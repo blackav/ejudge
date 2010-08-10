@@ -8855,6 +8855,7 @@ super_html_check_tests(FILE *f,
 
   for (i = 1; i < sstate->prob_a; i++) {
     if (!(prob = sstate->probs[i])) continue;
+    already_compiled = 0;
 
     fprintf(flog, "*** Checking problem %s ***\n", prob->short_name);
     if (prob->disable_testing > 0) {
