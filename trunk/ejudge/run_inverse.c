@@ -43,6 +43,8 @@
 #define GOOD_DIR_NAME "good"
 #define FAIL_DIR_NAME "fail"
 
+#define MAX_LOG_FILE_SIZE (1 * 1024 * 1024)
+
 struct run_info
 {
   int status;
@@ -1094,6 +1096,7 @@ run_inverse_testing(
         const unsigned char *log_path,
         const unsigned char *arch_path,
         const unsigned char *work_dir) = 0;
+  ssize_t ssize;
 
   make_patterns(prob, test_pat, sizeof(test_pat), corr_pat, sizeof(corr_pat));
 
@@ -1397,7 +1400,15 @@ run_inverse_testing(
 cleanup:
   /* process the log file */
   fclose(log_f); log_f = 0;
-  if (text_read_file(log_path, 1, &log_text, &log_size) < 0) {
+
+  ssize = generic_file_size(NULL, log_path, NULL);
+  if (ssize < 0) {
+    log_text = xstrdup("Error: log file does not exist\n");
+    log_size = strlen(log_text);
+  } else if (ssize > MAX_LOG_FILE_SIZE) {
+    log_text = xstrdup("Error: log file is too large\n");
+    log_size = strlen(log_text);
+  } else if (text_read_file(log_path, 1, &log_text, &log_size) < 0) {
     log_text = xstrdup("Error: failed to read the log file\n");
     log_size = strlen(log_text);
   } else if (strlen(log_text) != log_size) {
