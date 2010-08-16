@@ -1,3 +1,1392 @@
+2010-08-10 (r5980) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_html_3.c:
+	Ticket #37.
+	(super_html_check_tests) bug is fixed.
+
+2010-08-10 (r5979) Alexander Chernov  <cher@ejudge.ru>
+
+	* run_inverse.c:
+	Ticket #36.
+	(run_inverse_testing) the log file size is limited.
+
+2010-08-08 (r5977) Alexander Chernov  <cher@ejudge.ru>
+
+	* run_inverse.c:
+	(run_inverse_testing) most archive errors are reported as presentation
+	  errors instead of check failed errors.
+
+2010-08-03 (r5973) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html.c, super_html_3.c, super_html_4.c:
+	Ticket #32.
+
+	* new_server_html.c, super_html_3.c, super_html_4.c:
+	'enable_text_form' is supported for STANDARD problems.
+
+2010-08-03 (r5971) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_global_data) new field 'enable_textarea_submit'
+	  is added.
+
+2010-07-31 (r5967) Alexander Chernov  <cher@ejudge.ru>
+
+	* clntutil.h: copyright notice is updated;
+	(client_not_configured) 'messages' parameter is added.
+
+	* new_server_clnt.h: copyright notice is updated;
+	stdio.h is included;
+	(new_server_clnt_http_request) 'log_f' parameter is added.
+
+	* clntutil.c: copyright notice is updated;
+	(client_not_configured) 'messages' parameter is added.
+
+	* new-client.c: copyright notice is updated;
+	calls of 'client_not_configured' are updated;
+	logging of http_request errors is improved.
+
+	* new-server-cmd.c: copyright notice is updated;
+	calls of 'client_not_configured' are updated.
+
+	* serve-control.c:
+	calls of 'client_not_configured' are updated.
+
+	* users.c: copyright notice is updated;
+	calls of 'client_not_configured' are updated.
+
+2010-07-25 (r5964) Alexander Chernov  <cher@ejudge.ru>
+
+	* mime_type.h:
+	7-zip files are supported.
+
+	* mime_type.c:
+	7-zip files are supported.
+
+	* run_inverse.c:
+	(invoke_sample_program) some information about started programs
+	is printed.
+
+2010-07-23 (r5961) Alexander Chernov  <cher@ejudge.ru>
+
+	* run_inverse.c:
+	(invoke_checker) 'log_path' is opened in the appending mode.
+
+2010-07-23 (r5959) Alexander Chernov  <cher@ejudge.ru>
+
+	* misctext.c:
+	(text_read_file) reserve bytes are allocated properly;
+	(text_is_binary) return value is inverted;
+	(text_normalize_buf) non-increment bug is fixed.
+
+	* run_inverse.c:
+	(normalize_file) out_f is closed instead of log_f.
+
+2010-07-23 (r5957) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.c:
+	(prepare_copy_problem) all fields that must be cleared in the
+	  destination problem structure are now cleared.
+
+2010-07-21 (r5955) Alexander Chernov  <cher@ejudge.ru>
+
+	* serve_state.h, prepare.c, new_server_html.c, new_server_html_2.c, serve_state.c, super_html_3.c, prepare_out.c, serve_2.c, super_html_4.c, new_server_html_4.c:
+	Ticket #25.
+
+	* serve_state.h:
+	(serve_is_problem_started) new function prototype;
+	(serve_is_problem_deadlined) new function prototype;
+	(serve_is_problem_started_2) new function prototype;
+	(serve_is_problem_deadlined_2) new function prototype.
+
+	* new_server_html.c:
+	(unpriv_submit_run) 'serve_is_problem_started',
+	  'serve_is_problem_deadlined' functions are used;
+	(unpriv_command) 'serve_is_problem_started' function is used;
+	(is_problem_deadlined) moved to 'serve_2.c';
+	(html_problem_selection) 'serve_is_problem_started',
+	  'serve_is_problem_deadlined' functions are used;
+	(html_problem_selection_2) the same;
+	(get_problem_status) the same;
+	(unpriv_main_page) the same;
+	(unpriv_xml_update_answer) the same;
+	(unpriv_get_file) the same.
+
+	* new_server_html_2.c:
+	(ns_write_user_problems_summary) 'serve_is_problem_started' is used.
+
+	* new_server_html_4.c:
+	(cmd_submit_run) 'serve_is_problem_started',
+	  'serve_is_problem_deadlined' functions are used.
+
+	* prepare.c:
+	support for 'group_start_date', 'group_deadline' problem
+	configuration variables is added;
+	(prepare_free_group_dates) new function.
+
+	* prepare_out.c:
+	'group_start_date', 'group_deadline' are added to the unhandled
+	problem variables.
+
+	* serve_2.c:
+	(serve_is_problem_started) new function;
+	(serve_is_problem_started_2) new function;
+	(serve_is_problem_deadlined) new function;
+	(serve_is_problem_deadlined_2) new function.
+
+	* serve_state.c:
+	"xml_utils.h" is included;
+	<ctype.h> is included;
+	(parse_group_dates) new function;
+	(serve_parse_group_dates) new function;
+	(serve_state_load_contest) 'serve_parse_group_dates' is used.
+
+2010-07-19 (r5952) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct group_date_info) new structure;
+	(struct group_dates) new structure;
+	(struct section_problem_data) fields 'gsd', 'gdl' are added.
+
+2010-07-16 (r5950) Alexander Chernov  <cher@ejudge.ru>
+
+	* html.h, new_server_tables.c, serve_state.h, teamdb.c, files.make, teamdb_2.c, teamdb.h, teamdb_priv.h, new-server.h, new_server_html.c, html.c, new_server_html_2.c, serve_state.c:
+	Ticket #26.
+
+	* files.make:
+	teamdb_priv.h, teamdb_2.c are added.
+
+	* html.h:
+	(do_write_kirov_standings) 'user_filter' parameter is added;
+	(do_write_standings) the same;
+	(do_write_moscow_standings) the same.
+
+	* new-server.h:
+	new commands 'SET_STAND_FILTER', 'RESET_STAND_FILTER' are added;
+	(ns_write_priv_standings) 'phr' parameter is added;
+	(ns_set_stand_filter) new function prototype;
+	(ns_reset_stand_filter) new function prototype.
+
+	* serve_state.h:
+	(struct user_filter_info) new fields for standings filter are added:
+	  'stand_user_expr', 'stand_user_tree', 'stand_prob_expr',
+	  'stand_prob_tree', 'stand_run_expr', 'stand_run_tree',
+	  'stand_mem', 'stand_error_msgs';
+	(serve_state_destroy_stand_expr) new function prototype.
+
+	* teamdb.h:
+	(teamdb_get_user_map) 'teamdb_state_t state' parameter is replaced
+	  with 'serve_state_t cs';
+	  'cur_time' parameter is added;
+	  'filter' parameter is added.
+
+	* teamdb_priv.h: initial revision.
+
+	* html.c:
+	"filter_eval.h" is included;
+	(get_problem_map) new function to collect problems for standings;
+	(do_write_kirov_standings) 'user_filter' parameter is added;
+	  call of 'teamdb_get_user_map' is updated;
+	  'get_problem_map' is called;
+	  run filtering is supported;
+	(do_write_moscow_standings) the same as above;
+	(do_write_standings) the same as above;
+	(write_standings) calls of 'do_write_kirov_standings',
+	  'do_write_moscow_standings', 'do_write_standings' are updated.
+
+	* new_server_html.c:
+	(priv_standings) call of 'ns_write_priv_standings' is updated;
+	(priv_stand_filter_operation) new function to handle
+	  'SET_STAND_FILTER' and 'RESET_STAND_FILTER' requests;
+	(unpriv_view_standings) call of 'do_write_standings' is updated;
+	  call of 'do_write_kirov_standings' is updated;
+	  call of 'do_write_moscow_standings' is updated.
+
+	* new_server_html_2.c:
+	(stand_parse_error_func) new function to collect errors during
+	  filter expression parsing;
+	(ns_set_stand_filter) new function;
+	(ns_reset_stand_filter) new function;
+	(ns_write_priv_standings) 'phr' parameter is added;
+	  standings filter input form is generated;
+	  calls of 'do_write_kirov_standings', 'do_write_moscow_standings',
+	  'do_write_standings' are updated.
+
+	* new_server_tables.c:
+	'SET_STAND_FILTER', 'RESET_STAND_FILTER' commands are supported.
+
+	* serve_state.c:
+	(serve_state_destroy_stand_expr) new function;
+	(serve_state_destroy) the above function is called.
+
+	* teamdb.c:
+	"teamdb_priv.h" is included;
+	structure definitions are moved to teamdb_priv.h;
+	(teamdb_get_user_map) moved to teamdb_2.c.
+
+	* teamdb_2.c: initial revision.
+
+2010-07-15 (r5948) Alexander Chernov  <cher@ejudge.ru>
+
+	* filter_tree.h, filter_expr.y, userlist-server.c, super-serve.c, serve_state.c, prepare_out.c, super_proto.h, serve_state.h, filter_eval.c, files.make, prepare.c, filter_scan.lex, userlist_clnt.h, serve-control.c, userlist_proto.h, filter_tree.c, super_html_3.c, super_html_4.c:
+	Ticket #27.
+
+	* files.make:
+	'get_xml_by_text.c' file is added.
+
+	* filter_tree.h: copyright notice is updated;
+	'FILTER_ERR_INV_USERGROUP' error code is added.
+
+	* serve_state.h:
+	(struct serve_user_group) new structure;
+	(struct serve_group_member) new structure;
+	(struct serve_state) new fields: 'user_group_count',
+	  'user_group_map_size', 'user_groups', 'user_group_map',
+	  'group_member_count', 'group_member_map_size', 'group_members',
+	  'group_member_map'.
+
+	* super_proto.h:
+	editing of 'load_user_group' global configuration variable
+	is supported.
+
+	* userlist_clnt.h:
+	(userlist_clnt_get_xml_by_text) new function prototype.
+
+	* userlist_proto.h:
+	'ULS_GET_GROUPS' request code is added.
+
+	* filter_eval.c:
+	(find_user_group) new function;
+	(check_user_group) new function;
+	(do_eval) "inusergroup" primary expression is supported.
+
+	* filter_expr.y:
+	"inusergroup" primary expression is supported.
+
+	* filter_scan.lex:
+	"inusergroup" token is supported.
+
+	* filter_tree.c:
+	error message for the new error code is added.
+
+	* prepare.c, prepare_out.c:
+	'load_user_group' global configuration variable is supported.
+
+	* serve-control.c, super_html_3.c, super_html_4.c, super-serve.c:
+	editing of 'load_user_group' global configuration variable
+	is supported.
+
+	* serve_state.c:
+	(serve_state_destroy) user group info is destroyed;
+	(serve_load_user_groups) new function to load the user group info;
+	(serve_state_load_contest) user group info is loaded.
+
+	* userlist-server.c:
+	minor bugs are fixed;
+	(check_pk_set_user_info) new function;
+	(cmd_get_groups) new function to handle 'ULS_GET_GROUPS' request.
+
+2010-07-10 (r5944) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html.c:
+	Ticket #15.
+	(do_json_user_state) 'need_reload_check' parameter is added;
+	(unpriv_load_html_style) js generation is slightly changed;
+	(unpriv_page_header) page generation is changed.
+
+2010-07-09 (r5942) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_global_data) 'load_user_group' field is added;
+	(struct section_problem_data) new fields 'group_start_date',
+	  `group_deadline' are added.
+
+2010-07-09 (r5940) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html.c:
+	Ticket #14.
+	(unpriv_main_page) generation of the top and the bottom problem
+	  naviagation bars is changed to implement proper js-free tabs.
+
+2010-07-08 (r5937) Alexander Chernov  <cher@ejudge.ru>
+
+	* userlist-server.c:
+	Ticket #4 completed;
+	(check_pk_set_password) new function;
+	(cmd_set_passwd) 'check_pk_set_password' is called by the framework,
+	  so the packet checking code is removed;
+	(cmd_team_set_passwd) the same as above;
+	(cmd_priv_set_passwd) the same as above;
+	  shared contest users are supported properly.
+
+2010-07-07 (r5933) Alexander Chernov  <cher@ejudge.ru>
+
+	* serve_state.h:
+	(serve_invoke_stop_script) new function prototype.
+
+	* super_proto.h:
+	editing of 'contest_stop_cmd' global configuration variable
+	is supported.
+
+	* new_server_html.c:
+	(ns_check_contest_events) stop script is invoked;
+	(priv_contest_operation) stop script is invoked;
+	(priv_upsolving_operation) stop script is invoked.
+
+	* new_server_html_4.c:
+	(cmd_operation) stop script is invoked.
+
+	* prepare.c, prepare_out.c:
+	'contest_stop_cmd' global configuration variable is supported.
+
+	* serve_2.c:
+	(serve_invoke_stop_script) new function.
+
+	* serve-control.c, super_html.c, super_html_2.c, super_html_3.c, super_html_4.c, super-serve.c:
+	editing of 'contest_stop_cmd' is supported.
+
+2010-07-07 (r5932) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_global_data) 'contest_stop_cmd' field is added.
+
+	* super-serve.h:
+	(struct sid_state) 'contest_stop_cmd_text' field is added.
+
+	* struct-sizes.c: copyright notice is updated;
+	"super-serve.h" is included;
+	(main) size of struct sid_state is printed.
+
+2010-07-07 (r5930) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in:
+	ICONV variable is used instead of plain iconv.
+
+2010-07-07 (r5929) Alexander Chernov  <cher@ejudge.ru>
+
+	* configure.ac: copyright notice is updated;
+	Ticket #1 is fixed.
+	check for programs which gawk grep sed make rm cp ln ar cat chmod
+	  mkdir tar gzip bzip2 is added;
+	check for iconv program is added.
+
+2010-07-06 (r5927) Alexander Chernov  <cher@ejudge.ru>
+
+	* run_inverse.c: Ticket #29.
+	(invoke_zip) new function;
+	(run_inverse_testing) ZIP archives are supported.
+
+2010-06-30 (r5922) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_proto.h:
+	editing of `binary' problem configuration variable is supported.
+
+	* new_server_html.c:
+	(priv_submit_run) `binary' problem configuration variable is supported;
+	(priv_new_run) the same as above;
+	(unpriv_submit_run) the same as above.
+
+	* new_server_html_4.c:
+	(cmd_submit_run) `binary' problem configuration variable is supported.
+
+	* prepare.c, prepare_out.c:
+	`binary' problem configuration variable is supported.
+
+	* serve-control.c, super_html_3.c, super_html_4.c, super-serve.c:
+	editing of `binary' problem configuration variable is supported.
+
+2010-06-30 (r5920) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_problem_data) `binary' field is added.
+
+2010-06-29 (r5918) Alexander Chernov  <cher@ejudge.ru>
+
+	* html.h:
+	(write_xml_tests_report) new function prototype;
+	(write_xml_team_tests_report) new function prototype.
+
+	* html.c:
+	(write_xml_team_tests_report) new function.
+
+	* master_html.c:
+	(write_xml_tests_report) new function.
+
+	* new_server_html.c:
+	(unpriv_view_report) reports for testing problems are supported.
+
+	* new_server_html_2.c:
+	(ns_write_priv_report) reports for testing problems are supported.
+
+	* run_inverse.c:
+	(run_inverse_testing) content-type is written to the XML report.
+
+	* testing_report_xml.c:
+	(parse_testing_report) "failed_test" attribute is allowed to be unset;
+	  "tt_row_count", "tt_column_count" may be unset;
+	(testing_report_unparse_xml) "failed_test" is unparsed only if set.
+
+2010-06-29 (r5916) Alexander Chernov  <cher@ejudge.ru>
+
+	* run_inverse.c:
+	progress...
+
+2010-06-24 (r5907) Alexander Chernov  <cher@ejudge.ru>
+
+	* testing_report_xml.h:
+	(struct testing_report_row) `id' field is renamed to `row';
+	  `nominal_score', `score' fields are added.
+
+	* run.c:
+	(do_loop) bugs in inverse testing are fixed;
+	(check_config) inverse testing is supported.
+
+	* run_inverse.c:
+	bugs are fixed.
+
+	* runlog_static.c:
+	"problem_common.h" is included;
+	(run_status_str) `PROB_TYPE_TESTS' problems are supported.
+
+	* super_html_3.c:
+	(super_html_check_tests) `PROB_TYPE_TESTS' problems are supported.
+
+	* testing_report_xml.c:
+	"id" attribute is renamed to "row" in <ttrow> element;
+	"nominal-score", "score" attributes are supported in <ttrow>.
+
+2010-06-23 (r5904) Alexander Chernov  <cher@ejudge.ru>
+
+	* misctext.h:
+	(html_print_by_line) new function prototype.
+
+	* misctext.c:
+	(html_print_by_line) new function (moved here from run.c).
+
+	* testing_report_xml.h:
+	<stdio.h> is included;
+	(struct testing_report_test) fields `input_size', `output_size',
+	  `correct_size', `error_size', `checker_size' are added;
+	(struct testing_report_row) new structure;
+	(struct testing_report_cell) new structure;
+	(struct testing_report_xml) fields `tests_mode', `tt_row_count',
+	  `tt_column_count', `tt_rows', `tt_cells' are added;
+	(testing_report_alloc) new function prototype;
+	(testing_report_unparse_xml) new function prototype.
+
+	* run.c:
+	(html_print_by_line) moved to misctext.[ch];
+	(generate_xml_report) uses of `html_print_by_line' are updated;
+	  `global' is used instead of `serve_state.global';
+	(do_loop) `global' is used instead of `serve_state.global';
+	  inverse testing handling is completed.
+
+	* run_inverse.c:
+	completed.
+
+	* testing_report_xml.c:
+	"misctext.h" is included;
+	support for <ttrows>, <ttrow>, <ttcells>, <ttcell> elements is added;
+	support for "tests_mode", "tt_row_count", "tt_column_count", "id",
+	  "name", "must_fail", "row", "column" elements is added;
+	(testing_report_alloc) new function;
+	(unparse_scoring_system) new static function;
+	(unparse_bool_attr) new static function;
+	(unparse_bool_attr2) new static function;
+	(unparse_string_elem) new static function;
+	(unparse_string_attr) new static function;
+	(unparse_file_contents) new static function;
+	(testing_report_unparse_xml) new function.
+
+2010-06-18 (r5901) Alexander Chernov  <cher@ejudge.ru>
+
+	* fileutl.h:
+	(write_tmp_file) new function prototype.
+
+	* mime_type.c:
+	"fileutl.h" is included;
+	file is ported to MinGW;
+	(mime_type_guess) `write_tmp_file' is used.
+
+	* run_inverse.c:
+	in progress.
+
+2010-06-18 (r5895) Alexander Chernov  <cher@ejudge.ru>
+
+	* fileutl.h:
+	(scan_executable_file) function prototype is added.
+
+	* misctext.h:
+	(text_read_file) new function prototype;
+	(text_is_valid_char) new function prototype;
+	(text_is_binary) new function prototype;
+	(text_normalize_buf) new function prototype;
+	(text_normalize_dup) new function prototype.
+
+	* run.h:
+	(run_inverse_testing) function prototype is added.
+
+	* testing_report_xml.h:
+	(struct testing_report_xml) `errors' field is added.
+
+	* misctext.c:
+	(text_read_file) new function;
+	(text_is_valid_char) new function;
+	(text_is_binary) new function;
+	(text_normalize_buf) new function;
+	(text_normalize_dup) new function.
+
+	* run.c:
+	"run.h" is included;
+	(do_loop) inverse testing is invoked.
+
+	* run_inverse.c:
+	in progress.
+
+	* testing_report_xml.c:
+	support for <errors> element is added.
+
+2010-06-17 (r5893) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make:
+	run.h, run_inverse.c are added.
+
+	* run.h: initial revision.
+
+	* run_inverse.c: initial revision.
+
+2010-06-16 (r5891) Alexander Chernov  <cher@ejudge.ru>
+
+	* run_packet.h:
+	(struct run_request_packet) field `mime_type' is added.
+
+	* run_packet_priv.h:
+	the packet version is defined as a constant;
+	(struct run_request_bin_packet) field `mime_type' is added.
+
+	* serve_state.h:
+	(serve_run_request) `mime_type' parameter is added.
+
+	* new_server_html.c, new_server_html_4.c:
+	calls of `serve_run_request' are updated.
+
+	* run_packet_1.c, run_packet_2.c:
+	`mime_type' field is supported.
+
+	* serve_2.c:
+	(serve_run_request) `mime_type' parameter is added;
+	  `mime_type' is passed to the `run' program;
+	(serve_read_compile_packet) use of `serve_run_request' is updated;
+	(serve_rejudge_run) use of `serve_run_request' is updated.
+
+2010-06-16 (r5889) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.c:
+	(prepare) contests with no languages defined are allowed.
+
+	* super_html_2.c:
+	(super_html_commit_contest) contests with no languages are allowed.
+
+2010-06-16 (r5887) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.c:
+	(prepare_problem_free) new function.
+
+	* prepare_out.c:
+	"sformat.h" is included;
+	"varsubst.h" is included;
+	(prepare_unparse_testers) `prepare_problem_free' use is updated;
+	(print_files) output in HTML is generated;
+	(report_directory) new function;
+	(report_file) new function;
+	(handle_file) new function;
+	(handle_directory) new function;
+	(prob_instr) reworked;
+	(prepare_further_instructions) HTML output is generated.
+
+	* super_html_2.c:
+	(super_html_commit_contest) output of `prepare_further_instructions'
+	  is already in HTML.
+
+	* super_html_3.c:
+	use of `prepare_problem_free' is updated.
+
+2010-06-16 (r5886) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(prepare_global_free_func) prototype is removed;
+	(prepare_language_free_func) prototype is removed;
+	(prepare_problem_free_func) prototype is removed;
+	(prepare_tester_free_func) prototype is removed;
+	(prepare_global_free) prototype is added;
+	(prepare_language_free) prototype is added;
+	(prepare_problem_free) prototype is added;
+	(prepare_tester_free) prototype is added.
+
+2010-06-14 (r5884) Alexander Chernov  <cher@ejudge.ru>
+
+	* problem_common.h: copyright notice is updated;
+	problem type `tests' is added.
+
+	* problem_common.c: copyright notice is updated;
+	problem type `tests' is added.
+
+	* new_server_html.c, new_server_html_2.c, new_server_html_4.c:
+	initial support for new problem type `tests' is added.
+
+2010-06-14 (r5882) Alexander Chernov  <cher@ejudge.ru>
+
+	* compile.c:
+	(check_style_only) completed;
+	(do_loop) style checkers are supported.
+
+	* new_server_html.c:
+	(priv_submit_run) style checkers are supported for output-only
+	  problems;
+	(unpriv_submit_run) style checkers are supported for output-only
+	  problems.
+
+	* new_server_html_2.c:
+	(ns_write_priv_source) textual description of binary archive
+	  is displayed.
+
+	* new_server_html_4.c:
+	(cmd_submit_run) style checkers are supported for output-only
+	  problems.
+
+	* serve_2.c:
+	"mime_type.h" is included;
+	(serve_compile_request) lang == NULL is supported;
+	(serve_read_compile_packet) result of style checker is supported
+	  for output-only problems;
+	(serve_rejudge_run) style checkers are supported for output-only
+	  problems.
+
+2010-06-14 (r5881) Alexander Chernov  <cher@ejudge.ru>
+
+	* compile_packet.h:
+	(struct compile_request_packet) field `src_sfx' is added.
+
+	* compile_packet_priv.h:
+	compile packet version is boosted to 4;
+	(struct compile_request_bin_packet) field `src_sfx_len' is added.
+
+	* compile_packet_1.c:
+	(compile_request_packet_read) `src_sfx' is handled.
+
+	* compile_packet_2.c:
+	(compile_request_packet_write) `src_sfx' is handled.
+
+	* compile_packet_3.c:
+	(compile_request_packet_free) `src_sfx' is handled.
+
+2010-06-14 (r5880) Alexander Chernov  <cher@ejudge.ru>
+
+	* compile_packet.h:
+	"serve_state.h" is no longer included;
+	(compile_request_packet_read) serve_state_t argument is removed.
+
+	* compile.c:
+	(check_style) new function is added;
+	(do_loop) minor improvements;
+	  call of `compile_request_packet_read' is updated.
+
+	* compile_packet_1.c:
+	"serve_state.h" is no longer included;
+	(compile_request_packet_read) `state' argument is removed;
+	  lang_id check is removed.
+
+2010-06-12 (r5878) Alexander Chernov  <cher@ejudge.ru>
+
+	* ej_process.h: copyright notice is updated;
+	(ejudge_invoke_process) new function prototype.
+
+	* super_html_3.c:
+	(super_html_print_problem) memory leak is plugged;
+	(invoke_test_checker) new function to invoke the test checker;
+	(invoke_compile_process) reworked;
+	(invoke_make) test checker creation is checked;
+	(super_html_check_tests) memory leak is plugged;
+	  test checker is invoked, if configured for the problem.
+
+2010-06-12 (r5873) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_proto.h:
+	editing of `test_checker_cmd', `test_checker_env' problem
+	configuration variables is supported.
+
+	* prepare.c:
+	`test_checker_cmd', `test_checker_env' problem configuration
+	variables are added;
+	(prepare_copy_problem) implementation is changed.
+
+	* prepare_out.c:
+	`test_checker_cmd', `test_checker_env' problem configuration
+	variables are handled;
+	(prepare_unparse_testers) handling of `tmp_prob' is changed;
+	(prob_instr) handling of `tmp_prob' is changed.
+
+	* super_html_2.c: copyright notice is updated;
+	(super_html_commit_contest) a memory leak is plugged.
+
+	* super_html_3.c:
+	`test_checker_cmd', `test_checker_env' problem configuration
+	variables are handled;
+	(super_html_edit_languages) html armoring is reworked;
+	(super_html_print_problem) html armoring is reworked;
+	(super_html_check_tests) handling of `tmp_prob' is reworked.
+
+	* serve-control.c, super_html_4.c:
+	`test_checker_cmd', `test_checker_env' problem configuration
+	variables are handled.
+
+	* super-serve.c:
+	editing of `test_checker_cmd', `test_checker_env' problem
+	configuration variables is supported;
+	(super_serve_clear_edited_contest) memory leak is plugged;
+
+2010-06-12 (r5872) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(prepare_copy_problem) function prototype is changed.
+
+2010-06-12 (r5870) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_problem_data) new fields `test_checker_cmd',
+	  `test_checker_env' are added.
+
+2010-06-12 (r5868) Alexander Chernov  <cher@ejudge.ru>
+
+	* parsecfg.c:
+	(copy_param) "S" specification is supported - allocate string
+	  on heap.
+
+	* prepare.c:
+	tables are fixed for `open_tests' parameter.
+
+	* super_html_4.c:
+	's' <-> 'S' in parameter specification to match specification in
+	prepare.c.
+
+2010-06-12 (r5866) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_html_3.c:
+	(invoke_make) make is invoked with `ejudge_make_problem' target;
+	(super_html_check_tests) checkers are recompiled before tests
+	  are checked.
+
+2010-06-12 (r5864) Alexander Chernov  <cher@ejudge.ru>
+
+	* parsecfg.h:
+	(sarray_merge_pp) new function prototype.
+
+	* varsubst.h: copyright notice is updated;
+	(config_var_substitute_heap) new function prototype;
+	(config_var_substitute_buf) new function prototype.
+
+	* lang_config_vis.c: copyright notice is updated;
+	"varsubst.h" is included;
+	(do_substitute) is moved to varsubst module.
+
+	* new_server_html.c:
+	(priv_submit_run) call of `serve_compile_request' is updated;
+	(unpriv_submit_run) call of `serve_compile_request' is updated.
+
+	* new_server_html_4.c:
+	(cmd_submit_run) call of `serve_compile_request' is updated.
+
+	* parsecfg.c:
+	(sarray_merge_pp) new function.
+
+	* prepare.c:
+	(prepare_set_prob_value) `open_tests' is handled properly.
+
+	* serve_2.c:
+	"varsubst.h" is included;
+	(serve_compile_request) `style_checker_cmd' is processed;
+	  `style_checker_env' is processed;
+	(serve_rejudge_run) call of `serve_compile_request' is updated.
+
+	* varsubst.c: copyright notice is updated;
+	"config.h" is included;
+	<reuse/logger.h> is included;
+	(do_substitute) moved here from `lang_config_vis.c';
+	(config_var_substitute_heap) new function;
+	(config_var_substitute_buf) new function.
+
+2010-06-12 (r5861) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_proto.h:
+	editing of `style_checker_cmd', `style_checker_env' problem
+	  configuration parameters is supported.
+
+	* prepare.c, prepare_out.c:
+	`style_checker_cmd', `style_checker_env' problem configuration
+	  parameters are supported.
+
+	* serve-control.c, super_html_3.c, super_html_4.c, super-serve.c:
+	editing of `style_checker_cmd', `style_checker_env' problem
+	  configuration parameters is supported.
+
+2010-06-12 (r5860) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_problem_data) new fields `style_checker_cmd',
+	  `style_checker_env'.
+
+2010-06-12 (r5858) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_proto.h:
+	editing of `style_checker_env' language configuration variable
+	is supported.
+
+	* prepare_out.c:
+	(prepare_unparse_lang) `style_checker_env' support is improved.
+
+	* serve-control.c, super_html_3.c, super_html_4.c, super-serve.c:
+	editing of `style_checker_env' language configuration variable
+	is supported.
+
+2010-06-10 (r5854) Alexander Chernov  <cher@ejudge.ru>
+
+	* serve_state.h:
+	(serve_compile_request) parameters `style_check_only',
+	  `style_checker_cmd', `style_checker_env' are added.
+
+	* compile.c:
+	(do_loop) correct error is reported, if style checker failed
+	  to start.
+
+	* new_server_html.c:
+	(priv_submit_run) call of `serve_compile_request' is updated;
+	(unpriv_submit_run) call of `serve_compile_request' is updated.
+
+	* new_server_html_4.c:
+	(cmd_submit_run) call of `serve_compile_request' is updated.
+
+	* serve_2.c:
+	(serve_compile_request) parameters `style_check_only',
+	  `style_checker_cmd', `style_checker_env' are added;
+	(serve_rejudge_run) call of `serve_compile_request' is updated.
+
+2010-06-10 (r5852) Alexander Chernov  <cher@ejudge.ru>
+
+	* compile_packet.h:
+	(struct compile_request_packet) new fields: `style_check_only',
+	  `sc_env_num', `sc_env_vars'.
+
+	* compile_packet_priv.h:
+	packet version is boosted to 3;
+	(struct compile_request_bin_packet) new fields: `style_check_only',
+	  `sc_env_num'.
+
+	* compile.c:
+	(do_loop) style checker environment setting is supported.
+
+	* compile_packet_1.c:
+	(compile_request_packet_read) `style_check_only', `sc_env_num',
+	  `sc_env_vars' are handled.
+
+	* compile_packet_2.c:
+	(compile_request_packet_write) `style_check_only', `sc_env_num',
+	  `sc_env_vars' are handled.
+
+	* prepare.c:
+	`style_checker_env' language parameter is added.
+
+	* prepare_out.c:
+	(prepare_unparse_lang) `style_checker_env' is supported.
+
+2010-06-10 (r5851) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_language_data) `style_checker_env' field is added.
+
+2010-06-09 (r5848) Alexander Chernov  <cher@ejudge.ru>
+
+	* mime_type.h: copyright notice is updated;
+	(mime_type_guess_file) new function prototype.
+
+	* mime_type.c: copyright notice is updated;
+	(mime_type_guess_file) new function is added.
+
+2010-06-09 (r5847) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in:
+	rule for style_archive is added.
+
+	* files.make:
+	style_archive.c is added.
+
+	* style_archive.c: initial revision.
+
+2010-06-06 (r5846) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_html_3:
+	(invoke_make) new function;
+	(super_html_check_tests) make is invoked if Makefile is present.
+
+2010-06-04 (r5836) Alexander Chernov  <cher@ejudge.ru>
+
+	* html.h: copyright notice is updated;
+	(write_xml_team_testing_report) `prob' parameter is added.
+
+	* html.c:
+	(write_xml_team_testing_report) `prob' parameter is added;
+	  `open_tests' problem configuration variable is handled.
+
+	* new_server_html.c:
+	(unpriv_view_report) call of `write_xml_testing_report' is updated.
+
+	* new_server_html_2.c:
+	(ns_write_priv_report) call of `write_xml_testing_report' is updated.
+
+2010-06-04 (r5834) Alexander Chernov  <cher@ejudge.ru>
+
+	* reports.c:
+	(ns_olympiad_final_user_report) number of columns for `short answer'
+	  problems and for `select one' problems is decreased to 1.
+
+2010-06-04 (r5831) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_proto.h:
+	`open_tests' problem configuration variable editing is supported.
+
+	* prepare.c:
+	`open_tests' problem configuration variable is supported;
+	(prepare_parse_open_tests) new function;
+	(set_defaults) `open_tests' is supported.
+
+	* prepare_out.c:
+	(prepare_unparse_prob) `open_tests' is supported.
+
+	* reports.c:
+	(ns_olympiad_final_user_report) `output-only' problems are handled
+	  exactly as `text-answer' problems.
+
+	* serve-control.c, super_html_3.c, super_html_4.c, super-serve.c:
+	`open_tests' problem configuration variable editing is supported.
+
+2010-06-04 (r5830) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_problem_data) new fields `open_tests', `open_tests_val'
+	  are added.
+
+2010-06-01 (r5822) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.c:
+	`check_cmd' handing is fixed in `advanced_layout' mode.
+
+	* super_html_3.c:
+	`check_cmd' handing is fixed in `advanced_layout' mode.
+
+2010-05-31 (r5817) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare_dflt.h: copyright notice is updated;
+	defaults for advanced layout are specified.
+
+	* run_packet.h:
+	(struct run_request_packet) `advanced_layout' field is added.
+
+	* run_packet_priv.h:
+	FLAGS_ADVANCED_LAYOUT flag is added.
+
+	* new_server_html.c:
+	(load_problem_plugin) `advanced_layout' contest global
+	  parameter is supported.
+
+	* new_server_html_2.c:
+	"prepare_dflt.h" is included;
+	(write_from_contest_dir) new parameters `global', `prb', `entry'
+	  are added;
+	(ns_write_tests) calls of `write_from_contest_dir' are updated.
+
+	* prepare.c:
+	new global configuration variable `problems_dir' is added;
+	(set_defaults) `advanced_layout' parameter is supported;
+	(prepare_set_prob_value) `advanced_layout' parameter is supported;
+	(get_advanced_layout_path) new function.
+
+	* prepare_out.c:
+	(prob_instr) `advanced_layout' parameter is supported.
+
+	* run.c:
+	"prepare_dflt.h" is included;
+	(invoke_valuer) `advanced_layout' parameter is supported;
+	(invoke_nwrun) `global' parameter is marked as const pointer;
+	(run_tests) `advanced_layout' parameter is supported;
+	(check_config) `advanced_layout' parameter is supported.
+
+	* run_packet_1.c: copyright notice is updated;
+	(run_request_packet_read) `FLAGS_ADVANCED_LAYOUT' is supported.
+
+	* run_packet_2.c: copyright notice is updated;
+	(run_request_packet_write) `FLAGS_ADVANCED_LAYOUT' is supported.
+
+	* serve_2.c:
+	(serve_compile_request) `advanced_layout' parameter is supported;
+	(serve_run_request) `advanced_layout' parameter is supported.
+
+	* super_html_3.c:
+	(super_html_add_abstract_problem) `advanced_layout' global contest
+	  parameter is supported;
+	(super_html_check_tests) `advanced_layout' is supported.
+
+2010-05-30 (r5816) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_global_data) `problems_dir' field is added.
+	(get_advanced_layout_path) new function prototype.
+
+2010-05-29 (r5814) Alexander Chernov  <cher@ejudge.ru>
+
+	* userlist.h:
+	(struct userlist_groupmember) `rights' field is added.
+
+	* userlist_xml.c:
+	(elem_free) `rights' is freed.
+
+2010-05-28 (r5810) Alexander Chernov  <cher@ejudge.ru>
+
+	* list_ops.h: copyright notice is updated;
+	brackets are added around the parameters.
+
+	* uldb_plugin.h:
+	(struct uldb_plugin_iface::create_group) `created_by' parameter added.
+
+	* userlist.h:
+	(struct userlist_group) new fields `created_by', `create_time',
+	  `last_change_time' are added.
+
+	* uldb_plugin_xml.c:
+	(create_group_func) `created_by' parameter is added.
+
+	* userlist-server.c:
+	(cmd_create_group) plugin call of `create_group' is updated.
+
+2010-05-24 (r5804) Alexander Chernov  <cher@ejudge.ru>
+
+	* edit-userlist.c:
+	group operations on groups and group members are supported.
+
+2010-05-23 (r5802) Alexander Chernov  <cher@ejudge.ru>
+
+	* uldb_plugin.h:
+	(struct uldb_plugin_iface) new fields `get_group',
+	  `get_group_user_iterator', `get_group_member_iterator',
+	  `create_group_member', `remove_group_member'.
+
+	* userlist.h:
+	(struct userlist_user) fields `group_first', `group_last' are added;
+	(struct userlist_group) fields `user_first', `user_last' are added;
+	(struct userlist_groupmember) fields `user_prev', `user_next',
+	  `group_prev', `group_next', `group', `user' are added;
+	(userlist_write_groups_xml_header) function prototype is removed;
+	(userlist_write_groups_xml_footer) function prototype is removed;
+	(userlist_write_groups_header) function prototype is added;
+	(userlist_write_groups_footer) function prototype is added;
+	(userlist_write_groupmembers_header) function prototype is added;
+	(userlist_write_groupmembers_footer) function prototype is added;
+	(userlist_unparse_usergroupmember) function prototype is added.
+
+	* userlist_proto.h:
+	commands `ULS_LIST_GROUP_USERS', `ULS_CREATE_GROUP_MEMBER',
+	  `ULS_DELETE_GROUP_MEMBER' are added;
+	error `ULS_ERR_BAD_GROUP_ID' is added.
+
+	* edit-userlist.c:
+	group member editing is supported.
+
+	* uldb_plugin_xml.c:
+	(get_group_func) new function;
+	(get_group_user_iterator_func) new function;
+	(get_group_member_iterator_func) new function;
+	(create_group_member_func) new function;
+	(remove_group_member_func) new function.
+
+	* userlist_proto.c:
+	new error message is added.
+
+	* userlist-server.c:
+	(check_pk_map_contest) new function;
+	(check_pk_register_contest) new function;
+	(cmd_list_group_users) new function;
+	(cmd_create_group_member) new function;
+	(cmd_delete_group_member) new function.
+
+	* userlist_xml.c:
+	(do_parse_usergroupmember) new function;
+	(collect_usergroups) new function;
+	(userlist_unparse_usergroupmember) new function.
+
+2010-05-17 (r5798) Alexander Chernov  <cher@ejudge.ru>
+
+	* userlist.h:
+	(struct userlist_groupmember) new structure is added.
+
+	* edit-userlist.c:
+	some non-implemented code is commented out.
+
+2010-05-15 (r5797) Alexander Chernov  <cher@ejudge.ru>
+
+	* uldb_plugin.h: copyright notice is updated;
+	(get_group_iterator) new field is added;
+	(get_group_by_name) new field is added;
+	(try_new_group_name) new field is added;
+	(create_group) new field is added;
+	(remove_group) new field is added;
+	(edit_group_field) new field is added;
+	(clear_group_field) new field is added.
+
+	* userlist.h: copyright notice is updated;
+	(struct userlist_group) new structure to store user groups;
+	(struct userlist_list) new group-related fields;
+	(userlist_write_groups_xml_header) new function prototype;
+	(userlist_write_groups_xml_footer) new function prototype;
+	(userlist_unparse_usergroup) new function prototype;
+	(userlist_group_get_ptr) new function prototype;
+	(userlist_group_get_ptr_nc) new function prototype.
+
+	* userlist_clnt.h: copyright notice is updated;
+	(userlist_clnt_edit_field) `cmd' parameter is added;
+	(userlist_clnt_delete_field) `cmd' parameter is added;
+	(userlist_clnt_create_user) `cmd' parameter is added.
+
+	* userlist_proto.h: copyright notice is updated;
+	new commands ULS_LIST_ALL_GROUPS, ULS_CREATE_GROUP, ULS_DELETE_GROUP,
+	  ULS_EDIT_GROUP_FIELD, ULS_DELETE_GROUP_FIELD;
+	new error code ULS_ERR_GROUP_NAME_USED.
+
+	* edit-userlist.c: copyright notice is updated;
+	calls of `userlist_clnt_delete_field',
+	  `userlist_clnt_edit_field' are updated;
+	(do_display_group_members_menu) new function;
+	(display_group_members_menu) new function;
+	(do_display_group_menu) new function;
+	(display_group_menu) new function;
+	(display_main_menu) group editing is added.
+
+	* userlist.c:
+	(userlist_group_get_ptr) new function;
+	(userlist_group_get_ptr_nc) new function.
+
+	* userlist_proto.c: copyright notice is updated;
+	new error code is supported.
+
+	* userlist-server.c:
+	(check_pk_edit_field) new function;
+	(check_pk_delete_info) new function;
+	(cmd_list_all_groups) new function;
+	(cmd_create_group) new function;
+	(cmd_delete_group) new function;
+	(cmd_edit_group_field) new function;
+	(cmd_delete_group_field) new function.
+
+	* userlist_xml.c:
+	(do_parse_usergroups) new function;
+	(do_parse_userlist) usergroups are supported;
+	(xml_unparse_text_attr) new function;
+	(userlist_unparse_usergroup) new function;
+	(unparse_usergroup) new function;
+	(userlist_write_groups_xml_header) new function;
+	(userlist_write_groups_xml_footer) new function;
+	(userlist_unparse) usergroups are unparsed.
+
+	* uldb_plugin_xml.c: copyright notice is updated;
+	(get_group_iterator_func) new function;
+	(get_group_by_name_func) new function;
+	(try_new_group_name_func) new function;
+	(create_group_func) new function;
+	(remove_group_func) new function;
+	(edit_group_field_func) new function;
+	(clear_group_field_func) new function.
+
+2010-05-12 (r5794) Alexander Chernov  <cher@ejudge.ru>
+
+	* serve_2.c:
+	(serve_run_request) crash if lang == null is fixed.
+
+2010-03-07 (r5789) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_proto.h:
+	editing of `disable_auto_refresh', `ignore_unmarked' is supported.
+
+	* html.c:
+	(do_write_kirov_standings) `ignore_unmarked' is supported.
+
+	* new_server_html.c:
+	(do_json_user_state) `disable_auto_refresh' global variable
+	  is handled.
+
+	* new_server_html_2.c:
+	(ns_get_user_problems_summary) `ignore_unmarked' is supported.
+
+	* prepare.c, prepare_out.c:
+	`disable_auto_refresh' global configuration variable is supported;
+	`ignore_unmarked' problem configuration variable is supported.
+
+	* run.c:
+	`static' is added where needed.
+
+	* serve_2.c:
+	(serve_run_request) tester-specific `run_dir' is handled.
+
+	* serve-control.c, super-serve.c, super_html_3.c, super_html_4.c:
+	editing of `disable_auto_refresh', `ignore_unmarked' is supported.
+
+2010-03-07 (r5788) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_global_data) `disable_auto_refresh' field is added;
+	(struct section_problem_data) `ignore_unmarked' field is added.
+
+2010-03-06 (r5785) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_proto.h:
+	editing of `advanced_layout' is supported.
+
+	* serve-control.c, super_html_3.c, super_html_4.c, super-serve.c:
+	editing of `advanced_layout' is supported.
+
+2010-03-06 (r5784) Alexander Chernov  <cher@ejudge.ru>
+
+	* run.c:
+	(generate_xml_report) generation fixes.
+
+2010-03-06 (r5783) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_global_data) `advanced_layout' field is added.
+
+	* prepare.c, prepare_out.c:
+	`advanced_layout' field is supported.
+
+2010-03-03 (r5781) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html_2.c:
+	(ns_get_user_problems_summary) score_latest mode is supported for
+	  KIROV contests.
+
+2010-03-02 (r5779) Alexander Chernov  <cher@ejudge.ru>
+
+	* super-serve.c:
+	SSERV_CMD_CNTS_CHANGE_SCHED_TIME handler is installed properly.
+
+2010-03-01 (r5777) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server.h:
+	MARK_DISPLAYED_2, UNMARK_DISPLAYED_2 actions are added.
+
+	* serve_state.h:
+	(serve_mark_by_mask) new function prototype is added.
+
+	* filter_eval.c:
+	(is_latestmarked) bug is fixed.
+
+	* new_server_html.c:
+	(priv_clear_displayed) MARK_DISPLAYED_2, UNMARK_DISPLAYED_2
+	commands are handled.
+
+	* new_server_html_2.c:
+	(ns_write_priv_all_runs) MARK_DISPLAYED_2, UNMARK_DISPLAYED_2
+	  buttons are generated.
+
+	* new_server_tables.c:
+	MARK_DISPLAYED_2, UNMARK_DISPLAYED_2 buttons are added.
+
+	* serve_2.c:
+	(serve_mark_by_mask) new function.
+
+2010-02-23 (r5775) Alexander Chernov  <cher@ejudge.ru>
+
+	* rldb_plugin.h: copyright notice is updated;
+	(struct rldb_plugin_iface) `change_status_2' member is added.
+
+	* runlog.h:
+	(run_change_status_2) new function prototype.
+
+	* serve_2.c:
+	(serve_read_run_packet) `marked_flag' is handled.
+
+	* rldb_plugin_file.c:
+	(change_status_2_func) new function prototype.
+
+	* run.c:
+	(generate_xml_report) `marked_flag' parameter is added;
+	  "marked-flag" attribute is generated to XML;
+	(read_valuer_score) new function;
+	(invoke_valuer) `p_marked' parameter is added;
+	(run_tests) `marked_flag' is retrieved from the valuer and written
+	  to XML and reply packet.
+
+	* runlog.c:
+	(run_change_status_2) new function.
+
+2010-02-23 (r5773) Alexander Chernov  <cher@ejudge.ru>
+
+	* run_packet.h: copyright notice is updated;
+	(struct run_reply_packet) `marked_flag' field is added.
+
+	* run_packet_priv.h: copyright notice is updated;
+	`FLAGS_MARKED' flag is added.
+
+	* testing_report_xml.h:
+	(struct testing_report_xml) `marked_flag' field is added.
+
+	* run_packet_4.c, run_packet_5.c: copyright notice is updated;
+	`marked_flag' field is added.
+
+	* testing_report_xml.c:
+	"marked-flag" attribute is supported.
+
+2010-02-23 (r5772) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_proto.h:
+	editing of `valuer_sets_marked' problem variable is supported.
+
+	* serve-control.c, super_html_3.c, super_html_4.c, super-serve.c:
+	editing of `valuer_sets_marked' problem variable is supported.
+
+2010-02-23 (r5771) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.c, prepare_out.c:
+	`valuer_sets_marked' problem configuration variable is supported.
+
+2010-02-23 (r5770) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(section_problem_data) `valuer_sets_marked' field is added.
+
+2010-02-23 (r5769) Alexander Chernov  <cher@ejudge.ru>
+
+	* filter_eval.c, filter_expr.y, filter_scan.lex:
+	`marked', `saved', and `latestmarked' predicates are supported.
+
+2010-02-23 (r5768) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server.h:
+	editing of `is_marked' and `is_saved' run properties is handled.
+
+	* new_server_html.c, new_server_html_2.c, new_server_tables.c:
+	editing of `is_marked' and `is_saved' run properties is handled.
+
+2010-02-23 (r5767) Alexander Chernov  <cher@ejudge.ru>
+
+	* runlog.h, runlog.c:
+	new fields `is_marked', `is_saved', `saved_status', `saved_score',
+	`saved_test' are handled.
+
+	* rldb_plugin_file.c: copyright notice is updated;
+	new fields `is_marked', `is_saved', `saved_status', `saved_score',
+	`saved_test' are handled.
+
+2010-02-22 (r5763) Alexander Chernov  <cher@ejudge.ru>
+
+	* nwrun.c:
+	combined std/file input/output is properly supported.
+
 2010-01-28 (r5755) Alexander Chernov  <cher@ejudge.ru>
 
 	* teamdb.h: copyright notice is updated;

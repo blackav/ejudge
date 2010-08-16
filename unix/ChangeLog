@@ -1,3 +1,27 @@
+2010-06-24 (r5906) Alexander Chernov  <cher@ejudge.ru>
+
+	* fileutl.c:
+	(scan_executable_files) bugs are fixed.
+
+2010-06-18 (r5900) Alexander Chernov  <cher@ejudge.ru>
+
+	* fileutl.c:
+	(write_tmp_file) new function.
+
+2010-06-18 (r5896) Alexander Chernov  <cher@ejudge.ru>
+
+	* fileutl.c:
+	(scan_executable_files) new function.
+
+2010-06-12 (r5877) Alexander Chernov  <cher@ejudge.ru>
+
+	* ej_process.c: copyright notice is updated;
+	<errno.h> is included;
+	<stdarg.h> is included;
+	(error) new static function;
+	(fferror) new static function;
+	(ejudge_invoke_process) new function.
+
 2010-01-25 (r5730) Alexander Chernov  <cher@ejudge.ru>
 
 	* startstop.c: copyright notice is updated;
