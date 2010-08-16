@@ -1,3 +1,10 @@
+2010-07-31 (r5966) Alexander Chernov  <cher@ejudge.ru>
+
+	* http_request.c: copyright notice is updated;
+	(msg) new function is added to log the messages to the specified FIlE;
+	(new_server_clnt_http_request) 'log_f' parameter is added;
+	  error logging is improved.
+
 2008-12-25 (r5467) Alexander Chernov  <cher@ejudge.ru>
 
 	* open.c: copyright notice is updated;

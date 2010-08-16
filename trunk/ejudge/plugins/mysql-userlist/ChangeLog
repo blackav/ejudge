@@ -1,3 +1,35 @@
+2010-05-29 (r5813) Alexander Chernov  <cher@ejudge.ru>
+
+	* uldb_mysql.c, groupmembers.inc.c, tables.inc.c:
+	usergroup members implemented
+
+2010-05-28 (r5811) Alexander Chernov  <cher@ejudge.ru>
+
+	* create-userdb.sql:
+	description of groups and groupmembers tables is added.
+
+	* groups.inc.c:
+	group-related functions are implemented.
+
+	* methods.inc.c:
+	(create_group_func) `created_by' parameter is added.
+
+	* tables.inc.c: copyright notice is updated;
+	specification of groups table is added.
+
+	* uldb_mysql.c:
+	support for operations on usergroups is added.
+
+2010-05-28 (r5809) Alexander Chernov  <cher@ejudge.ru>
+
+	* groupmembers.inc.c, groups.inc.c:
+	initial revision
+
+2010-05-24 (r5806) Alexander Chernov  <cher@ejudge.ru>
+
+	* methods.inc.c, uldb_mysql.c, main.make, Makefile.in, create-userdb.sql, drop-userdb.sql:
+	stubs for usergroup-related functions are added
+
 2009-04-03 (r5557) Alexander Chernov  <cher@ejudge.ru>
 
 	* uldb_mysql.c: copyright notice is updated;

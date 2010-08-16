@@ -1,3 +1,27 @@
+2010-07-15 (r5947) Alexander Chernov  <cher@ejudge.ru>
+
+	* get_xml_by_text.c: initial revision.
+
+2010-05-23 (r5801) Alexander Chernov  <cher@ejudge.ru>
+
+	* list_all_users.c:
+	(userlist_clnt_list_all_users) any command is allowed.
+
+2010-05-15 (r5796) Alexander Chernov  <cher@ejudge.ru>
+
+	* create_user.c: copyright notice is updated;
+	(userlist_clnt_create_user) `cmd' parameter is added.
+
+	* delete_field.c: copyright notice is updated;
+	(userlist_clnt_delete_field) `cmd' parameter is added.
+
+	* edit_field.c: copyright notice is updated;
+	(userlist_clnt_edit_field) `cmd' parameter is added.
+
+	* list_all_users.c: copyright notice is updated;
+	(userlist_clnt_list_all_users) `ULS_LIST_ALL_GROUPS'
+	  is supported.
+
 2008-12-26 (r5480) Alexander Chernov  <cher@ejudge.ru>
 
 	* bytes_available.c: copyright notice is updated;

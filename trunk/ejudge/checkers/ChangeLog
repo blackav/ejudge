@@ -1,3 +1,168 @@
+2010-08-08 (r5976) Alexander Chernov  <cher@ejudge.ru>
+
+	* style_archive.c:
+	(read_text_file) the function returns fail code on binary files.
+
+2010-08-03 (r5969) Alexander Chernov  <cher@ejudge.ru>
+
+	* style_archive.c:
+	Ticket #33.
+
+2010-07-25 (r5963) Alexander Chernov  <cher@ejudge.ru>
+
+	* style_archive.c:
+	(check_tar_tests) parameters 'no_readme_mode', 'ignore_dot_files'
+	  are added;
+	  absence of README file is ignored, if 'no_readme_mode' is set;
+	  dot-files are ignored, if 'ignore_dot_files' is set;
+	(make_report) parameter 'ignore_dot_files' is added;
+	  absence of README file is tolerated;
+	  list of ignored files is printed.
+
+2010-07-06 (r5926) Alexander Chernov  <cher@ejudge.ru>
+
+	* style_archive.c: Ticket #29.
+	ZIP archives are checked.
+	<dirent.h> is included;
+	(check_file_name) new function;
+	(check_zip_date) new function;
+	(parse_zip_file_type) new function;
+	(get_zip_listing) new function;
+	(unpack_zip) new function;
+	(make_report) directories are re-checked after unpack;
+	(main) ZIP archives are supported.
+
+2010-07-01 (r5925) Alexander Chernov  <cher@ejudge.ru>
+
+	* style_archive.c:
+	(parse_c_string) the length of the parsed string is returned;
+	(get_tar_listing) check for empty and \0-containing file names
+	  is added;
+	(read_text_file) whitespace characters are allowed;
+	(is_valid_char) new function to restrict the set of allowed chars
+	  in file names;
+	(check_names) new function to check the correctness of file names;
+	(main) `EJ_TESTS_MODE' is supported;
+	  the names of the files in the archive are checked.
+
+2010-06-30 (r5921) Alexander Chernov  <cher@ejudge.ru>
+
+	* style_archive.c:
+	(parse_long_long) `K', `M', `G' suffixes are supported.
+
+2010-06-28 (r5914) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make:
+	`read_file_by_line_ex', `read_line_ex' are added.
+
+	* checker_internal.h:
+	(checker_read_file_by_line_ex) function prototype is added;
+	(checker_read_line_ex) function prototype is added.
+
+	* read_file_by_line_ex.c, read_line_ex.c: initial revision.
+
+	* real_line.c: copyright notice is updated;
+	check for invalid control characters is added;
+	error reporting is improved.
+
+2010-06-27 (r5913) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make: copyright notice is updated;
+	`in_open.c', `out_open.c', `corr_open.c', `eof.c', `skip_eoln_ex.c',
+	`read_buf_ex.c', `read_int_ex.c', `read_unsigned_int_ex.c',
+	`read_long_long_ex.c', `read_unsigned_long_long_ex.c',
+	`read_double_ex.c', `read_long_double_ex.c' are added.
+
+	* Makefile.unix.in:
+	`checkutils.h' is installed.
+
+	* checker_internal.h: copyright notice is updated;
+	(checker_error_func_t) new type;
+	(checker_in_open) new function prototype;
+	(checker_out_open) new function prototype;
+	(checker_corr_open) new function prototype;
+	(checker_eof) new function prototype;
+	(checker_eoln) new function prototype;
+	(checker_skip_eoln_ex) new function prototype;
+	(checker_read_buf_ex) new function prototype;
+	(checker_read_int_ex) new function prototype;
+	(checker_read_unsigned_int_ex) new function prototype;
+	(checker_read_long_long_ex) new function prototype;
+	(checker_read_unsigned_long_long_ex) new function prototype;
+	(checker_read_double_ex) new function prototype;
+	(checker_read_long_long_ex) new function prototype.
+
+	* corr_eof.c, in_eof.c, team_eof.c:
+	reimplemented to improve error checking;
+	check for invalid control characters (!isspace(c) && c < ' ') added.
+
+	* corr_eoln.c, in_eoln.c, team_eoln.c:
+	error reporting is improved;
+	reimplemented to improve error checking;
+	check for invalid control characters (!isspace(c) && c < ' ') added.
+
+	* read_buf_2.c, read_sexpr.c, skip_eoln.c: copyright notice is updated;
+	check for invalid control characters (!isspace(c) && c < ' ') added.
+
+	* read_corr_double.c, read_in_double.c, read_team_double.c: copyright notice is updated;
+	`checker_read_double' is used.
+
+	* read_corr_int.c, read_in_int.c, read_team_int.c: copyright notice is updated;
+	`checker_read_int' is used.
+
+	* read_corr_long_double.c, read_team_long_double.c: copyright notice is updated;
+	`checker_read_long_double' is used.
+
+	* read_corr_long_long.c, read_in_long_long.c, read_team_long_long.c: copyright notice is updated;
+	`checker_read_long_long' is used.
+
+	* read_corr_unsigned_int.c, read_in_unsigned_int.c, read_team_unsigned_int.c: copyright notice is updated;
+	`checker_read_unsigned_int' is used.
+
+	* read_corr_unsigned_long_long.c, read_in_unsigned_long_long.c, read_team_unsigned_long_long.c: copyright notice is updated;
+	`checker_read_unsigned_long_long' is used.
+
+	* read_double.c, read_long_double.c: copyright notice is updated;
+	<errno.h> is included;
+	(checker_read_double) reimplemented to improve word splitting
+	and error checking.
+
+	* read_in_long_double.c: copyright notice is updated;
+	`checker_read_long_double' is used.
+
+	* read_int.c, read_long_long.c, read_unsigned_int.c, read_unsigned_long_long.c: copyright notice is updated;
+	check for empty string is added;
+	error reporting is improved.
+
+	* vars.c: copyright notice is updated;
+	the names of the streams are changed.
+
+2010-06-26 (r5911) Alexander Chernov  <cher@ejudge.ru>
+
+	* checkutils.h, read_buf_ex.c, read_long_long_ex.c, corr_open.c, in_open.c, out_open.c, eof.c, eoln.c, read_unsigned_int_ex.c, skip_eoln_ex.c, read_long_double_ex.c, read_double_ex.c, read_int_ex.c, read_unsigned_long_long_ex.c:
+	initial revision.
+
+2010-06-26 (r5910) Alexander Chernov  <cher@ejudge.ru>
+
+	* maxs.c, summ.c:
+	files are removed.
+
+2010-06-12 (r5876) Alexander Chernov  <cher@ejudge.ru>
+
+	* style_archive.c:
+	(fferror) removed;
+	(invoke_process) removed.
+
+2010-06-09 (r5847) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in:
+	rule for style_archive is added.
+
+	* files.make:
+	style_archive.c is added.
+
+	* style_archive.c: initial revision.
+
 2007-12-02 (r4561) Alexander Chernov  <cher@ejudge.ru>
 
 	* testlib.pas:

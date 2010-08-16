@@ -1,3 +1,21 @@
+2010-06-18 (r5899) Alexander Chernov  <cher@ejudge.ru>
+
+	* files_win32.make:
+	mime_type.c is added.
+
+	* fileutl.c:
+	(write_tmp_file) new function.
+
+2010-06-18 (r5897) Alexander Chernov  <cher@ejudge.ru>
+
+	* fileutl.c:
+	(scan_executable_files) new function (stub yet).
+
+2010-06-17 (r5894) Alexander Chernov  <cher@ejudge.ru>
+
+	* files_win32.make:
+	`run_inverse.c' is added.
+
 2010-01-25 (r5741) Alexander Chernov  <cher@ejudge.ru>
 
 	* fileutl.c:

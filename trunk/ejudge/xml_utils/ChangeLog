@@ -1,3 +1,8 @@
+2010-08-03 (r5970) Alexander Chernov  <cher@ejudge.ru>
+
+	* unparse_run_status.c: copyright notice is updated;
+	Ticket #35.
+
 2009-08-27 (r5582) Alexander Chernov  <cher@ejudge.ru>
 
 	* parse_date.c:

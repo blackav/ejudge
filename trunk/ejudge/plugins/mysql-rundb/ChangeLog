@@ -1,3 +1,17 @@
+2010-02-23 (r5774) Alexander Chernov  <cher@ejudge.ru>
+
+	* methods.inc.c: copyright notice is updated;
+	(change_status_2_func) new function prototype.
+
+	* rldb_mysql.c:
+	(change_status_2_func) new function.
+
+2010-02-23 (r5766) Alexander Chernov  <cher@ejudge.ru>
+
+	* rldb_mysql.c, tables.inc.c: copyright notice is updated;
+	new fields `is_marked', `is_saved', `saved_status', `saved_score',
+	`saved_test' are handled.
+
 2008-12-31 (r5533) Alexander Chernov  <cher@ejudge.ru>
 
 	* rldb_mysql.c:
