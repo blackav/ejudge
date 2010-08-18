@@ -51,7 +51,7 @@ function hideStatusString()
 function handleError(type, errObj)
 { 
   if (pingTimer != null) {
-    pingTimer = window.setInterval(updateTime, 0);
+    pingTimer = window.clearInterval(pingTimer);
     pingTimer = null;
   }
 
