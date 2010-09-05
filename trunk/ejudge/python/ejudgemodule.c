@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -437,7 +437,7 @@ Ul_privCreateUser(UlObject *self, PyObject *args)
 
   if (!PyArg_ParseTuple(args, "z", &login))
     return 0;
-  if ((r = userlist_clnt_create_user(self->clnt, login, &user_id)) < 0) {
+  if ((r = userlist_clnt_create_user(self->clnt, ULS_CREATE_USER, login, &user_id)) < 0) {
     if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
     return 0;
   }
@@ -457,8 +457,8 @@ Ul_privEditField(UlObject *self, PyObject *args)
     PyErr_SetString(PyExc_ValueError, "invalid field");
     return 0;
   }
-  if ((r = userlist_clnt_edit_field(self->clnt, user_id, contest_id,
-                                    serial, field_id, value)) < 0) {
+  if ((r = userlist_clnt_edit_field(self->clnt, ULS_EDIT_FIELD, user_id,
+                                    contest_id, serial, field_id, value)) < 0){
     if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
     return 0;
   }
@@ -666,8 +666,8 @@ Ul_privDeleteField(UlObject *self, PyObject *args)
     PyErr_SetString(PyExc_ValueError, "invalid field");
     return 0;
   }
-  if ((r = userlist_clnt_delete_field(self->clnt, user_id, contest_id,
-                                      serial, field_val)) < 0) {
+  if ((r = userlist_clnt_delete_field(self->clnt, ULS_DELETE_FIELD, user_id,
+                                      contest_id, serial, field_val)) < 0) {
     if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
     return 0;
   }
