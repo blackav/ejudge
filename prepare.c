@@ -6789,7 +6789,7 @@ cntsprob_copy_and_set_default(
         if (*(unsigned char **) s_ptr != 0) {
           *pd_str = xstrdup(*(unsigned char **) s_ptr);
         }
-        if (!*pd_str && is_inh && *(unsigned char **) a_ptr) {
+        if (!*pd_str && is_inh && a_ptr && *(unsigned char **) a_ptr) {
           *pd_str = xstrdup(*(unsigned char **) a_ptr);
         }
         if (*pd_str && prob_format_set[f_id]) {
