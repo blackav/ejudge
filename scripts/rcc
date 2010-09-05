@@ -1,0 +1,5 @@
+#! /bin/sh
+# $Id$
+
+touch *_meta.c *_meta.h
+exit 0

@@ -15,7 +15,7 @@ AC_PROG_MKDIR_P
 AC_PROG_YACC
 AC_PROG_LEX
 
-if ! which --help > /dev/null 2>/dev/null
+if ! which which > /dev/null 2>/dev/null
 then
   echo "'which' program is not found, please install it." >&2
   echo "The package is probably called 'which'." >&2
@@ -1083,6 +1083,13 @@ then
   ac_cv_libcap_link=-lcap
 fi
 
+if [[ -x ../new-c/bin/rcc ]]
+then
+  ac_cv_meta_cc=../new-c/bin/rcc
+else
+  ac_cv_meta_cc=./scripts/rcc
+fi
+
 AC_SUBST(ac_cv_ejudge_arch)
 AC_SUBST(ac_cv_exe_suffix)
 AC_SUBST(ac_cv_expat_root)
@@ -1121,6 +1128,7 @@ AC_SUBST(ac_cv_httpd_htdocs_dir)
 AC_SUBST(ac_cv_has_lib_iconv)
 AC_SUBST(ac_cv_has_lib_libiconv)
 AC_SUBST(ac_cv_has_lib_intl)
+AC_SUBST(ac_cv_meta_cc)
 
 AC_SUBST(ac_cv_festival_home)
 AC_SUBST(ac_cv_libcap_link)
