@@ -58,6 +58,8 @@ WPTRSIGN=@ac_cv_gcc_wno_pointer_sign@
 NCURSES_SUFFIX=@ac_cv_ncurses_suffix@
 WERROR=@ac_cv_werror_flag@
 
+META_CC=@ac_cv_meta_cc@
+
 include files.make
 
 ifeq (${ARCH}, unix)
@@ -86,8 +88,6 @@ CC=gcc
 LD=gcc
 EXPAT_LIB=-lexpat
 REUSE_LIB=-lreuse
-
-META_CC = ../new-c/bin/rcc
 
 C_CFILES=compile.c version.c
 C_OBJECTS=$(C_CFILES:.c=.o) libcommon.a libplatform.a
