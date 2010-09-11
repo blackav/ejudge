@@ -122,6 +122,9 @@ teamdb_get_user_map(
     }
   }
 
+  /*
   env.mem = filter_tree_delete(env.mem);
+  filter->stand_user_tree = 0;
+  */
   *p_u_tot = u_tot;
 }
