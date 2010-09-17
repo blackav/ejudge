@@ -3124,11 +3124,20 @@ priv_set_run_style_error_status(
   unsigned char errmsg[1024];
   unsigned char rep_path[PATH_MAX];
 
+  if (opcaps_check(phr->caps, OPCAP_COMMENT_RUN) < 0) {
+    ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
+    goto cleanup;
+  }
+
   errmsg[0] = 0;
   if (parse_run_id(fout, phr, cnts, extra, &run_id, &re) < 0) return -1;
   if (re.user_id && !teamdb_lookup(cs->teamdb_state, re.user_id)) {
     ns_error(log_f, NEW_SRV_ERR_USER_ID_NONEXISTANT, re.user_id);
     goto cleanup;
+  }
+  if (re.status != RUN_ACCEPTED && opcaps_check(phr->caps, OPCAP_EDIT_RUN)<0){
+    ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
+    goto cleanup;    
   }
   if (ns_cgi_param(phr, "msg_text", &text) < 0) {
     snprintf(errmsg, sizeof(errmsg), "%s", "msg_text is binary");
@@ -3880,9 +3889,7 @@ priv_simple_change_status(
     goto invalid_param;
   }
 
-  if (opcaps_check(phr->caps, OPCAP_EDIT_RUN) < 0
-      && ((status != RUN_REJUDGE && status != RUN_FULL_REJUDGE)
-          || opcaps_check(phr->caps, OPCAP_REJUDGE_RUN))) {
+  if (opcaps_check(phr->caps, OPCAP_COMMENT_RUN) < 0) {
     ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
     goto cleanup;
   }
@@ -3895,6 +3902,10 @@ priv_simple_change_status(
       || !(prob = cs->probs[re.prob_id])) {
     ns_error(log_f, NEW_SRV_ERR_INV_RUN_ID);
     goto cleanup;
+  }
+  if (re.status != RUN_ACCEPTED && opcaps_check(phr->caps, OPCAP_EDIT_RUN)<0){
+    ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
+    goto cleanup;    
   }
 
   memset(&new_run, 0, sizeof(new_run));

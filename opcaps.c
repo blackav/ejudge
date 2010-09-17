@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -67,6 +67,7 @@ const unsigned char * const opcaps_cap_list [] =
   [OPCAP_EDIT_PASSWD]             "EDIT_PASSWD",
   [OPCAP_PRIV_EDIT_PASSWD]        "PRIV_EDIT_PASSWD",
   [OPCAP_RESTART] =               "RESTART",
+  [OPCAP_COMMENT_RUN] =           "COMMENT_RUN",
 
   [OPCAP_LAST]                    0
 };
@@ -97,7 +98,8 @@ const opcap_t OPCAP_JUDGE_PERMS =
   | (1ULL << OPCAP_VIEW_CLAR)
   | (1ULL << OPCAP_NEW_MESSAGE)
   | (1ULL << OPCAP_REPLY_MESSAGE)
-  | (1ULL << OPCAP_PRINT_RUN);
+  | (1ULL << OPCAP_PRINT_RUN)
+  | (1ULL << OPCAP_COMMENT_RUN);
 const opcap_t OPCAP_MASTER_PERMS =
   (1ULL << OPCAP_MASTER_LOGIN)
   | (1ULL << OPCAP_JUDGE_LOGIN)
@@ -133,7 +135,8 @@ const opcap_t OPCAP_MASTER_PERMS =
   | (1ULL << OPCAP_PRINT_RUN)
   | (1ULL << OPCAP_EDIT_PASSWD)
   | (1ULL << OPCAP_PRIV_EDIT_PASSWD)
-  | (1ULL << OPCAP_RESTART);
+  | (1ULL << OPCAP_RESTART)
+  | (1ULL << OPCAP_COMMENT_RUN);
 
 int
 opcaps_find(const opcaplist_t *list,

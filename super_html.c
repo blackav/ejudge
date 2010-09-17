@@ -3441,6 +3441,7 @@ static const char * contest_cap_descs[] =
   [OPCAP_EDIT_PASSWD] = "View and edit passwords for regular users",
   [OPCAP_PRIV_EDIT_PASSWD] = "View and edit passwords for privileged users",
   [OPCAP_RESTART] = "Restart the server programs",
+  [OPCAP_COMMENT_RUN] = "Comment the runs",
 };
 
 void
