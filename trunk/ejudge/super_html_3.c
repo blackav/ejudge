@@ -3349,6 +3349,13 @@ super_html_edit_languages(
   int row = 1;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
 
+  if (!global) {
+    super_html_contest_page_menu(f, session_id, sstate, 3, self_url,
+                                 hidden_vars, extra_args);
+    fprintf(f, "<h2>Editing session is finished</h2>\n");
+    goto cleanup;
+  }
+
   if (sstate->serve_parse_errors) {
     super_html_contest_page_menu(f, session_id, sstate, 3, self_url, hidden_vars,
                                  extra_args);
