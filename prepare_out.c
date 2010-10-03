@@ -948,6 +948,9 @@ prepare_unparse_prob(
   if (!prob->abstract) {
     fprintf(f, "long_name = \"%s\"\n", CARMOR(prob->long_name));
   }
+  if (!prob->abstract && prob->internal_name[0]) {
+    fprintf(f, "internal_name = \"%s\"\n", CARMOR(prob->internal_name));
+  }
 
   if ((prob->abstract && prob->type > 0)
       || (!prob->abstract && prob->type >= 0))
@@ -1253,6 +1256,10 @@ prepare_unparse_prob(
   if (prob->stand_last_column >= 0
       && ((prob->abstract && prob->stand_last_column) || !prob->abstract))
       unparse_bool(f, "stand_last_column", prob->stand_last_column);
+  if (!prob->abstract && prob->stand_column[0]) {
+    fprintf(f, "stand_column = \"%s\"\n", CARMOR(prob->stand_column));
+  }
+
 
   if (!prob->abstract && prob->start_date > 0)
     fprintf(f, "start_date = \"%s\"\n", xml_unparse_date(prob->start_date));
