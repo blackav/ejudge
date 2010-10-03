@@ -3525,14 +3525,16 @@ do_write_standings(
     start_time = run_get_virtual_start_time(state->runlog_state, user_id);
     stop_time = run_get_virtual_stop_time(state->runlog_state, user_id, 0);
   }
-  if (start_time && !stop_time && cur_time >= start_time + contest_dur) {
-    stop_time = start_time + contest_dur;
-  }
-  if (start_time && cur_time < start_time) {
+  if (start_time > 0 && cur_time < start_time) {
     cur_time = start_time;
   }
-  if (stop_time && cur_time > stop_time) {
-    cur_time = stop_time;
+  if (start_time > 0 && contest_dur > 0) {
+    if (stop_time <= 0 && cur_time >= start_time + contest_dur) {
+      stop_time = start_time + contest_dur;
+    }
+    if (stop_time > 0 && cur_time > stop_time) {
+      cur_time = stop_time;
+    }
   }
   current_dur = cur_time - start_time;
   if (!start_time) {
