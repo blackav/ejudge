@@ -5461,3 +5461,8 @@ prepare_out.c 5998 0 7226664
 run.c 6000 0 9534494
 prepare.c 6000 0 18333757
 serve_2.c 6000 0 9455947
+file_perms.h 6004 0 87295
+unix/file_perms.c 6002 0 174392
+win32/file_perms.c 6003 0 98282
+super_html_2.c 6004 0 4953115
+super_html_3.c 6004 0 26620378
