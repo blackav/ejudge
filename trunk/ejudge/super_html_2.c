@@ -870,15 +870,18 @@ rename_files(
         int group,
         int mode)
 {
+  int old_group = 0, old_mode = 0;
+
   if (!flag) return;
   if (!from || !*from || !to || !*to) return;
+  file_perms_get(to, &old_group, &old_mode);
   if (rename(from, to) < 0) {
     fprintf(flog, "error: renaming %s to %s failed: %s\n",
             from, to, os_ErrorMsg());
   } else {
     fprintf(flog, "renamed %s to %s\n", from, to);
   }
-  file_perms_set(flog, to, group, mode);
+  file_perms_set(flog, to, group, mode, old_group, old_mode);
 }
 
 static unsigned char *
@@ -1060,6 +1063,8 @@ super_html_commit_contest(FILE *f,
   FILE *vmap_f = 0;
   struct opcap_list_item *capp;
   int dir_mode = -1, dir_group = -1, file_mode = -1, file_group = -1; 
+  int old_vmap_group = 0, old_vmap_mode = 0;
+  int old_serve_group = 0, old_serve_mode = 0;
 
   if (!cnts) {
     return super_html_report_error(f, session_id, self_url, extra_args,
@@ -1168,7 +1173,7 @@ super_html_commit_contest(FILE *f,
       goto failed;
     }
     fprintf(flog, "contest root directory `%s' is created\n", cnts->root_dir);
-    file_perms_set(flog, cnts->root_dir, dir_group, dir_mode);
+    file_perms_set(flog, cnts->root_dir, dir_group, dir_mode, 0, 0);
     if (vcs_add_dir(cnts->root_dir, &vcs_str) > 0) {
       fprintf(flog, "Version control:\n%s\n", vcs_str);
       xfree(vcs_str); vcs_str = 0;
@@ -1189,7 +1194,7 @@ super_html_commit_contest(FILE *f,
       fprintf(flog, "error: %s\n", os_GetErrorString(-errcode));
       goto failed;
     }
-    file_perms_set(flog, conf_path, dir_group, dir_mode);
+    file_perms_set(flog, conf_path, dir_group, dir_mode, 0, 0);
     fprintf(flog, "contest configuration directory `%s' is created\n", conf_path);
     if (vcs_add_dir(conf_path, &vcs_str) > 0) {
       fprintf(flog, "Version control:\n%s\n", vcs_str);
@@ -1511,7 +1516,9 @@ super_html_commit_contest(FILE *f,
   rename_files(flog, s2ff, stand2_footer_path, stand2_footer_path_2, file_group, file_mode);
   rename_files(flog, phf, plog_header_path, plog_header_path_2, file_group, file_mode);
   rename_files(flog, pff, plog_footer_path, plog_footer_path_2, file_group, file_mode);
+  file_perms_get(vmap_path, &old_vmap_group, &old_vmap_mode);
   rename_files(flog, vmf, vmap_path, vmap_path_2, file_group, file_mode);
+  file_perms_get(serve_path, &old_serve_group, &old_serve_mode);
   rename_files(flog, sf, serve_path, serve_path_2, file_group, file_mode);
 
   if (vmf > 0) {
@@ -1523,7 +1530,8 @@ super_html_commit_contest(FILE *f,
       fprintf(flog, "Version control:\n%s\n", vcs_str);
     }
     xfree(vcs_str); vcs_str = 0;
-    file_perms_set(flog, vmap_path, file_group, file_mode);
+    file_perms_set(flog, vmap_path, file_group, file_mode,
+                   old_vmap_group, old_vmap_mode);
   }
 
   if (sf > 0) {
@@ -1535,7 +1543,8 @@ super_html_commit_contest(FILE *f,
       fprintf(flog, "Version control:\n%s\n", vcs_str);
     }
     xfree(vcs_str); vcs_str = 0;
-    file_perms_set(flog, serve_path, file_group, file_mode);
+    file_perms_set(flog, serve_path, file_group, file_mode,
+                   old_serve_group, old_serve_mode);
   }
 
   // FIXME: register and make invisible all the privileged users
