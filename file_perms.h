@@ -4,7 +4,7 @@
 #ifndef __FILE_PERMS_H__
 #define __FILE_PERMS_H__
 
-/* Copyright (C) 2009 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2009-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -22,6 +22,7 @@
 
 int file_perms_parse_mode(const unsigned char *mode);
 int file_perms_parse_group(const unsigned char *group);
-int file_perms_set(FILE *flog, const unsigned char *path, int group, int mode);
+int file_perms_set(FILE *flog, const unsigned char *path, int group, int mode, int old_group, int old_mode);
+void file_perms_get(const unsigned char *path, int *p_group, int *p_mode);
 
 #endif /* __FILE_PERMS_H__ */

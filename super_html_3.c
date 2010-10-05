@@ -8237,6 +8237,7 @@ check_test_file(
   size_t test_len = 0;
   unsigned char *d2u_txt = 0, *out_txt = 0;
   int changed = 0;
+  int old_group = 0, old_mode = 0;
 
   if (pat && *pat) {
     snprintf(name, sizeof(name), pat, n);
@@ -8289,6 +8290,8 @@ check_test_file(
     }
   }
 
+  file_perms_get(full, &old_group, &old_mode);
+
   if (!bin_flag) {
     if (generic_read_file(&test_txt, 0, &test_len, 0, 0, full, 0) < 0) {
       fprintf(flog, "Error: failed to read %s\n", full);
@@ -8327,7 +8330,7 @@ check_test_file(
       return -1;
     }
     fprintf(flog, "Info: file %s successfully written\n", full);
-    file_perms_set(flog, full, file_group, file_mode);
+    file_perms_set(flog, full, file_group, file_mode, old_group, old_mode);
   }
 
   xfree(out_txt);
