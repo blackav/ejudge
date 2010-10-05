@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2009 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2009-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -51,19 +51,46 @@ file_perms_parse_group(const unsigned char *group)
 }
 
 int
-file_perms_set(FILE *flog, const unsigned char *path, int group, int mode)
+file_perms_set(
+        FILE *flog,
+        const unsigned char *path,
+        int group,
+        int mode,
+        int old_group,
+        int old_mode)
 {
   if (group > 0) {
     if (chown(path, -1, group) < 0) {
       fprintf(flog, "chown: %s: %s\n", path, os_ErrorMsg());
     }
+  } else if (old_group > 0) {
+    chown(path, -1, old_group);
   }
   if (mode > 0) {
     if (chmod(path, mode) < 0) {
       fprintf(flog, "chmod: %s: %s\n", path, os_ErrorMsg());
     }
+  } else if (old_mode > 0) {
+    chmod(path, old_mode);
   }
   return 0;
+}
+
+void
+file_perms_get(
+        const unsigned char *path,
+        int *p_group,
+        int *p_mode)
+{
+  struct stat stb;
+
+  if (*p_group) *p_group = 0;
+  if (*p_mode) *p_mode = 0;
+
+  if (stat(path, &stb) < 0) return;
+
+  if (p_group) *p_group = stb.st_gid;
+  if (p_mode) *p_mode = stb.st_mode & 07777;
 }
 
 /*
