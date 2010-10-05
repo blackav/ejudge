@@ -2767,6 +2767,7 @@ do_loop(void)
   size_t reply_pkt_buf_size = 0;
   unsigned char errmsg[512];
   const struct section_global_data *global = serve_state.global;
+  const unsigned char *arch = 0;
 
   memset(&tn, 0, sizeof(tn));
 
@@ -2894,9 +2895,14 @@ do_loop(void)
                           utf8_mode);
       cr_serialize_unlock(&serve_state);
     } else {
+      arch = req_pkt->arch;
+      if (cur_prob->type > 0 && arch && !*arch) {
+        // any tester will work for output-only problems
+        arch = 0;
+      }
+
       /* regular problem */
-      if (!(tester_id = find_tester(&serve_state, req_pkt->problem_id,
-                                    req_pkt->arch))) {
+      if (!(tester_id = find_tester(&serve_state, req_pkt->problem_id, arch))){
         snprintf(errmsg, sizeof(errmsg),
                  "no tester found for %d, %s\n",
                  req_pkt->problem_id, req_pkt->arch);

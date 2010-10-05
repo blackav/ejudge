@@ -1171,7 +1171,7 @@ serve_run_request(
   int cn;
   struct section_problem_data *prob;
   struct section_language_data *lang = 0;
-  unsigned char *arch = "", *exe_sfx = "";
+  unsigned char *arch = 0, *exe_sfx = "";
   const unsigned char *user_name;
   int prio, i;
   unsigned char pkt_base[EJ_SERVE_PACKET_NAME_SIZE];
@@ -1278,6 +1278,10 @@ serve_run_request(
       fprintf(errf, "writing failed");
       return -1;
     }
+  }
+
+  if (!arch) {
+    arch = "";
   }
 
   /* create an internal representation of run packet */
