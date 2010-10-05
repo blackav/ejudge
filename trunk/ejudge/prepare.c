@@ -650,6 +650,22 @@ int
 find_tester(const serve_state_t state,int problem, char const *arch)
 {
   int i;
+  struct section_tester_data *tst;
+
+  if (!arch) {
+    for (i = 1; i <= state->max_tester; ++i) {
+      if ((tst = state->testers[i]) && tst->any <= 0
+          && problem == tst->problem)
+        return i;
+    }
+
+    for (i = 1; i <= state->max_tester; ++i) {
+      if ((tst = state->testers[i]) && tst->any)
+        return i;
+    }
+
+    return 0;
+  }
 
   for (i = 1; i <= state->max_tester; i++) {
     if (!state->testers[i]) continue;
