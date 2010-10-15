@@ -5466,3 +5466,7 @@ unix/file_perms.c 6002 0 174392
 win32/file_perms.c 6003 0 98282
 super_html_2.c 6004 0 4953115
 super_html_3.c 6004 0 26620378
+new-server.h 6006 0 2254578
+new-server.c 6006 0 1827140
+new_server_html.c 6006 0 39387570
+new_server_html_4.c 6006 0 4756297
