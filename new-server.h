@@ -108,7 +108,7 @@ ns_handle_http_request(struct server_framework_state *state,
 
 struct ejudge_cfg;
 struct userlist_clnt;
-extern struct ejudge_cfg *config;
+extern struct ejudge_cfg *ejudge_config;
 extern struct userlist_clnt *ul_conn;
 extern int ul_uid;
 extern unsigned char *ul_login;

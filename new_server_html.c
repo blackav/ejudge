@@ -683,7 +683,7 @@ ns_open_ul_connection(struct server_framework_state *state)
 
   if (ul_conn) return 0;
 
-  if (!(ul_conn = userlist_clnt_open(config->socket_path))) {
+  if (!(ul_conn = userlist_clnt_open(ejudge_config->socket_path))) {
     err("ns_open_ul_connection: connect to server failed");
     return -1;
   }
@@ -8788,7 +8788,7 @@ privileged_entry_point(
     phr->caps = caps;
   }
   phr->dbcaps = 0;
-  if (opcaps_find(&config->capabilities, phr->login, &caps) >= 0) {
+  if (opcaps_find(&ejudge_config->capabilities, phr->login, &caps) >= 0) {
     phr->dbcaps = caps;
   }
 
@@ -8797,7 +8797,7 @@ privileged_entry_point(
   callbacks.list_all_users = ns_list_all_users_callback;
 
   // invoke the contest
-  if (serve_state_load_contest(config, phr->contest_id,
+  if (serve_state_load_contest(ejudge_config, phr->contest_id,
                                ul_conn,
                                &callbacks,
                                &extra->serve_state, 0) < 0) {
@@ -13698,7 +13698,7 @@ unprivileged_entry_point(
     return unpriv_page_forgot_password_3(fout, phr, orig_locale_id);
 
   if ((phr->contest_id < 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts)
-      && !phr->session_id && config->enable_contest_select){
+      && !phr->session_id && ejudge_config->enable_contest_select){
     return anon_select_contest_page(fout, phr);
   }
 
@@ -13790,7 +13790,7 @@ unprivileged_entry_point(
   callbacks.list_all_users = ns_list_all_users_callback;
 
   // invoke the contest
-  if (serve_state_load_contest(config, phr->contest_id,
+  if (serve_state_load_contest(ejudge_config, phr->contest_id,
                                ul_conn,
                                &callbacks,
                                &extra->serve_state, 0) < 0) {
