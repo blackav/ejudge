@@ -68,7 +68,7 @@ static struct server_framework_params params =
 
 static struct server_framework_state *state = 0;
 static unsigned char *ejudge_xml_path;
-struct ejudge_cfg *config;
+struct ejudge_cfg *ejudge_config;
 
 struct userlist_clnt *ul_conn;
 int ul_uid;
@@ -437,14 +437,14 @@ check_restart_permissions(struct client_state *p)
     err("no user %d in system tables", p->peer_uid);
     return -1;
   }
-  if (!config->user_map) return 0;
-  for (um = config->user_map->first_down; um; um = um->right) {
+  if (!ejudge_config->user_map) return 0;
+  for (um = ejudge_config->user_map->first_down; um; um = um->right) {
     m = (struct ejudge_cfg_user_map*) um;
     if (!strcmp(m->system_user_str, sysp->pw_name)) break;
   }
   if (!um) return 0;
 
-  if (opcaps_find(&config->capabilities, m->local_user_str, &caps) < 0)
+  if (opcaps_find(&ejudge_config->capabilities, m->local_user_str, &caps) < 0)
     return 0;
   if (opcaps_check(caps, OPCAP_RESTART) < 0) return 0;
   return 1;
@@ -516,12 +516,12 @@ load_plugins(void)
   struct ejudge_plugin *plg, *files_plg;
   void *plugin_data = 0;
 
-  plugin_set_directory(config->plugin_dir);
+  plugin_set_directory(ejudge_config->plugin_dir);
 
-  //ejudge_cfg_unparse_plugins(config, stdout);
+  //ejudge_cfg_unparse_plugins(ejudge_config, stdout);
 
   // find config section for files plugin
-  for (p = config->plugin_list; p; p = p->right) {
+  for (p = ejudge_config->plugin_list; p; p = p->right) {
     files_plg = (struct ejudge_plugin*) p;
     if (!strcmp(files_plg->type, "nsdb") && !strcmp(files_plg->name, "files"))
       break;
@@ -533,11 +533,11 @@ load_plugins(void)
   // `files' plugin always loaded
   nsdb_plugins_num = 0;
   nsdb_plugins[nsdb_plugins_num].iface = &nsdb_plugin_files;
-  if (!(plugin_data = nsdb_plugin_files.init(config))) {
+  if (!(plugin_data = nsdb_plugin_files.init(ejudge_config))) {
     startup_error("cannot initialize files database plugin");
     return -1;
   }
-  if (nsdb_plugin_files.parse(plugin_data, config, p) < 0) {
+  if (nsdb_plugin_files.parse(plugin_data, ejudge_config, p) < 0) {
     startup_error("cannot initialize files database plugin");
     return -1;
   }
@@ -545,7 +545,7 @@ load_plugins(void)
   nsdb_plugins_num++;
 
   // load other userdb plugins
-  for (p = config->plugin_list; p; p = p->right) {
+  for (p = ejudge_config->plugin_list; p; p = p->right) {
     plg = (struct ejudge_plugin*) p;
 
     if (!plg->load_flag) continue;
@@ -571,11 +571,11 @@ load_plugins(void)
       startup_error("plugin version mismatch");
       return -1;
     }
-    if (!(plugin_data = nsdb_iface->init(config))) {
+    if (!(plugin_data = nsdb_iface->init(ejudge_config))) {
       startup_error("plugin initialization failed");
       return -1;
     }
-    if (nsdb_iface->parse(plugin_data, config, plg->data) < 0) {
+    if (nsdb_iface->parse(plugin_data, ejudge_config, plg->data) < 0) {
       startup_error("plugin failed to parse its configuration");
       return -1;
     }
@@ -608,24 +608,27 @@ setup_log_file(void)
   path_t buf;
   const unsigned char *s1, *s2;
 
-  if (config->new_server_log && os_IsAbsolutePath(config->new_server_log))
+  if (ejudge_config->new_server_log
+      && os_IsAbsolutePath(ejudge_config->new_server_log))
     return;
-  if (config->var_dir && os_IsAbsolutePath(config->var_dir)) {
-    if (!(s1 = config->new_server_log)) s1 = "new-server.log";
-    snprintf(buf, sizeof(buf), "%s/%s", config->var_dir, s1);
-    xfree(config->new_server_log);
-    config->new_server_log = xstrdup(buf);
-    return;
-  }
-  if (config->contests_home_dir&&os_IsAbsolutePath(config->contests_home_dir)){
-    if (!(s1 = config->new_server_log)) s1 = "new-server.log";
-    if (!(s2 = config->var_dir)) s2 = "var";
-    snprintf(buf, sizeof(buf), "%s/%s/%s", config->contests_home_dir, s2, s1);
-    xfree(config->new_server_log);
-    config->new_server_log = xstrdup(buf);
+  if (ejudge_config->var_dir && os_IsAbsolutePath(ejudge_config->var_dir)) {
+    if (!(s1 = ejudge_config->new_server_log)) s1 = "new-server.log";
+    snprintf(buf, sizeof(buf), "%s/%s", ejudge_config->var_dir, s1);
+    xfree(ejudge_config->new_server_log);
+    ejudge_config->new_server_log = xstrdup(buf);
     return;
   }
-  config->new_server_log = xstrdup("/tmp/new-server.log");
+  if (ejudge_config->contests_home_dir
+      && os_IsAbsolutePath(ejudge_config->contests_home_dir)){
+    if (!(s1 = ejudge_config->new_server_log)) s1 = "new-server.log";
+    if (!(s2 = ejudge_config->var_dir)) s2 = "var";
+    snprintf(buf, sizeof(buf), "%s/%s/%s", ejudge_config->contests_home_dir,
+             s2, s1);
+    xfree(ejudge_config->new_server_log);
+    ejudge_config->new_server_log = xstrdup(buf);
+    return;
+  }
+  ejudge_config->new_server_log = xstrdup("/tmp/new-server.log");
 }
 
 int
@@ -703,28 +706,28 @@ main(int argc, char *argv[])
 #endif /* EJUDGE_XML_PATH */
   if (!ejudge_xml_path) startup_error("configuration file is not specified");
 
-  config = ejudge_cfg_parse(ejudge_xml_path);
-  if (!config) return 1;
-  if (contests_set_directory(config->contests_dir) < 0) return 1;
-  l10n_prepare(config->l10n, config->l10n_dir);
+  ejudge_config = ejudge_cfg_parse(ejudge_xml_path);
+  if (!ejudge_config) return 1;
+  if (contests_set_directory(ejudge_config->contests_dir) < 0) return 1;
+  l10n_prepare(ejudge_config->l10n, ejudge_config->l10n_dir);
   if (!strcasecmp(EJUDGE_CHARSET, "UTF-8")) utf8_mode = 1;
 #if defined EJUDGE_NEW_SERVER_SOCKET
-  if (!config->new_server_socket)
-    config->new_server_socket = xstrdup(EJUDGE_NEW_SERVER_SOCKET);
+  if (!ejudge_config->new_server_socket)
+    ejudge_config->new_server_socket = xstrdup(EJUDGE_NEW_SERVER_SOCKET);
 #endif
-  if (!config->new_server_socket)
-    config->new_server_socket = xstrdup(EJUDGE_NEW_SERVER_SOCKET_DEFAULT);
+  if (!ejudge_config->new_server_socket)
+    ejudge_config->new_server_socket=xstrdup(EJUDGE_NEW_SERVER_SOCKET_DEFAULT);
 
 #if defined EJUDGE_CONTESTS_HOME_DIR
-  if (!config->contests_home_dir)
-    config->contests_home_dir = xstrdup(EJUDGE_CONTESTS_HOME_DIR);
+  if (!ejudge_config->contests_home_dir)
+    ejudge_config->contests_home_dir = xstrdup(EJUDGE_CONTESTS_HOME_DIR);
 #endif
   setup_log_file();
 
   info("ej-contests %s, compiled %s", compile_version, compile_date);
 
-  params.socket_path = config->new_server_socket;
-  params.log_path = config->new_server_log;
+  params.socket_path = ejudge_config->new_server_socket;
+  params.log_path = ejudge_config->new_server_log;
 
   if (load_plugins() < 0) return 1;
 
