@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2010/09/05 13:40:39
+// Generated 2010/10/23 15:56:32
 
 #ifndef __PREPARE_META_H__
 #define __PREPARE_META_H__
@@ -372,6 +372,7 @@ enum
   CNTSPROB_source_footer,
   CNTSPROB_valuer_sets_marked,
   CNTSPROB_ignore_unmarked,
+  CNTSPROB_interactor_time_limit,
   CNTSPROB_test_pat,
   CNTSPROB_corr_pat,
   CNTSPROB_info_pat,
