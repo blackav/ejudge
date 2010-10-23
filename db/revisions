@@ -5471,3 +5471,12 @@ new-server.c 6006 0 1827140
 new_server_html.c 6006 0 39387570
 new_server_html_4.c 6006 0 4756297
 new_server_html_2.c 6008 0 15875905
+prepare.h 6010 0 3985855
+super_proto.h 6012 0 2333357
+run.c 6012 0 9543983
+serve-control.c 6012 0 9253410
+super-serve.c 6012 0 14080641
+prepare.c 6012 0 18385874
+prepare_out.c 6012 0 7237208
+super_html_3.c 6012 0 26718945
+super_html_4.c 6012 0 18858457
