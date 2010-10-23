@@ -1727,6 +1727,9 @@ run_tests(struct section_tester_data *tst,
 #if HAVE_TASK_ENABLEALLSIGNALS - 0 == 1
         task_EnableAllSignals(tsk_int);
 #endif
+        if (prb->interactor_time_limit > 0) {
+          task_SetMaxTime(tsk_int, prb->interactor_time_limit);
+        }
 
         if (task_Start(tsk_int) < 0) {
           /* failed to start task */

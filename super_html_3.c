@@ -5825,6 +5825,31 @@ super_html_print_problem(FILE *f,
     xfree(checker_env);
   }
 
+  //PROBLEM_PARAM(interactor_time_limit, "d"),
+  if (show_adv) {
+    extra_msg = "";
+    if (prob->abstract) {
+      if (prob->interactor_time_limit == -1) extra_msg = "<i>(Undefined)</i>";
+      else if (!prob->interactor_time_limit) extra_msg = "<i>(Unlimited)</i>";
+    } else {
+      if (prob->interactor_time_limit == -1) {
+        prepare_set_prob_value(CNTSPROB_interactor_time_limit,
+                               tmp_prob, sup_prob, sstate->global);
+        if (!tmp_prob->interactor_time_limit)
+          snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - Unlimited)</i>");
+        else
+          snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %d)</i>",
+                   tmp_prob->interactor_time_limit);
+        extra_msg = msg_buf;
+      } else if (!prob->interactor_time_limit) extra_msg = "<i>(Unlimited)</i>";
+    }
+    print_int_editing_row(f, "Time limit for interactor (sec):",
+                          prob->interactor_time_limit, extra_msg,
+                          SSERV_CMD_PROB_CHANGE_INTERACTOR_TIME_LIMIT,
+                          session_id, form_row_attrs[row ^= 1],
+                          self_url, extra_args, prob_hidden_vars);
+  }
+
   //PROBLEM_PARAM(style_checker_cmd, "s"),
   extra_msg = 0;
   if (show_adv) {
@@ -6768,6 +6793,10 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_PROB_CHANGE_CHECKER_REAL_TIME_LIMIT:
     p_int = &prob->checker_real_time_limit;
+    goto handle_int_1;
+
+  case SSERV_CMD_PROB_CHANGE_INTERACTOR_TIME_LIMIT:
+    p_int = &prob->interactor_time_limit;
     goto handle_int_1;
 
   case SSERV_CMD_PROB_CHANGE_MAX_VM_SIZE:
