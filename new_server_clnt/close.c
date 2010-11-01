@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,10 +18,17 @@
 #include "new_server_clnt/new_server_clnt_priv.h"
 #include "new_server_proto.h"
 
-int
+#include <reuse/xalloc.h>
+
+#include <unistd.h>
+
+new_server_conn_t
 new_server_clnt_close(new_server_conn_t conn)
 {
-  // FIXME: do action
+  if (!conn) return 0;
+
+  close(conn->fd); conn->fd = -1;
+  xfree(conn);
   return 0;
 }
 
