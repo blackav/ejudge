@@ -1,0 +1,92 @@
+#!/bin/sh
+# $Id$
+# Copyright (c) 2005-2008 Alexander Chernov <cher@ejudge.ru>
+
+LANG_CONFIG_DIR="@lang_config_dir@"
+
+common_config() {
+  echo 'long_name="Python"'
+  echo 'src_sfx=".py"'
+  echo 'arch="linux-shared"'
+}
+
+failure() {
+  rm -f conftest*
+  echo 'version='
+  echo 'arg="'"${arg}"'"'
+  common_config
+  echo 'PYTHONPATH=/bin/false'
+  [ "${verbose}" = 1 ] && echo "no" >&2
+  exit 1
+}
+
+unset LANG
+unset LC_ALL
+unset LC_MESSAGES
+unset LANGUAGE
+
+if [ x"$1" = x-v ]
+then
+  verbose=1
+  shift
+fi
+
+# recheck the language
+if [ x"$1" = x-r ]
+then
+  arg="$2"
+  [ x"$2" != x ] && python3="$2"
+  [ "${python3}" = "" ] && python3="python3"
+
+  [ "${verbose}" = 1 ] && echo -n "checking whether Python is available..." >&2
+  "${python3}" -V >/dev/null 2>&1 || failure
+  version=`"${python3}" -V 2>&1 | gawk '{ print $2; }'` || failure
+  [ "${version}" != "" ] || failure
+  PYTHONPATH=`which "${python3}"` || failure
+  [ "${PYTHONPATH}" != "" ] || failure
+  echo "#! ${PYTHONPATH}" > conftest.py
+  echo 'print "OK"' >> conftest.py
+  chmod +x ./conftest.py || failure
+  ./conftest.py >/dev/null 2>&1 || failure
+
+  rm -f ./conftest*
+  echo 'version="'"${version}"'"'
+  echo 'arg="'"${arg}"'"'
+  common_config
+  echo 'PYTHONPATH="'"${PYTHONPATH}"'"'
+  [ "${verbose}" = 1 ] && echo "yes, ${PYTHONPATH}, ${version}" >&2
+  exit 0
+fi
+
+if [ x"$1" = x-l ]
+then
+  echo "Python3 interpreter [http://www.python.org]"
+  exit 0
+fi
+
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/python3.cfg"
+
+if [ -f "${EJUDGE_LANG_CONFIG}" ]
+then
+  . "${EJUDGE_LANG_CONFIG}"
+else
+  PYTHONPATH="/usr/bin/python3"
+fi
+
+if [ x"${PYTHONPATH}" = x -o x"${PYTHONPATH}" = x/bin/false ]
+then
+  echo "This language is not supported." >&2
+  exit 1
+fi
+
+if [ x"$1" = x-p ]
+then
+    echo "${PYTHONPATH}"
+    exit 0
+fi
+
+"${PYTHONPATH}" -V 2>/dev/null >/dev/null || exit 1
+    
+[ x"$1" = x-f ] && echo -n "Python "
+
+"${PYTHONPATH}" -V 2>&1 | gawk '{ print $2; }'

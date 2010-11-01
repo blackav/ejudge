@@ -86,6 +86,8 @@ SCRIPTS_IN = \
  php-version.in\
  python.in\
  python-version.in\
+ python3.in\
+ python3-version.in\
  ruby.in\
  ruby-version.in\
  tpc.in\
