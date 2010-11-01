@@ -30,7 +30,8 @@ int new_server_clnt_open(const unsigned char *, new_server_conn_t *);
 int new_server_clnt_send_packet(new_server_conn_t, size_t, void const *);
 int new_server_clnt_recv_packet(new_server_conn_t, size_t *, void **);
 int new_server_clnt_pass_fd(new_server_conn_t, int, const int *);
-int new_server_clnt_close(new_server_conn_t);
+
+new_server_conn_t new_server_clnt_close(new_server_conn_t);
 
 int new_server_clnt_http_request(
         new_server_conn_t conn,
