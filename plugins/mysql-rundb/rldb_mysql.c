@@ -1607,8 +1607,10 @@ check_func(
     }
 
     fprintf(log_f, "Warning: runs %d-%d to be fixed\n", run_id, run_id2);
-    // FIXME: fix the runs
-    run_id = run_id2 + 1;
+    // FIXME: fix the runs in the database
+    for (new_time = prev_time + 1; run_id <= run_id2; ++run_id, ++new_time) {
+      rls->runs[run_id].time = new_time;
+    }
   }
 
   return 0;
