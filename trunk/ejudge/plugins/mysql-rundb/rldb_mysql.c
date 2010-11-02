@@ -1566,6 +1566,17 @@ check_func(
 
     // check that we have the DST problem
     cur_time = (time_t) rls->runs[run_id].time;
+
+    if (prev_time >= cur_time + 3600) {
+      fprintf(log_f, "Error: timestamp for run %d: %ld (%s); ",
+              run_id - 1, prev_time, xml_unparse_date(prev_time));
+      fprintf(log_f, "timestamp for run %d: %ld (%s); ",
+              run_id, cur_time, xml_unparse_date(cur_time));
+      fprintf(log_f, "no DST change detected\n");
+      return -1;
+    }
+
+    cur_time += 3600;
     memset(&prev_tm, 0, sizeof(prev_tm));
     memset(&cur_tm, 0, sizeof(cur_tm));
     prev_tm.tm_isdst = -1;
