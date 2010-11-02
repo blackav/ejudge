@@ -179,6 +179,10 @@ change_status_2_func(
         int new_score,
         int judge_id,
         int is_marked);
+static int
+check_func(
+        struct rldb_plugin_cnts *cdata,
+        FILE *log_f);
 
 struct rldb_plugin_iface rldb_plugin_file =
 {
@@ -222,6 +226,7 @@ struct rldb_plugin_iface rldb_plugin_file =
   NULL, // put_entry
   NULL, // put_header
   change_status_2_func,
+  check_func,
 };
 
 static struct common_plugin_data *
@@ -1499,6 +1504,14 @@ change_status_2_func(
   rls->runs[run_id].judge_id = judge_id;
   rls->runs[run_id].is_marked = is_marked;
   return do_flush_entry(cs, run_id);
+}
+
+static int
+check_func(
+        struct rldb_plugin_cnts *cdata,
+        FILE *log_f)
+{
+  return 0;
 }
 
 /*
