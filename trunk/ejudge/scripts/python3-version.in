@@ -1,11 +1,11 @@
 #!/bin/sh
 # $Id$
-# Copyright (c) 2005-2008 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2005-2010 Alexander Chernov <cher@ejudge.ru>
 
 LANG_CONFIG_DIR="@lang_config_dir@"
 
 common_config() {
-  echo 'long_name="Python"'
+  echo 'long_name="Python3"'
   echo 'src_sfx=".py"'
   echo 'arch="linux-shared"'
 }
@@ -45,7 +45,7 @@ then
   PYTHONPATH=`which "${python3}"` || failure
   [ "${PYTHONPATH}" != "" ] || failure
   echo "#! ${PYTHONPATH}" > conftest.py
-  echo 'print "OK"' >> conftest.py
+  echo 'print ("OK")' >> conftest.py
   chmod +x ./conftest.py || failure
   ./conftest.py >/dev/null 2>&1 || failure
 
@@ -70,7 +70,7 @@ if [ -f "${EJUDGE_LANG_CONFIG}" ]
 then
   . "${EJUDGE_LANG_CONFIG}"
 else
-  PYTHONPATH="/usr/bin/python3"
+  PYTHONPATH="/usr/local/bin/python3"
 fi
 
 if [ x"${PYTHONPATH}" = x -o x"${PYTHONPATH}" = x/bin/false ]
