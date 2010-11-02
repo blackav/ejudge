@@ -175,3 +175,8 @@ change_status_2_func(
         int new_score,
         int new_judge_id,
         int new_is_marked);
+
+static int
+check_func(
+        struct rldb_plugin_cnts *cdata,
+        FILE *log_f);

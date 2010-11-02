@@ -103,6 +103,7 @@ struct rldb_plugin_iface plugin_rldb_mysql =
   put_entry_func,
   put_header_func,
   change_status_2_func,
+  check_func,
 };
 
 static struct common_plugin_data *
@@ -1538,6 +1539,68 @@ change_status_2_func(
 
   return do_update_entry(cs, run_id, &te,
                          RE_STATUS | RE_TEST | RE_SCORE | RE_JUDGE_ID | RE_IS_MARKED);
+}
+
+static int
+check_func(
+        struct rldb_plugin_cnts *cdata,
+        FILE *log_f)
+{
+  struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts *) cdata;
+  struct runlog_state *rls = cs->rl_state;
+  int run_id = 1, run_id2;
+  time_t cur_time, prev_time = 0, new_time;
+  struct tm prev_tm, cur_tm;
+
+  if (rls->run_u <= 0) return 0;
+  prev_time = rls->runs[0].time;
+
+  if (!log_f) log_f = stderr;
+
+  while (run_id < rls->run_u) {
+    if (rls->runs[run_id].time >= prev_time) {
+      prev_time = rls->runs[run_id].time;
+      ++run_id;
+      continue;
+    }
+
+    // check that we have the DST problem
+    cur_time = (time_t) rls->runs[run_id].time;
+    memset(&prev_tm, 0, sizeof(prev_tm));
+    memset(&cur_tm, 0, sizeof(cur_tm));
+    prev_tm.tm_isdst = -1;
+    cur_tm.tm_isdst = -1;
+    localtime_r(&prev_time, &prev_tm);
+    localtime_r(&cur_time, &cur_tm);
+    if (prev_tm.tm_isdst == cur_tm.tm_isdst) {
+      fprintf(log_f, "Error: timestamp for run %d: %ld (%s); ",
+              run_id - 1, prev_time, xml_unparse_date(prev_time));
+      fprintf(log_f, "timestamp for run %d: %ld (%s); ",
+              run_id, cur_time, xml_unparse_date(cur_time));
+      fprintf(log_f, "no DST change detected\n");
+      return -1;
+    }
+
+    fprintf(log_f, "Warning: timestamp for run %d: %ld (%s); ",
+            run_id - 1, prev_time, xml_unparse_date(prev_time));
+    fprintf(log_f, "timestamp for run %d: %ld (%s); ",
+            run_id, cur_time, xml_unparse_date(cur_time));
+    fprintf(log_f, "DST change detected, fixing\n");
+
+    // find how many runs need fixing
+    new_time = prev_time + 1;
+    run_id2 = run_id;
+    while (run_id2 < rls->run_u - 1 && new_time > rls->runs[run_id2 + 1].time){
+      ++new_time;
+      ++run_id2;
+    }
+
+    fprintf(log_f, "Warning: runs %d-%d to be fixed\n", run_id, run_id2);
+    // FIXME: fix the runs
+    run_id = run_id2 + 1;
+  }
+
+  return 0;
 }
 
 /*
