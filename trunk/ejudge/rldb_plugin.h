@@ -136,6 +136,8 @@ struct rldb_plugin_iface
                          int new_score,
                          int judge_id,
                          int is_marked);
+  // check the runlog (may fix broken items)
+  int (*check)(struct rldb_plugin_cnts *, FILE *log_f);
 };
 
 /* default plugin: compiled into new-server */

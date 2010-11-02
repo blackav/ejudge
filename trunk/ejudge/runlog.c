@@ -197,6 +197,8 @@ run_open(
                                            init_finish_time)))
       return -1;
     if (!(flags & RUN_LOG_NOINDEX)) {
+      if (state->iface->check && state->iface->check(state->cnts, 0) < 0)
+        return -1;
       if (runlog_check(0, &state->head, state->run_u, state->runs) < 0)
         return -1;
       build_indices(state);
@@ -216,6 +218,8 @@ run_open(
                                            init_finish_time)))
       return -1;
     if (!(flags & RUN_LOG_NOINDEX)) {
+      if (state->iface->check && state->iface->check(state->cnts, 0) < 0)
+        return -1;
       if (runlog_check(0, &state->head, state->run_u, state->runs) < 0)
         return -1;
       build_indices(state);
@@ -256,6 +260,8 @@ run_open(
                                          init_finish_time)))
     return -1;
   if (!(flags & RUN_LOG_NOINDEX)) {
+    if (state->iface->check && state->iface->check(state->cnts, 0) < 0)
+      return -1;
     if (runlog_check(0, &state->head, state->run_u, state->runs) < 0)
       return -1;
     build_indices(state);
