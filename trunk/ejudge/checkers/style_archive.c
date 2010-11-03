@@ -33,6 +33,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include <dirent.h>
+#include <sys/stat.h>
 
 extern char **environ;
 

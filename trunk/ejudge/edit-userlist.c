@@ -3480,7 +3480,7 @@ display_contests_menu(unsigned char *upper, int only_choose)
   PANEL *out_pan = 0, *in_pan = 0;
   int c, cmd;
   unsigned char current_level[512];
-  int sel_num, r;
+  int sel_num, r = 0;
   int retval = -1;
   const unsigned char *cnts_set = 0;
   int cnts_set_card;

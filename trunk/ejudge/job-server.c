@@ -38,6 +38,7 @@
 #include <errno.h>
 #include <sys/wait.h>
 #include <time.h>
+#include <sys/stat.h>
 
 static struct ejudge_cfg *config;
 static path_t job_server_log_path;
