@@ -5486,3 +5486,6 @@ new_server_clnt/close.c 6016 0 85633
 rldb_plugin.h 6022 0 409759
 rldb_plugin_file.c 6022 0 3127304
 runlog.c 6022 0 4419022
+runlog.h 6027 0 937408
+rldb_plugin_file.c 6027 0 3149919
+runlog_static.c 6027 0 808830
