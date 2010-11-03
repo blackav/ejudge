@@ -19,6 +19,7 @@
 
 #include "runlog.h"
 #include "problem_common.h"
+#include "xml_utils.h"
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
@@ -296,6 +297,87 @@ run_is_source_available(int status)
 {
   if (status < 0 || status > RUN_LAST) return 0;
   return run_source_available_statuses[status];
+}
+
+int
+run_fix_runlog_time(
+        FILE *log_f,
+        int run_u,
+        struct run_entry *runs,
+        unsigned char *fix_mask)
+{
+  int run_id = 1, run_id2;
+  time_t cur_time, prev_time = 0, new_time;
+  struct tm prev_tm, cur_tm;
+
+  if (run_u <= 0 || !runs) return 0;
+  if (!log_f) log_f = stderr;
+
+  if (fix_mask) {
+    memset(fix_mask, 0, run_u);
+  }
+  prev_time = runs[0].time;
+
+  while (run_id < run_u) {
+    if (runs[run_id].time >= prev_time) {
+      prev_time = runs[run_id].time;
+      ++run_id;
+      continue;
+    }
+
+    // check that we have the DST problem
+    cur_time = (time_t) runs[run_id].time;
+
+    if (prev_time >= cur_time + 3600) {
+      fprintf(log_f, "Error: timestamp for run %d: %ld (%s); ",
+              run_id - 1, prev_time, xml_unparse_date(prev_time));
+      fprintf(log_f, "timestamp for run %d: %ld (%s); ",
+              run_id, cur_time, xml_unparse_date(cur_time));
+      fprintf(log_f, "no DST change detected\n");
+      return -1;
+    }
+
+    cur_time += 3600;
+    memset(&prev_tm, 0, sizeof(prev_tm));
+    memset(&cur_tm, 0, sizeof(cur_tm));
+    prev_tm.tm_isdst = -1;
+    cur_tm.tm_isdst = -1;
+    localtime_r(&prev_time, &prev_tm);
+    localtime_r(&cur_time, &cur_tm);
+    if (prev_tm.tm_isdst == cur_tm.tm_isdst) {
+      fprintf(log_f, "Error: timestamp for run %d: %ld (%s); ",
+              run_id - 1, prev_time, xml_unparse_date(prev_time));
+      fprintf(log_f, "timestamp for run %d: %ld (%s); ",
+              run_id, cur_time, xml_unparse_date(cur_time));
+      fprintf(log_f, "no DST change detected\n");
+      return -1;
+    }
+
+    fprintf(log_f, "Warning: timestamp for run %d: %ld (%s); ",
+            run_id - 1, prev_time, xml_unparse_date(prev_time));
+    fprintf(log_f, "timestamp for run %d: %ld (%s); ",
+            run_id, cur_time, xml_unparse_date(cur_time));
+    fprintf(log_f, "DST change detected, fixing\n");
+
+    // find how many runs need fixing
+    new_time = prev_time + 1;
+    run_id2 = run_id;
+    while (run_id2 < run_u - 1 && new_time > runs[run_id2 + 1].time) {
+      ++new_time;
+      ++run_id2;
+    }
+
+    fprintf(log_f, "Warning: runs %d-%d to be fixed\n", run_id, run_id2);
+    for (new_time = prev_time + 1; run_id <= run_id2; ++run_id, ++new_time) {
+      runs[run_id].time = new_time;
+      if (fix_mask) {
+        fix_mask[run_id] = 1;
+      }
+    }
+  }
+
+  return 0;
+
 }
 
 /*

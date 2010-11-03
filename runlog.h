@@ -340,4 +340,11 @@ run_get_all_statistics(
         int *counts,
         size_t *sizes);
 
+int
+run_fix_runlog_time(
+        FILE *log_f,
+        int run_u,
+        struct run_entry *runs,
+        unsigned char *fix_mask);
+
 #endif /* __RUNLOG_H__ */
