@@ -38,6 +38,7 @@
 #include <dirent.h>
 #include <utime.h>
 #include <time.h>
+#include <sys/stat.h>
 
 static struct lang_config_info *lang_first, *lang_last;
 static int lang_configured = 0;
