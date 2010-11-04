@@ -1,3 +1,9 @@
+2010-10-05 (r6003) Alexander Chernov  <cher@ejudge.ru>
+
+	* file_perms.c: copyright notice is updated;
+	(file_perms_set) new function;
+	(file_perms_get) new function.
+
 2010-06-18 (r5899) Alexander Chernov  <cher@ejudge.ru>
 
 	* files_win32.make:

@@ -1,3 +1,8 @@
+2010-11-01 (r6014) Alexander Chernov  <cher@ejudge.ru>
+
+	* close.c: copyright notice is updated;
+	(userlist_clnt_close) fd and memory leak is fixed.
+
 2010-07-15 (r5947) Alexander Chernov  <cher@ejudge.ru>
 
 	* get_xml_by_text.c: initial revision.

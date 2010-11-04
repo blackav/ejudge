@@ -1,3 +1,8 @@
+2010-11-01 (r6016) Alexander Chernov  <cher@ejudge.ru>
+
+	* close.c: copyright notice is updated;
+	(new_server_clnt_close) resources are properly released.
+
 2010-07-31 (r5966) Alexander Chernov  <cher@ejudge.ru>
 
 	* http_request.c: copyright notice is updated;

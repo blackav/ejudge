@@ -1,3 +1,18 @@
+2010-11-03 (r6026) Alexander Chernov  <cher@ejudge.ru>
+
+	* rldb_mysql.c:
+	(check_func) the code is moved to a plugin independable module as
+	  'run_fix_runlog_time'.
+
+2010-11-02 (r6021) Alexander Chernov  <cher@ejudge.ru>
+
+	* methods.inc.c:
+	(check_func) new function prototype.
+
+	* rldb_mysql.c:
+	(check_func) new function to check the time consistency of the log
+	  and fix it.
+
 2010-02-23 (r5774) Alexander Chernov  <cher@ejudge.ru>
 
 	* methods.inc.c: copyright notice is updated;
