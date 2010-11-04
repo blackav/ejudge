@@ -1,3 +1,13 @@
+2010-11-01 (r6018) Alexander Chernov  <cher@ejudge.ru>
+
+	* python3.in, python3-version.in, lang_ids.cfg, Makefile.in:
+	python3 support is implemented.
+
+2010-09-05 (r5985) Alexander Chernov  <cher@ejudge.ru>
+
+	* rcc:
+	Fixed PRs #39, #40.
+
 2010-01-07 (r5608) Alexander Chernov  <cher@ejudge.ru>
 
 	* gfortran.in, gcj.in, g77.in, gfortran-version.in, g77-version.in, gpc.in, g++.in, gcc.in:

@@ -1,3 +1,9 @@
+2010-10-05 (r6002) Alexander Chernov  <cher@ejudge.ru>
+
+	* file_perms.c: copyright notice is updated;
+	(file_perms_set) new parameters 'old_group', 'old_mode' are added;
+	(file_perms_get) new function.
+
 2010-06-24 (r5906) Alexander Chernov  <cher@ejudge.ru>
 
 	* fileutl.c:

@@ -1,3 +1,154 @@
+2010-11-03 (r6029) Alexander Chernov  <cher@ejudge.ru>
+
+	* edit-userlist.c, job-server.c, lang_config_vis.c:
+	Fedora 13 compilation fixes.
+
+2010-11-03 (r6027) Alexander Chernov  <cher@ejudge.ru>
+
+	* runlog.h:
+	(run_fix_runlog_time) prototype is added.
+
+	* rldb_plugin_file.c:
+	(check_func) implemented.
+
+	* runlog_static.c:
+	(run_fix_runlog_time) most of code is moved from rldb_mysql.
+
+2010-11-02 (r6022) Alexander Chernov  <cher@ejudge.ru>
+
+	* rldb_plugin.h:
+	(struct rldb_plugin_iface) 'check' function is added.
+
+	* runlog.c:
+	(run_open) the plugin's 'check' function is invoked.
+
+	* rldb_plugin_file.c:
+	(check_func) new function to check the consistency of the log and
+	  fix it if necessary.
+
+2010-11-01 (r6017) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_clnt.h:
+	(new_server_clnt_close) the result type is changed to
+	  'new_server_conn_t'.
+
+2010-10-23 (r6012) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_proto.h:
+	editing of 'interactor_time_limit' problem is supported.
+
+	* prepare.c, prepare_out.c:
+	'interactor_time_limit' problem variable is supported.
+
+	* run.c:
+	(run_tests) 'interactor_time_limit' problem variable is supported.
+
+	* super-serve.c, super_html_3.c, super_html_4.c, serve-control.c:
+	editing of 'interactor_time_limit' problem is supported.
+
+2010-10-23 (r6010) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_problem_data) 'interactor_time_limit' is added.
+
+2010-10-16 (r6008) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html_2.c:
+	PR #47:
+	(write_from_contest_dir) 'advanced_layout' mode is correctly
+	supported.
+
+2010-10-15 (r6006) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server.h:
+	'config' global variable is renamed to 'ejudge_config'.
+
+	* new-server.c, new_server_html.c, new_server_html_4.c:
+	'config' global variable is renamed to 'ejudge_config'.
+
+2010-10-05 (r6004) Alexander Chernov  <cher@ejudge.ru>
+
+	* file_perms.h: copyright notice is updated;
+	(file_perms_set) new parameters 'old_group', 'old_mode' are added;
+	(file_perms_get) new function prototype.
+
+	* super_html_2.c:
+	(rename_files) old file group and permissions are preserved if
+	  possible;
+	(super_html_commit_contest) old file group and permissions are
+	  preserved if possible.
+
+	* super_html_3.c:
+	(check_test_file) old file group and permissions are preserved
+	  if possible.
+
+2010-10-05 (r6000) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.c:
+	(find_tester) arch == NULL now means any architecture.
+
+	* run.c:
+	(do_loop) arbitrary tester architecture now fits for output-only
+	  problems, not only the default architecture.
+
+	* serve_2.c:
+	(serve_run_request) arbitrary tester architecture now fits for
+	  output-only problems, not only the default architecture.
+
+2010-10-03 (r5998) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare_out.c:
+	(prepare_unparse_prob) `internal_name' and `stand_column' are unparsed.
+
+2010-10-03 (r5996) Alexander Chernov  <cher@ejudge.ru>
+
+	* html.c:
+	(do_write_standings) incorrect setting of cur_time for unlimited ACM
+	contests is fixed.
+
+2010-09-26 (r5994) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_html_3.c:
+	(super_html_edit_languages) situation, when no contest is edited
+	  is properly handled.
+
+2010-09-17 (r5992) Alexander Chernov  <cher@ejudge.ru>
+
+	* opcaps.h: copyright notice is updated;
+	`COMMENT_RUN' capability bit is added.
+
+	* ejudge-setup.c:
+	(generate_contest_xml) `MASTER_SET' capability set is used.
+
+	* new_server_html.c:
+	(priv_set_run_style_error_status) `COMMENT_RUN' capability bit is
+	  required;
+	(priv_simple_change_status) `COMMENT_RUN' capability bit is required.
+
+	* opcaps.c: copyright notice is updated;
+	`COMMENT_RUN' capability bit is added.
+
+	* serve-control.c, super_html.c:
+	`COMMENT_RUN' capability bit is added.
+
+2010-09-11 (r5990) Alexander Chernov  <cher@ejudge.ru>
+
+	* teamdb_2.c:
+	(teamdb_get_user_map) fatal crash is fixed.
+
+2010-09-05 (r5988) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.c:
+	PR #38 is fixed.
+
+	* prepare.c:
+	(cntsprob_copy_and_set_default) NULL pointer dereference fixed.
+
+2010-09-05 (r5985) Alexander Chernov  <cher@ejudge.ru>
+
+	* configure.ac, Makefile.unix.in:
+	Fixed PRs #39, #40.
+
 2010-08-10 (r5980) Alexander Chernov  <cher@ejudge.ru>
 
 	* super_html_3.c:
