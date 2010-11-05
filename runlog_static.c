@@ -319,6 +319,11 @@ run_fix_runlog_time(
   prev_time = runs[0].time;
 
   while (run_id < run_u) {
+    if (runs[run_id].status == RUN_EMPTY) {
+      ++run_id;
+      continue;
+    }
+
     if (runs[run_id].time >= prev_time) {
       prev_time = runs[run_id].time;
       ++run_id;
