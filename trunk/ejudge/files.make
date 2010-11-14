@@ -141,6 +141,7 @@ COMMON_CFILES=\
  meta_generic.c\
  mime_type.c\
  misctext.c\
+ ncheck_packet.c\
  new_server_html.c\
  new_server_html_2.c\
  new_server_html_3.c\
@@ -258,6 +259,7 @@ CFILES=\
  convert-clars.c\
  convert-runs.c\
  edit-userlist.c\
+ ej-ncheck.c\
  ejudge-configure-compilers.c\
  ejudge-control.c\
  ejudge-setup.c\
@@ -368,6 +370,7 @@ HFILES=\
  mime_type.h\
  mischtml.h\
  misctext.h\
+ ncheck_packet.h\
  ncurses_utils.h\
  new-server.h\
  nsdb_plugin.h\
