@@ -139,5 +139,8 @@
 /* prefix for HTML style files */
 #undef CONF_STYLE_PREFIX
 
+/* libzip available */
+#undef CONF_HAS_LIBZIP
+
 #endif /* __CONFIG_H__ */
 
