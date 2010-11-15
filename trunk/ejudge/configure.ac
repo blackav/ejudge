@@ -382,6 +382,10 @@ AC_CHECK_HEADER([ncurses.h],[ac_cv_has_ncurses=1],[ac_cv_has_ncurses=0])
 #  AC_MSG_FAILURE([ncurses.h is missing, please install ncurses development package])
 #fi
 
+dnl check zlib library
+AC_CHECK_HEADER([zip.h],[ac_cv_has_libzip=1],[ac_cv_has_libzip=0])
+AC_CHECK_LIB([zip],[zip_open],[ac_cv_has_lib_libzip=-lzip],[ac_cv_has_lib_libzip=])
+
 dnl Libcap checking stuff
 ac_cv_has_libcap=1
 if [[ x"${ac_cv_libcap_root}" = xno ]]
@@ -1128,6 +1132,7 @@ AC_SUBST(ac_cv_httpd_htdocs_dir)
 AC_SUBST(ac_cv_has_lib_iconv)
 AC_SUBST(ac_cv_has_lib_libiconv)
 AC_SUBST(ac_cv_has_lib_intl)
+AC_SUBST(ac_cv_has_lib_libzip)
 AC_SUBST(ac_cv_meta_cc)
 
 AC_SUBST(ac_cv_festival_home)
@@ -1135,6 +1140,11 @@ AC_SUBST(ac_cv_libcap_link)
 AC_SUBST(ac_cv_ejudge_server_bin_path_m)
 AC_SUBST(ac_cv_lang_config_dir)
 AC_SUBST(ac_cv_lang_config_dir_expanded)
+
+if [[ x"${ac_cv_has_libzip}" = x1 -a x"${ac_cv_has_lib_libzip}" != x ]]
+then
+  AC_DEFINE(CONF_HAS_LIBZIP,1)
+fi
 
 if [[ x"${ac_cv_nls}" = x1 -a x"${ac_cv_ejudge_arch}" != xwin32 ]]
 then
