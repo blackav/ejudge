@@ -1004,6 +1004,9 @@ lang_config_generate_compile_cfg(
     if ((s = shellconfig_get(p->cfg, "insecure"))) {
       fprintf(f, "insecure\n");
     }
+    if ((s = shellconfig_get(p->cfg, "secure"))) {
+      fprintf(f, "disable_security\n");
+    }
     if (!(s = shellconfig_get(p->cfg, "cmd"))) s = p->lang;
     fprintf(f, "cmd = \"%s\"\n", s);
     if ((s = shellconfig_get(p->cfg, "arch"))) {

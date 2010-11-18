@@ -2497,6 +2497,8 @@ priv_submit_run(FILE *fout,
   int skip_mime_type_test = 0;
   const unsigned char *text_form_text = 0;
   size_t text_form_size = 0;
+  unsigned char *utf8_str = 0;
+  int utf8_len = 0;
 
   if (ns_cgi_param_int(phr, "problem", &prob_id) < 0) {
     errmsg = "problem is not set or binary";
@@ -2659,7 +2661,14 @@ priv_submit_run(FILE *fout,
 
   switch (prob->type) {
   case PROB_TYPE_STANDARD:
-    if (!lang->binary && strlen(run_text) != run_size) goto binary_submission;
+    if (!lang->binary && strlen(run_text) != run_size) {
+      // guess utf-16/ucs-2
+      if (((int) run_size) < 0) goto binary_submission;
+      if ((utf8_len = ucs2_to_utf8(&utf8_str, run_text, run_size)) < 0)
+        goto binary_submission;
+      run_text = utf8_str;
+      run_size = (size_t) utf8_len;
+    }
     if (prob->enable_text_form > 0 && text_form_text
         && strlen(text_form_text) != text_form_size)
       goto binary_submission;
@@ -2914,10 +2923,12 @@ priv_submit_run(FILE *fout,
   }
 
  cleanup:
+  xfree(utf8_str);
   return retval;
 
  invalid_param:
   ns_html_err_inv_param(fout, phr, 0, errmsg);
+  xfree(utf8_str);
   return -1;
 }
 
@@ -9682,6 +9693,8 @@ unpriv_submit_run(FILE *fout,
   problem_xml_t px = 0;
   struct run_entry re;
   int skip_mime_type_test = 0;
+  unsigned char *utf8_str = 0;
+  int utf8_len = 0;
 
   l10n_setlocale(phr->locale_id);
   log_f = open_memstream(&log_txt, &log_len);
@@ -9795,8 +9808,14 @@ unpriv_submit_run(FILE *fout,
   switch (prob->type) {
   case PROB_TYPE_STANDARD:
     if (!lang->binary && strlen(run_text) != run_size) {
-      ns_error(log_f, NEW_SRV_ERR_BINARY_FILE);
-      goto done;
+      // guess utf-16/ucs-2
+      if (((int) run_size) < 0
+          || (utf8_len = ucs2_to_utf8(&utf8_str, run_text, run_size)) < 0) {
+        ns_error(log_f, NEW_SRV_ERR_BINARY_FILE);
+        goto done;
+      }
+      run_text = utf8_str;
+      run_size = (size_t) utf8_len;
     }
     if (prob->enable_text_form > 0 && text_form_text
         && strlen(text_form_text) != text_form_size) {
@@ -10229,6 +10248,7 @@ unpriv_submit_run(FILE *fout,
   //cleanup:;
   if (log_f) fclose(log_f);
   xfree(log_txt);
+  xfree(utf8_str);
 }
 
 static void

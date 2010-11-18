@@ -2358,6 +2358,9 @@ generate_serve_cfg(FILE *f)
     if ((s = shellconfig_get(p->cfg, "insecure"))) {
       fprintf(f, "insecure\n");
     }
+    if ((s = shellconfig_get(p->cfg, "secure"))) {
+      fprintf(f, "disable_security\n");
+    }
     fprintf(f, "\n");
   }
 

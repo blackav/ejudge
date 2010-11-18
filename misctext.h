@@ -112,6 +112,16 @@ int utf8_fix_string(unsigned char *str, int *gl_ind);
 int utf8_cnt(const unsigned char *s, int width, int *p_w);
 
 /*
+ * checks that 'u16str' is an UCS2 string and if so converts it into
+ * UTF8 string allocating it on the heap and writing the pointer
+ * to 'pu8str'. 'u16len' is the length of 'u16str' in bytes.
+ * returns -1, if the 'u16str' is not an UCS2 string, and the string
+ * length is all checks are ok
+ */
+int ucs2_to_utf8(unsigned char **pu8str, const unsigned char *u16str,
+                 int u16len); 
+
+/*
  * converts UTF8 buffer `in' of the size `in_size' to UCS4 buffer `out'
  * `out' MUST be large enough to hold all the characters
  * safe rule is to allocate `out' buffer for the same elements, as in `in'

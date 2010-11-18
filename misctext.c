@@ -1830,6 +1830,92 @@ html_print_by_line(
   putc('\n', f);
 }
 
+int
+ucs2_to_utf8(
+        unsigned char **pu8str,
+        const unsigned char *u16str,
+        int u16len)
+{
+  int i, out_count, c;
+  int is_be = 0; // big endian?
+  const unsigned char *u16p = u16str;
+  unsigned char *u8o = 0, *u8p = 0;
+
+  if (u16len < 0) return -1;
+  if (!u16str || !u16len) {
+    if (pu8str) *pu8str = 0;
+    return 0;
+  }
+  if ((u16len & 1)) return -1;
+
+  // check for zero in the middle
+  for (i = 0; i < u16len; i += 2) {
+    if (!u16str[i] && !u16str[i + 1]) return -1;
+  }
+
+  // check for the BOM
+  if (u16str[0] == 0xff && u16str[1] == 0xfe) {
+    u16p = u16str + 2;
+    u16len -= 2;
+  } else if (u16str[0] == 0xfe && u16str[1] == 0xff) {
+    u16p = u16str + 2;
+    u16len -= 2;
+    is_be = 1;
+  } else {
+    int count0 = 0;
+    int count1 = 0;
+    for (i = 0; i < u16len; i += 2) {
+      if (u16str[i] >= ' ') ++count0;
+      if (u16str[i + 1] >= ' ') ++count1;
+      if (count0 <= 0) {
+        is_be = 1;
+      }
+    }
+  }
+
+  out_count = 0;
+  for (i = 0; i < u16len; i += 2) {
+    if (is_be) {
+      c = (u16str[i] << 8) | u16str[i + 1];
+    } else {
+      c = (u16str[i + 1] << 8) | u16str[i];
+    }
+
+    if (c <= 0x7f) {
+      out_count += 1;
+    } else if (c <= 0x7ff) {
+      out_count += 2;
+    } else {
+      out_count += 3;
+    }
+  }
+  if (!pu8str) return out_count;
+
+  u8o = (unsigned char*) xmalloc(out_count + 1);
+  u8p = u8o;
+  for (i = 0; i < u16len; i += 2) {
+    if (is_be) {
+      c = (u16str[i] << 8) | u16str[i + 1];
+    } else {
+      c = (u16str[i + 1] << 8) | u16str[i];
+    }
+
+    if (c <= 0x7f) {
+      *u8p++ = c;
+    } else if (c <= 0x7ff) {
+      *u8p++ = (c >> 6) | 0xc0;
+      *u8p++ = (c & 0x3f) | 0x80;
+    } else {
+      *u8p++ = (c >> 12) | 0xe0;
+      *u8p++ = ((c >> 6) & 0x3f) | 0x80;
+      *u8p++ = (c & 0x3f) | 0x80;
+    }
+  }
+
+  *u8o = 0;
+  *pu8str = u8o;
+  return out_count;
+}
 
 /*
  * Local variables:
