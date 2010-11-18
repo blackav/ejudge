@@ -194,6 +194,7 @@ COMMON_CFILES=\
  super_html_5.c\
  super_proto.c\
  sha.c\
+ t3_packets.c\
  teamdb.c\
  teamdb_2.c\
  team_extra.c\
@@ -260,6 +261,7 @@ CFILES=\
  convert-runs.c\
  edit-userlist.c\
  ej-ncheck.c\
+ ej-t3-mediator.c\
  ejudge-configure-compilers.c\
  ejudge-control.c\
  ejudge-setup.c\
@@ -404,6 +406,7 @@ HFILES=\
  super_proto.h\
  super-serve.h\
  sha.h\
+ t3_packets.h\
  teamdb.h\
  teamdb_priv.h\
  team_extra.h\
