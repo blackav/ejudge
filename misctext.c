@@ -1912,7 +1912,7 @@ ucs2_to_utf8(
     }
   }
 
-  *u8o = 0;
+  *u8p = 0;
   *pu8str = u8o;
   return out_count;
 }
