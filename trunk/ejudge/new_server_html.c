@@ -7780,12 +7780,16 @@ priv_get_file(
     FAIL(NEW_SRV_ERR_INV_FILE_NAME);
 
   os_rGetSuffix(s, sfx, sizeof(sfx));
-  if (variant > 0) {
-    snprintf(fpath, sizeof(fpath), "%s/%s-%d/%s",
-             global->statement_dir, prob->short_name, variant, s);
+  if (global->advanced_layout) {
+    get_advanced_layout_path(fpath, sizeof(fpath), global, prob, s, variant);
   } else {
-    snprintf(fpath, sizeof(fpath), "%s/%s/%s",
-             global->statement_dir, prob->short_name, s);
+    if (variant > 0) {
+      snprintf(fpath, sizeof(fpath), "%s/%s-%d/%s",
+               global->statement_dir, prob->short_name, variant, s);
+    } else {
+      snprintf(fpath, sizeof(fpath), "%s/%s/%s",
+               global->statement_dir, prob->short_name, s);
+    }
   }
   mime_type = mime_type_parse_suffix(sfx);
   content_type = mime_type_get_type(mime_type);
@@ -13558,12 +13562,16 @@ unpriv_get_file(
     FAIL(NEW_SRV_ERR_INV_FILE_NAME);
 
   os_rGetSuffix(s, sfx, sizeof(sfx));
-  if (variant > 0) {
-    snprintf(fpath, sizeof(fpath), "%s/%s-%d/%s",
-             global->statement_dir, prob->short_name, variant, s);
+  if (global->advanced_layout) {
+    get_advanced_layout_path(fpath, sizeof(fpath), global, prob, s, variant);
   } else {
-    snprintf(fpath, sizeof(fpath), "%s/%s/%s",
-             global->statement_dir, prob->short_name, s);
+    if (variant > 0) {
+      snprintf(fpath, sizeof(fpath), "%s/%s-%d/%s",
+               global->statement_dir, prob->short_name, variant, s);
+    } else {
+      snprintf(fpath, sizeof(fpath), "%s/%s/%s",
+               global->statement_dir, prob->short_name, s);
+    }
   }
   mime_type = mime_type_parse_suffix(sfx);
   content_type = mime_type_get_type(mime_type);
