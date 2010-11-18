@@ -703,7 +703,7 @@ struct section_global_data
   +path_t test_checker_cmd;
  */
 
-/* sizeof(struct section_problem_data) == 64920 */
+/* sizeof(struct section_problem_data) == 64924 */
 struct section_problem_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -979,6 +979,9 @@ struct section_problem_data
   size_t max_data_size;
   /** max stack size limit */
   size_t max_stack_size;
+
+  /** external id (for external application binding) */
+  unsigned char *extid;
 
   /** these fields are for CGI editing of contest configuration files */
   unsigned char *unhandled_vars;
