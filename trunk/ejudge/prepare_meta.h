@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2010/10/23 15:56:32
+// Generated 2010/11/18 21:31:48
 
 #ifndef __PREPARE_META_H__
 #define __PREPARE_META_H__
@@ -420,6 +420,7 @@ enum
   CNTSPROB_max_vm_size,
   CNTSPROB_max_data_size,
   CNTSPROB_max_stack_size,
+  CNTSPROB_extid,
   CNTSPROB_unhandled_vars,
   CNTSPROB_score_view,
   CNTSPROB_score_view_score,
