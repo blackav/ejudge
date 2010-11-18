@@ -308,7 +308,7 @@ run_fix_runlog_time(
 {
   int run_id = 1, run_id2;
   time_t cur_time, prev_time = 0, new_time;
-  struct tm prev_tm, cur_tm;
+  //struct tm prev_tm, cur_tm;
 
   if (run_u <= 0 || !runs) return 0;
   if (!log_f) log_f = stderr;
@@ -342,6 +342,7 @@ run_fix_runlog_time(
       return -1;
     }
 
+/*
     cur_time += 3600;
     memset(&prev_tm, 0, sizeof(prev_tm));
     memset(&cur_tm, 0, sizeof(cur_tm));
@@ -355,8 +356,12 @@ run_fix_runlog_time(
       fprintf(log_f, "timestamp for run %d: %ld (%s); ",
               run_id, cur_time, xml_unparse_date(cur_time));
       fprintf(log_f, "no DST change detected\n");
-      return -1;
+      fprintf(log_f, "Error: ignoring this error for now...\n");
+      prev_time = 0;
+      ++run_id;
+      continue;
     }
+*/
 
     fprintf(log_f, "Warning: timestamp for run %d: %ld (%s); ",
             run_id - 1, prev_time, xml_unparse_date(prev_time));
@@ -379,6 +384,7 @@ run_fix_runlog_time(
         fix_mask[run_id] = 1;
       }
     }
+    prev_time = 0;
   }
 
   return 0;
