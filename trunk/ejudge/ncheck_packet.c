@@ -20,3 +20,42 @@
 #include "version.h"
 
 #include "ncheck_packet.h"
+#include "parsecfg.h"
+
+#include <reuse/xalloc.h>
+
+#define XFSIZE(t, x) (sizeof(((t*) 0)->x))
+
+#define NCHECK_IN_OFFSET(x)   XOFFSET(struct ncheck_in_packet, x)
+#define NCHECK_IN_SIZE(x)     XFSIZE(struct ncheck_in_packet, x)
+#define NCHECK_IN_PARAM(x, t) { #x, t, NCHECK_IN_OFFSET(x), NCHECK_IN_SIZE(x) }
+
+static const struct config_parse_info ncheck_in_params[] =
+{
+  NCHECK_IN_PARAM(priority, "d"),
+  NCHECK_IN_PARAM(contest_id, "d"),
+  NCHECK_IN_PARAM(run_id, "d"),
+  NCHECK_IN_PARAM(prob_id, "d"),
+  NCHECK_IN_PARAM(test_num, "d"),
+  NCHECK_IN_PARAM(judge_id, "d"),
+  NCHECK_IN_PARAM(use_contest_id_in_reply, "d"),
+  NCHECK_IN_PARAM(type, "d"),
+};
+static const struct config_section_info ncheck_in_config[] =
+{
+  { "global", sizeof(struct ncheck_in_packet), ncheck_in_params, 0, 0, 0 },
+  { NULL, 0, NULL }
+};
+
+#define NCHECK_OUT_OFFSET(x)   XOFFSET(struct nwrun_out_packet, x)
+#define NCHECK_OUT_SIZE(x)     XFSIZE(struct nwrun_out_packet, x)
+#define NCHECK_OUT_PARAM(x, t) { #x,t,NCHECK_OUT_OFFSET(x),NCHECK_OUT_SIZE(x) }
+
+static const struct config_parse_info ncheck_out_params[] =
+{
+};
+static const struct config_section_info ncheck_out_config[] =
+{
+  { "global", sizeof(struct ncheck_out_packet), ncheck_out_params, 0, 0, 0 },
+  { NULL, 0, NULL }
+};
