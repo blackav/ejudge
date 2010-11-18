@@ -1364,6 +1364,8 @@ prepare_unparse_unhandled_prob(
   do_str(f, &ab, "statement_file", prob->statement_file);
   //PROBLEM_PARAM(alternative, "x"),
   do_xstr(f, &ab, "alternative", prob->alternative);
+  //PROBLEM_PARAM(extid, "S"),
+  do_str(f, &ab, "extid", prob->extid);
 
   html_armor_free(&ab);
 }

@@ -1065,10 +1065,10 @@ invoke_nwrun(
   if (req_pkt->secure_run) {
     fprintf(f, "enable_secure_run = 1\n");
   }
-  if (req_pkt->memory_limit) {
+  if (req_pkt->memory_limit && req_pkt->secure_run) {
     fprintf(f, "enable_memory_limit_error = 1\n");
   }
-  if (req_pkt->security_violation) {
+  if (req_pkt->security_violation && req_pkt->secure_run) {
     fprintf(f, "enable_security_violation_error = 1\n");
   }
   fprintf(f, "prob_short_name = \"%s\"\n", prb->short_name);
@@ -1860,12 +1860,14 @@ run_tests(struct section_tester_data *tst,
         if (tst->max_vm_size && tst->max_vm_size != -1L)
           task_SetVMSize(tsk, tst->max_vm_size);
 #if defined HAVE_TASK_ENABLEMEMORYLIMITERROR
-        if (tst->enable_memory_limit_error && req_pkt->memory_limit) {
+        if (tst->enable_memory_limit_error && req_pkt->memory_limit
+            && req_pkt->secure_run) {
           task_EnableMemoryLimitError(tsk);
         }
 #endif
 #if defined HAVE_TASK_ENABLESECURITYVIOLATIONERROR
-        if (tst->enable_memory_limit_error && req_pkt->security_violation) {
+        if (tst->enable_memory_limit_error && req_pkt->secure_run
+            && req_pkt->security_violation) {
           task_EnableSecurityViolationError(tsk);
         }
 #endif
@@ -1890,12 +1892,14 @@ run_tests(struct section_tester_data *tst,
           if (prb->max_vm_size && prb->max_vm_size != -1L)
             task_SetVMSize(tsk, prb->max_vm_size);
 #if defined HAVE_TASK_ENABLEMEMORYLIMITERROR
-          if (tst->enable_memory_limit_error && req_pkt->memory_limit) {
+          if (tst->enable_memory_limit_error && req_pkt->memory_limit
+              && req_pkt->secure_run) {
             task_EnableMemoryLimitError(tsk);
           }
 #endif
 #if defined HAVE_TASK_ENABLESECURITYVIOLATIONERROR
-          if (tst->enable_memory_limit_error && req_pkt->security_violation) {
+          if (tst->enable_memory_limit_error
+              && req_pkt->secure_run && req_pkt->security_violation) {
             task_EnableSecurityViolationError(tsk);
           }
 #endif
@@ -2169,7 +2173,7 @@ run_tests(struct section_tester_data *tst,
 
 #if defined HAVE_TASK_ISMEMORYLIMIT
     if (tsk && tst->enable_memory_limit_error && req_pkt->memory_limit
-        && task_IsMemoryLimit(tsk)) {
+        && req_pkt->secure_run && task_IsMemoryLimit(tsk)) {
       failed_test = cur_test;
       status = RUN_MEM_LIMIT_ERR;
       total_failed_tests++;
@@ -2182,7 +2186,7 @@ run_tests(struct section_tester_data *tst,
 
 #if defined HAVE_TASK_ISSECURITYVIOLATION
     if (tsk && tst->enable_memory_limit_error && req_pkt->security_violation
-        && task_IsSecurityViolation(tsk)) {
+        && req_pkt->secure_run && task_IsSecurityViolation(tsk)) {
       failed_test = cur_test;
       status = RUN_SECURITY_ERR;
       total_failed_tests++;

@@ -34,7 +34,10 @@
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
 
+#if CONF_HAS_LIBZIP - 0 == 1
 #include <zip.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -193,6 +196,7 @@ handle_packet_zip_file(
         const unsigned char *path,
         const unsigned char *out_path)
 {
+#if CONF_HAS_LIBZIP - 0 == 1
   int zip_err = 0;
   struct zip *z = 0, *oz = 0;
   char errbuf[1024];
@@ -360,6 +364,10 @@ handle_packet_zip_file(
   }
 
   return retval;
+#else
+  logerr("Zip archives are not supported");
+  return -1;
+#endif /* CONF_HAS_LIBZIP */
 }
 
 static int
