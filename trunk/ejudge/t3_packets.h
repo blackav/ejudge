@@ -22,11 +22,12 @@
 struct t3_in_submit
 {
   unsigned char *prob_guid;
+  unsigned char *prob_extid;
   unsigned char *user_guid;
   unsigned char *prog_lang;
   unsigned char *prog_charset;
-  int mime_type;
   unsigned char *filename;
+  int gzipped;
 };
 
 struct t3_in_packet

@@ -454,6 +454,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(source_header, "s"),
   PROBLEM_PARAM(source_footer, "s"),
   PROBLEM_PARAM(score_view, "x"),
+  PROBLEM_PARAM(extid, "S"),
 
   { 0, 0, 0, 0 }
 };
@@ -921,6 +922,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
   sarray_free(p->score_view);
   xfree(p->score_view_score);
   xfree(p->score_view_text);
+  xfree(p->extid);
 
   if (p->variant_num > 0 && p->xml.a) {
     for (i = 1; i <= p->variant_num; i++) {
@@ -5326,6 +5328,7 @@ prepare_copy_problem(const struct section_problem_data *in)
   out->score_view_score = 0;
   out->score_view_text = 0;
   out->xml.p = 0;
+  out->extid = 0;
 
   return out;
 }

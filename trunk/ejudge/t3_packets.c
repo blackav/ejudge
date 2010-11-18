@@ -48,7 +48,8 @@ enum
   AT_U,
   AT_TYPE,
   AT_FILENAME,
-  AT_CONTENTTYPE,
+  AT_Q_EXTID,
+  AT_GZIPPED,
 
   AT_LAST_ATTR,
 };
@@ -68,7 +69,8 @@ static const char * const attr_map[] =
   [AT_U]           = "u",
   [AT_TYPE]        = "type",
   [AT_FILENAME]    = "filename",
-  [AT_CONTENTTYPE] = "contenttype",
+  [AT_Q_EXTID]     = "q_extid",
+  [AT_GZIPPED]     = "gzipped",
 
   [AT_LAST_ATTR] = 0,
 };
@@ -167,6 +169,9 @@ t3_parse_xml(
       case AT_TYPE:
         a_type = a->text;
         break;
+      case AT_Q_EXTID:
+        rs->prob_extid = a->text; a->text = 0;
+        break;
       }
     }
     if (!rs->prob_guid) {
@@ -204,54 +209,29 @@ t3_parse_xml(
     }
     for (uqx = uq->first_down; uqx && uqx->tag != TG_UQXFILE; uqx = uqx->right);
 
-    rs->mime_type = -1;
+    rs->gzipped = -1;
     for (a = uqx->first; a; a = a->next) {
       switch (a->tag) {
       case AT_FILENAME:
         rs->filename = a->text; a->text = 0;
         break;
-      case AT_CONTENTTYPE:
-        if (!a->text) {
-          xml_err_attr_invalid(a);
+      case AT_GZIPPED:
+        if (xml_attr_bool(a, &rs->gzipped) < 0)
           return -1;
-        }
-        if (!strcmp(a->text, "text/plain")) {
-          rs->mime_type = 0;
-        } else if (!strcmp(a->text, "application/x-gzip")) {
-          rs->mime_type = MIME_TYPE_APPL_GZIP;
-        } else {
-          xml_err_attr_invalid(a);
-          return -1;
-        }
+        break;
       }
     }
     if (!rs->filename) {
       xml_err_attr_undefined(uqx, AT_FILENAME);
       return -1;
     }
-    if (rs->mime_type == -1) {
+    if (rs->gzipped == -1) {
       // check for some well-known suffixes
       int len = strlen(rs->filename);
       if (ends_with(rs->filename, len, ".gz", 3)) {
-        rs->mime_type = MIME_TYPE_APPL_GZIP;
-      } else if (ends_with(rs->filename, len, ".c", 2)) {
-        rs->mime_type = MIME_TYPE_TEXT;
-      } else if (ends_with(rs->filename, len, ".cpp", 4)) {
-        rs->mime_type = MIME_TYPE_TEXT;
-      } else if (ends_with(rs->filename, len, ".bas", 4)) {
-        rs->mime_type = MIME_TYPE_TEXT;
-      } else if (ends_with(rs->filename, len, ".pas", 4)) {
-        rs->mime_type = MIME_TYPE_TEXT;
-      } else if (ends_with(rs->filename, len, ".py", 3)) {
-        rs->mime_type = MIME_TYPE_TEXT;
-      } else if (ends_with(rs->filename, len, ".php", 4)) {
-        rs->mime_type = MIME_TYPE_TEXT;
-      } else if (ends_with(rs->filename, len, ".pl", 3)) {
-        rs->mime_type = MIME_TYPE_TEXT;
-      } else if (ends_with(rs->filename, len, ".java", 5)) {
-        rs->mime_type = MIME_TYPE_TEXT;
-      } else if (ends_with(rs->filename, len, ".rb", 3)) {
-        rs->mime_type = MIME_TYPE_TEXT;
+        rs->gzipped = 1;
+      } else {
+        rs->gzipped = 0;
       }
     }
   }
@@ -295,6 +275,7 @@ t3_in_packet_free(struct t3_in_packet *p)
       struct t3_in_submit *q = &p->submits[i];
 
       xfree(q->prob_guid);
+      xfree(q->prob_extid);
       xfree(q->user_guid);
       xfree(q->prog_lang);
       xfree(q->prog_charset);
