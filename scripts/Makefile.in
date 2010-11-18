@@ -76,6 +76,8 @@ SCRIPTS_IN = \
  gpc-version.in\
  gprolog.in\
  gprolog-version.in\
+ kumir.in\
+ kumir-version.in\
  mzscheme.in\
  mzscheme-version.in\
  qb.in\
