@@ -30,15 +30,17 @@ then
   exit 1
 fi
 
-if ! "${KUMIRPATH}" --check --program-encoding=UTF-8 "$1"
+"${KUMIRPATH}" --check --program-encoding=UTF-8 --messages-encoding=UTF-8 "$1"
+retval=$?
+if [ "$retval" != 0 ]
 then
-  exit $?
+  exit $retval
 fi
 
 echo '#! /bin/sh' > "$2"
 echo 'cat <<__END__ > "${0}__"' >> "$2"
 cat "$1" >> "$2"
 echo '__END__' >> "$2"
-echo 'exec "'${KUMIRPATH}'" --run --program-encoding=UTF-8 "${0}__"' >> "$2"
+echo 'exec "'${KUMIRPATH}'" --run --program-encoding=UTF-8 --messages-encoding=UTF-8 "${0}__"' >> "$2"
 chmod +x $2
 exit 0
