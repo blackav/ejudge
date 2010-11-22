@@ -99,6 +99,7 @@ CFILES=\
  mac.c\
  utf8.c\
  ucs4.c\
+ valuer_parse_input.c\
  ruscmp.c
 
 CHKCFILES =\
