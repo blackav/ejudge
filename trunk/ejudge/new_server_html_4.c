@@ -954,7 +954,8 @@ cmd_submit_run(
                       "  Testing disabled for this problem or language\n",
                       run_id);
     } else {
-      if (serve_compile_request(cs, run_text, run_size, run_id, phr->user_id,
+      if (serve_compile_request(cs, run_text, run_size, global->contest_id,
+                                run_id, phr->user_id,
                                 lang->compile_id, phr->locale_id, 0,
                                 lang->src_sfx,
                                 lang->compiler_env,
@@ -979,8 +980,8 @@ cmd_submit_run(
                       run_id);
     } else {
       if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
-        if (serve_compile_request(cs, run_text, run_size, run_id,
-                                  phr->user_id, 0 /* lang_id */,
+        if (serve_compile_request(cs, run_text, run_size, global->contest_id,
+                                  run_id, phr->user_id, 0 /* lang_id */,
                                   0 /* locale_id */, 1 /* output_only*/,
                                   mime_type_get_suffix(mime_type),
                                   NULL /* compiler_env */,
@@ -1016,8 +1017,8 @@ cmd_submit_run(
                       run_id);
     } else {
       if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
-        if (serve_compile_request(cs, run_text, run_size, run_id,
-                                  phr->user_id, 0 /* lang_id */,
+        if (serve_compile_request(cs, run_text, run_size, global->contest_id,
+                                  run_id, phr->user_id, 0 /* lang_id */,
                                   0 /* locale_id */, 1 /* output_only*/,
                                   mime_type_get_suffix(mime_type),
                                   NULL /* compiler_env */,
@@ -1815,7 +1816,7 @@ new_server_cmd_handler(FILE *fout, struct http_request_info *phr)
   if (serve_state_load_contest(ejudge_config, phr->contest_id,
                                ul_conn,
                                &callbacks,
-                               &extra->serve_state, 0) < 0) {
+                               &extra->serve_state, 0, 0) < 0) {
     return -NEW_SRV_ERR_INV_CONTEST_ID;
   }
 

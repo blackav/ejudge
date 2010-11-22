@@ -109,7 +109,7 @@ NCHECK_CFILES=ej-ncheck.c version.c
 NCHECK_OBJECTS=$(NCHECK_CFILES:.c=.o) libcommon.a libplatform.a
 
 T3M_CFILES=ej-t3-mediator.c version.c
-T3M_OBJECTS=$(T3M_CFILES:.c=.o) libcommon.a libplatform.a
+T3M_OBJECTS=$(T3M_CFILES:.c=.o) libcommon.a libuserlist_clnt.a libplatform.a
 
 SC_CFILES = serve-control.c version.c
 SC_OBJECTS = $(SC_CFILES:.c=.o) libuserlist_clnt.a libsuper_clnt.a libcommon.a libplatform.a
@@ -262,7 +262,7 @@ ej-ncheck${EXESFX} : $(NCHECK_OBJECTS)
 	$(LD) $(LDFLAGS) $(NCHECK_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB}
 
 ej-t3-mediator : $(T3M_OBJECTS)
-	$(LD) $(LDFLAGS) $(T3M_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB} ${LIBZIP}
+	$(LD) $(LDFLAGS) $(T3M_OBJECTS) -o $@ $(LDLIBS) -ldl ${EXPAT_LIB} ${LIBZIP}
 
 ej-serve : $(SERVE_OBJECTS)
 	$(LD) $(LDFLAGS) $(SERVE_OBJECTS) -o $@ $(LDLIBS) -ldl ${EXPAT_LIB}

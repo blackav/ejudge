@@ -934,6 +934,7 @@ serve_compile_request(
         serve_state_t state,
         unsigned char const *str,
         int len,
+        int contest_id,
         int run_id,
         int user_id,
         int lang_id,
@@ -1035,7 +1036,7 @@ serve_compile_request(
 
   memset(&cp, 0, sizeof(cp));
   cp.judge_id = state->compile_request_id++;
-  cp.contest_id = global->contest_id;
+  cp.contest_id = contest_id;
   cp.run_id = run_id;
   cp.lang_id = lang_id;
   cp.locale_id = locale_id;
@@ -2302,6 +2303,7 @@ serve_rejudge_run(
         int force_full_rejudge,
         int priority_adjustment)
 {
+  const struct section_global_data *global = state->global;
   struct run_entry re;
   int accepting_mode = -1, arch_flags = 0;
   path_t run_arch_path;
@@ -2323,8 +2325,7 @@ serve_rejudge_run(
   }
   if (prob->manual_checking > 0 || prob->disable_testing > 0) return;
   if (prob->type > 0) {
-    if (force_full_rejudge
-        && state->global->score_system == SCORE_OLYMPIAD) {
+    if (force_full_rejudge && global->score_system == SCORE_OLYMPIAD) {
       accepting_mode = 0;
     }
 
@@ -2350,7 +2351,7 @@ serve_rejudge_run(
     }
 
     if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
-      serve_compile_request(state, 0 /* str*/, -1 /* len*/,
+      serve_compile_request(state, 0 /* str*/, -1 /* len*/, global->contest_id,
                             run_id, re.user_id, 0 /* lang_id */,
                             0 /* locale_id */, 1 /* output_only*/,
                             mime_type_get_suffix(re.mime_type),
@@ -2369,7 +2370,7 @@ serve_rejudge_run(
 
     arch_flags = archive_make_read_path(state, run_arch_path,
                                         sizeof(run_arch_path),
-                                        state->global->run_archive_dir, run_id,
+                                        global->run_archive_dir, run_id,
                                         0, 0);
     if (arch_flags < 0) return;
     if (generic_read_file(&run_text, 0, &run_size, arch_flags,
@@ -2391,11 +2392,11 @@ serve_rejudge_run(
     return;
   }
 
-  if (force_full_rejudge && state->global->score_system == SCORE_OLYMPIAD) {
+  if (force_full_rejudge && global->score_system == SCORE_OLYMPIAD) {
     accepting_mode = 0;
   }
 
-  serve_compile_request(state, 0, -1, run_id, re.user_id,
+  serve_compile_request(state, 0, -1, global->contest_id, run_id, re.user_id,
                         lang->compile_id, re.locale_id,
                         (prob->type > 0),
                         lang->src_sfx,
