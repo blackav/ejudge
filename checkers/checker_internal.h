@@ -62,7 +62,12 @@ enum
   RUN_TIME_LIMIT_ERR   = 3,
   RUN_PRESENTATION_ERR = 4,
   RUN_WRONG_ANSWER_ERR = 5,
-  RUN_CHECK_FAILED     = 6
+  RUN_CHECK_FAILED     = 6,
+  RUN_MEM_LIMIT_ERR    = 12,
+  RUN_SECURITY_ERR     = 13,
+  RUN_STYLE_ERR        = 14,
+
+  RUN_MAX_STATUS       = 14,
 };
 
 /* S-expression types */
@@ -85,6 +90,13 @@ union checker_sexpr_elem
   int kind;
   struct checker_sexpr_atom a;
   struct checker_sexpr_pair p;
+};
+
+struct valuer_test_info
+{
+  int result;
+  int score;
+  int time_ms;
 };
 
 extern FILE *f_in;
@@ -363,6 +375,11 @@ checker_read_long_double_ex(
         const char *name,
         int eof_error_flag,
         long double *p_val);
+
+void
+valuer_parse_input(
+        int *p_test_count,
+        struct valuer_test_info **p_infos);
 
 #ifdef __cplusplus
 }
