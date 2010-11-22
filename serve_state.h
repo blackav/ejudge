@@ -315,7 +315,8 @@ int serve_state_load_contest(
         struct userlist_clnt *ul_conn,
         struct teamdb_db_callbacks *teamdb_callbacks,
         serve_state_t *p_state,
-        const struct contest_desc **p_cnts);
+        const struct contest_desc **p_cnts,
+        int no_users_flag);
 
 int serve_count_unread_clars(const serve_state_t state, int user_id,
                              time_t start_time);
@@ -337,6 +338,7 @@ serve_compile_request(
         serve_state_t state,
         unsigned char const *str,
         int len,
+        int contest_id,
         int run_id,
         int user_id,
         int lang_id,

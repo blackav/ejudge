@@ -724,7 +724,13 @@ invoke_valuer(
   }
   fprintf(f, "%d\n", total_tests - 1);
   for (i = 1; i <= total_tests; i++) {
-    fprintf(f, "%d %d %ld\n", tests[i].status, tests[i].score, tests[i].times);
+    if (prb->scoring_checker) {
+      fprintf(f, "%d %d %ld\n", tests[i].status, tests[i].checker_score,
+              tests[i].times);
+    } else {
+      fprintf(f, "%d %d %ld\n", tests[i].status, tests[i].score,
+              tests[i].times);
+    }
   }
   if (ferror(f)) {
     append_msg_to_log(score_err, "failed to write to %s", score_list);
@@ -2406,7 +2412,9 @@ run_tests(struct section_tester_data *tst,
     force_check_failed = 0;
     if (prb->scoring_checker && !task_IsTimeout(tsk)
         && task_Status(tsk) == TSK_EXITED
-        && task_ExitCode(tsk) == RUN_WRONG_ANSWER_ERR) {
+        && (task_ExitCode(tsk) == RUN_WRONG_ANSWER_ERR
+            || task_ExitCode(tsk) == RUN_PRESENTATION_ERR
+            || task_ExitCode(tsk) == RUN_OK)) {
       switch (score_system_val) {
       case SCORE_KIROV:
       case SCORE_OLYMPIAD:
@@ -2535,13 +2543,13 @@ run_tests(struct section_tester_data *tst,
     for (jj = 1; jj <= prb->ntests; jj++) {
       tests[jj].score = 0;
       tests[jj].max_score = prb->tscores[jj];
-      if (tests[jj].status == RUN_OK) {
+      if (prb->scoring_checker
+          && (tests[jj].status == RUN_OK
+              || tests[jj].status == RUN_PRESENTATION_ERR
+              || tests[jj].status == RUN_WRONG_ANSWER_ERR)) {
+      } else if (tests[jj].status == RUN_OK) {
         score += prb->tscores[jj];
         tests[jj].score = prb->tscores[jj];
-      } else if (prb->scoring_checker
-                 && tests[jj].status == RUN_WRONG_ANSWER_ERR) {
-        tests[jj].score = tests[jj].checker_score;
-        score += tests[jj].checker_score;
       }
       if (tests[jj].status == RUN_CHECK_FAILED) {
         retcode = RUN_CHECK_FAILED;
@@ -3653,7 +3661,7 @@ check_config(void)
       }
 
       for (j = 1; j <= prb->ntests; j++) score_summ += prb->tscores[j];
-      if (score_summ > prb->full_score) {
+      if (score_summ > prb->full_score && !prb->valuer_cmd[0]) {
         err("total score (%d) > full score (%d) for problem %s",
             score_summ, prb->full_score, prb->short_name);
         return -1;

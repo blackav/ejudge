@@ -625,7 +625,8 @@ serve_state_load_contest(
         struct userlist_clnt *ul_conn,
         struct teamdb_db_callbacks *teamdb_callbacks,
         serve_state_t *p_state,
-        const struct contest_desc **p_cnts)
+        const struct contest_desc **p_cnts,
+        int no_users_flag)
 {
   serve_state_t state = 0;
   const struct contest_desc *cnts = 0;

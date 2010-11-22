@@ -2829,7 +2829,8 @@ priv_submit_run(FILE *fout,
                       "  Testing disabled for this problem or language\n",
                       run_id);
     } else {
-      if (serve_compile_request(cs, run_text, run_size, run_id, phr->user_id,
+      if (serve_compile_request(cs, run_text, run_size, global->contest_id,
+                                run_id, phr->user_id,
                                 lang->compile_id, phr->locale_id, 0,
                                 lang->src_sfx,
                                 lang->compiler_env,
@@ -2856,8 +2857,8 @@ priv_submit_run(FILE *fout,
                       run_id);
     } else {
       if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
-        serve_compile_request(cs, run_text, run_size, run_id,
-                              phr->user_id, 0 /* lang_id */,
+        serve_compile_request(cs, run_text, run_size, global->contest_id, 
+                              run_id, phr->user_id, 0 /* lang_id */,
                               0 /* locale_id */, 1 /* output_only*/,
                               mime_type_get_suffix(mime_type),
                               NULL /* compiler_env */,
@@ -2895,8 +2896,8 @@ priv_submit_run(FILE *fout,
     } else {
       /* FIXME: check for XML problem */
       if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
-        serve_compile_request(cs, run_text, run_size, run_id,
-                              phr->user_id, 0 /* lang_id */,
+        serve_compile_request(cs, run_text, run_size, global->contest_id,
+                              run_id, phr->user_id, 0 /* lang_id */,
                               0 /* locale_id */, 1 /* output_only*/,
                               mime_type_get_suffix(mime_type),
                               NULL /* compiler_env */,
@@ -8815,7 +8816,7 @@ privileged_entry_point(
   if (serve_state_load_contest(ejudge_config, phr->contest_id,
                                ul_conn,
                                &callbacks,
-                               &extra->serve_state, 0) < 0) {
+                               &extra->serve_state, 0, 0) < 0) {
     return ns_html_err_cnts_unavailable(fout, phr, 0, 0);
   }
 
@@ -10105,7 +10106,8 @@ unpriv_submit_run(FILE *fout,
                       "  Testing disabled for this problem or language\n",
                       run_id);
     } else {
-      if (serve_compile_request(cs, run_text, run_size, run_id, phr->user_id,
+      if (serve_compile_request(cs, run_text, run_size, global->contest_id,
+                                run_id, phr->user_id,
                                 lang->compile_id, phr->locale_id, 0,
                                 lang->src_sfx,
                                 lang->compiler_env,
@@ -10132,8 +10134,8 @@ unpriv_submit_run(FILE *fout,
                       run_id);
     } else {
       if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
-        serve_compile_request(cs, run_text, run_size, run_id,
-                              phr->user_id, 0 /* lang_id */,
+        serve_compile_request(cs, run_text, run_size, global->contest_id,
+                              run_id, phr->user_id, 0 /* lang_id */,
                               0 /* locale_id */, 1 /* output_only*/,
                               mime_type_get_suffix(mime_type),
                               NULL /* compiler_env */,
@@ -10190,8 +10192,8 @@ unpriv_submit_run(FILE *fout,
       }
 
       if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
-        serve_compile_request(cs, run_text, run_size, run_id,
-                              phr->user_id, 0 /* lang_id */,
+        serve_compile_request(cs, run_text, run_size, global->contest_id,
+                              run_id, phr->user_id, 0 /* lang_id */,
                               0 /* locale_id */, 1 /* output_only*/,
                               mime_type_get_suffix(mime_type),
                               NULL /* compiler_env */,
@@ -13821,7 +13823,7 @@ unprivileged_entry_point(
   if (serve_state_load_contest(ejudge_config, phr->contest_id,
                                ul_conn,
                                &callbacks,
-                               &extra->serve_state, 0) < 0) {
+                               &extra->serve_state, 0, 0) < 0) {
     return ns_html_err_cnts_unavailable(fout, phr, 0, 0);
   }
 
