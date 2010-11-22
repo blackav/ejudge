@@ -28,6 +28,17 @@ struct t3_in_submit
   unsigned char *prog_charset;
   unsigned char *filename;
   int gzipped;
+
+  /** the size of the file in the archive */
+  long file_size;
+  /** the file index in the ZIP file */
+  int zip_ind;
+  /** the compile id for the contest */
+  int cnts_lang_id;
+  /** the problem id for the contest */
+  int cnts_prob_id;
+  /** run_id for check */
+  int cnts_run_id;
 };
 
 struct t3_in_packet
