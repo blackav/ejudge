@@ -194,6 +194,8 @@ COMMON_CFILES=\
  super_html_5.c\
  super_proto.c\
  sha.c\
+ t3m_dir_listener.c\
+ t3m_zip_packet_class.c\
  t3_packets.c\
  teamdb.c\
  teamdb_2.c\
@@ -406,6 +408,8 @@ HFILES=\
  super_proto.h\
  super-serve.h\
  sha.h\
+ t3m_dir_listener.h\
+ t3m_packet_class.h\
  t3_packets.h\
  teamdb.h\
  teamdb_priv.h\

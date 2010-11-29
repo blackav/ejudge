@@ -693,6 +693,11 @@ serve_state_load_contest(
     }
   }
 
+  if (no_users_flag) {
+    *p_state = state;
+    return 1;
+  }
+
   team_extra_set_dir(state->team_extra_state, state->global->team_extra_dir);
 
   if (teamdb_set_callbacks(state->teamdb_state, teamdb_callbacks, cnts->id) < 0)
