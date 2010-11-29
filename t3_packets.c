@@ -38,6 +38,7 @@ enum
   TG_EXAMCHECK = 1,
   TG_UQ,
   TG_UQXFILE,
+  TG_ANSWER,
 
   TG_LAST_TAG
 };
@@ -50,6 +51,9 @@ enum
   AT_FILENAME,
   AT_Q_EXTID,
   AT_GZIPPED,
+  AT_NAME,
+  AT_SORTID,
+  AT_GUID,
 
   AT_LAST_ATTR,
 };
@@ -59,6 +63,7 @@ static const char * const elem_map[] =
   [TG_EXAMCHECK] = "examcheck",
   [TG_UQ]        = "uq",
   [TG_UQXFILE]   = "uqxfile",
+  [TG_ANSWER]    = "answer",
 
   [TG_LAST_TAG] = 0,
 };
@@ -71,6 +76,9 @@ static const char * const attr_map[] =
   [AT_FILENAME]    = "filename",
   [AT_Q_EXTID]     = "q_extid",
   [AT_GZIPPED]     = "gzipped",
+  [AT_NAME]        = "name",
+  [AT_SORTID]      = "sortid",
+  [AT_GUID]        = "guid",
 
   [AT_LAST_ATTR] = 0,
 };
@@ -182,26 +190,16 @@ t3_parse_xml(
       xml_err_attr_undefined(uq, AT_U);
       return -1;
     }
-    if (!a_type) {
-      xml_err_attr_undefined(uq, AT_TYPE);
-      return -1;
-    }
-
-    // type="LANG/CHARSET"
-    if (!(slash = strchr(a_type, '/'))) {
-      rs->prog_lang = xstrdup(a_type);
-    } else {
-      rs->prog_lang = xmemdup(a_type, slash - a_type);
-      rs->prog_charset = xstrdup(slash + 1);
-    }
 
     uqx_count = 0;
     for (uqx = uq->first_down; uqx; uqx = uqx->right) {
       if (uqx->tag == TG_UQXFILE) ++uqx_count;
     }
     if (!uqx_count) {
-      xml_err_elem_undefined(uq, TG_UQXFILE);
-      return -1;
+      rs->skip_flag = 1;
+      continue;
+      //xml_err_elem_undefined(uq, TG_UQXFILE);
+      //return -1;
     }
     if (uqx_count != 1) {
       xml_err(uq, "only one element <uqxfile> is allowed");
@@ -219,12 +217,28 @@ t3_parse_xml(
         if (xml_attr_bool(a, &rs->gzipped) < 0)
           return -1;
         break;
+      case AT_TYPE:
+        a_type = a->text;
+        break;
       }
+    }
+    if (!a_type) {
+      xml_err_attr_undefined(uqx, AT_TYPE);
+      return -1;
     }
     if (!rs->filename) {
       xml_err_attr_undefined(uqx, AT_FILENAME);
       return -1;
     }
+
+    // type="LANG/CHARSET"
+    if (!(slash = strchr(a_type, '/'))) {
+      rs->prog_lang = xstrdup(a_type);
+    } else {
+      rs->prog_lang = xmemdup(a_type, slash - a_type);
+      rs->prog_charset = xstrdup(slash + 1);
+    }
+
     if (rs->gzipped == -1) {
       // check for some well-known suffixes
       int len = strlen(rs->filename);

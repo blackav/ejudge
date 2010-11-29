@@ -28,6 +28,7 @@ struct t3_in_submit
   unsigned char *prog_charset;
   unsigned char *filename;
   int gzipped;
+  int skip_flag;
 
   /** the size of the file in the archive */
   long file_size;
