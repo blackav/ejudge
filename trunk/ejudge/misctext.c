@@ -1870,6 +1870,10 @@ ucs2_to_utf8(
       if (count0 <= 0) {
         is_be = 1;
       }
+      if (count0 > 0 && count1 > 0) {
+        // do not risk it
+        return -1;
+      }
     }
   }
 

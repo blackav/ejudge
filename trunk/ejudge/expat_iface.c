@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2010 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -276,8 +276,9 @@ encoding_hnd(void *data, const XML_Char *name, XML_Encoding *info)
   char *p_out_buf;
   size_t in_size, out_size, conv_size;
 
-  if ((conv_hnd = iconv_open("utf-16le", name)) == (iconv_t) -1)
+  if ((conv_hnd = iconv_open("utf-16le", name)) == (iconv_t) -1) {
     return 0;
+  }
 
   info->data = 0;
   info->convert = 0;
@@ -285,7 +286,11 @@ encoding_hnd(void *data, const XML_Char *name, XML_Encoding *info)
 
   /* fill up the translation table */
   /* FIXME: this supports only one byte encodings */
-  for (i = 0; i < 256; i++) {
+  for (i = 0; i < 128; ++i) {
+    info->map[i] = i;
+  }
+
+  for (; i < 256; i++) {
     in_size = 1;
     p_in_buf = (iconv_src_str_t) in_buf;
     in_buf[0] = i;
