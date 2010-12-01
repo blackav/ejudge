@@ -195,6 +195,7 @@ COMMON_CFILES=\
  super_proto.c\
  sha.c\
  t3m_dir_listener.c\
+ t3m_submits.c\
  t3m_zip_packet_class.c\
  t3_packets.c\
  teamdb.c\
@@ -216,6 +217,7 @@ COMMON_CFILES=\
  varsubst.c\
  vcs.c\
  watched_file.c\
+ zip_utils.c\
  xml_utils/attr_bool.c\
  xml_utils/attr_bool_byte.c\
  xml_utils/attr_date.c\
@@ -410,6 +412,7 @@ HFILES=\
  sha.h\
  t3m_dir_listener.h\
  t3m_packet_class.h\
+ t3m_submits.h\
  t3_packets.h\
  teamdb.h\
  teamdb_priv.h\
@@ -432,7 +435,8 @@ HFILES=\
  new_server_clnt.h\
  new_server_proto.h\
  new_server_clnt/new_server_clnt_priv.h\
- xml_utils.h
+ xml_utils.h\
+ zip_utils.h
 
 OTHERFILES=\
  filter_expr.y\
