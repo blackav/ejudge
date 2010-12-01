@@ -108,7 +108,7 @@ NWRUN_OBJECTS=$(NWRUN_CFILES:.c=.o) libcommon.a libplatform.a
 NCHECK_CFILES=ej-ncheck.c version.c
 NCHECK_OBJECTS=$(NCHECK_CFILES:.c=.o) libcommon.a libplatform.a
 
-T3M_CFILES=ej-t3-mediator.c version.c
+T3M_CFILES=ej-batch.c version.c
 T3M_OBJECTS=$(T3M_CFILES:.c=.o) libcommon.a libuserlist_clnt.a libplatform.a
 
 SC_CFILES = serve-control.c version.c
@@ -181,7 +181,7 @@ NSC_CFILES=new-server-control.c version.c
 NSC_OBJECTS=$(NSC_CFILES:.c=.o) libcommon.a libnew_server_clnt.a libplatform.a
 
 BINTARGETS = ejudge-jobs-cmd ejudge-edit-users ejudge-setup ejudge-configure-compilers ejudge-control ejudge-execute ejudge-contests-cmd
-SERVERBINTARGETS = ej-compile ej-compile-control ej-run ej-nwrun ej-ncheck ej-t3-mediator ej-serve ej-users ej-users-control ej-jobs ej-jobs-control ej-super-server ej-super-server-control ej-contests ej-contests-control uudecode ej-convert-clars ej-convert-runs ej-fix-db
+SERVERBINTARGETS = ej-compile ej-compile-control ej-run ej-nwrun ej-ncheck ej-batch ej-serve ej-users ej-users-control ej-jobs ej-jobs-control ej-super-server ej-super-server-control ej-contests ej-contests-control uudecode ej-convert-clars ej-convert-runs ej-fix-db
 CGITARGETS = users${CGI_PROG_SUFFIX} serve-control${CGI_PROG_SUFFIX} new-client${CGI_PROG_SUFFIX}
 TARGETS = ${SERVERBINTARGETS} ${BINTARGETS} ${CGITARGETS}
 STYLEFILES = style/logo.gif style/priv.css style/unpriv.css style/priv.js style/unpriv.js style/filter_expr.html
@@ -261,7 +261,7 @@ ej-nwrun${EXESFX} : $(NWRUN_OBJECTS)
 ej-ncheck${EXESFX} : $(NCHECK_OBJECTS)
 	$(LD) $(LDFLAGS) $(NCHECK_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB}
 
-ej-t3-mediator : $(T3M_OBJECTS)
+ej-batch : $(T3M_OBJECTS)
 	$(LD) $(LDFLAGS) $(T3M_OBJECTS) -o $@ $(LDLIBS) -ldl ${EXPAT_LIB} ${LIBZIP}
 
 ej-serve : $(SERVE_OBJECTS)
