@@ -26,7 +26,9 @@
 
 #include <reuse/xalloc.h>
 
+#if CONF_HAS_LIBZIP - 0 == 1
 #include <zip.h>
+#endif
 #include <stdio.h>
 #include <errno.h>
 #include <stdarg.h>
