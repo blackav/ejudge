@@ -58,6 +58,11 @@ struct t3_out_submit
 {
   unsigned char *prob_guid;
   unsigned char *user_guid;
+
+  // -1 means unchecked
+  int status;
+  int skip_flag;
+
   int score;
   unsigned char *mark;
   unsigned char *data;

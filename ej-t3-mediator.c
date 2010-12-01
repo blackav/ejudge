@@ -36,6 +36,12 @@
 #include "compile_packet.h"
 #include "t3m_dir_listener.h"
 #include "t3m_packet_class.h"
+#include "t3m_submits.h"
+#include "runlog.h"
+#include "run_packet.h"
+#include "testing_report_xml.h"
+#include "zip_utils.h"
+#include "xml_utils.h"
 
 #include <reuse/osdeps.h>
 #include <reuse/xalloc.h>
@@ -68,6 +74,15 @@
 #define MAX_CONTEST_ID    999999
 #define MAX_CONTEST_COUNT 1000000
 #define MAX_COMPILER_COUNT 1000000
+
+int
+compile_spool_add_reply_dir(const unsigned char *reply_dir);
+int
+run_spool_add_reply_dir(const unsigned char *reply_dir);
+
+/* FIXME: remove it */
+static struct dir_listener_state *global_dl_state = 0;
+static struct submit_block_state *global_sb_state = 0;
 
 static const unsigned char *program_name;
 static unsigned char *program_dir;
@@ -432,206 +447,6 @@ move_in(
   return r;
 }
 
-static int
-ungzip_to_memory(
-        FILE *log,
-        unsigned char **p_out_buf,
-        int *p_out_size,
-        const unsigned char *in_buf,
-        int in_size)
-{
-  z_stream zf;
-  gz_header gzh;
-  int r, zf_initialized = 0, retval = -1;
-  unsigned char *wb = 0;
-  int wz = 0, zz = 0;
-
-  wz = 4096;
-  wb = (unsigned char *) xmalloc(wz);
-
-  memset(&zf, 0, sizeof(zf));
-  memset(&gzh, 0, sizeof(gzh));
-  zf.zalloc = Z_NULL;
-  zf.zfree = Z_NULL;
-  zf.next_in = (unsigned char*) in_buf;
-  zf.avail_in = in_size;
-  zf.next_out = wb;
-  zf.avail_out = wz;
-
-  if (inflateInit2(&zf, 16+MAX_WBITS) != Z_OK) {
-    logerr("inflateInit failed");
-    goto cleanup;
-  }
-  zf_initialized = 1;
-
-  /*
-  if (inflateGetHeader(&zf, &gzh) != Z_OK) {
-    logerr("inflateGetHeader error");
-    goto cleanup;
-  }
-  */
-
-  while (1) {
-    r = inflate(&zf, Z_NO_FLUSH);
-    if (r == Z_STREAM_END) break;
-    if (r != Z_OK) {
-      logerr("decompression error");
-      goto cleanup;
-    }
-    zz = wz - zf.avail_out;
-    if (zz < 0 || zz > wz) {
-      logerr("decompression integrity check error");
-      goto cleanup;
-    }
-
-    wz *= 2;
-    wb = (unsigned char*) xrealloc(wb, wz);
-    zf.next_out = wb + zz;
-    zf.avail_out = wz - zz;
-  }
-
-  // append \0 to the end of file
-  if (zf.avail_out < 1) {
-    zz = wz - zf.avail_out;
-    if (zz < 0 || zz > wz) {
-      logerr("decompression integrity check error");
-      goto cleanup;
-    }
-
-    wz *= 2;
-    wb = (unsigned char*) xrealloc(wb, wz);
-    zf.next_out = wb + zz;
-    zf.avail_out = wz - zz;
-  }
-  *zf.next_out = 0;
-
-  *p_out_buf = wb;
-  *p_out_size = wz - zf.avail_out;
-
-  wb = 0;
-  retval = 0;
-
- cleanup:;
-  if (zf_initialized) {
-    inflateEnd(&zf);
-  }
-  xfree(wb);
-  return retval;
-}
-
-static int
-process_submit(
-        struct t3m_packet_class *pkt,
-        FILE *log,
-        serve_state_t state,
-        int submit_index)
-{
-  int retval = -1;
-  struct t3m_generic_submit sb;
-  unsigned char *orig_text = 0, *ungzip_text = 0, *utf8_text = 0;
-  int orig_size = 0, ungzip_size = 0, utf8_size = 0;
-
-  const unsigned char *text = 0;
-  int size = 0;
-
-  struct section_problem_data *prob = 0;
-  struct section_language_data *lang = 0;
-
-  if (pkt->ops->get_submit(pkt, log, submit_index, &sb) < 0) {
-    logerr("failed to extract submit %d", submit_index);
-    goto cleanup;
-  }
-  if (sb.skip_flag) return 0;
-
-  if (sb.prob_id > 0 && sb.prob_id <= state->max_prob) {
-    prob = state->probs[sb.prob_id];
-  }
-  if (!prob) {
-    logerr("invalid problem %d in submit %d", sb.prob_id, submit_index);
-    goto cleanup;
-  }
-  if (sb.lang_id > 0 && sb.lang_id <= state->max_lang) {
-    lang = state->langs[sb.lang_id];
-  }
-
-  if (sb.file_size <= 0) {
-    logerr("invalid size of submit %d", submit_index);
-    goto cleanup;
-  }
-  orig_size = sb.file_size;
-  orig_text = (unsigned char*) xmalloc(orig_size + 1);
-  memset(orig_text, 0, orig_size + 1);
-  if (pkt->ops->get_file(pkt, log, submit_index, orig_text, orig_size) < 0) {
-    logerr("failed to extract file of submit %d", submit_index);
-    goto cleanup;
-  }
-  text = orig_text; size = orig_size;
-  if (sb.gzipped) {
-    if (ungzip_to_memory(log, &ungzip_text, &ungzip_size,
-                         orig_text, orig_size) < 0) {
-      logerr("failed to ungzip file of submit %d", submit_index);
-      goto cleanup;
-    }
-    text = ungzip_text; size = ungzip_size;
-    xfree(orig_text); orig_text = 0; orig_size = 0;
-  }
-  /* FIXME: handle only text submits for now */
-  if (strlen(text) != size) {
-    if ((utf8_size = ucs2_to_utf8(&utf8_text, text, size)) < 0) {
-      logerr("UTF16 to UTF8 conversion failed in submit %d", submit_index);
-      goto cleanup;
-    }
-    xfree(ungzip_text); ungzip_text = 0; ungzip_size = 0;
-    xfree(orig_text); orig_text = 0; orig_size = 0;
-    text = utf8_text;
-    size = utf8_size;
-  }
-
-  /*
-int
-serve_compile_request(
-        serve_state_t state,
-        unsigned char const *str,
-        int len,
-        int contest_id,
-        int run_id,
-        int user_id,
-        int lang_id,
-        int locale_id,
-        int output_only,
-        unsigned char const *sfx,
-        char **compiler_env,
-        int style_check_only,
-        const unsigned char *style_checker_cmd,
-        char **style_checker_env,
-        int accepting_mode,
-        int priority_adjustment,
-        int notify_flag,
-        const struct section_problem_data *prob,
-        const struct section_language_data *lang);
-
-      if (serve_compile_request(cs, run_text, run_size, ?,
-                                run_id, phr->user_id,
-                                lang->compile_id, phr->locale_id, 0,
-                                lang->src_sfx,
-                                lang->compiler_env,
-                                0, prob->style_checker_cmd,
-                                prob->style_checker_env,
-                                -1, 0, 0, prob, lang) < 0) {
-
-   */
-
-  // compile that stuff
-
-  retval = 0;
-
- cleanup:;
-  xfree(utf8_text);
-  xfree(orig_text);
-  xfree(ungzip_text);
-  return retval;
-}
-
 struct t3_spool_packet_info
 {
   struct t3_spool_packet_info *prev, *next;
@@ -655,14 +470,327 @@ struct t3_spool_packet_info
   struct t3m_packet_class *pkt;
 
   /* >=0 for OK, <0 for errors */
+  int pending_count;
   int errcode;
   int completed;
 
+  int contest_id;
   int submit_count;
   int base_run_id;              /* run_id assigned from base */
+
+  // some statistics
+  int ignored_count;
+  int wrong_format_count;
+  int processed_count;
+
+  time_t start_time;
+  time_t finish_time;
 };
 
+static int
+process_submit(
+        struct t3m_packet_class *pkt,
+        FILE *log,
+        serve_state_t state,
+        int submit_index,
+        struct t3_spool_packet_info *pi)
+{
+  int retval = -1, r;
+  struct t3m_generic_submit sb;
+  unsigned char *orig_text = 0, *ungzip_text = 0, *utf8_text = 0;
+  int orig_size = 0, ungzip_size = 0, utf8_size = 0;
+
+  const unsigned char *text = 0;
+  int size = 0;
+
+  struct section_problem_data *prob = 0;
+  struct section_language_data *lang = 0;
+  unsigned char result_queue_dir[EJ_PATH_MAX];
+
+  if (pkt->ops->get_submit(pkt, log, submit_index, &sb) < 0) {
+    logerr("failed to extract submit %d", submit_index);
+    goto cleanup;
+  }
+  if (sb.skip_flag) {
+    ++pi->ignored_count;
+    return 0;
+  }
+
+  if (sb.prob_id > 0 && sb.prob_id <= state->max_prob) {
+    prob = state->probs[sb.prob_id];
+  }
+  if (!prob) {
+    logerr("invalid problem %d in submit %d", sb.prob_id, submit_index);
+    goto cleanup;
+  }
+  if (sb.lang_id > 0 && sb.lang_id <= state->max_lang) {
+    lang = state->langs[sb.lang_id];
+  }
+  if (!lang) {
+    logerr("invalid language %d in submit %d", sb.lang_id, submit_index);
+    goto cleanup;
+  }
+
+  if (sb.file_size <= 0) {
+    logerr("invalid size of submit %d", submit_index);
+    ++pi->wrong_format_count;
+    goto cleanup;
+  }
+  orig_size = sb.file_size;
+  orig_text = (unsigned char*) xmalloc(orig_size + 1);
+  memset(orig_text, 0, orig_size + 1);
+  if (pkt->ops->get_file(pkt, log, submit_index, orig_text, orig_size) < 0) {
+    logerr("failed to extract file of submit %d", submit_index);
+    ++pi->wrong_format_count;
+    goto cleanup;
+  }
+  text = orig_text; size = orig_size;
+  if (sb.gzipped) {
+    if (gzip_uncompress_to_memory(&ungzip_text, &ungzip_size,
+                                  orig_text, orig_size) < 0) {
+      logerr("failed to ungzip file of submit %d", submit_index);
+      ++pi->wrong_format_count;
+      goto cleanup;
+    }
+    text = ungzip_text; size = ungzip_size;
+    xfree(orig_text); orig_text = 0; orig_size = 0;
+  }
+  /* FIXME: handle only text submits for now */
+  if (strlen(text) != size) {
+    if ((utf8_size = ucs2_to_utf8(&utf8_text, text, size)) < 0) {
+      logerr("UTF16 to UTF8 conversion failed in submit %d", submit_index);
+      ++pi->wrong_format_count;
+      goto cleanup;
+    }
+    xfree(ungzip_text); ungzip_text = 0; ungzip_size = 0;
+    xfree(orig_text); orig_text = 0; orig_size = 0;
+    text = utf8_text;
+    size = utf8_size;
+  }
+
+  snprintf(result_queue_dir, sizeof(result_queue_dir),
+           "%s/%06d", lang->compile_dir, global->contest_id);
+
+  compile_spool_add_reply_dir(result_queue_dir);
+
+  r = serve_compile_request(state, text, size, global->contest_id,
+                            sb.run_id /* run_id */,
+                            1 /* user_id */,
+                            lang->compile_id,
+                            1 /* locale_id */,
+                            0 /* output_only */,
+                            lang->src_sfx /* sfx */,
+                            lang->compiler_env /* compiler_env */,
+                            0 /* style_check_only */,
+                            0 /* style_checker_cmd*/,
+                            0 /* style_checker_env*/,
+                            0 /* accepting_mode */,
+                            0 /* priority_adjustment */,
+                            0 /* notify_flag */,
+                            prob, lang,
+                            1 /* no_db_flag */);
+  if (r < 0) {
+    // FIXME: handle error
+    abort();
+  }
+
+  // compile that stuff
+  ++pi->pending_count;
+  retval = 0;
+
+ cleanup:;
+  xfree(utf8_text);
+  xfree(orig_text);
+  xfree(ungzip_text);
+  return retval;
+}
+
 static int base_run_id = 0;
+
+static int
+process_compile_packet(
+        void *data,
+        struct submit_block_info *sb,
+        struct compile_reply_packet *pkt,
+        const unsigned char *report_txt,
+        int report_len)
+{
+  struct t3_spool_packet_info *pi = (struct t3_spool_packet_info*) data;
+  int run_index, r;
+  struct contest_extra *extra = 0;
+  unsigned char result_queue_dir[EJ_PATH_MAX];
+  struct t3m_generic_submit t3sb;
+  const struct section_problem_data *prob = 0;
+  const struct section_language_data *lang = 0;
+  FILE *log = stderr;
+
+  run_index = pkt->run_id - pi->base_run_id;
+  ASSERT(run_index >= 0 && run_index < pi->submit_count);
+  if (pkt->status != RUN_OK && pkt->status != RUN_COMPILE_ERR
+      && pkt->status != RUN_CHECK_FAILED
+      && pkt->status != RUN_STYLE_ERR) {
+    fprintf(stderr, "Invalid compilation status\n");
+    abort();
+  }
+
+  if (pkt->status != RUN_OK) {
+    pi->pkt->ops->set_submit(pi->pkt, pi->log_f, run_index, 
+                             pkt->status, 0, report_txt);
+    ++pi->processed_count;
+    if (!--pi->pending_count) pi->completed = 1;
+    return 0;
+  }
+
+  extra = load_contest_extra(pi->contest_id);
+  ASSERT(extra);
+
+  memset(&t3sb, 0, sizeof(t3sb));
+  if (pi->pkt->ops->get_submit(pi->pkt, log, run_index, &t3sb) < 0) {
+    abort();
+  }
+
+  if (t3sb.prob_id > 0 && t3sb.prob_id <= extra->state->max_prob) {
+    prob = extra->state->probs[t3sb.prob_id];
+  }
+  if (!prob) {
+    logerr("invalid problem %d in submit %d", t3sb.prob_id, run_index);
+    abort();
+  }
+  if (t3sb.lang_id > 0 && t3sb.lang_id <= extra->state->max_lang) {
+    lang = extra->state->langs[t3sb.lang_id];
+  }
+  if (!lang) {
+    logerr("invalid language %d in submit %d", t3sb.lang_id, run_index);
+    abort();
+  }
+
+  // enqueue a run request
+  // FIXME: hardcoded path
+  snprintf(result_queue_dir, sizeof(result_queue_dir),
+           "/home/judges/%06d/var/run/%06d", pi->contest_id,
+           global->contest_id);
+  run_spool_add_reply_dir(result_queue_dir);
+
+  r = serve_run_request(extra->state, stderr, report_txt, report_len,
+                        global->contest_id,
+                        pkt->run_id,
+                        1 /* user_id */,
+                        t3sb.prob_id,
+                        t3sb.lang_id,
+                        0 /* variant */,
+                        0 /* priority_adjustment */,
+                        pkt->run_id, /* judge_id */
+                        0 /* accepting_mode */,
+                        0 /* notify_flag */,
+                        0 /* mime_type */,
+                        0 /* compile_report_dir */,
+                        0 /* comp_pkt */,
+                        1 /* no_db_flag */);
+  if (r < 0) abort();
+
+  return 0;
+}
+
+const unsigned char *
+get_status_str_rus(int status)
+{
+  switch (status) {
+  case RUN_OK:
+    return "OK";
+  case RUN_RUN_TIME_ERR:
+    return "Ошибка_при_выполнении";
+  case RUN_TIME_LIMIT_ERR:
+    return "Превышение_времени";
+  case RUN_PRESENTATION_ERR:
+    return "Неверный_формат_вывода";
+  case RUN_WRONG_ANSWER_ERR:
+    return "Неверный_ответ";
+  case RUN_CHECK_FAILED:
+    return "Ошибка_проверки!";
+  case RUN_MEM_LIMIT_ERR:
+    return "Превышение_ограничения_по_памяти";
+  case RUN_SECURITY_ERR:
+    return "Недопустимая_системная_операция";
+  default:
+    return "Недопустимый_статус";
+  }
+}
+
+unsigned char *
+make_report_data(testing_report_xml_t report, struct t3m_generic_submit *psb)
+{
+  char *text = 0;
+  size_t size = 0;
+  FILE *file = 0;
+  struct testing_report_test *tt;
+  int i;
+
+  file = open_memstream(&text, &size);
+  if (!report) {
+    fprintf(file, "No report\n");
+    goto done;
+  }
+  if (report->run_tests <= 0) {
+    fprintf(file, "No tests\n");
+    goto done;
+  }
+  if (report->status == RUN_CHECK_FAILED) {
+    fprintf(file, "Check failed: prob = %d\n", psb->prob_id);
+  }
+  for (i = 0; i < report->run_tests; ++i) {
+    tt = report->tests[i];
+    fprintf(file, "[%d] %s\n", i + 1, get_status_str_rus(tt->status));
+  }
+
+ done:
+  if (file) fclose(file);
+  return text;
+}
+
+static int
+process_run_packet(
+        void *data,
+        struct submit_block_info *sb,
+        struct run_reply_packet *pkt,
+        const unsigned char *report_txt,
+        int report_len)
+{
+  struct t3_spool_packet_info *pi = (struct t3_spool_packet_info*) data;
+  testing_report_xml_t report = 0;
+  int run_index;
+  const unsigned char *start_ptr = 0;
+  unsigned char *out_text = 0;
+  struct t3m_generic_submit submit;
+
+  run_index = pkt->run_id - pi->base_run_id;
+  ASSERT(run_index >= 0 && run_index < pi->submit_count);
+
+  memset(&submit, 0, sizeof(submit));
+  if (pi->pkt->ops->get_submit(pi->pkt, stderr, run_index, &submit) < 0) {
+    abort();
+  }
+  
+  if (get_content_type(report_txt, &start_ptr) != CONTENT_TYPE_XML) {
+    // we expect the master log in XML format
+    abort();
+  }
+
+  report = testing_report_parse_xml(start_ptr);
+  if (!report) {
+    fprintf(stderr, ">>%s<<\n", start_ptr);
+    ASSERT(report);
+  }
+
+  out_text = make_report_data(report, &submit);
+  pi->pkt->ops->set_submit(pi->pkt, pi->log_f, run_index, 
+                           pkt->status, pkt->score, out_text);
+  ++pi->processed_count;
+  if (!--pi->pending_count) pi->completed = 1;
+
+  xfree(out_text);
+  testing_report_free(report);
+  return 0;
+}
 
 static int
 process_packet(
@@ -672,7 +800,7 @@ process_packet(
 {
   int retval = -1;
   const unsigned char *exam_guid = 0;
-  int contest_id = 0, i;
+  int i;
   struct contest_extra *extra = 0;
 
   exam_guid = pkt->ops->get_exam_guid(pkt);
@@ -689,9 +817,9 @@ process_packet(
     logerr("exam GUID '%s' is not mapped to a contest", exam_guid);
     goto cleanup;
   }
-  contest_id = contests[i]->id;
+  pi->contest_id = contests[i]->id;
 
-  extra = load_contest_extra(contest_id);
+  extra = load_contest_extra(pi->contest_id);
   if (!extra) goto cleanup;
 
   pi->submit_count = pkt->ops->get_submit_count(pkt);
@@ -709,8 +837,10 @@ process_packet(
     goto cleanup;
   }
 
+  submit_block_add(global_sb_state, global->contest_id, pi->base_run_id, pi->submit_count, process_compile_packet, process_run_packet, pi);
+
   for (i = 0; i < pi->submit_count; ++i) {
-    process_submit(pkt, log, extra->state, i);
+    process_submit(pkt, log, extra->state, i, pi);
   }
 
   retval = 0;
@@ -741,6 +871,17 @@ t3_spool_finalize_packet(
   xfree(pi->log_t); pi->log_t = 0; pi->log_z = 0;
 
   move_in(pi->spool_out_dir, pi->pkt_name, pi->out_path);
+
+  pi->finish_time = time(0);
+
+  fprintf(stderr, "Packet statistics\n");
+  fprintf(stderr, "Submit count:   %d\n", pi->submit_count);
+  fprintf(stderr, "Ignored count:  %d\n", pi->ignored_count);
+  fprintf(stderr, "Wrong format:   %d\n", pi->wrong_format_count);
+  fprintf(stderr, "Processed:      %d\n", pi->processed_count);
+  fprintf(stderr, "Started:        %s\n", xml_unparse_date(pi->start_time));
+  fprintf(stderr, "Finished:       %s\n", xml_unparse_date(pi->finish_time));
+  fprintf(stderr, "Duration:       %ld\n", pi->finish_time - pi->start_time);
 
   pi->pkt = pi->pkt->ops->destroy(pi->pkt);
   xfree(pi->pkt_name);
@@ -785,6 +926,7 @@ t3_spool_handler(
   unique_name(out_name, sizeof(out_name), pkt_name);
   snprintf(out_path, sizeof(out_path), "%s/in/%s", spool_out_dir, out_name);
 
+  new_info->start_time = time(0);
   new_info->pkt_name = xstrdup(pkt_name);
   new_info->spool_in_dir = xstrdup(spool_dir);
   new_info->in_path = xstrdup(in_path);
@@ -823,89 +965,12 @@ t3_spool_checker(
   }
 }
 
-struct submit_info
-{
-  int status;
-};
-
-struct submit_block_info
-{
-  struct submit_block_info *prev, *next;
-  int contest_id;
-  int first_run_id;
-  int submit_count;
-
-  // additional submit information
-};
-
-static struct submit_block_info *sb_first, *sb_last;
-
-void
-submit_block_add(int contest_id, int first_run_id, int submit_count)
-{
-  struct submit_block_info *p;
-
-  ASSERT(contest_id > 0);
-  ASSERT(first_run_id >= 0);
-  ASSERT(submit_count > 0);
-
-  // check for overlaying packet
-  for (p = sb_first; p; p = p->next) {
-    if (p->contest_id == contest_id
-        && ((p->first_run_id < first_run_id + submit_count
-             && p->first_run_id >= first_run_id)
-            || (first_run_id < p->first_run_id + p->submit_count
-                && first_run_id >= p->first_run_id))) {
-      fprintf(stderr, "overlaying packets: contest_id=%d: (%d, %d), (%d, %d)",
-              p->contest_id, p->first_run_id, p->submit_count,
-              first_run_id, submit_count);
-      abort();
-    }
-  }
-
-  XCALLOC(p, 1);
-  p->contest_id = contest_id;
-  p->first_run_id = first_run_id;
-  p->submit_count = submit_count;
-  LINK_LAST(p, sb_first, sb_last, prev, next);
-}
-
-void
-submit_block_remove(int contest_id, int first_run_id, int submit_count)
-{
-  struct submit_block_info *p;
-
-  for (p = sb_first; p; p = p->next) {
-    if (p->contest_id == contest_id && p->first_run_id == first_run_id
-        && p->submit_count == submit_count) {
-      break;
-    }
-  }
-  if (!p) return;
-
-  UNLINK_FROM_LIST(p, sb_first, sb_last, prev, next);
-  // FIXME: free 'p' item
-}
-
-struct submit_block_info *
-submit_block_find(int contest_id, int run_id)
-{
-  struct submit_block_info *p;
-
-  for (p = sb_first; p; p = p->next) {
-    if (p->contest_id == contest_id && p->first_run_id <= run_id
-        && p->first_run_id + p->submit_count > run_id) {
-      return p;
-    }
-  }
-
-  return 0;
-}
-
 struct compile_spool_out_dirs
 {
-  struct compile_spool_dirs *prev, *next;
-  unsigned char *compile_reply_dir;
+  struct compile_spool_out_dirs *prev, *next;
+  unsigned char *reply_dir;
+  unsigned char *status_dir;
+  unsigned char *report_dir;
   int nrefs;
 };
 
@@ -914,6 +979,59 @@ struct compile_spool_info
   struct compile_spool_out_dirs *first_dir, *last_dir;
 };
 
+struct compile_spool_info compile_spool;
+
+int
+compile_dir_handler(
+        void *data,
+        const unsigned char *spool_dir,
+        const unsigned char *in_path,
+        const unsigned char *pkt_name);
+
+int
+compile_spool_add_reply_dir(const unsigned char *reply_dir)
+{
+  struct compile_spool_out_dirs *p;
+  unsigned char buf[EJ_PATH_MAX];
+
+  ASSERT(reply_dir);
+
+  for (p = compile_spool.first_dir; p; p = p->next) {
+    if (!strcmp(reply_dir, p->reply_dir))
+      break;
+  }
+  if (p) {
+    // already found
+    return 0;
+  }
+
+  XCALLOC(p, 1);
+  LINK_LAST(p, compile_spool.first_dir, compile_spool.last_dir, prev, next);
+
+  p->reply_dir = xstrdup(reply_dir);
+  snprintf(buf, sizeof(buf), "%s/status", reply_dir);
+  p->status_dir = xstrdup(buf);
+  snprintf(buf, sizeof(buf), "%s/report", reply_dir);
+  p->report_dir = xstrdup(buf);
+
+  // FIXME: handle errors properly
+  if (make_dir(p->reply_dir, 0) < 0) exit(1);
+  if (make_all_dir(p->status_dir, 0777) < 0) exit(1);
+  if (make_dir(p->report_dir, 0777) < 0) exit(1);
+
+  if (dir_listener_find(global_dl_state, p->status_dir, 0, 0, 0) >= 0) {
+    // dir listener is already added, but why?
+    fprintf(stderr, "dir listener for '%s' already registered!\n",
+            p->status_dir);
+    return 1;
+  }
+
+  dir_listener_add(global_dl_state, p->status_dir,
+                   compile_dir_handler, NULL, NULL);
+
+  return 1;
+}
+
 int
 compile_dir_handler(
         void *data,
@@ -921,16 +1039,28 @@ compile_dir_handler(
         const unsigned char *in_path,
         const unsigned char *pkt_name)
 {
-  char *pkt_buf = 0;
-  size_t pkt_size = 0;
+  char *pkt_buf = 0, *report_buf = 0;
+  size_t pkt_size = 0, report_size = 0;
   unsigned char src_path[EJ_PATH_MAX];
   int r, retval = 0;
   struct compile_reply_packet *pkt = 0;
   struct submit_block_info *sb = 0;
-  int run_index;
+  struct compile_spool_out_dirs *sp = 0;
+  int run_index, report_len;
+  unsigned char *report_txt = 0;
+
+  /* find spool_dir in compile_spool */
+  for (sp = compile_spool.first_dir; sp; sp = sp->next) {
+    if (!strcmp(sp->status_dir, spool_dir))
+      break;
+  }
+  if (!sp) {
+    fprintf(stderr, "spool directory '%s' is not registered\n", spool_dir);
+    abort();
+  }
 
   src_path[0] = 0;
-  snprintf(src_path, sizeof(src_path), "%s/../report/%s", spool_dir, pkt_name);
+  snprintf(src_path, sizeof(src_path), "%s/%s", sp->report_dir, pkt_name);
 
   r = generic_read_file(&pkt_buf, 0, &pkt_size, 0, NULL, in_path, NULL);
   if (r < 0) goto cleanup;
@@ -945,12 +1075,28 @@ compile_dir_handler(
     err("compile_dir_handler: invalid run_id %d", pkt->run_id);
     goto cleanup;
   }
-  if (!(sb = submit_block_find(pkt->contest_id, pkt->run_id))) {
+
+  r = generic_read_file(&report_buf, 0, &report_size, 0, NULL, src_path, NULL);
+  if (r < 0) goto cleanup;
+
+  report_txt = report_buf;
+  report_len = report_size;
+  if (report_len < 0) {
+    err("compile_dir_handler: invalid report length");
+    goto cleanup;
+  }
+
+  if (!(sb = submit_block_find(global_sb_state,
+                               pkt->contest_id, pkt->run_id))) {
     err("compile_dir_handler: no submits for (%d, %d)",
         pkt->contest_id, pkt->run_id);
     goto cleanup;
   }
   run_index = pkt->run_id - sb->first_run_id;
+
+  if (sb->compile_result_handler) {
+    sb->compile_result_handler(sb->data, sb, pkt, report_txt, report_len);
+  }
 
 cleanup:;
   if (src_path[0]) {
@@ -958,10 +1104,146 @@ cleanup:;
   }
   xfree(pkt_buf);
   compile_reply_packet_free(pkt);
+  xfree(report_buf);
 
   return retval;
 }
 
+int
+run_dir_handler(
+        void *data,
+        const unsigned char *spool_dir,
+        const unsigned char *in_path,
+        const unsigned char *pkt_name);
+
+struct run_spool_out_dirs
+{
+  struct run_spool_out_dirs *prev, *next;
+  unsigned char *reply_dir;
+  unsigned char *status_dir;
+  unsigned char *report_dir;
+  int nrefs;
+};
+
+struct run_spool_info
+{
+  struct run_spool_out_dirs *first_dir, *last_dir;
+};
+
+struct run_spool_info run_spool;
+
+int
+run_spool_add_reply_dir(const unsigned char *reply_dir)
+{
+  struct run_spool_out_dirs *p;
+  unsigned char buf[EJ_PATH_MAX];
+
+  ASSERT(reply_dir);
+
+  for (p = run_spool.first_dir; p; p = p->next) {
+    if (!strcmp(reply_dir, p->reply_dir))
+      break;
+  }
+  if (p) {
+    // already found
+    return 0;
+  }
+
+  XCALLOC(p, 1);
+  LINK_LAST(p, run_spool.first_dir, run_spool.last_dir, prev, next);
+
+  p->reply_dir = xstrdup(reply_dir);
+  snprintf(buf, sizeof(buf), "%s/status", reply_dir);
+  p->status_dir = xstrdup(buf);
+  snprintf(buf, sizeof(buf), "%s/report", reply_dir);
+  p->report_dir = xstrdup(buf);
+
+  // FIXME: handle errors properly
+  if (make_dir(p->reply_dir, 0) < 0) exit(1);
+  if (make_all_dir(p->status_dir, 0777) < 0) exit(1);
+  if (make_dir(p->report_dir, 0777) < 0) exit(1);
+
+  if (dir_listener_find(global_dl_state, p->status_dir, 0, 0, 0) >= 0) {
+    // dir listener is already added, but why?
+    fprintf(stderr, "dir listener for '%s' already registered!\n",
+            p->status_dir);
+    return 1;
+  }
+
+  dir_listener_add(global_dl_state, p->status_dir,
+                   run_dir_handler, NULL, NULL);
+
+  return 1;
+}
+
+int
+run_dir_handler(
+        void *data,
+        const unsigned char *spool_dir,
+        const unsigned char *in_path,
+        const unsigned char *pkt_name)
+{
+  struct run_spool_out_dirs *sp = 0;
+  unsigned char src_path[EJ_PATH_MAX];
+  struct run_reply_packet *pkt = 0;
+  int r;
+  char *pkt_buf = 0, *report_buf = 0;
+  size_t pkt_size = 0, report_size = 0;
+  unsigned char *report_txt = 0;
+  int report_len = 0;
+  struct submit_block_info *sb = 0;
+
+  /* find spool_dir in compile_spool */
+  for (sp = run_spool.first_dir; sp; sp = sp->next) {
+    if (!strcmp(sp->status_dir, spool_dir))
+      break;
+  }
+  if (!sp) {
+    fprintf(stderr, "spool directory '%s' is not registered\n", spool_dir);
+    abort();
+  }
+
+  src_path[0] = 0;
+  snprintf(src_path, sizeof(src_path), "%s/%s", sp->report_dir, pkt_name);
+
+  r = generic_read_file(&pkt_buf, 0, &pkt_size, 0, NULL, in_path, NULL);
+  if (r < 0) goto cleanup;
+  if (run_reply_packet_read(pkt_size, pkt_buf, &pkt) < 0) {
+    goto cleanup;
+  }
+  if (pkt->contest_id <= 0) {
+    err("run_dir_handler: invalid contest_id %d", pkt->contest_id);
+    goto cleanup;
+  }
+  if (pkt->run_id < 0) {
+    err("run_dir_handler: invalid run_id %d", pkt->run_id);
+    goto cleanup;
+  }
+
+  r = generic_read_file(&report_buf, 0, &report_size, 0, NULL, src_path, NULL);
+  if (r < 0) goto cleanup;
+
+  report_txt = report_buf;
+  report_len = report_size;
+  if (report_len < 0) {
+    err("run_dir_handler: invalid report length");
+    goto cleanup;
+  }
+
+  if (!(sb = submit_block_find(global_sb_state,
+                               pkt->contest_id, pkt->run_id))) {
+    err("run_dir_handler: no submits for (%d, %d)",
+        pkt->contest_id, pkt->run_id);
+    goto cleanup;
+  }
+
+  if (sb->run_result_handler) {
+    sb->run_result_handler(sb->data, sb, pkt, report_txt, report_len);
+  }
+
+ cleanup:;
+  return 0;
+}
 
 static int
 server_loop(struct dir_listener_state *dl_state)
@@ -1059,6 +1341,10 @@ parse_config(FILE *log)
   }
   if (!global) {
     logerr("no global section in configuration file");
+    goto cleanup;
+  }
+  if (global->contest_id <= 0) {
+    logerr("global contest_id parameter is undefined");
     goto cleanup;
   }
 
@@ -1261,8 +1547,10 @@ main(int argc, char *argv[])
   }
 #endif /* __WIN32__ */
 
+  global_sb_state = submit_block_create();
   XCALLOC(info, 1);
   dl_state = dir_listener_create();
+  global_dl_state = dl_state;
   dir_listener_add(dl_state, spool_in_dir, t3_spool_handler, t3_spool_checker, info);
 
   if (server_loop(dl_state) < 0) {

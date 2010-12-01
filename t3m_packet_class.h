@@ -73,6 +73,13 @@ struct t3m_packet_operations
         int index,
         unsigned char *text,
         int size);
+  int (*set_submit)(
+        struct t3m_packet_class *data,
+        FILE *log,
+        int index,
+        int status,
+        int score,
+        const unsigned char *text);
 };
 
 struct t3m_packet_class
