@@ -265,7 +265,7 @@ CFILES=\
  convert-runs.c\
  edit-userlist.c\
  ej-ncheck.c\
- ej-t3-mediator.c\
+ ej-batch.c\
  ejudge-configure-compilers.c\
  ejudge-control.c\
  ejudge-setup.c\
