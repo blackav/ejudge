@@ -203,7 +203,7 @@ t3_parse_xml(
     }
     if (uqx_count != 1) {
       xml_err(uq, "only one element <uqxfile> is allowed");
-      return -1;
+      //return -1;
     }
     for (uqx = uq->first_down; uqx && uqx->tag != TG_UQXFILE; uqx = uqx->right);
 
@@ -332,6 +332,7 @@ t3_out_packet_make_from_in(struct t3_in_packet *p)
       if (ins->user_guid) {
         outs->user_guid = xstrdup(ins->user_guid);
       }
+      outs->status = -1;
     }
   }
 
@@ -351,8 +352,9 @@ t3_out_packet_write(FILE *out, struct t3_out_packet *p)
           html_armor_buf(&ab, p->exam_guid));
   for (i = 0; i < p->submit_count; ++i) {
     struct t3_out_submit *ps = &p->submits[i];
+    if (ps->skip_flag) continue;
     fprintf(out, "  <um");
-    fprintf(out, " score=\"%d\"", ps->score);
+    fprintf(out, " m=\"%d\"", ps->score * 100);
     if (ps->prob_guid) {
       fprintf(out, " q=\"%s\"", html_armor_buf(&ab, ps->prob_guid));
     }
@@ -360,14 +362,16 @@ t3_out_packet_write(FILE *out, struct t3_out_packet *p)
       fprintf(out, " u=\"%s\"", html_armor_buf(&ab, ps->user_guid));
     }
     fprintf(out, ">\n");
-    fprintf(out, "    <uacomment");
-    if (ps->mark) {
-      fprintf(out, " mark=\"%s\"", html_armor_buf(&ab, ps->mark));
+    if (ps->mark || ps->data) {
+      fprintf(out, "    <uacomment");
+      if (ps->mark) {
+        fprintf(out, " mark=\"%s\"", html_armor_buf(&ab, ps->mark));
+      }
+      if (ps->data) {
+        fprintf(out, " data=\"%s\"", html_armor_buf(&ab, ps->data));
+      }
+      fprintf(out, "/>\n");
     }
-    if (ps->data) {
-      fprintf(out, " data=\"%s\"", html_armor_buf(&ab, ps->data));
-    }
-    fprintf(out, "/>\n");
     fprintf(out, "  </um>\n");
   }
   fprintf(out, "</examresults>\n");

@@ -82,6 +82,14 @@ static int zip_packet_get_file(
         int index,
         unsigned char *text,
         int size);
+static int
+zip_packet_set_submit(
+        struct t3m_packet_class *data,
+        FILE *log,
+        int index,
+        int status,
+        int score,
+        const unsigned char *text);
 
 struct t3m_packet_operations zip_packet_operations =
 {
@@ -94,6 +102,7 @@ struct t3m_packet_operations zip_packet_operations =
   .get_submit_count = zip_packet_get_submit_count,
   .get_submit = zip_packet_get_submit,
   .get_file = zip_packet_get_file,
+  .set_submit = zip_packet_set_submit,
 };
 
 struct zip_packet_class
@@ -215,13 +224,17 @@ zip_packet_class_parse(
     file_ind = zip_name_locate(zp->in_zip, submit->filename, 0);
     if (file_ind < 0) {
       logerr("entry '%s' is not found", submit->filename);
-      goto cleanup;
+      //goto cleanup;
+      submit->skip_flag = 1;
+      continue;
     }
     submit->zip_ind = file_ind;
     zip_stat_init(&zs);
     if (zip_stat_index(zp->in_zip, file_ind, 0, &zs) < 0) {
       logerr("entry '%s' is not found", submit->filename);
-      goto cleanup;
+      //goto cleanup;
+      submit->skip_flag = 1;
+      continue;
     }
     submit->file_size = zs.size;
     
@@ -539,8 +552,10 @@ zip_packet_get_file(
     return -1;
   }
 
+  /*
   fprintf(stderr, ">>%s, %ld, %d\n", t3sb->filename,
           t3sb->file_size, t3sb->zip_ind);
+  */
 
   if (!t3sb->file_size) return 0;
 
@@ -590,6 +605,40 @@ zip_packet_class_destroy(struct t3m_packet_class *data)
   xfree(zp);
   return 0;
 }
+
+static int
+zip_packet_set_submit(
+        struct t3m_packet_class *data,
+        FILE *log,
+        int index,
+        int status,
+        int score,
+        const unsigned char *text)
+{
+  struct zip_packet_class *zp = (struct zip_packet_class*) data;
+  struct t3_out_submit *t3sb;
+
+  if (!zp || !log) {
+    logerr("invalid parameters");
+    return -1;
+  }
+  if (!zp->out_packet) {
+    logerr("no output packet");
+    return -1;
+  }
+  if (index < 0 || index >= zp->out_packet->submit_count) {
+    logerr("index is out of range");
+    return -1;
+  }
+
+  t3sb = &zp->out_packet->submits[index];
+  t3sb->status = status;
+  t3sb->score = score;
+  t3sb->data = xstrdup(text);
+
+  return 0;
+}
+
 #endif /* CONF_HAS_LIBZIP */
 
 struct t3m_packet_class *
