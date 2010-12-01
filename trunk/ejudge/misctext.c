@@ -1788,6 +1788,9 @@ html_print_by_line(
             }
           } else if (*p <= 0xef) {
             // three bytes: 0x800-0xffff
+            putc('?', f);
+            p++;
+            /*
             if (p + 2 < s && p[1] >= 0x80 && p[1] <= 0xbf && p[2] >= 0x80 && p[2] <= 0xbf && (((s[0] & 0x0f) << 12) | ((s[1] & 0x3f) << 6) | (s[2] & 0x3f)) >= 0x800) {
               putc(*p++, f);
               putc(*p++, f);
@@ -1796,8 +1799,12 @@ html_print_by_line(
               putc('?', f);
               p++;
             }
+            */
           } else if (*p <= 0xf7) {
             // four bytes: 0x10000-0x10ffff
+            putc('?', f);
+            p++;
+            /*
             if (p + 3 < s && p[1] >= 0x80 && p[1] <= 0xbf && p[2] >= 0x80 && p[2] <= 0xbf && p[3] >= 0x80 && p[3] <= 0xbf && (((s[0] & 0x07) << 18) | ((s[1] & 0x3f) << 12) | ((s[2] & 0x3f) << 6) | (s[3] & 0x3f)) >= 0x10000) {
               putc(*p++, f);
               putc(*p++, f);
@@ -1807,6 +1814,7 @@ html_print_by_line(
               putc('?', f);
               p++;
             }
+            */
           } else {
             // reserved
             putc('?', f);

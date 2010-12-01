@@ -961,7 +961,7 @@ cmd_submit_run(
                                 lang->compiler_env,
                                 0, prob->style_checker_cmd,
                                 prob->style_checker_env,
-                                -1, 0, 0, prob, lang) < 0)
+                                -1, 0, 0, prob, lang, 0) < 0)
         FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
       serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
                       "Command: submit\n"
@@ -991,12 +991,14 @@ cmd_submit_run(
                                   0 /* accepting_mode */,
                                   0 /* priority_adjustment */,
                                   0 /* notify flag */,
-                                  prob, NULL /* lang */) < 0)
+                                  prob, NULL /* lang */,
+                                  0 /* no_db_flag */) < 0)
           FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
       } else {
-        if (serve_run_request(cs, stderr, run_text, run_size, run_id,
+        if (serve_run_request(cs, stderr, run_text, run_size,
+                              global->contest_id, run_id,
                               phr->user_id, prob->id, 0, variant, 0, -1, -1, 0,
-                              mime_type, 0, 0) < 0)
+                              mime_type, 0, 0, 0) < 0)
           FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
       }
 
@@ -1028,12 +1030,14 @@ cmd_submit_run(
                                   0 /* accepting_mode */,
                                   0 /* priority_adjustment */,
                                   0 /* notify flag */,
-                                  prob, NULL /* lang */) < 0)
+                                  prob, NULL /* lang */,
+                                  0 /* no_db_flag */) < 0)
           FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
       } else {
-        if (serve_run_request(cs, stderr, run_text, run_size, run_id,
+        if (serve_run_request(cs, stderr, run_text, run_size,
+                              global->contest_id, run_id,
                               phr->user_id, prob->id, 0, variant, 0, -1, -1, 0,
-                              mime_type, 0, 0) < 0)
+                              mime_type, 0, 0, 0) < 0)
           FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
       }
 

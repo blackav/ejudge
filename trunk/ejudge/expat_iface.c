@@ -298,7 +298,7 @@ encoding_hnd(void *data, const XML_Char *name, XML_Encoding *info)
     p_out_buf = out_buf;
     conv_size = iconv(conv_hnd, &p_in_buf, &in_size, &p_out_buf, &out_size);
     if (conv_size == (size_t) -1) {
-      info->map[i] = '?';
+      info->map[i] = '@';
       out_size = sizeof(out_buf);
       p_out_buf = out_buf;
       // reset the shift state
@@ -307,6 +307,7 @@ encoding_hnd(void *data, const XML_Char *name, XML_Encoding *info)
       ASSERT(!in_size);
       ASSERT(out_size + 2 == sizeof(out_buf));
       info->map[i] = out_buf[0] | (out_buf[1] << 8);
+      //if (info->map[i] >= 0x2000) info->map[i] = '?';
     }
   }
 

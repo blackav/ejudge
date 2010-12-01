@@ -2836,7 +2836,7 @@ priv_submit_run(FILE *fout,
                                 lang->compiler_env,
                                 0, prob->style_checker_cmd,
                                 prob->style_checker_env,
-                                -1, 0, 0, prob, lang) < 0) {
+                                -1, 0, 0, prob, lang, 0) < 0) {
         ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
         goto cleanup;
       }
@@ -2868,11 +2868,13 @@ priv_submit_run(FILE *fout,
                               0 /* accepting_mode */,
                               0 /* priority_adjustment */,
                               0 /* notify flag */,
-                              prob, NULL /* lang */);
+                              prob, NULL /* lang */,
+                              0 /* no_db_flag */);
       } else {
-        if (serve_run_request(cs, log_f, run_text, run_size, run_id,
+        if (serve_run_request(cs, log_f, run_text, run_size,
+                              global->contest_id, run_id,
                               phr->user_id, prob_id, 0, variant, 0, -1, -1, 0,
-                              mime_type, 0, 0) < 0) {
+                              mime_type, 0, 0, 0) < 0) {
           ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
           goto cleanup;
         }
@@ -2907,11 +2909,13 @@ priv_submit_run(FILE *fout,
                               0 /* accepting_mode */,
                               0 /* priority_adjustment */,
                               0 /* notify flag */,
-                              prob, NULL /* lang */);
+                              prob, NULL /* lang */,
+                              0 /* no_db_flag */);
       } else {      
-        if (serve_run_request(cs, log_f, run_text, run_size, run_id,
+        if (serve_run_request(cs, log_f, run_text, run_size,
+                              global->contest_id, run_id,
                               phr->user_id, prob_id, 0, variant, 0, -1, -1, 0,
-                              mime_type, 0, 0) < 0) {
+                              mime_type, 0, 0, 0) < 0) {
           ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
           goto cleanup;
         }
@@ -10113,7 +10117,7 @@ unpriv_submit_run(FILE *fout,
                                 lang->compiler_env,
                                 0, prob->style_checker_cmd,
                                 prob->style_checker_env,
-                                -1, 0, 1, prob, lang) < 0) {
+                                -1, 0, 1, prob, lang, 0) < 0) {
         ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
         goto done;
       }
@@ -10145,11 +10149,13 @@ unpriv_submit_run(FILE *fout,
                               0 /* accepting_mode */,
                               0 /* priority_adjustment */,
                               0 /* notify flag */,
-                              prob, NULL /* lang */);
+                              prob, NULL /* lang */,
+                              0 /* no_db_flag */);
       } else {
-        if (serve_run_request(cs, log_f, run_text, run_size, run_id,
+        if (serve_run_request(cs, log_f, run_text, run_size,
+                              global->contest_id, run_id,
                               phr->user_id, prob_id, 0, variant, 0, -1, -1, 1,
-                              mime_type, 0, 0) < 0) {
+                              mime_type, 0, 0, 0) < 0) {
           ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
           goto done;
         }
@@ -10203,11 +10209,13 @@ unpriv_submit_run(FILE *fout,
                               0 /* accepting_mode */,
                               0 /* priority_adjustment */,
                               0 /* notify flag */,
-                              prob, NULL /* lang */);
+                              prob, NULL /* lang */,
+                              0 /* no_db_flag */);
       } else {
-        if (serve_run_request(cs, log_f, run_text, run_size, run_id,
+        if (serve_run_request(cs, log_f, run_text, run_size,
+                              global->contest_id, run_id,
                               phr->user_id, prob_id, 0, variant, 0, -1, -1, 1,
-                              mime_type, 0, 0) < 0) {
+                              mime_type, 0, 0, 0) < 0) {
           ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
           goto done;
         }

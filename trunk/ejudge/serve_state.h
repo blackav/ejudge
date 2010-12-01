@@ -353,7 +353,8 @@ serve_compile_request(
         int priority_adjustment,
         int notify_flag,
         const struct section_problem_data *prob,
-        const struct section_language_data *lang);
+        const struct section_language_data *lang,
+        int no_db_flag);
 
 struct compile_reply_packet;
 int
@@ -362,6 +363,7 @@ serve_run_request(
         FILE *errf,
         const unsigned char *run_text,
         size_t run_size,
+        int contest_id,
         int run_id,
         int user_id,
         int prob_id,
@@ -373,7 +375,8 @@ serve_run_request(
         int notify_flag,
         int mime_type,
         const unsigned char *compile_report_dir,
-        const struct compile_reply_packet *comp_pkt);
+        const struct compile_reply_packet *comp_pkt,
+        int no_db_flag);
 
 int serve_is_valid_status(serve_state_t state, int status, int mode);
 

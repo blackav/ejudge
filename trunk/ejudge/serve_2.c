@@ -949,7 +949,8 @@ serve_compile_request(
         int priority_adjustment,
         int notify_flag,
         const struct section_problem_data *prob,
-        const struct section_language_data *lang)
+        const struct section_language_data *lang,
+        int no_db_flag)
 {
   struct compile_run_extra rx;
   struct compile_request_packet cp;
@@ -1087,7 +1088,7 @@ serve_compile_request(
   if (src_header_size > 0 || src_footer_size > 0) {
     if (len < 0) {
       arch_flags = archive_make_read_path(state, run_arch, sizeof(run_arch),
-                                          global->run_archive_dir, run_id, 0,0);
+                                          global->run_archive_dir, run_id,0,0);
       if (arch_flags < 0) goto failed;
       if (generic_read_file(&src_text, 0, &src_size, arch_flags, 0,
                             run_arch, "") < 0)
@@ -1127,9 +1128,11 @@ serve_compile_request(
     goto failed;
   }
 
-  if (run_change_status(state->runlog_state, run_id, RUN_COMPILING, 0, -1,
-                        cp.judge_id) < 0) {
-    goto failed;
+  if (!no_db_flag) {
+    if (run_change_status(state->runlog_state, run_id, RUN_COMPILING, 0, -1,
+                          cp.judge_id) < 0) {
+      goto failed;
+    }
   }
 
   sarray_free(sc_env_mem);
@@ -1156,6 +1159,7 @@ serve_run_request(
         FILE *errf,
         const unsigned char *run_text,
         size_t run_size,
+        int contest_id,
         int run_id,
         int user_id,
         int prob_id,
@@ -1167,7 +1171,8 @@ serve_run_request(
         int notify_flag,
         int mime_type,
         const unsigned char *compile_report_dir,
-        const struct compile_reply_packet *comp_pkt)
+        const struct compile_reply_packet *comp_pkt,
+        int no_db_flag)
 {
   int cn;
   struct section_problem_data *prob;
@@ -1198,11 +1203,17 @@ serve_run_request(
       return -1;
     }
   }
-  if (!(user_name = teamdb_get_name(state->teamdb_state, user_id))) {
-    fprintf(errf, "invalid user %d", user_id);
-    return -1;
+  if (no_db_flag) {
+    user_name = "";
+  } else {
+    if (!(user_name = teamdb_get_name(state->teamdb_state, user_id))) {
+      fprintf(errf, "invalid user %d", user_id);
+      return -1;
+    }
+    if (!*user_name) {
+      user_name = teamdb_get_login(state->teamdb_state, user_id);
+    }
   }
-  if (!*user_name) user_name = teamdb_get_login(state->teamdb_state, user_id);
 
   if (lang) arch = lang->arch;
   if (lang) exe_sfx = lang->exe_sfx;
@@ -1289,7 +1300,7 @@ serve_run_request(
   XALLOCAZ(run_pkt, 1);
 
   run_pkt->judge_id = judge_id;
-  run_pkt->contest_id = state->global->contest_id;
+  run_pkt->contest_id = contest_id;
   run_pkt->run_id = run_id;
   run_pkt->problem_id = prob->tester_id;
   run_pkt->accepting_mode = accepting_mode;
@@ -1366,24 +1377,26 @@ serve_run_request(
     }
   }
 
-  /* in new binary packet format we don't care about neither "special"
-   * characters in spellings nor about spelling length
-   */
-  teamdb_export_team(state->teamdb_state, user_id, &te);
-  ui = 0;
-  if (te.user) ui = te.user->cnts0;
-  if (ui && ui->spelling && ui->spelling[0]) {
-    run_pkt->user_spelling = ui->spelling;
+  if (!no_db_flag) {
+    /* in new binary packet format we don't care about neither "special"
+     * characters in spellings nor about spelling length
+     */
+    teamdb_export_team(state->teamdb_state, user_id, &te);
+    ui = 0;
+    if (te.user) ui = te.user->cnts0;
+    if (ui && ui->spelling && ui->spelling[0]) {
+      run_pkt->user_spelling = ui->spelling;
+    }
+    if (!run_pkt->user_spelling && ui && ui->name
+        && ui->name[0]) {
+      run_pkt->user_spelling = ui->name;
+    }
+    if (!run_pkt->user_spelling && te.login && te.user->login
+        && te.user->login[0]) {
+      run_pkt->user_spelling = te.user->login;
+    }
+    /* run_pkt->user_spelling is allowed to be NULL */
   }
-  if (!run_pkt->user_spelling && ui && ui->name
-      && ui->name[0]) {
-    run_pkt->user_spelling = ui->name;
-  }
-  if (!run_pkt->user_spelling && te.login && te.user->login
-      && te.user->login[0]) {
-    run_pkt->user_spelling = te.user->login;
-  }
-  /* run_pkt->user_spelling is allowed to be NULL */
 
   if (prob->spelling[0]) {
     run_pkt->prob_spelling = prob->spelling;
@@ -1408,9 +1421,11 @@ serve_run_request(
 
   /* update status */
   xfree(run_pkt_out); run_pkt_out = 0;
-  if (run_change_status(state->runlog_state, run_id, RUN_RUNNING, 0, -1,
-                        judge_id) < 0) {
-    return -1;
+  if (!no_db_flag) {
+    if (run_change_status(state->runlog_state, run_id, RUN_RUNNING, 0, -1,
+                          judge_id) < 0) {
+      return -1;
+    }
   }
 
   return 0;
@@ -1752,12 +1767,13 @@ serve_read_compile_packet(
       goto report_check_failed;
   }
 
-  if (serve_run_request(state, stderr, run_text, run_size, comp_pkt->run_id,
+  if (serve_run_request(state, stderr, run_text, run_size,
+                        global->contest_id, comp_pkt->run_id,
                         re.user_id, re.prob_id, re.lang_id, 0,
                         comp_extra->priority_adjustment,
                         comp_pkt->judge_id, comp_extra->accepting_mode,
                         comp_extra->notify_flag, re.mime_type,
-                        compile_report_dir, comp_pkt) < 0) {
+                        compile_report_dir, comp_pkt, 0) < 0) {
     snprintf(errmsg, sizeof(errmsg), "failed to write run packet\n");
     goto report_check_failed;
   }
@@ -2362,7 +2378,8 @@ serve_rejudge_run(
                             0 /* accepting_mode */,
                             0 /* priority_adjustment */,
                             1 /* notify flag */,
-                            prob, NULL /* lang */);
+                            prob, NULL /* lang */,
+                            0 /* no_db_flag */);
       serve_audit_log(state, run_id, user_id, ip, ssl_flag,
                       "Command: Rejudge\n");
       return;
@@ -2377,9 +2394,10 @@ serve_rejudge_run(
                           0, run_arch_path, 0) < 0)
       return;
 
-    serve_run_request(state, stderr, run_text, run_size, run_id,
+    serve_run_request(state, stderr, run_text, run_size,
+                      global->contest_id, run_id,
                       re.user_id, re.prob_id, 0, 0, priority_adjustment,
-                      -1, accepting_mode, 1, re.mime_type, 0, 0);
+                      -1, accepting_mode, 1, re.mime_type, 0, 0, 0);
     xfree(run_text);
 
     serve_audit_log(state, run_id, user_id, ip, ssl_flag, "Command: Rejudge\n");
@@ -2403,7 +2421,7 @@ serve_rejudge_run(
                         lang->compiler_env,
                         0, prob->style_checker_cmd,
                         prob->style_checker_env,
-                        accepting_mode, priority_adjustment, 1, prob, lang);
+                        accepting_mode, priority_adjustment, 1, prob, lang, 0);
 
   serve_audit_log(state, run_id, user_id, ip, ssl_flag, "Command: Rejudge\n");
 }
