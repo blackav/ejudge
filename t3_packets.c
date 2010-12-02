@@ -353,26 +353,28 @@ t3_out_packet_write(FILE *out, struct t3_out_packet *p)
   for (i = 0; i < p->submit_count; ++i) {
     struct t3_out_submit *ps = &p->submits[i];
     if (ps->skip_flag) continue;
-    fprintf(out, "  <um");
-    fprintf(out, " m=\"%d\"", ps->score * 100);
-    if (ps->prob_guid) {
-      fprintf(out, " q=\"%s\"", html_armor_buf(&ab, ps->prob_guid));
-    }
-    if (ps->user_guid) {
-      fprintf(out, " u=\"%s\"", html_armor_buf(&ab, ps->user_guid));
-    }
-    fprintf(out, ">\n");
     if (ps->mark || ps->data) {
-      fprintf(out, "    <uacomment");
-      if (ps->mark) {
-        fprintf(out, " mark=\"%s\"", html_armor_buf(&ab, ps->mark));
+      fprintf(out, "  <um");
+      fprintf(out, " m=\"%d\"", ps->score * 100);
+      if (ps->prob_guid) {
+        fprintf(out, " q=\"%s\"", html_armor_buf(&ab, ps->prob_guid));
       }
-      if (ps->data) {
-        fprintf(out, " data=\"%s\"", html_armor_buf(&ab, ps->data));
+      if (ps->user_guid) {
+        fprintf(out, " u=\"%s\"", html_armor_buf(&ab, ps->user_guid));
       }
-      fprintf(out, "/>\n");
+      fprintf(out, ">\n");
+      if (ps->mark || ps->data) {
+        fprintf(out, "    <uacomment");
+        if (ps->mark) {
+          fprintf(out, " mark=\"%s\"", html_armor_buf(&ab, ps->mark));
+        }
+        if (ps->data) {
+          fprintf(out, " data=\"%s\"", html_armor_buf(&ab, ps->data));
+        }
+        fprintf(out, "/>\n");
+      }
+      fprintf(out, "  </um>\n");
     }
-    fprintf(out, "  </um>\n");
   }
   fprintf(out, "</examresults>\n");
 

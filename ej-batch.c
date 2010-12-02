@@ -1253,7 +1253,7 @@ server_loop(struct dir_listener_state *dl_state)
   unsigned char in_path[EJ_PATH_MAX];
   struct dir_listener_info *dlp;
 
-  info("ej-t3-mediator server started");
+  info("ej-batch server started");
   interrupt_init();
   interrupt_disable();
   in_path[0] = 0;
@@ -1491,7 +1491,7 @@ main(int argc, char *argv[])
     die("too many arguments");
   }
 
-  if ((pid = start_find_process("ej-t3-mediator", 0)) > 0) {
+  if ((pid = start_find_process("ej-batch", 0)) > 0) {
     fprintf(stderr, "%s: is already running as pid %d\n", argv[0], pid);
     return 1;
   }
@@ -1514,12 +1514,12 @@ main(int argc, char *argv[])
   }
 
   if (ejudge_config->contests_home_dir && ejudge_config->contests_home_dir[0]) {
-    snprintf(pathbuf, sizeof(pathbuf), "%s/t3_mediator", ejudge_config->contests_home_dir);
+    snprintf(pathbuf, sizeof(pathbuf), "%s/batch", ejudge_config->contests_home_dir);
     t3_mediator_dir = xstrdup(pathbuf);
   }
 #if defined EJUDGE_CONTESTS_HOME_DIR
   if (!t3_mediator_dir) {
-    snprintf(pathbuf, sizeof(pathbuf), "%s/t3_mediator", EJUDGE_CONTESTS_HOME_DIR);
+    snprintf(pathbuf, sizeof(pathbuf), "%s/batch", EJUDGE_CONTESTS_HOME_DIR);
     t3_mediator_dir = xstrdup(pathbuf);
   }
 #endif /* EJUDGE_CONTESTS_HOME_DIR */
