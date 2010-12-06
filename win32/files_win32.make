@@ -22,6 +22,7 @@ WIN32_COMMON_CFILES=\
  compile_packet_3.c\
  compile_packet_5.c\
  digest_3.c\
+ digest_4.c\
  ejudge_cfg.c\
  errlog.c\
  expat_iface.c\
@@ -45,6 +46,7 @@ WIN32_COMMON_CFILES=\
  random.c\
  run_inverse.c\
  runlog.c\
+ runlog_static.c\
  run_packet_1.c\
  run_packet_3.c\
  run_packet_5.c\
@@ -54,6 +56,7 @@ WIN32_COMMON_CFILES=\
  shellcfg_parse.c\
  team_extra.c\
  testinfo.c\
+ testing_report_xml.c\
  tsc.c\
  userlist.c\
  userlist_proto.c\
