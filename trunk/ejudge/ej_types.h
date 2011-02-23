@@ -3,7 +3,7 @@
 #ifndef __EJ_TYPES_H__
 #define __EJ_TYPES_H__
 
-/* Copyright (C) 2005-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -79,5 +79,19 @@ enum user_flags
 
   USERLIST_UC_ALL          = 0x0000001f,
 };
+
+/* test visibility */
+enum test_visibility
+{
+  TV_NORMAL = 0, // normal visibility, default value
+  TV_FULL   = 1, // full visibility: show test, output, checker...
+  TV_BRIEF  = 2, // brief: only testing result
+  TV_EXISTS = 3, // only existance of the test, score is counted
+  TV_HIDDEN = 4, // completely hidden
+
+  TV_LAST = 5
+};
+
+int test_visibility_parse(const unsigned char*);
 
 #endif /* __EJ_TYPES_H__ */

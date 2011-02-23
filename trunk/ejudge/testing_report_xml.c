@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -36,7 +36,7 @@
 #endif /* EJUDGE_CHARSET */
 
 /*
-<testing-report run-id="N" judge-id="N" status="O" scoring="R" archive-available="B" [correct-available="B"] [info-available="B"] run-tests="N" [variant="N"] [accepting-mode="B"] [failed-test="N"] [tests-passed="N"] [score="N"] [time_limit_ms="T" real_time_limit_ms="T" [real-time-available="B"] [max-memory-used-available="T"] [marked-flag="B"] [tests-mode="B"] [tt-row-count="N"] [tt-column-count="N"]>
+<testing-report run-id="N" judge-id="N" status="O" scoring="R" archive-available="B" [correct-available="B"] [info-available="B"] run-tests="N" [variant="N"] [accepting-mode="B"] [failed-test="N"] [tests-passed="N"] [score="N"] [time_limit_ms="T" real_time_limit_ms="T" [real-time-available="B"] [max-memory-used-available="T"] [marked-flag="B"] [tests-mode="B"] [tt-row-count="N"] [tt-column-count="N"] [user-status="O"] [user-failed-test="N"] [user-tests-passed="N"] [user-score="N"] [user-max-score="N"] >
   <comment>T</comment>
   <valuer_comment>T</valuer_comment>
   <valuer_judge_comment>T</valuer_judge_comment>
@@ -44,7 +44,7 @@
   <host>T</host>
   <errors>T</errors>
   <tests>
-    <test num="N" status="O" [exit-code="N"] [term-signal="N"] time="N" real-time="N" [max-memory-used="N"] [nominal-score="N" score="N"] [comment="S"] [team-comment="S"] [checker-comment="S"] [exit-comment="S"] output-available="B" stderr-available="B" checker-output-available="B" args-too-long="B" [input-digest="X"] [correct-digest="X"]>
+    <test num="N" status="O" [exit-code="N"] [term-signal="N"] time="N" real-time="N" [max-memory-used="N"] [nominal-score="N" score="N"] [comment="S"] [team-comment="S"] [checker-comment="S"] [exit-comment="S"] output-available="B" stderr-available="B" checker-output-available="B" args-too-long="B" [input-digest="X"] [correct-digest="X"] [visibility="O"]>
        [<args>T</args>]
        [<input>T</input>]
        [<output>T</output>]
@@ -133,6 +133,12 @@ enum
   TR_A_MUST_FAIL,
   TR_A_ROW,
   TR_A_COLUMN,
+  TR_A_VISIBILITY,
+  TR_A_USER_STATUS,
+  TR_A_USER_FAILED_TEST,
+  TR_A_USER_TESTS_PASSED,
+  TR_A_USER_SCORE,
+  TR_A_USER_MAX_SCORE,
 
   TR_A_LAST_ATTR,
 };
@@ -207,6 +213,12 @@ static const char * const attr_map[] =
   [TR_A_MUST_FAIL] = "must-fail",
   [TR_A_ROW] = "row",
   [TR_A_COLUMN] = "column",
+  [TR_A_VISIBILITY] = "visibility",
+  [TR_A_USER_STATUS] = "user-status",
+  [TR_A_USER_FAILED_TEST] = "user-failed-test",
+  [TR_A_USER_TESTS_PASSED] = "user-tests-passed",
+  [TR_A_USER_SCORE] = "user-score",
+  [TR_A_USER_MAX_SCORE] = "user-max-score",
 
   [TR_A_LAST_ATTR] = 0,
 };
@@ -344,7 +356,14 @@ parse_test(struct xml_tree *t, testing_report_xml_t r)
       }
       p->score = x;
       break;
-
+    case TR_A_VISIBILITY:
+      x = test_visibility_parse(a->text);
+      if (x < 0 || x >= TV_LAST) {
+        xml_err_attr_invalid(a);
+        goto failure;
+      }
+      p->visibility = x;
+      break;
     case TR_A_COMMENT:
       p->comment = a->text;
       a->text = 0;
@@ -675,6 +694,11 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
   r->time_limit_ms = -1;
   r->real_time_limit_ms = -1;
   r->marked_flag = -1;
+  r->user_status = -1;
+  r->user_failed_test = -1;
+  r->user_tests_passed = -1;
+  r->user_score = -1;
+  r->user_max_score = -1;
 
   for (a = t->first; a; a = a->next) {
     switch (a->tag) {
@@ -702,6 +726,13 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
         return -1;
       }
       r->status = x;
+      break;
+    case TR_A_USER_STATUS:
+      if (!a->text || run_str_short_to_status(a->text, &x) < 0) {
+        xml_err_attr_invalid(a);
+        return -1;
+      }
+      r->user_status = x;
       break;
 
     case TR_A_SCORING:
@@ -775,6 +806,14 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
       r->failed_test = x;
       a_failed_test = a;
       break;
+    case TR_A_USER_FAILED_TEST:
+      if (xml_attr_int(a, &x) < 0) return -1;
+      if (x <= 0 || x >= EJ_MAX_TEST_NUM) {
+        xml_err_attr_invalid(a);
+        return -1;
+      }
+      r->user_failed_test = x;
+      break;
 
     case TR_A_TESTS_PASSED:
       if (xml_attr_int(a, &x) < 0) return -1;
@@ -784,6 +823,14 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
       }
       r->tests_passed = x;
       a_tests_passed = a;
+      break;
+    case TR_A_USER_TESTS_PASSED:
+      if (xml_attr_int(a, &x) < 0) return -1;
+      if (x < 0 || x > EJ_MAX_TEST_NUM) {
+        xml_err_attr_invalid(a);
+        return -1;
+      }
+      r->user_tests_passed = x;
       break;
 
     case TR_A_SCORE:
@@ -795,6 +842,14 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
       r->score = x;
       a_score = a;
       break;
+    case TR_A_USER_SCORE:
+      if (xml_attr_int(a, &x) < 0) return -1;
+      if (x < 0 || x > EJ_MAX_SCORE) {
+        xml_err_attr_invalid(a);
+        return -1;
+      }
+      r->user_score = x;
+      break;
 
     case TR_A_MAX_SCORE:
       if (xml_attr_int(a, &x) < 0) return -1;
@@ -804,6 +859,14 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
       }
       r->max_score = x;
       a_max_score = a;
+      break;
+    case TR_A_USER_MAX_SCORE:
+      if (xml_attr_int(a, &x) < 0) return -1;
+      if (x < 0 || x > EJ_MAX_SCORE) {
+        xml_err_attr_invalid(a);
+        return -1;
+      }
+      r->user_max_score = x;
       break;
 
     case TR_A_TIME_LIMIT_MS:
@@ -1284,6 +1347,22 @@ testing_report_unparse_xml(
     fprintf(out, " %s=\"%d\"", attr_map[TR_A_TT_COLUMN_COUNT],
             r->tt_column_count);
   }
+  if (r->user_status >= 0) {
+    run_status_to_str_short(buf1, sizeof(buf1), r->user_status);
+    fprintf(out, " %s=\"%s\"", attr_map[TR_A_USER_STATUS], buf1);
+  }
+  if (r->user_failed_test >= 0) {
+    fprintf(out, " %s=\"%d\"", attr_map[TR_A_USER_FAILED_TEST], r->user_failed_test);
+  }
+  if (r->user_tests_passed >= 0) {
+    fprintf(out, " %s=\"%d\"", attr_map[TR_A_USER_TESTS_PASSED], r->user_tests_passed);
+  }
+  if (r->user_score >= 0) {
+    fprintf(out, " %s=\"%d\"", attr_map[TR_A_USER_SCORE], r->user_score);
+  }
+  if (r->user_max_score >= 0) {
+    fprintf(out, " %s=\"%d\"", attr_map[TR_A_USER_MAX_SCORE], r->user_max_score);
+  }
   fprintf(out, " >\n");
 
   unparse_string_elem(out, &ab, TR_T_COMMENT, r->comment);
@@ -1340,6 +1419,9 @@ testing_report_unparse_xml(
       unparse_bool_attr(out, TR_A_CHECKER_OUTPUT_AVAILABLE,
                         t->checker_output_available);
       unparse_bool_attr(out, TR_A_ARGS_TOO_LONG, t->args_too_long);
+      if (t->visibility > 0) {
+        fprintf(out, " %s=\"%d\"", attr_map[TR_A_VISIBILITY], t->visibility);
+      }
       fprintf(out, " >\n");
 
       unparse_string_elem(out, &ab, TR_T_ARGS, t->args);

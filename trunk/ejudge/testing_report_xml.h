@@ -3,7 +3,7 @@
 #ifndef __TESTING_REPORT_XML_H__
 #define __TESTING_REPORT_XML_H__
 
-/* Copyright (C) 2005-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -37,6 +37,7 @@ struct testing_report_test
   int has_correct_digest;
   int has_info_digest;
   int max_memory_used;
+  int visibility;
 
   unsigned char input_digest[32];
   unsigned char correct_digest[32];
@@ -111,6 +112,12 @@ typedef struct testing_report_xml
   int real_time_limit_ms;
   int marked_flag;
   int tests_mode;
+  /* user-visible scores */
+  int user_status;
+  int user_failed_test;
+  int user_tests_passed;
+  int user_score;
+  int user_max_score;
   unsigned char *comment;       /* additional testing comment */
   unsigned char *valuer_comment;
   unsigned char *valuer_judge_comment;

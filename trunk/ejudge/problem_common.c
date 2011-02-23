@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2007-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,7 @@
  */
 
 #include "problem_common.h"
+#include "ej_types.h"
 
 #include <reuse/logger.h>
 
@@ -52,6 +53,30 @@ problem_unparse_type(int val)
   ASSERT(val >= 0 && val < PROB_TYPE_LAST);
   ASSERT(problem_type_str[val]);
   return problem_type_str[val];
+}
+
+const unsigned char * const test_visibility_str[] =
+{
+  [TV_NORMAL] = "normal",
+  [TV_FULL] = "full",
+  [TV_BRIEF] = "brief",
+  [TV_EXISTS] = "exists",
+  [TV_HIDDEN] = "hidden",
+
+  [TV_LAST] = 0
+};
+
+int
+test_visibility_parse(const unsigned char *str)
+{
+  int i;
+
+  if (!str || !*str) return TV_NORMAL;
+  for (i = 0; i < TV_LAST; ++i) {
+    if (test_visibility_str[i] && !strcasecmp(test_visibility_str[i], str))
+      return i;
+  }
+  return -1;
 }
 
 /*
