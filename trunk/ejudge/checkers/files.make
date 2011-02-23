@@ -1,7 +1,7 @@
 # -*- Makefile -*-
 # $Id$
 
-# Copyright (C) 2006-2010 Alexander Chernov <cher@ejudge.ru>
+# Copyright (C) 2006-2011 Alexander Chernov <cher@ejudge.ru>
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -123,4 +123,5 @@ CHKCFILES =\
  cmp_yesno.c
 
 STYLECFILES =\
- style_archive.c
+ style_archive.c\
+ style_c.c
