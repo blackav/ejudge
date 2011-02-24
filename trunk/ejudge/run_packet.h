@@ -3,7 +3,7 @@
 #ifndef __RUN_PACKET_H__
 #define __RUN_PACKET_H__
 
-/* Copyright (C) 2005-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -40,6 +40,7 @@ struct run_request_packet
   int notify_flag;              /* notify user when testing is completed */
   int advanced_layout;          /* advanced files layout */
   int mime_type;                /* mime type of the content */
+  int separate_user_score;      /* calculate separate user score */
   /* time when the compile request was queued by serve */
   int ts1;
   int ts1_us;
@@ -68,6 +69,9 @@ struct run_reply_packet
   int score;
   int notify_flag;
   int marked_flag;
+  int user_status;
+  int user_failed_test;
+  int user_score;
   /* time when the compile request was queued by serve */
   int ts1;
   int ts1_us;

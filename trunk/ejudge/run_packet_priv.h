@@ -3,7 +3,7 @@
 #ifndef __RUN_PACKET_PRIV_H__
 #define __RUN_PACKET_PRIV_H__
 
-/* Copyright (C) 2005-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -39,8 +39,9 @@ enum
   FLAGS_NOTIFY               = 0x800,
   FLAGS_MARKED               = 0x1000,
   FLAGS_ADVANCED_LAYOUT      = 0x2000,
+  FLAGS_SEPARATE_USER_SCORE  = 0x4000,
 
-  FLAGS_ALL_MASK             = 0x3fff, /* scoring system incl. */
+  FLAGS_ALL_MASK             = 0x7fff, /* scoring system incl. */
 };
 
 /* serve->run binary packet structure */
@@ -91,6 +92,9 @@ struct run_reply_bin_packet
   rint32_t  status;
   rint32_t  failed_test;
   rint32_t  score;
+  rint32_t  user_status;
+  rint32_t  user_failed_test;
+  rint32_t  user_score;
   ruint32_t flags;
   rint32_t  ts1;
   rint32_t  ts1_us;
@@ -106,7 +110,7 @@ struct run_reply_bin_packet
   rint32_t  ts6_us;
   rint32_t  ts7;
   rint32_t  ts7_us;
-  unsigned char pad[36];        /* padding to 128 bytes */
+  unsigned char pad[24];        /* padding to 128 bytes */
 };
 
 #endif /* __RUN_PACKET_PRIV_H__ */
