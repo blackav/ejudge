@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -597,6 +597,13 @@ super_html_edit_global_parameters(FILE *f,
   fprintf(f, "</td><td>");
   html_submit_button(f, SSERV_CMD_GLOB_CHANGE_ENABLE_WIN32_LANGUAGES, "Change");
   fprintf(f, "</td></tr></form>\n");
+
+  //GLOBAL_PARAM(separate_user_score, "d"),
+  print_boolean_select_row(f, "Calculate and store user-visible score separately:",
+                           global->separate_user_score,
+                           SSERV_CMD_GLOB_CHANGE_SEPARATE_USER_SCORE,
+                           session_id, form_row_attrs[row ^= 1],
+                           self_url, extra_args, hidden_vars);
 
   //GLOBAL_PARAM(secure_run, "d"),
   print_boolean_select_row(f, "Run programs securely:",
@@ -2944,6 +2951,10 @@ super_html_global_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_GLOB_CHANGE_ENABLE_MEMORY_LIMIT_ERROR:
     p_int = &global->enable_memory_limit_error;
+    goto handle_boolean;
+
+  case SSERV_CMD_GLOB_CHANGE_SEPARATE_USER_SCORE:
+    p_int = &global->separate_user_score;
     goto handle_boolean;
 
   case SSERV_CMD_GLOB_CHANGE_ENABLE_L10N:

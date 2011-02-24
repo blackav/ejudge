@@ -4,7 +4,7 @@
 #ifndef __SUPER_PROTO_H__
 #define __SUPER_PROTO_H__
 
-/* Copyright (C) 2004-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -522,6 +522,7 @@ enum
   SSERV_CMD_GLOB_CHANGE_SECURE_RUN,
   SSERV_CMD_GLOB_CHANGE_DETECT_VIOLATIONS,
   SSERV_CMD_GLOB_CHANGE_ENABLE_MEMORY_LIMIT_ERROR,
+  SSERV_CMD_GLOB_CHANGE_SEPARATE_USER_SCORE,
   SSERV_CMD_GLOB_CHANGE_STAND_ROW_ATTR,
   SSERV_CMD_GLOB_CLEAR_STAND_ROW_ATTR,
   SSERV_CMD_GLOB_CHANGE_STAND_PAGE_TABLE_ATTR,

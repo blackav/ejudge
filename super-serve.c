@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -3180,6 +3180,7 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_GLOB_CHANGE_SECURE_RUN:
   case SSERV_CMD_GLOB_CHANGE_DETECT_VIOLATIONS:
   case SSERV_CMD_GLOB_CHANGE_ENABLE_MEMORY_LIMIT_ERROR:
+  case SSERV_CMD_GLOB_CHANGE_SEPARATE_USER_SCORE:
   case SSERV_CMD_GLOB_CHANGE_STAND_ROW_ATTR:
   case SSERV_CMD_GLOB_CLEAR_STAND_ROW_ATTR:
   case SSERV_CMD_GLOB_CHANGE_STAND_PAGE_TABLE_ATTR:
@@ -4126,6 +4127,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_GLOB_CHANGE_SECURE_RUN] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_DETECT_VIOLATIONS] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_ENABLE_MEMORY_LIMIT_ERROR] = { cmd_set_value },
+  [SSERV_CMD_GLOB_CHANGE_SEPARATE_USER_SCORE] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_STAND_ROW_ATTR] = { cmd_set_value },
   [SSERV_CMD_GLOB_CLEAR_STAND_ROW_ATTR] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_STAND_PAGE_TABLE_ATTR] = { cmd_set_value },
