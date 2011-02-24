@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -67,6 +67,13 @@ run_reply_packet_read(
   pout->score = cvt_bin_to_host_32(pin->score);
   FAIL_IF(pout->score < -1 || pout->score > EJ_MAX_SCORE);
 
+  pout->user_status = cvt_bin_to_host_32(pin->user_status);
+  FAIL_IF(pout->user_status < -1 || pout->user_status > RUN_MAX_STATUS);
+  pout->user_failed_test = cvt_bin_to_host_32(pin->user_failed_test);
+  FAIL_IF(pout->user_failed_test < -2 || pout->user_failed_test > EJ_MAX_TEST_NUM);
+  pout->user_score = cvt_bin_to_host_32(pin->user_score);
+  FAIL_IF(pout->user_score < -1 || pout->user_score > EJ_MAX_SCORE);
+
   flags = cvt_bin_to_host_32(pin->flags);
   if ((flags & FLAGS_NOTIFY)) pout->notify_flag = 1;
   if ((flags & FLAGS_MARKED)) pout->marked_flag = 1;
@@ -97,7 +104,5 @@ run_reply_packet_read(
 
 /*
  * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  * End:
  */

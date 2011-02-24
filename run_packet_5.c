@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -63,6 +63,9 @@ run_reply_packet_write(
   out_data->failed_test = cvt_host_to_bin_32(in_data->failed_test);
   FAIL_IF(in_data->score < -1 || in_data->score > EJ_MAX_SCORE);
   out_data->score = cvt_host_to_bin_32(in_data->score);
+  out_data->user_status = cvt_host_to_bin_32(in_data->user_status);
+  out_data->user_failed_test = cvt_host_to_bin_32(in_data->user_failed_test);
+  out_data->user_score = cvt_host_to_bin_32(in_data->user_score);
 
   if (in_data->notify_flag) flags |= FLAGS_NOTIFY;
   if (in_data->marked_flag) flags |= FLAGS_MARKED;
@@ -95,7 +98,5 @@ run_reply_packet_write(
 
 /*
  * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  * End:
  */

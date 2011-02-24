@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -90,6 +90,7 @@ run_request_packet_read(
   if ((flags & FLAGS_SECURITY_VIOLATION)) pout->security_violation = 1;
   if ((flags & FLAGS_NOTIFY)) pout->notify_flag = 1;
   if ((flags & FLAGS_ADVANCED_LAYOUT)) pout->advanced_layout = 1;
+  if ((flags & FLAGS_SEPARATE_USER_SCORE)) pout->separate_user_score = 1;
 
   pout->ts1 = cvt_bin_to_host_32(pin->ts1);
   pout->ts1_us = cvt_bin_to_host_32(pin->ts1_us);
