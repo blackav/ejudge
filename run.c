@@ -119,6 +119,7 @@ struct testinfo
   unsigned char *team_comment;  /* team's comment */
   unsigned char *exit_comment;  /* comment on exit status */
   int            checker_score;
+  int            visibility;    /* test visibility */
 };
 
 static int total_tests;
@@ -389,6 +390,9 @@ generate_xml_report(
     }
     if (tests[i].args && strlen(tests[i].args) >= global->max_cmd_length) {
       fprintf(f, " args-too-long=\"yes\"");
+    }
+    if (tests[i].visibility > 0) {
+      fprintf(f, " visibility=\"%s\"", test_visibility_unparse(tests[i].visibility));
     }
     fprintf(f, " >\n");
 
@@ -1575,6 +1579,7 @@ run_tests(struct section_tester_data *tst,
     tests[cur_test].error_size = -1;
     tests[cur_test].correct_size = -1;
     tests[cur_test].chk_out_size = -1;
+    tests[cur_test].visibility = cntsprob_get_test_visibility(prb, cur_test);
 
     time_limit_value = 0;
     if (prb->time_limit_millis > 0)
