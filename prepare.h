@@ -705,7 +705,7 @@ struct section_global_data
   +path_t test_checker_cmd;
  */
 
-/* sizeof(struct section_problem_data) == 64924 */
+/* sizeof(struct section_problem_data) == 64928 */
 struct section_problem_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -761,6 +761,8 @@ struct section_problem_data
   ejintbool_t ignore_compile_errors;
   /** score for successful solution */
   int full_score;
+  /** score for successful user-visible solution (separate_user_score mode) */
+  int full_user_score;
   /** allow changing the score for successful solutions */
   ejintbool_t variable_full_score;
   /** score for one test */
