@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2011/02/27 16:45:00
+// Generated 2011/02/27 20:15:22
 
 #ifndef __PREPARE_META_H__
 #define __PREPARE_META_H__
@@ -311,6 +311,7 @@ enum
   CNTSPROB_team_show_judge_report,
   CNTSPROB_ignore_compile_errors,
   CNTSPROB_full_score,
+  CNTSPROB_full_user_score,
   CNTSPROB_variable_full_score,
   CNTSPROB_test_score,
   CNTSPROB_run_penalty,
