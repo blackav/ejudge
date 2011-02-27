@@ -3,7 +3,7 @@
 #ifndef __PREPARE_H__
 #define __PREPARE_H__
 
-/* Copyright (C) 2000-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -111,7 +111,7 @@ struct user_adjustment_info
 };
 struct user_adjustment_map;
 
-/* sizeof(struct section_global_data) == 350012 */
+/* sizeof(struct section_global_data) == 350016 */
 struct section_global_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -622,6 +622,8 @@ struct section_global_data
   int checker_real_time_limit;
   /** show problem deadlines to participants? */
   ejintbool_t show_deadline;
+  /** store separate scores for participants */
+  ejintbool_t separate_user_score;
 
   /** use gzip compression for large files */
   ejintbool_t use_gzip;
@@ -971,6 +973,7 @@ struct section_problem_data
 
   /** number of tests, open for unprivileged users */
   unsigned char open_tests[256];
+  int open_tests_count META_ATTRIB((meta_private));
   int *open_tests_val META_ATTRIB((meta_private));
 
   /** max virtual size limit  */
