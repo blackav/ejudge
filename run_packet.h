@@ -70,7 +70,7 @@ struct run_reply_packet
   int notify_flag;
   int marked_flag;
   int user_status;
-  int user_failed_test;
+  int user_tests_passed;
   int user_score;
   /* time when the compile request was queued by serve */
   int ts1;

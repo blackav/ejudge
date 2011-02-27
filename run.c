@@ -302,6 +302,16 @@ generate_xml_report(
   if (marked_flag >= 0) {
     fprintf(f, " marked-flag=\"%s\"", marked_flag?"yes":"no");
   }
+  if (reply_pkt->user_status >= 0) {
+    run_status_to_str_short(buf1, sizeof(buf1), reply_pkt->user_status);
+    fprintf(f, " user-status=\"%s\"", buf1);
+  }
+  if (reply_pkt->user_score >= 0) {
+    fprintf(f, " user-score=\"%d\"", reply_pkt->user_score);
+  }
+  if (reply_pkt->user_tests_passed >= 0) {
+    fprintf(f, " user-tests-passed=\"%d\"", reply_pkt->user_tests_passed);
+  }
   fprintf(f, " >\n");
 
   if (additional_comment) {
@@ -588,12 +598,15 @@ read_valuer_score(
         const unsigned char *what,
         int max_score,
         int valuer_sets_marked,
+        int separate_user_score,
         int *p_score,
-        int *p_marked)
+        int *p_marked,
+        int *p_user_status,
+        int *p_user_score)
 {
   char *score_buf = 0, *p;
   size_t score_buf_size = 0;
-  int x, y, n, r;
+  int x, y, n, r, user_status = -1, user_score = -1;
 
   if (p_marked) *p_marked = -1;
 
@@ -605,29 +618,25 @@ read_valuer_score(
   }
   if (strlen(score_buf) != score_buf_size) {
     append_msg_to_log(log_path, "The %s score output is binary", what);
-    xfree(score_buf);
-    return -1;
+    goto fail;
   }
 
   while (score_buf_size > 0 && isspace(score_buf[score_buf_size - 1]))
     score_buf[--score_buf_size] = 0;
   if (!score_buf_size) {
     append_msg_to_log(log_path, "The %s score output is empty", what);
-    xfree(score_buf);
-    return -1;
+    goto fail;
   }
 
   p = score_buf;
   if (sscanf(p, "%d%n", &x, &n) != 1) {
     append_msg_to_log(log_path, "The %s score output (%s) is invalid",
                       what, score_buf);
-    xfree(score_buf);
-    return -1;
+    goto fail;
   }
   if (x < 0 || x > max_score) {
     append_msg_to_log(log_path, "The %s score (%d) is invalid", what, x);
-    xfree(score_buf);
-    return -1;
+    goto fail;
   }
   p += n;
 
@@ -635,28 +644,68 @@ read_valuer_score(
     if (sscanf(p, "%d%n", &y, &n) != 1) {
       append_msg_to_log(log_path, "The %s marked_flag output (%s) is invalid",
                         what, score_buf);
-      xfree(score_buf);
-      return -1;
+      goto fail;
     }
     if (y < 0 || y > 1) {
       append_msg_to_log(log_path, "The %s marked_flag (%d) is invalid", what,y);
-      xfree(score_buf);
-      return -1;
+      goto fail;
     }
     p += n;
   }
 
+  if (separate_user_score > 0) {
+    while (isspace(*p)) ++p;
+    if (*p) {
+      if (sscanf(p, "%d%n", &user_status, &n) != 1) {
+        append_msg_to_log(log_path, "The %s user_status output (%s) is invalid",
+                          what, score_buf);
+        goto fail;
+      }
+      p += n;
+      if (user_status >= 0) {
+        if (user_status != RUN_OK && user_status != RUN_PARTIAL) {
+          append_msg_to_log(log_path, "The %s user_status output (%d) is invalid",
+                            what, user_status);
+          goto fail;
+        }
+      } else {
+        user_status = -1;
+      }
+    }
+    while (isspace(*p)) ++p;
+    if (*p) {
+      if (sscanf(p, "%d%n", &user_score, &n) != 1) {
+        append_msg_to_log(log_path, "The %s user_score output (%s) is invalid",
+                          what, score_buf);
+        goto fail;
+      }
+      p += n;
+      if (user_score >= 0) {
+        // do some more checking...
+      } else {
+        user_score = -1;
+      }
+    }
+  }
+
   if (*p) {
     append_msg_to_log(log_path, "The %s output is invalid", what);
-    xfree(score_buf);
-    return -1;
+    goto fail;
   }
 
   *p_score = x;
   if (valuer_sets_marked > 0 && p_marked) *p_marked = y;
+  if (separate_user_score > 0) {
+    if (p_user_status && user_status >= 0) *p_user_status = user_status;
+    if (p_user_score && user_score >= 0) *p_user_score = user_score;
+  }
 
   xfree(score_buf);
   return 0;
+
+fail:
+  xfree(score_buf);
+  return -1;
 }
 
 static void
@@ -693,6 +742,8 @@ invoke_valuer(
         int max_score,
         int *p_score,
         int *p_marked,
+        int *p_user_status,
+        int *p_user_score,
         char **p_err_txt,
         char **p_cmt_txt,
         char **p_jcmt_txt)
@@ -709,6 +760,7 @@ invoke_valuer(
   tpTask tsk = 0;
   char *err_txt = 0, *cmt_txt = 0, *jcmt_txt = 0;
   size_t err_len = 0, cmt_len = 0, jcmt_len = 0;
+  unsigned char strbuf[1024];
 
 #ifdef EJUDGE_PREFIX_DIR
   snprintf(ejudge_prefix_dir_env, sizeof(ejudge_prefix_dir_env),
@@ -728,13 +780,17 @@ invoke_valuer(
   }
   fprintf(f, "%d\n", total_tests - 1);
   for (i = 1; i <= total_tests; i++) {
+    fprintf(f, "%d", tests[i].status);
     if (prb->scoring_checker) {
-      fprintf(f, "%d %d %ld\n", tests[i].status, tests[i].checker_score,
-              tests[i].times);
+      fprintf(f, " %d", tests[i].checker_score);
     } else {
-      fprintf(f, "%d %d %ld\n", tests[i].status, tests[i].score,
-              tests[i].times);
+      fprintf(f, " %d", tests[i].score);
     }
+    fprintf(f, " %ld", tests[i].times);
+    if (global->separate_user_score > 0) {
+      fprintf(f, " %d", tests[i].visibility);
+    }
+    fprintf(f, "\n");
   }
   if (ferror(f)) {
     append_msg_to_log(score_err, "failed to write to %s", score_list);
@@ -774,6 +830,10 @@ invoke_valuer(
     task_SetMaxRealTime(tsk, prb->checker_real_time_limit);
   }
   setup_environment(tsk, prb->valuer_env, ejudge_prefix_dir_env);
+  if (global->separate_user_score > 0) {
+    snprintf(strbuf, sizeof(strbuf), "EJUDGE_USER_SCORE=1");
+    task_PutEnv(tsk, strbuf);
+  }
 #if HAVE_TASK_ENABLEALLSIGNALS - 0 == 1
   task_EnableAllSignals(tsk);
 #endif
@@ -801,7 +861,8 @@ invoke_valuer(
   task_Delete(tsk); tsk = 0;
 
   if (read_valuer_score(score_res, score_err, "valuer", max_score,
-                        prb->valuer_sets_marked, p_score, p_marked) < 0) {
+                        prb->valuer_sets_marked, global->separate_user_score,
+                        p_score, p_marked, p_user_status, p_user_score) < 0) {
     goto cleanup;
   }
   generic_read_file(&cmt_txt, 0, &cmt_len, 0, 0, score_cmt, "");
@@ -1378,6 +1439,7 @@ run_tests(struct section_tester_data *tst,
   int report_real_time_limit_ms = -1;
   int has_real_time = 0;
   int has_max_memory_used = 0;
+  int user_status, user_score, user_tests_passed;
 
   int pfd1[2], pfd2[2];
   tpTask tsk_int = 0;
@@ -2704,10 +2766,14 @@ run_tests(struct section_tester_data *tst,
 
   get_current_time(&reply_pkt->ts7, &reply_pkt->ts7_us);
 
+  user_status = -1;
+  user_score = -1;
+  user_tests_passed = -1;
   if (prb->valuer_cmd[0] && !req_pkt->accepting_mode
       && !reply_pkt->status != RUN_CHECK_FAILED) {
     if (invoke_valuer(global, prb, cur_variant, prb->full_score,
-                      &score, &marked_flag, &valuer_errors, &valuer_comment,
+                      &score, &marked_flag, &user_status, &user_score,
+                      &valuer_errors, &valuer_comment,
                       &valuer_judge_comment) < 0) {
       reply_pkt->status = RUN_CHECK_FAILED;
     } else {
@@ -2715,6 +2781,52 @@ run_tests(struct section_tester_data *tst,
       reply_pkt->marked_flag = marked_flag;
     }
   }
+
+  if (reply_pkt->status == RUN_CHECK_FAILED) {
+    user_status = RUN_CHECK_FAILED;
+    user_score = 0;
+    user_tests_passed = 0;
+  } else if (global->separate_user_score <= 0) {
+    user_status = reply_pkt->status;
+    user_score = reply_pkt->score;
+    if (score_system_val == SCORE_KIROV
+        || (score_system_val == SCORE_OLYMPIAD && !req_pkt->accepting_mode)) {
+      user_tests_passed = reply_pkt->failed_test - 1;
+    }
+  } else {
+    if (user_status < 0) {
+      user_status = RUN_OK;
+      for (cur_test = 1; cur_test < total_tests; ++cur_test) {
+        if (tests[cur_test].visibility != TV_HIDDEN
+            && tests[cur_test].status != RUN_OK) {
+          user_status = RUN_PARTIAL;
+          break;
+        }
+      }
+    }
+    if (score_system_val == SCORE_KIROV
+        || (score_system_val == SCORE_OLYMPIAD && !req_pkt->accepting_mode)) {
+      if (user_score < 0) {
+        user_score = 0;
+        for (cur_test = 1; cur_test < total_tests; ++cur_test) {
+          if (tests[cur_test].visibility != TV_HIDDEN
+              && tests[cur_test].score >= 0) {
+            user_score += tests[cur_test].score;
+          }
+        }
+      }
+      if (user_tests_passed < 0) {
+        for (cur_test = 1; cur_test < total_tests; ++cur_test) {
+          if (tests[cur_test].visibility != TV_HIDDEN)
+            ++user_tests_passed;
+        }
+      }
+    }
+  }
+
+  reply_pkt->user_status = user_status;
+  reply_pkt->user_score = user_score;
+  reply_pkt->user_tests_passed = user_tests_passed;
 
   generate_xml_report(req_pkt, reply_pkt, report_path, cur_variant,
                       score, prb->full_score,
@@ -2973,7 +3085,7 @@ do_loop(void)
       reply_pkt.run_id = req_pkt->run_id;
       reply_pkt.notify_flag = req_pkt->notify_flag;
       reply_pkt.user_status = -1;
-      reply_pkt.user_failed_test = -2;
+      reply_pkt.user_tests_passed = -1;
       reply_pkt.user_score = -1;
       reply_pkt.ts1 = req_pkt->ts1;
       reply_pkt.ts1_us = req_pkt->ts1_us;
@@ -3047,7 +3159,7 @@ do_loop(void)
     reply_pkt.contest_id = req_pkt->contest_id;
     reply_pkt.run_id = req_pkt->run_id;
     reply_pkt.user_status = -1;
-    reply_pkt.user_failed_test = -2;
+    reply_pkt.user_tests_passed = -1;
     reply_pkt.user_score = -1;
     reply_pkt.ts1 = req_pkt->ts1;
     reply_pkt.ts1_us = req_pkt->ts1_us;
