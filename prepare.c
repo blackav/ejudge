@@ -2129,6 +2129,7 @@ prepare_parse_open_tests(
         }
         goto fail;
       }
+      p += n;
       if (v2 < v1) {
         if (flog) {
           fprintf(flog, "parse_open_tests: second test in range is < than the first");
@@ -2179,6 +2180,7 @@ prepare_parse_open_tests(
       x = new_x;
       x_a = new_a;
     }
+
     for (; v1 <= v2; ++v1)
       x[v1] = visibility;
   }

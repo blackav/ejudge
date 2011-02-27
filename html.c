@@ -4568,7 +4568,7 @@ write_xml_team_testing_report(
 
   for (i = 0; i < r->run_tests; ++i) {
     if (!(t = r->tests[i])) continue;
-    visibility = cntsprob_get_test_visibility(prob, i);
+    visibility = cntsprob_get_test_visibility(prob, i + 1);
     // TV_NORMAL, TV_FULL, TV_BRIEF, TV_EXISTS, TV_HIDDEN
     if (visibility == TV_EXISTS || visibility == TV_HIDDEN) continue;
     if (t->team_comment) {
@@ -4604,7 +4604,7 @@ write_xml_team_testing_report(
   for (i = 0; i < r->run_tests; i++) {
     if (!(t = r->tests[i])) continue;
     // TV_NORMAL, TV_FULL, TV_BRIEF, TV_EXISTS, TV_HIDDEN
-    visibility = cntsprob_get_test_visibility(prob, i);
+    visibility = cntsprob_get_test_visibility(prob, i + 1);
     if (visibility == TV_HIDDEN) continue;
     ++serial;
     if (visibility == TV_EXISTS) {
@@ -4612,7 +4612,6 @@ write_xml_team_testing_report(
       fprintf(f, "<td%s>%d</td>", cl, serial);
       fprintf(f, "<td%s>&nbsp;</td>", cl); // status
       fprintf(f, "<td%s>&nbsp;</td>", cl); // time
-      fprintf(f, "</tr>\n");
       if (need_info) {
         fprintf(f, "<td%s>&nbsp;</td>", cl); // info
       }
@@ -4622,11 +4621,12 @@ write_xml_team_testing_report(
       if (need_comment) {
         fprintf(f, "<td%s>&nbsp;</td>", cl); // info
       }
+      fprintf(f, "</tr>\n");
       continue;
     }
 
     fprintf(f, "<tr>");
-    fprintf(f, "<td%s>%d</td>", cl, t->num);
+    fprintf(f, "<td%s>%d</td>", cl, serial);
     if (t->status == RUN_OK || t->status == RUN_ACCEPTED) {
       font_color = "green";
     } else {
@@ -4686,7 +4686,7 @@ write_xml_team_testing_report(
     fprintf(f, "<pre>");
     for (i = 0; i < r->run_tests; i++) {
       if (!(t = r->tests[i])) continue;
-      visibility = cntsprob_get_test_visibility(prob, i);
+      visibility = cntsprob_get_test_visibility(prob, i + 1);
       if (visibility != TV_FULL) continue;
       if (!t->args && !t->args_too_long && !t->input
           && !t->output && !t->error && !t->correct && !t->checker)
