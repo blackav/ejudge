@@ -92,6 +92,13 @@ test_visibility_parse_mem(const unsigned char *str, int len)
   return -1;
 }
 
+const unsigned char *
+test_visibility_unparse(int value)
+{
+  if (value < 0 || value >= TV_LAST) value = 0;
+  return test_visibility_str[value];
+}
+
 /*
  * Local variables:
  *  compile-command: "make"

@@ -94,5 +94,6 @@ enum test_visibility
 
 int test_visibility_parse(const unsigned char*);
 int test_visibility_parse_mem(const unsigned char*, int len);
+const unsigned char *test_visibility_unparse(int visibility);
 
 #endif /* __EJ_TYPES_H__ */
