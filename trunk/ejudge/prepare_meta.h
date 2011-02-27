@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2010/11/18 21:31:48
+// Generated 2011/02/27 16:13:31
 
 #ifndef __PREPARE_META_H__
 #define __PREPARE_META_H__
@@ -237,6 +237,7 @@ enum
   CNTSGLOB_compile_real_time_limit,
   CNTSGLOB_checker_real_time_limit,
   CNTSGLOB_show_deadline,
+  CNTSGLOB_separate_user_score,
   CNTSGLOB_use_gzip,
   CNTSGLOB_min_gzip_size,
   CNTSGLOB_use_dir_hierarchy,
@@ -416,6 +417,7 @@ enum
   CNTSPROB_score_bonus_total,
   CNTSPROB_score_bonus_val,
   CNTSPROB_open_tests,
+  CNTSPROB_open_tests_count,
   CNTSPROB_open_tests_val,
   CNTSPROB_max_vm_size,
   CNTSPROB_max_data_size,
