@@ -23,7 +23,7 @@
 #include <string.h>
 
 static const unsigned char *program_name;
-static const unsigned char *current_file_path = 0;
+static unsigned char *current_file_path = 0;
 static int lineno = -1;
 
 static int disable_tabs = 1;
@@ -86,6 +86,15 @@ enum
   STATE_CHAR = 4
 };
 
+static unsigned char *
+get_last_name(const unsigned char *str)
+{
+  if (!str) return 0;
+  char *p = strrchr(str, '/');
+  if (!p) return strdup(str);
+  return strdup(p + 1);
+}
+
 static int
 read_line(FILE *in, int *p_err_count)
 {
@@ -132,7 +141,10 @@ process_file(const unsigned char *path)
   int err_count = 0;
   int i, is_first, col, state;
 
-  current_file_path = path;
+  if (current_file_path) {
+    free(current_file_path);
+  }
+  current_file_path = get_last_name(path);
   lineno = -1;
   in = fopen(path, "r");
   if (!in) {
