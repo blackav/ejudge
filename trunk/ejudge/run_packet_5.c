@@ -64,7 +64,7 @@ run_reply_packet_write(
   FAIL_IF(in_data->score < -1 || in_data->score > EJ_MAX_SCORE);
   out_data->score = cvt_host_to_bin_32(in_data->score);
   out_data->user_status = cvt_host_to_bin_32(in_data->user_status);
-  out_data->user_failed_test = cvt_host_to_bin_32(in_data->user_failed_test);
+  out_data->user_tests_passed = cvt_host_to_bin_32(in_data->user_tests_passed);
   out_data->user_score = cvt_host_to_bin_32(in_data->user_score);
 
   if (in_data->notify_flag) flags |= FLAGS_NOTIFY;

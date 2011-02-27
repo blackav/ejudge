@@ -114,7 +114,6 @@ typedef struct testing_report_xml
   int tests_mode;
   /* user-visible scores */
   int user_status;
-  int user_failed_test;
   int user_tests_passed;
   int user_score;
   int user_max_score;

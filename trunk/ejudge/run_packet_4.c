@@ -69,8 +69,8 @@ run_reply_packet_read(
 
   pout->user_status = cvt_bin_to_host_32(pin->user_status);
   FAIL_IF(pout->user_status < -1 || pout->user_status > RUN_MAX_STATUS);
-  pout->user_failed_test = cvt_bin_to_host_32(pin->user_failed_test);
-  FAIL_IF(pout->user_failed_test < -2 || pout->user_failed_test > EJ_MAX_TEST_NUM);
+  pout->user_tests_passed = cvt_bin_to_host_32(pin->user_tests_passed);
+  FAIL_IF(pout->user_tests_passed < -1 || pout->user_tests_passed > EJ_MAX_TEST_NUM);
   pout->user_score = cvt_bin_to_host_32(pin->user_score);
   FAIL_IF(pout->user_score < -1 || pout->user_score > EJ_MAX_SCORE);
 

@@ -1122,7 +1122,7 @@ run_inverse_testing(
   reply_pkt->status = RUN_CHECK_FAILED;
   reply_pkt->score = 0;
   reply_pkt->user_status = -1;
-  reply_pkt->user_failed_test = -2;
+  reply_pkt->user_tests_passed = -1;
   reply_pkt->user_score = -1;
   reply_pkt->ts1 = req_pkt->ts1;
   reply_pkt->ts1_us = req_pkt->ts1_us;

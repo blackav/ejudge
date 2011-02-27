@@ -36,7 +36,7 @@
 #endif /* EJUDGE_CHARSET */
 
 /*
-<testing-report run-id="N" judge-id="N" status="O" scoring="R" archive-available="B" [correct-available="B"] [info-available="B"] run-tests="N" [variant="N"] [accepting-mode="B"] [failed-test="N"] [tests-passed="N"] [score="N"] [time_limit_ms="T" real_time_limit_ms="T" [real-time-available="B"] [max-memory-used-available="T"] [marked-flag="B"] [tests-mode="B"] [tt-row-count="N"] [tt-column-count="N"] [user-status="O"] [user-failed-test="N"] [user-tests-passed="N"] [user-score="N"] [user-max-score="N"] >
+<testing-report run-id="N" judge-id="N" status="O" scoring="R" archive-available="B" [correct-available="B"] [info-available="B"] run-tests="N" [variant="N"] [accepting-mode="B"] [failed-test="N"] [tests-passed="N"] [score="N"] [time_limit_ms="T" real_time_limit_ms="T" [real-time-available="B"] [max-memory-used-available="T"] [marked-flag="B"] [tests-mode="B"] [tt-row-count="N"] [tt-column-count="N"] [user-status="O"] [user-tests-passed="N"] [user-score="N"] [user-max-score="N"] >
   <comment>T</comment>
   <valuer_comment>T</valuer_comment>
   <valuer_judge_comment>T</valuer_judge_comment>
@@ -135,7 +135,6 @@ enum
   TR_A_COLUMN,
   TR_A_VISIBILITY,
   TR_A_USER_STATUS,
-  TR_A_USER_FAILED_TEST,
   TR_A_USER_TESTS_PASSED,
   TR_A_USER_SCORE,
   TR_A_USER_MAX_SCORE,
@@ -215,7 +214,6 @@ static const char * const attr_map[] =
   [TR_A_COLUMN] = "column",
   [TR_A_VISIBILITY] = "visibility",
   [TR_A_USER_STATUS] = "user-status",
-  [TR_A_USER_FAILED_TEST] = "user-failed-test",
   [TR_A_USER_TESTS_PASSED] = "user-tests-passed",
   [TR_A_USER_SCORE] = "user-score",
   [TR_A_USER_MAX_SCORE] = "user-max-score",
@@ -695,7 +693,6 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
   r->real_time_limit_ms = -1;
   r->marked_flag = -1;
   r->user_status = -1;
-  r->user_failed_test = -1;
   r->user_tests_passed = -1;
   r->user_score = -1;
   r->user_max_score = -1;
@@ -805,14 +802,6 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
       }
       r->failed_test = x;
       a_failed_test = a;
-      break;
-    case TR_A_USER_FAILED_TEST:
-      if (xml_attr_int(a, &x) < 0) return -1;
-      if (x <= 0 || x >= EJ_MAX_TEST_NUM) {
-        xml_err_attr_invalid(a);
-        return -1;
-      }
-      r->user_failed_test = x;
       break;
 
     case TR_A_TESTS_PASSED:
@@ -1265,7 +1254,6 @@ unparse_file_contents(
   }
 }
 
-
 void
 testing_report_unparse_xml(
         FILE *out,
@@ -1350,9 +1338,6 @@ testing_report_unparse_xml(
   if (r->user_status >= 0) {
     run_status_to_str_short(buf1, sizeof(buf1), r->user_status);
     fprintf(out, " %s=\"%s\"", attr_map[TR_A_USER_STATUS], buf1);
-  }
-  if (r->user_failed_test >= 0) {
-    fprintf(out, " %s=\"%d\"", attr_map[TR_A_USER_FAILED_TEST], r->user_failed_test);
   }
   if (r->user_tests_passed >= 0) {
     fprintf(out, " %s=\"%d\"", attr_map[TR_A_USER_TESTS_PASSED], r->user_tests_passed);
