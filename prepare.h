@@ -1332,4 +1332,9 @@ get_advanced_layout_path(
         const unsigned char *entry,
         int variant);
 
+int
+cntsprob_get_test_visibility(
+        const struct section_problem_data *prob,
+        int num);
+
 #endif /* __PREPARE_H__ */
