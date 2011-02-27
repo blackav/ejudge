@@ -7095,6 +7095,17 @@ get_advanced_layout_path(
   return buf;
 }
 
+int
+cntsprob_get_test_visibility(
+        const struct section_problem_data *prob,
+        int num)
+{
+  if (!prob || !prob->open_tests_val
+      || num <= 0 || num >= prob->open_tests_count)
+    return TV_NORMAL;
+  return prob->open_tests_val[num];
+}
+
 /*
  * Local variables:
  *  compile-command: "make"
