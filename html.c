@@ -4568,10 +4568,7 @@ write_xml_team_testing_report(
 
   for (i = 0; i < r->run_tests; ++i) {
     if (!(t = r->tests[i])) continue;
-    visibility = TV_NORMAL;
-    if (prob && prob->open_tests_val && i + 1 < prob->open_tests_count) {
-      visibility = prob->open_tests_val[i + 1];
-    }
+    visibility = cntsprob_get_test_visibility(prob, i);
     // TV_NORMAL, TV_FULL, TV_BRIEF, TV_EXISTS, TV_HIDDEN
     if (visibility == TV_EXISTS || visibility == TV_HIDDEN) continue;
     if (t->team_comment) {
@@ -4607,10 +4604,7 @@ write_xml_team_testing_report(
   for (i = 0; i < r->run_tests; i++) {
     if (!(t = r->tests[i])) continue;
     // TV_NORMAL, TV_FULL, TV_BRIEF, TV_EXISTS, TV_HIDDEN
-    visibility = TV_NORMAL;
-    if (prob && prob->open_tests_val && i + 1 < prob->open_tests_count) {
-      visibility = prob->open_tests_val[i + 1];
-    }
+    visibility = cntsprob_get_test_visibility(prob, i);
     if (visibility == TV_HIDDEN) continue;
     ++serial;
     if (visibility == TV_EXISTS) {
@@ -4692,10 +4686,7 @@ write_xml_team_testing_report(
     fprintf(f, "<pre>");
     for (i = 0; i < r->run_tests; i++) {
       if (!(t = r->tests[i])) continue;
-      visibility = TV_NORMAL;
-      if (prob && prob->open_tests_val && i + 1 < prob->open_tests_count) {
-        visibility = prob->open_tests_val[i + 1];
-      }
+      visibility = cntsprob_get_test_visibility(prob, i);
       if (visibility != TV_FULL) continue;
       if (!t->args && !t->args_too_long && !t->input
           && !t->output && !t->error && !t->correct && !t->checker)
