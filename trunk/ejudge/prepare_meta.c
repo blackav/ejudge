@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2011/02/27 16:45:00
+// Generated 2011/02/27 20:15:22
 
 #include "prepare_meta.h"
 #include "prepare.h"
@@ -349,6 +349,7 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_team_show_judge_report] = { CNTSPROB_team_show_judge_report, 'B', XSIZE(struct section_problem_data, team_show_judge_report), "team_show_judge_report", XOFFSET(struct section_problem_data, team_show_judge_report) },
   [CNTSPROB_ignore_compile_errors] = { CNTSPROB_ignore_compile_errors, 'B', XSIZE(struct section_problem_data, ignore_compile_errors), "ignore_compile_errors", XOFFSET(struct section_problem_data, ignore_compile_errors) },
   [CNTSPROB_full_score] = { CNTSPROB_full_score, 'i', XSIZE(struct section_problem_data, full_score), "full_score", XOFFSET(struct section_problem_data, full_score) },
+  [CNTSPROB_full_user_score] = { CNTSPROB_full_user_score, 'i', XSIZE(struct section_problem_data, full_user_score), "full_user_score", XOFFSET(struct section_problem_data, full_user_score) },
   [CNTSPROB_variable_full_score] = { CNTSPROB_variable_full_score, 'B', XSIZE(struct section_problem_data, variable_full_score), "variable_full_score", XOFFSET(struct section_problem_data, variable_full_score) },
   [CNTSPROB_test_score] = { CNTSPROB_test_score, 'i', XSIZE(struct section_problem_data, test_score), "test_score", XOFFSET(struct section_problem_data, test_score) },
   [CNTSPROB_run_penalty] = { CNTSPROB_run_penalty, 'i', XSIZE(struct section_problem_data, run_penalty), "run_penalty", XOFFSET(struct section_problem_data, run_penalty) },
