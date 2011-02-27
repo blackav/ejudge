@@ -79,6 +79,19 @@ test_visibility_parse(const unsigned char *str)
   return -1;
 }
 
+int
+test_visibility_parse_mem(const unsigned char *str, int len)
+{
+  int i;
+
+  if (!str || !*str) return TV_NORMAL;
+  for (i = 0; i < TV_LAST; ++i) {
+    if (test_visibility_str[i] && strlen(test_visibility_str[i]) == len && !strncasecmp(test_visibility_str[i], str, len))
+      return i;
+  }
+  return -1;
+}
+
 /*
  * Local variables:
  *  compile-command: "make"
