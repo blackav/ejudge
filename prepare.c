@@ -3379,11 +3379,6 @@ set_defaults(
         if (parse_score_bonus(prob->score_bonus, &prob->score_bonus_total,
                               &prob->score_bonus_val) < 0) return -1;
       }
-      if (prob->open_tests[0]) {
-        if (prepare_parse_open_tests(stderr, prob->open_tests,
-                                     &prob->open_tests_val, &prob->open_tests_count) < 0)
-          return -1;
-      }
     }
 
     if (mode == PREPARE_SERVE) {
@@ -3483,6 +3478,11 @@ set_defaults(
       if (prob->use_tgz) {
         path_add_dir(prob->tgz_dir, g->tgz_dir);
         vinfo("problem.%s.tgz_dir is '%s'", ish, prob->tgz_dir);
+      }
+      if (prob->open_tests[0]) {
+        if (prepare_parse_open_tests(stderr, prob->open_tests,
+                                     &prob->open_tests_val, &prob->open_tests_count) < 0)
+          return -1;
       }
     }
 
