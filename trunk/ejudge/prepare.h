@@ -705,7 +705,7 @@ struct section_global_data
   +path_t test_checker_cmd;
  */
 
-/* sizeof(struct section_problem_data) == 64928 */
+/* sizeof(struct section_problem_data) == 64932 */
 struct section_problem_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
