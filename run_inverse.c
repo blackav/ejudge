@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1121,6 +1121,9 @@ run_inverse_testing(
   reply_pkt->marked_flag = 0;
   reply_pkt->status = RUN_CHECK_FAILED;
   reply_pkt->score = 0;
+  reply_pkt->user_status = -1;
+  reply_pkt->user_failed_test = -2;
+  reply_pkt->user_score = -1;
   reply_pkt->ts1 = req_pkt->ts1;
   reply_pkt->ts1_us = req_pkt->ts1_us;
   reply_pkt->ts2 = req_pkt->ts2;

@@ -93,5 +93,6 @@ enum test_visibility
 };
 
 int test_visibility_parse(const unsigned char*);
+int test_visibility_parse_mem(const unsigned char*, int len);
 
 #endif /* __EJ_TYPES_H__ */

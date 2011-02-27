@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -282,6 +282,7 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(prune_empty_users, "d"),
   GLOBAL_PARAM(enable_report_upload, "d"),
   GLOBAL_PARAM(ignore_success_time, "d"),
+  GLOBAL_PARAM(separate_user_score, "d"),
 
   GLOBAL_PARAM(use_gzip, "d"),
   GLOBAL_PARAM(min_gzip_size, "d"),
@@ -2083,27 +2084,19 @@ parse_score_bonus(const unsigned char *str, int *p_total, int **p_values)
   return -1;
 }
 
-static int
-int_sort_func(const void *p1, const void *p2)
-{
-  int v1 = *(const int*) p1;
-  int v2 = *(const int*) p2;
-
-  if (v1 < v2) return -1;
-  if (v1 > v2) return 1;
-  return 0;
-}
-
 int
-prepare_parse_open_tests(FILE *flog, const unsigned char *str, int **p_vals)
+prepare_parse_open_tests(
+        FILE *flog,
+        const unsigned char *str,
+        int **p_vals,
+        int *p_count)
 {
-  int *vals = 0;
   int *x = 0;
   int x_a = 0;
-  int x_u = 0;
-  const unsigned char *p = str;
+  const unsigned char *p = str, *q;
   int n;
-  int v1, v2, i, j;
+  int v1, v2;
+  int visibility;
 
   if (*p_vals) *p_vals = 0;
   if (!str || !*str) return 0;
@@ -2118,7 +2111,7 @@ prepare_parse_open_tests(FILE *flog, const unsigned char *str, int **p_vals)
       goto fail;
     }
     v1 = -1; n = -1;
-    if (sscanf(p, "%d%n", &v1, &n) != 1 || v1 <= 0 || v1 > 100000) {
+    if (sscanf(p, "%d%n", &v1, &n) != 1 || v1 <= 0 || v1 > 1000) {
       if (flog) {
         fprintf(flog, "parse_open_tests: invalid test number\n");
       }
@@ -2130,7 +2123,7 @@ prepare_parse_open_tests(FILE *flog, const unsigned char *str, int **p_vals)
     if (*p == '-') {
       ++p;
       while (isspace(*p)) ++p;
-      if (sscanf(p, "%d%n", &v2, &n) != 1 || v2 <= 0 || v2 > 100000) {
+      if (sscanf(p, "%d%n", &v2, &n) != 1 || v2 <= 0 || v2 > 1000) {
         if (flog) {
           fprintf(flog, "parse_open_tests: invalid test number\n");
         }
@@ -2144,54 +2137,62 @@ prepare_parse_open_tests(FILE *flog, const unsigned char *str, int **p_vals)
       }
       while (isspace(*p)) ++p;
     }
+    visibility = TV_FULL;
+    if (*p == ':') {
+      // parse visibility specification
+      ++p;
+      while (isspace(*p)) ++p;
+      q = p;
+      while (*q && isalpha(*q)) ++q;
+      if (q == p) {
+        if (flog) {
+          fprintf(flog, "parse_open_tests: empty visibility specification");
+        }
+        goto fail;
+      }
+      visibility = test_visibility_parse_mem(p, q - p);
+      if (visibility < 0) {
+        if (flog) {
+          fprintf(flog, "parse_open_tests: invalid visibility");
+        }
+        goto fail;
+      }
+      p = q;
+      while (isspace(*p)) ++p;      
+    }
     if (*p == ',') {
       ++p;
     }
 
-    if (x_u + v2 - v1 + 1 > x_a) {
+    // set visibility for [v1;v2]
+
+    if (v2 >= x_a) {
       int new_a = x_a;
       int *new_x = 0;
       if (!new_a) new_a = 8;
-      while (new_a < x_u + v2 - v1 + 1) new_a *= 2;
+      while (v2 >= new_a) new_a *= 2;
       XCALLOC(new_x, new_a);
-      if (x_u > 0) {
-        memcpy(new_x, x, x_u * sizeof(new_x[0]));
+      if (x_a > 0) {
+        memcpy(new_x, x, x_a * sizeof(new_x[0]));
       }
       xfree(x);
       x = new_x;
       x_a = new_a;
     }
     for (; v1 <= v2; ++v1)
-      x[x_u++] = v1;
+      x[v1] = visibility;
   }
-
-  if (x_u > 0) {
-    // remove duplicates
-    qsort(x, x_u, sizeof(x[0]), int_sort_func);
-    for (i = 0, j = 1; j < x_u; ++j) {
-      if (x[i] != x[j]) {
-        x[++i] = x[j];
-      }
-    }
-    x_u = i + 1;
-  }
-
-  if (x_u > 0) {
-    XCALLOC(vals, x_u + 1);
-    memcpy(vals, x, x_u * sizeof(vals[0]));
-  }
-  xfree(x); x = 0; x_a = x_u = 0;
 
   if (p_vals) {
-    *p_vals = vals;
+    *p_vals = x;
+    *p_count = x_a;
   } else {
-    xfree(vals); vals = 0;
+    xfree(x); x = 0;
   }
   return 0;
 
 fail:
   xfree(x);
-  xfree(vals);
   return -1;
 }
 
@@ -3375,7 +3376,7 @@ set_defaults(
       }
       if (prob->open_tests[0]) {
         if (prepare_parse_open_tests(stderr, prob->open_tests,
-                                     &prob->open_tests_val) < 0)
+                                     &prob->open_tests_val, &prob->open_tests_count) < 0)
           return -1;
       }
     }

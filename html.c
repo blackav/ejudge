@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -4487,8 +4487,8 @@ write_xml_team_testing_report(
   unsigned char *font_color = 0, *s;
   int need_comment = 0, need_info = 0, is_kirov = 0, i;
   unsigned char cl[128] = { 0 };
-  const int *open_tests = 0;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  int visibility = 0, serial = 0, has_full = 0;
 
   if (table_class && *table_class) {
     snprintf(cl, sizeof(cl), " class=\"%s\"", table_class);
@@ -4566,22 +4566,25 @@ write_xml_team_testing_report(
     xfree(s);
   }
 
-  open_tests = 0;
-  if (prob) open_tests = prob->open_tests_val;
-  for (i = 0; i < r->run_tests; i++) {
+  for (i = 0; i < r->run_tests; ++i) {
     if (!(t = r->tests[i])) continue;
-    while (open_tests && *open_tests > 0 && *open_tests <= i) {
-      ++open_tests;
+    visibility = TV_NORMAL;
+    if (prob && prob->open_tests_val && i + 1 < prob->open_tests_count) {
+      visibility = prob->open_tests_val[i + 1];
     }
+    // TV_NORMAL, TV_FULL, TV_BRIEF, TV_EXISTS, TV_HIDDEN
+    if (visibility == TV_EXISTS || visibility == TV_HIDDEN) continue;
     if (t->team_comment) {
       need_comment = 1;
     }
+    // for any visibility of TV_NORMAL, TV_FULL, TV_BRIEF
     if (global->report_error_code && t->status == RUN_RUN_TIME_ERR) {
       need_info = 1;
     }
-    if (open_tests && *open_tests == i + 1 && t->status == RUN_RUN_TIME_ERR) {
+    if (visibility == TV_FULL && t->status == RUN_RUN_TIME_ERR) {
       need_info = 1;
     }
+    if (visibility == TV_FULL) has_full = 1;
   }
 
   fprintf(f,
@@ -4601,13 +4604,33 @@ write_xml_team_testing_report(
 
   fprintf(f, "</tr>\n");
 
-  open_tests = 0;
-  if (prob) open_tests = prob->open_tests_val;
   for (i = 0; i < r->run_tests; i++) {
     if (!(t = r->tests[i])) continue;
-    while (open_tests && *open_tests > 0 && *open_tests <= i) {
-      ++open_tests;
+    // TV_NORMAL, TV_FULL, TV_BRIEF, TV_EXISTS, TV_HIDDEN
+    visibility = TV_NORMAL;
+    if (prob && prob->open_tests_val && i + 1 < prob->open_tests_count) {
+      visibility = prob->open_tests_val[i + 1];
     }
+    if (visibility == TV_HIDDEN) continue;
+    ++serial;
+    if (visibility == TV_EXISTS) {
+      fprintf(f, "<tr>");
+      fprintf(f, "<td%s>%d</td>", cl, serial);
+      fprintf(f, "<td%s>&nbsp;</td>", cl); // status
+      fprintf(f, "<td%s>&nbsp;</td>", cl); // time
+      fprintf(f, "</tr>\n");
+      if (need_info) {
+        fprintf(f, "<td%s>&nbsp;</td>", cl); // info
+      }
+      if (is_kirov) {
+        fprintf(f, "<td%s>&nbsp;</td>", cl); // score
+      }
+      if (need_comment) {
+        fprintf(f, "<td%s>&nbsp;</td>", cl); // info
+      }
+      continue;
+    }
+
     fprintf(f, "<tr>");
     fprintf(f, "<td%s>%d</td>", cl, t->num);
     if (t->status == RUN_OK || t->status == RUN_ACCEPTED) {
@@ -4635,8 +4658,7 @@ write_xml_team_testing_report(
     if (need_info) {
       fprintf(f, "<td%s>", cl);
       if (t->status == RUN_RUN_TIME_ERR
-          && (global->report_error_code
-              || (open_tests && *open_tests == i + 1))) {
+          && (global->report_error_code || visibility == TV_FULL)) {
         if (t->exit_comment) {
           fprintf(f, "%s", t->exit_comment);
         } else if (t->term_signal >= 0) {
@@ -4666,19 +4688,18 @@ write_xml_team_testing_report(
   }
   fprintf(f, "</table>\n");
 
-  open_tests = 0;
-  if (prob) open_tests = prob->open_tests_val;
-  if (open_tests && *open_tests > 0) {
+  if (has_full) {
     fprintf(f, "<pre>");
     for (i = 0; i < r->run_tests; i++) {
       if (!(t = r->tests[i])) continue;
+      visibility = TV_NORMAL;
+      if (prob && prob->open_tests_val && i + 1 < prob->open_tests_count) {
+        visibility = prob->open_tests_val[i + 1];
+      }
+      if (visibility != TV_FULL) continue;
       if (!t->args && !t->args_too_long && !t->input
           && !t->output && !t->error && !t->correct && !t->checker)
         continue;
-      while (*open_tests > 0 && *open_tests <= i) {
-        ++open_tests;
-      }
-      if (*open_tests != i + 1) continue;
       fprintf(f, _("<b>====== Test #%d =======</b>\n"), t->num);
       if (t->args || t->args_too_long) {
         fprintf(f, "<a name=\"%dL\"></a>", t->num);
