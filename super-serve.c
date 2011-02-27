@@ -2893,6 +2893,7 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_PROB_CHANGE_DISABLE_AUTO_TESTING:
   case SSERV_CMD_PROB_CHANGE_ENABLE_COMPILATION:
   case SSERV_CMD_PROB_CHANGE_FULL_SCORE:
+  case SSERV_CMD_PROB_CHANGE_FULL_USER_SCORE:
   case SSERV_CMD_PROB_CHANGE_TEST_SCORE:
   case SSERV_CMD_PROB_CHANGE_RUN_PENALTY:
   case SSERV_CMD_PROB_CHANGE_ACM_RUN_PENALTY:
@@ -3837,6 +3838,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_CHANGE_DISABLE_AUTO_TESTING] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_ENABLE_COMPILATION] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_FULL_SCORE] = { cmd_set_value },
+  [SSERV_CMD_PROB_CHANGE_FULL_USER_SCORE] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_TEST_SCORE] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_RUN_PENALTY] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_ACM_RUN_PENALTY] = { cmd_set_value },

@@ -355,6 +355,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(team_show_judge_report, "d"),
   PROBLEM_PARAM(ignore_compile_errors, "d"),
   PROBLEM_PARAM(full_score, "d"),
+  PROBLEM_PARAM(full_user_score, "d"),
   PROBLEM_PARAM(test_score, "d"),
   PROBLEM_PARAM(run_penalty, "d"),
   PROBLEM_PARAM(acm_run_penalty, "d"),
@@ -862,6 +863,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->skip_testing = -1;
   p->test_score = -1;
   p->full_score = -1;
+  p->full_user_score = -1;
   p->variable_full_score = -1;
   p->hidden = -1;
   p->advance_to_next = -1;
@@ -3197,6 +3199,7 @@ set_defaults(
     prepare_set_prob_value(CNTSPROB_disable_security, prob, aprob, g);
 
     prepare_set_prob_value(CNTSPROB_full_score, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_full_user_score, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_variable_full_score, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_test_score, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_run_penalty, prob, aprob, g);
@@ -5564,6 +5567,10 @@ prepare_set_prob_value(
     if (out->full_score == -1) out->full_score = DFLT_P_FULL_SCORE;
     break;
 
+  case CNTSPROB_full_user_score:
+    if (out->full_user_score < 0 && abstr) out->full_user_score = abstr->full_user_score;
+    break;
+
   case CNTSPROB_test_score:
     if (out->test_score == -1 && abstr) out->test_score = abstr->test_score;
     if (out->test_score == -1) out->test_score = DFLT_P_TEST_SCORE;
@@ -6044,7 +6051,7 @@ static const int prob_settable_list[] =
   CNTSPROB_real_time_limit, CNTSPROB_interactor_time_limit, CNTSPROB_use_ac_not_ok,
   CNTSPROB_team_enable_rep_view, CNTSPROB_team_enable_ce_view,
   CNTSPROB_team_show_judge_report, CNTSPROB_ignore_compile_errors,
-  CNTSPROB_full_score, CNTSPROB_test_score, CNTSPROB_run_penalty,
+  CNTSPROB_full_score, CNTSPROB_full_user_score, CNTSPROB_test_score, CNTSPROB_run_penalty,
   CNTSPROB_acm_run_penalty, CNTSPROB_disqualified_penalty,
   CNTSPROB_ignore_penalty, CNTSPROB_use_corr, CNTSPROB_use_info,
   CNTSPROB_use_tgz, CNTSPROB_tests_to_accept, CNTSPROB_accept_partial,
@@ -6112,6 +6119,7 @@ static const unsigned char prob_settable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_team_show_judge_report] = 1,
   [CNTSPROB_ignore_compile_errors] = 1,
   [CNTSPROB_full_score] = 1,
+  [CNTSPROB_full_user_score] = 1,
   [CNTSPROB_test_score] = 1,
   [CNTSPROB_run_penalty] = 1,
   [CNTSPROB_acm_run_penalty] = 1,
@@ -6223,7 +6231,7 @@ static const int prob_inheritable_list[] =
   CNTSPROB_interactor_time_limit,
   CNTSPROB_use_ac_not_ok, CNTSPROB_team_enable_rep_view,
   CNTSPROB_team_enable_ce_view, CNTSPROB_team_show_judge_report,
-  CNTSPROB_ignore_compile_errors, CNTSPROB_full_score, CNTSPROB_test_score,
+  CNTSPROB_ignore_compile_errors, CNTSPROB_full_score, CNTSPROB_full_user_score, CNTSPROB_test_score,
   CNTSPROB_run_penalty, CNTSPROB_acm_run_penalty, 
   CNTSPROB_disqualified_penalty, CNTSPROB_ignore_penalty,
   CNTSPROB_use_corr, CNTSPROB_use_info, CNTSPROB_use_tgz,
@@ -6290,6 +6298,7 @@ static const unsigned char prob_inheritable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_team_show_judge_report] = 1,
   [CNTSPROB_ignore_compile_errors] = 1,
   [CNTSPROB_full_score] = 1,
+  [CNTSPROB_full_user_score] = 1,
   [CNTSPROB_test_score] = 1,
   [CNTSPROB_run_penalty] = 1,
   [CNTSPROB_acm_run_penalty] = 1, 
@@ -6412,6 +6421,7 @@ static const struct section_problem_data prob_undef_values =
   .team_show_judge_report = -1,
   .ignore_compile_errors = -1,
   .full_score = -1,
+  .full_user_score = -1,
   .variable_full_score = -1,
   .test_score = -1,
   .run_penalty = -1,
@@ -6538,6 +6548,7 @@ static const struct section_problem_data prob_default_values =
   .team_show_judge_report = 0,
   .ignore_compile_errors = 0,
   .full_score = 50,
+  .full_user_score = -1,
   .variable_full_score = 0,
   .test_score = 1,
   .run_penalty = 1,

@@ -5298,6 +5298,28 @@ super_html_print_problem(FILE *f,
                           self_url, extra_args, prob_hidden_vars);
   }
 
+  if (sstate->global && sstate->global->score_system != SCORE_ACM
+      && sstate->global->separate_user_score > 0) {
+    //PROBLEM_PARAM(full_user_score, "d"),
+    extra_msg = "";
+    if (prob->full_user_score == -1) {
+      if (prob->abstract) {
+        extra_msg = "<i>(Undefined)</i>";
+      } else {
+        prepare_set_prob_value(CNTSPROB_full_user_score,
+                               tmp_prob, sup_prob, sstate->global);
+        snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %d)</i>",
+                 tmp_prob->full_user_score);
+        extra_msg = msg_buf;
+      }
+    }
+    print_int_editing_row(f, "Score for user-visible full solution:",
+                          prob->full_user_score, extra_msg,
+                          SSERV_CMD_PROB_CHANGE_FULL_USER_SCORE,
+                          session_id, form_row_attrs[row ^= 1],
+                          self_url, extra_args, prob_hidden_vars);
+  }
+
   if (sstate->global &&
       (sstate->global->score_system == SCORE_KIROV
        || sstate->global->score_system == SCORE_OLYMPIAD)) {
@@ -6709,6 +6731,10 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_PROB_CHANGE_FULL_SCORE:
     p_int = &prob->full_score;
+    goto handle_int_1;
+
+  case SSERV_CMD_PROB_CHANGE_FULL_USER_SCORE:
+    p_int = &prob->full_user_score;
     goto handle_int_1;
 
   case SSERV_CMD_PROB_CHANGE_TEST_SCORE:
@@ -8955,6 +8981,7 @@ super_html_check_tests(FILE *f,
     prepare_set_prob_value(CNTSPROB_test_pat, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_test_score, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_full_score, tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_full_user_score, tmp_prob, abstr, global);
     mkpath(test_path, g_test_path, tmp_prob->test_dir, "");
     if (tmp_prob->use_corr) {
       prepare_set_prob_value(CNTSPROB_corr_dir, tmp_prob, abstr, 0);

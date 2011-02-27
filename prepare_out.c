@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1108,6 +1108,9 @@ prepare_unparse_prob(
           || !prob->abstract)
         fprintf(f, "full_score = %d\n", prob->full_score);
     }
+    if (prob->full_user_score >= 0 && global && global->separate_user_score > 0) {
+      fprintf(f, "full_user_score = %d\n", prob->full_user_score);
+    }
     if (prob->test_score >= 0) {
       if ((prob->abstract && prob->test_score != DFLT_P_TEST_SCORE)
           || !prob->abstract)
@@ -1149,6 +1152,9 @@ prepare_unparse_prob(
       if ((prob->abstract && prob->full_score != DFLT_P_FULL_SCORE)
           || !prob->abstract)
         fprintf(f, "full_score = %d\n", prob->full_score);
+    }
+    if (prob->full_user_score >= 0 && global && global->separate_user_score > 0) {
+      fprintf(f, "full_user_score = %d\n", prob->full_user_score);
     }
     if (prob->score_tests[0])
       fprintf(f, "score_tests = \"%s\"\n", CARMOR(prob->score_tests));
