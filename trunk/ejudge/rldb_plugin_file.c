@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2008-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -183,6 +183,19 @@ static int
 check_func(
         struct rldb_plugin_cnts *cdata,
         FILE *log_f);
+static int
+change_status_3_func(
+        struct rldb_plugin_cnts *cdata,
+        int run_id,
+        int new_status,
+        int new_test,
+        int new_score,
+        int judge_id,
+        int is_marked,
+        int has_user_score,
+        int user_status,
+        int user_tests_passed,
+        int user_score);
 
 struct rldb_plugin_iface rldb_plugin_file =
 {
@@ -227,6 +240,7 @@ struct rldb_plugin_iface rldb_plugin_file =
   NULL, // put_header
   change_status_2_func,
   check_func,
+  change_status_3_func,
 };
 
 static struct common_plugin_data *
@@ -1523,6 +1537,37 @@ check_func(
 
   // FIXME: save the updated runs
   return 0;
+}
+
+static int
+change_status_3_func(
+        struct rldb_plugin_cnts *cdata,
+        int run_id,
+        int new_status,
+        int new_test,
+        int new_score,
+        int judge_id,
+        int is_marked,
+        int has_user_score,
+        int user_status,
+        int user_tests_passed,
+        int user_score)
+{
+  struct rldb_file_cnts *cs = (struct rldb_file_cnts*) cdata;
+  struct runlog_state *rls = cs->rl_state;
+
+  ASSERT(run_id >= 0 && run_id < rls->run_u);
+
+  rls->runs[run_id].status = new_status;
+  rls->runs[run_id].test = new_test;
+  rls->runs[run_id].score = new_score;
+  rls->runs[run_id].judge_id = judge_id;
+  rls->runs[run_id].is_marked = is_marked;
+  rls->runs[run_id].is_saved = has_user_score;
+  rls->runs[run_id].saved_status = user_status;
+  rls->runs[run_id].saved_test = user_tests_passed;
+  rls->runs[run_id].saved_score = user_score;
+  return do_flush_entry(cs, run_id);
 }
 
 /*
