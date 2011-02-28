@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2008-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -104,6 +104,7 @@ struct rldb_plugin_iface plugin_rldb_mysql =
   put_header_func,
   change_status_2_func,
   check_func,
+  change_status_3_func,
 };
 
 static struct common_plugin_data *
@@ -1557,6 +1558,39 @@ check_func(
 
   // FIXME: save the updated runs
   return 0;
+}
+
+static int
+change_status_3_func(
+        struct rldb_plugin_cnts *cdata,
+        int run_id,
+        int new_status,
+        int new_test,
+        int new_score,
+        int new_judge_id,
+        int new_is_marked,
+        int has_user_score,
+        int user_status,
+        int user_tests_passed,
+        int user_score)
+{
+  struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts *) cdata;
+  struct run_entry te;
+
+  memset(&te, 0, sizeof(te));
+  te.status = new_status;
+  te.test = new_test;
+  te.score = new_score;
+  te.judge_id = new_judge_id;
+  te.is_marked = new_is_marked;
+  te.is_saved = has_user_score;
+  te.saved_status = user_status;
+  te.saved_test = user_tests_passed;
+  te.saved_score = user_score;
+
+  return do_update_entry(cs, run_id, &te,
+                         RE_STATUS | RE_TEST | RE_SCORE | RE_JUDGE_ID | RE_IS_MARKED
+                         | RE_IS_SAVED | RE_SAVED_STATUS | RE_SAVED_TEST | RE_SAVED_SCORE);
 }
 
 /*
