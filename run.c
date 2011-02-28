@@ -602,11 +602,12 @@ read_valuer_score(
         int *p_score,
         int *p_marked,
         int *p_user_status,
-        int *p_user_score)
+        int *p_user_score,
+        int *p_user_tests_passed)
 {
   char *score_buf = 0, *p;
   size_t score_buf_size = 0;
-  int x, y, n, r, user_status = -1, user_score = -1;
+  int x, y, n, r, user_status = -1, user_score = -1, user_tests_passed = -1;
 
   if (p_marked) *p_marked = -1;
 
@@ -686,6 +687,20 @@ read_valuer_score(
         user_score = -1;
       }
     }
+    while (isspace(*p)) ++p;
+    if (*p) {
+      if (sscanf(p, "%d%n", &user_tests_passed, &n) != 1) {
+        append_msg_to_log(log_path, "The %s user_tests_passed output (%s) is invalid",
+                          what, score_buf);
+        goto fail;
+      }
+      p += n;
+      if (user_tests_passed >= 0) {
+        // do some more checking
+      } else {
+        user_tests_passed = -1;
+      }
+    }
   }
 
   if (*p) {
@@ -698,6 +713,7 @@ read_valuer_score(
   if (separate_user_score > 0) {
     if (p_user_status && user_status >= 0) *p_user_status = user_status;
     if (p_user_score && user_score >= 0) *p_user_score = user_score;
+    if (p_user_tests_passed && user_tests_passed >= 0) *p_user_tests_passed = user_tests_passed;
   }
 
   xfree(score_buf);
@@ -744,6 +760,7 @@ invoke_valuer(
         int *p_marked,
         int *p_user_status,
         int *p_user_score,
+        int *p_user_tests_passed,
         char **p_err_txt,
         char **p_cmt_txt,
         char **p_jcmt_txt)
@@ -862,7 +879,7 @@ invoke_valuer(
 
   if (read_valuer_score(score_res, score_err, "valuer", max_score,
                         prb->valuer_sets_marked, global->separate_user_score,
-                        p_score, p_marked, p_user_status, p_user_score) < 0) {
+                        p_score, p_marked, p_user_status, p_user_score, p_user_tests_passed) < 0) {
     goto cleanup;
   }
   generic_read_file(&cmt_txt, 0, &cmt_len, 0, 0, score_cmt, "");
@@ -2772,7 +2789,7 @@ run_tests(struct section_tester_data *tst,
   if (prb->valuer_cmd[0] && !req_pkt->accepting_mode
       && !reply_pkt->status != RUN_CHECK_FAILED) {
     if (invoke_valuer(global, prb, cur_variant, prb->full_score,
-                      &score, &marked_flag, &user_status, &user_score,
+                      &score, &marked_flag, &user_status, &user_score, &user_tests_passed,
                       &valuer_errors, &valuer_comment,
                       &valuer_judge_comment) < 0) {
       reply_pkt->status = RUN_CHECK_FAILED;
@@ -2807,11 +2824,26 @@ run_tests(struct section_tester_data *tst,
     if (score_system_val == SCORE_KIROV
         || (score_system_val == SCORE_OLYMPIAD && !req_pkt->accepting_mode)) {
       if (user_score < 0) {
-        user_score = 0;
-        for (cur_test = 1; cur_test < total_tests; ++cur_test) {
-          if (tests[cur_test].visibility != TV_HIDDEN
-              && tests[cur_test].score >= 0) {
-            user_score += tests[cur_test].score;
+        if (prb->variable_full_score <= 0 && user_status == RUN_OK) {
+          if (prb->full_user_score >= 0) {
+            user_score = prb->full_user_score;
+          } else {
+            user_score = prb->full_score;
+          }
+        } else {
+          user_score = 0;
+          for (cur_test = 1; cur_test < total_tests; ++cur_test) {
+            if (tests[cur_test].visibility != TV_HIDDEN
+                && tests[cur_test].score >= 0) {
+              user_score += tests[cur_test].score;
+            }
+          }
+          if (prb->variable_full_score <= 0) {
+            if (prb->full_user_score >= 0 && user_score > prb->full_user_score) {
+              user_score = prb->full_user_score;
+            } else if (user_score > prb->full_score) {
+              user_score = prb->full_score;
+            }
           }
         }
       }
