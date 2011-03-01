@@ -194,3 +194,9 @@ change_status_3_func(
         int user_status,
         int user_tests_passed,
         int user_score);
+
+static int
+change_status_4_func(
+        struct rldb_plugin_cnts *cdata,
+        int run_id,
+        int new_status);
