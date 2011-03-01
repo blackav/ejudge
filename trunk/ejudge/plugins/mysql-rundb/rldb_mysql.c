@@ -105,6 +105,7 @@ struct rldb_plugin_iface plugin_rldb_mysql =
   change_status_2_func,
   check_func,
   change_status_3_func,
+  change_status_4_func,
 };
 
 static struct common_plugin_data *
@@ -1591,6 +1592,32 @@ change_status_3_func(
   return do_update_entry(cs, run_id, &te,
                          RE_STATUS | RE_TEST | RE_SCORE | RE_JUDGE_ID | RE_IS_MARKED
                          | RE_IS_SAVED | RE_SAVED_STATUS | RE_SAVED_TEST | RE_SAVED_SCORE);
+}
+
+static int
+change_status_4_func(
+        struct rldb_plugin_cnts *cdata,
+        int run_id,
+        int new_status)
+{
+  struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts *) cdata;
+  struct run_entry te;
+
+  memset(&te, 0, sizeof(te));
+  te.status = new_status;
+  te.test = 0;
+  te.score = -1;
+  te.judge_id = 0;
+  te.is_marked = 0;
+  te.is_saved = 0;
+  te.saved_status = 0;
+  te.saved_test = 0;
+  te.saved_score = 0;
+
+  return do_update_entry(cs, run_id, &te,
+                         RE_STATUS | RE_TEST | RE_SCORE | RE_JUDGE_ID
+                         | RE_IS_MARKED | RE_IS_SAVED | RE_SAVED_STATUS
+                         | RE_SAVED_TEST | RE_SAVED_SCORE);
 }
 
 /*
