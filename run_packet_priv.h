@@ -40,8 +40,9 @@ enum
   FLAGS_MARKED               = 0x1000,
   FLAGS_ADVANCED_LAYOUT      = 0x2000,
   FLAGS_SEPARATE_USER_SCORE  = 0x4000,
+  FLAGS_HAS_USER_SCORE       = 0x8000,
 
-  FLAGS_ALL_MASK             = 0x7fff, /* scoring system incl. */
+  FLAGS_ALL_MASK             = 0xffff, /* scoring system incl. */
 };
 
 /* serve->run binary packet structure */

@@ -3,7 +3,7 @@
 #ifndef __RUNLOG_H__
 #define __RUNLOG_H__
 
-/* Copyright (C) 2000-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -110,6 +110,24 @@ run_change_status_2(
         int newscore,
         int judge_id,
         int is_marked);
+int
+run_change_status_3(
+        runlog_state_t state,
+        int runid,
+        int newstatus,
+        int newtest,
+        int newscore,
+        int judge_id,
+        int is_marked,
+        int has_user_score,
+        int user_status,
+        int user_tests_passed,
+        int user_score);
+int
+run_change_status_4(
+        runlog_state_t state,
+        int runid,
+        int newstatus);
 int run_get_status(runlog_state_t state, int runid);
 int run_is_imported(runlog_state_t state, int runid);
 void run_get_times(runlog_state_t, time_t *, time_t *, time_t *, time_t *,

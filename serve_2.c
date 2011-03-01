@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1654,8 +1654,8 @@ serve_read_compile_packet(
 
   if (comp_pkt->status == RUN_CHECK_FAILED) {
     /* if status change fails, we cannot do reasonable recovery */
-    if (run_change_status(state->runlog_state, comp_pkt->run_id,
-                          RUN_CHECK_FAILED, 0, -1, 0) < 0)
+    if (run_change_status_4(state->runlog_state, comp_pkt->run_id,
+                            RUN_CHECK_FAILED) < 0)
       goto non_fatal_error;
     if (archive_dir_prepare(state, global->xml_report_archive_dir,
                             comp_pkt->run_id, 0, 0) < 0)
@@ -1674,8 +1674,8 @@ serve_read_compile_packet(
   if (comp_pkt->status == RUN_COMPILE_ERR
       || comp_pkt->status == RUN_STYLE_ERR) {
     /* if status change fails, we cannot do reasonable recovery */
-    if (run_change_status(state->runlog_state, comp_pkt->run_id,
-                          comp_pkt->status, 0, -1, 0) < 0)
+    if (run_change_status_4(state->runlog_state, comp_pkt->run_id,
+                            comp_pkt->status) < 0)
       goto non_fatal_error;
 
     if (archive_dir_prepare(state, global->xml_report_archive_dir,
@@ -1717,8 +1717,8 @@ serve_read_compile_packet(
     goto report_check_failed;
   }
   if (prob->disable_testing && prob->enable_compilation > 0) {
-    if (run_change_status(state->runlog_state, comp_pkt->run_id, RUN_ACCEPTED,
-                          0, -1, comp_pkt->judge_id) < 0)
+    if (run_change_status_4(state->runlog_state, comp_pkt->run_id,
+                            RUN_ACCEPTED) < 0)
       goto non_fatal_error;
     if (global->notify_status_change > 0 && !re.is_hidden
         && comp_extra->notify_flag) {
@@ -1789,8 +1789,8 @@ serve_read_compile_packet(
   serve_send_check_failed_email(cnts, comp_pkt->run_id);
 
   /* this is error recover, so if error happens again, we cannot do anything */
-  if (run_change_status(state->runlog_state, comp_pkt->run_id,
-                        RUN_CHECK_FAILED, 0, -1, 0) < 0)
+  if (run_change_status_4(state->runlog_state, comp_pkt->run_id,
+                          RUN_CHECK_FAILED) < 0)
     goto non_fatal_error;
   report_size = strlen(errmsg);
   rep_flags = archive_make_write_path(state, rep_path, sizeof(rep_path),
@@ -2012,10 +2012,28 @@ serve_read_run_packet(serve_state_t state,
   if (reply_pkt->status == RUN_CHECK_FAILED)
     serve_send_check_failed_email(cnts, reply_pkt->run_id);
   if (reply_pkt->marked_flag < 0) reply_pkt->marked_flag = 0;
-  if (run_change_status_2(state->runlog_state, reply_pkt->run_id,
-                          reply_pkt->status, reply_pkt->failed_test,
-                          reply_pkt->score, 0, reply_pkt->marked_flag) < 0)
-    goto failed;
+  if (reply_pkt->status == RUN_CHECK_FAILED) {
+    if (run_change_status_4(state->runlog_state, reply_pkt->run_id,
+                            reply_pkt->status) < 0)
+      goto failed;
+  } else {
+    int has_user_score = 0;
+    int user_status = 0;
+    int user_tests_passed = 0;
+    int user_score = 0;
+    if (state->global->separate_user_score > 0 && reply_pkt->has_user_score) {
+      has_user_score = 1;
+      user_status = reply_pkt->user_status;
+      user_tests_passed = reply_pkt->user_tests_passed;
+      user_score = reply_pkt->user_score;
+    }
+    if (run_change_status_3(state->runlog_state, reply_pkt->run_id,
+                            reply_pkt->status, reply_pkt->failed_test,
+                            reply_pkt->score, 0, reply_pkt->marked_flag,
+                            has_user_score, user_status, user_tests_passed,
+                            user_score) < 0)
+      goto failed;
+  }
   serve_update_standings_file(state, cnts, 0);
   if (state->global->notify_status_change > 0 && !re.is_hidden
       && reply_pkt->notify_flag) {
@@ -2286,8 +2304,8 @@ serve_judge_built_in_problem(
     serve_send_check_failed_email(cnts, run_id);
 
   /* FIXME: handle database update error */
-  run_change_status(state->runlog_state, run_id, glob_status, failed_test,
-                    score, 0);
+  run_change_status_3(state->runlog_state, run_id, glob_status, failed_test,
+                      score, 0, 0, 0, 0, 0, 0);
   serve_update_standings_file(state, cnts, 0);
   /*
   if (global->notify_status_change > 0 && !re.is_hidden
@@ -3433,7 +3451,7 @@ serve_testing_queue_delete(
   if (run_get_entry(state->runlog_state, packet->run_id, &re) >= 0
       && re.status == RUN_RUNNING
       && re.judge_id == packet->judge_id) {
-    run_change_status(state->runlog_state, packet->run_id, RUN_PENDING, 0,-1,0);
+    run_change_status_4(state->runlog_state, packet->run_id, RUN_PENDING);
   }
 
   packet = run_request_packet_free(packet);

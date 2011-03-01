@@ -196,6 +196,11 @@ change_status_3_func(
         int user_status,
         int user_tests_passed,
         int user_score);
+static int
+change_status_4_func(
+        struct rldb_plugin_cnts *cdata,
+        int run_id,
+        int new_status);
 
 struct rldb_plugin_iface rldb_plugin_file =
 {
@@ -241,6 +246,7 @@ struct rldb_plugin_iface rldb_plugin_file =
   change_status_2_func,
   check_func,
   change_status_3_func,
+  change_status_4_func,
 };
 
 static struct common_plugin_data *
@@ -1567,6 +1573,29 @@ change_status_3_func(
   rls->runs[run_id].saved_status = user_status;
   rls->runs[run_id].saved_test = user_tests_passed;
   rls->runs[run_id].saved_score = user_score;
+  return do_flush_entry(cs, run_id);
+}
+
+static int
+change_status_4_func(
+        struct rldb_plugin_cnts *cdata,
+        int run_id,
+        int new_status)
+{
+  struct rldb_file_cnts *cs = (struct rldb_file_cnts*) cdata;
+  struct runlog_state *rls = cs->rl_state;
+
+  ASSERT(run_id >= 0 && run_id < rls->run_u);
+
+  rls->runs[run_id].status = new_status;
+  rls->runs[run_id].test = 0;
+  rls->runs[run_id].score = -1;
+  rls->runs[run_id].judge_id = 0;
+  rls->runs[run_id].is_marked = 0;
+  rls->runs[run_id].is_saved = 0;
+  rls->runs[run_id].saved_status = 0;
+  rls->runs[run_id].saved_test = 0;
+  rls->runs[run_id].saved_score = 0;
   return do_flush_entry(cs, run_id);
 }
 

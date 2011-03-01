@@ -69,6 +69,7 @@ struct run_reply_packet
   int score;
   int notify_flag;
   int marked_flag;
+  int has_user_score;
   int user_status;
   int user_tests_passed;
   int user_score;

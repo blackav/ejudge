@@ -491,6 +491,70 @@ run_change_status_2(
 }
 
 int
+run_change_status_3(
+        runlog_state_t state,
+        int runid,
+        int newstatus,
+        int newtest,
+        int newscore,
+        int judge_id,
+        int is_marked,
+        int has_user_score,
+        int user_status,
+        int user_tests_passed,
+        int user_score)
+{
+  if (runid < 0 || runid >= state->run_u) ERR_R("bad runid: %d", runid);
+  if (newstatus < 0 || newstatus > 255) ERR_R("bad newstatus: %d", newstatus);
+  if (newtest < -1) ERR_R("bad newtest: %d", newtest);
+  if (newscore < -1 || newscore > EJ_MAX_SCORE)
+    ERR_R("bad newscore: %d", newscore);
+  if (judge_id < 0 || judge_id > EJ_MAX_JUDGE_ID)
+    ERR_R("bad judge_id: %d", judge_id);
+
+  if (newstatus == RUN_VIRTUAL_START || newstatus == RUN_VIRTUAL_STOP)
+    ERR_R("virtual status cannot be changed that way");
+  if (newstatus == RUN_EMPTY)
+    ERR_R("EMPTY status cannot be set this way");
+  if (state->runs[runid].status == RUN_VIRTUAL_START
+      || state->runs[runid].status == RUN_VIRTUAL_STOP
+      || state->runs[runid].status == RUN_EMPTY)
+    ERR_R("this entry cannot be changed");
+
+  if (state->runs[runid].is_readonly)
+    ERR_R("this entry is read-only");
+
+  return state->iface->change_status_3(state->cnts, runid, newstatus, newtest,
+                                       newscore, judge_id, is_marked,
+                                       has_user_score, user_status,
+                                       user_tests_passed, user_score);
+}
+
+int
+run_change_status_4(
+        runlog_state_t state,
+        int runid,
+        int newstatus)
+{
+  if (runid < 0 || runid >= state->run_u) ERR_R("bad runid: %d", runid);
+  if (newstatus < 0 || newstatus > 255) ERR_R("bad newstatus: %d", newstatus);
+
+  if (newstatus == RUN_VIRTUAL_START || newstatus == RUN_VIRTUAL_STOP)
+    ERR_R("virtual status cannot be changed that way");
+  if (newstatus == RUN_EMPTY)
+    ERR_R("EMPTY status cannot be set this way");
+  if (state->runs[runid].status == RUN_VIRTUAL_START
+      || state->runs[runid].status == RUN_VIRTUAL_STOP
+      || state->runs[runid].status == RUN_EMPTY)
+    ERR_R("this entry cannot be changed");
+
+  if (state->runs[runid].is_readonly)
+    ERR_R("this entry is read-only");
+
+  return state->iface->change_status_4(state->cnts, runid, newstatus);
+}
+
+int
 run_get_status(runlog_state_t state, int runid)
 {
   if (runid < 0 || runid >= state->run_u) ERR_R("bad runid: %d", runid);
