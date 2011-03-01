@@ -77,6 +77,7 @@ run_reply_packet_read(
   flags = cvt_bin_to_host_32(pin->flags);
   if ((flags & FLAGS_NOTIFY)) pout->notify_flag = 1;
   if ((flags & FLAGS_MARKED)) pout->marked_flag = 1;
+  if ((flags & FLAGS_HAS_USER_SCORE)) pout->has_user_score = 1;
 
   pout->ts1 = cvt_bin_to_host_32(pin->ts1);
   pout->ts1_us = cvt_bin_to_host_32(pin->ts1_us);

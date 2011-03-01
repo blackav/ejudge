@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -2821,7 +2821,7 @@ priv_submit_run(FILE *fout,
     if (prob->disable_auto_testing > 0
         || (prob->disable_testing > 0 && prob->enable_compilation <= 0)
         || lang->disable_auto_testing || lang->disable_testing) {
-      run_change_status(cs->runlog_state, run_id, RUN_PENDING, 0, -1, 0);
+      run_change_status_4(cs->runlog_state, run_id, RUN_PENDING);
       serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
                       "Command: submit\n"
                       "Status: pending\n"
@@ -2848,7 +2848,7 @@ priv_submit_run(FILE *fout,
   } else if (prob->manual_checking > 0) {
     // manually tested outputs
     if (prob->check_presentation <= 0) {
-      run_change_status(cs->runlog_state, run_id, RUN_ACCEPTED, 0, -1, 0);
+      run_change_status_4(cs->runlog_state, run_id, RUN_ACCEPTED);
       serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
                       "Command: submit\n"
                       "Status: accepted for testing\n"
@@ -2888,7 +2888,7 @@ priv_submit_run(FILE *fout,
     // automatically tested outputs
     if (prob->disable_auto_testing > 0
         || (prob->disable_testing > 0 && prob->enable_compilation <= 0)) {
-      run_change_status(cs->runlog_state, run_id, RUN_PENDING, 0, -1, 0);
+      run_change_status_4(cs->runlog_state, run_id, RUN_PENDING);
       serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
                       "Command: submit\n"
                       "Status: pending\n"
@@ -3189,8 +3189,7 @@ priv_set_run_style_error_status(
              global->xml_report_archive_dir, run_id, text2_len);
     goto invalid_param;
   }
-  if (run_change_status(cs->runlog_state, run_id,
-                        RUN_STYLE_ERR, 0, -1, 0) < 0)
+  if (run_change_status_4(cs->runlog_state, run_id, RUN_STYLE_ERR) < 0)
     goto invalid_param;
   if (global->notify_status_change > 0 && !re.is_hidden) {
     serve_notify_user_run_status_change(cnts, cs, re.user_id,
@@ -3275,13 +3274,24 @@ priv_submit_run_comment(
   }
 
   if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_IGNORE) {
-    run_change_status(cs->runlog_state, run_id, RUN_IGNORED, 0, -1, 0);
+    run_change_status_4(cs->runlog_state, run_id, RUN_IGNORED);
   } else if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_OK) {
     struct section_problem_data *prob = 0;
     int full_score = 0;
+    int user_status = 0, user_score = 0;
     if (re.prob_id > 0 && re.prob_id <= cs->max_prob) prob = cs->probs[re.prob_id];
     if (prob) full_score = prob->full_score;
-    run_change_status(cs->runlog_state, run_id, RUN_OK, full_score, re.test, 0);
+    if (global->separate_user_score > 0 && re.is_saved) {
+      user_status = RUN_OK;
+      user_score = -1;
+      if (prob) user_score = prob->full_user_score;
+      if (prob && user_score < 0) user_score = prob->full_score;
+      if (user_score < 0) user_score = 0;
+    }
+    run_change_status_3(cs->runlog_state, run_id, RUN_OK,
+                        full_score, re.test, 0, 0,
+                        re.saved_score, user_status, re.saved_test,
+                        user_score);
   }
 
   if (global->notify_clar_reply) {
@@ -10102,7 +10112,7 @@ unpriv_submit_run(FILE *fout,
         || (prob->disable_testing > 0 && prob->enable_compilation <= 0)
         || lang->disable_auto_testing || lang->disable_testing
         || cs->testing_suspended) {
-      run_change_status(cs->runlog_state, run_id, RUN_PENDING, 0, -1, 0);
+      run_change_status_4(cs->runlog_state, run_id, RUN_PENDING);
       serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
                       "Command: submit\n"
                       "Status: pending\n"
@@ -10129,7 +10139,7 @@ unpriv_submit_run(FILE *fout,
   } else if (prob->manual_checking > 0 && !accept_immediately) {
     // manually tested outputs
     if (prob->check_presentation <= 0) {
-      run_change_status(cs->runlog_state, run_id, RUN_ACCEPTED, 0, -1, 0);
+      run_change_status_4(cs->runlog_state, run_id, RUN_ACCEPTED);
       serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
                       "Command: submit\n"
                       "Status: accepted for testing\n"
@@ -10168,14 +10178,14 @@ unpriv_submit_run(FILE *fout,
     }
   } else {
     if (accept_immediately) {
-      run_change_status(cs->runlog_state, run_id, RUN_ACCEPTED, 0, -1, 0);
+      run_change_status_4(cs->runlog_state, run_id, RUN_ACCEPTED);
       serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
                       "Command: submit\n"
                       "Status: accepted\n"
                       "Run-id: %d\n", run_id);
     } else if (prob->disable_auto_testing > 0
         || (prob->disable_testing > 0 && prob->enable_compilation <= 0)) {
-      run_change_status(cs->runlog_state, run_id, RUN_PENDING, 0, -1, 0);
+      run_change_status_4(cs->runlog_state, run_id, RUN_PENDING);
       serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
                       "Command: submit\n"
                       "Status: pending\n"

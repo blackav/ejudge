@@ -148,8 +148,12 @@ struct rldb_plugin_iface
                          int is_marked,
                          int has_user_score,
                          int user_status,
-                         int user_failed_test,
+                         int user_tests_passed,
                          int user_score);
+  // change the status (brief version)
+  int (*change_status_4)(struct rldb_plugin_cnts *,
+                         int run_id,
+                         int new_status);
 };
 
 /* default plugin: compiled into new-server */
