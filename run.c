@@ -1456,7 +1456,7 @@ run_tests(struct section_tester_data *tst,
   int report_real_time_limit_ms = -1;
   int has_real_time = 0;
   int has_max_memory_used = 0;
-  int user_status, user_score, user_tests_passed;
+  int has_user_score, user_status, user_score, user_tests_passed;
 
   int pfd1[2], pfd2[2];
   tpTask tsk_int = 0;
@@ -2783,6 +2783,7 @@ run_tests(struct section_tester_data *tst,
 
   get_current_time(&reply_pkt->ts7, &reply_pkt->ts7_us);
 
+  has_user_score = 0;
   user_status = -1;
   user_score = -1;
   user_tests_passed = -1;
@@ -2811,6 +2812,7 @@ run_tests(struct section_tester_data *tst,
       user_tests_passed = reply_pkt->failed_test - 1;
     }
   } else {
+    has_user_score = 1;
     if (user_status < 0) {
       user_status = RUN_OK;
       for (cur_test = 1; cur_test < total_tests; ++cur_test) {
@@ -2856,6 +2858,7 @@ run_tests(struct section_tester_data *tst,
     }
   }
 
+  reply_pkt->has_user_score = has_user_score;
   reply_pkt->user_status = user_status;
   reply_pkt->user_score = user_score;
   reply_pkt->user_tests_passed = user_tests_passed;
