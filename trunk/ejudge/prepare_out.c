@@ -968,7 +968,7 @@ prepare_unparse_prob(
     unparse_bool(f, "manual_checking", prob->manual_checking);
   if ((prob->abstract && prob->examinator_num > 0)
       || (!prob->abstract && prob->examinator_num > 0))
-    fprintf(f, "examinator_num = %d", prob->examinator_num);
+    fprintf(f, "examinator_num = %d\n", prob->examinator_num);
   if ((prob->abstract && prob->check_presentation == 1)
       || (!prob->abstract && prob->check_presentation >= 0))
     unparse_bool(f, "check_presentation", prob->check_presentation);
