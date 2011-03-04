@@ -3,7 +3,7 @@
 #ifndef __HTML_H__
 #define __HTML_H__
 
-/* Copyright (C) 2000-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -24,14 +24,29 @@
 #include <stdio.h>
 #include <time.h>
 
-void write_standings(const serve_state_t,
-                     const struct contest_desc *,
-                     char const *, char const *,
-                     int, char const *, char const *, int, int, int);
-void write_public_log(const serve_state_t,
-                      const struct contest_desc *,
-                      char const *, char const *,
-                      char const *, char const *, int);
+void
+write_standings(
+        const serve_state_t,
+        const struct contest_desc *,
+        char const *,
+        char const *,
+        int,
+        char const *,
+        char const *,
+        int,
+        int,
+        int,
+        int user_mode);
+void
+write_public_log(
+        const serve_state_t,
+        const struct contest_desc *,
+        char const *,
+        char const *,
+        char const *,
+        char const *,
+        int,
+        int user_mode);
 
 void new_write_user_runs(const serve_state_t, FILE *f, int uid,
                          unsigned int show_flags,
@@ -77,7 +92,8 @@ do_write_kirov_standings(
         int force_fancy_style,
         time_t cur_time,
         int charset_id,
-        struct user_filter_info *u);
+        struct user_filter_info *u,
+        int user_mode);
 
 void
 do_write_standings(
@@ -120,19 +136,31 @@ void write_runs_dump(const serve_state_t, FILE *f, const unsigned char *,
 struct run_entry;
 struct section_problem_data;
 
-int calc_kirov_score(unsigned char *outbuf, size_t outsize,
-                     const struct run_entry *pe,
-                     const struct section_problem_data *pr,
-                     int attempts,
-                     int disq_attempts,
-                     int prev_successes,
-                     int *p_date_penalty,
-                     int format);
-void write_html_run_status(const serve_state_t, FILE *f,
-                           const struct run_entry *pe,
-                           int priv_level, int attempts,
-                           int disq_attempts, int prev_successes,
-                           const unsigned char *td_class, int disable_failed);
+int
+calc_kirov_score(
+        unsigned char *outbuf,
+        size_t outsize,
+        int separate_user_score,
+        int user_mode,
+        const struct run_entry *pe,
+        const struct section_problem_data *pr,
+        int attempts,
+        int disq_attempts,
+        int prev_successes,
+        int *p_date_penalty,
+        int format);
+void
+write_html_run_status(
+        const serve_state_t,
+        FILE *f,
+        const struct run_entry *pe,
+        int user_mode,
+        int priv_level,
+        int attempts,
+        int disq_attempts,
+        int prev_successes,
+        const unsigned char *td_class,
+        int disable_failed);
 
 int write_xml_testing_report(FILE *f, int user_mode, unsigned char const *txt,
                              ej_cookie_t sid,
@@ -188,9 +216,15 @@ write_xml_team_accepting_report(FILE *f, const unsigned char *txt,
                                 const unsigned char *table_class);
 
 void
-write_text_run_status(const serve_state_t state, FILE *f, struct run_entry *pe,
-                      int priv_level, int attempts, int disq_attempts,
-                      int prev_successes);
+write_text_run_status(
+        const serve_state_t state,
+        FILE *f,
+        struct run_entry *pe,
+        int user_mode,
+        int priv_level,
+        int attempts,
+        int disq_attempts,
+        int prev_successes);
 
 unsigned char*
 score_view_display(

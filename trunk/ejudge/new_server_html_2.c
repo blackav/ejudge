@@ -538,7 +538,7 @@ ns_write_priv_all_runs(
         fprintf(f, "<td%s>??? - %d</td>", cl, pe->lang_id);
       }
       run_status_str(pe->status, statstr, sizeof(statstr), prob_type, 0);
-      write_html_run_status(cs, f, pe, 1, attempts, disq_attempts,
+      write_html_run_status(cs, f, pe, 0, 1, attempts, disq_attempts,
                             prev_successes, "b1", 0);
       if (phr->role == USER_ROLE_ADMIN) {
         write_change_status_dialog(cs, f, "status", pe->is_imported, "b1");
@@ -3458,7 +3458,7 @@ ns_write_priv_standings(
 
   if (state->global->score_system == SCORE_KIROV
       || state->global->score_system == SCORE_OLYMPIAD)
-    do_write_kirov_standings(state, cnts, f, 0, 1, 0, 0, 0, 0, 0 /*accepting_mode*/, 1, 0, 0, u);
+    do_write_kirov_standings(state, cnts, f, 0, 1, 0, 0, 0, 0, 0 /*accepting_mode*/, 1, 0, 0, u, 0 /* user_mode */);
   else if (state->global->score_system == SCORE_MOSCOW)
     do_write_moscow_standings(state, cnts, f, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0,
                               u);
@@ -4538,8 +4538,8 @@ ns_write_user_run_status(
 
   fprintf(fout, "%d;%s;%s;%u;%s;%s;", run_id, run_kind_str, dur_str, re.size,
           prob_str, lang_str);
-  write_text_run_status(cs, fout, &re, 0, attempts, disq_attempts,
-                        prev_successes);
+  write_text_run_status(cs, fout, &re, 1 /* user_mode */, 0, attempts,
+                        disq_attempts, prev_successes);
   fprintf(fout, "\n");
 
   return 0;
@@ -5134,6 +5134,7 @@ ns_get_user_problems_summary(
   struct section_problem_data *cur_prob = 0;
   unsigned char *user_flag = 0;
   unsigned char *marked_flag = 0;
+  int status, score;
 
   if (global->is_virtual) {
     start_time = run_get_virtual_start_time(cs->runlog_state, user_id);
@@ -5149,15 +5150,24 @@ ns_get_user_problems_summary(
 
   for (run_id = 0; run_id < total_runs; run_id++) {
     if (run_get_entry(cs->runlog_state, run_id, &re) < 0) continue;
-    if (!run_is_valid_status(re.status)) continue;
-    if (re.status >= RUN_TRANSIENT_FIRST && re.status <= RUN_TRANSIENT_LAST
+
+    if (global->separate_user_score > 0 && re.is_saved) {
+      status = re.saved_status;
+      score = re.saved_score;
+    } else {
+      status = re.status;
+      score = re.score;
+    }
+
+    if (!run_is_valid_status(status)) continue;
+    if (status >= RUN_TRANSIENT_FIRST && status <= RUN_TRANSIENT_LAST
         && re.user_id == user_id
         && re.prob_id > 0 && re.prob_id <= cs->max_prob
         && cs->probs[re.prob_id]) {
       trans_flag[re.prob_id] = 1;
       all_attempts[re.prob_id]++;
     }
-    if (re.status > RUN_MAX_STATUS) continue;
+    if (status > RUN_MAX_STATUS) continue;
 
     cur_prob = 0;
     if (re.prob_id > 0 && re.prob_id <= cs->max_prob)
@@ -5170,7 +5180,7 @@ ns_get_user_problems_summary(
       if (teamdb_get_flags(cs->teamdb_state,
                            re.user_id) & (TEAM_INVISIBLE | TEAM_BANNED))
         continue;
-      if (re.status == RUN_OK) {
+      if (status == RUN_OK) {
         if (!user_flag[re.user_id * (cs->max_prob + 1) + re.prob_id]) {
           prev_successes[re.prob_id]++;
         }
@@ -5183,12 +5193,12 @@ ns_get_user_problems_summary(
     if (global->score_system == SCORE_OLYMPIAD && accepting_mode) {
       // OLYMPIAD contest in accepting mode
       if (cur_prob->type != PROB_TYPE_STANDARD) {
-        switch (re.status) {
+        switch (status) {
         case RUN_OK:
         case RUN_PARTIAL:
         case RUN_ACCEPTED:
         case RUN_WRONG_ANSWER_ERR:
-          re.status = RUN_ACCEPTED;
+          status = RUN_ACCEPTED;
           break;
 
         case RUN_COMPILE_ERR:
@@ -5198,10 +5208,10 @@ ns_get_user_problems_summary(
         case RUN_MEM_LIMIT_ERR:
         case RUN_SECURITY_ERR:
         case RUN_STYLE_ERR:
-          re.status = RUN_CHECK_FAILED;
+          status = RUN_CHECK_FAILED;
           break;
         }
-        switch (re.status) {
+        switch (status) {
         case RUN_ACCEPTED:
           accepted_flag[re.prob_id] = 1;
           best_run[re.prob_id] = run_id;
@@ -5229,7 +5239,7 @@ ns_get_user_problems_summary(
         }
       } else {
         // regular problems
-        switch (re.status) {
+        switch (status) {
         case RUN_OK:
         case RUN_PARTIAL:
         case RUN_ACCEPTED:
@@ -5269,11 +5279,11 @@ ns_get_user_problems_summary(
       // OLYMPIAD contest in judging mode
       //if (solved_flag[re.prob_id]) continue;
 
-      switch (re.status) {
+      switch (status) {
       case RUN_OK:
         solved_flag[re.prob_id] = 1;
         best_run[re.prob_id] = run_id;
-        cur_score = calc_kirov_score(0, 0, &re, cur_prob, 0, 0, 0, 0, 0);
+        cur_score = calc_kirov_score(0, 0, global->separate_user_score, 1 /* user_mode */, &re, cur_prob, 0, 0, 0, 0, 0);
         //if (cur_score > best_score[re.prob_id])
         best_score[re.prob_id] = cur_score;
         break;
@@ -5293,7 +5303,9 @@ ns_get_user_problems_summary(
         solved_flag[re.prob_id] = 0;
         best_run[re.prob_id] = run_id;
         attempts[re.prob_id]++;
-        cur_score = calc_kirov_score(0, 0, &re, cur_prob, 0, 0, 0, 0, 0);
+        cur_score = calc_kirov_score(0, 0, global->separate_user_score,
+                                     1 /* user_mode */,
+                                     &re, cur_prob, 0, 0, 0, 0, 0);
         //if (cur_score > best_score[re.prob_id])
         best_score[re.prob_id] = cur_score;
         break;
@@ -5322,10 +5334,11 @@ ns_get_user_problems_summary(
           && !re.is_marked) continue;
       if (!marked_flag[re.prob_id]) marked_flag[re.prob_id] = re.is_marked;
 
-      switch (re.status) {
+      switch (status) {
       case RUN_OK:
         solved_flag[re.prob_id] = 1;
-        cur_score = calc_kirov_score(0, 0, &re, cur_prob,
+        cur_score = calc_kirov_score(0, 0, global->separate_user_score,
+                                     1 /* user_mode */, &re, cur_prob,
                                      attempts[re.prob_id],
                                      disqualified[re.prob_id],
                                      prev_successes[re.prob_id], 0, 0);
@@ -5361,13 +5374,14 @@ ns_get_user_problems_summary(
 
       case RUN_PARTIAL:
         solved_flag[re.prob_id] = 0;
-        cur_score = calc_kirov_score(0, 0, &re, cur_prob,
+        cur_score = calc_kirov_score(0, 0, global->separate_user_score,
+                                     1 /* user_mode */, &re, cur_prob,
                                      attempts[re.prob_id],
                                      disqualified[re.prob_id],
                                      prev_successes[re.prob_id], 0, 0);
 
         attempts[re.prob_id]++;
-        if (cur_score >= best_score[re.prob_id] || cur_prob->score_latest > 0) {
+        if (cur_score >= best_score[re.prob_id] || cur_prob->score_latest > 0){
           best_score[re.prob_id] = cur_score;
           best_run[re.prob_id] = run_id;
         }
@@ -5393,7 +5407,7 @@ ns_get_user_problems_summary(
     } else if (global->score_system == SCORE_MOSCOW) {
       if (solved_flag[re.prob_id]) continue;
 
-      switch (re.status) {
+      switch (status) {
       case RUN_OK:
         solved_flag[re.prob_id] = 1;
         best_run[re.prob_id] = run_id;
@@ -5424,7 +5438,7 @@ ns_get_user_problems_summary(
       case RUN_MEM_LIMIT_ERR:
       case RUN_SECURITY_ERR:
         attempts[re.prob_id]++;
-        cur_score = re.score;
+        cur_score = score;
         if (cur_score >= best_score[re.prob_id]
             || best_run[re.prob_id] < 0) {
           best_score[re.prob_id] = cur_score;
@@ -5451,7 +5465,7 @@ ns_get_user_problems_summary(
       // ACM contest
       if (solved_flag[re.prob_id]) continue;
 
-      switch (re.status) {
+      switch (status) {
       case RUN_OK:
         solved_flag[re.prob_id] = 1;
         best_run[re.prob_id] = run_id;

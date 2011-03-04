@@ -77,25 +77,39 @@ sf_fopen(char const *path, char const *flags)
 
 /* format: 0 - HTML, 1 - plain text */
 int
-calc_kirov_score(unsigned char *outbuf,
-                 size_t outsize,
-                 const struct run_entry *pe,
-                 const struct section_problem_data *pr,
-                 int attempts,
-                 int disq_attempts,
-                 int prev_successes,
-                 int *p_date_penalty,
-                 int format)
+calc_kirov_score(
+        unsigned char *outbuf,
+        size_t outsize,
+        int separate_user_score,
+        int user_mode,
+        const struct run_entry *pe,
+        const struct section_problem_data *pr,
+        int attempts,
+        int disq_attempts,
+        int prev_successes,
+        int *p_date_penalty,
+        int format)
 {
   int score, init_score, dpi, date_penalty = 0, score_mult = 1, score_bonus = 0;
+  int status;
 
   ASSERT(pe);
   ASSERT(pr);
   ASSERT(attempts >= 0);
 
-  init_score = pe->score;
-  if (pe->status == RUN_OK && !pr->variable_full_score)
-    init_score = pr->full_score;
+  if (separate_user_score > 0 && user_mode > 0 && pe->is_saved) {
+    status = pe->saved_status;
+    init_score = pe->saved_score;
+    if (status == RUN_OK && !pr->variable_full_score) {
+      if (pr->full_user_score >= 0) init_score = pr->full_user_score;
+      else init_score = pr->full_user_score;
+    }
+  } else {
+    status = pe->status;
+    init_score = pe->score;
+    if (status == RUN_OK && !pr->variable_full_score)
+      init_score = pr->full_score;
+  }
   if (pr->score_multiplier > 1) score_mult = pr->score_multiplier;
 
   // get date_penalty
@@ -108,7 +122,7 @@ calc_kirov_score(unsigned char *outbuf,
   if (p_date_penalty) *p_date_penalty = date_penalty;
 
   // count the bonus depending on the number of previous successes
-  if (pe->status == RUN_OK && pr->score_bonus_total > 0) {
+  if (status == RUN_OK && pr->score_bonus_total > 0) {
     if (prev_successes >= 0 && prev_successes < pr->score_bonus_total)
       score_bonus = pr->score_bonus_val[prev_successes];
   }
@@ -205,6 +219,7 @@ write_html_run_status(
         const serve_state_t state,
         FILE *f,
         const struct run_entry *pe,
+        int user_mode, /* works for separate_user_score */
         int priv_level,
         int attempts,
         int disq_attempts,
@@ -217,14 +232,25 @@ write_html_run_status(
   struct section_problem_data *pr = 0;
   int need_extra_col = 0;
   unsigned char cl[128] = { 0 };
+  int status, score, test;
 
   if (td_class && *td_class) {
     snprintf(cl, sizeof(cl), " class=\"%s\"", td_class);
   }
 
+  if (global->separate_user_score > 0 && pe->is_saved && user_mode) {
+    status = pe->saved_status;
+    score = pe->saved_score;
+    test = pe->saved_test;
+  } else {
+    status = pe->status;
+    score = pe->score;
+    test = pe->test;
+  }
+
   if (pe->prob_id > 0 && pe->prob_id <= state->max_prob)
     pr = state->probs[pe->prob_id];
-  run_status_str(pe->status, status_str, sizeof(status_str),
+  run_status_str(status, status_str, sizeof(status_str),
                  pr?pr->type:0, pr?pr->scoring_checker:0);
   fprintf(f, "<td%s>%s</td>", cl, status_str);
 
@@ -233,13 +259,13 @@ write_html_run_status(
       || global->score_system == SCORE_MOSCOW)
     need_extra_col = 1;
 
-  if (pe->status >= RUN_PSEUDO_FIRST && pe->status <= RUN_PSEUDO_LAST) {
+  if (status >= RUN_PSEUDO_FIRST && status <= RUN_PSEUDO_LAST) {
     fprintf(f, "<td%s>&nbsp;</td>", cl);
     if (need_extra_col) {
       fprintf(f, "<td%s>&nbsp;</td>", cl);
     }
     return;
-  } else if (pe->status > RUN_MAX_STATUS) {
+  } else if (status > RUN_MAX_STATUS) {
     fprintf(f, "<td%s>%s</td>", cl, _("N/A"));
     if (need_extra_col) {
       fprintf(f, "<td%s>%s</td>", cl, _("N/A"));
@@ -247,7 +273,7 @@ write_html_run_status(
     return;
   }
 
-  switch (pe->status) {
+  switch (status) {
   case RUN_CHECK_FAILED:
     if (priv_level > 0) break;
   case RUN_ACCEPTED:
@@ -265,11 +291,11 @@ write_html_run_status(
 
   if (global->score_system == SCORE_ACM) {
     if (!disable_failed) {
-      if (pe->status == RUN_OK || pe->status == RUN_ACCEPTED || pe->test <= 0
+      if (status == RUN_OK || status == RUN_ACCEPTED || test <= 0
           || global->disable_failed_test_view > 0) {
         fprintf(f, "<td%s>%s</td>", cl, _("N/A"));
       } else {
-        fprintf(f, "<td%s>%d</td>", cl, pe->test);
+        fprintf(f, "<td%s>%d</td>", cl, test);
       }
     } else {
       fprintf(f, "<td%s>&nbsp;</td>", cl);
@@ -278,48 +304,67 @@ write_html_run_status(
   }
 
   if (global->score_system == SCORE_MOSCOW) {
-    if (pe->status == RUN_OK || pe->status == RUN_ACCEPTED || pe->test <= 0
+    if (status == RUN_OK || status == RUN_ACCEPTED || test <= 0
         || global->disable_failed_test_view > 0) {
       fprintf(f, "<td%s>%s</td>", cl, _("N/A"));
     } else {
-      fprintf(f, "<td%s>%d</td>", cl, pe->test);
+      fprintf(f, "<td%s>%d</td>", cl, test);
     }
-    if (pe->status == RUN_OK) {
-      fprintf(f, "<td%s><b>%d</b></td>", cl, pe->score);
+    if (status == RUN_OK) {
+      fprintf(f, "<td%s><b>%d</b></td>", cl, score);
     } else {
-      fprintf(f, "<td%s>%d</td>", cl, pe->score);
+      fprintf(f, "<td%s>%d</td>", cl, score);
     }
     return;
   }
 
-  if (pe->test <= 0) {
+  if (test <= 0) {
     fprintf(f, "<td%s>%s</td>", cl, _("N/A"));
   } else {
-    fprintf(f, "<td%s>%d</td>", cl, pe->test - 1);
+    fprintf(f, "<td%s>%d</td>", cl, test - 1);
   }
 
-  if (pe->score < 0 || !pr) {
+  if (score < 0 || !pr) {
     fprintf(f, "<td%s>%s</td>", cl, _("N/A"));
   } else {
-    calc_kirov_score(score_str, sizeof(score_str), pe, pr, attempts,
+    calc_kirov_score(score_str, sizeof(score_str),
+                     global->separate_user_score, user_mode,
+                     pe, pr, attempts,
                      disq_attempts, prev_successes, 0, 0);
     fprintf(f, "<td%s>%s</td>", cl, score_str);
   }
 }
 
 void
-write_text_run_status(const serve_state_t state, FILE *f, struct run_entry *pe,
-                      int priv_level, int attempts, int disq_attempts,
-                      int prev_successes)
+write_text_run_status(
+        const serve_state_t state,
+        FILE *f,
+        struct run_entry *pe,
+        int user_mode,
+        int priv_level,
+        int attempts,
+        int disq_attempts,
+        int prev_successes)
 {
   const struct section_global_data *global = state->global;
   unsigned char status_str[64], score_str[64];
   struct section_problem_data *pr = 0;
   int need_extra_col = 0;
+  int status, score, test;
+
+  if (global->separate_user_score > 0 && user_mode && pe->is_saved) {
+    status = pe->saved_status;
+    score = pe->saved_score;
+    test = pe->saved_test;
+  } else {
+    status = pe->status;
+    score = pe->score;
+    test = pe->test;
+  }
 
   if (pe->prob_id > 0 && pe->prob_id <= state->max_prob)
     pr = state->probs[pe->prob_id];
-  run_status_to_str_short(status_str, sizeof(status_str), pe->status);
+  run_status_to_str_short(status_str, sizeof(status_str), status);
   fprintf(f, "%s;", status_str);
 
   if (global->score_system == SCORE_KIROV
@@ -327,13 +372,13 @@ write_text_run_status(const serve_state_t state, FILE *f, struct run_entry *pe,
       || global->score_system == SCORE_MOSCOW)
     need_extra_col = 1;
 
-  if (pe->status >= RUN_PSEUDO_FIRST && pe->status <= RUN_PSEUDO_LAST) {
+  if (status >= RUN_PSEUDO_FIRST && status <= RUN_PSEUDO_LAST) {
     return;
-  } else if (pe->status > RUN_MAX_STATUS) {
+  } else if (status > RUN_MAX_STATUS) {
     return;
   }
 
-  switch (pe->status) {
+  switch (status) {
   case RUN_CHECK_FAILED:
     if (priv_level > 0) break;
   case RUN_ACCEPTED:
@@ -346,57 +391,62 @@ write_text_run_status(const serve_state_t state, FILE *f, struct run_entry *pe,
   }
 
   if (global->score_system == SCORE_ACM) {
-    if (pe->status == RUN_OK || pe->status == RUN_ACCEPTED || pe->test <= 0
+    if (status == RUN_OK || status == RUN_ACCEPTED || test <= 0
         || global->disable_failed_test_view > 0) {
       fprintf(f, ";");
     } else {
-      fprintf(f, "%d;", pe->test);
+      fprintf(f, "%d;", test);
     }
     return;
   }
 
   if (global->score_system == SCORE_MOSCOW) {
-    if (pe->status == RUN_OK || pe->status == RUN_ACCEPTED || pe->test <= 0
+    if (status == RUN_OK || status == RUN_ACCEPTED || test <= 0
         || global->disable_failed_test_view > 0) {
       fprintf(f, ";");
     } else {
-      fprintf(f, "%d;", pe->test);
+      fprintf(f, "%d;", test);
     }
-    if (pe->status == RUN_OK) {
-      fprintf(f, "%d;", pe->score);
+    if (status == RUN_OK) {
+      fprintf(f, "%d;", score);
     } else {
-      fprintf(f, "%d;", pe->score);
+      fprintf(f, "%d;", score);
     }
     return;
   }
 
-  if (pe->test <= 0) {
+  if (test <= 0) {
     fprintf(f, ";");
   } else {
-    fprintf(f, "%d;", pe->test - 1);
+    fprintf(f, "%d;", test - 1);
   }
 
-  if (pe->score < 0 || !pr) {
+  if (score < 0 || !pr) {
     fprintf(f, ";");
   } else {
-    calc_kirov_score(score_str, sizeof(score_str), pe, pr, attempts,
+    calc_kirov_score(score_str, sizeof(score_str),
+                     global->separate_user_score, user_mode,
+                     pe, pr, attempts,
                      disq_attempts, prev_successes, 0, 1);
     fprintf(f, "%s;", score_str);
   }
 }
 
 void
-new_write_user_runs(const serve_state_t state, FILE *f, int uid,
-                    unsigned int show_flags,
-                    int prob_id,
-                    int action_view_source,
-                    int action_view_report,
-                    int action_print_run,
-                    ej_cookie_t sid,
-                    unsigned char const *self_url,
-                    unsigned char const *hidden_vars,
-                    unsigned char const *extra_args,
-                    const unsigned char *table_class)
+new_write_user_runs(
+        const serve_state_t state,
+        FILE *f,
+        int uid,
+        unsigned int show_flags,
+        int prob_id,
+        int action_view_source,
+        int action_view_report,
+        int action_print_run,
+        ej_cookie_t sid,
+        unsigned char const *self_url,
+        unsigned char const *hidden_vars,
+        unsigned char const *extra_args,
+        const unsigned char *table_class)
 {
   const struct section_global_data *global = state->global;
   int i, showed, runs_to_show = 0;
@@ -412,6 +462,7 @@ new_write_user_runs(const serve_state_t state, FILE *f, int uid,
   struct section_problem_data *cur_prob;
   struct section_language_data *lang = 0;
   unsigned char *cl = "";
+  int status, score, test;
 
   if (table_class && *table_class) {
     cl = alloca(strlen(table_class) + 16);
@@ -472,10 +523,20 @@ new_write_user_runs(const serve_state_t state, FILE *f, int uid,
     if (re.lang_id > 0 && re.lang_id <= state->max_lang)
       lang = state->langs[re.lang_id];
 
+    if (global->separate_user_score > 0 && re.is_saved) {
+      status = re.saved_status;
+      score = re.saved_score;
+      test = re.saved_test;
+    } else {
+      status = re.status;
+      score = re.score;
+      test = re.test;
+    }
+
     if (global->score_system == SCORE_OLYMPIAD
         && state->accepting_mode) {
-      if (re.status == RUN_OK || re.status == RUN_PARTIAL)
-        re.status = RUN_ACCEPTED;
+      if (status == RUN_OK || status == RUN_PARTIAL)
+        status = RUN_ACCEPTED;
     }
 
     cur_prob = 0;
@@ -489,7 +550,7 @@ new_write_user_runs(const serve_state_t state, FILE *f, int uid,
 
     prev_successes = RUN_TOO_MANY;
     if (global->score_system == SCORE_KIROV
-        && re.status == RUN_OK
+        && status == RUN_OK
         && !re.is_hidden
         && cur_prob && cur_prob->score_bonus_total > 0) {
       if ((prev_successes = run_get_prev_successes(state->runlog_state, i)) < 0)
@@ -504,20 +565,20 @@ new_write_user_runs(const serve_state_t state, FILE *f, int uid,
     if (!start_time) time = start_time;
     if (start_time > time) time = start_time;
     duration_str(global->show_astr_time, time, start_time, dur_str, 0);
-    run_status_str(re.status, stat_str, sizeof(stat_str), 0, 0);
+    run_status_str(status, stat_str, sizeof(stat_str), 0, 0);
     prob_str = "???";
-    if (state->probs[re.prob_id]) {
-      if (state->probs[re.prob_id]->variant_num > 0) {
+    if (cur_prob) {
+      if (cur_prob->variant_num > 0) {
         int variant = re.variant;
         if (!variant) variant = find_variant(state, re.user_id, re.prob_id, 0);
-        prob_str = alloca(strlen(state->probs[re.prob_id]->short_name) + 10);
+        prob_str = alloca(strlen(cur_prob->short_name) + 10);
         if (variant > 0) {
-          sprintf(prob_str, "%s-%d", state->probs[re.prob_id]->short_name, variant);
+          sprintf(prob_str, "%s-%d", cur_prob->short_name, variant);
         } else {
-          sprintf(prob_str, "%s-?", state->probs[re.prob_id]->short_name);
+          sprintf(prob_str, "%s-?", cur_prob->short_name);
         }
       } else {
-        prob_str = state->probs[re.prob_id]->short_name;
+        prob_str = cur_prob->short_name;
       }
     }
     lang_str = "???";
@@ -531,7 +592,8 @@ new_write_user_runs(const serve_state_t state, FILE *f, int uid,
     fprintf(f, "<td%s>%s</td>", cl, prob_str);
     fprintf(f, "<td%s>%s</td>", cl, lang_str);
 
-    write_html_run_status(state, f, &re, 0, attempts, disq_attempts,
+    write_html_run_status(state, f, &re, 1 /* user_mode */,
+                          0, attempts, disq_attempts,
                           prev_successes, table_class, 0);
 
     if (global->team_enable_src_view) {
@@ -558,8 +620,8 @@ new_write_user_runs(const serve_state_t state, FILE *f, int uid,
       /* FIXME: RUN_PRESENTATION_ERR and != standard problem type */
     if (global->team_enable_rep_view) {
       fprintf(f, "<td%s>", cl);
-      if (re.status == RUN_CHECK_FAILED || re.status == RUN_IGNORED
-          || re.status == RUN_PENDING || re.status > RUN_MAX_STATUS
+      if (status == RUN_CHECK_FAILED || status == RUN_IGNORED
+          || status == RUN_PENDING || status > RUN_MAX_STATUS
           || (cur_prob && !cur_prob->team_enable_rep_view)) {
         fprintf(f, "N/A");
       } else {
@@ -572,7 +634,7 @@ new_write_user_runs(const serve_state_t state, FILE *f, int uid,
       fprintf(f, "</td>");
     } else if (global->team_enable_ce_view) {
       fprintf(f, "<td%s>", cl);
-      if (re.status != RUN_COMPILE_ERR && re.status != RUN_STYLE_ERR) {
+      if (status != RUN_COMPILE_ERR && status != RUN_STYLE_ERR) {
         fprintf(f, "N/A");
       } else {
         if (action_view_report > 0) {
@@ -1155,7 +1217,8 @@ do_write_kirov_standings(
         int force_fancy_style,
         time_t cur_time,
         int charset_id,
-        struct user_filter_info *user_filter)
+        struct user_filter_info *user_filter,
+        int user_mode)
 {
   struct section_global_data *global = state->global;
   const struct section_problem_data *prob;
@@ -1416,7 +1479,7 @@ do_write_kirov_standings(
   for (k = 0; k < r_tot; k++) {
     int tind;
     int pind;
-    int score, run_score, run_tests;
+    int score, run_score, run_tests, run_status;
     const struct run_entry *pe = &runs[k];
 
     if (pe->status == RUN_VIRTUAL_START || pe->status == RUN_VIRTUAL_STOP
@@ -1446,14 +1509,27 @@ do_write_kirov_standings(
         continue;
     }
 
-    run_score = pe->score;
-    if (pe->status == RUN_OK && !prob->variable_full_score)
-      run_score = prob->full_score;
-    run_tests = pe->test - 1;
+    if (global->separate_user_score > 0 && user_mode && pe->is_saved) {
+      run_status = pe->saved_status;
+      run_score = pe->saved_score;
+      if (run_status == RUN_OK && !prob->variable_full_score) {
+        if (prob->full_user_score >= 0) run_score = prob->full_user_score;
+        else run_score = prob->full_score;
+      }
+      run_tests = pe->saved_test - 1;
+    } else {
+      run_status = pe->status;
+      run_score = pe->saved_score;
+      if (run_status == RUN_OK && !prob->variable_full_score) {
+        run_score = prob->full_score;
+      }
+      run_tests = pe->test - 1;
+    }
+
     if (global->score_system == SCORE_OLYMPIAD && accepting_mode) {
       if (run_score < 0) run_score = 0;
       if (run_tests < 0) run_tests = 0;
-      switch (pe->status) {
+      switch (run_status) {
       case RUN_OK:
       case RUN_ACCEPTED:
         if (!full_sol[up_ind]) sol_att[up_ind]++;
@@ -1507,7 +1583,7 @@ do_write_kirov_standings(
     } else if (global->score_system == SCORE_OLYMPIAD) {
       run_score += pe->score_adj;
       if (run_score < 0) run_score = 0;
-      switch (pe->status) {
+      switch (run_status) {
       case RUN_OK:
         full_sol[up_ind] = 1;
         trans_num[up_ind] = 0;
@@ -1562,12 +1638,14 @@ do_write_kirov_standings(
       }
     } else {
       if (run_score == -1) run_score = 0;
-      if (pe->status == RUN_OK) {
+      if (run_status == RUN_OK) {
         if (!marked_flag[up_ind] || prob->ignore_unmarked <= 0
             || pe->is_marked) {
           marked_flag[up_ind] = pe->is_marked;
           if (!full_sol[up_ind]) sol_att[up_ind]++;
-          score = calc_kirov_score(0, 0, pe, prob, att_num[up_ind],
+          score = calc_kirov_score(0, 0,
+                                   global->separate_user_score, user_mode,
+                                   pe, prob, att_num[up_ind],
                                    disq_num[up_ind],
                                    full_sol[up_ind]?RUN_TOO_MANY:succ_att[pind],
                                    0, 0);
@@ -1586,12 +1664,14 @@ do_write_kirov_standings(
           last_submit_run = k;
           last_success_run = k;
         }
-      } else if (pe->status == RUN_PARTIAL) {
+      } else if (run_status == RUN_PARTIAL) {
         if (!marked_flag[up_ind] || prob->ignore_unmarked <= 0
             || pe->is_marked) {
           marked_flag[up_ind] = pe->is_marked;
           if (!full_sol[up_ind]) sol_att[up_ind]++;
-          score = calc_kirov_score(0, 0, pe, prob, att_num[up_ind],
+          score = calc_kirov_score(0, 0,
+                                   global->separate_user_score, user_mode,
+                                   pe, prob, att_num[up_ind],
                                    disq_num[up_ind], RUN_TOO_MANY, 0, 0);
           if (prob->score_latest > 0 || score > prob_score[up_ind]) {
             prob_score[up_ind] = score;
@@ -1603,9 +1683,11 @@ do_write_kirov_standings(
           if (!full_sol[up_ind]) tot_att[pind]++;
           last_submit_run = k;
         }
-      } else if (pe->status == RUN_WRONG_ANSWER_ERR && prob->type != 0) {
+      } else if (run_status == RUN_WRONG_ANSWER_ERR && prob->type != 0) {
         if (!full_sol[up_ind]) sol_att[up_ind]++;
-        score = calc_kirov_score(0, 0, pe, prob, att_num[up_ind],
+        score = calc_kirov_score(0, 0,
+                                 global->separate_user_score, user_mode,
+                                 pe, prob, att_num[up_ind],
                                  disq_num[up_ind], RUN_TOO_MANY, 0, 0);
         if (prob->score_latest > 0 || score > prob_score[up_ind]) {
           prob_score[up_ind] = score;
@@ -1613,22 +1695,22 @@ do_write_kirov_standings(
         att_num[up_ind]++;
         if (!full_sol[up_ind]) tot_att[pind]++;
         last_submit_run = k;
-      } else if ((pe->status == RUN_COMPILE_ERR || pe->status == RUN_STYLE_ERR)
+      } else if ((run_status == RUN_COMPILE_ERR || run_status == RUN_STYLE_ERR)
                  && !prob->ignore_compile_errors) {
         if (!full_sol[up_ind]) sol_att[up_ind]++;
         att_num[up_ind]++;
         if (!full_sol[up_ind]) tot_att[pind]++;
         last_submit_run = k;
-      } else if (pe->status == RUN_DISQUALIFIED) {
+      } else if (run_status == RUN_DISQUALIFIED) {
         if (!full_sol[up_ind]) sol_att[up_ind]++;
         disq_num[up_ind]++;
-      } else if (pe->status == RUN_PENDING
-                 || pe->status == RUN_ACCEPTED
-                 || pe->status == RUN_COMPILING
-                 || pe->status == RUN_RUNNING) {
+      } else if (run_status == RUN_PENDING
+                 || run_status == RUN_ACCEPTED
+                 || run_status == RUN_COMPILING
+                 || run_status == RUN_RUNNING) {
         trans_num[up_ind]++;
         total_trans++;
-      } else if (pe->status == RUN_CHECK_FAILED) {
+      } else if (run_status == RUN_CHECK_FAILED) {
         cf_num[up_ind]++;
       } else {
         /* something strange... */
@@ -1890,7 +1972,8 @@ do_write_kirov_standings(
         fprintf(f, "<p%s>%s: %s, ",
                 ss.success_attr, _("Last success"), dur_str);
         if (global->team_info_url[0]) {
-          teamdb_export_team(state->teamdb_state, runs[last_success_run].user_id,
+          teamdb_export_team(state->teamdb_state,
+                             runs[last_success_run].user_id,
                              &u_info);
           sformat_message(dur_str, sizeof(dur_str), 0, global->team_info_url,
                           NULL, NULL, NULL, NULL, &u_info, 0, 0, 0);
@@ -1927,7 +2010,8 @@ do_write_kirov_standings(
         fprintf(f, "<p%s>%s: %s, ",
                 ss.success_attr, _("Last submit"), dur_str);
         if (global->team_info_url[0]) {
-          teamdb_export_team(state->teamdb_state,runs[last_submit_run].user_id,
+          teamdb_export_team(state->teamdb_state,
+                             runs[last_submit_run].user_id,
                              &u_info);
           sformat_message(dur_str, sizeof(dur_str), 0, global->team_info_url,
                           NULL, NULL, NULL, NULL, &u_info, u_info.user, 0, 0);
@@ -4120,7 +4204,8 @@ write_standings(
         char const *footer_str,
         int accepting_mode,
         int force_fancy_style,
-        int charset_id)
+        int charset_id,
+        int user_mode)
 {
   const struct section_global_data *global = state->global;
   char    tbuf[64];
@@ -4142,7 +4227,7 @@ write_standings(
       || global->score_system == SCORE_OLYMPIAD)
     do_write_kirov_standings(state, cnts, f, stat_dir, 0, 0, header_str,
                              footer_str, 0, accepting_mode, force_fancy_style,
-                             0, charset_id, NULL);
+                             0, charset_id, NULL, user_mode);
   else if (global->score_system == SCORE_MOSCOW)
     do_write_moscow_standings(state, cnts, f, stat_dir, 0, 0, 0, header_str,
                               footer_str, 0, 0, force_fancy_style, 0,
@@ -4164,10 +4249,13 @@ write_standings(
 }
 
 static void
-do_write_public_log(const serve_state_t state,
-                    const struct contest_desc *cnts,
-                    FILE *f, char const *header_str,
-                    char const *footer_str)
+do_write_public_log(
+        const serve_state_t state,
+        const struct contest_desc *cnts,
+        FILE *f,
+        char const *header_str,
+        char const *footer_str,
+        int user_mode)
 {
   const struct section_global_data *global = state->global;
   int total;
@@ -4259,8 +4347,20 @@ do_write_public_log(const serve_state_t state,
   fprintf(f, "</tr>\n");
 
   for (i = total - 1; i >= 0; i--) {
+    int status, score, test;
+
     pe = &runs[i];
     if (pe->is_hidden) continue;
+
+    if (global->separate_user_score > 0 && user_mode && pe->is_saved) {
+      status = pe->saved_status;
+      score = pe->saved_score;
+      test = pe->saved_test;
+    } else {
+      status = pe->status;
+      score = pe->score;
+      test = pe->test;
+    }
 
     cur_prob = 0;
     if (pe->prob_id > 0 && pe->prob_id <= state->max_prob)
@@ -4274,7 +4374,7 @@ do_write_public_log(const serve_state_t state,
     if (global->score_system == SCORE_KIROV) {
       run_get_attempts(state->runlog_state, i, &attempts, &disq_attempts,
                        cur_prob->ignore_compile_errors);
-      if (pe->status == RUN_OK && cur_prob && cur_prob->score_bonus_total > 0){
+      if (status == RUN_OK && cur_prob && cur_prob->score_bonus_total > 0){
         prev_successes = run_get_prev_successes(state->runlog_state, i);
         if (prev_successes < 0) prev_successes = RUN_TOO_MANY;
       }
@@ -4283,24 +4383,24 @@ do_write_public_log(const serve_state_t state,
     if (!start_time) run_time = start_time;
     if (start_time > run_time) run_time = start_time;
     duration_str(global->show_astr_time, run_time, start_time, durstr, 0);
-    run_status_str(pe->status, statstr, sizeof(statstr), 0, 0);
+    run_status_str(status, statstr, sizeof(statstr), 0, 0);
 
     fputs("<tr>", f);
     fprintf(f, "<td>%d</td>", i);
     fprintf(f, "<td>%s</td>", durstr);
     fprintf(f, "<td>%s</td>",
             ARMOR(teamdb_get_name_2(state->teamdb_state, pe->user_id)));
-    if (state->probs[pe->prob_id]) {
-      if (state->probs[pe->prob_id]->variant_num > 0) {
+    if (cur_prob) {
+      if (cur_prob->variant_num > 0) {
         int variant = pe->variant;
-        if (!variant) variant = find_variant(state, pe->user_id, pe->prob_id,0);
+        if (!variant) variant = find_variant(state, pe->user_id, pe->prob_id, 0);
         if (variant > 0) {
-          fprintf(f, "<td>%s-%d</td>", state->probs[pe->prob_id]->short_name,variant);
+          fprintf(f, "<td>%s-%d</td>", cur_prob->short_name, variant);
         } else {
-          fprintf(f, "<td>%s-?</td>", state->probs[pe->prob_id]->short_name);
+          fprintf(f, "<td>%s-?</td>", cur_prob->short_name);
         }
       } else {
-        fprintf(f, "<td>%s</td>", state->probs[pe->prob_id]->short_name);
+        fprintf(f, "<td>%s</td>", cur_prob->short_name);
       }
     }
     else fprintf(f, "<td>??? - %d</td>", pe->prob_id);
@@ -4308,7 +4408,8 @@ do_write_public_log(const serve_state_t state,
       fprintf(f, "<td>%s</td>", state->langs[pe->lang_id]->short_name);
     else fprintf(f, "<td>??? - %d</td>", pe->lang_id);
 
-    write_html_run_status(state, f, pe, 0, attempts, disq_attempts,
+    write_html_run_status(state, f, pe, user_mode,
+                          0, attempts, disq_attempts,
                           prev_successes, 0, 1);
 
     fputs("</tr>\n", f);
@@ -4330,7 +4431,8 @@ write_public_log(
         char const *name,
         char const *header_str,
         char const *footer_str,
-        int charset_id)
+        int charset_id,
+        int user_mode)
 {
   char    tbuf[64];
   path_t  tpath;
@@ -4345,7 +4447,7 @@ write_public_log(
   } else {
     if (!(f = sf_fopen(tpath, "w"))) return;
   }
-  do_write_public_log(state, cnts, f, header_str, footer_str);
+  do_write_public_log(state, cnts, f, header_str, footer_str, user_mode);
   fclose(f); f = 0;
   if (charset_id > 0) {
     encode_txt = charset_encode_heap(charset_id, encode_txt);
