@@ -106,14 +106,14 @@ serve_update_standings_file(serve_state_t state,
                   state->global->users_on_page,
                   state->global->stand_header_txt,
                   state->global->stand_footer_txt,
-                  state->accepting_mode, 0, charset_id);
+                  state->accepting_mode, 0, charset_id, 1 /* user_mode */);
   if (state->global->stand2_file_name[0]) {
     charset_id = charset_get_id(state->global->stand2_charset);
     write_standings(state, cnts, state->global->status_dir,
                     state->global->stand2_file_name, 0,
                     state->global->stand2_header_txt,
                     state->global->stand2_footer_txt,
-                    state->accepting_mode, 0, charset_id);
+                    state->accepting_mode, 0, charset_id, 1 /* user_mode */);
   }
   l10n_setlocale(0);
   if (state->global->is_virtual) return;
@@ -163,7 +163,7 @@ serve_update_public_log_file(serve_state_t state,
                    state->global->plog_file_name,
                    state->global->plog_header_txt,
                    state->global->plog_footer_txt,
-                   charset_id);
+                   charset_id, 1 /* user_mode */);
   state->last_update_public_log = state->current_time;
   l10n_setlocale(0);
 }

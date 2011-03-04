@@ -11344,10 +11344,10 @@ unpriv_view_standings(FILE *fout,
   } else if (global->score_system == SCORE_OLYMPIAD) {
     //fprintf(fout, _("<p>Information is not available.</p>"));
     do_write_kirov_standings(cs, cnts, fout, 0, 1, 1, 0, 0, 0, 0, 1, cur_time,
-                             0, NULL);
+                             0, NULL, 1 /* user_mode */);
   } else if (global->score_system == SCORE_KIROV) {
     do_write_kirov_standings(cs, cnts, fout, 0, 1, 1, 0, 0, 0, 0, 1, cur_time,
-                             0, NULL);
+                             0, NULL, 1 /* user_mode */);
   } else if (global->score_system == SCORE_MOSCOW) {
     do_write_moscow_standings(cs, cnts, fout, 0, 1, 1, phr->user_id,
                               0, 0, 0, 0, 1, cur_time, 0, NULL);
