@@ -1305,6 +1305,7 @@ serve_run_request(
   run_pkt->problem_id = prob->tester_id;
   run_pkt->accepting_mode = accepting_mode;
   run_pkt->scoring_system = state->global->score_system;
+  run_pkt->separate_user_score = state->global->separate_user_score;
   run_pkt->variant = variant;
   run_pkt->accept_partial = prob->accept_partial;
   run_pkt->user_id = user_id;

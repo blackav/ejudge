@@ -36,7 +36,7 @@
 #endif /* EJUDGE_CHARSET */
 
 /*
-<testing-report run-id="N" judge-id="N" status="O" scoring="R" archive-available="B" [correct-available="B"] [info-available="B"] run-tests="N" [variant="N"] [accepting-mode="B"] [failed-test="N"] [tests-passed="N"] [score="N"] [time_limit_ms="T" real_time_limit_ms="T" [real-time-available="B"] [max-memory-used-available="T"] [marked-flag="B"] [tests-mode="B"] [tt-row-count="N"] [tt-column-count="N"] [user-status="O"] [user-tests-passed="N"] [user-score="N"] [user-max-score="N"] >
+<testing-report run-id="N" judge-id="N" status="O" scoring="R" archive-available="B" [correct-available="B"] [info-available="B"] run-tests="N" [variant="N"] [accepting-mode="B"] [failed-test="N"] [tests-passed="N"] [score="N"] [time_limit_ms="T" real_time_limit_ms="T" [real-time-available="B"] [max-memory-used-available="T"] [marked-flag="B"] [tests-mode="B"] [tt-row-count="N"] [tt-column-count="N"] [user-status="O"] [user-tests-passed="N"] [user-score="N"] [user-max-score="N"] [user-run-tests="N"] >
   <comment>T</comment>
   <valuer_comment>T</valuer_comment>
   <valuer_judge_comment>T</valuer_judge_comment>
@@ -138,6 +138,7 @@ enum
   TR_A_USER_TESTS_PASSED,
   TR_A_USER_SCORE,
   TR_A_USER_MAX_SCORE,
+  TR_A_USER_RUN_TESTS,
 
   TR_A_LAST_ATTR,
 };
@@ -217,6 +218,7 @@ static const char * const attr_map[] =
   [TR_A_USER_TESTS_PASSED] = "user-tests-passed",
   [TR_A_USER_SCORE] = "user-score",
   [TR_A_USER_MAX_SCORE] = "user-max-score",
+  [TR_A_USER_RUN_TESTS] = "user-run-tests",
 
   [TR_A_LAST_ATTR] = 0,
 };
@@ -696,6 +698,7 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
   r->user_tests_passed = -1;
   r->user_score = -1;
   r->user_max_score = -1;
+  r->user_run_tests = -1;
 
   for (a = t->first; a; a = a->next) {
     switch (a->tag) {
@@ -775,6 +778,15 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
         return -1;
       }
       r->run_tests = x;
+      break;
+
+    case TR_A_USER_RUN_TESTS:
+      if (xml_attr_int(a, &x) < 0) return -1;
+      if (x < 0 || x > EJ_MAX_TEST_NUM) {
+        xml_err_attr_invalid(a);
+        return -1;
+      }
+      r->user_run_tests = x;
       break;
 
     case TR_A_VARIANT:
@@ -1346,7 +1358,12 @@ testing_report_unparse_xml(
     fprintf(out, " %s=\"%d\"", attr_map[TR_A_USER_SCORE], r->user_score);
   }
   if (r->user_max_score >= 0) {
-    fprintf(out, " %s=\"%d\"", attr_map[TR_A_USER_MAX_SCORE], r->user_max_score);
+    fprintf(out, " %s=\"%d\"", attr_map[TR_A_USER_MAX_SCORE],
+            r->user_max_score);
+  }
+  if (r->user_run_tests >= 0) {
+    fprintf(out, " %s=\"%d\"", attr_map[TR_A_USER_RUN_TESTS],
+            r->user_run_tests);
   }
   fprintf(out, " >\n");
 

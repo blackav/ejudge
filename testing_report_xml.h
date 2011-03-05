@@ -117,6 +117,7 @@ typedef struct testing_report_xml
   int user_tests_passed;
   int user_score;
   int user_max_score;
+  int user_run_tests;
   unsigned char *comment;       /* additional testing comment */
   unsigned char *valuer_comment;
   unsigned char *valuer_judge_comment;
