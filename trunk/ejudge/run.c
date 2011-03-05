@@ -226,6 +226,7 @@ generate_xml_report(
         int variant,
         int scores,
         int max_score,
+        int user_max_score,
         int correct_available_flag,
         int info_available_flag,
         int report_time_limit_ms,
@@ -233,6 +234,7 @@ generate_xml_report(
         int has_real_time,
         int has_max_memory_used,
         int marked_flag,
+        int user_run_tests,
         const unsigned char *additional_comment,
         const unsigned char *valuer_comment,
         const unsigned char *valuer_judge_comment,
@@ -302,15 +304,22 @@ generate_xml_report(
   if (marked_flag >= 0) {
     fprintf(f, " marked-flag=\"%s\"", marked_flag?"yes":"no");
   }
-  if (reply_pkt->user_status >= 0) {
+  if (req_pkt->separate_user_score > 0 && reply_pkt->user_status >= 0) {
     run_status_to_str_short(buf1, sizeof(buf1), reply_pkt->user_status);
     fprintf(f, " user-status=\"%s\"", buf1);
   }
-  if (reply_pkt->user_score >= 0) {
+  if (req_pkt->separate_user_score > 0 && reply_pkt->user_score >= 0) {
     fprintf(f, " user-score=\"%d\"", reply_pkt->user_score);
   }
-  if (reply_pkt->user_tests_passed >= 0) {
+  if (req_pkt->separate_user_score > 0) {
+    if (user_max_score < 0) user_max_score = max_score;
+    fprintf(f, " user-max-score=\"%d\"", user_max_score);
+  }
+  if (req_pkt->separate_user_score > 0 && reply_pkt->user_tests_passed >= 0) {
     fprintf(f, " user-tests-passed=\"%d\"", reply_pkt->user_tests_passed);
+  }
+  if (req_pkt->separate_user_score > 0 && user_run_tests >= 0) {
+    fprintf(f, " user-run-tests=\"%d\"", user_run_tests);
   }
   fprintf(f, " >\n");
 
@@ -1456,7 +1465,7 @@ run_tests(struct section_tester_data *tst,
   int report_real_time_limit_ms = -1;
   int has_real_time = 0;
   int has_max_memory_used = 0;
-  int has_user_score, user_status, user_score, user_tests_passed;
+  int has_user_score, user_status, user_score, user_tests_passed, user_run_tests;
 
   int pfd1[2], pfd2[2];
   tpTask tsk_int = 0;
@@ -2787,10 +2796,12 @@ run_tests(struct section_tester_data *tst,
   user_status = -1;
   user_score = -1;
   user_tests_passed = -1;
+  user_run_tests = -1;
   if (prb->valuer_cmd[0] && !req_pkt->accepting_mode
       && !reply_pkt->status != RUN_CHECK_FAILED) {
     if (invoke_valuer(global, prb, cur_variant, prb->full_score,
-                      &score, &marked_flag, &user_status, &user_score, &user_tests_passed,
+                      &score, &marked_flag,
+                      &user_status, &user_score, &user_tests_passed,
                       &valuer_errors, &valuer_comment,
                       &valuer_judge_comment) < 0) {
       reply_pkt->status = RUN_CHECK_FAILED;
@@ -2801,18 +2812,22 @@ run_tests(struct section_tester_data *tst,
   }
 
   if (reply_pkt->status == RUN_CHECK_FAILED) {
-    user_status = RUN_CHECK_FAILED;
-    user_score = 0;
-    user_tests_passed = 0;
+    user_status = -1;
+    user_score = -1;
+    user_tests_passed = -1;
+    user_run_tests = -1;
   } else if (global->separate_user_score <= 0) {
-    user_status = reply_pkt->status;
-    user_score = reply_pkt->score;
-    if (score_system_val == SCORE_KIROV
-        || (score_system_val == SCORE_OLYMPIAD && !req_pkt->accepting_mode)) {
-      user_tests_passed = reply_pkt->failed_test - 1;
-    }
+    user_status = -1;
+    user_score = -1;
+    user_tests_passed = -1;
+    user_run_tests = -1;
   } else {
     has_user_score = 1;
+    user_run_tests = 0;
+    for (cur_test = 1; cur_test < total_tests; ++cur_test) {
+      if (tests[cur_test].visibility != TV_HIDDEN)
+        ++user_run_tests;
+    }
     if (user_status < 0) {
       user_status = RUN_OK;
       for (cur_test = 1; cur_test < total_tests; ++cur_test) {
@@ -2850,8 +2865,10 @@ run_tests(struct section_tester_data *tst,
         }
       }
       if (user_tests_passed < 0) {
+        user_tests_passed = 0;
         for (cur_test = 1; cur_test < total_tests; ++cur_test) {
-          if (tests[cur_test].visibility != TV_HIDDEN)
+          if (tests[cur_test].visibility != TV_HIDDEN
+              && tests[cur_test].status == RUN_OK)
             ++user_tests_passed;
         }
       }
@@ -2864,10 +2881,11 @@ run_tests(struct section_tester_data *tst,
   reply_pkt->user_tests_passed = user_tests_passed;
 
   generate_xml_report(req_pkt, reply_pkt, report_path, cur_variant,
-                      score, prb->full_score,
+                      score, prb->full_score, prb->full_user_score,
                       (prb->use_corr && prb->corr_dir[0]), prb->use_info,
                       report_time_limit_ms, report_real_time_limit_ms,
                       has_real_time, has_max_memory_used, marked_flag,
+                      user_run_tests,
                       additional_comment, valuer_comment,
                       valuer_judge_comment, valuer_errors);
 

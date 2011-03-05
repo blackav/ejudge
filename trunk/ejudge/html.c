@@ -4591,6 +4591,8 @@ write_xml_team_testing_report(
   unsigned char cl[128] = { 0 };
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   int visibility = 0, serial = 0, has_full = 0;
+  int status, score, max_score;
+  int run_tests, tests_passed;
 
   if (table_class && *table_class) {
     snprintf(cl, sizeof(cl), " class=\"%s\"", table_class);
@@ -4601,13 +4603,26 @@ write_xml_team_testing_report(
     return 0;
   }
 
-  if (r->status == RUN_OK || r->status == RUN_ACCEPTED) {
+  status = r->status;
+  score = r->score;
+  max_score = r->max_score;
+  run_tests = r->run_tests;
+  tests_passed = r->tests_passed;
+  if (global->separate_user_score > 0) {
+    if (r->user_status >= 0) status = r->user_status;
+    if (r->user_score >= 0) score = r->user_score;
+    if (r->user_max_score >= 0) max_score = r->user_max_score;
+    if (r->user_run_tests >= 0) run_tests = r->user_run_tests;
+    if (r->user_tests_passed >= 0) tests_passed = r->user_tests_passed;
+  }
+
+  if (status == RUN_OK || status == RUN_ACCEPTED) {
     font_color = "green";
   } else {
     font_color = "red";
   }
   fprintf(f, "<h2><font color=\"%s\">%s</font></h2>\n",
-          font_color, run_status_str(r->status, 0, 0, output_only, 0));
+          font_color, run_status_str(status, 0, 0, output_only, 0));
 
   if (output_only) {
     if (r->run_tests != 1 || !(t = r->tests[0])) {
@@ -4653,11 +4668,11 @@ write_xml_team_testing_report(
 
   if (is_kirov) {
     fprintf(f, _("<big>%d total tests runs, %d passed, %d failed.<br/>\n"),
-            r->run_tests, r->tests_passed, r->run_tests - r->tests_passed);
+            run_tests, tests_passed, run_tests - tests_passed);
     fprintf(f, _("Score gained: %d (out of %d).<br/><br/></big>\n"),
-            r->score, r->max_score);
+            score, max_score);
   } else {
-    if (r->status != RUN_OK && r->status != RUN_ACCEPTED) {
+    if (status != RUN_OK && status != RUN_ACCEPTED) {
       fprintf(f, _("<big>Failed test: %d.<br/><br/></big>\n"), r->failed_test);
     }
   }
