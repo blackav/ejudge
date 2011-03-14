@@ -87,6 +87,8 @@ static time_t last_activity_time;
 static struct serve_state serve_state;
 static int restart_flag = 0;
 static int utf8_mode = 0;
+static unsigned char **skip_archs;
+static int skip_arch_count;
 
 struct testinfo
 {
@@ -813,9 +815,6 @@ invoke_valuer(
       fprintf(f, " %d", tests[i].score);
     }
     fprintf(f, " %ld", tests[i].times);
-    if (global->separate_user_score > 0) {
-      fprintf(f, " %d", tests[i].visibility);
-    }
     fprintf(f, "\n");
   }
   if (ferror(f)) {
@@ -3098,6 +3097,14 @@ do_loop(void)
            req_pkt->arch);
       tst = serve_state.testers[tester_id];
 
+      if (tst->any) {
+        info("tester %d is a default tester", tester_id);
+        r = prepare_tester_refinement(&serve_state, &tn, tester_id,
+                                      req_pkt->problem_id);
+        ASSERT(r >= 0);
+        tst = &tn;
+      }
+
       /* if this tester is marked as "skip_testing" put the
        * packet back to the spool directory
        */
@@ -3107,15 +3114,12 @@ do_loop(void)
         if (r < 0) return -1;
         info("skipping tester <%s,%s>", cur_prob->short_name, tst->arch);
         scan_dir_add_ignored(global->run_queue_dir, pkt_name);
+        if (tst == &tn) {
+          sarray_free(tst->start_env); tst->start_env = 0;
+          sarray_free(tst->checker_env); tst->checker_env = 0;
+          sarray_free(tst->super); tst->super = 0;
+        }
         continue;
-      }
-
-      if (tst->any) {
-        info("tester %d is a default tester", tester_id);
-        r = prepare_tester_refinement(&serve_state, &tn, tester_id,
-                                      req_pkt->problem_id);
-        ASSERT(r >= 0);
-        tst = &tn;
       }
 
       snprintf(exe_pkt_name, sizeof(exe_pkt_name), "%s%s", pkt_name,
@@ -3371,6 +3375,7 @@ check_config(void)
   int     total = 0;
 
   struct section_problem_data *prb = 0;
+  struct section_tester_data *tst = 0;
   unsigned char *var_test_dir;
   unsigned char *var_corr_dir;
   unsigned char *var_info_dir;
@@ -3378,6 +3383,22 @@ check_config(void)
   unsigned char *var_check_cmd = 0;
   problem_xml_t px;
   const struct section_global_data *global = serve_state.global;
+
+  if (skip_arch_count > 0) {
+    for (i = 0; i < serve_state.max_abstr_tester; ++i) {
+      tst = serve_state.abstr_testers[i];
+      if (!tst) continue;
+      tst->skip_testing = -1;
+      for (j = 0; j < skip_arch_count; ++j) {
+        if (!strcmp(skip_archs[j], tst->arch)) {
+          break;
+        }
+      }
+      if (j < skip_arch_count) {
+        tst->skip_testing = 1;
+      }
+    }
+  }
 
   /* check spooler dirs */
   if (check_writable_spool(global->run_queue_dir, SPOOL_OUT) < 0) return -1;
@@ -3903,6 +3924,10 @@ main(int argc, char *argv[])
   if (argc == 1) goto print_usage;
   code = 1;
 
+  if (argc > 0) {
+    XCALLOC(skip_archs, argc);
+  }
+
   while (i < argc) {
     if (!strcmp(argv[i], "-k")) {
       if (++i >= argc) goto print_usage;
@@ -3913,6 +3938,9 @@ main(int argc, char *argv[])
     } else if (!strncmp(argv[i], "-D", 2)) {
       if (cpp_opts[0]) pathcat(cpp_opts, " ");
       pathcat(cpp_opts, argv[i++]);
+    } else if (!strcmp(argv[i], "-s")) {
+        if (++i >= argc) goto print_usage;
+        skip_archs[skip_arch_count++] = argv[i++];
     } else break;
   }
   if (i >= argc) goto print_usage;
@@ -3940,8 +3968,9 @@ main(int argc, char *argv[])
 
  print_usage:
   printf("Usage: %s [ OPTS ] config-file\n", argv[0]);
-  printf("  -k key - specify tester key\n");
-  printf("  -DDEF  - define a symbol for preprocessor\n");
+  printf("  -k key  - specify tester key\n");
+  printf("  -DDEF   - define a symbol for preprocessor\n");
+  printf("  -s arch - specify architecture to skip testing\n");
   return code;
 }
 

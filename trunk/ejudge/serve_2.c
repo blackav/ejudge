@@ -2031,7 +2031,7 @@ serve_read_run_packet(serve_state_t state,
     if (run_change_status_3(state->runlog_state, reply_pkt->run_id,
                             reply_pkt->status, reply_pkt->failed_test,
                             reply_pkt->score, 0, reply_pkt->marked_flag,
-                            has_user_score, user_status, user_tests_passed,
+                            has_user_score, user_status, user_tests_passed + 1,
                             user_score) < 0)
       goto failed;
   }

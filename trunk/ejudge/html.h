@@ -180,11 +180,15 @@ write_xml_tests_report(
         const unsigned char *class1,
         const unsigned char *class2);
 
-int write_xml_team_testing_report(serve_state_t,
-                                  const struct section_problem_data *prob,
-                                  FILE *f, int output_only,
-                                  const unsigned char *txt,
-                                  const unsigned char *table_class);
+int
+write_xml_team_testing_report(
+        serve_state_t state,
+        const struct section_problem_data *prob,
+        FILE *f,
+        int output_only,
+        int is_marked,
+        const unsigned char *txt,
+        const unsigned char *table_class);
 
 int
 write_xml_team_tests_report(

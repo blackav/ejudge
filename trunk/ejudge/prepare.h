@@ -705,7 +705,7 @@ struct section_global_data
   +path_t test_checker_cmd;
  */
 
-/* sizeof(struct section_problem_data) == 64932 */
+/* sizeof(struct section_problem_data) == 64936 */
 struct section_problem_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -743,6 +743,8 @@ struct section_problem_data
   ejintbool_t olympiad_mode;
   /** for KIROV contests: score the latest submit */
   ejintbool_t score_latest;
+  /** for KIROV contests: score the latest submit or the best unmarked */
+  ejintbool_t score_latest_or_unmarked;
   /** maximum astronomical time for a problem (seconds) */
   int real_time_limit;
   /** time limit in seconds */

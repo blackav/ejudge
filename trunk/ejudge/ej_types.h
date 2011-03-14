@@ -85,11 +85,12 @@ enum test_visibility
 {
   TV_NORMAL = 0, // normal visibility, default value
   TV_FULL   = 1, // full visibility: show test, output, checker...
-  TV_BRIEF  = 2, // brief: only testing result
-  TV_EXISTS = 3, // only existance of the test, score is counted
-  TV_HIDDEN = 4, // completely hidden
+  TV_FULLIFMARKED = 2, // full for the marked runs, hidden elsewhere
+  TV_BRIEF  = 3, // brief: only testing result
+  TV_EXISTS = 4, // only existance of the test, score is counted
+  TV_HIDDEN = 5, // completely hidden
 
-  TV_LAST = 5
+  TV_LAST = 6
 };
 
 int test_visibility_parse(const unsigned char*);
