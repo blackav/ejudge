@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2011/02/27 22:11:00
+// Generated 2011/03/14 23:56:48
 
 #ifndef __PREPARE_META_H__
 #define __PREPARE_META_H__
@@ -302,6 +302,7 @@ enum
   CNTSPROB_ignore_exit_code,
   CNTSPROB_olympiad_mode,
   CNTSPROB_score_latest,
+  CNTSPROB_score_latest_or_unmarked,
   CNTSPROB_real_time_limit,
   CNTSPROB_time_limit,
   CNTSPROB_time_limit_millis,
