@@ -11083,6 +11083,7 @@ unpriv_view_report(FILE *fout,
       } else {
         write_xml_team_testing_report(cs, prob, fout,
                                       prob->type != PROB_TYPE_STANDARD,
+                                      re.is_marked,
                                       rep_start, "b1");
       }
     }

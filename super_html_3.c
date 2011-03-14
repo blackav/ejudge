@@ -5275,6 +5275,21 @@ super_html_print_problem(FILE *f,
                                extra_msg,
                                session_id, form_row_attrs[row ^= 1],
                                self_url, extra_args, prob_hidden_vars);
+
+    //PROBLEM_PARAM(score_latest_or_unmarked, "d"),
+    extra_msg = 0;
+    if (!prob->abstract) {
+      prepare_set_prob_value(CNTSPROB_score_latest_or_unmarked,
+                             tmp_prob, sup_prob, sstate->global);
+      snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
+               tmp_prob->score_latest_or_unmarked?"Yes":"No");
+      extra_msg = msg_buf;
+    }
+    print_boolean_3_select_row(f, "Score the latest or the best unmarked?", prob->score_latest_or_unmarked,
+                               SSERV_CMD_PROB_CHANGE_SCORE_LATEST_OR_UNMARKED,
+                               extra_msg,
+                               session_id, form_row_attrs[row ^= 1],
+                               self_url, extra_args, prob_hidden_vars);
   }
 
   if (sstate->global && sstate->global->score_system != SCORE_ACM) {
@@ -6382,6 +6397,7 @@ super_html_add_abstract_problem(
   prob->ignore_exit_code = 0;
   prob->olympiad_mode = 0;
   prob->score_latest = 0;
+  prob->score_latest_or_unmarked = 0;
   prob->time_limit = 1;
   prob->time_limit_millis = 0;
   prob->real_time_limit = 5;
@@ -6651,6 +6667,10 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_PROB_CHANGE_SCORE_LATEST:
     p_int = &prob->score_latest;
+    goto handle_boolean_1;
+
+  case SSERV_CMD_PROB_CHANGE_SCORE_LATEST_OR_UNMARKED:
+    p_int = &prob->score_latest_or_unmarked;
     goto handle_boolean_1;
 
   case SSERV_CMD_PROB_CHANGE_TIME_LIMIT:

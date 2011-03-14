@@ -462,7 +462,7 @@ new_write_user_runs(
   struct section_problem_data *cur_prob;
   struct section_language_data *lang = 0;
   unsigned char *cl = "";
-  int status, score, test;
+  int status, score;
 
   if (table_class && *table_class) {
     cl = alloca(strlen(table_class) + 16);
@@ -526,11 +526,9 @@ new_write_user_runs(
     if (global->separate_user_score > 0 && re.is_saved) {
       status = re.saved_status;
       score = re.saved_score;
-      test = re.saved_test;
     } else {
       status = re.status;
       score = re.score;
-      test = re.test;
     }
 
     if (global->score_system == SCORE_OLYMPIAD
@@ -1637,37 +1635,124 @@ do_write_kirov_standings(
         break;
       }
     } else {
+      // KIROV system with variations
       if (run_score == -1) run_score = 0;
-      if (run_status == RUN_OK) {
-        if (!marked_flag[up_ind] || prob->ignore_unmarked <= 0
-            || pe->is_marked) {
-          marked_flag[up_ind] = pe->is_marked;
-          if (!full_sol[up_ind]) sol_att[up_ind]++;
+      if (prob->score_latest_or_unmarked > 0) {
+        if (run_status == RUN_OK) {
           score = calc_kirov_score(0, 0,
                                    global->separate_user_score, user_mode,
                                    pe, prob, att_num[up_ind],
                                    disq_num[up_ind],
                                    full_sol[up_ind]?RUN_TOO_MANY:succ_att[pind],
                                    0, 0);
-          if (prob->score_latest > 0 || score > prob_score[up_ind]) {
+          if (pe->is_marked) {
+            // latest
+            marked_flag[up_ind] = 1;
+            prob_score[up_ind] = score;
+            if (!prob->stand_hide_time) sol_time[up_ind] = pe->time;
+          } else if (marked_flag[up_ind]) {
+            // do nothing
+          } else if (score > prob_score[up_ind]) {
+            // best score
             prob_score[up_ind] = score;
             if (!prob->stand_hide_time) sol_time[up_ind] = pe->time;
           }
-          if (!sol_time[up_ind] && !prob->stand_hide_time)
-            sol_time[up_ind] = pe->time;
-          if (!full_sol[up_ind]) {
-            succ_att[pind]++;
-            tot_att[pind]++;
-          }
+          sol_att[up_ind]++;
+          succ_att[pind]++;
+          tot_att[pind]++;
           att_num[up_ind]++;
           full_sol[up_ind] = 1;
           last_submit_run = k;
           last_success_run = k;
+        } else if (run_status == RUN_PARTIAL || (run_status == RUN_WRONG_ANSWER_ERR && prob->type != 0)) {
+          score = calc_kirov_score(0, 0,
+                                   global->separate_user_score, user_mode,
+                                   pe, prob, att_num[up_ind],
+                                   disq_num[up_ind], RUN_TOO_MANY, 0, 0);
+          if (pe->is_marked) {
+            // latest
+            marked_flag[up_ind] = 1;
+            prob_score[up_ind] = score;
+            if (!prob->stand_hide_time) sol_time[up_ind] = pe->time;
+          } else if (marked_flag[up_ind]) {
+            // do nothing
+          } else if (score > prob_score[up_ind]) {
+            // best score
+            prob_score[up_ind] = score;
+            if (!prob->stand_hide_time) sol_time[up_ind] = pe->time;
+          }
+          if (!full_sol[up_ind]) sol_att[up_ind]++;
+          att_num[up_ind]++;
+          if (!full_sol[up_ind]) tot_att[pind]++;
+          full_sol[up_ind] = 0;
+          last_submit_run = k;
+        } else if ((run_status == RUN_COMPILE_ERR || run_status == RUN_STYLE_ERR)
+                   && !prob->ignore_compile_errors) {
+          if (!full_sol[up_ind]) sol_att[up_ind]++;
+          att_num[up_ind]++;
+          if (!full_sol[up_ind]) tot_att[pind]++;
+          last_submit_run = k;
+        } else if (run_status == RUN_DISQUALIFIED) {
+          if (!full_sol[up_ind]) sol_att[up_ind]++;
+          disq_num[up_ind]++;
+        } else if (run_status == RUN_PENDING
+                   || run_status == RUN_ACCEPTED
+                   || run_status == RUN_COMPILING
+                   || run_status == RUN_RUNNING) {
+          trans_num[up_ind]++;
+          total_trans++;
+        } else if (run_status == RUN_CHECK_FAILED) {
+          cf_num[up_ind]++;
+        } else {
+          /* something strange... */
         }
-      } else if (run_status == RUN_PARTIAL) {
-        if (!marked_flag[up_ind] || prob->ignore_unmarked <= 0
-            || pe->is_marked) {
-          marked_flag[up_ind] = pe->is_marked;
+      } else {
+        if (run_status == RUN_OK) {
+          if (!marked_flag[up_ind] || prob->ignore_unmarked <= 0
+              || pe->is_marked) {
+            marked_flag[up_ind] = pe->is_marked;
+            if (!full_sol[up_ind]) sol_att[up_ind]++;
+            score = calc_kirov_score(0, 0,
+                                     global->separate_user_score, user_mode,
+                                     pe, prob, att_num[up_ind],
+                                     disq_num[up_ind],
+                                     full_sol[up_ind]?RUN_TOO_MANY:succ_att[pind],
+                                     0, 0);
+            if (prob->score_latest > 0 || score > prob_score[up_ind]) {
+              prob_score[up_ind] = score;
+              if (!prob->stand_hide_time) sol_time[up_ind] = pe->time;
+            }
+            if (!sol_time[up_ind] && !prob->stand_hide_time)
+              sol_time[up_ind] = pe->time;
+            if (!full_sol[up_ind]) {
+              succ_att[pind]++;
+              tot_att[pind]++;
+            }
+            att_num[up_ind]++;
+            full_sol[up_ind] = 1;
+            last_submit_run = k;
+            last_success_run = k;
+          }
+        } else if (run_status == RUN_PARTIAL) {
+          if (!marked_flag[up_ind] || prob->ignore_unmarked <= 0
+              || pe->is_marked) {
+            marked_flag[up_ind] = pe->is_marked;
+            if (!full_sol[up_ind]) sol_att[up_ind]++;
+            score = calc_kirov_score(0, 0,
+                                     global->separate_user_score, user_mode,
+                                     pe, prob, att_num[up_ind],
+                                     disq_num[up_ind], RUN_TOO_MANY, 0, 0);
+            if (prob->score_latest > 0 || score > prob_score[up_ind]) {
+              prob_score[up_ind] = score;
+            }
+            if (prob->score_latest > 0) {
+              full_sol[up_ind] = 0;
+            }
+            att_num[up_ind]++;
+            if (!full_sol[up_ind]) tot_att[pind]++;
+            last_submit_run = k;
+          }
+        } else if (run_status == RUN_WRONG_ANSWER_ERR && prob->type != 0) {
           if (!full_sol[up_ind]) sol_att[up_ind]++;
           score = calc_kirov_score(0, 0,
                                    global->separate_user_score, user_mode,
@@ -1676,44 +1761,29 @@ do_write_kirov_standings(
           if (prob->score_latest > 0 || score > prob_score[up_ind]) {
             prob_score[up_ind] = score;
           }
-          if (prob->score_latest > 0) {
-            full_sol[up_ind] = 0;
-          }
           att_num[up_ind]++;
           if (!full_sol[up_ind]) tot_att[pind]++;
           last_submit_run = k;
+        } else if ((run_status == RUN_COMPILE_ERR || run_status == RUN_STYLE_ERR)
+                   && !prob->ignore_compile_errors) {
+          if (!full_sol[up_ind]) sol_att[up_ind]++;
+          att_num[up_ind]++;
+          if (!full_sol[up_ind]) tot_att[pind]++;
+          last_submit_run = k;
+        } else if (run_status == RUN_DISQUALIFIED) {
+          if (!full_sol[up_ind]) sol_att[up_ind]++;
+          disq_num[up_ind]++;
+        } else if (run_status == RUN_PENDING
+                   || run_status == RUN_ACCEPTED
+                   || run_status == RUN_COMPILING
+                   || run_status == RUN_RUNNING) {
+          trans_num[up_ind]++;
+          total_trans++;
+        } else if (run_status == RUN_CHECK_FAILED) {
+          cf_num[up_ind]++;
+        } else {
+          /* something strange... */
         }
-      } else if (run_status == RUN_WRONG_ANSWER_ERR && prob->type != 0) {
-        if (!full_sol[up_ind]) sol_att[up_ind]++;
-        score = calc_kirov_score(0, 0,
-                                 global->separate_user_score, user_mode,
-                                 pe, prob, att_num[up_ind],
-                                 disq_num[up_ind], RUN_TOO_MANY, 0, 0);
-        if (prob->score_latest > 0 || score > prob_score[up_ind]) {
-          prob_score[up_ind] = score;
-        }
-        att_num[up_ind]++;
-        if (!full_sol[up_ind]) tot_att[pind]++;
-        last_submit_run = k;
-      } else if ((run_status == RUN_COMPILE_ERR || run_status == RUN_STYLE_ERR)
-                 && !prob->ignore_compile_errors) {
-        if (!full_sol[up_ind]) sol_att[up_ind]++;
-        att_num[up_ind]++;
-        if (!full_sol[up_ind]) tot_att[pind]++;
-        last_submit_run = k;
-      } else if (run_status == RUN_DISQUALIFIED) {
-        if (!full_sol[up_ind]) sol_att[up_ind]++;
-        disq_num[up_ind]++;
-      } else if (run_status == RUN_PENDING
-                 || run_status == RUN_ACCEPTED
-                 || run_status == RUN_COMPILING
-                 || run_status == RUN_RUNNING) {
-        trans_num[up_ind]++;
-        total_trans++;
-      } else if (run_status == RUN_CHECK_FAILED) {
-        cf_num[up_ind]++;
-      } else {
-        /* something strange... */
       }
     }
   }
@@ -4347,7 +4417,7 @@ do_write_public_log(
   fprintf(f, "</tr>\n");
 
   for (i = total - 1; i >= 0; i--) {
-    int status, score, test;
+    int status, score;
 
     pe = &runs[i];
     if (pe->is_hidden) continue;
@@ -4355,11 +4425,9 @@ do_write_public_log(
     if (global->separate_user_score > 0 && user_mode && pe->is_saved) {
       status = pe->saved_status;
       score = pe->saved_score;
-      test = pe->saved_test;
     } else {
       status = pe->status;
       score = pe->score;
-      test = pe->test;
     }
 
     cur_prob = 0;
@@ -4580,6 +4648,7 @@ write_xml_team_testing_report(
         const struct section_problem_data *prob,
         FILE *f,
         int output_only,
+        int is_marked,
         const unsigned char *txt,
         const unsigned char *table_class)
 {
@@ -4685,8 +4754,12 @@ write_xml_team_testing_report(
 
   for (i = 0; i < r->run_tests; ++i) {
     if (!(t = r->tests[i])) continue;
+    // TV_NORMAL, TV_FULL, TV_FULLIFMARKED, TV_BRIEF, TV_EXISTS, TV_HIDDEN
     visibility = cntsprob_get_test_visibility(prob, i + 1);
-    // TV_NORMAL, TV_FULL, TV_BRIEF, TV_EXISTS, TV_HIDDEN
+    if (visibility == TV_FULLIFMARKED) {
+      visibility = TV_HIDDEN;
+      if (is_marked) visibility = TV_FULL;
+    }
     if (visibility == TV_EXISTS || visibility == TV_HIDDEN) continue;
     if (t->team_comment) {
       need_comment = 1;
@@ -4695,10 +4768,10 @@ write_xml_team_testing_report(
     if (global->report_error_code && t->status == RUN_RUN_TIME_ERR) {
       need_info = 1;
     }
-    if (visibility == TV_FULL && t->status == RUN_RUN_TIME_ERR) {
-      need_info = 1;
+    if (visibility == TV_FULL) {
+      if (t->status == RUN_RUN_TIME_ERR) need_info = 1;
+      has_full = 1;
     }
-    if (visibility == TV_FULL) has_full = 1;
   }
 
   fprintf(f,
@@ -4720,8 +4793,12 @@ write_xml_team_testing_report(
 
   for (i = 0; i < r->run_tests; i++) {
     if (!(t = r->tests[i])) continue;
-    // TV_NORMAL, TV_FULL, TV_BRIEF, TV_EXISTS, TV_HIDDEN
+    // TV_NORMAL, TV_FULL, TV_FULLIFMARKED, TV_BRIEF, TV_EXISTS, TV_HIDDEN
     visibility = cntsprob_get_test_visibility(prob, i + 1);
+    if (visibility == TV_FULLIFMARKED) {
+      visibility = TV_HIDDEN;
+      if (is_marked) visibility = TV_FULL;
+    }
     if (visibility == TV_HIDDEN) continue;
     ++serial;
     if (visibility == TV_EXISTS) {
@@ -4804,6 +4881,10 @@ write_xml_team_testing_report(
     for (i = 0; i < r->run_tests; i++) {
       if (!(t = r->tests[i])) continue;
       visibility = cntsprob_get_test_visibility(prob, i + 1);
+      if (visibility == TV_FULLIFMARKED) {
+        visibility = TV_HIDDEN;
+        if (is_marked) visibility = TV_FULL;
+      }
       if (visibility != TV_FULL) continue;
       if (!t->args && !t->args_too_long && !t->input
           && !t->output && !t->error && !t->correct && !t->checker)

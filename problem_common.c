@@ -59,6 +59,7 @@ const unsigned char * const test_visibility_str[] =
 {
   [TV_NORMAL] = "normal",
   [TV_FULL] = "full",
+  [TV_FULLIFMARKED] = "fullifmarked",
   [TV_BRIEF] = "brief",
   [TV_EXISTS] = "exists",
   [TV_HIDDEN] = "hidden",

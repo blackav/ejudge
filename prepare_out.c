@@ -229,6 +229,8 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
   }
   fprintf(f, "\n");
 
+  if (global->separate_user_score > 0)
+    unparse_bool(f, "separate_user_score", global->separate_user_score);
   if (global->team_enable_src_view != DFLT_G_TEAM_ENABLE_SRC_VIEW)
     unparse_bool(f, "team_enable_src_view", global->team_enable_src_view);
   if (global->team_enable_rep_view != DFLT_G_TEAM_ENABLE_REP_VIEW)
@@ -1003,6 +1005,9 @@ prepare_unparse_prob(
   if ((prob->abstract && prob->score_latest == 1)
       || (!prob->abstract && prob->score_latest >= 0))
     unparse_bool(f, "score_latest", prob->score_latest);
+  if ((prob->abstract && prob->score_latest_or_unmarked == 1)
+      || (!prob->abstract && prob->score_latest_or_unmarked >= 0))
+    unparse_bool(f, "score_latest_or_unmarked", prob->score_latest_or_unmarked);
   if (prob->xml_file[0])
     fprintf(f, "xml_file = \"%s\"\n", CARMOR(prob->xml_file));
   if (prob->alternatives_file[0])
@@ -1108,7 +1113,7 @@ prepare_unparse_prob(
           || !prob->abstract)
         fprintf(f, "full_score = %d\n", prob->full_score);
     }
-    if (prob->full_user_score >= 0 && global && global->separate_user_score > 0) {
+    if (prob->full_user_score >= 0 && global) {
       fprintf(f, "full_user_score = %d\n", prob->full_user_score);
     }
     if (prob->test_score >= 0) {
@@ -1153,7 +1158,7 @@ prepare_unparse_prob(
           || !prob->abstract)
         fprintf(f, "full_score = %d\n", prob->full_score);
     }
-    if (prob->full_user_score >= 0 && global && global->separate_user_score > 0) {
+    if (prob->full_user_score >= 0) {
       fprintf(f, "full_user_score = %d\n", prob->full_user_score);
     }
     if (prob->score_tests[0])
@@ -1650,6 +1655,9 @@ generate_abstract_tester(
   } else if(testing_work_dir) {
     fprintf(f, "check_dir = \"%s\"\n",
             c_armor_2(&ab, testing_work_dir, contests_home_dir));
+  }
+  if (atst && atst->skip_testing > 0) {
+    fprintf(f, "skip_testing\n");
   }
   fprintf(f, "\n");
 
