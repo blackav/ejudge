@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -235,18 +235,18 @@ serve_set_upsolving_mode(serve_state_t state)
                       &saved_finish_time);
   if (saved_stop_time <= 0) return;
 
-  if (state->freeze_standings)
+  if (state->upsolving_freeze_standings)
     state->global->stand_ignore_after = saved_stop_time;
-  if (state->disable_clars)
+  if (state->upsolving_disable_clars)
     state->global->disable_team_clars = 1;
-  if (state->view_source)
+  if (state->upsolving_view_source)
     state->global->team_enable_src_view = 1;
 
   for (prob_id = 1; prob_id <= state->max_prob; prob_id++) {
     if (!(prob = state->probs[prob_id])) continue;
-    if (state->view_protocol)
+    if (state->upsolving_view_protocol)
       prob->team_enable_rep_view = 1;
-    if (state->full_protocol)
+    if (state->upsolving_full_protocol)
       prob->team_show_judge_report = 1;
   }
 }
