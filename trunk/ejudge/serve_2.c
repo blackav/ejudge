@@ -265,11 +265,11 @@ serve_update_status_file(serve_state_t state, int force_flag)
   status.testing_finished = state->testing_finished;
 
   status.upsolving_mode = state->upsolving_mode;
-  status.freeze_standings = state->freeze_standings;
-  status.view_source = state->view_source;
-  status.view_protocol = state->view_protocol;
-  status.full_protocol = state->full_protocol;
-  status.disable_clars = state->disable_clars;
+  status.upsolving_freeze_standings = state->upsolving_freeze_standings;
+  status.upsolving_view_source = state->upsolving_view_source;
+  status.upsolving_view_protocol = state->upsolving_view_protocol;
+  status.upsolving_full_protocol = state->upsolving_full_protocol;
+  status.upsolving_disable_clars = state->upsolving_disable_clars;
 
   if (status.start_time && status.duration && state->global->board_fog_time > 0
       && !status.is_virtual) {
@@ -350,11 +350,11 @@ serve_load_status_file(serve_state_t state)
 
   state->upsolving_mode = status.upsolving_mode;
   info("load_status_file: upsolving_mode = %d", state->upsolving_mode);
-  state->freeze_standings = status.freeze_standings;
-  state->view_source = status.view_source;
-  state->view_protocol = status.view_protocol;
-  state->full_protocol = status.full_protocol;
-  state->disable_clars = status.disable_clars;
+  state->upsolving_freeze_standings = status.upsolving_freeze_standings;
+  state->upsolving_view_source = status.upsolving_view_source;
+  state->upsolving_view_protocol = status.upsolving_view_protocol;
+  state->upsolving_full_protocol = status.upsolving_full_protocol;
+  state->upsolving_disable_clars = status.upsolving_disable_clars;
   state->testing_finished = status.testing_finished;
 
   state->max_online_time = status.max_online_time;

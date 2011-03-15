@@ -3,7 +3,7 @@
 #ifndef __SERVE_STATE_H__
 #define __SERVE_STATE_H__
 
-/* Copyright (C) 2006-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -212,11 +212,11 @@ struct serve_state
 
   // upsolving mode
   int upsolving_mode;
-  int freeze_standings;
-  int view_source;
-  int view_protocol;
-  int full_protocol;
-  int disable_clars;
+  int upsolving_freeze_standings;
+  int upsolving_view_source;
+  int upsolving_view_protocol;
+  int upsolving_full_protocol;
+  int upsolving_disable_clars;
 
   time_t stat_last_check_time;
   time_t stat_reported_before;

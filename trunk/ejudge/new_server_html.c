@@ -6130,11 +6130,11 @@ priv_upsolving_operation(
     run_stop_contest(cs->runlog_state, cs->current_time);
     serve_invoke_stop_script(cs);
     cs->upsolving_mode = 0;
-    cs->freeze_standings = 0;
-    cs->view_source = 0;
-    cs->view_protocol = 0;
-    cs->full_protocol = 0;
-    cs->disable_clars = 0;
+    cs->upsolving_freeze_standings = 0;
+    cs->upsolving_view_source = 0;
+    cs->upsolving_view_protocol = 0;
+    cs->upsolving_full_protocol = 0;
+    cs->upsolving_disable_clars = 0;
     serve_update_status_file(cs, 1);
     extra->last_access_time = 0;          // force reload
     break;
@@ -6144,16 +6144,16 @@ priv_upsolving_operation(
     run_stop_contest(cs->runlog_state, 0);
     run_set_finish_time(cs->runlog_state, 0);
     cs->upsolving_mode = 1;
-    cs->freeze_standings = 0;
-    cs->view_source = 0;
-    cs->view_protocol = 0;
-    cs->full_protocol = 0;
-    cs->disable_clars = 0;
-    if (freeze_standings && *freeze_standings) cs->freeze_standings = 1;
-    if (view_source && *view_source) cs->view_source = 1;
-    if (view_protocol && *view_protocol) cs->view_protocol = 1;
-    if (full_proto && *full_proto) cs->full_protocol = 1;
-    if (disable_clars && *disable_clars) cs->disable_clars = 1;
+    cs->upsolving_freeze_standings = 0;
+    cs->upsolving_view_source = 0;
+    cs->upsolving_view_protocol = 0;
+    cs->upsolving_full_protocol = 0;
+    cs->upsolving_disable_clars = 0;
+    if (freeze_standings && *freeze_standings) cs->upsolving_freeze_standings = 1;
+    if (view_source && *view_source) cs->upsolving_view_source = 1;
+    if (view_protocol && *view_protocol) cs->upsolving_view_protocol = 1;
+    if (full_proto && *full_proto) cs->upsolving_full_protocol = 1;
+    if (disable_clars && *disable_clars) cs->upsolving_disable_clars = 1;
     serve_update_status_file(cs, 1);
     extra->last_access_time = 0;          // force reload
     break;

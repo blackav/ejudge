@@ -4,7 +4,7 @@
 #ifndef __PROTOCOL_H__
 #define __PROTOCOL_H__
 
-/* Copyright (C) 2002-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -81,11 +81,11 @@ struct prot_serve_status_v2
 
   // upsolving mode
   unsigned char upsolving_mode;
-  unsigned char freeze_standings;
-  unsigned char view_source;
-  unsigned char view_protocol;
-  unsigned char full_protocol;
-  unsigned char disable_clars;
+  unsigned char upsolving_freeze_standings;
+  unsigned char upsolving_view_source;
+  unsigned char upsolving_view_protocol;
+  unsigned char upsolving_full_protocol;
+  unsigned char upsolving_disable_clars;
   unsigned char testing_finished;
 
   ej_time64_t   max_online_time;
