@@ -1666,7 +1666,7 @@ run_tests(struct section_tester_data *tst,
     tests[cur_test].error_size = -1;
     tests[cur_test].correct_size = -1;
     tests[cur_test].chk_out_size = -1;
-    tests[cur_test].visibility = cntsprob_get_test_visibility(prb, cur_test);
+    tests[cur_test].visibility = cntsprob_get_test_visibility(prb, cur_test, 0);
 
     time_limit_value = 0;
     if (prb->time_limit_millis > 0)

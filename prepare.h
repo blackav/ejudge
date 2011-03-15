@@ -980,6 +980,11 @@ struct section_problem_data
   int open_tests_count META_ATTRIB((meta_private));
   int *open_tests_val META_ATTRIB((meta_private));
 
+  /** test visibility in the final final mode */
+  unsigned char final_open_tests[256];
+  int final_open_tests_count META_ATTRIB((meta_private));
+  int *final_open_tests_val META_ATTRIB((meta_private));
+
   /** max virtual size limit  */
   size_t max_vm_size;
   /** max size of the data (NOT USED) */
@@ -1339,6 +1344,7 @@ get_advanced_layout_path(
 int
 cntsprob_get_test_visibility(
         const struct section_problem_data *prob,
-        int num);
+        int num,
+        int final_mode);
 
 #endif /* __PREPARE_H__ */
