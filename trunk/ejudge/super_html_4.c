@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2008-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1352,6 +1352,7 @@ static const struct cnts_edit_info cnts_problem_info[] =
   { NS_PROBLEM, CNTSPROB_test_sets, 'x', 1, 1, 1, 1, 0, "Specially scored test sets", 0, "SidState.prob_show_adv Global.score_system SCORE_KIROV == Global.score_system SCORE_OLYMPIAD == || &&" },
   { NS_PROBLEM, CNTSPROB_score_bonus, 'S', 1, 1, 1, 1, 0, "Additional score bonus", 0, "Global.score_system SCORE_KIROV ==" },
   { NS_PROBLEM, CNTSPROB_open_tests, 'S', 1, 1, 1, 1, 0, "Tests open for participants", 0, "SidState.prob_show_adv" },
+  { NS_PROBLEM, CNTSPROB_final_open_tests, 'S', 1, 1, 1, 1, 0, "Tests open for participants on final show", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_tests_to_accept, 'd', 1, 1, 1, 1, 0, "Number of accept tests", 0, "Global.score_system SCORE_OLYMPIAD ==" },
   { NS_PROBLEM, CNTSPROB_accept_partial, 'Y', 1, 0, 0, 0, 0, "Accept submits, which do not pass accept tests", 0, "SidState.prob_show_adv Global.score_system SCORE_OLYMPIAD == &&" },
   { NS_PROBLEM, CNTSPROB_min_tests_to_accept, 'd', 1, 1, 1, 1, 0, "Minimum number of tests to accept", 0, "SidState.prob_show_adv Global.score_system SCORE_OLYMPIAD == &&" },
@@ -6030,6 +6031,7 @@ static const unsigned char prob_reloadable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_personal_deadline] = 0,
   [CNTSPROB_score_bonus] = 0,
   [CNTSPROB_open_tests] = 0,
+  [CNTSPROB_final_open_tests] = 0,
   [CNTSPROB_statement_file] = 1,
   [CNTSPROB_alternatives_file] = 0,
   [CNTSPROB_plugin_file] = 1,

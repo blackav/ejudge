@@ -4755,7 +4755,7 @@ write_xml_team_testing_report(
   for (i = 0; i < r->run_tests; ++i) {
     if (!(t = r->tests[i])) continue;
     // TV_NORMAL, TV_FULL, TV_FULLIFMARKED, TV_BRIEF, TV_EXISTS, TV_HIDDEN
-    visibility = cntsprob_get_test_visibility(prob, i + 1);
+    visibility = cntsprob_get_test_visibility(prob, i + 1, 0);
     if (visibility == TV_FULLIFMARKED) {
       visibility = TV_HIDDEN;
       if (is_marked) visibility = TV_FULL;
@@ -4794,7 +4794,7 @@ write_xml_team_testing_report(
   for (i = 0; i < r->run_tests; i++) {
     if (!(t = r->tests[i])) continue;
     // TV_NORMAL, TV_FULL, TV_FULLIFMARKED, TV_BRIEF, TV_EXISTS, TV_HIDDEN
-    visibility = cntsprob_get_test_visibility(prob, i + 1);
+    visibility = cntsprob_get_test_visibility(prob, i + 1, 0);
     if (visibility == TV_FULLIFMARKED) {
       visibility = TV_HIDDEN;
       if (is_marked) visibility = TV_FULL;
@@ -4880,7 +4880,7 @@ write_xml_team_testing_report(
     fprintf(f, "<pre>");
     for (i = 0; i < r->run_tests; i++) {
       if (!(t = r->tests[i])) continue;
-      visibility = cntsprob_get_test_visibility(prob, i + 1);
+      visibility = cntsprob_get_test_visibility(prob, i + 1, 0);
       if (visibility == TV_FULLIFMARKED) {
         visibility = TV_HIDDEN;
         if (is_marked) visibility = TV_FULL;
