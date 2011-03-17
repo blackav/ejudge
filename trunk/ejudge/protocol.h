@@ -94,7 +94,12 @@ struct prot_serve_status_v2
   // priority adjustments for problems
   signed char   prob_prio[EJ_SERVE_STATUS_TOTAL_PROBS];
 
-  unsigned char _pad[16];
+  signed char online_view_source;
+  signed char online_view_report;
+  unsigned char online_view_judge_score;
+  unsigned char online_final_visibility;
+
+  unsigned char _pad[12];
 };
 
 #define PROT_SERVE_PACKET_MAGIC (0xe342)

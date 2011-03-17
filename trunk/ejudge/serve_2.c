@@ -270,6 +270,10 @@ serve_update_status_file(serve_state_t state, int force_flag)
   status.upsolving_view_protocol = state->upsolving_view_protocol;
   status.upsolving_full_protocol = state->upsolving_full_protocol;
   status.upsolving_disable_clars = state->upsolving_disable_clars;
+  status.online_view_source = state->online_view_source;
+  status.online_view_report = state->online_view_report;
+  status.online_view_judge_score = state->online_view_judge_score;
+  status.online_final_visibility = state->online_final_visibility;
 
   if (status.start_time && status.duration && state->global->board_fog_time > 0
       && !status.is_virtual) {
@@ -356,6 +360,10 @@ serve_load_status_file(serve_state_t state)
   state->upsolving_full_protocol = status.upsolving_full_protocol;
   state->upsolving_disable_clars = status.upsolving_disable_clars;
   state->testing_finished = status.testing_finished;
+  state->online_view_source = status.online_view_source;
+  state->online_view_report = status.online_view_report;
+  state->online_view_judge_score = status.online_view_judge_score;
+  state->online_final_visibility = status.online_final_visibility;
 
   state->max_online_time = status.max_online_time;
   state->max_online_count = status.max_online_count;
@@ -775,12 +783,8 @@ serve_move_files_to_insert_run(serve_state_t state, int run_id)
     archive_remove(state, global->run_archive_dir, i + 1, 0);
     archive_remove(state, global->xml_report_archive_dir, i + 1, 0);
     archive_remove(state, global->report_archive_dir, i + 1, 0);
-    if (global->team_enable_rep_view) {
-      archive_remove(state, global->team_report_archive_dir, i + 1, 0);
-    }
-    if (global->enable_full_archive) {
-      archive_remove(state, global->full_archive_dir, i + 1, 0);
-    }
+    archive_remove(state, global->team_report_archive_dir, i + 1, 0);
+    archive_remove(state, global->full_archive_dir, i + 1, 0);
     archive_remove(state, global->audit_log_dir, i + 1, 0);
 
     archive_rename(state, global->audit_log_dir, 0, i, 0, i + 1, 0, 0);
@@ -796,12 +800,8 @@ serve_move_files_to_insert_run(serve_state_t state, int run_id)
     if (run_is_imported(state->runlog_state, i + 1)) continue;
     archive_rename(state, global->xml_report_archive_dir, 0, i, 0, i + 1, 0, 0);
     archive_rename(state, global->report_archive_dir, 0, i, 0, i + 1, 0, 0);
-    if (global->team_enable_rep_view) {
-      archive_rename(state, global->team_report_archive_dir, 0,i,0,i + 1,0,0);
-    }
-    if (global->enable_full_archive) {
-      archive_rename(state, global->full_archive_dir, 0, i, 0, i + 1, 0, 0);
-    }
+    archive_rename(state, global->team_report_archive_dir, 0,i,0,i + 1,0,0);
+    archive_rename(state, global->full_archive_dir, 0, i, 0, i + 1, 0, 0);
   }
 }
 
@@ -2052,20 +2052,6 @@ serve_read_run_packet(serve_state_t state,
   if (generic_copy_file(REMOVE, run_report_dir, pname, "",
                         rep_flags, 0, rep_path, "") < 0)
     goto failed;
-  /*
-  if (serve_state.global->team_enable_rep_view) {
-    team_size = generic_file_size(run_team_report_dir, pname, "");
-    team_flags = archive_make_write_path(team_path, sizeof(team_path),
-                                         serve_state.global->team_report_archive_dir,
-                                         reply_pkt->run_id, team_size, 0);
-    if (archive_dir_prepare(serve_state.global->team_report_archive_dir,
-                            reply_pkt->run_id, 0, 0) < 0)
-      return -1;
-    if (generic_copy_file(REMOVE, run_team_report_dir, pname, "",
-                          team_flags, 0, team_path, "") < 0)
-      return -1;
-  }
-  */
   if (state->global->enable_full_archive) {
     full_flags = archive_make_write_path(state, full_path, sizeof(full_path),
                                          state->global->full_archive_dir,
@@ -2843,9 +2829,7 @@ serve_squeeze_runs(serve_state_t state)
       archive_rename(state, state->global->run_archive_dir, 0, i, 0, j, 0, 0);
       archive_rename(state, state->global->xml_report_archive_dir, 0, i, 0, j, 0, 1);
       archive_rename(state, state->global->report_archive_dir, 0, i, 0, j, 0, 1);
-      if (state->global->team_enable_rep_view) {
-        archive_rename(state, state->global->team_report_archive_dir, 0, i, 0, j, 0, 0);
-      }
+      archive_rename(state, state->global->team_report_archive_dir, 0, i, 0, j, 0, 0);
       if (state->global->enable_full_archive) {
         archive_rename(state, state->global->full_archive_dir, 0, i, 0, j, 0, 0);
       }
@@ -2857,12 +2841,8 @@ serve_squeeze_runs(serve_state_t state)
     archive_remove(state, state->global->run_archive_dir, j, 0);
     archive_remove(state, state->global->xml_report_archive_dir, j, 0);
     archive_remove(state, state->global->report_archive_dir, j, 0);
-    if (state->global->team_enable_rep_view) {
-      archive_remove(state, state->global->team_report_archive_dir, j, 0);
-    }
-    if (state->global->enable_full_archive) {
-      archive_remove(state, state->global->full_archive_dir, j, 0);
-    }
+    archive_remove(state, state->global->team_report_archive_dir, j, 0);
+    archive_remove(state, state->global->full_archive_dir, j, 0);
     archive_remove(state, state->global->audit_log_dir, j, 0);
   }
   run_squeeze_log(state->runlog_state);
@@ -3209,12 +3189,8 @@ serve_clear_by_mask(serve_state_t state,
         archive_remove(state, global->run_archive_dir, r, 0);
         archive_remove(state, global->xml_report_archive_dir, r, 0);
         archive_remove(state, global->report_archive_dir, r, 0);
-        if (global->team_enable_rep_view) {
-          archive_remove(state, global->team_report_archive_dir, r, 0);
-        }
-        if (global->enable_full_archive) {
-          archive_remove(state, global->full_archive_dir, r, 0);
-        }
+        archive_remove(state, global->team_report_archive_dir, r, 0);
+        archive_remove(state, global->full_archive_dir, r, 0);
         archive_remove(state, global->audit_log_dir, r, 0);
       }
     }
@@ -3265,12 +3241,8 @@ serve_ignore_by_mask(serve_state_t state,
     if (run_set_entry(state->runlog_state, r, RE_STATUS, &re) >= 0) {
       archive_remove(state, global->xml_report_archive_dir, r, 0);
       archive_remove(state, global->report_archive_dir, r, 0);
-      if (global->team_enable_rep_view) {
-        archive_remove(state, global->team_report_archive_dir, r, 0);
-      }
-      if (global->enable_full_archive) {
-        archive_remove(state, global->full_archive_dir, r, 0);
-      }
+      archive_remove(state, global->team_report_archive_dir, r, 0);
+      archive_remove(state, global->full_archive_dir, r, 0);
       serve_audit_log(state, r, user_id, ip, ssl_flag, "Command: %s\n", cmd);
     }
   }

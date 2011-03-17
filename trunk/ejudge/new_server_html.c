@@ -2140,6 +2140,7 @@ priv_contest_operation(FILE *fout,
   const struct section_global_data *global = cs->global;
   opcap_t caps;
   time_t start_time, stop_time, duration;
+  int param = 0;
 
   if (opcaps_find(&cnts->capabilities, phr->login, &caps) < 0
       || opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) {
@@ -2290,6 +2291,39 @@ priv_contest_operation(FILE *fout,
 
   case NEW_SRV_ACTION_SQUEEZE_RUNS:
     serve_squeeze_runs(cs);
+    break;
+
+  case NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_SOURCE:
+  case NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_REPORT:
+  case NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_JUDGE_SCORE:
+  case NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_FINAL_VISIBILITY:
+    if (ns_cgi_param_int(phr, "param", &param) < 0) {
+      ns_error(log_f, NEW_SRV_ERR_INV_PARAM);
+      goto cleanup;
+    }
+
+    switch (phr->action) {
+    case NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_SOURCE:
+      if (param < 0) param = -1;
+      else if (param > 0) param = 1;
+      cs->online_view_source = param;
+      break;
+    case NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_REPORT:
+      if (param < 0) param = -1;
+      else if (param > 0) param = 1;
+      cs->online_view_report = param;
+      break;
+    case NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_JUDGE_SCORE:
+      if (param) param = 1;
+      cs->online_view_judge_score = param;
+      break;
+    case NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_FINAL_VISIBILITY:
+      if (param) param = 1;
+      cs->online_final_visibility = param;
+      break;
+    }
+
+    serve_update_status_file(cs, 1);
     break;
   }
 
@@ -3605,12 +3639,8 @@ priv_clear_run(FILE *fout, FILE *log_f,
   archive_remove(cs, global->run_archive_dir, run_id, 0);
   archive_remove(cs, global->xml_report_archive_dir, run_id, 0);
   archive_remove(cs, global->report_archive_dir, run_id, 0);
-  if (global->team_enable_rep_view) {
-    archive_remove(cs, global->team_report_archive_dir, run_id, 0);
-  }
-  if (global->enable_full_archive) {
-    archive_remove(cs, global->full_archive_dir, run_id, 0);
-  }
+  archive_remove(cs, global->team_report_archive_dir, run_id, 0);
+  archive_remove(cs, global->full_archive_dir, run_id, 0);
   archive_remove(cs, global->audit_log_dir, run_id, 0);
 
  cleanup:
@@ -6675,6 +6705,31 @@ priv_stand_filter_operation(
 }
 
 static int
+priv_admin_contest_settings(
+        FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  int retval = 0;
+
+  if (phr->role != USER_ROLE_ADMIN) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+  l10n_setlocale(phr->locale_id);
+  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id,
+            "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role),
+            phr->name_arm, phr->contest_id, extra->contest_arm,
+            _("Contest settings"));
+  ns_write_admin_contest_settings(fout, log_f, phr, cnts, extra);
+  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
+  l10n_setlocale(0);
+
+ cleanup:
+  return retval;
+}
+
+static int
 priv_print_user_exam_protocol(
         FILE *fout,
         FILE *log_f,
@@ -7248,6 +7303,10 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_TESTING_DOWN_ALL] = priv_whole_testing_queue_operation,
   [NEW_SRV_ACTION_SET_STAND_FILTER] = priv_stand_filter_operation,
   [NEW_SRV_ACTION_RESET_STAND_FILTER] = priv_stand_filter_operation,
+  [NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_SOURCE] = priv_contest_operation,
+  [NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_REPORT] = priv_contest_operation,
+  [NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_JUDGE_SCORE] = priv_contest_operation,
+  [NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_FINAL_VISIBILITY] = priv_contest_operation,
 
   /* for priv_generic_page */
   [NEW_SRV_ACTION_VIEW_REPORT] = priv_view_report,
@@ -7310,6 +7369,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_TESTING_QUEUE] = priv_view_testing_queue,
   [NEW_SRV_ACTION_MARK_DISPLAYED_2] = priv_clear_displayed,
   [NEW_SRV_ACTION_UNMARK_DISPLAYED_2] = priv_clear_displayed,
+  [NEW_SRV_ACTION_ADMIN_CONTEST_SETTINGS] = priv_admin_contest_settings,
 };
 
 static void
@@ -7959,6 +8019,11 @@ priv_main_page(FILE *fout,
   fprintf(fout, "<li>%s%s</a></li>\n",
           ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_TESTING_QUEUE,0),
           _("View testing queue"));
+  if (phr->role >= USER_ROLE_ADMIN) {
+    fprintf(fout, "<li>%s%s</a></li>\n",
+            ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_ADMIN_CONTEST_SETTINGS, 0),
+            _("Contest settings"));
+  }
   if (cnts->problems_url) {
     fprintf(fout, "<li><a href=\"%s\" target=_blank>%s</a>\n",
             cnts->problems_url, _("Problems"));
@@ -8022,6 +8087,28 @@ priv_main_page(FILE *fout,
   if (cs->printing_suspended) {
     fprintf(fout, "<p><big><b>%s</b></big></p>\n",
             _("Print requests are suspended"));
+  }
+  if (cs->online_view_source < 0) {
+    fprintf(fout, "<p><big><b>%s</b></big></p>\n",
+            _("Source code is closed"));
+  } else if (cs->online_view_source > 0) {
+    fprintf(fout, "<p><big><b>%s</b></big></p>\n",
+            _("Source code is open"));
+  }
+  if (cs->online_view_report < 0) {
+    fprintf(fout, "<p><big><b>%s</b></big></p>\n",
+            _("Testing reports are closed"));
+  } else if (cs->online_view_report > 0) {
+    fprintf(fout, "<p><big><b>%s</b></big></p>\n",
+            _("Testing reports are open"));
+  }
+  if (cs->online_view_judge_score > 0) {
+    fprintf(fout, "<p><big><b>%s</b></big></p>\n",
+            _("Judge scores are opened"));
+  }
+  if (cs->online_final_visibility > 0) {
+    fprintf(fout, "<p><big><b>%s</b></big></p>\n",
+            _("Final visibility rules are active"));
   }
 
   // count online users
@@ -8705,6 +8792,11 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_UNMARK_DISPLAYED_2] = priv_generic_operation,
   [NEW_SRV_ACTION_SET_STAND_FILTER] = priv_generic_operation,
   [NEW_SRV_ACTION_RESET_STAND_FILTER] = priv_generic_operation,
+  [NEW_SRV_ACTION_ADMIN_CONTEST_SETTINGS] = priv_generic_page,
+  [NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_SOURCE] = priv_generic_operation,
+  [NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_REPORT] = priv_generic_operation,
+  [NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_JUDGE_SCORE] = priv_generic_operation,
+  [NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_FINAL_VISIBILITY] = priv_generic_operation,
 };
 
 static void
@@ -10757,7 +10849,7 @@ unpriv_view_source(FILE *fout,
     ns_error(log_f, NEW_SRV_ERR_CLIENTS_SUSPENDED);
     goto done;
   }
-  if (!global->team_enable_src_view) {
+  if (cs->online_view_source < 0 || (!cs->online_view_source && global->team_enable_src_view <= 0)) {
     ns_error(log_f, NEW_SRV_ERR_SOURCE_VIEW_DISABLED);
     goto done;
   }
@@ -10834,8 +10926,6 @@ unpriv_view_test(FILE *fout,
                  const struct contest_desc *cnts,
                  struct contest_extra *extra)
 {
-
-
   const serve_state_t cs = extra->serve_state;
   const struct section_global_data *global = cs->global;
   int run_id, test_num, n;
@@ -10844,6 +10934,7 @@ unpriv_view_test(FILE *fout,
   FILE *log_f = 0;
   char *log_txt = 0;
   size_t log_len = 0;
+  int enable_rep_view;
 
   // run_id, test_num
   if (unpriv_parse_run_id(fout, phr, cnts, extra, &run_id, &re) < 0)
@@ -10854,13 +10945,15 @@ unpriv_view_test(FILE *fout,
     goto cleanup;
   }
 
+  enable_rep_view = (cs->online_view_report > 0 || (!cs->online_view_report && global->team_enable_rep_view > 0));
+
   log_f = open_memstream(&log_txt, &log_len);
 
   if (cs->clients_suspended) {
     ns_error(log_f, NEW_SRV_ERR_CLIENTS_SUSPENDED);
     goto done;
   }
-  if (global->team_enable_rep_view <= 0) {
+  if (enable_rep_view <= 0) {
     ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
     goto done;
   }
@@ -10921,6 +11014,7 @@ unpriv_view_report(FILE *fout,
   unsigned char *html_report;
   time_t start_time, stop_time;
   int accepting_mode = 0;
+  int enable_rep_view = 0;
 
   static const int new_actions_vector[] =
   {
@@ -10951,6 +11045,8 @@ unpriv_view_report(FILE *fout,
 
   if (unpriv_parse_run_id(fout, phr, cnts, extra, &run_id, &re) < 0)
     goto cleanup;
+
+  enable_rep_view = (cs->online_view_report > 0 || (!cs->online_view_report && global->team_enable_rep_view > 0));
 
   log_f = open_memstream(&log_txt, &log_len);
 
@@ -10993,7 +11089,8 @@ unpriv_view_report(FILE *fout,
     goto done;
   }
 
-  if (!prob->team_enable_rep_view
+  if (enable_rep_view) enable_rep_view = prob->team_enable_rep_view;
+  if (!enable_rep_view
       && (!prob->team_enable_ce_view
           || (re.status != RUN_COMPILE_ERR && re.status != RUN_STYLE_ERR))) {
     ns_error(log_f, NEW_SRV_ERR_REPORT_VIEW_DISABLED);
@@ -14184,6 +14281,11 @@ static const unsigned char * const symbolic_action_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_UNMARK_DISPLAYED_2] = "UNMARK_DISPLAYED_2",
   [NEW_SRV_ACTION_SET_STAND_FILTER] = "SET_STAND_FILTER",
   [NEW_SRV_ACTION_RESET_STAND_FILTER] = "RESET_STAND_FILTER",
+  [NEW_SRV_ACTION_ADMIN_CONTEST_SETTINGS] = "ADMIN_CONTEST_SETTINGS",
+  [NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_SOURCE] = "ADMIN_CHANGE_ONLINE_VIEW_SOURCE",
+  [NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_REPORT] = "ADMIN_CHANGE_ONLINE_VIEW_REPORT",
+  [NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_JUDGE_SCORE] = "ADMIN_CHANGE_ONLINE_VIEW_JUDGE_SCORE",
+  [NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_FINAL_VISIBILITY] = "ADMIN_CHANGE_ONLINE_FINAL_VISIBILITY",
 };
 
 void

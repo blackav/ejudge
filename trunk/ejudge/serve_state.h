@@ -218,6 +218,32 @@ struct serve_state
   int upsolving_full_protocol;
   int upsolving_disable_clars;
 
+  /**
+     Enable source view for the participants.
+     Overrides team_enable_src_view if set.
+     0 - undefined, -1 - disabled, 1 - enabled.
+   */
+  int online_view_source;
+  /**
+     Enable report view for the participants.
+     Overrides team_enable_rep_view if set.
+     0 - undefined, -1 - disabled, 1 - enabled.
+   */
+  int online_view_report;
+  /**
+     Show the main (judge) scores to the participants.
+     Works for contests with separate_user_score mode set.
+     0 - no, 1 - yes.
+   */
+  int online_view_judge_score;
+  /**
+     Use the final visibility rules for the tests.
+     The final visibility rules are specified by final_open_tests
+     problem configuration variable.
+     0 - no, 1 - yes.
+   */
+  int online_final_visibility;
+
   time_t stat_last_check_time;
   time_t stat_reported_before;
   time_t stat_report_time;

@@ -4,7 +4,7 @@
 #ifndef __NEW_SERVER_H__
 #define __NEW_SERVER_H__
 
-/* Copyright (C) 2006-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -376,6 +376,11 @@ enum
   NEW_SRV_ACTION_UNMARK_DISPLAYED_2,
   NEW_SRV_ACTION_SET_STAND_FILTER,
   NEW_SRV_ACTION_RESET_STAND_FILTER,
+  NEW_SRV_ACTION_ADMIN_CONTEST_SETTINGS,
+  NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_SOURCE,
+  NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_REPORT,
+  NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_JUDGE_SCORE,
+  NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_FINAL_VISIBILITY,
 
   NEW_SRV_ACTION_LAST,
 };
@@ -893,6 +898,14 @@ void
 ns_reset_stand_filter(
         const serve_state_t state,
         struct http_request_info *phr);
+
+int
+ns_write_admin_contest_settings(
+        FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra);
 
 extern int utf8_mode;
 extern time_t server_start_time;
