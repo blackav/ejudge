@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2011/03/14 23:56:48
+// Generated 2011/03/17 09:58:28
 
 #include "prepare_meta.h"
 #include "prepare.h"
@@ -459,6 +459,9 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_open_tests] = { CNTSPROB_open_tests, 'S', XSIZE(struct section_problem_data, open_tests), "open_tests", XOFFSET(struct section_problem_data, open_tests) },
   [CNTSPROB_open_tests_count] = { CNTSPROB_open_tests_count, 'i', XSIZE(struct section_problem_data, open_tests_count), NULL, XOFFSET(struct section_problem_data, open_tests_count) },
   [CNTSPROB_open_tests_val] = { CNTSPROB_open_tests_val, '?', XSIZE(struct section_problem_data, open_tests_val), NULL, XOFFSET(struct section_problem_data, open_tests_val) },
+  [CNTSPROB_final_open_tests] = { CNTSPROB_final_open_tests, 'S', XSIZE(struct section_problem_data, final_open_tests), "final_open_tests", XOFFSET(struct section_problem_data, final_open_tests) },
+  [CNTSPROB_final_open_tests_count] = { CNTSPROB_final_open_tests_count, 'i', XSIZE(struct section_problem_data, final_open_tests_count), NULL, XOFFSET(struct section_problem_data, final_open_tests_count) },
+  [CNTSPROB_final_open_tests_val] = { CNTSPROB_final_open_tests_val, '?', XSIZE(struct section_problem_data, final_open_tests_val), NULL, XOFFSET(struct section_problem_data, final_open_tests_val) },
   [CNTSPROB_max_vm_size] = { CNTSPROB_max_vm_size, 'Z', XSIZE(struct section_problem_data, max_vm_size), "max_vm_size", XOFFSET(struct section_problem_data, max_vm_size) },
   [CNTSPROB_max_data_size] = { CNTSPROB_max_data_size, 'Z', XSIZE(struct section_problem_data, max_data_size), "max_data_size", XOFFSET(struct section_problem_data, max_data_size) },
   [CNTSPROB_max_stack_size] = { CNTSPROB_max_stack_size, 'Z', XSIZE(struct section_problem_data, max_stack_size), "max_stack_size", XOFFSET(struct section_problem_data, max_stack_size) },
