@@ -4791,6 +4791,8 @@ ns_write_olympiads_user_runs(
   unsigned char ab[1024];
   unsigned char *report_comment = 0, *src_txt = 0;
   int run_count = 0;
+  int enable_src_view = 0;
+  int enable_rep_view = 0;
 
   if (table_class && *table_class) {
     cl = alloca(strlen(table_class) + 16);
@@ -4842,9 +4844,11 @@ ns_write_olympiads_user_runs(
   if (!accepting_mode)
     fprintf(fout, "<th%s>%s</th>", cl, _("Score"));
 
-  if (global->team_enable_src_view)
+  enable_src_view = (cs->online_view_source > 0 || (!cs->online_view_source && global->team_enable_src_view > 0));
+  enable_rep_view = (cs->online_view_report > 0 || (!cs->online_view_report && global->team_enable_rep_view > 0));
+
+  if (enable_src_view)
     fprintf(fout, "<th%s>%s</th>", cl, _("View submitted answer"));
-  /*if (global->team_enable_rep_view || global->team_enable_ce_view)*/
   fprintf(fout, "<th%s>%s</th>", cl, _("View check details"));
   if (global->enable_printing && !cs->printing_suspended)
     fprintf(fout, "<th%s>%s</th>", cl, _("Print sources"));
@@ -5077,7 +5081,7 @@ ns_write_olympiads_user_runs(
     if (!accepting_mode)
       fprintf(fout, "<td%s>%s</td>", cl, score_buf);
 
-    if (global->team_enable_src_view) {
+    if (enable_src_view) {
       if (cnts->exam_mode && (src_txt = get_source(cs, i, prob, variant))) {
         fprintf(fout, "<td%s>%s</td>", cl, src_txt);
         xfree(src_txt); src_txt = 0;
@@ -5090,16 +5094,16 @@ ns_write_olympiads_user_runs(
     if (report_comment && *report_comment) {
       fprintf(fout, "<td%s>%s</td>", cl, report_comment);
     } else if ((re.status == RUN_COMPILE_ERR || re.status == RUN_STYLE_ERR)
-          && (global->team_enable_rep_view || global->team_enable_ce_view)
+          && (enable_rep_view || global->team_enable_ce_view)
           && report_allowed) {
       fprintf(fout, "<td%s>%s%s</a></td>", cl,
               ns_aref(ab, sizeof(ab), phr, NEW_SRV_ACTION_VIEW_REPORT,
                       "run_id=%d", i), _("View"));
-    } else if (global->team_enable_rep_view && report_allowed) {
+    } else if (enable_rep_view && report_allowed) {
       fprintf(fout, "<td%s>%s%s</a></td>", cl,
               ns_aref(ab, sizeof(ab), phr, NEW_SRV_ACTION_VIEW_REPORT,
                       "run_id=%d", i), _("View"));
-    } else if (global->team_enable_rep_view || global->team_enable_ce_view) {
+    } else if (enable_rep_view || global->team_enable_ce_view) {
       fprintf(fout, "<td%s>&nbsp;</td>", cl);
     }
 
@@ -5135,6 +5139,7 @@ ns_get_user_problems_summary(
   unsigned char *user_flag = 0;
   unsigned char *marked_flag = 0;
   int status, score;
+  int separate_user_score = 0;
 
   if (global->is_virtual) {
     start_time = run_get_virtual_start_time(cs->runlog_state, user_id);
@@ -5143,6 +5148,7 @@ ns_get_user_problems_summary(
   }
   total_runs = run_get_total(cs->runlog_state);
   total_teams = teamdb_get_max_team_id(cs->teamdb_state) + 1;
+  separate_user_score = global->separate_user_score > 0 && cs->online_view_judge_score <= 0;
 
   memset(best_run, -1, sizeof(best_run[0]) * (cs->max_prob + 1));
   XCALLOC(user_flag, (cs->max_prob + 1) * total_teams);
@@ -5151,7 +5157,7 @@ ns_get_user_problems_summary(
   for (run_id = 0; run_id < total_runs; run_id++) {
     if (run_get_entry(cs->runlog_state, run_id, &re) < 0) continue;
 
-    if (global->separate_user_score > 0 && re.is_saved) {
+    if (separate_user_score > 0 && re.is_saved) {
       status = re.saved_status;
       score = re.saved_score;
     } else {
@@ -5283,7 +5289,7 @@ ns_get_user_problems_summary(
       case RUN_OK:
         solved_flag[re.prob_id] = 1;
         best_run[re.prob_id] = run_id;
-        cur_score = calc_kirov_score(0, 0, global->separate_user_score, 1 /* user_mode */, &re, cur_prob, 0, 0, 0, 0, 0);
+        cur_score = calc_kirov_score(0, 0, separate_user_score, 1 /* user_mode */, &re, cur_prob, 0, 0, 0, 0, 0);
         //if (cur_score > best_score[re.prob_id])
         best_score[re.prob_id] = cur_score;
         break;
@@ -5303,7 +5309,7 @@ ns_get_user_problems_summary(
         solved_flag[re.prob_id] = 0;
         best_run[re.prob_id] = run_id;
         attempts[re.prob_id]++;
-        cur_score = calc_kirov_score(0, 0, global->separate_user_score,
+        cur_score = calc_kirov_score(0, 0, separate_user_score,
                                      1 /* user_mode */,
                                      &re, cur_prob, 0, 0, 0, 0, 0);
         //if (cur_score > best_score[re.prob_id])
@@ -5335,7 +5341,7 @@ ns_get_user_problems_summary(
 
         switch (status) {
         case RUN_OK:
-          cur_score = calc_kirov_score(0, 0, global->separate_user_score,
+          cur_score = calc_kirov_score(0, 0, separate_user_score,
                                        1 /* user_mode */, &re, cur_prob,
                                        attempts[re.prob_id],
                                        disqualified[re.prob_id],
@@ -5369,7 +5375,7 @@ ns_get_user_problems_summary(
           break;
 
         case RUN_PARTIAL:
-          cur_score = calc_kirov_score(0, 0, global->separate_user_score,
+          cur_score = calc_kirov_score(0, 0, separate_user_score,
                                        1 /* user_mode */, &re, cur_prob,
                                        attempts[re.prob_id],
                                        disqualified[re.prob_id],
@@ -5408,7 +5414,7 @@ ns_get_user_problems_summary(
         switch (status) {
         case RUN_OK:
           solved_flag[re.prob_id] = 1;
-          cur_score = calc_kirov_score(0, 0, global->separate_user_score,
+          cur_score = calc_kirov_score(0, 0, separate_user_score,
                                        1 /* user_mode */, &re, cur_prob,
                                        attempts[re.prob_id],
                                        disqualified[re.prob_id],
@@ -5445,7 +5451,7 @@ ns_get_user_problems_summary(
 
         case RUN_PARTIAL:
           solved_flag[re.prob_id] = 0;
-          cur_score = calc_kirov_score(0, 0, global->separate_user_score,
+          cur_score = calc_kirov_score(0, 0, separate_user_score,
                                        1 /* user_mode */, &re, cur_prob,
                                        attempts[re.prob_id],
                                        disqualified[re.prob_id],
@@ -5612,6 +5618,7 @@ ns_write_user_problems_summary(
   int act_status;
   unsigned char *cl = "";
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  int separate_user_score = 0;
 
   if (global->is_virtual) {
     start_time = run_get_virtual_start_time(cs->runlog_state, user_id);
@@ -5620,6 +5627,7 @@ ns_write_user_problems_summary(
   }
   total_runs = run_get_total(cs->runlog_state);
   total_teams = teamdb_get_max_team_id(cs->teamdb_state) + 1;
+  separate_user_score = global->separate_user_score > 0 && cs->online_view_judge_score <= 0;
 
   if (table_class && *table_class) {
     cl = alloca(strlen(table_class) + 16);
@@ -5705,7 +5713,7 @@ ns_write_user_problems_summary(
 
     int status, test, score;
     run_get_entry(cs->runlog_state, best_run[prob_id], &re);
-    if (global->separate_user_score > 0 && re.is_saved) {
+    if (separate_user_score > 0 && re.is_saved) {
       status = re.saved_status;
       act_status = re.saved_status;
       test = re.saved_test;
@@ -6331,6 +6339,164 @@ ns_write_testing_queue(
   vec.a = vec.u = 0;
 
   html_armor_free(&ab);
+  return 0;
+}
+
+int
+ns_write_admin_contest_settings(
+        FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  const serve_state_t cs = extra->serve_state;
+  const struct section_global_data *global = cs->global;
+  unsigned char cl[64] = { 0 };
+  unsigned char hbuf[1024];
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  const unsigned char *s = "";
+  unsigned char bb[1024];
+
+  snprintf(cl, sizeof(cl), " class=\"%s\"", "b0");
+  fprintf(fout, "<table%s><tr>", cl);
+  fprintf(fout, "<td%s>%s%s</a></td>",
+          cl, ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_MAIN_PAGE, 0),
+          _("Main page"));
+  fprintf(fout, "<td%s>%s%s</a></td>", cl,
+          ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_ADMIN_CONTEST_SETTINGS, 0),
+          _("Refresh"));
+  fprintf(fout, "</tr></table>\n");  
+  fprintf(fout, "<hr/>\n");
+
+  snprintf(cl, sizeof(cl), " class=\"%s\"", "b0");
+  fprintf(fout, "<table%s>", cl);
+
+  fprintf(fout, "<tr><td%s>%s</td>", cl, _("Participants can view their source code"));
+  fprintf(fout, "<td%s>", cl);
+  if (!cs->online_view_source) {
+    fprintf(fout, "Default (");
+    if (global->team_enable_src_view > 0) {
+      fprintf(fout, "Yes");
+    } else {
+      fprintf(fout, "No");
+    }
+    fprintf(fout, ")");
+  } else if (cs->online_view_source < 0) {
+    fprintf(fout, "No");
+  } else {
+    fprintf(fout, "Yes");
+  }
+  fprintf(fout, "</td>");
+  fprintf(fout, "<td%s>", cl);
+  html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
+  fprintf(fout, "<select name=\"param\">");
+  s = "";
+  if (!cs->online_view_source) s = " selected=\"selected\"";
+  fprintf(fout, "<option value=\"%d\"%s>%s</option>", 0, s, _("Default"));
+  s = "";
+  if (cs->online_view_source < 0) s = " selected=\"selected\"";
+  fprintf(fout, "<option value=\"%d\"%s>%s</option>", -1, s, _("No"));
+  s = "";
+  if (cs->online_view_source > 0) s = " selected=\"selected\"";
+  fprintf(fout, "<option value=\"%d\"%s>%s</option>", 1, s, _("Yes"));
+  fprintf(fout, "</select>%s",
+          BUTTON(NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_SOURCE));
+  fprintf(fout, "</form>");
+  fprintf(fout, "</td>");
+  fprintf(fout, "</tr>\n");
+
+  fprintf(fout, "<tr><td%s>%s</td>", cl, _("Participants can view testing reports"));
+  fprintf(fout, "<td%s>", cl);
+  if (!cs->online_view_report) {
+    fprintf(fout, "Default");
+  } else if (cs->online_view_report < 0) {
+    fprintf(fout, "No");
+  } else {
+    fprintf(fout, "Yes");
+  }
+  fprintf(fout, "</td>");
+  fprintf(fout, "<td%s>", cl);
+  html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
+  fprintf(fout, "<select name=\"param\">");
+  s = "";
+  if (!cs->online_view_report) s = " selected=\"selected\"";
+  fprintf(fout, "<option value=\"%d\"%s>%s</option>", 0, s, _("Default"));
+  s = "";
+  if (cs->online_view_report < 0) s = " selected=\"selected\"";
+  fprintf(fout, "<option value=\"%d\"%s>%s</option>", -1, s, _("No"));
+  s = "";
+  if (cs->online_view_report > 0) s = " selected=\"selected\"";
+  fprintf(fout, "<option value=\"%d\"%s>%s</option>", 1, s, _("Yes"));
+  fprintf(fout, "</select>%s",
+          BUTTON(NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_REPORT));
+  fprintf(fout, "</form>");
+  fprintf(fout, "</td>");
+  fprintf(fout, "</tr>\n");
+
+  if (global->separate_user_score > 0) {
+    fprintf(fout, "<tr><td%s>%s</td>", cl, _("Participants view judge score"));
+    fprintf(fout, "<td%s>", cl);
+    if (cs->online_view_judge_score <= 0) {
+      fprintf(fout, "No");
+    } else {
+      fprintf(fout, "Yes");
+    }
+    fprintf(fout, "</td>");
+    fprintf(fout, "<td%s>", cl);
+    html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
+    fprintf(fout, "<select name=\"param\">");
+    s = "";
+    if (cs->online_view_judge_score <= 0) s = " selected=\"selected\"";
+    fprintf(fout, "<option value=\"%d\"%s>%s</option>", 0, s, _("No"));
+    s = "";
+    if (cs->online_view_judge_score > 0) s = " selected=\"selected\"";
+    fprintf(fout, "<option value=\"%d\"%s>%s</option>", 1, s, _("Yes"));
+    fprintf(fout, "</select>%s",
+            BUTTON(NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_REPORT));
+    fprintf(fout, "</form>");
+    fprintf(fout, "</td>");
+    fprintf(fout, "</tr>\n");
+  }
+
+  fprintf(fout, "<tr><td%s>%s</td>", cl, _("Final test visibility rules"));
+  fprintf(fout, "<td%s>", cl);
+  if (cs->online_final_visibility <= 0) {
+    fprintf(fout, "No");
+  } else {
+    fprintf(fout, "Yes");
+  }
+  fprintf(fout, "</td>");
+  fprintf(fout, "<td%s>", cl);
+  html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
+  fprintf(fout, "<select name=\"param\">");
+  s = "";
+  if (cs->online_final_visibility <= 0) s = " selected=\"selected\"";
+  fprintf(fout, "<option value=\"%d\"%s>%s</option>", 0, s, _("No"));
+  s = "";
+  if (cs->online_final_visibility > 0) s = " selected=\"selected\"";
+  fprintf(fout, "<option value=\"%d\"%s>%s</option>", 1, s, _("Yes"));
+  fprintf(fout, "</select>%s",
+          BUTTON(NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_FINAL_VISIBILITY));
+  fprintf(fout, "</form>");
+  fprintf(fout, "</td>");
+  fprintf(fout, "</tr>\n");
+
+  fprintf(fout, "</table>\n");
+
+  fprintf(fout, "<hr/>\n");
+  snprintf(cl, sizeof(cl), " class=\"%s\"", "b0");
+  fprintf(fout, "<table%s><tr>", cl);
+  fprintf(fout, "<td%s>%s%s</a></td>",
+          cl, ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_MAIN_PAGE, 0),
+          _("Main page"));
+  fprintf(fout, "<td%s>%s%s</a></td>", cl,
+          ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_ADMIN_CONTEST_SETTINGS, 0),
+          _("Refresh"));
+  fprintf(fout, "</tr></table>\n");  
+
+  html_armor_free(&ab);
+
   return 0;
 }
 

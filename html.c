@@ -233,12 +233,14 @@ write_html_run_status(
   int need_extra_col = 0;
   unsigned char cl[128] = { 0 };
   int status, score, test;
+  int separate_user_score = 0;
 
   if (td_class && *td_class) {
     snprintf(cl, sizeof(cl), " class=\"%s\"", td_class);
   }
 
-  if (global->separate_user_score > 0 && pe->is_saved && user_mode) {
+  separate_user_score = global->separate_user_score > 0 && state->online_view_judge_score <= 0;
+  if (separate_user_score > 0 && pe->is_saved && user_mode) {
     status = pe->saved_status;
     score = pe->saved_score;
     test = pe->saved_test;
@@ -328,7 +330,7 @@ write_html_run_status(
     fprintf(f, "<td%s>%s</td>", cl, _("N/A"));
   } else {
     calc_kirov_score(score_str, sizeof(score_str),
-                     global->separate_user_score, user_mode,
+                     separate_user_score, user_mode,
                      pe, pr, attempts,
                      disq_attempts, prev_successes, 0, 0);
     fprintf(f, "<td%s>%s</td>", cl, score_str);
@@ -351,8 +353,10 @@ write_text_run_status(
   struct section_problem_data *pr = 0;
   int need_extra_col = 0;
   int status, score, test;
+  int separate_user_score = 0;
 
-  if (global->separate_user_score > 0 && user_mode && pe->is_saved) {
+  separate_user_score = global->separate_user_score > 0 && state->online_view_judge_score <= 0;
+  if (separate_user_score > 0 && user_mode && pe->is_saved) {
     status = pe->saved_status;
     score = pe->saved_score;
     test = pe->saved_test;
@@ -425,7 +429,7 @@ write_text_run_status(
     fprintf(f, ";");
   } else {
     calc_kirov_score(score_str, sizeof(score_str),
-                     global->separate_user_score, user_mode,
+                     separate_user_score, user_mode,
                      pe, pr, attempts,
                      disq_attempts, prev_successes, 0, 1);
     fprintf(f, "%s;", score_str);
@@ -463,6 +467,9 @@ new_write_user_runs(
   struct section_language_data *lang = 0;
   unsigned char *cl = "";
   int status, score;
+  int enable_src_view = 0;
+  int enable_rep_view = 0;
+  int separate_user_score = 0;
 
   if (table_class && *table_class) {
     cl = alloca(strlen(table_class) + 16);
@@ -499,9 +506,13 @@ new_write_user_runs(
     fprintf(f, "<th%s>%s</th>", cl, _("Failed test"));
   }
 
-  if (global->team_enable_src_view)
+  enable_src_view = (state->online_view_source > 0 || (!state->online_view_source && global->team_enable_src_view > 0));
+  enable_rep_view = (state->online_view_report > 0 || (!state->online_view_report && global->team_enable_rep_view > 0));
+  separate_user_score = global->separate_user_score > 0 && state->online_view_judge_score <= 0;
+
+  if (enable_src_view)
     fprintf(f, "<th%s>%s</th>", cl, _("View source"));
-  if (global->team_enable_rep_view || global->team_enable_ce_view)
+  if (enable_rep_view || global->team_enable_ce_view)
     fprintf(f, "<th%s>%s</th>", cl, _("View report"));
   if (global->enable_printing && !state->printing_suspended)
     fprintf(f, "<th%s>%s</th>", cl, _("Print sources"));
@@ -523,7 +534,7 @@ new_write_user_runs(
     if (re.lang_id > 0 && re.lang_id <= state->max_lang)
       lang = state->langs[re.lang_id];
 
-    if (global->separate_user_score > 0 && re.is_saved) {
+    if (separate_user_score > 0 && re.is_saved) {
       status = re.saved_status;
       score = re.saved_score;
     } else {
@@ -594,7 +605,7 @@ new_write_user_runs(
                           0, attempts, disq_attempts,
                           prev_successes, table_class, 0);
 
-    if (global->team_enable_src_view) {
+    if (enable_src_view) {
       fprintf(f, "<td%s>", cl);
       if (action_view_source > 0) {
         fprintf(f, "%s", html_hyperref(href, sizeof(href), sid,
@@ -616,7 +627,7 @@ new_write_user_runs(
       fprintf(f, "</td>");
     }
       /* FIXME: RUN_PRESENTATION_ERR and != standard problem type */
-    if (global->team_enable_rep_view) {
+    if (enable_rep_view) {
       fprintf(f, "<td%s>", cl);
       if (status == RUN_CHECK_FAILED || status == RUN_IGNORED
           || status == RUN_PENDING || status > RUN_MAX_STATUS
@@ -1278,6 +1289,7 @@ do_write_kirov_standings(
   size_t encode_len = 0;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   struct filter_env env;
+  int separate_user_score = 0;
 
   memset(&env, 0, sizeof(env));
 
@@ -1285,6 +1297,7 @@ do_write_kirov_standings(
   else head_style = "h2";
 
   setup_standings_style(&ss, global, force_fancy_style);
+  separate_user_score = global->separate_user_score > 0 && state->online_view_judge_score <= 0;
 
   attr_num = sarray_len(global->stand_row_attr);
   i = 0;
@@ -1507,7 +1520,7 @@ do_write_kirov_standings(
         continue;
     }
 
-    if (global->separate_user_score > 0 && user_mode && pe->is_saved) {
+    if (separate_user_score > 0 && user_mode && pe->is_saved) {
       run_status = pe->saved_status;
       run_score = pe->saved_score;
       if (run_status == RUN_OK && !prob->variable_full_score) {
@@ -1640,7 +1653,7 @@ do_write_kirov_standings(
       if (prob->score_latest_or_unmarked > 0) {
         if (run_status == RUN_OK) {
           score = calc_kirov_score(0, 0,
-                                   global->separate_user_score, user_mode,
+                                   separate_user_score, user_mode,
                                    pe, prob, att_num[up_ind],
                                    disq_num[up_ind],
                                    full_sol[up_ind]?RUN_TOO_MANY:succ_att[pind],
@@ -1666,7 +1679,7 @@ do_write_kirov_standings(
           last_success_run = k;
         } else if (run_status == RUN_PARTIAL || (run_status == RUN_WRONG_ANSWER_ERR && prob->type != 0)) {
           score = calc_kirov_score(0, 0,
-                                   global->separate_user_score, user_mode,
+                                   separate_user_score, user_mode,
                                    pe, prob, att_num[up_ind],
                                    disq_num[up_ind], RUN_TOO_MANY, 0, 0);
           if (pe->is_marked) {
@@ -1713,7 +1726,7 @@ do_write_kirov_standings(
             marked_flag[up_ind] = pe->is_marked;
             if (!full_sol[up_ind]) sol_att[up_ind]++;
             score = calc_kirov_score(0, 0,
-                                     global->separate_user_score, user_mode,
+                                     separate_user_score, user_mode,
                                      pe, prob, att_num[up_ind],
                                      disq_num[up_ind],
                                      full_sol[up_ind]?RUN_TOO_MANY:succ_att[pind],
@@ -1739,7 +1752,7 @@ do_write_kirov_standings(
             marked_flag[up_ind] = pe->is_marked;
             if (!full_sol[up_ind]) sol_att[up_ind]++;
             score = calc_kirov_score(0, 0,
-                                     global->separate_user_score, user_mode,
+                                     separate_user_score, user_mode,
                                      pe, prob, att_num[up_ind],
                                      disq_num[up_ind], RUN_TOO_MANY, 0, 0);
             if (prob->score_latest > 0 || score > prob_score[up_ind]) {
@@ -1755,7 +1768,7 @@ do_write_kirov_standings(
         } else if (run_status == RUN_WRONG_ANSWER_ERR && prob->type != 0) {
           if (!full_sol[up_ind]) sol_att[up_ind]++;
           score = calc_kirov_score(0, 0,
-                                   global->separate_user_score, user_mode,
+                                   separate_user_score, user_mode,
                                    pe, prob, att_num[up_ind],
                                    disq_num[up_ind], RUN_TOO_MANY, 0, 0);
           if (prob->score_latest > 0 || score > prob_score[up_ind]) {
@@ -4341,11 +4354,13 @@ do_write_public_log(
 
   const struct run_entry *runs, *pe;
   const struct section_problem_data *cur_prob;
+  int separate_user_score = 0;
 
   start_time = run_get_start_time(state->runlog_state);
   stop_time = run_get_stop_time(state->runlog_state);
   total = run_get_total(state->runlog_state);
   runs = run_get_entries_ptr(state->runlog_state);
+  separate_user_score = global->separate_user_score > 0 && state->online_view_judge_score <= 0;
 
   switch (global->score_system) {
   case SCORE_ACM:
@@ -4422,7 +4437,7 @@ do_write_public_log(
     pe = &runs[i];
     if (pe->is_hidden) continue;
 
-    if (global->separate_user_score > 0 && user_mode && pe->is_saved) {
+    if (separate_user_score > 0 && user_mode && pe->is_saved) {
       status = pe->saved_status;
       score = pe->saved_score;
     } else {
@@ -4677,7 +4692,7 @@ write_xml_team_testing_report(
   max_score = r->max_score;
   run_tests = r->run_tests;
   tests_passed = r->tests_passed;
-  if (global->separate_user_score > 0) {
+  if (global->separate_user_score > 0 && state->online_view_judge_score <= 0) {
     if (r->user_status >= 0) status = r->user_status;
     if (r->user_score >= 0) score = r->user_score;
     if (r->user_max_score >= 0) max_score = r->user_max_score;
@@ -4755,7 +4770,7 @@ write_xml_team_testing_report(
   for (i = 0; i < r->run_tests; ++i) {
     if (!(t = r->tests[i])) continue;
     // TV_NORMAL, TV_FULL, TV_FULLIFMARKED, TV_BRIEF, TV_EXISTS, TV_HIDDEN
-    visibility = cntsprob_get_test_visibility(prob, i + 1, 0);
+    visibility = cntsprob_get_test_visibility(prob, i + 1, state->online_final_visibility);
     if (visibility == TV_FULLIFMARKED) {
       visibility = TV_HIDDEN;
       if (is_marked) visibility = TV_FULL;
@@ -4794,7 +4809,7 @@ write_xml_team_testing_report(
   for (i = 0; i < r->run_tests; i++) {
     if (!(t = r->tests[i])) continue;
     // TV_NORMAL, TV_FULL, TV_FULLIFMARKED, TV_BRIEF, TV_EXISTS, TV_HIDDEN
-    visibility = cntsprob_get_test_visibility(prob, i + 1, 0);
+    visibility = cntsprob_get_test_visibility(prob, i + 1, state->online_final_visibility);
     if (visibility == TV_FULLIFMARKED) {
       visibility = TV_HIDDEN;
       if (is_marked) visibility = TV_FULL;
@@ -4880,7 +4895,7 @@ write_xml_team_testing_report(
     fprintf(f, "<pre>");
     for (i = 0; i < r->run_tests; i++) {
       if (!(t = r->tests[i])) continue;
-      visibility = cntsprob_get_test_visibility(prob, i + 1, 0);
+      visibility = cntsprob_get_test_visibility(prob, i + 1, state->online_final_visibility);
       if (visibility == TV_FULLIFMARKED) {
         visibility = TV_HIDDEN;
         if (is_marked) visibility = TV_FULL;
