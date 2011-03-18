@@ -1,6 +1,6 @@
 #!/bin/sh
 # $Id$
-# Copyright (c) 2005-2008 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2005-2011 Alexander Chernov <cher@ejudge.ru>
 
 LANG_CONFIG_DIR="@lang_config_dir@"
 
@@ -40,7 +40,7 @@ then
 
   [ "${verbose}" = 1 ] && echo -n "checking whether Perl is available..." >&2
   "${perl}" --version >/dev/null 2>&1 || failure
-  version=`"${perl}" --version 2>&1 | grep "This is perl" | gawk -v FS="[ v]" '{ print $5; }'` || failure
+  version=`"${perl}" -e '$z=int($]*1000000); $v1 = int($z / 1000000); $z = int($z % 1000000);$v2 = int($z / 1000);$v3 = int($z % 1000);print $v1 . "." . $v2 . "." . $v3 . "\n";'` || failure
   [ "${version}" != "" ] || failure
   PERLPATH=`which "${perl}"` || failure
   [ "${PERLPATH}" != "" ] || failure
@@ -89,4 +89,4 @@ fi
     
 [ x"$1" = x-f ] && echo -n "Perl "
 
-"${PERLPATH}" --version 2>&1 | grep "This is perl" | gawk -v FS="[ v]" '{ print $5; }'
+"${PERLPATH}" -e '$z=int($]*1000000); $v1 = int($z / 1000000); $z = int($z % 1000000);$v2 = int($z / 1000);$v3 = int($z % 1000);print $v1 . "." . $v2 . "." . $v3 . "\n";'
