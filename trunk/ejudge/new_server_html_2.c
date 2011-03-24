@@ -448,19 +448,22 @@ ns_write_priv_all_runs(
         continue;
       }
 
+      prob = 0;
+      if (pe->prob_id > 0 && pe->prob_id <= cs->max_prob) {
+        prob = cs->probs[pe->prob_id];
+      }
       prev_successes = RUN_TOO_MANY;
       if (global->score_system == SCORE_KIROV && pe->status == RUN_OK
-          && pe->prob_id > 0 && pe->prob_id <= cs->max_prob && !pe->is_hidden
-          && cs->probs[pe->prob_id]
-          && cs->probs[pe->prob_id]->score_bonus_total > 0) {
+          && prob && prob->score_bonus_total > 0) {
         if ((prev_successes = run_get_prev_successes(cs->runlog_state, rid))<0)
           prev_successes = RUN_TOO_MANY;
       }
 
       attempts = 0; disq_attempts = 0;
       if (global->score_system == SCORE_KIROV && !pe->is_hidden) {
-        run_get_attempts(cs->runlog_state, rid, &attempts, &disq_attempts,
-                         cs->probs[pe->prob_id]->ignore_compile_errors);
+        int ice = 0;
+        if (prob) ice = prob->ignore_compile_errors;
+        run_get_attempts(cs->runlog_state, rid, &attempts, &disq_attempts, ice);
       }
       run_time = pe->time;
       imported_str = "";
