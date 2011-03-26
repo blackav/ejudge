@@ -275,6 +275,27 @@ COMMON_CFILES=\
  xml_utils/xml_err_a.c\
  ${REUSE_CFILES}
 
+PLATFORM_CFILES =\
+ pathutl.c\
+ $(ARCH)/fileutl.c\
+ $(ARCH)/cr_serialize.c\
+ $(ARCH)/interrupt.c\
+ $(ARCH)/curtime.c\
+ $(ARCH)/timestamp.c\
+ $(ARCH)/ej_process.c\
+ $(ARCH)/cpu.c\
+ $(ARCH)/file_perms.c\
+ $(ARCH)/full_archive.c\
+ $(ARCH)/startstop.c\
+ $(ARCH)/sock_op_enable_creds.c\
+ $(ARCH)/sock_op_get_fds.c\
+ $(ARCH)/sock_op_put_fds.c\
+ $(ARCH)/sock_op_get_creds.c\
+ $(ARCH)/sock_op_put_creds.c\
+ $(ARCH)/open_memstream.c\
+ $(ARCH)/fmemopen.c\
+ $(ARCH)/reuse_logger.c
+
 CFILES=\
  clean-users.c\
  collect-emails.c\
@@ -344,6 +365,8 @@ CFILES=\
  win32/sock_op_put_creds.c\
  unix/startstop.c\
  win32/startstop.c\
+ unix/reuse_logger.c\
+ win32/reuse_logger.c\
  ${COMMON_CFILES}\
  ${SUPER_CLNT_CFILES}\
  ${USERLIST_CLNT_CFILES}\
