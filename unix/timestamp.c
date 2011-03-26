@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2005-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,7 +17,8 @@
 
 #include "timestamp.h"
 
-#include <reuse/xalloc.h>
+#include "reuse_xalloc.h"
+
 #include <reuse/logger.h>
 
 #include <time.h>
