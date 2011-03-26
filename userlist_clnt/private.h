@@ -4,7 +4,7 @@
 #ifndef __USERLIST_CLNT_PRIVATE_H__
 #define __USERLIST_CLNT_PRIVATE_H__
 
-/* Copyright (C) 2002,2006,2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -28,8 +28,9 @@
 
 /* for python bindings we don't want reuse stuff... */
 #if !defined PYTHON
+#include "reuse_xalloc.h"
+
 #include <reuse/logger.h>
-#include <reuse/xalloc.h>
 #include <reuse/osdeps.h>
 #endif
 
