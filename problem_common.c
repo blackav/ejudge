@@ -18,7 +18,7 @@
 #include "problem_common.h"
 #include "ej_types.h"
 
-#include <reuse/logger.h>
+#include "reuse_logger.h"
 
 #include <string.h>
 

@@ -32,10 +32,10 @@
 #include "testing_report_xml.h"
 
 #include "reuse_xalloc.h"
+#include "reuse_logger.h"
 
 #include <reuse/osdeps.h>
 #include <reuse/exec.h>
-#include <reuse/logger.h>
 
 #include <ctype.h>
 #include <errno.h>

@@ -23,9 +23,9 @@
 #include "xml_utils.h"
 
 #include "reuse_xalloc.h"
+#include "reuse_logger.h"
 
 #include <reuse/MemPage.h>
-#include <reuse/logger.h>
 
 #include <errno.h>
 #include <limits.h>

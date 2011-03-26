@@ -18,8 +18,7 @@
 #include "tex_dom.h"
 
 #include "reuse_xalloc.h"
-
-#include <reuse/logger.h>
+#include "reuse_logger.h"
 
 #include <string.h>
 

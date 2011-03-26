@@ -24,8 +24,7 @@
 #include "misctext.h"
 
 #include "reuse_xalloc.h"
-
-#include <reuse/logger.h>
+#include "reuse_logger.h"
 
 #include <expat.h>
 

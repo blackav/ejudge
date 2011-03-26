@@ -22,8 +22,7 @@
 #include "list_ops.h"
 
 #include "reuse_xalloc.h"
-
-#include <reuse/logger.h>
+#include "reuse_logger.h"
 
 #include <stdio.h>
 #include <stdlib.h>
