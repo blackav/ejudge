@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -30,7 +30,8 @@
 #include "../mysql-common/common_mysql.h"
 #include "compat.h"
 
-#include <reuse/xalloc.h>
+#include "reuse_xalloc.h"
+
 #include <reuse/logger.h>
 #include <reuse/osdeps.h>
 
