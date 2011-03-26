@@ -1,13 +1,13 @@
 // This is an auto-generated file, do not edit
-// Generated 2010/01/19 13:13:47
+// Generated 2011/03/26 13:51:20
 
 #include "contests_meta.h"
 #include "contests.h"
 #include "meta_generic.h"
 
-#include <reuse/logger.h>
-#include <reuse/xalloc.h>
+#include "reuse_xalloc.h"
 
+#include "reuse_logger.h"
 #include <string.h>
 #include <stdlib.h>
 
