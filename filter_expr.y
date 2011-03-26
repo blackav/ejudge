@@ -1,7 +1,7 @@
 /* -*- mode: fundamental -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,7 +18,7 @@
 %{
 #include "filter_tree.h"
 
-#include <reuse/logger.h>
+#include "reuse_logger.h"
 
 #include <stdio.h>
 #include <string.h>

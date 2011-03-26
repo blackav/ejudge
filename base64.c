@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -19,7 +19,7 @@
 
 #include "errlog.h"
 
-#include <reuse/logger.h>
+#include "reuse_logger.h"
 
 #include <string.h>
 

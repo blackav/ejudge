@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -25,7 +25,8 @@
 #include "errlog.h"
 #include "serve_state.h"
 
-#include <reuse/logger.h>
+#include "reuse_logger.h"
+
 #include <reuse/osdeps.h>
 
 #include <sys/types.h>
