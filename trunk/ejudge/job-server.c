@@ -27,9 +27,9 @@
 #include "compat.h"
 
 #include "reuse_xalloc.h"
+#include "reuse_logger.h"
 
 #include <reuse/osdeps.h>
-#include <reuse/logger.h>
 
 #include <string.h>
 #include <unistd.h>

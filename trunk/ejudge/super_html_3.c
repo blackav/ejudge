@@ -41,8 +41,8 @@
 #include "file_perms.h"
 
 #include "reuse_xalloc.h"
+#include "reuse_logger.h"
 
-#include <reuse/logger.h>
 #include <reuse/osdeps.h>
 
 #include <stdio.h>

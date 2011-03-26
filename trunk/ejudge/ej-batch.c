@@ -44,9 +44,9 @@
 #include "xml_utils.h"
 
 #include "reuse_xalloc.h"
+#include "reuse_logger.h"
 
 #include <reuse/osdeps.h>
-#include <reuse/logger.h>
 
 #if CONF_HAS_LIBZIP - 0 == 1
 #include <zip.h>
