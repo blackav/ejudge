@@ -92,6 +92,24 @@ NEW_SERVER_CLNT_CFILES=\
  new_server_clnt/recv_packet.c\
  new_server_clnt/send_packet.c
 
+REUSE_CFILES=\
+ reuse/reuse_xalloc.c\
+ reuse/reuse_xcalloc.c\
+ reuse/reuse_xexpand.c\
+ reuse/reuse_xexpand2.c\
+ reuse/reuse_xexpand3.c\
+ reuse/reuse_xexpand4.c\
+ reuse/reuse_xfree.c\
+ reuse/reuse_xmalloc.c\
+ reuse/reuse_xmemdup.c\
+ reuse/reuse_xrealloc.c\
+ reuse/reuse_xstrarrayfree.c\
+ reuse/reuse_xstrdup.c\
+ reuse/reuse_xstrmerge0.c\
+ reuse/reuse_xstrmerge1.c\
+ reuse/reuse_xstrmerge2.c\
+ reuse/reuse_xstrmerge3.c
+
 COMMON_CFILES=\
  allowed_list.c\
  archive_paths.c\
@@ -254,7 +272,8 @@ COMMON_CFILES=\
  xml_utils/unparse_run_status.c\
  xml_utils/unparse_text.c\
  xml_utils/xml_err.c\
- xml_utils/xml_err_a.c
+ xml_utils/xml_err_a.c\
+ ${REUSE_CFILES}
 
 CFILES=\
  clean-users.c\
@@ -392,6 +411,7 @@ HFILES=\
  problem_xml.h\
  protocol.h\
  random.h\
+ reuse_xalloc.h\
  rldb_plugin.h\
  run.h\
  runlog.h\
