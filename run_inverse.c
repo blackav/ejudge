@@ -31,8 +31,9 @@
 #include "runlog.h"
 #include "testing_report_xml.h"
 
+#include "reuse_xalloc.h"
+
 #include <reuse/osdeps.h>
-#include <reuse/xalloc.h>
 #include <reuse/exec.h>
 #include <reuse/logger.h>
 

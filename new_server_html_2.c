@@ -49,7 +49,8 @@
 #include "run_packet.h"
 #include "prepare_dflt.h"
 
-#include <reuse/xalloc.h>
+#include "reuse_xalloc.h"
+
 #include <reuse/logger.h>
 #include <reuse/osdeps.h>
 

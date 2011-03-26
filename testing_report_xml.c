@@ -26,8 +26,9 @@
 #include "digest_io.h"
 #include "misctext.h"
 
+#include "reuse_xalloc.h"
+
 #include <reuse/logger.h>
-#include <reuse/xalloc.h>
 
 #include <string.h>
 

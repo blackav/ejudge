@@ -40,8 +40,9 @@
 #include "compat.h"
 #include "file_perms.h"
 
+#include "reuse_xalloc.h"
+
 #include <reuse/logger.h>
-#include <reuse/xalloc.h>
 #include <reuse/osdeps.h>
 
 #include <stdio.h>
