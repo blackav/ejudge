@@ -1,7 +1,7 @@
 # -*- Makefile -*-
 # $Id$
 
-# Copyright (C) 2002-2010 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2002-2011 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -411,6 +411,7 @@ HFILES=\
  problem_xml.h\
  protocol.h\
  random.h\
+ reuse_logger.h\
  reuse_xalloc.h\
  rldb_plugin.h\
  run.h\

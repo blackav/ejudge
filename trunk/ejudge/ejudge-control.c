@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -22,8 +22,9 @@
 #include "ejudge_cfg.h"
 #include "pathutl.h"
 
+#include "reuse_logger.h"
+
 #include <reuse/osdeps.h>
-#include <reuse/logger.h>
 #include <reuse/exec.h>
 
 #include <stdio.h>
