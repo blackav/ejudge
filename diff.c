@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -25,8 +25,9 @@
 #include "serve_state.h"
 #include "misctext.h"
 
+#include "reuse_xalloc.h"
+
 #include <reuse/exec.h>
-#include <reuse/xalloc.h>
 
 #include <unistd.h>
 #include <fcntl.h>

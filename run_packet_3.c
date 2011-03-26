@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2005-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -21,9 +21,10 @@
 #include "prepare.h"
 #include "runlog.h"
 
+#include "reuse_xalloc.h"
+
 #include <reuse/integral.h>
 #include <reuse/logger.h>
-#include <reuse/xalloc.h>
 
 #include <stdlib.h>
 #include <string.h>

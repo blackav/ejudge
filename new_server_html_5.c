@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2007-2009 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -31,7 +31,8 @@
 #include "l10n.h"
 #include "compat.h"
 
-#include <reuse/xalloc.h>
+#include "reuse_xalloc.h"
+
 #include <reuse/logger.h>
 
 #include <stdio.h>

@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -21,8 +21,9 @@
 #include "t3m_dir_listener.h"
 #include "list_ops.h"
 
+#include "reuse_xalloc.h"
+
 #include <reuse/logger.h>
-#include <reuse/xalloc.h>
 
 #include <string.h>
 #include <stdio.h>

@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -43,9 +43,10 @@
 #include "sock_op.h"
 #include "compat.h"
 
+#include "reuse_xalloc.h"
+
 #include <reuse/logger.h>
 #include <reuse/osdeps.h>
-#include <reuse/xalloc.h>
 
 #include <stdio.h>
 #include <time.h>
