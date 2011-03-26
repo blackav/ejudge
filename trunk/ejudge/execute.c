@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,7 +18,8 @@
 #include "config.h"
 #include "version.h"
 
-#include <reuse/xalloc.h>
+#include "reuse_xalloc.h"
+
 #include <reuse/exec.h>
 
 #include <stdio.h>

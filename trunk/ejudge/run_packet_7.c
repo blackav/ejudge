@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -19,7 +19,7 @@
 #include "run_packet.h"
 #include "run_packet_priv.h"
 
-#include <reuse/xalloc.h>
+#include "reuse_xalloc.h"
 
 #include <stdlib.h>
 

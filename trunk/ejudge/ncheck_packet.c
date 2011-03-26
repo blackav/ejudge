@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -22,7 +22,7 @@
 #include "ncheck_packet.h"
 #include "parsecfg.h"
 
-#include <reuse/xalloc.h>
+#include "reuse_xalloc.h"
 
 #define XFSIZE(t, x) (sizeof(((t*) 0)->x))
 

@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -30,8 +30,9 @@
 #define EJUDGE_SKIP_MYSQL 1
 #include "plugins/mysql-common/common_mysql.h"
 
+#include "reuse_xalloc.h"
+
 #include <reuse/osdeps.h>
-#include <reuse/xalloc.h>
 #include <reuse/logger.h>
 
 #include <stdio.h>

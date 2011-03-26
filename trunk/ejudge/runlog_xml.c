@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -33,8 +33,9 @@
 #include "fileutl.h"
 #include "base64.h"
 
+#include "reuse_xalloc.h"
+
 #include <reuse/logger.h>
-#include <reuse/xalloc.h>
 
 #include <errno.h>
 #include <ctype.h>

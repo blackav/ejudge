@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -22,8 +22,9 @@
 #include "runlog.h"
 #include "xml_utils.h"
 
+#include "reuse_xalloc.h"
+
 #include <reuse/MemPage.h>
-#include <reuse/xalloc.h>
 #include <reuse/logger.h>
 
 #include <errno.h>
