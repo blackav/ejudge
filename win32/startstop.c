@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2008-2009 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -22,7 +22,7 @@
 #include "version.h"
 #include "startstop.h"
 
-#include <reuse/logger.h>
+#include "reuse_logger.h"
 
 #if STARTSTOP_DEBUG - 0
 #include <stdio.h>
