@@ -1,13 +1,13 @@
 // This is an auto-generated file, do not edit
-// Generated 2010/07/07 13:00:39
+// Generated 2011/03/26 13:51:20
 
 #include "super-serve_meta.h"
 #include "super-serve.h"
 #include "meta_generic.h"
 
-#include <reuse/logger.h>
-#include <reuse/xalloc.h>
+#include "reuse_xalloc.h"
 
+#include "reuse_logger.h"
 #include <string.h>
 #include <stdlib.h>
 
