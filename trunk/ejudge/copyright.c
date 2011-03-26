@@ -20,7 +20,7 @@
 #include "copyright.h"
 #include "version.h"
 
-#include <reuse/xalloc.h>
+#include "reuse_xalloc.h"
 
 #include <stdio.h>
 

@@ -37,7 +37,8 @@
 #include "sock_op.h"
 #include "compat.h"
 
-#include <reuse/xalloc.h>
+#include "reuse_xalloc.h"
+
 #include <reuse/osdeps.h>
 #include <reuse/logger.h>
 

@@ -26,9 +26,10 @@
 #include "prepare.h"
 #include "runlog.h"
 
+#include "reuse_xalloc.h"
+
 #include <reuse/integral.h>
 #include <reuse/logger.h>
-#include <reuse/xalloc.h>
 
 #include <stdlib.h>
 #include <string.h>

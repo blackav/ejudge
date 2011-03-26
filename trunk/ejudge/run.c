@@ -38,10 +38,11 @@
 #include "misctext.h"
 #include "run.h"
 
+#include "reuse_xalloc.h"
+
 #include <reuse/osdeps.h>
 #include <reuse/logger.h>
 #include <reuse/exec.h>
-#include <reuse/xalloc.h>
 #include <reuse/number_io.h>
 #include <reuse/format_io.h>
 #include <reuse/integral.h>

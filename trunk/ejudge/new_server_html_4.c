@@ -41,7 +41,8 @@
 #include "charsets.h"
 #include "compat.h"
 
-#include <reuse/xalloc.h>
+#include "reuse_xalloc.h"
+
 #include <reuse/logger.h>
 
 #include <stdlib.h>

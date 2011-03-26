@@ -32,7 +32,8 @@
 #include "xml_utils.h"
 #include "random.h"
 
-#include <reuse/xalloc.h>
+#include "reuse_xalloc.h"
+
 #include <reuse/logger.h>
 #include <reuse/osdeps.h>
 
