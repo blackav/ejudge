@@ -35,8 +35,7 @@
 
 #include "reuse_xalloc.h"
 #include "reuse_osdeps.h"
-
-#include <reuse/exec.h>
+#include "reuse_exec.h"
 
 #include <stdio.h>
 #include <stdlib.h>

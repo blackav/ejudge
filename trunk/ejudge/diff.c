@@ -26,8 +26,7 @@
 #include "misctext.h"
 
 #include "reuse_xalloc.h"
-
-#include <reuse/exec.h>
+#include "reuse_exec.h"
 
 #include <unistd.h>
 #include <fcntl.h>
