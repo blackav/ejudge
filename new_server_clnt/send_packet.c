@@ -20,8 +20,7 @@
 #include "errlog.h"
 
 #include "reuse_osdeps.h"
-
-#include <reuse/integral.h>
+#include "reuse_integral.h"
 
 #include <unistd.h>
 #include <sys/uio.h>
