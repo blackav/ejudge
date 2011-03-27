@@ -34,11 +34,6 @@ XGETTEXT=@XGETTEXT@
 MSGMERGE=@MSGMERGE@
 MSGFMT=@MSGFMT@
 
-REUSE_DIR=@ac_cv_reuse_root@
-REUSE_CONF=@ac_cv_reuse_config@
-REUSE_INCL_OPT=@ac_cv_reuse_include_opt@
-REUSE_LIB_OPT=@ac_cv_reuse_lib_opt@
-
 EXPAT_DIR=@ac_cv_expat_root@
 EXPAT_INCL_OPT=@ac_cv_expat_include_opt@
 EXPAT_LIB_OPT=@ac_cv_expat_lib_opt@
@@ -219,7 +214,7 @@ cmp_% : cmp_%.c checker.h checker_internal.h libchecker.so
 endif
 
 style_% : style_%.c
-	${CC} ${CFLAGS} ${LDFLAGS} -L.. $< ${REUSE_LIB_OPT} -o $@ -lcommon -lplatform -lreuse -lz -lm
+	${CC} ${CFLAGS} ${LDFLAGS} -L.. $< -o $@ -lcommon -lplatform -lcommon -lz -lm
 
 pic/%.o : %.c
 	${CC} ${CFLAGS} -fPIC -DPIC -c $< -o $@
