@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  */
 
-#include <reuse/integral.h>
+#include "reuse_integral.h"
 
 /* special types used to store/send data in binary format */
 typedef rint32_t  ej_time_t;     /* time_t as stored in files */
