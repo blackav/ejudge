@@ -94,6 +94,7 @@ int      task_EnableMemoryLimitError(tpTask);
 int      task_EnableSecureExec(tpTask);
 int      task_EnableAllSignals(tpTask);
 int      task_EnableSecurityViolationError(tpTask);
+int      task_EnableProcessGroup(tpTask);
 
 int      task_PrintArgs(tpTask);
 void     task_fPrintArgs(tpTask, FILE *);

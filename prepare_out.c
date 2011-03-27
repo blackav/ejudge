@@ -813,6 +813,7 @@ prepare_unparse_lang(
 {
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   int i, flag = 0;
+  unsigned char size_buf[256];
 
   fprintf(f, "[language]\n");
   fprintf(f, "id = %d\n", lang->id);
@@ -854,6 +855,15 @@ prepare_unparse_lang(
   }
   if (lang->style_checker_cmd[0]) {
     fprintf(f, "style_checker_cmd = \"%s\"\n",CARMOR(lang->style_checker_cmd));
+  }
+
+  if (lang->max_vm_size != -1L && lang->max_vm_size != 0) {
+    fprintf(f, "max_vm_size = %s\n",
+            size_t_to_size(size_buf, sizeof(size_buf), lang->max_vm_size));
+  }
+  if (lang->max_stack_size != -1L && lang->max_stack_size != 0) {
+    fprintf(f, "max_stack_size = %s\n",
+            size_t_to_size(size_buf, sizeof(size_buf), lang->max_stack_size));
   }
 
   if (lang->compiler_env) {

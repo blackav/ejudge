@@ -119,6 +119,7 @@ check_style_only(
   task_AddArg(tsk, work_src_path);
   task_SetPathAsArg0(tsk);
   task_SetWorkingDir(tsk, global->compile_work_dir);
+  task_EnableProcessGroup(tsk);
   task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_WRITE);
   task_SetRedir(tsk, 1, TSR_FILE, work_txt_path, TSK_REWRITE, 0777);
   task_SetRedir(tsk, 2, TSR_FILE, work_log_path, TSK_REWRITE, 0777);
@@ -389,6 +390,7 @@ do_loop(void)
         task_AddArg(tsk, src_path);
         task_SetPathAsArg0(tsk);
         task_SetWorkingDir(tsk, global->compile_work_dir);
+        task_EnableProcessGroup(tsk);
         task_SetRedir(tsk, 1, TSR_FILE, log_path, TSK_REWRITE, 0777);
         task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_WRITE);
         task_SetRedir(tsk, 2, TSR_DUP, 1);
@@ -432,6 +434,17 @@ do_loop(void)
         task_AddArg(tsk, src_name);
         task_AddArg(tsk, exe_name);
         task_SetPathAsArg0(tsk);
+        task_EnableProcessGroup(tsk);
+        if (req->max_vm_size != 0 && req->max_vm_size != -1L) {
+          task_SetVMSize(tsk, req->max_vm_size);
+        } else if (lang->max_vm_size != 0 && lang->max_vm_size != -1L) {
+          task_SetVMSize(tsk, lang->max_vm_size);
+        }
+        if (req->max_stack_size != 0 && req->max_stack_size != -1L) {
+          task_SetStackSize(tsk, req->max_stack_size);
+        } else if (lang->max_stack_size != 0 && lang->max_stack_size != -1L) {
+          task_SetStackSize(tsk, lang->max_stack_size);
+        }
 
         if (req->env_num > 0) {
           for (i = 0; i < req->env_num; i++)
@@ -445,6 +458,7 @@ do_loop(void)
           task_SetMaxRealTime(tsk, lang->compile_real_time_limit);
         }
         task_EnableAllSignals(tsk);
+        
 
         if (cr_serialize_lock(&serve_state) < 0) {
           // FIXME: propose reasonable recovery?

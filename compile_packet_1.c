@@ -84,6 +84,9 @@ compile_request_packet_read(
   pout->ts1_us = cvt_bin_to_host_32(pin->ts1_us);
   FAIL_IF(pout->ts1_us < 0 || pout->ts1_us > USEC_MAX);
 
+  pout->max_vm_size = (size_t) cvt_bin_to_host_64(pin->max_vm_size);
+  pout->max_stack_size = (size_t) cvt_bin_to_host_64(pin->max_stack_size);
+
   /* extract the additional data */
   // set up the additional data pointer
   pin_ptr = (const unsigned char*) in_data + sizeof(*pin);

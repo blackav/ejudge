@@ -73,6 +73,9 @@ static const unsigned char * const form_row_attrs[]=
   " bgcolor=\"#e0e0e0\"",
 };
 
+static int
+num_suffix(const unsigned char *str);
+
 static void
 html_submit_button(FILE *f,
                    int action,
@@ -3359,6 +3362,7 @@ super_html_edit_languages(
   path_t lang_hidden_vars;
   int row = 1;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  unsigned char num_buf[1024];
 
   if (!global) {
     super_html_contest_page_menu(f, session_id, sstate, 3, self_url,
@@ -3544,6 +3548,34 @@ super_html_edit_languages(
                              session_id,
                              form_row_attrs[row ^= 1],
                              self_url, extra_args, lang_hidden_vars);
+
+    //LANGUAGE_PARAM(max_vm_size, "d"),
+    if (lang->max_vm_size == -1L || lang->max_vm_size == 0) {
+      num_buf[0] = 0;
+    } else {
+      num_to_size_str(num_buf, sizeof(num_buf), lang->max_vm_size);
+    }
+    html_start_form(f, 1, self_url, lang_hidden_vars);
+    fprintf(f, "<tr%s><td>%s</td><td>",
+            form_row_attrs[row ^= 1], "Maximum VM size:");
+    html_edit_text_form(f, 0, 0, "param", num_buf);
+    fprintf(f, "</td><td>");
+    html_submit_button(f, SSERV_CMD_LANG_CHANGE_MAX_VM_SIZE, "Change");
+    fprintf(f, "</td></tr></form>\n");
+
+    //LANGUAGE_PARAM(max_stack_size, "d"),
+    if (lang->max_stack_size == -1L || lang->max_stack_size == 0) {
+      num_buf[0] = 0;
+    } else {
+      num_to_size_str(num_buf, sizeof(num_buf), lang->max_stack_size);
+    }
+    html_start_form(f, 1, self_url, lang_hidden_vars);
+    fprintf(f, "<tr%s><td>%s</td><td>",
+            form_row_attrs[row ^= 1], "Maximum stack size:");
+    html_edit_text_form(f, 0, 0, "param", num_buf);
+    fprintf(f, "</td><td>");
+    html_submit_button(f, SSERV_CMD_LANG_CHANGE_MAX_STACK_SIZE, "Change");
+    fprintf(f, "</td></tr></form>\n");
 
     if (lang->binary) {
       //LANGUAGE_PARAM(content_type, "s"),
@@ -3754,6 +3786,8 @@ super_html_lang_activate(
   lang->insecure = cs_lang->insecure;
   strcpy(lang->content_type, cs_lang->content_type);
   lang->compile_dir_index = cs_lang->compile_dir_index;
+  lang->max_vm_size = cs_lang->max_vm_size;
+  lang->max_stack_size = cs_lang->max_stack_size;
 }
 
 void
@@ -3785,8 +3819,9 @@ super_html_lang_cmd(struct sid_state *sstate, int cmd,
                     int param3, int param4)
 {
   struct section_language_data *pl_old, *pl_new;
-  int val, n;
+  int val, n, mult;
   int *p_int;
+  size_t *p_size, zval;
   char **tmp_env = 0;
 
   if (!sstate->cs_langs) {
@@ -3896,6 +3931,27 @@ super_html_lang_cmd(struct sid_state *sstate, int cmd,
     if (!pl_new) return 0;
     p_int = &pl_new->binary;
     goto handle_boolean;
+
+  case SSERV_CMD_LANG_CHANGE_MAX_VM_SIZE:
+    p_size = &pl_new->max_vm_size;
+
+  handle_size_t:
+    if (!param2) return -SSERV_ERR_INVALID_PARAMETER;
+    if (sscanf(param2, "%d%n", &val, &n) == 1 && !param2[n] && val == -1) {
+      *p_size = -1L;
+      return 0;
+    }
+    if (sscanf(param2, "%zu%n", &zval, &n) != 1)
+      return -SSERV_ERR_INVALID_PARAMETER;
+    if (!(mult = num_suffix(param2 + n))) return -SSERV_ERR_INVALID_PARAMETER;
+    // FIXME: check for overflow
+    zval *= mult;
+    *p_size = zval;
+    return 0;
+
+  case SSERV_CMD_LANG_CHANGE_MAX_STACK_SIZE:
+    p_size = &pl_new->max_stack_size;
+    goto handle_size_t;
 
   case SSERV_CMD_LANG_CHANGE_OPTS:
     if (!pl_new) return 0;
