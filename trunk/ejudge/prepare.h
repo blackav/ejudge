@@ -1011,7 +1011,7 @@ struct section_problem_data
   } xml META_ATTRIB((meta_hidden));
 };
 
-/* sizeof(struct section_language_data) == 33664 */
+/* sizeof(struct section_language_data) == 33672 */
 struct section_language_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -1056,6 +1056,11 @@ struct section_language_data
   ejintbool_t disable_auto_testing;
   /** do not test this language at all */
   ejintbool_t disable_testing;
+
+  /** max virtual size limit  */
+  size_t max_vm_size;
+  /** max stack size limit */
+  size_t max_stack_size;
 
   /** index of the compile directory in the list of compile servers */
   int compile_dir_index;

@@ -3,7 +3,7 @@
 #ifndef __COMPILE_PACKET_H__
 #define __COMPILE_PACKET_H__
 
-/* Copyright (C) 2005-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -30,6 +30,8 @@ struct compile_request_packet
   int style_check_only;
   int ts1;
   int ts1_us;
+  size_t max_vm_size;
+  size_t max_stack_size;
   unsigned char *style_checker;
   unsigned char *src_sfx;
   int run_block_len;
