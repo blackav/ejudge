@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -22,7 +22,7 @@
 #include "errlog.h"
 #include "fileutl.h"
 
-#include <reuse/osdeps.h>
+#include "reuse_osdeps.h"
 
 #include <stdio.h>
 #include <string.h>
