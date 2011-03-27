@@ -93,6 +93,8 @@ NEW_SERVER_CLNT_CFILES=\
  new_server_clnt/send_packet.c
 
 REUSE_CFILES=\
+ reuse/reuse_hash.c\
+ reuse/reuse_mempage.c\
  reuse/reuse_xalloc.c\
  reuse/reuse_xcalloc.c\
  reuse/reuse_xexpand.c\
@@ -300,6 +302,7 @@ PLATFORM_CFILES =\
  $(ARCH)/reuse_errormsg.c\
  $(ARCH)/reuse_errorstring.c\
  $(ARCH)/reuse_findinpath.c\
+ $(ARCH)/reuse_exec.c\
  $(ARCH)/reuse_getbasename.c\
  $(ARCH)/reuse_geterrorstring.c\
  $(ARCH)/reuse_getlastname.c\
@@ -405,6 +408,8 @@ CFILES=\
  win32/reuse_errormsg.c\
  unix/reuse_errorstring.c\
  win32/reuse_errorstring.c\
+ unix/reuse_exec.c\
+ win32/reuse_exec.c\
  unix/reuse_findinpath.c\
  win32/reuse_findinpath.c\
  unix/reuse_getbasename.c\
@@ -516,8 +521,12 @@ HFILES=\
  problem_xml.h\
  protocol.h\
  random.h\
+ reuse_exec.h\
+ reuse_hash.h\
+ reuse_hash_priv.h\
  reuse_integral.h\
  reuse_logger.h\
+ reuse_mempage.h\
  reuse_osdeps.h\
  reuse_xalloc.h\
  rldb_plugin.h\

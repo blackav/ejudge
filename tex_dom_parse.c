@@ -19,8 +19,7 @@
 
 #include "reuse_xalloc.h"
 #include "reuse_logger.h"
-
-#include <reuse/hash.h>
+#include "reuse_hash.h"
 
 #include <string.h>
 #include <ctype.h>

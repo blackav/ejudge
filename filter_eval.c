@@ -25,8 +25,7 @@
 #include "archive_paths.h"
 
 #include "reuse_logger.h"
-
-#include <reuse/MemPage.h>
+#include "reuse_mempage.h"
 
 static unsigned char *envdup(struct filter_env *env,
                              unsigned char const *str)
