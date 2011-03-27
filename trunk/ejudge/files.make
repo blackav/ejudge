@@ -294,6 +294,34 @@ PLATFORM_CFILES =\
  $(ARCH)/sock_op_put_creds.c\
  $(ARCH)/open_memstream.c\
  $(ARCH)/fmemopen.c\
+ $(ARCH)/reuse_attachfile.c\
+ $(ARCH)/reuse_checkaccess.c\
+ $(ARCH)/reuse_dirname.c\
+ $(ARCH)/reuse_errormsg.c\
+ $(ARCH)/reuse_errorstring.c\
+ $(ARCH)/reuse_findinpath.c\
+ $(ARCH)/reuse_getbasename.c\
+ $(ARCH)/reuse_geterrorstring.c\
+ $(ARCH)/reuse_getlastname.c\
+ $(ARCH)/reuse_getsignalstring.c\
+ $(ARCH)/reuse_getsuffix.c\
+ $(ARCH)/reuse_getworkingdir.c\
+ $(ARCH)/reuse_isabsolutepath.c\
+ $(ARCH)/reuse_isfile.c\
+ $(ARCH)/reuse_logger.c\
+ $(ARCH)/reuse_makedir.c\
+ $(ARCH)/reuse_makedirpath.c\
+ $(ARCH)/reuse_nodename.c\
+ $(ARCH)/reuse_normalize_path.c\
+ $(ARCH)/reuse_rdirname.c\
+ $(ARCH)/reuse_rgetbasename.c\
+ $(ARCH)/reuse_rgetlastname.c\
+ $(ARCH)/reuse_rgetsuffix.c\
+ $(ARCH)/reuse_rgetworkingdir.c\
+ $(ARCH)/reuse_setlock.c\
+ $(ARCH)/reuse_sleep.c\
+ $(ARCH)/reuse_substsuffix.c\
+ $(ARCH)/reuse_tempnam.c\
  $(ARCH)/reuse_logger.c
 
 CFILES=\
@@ -367,6 +395,60 @@ CFILES=\
  win32/startstop.c\
  unix/reuse_logger.c\
  win32/reuse_logger.c\
+ unix/reuse_attachfile.c\
+ win32/reuse_attachfile.c\
+ unix/reuse_checkaccess.c\
+ win32/reuse_checkaccess.c\
+ unix/reuse_dirname.c\
+ win32/reuse_dirname.c\
+ unix/reuse_errormsg.c\
+ win32/reuse_errormsg.c\
+ unix/reuse_errorstring.c\
+ win32/reuse_errorstring.c\
+ unix/reuse_findinpath.c\
+ win32/reuse_findinpath.c\
+ unix/reuse_getbasename.c\
+ win32/reuse_getbasename.c\
+ unix/reuse_geterrorstring.c\
+ win32/reuse_geterrorstring.c\
+ unix/reuse_getlastname.c\
+ win32/reuse_getlastname.c\
+ unix/reuse_getsignalstring.c\
+ win32/reuse_getsignalstring.c\
+ unix/reuse_getsuffix.c\
+ win32/reuse_getsuffix.c\
+ unix/reuse_getworkingdir.c\
+ win32/reuse_getworkingdir.c\
+ unix/reuse_isabsolutepath.c\
+ win32/reuse_isabsolutepath.c\
+ unix/reuse_isfile.c\
+ win32/reuse_isfile.c\
+ unix/reuse_makedir.c\
+ win32/reuse_makedir.c\
+ unix/reuse_makedirpath.c\
+ win32/reuse_makedirpath.c\
+ unix/reuse_nodename.c\
+ win32/reuse_nodename.c\
+ unix/reuse_normalize_path.c\
+ win32/reuse_normalize_path.c\
+ unix/reuse_rdirname.c\
+ win32/reuse_rdirname.c\
+ unix/reuse_rgetbasename.c\
+ win32/reuse_rgetbasename.c\
+ unix/reuse_rgetlastname.c\
+ win32/reuse_rgetlastname.c\
+ unix/reuse_rgetsuffix.c\
+ win32/reuse_rgetsuffix.c\
+ unix/reuse_rgetworkingdir.c\
+ win32/reuse_rgetworkingdir.c\
+ unix/reuse_setlock.c\
+ win32/reuse_setlock.c\
+ unix/reuse_sleep.c\
+ win32/reuse_sleep.c\
+ unix/reuse_substsuffix.c\
+ win32/reuse_substsuffix.c\
+ unix/reuse_tempnam.c\
+ win32/reuse_tempnam.c\
  ${COMMON_CFILES}\
  ${SUPER_CLNT_CFILES}\
  ${USERLIST_CLNT_CFILES}\
