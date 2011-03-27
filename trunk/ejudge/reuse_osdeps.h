@@ -55,12 +55,6 @@ char *os_tempnam(char const *, char const *);
 enum { OSPK_REG = 0, OSPK_DIR = 1, OSPK_OTHER = 2 };
 int   os_IsFile(char const *path);
 
-char *get_PRJ_HOME(void);
-char *get_PRJ_HOME_name(void);
-char *get_PRJ_CONFIG(void);
-char *get_PRJ_CONFIG_name(void);
-int   os_GuessProjectEnv(char *, char const *);
-
 int os_SetLock(char const *, int, int);
 
 enum { REUSE_X_OK = 1, REUSE_W_OK = 2, REUSE_R_OK = 4, REUSE_F_OK = 8 };
