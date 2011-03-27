@@ -151,6 +151,9 @@ case "${target}" in
   *-*-mingw*)
     ac_cv_ejudge_arch=win32
     ac_cv_exe_suffix=.exe
+    ac_cv_conf_dos_filenaming=1
+    ac_cv_dir_separator='\\'
+    ac_cv_path_separator=';'
     CFLAGS="${CFLAGS} -mno-cygwin"
     LDFLAGS="${LDFLAGS} -mno-cygwin"
     reuse_binmode=" --binmode"
@@ -159,6 +162,9 @@ case "${target}" in
   *)
     ac_cv_ejudge_arch=unix
     ac_cv_exe_suffix=
+    ac_cv_conf_unix_filenaming=1
+    ac_cv_dir_separator='/'
+    ac_cv_path_separator=':'
     reuse_binmode=""
     AC_MSG_RESULT([unix])
     ;;
@@ -713,6 +719,46 @@ CC="${saved_CC}"
 
 dnl reuse checking stuff
 
+dnl check whether long long is supported
+AC_MSG_CHECKING([for long long type])
+AC_RUN_IFELSE(
+[[
+int main(void)
+{
+  long long a = 0;
+  unsigned long long b = 0;
+  signed long long c = 0;
+  return 0;
+}
+]],[
+AC_MSG_RESULT([yes])
+ac_cv_has_long_long=1
+],[
+AC_MSG_RESULT([no])
+ac_cv_has_long_long=""
+])
+
+dnl check whether __int64 is supported
+AC_MSG_CHECKING([for __int64 type])
+AC_RUN_IFELSE(
+[[
+int main(void)
+{
+  __int64 a = 0;
+  unsigned __int64 b = 0;
+  signed __int64 c = 0;
+  return 0;
+}
+]],[
+AC_MSG_RESULT([yes])
+ac_cv_has___int64=1
+],[
+AC_MSG_RESULT([no])
+ac_cv_has___int64=""
+])
+
+dnl !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 ac_cv_has_reuse=1
 if [[ x"${ac_cv_reuse_root}" = x -o x"${ac_cv_reuse_root}" = xyes -o x"${ac_cv_reuse_root}" = xno ]]
 then
@@ -1260,6 +1306,35 @@ fi
 if [[ x"${ac_cv_httpd_htdocs_dir}" != x ]]
 then
   AC_DEFINE_UNQUOTED(EJUDGE_HTTPD_HTDOCS_DIR,"${ac_cv_httpd_htdocs_dir}")
+fi
+
+if [[ x"${ac_cv_conf_dos_filenaming}" != x ]]
+then
+  AC_DEFINE(CONF_DOS_FILENAMING, 1)
+fi
+
+if [[ x"${ac_cv_conf_unix_filenaming}" != x ]]
+then
+  AC_DEFINE(CONF_UNIX_FILENAMING, 1)
+fi
+
+AC_DEFINE_UNQUOTED(CONF_EXE_SUFFIX,"${ac_cv_exe_suffix}")
+AC_DEFINE_UNQUOTED(CONF_DIRSEP,"${ac_cv_dir_separator}")
+AC_DEFINE_UNQUOTED(CONF_PATHSEP,"${ac_cv_path_separator}")
+
+if [[ x"${ac_cv_c_long_double}" != xyes ]]
+then
+  AC_DEFINE(R_LONG_DOUBLE_IS_DOUBLE, 1)
+fi
+
+if [[ x"${ac_cv_has_long_long}" = x1 ]]
+then
+  AC_DEFINE(R_HAS_LONGLONG, 1)
+fi
+
+if [[ x"${ac_cv_has___int64}" = x1 ]]
+then
+  AC_DEFINE(R_HAS___INT64, 1)
 fi
 
 AC_CONFIG_HEADERS([config.h])

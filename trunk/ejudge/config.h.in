@@ -142,5 +142,27 @@
 /* libzip available */
 #undef CONF_HAS_LIBZIP
 
+/* DOS path rules */
+#undef CONF_DOS_FILENAMING
+
+/* UNIX path rules */
+#undef CONF_UNIX_FILENAMING
+
+/* the suffix of executable files */
+#undef CONF_EXE_SUFFIX
+
+/* directory separator */
+#undef CONF_DIRSEP
+
+/* path separator */
+#undef CONF_PATHSEP
+
+/* if double == long double */
+#undef R_LONG_DOUBLE_IS_DOUBLE
+
+#undef R_HAS_LONGLONG
+
+#undef R_HAS___INT64
+
 #endif /* __CONFIG_H__ */
 
