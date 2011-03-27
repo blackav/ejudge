@@ -6119,3 +6119,6 @@ sformat.c 6185 0 1804572
 tex_dom_parse.c 6185 0 1231317
 reuse/reuse_hash.c 6181 0 500396
 reuse/reuse_mempage.c 6181 0 327365
+compile.c 6187 0 2257986
+execute.c 6187 0 762641
+run.c 6187 0 10008800
