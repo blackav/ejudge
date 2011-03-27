@@ -39,8 +39,7 @@
 
 #include "reuse_xalloc.h"
 #include "reuse_logger.h"
-
-#include <reuse/osdeps.h>
+#include "reuse_osdeps.h"
 
 #include <stdio.h>
 #include <sys/types.h>
