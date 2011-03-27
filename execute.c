@@ -55,9 +55,7 @@ static int clear_env_flag = 0;
 static int no_core_dump = 0;
 static int memory_limit = 0;
 static int secure_exec = 0;
-#if defined HAVE_TASK_ISSECURITYVIOLATION
 static int security_violation = 0;
-#endif
 
 static int time_limit = 0;
 static int time_limit_millis = 0;
@@ -128,21 +126,13 @@ static const unsigned char help_str[] =
 "--clear-env              clear all environment\n"
 "--env=VAR=VALUE          set the environment VAR to VALUE\n"
 "--time-limit=SEC         set the time limit to SEC seconds\n"
-#if defined HAVE_TASK_SETMAXTIMEMILLIS
 "--time-limit-millis=MSEC set the time limit to MSEC milliseconds\n"
-#endif
 "--real-time-limit=SEC    set the real time limit to SEC seconds\n"
 "--no-core-dump           disable core dump\n"
 "--kill-signal=SIGNAL     specify the termination signal (kill, term, intr)\n"
-#if defined HAVE_TASK_ENABLEMEMORYLIMITERROR
 "--memory-limit           enable memory limit error detection\n"
-#endif
-#if defined HAVE_TASK_ENABLESECUREEXEC
 "--secure-exec            enable secure execution\n"
-#endif
-#if defined HAVE_TASK_ENABLESECURITYVIOLATIONERROR
 "--security-violation     enable security violation error detection\n"
-#endif
 "--max-vm-size=SIZE       specify the virtual memory size limit\n"
 "--max-stack-size=SIZE    specify the stack size limit\n"
 "--max-data-size=SIZE     specify the heap size limit\n"
@@ -179,12 +169,8 @@ handle_options(const unsigned char *opt)
   } else if (!strncmp("--time-limit=", opt, 13)) {
     parse_int("--time-limit", opt + 13, &time_limit, 1, 99999);
   } else if (!strncmp("--time-limit-millis=", opt, 20)) {
-#if !defined HAVE_TASK_SETMAXTIMEMILLIS
-    fatal("option --time-limit-millis is not supported");
-#else
     parse_int("--time-limit-millis", opt + 20, &time_limit_millis,
               1, 999999999);
-#endif
   } else if (!strncmp("--real-time-limit=", opt, 18)) {
     parse_int("--real-time-limit", opt + 18, &real_time_limit, 1, 99999);
   } else if (!strcmp("--no-core-dump", opt)) {
@@ -192,23 +178,11 @@ handle_options(const unsigned char *opt)
   } else if (!strncmp("--kill-signal=", opt, 14)) {
     kill_signal = opt + 14;
   } else if (!strcmp("--memory-limit", opt)) {
-#if !defined HAVE_TASK_ENABLEMEMORYLIMITERROR
-    fatal("option --memory-limit is not supported");
-#else
     memory_limit = 1;
-#endif
   } else if (!strcmp("--secure-exec", opt)) {
-#if !defined HAVE_TASK_ENABLESECUREEXEC
-    fatal("option --secure-exec is not supported");
-#else
     secure_exec = 1;
-#endif
   } else if (!strcmp("--security-violation", opt)) {
-#if !defined HAVE_TASK_ENABLESECURITYVIOLATIONERROR
-    fatal("option --security-violation is not supported");
-#else
     security_violation = 1;
-#endif
   } else if (!strncmp("--max-vm-size=", opt, 14)) {
     parse_size("--max-vm-size", opt + 14, &max_vm_size, 4096, 1 << 30);
   } else if (!strncmp("--max-stack-size=", opt, 17)) {
@@ -233,9 +207,7 @@ run_program(int argc, char *argv[])
   int retcode = 1;
 
   if (!(tsk = task_New())) fatal("cannot create task");
-#if defined HAVE_TASK_SETQUIETFLAG
   task_SetQuietFlag(tsk);
-#endif
   task_pnAddArgs(tsk, argc, argv);
   task_SetPathAsArg0(tsk);
   if (working_dir) task_SetWorkingDir(tsk, working_dir);
@@ -247,11 +219,9 @@ run_program(int argc, char *argv[])
   if (clear_env_flag) task_ClearEnv(tsk);
   for (i = 0; i < env_vars.u; i++)
     task_PutEnv(tsk, env_vars.v[i]);
-#if defined HAVE_TASK_SETMAXTIMEMILLIS
   if (time_limit_millis > 0)
     if (task_SetMaxTimeMillis(tsk, time_limit_millis) < 0)
       fatal("--time-limit-millis is not supported");
-#endif
   if (time_limit > 0) task_SetMaxTime(tsk, time_limit);
   if (real_time_limit > 0) task_SetMaxRealTime(tsk, real_time_limit);
   if (kill_signal)
@@ -261,46 +231,31 @@ run_program(int argc, char *argv[])
   if (max_vm_size) task_SetVMSize(tsk, max_vm_size);
   if (max_stack_size) task_SetStackSize(tsk, max_stack_size);
   if (max_data_size) task_SetDataSize(tsk, max_data_size);
-#if defined HAVE_TASK_ENABLEMEMORYLIMITERROR
   if (memory_limit)
     if (task_EnableMemoryLimitError(tsk) < 0)
       fatal("--memory-limit is not supported");
-#endif
-#if defined HAVE_TASK_ENABLESECUREEXEC
   if (secure_exec)
     if (task_EnableSecureExec(tsk) < 0)
       fatal("--secure-exec is not supported");
-#endif
-#if defined HAVE_TASK_ENABLESECURITYVIOLATIONERROR
   if (security_violation)
     if (task_EnableSecurityViolationError(tsk) < 0)
       fatal("--security-violation is not supported");
-#endif
 
   if (task_Start(tsk) < 0) {
-#if defined HAVE_TASK_GETERRORMESSAGE
     fprintf(stderr, "Status: CF\n"
             "Description: cannot start task: %s\n", task_GetErrorMessage(tsk));
-#else
-    fprintf(stderr, "Status: CF\n"
-            "Description: cannot start task\n");
-#endif
     task_Delete(tsk);
     return 2;
   }
   task_Wait(tsk);
-#if defined HAVE_TASK_ISMEMORYLIMIT
   if (memory_limit && task_IsMemoryLimit(tsk)) {
     fprintf(stderr, "Status: ML\n"
             "Description: memory limit exceeded\n");
   } else
-#endif
-#if defined HAVE_TASK_ISSECURITYVIOLATION
   if (security_violation && task_IsSecurityViolation(tsk)) {
     fprintf(stderr, "Status: SV\n"
             "Description: security violation\n");
   } else
-#endif
   if (task_IsTimeout(tsk)) {
     fprintf(stderr, "Status: TL\n"
             "Description: time limit exceeded\n");
@@ -317,9 +272,8 @@ run_program(int argc, char *argv[])
     retcode = 0;
   }
   fprintf(stderr, "CPUTime: %ld\n", task_GetRunningTime(tsk));
-#if defined HAVE_TASK_GETREALTIME
   fprintf(stderr, "RealTime: %ld\n", task_GetRealTime(tsk));
-#endif
+
   return retcode;
 }
 
