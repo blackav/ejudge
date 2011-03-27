@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2008-2009 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,7 @@
 #if defined PYTHON
 #include <Python.h>
 #else
-#include <reuse/osdeps.h>
+#include "reuse_osdeps.h"
 #endif
 
 #include <string.h>
