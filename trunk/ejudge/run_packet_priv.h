@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  */
 
-#include <reuse/integral.h>
+#include "reuse_integral.h"
 
 /* various private data structures and constants for run packets */
 

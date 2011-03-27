@@ -28,14 +28,7 @@
       Robert Klep <robert@ilse.nl>  -- Expansion function fix
 */
 
-#include <reuse/ReuseDefs.h>
-#if defined REUSE_VERSION && REUSE_VERSION >= 4
-#include <reuse/integral.h>
-#else
-#include <p_config.h>
-#include <p_integral.h>
-#endif /* reuse version >= 4 */
-
+#include "reuse_integral.h"
 #include "sha.h"
 
 #include <stdio.h>
@@ -408,9 +401,8 @@ sha_process_block (const void *buffer, size_t len, struct sha_ctx *ctx)
     }
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  * End:
  */
