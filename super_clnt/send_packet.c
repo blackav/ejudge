@@ -20,8 +20,7 @@
 #include "errlog.h"
 
 #include "reuse_osdeps.h"
-
-#include <reuse/integral.h>
+#include "reuse_integral.h"
 
 #include <sys/uio.h>
 #include <stdlib.h>
@@ -81,9 +80,8 @@ super_clnt_send_packet(int sock_fd, size_t size, const void *buf)
   return -SSERV_ERR_WRITE_TO_SERVER;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make -C .."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  * End:
  */
