@@ -1,7 +1,7 @@
 # -*- Makefile -*-
 # $Id$
 
-# Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2006-2011 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -24,9 +24,9 @@ HFILES =
 CC = gcc
 LD = gcc
 
-CFLAGS = -I. -I../.. $(MYSQL_INCL_OPT) $(REUSE_INCL_OPT) $(EXPAT_INCL_OPT) $(CDEBUGFLAGS) $(CCOMPFLAGS) $(CEXTRAFLAGS) $(WPTRSIGN)
-LDFLAGS = $(MYSQL_LIB_OPT) $(REUSE_LIB_OPT) $(EXPAT_LIB_OPT) $(CDEBUGFLAGS) $(LDCOMPFLAGS) $(LDEXTRAFLAGS)
-LDLIBS = $(EXTRALIBS) $(MYSQL_LIBS) -lreuse -lexpat -lm
+CFLAGS = -I. -I../.. $(MYSQL_INCL_OPT) $(EXPAT_INCL_OPT) $(CDEBUGFLAGS) $(CCOMPFLAGS) $(CEXTRAFLAGS) $(WPTRSIGN)
+LDFLAGS = $(MYSQL_LIB_OPT) $(EXPAT_LIB_OPT) $(CDEBUGFLAGS) $(LDCOMPFLAGS) $(LDEXTRAFLAGS)
+LDLIBS = $(EXTRALIBS) $(MYSQL_LIBS) -lexpat -lm
 
 PLUGINS = uldb_mysql.so
 SCHEMAS = create-userdb.sql drop-userdb.sql
