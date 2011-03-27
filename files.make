@@ -516,7 +516,9 @@ HFILES=\
  problem_xml.h\
  protocol.h\
  random.h\
+ reuse_integral.h\
  reuse_logger.h\
+ reuse_osdeps.h\
  reuse_xalloc.h\
  rldb_plugin.h\
  run.h\
