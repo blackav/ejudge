@@ -24,8 +24,7 @@
 
 #include "reuse_xalloc.h"
 #include "reuse_logger.h"
-
-#include <reuse/MemPage.h>
+#include "reuse_mempage.h"
 
 #include <errno.h>
 #include <limits.h>

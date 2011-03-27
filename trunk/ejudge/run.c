@@ -44,9 +44,6 @@
 #include "reuse_integral.h"
 #include "reuse_exec.h"
 
-#include <reuse/number_io.h>
-#include <reuse/format_io.h>
-
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
@@ -3270,9 +3267,9 @@ count_files(char const *dir, char const *sfx, const char *pat)
     if (pat && pat[0]) {
       unsigned char file_base[64];
       snprintf(file_base, sizeof(file_base), pat, n);
-      os_snprintf(path, PATH_MAX, "%s%s%s", dir, PATH_SEP, file_base);
+      snprintf(path, PATH_MAX, "%s%s%s", dir, PATH_SEP, file_base);
     } else {
-      os_snprintf(path, PATH_MAX, "%s%s%03d%s", dir, PATH_SEP, n, sfx);
+      snprintf(path, PATH_MAX, "%s%s%03d%s", dir, PATH_SEP, n, sfx);
     }
     s = os_IsFile(path);
     if (s < 0) break;
