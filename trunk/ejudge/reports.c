@@ -34,9 +34,9 @@
 #include "mime_type.h"
 
 #include "reuse_xalloc.h"
+#include "reuse_osdeps.h"
 
 #include <reuse/exec.h>
-#include <reuse/osdeps.h>
 
 #include <stdio.h>
 #include <stdlib.h>

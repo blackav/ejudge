@@ -27,8 +27,7 @@
 #include "compat.h"
 
 #include "reuse_xalloc.h"
-
-#include <reuse/osdeps.h>
+#include "reuse_osdeps.h"
 
 #include <stdio.h>
 #include <stdlib.h>

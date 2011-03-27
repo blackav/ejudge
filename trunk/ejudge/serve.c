@@ -50,8 +50,8 @@
 
 #include "reuse_xalloc.h"
 #include "reuse_logger.h"
+#include "reuse_osdeps.h"
 
-#include <reuse/osdeps.h>
 #include <reuse/number_io.h>
 #include <reuse/format_io.h>
 #include <reuse/exec.h>

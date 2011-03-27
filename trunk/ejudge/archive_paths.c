@@ -26,8 +26,7 @@
 #include "serve_state.h"
 
 #include "reuse_logger.h"
-
-#include <reuse/osdeps.h>
+#include "reuse_osdeps.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>

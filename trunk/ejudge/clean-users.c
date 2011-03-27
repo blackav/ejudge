@@ -30,8 +30,7 @@
 #include "serve_state.h"
 
 #include "reuse_xalloc.h"
-
-#include <reuse/osdeps.h>
+#include "reuse_osdeps.h"
 
 #include <stdio.h>
 #include <limits.h>

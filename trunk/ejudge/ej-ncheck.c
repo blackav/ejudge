@@ -22,8 +22,7 @@
 #include "ncheck_packet.h"
 
 #include "reuse_xalloc.h"
-
-#include <reuse/osdeps.h>
+#include "reuse_osdeps.h"
 
 #include <stdlib.h>
 #include <stdio.h>

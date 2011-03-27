@@ -19,8 +19,7 @@
 #include "errlog.h"
 
 #include "reuse_logger.h"
-
-#include <reuse/osdeps.h>
+#include "reuse_osdeps.h"
 
 #include <stdio.h>
 #include <stdlib.h>
