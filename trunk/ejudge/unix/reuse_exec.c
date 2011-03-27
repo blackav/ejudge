@@ -98,6 +98,7 @@ struct tTask
   int    clear_env;             /* clear the environment? */
   int    quiet_flag;            /* be quiet */
   int    enable_all_signals;    /* unmask all signals after fork */
+  int    enable_process_group;  /* create a new process group */
   struct rusage usage;          /* process resource utilization */
   struct timeval start_time;    /* start real-time */
   struct timeval stop_time;     /* stop real-time */
@@ -973,6 +974,15 @@ task_EnableAllSignals(tTask *tsk)
 }
 
 int
+task_EnableProcessGroup(tTask *tsk)
+{
+  task_init_module();
+  ASSERT(tsk);
+  tsk->enable_process_group = 1;
+  return 0;
+}
+
+int
 task_DisableCoreDump(tTask *tsk)
 {
   task_init_module();
@@ -1377,6 +1387,10 @@ task_Start(tTask *tsk)
       tsk->pid = pid;
       task_active++;
 
+      if (tsk->enable_process_group > 0) {
+        setpgid(tsk->pid, tsk->pid);
+      }
+
       /* close the writing end of communication pipe */
       close(comm_fd + 1);
 
@@ -1444,6 +1458,10 @@ task_Start(tTask *tsk)
     int i;
     int tfd;
     int code;
+
+    if (tsk->enable_process_group > 0) {
+      setpgid(0, 0);
+    }
 
 #ifdef __linux__
     if (tsk->enable_memory_limit_error && linux_ptrace_code > 0) {
@@ -1758,7 +1776,11 @@ task_Wait(tTask *tsk)
       }
       if ((!wait_time.tv_sec && !wait_time.tv_nsec) || wait_time.tv_sec < 0) {
         // time is over, kill the process
-        kill(tsk->pid, tsk->termsig);
+        if (tsk->enable_process_group > 0) {
+          kill(-tsk->pid, tsk->termsig);
+        } else {
+          kill(tsk->pid, tsk->termsig);
+        }
         tsk->was_timeout = 1;
         /*
         fprintf(stderr, "EXEC: TASK_WAIT: 1: REAL TIME TIMEOUT %ld.%09ld\n",
@@ -1769,7 +1791,11 @@ task_Wait(tTask *tsk)
       n = sigtimedwait(&bs, 0, &wait_time);
       if (n < 0 && errno == EAGAIN) {
         // time is over, kill the process
-        kill(tsk->pid, tsk->termsig);
+        if (tsk->enable_process_group > 0) {
+          kill(-tsk->pid, tsk->termsig);
+        } else {
+          kill(tsk->pid, tsk->termsig);
+        }
         tsk->was_timeout = 1;
         //fprintf(stderr, "EXEC: TASK_WAIT: 2: REAL TIME TIMEOUT %d\n", n);
         break;
