@@ -51,10 +51,10 @@
 #include "reuse_xalloc.h"
 #include "reuse_logger.h"
 #include "reuse_osdeps.h"
+#include "reuse_exec.h"
 
 #include <reuse/number_io.h>
 #include <reuse/format_io.h>
-#include <reuse/exec.h>
 
 #include <time.h>
 #include <stdio.h>
