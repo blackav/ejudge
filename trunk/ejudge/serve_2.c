@@ -1048,6 +1048,10 @@ serve_compile_request(
   cp.env_num = -1;
   cp.env_vars = (unsigned char**) compiler_env;
   cp.style_check_only = !!style_check_only;
+  if (lang) {
+    cp.max_vm_size = lang->max_vm_size;
+    cp.max_stack_size = lang->max_stack_size;
+  }
   if (style_checker_cmd && style_checker_cmd[0]) {
     cp.style_checker = (unsigned char*) style_checker_cmd;
   }
