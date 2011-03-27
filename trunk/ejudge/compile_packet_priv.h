@@ -3,7 +3,7 @@
 #ifndef __COMPILE_PACKET_PRIV_H__
 #define __COMPILE_PACKET_PRIV_H__
 
-/* Copyright (C) 2005-2010 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2005-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  */
 
-#include <reuse/integral.h>
+#include "reuse_integral.h"
 
 #define EJ_COMPILE_PACKET_VERSION 4
 
