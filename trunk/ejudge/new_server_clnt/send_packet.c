@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -19,8 +19,9 @@
 #include "new_server_proto.h"
 #include "errlog.h"
 
+#include "reuse_osdeps.h"
+
 #include <reuse/integral.h>
-#include <reuse/osdeps.h>
 
 #include <unistd.h>
 #include <sys/uio.h>
