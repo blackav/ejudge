@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2009-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2009-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,7 +18,7 @@
 #include "file_perms.h"
 #include "misctext.h"
 
-#include <reuse/osdeps.h>
+#include "reuse_osdeps.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>

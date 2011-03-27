@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -21,7 +21,7 @@
 #include "serve_state.h"
 #include "serve_state.h"
 
-#include <reuse/osdeps.h>
+#include "reuse_osdeps.h"
 
 #include <sys/types.h>
 #include <sys/ipc.h>
