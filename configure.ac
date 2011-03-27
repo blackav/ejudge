@@ -1,5 +1,5 @@
 dnl $Id$
-dnl Copyright (C) 2004-2010 Alexander Chernov <cher@ejudge.ru>
+dnl Copyright (C) 2004-2011 Alexander Chernov <cher@ejudge.ru>
 
 AC_INIT(ejudge,2.3)
 AC_PREREQ(2.59)
@@ -56,12 +56,6 @@ AC_ARG_WITH([expat-include-dir],AC_HELP_STRING([--with-expat-include-dir],[speci
 AC_ARG_WITH([expat-lib-dir],AC_HELP_STRING([--with-expat-lib-dir],[specify non-standard location of -lexpat [[EXPAT-DIR/lib]]]),[ac_cv_expat_lib_dir=$withval])
 
 AC_ARG_WITH([mysql], AC_HELP_STRING([--with-mysql=MYSQL-DIR],[specify the path to the mysql installation directory]),[ac_cv_mysql_root="$withval"])
-
-AC_ARG_WITH([reuse], AC_HELP_STRING([--with-reuse=REUSE-DIR],[specify the path to reuse library]),[ac_cv_reuse_root=$withval])
-AC_ARG_WITH([reuse-include-dir],AC_HELP_STRING([--with-reuse-include-dir],[specify the location of reuse include directories [[REUSE-DIR/include]]]),[ac_cv_reuse_include_dir=$withval])
-AC_ARG_WITH([reuse-lib-dir],AC_HELP_STRING([--with-reuse-lib-dir],[specify the location of reuse library directories [[REUSE-DIR/lib]]]),[ac_cv_reuse_lib_dir=$withval])
-AC_ARG_WITH([reuse-conf-dir],AC_HELP_STRING([--with-reuse-conf-dir],[specify the location of reuse configuration directories [[REUSE-DIR/etc]]]),[ac_cv_reuse_conf_dir=$withval])
-AC_ARG_WITH([reuse-config],AC_HELP_STRING([--with-reuse-config],[specify the configuration name]),[ac_cv_reuse_config=$withval])
 
 AC_ARG_ENABLE([cgi-suffix], AC_HELP_STRING([--enable-cgi-suffix],[append the given suffix to the CGI programs]),[ac_cv_cgi_suffix=$enableval],[ac_cv_cgi_suffix=""])
 AC_ARG_ENABLE([cgi-bin-dir], AC_HELP_STRING([--enable-cgi-bin-dir],[specify the destination CGI script directory [[\${prefix}/libexec/ejudge/cgi-bin]]]),[cgibindir=$enableval], [cgibindir='${libexecdir}/ejudge/cgi-bin'])
@@ -156,7 +150,6 @@ case "${target}" in
     ac_cv_path_separator=';'
     CFLAGS="${CFLAGS} -mno-cygwin"
     LDFLAGS="${LDFLAGS} -mno-cygwin"
-    reuse_binmode=" --binmode"
     AC_MSG_RESULT([win32])
     ;;
   *)
@@ -165,7 +158,6 @@ case "${target}" in
     ac_cv_conf_unix_filenaming=1
     ac_cv_dir_separator='/'
     ac_cv_path_separator=':'
-    reuse_binmode=""
     AC_MSG_RESULT([unix])
     ;;
 esac
@@ -717,8 +709,6 @@ AC_MSG_RESULT([no])
 fi
 CC="${saved_CC}"
 
-dnl reuse checking stuff
-
 dnl check whether long long is supported
 AC_MSG_CHECKING([for long long type])
 AC_RUN_IFELSE(
@@ -756,202 +746,6 @@ ac_cv_has___int64=1
 AC_MSG_RESULT([no])
 ac_cv_has___int64=""
 ])
-
-dnl !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-ac_cv_has_reuse=1
-if [[ x"${ac_cv_reuse_root}" = x -o x"${ac_cv_reuse_root}" = xyes -o x"${ac_cv_reuse_root}" = xno ]]
-then
-  dnl try reuse-config script
-  AC_PATH_PROG([REUSE_CONF_SCRIPT],[reuse-config],[no])
-  if [[ x"${REUSE_CONF_SCRIPT}" = xno ]]
-  then
-    AC_MSG_ERROR([You must specify the reuse directory using --with-reuse])
-  fi
-  ac_cv_reuse_include_opt=`"${REUSE_CONF_SCRIPT}" ${reuse_binmode} --cflags`
-  ac_cv_reuse_lib_opt=`"${REUSE_CONF_SCRIPT}" ${reuse_binmode} --ldflags`
-else
-  if [[ -x "${ac_cv_reuse_root}/bin/reuse-config" ]]
-  then
-    REUSE_CONF_SCRIPT="${ac_cv_reuse_root}/bin/reuse-config"
-    [[ x"${ac_cv_reuse_include_dir}" = x -o x"${ac_cv_reuse_include_dir}" = xyes -o x"${ac_cv_reuse_include_dir}" = xno ]] && ac_cv_reuse_include_opt=`"${REUSE_CONF_SCRIPT}" ${reuse_binmode} --cflags`
-    [[ x"${ac_cv_reuse_lib_dir}" = x -o x"${ac_cv_reuse_lib_dir}" = xyes -o x"${ac_cv_reuse_lib_dir}" = xno ]] && ac_cv_reuse_lib_opt=`"${REUSE_CONF_SCRIPT}" ${reuse_binmode} --ldflags`
-  else
-    [[ x"${ac_cv_reuse_include_dir}" = x -o x"${ac_cv_reuse_include_dir}" = xyes -o x"${ac_cv_reuse_include_dir}" = xno ]] && ac_cv_reuse_include_dir="${ac_cv_reuse_root}/include"
-    [[ x"${ac_cv_reuse_lib_dir}" = x -o x"${ac_cv_reuse_lib_dir}" = xyes -o x"${ac_cv_reuse_lib_dir}" = xno ]] && ac_cv_reuse_lib_dir="${ac_cv_reuse_root}/lib"
-
-    if [[ x"${ac_cv_reuse_config}" = x -o x"${ac_cv_reuse_config}" = xyes -o x"${ac_cv_reuse_config}" = xno ]]
-    then
-      [[ x"${ac_cv_reuse_conf_dir}" = x -o x"${ac_cv_reuse_conf_dir}" = xyes -o x"${ac_cv_reuse_conf_dir}" = xno ]] && ac_cv_reuse_conf_dir="${ac_cv_reuse_root}/etc"
-      if [[ ! -x "${ac_cv_reuse_conf_dir}/config.guess" ]]
-      then
-        AC_MSG_ERROR([The reuse configuration script config.guess is missing or non-executable at ${ac_cv_reuse_conf_dir}])
-      fi
-      ac_cv_reuse_config=`"${ac_cv_reuse_conf_dir}/config.guess" 2>/dev/null`
-      if [[ $? != 0 -o x"${ac_cv_reuse_config}" = x ]]
-      then
-        AC_MSG_ERROR([The reuse configuration script returned no result])
-      fi
-    fi
-    AC_MSG_NOTICE([using the reuse configuration ${ac_cv_reuse_config}])
-  
-    ac_cv_reuse_include_opt="-I${ac_cv_reuse_include_dir} -I${ac_cv_reuse_include_dir}/${ac_cv_reuse_config}"
-    ac_cv_reuse_lib_opt="-L${ac_cv_reuse_lib_dir}/${ac_cv_reuse_config}"
-  fi
-fi
-
-saved_CFLAGS="${CFLAGS}"
-saved_CPPFLAGS="${CPPFLAGS}"
-saved_LDFLAGS="${LDFLAGS}"
-saved_LIBS="${LIBS}"
-CFLAGS="${CFLAGS} ${ac_cv_reuse_include_opt}"
-CPPFLAGS="${CPPFLAGS} ${ac_cv_reuse_include_opt}"
-LDFLAGS="${LDFLAGS} ${ac_cv_reuse_lib_opt}"
-LIBS="-lreuse ${LIBS} -lm"
-
-if [[ x"${ac_cv_has_reuse}" = x1 ]]
-then
-  AC_CHECK_HEADER([reuse/exec.h],[],[ac_cv_has_reuse=""])
-fi
-if [[ x"${ac_cv_has_reuse}" = x1 ]]
-then
-  AC_CHECK_HEADER([reuse/format_io.h],[],[ac_cv_has_reuse=""])
-fi
-if [[ x"${ac_cv_has_reuse}" = x1 ]]
-then
-  AC_CHECK_HEADER([reuse/logger.h],[],[ac_cv_has_reuse=""])
-fi
-if [[ x"${ac_cv_has_reuse}" = x1 ]]
-then
-  AC_CHECK_HEADER([reuse/MemPage.h],[],[ac_cv_has_reuse=""])
-fi
-if [[ x"${ac_cv_has_reuse}" = x1 ]]
-then
-  AC_CHECK_HEADER([reuse/number_io.h],[],[ac_cv_has_reuse=""])
-fi
-if [[ x"${ac_cv_has_reuse}" = x1 ]]
-then
-  AC_CHECK_HEADER([reuse/osdeps.h],[],[ac_cv_has_reuse=""])
-fi
-if [[ x"${ac_cv_has_reuse}" = x1 ]]
-then
-  AC_CHECK_HEADER([reuse/xalloc.h],[],[ac_cv_has_reuse=""])
-fi
-if [[ x"${ac_cv_has_reuse}" = x1 ]]
-then
-  AC_CHECK_LIB([reuse], [os_GetWorkingDir], [], [ac_cv_has_reuse=""])
-fi
-
-dnl Check new reuse features
-if [[ x"${ac_cv_has_reuse}" = x1 ]]
-then
-  AC_CHECK_FUNCS([task_SetMaxTimeMillis task_GetRealTime task_IsMemoryLimit task_EnableMemoryLimitError task_EnableSecureExec task_SetQuietFlag task_GetErrorMessage task_EnableAllSignals task_fPrintArgs task_IsSecurityViolation task_EnableSecurityViolationError task_GetPid])
-fi
-
-ac_cv_have_task_append=
-if [[ x"${ac_cv_has_reuse}" = x1 ]]
-then
-  AC_MSG_CHECKING([TSK_APPEND flag])
-  AC_RUN_IFELSE([[
-#include <reuse/version.h>
-#include <reuse/exec.h>
-int main()
-{
-  int x = TSK_APPEND;
-  return 0;
-}
-]],[
-AC_MSG_RESULT([yes])
-ac_cv_have_task_append=1
-],[
-AC_MSG_RESULT([no])
-])
-fi
-
-ac_cv_version_detected=
-if [[ x"${ac_cv_has_reuse}" = x1 ]]
-then
-  AC_MSG_CHECKING([for reuse version >= 4])
-  AC_RUN_IFELSE([[
-#include <reuse/version.h>
-#include <stdio.h>
-#include <string.h>
-int main()
-{
-  const char *p = reuse_compile_version;
-  int major, minor, patch, build = 0, n, svnver = 0;
-  if (sscanf(p, "%d.%dpre%d #%d%n", &major, &minor, &patch, &build, &n) == 4
-      && !p[n]) {
-    patch = 0;
-  } else if (sscanf(p, "%d.%dpre%d%n", &major, &minor, &patch, &n) == 3
-             && !p[n]) {
-    patch = 0;
-  } else if (sscanf(p, "%d.%d.%d #%d%n", &major, &minor, &patch, &build, &n)==4
-             && !p[n]) {
-  } else if (sscanf(p, "%d.%d.%d%n", &major, &minor, &patch, &n) == 3
-             && !p[n]) {
-  } else if (sscanf(p, "%d.%d.%d+ (SVN r%d)%n", &major, &minor, &patch,
-                    &svnver, &n) == 4) {
-  } else if (sscanf(p, "%d.%d.%d+ (SVN r%d) #%d%n", &major, &minor, &patch,
-                    &svnver, &build, &n) == 4) {
-  } else {
-    return 1;
-  }
-  if (major < 3 || major >= 1000) return 1;
-  if (minor < 0 || minor >= 1000) return 1;
-  if (patch < 0 || patch >= 1000) return 1;
-  if (major >= 4) return 0;
-  return 1;
-}
-]],[
-AC_MSG_RESULT([yes])
-ac_cv_version_detected=1
-],[
-AC_MSG_RESULT([no])
-])
-fi
-
-if [[ x"${ac_cv_has_reuse}" = x1 -a x"${ac_cv_version_detected}" = x ]]
-then
-  AC_MSG_CHECKING([for reuse version >= 3.0.17])
-  AC_RUN_IFELSE(
-[[
-#include <stdio.h>
-#include <string.h>
-extern char const reuse_release_str[];
-int main()
-{
-  const char *p = reuse_release_str;
-  int major, minor, patch, build, n;
-  if (*p != '$') return 1;
-  if (strncmp(p + 1, "Revision: REUSE-", 16) != 0) return 1;
-  if (sscanf(p + 17, "%d.%d.%d (%d) $%n", &major, &minor, &patch, &build, &n) != 4) return 1;
-  if (p[17 + n]) return 1;
-  if (major < 3 || major >= 1000) return 1;
-  if (minor < 0 || minor >= 1000) return 1;
-  if (patch < 0 || patch >= 1000) return 1;
-  if (build <= 0) return 1;
-  if (major > 3) return 0;
-  if (minor > 0) return 0;
-  if (patch < 17) return 1;
-  return 0;
-}
-]],[AC_MSG_RESULT([yes])],
-[
-AC_MSG_RESULT([no])
-ac_cv_has_reuse=""
-])
-fi
-
-CFLAGS="${saved_CFLAGS}"
-CPPFLAGS="${saved_CPPFLAGS}"
-LDFLAGS="${saved_LDFLAGS}"
-LIBS="${saved_LIBS}"
-
-if [[ x"${ac_cv_has_reuse}" != x1 ]]
-then
-  AC_MSG_FAILURE([The reuse library is unusable])
-fi
 
 dnl localization stuff
 
@@ -1145,10 +939,6 @@ AC_SUBST(ac_cv_exe_suffix)
 AC_SUBST(ac_cv_expat_root)
 AC_SUBST(ac_cv_expat_include_opt)
 AC_SUBST(ac_cv_expat_lib_opt)
-AC_SUBST(ac_cv_reuse_root)
-AC_SUBST(ac_cv_reuse_config)
-AC_SUBST(ac_cv_reuse_include_opt)
-AC_SUBST(ac_cv_reuse_lib_opt)
 AC_SUBST(ac_cv_libcap_root)
 AC_SUBST(ac_cv_libcap_include_opt)
 AC_SUBST(ac_cv_libcap_lib_opt)
