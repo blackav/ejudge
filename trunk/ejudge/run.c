@@ -76,10 +76,6 @@
 #define EJUDGE_CHARSET EJ_INTERNAL_CHARSET
 #endif /* EJUDGE_CHARSET */
 
-#if HAVE_TASK_APPEND - 0 == 0
-#define TSK_APPEND TSK_REWRITE
-#endif
-
 static int managed_mode_flag = 0;
 static time_t last_activity_time;
 static struct serve_state serve_state;
@@ -857,9 +853,7 @@ invoke_valuer(
     snprintf(strbuf, sizeof(strbuf), "EJUDGE_USER_SCORE=1");
     task_PutEnv(tsk, strbuf);
   }
-#if HAVE_TASK_ENABLEALLSIGNALS - 0 == 1
   task_EnableAllSignals(tsk);
-#endif
 
   if (task_Start(tsk) < 0) {
     append_msg_to_log(score_err, "valuer failed to start");
@@ -1596,9 +1590,7 @@ run_tests(struct section_tester_data *tst,
     task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ, 0);
     task_SetRedir(tsk, 1, TSR_FILE, report_path, TSK_REWRITE, TSK_FULL_RW);
     task_SetRedir(tsk, 2, TSR_DUP, 1);
-#if HAVE_TASK_ENABLEALLSIGNALS - 0 == 1
     task_EnableAllSignals(tsk);
-#endif
     task_Start(tsk);
     task_Wait(tsk);
     if (task_IsAbnormal(tsk)) goto _internal_execution_error;
@@ -1820,9 +1812,7 @@ run_tests(struct section_tester_data *tst,
         task_SetRedir(tsk_int, pfd2[1], TSR_CLOSE);
         task_SetRedir(tsk_int, 2, TSR_FILE, check_out_path, TSK_REWRITE, 
                       TSK_FULL_RW);
-#if HAVE_TASK_ENABLEALLSIGNALS - 0 == 1
         task_EnableAllSignals(tsk_int);
-#endif
         if (prb->interactor_time_limit > 0) {
           task_SetMaxTime(tsk_int, prb->interactor_time_limit);
         }
@@ -1917,11 +1907,7 @@ run_tests(struct section_tester_data *tst,
 
       if (time_limit_value > 0) {
         if ((time_limit_value % 1000)) {
-#if defined HAVE_TASK_SETMAXTIMEMILLIS
           task_SetMaxTimeMillis(tsk, time_limit_value);
-#else
-          task_SetMaxTime(tsk, (time_limit_value + 999) / 1000);
-#endif
         } else {
           task_SetMaxTime(tsk, time_limit_value / 1000);
         }
@@ -1955,18 +1941,14 @@ run_tests(struct section_tester_data *tst,
           task_SetDataSize(tsk, tst->max_data_size);
         if (tst->max_vm_size && tst->max_vm_size != -1L)
           task_SetVMSize(tsk, tst->max_vm_size);
-#if defined HAVE_TASK_ENABLEMEMORYLIMITERROR
         if (tst->enable_memory_limit_error && req_pkt->memory_limit
             && req_pkt->secure_run) {
           task_EnableMemoryLimitError(tsk);
         }
-#endif
-#if defined HAVE_TASK_ENABLESECURITYVIOLATIONERROR
         if (tst->enable_memory_limit_error && req_pkt->secure_run
             && req_pkt->security_violation) {
           task_EnableSecurityViolationError(tsk);
         }
-#endif
       } else {
         switch (tst->memory_limit_type_val) {
         case MEMLIMIT_TYPE_DEFAULT:
@@ -1987,18 +1969,14 @@ run_tests(struct section_tester_data *tst,
             task_SetDataSize(tsk, prb->max_data_size);
           if (prb->max_vm_size && prb->max_vm_size != -1L)
             task_SetVMSize(tsk, prb->max_vm_size);
-#if defined HAVE_TASK_ENABLEMEMORYLIMITERROR
           if (tst->enable_memory_limit_error && req_pkt->memory_limit
               && req_pkt->secure_run) {
             task_EnableMemoryLimitError(tsk);
           }
-#endif
-#if defined HAVE_TASK_ENABLESECURITYVIOLATIONERROR
           if (tst->enable_memory_limit_error
               && req_pkt->secure_run && req_pkt->security_violation) {
             task_EnableSecurityViolationError(tsk);
           }
-#endif
           break;
         case MEMLIMIT_TYPE_JAVA:
           java_flags_ptr = flags_buf;
@@ -2050,7 +2028,6 @@ run_tests(struct section_tester_data *tst,
         switch (tst->secure_exec_type_val) {
         case SEXEC_TYPE_STATIC:
           if (req_pkt->secure_run) {
-#if defined HAVE_TASK_ENABLESECUREEXEC
             if (task_EnableSecureExec(tsk) < 0) {
               // FIXME: also report this condition
               err("task_EnableSecureExec() failed");
@@ -2067,22 +2044,6 @@ run_tests(struct section_tester_data *tst,
               total_failed_tests++;
               goto done_this_test;
             }
-#else
-            // FIXME: also report this condition
-            err("no task_EnableSecureExec support in the reuse library");
-            status = RUN_CHECK_FAILED;
-            tests[cur_test].code = 0;
-            task_Delete(tsk); tsk = 0;
-            if (tsk_int) task_Delete(tsk_int);
-            tsk_int = 0;
-            if (pfd1[0] >= 0) close(pfd1[0]);
-            if (pfd1[1] >= 0) close(pfd1[1]);
-            if (pfd2[0] >= 0) close(pfd2[0]);
-            if (pfd2[1] >= 0) close(pfd2[1]);
-            pfd1[0] = pfd1[1] = pfd2[0] = pfd2[1] = -1;
-            total_failed_tests++;
-            goto done_this_test;
-#endif
           }
           break;
         case SEXEC_TYPE_DLL:
@@ -2121,9 +2082,7 @@ run_tests(struct section_tester_data *tst,
         }
       }
 #endif
-#if HAVE_TASK_ENABLEALLSIGNALS - 0 == 1
       task_EnableAllSignals(tsk);
-#endif
 
       if (task_Start(tsk) < 0) {
         /* failed to start task */
@@ -2178,10 +2137,8 @@ run_tests(struct section_tester_data *tst,
     /* fill test report structure */
     if (tsk) {
       tests[cur_test].times = task_GetRunningTime(tsk);
-#if defined HAVE_TASK_GETREALTIME
       has_real_time = 1;
       tests[cur_test].real_time = task_GetRealTime(tsk);
-#endif
     }
     if (req_pkt->full_archive) {
       filehash_get(test_src, tests[cur_test].input_digest);
@@ -2267,7 +2224,6 @@ run_tests(struct section_tester_data *tst,
       }
     }
 
-#if defined HAVE_TASK_ISMEMORYLIMIT
     if (tsk && tst->enable_memory_limit_error && req_pkt->memory_limit
         && req_pkt->secure_run && task_IsMemoryLimit(tsk)) {
       failed_test = cur_test;
@@ -2278,9 +2234,7 @@ run_tests(struct section_tester_data *tst,
       tsk_int = 0;
       goto done_this_test;
     }
-#endif
 
-#if defined HAVE_TASK_ISSECURITYVIOLATION
     if (tsk && tst->enable_memory_limit_error && req_pkt->security_violation
         && req_pkt->secure_run && task_IsSecurityViolation(tsk)) {
       failed_test = cur_test;
@@ -2291,7 +2245,6 @@ run_tests(struct section_tester_data *tst,
       tsk_int = 0;
       goto done_this_test;
     }
-#endif
 
     if (tsk && task_IsTimeout(tsk)) {
       failed_test = cur_test;
@@ -2473,9 +2426,7 @@ run_tests(struct section_tester_data *tst,
     }
     setup_environment(tsk, prb->checker_env, ejudge_prefix_dir_env);
     setup_environment(tsk, tst->checker_env, ejudge_prefix_dir_env);
-#if HAVE_TASK_ENABLEALLSIGNALS - 0 == 1
     task_EnableAllSignals(tsk);
-#endif
 
     task_Start(tsk);
     task_Wait(tsk);

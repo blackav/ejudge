@@ -126,9 +126,7 @@ check_style_only(
     for (i = 0; i < req->sc_env_num; i++)
       task_PutEnv(tsk, req->sc_env_vars[i]);
   }
-#if HAVE_TASK_ENABLEALLSIGNALS - 0 == 1
   task_EnableAllSignals(tsk);
-#endif /* HAVE_TASK_ENABLEALLSIGNALS */
   if (task_Start(tsk) < 0) {
     err("Failed to start style checker process");
     snprintf(msgbuf, sizeof(msgbuf), "Failed to start style checker %s\n",
@@ -401,9 +399,7 @@ do_loop(void)
         if (lang->compile_real_time_limit > 0) {
           task_SetMaxRealTime(tsk, lang->compile_real_time_limit);
         }
-#if HAVE_TASK_ENABLEALLSIGNALS - 0 == 1
         task_EnableAllSignals(tsk);
-#endif /* HAVE_TASK_ENABLEALLSIGNALS */
         if (task_Start(tsk) < 0) {
           err("Failed to start style checker process");
           tail_message = "\n\nFailed to start style checker";
@@ -448,9 +444,7 @@ do_loop(void)
         if (lang->compile_real_time_limit > 0) {
           task_SetMaxRealTime(tsk, lang->compile_real_time_limit);
         }
-#if HAVE_TASK_ENABLEALLSIGNALS - 0 == 1
         task_EnableAllSignals(tsk);
-#endif /* HAVE_TASK_ENABLEALLSIGNALS */
 
         if (cr_serialize_lock(&serve_state) < 0) {
           // FIXME: propose reasonable recovery?
