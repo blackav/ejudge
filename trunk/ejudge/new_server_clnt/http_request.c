@@ -21,8 +21,7 @@
 #include "errlog.h"
 
 #include "reuse_xalloc.h"
-
-#include <reuse/osdeps.h>
+#include "reuse_osdeps.h"
 
 #include <unistd.h>
 

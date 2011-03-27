@@ -21,8 +21,7 @@
 #include "sock_op.h"
 
 #include "reuse_xalloc.h"
-
-#include <reuse/osdeps.h>
+#include "reuse_osdeps.h"
 
 #include <signal.h>
 #include <unistd.h>
