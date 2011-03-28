@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2011/03/26 13:51:20
+// Generated 2011/03/27 23:55:14
 
 #ifndef __PREPARE_META_H__
 #define __PREPARE_META_H__
@@ -471,6 +471,8 @@ enum
   CNTSLANG_style_checker_env,
   CNTSLANG_disable_auto_testing,
   CNTSLANG_disable_testing,
+  CNTSLANG_max_vm_size,
+  CNTSLANG_max_stack_size,
   CNTSLANG_compile_dir_index,
   CNTSLANG_compile_dir,
   CNTSLANG_compile_queue_dir,
