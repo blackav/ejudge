@@ -244,6 +244,9 @@ serve_update_status_file(serve_state_t state, int force_flag)
 
   status.cur_time = state->current_time;
   run_get_times(state->runlog_state, &t1, &t2, &t3, &t4, &t5);
+  if (t1 > 0 && t5 > 0 && t5 <= t1) {
+    t5 = 0;
+  }
   status.start_time = t1;
   status.sched_time = t2;
   status.duration = t3;
@@ -2795,8 +2798,16 @@ serve_rejudge_all(
 void
 serve_reset_contest(const struct contest_desc *cnts, serve_state_t state)
 {
+  time_t contest_finish_time = 0;
+
+  if (state->global->contest_finish_time > 0) {
+    contest_finish_time = state->global->contest_finish_time;
+  }
+  if (contest_finish_time > 0 && contest_finish_time <= state->current_time) {
+    contest_finish_time = 0;
+  }
   run_reset(state->runlog_state, state->global->contest_time,
-            cnts->sched_time, state->global->contest_finish_time);
+            cnts->sched_time, contest_finish_time);
   run_set_duration(state->runlog_state,
                    state->global->contest_time);
   clar_reset(state->clarlog_state);
