@@ -5841,7 +5841,7 @@ super_html_print_problem(FILE *f,
   extra_msg = 0;
   if (show_adv) {
     if (prob->abstract) extra_msg = "";
-    if (!prob->abstract && !prob->standard_checker[0]) {
+    if (!prob->abstract) {
       extra_msg = "";
       prepare_set_prob_value(CNTSPROB_valuer_cmd,
                              tmp_prob, sup_prob, sstate->global);
@@ -5895,7 +5895,7 @@ super_html_print_problem(FILE *f,
   }
 
   //PROBLEM_PARAM(valuer_env, "x"),
-  if (!prob->abstract) {
+  if (!prob->abstract && show_adv) {
     if (!prob->valuer_env || !prob->valuer_env[0]) {
       extra_msg = "(not set)";
       checker_env = xstrdup("");

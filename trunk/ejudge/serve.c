@@ -85,6 +85,8 @@ main(int argc, char *argv[])
   int     p_flags = 0;
   int     i = 1;
   unsigned char *user = 0, *group = 0, *workdir = 0;
+  const struct section_global_data *global = 0;
+  time_t contest_finish_time = 0;
 
   start_set_self_args(argc, argv);
 
@@ -149,36 +151,41 @@ main(int argc, char *argv[])
               (cmdline_socket_fd >= 0), 0, 0) < 0) return 1;
   if (prepare_serve_defaults(&serve_state, &cur_contest) < 0) return 1;
 
-  l10n_prepare(serve_state.global->enable_l10n, serve_state.global->l10n_dir);
+  global = serve_state.global;
+  l10n_prepare(global->enable_l10n, global->l10n_dir);
 
   if (create_dirs(&serve_state, PREPARE_SERVE) < 0) return 1;
-  if (serve_state.global->contest_id <= 0) {
+  if (global->contest_id <= 0) {
     err("contest_id is not defined");
     return 1;
   }
   serve_state.teamdb_state = teamdb_init();
   serve_state.team_extra_state = team_extra_init();
-  team_extra_set_dir(serve_state.team_extra_state,
-                     serve_state.global->team_extra_dir);
+  team_extra_set_dir(serve_state.team_extra_state, global->team_extra_dir);
   if (!initialize_mode) {
-    if (teamdb_open_client(serve_state.teamdb_state,
-                           serve_state.global->socket_path,
-                           serve_state.global->contest_id) < 0)
+    if (teamdb_open_client(serve_state.teamdb_state, global->socket_path,
+                           global->contest_id) < 0)
       return 1;
   }
   serve_state.runlog_state = run_init(serve_state.teamdb_state);
-  if (run_open(serve_state.runlog_state,
-               config, cur_contest, serve_state.global, 0, 0,
-               serve_state.global->contest_time, cur_contest->sched_time,
-               serve_state.global->contest_finish_time) < 0) return 1;
-  if (serve_state.global->is_virtual
-      && serve_state.global->score_system != SCORE_ACM) {
+  if (global->contest_finish_time > 0) {
+    contest_finish_time = global->contest_finish_time;
+  }
+  if (contest_finish_time > 0
+      && contest_finish_time <= serve_state.current_time) {
+    contest_finish_time = 0;
+  }
+  if (run_open(serve_state.runlog_state, config, cur_contest, global, 0, 0,
+               global->contest_time, cur_contest->sched_time,
+               contest_finish_time) < 0) return 1;
+  if (global->is_virtual
+      && global->score_system != SCORE_ACM) {
     err("invalid score system for virtual contest");
     return 1;
   }
   serve_state.clarlog_state = clar_init();
   if (clar_open(serve_state.clarlog_state,
-                config, cur_contest, serve_state.global, 0, 0) < 0)
+                config, cur_contest, global, 0, 0) < 0)
     return 1;
   serve_load_status_file(&serve_state);
   serve_build_compile_dirs(&serve_state);

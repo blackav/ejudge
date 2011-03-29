@@ -638,6 +638,8 @@ serve_state_load_contest(
   const size_t *sza;
   struct contest_plugin_iface *iface;
   const unsigned char *f = __FUNCTION__;
+  const struct section_global_data *global = 0;
+  time_t contest_finish_time = 0;
 
   if (*p_state) return 0;
   if (contests_get(contest_id, &cnts) < 0 || !cnts) goto failure;
@@ -685,8 +687,10 @@ serve_state_load_contest(
   if (prepare_serve_defaults(state, p_cnts) < 0) goto failure;
   if (create_dirs(state, PREPARE_SERVE) < 0) goto failure;
 
+  global = state->global;
+
   /* find olympiad_mode problems in KIROV contests */
-  if (state->global->score_system == SCORE_KIROV) {
+  if (global->score_system == SCORE_KIROV) {
     for (i = 1; i <= state->max_prob; i++) {
       if (!(prob = state->probs[i])) continue;
       if (prob->olympiad_mode > 0) state->has_olympiad_mode = 1;
@@ -698,7 +702,7 @@ serve_state_load_contest(
     return 1;
   }
 
-  team_extra_set_dir(state->team_extra_state, state->global->team_extra_dir);
+  team_extra_set_dir(state->team_extra_state, global->team_extra_dir);
 
   if (teamdb_set_callbacks(state->teamdb_state, teamdb_callbacks, cnts->id) < 0)
     goto failure;
@@ -716,8 +720,8 @@ serve_state_load_contest(
   }
 
   // load reporting plugin
-  if (state->global->contest_plugin_file[0]) {
-    iface = (struct contest_plugin_iface *) plugin_load(state->global->contest_plugin_file, "report", "");
+  if (global->contest_plugin_file[0]) {
+    iface = (struct contest_plugin_iface *) plugin_load(global->contest_plugin_file, "report", "");
     if (!iface) goto failure;
     state->contest_plugin = iface;
     if (iface->contest_plugin_version != CONTEST_PLUGIN_IFACE_VERSION) {
@@ -746,24 +750,31 @@ serve_state_load_contest(
       state->contest_plugin_data = (*state->contest_plugin->init)();
   }
 
-  if (state->global->is_virtual) {
-    if (state->global->score_system != SCORE_ACM
-        && state->global->score_system != SCORE_OLYMPIAD) {
+  if (global->is_virtual) {
+    if (global->score_system != SCORE_ACM
+        && global->score_system != SCORE_OLYMPIAD) {
       err("invalid score system for virtual contest");
       goto failure;
     }
   }
 
   while (1) {
-    if (run_open(state->runlog_state, config, cnts, state->global, 0, 0,
-                 state->global->contest_time, cnts->sched_time,
-                 state->global->contest_finish_time) < 0) goto failure;
+    contest_finish_time = 0;
+    if (global->contest_finish_time > 0) {
+      contest_finish_time = global->contest_finish_time;
+    }
+    if (contest_finish_time > 0 && contest_finish_time <= state->current_time){
+      contest_finish_time = 0;
+    }
+    if (run_open(state->runlog_state, config, cnts, global, 0, 0,
+                 global->contest_time, cnts->sched_time,
+                 contest_finish_time) < 0) goto failure;
     if (!serve_collect_virtual_stop_events(state)) break;
     state->runlog_state = run_destroy(state->runlog_state);
     state->runlog_state = run_init(state->teamdb_state);
   }
 
-  if (clar_open(state->clarlog_state, config, cnts, state->global, 0, 0) < 0)
+  if (clar_open(state->clarlog_state, config, cnts, global, 0, 0) < 0)
     goto failure;
   serve_load_status_file(state);
   serve_set_upsolving_mode(state);

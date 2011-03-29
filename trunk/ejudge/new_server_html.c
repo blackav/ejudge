@@ -1016,6 +1016,11 @@ ns_check_contest_events(serve_state_t cs, const struct contest_desc *cnts)
   run_get_times(cs->runlog_state, &start_time, &sched_time,
                 &duration, &stop_time, &finish_time);
 
+  if (start_time > 0 && finish_time > 0 && finish_time < start_time) {
+    // this is not right, ignore this situation
+    finish_time = 0;
+  }
+
   if (!global->is_virtual) {
     if (start_time > 0 && stop_time <= 0 && duration <= 0 && finish_time > 0
         && cs->current_time >= finish_time) {
