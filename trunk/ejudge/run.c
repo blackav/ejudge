@@ -834,7 +834,7 @@ invoke_valuer(
     }
   }
 
-  //fprintf(stderr, "valuer: %s\n", valuer_cmd);
+  info("starting valuer: %s %s %s", valuer_cmd, score_cmt, score_jcmt);
 
   tsk = task_New();
   task_AddArg(tsk, valuer_cmd);
