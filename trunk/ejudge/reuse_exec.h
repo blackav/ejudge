@@ -80,7 +80,6 @@ int      task_SetWorkingDir(tpTask, char const *);
 int      task_SetMaxTime(tpTask, int);
 int      task_SetMaxTimeMillis(tpTask, int);
 int      task_SetMaxRealTime(tpTask, int);
-int      task_SetMaxProcCount(tTask *tsk, int cnt);
 
 int      task_PutEnv(tpTask, char const *);
 int      task_ClearEnv(tpTask);
@@ -120,6 +119,26 @@ int      task_GetPid(tpTask);
 
 #define task_GetMemoryUsed task_GetMemoryUsed
 long     task_GetMemoryUsed(tpTask);
+
+/* setrlimit interface */
+// RLIMIT_CORE
+int task_SetMaxCoreSize(tpTask, ssize_t);
+// RLIMIT_FSIZE
+int task_SetMaxFileSize(tpTask, ssize_t);
+// RLIMIT_MEMLOCK
+int task_SetMaxLockedMemorySize(tpTask, ssize_t);
+// RLIMIT_MSGQUEUE
+int task_SetMaxMessageQueueSize(tpTask, ssize_t);
+// RLIMIT_NICE
+int task_SetMaxNiceValue(tpTask, int);
+// RLIMIT_NOFILE
+int task_SetMaxOpenFileCount(tpTask, int);
+// RLIMIT_NPROC
+int task_SetMaxProcessCount(tpTask, int);
+// RLIMIT_RTPRIO
+int task_SetMaxPrioValue(tpTask, int);
+// RLIMIT_SIGPENDING
+int task_SetMaxPendingCount(tpTask, int);
 
 #ifdef __cplusplus
 }

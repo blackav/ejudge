@@ -333,7 +333,7 @@ run_program(
   if (packet->max_vm_size > 0) {
     task_SetVMSize(tsk, packet->max_vm_size);
   }
-  task_SetMaxProcCount(tsk, 1);
+  task_SetMaxProcessCount(tsk, 1);
   if (packet->enable_secure_run > 0) {
     task_EnableSecureExec(tsk);
   }
