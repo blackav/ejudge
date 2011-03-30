@@ -99,6 +99,15 @@ struct tTask
   int    quiet_flag;            /* be quiet */
   int    enable_all_signals;    /* unmask all signals after fork */
   int    enable_process_group;  /* create a new process group */
+  ssize_t max_core_size;        /* maximum size of core files */
+  ssize_t max_file_size;        /* maximum size of created files */
+  ssize_t max_locked_mem_size;  /* maximum size of locked memory */
+  ssize_t max_msg_queue_size;   /* maximum size of POSIX message queues */
+  int    max_nice_value;        /* max priority */
+  int    max_open_file_count;   /* max number of open files per process */
+  int    max_process_count;     /* max number of created processes/threads */
+  int    max_prio_value;        /* max real-time priority */
+  int    max_pending_count;     /* max number of pending signals */
   struct rusage usage;          /* process resource utilization */
   struct timeval start_time;    /* start real-time */
   struct timeval stop_time;     /* stop real-time */
@@ -374,6 +383,16 @@ task_New(void)
   r = xcalloc(1, sizeof(tTask));
   r->state = TSK_STOPPED;
   r->termsig = SIGTERM;
+
+  r->max_core_size = -1;
+  r->max_file_size = -1;
+  r->max_locked_mem_size = -1;
+  r->max_msg_queue_size = -1;
+  r->max_nice_value = -1;
+  r->max_open_file_count = -1;
+  r->max_process_count = -1;
+  r->max_prio_value = -1;
+  r->max_pending_count = -1;
 
   /* find an empty slot */
   for (i = 0; i < task_u; i++)
@@ -799,13 +818,6 @@ task_SetMaxRealTime(tTask *tsk, int time)
   return 0;
 }
 
-int
-task_SetMaxProcCount(tTask *tsk, int cnt)
-{
-  // not implemented
-  return 0;
-}
-
 /**
  * NAME:    task_SetRedir
  * PURPOSE: set file descriptiors redirections
@@ -979,6 +991,87 @@ task_EnableProcessGroup(tTask *tsk)
   task_init_module();
   ASSERT(tsk);
   tsk->enable_process_group = 1;
+  return 0;
+}
+
+int
+task_SetMaxCoreSize(tTask *tsk, ssize_t max_core_size)
+{
+  task_init_module();
+  ASSERT(tsk);
+  tsk->max_core_size = max_core_size;
+  return 0;
+}
+
+int
+task_SetMaxFileSize(tTask *tsk, ssize_t max_file_size)
+{
+  task_init_module();
+  ASSERT(tsk);
+  tsk->max_file_size = max_file_size;
+  return 0;
+}
+
+int
+task_SetMaxLockedMemorySize(tTask *tsk, ssize_t max_locked_mem_size)
+{
+  task_init_module();
+  ASSERT(tsk);
+  tsk->max_locked_mem_size = max_locked_mem_size;
+  return 0;
+}
+
+int
+task_SetMaxMessageQueueSize(tTask *tsk, ssize_t max_msg_queue_size)
+{
+  task_init_module();
+  ASSERT(tsk);
+  tsk->max_msg_queue_size = max_msg_queue_size;
+  return 0;
+}
+
+int
+task_SetMaxNiceValue(tTask *tsk, ssize_t max_nice_value)
+{
+  task_init_module();
+  ASSERT(tsk);
+  tsk->max_nice_value = max_nice_value;
+  return 0;
+}
+
+int
+task_SetMaxOpenFileCount(tTask *tsk, ssize_t max_open_file_count)
+{
+  task_init_module();
+  ASSERT(tsk);
+  tsk->max_open_file_count = max_open_file_count;
+  return 0;
+}
+
+int
+task_SetMaxProcessCount(tTask *tsk, ssize_t max_process_count)
+{
+  task_init_module();
+  ASSERT(tsk);
+  tsk->max_process_count = max_process_count;
+  return 0;
+}
+
+int
+task_SetMaxPrioValue(tTask *tsk, ssize_t max_prio_value)
+{
+  task_init_module();
+  ASSERT(tsk);
+  tsk->max_prio_value = max_prio_value;
+  return 0;
+}
+
+int
+task_SetMaxPendingCount(tTask *tsk, ssize_t max_pending_count)
+{
+  task_init_module();
+  ASSERT(tsk);
+  tsk->max_pending_count = max_pending_count;
   return 0;
 }
 
@@ -1233,6 +1326,22 @@ format_exitcode(tTask *tsk, char *buf, int size, int code, int err)
 
 #define MAKECODE(c,e) (((c & 0xFF) << 16) | (e & 0xFFFF))
 
+static void
+set_limit(int fd, int resource, rlim_t value)
+{
+  struct rlimit lim;
+  int code;
+
+  memset(&lim, 0, sizeof(lim));
+  lim.rlim_cur = value;
+  lim.rlim_max = value;
+  if (setrlimit(resource, &lim) < 0) {
+    code = MAKECODE(TASK_ERR_RLIMIT_FAILED, errno);
+    write(fd, &code, sizeof(code));
+    _exit(TASK_ERR_RLIMIT_FAILED);
+  }
+}
+
 /**
  * NAME:    task_Start
  * PURPOSE: start a task
@@ -1248,6 +1357,7 @@ task_Start(tTask *tsk)
   tRedir *rdr;
   char    errbuf[512];
   sigset_t ss;
+  struct rlimit lim;
 
   task_init_module();
   ASSERT(tsk);
@@ -1301,11 +1411,10 @@ task_Start(tTask *tsk)
 
   /* get the number of communication fd and create status pipe */
   {
-    struct rlimit rlim;
     int           pp[2];
 
-    getrlimit(RLIMIT_NOFILE, &rlim);
-    comm_fd = rlim.rlim_cur - 3;
+    getrlimit(RLIMIT_NOFILE, &lim);
+    comm_fd = lim.rlim_cur - 3;
     if (pipe(pp) < 0) {
       tsk->state = TSK_ERROR;
       tsk->pid = 1;
@@ -1596,56 +1705,49 @@ task_Start(tTask *tsk)
     }
 
     if (tsk->disable_core) {
-      struct rlimit lim;
-      memset(&lim, 0, sizeof(lim));
-      if (setrlimit(RLIMIT_CORE, &lim) < 0) {
-        code = MAKECODE(TASK_ERR_RLIMIT_FAILED, errno);
-        write(comm_fd + 1, &code, sizeof(code));
-        _exit(TASK_ERR_RLIMIT_FAILED);
-      }
+      set_limit(comm_fd + 1, RLIMIT_CORE, 0);
     }
-
     if (tsk->max_stack_size > 0) {
-      struct rlimit lim;
-      memset(&lim, 0, sizeof(lim));
-      lim.rlim_cur = tsk->max_stack_size;
-      lim.rlim_max = tsk->max_stack_size;
-      if (setrlimit(RLIMIT_STACK, &lim) < 0) {
-        code = MAKECODE(TASK_ERR_RLIMIT_FAILED, errno);
-        write(comm_fd + 1, &code, sizeof(code));
-        _exit(TASK_ERR_RLIMIT_FAILED);
-      }
+      set_limit(comm_fd + 1, RLIMIT_STACK, tsk->max_stack_size);
     }
-
     if (tsk->max_data_size > 0) {
-      struct rlimit lim;
-      memset(&lim, 0, sizeof(lim));
-      lim.rlim_cur = tsk->max_data_size;
-      lim.rlim_max = tsk->max_data_size;
-      if (setrlimit(RLIMIT_DATA, &lim) < 0) {
-        code = MAKECODE(TASK_ERR_RLIMIT_FAILED, errno);
-        write(comm_fd + 1, &code, sizeof(code));
-        _exit(TASK_ERR_RLIMIT_FAILED);
-      }
+      set_limit(comm_fd + 1, RLIMIT_DATA, tsk->max_data_size);
     }
-
     if (tsk->max_vm_size > 0) {
-      struct rlimit lim;
-      memset(&lim, 0, sizeof(lim));
-      lim.rlim_cur = tsk->max_vm_size;
-      lim.rlim_max = tsk->max_vm_size;
-      if (setrlimit(RLIMIT_AS, &lim) < 0) {
-        code = MAKECODE(TASK_ERR_RLIMIT_FAILED, errno);
-        write(comm_fd + 1, &code, sizeof(code));
-        _exit(TASK_ERR_RLIMIT_FAILED);
-      }
+      set_limit(comm_fd + 1, RLIMIT_AS, tsk->max_vm_size);
+    }
+    if (tsk->max_core_size >= 0) {
+      set_limit(comm_fd + 1, RLIMIT_CORE, tsk->max_core_size);
+    }
+    if (tsk->max_file_size >= 0) {
+      set_limit(comm_fd + 1, RLIMIT_FSIZE, tsk->max_file_size);
+    }
+    if (tsk->max_locked_mem_size >= 0) {
+      set_limit(comm_fd + 1, RLIMIT_MEMLOCK, tsk->max_locked_mem_size);
+    }
+    if (tsk->max_msg_queue_size >= 0) {
+      set_limit(comm_fd + 1, RLIMIT_MSGQUEUE, tsk->max_msg_queue_size);
+    }
+    if (tsk->max_nice_value >= 0) {
+      set_limit(comm_fd + 1, RLIMIT_NICE, tsk->max_nice_value);
+    }
+    if (tsk->max_open_file_count >= 0) {
+      set_limit(comm_fd + 1, RLIMIT_NOFILE, tsk->max_open_file_count);
+    }
+    if (tsk->max_process_count >= 0) {
+      set_limit(comm_fd + 1, RLIMIT_NPROC, tsk->max_process_count);
+    }
+    if (tsk->max_prio_value >= 0) {
+      set_limit(comm_fd + 1, RLIMIT_RTPRIO, tsk->max_prio_value);
+    }
+    if (tsk->max_pending_count >= 0) {
+      set_limit(comm_fd + 1, RLIMIT_SIGPENDING, tsk->max_pending_count);
     }
 
     /* set millisecond time limit */
 #ifdef __linux__
     if (linux_ms_time_limit > 0 && tsk->max_time_millis > 0) {
       // the kernel supports millisecond-precise time-limits
-      struct rlimit lim;
       memset(&lim, 0, sizeof(lim));
       lim.rlim_cur = tsk->max_time_millis;
       lim.rlim_max = tsk->max_time_millis;
@@ -1668,7 +1770,6 @@ task_Start(tTask *tsk)
 #endif
 
     if (tsk->max_time > 0) {
-      struct rlimit lim;
       memset(&lim, 0, sizeof(lim));
 
 #ifdef __linux__
@@ -2096,6 +2197,7 @@ linux_set_fix_flag(void)
   int pid, status, retcode, mjver = 0, mnver = 0, patch = 0;
   struct rusage usage;
   struct utsname buf;
+  struct rlimit lim;
 
   if (linux_fix_time_flag >= 0) return;
   if (linux_ms_time_limit >= 0) return;
@@ -2127,8 +2229,6 @@ linux_set_fix_flag(void)
   if (linux_rlimit_code > 0) {
     if ((pid = fork()) < 0) return;
     if (!pid) {
-      struct rlimit lim;
-
       memset(&lim, 0, sizeof(lim));
       lim.rlim_cur = 1000;
       lim.rlim_max = 1000;
@@ -2147,8 +2247,6 @@ linux_set_fix_flag(void)
   if (linux_fix_time_flag < 0) {
     if ((pid = fork()) < 0) return;
     if (!pid) {
-      struct rlimit lim;
-
       memset(&lim, 0, sizeof(lim));
       lim.rlim_cur = 0;
       lim.rlim_max = 0;
