@@ -52,8 +52,6 @@ run_request_packet_read(
   FAIL_IF(pkt_bin_align(in_size) != in_size);
   packet_len = cvt_bin_to_host_32(pin->packet_len);
   FAIL_IF(packet_len != in_size);
-  version = cvt_bin_to_host_32(pin->version);
-  FAIL_IF(version != RUN_REQUEST_PACKET_VERSION);
 
   XCALLOC(pout, 1);
 
@@ -63,6 +61,10 @@ run_request_packet_read(
     *p_out_data = pout;
     return 0;
   }
+
+  version = cvt_bin_to_host_32(pin->version);
+  FAIL_IF(version != RUN_REQUEST_PACKET_VERSION);
+
   FAIL_IF(pout->contest_id <= 0 || pout->contest_id > EJ_MAX_CONTEST_ID);
   pout->run_id = cvt_bin_to_host_32(pin->run_id);
   FAIL_IF(pout->run_id < 0 || pout->run_id > EJ_MAX_RUN_ID);
