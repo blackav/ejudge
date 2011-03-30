@@ -349,6 +349,9 @@ serve_load_status_file(serve_state_t state)
       && state->global->is_virtual) {
     state->accepting_mode = 1;
   }
+  if (state->global->score_system != SCORE_OLYMPIAD) {
+    state->accepting_mode = 0;
+  }
   info("load_status_file: accepting_mode = %d", state->accepting_mode);
   state->printing_suspended = status.printing_suspended;
   info("load_status_file: printing_suspended = %d", state->printing_suspended);
