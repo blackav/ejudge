@@ -1116,6 +1116,9 @@ prepare_unparse_prob(
   if (prob->max_data_size != -1L)
     fprintf(f, "max_data_size = %s\n",
             size_t_to_size(size_buf, sizeof(size_buf), prob->max_data_size));
+  if (prob->max_core_size != -1L)
+    fprintf(f, "max_core_size = %s\n",
+            size_t_to_size(size_buf, sizeof(size_buf), prob->max_core_size));
 
   if (score_system == SCORE_KIROV || score_system == SCORE_OLYMPIAD) {
     if (prob->full_score >= 0) {

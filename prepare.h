@@ -991,6 +991,8 @@ struct section_problem_data
   size_t max_data_size;
   /** max stack size limit */
   size_t max_stack_size;
+  /** max allowed size of the core file */
+  size_t max_core_size;
 
   /** external id (for external application binding) */
   unsigned char *extid;

@@ -2922,6 +2922,7 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_PROB_CHANGE_INTERACTOR_TIME_LIMIT:
   case SSERV_CMD_PROB_CHANGE_MAX_VM_SIZE:
   case SSERV_CMD_PROB_CHANGE_MAX_STACK_SIZE:
+  case SSERV_CMD_PROB_CHANGE_MAX_CORE_SIZE:
   case SSERV_CMD_PROB_CHANGE_INPUT_FILE:
   case SSERV_CMD_PROB_CLEAR_INPUT_FILE:
   case SSERV_CMD_PROB_CHANGE_OUTPUT_FILE:
@@ -3872,6 +3873,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_CHANGE_INTERACTOR_TIME_LIMIT] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_MAX_VM_SIZE] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_MAX_STACK_SIZE] = { cmd_set_value },
+  [SSERV_CMD_PROB_CHANGE_MAX_CORE_SIZE] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_INPUT_FILE] = { cmd_set_value },
   [SSERV_CMD_PROB_CLEAR_INPUT_FILE] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_OUTPUT_FILE] = { cmd_set_value },
