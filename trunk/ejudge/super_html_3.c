@@ -5024,6 +5024,40 @@ super_html_print_problem(FILE *f,
     fprintf(f, "</td></tr></form>\n");
   }
 
+  //PROBLEM_PARAM(max_core_size, "d"),
+  if (show_adv) {
+    extra_msg = "";
+    if (prob->abstract) {
+      if (prob->max_core_size == -1L)
+        extra_msg = "<i>(OS Limit)</i>";
+    } else {
+      if (prob->max_core_size == -1L) {
+        prepare_set_prob_value(CNTSPROB_max_core_size,
+                               tmp_prob, sup_prob, sstate->global);
+        if (tmp_prob->max_core_size == -1L)
+          snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - OS Limit)</i>");
+      else
+        snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %s)</i>",
+                 size_t_to_size_str(num_buf, sizeof(num_buf), tmp_prob->max_core_size));
+        extra_msg = msg_buf;
+      }
+    }
+    if (prob->max_core_size == -1L) {
+      num_buf[0] = 0;
+    } else {
+      size_t_to_size_str(num_buf, sizeof(num_buf), tmp_prob->max_core_size);
+    }
+    if (!problem_type_flag) {
+      html_start_form(f, 1, self_url, prob_hidden_vars);
+      fprintf(f, "<tr%s><td>%s</td><td>", form_row_attrs[row ^= 1],
+              "Maximum core file size:");
+      html_edit_text_form(f, 0, 0, "param", num_buf);
+      fprintf(f, "%s</td><td>", extra_msg);
+      html_submit_button(f, SSERV_CMD_PROB_CHANGE_MAX_CORE_SIZE, "Change");
+      fprintf(f, "</td></tr></form>\n");
+    }
+  }
+
   //PROBLEM_PARAM(checker_real_time_limit, "d"),
   if (show_adv) {
     extra_msg = "";
@@ -6954,6 +6988,10 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_PROB_CHANGE_MAX_STACK_SIZE:
     p_size = &prob->max_stack_size;
+    goto handle_size_t;
+
+  case SSERV_CMD_PROB_CHANGE_MAX_CORE_SIZE:
+    p_size = &prob->max_core_size;
     goto handle_size_t;
 
   case SSERV_CMD_PROB_CHANGE_INPUT_FILE:

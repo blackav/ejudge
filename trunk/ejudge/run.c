@@ -2084,6 +2084,10 @@ run_tests(struct section_tester_data *tst,
 #endif
       task_EnableAllSignals(tsk);
 
+      if (prb->max_core_size != -1L) {
+        task_SetMaxCoreSize(tsk, prb->max_core_size);
+      }
+
       if (task_Start(tsk) < 0) {
         /* failed to start task */
         status = RUN_CHECK_FAILED;
