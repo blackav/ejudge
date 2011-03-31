@@ -86,6 +86,7 @@ compile_request_packet_read(
 
   pout->max_vm_size = (size_t) cvt_bin_to_host_64(pin->max_vm_size);
   pout->max_stack_size = (size_t) cvt_bin_to_host_64(pin->max_stack_size);
+  pout->max_file_size = (size_t) cvt_bin_to_host_64(pin->max_file_size);
 
   /* extract the additional data */
   // set up the additional data pointer

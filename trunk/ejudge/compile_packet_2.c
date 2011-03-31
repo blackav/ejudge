@@ -137,6 +137,7 @@ compile_request_packet_write(
   out_data->ts1_us = cvt_host_to_bin_32(in_data->ts1_us);
   out_data->max_vm_size = cvt_host_to_bin_64(in_data->max_vm_size);
   out_data->max_stack_size = cvt_host_to_bin_64(in_data->max_stack_size);
+  out_data->max_file_size = cvt_host_to_bin_64(in_data->max_file_size);
   out_data->style_checker_len = cvt_host_to_bin_32(style_checker_len);
   out_data->src_sfx_len = cvt_host_to_bin_32(src_sfx_len);
   out_data->run_block_len = cvt_host_to_bin_32(in_data->run_block_len);

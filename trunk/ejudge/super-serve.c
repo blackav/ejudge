@@ -2830,6 +2830,7 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_LANG_CHANGE_BINARY:
   case SSERV_CMD_LANG_CHANGE_MAX_VM_SIZE:
   case SSERV_CMD_LANG_CHANGE_MAX_STACK_SIZE:
+  case SSERV_CMD_LANG_CHANGE_MAX_FILE_SIZE:
   case SSERV_CMD_LANG_CHANGE_CONTENT_TYPE:
   case SSERV_CMD_LANG_CLEAR_CONTENT_TYPE:
   case SSERV_CMD_LANG_CHANGE_OPTS:
@@ -2923,6 +2924,9 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_PROB_CHANGE_MAX_VM_SIZE:
   case SSERV_CMD_PROB_CHANGE_MAX_STACK_SIZE:
   case SSERV_CMD_PROB_CHANGE_MAX_CORE_SIZE:
+  case SSERV_CMD_PROB_CHANGE_MAX_FILE_SIZE:
+  case SSERV_CMD_PROB_CHANGE_MAX_OPEN_FILE_COUNT:
+  case SSERV_CMD_PROB_CHANGE_MAX_PROCESS_COUNT:
   case SSERV_CMD_PROB_CHANGE_INPUT_FILE:
   case SSERV_CMD_PROB_CLEAR_INPUT_FILE:
   case SSERV_CMD_PROB_CHANGE_OUTPUT_FILE:
@@ -3788,6 +3792,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_LANG_CHANGE_BINARY] = { cmd_set_value },
   [SSERV_CMD_LANG_CHANGE_MAX_VM_SIZE] = { cmd_set_value },
   [SSERV_CMD_LANG_CHANGE_MAX_STACK_SIZE] = { cmd_set_value },
+  [SSERV_CMD_LANG_CHANGE_MAX_FILE_SIZE] = { cmd_set_value },
   [SSERV_CMD_LANG_CHANGE_OPTS] = { cmd_set_value },
   [SSERV_CMD_LANG_CLEAR_OPTS] = { cmd_set_value },
   [SSERV_CMD_LANG_CHANGE_STYLE_CHECKER_CMD] = { cmd_set_value },
@@ -3874,6 +3879,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_CHANGE_MAX_VM_SIZE] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_MAX_STACK_SIZE] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_MAX_CORE_SIZE] = { cmd_set_value },
+  [SSERV_CMD_PROB_CHANGE_MAX_FILE_SIZE] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_INPUT_FILE] = { cmd_set_value },
   [SSERV_CMD_PROB_CLEAR_INPUT_FILE] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_OUTPUT_FILE] = { cmd_set_value },

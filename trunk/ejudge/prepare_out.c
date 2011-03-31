@@ -865,6 +865,10 @@ prepare_unparse_lang(
     fprintf(f, "max_stack_size = %s\n",
             size_t_to_size(size_buf, sizeof(size_buf), lang->max_stack_size));
   }
+  if (lang->max_file_size != -1L && lang->max_file_size != 0) {
+    fprintf(f, "max_file_size = %s\n",
+            size_t_to_size(size_buf, sizeof(size_buf), lang->max_file_size));
+  }
 
   if (lang->compiler_env) {
     for (i = 0; lang->compiler_env[i]; i++) {
@@ -1119,6 +1123,15 @@ prepare_unparse_prob(
   if (prob->max_core_size != -1L)
     fprintf(f, "max_core_size = %s\n",
             size_t_to_size(size_buf, sizeof(size_buf), prob->max_core_size));
+  if (prob->max_file_size != -1L)
+    fprintf(f, "max_file_size = %s\n",
+            size_t_to_size(size_buf, sizeof(size_buf), prob->max_file_size));
+  if (prob->max_open_file_count >= 0) {
+    fprintf(f, "max_open_file_count = %d\n", prob->max_open_file_count);
+  }
+  if (prob->max_process_count >= 0) {
+    fprintf(f, "max_process_count = %d\n", prob->max_process_count);
+  }
 
   if (score_system == SCORE_KIROV || score_system == SCORE_OLYMPIAD) {
     if (prob->full_score >= 0) {

@@ -397,6 +397,9 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(max_stack_size, "z"),
   PROBLEM_PARAM(max_data_size, "z"),
   PROBLEM_PARAM(max_core_size, "z"),
+  PROBLEM_PARAM(max_file_size, "z"),
+  PROBLEM_PARAM(max_open_file_count, "d"),
+  PROBLEM_PARAM(max_process_count, "d"),
   PROBLEM_PARAM_2(type, do_problem_parse_type),
   PROBLEM_PARAM(interactor_time_limit, "d"),
 
@@ -491,6 +494,7 @@ static const struct config_parse_info section_language_params[] =
   LANGUAGE_PARAM(disable_testing, "d"),
   LANGUAGE_PARAM(max_vm_size, "z"),
   LANGUAGE_PARAM(max_stack_size, "z"),
+  LANGUAGE_PARAM(max_file_size, "z"),
 
   LANGUAGE_PARAM(compile_dir, "s"),
   LANGUAGE_PARAM(compile_dir_index, "d"),
@@ -888,6 +892,9 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->max_stack_size = -1L;
   p->max_data_size = -1L;
   p->max_core_size = -1L;
+  p->max_file_size = -1L;
+  p->max_open_file_count = -1;
+  p->max_process_count = -1;
   p->interactor_time_limit = -1;
 }
 
@@ -3261,6 +3268,9 @@ set_defaults(
     prepare_set_prob_value(CNTSPROB_max_stack_size, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_max_data_size, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_max_core_size, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_max_file_size, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_max_open_file_count, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_max_process_count, prob, aprob, g);
 
     prepare_set_prob_value(CNTSPROB_source_header, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_source_footer, prob, aprob, g);
@@ -5736,6 +5746,21 @@ prepare_set_prob_value(
       out->max_core_size = abstr->max_core_size;
     break;
 
+  case CNTSPROB_max_file_size:
+    if (out->max_file_size == -1L && abstr)
+      out->max_file_size = abstr->max_file_size;
+    break;
+
+  case CNTSPROB_max_open_file_count:
+    if (out->max_open_file_count < 0 && abstr)
+      out->max_open_file_count = abstr->max_open_file_count;
+    break;
+
+  case CNTSPROB_max_process_count:
+    if (out->max_process_count < 0 && abstr)
+      out->max_process_count = abstr->max_process_count;
+    break;
+
   case CNTSPROB_input_file:
     if (!out->input_file[0] && abstr && abstr->input_file[0]) {
       sformat_message(out->input_file, PATH_MAX, 0, abstr->input_file,
@@ -6099,7 +6124,8 @@ static const int prob_settable_list[] =
   CNTSPROB_stand_ignore_score, CNTSPROB_stand_last_column,
   CNTSPROB_score_multiplier, CNTSPROB_prev_runs_to_show,
   CNTSPROB_max_vm_size, CNTSPROB_max_stack_size, CNTSPROB_max_data_size,
-  CNTSPROB_max_core_size,
+  CNTSPROB_max_core_size, CNTSPROB_max_file_size,
+  CNTSPROB_max_open_file_count, CNTSPROB_max_process_count,
   CNTSPROB_test_dir, CNTSPROB_test_sfx,
   CNTSPROB_corr_dir, CNTSPROB_corr_sfx, CNTSPROB_info_dir, CNTSPROB_info_sfx,
   CNTSPROB_tgz_dir, CNTSPROB_tgz_sfx, CNTSPROB_input_file,
@@ -6192,6 +6218,9 @@ static const unsigned char prob_settable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_max_stack_size] = 1,
   [CNTSPROB_max_data_size] = 1,
   [CNTSPROB_max_core_size] = 1,
+  [CNTSPROB_max_file_size] = 1,
+  [CNTSPROB_max_open_file_count] = 1,
+  [CNTSPROB_max_process_count] = 1,
   [CNTSPROB_super] = 1,
   [CNTSPROB_short_name] = 1,
   [CNTSPROB_long_name] = 1,
@@ -6285,7 +6314,8 @@ static const int prob_inheritable_list[] =
   CNTSPROB_stand_last_column, CNTSPROB_score_multiplier,
   CNTSPROB_prev_runs_to_show, CNTSPROB_max_vm_size,
   CNTSPROB_max_stack_size, CNTSPROB_max_data_size,
-  CNTSPROB_max_core_size,
+  CNTSPROB_max_core_size, CNTSPROB_max_file_size,
+  CNTSPROB_max_open_file_count, CNTSPROB_max_process_count,
   CNTSPROB_test_dir, CNTSPROB_test_sfx, CNTSPROB_corr_dir, CNTSPROB_corr_sfx,
   CNTSPROB_info_dir, CNTSPROB_info_sfx, CNTSPROB_tgz_dir, CNTSPROB_tgz_sfx,
   CNTSPROB_input_file, CNTSPROB_output_file, CNTSPROB_test_score_list,
@@ -6375,6 +6405,9 @@ static const unsigned char prob_inheritable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_max_stack_size] = 1,
   [CNTSPROB_max_data_size] = 1,
   [CNTSPROB_max_core_size] = 1,
+  [CNTSPROB_max_file_size] = 1,
+  [CNTSPROB_max_open_file_count] = 1,
+  [CNTSPROB_max_process_count] = 1,
   [CNTSPROB_test_dir] = 1,
   [CNTSPROB_test_sfx] = 1,
   [CNTSPROB_corr_dir] = 1,
@@ -6557,6 +6590,9 @@ static const struct section_problem_data prob_undef_values =
   .max_data_size = (size_t) -1,
   .max_stack_size = (size_t) -1,
   .max_core_size = (size_t) -1,
+  .max_file_size = (size_t) -1,
+  .max_open_file_count = -1,
+  .max_process_count = -1,
   .score_view = 0,
 };
 
@@ -6672,6 +6708,9 @@ static const struct section_problem_data prob_default_values =
   .max_data_size = 0,
   .max_stack_size = 0,
   .max_core_size = -1L,
+  .max_file_size = -1L,
+  .max_open_file_count = -1,
+  .max_process_count = -1,
 };
 
 static const int prob_global_map[CNTSPROB_LAST_FIELD] =

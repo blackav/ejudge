@@ -37,6 +37,7 @@ struct compile_request_bin_packet
   rint32_t output_only;         /* the problem is output only */
   ruint64_t max_vm_size;        /* the process VM limit */
   ruint64_t max_stack_size;     /* the process stack size */
+  ruint64_t max_file_size;      /* the maximum file size */
   rint32_t style_check_only;    /* only perform style check */
   rint32_t ts1;                 /* the time, when comp. request was queued */
   rint32_t ts1_us;              /* the microsecond component */

@@ -3577,6 +3577,20 @@ super_html_edit_languages(
     html_submit_button(f, SSERV_CMD_LANG_CHANGE_MAX_STACK_SIZE, "Change");
     fprintf(f, "</td></tr></form>\n");
 
+    //LANGUAGE_PARAM(max_file_size, "d"),
+    if (lang->max_file_size == -1L || lang->max_file_size == 0) {
+      num_buf[0] = 0;
+    } else {
+      num_to_size_str(num_buf, sizeof(num_buf), lang->max_file_size);
+    }
+    html_start_form(f, 1, self_url, lang_hidden_vars);
+    fprintf(f, "<tr%s><td>%s</td><td>",
+            form_row_attrs[row ^= 1], "Maximum file size:");
+    html_edit_text_form(f, 0, 0, "param", num_buf);
+    fprintf(f, "</td><td>");
+    html_submit_button(f, SSERV_CMD_LANG_CHANGE_MAX_FILE_SIZE, "Change");
+    fprintf(f, "</td></tr></form>\n");
+
     if (lang->binary) {
       //LANGUAGE_PARAM(content_type, "s"),
       print_string_editing_row(f, "Content type for files:", lang->content_type,
@@ -3788,6 +3802,7 @@ super_html_lang_activate(
   lang->compile_dir_index = cs_lang->compile_dir_index;
   lang->max_vm_size = cs_lang->max_vm_size;
   lang->max_stack_size = cs_lang->max_stack_size;
+  lang->max_file_size = cs_lang->max_file_size;
 }
 
 void
@@ -3951,6 +3966,10 @@ super_html_lang_cmd(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_LANG_CHANGE_MAX_STACK_SIZE:
     p_size = &pl_new->max_stack_size;
+    goto handle_size_t;
+
+  case SSERV_CMD_LANG_CHANGE_MAX_FILE_SIZE:
+    p_size = &pl_new->max_file_size;
     goto handle_size_t;
 
   case SSERV_CMD_LANG_CHANGE_OPTS:
@@ -4989,7 +5008,7 @@ super_html_print_problem(FILE *f,
   }
 
   if (!problem_type_flag && show_adv) {
-    //PROBLEM_PARAM(max_stack_size, "d"),
+    //PROBLEM_PARAM(max_stack_size, "z"),
     extra_msg = "";
     if (prob->abstract) {
       /*
@@ -5024,7 +5043,7 @@ super_html_print_problem(FILE *f,
     fprintf(f, "</td></tr></form>\n");
   }
 
-  //PROBLEM_PARAM(max_core_size, "d"),
+  //PROBLEM_PARAM(max_core_size, "z"),
   if (show_adv) {
     extra_msg = "";
     if (prob->abstract) {
@@ -5057,6 +5076,114 @@ super_html_print_problem(FILE *f,
       fprintf(f, "</td></tr></form>\n");
     }
   }
+
+  //PROBLEM_PARAM(max_file_size, "z"),
+  if (show_adv) {
+    extra_msg = "";
+    if (prob->abstract) {
+      if (prob->max_file_size == -1L)
+        extra_msg = "<i>(OS Limit)</i>";
+    } else {
+      if (prob->max_file_size == -1L) {
+        prepare_set_prob_value(CNTSPROB_max_file_size,
+                               tmp_prob, sup_prob, sstate->global);
+        if (tmp_prob->max_file_size == -1L)
+          snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - OS Limit)</i>");
+      else
+        snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %s)</i>",
+                 size_t_to_size_str(num_buf, sizeof(num_buf), tmp_prob->max_file_size));
+        extra_msg = msg_buf;
+      }
+    }
+    if (prob->max_file_size == -1L) {
+      num_buf[0] = 0;
+    } else {
+      size_t_to_size_str(num_buf, sizeof(num_buf), tmp_prob->max_file_size);
+    }
+    if (!problem_type_flag) {
+      html_start_form(f, 1, self_url, prob_hidden_vars);
+      fprintf(f, "<tr%s><td>%s</td><td>", form_row_attrs[row ^= 1],
+              "Maximum file size:");
+      html_edit_text_form(f, 0, 0, "param", num_buf);
+      fprintf(f, "%s</td><td>", extra_msg);
+      html_submit_button(f, SSERV_CMD_PROB_CHANGE_MAX_FILE_SIZE, "Change");
+      fprintf(f, "</td></tr></form>\n");
+    }
+  }
+
+
+
+
+  //PROBLEM_PARAM(max_open_file_count, "d"),
+  if (show_adv) {
+    extra_msg = "";
+    if (prob->abstract) {
+      if (prob->max_open_file_count < 0)
+        extra_msg = "<i>(OS Limit)</i>";
+    } else {
+      if (prob->max_open_file_count < 0) {
+        prepare_set_prob_value(CNTSPROB_max_open_file_count,
+                               tmp_prob, sup_prob, sstate->global);
+        if (tmp_prob->max_open_file_count < 0)
+          snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - OS Limit)</i>");
+        else
+          snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %d)</i>",
+                   tmp_prob->max_open_file_count);
+        extra_msg = msg_buf;
+      }
+    }
+    if (prob->max_open_file_count < 0) {
+      num_buf[0] = 0;
+    } else {
+      snprintf(num_buf, sizeof(num_buf), "%d", tmp_prob->max_open_file_count);
+    }
+    if (!problem_type_flag) {
+      html_start_form(f, 1, self_url, prob_hidden_vars);
+      fprintf(f, "<tr%s><td>%s</td><td>", form_row_attrs[row ^= 1],
+              "Maximum open file count:");
+      html_edit_text_form(f, 0, 0, "param", num_buf);
+      fprintf(f, "%s</td><td>", extra_msg);
+      html_submit_button(f,SSERV_CMD_PROB_CHANGE_MAX_OPEN_FILE_COUNT,"Change");
+      fprintf(f, "</td></tr></form>\n");
+    }
+  }
+
+  //PROBLEM_PARAM(max_process_count, "d"),
+  if (show_adv) {
+    extra_msg = "";
+    if (prob->abstract) {
+      if (prob->max_process_count < 0)
+        extra_msg = "<i>(OS Limit)</i>";
+    } else {
+      if (prob->max_process_count < 0) {
+        prepare_set_prob_value(CNTSPROB_max_process_count,
+                               tmp_prob, sup_prob, sstate->global);
+        if (tmp_prob->max_process_count < 0)
+          snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - OS Limit)</i>");
+        else
+          snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %d)</i>",
+                   tmp_prob->max_process_count);
+        extra_msg = msg_buf;
+      }
+    }
+    if (prob->max_process_count < 0) {
+      num_buf[0] = 0;
+    } else {
+      snprintf(num_buf, sizeof(num_buf), "%d", tmp_prob->max_process_count);
+    }
+    if (!problem_type_flag) {
+      html_start_form(f, 1, self_url, prob_hidden_vars);
+      fprintf(f, "<tr%s><td>%s</td><td>", form_row_attrs[row ^= 1],
+              "Maximum process count:");
+      html_edit_text_form(f, 0, 0, "param", num_buf);
+      fprintf(f, "%s</td><td>", extra_msg);
+      html_submit_button(f,SSERV_CMD_PROB_CHANGE_MAX_PROCESS_COUNT, "Change");
+      fprintf(f, "</td></tr></form>\n");
+    }
+  }
+
+
+
 
   //PROBLEM_PARAM(checker_real_time_limit, "d"),
   if (show_adv) {
@@ -6993,6 +7120,18 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
   case SSERV_CMD_PROB_CHANGE_MAX_CORE_SIZE:
     p_size = &prob->max_core_size;
     goto handle_size_t;
+
+  case SSERV_CMD_PROB_CHANGE_MAX_FILE_SIZE:
+    p_size = &prob->max_file_size;
+    goto handle_size_t;
+
+  case SSERV_CMD_PROB_CHANGE_MAX_OPEN_FILE_COUNT:
+    p_int = &prob->max_open_file_count;
+    goto handle_int_1;
+
+  case SSERV_CMD_PROB_CHANGE_MAX_PROCESS_COUNT:
+    p_int = &prob->max_process_count;
+    goto handle_int_1;
 
   case SSERV_CMD_PROB_CHANGE_INPUT_FILE:
     PROB_ASSIGN_STRING(input_file);

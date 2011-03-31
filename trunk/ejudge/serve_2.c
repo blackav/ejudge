@@ -1057,6 +1057,7 @@ serve_compile_request(
   if (lang) {
     cp.max_vm_size = lang->max_vm_size;
     cp.max_stack_size = lang->max_stack_size;
+    cp.max_file_size = lang->max_file_size;
   }
   if (style_checker_cmd && style_checker_cmd[0]) {
     cp.style_checker = (unsigned char*) style_checker_cmd;
