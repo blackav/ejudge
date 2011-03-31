@@ -2087,6 +2087,15 @@ run_tests(struct section_tester_data *tst,
       if (prb->max_core_size != -1L) {
         task_SetMaxCoreSize(tsk, prb->max_core_size);
       }
+      if (prb->max_file_size != -1L) {
+        task_SetMaxFileSize(tsk, prb->max_file_size);
+      }
+      if (prb->max_open_file_count >= 0) {
+        task_SetMaxOpenFileCount(tsk, prb->max_open_file_count);
+      }
+      if (prb->max_process_count >= 0) {
+        task_SetMaxProcessCount(tsk, prb->max_process_count);
+      }
 
       if (task_Start(tsk) < 0) {
         /* failed to start task */

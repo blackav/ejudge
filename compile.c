@@ -445,6 +445,11 @@ do_loop(void)
         } else if (lang->max_stack_size != 0 && lang->max_stack_size != -1L) {
           task_SetStackSize(tsk, lang->max_stack_size);
         }
+        if (req->max_file_size != 0 && req->max_file_size != -1L) {
+          task_SetMaxFileSize(tsk, req->max_file_size);
+        } else if (lang->max_file_size != 0 && lang->max_file_size != -1L) {
+          task_SetMaxFileSize(tsk, lang->max_file_size);
+        }
 
         if (req->env_num > 0) {
           for (i = 0; i < req->env_num; i++)

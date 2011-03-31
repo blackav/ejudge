@@ -993,6 +993,12 @@ struct section_problem_data
   size_t max_stack_size;
   /** max allowed size of the core file */
   size_t max_core_size;
+  /** max file size */
+  size_t max_file_size;
+  /** max number of opened files per process */
+  int max_open_file_count;
+  /** max number of processes per user */
+  int max_process_count;
 
   /** external id (for external application binding) */
   unsigned char *extid;
@@ -1063,6 +1069,8 @@ struct section_language_data
   size_t max_vm_size;
   /** max stack size limit */
   size_t max_stack_size;
+  /** max file size limit */
+  size_t max_file_size;
 
   /** index of the compile directory in the list of compile servers */
   int compile_dir_index;
