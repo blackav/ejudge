@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2011/03/27 23:55:14
+// Generated 2011/03/31 08:17:48
 
 #include "prepare_meta.h"
 #include "prepare.h"
@@ -465,6 +465,7 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_max_vm_size] = { CNTSPROB_max_vm_size, 'Z', XSIZE(struct section_problem_data, max_vm_size), "max_vm_size", XOFFSET(struct section_problem_data, max_vm_size) },
   [CNTSPROB_max_data_size] = { CNTSPROB_max_data_size, 'Z', XSIZE(struct section_problem_data, max_data_size), "max_data_size", XOFFSET(struct section_problem_data, max_data_size) },
   [CNTSPROB_max_stack_size] = { CNTSPROB_max_stack_size, 'Z', XSIZE(struct section_problem_data, max_stack_size), "max_stack_size", XOFFSET(struct section_problem_data, max_stack_size) },
+  [CNTSPROB_max_core_size] = { CNTSPROB_max_core_size, 'Z', XSIZE(struct section_problem_data, max_core_size), "max_core_size", XOFFSET(struct section_problem_data, max_core_size) },
   [CNTSPROB_extid] = { CNTSPROB_extid, 's', XSIZE(struct section_problem_data, extid), "extid", XOFFSET(struct section_problem_data, extid) },
   [CNTSPROB_unhandled_vars] = { CNTSPROB_unhandled_vars, 's', XSIZE(struct section_problem_data, unhandled_vars), "unhandled_vars", XOFFSET(struct section_problem_data, unhandled_vars) },
   [CNTSPROB_score_view] = { CNTSPROB_score_view, 'x', XSIZE(struct section_problem_data, score_view), "score_view", XOFFSET(struct section_problem_data, score_view) },
