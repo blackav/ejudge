@@ -1704,9 +1704,6 @@ task_Start(tTask *tsk)
       }
     }
 
-    if (tsk->disable_core) {
-      set_limit(comm_fd + 1, RLIMIT_CORE, 0);
-    }
     if (tsk->max_stack_size > 0) {
       set_limit(comm_fd + 1, RLIMIT_STACK, tsk->max_stack_size);
     }
@@ -1718,6 +1715,8 @@ task_Start(tTask *tsk)
     }
     if (tsk->max_core_size >= 0) {
       set_limit(comm_fd + 1, RLIMIT_CORE, tsk->max_core_size);
+    } else if (tsk->disable_core) {
+      set_limit(comm_fd + 1, RLIMIT_CORE, 0);
     }
     if (tsk->max_file_size >= 0) {
       set_limit(comm_fd + 1, RLIMIT_FSIZE, tsk->max_file_size);
