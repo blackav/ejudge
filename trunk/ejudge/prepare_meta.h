@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2011/03/31 08:17:48
+// Generated 2011/04/01 02:56:22
 
 #ifndef __PREPARE_META_H__
 #define __PREPARE_META_H__
@@ -428,6 +428,9 @@ enum
   CNTSPROB_max_data_size,
   CNTSPROB_max_stack_size,
   CNTSPROB_max_core_size,
+  CNTSPROB_max_file_size,
+  CNTSPROB_max_open_file_count,
+  CNTSPROB_max_process_count,
   CNTSPROB_extid,
   CNTSPROB_unhandled_vars,
   CNTSPROB_score_view,
@@ -474,6 +477,7 @@ enum
   CNTSLANG_disable_testing,
   CNTSLANG_max_vm_size,
   CNTSLANG_max_stack_size,
+  CNTSLANG_max_file_size,
   CNTSLANG_compile_dir_index,
   CNTSLANG_compile_dir,
   CNTSLANG_compile_queue_dir,

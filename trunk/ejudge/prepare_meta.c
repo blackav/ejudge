@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2011/03/31 08:17:48
+// Generated 2011/04/01 02:56:22
 
 #include "prepare_meta.h"
 #include "prepare.h"
@@ -466,6 +466,9 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_max_data_size] = { CNTSPROB_max_data_size, 'Z', XSIZE(struct section_problem_data, max_data_size), "max_data_size", XOFFSET(struct section_problem_data, max_data_size) },
   [CNTSPROB_max_stack_size] = { CNTSPROB_max_stack_size, 'Z', XSIZE(struct section_problem_data, max_stack_size), "max_stack_size", XOFFSET(struct section_problem_data, max_stack_size) },
   [CNTSPROB_max_core_size] = { CNTSPROB_max_core_size, 'Z', XSIZE(struct section_problem_data, max_core_size), "max_core_size", XOFFSET(struct section_problem_data, max_core_size) },
+  [CNTSPROB_max_file_size] = { CNTSPROB_max_file_size, 'Z', XSIZE(struct section_problem_data, max_file_size), "max_file_size", XOFFSET(struct section_problem_data, max_file_size) },
+  [CNTSPROB_max_open_file_count] = { CNTSPROB_max_open_file_count, 'i', XSIZE(struct section_problem_data, max_open_file_count), "max_open_file_count", XOFFSET(struct section_problem_data, max_open_file_count) },
+  [CNTSPROB_max_process_count] = { CNTSPROB_max_process_count, 'i', XSIZE(struct section_problem_data, max_process_count), "max_process_count", XOFFSET(struct section_problem_data, max_process_count) },
   [CNTSPROB_extid] = { CNTSPROB_extid, 's', XSIZE(struct section_problem_data, extid), "extid", XOFFSET(struct section_problem_data, extid) },
   [CNTSPROB_unhandled_vars] = { CNTSPROB_unhandled_vars, 's', XSIZE(struct section_problem_data, unhandled_vars), "unhandled_vars", XOFFSET(struct section_problem_data, unhandled_vars) },
   [CNTSPROB_score_view] = { CNTSPROB_score_view, 'x', XSIZE(struct section_problem_data, score_view), "score_view", XOFFSET(struct section_problem_data, score_view) },
@@ -545,6 +548,7 @@ static struct meta_info_item meta_info_section_language_data_data[] =
   [CNTSLANG_disable_testing] = { CNTSLANG_disable_testing, 'B', XSIZE(struct section_language_data, disable_testing), "disable_testing", XOFFSET(struct section_language_data, disable_testing) },
   [CNTSLANG_max_vm_size] = { CNTSLANG_max_vm_size, 'Z', XSIZE(struct section_language_data, max_vm_size), "max_vm_size", XOFFSET(struct section_language_data, max_vm_size) },
   [CNTSLANG_max_stack_size] = { CNTSLANG_max_stack_size, 'Z', XSIZE(struct section_language_data, max_stack_size), "max_stack_size", XOFFSET(struct section_language_data, max_stack_size) },
+  [CNTSLANG_max_file_size] = { CNTSLANG_max_file_size, 'Z', XSIZE(struct section_language_data, max_file_size), "max_file_size", XOFFSET(struct section_language_data, max_file_size) },
   [CNTSLANG_compile_dir_index] = { CNTSLANG_compile_dir_index, 'i', XSIZE(struct section_language_data, compile_dir_index), "compile_dir_index", XOFFSET(struct section_language_data, compile_dir_index) },
   [CNTSLANG_compile_dir] = { CNTSLANG_compile_dir, 'S', XSIZE(struct section_language_data, compile_dir), "compile_dir", XOFFSET(struct section_language_data, compile_dir) },
   [CNTSLANG_compile_queue_dir] = { CNTSLANG_compile_queue_dir, 'S', XSIZE(struct section_language_data, compile_queue_dir), "compile_queue_dir", XOFFSET(struct section_language_data, compile_queue_dir) },
