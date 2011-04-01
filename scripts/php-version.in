@@ -1,6 +1,6 @@
 #!/bin/sh
 # $Id$
-# Copyright (c) 2008 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2008-2011 Alexander Chernov <cher@ejudge.ru>
 
 LANG_CONFIG_DIR="@lang_config_dir@"
 
@@ -40,7 +40,7 @@ then
 
   [ "${verbose}" = 1 ] && echo -n "checking whether PHP is available..." >&2
   "${php}" --version >/dev/null 2>&1 || failure
-  version=`"${php}" --version 2>&1 | head -1 | gawk '{ print $2; }'` || failure
+  version=`"${php}" --version 2>&1 | grep 'built:' | gawk '{ print $2; }'` || failure
   [ "${version}" != "" ] || failure
   PHPPATH=`which "${php}"` || failure
   [ "${PHPPATH}" != "" ] || failure
@@ -91,4 +91,4 @@ fi
     
 [ x"$1" = x-f ] && echo -n "PHP "
 
-"${PHPPATH}" --version 2>&1 | head -1 | gawk '{ print $2; }'
+"${PHPPATH}" --version 2>&1 | grep 'built:' | gawk '{ print $2; }'
