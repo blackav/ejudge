@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2011/04/01 02:56:22
+// Generated 2011/04/02 00:03:17
 
 #include "prepare_meta.h"
 #include "prepare.h"
@@ -257,6 +257,9 @@ static struct meta_info_item meta_info_section_global_data_data[] =
   [CNTSGLOB_enable_printing] = { CNTSGLOB_enable_printing, 'B', XSIZE(struct section_global_data, enable_printing), "enable_printing", XOFFSET(struct section_global_data, enable_printing) },
   [CNTSGLOB_disable_banner_page] = { CNTSGLOB_disable_banner_page, 'B', XSIZE(struct section_global_data, disable_banner_page), "disable_banner_page", XOFFSET(struct section_global_data, disable_banner_page) },
   [CNTSGLOB_team_page_quota] = { CNTSGLOB_team_page_quota, 'i', XSIZE(struct section_global_data, team_page_quota), "team_page_quota", XOFFSET(struct section_global_data, team_page_quota) },
+  [CNTSGLOB_compile_max_vm_size] = { CNTSGLOB_compile_max_vm_size, 'Z', XSIZE(struct section_global_data, compile_max_vm_size), "compile_max_vm_size", XOFFSET(struct section_global_data, compile_max_vm_size) },
+  [CNTSGLOB_compile_max_stack_size] = { CNTSGLOB_compile_max_stack_size, 'Z', XSIZE(struct section_global_data, compile_max_stack_size), "compile_max_stack_size", XOFFSET(struct section_global_data, compile_max_stack_size) },
+  [CNTSGLOB_compile_max_file_size] = { CNTSGLOB_compile_max_file_size, 'Z', XSIZE(struct section_global_data, compile_max_file_size), "compile_max_file_size", XOFFSET(struct section_global_data, compile_max_file_size) },
   [CNTSGLOB_user_priority_adjustments] = { CNTSGLOB_user_priority_adjustments, 'x', XSIZE(struct section_global_data, user_priority_adjustments), "user_priority_adjustments", XOFFSET(struct section_global_data, user_priority_adjustments) },
   [CNTSGLOB_user_adjustment_info] = { CNTSGLOB_user_adjustment_info, '?', XSIZE(struct section_global_data, user_adjustment_info), NULL, XOFFSET(struct section_global_data, user_adjustment_info) },
   [CNTSGLOB_user_adjustment_map] = { CNTSGLOB_user_adjustment_map, '?', XSIZE(struct section_global_data, user_adjustment_map), NULL, XOFFSET(struct section_global_data, user_adjustment_map) },
