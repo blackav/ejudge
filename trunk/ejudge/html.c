@@ -4767,6 +4767,11 @@ write_xml_team_testing_report(
     xfree(s);
   }
 
+  if (r->valuer_comment) {
+    fprintf(f, "<p><b>%s</b>: %s</p>\n", _("Valuer comments"),
+            ARMOR(r->valuer_comment));
+  }
+
   for (i = 0; i < r->run_tests; ++i) {
     if (!(t = r->tests[i])) continue;
     // TV_NORMAL, TV_FULL, TV_FULLIFMARKED, TV_BRIEF, TV_EXISTS, TV_HIDDEN

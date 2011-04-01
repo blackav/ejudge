@@ -2212,13 +2212,14 @@ super_html_global_param(struct sid_state *sstate, int cmd,
                         int param3, int param4)
 {
   struct section_global_data *global = sstate->global;
-  int hh, mm, n, val, default_val;
+  int hh, mm, n, val, default_val, mult;
   unsigned char *s;
   int *p_int;
   unsigned char *p_str;
   size_t str_size;
   unsigned char **pp_str;
   char **tmp_env = 0;
+  size_t *p_size, zval;
 
   if (!global) return -SSERV_ERR_CONTEST_NOT_EDITED;
 
@@ -2535,6 +2536,31 @@ super_html_global_param(struct sid_state *sstate, int cmd,
   case SSERV_CMD_GLOB_CHANGE_TEAM_PAGE_QUOTA:
     p_int = &global->team_page_quota;
     goto handle_int;
+
+  case SSERV_CMD_GLOB_CHANGE_COMPILE_MAX_VM_SIZE:
+    p_size = &global->compile_max_vm_size;
+
+  handle_size_t:
+    if (!param2) return -SSERV_ERR_INVALID_PARAMETER;
+    if (sscanf(param2, "%d%n", &val, &n) == 1 && !param2[n] && val == -1) {
+      *p_size = -1L;
+      return 0;
+    }
+    if (sscanf(param2, "%zu%n", &zval, &n) != 1)
+      return -SSERV_ERR_INVALID_PARAMETER;
+    if (!(mult = num_suffix(param2 + n))) return -SSERV_ERR_INVALID_PARAMETER;
+    // FIXME: check for overflow
+    zval *= mult;
+    *p_size = zval;
+    return 0;
+
+  case SSERV_CMD_GLOB_CHANGE_COMPILE_MAX_STACK_SIZE:
+    p_size = &global->compile_max_stack_size;
+    goto handle_size_t;
+
+  case SSERV_CMD_GLOB_CHANGE_COMPILE_MAX_FILE_SIZE:
+    p_size = &global->compile_max_file_size;
+    goto handle_size_t;
 
   case SSERV_CMD_GLOB_CHANGE_TEAM_INFO_URL:
     GLOB_SET_STRING(team_info_url);
@@ -3402,6 +3428,48 @@ super_html_edit_languages(
                                extra_args);
 
   fprintf(f, "<table border=\"0\">\n");
+
+  //GLOBAL_PARAM(compile_max_vm_size, "z"),
+  if (((ssize_t) global->compile_max_vm_size) <= 0) {
+    num_buf[0] = 0;
+  } else {
+    num_to_size_str(num_buf, sizeof(num_buf), global->compile_max_vm_size);
+  }
+  html_start_form(f, 1, self_url, hidden_vars);
+  fprintf(f, "<tr%s><td>%s</td><td>",
+          form_row_attrs[row ^= 1], "Maximum VM size for compilers:");
+  html_edit_text_form(f, 0, 0, "param", num_buf);
+  fprintf(f, "</td><td>");
+  html_submit_button(f, SSERV_CMD_GLOB_CHANGE_COMPILE_MAX_VM_SIZE, "Change");
+  fprintf(f, "</td></tr></form>\n");
+
+  //GLOBAL_PARAM(compile_max_stack_size, "z"),
+  if (((ssize_t) global->compile_max_stack_size) <= 0) {
+    num_buf[0] = 0;
+  } else {
+    num_to_size_str(num_buf, sizeof(num_buf), global->compile_max_stack_size);
+  }
+  html_start_form(f, 1, self_url, hidden_vars);
+  fprintf(f, "<tr%s><td>%s</td><td>",
+          form_row_attrs[row ^= 1], "Maximum stack size for compilers:");
+  html_edit_text_form(f, 0, 0, "param", num_buf);
+  fprintf(f, "</td><td>");
+  html_submit_button(f, SSERV_CMD_GLOB_CHANGE_COMPILE_MAX_STACK_SIZE,"Change");
+  fprintf(f, "</td></tr></form>\n");
+
+  //GLOBAL_PARAM(compile_max_file_size, "z"),
+  if (((ssize_t) global->compile_max_file_size) <= 0) {
+    num_buf[0] = 0;
+  } else {
+    num_to_size_str(num_buf, sizeof(num_buf), global->compile_max_file_size);
+  }
+  html_start_form(f, 1, self_url, hidden_vars);
+  fprintf(f, "<tr%s><td>%s</td><td>",
+          form_row_attrs[row ^= 1], "Maximum file size for compilers:");
+  html_edit_text_form(f, 0, 0, "param", num_buf);
+  fprintf(f, "</td><td>");
+  html_submit_button(f, SSERV_CMD_GLOB_CHANGE_COMPILE_MAX_FILE_SIZE, "Change");
+  fprintf(f, "</td></tr></form>\n");
 
   for (i = 1; i < sstate->cs_lang_total; i++) {
     if (!(cs_lang = sstate->cs_langs[i])) continue;

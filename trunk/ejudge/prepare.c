@@ -320,6 +320,10 @@ static const struct config_parse_info section_global_params[] =
 
   GLOBAL_PARAM(load_user_group, "x"),
 
+  GLOBAL_PARAM(compile_max_vm_size, "z"),
+  GLOBAL_PARAM(compile_max_stack_size, "z"),
+  GLOBAL_PARAM(compile_max_file_size, "z"),
+
   { 0, 0, 0, 0 }
 };
 
@@ -758,6 +762,10 @@ global_init_func(struct generic_section_config *gp)
   p->xml_report = -1;
   p->advanced_layout = -1;
   p->disable_auto_refresh = -1;
+
+  p->compile_max_vm_size = -1L;
+  p->compile_max_stack_size = -1L;
+  p->compile_max_file_size = -1L;
 }
 
 static void free_user_adjustment_info(struct user_adjustment_info*);
@@ -5120,6 +5128,10 @@ prepare_new_global_section(int contest_id, const unsigned char *root_dir,
 
   strcpy(global->standings_file_name, DFLT_G_STANDINGS_FILE_NAME);
   global->plog_update_time = DFLT_G_PLOG_UPDATE_TIME;
+
+  global->compile_max_vm_size = -1L;
+  global->compile_max_stack_size = -1L;
+  global->compile_max_file_size = -1L;
 
   /*
   GLOBAL_PARAM(test_sfx, "s"),

@@ -1054,10 +1054,25 @@ serve_compile_request(
   cp.env_num = -1;
   cp.env_vars = (unsigned char**) compiler_env;
   cp.style_check_only = !!style_check_only;
+  cp.max_vm_size = -1L;
+  cp.max_stack_size = -1L;
+  cp.max_file_size = -1L;
   if (lang) {
-    cp.max_vm_size = lang->max_vm_size;
-    cp.max_stack_size = lang->max_stack_size;
-    cp.max_file_size = lang->max_file_size;
+    if (((ssize_t) lang->max_vm_size) > 0) {
+      cp.max_vm_size = lang->max_vm_size;
+    } else if (((ssize_t) global->compile_max_vm_size) > 0) {
+      cp.max_vm_size = global->compile_max_vm_size;
+    }
+    if (((ssize_t) lang->max_stack_size) > 0) {
+      cp.max_stack_size = lang->max_stack_size;
+    } else if (((ssize_t) global->compile_max_stack_size) > 0) {
+      cp.max_stack_size = global->compile_max_stack_size;
+    }
+    if (((ssize_t) lang->max_file_size) > 0) {
+      cp.max_file_size = lang->max_file_size;
+    } else if (((ssize_t) global->compile_max_file_size) > 0) {
+      cp.max_file_size = global->compile_max_file_size;
+    }
   }
   if (style_checker_cmd && style_checker_cmd[0]) {
     cp.style_checker = (unsigned char*) style_checker_cmd;
