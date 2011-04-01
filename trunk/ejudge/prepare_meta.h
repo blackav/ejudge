@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2011/04/01 02:56:22
+// Generated 2011/04/02 00:03:17
 
 #ifndef __PREPARE_META_H__
 #define __PREPARE_META_H__
@@ -252,6 +252,9 @@ enum
   CNTSGLOB_enable_printing,
   CNTSGLOB_disable_banner_page,
   CNTSGLOB_team_page_quota,
+  CNTSGLOB_compile_max_vm_size,
+  CNTSGLOB_compile_max_stack_size,
+  CNTSGLOB_compile_max_file_size,
   CNTSGLOB_user_priority_adjustments,
   CNTSGLOB_user_adjustment_info,
   CNTSGLOB_user_adjustment_map,
