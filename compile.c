@@ -435,20 +435,26 @@ do_loop(void)
         task_AddArg(tsk, exe_name);
         task_SetPathAsArg0(tsk);
         task_EnableProcessGroup(tsk);
-        if (req->max_vm_size != 0 && req->max_vm_size != -1L) {
+        if (((ssize_t) req->max_vm_size) > 0) {
           task_SetVMSize(tsk, req->max_vm_size);
-        } else if (lang->max_vm_size != 0 && lang->max_vm_size != -1L) {
+        } else if (((ssize_t) lang->max_vm_size) > 0) {
           task_SetVMSize(tsk, lang->max_vm_size);
+        } else if (((ssize_t) global->compile_max_vm_size) > 0) {
+          task_SetVMSize(tsk, global->compile_max_vm_size);
         }
-        if (req->max_stack_size != 0 && req->max_stack_size != -1L) {
+        if (((ssize_t) req->max_stack_size) > 0) {
           task_SetStackSize(tsk, req->max_stack_size);
-        } else if (lang->max_stack_size != 0 && lang->max_stack_size != -1L) {
+        } else if (((ssize_t) lang->max_stack_size) > 0) {
           task_SetStackSize(tsk, lang->max_stack_size);
+        } else if (((ssize_t) global->compile_max_stack_size) > 0) {
+          task_SetStackSize(tsk, global->compile_max_stack_size);
         }
-        if (req->max_file_size != 0 && req->max_file_size != -1L) {
+        if (((ssize_t) req->max_file_size) > 0) {
           task_SetMaxFileSize(tsk, req->max_file_size);
-        } else if (lang->max_file_size != 0 && lang->max_file_size != -1L) {
+        } else if (((ssize_t) lang->max_file_size) > 0) {
           task_SetMaxFileSize(tsk, lang->max_file_size);
+        } else if (((ssize_t) global->compile_max_file_size) > 0) {
+          task_SetMaxFileSize(tsk, global->compile_max_file_size);
         }
 
         if (req->env_num > 0) {

@@ -146,6 +146,7 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
     0,
   };
   unsigned char nbuf[64];
+  unsigned char size_buf[256];
 
   fprintf(f, "contest_id = %d\n", global->contest_id);
 
@@ -330,6 +331,23 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
     fprintf(f, "max_clar_num = %d\n", global->max_clar_num);
   if (global->team_page_quota != DFLT_G_TEAM_PAGE_QUOTA)
     fprintf(f, "team_page_quota = %d\n", global->team_page_quota);
+
+  if (((ssize_t) global->compile_max_vm_size) > 0) {
+    fprintf(f, "compile_max_vm_size = %s\n",
+            size_t_to_size(size_buf, sizeof(size_buf),
+                           global->compile_max_vm_size));
+  }
+  if (((ssize_t) global->compile_max_stack_size) > 0) {
+    fprintf(f, "compile_max_stack_size = %s\n",
+            size_t_to_size(size_buf, sizeof(size_buf),
+                           global->compile_max_stack_size));
+  }
+  if (((ssize_t) global->compile_max_file_size) > 0) {
+    fprintf(f, "compile_max_file_size = %s\n",
+            size_t_to_size(size_buf, sizeof(size_buf),
+                           global->compile_max_file_size));
+  }
+
   fprintf(f, "\n");
 
   if (global->team_info_url[0])
@@ -2204,13 +2222,16 @@ prob_instr(
     handle_file(f, global, tmp_prob, "Makefile", 0);
   }
 
-  prepare_set_prob_value(CNTSPROB_xml_file, tmp_prob, abstr,0);
+  prepare_set_prob_value(CNTSPROB_xml_file, tmp_prob, abstr, global);
   if (tmp_prob->xml_file[0]) {
+    if (global->advanced_layout <= 0) {
+      pathmake2(tmp_prob->xml_file, conf_path, "/", tmp_prob->xml_file, NULL);
+    }
     fprintf(f, "<p><b>Problem statement file:</b></p>\n");
     handle_file(f, global, tmp_prob, tmp_prob->xml_file, 0);
   }
 
-  prepare_set_prob_value(CNTSPROB_plugin_file, tmp_prob, abstr,0);
+  prepare_set_prob_value(CNTSPROB_plugin_file, tmp_prob, abstr, global);
   if (tmp_prob->plugin_file[0]) {
     fprintf(f, "<p><b>Problem plugin file:</b></p>\n");
     handle_file(f, global, tmp_prob, tmp_prob->plugin_file, 0);

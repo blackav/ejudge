@@ -111,7 +111,7 @@ struct user_adjustment_info
 };
 struct user_adjustment_map;
 
-/* sizeof(struct section_global_data) == 350016 */
+/* sizeof(struct section_global_data) == 350028 */
 struct section_global_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -654,6 +654,13 @@ struct section_global_data
   /** printing quota (in pages) */
   int team_page_quota;
 
+  /* common compilation virtual address space size limit */
+  size_t compile_max_vm_size;
+  /* common compilation stack size limit */
+  size_t compile_max_stack_size;
+  /* common file size limit */
+  size_t compile_max_file_size;
+
   /** per participant testing priority adjustment */
   char **user_priority_adjustments;
   struct user_adjustment_info *user_adjustment_info META_ATTRIB((meta_private));
@@ -705,7 +712,7 @@ struct section_global_data
   +path_t test_checker_cmd;
  */
 
-/* sizeof(struct section_problem_data) == 64936 */
+/* sizeof(struct section_problem_data) == 65216 */
 struct section_problem_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -1019,7 +1026,7 @@ struct section_problem_data
   } xml META_ATTRIB((meta_hidden));
 };
 
-/* sizeof(struct section_language_data) == 33672 */
+/* sizeof(struct section_language_data) == 33676 */
 struct section_language_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
