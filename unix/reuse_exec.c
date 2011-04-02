@@ -1719,7 +1719,8 @@ task_Start(tTask *tsk)
       set_limit(comm_fd + 1, RLIMIT_CORE, 0);
     }
     if (tsk->max_file_size >= 0) {
-      set_limit(comm_fd + 1, RLIMIT_FSIZE, tsk->max_file_size);
+      // also convert bytes to blocks
+      set_limit(comm_fd + 1, RLIMIT_FSIZE, tsk->max_file_size / 512);
     }
     if (tsk->max_locked_mem_size >= 0) {
       set_limit(comm_fd + 1, RLIMIT_MEMLOCK, tsk->max_locked_mem_size);
