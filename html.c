@@ -4768,7 +4768,7 @@ write_xml_team_testing_report(
   }
 
   if (r->valuer_comment) {
-    fprintf(f, "<p><b>%s</b>: %s</p>\n", _("Valuer comments"),
+    fprintf(f, "<p><b>%s</b>:<br/></p><pre>%s</pre>\n", _("Valuer comments"),
             ARMOR(r->valuer_comment));
   }
 
