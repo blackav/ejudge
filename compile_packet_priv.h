@@ -46,7 +46,7 @@ struct compile_request_bin_packet
   rint32_t run_block_len;       /* the length of the run block */
   rint32_t env_num;             /* the number of env. variables */
   rint32_t sc_env_num;          /* the number of style checker env. vars */
-  //unsigned char pad[4];        /* padding to 64 boundary */
+  unsigned char pad[8];         /* padding to 16-byte boundary */
   /* style checker command (aligned to 16 byte boundary) */
   /* run_block (aligned to 16 byte boundary) */
   /* env variable length array (aligned to 16-byte address boundary) */
