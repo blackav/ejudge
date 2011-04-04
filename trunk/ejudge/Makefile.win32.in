@@ -2,7 +2,7 @@
 # $Id$
 # @configure_input@
 
-# Copyright (C) 2005-2010 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2005-2011 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -35,11 +35,6 @@ XGETTEXT=@XGETTEXT@
 MSGMERGE=@MSGMERGE@
 MSGFMT=@MSGFMT@
 
-REUSE_DIR=@ac_cv_reuse_root@
-REUSE_CONF=@ac_cv_reuse_config@
-REUSE_INCL_OPT=@ac_cv_reuse_include_opt@
-REUSE_LIB_OPT=@ac_cv_reuse_lib_opt@
-
 EXPAT_DIR=@ac_cv_expat_root@
 EXPAT_INCL_OPT=@ac_cv_expat_include_opt@
 EXPAT_LIB_OPT=@ac_cv_expat_lib_opt@
@@ -65,13 +60,12 @@ else
 $(error "unsupported configuration")
 endif
 
-LDLIBS=${EXTRALIBS} -lreuse -lz -lm -liconv -lintl
-CFLAGS=-I. ${REUSE_INCL_OPT} ${EXPAT_INCL_OPT} ${CDEBUGFLAGS} ${CCOMPFLAGS} ${CEXTRAFLAGS}
-LDFLAGS=${REUSE_LIB_OPT} ${EXPAT_LIB_OPT} ${CDEBUGFLAGS} ${LDCOMPFLAGS} ${LDEXTRAFLAGS}
+LDLIBS=${EXTRALIBS} -lz -lm -liconv -lintl
+CFLAGS=-I. ${EXPAT_INCL_OPT} ${CDEBUGFLAGS} ${CCOMPFLAGS} ${CEXTRAFLAGS}
+LDFLAGS=${EXPAT_LIB_OPT} ${CDEBUGFLAGS} ${LDCOMPFLAGS} ${LDEXTRAFLAGS}
 CC=gcc
 LD=gcc
 EXPAT_LIB=-lexpat
-REUSE_LIB=-lreuse
 
 C_CFILES=compile.c version.c
 C_OBJECTS=$(C_CFILES:.c=.o) libcommon.a libplatform.a
@@ -118,13 +112,13 @@ install: local_install
 	$(MAKE) -C scripts DESTDIR="${DESTDIR}" install
 
 ej-compile$(EXESFX) : $(C_OBJECTS)
-	$(LD) $(LDFLAGS) $(C_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB}
+	$(LD) $(LDFLAGS) $(C_OBJECTS) libcommon.a -o $@ $(LDLIBS) ${EXPAT_LIB}
 
 ej-run${EXESFX} : $(RUN_OBJECTS)
-	$(LD) $(LDFLAGS) $(RUN_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB}
+	$(LD) $(LDFLAGS) $(RUN_OBJECTS) libcommon.a -o $@ $(LDLIBS) ${EXPAT_LIB}
 
 ej-nwrun${EXESFX} : $(NWRUN_OBJECTS)
-	$(LD) $(LDFLAGS) $(NWRUN_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB}
+	$(LD) $(LDFLAGS) $(NWRUN_OBJECTS) libcommon.a -o $@ $(LDLIBS) ${EXPAT_LIB}
 
 serve : $(SERVE_OBJECTS)
 	$(LD) $(LDFLAGS) $(SERVE_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB}
