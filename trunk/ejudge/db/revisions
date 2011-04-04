@@ -6191,3 +6191,15 @@ struct-sizes.c 6219 0 139049
 ejudge-setup.c 6221 0 10535769
 unix/reuse_exec.c 6222 0 4422637
 ejudge-setup.c 6224 0 10535828
+win32/reuse_logger.c 6227 0 629736
+win32/reuse_checkaccess.c 6227 0 131717
+win32/reuse_dirname.c 6227 0 100290
+win32/reuse_errormsg.c 6227 0 107480
+win32/reuse_exec.c 6227 0 2778617
+win32/reuse_getlastname.c 6227 0 85982
+win32/reuse_getsignalstring.c 6227 0 162887
+win32/reuse_getworkingdir.c 6227 0 95847
+win32/reuse_isabsolutepath.c 6227 0 78961
+win32/reuse_isfile.c 6227 0 98838
+win32/reuse_nodename.c 6227 0 91674
+win32/reuse_sleep.c 6227 0 79502
