@@ -2327,6 +2327,10 @@ generate_serve_cfg(FILE *f)
 
   fprintf(f, "\n");
 
+  fprintf(f, "compile_max_vm_size = 256M\n");
+  fprintf(f, "compile_max_file_size = 1G\n");
+  fprintf(f, "\n");
+
   for (i = 0; i < lang_num; i++) {
     p = langs[i];
     if (!p->cfg) continue;
@@ -2641,6 +2645,7 @@ generate_serve_cfg(FILE *f)
         "xml_file = \"%Ps.xml\"\n"
         "max_vm_size = 64M\n"
         "max_stack_size = 64M\n"
+        "max_file_size = 64M\n"
         "time_limit = 1\n"
         "test_sfx = \".dat\"\n"
         "corr_sfx = \".ans\"\n"
