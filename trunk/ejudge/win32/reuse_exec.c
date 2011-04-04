@@ -644,6 +644,66 @@ task_SetKillSignal(tTask *tsk, char const *signame)
   return 0;
 }
 
+int
+task_EnableProcessGroup(tTask *tsk)
+{
+  return 0;
+}
+
+int
+task_SetMaxCoreSize(tTask *tsk, ssize_t max_core_size)
+{
+  return 0;
+}
+
+int
+task_SetMaxFileSize(tTask *tsk, ssize_t max_file_size)
+{
+  return 0;
+}
+
+int
+task_SetMaxLockedMemorySize(tTask *tsk, ssize_t max_locked_memory_size)
+{
+  return 0;
+}
+
+int
+task_SetMaxMessageQueueSize(tTask *tsk, ssize_t max_msg_queue_size)
+{
+  return 0;
+}
+
+int
+task_SetMaxNiceValue(tTask *tsk, int max_nice_value)
+{
+  return 0;
+}
+
+int
+task_SetMaxOpenFileCount(tTask *tsk, int max_open_file_count)
+{
+  return 0;
+}
+
+int
+task_SetMaxProcessCount(tTask *tsk, int max_process_count)
+{
+  return 0;
+}
+
+int
+task_SetMaxPrioValue(tTask *tsk, int max_prio_value)
+{
+  return 0;
+}
+
+int
+task_SetMaxPendingCount(tTask *tsk, int max_pending_count)
+{
+  return 0;
+}
+
 static char *
 print_as_shell_redir(int oflags)
 {

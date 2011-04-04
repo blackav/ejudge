@@ -19,15 +19,6 @@
 
 #include "reuse_logger.h"
 
-/* internal include directives */
-//#include "lconfig.h"
-//#include "reuse/config.h"
-//#include "embed_version.h"
-
-//#include <reuse/logger.h>
-//#include <reuse/osdeps.h>
-//#include <reuse/format_io.h>
-
 #include <windows.h>
 
 #include <stdio.h>
@@ -74,7 +65,7 @@ static char *priority_names[]=
 };
 
 static int initialized = 0;
-  static void
+static void
 minimal_init(void)
 {
   HANDLE prc, err, log = INVALID_HANDLE_VALUE;
@@ -98,7 +89,7 @@ minimal_init(void)
   }
 }
 
-  void
+void
 logger_init_ex(logmodule_t *mi, char *path, int stderr_flag)
 {
   int i;
@@ -135,13 +126,13 @@ logger_init_ex(logmodule_t *mi, char *path, int stderr_flag)
   }
 }
 
-  void
+void
 logger_init(logmodule_t *mi, char *path)
 {
   logger_init_ex(mi, path, 0);
 }
 
-  int
+int
 vwrite_log(int facility, int level, char const *format, va_list args)
 {
   char      bprio[32];
@@ -173,9 +164,9 @@ vwrite_log(int facility, int level, char const *format, va_list args)
     SYSTEMTIME st;
 
     GetSystemTime(&st);
-    os_snprintf(btime, 64, "%02d:%02d:%02d %02d/%02d/%d:",
-	      st.wHour, st.wMinute, st.wSecond,
-	      st.wDay, st.wMonth, st.wYear);
+    snprintf(btime, 64, "%02d:%02d:%02d %02d/%02d/%d:",
+             st.wHour, st.wMinute, st.wSecond,
+             st.wDay, st.wMonth, st.wYear);
     btime[63] = 0;
   }
 #else
@@ -200,19 +191,19 @@ vwrite_log(int facility, int level, char const *format, va_list args)
   if (level < LOG_MIN_PRIO || level > LOG_MAX_PRIO) {
     sprintf(bprio, "%d:", level);
   } else {
-    os_snprintf(bprio, 32, "%s:", priority_names[level]);
+    snprintf(bprio, 32, "%s:", priority_names[level]);
   }
 
   bfac[0] = 0;
   if (facility && logmodules[facility]->name) {
-    os_snprintf(bfac, 32, "%s:", logmodules[facility]->name);
+    snprintf(bfac, 32, "%s:", logmodules[facility]->name);
     bfac[31] = 0;
   } else if (!logmodules[facility]->name) {
     sprintf(bfac, "%d:", facility);
   }
 
-  r = os_snprintf(msg, 1024, "%s%s%s", btime, bfac, bprio);
-  os_vsnprintf(msg + r, 1024 - r, format, args);
+  r = snprintf(msg, 1024, "%s%s%s", btime, bfac, bprio);
+  vsnprintf(msg + r, 1024 - r, format, args);
   msg[msglen] = 0;
   r = strlen(msg) + 2;
   if (r >= 1024) {
@@ -242,7 +233,7 @@ vwrite_log(int facility, int level, char const *format, va_list args)
   return bw;
 }
 
-  int
+int
 write_log(int facility, int level, char const *format, ...)
 {
   va_list    args;
@@ -254,7 +245,7 @@ write_log(int facility, int level, char const *format, ...)
   return r;
 }
 
-  void
+void
 logger_close(void)
 {
   if (log_fd != INVALID_HANDLE_VALUE) {
@@ -264,7 +255,7 @@ logger_close(void)
   }
 }
 
-  int
+int
 logger_get_fd(void)
 {
   minimal_init();
@@ -285,34 +276,34 @@ static void _swerr(char *, int, jmp_buf *, char *, va_list) __attribute__ ((nore
 static void _swerr(char *, int, jmp_buf *, char *, va_list);
 #endif
 
-  static void
+static void
 _swwarn(char *file, int line, char *format, va_list args)
 {
   char buf[1024];
   int  n;
   
-  n = os_snprintf(buf, 1024, "Internal: %s: %d: ", file, line);
-  os_vsnprintf(buf + n, 1024 - n, format, args);
+  n = snprintf(buf, 1024, "Internal: %s: %d: ", file, line);
+  vsnprintf(buf + n, 1024 - n, format, args);
   buf[1023] = 0;
 
   write_log(LOG_SW, LOG_ALERT, "%s", buf);
 }
 
-  static void
+static void
 _swerr(char *file, int line, jmp_buf *jb, char *format, va_list args)
 {
   char buf[1024];
   int  n;
   
-  n = os_snprintf(buf, 1024, "Internal: %s: %d: ", file, line);
-  os_vsnprintf(buf + n, 1024 - n, format, args);
+  n = snprintf(buf, 1024, "Internal: %s: %d: ", file, line);
+  vsnprintf(buf + n, 1024 - n, format, args);
   buf[1023] = 0;
 
   write_log(LOG_SW, LOG_EMERG, "%s", buf);
   swabort();
 }
 
-  void
+void
 swerr(char *file, int line, char *format, ...)
 {
   va_list args;
@@ -324,7 +315,7 @@ swerr(char *file, int line, char *format, ...)
 #endif
 }
 
-  void
+void
 swerr1(char *format, ...)
 {
   va_list args;
@@ -336,7 +327,7 @@ swerr1(char *format, ...)
 #endif
 }
 
-  void
+void
 swerr2(char *format, ...)
 {
   va_list args;
@@ -348,14 +339,14 @@ swerr2(char *format, ...)
 #endif
 }
 
-  void
+void
 swerr_SetPos(char *file, int line)
 {
   swerr_file = file;
   swerr_line = line;
 }
 
-  void
+void
 swerr_SetPosBuf(char *file, int line, void *buf)
 {
   swerr_file    = file;
@@ -364,7 +355,7 @@ swerr_SetPosBuf(char *file, int line, void *buf)
   memcpy(&swerr_handler, buf, sizeof (swerr_handler));
 }
 
-  void
+void
 swabort(void)
 {
   //RaiseException(0xC0000100, EXCEPTION_NONCONTINUABLE, 0, NULL);
@@ -372,7 +363,7 @@ swabort(void)
   ExitProcess(0xC0000100);
 }
 
-  void
+void
 swwarn(char *format, ...)
 {
   va_list args;
@@ -387,6 +378,5 @@ swwarn(char *format, ...)
 /*
  * Local variables:
  *  compile-command: "make -C .."
- *  c-font-lock-extra-types: ("HANDLE" "FILE" "\\sw+_t" "DWORD" "va_list" "jmp_buf" "SYSTEMTIME")
  * End:
  */
