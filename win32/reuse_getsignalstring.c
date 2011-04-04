@@ -57,16 +57,16 @@ os_GetSignalString(int s)
 
   if (s > 0 && s < sizeof(signal_strings)/sizeof(signal_strings[0])
       && signal_strings[s]) {
-    os_snprintf(buf, sizeof(buf), "Exception 0x%X - %s",
+    snprintf(buf, sizeof(buf), "Exception 0x%X - %s",
                 (0xc0000000 | s), signal_strings[s]);
     return buf;
   }
-  os_snprintf(buf, sizeof(buf), "Exception 0x%X", (0xc0000000 | s));
+  snprintf(buf, sizeof(buf), "Exception 0x%X", (0xc0000000 | s));
   return buf;
 }
 
 /*
  * Local variables:
- *  compile-command: "make -C ../.."
+ *  compile-command: "make -C .."
  * End:
  */

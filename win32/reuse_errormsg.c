@@ -36,13 +36,13 @@ os_ErrorMsg(void)
                 NULL, e,
                 MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
                 buf, sizeof(buf), NULL);
-  os_snprintf(errmsg_buf, sizeof(errmsg_buf), "%d, %s", e, buf);
+  snprintf(errmsg_buf, sizeof(errmsg_buf), "%d, %s", e, buf);
   errmsg_buf[sizeof(errmsg_buf) - 1] = 0;
   return errmsg_buf;
 }
 
 /*
  * Local variables:
- *  compile-command: "make -C ../.."
+ *  compile-command: "make -C .."
  * End:
  */

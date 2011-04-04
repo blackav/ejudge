@@ -47,6 +47,6 @@ os_DirName(char const *str)
 
 /*
  * Local variables:
- *  compile-command: "make -C ../.."
+ *  compile-command: "make -C .."
  * End:
  */

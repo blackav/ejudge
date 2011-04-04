@@ -46,7 +46,6 @@ os_IsFile(char const *path)
 
 /*
  * Local variables:
- *  compile-command: "make -C ../.."
- *  c-font-lock-extra-types: ("HANDLE" "FILE" "\\sw+_t" "DWORD" "va_list" "WIN32_FIND_DATA")
+ *  compile-command: "make -C .."
  * End:
  */

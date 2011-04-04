@@ -1,7 +1,7 @@
 # -*- Makefile -*-
 # $Id$
 
-# Copyright (C) 2009-2010 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2009-2011 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -100,7 +100,17 @@ WIN32_COMMON_CFILES=\
  xml_utils/unparse_run_status.c\
  xml_utils/unparse_text.c\
  xml_utils/xml_err.c\
- xml_utils/xml_err_a.c
+ xml_utils/xml_err_a.c\
+ reuse/reuse_xalloc.c\
+ reuse/reuse_xcalloc.c\
+ reuse/reuse_xexpand.c\
+ reuse/reuse_xexpand2.c\
+ reuse/reuse_xfree.c\
+ reuse/reuse_xmalloc.c\
+ reuse/reuse_xmemdup.c\
+ reuse/reuse_xrealloc.c\
+ reuse/reuse_xstrarrayfree.c\
+ reuse/reuse_xstrdup.c
 
 WIN32_PLATFORM_CFILES =\
  pathutl.c\
@@ -113,6 +123,22 @@ WIN32_PLATFORM_CFILES =\
  $(ARCH)/full_archive.c\
  $(ARCH)/interrupt.c\
  $(ARCH)/open_memstream.c\
+ $(ARCH)/reuse_checkaccess.c\
+ $(ARCH)/reuse_dirname.c\
+ $(ARCH)/reuse_getlastname.c\
+ $(ARCH)/reuse_getsignalstring.c\
+ $(ARCH)/reuse_getworkingdir.c\
+ $(ARCH)/reuse_errormsg.c\
+ $(ARCH)/reuse_exec.c\
+ $(ARCH)/reuse_getsignalstring.c\
+ $(ARCH)/reuse_isabsolutepath.c\
+ $(ARCH)/reuse_isfile.c\
+ $(ARCH)/reuse_logger.c\
+ $(ARCH)/reuse_makedirpath.c\
+ $(ARCH)/reuse_nodename.c\
+ $(ARCH)/reuse_normalize_path.c\
+ $(ARCH)/reuse_rgetworkingdir.c\
+ $(ARCH)/reuse_sleep.c\
  $(ARCH)/sock_op_enable_creds.c\
  $(ARCH)/sock_op_get_creds.c\
  $(ARCH)/sock_op_get_fds.c\

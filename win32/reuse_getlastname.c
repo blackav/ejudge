@@ -37,6 +37,6 @@ os_GetLastname(char const *path)
 
 /*
  * Local variables:
- *  compile-command: "make -C ../.."
+ *  compile-command: "make -C .."
  * End:
  */

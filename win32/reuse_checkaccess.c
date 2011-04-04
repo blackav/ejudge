@@ -71,6 +71,6 @@ os_CheckAccess(char const *path, int perms)
 
 /*
  * Local variables:
- *  compile-command: "make -C ../.."
+ *  compile-command: "make -C .."
  * End:
  */

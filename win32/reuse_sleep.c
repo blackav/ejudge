@@ -32,6 +32,6 @@ os_Sleep(int millis)
 
 /*
  * Local variables:
- *  compile-command: "make -C ../.."
+ *  compile-command: "make -C .."
  * End:
  */
