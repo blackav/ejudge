@@ -2328,7 +2328,7 @@ generate_serve_cfg(FILE *f)
   fprintf(f, "\n");
 
   fprintf(f, "compile_max_vm_size = 256M\n");
-  fprintf(f, "compile_max_file_size = 1G\n");
+  fprintf(f, "compile_max_file_size = 32M\n");
   fprintf(f, "\n");
 
   for (i = 0; i < lang_num; i++) {
