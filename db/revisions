@@ -6203,3 +6203,5 @@ win32/reuse_isabsolutepath.c 6227 0 78961
 win32/reuse_isfile.c 6227 0 98838
 win32/reuse_nodename.c 6227 0 91674
 win32/reuse_sleep.c 6227 0 79502
+prepare.c 6229 0 18779098
+serve_2.c 6229 0 9619898
