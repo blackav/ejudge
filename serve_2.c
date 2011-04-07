@@ -1013,6 +1013,10 @@ serve_compile_request(
 
   if (!state->compile_request_id) state->compile_request_id++;
 
+  if ((!style_checker_cmd || !style_checker_cmd[0]) && lang) {
+    style_checker_cmd = lang->style_checker_cmd;
+  }
+
   if (style_checker_cmd && style_checker_cmd[0]) {
     sformat_message(tmp_path, sizeof(tmp_path), 0, style_checker_cmd,
                     global, prob, lang, 0, 0, 0, 0, 0);
@@ -1030,9 +1034,6 @@ serve_compile_request(
     }
   }
 
-  if ((!style_checker_cmd || !style_checker_cmd[0]) && lang) {
-    style_checker_cmd = lang->style_checker_cmd;
-  }
   if (style_checker_env && style_checker_env[0] && lang
       && lang->style_checker_env && lang->style_checker_env[0]) {
     sc_env_mem = sarray_merge_pp(lang->style_checker_env, style_checker_env);
