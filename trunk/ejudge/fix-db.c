@@ -338,7 +338,7 @@ is_short_name(
   ++s;
   p = s;
   while (*s && *s != '"') ++s;
-  snprintf(short_name_buf, short_name_buf_len, "%.*s", s - p, p);
+  snprintf(short_name_buf, short_name_buf_len, "%.*s", (int) (s - p), p);
   if (*s != '"') return 0;
   return 1;
 }
