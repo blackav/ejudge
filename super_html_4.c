@@ -6232,7 +6232,7 @@ cmd_op_set_serve_prob_field(
     break;
   case 'z':
     {
-      ejintsize_t val = 0;
+      size_t val = 0;
       if (parse_size(valstr, &val) < 0) FAIL(S_ERR_INV_VALUE);
       * (ejintsize_t*) f_ptr = val;
     }
