@@ -519,8 +519,8 @@ text_table_number_lines(
 
   fprintf(out_f, "<tr%s><td valign=\"top\"%s>", tr_attr, td_attr);
   for (line = 0; line < lines; ++line)
-    fprintf(out_f, "<span onclick=\"markLine(%" EJ_PRINTF_ZSPEC "u)\"><tt>[%" EJ_PRINTF_ZSPEC "u]</tt></span><br/>\n",
-            EJ_PRINTF_ZCAST(line + 1), EJ_PRINTF_ZCAST(line + 1));
+    fprintf(out_f,"<span onclick=\"markLine(%d)\"><tt>[%d]</tt></span><br/>\n",
+            line + 1, line + 1);
   fprintf(out_f, "</td><td valign=\"top\"%s>", td_attr);
 
   for (cur = 0; cur < insize; ++cur) {
