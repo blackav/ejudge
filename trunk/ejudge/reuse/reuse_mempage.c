@@ -157,9 +157,9 @@ pgPageStatistics(tPageDesc *desc, FILE *f)
 
   fprintf(f,
           "Number of chunks:            %d\n"
-          "Total allocated memory size: %u\n"
-          "Total used memory size:      %u\n"
-          "Wasted for alignment:        %u\n",  
+          "Total allocated memory size: %zu\n"
+          "Total used memory size:      %zu\n"
+          "Wasted for alignment:        %zu\n",  
           /*"Detailed statistics for each Chunk:\n"*/
           Chunk_Num, Allocated, Used, desc->Wasted);
 
