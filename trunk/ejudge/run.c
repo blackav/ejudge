@@ -1140,13 +1140,16 @@ invoke_nwrun(
     fprintf(f, "real_time_limit_millis = %d\n", prb->real_time_limit * 1000);
   }
   if (prb->max_stack_size > 0) {
-    fprintf(f, "max_stack_size = %" EJ_PRINTF_ZSPEC "u\n", prb->max_stack_size);
+    fprintf(f, "max_stack_size = %" EJ_PRINTF_ZSPEC "u\n",
+            EJ_PRINTF_ZCAST(prb->max_stack_size));
   }
   if (prb->max_data_size > 0) {
-    fprintf(f, "max_data_size = %" EJ_PRINTF_ZSPEC "u\n", prb->max_data_size);
+    fprintf(f, "max_data_size = %" EJ_PRINTF_ZSPEC "u\n",
+            EJ_PRINTF_ZCAST(prb->max_data_size));
   }
   if (prb->max_vm_size > 0) {
-    fprintf(f, "max_vm_size = %" EJ_PRINTF_ZSPEC "u\n", prb->max_vm_size);
+    fprintf(f, "max_vm_size = %" EJ_PRINTF_ZSPEC "u\n",
+            EJ_PRINTF_ZCAST(prb->max_vm_size));
   }
   fprintf(f, "max_output_file_size = 60M\n");
   fprintf(f, "max_error_file_size = 16M\n");
