@@ -1031,7 +1031,7 @@ task_SetMaxMessageQueueSize(tTask *tsk, ssize_t max_msg_queue_size)
 }
 
 int
-task_SetMaxNiceValue(tTask *tsk, ssize_t max_nice_value)
+task_SetMaxNiceValue(tTask *tsk, int max_nice_value)
 {
   task_init_module();
   ASSERT(tsk);
@@ -1040,7 +1040,7 @@ task_SetMaxNiceValue(tTask *tsk, ssize_t max_nice_value)
 }
 
 int
-task_SetMaxOpenFileCount(tTask *tsk, ssize_t max_open_file_count)
+task_SetMaxOpenFileCount(tTask *tsk, int max_open_file_count)
 {
   task_init_module();
   ASSERT(tsk);
@@ -1049,7 +1049,7 @@ task_SetMaxOpenFileCount(tTask *tsk, ssize_t max_open_file_count)
 }
 
 int
-task_SetMaxProcessCount(tTask *tsk, ssize_t max_process_count)
+task_SetMaxProcessCount(tTask *tsk, int max_process_count)
 {
   task_init_module();
   ASSERT(tsk);
@@ -1058,7 +1058,7 @@ task_SetMaxProcessCount(tTask *tsk, ssize_t max_process_count)
 }
 
 int
-task_SetMaxPrioValue(tTask *tsk, ssize_t max_prio_value)
+task_SetMaxPrioValue(tTask *tsk, int max_prio_value)
 {
   task_init_module();
   ASSERT(tsk);
@@ -1067,7 +1067,7 @@ task_SetMaxPrioValue(tTask *tsk, ssize_t max_prio_value)
 }
 
 int
-task_SetMaxPendingCount(tTask *tsk, ssize_t max_pending_count)
+task_SetMaxPendingCount(tTask *tsk, int max_pending_count)
 {
   task_init_module();
   ASSERT(tsk);
