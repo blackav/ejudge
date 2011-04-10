@@ -1,3 +1,25 @@
+2011-03-27 (r6169) Alexander Chernov  <cher@ejudge.ru>
+
+	* send_packet.c:
+	copyright notice is updated;
+	"reuse_integral.h" is included instead of <reuse/integral.h>.
+
+2011-03-27 (r6152) Alexander Chernov  <cher@ejudge.ru>
+
+	* private.h:
+	"reuse_osdeps.h" is included instead of <reuse/osdeps.h>.
+
+2011-03-26 (r6138) Alexander Chernov  <cher@ejudge.ru>
+
+	* private.h:
+	"reuse_logger.h" is used instead of <reuse/logger.h>.
+
+2011-03-26 (r6130) Alexander Chernov  <cher@ejudge.ru>
+
+	* private.h:
+	copyright notice is updated;
+	"reuse_xalloc.h" is included instead of <reuse/xalloc.h>.
+
 2010-11-01 (r6014) Alexander Chernov  <cher@ejudge.ru>
 
 	* close.c: copyright notice is updated;

@@ -22,40 +22,27 @@ well. The root privilegies are required to create this
 directory, so become root and issue the following commands:
 mkdir /home/judges
 chown ejudge:ejudge /home/judges
-3. Log in as the `ejudge' users, unpack, compile and install the
-reuse library in the home directory.
-
-cd ~
-tar xvfz REUSE-ARCH-DIR/reuse-VERSION.tgz
-cd reuse/source
-./configure
-make
-make install
-
-Here REUSE-ARCH-DIR is the directory where the reuse library
-archive is downloaded. VERSION is the library version. Always
-use the latest version (as of this writing it is 4.3.5).
-4. Change directory to the home directory and unpack the ejudge archive.
+3. Change directory to the home directory and unpack the ejudge archive.
 
 cd ~
 tar xvfz EJUDGE-ARCH-DIR/ejudge-VERSION.tgz
 cd ejudge
 
-5. Configure the ejudge
+4. Configure the ejudge
 
-./configure --prefix=/home/ejudge/inst-ejudge --with-reuse=/home/ejudge/reuse --enable-contests-home-dir=/home/judges --with-httpd-cgi-bin-dir=CGI-BIN-DIR --with-httpd-htdocs-dir=HTDOCS-DIR --enable-ajax --enable-hidden-server-bins --enable-local-dir=/var/lib/ejudge
+./configure --prefix=/home/ejudge/inst-ejudge --enable-contests-home-dir=/home/judges --with-httpd-cgi-bin-dir=CGI-BIN-DIR --with-httpd-htdocs-dir=HTDOCS-DIR --enable-ajax --enable-hidden-server-bins --enable-local-dir=/var/lib/ejudge
 
 Here CGI-BIN-DIR is the CGI directory of your web server
 installation (for example, `/home/httpd/cgi-bin'), HTDOCS-DIR is
 the root of the HTML documents of your web server installation
 (for example, `/home/httpd/html'). Refer to your system manuals
 for exact information on this paths.
-6. Compile and install the ejudge system.
+5. Compile and install the ejudge system.
 
 make
 make install
 
-7. Run the `ejudge-setup' program, go to the "Administrator
+6. Run the `ejudge-setup' program, go to the "Administrator
  identity" menu and fill up the required fields:
 
 ./ejudge-setup
@@ -69,26 +56,23 @@ Then generate the setup script using the "Save setup script"
 menu item. When you invoke this menu item, the setup script file
 name will be requested. Preserve the default name `ejudge-install.sh'.
 
-8. Enter the "Setup compilers" menu and check, that all
+7. Enter the "Setup compilers" menu and check, that all
 compilers and interpreters are auto-detected correctly. Edit
 paths, if necessary.
 
-9. Invoke the setup script as the root user.
+8. Invoke the setup script as the root user.
 su -
 cd ~ejudge/ejudge
 ./ejudge-install.sh
+
+9. Copy necessary files to the document tree of the web server.
+To do so execute the following script as 'root' user:
+ejudge-upgrade-web
 
 10. Start the ejudge system. The programs must be started by the
 `ejudge' user.
 
 ejudge-control start
-
-11. Download the DoJo Toolkit
-(http://download.dojotoolkit.org/release-0.4.3/dojo-0.4.3-ajax.tar.gz).
-Install it to HTDOCS-DIR/ejudge:
-cd HTDOCS-DIR/ejudge
-tar xvf dojo-0.4.3-ajax.tar.gz
-mv dojo-0.4.3-ajax/* .
 
 Make sure, that the access permissions of the `/home/ejudge'
 directory allows reading of files for arbitrary users. Some
@@ -109,6 +93,6 @@ test the installation typing the
 `http://localhost/cgi-bin/serve-control' URL in the web browser.
 Of course, the web server should be started.
 
-For the full installation documenation please, refer to the
+For the full installation documenation, please, refer to the
 wiki-pages at http://www.ejudge.ru.
 

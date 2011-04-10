@@ -1,3 +1,19 @@
+2011-03-27 (r6188) Alexander Chernov  <cher@ejudge.ru>
+
+	* main.make, Makefile.in:
+	reuse dependency is removed.
+
+2011-03-26 (r6139) Alexander Chernov  <cher@ejudge.ru>
+
+	* cldb_mysql.c:
+	"reuse_logger.h" is used instead of <reuse/logger.h>.
+
+2011-03-26 (r6125) Alexander Chernov  <cher@ejudge.ru>
+
+	* cldb_mysql.c:
+	copyright notice is updated;
+	"reuse_xalloc.h" is included instead of <reuse/xalloc.h>.
+
 2009-05-02 (r5568) Alexander Chernov  <cher@ejudge.ru>
 
 	* cldb_mysql.c: copyright notice is updated;

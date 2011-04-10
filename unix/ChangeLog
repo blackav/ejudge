@@ -1,3 +1,74 @@
+2011-03-31 (r6208) Alexander Chernov  <cher@ejudge.ru>
+
+	* reuse_exec.c:
+	(task_Start) core files disable code moved.
+
+2011-03-30 (r6206) Alexander Chernov  <cher@ejudge.ru>
+
+	* reuse_exec.c:
+	(struct tTask) new fields 'max_core_size', 'max_file_size',
+	'max_locked_mem_size', 'max_msg_queue_size', 'max_nice_value',
+	'max_open_file_count', 'max_process_count', 'max_prio_value',
+	'max_pending_count' are added;
+	(task_SetMaxProcCount) removed;
+	(task_SetMaxCoreSize) new function;
+	(task_SetMaxFileSize) new function;
+	(task_SetMaxLockedMemorySize) new function;
+	(task_SetMaxMessageQueueSize) new function;
+	(task_SetMaxNiceValue) new function;
+	(task_SetMaxOpenFileCount) new function;
+	(task_SetMaxProcessCount) new function;
+	(task_SetMaxPrioValue) new function;
+	(task_SetMaxPendingCount) new function;
+	(set_limit) new static function;
+	(task_Start) new rlimit settings are supported.
+
+2011-03-27 (r6193) Alexander Chernov  <cher@ejudge.ru>
+
+	* reuse_exec.c:
+	(task_EnableProcessGroup) new function;
+	(task_Start) a new process group is created if the corresponding
+	mode is activated;
+	(task_Wait) the whole process group is killed if the process
+	group mode is activated.
+
+2011-03-27 (r6183) Alexander Chernov  <cher@ejudge.ru>
+
+	* reuse_exec.c:
+	Initial revision. Copied from the reuse library.
+
+2011-03-27 (r6166) Alexander Chernov  <cher@ejudge.ru>
+
+	* reuse_findinpath.c, reuse_substsuffix.c, reuse_rgetsuffix.c, reuse_rgetlastname.c, reuse_nodename.c, reuse_isabsolutepath.c, reuse_makedirpath.c, reuse_rgetbasename.c, reuse_checkaccess.c, reuse_errormsg.c, reuse_rdirname.c, reuse_rgetworkingdir.c, reuse_tempnam.c, reuse_getlastname.c, reuse_attachfile.c, reuse_setlock.c, reuse_getsignalstring.c, reuse_getsuffix.c, reuse_sleep.c, reuse_getbasename.c, reuse_isfile.c, reuse_normalize_path.c, reuse_makedir.c, reuse_getworkingdir.c, reuse_dirname.c, reuse_geterrorstring.c, reuse_errorstring.c:
+	Initial revision. Copied from the reuse library.
+
+2011-03-27 (r6161) Alexander Chernov  <cher@ejudge.ru>
+
+	* sock_op_get_fds.c, cr_serialize.c, sock_op_get_creds.c, sock_op_enable_creds.c, startstop.c, file_perms.c, sock_op_put_creds.c:
+	copyright notice is updated;
+	"reuse_osdeps.h" is included instead of <reuse/osdeps.h>.
+
+2011-03-27 (r6160) Alexander Chernov  <cher@ejudge.ru>
+
+	* full_archive.c, fileutl.c:
+	"reuse_osdeps.h" is included instead of <reuse/osdeps.h>.
+
+2011-03-26 (r6150) Alexander Chernov  <cher@ejudge.ru>
+
+	* reuse_logger.c:
+	Initial revision. Copied from the reuse library.
+
+2011-03-26 (r6145) Alexander Chernov  <cher@ejudge.ru>
+
+	* full_archive.c, timestamp.c, fileutl.c:
+	"reuse_logger.h" is used instead of <reuse/logger.h>.
+
+2011-03-26 (r6134) Alexander Chernov  <cher@ejudge.ru>
+
+	* ej_process.c, full_archive.c, timestamp.c, fileutl.c:
+	copyright notice is updated;
+	"reuse_xalloc.h" is included instead of <reuse/xalloc.h>.
+
 2010-10-05 (r6002) Alexander Chernov  <cher@ejudge.ru>
 
 	* file_perms.c: copyright notice is updated;
