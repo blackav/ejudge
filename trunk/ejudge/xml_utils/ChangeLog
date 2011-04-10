@@ -1,3 +1,9 @@
+2011-03-26 (r6129) Alexander Chernov  <cher@ejudge.ru>
+
+	* empty_text.c, parse_date.c:
+	copyright notice is updated;
+	"reuse_xalloc.h" is included instead of <reuse/xalloc.h>.
+
 2010-08-03 (r5970) Alexander Chernov  <cher@ejudge.ru>
 
 	* unparse_run_status.c: copyright notice is updated;

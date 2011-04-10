@@ -1,3 +1,1003 @@
+2011-04-10 (r6242) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_html.c:
+	(super_html_main_page) serve status reporting column is removed.
+
+2011-04-09 (r6240) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_html.c, super_html_3.c:
+	Help links to the wiki pages are added.
+
+2011-04-08 (r6238) Alexander Chernov  <cher@ejudge.ru>
+
+	* run.c:
+	x86_64 fixes
+
+2011-04-08 (r6237) Alexander Chernov  <cher@ejudge.ru>
+
+	* misctext.c:
+	x86_64 fixes
+
+2011-04-08 (r6236) Alexander Chernov  <cher@ejudge.ru>
+
+	* fix-db.c:
+	x86_64 fixes
+
+2011-04-08 (r6235) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_html_4.c:
+	x86_64 fixes
+
+2011-04-07 (r6231) Alexander Chernov  <cher@ejudge.ru>
+
+	* misctext.c:
+	(html_print_by_line) incorrect UTF8 validity check is fixed.
+
+2011-04-07 (r6229) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.c:
+	(set_defaults)
+	if language-specific 'style_checker_cmd' is not an absolute path
+	and does not start with '@', global standard checker directory
+	path is prepended to it.
+
+	* serve_2.c:
+	(serve_compile_request) language-specified 'style_checker_cmd'
+	is properly expanded.
+
+2011-04-04 (r6226) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.win32.in:
+	reuse library dependency is removed;
+	libcommon.a is linked twice, if necessary.
+
+2011-04-01 (r6214) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_global_data) new fields 'compile_max_vm_size',
+	'compile_max_stack_size', 'compile_max_file_size' are added.
+
+	* super_proto.h:
+	editing of the 'compile_max_vm_size', 'compile_max_stack_size',
+	'compile_max_file_size' global configuration variables
+	is supported.
+
+	* compile.c:
+	(do_loop) global configuration variables
+	'compile_max_vm_size', 'compile_max_stack_size',
+	'compile_max_file_size' are handled.
+
+	* html.c:
+	(write_xml_team_testing_report) valuer comments are printed.
+
+	* prepare.c:
+	 new global configuration variables
+	'compile_max_vm_size', 'compile_max_stack_size',
+	'compile_max_file_size' are added.
+
+	* prepare_out.c:
+	(prepare_unparse_global) new global configuration variables
+	'compile_max_vm_size', 'compile_max_stack_size',
+	'compile_max_file_size' are supported;
+	(prob_instr) xml_file path computation is improved.
+
+	* serve_2.c:
+	(serve_compile_request) global configuration variables
+	'compile_max_vm_size', 'compile_max_stack_size',
+	'compile_max_file_size' are handled.
+
+	* serve-control.c, super_html_3.c, super-serve.c:
+	editing of the 'compile_max_vm_size', 'compile_max_stack_size',
+	'compile_max_file_size' global configuration variables
+	is supported.
+
+2011-03-31 (r6211) Alexander Chernov  <cher@ejudge.ru>
+
+	* compile_packet.h:
+	(struct compile_request_packet) 'max_file_size' field is added.
+
+	* compile_packet_priv.h:
+	(struct compile_request_bin_packet) 'max_file_size' field is added.
+
+	* prepare.h:
+	(struct section_problem_data) new fields 'max_file_size',
+	'max_open_file_count', 'max_process_count' are added;
+	(struct section_language_data) new field 'max_file_size'
+	is added.
+
+	* super_proto.h:
+	editing of 'max_file_size' language configuration variable is supported
+	editing of 'max_file_size', 'max_open_file_count', 'max_process_count'
+	problem configuration variables is supported.
+
+	* compile.c:
+	'max_file_size' language configuration variable is supported.
+
+	* compile_packet_1.c:
+	(compile_request_packet_read) 'max_file_size' field is handled.
+
+	* compile_packet_2.c:
+	(compile_request_packet_write) 'max_file_size' field is handled.
+
+	* prepare.c, prepare_out.c:
+	'max_file_size' language configuration variable is supported;
+	'max_file_size', 'max_open_file_count', 'max_process_count'
+	problem configuration variables are supported.
+
+	* run.c:
+	(run_tests) 'max_file_size', 'max_open_file_count',
+	'max_process_count' problem configuration variables are handled.
+
+	* serve_2.c:
+	(serve_compile_request) 'max_file_size' language configuration
+	variable is handled.
+
+	* serve-control.c, super_html_3.c, super_html_4.c, super-serve.c:
+	editing of 'max_file_size' language configuration variable is supported
+	editing of 'max_file_size', 'max_open_file_count', 'max_process_count'
+	problem configuration variables is supported.
+
+2011-03-31 (r6209) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_problem_data) 'max_core_size' field is added.
+
+	* super_proto.h:
+	editing of the 'max_core_size' problem configuration variable
+	is supported.
+
+	* prepare.c, prepare_out.c:
+	'max_core_size' problem configuration variable is added.
+
+	* run.c:
+	(run_tests) 'max_core_size' problem configuration variable is handled.
+
+	* serve-control.c, super_html_3.c, super_html_4.c, super-serve.c:
+	editing of the 'max_core_size' problem configuration variable
+	is supported.
+
+2011-03-30 (r6207) Alexander Chernov  <cher@ejudge.ru>
+
+	* reuse_exec.h:
+	(task_SetMaxProcCount) prototype is removed;
+	(task_SetMaxCoreSize) new function prototype;
+	(task_SetMaxFileSize) new function prototype;
+	(task_SetMaxLockedMemorySize) new function prototype;
+	(task_SetMaxMessageQueueSize) new function prototype;
+	(task_SetMaxNiceValue) new function prototype;
+	(task_SetMaxOpenFileCount) new function prototype;
+	(task_SetMaxProcessCount) new function prototype;
+	(task_SetMaxPrioValue) new function prototype;
+	(task_SetMaxPendingCount) new function prototype.
+
+	* nwrun.c:
+	(run_program) 'task_SetMaxProcCount' is renamed
+	to 'task_SetMaxProcessCount'.
+
+2011-03-30 (r6204) Alexander Chernov  <cher@ejudge.ru>
+
+	* run_packet_1.c:
+	(run_request_packet_read) packet version is not checked for
+	the QUIT packet.
+
+2011-03-29 (r6200) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html.c:
+	(ns_check_contest_events) 'finish_time' sanity checks are added.
+
+	* serve.c:
+	(main) 'finish_time' sanity checks are added.
+
+	* serve_2.c:
+	(serve_update_status_file) 'finish_time' sanity checks are added;
+	(serve_reset_contest) the same.
+
+	* serve_state.c:
+	(serve_state_load_contest) 'finish_time' sanity checks are added.
+
+	* super_html_3.c:
+	(super_html_print_problem) "valuer_cmd" editing is improved.
+
+2011-03-27 (r6195) Alexander Chernov  <cher@ejudge.ru>
+
+	* serve_2.c:
+	(serve_compile_request) 'max_vm_size', 'max_stack_size' are passed to
+	the compilation server.
+
+2011-03-27 (r6194) Alexander Chernov  <cher@ejudge.ru>
+
+	* compile_packet.h: copyright notice is updated;
+	(struct compile_request_packet) new fields 'max_vm_size',
+	'max_stack_size' are added.
+
+	* compile_packet_priv.h:
+	(struct compile_request_bin_packet) 'max_vm_size',
+	'max_stack_size' fields are added.
+
+	* prepare.h:
+	(struct section_language_data) 'max_vm_size', 'max_stack_size'
+	fields are added.
+
+	* reuse_exec.h:
+	(task_EnableProcessGroup) new function prototype.
+
+	* super_proto.h:
+	editing of the new 'max_vm_size', 'max_stack_size' language
+	configuration variables is supported.
+
+	* compile.c:
+	compilation processes are started in separate process groups;
+	'max_vm_size', 'max_stack_size' language configuration variables
+	are supported.
+
+	* compile_packet_1.c:
+	(compile_request_packet_read) 'max_vm_size', 'max_stack_size'
+	are read.
+
+	* compile_packet_2.c:
+	(compile_request_packet_write) 'max_vm_size', 'max_stack_size'
+	are written.
+
+	* prepare_out.c:
+	(prepare_unparse_lang) new language configuration variables
+	'max_vm_size', 'max_stack_size' are supported.
+
+	* serve-control.c, super_html_3.c, super-serve.c:
+	editing of the new 'max_vm_size', 'max_stack_size' language
+	configuration variables is supported.
+
+2011-03-27 (r6189) Alexander Chernov  <cher@ejudge.ru>
+
+	* configure.ac:
+	Reuse checking is removed.
+
+2011-03-27 (r6187) Alexander Chernov  <cher@ejudge.ru>
+
+	* config.h.in:
+	reuse-specific feature macros are removed.
+
+	* compile.c, execute.c, run.c:
+	conditional compilation depending on the version of
+	the reuse library is removed.
+
+2011-03-27 (r6185) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in: dependencies from the reuse library are removed.
+
+	* files.make:
+	more reuse files are added.
+
+	* filter_eval.c:
+	"reuse_mempage.h" is included instead of <reuse/MemPage.h>.
+
+	* filter_tree.c:
+	"reuse_mempage.h" is included instead of <reuse/MemPage.h>.
+
+	* serve.c:
+	<reuse/number_io.h> is no longer included;
+	<reuse/format_io.h> is no longer included.
+
+	* sformat.c:
+	<reuse/number_io.h> is no longer included;
+	<reuse/format_io.h> is no longer included.
+	'snprintf' is used instead of 'os_snprintf'.
+
+	* run.c:
+	<reuse/number_io.h> is no longer included;
+	<reuse/format_io.h> is no longer included;
+	'snprintf' is used instead of 'os_snprintf'.
+
+	* tex_dom_parse.c:
+	"reuse_hash.h" is insluded instead of <reuse/hash.h>.
+
+	* userlist-server-control.c: copyright notice is updated;
+	"reuse_osdeps.h" is included instead of <reuse/osdeps.h>.
+
+2011-03-27 (r6184) Alexander Chernov  <cher@ejudge.ru>
+
+	* reuse_hash.h, reuse_hash_priv.h, reuse_exec.h, reuse_mempage.h:
+	Initial revision. Copied from the reuse library.
+
+2011-03-27 (r6180) Alexander Chernov  <cher@ejudge.ru>
+
+	* printing.c:
+	copyright notice is updated;
+	"reuse_exec.h" is included instead of <reuse/exec.h>.
+
+2011-03-27 (r6179) Alexander Chernov  <cher@ejudge.ru>
+
+	* serve.c:
+	"reuse_exec.h" is included instead of <reuse/exec.h>.
+
+2011-03-27 (r6178) Alexander Chernov  <cher@ejudge.ru>
+
+	* nwrun.c, reports.c, run_inverse.c, ejudge-control.c, execute.c, run.c, serve_2.c, compile.c, diff.c:
+	"reuse_exec.h" is included instead of <reuse/exec.h>.
+
+2011-03-27 (r6176) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make:
+	more reuse files are added.
+
+2011-03-27 (r6175) Alexander Chernov  <cher@ejudge.ru>
+
+	* reuse_integral.h:
+	Initial revision. Copied from the reuse library.
+
+2011-03-27 (r6174) Alexander Chernov  <cher@ejudge.ru>
+
+	* config.h.in, configure.ac:
+	reuse features merged in.
+
+2011-03-27 (r6173) Alexander Chernov  <cher@ejudge.ru>
+
+	* compile_packet_priv.h, full_archive.h:
+	copyright notice is updated;
+	"reuse_integral.h" is included instead of <reuse/integral.h>.
+
+2011-03-27 (r6172) Alexander Chernov  <cher@ejudge.ru>
+
+	* sha.c, run_packet_1.c, run_packet_2.c, run_packet_3.c, run_packet_4.c, run_packet_5.c, run_packet_6.c, sha.h, ej_types.h, compile_packet_1.c, run_packet_priv.h, compile_packet_2.c, compile_packet_3.c, compile_packet_4.c, compile_packet_5.c, compile_packet_6.c, run.c:
+	"reuse_integral.h" is included instead of <reuse/integral.h>.
+
+2011-03-27 (r6167) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make:
+	more reuse files are added.
+
+2011-03-27 (r6164) Alexander Chernov  <cher@ejudge.ru>
+
+	* reuse_osdeps.h:
+	Initial revision. Copied from the reuse library.
+
+2011-03-27 (r6163) Alexander Chernov  <cher@ejudge.ru>
+
+	* super-serve-control.c, mime_type.c:
+	copyright notice is updated;
+	"reuse_osdeps.h" is included instead of <reuse/osdeps.h>.
+
+2011-03-27 (r6162) Alexander Chernov  <cher@ejudge.ru>
+
+	* nwrun.c, contest_tmpl.c, userlist-server.c, super-serve.c, random.c, clean-users.c, cldb_plugin_file.c, ejudge-control.c, convert-clars.c, clarlog.c, contests_2.c, server_framework.c, uldb_plugin_xml.c, serve.c, new_server_html_2.c, nsdb_plugin_files.c, ej-ncheck.c, compile.c, team_extra.c, new-server.c, reports.c, users.c, serve-control.c, contests.c, new_server_html.c, super_html_2.c, super_html_3.c, convert-runs.c, compile-control.c, super_html_5.c, runlog.c, fix-db.c, new-server-control.c, ej-batch.c, job-server.c, master_html.c, archive_paths.c, pathutl.c, super_html.c, ejudge_cfg.c, serve_state.c, opcaps.c, prepare_out.c, vcs.c, job-server-control.c, teamdb.c, edit-userlist.c, prepare.c, new-server-cmd.c, clntutil.c, run_inverse.c, runlog_import.c, nwrun_packet.c, rldb_plugin_file.c, ejudge-setup.c, ncurses_utils.c, run.c, html.c, serve_2.c, new-client.c:
+	"reuse_osdeps.h" is included instead of <reuse/osdeps.h>.
+
+2011-03-26 (r6151) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in: copyright notice is updated;
+	rule for libplatform.a updated.
+
+	* files.make:
+	PLATFORM_CFILES definition is added;
+	reuse_logger.c is added.
+
+2011-03-26 (r6148) Alexander Chernov  <cher@ejudge.ru>
+
+	* reuse_logger.h:
+	initial revision: copies from the reuse library
+
+2011-03-26 (r6147) Alexander Chernov  <cher@ejudge.ru>
+
+	* filter_expr.y, filter_eval.c, job-server-control.c, files.make, digest_1.c, archive_paths.c, digest_2.c, random.c, digest_3.c, ejudge-control.c, digest_4.c, digest_5.c, base64.c, html_start_form.c, userlist_check.c:
+	copyright notice is updated;
+	"reuse_logger.h" is used instead of <reuse/logger.h>.
+
+2011-03-26 (r6146) Alexander Chernov  <cher@ejudge.ru>
+
+	* team_extra_xml.c, userlist.c, contest_tmpl.c, run_packet_2.c, run_packet_4.c, run_packet_6.c, super-serve.c, clarlog.c, contests_2.c, uldb_plugin_xml.c, serve.c, new_server_html_2.c, nsdb_plugin_files.c, new_server_html_4.c, team_extra.c, compile_packet_1.c, compile_packet_3.c, serve-control.c, compile_packet_5.c, new_server_html.c, super_html_3.c, t3m_dir_listener.c, charsets.c, ej-batch.c, pathutl.c, super_html.c, meta_generic.c, tex_dom_doc.c, serve_state.c, prepare_out.c, testing_report_xml.c, tex_dom_parse.c, errlog.c, tex_dom_render.c, prepare.c, rldb_plugin_file.c, runlog_import.c, ejudge-setup.c, ncurses_utils.c, serve_2.c, t3m_submits.c, run_packet_1.c, run_packet_3.c, userlist-server.c, run_packet_5.c, cldb_plugin_file.c, server_framework.c, filehash.c, runlog_xml.c, new_server_html_5.c, compile.c, parsecfg.c, tex_dom.c, compile_packet_2.c, misctext.c, users.c, contests.c, compile_packet_4.c, dos2unix_str.c, super_html_2.c, filter_tree.c, compile_packet_6.c, super_html_4.c, runlog.c, compile-control.c, problem_common.c, expat_iface.c, varsubst.c, fix-db.c, job-server.c, master_html.c, ejudge_cfg.c, opcaps.c, lang_config_vis.c, userlist_xml.c, vcs.c, teamdb.c, edit-userlist.c, new-server-cmd.c, clntutil.c, run_inverse.c, protocol.c, run.c, html.c, new-client.c:
+	"reuse_logger.h" is used instead of <reuse/logger.h>.
+
+2011-03-26 (r6137) Alexander Chernov  <cher@ejudge.ru>
+
+	* serve_2.c:
+	"reuse_xalloc.h" is included instead of <reuse/xalloc.h>.
+
+2011-03-26 (r6136) Alexander Chernov  <cher@ejudge.ru>
+
+	* run_packet_1.c, run_packet_2.c, run_packet_4.c, run_packet_5.c, super-serve.c, serve_state.c, new_server_html_2.c, prepare_out.c, new_server_html_4.c, testing_report_xml.c, prepare.c, run_inverse.c, rldb_plugin_file.c, serve-control.c, new_server_html.c, super_html_3.c, html.c, run.c, super_html_4.c, runlog.c, copyright.c:
+	"reuse_xalloc.h" is included instead of <reuse/xalloc.h>.
+
+2011-03-26 (r6135) Alexander Chernov  <cher@ejudge.ru>
+
+	* team_extra_xml.c, nwrun.c, userlist.c, send_job_packet.c, contest_tmpl.c, run_packet_6.c, problem_xml.c, clean-users.c, allowed_list.c, clarlog.c, contests_2.c, serve.c, uldb_plugin_xml.c, nsdb_plugin_files.c, team_extra.c, new-server.c, compile_packet_1.c, compile_packet_3.c, execute.c, compile_packet_5.c, convert-runs.c, t3m_dir_listener.c, super_html_5.c, new-server-control.c, charsets.c, ej-batch.c, watched_file.c, super_proto.c, pathutl.c, super_html.c, ncheck_packet.c, zip_utils.c, meta_generic.c, tex_dom_doc.c, tex_dom_parse.c, errlog.c, csv.c, collect-emails.c, tex_dom_render.c, plugin.c, runlog_import.c, ejudge-setup.c, prepare_serve.c, ncurses_utils.c, problem_plugin_impl.h, diff.c, t3m_submits.c, ejudge-configure-compilers.c, run_packet_3.c, userlist-server.c, shellcfg_parse.c, run_packet_7.c, cldb_plugin_file.c, stringset.c, convert-clars.c, filehash.c, server_framework.c, runlog_xml.c, ej-ncheck.c, new_server_html_5.c, compile.c, parsecfg.c, reports.c, tex_dom.c, compile_packet_2.c, misctext.c, t3m_zip_packet_class.c, users.c, contests.c, compile_packet_4.c, cgi.c, super_html_2.c, dos2unix_str.c, compile_packet_6.c, filter_tree.c, compile-control.c, slice-userlist.c, expat_iface.c, varsubst.c, fix-db.c, sformat.c, job-server.c, master_html.c, ejudge_cfg.c, opcaps.c, lang_config_vis.c, userlist_xml.c, vcs.c, teamdb.c, edit-userlist.c, new-server-cmd.c, clntutil.c, t3_packets.c, nwrun_packet.c, protocol.c, new-client.c, common_plugin.c:
+	copyright notice is updated;
+	"reuse_xalloc.h" is included instead of <reuse/xalloc.h>.
+
+2011-03-26 (r6124) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make:
+	some files copied from the reuse library are added.
+
+2011-03-26 (r6123) Alexander Chernov  <cher@ejudge.ru>
+
+	* reuse_xalloc.h:
+	initial revision: copied from the reuse library
+
+2011-03-24 (r6119) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html_2.c:
+	(ns_write_priv_all_runs) crash in case of removed problems is fixed.
+
+2011-03-17 (r6116) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server.h: copyright notice is updated;
+	new actions 'ADMIN_CONTEST_SETTINGS',
+	'ADMIN_CHANGE_ONLINE_VIEW_SOURCE',
+	'ADMIN_CHANGE_ONLINE_VIEW_REPORT',
+	'ADMIN_CHANGE_ONLINE_VIEW_JUDGE_SCORE',
+	'ADMIN_CHANGE_ONLINE_FINAL_VISIBILITY'
+	are added;
+	(ns_write_admin_contest_settings) new function prototype.
+
+	* protocol.h:
+	(struct prot_serve_status_v2) new fields 'online_view_source',
+	'online_view_report', 'online_view_judge_score',
+	'online_final_visibility' are added.
+
+	* serve_state.h:
+	(struct serve_state) new fields 'online_view_source',
+	'online_view_report', 'online_view_judge_score',
+	'online_final_visibility' are added.
+
+	* html.c:
+	(write_html_run_status) 'online_view_judge_score' is handled;
+	(write_text_run_status) the same as above;
+	(new_write_user_runs) 'online_view_report', 'online_view_source',
+	'online_view_judge_score' are handled;
+	(do_write_kirov_standings) the same as above;
+	(do_write_public_log) the same as above;
+	(write_xml_team_testing_report) 'online_view_judge_score',
+	'online_final_visibility' are supported.
+
+	* new_server_html.c:
+	(priv_contest_operation) new commands 'ADMIN_CHANGE_ONLINE_VIEW_SOURCE'
+	'ADMIN_CHANGE_ONLINE_VIEW_REPORT',
+	'ADMIN_CHANGE_ONLINE_VIEW_JUDGE_SCORE',
+	'ADMIN_CHANGE_ONLINE_FINAL_VISIBILITY' are handled;
+	(priv_clear_run) 'team_enable_rep_view', 'enable_full_archive'
+	global configuration variables are disregarded;
+	(priv_admin_contest_settings) new function to display the
+	"Contest settings" page;
+	(priv_main_page) link to "Contest settings" page is added;
+	online option values are shown;
+	(unpriv_view_source) 'online_view_source' is supported;
+	(unpriv_view_test) 'online_view_report' is supported;
+	(unpriv_view_report) 'online_view_report' is supported.
+
+	* new_server_html_2.c:
+	(ns_write_olympiads_user_runs) 'online_view_source',
+	'online_view_report' are supported;
+	(ns_get_user_problems_summary) 'online_view_judge_score'
+	is supported;
+	(ns_write_user_problems_summary) the same as above;
+	(ns_write_admin_contest_settings) new function to generate
+	the "Contest settings" page.
+
+	* new_server_tables.c: copyright notice is updated;
+	actions 'ADMIN_CHANGE_ONLINE_VIEW_SOURCE'
+	'ADMIN_CHANGE_ONLINE_VIEW_REPORT',
+	'ADMIN_CHANGE_ONLINE_VIEW_JUDGE_SCORE',
+	'ADMIN_CHANGE_ONLINE_FINAL_VISIBILITY'
+	are supported.
+
+	* serve_2.c:
+	(serve_update_status_file) new fields 'online_view_source',
+	'online_view_report', 'online_view_judge_score',
+	'online_final_visibility' are saved;
+	(serve_load_status_file) new fields (see above) are restored;
+	(serve_move_files_to_insert_run) 'team_enable_rep_view',
+	'enable_full_archive' global configuration variables are
+	disregarded;
+	(serve_squeeze_runs) the same as above;
+	(serve_clear_by_mask) the same as above;
+	(serve_ignore_by_mask) the same as above.
+
+2011-03-15 (r6115) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_problem_data) 'final_open_tests' field is added;
+	final_open_tests_count, final_open_tests_val fields are added;
+	(cntsprob_get_test_visibility) 'final_mode' parameter is added.
+
+	* super_proto.h:
+	editing of 'final_open_tests' is supported.
+
+	* html.c:
+	(write_xml_team_testing_report) call of 'cntsprob_get_test_visibility'
+	are updated.
+
+	* prepare.c:
+	'final_open_tests' problem configuration variable is added;
+	(cntsprob_get_test_visibility) 'final_mode' parameter is added.
+
+	* prepare_out.c:
+	(prepare_unparse_prob) 'final_open_tests' is handled.
+
+	* run.c:
+	(run_tests) call of 'cntsprob_get_test_visibility' updated.
+
+	* serve-control.c, super_html_3.c, super_html_4.c, super-serve.c:
+	editing of 'final_open_tests' is supported.
+
+2011-03-15 (r6113) Alexander Chernov  <cher@ejudge.ru>
+
+	* protocol.h, serve_state.h:
+	fields are renamed: 'upsolving_' prefix is added to 'freeze_standings',
+	'view_source', 'view_protocol', 'full_protocol', 'disable_clars'.
+
+	* new_server_html.c, serve_2.c, serve_state.c:
+	fields are renamed: 'upsolving_' prefix is added to 'freeze_standings',
+	'view_source', 'view_protocol', 'full_protocol', 'disable_clars'.
+
+2011-03-14 (r6111) Alexander Chernov  <cher@ejudge.ru>
+
+	* html.h:
+	(write_xml_team_testing_report) 'is_marked' parameter is added.
+
+	* super_proto.h:
+	editing of 'score_latest_or_unmarked' problem configuration variable
+	is implemented.
+
+	* html.c:
+	(do_write_kirov_standings) 'score_latest_or_unmarked' problem
+	configuration variable is handled;
+	(do_write_public_log) the same as above;
+	(write_xml_team_testing_report) visibility "fullifmarked"
+	is supported.
+
+	* new_server_html.c:
+	(unpriv_view_report) call of 'write_xml_team_testing_report' updated.
+
+	* prepare_out.c:
+	(prepare_unparse_global) 'separate_user_score' is unparsed;
+	(prepare_unparse_prob) 'score_latest_or_unmarked' is unparsed;
+	(generate_abstract_tester) 'skip_testing' is unparsed.
+
+	* problem_common.c:
+	"fullifmarked" visibility is added.
+
+	* run.c:
+	(invoke_valuer) visibility is not printed to the valuer input stream;
+	(do_loop) 'skip_testing' configuration variable is handled correctly
+	for 'any' testers;
+	(check_config) 'skip_arch' option is handled;
+	(main) '-s ARCH' option is added to specify architectures which are
+	to be skipped in this instance of 'ej-run' program.
+
+	* serve_2.c:
+	(serve_read_run_packet) 'user_tests_passed' are adjusted for storing
+	to the database.
+
+	* super-serve.c:
+	editing of 'score_latest_or_unmarked' problem configuration variable
+	is implemented.
+
+2011-03-05 (r6109) Alexander Chernov  <cher@ejudge.ru>
+
+	* testing_report_xml.h:
+	(struct testing_report_xml) 'user_run_tests' field is added.
+
+	* html.c:
+	(write_xml_team_testing_report) separate_user_score mode
+	is supported.
+
+	* run.c:
+	(generate_xml_report) 'user_max_score', 'user_run_tests'
+	parameters are added.
+	(run_tests) 'user_run_tests' is supported.
+
+	* serve_2.c:
+	(serve_run_request) 'separate_user_score' is passed.
+
+	* testing_report_xml.c:
+	"user_run_tests" attribute is handled.
+
+2011-03-04 (r6107) Alexander Chernov  <cher@ejudge.ru>
+
+	* html.h: copyright notice is updated;
+	(write_standings) 'user_mode' parameter is added;
+	(write_public_log) 'user_mode' parameter is added;
+	(do_write_kirov_standings) 'user_mode' parameter is added;
+	(calc_kirov_score) 'separate_user_score' parameter is added;
+	'user_mode' parameter is added;
+	(write_html_run_status) 'user_mode' parameter is added;
+	(write_text_run_status) 'user_mode' parameter is added.
+
+	* html.c:
+	(calc_kirov_score) 'separate_user_score' mode is supported;
+	(write_html_run_status) 'separate_user_score' mode is supported;
+	(write_text_run_status) 'separate_user_score' mode is supported;
+	(new_write_user_runs) 'separate_user_score' mode is supported;
+	(do_write_kirov_standings) 'separate_user_score' mode is supported;
+	(write_standings) 'separate_user_score' mode is supported;
+	(do_write_public_log) 'separate_user_score' mode is supported;
+	(write_public_log) 'separate_user_score' mode is supported.
+
+	* new_server_html.c:
+	(unpriv_view_standings) 'separate_user_score' mode is supported.
+
+	* new_server_html_2.c:
+	(ns_write_priv_all_runs) call of 'write_html_run_status' updated;
+	(ns_write_priv_standings) call of 'do_write_kirov_standings' updated;
+	(ns_write_user_run_status) call of 'write_text_run_status' updated;
+	(ns_get_user_problems_summary) separate_user_score mode supported.
+
+	* new_server_html_4.c:
+	(do_dump_master_runs) 'calc_kirov_score' call is updated.
+
+	* serve_2.c:
+	(serve_update_standings_file) 'separate_user_score' mode
+	is supported;
+	(serve_update_public_log_file) 'separate_user_score' mode
+	is supported.
+
+2011-03-04 (r6106) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare_out.c:
+	missed \n is added.
+
+2011-03-01 (r6103) Alexander Chernov  <cher@ejudge.ru>
+
+	* rldb_plugin.h:
+	(struct rldb_plugin_iface) 'change_status_4' field is added.
+
+	* runlog.h: copyright notice is updated;
+	(run_change_status_3) new function prototype;
+	(run_change_status_4) new function prototype.
+
+	* run_packet.h:
+	(struct run_reply_packet) 'has_user_score' field is added.
+
+	* run_packet_priv.h:
+	FLAGS_HAS_USER_SCORE is added.
+
+	* new_server_html.c: copyright notice is updated;
+	separate_user_score mode is supported.
+
+	* new_server_html_4.c: copyright notice is updated;
+	separate_user_score mode is supported.
+
+	* rldb_plugin_file.c:
+	(change_status_4_func) new function.
+
+	* runlog.c:
+	(run_change_status_3) new function;
+	(run_change_status_4) new function.
+
+	* run_packet_4.c:
+	(run_reply_packet_read) 'has_user_score' is supported.
+
+	* run_packet_5.c:
+	(run_reply_packet_write) 'has_user_score' is supported.
+
+	* serve_2.c: copyright notice is updated;
+	separate_user_score mode is supported.
+
+2011-02-28 (r6100) Alexander Chernov  <cher@ejudge.ru>
+
+	* rldb_plugin.h: copyright notice is updated;
+	(struct rldb_plugin_iface) new member 'change_status_3' is added.
+
+	* rldb_plugin_file.c: copyright notice is updated;
+	(change_status_3_func) new member function is implemented.
+
+	* run.c:
+	(read_valuer_score) 'p_user_tests_passed' parameter is added;
+	'user_tests_passed' is read from the valuer output;
+	(invoke_valuer) 'p_user_tests_passed' parameter is added;
+	(run_tests) full_user_score is handled in separate_user_score mode;
+	user_tests_passed is received from the valuer output.
+
+2011-02-27 (r6097) Alexander Chernov  <cher@ejudge.ru>
+
+	* testing_report_xml.h:
+	"user-failed-test" attribute is removed.
+
+	* run_packet.h:
+	(struct run_reply_packet) 'user_failed_test'->'user_tests_passed'.
+
+	* run_packet_priv.h:
+	(struct run_reply_bin_packet) 'user_failed_test'->'user_tests_passed'.
+
+	* run.c:
+	basic support for separate user scoring is implemented.
+
+	* run_packet_4.c, run_packet_5.c, run_inverse.c:
+	'user_failed_test'->'user_tests_passed'.
+
+	* testing_report_xml.c:
+	"user-failed-test" attribute is removed.
+
+2011-02-27 (r6093) Alexander Chernov  <cher@ejudge.ru>
+
+	* ej_types.h:
+	(test_visibility_unparse) new function prototype.
+
+	* problem_common.c:
+	(test_visibility_unparse) new function.
+
+	* run.c:
+	(struct testinfo) 'visibility' field is added;
+	(generate_xml_report) 'visibility' is unparsed;
+	(run_tests) 'visibility' is initialized.
+
+2011-02-27 (r6091) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.c:
+	'full_user_score' problem variable is added.
+
+	* prepare_out.c: copyright notice is updated;
+	(prepare_unparse_prob) 'full_user_score' is handled.
+
+	* serve-control.c, super_html_3.c, super-serve.c:
+	editing of the new 'full_user_score' problem variable is supported.
+
+2011-02-27 (r6089) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_problem_data) new field 'full_user_score'.
+
+	* super_proto.h:
+	editing of the new 'full_user_score' problem variable is supported.
+
+2011-02-27 (r6086) Alexander Chernov  <cher@ejudge.ru>
+
+	* runlog.c: copyright notice is updated;
+	(run_get_attempts) RUN_STYLE_ERR is not counted as an attempt.
+
+2011-02-27 (r6082) Alexander Chernov  <cher@ejudge.ru>
+
+	* html.c:
+	(write_xml_team_testing_report) 'cntsprob_get_test_visibility'
+	function is used.
+
+	* prepare.c:
+	(cntsprob_get_test_visibility) new function.
+
+2011-02-27 (r6081) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(cntsprob_get_test_visibility) new function prototype.
+
+2011-02-27 (r6079) Alexander Chernov  <cher@ejudge.ru>
+
+	* ej_types.h:
+	(test_visibility_parse_mem) new function prototype.
+
+	* html.c: copyright notice is updated;
+	(write_xml_team_testing_report) new visibility conception is supported.
+
+	* prepare.c: copyright notice is updated;
+	'separate_user_score' global variable is added;
+	(prepare_parse_open_tests) rewritten to support visibility concept.
+
+	* problem_common.c:
+	(test_visibility_parse_mem) new function.
+
+	* run.c: copyright notice is updated;
+	(do_loop) user scores in the reply packet are filled up with the
+	default values.
+
+	* run_inverse.c: copyright notice is updated;
+	(run_inverse_testing) user scores in the reply packet are filled up
+	with the default values.
+
+2011-02-27 (r6078) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h: copyright notice is updated;
+	(struct section_global_data) 'separate_user_score' field is added.
+
+2011-02-24 (r6077) Alexander Chernov  <cher@ejudge.ru>
+
+	* run_packet.h: copyright notice is updated;
+	(struct run_request_packet) 'separate_user_score' field is added;
+	(struct run_reply_packet) 'user_status', 'user_failed_test',
+	'user_score' fields are added.
+
+	* run_packet_priv.h: copyright notice is updated;
+	FLAGS_SEPARATE_USER_SCORE is added;
+	(struct run_reply_bin_packet) new fields 'user_status',
+	'user_failed_test', 'user_score' are added.
+
+	* run_packet_1.c, run_packet_2.c: copyright notice is updated;
+	'separate_user_score' field is supported.
+
+	* run_packet_4.c, run_packet_5.c: copyright notice is updated;
+	'user_status', 'user_failed_test', 'user_score' fields
+	are supported.
+
+2011-02-24 (r6076) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_proto.h: copyright notice is updated;
+	editing of 'separate_user_score' global configuration variable is
+	supported.
+
+	* serve-control.c, super_html_3.c, super-serve.c: copyright notice is updated;
+	editing of 'separate_user_score' global configuration variable is
+	supported.
+
+2011-02-24 (r6075) Alexander Chernov  <cher@ejudge.ru>
+
+	* copyright.c: copyright notice is updated.
+
+2011-02-23 (r6073) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make: copyright notice is updated;
+	'style_c.c' is added.
+
+	* style_c.c: new file.
+
+2011-02-23 (r6072) Alexander Chernov  <cher@ejudge.ru>
+
+	* ej_types.h: copyright notice is updated;
+	(enum test_visibility) new enumerated constants;
+	(test_visibility_parse) new function prototype.
+
+	* testing_report_xml.h: copyright notice is updated;
+	new attribute "visibility" of the test description element <test>
+	is supported;
+	new attributes "user-status", "user-failed-test", "user-tests-passed",
+	"user-score", "user-max-score" of the report element <testing-report>
+	are supported.
+
+	* problem_common.c: copyright notice is updated;
+	"ej_types.h" is included;
+	(test_visibility_parse) new function.
+
+	* testing_report_xml.c: copyright notice is updated;
+	new attribute "visibility" of the test description element <test>
+	is supported;
+	new attributes "user-status", "user-failed-test", "user-tests-passed",
+	"user-score", "user-max-score" of the report element <testing-report>
+	are supported.
+
+2010-12-01 (r6063) Alexander Chernov  <cher@ejudge.ru>
+
+	* t3m_submits.c, t3m_submits.h, zip_utils.c, zip_utils.h:
+	initial revision
+
+2010-12-01 (r6062) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make: new files added: 't3m_submits.[ch]', 'zip_utils.[ch]'.
+
+	* serve_state.h:
+	(serve_compile_request) 'no_db_flag' is added;
+	(serve_run_request) 'contest_id', 'no_db_flag' are added.
+
+	* expat_iface.c:
+	(encoding_hnd) '@' is used instead of '?' for unknown characters
+	  due to some weirdness of expat.
+
+	* misctext.c:
+	(html_print_by_line) do not allow characters not fitting UCS2 due to
+	  weirdness of expat.
+
+	* new_server_html.c, new_server_html_4.c:
+	calls of 'serve_compile_request', 'serve_run_request' are updated.
+
+	* serve_2.c:
+	(serve_compile_request) 'no_db_flag' parameter is added;
+	(serve_run_request) 'contest_id', 'no_db_flag' parameters added;
+
+2010-11-29 (r6059) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make:
+	't3m_dir_listener.[ch]', 't3m_packet_class.h',
+	't3m_zip_packet_class.c' are added.
+
+	* expat_iface.c: copyright notice is updated;
+	(encoding_hnd) fixing for Windows-1251 support.
+
+	* misctext.c:
+	(ucs2_to_utf8) conversion heuristic is relaxed a bit.
+
+	* serve_state.c:
+	(serve_state_load_contest) 'no_users_flag' is supported.
+
+2010-11-22 (r6056) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in:
+	rules for ej-t3-mediator are changed.
+
+	* serve_state.h:
+	(serve_state_load_contest) 'no_users_flag' parameter is added.
+
+	* new_server_html.c, new_server_html_4.c:
+	calls of 'serve_compile_request' are updated.
+
+	* serve_2.c:
+	(serve_compile_request) 'contest_id' parameter is added;
+	calls of 'serve_compile_request' are updated.
+
+	* serve_state.c:
+	(serve_state_load_contest) 'no_users_flag' parameter is added.
+
+	* run.c:
+	'scoring_checker' and 'valuer_cmd' works together;
+	full_score check is relaxed if valuer_cmd is set.
+
+2010-11-18 (r6053) Alexander Chernov  <cher@ejudge.ru>
+
+	* runlog_static.c:
+	(run_fix_runlog_time) time skew fixing is relaxed.
+
+2010-11-18 (r6051) Alexander Chernov  <cher@ejudge.ru>
+
+	* t3_packets.h:
+	(struct t3_in_submit) 'prob_extid' field is added;
+	  'mime_type' field is removed;
+	  'gzipped' field is added.
+
+	* ej-t3-mediator.c:
+	protection if libzip is missing is added.
+
+	* prepare.c:
+	'extid' problem configuration variable is added.
+
+	* prepare_out.c:
+	(prepare_unparse_unhandled_prob) 'extid' problem configuration
+	  variable is handled.
+
+	* run.c:
+	security violation detection and memory limit detection are enabled
+	only if general security restrictions are enabled.
+
+	* t3_packets.c:
+	"contenttype" attribute is removed;
+	"q_extid", "gzipped" attributes are added.
+
+2010-11-18 (r6050) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_problem_data) 'extid' field is added.
+
+2010-11-18 (r6048) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html.c:
+	(priv_get_file) 'advanced_layout' is supported;
+	(unpriv_get_file) 'advanced_layout' is supported.
+
+2010-11-18 (r6043) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make: new files added: ej-t3-mediator.c, t3_packets.[ch].
+
+	* ej-t3-mediator.c, t3_packets.h, t3_packets.c: initial revision.
+
+2010-11-18 (r6042) Alexander Chernov  <cher@ejudge.ru>
+
+	* misctext.h:
+	(ucs2_to_utf8) new function prototype.
+
+	* ejudge-setup.c:
+	(generate_serve_cfg) 'secure' languages are supported.
+
+	* lang_config_vis.c:
+	(lang_config_generate_compile_cfg) 'secure' languages are supported.
+
+	* misctext.c:
+	(ucs2_to_utf8) new function.
+
+	* new_server_html.c:
+	(priv_submit_run) auto-conversion from ucs-2 to utf-8 is supported;
+	(unpriv_submit_run) the same.
+
+2010-11-15 (r6040) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in: rules for ej-t3-generator are added.
+
+2010-11-15 (r6038) Alexander Chernov  <cher@ejudge.ru>
+
+	* configure.ac: libzip check is added.
+
+	* config.h.in: libzip check is added.
+
+2010-11-14 (r6037) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in: rule for ej-ncheck is added.
+
+	* files.make: new files are added.
+
+	* ej-ncheck.c, ncheck_packet.c, ncheck_packet.h: initial revision.
+
 2010-11-03 (r6029) Alexander Chernov  <cher@ejudge.ru>
 
 	* edit-userlist.c, job-server.c, lang_config_vis.c:

@@ -1,3 +1,35 @@
+2011-03-27 (r6188) Alexander Chernov  <cher@ejudge.ru>
+
+	* main.make, Makefile.in:
+	reuse dependency is removed.
+
+2011-03-26 (r6141) Alexander Chernov  <cher@ejudge.ru>
+
+	* rldb_mysql.c:
+	"reuse_logger.h" is used instead of <reuse/logger.h>.
+
+2011-03-26 (r6128) Alexander Chernov  <cher@ejudge.ru>
+
+	* rldb_mysql.c:
+	copyright notice is updated;
+	"reuse_xalloc.h" is included instead of <reuse/xalloc.h>.
+
+2011-03-01 (r6102) Alexander Chernov  <cher@ejudge.ru>
+
+	* methods.inc.c:
+	(change_status_4_func) new prototype is added.
+
+	* rldb_mysql.c:
+	(change_status_4_func) new function.
+
+2011-02-28 (r6099) Alexander Chernov  <cher@ejudge.ru>
+
+	* methods.inc.c: copyright notice is updated;
+	(change_status_3_func) new function prototype is added.
+
+	* rldb_mysql.c: copyright notice is updated;
+	(change_status_3_func) new function.
+
 2010-11-03 (r6026) Alexander Chernov  <cher@ejudge.ru>
 
 	* rldb_mysql.c:

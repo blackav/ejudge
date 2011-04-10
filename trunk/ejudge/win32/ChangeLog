@@ -1,3 +1,45 @@
+2011-04-04 (r6227) Alexander Chernov  <cher@ejudge.ru>
+
+	* reuse_exec.c, reuse_getlastname.c, reuse_getsignalstring.c, reuse_nodename.c, reuse_isabsolutepath.c, reuse_sleep.c, reuse_isfile.c, files_win32.make, reuse_checkaccess.c, reuse_dirname.c, reuse_getworkingdir.c, reuse_logger.c, reuse_errormsg.c:
+	compilation fixes
+
+2011-03-27 (r6182) Alexander Chernov  <cher@ejudge.ru>
+
+	* reuse_exec.c:
+	Initial revision. Copied from the reuse library.
+
+2011-03-27 (r6165) Alexander Chernov  <cher@ejudge.ru>
+
+	* reuse_getsuffix.c, reuse_getsignalstring.c, reuse_getlastname.c, reuse_attachfile.c, reuse_setlock.c, reuse_sleep.c, reuse_isfile.c, reuse_getbasename.c, reuse_makedir.c, reuse_normalize_path.c, reuse_dirname.c, reuse_getworkingdir.c, reuse_errorstring.c, reuse_geterrorstring.c, reuse_findinpath.c, reuse_substsuffix.c, reuse_nodename.c, reuse_rgetlastname.c, reuse_rgetsuffix.c, reuse_isabsolutepath.c, reuse_makedirpath.c, reuse_rgetbasename.c, reuse_checkaccess.c, reuse_errormsg.c, reuse_tempnam.c, reuse_rgetworkingdir.c, reuse_rdirname.c:
+	Initial revision. Copied from the reuse library.
+
+2011-03-27 (r6159) Alexander Chernov  <cher@ejudge.ru>
+
+	* full_archive.c, fileutl.c:
+	"reuse_osdeps.h" is included instead of <reuse/osdeps.h>.
+
+2011-03-26 (r6150) Alexander Chernov  <cher@ejudge.ru>
+
+	* reuse_logger.c:
+	Initial revision. Copied from the reuse library.
+
+2011-03-26 (r6144) Alexander Chernov  <cher@ejudge.ru>
+
+	* files_win32.make, startstop.c:
+	copyright notice is updated;
+	"reuse_logger.h" is used instead of <reuse/logger.h>.
+
+2011-03-26 (r6143) Alexander Chernov  <cher@ejudge.ru>
+
+	* full_archive.c, timestamp.c, fileutl.c:
+	"reuse_logger.h" is used instead of <reuse/logger.h>.
+
+2011-03-26 (r6133) Alexander Chernov  <cher@ejudge.ru>
+
+	* full_archive.c, timestamp.c, fileutl.c:
+	copyright notice is updated;
+	"reuse_xalloc.h" is included instead of <reuse/xalloc.h>.
+
 2010-10-05 (r6003) Alexander Chernov  <cher@ejudge.ru>
 
 	* file_perms.c: copyright notice is updated;

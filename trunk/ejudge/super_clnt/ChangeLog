@@ -1,3 +1,25 @@
+2011-03-27 (r6171) Alexander Chernov  <cher@ejudge.ru>
+
+	* send_packet.c:
+	"reuse_integral.h" is included instead of <reuse/integral.h>.
+
+2011-03-27 (r6158) Alexander Chernov  <cher@ejudge.ru>
+
+	* set_param.c, main_page.c, send_packet.c, do_pass_fd.c, open.c, create_contest.c:
+	copyright notice is updated;
+	"reuse_osdeps.h" is included instead of <reuse/osdeps.h>.
+
+2011-03-27 (r6157) Alexander Chernov  <cher@ejudge.ru>
+
+	* recv_packet.c, http_request.c:
+	"reuse_osdeps.h" is included instead of <reuse/osdeps.h>.
+
+2011-03-26 (r6132) Alexander Chernov  <cher@ejudge.ru>
+
+	* recv_packet.c, http_request.c:
+	copyright notice is updated;
+	"reuse_xalloc.h" is included instead of <reuse/xalloc.h>.
+
 2008-12-25 (r5465) Alexander Chernov  <cher@ejudge.ru>
 
 	* do_pass_fd.c: copyright notice is updated;

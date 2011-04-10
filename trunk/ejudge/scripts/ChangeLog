@@ -1,3 +1,13 @@
+2011-04-01 (r6213) Alexander Chernov  <cher@ejudge.ru>
+
+	* php-version.in:
+	autodetection of the PHP version is improved.
+
+2011-03-18 (r6118) Alexander Chernov  <cher@ejudge.ru>
+
+	* perl-version.in: copyright notice is updated;
+	perl version detection is improved.
+
 2010-11-01 (r6018) Alexander Chernov  <cher@ejudge.ru>
 
 	* python3.in, python3-version.in, lang_ids.cfg, Makefile.in:

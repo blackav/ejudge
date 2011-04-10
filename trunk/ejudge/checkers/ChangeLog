@@ -1,3 +1,31 @@
+2011-03-27 (r6192) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in:
+	reuse dependency removed
+
+2011-02-27 (r6088) Alexander Chernov  <cher@ejudge.ru>
+
+	* style_c.c:
+	only the basename is reported on errors instead of the full path.
+
+2011-02-23 (r6073) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make: copyright notice is updated;
+	'style_c.c' is added.
+
+	* style_c.c: new file.
+
+2010-11-22 (r6055) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make:
+	'valuer_parse_input.c' is added.
+
+	* checker_internal.h:
+	valid run statuses are updated;
+	(valuer_parse_input) new function.
+
+	* valuer_parse_input.c: initial revision.
+
 2010-11-03 (r6029) Alexander Chernov  <cher@ejudge.ru>
 
 	* style_archive.c:

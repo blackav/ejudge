@@ -1,3 +1,24 @@
+2011-03-27 (r6188) Alexander Chernov  <cher@ejudge.ru>
+
+	* main.make, Makefile.in:
+	reuse dependency is removed.
+
+2011-03-27 (r6154) Alexander Chernov  <cher@ejudge.ru>
+
+	* common_mysql.c:
+	"reuse_osdeps.h" is included instead of <reuse/osdeps.h>.
+
+2011-03-26 (r6140) Alexander Chernov  <cher@ejudge.ru>
+
+	* common_mysql.c:
+	"reuse_logger.h" is used instead of <reuse/logger.h>.
+
+2011-03-26 (r6126) Alexander Chernov  <cher@ejudge.ru>
+
+	* common_mysql.c:
+	copyright notice is updated;
+	"reuse_xalloc.h" is included instead of <reuse/xalloc.h>.
+
 2010-01-06 (r5604) Alexander Chernov  <cher@ejudge.ru>
 
 	* common_mysql.h: copyright notice is updated;
