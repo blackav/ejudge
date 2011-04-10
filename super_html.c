@@ -422,7 +422,6 @@ super_html_main_page(FILE *f,
           "<th>Id</th>\n"
           "<th>Name</th>\n"
           "<th>Closed?</th>\n"
-          "<th>Serve status</th>\n"
           "<th>Run status</th>\n"
           "<th>Judge</th>\n"
           "<th>Master</th>\n"
@@ -442,19 +441,6 @@ super_html_main_page(FILE *f,
       fprintf(f, "<td>%d</td>", contest_id);
       fprintf(f, "<td>(removed)</td>");
       fprintf(f, "<td>&nbsp;</td>");
-
-      if (!extra || !extra->serve_used) {
-        fprintf(f, "<td><i>Not managed</i></td>\n");
-      } else {
-        if (extra->serve_suspended) {
-          fprintf(f, "<td bgcolor=\"#ff8888\">Failed</td>\n");
-        } else if (extra->serve_pid > 0) {
-          fprintf(f, "<td bgcolor=\"#ffff88\">Running, %d</td>\n",
-                  extra->serve_pid);
-        } else {
-          fprintf(f, "<td bgcolor=\"#ffff88\">Waiting</td>\n");
-        }
-      }
 
       if (!extra || !extra->run_used) {
         cnt = 0;
@@ -497,19 +483,6 @@ super_html_main_page(FILE *f,
       fprintf(f, "<td>%d</td>", contest_id);
       fprintf(f, "<td bgcolor=\"#ff8888\">(XML parse error)</td>");
       fprintf(f, "<td>&nbsp;</td>");
-
-      if (!extra || !extra->serve_used) {
-        fprintf(f, "<td><i>Not managed</i></td>\n");
-      } else {
-        if (extra->serve_suspended) {
-          fprintf(f, "<td bgcolor=\"#ff8888\">Failed</td>\n");
-        } else if (extra->serve_pid > 0) {
-          fprintf(f, "<td bgcolor=\"#ffff88\">Running, %d</td>\n",
-                  extra->serve_pid);
-        } else {
-          fprintf(f, "<td bgcolor=\"#ffff88\">Waiting</td>\n");
-        }
-      }
 
       if (!extra || !extra->run_used) {
         cnt = 0;
@@ -568,38 +541,6 @@ super_html_main_page(FILE *f,
 
     // report "closed" flag
     fprintf(f, "<td>%s</td>", cnts->closed?"closed":"&nbsp;");
-
-    // report serve mastering status
-    if (priv_level >= PRIV_LEVEL_ADMIN) {
-      if (cnts->managed) {
-        fprintf(f, "<td><font color=\"green\"><i>New server</i></font></td>\n");
-      } else if (!cnts->managed && (!extra || !extra->serve_used)) {
-        fprintf(f, "<td><i>Not managed</i></td>\n");
-      } else if (!extra || !extra->serve_used) {
-        fprintf(f, "<td bgcolor=\"#ffff88\">Not yet managed</td>\n");
-      } else if (!cnts->managed) {
-        // still managed, but not necessary
-        if (extra->serve_suspended) {
-          fprintf(f, "<td bgcolor=\"#ff8888\">Failed, not managed</td>\n");
-        } else if (extra->serve_pid > 0) {
-          fprintf(f, "<td bgcolor=\"#ffff88\">Running, %d, not managed</td>\n",
-                  extra->serve_pid);
-        } else {
-          fprintf(f, "<td bgcolor=\"#ffff88\">Waiting, not managed</td>\n");
-        }
-      } else {
-        // managed as need to
-        if (extra->serve_suspended) {
-          fprintf(f, "<td bgcolor=\"#ff8888\">Failed</td>\n");
-        } else if (extra->serve_pid > 0) {
-          fprintf(f, "<td>Running, %d</td>\n", extra->serve_pid);
-        } else {
-          fprintf(f, "<td>Waiting</td>\n");
-        }
-      }
-    } else {
-      fprintf(f, "<td>&nbsp;</td>\n");
-    }
 
     // report run mastering status
     if (priv_level >= PRIV_LEVEL_ADMIN) {
