@@ -18,6 +18,7 @@
 #include "parsecfg.h"
 #include "charsets.h"
 #include "xml_utils.h"
+#include "misctext.h"
 
 #include "reuse_xalloc.h"
 #include "reuse_logger.h"
@@ -1001,17 +1002,6 @@ read_comment(FILE *f)
 }
 
 static int
-num_suffix(const unsigned char *str)
-{
-  if (!str[0]) return 1;
-  if (str[1]) return 0; 
-  if (str[0] == 'k' || str[0] == 'K') return 1024;
-  if (str[0] == 'm' || str[0] == 'M') return 1024 * 1024;
-  if (str[0] == 'g' || str[0] == 'G') return 1024 * 1024 * 1024;
-  return 0;
-}
-
-static int
 copy_param(void *cfg, const struct config_parse_info *params,
            char *varname, char *varvalue)
 {
@@ -1044,40 +1034,22 @@ copy_param(void *cfg, const struct config_parse_info *params,
     ptr = (time_t*) ((char*) cfg + params[i].offset);
     *ptr = v;
   } else if (!strcmp(params[i].type, "z")) {
-    int n, m;
-    size_t v, *ptr;
+    size_t v = 0, *ptr = 0;
 
-#ifdef __WIN32__
-    if (sscanf(varvalue, "%d%n", &v, &n) != 1
-        || !(m = num_suffix(varvalue + n))) {
-      fprintf(stderr, "%d: size parameter expected for '%s'\n",
+    if (size_str_to_size_t(varvalue, &v) < 0) {
+      fprintf(stderr, "%d: invalid value of size parameter for '%s'\n",
               parsecfg_state.lineno - 1, varname);
-      return -1;
+      return -1;              
     }
-#else
-    if (sscanf(varvalue, "%zu%n", &v, &n) != 1
-        || !(m = num_suffix(varvalue + n))) {
-      fprintf(stderr, "%d: size parameter expected for '%s'\n",
-              parsecfg_state.lineno - 1, varname);
-      return -1;
-    }
-#endif /* __WIN32__ */
-    // FIXME: check for overflow 
-    v *= m;
     ptr = (size_t*) ((char*) cfg + params[i].offset);
     *ptr = v;
   } else if (!strcmp(params[i].type, "d")) {
-    int  n, v, m;
-    int *ptr;
-
-    if (sscanf(varvalue, "%d%n", &v, &n) != 1
-        || !(m = num_suffix(varvalue + n))) {
-      fprintf(stderr, "%d: numeric parameter expected for '%s'\n",
+    int v = 0, *ptr = 0;
+    if (size_str_to_num(varvalue, &v) < 0) {
+      fprintf(stderr, "%d: invalid value of numeric parameter for '%s'\n",
               parsecfg_state.lineno - 1, varname);
       return -1;
     }
-    // FIXME: check for overflow 
-    v *= m;
     ptr = (int *) ((char*) cfg + params[i].offset);
     *ptr = v;
   } else if (!strcmp(params[i].type, "s")) {
