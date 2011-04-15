@@ -73,9 +73,6 @@ static const unsigned char * const form_row_attrs[]=
   " bgcolor=\"#e0e0e0\"",
 };
 
-static int
-num_suffix(const unsigned char *str);
-
 static void
 html_submit_button(FILE *f,
                    int action,
@@ -4462,7 +4459,7 @@ super_html_lang_cmd(struct sid_state *sstate, int cmd,
                     int param3, int param4)
 {
   struct section_language_data *pl_old, *pl_new;
-  int val, n, mult;
+  int val, n;
   int *p_int;
   size_t *p_size, zval;
   char **tmp_env = 0;
@@ -4579,16 +4576,8 @@ super_html_lang_cmd(struct sid_state *sstate, int cmd,
     p_size = &pl_new->max_vm_size;
 
   handle_size_t:
-    if (!param2) return -SSERV_ERR_INVALID_PARAMETER;
-    if (sscanf(param2, "%d%n", &val, &n) == 1 && !param2[n] && val == -1) {
-      *p_size = -1L;
-      return 0;
-    }
-    if (sscanf(param2, "%zu%n", &zval, &n) != 1)
-      return -SSERV_ERR_INVALID_PARAMETER;
-    if (!(mult = num_suffix(param2 + n))) return -SSERV_ERR_INVALID_PARAMETER;
-    // FIXME: check for overflow
-    zval *= mult;
+    zval = 0;
+    if (size_str_to_size_t(param2, &zval) < 0) return -SSERV_ERR_INVALID_PARAMETER;
     *p_size = zval;
     return 0;
 
@@ -7364,17 +7353,6 @@ super_html_prob_cmd(struct sid_state *sstate, int cmd,
 
 #define PROB_ASSIGN_STRING(f) snprintf(prob->f, sizeof(prob->f), "%s", param2)
 #define PROB_CLEAR_STRING(f) prob->f[0] = 0
-
-static int
-num_suffix(const unsigned char *str)
-{
-  if (!str[0]) return 1;
-  if (str[1]) return 0; 
-  if (str[0] == 'k' || str[0] == 'K') return 1024;
-  if (str[0] == 'm' || str[0] == 'M') return 1024 * 1024;
-  if (str[0] == 'g' || str[0] == 'G') return 1024 * 1024 * 1024;
-  return 0;
-}
 
 int
 super_html_prob_param(struct sid_state *sstate, int cmd,
