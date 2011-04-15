@@ -61,31 +61,6 @@ unparse_bool(FILE *f, const unsigned char *name, int value)
   fprintf(f, "%s%s\n", name, value?"":" = 0");
 }
 
-#define SIZE_G (1024 * 1024 * 1024)
-#define SIZE_M (1024 * 1024)
-#define SIZE_K (1024)
-
-static unsigned char*
-num_to_size(unsigned char *buf, size_t buf_size, int num)
-{
-  if (!num) snprintf(buf, buf_size, "0");
-  else if (!(num % SIZE_G)) snprintf(buf, buf_size, "%uG", num / SIZE_G);
-  else if (!(num % SIZE_M)) snprintf(buf, buf_size, "%uM", num / SIZE_M);
-  else if (!(num % SIZE_K)) snprintf(buf, buf_size, "%uK", num / SIZE_K);
-  else snprintf(buf, buf_size, "%u", num);
-  return buf;
-}
-static unsigned char*
-size_t_to_size(unsigned char *buf, size_t buf_size, size_t num)
-{
-  if (!num) snprintf(buf, buf_size, "0");
-  else if (!(num % SIZE_G)) snprintf(buf, buf_size, "%zuG", num / SIZE_G);
-  else if (!(num % SIZE_M)) snprintf(buf, buf_size, "%zuM", num / SIZE_M);
-  else if (!(num % SIZE_K)) snprintf(buf, buf_size, "%zuK", num / SIZE_K);
-  else snprintf(buf, buf_size, "%zu", num);
-  return buf;
-}
-
 static void
 do_str(
         FILE *f,
@@ -315,18 +290,18 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
 
   if (global->max_run_size != DFLT_G_MAX_RUN_SIZE)
     fprintf(f, "max_run_size = %s\n",
-            num_to_size(nbuf, sizeof(nbuf), global->max_run_size));
+            num_to_size_str(nbuf, sizeof(nbuf), global->max_run_size));
   if (global->max_run_total != DFLT_G_MAX_RUN_TOTAL)
     fprintf(f, "max_run_total = %s\n",
-            num_to_size(nbuf, sizeof(nbuf), global->max_run_total));
+            num_to_size_str(nbuf, sizeof(nbuf), global->max_run_total));
   if (global->max_run_num != DFLT_G_MAX_RUN_NUM)
     fprintf(f, "max_run_num = %d\n", global->max_run_num);
   if (global->max_clar_size != DFLT_G_MAX_CLAR_SIZE)
     fprintf(f, "max_clar_size = %s\n",
-            num_to_size(nbuf, sizeof(nbuf), global->max_clar_size));
+            num_to_size_str(nbuf, sizeof(nbuf), global->max_clar_size));
   if (global->max_clar_total != DFLT_G_MAX_CLAR_TOTAL)
     fprintf(f, "max_clar_total = %s\n",
-            num_to_size(nbuf, sizeof(nbuf), global->max_clar_total));
+            num_to_size_str(nbuf, sizeof(nbuf), global->max_clar_total));
   if (global->max_clar_num != DFLT_G_MAX_CLAR_NUM)
     fprintf(f, "max_clar_num = %d\n", global->max_clar_num);
   if (global->team_page_quota != DFLT_G_TEAM_PAGE_QUOTA)
@@ -334,17 +309,17 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
 
   if (((ssize_t) global->compile_max_vm_size) > 0) {
     fprintf(f, "compile_max_vm_size = %s\n",
-            size_t_to_size(size_buf, sizeof(size_buf),
+            size_t_to_size_str(size_buf, sizeof(size_buf),
                            global->compile_max_vm_size));
   }
   if (((ssize_t) global->compile_max_stack_size) > 0) {
     fprintf(f, "compile_max_stack_size = %s\n",
-            size_t_to_size(size_buf, sizeof(size_buf),
+            size_t_to_size_str(size_buf, sizeof(size_buf),
                            global->compile_max_stack_size));
   }
   if (((ssize_t) global->compile_max_file_size) > 0) {
     fprintf(f, "compile_max_file_size = %s\n",
-            size_t_to_size(size_buf, sizeof(size_buf),
+            size_t_to_size_str(size_buf, sizeof(size_buf),
                            global->compile_max_file_size));
   }
 
@@ -486,10 +461,10 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
     fprintf(f, "rounding_mode = %s\n", rounding_modes[global->rounding_mode]);
   if (global->max_file_length && global->max_file_length != DFLT_G_MAX_FILE_LENGTH)
     fprintf(f, "max_file_length = %s\n",
-            num_to_size(nbuf, sizeof(nbuf), global->max_file_length));
+            num_to_size_str(nbuf, sizeof(nbuf), global->max_file_length));
   if (global->max_line_length && global->max_line_length != DFLT_G_MAX_LINE_LENGTH)
     fprintf(f, "max_line_length = %s\n",
-            num_to_size(nbuf, sizeof(nbuf), global->max_line_length));
+            num_to_size_str(nbuf, sizeof(nbuf), global->max_line_length));
   if (global->disable_auto_testing != DFLT_G_DISABLE_AUTO_TESTING)
     unparse_bool(f, "disable_auto_testing", global->disable_auto_testing);
   if (global->disable_testing != DFLT_G_DISABLE_TESTING)
@@ -877,15 +852,15 @@ prepare_unparse_lang(
 
   if (lang->max_vm_size != -1L && lang->max_vm_size != 0) {
     fprintf(f, "max_vm_size = %s\n",
-            size_t_to_size(size_buf, sizeof(size_buf), lang->max_vm_size));
+            size_t_to_size_str(size_buf, sizeof(size_buf), lang->max_vm_size));
   }
   if (lang->max_stack_size != -1L && lang->max_stack_size != 0) {
     fprintf(f, "max_stack_size = %s\n",
-            size_t_to_size(size_buf, sizeof(size_buf), lang->max_stack_size));
+            size_t_to_size_str(size_buf, sizeof(size_buf), lang->max_stack_size));
   }
   if (lang->max_file_size != -1L && lang->max_file_size != 0) {
     fprintf(f, "max_file_size = %s\n",
-            size_t_to_size(size_buf, sizeof(size_buf), lang->max_file_size));
+            size_t_to_size_str(size_buf, sizeof(size_buf), lang->max_file_size));
   }
 
   if (lang->compiler_env) {
@@ -1131,19 +1106,19 @@ prepare_unparse_prob(
 
   if (prob->max_vm_size != -1L)
     fprintf(f, "max_vm_size = %s\n",
-            size_t_to_size(size_buf, sizeof(size_buf), prob->max_vm_size));
+            size_t_to_size_str(size_buf, sizeof(size_buf), prob->max_vm_size));
   if (prob->max_stack_size != -1L)
     fprintf(f, "max_stack_size = %s\n",
-            size_t_to_size(size_buf, sizeof(size_buf), prob->max_stack_size));
+            size_t_to_size_str(size_buf, sizeof(size_buf), prob->max_stack_size));
   if (prob->max_data_size != -1L)
     fprintf(f, "max_data_size = %s\n",
-            size_t_to_size(size_buf, sizeof(size_buf), prob->max_data_size));
+            size_t_to_size_str(size_buf, sizeof(size_buf), prob->max_data_size));
   if (prob->max_core_size != -1L)
     fprintf(f, "max_core_size = %s\n",
-            size_t_to_size(size_buf, sizeof(size_buf), prob->max_core_size));
+            size_t_to_size_str(size_buf, sizeof(size_buf), prob->max_core_size));
   if (prob->max_file_size != -1L)
     fprintf(f, "max_file_size = %s\n",
-            size_t_to_size(size_buf, sizeof(size_buf), prob->max_file_size));
+            size_t_to_size_str(size_buf, sizeof(size_buf), prob->max_file_size));
   if (prob->max_open_file_count >= 0) {
     fprintf(f, "max_open_file_count = %d\n", prob->max_open_file_count);
   }

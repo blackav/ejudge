@@ -251,4 +251,9 @@ html_print_by_line(
         unsigned char const *s,
         size_t size);
 
+int
+size_str_to_num(const unsigned char *str, int *p_num);
+int
+size_str_to_size_t(const unsigned char *str, size_t *p_size);
+
 #endif /* __MISCTEXT_H__ */

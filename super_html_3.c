@@ -2768,7 +2768,7 @@ super_html_global_param(struct sid_state *sstate, int cmd,
                         int param3, int param4)
 {
   struct section_global_data *global = sstate->global;
-  int hh, mm, n, val, default_val, mult;
+  int hh, mm, n, val, default_val;
   unsigned char *s;
   int *p_int;
   unsigned char *p_str;
@@ -3097,16 +3097,8 @@ super_html_global_param(struct sid_state *sstate, int cmd,
     p_size = &global->compile_max_vm_size;
 
   handle_size_t:
-    if (!param2) return -SSERV_ERR_INVALID_PARAMETER;
-    if (sscanf(param2, "%d%n", &val, &n) == 1 && !param2[n] && val == -1) {
-      *p_size = -1L;
-      return 0;
-    }
-    if (sscanf(param2, "%zu%n", &zval, &n) != 1)
-      return -SSERV_ERR_INVALID_PARAMETER;
-    if (!(mult = num_suffix(param2 + n))) return -SSERV_ERR_INVALID_PARAMETER;
-    // FIXME: check for overflow
-    zval *= mult;
+    zval = 0;
+    if (size_str_to_size_t(param2, &zval) < 0) return -SSERV_ERR_INVALID_PARAMETER;
     *p_size = zval;
     return 0;
 
@@ -7390,7 +7382,7 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
                       int param3, int param4)
 {
   struct section_problem_data *prob;
-  int i, n, val, mult;
+  int i, n, val;
   int *p_int;
   char **tmp_env = 0;
   size_t *p_size, zval;
@@ -7758,16 +7750,8 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
     p_size = &prob->max_vm_size;
 
   handle_size_t:
-    if (!param2) return -SSERV_ERR_INVALID_PARAMETER;
-    if (sscanf(param2, "%d%n", &val, &n) == 1 && !param2[n] && val == -1) {
-      *p_size = -1L;
-      return 0;
-    }
-    if (sscanf(param2, "%zu%n", &zval, &n) != 1)
-      return -SSERV_ERR_INVALID_PARAMETER;
-    if (!(mult = num_suffix(param2 + n))) return -SSERV_ERR_INVALID_PARAMETER;
-    // FIXME: check for overflow
-    zval *= mult;
+    zval = 0;
+    if (size_str_to_size_t(param2, &zval) < 0) return -SSERV_ERR_INVALID_PARAMETER;
     *p_size = zval;
     return 0;
 
