@@ -228,6 +228,8 @@ struct uldb_plugin_iface plugin_uldb_mysql =
   create_group_member_func,
   // remove a group member
   remove_group_member_func,
+  // get a user iterator
+  get_brief_list_iterator_2_func,
 };
 
 // the size of the cookies pool, must be power of 2
@@ -4807,6 +4809,150 @@ remove_group_member_func(void *data, int group_id, int user_id)
 
   state->mi->simple_fquery(state->md, "DELETE FROM %sgroupmembers WHERE group_id = %d AND user_id = %d ;",
                            state->md->table_prefix, group_id, user_id);
+  return 0;
+}
+
+static ptr_iterator_t
+get_brief_list_iterator_2_func(
+        void *data,
+        int contest_id,
+        const unsigned char *filter,
+        int offset,
+        int count)
+{
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+  struct brief_list_iterator *iter = 0;
+  int i, val, j;
+
+  if (offset < 0) offset = 0;
+  if (count < 0) count = 0;
+  if (offset + count < 0) count = 0;
+
+  XCALLOC(iter, 1);
+  iter->b = brief_list_iterator_funcs;
+  iter->state = state;
+  iter->contest_id = contest_id;
+  iter->cur_ind = 0;
+
+  if (!contest_id) {
+    if (state->mi->fquery(state->md, LOGIN_WIDTH,
+                  "SELECT * FROM %slogins WHERE 1 ORDER BY user_id LIMIT %d, %d;",
+                          state->md->table_prefix, offset, count) < 0)
+      goto fail;
+    iter->total_ids = state->md->row_count;
+    if (!iter->total_ids) {
+      state->mi->free_res(state->md);
+      return (ptr_iterator_t) iter;
+    }
+
+    XCALLOC(iter->noreg_rows, iter->total_ids);
+    for (i = 0; i < iter->total_ids; i++) {
+      if (!(state->md->row = mysql_fetch_row(state->md->res)))
+        db_error_no_data_fail(state->md);
+      state->md->lengths = mysql_fetch_lengths(state->md->res);
+      if (!state->md->lengths[0])
+        db_error_inv_value_fail(state->md, "value");
+      if (state->mi->parse_int(state->md, state->md->row[0], &val) < 0 || val <= 0)
+        db_error_inv_value_fail(state->md, "value");
+      iter->noreg_rows[i].user_id = val;
+      copy_saved_row(state, &iter->noreg_rows[i].login_row);
+    }
+
+    state->mi->free_res(state->md);
+    if (state->mi->fquery(state->md, USER_INFO_WIDTH,
+                  "SELECT * FROM %susers WHERE contest_id = 0 ORDER BY user_id ;",
+                  state->md->table_prefix) < 0)
+      goto fail;
+    j = 0;
+    for (i = 0; i < state->md->row_count; i++) {
+      if (!(state->md->row = mysql_fetch_row(state->md->res)))
+        db_error_no_data_fail(state->md);
+      state->md->lengths = mysql_fetch_lengths(state->md->res);
+      if (!state->md->lengths[0])
+        db_error_inv_value_fail(state->md, "value");
+      if (state->mi->parse_int(state->md, state->md->row[0], &val) < 0 || val <= 0)
+        db_error_inv_value_fail(state->md, "value");
+      while (j < iter->total_ids && iter->noreg_rows[j].user_id < val) j++;
+      if (j < iter->total_ids && iter->noreg_rows[j].user_id == val) {
+        copy_saved_row(state, &iter->noreg_rows[j].user_info_row);
+      }
+    }
+
+    state->mi->free_res(state->md);
+    return (ptr_iterator_t) iter;
+  }
+
+  if (state->mi->fquery(state->md, LOGIN_WIDTH,
+                        "SELECT %slogins.* FROM %slogins, %scntsregs WHERE %slogins.user_id = %scntsregs.user_id AND %scntsregs.contest_id = %d ORDER BY %slogins.user_id LIMIT %d, %d;",
+                        state->md->table_prefix, state->md->table_prefix, state->md->table_prefix,
+                        state->md->table_prefix, state->md->table_prefix, state->md->table_prefix,
+                        contest_id, state->md->table_prefix, offset, count) < 0)
+    goto fail;
+
+  iter->total_ids = state->md->row_count;
+  if (!iter->total_ids) {
+    state->mi->free_res(state->md);
+    return (ptr_iterator_t) iter;
+  }
+  XCALLOC(iter->full_rows, iter->total_ids);
+  for (i = 0; i < iter->total_ids; i++) {
+    if (!(state->md->row = mysql_fetch_row(state->md->res)))
+      db_error_no_data_fail(state->md);
+    state->md->lengths = mysql_fetch_lengths(state->md->res);
+    if (!state->md->lengths[0])
+      db_error_inv_value_fail(state->md, "value");
+    if (state->mi->parse_int(state->md, state->md->row[0], &val) < 0 || val <= 0)
+      db_error_inv_value_fail(state->md, "value");
+    iter->full_rows[i].user_id = val;
+    copy_saved_row(state, &iter->full_rows[i].login_row);
+  }
+  state->mi->free_res(state->md);
+
+  if (state->mi->fquery(state->md, USER_INFO_WIDTH,
+                "SELECT * FROM %susers WHERE contest_id = %d ORDER BY user_id ;",
+                state->md->table_prefix, contest_id) < 0)
+    goto fail;
+  j = 0;
+  for (i = 0; i < state->md->row_count; i++) {
+    if (!(state->md->row = mysql_fetch_row(state->md->res)))
+      db_error_no_data_fail(state->md);
+    state->md->lengths = mysql_fetch_lengths(state->md->res);
+    if (!state->md->lengths[0])
+      db_error_inv_value_fail(state->md, "value");
+    if (state->mi->parse_int(state->md, state->md->row[0], &val) < 0 || val <= 0)
+      db_error_inv_value_fail(state->md, "value");
+    while (j < iter->total_ids && iter->full_rows[j].user_id < val) j++;
+    if (j < iter->total_ids && iter->full_rows[j].user_id == val) {
+      copy_saved_row(state, &iter->full_rows[j].user_info_row);
+    }
+  }
+  state->mi->free_res(state->md);
+
+  if (state->mi->fquery(state->md, CNTSREG_WIDTH,
+                "SELECT * FROM %scntsregs WHERE contest_id = %d ORDER BY user_id ;",
+                state->md->table_prefix, contest_id) < 0)
+    goto fail;
+  j = 0;
+  for (i = 0; i < state->md->row_count; i++) {
+    if (!(state->md->row = mysql_fetch_row(state->md->res)))
+      db_error_no_data_fail(state->md);
+    state->md->lengths = mysql_fetch_lengths(state->md->res);
+    if (!state->md->lengths[0])
+      db_error_inv_value_fail(state->md, "value");
+    if (state->mi->parse_int(state->md, state->md->row[0], &val) < 0 || val <= 0)
+      db_error_inv_value_fail(state->md, "value");
+    while (j < iter->total_ids && iter->full_rows[j].user_id < val) j++;
+    if (j < iter->total_ids && iter->full_rows[j].user_id == val) {
+      copy_saved_row(state, &iter->full_rows[j].cntsreg_row);
+    }
+  }
+  state->mi->free_res(state->md);
+
+  return (ptr_iterator_t) iter;
+
+ fail:
+  state->mi->free_res(state->md);
+  brief_list_iterator_destroy_func((ptr_iterator_t) iter);
   return 0;
 }
 
