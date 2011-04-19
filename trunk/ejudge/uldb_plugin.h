@@ -4,7 +4,7 @@
 #ifndef __ULDB_PLUGIN_H__
 #define __ULDB_PLUGIN_H__
 
-/* Copyright (C) 2006-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -226,6 +226,8 @@ struct uldb_plugin_iface
   int (*create_group_member)(void *, int group_id, int user_id);
   // remove a group member
   int (*remove_group_member)(void *, int group_id, int user_id);
+  // list users
+  ptr_iterator_t (*get_brief_list_iterator_2)(void *, int contest_id, const unsigned char *filter, int offset, int count);
 };
 
 /* default plugin: compiled into userlist-server */

@@ -3,7 +3,7 @@
 #ifndef __SUPER_HTML_H__
 #define __SUPER_HTML_H__
 
-/* Copyright (C) 2004-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -539,5 +539,11 @@ int
 super_html_add_abstract_problem(
         struct sid_state *sstate,
         const unsigned char *short_name);
+
+int
+super_serve_op_browse_users(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr);
 
 #endif /* __SUPER_HTML_H__ */

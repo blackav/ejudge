@@ -4,7 +4,7 @@
 #ifndef __USERLIST_CLNT_H__
 #define __USERLIST_CLNT_H__
 
-/* Copyright (C) 2002-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -394,5 +394,15 @@ userlist_clnt_get_xml_by_text(
         int cmd,
         const unsigned char *request_text,
         unsigned char **reply_text);
+
+int
+userlist_clnt_list_users_2(
+        struct userlist_clnt *clnt,
+        int cmd,
+        int contest_id,
+        const unsigned char *filter,
+        int offset,
+        int count,
+        unsigned char **p_info);
 
 #endif /* __USERLIST_CLNT_H__ */

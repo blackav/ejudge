@@ -604,6 +604,7 @@ link_client_state(struct client_state *p)
 #define default_get_contest_reg(a, b) dflt_iface->get_contest_reg(uldb_default->data, a, b)
 #define default_try_new_login(a, b, c, d, e) dflt_iface->try_new_login(uldb_default->data, a, b, c, d, e)
 #define default_set_simple_reg(a, b, c) dflt_iface->set_simple_reg(uldb_default->data, a, b, c)
+#define default_get_brief_list_iterator_2(a, b, c, d) dflt_iface->get_brief_list_iterator_2(uldb_default->data, a, b, c, d)
 
 static void
 update_all_user_contests(int user_id)
@@ -1220,6 +1221,42 @@ check_pk_set_user_info(
   }
   exp_len = sizeof(*data) + xml_len;
   if (pkt_len != exp_len) {
+    CONN_BAD("pkt_len mismatch: %d instead of %d", pkt_len, exp_len);
+    return -1;
+  }
+
+  return 0;
+}
+
+static int
+check_pk_list_users_2(
+        struct client_state *p,
+        int pkt_len,
+        const struct userlist_pk_list_users_2 *data)
+{
+  int filter_len, exp_len;
+
+  if (pkt_len < sizeof(*data)) {
+    CONN_BAD("packet too small: %d instead of %d",
+             pkt_len, (int) sizeof(*data));
+    return -1;
+  }
+  if (pkt_len > (128*1024*1024)) {
+    CONN_BAD("packet too big: %d", pkt_len);
+    return -1;
+  }
+  if (data->filter_len < 0 || data->filter_len > (128*1024*1024)) {
+    CONN_BAD("filter_len is invalid: %d", data->filter_len);
+    return -1;
+  }
+  filter_len = strlen(data->data);
+  if (filter_len != data->filter_len) {
+    CONN_BAD("filter_len mismatch: %d instead of %d",
+             filter_len, data->filter_len);
+    return -1;
+  }
+  exp_len = sizeof(*data) + filter_len;
+  if (exp_len != pkt_len) {
     CONN_BAD("pkt_len mismatch: %d instead of %d", pkt_len, exp_len);
     return -1;
   }
@@ -8958,6 +8995,57 @@ cleanup:
   xfree(xml_text);
 }
 
+static void
+cmd_list_all_users_2(
+        struct client_state *p,
+        int pkt_len,
+        struct userlist_pk_list_users_2 *data)
+{
+  FILE *f = 0;
+  char *xml_ptr = 0;
+  size_t xml_size = 0;
+  struct userlist_pk_xml_data *out = 0;
+  size_t out_size = 0;
+  const struct contest_desc *cnts = 0;
+  unsigned char logbuf[1024];
+  ptr_iterator_t iter;
+  const struct userlist_user *u;
+
+  snprintf(logbuf, sizeof(logbuf), "LIST_ALL_USERS_2: %d, %d, %d, %d",
+           p->user_id, data->contest_id, data->offset, data->count);
+
+  if (is_judge(p, logbuf) < 0) return;
+  if (data->contest_id) {
+    if (full_get_contest(p, logbuf, &data->contest_id, &cnts) < 0) return;
+  }
+  if (is_dbcnts_capable(p, cnts, OPCAP_LIST_USERS, logbuf) < 0) return;
+
+  f = open_memstream(&xml_ptr, &xml_size);
+  userlist_write_xml_header(f);
+  iter = default_get_brief_list_iterator_2(data->contest_id, data->data, data->offset, data->count);
+  if (iter) {
+    for (; iter->has_next(iter); iter->next(iter)) {
+      if (!(u = (const struct userlist_user*) iter->get(iter))) continue;
+      userlist_unparse_user_short(u, f, data->contest_id);
+      default_unlock_user(u);
+    }
+  }
+  userlist_write_xml_footer(f);
+  if (iter) iter->destroy(iter);
+  close_memstream(f); f = 0;
+  ASSERT(xml_size == strlen(xml_ptr));
+  out_size = sizeof(*out) + xml_size;
+  out = (struct userlist_pk_xml_data*) xmalloc(out_size);
+  memset(out, 0, out_size);
+  out->reply_id = ULS_XML_DATA;
+  out->info_len = xml_size;
+  memcpy(out->data, xml_ptr, xml_size + 1);
+  xfree(xml_ptr); xml_ptr = 0;
+  enqueue_reply_to_client(p, out_size, out);
+  info("%s -> OK, size = %zu", logbuf, xml_size); 
+  xfree(out); out = 0;
+}
+
 static void (*cmd_table[])() =
 {
   [ULS_REGISTER_NEW] =          cmd_register_new,
@@ -9044,6 +9132,7 @@ static void (*cmd_table[])() =
   [ULS_CREATE_GROUP_MEMBER] =   cmd_create_group_member,
   [ULS_DELETE_GROUP_MEMBER] =   cmd_delete_group_member,
   [ULS_GET_GROUPS] =            cmd_get_groups,
+  [ULS_LIST_ALL_USERS_2] =      cmd_list_all_users_2,
 
   [ULS_LAST_CMD] 0
 };
@@ -9134,6 +9223,7 @@ static int (*check_table[])() =
   [ULS_CREATE_GROUP_MEMBER] =   check_pk_register_contest,
   [ULS_DELETE_GROUP_MEMBER] =   check_pk_register_contest,
   [ULS_GET_GROUPS] =            check_pk_set_user_info,
+  [ULS_LIST_ALL_USERS_2] =      check_pk_list_users_2,
 
   [ULS_LAST_CMD] 0
 };
