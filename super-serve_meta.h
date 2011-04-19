@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2011/03/26 13:51:20
+// Generated 2011/04/19 08:07:19
 
 #ifndef __SUPER_SERVE_META_H__
 #define __SUPER_SERVE_META_H__
@@ -111,6 +111,10 @@ enum
   SSSS_var_header_text,
   SSSS_var_footer_text,
   SSSS_compile_home_dir,
+  SSSS_user_filter_set,
+  SSSS_user_filter,
+  SSSS_user_offset,
+  SSSS_user_count,
 
   SSSS_LAST_FIELD,
 };

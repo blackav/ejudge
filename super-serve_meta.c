@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2011/03/26 13:51:20
+// Generated 2011/04/19 08:07:19
 
 #include "super-serve_meta.h"
 #include "super-serve.h"
@@ -116,6 +116,10 @@ static struct meta_info_item meta_info_sid_state_data[] =
   [SSSS_var_header_text] = { SSSS_var_header_text, 's', XSIZE(struct sid_state, var_header_text), "var_header_text", XOFFSET(struct sid_state, var_header_text) },
   [SSSS_var_footer_text] = { SSSS_var_footer_text, 's', XSIZE(struct sid_state, var_footer_text), "var_footer_text", XOFFSET(struct sid_state, var_footer_text) },
   [SSSS_compile_home_dir] = { SSSS_compile_home_dir, 's', XSIZE(struct sid_state, compile_home_dir), "compile_home_dir", XOFFSET(struct sid_state, compile_home_dir) },
+  [SSSS_user_filter_set] = { SSSS_user_filter_set, 'B', XSIZE(struct sid_state, user_filter_set), "user_filter_set", XOFFSET(struct sid_state, user_filter_set) },
+  [SSSS_user_filter] = { SSSS_user_filter, 's', XSIZE(struct sid_state, user_filter), "user_filter", XOFFSET(struct sid_state, user_filter) },
+  [SSSS_user_offset] = { SSSS_user_offset, 'i', XSIZE(struct sid_state, user_offset), "user_offset", XOFFSET(struct sid_state, user_offset) },
+  [SSSS_user_count] = { SSSS_user_count, 'i', XSIZE(struct sid_state, user_count), "user_count", XOFFSET(struct sid_state, user_count) },
 };
 
 int ss_sid_state_get_type(int tag)
