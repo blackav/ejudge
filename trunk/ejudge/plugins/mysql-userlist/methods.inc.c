@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2008-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -435,6 +435,13 @@ static int
 create_group_member_func(void *data, int group_id, int user_id);
 static int
 remove_group_member_func(void *data, int group_id, int user_id);
+static ptr_iterator_t
+get_brief_list_iterator_2_func(
+        void *data,
+        int contest_id,
+        const unsigned char *filter,
+        int offset,
+        int count);
 
 /*
  * Local variables:
