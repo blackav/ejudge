@@ -6546,6 +6546,8 @@ static handler_func_t op_handlers[SSERV_OP_LAST] =
   [SSERV_OP_CREATE_PROBLEM] = super_serve_op_edit_problem,
   [SSERV_OP_DELETE_ITEM] = super_serve_op_package_operation,
   [SSERV_OP_EDIT_PROBLEM] = super_serve_op_edit_problem,
+
+  [SSERV_OP_BROWSE_USERS] = super_serve_op_browse_users,
 };
 
 static int

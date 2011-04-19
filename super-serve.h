@@ -3,7 +3,7 @@
 #ifndef __SUPER_SERVE_H__
 #define __SUPER_SERVE_H__
 
-/* Copyright (C) 2004-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -83,7 +83,7 @@ struct section_language_data;
 struct section_problem_data;
 struct section_tester_data;
 
-/* sizeof(struct sid_state) == 416 */
+/* sizeof(struct sid_state) == 432 */
 struct sid_state
 {
   struct sid_state *next;
@@ -207,9 +207,15 @@ struct sid_state
   unsigned char *var_footer_text;
 
   unsigned char *compile_home_dir;
+
+  ejintbool_t user_filter_set;
+  unsigned char *user_filter;
+  int user_offset;
+  int user_count;
 };
 
 struct sid_state;
+struct userlist_conn;
 struct super_http_request_info
 {
   // program invocation arguments
@@ -226,6 +232,7 @@ struct super_http_request_info
 
   const struct ejudge_cfg *config;
   struct sid_state *ss;
+  struct userlist_clnt *userlist_clnt;
 
   int opcode;
 

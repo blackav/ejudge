@@ -4,7 +4,7 @@
 #ifndef __USERLIST_PROTO_H__
 #define __USERLIST_PROTO_H__
 
-/* Copyright (C) 2002-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -108,6 +108,7 @@ enum
     ULS_CREATE_GROUP_MEMBER,
     ULS_DELETE_GROUP_MEMBER,
     ULS_GET_GROUPS,
+    ULS_LIST_ALL_USERS_2,
 
     ULS_LAST_CMD
   };
@@ -371,6 +372,16 @@ struct userlist_pk_dump_database
   short request_id;
   int   contest_id;
   int   html_flag;
+};
+
+struct userlist_pk_list_users_2
+{
+  short request_id;
+  int   contest_id;
+  int   filter_len;
+  int   offset;
+  int   count;
+  unsigned char data[1];
 };
 
 /* server->client replies */

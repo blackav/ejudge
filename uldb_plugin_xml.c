@@ -175,6 +175,13 @@ static int
 create_group_member_func(void *data, int group_id, int user_id);
 static int
 remove_group_member_func(void *data, int group_id, int user_id);
+static ptr_iterator_t
+get_brief_list_iterator_2_func(
+        void *data,
+        int contest_id,
+        const unsigned char *filter,
+        int offset,
+        int count);
 
 struct uldb_plugin_iface uldb_plugin_xml =
 {
@@ -276,6 +283,7 @@ struct uldb_plugin_iface uldb_plugin_xml =
   get_group_member_iterator_func,
   create_group_member_func,
   remove_group_member_func,
+  get_brief_list_iterator_2_func,
 };
 
 struct uldb_xml_state
@@ -327,6 +335,17 @@ struct info_list_iterator
   struct uldb_xml_state *state;
   int contest_id;
   unsigned int flag_mask;
+  int user_id;
+};
+
+struct brief_list_2_iterator
+{
+  struct ptr_iterator b;
+  struct uldb_xml_state *state;
+  int contest_id;
+  unsigned char *filter;
+  int offset;
+  int count;
   int user_id;
 };
 
@@ -3740,6 +3759,110 @@ remove_group_member_func(void *data, int group_id, int user_id)
   state->flush_interval /= 2;
 
   return 0;
+}
+
+static void
+brief_list_2_do_skip(
+        struct brief_list_2_iterator *iter,
+        const struct userlist_list *ul)
+{
+  const struct userlist_user *u;
+  const struct xml_tree *t;
+  const struct userlist_contest *c;
+
+  for (;; ++iter->user_id) {
+    if (iter->user_id >= ul->user_map_size) return;
+    if (!(u = ul->user_map[iter->user_id])) continue;
+    if (iter->contest_id <= 0) {
+      if (iter->offset <= 0) return;
+      --iter->offset;
+      continue;
+    }
+    if (!u->contests) continue;
+    for (t = u->contests->first_down; t; t = t->right) {
+      c = (const struct userlist_contest*) t;
+      if (c->id == iter->contest_id) {
+        if (iter->offset <= 0) return;
+        --iter->offset;
+        break;
+      }
+    }
+  }
+}
+
+static int
+brief_list_2_iterator_has_next_func(ptr_iterator_t data)
+{
+  struct brief_list_2_iterator *iter = (struct brief_list_2_iterator*) data;
+  struct userlist_list *ul = iter->state->userlist;
+
+  if (iter->count <= 0) return 0;
+  brief_list_2_do_skip(iter, ul);
+  return (iter->user_id < ul->user_map_size);
+}
+static const void *
+brief_list_2_iterator_get_func(ptr_iterator_t data)
+{
+  struct brief_list_2_iterator *iter = (struct brief_list_2_iterator*) data;
+  struct userlist_list *ul = iter->state->userlist;
+
+  if (iter->count <= 0) return 0;
+  brief_list_2_do_skip(iter, ul);
+  if (iter->user_id >= ul->user_map_size) return 0;
+  --iter->count;
+  return (const void *) ul->user_map[iter->user_id];
+}
+static void
+brief_list_2_iterator_next_func(ptr_iterator_t data)
+{
+  struct brief_list_2_iterator *iter = (struct brief_list_2_iterator*) data;
+  struct userlist_list *ul = iter->state->userlist;
+
+  if (iter->count <= 0) return;
+  if (iter->user_id < ul->user_map_size) iter->user_id++;
+  brief_list_2_do_skip(iter, ul);
+}
+
+static void
+brief_list_2_iterator_destroy_func(ptr_iterator_t data)
+{
+  struct brief_list_2_iterator *iter = (struct brief_list_2_iterator*) data;
+  xfree(iter->filter);
+  xfree(iter);
+}
+
+static struct ptr_iterator brief_list_2_iterator_funcs =
+{
+  brief_list_2_iterator_has_next_func,
+  brief_list_2_iterator_get_func,
+  brief_list_2_iterator_next_func,
+  brief_list_2_iterator_destroy_func,
+};
+
+static ptr_iterator_t
+get_brief_list_iterator_2_func(
+        void *data,
+        int contest_id,
+        const unsigned char *filter,
+        int offset,
+        int count)
+{
+  struct uldb_xml_state *state = (struct uldb_xml_state*) data;
+  struct brief_list_2_iterator *iter;
+
+  if (offset < 0) offset = 0;
+  if (count < 0) count = 0;
+  if (offset + count < 0) count = 0;
+
+  XCALLOC(iter, 1);
+  iter->b = brief_list_2_iterator_funcs;
+  iter->state = state;
+  iter->contest_id = contest_id;
+  if (filter) iter->filter = xstrdup(filter);
+  iter->offset = offset;
+  iter->count = count;
+  iter->user_id = 0;
+  return (ptr_iterator_t) iter;
 }
 
 /*

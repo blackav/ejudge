@@ -43,6 +43,7 @@ USERLIST_CLNT_CFILES=\
  userlist_clnt/import_csv_users.c\
  userlist_clnt/list_all_users.c\
  userlist_clnt/list_users.c\
+ userlist_clnt/list_users_2.c\
  userlist_clnt/login.c\
  userlist_clnt/logout.c\
  userlist_clnt/lookup_cookie.c\
@@ -212,6 +213,7 @@ COMMON_CFILES=\
  super_html_3.c\
  super_html_4.c\
  super_html_5.c\
+ super_html_6.c\
  super_proto.c\
  sha.c\
  t3m_dir_listener.c\

@@ -1627,6 +1627,7 @@ sid_state_clear(struct sid_state *p)
   super_serve_clear_edited_contest(p);
   xfree(p->user_login);
   xfree(p->user_name);
+  xfree(p->user_filter);
   XMEMZERO(p, 1);
 }
 static struct sid_state*
@@ -3483,6 +3484,7 @@ cmd_http_request(
   hr.ip = p->ip;
   hr.ssl_flag = p->ssl;
   hr.system_login = userlist_login;
+  hr.userlist_clnt = userlist_clnt;
 
   hr.ss = sid_state_get(p->cookie, p->user_id, p->login, p->name);
   hr.config = config;

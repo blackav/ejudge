@@ -390,6 +390,8 @@ super_html_main_page(FILE *f,
 
   fprintf(f, "<table border=\"0\"><tr><td>%sProblem editor</a></td></tr></table>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_PROBLEM_PACKAGES));
 
+  fprintf(f, "<table border=\"0\"><tr><td>%sUser editor</a></td></tr></table>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_USERS));
+
   fprintf(f, "<table border=\"0\"><tr><td>%sCreate new contest</a></td>", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d", SSERV_CMD_CREATE_CONTEST));
   if (sstate->edited_cnts) {
     fprintf(f, "<td>%sEdit current contest</a></td>",
