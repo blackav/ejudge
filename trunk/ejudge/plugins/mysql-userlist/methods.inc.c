@@ -442,6 +442,12 @@ get_brief_list_iterator_2_func(
         const unsigned char *filter,
         int offset,
         int count);
+static int
+get_user_count_func(
+        void *data,
+        int contest_id,
+        const unsigned char *filter,
+        long long *p_count);
 
 /*
  * Local variables:

@@ -230,6 +230,8 @@ struct uldb_plugin_iface plugin_uldb_mysql =
   remove_group_member_func,
   // get a user iterator
   get_brief_list_iterator_2_func,
+  // get the total count of the users
+  get_user_count_func,
 };
 
 // the size of the cookies pool, must be power of 2
@@ -4953,6 +4955,38 @@ get_brief_list_iterator_2_func(
  fail:
   state->mi->free_res(state->md);
   brief_list_iterator_destroy_func((ptr_iterator_t) iter);
+  return 0;
+}
+
+static int
+get_user_count_func(
+        void *data,
+        int contest_id,
+        const unsigned char *filter,
+        long long *p_count)
+{
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+  unsigned char cmdbuf[1024];
+  int cmdlen, count = 0;
+
+  if (contest_id <= 0) {
+    snprintf(cmdbuf, sizeof(cmdbuf), "SELECT COUNT(user_id) FROM %slogins WHERE 1 ;", state->md->table_prefix);
+  } else {
+    snprintf(cmdbuf, sizeof(cmdbuf), "SELECT COUNT(%slogins.user_id) FROM %slogins, %scntsregs WHERE %slogins.user_id = %scntsregs.user_id AND %scntsregs.contest_id = %d;",
+             state->md->table_prefix, state->md->table_prefix,
+             state->md->table_prefix, state->md->table_prefix,
+             state->md->table_prefix, state->md->table_prefix, contest_id);
+  }
+
+  cmdlen = strlen(cmdbuf);
+  if (state->mi->query_one_row(state->md, cmdbuf, cmdlen, 1) < 0) goto fail;
+  if (state->mi->int_val(state->md, &count, 1) < 0) goto fail;
+  state->mi->free_res(state->md);
+  if (p_count) *p_count = count;
+  return 0;
+
+fail:
+  state->mi->free_res(state->md);
   return 0;
 }
 
