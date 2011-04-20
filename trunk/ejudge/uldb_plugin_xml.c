@@ -182,6 +182,12 @@ get_brief_list_iterator_2_func(
         const unsigned char *filter,
         int offset,
         int count);
+static int
+get_user_count_func(
+        void *data,
+        int contest_id,
+        const unsigned char *filter,
+        long long *p_count);
 
 struct uldb_plugin_iface uldb_plugin_xml =
 {
@@ -284,6 +290,7 @@ struct uldb_plugin_iface uldb_plugin_xml =
   create_group_member_func,
   remove_group_member_func,
   get_brief_list_iterator_2_func,
+  get_user_count_func,
 };
 
 struct uldb_xml_state
@@ -3863,6 +3870,27 @@ get_brief_list_iterator_2_func(
   iter->count = count;
   iter->user_id = 0;
   return (ptr_iterator_t) iter;
+}
+
+static int
+get_user_count_func(
+        void *data,
+        int contest_id,
+        const unsigned char *filter,
+        long long *p_count)
+{
+  struct uldb_xml_state *state = (struct uldb_xml_state*) data;
+  int i;
+  long long count = 0;
+
+  for (i = 0; i < state->userlist->user_map_size; ++i) {
+    if (state->userlist->user_map[i]) {
+      ++count;
+    }
+  }
+
+  if (p_count) *p_count = count;
+  return 0;
 }
 
 /*

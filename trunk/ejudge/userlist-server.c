@@ -605,6 +605,7 @@ link_client_state(struct client_state *p)
 #define default_try_new_login(a, b, c, d, e) dflt_iface->try_new_login(uldb_default->data, a, b, c, d, e)
 #define default_set_simple_reg(a, b, c) dflt_iface->set_simple_reg(uldb_default->data, a, b, c)
 #define default_get_brief_list_iterator_2(a, b, c, d) dflt_iface->get_brief_list_iterator_2(uldb_default->data, a, b, c, d)
+#define default_get_user_count(a, b, c) dflt_iface->get_user_count(uldb_default->data, a, b, c)
 
 static void
 update_all_user_contests(int user_id)
@@ -9046,6 +9047,46 @@ cmd_list_all_users_2(
   xfree(out); out = 0;
 }
 
+static void
+cmd_get_user_count(
+        struct client_state *p,
+        int pkt_len,
+        struct userlist_pk_list_users_2 *data)
+{
+  struct userlist_pk_count out;
+  const struct contest_desc *cnts = 0;
+  unsigned char logbuf[1024];
+  long long count = -1;
+  int r;
+
+  snprintf(logbuf, sizeof(logbuf), "GET_USER_COUNT: %d, %d",
+           p->user_id, data->contest_id);
+
+  if (is_judge(p, logbuf) < 0) return;
+  if (data->contest_id) {
+    if (full_get_contest(p, logbuf, &data->contest_id, &cnts) < 0) return;
+  }
+  if (is_dbcnts_capable(p, cnts, OPCAP_LIST_USERS, logbuf) < 0) return;
+
+  r = default_get_user_count(data->contest_id, data->data, &count);
+  if (r < 0) {
+    err("%s -> database error %d", logbuf, -r);
+    send_reply(p, -ULS_ERR_DB_ERROR);
+    return;
+  }
+  if (count < 0) {
+    err("%s -> invalid value of count %lld", logbuf, count);
+    send_reply(p, -ULS_ERR_DB_ERROR);
+    return;    
+  }
+
+  memset(&out, 0, sizeof(out));
+  out.reply_id = ULS_COUNT;
+  out.count = count;
+  enqueue_reply_to_client(p, sizeof(out), &out);
+  info("%s -> OK", logbuf); 
+}
+
 static void (*cmd_table[])() =
 {
   [ULS_REGISTER_NEW] =          cmd_register_new,
@@ -9133,6 +9174,7 @@ static void (*cmd_table[])() =
   [ULS_DELETE_GROUP_MEMBER] =   cmd_delete_group_member,
   [ULS_GET_GROUPS] =            cmd_get_groups,
   [ULS_LIST_ALL_USERS_2] =      cmd_list_all_users_2,
+  [ULS_GET_USER_COUNT] =        cmd_get_user_count,
 
   [ULS_LAST_CMD] 0
 };
@@ -9224,6 +9266,7 @@ static int (*check_table[])() =
   [ULS_DELETE_GROUP_MEMBER] =   check_pk_register_contest,
   [ULS_GET_GROUPS] =            check_pk_set_user_info,
   [ULS_LIST_ALL_USERS_2] =      check_pk_list_users_2,
+  [ULS_GET_USER_COUNT] =        check_pk_list_users_2,
 
   [ULS_LAST_CMD] 0
 };

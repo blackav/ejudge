@@ -30,7 +30,61 @@
 
 #include "reuse_xalloc.h"
 
+#include <stdarg.h>
+
 #define ARMOR(s)  html_armor_buf(&ab, (s))
+
+unsigned char *
+ss_url_unescaped(
+        unsigned char *buf,
+        size_t size,
+        const struct super_http_request_info *phr,
+        int action,
+        int op,
+        const char *format,
+        ...)
+{
+  unsigned char fbuf[1024];
+  unsigned char abuf[64];
+  unsigned char obuf[64];
+  const unsigned char *sep = "";
+  va_list args;
+
+  fbuf[0] = 0;
+  if (format && *format) {
+    va_start(args, format);
+    vsnprintf(fbuf, sizeof(fbuf), format, args);
+    va_end(args);
+  }
+  if (fbuf[0]) sep = "&";
+
+  abuf[0] = 0;
+  if (action > 0) snprintf(abuf, sizeof(abuf), "&action=%d", action);
+  obuf[0] = 0;
+  if (op > 0) snprintf(obuf, sizeof(obuf), "&op=%d", op);
+
+  snprintf(buf, size, "%s?SID=%016llx%s%s%s%s", phr->self_url,
+           phr->session_id, abuf, obuf, sep, fbuf);
+  return buf;
+}
+
+void
+ss_redirect(
+        FILE *fout,
+        struct super_http_request_info *phr,
+        int new_op,
+        const unsigned char *extra)
+{
+  unsigned char url[1024];
+
+  if (extra && *extra) {
+    ss_url_unescaped(url, sizeof(url), phr, SSERV_CMD_HTTP_REQUEST, new_op, "%s", extra);
+  } else {
+    ss_url_unescaped(url, sizeof(url), phr, SSERV_CMD_HTTP_REQUEST, new_op, 0);
+  }
+
+  fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\nLocation: %s\n\n", EJUDGE_CHARSET, url);
+}
 
 int
 super_serve_op_browse_users(
@@ -47,7 +101,7 @@ super_serve_op_browse_users(
   int user_count = 20;
   const unsigned char *s;
   struct userlist_list *users = 0;
-  int user_id, serial;
+  int user_id, serial, flags_count = 0;
   const struct userlist_user *u;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
 
@@ -82,8 +136,8 @@ super_serve_op_browse_users(
   fprintf(out_f, "<table class=\"b0\">");
   s = user_filter;
   if (!s) s = "";
-  fprintf(out_f, "<tr><td class=\"b0\">Filter:</td><td class=\"b0\">%s</td></tr>",
-          html_input_text(buf, sizeof(buf), "user_filter", 50, "%s", s));
+  fprintf(out_f, "<!--<tr><td class=\"b0\">Filter:</td><td class=\"b0\">%s</td></tr>-->",
+          html_input_text(buf, sizeof(buf), "user_filter", 50, "%s", ARMOR(s)));
   hbuf[0] = 0;
   if (phr->ss->user_filter_set) {
     snprintf(hbuf, sizeof(hbuf), "%d", user_offset);
@@ -123,13 +177,19 @@ super_serve_op_browse_users(
     goto do_footer;
   }
 
+  html_start_form(out_f, 1, phr->self_url, "");
+  html_hidden(out_f, "SID", "%016llx", phr->session_id);
+  html_hidden(out_f, "action", "%d", SSERV_CMD_HTTP_REQUEST);
   fprintf(out_f, "<table class=\"b1\">\n");
 
   fprintf(out_f, "<tr>");
+  fprintf(out_f, "<th class=\"b1\">&nbsp;</th>");
   fprintf(out_f, "<th class=\"b1\">NN</th>");
   fprintf(out_f, "<th class=\"b1\">User Id</th>");
   fprintf(out_f, "<th class=\"b1\">User Login</th>");
   fprintf(out_f, "<th class=\"b1\">E-mail</th>");
+  fprintf(out_f, "<th class=\"b1\">Name</th>");
+  fprintf(out_f, "<th class=\"b1\">Flags</th>");
   fprintf(out_f, "</tr>\n");
 
   serial = user_offset - 1;
@@ -137,6 +197,7 @@ super_serve_op_browse_users(
     if (!(u = users->user_map[user_id])) continue;
     ++serial;
     fprintf(out_f, "<tr>\n");
+    fprintf(out_f, "<td class=\"b1\"><input type=\"checkbox\" name=\"user_%d\"/></td>", user_id);
     fprintf(out_f, "<td class=\"b1\">%d</td>", serial);
     fprintf(out_f, "<td class=\"b1\">%d</td>", user_id);
     if (!u->login) {
@@ -149,10 +210,66 @@ super_serve_op_browse_users(
     } else {
       fprintf(out_f, "<td class=\"b1\"><tt>%s</tt></td>", ARMOR(u->email));
     }
+    if (!u->cnts0 || !u->cnts0->name) {
+      fprintf(out_f, "<td class=\"b1\"><i>NULL</i></td>");
+    } else {
+      fprintf(out_f, "<td class=\"b1\"><tt>%s</tt></td>", ARMOR(u->cnts0->name));
+    }
+    fprintf(out_f, "<td class=\"b1\">");
+    if (u->is_privileged) {
+      if (flags_count > 0) fprintf(out_f, ", ");
+      fprintf(out_f, "privileged");
+      ++flags_count;
+    }
+    if (u->is_invisible) {
+      if (flags_count > 0) fprintf(out_f, ", ");
+      fprintf(out_f, "invisible");
+      ++flags_count;
+    }
+    if (u->is_banned) {
+      if (flags_count > 0) fprintf(out_f, ", ");
+      fprintf(out_f, "banned");
+      ++flags_count;
+    }
+    if (u->is_locked) {
+      if (flags_count > 0) fprintf(out_f, ", ");
+      fprintf(out_f, "locked");
+      ++flags_count;
+    }
+    if (u->show_login) {
+      if (flags_count > 0) fprintf(out_f, ", ");
+      fprintf(out_f, "show_login");
+      ++flags_count;
+    }
+    if (u->show_email) {
+      if (flags_count > 0) fprintf(out_f, ", ");
+      fprintf(out_f, "show_email");
+      ++flags_count;
+    }
+    if (u->read_only) {
+      if (flags_count > 0) fprintf(out_f, ", ");
+      fprintf(out_f, "read_only");
+      ++flags_count;
+    }
+    if (u->never_clean) {
+      if (flags_count > 0) fprintf(out_f, ", ");
+      fprintf(out_f, "never_clean");
+      ++flags_count;
+    }
+    if (u->simple_registration) {
+      if (flags_count > 0) fprintf(out_f, ", ");
+      fprintf(out_f, "simple_reg");
+      ++flags_count;
+    }
+    if (!flags_count) {
+      fprintf(out_f, "&nbsp;");
+    }
+    fprintf(out_f, "</td>");
     fprintf(out_f, "</tr>\n");
   }
 
   fprintf(out_f, "</table>\n");
+  fprintf(out_f, "</form>\n");
 
 do_footer:
   ss_write_html_footer(out_f);
@@ -160,5 +277,17 @@ do_footer:
   userlist_free(&users->b); users = 0;
   xfree(xml_text); xml_text = 0;
   html_armor_free(&ab);
+  return retval;
+}
+
+int
+super_serve_op_set_user_filter(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+
+  ss_redirect(out_f, phr, SSERV_OP_BROWSE_USERS, 0);
   return retval;
 }

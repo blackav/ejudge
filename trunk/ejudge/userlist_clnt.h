@@ -405,4 +405,12 @@ userlist_clnt_list_users_2(
         int count,
         unsigned char **p_info);
 
+int
+userlist_clnt_get_count(
+        struct userlist_clnt *clnt,
+        int cmd,
+        int contest_id,
+        const unsigned char *filter,
+        long long *p_count);
+
 #endif /* __USERLIST_CLNT_H__ */

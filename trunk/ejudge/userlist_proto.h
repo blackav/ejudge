@@ -109,6 +109,7 @@ enum
     ULS_DELETE_GROUP_MEMBER,
     ULS_GET_GROUPS,
     ULS_LIST_ALL_USERS_2,
+    ULS_GET_USER_COUNT,
 
     ULS_LAST_CMD
   };
@@ -129,6 +130,7 @@ enum
     ULS_TEXT_DATA,
     ULS_NEW_PASSWORD,
     ULS_TEXT_DATA_FAILURE,
+    ULS_COUNT,
   };
 
 /* various error codes */
@@ -454,6 +456,12 @@ struct userlist_pk_new_password
   int         name_len;
   int         passwd_len;
   char        data[3];
+};
+
+struct userlist_pk_count
+{
+  short reply_id;
+  long long count;
 };
 
 #endif /* __USERLIST_PROTO_H__ */
