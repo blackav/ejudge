@@ -6548,6 +6548,12 @@ static handler_func_t op_handlers[SSERV_OP_LAST] =
   [SSERV_OP_EDIT_PROBLEM] = super_serve_op_edit_problem,
 
   [SSERV_OP_BROWSE_USERS] = super_serve_op_browse_users,
+  [SSERV_OP_CHANGE_USER_FILTER] = super_serve_op_set_user_filter,
+  [SSERV_OP_USER_FILTER_FIRST_PAGE] = super_serve_op_set_user_filter,
+  [SSERV_OP_USER_FILTER_PREV_PAGE] = super_serve_op_set_user_filter,
+  [SSERV_OP_USER_FILTER_NEXT_PAGE] = super_serve_op_set_user_filter,
+  [SSERV_OP_USER_FILTER_LAST_PAGE] = super_serve_op_set_user_filter,
+
 };
 
 static int
@@ -6555,8 +6561,15 @@ do_http_request(FILE *log_f, FILE *out_f, struct super_http_request_info *phr)
 {
   int opcode = 0;
   int retval = 0;
+  int n = 0;
+  const unsigned char *s = 0;
 
-  if (ss_cgi_param_int(phr, "op", &opcode) < 0
+  if ((s = ss_cgi_nname(phr, "op_", 3))) {
+    if (sscanf(s, "op_%d%n", &opcode, &n) != 1 || s[n]
+        || opcode <= 0 || opcode >= SSERV_OP_LAST
+        || !op_handlers[opcode])
+      FAIL(S_ERR_INV_OPER);
+  } else if (ss_cgi_param_int(phr, "op", &opcode) < 0
       || opcode <= 0 || opcode >= SSERV_OP_LAST || !op_handlers[opcode])
     FAIL(S_ERR_INV_OPER);
   phr->opcode = opcode;

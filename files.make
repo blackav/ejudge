@@ -33,6 +33,7 @@ USERLIST_CLNT_CFILES=\
  userlist_clnt/generate_team_passwd.c\
  userlist_clnt/get_contests.c\
  userlist_clnt/get_cookie.c\
+ userlist_clnt/get_count.c\
  userlist_clnt/get_database.c\
  userlist_clnt/get_fd.c\
  userlist_clnt/get_info.c\

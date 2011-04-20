@@ -545,5 +545,10 @@ super_serve_op_browse_users(
         FILE *log_f,
         FILE *out_f,
         struct super_http_request_info *phr);
+int
+super_serve_op_set_user_filter(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr);
 
 #endif /* __SUPER_HTML_H__ */
