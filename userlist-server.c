@@ -9084,7 +9084,7 @@ cmd_get_user_count(
   out.reply_id = ULS_COUNT;
   out.count = count;
   enqueue_reply_to_client(p, sizeof(out), &out);
-  info("%s -> OK", logbuf); 
+  info("%s -> OK, %lld", logbuf, out.count); 
 }
 
 static void (*cmd_table[])() =

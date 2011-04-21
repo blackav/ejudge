@@ -27,6 +27,7 @@
 #include "userlist_clnt.h"
 #include "userlist.h"
 #include "misctext.h"
+#include "errlog.h"
 
 #include "reuse_xalloc.h"
 
@@ -287,7 +288,60 @@ super_serve_op_set_user_filter(
         struct super_http_request_info *phr)
 {
   int retval = 0;
+  long long total_count = 0;
+  int user_offset = 0;
+  int user_count = 0;
+  int value, r;
 
+  if (!phr->userlist_clnt) {
+    goto cleanup;
+  }
+  if ((r = userlist_clnt_get_count(phr->userlist_clnt, ULS_GET_USER_COUNT,
+                                   0, 0, &total_count)) < 0) {
+    err("set_user_filter: get_count failed: %d", -r);
+    goto cleanup;
+  }
+  if (total_count <= 0) goto cleanup;
+  if (phr->ss->user_filter_set) {
+    user_offset = phr->ss->user_offset;
+    user_count = phr->ss->user_count;
+  }
+
+  switch (phr->opcode) {
+  case SSERV_OP_CHANGE_USER_FILTER:
+    if (ss_cgi_param_int(phr, "user_offset", &value) >= 0) {
+      user_offset = value;
+    }
+    if (ss_cgi_param_int(phr, "user_count", &value) >= 0) {
+      user_count = value;
+    }
+    break;
+
+  case SSERV_OP_USER_FILTER_FIRST_PAGE:
+    user_offset = 0;
+    break;
+  case SSERV_OP_USER_FILTER_PREV_PAGE:
+    user_offset -= user_count;
+    break;
+  case SSERV_OP_USER_FILTER_NEXT_PAGE:
+    user_offset += user_count;
+    break;
+  case SSERV_OP_USER_FILTER_LAST_PAGE:
+    user_offset = total_count;
+    break;
+  }
+
+  if (user_count <= 0) user_count = 20;
+  if (user_count > 200) user_count = 200;
+  if (user_offset + user_count > total_count) {
+    user_offset = total_count - user_count;
+  }
+  if (user_offset < 0) user_offset = 0;
+  phr->ss->user_filter_set = 1;
+  phr->ss->user_offset = user_offset;
+  phr->ss->user_count = user_count;
+
+cleanup:
   ss_redirect(out_f, phr, SSERV_OP_BROWSE_USERS, 0);
   return retval;
 }

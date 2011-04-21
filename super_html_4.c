@@ -180,7 +180,7 @@ ss_cgi_nname(
   return 0;
 }
 
-static int
+int
 ss_cgi_param_int(
         struct super_http_request_info *phr,
         const unsigned char *name,
