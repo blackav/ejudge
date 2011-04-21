@@ -78,7 +78,7 @@ userlist_clnt_get_count(
     return -ULS_ERR_PROTOCOL;
   }
   xfree(in); in = 0;
-  if (*p_count) *p_count = count;
+  if (p_count) *p_count = count;
 
   return ULS_COUNT;
 }
