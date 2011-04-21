@@ -4980,7 +4980,10 @@ get_user_count_func(
 
   cmdlen = strlen(cmdbuf);
   if (state->mi->query_one_row(state->md, cmdbuf, cmdlen, 1) < 0) goto fail;
-  if (state->mi->int_val(state->md, &count, 1) < 0) goto fail;
+  if (!state->md->lengths[0])
+    db_error_inv_value_fail(state->md, "value");
+  if (state->mi->parse_int(state->md, state->md->row[0], &count) < 0 || count <= 0)
+    db_error_inv_value_fail(state->md, "value");
   state->mi->free_res(state->md);
   if (p_count) *p_count = count;
   return 0;
