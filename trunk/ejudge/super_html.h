@@ -493,6 +493,11 @@ ss_cgi_param(
         const struct super_http_request_info *phr,
         const unsigned char *param,
         const unsigned char **p_value);
+int
+ss_cgi_param_int(
+        struct super_http_request_info *phr,
+        const unsigned char *name,
+        int *p_val);
 
 void
 ss_write_html_header(
