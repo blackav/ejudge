@@ -25,6 +25,7 @@ userlist_clnt_list_users_2(
         struct userlist_clnt *clnt,
         int cmd,
         int contest_id,
+        int group_id,
         const unsigned char *filter,
         int offset,
         int count,
@@ -47,6 +48,7 @@ userlist_clnt_list_users_2(
   memset(out, 0, out_size);
   out->request_id = cmd;
   out->contest_id = contest_id;
+  out->group_id = group_id;
   out->filter_len = filter_len;
   out->offset = offset;
   out->count = count;
