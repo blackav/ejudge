@@ -24,6 +24,7 @@ userlist_clnt_get_count(
         struct userlist_clnt *clnt,
         int cmd,
         int contest_id,
+        int group_id,
         const unsigned char *filter,
         long long *p_count)
 {
@@ -45,6 +46,7 @@ userlist_clnt_get_count(
   memset(out, 0, out_size);
   out->request_id = cmd;
   out->contest_id = contest_id;
+  out->group_id = group_id;
   out->filter_len = filter_len;
   memcpy(out->data, filter, filter_len + 1);
 
