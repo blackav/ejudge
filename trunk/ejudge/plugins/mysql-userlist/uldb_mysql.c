@@ -232,6 +232,10 @@ struct uldb_plugin_iface plugin_uldb_mysql =
   get_brief_list_iterator_2_func,
   // get the total count of the users
   get_user_count_func,
+  // get a group iterator
+  get_group_iterator_2_func,
+  // get the total count of the groups
+  get_group_count_func,
 };
 
 // the size of the cookies pool, must be power of 2
@@ -3895,7 +3899,10 @@ get_member_serial_func(void *data)
   snprintf(cmdbuf, sizeof(cmdbuf), "SELECT MAX(serial) FROM %smembers WHERE 1 ;", state->md->table_prefix);
   cmdlen = strlen(cmdbuf);
   if (state->mi->query_one_row(state->md, cmdbuf, cmdlen, 1) < 0) goto fail;
-  if (state->mi->int_val(state->md, &current_member, 1) < 0) goto fail;
+  if (!state->md->lengths[0])
+    db_error_inv_value_fail(state->md, "value");
+  if (state->mi->parse_int(state->md, state->md->row[0], &current_member) < 0 || current_member <= 0)
+    db_error_inv_value_fail(state->md, "value");
   state->mi->free_res(state->md);
   return current_member;
 
@@ -4818,6 +4825,7 @@ static ptr_iterator_t
 get_brief_list_iterator_2_func(
         void *data,
         int contest_id,
+        int group_id,
         const unsigned char *filter,
         int offset,
         int count)
@@ -4962,6 +4970,7 @@ static int
 get_user_count_func(
         void *data,
         int contest_id,
+        int group_id,
         const unsigned char *filter,
         long long *p_count)
 {
@@ -4969,14 +4978,98 @@ get_user_count_func(
   unsigned char cmdbuf[1024];
   int cmdlen, count = 0;
 
-  if (contest_id <= 0) {
-    snprintf(cmdbuf, sizeof(cmdbuf), "SELECT COUNT(user_id) FROM %slogins WHERE 1 ;", state->md->table_prefix);
-  } else {
+  if (contest_id > 0 && group_id > 0) {
+    // FIXME:
+    abort();
+  } else if (contest_id > 0) {
     snprintf(cmdbuf, sizeof(cmdbuf), "SELECT COUNT(%slogins.user_id) FROM %slogins, %scntsregs WHERE %slogins.user_id = %scntsregs.user_id AND %scntsregs.contest_id = %d;",
              state->md->table_prefix, state->md->table_prefix,
              state->md->table_prefix, state->md->table_prefix,
              state->md->table_prefix, state->md->table_prefix, contest_id);
+  } else if (group_id > 0) {
+  } else {
+    snprintf(cmdbuf, sizeof(cmdbuf), "SELECT COUNT(user_id) FROM %slogins WHERE 1 ;", state->md->table_prefix);
   }
+
+  cmdlen = strlen(cmdbuf);
+  if (state->mi->query_one_row(state->md, cmdbuf, cmdlen, 1) < 0) goto fail;
+  if (!state->md->lengths[0])
+    db_error_inv_value_fail(state->md, "value");
+  if (state->mi->parse_int(state->md, state->md->row[0], &count) < 0 || count <= 0)
+    db_error_inv_value_fail(state->md, "value");
+  state->mi->free_res(state->md);
+  if (p_count) *p_count = count;
+  return 0;
+
+fail:
+  state->mi->free_res(state->md);
+  return 0;
+}
+
+static ptr_iterator_t
+get_group_iterator_2_func(
+        void *data,
+        const unsigned char *filter,
+        int offset,
+        int count)
+{
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+  char *cmd_t = 0;
+  size_t cmd_z = 0;
+  FILE *cmd_f = 0;
+  struct group_iterator *iter = 0;
+  int i;
+
+  if (offset < 0) offset = 0;
+  if (count < 0) count = 0;
+
+  XCALLOC(iter, 1);
+  iter->b = group_iterator_funcs;
+
+  cmd_f = open_memstream(&cmd_t, &cmd_z);
+  fprintf(cmd_f, "SELECT * FROM %sgroups WHERE 1 ORDER BY group_id LIMIT %d, %d;",
+          state->md->table_prefix, offset, count);
+  fclose(cmd_f); cmd_f = 0;
+  if (state->mi->query(state->md, cmd_t, cmd_z, USERGROUP_WIDTH) < 0)
+    goto fail;
+  xfree(cmd_t); cmd_t = 0; cmd_z = 0;
+  iter->group_count = state->md->row_count;
+  if (iter->group_count <= 0) {
+    state->mi->free_res(state->md);
+    return (ptr_iterator_t) iter;
+  }
+  XCALLOC(iter->groups, iter->group_count);
+  for (i = 0; i < iter->group_count; ++i) {
+    if (!(state->md->row = mysql_fetch_row(state->md->res)))
+      db_error_no_data_fail(state->md);
+    state->md->lengths = mysql_fetch_lengths(state->md->res);
+    iter->groups[i] = (struct userlist_group*) userlist_node_alloc(USERLIST_T_USERGROUP);
+    if (parse_group(state, state->md->field_count, state->md->row,
+                    state->md->lengths, iter->groups[i]) < 0) goto fail;
+  }
+
+  state->mi->free_res(state->md);
+  return (ptr_iterator_t) iter;
+
+fail:
+  state->mi->free_res(state->md);
+  group_iterator_destroy_func((ptr_iterator_t) iter);
+  if (cmd_f) fclose(cmd_f);
+  xfree(cmd_t);
+  return 0;
+}
+
+static int
+get_group_count_func(
+        void *data,
+        const unsigned char *filter,
+        long long *p_count)
+{
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+  unsigned char cmdbuf[1024];
+  int cmdlen, count = 0;
+
+  snprintf(cmdbuf, sizeof(cmdbuf), "SELECT COUNT(group_id) FROM %sgroups WHERE 1 ;", state->md->table_prefix);
 
   cmdlen = strlen(cmdbuf);
   if (state->mi->query_one_row(state->md, cmdbuf, cmdlen, 1) < 0) goto fail;

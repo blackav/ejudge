@@ -439,6 +439,7 @@ static ptr_iterator_t
 get_brief_list_iterator_2_func(
         void *data,
         int contest_id,
+        int group_id,
         const unsigned char *filter,
         int offset,
         int count);
@@ -446,6 +447,18 @@ static int
 get_user_count_func(
         void *data,
         int contest_id,
+        int group_id,
+        const unsigned char *filter,
+        long long *p_count);
+static ptr_iterator_t
+get_group_iterator_2_func(
+        void *data,
+        const unsigned char *filter,
+        int offset,
+        int count);
+static int
+get_group_count_func(
+        void *data,
         const unsigned char *filter,
         long long *p_count);
 
