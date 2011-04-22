@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2011/04/19 08:07:19
+// Generated 2011/04/22 22:49:16
 
 #include "super-serve_meta.h"
 #include "super-serve.h"
@@ -120,6 +120,18 @@ static struct meta_info_item meta_info_sid_state_data[] =
   [SSSS_user_filter] = { SSSS_user_filter, 's', XSIZE(struct sid_state, user_filter), "user_filter", XOFFSET(struct sid_state, user_filter) },
   [SSSS_user_offset] = { SSSS_user_offset, 'i', XSIZE(struct sid_state, user_offset), "user_offset", XOFFSET(struct sid_state, user_offset) },
   [SSSS_user_count] = { SSSS_user_count, 'i', XSIZE(struct sid_state, user_count), "user_count", XOFFSET(struct sid_state, user_count) },
+  [SSSS_group_filter_set] = { SSSS_group_filter_set, 'B', XSIZE(struct sid_state, group_filter_set), "group_filter_set", XOFFSET(struct sid_state, group_filter_set) },
+  [SSSS_group_filter] = { SSSS_group_filter, 's', XSIZE(struct sid_state, group_filter), "group_filter", XOFFSET(struct sid_state, group_filter) },
+  [SSSS_group_offset] = { SSSS_group_offset, 'i', XSIZE(struct sid_state, group_offset), "group_offset", XOFFSET(struct sid_state, group_offset) },
+  [SSSS_group_count] = { SSSS_group_count, 'i', XSIZE(struct sid_state, group_count), "group_count", XOFFSET(struct sid_state, group_count) },
+  [SSSS_contest_user_filter_set] = { SSSS_contest_user_filter_set, 'B', XSIZE(struct sid_state, contest_user_filter_set), "contest_user_filter_set", XOFFSET(struct sid_state, contest_user_filter_set) },
+  [SSSS_contest_user_filter] = { SSSS_contest_user_filter, 's', XSIZE(struct sid_state, contest_user_filter), "contest_user_filter", XOFFSET(struct sid_state, contest_user_filter) },
+  [SSSS_contest_user_offset] = { SSSS_contest_user_offset, 'i', XSIZE(struct sid_state, contest_user_offset), "contest_user_offset", XOFFSET(struct sid_state, contest_user_offset) },
+  [SSSS_contest_user_count] = { SSSS_contest_user_count, 'i', XSIZE(struct sid_state, contest_user_count), "contest_user_count", XOFFSET(struct sid_state, contest_user_count) },
+  [SSSS_group_user_filter_set] = { SSSS_group_user_filter_set, 'B', XSIZE(struct sid_state, group_user_filter_set), "group_user_filter_set", XOFFSET(struct sid_state, group_user_filter_set) },
+  [SSSS_group_user_filter] = { SSSS_group_user_filter, 's', XSIZE(struct sid_state, group_user_filter), "group_user_filter", XOFFSET(struct sid_state, group_user_filter) },
+  [SSSS_group_user_offset] = { SSSS_group_user_offset, 'i', XSIZE(struct sid_state, group_user_offset), "group_user_offset", XOFFSET(struct sid_state, group_user_offset) },
+  [SSSS_group_user_count] = { SSSS_group_user_count, 'i', XSIZE(struct sid_state, group_user_count), "group_user_count", XOFFSET(struct sid_state, group_user_count) },
 };
 
 int ss_sid_state_get_type(int tag)
