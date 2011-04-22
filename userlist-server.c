@@ -604,8 +604,10 @@ link_client_state(struct client_state *p)
 #define default_get_contest_reg(a, b) dflt_iface->get_contest_reg(uldb_default->data, a, b)
 #define default_try_new_login(a, b, c, d, e) dflt_iface->try_new_login(uldb_default->data, a, b, c, d, e)
 #define default_set_simple_reg(a, b, c) dflt_iface->set_simple_reg(uldb_default->data, a, b, c)
-#define default_get_brief_list_iterator_2(a, b, c, d) dflt_iface->get_brief_list_iterator_2(uldb_default->data, a, b, c, d)
-#define default_get_user_count(a, b, c) dflt_iface->get_user_count(uldb_default->data, a, b, c)
+#define default_get_brief_list_iterator_2(a, b, c, d, e) dflt_iface->get_brief_list_iterator_2(uldb_default->data, a, b, c, d, e)
+#define default_get_user_count(a, b, c, d) dflt_iface->get_user_count(uldb_default->data, a, b, c, d)
+#define default_get_group_iterator_2(a, b, c) dflt_iface->get_group_iterator_2(uldb_default->data, a, b, c)
+#define default_get_group_count(a, b) dflt_iface->get_group_count(uldb_default->data, a, b)
 
 static void
 update_all_user_contests(int user_id)
@@ -2400,7 +2402,11 @@ cmd_login(struct client_state *p,
     return;
   }
   rdtscll(tsc2);
-  tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
+  if (cpu_frequency > 0) {
+    tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
+  } else {
+    tsc2 = tsc2 - tsc1;
+  }
   if (ui) name = ui->name;
   if (!name || !*name) name = u->login;
   if (!name) name = "";
@@ -2515,7 +2521,11 @@ cmd_check_user(
     return;
   }
   rdtscll(tsc2);
-  tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
+  if (cpu_frequency > 0) {
+    tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
+  } else {
+    tsc2 = tsc2 - tsc1;
+  }
   if (ui) name = ui->name;
   if (!name || !*name) name = u->login;
   if (!name) name = "";
@@ -2657,7 +2667,11 @@ cmd_team_login(struct client_state *p, int pkt_len,
     return;
   }
   rdtscll(tsc2);
-  tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
+  if (cpu_frequency > 0) {
+    tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
+  } else {
+    tsc2 = tsc2 - tsc1;
+  }
   if (ui) name = ui->name;
   if (!name || !*name) name = u->login;
   if (!name) name = "";
@@ -2824,7 +2838,11 @@ cmd_team_check_user(struct client_state *p, int pkt_len,
     return;
   }
   rdtscll(tsc2);
-  tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
+  if (cpu_frequency > 0) {
+    tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
+  } else {
+    tsc2 = tsc2 - tsc1;
+  }
   if (ui) name = ui->name;
   if (!name || !*name) name = u->login;
   if (!name) name = "";
@@ -3007,7 +3025,11 @@ cmd_priv_login(struct client_state *p, int pkt_len,
     return;
   }
   rdtscll(tsc2);
-  tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
+  if (cpu_frequency > 0) {
+    tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
+  } else {
+    tsc2 = tsc2 - tsc1;
+  }
 
   if (!u) {
     err("%s -> WRONG LOGIN", logbuf);
@@ -3225,7 +3247,11 @@ cmd_priv_check_user(struct client_state *p, int pkt_len,
     return;
   }
   rdtscll(tsc2);
-  tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
+  if (cpu_frequency > 0) {
+    tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
+  } else {
+    tsc2 = tsc2 - tsc1;
+  }
 
   if (!u) {
     err("%s -> WRONG LOGIN", logbuf);
@@ -3333,7 +3359,11 @@ cmd_check_cookie(struct client_state *p,
     return;
   }
   rdtscll(tsc2);
-  tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
+  if (cpu_frequency > 0) {
+    tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
+  } else {
+    tsc2 = tsc2 - tsc1;
+  }
 
   if (data->contest_id < 0) data->contest_id = cookie->contest_id;
   orig_contest_id = data->contest_id;
@@ -3475,7 +3505,11 @@ cmd_team_check_cookie(
     return;
   }
   rdtscll(tsc2);
-  tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
+  if (cpu_frequency > 0) {
+    tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
+  } else {
+    tsc2 = tsc2 - tsc1;
+  }
 
   if (data->contest_id < 0) data->contest_id = cookie->contest_id;
   orig_contest_id = data->contest_id;
@@ -3638,7 +3672,11 @@ cmd_priv_check_cookie(struct client_state *p,
     return;
   }
   rdtscll(tsc2);
-  tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
+  if (cpu_frequency > 0) {
+    tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
+  } else {
+    tsc2 = tsc2 - tsc1;
+  }
 
   if (data->contest_id < 0) data->contest_id = cookie->contest_id;
   orig_contest_id = data->contest_id;
@@ -3822,7 +3860,11 @@ cmd_priv_cookie_login(struct client_state *p,
     return;
   }
   rdtscll(tsc2);
-  tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
+  if (cpu_frequency > 0) {
+    tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
+  } else {
+    tsc2 = tsc2 - tsc1;
+  }
 
   if (default_get_user_info_3(cookie->user_id,data->contest_id,&u,&ui,&c) < 0
       || !u) {
@@ -7416,7 +7458,11 @@ cmd_get_cookie(struct client_state *p,
   if (default_get_cookie(data->cookie, &cookie) < 0 || !cookie)
     FAIL(ULS_ERR_NO_COOKIE, "no such cookie");
   rdtscll(tsc2);
-  tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
+  if (cpu_frequency > 0) {
+    tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
+  } else {
+    tsc2 = tsc2 - tsc1;
+  }
 
   new_contest_id = cookie->contest_id;
   if (cookie->contest_id > 0) {
@@ -9012,18 +9058,18 @@ cmd_list_all_users_2(
   ptr_iterator_t iter;
   const struct userlist_user *u;
 
-  snprintf(logbuf, sizeof(logbuf), "LIST_ALL_USERS_2: %d, %d, %d, %d",
-           p->user_id, data->contest_id, data->offset, data->count);
+  snprintf(logbuf, sizeof(logbuf), "LIST_ALL_USERS_2: %d, %d, %d, %d, %d",
+           p->user_id, data->contest_id, data->group_id, data->offset, data->count);
 
   if (is_judge(p, logbuf) < 0) return;
-  if (data->contest_id) {
+  if (data->contest_id > 0) {
     if (full_get_contest(p, logbuf, &data->contest_id, &cnts) < 0) return;
   }
   if (is_dbcnts_capable(p, cnts, OPCAP_LIST_USERS, logbuf) < 0) return;
 
   f = open_memstream(&xml_ptr, &xml_size);
   userlist_write_xml_header(f);
-  iter = default_get_brief_list_iterator_2(data->contest_id, data->data, data->offset, data->count);
+  iter = default_get_brief_list_iterator_2(data->contest_id, data->group_id, data->data, data->offset, data->count);
   if (iter) {
     for (; iter->has_next(iter); iter->next(iter)) {
       if (!(u = (const struct userlist_user*) iter->get(iter))) continue;
@@ -9068,7 +9114,94 @@ cmd_get_user_count(
   }
   if (is_dbcnts_capable(p, cnts, OPCAP_LIST_USERS, logbuf) < 0) return;
 
-  r = default_get_user_count(data->contest_id, data->data, &count);
+  r = default_get_user_count(data->contest_id, data->group_id, data->data, &count);
+  if (r < 0) {
+    err("%s -> database error %d", logbuf, -r);
+    send_reply(p, -ULS_ERR_DB_ERROR);
+    return;
+  }
+  if (count < 0) {
+    err("%s -> invalid value of count %lld", logbuf, count);
+    send_reply(p, -ULS_ERR_DB_ERROR);
+    return;    
+  }
+
+  memset(&out, 0, sizeof(out));
+  out.reply_id = ULS_COUNT;
+  out.count = count;
+  enqueue_reply_to_client(p, sizeof(out), &out);
+  info("%s -> OK, %lld", logbuf, out.count); 
+}
+
+static void
+cmd_list_all_groups_2(
+        struct client_state *p,
+        int pkt_len,
+        struct userlist_pk_list_users_2 *data)
+{
+  FILE *fout = 0;
+  char *xml_ptr = 0;
+  size_t xml_size = 0;
+  struct userlist_pk_xml_data *out = 0;
+  size_t out_size = 0;
+  unsigned char logbuf[1024];
+  ptr_iterator_t iter;
+  const struct userlist_group *grp;
+
+  snprintf(logbuf, sizeof(logbuf), "LIST_ALL_USERS_2: %d, %d, %d",
+           p->user_id, data->offset, data->count);
+
+  if (is_judge(p, logbuf) < 0) return;
+  if (is_dbcnts_capable(p, NULL, OPCAP_LIST_USERS, logbuf) < 0) return;
+
+  fout = open_memstream(&xml_ptr, &xml_size);
+  userlist_write_xml_header(fout);
+  userlist_write_groups_header(fout);
+  iter = default_get_group_iterator_2(data->data, data->offset, data->count);
+  if (iter) {
+    for (; iter->has_next(iter); iter->next(iter)) {
+      grp = (const struct userlist_group*) iter->get(iter);
+      if (grp) {
+        userlist_unparse_usergroup(fout, grp, "      ", "\n");
+        // plugin_call1(unlock_group, grp);
+      }
+    }
+    iter->destroy(iter); iter = 0;
+  }
+  userlist_write_groups_footer(fout);
+  userlist_write_xml_footer(fout);
+  fclose(fout); fout = 0;
+
+  ASSERT(xml_size == strlen(xml_ptr));
+  out_size = sizeof(*out) + xml_size;
+  out = (struct userlist_pk_xml_data*) xmalloc(out_size);
+  memset(out, 0, out_size);
+  out->reply_id = ULS_XML_DATA;
+  out->info_len = xml_size;
+  memcpy(out->data, xml_ptr, xml_size + 1);
+  xfree(xml_ptr); xml_ptr = 0;
+  enqueue_reply_to_client(p, out_size, out);
+  info("%s -> OK, size = %zu", logbuf, xml_size); 
+  xfree(out); out = 0;
+}
+
+static void
+cmd_get_group_count(
+        struct client_state *p,
+        int pkt_len,
+        struct userlist_pk_list_users_2 *data)
+{
+  struct userlist_pk_count out;
+  unsigned char logbuf[1024];
+  long long count = -1;
+  int r;
+
+  snprintf(logbuf, sizeof(logbuf), "GET_GROUP_COUNT: %d", p->user_id);
+
+  if (is_judge(p, logbuf) < 0) return;
+  if (is_dbcnts_capable(p, NULL, OPCAP_LIST_USERS, logbuf) < 0) return;
+
+  r = default_get_group_count(data->data, &count);
   if (r < 0) {
     err("%s -> database error %d", logbuf, -r);
     send_reply(p, -ULS_ERR_DB_ERROR);
@@ -9175,6 +9308,8 @@ static void (*cmd_table[])() =
   [ULS_GET_GROUPS] =            cmd_get_groups,
   [ULS_LIST_ALL_USERS_2] =      cmd_list_all_users_2,
   [ULS_GET_USER_COUNT] =        cmd_get_user_count,
+  [ULS_LIST_ALL_GROUPS_2] =     cmd_list_all_groups_2,
+  [ULS_GET_GROUP_COUNT] =       cmd_get_group_count,
 
   [ULS_LAST_CMD] 0
 };
@@ -9267,6 +9402,8 @@ static int (*check_table[])() =
   [ULS_GET_GROUPS] =            check_pk_set_user_info,
   [ULS_LIST_ALL_USERS_2] =      check_pk_list_users_2,
   [ULS_GET_USER_COUNT] =        check_pk_list_users_2,
+  [ULS_LIST_ALL_GROUPS_2] =     check_pk_list_users_2,
+  [ULS_GET_GROUP_COUNT] =       check_pk_list_users_2,
 
   [ULS_LAST_CMD] 0
 };

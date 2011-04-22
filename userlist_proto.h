@@ -110,6 +110,8 @@ enum
     ULS_GET_GROUPS,
     ULS_LIST_ALL_USERS_2,
     ULS_GET_USER_COUNT,
+    ULS_LIST_ALL_GROUPS_2,
+    ULS_GET_GROUP_COUNT,
 
     ULS_LAST_CMD
   };
@@ -380,6 +382,7 @@ struct userlist_pk_list_users_2
 {
   short request_id;
   int   contest_id;
+  int   group_id;
   int   filter_len;
   int   offset;
   int   count;

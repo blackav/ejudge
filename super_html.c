@@ -391,6 +391,7 @@ super_html_main_page(FILE *f,
   fprintf(f, "<table border=\"0\"><tr><td>%sProblem editor</a></td></tr></table>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_PROBLEM_PACKAGES));
 
   fprintf(f, "<table border=\"0\"><tr><td>%sUser editor</a></td></tr></table>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_USERS));
+  fprintf(f, "<table border=\"0\"><tr><td>%sGroup editor</a></td></tr></table>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_GROUPS));
 
   fprintf(f, "<table border=\"0\"><tr><td>%sCreate new contest</a></td>", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d", SSERV_CMD_CREATE_CONTEST));
   if (sstate->edited_cnts) {
@@ -425,6 +426,7 @@ super_html_main_page(FILE *f,
           "<th>Name</th>\n"
           "<th>Closed?</th>\n"
           "<th>Run status</th>\n"
+          "<th>Users</th>\n"
           "<th>Judge</th>\n"
           "<th>Master</th>\n"
           "<th>User</th>\n"
@@ -587,6 +589,8 @@ super_html_main_page(FILE *f,
     } else {
       fprintf(f, "<td>&nbsp;</td>\n");
     }
+
+    fprintf(f, "<td>%sUsers</a></td>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d&op=%d&contest_id=%d", SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_USERS, contest_id));
 
     // report judge URL
     if (opcaps_check(caps, OPCAP_JUDGE_LOGIN) >= 0 && judge_url[0]
@@ -784,6 +788,8 @@ super_html_contest_page(FILE *f,
   if (cnts->keywords) {
     fprintf(f, "<tr><td>Contest keywords:</td><td><tt>%s</tt></td></tr>\n", cnts->keywords);
   }
+
+  fprintf(f, "<tr><td>View/edit users</td><td>%sUsers</a></td></tr>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d&op=%d&contest_id=%d", SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_USERS, contest_id));
 
   // report judge URL
   if (opcaps_check(caps, OPCAP_JUDGE_LOGIN) >= 0 && judge_url[0]
