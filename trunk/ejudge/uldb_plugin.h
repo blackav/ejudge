@@ -227,9 +227,13 @@ struct uldb_plugin_iface
   // remove a group member
   int (*remove_group_member)(void *, int group_id, int user_id);
   // list users
-  ptr_iterator_t (*get_brief_list_iterator_2)(void *, int contest_id, const unsigned char *filter, int offset, int count);
+  ptr_iterator_t (*get_brief_list_iterator_2)(void *, int contest_id, int group_id, const unsigned char *filter, int offset, int count);
   // get the total count of users for the given filter
-  int (*get_user_count)(void *, int contest_id, const unsigned char *filter, long long *p_count);
+  int (*get_user_count)(void *, int contest_id, int group_id, const unsigned char *filter, long long *p_count);
+  // get the group iterator
+  ptr_iterator_t (*get_group_iterator_2)(void *, const unsigned char *filter, int offset, int count);
+  // get the total number of groups to display
+  int (*get_group_count)(void *, const unsigned char *filter, long long *p_count);
 };
 
 /* default plugin: compiled into userlist-server */

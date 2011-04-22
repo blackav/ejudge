@@ -83,7 +83,7 @@ struct section_language_data;
 struct section_problem_data;
 struct section_tester_data;
 
-/* sizeof(struct sid_state) == 432 */
+/* sizeof(struct sid_state) == 480 */
 struct sid_state
 {
   struct sid_state *next;
@@ -212,6 +212,21 @@ struct sid_state
   unsigned char *user_filter;
   int user_offset;
   int user_count;
+
+  ejintbool_t group_filter_set;
+  unsigned char *group_filter;
+  int group_offset;
+  int group_count;
+
+  ejintbool_t contest_user_filter_set;
+  unsigned char *contest_user_filter;
+  int contest_user_offset;
+  int contest_user_count;
+
+  ejintbool_t group_user_filter_set;
+  unsigned char *group_user_filter;
+  int group_user_offset;
+  int group_user_count;
 };
 
 struct sid_state;

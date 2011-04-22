@@ -6554,6 +6554,12 @@ static handler_func_t op_handlers[SSERV_OP_LAST] =
   [SSERV_OP_USER_FILTER_NEXT_PAGE] = super_serve_op_set_user_filter,
   [SSERV_OP_USER_FILTER_LAST_PAGE] = super_serve_op_set_user_filter,
 
+  [SSERV_OP_BROWSE_GROUPS] = super_serve_op_browse_groups,
+  [SSERV_OP_CHANGE_GROUP_FILTER] = super_serve_op_set_group_filter,
+  [SSERV_OP_GROUP_FILTER_FIRST_PAGE] = super_serve_op_set_group_filter,
+  [SSERV_OP_GROUP_FILTER_PREV_PAGE] = super_serve_op_set_group_filter,
+  [SSERV_OP_GROUP_FILTER_NEXT_PAGE] = super_serve_op_set_group_filter,
+  [SSERV_OP_GROUP_FILTER_LAST_PAGE] = super_serve_op_set_group_filter,
 };
 
 static int

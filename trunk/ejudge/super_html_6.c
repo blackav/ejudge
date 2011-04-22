@@ -105,10 +105,26 @@ super_serve_op_browse_users(
   int user_id, serial, flags_count = 0;
   const struct userlist_user *u;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  const unsigned char *cl;
 
   snprintf(buf, sizeof(buf), "serve-control: %s, browsing users",
            phr->html_name);
   ss_write_html_header(out_f, phr, buf, 1, 0);
+
+  fprintf(out_f, "<script language=\"javascript\">\n");
+  fprintf(out_f,
+          "function setAllCheckboxes(value)\n"
+          "{\n"
+          "  objs = document.forms[1].elements;\n"
+          "  if (objs != null) {\n"
+          "    for (var i = 0; i < objs.length; ++i) {\n"
+          "      if (objs[i].type == \"checkbox\") {\n"
+          "        objs[i].checked = value;\n"
+          "      }\n"
+          "    }\n"
+          "  }\n"
+          "}\n");
+  fprintf(out_f, "</script>\n");
 
   fprintf(out_f, "<h1>%s</h1>\n<br/>\n", buf);
 
@@ -163,7 +179,7 @@ super_serve_op_browse_users(
   fprintf(out_f, "</form>\n");
 
   r = userlist_clnt_list_users_2(phr->userlist_clnt, ULS_LIST_ALL_USERS_2,
-                                 0, user_filter, user_offset, user_count,
+                                 0, 0, user_filter, user_offset, user_count,
                                  &xml_text);
   if (r < 0) {
     fprintf(out_f, "<hr/><h2>Error</h2>\n");
@@ -181,16 +197,18 @@ super_serve_op_browse_users(
   html_start_form(out_f, 1, phr->self_url, "");
   html_hidden(out_f, "SID", "%016llx", phr->session_id);
   html_hidden(out_f, "action", "%d", SSERV_CMD_HTTP_REQUEST);
-  fprintf(out_f, "<table class=\"b1\">\n");
+  cl = " class=\"b1\"";
+  fprintf(out_f, "<table%s>\n", cl);
 
   fprintf(out_f, "<tr>");
-  fprintf(out_f, "<th class=\"b1\">&nbsp;</th>");
-  fprintf(out_f, "<th class=\"b1\">NN</th>");
-  fprintf(out_f, "<th class=\"b1\">User Id</th>");
-  fprintf(out_f, "<th class=\"b1\">User Login</th>");
-  fprintf(out_f, "<th class=\"b1\">E-mail</th>");
-  fprintf(out_f, "<th class=\"b1\">Name</th>");
-  fprintf(out_f, "<th class=\"b1\">Flags</th>");
+  fprintf(out_f, "<th%s>&nbsp;</th>", cl);
+  fprintf(out_f, "<th%s>NN</th>", cl);
+  fprintf(out_f, "<th%s>User Id</th>", cl);
+  fprintf(out_f, "<th%s>User Login</th>", cl);
+  fprintf(out_f, "<th%s>E-mail</th>", cl);
+  fprintf(out_f, "<th%s>Name</th>", cl);
+  fprintf(out_f, "<th%s>Flags</th>", cl);
+  fprintf(out_f, "<th%s>Operations</th>", cl);
   fprintf(out_f, "</tr>\n");
 
   serial = user_offset - 1;
@@ -266,10 +284,25 @@ super_serve_op_browse_users(
       fprintf(out_f, "&nbsp;");
     }
     fprintf(out_f, "</td>");
+    fprintf(out_f, "<td%s>", cl);
+    fprintf(out_f, "%s%s</a>",
+            html_hyperref(hbuf, sizeof(buf), phr->session_id, phr->self_url,
+                          NULL, "action=%d&amp;op=%d", SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_DETAIL_PAGE),
+            "[Details]");
+    fprintf(out_f, "&nbsp;%s%s</a>",
+            html_hyperref(hbuf, sizeof(buf), phr->session_id, phr->self_url,
+                          NULL, "action=%d&amp;op=%d", SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_PASSWORD_PAGE),
+            "[Reg. password]");
+    fprintf(out_f, "</td>");
     fprintf(out_f, "</tr>\n");
   }
-
   fprintf(out_f, "</table>\n");
+
+  cl = " class=\"b0\"";
+  fprintf(out_f, "<table%s><tr>", cl);
+  fprintf(out_f, "<td%s><a onclick=\"setAllCheckboxes(true)\">Mark All</a></td>", cl);
+  fprintf(out_f, "<td%s><a onclick=\"setAllCheckboxes(false)\">Unmark All</a></td>", cl);
+  fprintf(out_f, "</tr></table>\n");
   fprintf(out_f, "</form>\n");
 
 do_footer:
@@ -297,7 +330,7 @@ super_serve_op_set_user_filter(
     goto cleanup;
   }
   if ((r = userlist_clnt_get_count(phr->userlist_clnt, ULS_GET_USER_COUNT,
-                                   0, 0, &total_count)) < 0) {
+                                   0, 0, 0, &total_count)) < 0) {
     err("set_user_filter: get_count failed: %d", -r);
     goto cleanup;
   }
@@ -343,5 +376,25 @@ super_serve_op_set_user_filter(
 
 cleanup:
   ss_redirect(out_f, phr, SSERV_OP_BROWSE_USERS, 0);
+  return retval;
+}
+
+int
+super_serve_op_browse_groups(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  return retval;
+}
+
+int
+super_serve_op_set_group_filter(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
   return retval;
 }

@@ -400,6 +400,7 @@ userlist_clnt_list_users_2(
         struct userlist_clnt *clnt,
         int cmd,
         int contest_id,
+        int group_id,
         const unsigned char *filter,
         int offset,
         int count,
@@ -410,6 +411,7 @@ userlist_clnt_get_count(
         struct userlist_clnt *clnt,
         int cmd,
         int contest_id,
+        int group_id,
         const unsigned char *filter,
         long long *p_count);
 
