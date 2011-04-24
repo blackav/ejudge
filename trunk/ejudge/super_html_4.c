@@ -198,7 +198,7 @@ ss_cgi_param_int(
   return 0;
 }
 
-static int
+int
 ss_cgi_param_int_opt(
         struct super_http_request_info *phr,
         const unsigned char *name,
@@ -6547,19 +6547,20 @@ static handler_func_t op_handlers[SSERV_OP_LAST] =
   [SSERV_OP_DELETE_ITEM] = super_serve_op_package_operation,
   [SSERV_OP_EDIT_PROBLEM] = super_serve_op_edit_problem,
 
-  [SSERV_OP_BROWSE_USERS] = super_serve_op_browse_users,
-  [SSERV_OP_CHANGE_USER_FILTER] = super_serve_op_set_user_filter,
-  [SSERV_OP_USER_FILTER_FIRST_PAGE] = super_serve_op_set_user_filter,
-  [SSERV_OP_USER_FILTER_PREV_PAGE] = super_serve_op_set_user_filter,
-  [SSERV_OP_USER_FILTER_NEXT_PAGE] = super_serve_op_set_user_filter,
-  [SSERV_OP_USER_FILTER_LAST_PAGE] = super_serve_op_set_user_filter,
+  [SSERV_OP_BROWSE_USERS_PAGE] = super_serve_op_browse_users,
+  [SSERV_OP_CHANGE_USER_FILTER_ACTION] = super_serve_op_set_user_filter,
+  [SSERV_OP_USER_FILTER_FIRST_PAGE_ACTION] = super_serve_op_set_user_filter,
+  [SSERV_OP_USER_FILTER_PREV_PAGE_ACTION] = super_serve_op_set_user_filter,
+  [SSERV_OP_USER_FILTER_NEXT_PAGE_ACTION] = super_serve_op_set_user_filter,
+  [SSERV_OP_USER_FILTER_LAST_PAGE_ACTION] = super_serve_op_set_user_filter,
+  [SSERV_OP_USER_DETAIL_PAGE] = super_serve_op_user_detail_page,
 
-  [SSERV_OP_BROWSE_GROUPS] = super_serve_op_browse_groups,
-  [SSERV_OP_CHANGE_GROUP_FILTER] = super_serve_op_set_group_filter,
-  [SSERV_OP_GROUP_FILTER_FIRST_PAGE] = super_serve_op_set_group_filter,
-  [SSERV_OP_GROUP_FILTER_PREV_PAGE] = super_serve_op_set_group_filter,
-  [SSERV_OP_GROUP_FILTER_NEXT_PAGE] = super_serve_op_set_group_filter,
-  [SSERV_OP_GROUP_FILTER_LAST_PAGE] = super_serve_op_set_group_filter,
+  [SSERV_OP_BROWSE_GROUPS_PAGE] = super_serve_op_browse_groups,
+  [SSERV_OP_CHANGE_GROUP_FILTER_ACTION] = super_serve_op_set_group_filter,
+  [SSERV_OP_GROUP_FILTER_FIRST_PAGE_ACTION] = super_serve_op_set_group_filter,
+  [SSERV_OP_GROUP_FILTER_PREV_PAGE_ACTION] = super_serve_op_set_group_filter,
+  [SSERV_OP_GROUP_FILTER_NEXT_PAGE_ACTION] = super_serve_op_set_group_filter,
+  [SSERV_OP_GROUP_FILTER_LAST_PAGE_ACTION] = super_serve_op_set_group_filter,
 };
 
 static int
@@ -6607,6 +6608,7 @@ static unsigned char const * const error_messages[] =
   [S_ERR_INV_PACKAGE] = "Invalid package",
   [S_ERR_ITEM_EXISTS] = "Such item already exists",
   [S_ERR_OPERATION_FAILED] = "System operation failed",
+  [S_ERR_INV_USER_ID] = "Invalid User ID",
 };
 
 void

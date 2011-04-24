@@ -28,12 +28,19 @@
 #include "userlist.h"
 #include "misctext.h"
 #include "errlog.h"
+#include "xml_utils.h"
 
 #include "reuse_xalloc.h"
 
 #include <stdarg.h>
 
 #define ARMOR(s)  html_armor_buf(&ab, (s))
+#define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
+
+#define FIRST_COOKIE(u) ((struct userlist_cookie*) (u)->cookies->first_down)
+#define NEXT_COOKIE(c)  ((struct userlist_cookie*) (c)->b.right)
+#define FIRST_CONTEST(u) ((struct userlist_contest*)(u)->contests->first_down)
+#define NEXT_CONTEST(c)  ((struct userlist_contest*)(c)->b.right)
 
 unsigned char *
 ss_url_unescaped(
@@ -85,6 +92,56 @@ ss_redirect(
   }
 
   fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\nLocation: %s\n\n", EJUDGE_CHARSET, url);
+}
+
+static void
+ss_select(
+        FILE *fout,
+        const unsigned char *param,
+        const unsigned char **options,
+        int value)
+{
+  int option_count = 0, i;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  const unsigned char *s;
+
+  if (!options) return;
+  for (; options[option_count]; ++option_count);
+  if (option_count <= 0) return;
+
+  if (value < 0 || value >= option_count) value = 0;
+
+  fprintf(fout, "<select name=\"%s\">", param);
+  for (i = 0; i < option_count; ++i) {
+    s = "";
+    if (i == value) s = " selected=\"selected\"";
+    fprintf(fout, "<option value=\"%d\"%s>%s</option>",
+            i, s, ARMOR(options[i]));
+  }
+  fprintf(fout, "</select>");
+  html_armor_free(&ab);
+}
+
+static int
+userlist_user_count_contests(struct userlist_user *u)
+{
+  struct userlist_contest *c;
+  int tot = 0;
+
+  if (!u || !u->contests) return 0;
+  for (c = FIRST_CONTEST(u); c; c = NEXT_CONTEST(c), tot++);
+  return tot;
+}
+static int
+userlist_user_count_cookies(struct userlist_user *u)
+{
+  struct userlist_cookie *cookie;
+  int tot = 0;
+
+  if (!u) return 0;
+  if (!u->cookies) return 0;
+  for (cookie = FIRST_COOKIE(u); cookie; cookie = NEXT_COOKIE(cookie), tot++);
+  return tot;
 }
 
 int
@@ -168,13 +225,13 @@ super_serve_op_browse_users(
   fprintf(out_f, "<tr><td class=\"b0\">Count:</td><td class=\"b0\">%s</td></tr>",
           html_input_text(buf, sizeof(buf), "user_count", 10, "%s", hbuf));
   fprintf(out_f, "<tr><td class=\"b0\">&nbsp;</td><td class=\"b0\"><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td></tr>",
-          SSERV_OP_CHANGE_USER_FILTER, "Change");
+          SSERV_OP_CHANGE_USER_FILTER_ACTION, "Change");
   fprintf(out_f, "</table>");
   fprintf(out_f, "<table class=\"b0\"><tr>");
-  fprintf(out_f, "<td class=\"b0\"><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>", SSERV_OP_USER_FILTER_FIRST_PAGE, "&lt;&lt;");
-  fprintf(out_f, "<td class=\"b0\"><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>", SSERV_OP_USER_FILTER_PREV_PAGE, "&lt;");
-  fprintf(out_f, "<td class=\"b0\"><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>", SSERV_OP_USER_FILTER_NEXT_PAGE, "&gt;");
-  fprintf(out_f, "<td class=\"b0\"><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>", SSERV_OP_USER_FILTER_LAST_PAGE, "&gt;&gt;");
+  fprintf(out_f, "<td class=\"b0\"><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>", SSERV_OP_USER_FILTER_FIRST_PAGE_ACTION, "&lt;&lt;");
+  fprintf(out_f, "<td class=\"b0\"><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>", SSERV_OP_USER_FILTER_PREV_PAGE_ACTION, "&lt;");
+  fprintf(out_f, "<td class=\"b0\"><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>", SSERV_OP_USER_FILTER_NEXT_PAGE_ACTION, "&gt;");
+  fprintf(out_f, "<td class=\"b0\"><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>", SSERV_OP_USER_FILTER_LAST_PAGE_ACTION, "&gt;&gt;");
   fprintf(out_f, "</tr></table>\n");
   fprintf(out_f, "</form>\n");
 
@@ -287,11 +344,15 @@ super_serve_op_browse_users(
     fprintf(out_f, "<td%s>", cl);
     fprintf(out_f, "%s%s</a>",
             html_hyperref(hbuf, sizeof(buf), phr->session_id, phr->self_url,
-                          NULL, "action=%d&amp;op=%d", SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_DETAIL_PAGE),
+                          NULL, "action=%d&amp;op=%d&amp;other_user_id=%d",
+                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_DETAIL_PAGE,
+                          user_id),
             "[Details]");
     fprintf(out_f, "&nbsp;%s%s</a>",
             html_hyperref(hbuf, sizeof(buf), phr->session_id, phr->self_url,
-                          NULL, "action=%d&amp;op=%d", SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_PASSWORD_PAGE),
+                          NULL, "action=%d&amp;op=%d&amp;other_user_id=%d",
+                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_PASSWORD_PAGE,
+                          user_id),
             "[Reg. password]");
     fprintf(out_f, "</td>");
     fprintf(out_f, "</tr>\n");
@@ -341,7 +402,7 @@ super_serve_op_set_user_filter(
   }
 
   switch (phr->opcode) {
-  case SSERV_OP_CHANGE_USER_FILTER:
+  case SSERV_OP_CHANGE_USER_FILTER_ACTION:
     if (ss_cgi_param_int(phr, "user_offset", &value) >= 0) {
       user_offset = value;
     }
@@ -350,16 +411,16 @@ super_serve_op_set_user_filter(
     }
     break;
 
-  case SSERV_OP_USER_FILTER_FIRST_PAGE:
+  case SSERV_OP_USER_FILTER_FIRST_PAGE_ACTION:
     user_offset = 0;
     break;
-  case SSERV_OP_USER_FILTER_PREV_PAGE:
+  case SSERV_OP_USER_FILTER_PREV_PAGE_ACTION:
     user_offset -= user_count;
     break;
-  case SSERV_OP_USER_FILTER_NEXT_PAGE:
+  case SSERV_OP_USER_FILTER_NEXT_PAGE_ACTION:
     user_offset += user_count;
     break;
-  case SSERV_OP_USER_FILTER_LAST_PAGE:
+  case SSERV_OP_USER_FILTER_LAST_PAGE_ACTION:
     user_offset = total_count;
     break;
   }
@@ -375,7 +436,841 @@ super_serve_op_set_user_filter(
   phr->ss->user_count = user_count;
 
 cleanup:
-  ss_redirect(out_f, phr, SSERV_OP_BROWSE_USERS, 0);
+  ss_redirect(out_f, phr, SSERV_OP_BROWSE_USERS_PAGE, 0);
+  return retval;
+}
+
+struct user_row_info
+{
+  int field_id;
+  unsigned char *field_desc;
+};
+
+static char const * const member_string[] =
+{
+  "Contestant",
+  "Reserve",
+  "Coach",
+  "Advisor",
+  "Guest"
+};
+static char const * const member_string_pl[] =
+{
+  "Contestants",
+  "Reserves",
+  "Coaches",
+  "Advisors",
+  "Guests"
+};
+
+static void
+string_row(
+        FILE *out_f,
+        const unsigned char *tr_class,
+        int is_hidden,
+        const unsigned char *td_class,
+        const unsigned char *legend,
+        const unsigned char *param_suffix,
+        const unsigned char *str)
+{
+  unsigned char trcl[256];
+  unsigned char tdcl[256];
+  unsigned char param_name[256];
+  unsigned char buf[1024];
+  const unsigned char *checked = "";
+  const unsigned char *display = "";
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+
+  trcl[0] = 0;
+  if (tr_class) {
+    snprintf(trcl, sizeof(trcl), " class=\"%s\"", tr_class);
+  }
+  tdcl[0] = 0;
+  if (td_class) {
+    snprintf(tdcl, sizeof(tdcl), " class=\"%s\"", td_class);
+  }
+  if (!str) {
+    checked = " checked=\"checked\"";
+    str = "";
+  }
+  snprintf(param_name, sizeof(param_name), "field_%s", param_suffix);
+  if (is_hidden) {
+    display = " style=\"display: none;\"";
+  }
+
+  fprintf(out_f, "<tr%s%s>", trcl, display);
+  fprintf(out_f, "<td%s><b>%s:</b></td>", tdcl, legend);
+  fprintf(out_f, "<td%s><input type=\"checkbox\" name=\"field_null_%s\" value=\"1\"%s /></td>",
+          tdcl, param_suffix, checked);
+  fprintf(out_f, "<td%s>%s</td>", tdcl,
+          html_input_text(buf, sizeof(buf), param_name, 50, "%s", ARMOR(str)));
+  fprintf(out_f, "<td%s>&nbsp;</td>", tdcl);
+  fprintf(out_f, "</tr>\n");
+  html_armor_free(&ab);
+}
+
+int
+super_serve_op_user_detail_page(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0, r, row, role, pers, reg_count, cookie_count;
+  int other_user_id = 0, contest_id = 0, group_id = 0;
+  unsigned char contest_id_str[128];
+  unsigned char group_id_str[128];
+  unsigned char buf[1024];
+  unsigned char buf2[1024];
+  unsigned char hbuf[1024];
+  unsigned char *xml_text = 0;
+  struct userlist_user *u = 0;
+  struct userlist_user_info *ui = 0;
+  const unsigned char *cl, *s, *s2;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  struct userlist_member *m;
+  const struct contest_desc *cnts = 0;
+  struct userlist_contest *reg;
+  struct userlist_cookie *cookie;
+
+  if (ss_cgi_param_int(phr, "other_user_id", &other_user_id) < 0) {
+    FAIL(S_ERR_INV_USER_ID);
+  }
+  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  ss_cgi_param_int_opt(phr, "group_id", &group_id, 0);
+
+  if (contest_id < 0) contest_id = 0;
+  if (contest_id > 0) {
+    if (contests_get(contest_id, &cnts) < 0 || !cnts) contest_id = 0;
+  }
+  contest_id_str[0] = 0;
+  if (contest_id > 0) {
+    snprintf(contest_id_str, sizeof(contest_id_str), "&amp;contest_id=%d", contest_id);
+  }
+  if (group_id < 0) group_id = 0;
+  group_id_str[0] = 0;
+  if (group_id > 0) {
+    snprintf(group_id_str, sizeof(group_id_str), "&amp;group_id=%d", group_id);
+  }
+
+  snprintf(buf, sizeof(buf), "serve-control: %s, viewing user %d",
+           phr->html_name, other_user_id);
+  ss_write_html_header(out_f, phr, buf, 1, 0);
+
+  fprintf(out_f, "<script language=\"javascript\">\n");
+  fprintf(out_f,
+          "function toggleRowsVisibility(value, rows1, rows2)\n"
+          "{\n"
+          "  var vis1 = \"\";\n"
+          "  var vis2 = \"\";\n"
+          "  if (value == true) {\n"
+          "    vis1 = \"none\";\n"
+          "  } else {\n"
+          "    vis2 = \"none\";\n"
+          "  }\n"
+          "  if (rows1 != null) {\n"
+          "    for (var row in rows1) {\n"
+          "      var obj = document.getElementById(rows1[row]);\n"
+          "      if (obj != null) {\n"
+          "        obj.style.display = vis1;\n"
+          "      }\n"
+          "    }\n"
+          "  }\n"
+          "  if (rows2 != null) {\n"
+          "    for (var row in rows2) {\n"
+          "      var obj = document.getElementById(rows2[row]);\n"
+          "      if (obj != null) {\n"
+          "        obj.style.display = vis2;\n"
+          "      }\n"
+          "    }\n"
+          "  }\n"
+          "}\n"
+          "function toggleRowsVisibility2(value, tid, rowclass1, rowclass2)\n"
+          "{\n"
+          "  var vis1 = \"\";\n"
+          "  var vis2 = \"\";\n"
+          "  if (value == true) {\n"
+          "    vis1 = \"none\";\n"
+          "  } else {\n"
+          "    vis2 = \"none\";\n"
+          "  }\n"
+          "  var tobj = document.getElementById(tid);\n"
+          "  if (tobj == null) {\n"
+          "    return;\n"
+          "  }\n"
+          "  var trows = tobj.rows;\n"
+          "  if (trows != null) {\n"
+          "    for (var row in trows) {\n"
+          "      if (trows[row].className == rowclass1) {\n"
+          "        trows[row].style.display = vis1;\n"
+          "      } else if (trows[row].className == rowclass2) {\n"
+          "        trows[row].style.display = vis2;\n"
+          "      }\n"
+          "    }\n"
+          "  }\n"
+          "}\n"
+          "function toggleStatVisibility(value)\n"
+          "{\n"
+          "  toggleRowsVisibility2(value, \"UserData\", \"StatRow1\", \"StatRow2\");\n"
+          "}\n"
+          "function toggleFlagVisibility(value)\n"
+          "{\n"
+          "  toggleRowsVisibility2(value, \"UserData\", \"FlagRow1\", \"FlagRow2\");\n"
+          "}\n"
+          "function toggleUserInfoVisibility(value)\n"
+          "{\n"
+          "  toggleRowsVisibility2(value, \"UserData\", \"UserInfoRow1\", \"UserInfoRow2\");\n"
+          "}\n"
+          "function toggleMemberInfoVisibility(value)\n"
+          "{\n"
+          "  toggleRowsVisibility2(value, \"UserData\", \"MemberInfoRow1\", \"MemberInfoRow2\");\n"
+          "}\n"
+          "function showContestRegs()\n"
+          "{\n"
+          "  document.getElementById(\"ContestRegsShowLink\").style.display = \"none\";\n"
+          "  document.getElementById(\"ContestRegsTable\").style.display = \"\";\n"
+          "}\n"
+          "function hideContestRegs()\n"
+          "{\n"
+          "  document.getElementById(\"ContestRegsShowLink\").style.display = \"\";\n"
+          "  document.getElementById(\"ContestRegsTable\").style.display = \"none\";\n"
+          "}\n"
+          "function showCookies()\n"
+          "{\n"
+          "  document.getElementById(\"CookiesShowLink\").style.display = \"none\";\n"
+          "  document.getElementById(\"CookiesTable\").style.display = \"\";\n"
+          "}\n"
+          "function hideCookies()\n"
+          "{\n"
+          "  document.getElementById(\"CookiesShowLink\").style.display = \"\";\n"
+          "  document.getElementById(\"CookiesTable\").style.display = \"none\";\n"
+          "}\n");
+  fprintf(out_f, "</script>\n");
+
+  fprintf(out_f, "<h1>%s</h1>\n<br/>\n", buf);
+
+  fprintf(out_f, "<ul>");
+  fprintf(out_f, "<li>%s%s</a></li>",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                        NULL, NULL),
+          "Main page");
+  fprintf(out_f, "<li>%s%s</a></li>",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                        NULL, "action=%d&amp;op=%d",
+                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_USERS_PAGE),
+          "Browse users");
+  fprintf(out_f, "<li>%s%s</a></li>",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                        NULL, "action=%d&amp;op=%d",
+                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_GROUPS_PAGE),
+          "Browse groups");
+  if (contest_id > 0) {
+    fprintf(out_f, "<li>%s%s %d</a></li>",
+            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                          NULL, "action=%d&amp;op=%d%s",
+                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_USERS_PAGE,
+                          contest_id_str),
+            "Browse users of contest", contest_id);
+  }
+  if (group_id > 0) {
+    fprintf(out_f, "<li>%s%s %d</a></li>",
+            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                          NULL, "action=%d&amp;op=%d%s",
+                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_USERS_PAGE,
+                          group_id_str),
+            "Browse users of group", group_id);
+  }
+  fprintf(out_f, "</ul>\n");
+
+  if (!phr->userlist_clnt) {
+    fprintf(out_f, "<hr/><h2>Error</h2>\n");
+    fprintf(out_f, "<pre>No connection to the server!</pre>\n");
+    goto do_footer;
+  }
+
+  r = userlist_clnt_get_info(phr->userlist_clnt, ULS_PRIV_GET_USER_INFO,
+                             other_user_id, 0, &xml_text);
+  if (r < 0) {
+    fprintf(out_f, "<hr/><h2>Error</h2>\n");
+    fprintf(out_f, "<pre>Cannot get user information: %s</pre>\n",
+            userlist_strerror(-r));
+    goto do_footer;
+  }
+  if (!(u = userlist_parse_user_str(xml_text))) {
+    fprintf(out_f, "<hr/><h2>Error</h2>\n");
+    fprintf(out_f, "<pre>XML parse error</pre>\n");
+    goto do_footer;
+  }
+  ui = u->cnts0;
+
+  html_start_form(out_f, 1, phr->self_url, "");
+  html_hidden(out_f, "SID", "%016llx", phr->session_id);
+  html_hidden(out_f, "action", "%d", SSERV_CMD_HTTP_REQUEST);
+  html_hidden(out_f, "other_user_id", "%d", other_user_id);
+  if (contest_id > 0) {
+    html_hidden(out_f, "contest_id", "%d", contest_id);
+  }
+  if (group_id > 0) {
+    html_hidden(out_f, "group_id", "%d", group_id);
+  }
+  cl = " class=\"b1\"";
+  fprintf(out_f, "<table%s id=\"UserData\">\n", cl);
+  fprintf(out_f, "<tr><td%s colspan=\"4\" align=\"center\">", cl);
+  fprintf(out_f, "%s%s</a>",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id,
+                        phr->self_url, NULL,
+                        "action=%d&amp;op=%d&amp;other_user_id=%d%s%s",
+                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_CANCEL_AND_PREV_ACTION,
+                        other_user_id, contest_id_str, group_id_str),
+          "Prev user");
+  fprintf(out_f, "&nbsp;%s%s</a>",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id,
+                        phr->self_url, NULL,
+                        "action=%d&amp;op=%d&amp;other_user_id=%d%s%s",
+                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_CANCEL_AND_PREV_ACTION,
+                        other_user_id, contest_id_str, group_id_str),
+          "Next user");
+  fprintf(out_f, "</td></tr>\n");
+  fprintf(out_f, "<tr><th%s width=\"250px\">&nbsp;</th><th%s><b>NULL?</b></th><th%s>&nbsp;</th><th%s>&nbsp;</th></tr>\n", cl, cl, cl, cl);
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>&nbsp;</td><td%s>%d</td><td%s>&nbsp;</td></tr>\n",
+          cl, "User ID", cl, cl, other_user_id, cl);
+  s = u->login;
+  if (!s) s = "";
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>&nbsp;</td><td%s>%s</td><td%s>&nbsp;</td></tr>\n",
+          cl, "User login", cl, cl, 
+          html_input_text(buf, sizeof(hbuf), "other_login", 50, "%s", ARMOR(s)), cl);
+  s = u->email;
+  if (!s) s = "";
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>&nbsp;</td><td%s>%s</td><td%s>&nbsp;</td></tr>\n",
+          cl, "User e-mail", cl, cl, 
+          html_input_text(buf, sizeof(buf), "email", 50, "%s", ARMOR(s)), cl);
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>&nbsp;</td><td%s>",
+          cl, "Password", cl, cl);
+  if (!u->passwd) {
+    fprintf(out_f, "<i>NULL</i>");
+  } else if (u->passwd_method == USERLIST_PWD_PLAIN) {
+    fprintf(out_f, "<tt>%s</tt>", ARMOR(u->passwd));
+  } else if (u->passwd_method == USERLIST_PWD_SHA1) {
+    fprintf(out_f, "<i>Hashed with SHA1</i>");
+  } else {
+    fprintf(out_f, "<i>Unsupported method</i>");
+  }
+  fprintf(out_f, "</td><td%s>%s%s</a></td></tr>", cl,
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                        NULL, "action=%d&amp;op=%d&amp;other_user_id=%d%s%s",
+                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_PASSWORD_PAGE,
+                        other_user_id, contest_id_str, group_id_str),
+          "[Change]");
+  fprintf(out_f, "<tr class=\"StatRow1\"><td colspan=\"4\"%s align=\"center\"><a onclick=\"toggleStatVisibility(true)\">[%s]</a></td></tr>\n",
+          cl, "Show user statistics");
+  fprintf(out_f, "<tr class=\"StatRow2\" style=\"display: none;\"><td colspan=\"4\"%s align=\"center\"><a onclick=\"toggleStatVisibility(false)\">[%s]</a></td></tr>\n", cl, "Hide user statistics");
+
+  static const struct user_row_info timestamp_rows[] =
+  {
+    { USERLIST_NN_REGISTRATION_TIME, "Registration time" },
+    { USERLIST_NN_LAST_LOGIN_TIME, "Last login time" },
+    { USERLIST_NN_LAST_CHANGE_TIME, "Last change time" },
+    { USERLIST_NN_LAST_PWDCHANGE_TIME, "Last password change time" },
+    { 0, 0 },
+  };
+  for (row = 0; timestamp_rows[row].field_id > 0; ++row) {
+    fprintf(out_f, "<tr class=\"StatRow2\" style=\"display: none;\"><td%s><b>%s:</b></td><td%s>&nbsp;</td><td%s>",
+            cl, timestamp_rows[row].field_desc, cl, cl);
+    time_t *pt = (time_t*) userlist_get_user_field_ptr(u, timestamp_rows[row].field_id);
+    if (pt && *pt > 0) {
+      fprintf(out_f, "%s</td><td%s>%s%s</a></td></tr>\n",
+              xml_unparse_date(*pt), cl,
+              html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                            NULL, "action=%d&amp;op=%d&amp;other_user_id=%d&amp;field_id=%d%s%s",
+                            SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_CLEAR_FIELD_ACTION,
+                            other_user_id, timestamp_rows[row].field_id,
+                            contest_id_str, group_id_str),
+              "[Reset]");
+    } else if (pt) {
+      fprintf(out_f, "<i>Not set</i></td><td%s>&nbsp;</td></tr>\n", cl);
+    } else {
+      fprintf(out_f, "<i>Invalid field</i></td><td%s>&nbsp;</td></tr>\n", cl);
+    }
+  }
+
+  fprintf(out_f, "<tr class=\"FlagRow1\"><td colspan=\"4\"%s align=\"center\"><a onclick=\"toggleFlagVisibility(true)\">[%s]</a></td></tr>\n",
+          cl, "Show user flags");
+  fprintf(out_f, "<tr class=\"FlagRow2\" style=\"display: none;\"><td colspan=\"4\"%s align=\"center\"><a onclick=\"toggleFlagVisibility(false)\">[%s]</a></td></tr>\n", cl, "Hide user flags");
+
+  static const struct user_row_info flag_rows[] =
+  {
+    { USERLIST_NN_IS_PRIVILEGED, "Globally privileged" },
+    { USERLIST_NN_IS_INVISIBLE, "Globally invisible" },
+    { USERLIST_NN_IS_BANNED, "Globally banned" },
+    { USERLIST_NN_IS_LOCKED, "Globally locked" },
+    { USERLIST_NN_SHOW_LOGIN, "Show login to everybody" },
+    { USERLIST_NN_SHOW_EMAIL, "Show email to everybody" },
+    { USERLIST_NN_READ_ONLY, "Globally read-only" },
+    { USERLIST_NN_NEVER_CLEAN, "Do not auto-clean" },
+    { USERLIST_NN_SIMPLE_REGISTRATION, "E-mail is not confirmed" },
+    { 0, 0 },
+  };
+  for (row = 0; flag_rows[row].field_id > 0; ++row) {
+    fprintf(out_f, "<tr class=\"FlagRow2\" style=\"display: none;\"><td%s><b>%s:</b></td><td%s>&nbsp;</td><td%s>",
+            cl, flag_rows[row].field_desc, cl, cl);
+    int *pi = (int*) userlist_get_user_field_ptr(u, flag_rows[row].field_id);
+    if (pi) {
+      s = "";
+      if (*pi > 0) {
+        s = " checked=\"checked\"";
+      }
+      fprintf(out_f, "<input type=\"checkbox\" name=\"field_%d\" value=\"1\"%s />",
+              flag_rows[row].field_id, s);
+    } else {
+      fprintf(out_f, "<i>Invalid field</i>");
+    }
+    fprintf(out_f, "</td><td%s>&nbsp;</td></tr>\n", cl);
+  }
+
+  fprintf(out_f, "<tr><td%s align=\"center\" colspan=\"4\"><b>%s</b></td></tr>\n",
+          cl, "Generic contest-specific fields");
+  s = "";
+  if (ui->cnts_read_only > 0) s = " checked=\"checked\"";
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>&nbsp;</td><td%s><input type=\"checkbox\" name=\"field_%d\" value=\"1\"%s /></td><td%s>&nbsp;</td></tr>\n",
+          cl, "User data is read-only", cl, cl, USERLIST_NC_CNTS_READ_ONLY, s, cl);
+  s = "";
+  s2 = ui->name;
+  if (!s2) {
+    s = " checked=\"checked\"";
+    s2 = "";
+  }
+  snprintf(hbuf, sizeof(hbuf), "field_%d", USERLIST_NC_NAME);
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"field_null_%d\" value=\"1\"%s /></td><td%s>%s</td><td%s>&nbsp;</td></tr>\n",
+          cl, "User name", cl, USERLIST_NC_NAME, s, cl, 
+          html_input_text(buf, sizeof(buf), hbuf, 50, "%s", ARMOR(s2)), cl);
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>&nbsp;</td><td%s>",
+          cl, "Contest password", cl, cl);
+  if (!ui->team_passwd) {
+    fprintf(out_f, "<i>NULL</i>");
+  } else if (ui->team_passwd_method == USERLIST_PWD_PLAIN) {
+    fprintf(out_f, "<tt>%s</tt>", ARMOR(ui->team_passwd));
+  } else if (ui->team_passwd_method == USERLIST_PWD_SHA1) {
+    fprintf(out_f, "<i>Hashed with SHA1</i>");
+  } else {
+    fprintf(out_f, "<i>Unsupported method</i>");
+  }
+  fprintf(out_f, "</td><td%s>%s%s</a></td></tr>", cl,
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                        NULL, "action=%d&amp;op=%d&amp;other_user_id=%d%s%s",
+                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_PASSWORD_PAGE,
+                        other_user_id, contest_id_str, group_id_str),
+          "[Change]");
+
+  fprintf(out_f, "<tr class=\"UserInfoRow1\"><td colspan=\"4\"%s align=\"center\"><a onclick=\"toggleUserInfoVisibility(true)\">[%s]</a></td></tr>\n",
+          cl, "Show more user info fields");
+  fprintf(out_f, "<tr class=\"UserInfoRow2\" style=\"display: none;\"><td colspan=\"4\"%s align=\"center\"><a onclick=\"toggleUserInfoVisibility(false)\">[%s]</a></td></tr>\n", cl, "Hide user info fields");
+
+  static const struct user_row_info user_info_rows[] =
+  {
+    { USERLIST_NC_INST, "Institution name" },
+    { USERLIST_NC_INST_EN, "Inst. name (En)" },
+    { USERLIST_NC_INSTSHORT, "Short inst. name" },
+    { USERLIST_NC_INSTSHORT_EN, "Short inst. name (En)" },
+    { USERLIST_NC_INSTNUM, "Institution number" },
+    { USERLIST_NC_FAC, "Faculty name" },
+    { USERLIST_NC_FAC_EN, "Faculty name (En)" },
+    { USERLIST_NC_FACSHORT, "Short faculty name" },
+    { USERLIST_NC_FACSHORT_EN, "Short faculty name (En)" },
+    { USERLIST_NC_HOMEPAGE, "Web home page" },
+    { USERLIST_NC_CITY, "City" },
+    { USERLIST_NC_CITY_EN, "City (En)" },
+    { USERLIST_NC_COUNTRY, "Country" },
+    { USERLIST_NC_COUNTRY_EN, "Country (En)" },
+    { USERLIST_NC_REGION, "Region" },
+    { USERLIST_NC_AREA, "Region (En)" },
+    { USERLIST_NC_ZIP, "Zip code" },
+    { USERLIST_NC_STREET, "Street address" },
+    { USERLIST_NC_LOCATION, "Computer location" },
+    { USERLIST_NC_SPELLING, "Name spelling" },
+    { USERLIST_NC_PRINTER_NAME, "Printer name" },
+    { USERLIST_NC_EXAM_ID, "Examination Id" },
+    { USERLIST_NC_EXAM_CYPHER, "Examination cypher" },
+    { USERLIST_NC_LANGUAGES, "Programming languages" },
+    { USERLIST_NC_PHONE, "Contact phone" },
+    { USERLIST_NC_FIELD0, "Additional field 0" },
+    { USERLIST_NC_FIELD1, "Additional field 1" },
+    { USERLIST_NC_FIELD2, "Additional field 2" },
+    { USERLIST_NC_FIELD3, "Additional field 3" },
+    { USERLIST_NC_FIELD4, "Additional field 4" },
+    { USERLIST_NC_FIELD5, "Additional field 5" },
+    { USERLIST_NC_FIELD6, "Additional field 6" },
+    { USERLIST_NC_FIELD7, "Additional field 7" },
+    { USERLIST_NC_FIELD8, "Additional field 8" },
+    { USERLIST_NC_FIELD9, "Additional field 9" },
+
+    { 0, 0 },
+  };
+  for (row = 0; user_info_rows[row].field_id > 0; ++row) {
+    s = 0;
+    if (user_info_rows[row].field_id == USERLIST_NC_INSTNUM) {
+      if (ui->instnum > 0) {
+        snprintf(buf2, sizeof(buf2), "%d", ui->instnum);
+        s = buf2;
+      }
+    } else {
+      unsigned char **ps = (unsigned char**) userlist_get_user_info_field_ptr(ui, user_info_rows[row].field_id);
+      if (!ps) continue;
+      s = *ps;
+    }
+    snprintf(hbuf, sizeof(hbuf), "%d", user_info_rows[row].field_id);
+    string_row(out_f, "UserInfoRow2", 1, "b1", user_info_rows[row].field_desc, hbuf, s);
+  }
+
+  static const struct user_row_info user_info_stat_rows[] =
+  {
+    { USERLIST_NC_CREATE_TIME, "Create time" },
+    { USERLIST_NC_LAST_LOGIN_TIME, "Last login time" },
+    { USERLIST_NC_LAST_CHANGE_TIME, "Last change time" },
+    { USERLIST_NC_LAST_PWDCHANGE_TIME, "Last password change time" },
+
+    { 0, 0 },
+  };
+  for (row = 0; user_info_stat_rows[row].field_id > 0; ++row) {
+    fprintf(out_f, "<tr class=\"UserInfoRow2\" style=\"display: none;\"><td%s><b>%s:</b></td><td%s>&nbsp;</td><td%s>",
+            cl, user_info_stat_rows[row].field_desc, cl, cl);
+    time_t *pt = (time_t*) userlist_get_user_info_field_ptr(ui, user_info_stat_rows[row].field_id);
+    if (pt && *pt > 0) {
+      fprintf(out_f, "%s</td><td%s>%s%s</a></td></tr>\n",
+              xml_unparse_date(*pt), cl,
+              html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                            NULL, "action=%d&amp;op=%d&amp;other_user_id=%d&amp;field_id=%d%s%s",
+                            SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_CLEAR_FIELD_ACTION,
+                            other_user_id, user_info_stat_rows[row].field_id,
+                            contest_id_str, group_id_str),
+              "[Reset]");
+    } else if (pt) {
+      fprintf(out_f, "<i>Not set</i></td><td%s>&nbsp;</td></tr>\n", cl);
+    } else {
+      fprintf(out_f, "<i>Invalid field</i></td><td%s>&nbsp;</td></tr>\n", cl);
+    }
+  }
+
+  fprintf(out_f, "<tr class=\"MemberInfoRow1\"><td colspan=\"4\"%s align=\"center\"><a onclick=\"toggleMemberInfoVisibility(true)\">[%s]</a></td></tr>\n",
+          cl, "Show members");
+  fprintf(out_f, "<tr class=\"MemberInfoRow2\" style=\"display: none;\"><td colspan=\"4\"%s align=\"center\"><a onclick=\"toggleMemberInfoVisibility(false)\">[%s]</a></td></tr>\n", cl, "Hide members");
+
+  if (ui && ui->members) {
+    for (role = 0; role < CONTEST_LAST_MEMBER; ++role) {
+      int role_cnt = userlist_members_count(ui->members, role);
+      if (role_cnt <= 0) continue;
+      fprintf(out_f, "<tr class=\"MemberInfoRow2\" style=\"display: none;\"><td colspan=\"4\"%s align=\"center\"><b>%s (%d)</b></td></tr>\n", cl, member_string_pl[role], role_cnt);
+      for (pers = 0; pers < role_cnt; ++pers) {
+        if (!(m = (struct userlist_member*) userlist_members_get_nth(ui->members, role, pers)))
+          continue;
+
+        fprintf(out_f, "<tr class=\"MemberInfoRow2\" style=\"display: none;\"><td colspan=\"3\"%s align=\"center\"><b>%s %d (%d)</b></td><td%s>%s[%s]</a></tr>\n", cl, member_string[role], pers + 1, m->serial, cl,
+                html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                              NULL, "action=%d&amp;op=%d&amp;other_user_id=%d&amp;serial=%d%s%s",
+                              SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_DELETE_MEMBER_PAGE,
+                              other_user_id, m->serial, contest_id_str, group_id_str),
+                "Delete");
+
+        fprintf(out_f, "<tr class=\"MemberInfoRow2\" style=\"display: none;\"><td%s><b>%s</b></td><td%s>&nbsp;</td><td%s>%d</td><td%s>&nbsp;</td></tr>\n",
+                cl, "Member serial Id", cl, cl, m->serial, cl);
+
+        snprintf(hbuf, sizeof(hbuf), "mfield_%d_%d", m->serial, USERLIST_NM_STATUS);
+        fprintf(out_f, "<tr class=\"MemberInfoRow2\" style=\"display: none;\"><td%s><b>%s</b></td><td%s>&nbsp;</td><td%s>",
+                cl, "Status", cl, cl);
+        ss_select(out_f, hbuf, (const unsigned char* []) { "Undefined", "School student", "Student", "Magistrant", "PhD student", "School teacher", "Professor", "Scientist", "Other", NULL }, m->status);
+        fprintf(out_f, "</td><td%s>&nbsp;</td></tr>\n", cl);
+        snprintf(hbuf, sizeof(hbuf), "mfield_%d_%d", m->serial, USERLIST_NM_GENDER);
+        fprintf(out_f, "<tr class=\"MemberInfoRow2\" style=\"display: none;\"><td%s><b>%s</b></td><td%s>&nbsp;</td><td%s>",
+                cl, "Status", cl, cl);
+        ss_select(out_f, hbuf, (const unsigned char* []) { "Undefined", "Male", "Female", NULL }, m->gender);
+        fprintf(out_f, "</td><td%s>&nbsp;</td></tr>\n", cl);
+
+        s = 0;
+        if (m->grade > 0) {
+          snprintf(buf2, sizeof(buf2), "%d", m->grade);
+          s = buf2;
+        }
+        snprintf(hbuf, sizeof(hbuf), "%d_%d", m->serial, USERLIST_NM_GRADE);
+        string_row(out_f, "MemberInfoRow2", 1, "b1", "Grade", hbuf, s);
+
+        static const struct user_row_info member_rows[] =
+        {
+          { USERLIST_NM_FIRSTNAME, "First name" },
+          { USERLIST_NM_FIRSTNAME_EN, "First name (En)" },
+          { USERLIST_NM_MIDDLENAME, "Middle name" },
+          { USERLIST_NM_MIDDLENAME_EN, "Middle name (En)" },
+          { USERLIST_NM_SURNAME, "Surname" },
+          { USERLIST_NM_SURNAME_EN, "Surname (En)" },
+          { USERLIST_NM_GROUP, "Academic group" },
+          { USERLIST_NM_GROUP_EN, "Academic group (En)" },
+          { USERLIST_NM_EMAIL, "Email" },
+          { USERLIST_NM_HOMEPAGE, "Web home page" },
+          { USERLIST_NM_OCCUPATION, "Occupation" },
+          { USERLIST_NM_OCCUPATION_EN, "Occupation (En)" },
+          { USERLIST_NM_DISCIPLINE, "Discipline" },
+          { USERLIST_NM_INST, "Institution name" },
+          { USERLIST_NM_INST_EN, "Institution name (En)" },
+          { USERLIST_NM_INSTSHORT, "Short inst. name" },
+          { USERLIST_NM_INSTSHORT_EN, "Short inst. name (En)" },
+          { USERLIST_NM_FAC, "Faculty name" },
+          { USERLIST_NM_FAC_EN, "Faculty name (En)" },
+          { USERLIST_NM_FACSHORT, "Short faculty name" },
+          { USERLIST_NM_FACSHORT_EN, "Short faculty name (En)" },
+          { USERLIST_NM_PHONE, "Phone" },
+
+          { 0, 0 },
+        };
+
+        for (row = 0; member_rows[row].field_id > 0; ++row) {
+          unsigned char **ps = (unsigned char**) userlist_get_member_field_ptr(m, member_rows[row].field_id);
+          if (!ps) continue;
+          s = *ps;
+          snprintf(hbuf, sizeof(hbuf), "%d_%d", m->serial, member_rows[row].field_id);
+          string_row(out_f, "MemberInfoRow2", 1, "b1", member_rows[row].field_desc, hbuf, s);
+        }
+
+        static const struct user_row_info member_date_rows[] =
+        {
+          { USERLIST_NM_BIRTH_DATE, "Date of birth" },
+          { USERLIST_NM_ENTRY_DATE, "Date of entry" },
+          { USERLIST_NM_GRADUATION_DATE, "Graduation date" },
+
+          { 0, 0 },
+        };
+
+        for (row = 0; member_date_rows[row].field_id > 0; ++row) {
+          time_t *pt = (time_t*) userlist_get_member_field_ptr(m, member_date_rows[row].field_id);
+          if (!pt) continue;
+          s = 0;
+          if (*pt > 0) {
+            userlist_get_member_field_str(buf2, sizeof(buf2), m, member_date_rows[row].field_id, 0, 0);
+            s = buf2;
+          }
+          snprintf(hbuf, sizeof(hbuf), "%d_%d", m->serial, member_date_rows[row].field_id);
+          string_row(out_f, "MemberInfoRow2", 1, "b1", member_date_rows[row].field_desc, hbuf, s);
+        }
+
+        static const struct user_row_info member_time_rows[] =
+        {
+          { USERLIST_NM_CREATE_TIME, "Create time" },
+          { USERLIST_NM_LAST_CHANGE_TIME, "Last change time" },
+
+          { 0, 0 },
+        };
+
+        for (row = 0; member_time_rows[row].field_id > 0; ++row) {
+          fprintf(out_f, "<tr class=\"MemberInfoRow2\" style=\"display: none;\"><td%s><b>%s:</b></td><td%s>&nbsp;</td><td%s>",
+                  cl, member_time_rows[row].field_desc, cl, cl);
+          time_t *pt = (time_t*) userlist_get_member_field_ptr(m, member_time_rows[row].field_id);
+          if (pt && *pt > 0) {
+            fprintf(out_f, "%s</td><td%s>%s%s</a></td></tr>\n",
+                    xml_unparse_date(*pt), cl,
+                    html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                                  NULL, "action=%d&amp;op=%d&amp;other_user_id=%d&amp;field_id=%d%s%s",
+                                  SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_CLEAR_FIELD_ACTION,
+                                  other_user_id, member_time_rows[row].field_id,
+                                  contest_id_str, group_id_str),
+                    "[Reset]");
+          } else if (pt) {
+            fprintf(out_f, "<i>Not set</i></td><td%s>&nbsp;</td></tr>\n", cl);
+          } else {
+            fprintf(out_f, "<i>Invalid field</i></td><td%s>&nbsp;</td></tr>\n", cl);
+          }
+        }
+      }
+    }
+  }
+
+  fprintf(out_f, "<tr><td%s colspan=\"4\" align=\"center\">", cl);
+  fprintf(out_f, "<input type=\"submit\" name=\"op_%d\" value=\"%s\" />",
+          SSERV_OP_USER_SAVE_AND_PREV_ACTION, "Save and goto PREV user");
+  fprintf(out_f, "&nbsp;<input type=\"submit\" name=\"op_%d\" value=\"%s\" />",
+          SSERV_OP_USER_SAVE_ACTION, "Save and goto user list");
+  fprintf(out_f, "&nbsp;<input type=\"submit\" name=\"op_%d\" value=\"%s\" />",
+          SSERV_OP_USER_SAVE_AND_NEXT_ACTION, "Save and goto NEXT user");
+  fprintf(out_f, "</td></tr>\n");
+  fprintf(out_f, "<tr><td%s colspan=\"4\" align=\"center\">", cl);
+  fprintf(out_f, "<input type=\"submit\" name=\"op_%d\" value=\"%s\" />",
+          SSERV_OP_USER_CANCEL_AND_PREV_ACTION, "Cancel and goto PREV user");
+  fprintf(out_f, "&nbsp;<input type=\"submit\" name=\"op_%d\" value=\"%s\" />",
+          SSERV_OP_USER_CANCEL_ACTION, "Cancel and goto user list");
+  fprintf(out_f, "&nbsp;<input type=\"submit\" name=\"op_%d\" value=\"%s\" />",
+          SSERV_OP_USER_CANCEL_AND_NEXT_ACTION, "Cancel and goto NEXT user");
+  fprintf(out_f, "</td></tr>\n");
+
+  fprintf(out_f, "</table>\n");
+  fprintf(out_f, "</form>\n");
+
+  html_start_form(out_f, 1, phr->self_url, "");
+  html_hidden(out_f, "SID", "%016llx", phr->session_id);
+  html_hidden(out_f, "action", "%d", SSERV_CMD_HTTP_REQUEST);
+  html_hidden(out_f, "other_user_id", "%d", other_user_id);
+  if (contest_id > 0) {
+    html_hidden(out_f, "contest_id", "%d", contest_id);
+  }
+  if (group_id > 0) {
+    html_hidden(out_f, "group_id", "%d", group_id);
+  }
+  fprintf(out_f, "Create new member: ");
+  ss_select(out_f, "role", (const unsigned char* []) { "", "Contestant", "Reserve", "Coach", "Advisor", "Guest", NULL }, 0);
+  fprintf(out_f, "<input type=\"submit\" name=\"op_%d\" value=\"%s\" />",
+          SSERV_OP_USER_CREATE_MEMBER_ACTION, "Create member");
+  fprintf(out_f, "</form>\n");
+
+  reg_count = userlist_user_count_contests(u);
+  if (reg_count > 0) {
+    fprintf(out_f, "<h2>%s</h2>\n", "Contest registrations");
+
+    fprintf(out_f, "<div id=\"ContestRegsShowLink\"><p><a onclick=\"showContestRegs()\">%s</a></p></div>\n",
+            "Show Contest Registrations");
+    fprintf(out_f, "<div id=\"ContestRegsTable\" style=\"display: none;\"><p><a onclick=\"hideContestRegs()\">%s</a></p>\n",
+            "Hide Contest Registrations");
+    fprintf(out_f, "<table%s>\n", cl);
+    fprintf(out_f, "<tr><th%s align=\"center\"><b>Contest Id</b></th><th%s align=\"center\"><b>Contest name</b></th>"
+            "<th%s align=\"center\"><b>Status</b></th><th%s align=\"center\"><b>Flags</b></th>"
+            "<th%s align=\"center\"><b>Create date</b></th><th%s align=\"center\"><b>Last change date</b></th>"
+            "<th%s align=\"center\"><b>Actions</b></th></tr>\n",
+            cl, cl, cl, cl, cl, cl, cl);
+    for (reg = FIRST_CONTEST(u); reg; reg = NEXT_CONTEST(reg)) {
+      if (contests_get(reg->id, &cnts) < 0 || !cnts) continue;
+      fprintf(out_f, "<tr>");
+      fprintf(out_f, "<td%s>%d</td>", cl, reg->id);
+      fprintf(out_f, "<td%s>%s</td>", cl, ARMOR(cnts->name));
+      r = reg->status;
+      if (r < 0 || r >= USERLIST_REG_LAST) r = 0;
+      static const unsigned char * const reg_strs[] =
+      {
+        "<font color=\"green\">OK</font>",
+        "<font color=\"magenta\">Pending</font>",
+        "<font color=\"red\">Rejected</font>",
+      };
+      fprintf(out_f, "<td%s>%s</td>", cl, reg_strs[r]);
+      fprintf(out_f, "<td%s>", cl);
+      r = 0;
+      if ((reg->flags & USERLIST_UC_INVISIBLE)) {
+        if (r++) fprintf(out_f, ", ");
+        fprintf(out_f, "invisible");
+      }
+      if ((reg->flags & USERLIST_UC_BANNED)) {
+        if (r++) fprintf(out_f, ", ");
+        fprintf(out_f, "banned");
+      }
+      if ((reg->flags & USERLIST_UC_LOCKED)) {
+        if (r++) fprintf(out_f, ", ");
+        fprintf(out_f, "locked");
+      }
+      if ((reg->flags & USERLIST_UC_INCOMPLETE)) {
+        if (r++) fprintf(out_f, ", ");
+        fprintf(out_f, "incomplete");
+      }
+      if ((reg->flags & USERLIST_UC_DISQUALIFIED)) {
+        if (r++) fprintf(out_f, ", ");
+        fprintf(out_f, "disqualified");
+      }
+      fprintf(out_f, "</td>");
+      if (reg->create_time > 0) {
+        fprintf(out_f, "<td%s>%s</td>", cl, xml_unparse_date(reg->create_time));
+      } else {
+        fprintf(out_f, "<td%s><i>Not set</i></td>", cl);
+      }
+      if (reg->last_change_time > 0) {
+        fprintf(out_f, "<td%s>%s</td>", cl, xml_unparse_date(reg->last_change_time));
+      } else {
+        fprintf(out_f, "<td%s><i>Not set</i></td>", cl);
+      }
+      fprintf(out_f, "<td%s>", cl);
+      fprintf(out_f, "%s[%s]</a>",
+              html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                            NULL, "action=%d&amp;op=%d&amp;other_user_id=%d&amp;contest_id=%d",
+                                  SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_DETAIL_PAGE,
+                                  other_user_id, reg->id),
+              "User details");
+      fprintf(out_f, "&nbsp;%s[%s]</a>",
+              html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                            NULL, "action=%d&amp;op=%d&amp;other_user_id=%d&amp;contest_id=%d",
+                                  SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_EDIT_REG_PAGE,
+                                  other_user_id, reg->id),
+              "Change");
+      fprintf(out_f, "&nbsp;%s[%s]</a>",
+              html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                            NULL, "action=%d&amp;op=%d&amp;other_user_id=%d&amp;contest_id=%d",
+                                  SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_DELETE_REG_PAGE,
+                                  other_user_id, reg->id),
+              "Delete");
+
+      fprintf(out_f, "</td>");
+      fprintf(out_f, "</tr>\n");
+    }
+    fprintf(out_f, "</table>\n");
+    fprintf(out_f, "<p>%s[%s]</a></p>",
+            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                          NULL, "action=%d&amp;op=%d&amp;other_user_id=%d",
+                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_CREATE_REG_PAGE,
+                          other_user_id),
+            "Create a registration");
+    fprintf(out_f, "</div>\n");
+  }
+
+  cookie_count = userlist_user_count_cookies(u);
+  if (cookie_count > 0) {
+    fprintf(out_f, "<h2>%s</h2>\n", "Sessions");
+
+    fprintf(out_f, "<div id=\"CookiesShowLink\"><p><a onclick=\"showCookies()\">%s</a></p></div>\n",
+            "Show Cookies");
+    fprintf(out_f, "<div id=\"CookiesTable\" style=\"display: none;\"><p><a onclick=\"hideCookies()\">%s</a></p>\n",
+            "Hide Cookies");
+    fprintf(out_f, "<table%s>\n", cl);
+
+    fprintf(out_f, "<tr>");
+    fprintf(out_f, "<td%s align=\"center\"><b>%s</b></td>", cl, "IP address");
+    fprintf(out_f, "<td%s align=\"center\"><b>%s</b></td>", cl, "SSL?");
+    fprintf(out_f, "<td%s align=\"center\"><b>%s</b></td>", cl, "Session ID");
+    fprintf(out_f, "<td%s align=\"center\"><b>%s</b></td>", cl, "Expiry time");
+    fprintf(out_f, "<td%s align=\"center\"><b>%s</b></td>", cl, "Contest ID");
+    fprintf(out_f, "<td%s align=\"center\"><b>%s</b></td>", cl, "Locale ID");
+    fprintf(out_f, "<td%s align=\"center\"><b>%s</b></td>", cl, "Privilege Level");
+    fprintf(out_f, "<td%s align=\"center\"><b>%s</b></td>", cl, "Role");
+    fprintf(out_f, "<td%s align=\"center\"><b>%s</b></td>", cl, "Recovery?");
+    fprintf(out_f, "<td%s align=\"center\"><b>%s</b></td>", cl, "Team?");
+    fprintf(out_f, "<td%s align=\"center\"><b>%s</b></td>", cl, "Actions");
+    fprintf(out_f, "</tr>\n");
+
+    for (cookie=FIRST_COOKIE(u);cookie;cookie=NEXT_COOKIE(cookie)) {
+      fprintf(out_f, "<tr>");
+      fprintf(out_f, "<td%s>%s</td>", cl, xml_unparse_ip(cookie->ip));
+      fprintf(out_f, "<td%s>%d</td>", cl, cookie->ssl);
+      fprintf(out_f, "<td%s>%016llx</td>", cl, cookie->cookie);
+      fprintf(out_f, "<td%s>%s</td>", cl, xml_unparse_date(cookie->expire));
+      fprintf(out_f, "<td%s>%d</td>", cl, cookie->contest_id);
+      fprintf(out_f, "<td%s>%d</td>", cl, cookie->locale_id);
+      fprintf(out_f, "<td%s>%d</td>", cl, cookie->priv_level);
+      fprintf(out_f, "<td%s>%d</td>", cl, cookie->role);
+      fprintf(out_f, "<td%s>%d</td>", cl, cookie->recovery);
+      fprintf(out_f, "<td%s>%d</td>", cl, cookie->team_login);
+      fprintf(out_f, "<td%s>%s[%s]</a></td>", cl,
+              html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                            NULL, "action=%d&amp;op=%d&amp;other_user_id=%d&amp;other_SID=%016llx%s%s",
+                            SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_DELETE_SESSION_ACTION,
+                            other_user_id, cookie->cookie, contest_id_str, group_id_str),
+              "Delete");
+      fprintf(out_f, "</tr>");
+    }
+
+    fprintf(out_f, "</table>\n");
+    fprintf(out_f, "<p>%s[%s]</a></p>",
+            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                          NULL, "action=%d&amp;op=%d&amp;other_user_id=%d%s%s",
+                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_DELETE_ALL_SESSIONS_ACTION,
+                          other_user_id, contest_id_str, group_id_str),
+            "Delete all sessions");
+    fprintf(out_f, "</div>\n");
+  }
+
+do_footer:
+  ss_write_html_footer(out_f);
+
+cleanup:
+  userlist_free(&u->b); u = 0;
+  xfree(xml_text); xml_text = 0;
+  html_armor_free(&ab);
   return retval;
 }
 
