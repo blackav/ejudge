@@ -484,6 +484,7 @@ enum
   S_ERR_INV_PACKAGE,
   S_ERR_ITEM_EXISTS,
   S_ERR_OPERATION_FAILED,
+  S_ERR_INV_USER_ID,
 
   S_ERR_LAST
 };
@@ -498,6 +499,12 @@ ss_cgi_param_int(
         struct super_http_request_info *phr,
         const unsigned char *name,
         int *p_val);
+int
+ss_cgi_param_int_opt(
+        struct super_http_request_info *phr,
+        const unsigned char *name,
+        int *p_val,
+        int default_value);
 
 void
 ss_write_html_header(
@@ -552,6 +559,11 @@ super_serve_op_browse_users(
         struct super_http_request_info *phr);
 int
 super_serve_op_set_user_filter(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr);
+int
+super_serve_op_user_detail_page(
         FILE *log_f,
         FILE *out_f,
         struct super_http_request_info *phr);
