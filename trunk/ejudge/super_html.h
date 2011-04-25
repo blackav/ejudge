@@ -577,5 +577,30 @@ super_serve_op_set_group_filter(
         FILE *log_f,
         FILE *out_f,
         struct super_http_request_info *phr);
+int
+super_serve_op_user_password_page(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr);
+int
+super_serve_op_user_cnts_password_page(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr);
+int
+super_serve_op_user_create_reg_page(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr);
+int
+super_serve_op_user_edit_reg_page(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr);
+int
+super_serve_op_user_delete_reg_page(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr);
 
 #endif /* __SUPER_HTML_H__ */
