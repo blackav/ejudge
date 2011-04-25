@@ -6554,6 +6554,11 @@ static handler_func_t op_handlers[SSERV_OP_LAST] =
   [SSERV_OP_USER_FILTER_NEXT_PAGE_ACTION] = super_serve_op_set_user_filter,
   [SSERV_OP_USER_FILTER_LAST_PAGE_ACTION] = super_serve_op_set_user_filter,
   [SSERV_OP_USER_DETAIL_PAGE] = super_serve_op_user_detail_page,
+  [SSERV_OP_USER_PASSWORD_PAGE] = super_serve_op_user_password_page,
+  [SSERV_OP_USER_CNTS_PASSWORD_PAGE] = super_serve_op_user_cnts_password_page,
+  [SSERV_OP_USER_CREATE_REG_PAGE] = super_serve_op_user_create_reg_page,
+  [SSERV_OP_USER_EDIT_REG_PAGE] = super_serve_op_user_edit_reg_page,
+  [SSERV_OP_USER_DELETE_REG_PAGE] = super_serve_op_user_delete_reg_page,
 
   [SSERV_OP_BROWSE_GROUPS_PAGE] = super_serve_op_browse_groups,
   [SSERV_OP_CHANGE_GROUP_FILTER_ACTION] = super_serve_op_set_group_filter,
