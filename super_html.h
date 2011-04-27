@@ -602,5 +602,20 @@ super_serve_op_user_delete_reg_page(
         FILE *log_f,
         FILE *out_f,
         struct super_http_request_info *phr);
+int
+super_serve_op_user_create_one_page(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr);
+int
+super_serve_op_user_create_many_page(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr);
+int
+super_serve_op_user_create_from_csv_page(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr);
 
 #endif /* __SUPER_HTML_H__ */

@@ -428,6 +428,12 @@ super_serve_op_browse_users(
                         SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_CREATE_MANY_PAGE,
                         contest_id_str, group_id_str),
           "Create MANY new users");
+  fprintf(out_f, "<td%s>%s[%s]</a></td>", cl,
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                        NULL, "action=%d&amp;op=%d%s%s",
+                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_CREATE_FROM_CSV_PAGE,
+                        contest_id_str, group_id_str),
+          "Create users from a CSV table");
   fprintf(out_f, "</tr></table>\n");
 
 do_footer:
@@ -601,6 +607,20 @@ static const unsigned char * const reg_status_strs[] =
   "<font color=\"magenta\">Pending</font>",
   "<font color=\"red\">Rejected</font>",
   "<font color=\"red\"><b>Invalid status</b></font>",
+};
+
+static const struct user_row_info user_flag_rows[] =
+{
+  { USERLIST_NN_IS_PRIVILEGED, "Globally privileged" },
+  { USERLIST_NN_IS_INVISIBLE, "Globally invisible" },
+  { USERLIST_NN_IS_BANNED, "Globally banned" },
+  { USERLIST_NN_IS_LOCKED, "Globally locked" },
+  { USERLIST_NN_SHOW_LOGIN, "Show login to everybody" },
+  { USERLIST_NN_SHOW_EMAIL, "Show email to everybody" },
+  { USERLIST_NN_READ_ONLY, "Globally read-only" },
+  { USERLIST_NN_NEVER_CLEAN, "Do not auto-clean" },
+  { USERLIST_NN_SIMPLE_REGISTRATION, "E-mail is not confirmed" },
+  { 0, 0 },
 };
 
 int
@@ -890,30 +910,17 @@ super_serve_op_user_detail_page(
           cl, "Show user flags");
   fprintf(out_f, "<tr class=\"FlagRow2\" style=\"display: none;\"><td colspan=\"4\"%s align=\"center\"><a onclick=\"toggleFlagVisibility(false)\">[%s]</a></td></tr>\n", cl, "Hide user flags");
 
-  static const struct user_row_info flag_rows[] =
-  {
-    { USERLIST_NN_IS_PRIVILEGED, "Globally privileged" },
-    { USERLIST_NN_IS_INVISIBLE, "Globally invisible" },
-    { USERLIST_NN_IS_BANNED, "Globally banned" },
-    { USERLIST_NN_IS_LOCKED, "Globally locked" },
-    { USERLIST_NN_SHOW_LOGIN, "Show login to everybody" },
-    { USERLIST_NN_SHOW_EMAIL, "Show email to everybody" },
-    { USERLIST_NN_READ_ONLY, "Globally read-only" },
-    { USERLIST_NN_NEVER_CLEAN, "Do not auto-clean" },
-    { USERLIST_NN_SIMPLE_REGISTRATION, "E-mail is not confirmed" },
-    { 0, 0 },
-  };
-  for (row = 0; flag_rows[row].field_id > 0; ++row) {
+  for (row = 0; user_flag_rows[row].field_id > 0; ++row) {
     fprintf(out_f, "<tr class=\"FlagRow2\" style=\"display: none;\"><td%s><b>%s:</b></td><td%s>&nbsp;</td><td%s>",
-            cl, flag_rows[row].field_desc, cl, cl);
-    int *pi = (int*) userlist_get_user_field_ptr(u, flag_rows[row].field_id);
+            cl, user_flag_rows[row].field_desc, cl, cl);
+    int *pi = (int*) userlist_get_user_field_ptr(u, user_flag_rows[row].field_id);
     if (pi) {
       s = "";
       if (*pi > 0) {
         s = " checked=\"checked\"";
       }
       fprintf(out_f, "<input type=\"checkbox\" name=\"field_%d\" value=\"1\"%s />",
-              flag_rows[row].field_id, s);
+              user_flag_rows[row].field_id, s);
     } else {
       fprintf(out_f, "<i>Invalid field</i>");
     }
@@ -2277,6 +2284,710 @@ cleanup:
   userlist_free(&u->b); u = 0;
   xfree(xml_text); xml_text = 0;
   html_armor_free(&ab);
+  return retval;
+}
+
+int
+super_serve_op_user_create_one_page(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0, row, i;
+  int contest_id = 0, group_id = 0, other_contest_id_2 = 0;
+  unsigned char contest_id_str[128], group_id_str[128];
+  const struct contest_desc *cnts = 0;
+  unsigned char buf[1024], hbuf[1024];
+  const unsigned char *cl = 0;
+  const int *cnts_id_list = 0;
+  int cnts_id_count = 0;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  const unsigned char *s;
+
+  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  ss_cgi_param_int_opt(phr, "group_id", &group_id, 0);
+
+  if (contest_id != 0) {
+    if (contests_get(contest_id, &cnts) < 0 || !cnts) contest_id = 0;
+  }
+  contest_id_str[0] = 0;
+  if (contest_id > 0) {
+    snprintf(contest_id_str, sizeof(contest_id_str), "&amp;contest_id=%d", contest_id);
+  }
+  if (group_id < 0) group_id = 0;
+  group_id_str[0] = 0;
+  if (group_id > 0) {
+    snprintf(group_id_str, sizeof(group_id_str), "&amp;group_id=%d", group_id);
+  }
+
+  snprintf(buf, sizeof(buf), "serve-control: %s, create a new user",
+           phr->html_name);
+  ss_write_html_header(out_f, phr, buf, 1, 0);
+
+  fprintf(out_f, "<script language=\"javascript\">\n");
+  fprintf(out_f,
+          "function changeEmail(form_obj)\n"
+          "{\n"
+          "  if (form_obj.other_email.value != null && form_obj.other_email.value != \"\") {\n"
+          "    document.getElementById(\"SendEmailRow\").style.display = \"\";\n"
+          "    changeSendEmail(form_obj);\n"
+          "  } else {\n"
+          "    document.getElementById(\"SendEmailRow\").style.display = \"none\";\n"
+          "    document.getElementById(\"ConfirmEmailRow\").style.display = \"none\";\n"
+          "  }\n"
+          "}\n");
+  fprintf(out_f,
+          "function changeSendEmail(form_obj)\n"
+          "{\n"
+          "  if (form_obj.send_email.checked) {\n"
+          "    document.getElementById(\"ConfirmEmailRow\").style.display = \"\";\n"
+          "  } else {\n"
+          "    document.getElementById(\"ConfirmEmailRow\").style.display = \"none\";\n"
+          "  }\n"
+          "}\n");
+  fprintf(out_f,
+          "function randomChar()\n"
+          "{\n"
+          "  var str = \"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789\";\n"
+          "  var ind = Math.floor(Math.random() * str.length);\n"
+          "  if (ind < 0 || ind >= str.length) ind = 0;\n"
+          "  return str.charAt(ind);\n"
+          "}\n"
+          "function randomString(length)\n"
+          "{\n"
+          "  var res = \"\";\n"
+          "  for (var i = 0; i < length; ++i) {\n"
+          "    res += randomChar();\n"
+          "  }\n"
+          "  return res;\n"
+          "}\n"
+          "function generateRandomRegPassword()\n"
+          "{\n"
+          "  form_obj = document.getElementById(\"CreateForm\");\n"
+          "  form_obj.reg_random.value = randomString(16);\n"
+          "}\n"
+          "function copyRandomRegPassword()\n"
+          "{\n"
+          "  form_obj = document.getElementById(\"CreateForm\");\n"
+          "  form_obj.reg_password1.value = form_obj.reg_random.value;\n"
+          "  form_obj.reg_password2.value = form_obj.reg_random.value;\n"
+          "}\n"
+          "function generateRandomCntsPassword()\n"
+          "{\n"
+          "  form_obj = document.getElementById(\"CreateForm\");\n"
+          "  form_obj.cnts_random.value = randomString(16);\n"
+          "}\n"
+          "function copyRandomCntsPassword()\n"
+          "{\n"
+          "  form_obj = document.getElementById(\"CreateForm\");\n"
+          "  form_obj.cnts_password1.value = form_obj.cnts_random.value;\n"
+          "  form_obj.cnts_password2.value = form_obj.cnts_random.value;\n"
+          "}\n"
+          "function copyRegPassword()\n"
+          "{\n"
+          "  form_obj = document.getElementById(\"CreateForm\");\n"
+          "  form_obj.cnts_random.value = form_obj.reg_random.value;\n"
+          "  form_obj.cnts_password1.value = form_obj.reg_password1.value;\n"
+          "  form_obj.cnts_password2.value = form_obj.reg_password2.value;\n"
+          "  form_obj.cnts_sha1.checked = form_obj.reg_sha1.checked;\n"
+          "}\n");
+  fprintf(out_f,
+          "function toggleRowsVisibility2(value, tid, rowclass1, rowclass2)\n"
+          "{\n"
+          "  var vis1 = \"\";\n"
+          "  var vis2 = \"\";\n"
+          "  if (value == true) {\n"
+          "    vis1 = \"none\";\n"
+          "  } else {\n"
+          "    vis2 = \"none\";\n"
+          "  }\n"
+          "  var tobj = document.getElementById(tid);\n"
+          "  if (tobj == null) {\n"
+          "    return;\n"
+          "  }\n"
+          "  var trows = tobj.rows;\n"
+          "  if (trows != null) {\n"
+          "    for (var row in trows) {\n"
+          "      if (trows[row].className == rowclass1) {\n"
+          "        trows[row].style.display = vis1;\n"
+          "      } else if (trows[row].className == rowclass2) {\n"
+          "        trows[row].style.display = vis2;\n"
+          "      }\n"
+          "    }\n"
+          "  }\n"
+          "}\n"
+          "function changeCntsRegCreate(obj)\n"
+          "{\n"
+          "  toggleRowsVisibility2(obj.checked, \"CreateUserTable\", \"CntsRegRow0\", \"CntsRegRow\");\n"
+          "}\n"
+          "function changeGroupCreate(obj)\n"
+          "{\n"
+          "  toggleRowsVisibility2(obj.checked, \"CreateUserTable\", \"GroupRow0\", \"GroupRow\");\n"
+          "}\n"
+          "");
+  fprintf(out_f,
+          "function updateCnts1()\n"
+          "{\n"
+          "  var obj1 = document.getElementById(\"cnts1\");\n"
+          "  var obj2 = document.getElementById(\"cnts2\");\n"
+          "  var value = obj1.value;\n"
+          "  var i;\n"
+          "  for (i = 0; i < obj2.options.length; ++i) {\n"
+          "    if (obj2.options[i].value == value) {\n"
+          "      obj2.options.selectedIndex = i;\n"
+          "      break;\n"
+          "    }\n"
+          "  }\n"
+          "}\n");
+  fprintf(out_f,
+          "function updateCnts2()\n"
+          "{\n"
+          "  var obj1 = document.getElementById(\"cnts1\");\n"
+          "  var obj2 = document.getElementById(\"cnts2\");\n"
+          "  var value = obj2.options[obj2.selectedIndex].value;\n"
+          "  obj1.value = value;\n"
+          "}\n");
+  fprintf(out_f, "</script>\n");
+
+  fprintf(out_f, "<h1>%s</h1>\n<br/>\n", buf);
+
+  fprintf(out_f, "<ul>");
+  fprintf(out_f, "<li>%s%s</a></li>",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                        NULL, NULL),
+          "Main page");
+  fprintf(out_f, "<li>%s%s</a></li>",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                        NULL, "action=%d&amp;op=%d",
+                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_USERS_PAGE),
+          "Browse users");
+  fprintf(out_f, "<li>%s%s</a></li>",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                        NULL, "action=%d&amp;op=%d",
+                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_GROUPS_PAGE),
+          "Browse groups");
+  if (contest_id > 0) {
+    fprintf(out_f, "<li>%s%s %d</a></li>",
+            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                          NULL, "action=%d&amp;op=%d%s",
+                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_USERS_PAGE,
+                          contest_id_str),
+            "Browse users of contest", contest_id);
+  }
+  if (group_id > 0) {
+    fprintf(out_f, "<li>%s%s %d</a></li>",
+            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                          NULL, "action=%d&amp;op=%d%s",
+                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_USERS_PAGE,
+                          group_id_str),
+            "Browse users of group", group_id);
+  }
+  fprintf(out_f, "</ul>\n");
+
+  html_start_form_id(out_f, 1, phr->self_url, "CreateForm", "");
+  html_hidden(out_f, "SID", "%016llx", phr->session_id);
+  html_hidden(out_f, "action", "%d", SSERV_CMD_HTTP_REQUEST);
+  html_hidden(out_f, "op", "%d", SSERV_OP_USER_CREATE_ONE_ACTION);
+  if (contest_id > 0) {
+    html_hidden(out_f, "contest_id", "%d", contest_id);
+  }
+  if (group_id > 0) {
+    html_hidden(out_f, "group_id", "%d", group_id);
+  }
+  cl = " class=\"b0\"";
+  fprintf(out_f, "<table%s id=\"CreateUserTable\">\n", cl);
+  fprintf(out_f, "<tr><td%s><b>%s*:</b></td><td%s><input type=\"text\" size=\"40\" name=\"other_login\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, "Login", cl, cl);
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"text\" size=\"40\" onchange=\"changeEmail(this.form)\" name=\"other_email\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, "E-mail", cl, cl);
+  fprintf(out_f, "<tr id=\"SendEmailRow\" style=\"display: none;\"><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" onchange=\"changeSendEmail(this.form)\" name=\"send_email\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, "Send registration e-mail", cl, cl);
+  fprintf(out_f, "<tr id=\"ConfirmEmailRow\" style=\"display: none;\"><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"confirm_email\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, "Confirm e-mail by user", cl, cl);
+  fprintf(out_f, "<tr><td%s><b>%s*:</b></td><td%s><input type=\"password\" name=\"reg_password1\" size=\"40\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, "Registration password", cl, cl);
+  fprintf(out_f, "<tr><td%s><b>%s*:</b></td><td%s><input type=\"password\" name=\"reg_password2\" size=\"40\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, "Confirm password", cl, cl);
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"text\" name=\"reg_random\" size=\"40\" /></td><td%s><a onclick=\"generateRandomRegPassword()\">[%s]</a>&nbsp;<a onclick=\"copyRandomRegPassword()\">[%s]</a></td></tr>\n",
+          cl, "Random password", cl, cl, "Generate", "Copy");
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"reg_sha1\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, "Use SHA1", cl, cl);
+
+  for (row = 0; user_flag_rows[row].field_id > 0; ++row) {
+    fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"field_%d\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+            cl, user_flag_rows[row].field_desc, cl, user_flag_rows[row].field_id, cl);
+  }
+
+  fprintf(out_f, "<tr><td%s colspan=\"3\" align=\"center\"><b>%s</b></td></tr>\n",
+          cl, "Contest registration");
+
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" onchange=\"changeCntsRegCreate(this)\" name=\"reg_cnts_create\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, "Create a contest registration", cl, cl);
+
+  cnts_id_count = contests_get_list(&cnts_id_list);
+  if (cnts_id_count <= 0 || !cnts_id_list) {
+    cnts_id_count = 0;
+    cnts_id_list = 0;
+  }
+
+  hbuf[0] = 0;
+  if (contest_id > 0) {
+    snprintf(hbuf, sizeof(hbuf), "%d", contest_id);
+  }
+  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input id=\"cnts1\" onchange=\"updateCnts1()\" type=\"text\" name=\"other_contest_id_1\" size=\"20\" value=\"%s\"/></td><td%s>&nbsp;</td></tr>\n",
+          cl, "Contest ID", cl, hbuf, cl);
+  if (cnts_id_count > 0) {
+    fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s>", cl, "Contest name", cl);
+    fprintf(out_f, "<select id=\"cnts2\" onchange=\"updateCnts2()\" name=\"other_contest_id_2\"><option value=\"0\"></option>");
+    for (i = 0; i < cnts_id_count; ++i) {
+      other_contest_id_2 = cnts_id_list[i];
+      if (other_contest_id_2 <= 0) continue;
+      if (contests_get(other_contest_id_2, &cnts) < 0 || !cnts) continue;
+      if (cnts->closed) continue;
+      s = "";
+      if (contest_id > 0 && cnts->id == contest_id) {
+        s = " selected=\"selected\"";
+      }
+      fprintf(out_f, "<option value=\"%d\"%s>%s</option>", other_contest_id_2, s, ARMOR(cnts->name));
+    }
+    fprintf(out_f, "</select>");
+    fprintf(out_f, "</td><td%s>&nbsp;</td></tr>\n", cl);
+  }
+  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s>", cl, "Status", cl);
+  ss_select(out_f, hbuf, (const unsigned char* []) { "OK", "Pending", "Rejected", NULL }, 1);
+  fprintf(out_f, "</td></tr>\n");
+  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\" /></td></tr>\n",
+          cl, "Invisible?", cl, "is_invisible");
+  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\" /></td></tr>\n",
+          cl, "Banned?", cl, "is_banned");
+  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\" /></td></tr>\n",
+          cl, "Locked?", cl, "is_locked");
+  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\" /></td></tr>\n",
+          cl, "Incomplete?", cl, "is_incomplete");
+  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\" /></td></tr>\n",
+          cl, "Disqualified?", cl, "is_disqualified");
+
+  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"password\" name=\"cnts_password1\" size=\"40\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, "Contest password", cl, cl);
+  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"password\" name=\"cnts_password2\" size=\"40\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, "Confirm password", cl, cl);
+  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"text\" name=\"cnts_random\" size=\"40\" /></td><td%s><a onclick=\"generateRandomCntsPassword()\">[%s]</a>&nbsp;<a onclick=\"copyRandomCntsPassword()\">[%s]</a>&nbsp;<a onclick=\"copyRegPassword()\">[%s]</a></td></tr>\n",
+          cl, "Random password", cl, cl, "Generate", "Copy", "Copy reg. password");
+  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"cnts_sha1\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, "Use SHA1", cl, cl);
+
+  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"text\" size=\"40\" name=\"cnts_name\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, "User name", cl, cl);
+
+  fprintf(out_f, "<tr><td%s colspan=\"3\" align=\"center\"><b>%s</b></td></tr>\n",
+          cl, "Group membership");
+
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" onchange=\"changeGroupCreate(this)\" name=\"group_create\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, "Add user to a group", cl, cl);
+  hbuf[0] = 0;
+  if (group_id > 0) {
+    snprintf(hbuf, sizeof(hbuf), "%d", group_id);
+  }
+  fprintf(out_f, "<tr class=\"GroupRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"text\" name=\"other_group_id\" size=\"20\" value=\"%s\"/></td><td%s>&nbsp;</td></tr>\n",
+          cl, "Group ID", cl, hbuf, cl);
+
+  fprintf(out_f, "<tr><td%s>&nbsp;</td><td%s><input type=\"submit\" name=\"submit\" value=\"%s\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, cl, "Create a user", cl);
+  fprintf(out_f, "</table>\n");
+  fprintf(out_f, "</form>\n");
+
+  ss_write_html_footer(out_f);
+
+  html_armor_free(&ab);
+  return retval;
+}
+
+int
+super_serve_op_user_create_many_page(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0, row, i;
+  int contest_id = 0, group_id = 0, other_contest_id_2 = 0;
+  unsigned char contest_id_str[128], group_id_str[128];
+  const struct contest_desc *cnts = 0;
+  unsigned char buf[1024], hbuf[1024];
+  const unsigned char *cl = 0;
+  const int *cnts_id_list = 0;
+  int cnts_id_count = 0;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  const unsigned char *s;
+
+  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  ss_cgi_param_int_opt(phr, "group_id", &group_id, 0);
+
+  if (contest_id != 0) {
+    if (contests_get(contest_id, &cnts) < 0 || !cnts) contest_id = 0;
+  }
+  contest_id_str[0] = 0;
+  if (contest_id > 0) {
+    snprintf(contest_id_str, sizeof(contest_id_str), "&amp;contest_id=%d", contest_id);
+  }
+  if (group_id < 0) group_id = 0;
+  group_id_str[0] = 0;
+  if (group_id > 0) {
+    snprintf(group_id_str, sizeof(group_id_str), "&amp;group_id=%d", group_id);
+  }
+
+  snprintf(buf, sizeof(buf), "serve-control: %s, create many new users",
+           phr->html_name);
+  ss_write_html_header(out_f, phr, buf, 1, 0);
+
+  fprintf(out_f, "<script language=\"javascript\" src=\"%ssprintf.js\" ></script>\n",
+          CONF_STYLE_PREFIX);
+  fprintf(out_f, "<script language=\"javascript\">\n");
+  fprintf(out_f,
+          "function changeEmail(form_obj)\n"
+          "{\n"
+          "  if (form_obj.other_email.value != null && form_obj.other_email.value != \"\") {\n"
+          "    document.getElementById(\"SendEmailRow\").style.display = \"\";\n"
+          "    changeSendEmail(form_obj);\n"
+          "  } else {\n"
+          "    document.getElementById(\"SendEmailRow\").style.display = \"none\";\n"
+          "    document.getElementById(\"ConfirmEmailRow\").style.display = \"none\";\n"
+          "  }\n"
+          "}\n");
+  fprintf(out_f,
+          "function changeSendEmail(form_obj)\n"
+          "{\n"
+          "  if (form_obj.send_email.checked) {\n"
+          "    document.getElementById(\"ConfirmEmailRow\").style.display = \"\";\n"
+          "  } else {\n"
+          "    document.getElementById(\"ConfirmEmailRow\").style.display = \"none\";\n"
+          "  }\n"
+          "}\n");
+  fprintf(out_f,
+          "function randomChar()\n"
+          "{\n"
+          "  var str = \"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789\";\n"
+          "  var ind = Math.floor(Math.random() * str.length);\n"
+          "  if (ind < 0 || ind >= str.length) ind = 0;\n"
+          "  return str.charAt(ind);\n"
+          "}\n"
+          "function randomString(length)\n"
+          "{\n"
+          "  var res = \"\";\n"
+          "  for (var i = 0; i < length; ++i) {\n"
+          "    res += randomChar();\n"
+          "  }\n"
+          "  return res;\n"
+          "}\n"
+          "function generateRandomRegPassword()\n"
+          "{\n"
+          "  form_obj = document.getElementById(\"CreateForm\");\n"
+          "  form_obj.reg_random.value = randomString(16);\n"
+          "}\n"
+          "function copyRandomRegPassword()\n"
+          "{\n"
+          "  form_obj = document.getElementById(\"CreateForm\");\n"
+          "  form_obj.reg_password1.value = form_obj.reg_random.value;\n"
+          "  form_obj.reg_password2.value = form_obj.reg_random.value;\n"
+          "}\n"
+          "function generateRandomCntsPassword()\n"
+          "{\n"
+          "  form_obj = document.getElementById(\"CreateForm\");\n"
+          "  form_obj.cnts_random.value = randomString(16);\n"
+          "}\n"
+          "function copyRandomCntsPassword()\n"
+          "{\n"
+          "  form_obj = document.getElementById(\"CreateForm\");\n"
+          "  form_obj.cnts_password1.value = form_obj.cnts_random.value;\n"
+          "  form_obj.cnts_password2.value = form_obj.cnts_random.value;\n"
+          "}\n"
+          "function copyRegPassword()\n"
+          "{\n"
+          "  form_obj = document.getElementById(\"CreateForm\");\n"
+          "  form_obj.cnts_random.value = form_obj.reg_random.value;\n"
+          "  form_obj.cnts_password1.value = form_obj.reg_password1.value;\n"
+          "  form_obj.cnts_password2.value = form_obj.reg_password2.value;\n"
+          "  form_obj.cnts_sha1.checked = form_obj.reg_sha1.checked;\n"
+          "}\n");
+  fprintf(out_f,
+          "function toggleRowsVisibility2(value, tid, rowclass1, rowclass2)\n"
+          "{\n"
+          "  var vis1 = \"\";\n"
+          "  var vis2 = \"\";\n"
+          "  if (value == true) {\n"
+          "    vis1 = \"none\";\n"
+          "  } else {\n"
+          "    vis2 = \"none\";\n"
+          "  }\n"
+          "  var tobj = document.getElementById(tid);\n"
+          "  if (tobj == null) {\n"
+          "    return;\n"
+          "  }\n"
+          "  var trows = tobj.rows;\n"
+          "  if (trows != null) {\n"
+          "    for (var row in trows) {\n"
+          "      if (trows[row].className == rowclass1) {\n"
+          "        trows[row].style.display = vis1;\n"
+          "      } else if (trows[row].className == rowclass2) {\n"
+          "        trows[row].style.display = vis2;\n"
+          "      }\n"
+          "    }\n"
+          "  }\n"
+          "}\n"
+          "function changeCntsRegCreate(obj)\n"
+          "{\n"
+          "  toggleRowsVisibility2(obj.checked, \"CreateUserTable\", \"CntsRegRow0\", \"CntsRegRow\");\n"
+          "  if (obj.checked) {\n"
+          "    changeCntsUseRegPassword();\n"
+          "  }\n"
+          "}\n"
+          "function changeGroupCreate(obj)\n"
+          "{\n"
+          "  toggleRowsVisibility2(obj.checked, \"CreateUserTable\", \"GroupRow0\", \"GroupRow\");\n"
+          "}\n"
+          "");
+  fprintf(out_f,
+          "function updateCnts1()\n"
+          "{\n"
+          "  var obj1 = document.getElementById(\"cnts1\");\n"
+          "  var obj2 = document.getElementById(\"cnts2\");\n"
+          "  var value = obj1.value;\n"
+          "  var i;\n"
+          "  for (i = 0; i < obj2.options.length; ++i) {\n"
+          "    if (obj2.options[i].value == value) {\n"
+          "      obj2.options.selectedIndex = i;\n"
+          "      break;\n"
+          "    }\n"
+          "  }\n"
+          "}\n");
+  fprintf(out_f,
+          "function updateCnts2()\n"
+          "{\n"
+          "  var obj1 = document.getElementById(\"cnts1\");\n"
+          "  var obj2 = document.getElementById(\"cnts2\");\n"
+          "  var value = obj2.options[obj2.selectedIndex].value;\n"
+          "  obj1.value = value;\n"
+          "}\n");
+  fprintf(out_f,
+          "function changeRandomRegPassword()\n"
+          "{\n"
+          "  var form_obj = document.getElementById(\"CreateForm\");\n"
+          "  var vis = \"\";\n"
+          "  if (form_obj.reg_random.checked) vis = \"none\";\n"
+          "  document.getElementById(\"RegPasswordTemplateRow\").style.display = vis;\n"
+          "  document.getElementById(\"RegPasswordSha1Row\").style.display = vis;\n"
+          "}\n"
+          "function changeCntsUseRegPassword()\n"
+          "{\n"
+          "  var form_obj = document.getElementById(\"CreateForm\");\n"
+          "  var vis = \"\";\n"
+          "  if (form_obj.cnts_password_use_reg.checked) {\n"
+          "    vis = \"none\";\n"
+          "    document.getElementById(\"CntsPasswordTemplateRow\").style.display = vis;\n"
+          "    document.getElementById(\"CntsPasswordSha1Row\").style.display = vis;\n"
+          "  } else {\n"
+          "    changeRandomCntsPassword()\n"
+          "  }\n"
+          "  document.getElementById(\"CntsPasswordRandomRow\").style.display = vis;\n"
+          "}\n"
+          "function changeRandomCntsPassword()\n"
+          "{\n"
+          "  var form_obj = document.getElementById(\"CreateForm\");\n"
+          "  var vis = \"\";\n"
+          "  if (form_obj.cnts_password_random.checked) vis = \"none\";\n"
+          "  document.getElementById(\"CntsPasswordTemplateRow\").style.display = vis;\n"
+          "  document.getElementById(\"CntsPasswordSha1Row\").style.display = vis;\n"
+          "}\n"
+          "");
+  fprintf(out_f,
+          "function formatLogins()\n"
+          "{\n"
+          "  var form_obj = document.getElementById(\"CreateForm\");\n"
+          "  var div_obj = document.getElementById(\"LoginsCreated\");\n"
+          "  if (div_obj.childNodes.length == 1) {\n"
+          "    div_obj.removeChild(div_obj.childNodes[0]);\n"
+          "  }\n"
+          "  var str = \"\";\n"
+          "  var first = parseInt(form_obj.first_serial.value);\n"
+          "  var last = parseInt(form_obj.last_serial.value);\n"
+          "  var format = form_obj.login_template.value;\n"
+          "  if (first != null && first != NaN && last != null && last != NaN && first >= 0 && last >= 0 && first <= last && last - first + 1 <= 10000 && format != null && format.length > 0) {\n"
+          "    if (last - first + 1 <= 5) {\n"
+          "      for (var i = first; i <= last; ++i) {\n"
+          "        str += \" \" + sprintf(format, i);\n"
+          "      }\n"
+          "    } else {\n"
+          "      str += sprintf(format, first);\n"
+          "      str += \" \" + sprintf(format, first + 1);\n"
+          "      str += \" \" + sprintf(format, first + 2);\n"
+          "      str += \" ...\";\n"
+          "      str += \" \" + sprintf(format, last - 1);\n"
+          "      str += \" \" + sprintf(format, last);\n"
+          "    }\n"
+          "  }\n"
+          "  var node = document.createTextNode(str);\n"
+          "  div_obj.appendChild(node);\n"
+          "}\n"
+          "");
+  fprintf(out_f, "</script>\n");
+
+  fprintf(out_f, "<h1>%s</h1>\n<br/>\n", buf);
+
+  fprintf(out_f, "<ul>");
+  fprintf(out_f, "<li>%s%s</a></li>",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                        NULL, NULL),
+          "Main page");
+  fprintf(out_f, "<li>%s%s</a></li>",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                        NULL, "action=%d&amp;op=%d",
+                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_USERS_PAGE),
+          "Browse users");
+  fprintf(out_f, "<li>%s%s</a></li>",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                        NULL, "action=%d&amp;op=%d",
+                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_GROUPS_PAGE),
+          "Browse groups");
+  if (contest_id > 0) {
+    fprintf(out_f, "<li>%s%s %d</a></li>",
+            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                          NULL, "action=%d&amp;op=%d%s",
+                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_USERS_PAGE,
+                          contest_id_str),
+            "Browse users of contest", contest_id);
+  }
+  if (group_id > 0) {
+    fprintf(out_f, "<li>%s%s %d</a></li>",
+            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                          NULL, "action=%d&amp;op=%d%s",
+                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_USERS_PAGE,
+                          group_id_str),
+            "Browse users of group", group_id);
+  }
+  fprintf(out_f, "</ul>\n");
+
+  html_start_form_id(out_f, 1, phr->self_url, "CreateForm", "");
+  html_hidden(out_f, "SID", "%016llx", phr->session_id);
+  html_hidden(out_f, "action", "%d", SSERV_CMD_HTTP_REQUEST);
+  html_hidden(out_f, "op", "%d", SSERV_OP_USER_CREATE_MANY_ACTION);
+  if (contest_id > 0) {
+    html_hidden(out_f, "contest_id", "%d", contest_id);
+  }
+  if (group_id > 0) {
+    html_hidden(out_f, "group_id", "%d", group_id);
+  }
+  cl = " class=\"b0\"";
+  fprintf(out_f, "<table%s id=\"CreateUserTable\">\n", cl);
+  fprintf(out_f, "<tr><td%s><b>%s*:</b></td><td%s><input type=\"text\" size=\"40\" name=\"first_serial\" onchange=\"formatLogins()\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, "First serial number", cl, cl);
+  fprintf(out_f, "<tr><td%s><b>%s*:</b></td><td%s><input type=\"text\" size=\"40\" name=\"last_serial\" onchange=\"formatLogins()\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, "Last serial number", cl, cl);
+  fprintf(out_f, "<tr><td%s><b>%s*:</b></td><td%s><input type=\"text\" size=\"40\" name=\"login_template\" onchange=\"formatLogins()\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, "Login template", cl, cl);
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s colspan=\"2\"><div id=\"LoginsCreated\" style=\"display: inline;\"></div></td></tr>\n",
+          cl, "Logins to be created", cl);
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" onchange=\"changeRandomRegPassword()\" name=\"reg_random\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, "Use random password", cl, cl);
+  fprintf(out_f, "<tr id=\"RegPasswordTemplateRow\"><td%s><b>%s:</b></td><td%s><input type=\"text\" size=\"40\" name=\"password_template\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, "Password template", cl, cl);
+  fprintf(out_f, "<tr id=\"RegPasswordSha1Row\"><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"reg_sha1\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, "Use SHA1", cl, cl);
+
+  for (row = 0; user_flag_rows[row].field_id > 0; ++row) {
+    fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"field_%d\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+            cl, user_flag_rows[row].field_desc, cl, user_flag_rows[row].field_id, cl);
+  }
+
+  fprintf(out_f, "<tr><td%s colspan=\"3\" align=\"center\"><b>%s</b></td></tr>\n",
+          cl, "Contest registration");
+
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" onchange=\"changeCntsRegCreate(this)\" name=\"reg_cnts_create\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, "Create a contest registration", cl, cl);
+
+  cnts_id_count = contests_get_list(&cnts_id_list);
+  if (cnts_id_count <= 0 || !cnts_id_list) {
+    cnts_id_count = 0;
+    cnts_id_list = 0;
+  }
+
+  hbuf[0] = 0;
+  if (contest_id > 0) {
+    snprintf(hbuf, sizeof(hbuf), "%d", contest_id);
+  }
+  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input id=\"cnts1\" onchange=\"updateCnts1()\" type=\"text\" name=\"other_contest_id_1\" size=\"20\" value=\"%s\"/></td><td%s>&nbsp;</td></tr>\n",
+          cl, "Contest ID", cl, hbuf, cl);
+  if (cnts_id_count > 0) {
+    fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s>", cl, "Contest name", cl);
+    fprintf(out_f, "<select id=\"cnts2\" onchange=\"updateCnts2()\" name=\"other_contest_id_2\"><option value=\"0\"></option>");
+    for (i = 0; i < cnts_id_count; ++i) {
+      other_contest_id_2 = cnts_id_list[i];
+      if (other_contest_id_2 <= 0) continue;
+      if (contests_get(other_contest_id_2, &cnts) < 0 || !cnts) continue;
+      if (cnts->closed) continue;
+      s = "";
+      if (contest_id > 0 && cnts->id == contest_id) {
+        s = " selected=\"selected\"";
+      }
+      fprintf(out_f, "<option value=\"%d\"%s>%s</option>", other_contest_id_2, s, ARMOR(cnts->name));
+    }
+    fprintf(out_f, "</select>");
+    fprintf(out_f, "</td><td%s>&nbsp;</td></tr>\n", cl);
+  }
+  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s>", cl, "Status", cl);
+  ss_select(out_f, hbuf, (const unsigned char* []) { "OK", "Pending", "Rejected", NULL }, 1);
+  fprintf(out_f, "</td></tr>\n");
+  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\" /></td></tr>\n",
+          cl, "Invisible?", cl, "is_invisible");
+  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\" /></td></tr>\n",
+          cl, "Banned?", cl, "is_banned");
+  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\" /></td></tr>\n",
+          cl, "Locked?", cl, "is_locked");
+  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\" /></td></tr>\n",
+          cl, "Incomplete?", cl, "is_incomplete");
+  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\" /></td></tr>\n",
+          cl, "Disqualified?", cl, "is_disqualified");
+
+  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"cnts_password_use_reg\" onchange=\"changeCntsUseRegPassword()\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, "Use registration password", cl, cl);
+  fprintf(out_f, "<tr id=\"CntsPasswordRandomRow\" class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"cnts_password_random\" onchange=\"changeRandomCntsPassword()\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, "Random contest password", cl, cl);
+  fprintf(out_f, "<tr id=\"CntsPasswordTemplateRow\" class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"text\" name=\"cnts_password_template\" size=\"40\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, "Contest password template", cl, cl);
+  fprintf(out_f, "<tr id=\"CntsPasswordSha1Row\" class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"cnts_sha1\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, "Use SHA1", cl, cl);
+
+  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"text\" size=\"40\" name=\"cnts_name\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, "User name template", cl, cl);
+
+  fprintf(out_f, "<tr><td%s colspan=\"3\" align=\"center\"><b>%s</b></td></tr>\n",
+          cl, "Group membership");
+
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" onchange=\"changeGroupCreate(this)\" name=\"group_create\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, "Add user to a group", cl, cl);
+  hbuf[0] = 0;
+  if (group_id > 0) {
+    snprintf(hbuf, sizeof(hbuf), "%d", group_id);
+  }
+  fprintf(out_f, "<tr class=\"GroupRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"text\" name=\"other_group_id\" size=\"20\" value=\"%s\"/></td><td%s>&nbsp;</td></tr>\n",
+          cl, "Group ID", cl, hbuf, cl);
+
+  fprintf(out_f, "<tr><td%s>&nbsp;</td><td%s><input type=\"submit\" name=\"submit\" value=\"%s\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, cl, "Create many users", cl);
+  fprintf(out_f, "</table>\n");
+  fprintf(out_f, "</form>\n");
+
+  ss_write_html_footer(out_f);
+
+  html_armor_free(&ab);
+  return retval;
+}
+
+int
+super_serve_op_user_create_from_csv_page(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
   return retval;
 }
 
