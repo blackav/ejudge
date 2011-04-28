@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<problem
+   package = "ru.ejudge.sample_contest"
+   id = "A"
+   type = "standard">
+  <statement language="ru_RU">
+    <title>Задача A</title>
+    <description>
+<p>На стандартном потоке ввода задаются два целых числа, не меньшие
+-32000 и не большие 32000.
+На стандартный поток вывода напечатайте сумму этих чисел.
+</p>
+<p>
+Числа задаются по одному в строке. Пробельные символы перед числом и после
+него отсутствуют. Пустые строки в вводе отсутствуют.
+</p>
+    </description>
+  </statement>
+  <examples>
+    <example>
+      <input>1
+2</input>
+      <output>3</output>
+    </example>
+  </examples>
+</problem>
