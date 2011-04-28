@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<problem
+   package = "ru.ejudge.sample_contest"
+   id = "B"
+   type = "standard">
+  <statement language="ru_RU">
+    <title>Задача B</title>
+    <description>
+<p>На стандартном потоке ввода задаётся последовательность целых чисел.
+Каждое число последовательности не меньше -20000000 и не больше 20000000.
+Всего последовательность состоит не более чем из 40 чисел.
+Последовательность завершается признаком конца ввода.
+На стандартный поток вывода напечатайте сумму этих чисел.
+</p>
+    </description>
+  </statement>
+  <examples>
+    <example>
+      <input>1 2 3 4</input>
+      <output>10</output>
+    </example>
+  </examples>
+</problem>
