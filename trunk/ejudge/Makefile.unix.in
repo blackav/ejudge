@@ -475,4 +475,9 @@ prepare_meta.c prepare_meta.h : prepare.h
 style/actions.js : make-js-actions
 	./make-js-actions > style/actions.js
 
+contest-1/contest-1.c : contest-1/contest-1.tar.gz
+	contest-1/make-c.sh contest-1.tar.gz contest-1/contest-1.tar.gz contest-1/contest-1.c
+contest-1/contest-1.tar.gz :
+	tar cvz --exclude-vcs -C contest-1 -f contest-1.tar.gz problem
+
 include deps.make
