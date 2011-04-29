@@ -29,6 +29,7 @@
 #include "misctext.h"
 #include "errlog.h"
 #include "xml_utils.h"
+#include "ejudge_cfg.h"
 
 #include "reuse_xalloc.h"
 
@@ -94,6 +95,72 @@ ss_redirect(
   fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\nLocation: %s\n\n", EJUDGE_CHARSET, url);
 }
 
+void
+ss_redirect_2(
+        FILE *fout,
+        struct super_http_request_info *phr,
+        int new_op,
+        int contest_id,
+        int group_id,
+        int other_user_id)
+{
+  unsigned char url[1024];
+  char *o_str = 0;
+  size_t o_len = 0;
+  FILE *o_out = 0;
+
+  o_out = open_memstream(&o_str, &o_len);
+  if (contest_id > 0) {
+    fprintf(o_out, "&contest_id=%d", contest_id);
+  }
+  if (group_id > 0) {
+    fprintf(o_out, "&group_id=%d", group_id);
+  }
+  if (other_user_id > 0) {
+    fprintf(o_out, "&other_user_id=%d", other_user_id);
+  }
+  fclose(o_out); o_out = 0;
+
+  if (o_str && *o_str) {
+    ss_url_unescaped(url, sizeof(url), phr, SSERV_CMD_HTTP_REQUEST, new_op, "%s", o_str);
+  } else {
+    ss_url_unescaped(url, sizeof(url), phr, SSERV_CMD_HTTP_REQUEST, new_op, 0);
+  }
+
+  xfree(o_str); o_str = 0; o_len = 0;
+
+  fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\nLocation: %s\n\n", EJUDGE_CHARSET, url);
+}
+
+static unsigned char *
+fix_string(const unsigned char *s)
+{
+  if (!s) return NULL;
+
+  int len = strlen(s);
+  if (len < 0) return NULL;
+
+  while (len > 0 && (s[len - 1] <= ' ' || s[len - 1] == 127)) --len;
+  if (len <= 0) return xstrdup("");
+
+  int i = 0;
+  while (i < len && (s[i] <= ' ' || s[i] == 127)) ++i;
+  if (i >= len) return xstrdup("");
+
+  unsigned char *out = (unsigned char *) xmalloc(len + 1);
+  int j = 0;
+  for (; i < len; ++i, ++j) {
+    if (s[i] <= ' ' || s[i] == 127) {
+      out[j] = ' ';
+    } else {
+      out[j] = s[i];
+    }
+  }
+  out[j] = 0;
+
+  return out;
+}
+
 static void
 ss_select(
         FILE *fout,
@@ -120,6 +187,21 @@ ss_select(
   }
   fprintf(fout, "</select>");
   html_armor_free(&ab);
+}
+
+static int
+get_global_caps(struct super_http_request_info *phr, opcap_t *pcap)
+{
+  return opcaps_find(&phr->config->capabilities, phr->login, pcap);
+}
+
+static int
+is_globally_privileged(struct super_http_request_info *phr, const struct userlist_user *u)
+{
+  opcap_t caps = 0;
+  if (u->is_privileged) return 1;
+  if (opcaps_find(&phr->config->capabilities, u->login, &caps) >= 0) return 1;
+  return 0;
 }
 
 static int
@@ -159,7 +241,7 @@ super_serve_op_browse_users(
   int user_count = 20;
   const unsigned char *s;
   struct userlist_list *users = 0;
-  int user_id, serial, flags_count = 0;
+  int user_id, serial;
   const struct userlist_user *u;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   const unsigned char *cl;
@@ -312,7 +394,7 @@ super_serve_op_browse_users(
   fprintf(out_f, "<th%s>User Login</th>", cl);
   fprintf(out_f, "<th%s>E-mail</th>", cl);
   fprintf(out_f, "<th%s>Name</th>", cl);
-  fprintf(out_f, "<th%s>Flags</th>", cl);
+  //fprintf(out_f, "<th%s>Flags</th>", cl);
   fprintf(out_f, "<th%s>Operations</th>", cl);
   fprintf(out_f, "</tr>\n");
 
@@ -339,6 +421,8 @@ super_serve_op_browse_users(
     } else {
       fprintf(out_f, "<td class=\"b1\"><tt>%s</tt></td>", ARMOR(u->cnts0->name));
     }
+    /*
+    int flags_count = 0;
     fprintf(out_f, "<td class=\"b1\">");
     if (u->is_privileged) {
       if (flags_count > 0) fprintf(out_f, ", ");
@@ -389,6 +473,7 @@ super_serve_op_browse_users(
       fprintf(out_f, "&nbsp;");
     }
     fprintf(out_f, "</td>");
+    */
     fprintf(out_f, "<td%s>", cl);
     fprintf(out_f, "%s%s</a>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
@@ -402,6 +487,14 @@ super_serve_op_browse_users(
                           SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_PASSWORD_PAGE,
                           user_id, contest_id_str, group_id_str),
             "[Reg. password]");
+    if (contest_id > 0) {
+      fprintf(out_f, "&nbsp;%s%s</a>",
+              html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                            NULL, "action=%d&amp;op=%d&amp;other_user_id=%d%s%s",
+                            SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_CNTS_PASSWORD_PAGE,
+                            user_id, contest_id_str, group_id_str),
+              "[Cnts. password]");
+    }
     fprintf(out_f, "</td>");
     fprintf(out_f, "</tr>\n");
   }
@@ -619,7 +712,7 @@ static const struct user_row_info user_flag_rows[] =
   { USERLIST_NN_SHOW_EMAIL, "Show email to everybody" },
   { USERLIST_NN_READ_ONLY, "Globally read-only" },
   { USERLIST_NN_NEVER_CLEAN, "Do not auto-clean" },
-  { USERLIST_NN_SIMPLE_REGISTRATION, "E-mail is not confirmed" },
+  { USERLIST_NN_SIMPLE_REGISTRATION, "Simple registration" },
   { 0, 0 },
 };
 
@@ -870,9 +963,9 @@ super_serve_op_user_detail_page(
   }
   fprintf(out_f, "</td><td%s>%s%s</a></td></tr>", cl,
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                        NULL, "action=%d&amp;op=%d&amp;other_user_id=%d%s%s",
+                        NULL, "action=%d&amp;op=%d&amp;other_user_id=%d&amp;next_op=%d%s%s",
                         SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_PASSWORD_PAGE,
-                        other_user_id, contest_id_str, group_id_str),
+                        other_user_id, SSERV_OP_USER_DETAIL_PAGE, contest_id_str, group_id_str),
           "[Change]");
   fprintf(out_f, "<tr class=\"StatRow1\"><td colspan=\"4\"%s align=\"center\"><a onclick=\"toggleStatVisibility(true)\">[%s]</a></td></tr>\n",
           cl, "Show user statistics");
@@ -1377,7 +1470,7 @@ super_serve_op_user_password_page(
 {
   int retval = 0, r;
   unsigned char buf[1024];
-  int other_user_id = -1, contest_id = -1, group_id = -1;
+  int other_user_id = -1, contest_id = -1, group_id = -1, next_op = -1;
   unsigned char contest_id_str[128];
   unsigned char group_id_str[128];
   const struct contest_desc *cnts = 0;
@@ -1393,6 +1486,7 @@ super_serve_op_user_password_page(
   }
   ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   ss_cgi_param_int_opt(phr, "group_id", &group_id, 0);
+  ss_cgi_param_int_opt(phr, "next_op", &next_op, 0);
 
   if (contest_id < 0) contest_id = 0;
   if (contest_id > 0) {
@@ -1411,6 +1505,38 @@ super_serve_op_user_password_page(
   snprintf(buf, sizeof(buf), "serve-control: %s, change registration password for user %d",
            phr->html_name, other_user_id);
   ss_write_html_header(out_f, phr, buf, 1, 0);
+
+  fprintf(out_f, "<script language=\"javascript\">\n");
+  fprintf(out_f,
+          "function randomChar()\n"
+          "{\n"
+          "  var str = \"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789\";\n"
+          "  var ind = Math.floor(Math.random() * str.length);\n"
+          "  if (ind < 0 || ind >= str.length) ind = 0;\n"
+          "  return str.charAt(ind);\n"
+          "}\n"
+          "function randomString(length)\n"
+          "{\n"
+          "  var res = \"\";\n"
+          "  for (var i = 0; i < length; ++i) {\n"
+          "    res += randomChar();\n"
+          "  }\n"
+          "  return res;\n"
+          "}\n"
+          "function generateRandomRegPassword()\n"
+          "{\n"
+          "  form_obj = document.getElementById(\"PasswordForm\");\n"
+          "  form_obj.reg_random.value = randomString(16);\n"
+          "}\n"
+          "function copyRandomRegPassword()\n"
+          "{\n"
+          "  form_obj = document.getElementById(\"PasswordForm\");\n"
+          "  form_obj.reg_password1.value = form_obj.reg_random.value;\n"
+          "  form_obj.reg_password2.value = form_obj.reg_random.value;\n"
+          "}\n"
+          "");
+  fprintf(out_f, "</script>\n");
+
   fprintf(out_f, "<h1>%s</h1>\n<br/>\n", buf);
 
   fprintf(out_f, "<ul>");
@@ -1477,7 +1603,7 @@ super_serve_op_user_password_page(
   if (u && u->cnts0) s = u->cnts0->name;
   if (!s) s = "";
 
-  html_start_form(out_f, 1, phr->self_url, "");
+  html_start_form_id(out_f, 1, phr->self_url, "PasswordForm", "");
   html_hidden(out_f, "SID", "%016llx", phr->session_id);
   html_hidden(out_f, "action", "%d", SSERV_CMD_HTTP_REQUEST);
   html_hidden(out_f, "other_user_id", "%d", other_user_id);
@@ -1487,16 +1613,19 @@ super_serve_op_user_password_page(
   if (group_id > 0) {
     html_hidden(out_f, "group_id", "%d", group_id);
   }
+  if (next_op > 0) {
+    html_hidden(out_f, "next_op", "%d", next_op);
+  }
   html_hidden(out_f, "op", "%d", SSERV_OP_USER_CHANGE_PASSWORD_ACTION);
   cl = " class=\"b0\"";
   fprintf(out_f, "<table%s>\n", cl);
-  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%d</td></tr>\n",
-          cl, "User ID", cl, other_user_id);
-  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%s</td></tr>\n",
-          cl, "User login", cl, ARMOR(u->login));
-  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%s</td></tr>\n",
-          cl, "User name", cl, ARMOR(s));
-  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>",
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%d</td><td%s>&nbsp;</td></tr>\n",
+          cl, "User ID", cl, other_user_id, cl);
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%s</td><td%s>&nbsp;</td></tr>\n",
+          cl, "User login", cl, ARMOR(u->login), cl);
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%s</td><td%s>&nbsp;</td></tr>\n",
+          cl, "User name", cl, ARMOR(s), cl);
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s colspan=\"2\">",
           cl, "Current password", cl);
   if (!u->passwd) {
     fprintf(out_f, "<i>NULL</i>");
@@ -1506,14 +1635,16 @@ super_serve_op_user_password_page(
     fprintf(out_f, "Sha1 hash: <i>%s</i>", ARMOR(u->passwd));
   }
   fprintf(out_f, "</td></tr>\n");
-  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"password\" name=\"passwd1\" size=\"20\" /></td></tr>\n",
-          cl, "New password", cl);
-  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"password\" name=\"passwd2\" size=\"20\" /></td></tr>\n",
-          cl, "Confirm new password", cl);
-  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"usesha1\" value=\"1\" /></td></tr>\n",
-          cl, "Use SHA1", cl);
-  fprintf(out_f, "<tr><td%s>&nbsp;</td><td%s><input type=\"submit\" name=\"submit\" value=\"%s\" /></td></tr>\n",
-          cl, cl, "Change password");
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"password\" name=\"reg_password1\" size=\"20\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, "New password", cl, cl);
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"password\" name=\"reg_password2\" size=\"20\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, "Confirm new password", cl, cl);
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"text\" name=\"reg_random\" size=\"40\" /></td><td%s><a onclick=\"generateRandomRegPassword()\">[%s]</a>&nbsp;<a onclick=\"copyRandomRegPassword()\">[%s]</a></td></tr>\n",
+          cl, "Random password", cl, cl, "Generate", "Copy");
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"usesha1\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, "Use SHA1", cl, cl);
+  fprintf(out_f, "<tr><td%s>&nbsp;</td><td%s><input type=\"submit\" name=\"submit\" value=\"%s\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, cl, "Change password", cl);
   fprintf(out_f, "</table>\n");
   fprintf(out_f, "</form>\n");
 
@@ -1572,6 +1703,38 @@ super_serve_op_user_cnts_password_page(
   snprintf(buf, sizeof(buf), "serve-control: %s, change contest password for user %d in contest %d",
            phr->html_name, other_user_id, contest_id);
   ss_write_html_header(out_f, phr, buf, 1, 0);
+
+  fprintf(out_f, "<script language=\"javascript\">\n");
+  fprintf(out_f,
+          "function randomChar()\n"
+          "{\n"
+          "  var str = \"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789\";\n"
+          "  var ind = Math.floor(Math.random() * str.length);\n"
+          "  if (ind < 0 || ind >= str.length) ind = 0;\n"
+          "  return str.charAt(ind);\n"
+          "}\n"
+          "function randomString(length)\n"
+          "{\n"
+          "  var res = \"\";\n"
+          "  for (var i = 0; i < length; ++i) {\n"
+          "    res += randomChar();\n"
+          "  }\n"
+          "  return res;\n"
+          "}\n"
+          "function generateRandomCntsPassword()\n"
+          "{\n"
+          "  form_obj = document.getElementById(\"PasswordForm\");\n"
+          "  form_obj.cnts_random.value = randomString(16);\n"
+          "}\n"
+          "function copyRandomCntsPassword()\n"
+          "{\n"
+          "  form_obj = document.getElementById(\"PasswordForm\");\n"
+          "  form_obj.cnts_password1.value = form_obj.cnts_random.value;\n"
+          "  form_obj.cnts_password2.value = form_obj.cnts_random.value;\n"
+          "}\n"
+          "");
+  fprintf(out_f, "</script>\n");
+
   fprintf(out_f, "<h1>%s</h1>\n<br/>\n", buf);
 
   fprintf(out_f, "<ul>");
@@ -1638,7 +1801,7 @@ super_serve_op_user_cnts_password_page(
   if (u && u->cnts0) s = u->cnts0->name;
   if (!s) s = "";
 
-  html_start_form(out_f, 1, phr->self_url, "");
+  html_start_form_id(out_f, 1, phr->self_url, "PasswordForm", "");
   html_hidden(out_f, "SID", "%016llx", phr->session_id);
   html_hidden(out_f, "action", "%d", SSERV_CMD_HTTP_REQUEST);
   html_hidden(out_f, "other_user_id", "%d", other_user_id);
@@ -1651,19 +1814,19 @@ super_serve_op_user_cnts_password_page(
   html_hidden(out_f, "op", "%d", SSERV_OP_USER_CHANGE_CNTS_PASSWORD_ACTION);
   cl = " class=\"b0\"";
   fprintf(out_f, "<table%s>\n", cl);
-  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%d</td></tr>\n",
-          cl, "User ID", cl, other_user_id);
-  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%s</td></tr>\n",
-          cl, "User login", cl, ARMOR(u->login));
-  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%s</td></tr>\n",
-          cl, "User name", cl, ARMOR(s));
-  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%d</td></tr>\n",
-          cl, "Contest ID", cl, contest_id);
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%d</td><td%s>&nbsp;</td></tr>\n",
+          cl, "User ID", cl, other_user_id, cl);
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%s</td><td%s>&nbsp;</td></tr>\n",
+          cl, "User login", cl, ARMOR(u->login), cl);
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%s</td><td%s>&nbsp;</td></tr>\n",
+          cl, "User name", cl, ARMOR(s), cl);
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%d</td><td%s>&nbsp;</td></tr>\n",
+          cl, "Contest ID", cl, contest_id, cl);
   if (cnts) {
-    fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%s</td></tr>\n",
-            cl, "Contest name", cl, ARMOR(cnts->name));
+    fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%s</td><td%s>&nbsp;</td></tr>\n",
+            cl, "Contest name", cl, ARMOR(cnts->name), cl);
   }
-  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>",
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s colspan=\"2\">",
           cl, "Current password", cl);
   if (!u->passwd) {
     fprintf(out_f, "<i>NULL</i>");
@@ -1673,16 +1836,20 @@ super_serve_op_user_cnts_password_page(
     fprintf(out_f, "Sha1 hash: <i>%s</i>", ARMOR(u->passwd));
   }
   fprintf(out_f, "</td></tr>\n");
-  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"settonull\" value=\"1\" /></td></tr>\n",
-          cl, "Set to NULL", cl);
-  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"password\" name=\"passwd1\" size=\"20\" /></td></tr>\n",
-          cl, "New password", cl);
-  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"password\" name=\"passwd2\" size=\"20\" /></td></tr>\n",
-          cl, "Confirm new password", cl);
-  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"usesha1\" value=\"1\" /></td></tr>\n",
-          cl, "Use SHA1", cl);
-  fprintf(out_f, "<tr><td%s>&nbsp;</td><td%s><input type=\"submit\" name=\"submit\" value=\"%s\" /></td></tr>\n",
-          cl, cl, "Change password");
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"useregpasswd\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, "Copy from reg. password", cl, cl);
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"settonull\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, "Set to NULL", cl, cl);
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"password\" name=\"cnts_password1\" size=\"20\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, "New password", cl, cl);
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"password\" name=\"cnts_password2\" size=\"20\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, "Confirm new password", cl, cl);
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"text\" name=\"cnts_random\" size=\"40\" /></td><td%s><a onclick=\"generateRandomCntsPassword()\">[%s]</a>&nbsp;<a onclick=\"copyRandomCntsPassword()\">[%s]</a></td></tr>\n",
+          cl, "Random password", cl, cl, "Generate", "Copy");
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"usesha1\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, "Use SHA1", cl, cl);
+  fprintf(out_f, "<tr><td%s>&nbsp;</td><td%s><input type=\"submit\" name=\"submit\" value=\"%s\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, cl, "Change password", cl);
   fprintf(out_f, "</table>\n");
   fprintf(out_f, "</form>\n");
 
@@ -2987,7 +3154,376 @@ super_serve_op_user_create_from_csv_page(
         FILE *out_f,
         struct super_http_request_info *phr)
 {
-  int retval = 0;
+  int retval = 0, row, i;
+  int contest_id = 0, group_id = 0, other_contest_id_2 = 0;
+  unsigned char contest_id_str[128], group_id_str[128];
+  const struct contest_desc *cnts = 0;
+  unsigned char buf[1024], hbuf[1024];
+  const unsigned char *cl = 0;
+  const int *cnts_id_list = 0;
+  int cnts_id_count = 0;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  const unsigned char *s;
+
+  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  ss_cgi_param_int_opt(phr, "group_id", &group_id, 0);
+
+  if (contest_id != 0) {
+    if (contests_get(contest_id, &cnts) < 0 || !cnts) contest_id = 0;
+  }
+  contest_id_str[0] = 0;
+  if (contest_id > 0) {
+    snprintf(contest_id_str, sizeof(contest_id_str), "&amp;contest_id=%d", contest_id);
+  }
+  if (group_id < 0) group_id = 0;
+  group_id_str[0] = 0;
+  if (group_id > 0) {
+    snprintf(group_id_str, sizeof(group_id_str), "&amp;group_id=%d", group_id);
+  }
+
+  snprintf(buf, sizeof(buf), "serve-control: %s, create users from a CSV file",
+           phr->html_name);
+  ss_write_html_header(out_f, phr, buf, 1, 0);
+
+  fprintf(out_f, "<script language=\"javascript\">\n");
+  fprintf(out_f,
+          "function changeEmail(form_obj)\n"
+          "{\n"
+          "  if (form_obj.other_email.value != null && form_obj.other_email.value != \"\") {\n"
+          "    document.getElementById(\"SendEmailRow\").style.display = \"\";\n"
+          "    changeSendEmail(form_obj);\n"
+          "  } else {\n"
+          "    document.getElementById(\"SendEmailRow\").style.display = \"none\";\n"
+          "    document.getElementById(\"ConfirmEmailRow\").style.display = \"none\";\n"
+          "  }\n"
+          "}\n");
+  fprintf(out_f,
+          "function changeSendEmail(form_obj)\n"
+          "{\n"
+          "  if (form_obj.send_email.checked) {\n"
+          "    document.getElementById(\"ConfirmEmailRow\").style.display = \"\";\n"
+          "  } else {\n"
+          "    document.getElementById(\"ConfirmEmailRow\").style.display = \"none\";\n"
+          "  }\n"
+          "}\n");
+  fprintf(out_f,
+          "function randomChar()\n"
+          "{\n"
+          "  var str = \"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789\";\n"
+          "  var ind = Math.floor(Math.random() * str.length);\n"
+          "  if (ind < 0 || ind >= str.length) ind = 0;\n"
+          "  return str.charAt(ind);\n"
+          "}\n"
+          "function randomString(length)\n"
+          "{\n"
+          "  var res = \"\";\n"
+          "  for (var i = 0; i < length; ++i) {\n"
+          "    res += randomChar();\n"
+          "  }\n"
+          "  return res;\n"
+          "}\n"
+          "function generateRandomRegPassword()\n"
+          "{\n"
+          "  form_obj = document.getElementById(\"CreateForm\");\n"
+          "  form_obj.reg_random.value = randomString(16);\n"
+          "}\n"
+          "function copyRandomRegPassword()\n"
+          "{\n"
+          "  form_obj = document.getElementById(\"CreateForm\");\n"
+          "  form_obj.reg_password1.value = form_obj.reg_random.value;\n"
+          "  form_obj.reg_password2.value = form_obj.reg_random.value;\n"
+          "}\n"
+          "function generateRandomCntsPassword()\n"
+          "{\n"
+          "  form_obj = document.getElementById(\"CreateForm\");\n"
+          "  form_obj.cnts_random.value = randomString(16);\n"
+          "}\n"
+          "function copyRandomCntsPassword()\n"
+          "{\n"
+          "  form_obj = document.getElementById(\"CreateForm\");\n"
+          "  form_obj.cnts_password1.value = form_obj.cnts_random.value;\n"
+          "  form_obj.cnts_password2.value = form_obj.cnts_random.value;\n"
+          "}\n"
+          "function copyRegPassword()\n"
+          "{\n"
+          "  form_obj = document.getElementById(\"CreateForm\");\n"
+          "  form_obj.cnts_random.value = form_obj.reg_random.value;\n"
+          "  form_obj.cnts_password1.value = form_obj.reg_password1.value;\n"
+          "  form_obj.cnts_password2.value = form_obj.reg_password2.value;\n"
+          "  form_obj.cnts_sha1.checked = form_obj.reg_sha1.checked;\n"
+          "}\n");
+  fprintf(out_f,
+          "function toggleRowsVisibility2(value, tid, rowclass1, rowclass2)\n"
+          "{\n"
+          "  var vis1 = \"\";\n"
+          "  var vis2 = \"\";\n"
+          "  if (value == true) {\n"
+          "    vis1 = \"none\";\n"
+          "  } else {\n"
+          "    vis2 = \"none\";\n"
+          "  }\n"
+          "  var tobj = document.getElementById(tid);\n"
+          "  if (tobj == null) {\n"
+          "    return;\n"
+          "  }\n"
+          "  var trows = tobj.rows;\n"
+          "  if (trows != null) {\n"
+          "    for (var row in trows) {\n"
+          "      if (trows[row].className == rowclass1) {\n"
+          "        trows[row].style.display = vis1;\n"
+          "      } else if (trows[row].className == rowclass2) {\n"
+          "        trows[row].style.display = vis2;\n"
+          "      }\n"
+          "    }\n"
+          "  }\n"
+          "}\n"
+          "function changeCntsRegCreate(obj)\n"
+          "{\n"
+          "  toggleRowsVisibility2(obj.checked, \"CreateUserTable\", \"CntsRegRow0\", \"CntsRegRow\");\n"
+          "}\n"
+          "function changeGroupCreate(obj)\n"
+          "{\n"
+          "  toggleRowsVisibility2(obj.checked, \"CreateUserTable\", \"GroupRow0\", \"GroupRow\");\n"
+          "}\n"
+          "");
+  fprintf(out_f,
+          "function updateCnts1()\n"
+          "{\n"
+          "  var obj1 = document.getElementById(\"cnts1\");\n"
+          "  var obj2 = document.getElementById(\"cnts2\");\n"
+          "  var value = obj1.value;\n"
+          "  var i;\n"
+          "  for (i = 0; i < obj2.options.length; ++i) {\n"
+          "    if (obj2.options[i].value == value) {\n"
+          "      obj2.options.selectedIndex = i;\n"
+          "      break;\n"
+          "    }\n"
+          "  }\n"
+          "}\n");
+  fprintf(out_f,
+          "function updateCnts2()\n"
+          "{\n"
+          "  var obj1 = document.getElementById(\"cnts1\");\n"
+          "  var obj2 = document.getElementById(\"cnts2\");\n"
+          "  var value = obj2.options[obj2.selectedIndex].value;\n"
+          "  obj1.value = value;\n"
+          "}\n");
+  fprintf(out_f, "</script>\n");
+
+  fprintf(out_f, "<h1>%s</h1>\n<br/>\n", buf);
+
+  fprintf(out_f, "<ul>");
+  fprintf(out_f, "<li>%s%s</a></li>",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                        NULL, NULL),
+          "Main page");
+  fprintf(out_f, "<li>%s%s</a></li>",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                        NULL, "action=%d&amp;op=%d",
+                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_USERS_PAGE),
+          "Browse users");
+  fprintf(out_f, "<li>%s%s</a></li>",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                        NULL, "action=%d&amp;op=%d",
+                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_GROUPS_PAGE),
+          "Browse groups");
+  if (contest_id > 0) {
+    fprintf(out_f, "<li>%s%s %d</a></li>",
+            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                          NULL, "action=%d&amp;op=%d%s",
+                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_USERS_PAGE,
+                          contest_id_str),
+            "Browse users of contest", contest_id);
+  }
+  if (group_id > 0) {
+    fprintf(out_f, "<li>%s%s %d</a></li>",
+            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                          NULL, "action=%d&amp;op=%d%s",
+                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_USERS_PAGE,
+                          group_id_str),
+            "Browse users of group", group_id);
+  }
+  fprintf(out_f, "</ul>\n");
+
+  html_start_form_id(out_f, 2, phr->self_url, "CreateForm", "");
+  html_hidden(out_f, "SID", "%016llx", phr->session_id);
+  html_hidden(out_f, "action", "%d", SSERV_CMD_HTTP_REQUEST);
+  html_hidden(out_f, "op", "%d", SSERV_OP_USER_CREATE_ONE_ACTION);
+  if (contest_id > 0) {
+    html_hidden(out_f, "contest_id", "%d", contest_id);
+  }
+  if (group_id > 0) {
+    html_hidden(out_f, "group_id", "%d", group_id);
+  }
+  cl = " class=\"b0\"";
+  fprintf(out_f, "<table%s id=\"CreateUserTable\">\n", cl);
+  fprintf(out_f, "<tr id=\"SendEmailRow\"><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" onchange=\"changeSendEmail(this.form)\" name=\"send_email\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, "Send registration e-mail", cl, cl);
+  fprintf(out_f, "<tr id=\"ConfirmEmailRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"confirm_email\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, "Confirm e-mail by user", cl, cl);
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"reg_random\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, "Use random password", cl, cl);
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"reg_sha1\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, "Use SHA1", cl, cl);
+
+  for (row = 0; user_flag_rows[row].field_id > 0; ++row) {
+    fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"field_%d\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+            cl, user_flag_rows[row].field_desc, cl, user_flag_rows[row].field_id, cl);
+  }
+
+  fprintf(out_f, "<tr><td%s colspan=\"3\" align=\"center\"><b>%s</b></td></tr>\n",
+          cl, "Contest registration");
+
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" onchange=\"changeCntsRegCreate(this)\" name=\"reg_cnts_create\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, "Create a contest registration", cl, cl);
+
+  cnts_id_count = contests_get_list(&cnts_id_list);
+  if (cnts_id_count <= 0 || !cnts_id_list) {
+    cnts_id_count = 0;
+    cnts_id_list = 0;
+  }
+
+  hbuf[0] = 0;
+  if (contest_id > 0) {
+    snprintf(hbuf, sizeof(hbuf), "%d", contest_id);
+  }
+  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input id=\"cnts1\" onchange=\"updateCnts1()\" type=\"text\" name=\"other_contest_id_1\" size=\"20\" value=\"%s\"/></td><td%s>&nbsp;</td></tr>\n",
+          cl, "Contest ID", cl, hbuf, cl);
+  if (cnts_id_count > 0) {
+    fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s>", cl, "Contest name", cl);
+    fprintf(out_f, "<select id=\"cnts2\" onchange=\"updateCnts2()\" name=\"other_contest_id_2\"><option value=\"0\"></option>");
+    for (i = 0; i < cnts_id_count; ++i) {
+      other_contest_id_2 = cnts_id_list[i];
+      if (other_contest_id_2 <= 0) continue;
+      if (contests_get(other_contest_id_2, &cnts) < 0 || !cnts) continue;
+      if (cnts->closed) continue;
+      s = "";
+      if (contest_id > 0 && cnts->id == contest_id) {
+        s = " selected=\"selected\"";
+      }
+      fprintf(out_f, "<option value=\"%d\"%s>%s</option>", other_contest_id_2, s, ARMOR(cnts->name));
+    }
+    fprintf(out_f, "</select>");
+    fprintf(out_f, "</td><td%s>&nbsp;</td></tr>\n", cl);
+  }
+  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s>", cl, "Status", cl);
+  ss_select(out_f, hbuf, (const unsigned char* []) { "OK", "Pending", "Rejected", NULL }, 1);
+  fprintf(out_f, "</td></tr>\n");
+  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\" /></td></tr>\n",
+          cl, "Invisible?", cl, "is_invisible");
+  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\" /></td></tr>\n",
+          cl, "Banned?", cl, "is_banned");
+  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\" /></td></tr>\n",
+          cl, "Locked?", cl, "is_locked");
+  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\" /></td></tr>\n",
+          cl, "Incomplete?", cl, "is_incomplete");
+  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\" /></td></tr>\n",
+          cl, "Disqualified?", cl, "is_disqualified");
+
+  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"cnts_password_use_reg\" onchange=\"changeCntsUseRegPassword()\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, "Use registration password", cl, cl);
+  fprintf(out_f, "<tr id=\"CntsPasswordRandomRow\" class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"cnts_password_random\" onchange=\"changeRandomCntsPassword()\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, "Random contest password", cl, cl);
+  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"cnts_sha1\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, "Use SHA1", cl, cl);
+
+  fprintf(out_f, "<tr><td%s colspan=\"3\" align=\"center\"><b>%s</b></td></tr>\n",
+          cl, "Group membership");
+
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" onchange=\"changeGroupCreate(this)\" name=\"group_create\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, "Add user to a group", cl, cl);
+  hbuf[0] = 0;
+  if (group_id > 0) {
+    snprintf(hbuf, sizeof(hbuf), "%d", group_id);
+  }
+  fprintf(out_f, "<tr class=\"GroupRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"text\" name=\"other_group_id\" size=\"20\" value=\"%s\"/></td><td%s>&nbsp;</td></tr>\n",
+          cl, "Group ID", cl, hbuf, cl);
+
+  fprintf(out_f, "<tr><td%s colspan=\"3\" align=\"center\"><b>%s</b></td></tr>\n",
+          cl, "File");
+
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"file\" name=\"csv_file\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, "CSV File", cl, cl);
+
+  fprintf(out_f, "<tr><td%s>&nbsp;</td><td%s><input type=\"submit\" name=\"submit\" value=\"%s\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, cl, "Create users", cl);
+  fprintf(out_f, "</table>\n");
+  fprintf(out_f, "</form>\n");
+
+  ss_write_html_footer(out_f);
+
+  html_armor_free(&ab);
+  return retval;
+}
+
+int
+super_serve_op_user_change_password_action(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0, r;
+  int contest_id = 0, group_id = 0, other_user_id = 0, next_op = 0, usesha1 = 0;
+  const struct contest_desc *cnts = 0;
+  unsigned char *xml_text = 0;
+  struct userlist_user *u = 0;
+  opcap_t caps = 0;
+  const unsigned char *s = 0;
+  unsigned char *reg_password1 = 0;
+  unsigned char *reg_password2 = 0;
+
+  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  ss_cgi_param_int_opt(phr, "group_id", &group_id, 0);
+  ss_cgi_param_int_opt(phr, "next_op", &next_op, 0);
+  if (contest_id != 0) {
+    if (contests_get(contest_id, &cnts) < 0 || !cnts) contest_id = 0;
+  }
+
+  s = 0;
+  if (ss_cgi_param(phr, "reg_password1", &s) <= 0 || !s) FAIL(S_ERR_PASSWD1_UNDEF);
+  reg_password1 = fix_string(s);
+  if (!reg_password1 || !*reg_password1) FAIL(S_ERR_PASSWD1_UNDEF);
+  if (strlen(reg_password1) > 1024) FAIL(S_ERR_INV_PASSWD1);
+  s = 0;
+  if (ss_cgi_param(phr, "reg_password2", &s) <= 0 || !s) FAIL(S_ERR_PASSWD2_UNDEF);
+  reg_password2 = fix_string(s);
+  if (!reg_password2 || !*reg_password2) FAIL(S_ERR_PASSWD2_UNDEF);
+  if (strlen(reg_password2) > 1024) FAIL(S_ERR_INV_PASSWD2);
+  if (strcmp(reg_password1, reg_password2) != 0) FAIL(S_ERR_PASSWDS_DIFFER);
+
+  ss_cgi_param_int_opt(phr, "usesha1", &usesha1, 0);
+  if (usesha1 != 1) usesha1 = 0;
+
+  if (phr->priv_level <= 0) FAIL(S_ERR_PERM_DENIED);
+  if (get_global_caps(phr, &caps) < 0) FAIL(S_ERR_PERM_DENIED);
+  if (opcaps_check(caps, OPCAP_EDIT_PASSWD) < 0 && opcaps_check(caps, OPCAP_PRIV_EDIT_PASSWD) < 0)
+    FAIL(S_ERR_PERM_DENIED);
+
+  if (ss_cgi_param_int(phr, "other_user_id", &other_user_id) < 0) FAIL(S_ERR_INV_USER_ID);
+  if (!phr->userlist_clnt) FAIL(S_ERR_NO_CONNECTION);
+  r = userlist_clnt_get_info(phr->userlist_clnt, ULS_PRIV_GET_USER_INFO,
+                             other_user_id, 0, &xml_text);
+  if (r < 0) {
+    if (r == -ULS_ERR_BAD_UID) FAIL(S_ERR_INV_USER_ID);
+    FAIL(S_ERR_DB_ERROR);
+  }
+  if (!(u = userlist_parse_user_str(xml_text))) FAIL(S_ERR_DB_ERROR);
+  if (is_globally_privileged(phr, u) && opcaps_check(caps, OPCAP_PRIV_EDIT_PASSWD) < 0)
+    FAIL(S_ERR_PERM_DENIED);
+  else if (opcaps_check(caps, OPCAP_EDIT_PASSWD) < 0)
+    FAIL(S_ERR_PERM_DENIED);
+
+  if (next_op == SSERV_OP_USER_DETAIL_PAGE) {
+    ss_redirect_2(out_f, phr, SSERV_OP_USER_DETAIL_PAGE, contest_id, group_id, other_user_id);
+  } else {
+    ss_redirect_2(out_f, phr, SSERV_OP_BROWSE_USERS_PAGE, contest_id, group_id, 0);
+  }
+
+cleanup:
+  userlist_free(&u->b); u = 0;
+  xfree(xml_text); xml_text = 0;
+  xfree(reg_password1); reg_password1 = 0;
+  xfree(reg_password2); reg_password2 = 0;
   return retval;
 }
 
