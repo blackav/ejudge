@@ -485,6 +485,13 @@ enum
   S_ERR_ITEM_EXISTS,
   S_ERR_OPERATION_FAILED,
   S_ERR_INV_USER_ID,
+  S_ERR_NO_CONNECTION,
+  S_ERR_DB_ERROR,
+  S_ERR_PASSWD1_UNDEF,
+  S_ERR_PASSWD2_UNDEF,
+  S_ERR_INV_PASSWD1,
+  S_ERR_INV_PASSWD2,
+  S_ERR_PASSWDS_DIFFER,
 
   S_ERR_LAST
 };
@@ -614,6 +621,11 @@ super_serve_op_user_create_many_page(
         struct super_http_request_info *phr);
 int
 super_serve_op_user_create_from_csv_page(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr);
+int
+super_serve_op_user_change_password_action(
         FILE *log_f,
         FILE *out_f,
         struct super_http_request_info *phr);

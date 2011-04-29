@@ -6558,6 +6558,7 @@ static handler_func_t op_handlers[SSERV_OP_LAST] =
   [SSERV_OP_USER_CREATE_FROM_CSV_PAGE] = super_serve_op_user_create_from_csv_page,
   [SSERV_OP_USER_DETAIL_PAGE] = super_serve_op_user_detail_page,
   [SSERV_OP_USER_PASSWORD_PAGE] = super_serve_op_user_password_page,
+  [SSERV_OP_USER_CHANGE_PASSWORD_ACTION] = super_serve_op_user_change_password_action,
   [SSERV_OP_USER_CNTS_PASSWORD_PAGE] = super_serve_op_user_cnts_password_page,
   [SSERV_OP_USER_CREATE_REG_PAGE] = super_serve_op_user_create_reg_page,
   [SSERV_OP_USER_EDIT_REG_PAGE] = super_serve_op_user_edit_reg_page,
@@ -6617,6 +6618,13 @@ static unsigned char const * const error_messages[] =
   [S_ERR_ITEM_EXISTS] = "Such item already exists",
   [S_ERR_OPERATION_FAILED] = "System operation failed",
   [S_ERR_INV_USER_ID] = "Invalid User ID",
+  [S_ERR_NO_CONNECTION] = "No connection to the database",
+  [S_ERR_DB_ERROR] = "Database error",
+  [S_ERR_PASSWD1_UNDEF] = "Password 1 is not specified",
+  [S_ERR_PASSWD2_UNDEF] = "Password 2 is not specified",
+  [S_ERR_INV_PASSWD1] = "Password 1 is invalid",
+  [S_ERR_INV_PASSWD2] = "Password 2 is invalid",
+  [S_ERR_PASSWDS_DIFFER] = "Passwords do not match each other",
 };
 
 void
