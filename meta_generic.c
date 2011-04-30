@@ -124,3 +124,32 @@ meta_lookup_string(const struct meta_automaton *atm, const char *str)
   }
   return -atm->st[cur_st][0];
 }
+
+void
+meta_destroy_fields(const struct meta_methods *mth, void *ptr)
+{
+  int field_id, ft;
+  void *fp;
+
+  for (field_id = 1; field_id < mth->last_tag; ++field_id) {
+    ft = mth->get_type(field_id);
+    fp = mth->get_ptr_nc(ptr, field_id);
+    if (!fp) continue;
+    switch (ft) {
+    case '0':                   /* ej_int_opt_0_t */
+    case '3':                   /* ej_checkbox_t */
+    case '4':                   /* ej_int_opt_1_t */
+      break;
+    case '1':                   /* ej_textbox_t */
+    case '2':                   /* ej_textbox_opt_t */
+      {
+        unsigned char **pp = (unsigned char **) fp;
+        xfree(*pp);
+      }
+      break;
+    default:
+      abort();
+    }
+  }
+  memset(ptr, 0, mth->size);
+}

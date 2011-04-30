@@ -34,6 +34,13 @@ typedef int ejintsize_t;
 typedef char **ejstrlist_t;
 typedef char **ejenvlist_t;
 
+/* for CGI param parser */
+typedef int ej_checkbox_t;
+typedef int ej_int_opt_0_t;
+typedef int ej_int_opt_1_t;
+typedef unsigned char *ej_textbox_t;
+typedef unsigned char *ej_textbox_opt_t;
+
 /* privilege level */
 enum priv_level
 {
