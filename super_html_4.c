@@ -40,6 +40,7 @@
 #include "prepare_dflt.h"
 #include "cpu.h"
 #include "compat.h"
+#include "errlog.h"
 
 #include "reuse_xalloc.h"
 #include "reuse_logger.h"
@@ -50,6 +51,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <sys/stat.h>
+#include <dlfcn.h>
 
 #if !defined CONF_STYLE_PREFIX
 #define CONF_STYLE_PREFIX "/ejudge/"
@@ -6476,6 +6478,131 @@ cmd_op_edit_serve_prob_field_detail(
   return retval;
 }
 
+static const unsigned char * const op_names[SSERV_OP_LAST] =
+{
+  [SSERV_OP_VIEW_CNTS_DETAILS] = "VIEW_CNTS_DETAILS",
+  [SSERV_OP_EDITED_CNTS_BACK] = "EDITED_CNTS_BACK",
+  [SSERV_OP_EDITED_CNTS_CONTINUE] = "EDITED_CNTS_CONTINUE",
+  [SSERV_OP_EDITED_CNTS_START_NEW] = "EDITED_CNTS_START_NEW",
+  [SSERV_OP_LOCKED_CNTS_FORGET] = "LOCKED_CNTS_FORGET",
+  [SSERV_OP_LOCKED_CNTS_CONTINUE] = "LOCKED_CNTS_CONTINUE",
+  [SSERV_OP_EDIT_CONTEST_PAGE] = "EDIT_CONTEST_PAGE",
+  [SSERV_OP_EDIT_CONTEST_PAGE_2] = "EDIT_CONTEST_PAGE_2",
+  [SSERV_OP_CLEAR_CONTEST_XML_FIELD] = "CLEAR_CONTEST_XML_FIELD",
+  [SSERV_OP_EDIT_CONTEST_XML_FIELD] = "EDIT_CONTEST_XML_FIELD",
+  [SSERV_OP_TOGGLE_CONTEST_XML_VISIBILITY] = "TOGGLE_CONTEST_XML_VISIBILITY",
+  [SSERV_OP_CONTEST_XML_FIELD_EDIT_PAGE] = "CONTEST_XML_FIELD_EDIT_PAGE",
+  [SSERV_OP_SAVE_FILE_CONTEST_XML] = "SAVE_FILE_CONTEST_XML",
+  [SSERV_OP_CLEAR_FILE_CONTEST_XML] = "CLEAR_FILE_CONTEST_XML",
+  [SSERV_OP_RELOAD_FILE_CONTEST_XML] = "RELOAD_FILE_CONTEST_XML",
+  [SSERV_OP_COPY_ACCESS_RULES_PAGE] = "COPY_ACCESS_RULES_PAGE",
+  [SSERV_OP_COPY_ALL_ACCESS_RULES_PAGE] = "COPY_ALL_ACCESS_RULES_PAGE",
+  [SSERV_OP_COPY_ALL_ACCESS_RULES] = "COPY_ALL_ACCESS_RULES",
+  [SSERV_OP_COPY_ALL_PRIV_USERS_PAGE] = "COPY_ALL_PRIV_USERS_PAGE",
+  [SSERV_OP_COPY_ALL_PRIV_USERS] = "COPY_ALL_PRIV_USERS",
+  [SSERV_OP_ADD_PRIV_USER] = "ADD_PRIV_USER",
+  [SSERV_OP_EDIT_PERMISSIONS_PAGE] = "EDIT_PERMISSIONS_PAGE",
+  [SSERV_OP_EDIT_GENERAL_FIELDS_PAGE] = "EDIT_GENERAL_FIELDS_PAGE",
+  [SSERV_OP_EDIT_MEMBER_FIELDS_PAGE] = "EDIT_MEMBER_FIELDS_PAGE",
+  [SSERV_OP_DELETE_PRIV_USER] = "DELETE_PRIV_USER",
+  [SSERV_OP_SET_PREDEF_PRIV] = "SET_PREDEF_PRIV",
+  [SSERV_OP_SET_PRIV] = "SET_PRIV",
+  [SSERV_OP_SET_DEFAULT_ACCESS] = "SET_DEFAULT_ACCESS",
+  [SSERV_OP_CHECK_IP_MASK] = "CHECK_IP_MASK",
+  [SSERV_OP_ADD_IP] = "ADD_IP",
+  [SSERV_OP_SET_RULE_ACCESS] = "SET_RULE_ACCESS",
+  [SSERV_OP_SET_RULE_SSL] = "SET_RULE_SSL",
+  [SSERV_OP_SET_RULE_IP] = "SET_RULE_IP",
+  [SSERV_OP_DELETE_RULE] = "DELETE_RULE",
+  [SSERV_OP_FORWARD_RULE] = "FORWARD_RULE",
+  [SSERV_OP_BACKWARD_RULE] = "BACKWARD_RULE",
+  [SSERV_OP_COPY_ACCESS_RULES] = "COPY_ACCESS_RULES",
+  [SSERV_OP_EDIT_GENERAL_FIELDS] = "EDIT_GENERAL_FIELDS",
+  [SSERV_OP_EDIT_MEMBER_FIELDS] = "EDIT_MEMBER_FIELDS",
+  [SSERV_OP_CREATE_NEW_CONTEST_PAGE] = "CREATE_NEW_CONTEST_PAGE",
+  [SSERV_OP_CREATE_NEW_CONTEST] = "CREATE_NEW_CONTEST",
+  [SSERV_OP_FORGET_CONTEST] = "FORGET_CONTEST",
+  [SSERV_OP_EDIT_SERVE_GLOBAL_FIELD] = "EDIT_SERVE_GLOBAL_FIELD",
+  [SSERV_OP_CLEAR_SERVE_GLOBAL_FIELD] = "CLEAR_SERVE_GLOBAL_FIELD",
+  [SSERV_OP_EDIT_SID_STATE_FIELD] = "EDIT_SID_STATE_FIELD",
+  [SSERV_OP_EDIT_SID_STATE_FIELD_NEGATED] = "EDIT_SID_STATE_FIELD_NEGATED",
+  [SSERV_OP_EDIT_SERVE_GLOBAL_FIELD_DETAIL_PAGE] = "EDIT_SERVE_GLOBAL_FIELD_DETAIL_PAGE",
+  [SSERV_OP_EDIT_SERVE_GLOBAL_FIELD_DETAIL] = "EDIT_SERVE_GLOBAL_FIELD_DETAIL",
+  [SSERV_OP_SET_SID_STATE_LANG_FIELD] = "SET_SID_STATE_LANG_FIELD",
+  [SSERV_OP_CLEAR_SID_STATE_LANG_FIELD] = "CLEAR_SID_STATE_LANG_FIELD",
+  [SSERV_OP_SET_SERVE_LANG_FIELD] = "SET_SERVE_LANG_FIELD",
+  [SSERV_OP_CLEAR_SERVE_LANG_FIELD] = "CLEAR_SERVE_LANG_FIELD",
+  [SSERV_OP_EDIT_SERVE_LANG_FIELD_DETAIL_PAGE] = "EDIT_SERVE_LANG_FIELD_DETAIL_PAGE",
+  [SSERV_OP_EDIT_SERVE_LANG_FIELD_DETAIL] = "EDIT_SERVE_LANG_FIELD_DETAIL",
+  [SSERV_OP_SERVE_LANG_UPDATE_VERSIONS] = "SERVE_LANG_UPDATE_VERSIONS",
+  [SSERV_OP_CREATE_ABSTR_PROB] = "CREATE_ABSTR_PROB",
+  [SSERV_OP_CREATE_CONCRETE_PROB] = "CREATE_CONCRETE_PROB",
+  [SSERV_OP_DELETE_PROB] = "DELETE_PROB",
+  [SSERV_OP_SET_SID_STATE_PROB_FIELD] = "SET_SID_STATE_PROB_FIELD",
+  [SSERV_OP_SET_SERVE_PROB_FIELD] = "SET_SERVE_PROB_FIELD",
+  [SSERV_OP_CLEAR_SERVE_PROB_FIELD] = "CLEAR_SERVE_PROB_FIELD",
+  [SSERV_OP_EDIT_SERVE_PROB_FIELD_DETAIL_PAGE] = "EDIT_SERVE_PROB_FIELD_DETAIL_PAGE",
+  [SSERV_OP_EDIT_SERVE_PROB_FIELD_DETAIL] = "EDIT_SERVE_PROB_FIELD_DETAIL",
+  [SSERV_OP_BROWSE_PROBLEM_PACKAGES] = "BROWSE_PROBLEM_PACKAGES",
+  [SSERV_OP_CREATE_PACKAGE] = "CREATE_PACKAGE",
+  [SSERV_OP_CREATE_PROBLEM] = "CREATE_PROBLEM",
+  [SSERV_OP_DELETE_ITEM] = "DELETE_ITEM",
+  [SSERV_OP_EDIT_PROBLEM] = "EDIT_PROBLEM",
+  [SSERV_OP_USER_BROWSE_PAGE] = "USER_BROWSE_PAGE",
+  [SSERV_OP_USER_FILTER_CHANGE_ACTION] = "USER_FILTER_CHANGE_ACTION",
+  [SSERV_OP_USER_FILTER_FIRST_PAGE_ACTION] = "USER_FILTER_FIRST_PAGE_ACTION",
+  [SSERV_OP_USER_FILTER_PREV_PAGE_ACTION] = "USER_FILTER_PREV_PAGE_ACTION",
+  [SSERV_OP_USER_FILTER_NEXT_PAGE_ACTION] = "USER_FILTER_NEXT_PAGE_ACTION",
+  [SSERV_OP_USER_FILTER_LAST_PAGE_ACTION] = "USER_FILTER_LAST_PAGE_ACTION",
+  [SSERV_OP_USER_CREATE_ONE_PAGE] = "USER_CREATE_ONE_PAGE",
+  [SSERV_OP_USER_CREATE_ONE_ACTION] = "USER_CREATE_ONE_ACTION",
+  [SSERV_OP_USER_CREATE_MANY_PAGE] = "USER_CREATE_MANY_PAGE",
+  [SSERV_OP_USER_CREATE_MANY_ACTION] = "USER_CREATE_MANY_ACTION",
+  [SSERV_OP_USER_CREATE_FROM_CSV_PAGE] = "USER_CREATE_FROM_CSV_PAGE",
+  [SSERV_OP_USER_CREATE_FROM_CSV_ACTION] = "USER_CREATE_FROM_CSV_ACTION",
+  [SSERV_OP_USER_DETAIL_PAGE] = "USER_DETAIL_PAGE",
+  [SSERV_OP_USER_PASSWORD_PAGE] = "USER_PASSWORD_PAGE",
+  [SSERV_OP_USER_CHANGE_PASSWORD_ACTION] = "USER_CHANGE_PASSWORD_ACTION",
+  [SSERV_OP_USER_CNTS_PASSWORD_PAGE] = "USER_CNTS_PASSWORD_PAGE",
+  [SSERV_OP_USER_CHANGE_CNTS_PASSWORD_ACTION] = "USER_CHANGE_CNTS_PASSWORD_ACTION",
+  [SSERV_OP_USER_CLEAR_FIELD_ACTION] = "USER_CLEAR_FIELD_ACTION",
+  [SSERV_OP_USER_CREATE_MEMBER_ACTION] = "USER_CREATE_MEMBER_ACTION",
+  [SSERV_OP_USER_DELETE_MEMBER_PAGE] = "USER_DELETE_MEMBER_PAGE",
+  [SSERV_OP_USER_SAVE_AND_PREV_ACTION] = "USER_SAVE_AND_PREV_ACTION",
+  [SSERV_OP_USER_SAVE_ACTION] = "USER_SAVE_ACTION",
+  [SSERV_OP_USER_SAVE_AND_NEXT_ACTION] = "USER_SAVE_AND_NEXT_ACTION",
+  [SSERV_OP_USER_CANCEL_AND_PREV_ACTION] = "USER_CANCEL_AND_PREV_ACTION",
+  [SSERV_OP_USER_CANCEL_ACTION] = "USER_CANCEL_ACTION",
+  [SSERV_OP_USER_CANCEL_AND_NEXT_ACTION] = "USER_CANCEL_AND_NEXT_ACTION",
+  [SSERV_OP_USER_CREATE_REG_PAGE] = "USER_CREATE_REG_PAGE",
+  [SSERV_OP_USER_CREATE_REG_ACTION] = "USER_CREATE_REG_ACTION",
+  [SSERV_OP_USER_EDIT_REG_PAGE] = "USER_EDIT_REG_PAGE",
+  [SSERV_OP_USER_EDIT_REG_ACTION] = "USER_EDIT_REG_ACTION",
+  [SSERV_OP_USER_DELETE_REG_PAGE] = "USER_DELETE_REG_PAGE",
+  [SSERV_OP_USER_DELETE_REG_ACTION] = "USER_DELETE_REG_ACTION",
+  [SSERV_OP_USER_DELETE_SESSION_ACTION] = "USER_DELETE_SESSION_ACTION",
+  [SSERV_OP_USER_DELETE_ALL_SESSIONS_ACTION] = "USER_DELETE_ALL_SESSIONS_ACTION",
+  [SSERV_OP_GROUP_BROWSE_PAGE] = "GROUP_BROWSE_PAGE",
+  [SSERV_OP_GROUP_FILTER_CHANGE_ACTION] = "GROUP_FILTER_CHANGE_ACTION",
+  [SSERV_OP_GROUP_FILTER_FIRST_PAGE_ACTION] = "GROUP_FILTER_FIRST_PAGE_ACTION",
+  [SSERV_OP_GROUP_FILTER_PREV_PAGE_ACTION] = "GROUP_FILTER_PREV_PAGE_ACTION",
+  [SSERV_OP_GROUP_FILTER_NEXT_PAGE_ACTION] = "GROUP_FILTER_NEXT_PAGE_ACTION",
+  [SSERV_OP_GROUP_FILTER_LAST_PAGE_ACTION] = "GROUP_FILTER_LAST_PAGE_ACTION",
+};
+
+static const int op_redirect[SSERV_OP_LAST] =
+{
+  [SSERV_OP_USER_FILTER_FIRST_PAGE_ACTION] = SSERV_OP_USER_FILTER_CHANGE_ACTION,
+  [SSERV_OP_USER_FILTER_PREV_PAGE_ACTION] = SSERV_OP_USER_FILTER_CHANGE_ACTION,
+  [SSERV_OP_USER_FILTER_NEXT_PAGE_ACTION] = SSERV_OP_USER_FILTER_CHANGE_ACTION,
+  [SSERV_OP_USER_FILTER_LAST_PAGE_ACTION] = SSERV_OP_USER_FILTER_CHANGE_ACTION,
+
+  [SSERV_OP_GROUP_FILTER_FIRST_PAGE_ACTION] = SSERV_OP_GROUP_FILTER_CHANGE_ACTION,
+  [SSERV_OP_GROUP_FILTER_PREV_PAGE_ACTION] = SSERV_OP_GROUP_FILTER_CHANGE_ACTION,
+  [SSERV_OP_GROUP_FILTER_NEXT_PAGE_ACTION] = SSERV_OP_GROUP_FILTER_CHANGE_ACTION,
+  [SSERV_OP_GROUP_FILTER_LAST_PAGE_ACTION] = SSERV_OP_GROUP_FILTER_CHANGE_ACTION,
+};
+
 static handler_func_t op_handlers[SSERV_OP_LAST] =
 {
   [SSERV_OP_VIEW_CNTS_DETAILS] = cmd_cnts_details,
@@ -6547,31 +6674,14 @@ static handler_func_t op_handlers[SSERV_OP_LAST] =
   [SSERV_OP_DELETE_ITEM] = super_serve_op_package_operation,
   [SSERV_OP_EDIT_PROBLEM] = super_serve_op_edit_problem,
 
-  [SSERV_OP_BROWSE_USERS_PAGE] = super_serve_op_browse_users,
-  [SSERV_OP_CHANGE_USER_FILTER_ACTION] = super_serve_op_set_user_filter,
-  [SSERV_OP_USER_FILTER_FIRST_PAGE_ACTION] = super_serve_op_set_user_filter,
-  [SSERV_OP_USER_FILTER_PREV_PAGE_ACTION] = super_serve_op_set_user_filter,
-  [SSERV_OP_USER_FILTER_NEXT_PAGE_ACTION] = super_serve_op_set_user_filter,
-  [SSERV_OP_USER_FILTER_LAST_PAGE_ACTION] = super_serve_op_set_user_filter,
-  [SSERV_OP_USER_CREATE_ONE_PAGE] = super_serve_op_user_create_one_page,
-  [SSERV_OP_USER_CREATE_MANY_PAGE] = super_serve_op_user_create_many_page,
-  [SSERV_OP_USER_CREATE_FROM_CSV_PAGE] = super_serve_op_user_create_from_csv_page,
-  [SSERV_OP_USER_DETAIL_PAGE] = super_serve_op_user_detail_page,
-  [SSERV_OP_USER_PASSWORD_PAGE] = super_serve_op_user_password_page,
-  [SSERV_OP_USER_CHANGE_PASSWORD_ACTION] = super_serve_op_user_change_password_action,
-  [SSERV_OP_USER_CNTS_PASSWORD_PAGE] = super_serve_op_user_cnts_password_page,
-  [SSERV_OP_USER_CREATE_REG_PAGE] = super_serve_op_user_create_reg_page,
-  [SSERV_OP_USER_EDIT_REG_PAGE] = super_serve_op_user_edit_reg_page,
-  [SSERV_OP_USER_DELETE_REG_PAGE] = super_serve_op_user_delete_reg_page,
-
-  [SSERV_OP_BROWSE_GROUPS_PAGE] = super_serve_op_browse_groups,
-  [SSERV_OP_CHANGE_GROUP_FILTER_ACTION] = super_serve_op_set_group_filter,
-  [SSERV_OP_GROUP_FILTER_FIRST_PAGE_ACTION] = super_serve_op_set_group_filter,
-  [SSERV_OP_GROUP_FILTER_PREV_PAGE_ACTION] = super_serve_op_set_group_filter,
-  [SSERV_OP_GROUP_FILTER_NEXT_PAGE_ACTION] = super_serve_op_set_group_filter,
-  [SSERV_OP_GROUP_FILTER_LAST_PAGE_ACTION] = super_serve_op_set_group_filter,
+  /* Note: operations SSERV_OP_USER_*, SSERV_OP_GROUP_* are loaded using dlsym */
 };
 
+extern void super_html_6_force_link(void);
+static void *super_html_6_force_link_ptr __attribute__((unused));
+static void *super_html_6_force_link_ptr = super_html_6_force_link;
+
+static void *self_dl_handle = 0;
 static int
 do_http_request(FILE *log_f, FILE *out_f, struct super_http_request_info *phr)
 {
@@ -6582,13 +6692,54 @@ do_http_request(FILE *log_f, FILE *out_f, struct super_http_request_info *phr)
 
   if ((s = ss_cgi_nname(phr, "op_", 3))) {
     if (sscanf(s, "op_%d%n", &opcode, &n) != 1 || s[n]
-        || opcode <= 0 || opcode >= SSERV_OP_LAST
-        || !op_handlers[opcode])
+        || opcode <= 0 || opcode >= SSERV_OP_LAST)
       FAIL(S_ERR_INV_OPER);
   } else if (ss_cgi_param_int(phr, "op", &opcode) < 0
-      || opcode <= 0 || opcode >= SSERV_OP_LAST || !op_handlers[opcode])
+      || opcode <= 0 || opcode >= SSERV_OP_LAST)
     FAIL(S_ERR_INV_OPER);
+
+  if (!op_names[opcode]) FAIL(S_ERR_INV_OPER);
+  if (op_handlers[opcode] == (handler_func_t) 1) FAIL(S_ERR_NOT_IMPLEMENTED);
   phr->opcode = opcode;
+
+  if (!op_handlers[opcode]) {
+    if (self_dl_handle == (void*) 1) FAIL(S_ERR_NOT_IMPLEMENTED);
+    self_dl_handle = dlopen(NULL, RTLD_NOW);
+    if (!self_dl_handle) {
+      err("do_http_request: dlopen failed: %s", dlerror());
+      self_dl_handle = (void*) 1;
+      FAIL(S_ERR_NOT_IMPLEMENTED);
+    }
+
+    int redir_opcode = opcode;
+    if (op_redirect[opcode] > 0) {
+      redir_opcode = op_redirect[opcode];
+      if (redir_opcode <= 0 || redir_opcode >= SSERV_OP_LAST || !op_names[redir_opcode]) {
+        err("do_http_request: invalid opcode redirect %d->%d", opcode, redir_opcode);
+        op_handlers[opcode] = (handler_func_t) 1;
+        FAIL(S_ERR_NOT_IMPLEMENTED);
+      }
+      if (op_handlers[redir_opcode] == (handler_func_t) 1) {
+        err("do_http_request: not implemented opcode redirect %d->%d", opcode, redir_opcode);
+        op_handlers[opcode] = (handler_func_t) 1;
+        FAIL(S_ERR_NOT_IMPLEMENTED);
+      }
+    }
+
+    if (op_handlers[redir_opcode]) {
+      op_handlers[opcode] = op_handlers[redir_opcode];
+    } else {
+      unsigned char func_name[512];
+      snprintf(func_name, sizeof(func_name), "super_serve_op_%s", op_names[redir_opcode]);
+      void *void_func = dlsym(self_dl_handle, func_name);
+      if (!void_func) {
+        err("do_http_request: function %s is not found", func_name);
+        op_handlers[opcode] = (handler_func_t) 1;
+        FAIL(S_ERR_NOT_IMPLEMENTED);
+      }
+      op_handlers[opcode] = (handler_func_t) void_func;
+    }
+  }
 
   retval = (*op_handlers[opcode])(log_f, out_f, phr);
 

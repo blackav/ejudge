@@ -7784,6 +7784,120 @@ cmd_priv_set_passwd(
   info("%s -> OK, %d", logbuf, cloned_flag);
 }
 
+static void
+cmd_priv_set_passwd_2(
+        struct client_state *p,
+        int pkt_len,
+        struct userlist_pk_set_password *data)
+{
+  const unsigned char *old_pwd, *new_pwd;
+  unsigned char logbuf[1024];
+  struct passwd_internal newint;
+  const struct userlist_user *u = 0;
+  const struct contest_desc *cnts = 0;
+  const struct userlist_user_info *ui = 0;
+  const struct userlist_contest *c = 0;
+  int reply_code = ULS_OK, cloned_flag = 0, contest_id = 0;
+
+  old_pwd = data->data;
+  new_pwd = old_pwd + data->old_len + 1;
+
+  if (!data->user_id) data->user_id = p->user_id;
+  snprintf(logbuf, sizeof(logbuf), "PRIV_SET_PASSWD_2: %d, %d, %d",
+           data->request_id, data->user_id, data->contest_id);
+
+  if (is_admin(p, logbuf) < 0) return;
+
+  if (data->new_len <= 0) {
+    err("%s -> new password is empty", logbuf);
+    send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+    return;
+  }
+  if (passwd_convert_to_internal(new_pwd, &newint) < 0) {
+    err("%s -> new password is invalid", logbuf);
+    send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+    return;
+  }
+
+  switch (data->request_id) {
+  case ULS_PRIV_SET_REG_PASSWD_PLAIN:
+  case ULS_PRIV_SET_REG_PASSWD_SHA1:
+    if (default_get_user_info_1(data->user_id, &u) < 0 || !u) {
+      err("%s -> invalid user", logbuf);
+      send_reply(p, -ULS_ERR_BAD_UID);
+      return;
+    }
+    if (data->user_id != p->user_id) {
+      if (is_privileged_user(u) >= 0) {
+        if (is_db_capable(p, OPCAP_PRIV_EDIT_PASSWD, logbuf) < 0) return;
+      } else {
+        if (is_db_capable(p, OPCAP_EDIT_PASSWD, logbuf) < 0) return;
+      }
+    }
+
+    if (data->request_id == ULS_PRIV_SET_REG_PASSWD_PLAIN) {
+      default_set_reg_passwd(u->id, USERLIST_PWD_PLAIN,
+                             newint.pwds[USERLIST_PWD_PLAIN], cur_time);
+    } else if (data->request_id == ULS_PRIV_SET_REG_PASSWD_SHA1) {
+      default_set_reg_passwd(u->id, USERLIST_PWD_SHA1,
+                             newint.pwds[USERLIST_PWD_SHA1], cur_time);
+    } else {
+      abort();
+    }
+    break;
+
+  case ULS_PRIV_SET_CNTS_PASSWD_PLAIN:
+  case ULS_PRIV_SET_CNTS_PASSWD_SHA1:
+    contest_id = data->contest_id;
+    if (contest_id > 0) {
+      if (full_get_contest(p, logbuf, &contest_id, &cnts) < 0) return;
+      if (cnts->disable_team_password) {
+        err("%s -> team password is disabled", logbuf);
+        send_reply(p, -ULS_ERR_NO_PERMS);
+        return;
+      }
+    }
+
+    if (default_get_user_info_3(data->user_id, contest_id, &u, &ui, &c) < 0
+        || !u) {
+      err("%s -> invalid user", logbuf);
+      send_reply(p, -ULS_ERR_BAD_UID);
+      return;
+    }
+    if (data->user_id != p->user_id) {
+      if (is_privileged_cnts_user(u, cnts) >= 0) {
+        if (is_dbcnts_capable(p, cnts, OPCAP_PRIV_EDIT_PASSWD, logbuf) < 0)
+          return;
+      } else {
+        if (is_dbcnts_capable(p, cnts, OPCAP_EDIT_PASSWD, logbuf) < 0) return;
+      }
+    }
+    if (contest_id > 0 && (!c || c->status != USERLIST_REG_OK)) {
+      err("%s -> not registered", logbuf);
+      send_reply(p, -ULS_ERR_NOT_REGISTERED);
+      return;
+    }
+
+    if (data->request_id == ULS_PRIV_SET_CNTS_PASSWD_PLAIN) {
+      default_set_team_passwd(data->user_id, contest_id, USERLIST_PWD_PLAIN,
+                              newint.pwds[USERLIST_PWD_PLAIN], cur_time,
+                              &cloned_flag);
+    } else if (data->request_id == ULS_PRIV_SET_CNTS_PASSWD_SHA1) {
+      default_set_team_passwd(data->user_id, contest_id, USERLIST_PWD_SHA1,
+                              newint.pwds[USERLIST_PWD_SHA1], cur_time,
+                              &cloned_flag);
+    }
+    if (cloned_flag) reply_code = ULS_CLONED;
+    break;
+
+  default:
+    abort();
+  }
+
+  default_remove_user_cookies(data->user_id);
+  send_reply(p, reply_code);
+  info("%s -> OK, %d", logbuf, cloned_flag);
+}
 
 static void
 do_get_database(FILE *f, int contest_id, const struct contest_desc *cnts)
@@ -9310,6 +9424,10 @@ static void (*cmd_table[])() =
   [ULS_GET_USER_COUNT] =        cmd_get_user_count,
   [ULS_LIST_ALL_GROUPS_2] =     cmd_list_all_groups_2,
   [ULS_GET_GROUP_COUNT] =       cmd_get_group_count,
+  [ULS_PRIV_SET_REG_PASSWD_PLAIN] = cmd_priv_set_passwd_2,
+  [ULS_PRIV_SET_REG_PASSWD_SHA1] = cmd_priv_set_passwd_2,
+  [ULS_PRIV_SET_CNTS_PASSWD_PLAIN] = cmd_priv_set_passwd_2,
+  [ULS_PRIV_SET_CNTS_PASSWD_SHA1] = cmd_priv_set_passwd_2,
 
   [ULS_LAST_CMD] 0
 };
@@ -9404,6 +9522,10 @@ static int (*check_table[])() =
   [ULS_GET_USER_COUNT] =        check_pk_list_users_2,
   [ULS_LIST_ALL_GROUPS_2] =     check_pk_list_users_2,
   [ULS_GET_GROUP_COUNT] =       check_pk_list_users_2,
+  [ULS_PRIV_SET_REG_PASSWD_PLAIN] = check_pk_set_password,
+  [ULS_PRIV_SET_REG_PASSWD_SHA1] = check_pk_set_password,
+  [ULS_PRIV_SET_CNTS_PASSWD_PLAIN] = check_pk_set_password,
+  [ULS_PRIV_SET_CNTS_PASSWD_SHA1] = check_pk_set_password,
 
   [ULS_LAST_CMD] 0
 };
