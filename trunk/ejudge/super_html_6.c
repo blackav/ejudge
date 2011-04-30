@@ -43,6 +43,11 @@
 #define FIRST_CONTEST(u) ((struct userlist_contest*)(u)->contests->first_down)
 #define NEXT_CONTEST(c)  ((struct userlist_contest*)(c)->b.right)
 
+void
+super_html_6_force_link()
+{
+}
+
 unsigned char *
 ss_url_unescaped(
         unsigned char *buf,
@@ -190,17 +195,31 @@ ss_select(
 }
 
 static int
-get_global_caps(struct super_http_request_info *phr, opcap_t *pcap)
+get_global_caps(const struct super_http_request_info *phr, opcap_t *pcap)
 {
   return opcaps_find(&phr->config->capabilities, phr->login, pcap);
 }
+static int
+get_contest_caps(const struct super_http_request_info *phr, const struct contest_desc *cnts, opcap_t *pcap)
+{
+  return opcaps_find(&cnts->capabilities, phr->login, pcap);
+}
 
 static int
-is_globally_privileged(struct super_http_request_info *phr, const struct userlist_user *u)
+is_globally_privileged(const struct super_http_request_info *phr, const struct userlist_user *u)
 {
   opcap_t caps = 0;
   if (u->is_privileged) return 1;
   if (opcaps_find(&phr->config->capabilities, u->login, &caps) >= 0) return 1;
+  return 0;
+}
+static int
+is_contest_privileged(
+        const struct contest_desc *cnts,
+        const struct userlist_user *u)
+{
+  opcap_t caps = 0;
+  if (opcaps_find(&cnts->capabilities, u->login, &caps) >= 0) return 1;
   return 0;
 }
 
@@ -227,7 +246,7 @@ userlist_user_count_cookies(struct userlist_user *u)
 }
 
 int
-super_serve_op_browse_users(
+super_serve_op_USER_BROWSE_PAGE(
         FILE *log_f,
         FILE *out_f,
         struct super_http_request_info *phr)
@@ -305,7 +324,7 @@ super_serve_op_browse_users(
     fprintf(out_f, "<li>%s%s</a></li>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                           NULL, "action=%d&amp;op=%d",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_USERS_PAGE),
+                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE),
             "Browse all users");
   }
   fprintf(out_f, "</ul>\n");
@@ -349,7 +368,7 @@ super_serve_op_browse_users(
   fprintf(out_f, "<tr><td class=\"b0\">Count:</td><td class=\"b0\">%s</td></tr>",
           html_input_text(buf, sizeof(buf), "user_count", 10, "%s", hbuf));
   fprintf(out_f, "<tr><td class=\"b0\">&nbsp;</td><td class=\"b0\"><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td></tr>",
-          SSERV_OP_CHANGE_USER_FILTER_ACTION, "Change");
+          SSERV_OP_USER_FILTER_CHANGE_ACTION, "Change");
   fprintf(out_f, "</table>");
   fprintf(out_f, "<table class=\"b0\"><tr>");
   fprintf(out_f, "<td class=\"b0\"><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>", SSERV_OP_USER_FILTER_FIRST_PAGE_ACTION, "&lt;&lt;");
@@ -487,7 +506,7 @@ super_serve_op_browse_users(
                           SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_PASSWORD_PAGE,
                           user_id, contest_id_str, group_id_str),
             "[Reg. password]");
-    if (contest_id > 0) {
+    if (contest_id > 0 && cnts && !cnts->disable_team_password) {
       fprintf(out_f, "&nbsp;%s%s</a>",
               html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                             NULL, "action=%d&amp;op=%d&amp;other_user_id=%d%s%s",
@@ -539,7 +558,7 @@ do_footer:
 }
 
 int
-super_serve_op_set_user_filter(
+super_serve_op_USER_FILTER_CHANGE_ACTION(
         FILE *log_f,
         FILE *out_f,
         struct super_http_request_info *phr)
@@ -587,7 +606,7 @@ super_serve_op_set_user_filter(
   }
 
   switch (phr->opcode) {
-  case SSERV_OP_CHANGE_USER_FILTER_ACTION:
+  case SSERV_OP_USER_FILTER_CHANGE_ACTION:
     if (ss_cgi_param_int(phr, "user_offset", &value) >= 0) {
       user_offset = value;
     }
@@ -621,7 +640,7 @@ super_serve_op_set_user_filter(
   phr->ss->user_count = user_count;
 
 cleanup:
-  ss_redirect(out_f, phr, SSERV_OP_BROWSE_USERS_PAGE, extra);
+  ss_redirect(out_f, phr, SSERV_OP_USER_BROWSE_PAGE, extra);
   return retval;
 }
 
@@ -717,7 +736,7 @@ static const struct user_row_info user_flag_rows[] =
 };
 
 int
-super_serve_op_user_detail_page(
+super_serve_op_USER_DETAIL_PAGE(
         FILE *log_f,
         FILE *out_f,
         struct super_http_request_info *phr)
@@ -863,18 +882,18 @@ super_serve_op_user_detail_page(
   fprintf(out_f, "<li>%s%s</a></li>",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                         NULL, "action=%d&amp;op=%d",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_USERS_PAGE),
+                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE),
           "Browse users");
   fprintf(out_f, "<li>%s%s</a></li>",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                         NULL, "action=%d&amp;op=%d",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_GROUPS_PAGE),
+                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_GROUP_BROWSE_PAGE),
           "Browse groups");
   if (contest_id > 0) {
     fprintf(out_f, "<li>%s%s %d</a></li>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                           NULL, "action=%d&amp;op=%d%s",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_USERS_PAGE,
+                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE,
                           contest_id_str),
             "Browse users of contest", contest_id);
   }
@@ -882,7 +901,7 @@ super_serve_op_user_detail_page(
     fprintf(out_f, "<li>%s%s %d</a></li>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                           NULL, "action=%d&amp;op=%d%s",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_USERS_PAGE,
+                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE,
                           group_id_str),
             "Browse users of group", group_id);
   }
@@ -1036,23 +1055,25 @@ super_serve_op_user_detail_page(
   fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"field_null_%d\" value=\"1\"%s /></td><td%s>%s</td><td%s>&nbsp;</td></tr>\n",
           cl, "User name", cl, USERLIST_NC_NAME, s, cl, 
           html_input_text(buf, sizeof(buf), hbuf, 50, "%s", ARMOR(s2)), cl);
-  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>&nbsp;</td><td%s>",
-          cl, "Contest password", cl, cl);
-  if (!ui->team_passwd) {
-    fprintf(out_f, "<i>NULL</i>");
-  } else if (ui->team_passwd_method == USERLIST_PWD_PLAIN) {
-    fprintf(out_f, "<tt>%s</tt>", ARMOR(ui->team_passwd));
-  } else if (ui->team_passwd_method == USERLIST_PWD_SHA1) {
-    fprintf(out_f, "<i>Hashed with SHA1</i>");
-  } else {
-    fprintf(out_f, "<i>Unsupported method</i>");
+  if (contest_id > 0 && cnts && !cnts->disable_team_password) {
+    fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>&nbsp;</td><td%s>",
+            cl, "Contest password", cl, cl);
+    if (!ui->team_passwd) {
+      fprintf(out_f, "<i>NULL</i>");
+    } else if (ui->team_passwd_method == USERLIST_PWD_PLAIN) {
+      fprintf(out_f, "<tt>%s</tt>", ARMOR(ui->team_passwd));
+    } else if (ui->team_passwd_method == USERLIST_PWD_SHA1) {
+      fprintf(out_f, "<i>Hashed with SHA1</i>");
+    } else {
+      fprintf(out_f, "<i>Unsupported method</i>");
+    }
+    fprintf(out_f, "</td><td%s>%s%s</a></td></tr>", cl,
+            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                          NULL, "action=%d&amp;op=%d&amp;other_user_id=%d&amp;contest_id=%d%s",
+                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_CNTS_PASSWORD_PAGE,
+                          other_user_id, contest_id, group_id_str),
+            "[Change]");
   }
-  fprintf(out_f, "</td><td%s>%s%s</a></td></tr>", cl,
-          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                        NULL, "action=%d&amp;op=%d&amp;other_user_id=%d&amp;contest_id=%d%s",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_CNTS_PASSWORD_PAGE,
-                        other_user_id, contest_id, group_id_str),
-          "[Change]");
 
   fprintf(out_f, "<tr class=\"UserInfoRow1\"><td colspan=\"4\"%s align=\"center\"><a onclick=\"toggleUserInfoVisibility(true)\">[%s]</a></td></tr>\n",
           cl, "Show more user info fields");
@@ -1463,7 +1484,7 @@ cleanup:
 }
 
 int
-super_serve_op_user_password_page(
+super_serve_op_USER_PASSWORD_PAGE(
         FILE *log_f,
         FILE *out_f,
         struct super_http_request_info *phr)
@@ -1547,18 +1568,18 @@ super_serve_op_user_password_page(
   fprintf(out_f, "<li>%s%s</a></li>",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                         NULL, "action=%d&amp;op=%d",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_USERS_PAGE),
+                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE),
           "Browse users");
   fprintf(out_f, "<li>%s%s</a></li>",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                         NULL, "action=%d&amp;op=%d",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_GROUPS_PAGE),
+                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_GROUP_BROWSE_PAGE),
           "Browse groups");
   if (contest_id > 0) {
     fprintf(out_f, "<li>%s%s %d</a></li>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                           NULL, "action=%d&amp;op=%d%s",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_USERS_PAGE,
+                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE,
                           contest_id_str),
             "Browse users of contest", contest_id);
   }
@@ -1566,7 +1587,7 @@ super_serve_op_user_password_page(
     fprintf(out_f, "<li>%s%s %d</a></li>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                           NULL, "action=%d&amp;op=%d%s",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_USERS_PAGE,
+                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE,
                           group_id_str),
             "Browse users of group", group_id);
   }
@@ -1659,7 +1680,7 @@ cleanup:
 }
 
 int
-super_serve_op_user_cnts_password_page(
+super_serve_op_USER_CNTS_PASSWORD_PAGE(
         FILE *log_f,
         FILE *out_f,
         struct super_http_request_info *phr)
@@ -1745,18 +1766,18 @@ super_serve_op_user_cnts_password_page(
   fprintf(out_f, "<li>%s%s</a></li>",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                         NULL, "action=%d&amp;op=%d",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_USERS_PAGE),
+                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE),
           "Browse users");
   fprintf(out_f, "<li>%s%s</a></li>",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                         NULL, "action=%d&amp;op=%d",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_GROUPS_PAGE),
+                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_GROUP_BROWSE_PAGE),
           "Browse groups");
   if (contest_id > 0) {
     fprintf(out_f, "<li>%s%s %d</a></li>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                           NULL, "action=%d&amp;op=%d%s",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_USERS_PAGE,
+                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE,
                           contest_id_str),
             "Browse users of contest", contest_id);
   }
@@ -1764,7 +1785,7 @@ super_serve_op_user_cnts_password_page(
     fprintf(out_f, "<li>%s%s %d</a></li>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                           NULL, "action=%d&amp;op=%d%s",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_USERS_PAGE,
+                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE,
                           group_id_str),
             "Browse users of group", group_id);
   }
@@ -1826,30 +1847,35 @@ super_serve_op_user_cnts_password_page(
     fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%s</td><td%s>&nbsp;</td></tr>\n",
             cl, "Contest name", cl, ARMOR(cnts->name), cl);
   }
-  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s colspan=\"2\">",
-          cl, "Current password", cl);
-  if (!u->passwd) {
-    fprintf(out_f, "<i>NULL</i>");
-  } else if (u->passwd_method == USERLIST_PWD_PLAIN) {
-    fprintf(out_f, "<tt>%s</tt>", ARMOR(u->passwd));
-  } else if (u->passwd_method == USERLIST_PWD_SHA1) {
-    fprintf(out_f, "Sha1 hash: <i>%s</i>", ARMOR(u->passwd));
+  if (cnts && cnts->disable_team_password > 0) {
+    fprintf(out_f, "<tr><td%s colspan=\"3\" align=\"center\"><b>%s</b></td></tr>\n",
+            cl, "Contest password is disabled");
+  } else {
+    fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s colspan=\"2\">",
+            cl, "Current password", cl);
+    if (!u->passwd) {
+      fprintf(out_f, "<i>NULL</i>");
+    } else if (u->passwd_method == USERLIST_PWD_PLAIN) {
+      fprintf(out_f, "<tt>%s</tt>", ARMOR(u->passwd));
+    } else if (u->passwd_method == USERLIST_PWD_SHA1) {
+      fprintf(out_f, "Sha1 hash: <i>%s</i>", ARMOR(u->passwd));
+    }
+    fprintf(out_f, "</td></tr>\n");
+    fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"useregpasswd\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+            cl, "Copy from reg. password", cl, cl);
+    fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"settonull\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+            cl, "Set to NULL", cl, cl);
+    fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"password\" name=\"cnts_password1\" size=\"20\" /></td><td%s>&nbsp;</td></tr>\n",
+            cl, "New password", cl, cl);
+    fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"password\" name=\"cnts_password2\" size=\"20\" /></td><td%s>&nbsp;</td></tr>\n",
+            cl, "Confirm new password", cl, cl);
+    fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"text\" name=\"cnts_random\" size=\"40\" /></td><td%s><a onclick=\"generateRandomCntsPassword()\">[%s]</a>&nbsp;<a onclick=\"copyRandomCntsPassword()\">[%s]</a></td></tr>\n",
+            cl, "Random password", cl, cl, "Generate", "Copy");
+    fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"usesha1\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+            cl, "Use SHA1", cl, cl);
+    fprintf(out_f, "<tr><td%s>&nbsp;</td><td%s><input type=\"submit\" name=\"submit\" value=\"%s\" /></td><td%s>&nbsp;</td></tr>\n",
+            cl, cl, "Change password", cl);
   }
-  fprintf(out_f, "</td></tr>\n");
-  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"useregpasswd\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
-          cl, "Copy from reg. password", cl, cl);
-  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"settonull\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
-          cl, "Set to NULL", cl, cl);
-  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"password\" name=\"cnts_password1\" size=\"20\" /></td><td%s>&nbsp;</td></tr>\n",
-          cl, "New password", cl, cl);
-  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"password\" name=\"cnts_password2\" size=\"20\" /></td><td%s>&nbsp;</td></tr>\n",
-          cl, "Confirm new password", cl, cl);
-  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"text\" name=\"cnts_random\" size=\"40\" /></td><td%s><a onclick=\"generateRandomCntsPassword()\">[%s]</a>&nbsp;<a onclick=\"copyRandomCntsPassword()\">[%s]</a></td></tr>\n",
-          cl, "Random password", cl, cl, "Generate", "Copy");
-  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"usesha1\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
-          cl, "Use SHA1", cl, cl);
-  fprintf(out_f, "<tr><td%s>&nbsp;</td><td%s><input type=\"submit\" name=\"submit\" value=\"%s\" /></td><td%s>&nbsp;</td></tr>\n",
-          cl, cl, "Change password", cl);
   fprintf(out_f, "</table>\n");
   fprintf(out_f, "</form>\n");
 
@@ -1864,7 +1890,7 @@ cleanup:
 }
 
 int
-super_serve_op_user_create_reg_page(
+super_serve_op_USER_CREATE_REG_PAGE(
         FILE *log_f,
         FILE *out_f,
         struct super_http_request_info *phr)
@@ -1941,18 +1967,18 @@ super_serve_op_user_create_reg_page(
   fprintf(out_f, "<li>%s%s</a></li>",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                         NULL, "action=%d&amp;op=%d",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_USERS_PAGE),
+                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE),
           "Browse users");
   fprintf(out_f, "<li>%s%s</a></li>",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                         NULL, "action=%d&amp;op=%d",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_GROUPS_PAGE),
+                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_GROUP_BROWSE_PAGE),
           "Browse groups");
   if (contest_id > 0) {
     fprintf(out_f, "<li>%s%s %d</a></li>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                           NULL, "action=%d&amp;op=%d%s",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_USERS_PAGE,
+                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE,
                           contest_id_str),
             "Browse users of contest", contest_id);
   }
@@ -1960,7 +1986,7 @@ super_serve_op_user_create_reg_page(
     fprintf(out_f, "<li>%s%s %d</a></li>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                           NULL, "action=%d&amp;op=%d%s",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_USERS_PAGE,
+                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE,
                           group_id_str),
             "Browse users of group", group_id);
   }
@@ -2058,7 +2084,7 @@ cleanup:
 }
 
 int
-super_serve_op_user_edit_reg_page(
+super_serve_op_USER_EDIT_REG_PAGE(
         FILE *log_f,
         FILE *out_f,
         struct super_http_request_info *phr)
@@ -2120,18 +2146,18 @@ super_serve_op_user_edit_reg_page(
   fprintf(out_f, "<li>%s%s</a></li>",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                         NULL, "action=%d&amp;op=%d",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_USERS_PAGE),
+                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE),
           "Browse users");
   fprintf(out_f, "<li>%s%s</a></li>",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                         NULL, "action=%d&amp;op=%d",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_GROUPS_PAGE),
+                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_GROUP_BROWSE_PAGE),
           "Browse groups");
   if (contest_id > 0) {
     fprintf(out_f, "<li>%s%s %d</a></li>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                           NULL, "action=%d&amp;op=%d%s",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_USERS_PAGE,
+                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE,
                           contest_id_str),
             "Browse users of contest", contest_id);
   }
@@ -2139,7 +2165,7 @@ super_serve_op_user_edit_reg_page(
     fprintf(out_f, "<li>%s%s %d</a></li>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                           NULL, "action=%d&amp;op=%d%s",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_USERS_PAGE,
+                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE,
                           group_id_str),
             "Browse users of group", group_id);
   }
@@ -2255,7 +2281,7 @@ cleanup:
 }
 
 int
-super_serve_op_user_delete_reg_page(
+super_serve_op_USER_DELETE_REG_PAGE(
         FILE *log_f,
         FILE *out_f,
         struct super_http_request_info *phr)
@@ -2318,18 +2344,18 @@ super_serve_op_user_delete_reg_page(
   fprintf(out_f, "<li>%s%s</a></li>",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                         NULL, "action=%d&amp;op=%d",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_USERS_PAGE),
+                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE),
           "Browse users");
   fprintf(out_f, "<li>%s%s</a></li>",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                         NULL, "action=%d&amp;op=%d",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_GROUPS_PAGE),
+                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_GROUP_BROWSE_PAGE),
           "Browse groups");
   if (contest_id > 0) {
     fprintf(out_f, "<li>%s%s %d</a></li>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                           NULL, "action=%d&amp;op=%d%s",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_USERS_PAGE,
+                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE,
                           contest_id_str),
             "Browse users of contest", contest_id);
   }
@@ -2337,7 +2363,7 @@ super_serve_op_user_delete_reg_page(
     fprintf(out_f, "<li>%s%s %d</a></li>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                           NULL, "action=%d&amp;op=%d%s",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_USERS_PAGE,
+                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE,
                           group_id_str),
             "Browse users of group", group_id);
   }
@@ -2455,7 +2481,7 @@ cleanup:
 }
 
 int
-super_serve_op_user_create_one_page(
+super_serve_op_USER_CREATE_ONE_PAGE(
         FILE *log_f,
         FILE *out_f,
         struct super_http_request_info *phr)
@@ -2626,18 +2652,18 @@ super_serve_op_user_create_one_page(
   fprintf(out_f, "<li>%s%s</a></li>",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                         NULL, "action=%d&amp;op=%d",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_USERS_PAGE),
+                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE),
           "Browse users");
   fprintf(out_f, "<li>%s%s</a></li>",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                         NULL, "action=%d&amp;op=%d",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_GROUPS_PAGE),
+                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_GROUP_BROWSE_PAGE),
           "Browse groups");
   if (contest_id > 0) {
     fprintf(out_f, "<li>%s%s %d</a></li>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                           NULL, "action=%d&amp;op=%d%s",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_USERS_PAGE,
+                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE,
                           contest_id_str),
             "Browse users of contest", contest_id);
   }
@@ -2645,7 +2671,7 @@ super_serve_op_user_create_one_page(
     fprintf(out_f, "<li>%s%s %d</a></li>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                           NULL, "action=%d&amp;op=%d%s",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_USERS_PAGE,
+                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE,
                           group_id_str),
             "Browse users of group", group_id);
   }
@@ -2770,7 +2796,7 @@ super_serve_op_user_create_one_page(
 }
 
 int
-super_serve_op_user_create_many_page(
+super_serve_op_USER_CREATE_MANY_PAGE(
         FILE *log_f,
         FILE *out_f,
         struct super_http_request_info *phr)
@@ -3007,18 +3033,18 @@ super_serve_op_user_create_many_page(
   fprintf(out_f, "<li>%s%s</a></li>",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                         NULL, "action=%d&amp;op=%d",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_USERS_PAGE),
+                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE),
           "Browse users");
   fprintf(out_f, "<li>%s%s</a></li>",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                         NULL, "action=%d&amp;op=%d",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_GROUPS_PAGE),
+                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_GROUP_BROWSE_PAGE),
           "Browse groups");
   if (contest_id > 0) {
     fprintf(out_f, "<li>%s%s %d</a></li>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                           NULL, "action=%d&amp;op=%d%s",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_USERS_PAGE,
+                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE,
                           contest_id_str),
             "Browse users of contest", contest_id);
   }
@@ -3026,7 +3052,7 @@ super_serve_op_user_create_many_page(
     fprintf(out_f, "<li>%s%s %d</a></li>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                           NULL, "action=%d&amp;op=%d%s",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_USERS_PAGE,
+                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE,
                           group_id_str),
             "Browse users of group", group_id);
   }
@@ -3149,7 +3175,7 @@ super_serve_op_user_create_many_page(
 }
 
 int
-super_serve_op_user_create_from_csv_page(
+super_serve_op_USER_CREATE_FROM_CSV_PAGE(
         FILE *log_f,
         FILE *out_f,
         struct super_http_request_info *phr)
@@ -3320,18 +3346,18 @@ super_serve_op_user_create_from_csv_page(
   fprintf(out_f, "<li>%s%s</a></li>",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                         NULL, "action=%d&amp;op=%d",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_USERS_PAGE),
+                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE),
           "Browse users");
   fprintf(out_f, "<li>%s%s</a></li>",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                         NULL, "action=%d&amp;op=%d",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_GROUPS_PAGE),
+                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_GROUP_BROWSE_PAGE),
           "Browse groups");
   if (contest_id > 0) {
     fprintf(out_f, "<li>%s%s %d</a></li>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                           NULL, "action=%d&amp;op=%d%s",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_USERS_PAGE,
+                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE,
                           contest_id_str),
             "Browse users of contest", contest_id);
   }
@@ -3339,7 +3365,7 @@ super_serve_op_user_create_from_csv_page(
     fprintf(out_f, "<li>%s%s %d</a></li>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                           NULL, "action=%d&amp;op=%d%s",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_USERS_PAGE,
+                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE,
                           group_id_str),
             "Browse users of group", group_id);
   }
@@ -3457,7 +3483,7 @@ super_serve_op_user_create_from_csv_page(
 }
 
 int
-super_serve_op_user_change_password_action(
+super_serve_op_USER_CHANGE_PASSWORD_ACTION(
         FILE *log_f,
         FILE *out_f,
         struct super_http_request_info *phr)
@@ -3513,10 +3539,16 @@ super_serve_op_user_change_password_action(
   else if (opcaps_check(caps, OPCAP_EDIT_PASSWD) < 0)
     FAIL(S_ERR_PERM_DENIED);
 
+  r = ULS_PRIV_SET_REG_PASSWD_PLAIN;
+  if (usesha1) r = ULS_PRIV_SET_REG_PASSWD_SHA1;
+
+  r = userlist_clnt_set_passwd(phr->userlist_clnt, r, other_user_id, 0, "", reg_password1);
+  if (r < 0) FAIL(S_ERR_DB_ERROR);
+
   if (next_op == SSERV_OP_USER_DETAIL_PAGE) {
     ss_redirect_2(out_f, phr, SSERV_OP_USER_DETAIL_PAGE, contest_id, group_id, other_user_id);
   } else {
-    ss_redirect_2(out_f, phr, SSERV_OP_BROWSE_USERS_PAGE, contest_id, group_id, 0);
+    ss_redirect_2(out_f, phr, SSERV_OP_USER_BROWSE_PAGE, contest_id, group_id, 0);
   }
 
 cleanup:
@@ -3524,6 +3556,106 @@ cleanup:
   xfree(xml_text); xml_text = 0;
   xfree(reg_password1); reg_password1 = 0;
   xfree(reg_password2); reg_password2 = 0;
+  return retval;
+}
+
+int
+super_serve_op_USER_CHANGE_CNTS_PASSWORD_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0, r;
+  int contest_id = 0, group_id = 0, other_user_id = 0;
+  int next_op = 0;
+  const struct contest_desc *cnts = 0;
+  int useregpasswd = 0, settonull = 0, usesha1 = 0;
+  unsigned char *cnts_password1 = 0;
+  unsigned char *cnts_password2 = 0;
+  const unsigned char *s = 0;
+  opcap_t gcaps = 0, ccaps = 0, fcaps = 0;
+  struct userlist_user *u = 0;
+  unsigned char *xml_text = 0;
+
+  if (ss_cgi_param_int(phr, "contest_id", &contest_id) <= 0) FAIL(S_ERR_INV_CONTEST);
+  if (contest_id <= 0 || contests_get(contest_id, &cnts) < 0 || !cnts)
+    FAIL(S_ERR_INV_CONTEST);
+
+  ss_cgi_param_int_opt(phr, "group_id", &group_id, 0);
+  ss_cgi_param_int_opt(phr, "next_op", &next_op, 0);
+
+  ss_cgi_param_int_opt(phr, "useregpasswd", &useregpasswd, 0);
+  if (useregpasswd != 1) useregpasswd = 0;
+  ss_cgi_param_int_opt(phr, "settonull", &settonull, 0);
+  if (settonull != 1) settonull = 0;
+  ss_cgi_param_int_opt(phr, "usesha1", &usesha1, 0);
+  if (usesha1 != 1) usesha1 = 0;
+
+  if (!useregpasswd && !settonull) {
+    s = 0;
+    if (ss_cgi_param(phr, "cnts_password1", &s) <= 0 || !s) FAIL(S_ERR_PASSWD1_UNDEF);
+    cnts_password1 = fix_string(s);
+    if (!cnts_password1 || !*cnts_password1) FAIL(S_ERR_PASSWD1_UNDEF);
+    if (strlen(cnts_password1) > 1024) FAIL(S_ERR_INV_PASSWD1);
+    s = 0;
+    if (ss_cgi_param(phr, "cnts_password2", &s) <= 0 || !s) FAIL(S_ERR_PASSWD2_UNDEF);
+    cnts_password2 = fix_string(s);
+    if (!cnts_password2 || !*cnts_password2) FAIL(S_ERR_PASSWD2_UNDEF);
+    if (strlen(cnts_password2) > 1024) FAIL(S_ERR_INV_PASSWD2);
+    if (strcmp(cnts_password1, cnts_password2) != 0) FAIL(S_ERR_PASSWDS_DIFFER);
+  }
+
+  if (phr->priv_level <= 0) FAIL(S_ERR_PERM_DENIED);
+  get_global_caps(phr, &gcaps);
+  get_contest_caps(phr, cnts, &ccaps);
+  fcaps = gcaps | ccaps;
+  if (opcaps_check(fcaps, OPCAP_EDIT_PASSWD) < 0 && opcaps_check(fcaps, OPCAP_PRIV_EDIT_PASSWD) < 0)
+    FAIL(S_ERR_PERM_DENIED);
+
+  if (ss_cgi_param_int(phr, "other_user_id", &other_user_id) < 0) FAIL(S_ERR_INV_USER_ID);
+  if (!phr->userlist_clnt) FAIL(S_ERR_NO_CONNECTION);
+  r = userlist_clnt_get_info(phr->userlist_clnt, ULS_PRIV_GET_USER_INFO,
+                             other_user_id, contest_id, &xml_text);
+  if (r < 0) {
+    if (r == -ULS_ERR_BAD_UID) FAIL(S_ERR_INV_USER_ID);
+    FAIL(S_ERR_DB_ERROR);
+  }
+  if (!(u = userlist_parse_user_str(xml_text))) FAIL(S_ERR_DB_ERROR);
+
+  if (is_globally_privileged(phr, u)) {
+    if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_PASSWD) < 0) FAIL(S_ERR_PERM_DENIED);
+  } else if (is_contest_privileged(cnts, u)) {
+    if (opcaps_check(fcaps, OPCAP_PRIV_EDIT_PASSWD) < 0) FAIL(S_ERR_PERM_DENIED);
+  } else {
+    if (opcaps_check(fcaps, OPCAP_EDIT_PASSWD) < 0) FAIL(S_ERR_PERM_DENIED);
+  }
+
+  if (settonull) {
+    r = userlist_clnt_delete_field(phr->userlist_clnt, ULS_DELETE_FIELD,
+                                   other_user_id, contest_id, 0,
+                                   USERLIST_NC_TEAM_PASSWD);
+  } else if (useregpasswd) {
+    r = userlist_clnt_register_contest(phr->userlist_clnt, ULS_COPY_TO_TEAM, other_user_id,
+                                       contest_id, 0, 0);
+  } else {
+    r = ULS_PRIV_SET_CNTS_PASSWD_PLAIN;
+    if (usesha1) r = ULS_PRIV_SET_CNTS_PASSWD_SHA1;
+
+    r = userlist_clnt_set_passwd(phr->userlist_clnt, r, other_user_id, 0, "", cnts_password1);
+  }
+  if (r < 0) FAIL(S_ERR_DB_ERROR);
+
+  if (next_op == SSERV_OP_USER_DETAIL_PAGE) {
+    ss_redirect_2(out_f, phr, SSERV_OP_USER_DETAIL_PAGE, contest_id, group_id, other_user_id);
+  } else {
+    ss_redirect_2(out_f, phr, SSERV_OP_USER_BROWSE_PAGE, contest_id, group_id, 0);
+  }
+
+cleanup:
+  userlist_free(&u->b); u = 0;
+  xfree(xml_text); xml_text = 0;
+  xfree(cnts_password1); cnts_password1 = 0;
+  xfree(cnts_password2); cnts_password2 = 0;
   return retval;
 }
 

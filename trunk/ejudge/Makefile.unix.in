@@ -204,6 +204,8 @@ install_ej_users: ej-users
 	install -m 0755 ej-users "${DESTDIR}${serverbindir}"
 install_ej_contests: ej-contests
 	install -m 0755 ej-contests "${DESTDIR}${serverbindir}"
+install_ej_super_server: ej-super-server
+	install -m 0755 ej-super-server "${DESTDIR}${serverbindir}"
 
 local_install: ${TARGETS} ejudge-config po mo
 	install -d "${DESTDIR}${bindir}"
@@ -280,7 +282,7 @@ ejudge-jobs-cmd: ${JP_OBJECTS}
 	${LD} ${LDFLAGS} $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB}
 
 ej-super-server: ${SS_OBJECTS}
-	${LD} ${LDFLAGS} $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB}
+	${LD} ${LDFLAGS} -rdynamic $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl
 
 ej-super-server-control: ${SSC_OBJECTS}
 	${LD} ${LDFLAGS} $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB}
