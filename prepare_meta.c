@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2011/04/02 00:03:17
+// Generated 2011/04/30 20:02:37
 
 #include "prepare_meta.h"
 #include "prepare.h"
@@ -316,6 +316,8 @@ int cntsglob_lookup_field(const char *name)
 
 const struct meta_methods cntsglob_methods =
 {
+  CNTSGLOB_LAST_FIELD,
+  sizeof(struct section_global_data),
   cntsglob_get_type,
   cntsglob_get_size,
   cntsglob_get_name,
@@ -519,6 +521,8 @@ int cntsprob_lookup_field(const char *name)
 
 const struct meta_methods cntsprob_methods =
 {
+  CNTSPROB_LAST_FIELD,
+  sizeof(struct section_problem_data),
   cntsprob_get_type,
   cntsprob_get_size,
   cntsprob_get_name,
@@ -604,6 +608,8 @@ int cntslang_lookup_field(const char *name)
 
 const struct meta_methods cntslang_methods =
 {
+  CNTSLANG_LAST_FIELD,
+  sizeof(struct section_language_data),
   cntslang_get_type,
   cntslang_get_size,
   cntslang_get_name,
@@ -702,6 +708,8 @@ int cntstester_lookup_field(const char *name)
 
 const struct meta_methods cntstester_methods =
 {
+  CNTSTESTER_LAST_FIELD,
+  sizeof(struct section_tester_data),
   cntstester_get_type,
   cntstester_get_size,
   cntstester_get_name,

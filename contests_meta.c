@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2011/03/26 13:51:20
+// Generated 2011/04/30 20:02:37
 
 #include "contests_meta.h"
 #include "contests.h"
@@ -148,6 +148,8 @@ int contest_desc_lookup_field(const char *name)
 
 const struct meta_methods contest_desc_methods =
 {
+  CNTS_LAST_FIELD,
+  sizeof(struct contest_desc),
   contest_desc_get_type,
   contest_desc_get_size,
   contest_desc_get_name,

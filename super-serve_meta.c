@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2011/04/22 22:49:16
+// Generated 2011/04/30 20:02:37
 
 #include "super-serve_meta.h"
 #include "super-serve.h"
@@ -174,6 +174,8 @@ int ss_sid_state_lookup_field(const char *name)
 
 const struct meta_methods ss_sid_state_methods =
 {
+  SSSS_LAST_FIELD,
+  sizeof(struct sid_state),
   ss_sid_state_get_type,
   ss_sid_state_get_size,
   ss_sid_state_get_name,
