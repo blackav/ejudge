@@ -6771,11 +6771,12 @@ static unsigned char const * const error_messages[] =
   [S_ERR_INV_USER_ID] = "Invalid User ID",
   [S_ERR_NO_CONNECTION] = "No connection to the database",
   [S_ERR_DB_ERROR] = "Database error",
-  [S_ERR_PASSWD1_UNDEF] = "Password 1 is not specified",
-  [S_ERR_PASSWD2_UNDEF] = "Password 2 is not specified",
+  [S_ERR_UNSPEC_PASSWD1] = "Password 1 is not specified",
+  [S_ERR_UNSPEC_PASSWD2] = "Password 2 is not specified",
   [S_ERR_INV_PASSWD1] = "Password 1 is invalid",
   [S_ERR_INV_PASSWD2] = "Password 2 is invalid",
   [S_ERR_PASSWDS_DIFFER] = "Passwords do not match each other",
+  [S_ERR_UNSPEC_LOGIN] = "Login is not specified",
 };
 
 void

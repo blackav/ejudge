@@ -4,7 +4,7 @@
 #ifndef __META_GENERIC_H__
 #define __META_GENERIC_H__
 
-/* Copyright (C) 2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -50,6 +50,8 @@ meta_lookup_string(const struct meta_automaton *atm, const char *str);
 
 struct meta_methods
 {
+  int last_tag;
+  size_t size;
   int (*get_type)(int tag);
   size_t (*get_size)(int tag);
   const char *(*get_name)(int tag);
@@ -57,5 +59,8 @@ struct meta_methods
   void *(*get_ptr_nc)(void *ptr, int tag);
   int (*lookup_field)(const char *name);
 };
+
+void
+meta_destroy_fields(const struct meta_methods *mth, void *ptr);
 
 #endif /* __META_GENERIC_H__ */

@@ -30,6 +30,9 @@
 #include "errlog.h"
 #include "xml_utils.h"
 #include "ejudge_cfg.h"
+#include "super_html_6.h"
+#include "super_html_6_meta.h"
+#include "meta_generic.h"
 
 #include "reuse_xalloc.h"
 
@@ -220,6 +223,68 @@ is_contest_privileged(
 {
   opcap_t caps = 0;
   if (opcaps_find(&cnts->capabilities, u->login, &caps) >= 0) return 1;
+  return 0;
+}
+
+static int
+ss_parse_params(
+        struct super_http_request_info *phr,
+        const struct meta_methods *mth,
+        void *params)
+{
+  int field_id, field_type;
+  void *field_ptr;
+  const unsigned char *field_name;
+
+  for (field_id = 1; field_id < mth->last_tag; ++field_id) {
+    field_type = mth->get_type(field_id);
+    field_ptr = mth->get_ptr_nc(params, field_id);
+    field_name = mth->get_name(field_id);
+    if (!field_ptr || !field_name) continue;
+    switch (field_type) {
+    case '0':                   /* ej_int_opt_0_t */
+      ss_cgi_param_int_opt(phr, field_name, (int*) field_ptr, 0);
+      break;
+    case '1':                   /* ej_textbox_t */
+      {
+        const unsigned char *s = 0;
+        if (ss_cgi_param(phr, field_name, &s) <= 0 || !s || !*s) {
+          return -S_ERR_INV_VALUE;
+        }
+        unsigned char *s2 = fix_string(s);
+        if (!s2 || !*s2) {
+          xfree(s2);
+          return -S_ERR_INV_VALUE;
+        }
+        *(unsigned char **) field_ptr = s2;
+      }
+      break;
+    case '2':                   /* ej_textbox_opt_t */
+      {
+        const unsigned char *s = 0;
+        if (ss_cgi_param(phr, field_name, &s) < 0) {
+          return -S_ERR_INV_VALUE;
+        }
+        unsigned char *s2 = fix_string(s);
+        if (!s2) s2 = xstrdup("");
+        *(unsigned char **) field_ptr = s2;
+      }
+      break;
+    case '3':                   /* ej_checkbox_t */
+      {
+        int *ip = (int*) field_ptr;
+        ss_cgi_param_int_opt(phr, field_name, ip, 0);
+        if (*ip != 1) *ip = 0;
+      }
+      break;
+    case '4':                   /* ej_int_opt_1_t */
+      ss_cgi_param_int_opt(phr, field_name, (int*) field_ptr, 1);
+      break;
+    default:
+      abort();
+    }
+  }
+
   return 0;
 }
 
@@ -2747,7 +2812,7 @@ super_serve_op_USER_CREATE_ONE_PAGE(
     fprintf(out_f, "</td><td%s>&nbsp;</td></tr>\n", cl);
   }
   fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s>", cl, "Status", cl);
-  ss_select(out_f, hbuf, (const unsigned char* []) { "OK", "Pending", "Rejected", NULL }, 1);
+  ss_select(out_f, "cnts_status", (const unsigned char* []) { "OK", "Pending", "Rejected", NULL }, 1);
   fprintf(out_f, "</td></tr>\n");
   fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\" /></td></tr>\n",
           cl, "Invisible?", cl, "is_invisible");
@@ -2760,6 +2825,10 @@ super_serve_op_USER_CREATE_ONE_PAGE(
   fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\" /></td></tr>\n",
           cl, "Disqualified?", cl, "is_disqualified");
 
+  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\" /></td></tr>\n",
+          cl, "Use reg. password?", cl, "cnts_use_reg_passwd");
+  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\" /></td></tr>\n",
+          cl, "Set to null?", cl, "cnts_null_passwd");
   fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"password\" name=\"cnts_password1\" size=\"40\" /></td><td%s>&nbsp;</td></tr>\n",
           cl, "Contest password", cl, cl);
   fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"password\" name=\"cnts_password2\" size=\"40\" /></td><td%s>&nbsp;</td></tr>\n",
@@ -3506,14 +3575,14 @@ super_serve_op_USER_CHANGE_PASSWORD_ACTION(
   }
 
   s = 0;
-  if (ss_cgi_param(phr, "reg_password1", &s) <= 0 || !s) FAIL(S_ERR_PASSWD1_UNDEF);
+  if (ss_cgi_param(phr, "reg_password1", &s) <= 0 || !s) FAIL(S_ERR_UNSPEC_PASSWD1);
   reg_password1 = fix_string(s);
-  if (!reg_password1 || !*reg_password1) FAIL(S_ERR_PASSWD1_UNDEF);
+  if (!reg_password1 || !*reg_password1) FAIL(S_ERR_UNSPEC_PASSWD1);
   if (strlen(reg_password1) > 1024) FAIL(S_ERR_INV_PASSWD1);
   s = 0;
-  if (ss_cgi_param(phr, "reg_password2", &s) <= 0 || !s) FAIL(S_ERR_PASSWD2_UNDEF);
+  if (ss_cgi_param(phr, "reg_password2", &s) <= 0 || !s) FAIL(S_ERR_UNSPEC_PASSWD2);
   reg_password2 = fix_string(s);
-  if (!reg_password2 || !*reg_password2) FAIL(S_ERR_PASSWD2_UNDEF);
+  if (!reg_password2 || !*reg_password2) FAIL(S_ERR_UNSPEC_PASSWD2);
   if (strlen(reg_password2) > 1024) FAIL(S_ERR_INV_PASSWD2);
   if (strcmp(reg_password1, reg_password2) != 0) FAIL(S_ERR_PASSWDS_DIFFER);
 
@@ -3593,14 +3662,14 @@ super_serve_op_USER_CHANGE_CNTS_PASSWORD_ACTION(
 
   if (!useregpasswd && !settonull) {
     s = 0;
-    if (ss_cgi_param(phr, "cnts_password1", &s) <= 0 || !s) FAIL(S_ERR_PASSWD1_UNDEF);
+    if (ss_cgi_param(phr, "cnts_password1", &s) <= 0 || !s) FAIL(S_ERR_UNSPEC_PASSWD1);
     cnts_password1 = fix_string(s);
-    if (!cnts_password1 || !*cnts_password1) FAIL(S_ERR_PASSWD1_UNDEF);
+    if (!cnts_password1 || !*cnts_password1) FAIL(S_ERR_UNSPEC_PASSWD1);
     if (strlen(cnts_password1) > 1024) FAIL(S_ERR_INV_PASSWD1);
     s = 0;
-    if (ss_cgi_param(phr, "cnts_password2", &s) <= 0 || !s) FAIL(S_ERR_PASSWD2_UNDEF);
+    if (ss_cgi_param(phr, "cnts_password2", &s) <= 0 || !s) FAIL(S_ERR_UNSPEC_PASSWD2);
     cnts_password2 = fix_string(s);
-    if (!cnts_password2 || !*cnts_password2) FAIL(S_ERR_PASSWD2_UNDEF);
+    if (!cnts_password2 || !*cnts_password2) FAIL(S_ERR_UNSPEC_PASSWD2);
     if (strlen(cnts_password2) > 1024) FAIL(S_ERR_INV_PASSWD2);
     if (strcmp(cnts_password1, cnts_password2) != 0) FAIL(S_ERR_PASSWDS_DIFFER);
   }
@@ -3656,6 +3725,48 @@ cleanup:
   xfree(xml_text); xml_text = 0;
   xfree(cnts_password1); cnts_password1 = 0;
   xfree(cnts_password2); cnts_password2 = 0;
+  return retval;
+}
+
+int
+super_serve_op_USER_CREATE_ONE_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  opcap_t caps = 0;
+  const struct contest_desc *cnts = 0;
+
+  struct ss_op_param_USER_CREATE_ONE_ACTION params;
+  memset(&params, 0, sizeof(params));
+  retval = ss_parse_params(phr, &meta_ss_op_param_USER_CREATE_ONE_ACTION_methods, &params);
+  if (retval < 0) goto cleanup;
+
+  if (params.contest_id > 0) {
+    cnts = 0;
+    if (contests_get(params.contest_id, &cnts) < 0 || !cnts) {
+      params.contest_id = 0;
+    }
+  }
+  cnts = 0;
+  if (params.reg_cnts_create) {
+    if (contests_get(params.other_contest_id_1, &cnts) < 0 || !cnts) {
+      FAIL(S_ERR_INV_CONTEST);
+    }
+  }
+
+  if (get_global_caps(phr, &caps) < 0 || opcaps_check(caps, OPCAP_CREATE_USER) < 0) {
+    FAIL(S_ERR_PERM_DENIED);
+  }
+  if (cnts) {
+    if (get_contest_caps(phr, cnts, &caps) < 0 || opcaps_check(caps, OPCAP_CREATE_REG) < 0) {
+      FAIL(S_ERR_PERM_DENIED);
+    }
+  }
+
+cleanup:
+  meta_destroy_fields(&meta_ss_op_param_USER_CREATE_ONE_ACTION_methods, &params);
   return retval;
 }
 
