@@ -3734,9 +3734,11 @@ super_serve_op_USER_CREATE_ONE_ACTION(
         FILE *out_f,
         struct super_http_request_info *phr)
 {
-  int retval = 0;
+  int retval = 0, r;
   opcap_t caps = 0;
   const struct contest_desc *cnts = 0;
+  int other_user_id = 0;
+  unsigned char *xml_text = 0;
 
   struct ss_op_param_USER_CREATE_ONE_ACTION params;
   memset(&params, 0, sizeof(params));
@@ -3754,6 +3756,16 @@ super_serve_op_USER_CREATE_ONE_ACTION(
     if (contests_get(params.other_contest_id_1, &cnts) < 0 || !cnts) {
       FAIL(S_ERR_INV_CONTEST);
     }
+  } else {
+    params.other_contest_id_1 = 0;
+  }
+
+  if (params.group_create) {
+    r = userlist_clnt_list_all_users(phr->userlist_clnt, ULS_LIST_GROUP_USERS,
+                                     params.other_group_id, &xml_text);
+    if (r < 0) FAIL(S_ERR_INV_GROUP_ID);
+  } else {
+    params.other_group_id = 0;
   }
 
   if (get_global_caps(phr, &caps) < 0 || opcaps_check(caps, OPCAP_CREATE_USER) < 0) {
@@ -3765,7 +3777,58 @@ super_serve_op_USER_CREATE_ONE_ACTION(
     }
   }
 
+  if (!params.other_login || !*params.other_login) FAIL(S_ERR_UNSPEC_LOGIN);
+  if (!params.reg_password1 || !*params.reg_password1) FAIL(S_ERR_UNSPEC_PASSWD1);
+  if (!params.reg_password2 || !*params.reg_password2) FAIL(S_ERR_UNSPEC_PASSWD2);
+  if (strcmp(params.reg_password1, params.reg_password2) != 0) FAIL(S_ERR_PASSWDS_DIFFER);
+  if (params.cnts_status < 0 || params.cnts_status >= USERLIST_REG_LAST) params.cnts_status = USERLIST_REG_PENDING;
+  if (!params.cnts_use_reg_passwd && !params.cnts_null_passwd) {
+    if (!params.cnts_password1 || !*params.cnts_password1) FAIL(S_ERR_UNSPEC_PASSWD1);
+    if (!params.cnts_password2 || !*params.cnts_password2) FAIL(S_ERR_UNSPEC_PASSWD2);
+    if (strcmp(params.cnts_password1, params.cnts_password2) != 0) FAIL(S_ERR_PASSWDS_DIFFER);
+  }
+
+  struct userlist_pk_create_user_2 up;
+  memset(&up, 0, sizeof(up));
+  up.send_email_flag = params.send_email;
+  up.confirm_email_flag = params.confirm_email;
+  up.use_sha1_flag = params.reg_sha1;
+  up.is_privileged_flag = params.field_1;
+  up.is_invisible_flag = params.field_2;
+  up.is_banned_flag = params.field_3;
+  up.is_locked_flag = params.field_4;
+  up.show_login_flag = params.field_5;
+  up.show_email_flag = params.field_6;
+  up.read_only_flag = params.field_7;
+  up.never_clean_flag = params.field_8;
+  up.simple_registration_flag = params.field_9;
+  up.contest_id = params.other_contest_id_1;
+  up.cnts_status = params.cnts_status;
+  up.cnts_is_invisible_flag = params.is_invisible;
+  up.cnts_is_banned_flag = params.is_banned;
+  up.cnts_is_locked_flag = params.is_locked;
+  up.cnts_is_incomplete_flag = params.is_incomplete;
+  up.cnts_is_disqualified_flag = params.is_disqualified;
+  up.cnts_use_reg_passwd_flag = params.cnts_use_reg_passwd;
+  up.cnts_set_null_passwd_flag = params.cnts_null_passwd;
+  up.cnts_use_sha1_flag = params.cnts_sha1;
+  up.group_id = params.other_group_id;
+
+  r = userlist_clnt_create_user_2(phr->userlist_clnt, ULS_CREATE_USER_2, &up,
+                                  params.other_login, params.other_email,
+                                  params.reg_password1, params.cnts_password1,
+                                  params.cnts_name, &other_user_id);
+  if (r < 0 && r == -ULS_ERR_LOGIN_USED) {
+    FAIL(S_ERR_DUPLICATED_LOGIN);
+  }
+  if (r < 0 || other_user_id <= 0) {
+    FAIL(S_ERR_DB_ERROR);
+  }
+
+  ss_redirect_2(out_f, phr, SSERV_OP_USER_BROWSE_PAGE, params.contest_id, params.group_id, 0);
+
 cleanup:
+  xfree(xml_text); xml_text = 0;
   meta_destroy_fields(&meta_ss_op_param_USER_CREATE_ONE_ACTION_methods, &params);
   return retval;
 }

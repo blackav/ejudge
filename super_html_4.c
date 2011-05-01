@@ -6777,6 +6777,8 @@ static unsigned char const * const error_messages[] =
   [S_ERR_INV_PASSWD2] = "Password 2 is invalid",
   [S_ERR_PASSWDS_DIFFER] = "Passwords do not match each other",
   [S_ERR_UNSPEC_LOGIN] = "Login is not specified",
+  [S_ERR_DUPLICATED_LOGIN] = "This login is aready used",
+  [S_ERR_INV_GROUP_ID] = "Invalid group ID",
 };
 
 void

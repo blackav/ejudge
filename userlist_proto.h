@@ -116,6 +116,7 @@ enum
     ULS_PRIV_SET_REG_PASSWD_SHA1,
     ULS_PRIV_SET_CNTS_PASSWD_PLAIN,
     ULS_PRIV_SET_CNTS_PASSWD_SHA1,
+    ULS_CREATE_USER_2,
 
     ULS_LAST_CMD
   };
@@ -391,6 +392,42 @@ struct userlist_pk_list_users_2
   int   offset;
   int   count;
   unsigned char data[1];
+};
+
+struct userlist_pk_create_user_2
+{
+  short request_id;
+  int login_len;
+  int email_len;
+  int send_email_flag;
+  int confirm_email_flag;
+  int random_password_flag;
+  int reg_password_len;
+  int use_sha1_flag;
+  int is_privileged_flag;
+  int is_invisible_flag;
+  int is_banned_flag;
+  int is_locked_flag;
+  int show_login_flag;
+  int show_email_flag;
+  int read_only_flag;
+  int never_clean_flag;
+  int simple_registration_flag;
+  int contest_id;
+  int cnts_status;
+  int cnts_is_invisible_flag;
+  int cnts_is_banned_flag;
+  int cnts_is_locked_flag;
+  int cnts_is_incomplete_flag;
+  int cnts_is_disqualified_flag;
+  int cnts_use_reg_passwd_flag;
+  int cnts_set_null_passwd_flag;
+  int cnts_random_password_flag;
+  int cnts_password_len;
+  int cnts_use_sha1_flag;
+  int cnts_name_len;
+  int group_id;
+  unsigned char data[5];
 };
 
 /* server->client replies */
