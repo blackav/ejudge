@@ -1040,8 +1040,17 @@ new_user_func(
         void *data,
         const unsigned char *login,
         const unsigned char *email,
+        int passwd_method,
         const unsigned char *passwd,
-        int simple_reg_flag)
+        int is_privileged,
+        int is_invisible,
+        int is_banned,
+        int is_locked,
+        int show_login,
+        int show_email,
+        int read_only,
+        int never_clean,
+        int simple_registration)
 {
   struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
   int val, inserted_flag = 0;
@@ -1059,7 +1068,16 @@ new_user_func(
     user.login = (char*) login;
     user.email = (char*) email;
     user.passwd = (char*) passwd;
-    user.simple_registration = !!simple_reg_flag;
+    user.passwd_method = passwd_method;
+    user.is_privileged = !!is_privileged;
+    user.is_invisible = !!is_invisible;
+    user.is_banned = !!is_banned;
+    user.is_locked = !!is_locked;
+    user.show_login = !!show_login;
+    user.show_email = !!show_email;
+    user.read_only = !!read_only;
+    user.never_clean = !!never_clean;
+    user.simple_registration = !!simple_registration;
 
     cmd_f = open_memstream(&cmd_t, &cmd_z);
     fprintf(cmd_f, "INSERT into %slogins VALUES ( ", state->md->table_prefix);
@@ -1078,7 +1096,16 @@ new_user_func(
     user.login = (char*) login;
     user.email = (char*) email;
     user.passwd = (char*) passwd;
-    user.simple_registration = !!simple_reg_flag;
+    user.passwd_method = passwd_method;
+    user.is_privileged = !!is_privileged;
+    user.is_invisible = !!is_invisible;
+    user.is_banned = !!is_banned;
+    user.is_locked = !!is_locked;
+    user.show_login = !!show_login;
+    user.show_email = !!show_email;
+    user.read_only = !!read_only;
+    user.never_clean = !!never_clean;
+    user.simple_registration = !!simple_registration;
 
     cmd_f = open_memstream(&cmd_t, &cmd_z);
     fprintf(cmd_f, "INSERT into %slogins VALUES ( ", state->md->table_prefix);
@@ -2433,6 +2460,7 @@ register_contest_func(
         int user_id,
         int contest_id,
         int status,
+        int flags,
         time_t cur_time,
         const struct userlist_contest **p_c)
 {
@@ -2453,6 +2481,7 @@ register_contest_func(
   memset(&new_uc, 0, sizeof(new_uc));
   new_uc.id = contest_id;
   new_uc.status = status;
+  new_uc.flags = flags;
   new_uc.create_time = cur_time;
   new_uc.last_change_time = cur_time;
   cmd_f = open_memstream(&cmd_t, &cmd_z);
