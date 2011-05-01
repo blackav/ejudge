@@ -74,10 +74,20 @@ struct uldb_plugin_iface
   // get login by the user_id, login allocated on heap
   unsigned char *(*get_login)(void *, int);
   // create a new user
-  int (*new_user)(void *, const unsigned char *login,
+  int (*new_user)(void *,
+                  const unsigned char *login,
                   const unsigned char *email,
+                  int passwd_method,
                   const unsigned char *reg_passwd,
-                  int simple_reg_flag);
+                  int is_privileged,
+                  int is_invisible,
+                  int is_banned,
+                  int is_locked,
+                  int show_login,
+                  int show_email,
+                  int read_only,
+                  int never_clean,
+                  int simple_registration);
   // remove a user
   int (*remove_user)(void *, int);
   // find a cookie
@@ -133,7 +143,7 @@ struct uldb_plugin_iface
   // set the team password
   int (*set_team_passwd)(void *, int, int, int, const unsigned char *, time_t, int *);
   // register a user for contest
-  int (*register_contest)(void *, int, int, int, time_t, const struct userlist_contest**);
+  int (*register_contest)(void *, int, int, int, int, time_t, const struct userlist_contest**);
   // remove a particular member from a user
   int (*remove_member)(void *, int, int, int, time_t, int *);
   // check if the user is read-only

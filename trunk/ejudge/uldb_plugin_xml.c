@@ -58,8 +58,17 @@ static void forced_sync_func(void *);
 static unsigned char *get_login_func(void *, int);
 static int new_user_func(void *, const unsigned char *login,
                          const unsigned char *email,
+                         int passwd_method,
                          const unsigned char *reg_passwd,
-                         int simple_reg_flag);
+                         int is_privileged,
+                         int is_invisible,
+                         int is_banned,
+                         int is_locked,
+                         int show_login,
+                         int show_email,
+                         int read_only,
+                         int never_clean,
+                         int simple_registration);
 static int remove_user_func(void *, int);
 static int get_cookie_func(void *, ej_cookie_t,
                            const struct userlist_cookie **);
@@ -93,7 +102,7 @@ static ptr_iterator_t get_standings_list_iterator_func(void *, int);
 static int check_user_func(void *, int);
 static int set_reg_passwd_func(void *, int, int, const unsigned char *, time_t);
 static int set_team_passwd_func(void *, int, int, int, const unsigned char *, time_t, int *);
-static int register_contest_func(void *, int, int, int, time_t, const struct userlist_contest **);
+static int register_contest_func(void *, int, int, int, int, time_t, const struct userlist_contest **);
 static int remove_member_func(void *, int, int, int, time_t, int *);
 static int is_read_only_func(void *, int, int);
 static ptr_iterator_t get_info_list_iterator_func(void *, int, unsigned int);
@@ -691,11 +700,21 @@ get_login_func(void *data, int user_id)
 }
 
 static int
-new_user_func(void *data,
-              const unsigned char *login,
-              const unsigned char *email,
-              const unsigned char *reg_passwd,
-              int simple_reg_flag)
+new_user_func(
+        void *data,
+        const unsigned char *login,
+        const unsigned char *email,
+        int passwd_method,
+        const unsigned char *reg_passwd,
+        int is_privileged,
+        int is_invisible,
+        int is_banned,
+        int is_locked,
+        int show_login,
+        int show_email,
+        int read_only,
+        int never_clean,
+        int simple_registration)
 {
   struct uldb_xml_state *state = (struct uldb_xml_state*) data;
   struct userlist_list *ul = state->userlist;
@@ -731,11 +750,19 @@ new_user_func(void *data,
   u->login = xstrdup(login);
   if (email) u->email = xstrdup(email);
   u->login_hash = userlist_login_hash(login);
-  u->simple_registration = simple_reg_flag;
+  u->is_privileged = is_privileged;
+  u->is_invisible = is_invisible;
+  u->is_banned = is_banned;
+  u->is_locked = is_locked;
+  u->show_login = show_login;
+  u->show_email = show_email;
+  u->read_only = read_only;
+  u->never_clean = never_clean;
+  u->simple_registration = simple_registration;
 
   if (reg_passwd) {
     u->passwd = xstrdup(reg_passwd);
-    u->passwd_method = USERLIST_PWD_PLAIN;
+    u->passwd_method = passwd_method;
   }
 
   if (ul->login_hash_table) {
@@ -1465,6 +1492,7 @@ register_contest_func(void *data,
                       int user_id,
                       int contest_id,
                       int status,
+                      int flags,
                       time_t cur_time,
                       const struct userlist_contest **p_c)
 {
@@ -1496,6 +1524,7 @@ register_contest_func(void *data,
   xml_link_node_last(u->contests, &c->b);
   c->id = contest_id;
   c->status = status;
+  c->flags = flags;
   c->create_time = cur_time;
 
   state->dirty = 1;

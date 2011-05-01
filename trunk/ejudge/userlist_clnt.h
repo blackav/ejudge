@@ -415,4 +415,17 @@ userlist_clnt_get_count(
         const unsigned char *filter,
         long long *p_count);
 
+struct userlist_pk_create_user_2;
+int
+userlist_clnt_create_user_2(
+        struct userlist_clnt *clnt,
+        int cmd,
+        const struct userlist_pk_create_user_2 *params,
+        const unsigned char *login_str,
+        const unsigned char *email_str,
+        const unsigned char *reg_password_str,
+        const unsigned char *cnts_password_str,
+        const unsigned char *cnts_name_str,
+        int *p_user_id);
+
 #endif /* __USERLIST_CLNT_H__ */

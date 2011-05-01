@@ -554,7 +554,7 @@ link_client_state(struct client_state *p)
 #define default_sync() dflt_iface->sync(uldb_default->data)
 #define default_forced_sync() dflt_iface->forced_sync(uldb_default->data)
 #define default_get_login(a) dflt_iface->get_login(uldb_default->data, a)
-#define default_new_user(a,b,c,d) dflt_iface->new_user(uldb_default->data, a, b, c, d)
+#define default_new_user(a,b,c,d,e,f,g,h,i,j,k,l,m) dflt_iface->new_user(uldb_default->data, a, b, c, d, e, f, g, h, i, j, k, l, m)
 #define default_remove_user(a) dflt_iface->remove_user(uldb_default->data, a)
 #define default_get_cookie(a, b) dflt_iface->get_cookie(uldb_default->data, a, b)
 #define default_new_cookie(a, b, c, d, e, f, g, h, i, j, k, l) dflt_iface->new_cookie(uldb_default->data, a, b, c, d, e, f, g, h, i, j, k, l)
@@ -578,7 +578,7 @@ link_client_state(struct client_state *p)
 #define default_check_user(a) dflt_iface->check_user(uldb_default->data, a)
 #define default_set_reg_passwd(a, b, c, d) dflt_iface->set_reg_passwd(uldb_default->data, a, b, c, d)
 #define default_set_team_passwd(a, b, c, d, e, f) dflt_iface->set_team_passwd(uldb_default->data, a, b, c, d, e, f)
-#define default_register_contest(a, b, c, d, e) dflt_iface->register_contest(uldb_default->data, a, b, c, d, e)
+#define default_register_contest(a, b, c, d, e, f) dflt_iface->register_contest(uldb_default->data, a, b, c, d, e, f)
 #define default_remove_member(a, b, c, d, e) dflt_iface->remove_member(uldb_default->data, a, b, c, d, e)
 #define default_is_read_only(a, b) dflt_iface->is_read_only(uldb_default->data, a, b)
 #define default_get_info_list_iterator(a, b) dflt_iface->get_info_list_iterator(uldb_default->data, a, b)
@@ -1268,6 +1268,81 @@ check_pk_list_users_2(
 }
 
 static int
+check_pk_create_user_2(
+        struct client_state *p,
+        int pkt_len,
+        const struct userlist_pk_create_user_2 *data)
+{
+  if (pkt_len < sizeof(*data)) {
+    CONN_BAD("packet too small: %d instead of %d", pkt_len, (int) sizeof(*data));
+    return -1;
+  }
+  if (pkt_len > (128*1024*1024)) {
+    CONN_BAD("packet too big: %d", pkt_len);
+    return -1;
+  }
+
+  if (data->login_len < 0 || data->login_len > 65535) {
+    CONN_BAD("login_len is invalid: %d", data->login_len);
+    return -1;
+  }
+  if (data->email_len < 0 || data->email_len > 65535) {
+    CONN_BAD("email_len is invalid: %d", data->email_len);
+    return -1;
+  }
+  if (data->reg_password_len < 0 || data->reg_password_len > 65535) {
+    CONN_BAD("reg_password_len is invalid: %d", data->reg_password_len);
+    return -1;
+  }
+  if (data->cnts_password_len < 0 || data->cnts_password_len > 65535) {
+    CONN_BAD("cnts_password_len is invalid: %d", data->cnts_password_len);
+    return -1;
+  }
+  if (data->cnts_name_len < 0 || data->cnts_name_len > 65535) {
+    CONN_BAD("cnts_name_len is invalid: %d", data->cnts_name_len);
+    return -1;
+  }
+  int exp_len = sizeof(*data) + data->login_len + data->email_len + data->reg_password_len + data->cnts_password_len + data->cnts_name_len;
+  if (exp_len != pkt_len) {
+    CONN_BAD("pkt_len mismatch: %d instead of %d", pkt_len, exp_len);
+    return -1;
+  }
+
+  const unsigned char *str = data->data;
+  int len = strlen(str);
+  if (len != data->login_len) {
+    CONN_BAD("login_len mismatch: %d instead of %d", len, data->login_len);
+    return -1;
+  }
+  str += len + 1;
+  len = strlen(str);
+  if (len != data->email_len) {
+    CONN_BAD("email_len mismatch: %d instead of %d", len, data->email_len);
+    return -1;
+  }
+  str += len + 1;
+  len = strlen(str);
+  if (len != data->reg_password_len) {
+    CONN_BAD("reg_password_len mismatch: %d instead of %d", len, data->reg_password_len);
+    return -1;
+  }
+  str += len + 1;
+  len = strlen(str);
+  if (len != data->cnts_password_len) {
+    CONN_BAD("cnts_password_len mismatch: %d instead of %d", len, data->cnts_password_len);
+    return -1;
+  }
+  str += len + 1;
+  len = strlen(str);
+  if (len != data->cnts_name_len) {
+    CONN_BAD("cnts_name_len mismatch: %d instead of %d", len, data->cnts_name_len);
+    return -1;
+  }
+
+  return 0;
+}
+
+static int
 full_get_contest(
         struct client_state *p,
         const unsigned char *pfx,
@@ -1407,6 +1482,159 @@ get_email_sender(const struct contest_desc *cnts)
   return ppwd->pw_name;
 }
 
+static int
+send_registration_email(
+        const struct contest_desc *cnts,
+        const struct userlist_user *u,
+        int locale_id,
+        const unsigned char *self_url,
+        int confirm_action)
+{
+  struct sformat_extra_data sformat_data;
+  path_t email_template_path;
+  path_t email_template_locale_0_path;
+  char *email_template = 0;
+  size_t email_template_size = 0;
+
+  memset(&sformat_data, 0, sizeof(sformat_data));
+  sformat_data.locale_id = locale_id;
+  sformat_data.server_name = config->server_name;
+  sformat_data.server_name_en = config->server_name_en;
+
+  // load the registration letter template file
+  if (cnts && cnts->register_email_file) {
+    sformat_message(email_template_path, sizeof(email_template_path), 0,
+                    cnts->register_email_file, 0, 0, 0, 0, 0,
+                    u, cnts, &sformat_data);
+    if (generic_read_file(&email_template, 0, &email_template_size, 0, "", email_template_path, "") < 0) {
+      // the template file for the given locale_id does not exist, so try locale_id = 0
+      sformat_data.locale_id = 0;
+      sformat_message(email_template_locale_0_path, sizeof(email_template_locale_0_path), 0,
+                      cnts->register_email_file, 0, 0, 0, 0, 0,
+                      u, cnts, &sformat_data);
+      if (strcmp(email_template_path, email_template_locale_0_path) != 0) {
+        strcpy(email_template_path, email_template_locale_0_path);
+        if (generic_read_file(&email_template, 0, &email_template_size, 0, "", email_template_path, "") < 0) {
+          email_template = 0;
+          email_template_size = 0;
+        }
+      } else {
+        email_template = 0;
+        email_template_size = 0;
+      }
+    }
+  }
+  sformat_data.locale_id = locale_id;
+
+  // sanity checks
+  if (email_template_size > 1 * 1024 * 1024) {
+    xfree(email_template); email_template = 0;
+    email_template_size = 0;
+  }
+  if (email_template && strlen(email_template) != email_template_size) {
+    xfree(email_template); email_template = 0;
+    email_template_size = 0;
+  }
+  if (email_template && is_empty_string(email_template)) {
+    xfree(email_template); email_template = 0;
+    email_template_size = 0;
+  }
+
+  unsigned char contest_id_str[64] = { 0 };
+  if (cnts) {
+    snprintf(contest_id_str, sizeof(contest_id_str), "&contest_id=%d", cnts->id);
+  }
+  unsigned char locale_id_str[64] = { 0 };
+  if (locale_id > 0) {
+    snprintf(locale_id_str, sizeof(locale_id_str), "&locale_id=%d", locale_id);
+  }
+  const unsigned char *base_url = 0;
+  if (self_url && *self_url) {
+    base_url = self_url;
+  } else if (cnts && cnts->register_url) {
+    base_url = cnts->register_url;
+  } else if (config->register_url) {
+    base_url = config->register_url;
+  } else {
+    base_url = "http://localhost/cgi-bin/register";
+  }
+  if (confirm_action <= 0 && cnts && cnts->force_registration) confirm_action = 4;
+  if (confirm_action <= 0) confirm_action = 3;
+  unsigned char confirm_url_buf[1024];
+  snprintf(confirm_url_buf, sizeof(confirm_url_buf), "%s?action=%d&login=%s%s%s",
+           base_url, confirm_action, u->login, contest_id_str, locale_id_str);
+  sformat_data.url = confirm_url_buf;
+
+  unsigned char contest_main_url[1024] = { 0 };
+  if (cnts && cnts->main_url) {
+    snprintf(contest_main_url, sizeof(contest_main_url), " (%s)", cnts->main_url);
+  } else if (config->server_main_url) {
+    snprintf(contest_main_url, sizeof(contest_main_url), " (%s)", config->server_main_url);
+  }
+  sformat_data.str1 = contest_main_url;
+
+  l10n_setlocale(locale_id);
+  if (!email_template && cnts) {
+    email_template =
+      _("Hello,\n"
+        "\n"
+        "Somebody (probably you) have specified this e-mail address (%Ue)\n"
+        "when registering an account to participate in %LCn%V1.\n"
+        "\n"
+        "To confirm registration, you should enter the provided login\n"
+        "and password on the login page of the server at the\n"
+        "following url: %Vu.\n"
+        "\n"
+        "Note, that if you do not do this in 24 hours from the moment\n"
+        "of sending this letter, registration will be void.\n"
+        "\n"
+        "login:    %Ul\n"
+        "password: %Uz\n"
+          "\n"
+        "Regards,\n"
+        "The ejudge contest administration system (www.ejudge.ru)\n");
+    email_template = xstrdup(email_template);
+    email_template_size = strlen(email_template);
+  }
+  if (!email_template) {
+    email_template =
+      _("Hello,\n"
+        "\n"
+        "Somebody (probably you) have specified this e-mail address (%Ue)\n"
+        "when registering an account on the %LVn%V1.\n"
+        "\n"
+        "To confirm registration, you should enter the provided login\n"
+        "and password on the login page of the server at the\n"
+        "following url: %Vu.\n"
+        "\n"
+        "Note, that if you do not do this in 24 hours from the moment\n"
+        "of sending this letter, registration will be void.\n"
+        "\n"
+        "login:    %Ul\n"
+        "password: %Uz\n"
+        "\n"
+        "Regards,\n"
+        "The ejudge contest administration system (www.ejudge.ru)\n");
+    email_template = xstrdup(email_template);
+    email_template_size = strlen(email_template);
+  }
+
+  size_t email_text_size = email_template_size * 4;
+  if (email_text_size < 4096) email_text_size = 4096;
+  unsigned char *email_text = (unsigned char *) xcalloc(email_text_size, 1);
+  sformat_message(email_text, email_text_size, 0, email_template,
+                  0, 0, 0, 0, 0, u, cnts, &sformat_data);
+  unsigned char *email_subject = _("You have been registered");
+  l10n_setlocale(0);
+
+  const unsigned char *sender_address = get_email_sender(cnts);
+  int retval = send_email_message(u->email, sender_address, NULL, email_subject, email_text);
+  xfree(email_text); email_text = 0;
+  xfree(email_template); email_template = 0;
+
+  return retval;
+}
+
 static void
 cmd_register_new_2(struct client_state *p,
                    int pkt_len,
@@ -1526,7 +1754,8 @@ cmd_register_new_2(struct client_state *p,
 
   generate_random_password(8, passwd_buf);
   passwd_len = strlen(passwd_buf);
-  user_id = default_new_user(login, email, passwd_buf, 1);
+  user_id = default_new_user(login, email, USERLIST_PWD_PLAIN, passwd_buf,
+                             0, 0, 0, 0, 0, 0, 0, 0, 0);
 
   login_len = strlen(login);
   out_size = sizeof(*out) + login_len + passwd_len;
@@ -1802,7 +2031,7 @@ cmd_register_new(struct client_state *p,
   }
 
   generate_random_password(8, passwd_buf);
-  user_id = default_new_user(login, email, passwd_buf, 0);
+  user_id = default_new_user(login, email, USERLIST_PWD_PLAIN, passwd_buf, 0, 0, 0, 0, 0, 0, 0, 0, 0);
   if (default_get_user_info_1(user_id, &u) < 0 || !u) {
     send_reply(p, -ULS_ERR_DB_ERROR);
     err("%s -> database error", logbuf);
@@ -4703,7 +4932,7 @@ cmd_register_contest(
 
   if (c->autoregister) status = USERLIST_REG_OK;
   errcode = default_register_contest(data->user_id, data->contest_id,
-                                     status, cur_time, &r);
+                                     status, 0, cur_time, &r);
   if (errcode < 0) {
     err("%s -> registration failed", logbuf);
     send_reply(p, -ULS_ERR_UNSPECIFIED_ERROR);
@@ -4777,7 +5006,7 @@ cmd_register_contest_2(
 
   if (c->autoregister) status = USERLIST_REG_OK;
   errcode = default_register_contest(data->user_id, data->contest_id,
-                                     status, cur_time, &r);
+                                     status, 0, cur_time, &r);
   if (errcode < 0) {
     err("%s -> registration failed", logbuf);
     send_reply(p, -ULS_ERR_UNSPECIFIED_ERROR);
@@ -4828,7 +5057,7 @@ cmd_priv_register_contest(
   if (is_cnts_capable(p, c, bit, logbuf) < 0) return;
 
   if (c->autoregister) status = USERLIST_REG_OK;
-  status = default_register_contest(data->user_id, data->contest_id, status,
+  status = default_register_contest(data->user_id, data->contest_id, status, 0,
                                     cur_time, &r);
   if (status < 0) {
     err("%s -> registration failed", logbuf);
@@ -6868,7 +7097,7 @@ cmd_create_user(
     login_ptr = buf;
   }
 
-  if ((user_id = default_new_user(login_ptr, "N/A", NULL, 0)) <= 0) {
+  if ((user_id = default_new_user(login_ptr, "N/A", USERLIST_PWD_PLAIN, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0)) <= 0) {
     err("%s -> cannot create user", logbuf);
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
@@ -9334,6 +9563,221 @@ cmd_get_group_count(
   info("%s -> OK, %lld", logbuf, out.count); 
 }
 
+static void
+cmd_create_user_2(
+        struct client_state *p,
+        int pkt_len,
+        struct userlist_pk_create_user_2 *data)
+{
+  unsigned char logbuf[1024];
+  const unsigned char *login_str = data->data;
+  const unsigned char *email_str = login_str + data->login_len + 1;
+  const unsigned char *reg_password_str = email_str + data->email_len + 1;
+  const unsigned char *cnts_password_str = reg_password_str + data->reg_password_len;
+  const unsigned char *cnts_name_str = cnts_password_str + data->cnts_password_len;
+  int user_id = 0;
+  unsigned char random_reg_password_buf[64];
+  int reg_password_len = data->reg_password_len;
+  unsigned char sha1_reg_password_buf[128];
+  int reg_password_method = USERLIST_PWD_PLAIN;
+  const struct contest_desc *cnts = 0;
+  int login_len = data->login_len;
+  unsigned char auto_login_buf[64];
+  const struct userlist_contest *cnts_reg = 0;
+  const struct userlist_group *ul_group = 0;
+  int cnts_password_len = data->cnts_password_len;
+  int cnts_password_method = USERLIST_PWD_PLAIN;
+  unsigned char random_cnts_password_buf[64];
+  unsigned char sha1_cnts_password_buf[64];
+  int cloned_flag = 0;
+  int send_email_flag = data->send_email_flag;
+
+  snprintf(logbuf, sizeof(logbuf), "CREATE_USER_2: %d", p->user_id);
+
+  if (p->user_id < 0) {
+    err("%s -> not authentificated", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+  ASSERT(p->user_id > 0);
+  if (is_db_capable(p, OPCAP_CREATE_USER, logbuf) < 0) return;
+
+  if (data->contest_id != 0) {
+    if (contests_get(data->contest_id, &cnts) < 0 || !cnts) {
+      err("%s -> invalid contest %d", logbuf, data->contest_id);
+      send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+      return;
+    }
+  }
+  if (data->group_id != 0) {
+    ul_group = plugin_call(get_group, data->contest_id);
+    if (!ul_group) {
+      err("%s -> invalid group %d", logbuf, data->group_id);
+      send_reply(p, -ULS_ERR_BAD_GROUP_ID);
+      return;
+    }
+  }
+
+  if (!login_len && cnts && cnts->assign_logins && cnts->login_template) {
+    int serial = 0;
+    int serial_step = 1;
+    int n = 0;
+    if (cnts->login_template_options
+        && sscanf(cnts->login_template_options, "%d%d%n",
+                  &serial, &serial_step, &n) == 2
+        && !cnts->login_template_options[n] && serial_step != 0) {
+      serial -= serial_step;
+    } else {
+      serial = 0;
+      serial_step = 1;
+    }
+    if (dflt_iface->try_new_login) {
+      serial += serial_step;
+      if (default_try_new_login(auto_login_buf, sizeof(auto_login_buf), cnts->login_template, serial, serial_step) < 0) {
+        send_reply(p, -ULS_ERR_DB_ERROR);
+        err("%s -> database error", logbuf);
+        return;
+      }
+    } else {
+      while (1) {
+        serial += serial_step;
+        snprintf(auto_login_buf, sizeof(auto_login_buf), cnts->login_template, serial);
+        if ((user_id = default_get_user_by_login(auto_login_buf)) < 0) break;
+      }
+    }
+    login_str = auto_login_buf;
+    login_len = strlen(login_str);
+  }
+
+  if (!login_len) {
+    err("%s -> empty login", logbuf);
+    send_reply(p, -ULS_ERR_INVALID_LOGIN);
+    return;
+  }
+  if (default_get_user_by_login(login_str) >= 0) {
+    err("%s -> login already exists", logbuf);
+    send_reply(p, -ULS_ERR_LOGIN_USED);
+    return;
+  }
+
+  if (data->random_password_flag) {
+    generate_random_password(16, random_reg_password_buf);
+    reg_password_str = random_reg_password_buf;
+    reg_password_len = strlen(reg_password_str);
+  }
+  if (!reg_password_len) {
+    err("%s -> empty password", logbuf);
+    send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+    return;
+  }
+  if (data->use_sha1_flag) {
+    make_sha1_ascii(reg_password_str, reg_password_len, sha1_reg_password_buf);
+    reg_password_method = USERLIST_PWD_SHA1;
+    reg_password_str = sha1_reg_password_buf;
+    reg_password_len = strlen(reg_password_str);
+  }
+
+  user_id = default_new_user(login_str,
+                             email_str,
+                             reg_password_method,
+                             reg_password_str,
+                             data->is_privileged_flag,
+                             data->is_invisible_flag,
+                             data->is_banned_flag,
+                             data->is_locked_flag,
+                             data->show_login_flag,
+                             data->show_email_flag,
+                             data->read_only_flag,
+                             data->never_clean_flag,
+                             data->simple_registration_flag);
+  if (user_id <= 0) {
+    err("%s -> cannot create user", logbuf);
+    send_reply(p, -ULS_ERR_DB_ERROR);
+    return;
+  }
+
+  if (data->contest_id) {
+    int cnts_flags = 0;
+    if (data->cnts_is_invisible_flag) cnts_flags |= USERLIST_UC_INVISIBLE;
+    if (data->cnts_is_banned_flag) cnts_flags |= USERLIST_UC_BANNED;
+    if (data->cnts_is_locked_flag) cnts_flags |= USERLIST_UC_LOCKED;
+    if (data->cnts_is_incomplete_flag) cnts_flags |= USERLIST_UC_INCOMPLETE;
+    if (data->cnts_is_disqualified_flag) cnts_flags |= USERLIST_UC_DISQUALIFIED;
+    if (default_register_contest(user_id, data->contest_id, data->cnts_status, cnts_flags,
+                                 cur_time, &cnts_reg) < 0) {
+      err("%s -> cannot register user", logbuf);
+      send_reply(p, -ULS_ERR_DB_ERROR);
+      return;
+    }
+  }
+
+  if (cnts && !cnts->disable_team_password) {
+    if (data->cnts_use_reg_passwd_flag) {
+      default_set_team_passwd(user_id, data->contest_id, reg_password_method, reg_password_str,
+                              cur_time, &cloned_flag);
+    } else if (data->cnts_set_null_passwd_flag) {
+      // do nothing...
+    } else {
+      if (data->cnts_random_password_flag) {
+        generate_random_password(16, random_cnts_password_buf);
+        cnts_password_str = random_cnts_password_buf;
+        cnts_password_len = strlen(cnts_password_str);
+      }
+      if (data->cnts_use_sha1_flag) {
+        make_sha1_ascii(cnts_password_str, cnts_password_len, sha1_cnts_password_buf);
+        cnts_password_method = USERLIST_PWD_SHA1;
+        cnts_password_str = sha1_cnts_password_buf;
+        cnts_password_len = strlen(cnts_password_str);
+      }
+      default_set_team_passwd(user_id, data->contest_id, cnts_password_method, cnts_password_str,
+                              cur_time, &cloned_flag);
+    }
+  }
+
+  if (cnts && cnts_name_str && *cnts_name_str) {
+    if (default_set_user_info_field(user_id, data->contest_id,
+                                    USERLIST_NC_NAME, cnts_name_str,
+                                    cur_time, &cloned_flag) < 0) {
+      err("%s -> cannot set user name", logbuf);
+      send_reply(p, -ULS_ERR_DB_ERROR);
+      return;
+    }
+  }
+
+  if (ul_group) {
+    if (plugin_call(create_group_member, data->group_id, user_id) < 0) {
+      err("%s -> cannot add user to a group", logbuf);
+      send_reply(p, -ULS_ERR_DB_ERROR);
+      return;
+    }
+  }
+
+  const struct userlist_user *u = 0;
+  if (default_get_user_info_1(user_id, &u) < 0 || !u) {
+    send_reply(p, -ULS_ERR_DB_ERROR);
+    err("%s -> database error", logbuf);
+    return;
+  }
+
+  if (!email_str || !*email_str) send_email_flag = 0;
+  /* FIXME: check other conditions when email is not send */
+
+  if (send_email_flag) {
+    send_registration_email(cnts, u, 0, NULL, 0);
+  }
+
+  if (!send_email_flag || !data->confirm_email_flag) {
+    default_touch_login_time(user_id, 0, cur_time);
+  }
+
+  struct userlist_pk_login_ok out;
+  memset(&out, 0, sizeof(out));
+  out.reply_id = ULS_LOGIN_OK;
+  out.user_id = user_id;
+  enqueue_reply_to_client(p, sizeof(out), &out);
+  info("%s -> OK, %d", logbuf, user_id); 
+}
+
 static void (*cmd_table[])() =
 {
   [ULS_REGISTER_NEW] =          cmd_register_new,
@@ -9428,6 +9872,7 @@ static void (*cmd_table[])() =
   [ULS_PRIV_SET_REG_PASSWD_SHA1] = cmd_priv_set_passwd_2,
   [ULS_PRIV_SET_CNTS_PASSWD_PLAIN] = cmd_priv_set_passwd_2,
   [ULS_PRIV_SET_CNTS_PASSWD_SHA1] = cmd_priv_set_passwd_2,
+  [ULS_CREATE_USER_2] =         cmd_create_user_2,
 
   [ULS_LAST_CMD] 0
 };
@@ -9526,6 +9971,7 @@ static int (*check_table[])() =
   [ULS_PRIV_SET_REG_PASSWD_SHA1] = check_pk_set_password,
   [ULS_PRIV_SET_CNTS_PASSWD_PLAIN] = check_pk_set_password,
   [ULS_PRIV_SET_CNTS_PASSWD_SHA1] = check_pk_set_password,
+  [ULS_CREATE_USER_2] =         check_pk_create_user_2,
 
   [ULS_LAST_CMD] 0
 };

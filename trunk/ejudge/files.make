@@ -23,6 +23,7 @@ USERLIST_CLNT_CFILES=\
  userlist_clnt/copy_user_info.c\
  userlist_clnt/create_member.c\
  userlist_clnt/create_user.c\
+ userlist_clnt/create_user_2.c\
  userlist_clnt/delete_cookie.c\
  userlist_clnt/delete_field.c\
  userlist_clnt/delete_info.c\
