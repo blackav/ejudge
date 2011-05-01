@@ -56,8 +56,17 @@ new_user_func(
         void *data,
         const unsigned char *login,
         const unsigned char *email,
+        int passwd_method,
         const unsigned char *passwd,
-        int simple_reg_flag);
+        int is_privileged,
+        int is_invisible,
+        int is_banned,
+        int is_locked,
+        int show_login,
+        int show_email,
+        int read_only,
+        int never_clean,
+        int simple_registration);
 static int
 remove_user_func(
         void *data,
@@ -189,6 +198,7 @@ register_contest_func(
         int user_id,
         int contest_id,
         int status,
+        int flags,
         time_t cur_time,
         const struct userlist_contest **p_c);
 static int
