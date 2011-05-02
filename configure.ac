@@ -747,6 +747,44 @@ AC_MSG_RESULT([no])
 ac_cv_has___int64=""
 ])
 
+AC_MSG_CHECKING([for -m32 support])
+saved_CC="${CC}"
+CC="${CC} -Wall -Werror -m32 -fPIC -DPIC -shared"
+AC_COMPILE_IFELSE([[
+#include <string.h>
+#include <stdio.h>
+int main(void)
+{
+  printf("%d\n", 0);
+  return 0;
+}
+]],[
+AC_MSG_RESULT([yes])
+ac_cv_need_32=1
+],[
+AC_MSG_RESULT([no])
+])
+CC="${saved_CC}"
+
+AC_MSG_CHECKING([for -m64 support])
+saved_CC="${CC}"
+CC="${CC} -Wall -Werror -m64 -fPIC -DPIC -shared"
+AC_COMPILE_IFELSE([[
+#include <string.h>
+#include <stdio.h>
+int main(void)
+{
+  printf("%d\n", 0);
+  return 0;
+}
+]],[
+AC_MSG_RESULT([yes])
+ac_cv_need_64=1
+],[
+AC_MSG_RESULT([no])
+])
+CC="${saved_CC}"
+
 dnl localization stuff
 
 if [[ x"${ac_cv_nls}" = xno ]]
@@ -970,6 +1008,8 @@ AC_SUBST(ac_cv_has_lib_libiconv)
 AC_SUBST(ac_cv_has_lib_intl)
 AC_SUBST(ac_cv_has_lib_libzip)
 AC_SUBST(ac_cv_meta_cc)
+AC_SUBST(ac_cv_need_32)
+AC_SUBST(ac_cv_need_64)
 
 AC_SUBST(ac_cv_festival_home)
 AC_SUBST(ac_cv_libcap_link)
