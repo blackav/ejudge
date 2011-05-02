@@ -57,7 +57,7 @@ userlist_clnt_create_user_2(
   unsigned char *email_ptr = login_ptr + login_len + 1;
   unsigned char *reg_password_ptr = email_ptr + email_len + 1;
   unsigned char *cnts_password_ptr = reg_password_ptr + reg_password_len + 1;
-  unsigned char *cnts_name_ptr = cnts_password_ptr + cnts_password_len;
+  unsigned char *cnts_name_ptr = cnts_password_ptr + cnts_password_len + 1;
 
   out->request_id = cmd;
   out->login_len = login_len;

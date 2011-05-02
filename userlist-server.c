@@ -9573,8 +9573,8 @@ cmd_create_user_2(
   const unsigned char *login_str = data->data;
   const unsigned char *email_str = login_str + data->login_len + 1;
   const unsigned char *reg_password_str = email_str + data->email_len + 1;
-  const unsigned char *cnts_password_str = reg_password_str + data->reg_password_len;
-  const unsigned char *cnts_name_str = cnts_password_str + data->cnts_password_len;
+  const unsigned char *cnts_password_str = reg_password_str + data->reg_password_len + 1;
+  const unsigned char *cnts_name_str = cnts_password_str + data->cnts_password_len + 1;
   int user_id = 0;
   unsigned char random_reg_password_buf[64];
   int reg_password_len = data->reg_password_len;
@@ -9736,6 +9736,13 @@ cmd_create_user_2(
 
   if (cnts && cnts_name_str && *cnts_name_str) {
     if (default_set_user_info_field(user_id, data->contest_id,
+                                    USERLIST_NC_NAME, cnts_name_str,
+                                    cur_time, &cloned_flag) < 0) {
+      err("%s -> cannot set user name", logbuf);
+      send_reply(p, -ULS_ERR_DB_ERROR);
+      return;
+    }
+    if (default_set_user_info_field(user_id, 0,
                                     USERLIST_NC_NAME, cnts_name_str,
                                     cur_time, &cloned_flag) < 0) {
       err("%s -> cannot set user name", logbuf);
