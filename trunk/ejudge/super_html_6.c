@@ -333,6 +333,8 @@ super_serve_op_USER_BROWSE_PAGE(
   unsigned char contest_id_str[128];
   unsigned char group_id_str[128];
   const struct contest_desc *cnts = 0;
+  opcap_t gcaps = 0;
+  opcap_t caps = 0;
 
   ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   ss_cgi_param_int_opt(phr, "group_id", &group_id, 0);
@@ -349,6 +351,15 @@ super_serve_op_USER_BROWSE_PAGE(
   group_id_str[0] = 0;
   if (group_id > 0) {
     snprintf(group_id_str, sizeof(group_id_str), "&amp;group_id=%d", group_id);
+  }
+
+  if (get_global_caps(phr, &gcaps) >= 0 && opcaps_check(gcaps, OPCAP_LIST_USERS) >= 0) {
+    // this user can view the full user list and the user list for any contest
+  } else if (!cnts) {
+    // user without global OPCAP_LIST_USERS capability cannot view the full user list
+    FAIL(-S_ERR_PERM_DENIED);
+  } else if (get_contest_caps(phr, cnts, &caps) < 0 || opcaps_check(caps, OPCAP_LIST_USERS) < 0) {
+    FAIL(-S_ERR_PERM_DENIED);
   }
 
   hbuf[0] = 0;
@@ -591,31 +602,34 @@ super_serve_op_USER_BROWSE_PAGE(
   fprintf(out_f, "</tr></table>\n");
   fprintf(out_f, "</form>\n");
 
-  cl = " class=\"b0\"";
-  fprintf(out_f, "<table%s><tr>", cl);
-  fprintf(out_f, "<td%s>%s[%s]</a></td>", cl,
-          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                        NULL, "action=%d&amp;op=%d%s%s",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_CREATE_ONE_PAGE,
-                        contest_id_str, group_id_str),
-          "Create one new user");
-  fprintf(out_f, "<td%s>%s[%s]</a></td>", cl,
-          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                        NULL, "action=%d&amp;op=%d%s%s",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_CREATE_MANY_PAGE,
-                        contest_id_str, group_id_str),
-          "Create MANY new users");
-  fprintf(out_f, "<td%s>%s[%s]</a></td>", cl,
-          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                        NULL, "action=%d&amp;op=%d%s%s",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_CREATE_FROM_CSV_PAGE,
-                        contest_id_str, group_id_str),
-          "Create users from a CSV table");
-  fprintf(out_f, "</tr></table>\n");
+  if (opcaps_check(gcaps, OPCAP_CREATE_USER) >= 0) {
+    cl = " class=\"b0\"";
+    fprintf(out_f, "<table%s><tr>", cl);
+    fprintf(out_f, "<td%s>%s[%s]</a></td>", cl,
+            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                          NULL, "action=%d&amp;op=%d%s%s",
+                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_CREATE_ONE_PAGE,
+                          contest_id_str, group_id_str),
+            "Create one new user");
+    fprintf(out_f, "<td%s>%s[%s]</a></td>", cl,
+            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                          NULL, "action=%d&amp;op=%d%s%s",
+                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_CREATE_MANY_PAGE,
+                          contest_id_str, group_id_str),
+            "Create MANY new users");
+    fprintf(out_f, "<td%s>%s[%s]</a></td>", cl,
+            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                          NULL, "action=%d&amp;op=%d%s%s",
+                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_CREATE_FROM_CSV_PAGE,
+                          contest_id_str, group_id_str),
+            "Create users from a CSV table");
+    fprintf(out_f, "</tr></table>\n");
+  }
 
 do_footer:
   ss_write_html_footer(out_f);
 
+cleanup:
   userlist_free(&users->b); users = 0;
   xfree(xml_text); xml_text = 0;
   html_armor_free(&ab);
@@ -2564,6 +2578,7 @@ super_serve_op_USER_CREATE_ONE_PAGE(
   int cnts_id_count = 0;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   const unsigned char *s;
+  opcap_t caps = 0;
 
   ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   ss_cgi_param_int_opt(phr, "group_id", &group_id, 0);
@@ -2579,6 +2594,10 @@ super_serve_op_USER_CREATE_ONE_PAGE(
   group_id_str[0] = 0;
   if (group_id > 0) {
     snprintf(group_id_str, sizeof(group_id_str), "&amp;group_id=%d", group_id);
+  }
+
+  if (get_global_caps(phr, &caps) < 0 || opcaps_check(caps, OPCAP_CREATE_USER) < 0) {
+    FAIL(S_ERR_PERM_DENIED);
   }
 
   snprintf(buf, sizeof(buf), "serve-control: %s, create a new user",
@@ -2863,6 +2882,7 @@ super_serve_op_USER_CREATE_ONE_PAGE(
 
   ss_write_html_footer(out_f);
 
+cleanup:
   html_armor_free(&ab);
   return retval;
 }
@@ -2883,6 +2903,7 @@ super_serve_op_USER_CREATE_MANY_PAGE(
   int cnts_id_count = 0;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   const unsigned char *s;
+  opcap_t caps = 0;
 
   ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   ss_cgi_param_int_opt(phr, "group_id", &group_id, 0);
@@ -2898,6 +2919,10 @@ super_serve_op_USER_CREATE_MANY_PAGE(
   group_id_str[0] = 0;
   if (group_id > 0) {
     snprintf(group_id_str, sizeof(group_id_str), "&amp;group_id=%d", group_id);
+  }
+
+  if (get_global_caps(phr, &caps) < 0 || opcaps_check(caps, OPCAP_CREATE_USER) < 0) {
+    FAIL(S_ERR_PERM_DENIED);
   }
 
   snprintf(buf, sizeof(buf), "serve-control: %s, create many new users",
@@ -3242,6 +3267,7 @@ super_serve_op_USER_CREATE_MANY_PAGE(
 
   ss_write_html_footer(out_f);
 
+cleanup:
   html_armor_free(&ab);
   return retval;
 }
@@ -3262,6 +3288,7 @@ super_serve_op_USER_CREATE_FROM_CSV_PAGE(
   int cnts_id_count = 0;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   const unsigned char *s;
+  opcap_t caps = 0;
 
   ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   ss_cgi_param_int_opt(phr, "group_id", &group_id, 0);
@@ -3277,6 +3304,10 @@ super_serve_op_USER_CREATE_FROM_CSV_PAGE(
   group_id_str[0] = 0;
   if (group_id > 0) {
     snprintf(group_id_str, sizeof(group_id_str), "&amp;group_id=%d", group_id);
+  }
+
+  if (get_global_caps(phr, &caps) < 0 || opcaps_check(caps, OPCAP_CREATE_USER) < 0) {
+    FAIL(S_ERR_PERM_DENIED);
   }
 
   snprintf(buf, sizeof(buf), "serve-control: %s, create users from a CSV file",
@@ -3550,6 +3581,7 @@ super_serve_op_USER_CREATE_FROM_CSV_PAGE(
 
   ss_write_html_footer(out_f);
 
+cleanup:
   html_armor_free(&ab);
   return retval;
 }
@@ -3785,7 +3817,7 @@ super_serve_op_USER_CREATE_ONE_ACTION(
   if (!params.reg_password2 || !*params.reg_password2) FAIL(S_ERR_UNSPEC_PASSWD2);
   if (strcmp(params.reg_password1, params.reg_password2) != 0) FAIL(S_ERR_PASSWDS_DIFFER);
   if (params.cnts_status < 0 || params.cnts_status >= USERLIST_REG_LAST) params.cnts_status = USERLIST_REG_PENDING;
-  if (!params.cnts_use_reg_passwd && !params.cnts_null_passwd) {
+  if (cnts && !cnts->disable_team_password && !params.cnts_use_reg_passwd && !params.cnts_null_passwd) {
     if (!params.cnts_password1 || !*params.cnts_password1) FAIL(S_ERR_UNSPEC_PASSWD1);
     if (!params.cnts_password2 || !*params.cnts_password2) FAIL(S_ERR_UNSPEC_PASSWD2);
     if (strcmp(params.cnts_password1, params.cnts_password2) != 0) FAIL(S_ERR_PASSWDS_DIFFER);
