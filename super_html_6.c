@@ -1107,11 +1107,12 @@ super_serve_op_USER_DETAIL_PAGE(
   fprintf(out_f, "<tr><td%s align=\"center\" colspan=\"4\"><b>%s</b></td></tr>\n",
           cl, "Generic contest-specific fields");
   s = "";
-  if (ui->cnts_read_only > 0) s = " checked=\"checked\"";
+  if (ui && ui->cnts_read_only > 0) s = " checked=\"checked\"";
   fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>&nbsp;</td><td%s><input type=\"checkbox\" name=\"field_%d\" value=\"1\"%s /></td><td%s>&nbsp;</td></tr>\n",
           cl, "User data is read-only", cl, cl, USERLIST_NC_CNTS_READ_ONLY, s, cl);
   s = "";
-  s2 = ui->name;
+  s2 = 0;
+  if (ui) s2 = ui->name;
   if (!s2) {
     s = " checked=\"checked\"";
     s2 = "";
@@ -1123,7 +1124,7 @@ super_serve_op_USER_DETAIL_PAGE(
   if (contest_id > 0 && cnts && !cnts->disable_team_password) {
     fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>&nbsp;</td><td%s>",
             cl, "Contest password", cl, cl);
-    if (!ui->team_passwd) {
+    if (!ui || !ui->team_passwd) {
       fprintf(out_f, "<i>NULL</i>");
     } else if (ui->team_passwd_method == USERLIST_PWD_PLAIN) {
       fprintf(out_f, "<tt>%s</tt>", ARMOR(ui->team_passwd));
@@ -1187,11 +1188,11 @@ super_serve_op_USER_DETAIL_PAGE(
   for (row = 0; user_info_rows[row].field_id > 0; ++row) {
     s = 0;
     if (user_info_rows[row].field_id == USERLIST_NC_INSTNUM) {
-      if (ui->instnum > 0) {
+      if (ui && ui->instnum > 0) {
         snprintf(buf2, sizeof(buf2), "%d", ui->instnum);
         s = buf2;
       }
-    } else {
+    } else if (ui) {
       unsigned char **ps = (unsigned char**) userlist_get_user_info_field_ptr(ui, user_info_rows[row].field_id);
       if (!ps) continue;
       s = *ps;
@@ -1209,23 +1210,25 @@ super_serve_op_USER_DETAIL_PAGE(
 
     { 0, 0 },
   };
-  for (row = 0; user_info_stat_rows[row].field_id > 0; ++row) {
-    fprintf(out_f, "<tr class=\"UserInfoRow2\" style=\"display: none;\"><td%s><b>%s:</b></td><td%s>&nbsp;</td><td%s>",
-            cl, user_info_stat_rows[row].field_desc, cl, cl);
-    time_t *pt = (time_t*) userlist_get_user_info_field_ptr(ui, user_info_stat_rows[row].field_id);
-    if (pt && *pt > 0) {
-      fprintf(out_f, "%s</td><td%s>%s%s</a></td></tr>\n",
-              xml_unparse_date(*pt), cl,
-              html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                            NULL, "action=%d&amp;op=%d&amp;other_user_id=%d&amp;field_id=%d%s%s",
-                            SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_CLEAR_FIELD_ACTION,
-                            other_user_id, user_info_stat_rows[row].field_id,
-                            contest_id_str, group_id_str),
-              "[Reset]");
-    } else if (pt) {
-      fprintf(out_f, "<i>Not set</i></td><td%s>&nbsp;</td></tr>\n", cl);
-    } else {
-      fprintf(out_f, "<i>Invalid field</i></td><td%s>&nbsp;</td></tr>\n", cl);
+  if (ui) {
+    for (row = 0; user_info_stat_rows[row].field_id > 0; ++row) {
+      fprintf(out_f, "<tr class=\"UserInfoRow2\" style=\"display: none;\"><td%s><b>%s:</b></td><td%s>&nbsp;</td><td%s>",
+              cl, user_info_stat_rows[row].field_desc, cl, cl);
+      time_t *pt = (time_t*) userlist_get_user_info_field_ptr(ui, user_info_stat_rows[row].field_id);
+      if (pt && *pt > 0) {
+        fprintf(out_f, "%s</td><td%s>%s%s</a></td></tr>\n",
+                xml_unparse_date(*pt), cl,
+                html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                              NULL, "action=%d&amp;op=%d&amp;other_user_id=%d&amp;field_id=%d%s%s",
+                              SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_CLEAR_FIELD_ACTION,
+                              other_user_id, user_info_stat_rows[row].field_id,
+                              contest_id_str, group_id_str),
+                "[Reset]");
+      } else if (pt) {
+        fprintf(out_f, "<i>Not set</i></td><td%s>&nbsp;</td></tr>\n", cl);
+      } else {
+        fprintf(out_f, "<i>Invalid field</i></td><td%s>&nbsp;</td></tr>\n", cl);
+      }
     }
   }
 
