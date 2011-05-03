@@ -2600,6 +2600,12 @@ super_serve_op_USER_CREATE_ONE_PAGE(
     FAIL(S_ERR_PERM_DENIED);
   }
 
+  cnts_id_count = contests_get_list(&cnts_id_list);
+  if (cnts_id_count <= 0 || !cnts_id_list) {
+    cnts_id_count = 0;
+    cnts_id_list = 0;
+  }
+
   snprintf(buf, sizeof(buf), "serve-control: %s, create a new user",
            phr->html_name);
   ss_write_html_header(out_f, phr, buf, 1, 0);
@@ -2699,6 +2705,7 @@ super_serve_op_USER_CREATE_ONE_PAGE(
           "function changeCntsRegCreate(obj)\n"
           "{\n"
           "  toggleRowsVisibility2(obj.checked, \"CreateUserTable\", \"CntsRegRow0\", \"CntsRegRow\");\n"
+          "  updateCntsPasswdVisibility();\n"
           "}\n"
           "function changeGroupCreate(obj)\n"
           "{\n"
@@ -2718,6 +2725,7 @@ super_serve_op_USER_CREATE_ONE_PAGE(
           "      break;\n"
           "    }\n"
           "  }\n"
+          "  updateCntsPasswdVisibility();\n"
           "}\n");
   fprintf(out_f,
           "function updateCnts2()\n"
@@ -2726,6 +2734,55 @@ super_serve_op_USER_CREATE_ONE_PAGE(
           "  var obj2 = document.getElementById(\"cnts2\");\n"
           "  var value = obj2.options[obj2.selectedIndex].value;\n"
           "  obj1.value = value;\n"
+          "  updateCntsPasswdVisibility();\n"
+          "}\n");
+  fprintf(out_f, "var cnts_passwd_enabled = { ");
+  row = 0;
+  for (i = 0; i < cnts_id_count; ++i) {
+    other_contest_id_2 = cnts_id_list[i];
+    if (other_contest_id_2 <= 0) continue;
+    if (contests_get(other_contest_id_2, &cnts) < 0 || !cnts) continue;
+    if (!cnts->disable_team_password) {
+      if (!row) fprintf(out_f, ", ");
+      ++row;
+      fprintf(out_f, "%d : true", other_contest_id_2);
+    }
+  }
+  fprintf(out_f, "};\n");
+  fprintf(out_f,
+          "function updateCntsPasswdVisibility()\n"
+          "{\n"
+          "  form_obj = document.getElementById(\"CreateForm\");\n"
+          "  if (!form_obj.reg_cnts_create.checked || !cnts_passwd_enabled[form_obj.other_contest_id_1.value]) {\n"
+          "    document.getElementById(\"CntsRegRowUseRegPasswd\").style.display = \"none\";\n"
+          "    document.getElementById(\"CntsRegRowSetToNull\").style.display = \"none\";\n"
+          "    document.getElementById(\"CntsRegRowPasswd1\").style.display = \"none\";\n"
+          "    document.getElementById(\"CntsRegRowPasswd2\").style.display = \"none\";\n"
+          "    document.getElementById(\"CntsRegRowPasswdRandom\").style.display = \"none\";\n"
+          "    document.getElementById(\"CntsRegRowPasswdSha1\").style.display = \"none\";\n"
+          "  } else {\n"
+          "    document.getElementById(\"CntsRegRowUseRegPasswd\").style.display = \"\";\n"
+          "    if (form_obj.cnts_use_reg_passwd.checked) {\n"
+          "      document.getElementById(\"CntsRegRowSetToNull\").style.display = \"none\";\n"
+          "      document.getElementById(\"CntsRegRowPasswd1\").style.display = \"none\";\n"
+          "      document.getElementById(\"CntsRegRowPasswd2\").style.display = \"none\";\n"
+          "      document.getElementById(\"CntsRegRowPasswdRandom\").style.display = \"none\";\n"
+          "      document.getElementById(\"CntsRegRowPasswdSha1\").style.display = \"none\";\n"
+          "    } else {\n"
+          "      document.getElementById(\"CntsRegRowSetToNull\").style.display = \"\";\n"
+          "      if (form_obj.cnts_null_passwd.checked) {\n"
+          "        document.getElementById(\"CntsRegRowPasswd1\").style.display = \"none\";\n"
+          "        document.getElementById(\"CntsRegRowPasswd2\").style.display = \"none\";\n"
+          "        document.getElementById(\"CntsRegRowPasswdRandom\").style.display = \"none\";\n"
+          "        document.getElementById(\"CntsRegRowPasswdSha1\").style.display = \"none\";\n"
+          "      } else {\n"
+          "        document.getElementById(\"CntsRegRowPasswd1\").style.display = \"\";\n"
+          "        document.getElementById(\"CntsRegRowPasswd2\").style.display = \"\";\n"
+          "        document.getElementById(\"CntsRegRowPasswdRandom\").style.display = \"\";\n"
+          "        document.getElementById(\"CntsRegRowPasswdSha1\").style.display = \"\";\n"
+          "      }\n"
+          "    }\n"
+          "  }\n"
           "}\n");
   fprintf(out_f, "</script>\n");
 
@@ -2804,12 +2861,6 @@ super_serve_op_USER_CREATE_ONE_PAGE(
   fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" onchange=\"changeCntsRegCreate(this)\" name=\"reg_cnts_create\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
           cl, "Create a contest registration", cl, cl);
 
-  cnts_id_count = contests_get_list(&cnts_id_list);
-  if (cnts_id_count <= 0 || !cnts_id_list) {
-    cnts_id_count = 0;
-    cnts_id_list = 0;
-  }
-
   hbuf[0] = 0;
   if (contest_id > 0) {
     snprintf(hbuf, sizeof(hbuf), "%d", contest_id);
@@ -2847,17 +2898,17 @@ super_serve_op_USER_CREATE_ONE_PAGE(
   fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\" /></td></tr>\n",
           cl, "Disqualified?", cl, "is_disqualified");
 
-  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\" /></td></tr>\n",
+  fprintf(out_f, "<tr class=\"CntsRegRow\" id=\"CntsRegRowUseRegPasswd\" style=\"display: none;\" ><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\" /></td></tr>\n",
           cl, "Use reg. password?", cl, "cnts_use_reg_passwd");
-  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\" /></td></tr>\n",
+  fprintf(out_f, "<tr class=\"CntsRegRow\" id=\"CntsRegRowSetToNull\" style=\"display: none;\" ><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\" /></td></tr>\n",
           cl, "Set to null?", cl, "cnts_null_passwd");
-  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"password\" name=\"cnts_password1\" size=\"40\" /></td><td%s>&nbsp;</td></tr>\n",
+  fprintf(out_f, "<tr class=\"CntsRegRow\" id=\"CntsRegRowPasswd1\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"password\" name=\"cnts_password1\" size=\"40\" /></td><td%s>&nbsp;</td></tr>\n",
           cl, "Contest password", cl, cl);
-  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"password\" name=\"cnts_password2\" size=\"40\" /></td><td%s>&nbsp;</td></tr>\n",
+  fprintf(out_f, "<tr class=\"CntsRegRow\" id=\"CntsRegRowPasswd2\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"password\" name=\"cnts_password2\" size=\"40\" /></td><td%s>&nbsp;</td></tr>\n",
           cl, "Confirm password", cl, cl);
-  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"text\" name=\"cnts_random\" size=\"40\" /></td><td%s><a onclick=\"generateRandomCntsPassword()\">[%s]</a>&nbsp;<a onclick=\"copyRandomCntsPassword()\">[%s]</a>&nbsp;<a onclick=\"copyRegPassword()\">[%s]</a></td></tr>\n",
+  fprintf(out_f, "<tr class=\"CntsRegRow\" id=\"CntsRegRowPasswdRandom\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"text\" name=\"cnts_random\" size=\"40\" /></td><td%s><a onclick=\"generateRandomCntsPassword()\">[%s]</a>&nbsp;<a onclick=\"copyRandomCntsPassword()\">[%s]</a>&nbsp;<a onclick=\"copyRegPassword()\">[%s]</a></td></tr>\n",
           cl, "Random password", cl, cl, "Generate", "Copy", "Copy reg. password");
-  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"cnts_sha1\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+  fprintf(out_f, "<tr class=\"CntsRegRow\" id=\"CntsRegRowPasswdSha1\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"cnts_sha1\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
           cl, "Use SHA1", cl, cl);
 
   fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"text\" size=\"40\" name=\"cnts_name\" /></td><td%s>&nbsp;</td></tr>\n",
