@@ -2743,7 +2743,7 @@ super_serve_op_USER_CREATE_ONE_PAGE(
     if (other_contest_id_2 <= 0) continue;
     if (contests_get(other_contest_id_2, &cnts) < 0 || !cnts) continue;
     if (!cnts->disable_team_password) {
-      if (!row) fprintf(out_f, ", ");
+      if (row) fprintf(out_f, ", ");
       ++row;
       fprintf(out_f, "%d : true", other_contest_id_2);
     }
@@ -2898,9 +2898,9 @@ super_serve_op_USER_CREATE_ONE_PAGE(
   fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\" /></td></tr>\n",
           cl, "Disqualified?", cl, "is_disqualified");
 
-  fprintf(out_f, "<tr class=\"CntsRegRow\" id=\"CntsRegRowUseRegPasswd\" style=\"display: none;\" ><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\" /></td></tr>\n",
+  fprintf(out_f, "<tr class=\"CntsRegRow\" id=\"CntsRegRowUseRegPasswd\" style=\"display: none;\" ><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" onchange=\"updateCntsPasswdVisibility()\" name=\"%s\" /></td></tr>\n",
           cl, "Use reg. password?", cl, "cnts_use_reg_passwd");
-  fprintf(out_f, "<tr class=\"CntsRegRow\" id=\"CntsRegRowSetToNull\" style=\"display: none;\" ><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\" /></td></tr>\n",
+  fprintf(out_f, "<tr class=\"CntsRegRow\" id=\"CntsRegRowSetToNull\" style=\"display: none;\" ><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" onchange=\"updateCntsPasswdVisibility()\" name=\"%s\" /></td></tr>\n",
           cl, "Set to null?", cl, "cnts_null_passwd");
   fprintf(out_f, "<tr class=\"CntsRegRow\" id=\"CntsRegRowPasswd1\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"password\" name=\"cnts_password1\" size=\"40\" /></td><td%s>&nbsp;</td></tr>\n",
           cl, "Contest password", cl, cl);
