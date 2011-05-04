@@ -3314,11 +3314,11 @@ super_serve_op_USER_CREATE_MANY_PAGE(
   fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\" /></td></tr>\n",
           cl, "Disqualified?", cl, "is_disqualified");
 
-  fprintf(out_f, "<tr id=\"CntsPasswordRegRow\" class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"cnts_use_reg_passwd\" onchange=\"changeCntsUseRegPassword()\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+  fprintf(out_f, "<tr id=\"CntsPasswordRegRow\" class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"cnts_use_reg_passwd\" onchange=\"updateCntsPasswdVisibility()\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
           cl, "Use registration password", cl, cl);
-  fprintf(out_f, "<tr id=\"CntsPasswordNullRow\" class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"cnts_null_passwd\" onchange=\"changeRandomCntsPassword()\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+  fprintf(out_f, "<tr id=\"CntsPasswordNullRow\" class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"cnts_null_passwd\" onchange=\"updateCntsPasswdVisibility()\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
           cl, "Set to null", cl, cl);
-  fprintf(out_f, "<tr id=\"CntsPasswordRandomRow\" class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"cnts_random_passwd\" onchange=\"changeRandomCntsPassword()\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+  fprintf(out_f, "<tr id=\"CntsPasswordRandomRow\" class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"cnts_random_passwd\" onchange=\"updateCntsPasswdVisibility()\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
           cl, "Random contest password", cl, cl);
   fprintf(out_f, "<tr id=\"CntsPasswordTemplateRow\" class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"text\" name=\"cnts_password_template\" size=\"40\" /></td><td%s>&nbsp;</td></tr>\n",
           cl, "Contest password template", cl, cl);
