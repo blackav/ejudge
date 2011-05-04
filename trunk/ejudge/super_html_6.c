@@ -2980,6 +2980,12 @@ super_serve_op_USER_CREATE_MANY_PAGE(
     FAIL(S_ERR_PERM_DENIED);
   }
 
+  cnts_id_count = contests_get_list(&cnts_id_list);
+  if (cnts_id_count <= 0 || !cnts_id_list) {
+    cnts_id_count = 0;
+    cnts_id_list = 0;
+  }
+
   snprintf(buf, sizeof(buf), "serve-control: %s, create many new users",
            phr->html_name);
   ss_write_html_header(out_f, phr, buf, 1, 0);
@@ -3270,12 +3276,6 @@ super_serve_op_USER_CREATE_MANY_PAGE(
 
   fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" onchange=\"changeCntsRegCreate(this)\" name=\"reg_cnts_create\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
           cl, "Create a contest registration", cl, cl);
-
-  cnts_id_count = contests_get_list(&cnts_id_list);
-  if (cnts_id_count <= 0 || !cnts_id_list) {
-    cnts_id_count = 0;
-    cnts_id_list = 0;
-  }
 
   hbuf[0] = 0;
   if (contest_id > 0) {
