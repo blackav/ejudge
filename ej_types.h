@@ -38,6 +38,7 @@ typedef char **ejenvlist_t;
 typedef int ej_checkbox_t;
 typedef int ej_int_opt_0_t;
 typedef int ej_int_opt_1_t;
+typedef int ej_int_opt_m1_t;
 typedef unsigned char *ej_textbox_t;
 typedef unsigned char *ej_textbox_opt_t;
 

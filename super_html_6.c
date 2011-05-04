@@ -37,6 +37,7 @@
 #include "reuse_xalloc.h"
 
 #include <stdarg.h>
+#include <printf.h>
 
 #define ARMOR(s)  html_armor_buf(&ab, (s))
 #define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
@@ -279,6 +280,9 @@ ss_parse_params(
       break;
     case '4':                   /* ej_int_opt_1_t */
       ss_cgi_param_int_opt(phr, field_name, (int*) field_ptr, 1);
+      break;
+    case '5':                   /* ej_int_opt_m1_t */
+      ss_cgi_param_int_opt(phr, field_name, (int*) field_ptr, -1);
       break;
     default:
       abort();
@@ -3228,7 +3232,7 @@ super_serve_op_USER_CREATE_MANY_PAGE(
           cl, "Logins to be created", cl);
   fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" onchange=\"changeRandomRegPassword()\" name=\"reg_random\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
           cl, "Use random password", cl, cl);
-  fprintf(out_f, "<tr id=\"RegPasswordTemplateRow\"><td%s><b>%s:</b></td><td%s><input type=\"text\" size=\"40\" name=\"password_template\" /></td><td%s>&nbsp;</td></tr>\n",
+  fprintf(out_f, "<tr id=\"RegPasswordTemplateRow\"><td%s><b>%s:</b></td><td%s><input type=\"text\" size=\"40\" name=\"reg_password_template\" /></td><td%s>&nbsp;</td></tr>\n",
           cl, "Password template", cl, cl);
   fprintf(out_f, "<tr id=\"RegPasswordSha1Row\"><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"reg_sha1\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
           cl, "Use SHA1", cl, cl);
@@ -3274,7 +3278,7 @@ super_serve_op_USER_CREATE_MANY_PAGE(
     fprintf(out_f, "</td><td%s>&nbsp;</td></tr>\n", cl);
   }
   fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s>", cl, "Status", cl);
-  ss_select(out_f, hbuf, (const unsigned char* []) { "OK", "Pending", "Rejected", NULL }, 1);
+  ss_select(out_f, "cnts_status", (const unsigned char* []) { "OK", "Pending", "Rejected", NULL }, 1);
   fprintf(out_f, "</td></tr>\n");
   fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\" /></td></tr>\n",
           cl, "Invisible?", cl, "is_invisible");
@@ -3287,16 +3291,18 @@ super_serve_op_USER_CREATE_MANY_PAGE(
   fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\" /></td></tr>\n",
           cl, "Disqualified?", cl, "is_disqualified");
 
-  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"cnts_password_use_reg\" onchange=\"changeCntsUseRegPassword()\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"cnts_use_reg_passwd\" onchange=\"changeCntsUseRegPassword()\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
           cl, "Use registration password", cl, cl);
-  fprintf(out_f, "<tr id=\"CntsPasswordRandomRow\" class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"cnts_password_random\" onchange=\"changeRandomCntsPassword()\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+  fprintf(out_f, "<tr id=\"CntsPasswordNull\" class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"cnts_null_passwd\" onchange=\"changeRandomCntsPassword()\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, "Set to null", cl, cl);
+  fprintf(out_f, "<tr id=\"CntsPasswordRandomRow\" class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"cnts_random_passwd\" onchange=\"changeRandomCntsPassword()\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
           cl, "Random contest password", cl, cl);
   fprintf(out_f, "<tr id=\"CntsPasswordTemplateRow\" class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"text\" name=\"cnts_password_template\" size=\"40\" /></td><td%s>&nbsp;</td></tr>\n",
           cl, "Contest password template", cl, cl);
   fprintf(out_f, "<tr id=\"CntsPasswordSha1Row\" class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"cnts_sha1\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
           cl, "Use SHA1", cl, cl);
 
-  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"text\" size=\"40\" name=\"cnts_name\" /></td><td%s>&nbsp;</td></tr>\n",
+  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"text\" size=\"40\" name=\"cnts_name_template\" /></td><td%s>&nbsp;</td></tr>\n",
           cl, "User name template", cl, cl);
 
   fprintf(out_f, "<tr><td%s colspan=\"3\" align=\"center\"><b>%s</b></td></tr>\n",
@@ -3916,6 +3922,76 @@ super_serve_op_USER_CREATE_ONE_ACTION(
 cleanup:
   xfree(xml_text); xml_text = 0;
   meta_destroy_fields(&meta_ss_op_param_USER_CREATE_ONE_ACTION_methods, &params);
+  return retval;
+}
+
+int
+super_serve_op_USER_CREATE_MANY_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0, r;
+  opcap_t caps = 0;
+  const struct contest_desc *cnts = 0;
+  unsigned char *xml_text = 0;
+  int serial_count;
+
+  struct ss_op_param_USER_CREATE_MANY_ACTION params;
+  memset(&params, 0, sizeof(params));
+  retval = ss_parse_params(phr, &meta_ss_op_param_USER_CREATE_MANY_ACTION_methods, &params);
+  if (retval < 0) goto cleanup;
+
+  if (params.contest_id > 0) {
+    cnts = 0;
+    if (contests_get(params.contest_id, &cnts) < 0 || !cnts) {
+      params.contest_id = 0;
+    }
+  }
+  cnts = 0;
+  if (params.reg_cnts_create) {
+    if (contests_get(params.other_contest_id_1, &cnts) < 0 || !cnts) {
+      FAIL(S_ERR_INV_CONTEST);
+    }
+  } else {
+    params.other_contest_id_1 = 0;
+  }
+
+  if (params.group_create) {
+    r = userlist_clnt_list_all_users(phr->userlist_clnt, ULS_LIST_GROUP_USERS,
+                                     params.other_group_id, &xml_text);
+    if (r < 0) FAIL(S_ERR_INV_GROUP_ID);
+  } else {
+    params.other_group_id = 0;
+  }
+
+  if (get_global_caps(phr, &caps) < 0 || opcaps_check(caps, OPCAP_CREATE_USER) < 0) {
+    FAIL(S_ERR_PERM_DENIED);
+  }
+  if (cnts) {
+    if (get_contest_caps(phr, cnts, &caps) < 0 || opcaps_check(caps, OPCAP_CREATE_REG) < 0) {
+      FAIL(S_ERR_PERM_DENIED);
+    }
+  }
+
+  if (params.first_serial < 0 || params.first_serial >= 1000000000) FAIL(S_ERR_INV_FIRST_SERIAL);
+  if (params.last_serial < 0 || params.last_serial >= 1000000000) FAIL(S_ERR_INV_LAST_SERIAL);
+  if (params.first_serial > params.last_serial) FAIL(S_ERR_INV_RANGE);
+  serial_count = params.last_serial - params.first_serial + 1;
+  if (serial_count > 1000) FAIL(S_ERR_INV_RANGE);
+  if (!params.login_template || !*params.login_template) FAIL(S_ERR_INV_LOGIN_TEMPLATE);
+
+  int printf_arg_types[10];
+  memset(printf_arg_types, 0, sizeof(printf_arg_types));
+  int printf_arg_count = parse_printf_format(params.login_template, 10, printf_arg_types);
+  if (printf_arg_count != 1) FAIL(S_ERR_INV_LOGIN_TEMPLATE);
+  if ((printf_arg_types[0] & ~PA_FLAG_MASK) != PA_INT) FAIL(S_ERR_INV_LOGIN_TEMPLATE);
+
+  ss_redirect_2(out_f, phr, SSERV_OP_USER_BROWSE_PAGE, params.contest_id, params.group_id, 0);
+
+cleanup:
+  xfree(xml_text); xml_text = 0;
+  meta_destroy_fields(&meta_ss_op_param_USER_CREATE_MANY_ACTION_methods, &params);
   return retval;
 }
 
