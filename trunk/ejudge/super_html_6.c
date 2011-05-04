@@ -3081,9 +3081,7 @@ super_serve_op_USER_CREATE_MANY_PAGE(
           "function changeCntsRegCreate(obj)\n"
           "{\n"
           "  toggleRowsVisibility2(obj.checked, \"CreateUserTable\", \"CntsRegRow0\", \"CntsRegRow\");\n"
-          "  if (obj.checked) {\n"
-          "    changeCntsUseRegPassword();\n"
-          "  }\n"
+          "  updateCntsPasswdVisibility();\n"
           "}\n"
           "function changeGroupCreate(obj)\n"
           "{\n"
@@ -3103,6 +3101,7 @@ super_serve_op_USER_CREATE_MANY_PAGE(
           "      break;\n"
           "    }\n"
           "  }\n"
+          "  updateCntsPasswdVisibility();\n"
           "}\n");
   fprintf(out_f,
           "function updateCnts2()\n"
@@ -3111,38 +3110,62 @@ super_serve_op_USER_CREATE_MANY_PAGE(
           "  var obj2 = document.getElementById(\"cnts2\");\n"
           "  var value = obj2.options[obj2.selectedIndex].value;\n"
           "  obj1.value = value;\n"
+          "  updateCntsPasswdVisibility();\n"
           "}\n");
+  fprintf(out_f, "var cnts_passwd_enabled = { ");
+  row = 0;
+  for (i = 0; i < cnts_id_count; ++i) {
+    other_contest_id_2 = cnts_id_list[i];
+    if (other_contest_id_2 <= 0) continue;
+    if (contests_get(other_contest_id_2, &cnts) < 0 || !cnts) continue;
+    if (!cnts->disable_team_password) {
+      if (row) fprintf(out_f, ", ");
+      ++row;
+      fprintf(out_f, "%d : true", other_contest_id_2);
+    }
+  }
+  fprintf(out_f, "};\n");
+  // CntsPasswordRegRow    cnts_use_reg_passwd
+  // CntsPasswordNullRow   cnts_null_passwd
+  // CntsPasswordRandomRow cnts_random_passwd
+  // CntsPasswordTemplateRow
+  // CntsPasswordSha1Row
   fprintf(out_f,
-          "function changeRandomRegPassword()\n"
+          "function updateCntsPasswdVisibility()\n"
           "{\n"
-          "  var form_obj = document.getElementById(\"CreateForm\");\n"
-          "  var vis = \"\";\n"
-          "  if (form_obj.reg_random.checked) vis = \"none\";\n"
-          "  document.getElementById(\"RegPasswordTemplateRow\").style.display = vis;\n"
-          "  document.getElementById(\"RegPasswordSha1Row\").style.display = vis;\n"
-          "}\n"
-          "function changeCntsUseRegPassword()\n"
-          "{\n"
-          "  var form_obj = document.getElementById(\"CreateForm\");\n"
-          "  var vis = \"\";\n"
-          "  if (form_obj.cnts_password_use_reg.checked) {\n"
-          "    vis = \"none\";\n"
-          "    document.getElementById(\"CntsPasswordTemplateRow\").style.display = vis;\n"
-          "    document.getElementById(\"CntsPasswordSha1Row\").style.display = vis;\n"
+          "  form_obj = document.getElementById(\"CreateForm\");\n"
+          "  if (!form_obj.reg_cnts_create.checked || !cnts_passwd_enabled[form_obj.other_contest_id_1.value]) {\n"
+          "    document.getElementById(\"CntsPasswordRegRow\").style.display = \"none\";\n"
+          "    document.getElementById(\"CntsPasswordNullRow\").style.display = \"none\";\n"
+          "    document.getElementById(\"CntsPasswordRandomRow\").style.display = \"none\";\n"
+          "    document.getElementById(\"CntsPasswordTemplateRow\").style.display = \"none\";\n"
+          "    document.getElementById(\"CntsPasswordSha1Row\").style.display = \"none\";\n"
           "  } else {\n"
-          "    changeRandomCntsPassword()\n"
+          "    document.getElementById(\"CntsPasswordRegRow\").style.display = \"\";\n"
+          "    if (form_obj.cnts_use_reg_passwd.checked) {\n"
+          "      document.getElementById(\"CntsPasswordNullRow\").style.display = \"none\";\n"
+          "      document.getElementById(\"CntsPasswordRandomRow\").style.display = \"none\";\n"
+          "      document.getElementById(\"CntsPasswordTemplateRow\").style.display = \"none\";\n"
+          "      document.getElementById(\"CntsPasswordSha1Row\").style.display = \"none\";\n"
+          "    } else {\n"
+          "      document.getElementById(\"CntsPasswordNullRow\").style.display = \"\";\n"
+          "      if (form_obj.cnts_null_passwd.checked) {\n"
+          "        document.getElementById(\"CntsPasswordRandomRow\").style.display = \"none\";\n"
+          "        document.getElementById(\"CntsPasswordTemplateRow\").style.display = \"none\";\n"
+          "        document.getElementById(\"CntsPasswordSha1Row\").style.display = \"none\";\n"
+          "      } else {\n"
+          "        document.getElementById(\"CntsPasswordRandomRow\").style.display = \"\";\n"
+          "        if (form_obj.cnts_random_passwd.checked) {\n"
+          "          document.getElementById(\"CntsPasswordTemplateRow\").style.display = \"none\";\n"
+          "          document.getElementById(\"CntsPasswordSha1Row\").style.display = \"none\";\n"
+          "        } else {\n"
+          "          document.getElementById(\"CntsPasswordTemplateRow\").style.display = \"\";\n"
+          "          document.getElementById(\"CntsPasswordSha1Row\").style.display = \"\";\n"
+          "        }\n"
+          "      }\n"
+          "    }\n"
           "  }\n"
-          "  document.getElementById(\"CntsPasswordRandomRow\").style.display = vis;\n"
-          "}\n"
-          "function changeRandomCntsPassword()\n"
-          "{\n"
-          "  var form_obj = document.getElementById(\"CreateForm\");\n"
-          "  var vis = \"\";\n"
-          "  if (form_obj.cnts_password_random.checked) vis = \"none\";\n"
-          "  document.getElementById(\"CntsPasswordTemplateRow\").style.display = vis;\n"
-          "  document.getElementById(\"CntsPasswordSha1Row\").style.display = vis;\n"
-          "}\n"
-          "");
+          "}\n");
   fprintf(out_f,
           "function formatLogins()\n"
           "{\n"
@@ -3291,9 +3314,9 @@ super_serve_op_USER_CREATE_MANY_PAGE(
   fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\" /></td></tr>\n",
           cl, "Disqualified?", cl, "is_disqualified");
 
-  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"cnts_use_reg_passwd\" onchange=\"changeCntsUseRegPassword()\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+  fprintf(out_f, "<tr id=\"CntsPasswordRegRow\" class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"cnts_use_reg_passwd\" onchange=\"changeCntsUseRegPassword()\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
           cl, "Use registration password", cl, cl);
-  fprintf(out_f, "<tr id=\"CntsPasswordNull\" class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"cnts_null_passwd\" onchange=\"changeRandomCntsPassword()\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+  fprintf(out_f, "<tr id=\"CntsPasswordNullRow\" class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"cnts_null_passwd\" onchange=\"changeRandomCntsPassword()\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
           cl, "Set to null", cl, cl);
   fprintf(out_f, "<tr id=\"CntsPasswordRandomRow\" class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"cnts_random_passwd\" onchange=\"changeRandomCntsPassword()\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
           cl, "Random contest password", cl, cl);
@@ -3925,17 +3948,29 @@ cleanup:
   return retval;
 }
 
+static unsigned char **create_many_sorted_logins;
+static int create_many_sort_func(const void *p1, const void *p2)
+{
+  return strcmp(*(const unsigned char**) p1, *(const unsigned char **) p2);
+}
+
 int
 super_serve_op_USER_CREATE_MANY_ACTION(
         FILE *log_f,
         FILE *out_f,
         struct super_http_request_info *phr)
 {
-  int retval = 0, r;
+  int retval = 0, r, i;
   opcap_t caps = 0;
   const struct contest_desc *cnts = 0;
   unsigned char *xml_text = 0;
-  int serial_count;
+  int serial_count = 0, cur_serial;
+  unsigned char **login_strs = 0;
+  unsigned char buf[1024];
+  unsigned char **reg_password_strs = 0;
+  unsigned char **cnts_password_strs = 0;
+  unsigned char **cnts_name_strs = 0;
+  int other_user_id = 0;
 
   struct ss_op_param_USER_CREATE_MANY_ACTION params;
   memset(&params, 0, sizeof(params));
@@ -3987,9 +4022,133 @@ super_serve_op_USER_CREATE_MANY_ACTION(
   if (printf_arg_count != 1) FAIL(S_ERR_INV_LOGIN_TEMPLATE);
   if ((printf_arg_types[0] & ~PA_FLAG_MASK) != PA_INT) FAIL(S_ERR_INV_LOGIN_TEMPLATE);
 
+  if (create_many_sorted_logins) {
+    xfree(create_many_sorted_logins);
+    create_many_sorted_logins = 0;
+  }
+  XCALLOC(create_many_sorted_logins, serial_count);
+  XCALLOC(login_strs, serial_count);
+  for (i = 0, cur_serial = params.first_serial; cur_serial <= params.last_serial; ++i, ++cur_serial) {
+    snprintf(buf, sizeof(buf), params.login_template, cur_serial);
+    if (strlen(buf) > 1000) FAIL(S_ERR_INV_LOGIN_TEMPLATE);
+    login_strs[i] = xstrdup(buf);
+    create_many_sorted_logins[i] = login_strs[i];
+  }
+  /* check login uniqueness */
+  qsort(create_many_sorted_logins, serial_count, sizeof(create_many_sorted_logins), create_many_sort_func);
+  for (i = 1; i < serial_count; ++i) {
+    if (!strcmp(create_many_sorted_logins[i - 1], create_many_sorted_logins[i]))
+      FAIL(S_ERR_INV_LOGIN_TEMPLATE);
+  }
+
+  XCALLOC(reg_password_strs, serial_count);
+  if (!params.reg_random) {
+    if (!params.reg_password_template || !*params.reg_password_template) FAIL(S_ERR_INV_REG_PASSWORD_TEMPLATE);
+    memset(printf_arg_types, 0, sizeof(printf_arg_types));
+    printf_arg_count = parse_printf_format(params.reg_password_template, 10, printf_arg_types);
+    if (printf_arg_count != 0 && printf_arg_count != 1)
+      FAIL(S_ERR_INV_REG_PASSWORD_TEMPLATE);
+    if (printf_arg_count == 1 && (printf_arg_types[0] & ~PA_FLAG_MASK) != PA_INT)
+      FAIL(S_ERR_INV_REG_PASSWORD_TEMPLATE);
+    for (i = 0, cur_serial = params.first_serial; cur_serial <= params.last_serial; ++i, ++cur_serial) {
+      snprintf(buf, sizeof(buf), params.reg_password_template, cur_serial);
+      if (strlen(buf) > 1000) FAIL(S_ERR_INV_REG_PASSWORD_TEMPLATE);
+      reg_password_strs[i] = xstrdup(buf);
+    }
+  }
+
+  XCALLOC(cnts_password_strs, serial_count);
+  if (cnts && !cnts->disable_team_password && !params.cnts_use_reg_passwd
+      && !params.cnts_null_passwd && !params.cnts_random_passwd) {
+    if (!params.cnts_password_template || !*params.cnts_password_template) FAIL(S_ERR_INV_CNTS_PASSWORD_TEMPLATE);
+    memset(printf_arg_types, 0, sizeof(printf_arg_types));
+    printf_arg_count = parse_printf_format(params.cnts_password_template, 10, printf_arg_types);
+    if (printf_arg_count != 0 && printf_arg_count != 1)
+      FAIL(S_ERR_INV_CNTS_PASSWORD_TEMPLATE);
+    if (printf_arg_count == 1 && (printf_arg_types[0] & ~PA_FLAG_MASK) != PA_INT)
+      FAIL(S_ERR_INV_CNTS_PASSWORD_TEMPLATE);
+    for (i = 0, cur_serial = params.first_serial; cur_serial <= params.last_serial; ++i, ++cur_serial) {
+      snprintf(buf, sizeof(buf), params.cnts_password_template, cur_serial);
+      if (strlen(buf) > 1000) FAIL(S_ERR_INV_CNTS_PASSWORD_TEMPLATE);
+      cnts_password_strs[i] = xstrdup(buf);
+    }
+  }
+
+  XCALLOC(cnts_name_strs, serial_count);
+  if (cnts) {
+    if (!params.cnts_name_template || !*params.cnts_name_template) FAIL(S_ERR_INV_CNTS_NAME_TEMPLATE);
+    memset(printf_arg_types, 0, sizeof(printf_arg_types));
+    printf_arg_count = parse_printf_format(params.cnts_name_template, 10, printf_arg_types);
+    if (printf_arg_count != 0 && printf_arg_count != 1)
+      FAIL(S_ERR_INV_CNTS_NAME_TEMPLATE);
+    if (printf_arg_count == 1 && (printf_arg_types[0] & ~PA_FLAG_MASK) != PA_INT)
+      FAIL(S_ERR_INV_CNTS_NAME_TEMPLATE);
+    for (i = 0, cur_serial = params.first_serial; cur_serial <= params.last_serial; ++i, ++cur_serial) {
+      snprintf(buf, sizeof(buf), params.cnts_name_template, cur_serial);
+      if (strlen(buf) > 1000) FAIL(S_ERR_INV_CNTS_NAME_TEMPLATE);
+      cnts_name_strs[i] = xstrdup(buf);
+    }
+  }
+
+  for (i = 0, cur_serial = params.first_serial; cur_serial <= params.last_serial; ++i, ++cur_serial) {
+    struct userlist_pk_create_user_2 up;
+    memset(&up, 0, sizeof(up));
+    up.random_password_flag = params.reg_random;
+    up.use_sha1_flag = params.reg_sha1;
+    up.is_privileged_flag = params.field_1;
+    up.is_invisible_flag = params.field_2;
+    up.is_banned_flag = params.field_3;
+    up.is_locked_flag = params.field_4;
+    up.show_login_flag = params.field_5;
+    up.show_email_flag = params.field_6;
+    up.read_only_flag = params.field_7;
+    up.never_clean_flag = params.field_8;
+    up.simple_registration_flag = params.field_9;
+    up.contest_id = params.other_contest_id_1;
+    up.cnts_status = params.cnts_status;
+    up.cnts_is_invisible_flag = params.is_invisible;
+    up.cnts_is_banned_flag = params.is_banned;
+    up.cnts_is_locked_flag = params.is_locked;
+    up.cnts_is_incomplete_flag = params.is_incomplete;
+    up.cnts_is_disqualified_flag = params.is_disqualified;
+    up.cnts_use_reg_passwd_flag = params.cnts_use_reg_passwd;
+    up.cnts_set_null_passwd_flag = params.cnts_null_passwd;
+    up.cnts_random_password_flag = params.cnts_random_passwd;
+    up.cnts_use_sha1_flag = params.cnts_sha1;
+    up.group_id = params.other_group_id;
+    other_user_id = 0;
+    r = userlist_clnt_create_user_2(phr->userlist_clnt, ULS_CREATE_USER_2, &up,
+                                    login_strs[i], NULL,
+                                    reg_password_strs[i], cnts_password_strs[i],
+                                    cnts_name_strs[i], &other_user_id);
+    if (r < 0 && r == -ULS_ERR_LOGIN_USED) {
+      FAIL(S_ERR_DUPLICATED_LOGIN);
+    }
+    if (r < 0 || other_user_id <= 0) {
+      FAIL(S_ERR_DB_ERROR);
+    }
+  }
+
   ss_redirect_2(out_f, phr, SSERV_OP_USER_BROWSE_PAGE, params.contest_id, params.group_id, 0);
 
 cleanup:
+  if (login_strs) {
+    for (i = 0; i < serial_count; ++i) xfree(login_strs[i]);
+    xfree(login_strs); login_strs = 0;
+  }
+  if (reg_password_strs) {
+    for (i = 0; i < serial_count; ++i) xfree(reg_password_strs[i]);
+    xfree(reg_password_strs); reg_password_strs = 0;
+  }
+  if (cnts_password_strs) {
+    for (i = 0; i < serial_count; ++i) xfree(cnts_password_strs[i]);
+    xfree(cnts_password_strs); cnts_password_strs = 0;
+  }
+  if (cnts_name_strs) {
+    for (i = 0; i < serial_count; ++i) xfree(cnts_name_strs[i]);
+    xfree(cnts_name_strs); cnts_name_strs = 0;
+  }
+  xfree(create_many_sorted_logins); create_many_sorted_logins = 0;
   xfree(xml_text); xml_text = 0;
   meta_destroy_fields(&meta_ss_op_param_USER_CREATE_MANY_ACTION_methods, &params);
   return retval;

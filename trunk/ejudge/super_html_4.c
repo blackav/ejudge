@@ -6783,6 +6783,9 @@ static unsigned char const * const error_messages[] =
   [S_ERR_INV_LAST_SERIAL] = "Invalid last serial number",
   [S_ERR_INV_RANGE] = "Invalid serial number range",
   [S_ERR_INV_LOGIN_TEMPLATE] = "Invalid login template",
+  [S_ERR_INV_REG_PASSWORD_TEMPLATE] = "Invalid registration password template",
+  [S_ERR_INV_CNTS_PASSWORD_TEMPLATE] = "Invalid contest password template",
+  [S_ERR_INV_CNTS_NAME_TEMPLATE] = "Invalid name template",
 };
 
 void

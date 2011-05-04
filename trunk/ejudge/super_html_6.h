@@ -90,7 +90,7 @@ struct ss_op_param_USER_CREATE_MANY_ACTION
   ej_checkbox_t    cnts_random_passwd;
   ej_textbox_opt_t cnts_password_template;
   ej_checkbox_t    cnts_sha1;
-  ej_checkbox_t    cnts_name_template;
+  ej_textbox_opt_t cnts_name_template;
   ej_checkbox_t    group_create;
   ej_int_opt_0_t   other_group_id;
 };
