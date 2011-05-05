@@ -95,4 +95,40 @@ struct ss_op_param_USER_CREATE_MANY_ACTION
   ej_int_opt_0_t   other_group_id;
 };
 
+struct ss_op_param_USER_CREATE_FROM_CSV_ACTION
+{
+  ej_int_opt_0_t   contest_id;
+  ej_int_opt_0_t   group_id;
+  ej_checkbox_t    send_email;
+  ej_checkbox_t    confirm_email;
+  ej_checkbox_t    reg_random;
+  ej_checkbox_t    reg_sha1;
+  ej_checkbox_t    field_1;          // USERLIST_NN_IS_PRIVILEGED,
+  ej_checkbox_t    field_2;          // USERLIST_NN_IS_INVISIBLE,
+  ej_checkbox_t    field_3;          // USERLIST_NN_IS_BANNED,
+  ej_checkbox_t    field_4;          // USERLIST_NN_IS_LOCKED,
+  ej_checkbox_t    field_5;          // USERLIST_NN_SHOW_LOGIN,
+  ej_checkbox_t    field_6;          // USERLIST_NN_SHOW_EMAIL,
+  ej_checkbox_t    field_7;          // USERLIST_NN_READ_ONLY,
+  ej_checkbox_t    field_8;          // USERLIST_NN_NEVER_CLEAN,
+  ej_checkbox_t    field_9;          // USERLIST_NN_SIMPLE_REGISTRATION,
+  ej_checkbox_t    reg_cnts_create;
+  ej_int_opt_0_t   other_contest_id_1;
+  ej_int_opt_1_t   cnts_status;
+  ej_checkbox_t    is_invisible;
+  ej_checkbox_t    is_banned;
+  ej_checkbox_t    is_locked;
+  ej_checkbox_t    is_incomplete;
+  ej_checkbox_t    is_disqualified;
+  ej_checkbox_t    cnts_use_reg_passwd;
+  ej_checkbox_t    cnts_null_passwd;
+  ej_checkbox_t    cnts_random_passwd;
+  ej_checkbox_t    cnts_sha1;
+  ej_textbox_opt_t cnts_name_template;
+  ej_checkbox_t    group_create;
+  ej_int_opt_0_t   other_group_id;
+  ej_textbox_opt_t separator;
+  ej_textbox_opt_t charset;
+};
+
 #endif /* __SUPER_HTML_6_H__ */
