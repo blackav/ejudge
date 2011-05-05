@@ -33,6 +33,8 @@
 #include "super_html_6.h"
 #include "super_html_6_meta.h"
 #include "meta_generic.h"
+#include "charsets.h"
+#include "csv.h"
 
 #include "reuse_xalloc.h"
 
@@ -2753,11 +2755,23 @@ super_serve_op_USER_CREATE_ONE_PAGE(
     }
   }
   fprintf(out_f, "};\n");
+  // CntsRegRowUseRegPasswd cnts_use_reg_passwd
+  // CntsRegRowSetToNull    cnts_rull_passwd
+  // CntsRegRowPasswd1      cnts_password1
+  // CntsRegRowPasswd2      cnts_password2
+  // CntsRegRowPasswdRandom cnts_random
+  // CntsRegRowPasswdSha1   cnts_sha1
   fprintf(out_f,
           "function updateCntsPasswdVisibility()\n"
           "{\n"
           "  form_obj = document.getElementById(\"CreateForm\");\n"
           "  if (!form_obj.reg_cnts_create.checked || !cnts_passwd_enabled[form_obj.other_contest_id_1.value]) {\n"
+          "    form_obj.cnts_use_reg_passwd.checked = false;\n"
+          "    form_obj.cnts_null_passwd.checked = false;\n"
+          "    form_obj.cnts_password1.value = \"\";\n"
+          "    form_obj.cnts_password2.value = \"\";\n"
+          "    form_obj.cnts_random.value = \"\";\n"
+          "    form_obj.cnts_sha1.checked = false;\n"
           "    document.getElementById(\"CntsRegRowUseRegPasswd\").style.display = \"none\";\n"
           "    document.getElementById(\"CntsRegRowSetToNull\").style.display = \"none\";\n"
           "    document.getElementById(\"CntsRegRowPasswd1\").style.display = \"none\";\n"
@@ -2767,6 +2781,11 @@ super_serve_op_USER_CREATE_ONE_PAGE(
           "  } else {\n"
           "    document.getElementById(\"CntsRegRowUseRegPasswd\").style.display = \"\";\n"
           "    if (form_obj.cnts_use_reg_passwd.checked) {\n"
+          "      form_obj.cnts_null_passwd.checked = false;\n"
+          "      form_obj.cnts_password1.value = \"\";\n"
+          "      form_obj.cnts_password2.value = \"\";\n"
+          "      form_obj.cnts_random.value = \"\";\n"
+          "      form_obj.cnts_sha1.checked = false;\n"
           "      document.getElementById(\"CntsRegRowSetToNull\").style.display = \"none\";\n"
           "      document.getElementById(\"CntsRegRowPasswd1\").style.display = \"none\";\n"
           "      document.getElementById(\"CntsRegRowPasswd2\").style.display = \"none\";\n"
@@ -2775,6 +2794,10 @@ super_serve_op_USER_CREATE_ONE_PAGE(
           "    } else {\n"
           "      document.getElementById(\"CntsRegRowSetToNull\").style.display = \"\";\n"
           "      if (form_obj.cnts_null_passwd.checked) {\n"
+          "        form_obj.cnts_password1.value = \"\";\n"
+          "        form_obj.cnts_password2.value = \"\";\n"
+          "        form_obj.cnts_random.value = \"\";\n"
+          "        form_obj.cnts_sha1.checked = false;\n"
           "        document.getElementById(\"CntsRegRowPasswd1\").style.display = \"none\";\n"
           "        document.getElementById(\"CntsRegRowPasswd2\").style.display = \"none\";\n"
           "        document.getElementById(\"CntsRegRowPasswdRandom\").style.display = \"none\";\n"
@@ -3131,42 +3154,56 @@ super_serve_op_USER_CREATE_MANY_PAGE(
     }
   }
   fprintf(out_f, "};\n");
-  // CntsPasswordRegRow    cnts_use_reg_passwd
-  // CntsPasswordNullRow   cnts_null_passwd
-  // CntsPasswordRandomRow cnts_random_passwd
-  // CntsPasswordTemplateRow
-  // CntsPasswordSha1Row
+  // CntsRegRowUseRegPasswd   cnts_use_reg_passwd
+  // CntsRegRowSetToNull      cnts_null_passwd
+  // CntsRegRowUseRandom      cnts_random_passwd
+  // CntsRegRowPasswdTemplate cnts_password_template
+  // CntsRegRowPasswdSha1     cnts_sha1
   fprintf(out_f,
           "function updateCntsPasswdVisibility()\n"
           "{\n"
           "  form_obj = document.getElementById(\"CreateForm\");\n"
           "  if (!form_obj.reg_cnts_create.checked || !cnts_passwd_enabled[form_obj.other_contest_id_1.value]) {\n"
-          "    document.getElementById(\"CntsPasswordRegRow\").style.display = \"none\";\n"
-          "    document.getElementById(\"CntsPasswordNullRow\").style.display = \"none\";\n"
-          "    document.getElementById(\"CntsPasswordRandomRow\").style.display = \"none\";\n"
-          "    document.getElementById(\"CntsPasswordTemplateRow\").style.display = \"none\";\n"
-          "    document.getElementById(\"CntsPasswordSha1Row\").style.display = \"none\";\n"
+          "    form_obj.cnts_use_reg_passwd.checked = false;\n"
+          "    form_obj.cnts_null_passwd.checked = false;\n"
+          "    form_obj.cnts_random_passwd.checked = false;\n"
+          "    form_obj.cnts_password_template.value = \"\";\n"
+          "    form_obj.cnts_sha1.checked = false;\n"
+          "    document.getElementById(\"CntsRegRowUseRegPasswd\").style.display = \"none\";\n"
+          "    document.getElementById(\"CntsRegRowSetToNull\").style.display = \"none\";\n"
+          "    document.getElementById(\"CntsRegRowUseRandom\").style.display = \"none\";\n"
+          "    document.getElementById(\"CntsRegRowPasswdTemplate\").style.display = \"none\";\n"
+          "    document.getElementById(\"CntsRegRowPasswdSha1\").style.display = \"none\";\n"
           "  } else {\n"
-          "    document.getElementById(\"CntsPasswordRegRow\").style.display = \"\";\n"
+          "    document.getElementById(\"CntsRegRowUseRegPasswd\").style.display = \"\";\n"
           "    if (form_obj.cnts_use_reg_passwd.checked) {\n"
-          "      document.getElementById(\"CntsPasswordNullRow\").style.display = \"none\";\n"
-          "      document.getElementById(\"CntsPasswordRandomRow\").style.display = \"none\";\n"
-          "      document.getElementById(\"CntsPasswordTemplateRow\").style.display = \"none\";\n"
-          "      document.getElementById(\"CntsPasswordSha1Row\").style.display = \"none\";\n"
+          "      form_obj.cnts_null_passwd.checked = false;\n"
+          "      form_obj.cnts_random_passwd.checked = false;\n"
+          "      form_obj.cnts_password_template.value = \"\";\n"
+          "      form_obj.cnts_sha1.checked = false;\n"
+          "      document.getElementById(\"CntsRegRowSetToNull\").style.display = \"none\";\n"
+          "      document.getElementById(\"CntsRegRowUseRandom\").style.display = \"none\";\n"
+          "      document.getElementById(\"CntsRegRowPasswdTemplate\").style.display = \"none\";\n"
+          "      document.getElementById(\"CntsRegRowPasswdSha1\").style.display = \"none\";\n"
           "    } else {\n"
-          "      document.getElementById(\"CntsPasswordNullRow\").style.display = \"\";\n"
+          "      document.getElementById(\"CntsRegRowSetToNull\").style.display = \"\";\n"
           "      if (form_obj.cnts_null_passwd.checked) {\n"
-          "        document.getElementById(\"CntsPasswordRandomRow\").style.display = \"none\";\n"
-          "        document.getElementById(\"CntsPasswordTemplateRow\").style.display = \"none\";\n"
-          "        document.getElementById(\"CntsPasswordSha1Row\").style.display = \"none\";\n"
+          "        form_obj.cnts_random_passwd.checked = false;\n"
+          "        form_obj.cnts_password_template.value = \"\";\n"
+          "        form_obj.cnts_sha1.checked = false;\n"
+          "        document.getElementById(\"CntsRegRowUseRandom\").style.display = \"none\";\n"
+          "        document.getElementById(\"CntsRegRowPasswdTemplate\").style.display = \"none\";\n"
+          "        document.getElementById(\"CntsRegRowPasswdSha1\").style.display = \"none\";\n"
           "      } else {\n"
-          "        document.getElementById(\"CntsPasswordRandomRow\").style.display = \"\";\n"
+          "        document.getElementById(\"CntsRegRowUseRandom\").style.display = \"\";\n"
           "        if (form_obj.cnts_random_passwd.checked) {\n"
-          "          document.getElementById(\"CntsPasswordTemplateRow\").style.display = \"none\";\n"
-          "          document.getElementById(\"CntsPasswordSha1Row\").style.display = \"none\";\n"
+          "          form_obj.cnts_password_template.value = \"\";\n"
+          "          form_obj.cnts_sha1.checked = false;\n"
+          "          document.getElementById(\"CntsRegRowPasswdTemplate\").style.display = \"none\";\n"
+          "          document.getElementById(\"CntsRegRowPasswdSha1\").style.display = \"none\";\n"
           "        } else {\n"
-          "          document.getElementById(\"CntsPasswordTemplateRow\").style.display = \"\";\n"
-          "          document.getElementById(\"CntsPasswordSha1Row\").style.display = \"\";\n"
+          "          document.getElementById(\"CntsRegRowPasswdTemplate\").style.display = \"\";\n"
+          "          document.getElementById(\"CntsRegRowPasswdSha1\").style.display = \"\";\n"
           "        }\n"
           "      }\n"
           "    }\n"
@@ -3314,15 +3351,15 @@ super_serve_op_USER_CREATE_MANY_PAGE(
   fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\" /></td></tr>\n",
           cl, "Disqualified?", cl, "is_disqualified");
 
-  fprintf(out_f, "<tr id=\"CntsPasswordRegRow\" class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"cnts_use_reg_passwd\" onchange=\"updateCntsPasswdVisibility()\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+  fprintf(out_f, "<tr id=\"CntsRegRowUseRegPasswd\" class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"cnts_use_reg_passwd\" onchange=\"updateCntsPasswdVisibility()\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
           cl, "Use registration password", cl, cl);
-  fprintf(out_f, "<tr id=\"CntsPasswordNullRow\" class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"cnts_null_passwd\" onchange=\"updateCntsPasswdVisibility()\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+  fprintf(out_f, "<tr id=\"CntsRegRowSetToNull\" class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"cnts_null_passwd\" onchange=\"updateCntsPasswdVisibility()\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
           cl, "Set to null", cl, cl);
-  fprintf(out_f, "<tr id=\"CntsPasswordRandomRow\" class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"cnts_random_passwd\" onchange=\"updateCntsPasswdVisibility()\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+  fprintf(out_f, "<tr id=\"CntsRegRowUseRandom\" class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"cnts_random_passwd\" onchange=\"updateCntsPasswdVisibility()\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
           cl, "Random contest password", cl, cl);
-  fprintf(out_f, "<tr id=\"CntsPasswordTemplateRow\" class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"text\" name=\"cnts_password_template\" size=\"40\" /></td><td%s>&nbsp;</td></tr>\n",
+  fprintf(out_f, "<tr id=\"CntsRegRowPasswdTemplate\" class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"text\" name=\"cnts_password_template\" size=\"40\" /></td><td%s>&nbsp;</td></tr>\n",
           cl, "Contest password template", cl, cl);
-  fprintf(out_f, "<tr id=\"CntsPasswordSha1Row\" class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"cnts_sha1\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+  fprintf(out_f, "<tr id=\"CntsRegRowPasswdSha1\" class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"cnts_sha1\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
           cl, "Use SHA1", cl, cl);
 
   fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"text\" size=\"40\" name=\"cnts_name_template\" /></td><td%s>&nbsp;</td></tr>\n",
@@ -3388,6 +3425,12 @@ super_serve_op_USER_CREATE_FROM_CSV_PAGE(
 
   if (get_global_caps(phr, &caps) < 0 || opcaps_check(caps, OPCAP_CREATE_USER) < 0) {
     FAIL(S_ERR_PERM_DENIED);
+  }
+
+  cnts_id_count = contests_get_list(&cnts_id_list);
+  if (cnts_id_count <= 0 || !cnts_id_list) {
+    cnts_id_count = 0;
+    cnts_id_list = 0;
   }
 
   snprintf(buf, sizeof(buf), "serve-control: %s, create users from a CSV file",
@@ -3489,6 +3532,7 @@ super_serve_op_USER_CREATE_FROM_CSV_PAGE(
           "function changeCntsRegCreate(obj)\n"
           "{\n"
           "  toggleRowsVisibility2(obj.checked, \"CreateUserTable\", \"CntsRegRow0\", \"CntsRegRow\");\n"
+          "  updateCntsPasswdVisibility();\n"
           "}\n"
           "function changeGroupCreate(obj)\n"
           "{\n"
@@ -3508,6 +3552,7 @@ super_serve_op_USER_CREATE_FROM_CSV_PAGE(
           "      break;\n"
           "    }\n"
           "  }\n"
+          "  updateCntsPasswdVisibility();\n"
           "}\n");
   fprintf(out_f,
           "function updateCnts2()\n"
@@ -3516,6 +3561,66 @@ super_serve_op_USER_CREATE_FROM_CSV_PAGE(
           "  var obj2 = document.getElementById(\"cnts2\");\n"
           "  var value = obj2.options[obj2.selectedIndex].value;\n"
           "  obj1.value = value;\n"
+          "  updateCntsPasswdVisibility();\n"
+          "}\n");
+  fprintf(out_f, "var cnts_passwd_enabled = { ");
+  row = 0;
+  for (i = 0; i < cnts_id_count; ++i) {
+    other_contest_id_2 = cnts_id_list[i];
+    if (other_contest_id_2 <= 0) continue;
+    if (contests_get(other_contest_id_2, &cnts) < 0 || !cnts) continue;
+    if (!cnts->disable_team_password) {
+      if (row) fprintf(out_f, ", ");
+      ++row;
+      fprintf(out_f, "%d : true", other_contest_id_2);
+    }
+  }
+  fprintf(out_f, "};\n");
+  // CntsRegRowUseRegPasswd   cnts_use_reg_passwd
+  // CntsRegRowSetToNull      cnts_null_passwd
+  // CntsRegRowUseRandom      cnts_random_passwd
+  // CntsRegRowPasswdSha1     cnts_sha1
+  fprintf(out_f,
+          "function updateCntsPasswdVisibility()\n"
+          "{\n"
+          "  form_obj = document.getElementById(\"CreateForm\");\n"
+          "  if (!form_obj.reg_cnts_create.checked || !cnts_passwd_enabled[form_obj.other_contest_id_1.value]) {\n"
+          "    form_obj.cnts_use_reg_passwd.checked = false;\n"
+          "    form_obj.cnts_null_passwd.checked = false;\n"
+          "    form_obj.cnts_random_passwd.checked = false;\n"
+          "    form_obj.cnts_sha1.checked = false;\n"
+          "    document.getElementById(\"CntsRegRowUseRegPasswd\").style.display = \"none\";\n"
+          "    document.getElementById(\"CntsRegRowSetToNull\").style.display = \"none\";\n"
+          "    document.getElementById(\"CntsRegRowUseRandom\").style.display = \"none\";\n"
+          "    document.getElementById(\"CntsRegRowPasswdSha1\").style.display = \"none\";\n"
+          "  } else {\n"
+          "    document.getElementById(\"CntsRegRowUseRegPasswd\").style.display = \"\";\n"
+          "    if (form_obj.cnts_use_reg_passwd.checked) {\n"
+          "      form_obj.cnts_null_passwd.checked = false;\n"
+          "      form_obj.cnts_random_passwd.checked = false;\n"
+          "      form_obj.cnts_sha1.checked = false;\n"
+          "      document.getElementById(\"CntsRegRowSetToNull\").style.display = \"none\";\n"
+          "      document.getElementById(\"CntsRegRowUseRandom\").style.display = \"none\";\n"
+          "      document.getElementById(\"CntsRegRowPasswdSha1\").style.display = \"none\";\n"
+          "    } else {\n"
+          "      document.getElementById(\"CntsRegRowSetToNull\").style.display = \"\";\n"
+          "      if (form_obj.cnts_null_passwd.checked) {\n"
+          "        form_obj.cnts_random_passwd.checked = false;\n"
+          "        form_obj.cnts_sha1.checked = false;\n"
+          "        document.getElementById(\"CntsRegRowUseRandom\").style.display = \"none\";\n"
+          "        document.getElementById(\"CntsRegRowPasswdSha1\").style.display = \"none\";\n"
+          "      } else {\n"
+          "        document.getElementById(\"CntsRegRowUseRandom\").style.display = \"\";\n"
+          "        if (form_obj.cnts_random_passwd.checked) {\n"
+          "          form_obj.cnts_password_template.value = \"\";\n"
+          "          form_obj.cnts_sha1.checked = false;\n"
+          "          document.getElementById(\"CntsRegRowPasswdSha1\").style.display = \"none\";\n"
+          "        } else {\n"
+          "          document.getElementById(\"CntsRegRowPasswdSha1\").style.display = \"\";\n"
+          "        }\n"
+          "      }\n"
+          "    }\n"
+          "  }\n"
           "}\n");
   fprintf(out_f, "</script>\n");
 
@@ -3586,12 +3691,6 @@ super_serve_op_USER_CREATE_FROM_CSV_PAGE(
   fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" onchange=\"changeCntsRegCreate(this)\" name=\"reg_cnts_create\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
           cl, "Create a contest registration", cl, cl);
 
-  cnts_id_count = contests_get_list(&cnts_id_list);
-  if (cnts_id_count <= 0 || !cnts_id_list) {
-    cnts_id_count = 0;
-    cnts_id_list = 0;
-  }
-
   hbuf[0] = 0;
   if (contest_id > 0) {
     snprintf(hbuf, sizeof(hbuf), "%d", contest_id);
@@ -3616,7 +3715,7 @@ super_serve_op_USER_CREATE_FROM_CSV_PAGE(
     fprintf(out_f, "</td><td%s>&nbsp;</td></tr>\n", cl);
   }
   fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s>", cl, "Status", cl);
-  ss_select(out_f, hbuf, (const unsigned char* []) { "OK", "Pending", "Rejected", NULL }, 1);
+  ss_select(out_f, "cnts_status", (const unsigned char* []) { "OK", "Pending", "Rejected", NULL }, 1);
   fprintf(out_f, "</td></tr>\n");
   fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\" /></td></tr>\n",
           cl, "Invisible?", cl, "is_invisible");
@@ -3629,11 +3728,13 @@ super_serve_op_USER_CREATE_FROM_CSV_PAGE(
   fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\" /></td></tr>\n",
           cl, "Disqualified?", cl, "is_disqualified");
 
-  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"cnts_password_use_reg\" onchange=\"changeCntsUseRegPassword()\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+  fprintf(out_f, "<tr id=\"CntsRegRowUseRegPasswd\" class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"cnts_use_reg_passwd\" onchange=\"updateCntsPasswdVisibility()\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
           cl, "Use registration password", cl, cl);
-  fprintf(out_f, "<tr id=\"CntsPasswordRandomRow\" class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"cnts_password_random\" onchange=\"changeRandomCntsPassword()\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+  fprintf(out_f, "<tr id=\"CntsRegRowSetToNull\" class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"cnts_null_passwd\" onchange=\"updateCntsPasswdVisibility()\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, "Set to null", cl, cl);
+  fprintf(out_f, "<tr id=\"CntsRegRowUseRandom\" class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"cnts_random_passwd\" onchange=\"updateCntsPasswdVisibility()\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
           cl, "Random contest password", cl, cl);
-  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"cnts_sha1\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+  fprintf(out_f, "<tr id=\"CntsRegRowPasswdSha1\" class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"cnts_sha1\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
           cl, "Use SHA1", cl, cl);
 
   fprintf(out_f, "<tr><td%s colspan=\"3\" align=\"center\"><b>%s</b></td></tr>\n",
@@ -3651,6 +3752,11 @@ super_serve_op_USER_CREATE_FROM_CSV_PAGE(
   fprintf(out_f, "<tr><td%s colspan=\"3\" align=\"center\"><b>%s</b></td></tr>\n",
           cl, "File");
 
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"text\" name=\"separator\" size=\"20\" value=\";\"/></td><td%s>&nbsp;</td></tr>\n",
+          cl, "Field separator", cl, cl);
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>", cl, "Charset", cl);
+  charset_html_select(out_f, NULL, NULL);
+  fprintf(out_f, "</td><td%s>&nbsp;</td></tr>\n", cl);
   fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"file\" name=\"csv_file\" /></td><td%s>&nbsp;</td></tr>\n",
           cl, "CSV File", cl, cl);
 
@@ -4149,6 +4255,99 @@ cleanup:
     xfree(cnts_name_strs); cnts_name_strs = 0;
   }
   xfree(create_many_sorted_logins); create_many_sorted_logins = 0;
+  xfree(xml_text); xml_text = 0;
+  meta_destroy_fields(&meta_ss_op_param_USER_CREATE_MANY_ACTION_methods, &params);
+  return retval;
+}
+
+int
+super_serve_op_USER_CREATE_FROM_CSV_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0, r;
+  opcap_t caps = 0;
+  const struct contest_desc *cnts = 0;
+  unsigned char *xml_text = 0;
+  struct csv_file *csv_parsed = 0;
+  const unsigned char *csv_text = 0;
+  unsigned char *recoded_csv_text = 0;
+  const unsigned char *separator = 0;
+
+  struct ss_op_param_USER_CREATE_FROM_CSV_ACTION params;
+  memset(&params, 0, sizeof(params));
+  retval = ss_parse_params(phr, &meta_ss_op_param_USER_CREATE_FROM_CSV_ACTION_methods, &params);
+  if (retval < 0) goto cleanup;
+
+  if (params.contest_id > 0) {
+    cnts = 0;
+    if (contests_get(params.contest_id, &cnts) < 0 || !cnts) {
+      params.contest_id = 0;
+    }
+  }
+  cnts = 0;
+  if (params.reg_cnts_create) {
+    if (contests_get(params.other_contest_id_1, &cnts) < 0 || !cnts) {
+      FAIL(S_ERR_INV_CONTEST);
+    }
+  } else {
+    params.other_contest_id_1 = 0;
+  }
+
+  if (params.group_create) {
+    r = userlist_clnt_list_all_users(phr->userlist_clnt, ULS_LIST_GROUP_USERS,
+                                     params.other_group_id, &xml_text);
+    if (r < 0) FAIL(S_ERR_INV_GROUP_ID);
+  } else {
+    params.other_group_id = 0;
+  }
+
+  if (get_global_caps(phr, &caps) < 0 || opcaps_check(caps, OPCAP_CREATE_USER) < 0) {
+    FAIL(S_ERR_PERM_DENIED);
+  }
+  if (cnts) {
+    if (get_contest_caps(phr, cnts, &caps) < 0 || opcaps_check(caps, OPCAP_CREATE_REG) < 0) {
+      FAIL(S_ERR_PERM_DENIED);
+    }
+  }
+
+  if (ss_cgi_param(phr, "csv_file", &csv_text) <= 0 || !csv_text) {
+    FAIL(S_ERR_INV_CSV_FILE);
+  }
+
+  if (params.charset && *params.charset) {
+    int charset_id = charset_get_id(params.charset);
+    if (charset_id < 0) FAIL(S_ERR_INV_CHARSET);
+    if (charset_id > 0) {
+      recoded_csv_text = charset_decode_to_heap(charset_id, csv_text);
+      if (!recoded_csv_text) FAIL(S_ERR_INV_CHARSET);
+      csv_text = recoded_csv_text;
+    }
+  }
+
+  separator = params.separator;
+  if (!separator || !*separator) separator = ";";
+  if (strlen(separator) != 1) FAIL(S_ERR_INV_SEPARATOR);
+  csv_parsed = csv_parse(csv_text, log_f, separator[0]);
+  if (!csv_parsed) FAIL(S_ERR_INV_CSV_FILE);
+
+  if (!csv_parsed->u) {
+    fprintf(log_f, "CSV file is empty\n");
+    FAIL(S_ERR_INV_CSV_FILE);
+  }
+  if (csv_parsed->u > 10000) {
+    fprintf(log_f, "CSV file is too big\n");
+    FAIL(S_ERR_INV_CSV_FILE);
+  }
+
+  //...
+
+  ss_redirect_2(out_f, phr, SSERV_OP_USER_BROWSE_PAGE, params.contest_id, params.group_id, 0);
+
+cleanup:
+  csv_parsed = csv_free(csv_parsed);
+  xfree(recoded_csv_text); recoded_csv_text = 0;
   xfree(xml_text); xml_text = 0;
   meta_destroy_fields(&meta_ss_op_param_USER_CREATE_MANY_ACTION_methods, &params);
   return retval;

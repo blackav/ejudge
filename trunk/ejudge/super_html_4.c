@@ -6786,6 +6786,9 @@ static unsigned char const * const error_messages[] =
   [S_ERR_INV_REG_PASSWORD_TEMPLATE] = "Invalid registration password template",
   [S_ERR_INV_CNTS_PASSWORD_TEMPLATE] = "Invalid contest password template",
   [S_ERR_INV_CNTS_NAME_TEMPLATE] = "Invalid name template",
+  [S_ERR_INV_CSV_FILE] = "Invalid CSV file",
+  [S_ERR_INV_CHARSET] = "Invalid charset",
+  [S_ERR_INV_SEPARATOR] = "Invalid field separator",
 };
 
 void
