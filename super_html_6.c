@@ -378,7 +378,7 @@ super_serve_op_USER_BROWSE_PAGE(
   }
   snprintf(buf, sizeof(buf), "serve-control: %s, browsing users%s",
            phr->html_name, hbuf);
-  ss_write_html_header(out_f, phr, buf, 1, 0);
+  ss_write_html_header(out_f, phr, buf, 0, NULL);
 
   fprintf(out_f, "<script language=\"javascript\">\n");
   fprintf(out_f,
@@ -777,6 +777,7 @@ string_row(
   unsigned char tdcl[256];
   unsigned char param_name[256];
   unsigned char buf[1024];
+  unsigned char onchange[1024];
   const unsigned char *checked = "";
   const unsigned char *display = "";
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
@@ -800,10 +801,11 @@ string_row(
 
   fprintf(out_f, "<tr%s%s>", trcl, display);
   fprintf(out_f, "<td%s><b>%s:</b></td>", tdcl, legend);
-  fprintf(out_f, "<td%s><input type=\"checkbox\" name=\"field_null_%s\" value=\"1\"%s /></td>",
-          tdcl, param_suffix, checked);
+  fprintf(out_f, "<td%s><input type=\"checkbox\" onchange=\"checkNull(%s)\" name=\"field_null_%s\" value=\"1\"%s /></td>",
+          tdcl, param_suffix, param_suffix, checked);
+  snprintf(onchange, sizeof(onchange), "uncheckNull(%s)", param_suffix);
   fprintf(out_f, "<td%s>%s</td>", tdcl,
-          html_input_text(buf, sizeof(buf), param_name, 50, "%s", ARMOR(str)));
+          html_input_text_js(buf, sizeof(buf), param_name, 50, onchange, "%s", ARMOR(str)));
   fprintf(out_f, "<td%s>&nbsp;</td>", tdcl);
   fprintf(out_f, "</tr>\n");
   html_armor_free(&ab);
@@ -887,7 +889,7 @@ super_serve_op_USER_DETAIL_PAGE(
 
   snprintf(buf, sizeof(buf), "serve-control: %s, viewing user %d",
            phr->html_name, other_user_id);
-  ss_write_html_header(out_f, phr, buf, 1, 0);
+  ss_write_html_header(out_f, phr, buf, 0, NULL);
 
   fprintf(out_f, "<script language=\"javascript\">\n");
   fprintf(out_f,
@@ -976,7 +978,26 @@ super_serve_op_USER_DETAIL_PAGE(
           "{\n"
           "  document.getElementById(\"CookiesShowLink\").style.display = \"\";\n"
           "  document.getElementById(\"CookiesTable\").style.display = \"none\";\n"
-          "}\n");
+          "}\n"
+          "function checkNull(field_id)\n"
+          "{\n"
+          "  var form_obj = document.getElementById(\"UserForm\");\n"
+          "  var checkbox_obj = form_obj[\"field_null_\" + field_id];\n"
+          "  var text_obj = form_obj[\"field_\" + field_id];\n"
+          "  if (checkbox_obj != null && checkbox_obj.checked) {\n"
+          "    if (text_obj) text_obj.value = \"\";\n"
+          "  }\n"
+          "}\n"
+          "function uncheckNull(field_id)\n"
+          "{\n"
+          "  var form_obj = document.getElementById(\"UserForm\");\n"
+          "  var checkbox_obj = form_obj[\"field_null_\" + field_id];\n"
+          "  var text_obj = form_obj[\"field_\" + field_id];\n"
+          "  if (text_obj != null && (text_obj.value != null && text_obj.value != \"\")) {\n"
+          "    if (checkbox_obj != null) checkbox_obj.checked = false;\n"
+          "  }\n"
+          "}\n"
+          "");
   fprintf(out_f, "</script>\n");
 
   fprintf(out_f, "<h1>%s</h1>\n<br/>\n", buf);
@@ -1035,7 +1056,7 @@ super_serve_op_USER_DETAIL_PAGE(
   }
   ui = u->cnts0;
 
-  html_start_form(out_f, 1, phr->self_url, "");
+  html_start_form_id(out_f, 1, phr->self_url, "UserForm", "");
   html_hidden(out_f, "SID", "%016llx", phr->session_id);
   html_hidden(out_f, "action", "%d", SSERV_CMD_HTTP_REQUEST);
   html_hidden(out_f, "other_user_id", "%d", other_user_id);
@@ -1160,9 +1181,10 @@ super_serve_op_USER_DETAIL_PAGE(
     s2 = "";
   }
   snprintf(hbuf, sizeof(hbuf), "field_%d", USERLIST_NC_NAME);
-  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"field_null_%d\" value=\"1\"%s /></td><td%s>%s</td><td%s>&nbsp;</td></tr>\n",
-          cl, "User name", cl, USERLIST_NC_NAME, s, cl, 
-          html_input_text(buf, sizeof(buf), hbuf, 50, "%s", ARMOR(s2)), cl);
+  snprintf(buf2, sizeof(buf2), "uncheckNull(%d)", USERLIST_NC_NAME);
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" onchange=\"checkNull(%d)\" name=\"field_null_%d\" value=\"1\"%s /></td><td%s>%s</td><td%s>&nbsp;</td></tr>\n",
+          cl, "User name", cl, USERLIST_NC_NAME, USERLIST_NC_NAME, s, cl, 
+          html_input_text_js(buf, sizeof(buf), hbuf, 50, buf2, "%s", ARMOR(s2)), cl);
   if (contest_id > 0 && cnts && !cnts->disable_team_password) {
     fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>&nbsp;</td><td%s>",
             cl, "Contest password", cl, cl);
@@ -1647,7 +1669,7 @@ super_serve_op_USER_PASSWORD_PAGE(
 
   snprintf(buf, sizeof(buf), "serve-control: %s, change registration password for user %d",
            phr->html_name, other_user_id);
-  ss_write_html_header(out_f, phr, buf, 1, 0);
+  ss_write_html_header(out_f, phr, buf, 0, NULL);
 
   fprintf(out_f, "<script language=\"javascript\">\n");
   fprintf(out_f,
@@ -1853,7 +1875,7 @@ super_serve_op_USER_CNTS_PASSWORD_PAGE(
 
   snprintf(buf, sizeof(buf), "serve-control: %s, change contest password for user %d in contest %d",
            phr->html_name, other_user_id, contest_id);
-  ss_write_html_header(out_f, phr, buf, 1, 0);
+  ss_write_html_header(out_f, phr, buf, 0, NULL);
 
   fprintf(out_f, "<script language=\"javascript\">\n");
   fprintf(out_f,
@@ -2046,7 +2068,7 @@ super_serve_op_USER_CREATE_REG_PAGE(
 
   snprintf(buf, sizeof(buf), "serve-control: %s, create a contest registration for user %d",
            phr->html_name, other_user_id);
-  ss_write_html_header(out_f, phr, buf, 1, 0);
+  ss_write_html_header(out_f, phr, buf, 0, NULL);
 
   fprintf(out_f, "<script language=\"javascript\">\n");
   fprintf(out_f,
@@ -2251,7 +2273,7 @@ super_serve_op_USER_EDIT_REG_PAGE(
 
   snprintf(buf, sizeof(buf), "serve-control: %s, edit the contest registration for user %d, contest %d",
            phr->html_name, other_user_id, other_contest_id);
-  ss_write_html_header(out_f, phr, buf, 1, 0);
+  ss_write_html_header(out_f, phr, buf, 0, NULL);
   fprintf(out_f, "<h1>%s</h1>\n<br/>\n", buf);
 
   fprintf(out_f, "<ul>");
@@ -2449,7 +2471,7 @@ super_serve_op_USER_DELETE_REG_PAGE(
 
   snprintf(buf, sizeof(buf), "serve-control: %s, delete the contest registration for user %d, contest %d",
            phr->html_name, other_user_id, other_contest_id);
-  ss_write_html_header(out_f, phr, buf, 1, 0);
+  ss_write_html_header(out_f, phr, buf, 0, NULL);
   fprintf(out_f, "<h1>%s</h1>\n<br/>\n", buf);
 
   fprintf(out_f, "<ul>");
@@ -2642,7 +2664,7 @@ super_serve_op_USER_CREATE_ONE_PAGE(
 
   snprintf(buf, sizeof(buf), "serve-control: %s, create a new user",
            phr->html_name);
-  ss_write_html_header(out_f, phr, buf, 1, 0);
+  ss_write_html_header(out_f, phr, buf, 0, NULL);
 
   fprintf(out_f, "<script language=\"javascript\">\n");
   fprintf(out_f,
@@ -3039,7 +3061,7 @@ super_serve_op_USER_CREATE_MANY_PAGE(
 
   snprintf(buf, sizeof(buf), "serve-control: %s, create many new users",
            phr->html_name);
-  ss_write_html_header(out_f, phr, buf, 1, 0);
+  ss_write_html_header(out_f, phr, buf, 0, NULL);
 
   fprintf(out_f, "<script language=\"javascript\" src=\"%ssprintf.js\" ></script>\n",
           CONF_STYLE_PREFIX);
@@ -3463,7 +3485,7 @@ super_serve_op_USER_CREATE_FROM_CSV_PAGE(
 
   snprintf(buf, sizeof(buf), "serve-control: %s, create users from a CSV file",
            phr->html_name);
-  ss_write_html_header(out_f, phr, buf, 1, 0);
+  ss_write_html_header(out_f, phr, buf, 0, NULL);
 
   fprintf(out_f, "<script language=\"javascript\">\n");
   fprintf(out_f,
@@ -4604,7 +4626,7 @@ super_serve_op_USER_SAVE_ACTION(
 
   ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   ss_cgi_param_int_opt(phr, "group_id", &group_id, 0);
-  if (ss_cgi_param_int(phr, "other_user_id", &other_user_id) <= 0)
+  if (ss_cgi_param_int(phr, "other_user_id", &other_user_id) < 0)
     FAIL(S_ERR_INV_USER_ID);
   if (contest_id > 0) {
     if (contests_get(contest_id, &cnts) < 0 || !cnts)
@@ -4714,7 +4736,6 @@ super_serve_op_USER_SAVE_ACTION(
   {
     // USERLIST_NC_CNTS_READ_ONLY,
     USERLIST_NC_NAME,
-    USERLIST_NC_TEAM_PASSWD,
     USERLIST_NC_INST,
     USERLIST_NC_INST_EN,
     // 105
@@ -4779,6 +4800,7 @@ super_serve_op_USER_SAVE_ACTION(
   for (int i = 0; (field_id = info_field_ids[i]); ++i) {
     if (info_null_fields[field_id]) continue;
     snprintf(param_name, sizeof(param_name), "field_%d", field_id);
+    s = 0;
     if (ss_cgi_param(phr, param_name, &s) < 0) FAIL(S_ERR_INV_VALUE);
     if (!s) s = "";
     info_fields[field_id] = fix_string(s);
@@ -4788,9 +4810,9 @@ super_serve_op_USER_SAVE_ACTION(
   int is_changed = 0;
   for (int i = 0; (field_id = info_field_ids[i]); ++i) {
     if (info_null_fields[field_id]) {
-      if (!userlist_is_empty_user_info_field(ui, field_id)) is_changed = 1;
-    } else {
-      if (!userlist_is_equal_user_info_field(ui, field_id, info_fields[field_id])) is_changed = 1;
+      if (ui && !userlist_is_empty_user_info_field(ui, field_id)) is_changed = 1;
+    } else if (info_fields[field_id]) {
+      if (!ui || !userlist_is_equal_user_info_field(ui, field_id, info_fields[field_id])) is_changed = 1;
     }
   }
 
@@ -4805,33 +4827,34 @@ super_serve_op_USER_SAVE_ACTION(
     }
     for (int i = 0; (field_id = info_field_ids[i]); ++i) {
       if (info_null_fields[field_id]) {
-        if (!userlist_is_empty_user_info_field(ui, field_id)) {
+        if (ui && !userlist_is_empty_user_info_field(ui, field_id)) {
           deleted_ids[deleted_count] = field_id;
           ++deleted_count;
         }
-      } else {
-        if (!userlist_is_equal_user_info_field(ui, field_id, info_fields[field_id])) {
+      } else if (info_fields[field_id]) {
+        if (!ui || !userlist_is_equal_user_info_field(ui, field_id, info_fields[field_id])) {
           changed_ids[changed_count] = field_id;
           changed_strs[changed_count] = info_fields[field_id];
           ++changed_count;
         }
       }
     }
-    if (deleted_count > 0 && changed_count > 0) {
-      if (is_globally_privileged(phr, u)) {
-        if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_USER) < 0 || opcaps_check(caps, OPCAP_PRIV_EDIT_USER) < 0)
-          FAIL(S_ERR_PERM_DENIED);
-      } else if (is_contest_privileged(cnts, u)) {
-        if (opcaps_check(caps, OPCAP_PRIV_EDIT_USER) < 0) FAIL(S_ERR_PERM_DENIED);
-      } else {
-        if (opcaps_check(caps, OPCAP_EDIT_USER) < 0) FAIL(S_ERR_PERM_DENIED);
-      }
+  }
 
-      if (userlist_clnt_edit_field_seq(phr->userlist_clnt, ULS_EDIT_FIELD_SEQ,
-                                       other_user_id, contest_id, 0, deleted_count, changed_count,
-                                       deleted_ids, changed_ids, changed_strs) < 0) {
-        FAIL(S_ERR_DB_ERROR);
-      }
+  if (deleted_count > 0 || changed_count > 0) {
+    if (is_globally_privileged(phr, u)) {
+      if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_USER) < 0 || opcaps_check(caps, OPCAP_PRIV_EDIT_USER) < 0)
+        FAIL(S_ERR_PERM_DENIED);
+    } else if (is_contest_privileged(cnts, u)) {
+      if (opcaps_check(caps, OPCAP_PRIV_EDIT_USER) < 0) FAIL(S_ERR_PERM_DENIED);
+    } else {
+      if (opcaps_check(caps, OPCAP_EDIT_USER) < 0) FAIL(S_ERR_PERM_DENIED);
+    }
+
+    if (userlist_clnt_edit_field_seq(phr->userlist_clnt, ULS_EDIT_FIELD_SEQ,
+                                     other_user_id, contest_id, 0, deleted_count, changed_count,
+                                     deleted_ids, changed_ids, changed_strs) < 0) {
+      FAIL(S_ERR_DB_ERROR);
     }
   }
 
@@ -4937,7 +4960,7 @@ super_serve_op_USER_SAVE_ACTION(
           }
         }
 
-        if (deleted_count > 0 && changed_count > 0) {
+        if (deleted_count > 0 || changed_count > 0) {
           if (is_globally_privileged(phr, u)) {
             if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_USER) < 0 || opcaps_check(caps, OPCAP_PRIV_EDIT_USER) < 0)
               FAIL(S_ERR_PERM_DENIED);

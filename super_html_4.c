@@ -409,8 +409,8 @@ write_html_header(
             "</style>\n",
             CONF_STYLE_PREFIX, CONF_STYLE_PREFIX, CONF_STYLE_PREFIX,
             CONF_STYLE_PREFIX, CONF_STYLE_PREFIX);
+    fprintf(out_f, "<style type=\"text/css\" id=\"generatedStyles\"></style>\n");
   }
-  fprintf(out_f, "<style type=\"text/css\" id=\"generatedStyles\"></style>\n");
 
   if (use_dojo) {
     fprintf(out_f, "<script type=\"text/javascript\" src=\"%sdojo/dojo.js\" djConfig=\"isDebug: false, parseOnLoad: true, dojoIframeHistoryUrl:'%sdojo/resources/iframe_history.html'\"></script>\n",

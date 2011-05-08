@@ -888,7 +888,7 @@ main(int argc, char *argv[])
 #if HAVE_SETSID - 0
   if (daemon_mode) {
     // FIXME: make log file tunable?
-    snprintf(log_path, sizeof(log_path), "%s/compile.log",
+    snprintf(log_path, sizeof(log_path), "%s/ej-compile.log",
              serve_state.global->var_dir);
 
     // daemonize itself

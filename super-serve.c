@@ -466,7 +466,7 @@ prepare_run_serving(const struct contest_desc *cnts,
     return;
   }
 
-  snprintf(run_log_path, sizeof(run_log_path), "%s/run_messages",
+  snprintf(run_log_path, sizeof(run_log_path), "%s/ej-run-messages.log",
            extra->var_dir);
 
   if ((queue_dir_fd = open(run_queue_dir, O_RDONLY, 0)) < 0) {
@@ -4267,7 +4267,7 @@ contest_mngmt_cmd(const struct contest_desc *cnts,
     snprintf(log_path, sizeof(log_path), "%s/var/messages", cnts->root_dir);
     goto do_truncate_log;
   case SSERV_CMD_RUN_LOG_TRUNC:
-    snprintf(log_path, sizeof(log_path), "%s/var/run_messages", cnts->root_dir);
+    snprintf(log_path, sizeof(log_path), "%s/var/ej-run-messages.log", cnts->root_dir);
     goto do_truncate_log;
 
   do_truncate_log:
@@ -4281,7 +4281,7 @@ contest_mngmt_cmd(const struct contest_desc *cnts,
     snprintf(log_path, sizeof(log_path), "%s/var/messages", cnts->root_dir);
     goto do_dev_null;
   case SSERV_CMD_RUN_LOG_DEV_NULL:
-    snprintf(log_path, sizeof(log_path), "%s/var/run_messages", cnts->root_dir);
+    snprintf(log_path, sizeof(log_path), "%s/var/ej-run-messages.log", cnts->root_dir);
     goto do_dev_null;
 
   do_dev_null:
@@ -4299,7 +4299,7 @@ contest_mngmt_cmd(const struct contest_desc *cnts,
     snprintf(log_path, sizeof(log_path), "%s/var/messages", cnts->root_dir);
     goto do_file;
   case SSERV_CMD_RUN_LOG_FILE:
-    snprintf(log_path, sizeof(log_path), "%s/var/run_messages", cnts->root_dir);
+    snprintf(log_path, sizeof(log_path), "%s/var/ej-run-messages.log", cnts->root_dir);
     goto do_file;
 
   do_file:

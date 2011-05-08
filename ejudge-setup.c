@@ -3023,8 +3023,8 @@ generate_ejudge_xml(FILE *f)
   if (config_var_dir[0]) {
     fprintf(f, "  <var_dir>%s</var_dir>\n", config_var_dir);
     // FIXME: should make configurable paths?
-    fprintf(f, "  <userlist_log>userlist.log</userlist_log>\n");
-    fprintf(f, "  <super_serve_log>super_serve.log</super_serve_log>\n");
+    fprintf(f, "  <userlist_log>ej-users.log</userlist_log>\n");
+    fprintf(f, "  <super_serve_log>ej-super-server.log</super_serve_log>\n");
     //fprintf(f, "  <compile_log>%s</compile_log>\n");
   }
 

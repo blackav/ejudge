@@ -133,34 +133,6 @@ enum
   MNG_STAT_LAST = MNG_STAT_WAITING,
 };
 static int
-get_serve_management_status(const struct contest_desc *cnts,
-                            struct contest_extra *extra)
-{
-  if (cnts->managed) {
-    return MNG_STAT_NEW_MANAGED;
-  } else if (!cnts->managed && (!extra || !extra->serve_used)) {
-    return MNG_STAT_NOT_MANAGED;
-  } else if (!extra || !extra->serve_used) {
-    return MNG_STAT_TEMP_NOT_MANAGED;
-  } else if (!cnts->managed) {
-    if (extra->serve_suspended) {
-      return MNG_STAT_TEMP_FAILED;
-    } else if (extra->serve_pid > 0) {
-      return MNG_STAT_TEMP_RUNNING;
-    } else {
-      return MNG_STAT_TEMP_WAITING;
-    }
-  } else {
-    if (extra->serve_suspended) {
-      return MNG_STAT_FAILED;
-    } else if (extra->serve_pid > 0) {
-      return MNG_STAT_RUNNING;
-    } else {
-      return MNG_STAT_WAITING;
-    }
-  }
-}
-static int
 get_run_management_status(const struct contest_desc *cnts,
                           struct contest_extra *extra)
 {
@@ -858,149 +830,6 @@ super_html_contest_page(FILE *f,
   }
   fprintf(f, "</tr>\n");
 
-  // report serve status
-  mng_status = get_serve_management_status(cnts, extra);
-  snprintf(mng_status_str, sizeof(mng_status_str),
-           mng_status_table[mng_status], extra?extra->serve_pid:0);
-  fprintf(f, "<tr><td><tt>serve</tt> management status:</td><td>%s</td>",
-          mng_status_str);
-  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0) {
-    fprintf(f, "<td>");
-    html_start_form(f, 1, self_url, new_hidden_vars);
-    switch (mng_status) {
-    case MNG_STAT_NOT_MANAGED:
-    case MNG_STAT_NEW_MANAGED:
-      fprintf(f, "&nbsp;");
-      /* FIXME: disabled for now
-      html_submit_button(f, SSERV_CMD_SERVE_MNG_TEMP,
-                         "Manage temporarily");
-      html_submit_button(f, SSERV_CMD_SERVE_MNG, "Manage permanently");
-      */
-      break;
-    case MNG_STAT_TEMP_NOT_MANAGED:
-      fprintf(f, "&nbsp;");
-      /*
-      html_submit_button(f, SSERV_CMD_SERVE_MNG_RESUME,
-                         "Resume management");
-      html_submit_button(f, SSERV_CMD_SERVE_MNG_STOP, "Stop management");
-      */
-      break;
-    case MNG_STAT_TEMP_FAILED:
-      /*
-      html_submit_button(f, SSERV_CMD_SERVE_MNG, "Manage permanently");
-      html_submit_button(f, SSERV_CMD_SERVE_MNG_STOP, "Stop management");
-      */
-      html_submit_button(f, SSERV_CMD_SERVE_MNG_RESET_ERROR,
-                         "Reset error flag");
-      html_submit_button(f, SSERV_CMD_SERVE_MNG_PROBE_RUN,
-                         "Do probe run");
-      break;
-    case MNG_STAT_TEMP_RUNNING:
-      /*
-      html_submit_button(f, SSERV_CMD_SERVE_MNG, "Manage permanently");
-      html_submit_button(f, SSERV_CMD_SERVE_MNG_STOP, "Stop management");
-      */
-      html_submit_button(f, SSERV_CMD_SERVE_MNG_TERM, "Terminate serve");
-      break;
-    case MNG_STAT_TEMP_WAITING:
-      /*
-      html_submit_button(f, SSERV_CMD_SERVE_MNG, "Manage permanently");
-      html_submit_button(f, SSERV_CMD_SERVE_MNG_STOP, "Stop management");
-      */
-      html_submit_button(f, SSERV_CMD_SERVE_MNG_PROBE_RUN,
-                         "Do probe run");
-      break;
-    case MNG_STAT_FAILED:
-      /*
-      html_submit_button(f, SSERV_CMD_SERVE_MNG_SUSPEND,
-                         "Suspend management");
-      html_submit_button(f, SSERV_CMD_SERVE_MNG_STOP, "Stop management");
-      */
-      html_submit_button(f, SSERV_CMD_SERVE_MNG_RESET_ERROR,
-                         "Reset error flag");
-      html_submit_button(f, SSERV_CMD_SERVE_MNG_PROBE_RUN,
-                         "Do probe run");
-      break;
-    case MNG_STAT_RUNNING:
-      /*
-      html_submit_button(f, SSERV_CMD_SERVE_MNG_SUSPEND,
-                         "Suspend management");
-      html_submit_button(f, SSERV_CMD_SERVE_MNG_STOP, "Stop management");
-      */
-      html_submit_button(f, SSERV_CMD_SERVE_MNG_TERM, "Terminate serve");
-      break;
-    case MNG_STAT_WAITING:
-      fprintf(f, "&nbsp;");
-      /*
-      html_submit_button(f, SSERV_CMD_SERVE_MNG_SUSPEND,
-                         "Suspend management");
-      html_submit_button(f, SSERV_CMD_SERVE_MNG_STOP,
-                         "Stop management");
-      */
-      html_submit_button(f, SSERV_CMD_SERVE_MNG_PROBE_RUN,
-                         "Do probe run");
-      break;
-    default:
-      abort();
-    }
-    fprintf(f, "</form>");
-    fprintf(f, "</td>");
-  }
-
-  // whether /dev/null exists?
-  if (stat("/dev/null", &devnullstat) < 0) {
-    // :( how come???
-    nodevnull = 1;
-  }
-
-  // serve log file status
-  if (!cnts->root_dir) {
-    logfilemode = 3;
-    snprintf(mng_status_str, sizeof(mng_status_str), "N/A");
-  } else {
-    snprintf(log_file_path, sizeof(log_file_path),
-             "%s/var/messages", cnts->root_dir);
-    if (stat(log_file_path, &logfilestat) < 0) {
-      logfilemode = 0;
-      snprintf(mng_status_str, sizeof(mng_status_str), "nonexistant");
-    } else if (!nodevnull
-               && logfilestat.st_dev == devnullstat.st_dev
-               && logfilestat.st_ino == devnullstat.st_ino) {
-      logfilemode = 1;
-      snprintf(mng_status_str, sizeof(mng_status_str), "/dev/null");
-    } else {
-      logfilemode = 2;
-      snprintf(mng_status_str, sizeof(mng_status_str), "%lld bytes",
-               (long long) logfilestat.st_size);
-    }
-  }
-
-  fprintf(f, "<tr><td>Serve log:</td><td>%s</td>", mng_status_str);
-  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0
-      && logfilemode != 3) {
-    fprintf(f, "<td>");
-    html_start_form(f, 1, self_url, new_hidden_vars);
-    if (logfilemode == 0) {
-      html_submit_button(f, SSERV_CMD_SERVE_LOG_DEV_NULL,
-                         "Redirect to /dev/null");
-    } else if (logfilemode == 2) {
-      html_submit_button(f, SSERV_CMD_SERVE_LOG_TRUNC, "Truncate log");
-      html_submit_button(f, SSERV_CMD_SERVE_LOG_DEV_NULL,
-                         "Redirect to /dev/null");
-      if (logfilestat.st_size <= MAX_LOG_VIEW_SIZE) {
-        fprintf(f, "%sView</a>",
-                html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
-                              "contest_id=%d&action=%d", contest_id,
-                              SSERV_CMD_VIEW_SERVE_LOG));
-      }
-    } else if (logfilemode == 1) {
-      html_submit_button(f, SSERV_CMD_SERVE_LOG_FILE, "Redirect to file");
-    }
-    fprintf(f, "</form>");
-    fprintf(f, "</td>");
-  }
-  fprintf(f, "</tr>\n");
-
   // report run status
   mng_status = get_run_management_status(cnts, extra);
   snprintf(mng_status_str, sizeof(mng_status_str),
@@ -1100,7 +929,7 @@ super_html_contest_page(FILE *f,
     snprintf(mng_status_str, sizeof(mng_status_str), "N/A");
   } else {
     snprintf(log_file_path, sizeof(log_file_path),
-             "%s/var/run_messages", cnts->root_dir);
+             "%s/var/ej-run-messages.log", cnts->root_dir);
     if (stat(log_file_path, &logfilestat) < 0) {
       logfilemode = 0;
       snprintf(mng_status_str, sizeof(mng_status_str), "nonexistant");
@@ -1307,7 +1136,7 @@ super_html_log_page(FILE *f,
     break;
   case SSERV_CMD_VIEW_RUN_LOG:
     snprintf(log_file_path, sizeof(log_file_path),
-             "%s/var/run_messages", cnts->root_dir);
+             "%s/var/ej-run-messages.log", cnts->root_dir);
     progname = "run";
     refresh_action = SSERV_CMD_VIEW_RUN_LOG;
     break;

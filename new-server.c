@@ -57,7 +57,7 @@ static struct server_framework_params params =
   .force_socket_flag = 0,
   .program_name = 0,
   .socket_path = "/tmp/new-server-socket",
-  .log_path = "/tmp/new-server.log",
+  .log_path = "/tmp/ej-contests.log",
   .select_timeout = 1,
   .user_data = 0,
   .startup_error = startup_error,
@@ -612,7 +612,7 @@ setup_log_file(void)
       && os_IsAbsolutePath(ejudge_config->new_server_log))
     return;
   if (ejudge_config->var_dir && os_IsAbsolutePath(ejudge_config->var_dir)) {
-    if (!(s1 = ejudge_config->new_server_log)) s1 = "new-server.log";
+    if (!(s1 = ejudge_config->new_server_log)) s1 = "ej-contests.log";
     snprintf(buf, sizeof(buf), "%s/%s", ejudge_config->var_dir, s1);
     xfree(ejudge_config->new_server_log);
     ejudge_config->new_server_log = xstrdup(buf);
@@ -620,7 +620,7 @@ setup_log_file(void)
   }
   if (ejudge_config->contests_home_dir
       && os_IsAbsolutePath(ejudge_config->contests_home_dir)){
-    if (!(s1 = ejudge_config->new_server_log)) s1 = "new-server.log";
+    if (!(s1 = ejudge_config->new_server_log)) s1 = "ej-contests.log";
     if (!(s2 = ejudge_config->var_dir)) s2 = "var";
     snprintf(buf, sizeof(buf), "%s/%s/%s", ejudge_config->contests_home_dir,
              s2, s1);
@@ -628,7 +628,7 @@ setup_log_file(void)
     ejudge_config->new_server_log = xstrdup(buf);
     return;
   }
-  ejudge_config->new_server_log = xstrdup("/tmp/new-server.log");
+  ejudge_config->new_server_log = xstrdup("/tmp/ej-contests.log");
 }
 
 int
