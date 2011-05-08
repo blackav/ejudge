@@ -656,6 +656,8 @@ super_serve_op_USER_FILTER_CHANGE_ACTION(
   int contest_id = 0, group_id = 0;
   const struct contest_desc *cnts = 0;
   unsigned char extra[256];
+  opcap_t gcaps = 0;
+  opcap_t caps = 0;
 
   ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   ss_cgi_param_int_opt(phr, "group_id", &group_id, 0);
@@ -674,6 +676,15 @@ super_serve_op_USER_FILTER_CHANGE_ACTION(
     snprintf(extra, sizeof(extra), "contest_id=%d", contest_id);
   } else if (group_id > 0) {
     snprintf(extra, sizeof(extra), "group_id=%d", group_id);
+  }
+
+  if (get_global_caps(phr, &gcaps) >= 0 && opcaps_check(gcaps, OPCAP_LIST_USERS) >= 0) {
+    // this user can view the full user list and the user list for any contest
+  } else if (!cnts) {
+    // user without global OPCAP_LIST_USERS capability cannot view the full user list
+    FAIL(-S_ERR_PERM_DENIED);
+  } else if (get_contest_caps(phr, cnts, &caps) < 0 || opcaps_check(caps, OPCAP_LIST_USERS) < 0) {
+    FAIL(-S_ERR_PERM_DENIED);
   }
 
   if (!phr->userlist_clnt) {
@@ -842,6 +853,8 @@ super_serve_op_USER_DETAIL_PAGE(
   const struct contest_desc *cnts = 0;
   struct userlist_contest *reg;
   struct userlist_cookie *cookie;
+  opcap_t gcaps = 0;
+  opcap_t caps = 0;
 
   if (ss_cgi_param_int(phr, "other_user_id", &other_user_id) < 0) {
     FAIL(S_ERR_INV_USER_ID);
@@ -861,6 +874,15 @@ super_serve_op_USER_DETAIL_PAGE(
   group_id_str[0] = 0;
   if (group_id > 0) {
     snprintf(group_id_str, sizeof(group_id_str), "&amp;group_id=%d", group_id);
+  }
+
+  if (get_global_caps(phr, &gcaps) >= 0 && opcaps_check(gcaps, OPCAP_GET_USER) >= 0) {
+    // this user can view the full user list and the user list for any contest
+  } else if (!cnts) {
+    // user without global OPCAP_LIST_USERS capability cannot view the full user list
+    FAIL(-S_ERR_PERM_DENIED);
+  } else if (get_contest_caps(phr, cnts, &caps) < 0 || opcaps_check(caps, OPCAP_GET_USER) < 0) {
+    FAIL(-S_ERR_PERM_DENIED);
   }
 
   snprintf(buf, sizeof(buf), "serve-control: %s, viewing user %d",
@@ -1275,12 +1297,12 @@ super_serve_op_USER_DETAIL_PAGE(
         fprintf(out_f, "<tr class=\"MemberInfoRow2\" style=\"display: none;\"><td%s><b>%s</b></td><td%s>&nbsp;</td><td%s>%d</td><td%s>&nbsp;</td></tr>\n",
                 cl, "Member serial Id", cl, cl, m->serial, cl);
 
-        snprintf(hbuf, sizeof(hbuf), "mfield_%d_%d", m->serial, USERLIST_NM_STATUS);
+        snprintf(hbuf, sizeof(hbuf), "field_%d_%d", m->serial, USERLIST_NM_STATUS);
         fprintf(out_f, "<tr class=\"MemberInfoRow2\" style=\"display: none;\"><td%s><b>%s</b></td><td%s>&nbsp;</td><td%s>",
                 cl, "Status", cl, cl);
         ss_select(out_f, hbuf, (const unsigned char* []) { "Undefined", "School student", "Student", "Magistrant", "PhD student", "School teacher", "Professor", "Scientist", "Other", NULL }, m->status);
         fprintf(out_f, "</td><td%s>&nbsp;</td></tr>\n", cl);
-        snprintf(hbuf, sizeof(hbuf), "mfield_%d_%d", m->serial, USERLIST_NM_GENDER);
+        snprintf(hbuf, sizeof(hbuf), "field_%d_%d", USERLIST_NM_GENDER, m->serial);
         fprintf(out_f, "<tr class=\"MemberInfoRow2\" style=\"display: none;\"><td%s><b>%s</b></td><td%s>&nbsp;</td><td%s>",
                 cl, "Status", cl, cl);
         ss_select(out_f, hbuf, (const unsigned char* []) { "Undefined", "Male", "Female", NULL }, m->gender);
@@ -1291,7 +1313,7 @@ super_serve_op_USER_DETAIL_PAGE(
           snprintf(buf2, sizeof(buf2), "%d", m->grade);
           s = buf2;
         }
-        snprintf(hbuf, sizeof(hbuf), "%d_%d", m->serial, USERLIST_NM_GRADE);
+        snprintf(hbuf, sizeof(hbuf), "%d_%d", USERLIST_NM_GRADE, m->serial);
         string_row(out_f, "MemberInfoRow2", 1, "b1", "Grade", hbuf, s);
 
         static const struct user_row_info member_rows[] =
@@ -1326,7 +1348,7 @@ super_serve_op_USER_DETAIL_PAGE(
           unsigned char **ps = (unsigned char**) userlist_get_member_field_ptr(m, member_rows[row].field_id);
           if (!ps) continue;
           s = *ps;
-          snprintf(hbuf, sizeof(hbuf), "%d_%d", m->serial, member_rows[row].field_id);
+          snprintf(hbuf, sizeof(hbuf), "%d_%d", member_rows[row].field_id, m->serial);
           string_row(out_f, "MemberInfoRow2", 1, "b1", member_rows[row].field_desc, hbuf, s);
         }
 
@@ -1347,7 +1369,7 @@ super_serve_op_USER_DETAIL_PAGE(
             userlist_get_member_field_str(buf2, sizeof(buf2), m, member_date_rows[row].field_id, 0, 0);
             s = buf2;
           }
-          snprintf(hbuf, sizeof(hbuf), "%d_%d", m->serial, member_date_rows[row].field_id);
+          snprintf(hbuf, sizeof(hbuf), "%d_%d", member_date_rows[row].field_id, m->serial);
           string_row(out_f, "MemberInfoRow2", 1, "b1", member_date_rows[row].field_desc, hbuf, s);
         }
 
@@ -1611,6 +1633,18 @@ super_serve_op_USER_PASSWORD_PAGE(
     snprintf(group_id_str, sizeof(group_id_str), "&amp;group_id=%d", group_id);
   }
 
+  r = userlist_clnt_get_info(phr->userlist_clnt, ULS_PRIV_GET_USER_INFO,
+                             other_user_id, 0, &xml_text);
+  if (r < 0 || !xml_text) FAIL(S_ERR_DB_ERROR);
+  if (!(u = userlist_parse_user_str(xml_text))) FAIL(S_ERR_DB_ERROR);
+
+  opcap_t caps = 0;
+  if (get_global_caps(phr, &caps) < 0) FAIL(S_ERR_PERM_DENIED);
+  int cap = OPCAP_EDIT_PASSWD;
+  if (is_globally_privileged(phr, u) || is_contest_privileged(cnts, u))
+    cap = OPCAP_PRIV_EDIT_PASSWD;
+  if (opcaps_check(caps, cap) < 0) FAIL(S_ERR_PERM_DENIED);
+
   snprintf(buf, sizeof(buf), "serve-control: %s, change registration password for user %d",
            phr->html_name, other_user_id);
   ss_write_html_header(out_f, phr, buf, 1, 0);
@@ -1691,20 +1725,6 @@ super_serve_op_USER_PASSWORD_PAGE(
   if (!phr->userlist_clnt) {
     fprintf(out_f, "<hr/><h2>Error</h2>\n");
     fprintf(out_f, "<pre>No connection to the server!</pre>\n");
-    goto do_footer;
-  }
-
-  r = userlist_clnt_get_info(phr->userlist_clnt, ULS_PRIV_GET_USER_INFO,
-                             other_user_id, 0, &xml_text);
-  if (r < 0) {
-    fprintf(out_f, "<hr/><h2>Error</h2>\n");
-    fprintf(out_f, "<pre>Cannot get user information: %s</pre>\n",
-            userlist_strerror(-r));
-    goto do_footer;
-  }
-  if (!(u = userlist_parse_user_str(xml_text))) {
-    fprintf(out_f, "<hr/><h2>Error</h2>\n");
-    fprintf(out_f, "<pre>XML parse error</pre>\n");
     goto do_footer;
   }
 
@@ -1809,6 +1829,28 @@ super_serve_op_USER_CNTS_PASSWORD_PAGE(
     snprintf(group_id_str, sizeof(group_id_str), "&amp;group_id=%d", group_id);
   }
 
+  r = userlist_clnt_get_info(phr->userlist_clnt, ULS_PRIV_GET_USER_INFO,
+                             other_user_id, contest_id, &xml_text);
+  if (r < 0 || !xml_text) FAIL(S_ERR_DB_ERROR);
+  if (!(u = userlist_parse_user_str(xml_text))) FAIL(S_ERR_DB_ERROR);
+
+  if (phr->priv_level <= 0) FAIL(S_ERR_PERM_DENIED);
+  opcap_t gcaps = 0;
+  get_global_caps(phr, &gcaps);
+  opcap_t caps = 0;
+  get_contest_caps(phr, cnts, &caps);
+
+  if (is_globally_privileged(phr, u)) {
+    if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_PASSWD) < 0)
+      FAIL(S_ERR_PERM_DENIED);
+  } else if (is_contest_privileged(cnts, u)) {
+    if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_PASSWD) < 0 && opcaps_check(caps, OPCAP_PRIV_EDIT_PASSWD) < 0)
+      FAIL(S_ERR_PERM_DENIED);
+  } else {
+    if (opcaps_check(gcaps, OPCAP_EDIT_PASSWD) < 0 && opcaps_check(caps, OPCAP_EDIT_PASSWD) < 0)
+      FAIL(S_ERR_PERM_DENIED);
+  }
+
   snprintf(buf, sizeof(buf), "serve-control: %s, change contest password for user %d in contest %d",
            phr->html_name, other_user_id, contest_id);
   ss_write_html_header(out_f, phr, buf, 1, 0);
@@ -1889,20 +1931,6 @@ super_serve_op_USER_CNTS_PASSWORD_PAGE(
   if (!phr->userlist_clnt) {
     fprintf(out_f, "<hr/><h2>Error</h2>\n");
     fprintf(out_f, "<pre>No connection to the server!</pre>\n");
-    goto do_footer;
-  }
-
-  r = userlist_clnt_get_info(phr->userlist_clnt, ULS_PRIV_GET_USER_INFO,
-                             other_user_id, contest_id, &xml_text);
-  if (r < 0) {
-    fprintf(out_f, "<hr/><h2>Error</h2>\n");
-    fprintf(out_f, "<pre>Cannot get user information: %s</pre>\n",
-            userlist_strerror(-r));
-    goto do_footer;
-  }
-  if (!(u = userlist_parse_user_str(xml_text))) {
-    fprintf(out_f, "<hr/><h2>Error</h2>\n");
-    fprintf(out_f, "<pre>XML parse error</pre>\n");
     goto do_footer;
   }
 
@@ -4274,6 +4302,11 @@ super_serve_op_USER_CREATE_FROM_CSV_ACTION(
   const unsigned char *csv_text = 0;
   unsigned char *recoded_csv_text = 0;
   const unsigned char *separator = 0;
+  unsigned char *login_str = 0;
+  unsigned char *email_str = 0;
+  unsigned char *reg_password_str = 0;
+  unsigned char *cnts_password_str = 0;
+  unsigned char *cnts_name_str = 0;
 
   struct ss_op_param_USER_CREATE_FROM_CSV_ACTION params;
   memset(&params, 0, sizeof(params));
@@ -4341,15 +4374,345 @@ super_serve_op_USER_CREATE_FROM_CSV_ACTION(
     FAIL(S_ERR_INV_CSV_FILE);
   }
 
-  //...
+  // columns: login, email, reg_password (regpassword, password), cnts_password (cntspassword), name (cnts_name, cntsname)
+  int login_idx = -1, email_idx = -1, reg_password_idx = -1, cnts_password_idx = -1, cnts_name_idx = -1;
+  int column_count = csv_parsed->v[0].u;
+  int failed = 0;
+  for (int col = 0; col < column_count; ++col) {
+    unsigned char *txt = fix_string(csv_parsed->v[0].v[col]);
+    if (!txt || !*txt) {
+      fprintf(log_f, "unidentified column %d, skipped\n", col + 1);
+    } else if (!strcasecmp(txt, "login")) {
+      if (login_idx >= 0) {
+        fprintf(log_f, "dupicated column 'login'\n");
+        failed = 1;
+      } else {
+        login_idx = col;
+      }
+    } else if (!strcasecmp(txt, "email")) {
+      if (email_idx >= 0) {
+        fprintf(log_f, "dupicated column 'email'\n");
+        failed = 1;
+      } else {
+        email_idx = col;
+      }
+    } else if (!strcasecmp(txt, "password") || !strcasecmp(txt, "reg_password") || !strcasecmp(txt, "regpassword")) {
+      if (reg_password_idx >= 0) {
+        fprintf(log_f, "dupicated column 'reg_password'\n");
+        failed = 1;
+      } else {
+        reg_password_idx = col;
+      }
+    } else if (!strcasecmp(txt, "cnts_password") || !strcasecmp(txt, "cntspassword")) {
+      if (cnts_password_idx >= 0) {
+        fprintf(log_f, "dupicated column 'cnts_password'\n");
+        failed = 1;
+      } else {
+        cnts_password_idx = col;
+      }
+    } else if (!strcasecmp(txt, "cntsname") || !strcasecmp(txt, "name")) {
+      if (cnts_name_idx >= 0) {
+        fprintf(log_f, "dupicated column 'cnts_name'\n");
+        failed = 1;
+      } else {
+        cnts_name_idx = col;
+      }
+    } else {
+      fprintf(log_f, "unidentified column %d (%s), skipped\n", col + 1, txt);
+    }
+    xfree(txt); txt = 0;
+  }
+  if (login_idx < 0) {
+    fprintf(log_f, "missing column 'login'\n");
+    failed = 1;
+  }
+  if (params.send_email && email_idx < 0) {
+    fprintf(log_f, "missing column 'email'\n");
+    failed = 1;
+  }
+  if (!params.reg_random && reg_password_idx < 0) {
+    fprintf(log_f, "missing column 'reg_password'\n");
+    failed = 1;
+  }
+  if (params.reg_random) {
+    reg_password_idx = -1;
+  }
+  if (cnts && !cnts->disable_team_password && !params.cnts_use_reg_passwd
+      && !params.cnts_null_passwd && !params.cnts_random_passwd
+      && cnts_password_idx < 0) {
+    fprintf(log_f, "missing column 'cnts_password'\n");
+    failed = 1;
+  }
+  if (!cnts || cnts->disable_team_password || params.cnts_use_reg_passwd
+      || params.cnts_null_passwd || params.cnts_random_passwd) {
+    cnts_password_idx = -1;
+  }
+  if (!cnts) {
+    cnts_name_idx = -1;
+  }
+  if (failed) FAIL(S_ERR_INV_CSV_FILE);
+
+  // dry run
+  for (int row = 1; row < csv_parsed->u; ++row) {
+    if (csv_parsed->v[row].u != column_count) {
+      fprintf(log_f, "row %d contains %d column, but %d columns expected\n",
+              row + 1, csv_parsed->v[row].u, column_count);
+      failed = 1;
+      continue;
+    }
+    unsigned char *txt = fix_string(csv_parsed->v[row].v[login_idx]);
+    int user_id = 0, r = 0;
+    r = userlist_clnt_lookup_user(phr->userlist_clnt, txt, 0, &user_id, NULL);
+    xfree(txt); txt = 0;
+    if (r < 0 && r != -ULS_ERR_INVALID_LOGIN) {
+      FAIL(S_ERR_DB_ERROR);
+    }
+    if (r >= 0 && user_id > 0) {
+      fprintf(log_f, "row %d: login '%s' already exists\n", row + 1, txt);
+      failed = 1;
+    }
+    if (email_idx >= 0) {
+      txt = fix_string(csv_parsed->v[row].v[email_idx]);
+      if (params.send_email) {
+        if (!txt || !*txt) {
+          fprintf(log_f, "row %d: email is not specified\n", row + 1);
+          failed = 1;
+        }
+      }
+      xfree(txt); txt = 0;
+    }
+    if (reg_password_idx >= 0) {
+      txt = fix_string(csv_parsed->v[row].v[reg_password_idx]);
+      if (!txt || !*txt) {
+        fprintf(log_f, "row %d: reg_password is not specified\n", row + 1);
+        failed = 1;
+      }
+      xfree(txt); txt = 0;
+    }
+    if (cnts_password_idx >= 0) {
+      txt = fix_string(csv_parsed->v[row].v[cnts_password_idx]);
+      if (!txt || !*txt) {
+        fprintf(log_f, "row %d: cnts_password is not specified\n", row + 1);
+        failed = 1;
+      }
+      xfree(txt); txt = 0;
+    }
+  }
+  if (failed) FAIL(S_ERR_INV_CSV_FILE);
+
+  for (int row = 1; row < csv_parsed->u; ++row) {
+    login_str = 0;
+    email_str = 0;
+    reg_password_str = 0;
+    cnts_password_str = 0;
+    cnts_name_str = 0;
+
+    login_str = fix_string(csv_parsed->v[row].v[login_idx]);
+    if (email_idx >= 0) email_str = fix_string(csv_parsed->v[row].v[email_idx]);
+    if (reg_password_idx >= 0) reg_password_str = fix_string(csv_parsed->v[row].v[reg_password_idx]);
+    if (cnts_password_idx >= 0) cnts_password_str = fix_string(csv_parsed->v[row].v[cnts_password_idx]);
+    if (cnts_name_idx >= 0) cnts_name_str = fix_string(csv_parsed->v[row].v[cnts_name_idx]);
+
+    struct userlist_pk_create_user_2 up;
+    int other_user_id = 0;
+    memset(&up, 0, sizeof(up));
+    up.random_password_flag = params.reg_random;
+    up.use_sha1_flag = params.reg_sha1;
+    up.is_privileged_flag = params.field_1;
+    up.is_invisible_flag = params.field_2;
+    up.is_banned_flag = params.field_3;
+    up.is_locked_flag = params.field_4;
+    up.show_login_flag = params.field_5;
+    up.show_email_flag = params.field_6;
+    up.read_only_flag = params.field_7;
+    up.never_clean_flag = params.field_8;
+    up.simple_registration_flag = params.field_9;
+    up.contest_id = params.other_contest_id_1;
+    up.cnts_status = params.cnts_status;
+    up.cnts_is_invisible_flag = params.is_invisible;
+    up.cnts_is_banned_flag = params.is_banned;
+    up.cnts_is_locked_flag = params.is_locked;
+    up.cnts_is_incomplete_flag = params.is_incomplete;
+    up.cnts_is_disqualified_flag = params.is_disqualified;
+    up.cnts_use_reg_passwd_flag = params.cnts_use_reg_passwd;
+    up.cnts_set_null_passwd_flag = params.cnts_null_passwd;
+    up.cnts_random_password_flag = params.cnts_random_passwd;
+    up.cnts_use_sha1_flag = params.cnts_sha1;
+    up.group_id = params.other_group_id;
+    r = userlist_clnt_create_user_2(phr->userlist_clnt, ULS_CREATE_USER_2, &up,
+                                    login_str, email_str,
+                                    reg_password_str, cnts_password_str,
+                                    cnts_name_str, &other_user_id);
+    if (r < 0 && r == -ULS_ERR_LOGIN_USED) {
+      FAIL(S_ERR_DUPLICATED_LOGIN);
+    }
+    if (r < 0 || other_user_id <= 0) {
+      FAIL(S_ERR_DB_ERROR);
+    }
+
+    xfree(login_str); login_str = 0;
+    xfree(email_str); email_str = 0;
+    xfree(reg_password_str); reg_password_str = 0;
+    xfree(cnts_password_str); cnts_password_str = 0;
+    xfree(cnts_name_str); cnts_name_str = 0;
+  }
 
   ss_redirect_2(out_f, phr, SSERV_OP_USER_BROWSE_PAGE, params.contest_id, params.group_id, 0);
 
 cleanup:
+  xfree(login_str); login_str = 0;
+  xfree(email_str); email_str = 0;
+  xfree(reg_password_str); reg_password_str = 0;
+  xfree(cnts_password_str); cnts_password_str = 0;
+  xfree(cnts_name_str); cnts_name_str = 0;
   csv_parsed = csv_free(csv_parsed);
   xfree(recoded_csv_text); recoded_csv_text = 0;
   xfree(xml_text); xml_text = 0;
   meta_destroy_fields(&meta_ss_op_param_USER_CREATE_MANY_ACTION_methods, &params);
+  return retval;
+}
+
+int
+super_serve_op_USER_SAVE_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  int contest_id = 0, group_id = 0, other_user_id = 0;
+  const struct contest_desc *cnts = 0;
+  unsigned char *xml_text = 0;
+  struct userlist_user *u = 0;
+  unsigned char *other_login_str = 0;
+  unsigned char *email_str = 0;
+  const unsigned char *s = 0;
+  unsigned char param_name[64];
+  opcap_t gcaps = 0;
+  opcap_t caps = 0;
+  int *changed_ids = 0;
+  const unsigned char **changed_strs = 0;
+
+  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  ss_cgi_param_int_opt(phr, "group_id", &group_id, 0);
+  if (ss_cgi_param_int(phr, "other_user_id", &other_user_id) <= 0)
+    FAIL(S_ERR_INV_USER_ID);
+  if (contest_id > 0) {
+    if (contests_get(contest_id, &cnts) < 0 || !cnts)
+      FAIL(S_ERR_INV_CONTEST);
+  }
+
+  if (phr->priv_level <= 0) FAIL(S_ERR_PERM_DENIED);
+  get_global_caps(phr, &gcaps);
+  if (cnts) {
+    get_contest_caps(phr, cnts, &caps);
+  } else {
+    caps = gcaps;
+  }
+
+  if (userlist_clnt_get_info(phr->userlist_clnt, ULS_PRIV_GET_USER_INFO,
+                             other_user_id, contest_id, &xml_text) < 0) {
+    FAIL(S_ERR_DB_ERROR);
+  }
+  if (!(u = userlist_parse_user_str(xml_text))) FAIL(S_ERR_DB_ERROR);
+
+  if (ss_cgi_param(phr, "other_login", &s) <= 0 || !s) FAIL(S_ERR_UNSPEC_LOGIN);
+  other_login_str = fix_string(s);
+  if (ss_cgi_param(phr, "email", &s) <= 0) FAIL(S_ERR_INV_VALUE);
+  email_str = fix_string(s);
+
+  static const int global_checkbox_ids[] =
+  {
+    USERLIST_NN_IS_PRIVILEGED,
+    USERLIST_NN_IS_INVISIBLE,
+    USERLIST_NN_IS_BANNED,
+    USERLIST_NN_IS_LOCKED,
+    USERLIST_NN_SHOW_LOGIN,
+    USERLIST_NN_SHOW_EMAIL,
+    USERLIST_NN_READ_ONLY,
+    USERLIST_NN_NEVER_CLEAN,
+    USERLIST_NN_SIMPLE_REGISTRATION,
+    0,
+  };
+  int global_checkbox_vals[USERLIST_NN_LAST];
+  memset(global_checkbox_vals, 0, sizeof(global_checkbox_vals));
+  for (int i = 0; global_checkbox_ids[i]; ++i) {
+    snprintf(param_name, sizeof(param_name), "field_%d", global_checkbox_ids[i]);
+    int val = 0;
+    ss_cgi_param_int_opt(phr, param_name, &val, 0);
+    if (val != 1) val = 0;
+    global_checkbox_vals[i] = val;
+  }
+
+  int changed_count = 0;
+  if (strcmp(u->login, other_login_str) != 0) {
+    ++changed_count;
+  }
+  if (strcmp(u->email, email_str) != 0) {
+    ++changed_count;
+  }
+  for (int i = 0; global_checkbox_ids[i]; ++i) {
+    const void *ptr = userlist_get_user_field_ptr(u, global_checkbox_ids[i]);
+    if (ptr) {
+      int ival = *(const int*) ptr;
+      if (ival != global_checkbox_vals[i]) {
+        ++changed_count;
+      }
+    }
+  }
+  if (changed_count > 0) {
+    int bit = 0;
+    if (is_globally_privileged(phr, u)
+        || (cnts && is_contest_privileged(cnts, u))
+        || global_checkbox_vals[USERLIST_NN_IS_PRIVILEGED] != u->is_privileged) {
+      bit = OPCAP_PRIV_EDIT_USER;
+    } else {
+      bit = OPCAP_EDIT_USER;
+    }
+    if (opcaps_check(gcaps, bit) < 0) FAIL(S_ERR_PERM_DENIED);
+
+    XCALLOC(changed_ids, changed_count);
+    XCALLOC(changed_strs, changed_count);
+    int cur = 0;
+
+    if (strcmp(u->login, other_login_str) != 0) {
+      changed_ids[cur] = USERLIST_NN_LOGIN;
+      changed_strs[cur] = other_login_str;
+      ++cur;
+    }
+    if (strcmp(u->email, email_str) != 0) {
+      changed_ids[cur] = USERLIST_NN_EMAIL;
+      changed_strs[cur] = email_str;
+      ++cur;
+    }
+    for (int i = 0; global_checkbox_ids[i]; ++i) {
+      const void *ptr = userlist_get_user_field_ptr(u, global_checkbox_ids[i]);
+      if (ptr) {
+        int ival = *(const int*) ptr;
+        if (ival != global_checkbox_vals[i]) {
+          changed_ids[cur] = global_checkbox_ids[i];
+          changed_strs[cur] = ival?"1":"0";
+          ++cur;
+        }
+      }
+    }
+
+    if (userlist_clnt_edit_field_seq(phr->userlist_clnt, ULS_EDIT_FIELD_SEQ,
+                                     other_user_id, contest_id, 0, 0, changed_count,
+                                     NULL, changed_ids, changed_strs) < 0) {
+      FAIL(S_ERR_DB_ERROR);
+    }
+
+    xfree(changed_ids); changed_ids = 0;
+    xfree(changed_strs); changed_strs = 0;
+  }
+
+cleanup:
+  xfree(changed_strs); changed_strs = 0;
+  xfree(changed_ids); changed_ids = 0;
+  xfree(email_str); email_str = 0;
+  xfree(other_login_str); other_login_str = 0;
+  userlist_free(&u->b); u = 0;
+  xfree(xml_text); xml_text = 0;
   return retval;
 }
 

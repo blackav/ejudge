@@ -210,6 +210,22 @@ get_group_count_func(
         void *data,
         const unsigned char *filter,
         long long *p_count);
+static int
+get_prev_user_id_func(
+        void *data,
+        int contest_id,
+        int group_id,
+        int user_id,
+        const unsigned char *filter,
+        int *p_user_id);
+static int
+get_next_user_id_func(
+        void *data,
+        int contest_id,
+        int group_id,
+        int user_id,
+        const unsigned char *filter,
+        int *p_user_id);
 
 struct uldb_plugin_iface uldb_plugin_xml =
 {
@@ -315,6 +331,8 @@ struct uldb_plugin_iface uldb_plugin_xml =
   get_user_count_func,
   get_group_iterator_2_func,
   get_group_count_func,
+  get_prev_user_id_func,
+  get_next_user_id_func,
 };
 
 struct uldb_xml_state
@@ -4057,6 +4075,81 @@ get_group_count_func(
   }
 
   if (p_count) *p_count = count;
+  return 0;
+}
+
+static int
+check_user_match(const struct userlist_user *u, int contest_id, int group_id, const unsigned char *filter)
+{
+  const struct xml_tree *t;
+  const struct userlist_contest *c;
+  const struct userlist_groupmember *m;
+
+  if (!u) return 0;
+  if (contest_id > 0) {
+    if (!u->contests) return 0;
+    for (t = u->contests->first_down; t; t = t->right) {
+      c = (const struct userlist_contest*) t;
+      if (c->id == contest_id) {
+        break;
+      }
+    }
+    if (!t) return 0;
+  }
+  if (group_id > 0) {
+    if (!u->group_first) return 0;
+    for (t = u->group_first; t; t = m->group_next) {
+      m = (const struct userlist_groupmember*) t;
+      if (m->group_id == group_id) break;
+    }
+    if (!t) return 0;
+  }
+
+  return 1;
+}
+
+static int
+get_prev_user_id_func(
+        void *data,
+        int contest_id,
+        int group_id,
+        int user_id,
+        const unsigned char *filter,
+        int *p_user_id)
+{
+  struct uldb_xml_state *state = (struct uldb_xml_state*) data;
+  struct userlist_list *ul = state->userlist;
+
+  if (user_id > ul->user_map_size) user_id = ul->user_map_size;
+  for (--user_id;
+       user_id > 0 && !check_user_match(ul->user_map[user_id], contest_id, group_id, filter);
+       --user_id) {
+  }
+
+  if (p_user_id) *p_user_id = user_id;
+  return 0;
+}
+
+static int
+get_next_user_id_func(
+        void *data,
+        int contest_id,
+        int group_id,
+        int user_id,
+        const unsigned char *filter,
+        int *p_user_id)
+{
+  struct uldb_xml_state *state = (struct uldb_xml_state*) data;
+  struct userlist_list *ul = state->userlist;
+
+  if (user_id < 0) user_id = 0;
+  for (++user_id;
+       user_id < ul->user_map_size && !check_user_match(ul->user_map[user_id], contest_id, group_id, filter);
+       ++user_id) {
+  }
+  if (user_id >= ul->user_map_size) user_id = 0;
+
+  if (p_user_id) *p_user_id = user_id;
   return 0;
 }
 

@@ -9785,6 +9785,62 @@ cmd_create_user_2(
   info("%s -> OK, %d", logbuf, user_id); 
 }
 
+static void
+cmd_next_user(
+        struct client_state *p,
+        int pkt_len,
+        struct userlist_pk_list_users_2 *data)
+{
+  unsigned char logbuf[1024];
+  const struct contest_desc *cnts = 0;
+  int user_id = 0;
+
+  snprintf(logbuf, sizeof(logbuf), "NEXT_USER: %d, %d, %d, %d", p->user_id,
+           data->user_id, data->contest_id, data->group_id);
+
+  if (is_judge(p, logbuf) < 0) return;
+  if (data->contest_id) {
+    if (full_get_contest(p, logbuf, &data->contest_id, &cnts) < 0) return;
+  }
+  if (is_dbcnts_capable(p, cnts, OPCAP_LIST_USERS, logbuf) < 0) return;
+
+  int (*func)(void *, int contest_id, int group_id, int user_id, const unsigned char *filter, int *p_user_id);
+  switch (data->request_id) {
+  case ULS_PREV_USER:
+    func = plugin_func(get_prev_user_id);
+    break;
+  case ULS_NEXT_USER:
+    func = plugin_func(get_next_user_id);
+    break;
+  default:
+    send_reply(p, -ULS_ERR_PROTOCOL);
+    err("%s -> invalid request", logbuf);
+    return;
+  }
+
+  struct userlist_pk_login_ok out;
+  memset(&out, 0, sizeof(out));
+
+  if (!func) {
+    out.reply_id = ULS_LOGIN_OK;
+    out.user_id = 0;
+    enqueue_reply_to_client(p, sizeof(out), &out);
+    info("%s -> not implemented, %d", logbuf, 0); 
+    return;
+  }
+
+  if (func(uldb_default->data, data->contest_id, data->group_id, data->user_id, data->data, &user_id) < 0) {
+    err("%s -> database error", logbuf);
+    send_reply(p, -ULS_ERR_DB_ERROR);
+    return;
+  }
+
+  out.reply_id = ULS_LOGIN_OK;
+  out.user_id = user_id;
+  enqueue_reply_to_client(p, sizeof(out), &out);
+  info("%s -> OK, %d", logbuf, user_id); 
+}
+
 static void (*cmd_table[])() =
 {
   [ULS_REGISTER_NEW] =          cmd_register_new,
@@ -9880,6 +9936,8 @@ static void (*cmd_table[])() =
   [ULS_PRIV_SET_CNTS_PASSWD_PLAIN] = cmd_priv_set_passwd_2,
   [ULS_PRIV_SET_CNTS_PASSWD_SHA1] = cmd_priv_set_passwd_2,
   [ULS_CREATE_USER_2] =         cmd_create_user_2,
+  [ULS_PREV_USER] =             cmd_next_user,
+  [ULS_NEXT_USER] =             cmd_next_user,
 
   [ULS_LAST_CMD] 0
 };
@@ -9979,6 +10037,8 @@ static int (*check_table[])() =
   [ULS_PRIV_SET_CNTS_PASSWD_PLAIN] = check_pk_set_password,
   [ULS_PRIV_SET_CNTS_PASSWD_SHA1] = check_pk_set_password,
   [ULS_CREATE_USER_2] =         check_pk_create_user_2,
+  [ULS_PREV_USER] =             check_pk_list_users_2,
+  [ULS_NEXT_USER] =             check_pk_list_users_2,
 
   [ULS_LAST_CMD] 0
 };
