@@ -47,6 +47,7 @@ userlist_clnt_get_prev_user_id(
   out->request_id = cmd;
   out->contest_id = contest_id;
   out->group_id = group_id;
+  out->user_id = user_id;
   out->filter_len = filter_len;
   memcpy(out->data, filter, filter_len + 1);
 

@@ -1059,7 +1059,7 @@ super_serve_op_USER_DETAIL_PAGE(
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id,
                         phr->self_url, NULL,
                         "action=%d&amp;op=%d&amp;other_user_id=%d%s%s",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_CANCEL_AND_PREV_ACTION,
+                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_CANCEL_AND_NEXT_ACTION,
                         other_user_id, contest_id_str, group_id_str),
           "Next user");
   fprintf(out_f, "</td></tr>\n");
