@@ -4583,14 +4583,24 @@ super_serve_op_USER_SAVE_ACTION(
   const struct contest_desc *cnts = 0;
   unsigned char *xml_text = 0;
   struct userlist_user *u = 0;
+  const struct userlist_user_info *ui = 0;
   unsigned char *other_login_str = 0;
   unsigned char *email_str = 0;
   const unsigned char *s = 0;
   unsigned char param_name[64];
   opcap_t gcaps = 0;
   opcap_t caps = 0;
-  int *changed_ids = 0;
-  const unsigned char **changed_strs = 0;
+  int changed_ids[USERLIST_NM_LAST];
+  int deleted_ids[USERLIST_NM_LAST];
+  const unsigned char *changed_strs[USERLIST_NM_LAST];
+  int new_cnts_read_only = 0;
+  int field_id;
+
+  unsigned char *info_fields[USERLIST_NC_LAST];
+  memset(info_fields, 0, sizeof(info_fields));
+
+  unsigned char *member_fields[USERLIST_NM_LAST];
+  memset(member_fields, 0, sizeof(member_fields));
 
   ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   ss_cgi_param_int_opt(phr, "group_id", &group_id, 0);
@@ -4635,12 +4645,12 @@ super_serve_op_USER_SAVE_ACTION(
   };
   int global_checkbox_vals[USERLIST_NN_LAST];
   memset(global_checkbox_vals, 0, sizeof(global_checkbox_vals));
-  for (int i = 0; global_checkbox_ids[i]; ++i) {
-    snprintf(param_name, sizeof(param_name), "field_%d", global_checkbox_ids[i]);
+  for (int i = 0; (field_id = global_checkbox_ids[i]); ++i) {
+    snprintf(param_name, sizeof(param_name), "field_%d", field_id);
     int val = 0;
     ss_cgi_param_int_opt(phr, param_name, &val, 0);
     if (val != 1) val = 0;
-    global_checkbox_vals[i] = val;
+    global_checkbox_vals[field_id] = val;
   }
 
   int changed_count = 0;
@@ -4670,28 +4680,25 @@ super_serve_op_USER_SAVE_ACTION(
     }
     if (opcaps_check(gcaps, bit) < 0) FAIL(S_ERR_PERM_DENIED);
 
-    XCALLOC(changed_ids, changed_count);
-    XCALLOC(changed_strs, changed_count);
-    int cur = 0;
-
+    changed_count = 0;
     if (strcmp(u->login, other_login_str) != 0) {
-      changed_ids[cur] = USERLIST_NN_LOGIN;
-      changed_strs[cur] = other_login_str;
-      ++cur;
+      changed_ids[changed_count] = USERLIST_NN_LOGIN;
+      changed_strs[changed_count] = other_login_str;
+      ++changed_count;
     }
     if (strcmp(u->email, email_str) != 0) {
-      changed_ids[cur] = USERLIST_NN_EMAIL;
-      changed_strs[cur] = email_str;
-      ++cur;
+      changed_ids[changed_count] = USERLIST_NN_EMAIL;
+      changed_strs[changed_count] = email_str;
+      ++changed_count;
     }
-    for (int i = 0; global_checkbox_ids[i]; ++i) {
-      const void *ptr = userlist_get_user_field_ptr(u, global_checkbox_ids[i]);
+    for (int i = 0; (field_id = global_checkbox_ids[i]); ++i) {
+      const void *ptr = userlist_get_user_field_ptr(u, field_id);
       if (ptr) {
         int ival = *(const int*) ptr;
-        if (ival != global_checkbox_vals[i]) {
-          changed_ids[cur] = global_checkbox_ids[i];
-          changed_strs[cur] = ival?"1":"0";
-          ++cur;
+        if (ival != global_checkbox_vals[field_id]) {
+          changed_ids[changed_count] = field_id;
+          changed_strs[changed_count] = ival?"1":"0";
+          ++changed_count;
         }
       }
     }
@@ -4701,18 +4708,324 @@ super_serve_op_USER_SAVE_ACTION(
                                      NULL, changed_ids, changed_strs) < 0) {
       FAIL(S_ERR_DB_ERROR);
     }
-
-    xfree(changed_ids); changed_ids = 0;
-    xfree(changed_strs); changed_strs = 0;
   }
 
+  static const int info_field_ids[] =
+  {
+    // USERLIST_NC_CNTS_READ_ONLY,
+    USERLIST_NC_NAME,
+    USERLIST_NC_TEAM_PASSWD,
+    USERLIST_NC_INST,
+    USERLIST_NC_INST_EN,
+    // 105
+    USERLIST_NC_INSTSHORT,
+    USERLIST_NC_INSTSHORT_EN,
+    USERLIST_NC_INSTNUM,
+    USERLIST_NC_FAC,
+    USERLIST_NC_FAC_EN,
+    // 110
+    USERLIST_NC_FACSHORT,
+    USERLIST_NC_FACSHORT_EN,
+    USERLIST_NC_HOMEPAGE,
+    USERLIST_NC_CITY,
+    USERLIST_NC_CITY_EN,
+    // 115
+    USERLIST_NC_COUNTRY,
+    USERLIST_NC_COUNTRY_EN,
+    USERLIST_NC_REGION,
+    USERLIST_NC_AREA,
+    USERLIST_NC_ZIP,
+    // 120
+    USERLIST_NC_STREET,
+    USERLIST_NC_LOCATION,
+    USERLIST_NC_SPELLING,
+    USERLIST_NC_PRINTER_NAME,
+    USERLIST_NC_EXAM_ID,
+    // 125
+    USERLIST_NC_EXAM_CYPHER,
+    USERLIST_NC_LANGUAGES,
+    USERLIST_NC_PHONE,
+    USERLIST_NC_FIELD0,
+    USERLIST_NC_FIELD1,
+    // 130
+    USERLIST_NC_FIELD2,
+    USERLIST_NC_FIELD3,
+    USERLIST_NC_FIELD4,
+    USERLIST_NC_FIELD5,
+    USERLIST_NC_FIELD6,
+    // 135
+    USERLIST_NC_FIELD7,
+    USERLIST_NC_FIELD8,
+    USERLIST_NC_FIELD9,
+    0,
+  };
+  int info_null_fields[USERLIST_NC_LAST];
+  memset(info_null_fields, 0, sizeof(info_null_fields));
+  for (int i = 0; (field_id = info_field_ids[i]); ++i) {
+    snprintf(param_name, sizeof(param_name), "field_null_%d", field_id);
+    int val = 0;
+    ss_cgi_param_int_opt(phr, param_name, &val, 0);
+    if (val != 1) val = 0;
+    info_null_fields[field_id] = val;
+  }
+
+  snprintf(param_name, sizeof(param_name), "field_%d", USERLIST_NC_CNTS_READ_ONLY);
+  ss_cgi_param_int_opt(phr, param_name, &new_cnts_read_only, 0);
+  if (new_cnts_read_only != 1) new_cnts_read_only = 0;
+
+  int cnts_read_only = 0;
+  if (ui && ui->cnts_read_only) cnts_read_only = 1;
+
+  for (int i = 0; (field_id = info_field_ids[i]); ++i) {
+    if (info_null_fields[field_id]) continue;
+    snprintf(param_name, sizeof(param_name), "field_%d", field_id);
+    if (ss_cgi_param(phr, param_name, &s) < 0) FAIL(S_ERR_INV_VALUE);
+    if (!s) s = "";
+    info_fields[field_id] = fix_string(s);
+  }
+
+  if (u) ui = u->cnts0;
+  int is_changed = 0;
+  for (int i = 0; (field_id = info_field_ids[i]); ++i) {
+    if (info_null_fields[field_id]) {
+      if (!userlist_is_empty_user_info_field(ui, field_id)) is_changed = 1;
+    } else {
+      if (!userlist_is_equal_user_info_field(ui, field_id, info_fields[field_id])) is_changed = 1;
+    }
+  }
+
+  int deleted_count = 0;
+  changed_count = 0;
+  if (is_changed) {
+    if (cnts_read_only && new_cnts_read_only) FAIL(S_ERR_DATA_READ_ONLY);
+    if (cnts_read_only != new_cnts_read_only) {
+      changed_ids[changed_count] = USERLIST_NC_CNTS_READ_ONLY;
+      changed_strs[changed_count] = new_cnts_read_only?"1":"0";
+      ++changed_count;
+    }
+    for (int i = 0; (field_id = info_field_ids[i]); ++i) {
+      if (info_null_fields[field_id]) {
+        if (!userlist_is_empty_user_info_field(ui, field_id)) {
+          deleted_ids[deleted_count] = field_id;
+          ++deleted_count;
+        }
+      } else {
+        if (!userlist_is_equal_user_info_field(ui, field_id, info_fields[field_id])) {
+          changed_ids[changed_count] = field_id;
+          changed_strs[changed_count] = info_fields[field_id];
+          ++changed_count;
+        }
+      }
+    }
+    if (deleted_count > 0 && changed_count > 0) {
+      if (is_globally_privileged(phr, u)) {
+        if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_USER) < 0 || opcaps_check(caps, OPCAP_PRIV_EDIT_USER) < 0)
+          FAIL(S_ERR_PERM_DENIED);
+      } else if (is_contest_privileged(cnts, u)) {
+        if (opcaps_check(caps, OPCAP_PRIV_EDIT_USER) < 0) FAIL(S_ERR_PERM_DENIED);
+      } else {
+        if (opcaps_check(caps, OPCAP_EDIT_USER) < 0) FAIL(S_ERR_PERM_DENIED);
+      }
+
+      if (userlist_clnt_edit_field_seq(phr->userlist_clnt, ULS_EDIT_FIELD_SEQ,
+                                       other_user_id, contest_id, 0, deleted_count, changed_count,
+                                       deleted_ids, changed_ids, changed_strs) < 0) {
+        FAIL(S_ERR_DB_ERROR);
+      }
+    }
+  }
+
+  static const int member_field_ids[] = 
+  {
+    USERLIST_NM_STATUS,
+    USERLIST_NM_GENDER,
+    USERLIST_NM_GRADE,
+    USERLIST_NM_FIRSTNAME,
+    /* 205 */
+    USERLIST_NM_FIRSTNAME_EN,
+    USERLIST_NM_MIDDLENAME,
+    USERLIST_NM_MIDDLENAME_EN,
+    USERLIST_NM_SURNAME,
+    USERLIST_NM_SURNAME_EN,
+    /* 210 */
+    USERLIST_NM_GROUP,
+    USERLIST_NM_GROUP_EN,
+    USERLIST_NM_EMAIL,
+    USERLIST_NM_HOMEPAGE,
+    USERLIST_NM_OCCUPATION,
+    /* 215 */
+    USERLIST_NM_OCCUPATION_EN,
+    USERLIST_NM_DISCIPLINE,
+    USERLIST_NM_INST,
+    USERLIST_NM_INST_EN,
+    USERLIST_NM_INSTSHORT,
+    /* 220 */
+    USERLIST_NM_INSTSHORT_EN,
+    USERLIST_NM_FAC,
+    USERLIST_NM_FAC_EN,
+    USERLIST_NM_FACSHORT,
+    USERLIST_NM_FACSHORT_EN,
+    /* 225 */
+    USERLIST_NM_PHONE,
+    USERLIST_NM_CREATE_TIME,
+    USERLIST_NM_LAST_CHANGE_TIME,
+    USERLIST_NM_BIRTH_DATE,
+    USERLIST_NM_ENTRY_DATE,
+    /* 230 */
+    USERLIST_NM_GRADUATION_DATE,
+    0,
+  };
+  int member_null_fields[USERLIST_NM_LAST];
+
+  if (ui && ui->members) {
+    for (int role = 0; role < CONTEST_LAST_MEMBER; ++role) {
+      int role_cnt = userlist_members_count(ui->members, role);
+      if (role_cnt <= 0) continue;
+      for (int pers = 0; pers < role_cnt; ++pers) {
+        const struct userlist_member *m;
+        if (!(m = (const struct userlist_member*) userlist_members_get_nth(ui->members, role, pers)))
+          continue;
+
+        memset(member_null_fields, 0, sizeof(member_null_fields));
+        memset(member_fields, 0, sizeof(member_fields));
+
+        for (int i = 0; (field_id = member_field_ids[i]); ++i) {
+          snprintf(param_name, sizeof(param_name), "field_null_%d_%d", field_id, m->serial);
+          int val = 0;
+          ss_cgi_param_int_opt(phr, param_name, &val, 0);
+          if (val != 1) val = 0;
+          member_null_fields[field_id] = val;
+        }
+
+        for (int i = 0; (field_id = member_field_ids[i]); ++i) {
+          if (member_null_fields[field_id]) continue;
+          snprintf(param_name, sizeof(param_name), "field_%d_%d", field_id, m->serial);
+          int r = ss_cgi_param(phr, param_name, &s);
+          if (!r || !s) continue;
+          if (r < 0) FAIL(S_ERR_INV_VALUE);
+          if (!s) s = "";
+          member_fields[field_id] = fix_string(s);
+        }
+
+        is_changed = 0;
+        for (int i = 0; (field_id = member_field_ids[i]); ++i) {
+          if (member_null_fields[field_id]) {
+            if (!userlist_is_empty_member_field(m, field_id)) is_changed = 1;
+          } else if (member_fields[field_id]) {
+            if (!userlist_is_equal_member_field(m, field_id, member_fields[field_id])) is_changed = 1;
+          }
+        }
+
+        deleted_count = 0;
+        changed_count = 0;
+        if (is_changed) {
+          if (cnts_read_only && new_cnts_read_only) FAIL(S_ERR_DATA_READ_ONLY);
+
+          for (int i = 0; (field_id = member_field_ids[i]); ++i) {
+            if (member_null_fields[field_id]) {
+              if (!userlist_is_empty_member_field(m, field_id)) {
+                deleted_ids[deleted_count] = field_id;
+                ++deleted_count;
+              }
+            } else if (member_fields[field_id]){
+              if (!userlist_is_equal_member_field(m, field_id, member_fields[field_id])) {
+                changed_ids[changed_count] = field_id;
+                changed_strs[changed_count] = member_fields[field_id];
+                ++changed_count;
+              }
+            }
+          }
+        }
+
+        if (deleted_count > 0 && changed_count > 0) {
+          if (is_globally_privileged(phr, u)) {
+            if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_USER) < 0 || opcaps_check(caps, OPCAP_PRIV_EDIT_USER) < 0)
+              FAIL(S_ERR_PERM_DENIED);
+          } else if (is_contest_privileged(cnts, u)) {
+            if (opcaps_check(caps, OPCAP_PRIV_EDIT_USER) < 0) FAIL(S_ERR_PERM_DENIED);
+          } else {
+            if (opcaps_check(caps, OPCAP_EDIT_USER) < 0) FAIL(S_ERR_PERM_DENIED);
+          }
+
+          if (userlist_clnt_edit_field_seq(phr->userlist_clnt, ULS_EDIT_FIELD_SEQ,
+                                           other_user_id, contest_id, m->serial, deleted_count, changed_count,
+                                           deleted_ids, changed_ids, changed_strs) < 0) {
+            FAIL(S_ERR_DB_ERROR);
+          }
+        }
+
+        for (int i = USERLIST_NM_FIRST; i < USERLIST_NM_LAST; ++i) {
+          xfree(member_fields[i]);
+        }
+        memset(member_fields, 0, sizeof(member_fields));
+      }
+    }
+  }
+
+  int next_user_id = 0;
+  int next_op = SSERV_OP_USER_DETAIL_PAGE;
+  if (phr->opcode == SSERV_OP_USER_SAVE_AND_PREV_ACTION) {
+    userlist_clnt_get_prev_user_id(phr->userlist_clnt, ULS_PREV_USER, contest_id, group_id, other_user_id,
+                                   NULL, &next_user_id);
+  } else if (phr->opcode == SSERV_OP_USER_SAVE_AND_NEXT_ACTION) {
+    userlist_clnt_get_prev_user_id(phr->userlist_clnt, ULS_NEXT_USER, contest_id, group_id, other_user_id,
+                                   NULL, &next_user_id);
+  } else {
+    next_op = SSERV_OP_USER_BROWSE_PAGE;
+  }
+  if (next_user_id <= 0) next_op = SSERV_OP_USER_BROWSE_PAGE;
+
+  ss_redirect_2(out_f, phr, next_op, contest_id, group_id, next_user_id);
+
 cleanup:
-  xfree(changed_strs); changed_strs = 0;
-  xfree(changed_ids); changed_ids = 0;
+  for (int i = 0; i < USERLIST_NC_LAST; ++i) {
+    xfree(info_fields[i]); info_fields[i] = 0;
+  }
+  for (int i = USERLIST_NM_FIRST; i < USERLIST_NM_LAST; ++i) {
+    xfree(member_fields[i]); member_fields[i] = 0;
+  }
   xfree(email_str); email_str = 0;
   xfree(other_login_str); other_login_str = 0;
   userlist_free(&u->b); u = 0;
   xfree(xml_text); xml_text = 0;
+  return retval;
+}
+
+int
+super_serve_op_USER_CANCEL_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  int contest_id = 0, group_id = 0, other_user_id = 0;
+  const struct contest_desc *cnts = 0;
+
+  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  ss_cgi_param_int_opt(phr, "group_id", &group_id, 0);
+  ss_cgi_param_int_opt(phr, "other_user_id", &other_user_id, 0);
+  if (contest_id > 0) {
+    if (contests_get(contest_id, &cnts) < 0 || !cnts)
+      FAIL(S_ERR_INV_CONTEST);
+  }
+  if (other_user_id <= 0) phr->opcode = SSERV_OP_USER_CANCEL_ACTION;
+
+  int next_user_id = 0;
+  int next_op = SSERV_OP_USER_DETAIL_PAGE;
+  if (phr->opcode == SSERV_OP_USER_CANCEL_AND_PREV_ACTION) {
+    userlist_clnt_get_prev_user_id(phr->userlist_clnt, ULS_PREV_USER, contest_id, group_id, other_user_id,
+                                   NULL, &next_user_id);
+  } else if (phr->opcode == SSERV_OP_USER_CANCEL_AND_NEXT_ACTION) {
+    userlist_clnt_get_prev_user_id(phr->userlist_clnt, ULS_NEXT_USER, contest_id, group_id, other_user_id,
+                                   NULL, &next_user_id);
+  } else {
+    next_op = SSERV_OP_USER_BROWSE_PAGE;
+  }
+  if (next_user_id <= 0) next_op = SSERV_OP_USER_BROWSE_PAGE;
+
+  ss_redirect_2(out_f, phr, next_op, contest_id, group_id, next_user_id);
+
+cleanup:
   return retval;
 }
 
