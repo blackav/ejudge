@@ -244,6 +244,10 @@ struct uldb_plugin_iface
   ptr_iterator_t (*get_group_iterator_2)(void *, const unsigned char *filter, int offset, int count);
   // get the total number of groups to display
   int (*get_group_count)(void *, const unsigned char *filter, long long *p_count);
+  // get the previous user
+  int (*get_prev_user_id)(void *, int contest_id, int group_id, int user_id, const unsigned char *filter, int *p_user_id);
+  // get the next user
+  int (*get_next_user_id)(void *, int contest_id, int group_id, int user_id, const unsigned char *filter, int *p_user_id);
 };
 
 /* default plugin: compiled into userlist-server */

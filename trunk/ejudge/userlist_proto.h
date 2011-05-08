@@ -117,6 +117,8 @@ enum
     ULS_PRIV_SET_CNTS_PASSWD_PLAIN,
     ULS_PRIV_SET_CNTS_PASSWD_SHA1,
     ULS_CREATE_USER_2,
+    ULS_PREV_USER,
+    ULS_NEXT_USER,
 
     ULS_LAST_CMD
   };
@@ -388,6 +390,7 @@ struct userlist_pk_list_users_2
   short request_id;
   int   contest_id;
   int   group_id;
+  int   user_id;
   int   filter_len;
   int   offset;
   int   count;
