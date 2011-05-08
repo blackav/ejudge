@@ -24,7 +24,7 @@ CREATE TABLE %slogins
 
 CREATE TABLE %scookies
        (cookie VARCHAR(32) NOT NULL PRIMARY KEY,
-       user_id INT NOT NULL,
+       user_id INT UNSIGNED NOT NULL,
        contest_id INT UNSIGNED NOT NULL,
        priv_level TINYINT NOT NULL DEFAULT 0,
        role_id TINYINT NOT NULL DEFAULT 0,
@@ -144,10 +144,10 @@ CREATE TABLE %smembers
 
 CREATE TABLE %sgroups
 (
-    group_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    group_id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     group_name VARCHAR(128) NOT NULL UNIQUE KEY,
     description VARCHAR(512) DEFAULT NULL,
-    created_by INT NOT NULL,
+    created_by INT UNSIGNED NOT NULL,
     create_time DATETIME NOT NULL,
     last_change_time DATETIME DEFAULT NULL,
     FOREIGN KEY (created_by) REFERENCES logins(user_id)
@@ -155,8 +155,8 @@ CREATE TABLE %sgroups
 
 CREATE TABLE %sgroupmembers
 (
-    group_id INT NOT NULL,
-    user_id INT NOT NULL,
+    group_id INT UNSIGNED NOT NULL,
+    user_id INT UNSIGNED NOT NULL,
     rights VARCHAR(512) DEFAULT NULL,
     PRIMARY KEY (group_id, user_id),
     FOREIGN KEY g(group_id) REFERENCES groups(group_id),
