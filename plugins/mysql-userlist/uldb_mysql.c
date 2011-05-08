@@ -236,6 +236,10 @@ struct uldb_plugin_iface plugin_uldb_mysql =
   get_group_iterator_2_func,
   // get the total count of the groups
   get_group_count_func,
+  // get the previous user
+  get_prev_user_id_func,
+  // get the next user
+  get_next_user_id_func,
 };
 
 // the size of the cookies pool, must be power of 2
@@ -5109,6 +5113,98 @@ get_group_count_func(
   state->mi->free_res(state->md);
   if (p_count) *p_count = count;
   return 0;
+
+fail:
+  state->mi->free_res(state->md);
+  return 0;
+}
+
+static int
+get_prev_user_id_func(
+        void *data,
+        int contest_id,
+        int group_id,
+        int user_id,
+        const unsigned char *filter,
+        int *p_user_id)
+{
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+  unsigned char cmdbuf[1024];
+  int cmdlen;
+
+  if (contest_id > 0 && group_id > 0) group_id = 0; // FIXME
+  if (group_id > 0) group_id = 0;                   /* FIXME */
+  if (p_user_id) *p_user_id = 0;
+
+  if (contest_id > 0 && group_id > 0) {
+    abort();
+  } else if (contest_id > 0) {
+    snprintf(cmdbuf, sizeof(cmdbuf), "SELECT %slogins.user_id FROM %slogins, %scntsregs WHERE %slogins.user_id = %scntsregs.user_id AND %scntsregs.contest_id = %d AND %slogins.user_id < %d ORDER BY %slogins.user_id DESC LIMIT 0, 1;",
+             state->md->table_prefix, state->md->table_prefix,
+             state->md->table_prefix, state->md->table_prefix,
+             state->md->table_prefix, state->md->table_prefix, contest_id,
+             state->md->table_prefix, user_id,
+             state->md->table_prefix);
+  } else if (group_id > 0) {
+    abort();
+  } else {
+    snprintf(cmdbuf, sizeof(cmdbuf), "SELECT user_id FROM %slogins WHERE user_id < %d ORDER BY user_id DESC LIMIT 0, 1;",
+             state->md->table_prefix, user_id);
+  }
+  cmdlen = strlen(cmdbuf);
+  if (state->mi->query(state->md, cmdbuf, cmdlen, 1) < 0) goto fail;
+  if (state->md->row_count != 1) goto fail;
+  if (!(state->md->row = mysql_fetch_row(state->md->res))) goto fail;
+  state->md->lengths = mysql_fetch_lengths(state->md->res);
+  if (!state->md->lengths[0]) goto fail;
+  if (state->mi->parse_int(state->md, state->md->row[0], &user_id) < 0 || user_id <= 0) goto fail;
+  if (p_user_id) *p_user_id = user_id;
+
+fail:
+  state->mi->free_res(state->md);
+  return 0;
+}
+
+static int
+get_next_user_id_func(
+        void *data,
+        int contest_id,
+        int group_id,
+        int user_id,
+        const unsigned char *filter,
+        int *p_user_id)
+{
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+  unsigned char cmdbuf[1024];
+  int cmdlen;
+
+  if (contest_id > 0 && group_id > 0) group_id = 0; // FIXME
+  if (group_id > 0) group_id = 0;                   /* FIXME */
+  if (p_user_id) *p_user_id = 0;
+
+  if (contest_id > 0 && group_id > 0) {
+    abort();
+  } else if (contest_id > 0) {
+    snprintf(cmdbuf, sizeof(cmdbuf), "SELECT %slogins.user_id FROM %slogins, %scntsregs WHERE %slogins.user_id = %scntsregs.user_id AND %scntsregs.contest_id = %d AND %slogins.user_id > %d ORDER BY %slogins.user_id LIMIT 0, 1;",
+             state->md->table_prefix, state->md->table_prefix,
+             state->md->table_prefix, state->md->table_prefix,
+             state->md->table_prefix, state->md->table_prefix, contest_id,
+             state->md->table_prefix, user_id,
+             state->md->table_prefix);
+  } else if (group_id > 0) {
+    abort();
+  } else {
+    snprintf(cmdbuf, sizeof(cmdbuf), "SELECT user_id FROM %slogins WHERE user_id > %d ORDER BY user_id DESC LIMIT 0, 1;",
+             state->md->table_prefix, user_id);
+  }
+  cmdlen = strlen(cmdbuf);
+  if (state->mi->query(state->md, cmdbuf, cmdlen, 1) < 0) goto fail;
+  if (state->md->row_count != 1) goto fail;
+  if (!(state->md->row = mysql_fetch_row(state->md->res))) goto fail;
+  state->md->lengths = mysql_fetch_lengths(state->md->res);
+  if (!state->md->lengths[0]) goto fail;
+  if (state->mi->parse_int(state->md, state->md->row[0], &user_id) < 0 || user_id <= 0) goto fail;
+  if (p_user_id) *p_user_id = user_id;
 
 fail:
   state->mi->free_res(state->md);

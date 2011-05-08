@@ -471,6 +471,22 @@ get_group_count_func(
         void *data,
         const unsigned char *filter,
         long long *p_count);
+static int
+get_prev_user_id_func(
+        void *data,
+        int contest_id,
+        int group_id,
+        int user_id,
+        const unsigned char *filter,
+        int *p_user_id);
+static int
+get_next_user_id_func(
+        void *data,
+        int contest_id,
+        int group_id,
+        int user_id,
+        const unsigned char *filter,
+        int *p_user_id);
 
 /*
  * Local variables:
