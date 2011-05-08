@@ -427,5 +427,14 @@ userlist_clnt_create_user_2(
         const unsigned char *cnts_password_str,
         const unsigned char *cnts_name_str,
         int *p_user_id);
+int
+userlist_clnt_get_prev_user_id(
+        struct userlist_clnt *clnt,
+        int cmd,
+        int contest_id,
+        int group_id,
+        int user_id,
+        const unsigned char *filter,
+        int *p_user_id);
 
 #endif /* __USERLIST_CLNT_H__ */
