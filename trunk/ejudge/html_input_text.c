@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -45,6 +45,40 @@ html_input_text(unsigned char *buf, size_t size,
 
   snprintf(buf, size, "<input type=\"text\"%s%s value=\"%s\"/>",
            bsize, bname, bformat);
+  return buf;
+}
+
+unsigned char *
+html_input_text_js(
+        unsigned char *buf,
+        size_t size,
+        const unsigned char *var_name,
+        int text_size,
+        const unsigned char *onchange,
+        const char *format,
+        ...)
+{
+  va_list args;
+  unsigned char bformat[1024] = { 0 };
+  unsigned char bsize[128];
+  unsigned char bname[128];
+  unsigned char bonchange[128];
+
+  if (format && *format) {
+    va_start(args, format);
+    vsnprintf(bformat, sizeof(bformat), format, args);
+    va_end(args);
+  }
+
+  bsize[0] = 0;
+  if (text_size > 0) snprintf(bsize, sizeof(bsize), " size=\"%d\"", text_size);
+  bname[0] = 0;
+  if (var_name) snprintf(bname, sizeof(bname), " name=\"%s\"", var_name);
+  bonchange[0] = 0;
+  if (onchange) snprintf(bonchange, sizeof(bonchange), " onchange=\"%s\"", onchange);
+
+  snprintf(buf, size, "<input type=\"text\"%s%s%s value=\"%s\"/>",
+           bsize, bname, bonchange, bformat);
   return buf;
 }
 

@@ -76,7 +76,7 @@ prepare_config_vars(void)
         return -1;
     }
   } else {
-    if (make_path_in_var_dir(job_server_log_path, "job_server.log") < 0)
+    if (make_path_in_var_dir(job_server_log_path, "ej-jobs.log") < 0)
       return -1;
   }
 
