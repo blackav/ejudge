@@ -5053,6 +5053,85 @@ cleanup:
 }
 
 int
+super_serve_op_USER_CREATE_MEMBER_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  int contest_id = 0, group_id = 0, other_user_id = 0, role = 0;
+  const struct contest_desc *cnts = 0;
+  unsigned char *xml_text = 0;
+  struct userlist_user *u = 0;
+  opcap_t gcaps = 0, caps = 0;
+
+  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  ss_cgi_param_int_opt(phr, "group_id", &group_id, 0);
+  ss_cgi_param_int_opt(phr, "other_user_id", &other_user_id, 0);
+  ss_cgi_param_int_opt(phr, "role", &role, -1);
+
+  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+  if (group_id < 0) group_id = 0;
+  if (userlist_clnt_get_info(phr->userlist_clnt, ULS_PRIV_GET_USER_INFO,
+                             other_user_id, contest_id, &xml_text) < 0) {
+    FAIL(S_ERR_DB_ERROR);
+  }
+
+  if (phr->priv_level <= 0) FAIL(S_ERR_PERM_DENIED);
+  get_global_caps(phr, &gcaps);
+  get_contest_caps(phr, cnts, &caps);
+  caps = (caps | gcaps) & ((1L << OPCAP_EDIT_USER) | (1L << OPCAP_PRIV_EDIT_USER));
+  if (!caps) FAIL(S_ERR_PERM_DENIED);
+
+  if (!(u = userlist_parse_user_str(xml_text))) FAIL(S_ERR_DB_ERROR);
+  if (role < 0 || role >= USERLIST_MB_LAST) FAIL(S_ERR_INV_VALUE);
+
+  if (is_globally_privileged(phr, u)) {
+    if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_USER) < 0) FAIL(S_ERR_PERM_DENIED);
+  } else if (is_contest_privileged(cnts, u)) {
+    if (opcaps_check(caps, OPCAP_PRIV_EDIT_USER) < 0) FAIL(S_ERR_PERM_DENIED);
+  } else {
+    if (opcaps_check(caps, OPCAP_EDIT_USER) < 0) FAIL(S_ERR_PERM_DENIED);
+  }
+
+  int max_count = 0;
+  if (role == CONTEST_M_CONTESTANT) {
+    if (cnts->personal) {
+      max_count = 1;
+    } else if (cnts->members[role]) {
+      max_count = cnts->members[role]->max_count;
+    }
+  } else if (role == CONTEST_M_RESERVE) {
+    if (cnts->personal) {
+      max_count = 0;
+    } else if (cnts->members[role]) {
+      max_count = cnts->members[role]->max_count;
+    }
+  } else {
+    if (cnts->members[role]) {
+      max_count = cnts->members[role]->max_count;
+    }
+  }
+
+  int cur_count = 0;
+  if (u && u->cnts0 && u->cnts0->members) {
+    cur_count = userlist_members_count(u->cnts0->members, role);
+  }
+  if (cur_count >= max_count) FAIL(S_ERR_TOO_MANY_MEMBERS);
+
+  if (userlist_clnt_create_member(phr->userlist_clnt, other_user_id, contest_id, role) < 0)
+    FAIL(S_ERR_DB_ERROR);
+
+  ss_redirect_2(out_f, phr, SSERV_OP_USER_DETAIL_PAGE, contest_id, group_id, other_user_id);
+
+cleanup:
+  userlist_free(&u->b); u = 0;
+  xfree(xml_text); xml_text = 0;
+  return retval;
+}
+
+int
 super_serve_op_browse_groups(
         FILE *log_f,
         FILE *out_f,

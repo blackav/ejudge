@@ -6796,6 +6796,7 @@ static unsigned char const * const error_messages[] =
   [S_ERR_INV_CHARSET] = "Invalid charset",
   [S_ERR_INV_SEPARATOR] = "Invalid field separator",
   [S_ERR_DATA_READ_ONLY] = "Data is read-only",
+  [S_ERR_TOO_MANY_MEMBERS] = "Too many members",
 };
 
 void
