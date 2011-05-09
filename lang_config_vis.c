@@ -672,7 +672,8 @@ lang_configure_screen(
         const unsigned char *working_dir,
         unsigned char **keys,
         unsigned char **values,
-        const unsigned char *header)
+        const unsigned char *header,
+        int batch_mode)
 {
   WINDOW *in_win = 0, *out_win = 0;
   PANEL *in_pan = 0, *out_pan = 0;
@@ -705,9 +706,12 @@ lang_configure_screen(
 
   reconfigure_all_languages(script_dir, script_in_dirs, config_dir,
                             working_dir, keys, values, 0, in_win);
-  ncurses_print_help("Press any key");
-  doupdate();
-  c = getch();
+
+  if (!batch_mode) {
+    ncurses_print_help("Press any key");
+    doupdate();
+    c = getch();
+  }
 
   if (in_pan) del_panel(in_pan);
   if (out_pan) del_panel(out_pan);
@@ -762,7 +766,7 @@ lang_config_menu(
   unsigned char lang_id_buf[32];
 
   lang_configure_screen(script_dir, script_in_dirs, 0,
-                        working_dir, 0, 0, header);
+                        working_dir, 0, 0, header, 0);
   assign_lang_ids();
 
   for (pcfg = lang_first; pcfg; pcfg = pcfg->next) {
