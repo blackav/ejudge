@@ -6347,3 +6347,10 @@ html_input_text.c 6323 0 200914
 super_html.c 6323 0 11721019
 super_html_4.c 6323 0 19792345
 super_html_6.c 6323 0 16255558
+lang_config_vis.h 6325 0 194875
+ejudge-configure-compilers.c 6325 0 1692425
+ejudge-setup.c 6325 0 10263154
+lang_config_vis.c 6325 0 2245746
+super_html.h 6326 0 1592596
+super_html_4.c 6326 0 19796160
+super_html_6.c 6326 0 16463191
