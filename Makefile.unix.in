@@ -174,7 +174,8 @@ NSM_OBJECTS = $(NSM_CFILES:.c=.o) libcommon.a libnew_server_clnt.a libuserlist_c
 NSC_CFILES=new-server-control.c version.c
 NSC_OBJECTS=$(NSC_CFILES:.c=.o) libcommon.a libnew_server_clnt.a libplatform.a libcommon.a
 
-BINTARGETS = ejudge-jobs-cmd ejudge-edit-users ejudge-setup ejudge-configure-compilers ejudge-control ejudge-execute ejudge-contests-cmd ejudge-install.sh
+INSTALLSCRIPT = ejudge-install.sh
+BINTARGETS = ejudge-jobs-cmd ejudge-edit-users ejudge-setup ejudge-configure-compilers ejudge-control ejudge-execute ejudge-contests-cmd
 SERVERBINTARGETS = ej-compile ej-compile-control ej-run ej-nwrun ej-ncheck ej-batch ej-serve ej-users ej-users-control ej-jobs ej-jobs-control ej-super-server ej-super-server-control ej-contests ej-contests-control uudecode ej-convert-clars ej-convert-runs ej-fix-db
 CGITARGETS = users${CGI_PROG_SUFFIX} serve-control${CGI_PROG_SUFFIX} new-client${CGI_PROG_SUFFIX}
 TARGETS = ${SERVERBINTARGETS} ${BINTARGETS} ${CGITARGETS}
@@ -232,6 +233,8 @@ local_install: ${TARGETS} ejudge-config po mo
 	install -m 0755 style/ejudge-upgrade-web "${DESTDIR}${bindir}"
 	mkdir -p "${DESTDIR}${includedir}/ejudge"
 	for i in problem_plugin_impl.h problem_plugin.h ejudge_plugin.h ej_types.h iterators.h contest_plugin.h; do install -m 644 $$i "${DESTDIR}${includedir}/ejudge"; done
+	if [ ! -f "${INSTALLSCRIPT}" ]; then ./ejudge-setup -b; fi
+	if [ -f "${INSTALLSCRIPT}" ]; then install -m 0755 "${INSTALLSCRIPT}" "${DESTDIR}${bindir}"; fi
 
 install: local_install
 	$(MAKE) -C scripts DESTDIR="${DESTDIR}" install
