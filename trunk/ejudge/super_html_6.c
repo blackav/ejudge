@@ -1411,9 +1411,9 @@ super_serve_op_USER_DETAIL_PAGE(
             fprintf(out_f, "%s</td><td%s>%s%s</a></td></tr>\n",
                     xml_unparse_date(*pt), cl,
                     html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                                  NULL, "action=%d&amp;op=%d&amp;other_user_id=%d&amp;field_id=%d%s%s",
+                                  NULL, "action=%d&amp;op=%d&amp;other_user_id=%d&amp;member_id=%d&amp;field_id=%d%s%s",
                                   SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_CLEAR_FIELD_ACTION,
-                                  other_user_id, member_time_rows[row].field_id,
+                                  other_user_id, m->serial, member_time_rows[row].field_id,
                                   contest_id_str, group_id_str),
                     "[Reset]");
           } else if (pt) {
@@ -5085,6 +5085,7 @@ super_serve_op_USER_CREATE_MEMBER_ACTION(
   if (!caps) FAIL(S_ERR_PERM_DENIED);
 
   if (!(u = userlist_parse_user_str(xml_text))) FAIL(S_ERR_DB_ERROR);
+  --role;
   if (role < 0 || role >= USERLIST_MB_LAST) FAIL(S_ERR_INV_VALUE);
 
   if (is_globally_privileged(phr, u)) {
