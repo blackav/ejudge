@@ -6568,6 +6568,7 @@ static const unsigned char * const op_names[SSERV_OP_LAST] =
   [SSERV_OP_USER_CLEAR_FIELD_ACTION] = "USER_CLEAR_FIELD_ACTION",
   [SSERV_OP_USER_CREATE_MEMBER_ACTION] = "USER_CREATE_MEMBER_ACTION",
   [SSERV_OP_USER_DELETE_MEMBER_PAGE] = "USER_DELETE_MEMBER_PAGE",
+  [SSERV_OP_USER_DELETE_MEMBER_ACTION] = "USER_DELETE_MEMBER_ACTION",
   [SSERV_OP_USER_SAVE_AND_PREV_ACTION] = "USER_SAVE_AND_PREV_ACTION",
   [SSERV_OP_USER_SAVE_ACTION] = "USER_SAVE_ACTION",
   [SSERV_OP_USER_SAVE_AND_NEXT_ACTION] = "USER_SAVE_AND_NEXT_ACTION",
@@ -6674,6 +6675,7 @@ static handler_func_t op_handlers[SSERV_OP_LAST] =
   [SSERV_OP_CLEAR_SERVE_PROB_FIELD] = cmd_op_clear_serve_prob_field,
   [SSERV_OP_EDIT_SERVE_PROB_FIELD_DETAIL_PAGE] = cmd_op_edit_serve_prob_field_detail_page,
   [SSERV_OP_EDIT_SERVE_PROB_FIELD_DETAIL] = cmd_op_edit_serve_prob_field_detail,
+
   [SSERV_OP_BROWSE_PROBLEM_PACKAGES] = super_serve_op_browse_problem_packages,
   [SSERV_OP_CREATE_PACKAGE] = super_serve_op_package_operation,
   [SSERV_OP_CREATE_PROBLEM] = super_serve_op_edit_problem,
@@ -6797,6 +6799,7 @@ static unsigned char const * const error_messages[] =
   [S_ERR_INV_SEPARATOR] = "Invalid field separator",
   [S_ERR_DATA_READ_ONLY] = "Data is read-only",
   [S_ERR_TOO_MANY_MEMBERS] = "Too many members",
+  [S_ERR_INV_SERIAL] = "Invalid member",
 };
 
 void
