@@ -316,6 +316,72 @@ userlist_user_count_cookies(struct userlist_user *u)
   return tot;
 }
 
+static void
+print_top_navigation_links(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr,
+        int contest_id,
+        int group_id,
+        int other_user_id)
+{
+  unsigned char hbuf[1024];
+  unsigned char contest_id_str[1024];
+  unsigned char group_id_str[1024];
+
+  contest_id_str[0] = 0;
+  if (contest_id > 0) {
+    snprintf(contest_id_str, sizeof(contest_id_str), "&amp;contest_id=%d", contest_id);
+  }
+  if (group_id < 0) group_id = 0;
+  group_id_str[0] = 0;
+  if (group_id > 0) {
+    snprintf(group_id_str, sizeof(group_id_str), "&amp;group_id=%d", group_id);
+  }
+
+  fprintf(out_f, "<ul>");
+  fprintf(out_f, "<li>%s%s</a></li>",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                        NULL, NULL),
+          "Main page");
+  fprintf(out_f, "<li>%s%s</a></li>",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                        NULL, "action=%d&amp;op=%d",
+                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE),
+          "Browse users");
+  fprintf(out_f, "<li>%s%s</a></li>",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                        NULL, "action=%d&amp;op=%d",
+                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_GROUP_BROWSE_PAGE),
+          "Browse groups");
+  if (contest_id > 0) {
+    fprintf(out_f, "<li>%s%s %d</a></li>",
+            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                          NULL, "action=%d&amp;op=%d%s",
+                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE,
+                          contest_id_str),
+            "Browse users of contest", contest_id);
+  }
+  if (group_id > 0) {
+    fprintf(out_f, "<li>%s%s %d</a></li>",
+            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                          NULL, "action=%d&amp;op=%d%s",
+                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE,
+                          group_id_str),
+            "Browse users of group", group_id);
+  }
+  if (other_user_id > 0) {
+    fprintf(out_f, "<li>%s%s</a></li>",
+            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                          NULL, "action=%d&amp;op=%d&amp;other_user_id=%d%s%s",
+                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_DETAIL_PAGE,
+                          other_user_id,
+                          contest_id_str, group_id_str),
+            "User details");
+  }
+  fprintf(out_f, "</ul>\n");
+}
+
 int
 super_serve_op_USER_BROWSE_PAGE(
         FILE *log_f,
@@ -397,19 +463,7 @@ super_serve_op_USER_BROWSE_PAGE(
 
   fprintf(out_f, "<h1>%s</h1>\n<br/>\n", buf);
 
-  fprintf(out_f, "<ul>");
-  fprintf(out_f, "<li>%s%s</a></li>",
-          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                        NULL, NULL),
-          "Main page");
-  if (contest_id > 0) {
-    fprintf(out_f, "<li>%s%s</a></li>",
-            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                          NULL, "action=%d&amp;op=%d",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE),
-            "Browse all users");
-  }
-  fprintf(out_f, "</ul>\n");
+  print_top_navigation_links(log_f, out_f, phr, contest_id, group_id, 0);
 
   if (!phr->userlist_clnt) {
     fprintf(out_f, "<hr/><h2>Error</h2>\n");
@@ -1002,38 +1056,7 @@ super_serve_op_USER_DETAIL_PAGE(
 
   fprintf(out_f, "<h1>%s</h1>\n<br/>\n", buf);
 
-  fprintf(out_f, "<ul>");
-  fprintf(out_f, "<li>%s%s</a></li>",
-          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                        NULL, NULL),
-          "Main page");
-  fprintf(out_f, "<li>%s%s</a></li>",
-          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                        NULL, "action=%d&amp;op=%d",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE),
-          "Browse users");
-  fprintf(out_f, "<li>%s%s</a></li>",
-          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                        NULL, "action=%d&amp;op=%d",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_GROUP_BROWSE_PAGE),
-          "Browse groups");
-  if (contest_id > 0) {
-    fprintf(out_f, "<li>%s%s %d</a></li>",
-            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                          NULL, "action=%d&amp;op=%d%s",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE,
-                          contest_id_str),
-            "Browse users of contest", contest_id);
-  }
-  if (group_id > 0) {
-    fprintf(out_f, "<li>%s%s %d</a></li>",
-            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                          NULL, "action=%d&amp;op=%d%s",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE,
-                          group_id_str),
-            "Browse users of group", group_id);
-  }
-  fprintf(out_f, "</ul>\n");
+  print_top_navigation_links(log_f, out_f, phr, contest_id, group_id, other_user_id);
 
   if (!phr->userlist_clnt) {
     fprintf(out_f, "<hr/><h2>Error</h2>\n");
@@ -1615,6 +1638,272 @@ cleanup:
   return retval;
 }
 
+static void
+print_user_info(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr,
+        const struct contest_desc *cnts,
+        const struct userlist_user *u,
+        const struct userlist_user_info *ui,
+        const struct userlist_member *m,
+        int role,
+        int num)
+{
+  unsigned char *cl = " class=\"b1\"";
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  const unsigned char *s;
+  int row = 0;
+  unsigned char buf[1024];
+
+  fprintf(out_f, "<table%s>\n", cl);
+  fprintf(out_f, "<tr><td%s width=\"250px\" colspan=\"2\" align=\"center\"><b>%s %d</b></td></tr>\n", cl,
+          "User information for user", u->id);
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%d</td></tr>\n",
+          cl, "User ID", cl, u->id);
+  s = u->login;
+  if (!s) s = "";
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%s</td></tr>\n",
+          cl, "User login", cl, ARMOR(s));
+  s = u->email;
+  if (!s) s = "";
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%s</td></tr>\n",
+          cl, "User e-mail", cl, ARMOR(s));
+
+  /*
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>&nbsp;</td><td%s>",
+          cl, "Password", cl, cl);
+  if (!u->passwd) {
+    fprintf(out_f, "<i>NULL</i>");
+  } else if (u->passwd_method == USERLIST_PWD_PLAIN) {
+    fprintf(out_f, "<tt>%s</tt>", ARMOR(u->passwd));
+  } else if (u->passwd_method == USERLIST_PWD_SHA1) {
+    fprintf(out_f, "<i>Hashed with SHA1</i>");
+  } else {
+    fprintf(out_f, "<i>Unsupported method</i>");
+  }
+  fprintf(out_f, "</td><td%s>%s%s</a></td></tr>", cl,
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                        NULL, "action=%d&amp;op=%d&amp;other_user_id=%d&amp;next_op=%d%s%s",
+                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_PASSWORD_PAGE,
+                        other_user_id, SSERV_OP_USER_DETAIL_PAGE, contest_id_str, group_id_str),
+          "[Change]");
+  */
+
+  fprintf(out_f, "<tr><td colspan=\"2\"%s align=\"center\"><b>%s</b></td></tr>\n",
+          cl, "User statistics");
+
+  static const struct user_row_info timestamp_rows[] =
+  {
+    { USERLIST_NN_REGISTRATION_TIME, "Registration time" },
+    { USERLIST_NN_LAST_LOGIN_TIME, "Last login time" },
+    { USERLIST_NN_LAST_CHANGE_TIME, "Last change time" },
+    { USERLIST_NN_LAST_PWDCHANGE_TIME, "Last password change time" },
+    { 0, 0 },
+  };
+  for (row = 0; timestamp_rows[row].field_id > 0; ++row) {
+    fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>",
+            cl, timestamp_rows[row].field_desc, cl);
+    time_t *pt = (time_t*) userlist_get_user_field_ptr(u, timestamp_rows[row].field_id);
+    if (pt && *pt > 0) {
+      fprintf(out_f, "%s</td></tr>\n", xml_unparse_date(*pt));
+    } else if (pt) {
+      fprintf(out_f, "<i>Not set</i></td></tr>\n");
+    }
+  }
+
+  for (row = 0; user_flag_rows[row].field_id > 0; ++row) {
+    fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>",
+            cl, user_flag_rows[row].field_desc, cl);
+    int *pi = (int*) userlist_get_user_field_ptr(u, user_flag_rows[row].field_id);
+    if (pi) {
+      fprintf(out_f, "%s", (*pi)?"YES":"NO");
+    } else {
+      fprintf(out_f, "<i>Invalid field</i>");
+    }
+    fprintf(out_f, "</td></tr>\n");
+  }
+
+  if (!ui || !cnts) goto cleanup;
+
+  fprintf(out_f, "<tr><td%s align=\"center\" colspan=\"2\"><b>%s %d</b></td></tr>\n",
+          cl, "Contest-specific fields for contest", cnts->id);
+
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%s</td></tr>\n",
+          cl, "User data is read-only", cl, ui->cnts_read_only?"YES":"NO");
+  s = 0;
+  if (ui) s = ui->name;
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%s</td></tr>\n",
+          cl, "User name", cl, ARMOR(s));
+
+  /*
+  if (contest_id > 0 && cnts && !cnts->disable_team_password) {
+    fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>&nbsp;</td><td%s>",
+            cl, "Contest password", cl, cl);
+    if (!ui || !ui->team_passwd) {
+      fprintf(out_f, "<i>NULL</i>");
+    } else if (ui->team_passwd_method == USERLIST_PWD_PLAIN) {
+      fprintf(out_f, "<tt>%s</tt>", ARMOR(ui->team_passwd));
+    } else if (ui->team_passwd_method == USERLIST_PWD_SHA1) {
+      fprintf(out_f, "<i>Hashed with SHA1</i>");
+    } else {
+      fprintf(out_f, "<i>Unsupported method</i>");
+    }
+    fprintf(out_f, "</td><td%s>%s%s</a></td></tr>", cl,
+            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                          NULL, "action=%d&amp;op=%d&amp;other_user_id=%d&amp;contest_id=%d%s",
+                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_CNTS_PASSWORD_PAGE,
+                          other_user_id, contest_id, group_id_str),
+            "[Change]");
+  }
+  */
+
+  static const struct user_row_info user_info_rows[] =
+  {
+    { USERLIST_NC_INST, "Institution name" },
+    { USERLIST_NC_INST_EN, "Inst. name (En)" },
+    { USERLIST_NC_INSTSHORT, "Short inst. name" },
+    { USERLIST_NC_INSTSHORT_EN, "Short inst. name (En)" },
+    { USERLIST_NC_INSTNUM, "Institution number" },
+    { USERLIST_NC_FAC, "Faculty name" },
+    { USERLIST_NC_FAC_EN, "Faculty name (En)" },
+    { USERLIST_NC_FACSHORT, "Short faculty name" },
+    { USERLIST_NC_FACSHORT_EN, "Short faculty name (En)" },
+    { USERLIST_NC_HOMEPAGE, "Web home page" },
+    { USERLIST_NC_CITY, "City" },
+    { USERLIST_NC_CITY_EN, "City (En)" },
+    { USERLIST_NC_COUNTRY, "Country" },
+    { USERLIST_NC_COUNTRY_EN, "Country (En)" },
+    { USERLIST_NC_REGION, "Region" },
+    { USERLIST_NC_AREA, "Region (En)" },
+    { USERLIST_NC_ZIP, "Zip code" },
+    { USERLIST_NC_STREET, "Street address" },
+    { USERLIST_NC_LOCATION, "Computer location" },
+    { USERLIST_NC_SPELLING, "Name spelling" },
+    { USERLIST_NC_PRINTER_NAME, "Printer name" },
+    { USERLIST_NC_EXAM_ID, "Examination Id" },
+    { USERLIST_NC_EXAM_CYPHER, "Examination cypher" },
+    { USERLIST_NC_LANGUAGES, "Programming languages" },
+    { USERLIST_NC_PHONE, "Contact phone" },
+    { USERLIST_NC_FIELD0, "Additional field 0" },
+    { USERLIST_NC_FIELD1, "Additional field 1" },
+    { USERLIST_NC_FIELD2, "Additional field 2" },
+    { USERLIST_NC_FIELD3, "Additional field 3" },
+    { USERLIST_NC_FIELD4, "Additional field 4" },
+    { USERLIST_NC_FIELD5, "Additional field 5" },
+    { USERLIST_NC_FIELD6, "Additional field 6" },
+    { USERLIST_NC_FIELD7, "Additional field 7" },
+    { USERLIST_NC_FIELD8, "Additional field 8" },
+    { USERLIST_NC_FIELD9, "Additional field 9" },
+
+    { 0, 0 },
+  };
+  for (row = 0; user_info_rows[row].field_id > 0; ++row) {
+    userlist_get_user_info_field_str(buf, sizeof(buf), ui, user_info_rows[row].field_id, 1);
+    fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%s</td></tr>\n",
+            cl, user_info_rows[row].field_desc, cl, ARMOR(buf));
+  }
+
+  static const struct user_row_info user_info_stat_rows[] =
+  {
+    { USERLIST_NC_CREATE_TIME, "Create time" },
+    { USERLIST_NC_LAST_LOGIN_TIME, "Last login time" },
+    { USERLIST_NC_LAST_CHANGE_TIME, "Last change time" },
+    { USERLIST_NC_LAST_PWDCHANGE_TIME, "Last password change time" },
+
+    { 0, 0 },
+  };
+  for (row = 0; user_info_stat_rows[row].field_id > 0; ++row) {
+    userlist_get_user_info_field_str(buf, sizeof(buf), ui, user_info_stat_rows[row].field_id, 1);
+    fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%s</td></tr>\n",
+            cl, user_info_stat_rows[row].field_desc, cl, ARMOR(buf));
+  }
+  
+  if (!m) goto cleanup;
+
+  fprintf(out_f, "<tr><td%s align=\"center\" colspan=\"2\"><b>%s %s::%d (%d)</b></td></tr>\n",
+          cl, "Member", member_string[role], num + 1, m->serial);
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%d</td></tr>\n",
+          cl, "Member serial Id", cl, m->serial);
+  userlist_get_member_field_str(buf, sizeof(buf), m, USERLIST_NM_STATUS, 1, 0);
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%s</td></tr>\n",
+          cl, "Status", cl, ARMOR(buf));
+  userlist_get_member_field_str(buf, sizeof(buf), m, USERLIST_NM_GENDER, 1, 0);
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%s</td></tr>\n",
+          cl, "Gender", cl, ARMOR(buf));
+  userlist_get_member_field_str(buf, sizeof(buf), m, USERLIST_NM_GRADE, 1, 0);
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%s</td></tr>\n",
+          cl, "Grade", cl, ARMOR(buf));
+
+  static const struct user_row_info member_rows[] =
+  {
+    { USERLIST_NM_FIRSTNAME, "First name" },
+    { USERLIST_NM_FIRSTNAME_EN, "First name (En)" },
+    { USERLIST_NM_MIDDLENAME, "Middle name" },
+    { USERLIST_NM_MIDDLENAME_EN, "Middle name (En)" },
+    { USERLIST_NM_SURNAME, "Surname" },
+    { USERLIST_NM_SURNAME_EN, "Surname (En)" },
+    { USERLIST_NM_GROUP, "Academic group" },
+    { USERLIST_NM_GROUP_EN, "Academic group (En)" },
+    { USERLIST_NM_EMAIL, "Email" },
+    { USERLIST_NM_HOMEPAGE, "Web home page" },
+    { USERLIST_NM_OCCUPATION, "Occupation" },
+    { USERLIST_NM_OCCUPATION_EN, "Occupation (En)" },
+    { USERLIST_NM_DISCIPLINE, "Discipline" },
+    { USERLIST_NM_INST, "Institution name" },
+    { USERLIST_NM_INST_EN, "Institution name (En)" },
+    { USERLIST_NM_INSTSHORT, "Short inst. name" },
+    { USERLIST_NM_INSTSHORT_EN, "Short inst. name (En)" },
+    { USERLIST_NM_FAC, "Faculty name" },
+    { USERLIST_NM_FAC_EN, "Faculty name (En)" },
+    { USERLIST_NM_FACSHORT, "Short faculty name" },
+    { USERLIST_NM_FACSHORT_EN, "Short faculty name (En)" },
+    { USERLIST_NM_PHONE, "Phone" },
+
+    { 0, 0 },
+  };
+
+  for (row = 0; member_rows[row].field_id > 0; ++row) {
+    userlist_get_member_field_str(buf, sizeof(buf), m, member_rows[row].field_id, 1, 0);
+    fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%s</td></tr>\n",
+            cl, member_rows[row].field_desc, cl, ARMOR(buf));
+  }
+
+  static const struct user_row_info member_date_rows[] =
+  {
+    { USERLIST_NM_BIRTH_DATE, "Date of birth" },
+    { USERLIST_NM_ENTRY_DATE, "Date of entry" },
+    { USERLIST_NM_GRADUATION_DATE, "Graduation date" },
+
+    { 0, 0 },
+  };
+
+  for (row = 0; member_date_rows[row].field_id > 0; ++row) {
+    userlist_get_member_field_str(buf, sizeof(buf), m, member_date_rows[row].field_id, 1, 0);
+    fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%s</td></tr>\n",
+            cl, member_date_rows[row].field_desc, cl, ARMOR(buf));
+  }
+
+  static const struct user_row_info member_time_rows[] =
+  {
+    { USERLIST_NM_CREATE_TIME, "Create time" },
+    { USERLIST_NM_LAST_CHANGE_TIME, "Last change time" },
+
+    { 0, 0 },
+  };
+
+  for (row = 0; member_time_rows[row].field_id > 0; ++row) {
+    userlist_get_member_field_str(buf, sizeof(buf), m, member_time_rows[row].field_id, 1, 0);
+    fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%s</td></tr>\n",
+            cl, member_time_rows[row].field_desc, cl, ARMOR(buf));
+  }
+
+  fprintf(out_f, "</table>\n");
+
+cleanup:
+  html_armor_free(&ab);
+}
+
 int
 super_serve_op_USER_PASSWORD_PAGE(
         FILE *log_f,
@@ -1624,15 +1913,12 @@ super_serve_op_USER_PASSWORD_PAGE(
   int retval = 0, r;
   unsigned char buf[1024];
   int other_user_id = -1, contest_id = -1, group_id = -1, next_op = -1;
-  unsigned char contest_id_str[128];
-  unsigned char group_id_str[128];
   const struct contest_desc *cnts = 0;
   unsigned char *xml_text = 0;
   struct userlist_user *u = 0;
   const unsigned char *cl = 0;
   const unsigned char *s = 0;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
-  unsigned char hbuf[1024];
 
   if (ss_cgi_param_int(phr, "other_user_id", &other_user_id) < 0) {
     FAIL(S_ERR_INV_USER_ID);
@@ -1645,15 +1931,7 @@ super_serve_op_USER_PASSWORD_PAGE(
   if (contest_id > 0) {
     if (contests_get(contest_id, &cnts) < 0 || !cnts) contest_id = 0;
   }
-  contest_id_str[0] = 0;
-  if (contest_id > 0) {
-    snprintf(contest_id_str, sizeof(contest_id_str), "&amp;contest_id=%d", contest_id);
-  }
   if (group_id < 0) group_id = 0;
-  group_id_str[0] = 0;
-  if (group_id > 0) {
-    snprintf(group_id_str, sizeof(group_id_str), "&amp;group_id=%d", group_id);
-  }
 
   r = userlist_clnt_get_info(phr->userlist_clnt, ULS_PRIV_GET_USER_INFO,
                              other_user_id, 0, &xml_text);
@@ -1704,45 +1982,7 @@ super_serve_op_USER_PASSWORD_PAGE(
 
   fprintf(out_f, "<h1>%s</h1>\n<br/>\n", buf);
 
-  fprintf(out_f, "<ul>");
-  fprintf(out_f, "<li>%s%s</a></li>",
-          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                        NULL, NULL),
-          "Main page");
-  fprintf(out_f, "<li>%s%s</a></li>",
-          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                        NULL, "action=%d&amp;op=%d",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE),
-          "Browse users");
-  fprintf(out_f, "<li>%s%s</a></li>",
-          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                        NULL, "action=%d&amp;op=%d",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_GROUP_BROWSE_PAGE),
-          "Browse groups");
-  if (contest_id > 0) {
-    fprintf(out_f, "<li>%s%s %d</a></li>",
-            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                          NULL, "action=%d&amp;op=%d%s",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE,
-                          contest_id_str),
-            "Browse users of contest", contest_id);
-  }
-  if (group_id > 0) {
-    fprintf(out_f, "<li>%s%s %d</a></li>",
-            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                          NULL, "action=%d&amp;op=%d%s",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE,
-                          group_id_str),
-            "Browse users of group", group_id);
-  }
-  fprintf(out_f, "<li>%s%s</a></li>",
-          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                        NULL, "action=%d&amp;op=%d&amp;other_user_id=%d%s%s",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_DETAIL_PAGE,
-                        other_user_id,
-                        contest_id_str, group_id_str),
-          "User details");
-  fprintf(out_f, "</ul>\n");
+  print_top_navigation_links(log_f, out_f, phr, contest_id, group_id, other_user_id);
 
   if (!phr->userlist_clnt) {
     fprintf(out_f, "<hr/><h2>Error</h2>\n");
@@ -1818,15 +2058,12 @@ super_serve_op_USER_CNTS_PASSWORD_PAGE(
   int retval = 0, r;
   unsigned char buf[1024];
   int other_user_id = -1, contest_id = -1, group_id = -1;
-  unsigned char contest_id_str[128];
-  unsigned char group_id_str[128];
   const struct contest_desc *cnts = 0;
   unsigned char *xml_text = 0;
   struct userlist_user *u = 0;
   const unsigned char *cl = 0;
   const unsigned char *s = 0;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
-  unsigned char hbuf[1024];
 
   if (ss_cgi_param_int(phr, "other_user_id", &other_user_id) < 0) {
     FAIL(S_ERR_INV_USER_ID);
@@ -1841,15 +2078,7 @@ super_serve_op_USER_CNTS_PASSWORD_PAGE(
       FAIL(S_ERR_INV_CONTEST);
     }
   }
-  contest_id_str[0] = 0;
-  if (contest_id > 0) {
-    snprintf(contest_id_str, sizeof(contest_id_str), "&amp;contest_id=%d", contest_id);
-  }
   if (group_id < 0) group_id = 0;
-  group_id_str[0] = 0;
-  if (group_id > 0) {
-    snprintf(group_id_str, sizeof(group_id_str), "&amp;group_id=%d", group_id);
-  }
 
   r = userlist_clnt_get_info(phr->userlist_clnt, ULS_PRIV_GET_USER_INFO,
                              other_user_id, contest_id, &xml_text);
@@ -1910,45 +2139,7 @@ super_serve_op_USER_CNTS_PASSWORD_PAGE(
 
   fprintf(out_f, "<h1>%s</h1>\n<br/>\n", buf);
 
-  fprintf(out_f, "<ul>");
-  fprintf(out_f, "<li>%s%s</a></li>",
-          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                        NULL, NULL),
-          "Main page");
-  fprintf(out_f, "<li>%s%s</a></li>",
-          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                        NULL, "action=%d&amp;op=%d",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE),
-          "Browse users");
-  fprintf(out_f, "<li>%s%s</a></li>",
-          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                        NULL, "action=%d&amp;op=%d",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_GROUP_BROWSE_PAGE),
-          "Browse groups");
-  if (contest_id > 0) {
-    fprintf(out_f, "<li>%s%s %d</a></li>",
-            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                          NULL, "action=%d&amp;op=%d%s",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE,
-                          contest_id_str),
-            "Browse users of contest", contest_id);
-  }
-  if (group_id > 0) {
-    fprintf(out_f, "<li>%s%s %d</a></li>",
-            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                          NULL, "action=%d&amp;op=%d%s",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE,
-                          group_id_str),
-            "Browse users of group", group_id);
-  }
-  fprintf(out_f, "<li>%s%s</a></li>",
-          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                        NULL, "action=%d&amp;op=%d&amp;other_user_id=%d%s%s",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_DETAIL_PAGE,
-                        other_user_id,
-                        contest_id_str, group_id_str),
-          "User details");
-  fprintf(out_f, "</ul>\n");
+  print_top_navigation_links(log_f, out_f, phr, contest_id, group_id, other_user_id);
 
   if (!phr->userlist_clnt) {
     fprintf(out_f, "<hr/><h2>Error</h2>\n");
@@ -2036,8 +2227,6 @@ super_serve_op_USER_CREATE_REG_PAGE(
   int retval = 0, r;
   int other_user_id = 0, contest_id = 0, group_id = 0;
   const struct contest_desc *cnts = 0;
-  unsigned char contest_id_str[128];
-  unsigned char group_id_str[128];
   unsigned char buf[1024];
   unsigned char hbuf[1024];
   unsigned char *xml_text = 0;
@@ -2056,15 +2245,7 @@ super_serve_op_USER_CREATE_REG_PAGE(
   if (contest_id != 0) {
     if (contests_get(contest_id, &cnts) < 0 || !cnts) contest_id = 0;
   }
-  contest_id_str[0] = 0;
-  if (contest_id > 0) {
-    snprintf(contest_id_str, sizeof(contest_id_str), "&amp;contest_id=%d", contest_id);
-  }
   if (group_id < 0) group_id = 0;
-  group_id_str[0] = 0;
-  if (group_id > 0) {
-    snprintf(group_id_str, sizeof(group_id_str), "&amp;group_id=%d", group_id);
-  }
 
   snprintf(buf, sizeof(buf), "serve-control: %s, create a contest registration for user %d",
            phr->html_name, other_user_id);
@@ -2097,45 +2278,7 @@ super_serve_op_USER_CREATE_REG_PAGE(
 
   fprintf(out_f, "<h1>%s</h1>\n<br/>\n", buf);
 
-  fprintf(out_f, "<ul>");
-  fprintf(out_f, "<li>%s%s</a></li>",
-          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                        NULL, NULL),
-          "Main page");
-  fprintf(out_f, "<li>%s%s</a></li>",
-          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                        NULL, "action=%d&amp;op=%d",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE),
-          "Browse users");
-  fprintf(out_f, "<li>%s%s</a></li>",
-          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                        NULL, "action=%d&amp;op=%d",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_GROUP_BROWSE_PAGE),
-          "Browse groups");
-  if (contest_id > 0) {
-    fprintf(out_f, "<li>%s%s %d</a></li>",
-            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                          NULL, "action=%d&amp;op=%d%s",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE,
-                          contest_id_str),
-            "Browse users of contest", contest_id);
-  }
-  if (group_id > 0) {
-    fprintf(out_f, "<li>%s%s %d</a></li>",
-            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                          NULL, "action=%d&amp;op=%d%s",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE,
-                          group_id_str),
-            "Browse users of group", group_id);
-  }
-  fprintf(out_f, "<li>%s%s</a></li>",
-          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                        NULL, "action=%d&amp;op=%d&amp;other_user_id=%d%s%s",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_DETAIL_PAGE,
-                        other_user_id,
-                        contest_id_str, group_id_str),
-          "User details");
-  fprintf(out_f, "</ul>\n");
+  print_top_navigation_links(log_f, out_f, phr, contest_id, group_id, other_user_id);
 
   if (!phr->userlist_clnt) {
     fprintf(out_f, "<hr/><h2>Error</h2>\n");
@@ -2276,45 +2419,7 @@ super_serve_op_USER_EDIT_REG_PAGE(
   ss_write_html_header(out_f, phr, buf, 0, NULL);
   fprintf(out_f, "<h1>%s</h1>\n<br/>\n", buf);
 
-  fprintf(out_f, "<ul>");
-  fprintf(out_f, "<li>%s%s</a></li>",
-          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                        NULL, NULL),
-          "Main page");
-  fprintf(out_f, "<li>%s%s</a></li>",
-          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                        NULL, "action=%d&amp;op=%d",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE),
-          "Browse users");
-  fprintf(out_f, "<li>%s%s</a></li>",
-          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                        NULL, "action=%d&amp;op=%d",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_GROUP_BROWSE_PAGE),
-          "Browse groups");
-  if (contest_id > 0) {
-    fprintf(out_f, "<li>%s%s %d</a></li>",
-            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                          NULL, "action=%d&amp;op=%d%s",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE,
-                          contest_id_str),
-            "Browse users of contest", contest_id);
-  }
-  if (group_id > 0) {
-    fprintf(out_f, "<li>%s%s %d</a></li>",
-            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                          NULL, "action=%d&amp;op=%d%s",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE,
-                          group_id_str),
-            "Browse users of group", group_id);
-  }
-  fprintf(out_f, "<li>%s%s</a></li>",
-          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                        NULL, "action=%d&amp;op=%d&amp;other_user_id=%d%s%s",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_DETAIL_PAGE,
-                        other_user_id,
-                        contest_id_str, group_id_str),
-          "User details");
-  fprintf(out_f, "</ul>\n");
+  print_top_navigation_links(log_f, out_f, phr, contest_id, group_id, other_user_id);
 
   if (!phr->userlist_clnt) {
     fprintf(out_f, "<hr/><h2>Error</h2>\n");
@@ -2474,45 +2579,7 @@ super_serve_op_USER_DELETE_REG_PAGE(
   ss_write_html_header(out_f, phr, buf, 0, NULL);
   fprintf(out_f, "<h1>%s</h1>\n<br/>\n", buf);
 
-  fprintf(out_f, "<ul>");
-  fprintf(out_f, "<li>%s%s</a></li>",
-          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                        NULL, NULL),
-          "Main page");
-  fprintf(out_f, "<li>%s%s</a></li>",
-          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                        NULL, "action=%d&amp;op=%d",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE),
-          "Browse users");
-  fprintf(out_f, "<li>%s%s</a></li>",
-          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                        NULL, "action=%d&amp;op=%d",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_GROUP_BROWSE_PAGE),
-          "Browse groups");
-  if (contest_id > 0) {
-    fprintf(out_f, "<li>%s%s %d</a></li>",
-            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                          NULL, "action=%d&amp;op=%d%s",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE,
-                          contest_id_str),
-            "Browse users of contest", contest_id);
-  }
-  if (group_id > 0) {
-    fprintf(out_f, "<li>%s%s %d</a></li>",
-            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                          NULL, "action=%d&amp;op=%d%s",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE,
-                          group_id_str),
-            "Browse users of group", group_id);
-  }
-  fprintf(out_f, "<li>%s%s</a></li>",
-          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                        NULL, "action=%d&amp;op=%d&amp;other_user_id=%d%s%s",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_DETAIL_PAGE,
-                        other_user_id,
-                        contest_id_str, group_id_str),
-          "User details");
-  fprintf(out_f, "</ul>\n");
+  print_top_navigation_links(log_f, out_f, phr, contest_id, group_id, other_user_id);
 
   if (!phr->userlist_clnt) {
     fprintf(out_f, "<hr/><h2>Error</h2>\n");
@@ -2626,7 +2693,6 @@ super_serve_op_USER_CREATE_ONE_PAGE(
 {
   int retval = 0, row, i;
   int contest_id = 0, group_id = 0, other_contest_id_2 = 0;
-  unsigned char contest_id_str[128], group_id_str[128];
   const struct contest_desc *cnts = 0;
   unsigned char buf[1024], hbuf[1024];
   const unsigned char *cl = 0;
@@ -2642,15 +2708,7 @@ super_serve_op_USER_CREATE_ONE_PAGE(
   if (contest_id != 0) {
     if (contests_get(contest_id, &cnts) < 0 || !cnts) contest_id = 0;
   }
-  contest_id_str[0] = 0;
-  if (contest_id > 0) {
-    snprintf(contest_id_str, sizeof(contest_id_str), "&amp;contest_id=%d", contest_id);
-  }
   if (group_id < 0) group_id = 0;
-  group_id_str[0] = 0;
-  if (group_id > 0) {
-    snprintf(group_id_str, sizeof(group_id_str), "&amp;group_id=%d", group_id);
-  }
 
   if (get_global_caps(phr, &caps) < 0 || opcaps_check(caps, OPCAP_CREATE_USER) < 0) {
     FAIL(S_ERR_PERM_DENIED);
@@ -2865,38 +2923,7 @@ super_serve_op_USER_CREATE_ONE_PAGE(
 
   fprintf(out_f, "<h1>%s</h1>\n<br/>\n", buf);
 
-  fprintf(out_f, "<ul>");
-  fprintf(out_f, "<li>%s%s</a></li>",
-          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                        NULL, NULL),
-          "Main page");
-  fprintf(out_f, "<li>%s%s</a></li>",
-          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                        NULL, "action=%d&amp;op=%d",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE),
-          "Browse users");
-  fprintf(out_f, "<li>%s%s</a></li>",
-          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                        NULL, "action=%d&amp;op=%d",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_GROUP_BROWSE_PAGE),
-          "Browse groups");
-  if (contest_id > 0) {
-    fprintf(out_f, "<li>%s%s %d</a></li>",
-            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                          NULL, "action=%d&amp;op=%d%s",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE,
-                          contest_id_str),
-            "Browse users of contest", contest_id);
-  }
-  if (group_id > 0) {
-    fprintf(out_f, "<li>%s%s %d</a></li>",
-            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                          NULL, "action=%d&amp;op=%d%s",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE,
-                          group_id_str),
-            "Browse users of group", group_id);
-  }
-  fprintf(out_f, "</ul>\n");
+  print_top_navigation_links(log_f, out_f, phr, contest_id, group_id, 0);
 
   html_start_form_id(out_f, 1, phr->self_url, "CreateForm", "");
   html_hidden(out_f, "SID", "%016llx", phr->session_id);
@@ -3023,7 +3050,6 @@ super_serve_op_USER_CREATE_MANY_PAGE(
 {
   int retval = 0, row, i;
   int contest_id = 0, group_id = 0, other_contest_id_2 = 0;
-  unsigned char contest_id_str[128], group_id_str[128];
   const struct contest_desc *cnts = 0;
   unsigned char buf[1024], hbuf[1024];
   const unsigned char *cl = 0;
@@ -3039,15 +3065,7 @@ super_serve_op_USER_CREATE_MANY_PAGE(
   if (contest_id != 0) {
     if (contests_get(contest_id, &cnts) < 0 || !cnts) contest_id = 0;
   }
-  contest_id_str[0] = 0;
-  if (contest_id > 0) {
-    snprintf(contest_id_str, sizeof(contest_id_str), "&amp;contest_id=%d", contest_id);
-  }
   if (group_id < 0) group_id = 0;
-  group_id_str[0] = 0;
-  if (group_id > 0) {
-    snprintf(group_id_str, sizeof(group_id_str), "&amp;group_id=%d", group_id);
-  }
 
   if (get_global_caps(phr, &caps) < 0 || opcaps_check(caps, OPCAP_CREATE_USER) < 0) {
     FAIL(S_ERR_PERM_DENIED);
@@ -3293,38 +3311,7 @@ super_serve_op_USER_CREATE_MANY_PAGE(
 
   fprintf(out_f, "<h1>%s</h1>\n<br/>\n", buf);
 
-  fprintf(out_f, "<ul>");
-  fprintf(out_f, "<li>%s%s</a></li>",
-          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                        NULL, NULL),
-          "Main page");
-  fprintf(out_f, "<li>%s%s</a></li>",
-          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                        NULL, "action=%d&amp;op=%d",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE),
-          "Browse users");
-  fprintf(out_f, "<li>%s%s</a></li>",
-          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                        NULL, "action=%d&amp;op=%d",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_GROUP_BROWSE_PAGE),
-          "Browse groups");
-  if (contest_id > 0) {
-    fprintf(out_f, "<li>%s%s %d</a></li>",
-            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                          NULL, "action=%d&amp;op=%d%s",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE,
-                          contest_id_str),
-            "Browse users of contest", contest_id);
-  }
-  if (group_id > 0) {
-    fprintf(out_f, "<li>%s%s %d</a></li>",
-            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                          NULL, "action=%d&amp;op=%d%s",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE,
-                          group_id_str),
-            "Browse users of group", group_id);
-  }
-  fprintf(out_f, "</ul>\n");
+  print_top_navigation_links(log_f, out_f, phr, contest_id, group_id, 0);
 
   html_start_form_id(out_f, 1, phr->self_url, "CreateForm", "");
   html_hidden(out_f, "SID", "%016llx", phr->session_id);
@@ -3447,7 +3434,6 @@ super_serve_op_USER_CREATE_FROM_CSV_PAGE(
 {
   int retval = 0, row, i;
   int contest_id = 0, group_id = 0, other_contest_id_2 = 0;
-  unsigned char contest_id_str[128], group_id_str[128];
   const struct contest_desc *cnts = 0;
   unsigned char buf[1024], hbuf[1024];
   const unsigned char *cl = 0;
@@ -3463,15 +3449,7 @@ super_serve_op_USER_CREATE_FROM_CSV_PAGE(
   if (contest_id != 0) {
     if (contests_get(contest_id, &cnts) < 0 || !cnts) contest_id = 0;
   }
-  contest_id_str[0] = 0;
-  if (contest_id > 0) {
-    snprintf(contest_id_str, sizeof(contest_id_str), "&amp;contest_id=%d", contest_id);
-  }
   if (group_id < 0) group_id = 0;
-  group_id_str[0] = 0;
-  if (group_id > 0) {
-    snprintf(group_id_str, sizeof(group_id_str), "&amp;group_id=%d", group_id);
-  }
 
   if (get_global_caps(phr, &caps) < 0 || opcaps_check(caps, OPCAP_CREATE_USER) < 0) {
     FAIL(S_ERR_PERM_DENIED);
@@ -3676,38 +3654,7 @@ super_serve_op_USER_CREATE_FROM_CSV_PAGE(
 
   fprintf(out_f, "<h1>%s</h1>\n<br/>\n", buf);
 
-  fprintf(out_f, "<ul>");
-  fprintf(out_f, "<li>%s%s</a></li>",
-          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                        NULL, NULL),
-          "Main page");
-  fprintf(out_f, "<li>%s%s</a></li>",
-          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                        NULL, "action=%d&amp;op=%d",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE),
-          "Browse users");
-  fprintf(out_f, "<li>%s%s</a></li>",
-          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                        NULL, "action=%d&amp;op=%d",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_GROUP_BROWSE_PAGE),
-          "Browse groups");
-  if (contest_id > 0) {
-    fprintf(out_f, "<li>%s%s %d</a></li>",
-            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                          NULL, "action=%d&amp;op=%d%s",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE,
-                          contest_id_str),
-            "Browse users of contest", contest_id);
-  }
-  if (group_id > 0) {
-    fprintf(out_f, "<li>%s%s %d</a></li>",
-            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                          NULL, "action=%d&amp;op=%d%s",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE,
-                          group_id_str),
-            "Browse users of group", group_id);
-  }
-  fprintf(out_f, "</ul>\n");
+  print_top_navigation_links(log_f, out_f, phr, contest_id, group_id, 0);
 
   html_start_form_id(out_f, 2, phr->self_url, "CreateForm", "");
   html_hidden(out_f, "SID", "%016llx", phr->session_id);
@@ -5073,10 +5020,6 @@ super_serve_op_USER_CREATE_MEMBER_ACTION(
   if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
   if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
   if (group_id < 0) group_id = 0;
-  if (userlist_clnt_get_info(phr->userlist_clnt, ULS_PRIV_GET_USER_INFO,
-                             other_user_id, contest_id, &xml_text) < 0) {
-    FAIL(S_ERR_DB_ERROR);
-  }
 
   if (phr->priv_level <= 0) FAIL(S_ERR_PERM_DENIED);
   get_global_caps(phr, &gcaps);
@@ -5084,6 +5027,10 @@ super_serve_op_USER_CREATE_MEMBER_ACTION(
   caps = (caps | gcaps) & ((1L << OPCAP_EDIT_USER) | (1L << OPCAP_PRIV_EDIT_USER));
   if (!caps) FAIL(S_ERR_PERM_DENIED);
 
+  if (userlist_clnt_get_info(phr->userlist_clnt, ULS_PRIV_GET_USER_INFO,
+                             other_user_id, contest_id, &xml_text) < 0) {
+    FAIL(S_ERR_DB_ERROR);
+  }
   if (!(u = userlist_parse_user_str(xml_text))) FAIL(S_ERR_DB_ERROR);
   --role;
   if (role < 0 || role >= USERLIST_MB_LAST) FAIL(S_ERR_INV_VALUE);
@@ -5122,6 +5069,168 @@ super_serve_op_USER_CREATE_MEMBER_ACTION(
   if (cur_count >= max_count) FAIL(S_ERR_TOO_MANY_MEMBERS);
 
   if (userlist_clnt_create_member(phr->userlist_clnt, other_user_id, contest_id, role) < 0)
+    FAIL(S_ERR_DB_ERROR);
+
+  ss_redirect_2(out_f, phr, SSERV_OP_USER_DETAIL_PAGE, contest_id, group_id, other_user_id);
+
+cleanup:
+  userlist_free(&u->b); u = 0;
+  xfree(xml_text); xml_text = 0;
+  return retval;
+}
+
+int
+super_serve_op_USER_DELETE_MEMBER_PAGE(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  int other_user_id = 0, contest_id = 0, group_id = 0, serial = 0;
+  const struct contest_desc *cnts = 0;
+  unsigned char contest_id_str[128];
+  unsigned char group_id_str[128];
+  opcap_t gcaps = 0, caps = 0;
+  unsigned char *xml_text = 0;
+  struct userlist_user *u = 0;
+  struct userlist_member *m = 0;
+  int role = 0, num = 0;
+  unsigned char buf[1024];
+  unsigned char hbuf[1024];
+
+  if (ss_cgi_param_int(phr, "other_user_id", &other_user_id) < 0 || other_user_id <= 0) {
+    FAIL(S_ERR_INV_USER_ID);
+  }
+  if (ss_cgi_param_int(phr, "serial", &serial) < 0 || serial <= 0) {
+    FAIL(S_ERR_INV_SERIAL);
+  }
+  if (ss_cgi_param_int(phr, "contest_id", &contest_id) < 0 || contest_id <= 0) {
+    FAIL(S_ERR_INV_CONTEST);
+  }
+  if (contest_id > 0) {
+    if (contests_get(contest_id, &cnts) < 0 || !cnts) {
+      FAIL(S_ERR_INV_CONTEST);
+    }
+  }
+  contest_id_str[0] = 0;
+  if (contest_id > 0) {
+    snprintf(contest_id_str, sizeof(contest_id_str), "&amp;contest_id=%d", contest_id);
+  }
+  ss_cgi_param_int_opt(phr, "group_id", &group_id, 0);
+  if (group_id < 0) group_id = 0;
+  group_id_str[0] = 0;
+  if (group_id > 0) {
+    snprintf(group_id_str, sizeof(group_id_str), "&amp;group_id=%d", group_id);
+  }
+
+  if (phr->priv_level <= 0) FAIL(S_ERR_PERM_DENIED);
+  get_global_caps(phr, &gcaps);
+  get_contest_caps(phr, cnts, &caps);
+  caps = (caps | gcaps) & ((1L << OPCAP_EDIT_USER) | (1L << OPCAP_PRIV_EDIT_USER));
+  if (!caps) FAIL(S_ERR_PERM_DENIED);
+
+  if (userlist_clnt_get_info(phr->userlist_clnt, ULS_PRIV_GET_USER_INFO,
+                             other_user_id, contest_id, &xml_text) < 0) {
+    FAIL(S_ERR_DB_ERROR);
+  }
+  if (!(u = userlist_parse_user_str(xml_text))) FAIL(S_ERR_DB_ERROR);
+
+  if (is_globally_privileged(phr, u)) {
+    if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_USER) < 0) FAIL(S_ERR_PERM_DENIED);
+  } else if (is_contest_privileged(cnts, u)) {
+    if (opcaps_check(caps, OPCAP_PRIV_EDIT_USER) < 0) FAIL(S_ERR_PERM_DENIED);
+  } else {
+    if (opcaps_check(caps, OPCAP_EDIT_USER) < 0) FAIL(S_ERR_PERM_DENIED);
+  }
+
+  m = 0;
+  if (u->cnts0 && u->cnts0->members) {
+    m = userlist_get_member_nc(u->cnts0->members, serial, &role, &num);
+  }
+  if (!m) FAIL(S_ERR_INV_SERIAL);
+  if (role < 0 || role >= USERLIST_MB_LAST || num < 0) FAIL(S_ERR_INV_SERIAL);
+
+  snprintf(buf, sizeof(buf), "serve-control: %s, delete the member '%s'::%d (%d) of user %d, contest %d",
+           phr->html_name, member_string[role], num + 1, serial,
+           other_user_id, contest_id);
+  ss_write_html_header(out_f, phr, buf, 0, NULL);
+  fprintf(out_f, "<h1>%s</h1>\n<br/>\n", buf);
+
+  print_top_navigation_links(log_f, out_f, phr, contest_id, group_id, other_user_id);
+
+  print_user_info(log_f, out_f, phr, cnts, u, u->cnts0, m, role, num);
+
+  fprintf(out_f, "<p>%s[%s]</a>",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                        NULL, "action=%d&amp;op=%d&amp;other_user_id=%d%s%s",
+                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_DETAIL_PAGE,
+                        other_user_id, contest_id_str, group_id_str),
+          "Cancel");
+
+  fprintf(out_f, "&nbsp;%s[%s]</a></p>",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                        NULL, "action=%d&amp;op=%d&amp;other_user_id=%d&amp;serial=%d%s%s",
+                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_DELETE_MEMBER_ACTION,
+                        other_user_id, m->serial, contest_id_str, group_id_str),
+          "Delete");
+
+cleanup:
+  userlist_free(&u->b); u = 0;
+  xfree(xml_text); xml_text = 0;
+  return retval;
+}
+
+int
+super_serve_op_USER_DELETE_MEMBER_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  int contest_id = 0, group_id = 0, other_user_id = 0, serial = 0;
+  const struct contest_desc *cnts = 0;
+  opcap_t gcaps = 0, caps = 0;
+  unsigned char *xml_text = 0;
+  struct userlist_user *u = 0;
+  const struct userlist_member *m = 0;
+
+  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  ss_cgi_param_int_opt(phr, "group_id", &group_id, 0);
+  ss_cgi_param_int_opt(phr, "other_user_id", &other_user_id, 0);
+  ss_cgi_param_int_opt(phr, "serial", &serial, 0);
+
+  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+  if (group_id < 0) group_id = 0;
+
+  if (phr->priv_level <= 0) FAIL(S_ERR_PERM_DENIED);
+  get_global_caps(phr, &gcaps);
+  get_contest_caps(phr, cnts, &caps);
+  caps = (caps | gcaps) & ((1L << OPCAP_EDIT_USER) | (1L << OPCAP_PRIV_EDIT_USER));
+  if (!caps) FAIL(S_ERR_PERM_DENIED);
+
+  if (userlist_clnt_get_info(phr->userlist_clnt, ULS_PRIV_GET_USER_INFO,
+                             other_user_id, contest_id, &xml_text) < 0) {
+    FAIL(S_ERR_DB_ERROR);
+  }
+  if (!(u = userlist_parse_user_str(xml_text))) FAIL(S_ERR_DB_ERROR);
+
+  if (is_globally_privileged(phr, u)) {
+    if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_USER) < 0) FAIL(S_ERR_PERM_DENIED);
+  } else if (is_contest_privileged(cnts, u)) {
+    if (opcaps_check(caps, OPCAP_PRIV_EDIT_USER) < 0) FAIL(S_ERR_PERM_DENIED);
+  } else {
+    if (opcaps_check(caps, OPCAP_EDIT_USER) < 0) FAIL(S_ERR_PERM_DENIED);
+  }
+
+  m = 0;
+  if (u->cnts0 && u->cnts0->members) {
+    m = userlist_get_member_nc(u->cnts0->members, serial, NULL, NULL);
+  }
+  if (!m) FAIL(S_ERR_INV_SERIAL);
+
+  if (userlist_clnt_delete_info(phr->userlist_clnt, ULS_PRIV_DELETE_MEMBER,
+                                other_user_id, contest_id, serial) < 0)
     FAIL(S_ERR_DB_ERROR);
 
   ss_redirect_2(out_f, phr, SSERV_OP_USER_DETAIL_PAGE, contest_id, group_id, other_user_id);
