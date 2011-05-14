@@ -316,6 +316,24 @@ userlist_user_count_cookies(struct userlist_user *u)
   return tot;
 }
 
+static struct userlist_user *
+get_user_info(
+        struct super_http_request_info *phr,
+        int user_id,
+        int contest_id)
+{
+  unsigned char *xml_text = 0;
+  struct userlist_user *u = 0;
+
+  if (userlist_clnt_get_info(phr->userlist_clnt, ULS_PRIV_GET_USER_INFO,
+                             user_id, contest_id, &xml_text) < 0 || !xml_text) {
+    return NULL;
+  }
+  u = userlist_parse_user_str(xml_text);
+  xfree(xml_text);
+  return u;
+}
+
 static void
 print_top_navigation_links(
         FILE *log_f,
@@ -887,6 +905,111 @@ static const struct user_row_info user_flag_rows[] =
   { 0, 0 },
 };
 
+static const struct user_row_info user_timestamp_rows[] =
+{
+  { USERLIST_NN_REGISTRATION_TIME, "Registration time" },
+  { USERLIST_NN_LAST_LOGIN_TIME, "Last login time" },
+  { USERLIST_NN_LAST_CHANGE_TIME, "Last change time" },
+  { USERLIST_NN_LAST_PWDCHANGE_TIME, "Last password change time" },
+  { 0, 0 },
+};
+
+static const struct user_row_info user_info_rows[] =
+{
+  { USERLIST_NC_INST, "Institution name" },
+  { USERLIST_NC_INST_EN, "Inst. name (En)" },
+  { USERLIST_NC_INSTSHORT, "Short inst. name" },
+  { USERLIST_NC_INSTSHORT_EN, "Short inst. name (En)" },
+  { USERLIST_NC_INSTNUM, "Institution number" },
+  { USERLIST_NC_FAC, "Faculty name" },
+  { USERLIST_NC_FAC_EN, "Faculty name (En)" },
+  { USERLIST_NC_FACSHORT, "Short faculty name" },
+  { USERLIST_NC_FACSHORT_EN, "Short faculty name (En)" },
+  { USERLIST_NC_HOMEPAGE, "Web home page" },
+  { USERLIST_NC_CITY, "City" },
+  { USERLIST_NC_CITY_EN, "City (En)" },
+  { USERLIST_NC_COUNTRY, "Country" },
+  { USERLIST_NC_COUNTRY_EN, "Country (En)" },
+  { USERLIST_NC_REGION, "Region" },
+  { USERLIST_NC_AREA, "Region (En)" },
+  { USERLIST_NC_ZIP, "Zip code" },
+  { USERLIST_NC_STREET, "Street address" },
+  { USERLIST_NC_LOCATION, "Computer location" },
+  { USERLIST_NC_SPELLING, "Name spelling" },
+  { USERLIST_NC_PRINTER_NAME, "Printer name" },
+  { USERLIST_NC_EXAM_ID, "Examination Id" },
+  { USERLIST_NC_EXAM_CYPHER, "Examination cypher" },
+  { USERLIST_NC_LANGUAGES, "Programming languages" },
+  { USERLIST_NC_PHONE, "Contact phone" },
+  { USERLIST_NC_FIELD0, "Additional field 0" },
+  { USERLIST_NC_FIELD1, "Additional field 1" },
+  { USERLIST_NC_FIELD2, "Additional field 2" },
+  { USERLIST_NC_FIELD3, "Additional field 3" },
+  { USERLIST_NC_FIELD4, "Additional field 4" },
+  { USERLIST_NC_FIELD5, "Additional field 5" },
+  { USERLIST_NC_FIELD6, "Additional field 6" },
+  { USERLIST_NC_FIELD7, "Additional field 7" },
+  { USERLIST_NC_FIELD8, "Additional field 8" },
+  { USERLIST_NC_FIELD9, "Additional field 9" },
+
+  { 0, 0 },
+};
+
+static const struct user_row_info user_info_stat_rows[] =
+{
+  { USERLIST_NC_CREATE_TIME, "Create time" },
+  { USERLIST_NC_LAST_LOGIN_TIME, "Last login time" },
+  { USERLIST_NC_LAST_CHANGE_TIME, "Last change time" },
+  { USERLIST_NC_LAST_PWDCHANGE_TIME, "Last password change time" },
+
+  { 0, 0 },
+};
+
+static const struct user_row_info member_rows[] =
+{
+  { USERLIST_NM_FIRSTNAME, "First name" },
+  { USERLIST_NM_FIRSTNAME_EN, "First name (En)" },
+  { USERLIST_NM_MIDDLENAME, "Middle name" },
+  { USERLIST_NM_MIDDLENAME_EN, "Middle name (En)" },
+  { USERLIST_NM_SURNAME, "Surname" },
+  { USERLIST_NM_SURNAME_EN, "Surname (En)" },
+  { USERLIST_NM_GROUP, "Academic group" },
+  { USERLIST_NM_GROUP_EN, "Academic group (En)" },
+  { USERLIST_NM_EMAIL, "Email" },
+  { USERLIST_NM_HOMEPAGE, "Web home page" },
+  { USERLIST_NM_OCCUPATION, "Occupation" },
+  { USERLIST_NM_OCCUPATION_EN, "Occupation (En)" },
+  { USERLIST_NM_DISCIPLINE, "Discipline" },
+  { USERLIST_NM_INST, "Institution name" },
+  { USERLIST_NM_INST_EN, "Institution name (En)" },
+  { USERLIST_NM_INSTSHORT, "Short inst. name" },
+  { USERLIST_NM_INSTSHORT_EN, "Short inst. name (En)" },
+  { USERLIST_NM_FAC, "Faculty name" },
+  { USERLIST_NM_FAC_EN, "Faculty name (En)" },
+  { USERLIST_NM_FACSHORT, "Short faculty name" },
+  { USERLIST_NM_FACSHORT_EN, "Short faculty name (En)" },
+  { USERLIST_NM_PHONE, "Phone" },
+
+  { 0, 0 },
+};
+
+static const struct user_row_info member_date_rows[] =
+{
+  { USERLIST_NM_BIRTH_DATE, "Date of birth" },
+  { USERLIST_NM_ENTRY_DATE, "Date of entry" },
+  { USERLIST_NM_GRADUATION_DATE, "Graduation date" },
+
+  { 0, 0 },
+};
+
+static const struct user_row_info member_time_rows[] =
+{
+  { USERLIST_NM_CREATE_TIME, "Create time" },
+  { USERLIST_NM_LAST_CHANGE_TIME, "Last change time" },
+
+  { 0, 0 },
+};
+
 int
 super_serve_op_USER_DETAIL_PAGE(
         FILE *log_f,
@@ -1058,25 +1181,7 @@ super_serve_op_USER_DETAIL_PAGE(
 
   print_top_navigation_links(log_f, out_f, phr, contest_id, group_id, other_user_id);
 
-  if (!phr->userlist_clnt) {
-    fprintf(out_f, "<hr/><h2>Error</h2>\n");
-    fprintf(out_f, "<pre>No connection to the server!</pre>\n");
-    goto do_footer;
-  }
-
-  r = userlist_clnt_get_info(phr->userlist_clnt, ULS_PRIV_GET_USER_INFO,
-                             other_user_id, contest_id, &xml_text);
-  if (r < 0) {
-    fprintf(out_f, "<hr/><h2>Error</h2>\n");
-    fprintf(out_f, "<pre>Cannot get user information: %s</pre>\n",
-            userlist_strerror(-r));
-    goto do_footer;
-  }
-  if (!(u = userlist_parse_user_str(xml_text))) {
-    fprintf(out_f, "<hr/><h2>Error</h2>\n");
-    fprintf(out_f, "<pre>XML parse error</pre>\n");
-    goto do_footer;
-  }
+  if (!(u = get_user_info(phr, other_user_id, contest_id))) FAIL(S_ERR_DB_ERROR);
   ui = u->cnts0;
 
   html_start_form_id(out_f, 1, phr->self_url, "UserForm", "");
@@ -1141,25 +1246,17 @@ super_serve_op_USER_DETAIL_PAGE(
           cl, "Show user statistics");
   fprintf(out_f, "<tr class=\"StatRow2\" style=\"display: none;\"><td colspan=\"4\"%s align=\"center\"><a onclick=\"toggleStatVisibility(false)\">[%s]</a></td></tr>\n", cl, "Hide user statistics");
 
-  static const struct user_row_info timestamp_rows[] =
-  {
-    { USERLIST_NN_REGISTRATION_TIME, "Registration time" },
-    { USERLIST_NN_LAST_LOGIN_TIME, "Last login time" },
-    { USERLIST_NN_LAST_CHANGE_TIME, "Last change time" },
-    { USERLIST_NN_LAST_PWDCHANGE_TIME, "Last password change time" },
-    { 0, 0 },
-  };
-  for (row = 0; timestamp_rows[row].field_id > 0; ++row) {
+  for (row = 0; user_timestamp_rows[row].field_id > 0; ++row) {
     fprintf(out_f, "<tr class=\"StatRow2\" style=\"display: none;\"><td%s><b>%s:</b></td><td%s>&nbsp;</td><td%s>",
-            cl, timestamp_rows[row].field_desc, cl, cl);
-    time_t *pt = (time_t*) userlist_get_user_field_ptr(u, timestamp_rows[row].field_id);
+            cl, user_timestamp_rows[row].field_desc, cl, cl);
+    time_t *pt = (time_t*) userlist_get_user_field_ptr(u, user_timestamp_rows[row].field_id);
     if (pt && *pt > 0) {
       fprintf(out_f, "%s</td><td%s>%s%s</a></td></tr>\n",
               xml_unparse_date(*pt), cl,
               html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                             NULL, "action=%d&amp;op=%d&amp;other_user_id=%d&amp;field_id=%d%s%s",
                             SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_CLEAR_FIELD_ACTION,
-                            other_user_id, timestamp_rows[row].field_id,
+                            other_user_id, user_timestamp_rows[row].field_id,
                             contest_id_str, group_id_str),
               "[Reset]");
     } else if (pt) {
@@ -1232,46 +1329,6 @@ super_serve_op_USER_DETAIL_PAGE(
           cl, "Show more user info fields");
   fprintf(out_f, "<tr class=\"UserInfoRow2\" style=\"display: none;\"><td colspan=\"4\"%s align=\"center\"><a onclick=\"toggleUserInfoVisibility(false)\">[%s]</a></td></tr>\n", cl, "Hide user info fields");
 
-  static const struct user_row_info user_info_rows[] =
-  {
-    { USERLIST_NC_INST, "Institution name" },
-    { USERLIST_NC_INST_EN, "Inst. name (En)" },
-    { USERLIST_NC_INSTSHORT, "Short inst. name" },
-    { USERLIST_NC_INSTSHORT_EN, "Short inst. name (En)" },
-    { USERLIST_NC_INSTNUM, "Institution number" },
-    { USERLIST_NC_FAC, "Faculty name" },
-    { USERLIST_NC_FAC_EN, "Faculty name (En)" },
-    { USERLIST_NC_FACSHORT, "Short faculty name" },
-    { USERLIST_NC_FACSHORT_EN, "Short faculty name (En)" },
-    { USERLIST_NC_HOMEPAGE, "Web home page" },
-    { USERLIST_NC_CITY, "City" },
-    { USERLIST_NC_CITY_EN, "City (En)" },
-    { USERLIST_NC_COUNTRY, "Country" },
-    { USERLIST_NC_COUNTRY_EN, "Country (En)" },
-    { USERLIST_NC_REGION, "Region" },
-    { USERLIST_NC_AREA, "Region (En)" },
-    { USERLIST_NC_ZIP, "Zip code" },
-    { USERLIST_NC_STREET, "Street address" },
-    { USERLIST_NC_LOCATION, "Computer location" },
-    { USERLIST_NC_SPELLING, "Name spelling" },
-    { USERLIST_NC_PRINTER_NAME, "Printer name" },
-    { USERLIST_NC_EXAM_ID, "Examination Id" },
-    { USERLIST_NC_EXAM_CYPHER, "Examination cypher" },
-    { USERLIST_NC_LANGUAGES, "Programming languages" },
-    { USERLIST_NC_PHONE, "Contact phone" },
-    { USERLIST_NC_FIELD0, "Additional field 0" },
-    { USERLIST_NC_FIELD1, "Additional field 1" },
-    { USERLIST_NC_FIELD2, "Additional field 2" },
-    { USERLIST_NC_FIELD3, "Additional field 3" },
-    { USERLIST_NC_FIELD4, "Additional field 4" },
-    { USERLIST_NC_FIELD5, "Additional field 5" },
-    { USERLIST_NC_FIELD6, "Additional field 6" },
-    { USERLIST_NC_FIELD7, "Additional field 7" },
-    { USERLIST_NC_FIELD8, "Additional field 8" },
-    { USERLIST_NC_FIELD9, "Additional field 9" },
-
-    { 0, 0 },
-  };
   for (row = 0; user_info_rows[row].field_id > 0; ++row) {
     s = 0;
     if (user_info_rows[row].field_id == USERLIST_NC_INSTNUM) {
@@ -1288,15 +1345,6 @@ super_serve_op_USER_DETAIL_PAGE(
     string_row(out_f, "UserInfoRow2", 1, "b1", user_info_rows[row].field_desc, hbuf, s);
   }
 
-  static const struct user_row_info user_info_stat_rows[] =
-  {
-    { USERLIST_NC_CREATE_TIME, "Create time" },
-    { USERLIST_NC_LAST_LOGIN_TIME, "Last login time" },
-    { USERLIST_NC_LAST_CHANGE_TIME, "Last change time" },
-    { USERLIST_NC_LAST_PWDCHANGE_TIME, "Last password change time" },
-
-    { 0, 0 },
-  };
   if (ui) {
     for (row = 0; user_info_stat_rows[row].field_id > 0; ++row) {
       fprintf(out_f, "<tr class=\"UserInfoRow2\" style=\"display: none;\"><td%s><b>%s:</b></td><td%s>&nbsp;</td><td%s>",
@@ -1361,34 +1409,6 @@ super_serve_op_USER_DETAIL_PAGE(
         snprintf(hbuf, sizeof(hbuf), "%d_%d", USERLIST_NM_GRADE, m->serial);
         string_row(out_f, "MemberInfoRow2", 1, "b1", "Grade", hbuf, s);
 
-        static const struct user_row_info member_rows[] =
-        {
-          { USERLIST_NM_FIRSTNAME, "First name" },
-          { USERLIST_NM_FIRSTNAME_EN, "First name (En)" },
-          { USERLIST_NM_MIDDLENAME, "Middle name" },
-          { USERLIST_NM_MIDDLENAME_EN, "Middle name (En)" },
-          { USERLIST_NM_SURNAME, "Surname" },
-          { USERLIST_NM_SURNAME_EN, "Surname (En)" },
-          { USERLIST_NM_GROUP, "Academic group" },
-          { USERLIST_NM_GROUP_EN, "Academic group (En)" },
-          { USERLIST_NM_EMAIL, "Email" },
-          { USERLIST_NM_HOMEPAGE, "Web home page" },
-          { USERLIST_NM_OCCUPATION, "Occupation" },
-          { USERLIST_NM_OCCUPATION_EN, "Occupation (En)" },
-          { USERLIST_NM_DISCIPLINE, "Discipline" },
-          { USERLIST_NM_INST, "Institution name" },
-          { USERLIST_NM_INST_EN, "Institution name (En)" },
-          { USERLIST_NM_INSTSHORT, "Short inst. name" },
-          { USERLIST_NM_INSTSHORT_EN, "Short inst. name (En)" },
-          { USERLIST_NM_FAC, "Faculty name" },
-          { USERLIST_NM_FAC_EN, "Faculty name (En)" },
-          { USERLIST_NM_FACSHORT, "Short faculty name" },
-          { USERLIST_NM_FACSHORT_EN, "Short faculty name (En)" },
-          { USERLIST_NM_PHONE, "Phone" },
-
-          { 0, 0 },
-        };
-
         for (row = 0; member_rows[row].field_id > 0; ++row) {
           unsigned char **ps = (unsigned char**) userlist_get_member_field_ptr(m, member_rows[row].field_id);
           if (!ps) continue;
@@ -1396,15 +1416,6 @@ super_serve_op_USER_DETAIL_PAGE(
           snprintf(hbuf, sizeof(hbuf), "%d_%d", member_rows[row].field_id, m->serial);
           string_row(out_f, "MemberInfoRow2", 1, "b1", member_rows[row].field_desc, hbuf, s);
         }
-
-        static const struct user_row_info member_date_rows[] =
-        {
-          { USERLIST_NM_BIRTH_DATE, "Date of birth" },
-          { USERLIST_NM_ENTRY_DATE, "Date of entry" },
-          { USERLIST_NM_GRADUATION_DATE, "Graduation date" },
-
-          { 0, 0 },
-        };
 
         for (row = 0; member_date_rows[row].field_id > 0; ++row) {
           time_t *pt = (time_t*) userlist_get_member_field_ptr(m, member_date_rows[row].field_id);
@@ -1417,14 +1428,6 @@ super_serve_op_USER_DETAIL_PAGE(
           snprintf(hbuf, sizeof(hbuf), "%d_%d", member_date_rows[row].field_id, m->serial);
           string_row(out_f, "MemberInfoRow2", 1, "b1", member_date_rows[row].field_desc, hbuf, s);
         }
-
-        static const struct user_row_info member_time_rows[] =
-        {
-          { USERLIST_NM_CREATE_TIME, "Create time" },
-          { USERLIST_NM_LAST_CHANGE_TIME, "Last change time" },
-
-          { 0, 0 },
-        };
 
         for (row = 0; member_time_rows[row].field_id > 0; ++row) {
           fprintf(out_f, "<tr class=\"MemberInfoRow2\" style=\"display: none;\"><td%s><b>%s:</b></td><td%s>&nbsp;</td><td%s>",
@@ -1628,7 +1631,6 @@ super_serve_op_USER_DETAIL_PAGE(
     fprintf(out_f, "</div>\n");
   }
 
-do_footer:
   ss_write_html_footer(out_f);
 
 cleanup:
@@ -1693,18 +1695,10 @@ print_user_info(
   fprintf(out_f, "<tr><td colspan=\"2\"%s align=\"center\"><b>%s</b></td></tr>\n",
           cl, "User statistics");
 
-  static const struct user_row_info timestamp_rows[] =
-  {
-    { USERLIST_NN_REGISTRATION_TIME, "Registration time" },
-    { USERLIST_NN_LAST_LOGIN_TIME, "Last login time" },
-    { USERLIST_NN_LAST_CHANGE_TIME, "Last change time" },
-    { USERLIST_NN_LAST_PWDCHANGE_TIME, "Last password change time" },
-    { 0, 0 },
-  };
-  for (row = 0; timestamp_rows[row].field_id > 0; ++row) {
+  for (row = 0; user_timestamp_rows[row].field_id > 0; ++row) {
     fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>",
-            cl, timestamp_rows[row].field_desc, cl);
-    time_t *pt = (time_t*) userlist_get_user_field_ptr(u, timestamp_rows[row].field_id);
+            cl, user_timestamp_rows[row].field_desc, cl);
+    time_t *pt = (time_t*) userlist_get_user_field_ptr(u, user_timestamp_rows[row].field_id);
     if (pt && *pt > 0) {
       fprintf(out_f, "%s</td></tr>\n", xml_unparse_date(*pt));
     } else if (pt) {
@@ -1758,61 +1752,12 @@ print_user_info(
   }
   */
 
-  static const struct user_row_info user_info_rows[] =
-  {
-    { USERLIST_NC_INST, "Institution name" },
-    { USERLIST_NC_INST_EN, "Inst. name (En)" },
-    { USERLIST_NC_INSTSHORT, "Short inst. name" },
-    { USERLIST_NC_INSTSHORT_EN, "Short inst. name (En)" },
-    { USERLIST_NC_INSTNUM, "Institution number" },
-    { USERLIST_NC_FAC, "Faculty name" },
-    { USERLIST_NC_FAC_EN, "Faculty name (En)" },
-    { USERLIST_NC_FACSHORT, "Short faculty name" },
-    { USERLIST_NC_FACSHORT_EN, "Short faculty name (En)" },
-    { USERLIST_NC_HOMEPAGE, "Web home page" },
-    { USERLIST_NC_CITY, "City" },
-    { USERLIST_NC_CITY_EN, "City (En)" },
-    { USERLIST_NC_COUNTRY, "Country" },
-    { USERLIST_NC_COUNTRY_EN, "Country (En)" },
-    { USERLIST_NC_REGION, "Region" },
-    { USERLIST_NC_AREA, "Region (En)" },
-    { USERLIST_NC_ZIP, "Zip code" },
-    { USERLIST_NC_STREET, "Street address" },
-    { USERLIST_NC_LOCATION, "Computer location" },
-    { USERLIST_NC_SPELLING, "Name spelling" },
-    { USERLIST_NC_PRINTER_NAME, "Printer name" },
-    { USERLIST_NC_EXAM_ID, "Examination Id" },
-    { USERLIST_NC_EXAM_CYPHER, "Examination cypher" },
-    { USERLIST_NC_LANGUAGES, "Programming languages" },
-    { USERLIST_NC_PHONE, "Contact phone" },
-    { USERLIST_NC_FIELD0, "Additional field 0" },
-    { USERLIST_NC_FIELD1, "Additional field 1" },
-    { USERLIST_NC_FIELD2, "Additional field 2" },
-    { USERLIST_NC_FIELD3, "Additional field 3" },
-    { USERLIST_NC_FIELD4, "Additional field 4" },
-    { USERLIST_NC_FIELD5, "Additional field 5" },
-    { USERLIST_NC_FIELD6, "Additional field 6" },
-    { USERLIST_NC_FIELD7, "Additional field 7" },
-    { USERLIST_NC_FIELD8, "Additional field 8" },
-    { USERLIST_NC_FIELD9, "Additional field 9" },
-
-    { 0, 0 },
-  };
   for (row = 0; user_info_rows[row].field_id > 0; ++row) {
     userlist_get_user_info_field_str(buf, sizeof(buf), ui, user_info_rows[row].field_id, 1);
     fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%s</td></tr>\n",
             cl, user_info_rows[row].field_desc, cl, ARMOR(buf));
   }
 
-  static const struct user_row_info user_info_stat_rows[] =
-  {
-    { USERLIST_NC_CREATE_TIME, "Create time" },
-    { USERLIST_NC_LAST_LOGIN_TIME, "Last login time" },
-    { USERLIST_NC_LAST_CHANGE_TIME, "Last change time" },
-    { USERLIST_NC_LAST_PWDCHANGE_TIME, "Last password change time" },
-
-    { 0, 0 },
-  };
   for (row = 0; user_info_stat_rows[row].field_id > 0; ++row) {
     userlist_get_user_info_field_str(buf, sizeof(buf), ui, user_info_stat_rows[row].field_id, 1);
     fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%s</td></tr>\n",
@@ -1835,62 +1780,17 @@ print_user_info(
   fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%s</td></tr>\n",
           cl, "Grade", cl, ARMOR(buf));
 
-  static const struct user_row_info member_rows[] =
-  {
-    { USERLIST_NM_FIRSTNAME, "First name" },
-    { USERLIST_NM_FIRSTNAME_EN, "First name (En)" },
-    { USERLIST_NM_MIDDLENAME, "Middle name" },
-    { USERLIST_NM_MIDDLENAME_EN, "Middle name (En)" },
-    { USERLIST_NM_SURNAME, "Surname" },
-    { USERLIST_NM_SURNAME_EN, "Surname (En)" },
-    { USERLIST_NM_GROUP, "Academic group" },
-    { USERLIST_NM_GROUP_EN, "Academic group (En)" },
-    { USERLIST_NM_EMAIL, "Email" },
-    { USERLIST_NM_HOMEPAGE, "Web home page" },
-    { USERLIST_NM_OCCUPATION, "Occupation" },
-    { USERLIST_NM_OCCUPATION_EN, "Occupation (En)" },
-    { USERLIST_NM_DISCIPLINE, "Discipline" },
-    { USERLIST_NM_INST, "Institution name" },
-    { USERLIST_NM_INST_EN, "Institution name (En)" },
-    { USERLIST_NM_INSTSHORT, "Short inst. name" },
-    { USERLIST_NM_INSTSHORT_EN, "Short inst. name (En)" },
-    { USERLIST_NM_FAC, "Faculty name" },
-    { USERLIST_NM_FAC_EN, "Faculty name (En)" },
-    { USERLIST_NM_FACSHORT, "Short faculty name" },
-    { USERLIST_NM_FACSHORT_EN, "Short faculty name (En)" },
-    { USERLIST_NM_PHONE, "Phone" },
-
-    { 0, 0 },
-  };
-
   for (row = 0; member_rows[row].field_id > 0; ++row) {
     userlist_get_member_field_str(buf, sizeof(buf), m, member_rows[row].field_id, 1, 0);
     fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%s</td></tr>\n",
             cl, member_rows[row].field_desc, cl, ARMOR(buf));
   }
 
-  static const struct user_row_info member_date_rows[] =
-  {
-    { USERLIST_NM_BIRTH_DATE, "Date of birth" },
-    { USERLIST_NM_ENTRY_DATE, "Date of entry" },
-    { USERLIST_NM_GRADUATION_DATE, "Graduation date" },
-
-    { 0, 0 },
-  };
-
   for (row = 0; member_date_rows[row].field_id > 0; ++row) {
     userlist_get_member_field_str(buf, sizeof(buf), m, member_date_rows[row].field_id, 1, 0);
     fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%s</td></tr>\n",
             cl, member_date_rows[row].field_desc, cl, ARMOR(buf));
   }
-
-  static const struct user_row_info member_time_rows[] =
-  {
-    { USERLIST_NM_CREATE_TIME, "Create time" },
-    { USERLIST_NM_LAST_CHANGE_TIME, "Last change time" },
-
-    { 0, 0 },
-  };
 
   for (row = 0; member_time_rows[row].field_id > 0; ++row) {
     userlist_get_member_field_str(buf, sizeof(buf), m, member_time_rows[row].field_id, 1, 0);
@@ -1910,7 +1810,7 @@ super_serve_op_USER_PASSWORD_PAGE(
         FILE *out_f,
         struct super_http_request_info *phr)
 {
-  int retval = 0, r;
+  int retval = 0;
   unsigned char buf[1024];
   int other_user_id = -1, contest_id = -1, group_id = -1, next_op = -1;
   const struct contest_desc *cnts = 0;
@@ -1933,10 +1833,7 @@ super_serve_op_USER_PASSWORD_PAGE(
   }
   if (group_id < 0) group_id = 0;
 
-  r = userlist_clnt_get_info(phr->userlist_clnt, ULS_PRIV_GET_USER_INFO,
-                             other_user_id, 0, &xml_text);
-  if (r < 0 || !xml_text) FAIL(S_ERR_DB_ERROR);
-  if (!(u = userlist_parse_user_str(xml_text))) FAIL(S_ERR_DB_ERROR);
+  if (!(u = get_user_info(phr, other_user_id, 0))) FAIL(S_ERR_DB_ERROR);
 
   opcap_t caps = 0;
   if (get_global_caps(phr, &caps) < 0) FAIL(S_ERR_PERM_DENIED);
@@ -2055,7 +1952,7 @@ super_serve_op_USER_CNTS_PASSWORD_PAGE(
         FILE *out_f,
         struct super_http_request_info *phr)
 {
-  int retval = 0, r;
+  int retval = 0;
   unsigned char buf[1024];
   int other_user_id = -1, contest_id = -1, group_id = -1;
   const struct contest_desc *cnts = 0;
@@ -2080,10 +1977,7 @@ super_serve_op_USER_CNTS_PASSWORD_PAGE(
   }
   if (group_id < 0) group_id = 0;
 
-  r = userlist_clnt_get_info(phr->userlist_clnt, ULS_PRIV_GET_USER_INFO,
-                             other_user_id, contest_id, &xml_text);
-  if (r < 0 || !xml_text) FAIL(S_ERR_DB_ERROR);
-  if (!(u = userlist_parse_user_str(xml_text))) FAIL(S_ERR_DB_ERROR);
+  if (!(u = get_user_info(phr, other_user_id, contest_id))) FAIL(S_ERR_DB_ERROR);
 
   if (phr->priv_level <= 0) FAIL(S_ERR_PERM_DENIED);
   opcap_t gcaps = 0;
@@ -2224,11 +2118,10 @@ super_serve_op_USER_CREATE_REG_PAGE(
         FILE *out_f,
         struct super_http_request_info *phr)
 {
-  int retval = 0, r;
+  int retval = 0;
   int other_user_id = 0, contest_id = 0, group_id = 0;
   const struct contest_desc *cnts = 0;
   unsigned char buf[1024];
-  unsigned char hbuf[1024];
   unsigned char *xml_text = 0;
   struct userlist_user *u = 0;
   const unsigned char *cl = 0;
@@ -2246,6 +2139,8 @@ super_serve_op_USER_CREATE_REG_PAGE(
     if (contests_get(contest_id, &cnts) < 0 || !cnts) contest_id = 0;
   }
   if (group_id < 0) group_id = 0;
+
+  if (phr->priv_level <= 0) FAIL(S_ERR_PERM_DENIED);
 
   snprintf(buf, sizeof(buf), "serve-control: %s, create a contest registration for user %d",
            phr->html_name, other_user_id);
@@ -2280,25 +2175,8 @@ super_serve_op_USER_CREATE_REG_PAGE(
 
   print_top_navigation_links(log_f, out_f, phr, contest_id, group_id, other_user_id);
 
-  if (!phr->userlist_clnt) {
-    fprintf(out_f, "<hr/><h2>Error</h2>\n");
-    fprintf(out_f, "<pre>No connection to the server!</pre>\n");
-    goto do_footer;
-  }
-
-  r = userlist_clnt_get_info(phr->userlist_clnt, ULS_PRIV_GET_USER_INFO,
-                             other_user_id, 0, &xml_text);
-  if (r < 0) {
-    fprintf(out_f, "<hr/><h2>Error</h2>\n");
-    fprintf(out_f, "<pre>Cannot get user information: %s</pre>\n",
-            userlist_strerror(-r));
-    goto do_footer;
-  }
-  if (!(u = userlist_parse_user_str(xml_text))) {
-    fprintf(out_f, "<hr/><h2>Error</h2>\n");
-    fprintf(out_f, "<pre>XML parse error</pre>\n");
-    goto do_footer;
-  }
+  if (!(u = get_user_info(phr, other_user_id, contest_id)))
+    FAIL(S_ERR_DB_ERROR);
 
   cnts_id_count = contests_get_list(&cnts_id_list);
   if (cnts_id_count <= 0 || !cnts_id_list) {
@@ -2338,7 +2216,7 @@ super_serve_op_USER_CREATE_REG_PAGE(
   fprintf(out_f, "</select>");
   fprintf(out_f, "</td></tr>\n");
   fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>", cl, "Status", cl);
-  ss_select(out_f, hbuf, (const unsigned char* []) { "OK", "Pending", "Rejected", NULL }, 1);
+  ss_select(out_f, "status", (const unsigned char* []) { "OK", "Pending", "Rejected", NULL }, 1);
   fprintf(out_f, "</td></tr>\n");
   fprintf(out_f, "<tr><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\" /></td></tr>\n",
           cl, "Invisible?", cl, "is_invisible");
@@ -2427,19 +2305,8 @@ super_serve_op_USER_EDIT_REG_PAGE(
     goto do_footer;
   }
 
-  r = userlist_clnt_get_info(phr->userlist_clnt, ULS_PRIV_GET_USER_INFO,
-                             other_user_id, 0, &xml_text);
-  if (r < 0) {
-    fprintf(out_f, "<hr/><h2>Error</h2>\n");
-    fprintf(out_f, "<pre>Cannot get user information: %s</pre>\n",
-            userlist_strerror(-r));
-    goto do_footer;
-  }
-  if (!(u = userlist_parse_user_str(xml_text))) {
-    fprintf(out_f, "<hr/><h2>Error</h2>\n");
-    fprintf(out_f, "<pre>XML parse error</pre>\n");
-    goto do_footer;
-  }
+  if (!(u = get_user_info(phr, other_user_id, 0)))
+    FAIL(S_ERR_DB_ERROR);
 
   if ((reg_count = userlist_user_count_contests(u)) <= 0) {
     fprintf(out_f, "<hr/><h2>Error</h2>\n");
@@ -2581,25 +2448,7 @@ super_serve_op_USER_DELETE_REG_PAGE(
 
   print_top_navigation_links(log_f, out_f, phr, contest_id, group_id, other_user_id);
 
-  if (!phr->userlist_clnt) {
-    fprintf(out_f, "<hr/><h2>Error</h2>\n");
-    fprintf(out_f, "<pre>No connection to the server!</pre>\n");
-    goto do_footer;
-  }
-
-  r = userlist_clnt_get_info(phr->userlist_clnt, ULS_PRIV_GET_USER_INFO,
-                             other_user_id, 0, &xml_text);
-  if (r < 0) {
-    fprintf(out_f, "<hr/><h2>Error</h2>\n");
-    fprintf(out_f, "<pre>Cannot get user information: %s</pre>\n",
-            userlist_strerror(-r));
-    goto do_footer;
-  }
-  if (!(u = userlist_parse_user_str(xml_text))) {
-    fprintf(out_f, "<hr/><h2>Error</h2>\n");
-    fprintf(out_f, "<pre>XML parse error</pre>\n");
-    goto do_footer;
-  }
+  if (!(u = get_user_info(phr, other_user_id, 0))) FAIL(S_ERR_DB_ERROR);
 
   if ((reg_count = userlist_user_count_contests(u)) <= 0) {
     fprintf(out_f, "<hr/><h2>Error</h2>\n");
@@ -4537,7 +4386,7 @@ cleanup:
   csv_parsed = csv_free(csv_parsed);
   xfree(recoded_csv_text); recoded_csv_text = 0;
   xfree(xml_text); xml_text = 0;
-  meta_destroy_fields(&meta_ss_op_param_USER_CREATE_MANY_ACTION_methods, &params);
+  meta_destroy_fields(&meta_ss_op_param_USER_CREATE_FROM_CSV_ACTION_methods, &params);
   return retval;
 }
 
@@ -5238,6 +5087,75 @@ super_serve_op_USER_DELETE_MEMBER_ACTION(
 cleanup:
   userlist_free(&u->b); u = 0;
   xfree(xml_text); xml_text = 0;
+  return retval;
+}
+
+int
+super_serve_op_USER_CREATE_REG_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  struct userlist_user *u = 0;
+
+  struct ss_op_param_USER_CREATE_REG_ACTION params;
+  memset(&params, 0, sizeof(params));
+  retval = ss_parse_params(phr, &meta_ss_op_param_USER_CREATE_REG_ACTION_methods, &params);
+  if (retval < 0) goto cleanup;
+
+  const struct contest_desc *cnts = 0;
+  if (params.contest_id > 0) {
+    if (contests_get(params.contest_id, &cnts) < 0 || !cnts)
+      params.contest_id = 0;
+  } else {
+    params.contest_id = 0;
+  }
+  cnts = 0;
+  if (params.other_contest_id_1 <= 0) FAIL(S_ERR_INV_CONTEST);
+  if (contests_get(params.other_contest_id_1, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+
+  if (params.group_id < 0) params.group_id = 0;
+
+  if (phr->priv_level <= 0) FAIL(S_ERR_PERM_DENIED);
+  opcap_t gcaps = 0, caps = 0;
+  get_global_caps(phr, &gcaps);
+  get_contest_caps(phr, cnts, &caps);
+  caps |= gcaps;
+  if (opcaps_check(caps, OPCAP_CREATE_REG) < 0 && opcaps_check(caps, OPCAP_PRIV_CREATE_REG) < 0)
+    FAIL(S_ERR_PERM_DENIED);
+
+  if (!(u = get_user_info(phr, params.other_user_id, cnts->id))) FAIL(S_ERR_DB_ERROR);
+  if (is_globally_privileged(phr, u)) {
+    if (opcaps_check(gcaps, OPCAP_PRIV_CREATE_REG) < 0) FAIL(S_ERR_PERM_DENIED);
+  } else if (is_contest_privileged(cnts, u)) {
+    if (opcaps_check(caps, OPCAP_PRIV_CREATE_REG) < 0) FAIL(S_ERR_PERM_DENIED);
+  } else {
+    if (opcaps_check(caps, OPCAP_CREATE_REG) < 0) FAIL(S_ERR_PERM_DENIED);
+  }
+
+  if (params.status < 0 || params.status >= USERLIST_REG_LAST) params.status = USERLIST_REG_PENDING;
+
+  int flags = 0;
+  if (params.is_invisible) flags |= USERLIST_UC_INVISIBLE;
+  if (params.is_banned) flags |= USERLIST_UC_BANNED;
+  if (params.is_locked) flags |= USERLIST_UC_LOCKED;
+  if (params.is_incomplete) flags |= USERLIST_UC_INCOMPLETE;
+  if (params.is_disqualified) flags |= USERLIST_UC_DISQUALIFIED;
+
+  if (userlist_clnt_register_contest(phr->userlist_clnt,
+                                     ULS_PRIV_REGISTER_CONTEST,
+                                     params.other_user_id, cnts->id, 0, 0) < 0)
+    FAIL(S_ERR_DB_ERROR);
+  if (userlist_clnt_change_registration(phr->userlist_clnt, params.other_user_id,
+                                        cnts->id, params.status, 4, flags) < 0)
+    FAIL(S_ERR_DB_ERROR);
+
+  ss_redirect_2(out_f, phr, SSERV_OP_USER_DETAIL_PAGE, params.contest_id, params.group_id, params.other_user_id);
+
+cleanup:
+  meta_destroy_fields(&meta_ss_op_param_USER_CREATE_REG_ACTION_methods, &params);
+  userlist_free(&u->b); u = 0;
   return retval;
 }
 

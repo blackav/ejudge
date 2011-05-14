@@ -1836,6 +1836,7 @@ set_reg_flags_func(void *data, int user_id, int contest_id, int cmd,
   case 1: new_value |= value; break;
   case 2: new_value &= ~value; break;
   case 3: new_value ^= value; break;
+  case 4: new_value = value; break;
   }
   if (new_value == c->flags) return 0;
 

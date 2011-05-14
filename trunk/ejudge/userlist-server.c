@@ -6621,7 +6621,7 @@ cmd_edit_registration(struct client_state *p, int pkt_len,
     send_reply(p, -ULS_ERR_PROTOCOL);
     return;
   }
-  if (data->flags_cmd < 0 || data->flags_cmd > 3) {
+  if (data->flags_cmd < 0 || data->flags_cmd > 4) {
     err("%s -> invalid flags command", logbuf);
     send_reply(p, -ULS_ERR_PROTOCOL);
     return;
