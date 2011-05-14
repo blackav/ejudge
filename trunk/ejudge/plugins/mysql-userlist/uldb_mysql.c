@@ -2940,6 +2940,18 @@ set_reg_flags_func(
       sep = ", ";
     }
     break;
+  case 4:                       /* copy */
+    fprintf(cmd_f, "%sinvisible = %d", sep, !!(value & USERLIST_UC_INVISIBLE));
+    sep = ", ";
+    fprintf(cmd_f, "%sbanned = %d", sep, !!(value & USERLIST_UC_BANNED));
+    sep = ", ";
+    fprintf(cmd_f, "%slocked = %d", sep, !!(value & USERLIST_UC_LOCKED));
+    sep = ", ";
+    fprintf(cmd_f, "%sincomplete = %d", sep, !!(value & USERLIST_UC_INCOMPLETE));
+    sep = ", ";
+    fprintf(cmd_f, "%sdisqualified = %d", sep, !!(value & USERLIST_UC_DISQUALIFIED));
+    sep = ", ";
+    break;
   default:
     abort();
   }
