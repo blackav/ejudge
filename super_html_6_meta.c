@@ -1,4 +1,5 @@
 // This is an auto-generated file, do not edit
+// Generated 2011/05/18 09:23:24
 
 #include "super_html_6_meta.h"
 #include "super_html_6.h"
@@ -333,5 +334,69 @@ const struct meta_methods meta_ss_op_param_USER_CREATE_REG_ACTION_methods =
   (const void *(*)(const void *ptr, int tag))meta_ss_op_param_USER_CREATE_REG_ACTION_get_ptr,
   (void *(*)(void *ptr, int tag))meta_ss_op_param_USER_CREATE_REG_ACTION_get_ptr_nc,
   meta_ss_op_param_USER_CREATE_REG_ACTION_lookup_field,
+};
+
+static struct meta_info_item meta_info_ss_op_param_USER_EDIT_REG_ACTION_data[] =
+{
+  [META_SS_OP_PARAM_USER_EDIT_REG_ACTION_other_user_id] = { META_SS_OP_PARAM_USER_EDIT_REG_ACTION_other_user_id, '0', XSIZE(struct ss_op_param_USER_EDIT_REG_ACTION, other_user_id), "other_user_id", XOFFSET(struct ss_op_param_USER_EDIT_REG_ACTION, other_user_id) },
+  [META_SS_OP_PARAM_USER_EDIT_REG_ACTION_other_contest_id] = { META_SS_OP_PARAM_USER_EDIT_REG_ACTION_other_contest_id, '0', XSIZE(struct ss_op_param_USER_EDIT_REG_ACTION, other_contest_id), "other_contest_id", XOFFSET(struct ss_op_param_USER_EDIT_REG_ACTION, other_contest_id) },
+  [META_SS_OP_PARAM_USER_EDIT_REG_ACTION_contest_id] = { META_SS_OP_PARAM_USER_EDIT_REG_ACTION_contest_id, '0', XSIZE(struct ss_op_param_USER_EDIT_REG_ACTION, contest_id), "contest_id", XOFFSET(struct ss_op_param_USER_EDIT_REG_ACTION, contest_id) },
+  [META_SS_OP_PARAM_USER_EDIT_REG_ACTION_group_id] = { META_SS_OP_PARAM_USER_EDIT_REG_ACTION_group_id, '0', XSIZE(struct ss_op_param_USER_EDIT_REG_ACTION, group_id), "group_id", XOFFSET(struct ss_op_param_USER_EDIT_REG_ACTION, group_id) },
+  [META_SS_OP_PARAM_USER_EDIT_REG_ACTION_status] = { META_SS_OP_PARAM_USER_EDIT_REG_ACTION_status, '4', XSIZE(struct ss_op_param_USER_EDIT_REG_ACTION, status), "status", XOFFSET(struct ss_op_param_USER_EDIT_REG_ACTION, status) },
+  [META_SS_OP_PARAM_USER_EDIT_REG_ACTION_is_invisible] = { META_SS_OP_PARAM_USER_EDIT_REG_ACTION_is_invisible, '3', XSIZE(struct ss_op_param_USER_EDIT_REG_ACTION, is_invisible), "is_invisible", XOFFSET(struct ss_op_param_USER_EDIT_REG_ACTION, is_invisible) },
+  [META_SS_OP_PARAM_USER_EDIT_REG_ACTION_is_banned] = { META_SS_OP_PARAM_USER_EDIT_REG_ACTION_is_banned, '3', XSIZE(struct ss_op_param_USER_EDIT_REG_ACTION, is_banned), "is_banned", XOFFSET(struct ss_op_param_USER_EDIT_REG_ACTION, is_banned) },
+  [META_SS_OP_PARAM_USER_EDIT_REG_ACTION_is_locked] = { META_SS_OP_PARAM_USER_EDIT_REG_ACTION_is_locked, '3', XSIZE(struct ss_op_param_USER_EDIT_REG_ACTION, is_locked), "is_locked", XOFFSET(struct ss_op_param_USER_EDIT_REG_ACTION, is_locked) },
+  [META_SS_OP_PARAM_USER_EDIT_REG_ACTION_is_incomplete] = { META_SS_OP_PARAM_USER_EDIT_REG_ACTION_is_incomplete, '3', XSIZE(struct ss_op_param_USER_EDIT_REG_ACTION, is_incomplete), "is_incomplete", XOFFSET(struct ss_op_param_USER_EDIT_REG_ACTION, is_incomplete) },
+  [META_SS_OP_PARAM_USER_EDIT_REG_ACTION_is_disqualified] = { META_SS_OP_PARAM_USER_EDIT_REG_ACTION_is_disqualified, '3', XSIZE(struct ss_op_param_USER_EDIT_REG_ACTION, is_disqualified), "is_disqualified", XOFFSET(struct ss_op_param_USER_EDIT_REG_ACTION, is_disqualified) },
+};
+
+int meta_ss_op_param_USER_EDIT_REG_ACTION_get_type(int tag)
+{
+  ASSERT(tag > 0 && tag < META_SS_OP_PARAM_USER_EDIT_REG_ACTION_LAST_FIELD);
+  return meta_info_ss_op_param_USER_EDIT_REG_ACTION_data[tag].type;
+}
+
+size_t meta_ss_op_param_USER_EDIT_REG_ACTION_get_size(int tag)
+{
+  ASSERT(tag > 0 && tag < META_SS_OP_PARAM_USER_EDIT_REG_ACTION_LAST_FIELD);
+  return meta_info_ss_op_param_USER_EDIT_REG_ACTION_data[tag].size;
+}
+
+const char *meta_ss_op_param_USER_EDIT_REG_ACTION_get_name(int tag)
+{
+  ASSERT(tag > 0 && tag < META_SS_OP_PARAM_USER_EDIT_REG_ACTION_LAST_FIELD);
+  return meta_info_ss_op_param_USER_EDIT_REG_ACTION_data[tag].name;
+}
+
+const void *meta_ss_op_param_USER_EDIT_REG_ACTION_get_ptr(const struct ss_op_param_USER_EDIT_REG_ACTION *ptr, int tag)
+{
+  ASSERT(tag > 0 && tag < META_SS_OP_PARAM_USER_EDIT_REG_ACTION_LAST_FIELD);
+  return XPDEREF(void, ptr, meta_info_ss_op_param_USER_EDIT_REG_ACTION_data[tag].offset);
+}
+
+void *meta_ss_op_param_USER_EDIT_REG_ACTION_get_ptr_nc(struct ss_op_param_USER_EDIT_REG_ACTION *ptr, int tag)
+{
+  ASSERT(tag > 0 && tag < META_SS_OP_PARAM_USER_EDIT_REG_ACTION_LAST_FIELD);
+  return XPDEREF(void, ptr, meta_info_ss_op_param_USER_EDIT_REG_ACTION_data[tag].offset);
+}
+
+int meta_ss_op_param_USER_EDIT_REG_ACTION_lookup_field(const char *name)
+{
+  static struct meta_automaton *atm = 0;
+  ASSERT(name);
+  if (!atm) atm = meta_build_automaton(meta_info_ss_op_param_USER_EDIT_REG_ACTION_data, META_SS_OP_PARAM_USER_EDIT_REG_ACTION_LAST_FIELD);
+  return meta_lookup_string(atm, name);
+}
+
+const struct meta_methods meta_ss_op_param_USER_EDIT_REG_ACTION_methods =
+{
+  META_SS_OP_PARAM_USER_EDIT_REG_ACTION_LAST_FIELD,
+  sizeof(struct ss_op_param_USER_EDIT_REG_ACTION),
+  meta_ss_op_param_USER_EDIT_REG_ACTION_get_type,
+  meta_ss_op_param_USER_EDIT_REG_ACTION_get_size,
+  meta_ss_op_param_USER_EDIT_REG_ACTION_get_name,
+  (const void *(*)(const void *ptr, int tag))meta_ss_op_param_USER_EDIT_REG_ACTION_get_ptr,
+  (void *(*)(void *ptr, int tag))meta_ss_op_param_USER_EDIT_REG_ACTION_get_ptr_nc,
+  meta_ss_op_param_USER_EDIT_REG_ACTION_lookup_field,
 };
 

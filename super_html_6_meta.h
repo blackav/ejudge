@@ -1,4 +1,5 @@
 // This is an auto-generated file, do not edit
+// Generated 2011/05/18 09:23:24
 
 #ifndef __SUPER_HTML_6_META_H__
 #define __SUPER_HTML_6_META_H__
@@ -188,5 +189,34 @@ int meta_ss_op_param_USER_CREATE_REG_ACTION_lookup_field(const char *name);
 
 struct meta_methods;
 extern const struct meta_methods meta_ss_op_param_USER_CREATE_REG_ACTION_methods;
+
+
+enum
+{
+  META_SS_OP_PARAM_USER_EDIT_REG_ACTION_other_user_id = 1,
+  META_SS_OP_PARAM_USER_EDIT_REG_ACTION_other_contest_id,
+  META_SS_OP_PARAM_USER_EDIT_REG_ACTION_contest_id,
+  META_SS_OP_PARAM_USER_EDIT_REG_ACTION_group_id,
+  META_SS_OP_PARAM_USER_EDIT_REG_ACTION_status,
+  META_SS_OP_PARAM_USER_EDIT_REG_ACTION_is_invisible,
+  META_SS_OP_PARAM_USER_EDIT_REG_ACTION_is_banned,
+  META_SS_OP_PARAM_USER_EDIT_REG_ACTION_is_locked,
+  META_SS_OP_PARAM_USER_EDIT_REG_ACTION_is_incomplete,
+  META_SS_OP_PARAM_USER_EDIT_REG_ACTION_is_disqualified,
+
+  META_SS_OP_PARAM_USER_EDIT_REG_ACTION_LAST_FIELD,
+};
+
+struct ss_op_param_USER_EDIT_REG_ACTION;
+
+int meta_ss_op_param_USER_EDIT_REG_ACTION_get_type(int tag);
+size_t meta_ss_op_param_USER_EDIT_REG_ACTION_get_size(int tag);
+const char *meta_ss_op_param_USER_EDIT_REG_ACTION_get_name(int tag);
+const void *meta_ss_op_param_USER_EDIT_REG_ACTION_get_ptr(const struct ss_op_param_USER_EDIT_REG_ACTION *ptr, int tag);
+void *meta_ss_op_param_USER_EDIT_REG_ACTION_get_ptr_nc(struct ss_op_param_USER_EDIT_REG_ACTION *ptr, int tag);
+int meta_ss_op_param_USER_EDIT_REG_ACTION_lookup_field(const char *name);
+
+struct meta_methods;
+extern const struct meta_methods meta_ss_op_param_USER_EDIT_REG_ACTION_methods;
 
 #endif
