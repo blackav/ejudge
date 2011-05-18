@@ -2292,6 +2292,14 @@ super_serve_op_USER_EDIT_REG_PAGE(
     FAIL(S_ERR_INV_CONTEST);
   }
 
+  opcap_t gcaps = 0, caps = 0;
+  get_global_caps(phr, &gcaps);
+  get_contest_caps(phr, cnts, &caps);
+  caps |= gcaps;
+  if (phr->priv_level <= 0) FAIL(S_ERR_PERM_DENIED);
+  if (opcaps_check(caps, OPCAP_EDIT_REG) < 0 && opcaps_check(caps, OPCAP_PRIV_EDIT_REG) < 0)
+    FAIL(S_ERR_PERM_DENIED);
+
   snprintf(buf, sizeof(buf), "serve-control: %s, edit the contest registration for user %d, contest %d",
            phr->html_name, other_user_id, other_contest_id);
   ss_write_html_header(out_f, phr, buf, 0, NULL);
@@ -2307,6 +2315,14 @@ super_serve_op_USER_EDIT_REG_PAGE(
 
   if (!(u = get_user_info(phr, other_user_id, 0)))
     FAIL(S_ERR_DB_ERROR);
+
+  if (is_globally_privileged(phr, u)) {
+    if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_REG) < 0) FAIL(S_ERR_PERM_DENIED);
+  } else if (is_contest_privileged(cnts, u)) {
+    if (opcaps_check(caps, OPCAP_PRIV_EDIT_REG) < 0) FAIL(S_ERR_PERM_DENIED);
+  } else {
+    if (opcaps_check(caps, OPCAP_EDIT_REG) < 0) FAIL(S_ERR_PERM_DENIED);
+  }
 
   if ((reg_count = userlist_user_count_contests(u)) <= 0) {
     fprintf(out_f, "<hr/><h2>Error</h2>\n");
@@ -2347,7 +2363,7 @@ super_serve_op_USER_EDIT_REG_PAGE(
   r = reg->status;
   if (r < 0 || r >= USERLIST_REG_LAST) r = USERLIST_REG_PENDING;
   fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>", cl, "Status", cl);
-  ss_select(out_f, hbuf, (const unsigned char* []) { "OK", "Pending", "Rejected", NULL }, r);
+  ss_select(out_f, "status", (const unsigned char* []) { "OK", "Pending", "Rejected", NULL }, r);
   fprintf(out_f, "</td></tr>\n");
   s = "";
   if ((reg->flags & USERLIST_UC_INVISIBLE)) s = checked;
@@ -2441,6 +2457,14 @@ super_serve_op_USER_DELETE_REG_PAGE(
     FAIL(S_ERR_INV_CONTEST);
   }
 
+  if (phr->priv_level <= 0) FAIL(S_ERR_PERM_DENIED);
+  opcap_t gcaps = 0, caps = 0;
+  get_global_caps(phr, &gcaps);
+  get_contest_caps(phr, cnts, &caps);
+  caps |= gcaps;
+  if (opcaps_check(caps, OPCAP_PRIV_DELETE_REG) < 0 && opcaps_check(caps, OPCAP_DELETE_REG) < 0)
+    FAIL(S_ERR_PERM_DENIED);
+
   snprintf(buf, sizeof(buf), "serve-control: %s, delete the contest registration for user %d, contest %d",
            phr->html_name, other_user_id, other_contest_id);
   ss_write_html_header(out_f, phr, buf, 0, NULL);
@@ -2449,6 +2473,14 @@ super_serve_op_USER_DELETE_REG_PAGE(
   print_top_navigation_links(log_f, out_f, phr, contest_id, group_id, other_user_id);
 
   if (!(u = get_user_info(phr, other_user_id, 0))) FAIL(S_ERR_DB_ERROR);
+
+  if (is_globally_privileged(phr, u)) {
+    if (opcaps_check(gcaps, OPCAP_PRIV_DELETE_REG) < 0) FAIL(S_ERR_PERM_DENIED);
+  } else if (is_contest_privileged(cnts, u)) {
+    if (opcaps_check(caps, OPCAP_PRIV_DELETE_REG) < 0) FAIL(S_ERR_PERM_DENIED);
+  } else {
+    if (opcaps_check(caps, OPCAP_DELETE_REG) < 0) FAIL(S_ERR_PERM_DENIED);
+  }
 
   if ((reg_count = userlist_user_count_contests(u)) <= 0) {
     fprintf(out_f, "<hr/><h2>Error</h2>\n");
@@ -5155,6 +5187,125 @@ super_serve_op_USER_CREATE_REG_ACTION(
 
 cleanup:
   meta_destroy_fields(&meta_ss_op_param_USER_CREATE_REG_ACTION_methods, &params);
+  userlist_free(&u->b); u = 0;
+  return retval;
+}
+
+int
+super_serve_op_USER_EDIT_REG_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  struct userlist_user *u = 0;
+
+  struct ss_op_param_USER_EDIT_REG_ACTION params;
+  memset(&params, 0, sizeof(params));
+  retval = ss_parse_params(phr, &meta_ss_op_param_USER_EDIT_REG_ACTION_methods, &params);
+  if (retval < 0) goto cleanup;
+
+  const struct contest_desc *cnts = 0;
+  if (params.contest_id > 0) {
+    if (contests_get(params.contest_id, &cnts) < 0 || !cnts)
+      params.contest_id = 0;
+  } else {
+    params.contest_id = 0;
+  }
+  cnts = 0;
+  if (params.other_contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
+  if (contests_get(params.other_contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+
+  if (params.group_id < 0) params.group_id = 0;
+
+  if (phr->priv_level <= 0) FAIL(S_ERR_PERM_DENIED);
+  opcap_t gcaps = 0, caps = 0;
+  get_global_caps(phr, &gcaps);
+  get_contest_caps(phr, cnts, &caps);
+  caps |= gcaps;
+  if (opcaps_check(caps, OPCAP_CREATE_REG) < 0 && opcaps_check(caps, OPCAP_PRIV_CREATE_REG) < 0)
+    FAIL(S_ERR_PERM_DENIED);
+
+  if (!(u = get_user_info(phr, params.other_user_id, cnts->id))) FAIL(S_ERR_DB_ERROR);
+  if (is_globally_privileged(phr, u)) {
+    if (opcaps_check(gcaps, OPCAP_PRIV_CREATE_REG) < 0) FAIL(S_ERR_PERM_DENIED);
+  } else if (is_contest_privileged(cnts, u)) {
+    if (opcaps_check(caps, OPCAP_PRIV_CREATE_REG) < 0) FAIL(S_ERR_PERM_DENIED);
+  } else {
+    if (opcaps_check(caps, OPCAP_CREATE_REG) < 0) FAIL(S_ERR_PERM_DENIED);
+  }
+
+  if (params.status < 0 || params.status >= USERLIST_REG_LAST) params.status = USERLIST_REG_PENDING;
+
+  int flags = 0;
+  if (params.is_invisible) flags |= USERLIST_UC_INVISIBLE;
+  if (params.is_banned) flags |= USERLIST_UC_BANNED;
+  if (params.is_locked) flags |= USERLIST_UC_LOCKED;
+  if (params.is_incomplete) flags |= USERLIST_UC_INCOMPLETE;
+  if (params.is_disqualified) flags |= USERLIST_UC_DISQUALIFIED;
+
+  if (userlist_clnt_change_registration(phr->userlist_clnt, params.other_user_id,
+                                        cnts->id, params.status, 4, flags) < 0)
+    FAIL(S_ERR_DB_ERROR);
+
+  ss_redirect_2(out_f, phr, SSERV_OP_USER_DETAIL_PAGE, params.contest_id, params.group_id, params.other_user_id);
+
+cleanup:
+  meta_destroy_fields(&meta_ss_op_param_USER_EDIT_REG_ACTION_methods, &params);
+  userlist_free(&u->b); u = 0;
+  return retval;
+}
+
+int
+super_serve_op_USER_DELETE_REG_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  struct userlist_user *u = 0;
+  int contest_id = 0, group_id = 0, other_user_id = 0, other_contest_id = 0;
+  const struct contest_desc *cnts = 0;
+
+  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  ss_cgi_param_int_opt(phr, "group_id", &group_id, 0);
+  ss_cgi_param_int_opt(phr, "other_user_id", &other_user_id, 0);
+  ss_cgi_param_int_opt(phr, "other_contest_id", &other_contest_id, 0);
+
+  if (contest_id < 0) contest_id = 0;
+  if (contest_id > 0) {
+    if (contests_get(contest_id, &cnts) < 0 || !cnts)
+      contest_id = 0;
+  }
+  if (group_id < 0) group_id = 0;
+
+  cnts = 0;
+  if (other_contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
+  if (contests_get(other_contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+
+  if (phr->priv_level <= 0) FAIL(S_ERR_PERM_DENIED);
+  opcap_t gcaps = 0, caps = 0;
+  get_global_caps(phr, &gcaps);
+  get_contest_caps(phr, cnts, &caps);
+  caps |= gcaps;
+  if (opcaps_check(caps, OPCAP_PRIV_DELETE_REG) < 0 && opcaps_check(caps, OPCAP_DELETE_REG) < 0)
+    FAIL(S_ERR_PERM_DENIED);
+
+  if (!(u = get_user_info(phr, other_user_id, cnts->id))) FAIL(S_ERR_DB_ERROR);
+  if (is_globally_privileged(phr, u)) {
+    if (opcaps_check(gcaps, OPCAP_PRIV_DELETE_REG) < 0) FAIL(S_ERR_PERM_DENIED);
+  } else if (is_contest_privileged(cnts, u)) {
+    if (opcaps_check(caps, OPCAP_PRIV_DELETE_REG) < 0) FAIL(S_ERR_PERM_DENIED);
+  } else {
+    if (opcaps_check(caps, OPCAP_DELETE_REG) < 0) FAIL(S_ERR_PERM_DENIED);
+  }
+
+  if (userlist_clnt_change_registration(phr->userlist_clnt, u->id, cnts->id, -2, 0, 0) < 0)
+    FAIL(S_ERR_DB_ERROR);
+
+  ss_redirect_2(out_f, phr, SSERV_OP_USER_DETAIL_PAGE, contest_id, group_id, other_user_id);
+
+cleanup:
   userlist_free(&u->b); u = 0;
   return retval;
 }
