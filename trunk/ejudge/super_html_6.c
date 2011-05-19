@@ -5310,6 +5310,155 @@ cleanup:
   return retval;
 }
 
+static const unsigned char clearable_fields[] =
+{
+  [USERLIST_NN_IS_PRIVILEGED] = 1,
+  [USERLIST_NN_IS_INVISIBLE] = 1,
+  [USERLIST_NN_IS_BANNED] = 1,
+  [USERLIST_NN_IS_LOCKED] = 1,
+  [USERLIST_NN_SHOW_LOGIN] = 1,
+  [USERLIST_NN_SHOW_EMAIL] = 1,
+  [USERLIST_NN_READ_ONLY] = 1,
+  [USERLIST_NN_NEVER_CLEAN] = 1,
+  [USERLIST_NN_SIMPLE_REGISTRATION] = 1,
+  [USERLIST_NN_EMAIL] = 1,
+
+  [USERLIST_NC_CNTS_READ_ONLY] = 1,
+  [USERLIST_NC_NAME] = 1,
+  [USERLIST_NC_INST] = 1,
+  [USERLIST_NC_INST_EN] = 1,
+  [USERLIST_NC_INSTSHORT] = 1,
+  [USERLIST_NC_INSTSHORT_EN] = 1,
+  [USERLIST_NC_INSTNUM] = 1,
+  [USERLIST_NC_FAC] = 1,
+  [USERLIST_NC_FAC_EN] = 1,
+  [USERLIST_NC_FACSHORT] = 1,
+  [USERLIST_NC_FACSHORT_EN] = 1,
+  [USERLIST_NC_HOMEPAGE] = 1,
+  [USERLIST_NC_CITY] = 1,
+  [USERLIST_NC_CITY_EN] = 1,
+  [USERLIST_NC_COUNTRY] = 1,
+  [USERLIST_NC_COUNTRY_EN] = 1,
+  [USERLIST_NC_REGION] = 1,
+  [USERLIST_NC_AREA] = 1,
+  [USERLIST_NC_ZIP] = 1,
+  [USERLIST_NC_STREET] = 1,
+  [USERLIST_NC_LOCATION] = 1,
+  [USERLIST_NC_SPELLING] = 1,
+  [USERLIST_NC_PRINTER_NAME] = 1,
+  [USERLIST_NC_EXAM_ID] = 1,
+  [USERLIST_NC_EXAM_CYPHER] = 1,
+  [USERLIST_NC_LANGUAGES] = 1,
+  [USERLIST_NC_PHONE] = 1,
+  [USERLIST_NC_FIELD0] = 1,
+  [USERLIST_NC_FIELD1] = 1,
+  [USERLIST_NC_FIELD2] = 1,
+  [USERLIST_NC_FIELD3] = 1,
+  [USERLIST_NC_FIELD4] = 1,
+  [USERLIST_NC_FIELD5] = 1,
+  [USERLIST_NC_FIELD6] = 1,
+  [USERLIST_NC_FIELD7] = 1,
+  [USERLIST_NC_FIELD8] = 1,
+  [USERLIST_NC_FIELD9] = 1,
+
+  [USERLIST_NM_STATUS] = 1,
+  [USERLIST_NM_GENDER] = 1,
+  [USERLIST_NM_GRADE] = 1,
+  [USERLIST_NM_FIRSTNAME] = 1,
+  [USERLIST_NM_FIRSTNAME_EN] = 1,
+  [USERLIST_NM_MIDDLENAME] = 1,
+  [USERLIST_NM_MIDDLENAME_EN] = 1,
+  [USERLIST_NM_SURNAME] = 1,
+  [USERLIST_NM_SURNAME_EN] = 1,
+  [USERLIST_NM_GROUP] = 1,
+  [USERLIST_NM_GROUP_EN] = 1,
+  [USERLIST_NM_EMAIL] = 1,
+  [USERLIST_NM_HOMEPAGE] = 1,
+  [USERLIST_NM_OCCUPATION] = 1,
+  [USERLIST_NM_OCCUPATION_EN] = 1,
+  [USERLIST_NM_DISCIPLINE] = 1,
+  [USERLIST_NM_INST] = 1,
+  [USERLIST_NM_INST_EN] = 1,
+  [USERLIST_NM_INSTSHORT] = 1,
+  [USERLIST_NM_INSTSHORT_EN] = 1,
+  [USERLIST_NM_FAC] = 1,
+  [USERLIST_NM_FAC_EN] = 1,
+  [USERLIST_NM_FACSHORT] = 1,
+  [USERLIST_NM_FACSHORT_EN] = 1,
+  [USERLIST_NM_PHONE] = 1,
+  [USERLIST_NM_BIRTH_DATE] = 1,
+  [USERLIST_NM_ENTRY_DATE] = 1,
+  [USERLIST_NM_GRADUATION_DATE] = 1,
+};
+
+int
+super_serve_op_USER_CLEAR_FIELD_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  int contest_id = 0, group_id = 0, other_user_id = 0, field_id = 0, member_id = 0;
+  const struct contest_desc *cnts = 0;
+  struct userlist_user *u = 0;
+  const struct userlist_member *m = 0;
+
+  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  ss_cgi_param_int_opt(phr, "group_id", &group_id, 0);
+  ss_cgi_param_int_opt(phr, "other_user_id", &other_user_id, 0);
+  ss_cgi_param_int_opt(phr, "field_id", &field_id, 0);
+  ss_cgi_param_int_opt(phr, "member_id", &member_id, 0);
+
+  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+  if (group_id < 0) group_id = 0;
+
+  if (phr->priv_level <= 0) FAIL(S_ERR_PERM_DENIED);
+  opcap_t gcaps = 0, caps = 0;
+  get_global_caps(phr, &gcaps);
+  get_contest_caps(phr, cnts, &caps);
+  caps |= gcaps;
+  if (opcaps_check(caps, OPCAP_PRIV_DELETE_REG) < 0 && opcaps_check(caps, OPCAP_DELETE_REG) < 0)
+    FAIL(S_ERR_PERM_DENIED);
+
+  if (!(u = get_user_info(phr, other_user_id, cnts->id))) FAIL(S_ERR_DB_ERROR);
+  if (is_globally_privileged(phr, u)) {
+    if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_USER) < 0) FAIL(S_ERR_PERM_DENIED);
+  } else if (is_contest_privileged(cnts, u)) {
+    if (opcaps_check(caps, OPCAP_PRIV_EDIT_USER) < 0) FAIL(S_ERR_PERM_DENIED);
+  } else {
+    if (opcaps_check(caps, OPCAP_EDIT_USER) < 0) FAIL(S_ERR_PERM_DENIED);
+  }
+
+  if (field_id < USERLIST_NN_FIRST || field_id >= USERLIST_NM_LAST)
+    FAIL(S_ERR_INV_VALUE);
+  if (!clearable_fields[field_id])
+    FAIL(S_ERR_INV_VALUE);
+
+  if (field_id >= USERLIST_NM_FIRST && field_id < USERLIST_NM_LAST) {
+    if (u->cnts0 && u->cnts0->members) {
+      m = userlist_get_member_nc(u->cnts0->members, field_id, NULL, NULL);
+    }
+    if (!m) {
+      member_id = 0;
+    }
+  } else {
+    member_id = 0;
+  }
+
+  if (userlist_clnt_delete_field(phr->userlist_clnt, ULS_DELETE_FIELD,
+                                 other_user_id, contest_id, member_id,
+                                 field_id) < 0) {
+    FAIL(S_ERR_DB_ERROR);
+  }
+
+  ss_redirect_2(out_f, phr, SSERV_OP_USER_DETAIL_PAGE, contest_id, group_id, other_user_id);
+
+cleanup:
+  userlist_free(&u->b); u = 0;
+  return retval;
+}
+
 int
 super_serve_op_browse_groups(
         FILE *log_f,
