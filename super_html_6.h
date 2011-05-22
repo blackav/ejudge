@@ -151,6 +151,7 @@ struct ss_op_param_USER_EDIT_REG_ACTION
   ej_int_opt_0_t   other_contest_id;
   ej_int_opt_0_t   contest_id;
   ej_int_opt_0_t   group_id;
+  ej_int_opt_0_t   next_op;
   ej_int_opt_1_t   status;
   ej_checkbox_t    is_invisible;
   ej_checkbox_t    is_banned;
