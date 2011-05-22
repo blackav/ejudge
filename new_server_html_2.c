@@ -3461,7 +3461,7 @@ ns_write_priv_standings(
 
   if (state->global->score_system == SCORE_KIROV
       || state->global->score_system == SCORE_OLYMPIAD)
-    do_write_kirov_standings(state, cnts, f, 0, 1, 0, 0, 0, 0, 0 /*accepting_mode*/, 1, 0, 0, u, 0 /* user_mode */);
+    do_write_kirov_standings(state, cnts, f, 0, 1, 0, 0, 0, 0, 0, 0 /*accepting_mode*/, 1, 0, 0, u, 0 /* user_mode */);
   else if (state->global->score_system == SCORE_MOSCOW)
     do_write_moscow_standings(state, cnts, f, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0,
                               u);
