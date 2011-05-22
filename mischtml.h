@@ -29,6 +29,15 @@ unsigned char *html_hyperref(unsigned char *buf, size_t size,
                              const unsigned char *extra_args,
                              const char *format, ...)
   __attribute__((format(printf, 6, 7)));
+unsigned char *html_hyperref_attr(
+        unsigned char *buf,
+        size_t size,
+        ej_cookie_t session_id,
+        const unsigned char *self_url,
+        const unsigned char *extra_args,
+        const unsigned char *attrs,
+        const char *format, ...)
+  __attribute__((format(printf, 7, 8)));
 
 void html_start_form(FILE *f, int mode,
                      unsigned char const *self_url,

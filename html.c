@@ -4668,6 +4668,13 @@ done:
   return 0;
 }
 
+static const unsigned char *
+html_make_title(unsigned char *buf, size_t size, const unsigned char *title)
+{
+  snprintf(buf, size, " title=\"%s\"", title);
+  return buf;
+}
+
 int
 write_xml_team_testing_report(
         const serve_state_t state,
@@ -4676,7 +4683,11 @@ write_xml_team_testing_report(
         int output_only,
         int is_marked,
         const unsigned char *txt,
-        const unsigned char *table_class)
+        const unsigned char *table_class,
+        ej_cookie_t sid,
+        const unsigned char *self_url,
+        const unsigned char *extra_args,
+        const int *action_vec)
 {
   const struct section_global_data *global = state->global;
   testing_report_xml_t r = 0;
@@ -4685,9 +4696,11 @@ write_xml_team_testing_report(
   int need_comment = 0, need_info = 0, is_kirov = 0, i;
   unsigned char cl[128] = { 0 };
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
-  int visibility = 0, serial = 0, has_full = 0;
+  int visibility = 0, serial = 0, has_full = 0, need_links = 0;
   int status, score, max_score;
   int run_tests, tests_passed;
+  unsigned char hbuf[1024];
+  unsigned char tbuf[1024];
 
   if (table_class && *table_class) {
     snprintf(cl, sizeof(cl), " class=\"%s\"", table_class);
@@ -4802,6 +4815,7 @@ write_xml_team_testing_report(
     if (visibility == TV_FULL) {
       if (t->status == RUN_RUN_TIME_ERR) need_info = 1;
       has_full = 1;
+      if (r->archive_available) need_links = 1;
     }
   }
 
@@ -4818,6 +4832,9 @@ write_xml_team_testing_report(
   }
   if (need_comment) {
     fprintf(f, "<th%s>%s</th>", cl, _("Comment"));
+  }
+  if (need_links) {
+    fprintf(f, "<th%s>%s</th>", cl, _("Links"));
   }
 
   fprintf(f, "</tr>\n");
@@ -4902,6 +4919,52 @@ write_xml_team_testing_report(
         fprintf(f, "<td%s>%s</td>", cl, s);
         xfree(s);
       }
+    }
+    if (need_links) {
+      fprintf(f, "<td%s>", cl);
+      if (visibility == TV_FULL) {
+        fprintf(f, "&nbsp;%s[I]</a>",
+                html_hyperref_attr(hbuf, sizeof(hbuf), sid, self_url, extra_args,
+                                   html_make_title(tbuf, sizeof(tbuf), _("Test input data")),
+                                   "action=%d&run_id=%d&test_num=%d",
+                                   action_vec[0], r->run_id, t->num));
+        if (t->output_available) {
+          fprintf(f, "&nbsp;%s[O]</a>",
+                  html_hyperref_attr(hbuf, sizeof(hbuf), sid, self_url, extra_args,
+                                     html_make_title(tbuf, sizeof(tbuf), _("Program output")),
+                                     "action=%d&run_id=%d&test_num=%d",
+                                     action_vec[1], r->run_id, t->num));
+        }
+        if (r->correct_available) {
+          fprintf(f, "&nbsp;%s[A]</a>",
+                  html_hyperref_attr(hbuf, sizeof(hbuf), sid, self_url, extra_args,
+                                     html_make_title(tbuf, sizeof(tbuf), _("Correct answer")),
+                                     "action=%d&run_id=%d&test_num=%d",
+                                     action_vec[2], r->run_id, t->num));
+        }
+        if (t->stderr_available) {
+          fprintf(f, "&nbsp;%s[E]</a>",
+                  html_hyperref_attr(hbuf, sizeof(hbuf), sid, self_url, extra_args,
+                                     html_make_title(tbuf, sizeof(tbuf), _("Program stderr output")),
+                                     "action=%d&run_id=%d&test_num=%d",
+                                     action_vec[3], r->run_id, t->num));
+        }
+        if (t->checker_output_available) {
+          fprintf(f, "&nbsp;%s[C]</a>",
+                  html_hyperref_attr(hbuf, sizeof(hbuf), sid, self_url, extra_args,
+                                     html_make_title(tbuf, sizeof(tbuf), _("Checker output")),
+                                     "action=%d&run_id=%d&test_num=%d",
+                                     action_vec[4], r->run_id, t->num));
+        }
+        if (r->info_available) {
+          fprintf(f, "&nbsp;%s[F]</a>",
+                  html_hyperref_attr(hbuf, sizeof(hbuf), sid, self_url, extra_args,
+                                     html_make_title(tbuf, sizeof(tbuf), _("Test information")),
+                                     "action=%d&run_id=%d&test_num=%d",
+                                     action_vec[5], r->run_id, t->num));
+        }
+      }
+      fprintf(f, "</td>");
     }
     fprintf(f, "</tr>\n");
   }

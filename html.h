@@ -190,7 +190,11 @@ write_xml_team_testing_report(
         int output_only,
         int is_marked,
         const unsigned char *txt,
-        const unsigned char *table_class);
+        const unsigned char *table_class,
+        ej_cookie_t sid,
+        const unsigned char *self_url,
+        const unsigned char *extra_args,
+        const int *action_vec);
 
 int
 write_xml_team_tests_report(
