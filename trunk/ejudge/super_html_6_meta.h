@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2011/05/18 09:23:24
+// Generated 2011/05/22 11:43:29
 
 #ifndef __SUPER_HTML_6_META_H__
 #define __SUPER_HTML_6_META_H__
@@ -197,6 +197,7 @@ enum
   META_SS_OP_PARAM_USER_EDIT_REG_ACTION_other_contest_id,
   META_SS_OP_PARAM_USER_EDIT_REG_ACTION_contest_id,
   META_SS_OP_PARAM_USER_EDIT_REG_ACTION_group_id,
+  META_SS_OP_PARAM_USER_EDIT_REG_ACTION_next_op,
   META_SS_OP_PARAM_USER_EDIT_REG_ACTION_status,
   META_SS_OP_PARAM_USER_EDIT_REG_ACTION_is_invisible,
   META_SS_OP_PARAM_USER_EDIT_REG_ACTION_is_banned,
