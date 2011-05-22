@@ -10932,14 +10932,14 @@ unpriv_view_test(FILE *fout,
                  struct contest_extra *extra)
 {
   const serve_state_t cs = extra->serve_state;
-  const struct section_global_data *global = cs->global;
+  const struct section_problem_data *prob = 0;
   int run_id, test_num, n;
   const unsigned char *s = 0;
   struct run_entry re;
   FILE *log_f = 0;
   char *log_txt = 0;
   size_t log_len = 0;
-  int enable_rep_view;
+  int enable_rep_view = -1;
 
   // run_id, test_num
   if (unpriv_parse_run_id(fout, phr, cnts, extra, &run_id, &re) < 0)
@@ -10949,8 +10949,29 @@ unpriv_view_test(FILE *fout,
     ns_html_err_inv_param(fout, phr, 0, "cannot parse test_num");
     goto cleanup;
   }
+  if (re.prob_id <= 0 || re.prob_id > cs->max_prob || !(prob = cs->probs[re.prob_id])) {
+    ns_html_err_inv_param(fout, phr, 0, "invalid problem");
+    goto cleanup;
+  }
 
-  enable_rep_view = (cs->online_view_report > 0 || (!cs->online_view_report && global->team_enable_rep_view > 0));
+  // report view is explicitly disabled by the current contest setting
+  if (cs->online_view_report < 0) enable_rep_view = 0;
+  // report view is explicitly enabled by the current contest setting
+  //if (cs->online_view_report > 0) enable_rep_view = 1;
+  // report view is disabled by the problem configuration
+  if (enable_rep_view < 0 && prob->team_enable_rep_view <= 0) enable_rep_view = 0;
+  // report view is enabled by the problem configuration
+  if (enable_rep_view < 0 && prob->team_show_judge_report > 0) enable_rep_view = 1;
+  if (enable_rep_view < 0) {
+    int visibility = cntsprob_get_test_visibility(prob, test_num, cs->online_final_visibility);
+    if (visibility == TV_FULLIFMARKED) {
+      visibility = TV_HIDDEN;
+      if (re.is_marked) visibility = TV_FULL;
+    }
+    if (visibility == TV_FULL) enable_rep_view = 1;
+  }
+
+  if (enable_rep_view < 0) enable_rep_view = 0;
 
   log_f = open_memstream(&log_txt, &log_len);
 
@@ -10959,10 +10980,6 @@ unpriv_view_test(FILE *fout,
     goto done;
   }
   if (enable_rep_view <= 0) {
-    ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
-    goto done;
-  }
-  if (global->team_show_judge_report <= 0) {
     ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
     goto done;
   }
@@ -11186,7 +11203,7 @@ unpriv_view_report(FILE *fout,
         write_xml_team_testing_report(cs, prob, fout,
                                       prob->type != PROB_TYPE_STANDARD,
                                       re.is_marked,
-                                      rep_start, "b1");
+                                      rep_start, "b1", phr->session_id, phr->self_url, "", new_actions_vector);
       }
     }
     break;

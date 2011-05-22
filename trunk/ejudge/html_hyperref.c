@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -51,9 +51,44 @@ html_hyperref(unsigned char *buf, size_t size,
   return buf;
 }
 
+unsigned char *
+html_hyperref_attr(
+        unsigned char *buf,
+        size_t size,
+        ej_cookie_t session_id,
+        const unsigned char *self_url,
+        const unsigned char *extra_args,
+        const unsigned char *attrs,
+        const char *format,
+        ...)
+{
+  unsigned char b[1024] = { 0 };
+  va_list args;
+
+  if (!attrs) attrs = "";
+  if (format && *format) {
+    va_start(args, format);
+    vsnprintf(b, sizeof(b), format, args);
+    va_end(args);
+  }
+
+  if (extra_args && *extra_args && *b) {
+    snprintf(buf, size, "<a%s href=\"%s?SID=%016llx&%s&%s\">",
+             attrs, self_url, session_id, extra_args, b);
+  } else if (extra_args && *extra_args) {
+    snprintf(buf, size, "<a%s href=\"%s?SID=%016llx&%s\">",
+             attrs, self_url, session_id, extra_args);
+  } else if (*b) {
+    snprintf(buf, size, "<a%s href=\"%s?SID=%016llx&%s\">", attrs, self_url, session_id, b);
+  } else {
+    snprintf(buf, size, "<a%s href=\"%s?SID=%016llx\">", attrs, self_url, session_id);
+  }
+
+  return buf;
+}
+
 /*
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list" "fd_set" "DIR")
  * End:
  */
