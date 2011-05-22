@@ -1219,6 +1219,7 @@ do_write_kirov_standings(
         const unsigned char *stand_dir,
         int client_flag,
         int only_table_flag,
+        int user_id,
         const unsigned char *header_str,
         unsigned char const *footer_str,
         int raw_flag,
@@ -1509,8 +1510,18 @@ do_write_kirov_standings(
     prob = state->probs[pe->prob_id];
     if (!prob || tind < 0 || pind < 0 || prob->hidden) continue;
 
+    /*
+      if (client_flag != 1 || user_id) {
+        if (run_time < start_time) run_time = start_time;
+        if (current_dur > 0 && run_time - start_time > current_dur) continue;
+        if (global->stand_ignore_after > 0
+            && pe->time >= global->stand_ignore_after)
+          continue;
+      }
+     */
+
     // ignore future runs when not in privileged mode
-    if (!client_flag) {
+    if (!client_flag || user_id > 0) {
       run_time = pe->time;
       if (run_time < start_time) run_time = start_time;
       if (stop_time && run_time > stop_time) run_time = stop_time;
@@ -4308,7 +4319,7 @@ write_standings(
   }
   if (global->score_system == SCORE_KIROV
       || global->score_system == SCORE_OLYMPIAD)
-    do_write_kirov_standings(state, cnts, f, stat_dir, 0, 0, header_str,
+    do_write_kirov_standings(state, cnts, f, stat_dir, 0, 0, 0, header_str,
                              footer_str, 0, accepting_mode, force_fancy_style,
                              0, charset_id, NULL, user_mode);
   else if (global->score_system == SCORE_MOSCOW)
