@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-03-16 23:48+0300\n"
-"PO-Revision-Date: 2011-03-23 08:37+0300\n"
+"POT-Creation-Date: 2011-05-23 01:14+0400\n"
+"PO-Revision-Date: 2011-05-23 01:15+0400\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -961,6 +961,9 @@ msgstr "Продолжить"
 
 msgid "Coordinator"
 msgstr "Координатор"
+
+msgid "Correct answer"
+msgstr "Правильный ответ"
 
 msgid "Correct output"
 msgstr "Правильный ответ"
@@ -1920,6 +1923,9 @@ msgstr "Последняя успешная сдача"
 msgid "Link"
 msgstr "Ссылка"
 
+msgid "Links"
+msgstr "Ссылки"
+
 msgid "List of registered participants"
 msgstr "Список зарегистрировавшихся участников"
 
@@ -2606,6 +2612,9 @@ msgstr "Вывод программы"
 msgid "Program output to stderr"
 msgstr "Вывод программы на stderr"
 
+msgid "Program stderr output"
+msgstr "Вывод программы на поток ошибок"
+
 msgid "Programming language"
 msgstr "Язык программирования"
 
@@ -3277,7 +3286,13 @@ msgstr "Запрошенный файл не существует"
 msgid "Test file is not available"
 msgstr "Тест недоступен"
 
+msgid "Test information"
+msgstr "Информация о тесте"
+
 msgid "Test input"
+msgstr "Входные данные"
+
+msgid "Test input data"
 msgstr "Входные данные"
 
 msgid "Test number"
