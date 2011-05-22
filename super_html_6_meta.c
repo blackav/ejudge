@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2011/05/18 09:23:24
+// Generated 2011/05/22 11:43:29
 
 #include "super_html_6_meta.h"
 #include "super_html_6.h"
@@ -342,6 +342,7 @@ static struct meta_info_item meta_info_ss_op_param_USER_EDIT_REG_ACTION_data[] =
   [META_SS_OP_PARAM_USER_EDIT_REG_ACTION_other_contest_id] = { META_SS_OP_PARAM_USER_EDIT_REG_ACTION_other_contest_id, '0', XSIZE(struct ss_op_param_USER_EDIT_REG_ACTION, other_contest_id), "other_contest_id", XOFFSET(struct ss_op_param_USER_EDIT_REG_ACTION, other_contest_id) },
   [META_SS_OP_PARAM_USER_EDIT_REG_ACTION_contest_id] = { META_SS_OP_PARAM_USER_EDIT_REG_ACTION_contest_id, '0', XSIZE(struct ss_op_param_USER_EDIT_REG_ACTION, contest_id), "contest_id", XOFFSET(struct ss_op_param_USER_EDIT_REG_ACTION, contest_id) },
   [META_SS_OP_PARAM_USER_EDIT_REG_ACTION_group_id] = { META_SS_OP_PARAM_USER_EDIT_REG_ACTION_group_id, '0', XSIZE(struct ss_op_param_USER_EDIT_REG_ACTION, group_id), "group_id", XOFFSET(struct ss_op_param_USER_EDIT_REG_ACTION, group_id) },
+  [META_SS_OP_PARAM_USER_EDIT_REG_ACTION_next_op] = { META_SS_OP_PARAM_USER_EDIT_REG_ACTION_next_op, '0', XSIZE(struct ss_op_param_USER_EDIT_REG_ACTION, next_op), "next_op", XOFFSET(struct ss_op_param_USER_EDIT_REG_ACTION, next_op) },
   [META_SS_OP_PARAM_USER_EDIT_REG_ACTION_status] = { META_SS_OP_PARAM_USER_EDIT_REG_ACTION_status, '4', XSIZE(struct ss_op_param_USER_EDIT_REG_ACTION, status), "status", XOFFSET(struct ss_op_param_USER_EDIT_REG_ACTION, status) },
   [META_SS_OP_PARAM_USER_EDIT_REG_ACTION_is_invisible] = { META_SS_OP_PARAM_USER_EDIT_REG_ACTION_is_invisible, '3', XSIZE(struct ss_op_param_USER_EDIT_REG_ACTION, is_invisible), "is_invisible", XOFFSET(struct ss_op_param_USER_EDIT_REG_ACTION, is_invisible) },
   [META_SS_OP_PARAM_USER_EDIT_REG_ACTION_is_banned] = { META_SS_OP_PARAM_USER_EDIT_REG_ACTION_is_banned, '3', XSIZE(struct ss_op_param_USER_EDIT_REG_ACTION, is_banned), "is_banned", XOFFSET(struct ss_op_param_USER_EDIT_REG_ACTION, is_banned) },
