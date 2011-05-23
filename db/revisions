@@ -6381,3 +6381,12 @@ new_server_html.c 6343 0 39974563
 new_server_html_2.c 6343 0 16579788
 prepare.c 6345 0 18782046
 sformat.c 6345 0 1817744
+misctext.h 6347 0 695511
+super_html.h 6347 0 1595322
+ejudge-setup.c 6347 0 10299757
+job-server.c 6347 0 1360702
+misctext.c 6347 0 3421863
+new_server_html_5.c 6347 0 9251098
+super_html_2.c 6347 0 4968404
+super_html_4.c 6347 0 19828577
+super_html_6.c 6347 0 17614743
