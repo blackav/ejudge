@@ -3058,7 +3058,7 @@ set_defaults(
       }
     }
 
-    if (lang->style_checker_cmd[0] && lang->style_checker_cmd[0] != '@') {
+    if (lang->style_checker_cmd[0] && lang->style_checker_cmd[0] != '@' && lang->style_checker_cmd[0] != '%') {
       pathmake2(lang->style_checker_cmd, g->ejudge_checkers_dir,
                 "/", lang->style_checker_cmd, NULL);
     }
