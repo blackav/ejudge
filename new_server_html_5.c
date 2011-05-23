@@ -684,6 +684,8 @@ create_account(
   if (!r || !email) FAIL2(NEW_SRV_ERR_EMAIL_UNSPECIFIED);
   if (check_str(email, email_accept_chars) < 0)
     FAIL2(NEW_SRV_ERR_EMAIL_INV_CHARS);
+  if (!is_valid_email_address(email))
+    FAIL2(NEW_SRV_ERR_EMAIL_INV_CHARS);
 
   // if neither login nor email are specified, just change the locale
   if (!*login && !*email) {

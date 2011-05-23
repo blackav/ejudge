@@ -3978,6 +3978,8 @@ super_serve_op_USER_CREATE_ONE_ACTION(
     if (!params.cnts_password2 || !*params.cnts_password2) FAIL(S_ERR_UNSPEC_PASSWD2);
     if (strcmp(params.cnts_password1, params.cnts_password2) != 0) FAIL(S_ERR_PASSWDS_DIFFER);
   }
+  if (params.other_email && *params.other_email && !is_valid_email_address(params.other_email))
+    FAIL(S_ERR_INV_EMAIL);
 
   struct userlist_pk_create_user_2 up;
   memset(&up, 0, sizeof(up));
@@ -4415,7 +4417,10 @@ super_serve_op_USER_CREATE_FROM_CSV_ACTION(
     }
     if (email_idx >= 0) {
       txt = fix_string(csv_parsed->v[row].v[email_idx]);
-      if (params.send_email) {
+      if (txt && *txt && !is_valid_email_address(txt)) {
+        fprintf(log_f, "row %d: invalid email address\n", row + 1);
+        failed = 1;
+      } else if (params.send_email) {
         if (!txt || !*txt) {
           fprintf(log_f, "row %d: email is not specified\n", row + 1);
           failed = 1;
@@ -4571,6 +4576,8 @@ super_serve_op_USER_SAVE_ACTION(
   other_login_str = fix_string(s);
   if (ss_cgi_param(phr, "email", &s) <= 0) FAIL(S_ERR_INV_VALUE);
   email_str = fix_string(s);
+  if (email_str && *email_str && !is_valid_email_address(email_str))
+    FAIL(S_ERR_INV_EMAIL);
 
   static const int global_checkbox_ids[] =
   {

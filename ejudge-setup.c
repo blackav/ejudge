@@ -1097,9 +1097,12 @@ is_valid_id_var(int idx)
   case ID_LINE_RETURN:
   case ID_LINE_SETTINGS:
     return 1;
+  case ID_LINE_EMAIL:
+    if (!is_valid_email_address(id_edit_items[idx].buf)) return 0;
+    if (id_edit_items[idx].buf[0]) return 1;
+    return 0;
   case ID_LINE_USER_ID:
   case ID_LINE_LOGIN:
-  case ID_LINE_EMAIL:
   case ID_LINE_NAME:
     if (id_edit_items[idx].buf[0]) return 1;
     return 0;
@@ -1348,6 +1351,10 @@ do_identity_menu(int *p_cur_item)
       case ID_LINE_EMAIL:
         if (strspn(buf1, email_accept_chars) != strlen(buf1)) {
           ncurses_errbox("\\begin{center}\nERROR!\n\nThe administrator e-mail contains invalid characters!\n\\end{center}\n");
+          continue;
+        }
+        if (!is_valid_email_address(buf1)) {
+          ncurses_errbox("\\begin{center}\nERROR!\n\nThe administrator e-mail is invalid!\n\\end{center}\n");
           continue;
         }
         snprintf(config_email, sizeof(config_email), "%s", buf1);
@@ -1605,8 +1612,11 @@ is_valid_setting_var(int idx)
   case SET_LINE_DEFAULT_CLARDB_PLUGIN:
   case SET_LINE_DEFAULT_RUNDB_PLUGIN:
     return 1;
-  case SET_LINE_CHARSET:
   case SET_LINE_REG_EMAIL:
+    if (!is_valid_email_address(set_edit_items[idx].buf)) return 0;
+    if (set_edit_items[idx].buf[0]) return 1;
+    return 0;
+  case SET_LINE_CHARSET:
   case SET_LINE_REG_URL:
   case SET_LINE_SER_KEY:
   case SET_LINE_SERVER_NAME:

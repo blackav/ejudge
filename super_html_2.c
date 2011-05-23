@@ -265,6 +265,7 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
                            int param3, int param4, int param5)
 {
   unsigned char **p_str = 0, **p_str_d2u = 0;
+  unsigned char **p_email = 0;
   unsigned char *p_bool = 0;
   time_t *p_date = 0;
   int v, n, memb_ind;
@@ -450,13 +451,13 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
     p_str = &cnts->allowed_regions;
     break;
   case SSERV_CMD_CNTS_CHANGE_CF_NOTIFY_EMAIL:
-    p_str = &cnts->cf_notify_email;
+    p_email = &cnts->cf_notify_email;
     break;
   case SSERV_CMD_CNTS_CHANGE_CLAR_NOTIFY_EMAIL:
-    p_str = &cnts->clar_notify_email;
+    p_email = &cnts->clar_notify_email;
     break;
   case SSERV_CMD_CNTS_CHANGE_DAILY_STAT_EMAIL:
-    p_str = &cnts->daily_stat_email;
+    p_email = &cnts->daily_stat_email;
     break;
   case SSERV_CMD_CNTS_CHANGE_TEAM_HEAD_STYLE:
     p_str = &cnts->team_head_style;
@@ -465,7 +466,7 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
     p_str = &cnts->team_par_style;
     break;
   case SSERV_CMD_CNTS_CHANGE_REGISTER_EMAIL:
-    p_str = &cnts->register_email;
+    p_email = &cnts->register_email;
     break;
   case SSERV_CMD_CNTS_CHANGE_REGISTER_URL:
     p_str = &cnts->register_url;
@@ -714,6 +715,12 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
 
   default:
     abort();
+  }
+
+  if (p_email) {
+    if (param2 && *param2 && !is_valid_email_address(param2))
+      return -SSERV_ERR_INVALID_PARAMETER;
+    p_str = p_email; p_email = 0;
   }
 
   if (p_date) {
