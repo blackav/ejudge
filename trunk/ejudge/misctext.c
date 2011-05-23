@@ -2046,6 +2046,47 @@ ucs2_to_utf8(
 }
 
 /*
+  returns: 0 - address invalid, 1 - valid
+ */
+int
+is_valid_email_address(const unsigned char *email_address)
+{
+  if (!email_address || !*email_address) return 0;
+  const unsigned char *p;
+  const unsigned char *at_ptr = 0;
+  for (p = email_address; *p; ++p) {
+    if (*p <= ' ' || *p >= 127 || *p == '\\' || *p == '\'' || *p == '\"')
+      return 0;
+    if (*p == '@') {
+      if (at_ptr) return 0;
+      at_ptr = p;
+    }
+  }
+  if (!at_ptr) return 0;
+  if (at_ptr == email_address || !at_ptr[1]) return 0;
+  // check domain part
+  for (p = at_ptr + 1; *p; ++p) {
+    if (!isalnum(*p) && *p != '-' && *p != '_' && *p != '.')
+      return 0;
+    if (*p == '.' && (p[-1] == '@' || !p[1] || p[1] == '.')) return 0;
+  }
+  // check local part
+  for (p = email_address; p < at_ptr; ++p) {
+    if (*p == '.') {
+      if (p == email_address || p[1] == '@' || p[1] == '.') return 0;
+    } else if (isalnum(*p)) {
+      // do nothing
+    } else if (*p == '!' || *p == '#' || *p == '+' || *p == '-' || *p == '/' || *p == '=' || *p == '?'
+               || *p == '^' || *p == '_' || *p == '~') {
+      // All valid chars: ! # $ % & * + - / = ? ^ _ ` { | } ~
+    } else {
+      return 0;
+    }
+  }
+  return 1;
+}
+
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")

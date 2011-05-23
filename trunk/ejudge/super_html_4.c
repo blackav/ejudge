@@ -2979,6 +2979,14 @@ cmd_edit_contest_xml_field(
         if ((newval = l10n_parse_locale(valstr)) < 0)
           FAIL(S_ERR_INV_VALUE);
       }
+      if (f_id == CNTS_register_email
+          || f_id == CNTS_cf_notify_email
+          || f_id == CNTS_clar_notify_email
+          || f_id == CNTS_daily_stat_email) {
+        if (valstr && *valstr && !is_valid_email_address(valstr)) {
+          FAIL(S_ERR_INV_VALUE);
+        }
+      }
 
       if (!*p_str) {
         retval = 1;
@@ -6800,6 +6808,7 @@ static unsigned char const * const error_messages[] =
   [S_ERR_DATA_READ_ONLY] = "Data is read-only",
   [S_ERR_TOO_MANY_MEMBERS] = "Too many members",
   [S_ERR_INV_SERIAL] = "Invalid member",
+  [S_ERR_INV_EMAIL] = "Invalid email",
 };
 
 void
