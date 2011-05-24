@@ -2641,6 +2641,8 @@ cmd_simple_top_command(struct client_state *p, int len,
   case SSERV_CMD_CNTS_CLEAR_TEAM_URL:
   case SSERV_CMD_CNTS_CLEAR_STANDINGS_URL:
   case SSERV_CMD_CNTS_CLEAR_PROBLEMS_URL:
+  case SSERV_CMD_CNTS_CLEAR_LOGO_URL:
+  case SSERV_CMD_CNTS_CLEAR_CSS_URL:
   case SSERV_CMD_CNTS_CLEAR_ROOT_DIR:
   case SSERV_CMD_CNTS_CLEAR_CONF_DIR:
   case SSERV_CMD_CNTS_CLEAR_DIR_MODE:
@@ -2775,6 +2777,8 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_CNTS_CHANGE_TEAM_URL:
   case SSERV_CMD_CNTS_CHANGE_STANDINGS_URL:
   case SSERV_CMD_CNTS_CHANGE_PROBLEMS_URL:
+  case SSERV_CMD_CNTS_CHANGE_LOGO_URL:
+  case SSERV_CMD_CNTS_CHANGE_CSS_URL:
   case SSERV_CMD_CNTS_CHANGE_ROOT_DIR:
   case SSERV_CMD_CNTS_CHANGE_CONF_DIR:
   case SSERV_CMD_CNTS_CHANGE_DIR_MODE:
@@ -3635,6 +3639,8 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_CLEAR_TEAM_URL] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_STANDINGS_URL] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_PROBLEMS_URL] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_CLEAR_LOGO_URL] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_CLEAR_CSS_URL] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_ROOT_DIR] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_CONF_DIR] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_DIR_MODE] = { cmd_simple_top_command },
@@ -3710,6 +3716,8 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_CHANGE_TEAM_URL] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_STANDINGS_URL] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_PROBLEMS_URL] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_LOGO_URL] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_CSS_URL] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_ROOT_DIR] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_CONF_DIR] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_DIR_MODE] = { cmd_set_value },
