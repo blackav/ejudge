@@ -994,6 +994,8 @@ static const struct cnts_edit_info cnts_edit_info[] =
   { NS_CONTEST, CNTS_team_url, 's', 1, 1, 1, 1, 0, "URL for the client CGI program", "URL for the client CGI program", 0 },
   { NS_CONTEST, CNTS_standings_url, 's', 1, 1, 1, 1, 0, "URL for the current standings", "URL for the current standings", 0 },
   { NS_CONTEST, CNTS_problems_url, 's', 1, 1, 1, 1, 0, "URL for the problemset", "URL for the problemset", 0 },
+  { NS_CONTEST, CNTS_logo_url, 's', 1, 1, 1, 1, 0, "URL for the contest logo", "URL for the contest logo", 0 },
+  { NS_CONTEST, CNTS_css_url, 's', 1, 1, 1, 1, 0, "URL for the contest CSS", "URL for the contest CSS", 0 },
   { 0, 0, '-', 0, 0, 0, 0, 0, "Contest Management", 0, 0 },
   { NS_CONTEST, CNTS_managed, 'y', 1, 0, 0, 0, 0, "Enable the contest service", "Enable the contest service", 0 },
   { NS_CONTEST, CNTS_run_managed, 'y', 1, 0, 0, 0, 0, "Enable the run service", "Enable the run service", 0 },

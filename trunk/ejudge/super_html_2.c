@@ -125,6 +125,8 @@ super_html_clear_variable(struct sid_state *sstate, int cmd)
   case SSERV_CMD_CNTS_CLEAR_TEAM_URL: p_str = &cnts->team_url; break;
   case SSERV_CMD_CNTS_CLEAR_STANDINGS_URL: p_str = &cnts->standings_url; break;
   case SSERV_CMD_CNTS_CLEAR_PROBLEMS_URL: p_str = &cnts->problems_url; break;
+  case SSERV_CMD_CNTS_CLEAR_LOGO_URL: p_str = &cnts->logo_url; break;
+  case SSERV_CMD_CNTS_CLEAR_CSS_URL: p_str = &cnts->css_url; break;
   case SSERV_CMD_CNTS_CLEAR_ROOT_DIR: p_str = &cnts->root_dir; break;
   case SSERV_CMD_CNTS_CLEAR_CONF_DIR: p_str = &cnts->conf_dir; break;
   case SSERV_CMD_CNTS_CLEAR_DIR_MODE: p_str = &cnts->dir_mode; break;
@@ -488,6 +490,12 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
     break;
   case SSERV_CMD_CNTS_CHANGE_PROBLEMS_URL:
     p_str = &cnts->problems_url;
+    break;
+  case SSERV_CMD_CNTS_CHANGE_LOGO_URL:
+    p_str = &cnts->logo_url;
+    break;
+  case SSERV_CMD_CNTS_CHANGE_CSS_URL:
+    p_str = &cnts->css_url;
     break;
   case SSERV_CMD_CNTS_CHANGE_ROOT_DIR:
     p_str = &cnts->root_dir;

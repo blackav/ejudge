@@ -248,6 +248,7 @@ static const unsigned char * const action_to_help_url_map[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_CHANGE_TEAM_URL] = "Contest.xml:team_url",
   [SSERV_CMD_CNTS_CHANGE_STANDINGS_URL] = "Contest.xml:standings_url",
   [SSERV_CMD_CNTS_CHANGE_PROBLEMS_URL] = "Contest.xml:problems_url",
+  [SSERV_CMD_CNTS_CHANGE_LOGO_URL] = "Contest.xml:logo_url",
   [SSERV_CMD_CNTS_CHANGE_ROOT_DIR] = "Contest.xml:root_dir",
   [SSERV_CMD_CNTS_CHANGE_CONF_DIR] = "Contest.xml:conf_dir",
   [SSERV_CMD_CNTS_CHANGE_DIR_MODE] = "Contest.xml:dir_mode",

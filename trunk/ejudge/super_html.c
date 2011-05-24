@@ -2298,6 +2298,26 @@ super_html_edit_contest_page(FILE *f,
                            self_url,
                            extra_args,
                            hidden_vars);
+  print_string_editing_row(f, "URL for the contest logo:",
+                           cnts->logo_url,
+                           SSERV_CMD_CNTS_CHANGE_LOGO_URL,
+                           SSERV_CMD_CNTS_CLEAR_LOGO_URL,
+                           0,
+                           session_id,
+                           form_row_attrs[row ^= 1],
+                           self_url,
+                           extra_args,
+                           hidden_vars);
+  print_string_editing_row(f, "URL for the contest CSS:",
+                           cnts->css_url,
+                           SSERV_CMD_CNTS_CHANGE_CSS_URL,
+                           SSERV_CMD_CNTS_CLEAR_CSS_URL,
+                           0,
+                           session_id,
+                           form_row_attrs[row ^= 1],
+                           self_url,
+                           extra_args,
+                           hidden_vars);
 
   html_start_form(f, 1, self_url, hidden_vars);
   fprintf(f, "<tr%s><td colspan=\"4\" align=\"center\"><b>Various contest's flags</b>", head_row_attr);
