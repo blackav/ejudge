@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2011/04/30 20:02:37
+// Generated 2011/05/24 09:20:57
 
 #include "contests_meta.h"
 #include "contests.h"
@@ -103,6 +103,8 @@ static struct meta_info_item meta_info_contest_desc_data[] =
   [CNTS_default_locale] = { CNTS_default_locale, 's', XSIZE(struct contest_desc, default_locale), "default_locale", XOFFSET(struct contest_desc, default_locale) },
   [CNTS_welcome_file] = { CNTS_welcome_file, 's', XSIZE(struct contest_desc, welcome_file), "welcome_file", XOFFSET(struct contest_desc, welcome_file) },
   [CNTS_reg_welcome_file] = { CNTS_reg_welcome_file, 's', XSIZE(struct contest_desc, reg_welcome_file), "reg_welcome_file", XOFFSET(struct contest_desc, reg_welcome_file) },
+  [CNTS_logo_url] = { CNTS_logo_url, 's', XSIZE(struct contest_desc, logo_url), "logo_url", XOFFSET(struct contest_desc, logo_url) },
+  [CNTS_css_url] = { CNTS_css_url, 's', XSIZE(struct contest_desc, css_url), "css_url", XOFFSET(struct contest_desc, css_url) },
   [CNTS_slave_rules] = { CNTS_slave_rules, '?', XSIZE(struct contest_desc, slave_rules), "slave_rules", XOFFSET(struct contest_desc, slave_rules) },
   [CNTS_user_contest_num] = { CNTS_user_contest_num, 'i', XSIZE(struct contest_desc, user_contest_num), "user_contest_num", XOFFSET(struct contest_desc, user_contest_num) },
   [CNTS_default_locale_num] = { CNTS_default_locale_num, 'i', XSIZE(struct contest_desc, default_locale_num), "default_locale_num", XOFFSET(struct contest_desc, default_locale_num) },
