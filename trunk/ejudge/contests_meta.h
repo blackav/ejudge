@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2011/04/30 20:02:37
+// Generated 2011/05/24 09:20:57
 
 #ifndef __CONTESTS_META_H__
 #define __CONTESTS_META_H__
@@ -98,6 +98,8 @@ enum
   CNTS_default_locale,
   CNTS_welcome_file,
   CNTS_reg_welcome_file,
+  CNTS_logo_url,
+  CNTS_css_url,
   CNTS_slave_rules,
   CNTS_user_contest_num,
   CNTS_default_locale_num,

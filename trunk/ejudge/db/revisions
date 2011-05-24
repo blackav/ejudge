@@ -6390,3 +6390,6 @@ new_server_html_5.c 6347 0 9251098
 super_html_2.c 6347 0 4968404
 super_html_4.c 6347 0 19828577
 super_html_6.c 6347 0 17614743
+contests.h 6349 0 1201675
+contests.c 6349 0 4181588
+contest_tmpl.c 6349 0 945040
