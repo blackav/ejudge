@@ -6393,3 +6393,11 @@ super_html_6.c 6347 0 17614743
 contests.h 6349 0 1201675
 contests.c 6349 0 4181588
 contest_tmpl.c 6349 0 945040
+super_proto.h 6351 0 2527479
+serve-control.c 6351 0 9423794
+super-serve.c 6351 0 14251132
+contests_2.c 6351 0 2045843
+super_html.c 6351 0 11773017
+super_html_2.c 6351 0 4991460
+super_html_3.c 6351 0 30688511
+super_html_4.c 6351 0 19844729
