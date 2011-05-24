@@ -125,6 +125,8 @@ const int contests_tag_to_meta_map[CONTEST_LAST_TAG] =
   [CONTEST_WELCOME_FILE] = CNTS_welcome_file,
   [CONTEST_REG_WELCOME_FILE] = CNTS_reg_welcome_file,
   [CONTEST_USER_CONTEST] = CNTS_user_contest,
+  [CONTEST_LOGO_URL] = CNTS_logo_url,
+  [CONTEST_CSS_URL] = CNTS_css_url,
 };
 const int contests_attr_to_meta_map[CONTEST_LAST_ATTR] =
 {
@@ -235,6 +237,8 @@ char const * const contests_elem_map[] =
   "slave_rules",
   "run_managed_on",
   "user_contest",
+  "logo_url",
+  "css_url",
 
   0
 };
@@ -753,6 +757,8 @@ static const unsigned char contest_final_set[CONTEST_LAST_TAG] =
   [CONTEST_WELCOME_FILE] = 1,
   [CONTEST_REG_WELCOME_FILE] = 1,
   [CONTEST_USER_CONTEST] = 1,
+  [CONTEST_LOGO_URL] = 1,
+  [CONTEST_CSS_URL] = 1,
 };
 
 static const unsigned char contest_access_set[CONTEST_LAST_TAG] =
@@ -1714,12 +1720,7 @@ contests_get_path_in_conf_dir(
     snprintf(home_dir, sizeof(home_dir), "%s", CONTESTS_HOME_DIR);
 #endif
     if (!home_dir[0]) {
-#ifdef __WIN32__
-      /* INSERT YOUR SERVER'S SAMBA ADDRESS HERE ------\/-----------------*/
-      snprintf(home_dir, sizeof(home_dir), "%s", "//192.168.244.130/judges");
-#else
       snprintf(home_dir, sizeof(home_dir), "%s", "/home/judges");
-#endif /* __WIN32__ */
     }
     if (cnts->root_dir) {
       snprintf(root_dir, sizeof(root_dir), "%s/%s", home_dir, cnts->root_dir);
