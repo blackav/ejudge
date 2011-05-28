@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2009 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -73,7 +73,7 @@ const unsigned char ns_fancy_header[] =
 "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n"
 "<html><head>\n<meta http-equiv=\"Content-type\" content=\"text/html; charset=%C\"/>\n"
 "%S"
-"<link rel=\"stylesheet\" href=\"" CONF_STYLE_PREFIX "unpriv.css\" type=\"text/css\"/>\n"
+"<link rel=\"stylesheet\" href=\"%Y\" type=\"text/css\"/>\n"
   //"<link rel=\"shortcut icon\" type=\"image/x-icon\" href=\"/favicon.ico\"/>\n"
 "<title>%H</title></head>\n"
   //"<body onload=\"startClock()\">"
@@ -89,7 +89,7 @@ const unsigned char ns_fancy_empty_status[] =
 "<td class=\"menu\"><div class=\"contest_actions_item\">&nbsp;</div></td></tr></table></div>\n";
 const unsigned char ns_fancy_separator[] =
 "</div>\n"
-"<div id=\"l11\"><img src=\"" CONF_STYLE_PREFIX "logo.gif\" alt=\"ejudge logo\"/></div>\n"
+"<div id=\"l11\"><img src=\"%O\" alt=\"logo\"/></div>\n"
 "<div id=\"l13\">\n";
 const unsigned char ns_fancy_footer[] =
 "<div id=\"footer\">%R</div>\n"
@@ -118,15 +118,18 @@ const unsigned char * const ns_ssl_flag_str[] =
 };
 
 static void
-process_template(FILE *out,
-                 unsigned char const *templ,
-                 unsigned char const *content_type,
-                 unsigned char const *charset,
-                 unsigned char const *title,
-                 unsigned char const *copyright,
-                 const unsigned char *script_part,
-                 const unsigned char *body_attr,
-                 int locale_id)
+process_template(
+        FILE *out,
+        unsigned char const *templ,
+        unsigned char const *content_type,
+        unsigned char const *charset,
+        unsigned char const *title,
+        unsigned char const *copyright,
+        const unsigned char *script_part,
+        const unsigned char *body_attr,
+        int locale_id,
+        const unsigned char *logo_url,
+        const unsigned char *css_url)
 {
   unsigned char const *s = templ;
 
@@ -157,6 +160,12 @@ process_template(FILE *out,
     case 'B':
       fputs(body_attr, out);
       break;
+    case 'O':
+      fputs(logo_url, out);
+      break;
+    case 'Y':
+      fputs(css_url, out);
+      break;
     default:
       putc('%', out);
       continue;
@@ -166,16 +175,22 @@ process_template(FILE *out,
 }
 
 void
-ns_header(FILE *out, unsigned char const *templ,
-          unsigned char const *content_type,
-          unsigned char const *charset,
-          const unsigned char *script_part,
-          const unsigned char *body_attr,
-          int locale_id,
-          char const *format, ...)
+ns_header(
+        FILE *out,
+        unsigned char const *templ,
+        unsigned char const *content_type,
+        unsigned char const *charset,
+        const unsigned char *script_part,
+        const unsigned char *body_attr,
+        int locale_id,
+        const struct contest_desc *cnts,
+        char const *format,
+        ...)
 {
   va_list args;
   unsigned char title[1024];
+  const unsigned char *logo_url = 0;
+  const unsigned char *css_url = 0;
 
   title[0] = 0;
   if (format) {
@@ -190,21 +205,63 @@ ns_header(FILE *out, unsigned char const *templ,
   if (!script_part) script_part = "";
   if (!body_attr) body_attr = "";
 
+  if (cnts) {
+    logo_url = cnts->logo_url;
+    css_url = cnts->css_url;
+  }
+  if (!logo_url) {
+#if defined CONF_STYLE_PREFIX
+    logo_url = CONF_STYLE_PREFIX "logo.gif";
+#else
+    logo_url = "logo.gif";
+#endif
+  }
+  if (!css_url) {
+#if defined CONF_STYLE_PREFIX
+    css_url = CONF_STYLE_PREFIX "unpriv.css";
+#else
+    css_url = "unpriv.css";
+#endif
+  }
+
   fprintf(out, "Content-Type: %s; charset=%s\n"
           "Cache-Control: no-cache\n"
           "Pragma: no-cache\n\n", content_type, charset);
 
   process_template(out, templ, content_type, charset, title, 0,
-                   script_part, body_attr, locale_id);
+                   script_part, body_attr, locale_id, logo_url, css_url);
 }
 
 void
-ns_footer(FILE *out, unsigned char const *templ,
-          const unsigned char *copyright, int locale_id)
+ns_separator(
+        FILE *out,
+        unsigned char const *templ,
+        const struct contest_desc *cnts)
+{
+  const unsigned char *logo_url = 0;
+
+  if (cnts) logo_url = cnts->logo_url;
+  if (!logo_url) {
+#if defined CONF_STYLE_PREFIX
+    logo_url = CONF_STYLE_PREFIX "logo.gif";
+#else
+    logo_url = "logo.gif";
+#endif
+  }
+
+  process_template(out, templ, NULL, NULL, NULL, NULL, NULL, NULL, 0, logo_url, NULL);
+}
+
+void
+ns_footer(
+        FILE *out,
+        unsigned char const *templ,
+        const unsigned char *copyright,
+        int locale_id)
 {
   if (!copyright) copyright = get_copyright(locale_id);
   if (!templ) templ = ns_default_footer;
-  process_template(out, templ, 0, 0, 0, copyright, 0, 0, 0);
+  process_template(out, templ, 0, 0, 0, copyright, 0, 0, 0, NULL, NULL);
 }
 
 void
@@ -259,10 +316,10 @@ ns_html_err_no_perm(FILE *fout,
     }    
   }
   l10n_setlocale(phr->locale_id);
-  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, _("Permission denied"));
+  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, cnts, _("Permission denied"));
   if (separator && *separator) {
     fprintf(fout, "%s", ns_fancy_empty_status);
-    fprintf(fout, "%s", separator);
+    ns_separator(fout, separator, cnts);
   }
   fprintf(fout, "<p>%s</p>\n",
           _("Permission denied. The possible reasons are as follows."));
@@ -354,10 +411,10 @@ ns_html_err_simple_registered(
     }    
   }
   l10n_setlocale(phr->locale_id);
-  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, _("Cannot participate"));
+  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, cnts, _("Cannot participate"));
   if (separator && *separator) {
     fprintf(fout, "%s", ns_fancy_empty_status);
-    fprintf(fout, "%s", separator);
+    ns_separator(fout, separator, cnts);
   }
   fprintf(fout, "<p>%s</p>\n",
           _("You cannot participate in this contest. Your account was created using the simple registration procedure, i.e. your e-mail address was not verified. This contest requires e-mail verification, so your account cannot be accepted."));
@@ -441,10 +498,10 @@ ns_html_err_inv_param(FILE *fout,
     }    
   }
   l10n_setlocale(phr->locale_id);
-  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, _("Invalid parameter"));
+  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, cnts, _("Invalid parameter"));
   if (separator && *separator) {
     fprintf(fout, "%s", ns_fancy_empty_status);
-    fprintf(fout, "%s", separator);
+    ns_separator(fout, separator, cnts);
   }
   fprintf(fout, "<p>%s</p>\n",
           _("A request parameter is invalid. Please, contact the site administrator."));
@@ -502,10 +559,10 @@ ns_html_err_service_not_available(FILE *fout,
     }    
   }
   l10n_setlocale(phr->locale_id);
-  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, _("Service not available"));
+  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, cnts, _("Service not available"));
   if (separator && *separator) {
     fprintf(fout, "%s", ns_fancy_empty_status);
-    fprintf(fout, "%s", separator);
+    ns_separator(fout, separator, cnts);
   }
   fprintf(fout, "<p>%s</p>\n",
           _("Service that you requested is not available."));
@@ -563,10 +620,10 @@ ns_html_err_cnts_unavailable(FILE *fout,
     }    
   }
   l10n_setlocale(phr->locale_id);
-  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, _("Contest not available"));
+  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, cnts, _("Contest not available"));
   if (separator && *separator) {
     fprintf(fout, "%s", ns_fancy_empty_status);
-    fprintf(fout, "%s", separator);
+    ns_separator(fout, separator, cnts);
   }
   fprintf(fout, "<p>%s</p>\n",
           _("The contest is temporarily not available. Please, retry the request a bit later."));
@@ -629,11 +686,11 @@ ns_html_err_ul_server_down(FILE *fout,
     }    
   }
   l10n_setlocale(phr->locale_id);
-  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id,
+  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, cnts,
             _("User database server is down"));
   if (separator && *separator) {
     fprintf(fout, "%s", ns_fancy_empty_status);
-    fprintf(fout, "%s", separator);
+    ns_separator(fout, separator, cnts);
   }
   fprintf(fout, "<p>%s</p>\n",
           _("The user database server is currently not available. Please, retry the request later."));
@@ -696,10 +753,10 @@ ns_html_err_internal_error(FILE *fout,
     }    
   }
   l10n_setlocale(phr->locale_id);
-  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, _("Internal error"));
+  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, cnts, _("Internal error"));
   if (separator && *separator) {
     fprintf(fout, "%s", ns_fancy_empty_status);
-    fprintf(fout, "%s", separator);
+    ns_separator(fout, separator, cnts);
   }
   fprintf(fout, "<p>%s</p>\n",
           _("Your request has caused an internal server error. Please, report it as a bug."));
@@ -762,10 +819,10 @@ ns_html_err_inv_session(FILE *fout,
     }    
   }
   l10n_setlocale(phr->locale_id);
-  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, _("Invalid session"));
+  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, cnts, _("Invalid session"));
   if (separator && *separator) {
     fprintf(fout, "%s", ns_fancy_empty_status);
-    fprintf(fout, "%s", separator);
+    ns_separator(fout, separator, cnts);
   }
   fprintf(fout, "<p>%s</p>\n",
           _("Invalid session identifier. The possible reasons are as follows."));
@@ -839,10 +896,10 @@ ns_html_err_registration_incomplete(
     else footer = ns_fancy_footer;
   }
   l10n_setlocale(phr->locale_id);
-  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, _("Registration incomplete"));
+  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, cnts, _("Registration incomplete"));
   if (separator && *separator) {
     fprintf(fout, "%s", ns_fancy_empty_status);
-    fprintf(fout, "%s", separator);
+    ns_separator(fout, separator, cnts);
   }
 
   if (cnts && cnts->allow_reg_data_edit
@@ -899,10 +956,10 @@ ns_html_err_disqualified(
     else footer = ns_fancy_footer;
   }
   l10n_setlocale(phr->locale_id);
-  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, _("You are disqualified"));
+  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, cnts, _("You are disqualified"));
   if (separator && *separator) {
     fprintf(fout, "%s", ns_fancy_empty_status);
-    fprintf(fout, "%s", separator);
+    ns_separator(fout, separator, cnts);
   }
   fprintf(fout, "<p>%s</p>\n",
           _("You are disqualified by the contest administration."));

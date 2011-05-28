@@ -609,16 +609,29 @@ ns_write_priv_clar(const serve_state_t cs,
                    struct contest_extra *extra,
                    int clar_id);
 
-void ns_header(FILE *out, unsigned char const *template,
-               unsigned char const *content_type,
-               unsigned char const *charset,
-               const unsigned char *script_part,
-               const unsigned char *body_attr,
-               int locale_id,
-               char const *format, ...)
-  __attribute__((format(printf, 8, 9)));
-void ns_footer(FILE *out, unsigned char const *templ,
-               const unsigned char *copyright, int locale_id);
+void
+ns_header(
+        FILE *out,
+        unsigned char const *template,
+        unsigned char const *content_type,
+        unsigned char const *charset,
+        const unsigned char *script_part,
+        const unsigned char *body_attr,
+        int locale_id,
+        const struct contest_desc *cnts,
+        char const *format,
+        ...)
+  __attribute__((format(printf, 9, 10)));
+void
+ns_separator(
+        FILE *out,
+        unsigned char const *templ,
+        const struct contest_desc *cnts);
+void ns_footer(
+        FILE *out,
+        unsigned char const *templ,
+        const unsigned char *copyright,
+        int locale_id);
 
 const unsigned char *ns_unparse_role(int role);
 
