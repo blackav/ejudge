@@ -120,6 +120,7 @@ COMMON_CFILES=\
  allowed_list.c\
  archive_paths.c\
  base64.c\
+ bitset.c\
  cgi.c\
  charsets.c\
  clarlog.c\
@@ -467,6 +468,7 @@ CFILES=\
 HFILES=\
  archive_paths.h\
  base64.h\
+ bitset.h\
  cgi.h\
  charsets.h\
  clarlog.h\
