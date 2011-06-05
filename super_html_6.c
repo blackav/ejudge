@@ -35,11 +35,13 @@
 #include "meta_generic.h"
 #include "charsets.h"
 #include "csv.h"
+#include "bitset.h"
 
 #include "reuse_xalloc.h"
 
 #include <stdarg.h>
 #include <printf.h>
+#include <limits.h>
 
 #define ARMOR(s)  html_armor_buf(&ab, (s))
 #define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
@@ -434,9 +436,20 @@ super_serve_op_USER_BROWSE_PAGE(
   opcap_t gcaps = 0;
   opcap_t caps = 0;
   const struct userlist_contest *reg = 0;
+  int min_user_id = INT_MAX;
+  int max_user_id = 0;
+  bitset_t marked = BITSET_INITIALIZER;
+  unsigned char *marked_str = 0;
 
   ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   ss_cgi_param_int_opt(phr, "group_id", &group_id, 0);
+
+  s = 0;
+  if (ss_cgi_param(phr, "marked", &s) > 0 && s) {
+    if (bitset_url_decode(s, &marked) >= 0) {
+      marked_str = bitset_url_encode(&marked);
+    }
+  }
 
   if (contest_id < 0) contest_id = 0;
   if (contest_id > 0) {
@@ -485,7 +498,31 @@ super_serve_op_USER_BROWSE_PAGE(
           "      }\n"
           "    }\n"
           "  }\n"
-          "}\n");
+          "}\n"
+          "function toggleAllCheckboxes()\n"
+          "{\n"
+          "  objs = document.forms[1].elements;\n"
+          "  if (objs != null) {\n"
+          "    for (var i = 0; i < objs.length; ++i) {\n"
+          "      if (objs[i].type == \"checkbox\") {\n"
+          "        objs[i].checked = !objs[i].checked;\n"
+          "      }\n"
+          "    }\n"
+          "  }\n"
+          "}\n"
+          "function setOperationVisibility(oper, value)\n"
+          "{\n"
+          "  obj1 = document.getElementById(\"Show\" + oper + \"Menu\");\n"
+          "  obj2 = document.getElementById(\"Hide\" + oper + \"Menu\");\n"
+          "  if (value) {\n"
+          "    obj1.style.display = \"none\";\n"
+          "    obj2.style.display = \"\";\n"
+          "  } else {\n"
+          "    obj1.style.display = \"\";\n"
+          "    obj2.style.display = \"none\";\n"
+          "  }\n"
+          "}\n"
+          "");
   fprintf(out_f, "</script>\n");
 
   fprintf(out_f, "<h1>%s</h1>\n<br/>\n", buf);
@@ -517,6 +554,9 @@ super_serve_op_USER_BROWSE_PAGE(
   if (group_id > 0) {
     html_hidden(out_f, "group_id", "%d", group_id);
   }
+  if (marked_str && marked_str) {
+    html_hidden(out_f, "marked", "%s", marked_str);
+  }
   fprintf(out_f, "<table class=\"b0\">");
   s = user_filter;
   if (!s) s = "";
@@ -543,12 +583,13 @@ super_serve_op_USER_BROWSE_PAGE(
   fprintf(out_f, "<td class=\"b0\"><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>", SSERV_OP_USER_FILTER_NEXT_PAGE_ACTION, "&gt;");
   fprintf(out_f, "<td class=\"b0\"><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>", SSERV_OP_USER_FILTER_LAST_PAGE_ACTION, "&gt;&gt;");
   fprintf(out_f, "</tr></table>\n");
-  fprintf(out_f, "</form>\n");
+  //fprintf(out_f, "</form>\n");
 
   r = userlist_clnt_list_users_2(phr->userlist_clnt, ULS_LIST_ALL_USERS_2,
                                  contest_id, group_id, user_filter, user_offset, user_count,
                                  &xml_text);
   if (r < 0) {
+    fprintf(out_f, "</form>\n");
     fprintf(out_f, "<hr/><h2>Error</h2>\n");
     fprintf(out_f, "<pre>Cannot get user list: %s</pre>\n",
             userlist_strerror(-r));
@@ -556,12 +597,20 @@ super_serve_op_USER_BROWSE_PAGE(
   }
   users = userlist_parse_str(xml_text);
   if (!users) {
+    fprintf(out_f, "</form>\n");
     fprintf(out_f, "<hr/><h2>Error</h2>\n");
     fprintf(out_f, "<pre>XML parse error</pre>\n");
     goto do_footer;
   }
 
-  html_start_form(out_f, 1, phr->self_url, "");
+  for (user_id = 1; user_id < users->user_map_size; ++user_id) {
+    if (!(u = users->user_map[user_id])) continue;
+    if (user_id >= max_user_id) max_user_id = user_id;
+    if (user_id <= min_user_id) min_user_id = user_id;
+  }
+
+  //html_start_form(out_f, 1, phr->self_url, "");
+  /*
   html_hidden(out_f, "SID", "%016llx", phr->session_id);
   html_hidden(out_f, "action", "%d", SSERV_CMD_HTTP_REQUEST);
   if (contest_id > 0) {
@@ -570,6 +619,9 @@ super_serve_op_USER_BROWSE_PAGE(
   if (group_id > 0) {
     html_hidden(out_f, "group_id", "%d", group_id);
   }
+  */
+  html_hidden(out_f, "min_user_id", "%d", min_user_id);
+  html_hidden(out_f, "max_user_id", "%d", max_user_id);
   cl = " class=\"b1\"";
   fprintf(out_f, "<table%s>\n", cl);
 
@@ -598,7 +650,11 @@ super_serve_op_USER_BROWSE_PAGE(
 
     ++serial;
     fprintf(out_f, "<tr>\n");
-    fprintf(out_f, "<td class=\"b1\"><input type=\"checkbox\" name=\"user_%d\"/></td>", user_id);
+    s = "";
+    if (bitset_safe_get(&marked, user_id)) {
+      s = " checked=\"checked\"";
+    }
+    fprintf(out_f, "<td class=\"b1\"><input type=\"checkbox\" name=\"user_%d\" value=\"1\"%s/></td>", user_id, s);
     fprintf(out_f, "<td class=\"b1\">%d</td>", serial);
     fprintf(out_f, "<td class=\"b1\">%d</td>", user_id);
     if (!u->login) {
@@ -749,12 +805,127 @@ super_serve_op_USER_BROWSE_PAGE(
 
   cl = " class=\"b0\"";
   fprintf(out_f, "<table%s><tr>", cl);
-  fprintf(out_f, "<td%s><a onclick=\"setAllCheckboxes(true)\">Mark All</a></td>", cl);
-  fprintf(out_f, "<td%s><a onclick=\"setAllCheckboxes(false)\">Unmark All</a></td>", cl);
+  if (cnts) {
+    fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+            cl, SSERV_OP_USER_BROWSE_MARK_ALL_ACTION, "Mark all");
+  }
+  fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+          cl, SSERV_OP_USER_BROWSE_UNMARK_ALL_ACTION, "Unmark all");
+  if (cnts) {
+    fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+            cl, SSERV_OP_USER_BROWSE_TOGGLE_ALL_ACTION, "Toggle all");
+  }
   fprintf(out_f, "</tr></table>\n");
+
+  fprintf(out_f, "<div id=\"ShowRegistrationMenu\">");
+  fprintf(out_f, "<a onclick=\"setOperationVisibility('Registration', true)\">[%s]</a>\n",
+          "Registration operations");
+  fprintf(out_f, "</div>");
+  fprintf(out_f, "<div style=\"display: none;\" id=\"HideRegistrationMenu\">");
+  fprintf(out_f, "<a onclick=\"setOperationVisibility('Registration', false)\">[%s]</a><br/>\n",
+          "Hide registration operations");
+  fprintf(out_f, "<table%s><tr>", cl);
+  fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+          cl, SSERV_OP_USER_SEL_CREATE_REG_PAGE, "Register for another contest");
+  if (cnts) {
+    fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+            cl, SSERV_OP_USER_SEL_CREATE_REG_AND_COPY_PAGE, "Register for another contest and copy data");
+  }
+  fprintf(out_f, "</tr></table>\n");
+  fprintf(out_f, "</div>");
+
+  if (cnts) {
+    fprintf(out_f, "<div id=\"ShowPasswordMenu\">");
+    fprintf(out_f, "<a onclick=\"setOperationVisibility('Password', true)\">[%s]</a>\n", "Password operations");
+    fprintf(out_f, "</div>");
+    fprintf(out_f, "<div style=\"display: none;\" id=\"HidePasswordMenu\">");
+    fprintf(out_f, "<a onclick=\"setOperationVisibility('Password', false)\">[%s]</a><br/>\n", "Hide password operations");
+    cl = " class=\"b0\"";
+    fprintf(out_f, "<table%s>", cl);
+    fprintf(out_f, "<tr><td%s><b>Registration passwords:</b></td>", cl);
+    fprintf(out_f, "<td%s>View</td>", cl);
+    fprintf(out_f, "<td%s>&nbsp;</td>", cl);
+    fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+            cl, SSERV_OP_USER_SEL_RANDOM_PASSWD_PAGE, "Generate random");
+    fprintf(out_f, "</tr>\n");
+    if (!cnts->disable_team_password) {
+      fprintf(out_f, "<tr><td%s><b>Contest passwords:</b></td>", cl);
+      fprintf(out_f, "<td%s>View</td>", cl);
+      fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+              cl, SSERV_OP_USER_SEL_CLEAR_CNTS_PASSWD_PAGE, "Clear");
+      fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+              cl, SSERV_OP_USER_SEL_RANDOM_CNTS_PASSWD_PAGE, "Generate random");
+      fprintf(out_f, "</tr>\n");
+    }
+    fprintf(out_f, "</table>\n");
+    fprintf(out_f, "</div>");
+
+    fprintf(out_f, "<div id=\"ShowStatusMenu\">");
+    fprintf(out_f, "<a onclick=\"setOperationVisibility('Status', true)\">[%s]</a>\n", "Status operations");
+    fprintf(out_f, "</div>");
+    fprintf(out_f, "<div style=\"display: none;\" id=\"HideStatusMenu\">");
+    fprintf(out_f, "<a onclick=\"setOperationVisibility('Status', false)\">[%s]</a><br/>\n", "Hide status operations");
+    cl = " class=\"b0\"";
+    fprintf(out_f, "<table%s>", cl);
+    fprintf(out_f, "<tr><td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td></tr>",
+            cl, SSERV_OP_USER_SEL_DELETE_REG_PAGE, "Delete registrations");
+    fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>", cl, "Status", cl);
+    ss_select(out_f, "status", (const unsigned char* []) { "OK", "Pending", "Rejected", NULL }, 0);
+    fprintf(out_f, "</td>");
+    fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td></tr>",
+            cl, SSERV_OP_USER_SEL_CHANGE_REG_STATUS_PAGE, "Change status");
+    fprintf(out_f, "</table>\n");
+    fprintf(out_f, "</div>");
+
+    fprintf(out_f, "<div id=\"ShowFlagsMenu\">");
+    fprintf(out_f, "<a onclick=\"setOperationVisibility('Flags', true)\">[%s]</a>\n", "Flags operations");
+    fprintf(out_f, "</div>");
+    fprintf(out_f, "<div style=\"display: none;\" id=\"HideFlagsMenu\">");
+    fprintf(out_f, "<a onclick=\"setOperationVisibility('Flags', false)\">[%s]</a><br/>\n", "Hide flags operations");
+
+    cl = " class=\"b0\"";
+    fprintf(out_f, "<table%s>", cl);
+
+    static const unsigned char * const flag_vars[] =
+    {
+      "invisible_op", "banned_op", "locked_op", "incomplete_op", "disqualified_op", NULL,
+    };
+    static const unsigned char * const flag_legends[] =
+    {
+      "Invisible", "Banned", "Locked", "Incomplete", "Disqualified", NULL,
+    };
+    static const unsigned char * const op_legends[] =
+    {
+      "Do nothing", "Clear", "Set", "Toggle", NULL,
+    };
+
+    for (int flag = 0; flag_vars[flag]; ++flag) {
+      fprintf(out_f, "<tr><td%s><b>%s</b></td>", cl, flag_legends[flag]);
+      for (int op = 0; op_legends[op]; ++op) {
+        s = "";
+        if (!op) s = " checked=\"checked\"";
+        fprintf(out_f, "<td%s><input type=\"radio\" name=\"%s\" value=\"%d\"%s /> %s</td>",
+                cl, flag_vars[flag], op, s, op_legends[op]);
+      }
+      fprintf(out_f, "</tr>\n");
+    }
+
+    fprintf(out_f, "<tr><td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td></tr>",
+            cl, SSERV_OP_USER_SEL_CHANGE_REG_FLAGS_PAGE, "Change flags");
+    fprintf(out_f, "</table>\n");
+    fprintf(out_f, "</div>");
+  }
+
   fprintf(out_f, "</form>\n");
 
   if (opcaps_check(gcaps, OPCAP_CREATE_USER) >= 0) {
+    fprintf(out_f, "<div id=\"ShowCreateUserMenu\">");
+    fprintf(out_f, "<a onclick=\"setOperationVisibility('CreateUser', true)\">[%s]</a>\n",
+            "User creation operations");
+    fprintf(out_f, "</div>");
+    fprintf(out_f, "<div style=\"display: none;\" id=\"HideCreateUserMenu\">");
+    fprintf(out_f, "<a onclick=\"setOperationVisibility('CreateUser', false)\">[%s]</a><br/>\n",
+            "Hide user creation operations");
     cl = " class=\"b0\"";
     fprintf(out_f, "<table%s><tr>", cl);
     fprintf(out_f, "<td%s>%s[%s]</a></td>", cl,
@@ -776,6 +947,7 @@ super_serve_op_USER_BROWSE_PAGE(
                           contest_id_str, group_id_str),
             "Create users from a CSV table");
     fprintf(out_f, "</tr></table>\n");
+    fprintf(out_f, "</div>");
   }
 
 do_footer:
@@ -785,7 +957,48 @@ cleanup:
   userlist_free(&users->b); users = 0;
   xfree(xml_text); xml_text = 0;
   html_armor_free(&ab);
+  bitset_free(&marked);
+  xfree(marked_str);
   return retval;
+}
+
+static unsigned char *
+collect_marked_set(
+        struct super_http_request_info *phr,
+        bitset_t *pms)
+{
+  const unsigned char *s = 0;
+
+  if (ss_cgi_param(phr, "marked", &s) > 0 && s) {
+    bitset_url_decode(s, pms);
+  }
+
+  int min_user_id = 0;
+  int max_user_id = 0;
+  ss_cgi_param_int_opt(phr, "min_user_id", &min_user_id, 0);
+  ss_cgi_param_int_opt(phr, "max_user_id", &max_user_id, 0);
+  if (min_user_id <= 0 || min_user_id > EJ_MAX_USER_ID
+      || max_user_id <= 0 || max_user_id > EJ_MAX_USER_ID
+      || min_user_id > max_user_id) return bitset_url_encode(pms);
+
+  bitset_resize(pms, max_user_id + 1);
+  for (int i = min_user_id; i <= max_user_id; ++i)
+    bitset_off(pms, i);
+
+  for (int i = 0; i < phr->param_num; ++i) {
+    if (!strncmp(phr->param_names[i], "user_", 5)) {
+      int user_id = 0, n = 0;
+      if (sscanf(phr->param_names[i] + 5, "%d%n", &user_id, &n) == 1
+          && !phr->param_names[i][n + 5]
+          && user_id >= min_user_id
+          && user_id <= max_user_id) {
+        if (phr->param_sizes[i] == 1 && phr->params[i][0] == '1') {
+          bitset_on(pms, user_id);
+        }
+      }
+    }
+  }
+  return bitset_url_encode(pms);
 }
 
 int
@@ -801,12 +1014,18 @@ super_serve_op_USER_FILTER_CHANGE_ACTION(
   int value, r;
   int contest_id = 0, group_id = 0;
   const struct contest_desc *cnts = 0;
-  unsigned char extra[256];
   opcap_t gcaps = 0;
   opcap_t caps = 0;
+  bitset_t marked = BITSET_INITIALIZER;
+  unsigned char *marked_str = 0;
+  int notfirst = 0;
+  FILE *extra_f = 0;
+  char *extra_t = 0;
+  size_t extra_z = 0;
 
   ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   ss_cgi_param_int_opt(phr, "group_id", &group_id, 0);
+  marked_str = collect_marked_set(phr, &marked);
 
   if (contest_id < 0) contest_id = 0;
   if (contest_id > 0) {
@@ -814,15 +1033,22 @@ super_serve_op_USER_FILTER_CHANGE_ACTION(
   }
   if (group_id < 0) group_id = 0;
 
-  extra[0] = 0;
-  if (contest_id > 0 && group_id > 0) {
-    snprintf(extra, sizeof(extra), "contest_id=%d&group_id=%d",
-             contest_id, group_id);
-  } else if (contest_id > 0) {
-    snprintf(extra, sizeof(extra), "contest_id=%d", contest_id);
-  } else if (group_id > 0) {
-    snprintf(extra, sizeof(extra), "group_id=%d", group_id);
+  extra_f = open_memstream(&extra_t, &extra_z);
+  if (contest_id > 0) {
+    fprintf(extra_f, "contest_id=%d", contest_id);
+    notfirst = 1;
   }
+  if (group_id > 0) {
+    if (notfirst) putc('&', extra_f);
+    notfirst = 1;
+    fprintf(extra_f, "group_id=%d", group_id);
+  }
+  if (marked_str && *marked_str) {
+    if (notfirst) putc('&', extra_f);
+    notfirst = 1;
+    fprintf(extra_f, "marked=%s", marked_str);
+  }
+  fclose(extra_f); extra_f = 0;
 
   if (get_global_caps(phr, &gcaps) >= 0 && opcaps_check(gcaps, OPCAP_LIST_USERS) >= 0) {
     // this user can view the full user list and the user list for any contest
@@ -882,7 +1108,96 @@ super_serve_op_USER_FILTER_CHANGE_ACTION(
   phr->ss->user_count = user_count;
 
 cleanup:
-  ss_redirect(out_f, phr, SSERV_OP_USER_BROWSE_PAGE, extra);
+  ss_redirect(out_f, phr, SSERV_OP_USER_BROWSE_PAGE, extra_t);
+  bitset_free(&marked);
+  xfree(marked_str);
+  if (extra_f) fclose(extra_f);
+  xfree(extra_t);
+  return retval;
+}
+
+int
+super_serve_op_USER_BROWSE_MARK_ALL_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0, r;
+  int contest_id = 0, group_id = 0;
+  bitset_t marked = BITSET_INITIALIZER;
+  unsigned char *marked_str = 0;
+  const struct contest_desc *cnts = 0;
+  int user_id = 0;
+  struct userlist_list *users = 0;
+  unsigned char *xml_text = 0;
+  int notfirst = 0;
+  FILE *extra_f = 0;
+  char *extra_t = 0;
+  size_t extra_z = 0;
+
+  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  ss_cgi_param_int_opt(phr, "group_id", &group_id, 0);
+  marked_str = collect_marked_set(phr, &marked);
+
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) {
+    contest_id = 0;
+  }
+  if (group_id < 0) group_id = 0;
+
+  if (phr->opcode == SSERV_OP_USER_BROWSE_UNMARK_ALL_ACTION) {
+    xfree(marked_str); marked_str = 0;
+    goto cleanup;
+  }
+
+  // get the IDs of all users registered for contest
+  r = userlist_clnt_list_all_users(phr->userlist_clnt, ULS_LIST_ALL_USERS, cnts->id, &xml_text);
+  if (r < 0 || !xml_text) goto cleanup;
+  users = userlist_parse_str(xml_text);
+  if (!users) goto cleanup;
+  xfree(xml_text); xml_text = 0;
+  bitset_resize(&marked, users->user_map_size);
+
+  if (phr->opcode == SSERV_OP_USER_BROWSE_MARK_ALL_ACTION) {
+    for (user_id = 1; user_id < users->user_map_size; ++user_id) {
+      if (users->user_map[user_id]) {
+        bitset_on(&marked, user_id);
+      }
+    }
+  } else if (phr->opcode == SSERV_OP_USER_BROWSE_TOGGLE_ALL_ACTION) {
+    for (user_id = 1; user_id < users->user_map_size; ++user_id) {
+      if (users->user_map[user_id]) {
+        bitset_toggle(&marked, user_id);
+      }
+    }
+  }
+
+  xfree(marked_str);
+  marked_str = bitset_url_encode(&marked);
+
+cleanup:
+  extra_f = open_memstream(&extra_t, &extra_z);
+  if (contest_id > 0) {
+    fprintf(extra_f, "contest_id=%d", contest_id);
+    notfirst = 1;
+  }
+  if (group_id > 0) {
+    if (notfirst) putc('&', extra_f);
+    notfirst = 1;
+    fprintf(extra_f, "group_id=%d", group_id);
+  }
+  if (marked_str && *marked_str) {
+    if (notfirst) putc('&', extra_f);
+    notfirst = 1;
+    fprintf(extra_f, "marked=%s", marked_str);
+  }
+  fclose(extra_f); extra_f = 0;
+  ss_redirect(out_f, phr, SSERV_OP_USER_BROWSE_PAGE, extra_t);
+  xfree(marked_str);
+  bitset_free(&marked);
+  if (extra_f) fclose(extra_f);
+  xfree(extra_t);
+  userlist_free(&users->b); users = 0;
+  xfree(xml_text);
   return retval;
 }
 
