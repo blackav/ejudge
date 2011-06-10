@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2011/04/30 20:02:37
+// Generated 2011/06/11 00:04:30
 
 #include "super-serve_meta.h"
 #include "super-serve.h"
@@ -132,6 +132,7 @@ static struct meta_info_item meta_info_sid_state_data[] =
   [SSSS_group_user_filter] = { SSSS_group_user_filter, 's', XSIZE(struct sid_state, group_user_filter), "group_user_filter", XOFFSET(struct sid_state, group_user_filter) },
   [SSSS_group_user_offset] = { SSSS_group_user_offset, 'i', XSIZE(struct sid_state, group_user_offset), "group_user_offset", XOFFSET(struct sid_state, group_user_offset) },
   [SSSS_group_user_count] = { SSSS_group_user_count, 'i', XSIZE(struct sid_state, group_user_count), "group_user_count", XOFFSET(struct sid_state, group_user_count) },
+  [SSSS_marked] = { SSSS_marked, '?', XSIZE(struct sid_state, marked), "marked", XOFFSET(struct sid_state, marked) },
 };
 
 int ss_sid_state_get_type(int tag)
