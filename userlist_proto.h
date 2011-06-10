@@ -119,6 +119,7 @@ enum
     ULS_CREATE_USER_2,
     ULS_PREV_USER,
     ULS_NEXT_USER,
+    ULS_LIST_ALL_USERS_3,
 
     ULS_LAST_CMD
   };
