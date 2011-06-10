@@ -1628,6 +1628,7 @@ sid_state_clear(struct sid_state *p)
   xfree(p->user_login);
   xfree(p->user_name);
   xfree(p->user_filter);
+  bitset_free(&p->marked);
   XMEMZERO(p, 1);
 }
 static struct sid_state*

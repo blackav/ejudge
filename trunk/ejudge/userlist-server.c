@@ -42,6 +42,7 @@
 #include "csv.h"
 #include "sock_op.h"
 #include "compat.h"
+#include "bitset.h"
 
 #include "reuse_xalloc.h"
 #include "reuse_logger.h"
@@ -9491,7 +9492,7 @@ cmd_list_all_groups_2(
   ptr_iterator_t iter;
   const struct userlist_group *grp;
 
-  snprintf(logbuf, sizeof(logbuf), "LIST_ALL_USERS_2: %d, %d, %d",
+  snprintf(logbuf, sizeof(logbuf), "LIST_ALL_GROUPS_2: %d, %d, %d",
            p->user_id, data->offset, data->count);
 
   if (is_judge(p, logbuf) < 0) return;
@@ -9841,6 +9842,61 @@ cmd_next_user(
   info("%s -> OK, %d", logbuf, user_id); 
 }
 
+static void
+cmd_list_all_users_3(
+        struct client_state *p,
+        int pkt_len,
+        struct userlist_pk_list_users_2 *data)
+{
+  FILE *f = 0;
+  char *xml_ptr = 0;
+  size_t xml_size = 0;
+  struct userlist_pk_xml_data *out = 0;
+  size_t out_size = 0;
+  const struct contest_desc *cnts = 0;
+  unsigned char logbuf[1024];
+  const struct userlist_user *u = 0;
+  bitset_t marked = BITSET_INITIALIZER;
+  int user_id;
+
+  snprintf(logbuf, sizeof(logbuf), "LIST_ALL_USERS_3: %d, %d, %d, %d, %d",
+           p->user_id, data->contest_id, data->group_id, data->offset, data->count);
+
+  if (is_judge(p, logbuf) < 0) return;
+  if (data->contest_id > 0) {
+    if (full_get_contest(p, logbuf, &data->contest_id, &cnts) < 0) return;
+  }
+  if (is_dbcnts_capable(p, cnts, OPCAP_LIST_USERS, logbuf) < 0) return;
+
+  bitset_url_decode(data->data, &marked);
+  f = open_memstream(&xml_ptr, &xml_size);
+  userlist_write_xml_header(f);
+  if (marked.size > 0) {
+    for (user_id = 1; user_id < marked.size; ++user_id) {
+      if (bitset_get(&marked, user_id)) {
+        if (default_get_user_info_4(user_id, data->contest_id, &u) >= 0 && u) {
+          userlist_unparse_user_short(u, f, data->contest_id);
+          default_unlock_user(u);
+        }
+      }
+    }
+  }
+  userlist_write_xml_footer(f);
+  close_memstream(f); f = 0;
+  ASSERT(xml_size == strlen(xml_ptr));
+  out_size = sizeof(*out) + xml_size;
+  out = (struct userlist_pk_xml_data*) xmalloc(out_size);
+  memset(out, 0, out_size);
+  out->reply_id = ULS_XML_DATA;
+  out->info_len = xml_size;
+  memcpy(out->data, xml_ptr, xml_size + 1);
+  xfree(xml_ptr); xml_ptr = 0;
+  enqueue_reply_to_client(p, out_size, out);
+  info("%s -> OK, size = %zu", logbuf, xml_size); 
+  xfree(out); out = 0;
+  bitset_free(&marked);
+}
+
 static void (*cmd_table[])() =
 {
   [ULS_REGISTER_NEW] =          cmd_register_new,
@@ -9938,6 +9994,7 @@ static void (*cmd_table[])() =
   [ULS_CREATE_USER_2] =         cmd_create_user_2,
   [ULS_PREV_USER] =             cmd_next_user,
   [ULS_NEXT_USER] =             cmd_next_user,
+  [ULS_LIST_ALL_USERS_3] =      cmd_list_all_users_3,
 
   [ULS_LAST_CMD] 0
 };
@@ -10039,6 +10096,7 @@ static int (*check_table[])() =
   [ULS_CREATE_USER_2] =         check_pk_create_user_2,
   [ULS_PREV_USER] =             check_pk_list_users_2,
   [ULS_NEXT_USER] =             check_pk_list_users_2,
+  [ULS_LIST_ALL_USERS_3] =      check_pk_list_users_2,
 
   [ULS_LAST_CMD] 0
 };

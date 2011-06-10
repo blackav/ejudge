@@ -20,6 +20,7 @@
 #include "ej_types.h"
 
 #include "opcaps.h"
+#include "bitset.h"
 
 #include <time.h>
 
@@ -227,6 +228,8 @@ struct sid_state
   unsigned char *group_user_filter;
   int group_user_offset;
   int group_user_count;
+
+  bitset_t marked;
 };
 
 struct sid_state;
