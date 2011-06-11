@@ -854,8 +854,9 @@ super_serve_op_USER_BROWSE_PAGE(
   fprintf(out_f, "<div style=\"display: none;\" id=\"HideRegistrationMenu\">");
   fprintf(out_f, "<a onclick=\"setOperationVisibility('Registration', false)\">[%s]</a><br/>\n",
           "Hide registration operations");
-  fprintf(out_f, "<table%s><tr>", cl);
-  fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+  fprintf(out_f, "<table%s>", cl);
+  fprintf(out_f, "<tr><td%s colspan=\"2\"><b>Contest ID:</b> <input type=\"text\" name=\"other_contest_id\" /></td></tr>\n", cl);
+  fprintf(out_f, "<tr><td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
           cl, SSERV_OP_USER_SEL_CREATE_REG_PAGE, "Register for another contest");
   if (cnts) {
     fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
@@ -1234,6 +1235,8 @@ handles: USER_SEL_RANDOM_PASSWD_PAGE
          USER_SEL_DELETE_REG_PAGE
          USER_SEL_CHANGE_REG_STATUS_PAGE
          USER_SEL_CHANGE_REG_FLAGS_PAGE
+         USER_SEL_CREATE_REG_PAGE
+         USER_SEL_CREATE_REG_AND_COPY_PAGE
  */
 int
 super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
@@ -1266,6 +1269,10 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
   int status = USERLIST_REG_REJECTED;
   int invisible_op = 0, banned_op = 0, locked_op = 0, incomplete_op = 0, disqualified_op = 0;
   int is_set_changed = 0;
+  const int *cnts_id_list = 0;
+  int cnts_id_count = 0;
+  int other_contest_id = 0;
+  const struct contest_desc *other_cnts = 0;
 
   ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   ss_cgi_param_int_opt(phr, "group_id", &group_id, 0);
@@ -1302,6 +1309,14 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
     if (locked_op < 0 || locked_op > 3) locked_op = 0;
     if (incomplete_op < 0 || incomplete_op > 3) incomplete_op = 0;
     if (disqualified_op < 0 || disqualified_op > 3) disqualified_op = 0;
+    break;
+  case SSERV_OP_USER_SEL_CREATE_REG_PAGE:
+  case SSERV_OP_USER_SEL_CREATE_REG_AND_COPY_PAGE:
+    ss_cgi_param_int_opt(phr, "other_contest_id", &other_contest_id, 0);
+    if (other_contest_id <= 0 || contests_get(other_contest_id, &other_cnts) < 0 || !other_cnts) {
+      other_contest_id = 0;
+    }
+    cnts_id_count = contests_get_list(&cnts_id_list);
     break;
   }
 
@@ -1341,6 +1356,9 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
     caps |= gcaps;
     if (opcaps_check(caps, OPCAP_PRIV_EDIT_REG) < 0 && opcaps_check(caps, OPCAP_EDIT_REG) < 0)
       FAIL(S_ERR_PERM_DENIED);
+    break;
+  case SSERV_OP_USER_SEL_CREATE_REG_PAGE:
+  case SSERV_OP_USER_SEL_CREATE_REG_AND_COPY_PAGE:
     break;
   default:
     abort();
@@ -1404,6 +1422,9 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
           if (opcaps_check(caps, OPCAP_EDIT_REG) < 0) u = 0;
         }
         break;
+      case SSERV_OP_USER_SEL_CREATE_REG_PAGE:
+      case SSERV_OP_USER_SEL_CREATE_REG_AND_COPY_PAGE:
+        break;
       default:
         abort();
       }
@@ -1454,11 +1475,44 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
     snprintf(buf, sizeof(buf), "serve-control: %s, change registration flags in contest %d",
              phr->html_name, contest_id);
     break;
+  case SSERV_OP_USER_SEL_CREATE_REG_PAGE:
+    snprintf(buf, sizeof(buf), "serve-control: %s, register users for another contest",
+             phr->html_name);
+    break;
+  case SSERV_OP_USER_SEL_CREATE_REG_AND_COPY_PAGE:
+    snprintf(buf, sizeof(buf), "serve-control: %s, register users for another contest and copy data",
+             phr->html_name);
+    break;
   default:
     abort();
   }
 
   ss_write_html_header(out_f, phr, buf, 0, NULL);
+
+  fprintf(out_f, "<script language=\"javascript\">\n");
+  fprintf(out_f,
+          "function updateCnts1()\n"
+          "{\n"
+          "  var obj1 = document.getElementById(\"cnts1\");\n"
+          "  var obj2 = document.getElementById(\"cnts2\");\n"
+          "  var value = obj1.value;\n"
+          "  var i;\n"
+          "  for (i = 0; i < obj2.options.length; ++i) {\n"
+          "    if (obj2.options[i].value == value) {\n"
+          "      obj2.options.selectedIndex = i;\n"
+          "      break;\n"
+          "    }\n"
+          "  }\n"
+          "}\n");
+  fprintf(out_f,
+          "function updateCnts2()\n"
+          "{\n"
+          "  var obj1 = document.getElementById(\"cnts1\");\n"
+          "  var obj2 = document.getElementById(\"cnts2\");\n"
+          "  var value = obj2.options[obj2.selectedIndex].value;\n"
+          "  obj1.value = value;\n"
+          "}\n");
+  fprintf(out_f, "</script>\n");
 
   fprintf(out_f, "<h1>%s</h1>\n<br/>\n", buf);
 
@@ -1472,7 +1526,6 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
     fprintf(out_f, "<h2>%s</h2>\n", ARMOR(cnts->name));
     break;
   }
-
 
   print_top_navigation_links(log_f, out_f, phr, contest_id, group_id, 0, marked_str);
 
@@ -1555,6 +1608,40 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
     operation = SSERV_OP_USER_SEL_CHANGE_REG_FLAGS_ACTION;
     button_label = "Change!";
     break;
+  case SSERV_OP_USER_SEL_CREATE_REG_PAGE:
+  case SSERV_OP_USER_SEL_CREATE_REG_AND_COPY_PAGE:
+    cl = " class=\"b0\"";
+    fprintf(out_f, "<table%s>\n", cl);
+    buf[0] = 0;
+    if (other_contest_id > 0) snprintf(buf, sizeof(buf), "%d", other_contest_id);
+    fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input id=\"cnts1\" onchange=\"updateCnts1()\" type=\"text\" name=\"other_contest_id_1\" size=\"20\" value=\"%s\"/></td></tr>\n",
+            cl, "Contest ID", cl, buf);
+    fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>", cl, "Contest name", cl);
+    fprintf(out_f, "<select id=\"cnts2\" onchange=\"updateCnts2()\" name=\"other_contest_id_2\"><option value=\"0\"></option>");
+    for (int i = 0; i < cnts_id_count; ++i) {
+      int other_contest_id_2 = cnts_id_list[i];
+      if (other_contest_id_2 <= 0) continue;
+      if (contests_get(other_contest_id_2, &cnts) < 0 || !cnts) continue;
+      if (cnts->closed) continue;
+      s = "";
+      if (other_contest_id_2 == other_contest_id) s = " selected=\"selected\"";
+      fprintf(out_f, "<option value=\"%d\"%s>%s</option>", other_contest_id_2, s, ARMOR(cnts->name));
+    }
+    fprintf(out_f, "</select>");
+    fprintf(out_f, "</td></tr>\n");
+    fprintf(out_f, "</table>\n");
+
+    switch (phr->opcode) {
+    case SSERV_OP_USER_SEL_CREATE_REG_PAGE:
+      operation = SSERV_OP_USER_SEL_CREATE_REG_ACTION;
+      button_label = "Register!";
+      break;
+    case SSERV_OP_USER_SEL_CREATE_REG_AND_COPY_PAGE:
+      operation = SSERV_OP_USER_SEL_CREATE_REG_AND_COPY_ACTION;
+      button_label = "Register and copy!";
+      break;
+    }
+    break;
   default:
     abort();
   }
@@ -1620,29 +1707,31 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
   }
   fprintf(out_f, "</table>\n");
 
-  cl = " class=\"b0\"";
-  fprintf(out_f, "<table%s>", cl);
-  if (need_privileged) {
-    fprintf(out_f, "<tr><td%s><input type=\"checkbox\" name=\"%s\" value=\"1\" /></td><td%s>%s</td></tr>\n",
-            cl, "include_privileged", cl, "Peform the operation even for PRIVILEGED users");
+  if (phr->opcode != SSERV_OP_USER_SEL_CHANGE_REG_FLAGS_PAGE) {
+    cl = " class=\"b0\"";
+    fprintf(out_f, "<table%s>", cl);
+    if (need_privileged) {
+      fprintf(out_f, "<tr><td%s><input type=\"checkbox\" name=\"%s\" value=\"1\" /></td><td%s>%s</td></tr>\n",
+              cl, "include_privileged", cl, "Peform the operation even for PRIVILEGED users");
+    }
+    if (need_invisible) {
+      fprintf(out_f, "<tr><td%s><input type=\"checkbox\" name=\"%s\" value=\"1\" /></td><td%s>%s</td></tr>\n",
+              cl, "include_invisible", cl, "Peform the operation even for INVISIBLE users");
+    }
+    if (need_banned) {
+      fprintf(out_f, "<tr><td%s><input type=\"checkbox\" name=\"%s\" value=\"1\" /></td><td%s>%s</td></tr>\n",
+              cl, "include_banned", cl, "Peform the operation even for BANNED users");
+    }
+    if (need_locked) {
+      fprintf(out_f, "<tr><td%s><input type=\"checkbox\" name=\"%s\" value=\"1\" /></td><td%s>%s</td></tr>\n",
+              cl, "include_locked", cl, "Peform the operation even for LOCKED users");
+    }
+    if (need_disqualified) {
+      fprintf(out_f, "<tr><td%s><input type=\"checkbox\" name=\"%s\" value=\"1\" /></td><td%s>%s</td></tr>\n",
+              cl, "include_disqualified", cl, "Peform the operation even for DISQUALIFIED users");
+    }
+    fprintf(out_f, "</table>");
   }
-  if (need_invisible) {
-    fprintf(out_f, "<tr><td%s><input type=\"checkbox\" name=\"%s\" value=\"1\" /></td><td%s>%s</td></tr>\n",
-            cl, "include_invisible", cl, "Peform the operation even for INVISIBLE users");
-  }
-  if (need_banned) {
-    fprintf(out_f, "<tr><td%s><input type=\"checkbox\" name=\"%s\" value=\"1\" /></td><td%s>%s</td></tr>\n",
-            cl, "include_banned", cl, "Peform the operation even for BANNED users");
-  }
-  if (need_locked) {
-    fprintf(out_f, "<tr><td%s><input type=\"checkbox\" name=\"%s\" value=\"1\" /></td><td%s>%s</td></tr>\n",
-            cl, "include_locked", cl, "Peform the operation even for LOCKED users");
-  }
-  if (need_disqualified) {
-    fprintf(out_f, "<tr><td%s><input type=\"checkbox\" name=\"%s\" value=\"1\" /></td><td%s>%s</td></tr>\n",
-            cl, "include_disqualified", cl, "Peform the operation even for DISQUALIFIED users");
-  }
-  fprintf(out_f, "</table>");
 
   cl = " class=\"b0\"";
   fprintf(out_f, "<table%s><tr>", cl);
@@ -1658,6 +1747,319 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
 
 cleanup:
   html_armor_free(&ab);
+  userlist_free(&users->b); users = 0;
+  bitset_free(&marked);
+  xfree(marked_str);
+  xfree(xml_text);
+  return retval;
+}
+
+int
+super_serve_op_USER_SEL_RANDOM_PASSWD_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0, r;
+  int contest_id = 0, group_id = 0;
+  bitset_t marked = BITSET_INITIALIZER;
+  unsigned char *marked_str = 0;
+  const struct contest_desc *cnts = 0, *other_cnts = 0;
+  int status = -1;
+  int invisible_op = 0, banned_op = 0, locked_op = 0, incomplete_op = 0, disqualified_op = 0;
+  int clear_mask = 0, set_mask = 0, toggle_mask = 0;
+  int other_contest_id = 0;
+  opcap_t gcaps = 0, caps = 0, rcaps = 0;
+  unsigned char *xml_text = 0;
+  struct userlist_list *users = 0;
+  int user_id = 0, user_count = 0;
+  const struct userlist_user *u = 0;
+  const struct userlist_contest *reg = 0;
+  int include_invisible = 0, include_banned = 0, include_locked = 0, include_disqualified = 0;
+
+  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  ss_cgi_param_int_opt(phr, "group_id", &group_id, 0);
+  marked_str = collect_marked_set(phr, &marked);
+
+  if (contest_id < 0) contest_id = 0;
+  if (contest_id > 0) {
+    if (contests_get(contest_id, &cnts) < 0 || !cnts) contest_id = 0;
+  }
+  if (group_id < 0) group_id = 0;
+
+  ss_cgi_param_int_opt(phr, "include_invisible", &include_invisible, 0);
+  if (include_invisible != 1) include_invisible = 0;
+  ss_cgi_param_int_opt(phr, "include_banned", &include_banned, 0);
+  if (include_banned != 1) include_banned = 0;
+  ss_cgi_param_int_opt(phr, "include_locked", &include_locked, 0);
+  if (include_locked != 1) include_locked = 0;
+  ss_cgi_param_int_opt(phr, "include_disqualified", &include_disqualified, 0);
+  if (include_disqualified != 1) include_disqualified = 0;
+
+  /* additional parameters */
+  switch (phr->opcode) {
+  case SSERV_OP_USER_SEL_CHANGE_REG_STATUS_ACTION:
+    ss_cgi_param_int_opt(phr, "status", &status, -1);
+    if (status < 0 || status >= USERLIST_REG_LAST) FAIL(S_ERR_INV_VALUE);
+    break;
+  case SSERV_OP_USER_SEL_CHANGE_REG_FLAGS_ACTION:
+    ss_cgi_param_int_opt(phr, "invisible_op", &invisible_op, 0);
+    ss_cgi_param_int_opt(phr, "banned_op", &banned_op, 0);
+    ss_cgi_param_int_opt(phr, "locked_op", &locked_op, 0);
+    ss_cgi_param_int_opt(phr, "incomplete_op", &incomplete_op, 0);
+    ss_cgi_param_int_opt(phr, "disqualified_op", &disqualified_op, 0);
+    if (invisible_op < 0 || invisible_op > 3) invisible_op = 0;
+    if (banned_op < 0 || banned_op > 3) banned_op = 0;
+    if (locked_op < 0 || locked_op > 3) locked_op = 0;
+    if (incomplete_op < 0 || incomplete_op > 3) incomplete_op = 0;
+    if (disqualified_op < 0 || disqualified_op > 3) disqualified_op = 0;
+    if (invisible_op == 1) {
+      clear_mask |= USERLIST_UC_INVISIBLE;
+    } else if (invisible_op == 2) {
+      set_mask |= USERLIST_UC_INVISIBLE;
+    } else if (invisible_op == 3) {
+      toggle_mask |= USERLIST_UC_INVISIBLE;
+    }
+    if (banned_op == 1) {
+      clear_mask |= USERLIST_UC_BANNED;
+    } else if (banned_op == 2) {
+      set_mask |= USERLIST_UC_BANNED;
+    } else if (banned_op == 3) {
+      toggle_mask |= USERLIST_UC_BANNED;
+    }
+    if (locked_op == 1) {
+      clear_mask |= USERLIST_UC_LOCKED;
+    } else if (locked_op == 2) {
+      set_mask |= USERLIST_UC_LOCKED;
+    } else if (locked_op == 3) {
+      toggle_mask |= USERLIST_UC_LOCKED;
+    }
+    if (incomplete_op == 1) {
+      clear_mask |= USERLIST_UC_INCOMPLETE;
+    } else if (incomplete_op == 2) {
+      set_mask |= USERLIST_UC_INCOMPLETE;
+    } else if (incomplete_op == 3) {
+      toggle_mask |= USERLIST_UC_INCOMPLETE;
+    }
+    if (disqualified_op == 1) {
+      clear_mask |= USERLIST_UC_DISQUALIFIED;
+    } else if (disqualified_op == 2) {
+      set_mask |= USERLIST_UC_DISQUALIFIED;
+    } else if (disqualified_op == 3) {
+      toggle_mask |= USERLIST_UC_DISQUALIFIED;
+    }
+    if (!(clear_mask + set_mask + toggle_mask)) goto done;
+    break;
+  case SSERV_OP_USER_SEL_CREATE_REG_ACTION:
+  case SSERV_OP_USER_SEL_CREATE_REG_AND_COPY_ACTION:
+    ss_cgi_param_int_opt(phr, "other_contest_id_1", &other_contest_id, 0);
+    if (other_contest_id <= 0 || contests_get(other_contest_id, &other_cnts) < 0 || !other_cnts) {
+      other_contest_id = 0;
+    }
+    if (!other_cnts) FAIL(S_ERR_INV_CONTEST);
+    break;
+  }
+
+  switch (phr->opcode) {
+  case SSERV_OP_USER_SEL_RANDOM_PASSWD_ACTION:
+    if (get_global_caps(phr, &gcaps) < 0) FAIL(S_ERR_PERM_DENIED);
+    if (opcaps_check(gcaps, OPCAP_EDIT_PASSWD) < 0 && opcaps_check(gcaps, OPCAP_PRIV_EDIT_PASSWD) < 0)
+      FAIL(S_ERR_PERM_DENIED);
+    break;
+  case SSERV_OP_USER_SEL_CLEAR_CNTS_PASSWD_ACTION:
+  case SSERV_OP_USER_SEL_RANDOM_CNTS_PASSWD_ACTION:
+    if (!cnts) FAIL(S_ERR_INV_CONTEST);
+    get_global_caps(phr, &gcaps);
+    get_contest_caps(phr, cnts, &caps);
+    caps |= gcaps;
+    if (opcaps_check(caps, OPCAP_EDIT_PASSWD) < 0 && opcaps_check(caps, OPCAP_PRIV_EDIT_PASSWD) < 0)
+      FAIL(S_ERR_PERM_DENIED);
+    break;
+  case SSERV_OP_USER_SEL_DELETE_REG_ACTION:
+    if (!cnts) FAIL(S_ERR_INV_CONTEST);
+    get_global_caps(phr, &gcaps);
+    if (opcaps_check(gcaps, OPCAP_EDIT_USER) >= 0) gcaps |= 1LL << OPCAP_DELETE_REG;
+    if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_USER) >= 0) gcaps |= 1LL << OPCAP_PRIV_DELETE_REG;
+    get_contest_caps(phr, cnts, &caps);
+    caps |= gcaps;
+    if (opcaps_check(caps, OPCAP_PRIV_DELETE_REG) < 0 && opcaps_check(caps, OPCAP_DELETE_REG) < 0)
+      FAIL(S_ERR_PERM_DENIED);
+    break;
+  case SSERV_OP_USER_SEL_CHANGE_REG_STATUS_ACTION:
+  case SSERV_OP_USER_SEL_CHANGE_REG_FLAGS_ACTION:
+    if (!cnts) FAIL(S_ERR_INV_CONTEST);
+    get_global_caps(phr, &gcaps);
+    if (opcaps_check(gcaps, OPCAP_EDIT_USER) >= 0) gcaps |= 1LL << OPCAP_EDIT_REG;
+    if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_USER) >= 0) gcaps |= 1LL << OPCAP_PRIV_EDIT_REG;
+    get_contest_caps(phr, cnts, &caps);
+    caps |= gcaps;
+    if (opcaps_check(caps, OPCAP_PRIV_EDIT_REG) < 0 && opcaps_check(caps, OPCAP_EDIT_REG) < 0)
+      FAIL(S_ERR_PERM_DENIED);
+    break;
+  case SSERV_OP_USER_SEL_CREATE_REG_ACTION:
+    get_global_caps(phr, &gcaps);
+    get_contest_caps(phr, other_cnts, &caps);
+    caps |= gcaps;
+    if (opcaps_check(caps, OPCAP_PRIV_CREATE_REG) < 0 && opcaps_check(caps, OPCAP_CREATE_REG) < 0)
+      FAIL(S_ERR_PERM_DENIED);
+    break;
+  case SSERV_OP_USER_SEL_CREATE_REG_AND_COPY_ACTION:
+    if  (!cnts) FAIL(S_ERR_INV_CONTEST);
+    get_global_caps(phr, &gcaps);
+    get_contest_caps(phr, other_cnts, &caps);
+    caps |= gcaps;
+    if (opcaps_check(caps, OPCAP_PRIV_CREATE_REG) < 0 && opcaps_check(caps, OPCAP_CREATE_REG) < 0)
+      FAIL(S_ERR_PERM_DENIED);
+    get_contest_caps(phr, cnts, &rcaps);
+    rcaps |= gcaps;
+    if (opcaps_check(rcaps, OPCAP_GET_USER) < 0)
+      FAIL(S_ERR_PERM_DENIED);
+    break;
+  default:
+    abort();
+  }
+
+  if (!phr->userlist_clnt) FAIL(S_ERR_DB_ERROR);
+  r = userlist_clnt_list_users_2(phr->userlist_clnt, ULS_LIST_ALL_USERS_3,
+                                 contest_id, group_id, marked_str, 0, 0,
+                                 &xml_text);
+  if (r < 0) FAIL(S_ERR_DB_ERROR);
+  users = userlist_parse_str(xml_text);
+  if (!users) FAIL(S_ERR_DB_ERROR);
+
+  for (user_id = 1; user_id < marked.size; ++user_id) {
+    if (bitset_get(&marked, user_id)) {
+      if (user_id >= users->user_map_size || !(u = users->user_map[user_id])) {
+        bitset_off(&marked, user_id);
+        continue;
+      }
+      if (contest_id > 0 && !userlist_get_user_contest(u, contest_id)) {
+        bitset_off(&marked, user_id);
+        continue;
+      }
+      if (cnts && phr->opcode != SSERV_OP_USER_SEL_CHANGE_REG_FLAGS_ACTION
+          && (reg = userlist_get_user_contest(u, contest_id))) {
+        if (((reg->flags & USERLIST_UC_INVISIBLE) && !include_invisible)
+            || ((reg->flags & USERLIST_UC_BANNED) && !include_banned)
+            || ((reg->flags & USERLIST_UC_LOCKED) && !include_locked)
+            || ((reg->flags & USERLIST_UC_DISQUALIFIED) && !include_disqualified)) {
+          bitset_off(&marked, user_id);
+          continue;
+        }
+      }
+      switch (phr->opcode) {
+      case SSERV_OP_USER_SEL_RANDOM_PASSWD_ACTION:
+        if (is_privileged(phr, cnts, u)) {
+          if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_PASSWD) < 0) u = 0;
+        } else {
+          if (opcaps_check(gcaps, OPCAP_EDIT_PASSWD) < 0) u = 0;
+        }
+        break;
+      case SSERV_OP_USER_SEL_CLEAR_CNTS_PASSWD_ACTION:
+      case SSERV_OP_USER_SEL_RANDOM_CNTS_PASSWD_ACTION:
+        if (is_globally_privileged(phr, u)) {
+          if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_PASSWD) < 0) u = 0;
+        } else if (is_contest_privileged(cnts, u)) {
+          if (opcaps_check(caps, OPCAP_PRIV_EDIT_PASSWD) < 0) u = 0;
+        } else {
+          if (opcaps_check(caps, OPCAP_EDIT_PASSWD) < 0) u = 0;
+        }
+        break;
+      case SSERV_OP_USER_SEL_DELETE_REG_ACTION:
+        if (is_globally_privileged(phr, u)) {
+          if (opcaps_check(gcaps, OPCAP_PRIV_DELETE_REG) < 0) u = 0;
+        } else if (is_contest_privileged(cnts, u)) {
+          if (opcaps_check(caps, OPCAP_PRIV_DELETE_REG) < 0) u = 0;
+        } else {
+          if (opcaps_check(caps, OPCAP_DELETE_REG) < 0) u = 0;
+        }
+        break;
+      case SSERV_OP_USER_SEL_CHANGE_REG_STATUS_ACTION:
+      case SSERV_OP_USER_SEL_CHANGE_REG_FLAGS_ACTION:
+        if (is_globally_privileged(phr, u)) {
+          if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_REG) < 0) u = 0;
+        } else if (is_contest_privileged(cnts, u)) {
+          if (opcaps_check(caps, OPCAP_PRIV_EDIT_REG) < 0) u = 0;
+        } else {
+          if (opcaps_check(caps, OPCAP_EDIT_REG) < 0) u = 0;
+        }
+        break;
+      case SSERV_OP_USER_SEL_CREATE_REG_ACTION:
+      case SSERV_OP_USER_SEL_CREATE_REG_AND_COPY_ACTION:
+        if (is_globally_privileged(phr, u)) {
+          if (opcaps_check(gcaps, OPCAP_PRIV_CREATE_REG) < 0) u = 0;
+        } else {
+          if (opcaps_check(caps, OPCAP_CREATE_USER) < 0) u = 0;
+        }
+        break;
+      default:
+        abort();
+      }
+      if (!u) {
+        bitset_off(&marked, user_id);
+        continue;
+      }
+      ++user_count;
+    }
+  }
+  if (user_count <= 0) goto done;
+
+  /* do the requested operation */
+  for (user_id = 1; user_id < marked.size; ++user_id) {
+    if (!bitset_get(&marked, user_id)) continue;
+
+    r = 0;
+    switch (phr->opcode) {
+    case SSERV_OP_USER_SEL_RANDOM_PASSWD_ACTION:
+      r = userlist_clnt_register_contest(phr->userlist_clnt, ULS_RANDOM_PASSWD, user_id,
+                                         contest_id, 0, 0);
+      break;
+    case SSERV_OP_USER_SEL_CLEAR_CNTS_PASSWD_ACTION:
+      r = userlist_clnt_delete_field(phr->userlist_clnt, ULS_DELETE_FIELD,
+                                     user_id, contest_id, 0, USERLIST_NC_TEAM_PASSWD);
+      break;
+    case SSERV_OP_USER_SEL_RANDOM_CNTS_PASSWD_ACTION:
+      r = userlist_clnt_register_contest(phr->userlist_clnt, ULS_RANDOM_TEAM_PASSWD, user_id,
+                                         contest_id, 0, 0);
+      break;
+    case SSERV_OP_USER_SEL_DELETE_REG_ACTION:
+      r = userlist_clnt_change_registration(phr->userlist_clnt, user_id, contest_id, -2, 0, 0);
+      break;
+    case SSERV_OP_USER_SEL_CHANGE_REG_STATUS_ACTION:
+      r = userlist_clnt_change_registration(phr->userlist_clnt, user_id, contest_id, status, 0, 0);
+      break;
+    case SSERV_OP_USER_SEL_CHANGE_REG_FLAGS_ACTION:
+      if (clear_mask > 0 && r >= 0) {
+        r = userlist_clnt_change_registration(phr->userlist_clnt, user_id, contest_id, -1, 2, clear_mask);
+      }
+      if (set_mask > 0 && r >= 0) {
+        r = userlist_clnt_change_registration(phr->userlist_clnt, user_id, contest_id, -1, 1, set_mask);
+      }
+      if (toggle_mask > 0 && r >= 0) {
+        r = userlist_clnt_change_registration(phr->userlist_clnt, user_id, contest_id, -1, 3, toggle_mask);
+      }
+      break;
+    case SSERV_OP_USER_SEL_CREATE_REG_ACTION:
+      r = userlist_clnt_register_contest(phr->userlist_clnt, ULS_PRIV_REGISTER_CONTEST,
+                                         user_id, other_contest_id, 0, 0);
+      break;
+    case SSERV_OP_USER_SEL_CREATE_REG_AND_COPY_ACTION:
+      r = userlist_clnt_register_contest(phr->userlist_clnt, ULS_PRIV_REGISTER_CONTEST,
+                                         user_id, other_contest_id, 0, 0);
+      if (r >= 0) {
+        r = userlist_clnt_copy_user_info(phr->userlist_clnt, user_id, contest_id, other_contest_id);
+      }
+      break;
+    default:
+      abort();
+    }
+    if (r < 0) FAIL(S_ERR_DB_ERROR);
+  }
+
+done:
+  ss_redirect_2(out_f, phr, SSERV_OP_USER_BROWSE_PAGE, contest_id, group_id, 0, NULL);
+
+cleanup:
   userlist_free(&users->b); users = 0;
   bitset_free(&marked);
   xfree(marked_str);
