@@ -1103,6 +1103,8 @@ super_serve_op_USER_FILTER_CHANGE_ACTION(
     user_offset = phr->ss->user_offset;
     user_count = phr->ss->user_count;
   }
+  if (user_count <= 0) user_count = 20;
+  if (user_count > 200) user_count = 200;
 
   switch (phr->opcode) {
   case SSERV_OP_USER_FILTER_CHANGE_ACTION:
@@ -1112,6 +1114,8 @@ super_serve_op_USER_FILTER_CHANGE_ACTION(
     if (ss_cgi_param_int(phr, "user_count", &value) >= 0) {
       user_count = value;
     }
+    if (user_count <= 0) user_count = 20;
+    if (user_count > 200) user_count = 200;
     break;
 
   case SSERV_OP_USER_FILTER_FIRST_PAGE_ACTION:
@@ -1128,8 +1132,6 @@ super_serve_op_USER_FILTER_CHANGE_ACTION(
     break;
   }
 
-  if (user_count <= 0) user_count = 20;
-  if (user_count > 200) user_count = 200;
   if (user_offset + user_count > total_count) {
     user_offset = total_count - user_count;
   }
