@@ -555,10 +555,12 @@ super_serve_op_USER_BROWSE_PAGE(
           "");
   fprintf(out_f, "</script>\n");
 
-  fprintf(out_f, "<h1>%s</h1>\n<br/>\n", buf);
+  fprintf(out_f, "<h1>%s</h1>\n", buf);
 
   if (cnts) {
     fprintf(out_f, "<h2>Contest %d: %s</h2>", cnts->id, ARMOR(cnts->name));
+  } else {
+    fprintf(out_f, "<br/>\n");
   }
 
   print_top_navigation_links(log_f, out_f, phr, contest_id, group_id, 0, marked_str);
@@ -874,14 +876,16 @@ super_serve_op_USER_BROWSE_PAGE(
     cl = " class=\"b0\"";
     fprintf(out_f, "<table%s>", cl);
     fprintf(out_f, "<tr><td%s><b>Registration passwords:</b></td>", cl);
-    fprintf(out_f, "<td%s>View</td>", cl);
+    fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+            cl, SSERV_OP_USER_SEL_VIEW_PASSWD_REDIRECT, "View");
     fprintf(out_f, "<td%s>&nbsp;</td>", cl);
     fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
             cl, SSERV_OP_USER_SEL_RANDOM_PASSWD_PAGE, "Generate random");
     fprintf(out_f, "</tr>\n");
     if (!cnts->disable_team_password) {
       fprintf(out_f, "<tr><td%s><b>Contest passwords:</b></td>", cl);
-      fprintf(out_f, "<td%s>View</td>", cl);
+      fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+              cl, SSERV_OP_USER_SEL_VIEW_CNTS_PASSWD_REDIRECT, "View");
       fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
               cl, SSERV_OP_USER_SEL_CLEAR_CNTS_PASSWD_PAGE, "Clear");
       fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
@@ -1775,7 +1779,7 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_ACTION(
   int user_id = 0, user_count = 0;
   const struct userlist_user *u = 0;
   const struct userlist_contest *reg = 0;
-  int include_invisible = 0, include_banned = 0, include_locked = 0, include_disqualified = 0;
+  int include_privileged = 0, include_invisible = 0, include_banned = 0, include_locked = 0, include_disqualified = 0;
 
   ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   ss_cgi_param_int_opt(phr, "group_id", &group_id, 0);
@@ -1787,6 +1791,8 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_ACTION(
   }
   if (group_id < 0) group_id = 0;
 
+  ss_cgi_param_int_opt(phr, "include_privileged", &include_privileged, 0);
+  if (include_privileged != 1) include_privileged = 0;
   ss_cgi_param_int_opt(phr, "include_invisible", &include_invisible, 0);
   if (include_invisible != 1) include_invisible = 0;
   ss_cgi_param_int_opt(phr, "include_banned", &include_banned, 0);
@@ -1934,6 +1940,10 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_ACTION(
         continue;
       }
       if (contest_id > 0 && !userlist_get_user_contest(u, contest_id)) {
+        bitset_off(&marked, user_id);
+        continue;
+      }
+      if (!include_privileged && is_privileged(phr, cnts, u)) {
         bitset_off(&marked, user_id);
         continue;
       }
@@ -6775,6 +6785,253 @@ super_serve_op_USER_CLEAR_FIELD_ACTION(
 cleanup:
   userlist_free(&u->b); u = 0;
   return retval;
+}
+
+int
+super_serve_op_USER_SEL_VIEW_PASSWD_PAGE(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0, r = 0;
+  int contest_id = 0, group_id = 0;
+  unsigned char *marked_str = 0;
+  bitset_t marked = BITSET_INITIALIZER;
+  const struct contest_desc *cnts = 0;
+  opcap_t gcaps = 0, caps = 0;
+  unsigned char *xml_text = 0;
+  struct userlist_list *users = 0;
+  unsigned char buf[1024];
+  const unsigned char *s = 0;
+  const unsigned char *cl = 0;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  int user_id = 0, serial;
+  const struct userlist_user *u = 0;
+  const struct userlist_contest *reg = 0;
+  const struct userlist_user_info *ui = 0;
+  int allowed, passwd_method;
+  const unsigned char *passwd;
+
+  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  ss_cgi_param_int_opt(phr, "group_id", &group_id, 0);
+  marked_str = collect_marked_set(phr, &marked);
+
+  if (contest_id < 0) contest_id = 0;
+  if (contest_id > 0) {
+    if (contests_get(contest_id, &cnts) < 0 || !cnts) contest_id = 0;
+  }
+  if (group_id < 0) group_id = 0;
+
+  /* check permissions */
+  switch (phr->opcode) {
+  case SSERV_OP_USER_SEL_VIEW_PASSWD_PAGE:
+    get_global_caps(phr, &gcaps);
+    if (cnts) get_contest_caps(phr, cnts, &caps);
+    caps |= gcaps;
+    break;
+  case SSERV_OP_USER_SEL_VIEW_CNTS_PASSWD_PAGE:
+    if (!cnts) FAIL(S_ERR_INV_CONTEST);
+    if (cnts->disable_team_password) FAIL(S_ERR_INV_CONTEST);
+    get_global_caps(phr, &gcaps);
+    get_contest_caps(phr, cnts, &caps);
+    caps |= gcaps;
+    break;
+  default:
+    abort();
+  }
+  if (opcaps_check(caps, OPCAP_GET_USER) < 0) FAIL(S_ERR_PERM_DENIED);
+  if (opcaps_check(caps, OPCAP_PRIV_EDIT_PASSWD) < 0 && opcaps_check(caps, OPCAP_EDIT_PASSWD) < 0) FAIL(S_ERR_PERM_DENIED);
+
+  if (!phr->userlist_clnt) FAIL(S_ERR_DB_ERROR);
+  r = userlist_clnt_list_users_2(phr->userlist_clnt, ULS_LIST_ALL_USERS_4,
+                                 contest_id, group_id, marked_str, 0, 0,
+                                 &xml_text);
+
+  if (r < 0) FAIL(S_ERR_DB_ERROR);
+  users = userlist_parse_str(xml_text);
+  if (!users) FAIL(S_ERR_DB_ERROR);
+
+  switch (phr->opcode) {
+  case SSERV_OP_USER_SEL_VIEW_PASSWD_PAGE:
+    snprintf(buf, sizeof(buf), "serve-control: %s, view registration passwords", phr->html_name);
+    break;
+  case SSERV_OP_USER_SEL_VIEW_CNTS_PASSWD_PAGE:
+    snprintf(buf, sizeof(buf), "serve-control: %s, view contest passwords in contest %d", phr->html_name, contest_id);
+    break;
+  default:
+    abort();
+  }
+
+  ss_write_html_header(out_f, phr, buf, 0, NULL);
+
+  fprintf(out_f, "<h1>%s</h1>\n", buf);
+  if (cnts && cnts->name) {
+    fprintf(out_f, "<h2>Contest %d: %s</h2>\n", cnts->id, ARMOR(cnts->name));
+  } else {
+    fprintf(out_f, "<br/>\n");
+  }
+
+  print_top_navigation_links(log_f, out_f, phr, contest_id, group_id, 0, marked_str);
+
+  cl = " class=\"b1\"";
+  fprintf(out_f, "<table%s>", cl);
+  fprintf(out_f, "<tr>");
+  fprintf(out_f, "<th%s>%s</th><th%s>%s</th><th%s>%s</th>",
+          cl, "NN", cl, "User ID", cl, "Login");
+  s = "Registration password";
+  if (phr->opcode == SSERV_OP_USER_SEL_VIEW_CNTS_PASSWD_PAGE) s = "Contest password";
+  fprintf(out_f, "<th%s>%s</th>", cl, s);
+  if (cnts) {
+    fprintf(out_f, "<th%s>%s</th><th%s>%s</th><th%s>%s</th><th%s>%s</th><th%s>%s</th>",
+            cl, "Name", cl, "Status", cl, "Flags", cl, "Location", cl, "Printer name");
+  }
+  fprintf(out_f, "</tr>\n");
+  for (user_id = 1, serial = 0; user_id < marked.size; ++user_id) {
+    if (!bitset_get(&marked, user_id)) continue;
+    if (user_id >= users->user_map_size) continue;
+    if (!(u = users->user_map[user_id])) continue;
+    ui = u->cnts0;
+    reg = 0;
+    if (cnts) {
+      reg = userlist_get_user_contest(u, contest_id);
+      if (!reg) continue;
+    }
+    fprintf(out_f, "<tr><td%s>%d</td>", cl, ++serial);
+    fprintf(out_f, "<td%s>%d</td>", cl, user_id);
+    fprintf(out_f, "<td%s>%s</td>", cl, ARMOR(u->login));
+    fprintf(out_f, "<td%s>", cl);
+    allowed = 0;
+    passwd_method = -1;
+    passwd = 0;
+    switch (phr->opcode) {
+    case SSERV_OP_USER_SEL_VIEW_PASSWD_PAGE:
+      if (is_globally_privileged(phr, u)) {
+        if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_PASSWD) >= 0) allowed = 1;
+      } else if (cnts && is_contest_privileged(cnts, u)) {
+        if (opcaps_check(caps, OPCAP_PRIV_EDIT_PASSWD) >= 0) allowed = 1;
+      } else {
+        if (opcaps_check(caps, OPCAP_EDIT_PASSWD) >= 0) allowed = 1;
+      }
+      if (allowed) {
+        passwd_method = u->passwd_method;
+        passwd = u->passwd;
+      }
+      break;
+    case SSERV_OP_USER_SEL_VIEW_CNTS_PASSWD_PAGE:
+      if (is_globally_privileged(phr, u)) {
+        if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_PASSWD) >= 0) allowed = 1;
+      } else if (is_contest_privileged(cnts, u)) {
+        if (opcaps_check(caps, OPCAP_PRIV_EDIT_PASSWD) >= 0) allowed = 1;
+      } else {
+        if (opcaps_check(caps, OPCAP_EDIT_PASSWD) >= 0) allowed = 1;
+      }
+      if (allowed && ui) {
+        passwd_method = ui->team_passwd_method;
+        passwd = ui->team_passwd;
+      }
+      break;
+    default:
+      break;
+    }
+    if (!allowed) {
+      fprintf(out_f, "<i>hidden</i>");
+    } else if (passwd_method < 0 || !passwd) {
+      fprintf(out_f, "<i>null</i>");
+    } else if (passwd_method == USERLIST_PWD_SHA1) {
+      fprintf(out_f, "<i>changed</i>");
+    } else if (passwd_method == USERLIST_PWD_PLAIN) {
+      fprintf(out_f, "<tt>%s</tt>", ARMOR(passwd));
+    } else {
+      fprintf(out_f, "<i>unknown</i>");
+    }
+    fprintf(out_f, "</td>");
+    if (cnts) {
+      s = u->login;
+      if (ui && ui->name && *ui->name) s = ui->name;
+      fprintf(out_f, "<td%s>%s</td>", cl, ARMOR(s));
+      if (cnts && reg) {
+        r = reg->status;
+        if (r < 0 || r >= USERLIST_REG_LAST) r = USERLIST_REG_LAST;
+        fprintf(out_f, "<td%s>%s</td>", cl, reg_status_strs[r]);
+      } else {
+        fprintf(out_f, "<td%s>&nbsp;</td>", cl);
+      }
+      fprintf(out_f, "<td%s>", cl);
+      s = "";
+      if (is_privileged(phr, cnts, u)) {
+        fprintf(out_f, "%s%s", s, "privileged");
+        s = ", ";
+      }
+      if (cnts && reg) {
+        if ((reg->flags & USERLIST_UC_INVISIBLE)) {
+          fprintf(out_f, "%s%s", s, "invisible");
+          s = ", ";
+        }
+        if ((reg->flags & USERLIST_UC_BANNED)) {
+          fprintf(out_f, "%s%s", s, "banned");
+          s = ", ";
+        }
+        if ((reg->flags & USERLIST_UC_LOCKED)) {
+          fprintf(out_f, "%s%s", s, "locked");
+          s = ", ";
+        }
+        if ((reg->flags & USERLIST_UC_DISQUALIFIED)) {
+          fprintf(out_f, "%s%s", s, "disqualified");
+          s = ", ";
+        }
+      }
+      if (!*s) fprintf(out_f, "&nbsp;");
+      fprintf(out_f, "</td>");
+      s = "";
+      if (ui && ui->location) s = ui->location;
+      fprintf(out_f, "<td%s>%s</td>", cl, ARMOR(s));
+      s = "";
+      if (ui && ui->printer_name) s = ui->printer_name;
+      fprintf(out_f, "<td%s>%s</td>", cl, ARMOR(s));
+    }
+    fprintf(out_f, "</tr>\n");
+  }
+  fprintf(out_f, "</table>\n");
+
+  ss_write_html_footer(out_f);
+
+cleanup:
+  html_armor_free(&ab);
+  userlist_free(&users->b); users = 0;
+  xfree(xml_text);
+  bitset_free(&marked);
+  xfree(marked_str);
+  return retval;
+}
+
+int
+super_serve_op_USER_SEL_VIEW_PASSWD_REDIRECT(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int contest_id = 0, group_id = 0, next_op = 0;
+  bitset_t marked = BITSET_INITIALIZER;
+  unsigned char *marked_str = 0;
+
+  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  ss_cgi_param_int_opt(phr, "group_id", &group_id, 0);
+  marked_str = collect_marked_set(phr, &marked);
+  switch (phr->opcode) {
+  case SSERV_OP_USER_SEL_VIEW_PASSWD_REDIRECT:
+    next_op = SSERV_OP_USER_SEL_VIEW_PASSWD_PAGE;
+    break;
+  case SSERV_OP_USER_SEL_VIEW_CNTS_PASSWD_REDIRECT:
+    next_op = SSERV_OP_USER_SEL_VIEW_CNTS_PASSWD_PAGE;
+    break;
+  default:
+    abort();
+  }
+  ss_redirect_2(out_f, phr, next_op, contest_id, group_id, 0, marked_str);
+
+  xfree(marked_str);
+  bitset_free(&marked);
+  return 0;
 }
 
 int
