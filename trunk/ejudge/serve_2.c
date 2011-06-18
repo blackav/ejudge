@@ -1615,7 +1615,7 @@ serve_read_compile_packet(
   struct compile_reply_packet *comp_pkt = 0;
   long report_size = 0;
   unsigned char errmsg[1024] = { 0 };
-  unsigned char *team_name = 0;
+  //unsigned char *team_name = 0;
   struct compile_run_extra *comp_extra = 0;
   struct section_problem_data *prob = 0;
   int arch_flags;
@@ -1740,10 +1740,12 @@ serve_read_compile_packet(
     goto report_check_failed;
   }
   */
+  /*
   if (!(team_name = teamdb_get_name(state->teamdb_state, re.user_id))) {
     snprintf(errmsg, sizeof(errmsg), "invalid team %d\n", re.user_id);
     goto report_check_failed;
   }
+  */
   if (prob->disable_testing && prob->enable_compilation > 0) {
     if (run_change_status_4(state->runlog_state, comp_pkt->run_id,
                             RUN_ACCEPTED) < 0)

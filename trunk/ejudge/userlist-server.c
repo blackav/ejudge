@@ -5020,9 +5020,7 @@ cmd_register_contest_2(
 
   default_check_user_reg_data(data->user_id, data->contest_id);
   r = default_get_contest_reg(data->user_id, data->contest_id);
-  if (r && r->status == USERLIST_REG_OK) {
-    update_userlist_table(data->contest_id);
-  }
+  update_userlist_table(data->contest_id);
   info("%s -> OK", logbuf);
   send_reply(p, ULS_OK);
   return;
@@ -5070,7 +5068,7 @@ cmd_priv_register_contest(
     return;
   }
 
-  if (r->status == USERLIST_REG_OK) {
+  if (r && r->status == USERLIST_REG_OK) {
     update_userlist_table(data->contest_id);
   }
   info("%s -> OK", logbuf);
@@ -5126,6 +5124,7 @@ cmd_delete_member(struct client_state *p, int pkt_len,
     return send_reply(p, -ULS_ERR_UNSPECIFIED_ERROR);
   }
 
+  update_userlist_table(data->contest_id);
   if (cloned_flag) reply_code = ULS_CLONED;
   info("%s -> OK", logbuf);
   send_reply(p, reply_code);
