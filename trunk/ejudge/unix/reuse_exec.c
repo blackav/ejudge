@@ -2282,7 +2282,7 @@ linux_set_secure_exec_supported_flag(void)
 
   if (!pid) {
     if (ptrace(0x4281, 0, 0, 0) < 0) _exit(1);
-    if (dup(0) >= 0) _exit(1);
+    //if (dup(0) >= 0) _exit(1);
     _exit(0);
   }
 
