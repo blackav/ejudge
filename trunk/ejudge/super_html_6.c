@@ -617,6 +617,19 @@ super_serve_op_USER_BROWSE_PAGE(
   fprintf(out_f, "</tr></table>\n");
   //fprintf(out_f, "</form>\n");
 
+  cl = " class=\"b0\"";
+  fprintf(out_f, "<table%s><tr>", cl);
+  fprintf(out_f, "<td%s><b>%s:</b></td>", cl, "Jump to contest");
+  hbuf[0] = 0;
+  if (contest_id > 0) {
+    snprintf(hbuf, sizeof(hbuf), "%d", contest_id);
+  }
+  fprintf(out_f, "<td%s>%s</td>", cl,
+          html_input_text(buf, sizeof(buf), "jump_contest_id", 10, "%s", hbuf));
+  fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+          cl, SSERV_OP_USER_JUMP_CONTEST_ACTION, "Jump");
+  fprintf(out_f, "</tr></table>\n");
+
   r = userlist_clnt_list_users_2(phr->userlist_clnt, ULS_LIST_ALL_USERS_2,
                                  contest_id, group_id, user_filter, user_offset, user_count,
                                  &xml_text);
@@ -1146,6 +1159,34 @@ cleanup:
   xfree(marked_str);
   if (extra_f) fclose(extra_f);
   xfree(extra_t);
+  return retval;
+}
+
+int
+super_serve_op_USER_JUMP_CONTEST_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  int contest_id = 0, group_id = 0, jump_contest_id = 0;
+  const struct contest_desc *cnts = 0;
+
+  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  ss_cgi_param_int_opt(phr, "group_id", &group_id, 0);
+  ss_cgi_param_int_opt(phr, "jump_contest_id", &jump_contest_id, 0);
+
+  if (jump_contest_id < 0) jump_contest_id = 0;
+  if (jump_contest_id > 0 && (contests_get(jump_contest_id, &cnts) < 0 || !cnts)) {
+    cnts = 0;
+    jump_contest_id = contest_id;
+    if (jump_contest_id > 0 && (contests_get(jump_contest_id, &cnts) < 0 || !cnts)) {
+      jump_contest_id = 0;
+    }
+  }
+
+  ss_redirect_2(out_f, phr, SSERV_OP_USER_BROWSE_PAGE, jump_contest_id, group_id, 0, NULL);
+
   return retval;
 }
 
