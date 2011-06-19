@@ -7255,11 +7255,301 @@ cleanup:
 }
 
 int
-super_serve_op_set_group_filter(
+super_serve_GROUP_FILTER_CHANGE_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int r, value, retval = 0;
+  opcap_t gcaps = 0;
+  long long total_count = 0;
+  int group_offset = 0;
+  int group_count = 0;
+
+  if (get_global_caps(phr, &gcaps) < 0 && opcaps_check(gcaps, OPCAP_LIST_USERS) < 0) {
+    FAIL(S_ERR_PERM_DENIED);
+  }
+
+  if (!phr->userlist_clnt) {
+    goto cleanup;
+  }
+  if ((r = userlist_clnt_get_count(phr->userlist_clnt, ULS_GET_GROUP_COUNT,
+                                   0, 0, 0, &total_count)) < 0) {
+    err("set_group_filter: get_count failed: %d", -r);
+    goto cleanup;
+  }
+  if (total_count <= 0) goto cleanup;
+  if (phr->ss->group_filter_set) {
+    group_offset = phr->ss->group_offset;
+    group_count = phr->ss->group_count;
+  }
+  if (group_count <= 0) group_count = 20;
+  if (group_count > 200) group_count = 200;
+
+  switch (phr->opcode) {
+  case SSERV_OP_GROUP_FILTER_CHANGE_ACTION:
+    if (ss_cgi_param_int(phr, "group_offset", &value) >= 0) {
+      group_offset = value;
+    }
+    if (ss_cgi_param_int(phr, "group_count", &value) >= 0) {
+      group_count = value;
+    }
+    if (group_count <= 0) group_count = 20;
+    if (group_count > 200) group_count = 200;
+    break;
+
+  case SSERV_OP_GROUP_FILTER_FIRST_PAGE_ACTION:
+    group_offset = 0;
+    break;
+  case SSERV_OP_GROUP_FILTER_PREV_PAGE_ACTION:
+    group_offset -= group_count;
+    break;
+  case SSERV_OP_GROUP_FILTER_NEXT_PAGE_ACTION:
+    group_offset += group_count;
+    break;
+  case SSERV_OP_GROUP_FILTER_LAST_PAGE_ACTION:
+    group_offset = group_count;
+    break;
+  }
+
+  if (group_offset + group_count > total_count) {
+    group_offset = total_count - group_count;
+  }
+  if (group_offset < 0) group_offset = 0;
+  phr->ss->group_filter_set = 1;
+  phr->ss->group_offset = group_offset;
+  phr->ss->group_count = group_count;
+
+cleanup:
+  ss_redirect(out_f, phr, SSERV_OP_GROUP_BROWSE_PAGE, NULL);
+  return retval;
+}
+
+int
+super_serve_op_GROUP_CREATE_PAGE(
         FILE *log_f,
         FILE *out_f,
         struct super_http_request_info *phr)
 {
   int retval = 0;
+  unsigned char buf[1024];
+  const unsigned char *cl = 0;
+  opcap_t caps = 0;
+
+  if (get_global_caps(phr, &caps) < 0 || opcaps_check(caps, OPCAP_CREATE_USER) < 0) {
+    FAIL(S_ERR_PERM_DENIED);
+  }
+
+  snprintf(buf, sizeof(buf), "serve-control: %s, create a new group",
+           phr->html_name);
+  ss_write_html_header(out_f, phr, buf, 0, NULL);
+
+  fprintf(out_f, "<h1>%s</h1>\n", buf);
+
+  print_top_navigation_links(log_f, out_f, phr, 0, 0, 0, NULL);
+
+  html_start_form(out_f, 1, phr->self_url, "");
+  html_hidden(out_f, "SID", "%016llx", phr->session_id);
+  html_hidden(out_f, "action", "%d", SSERV_CMD_HTTP_REQUEST);
+  html_hidden(out_f, "op", "%d", SSERV_OP_GROUP_CREATE_ACTION);
+
+  cl = " class=\"b0\"";
+  fprintf(out_f, "<table%s>\n", cl);
+  fprintf(out_f, "<tr><td%s><b>%s*:</b></td><td%s><input type=\"text\" size=\"80\" name=\"group_name\" /></td></tr>\n",
+          cl, "Group Name", cl);
+  fprintf(out_f, "<tr><td%s><b>%s*:</b></td><td%s><input type=\"text\" size=\"80\" name=\"description\" /></td></tr>\n",
+          cl, "Description", cl);
+  fprintf(out_f, "<tr><td%s>&nbsp;</td><td%s><input type=\"submit\" name=\"submit\" value=\"%s\" /></td></tr>\n",
+          cl, cl, "Create a group");
+  fprintf(out_f, "</table>\n");
+  fprintf(out_f, "</form>\n");
+
+  ss_write_html_footer(out_f);
+
+cleanup:
   return retval;
+}
+
+int
+super_serve_op_GROUP_MODIFY_PAGE(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0, r;
+  unsigned char *xml_text = 0;
+  struct userlist_list *users = 0;
+  int group_id = 0;
+  struct userlist_group *g = 0;
+  unsigned char buf[1024];
+  const unsigned char *cl = 0;
+  const unsigned char *s;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  opcap_t caps = 0;
+
+  if (get_global_caps(phr, &caps) < 0 || opcaps_check(caps, OPCAP_EDIT_USER) < 0) {
+    FAIL(S_ERR_PERM_DENIED);
+  }
+
+  ss_cgi_param_int_opt(phr, "group_id", &group_id, 0);
+  if (group_id <= 0) FAIL(S_ERR_INV_GROUP_ID);
+
+  if (!phr->userlist_clnt) FAIL(S_ERR_DB_ERROR);
+  r = userlist_clnt_list_all_users(phr->userlist_clnt, ULS_LIST_GROUP_USERS,
+                                   group_id, &xml_text);
+  if (r < 0) FAIL(S_ERR_DB_ERROR);
+  users = userlist_parse_str(xml_text);
+  if (!users) FAIL(S_ERR_DB_ERROR);
+  if (group_id >= users->group_map_size || !(g = users->group_map[group_id]))
+    FAIL(S_ERR_INV_GROUP_ID);
+
+  snprintf(buf, sizeof(buf), "serve-control: %s, modifying group %d",
+           phr->html_name, group_id);
+  ss_write_html_header(out_f, phr, buf, 0, NULL);
+
+  fprintf(out_f, "<h1>%s</h1>\n", buf);
+
+  print_top_navigation_links(log_f, out_f, phr, 0, group_id, 0, NULL);
+
+  html_start_form(out_f, 1, phr->self_url, "");
+  html_hidden(out_f, "SID", "%016llx", phr->session_id);
+  html_hidden(out_f, "action", "%d", SSERV_CMD_HTTP_REQUEST);
+  html_hidden(out_f, "group_id", "%d", group_id);
+
+  cl = " class=\"b0\"";
+  fprintf(out_f, "<table%s>\n", cl);
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%d</td></tr>\n",
+          cl, "Group Id", cl, group_id);
+  s = g->group_name;
+  if (!s) s = "";
+  fprintf(out_f, "<tr><td%s><b>%s*:</b></td><td%s><input type=\"text\" size=\"80\" name=\"group_name\" value=\"%s\" /></td></tr>\n",
+          cl, "Group Name", cl, ARMOR(s));
+  s = g->description;
+  if (!s) s = "";
+  fprintf(out_f, "<tr><td%s><b>%s*:</b></td><td%s><input type=\"text\" size=\"80\" name=\"description\" value=\"%s\" /></td></tr>\n",
+          cl, "Description", cl, ARMOR(s));
+  fprintf(out_f, "<tr><td%s colspan=\"2\">", cl);
+  fprintf(out_f, "<input type=\"submit\" name=\"op_%d\" value=\"%s\" />",
+          SSERV_OP_GROUP_CANCEL_ACTION, "Cancel");
+  fprintf(out_f, "&nbsp;<input type=\"submit\" name=\"op_%d\" value=\"%s\" />",
+          SSERV_OP_GROUP_DELETE_PAGE_ACTION, "Delete the group!");
+  fprintf(out_f, "&nbsp;<input type=\"submit\" name=\"op_%d\" value=\"%s\" />",
+          SSERV_OP_GROUP_MODIFY_ACTION, "Save changes");
+  fprintf(out_f, "</td></tr>\n");
+  fprintf(out_f, "</table>\n");
+  fprintf(out_f, "</form>\n");
+
+  ss_write_html_footer(out_f);
+
+cleanup:
+  html_armor_free(&ab);
+  userlist_free(&users->b); users = 0;
+  xfree(xml_text);
+  return retval;
+}
+
+int
+super_serve_op_GROUP_DELETE_PAGE(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0, r;
+  unsigned char *xml_text = 0;
+  struct userlist_list *users = 0;
+  int group_id = 0;
+  struct userlist_group *g = 0;
+  unsigned char buf[1024];
+  const unsigned char *cl = 0;
+  const unsigned char *s;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  opcap_t caps = 0;
+
+  if (get_global_caps(phr, &caps) < 0 || opcaps_check(caps, OPCAP_EDIT_USER) < 0) {
+    FAIL(S_ERR_PERM_DENIED);
+  }
+
+  ss_cgi_param_int_opt(phr, "group_id", &group_id, 0);
+  if (group_id <= 0) FAIL(S_ERR_INV_GROUP_ID);
+
+  if (!phr->userlist_clnt) FAIL(S_ERR_DB_ERROR);
+  r = userlist_clnt_list_all_users(phr->userlist_clnt, ULS_LIST_GROUP_USERS,
+                                   group_id, &xml_text);
+  if (r < 0) FAIL(S_ERR_DB_ERROR);
+  users = userlist_parse_str(xml_text);
+  if (!users) FAIL(S_ERR_DB_ERROR);
+  if (group_id >= users->group_map_size || !(g = users->group_map[group_id]))
+    FAIL(S_ERR_INV_GROUP_ID);
+
+  snprintf(buf, sizeof(buf), "serve-control: %s, modifying group %d",
+           phr->html_name, group_id);
+  ss_write_html_header(out_f, phr, buf, 0, NULL);
+
+  fprintf(out_f, "<h1>%s</h1>\n", buf);
+
+  print_top_navigation_links(log_f, out_f, phr, 0, group_id, 0, NULL);
+
+  html_start_form(out_f, 1, phr->self_url, "");
+  html_hidden(out_f, "SID", "%016llx", phr->session_id);
+  html_hidden(out_f, "action", "%d", SSERV_CMD_HTTP_REQUEST);
+  html_hidden(out_f, "group_id", "%d", group_id);
+
+  cl = " class=\"b0\"";
+  fprintf(out_f, "<table%s>\n", cl);
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%d</td></tr>\n",
+          cl, "Group Id", cl, group_id);
+  s = g->group_name;
+  if (!s) s = "";
+  fprintf(out_f, "<tr><td%s><b>%s*:</b></td><td%s>%s</td></tr>\n",
+          cl, "Group Name", cl, ARMOR(s));
+  s = g->description;
+  if (!s) s = "";
+  fprintf(out_f, "<tr><td%s><b>%s*:</b></td><td%s>%s</td></tr>\n",
+          cl, "Description", cl, ARMOR(s));
+  fprintf(out_f, "<tr><td%s colspan=\"2\">", cl);
+  fprintf(out_f, "<input type=\"submit\" name=\"op_%d\" value=\"%s\" />",
+          SSERV_OP_GROUP_CANCEL_ACTION, "Cancel");
+  fprintf(out_f, "&nbsp;<input type=\"submit\" name=\"op_%d\" value=\"%s\" />",
+          SSERV_OP_GROUP_DELETE_ACTION, "Delete the group!");
+  fprintf(out_f, "&nbsp;<input type=\"submit\" name=\"op_%d\" value=\"%s\" />",
+          SSERV_OP_GROUP_MODIFY_PAGE_ACTION, "Modify the group");
+  fprintf(out_f, "</td></tr>\n");
+  fprintf(out_f, "</table>\n");
+  fprintf(out_f, "</form>\n");
+
+  ss_write_html_footer(out_f);
+
+cleanup:
+  html_armor_free(&ab);
+  userlist_free(&users->b); users = 0;
+  xfree(xml_text);
+  return retval;
+}
+
+int
+super_serve_op_GROUP_DELETE_PAGE_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int group_id = 0;
+
+  ss_cgi_param_int_opt(phr, "group_id", &group_id, 0);
+  if (group_id <= 0) group_id = 0;
+  ss_redirect_2(out_f, phr, SSERV_OP_GROUP_DELETE_PAGE, 0, group_id, 0, 0);
+  return 0;
+}
+
+int
+super_serve_op_GROUP_MODIFY_PAGE_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int group_id = 0;
+
+  ss_cgi_param_int_opt(phr, "group_id", &group_id, 0);
+  if (group_id <= 0) group_id = 0;
+  ss_redirect_2(out_f, phr, SSERV_OP_GROUP_MODIFY_PAGE, 0, group_id, 0, 0);
+  return 0;
 }
