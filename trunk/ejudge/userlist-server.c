@@ -9952,6 +9952,51 @@ cmd_list_all_users_4(
   bitset_free(&marked);
 }
 
+static void
+cmd_get_group_info(
+        struct client_state *p,
+        int pkt_len,
+        struct userlist_pk_map_contest *data)
+{
+  unsigned char logbuf[1024];
+  const struct userlist_group *grp;
+  char *xml_ptr = 0;
+  size_t xml_size = 0;
+  FILE *fout = 0;
+  struct userlist_pk_xml_data *out = 0;
+  size_t out_size;
+
+  snprintf(logbuf, sizeof(logbuf), "GET_GROUP_INFO: %d, %d",
+           p->user_id, data->contest_id);
+
+  if (is_admin(p, logbuf) < 0) return;
+
+  grp = plugin_call(get_group, data->contest_id);
+  if (!grp) {
+    err("%s -> invalid group %d", logbuf, data->contest_id);
+    send_reply(p, -ULS_ERR_BAD_GROUP_ID);
+    return;
+  }
+
+  fout = open_memstream(&xml_ptr, &xml_size);
+  userlist_write_xml_header(fout);
+  userlist_write_groups_header(fout);
+  userlist_unparse_usergroup(fout, grp, "      ", "\n");
+  userlist_write_groups_footer(fout);
+  userlist_write_xml_footer(fout);
+  fclose(fout); fout = 0;
+
+  out_size = sizeof(*out) + xml_size;
+  out = alloca(out_size);
+  memset(out, 0, out_size);
+  out->reply_id = ULS_XML_DATA;
+  out->info_len = xml_size;
+  memcpy(out->data, xml_ptr, xml_size + 1);
+  xfree(xml_ptr); xml_ptr = 0;
+  enqueue_reply_to_client(p, out_size, out);
+  info("%s -> OK, size = %zu", logbuf, xml_size); 
+}
+
 static void (*cmd_table[])() =
 {
   [ULS_REGISTER_NEW] =          cmd_register_new,
@@ -10051,6 +10096,7 @@ static void (*cmd_table[])() =
   [ULS_NEXT_USER] =             cmd_next_user,
   [ULS_LIST_ALL_USERS_3] =      cmd_list_all_users_3,
   [ULS_LIST_ALL_USERS_4] =      cmd_list_all_users_4,
+  [ULS_GET_GROUP_INFO] =        cmd_get_group_info,
 
   [ULS_LAST_CMD] 0
 };
@@ -10154,6 +10200,7 @@ static int (*check_table[])() =
   [ULS_NEXT_USER] =             check_pk_list_users_2,
   [ULS_LIST_ALL_USERS_3] =      check_pk_list_users_2,
   [ULS_LIST_ALL_USERS_4] =      check_pk_list_users_2,
+  [ULS_GET_GROUP_INFO] =        check_pk_map_contest,
 
   [ULS_LAST_CMD] 0
 };
