@@ -880,6 +880,24 @@ super_serve_op_USER_BROWSE_PAGE(
   fprintf(out_f, "</tr></table>\n");
   fprintf(out_f, "</div>");
 
+  fprintf(out_f, "<div id=\"ShowGroupMenu\">");
+  fprintf(out_f, "<a onclick=\"setOperationVisibility('Group', true)\">[%s]</a>\n",
+          "Group operations");
+  fprintf(out_f, "</div>");
+  fprintf(out_f, "<div style=\"display: none;\" id=\"HideGroupMenu\">");
+  fprintf(out_f, "<a onclick=\"setOperationVisibility('Group', false)\">[%s]</a><br/>\n",
+          "Hide group operations");
+  fprintf(out_f, "<table%s>", cl);
+  fprintf(out_f, "<tr><td%s colspan=\"2\"><b>Group ID:</b> <input type=\"text\" name=\"other_group_id\" /></td></tr>\n", cl);
+  fprintf(out_f, "<tr><td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+          cl, SSERV_OP_USER_SEL_ADD_TO_GROUP_PAGE, "Add users to another group");
+  if (group_id > 0) {
+    fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+            cl, SSERV_OP_USER_SEL_REMOVE_FROM_GROUP_PAGE, "Remove from group");
+  }
+  fprintf(out_f, "</tr></table>\n");
+  fprintf(out_f, "</div>");
+
   if (cnts) {
     fprintf(out_f, "<div id=\"ShowPasswordMenu\">");
     fprintf(out_f, "<a onclick=\"setOperationVisibility('Password', true)\">[%s]</a>\n", "Password operations");
@@ -7395,7 +7413,7 @@ super_serve_op_GROUP_MODIFY_PAGE(
   if (group_id <= 0) FAIL(S_ERR_INV_GROUP_ID);
 
   if (!phr->userlist_clnt) FAIL(S_ERR_DB_ERROR);
-  r = userlist_clnt_list_all_users(phr->userlist_clnt, ULS_LIST_GROUP_USERS,
+  r = userlist_clnt_list_all_users(phr->userlist_clnt, ULS_GET_GROUP_INFO,
                                    group_id, &xml_text);
   if (r < 0) FAIL(S_ERR_DB_ERROR);
   users = userlist_parse_str(xml_text);
@@ -7473,7 +7491,7 @@ super_serve_op_GROUP_DELETE_PAGE(
   if (group_id <= 0) FAIL(S_ERR_INV_GROUP_ID);
 
   if (!phr->userlist_clnt) FAIL(S_ERR_DB_ERROR);
-  r = userlist_clnt_list_all_users(phr->userlist_clnt, ULS_LIST_GROUP_USERS,
+  r = userlist_clnt_list_all_users(phr->userlist_clnt, ULS_GET_GROUP_INFO,
                                    group_id, &xml_text);
   if (r < 0) FAIL(S_ERR_DB_ERROR);
   users = userlist_parse_str(xml_text);
