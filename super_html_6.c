@@ -499,9 +499,9 @@ super_serve_op_USER_BROWSE_PAGE(
     // this user can view the full user list and the user list for any contest
   } else if (!cnts) {
     // user without global OPCAP_LIST_USERS capability cannot view the full user list
-    FAIL(-S_ERR_PERM_DENIED);
+    FAIL(S_ERR_PERM_DENIED);
   } else if (get_contest_caps(phr, cnts, &caps) < 0 || opcaps_check(caps, OPCAP_LIST_USERS) < 0) {
-    FAIL(-S_ERR_PERM_DENIED);
+    FAIL(S_ERR_PERM_DENIED);
   }
 
   hbuf[0] = 0;
@@ -1098,9 +1098,9 @@ super_serve_op_USER_FILTER_CHANGE_ACTION(
     // this user can view the full user list and the user list for any contest
   } else if (!cnts) {
     // user without global OPCAP_LIST_USERS capability cannot view the full user list
-    FAIL(-S_ERR_PERM_DENIED);
+    FAIL(S_ERR_PERM_DENIED);
   } else if (get_contest_caps(phr, cnts, &caps) < 0 || opcaps_check(caps, OPCAP_LIST_USERS) < 0) {
-    FAIL(-S_ERR_PERM_DENIED);
+    FAIL(S_ERR_PERM_DENIED);
   }
 
   if (!phr->userlist_clnt) {
@@ -7078,12 +7078,179 @@ super_serve_op_USER_SEL_VIEW_PASSWD_REDIRECT(
 }
 
 int
-super_serve_op_browse_groups(
+super_serve_op_GROUP_BROWSE_PAGE(
         FILE *log_f,
         FILE *out_f,
         struct super_http_request_info *phr)
 {
-  int retval = 0;
+  int retval = 0, r;
+  const struct userlist_group *g;
+  const unsigned char *cl;
+  int min_group_id = INT_MAX;
+  int max_group_id = 0;
+  int group_id, serial;
+  struct userlist_list *users = 0;
+  unsigned char *xml_text = 0;
+  unsigned char hbuf[1024];
+  unsigned char buf[1024];
+  const unsigned char *group_filter = 0;
+  int group_offset = 0;
+  int group_count = 20;
+  const unsigned char *s;
+  opcap_t gcaps = 0;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+
+  if (get_global_caps(phr, &gcaps) < 0 && opcaps_check(gcaps, OPCAP_LIST_USERS) < 0) {
+    FAIL(S_ERR_PERM_DENIED);
+  }
+
+  snprintf(buf, sizeof(buf), "serve-control: %s, browsing groups", phr->html_name);
+  ss_write_html_header(out_f, phr, buf, 0, NULL);
+  fprintf(out_f, "<h1>%s</h1>\n", buf);
+
+  print_top_navigation_links(log_f, out_f, phr, 0, 0, 0, NULL);
+
+  if (!phr->userlist_clnt) {
+    fprintf(out_f, "<hr/><h2>Error</h2>\n");
+    fprintf(out_f, "<pre>No connection to the server!</pre>\n");
+    goto do_footer;
+  }
+
+  if (phr->ss->group_filter_set) {
+    group_filter = phr->ss->group_filter;
+    group_offset = phr->ss->group_offset;
+    group_count = phr->ss->group_count;
+  }
+
+  html_start_form(out_f, 1, phr->self_url, "");
+  html_hidden(out_f, "SID", "%016llx", phr->session_id);
+  html_hidden(out_f, "action", "%d", SSERV_CMD_HTTP_REQUEST);
+  fprintf(out_f, "<table class=\"b0\">");
+  s = group_filter;
+  if (!s) s = "";
+  fprintf(out_f, "<!--<tr><td class=\"b0\">Filter:</td><td class=\"b0\">%s</td></tr>-->",
+          html_input_text(buf, sizeof(buf), "group_filter", 50, "%s", ARMOR(s)));
+  hbuf[0] = 0;
+  if (phr->ss->group_filter_set) {
+    snprintf(hbuf, sizeof(hbuf), "%d", group_offset);
+  }
+  fprintf(out_f, "<tr><td class=\"b0\">Offset:</td><td class=\"b0\">%s</td></tr>",
+          html_input_text(buf, sizeof(buf), "group_offset", 10, "%s", hbuf));
+  hbuf[0] = 0;
+  if (phr->ss->group_filter_set) {
+    snprintf(hbuf, sizeof(hbuf), "%d", group_count);
+  }
+  fprintf(out_f, "<tr><td class=\"b0\">Count:</td><td class=\"b0\">%s</td></tr>",
+          html_input_text(buf, sizeof(buf), "group_count", 10, "%s", hbuf));
+  fprintf(out_f, "<tr><td class=\"b0\">&nbsp;</td><td class=\"b0\"><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td></tr>",
+          SSERV_OP_GROUP_FILTER_CHANGE_ACTION, "Change");
+  fprintf(out_f, "</table>");
+  fprintf(out_f, "<table class=\"b0\"><tr>");
+  fprintf(out_f, "<td class=\"b0\"><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>", SSERV_OP_GROUP_FILTER_FIRST_PAGE_ACTION, "&lt;&lt;");
+  fprintf(out_f, "<td class=\"b0\"><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>", SSERV_OP_GROUP_FILTER_PREV_PAGE_ACTION, "&lt;");
+  fprintf(out_f, "<td class=\"b0\"><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>", SSERV_OP_GROUP_FILTER_NEXT_PAGE_ACTION, "&gt;");
+  fprintf(out_f, "<td class=\"b0\"><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>", SSERV_OP_GROUP_FILTER_LAST_PAGE_ACTION, "&gt;&gt;");
+  fprintf(out_f, "</tr></table>\n");
+
+  r = userlist_clnt_list_users_2(phr->userlist_clnt, ULS_LIST_ALL_GROUPS_2,
+                                 0, 0, group_filter, group_offset, group_count,
+                                 &xml_text);
+  if (r < 0) {
+    fprintf(out_f, "</form>\n");
+    fprintf(out_f, "<hr/><h2>Error</h2>\n");
+    fprintf(out_f, "<pre>Cannot get user list: %s</pre>\n",
+            userlist_strerror(-r));
+    goto do_footer;
+  }
+  users = userlist_parse_str(xml_text);
+  if (!users) {
+    fprintf(out_f, "</form>\n");
+    fprintf(out_f, "<hr/><h2>Error</h2>\n");
+    fprintf(out_f, "<pre>XML parse error</pre>\n");
+    goto do_footer;
+  }
+
+  for (group_id = 1; group_id < users->group_map_size; ++group_id) {
+    if (!(g = users->group_map[group_id])) continue;
+    if (group_id >= max_group_id) max_group_id = group_id;
+    if (group_id <= min_group_id) min_group_id = group_id;
+  }
+  html_hidden(out_f, "min_group_id", "%d", min_group_id);
+  html_hidden(out_f, "max_group_id", "%d", max_group_id);
+
+  cl = " class=\"b1\"";
+  fprintf(out_f, "<table%s>\n", cl);
+  fprintf(out_f, "<tr>");
+  fprintf(out_f, "<th%s>NN</th>", cl);
+  fprintf(out_f, "<th%s>Group Id</th>", cl);
+  fprintf(out_f, "<th%s>Group Name</th>", cl);
+  fprintf(out_f, "<th%s>Description</th>", cl);
+  fprintf(out_f, "<th%s>Operations</th>", cl);
+  fprintf(out_f, "</tr>\n");
+
+  serial = group_offset - 1;
+  for (group_id = 1; group_id < users->group_map_size; ++group_id) {
+    if (!(g = users->group_map[group_id])) continue;
+
+    ++serial;
+    fprintf(out_f, "<tr>\n");
+    fprintf(out_f, "<td class=\"b1\">%d</td>", serial);
+    fprintf(out_f, "<td class=\"b1\">%d</td>", group_id);
+    if (!g->group_name) {
+      fprintf(out_f, "<td class=\"b1\"><i>NULL</i></td>");
+    } else {
+      fprintf(out_f, "<td class=\"b1\"><tt>%s</tt></td>", ARMOR(g->group_name));
+    }
+    if (!g->description) {
+      fprintf(out_f, "<td class=\"b1\"><i>NULL</i></td>");
+    } else {
+      fprintf(out_f, "<td class=\"b1\"><tt>%s</tt></td>", ARMOR(g->description));
+    }
+
+    fprintf(out_f, "<td%s>", cl);
+    fprintf(out_f, "%s%s</a>",
+            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                          NULL, "action=%d&amp;op=%d&amp;group_id=%d",
+                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_GROUP_MODIFY_PAGE,
+                          group_id),
+            "[Modify]");
+    fprintf(out_f, "&nbsp;%s%s</a>",
+            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                          NULL, "action=%d&amp;op=%d&amp;group_id=%d",
+                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE,
+                          group_id),
+            "[Members]");
+    fprintf(out_f, "&nbsp;%s%s</a>",
+            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                          NULL, "action=%d&amp;op=%d&amp;group_id=%d",
+                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_GROUP_DELETE_PAGE,
+                          group_id),
+            "[Delete]");
+    fprintf(out_f, "</td>");
+    fprintf(out_f, "</tr>\n");
+
+  }
+  fprintf(out_f, "</table>\n");
+  fprintf(out_f, "</form>\n");
+
+  if (opcaps_check(gcaps, OPCAP_CREATE_USER) >= 0) {
+    cl = " class=\"b0\"";
+    fprintf(out_f, "<table%s><tr>", cl);
+    fprintf(out_f, "<td%s>%s[%s]</a></td>", cl,
+            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                          NULL, "action=%d&amp;op=%d",
+                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_GROUP_CREATE_PAGE),
+            "Create");
+    fprintf(out_f, "</tr></table>\n");
+  }
+
+do_footer:
+  ss_write_html_footer(out_f);
+
+cleanup:
+  xfree(xml_text); xml_text = 0;
+  userlist_free(&users->b); users = 0;
+  html_armor_free(&ab);
   return retval;
 }
 
