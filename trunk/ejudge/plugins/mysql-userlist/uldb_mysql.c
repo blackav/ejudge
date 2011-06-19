@@ -4878,6 +4878,9 @@ get_brief_list_iterator_2_func(
   struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
   struct brief_list_iterator *iter = 0;
   int i, val, j;
+  FILE *uid_f = NULL;
+  char *uid_t = NULL;
+  size_t uid_z = 0;
 
   if (offset < 0) offset = 0;
   if (count < 0) count = 0;
@@ -4888,6 +4891,67 @@ get_brief_list_iterator_2_func(
   iter->state = state;
   iter->contest_id = contest_id;
   iter->cur_ind = 0;
+
+  if (contest_id <= 0 && group_id > 0) {
+    if (state->mi->fquery(state->md, LOGIN_WIDTH,
+                  "SELECT l.* FROM %slogins AS l, %sgroupmembers AS m WHERE l.user_id = m.user_id AND m.group_id = %d ORDER BY l.user_id LIMIT %d, %d;",
+                          state->md->table_prefix,
+                          state->md->table_prefix,
+                          group_id, offset, count) < 0)
+      goto fail;
+    iter->total_ids = state->md->row_count;
+    if (!iter->total_ids) {
+      state->mi->free_res(state->md);
+      return (ptr_iterator_t) iter;
+    }
+
+    uid_f = open_memstream(&uid_t, &uid_z);
+    XCALLOC(iter->noreg_rows, iter->total_ids);
+    for (i = 0; i < iter->total_ids; i++) {
+      if (!(state->md->row = mysql_fetch_row(state->md->res)))
+        db_error_no_data_fail(state->md);
+      state->md->lengths = mysql_fetch_lengths(state->md->res);
+      if (!state->md->lengths[0])
+        db_error_inv_value_fail(state->md, "value");
+      if (state->mi->parse_int(state->md, state->md->row[0], &val) < 0 || val <= 0)
+        db_error_inv_value_fail(state->md, "value");
+      iter->noreg_rows[i].user_id = val;
+      copy_saved_row(state, &iter->noreg_rows[i].login_row);
+      if (i > 0) fprintf(uid_f, ", ");
+      fprintf(uid_f, "%d", val);
+    }
+    fclose(uid_f); uid_f = NULL;
+
+    if (!uid_t && !*uid_t) {
+      xfree(uid_t); uid_t = 0;
+      state->mi->free_res(state->md);
+      return (ptr_iterator_t) iter;
+    }
+
+    state->mi->free_res(state->md);
+    if (state->mi->fquery(state->md, USER_INFO_WIDTH,
+                  "SELECT * FROM %susers WHERE contest_id = 0 AND user_id IN (%s) ORDER BY user_id;",
+                          state->md->table_prefix, uid_t) < 0)
+      goto fail;
+    xfree(uid_t); uid_t = 0; uid_z = 0;
+    j = 0;
+    for (i = 0; i < state->md->row_count; i++) {
+      if (!(state->md->row = mysql_fetch_row(state->md->res)))
+        db_error_no_data_fail(state->md);
+      state->md->lengths = mysql_fetch_lengths(state->md->res);
+      if (!state->md->lengths[0])
+        db_error_inv_value_fail(state->md, "value");
+      if (state->mi->parse_int(state->md, state->md->row[0], &val) < 0 || val <= 0)
+        db_error_inv_value_fail(state->md, "value");
+      while (j < iter->total_ids && iter->noreg_rows[j].user_id < val) j++;
+      if (j < iter->total_ids && iter->noreg_rows[j].user_id == val) {
+        copy_saved_row(state, &iter->noreg_rows[j].user_info_row);
+      }
+    }
+
+    state->mi->free_res(state->md);
+    return (ptr_iterator_t) iter;
+  }
 
   if (!contest_id) {
     if (state->mi->fquery(state->md, LOGIN_WIDTH,
@@ -4900,6 +4964,7 @@ get_brief_list_iterator_2_func(
       return (ptr_iterator_t) iter;
     }
 
+    uid_f = open_memstream(&uid_t, &uid_z);
     XCALLOC(iter->noreg_rows, iter->total_ids);
     for (i = 0; i < iter->total_ids; i++) {
       if (!(state->md->row = mysql_fetch_row(state->md->res)))
@@ -4911,13 +4976,22 @@ get_brief_list_iterator_2_func(
         db_error_inv_value_fail(state->md, "value");
       iter->noreg_rows[i].user_id = val;
       copy_saved_row(state, &iter->noreg_rows[i].login_row);
+      if (i > 0) fprintf(uid_f, ", ");
+      fprintf(uid_f, "%d", val);
+    }
+    fclose(uid_f); uid_f = NULL;
+
+    if (!uid_t && !*uid_t) {
+      state->mi->free_res(state->md);
+      return (ptr_iterator_t) iter;
     }
 
     state->mi->free_res(state->md);
     if (state->mi->fquery(state->md, USER_INFO_WIDTH,
-                  "SELECT * FROM %susers WHERE contest_id = 0 ORDER BY user_id ;",
-                  state->md->table_prefix) < 0)
+                  "SELECT * FROM %susers WHERE contest_id = 0 AND user_id IN (%s) ORDER BY user_id ;",
+                          state->md->table_prefix, uid_t) < 0)
       goto fail;
+    xfree(uid_t); uid_t = 0; uid_z = 0;
     j = 0;
     for (i = 0; i < state->md->row_count; i++) {
       if (!(state->md->row = mysql_fetch_row(state->md->res)))
@@ -4949,6 +5023,8 @@ get_brief_list_iterator_2_func(
     state->mi->free_res(state->md);
     return (ptr_iterator_t) iter;
   }
+
+  uid_f = open_memstream(&uid_t, &uid_z);
   XCALLOC(iter->full_rows, iter->total_ids);
   for (i = 0; i < iter->total_ids; i++) {
     if (!(state->md->row = mysql_fetch_row(state->md->res)))
@@ -4960,12 +5036,20 @@ get_brief_list_iterator_2_func(
       db_error_inv_value_fail(state->md, "value");
     iter->full_rows[i].user_id = val;
     copy_saved_row(state, &iter->full_rows[i].login_row);
+    if (i > 0) fprintf(uid_f, ", ");
+    fprintf(uid_f, "%d", val);
   }
+  fclose(uid_f); uid_f = NULL;
   state->mi->free_res(state->md);
 
+  if (!uid_t && !*uid_t) {
+    state->mi->free_res(state->md);
+    return (ptr_iterator_t) iter;
+  }
+
   if (state->mi->fquery(state->md, USER_INFO_WIDTH,
-                "SELECT * FROM %susers WHERE contest_id = %d ORDER BY user_id ;",
-                state->md->table_prefix, contest_id) < 0)
+                "SELECT * FROM %susers WHERE contest_id = %d AND user_id IN (%s) ORDER BY user_id ;",
+                        state->md->table_prefix, contest_id, uid_t) < 0)
     goto fail;
   j = 0;
   for (i = 0; i < state->md->row_count; i++) {
@@ -4984,9 +5068,10 @@ get_brief_list_iterator_2_func(
   state->mi->free_res(state->md);
 
   if (state->mi->fquery(state->md, CNTSREG_WIDTH,
-                "SELECT * FROM %scntsregs WHERE contest_id = %d ORDER BY user_id ;",
-                state->md->table_prefix, contest_id) < 0)
+                        "SELECT * FROM %scntsregs WHERE contest_id = %d AND user_id IN (%s) ORDER BY user_id ;",
+                        state->md->table_prefix, contest_id, uid_t) < 0)
     goto fail;
+  xfree(uid_t); uid_t = 0; uid_z = 0;
   j = 0;
   for (i = 0; i < state->md->row_count; i++) {
     if (!(state->md->row = mysql_fetch_row(state->md->res)))
@@ -5006,6 +5091,11 @@ get_brief_list_iterator_2_func(
   return (ptr_iterator_t) iter;
 
  fail:
+  if (uid_f) {
+    fclose(uid_f);
+    uid_f = 0;
+  }
+  xfree(uid_t); uid_t = 0;
   state->mi->free_res(state->md);
   brief_list_iterator_destroy_func((ptr_iterator_t) iter);
   return 0;
