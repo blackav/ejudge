@@ -6441,3 +6441,8 @@ userlist-server.c 6377 0 26735216
 super_html_4.c 6377 0 20169910
 super_html_6.c 6377 0 23311933
 plugins/mysql-userlist/uldb_mysql.c 6376 0 12879277
+super_html.h 6379 0 1601098
+super_proto.h 6379 0 2644724
+super_html_4.c 6379 0 20216962
+super_html_6.c 6379 0 24425514
+uldb_plugin_xml.c 6379 0 9645022
