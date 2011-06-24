@@ -392,6 +392,7 @@ struct brief_list_2_iterator
   struct ptr_iterator b;
   struct uldb_xml_state *state;
   int contest_id;
+  int group_id;
   unsigned char *filter;
   int offset;
   int count;
@@ -3839,23 +3840,50 @@ brief_list_2_do_skip(
   const struct userlist_user *u;
   const struct xml_tree *t;
   const struct userlist_contest *c;
+  const struct userlist_groupmember *gm;
 
   for (;; ++iter->user_id) {
     if (iter->user_id >= ul->user_map_size) return;
     if (!(u = ul->user_map[iter->user_id])) continue;
-    if (iter->contest_id <= 0) {
+    if (iter->contest_id > 0 && iter->group_id > 0) {
+      if (!u->group_first) continue;
+      for (gm = (const struct userlist_groupmember*) u->group_first;
+           gm && gm->group_id < iter->group_id;
+           gm = (struct userlist_groupmember*) gm->group_next) {
+      }
+      if (!gm || gm->group_id != iter->group_id) continue;
+      if (!u->contests) continue;
+      for (t = u->contests->first_down; t; t = t->right) {
+        c = (const struct userlist_contest*) t;
+        if (c->id == iter->contest_id) {
+          if (iter->offset <= 0) return;
+          --iter->offset;
+          break;
+        }
+      }
+    } else if (iter->group_id > 0) {
+      if (!u->group_first) continue;
+      for (gm = (const struct userlist_groupmember*) u->group_first;
+           gm && gm->group_id < iter->group_id;
+           gm = (struct userlist_groupmember*) gm->group_next) {
+      }
+      if (!gm || gm->group_id != iter->group_id) continue;
+      if (iter->offset <= 0) return;
+      --iter->offset;
+    } else if (iter->contest_id > 0) {
+      if (!u->contests) continue;
+      for (t = u->contests->first_down; t; t = t->right) {
+        c = (const struct userlist_contest*) t;
+        if (c->id == iter->contest_id) {
+          if (iter->offset <= 0) return;
+          --iter->offset;
+          break;
+        }
+      }
+    } else {
       if (iter->offset <= 0) return;
       --iter->offset;
       continue;
-    }
-    if (!u->contests) continue;
-    for (t = u->contests->first_down; t; t = t->right) {
-      c = (const struct userlist_contest*) t;
-      if (c->id == iter->contest_id) {
-        if (iter->offset <= 0) return;
-        --iter->offset;
-        break;
-      }
     }
   }
 }
@@ -3929,6 +3957,7 @@ get_brief_list_iterator_2_func(
   iter->b = brief_list_2_iterator_funcs;
   iter->state = state;
   iter->contest_id = contest_id;
+  iter->group_id = group_id;
   if (filter) iter->filter = xstrdup(filter);
   iter->offset = offset;
   iter->count = count;
