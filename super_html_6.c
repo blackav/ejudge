@@ -618,17 +618,26 @@ super_serve_op_USER_BROWSE_PAGE(
   //fprintf(out_f, "</form>\n");
 
   cl = " class=\"b0\"";
-  fprintf(out_f, "<table%s><tr>", cl);
-  fprintf(out_f, "<td%s><b>%s:</b></td>", cl, "Jump to contest");
+  fprintf(out_f, "<table%s>", cl);
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td>", cl, "Jump to contest");
   hbuf[0] = 0;
   if (contest_id > 0) {
     snprintf(hbuf, sizeof(hbuf), "%d", contest_id);
   }
   fprintf(out_f, "<td%s>%s</td>", cl,
           html_input_text(buf, sizeof(buf), "jump_contest_id", 10, "%s", hbuf));
-  fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+  fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td></tr>",
           cl, SSERV_OP_USER_JUMP_CONTEST_ACTION, "Jump");
-  fprintf(out_f, "</tr></table>\n");
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td>", cl, "Jump to group");
+  hbuf[0] = 0;
+  if (group_id > 0) {
+    snprintf(hbuf, sizeof(hbuf), "%d", group_id);
+  }
+  fprintf(out_f, "<td%s>%s</td>", cl,
+          html_input_text(buf, sizeof(buf), "jump_group_id", 10, "%s", hbuf));
+  fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td></tr>",
+          cl, SSERV_OP_USER_JUMP_GROUP_ACTION, "Jump");
+  fprintf(out_f, "</table>\n");
 
   r = userlist_clnt_list_users_2(phr->userlist_clnt, ULS_LIST_ALL_USERS_2,
                                  contest_id, group_id, user_filter, user_offset, user_count,
@@ -890,10 +899,10 @@ super_serve_op_USER_BROWSE_PAGE(
   fprintf(out_f, "<table%s>", cl);
   fprintf(out_f, "<tr><td%s colspan=\"2\"><b>Group ID:</b> <input type=\"text\" name=\"other_group_id\" /></td></tr>\n", cl);
   fprintf(out_f, "<tr><td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
-          cl, SSERV_OP_USER_SEL_ADD_TO_GROUP_PAGE, "Add users to another group");
+          cl, SSERV_OP_USER_SEL_CREATE_GROUP_MEMBER_PAGE, "Add users to another group");
   if (group_id > 0) {
     fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
-            cl, SSERV_OP_USER_SEL_REMOVE_FROM_GROUP_PAGE, "Remove from group");
+            cl, SSERV_OP_USER_SEL_DELETE_GROUP_MEMBER_PAGE, "Remove from group");
   }
   fprintf(out_f, "</tr></table>\n");
   fprintf(out_f, "</div>");
@@ -1209,6 +1218,59 @@ super_serve_op_USER_JUMP_CONTEST_ACTION(
 }
 
 int
+super_serve_op_USER_JUMP_GROUP_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0, r;
+  int contest_id = 0, group_id = 0, jump_group_id = 0, real_jump_group_id = 0;
+  unsigned char *xml_text = NULL;
+  struct userlist_list *users = NULL;
+
+  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  ss_cgi_param_int_opt(phr, "group_id", &group_id, 0);
+  ss_cgi_param_int_opt(phr, "jump_group_id", &jump_group_id, 0);
+
+  if (jump_group_id < 0) jump_group_id = 0;
+  if (group_id < 0) group_id = 0;
+
+  if (jump_group_id > 0) {
+    if (!phr->userlist_clnt) FAIL(S_ERR_DB_ERROR);
+    r = userlist_clnt_list_all_users(phr->userlist_clnt, ULS_GET_GROUP_INFO,
+                                     jump_group_id, &xml_text);
+    if (r < 0) FAIL(S_ERR_DB_ERROR);
+    users = userlist_parse_str(xml_text);
+    xfree(xml_text); xml_text = NULL;
+    if (!users) FAIL(S_ERR_DB_ERROR);
+    if (jump_group_id < users->group_map_size && users->group_map[jump_group_id]) {
+      real_jump_group_id = jump_group_id;
+    }
+    userlist_free(&users->b); users = NULL;
+  }
+  if (group_id > 0) {
+    if (!phr->userlist_clnt) FAIL(S_ERR_DB_ERROR);
+    r = userlist_clnt_list_all_users(phr->userlist_clnt, ULS_GET_GROUP_INFO,
+                                     group_id, &xml_text);
+    if (r < 0) FAIL(S_ERR_DB_ERROR);
+    users = userlist_parse_str(xml_text);
+    xfree(xml_text); xml_text = NULL;
+    if (!users) FAIL(S_ERR_DB_ERROR);
+    if (group_id < users->group_map_size && users->group_map[group_id]) {
+      real_jump_group_id = group_id;
+    }
+    userlist_free(&users->b); users = NULL;
+  }
+
+cleanup:
+  ss_redirect_2(out_f, phr, SSERV_OP_USER_BROWSE_PAGE, contest_id, real_jump_group_id, 0, NULL);
+
+  userlist_free(&users->b); users = NULL;
+  xfree(xml_text); xml_text = NULL;
+  return retval;
+}
+
+int
 super_serve_op_USER_BROWSE_MARK_ALL_ACTION(
         FILE *log_f,
         FILE *out_f,
@@ -1302,6 +1364,7 @@ handles: USER_SEL_RANDOM_PASSWD_PAGE
          USER_SEL_CHANGE_REG_FLAGS_PAGE
          USER_SEL_CREATE_REG_PAGE
          USER_SEL_CREATE_REG_AND_COPY_PAGE
+         USER_SEL_ADD_TO_GROUP_PAGE
  */
 int
 super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
@@ -1321,9 +1384,11 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
   const unsigned char *cl = 0;
   unsigned char *xml_text = 0;
   struct userlist_list *users = 0;
+  struct userlist_list *groups = 0;
   const struct userlist_user *u = 0;
   const struct userlist_contest *reg = 0;
   const struct userlist_user_info *ui = 0;
+  const struct userlist_group *g = 0;
   const unsigned char *s = 0;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   opcap_t gcaps = 0, caps = 0;
@@ -1337,7 +1402,10 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
   const int *cnts_id_list = 0;
   int cnts_id_count = 0;
   int other_contest_id = 0;
+  int other_group_id = 0;
   const struct contest_desc *other_cnts = 0;
+  unsigned char *group_name = NULL;
+  unsigned char *group_desc = NULL;
 
   ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   ss_cgi_param_int_opt(phr, "group_id", &group_id, 0);
@@ -1352,6 +1420,22 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
     snprintf(contest_id_str, sizeof(contest_id_str), "&amp;contest_id=%d", contest_id);
   }
   if (group_id < 0) group_id = 0;
+  if (group_id > 0) {
+    r = userlist_clnt_list_all_users(phr->userlist_clnt, ULS_GET_GROUP_INFO, group_id, &xml_text);
+    if (r >= 0) {
+      users = userlist_parse_str(xml_text);
+      if (users && group_id < users->group_map_size && (g = users->group_map[group_id])) {
+        group_name = xstrdup(g->group_name);
+        group_desc = xstrdup(g->description);
+      } else {
+        group_id = 0;
+      }
+    } else {
+      group_id = 0;
+    }
+    userlist_free(&users->b); users = 0;
+    xfree(xml_text); xml_text = 0;
+  }
   group_id_str[0] = 0;
   if (group_id > 0) {
     snprintf(group_id_str, sizeof(group_id_str), "&amp;group_id=%d", group_id);
@@ -1382,6 +1466,27 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
       other_contest_id = 0;
     }
     cnts_id_count = contests_get_list(&cnts_id_list);
+    break;
+  case SSERV_OP_USER_SEL_CREATE_GROUP_MEMBER_PAGE:
+    ss_cgi_param_int_opt(phr, "other_group_id", &other_group_id, 0);
+    if (other_group_id < 0) other_group_id = 0;
+    if (other_group_id > 0) {
+      r = userlist_clnt_list_all_users(phr->userlist_clnt, ULS_GET_GROUP_INFO, other_group_id, &xml_text);
+      if (r < 0) other_group_id = 0;
+      users = userlist_parse_str(xml_text);
+      if (!users || group_id >= users->group_map_size || !users->group_map[other_group_id])
+        other_group_id = 0;
+      userlist_free(&users->b); users = 0;
+      xfree(xml_text); xml_text = 0;
+    }
+    r = userlist_clnt_list_all_users(phr->userlist_clnt, ULS_LIST_ALL_GROUPS, 0, &xml_text);
+    if (r >= 0) {
+      groups = userlist_parse_str(xml_text);
+      xfree(xml_text); xml_text = 0;
+    }
+    break;
+  case SSERV_OP_USER_SEL_DELETE_GROUP_MEMBER_PAGE:
+    if (group_id <= 0) FAIL(S_ERR_INV_VALUE);
     break;
   }
 
@@ -1424,6 +1529,12 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
     break;
   case SSERV_OP_USER_SEL_CREATE_REG_PAGE:
   case SSERV_OP_USER_SEL_CREATE_REG_AND_COPY_PAGE:
+    break;
+  case SSERV_OP_USER_SEL_CREATE_GROUP_MEMBER_PAGE:
+  case SSERV_OP_USER_SEL_DELETE_GROUP_MEMBER_PAGE:
+    if (get_global_caps(phr, &gcaps) < 0) FAIL(S_ERR_PERM_DENIED);
+    if (opcaps_check(gcaps, OPCAP_EDIT_USER) < 0)
+      FAIL(S_ERR_PERM_DENIED);
     break;
   default:
     abort();
@@ -1490,6 +1601,9 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
       case SSERV_OP_USER_SEL_CREATE_REG_PAGE:
       case SSERV_OP_USER_SEL_CREATE_REG_AND_COPY_PAGE:
         break;
+      case SSERV_OP_USER_SEL_CREATE_GROUP_MEMBER_PAGE:
+      case SSERV_OP_USER_SEL_DELETE_GROUP_MEMBER_PAGE:
+        break;
       default:
         abort();
       }
@@ -1548,6 +1662,14 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
     snprintf(buf, sizeof(buf), "serve-control: %s, register users for another contest and copy data",
              phr->html_name);
     break;
+  case SSERV_OP_USER_SEL_CREATE_GROUP_MEMBER_PAGE:
+    snprintf(buf, sizeof(buf), "serve-control: %s, add users to a group",
+             phr->html_name);
+    break;
+  case SSERV_OP_USER_SEL_DELETE_GROUP_MEMBER_PAGE:
+    snprintf(buf, sizeof(buf), "serve-control: %s, remove users from group %d",
+             phr->html_name, group_id);
+    break;
   default:
     abort();
   }
@@ -1577,6 +1699,28 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
           "  var value = obj2.options[obj2.selectedIndex].value;\n"
           "  obj1.value = value;\n"
           "}\n");
+  fprintf(out_f,
+          "function updateGroup1()\n"
+          "{\n"
+          "  var obj1 = document.getElementById(\"group1\");\n"
+          "  var obj2 = document.getElementById(\"group2\");\n"
+          "  var value = obj1.value;\n"
+          "  var i;\n"
+          "  for (i = 0; i < obj2.options.length; ++i) {\n"
+          "    if (obj2.options[i].value == value) {\n"
+          "      obj2.options.selectedIndex = i;\n"
+          "      break;\n"
+          "    }\n"
+          "  }\n"
+          "}\n");
+  fprintf(out_f,
+          "function updateGroup2()\n"
+          "{\n"
+          "  var obj1 = document.getElementById(\"group1\");\n"
+          "  var obj2 = document.getElementById(\"group2\");\n"
+          "  var value = obj2.options[obj2.selectedIndex].value;\n"
+          "  obj1.value = value;\n"
+          "}\n");
   fprintf(out_f, "</script>\n");
 
   fprintf(out_f, "<h1>%s</h1>\n<br/>\n", buf);
@@ -1589,6 +1733,9 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
   case SSERV_OP_USER_SEL_CHANGE_REG_STATUS_PAGE:
   case SSERV_OP_USER_SEL_CHANGE_REG_FLAGS_PAGE:
     fprintf(out_f, "<h2>%s</h2>\n", ARMOR(cnts->name));
+    break;
+  case SSERV_OP_USER_SEL_DELETE_GROUP_MEMBER_PAGE:
+    fprintf(out_f, "<h2>Group: %s</h2>\n", ARMOR(group_name));
     break;
   }
 
@@ -1707,6 +1854,34 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
       break;
     }
     break;
+  case SSERV_OP_USER_SEL_CREATE_GROUP_MEMBER_PAGE:
+    cl = " class=\"b0\"";
+    fprintf(out_f, "<table%s>\n", cl);
+    buf[0] = 0;
+    if (other_group_id > 0) snprintf(buf, sizeof(buf), "%d", other_group_id);
+    fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input id=\"group1\" onchange=\"updateGroup1()\" type=\"text\" name=\"other_group_id_1\" size=\"20\" value=\"%s\"/></td></tr>\n",
+            cl, "Group ID", cl, buf);
+    fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>", cl, "Group name", cl);
+    fprintf(out_f, "<select id=\"group2\" onchange=\"updateGroup2()\" name=\"other_group_id_2\"><option value=\"0\"></option>");
+    if (groups) {
+      for (int i = 0; i < groups->group_map_size; ++i) {
+        if (!(g = groups->group_map[i])) continue;
+        s = "";
+        if (i == other_group_id) s = " selected=\"selected\"";
+        fprintf(out_f, "<option value=\"%d\"%s>%s</option>", i, s, ARMOR(g->group_name));
+      }
+    }
+    fprintf(out_f, "</select>");
+    fprintf(out_f, "</td></tr>\n");
+    fprintf(out_f, "</table>\n");
+    operation = SSERV_OP_USER_SEL_CREATE_GROUP_MEMBER_ACTION;
+    button_label = "Add to group";
+    break;
+  case SSERV_OP_USER_SEL_DELETE_GROUP_MEMBER_PAGE:
+    fprintf(out_f, "<p>The following users are to be removed from group %d:</p>\n", group_id);
+    operation = SSERV_OP_USER_SEL_DELETE_GROUP_MEMBER_ACTION;
+    button_label = "Remove from group";
+    break;
   default:
     abort();
   }
@@ -1812,10 +1987,13 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
 
 cleanup:
   html_armor_free(&ab);
+  userlist_free(&groups->b); groups = 0;
   userlist_free(&users->b); users = 0;
   bitset_free(&marked);
   xfree(marked_str);
   xfree(xml_text);
+  xfree(group_name);
+  xfree(group_desc);
   return retval;
 }
 
@@ -1834,6 +2012,7 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_ACTION(
   int invisible_op = 0, banned_op = 0, locked_op = 0, incomplete_op = 0, disqualified_op = 0;
   int clear_mask = 0, set_mask = 0, toggle_mask = 0;
   int other_contest_id = 0;
+  int other_group_id = 0;
   opcap_t gcaps = 0, caps = 0, rcaps = 0;
   unsigned char *xml_text = 0;
   struct userlist_list *users = 0;
@@ -1851,6 +2030,21 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_ACTION(
     if (contests_get(contest_id, &cnts) < 0 || !cnts) contest_id = 0;
   }
   if (group_id < 0) group_id = 0;
+  if (group_id > 0) {
+    r = userlist_clnt_list_all_users(phr->userlist_clnt, ULS_GET_GROUP_INFO, group_id, &xml_text);
+    if (r >= 0) {
+      users = userlist_parse_str(xml_text);
+      if (users && group_id < users->group_map_size && users->group_map[group_id]) {
+        // ...
+      } else {
+        group_id = 0;
+      }
+    } else {
+      group_id = 0;
+    }
+    userlist_free(&users->b); users = 0;
+    xfree(xml_text); xml_text = 0;
+  }
 
   ss_cgi_param_int_opt(phr, "include_privileged", &include_privileged, 0);
   if (include_privileged != 1) include_privileged = 0;
@@ -1925,6 +2119,20 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_ACTION(
     }
     if (!other_cnts) FAIL(S_ERR_INV_CONTEST);
     break;
+  case SSERV_OP_USER_SEL_CREATE_GROUP_MEMBER_ACTION:
+    ss_cgi_param_int_opt(phr, "other_group_id_1", &other_group_id, 0);
+    if (other_group_id <= 0) FAIL(S_ERR_INV_GROUP_ID);
+    r = userlist_clnt_list_all_users(phr->userlist_clnt, ULS_GET_GROUP_INFO, other_group_id, &xml_text);
+    if (r < 0) FAIL(S_ERR_INV_GROUP_ID);
+    users = userlist_parse_str(xml_text);
+    if (!users || other_group_id >= users->group_map_size || !users->group_map[other_group_id])
+      FAIL(S_ERR_INV_GROUP_ID);
+    userlist_free(&users->b); users = 0;
+    xfree(xml_text); xml_text = 0;
+    break;
+  case SSERV_OP_USER_SEL_DELETE_GROUP_MEMBER_ACTION:
+    if (group_id <= 0) FAIL(S_ERR_INV_GROUP_ID);
+    break;
   }
 
   switch (phr->opcode) {
@@ -1980,6 +2188,12 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_ACTION(
     get_contest_caps(phr, cnts, &rcaps);
     rcaps |= gcaps;
     if (opcaps_check(rcaps, OPCAP_GET_USER) < 0)
+      FAIL(S_ERR_PERM_DENIED);
+    break;
+  case SSERV_OP_USER_SEL_CREATE_GROUP_MEMBER_ACTION:
+  case SSERV_OP_USER_SEL_DELETE_GROUP_MEMBER_ACTION:
+    if (get_global_caps(phr, &gcaps) < 0) FAIL(S_ERR_PERM_DENIED);
+    if (opcaps_check(gcaps, OPCAP_EDIT_USER) < 0)
       FAIL(S_ERR_PERM_DENIED);
     break;
   default:
@@ -2063,6 +2277,9 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_ACTION(
           if (opcaps_check(caps, OPCAP_CREATE_USER) < 0) u = 0;
         }
         break;
+      case SSERV_OP_USER_SEL_CREATE_GROUP_MEMBER_ACTION:
+      case SSERV_OP_USER_SEL_DELETE_GROUP_MEMBER_ACTION:
+        break;
       default:
         abort();
       }
@@ -2120,6 +2337,14 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_ACTION(
       if (r >= 0) {
         r = userlist_clnt_copy_user_info(phr->userlist_clnt, user_id, contest_id, other_contest_id);
       }
+      break;
+    case SSERV_OP_USER_SEL_CREATE_GROUP_MEMBER_ACTION:
+      r = userlist_clnt_register_contest(phr->userlist_clnt, ULS_CREATE_GROUP_MEMBER,
+                                         user_id, other_group_id, 0, 0);
+      break;
+    case SSERV_OP_USER_SEL_DELETE_GROUP_MEMBER_ACTION:
+      r = userlist_clnt_register_contest(phr->userlist_clnt, ULS_DELETE_GROUP_MEMBER,
+                                         user_id, group_id, 0, 0);
       break;
     default:
       abort();
@@ -7570,4 +7795,162 @@ super_serve_op_GROUP_MODIFY_PAGE_ACTION(
   if (group_id <= 0) group_id = 0;
   ss_redirect_2(out_f, phr, SSERV_OP_GROUP_MODIFY_PAGE, 0, group_id, 0, 0);
   return 0;
+}
+
+int
+super_serve_op_GROUP_CREATE_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0, r, group_id = 0;
+  opcap_t caps = 0;
+  const unsigned char *s = NULL;
+  unsigned char *group_name = NULL;
+  unsigned char *description = NULL;
+
+  if (get_global_caps(phr, &caps) < 0 || opcaps_check(caps, OPCAP_CREATE_USER) < 0) {
+    FAIL(S_ERR_PERM_DENIED);
+  }
+
+  s = 0;
+  if (ss_cgi_param(phr, "group_name", &s) <= 0 || !s) FAIL(S_ERR_INV_GROUP_NAME);
+  group_name = fix_string(s);
+  if (!group_name || !*group_name) FAIL(S_ERR_INV_GROUP_NAME);
+  if (strlen(group_name) > 1024) FAIL(S_ERR_INV_GROUP_NAME);
+  if (check_str(group_name, login_accept_chars) < 0) FAIL(S_ERR_INV_GROUP_NAME);
+
+  s = 0;
+  if (ss_cgi_param(phr, "description", &s) < 0) FAIL(S_ERR_INV_DESCRIPTION);
+  if (!s) {
+    description = xstrdup("");
+  } else {
+    description = fix_string(s);
+  }
+  if (!description) description = xstrdup("");
+  if (strlen(description) > 1024) FAIL(S_ERR_INV_DESCRIPTION);
+
+  r = userlist_clnt_create_user(phr->userlist_clnt, ULS_CREATE_GROUP, group_name, &group_id);
+  if (r < 0 || group_name < 0) FAIL(S_ERR_GROUP_CREATION_FAILED);
+  r = userlist_clnt_edit_field(phr->userlist_clnt, ULS_EDIT_GROUP_FIELD, group_id, 0,
+                               0, USERLIST_GRP_DESCRIPTION, description);
+  if (r < 0) FAIL(S_ERR_DB_ERROR);
+
+  ss_redirect_2(out_f, phr, SSERV_OP_GROUP_BROWSE_PAGE, 0, 0, 0, 0);
+
+cleanup:
+  xfree(group_name); group_name = NULL;
+  xfree(description); description = NULL;
+  return retval;
+}
+
+int
+super_serve_op_GROUP_MODIFY_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0, r;
+  int group_id = 0;
+  unsigned char *xml_text = 0;
+  struct userlist_list *users = 0;
+  opcap_t caps = 0;
+  const struct userlist_group *g = 0;
+  const unsigned char *s;
+  unsigned char *group_name = NULL;
+  unsigned char *description = NULL;
+
+  if (get_global_caps(phr, &caps) < 0 || opcaps_check(caps, OPCAP_EDIT_USER) < 0) {
+    FAIL(S_ERR_PERM_DENIED);
+  }
+
+  ss_cgi_param_int_opt(phr, "group_id", &group_id, 0);
+  if (group_id <= 0) FAIL(S_ERR_INV_GROUP_ID);
+
+  if (!phr->userlist_clnt) FAIL(S_ERR_DB_ERROR);
+  r = userlist_clnt_list_all_users(phr->userlist_clnt, ULS_GET_GROUP_INFO,
+                                   group_id, &xml_text);
+  if (r < 0) FAIL(S_ERR_DB_ERROR);
+  users = userlist_parse_str(xml_text);
+  if (!users) FAIL(S_ERR_DB_ERROR);
+  if (group_id >= users->group_map_size || !(g = users->group_map[group_id]))
+    FAIL(S_ERR_INV_GROUP_ID);
+
+  s = 0;
+  if (ss_cgi_param(phr, "group_name", &s) <= 0 || !s) FAIL(S_ERR_INV_GROUP_NAME);
+  group_name = fix_string(s);
+  if (!group_name || !*group_name) FAIL(S_ERR_INV_GROUP_NAME);
+  if (strlen(group_name) > 1024) FAIL(S_ERR_INV_GROUP_NAME);
+  if (check_str(group_name, login_accept_chars) < 0) FAIL(S_ERR_INV_GROUP_NAME);
+
+  s = 0;
+  if (ss_cgi_param(phr, "description", &s) < 0) FAIL(S_ERR_INV_DESCRIPTION);
+  if (!s) {
+    description = xstrdup("");
+  } else {
+    description = fix_string(s);
+  }
+  if (!description) description = xstrdup("");
+  if (strlen(description) > 1024) FAIL(S_ERR_INV_DESCRIPTION);
+
+  if (!g->group_name || strcmp(g->group_name, group_name) != 0) {
+    r = userlist_clnt_edit_field(phr->userlist_clnt, ULS_EDIT_GROUP_FIELD,
+                                 group_id, 0, 0, USERLIST_GRP_GROUP_NAME, group_name);
+    if (r < 0) FAIL(S_ERR_DB_ERROR);
+  }
+
+  if (!g->description || strcmp(g->description, description) != 0) {
+    r = userlist_clnt_edit_field(phr->userlist_clnt, ULS_EDIT_GROUP_FIELD,
+                                 group_id, 0, 0, USERLIST_GRP_DESCRIPTION, description);
+    if (r < 0) FAIL(S_ERR_DB_ERROR);
+  }
+
+  ss_redirect_2(out_f, phr, SSERV_OP_GROUP_BROWSE_PAGE, 0, 0, 0, 0);
+
+cleanup:
+  userlist_free(&users->b); users = 0;
+  xfree(xml_text); xml_text = 0;
+  xfree(group_name); group_name = NULL;
+  xfree(description); description = NULL;
+  return retval;
+}
+
+int
+super_serve_op_GROUP_DELETE_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0, r;
+  int group_id = 0;
+  unsigned char *xml_text = 0;
+  struct userlist_list *users = 0;
+  opcap_t caps = 0;
+  const struct userlist_group *g = 0;
+
+  if (get_global_caps(phr, &caps) < 0 || opcaps_check(caps, OPCAP_DELETE_USER) < 0) {
+    FAIL(S_ERR_PERM_DENIED);
+  }
+
+  ss_cgi_param_int_opt(phr, "group_id", &group_id, 0);
+  if (group_id <= 0) FAIL(S_ERR_INV_GROUP_ID);
+
+  if (!phr->userlist_clnt) FAIL(S_ERR_DB_ERROR);
+  r = userlist_clnt_list_all_users(phr->userlist_clnt, ULS_GET_GROUP_INFO,
+                                   group_id, &xml_text);
+  if (r < 0) FAIL(S_ERR_DB_ERROR);
+  users = userlist_parse_str(xml_text);
+  if (!users) FAIL(S_ERR_DB_ERROR);
+  if (group_id >= users->group_map_size || !(g = users->group_map[group_id]))
+    FAIL(S_ERR_INV_GROUP_ID);
+
+  r = userlist_clnt_delete_info(phr->userlist_clnt, ULS_DELETE_GROUP, group_id, 0, 0);
+  if (r < 0) FAIL(S_ERR_DB_ERROR);
+
+  ss_redirect_2(out_f, phr, SSERV_OP_GROUP_BROWSE_PAGE, 0, 0, 0, 0);
+
+cleanup:
+  userlist_free(&users->b); users = 0;
+  xfree(xml_text); xml_text = 0;
+  return retval;
 }
