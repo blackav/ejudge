@@ -56,6 +56,10 @@ parse_int(const char *str, int *p_val)
   int v;
   char *eptr = 0;
 
+  if (!str) return -1;
+  while (isspace(*str)) ++str;
+  if (!*str) return -1;
+
   errno = 0;
   v = strtol(str, &eptr, 10);
   if (errno || *eptr) return -1;
@@ -246,6 +250,24 @@ cmd_dump_problems(
 }
 
 static int
+cmd_dump_languages(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  const serve_state_t cs = extra->serve_state;
+  int i;
+  const struct section_language_data *lang;
+
+  for (i = 0; i <= cs->max_lang; i++) {
+    if (!(lang = cs->langs[i])) continue;
+    fprintf(fout, "%d;%s;%s;%s;%s\n", lang->id, lang->short_name, lang->long_name, lang->src_sfx, lang->exe_sfx);
+  }
+  return 0;
+}
+
+static int
 do_schedule(
         struct http_request_info *phr,
         serve_state_t cs,
@@ -393,15 +415,8 @@ cmd_operation(
 }
 
 static int
-cmd_operation_2(
-        FILE *fout,
-        struct http_request_info *phr,
-        const struct contest_desc *cnts,
-        struct contest_extra *extra)
+get_contest_type(FILE *fout, const struct section_global_data *global)
 {
-  int retval = 0;
-  const serve_state_t cs = extra->serve_state;
-  const struct section_global_data *global = cs->global;
   const unsigned char *s = 0;
   static const unsigned char * const contest_types[SCORE_TOTAL] =
   {
@@ -418,18 +433,110 @@ cmd_operation_2(
     [SCORE_MOSCOW] = 0,
   };
 
+  if (global->score_system < 0 || global->score_system >= SCORE_TOTAL) return -1;
+  if (global->is_virtual) s = virtual_contest_types[global->score_system];
+  else s = contest_types[global->score_system];
+  if (!s) return -1;
+  fprintf(fout, "%s", s);
+  return 0;
+}
+
+static int
+get_contest_status(
+        FILE *fout,
+        const serve_state_t cs,
+        time_t start_time,
+        time_t stop_time,
+        time_t duration)
+{
+  if (start_time > 0) {
+    if (stop_time > 0) {
+      if (duration == 0 || start_time + duration > cs->current_time) {
+        fprintf(fout, "paused");
+      } else {
+        fprintf(fout, "over");
+      }
+    } else {
+      fprintf(fout, "running");
+    }
+  } else {
+    fprintf(fout, "not started");
+  }
+  return 0;
+}
+
+static int
+get_positive_time(FILE *fout, time_t t)
+{
+  if (t > 0) {
+    fprintf(fout, "%s", xml_unparse_date(t));
+  } else {
+    fprintf(fout, "%d", 0);
+  }
+  return 0;
+}
+
+static int
+get_contest_duration(FILE *fout, int duration)
+{
+  fprintf(fout, "%d", duration);
+  return 0;
+}
+
+static int
+cmd_operation_2(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  int retval = 0;
+  const serve_state_t cs = extra->serve_state;
+  const struct section_global_data *global = cs->global;
+  time_t start_time = 0, duration = 0, stop_time = 0, sched = 0;
+
+  run_get_times(cs->runlog_state, &start_time, &sched, &duration, &stop_time, 0);	
   switch (phr->action) {
   case NEW_SRV_ACTION_GET_CONTEST_NAME:
     fprintf(fout, "%s", cnts->name);
     break;
   case NEW_SRV_ACTION_GET_CONTEST_TYPE:
-    if (global->score_system < 0
-        || global->score_system >= SCORE_TOTAL)
-      FAIL(NEW_SRV_ERR_INV_CONTEST_ID);
-    if (global->is_virtual) s = virtual_contest_types[global->score_system];
-    else s = contest_types[global->score_system];
-    if (!s) FAIL(NEW_SRV_ERR_INV_CONTEST_ID);
-    fprintf(fout, "%s", s);
+    if (get_contest_type(fout, global) < 0) FAIL(NEW_SRV_ERR_INV_CONTEST_ID);
+    break;
+  case NEW_SRV_ACTION_GET_CONTEST_STATUS:
+    get_contest_status(fout, cs, start_time, stop_time, duration);
+    break;
+  case NEW_SRV_ACTION_GET_CONTEST_SCHED:
+    get_positive_time(fout, sched);
+    break;
+  case NEW_SRV_ACTION_GET_CONTEST_DURATION:
+    get_contest_duration(fout, duration);
+    break;
+  case NEW_SRV_ACTION_GET_CONTEST_DESCRIPTION:
+    /*
+    {
+    'name' : '<name>',
+    'type' : '<type>',
+    'status' : '<status>',
+    'start' : '<start time>',
+    'duration' : '<duration in seconds>',
+    'stop' : '<stop time>',
+    'sched' : '<schedule time>'
+    }
+    */
+    fprintf(fout, "{ 'name' : '%s', 'type' : '", cnts->name);
+    if (get_contest_type(fout, global) < 0) FAIL(NEW_SRV_ERR_INV_CONTEST_ID);
+    fprintf(fout, "', 'status' : '");
+    get_contest_status(fout, cs, start_time, stop_time, duration);
+    fprintf(fout, "', 'start' : '");
+    get_positive_time(fout, start_time);
+    fprintf(fout, "', 'duration' : '");
+    get_contest_duration(fout, duration);
+    fprintf(fout, "', 'stop' : '");
+    get_positive_time(fout, stop_time);
+    fprintf(fout, "', 'sched' : '");
+    get_positive_time(fout, sched);
+    fprintf(fout, "' }");
     break;
   default:
     abort();
@@ -685,12 +792,17 @@ cmd_submit_run(
 
   if (ns_cgi_param(phr, "prob", &s) <= 0)
     FAIL(NEW_SRV_ERR_INV_PROB_ID);
-  for (i = 1; i <= cs->max_prob; i++)
-    if (cs->probs[i] && !strcmp(s, cs->probs[i]->short_name))
-      break;
-  if (i > cs->max_prob)
-    FAIL(NEW_SRV_ERR_INV_PROB_ID);
-  prob = cs->probs[i];
+  if (s && *s == '#') {
+    if (parse_int(s + 1, &i) < 0 || i <= 0 || i > cs->max_prob || !(prob = cs->probs[i]))
+      FAIL(NEW_SRV_ERR_INV_PROB_ID);
+  } else {
+    for (i = 1; i <= cs->max_prob; i++)
+      if (cs->probs[i] && !strcmp(s, cs->probs[i]->short_name))
+        break;
+    if (i > cs->max_prob)
+      FAIL(NEW_SRV_ERR_INV_PROB_ID);
+    prob = cs->probs[i];
+  }
 
   /* check variant */
   switch (phr->role) {
@@ -1690,6 +1802,7 @@ static cmd_handler_t cmd_actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_RUNS_DUMP] = cmd_dump_runs,
   [NEW_SRV_ACTION_LOGOUT] = cmd_logout,
   [NEW_SRV_ACTION_DUMP_PROBLEMS] = cmd_dump_problems,
+  [NEW_SRV_ACTION_DUMP_LANGUAGES] = cmd_dump_languages,
   [NEW_SRV_ACTION_SOFT_UPDATE_STANDINGS] = cmd_operation,
   [NEW_SRV_ACTION_TEST_SUSPEND] = cmd_operation,
   [NEW_SRV_ACTION_TEST_RESUME] = cmd_operation,
@@ -1700,6 +1813,10 @@ static cmd_handler_t cmd_actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_DUMP_CLAR] = cmd_clar_operation,
   [NEW_SRV_ACTION_GET_CONTEST_NAME] = cmd_operation_2,
   [NEW_SRV_ACTION_GET_CONTEST_TYPE] = cmd_operation_2,
+  [NEW_SRV_ACTION_GET_CONTEST_STATUS] = cmd_operation_2,
+  [NEW_SRV_ACTION_GET_CONTEST_SCHED] = cmd_operation_2,
+  [NEW_SRV_ACTION_GET_CONTEST_DURATION] = cmd_operation_2,
+  [NEW_SRV_ACTION_GET_CONTEST_DESCRIPTION] = cmd_operation_2,
   [NEW_SRV_ACTION_SUBMIT_RUN] = cmd_submit_run,
   [NEW_SRV_ACTION_UPLOAD_RUNLOG_XML_2] = cmd_import_xml_runs,
   [NEW_SRV_ACTION_DUMP_MASTER_RUNS] = cmd_dump_master_runs,
