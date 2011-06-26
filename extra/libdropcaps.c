@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -48,11 +48,13 @@ init(void)
   if (ptrace(0x4281, 0, 0, 0) >= 0) {
     // new secure exec interface
     /* if getppid works, CAP_SYS_OPERATIONS has no effect :-( */
+    /*
     if (dup(0) >= 0) {
       fprintf(stderr,
               "capexec: CAP_SYS_OPERATIONS is not supported on this system\n");
       _exit(6);
     }
+    */
     return;
   }
 
