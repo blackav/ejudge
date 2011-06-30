@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -50,6 +50,8 @@ static const unsigned char * const DEFAULT_INPUT_PATTERN = "%03d.dat";
 static const unsigned char * const DEFAULT_OUTPUT_PATTERN = "%03d.ans";
 static const unsigned char * const DEFAULT_TESTS_DIR = "tests";
 static const unsigned char * const DEFAULT_WORK_DIR = "/tmp";
+static const unsigned char * const DEFAULT_PROGRAM_DIR = "solution";
+static const unsigned char * const DEFAULT_SCRIPT_NAME = "Makefile";
 
 struct archive_entry
 {
@@ -875,7 +877,7 @@ check_names(struct archive_file *arch)
   return 0;
 }
 
-int
+static int
 check_tar_tests(
         struct archive_file *arch,
         int max_test_count,
@@ -1055,7 +1057,7 @@ create_arch_dir(
   return 0;
 }
 
-int
+static int
 make_report(
         struct archive_file *arch,
         const unsigned char *path,
@@ -1179,6 +1181,184 @@ fail:
   return -1;
 }
 
+static int
+check_make(
+        struct archive_file *arch,
+        const unsigned char *dir_prefix,
+        const unsigned char *script_name)
+{
+  int retcode = 0;
+  int i;
+  unsigned char n1[512];
+
+  // find the main directory entry
+  snprintf(n1, sizeof(n1), "%s/", dir_prefix);
+  if ((i = find_entry(arch, n1)) < 0) {
+    snprintf(n1, sizeof(n1), "%s", dir_prefix);
+    if ((i = find_entry(arch, n1)) < 0) {
+      error("no %s entry in the archive", n1);
+      return -1;
+    }
+  }
+  if (!S_ISDIR(arch->v[i].type)) {
+    error("%s entry is not a directory", n1);
+    return -1;
+  }
+  if ((arch->v[i].type & 0700) != 0700) {
+    error("invalid permissions on %s entry", n1);
+    return -1;
+  }
+  arch->v[i].is_processed = 1;
+
+  // find the build script entry
+  snprintf(n1, sizeof(n1), "%s/%s", dir_prefix, script_name);
+  i = find_entry(arch, n1);
+  if (i < 0) {
+    error("no %s entry in the archive", n1);
+    return -1;
+  }
+  if (i >= 0) {
+    if (!S_ISREG(arch->v[i].type)) {
+      error("%s is not a regular file", n1);
+      return -1;
+    }
+    if ((arch->v[i].type & 0400) != 0400) {
+      error("invalid permissions on %s entry", n1);
+      return -1;
+    }
+    arch->v[i].is_processed = 1;
+  }
+
+  return retcode;
+}
+
+static int
+make_make_report(
+        struct archive_file *arch,
+        const unsigned char *path,
+        const unsigned char *work_dir,
+        const unsigned char *prefix,
+        const unsigned char *program_dir,
+        const unsigned char *script_name,
+        int (*unpack_func)(const unsigned char *path,const unsigned char *dir))
+{
+  unsigned char wd[PATH_MAX];
+  int wd_created = 0;
+/*
+  unsigned char td[PATH_MAX];
+  struct stat stb;
+  unsigned char fp[PATH_MAX];
+  char *txt = 0;
+  size_t len = 0;
+  int num;
+  unsigned char ifbase[PATH_MAX];
+  unsigned char ofbase[PATH_MAX];
+  unsigned char ifpath[PATH_MAX];
+  unsigned char ofpath[PATH_MAX];
+*/
+  DIR *d = 0;
+  struct dirent *dd;
+
+  if (create_arch_dir(wd, sizeof(wd), work_dir, prefix) < 0)
+    goto fail;
+  wd_created = 1;
+
+  if (unpack_func(path, wd) < 0)
+    goto fail;
+
+  // check, that all files in the working dir have good names
+  if (!(d = opendir(wd))) {
+    error("cannot open directory %s", wd);
+    goto fail;
+  }
+  while ((dd = readdir(d))) {
+    if (check_file_name(dd->d_name) < 0) {
+      error("name '%s' is invalid", dd->d_name);
+      goto fail;
+    }
+  }
+  closedir(d); d = 0;
+
+  /*
+
+  snprintf(td, sizeof(td), "%s/%s", wd, tests_dir);
+  if (stat(td, &stb) < 0) {
+    error("directory %s does not exist", td);
+    goto fail;
+  }
+  if (!S_ISDIR(stb.st_mode)) {
+    error("directory %s is not a directory", td);
+    goto fail;
+  }
+  if (access(td, R_OK | W_OK | X_OK) < 0) {
+    error("directory %s has invalid permissions", td);
+    goto fail;
+  }
+
+  // check, that all files in the tests dir have good names
+  if (!(d = opendir(td))) {
+    error("cannot open directory %s", td);
+    goto fail;
+  }
+  while ((dd = readdir(d))) {
+    if (check_file_name(dd->d_name) < 0) {
+      error("name '%s' is invalid", dd->d_name);
+      goto fail;
+    }
+  }
+  closedir(d); d = 0;
+
+  snprintf(fp, sizeof(fp), "%s/README", td);
+  if (read_text_file(fp, "README", &txt, &len) >= 0) {
+    printf("=== README ===\n%s\n", txt);
+    free(txt); txt = 0; len = 0;
+  }
+
+  num = 0;
+  while (1) {
+    ++num;
+    snprintf(ifbase, sizeof(ifbase), input_file_pattern, num);
+    snprintf(ofbase, sizeof(ofbase), output_file_pattern, num);
+    snprintf(ifpath, sizeof(ifpath), "%s/%s", td, ifbase);
+    snprintf(ofpath, sizeof(ofpath), "%s/%s", td, ofbase);
+
+    if (stat(ifpath, &stb) < 0) break;
+
+    if (read_text_file(ifpath, ifbase, &txt, &len) < 0)
+      goto fail;
+    printf("=== %s ===\n%s\n", ifbase, txt);
+    free(txt); txt = 0; len = 0;
+    if (read_text_file(ofpath, ofbase, &txt, &len) < 0)
+      goto fail;
+    printf("=== %s ===\n%s\n", ofbase, txt);
+    free(txt); txt = 0; len = 0;
+  }
+
+  if (ignore_dot_files) {
+    if ((d = opendir(td))) {
+      while ((dd = readdir(d))) {
+        if (!strcmp(dd->d_name, ".")) continue;
+        if (!strcmp(dd->d_name, "..")) continue;
+        if (dd->d_name[0] == '.') {
+          printf("Ignored file: %s\n", dd->d_name);
+        }
+      }
+      closedir(d); d = 0;
+    }
+  }
+ */
+  
+  remove_directory_recursively(wd, 0);
+  return 0;
+
+fail:
+  if (d) closedir(d);
+  if (wd_created) {
+    remove_directory_recursively(wd, 0);
+  }
+  return -1;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -1189,13 +1369,16 @@ main(int argc, char **argv)
   int max_test_count = -1;
   long long tmp;
   int max_file_count = -1;
-  int tests_mode = 0;
+  int tests_mode = -1;
+  int make_mode = 0;
   int mime_type;
   struct archive_file arch;
   const unsigned char *if_patt = 0;
   const unsigned char *of_patt = 0;
   const unsigned char *tests_dir = 0;
   const unsigned char *work_dir = 0;
+  const unsigned char *program_dir = 0;
+  const unsigned char *script_name = 0;
   int (*unpack_func)(const unsigned char *path,const unsigned char *dir) = 0;
   const unsigned char *env;
   int no_readme_mode = 0;
@@ -1247,8 +1430,17 @@ main(int argc, char **argv)
   if ((env = getenv("EJ_WORK_DIR"))) {
     work_dir = env;
   }
+  if ((env = getenv("EJ_PROGRAM_DIR"))) {
+    program_dir = env;
+  }
+  if ((env = getenv("EJ_SCRIPT_NAME"))) {
+    script_name = env;
+  }
   if ((env = getenv("EJ_TESTS_MODE"))) {
     tests_mode = 1;
+  }
+  if ((env = getenv("EJ_MAKE_MODE"))) {
+    make_mode = 1;
   }
   if ((env = getenv("EJ_NO_README"))) {
     no_readme_mode = 1;
@@ -1296,6 +1488,10 @@ main(int argc, char **argv)
       // test archive check mode
       tests_mode = 1;
       ++i;
+    } else if (!strcmp(argv[i], "-m")) {
+      // make archive check mode
+      make_mode = 1;
+      ++i;
     } else if (!strcmp(argv[i], "-r")) {
       // no README mode
       no_readme_mode = 1;
@@ -1338,6 +1534,18 @@ main(int argc, char **argv)
         die("argument expected for -w option");
       work_dir = argv[i + 1];
       i += 2;
+    } else if (!strcmp(argv[i], "-p")) {
+      // program directory
+      if (i + 1 >= argc)
+        die("argument expected for -p option");
+      program_dir = argv[i + 1];
+      i += 2;
+    } else if (!strcmp(argv[i], "-s")) {
+      // script name
+      if (i + 1 >= argc)
+        die("argument expected for -s option");
+      script_name = argv[i + 1];
+      i += 2;
     } else {
       die("invalid option '%s'", argv[i]);
     }
@@ -1350,6 +1558,8 @@ main(int argc, char **argv)
     die("invalid parameters after file name");
   }
 
+  if (tests_mode < 0 && make_mode <= 0) tests_mode = 1;
+  if (tests_mode < 0) tests_mode = 0;
   if (max_archive_size <= 0) max_archive_size = DEFAULT_MAX_ARCHIVE_SIZE;
   if (max_file_size <= 0) max_file_size = DEFAULT_MAX_FILE_SIZE;
   if (max_file_count <= 0) max_file_count = DEFAULT_MAX_FILE_COUNT;
@@ -1358,6 +1568,8 @@ main(int argc, char **argv)
   if (!of_patt) of_patt = DEFAULT_OUTPUT_PATTERN;
   if (!tests_dir) tests_dir = DEFAULT_TESTS_DIR;
   if (!work_dir) work_dir = DEFAULT_WORK_DIR;
+  if (!program_dir) program_dir = DEFAULT_PROGRAM_DIR;
+  if (!script_name) script_name = DEFAULT_SCRIPT_NAME;
 
   if (access(archive_path, R_OK) < 0)
     die("file %s does not exist or is not readable");
@@ -1389,13 +1601,20 @@ main(int argc, char **argv)
   if (check_sizes(&arch, max_file_count, max_file_size, max_archive_size) < 0)
     return 1;
   if (check_names(&arch) < 0) return 1;
-  if (check_tar_tests(&arch, max_test_count, tests_dir, if_patt, of_patt,
-                      no_readme_mode, ignore_dot_files) < 0)
-    return 1;
 
-  if (make_report(&arch, archive_path, work_dir, "stylearch", tests_dir,
-                  if_patt, of_patt, unpack_func, ignore_dot_files) < 0)
-    return 1;
+  if (tests_mode) {
+    if (check_tar_tests(&arch, max_test_count, tests_dir, if_patt, of_patt,
+                        no_readme_mode, ignore_dot_files) < 0)
+      return 1;
+    if (make_report(&arch, archive_path, work_dir, "stylearch", tests_dir,
+                    if_patt, of_patt, unpack_func, ignore_dot_files) < 0)
+      return 1;
+  } else if (make_mode) {
+    if (check_make(&arch, program_dir, script_name) < 0)
+      return 1;
+    if (make_make_report(&arch, archive_path, work_dir, "makearch", program_dir, script_name, unpack_func) < 0)
+      return 1;
+  }
 
   return 0;
 }
@@ -1403,6 +1622,5 @@ main(int argc, char **argv)
 /*
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list" "fd_set" "DIR")
  * End:
  */
