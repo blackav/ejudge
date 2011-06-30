@@ -402,6 +402,7 @@ super_html_main_page(FILE *f,
           "<th>Judge</th>\n"
           "<th>Master</th>\n"
           "<th>User</th>\n"
+          "<th>Edit</th>\n"
           "<th>Details</th>\n"
           "</tr>\n");
   for (contest_id = 1; contest_id < contest_max_id; contest_id++) {
@@ -606,6 +607,10 @@ super_html_main_page(FILE *f,
     if (priv_level >= PRIV_LEVEL_ADMIN
         && opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0
         && contests_check_serve_control_ip_2(cnts, ip_address, ssl)) {
+      fprintf(f, "<td>%sEdit</a></td>",
+              html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
+                            "contest_id=%d&action=%d", contest_id,
+                            SSERV_CMD_EDIT_CONTEST_XML));
       fprintf(f, "<td>%sDetails</a></td>\n",
               html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
                             "contest_id=%d&action=%d", contest_id,
