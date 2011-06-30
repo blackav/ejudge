@@ -749,13 +749,13 @@ ac_cv_has___int64=""
 
 AC_MSG_CHECKING([for -m32 support])
 saved_CC="${CC}"
-CC="${CC} -Wall -Werror -m32 -fPIC -DPIC -shared"
-AC_COMPILE_IFELSE([[
+CC="${CC} -m32 -fPIC -DPIC"
+AC_RUN_IFELSE([[
 #include <string.h>
 #include <stdio.h>
 int main(void)
 {
-  printf("%d\n", 0);
+  printf("");
   return 0;
 }
 ]],[
@@ -768,13 +768,13 @@ CC="${saved_CC}"
 
 AC_MSG_CHECKING([for -m64 support])
 saved_CC="${CC}"
-CC="${CC} -Wall -Werror -m64 -fPIC -DPIC -shared"
-AC_COMPILE_IFELSE([[
+CC="${CC} -m64 -fPIC -DPIC"
+AC_RUN_IFELSE([[
 #include <string.h>
 #include <stdio.h>
 int main(void)
 {
-  printf("%d\n", 0);
+  printf("");
   return 0;
 }
 ]],[
