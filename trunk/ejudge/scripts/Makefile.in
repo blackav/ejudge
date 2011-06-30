@@ -2,7 +2,7 @@
 # $Id$
 # @configure_input@
 
-# Copyright (C) 2004-2008 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2004-2011 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -102,6 +102,10 @@ SCRIPTS_IN = \
  mcs-version.in\
  vbnc.in\
  vbnc-version.in\
+ make.in\
+ make-version.in\
+ ghc.in\
+ ghc-version.in\
  runjava.in\
  runmono.in\
  runperl.in
