@@ -1244,18 +1244,11 @@ make_make_report(
 {
   unsigned char wd[PATH_MAX];
   int wd_created = 0;
-/*
   unsigned char td[PATH_MAX];
   struct stat stb;
   unsigned char fp[PATH_MAX];
   char *txt = 0;
   size_t len = 0;
-  int num;
-  unsigned char ifbase[PATH_MAX];
-  unsigned char ofbase[PATH_MAX];
-  unsigned char ifpath[PATH_MAX];
-  unsigned char ofpath[PATH_MAX];
-*/
   DIR *d = 0;
   struct dirent *dd;
 
@@ -1272,81 +1265,62 @@ make_make_report(
     goto fail;
   }
   while ((dd = readdir(d))) {
+    if (!strcmp(dd->d_name, ".")) continue;
+    if (!strcmp(dd->d_name, "..")) continue;
     if (check_file_name(dd->d_name) < 0) {
       error("name '%s' is invalid", dd->d_name);
+      goto fail;
+    }
+    if (strcmp(dd->d_name, program_dir) != 0) {
+      error("archive contains invalid entries");
+      goto fail;
+    }
+    snprintf(td, sizeof(td), "%s/%s", wd, dd->d_name);
+    if (stat(td, &stb) < 0) {
+      error("entry %s does not exist", td);
+      goto fail;
+    }
+    if (!S_ISDIR(stb.st_mode)) {
+      error("directory %s is not a directory", td);
+      goto fail;
+    }
+    if (access(td, R_OK | W_OK | X_OK) < 0) {
+      error("directory %s has invalid permissions", td);
       goto fail;
     }
   }
   closedir(d); d = 0;
 
-  /*
-
-  snprintf(td, sizeof(td), "%s/%s", wd, tests_dir);
-  if (stat(td, &stb) < 0) {
-    error("directory %s does not exist", td);
-    goto fail;
-  }
-  if (!S_ISDIR(stb.st_mode)) {
-    error("directory %s is not a directory", td);
-    goto fail;
-  }
-  if (access(td, R_OK | W_OK | X_OK) < 0) {
-    error("directory %s has invalid permissions", td);
-    goto fail;
-  }
-
-  // check, that all files in the tests dir have good names
   if (!(d = opendir(td))) {
     error("cannot open directory %s", td);
     goto fail;
   }
   while ((dd = readdir(d))) {
+    if (!strcmp(dd->d_name, ".")) continue;
+    if (!strcmp(dd->d_name, "..")) continue;
     if (check_file_name(dd->d_name) < 0) {
       error("name '%s' is invalid", dd->d_name);
       goto fail;
     }
-  }
-  closedir(d); d = 0;
-
-  snprintf(fp, sizeof(fp), "%s/README", td);
-  if (read_text_file(fp, "README", &txt, &len) >= 0) {
-    printf("=== README ===\n%s\n", txt);
-    free(txt); txt = 0; len = 0;
-  }
-
-  num = 0;
-  while (1) {
-    ++num;
-    snprintf(ifbase, sizeof(ifbase), input_file_pattern, num);
-    snprintf(ofbase, sizeof(ofbase), output_file_pattern, num);
-    snprintf(ifpath, sizeof(ifpath), "%s/%s", td, ifbase);
-    snprintf(ofpath, sizeof(ofpath), "%s/%s", td, ofbase);
-
-    if (stat(ifpath, &stb) < 0) break;
-
-    if (read_text_file(ifpath, ifbase, &txt, &len) < 0)
+    snprintf(fp, sizeof(fp), "%s/%s", td, dd->d_name);
+    if (lstat(fp, &stb) < 0) {
+      error("entry %s does not exist", td);
       goto fail;
-    printf("=== %s ===\n%s\n", ifbase, txt);
-    free(txt); txt = 0; len = 0;
-    if (read_text_file(ofpath, ofbase, &txt, &len) < 0)
+    }
+    if (!S_ISREG(stb.st_mode)) {
+      error("directory %s is not a directory", td);
       goto fail;
-    printf("=== %s ===\n%s\n", ofbase, txt);
-    free(txt); txt = 0; len = 0;
-  }
-
-  if (ignore_dot_files) {
-    if ((d = opendir(td))) {
-      while ((dd = readdir(d))) {
-        if (!strcmp(dd->d_name, ".")) continue;
-        if (!strcmp(dd->d_name, "..")) continue;
-        if (dd->d_name[0] == '.') {
-          printf("Ignored file: %s\n", dd->d_name);
-        }
-      }
-      closedir(d); d = 0;
+    }
+    if (access(td, R_OK | W_OK) < 0) {
+      error("directory %s has invalid permissions", td);
+      goto fail;
+    }
+    if (read_text_file(fp, dd->d_name, &txt, &len) >= 0) {
+      printf("=== %s ===\n%s\n", dd->d_name, txt);
+      free(txt); txt = 0; len = 0;
     }
   }
- */
+  closedir(d); d = 0;
   
   remove_directory_recursively(wd, 0);
   return 0;
