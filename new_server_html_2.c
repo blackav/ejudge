@@ -1643,17 +1643,6 @@ ns_write_priv_source(const serve_state_t state,
                      "run_id=%d&no_disp=1", run_id));
     } else {
       fprintf(f, "<p>The submission is binary and thus is not shown.</p>\n");
-      /* try to load text description of the archive */
-      txt_flags = archive_make_read_path(state, txt_path, sizeof(txt_path),
-                                         global->report_archive_dir,
-                                         run_id, 0, 0);
-      if (txt_flags >= 0) {
-        if (generic_read_file(&txt_text, 0, &txt_size, txt_flags, 0,
-                              txt_path, 0) >= 0) {
-          fprintf(f, "<pre>%s</pre>\n", ARMOR(txt_text));
-          xfree(txt_text); txt_text = 0; txt_size = 0;
-        }
-      }
     }
   } else if (lang && lang->binary) {
     fprintf(f, "<p>The submission is binary and thus is not shown.</p>\n");
@@ -1694,6 +1683,18 @@ ns_write_priv_source(const serve_state_t state,
                       _("Main page"), 0, 0, 0, _("Refresh"), _("View report"),
                       _("View team report"));
     */
+  }
+
+    /* try to load text description of the archive */
+  txt_flags = archive_make_read_path(state, txt_path, sizeof(txt_path),
+                                     global->report_archive_dir,
+                                     run_id, 0, 0);
+  if (txt_flags >= 0) {
+    if (generic_read_file(&txt_text, 0, &txt_size, txt_flags, 0,
+                          txt_path, 0) >= 0) {
+      fprintf(f, "<h2>%s</h2>\n<pre>%s</pre>\n", "Style checker output", ARMOR(txt_text));
+      xfree(txt_text); txt_text = 0; txt_size = 0;
+    }
   }
 
   fprintf(f, "<h2>%s</h2>\n", _("Send a message about this run"));
