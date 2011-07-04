@@ -78,6 +78,7 @@ check_style_only(
   size_t reply_bin_size = 0;
   unsigned char msgbuf[1024] = { 0 };
   path_t log_path;
+  path_t txt_path;
   path_t work_src_path;
   path_t work_log_path;
   path_t work_txt_path;
@@ -91,6 +92,7 @@ check_style_only(
   // working directory: ${global->compile_work_dir}
 
   snprintf(log_path, sizeof(log_path), "%s/%s", report_dir, run_name);
+  snprintf(txt_path, sizeof(txt_path), "%s/%s.txt", report_dir, run_name);
   if (req->src_sfx) src_sfx = req->src_sfx;
   snprintf(work_src_path, sizeof(work_src_path), "%s/%s%s",
            global->compile_work_dir, run_name, src_sfx);
@@ -171,11 +173,12 @@ check_style_only(
     rpl->status = RUN_STYLE_ERR;
     get_current_time(&rpl->ts3, &rpl->ts3_us);
     generic_copy_file(0, 0, work_log_path, "", 0, 0, log_path, "");
+    generic_copy_file(0, 0, work_txt_path, "", 0, 0, txt_path, "");
   } else {
     // success
     rpl->status = RUN_OK;
     get_current_time(&rpl->ts3, &rpl->ts3_us);
-    generic_copy_file(0, 0, work_txt_path, "", 0, 0, log_path, "");
+    generic_copy_file(0, 0, work_txt_path, "", 0, 0, txt_path, "");
   }
 
   if (compile_reply_packet_write(rpl, &reply_bin_size, &reply_bin) < 0)
@@ -213,9 +216,11 @@ do_loop(void)
   path_t src_path;
   path_t exe_path;
   path_t log_path;
+  path_t txt_path;
 
   path_t exe_out;
   path_t log_out;
+  path_t txt_out;
   path_t report_dir, status_dir;
 
   path_t  pkt_name, run_name;
@@ -323,6 +328,7 @@ do_loop(void)
              "%s/%06d/status", global->compile_dir, rpl.contest_id);
     snprintf(run_name, sizeof(run_name), "%06d", rpl.run_id);
     pathmake(log_out, report_dir, "/", run_name, NULL);
+    snprintf(txt_out, sizeof(txt_out), "%s/%s.txt", report_dir, run_name);
 
     make_all_dir(status_dir, 0777);
     make_dir(report_dir, 0777);
@@ -355,6 +361,7 @@ do_loop(void)
     pathmake(src_path, global->compile_work_dir, "/", src_name, NULL);
     pathmake(exe_path, global->compile_work_dir, "/", exe_name, NULL);
     pathmake(log_path, global->compile_work_dir, "/", "log", NULL);
+    pathmake(txt_path, global->compile_work_dir, "/", "txt", NULL);
     /* the resulting executable file */
     pathmake(exe_out, report_dir, "/", exe_name, NULL);
 
@@ -391,9 +398,9 @@ do_loop(void)
         task_SetPathAsArg0(tsk);
         task_SetWorkingDir(tsk, global->compile_work_dir);
         task_EnableProcessGroup(tsk);
-        task_SetRedir(tsk, 1, TSR_FILE, log_path, TSK_REWRITE, 0777);
         task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_WRITE);
-        task_SetRedir(tsk, 2, TSR_DUP, 1);
+        task_SetRedir(tsk, 1, TSR_FILE, txt_path, TSK_REWRITE, 0777);
+        task_SetRedir(tsk, 2, TSR_FILE, log_path, TSK_REWRITE, 0777);
         if (req->sc_env_num > 0) {
           for (i = 0; i < req->sc_env_num; i++)
             task_PutEnv(tsk, req->sc_env_vars[i]);
@@ -535,6 +542,9 @@ do_loop(void)
         r = generic_copy_file(0, 0, log_path, "", 0, 0, log_out, "");
       } else {
         r = generic_copy_file(0, 0, exe_path, "", 0, 0, exe_out, "");
+      }
+      if (generic_file_size(0, txt_path, "") > 0) {
+        generic_copy_file(0, 0, txt_path, "", 0, 0, txt_out, "");
       }
       if (r >= 0 && generic_write_file(rpl_pkt, rpl_size, SAFE,
                                        status_dir, run_name, "") >= 0)
