@@ -1,3 +1,31 @@
+2011-05-08 (r6315) Alexander Chernov  <cher@ejudge.ru>
+
+	* get_prev_user_id.c:
+	initial revision
+
+2011-05-01 (r6289) Alexander Chernov  <cher@ejudge.ru>
+
+	* create_user_2.c:
+	initial revision
+
+2011-04-22 (r6262) Alexander Chernov  <cher@ejudge.ru>
+
+	* get_count.c:
+	(userlist_clnt_get_count) 'group_id' parameter is added.
+
+	* list_users_2.c:
+	(userlist_clnt_list_users_2) 'group_id' parameter is added.
+
+2011-04-20 (r6254) Alexander Chernov  <cher@ejudge.ru>
+
+	* get_count.c:
+	initial revision
+
+2011-04-19 (r6249) Alexander Chernov  <cher@ejudge.ru>
+
+	* list_users_2.c:
+	initial revision
+
 2011-03-27 (r6169) Alexander Chernov  <cher@ejudge.ru>
 
 	* send_packet.c:

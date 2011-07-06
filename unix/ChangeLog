@@ -1,3 +1,8 @@
+2011-06-18 (r6367) Alexander Chernov  <cher@ejudge.ru>
+
+	* reuse_exec.c:
+	(linux_set_secure_exec_supported_flag) check for 'dup' is removed.
+
 2011-03-31 (r6208) Alexander Chernov  <cher@ejudge.ru>
 
 	* reuse_exec.c:

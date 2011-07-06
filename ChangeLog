@@ -1,3 +1,680 @@
+2011-07-04 (r6393) Alexander Chernov  <cher@ejudge.ru>
+
+	* compile.c:
+	style checker output to the standard output is stored in a separate file.
+
+	* new_server_html_2.c:
+	(ns_write_priv_source) style checker output is shown in all cases.
+
+	* serve_2.c:
+	(serve_read_compile_packet) style checker report file is supported.
+
+2011-06-30 (r6387) Alexander Chernov  <cher@ejudge.ru>
+
+	* lang_config_vis.c:
+	(lang_config_generate_compile_cfg) support for "binary" configuration parameter
+	is added.
+
+2011-06-25 (r6381) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server.h:
+	new commands are added:
+	NEW_SRV_ACTION_DUMP_LANGUAGES, NEW_SRV_ACTION_GET_CONTEST_STATUS,
+	NEW_SRV_ACTION_GET_CONTEST_SCHED, NEW_SRV_ACTION_GET_CONTEST_DURATION,
+	NEW_SRV_ACTION_GET_CONTEST_DURATION;
+	according to a patch from germanilyin@gmail.com.
+
+	* new_server_html.c, new_server_html_4.c, new-server-cmd.c:
+	new commands are added:
+	NEW_SRV_ACTION_DUMP_LANGUAGES, NEW_SRV_ACTION_GET_CONTEST_STATUS,
+	NEW_SRV_ACTION_GET_CONTEST_SCHED, NEW_SRV_ACTION_GET_CONTEST_DURATION,
+	NEW_SRV_ACTION_GET_CONTEST_DURATION;
+	according to a patch from germanilyin@gmail.com.
+
+2011-06-19 (r6377) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_proto.h: progress.
+
+	* userlist_proto.h:
+	'ULS_GET_GROUP_INFO' is added.
+
+	* super_html_4.c, super_html_6.c: progress.
+
+	* userlist-server.c:
+	'ULS_GET_GROUP_INFO' request is implemented.
+
+2011-06-18 (r6370) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_proto.h:
+	SSERV_OP_USER_JUMP_CONTEST_ACTION is added.
+
+	* super_html_4.c, super_html_6.c:
+	jumping to another contest is implemented.
+
+2011-06-18 (r6368) Alexander Chernov  <cher@ejudge.ru>
+
+	* serve_2.c:
+	(serve_read_compile_packet) check for user name is removed.
+
+	* userlist-server.c:
+	userlist updating is improved.
+
+2011-06-12 (r6363) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_proto.h: progress.
+
+	* userlist_proto.h:
+	'ULS_LIST_ALL_USERS_4' is added.
+
+	* super_html_4.c, super_html_6.c: progress.
+
+	* userlist-server.c:
+	'ULS_LIST_ALL_USERS_4' is implemented.
+
+2011-06-11 (r6361) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_html_4.c, super_html_6.c: progress.
+
+2011-06-10 (r6359) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_proto.h:
+	SSERV_OP_USER_SEL_CANCEL_ACTION is added.
+
+	* super-serve.h:
+	"bitset.h" is included;
+	(struct sid_state) 'marked' field is added.
+
+	* userlist_proto.h:
+	ULS_LIST_ALL_USERS_3 command is added.
+
+	* super_html_4.c, super_html_6.c: progress
+
+	* super-serve.c:
+	(sid_state_clear) 'marked' field is freed.
+
+	* userlist-server.c:
+	"bitset.h" is included;
+	(cmd_list_all_users_3) new command is implemented.
+
+2011-06-05 (r6356) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make:
+	bitset.[ch] are added.
+
+	* super_proto.h: progress...
+
+	* super_html_4.c, super_html_6.c: progress...
+
+2011-06-05 (r6355) Alexander Chernov  <cher@ejudge.ru>
+
+	* bitset.c, bitset.h:
+	initial revision
+
+2011-05-28 (r6353) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server.h:
+	(ns_header) 'cnts' parameter is added;
+	(ns_separator) new function prototype.
+
+	* new_server_html.c, new_server_html_2.c, new_server_html_5.c:
+	calls of 'ns_header' are updated;
+	calls of 'ns_separator' are added instead of fprintfs.
+
+	* new_server_html_3.c: copyright notice is updated;
+	header and separator templated are changed to use substitutions;
+	(process_template) 'logo_url', 'css_url' parameters are added;
+	  '%O' (logo) and '%Y' (css) substitutions are supported;
+	(ns_header) 'cnts' parameter is added;
+	(ns_separator) new function;
+	(ns_footer) call of 'process_template' is updated;
+	calls of 'ns_header' are updated;
+	calls of 'ns_separator' are added.
+
+2011-05-24 (r6351) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_proto.h:
+	editing of new contest elements <logo_url>, <css_url> is supported.
+
+	* serve-control.c, super_html.c, super_html_2.c, super_html_3.c, super_html_4.c, super-serve.c:
+	editing of new contest elements <logo_url>, <css_url> is supported.
+
+2011-05-24 (r6349) Alexander Chernov  <cher@ejudge.ru>
+
+	* contests.h: copyright notice is updated;
+	(struct contest_desc) new fields 'logo_url', 'css_url' are added.
+
+	* contests.c, contest_tmpl.c:
+	new elements <logo_url>, <css_url> are handled.
+
+2011-05-23 (r6347) Alexander Chernov  <cher@ejudge.ru>
+
+	* misctext.h: copyright notice is updated;
+	(is_valid_email_address) new function prototype.
+
+	* super_html.h:
+	new error code 'S_ERR_INV_EMAIL' is added.
+
+	* ejudge-setup.c, job-server.c, new_server_html_5.c, super_html_2.c, super_html_4.c, super_html_6.c:
+	email address is validated using 'is_valid_email_address' function.
+
+	* misctext.c:
+	(is_valid_email_address) new function.
+
+2011-05-23 (r6345) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.c:
+	(set_defaults) '%' is considered as a special substitution character
+	when handling style_checker_cmd.
+
+	* sformat.c:
+	(sformat_message) %Gr substitution is supported.
+
+2011-05-22 (r6343) Alexander Chernov  <cher@ejudge.ru>
+
+	* html.h:
+	(write_xml_team_testing_report) new parameters are added:
+	  'sid', 'self_url', 'extra_args', 'action_vec'.
+
+	* mischtml.h:
+	(html_hyperref_attr) new function prototype.
+
+	* html.c:
+	(html_make_title) new function;
+	(write_xml_team_testing_report) new parameters are added:
+	  'sid', 'self_url', 'extra_args', 'action_vec';
+	full archive storage is supported.
+
+	* html_hyperref.c: copyright notice is updated;
+	(html_hyperref_attr) new function.
+
+	* new_server_html.c:
+	(unpriv_view_test) test visibility settings are supported;
+	(unpriv_view_report) call of 'write_xml_team_testing_report' updated.
+
+	* new_server_html_2.c:
+	(ns_write_priv_report) call of 'write_xml_team_testing_report' updated.
+
+2011-05-22 (r6341) Alexander Chernov  <cher@ejudge.ru>
+
+	* html.h:
+	(do_write_kirov_standings) 'user_id' parameter is added.
+
+	* html.c:
+	(do_write_kirov_standings) 'user_id' parameter is added;
+	  standings freezing in user mode is supported correctly;
+	(write_standings) call of 'do_write_kirov_standings' is updated.
+
+	* new_server_html.c, new_server_html_2.c:
+	calls of 'do_write_kirov_standings' are updated.
+
+2011-05-14 (r6333) Alexander Chernov  <cher@ejudge.ru>
+
+	* meta.make: progress...
+
+	* super_html_6.h, super_proto.h: progress...
+
+	* super_html_6.c: progress...
+
+	* uldb_plugin_xml.c:
+	(set_reg_flags_func) copy command (4) is supported.
+
+	* userlist-server.c:
+	(cmd_edit_registration) copy command (4) is supported.
+
+2011-05-09 (r6326) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_html.h:
+	'S_ERR_TOO_MANY_MEMBERS' error code is added.
+
+	* Makefile.unix.in:
+	generation and installation of default 'ejudge-install.sh' is added.
+
+	* super_html_4.c:
+	'S_ERR_TOO_MANY_MEMBERS' error code is added.
+
+	* super_html_6.c:
+	(super_serve_op_USER_CREATE_MEMBER_ACTION) new function.
+
+2011-05-09 (r6325) Alexander Chernov  <cher@ejudge.ru>
+
+	* lang_config_vis.h: copyright notice is updated;
+	(lang_configure_screen) 'batch_mode' parameter is added.
+
+	* ejudge-configure-compilers.c:
+	(visual_setup) call of 'lang_configure_screen' is updated.
+
+	* ejudge-setup.c:
+	(make_sha1_passwd) new function;
+	(do_identity_menu) 'make_sha1_passwd' is called;
+	(initialize_setting_var) mysql plugin is not enabled by default;
+	workdisk is disabled by default;
+	(do_preview_menu) call of 'lang_configure_screen' is updated;
+	(generate_install_script) warning is added to the generated script;
+	check for user is added to the generated script;
+	(preview_install_script) call of 'lang_configure_screen' is updated;
+	(save_install_script) 'batch_mode', 'output_name' parameters are added;
+	(do_main_menu) call of 'save_install_script' is updated;
+	(main) batch mode (-b) option is supported.
+
+	* lang_config_vis.c:
+	(lang_configure_screen) 'batch_mode' parameter is added.
+
+2011-05-08 (r6323) Alexander Chernov  <cher@ejudge.ru>
+
+	* mischtml.h: copyright notice is updated;
+	(html_input_text_js) new function prototype.
+
+	* compile.c:
+	default log file name is changed to 'ej-compile.log'.
+
+	* ejudge-setup.c:
+	default log file names are changed to 'ej-users.log'
+	and 'ej-super-server.log' for the respective programs.
+
+	* html_input_text.c: copyright notice is updated;
+	(html_input_text_js) new function.
+
+	* job-server.c:
+	default log file name is changed to 'ej-jobs.log'.
+
+	* new-server.c:
+	default log file name is changed to 'ej-contests.log'.
+
+	* super_html.c:
+	some obsoleted code is removed;
+	default ej-run log file name is changed to 'ej-run-messages.log'.
+
+	* super_html_6.c: progress...
+
+	* super-serve.c:
+	default ej-run log file name is changed to 'ej-run-messages.log'.
+
+2011-05-08 (r6316) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make:
+	'userlist_clnt/get_prev_user_id.c' is added.
+
+	* userlist_clnt.h:
+	(userlist_clnt_get_prev_user_id) new function prototype.
+
+2011-05-08 (r6314) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_proto.h: progress...
+
+	* uldb_plugin.h:
+	(struct uldb_plugin_iface) new member functions: 'get_prev_user_id',
+	  'get_next_user_id'.
+
+	* userlist_proto.h:
+	new commands added: ULS_PREV_USER, ULS_NEXT_USER;
+	(struct userlist_pk_list_users_2) 'user_id' field is added.
+
+	* super_html_4.c, super_html_6.c: progress...
+
+	* uldb_plugin_xml.c:
+	(get_prev_user_id_func) new function;
+	(get_next_user_id_func) new function.
+
+	* userlist.c:
+	more prime numbers are added.
+
+	* userlist-server.c:
+	(cmd_next_user) new function;
+	ULS_PREV_USER, ULS_NEXT_USER requests are handled.
+
+2011-05-04 (r6302) Alexander Chernov  <cher@ejudge.ru>
+
+	* meta.make:
+	metainfo for ss_op_param_USER_CREATE_MANY_ACTION is generated.
+
+	* ej_types.h:
+	'ej_int_opt_m1_t' is added.
+
+	* super_html.h:
+	new error codes are added.
+
+	* super_html_6.h:
+	(struct ss_op_param_USER_CREATE_MANY_ACTION) new structure added.
+
+	* super_html_4.c, super_html_6.c: progress...
+
+2011-05-02 (r6294) Alexander Chernov  <cher@ejudge.ru>
+
+	* configure.ac:
+	check for -m32 and -m64 options is added.
+
+2011-05-01 (r6290) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make:
+	userlist_clnt/create_user_2.c is added.
+
+	* super_html.h: new error codes are added.
+
+	* uldb_plugin.h:
+	(struct uldb_plugin_iface::new_user) the following new parameters
+	are added:
+	'passwd_method', 'is_privileged', 'is_invisible', 'is_banned',
+	'is_locked', 'show_login', 'show_email', 'read_only',
+	'never_clean';
+	(struct uldb_plugin_iface::register_contest) new parameter 'flags'
+	is added.
+
+	* userlist_clnt.h:
+	(userlist_clnt_create_user_2) new function prototype.
+
+	* userlist_proto.h:
+	new command 'ULS_CREATE_USER_2' is added;
+	(struct userlist_pk_create_user_2) new packet structure.
+
+	* super_html_4.c: new error codes are added.
+
+	* super_html_6.c: progress...
+
+	* uldb_plugin_xml.c:
+	(new_user_func) many parameters are added;
+	(register_contest_func) parameter 'flags' is added.
+
+	* userlist-server.c:
+	(check_pk_create_user_2) new function;
+	(send_registration_email) new function;
+	use of 'new_user' DB method is changed;
+	use of 'register_contest' DB method is changed;
+	(cmd_create_user_2) new function.
+
+2011-04-30 (r6286) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in:
+	'super_html_6_meta' is added;
+	metainfo generation is moved to a separater 'meta.make' file.
+
+	* meta.make: initial revision.
+
+	* ej_types.h:
+	new typedef for CGI param parsing generator are added.
+
+	* meta_generic.h: copyright notice is updated;
+	(struct meta_methods) new fields 'last_tag', 'size' are added;
+	(meta_destroy_fields) new function prototype.
+
+	* super_html.h: error codes are renamed.
+
+	* super_html_6.h: initial revision
+
+	* meta_generic.c:
+	(meta_destroy_fields) new function.
+
+	* super_html_4.c, super_html_6.c: progress...
+
+2011-04-30 (r6284) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in:
+	'install_ej_super_server' rule is added;
+	'-rdynamic' options is added for ej-super-server.
+
+	* super_html.h:
+	'super_serve_op_*' function prototypes are removed as they are
+	linked dynamically.
+
+	* super_proto.h:
+	some operations are renamed.
+
+	* userlist_proto.h:
+	new commands are added:
+	ULS_PRIV_SET_REG_PASSWD_PLAIN,
+	ULS_PRIV_SET_REG_PASSWD_SHA1,
+	ULS_PRIV_SET_CNTS_PASSWD_PLAIN,
+	ULS_PRIV_SET_CNTS_PASSWD_SHA1.
+
+	* super_html.c:
+	some operations are renamed.
+
+	* super_html_4.c:
+	(do_http_request) dynamic symbol lookup is implemented instead of
+	static function table.
+
+	* super_html_6.c: progress...
+
+	* userlist-server.c:
+	(cmd_priv_set_passwd_2) new function to handle the new commands.
+
+2011-04-28 (r6273) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in:
+	rules for generation of the contest-1 archive file are added.
+
+	* ejudge-setup.c:
+	(generate_serve_cfg) 'advanced_layout' is enabled;
+	statement file name is 'statement.xml';
+	checker file name is 'checker';
+	(generate_contest_xml) default access permissions
+	are changed to "enable from all";
+	the uuencoded contest-1 archive is taken from an external file.
+
+2011-04-27 (r6271) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in:
+	style/sprintf.js is added.
+
+	* super_html.h:
+	(super_serve_op_user_create_one_page) new function prototype;
+	(super_serve_op_user_create_many_page) new function prototype;
+	(super_serve_op_user_create_from_csv_page) new function prototype.
+
+	* super_proto.h:
+	new operations are added:
+	SSERV_OP_USER_CREATE_ONE_ACTION,
+	SSERV_OP_USER_CREATE_MANY_ACTION,
+	SSERV_OP_USER_CREATE_FROM_CSV_PAGE,
+	SSERV_OP_USER_CREATE_FROM_CSV_ACTION.
+
+	* super_html_4.c, super_html_6.c: in progress...
+
+2011-04-25 (r6267) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_html.h:
+	(super_serve_op_user_password_page) new function prototype;
+	(super_serve_op_user_cnts_password_page) new function prototype;
+	(super_serve_op_user_create_reg_page) new function prototype;
+	(super_serve_op_user_edit_reg_page) new function prototype;
+	(super_serve_op_user_delete_reg_page) new function prototype.
+
+	* super_proto.h:
+	new operations are added:
+	SSERV_OP_USER_CREATE_ONE_PAGE,
+	SSERV_OP_USER_CREATE_MANY_PAGE,
+	SSERV_OP_USER_CHANGE_PASSWORD_ACTION,
+	SSERV_OP_USER_CNTS_PASSWORD_PAGE,
+	SSERV_OP_USER_CHANGE_CNTS_PASSWORD_ACTION,
+	SSERV_OP_USER_CREATE_REG_ACTION,
+	SSERV_OP_USER_EDIT_REG_ACTION,
+	SSERV_OP_USER_DELETE_REG_ACTION.
+
+	* super_html_4.c, super_html_6.c: progress...
+
+2011-04-24 (r6265) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_html.h:
+	(ss_cgi_param_int_opt) new function prototype;
+	(super_serve_op_user_detail_page) new function prototype.
+
+	* super_proto.h: new operations are added.
+
+	* super_html.c, super_html_4.c, super_html_6.c: progress...
+
+2011-04-22 (r6263) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_html.h:
+	(super_serve_op_browse_groups) new function prototype;
+	(super_serve_op_set_group_filter) new function prototype.
+
+	* super_proto.h:
+	new operations are added.
+
+	* super-serve.h:
+	(struct sid_state) new fields are added.
+
+	* uldb_plugin.h:
+	(get_brief_list_iterator_2) 'group_id' parameter is added;
+	(get_user_count) 'group_id' parameter is added;
+	(get_group_iterator_2) new method;
+	(get_group_count) new method.
+
+	* userlist_clnt.h:
+	(userlist_clnt_list_users_2) 'group_id' parameter is added;
+	(userlist_clnt_get_count) 'group_id' parameter is added.
+
+	* userlist_proto.h:
+	new requests 'ULS_LIST_ALL_GROUPS_2', 'ULS_GET_GROUP_COUNT'
+	are added;
+	(struct userlist_pk_list_users_2) 'group_id' field is added.
+
+	* super_html.c:
+	"Group editor" link is added to the main page.
+
+	* super_html_4.c, super_html_6.c: in progress...
+
+	* uldb_plugin_xml.c:
+	(get_brief_list_iterator_2_func) 'group_id' parameter is added;
+	(get_user_count_func) 'group_id' parameter is added;
+	(get_group_iterator_2_func) new function;
+	(get_group_count_func) new function.
+
+	* userlist.c:
+	protection against cpu_frequency == 0 is added.
+
+	* userlist-server.c:
+	protection against cpu_frequency == 0 is added;
+	(cmd_list_all_users_2) 'group_id' field is handled;
+	(cmd_get_user_count) 'group_id' field is handled;
+	(cmd_list_all_groups_2) new function;
+	(cmd_get_group_count) new function.
+
+2011-04-21 (r6256) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_html.h:
+	(ss_cgi_param_int) function prototype is added.
+
+	* super_html_4.c:
+	(ss_cgi_param_int) the function is made non-static.
+
+	* super_html_6.c: in progress...
+
+	* userlist-server.c:
+	(cmd_get_user_count) the count is logged.
+
+2011-04-20 (r6255) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make:
+	'userlist_clnt/get_count.c' is added.
+
+	* super_html.h:
+	(super_serve_op_set_user_filter) new function prototype.
+
+	* uldb_plugin.h:
+	(struct uldb_plugin_iface) new member function 'get_user_count'
+	is added.
+
+	* userlist_clnt.h:
+	(userlist_clnt_get_count) new function prototype.
+
+	* userlist_proto.h:
+	'ULS_GET_USER_COUNT' request code is added;
+	'ULS_COUNT' reply code is added;
+	(struct userlist_pk_count) new reply packet.
+
+	* super_html_4.c: new opcodes are added;
+	(do_http_request) 'op_'-prefixed opcodes are handled.
+
+	* super_html_6.c: ...progress...
+
+	* uldb_plugin_xml.c:
+	(get_user_count_func) new function.
+
+	* userlist-server.c:
+	(cmd_get_user_count) new function;
+	'ULS_GET_USER_COUNT' request is handled.
+
+2011-04-19 (r6251) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make:
+	userlist_clnt/list_users_2.c is added;
+	super_html_6.c is added.
+
+	* super_html.h: copyright notice is updated;
+	(super_serve_op_browse_users) new function prototype.
+
+	* super_proto.h: new operations are added:
+	SSERV_OP_BROWSE_USERS, SSERV_OP_CHANGE_USER_FILTER,
+	SSERV_OP_USER_FILTER_FIRST_PAGE, SSERV_OP_USER_FILTER_PREV_PAGE,
+	SSERV_OP_USER_FILTER_NEXT_PAGE, SSERV_OP_USER_FILTER_LAST_PAGE.
+
+	* super-serve.h: copyright notice is updated;
+	(struct sid_state) new fields 'user_filter_set', 'user_filter',
+	'user_offset', 'user_count' are added;
+	(struct http_request_info) field 'userlist_clnt' is added.
+
+	* uldb_plugin.h: copyright notice is updated;
+	(struct uldb_plugin_iface) 'get_brief_list_iterator_2' member
+	function is added.
+
+	* userlist_clnt.h: copyright notice is added;
+	(userlist_clnt_list_users_2) new function prototype.
+
+	* userlist_proto.h: copyright notice is updated;
+	'ULS_LIST_ALL_USERS_2' command is added;
+	(struct userlist_pk_list_users_2) new struct is added.
+
+	* super_html.c:
+	(super_html_main_page) "User editor" link is added.
+
+	* super_html_4.c:
+	SSERV_OP_BROWSE_USERS request is handled.
+
+	* super_html_6.c: initial revision.
+
+	* super-serve.c:
+	(sid_state_clear) 'user_filter' is freed;
+	(cmd_http_request) 'userlist_clnt' is added to the request structure.
+
+	* uldb_plugin_xml.c:
+	(get_brief_list_iterator_2_func) new function.
+
+	* userlist-server.c:
+	(check_pk_list_users_2) new function;
+	(cmd_list_all_users_2) new function.
+
+2011-04-15 (r6247) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_html_3.c:
+	(super_html_lang_cmd) 'size_str_to_size_t' is used;
+	(num_suffix) function is removed.
+
+2011-04-15 (r6246) Alexander Chernov  <cher@ejudge.ru>
+
+	* misctext.h:
+	(size_str_to_num) new function prototype;
+	(size_str_to_size_t) new function prototype.
+
+	* misctext.c:
+	<errno.h> is included;
+	(size_str_to_num) new function;
+	(size_str_to_size_t) new function.
+
+	* parsecfg.c:
+	"misctext.h" is included;
+	(num_suffix) function is removed;
+	(copy_param) 'size_str_to_num', 'size_str_to_size_t' are used.
+
+	* prepare_out.c:
+	(num_to_size) function is removed;
+	(size_t_to_size) function is removed;
+	'num_to_size_str' is used instead of 'num_to_size';
+	'size_t_to_size_str' is used instead of 'size_t_to_size'.
+
+	* super_html_3.c:
+	(super_html_global_param) 'size_str_to_size_t' is used;
+	(super_html_prob_param) 'size_str_to_size_t' is used;
+
 2011-04-10 (r6242) Alexander Chernov  <cher@ejudge.ru>
 
 	* super_html.c:

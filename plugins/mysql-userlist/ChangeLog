@@ -1,3 +1,58 @@
+2011-06-19 (r6376) Alexander Chernov  <cher@ejudge.ru>
+
+	* uldb_mysql.c:
+	(get_brief_list_iterator_2_func) performance is improved, group_id is supported.
+
+2011-05-14 (r6332) Alexander Chernov  <cher@ejudge.ru>
+
+	* uldb_mysql.c:
+	(set_reg_flags_func) copy operation (4) is supported.
+
+2011-05-08 (r6313) Alexander Chernov  <cher@ejudge.ru>
+
+	* methods.inc.c:
+	(get_prev_user_id_func) new function prototype;
+	(get_next_user_id_func) new function prototype.
+
+	* uldb_mysql.c:
+	(get_prev_user_id_func) new function;
+	(get_next_user_id_func) new function.
+
+2011-05-01 (r6288) Alexander Chernov  <cher@ejudge.ru>
+
+	* methods.inc.c, uldb_mysql.c:
+	(new_user_func) many new parameters are added;
+	(register_contest_func) new parameter 'flags' is added.
+
+2011-04-22 (r6261) Alexander Chernov  <cher@ejudge.ru>
+
+	* methods.inc.c:
+	(get_brief_list_iterator_2_func) 'group_id' parameter is added;
+	(get_group_iterator_2_func) new function prototype;
+	(get_group_count_func) new function prototope.
+
+	* uldb_mysql.c:
+	(get_member_serial_func) a bug is fixed;
+	(get_brief_list_iterator_2_func) 'group_id' parameter is added;
+	(get_group_iterator_2_func) new function;
+	(get_group_count_func) new function.
+
+2011-04-20 (r6253) Alexander Chernov  <cher@ejudge.ru>
+
+	* methods.inc.c:
+	(get_user_count_func) new function prototype.
+
+	* uldb_mysql.c:
+	(get_user_count_func) new function.
+
+2011-04-19 (r6250) Alexander Chernov  <cher@ejudge.ru>
+
+	* methods.inc.c: copyright notice is updated;
+	(get_brief_list_iterator_2_func) function prototype is added.
+
+	* uldb_mysql.c:
+	(get_brief_list_iterator_2_func) new function is added.
+
 2011-03-27 (r6188) Alexander Chernov  <cher@ejudge.ru>
 
 	* main.make, Makefile.in:
