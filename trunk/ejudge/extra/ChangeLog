@@ -1,3 +1,9 @@
+2011-05-02 (r6293) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.in: copyright notice is updated;
+	rules for compilation of explicitly 32- and 64-bit versions
+	of libdropcaps.so are added.
+
 2010-01-03 (r5602) Alexander Chernov  <cher@ejudge.ru>
 
 	* Makefile.in: copyright notice is updated;

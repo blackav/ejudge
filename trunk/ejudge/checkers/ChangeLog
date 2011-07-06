@@ -1,3 +1,8 @@
+2011-06-30 (r6386) Alexander Chernov  <cher@ejudge.ru>
+
+	* style_archive.c: copyright notice is updated;
+	support for make-style archives is added.
+
 2011-03-27 (r6192) Alexander Chernov  <cher@ejudge.ru>
 
 	* Makefile.unix.in:
