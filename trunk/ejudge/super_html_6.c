@@ -5896,7 +5896,7 @@ super_serve_op_USER_CREATE_FROM_CSV_ACTION(
   // dry run
   for (int row = 1; row < csv_parsed->u; ++row) {
     if (csv_parsed->v[row].u != column_count) {
-      fprintf(log_f, "row %d contains %d column, but %d columns expected\n",
+      fprintf(log_f, "row %d contains %zu column, but %d columns expected\n",
               row + 1, csv_parsed->v[row].u, column_count);
       failed = 1;
       continue;
