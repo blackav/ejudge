@@ -6761,8 +6761,7 @@ static handler_func_t op_handlers[SSERV_OP_LAST] =
 };
 
 extern void super_html_6_force_link(void);
-static void *super_html_6_force_link_ptr __attribute__((unused));
-static void *super_html_6_force_link_ptr = super_html_6_force_link;
+void *super_html_6_force_link_ptr = super_html_6_force_link;
 
 static void *self_dl_handle = 0;
 static int
