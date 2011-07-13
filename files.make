@@ -218,6 +218,7 @@ COMMON_CFILES=\
  super_html_4.c\
  super_html_5.c\
  super_html_6.c\
+ super_html_7.c\
  super_proto.c\
  sha.c\
  t3m_dir_listener.c\
