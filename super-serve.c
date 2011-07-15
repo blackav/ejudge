@@ -1582,6 +1582,7 @@ sid_state_find(ej_cookie_t sid)
 static struct sid_state*
 sid_state_add(
         ej_cookie_t sid,
+        ej_ip_t remote_addr,
         int user_id,
         const unsigned char *user_login,
         const unsigned char *user_name)
@@ -1591,6 +1592,7 @@ sid_state_add(
   ASSERT(sid);
   XCALLOC(n, 1);
   n->sid = sid;
+  n->remote_addr = remote_addr;
   n->init_time = time(0);
   n->flags |= SID_STATE_SHOW_CLOSED;
   n->user_id = user_id;
@@ -1611,6 +1613,7 @@ sid_state_add(
 static struct sid_state*
 sid_state_get(
         ej_cookie_t sid,
+        ej_ip_t remote_addr,
         int user_id,
         const unsigned char *user_login,
         const unsigned char *user_name)
@@ -1618,7 +1621,7 @@ sid_state_get(
   struct sid_state *p;
 
   if (!(p = sid_state_find(sid)))
-    p = sid_state_add(sid, user_id, user_login, user_name);
+    p = sid_state_add(sid, remote_addr, user_id, user_login, user_name);
   return p;
 }
 static void
@@ -1694,6 +1697,28 @@ super_serve_sid_state_get_cnts_editor_nc(int contest_id)
 
   for (p = sid_state_first; p; p = p->next)
     if (p->edited_cnts && p->edited_cnts->id == contest_id)
+      return p;
+  return 0;
+}
+
+const struct sid_state*
+super_serve_sid_state_get_test_editor(int contest_id)
+{
+  struct sid_state *p;
+
+  for (p = sid_state_first; p; p = p->next)
+    if (p->te_state && p->te_state->contest_id == contest_id)
+      return p;
+  return 0;
+}
+
+struct sid_state*
+super_serve_sid_state_get_test_editor_nc(int contest_id)
+{
+  struct sid_state *p;
+
+  for (p = sid_state_first; p; p = p->next)
+    if (p->te_state && p->te_state->contest_id == contest_id)
       return p;
   return 0;
 }
@@ -1927,7 +1952,7 @@ cmd_main_page(struct client_state *p, int len,
     return send_reply(p, -SSERV_ERR_PROTOCOL_ERROR);
   }
 
-  sstate = sid_state_get(p->cookie, p->user_id, p->login, p->name);
+  sstate = sid_state_get(p->cookie, p->ip, p->user_id, p->login, p->name);
 
   // extra incoming packet checks
   switch (pkt->b.id) {
@@ -2346,7 +2371,7 @@ cmd_create_contest(struct client_state *p, int len,
 
   // FIXME: check permissions
 
-  sstate = sid_state_get(p->cookie, p->user_id, p->login, p->name);
+  sstate = sid_state_get(p->cookie, p->ip, p->user_id, p->login, p->name);
   if (!(f = open_memstream(&html_ptr, &html_len))) {
     err("%d: open_memstream failed", p->id);
     return send_reply(p, -SSERV_ERR_SYSTEM_ERROR);
@@ -2477,7 +2502,7 @@ cmd_simple_top_command(struct client_state *p, int len,
   if ((r = get_peer_local_user(p)) < 0) {
     return send_reply(p, r);
   }
-  sstate = sid_state_get(p->cookie, p->user_id, p->login, p->name);
+  sstate = sid_state_get(p->cookie, p->ip, p->user_id, p->login, p->name);
 
   switch (pkt->b.id) {
   case SSERV_CMD_SHOW_HIDDEN:
@@ -2706,7 +2731,7 @@ cmd_set_value(struct client_state *p, int len,
   if ((r = get_peer_local_user(p)) < 0) {
     return send_reply(p, r);
   }
-  sstate = sid_state_get(p->cookie, p->user_id, p->login, p->name);
+  sstate = sid_state_get(p->cookie, p->ip, p->user_id, p->login, p->name);
 
   switch (pkt->b.id) {
   case SSERV_CMD_CNTS_CHANGE_NAME:
@@ -3491,7 +3516,7 @@ cmd_http_request(
   hr.system_login = userlist_login;
   hr.userlist_clnt = userlist_clnt;
 
-  hr.ss = sid_state_get(p->cookie, p->user_id, p->login, p->name);
+  hr.ss = sid_state_get(p->cookie, p->ip, p->user_id, p->login, p->name);
   hr.config = config;
 
   super_html_http_request(&out_t, &out_z, &hr);

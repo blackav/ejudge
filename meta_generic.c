@@ -139,6 +139,7 @@ meta_destroy_fields(const struct meta_methods *mth, void *ptr)
     case '0':                   /* ej_int_opt_0_t */
     case '3':                   /* ej_checkbox_t */
     case '4':                   /* ej_int_opt_1_t */
+    case '5':
       break;
     case '1':                   /* ej_textbox_t */
     case '2':                   /* ej_textbox_opt_t */

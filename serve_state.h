@@ -154,6 +154,8 @@ struct serve_state
 {
   unsigned char *config_path;
 
+  int contest_id;
+
   /* serve.cfg parsed config */
   struct generic_section_config *config;
   struct section_global_data    *global;
