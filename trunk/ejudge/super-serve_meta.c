@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2011/06/11 00:04:30
+// Generated 2011/07/15 23:45:37
 
 #include "super-serve_meta.h"
 #include "super-serve.h"
@@ -16,6 +16,7 @@ static struct meta_info_item meta_info_sid_state_data[] =
   [SSSS_next] = { SSSS_next, '?', XSIZE(struct sid_state, next), "next", XOFFSET(struct sid_state, next) },
   [SSSS_prev] = { SSSS_prev, '?', XSIZE(struct sid_state, prev), "prev", XOFFSET(struct sid_state, prev) },
   [SSSS_sid] = { SSSS_sid, '?', XSIZE(struct sid_state, sid), "sid", XOFFSET(struct sid_state, sid) },
+  [SSSS_remote_addr] = { SSSS_remote_addr, '?', XSIZE(struct sid_state, remote_addr), "remote_addr", XOFFSET(struct sid_state, remote_addr) },
   [SSSS_init_time] = { SSSS_init_time, 't', XSIZE(struct sid_state, init_time), "init_time", XOFFSET(struct sid_state, init_time) },
   [SSSS_flags] = { SSSS_flags, '?', XSIZE(struct sid_state, flags), "flags", XOFFSET(struct sid_state, flags) },
   [SSSS_edited_cnts] = { SSSS_edited_cnts, '?', XSIZE(struct sid_state, edited_cnts), "edited_cnts", XOFFSET(struct sid_state, edited_cnts) },
@@ -133,6 +134,7 @@ static struct meta_info_item meta_info_sid_state_data[] =
   [SSSS_group_user_offset] = { SSSS_group_user_offset, 'i', XSIZE(struct sid_state, group_user_offset), "group_user_offset", XOFFSET(struct sid_state, group_user_offset) },
   [SSSS_group_user_count] = { SSSS_group_user_count, 'i', XSIZE(struct sid_state, group_user_count), "group_user_count", XOFFSET(struct sid_state, group_user_count) },
   [SSSS_marked] = { SSSS_marked, '?', XSIZE(struct sid_state, marked), "marked", XOFFSET(struct sid_state, marked) },
+  [SSSS_te_state] = { SSSS_te_state, '?', XSIZE(struct sid_state, te_state), "te_state", XOFFSET(struct sid_state, te_state) },
 };
 
 int ss_sid_state_get_type(int tag)
