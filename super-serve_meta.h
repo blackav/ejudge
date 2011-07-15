@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2011/06/11 00:04:30
+// Generated 2011/07/15 23:45:37
 
 #ifndef __SUPER_SERVE_META_H__
 #define __SUPER_SERVE_META_H__
@@ -11,6 +11,7 @@ enum
   SSSS_next = 1,
   SSSS_prev,
   SSSS_sid,
+  SSSS_remote_addr,
   SSSS_init_time,
   SSSS_flags,
   SSSS_edited_cnts,
@@ -128,6 +129,7 @@ enum
   SSSS_group_user_offset,
   SSSS_group_user_count,
   SSSS_marked,
+  SSSS_te_state,
 
   SSSS_LAST_FIELD,
 };
