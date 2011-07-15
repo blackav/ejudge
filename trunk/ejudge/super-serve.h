@@ -83,13 +83,15 @@ struct section_global_data;
 struct section_language_data;
 struct section_problem_data;
 struct section_tester_data;
+struct serve_state;
 
-/* sizeof(struct sid_state) == 480 */
+/* sizeof(struct sid_state) == 496 */
 struct sid_state
 {
   struct sid_state *next;
   struct sid_state *prev;
   ej_cookie_t sid;
+  ej_ip_t remote_addr;
   time_t init_time;
   unsigned long flags;
   struct contest_desc *edited_cnts;
@@ -230,6 +232,9 @@ struct sid_state
   int group_user_count;
 
   bitset_t marked;
+
+  /* serve state for test editing */
+  struct serve_state *te_state;
 };
 
 struct sid_state;
@@ -288,5 +293,7 @@ int super_serve_start_serve_test_mode(const struct contest_desc *cnts,
 int super_serve_sid_state_get_max_edited_cnts(void);
 const struct sid_state* super_serve_sid_state_get_cnts_editor(int contest_id);
 struct sid_state* super_serve_sid_state_get_cnts_editor_nc(int contest_id);
+const struct sid_state* super_serve_sid_state_get_test_editor(int contest_id);
+struct sid_state* super_serve_sid_state_get_test_editor_nc(int contest_id);
 
 #endif /* __SUPER_SERVE_H__ */
