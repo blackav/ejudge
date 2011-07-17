@@ -41,7 +41,7 @@ finish_func(struct common_plugin_data *);
 static int
 prepare_func(
         struct common_plugin_data *,
-        struct ejudge_cfg *,
+        const struct ejudge_cfg *,
         struct xml_tree *);
 static int
 connect_func(struct common_mysql_state *state);
@@ -253,7 +253,7 @@ parse_passwd_file(
 static int
 prepare_func(
         struct common_plugin_data *data,
-        struct ejudge_cfg *config,
+        const struct ejudge_cfg *config,
         struct xml_tree *tree)
 {
   struct common_mysql_state *state = (struct common_mysql_state*) data;
