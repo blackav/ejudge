@@ -29,7 +29,7 @@ static struct common_loaded_plugin *plugins = 0;
 const struct common_loaded_plugin *
 plugin_register_builtin(
         struct common_plugin_iface *iface,
-        struct ejudge_cfg *config)
+        const struct ejudge_cfg *config)
 {
   int i;
   struct common_plugin_data *data;
@@ -91,7 +91,7 @@ plugin_load_external(
         const unsigned char *path,
         const unsigned char *type,
         const unsigned char *name,
-        struct ejudge_cfg *config)
+        const struct ejudge_cfg *config)
 {
   int i;
   struct common_plugin_data *data;
@@ -157,9 +157,3 @@ plugin_get(
   return NULL;
 }
 
-/*
- * Local variables:
- *  compile-command: "make -C ../.."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- * End:
- */

@@ -4,7 +4,7 @@
 #ifndef __COMMON_PLUGIN_H__
 #define __COMMON_PLUGIN_H__
 
-/* Copyright (C) 2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -37,7 +37,7 @@ struct common_plugin_iface
   // destroy the plugin data
   int (*finish)(struct common_plugin_data *);
   // parse the plugin configuration
-  int (*prepare)(struct common_plugin_data *, struct ejudge_cfg *,
+  int (*prepare)(struct common_plugin_data *, const struct ejudge_cfg *,
                  struct xml_tree *);
 };
 
@@ -52,13 +52,13 @@ struct common_loaded_plugin
 const struct common_loaded_plugin *
 plugin_register_builtin(
         struct common_plugin_iface *iface,
-        struct ejudge_cfg *config);
+        const struct ejudge_cfg *config);
 const struct common_loaded_plugin *
 plugin_load_external(
         const unsigned char *path,
         const unsigned char *type,
         const unsigned char *name,
-        struct ejudge_cfg *config);
+        const struct ejudge_cfg *config);
 const struct common_loaded_plugin *
 plugin_get(
         const unsigned char *type,

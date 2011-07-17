@@ -738,7 +738,7 @@ ejudge_cfg_unparse_plugins(struct ejudge_cfg *cfg, FILE *f)
 
 struct xml_tree *
 ejudge_cfg_get_plugin_config(
-        struct ejudge_cfg *cfg,
+        const struct ejudge_cfg *cfg,
         const unsigned char *type,
         const unsigned char *name)
 {

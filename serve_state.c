@@ -619,8 +619,68 @@ const size_t serve_struct_sizes_array_size = sizeof(serve_struct_sizes_array);
 const size_t serve_struct_sizes_array_num = sizeof(serve_struct_sizes_array) / sizeof(serve_struct_sizes_array[0]);
 
 int
+serve_state_load_contest_config(
+        const struct ejudge_cfg *config,
+        int contest_id,
+        const struct contest_desc *cnts,
+        serve_state_t *p_state)
+{
+  serve_state_t state = 0;
+  path_t config_path;
+  const unsigned char *conf_dir;
+  struct stat stbuf;
+
+  if (cnts->conf_dir && os_IsAbsolutePath(cnts->conf_dir)) {
+    snprintf(config_path, sizeof(config_path), "%s/serve.cfg", cnts->conf_dir);
+  } else {
+    if (!cnts->root_dir) {
+      err("load_contest: contest %d root_dir is not set", contest_id);
+      goto failure;
+    } else if (!os_IsAbsolutePath(cnts->root_dir)) {
+      err("load_contest: contest %d root_dir %s is not absolute",
+          contest_id, cnts->root_dir);
+      goto failure;
+    }
+    if (!(conf_dir = cnts->conf_dir)) conf_dir = "conf";
+    snprintf(config_path, sizeof(config_path),
+             "%s/%s/serve.cfg", cnts->root_dir, conf_dir);
+  }
+
+  if (stat(config_path, &stbuf) < 0) {
+    err("load_contest: contest %d config file %s does not exist",
+        contest_id, config_path);
+    goto failure;
+  }
+  if (!S_ISREG(stbuf.st_mode)) {
+    err("load_contest: contest %d config file %s is not a regular file",
+        contest_id, config_path);
+    goto failure;
+  }
+  if (access(config_path, R_OK) < 0) {
+    err("load_contest: contest %d config file %s is not readable",
+        contest_id, config_path);
+    goto failure;
+  }
+
+  state = serve_state_init();
+  state->config_path = xstrdup(config_path);
+  state->current_time = time(0);
+  state->load_time = state->current_time;
+
+  if (prepare(state, state->config_path, 0, PREPARE_SERVE, "", 1, 0, 0) < 0)
+    goto failure;
+  if (prepare_serve_defaults(state, NULL) < 0) goto failure;
+
+  return 1;
+
+ failure:
+  serve_state_destroy(state, cnts, NULL);
+  return -1;
+}
+
+int
 serve_state_load_contest(
-        struct ejudge_cfg *config,
+        const struct ejudge_cfg *config,
         int contest_id,
         struct userlist_clnt *ul_conn,
         struct teamdb_db_callbacks *teamdb_callbacks,

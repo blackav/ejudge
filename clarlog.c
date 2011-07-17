@@ -82,7 +82,7 @@ clar_destroy(clarlog_state_t state)
 int
 clar_open(
         clarlog_state_t state,
-        struct ejudge_cfg *config,
+        const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
         const struct section_global_data *global,
         const unsigned char *plugin_name,

@@ -62,7 +62,7 @@ finish_func(struct common_plugin_data *);
 static int
 prepare_func(
         struct common_plugin_data *data,
-        struct ejudge_cfg *config,
+        const struct ejudge_cfg *config,
         struct xml_tree *plugin_config);
 static struct rldb_plugin_cnts *
 open_func(
@@ -268,7 +268,7 @@ finish_func(struct common_plugin_data *data)
 static int
 prepare_func(
         struct common_plugin_data *data,
-        struct ejudge_cfg *config,
+        const struct ejudge_cfg *config,
         struct xml_tree *plugin_config)
 {
   return 0;

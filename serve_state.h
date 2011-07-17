@@ -155,6 +155,8 @@ struct serve_state
   unsigned char *config_path;
 
   int contest_id;
+  time_t last_timestamp;
+  time_t last_check_time;
 
   /* serve.cfg parsed config */
   struct generic_section_config *config;
@@ -337,8 +339,14 @@ void serve_check_stat_generation(serve_state_t state,
                                  int force_flag, int utf8_mode);
 
 struct ejudge_cfg;
+int
+serve_state_load_contest_config(
+        const struct ejudge_cfg *config,
+        int contest_id,
+        const struct contest_desc *cnts,
+        serve_state_t *p_state);
 int serve_state_load_contest(
-        struct ejudge_cfg *,
+        const struct ejudge_cfg *,
         int contest_id,
         struct userlist_clnt *ul_conn,
         struct teamdb_db_callbacks *teamdb_callbacks,

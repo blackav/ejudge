@@ -3,7 +3,7 @@
 #ifndef __CLARLOG_H__
 #define __CLARLOG_H__
 
-/* Copyright (C) 2000-2009 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -68,7 +68,7 @@ clarlog_state_t clar_init(void);
 clarlog_state_t clar_destroy(clarlog_state_t state);
 int clar_open(
         clarlog_state_t state,
-        struct ejudge_cfg *config,
+        const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
         const struct section_global_data *global,
         const unsigned char *plugin_name,
