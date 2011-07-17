@@ -4,7 +4,7 @@
 #ifndef __EJUDGE_CFG_H__
 #define __EJUDGE_CFG_H__ 1
 
-/* Copyright (C) 2002-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -106,7 +106,7 @@ void ejudge_cfg_unparse_plugins(struct ejudge_cfg *cfg, FILE *f);
 const struct xml_parse_spec *ejudge_cfg_get_spec(void);
 struct xml_tree *
 ejudge_cfg_get_plugin_config(
-        struct ejudge_cfg *cfg,
+        const struct ejudge_cfg *cfg,
         const unsigned char *type,
         const unsigned char *name);
 

@@ -44,7 +44,7 @@ static struct common_plugin_data *init_func(void);
 static int finish_func(struct common_plugin_data *);
 static int prepare_func(
         struct common_plugin_data *,
-        struct ejudge_cfg *,
+        const struct ejudge_cfg *,
         struct xml_tree *);
 static int open_func(void *);
 static int close_func(void *);
@@ -430,7 +430,7 @@ finish_func(struct common_plugin_data *data)
 static int
 prepare_func(
         struct common_plugin_data *data,
-        struct ejudge_cfg *ej_cfg,
+        const struct ejudge_cfg *ej_cfg,
         struct xml_tree *t)
 {
   struct uldb_xml_state *state = (struct uldb_xml_state*) data;
