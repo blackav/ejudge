@@ -24,7 +24,7 @@ finish_func(struct common_plugin_data *data);
 static int
 prepare_func(
         struct common_plugin_data *data,
-        struct ejudge_cfg *config,
+        const struct ejudge_cfg *config,
         struct xml_tree *tree);
 
 static struct rldb_plugin_cnts *
