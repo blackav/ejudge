@@ -22,7 +22,7 @@ finish_func(struct common_plugin_data *);
 static int
 prepare_func(
         struct common_plugin_data *,
-        struct ejudge_cfg *,
+        const struct ejudge_cfg *,
         struct xml_tree *);
 static int
 open_func(void *data);
