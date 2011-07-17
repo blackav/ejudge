@@ -57,7 +57,7 @@ static int finish_func(struct common_plugin_data *data);
 static int
 prepare_func(
         struct common_plugin_data *data,
-        struct ejudge_cfg *config,
+        const struct ejudge_cfg *config,
         struct xml_tree *tree);
 static struct cldb_plugin_cnts *
 open_func(
@@ -135,7 +135,7 @@ finish_func(struct common_plugin_data *data)
 static int
 prepare_func(
         struct common_plugin_data *data,
-        struct ejudge_cfg *config,
+        const struct ejudge_cfg *config,
         struct xml_tree *tree)
 {
   struct cldb_mysql_state *state = (struct cldb_mysql_state*) data;
