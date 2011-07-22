@@ -1265,6 +1265,12 @@ void prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
 void prepare_unparse_unhandled_prob(FILE *f, const struct section_problem_data *prob,
                                     const struct section_global_data *global);
 int prepare_check_forbidden_prob(FILE *f, const struct section_problem_data *prob);
+void
+prepare_unparse_actual_prob(
+        FILE *f,
+        const struct section_problem_data *prob,
+        const struct section_global_data *global,
+        int show_paths);
 
 int prepare_unparse_testers(FILE *f,
                             int secure_run,
