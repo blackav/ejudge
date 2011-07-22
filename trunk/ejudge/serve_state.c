@@ -671,6 +671,8 @@ serve_state_load_contest_config(
     goto failure;
   if (prepare_serve_defaults(state, NULL) < 0) goto failure;
 
+  *p_state = state;
+
   return 1;
 
  failure:

@@ -525,4 +525,7 @@ super_html_add_abstract_problem(
         struct sid_state *sstate,
         const unsigned char *short_name);
 
+const unsigned char *
+super_html_get_standard_checker_description(const unsigned char *standard_checker);
+
 #endif /* __SUPER_HTML_H__ */

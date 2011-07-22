@@ -1314,6 +1314,299 @@ prepare_unparse_prob(
   html_armor_free(&ab);
 }
 
+void
+prepare_unparse_actual_prob(
+        FILE *f,
+        const struct section_problem_data *prob,
+        const struct section_global_data *global,
+        int show_paths)
+{
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  unsigned char size_buf[64];
+
+  fprintf(f, "[problem]\n");
+  fprintf(f, "id = %d\n", prob->id);
+  if (prob->abstract > 0) fprintf(f, "abstract\n");
+  if (prob->super[0]) fprintf(f, "super = \"%s\"\n", CARMOR(prob->super));
+  fprintf(f, "short_name = \"%s\"\n", CARMOR(prob->short_name));
+  fprintf(f, "long_name = \"%s\"\n", CARMOR(prob->long_name));
+  if (prob->internal_name[0]) fprintf(f, "internal_name = \"%s\"\n", CARMOR(prob->internal_name));
+  fprintf(f, "type = \"%s\"\n", problem_unparse_type(prob->type));
+
+  if (prob->scoring_checker > 0)
+    unparse_bool(f, "scoring_checker", prob->scoring_checker);
+  if (prob->manual_checking > 0)
+    unparse_bool(f, "manual_checking", prob->manual_checking);
+  if (prob->examinator_num > 0)
+    fprintf(f, "examinator_num = %d\n", prob->examinator_num);
+  if (prob->check_presentation > 0)
+    unparse_bool(f, "check_presentation", prob->check_presentation);
+  if (prob->use_stdin > 0)
+    unparse_bool(f, "use_stdin", prob->use_stdin);
+  if (prob->input_file[0])
+    fprintf(f, "input_file = \"%s\"\n", CARMOR(prob->input_file));
+  if (prob->combined_stdin > 0)
+    unparse_bool(f, "combined_stdin", prob->combined_stdin);
+  if (prob->use_stdout > 0)
+    unparse_bool(f, "use_stdout", prob->use_stdout);
+  if (prob->output_file[0])
+    fprintf(f, "output_file = \"%s\"\n", CARMOR(prob->output_file));
+  if (prob->combined_stdout > 0)
+    unparse_bool(f, "combined_stdout", prob->combined_stdout);
+  if (prob->binary_input > 0)
+    unparse_bool(f, "binary_input", prob->binary_input);
+  if (prob->binary > 0)
+    unparse_bool(f, "binary", prob->binary);
+  if (prob->ignore_exit_code > 0)
+    unparse_bool(f, "ignore_exit_code", prob->ignore_exit_code);
+  if (prob->olympiad_mode > 0)
+    unparse_bool(f, "olympiad_mode", prob->olympiad_mode);
+  if (prob->score_latest > 0)
+    unparse_bool(f, "score_latest", prob->score_latest);
+  if (prob->score_latest_or_unmarked > 0)
+    unparse_bool(f, "score_latest_or_unmarked", prob->score_latest_or_unmarked);
+  if (show_paths && prob->xml_file[0])
+    fprintf(f, "xml_file = \"%s\"\n", CARMOR(prob->xml_file));
+  if (show_paths && prob->alternatives_file[0])
+    fprintf(f, "alternatives_file = \"%s\"\n", CARMOR(prob->alternatives_file));
+  if (show_paths && prob->statement_file[0])
+    fprintf(f, "statement_file = \"%s\"\n", CARMOR(prob->statement_file));
+  if (show_paths && prob->plugin_file[0])
+    fprintf(f, "plugin_file = \"%s\"\n", CARMOR(prob->plugin_file));
+
+  if (show_paths && prob->test_dir[0])
+    fprintf(f, "test_dir = \"%s\"\n", CARMOR(prob->test_dir));
+  if (prob->test_pat[0]) {
+    fprintf(f, "test_pat = \"%s\"\n", CARMOR(prob->test_pat));
+  } else if (prob->test_sfx[0]) {
+    fprintf(f, "test_sfx = \"%s\"\n", CARMOR(prob->test_sfx));
+  }
+
+  if (prob->use_corr > 0) {
+    unparse_bool(f, "use_corr", prob->use_corr);
+    if (show_paths && prob->corr_dir[0])
+      fprintf(f, "corr_dir = \"%s\"\n", CARMOR(prob->corr_dir));
+    if (prob->corr_pat[0]) {
+      fprintf(f, "corr_pat = \"%s\"\n", CARMOR(prob->corr_pat));
+    } else if (prob->corr_sfx[0]) {
+      fprintf(f, "corr_sfx = \"%s\"\n", CARMOR(prob->corr_sfx));
+    }
+  }
+
+  if (prob->use_info > 0) {
+    unparse_bool(f, "use_info", prob->use_info);
+    if (show_paths && prob->info_dir[0])
+      fprintf(f, "info_dir = \"%s\"\n", CARMOR(prob->info_dir));
+    if (prob->info_pat[0]) {
+      fprintf(f, "info_pat = \"%s\"\n", CARMOR(prob->info_pat));
+    } else if (prob->info_sfx[0]) {
+      fprintf(f, "info_sfx = \"%s\"\n", CARMOR(prob->info_sfx));
+    }
+  }
+
+  if (prob->use_tgz > 0) {
+    unparse_bool(f, "use_tgz", prob->use_tgz);
+    if (show_paths && prob->tgz_dir[0])
+      fprintf(f, "tgz_dir = \"%s\"\n", CARMOR(prob->tgz_dir));
+    if (prob->tgz_pat[0]) {
+      fprintf(f, "tgz_pat = \"%s\"\n", CARMOR(prob->tgz_pat));
+    } else if (prob->tgz_sfx[0]) {
+      fprintf(f, "tgz_sfx = \"%s\"\n", CARMOR(prob->tgz_sfx));
+    }
+  }
+
+  if (prob->time_limit_millis > 0) {
+    fprintf(f, "time_limit_millis = %d\n", prob->time_limit_millis);
+  } else if (prob->time_limit > 0) {
+    fprintf(f, "time_limit = %d\n", prob->time_limit);
+  }
+  if (prob->real_time_limit > 0) 
+    fprintf(f, "real_time_limit = %d\n", prob->real_time_limit);
+  if (prob->checker_real_time_limit > 0)
+    fprintf(f, "checker_real_time_limit = %d\n", prob->checker_real_time_limit);
+
+  if (prob->max_vm_size != -1L)
+    fprintf(f, "max_vm_size = %s\n",
+            size_t_to_size_str(size_buf, sizeof(size_buf), prob->max_vm_size));
+  if (prob->max_stack_size != -1L)
+    fprintf(f, "max_stack_size = %s\n",
+            size_t_to_size_str(size_buf, sizeof(size_buf), prob->max_stack_size));
+  if (prob->max_data_size != -1L && prob->max_data_size != 0L)
+    fprintf(f, "max_data_size = %s\n",
+            size_t_to_size_str(size_buf, sizeof(size_buf), prob->max_data_size));
+  if (prob->max_core_size != -1L)
+    fprintf(f, "max_core_size = %s\n",
+            size_t_to_size_str(size_buf, sizeof(size_buf), prob->max_core_size));
+  if (prob->max_file_size != -1L)
+    fprintf(f, "max_file_size = %s\n",
+            size_t_to_size_str(size_buf, sizeof(size_buf), prob->max_file_size));
+  if (prob->max_open_file_count > 0) {
+    fprintf(f, "max_open_file_count = %d\n", prob->max_open_file_count);
+  }
+  if (prob->max_process_count > 0) {
+    fprintf(f, "max_process_count = %d\n", prob->max_process_count);
+  }
+
+  if (global->score_system == SCORE_KIROV || global->score_system == SCORE_OLYMPIAD) {
+    if (prob->full_score >= 0)
+      fprintf(f, "full_score = %d\n", prob->full_score);
+    if (prob->full_user_score >= 0)
+      fprintf(f, "full_user_score = %d\n", prob->full_user_score);
+    if (prob->test_score >= 0)
+      fprintf(f, "test_score = %d\n", prob->test_score);
+    if (prob->variable_full_score > 0)
+      unparse_bool(f, "variable_full_score", prob->variable_full_score);
+    if (prob->run_penalty >= 0)
+      fprintf(f, "run_penalty = %d\n", prob->run_penalty);
+    if (prob->disqualified_penalty >= 0)
+      fprintf(f, "disqualified_penalty = %d\n", prob->disqualified_penalty);
+    if (prob->test_score_list[0])
+      fprintf(f, "test_score_list = \"%s\"\n", CARMOR(prob->test_score_list));
+    if (prob->score_bonus[0])
+      fprintf(f, "score_bonus = \"%s\"\n", CARMOR(prob->score_bonus));
+    if (prob->score_multiplier > 0)
+      fprintf(f, "score_multiplier = %d\n", prob->score_multiplier);
+  }
+  if (global->score_system == SCORE_MOSCOW || global->score_system == SCORE_ACM) {
+    if (prob->acm_run_penalty >= 0)
+      fprintf(f, "acm_run_penalty = %d\n", prob->acm_run_penalty);
+    if (prob->ignore_penalty > 0)
+      unparse_bool(f, "ignore_penalty", prob->ignore_penalty);
+  }
+  if (global->score_system == SCORE_MOSCOW) {
+    if (prob->full_score >= 0)
+      fprintf(f, "full_score = %d\n", prob->full_score);
+    if (prob->full_user_score >= 0)
+      fprintf(f, "full_user_score = %d\n", prob->full_user_score);
+    if (prob->score_tests[0])
+      fprintf(f, "score_tests = \"%s\"\n", CARMOR(prob->score_tests));
+  }
+  if (global->score_system == SCORE_OLYMPIAD) {
+    if (prob->tests_to_accept > 0)
+      fprintf(f, "tests_to_accept = %d\n", prob->tests_to_accept);
+    if (prob->accept_partial > 0)
+      unparse_bool(f, "accept_partial", prob->accept_partial);
+    if (prob->min_tests_to_accept >= 0)
+      fprintf(f, "min_tests_to_accept = %d\n", prob->min_tests_to_accept);
+  }
+
+  if (prob->open_tests[0])
+    fprintf(f, "open_tests = \"%s\"\n", CARMOR(prob->open_tests));
+  if (prob->final_open_tests[0])
+    fprintf(f, "final_open_tests = \"%s\"\n", CARMOR(prob->final_open_tests));
+
+  if (prob->standard_checker[0])
+    fprintf(f, "standard_checker = \"%s\"\n", CARMOR(prob->standard_checker));
+  if (!prob->standard_checker[0] && show_paths && prob->check_cmd[0])
+    fprintf(f, "check_cmd = \"%s\"\n", CARMOR(prob->check_cmd));
+  do_xstr(f, &ab, "checker_env", prob->checker_env);
+  if (show_paths && prob->valuer_cmd[0])
+    fprintf(f, "valuer_cmd = \"%s\"\n", CARMOR(prob->valuer_cmd));
+  do_xstr(f, &ab, "valuer_env", prob->valuer_env);
+  if (show_paths && prob->interactor_cmd[0])
+    fprintf(f,"interactor_cmd = \"%s\"\n",CARMOR(prob->interactor_cmd));
+  do_xstr(f, &ab, "interactor_env", prob->interactor_env);
+  if (prob->interactor_time_limit > 0)
+    fprintf(f, "interactor_time_limit = %d\n", prob->interactor_time_limit);
+  if (show_paths && prob->style_checker_cmd[0])
+    fprintf(f,"style_checker_cmd = \"%s\"\n",CARMOR(prob->style_checker_cmd));
+  do_xstr(f, &ab, "style_checker_env", prob->style_checker_env);
+  if (show_paths && prob->test_checker_cmd && prob->test_checker_cmd[0]) {
+    fprintf(f,"test_checker_cmd = \"%s\"\n", CARMOR(prob->test_checker_cmd));
+  }
+  do_xstr(f, &ab, "test_checker_env", prob->test_checker_env);
+  do_xstr(f, &ab, "lang_time_adj", prob->lang_time_adj);
+  do_xstr(f, &ab, "lang_time_adj_millis", prob->lang_time_adj_millis);
+  do_xstr(f, &ab, "test_sets", prob->test_sets);
+  do_xstr(f, &ab, "disable_language", prob->disable_language);
+  do_xstr(f, &ab, "enable_language", prob->enable_language);
+  do_xstr(f, &ab, "require", prob->require);
+  do_xstr(f, &ab, "score_view", prob->score_view);
+  do_xstr(f, &ab, "date_penalty", prob->date_penalty);
+  do_xstr(f, &ab, "group_start_date", prob->group_start_date);
+  do_xstr(f, &ab, "group_deadline", prob->group_deadline);
+  do_xstr(f, &ab, "personal_deadline", prob->personal_deadline);
+  do_xstr(f, &ab, "score_view", prob->score_view);
+  do_xstr(f, &ab, "score_view_text", prob->score_view_text);
+
+  if (prob->variant_num > 0)
+    fprintf(f, "variant_num = %d\n", prob->variant_num);
+ 
+  if (prob->use_ac_not_ok > 0)
+    unparse_bool(f, "use_ac_not_ok", prob->use_ac_not_ok);
+  if (prob->team_enable_rep_view > 0)
+    unparse_bool(f, "team_enable_rep_view", prob->team_enable_rep_view);
+  if (prob->team_enable_ce_view > 0)
+    unparse_bool(f, "team_enable_ce_view", prob->team_enable_ce_view);
+  if (prob->team_show_judge_report > 0)
+    unparse_bool(f, "team_show_judge_report", prob->team_show_judge_report);
+  if (prob->ignore_compile_errors > 0)
+    unparse_bool(f, "ignore_compile_errors", prob->ignore_compile_errors);
+  if (prob->disable_auto_testing > 0)
+    unparse_bool(f, "disable_auto_testing", prob->disable_auto_testing);
+  if (prob->disable_user_submit > 0)
+    unparse_bool(f, "disable_user_submit", prob->disable_user_submit);
+  if (prob->disable_tab > 0)
+    unparse_bool(f, "disable_tab", prob->disable_tab);
+  if (prob->restricted_statement > 0)
+    unparse_bool(f, "restricted_statement", prob->restricted_statement);
+  if (prob->disable_submit_after_ok > 0)
+    unparse_bool(f, "disable_submit_after_ok", prob->disable_submit_after_ok);
+  if (prob->disable_security > 0)
+    unparse_bool(f, "disable_security", prob->disable_security);
+  if (prob->disable_testing > 0)
+    unparse_bool(f, "disable_testing", prob->disable_testing);
+  if (prob->skip_testing  > 0)
+    unparse_bool(f, "skip_testing", prob->skip_testing);
+  if (prob->priority_adjustment > 0)
+    fprintf(f, "priority_adjustment = %d\n", prob->priority_adjustment);    
+  if (prob->enable_compilation > 0)
+    unparse_bool(f, "enable_compilation", prob->enable_compilation);
+  if (prob->hidden > 0)
+    unparse_bool(f, "hidden", prob->hidden);
+  if (prob->stand_hide_time > 0)
+    unparse_bool(f, "stand_hide_time", prob->stand_hide_time);
+  if (prob->advance_to_next > 0)
+    unparse_bool(f, "advance_to_next", prob->advance_to_next);
+  if (prob->prev_runs_to_show > 0)
+    fprintf(f, "prev_runs_to_show = %d\n", prob->prev_runs_to_show);    
+  if (prob->disable_ctrl_chars > 0)
+    unparse_bool(f, "disable_ctrl_chars", prob->disable_ctrl_chars);
+  if (prob->valuer_sets_marked > 0)
+    unparse_bool(f, "valuer_sets_marked", prob->valuer_sets_marked);
+  if (prob->ignore_unmarked > 0)
+    unparse_bool(f, "ignore_unmarked", prob->ignore_unmarked);
+  if (prob->enable_text_form > 0)
+    unparse_bool(f, "enable_text_form", prob->enable_text_form);
+  if (prob->stand_ignore_score > 0)
+    unparse_bool(f, "stand_ignore_score", prob->stand_ignore_score);
+  if (prob->stand_last_column > 0)
+    unparse_bool(f, "stand_last_column", prob->stand_last_column);
+  if (prob->stand_column[0])
+    fprintf(f, "stand_column = \"%s\"\n", CARMOR(prob->stand_column));
+  if (prob->stand_name[0])
+    fprintf(f, "stand_name = \"%s\"\n", CARMOR(prob->stand_name));
+  if (prob->group_name[0])
+    fprintf(f, "group_name = \"%s\"\n", CARMOR(prob->group_name));
+  if (prob->spelling[0])
+    fprintf(f, "spelling = \"%s\"\n", CARMOR(prob->spelling));
+
+  if (prob->start_date > 0)
+    fprintf(f, "start_date = \"%s\"\n", xml_unparse_date(prob->start_date));
+  if (prob->deadline > 0)
+    fprintf(f, "deadline = \"%s\"\n", xml_unparse_date(prob->deadline));
+  if (prob->stand_attr[0])
+    fprintf(f, "stand_attr = \"%s\"\n", CARMOR(prob->stand_attr));
+  if (prob->source_header[0])
+    fprintf(f, "source_header = \"%s\"\n", CARMOR(prob->source_header));
+  if (prob->source_footer[0])
+    fprintf(f, "source_footer = \"%s\"\n", CARMOR(prob->source_footer));
+  if (prob->extid && prob->extid[0])
+    fprintf(f, "extid = \"%s\"\n", CARMOR(prob->extid));
+
+  html_armor_free(&ab);
+}
+
 /*
  * Unhandled problem variables:
  *
