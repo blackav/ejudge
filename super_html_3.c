@@ -4723,6 +4723,19 @@ print_std_checker_row(FILE *f,
   fprintf(f, "</tr></form>\n");
 }
 
+const unsigned char *
+super_html_get_standard_checker_description(const unsigned char *standard_checker)
+{
+  if (!standard_checker) return NULL;
+
+  for (int i = 0; super_html_std_checkers[i].name; ++i) {
+    if (!strcmp(super_html_std_checkers[i].name, standard_checker)) {
+      return super_html_std_checkers[i].desc;
+    }
+  }
+  return NULL;
+}
+
 /*
   PROBLEM_PARAM(tester_id, "d"),
   PROBLEM_PARAM(use_tgz, "d"),

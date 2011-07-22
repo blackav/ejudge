@@ -2747,12 +2747,10 @@ set_defaults(
     }
   }
 
-  if (mode == PREPARE_RUN) {
-    if (g->checker_real_time_limit == -1) {
-      g->checker_real_time_limit = DFLT_G_CHECKER_REAL_TIME_LIMIT;
-      vinfo("global.checker_real_time_limit set to %d",
-            g->checker_real_time_limit);
-    }
+  if (g->checker_real_time_limit == -1) {
+    g->checker_real_time_limit = DFLT_G_CHECKER_REAL_TIME_LIMIT;
+    vinfo("global.checker_real_time_limit set to %d",
+          g->checker_real_time_limit);
   }
 
   if (mode == PREPARE_SERVE) {
@@ -3520,43 +3518,41 @@ set_defaults(
       }
     }
 
-    if (mode == PREPARE_RUN) {
-      if (!prob->input_file[0] && si != -1 && aprob->input_file[0]) {
-        sformat_message(prob->input_file, PATH_MAX, 0, aprob->input_file,
-                        NULL, prob, NULL, NULL, NULL, 0, 0, 0);
-        vinfo("problem.%s.input_file inherited from problem.%s ('%s')",
-             ish, sish, prob->input_file);
-      }
-      if (!prob->input_file[0]) {
-        vinfo("problem.%s.input_file set to %s", ish, DFLT_P_INPUT_FILE);
-        snprintf(prob->input_file, sizeof(prob->input_file),
-                 "%s", DFLT_P_INPUT_FILE);
-      }
-      if (!prob->output_file[0] && si != -1 && aprob->output_file[0]) {
-        sformat_message(prob->output_file, PATH_MAX, 0, aprob->output_file,
-                        NULL, prob, NULL, NULL, NULL, 0, 0, 0);
-        vinfo("problem.%s.output_file inherited from problem.%s ('%s')",
-             ish, sish, prob->output_file);
-      }
-      if (!prob->output_file[0]) {
-        vinfo("problem.%s.output_file set to %s", ish, DFLT_P_OUTPUT_FILE);
-        snprintf(prob->output_file, sizeof(prob->output_file),
-                 "%s", DFLT_P_OUTPUT_FILE);
-      }
-
-      if (prob->variant_num == -1 && si != -1 && aprob->variant_num != -1) {
-        prob->variant_num = aprob->variant_num;
-        vinfo("problem.%s.variant_num inherited from problem.%s (%d)",
-             ish, sish, prob->variant_num);
-      }
-      if (prob->variant_num == -1) {
-        prob->variant_num = 0;
-      }
-
-      prepare_set_prob_value(CNTSPROB_use_corr, prob, aprob, g);
-
-      prepare_set_prob_value(CNTSPROB_checker_real_time_limit, prob, aprob, g);
+    if (!prob->input_file[0] && si != -1 && aprob->input_file[0]) {
+      sformat_message(prob->input_file, PATH_MAX, 0, aprob->input_file,
+                      NULL, prob, NULL, NULL, NULL, 0, 0, 0);
+      vinfo("problem.%s.input_file inherited from problem.%s ('%s')",
+            ish, sish, prob->input_file);
     }
+    if (!prob->input_file[0]) {
+      vinfo("problem.%s.input_file set to %s", ish, DFLT_P_INPUT_FILE);
+      snprintf(prob->input_file, sizeof(prob->input_file),
+               "%s", DFLT_P_INPUT_FILE);
+    }
+    if (!prob->output_file[0] && si != -1 && aprob->output_file[0]) {
+      sformat_message(prob->output_file, PATH_MAX, 0, aprob->output_file,
+                      NULL, prob, NULL, NULL, NULL, 0, 0, 0);
+      vinfo("problem.%s.output_file inherited from problem.%s ('%s')",
+            ish, sish, prob->output_file);
+    }
+    if (!prob->output_file[0]) {
+      vinfo("problem.%s.output_file set to %s", ish, DFLT_P_OUTPUT_FILE);
+      snprintf(prob->output_file, sizeof(prob->output_file),
+               "%s", DFLT_P_OUTPUT_FILE);
+    }
+
+    if (prob->variant_num == -1 && si != -1 && aprob->variant_num != -1) {
+      prob->variant_num = aprob->variant_num;
+      vinfo("problem.%s.variant_num inherited from problem.%s (%d)",
+            ish, sish, prob->variant_num);
+    }
+    if (prob->variant_num == -1) {
+      prob->variant_num = 0;
+    }
+
+    prepare_set_prob_value(CNTSPROB_use_corr, prob, aprob, g);
+
+    prepare_set_prob_value(CNTSPROB_checker_real_time_limit, prob, aprob, g);
 
     if (prob->test_sets) {
       if (parse_testsets(prob->test_sets,
