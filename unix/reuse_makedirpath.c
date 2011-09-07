@@ -23,6 +23,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <limits.h>
+#include <ctype.h>
+#include <grp.h>
 
 /**
  * NAME:    strip_trailing_slashes
@@ -238,6 +241,74 @@ os_MakeDirPath(char const *path, int mode)
   umask(old_mask);
   return -err;
       
+}
+
+int
+os_MakeDirPath2(const unsigned char *path, const unsigned char *mode_str, const unsigned char *group_str)
+{
+  char *eptr = NULL;
+  int mode = -1, len, user_id = -1, group_id = -1, old_mask, err;
+  unsigned char *tstr = NULL;
+  struct group *grp = NULL;
+
+  if (mode_str != NULL) {
+    len = strlen(mode_str);
+    if (len >= PATH_MAX) {
+      errno = -EINVAL;
+      return -1;
+    }
+    tstr = (unsigned char *) alloca(len + 1);
+    strcpy(tstr, mode_str);
+    while (len > 0 && isspace(tstr[len - 1])) --len;
+    tstr[len] = 0;
+    mode_str = tstr;
+    if (len == 0) mode_str = NULL;
+  }
+
+  if (mode_str != NULL) {
+    errno = 0;
+    mode = strtol(mode_str, &eptr, 8);
+    if (errno || *eptr || mode <= 0 || mode > 07777) {
+      errno = -EINVAL;
+      return -1;
+    }
+    mode |= 0700;
+  }
+
+  if (group_str != NULL) {
+    len = strlen(group_str);
+    if (len >= PATH_MAX) {
+      errno = -EINVAL;
+      return -1;
+    }
+    tstr = (unsigned char *) alloca(len + 1);
+    strcpy(tstr, group_str);
+    while (len > 0 && isspace(tstr[len - 1])) --len;
+    tstr[len] = 0;
+    group_str = tstr;
+    if (len == 0) group_str = NULL;
+  }
+
+  if (group_str != NULL) {
+    errno = 0;
+    grp = getgrnam(group_str);
+    if (grp == NULL || errno != 0) {
+      errno = EINVAL;
+      return -1;
+    }
+    group_id = grp->gr_gid;
+    user_id = getuid();
+  }
+
+  old_mask = umask(0);
+  if (mode <= 0) {
+    mode = 0777 & ~old_mask;
+  }
+  errno = 0;
+  err = make_path(path, mode, mode, user_id, group_id, 1);
+  umask(old_mask);
+
+  return err;
 }
 
 /*
