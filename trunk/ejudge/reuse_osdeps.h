@@ -45,6 +45,7 @@ char *os_GetLastname(char const *);
 int   os_rGetLastname(char const *, char *, int);
 
 int   os_MakeDirPath(char const *, int);
+int   os_MakeDirPath2(const unsigned char *path, const unsigned char *mode_str, const unsigned char *group_str);
 int   os_MakeDir(char const *, int);
 
 char *os_DirName(char const *);
