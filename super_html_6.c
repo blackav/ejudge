@@ -42,6 +42,7 @@
 #include <stdarg.h>
 #include <printf.h>
 #include <limits.h>
+#include <errno.h>
 
 #define ARMOR(s)  html_armor_buf(&ab, (s))
 #define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
@@ -1017,6 +1018,14 @@ super_serve_op_USER_BROWSE_PAGE(
                           SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_CREATE_FROM_CSV_PAGE,
                           contest_id_str, group_id_str),
             "Create users from a CSV table");
+    if (contest_id > 0) {
+      fprintf(out_f, "<td%s>%s[%s]</a></td>", cl,
+              html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                            NULL, "action=%d&amp;op=%d%s%s",
+                            SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_IMPORT_CSV_PAGE,
+                            contest_id_str, group_id_str),
+              "Import user data from a CSV table");
+    }
     fprintf(out_f, "</tr></table>\n");
     fprintf(out_f, "</div>");
   }
@@ -5129,7 +5138,7 @@ super_serve_op_USER_CREATE_FROM_CSV_PAGE(
   html_start_form_id(out_f, 2, phr->self_url, "CreateForm", "");
   html_hidden(out_f, "SID", "%016llx", phr->session_id);
   html_hidden(out_f, "action", "%d", SSERV_CMD_HTTP_REQUEST);
-  html_hidden(out_f, "op", "%d", SSERV_OP_USER_CREATE_ONE_ACTION);
+  html_hidden(out_f, "op", "%d", SSERV_OP_USER_CREATE_FROM_CSV_ACTION);
   if (contest_id > 0) {
     html_hidden(out_f, "contest_id", "%d", contest_id);
   }
@@ -7318,6 +7327,436 @@ super_serve_op_USER_SEL_VIEW_PASSWD_REDIRECT(
   xfree(marked_str);
   bitset_free(&marked);
   return 0;
+}
+
+int
+super_serve_op_USER_IMPORT_CSV_PAGE(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  int contest_id = 0, group_id = 0;
+  const struct contest_desc *cnts = 0;
+  opcap_t caps = 0LL;
+  unsigned char buf[1024];
+  const unsigned char *cl = 0;
+
+  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  ss_cgi_param_int_opt(phr, "group_id", &group_id, 0);
+
+  if (contest_id != 0) {
+    if (contests_get(contest_id, &cnts) < 0 || !cnts) contest_id = 0;
+  }
+  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
+  if (group_id < 0) group_id = 0;
+
+  /* FIXME: refine caps */
+  if (get_global_caps(phr, &caps) < 0 || opcaps_check(caps, OPCAP_CREATE_USER) < 0) {
+    FAIL(S_ERR_PERM_DENIED);
+  }
+
+  snprintf(buf, sizeof(buf), "serve-control: %s, import user data from a CSV file",
+           phr->html_name);
+  ss_write_html_header(out_f, phr, buf, 0, NULL);
+
+  fprintf(out_f, "<h1>%s</h1>\n<br/>\n", buf);
+
+  print_top_navigation_links(log_f, out_f, phr, contest_id, group_id, 0, NULL);
+
+  html_start_form_id(out_f, 2, phr->self_url, "CreateForm", "");
+  html_hidden(out_f, "SID", "%016llx", phr->session_id);
+  html_hidden(out_f, "action", "%d", SSERV_CMD_HTTP_REQUEST);
+  html_hidden(out_f, "op", "%d", SSERV_OP_USER_IMPORT_CSV_ACTION);
+  if (contest_id > 0) {
+    html_hidden(out_f, "contest_id", "%d", contest_id);
+  }
+  if (group_id > 0) {
+    html_hidden(out_f, "group_id", "%d", group_id);
+  }
+  cl = " class=\"b0\"";
+  fprintf(out_f, "<table%s id=\"CreateUserTable\">\n", cl);
+
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"text\" name=\"separator\" size=\"20\" value=\";\"/></td><td%s>&nbsp;</td></tr>\n",
+          cl, "Field separator", cl, cl);
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>", cl, "Charset", cl);
+  charset_html_select(out_f, NULL, NULL);
+  fprintf(out_f, "</td><td%s>&nbsp;</td></tr>\n", cl);
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"file\" name=\"csv_file\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, "CSV File", cl, cl);
+
+  fprintf(out_f, "<tr><td%s>&nbsp;</td><td%s><input type=\"submit\" name=\"submit\" value=\"%s\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, cl, "Create users", cl);
+  fprintf(out_f, "</table>\n");
+  fprintf(out_f, "</form>\n");
+
+  ss_write_html_footer(out_f);
+
+cleanup:
+  return retval;
+}
+
+int
+super_serve_op_USER_IMPORT_CSV_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  int contest_id = 0, group_id = 0;
+  const struct contest_desc *cnts = 0;
+  opcap_t caps = 0LL;
+  const unsigned char *separator = NULL;
+  const unsigned char *csv_text = 0;
+  const unsigned char *charset = 0;
+  unsigned char *recoded_csv_text = 0;
+  struct csv_file *csv_parsed = 0;
+  int *user_ids = 0;
+
+  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  ss_cgi_param_int_opt(phr, "group_id", &group_id, 0);
+
+  if (contest_id != 0) {
+    if (contests_get(contest_id, &cnts) < 0 || !cnts) contest_id = 0;
+  }
+  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
+  if (group_id < 0) group_id = 0;
+
+  /* FIXME: refine caps */
+  if (get_global_caps(phr, &caps) < 0 || opcaps_check(caps, OPCAP_CREATE_USER) < 0) {
+    FAIL(S_ERR_PERM_DENIED);
+  }
+
+  if (ss_cgi_param(phr, "csv_file", &csv_text) <= 0 || !csv_text) {
+    FAIL(S_ERR_INV_CSV_FILE);
+  }
+
+  ss_cgi_param(phr, "charset", &charset);
+  if (charset && *charset) {
+    int charset_id = charset_get_id(charset);
+    if (charset_id < 0) FAIL(S_ERR_INV_CHARSET);
+    if (charset_id > 0) {
+      recoded_csv_text = charset_decode_to_heap(charset_id, csv_text);
+      if (!recoded_csv_text) FAIL(S_ERR_INV_CHARSET);
+      csv_text = recoded_csv_text;
+    }
+  }
+
+  ss_cgi_param(phr, "separator", &separator);
+  if (!separator || !*separator) separator = ";";
+  if (strlen(separator) != 1) FAIL(S_ERR_INV_SEPARATOR);
+
+  csv_parsed = csv_parse(csv_text, log_f, separator[0]);
+  if (!csv_parsed) FAIL(S_ERR_INV_CSV_FILE);
+
+  if (csv_parsed->u <= 0) {
+    fprintf(log_f, "CSV file is empty\n");
+    FAIL(S_ERR_INV_CSV_FILE);
+  }
+  if (csv_parsed->u > 10000) {
+    fprintf(log_f, "CSV file is too big\n");
+    FAIL(S_ERR_INV_CSV_FILE);
+  }
+
+  int column_count = csv_parsed->v[0].u;
+
+  // search for the key field (either login or user_id) and for 'serial' field
+  int login_idx = -1, user_id_idx = -1, serial_idx = -1, failed = 0;
+  int col;
+  for (col = 0; col < column_count; ++col) {
+    unsigned char *txt = fix_string(csv_parsed->v[0].v[col]);
+    if (!txt || !*txt) {
+      // nothing
+    } else if (!strcasecmp(txt, "login")) {
+      if (login_idx >= 0) {
+        fprintf(log_f, "dupicated column 'login'\n");
+        failed = 1;
+      } else {
+        login_idx = col;
+      }
+    } else if (!strcasecmp(txt, "user_id") || !strcasecmp(txt, "userid")) {
+      if (user_id_idx >= 0) {
+        fprintf(log_f, "dupicated column 'user_id'\n");
+        failed = 1;
+      } else {
+        user_id_idx = col;
+      }
+    } else if (!strcasecmp(txt, "serial")) {
+      if (serial_idx >= 0) {
+        fprintf(log_f, "dupicated column 'serial'\n");
+        failed = 1;
+      } else {
+        serial_idx = col;
+      }
+    }
+    xfree(txt); txt = 0;
+  }
+  if (login_idx >= 0 && user_id_idx >= 0) {
+    fprintf(log_f, "both 'login' and 'user_id' are defined\n");
+    failed = 1;
+  }
+  if (login_idx < 0 && user_id_idx < 0) {
+    fprintf(log_f, "neither 'login' nor 'user_id' are defined\n");
+    failed = 1;
+  }
+  if (failed) FAIL(S_ERR_INV_CSV_FILE);
+
+  int field_idx[USERLIST_NM_LAST];
+  memset(field_idx, -1, sizeof(field_idx));
+  for (col = 0; col < column_count; ++col) {
+    unsigned char *txt = fix_string(csv_parsed->v[0].v[col]);
+    int fid = -1;
+    if (!txt || !*txt) {
+      fprintf(log_f, "empty column %d is ignored\n", col + 1);
+      // nothing
+    } else if ((fid = userlist_lookup_csv_field_name(txt)) <= 0) {
+      fprintf(log_f, "unknown column '%s' (%d) is ignored\n", txt, col + 1);
+    } else if (field_idx[fid] >= 0) {
+      fprintf(log_f, "duplicated column '%s' (%d)\n", userlist_get_csv_field_name(fid), col + 1);
+      failed = 1;
+    } else {
+      field_idx[fid] = col;
+    }
+    xfree(txt); txt = 0;
+  }
+  if (failed) FAIL(S_ERR_INV_CSV_FILE);
+
+  // clear unsettable fields
+  field_idx[USERLIST_NN_ID] = -1;
+  field_idx[USERLIST_NN_LOGIN] = -1;
+  field_idx[USERLIST_NN_REGISTRATION_TIME] = -1;
+  field_idx[USERLIST_NN_LAST_LOGIN_TIME] = -1;
+  field_idx[USERLIST_NN_LAST_CHANGE_TIME] = -1;
+  field_idx[USERLIST_NN_LAST_PWDCHANGE_TIME] = -1;
+  field_idx[USERLIST_NC_CREATE_TIME] = -1;
+  field_idx[USERLIST_NC_LAST_LOGIN_TIME] = -1;
+  field_idx[USERLIST_NC_LAST_CHANGE_TIME] = -1;
+  field_idx[USERLIST_NC_LAST_PWDCHANGE_TIME] = -1;
+  field_idx[USERLIST_NM_SERIAL] = -1;
+  field_idx[USERLIST_NM_CREATE_TIME] = -1;
+  field_idx[USERLIST_NM_LAST_CHANGE_TIME] = -1;
+
+  int has_global_fields = 0, has_contest_fields = 0, has_member_fields = 0;
+  int field_id;
+  for (field_id = USERLIST_NN_FIRST; field_id < USERLIST_NN_LAST; ++field_id) {
+    if (field_idx[field_id] >= 0) has_global_fields = 1;
+  }
+  for (field_id = USERLIST_NC_FIRST; field_id < USERLIST_NC_LAST; ++field_id) {
+    if (field_idx[field_id] >= 0) has_contest_fields = 1;
+  }
+  for (field_id = USERLIST_NM_FIRST; field_id < USERLIST_NM_LAST; ++field_id) {
+    if (field_idx[field_id] >= 0) has_member_fields = 1;
+  }
+  if (has_member_fields && !cnts->personal) {
+    if (serial_idx < 0) {
+      fprintf(log_f, "'serial' field must be specified for non-personal contests\n");
+      failed = 1;
+    }
+    if (has_global_fields || has_contest_fields) {
+      fprintf(log_f, "global or contest fields cannot be changed with member fields\n");
+      failed = 1;
+    }
+  } else if (has_member_fields && cnts->personal) {
+    if (serial_idx >= 0) {
+      fprintf(log_f, "'serial' field must not be specified for personal contests\n");
+      failed = 1;
+    }
+  }
+  if (failed) FAIL(S_ERR_INV_CSV_FILE);
+
+  if (cnts->disable_team_password && field_idx[USERLIST_NC_TEAM_PASSWD] >= 0) {
+    fprintf(log_f, "contest password is ignored because of contest settings\n");
+    field_idx[USERLIST_NC_TEAM_PASSWD] = -1;
+  }
+
+  XCALLOC(user_ids, csv_parsed->u);
+  int row;
+  for (row = 1; row < csv_parsed->u; ++row) {
+    if (csv_parsed->v[row].u != column_count) {
+      fprintf(log_f, "row %d contains %zu column, but %d columns expected\n",
+              row + 1, csv_parsed->v[row].u, column_count);
+      failed = 1;
+      continue;
+    }
+    unsigned char *txt = 0;
+    if (user_id_idx >= 0) {
+      txt = fix_string(csv_parsed->v[row].v[user_id_idx]);
+      if (!txt || !*txt) {
+        fprintf(log_f, "'user_id' empty in row %d\n", row + 1);
+        failed = 1;
+      } else {
+        int user_id = 0;
+        char *eptr = 0;
+        errno = 0;
+        user_id = strtol(txt, &eptr, 10);
+        if (errno || *eptr || user_id <= 0 || user_id >= 1000000000) {
+          fprintf(log_f, "invalid user_id '%s' in row %d\n", txt, row + 1);
+          failed = 1;
+        } else {
+          int r = 0;
+          r = userlist_clnt_lookup_user_id(phr->userlist_clnt, user_id, contest_id, NULL, NULL);
+          if (r < 0) {
+            fprintf(log_f, "non-existant user_id %d or user is not registered for this contest in row %d\n", user_id, row + 1);
+            failed = 1;
+          } else {
+            user_ids[row] = user_id;
+          }
+        }
+      }
+    } else if (login_idx >= 0) {
+      txt = fix_string(csv_parsed->v[row].v[login_idx]);
+      if (!txt || !*txt) {
+        fprintf(log_f, "'login' empty in row %d\n", row + 1);
+        failed = 1;
+      } else {
+        int user_id = 0, r = 0;
+        r = userlist_clnt_lookup_user(phr->userlist_clnt, txt, contest_id, &user_id, NULL);
+        if (r < 0 || user_id <= 0) {
+          fprintf(log_f, "non-existant login '%s' or user is not registered for this contest in row %d\n", txt, row + 1);
+          failed = 1;
+        } else {
+          user_ids[row] = user_id;
+        }
+      }
+    }
+    xfree(txt); txt = 0;
+  }
+  if (failed) FAIL(S_ERR_INV_CSV_FILE);
+
+  int deleted_ids[USERLIST_NM_LAST];
+  int changed_ids[USERLIST_NM_LAST];
+  unsigned char *changed_strs[USERLIST_NM_LAST];
+  int deleted_count = 0;
+  int changed_count = 0;
+  memset(deleted_ids, 0, sizeof(deleted_ids));
+  memset(changed_ids, 0, sizeof(changed_ids));
+  memset(changed_strs, 0, sizeof(changed_strs));
+
+  for (row = 1; row < csv_parsed->u; ++row) {
+    for (field_id = 1; field_id < USERLIST_NM_LAST; ++field_id) {
+      if (field_idx[field_id] >= 0) {
+        unsigned char *txt = fix_string(csv_parsed->v[row].v[field_idx[field_id]]);
+        if (!txt || !*txt) {
+          deleted_ids[deleted_count++] = field_id;
+          xfree(txt); txt = NULL;
+        } else {
+          changed_ids[changed_count] = field_id;
+          changed_strs[changed_count] = txt; txt = NULL;
+          ++changed_count;
+        }
+      }
+    }
+
+    if (userlist_clnt_edit_field_seq(phr->userlist_clnt, ULS_EDIT_FIELD_SEQ,
+                                     user_ids[row], contest_id, 0, deleted_count, changed_count,
+                                     deleted_ids, changed_ids,
+                                     (const unsigned char **) changed_strs) < 0) {
+      FAIL(S_ERR_DB_ERROR);
+    }
+
+    /*
+  if (ui && ui->members) {
+    for (int role = 0; role < CONTEST_LAST_MEMBER; ++role) {
+      int role_cnt = userlist_members_count(ui->members, role);
+      if (role_cnt <= 0) continue;
+      for (int pers = 0; pers < role_cnt; ++pers) {
+        const struct userlist_member *m;
+        if (!(m = (const struct userlist_member*) userlist_members_get_nth(ui->members, role, pers)))
+          continue;
+
+        memset(member_null_fields, 0, sizeof(member_null_fields));
+        memset(member_fields, 0, sizeof(member_fields));
+
+        for (int i = 0; (field_id = member_field_ids[i]); ++i) {
+          snprintf(param_name, sizeof(param_name), "field_null_%d_%d", field_id, m->serial);
+          int val = 0;
+          ss_cgi_param_int_opt(phr, param_name, &val, 0);
+          if (val != 1) val = 0;
+          member_null_fields[field_id] = val;
+        }
+
+        for (int i = 0; (field_id = member_field_ids[i]); ++i) {
+          if (member_null_fields[field_id]) continue;
+          snprintf(param_name, sizeof(param_name), "field_%d_%d", field_id, m->serial);
+          int r = ss_cgi_param(phr, param_name, &s);
+          if (!r || !s) continue;
+          if (r < 0) FAIL(S_ERR_INV_VALUE);
+          if (!s) s = "";
+          member_fields[field_id] = fix_string(s);
+        }
+
+        is_changed = 0;
+        for (int i = 0; (field_id = member_field_ids[i]); ++i) {
+          if (member_null_fields[field_id]) {
+            if (!userlist_is_empty_member_field(m, field_id)) is_changed = 1;
+          } else if (member_fields[field_id]) {
+            if (!userlist_is_equal_member_field(m, field_id, member_fields[field_id])) is_changed = 1;
+          }
+        }
+
+        deleted_count = 0;
+        changed_count = 0;
+        if (is_changed) {
+          if (cnts_read_only && new_cnts_read_only) FAIL(S_ERR_DATA_READ_ONLY);
+
+          for (int i = 0; (field_id = member_field_ids[i]); ++i) {
+            if (member_null_fields[field_id]) {
+              if (!userlist_is_empty_member_field(m, field_id)) {
+                deleted_ids[deleted_count] = field_id;
+                ++deleted_count;
+              }
+            } else if (member_fields[field_id]){
+              if (!userlist_is_equal_member_field(m, field_id, member_fields[field_id])) {
+                changed_ids[changed_count] = field_id;
+                changed_strs[changed_count] = member_fields[field_id];
+                ++changed_count;
+              }
+            }
+          }
+        }
+
+        if (deleted_count > 0 || changed_count > 0) {
+          if (is_globally_privileged(phr, u)) {
+            if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_USER) < 0 || opcaps_check(caps, OPCAP_PRIV_EDIT_USER) < 0)
+              FAIL(S_ERR_PERM_DENIED);
+          } else if (is_contest_privileged(cnts, u)) {
+            if (opcaps_check(caps, OPCAP_PRIV_EDIT_USER) < 0) FAIL(S_ERR_PERM_DENIED);
+          } else {
+            if (opcaps_check(caps, OPCAP_EDIT_USER) < 0) FAIL(S_ERR_PERM_DENIED);
+          }
+
+          if (userlist_clnt_edit_field_seq(phr->userlist_clnt, ULS_EDIT_FIELD_SEQ,
+                                           other_user_id, contest_id, m->serial, deleted_count, changed_count,
+                                           deleted_ids, changed_ids, changed_strs) < 0) {
+            FAIL(S_ERR_DB_ERROR);
+          }
+        }
+
+        for (int i = USERLIST_NM_FIRST; i < USERLIST_NM_LAST; ++i) {
+          xfree(member_fields[i]);
+        }
+        memset(member_fields, 0, sizeof(member_fields));
+      }
+    }
+  }
+     */
+    for (int i = 0; i < changed_count; ++i) {
+      xfree(changed_strs[i]);
+    }
+    memset(deleted_ids, 0, sizeof(deleted_ids));
+    memset(changed_ids, 0, sizeof(changed_ids));
+    memset(changed_strs, 0, sizeof(changed_strs));
+    changed_count = 0;
+    deleted_count = 0;
+  }
+
+  ss_redirect_2(out_f, phr, SSERV_OP_USER_BROWSE_PAGE, contest_id, group_id, 0, NULL);
+
+cleanup:
+  xfree(user_ids);
+  csv_parsed = csv_free(csv_parsed);
+  xfree(recoded_csv_text); recoded_csv_text = 0;
+  return retval;
 }
 
 int

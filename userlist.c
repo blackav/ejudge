@@ -1970,6 +1970,134 @@ userlist_group_get_ptr_nc(struct userlist_group *grp, int field)
   }
 }
 
+static const unsigned char * const field_lookup_table[][7] =
+{
+  [USERLIST_NN_ID] = { "user_id", "userid", NULL },
+  [USERLIST_NN_IS_PRIVILEGED] = { "is_privileged", "isprivileged", NULL},
+  [USERLIST_NN_IS_INVISIBLE] = { "is_invisible", "isinvisible", NULL },
+  [USERLIST_NN_IS_BANNED] = { "is_banned", "isbanned", NULL },
+  [USERLIST_NN_IS_LOCKED] = { "is_locked", "islocked", NULL },
+  [USERLIST_NN_SHOW_LOGIN] = { "show_login", "showlogin", NULL },
+  [USERLIST_NN_SHOW_EMAIL] = { "show_email", "showemail", NULL },
+  [USERLIST_NN_READ_ONLY] = { "read_only", "readonly", NULL },
+  [USERLIST_NN_NEVER_CLEAN] = { "never_clean", "neverclean", NULL },
+  [USERLIST_NN_SIMPLE_REGISTRATION] = { "simple_registration", "simpleregistration", NULL },
+  [USERLIST_NN_LOGIN] = { "login", NULL },
+  [USERLIST_NN_EMAIL] = { "email", NULL },
+  [USERLIST_NN_PASSWD] = { "password", "passwd", "reg_passwd", "regpasswd", "reg_password", "regpassword", NULL },
+  /*
+    USERLIST_NN_REGISTRATION_TIME,
+    USERLIST_NN_LAST_LOGIN_TIME,
+    USERLIST_NN_LAST_CHANGE_TIME,
+    USERLIST_NN_LAST_PWDCHANGE_TIME,
+  */
+
+  [USERLIST_NC_CNTS_READ_ONLY] = { "cnts_read_only", "cntsreadonly", NULL },
+  [USERLIST_NC_NAME] = { "name", "cntsname", "cnts_name", NULL },
+  [USERLIST_NC_TEAM_PASSWD] = { "cnts_password", "cntspassword", "cnts_passwd", "cntspasswd", NULL },
+  [USERLIST_NC_INST] = { "inst", "institution", NULL },
+  [USERLIST_NC_INST_EN] = { "inst_en", "institution_en", NULL },
+  [USERLIST_NC_INSTSHORT] = { "instshort", "institution_short", NULL },
+  [USERLIST_NC_INSTSHORT_EN] = { "instshort_en", "institution_short_en", NULL },
+  [USERLIST_NC_INSTNUM] = { "instnum", "institution_number", NULL },
+  [USERLIST_NC_FAC] = { "fac", "faculty", NULL },
+  [USERLIST_NC_FAC_EN] = { "fac_en", "faculty_en", NULL },
+  [USERLIST_NC_FACSHORT] = { "facshort", "faculty_short", NULL },
+  [USERLIST_NC_FACSHORT_EN] = { "facshort_en", "faculty_short_en", NULL },
+  [USERLIST_NC_HOMEPAGE] = { "homepage", NULL },
+  [USERLIST_NC_CITY] = { "city", NULL },
+  [USERLIST_NC_CITY_EN] = { "city_en", NULL },
+  [USERLIST_NC_COUNTRY] = { "country", NULL },
+  [USERLIST_NC_COUNTRY_EN] = { "country_en", NULL },
+  [USERLIST_NC_REGION] = { "region", NULL },
+  [USERLIST_NC_AREA] = { "area", NULL },
+  [USERLIST_NC_ZIP] = { "zip", NULL },
+  [USERLIST_NC_STREET] = { "street", NULL },
+  [USERLIST_NC_LOCATION] = { "location", NULL },
+  [USERLIST_NC_SPELLING] = { "spelling", NULL },
+  [USERLIST_NC_PRINTER_NAME] = { "printer_name", "printername", NULL },
+  [USERLIST_NC_EXAM_ID] = { "exam_id", "examid", NULL },
+  [USERLIST_NC_EXAM_CYPHER] = { "exam_cypher", "examcypher", NULL },
+  [USERLIST_NC_LANGUAGES] = { "languages", NULL },
+  [USERLIST_NC_PHONE] = { "phone", NULL },
+  [USERLIST_NC_FIELD0] = { "field0", NULL },
+  [USERLIST_NC_FIELD1] = { "field1", NULL },
+  [USERLIST_NC_FIELD2] = { "field2", NULL },
+  [USERLIST_NC_FIELD3] = { "field3", NULL },
+  [USERLIST_NC_FIELD4] = { "field4", NULL },
+  [USERLIST_NC_FIELD5] = { "field5", NULL },
+  [USERLIST_NC_FIELD6] = { "field6", NULL },
+  [USERLIST_NC_FIELD7] = { "field7", NULL },
+  [USERLIST_NC_FIELD8] = { "field8", NULL },
+  [USERLIST_NC_FIELD9] = { "field9", NULL },
+
+  /*
+    USERLIST_NC_CREATE_TIME,
+    USERLIST_NC_LAST_LOGIN_TIME,
+    USERLIST_NC_LAST_CHANGE_TIME,
+    USERLIST_NC_LAST_PWDCHANGE_TIME,
+    USERLIST_NC_LAST,
+  */
+
+  [USERLIST_NM_SERIAL] = { "serial", NULL },
+  [USERLIST_NM_STATUS] = { "status", NULL },
+  [USERLIST_NM_GENDER] = { "gender", NULL },
+  [USERLIST_NM_GRADE] = { "grade", NULL },
+  [USERLIST_NM_FIRSTNAME] = { "firstname", NULL },
+  [USERLIST_NM_FIRSTNAME_EN] = { "firstname_en", NULL },
+  [USERLIST_NM_MIDDLENAME] = { "middlename", NULL },
+  [USERLIST_NM_MIDDLENAME_EN] = { "middlename_en", NULL },
+  [USERLIST_NM_SURNAME] = { "surname", NULL },
+  [USERLIST_NM_SURNAME_EN] = { "surname_en", NULL },
+  [USERLIST_NM_GROUP] = { "group", NULL },
+  [USERLIST_NM_GROUP_EN] = { "group_en", NULL},
+  [USERLIST_NM_EMAIL] = { "memb_email", "membemail", "member_email", "memberemail", NULL },
+  [USERLIST_NM_HOMEPAGE] = { "memb_homepage", "membhomepage", "member_homepage", "memberhomepage", NULL },
+  [USERLIST_NM_OCCUPATION] = { "occupation", NULL },
+  [USERLIST_NM_OCCUPATION_EN] = { "occupation_en", NULL },
+  [USERLIST_NM_DISCIPLINE] = { "discipline", NULL },
+  [USERLIST_NC_INST] = { "memb_inst", "member_institution", "membinst", "memberinstitution", NULL },
+  [USERLIST_NC_INST_EN] = { "memb_inst_en", "member_institution_en", "membinsten", "memberinstitutionen", NULL },
+  [USERLIST_NC_INSTSHORT] = { "memb_instshort", "member_institution_short", "membinstshort", "memberinstitutionshort", NULL },
+  [USERLIST_NC_INSTSHORT_EN] = { "memb_instshort_en", "member_institution_short_en", "membinstshorten", "memberinstitutionshorten", NULL },
+  [USERLIST_NC_FAC] = { "memb_fac", "member_faculty", "membfac", "memberfaculty", NULL },
+  [USERLIST_NC_FAC_EN] = { "memb_fac_en", "member_faculty_en", "membfacen", "memberfacultyen", NULL },
+  [USERLIST_NC_FACSHORT] = { "memb_facshort", "member_faculty_short", "membfacshort", "memberfacultyshort", NULL },
+  [USERLIST_NC_FACSHORT_EN] = { "memb_facshort_en", "member_faculty_short_en", "membfacshorten", "memberfacultyshorten", NULL },
+  [USERLIST_NM_PHONE] = { "memb_phone", "membphone", "member_phone", "memberphone", NULL },
+  /*
+    USERLIST_NM_CREATE_TIME,
+    USERLIST_NM_LAST_CHANGE_TIME,
+  */
+  [USERLIST_NM_BIRTH_DATE] = { "birth_date", "birthdate", "memb_birth_date", "membbirthdate", NULL },
+  [USERLIST_NM_ENTRY_DATE] = { "entry_date", "entrydate", "memb_entry_date", "membentrydate", NULL },
+  [USERLIST_NM_GRADUATION_DATE] = { "graduation_date", "graduationdate", "memb_graduation_date", "membgraduationdate", NULL },
+  /*
+    USERLIST_NM_LAST,
+  */
+};
+
+int
+userlist_lookup_csv_field_name(const unsigned char *str)
+{
+  int field_id;
+
+  if (!str || !*str) return -1;
+  for (field_id = 1; field_id < USERLIST_NM_LAST; ++field_id) {
+    for (int j = 0; field_lookup_table[field_id][j]; ++j)
+      if (!strcasecmp(str, field_lookup_table[field_id][j]))
+        return field_id;
+  }
+  return -1;
+}
+
+const unsigned char *
+userlist_get_csv_field_name(int field_id)
+{
+  if (field_id <= 0 || field_id >= USERLIST_NM_LAST) return NULL;
+  return field_lookup_table[field_id][0];
+}
+
 /*
  * Local variables:
  *  compile-command: "make"
