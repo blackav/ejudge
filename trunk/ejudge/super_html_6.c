@@ -7386,7 +7386,7 @@ super_serve_op_USER_IMPORT_CSV_PAGE(
           cl, "CSV File", cl, cl);
 
   fprintf(out_f, "<tr><td%s>&nbsp;</td><td%s><input type=\"submit\" name=\"submit\" value=\"%s\" /></td><td%s>&nbsp;</td></tr>\n",
-          cl, cl, "Create users", cl);
+          cl, cl, "Import data", cl);
   fprintf(out_f, "</table>\n");
   fprintf(out_f, "</form>\n");
 
@@ -7412,6 +7412,7 @@ super_serve_op_USER_IMPORT_CSV_ACTION(
   unsigned char *recoded_csv_text = 0;
   struct csv_file *csv_parsed = 0;
   int *user_ids = 0;
+  int *serials = 0;
 
   ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   ss_cgi_param_int_opt(phr, "group_id", &group_id, 0);
@@ -7570,6 +7571,7 @@ super_serve_op_USER_IMPORT_CSV_ACTION(
   }
 
   XCALLOC(user_ids, csv_parsed->u);
+  XCALLOC(serials, csv_parsed->u);
   int row;
   for (row = 1; row < csv_parsed->u; ++row) {
     if (csv_parsed->v[row].u != column_count) {
@@ -7603,6 +7605,7 @@ super_serve_op_USER_IMPORT_CSV_ACTION(
           }
         }
       }
+      xfree(txt); txt = 0;
     } else if (login_idx >= 0) {
       txt = fix_string(csv_parsed->v[row].v[login_idx]);
       if (!txt || !*txt) {
@@ -7618,8 +7621,26 @@ super_serve_op_USER_IMPORT_CSV_ACTION(
           user_ids[row] = user_id;
         }
       }
+      xfree(txt); txt = 0;
     }
-    xfree(txt); txt = 0;
+    if (serial_idx >= 0) {
+      txt = fix_string(csv_parsed->v[row].v[user_id_idx]);
+      if (!txt || !*txt) {
+        fprintf(log_f, "'serial' empty in row %d\n", row + 1);
+        failed = 1;
+      } else {
+        char *eptr = 0;
+        errno = 0;
+        int serial = strtol(txt, &eptr, 10);
+        if (errno || *eptr || serial <= 0 || serial >= 1000000000) {
+          fprintf(log_f, "invalid serial '%s' in row %d\n", txt, row + 1);
+          failed = 1;
+        } else {
+          serials[row] = serial;
+        }
+      }
+      xfree(txt); txt = 0;
+    }
   }
   if (failed) FAIL(S_ERR_INV_CSV_FILE);
 
@@ -7648,98 +7669,12 @@ super_serve_op_USER_IMPORT_CSV_ACTION(
     }
 
     if (userlist_clnt_edit_field_seq(phr->userlist_clnt, ULS_EDIT_FIELD_SEQ,
-                                     user_ids[row], contest_id, 0, deleted_count, changed_count,
+                                     user_ids[row], contest_id, serials[row], deleted_count, changed_count,
                                      deleted_ids, changed_ids,
                                      (const unsigned char **) changed_strs) < 0) {
       FAIL(S_ERR_DB_ERROR);
     }
 
-    /*
-  if (ui && ui->members) {
-    for (int role = 0; role < CONTEST_LAST_MEMBER; ++role) {
-      int role_cnt = userlist_members_count(ui->members, role);
-      if (role_cnt <= 0) continue;
-      for (int pers = 0; pers < role_cnt; ++pers) {
-        const struct userlist_member *m;
-        if (!(m = (const struct userlist_member*) userlist_members_get_nth(ui->members, role, pers)))
-          continue;
-
-        memset(member_null_fields, 0, sizeof(member_null_fields));
-        memset(member_fields, 0, sizeof(member_fields));
-
-        for (int i = 0; (field_id = member_field_ids[i]); ++i) {
-          snprintf(param_name, sizeof(param_name), "field_null_%d_%d", field_id, m->serial);
-          int val = 0;
-          ss_cgi_param_int_opt(phr, param_name, &val, 0);
-          if (val != 1) val = 0;
-          member_null_fields[field_id] = val;
-        }
-
-        for (int i = 0; (field_id = member_field_ids[i]); ++i) {
-          if (member_null_fields[field_id]) continue;
-          snprintf(param_name, sizeof(param_name), "field_%d_%d", field_id, m->serial);
-          int r = ss_cgi_param(phr, param_name, &s);
-          if (!r || !s) continue;
-          if (r < 0) FAIL(S_ERR_INV_VALUE);
-          if (!s) s = "";
-          member_fields[field_id] = fix_string(s);
-        }
-
-        is_changed = 0;
-        for (int i = 0; (field_id = member_field_ids[i]); ++i) {
-          if (member_null_fields[field_id]) {
-            if (!userlist_is_empty_member_field(m, field_id)) is_changed = 1;
-          } else if (member_fields[field_id]) {
-            if (!userlist_is_equal_member_field(m, field_id, member_fields[field_id])) is_changed = 1;
-          }
-        }
-
-        deleted_count = 0;
-        changed_count = 0;
-        if (is_changed) {
-          if (cnts_read_only && new_cnts_read_only) FAIL(S_ERR_DATA_READ_ONLY);
-
-          for (int i = 0; (field_id = member_field_ids[i]); ++i) {
-            if (member_null_fields[field_id]) {
-              if (!userlist_is_empty_member_field(m, field_id)) {
-                deleted_ids[deleted_count] = field_id;
-                ++deleted_count;
-              }
-            } else if (member_fields[field_id]){
-              if (!userlist_is_equal_member_field(m, field_id, member_fields[field_id])) {
-                changed_ids[changed_count] = field_id;
-                changed_strs[changed_count] = member_fields[field_id];
-                ++changed_count;
-              }
-            }
-          }
-        }
-
-        if (deleted_count > 0 || changed_count > 0) {
-          if (is_globally_privileged(phr, u)) {
-            if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_USER) < 0 || opcaps_check(caps, OPCAP_PRIV_EDIT_USER) < 0)
-              FAIL(S_ERR_PERM_DENIED);
-          } else if (is_contest_privileged(cnts, u)) {
-            if (opcaps_check(caps, OPCAP_PRIV_EDIT_USER) < 0) FAIL(S_ERR_PERM_DENIED);
-          } else {
-            if (opcaps_check(caps, OPCAP_EDIT_USER) < 0) FAIL(S_ERR_PERM_DENIED);
-          }
-
-          if (userlist_clnt_edit_field_seq(phr->userlist_clnt, ULS_EDIT_FIELD_SEQ,
-                                           other_user_id, contest_id, m->serial, deleted_count, changed_count,
-                                           deleted_ids, changed_ids, changed_strs) < 0) {
-            FAIL(S_ERR_DB_ERROR);
-          }
-        }
-
-        for (int i = USERLIST_NM_FIRST; i < USERLIST_NM_LAST; ++i) {
-          xfree(member_fields[i]);
-        }
-        memset(member_fields, 0, sizeof(member_fields));
-      }
-    }
-  }
-     */
     for (int i = 0; i < changed_count; ++i) {
       xfree(changed_strs[i]);
     }
@@ -7753,6 +7688,7 @@ super_serve_op_USER_IMPORT_CSV_ACTION(
   ss_redirect_2(out_f, phr, SSERV_OP_USER_BROWSE_PAGE, contest_id, group_id, 0, NULL);
 
 cleanup:
+  xfree(serials);
   xfree(user_ids);
   csv_parsed = csv_free(csv_parsed);
   xfree(recoded_csv_text); recoded_csv_text = 0;
