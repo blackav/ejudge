@@ -43,6 +43,9 @@
 #include <ctype.h>
 #include <errno.h>
 
+#define SAVED_TEST_PREFIX "s_"
+#define TEMP_TEST_PREFIX "t_"
+
 #define ARMOR(s)  html_armor_buf(&ab, (s))
 #define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
 
@@ -783,7 +786,7 @@ scan_test_directory(
 
   // scan for saved files
   test_count = 0;
-  snprintf(saved_pat, sizeof(saved_pat), "s_%s", test_pat);
+  snprintf(saved_pat, sizeof(saved_pat), "%s%s", SAVED_TEST_PREFIX, test_pat);
   do {
     ++test_count;
     snprintf(name, sizeof(name), saved_pat, test_count);
@@ -802,7 +805,7 @@ scan_test_directory(
 
   corr_count = 0;
   if (corr_pat && corr_pat[0]) {
-    snprintf(saved_pat, sizeof(saved_pat), "s_%s", corr_pat);
+    snprintf(saved_pat, sizeof(saved_pat), "%s%s", SAVED_TEST_PREFIX, corr_pat);
     do {
       ++corr_count;
       snprintf(name, sizeof(name), saved_pat, corr_count);
@@ -818,6 +821,26 @@ scan_test_directory(
       }
     } while (low < high);
     --corr_count;
+  }
+
+  info_count = 0;
+  if (info_pat && info_pat[0]) {
+    snprintf(saved_pat, sizeof(saved_pat), "%s%s", SAVED_TEST_PREFIX, info_pat);
+    do {
+      ++info_count;
+      snprintf(name, sizeof(name), saved_pat, info_count);
+      low = 0; high = files->u;
+      while (low < high) {
+        mid = (low + high) / 2;
+        if (!(v = strcmp(files->v[mid].name, name))) break;
+        if (v < 0) {
+          low = mid + 1;
+        } else {
+          high = mid;
+        }
+      }
+    } while (low < high);
+    --info_count;
   }
 
   common_count = test_count;
@@ -1314,7 +1337,7 @@ super_serve_op_TESTS_TESTS_VIEW_PAGE(
     fprintf(out_f, "&nbsp;%s[%s]</a>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                           "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;test_num=%d", SSERV_CMD_HTTP_REQUEST,
-                          SSERV_OP_TESTS_TEST_DELETE, contest_id, prob_id, i + 1),
+                          SSERV_OP_TESTS_TEST_DELETE_PAGE, contest_id, prob_id, i + 1),
             "Delete");
     fprintf(out_f, "</td>");
     fprintf(out_f, "</tr>\n");
@@ -1370,7 +1393,7 @@ super_serve_op_TESTS_TESTS_VIEW_PAGE(
       fprintf(out_f, "&nbsp;%s[%s]</a>",
               html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                             "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;test_num=%d", SSERV_CMD_HTTP_REQUEST,
-                            SSERV_OP_TESTS_SAVED_DELETE, contest_id, prob_id, i + 1),
+                            SSERV_OP_TESTS_SAVED_DELETE_PAGE, contest_id, prob_id, i + 1),
               "Delete");
       fprintf(out_f, "</td>");
       fprintf(out_f, "</tr>\n");
@@ -1379,7 +1402,6 @@ super_serve_op_TESTS_TESTS_VIEW_PAGE(
   }
 
   ss_write_html_footer(out_f);
-
 
 cleanup:
   test_dir_info_free(&td_info);
@@ -1668,6 +1690,31 @@ insert_test(
   return retval;
 }
 
+static int
+check_test_existance(
+        FILE *log_f,
+        const unsigned char *test_dir,
+        const unsigned char *test_pat,
+        const unsigned char *corr_pat,
+        const unsigned char *info_pat,
+        const unsigned char *prefix,
+        int test_num) // 1-based
+{
+  unsigned char test_path[PATH_MAX];
+  unsigned char corr_path[PATH_MAX];
+  unsigned char info_path[PATH_MAX];
+  int exists = 0;
+
+  make_prefixed_path(test_path, sizeof(test_path), test_dir, prefix, test_pat, test_num);
+  make_prefixed_path(corr_path, sizeof(corr_path), test_dir, prefix, corr_pat, test_num);
+  make_prefixed_path(info_path, sizeof(info_path), test_dir, prefix, info_pat, test_num);
+
+  if (test_path[0] && access(test_path, F_OK) >= 0) exists = 1;
+  if (corr_path[0] && access(corr_path, F_OK) >= 0) exists = 1;
+  if (info_path[0] && access(info_path, F_OK) >= 0) exists = 1;
+  return exists;
+}
+
 int
 super_serve_op_TESTS_TEST_MOVE_UP(
         FILE *log_f,
@@ -1720,7 +1767,7 @@ super_serve_op_TESTS_TEST_MOVE_UP(
   if (test_num <= 0 || test_num >= 1000000) FAIL(S_ERR_INV_TEST_NUM);
 
   if (phr->opcode == SSERV_OP_TESTS_SAVED_MOVE_UP || phr->opcode == SSERV_OP_TESTS_SAVED_MOVE_DOWN) {
-    pat_prefix = "_";
+    pat_prefix = SAVED_TEST_PREFIX;
   }
   if (phr->opcode == SSERV_OP_TESTS_TEST_MOVE_UP || phr->opcode == SSERV_OP_TESTS_SAVED_MOVE_UP) {
     to_test_num = test_num - 1;
@@ -1738,7 +1785,12 @@ super_serve_op_TESTS_TEST_MOVE_UP(
   if (retval < 0) goto cleanup;
   retval = 0;
 
-  retval = swap_files(log_f, test_dir, test_pat, corr_pat, info_pat, pat_prefix, pat_prefix, "tmp_",
+  if (phr->opcode == SSERV_OP_TESTS_TEST_MOVE_DOWN || phr->opcode == SSERV_OP_TESTS_SAVED_MOVE_DOWN) {
+    if (!check_test_existance(log_f, test_dir, test_pat, corr_pat, info_pat, pat_prefix, to_test_num))
+      goto done;
+  }
+
+  retval = swap_files(log_f, test_dir, test_pat, corr_pat, info_pat, pat_prefix, pat_prefix, TEMP_TEST_PREFIX,
                       from_test_num, to_test_num);
   if (retval < 0) goto cleanup;
   retval = 0;
@@ -1809,19 +1861,19 @@ super_serve_op_TESTS_TEST_MOVE_TO_SAVED(
   if (retval < 0) goto cleanup;
 
   if (phr->opcode == SSERV_OP_TESTS_TEST_MOVE_TO_SAVED) {
-    if (test_num <= 0 || test_num >= td_info.test_ref_count) goto done;
-    if (move_files(log_f, test_dir, test_pat, corr_pat, info_pat, NULL, "_", "tmp_",
-                   test_num, td_info.saved_ref_count) < 0)
+    if (test_num <= 0 || test_num > td_info.test_ref_count) goto done;
+    if (move_files(log_f, test_dir, test_pat, corr_pat, info_pat, NULL, SAVED_TEST_PREFIX, TEMP_TEST_PREFIX,
+                   test_num, td_info.saved_ref_count + 1) < 0)
       goto cleanup;
     if (delete_test(log_f, test_dir, test_pat, corr_pat, info_pat, NULL,
                     td_info.test_ref_count, test_num) < 0)
       goto cleanup;
   } else if (phr->opcode == SSERV_OP_TESTS_SAVED_MOVE_TO_TEST) {
-    if (test_num <= 0 || test_num >= td_info.saved_ref_count) goto done;
-    if (move_files(log_f, test_dir, test_pat, corr_pat, info_pat, "_", NULL, "tmp_",
-                   test_num, td_info.test_ref_count) < 0)
+    if (test_num <= 0 || test_num > td_info.saved_ref_count) goto done;
+    if (move_files(log_f, test_dir, test_pat, corr_pat, info_pat, SAVED_TEST_PREFIX, NULL, TEMP_TEST_PREFIX,
+                   test_num, td_info.test_ref_count + 1) < 0)
       goto cleanup;
-    if (delete_test(log_f, test_dir, test_pat, corr_pat, info_pat, "_",
+    if (delete_test(log_f, test_dir, test_pat, corr_pat, info_pat, SAVED_TEST_PREFIX,
                     td_info.saved_ref_count, test_num) < 0)
       goto cleanup;
   } else {
@@ -1833,5 +1885,98 @@ done:
 
 cleanup:
   test_dir_info_free(&td_info);
+  return retval;
+}
+
+int
+super_serve_op_TESTS_TEST_EDIT_PAGE(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  int contest_id = 0;
+  int prob_id = 0;
+  int variant = 0;
+  int test_num = 0;
+  const struct contest_desc *cnts = NULL;
+  opcap_t caps = 0LL;
+  serve_state_t cs = NULL;
+  const struct section_global_data *global = NULL;
+  const struct section_problem_data *prob = NULL;
+  unsigned char test_dir[PATH_MAX];
+  unsigned char test_pat[PATH_MAX];
+  unsigned char corr_pat[PATH_MAX];
+  unsigned char info_pat[PATH_MAX];
+  unsigned char buf[1024];
+  unsigned char hbuf[1024];
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+
+  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+
+  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
+  get_full_caps(phr, cnts, &caps);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(S_ERR_PERM_DENIED);
+
+  retval = check_other_editors(log_f, out_f, phr, contest_id, cnts);
+  if (retval <= 0) goto cleanup;
+  retval = 0;
+  cs = phr->ss->te_state;
+  global = cs->global;
+
+  ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
+  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
+  if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
+
+  variant = -1;
+  if (prob->variant_num > 0) {
+    ss_cgi_param_int_opt(phr, "variant", &variant, 0);
+    if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
+  }
+
+  ss_cgi_param_int_opt(phr, "test_num", &test_num, 0);
+  if (test_num <= 0 || test_num >= 1000000) FAIL(S_ERR_INV_TEST_NUM);
+
+  retval = prepare_test_file_names(log_f, phr, cnts, global, prob, variant, NULL,
+                                   sizeof(test_dir), test_dir, test_pat, corr_pat, info_pat);
+  if (retval < 0) goto cleanup;
+  retval = 0;
+
+  snprintf(buf, sizeof(buf), "serve-control: %s, contest %d (%s), test %d for problem %s",
+           phr->html_name, contest_id, ARMOR(cnts->name), test_num, prob->short_name);
+  ss_write_html_header(out_f, phr, buf, 0, NULL);
+  fprintf(out_f, "<h1>%s</h1>\n", buf);
+
+  fprintf(out_f, "<ul>");
+  fprintf(out_f, "<li>%s%s</a></li>",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL, NULL),
+          "Main page");
+  fprintf(out_f, "<li>%s%s</a></li>\n",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
+                        "action=%d&op=%d&contest_id=%d", SSERV_CMD_HTTP_REQUEST,
+                        SSERV_OP_TESTS_MAIN_PAGE, contest_id),
+          "Problems page");
+  fprintf(out_f, "<li>%s%s</a></li>\n",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
+                        "action=%d&op=%d&contest_id=%d&prob_id=%d", SSERV_CMD_HTTP_REQUEST,
+                        SSERV_OP_TESTS_TESTS_VIEW_PAGE, contest_id, prob_id),
+          "Tests page");
+  fprintf(out_f, "</ul>\n");
+
+  html_start_form(out_f, 1, phr->self_url, "");
+  html_hidden(out_f, "SID", "%016llx", phr->session_id);
+  html_hidden(out_f, "action", "%d", SSERV_CMD_HTTP_REQUEST);
+  html_hidden(out_f, "contest_id", "%d", contest_id);
+  html_hidden(out_f, "prob_id", "%d", prob_id);
+  html_hidden(out_f, "test_num", "%d", test_num);
+
+  fprintf(out_f, "</form>\n");
+
+  ss_write_html_footer(out_f);
+
+cleanup:
+  html_armor_free(&ab);
   return retval;
 }

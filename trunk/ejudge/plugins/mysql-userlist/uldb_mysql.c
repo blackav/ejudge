@@ -2866,7 +2866,7 @@ set_reg_flags_func(
 
   ASSERT(user_id > 0);
   ASSERT(contest_id > 0);
-  ASSERT(cmd >= 0 && cmd <= 3);
+  ASSERT(cmd >= 0 && cmd <= 4);
   value &= USERLIST_UC_ALL;
 
   if (!cmd || !value) return 0;
