@@ -24,6 +24,7 @@ int checker_main(int argc, char **argv)
 {
   char **out_lines, **corr_lines;
   size_t out_lines_num, corr_lines_num, i;
+  int nocase = 0;
 
   // считываем файл результата работы программы
   checker_read_file_by_line(1, &out_lines, &out_lines_num);
@@ -33,14 +34,21 @@ int checker_main(int argc, char **argv)
   checker_normalize_file(out_lines, &out_lines_num);
   // отбрасываем пробелы в эталонном файле
   checker_normalize_file(corr_lines, &corr_lines_num);
+  if (getenv("EJUDGE_NOCASE")) nocase = 1;
 
   if (out_lines_num != corr_lines_num)
     fatal_WA("Different number of lines: out = %zu, corr = %zu",
              out_lines_num, corr_lines_num);
   for (i = 0; i < out_lines_num; i++)
-    if (strcmp(out_lines[i], corr_lines[i]) != 0)
-      fatal_WA("Line %zu differs: out:\n>%s<\ncorr:\n>%s<",
-               i + 1, out_lines[i], corr_lines[i]);
+    if (nocase) {
+      if (strcasecmp(out_lines[i], corr_lines[i]) != 0)
+        fatal_WA("Line %zu differs: out:\n>%s<\ncorr:\n>%s<",
+                 i + 1, out_lines[i], corr_lines[i]);
+    } else {
+      if (strcmp(out_lines[i], corr_lines[i]) != 0)
+        fatal_WA("Line %zu differs: out:\n>%s<\ncorr:\n>%s<",
+                 i + 1, out_lines[i], corr_lines[i]);
+    }
   
   checker_OK();
 }
