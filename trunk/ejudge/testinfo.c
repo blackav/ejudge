@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -244,6 +244,111 @@ parse_cmdline(const unsigned char *str, struct cmdline_buf *pcmd)
   }
   memset(pcmd, 0, sizeof(*pcmd));
   return code;
+}
+
+static void
+append_char(unsigned char **p_t, int *p_a, int *p_u, int c)
+{
+  if (!*p_t || !*p_a) {
+    *p_a = 32;
+    *p_t = (unsigned char*) malloc(*p_a);
+  } else if (*p_u == *p_a) {
+    *p_a *= 2;
+    *p_t = (unsigned char *) realloc(*p_t, *p_a);
+  }
+  if (!*p_t) return;
+  (*p_t)[(*p_u)++] = c;
+}
+
+static void
+append_string(unsigned char **p_t, int *p_a, int *p_u, const unsigned char *s)
+{
+  int slen;
+
+  if (!s || !*s) return;
+  slen = strlen(s);
+  if (*p_u + slen > *p_a) {
+    if (*p_a <= 0) *p_a = 32;
+    while (*p_u + slen > *p_a) *p_a *= 2;
+    *p_t = (unsigned char *) realloc(*p_t, *p_a);
+    if (!*p_t) return;
+  }
+  while (*s) {
+    (*p_t)[(*p_u)++] = *s++;
+  }
+}
+
+static int
+need_quotes(const unsigned char *str)
+{
+  if (!str) return 0;
+  for (; *str; ++str) {
+    if (*str <= ' ' || *str == 0177 || *str == '\'' || *str == '\"' || *str == '\\')
+      return 1;
+  }
+  return 0;
+}
+
+static void
+append_string_quoted(unsigned char **p_t, int *p_a, int *p_u, const unsigned char *s)
+{
+  unsigned char buf[16];
+  if (!s || !*s) return;
+  for (; *s; ++s) {
+    switch (*s) {
+    case '\t':
+      append_string(p_t, p_a, p_u, "\\t");
+      break;
+    case '\r':
+      append_string(p_t, p_a, p_u, "\\r");
+      break;
+    case '\n':
+      append_string(p_t, p_a, p_u, "\\n");
+      break;
+    case '\'':
+      append_string(p_t, p_a, p_u, "\\\'");
+      break;
+    case '\"':
+      append_string(p_t, p_a, p_u, "\\\"");
+      break;
+    case '\\':
+      append_string(p_t, p_a, p_u, "\\\\");
+      break;
+    default:
+      if (*s < ' ' || *s == 0177) {
+        snprintf(buf, sizeof(buf), "\\%03o", *s);
+        append_string(p_t, p_a, p_u, buf);
+      } else {
+        append_char(p_t, p_a, p_u, *s);
+      }
+      break;
+    }
+  }
+}
+
+unsigned char *
+testinfo_unparse_cmdline(const struct testinfo_struct *ti)
+{
+  int i, a = 0, u = 0;
+  unsigned char *t = NULL;
+
+  if (ti->cmd_argc <= 0 || !ti->cmd_argv) return strdup("");
+  for (i = 0; i < ti->cmd_argc; ++ti) {
+    if (i > 0) append_char(&t, &a, &u, ' ');
+    if (!ti->cmd_argv[i]) {
+      append_string(&t, &a, &u, "(null)");
+    } else {
+      if (need_quotes(ti->cmd_argv[i])) {
+        append_char(&t, &a, &u, '\"');
+        append_string_quoted(&t, &a, &u, ti->cmd_argv[i]);
+        append_char(&t, &a, &u, '\"');
+      } else {
+        append_string(&t, &a, &u, ti->cmd_argv[i]);
+      }
+    }
+  }
+  append_char(&t, &a, &u, 0);
+  return t;
 }
 
 static void

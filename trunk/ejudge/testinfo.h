@@ -3,7 +3,7 @@
 #ifndef __TESTINFO_H__
 #define __TESTINFO_H__
 
-/* Copyright (C) 2003-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -58,6 +58,7 @@ typedef struct testinfo_struct testinfo_t;
 int testinfo_parse(const char *path, testinfo_t *pt);
 void testinfo_free(testinfo_t *pt);
 const char *testinfo_strerror(int errcode);
+unsigned char *testinfo_unparse_cmdline(const testinfo_t *pt);
 
 #ifdef __cplusplus
 }
@@ -68,6 +69,5 @@ const char *testinfo_strerror(int errcode);
 /*
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  * End:
  */

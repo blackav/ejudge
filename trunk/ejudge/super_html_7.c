@@ -31,6 +31,7 @@
 #include "prepare.h"
 #include "prepare_dflt.h"
 #include "fileutl.h"
+#include "testinfo.h"
 
 #include "reuse_xalloc.h"
 #include "reuse_osdeps.h"
@@ -42,9 +43,12 @@
 #include <dirent.h>
 #include <ctype.h>
 #include <errno.h>
+#include <pwd.h>
+#include <grp.h>
 
 #define SAVED_TEST_PREFIX "s_"
 #define TEMP_TEST_PREFIX "t_"
+#define MAX_ONLINE_EDITOR_SIZE (10*1024)
 
 #define ARMOR(s)  html_armor_buf(&ab, (s))
 #define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
@@ -1277,7 +1281,7 @@ super_serve_op_TESTS_TESTS_VIEW_PAGE(
     fprintf(out_f, "&nbsp;%s[%s]</a>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                           "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d", SSERV_CMD_HTTP_REQUEST,
-                          SSERV_OP_TESTS_README_DELETE, contest_id, prob_id),
+                          SSERV_OP_TESTS_README_DELETE_PAGE, contest_id, prob_id),
             "Delete");
     fprintf(out_f, "</td></tr></table>\n");
   } else {
@@ -1312,17 +1316,17 @@ super_serve_op_TESTS_TESTS_VIEW_PAGE(
     fprintf(out_f, "&nbsp;%s[%s]</a>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                           "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;test_num=%d", SSERV_CMD_HTTP_REQUEST,
-                          SSERV_OP_TESTS_TEST_MOVE_UP, contest_id, prob_id, i + 1),
+                          SSERV_OP_TESTS_TEST_MOVE_UP_ACTION, contest_id, prob_id, i + 1),
             "Move up");
     fprintf(out_f, "&nbsp;%s[%s]</a>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                           "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;test_num=%d", SSERV_CMD_HTTP_REQUEST,
-                          SSERV_OP_TESTS_TEST_MOVE_DOWN, contest_id, prob_id, i + 1),
+                          SSERV_OP_TESTS_TEST_MOVE_DOWN_ACTION, contest_id, prob_id, i + 1),
             "Move down");
     fprintf(out_f, "&nbsp;%s[%s]</a>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                           "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;test_num=%d", SSERV_CMD_HTTP_REQUEST,
-                          SSERV_OP_TESTS_TEST_MOVE_TO_SAVED, contest_id, prob_id, i + 1),
+                          SSERV_OP_TESTS_TEST_MOVE_TO_SAVED_ACTION, contest_id, prob_id, i + 1),
             "Move to saved");
     fprintf(out_f, "&nbsp;%s[%s]</a>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
@@ -1378,17 +1382,17 @@ super_serve_op_TESTS_TESTS_VIEW_PAGE(
       fprintf(out_f, "&nbsp;%s[%s]</a>",
               html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                             "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;test_num=%d", SSERV_CMD_HTTP_REQUEST,
-                            SSERV_OP_TESTS_SAVED_MOVE_UP, contest_id, prob_id, i + 1),
+                            SSERV_OP_TESTS_SAVED_MOVE_UP_ACTION, contest_id, prob_id, i + 1),
               "Move up");
       fprintf(out_f, "&nbsp;%s[%s]</a>",
               html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                             "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;test_num=%d", SSERV_CMD_HTTP_REQUEST,
-                            SSERV_OP_TESTS_SAVED_MOVE_DOWN, contest_id, prob_id, i + 1),
+                            SSERV_OP_TESTS_SAVED_MOVE_DOWN_ACTION, contest_id, prob_id, i + 1),
               "Move down");
       fprintf(out_f, "&nbsp;%s[%s]</a>",
               html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                             "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;test_num=%d", SSERV_CMD_HTTP_REQUEST,
-                            SSERV_OP_TESTS_SAVED_MOVE_TO_TEST, contest_id, prob_id, i + 1),
+                            SSERV_OP_TESTS_SAVED_MOVE_TO_TEST_ACTION, contest_id, prob_id, i + 1),
               "Move to tests");
       fprintf(out_f, "&nbsp;%s[%s]</a>",
               html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
@@ -1716,7 +1720,7 @@ check_test_existance(
 }
 
 int
-super_serve_op_TESTS_TEST_MOVE_UP(
+super_serve_op_TESTS_TEST_MOVE_UP_ACTION(
         FILE *log_f,
         FILE *out_f,
         struct super_http_request_info *phr)
@@ -1766,13 +1770,13 @@ super_serve_op_TESTS_TEST_MOVE_UP(
   ss_cgi_param_int_opt(phr, "test_num", &test_num, 0);
   if (test_num <= 0 || test_num >= 1000000) FAIL(S_ERR_INV_TEST_NUM);
 
-  if (phr->opcode == SSERV_OP_TESTS_SAVED_MOVE_UP || phr->opcode == SSERV_OP_TESTS_SAVED_MOVE_DOWN) {
+  if (phr->opcode == SSERV_OP_TESTS_SAVED_MOVE_UP_ACTION || phr->opcode == SSERV_OP_TESTS_SAVED_MOVE_DOWN_ACTION) {
     pat_prefix = SAVED_TEST_PREFIX;
   }
-  if (phr->opcode == SSERV_OP_TESTS_TEST_MOVE_UP || phr->opcode == SSERV_OP_TESTS_SAVED_MOVE_UP) {
+  if (phr->opcode == SSERV_OP_TESTS_TEST_MOVE_UP_ACTION || phr->opcode == SSERV_OP_TESTS_SAVED_MOVE_UP_ACTION) {
     to_test_num = test_num - 1;
     from_test_num = test_num;
-  } else if (phr->opcode == SSERV_OP_TESTS_TEST_MOVE_DOWN || phr->opcode == SSERV_OP_TESTS_SAVED_MOVE_DOWN) {
+  } else if (phr->opcode == SSERV_OP_TESTS_TEST_MOVE_DOWN_ACTION || phr->opcode == SSERV_OP_TESTS_SAVED_MOVE_DOWN_ACTION) {
     to_test_num = test_num + 1;
     from_test_num = test_num;
   } else {
@@ -1785,7 +1789,7 @@ super_serve_op_TESTS_TEST_MOVE_UP(
   if (retval < 0) goto cleanup;
   retval = 0;
 
-  if (phr->opcode == SSERV_OP_TESTS_TEST_MOVE_DOWN || phr->opcode == SSERV_OP_TESTS_SAVED_MOVE_DOWN) {
+  if (phr->opcode == SSERV_OP_TESTS_TEST_MOVE_DOWN_ACTION || phr->opcode == SSERV_OP_TESTS_SAVED_MOVE_DOWN_ACTION) {
     if (!check_test_existance(log_f, test_dir, test_pat, corr_pat, info_pat, pat_prefix, to_test_num))
       goto done;
   }
@@ -1803,7 +1807,7 @@ cleanup:
 }
 
 int
-super_serve_op_TESTS_TEST_MOVE_TO_SAVED(
+super_serve_op_TESTS_TEST_MOVE_TO_SAVED_ACTION(
         FILE *log_f,
         FILE *out_f,
         struct super_http_request_info *phr)
@@ -1860,7 +1864,7 @@ super_serve_op_TESTS_TEST_MOVE_TO_SAVED(
   retval = scan_test_directory(log_f, &td_info, cnts, test_dir, test_pat, corr_pat, info_pat);
   if (retval < 0) goto cleanup;
 
-  if (phr->opcode == SSERV_OP_TESTS_TEST_MOVE_TO_SAVED) {
+  if (phr->opcode == SSERV_OP_TESTS_TEST_MOVE_TO_SAVED_ACTION) {
     if (test_num <= 0 || test_num > td_info.test_ref_count) goto done;
     if (move_files(log_f, test_dir, test_pat, corr_pat, info_pat, NULL, SAVED_TEST_PREFIX, TEMP_TEST_PREFIX,
                    test_num, td_info.saved_ref_count + 1) < 0)
@@ -1868,7 +1872,7 @@ super_serve_op_TESTS_TEST_MOVE_TO_SAVED(
     if (delete_test(log_f, test_dir, test_pat, corr_pat, info_pat, NULL,
                     td_info.test_ref_count, test_num) < 0)
       goto cleanup;
-  } else if (phr->opcode == SSERV_OP_TESTS_SAVED_MOVE_TO_TEST) {
+  } else if (phr->opcode == SSERV_OP_TESTS_SAVED_MOVE_TO_TEST_ACTION) {
     if (test_num <= 0 || test_num > td_info.saved_ref_count) goto done;
     if (move_files(log_f, test_dir, test_pat, corr_pat, info_pat, SAVED_TEST_PREFIX, NULL, TEMP_TEST_PREFIX,
                    test_num, td_info.test_ref_count + 1) < 0)
@@ -1886,6 +1890,141 @@ done:
 cleanup:
   test_dir_info_free(&td_info);
   return retval;
+}
+
+static void
+norm_type_select(FILE *out_f)
+{
+  fprintf(out_f, "<select name=\"norm_type\">"
+          "<option value=\"0\">None</option>"
+          "<option value=\"1\">End of line</option>"
+          "<option value=\"2\" selected=\"selected\">End of line and trailing space</option>"
+          "</select>");
+}
+
+static int
+is_binary_file(const unsigned char *text, size_t size)
+{
+  const unsigned char *p = text;
+
+  if (!text || size > 1000000000) return 1;
+  if (strlen(text) != size) return 1;
+  for (; *p; ++p) {
+    if (*p == 127 || (*p < ' ' && !isspace(*p))) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+static int
+report_file_info(
+        FILE *out_f,
+        const unsigned char *path,
+        int binary_input,
+        unsigned char **p_text,
+        int *p_size,
+        struct testinfo_struct *pti)
+{
+  int retval = 0;
+  struct stat stb;
+  const unsigned char *cl = " class=\"b0\"";
+  char *text = NULL;
+  size_t size = 0;
+
+  *p_text = NULL;
+  *p_size = 0;
+  fprintf(out_f, "<table%s>", cl);
+  fprintf(out_f, "<tr><td%s>%s:</td><td%s><tt>%s</tt></td></tr>\n", cl ,"Path", cl, path);
+  if (stat(path, &stb) < 0) {
+    fprintf(out_f, "<tr><td%s colspan=\"2\" align=\"center\"><font color=\"red\">%s</font></td></tr>\n",
+            cl, "File does not exist");
+    retval = -1;
+  } else {
+    if (access(path, R_OK) < 0) {
+      fprintf(out_f, "<tr><td%s colspan=\"2\" align=\"center\"><font color=\"red\">%s</font></td></tr>\n",
+              cl, "File is not readable");
+      retval = -1;
+    }
+    if (access(path, W_OK) < 0) {
+      fprintf(out_f, "<tr><td%s colspan=\"2\" align=\"center\"><font color=\"red\">%s</font></td></tr>\n",
+              cl, "File is not writeable");
+    }
+    fprintf(out_f, "<tr><td%s>%s:</td><td%s>%lld</td></tr>\n",
+            cl, "Size", cl, (long long) stb.st_size);
+    if (stb.st_size > MAX_ONLINE_EDITOR_SIZE) {
+      fprintf(out_f, "<tr><td%s colspan=\"2\" align=\"center\"><font color=\"red\">%s</font></td></tr>\n",
+              cl, "File is too big to be edited online");
+      retval = -2;
+    }
+
+    if (retval != -2 && binary_input <= 0) {
+      if (pti) {
+        retval = testinfo_parse(path, pti);
+        if (retval < 0) {
+          fprintf(out_f, "<tr><td%s colspan=\"2\" align=\"center\"><font color=\"red\">%s: %s</font></td></tr>\n",
+                  cl, "Testinfo error", testinfo_strerror(retval));
+        }
+        retval = 0;
+      } else {
+        if (generic_read_file(&text, 0, &size, 0, 0, path, 0) < 0 || !text) {
+          fprintf(out_f, "<tr><td%s colspan=\"2\" align=\"center\"><font color=\"red\">%s</font></td></tr>\n",
+                  cl, "Input error");
+          retval = -2;
+        } else if (is_binary_file(text, size)) {
+          fprintf(out_f, "<tr><td%s colspan=\"2\" align=\"center\"><font color=\"red\">%s</font></td></tr>\n",
+                  cl, "Text file contains invalid characters");
+          retval = -2;
+          xfree(text); text = NULL; size = 0;
+        }
+      }
+    }
+
+    fprintf(out_f, "<tr><td%s>%s:</td><td%s>%03o</td></tr>\n",
+            cl, "Mode", cl, stb.st_mode & 07777);
+    struct passwd *ui = getpwuid(stb.st_uid);
+    if (!ui) {
+      fprintf(out_f, "<tr><td%s>%s:</td><td%s>%d</td></tr>\n",
+              cl, "Owner UID", cl, stb.st_uid);
+    } else {
+      fprintf(out_f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+              cl, "Owner", cl, ui->pw_name);
+    }
+    struct group *gi = getgrgid(stb.st_gid);
+    if (!gi) {
+      fprintf(out_f, "<tr><td%s>%s:</td><td%s>%d</td></tr>\n",
+              cl, "Owner GID", cl, stb.st_gid);
+    } else {
+      fprintf(out_f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+              cl, "Group", cl, gi->gr_name);
+    }
+    fprintf(out_f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+            cl, "Last modification", cl, xml_unparse_date(stb.st_mtime));
+  }
+  fprintf(out_f, "</table>\n");
+
+  *p_text = text;
+  *p_size = size;
+
+  return retval;
+}
+
+
+static void
+edit_file_textarea(
+        FILE *out_f,
+        const unsigned char *name,
+        int cols,
+        int rows,
+        const unsigned char *text)
+{
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+
+  if (cols <= 0) cols = 60;
+  if (rows <= 0) rows = 10;
+  if (!text) text = "";
+  fprintf(out_f, "<textarea name=\"%s\" cols=\"%d\" rows=\"%d\">%s</textarea>\n", name, cols, rows, ARMOR(text));
+  html_armor_free(&ab);
 }
 
 int
@@ -1911,6 +2050,15 @@ super_serve_op_TESTS_TEST_EDIT_PAGE(
   unsigned char buf[1024];
   unsigned char hbuf[1024];
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  const unsigned char *cl, *s, *s2;
+  const unsigned char *prefix = NULL;
+  unsigned char path[PATH_MAX];
+  int r;
+  unsigned char *text = NULL;
+  int size = 0;
+  struct testinfo_struct testinfo;
+
+  memset(&testinfo, 0, sizeof(testinfo));
 
   ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
@@ -1972,11 +2120,135 @@ super_serve_op_TESTS_TEST_EDIT_PAGE(
   html_hidden(out_f, "prob_id", "%d", prob_id);
   html_hidden(out_f, "test_num", "%d", test_num);
 
+  if (test_pat[0] > ' ') {
+    fprintf(out_f, "<h2>%s</h2>\n", "Input file");
+    make_prefixed_path(path, sizeof(path), test_dir, prefix, test_pat, test_num);
+    r = report_file_info(out_f, path, prob->binary_input, &text, &size, NULL);
+    if (prob->binary_input > 0 || r == -2) {
+      // what to do?
+    } else {
+      edit_file_textarea(out_f, "test_txt", 60, 10, text);
+    }
+    xfree(text); text = NULL; size = 0;
+    cl = " class=\"b0\"";
+    fprintf(out_f, "<table%s><tr>", cl);
+    fprintf(out_f, "<td%s>%s%s</a></td>", cl,
+            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
+                          "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;test_num=%d&amp;file_type=%d",
+                          SSERV_CMD_HTTP_REQUEST,
+                          SSERV_OP_TESTS_TEST_DOWNLOAD, contest_id, prob_id, test_num, 1),
+            "Download file");
+    fprintf(out_f, "<td%s>%s%s</a></td>", cl,
+            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
+                          "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;test_num=%d&amp;file_type=%d",
+                          SSERV_CMD_HTTP_REQUEST,
+                          SSERV_OP_TESTS_TEST_UPLOAD_PAGE, contest_id, prob_id, test_num, 1),
+            "Upload file");
+    fprintf(out_f, "</table>\n");
+  }
+
+  if (corr_pat[0] > ' ') {
+    fprintf(out_f, "<h2>%s</h2>\n", "Answer file");
+    make_prefixed_path(path, sizeof(path), test_dir, prefix, corr_pat, test_num);
+    r = report_file_info(out_f, path, prob->binary_input, &text, &size, NULL);
+    if (prob->binary_input > 0 || r == -2) {
+      // what to do?
+    } else {
+      edit_file_textarea(out_f, "corr_txt", 60, 10, text);
+    }
+    xfree(text); text = NULL; size = 0;
+    cl = " class=\"b0\"";
+    fprintf(out_f, "<table%s><tr>", cl);
+    fprintf(out_f, "<td%s>%s%s</a></td>", cl,
+            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
+                          "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;test_num=%d&amp;file_type=%d",
+                          SSERV_CMD_HTTP_REQUEST,
+                          SSERV_OP_TESTS_TEST_DOWNLOAD, contest_id, prob_id, test_num, 2),
+            "Download file");
+    fprintf(out_f, "<td%s>%s%s</a></td>", cl,
+            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
+                          "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;test_num=%d&amp;file_type=%d",
+                          SSERV_CMD_HTTP_REQUEST,
+                          SSERV_OP_TESTS_TEST_UPLOAD_PAGE, contest_id, prob_id, test_num, 2),
+            "Upload file");
+    fprintf(out_f, "</table>\n");
+  }
+
+  if (info_pat[0] > ' ') {
+    fprintf(out_f, "<h2>%s</h2>\n", "Info file");
+    make_prefixed_path(path, sizeof(path), test_dir, prefix, info_pat, test_num);
+    r = report_file_info(out_f, path, 0, &text, &size, &testinfo);
+    xfree(text); text = NULL; size = 0;
+    text = testinfo_unparse_cmdline(&testinfo);
+    cl = " class=\"b0\"";
+    fprintf(out_f, "<table%s>", cl);
+    fprintf(out_f, "<tr><td%s>%s:</td><td%s>%s</td></tr>",
+            cl, "Command line",
+            cl, html_input_text(hbuf, sizeof(hbuf), "testinfo_cmdline", 60, "%s", ARMOR(text)));
+    buf[0] = 0;
+    if (testinfo.exit_code > 0 && testinfo.exit_code < 128) {
+      snprintf(buf, sizeof(buf), "%d", testinfo.exit_code);
+    }
+    fprintf(out_f, "<tr><td%s>%s:</td><td%s>%s</td></tr>",
+            cl, "Expected exit code",
+            cl, html_input_text(hbuf, sizeof(hbuf), "testinfo_exit_code", 60, "%s", buf));
+    s = ""; s2 = "";
+    if (testinfo.check_stderr > 0) {
+      s2 = " selected=\"selected\"";
+    } else {
+      s = " selected=\"selected\"";
+    }
+    fprintf(out_f, "<tr><td%s>%s:</td><td%s><select name=\"testinfo_check_stderr\"><option value=\"0\"%s>%s</option><option value=\"1\"%s>%s</option></select></td></tr>",
+            cl, "Check stderr instead of stdout", cl, s, "No", s2, "Yes");
+    s = testinfo.team_comment;
+    if (!s) s = "";
+    fprintf(out_f, "<tr><td%s>%s:</td><td%s>%s</td></tr>",
+            cl, "User comment",
+            cl, html_input_text(hbuf, sizeof(hbuf), "testinfo_user_comment", 60, "%s", ARMOR(s)));
+    s = testinfo.comment;
+    if (!s) s = "";
+    fprintf(out_f, "<tr><td%s>%s:</td><td%s>%s</td></tr>",
+            cl, "Judge comment",
+            cl, html_input_text(hbuf, sizeof(hbuf), "testinfo_comment", 60, "%s", ARMOR(s)));
+    fprintf(out_f, "</table>\n");
+    cl = " class=\"b0\"";
+    fprintf(out_f, "<table%s><tr>", cl);
+    fprintf(out_f, "<td%s>%s%s</a></td>", cl,
+            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
+                          "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;test_num=%d&amp;file_type=%d",
+                          SSERV_CMD_HTTP_REQUEST,
+                          SSERV_OP_TESTS_TEST_CLEAR_INF_ACTION, contest_id, prob_id, test_num, 3),
+            "Clear file");
+    fprintf(out_f, "</table>\n");
+    xfree(text); text = NULL;
+  }
+
+  if (prob->binary_input <= 0) {
+    cl = " class=\"b0\"";
+    fprintf(out_f, "<table%s><tr><td%s>%s:</td><td%s>", cl, cl, "File normalization type", cl);
+    norm_type_select(out_f);
+    fprintf(out_f, "</td></tr></table>\n");
+  }
+
+  cl = " class=\"b0\"";
+  fprintf(out_f, "<table%s><tr>", cl);
+  fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+          cl, SSERV_OP_TESTS_CANCEL_ACTION, "Cancel");
+  fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+          cl, SSERV_OP_TESTS_TEST_EDIT_ACTION, "Save changes");
+  fprintf(out_f, "<td%s width=\"100px\">&nbsp;</td>", cl);
+  fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+          cl, SSERV_OP_TESTS_TEST_DELETE_PAGE, "Delete this test");
+  fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+          cl, SSERV_OP_TESTS_TEST_MOVE_TO_SAVED_ACTION, "Move this test to saved");
+  fprintf(out_f, "</tr></table>\n");
+
   fprintf(out_f, "</form>\n");
 
   ss_write_html_footer(out_f);
 
 cleanup:
   html_armor_free(&ab);
+  testinfo_free(&testinfo);
   return retval;
 }
