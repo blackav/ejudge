@@ -333,7 +333,7 @@ testinfo_unparse_cmdline(const struct testinfo_struct *ti)
   unsigned char *t = NULL;
 
   if (ti->cmd_argc <= 0 || !ti->cmd_argv) return strdup("");
-  for (i = 0; i < ti->cmd_argc; ++ti) {
+  for (i = 0; i < ti->cmd_argc; ++i) {
     if (i > 0) append_char(&t, &a, &u, ' ');
     if (!ti->cmd_argv[i]) {
       append_string(&t, &a, &u, "(null)");
