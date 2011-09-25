@@ -1014,34 +1014,57 @@ is_text_file(const unsigned char *txt, size_t size)
 static void
 output_text_file(FILE *out_f, const unsigned char *txt, size_t size)
 {
+  enum { MAX_LINE_COUNT = 10, MAX_COLUMN_COUNT = 40 };
   size_t i;
+  int column_count = 0;
+  int line_count = 0;
 
+  // show no more than 10 lines with no more than 40 characters in line
   fprintf(out_f, "<br/><hr/><pre>");
   for (i = 0; i < size; ++i) {
+    if (line_count >= MAX_LINE_COUNT) {
+      fprintf(out_f, "<i>...</i>\n");
+      break;
+    }
+    if (column_count >= MAX_COLUMN_COUNT && txt[i] != '\n') {
+      fprintf(out_f, "<i>...</i>\n");
+      for (; i < size && txt[i] != '\n'; ++i) {}
+      column_count = 0;
+      ++line_count;
+      continue;
+    }
     switch (txt[i]) {
     case '<':
       fprintf(out_f, "&lt;");
+      ++column_count;
       break;
     case '>':
       fprintf(out_f, "&gt;");
+      ++column_count;
       break;
     case '&':
       fprintf(out_f, "&amp;");
+      ++column_count;
       break;
     case '"':
       fprintf(out_f, "&quot;");
+      ++column_count;
       break;
     case '\t':
       fprintf(out_f, "&rarr;");
+      ++column_count;
       break;
     case '\r':
       fprintf(out_f, "&crarr;");
       break;
     case '\n':
       fprintf(out_f, "&para;\n");
+      column_count = 0;
+      ++line_count;
       break;
     default:
       putc(txt[i], out_f);
+      ++column_count;
       break;
     }
   }
@@ -1066,7 +1089,18 @@ report_file(
   fprintf(out_f, "<td%s valign=\"top\">", cl);
   fprintf(out_f, "<i>%s</i><br/>", xml_unparse_date(files->v[index].mtime));
   fprintf(out_f, "<i>%lld</i>", files->v[index].size);
-  if (files->v[index].size > 0 || files->v[index].size <= 256) {
+  if (generic_read_file(&file_t, 0, &file_z, 0, dir_path, files->v[index].name, "") < 0) {
+    fprintf(out_f, "<br/><i>%s</i>", "read error");
+  } else if (!is_text_file(file_t, file_z)) {
+    xfree(file_t); file_t = 0; file_z = 0;
+    fprintf(out_f, "<br/><i>%s</i>", "binary file");
+  } else {
+    output_text_file(out_f, file_t, file_z);
+    xfree(file_t); file_t = 0; file_z = 0;
+  }
+  
+  /*
+  if (files->v[index].size > 0 && files->v[index].size <= 256) {
     if (generic_read_file(&file_t, 0, &file_z, 0, dir_path, files->v[index].name, "") < 0) {
       fprintf(out_f, "<br/><i>%s</i>", "read error");
     } else if (!is_text_file(file_t, file_z)) {
@@ -1077,6 +1111,7 @@ report_file(
       xfree(file_t); file_t = 0; file_z = 0;
     }
   }
+  */
   fprintf(out_f, "</td>");
 }
 
