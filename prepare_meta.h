@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2011/07/22 08:50:03
+// Generated 2011/09/27 13:37:34
 
 #ifndef __PREPARE_META_H__
 #define __PREPARE_META_H__
@@ -412,6 +412,8 @@ enum
   CNTSPROB_interactor_cmd,
   CNTSPROB_style_checker_cmd,
   CNTSPROB_test_checker_cmd,
+  CNTSPROB_solution_src,
+  CNTSPROB_solution_cmd,
   CNTSPROB_lang_time_adj,
   CNTSPROB_lang_time_adj_millis,
   CNTSPROB_alternative,

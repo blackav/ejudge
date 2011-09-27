@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2011/07/22 08:50:03
+// Generated 2011/09/27 13:37:34
 
 #include "prepare_meta.h"
 #include "prepare.h"
@@ -452,6 +452,8 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_interactor_cmd] = { CNTSPROB_interactor_cmd, 'S', XSIZE(struct section_problem_data, interactor_cmd), "interactor_cmd", XOFFSET(struct section_problem_data, interactor_cmd) },
   [CNTSPROB_style_checker_cmd] = { CNTSPROB_style_checker_cmd, 'S', XSIZE(struct section_problem_data, style_checker_cmd), "style_checker_cmd", XOFFSET(struct section_problem_data, style_checker_cmd) },
   [CNTSPROB_test_checker_cmd] = { CNTSPROB_test_checker_cmd, 's', XSIZE(struct section_problem_data, test_checker_cmd), "test_checker_cmd", XOFFSET(struct section_problem_data, test_checker_cmd) },
+  [CNTSPROB_solution_src] = { CNTSPROB_solution_src, 's', XSIZE(struct section_problem_data, solution_src), "solution_src", XOFFSET(struct section_problem_data, solution_src) },
+  [CNTSPROB_solution_cmd] = { CNTSPROB_solution_cmd, 's', XSIZE(struct section_problem_data, solution_cmd), "solution_cmd", XOFFSET(struct section_problem_data, solution_cmd) },
   [CNTSPROB_lang_time_adj] = { CNTSPROB_lang_time_adj, 'x', XSIZE(struct section_problem_data, lang_time_adj), "lang_time_adj", XOFFSET(struct section_problem_data, lang_time_adj) },
   [CNTSPROB_lang_time_adj_millis] = { CNTSPROB_lang_time_adj_millis, 'x', XSIZE(struct section_problem_data, lang_time_adj_millis), "lang_time_adj_millis", XOFFSET(struct section_problem_data, lang_time_adj_millis) },
   [CNTSPROB_alternative] = { CNTSPROB_alternative, 'x', XSIZE(struct section_problem_data, alternative), "alternative", XOFFSET(struct section_problem_data, alternative) },
