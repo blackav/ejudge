@@ -32,6 +32,7 @@
 #include "prepare_dflt.h"
 #include "fileutl.h"
 #include "testinfo.h"
+#include "file_perms.h"
 
 #include "reuse_xalloc.h"
 #include "reuse_osdeps.h"
@@ -46,8 +47,9 @@
 #include <pwd.h>
 #include <grp.h>
 
-#define SAVED_TEST_PREFIX "s_"
-#define TEMP_TEST_PREFIX "t_"
+#define SAVED_TEST_PREFIX      "s_"
+#define TEMP_TEST_PREFIX       "t_"
+#define DEL_TEST_PREFIX        "d_"
 #define MAX_ONLINE_EDITOR_SIZE (10*1024)
 
 #define ARMOR(s)  html_armor_buf(&ab, (s))
@@ -1927,14 +1929,29 @@ cleanup:
   return retval;
 }
 
+enum
+{
+  TEST_NORM_FIRST = 0,
+  TEST_NORM_NONE = TEST_NORM_FIRST,
+  TEST_NORM_NL,
+  TEST_NORM_WS,
+  TEST_NORM_NP,
+  TEST_NORM_LAST
+};
+
 static void
 norm_type_select(FILE *out_f)
 {
   fprintf(out_f, "<select name=\"norm_type\">"
-          "<option value=\"0\">None</option>"
-          "<option value=\"1\">End of line</option>"
-          "<option value=\"2\" selected=\"selected\">End of line and trailing space</option>"
-          "</select>");
+          "<option value=\"%d\">None</option>"
+          "<option value=\"%d\">End of line</option>"
+          "<option value=\"%d\">End of line and trailing space</option>"
+          "<option value=\"%d\" selected=\"selected\">End of line, trailing space, and non-printable</option>"
+          "</select>",
+          TEST_NORM_NONE,
+          TEST_NORM_NL,
+          TEST_NORM_WS,
+          TEST_NORM_NP);
 }
 
 static int
@@ -2285,5 +2302,439 @@ super_serve_op_TESTS_TEST_EDIT_PAGE(
 cleanup:
   html_armor_free(&ab);
   testinfo_free(&testinfo);
+  return retval;
+}
+
+int
+super_serve_op_TESTS_CANCEL_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  int contest_id = 0;
+  const struct contest_desc *cnts = 0;
+  opcap_t caps = 0LL;
+  serve_state_t cs = NULL;
+  const struct section_global_data *global = NULL;
+  const struct section_problem_data *prob = NULL;
+  int prob_id = 0;
+  int variant = 0;
+
+  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+
+  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
+  get_full_caps(phr, cnts, &caps);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(S_ERR_PERM_DENIED);
+
+  retval = check_other_editors(log_f, out_f, phr, contest_id, cnts);
+  if (retval <= 0) goto cleanup;
+  retval = 0;
+  retval = 0;
+  cs = phr->ss->te_state;
+  global = cs->global;
+
+  ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
+  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
+  if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
+
+  variant = -1;
+  if (prob->variant_num > 0) {
+    ss_cgi_param_int_opt(phr, "variant", &variant, 0);
+    if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
+  }
+
+  ss_redirect_2(out_f, phr, SSERV_OP_TESTS_TESTS_VIEW_PAGE, contest_id, prob_id, variant, 0);
+
+cleanup:
+  return retval;
+}
+
+static unsigned char *
+fix_string(const unsigned char *s)
+{
+  if (!s) return NULL;
+
+  int len = strlen(s);
+  if (len < 0) return NULL;
+
+  while (len > 0 && (s[len - 1] <= ' ' || s[len - 1] == 127)) --len;
+  if (len <= 0) return xstrdup("");
+
+  int i = 0;
+  while (i < len && (s[i] <= ' ' || s[i] == 127)) ++i;
+  if (i >= len) return xstrdup("");
+
+  unsigned char *out = (unsigned char *) xmalloc(len + 1);
+  int j = 0;
+  for (; i < len; ++i, ++j) {
+    if (s[i] <= ' ' || s[i] == 127) {
+      out[j] = ' ';
+    } else {
+      out[j] = s[i];
+    }
+  }
+  out[j] = 0;
+
+  return out;
+}
+
+static int
+need_file_update(const unsigned char *out_path, const unsigned char *tmp_path)
+{
+  FILE *f1 = NULL;
+  FILE *f2 = NULL;
+  int c1, c2;
+
+  if (!(f1 = fopen(out_path, "r"))) return 1;
+  if (!(f2 = fopen(tmp_path, "r"))) {
+    fclose(f1);
+    return -1;
+  }
+  do {
+    c1 = getc_unlocked(f1);
+    c2 = getc_unlocked(f2);
+  } while (c1 != EOF && c2 != EOF && c1 == c2);
+  fclose(f2);
+  fclose(f1);
+  return c1 != EOF || c2 != EOF;
+}
+
+static unsigned char *
+normalize_text(int mode, const unsigned char *text)
+{
+  size_t tlen = strlen(text);
+  int op_mask = 0;
+  unsigned char *out_text = NULL;
+  size_t out_count = 0;
+  int done_mask = 0;
+
+  switch (mode) {
+  case TEST_NORM_NONE:
+    return xstrdup(text);
+  case TEST_NORM_NP:
+    op_mask |= TEXT_FIX_NP;
+  case TEST_NORM_WS: // fallthrough
+    op_mask |= TEXT_FIX_TR_SP | TEXT_FIX_TR_NL;
+  case TEST_NORM_NL: // fallthrough
+    op_mask |= TEXT_FIX_CR | TEXT_FIX_FINAL_NL;
+    break;
+  default:
+    abort();
+  }
+
+  text_normalize_dup(text, tlen, op_mask, &out_text, &out_count, &done_mask);
+  return out_text;
+
+  /*
+  char **lines = NULL;
+  int line, slen, outlen = 0;
+  unsigned char *str;
+  unsigned char *outstr = NULL;
+
+  if (mode == 0) {
+    return xstrdup(text);
+  } else {
+    split_to_lines(text, &lines, 0);
+    if (!lines) return xstrdup("");
+    if (!lines[0]) {
+      xfree(lines);
+      return xstrdup("");
+    }
+    if (mode == 1) {
+      for (line = 0; lines[line]; ++line) {
+        slen = strlen(lines[line]);
+        if (slen > 0 && lines[line][slen - 1] == '\n') --slen;
+        if (slen > 0 && lines[line][slen - 1] == '\r') --slen;
+        lines[line][slen] = 0;
+      }
+    } else if (mode == 2) {
+      for (line = 0; lines[line]; ++line) {
+        str = lines[line];
+        slen = strlen(str);
+        while (slen > 0 && isspace(str[slen - 1])) --slen;
+        str[slen] = 0;
+      }
+      while (line > 0 && !lines[line - 1][0]) {
+        xfree(lines[--line]);
+        lines[line] = 0;
+      }
+    } else {
+      abort();
+    }
+    if (!lines[0]) {
+      xfree(lines);
+      return xstrdup("");
+    }
+    for (line = 0; lines[line]; ++line) {
+      outlen += strlen(lines[line]) + 1;
+    }
+    str = outstr = (unsigned char *) xmalloc(outlen + 1);
+    for (line = 0; lines[line]; ++line) {
+      slen = strlen(lines[line]);
+      memcpy(str, lines[line], slen);
+      str += slen;
+      *str++ = '\n';
+    }
+    *str = 0;
+    return outstr;
+  }
+  */
+}
+
+static int
+write_file(const unsigned char *path, const unsigned char *data)
+{
+  FILE *f = fopen(path, "w");
+  if (!f) return -1;
+  for (;*data; ++data) {
+    if (putc_unlocked(*data, f) < 0) {
+      fclose(f);
+      return -1;
+    }
+  }
+  fclose(f);
+  return 0;
+}
+
+int
+super_serve_op_TESTS_TEST_EDIT_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  int contest_id = 0;
+  const struct contest_desc *cnts = NULL;
+  opcap_t caps = 0LL;
+  serve_state_t cs = NULL;
+  const struct section_global_data *global = NULL;
+  const struct section_problem_data *prob = NULL;
+  int prob_id = 0;
+  int variant = 0;
+  int test_num = 0;
+  unsigned char test_dir[PATH_MAX];
+  unsigned char test_pat[PATH_MAX];
+  unsigned char corr_pat[PATH_MAX];
+  unsigned char info_pat[PATH_MAX];
+  unsigned char test_tmp_path[PATH_MAX];
+  unsigned char corr_tmp_path[PATH_MAX];
+  unsigned char info_tmp_path[PATH_MAX];
+  unsigned char test_out_path[PATH_MAX];
+  unsigned char corr_out_path[PATH_MAX];
+  unsigned char info_out_path[PATH_MAX];
+  unsigned char test_del_path[PATH_MAX];
+  unsigned char corr_del_path[PATH_MAX];
+  unsigned char info_del_path[PATH_MAX];
+  FILE *tmp_f = NULL;
+  int testinfo_exit_code = 0;
+  int testinfo_check_stderr = 0;
+  const unsigned char *testinfo_cmdline = NULL;
+  const unsigned char *testinfo_comment = NULL;
+  const unsigned char *testinfo_user_comment = NULL;
+  const unsigned char *test_txt = NULL;
+  const unsigned char *corr_txt = NULL;
+  int norm_type = -1;
+  unsigned char *text = NULL;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  int r;
+  int file_group = -1;
+  int file_mode = -1;
+
+  test_tmp_path[0] = 0;
+  corr_tmp_path[0] = 0;
+  info_tmp_path[0] = 0;
+  test_del_path[0] = 0;
+  corr_del_path[0] = 0;
+  info_del_path[0] = 0;
+
+  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+
+  if (cnts->file_group) {
+    file_group = file_perms_parse_group(cnts->file_group);
+    if (file_group <= 0) FAIL(S_ERR_INV_SYS_GROUP);
+  }
+  if (cnts->file_mode) {
+    file_mode = file_perms_parse_mode(cnts->file_mode);
+    if (file_mode <= 0) FAIL(S_ERR_INV_SYS_MODE);
+  }
+
+  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
+  get_full_caps(phr, cnts, &caps);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(S_ERR_PERM_DENIED);
+
+  retval = check_other_editors(log_f, out_f, phr, contest_id, cnts);
+  if (retval <= 0) goto cleanup;
+  retval = 0;
+  cs = phr->ss->te_state;
+  global = cs->global;
+
+  ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
+  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
+  if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
+
+  variant = -1;
+  if (prob->variant_num > 0) {
+    ss_cgi_param_int_opt(phr, "variant", &variant, 0);
+    if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
+  }
+
+  ss_cgi_param_int_opt(phr, "test_num", &test_num, 0);
+  if (test_num <= 0 || test_num >= 1000000) FAIL(S_ERR_INV_TEST_NUM);
+
+  retval = prepare_test_file_names(log_f, phr, cnts, global, prob, variant, NULL,
+                                   sizeof(test_dir), test_dir, test_pat, corr_pat, info_pat);
+  if (retval < 0) goto cleanup;
+  retval = 0;
+
+  if (prob->use_info > 0 && info_pat[0]) {
+    ss_cgi_param_int_opt(phr, "testinfo_exit_code", &testinfo_exit_code, 0);
+    if (testinfo_exit_code < 0 || testinfo_exit_code >= 128) FAIL(S_ERR_INV_EXIT_CODE);
+    ss_cgi_param_int_opt(phr, "testinfo_check_stderr", &testinfo_check_stderr, 0);
+    if (testinfo_check_stderr != 1) testinfo_check_stderr = 0;
+    ss_cgi_param(phr, "testinfo_cmdline", &testinfo_cmdline);
+    ss_cgi_param(phr, "testinfo_user_comment", &testinfo_user_comment);
+    ss_cgi_param(phr, "testinfo_comment", &testinfo_comment);
+
+    make_prefixed_path(info_tmp_path, sizeof(info_tmp_path), test_dir, TEMP_TEST_PREFIX, info_pat, test_num);
+    make_prefixed_path(info_out_path, sizeof(info_out_path), test_dir, NULL, info_pat, test_num);
+    make_prefixed_path(info_del_path, sizeof(info_del_path), test_dir, DEL_TEST_PREFIX, info_pat, test_num);
+    if (!(tmp_f = fopen(info_tmp_path, "w"))) FAIL(S_ERR_FS_ERROR);
+    if (testinfo_exit_code > 0) {
+      fprintf(tmp_f, "exit_code = %d\n", testinfo_exit_code);
+    }
+    if (testinfo_check_stderr) {
+      fprintf(tmp_f, "check_stderr = %d\n", testinfo_check_stderr);
+    }
+    text = fix_string(testinfo_cmdline);
+    if (text) {
+      fprintf(tmp_f, "params = %s\n", text);
+    }
+    xfree(text); text = NULL;
+    text = fix_string(testinfo_comment);
+    if (text) {
+      fprintf(tmp_f, "comment = %s\n", c_armor_buf(&ab, text));
+    }
+    xfree(text); text = NULL;
+    text = fix_string(testinfo_user_comment);
+    if (text) {
+      fprintf(tmp_f, "team_comment = %s\n", c_armor_buf(&ab, text));
+    }
+    xfree(text); text = NULL;
+    fclose(tmp_f); tmp_f = NULL;
+    r = need_file_update(info_out_path, info_tmp_path);
+    if (r < 0) FAIL(S_ERR_FS_ERROR);
+    if (!r) {
+      unlink(info_tmp_path);
+      info_tmp_path[0] = 0;
+    }
+  }
+  if (info_tmp_path[0] && (file_group > 0 || file_mode > 0)) {
+    file_perms_set(log_f, info_tmp_path, file_group, file_mode, -1, -1);
+  }
+
+  ss_cgi_param_int_opt(phr, "norm_type", &norm_type, -1);
+  if (norm_type < TEST_NORM_FIRST || norm_type >= TEST_NORM_LAST) norm_type = TEST_NORM_NONE;
+
+  if (prob->binary_input <= 0 && prob->use_corr > 0 && corr_pat[0]) {
+    r = ss_cgi_param(phr, "corr_txt", &corr_txt);
+    if (r < 0) FAIL(S_ERR_INV_VALUE);
+    if (r > 0) {
+      make_prefixed_path(corr_tmp_path, sizeof(corr_tmp_path), test_dir, TEMP_TEST_PREFIX, corr_pat, test_num);
+      make_prefixed_path(corr_out_path, sizeof(corr_out_path), test_dir, NULL, corr_pat, test_num);
+      make_prefixed_path(corr_del_path, sizeof(corr_del_path), test_dir, DEL_TEST_PREFIX, corr_pat, test_num);
+      text = normalize_text(norm_type, corr_txt);
+      r = write_file(corr_tmp_path, text);
+      if (r < 0) FAIL(S_ERR_FS_ERROR);
+      xfree(text); text = NULL;
+      r = need_file_update(corr_out_path, corr_tmp_path);
+      if (r < 0) FAIL(S_ERR_FS_ERROR);
+      if (!r) {
+        unlink(corr_tmp_path);
+        corr_tmp_path[0] = 0;
+      }
+    }
+  }
+  if (corr_tmp_path[0] && (file_group > 0 || file_mode > 0)) {
+    file_perms_set(log_f, corr_tmp_path, file_group, file_mode, -1, -1);
+  }
+
+  if (prob->binary_input <= 0) {
+    r = ss_cgi_param(phr, "test_txt", &test_txt);
+    if (r < 0) FAIL(S_ERR_INV_VALUE);
+    if (r > 0) {
+      make_prefixed_path(test_tmp_path, sizeof(test_tmp_path), test_dir, TEMP_TEST_PREFIX, test_pat, test_num);
+      make_prefixed_path(test_out_path, sizeof(test_out_path), test_dir, NULL, test_pat, test_num);
+      make_prefixed_path(test_del_path, sizeof(test_del_path), test_dir, DEL_TEST_PREFIX, test_pat, test_num);
+      text = normalize_text(norm_type, test_txt);
+      r = write_file(test_tmp_path, text);
+      if (r < 0) FAIL(S_ERR_FS_ERROR);
+      xfree(text); text = NULL;
+      r = need_file_update(test_out_path, test_tmp_path);
+      if (r < 0) FAIL(S_ERR_FS_ERROR);
+      if (!r) {
+        unlink(test_tmp_path);
+        test_tmp_path[0] = 0;
+      }
+    }
+  }
+  if (test_tmp_path[0] && (file_group > 0 || file_mode > 0)) {
+    file_perms_set(log_f, test_tmp_path, file_group, file_mode, -1, -1);
+  }
+
+  if (test_tmp_path[0]) {
+    if (logged_rename(log_f, test_out_path, test_del_path) < 0) {
+      FAIL(S_ERR_FS_ERROR);
+    }
+    if (logged_rename(log_f, test_tmp_path, test_out_path) < 0) {
+      logged_rename(log_f, test_del_path, test_out_path);
+      FAIL(S_ERR_FS_ERROR);
+    }
+  }
+  if (corr_tmp_path[0]) {
+    if (logged_rename(log_f, corr_out_path, corr_del_path) < 0) {
+      logged_rename(log_f, test_del_path, test_out_path);
+      FAIL(S_ERR_FS_ERROR);
+    }
+    if (logged_rename(log_f, corr_tmp_path, corr_out_path) < 0) {
+      logged_rename(log_f, corr_del_path, corr_out_path);
+      logged_rename(log_f, test_del_path, test_out_path);
+      FAIL(S_ERR_FS_ERROR);
+    }
+  }
+  if (info_tmp_path[0]) {
+    if (logged_rename(log_f, info_out_path, info_del_path) < 0) {
+      if (corr_tmp_path[0]) {
+        logged_rename(log_f, corr_del_path, corr_out_path);
+      }
+      logged_rename(log_f, test_del_path, test_out_path);
+      FAIL(S_ERR_FS_ERROR);
+    }
+    if (logged_rename(log_f, info_tmp_path, info_out_path) < 0) {
+      logged_rename(log_f, info_del_path, info_out_path);
+      if (corr_tmp_path[0]) {
+        logged_rename(log_f, corr_del_path, corr_out_path);
+      }
+      logged_rename(log_f, test_del_path, test_out_path);
+      FAIL(S_ERR_FS_ERROR);
+    }
+  }
+
+  ss_redirect_2(out_f, phr, SSERV_OP_TESTS_TESTS_VIEW_PAGE, contest_id, prob_id, variant, 0);
+
+cleanup:
+  xfree(text);
+  if (tmp_f) fclose(tmp_f);
+  if (test_tmp_path[0]) unlink(test_tmp_path);
+  if (corr_tmp_path[0]) unlink(corr_tmp_path);
+  if (info_tmp_path[0]) unlink(info_tmp_path);
+  if (test_del_path[0]) unlink(test_del_path);
+  if (corr_del_path[0]) unlink(corr_del_path);
+  if (info_del_path[0]) unlink(info_del_path);
+  html_armor_free(&ab);
   return retval;
 }

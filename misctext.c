@@ -1790,6 +1790,12 @@ text_normalize_buf(
       }
       out_text[j++] = '\n';
       ++i;
+    } else if ((op_mask & TEXT_FIX_NP) &&
+               (in_text[i] == 127
+                || (in_text[i] < ' ' && in_text[i] != '\r' && in_text[i] != '\n' && in_text[i] != '\t'))) {
+      out_text[j++] = ' ';
+      done_mask |= TEXT_FIX_NP;
+      ++count;
     } else {
       out_text[j++] = in_text[i++];
     }
@@ -1841,7 +1847,7 @@ text_normalize_dup(
     if (p_count) *p_count = 0;
     return 0;
   }
-  out_text = (unsigned char*) xmalloc(in_size + 2);
+  *p_out_text = out_text = (unsigned char*) xmalloc(in_size + 2);
   memcpy(out_text, in_text, in_size + 1);
   return text_normalize_buf(out_text, in_size, op_mask, p_count, p_done_mask);
 }

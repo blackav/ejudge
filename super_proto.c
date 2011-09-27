@@ -362,6 +362,9 @@ unsigned char const * const super_proto_op_error_messages[] =
   [S_ERR_INV_CNTS_SETTINGS] = "Invalid contest settings",
   [S_ERR_INV_TEST_NUM] = "Invalid test number",
   [S_ERR_FS_ERROR] = "Filesystem error",
+  [S_ERR_INV_EXIT_CODE] = "Invalid exit code",
+  [S_ERR_INV_SYS_GROUP] = "Invalid system group",
+  [S_ERR_INV_SYS_MODE] = "Invalid system mode",
 };
 
 /*
