@@ -709,10 +709,12 @@ struct section_global_data
   +path_t valuer_cmd;
   +path_t interactor_cmd;
   +path_t style_checker_cmd;
-  +path_t test_checker_cmd;
+  +unsigned char *test_checker_cmd;
+  +unsigned char *solution_src;
+  +unsigned char *solution_cmd;
  */
 
-/* sizeof(struct section_problem_data) == 65216 */
+/* sizeof(struct section_problem_data) == 65224 */
 struct section_problem_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -963,6 +965,10 @@ struct section_problem_data
   path_t style_checker_cmd;
   /** test checker program */
   unsigned char *test_checker_cmd;
+  /** solution source file */
+  unsigned char *solution_src;
+  /** solution command */
+  unsigned char *solution_cmd;
   /** time limit adjustments depending on language */
   char **lang_time_adj;
   /** time limit milliseconds adjustments depending on language (priority over lang_time_adj) */

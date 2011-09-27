@@ -1225,6 +1225,12 @@ prepare_unparse_prob(
   if (prob->test_checker_cmd && prob->test_checker_cmd[0]) {
     fprintf(f,"test_checker_cmd = \"%s\"\n", CARMOR(prob->test_checker_cmd));
   }
+  if (prob->solution_src && prob->solution_src[0]) {
+    fprintf(f,"solution_src = \"%s\"\n", CARMOR(prob->solution_src));
+  }
+  if (prob->solution_cmd && prob->solution_cmd[0]) {
+    fprintf(f,"solution_cmd = \"%s\"\n", CARMOR(prob->solution_cmd));
+  }
   do_xstr(f, &ab, "test_checker_env", prob->test_checker_env);
   do_xstr(f, &ab, "lang_time_adj", prob->lang_time_adj);
   do_xstr(f, &ab, "lang_time_adj_millis", prob->lang_time_adj_millis);
@@ -1513,6 +1519,12 @@ prepare_unparse_actual_prob(
   do_xstr(f, &ab, "style_checker_env", prob->style_checker_env);
   if (show_paths && prob->test_checker_cmd && prob->test_checker_cmd[0]) {
     fprintf(f,"test_checker_cmd = \"%s\"\n", CARMOR(prob->test_checker_cmd));
+  }
+  if (show_paths && prob->solution_src && prob->solution_src[0]) {
+    fprintf(f,"solution_src = \"%s\"\n", CARMOR(prob->solution_src));
+  }
+  if (show_paths && prob->solution_cmd && prob->solution_cmd[0]) {
+    fprintf(f,"solution_cmd = \"%s\"\n", CARMOR(prob->solution_cmd));
   }
   do_xstr(f, &ab, "test_checker_env", prob->test_checker_env);
   do_xstr(f, &ab, "lang_time_adj", prob->lang_time_adj);
@@ -2515,6 +2527,18 @@ prob_instr(
   if (tmp_prob->test_checker_cmd && tmp_prob->test_checker_cmd[0]) {
     fprintf(f, "<p><b>Tests checker:</b></p>\n");
     handle_file(f, global, tmp_prob, tmp_prob->test_checker_cmd, 1);
+  }
+
+  prepare_set_prob_value(CNTSPROB_solution_src, tmp_prob, abstr, global);
+  if (tmp_prob->solution_src && tmp_prob->solution_src[0]) {
+    fprintf(f, "<p><b>Solution source code:</b></p>\n");
+    handle_file(f, global, tmp_prob, tmp_prob->solution_src, 1);
+  }
+
+  prepare_set_prob_value(CNTSPROB_solution_cmd, tmp_prob, abstr, global);
+  if (tmp_prob->solution_cmd && tmp_prob->solution_cmd[0]) {
+    fprintf(f, "<p><b>Solution command:</b></p>\n");
+    handle_file(f, global, tmp_prob, tmp_prob->solution_cmd, 1);
   }
 
   prepare_set_prob_value(CNTSPROB_valuer_cmd, tmp_prob, abstr, global);
