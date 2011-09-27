@@ -216,7 +216,8 @@ enum
   TEXT_FIX_CR = 1,              /* dos2unix conversion */
   TEXT_FIX_TR_SP = 2,           /* trailing space removal */
   TEXT_FIX_FINAL_NL = 4,        /* final newline append */
-  TEXT_FIX_TR_NL = 8            /* trailing newline removal */
+  TEXT_FIX_TR_NL = 8,           /* trailing newline removal */
+  TEXT_FIX_NP = 16              /* replace non-printables, except \n, \t, \r with space */
 };
 
 /**
