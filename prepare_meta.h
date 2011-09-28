@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2011/09/27 13:37:34
+// Generated 2011/09/28 08:56:05
 
 #ifndef __PREPARE_META_H__
 #define __PREPARE_META_H__
@@ -389,6 +389,8 @@ enum
   CNTSPROB_test_sets,
   CNTSPROB_ts_total,
   CNTSPROB_ts_infos,
+  CNTSPROB_normalization,
+  CNTSPROB_normalization_val,
   CNTSPROB_deadline,
   CNTSPROB_start_date,
   CNTSPROB_variant_num,
