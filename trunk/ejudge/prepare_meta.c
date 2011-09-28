@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2011/09/27 13:37:34
+// Generated 2011/09/28 08:56:05
 
 #include "prepare_meta.h"
 #include "prepare.h"
@@ -429,6 +429,8 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_test_sets] = { CNTSPROB_test_sets, 'x', XSIZE(struct section_problem_data, test_sets), "test_sets", XOFFSET(struct section_problem_data, test_sets) },
   [CNTSPROB_ts_total] = { CNTSPROB_ts_total, 'i', XSIZE(struct section_problem_data, ts_total), NULL, XOFFSET(struct section_problem_data, ts_total) },
   [CNTSPROB_ts_infos] = { CNTSPROB_ts_infos, '?', XSIZE(struct section_problem_data, ts_infos), NULL, XOFFSET(struct section_problem_data, ts_infos) },
+  [CNTSPROB_normalization] = { CNTSPROB_normalization, 'S', XSIZE(struct section_problem_data, normalization), "normalization", XOFFSET(struct section_problem_data, normalization) },
+  [CNTSPROB_normalization_val] = { CNTSPROB_normalization_val, 'i', XSIZE(struct section_problem_data, normalization_val), NULL, XOFFSET(struct section_problem_data, normalization_val) },
   [CNTSPROB_deadline] = { CNTSPROB_deadline, 't', XSIZE(struct section_problem_data, deadline), "deadline", XOFFSET(struct section_problem_data, deadline) },
   [CNTSPROB_start_date] = { CNTSPROB_start_date, 't', XSIZE(struct section_problem_data, start_date), "start_date", XOFFSET(struct section_problem_data, start_date) },
   [CNTSPROB_variant_num] = { CNTSPROB_variant_num, 'i', XSIZE(struct section_problem_data, variant_num), "variant_num", XOFFSET(struct section_problem_data, variant_num) },
