@@ -1929,16 +1929,6 @@ cleanup:
   return retval;
 }
 
-enum
-{
-  TEST_NORM_FIRST = 0,
-  TEST_NORM_NONE = TEST_NORM_FIRST,
-  TEST_NORM_NL,
-  TEST_NORM_WS,
-  TEST_NORM_NP,
-  TEST_NORM_LAST
-};
-
 static void
 norm_type_select(FILE *out_f)
 {
