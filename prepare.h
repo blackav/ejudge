@@ -714,7 +714,7 @@ struct section_global_data
   +unsigned char *solution_cmd;
  */
 
-/* sizeof(struct section_problem_data) == 65224 */
+/* sizeof(struct section_problem_data) == 65260 */
 struct section_problem_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -921,6 +921,10 @@ struct section_problem_data
   char **test_sets;
   int ts_total META_ATTRIB((meta_private));
   struct testset_info *ts_infos META_ATTRIB((meta_private));
+
+  /** test normalization type */
+  unsigned char normalization[32];
+  int normalization_val META_ATTRIB((meta_private));
 
   /** deadline for sending this problem */
   time_t deadline;
