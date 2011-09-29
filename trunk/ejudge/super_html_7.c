@@ -295,6 +295,7 @@ super_serve_op_TESTS_MAIN_PAGE(
   int need_makefile = 0;
   int need_header = 0;
   int need_footer = 0;
+  int need_solution = 0;
   int variant_num = 0;
 
   FILE *prb_f = NULL;
@@ -324,6 +325,7 @@ super_serve_op_TESTS_MAIN_PAGE(
     if (prob->test_checker_cmd && prob->test_checker_cmd[0]) need_test_checker = 1;
     if (prob->source_header && prob->source_header[0]) need_header = 1;
     if (prob->source_footer && prob->source_footer[0]) need_footer = 1;
+    if (prob->solution_src && prob->solution_src[0]) need_solution = 1;
   }
   if (cs->global->advanced_layout > 0) need_makefile = 1;
 
@@ -363,6 +365,9 @@ super_serve_op_TESTS_MAIN_PAGE(
   if (need_footer > 0) {
     fprintf(out_f, "<th%s>%s</th>", cl, "Source footer");
   }
+  if (need_solution > 0) {
+    fprintf(out_f, "<th%s>%s</th>", cl, "Solution");
+  }  
   if (need_style_checker > 0) {
     fprintf(out_f, "<th%s>%s</th>", cl, "Style checker");
   }
@@ -469,6 +474,21 @@ super_serve_op_TESTS_MAIN_PAGE(
                   html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                                 NULL, "action=%d&amp;op=%d&amp;contest_id=%d&amp;variant=%d&amp;prob_id=%d",
                                 SSERV_CMD_HTTP_REQUEST, SSERV_OP_TESTS_SOURCE_FOOTER_EDIT_PAGE,
+                                contest_id, variant, prob_id),
+                  "Edit");
+        } else {
+          fprintf(out_f, "<td%s>&nbsp;</td>", cl);
+        }
+      }
+
+      // solution
+      if (need_solution) {
+        if (prob->solution_src && prob->solution_src[0]) {
+          fprintf(out_f, "<td title=\"%s\"%s>%s%s</a></td>",
+                  ARMOR(prob->solution_src), cl, 
+                  html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                                NULL, "action=%d&amp;op=%d&amp;contest_id=%d&amp;variant=%d&amp;prob_id=%d",
+                                SSERV_CMD_HTTP_REQUEST, SSERV_OP_TESTS_SOLUTION_EDIT_PAGE,
                                 contest_id, variant, prob_id),
                   "Edit");
         } else {
@@ -587,10 +607,14 @@ enum
   TESTS_TEST_FILE = 1,
   TESTS_CORR_FILE = 2,
   TESTS_INFO_FILE = 3,
-  TESTS_SAVED_TEST_FILE = 5,
-  TESTS_SAVED_CORR_FILE = 6,
-  TESTS_SAVED_INFO_FILE = 7,
-  TESTS_README_FILE = 9,
+  TESTS_TGZ_FILE = 4,
+  TESTS_TGZ_DIR = 5,
+  TESTS_SAVED_TEST_FILE = 6,
+  TESTS_SAVED_CORR_FILE = 7,
+  TESTS_SAVED_INFO_FILE = 8,
+  TESTS_SAVED_TGZ_FILE = 9,
+  TESTS_SAVED_TGZ_DIR = 10,
+  TESTS_README_FILE = 11,
 };
 
 struct test_file_info
@@ -610,6 +634,7 @@ struct test_info
   int corr_idx;
   int info_idx;
   int tgz_idx;
+  int tgz_dir_idx;
 };
 struct test_dir_info
 {
@@ -1930,18 +1955,29 @@ cleanup:
 }
 
 static void
-norm_type_select(FILE *out_f)
+norm_type_select(FILE *out_f, int norm_type)
 {
+  const unsigned char *ss[TEST_NORM_LAST];
+  int i;
+
+  if (norm_type < TEST_NORM_FIRST || norm_type >= TEST_NORM_LAST) {
+    norm_type = TEST_NORM_NONE;
+  }
+  if (norm_type == TEST_NORM_DEFAULT) norm_type = TEST_NORM_NL;
+  for (i = 0; i < TEST_NORM_LAST; ++i) {
+    ss[i] = "";
+    if (norm_type == i) ss[i] = " selected=\"selected\"";
+  }
   fprintf(out_f, "<select name=\"norm_type\">"
-          "<option value=\"%d\">None</option>"
-          "<option value=\"%d\">End of line</option>"
-          "<option value=\"%d\">End of line and trailing space</option>"
-          "<option value=\"%d\" selected=\"selected\">End of line, trailing space, and non-printable</option>"
+          "<option value=\"%d\"%s>None</option>"
+          "<option value=\"%d\"%s>End of line</option>"
+          "<option value=\"%d\"%s>End of line and trailing space</option>"
+          "<option value=\"%d\"%s>End of line, trailing space, and non-printable</option>"
           "</select>",
-          TEST_NORM_NONE,
-          TEST_NORM_NL,
-          TEST_NORM_WS,
-          TEST_NORM_NP);
+          TEST_NORM_NONE, ss[TEST_NORM_NONE],
+          TEST_NORM_NL, ss[TEST_NORM_NL],
+          TEST_NORM_WS, ss[TEST_NORM_WS],
+          TEST_NORM_NP, ss[TEST_NORM_NP]);
 }
 
 static int
@@ -2099,6 +2135,7 @@ super_serve_op_TESTS_TEST_EDIT_PAGE(
   unsigned char *text = NULL;
   int size = 0;
   struct testinfo_struct testinfo;
+  int norm_type = TEST_NORM_NONE;
 
   memset(&testinfo, 0, sizeof(testinfo));
 
@@ -2119,6 +2156,11 @@ super_serve_op_TESTS_TEST_EDIT_PAGE(
   ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
   if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
   if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
+  if (prob->binary_input <= 0) {
+    norm_type = test_normalization_parse(prob->normalization);
+    if (norm_type < TEST_NORM_FIRST || norm_type >= TEST_NORM_LAST) norm_type = TEST_NORM_NONE;
+    if (norm_type == TEST_NORM_DEFAULT) norm_type = TEST_NORM_NL;
+  }
 
   variant = -1;
   if (prob->variant_num > 0) {
@@ -2268,7 +2310,7 @@ super_serve_op_TESTS_TEST_EDIT_PAGE(
   if (prob->binary_input <= 0) {
     cl = " class=\"b0\"";
     fprintf(out_f, "<table%s><tr><td%s>%s:</td><td%s>", cl, cl, "File normalization type", cl);
-    norm_type_select(out_f);
+    norm_type_select(out_f, norm_type);
     fprintf(out_f, "</td></tr></table>\n");
   }
 
@@ -2629,6 +2671,7 @@ super_serve_op_TESTS_TEST_EDIT_ACTION(
 
   ss_cgi_param_int_opt(phr, "norm_type", &norm_type, -1);
   if (norm_type < TEST_NORM_FIRST || norm_type >= TEST_NORM_LAST) norm_type = TEST_NORM_NONE;
+  if (norm_type == TEST_NORM_DEFAULT) norm_type = TEST_NORM_NL;
 
   if (prob->binary_input <= 0 && prob->use_corr > 0 && corr_pat[0]) {
     r = ss_cgi_param(phr, "corr_txt", &corr_txt);

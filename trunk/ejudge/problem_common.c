@@ -100,6 +100,36 @@ test_visibility_unparse(int value)
   return test_visibility_str[value];
 }
 
+const unsigned char * const test_normalization_str[] =
+{
+  [TEST_NORM_NONE] = "none",
+  [TEST_NORM_DEFAULT] = "",
+  [TEST_NORM_NL]   = "nl",
+  [TEST_NORM_WS]   = "nlws",
+  [TEST_NORM_NP]   = "nlwsnp",
+  [TEST_NORM_LAST] = 0,
+};
+
+int
+test_normalization_parse(const unsigned char *str)
+{
+  int i;
+
+  if (!str || !*str) return TEST_NORM_DEFAULT;
+  for (i = 0; i < TEST_NORM_LAST; ++i) {
+    if (!strcasecmp(test_normalization_str[i], str))
+      return i;
+  }
+  return -1;
+}
+
+const unsigned char *
+test_normalization_unparse(int value)
+{
+  if (value < TEST_NORM_FIRST || value >= TEST_NORM_LAST) return "";
+  return test_normalization_str[value];
+}
+
 /*
  * Local variables:
  *  compile-command: "make"

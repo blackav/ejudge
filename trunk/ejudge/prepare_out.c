@@ -1313,6 +1313,8 @@ prepare_unparse_prob(
     fprintf(f, "source_header = \"%s\"\n", CARMOR(prob->source_header));
   if (prob->source_footer[0])
     fprintf(f, "source_footer = \"%s\"\n", CARMOR(prob->source_footer));
+  if (prob->normalization[0])
+    fprintf(f, "normalization = \"%s\"\n", CARMOR(prob->normalization));
 
   fprintf(f, "\n");
   if (prob->unhandled_vars) fprintf(f, "%s\n", prob->unhandled_vars);
@@ -1613,6 +1615,8 @@ prepare_unparse_actual_prob(
     fprintf(f, "source_header = \"%s\"\n", CARMOR(prob->source_header));
   if (prob->source_footer[0])
     fprintf(f, "source_footer = \"%s\"\n", CARMOR(prob->source_footer));
+  if (prob->normalization[0])
+    fprintf(f, "normalization = \"%s\"\n", CARMOR(prob->normalization));
   if (prob->extid && prob->extid[0])
     fprintf(f, "extid = \"%s\"\n", CARMOR(prob->extid));
 
