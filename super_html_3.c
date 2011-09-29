@@ -538,6 +538,7 @@ static const unsigned char * const action_to_help_url_map[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_CHANGE_STAND_ATTR] = "Serve.cfg:problem:stand_attr",
   [SSERV_CMD_PROB_CHANGE_SOURCE_HEADER] = "Serve.cfg:problem:source_header",
   [SSERV_CMD_PROB_CHANGE_SOURCE_FOOTER] = "Serve.cfg:problem:source_footer",
+  [SSERV_CMD_PROB_CHANGE_NORMALIZATION] = "Serve.cfg:problem:normalization",
 };
 
 static void
@@ -5192,6 +5193,31 @@ super_html_print_problem(FILE *f,
                                self_url, extra_args, prob_hidden_vars);
   }
 
+  if (show_adv && tmp_prob->binary_input <= 0) {
+    //PROBLEM_PARAM(normalization, "s"),
+    msg_buf[0] = 0;
+    if (prob->abstract > 0 && !prob->normalization[0]) {
+      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default)</i>");
+    } else if (prob->abstract > 0) {
+      // nothing
+    } else if (prob->abstract <= 0 && !prob->normalization[0]) {
+      if (!tmp_prob->normalization[0]) {
+        snprintf(msg_buf, sizeof(msg_buf), "<i>(Default)</i>");
+      } else {
+        snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %s)</i>", ARMOR(tmp_prob->normalization));
+      }
+    }
+    extra_msg = msg_buf;
+    print_string_editing_row_3(f,
+                               "Test normalization mode:",
+                               prob->normalization,
+                               SSERV_CMD_PROB_CHANGE_NORMALIZATION,
+                               SSERV_CMD_PROB_CLEAR_NORMALIZATION,
+                               extra_msg,
+                               session_id, form_row_attrs[row ^= 1],
+                               self_url, extra_args, prob_hidden_vars);
+  }
+
   if (show_adv) {
     //PROBLEM_PARAM(binary, "d"),
     extra_msg = 0;
@@ -8230,6 +8256,14 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_PROB_CLEAR_SOURCE_FOOTER:
     PROB_CLEAR_STRING(source_footer);
+    return 0;
+
+  case SSERV_CMD_PROB_CHANGE_NORMALIZATION:
+    PROB_ASSIGN_STRING(normalization);
+    return 0;
+
+  case SSERV_CMD_PROB_CLEAR_NORMALIZATION:
+    PROB_CLEAR_STRING(normalization);
     return 0;
 
   default:

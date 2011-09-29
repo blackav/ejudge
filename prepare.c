@@ -469,6 +469,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(source_footer, "s"),
   PROBLEM_PARAM(score_view, "x"),
   PROBLEM_PARAM(extid, "S"),
+  PROBLEM_PARAM(normalization, "s"),
 
   { 0, 0, 0, 0 }
 };
@@ -3286,6 +3287,7 @@ set_defaults(
 
     prepare_set_prob_value(CNTSPROB_source_header, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_source_footer, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_normalization, prob, aprob, g);
 
     if (prob->priority_adjustment == -1000 && si != -1 &&
         aprob->priority_adjustment != -1000) {
@@ -6123,6 +6125,12 @@ prepare_set_prob_value(
     }
     break;
 
+  case CNTSPROB_normalization:
+    if (!out->normalization[0] && abstr && abstr->normalization[0]) {
+      strcpy(out->normalization, abstr->normalization);
+    }
+    break;
+
   case CNTSPROB_xml_file:
     if (!out->xml_file[0] && abstr && abstr->xml_file[0]) {
       sformat_message(out->xml_file, sizeof(out->xml_file), 0,
@@ -6197,6 +6205,7 @@ static const int prob_settable_list[] =
   CNTSPROB_alternative, CNTSPROB_stand_attr, CNTSPROB_source_header,
   CNTSPROB_source_footer, CNTSPROB_score_view,
   CNTSPROB_open_tests, CNTSPROB_final_open_tests,
+  CNTSPROB_normalization,
 
   0
 };
@@ -6335,6 +6344,7 @@ static const unsigned char prob_settable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_score_view] = 1,
   [CNTSPROB_open_tests] = 1,
   [CNTSPROB_final_open_tests] = 1,
+  [CNTSPROB_normalization] = 1,
 };
 
 static const int prob_inheritable_list[] =
@@ -6389,6 +6399,7 @@ static const int prob_inheritable_list[] =
   CNTSPROB_plugin_file, CNTSPROB_xml_file, CNTSPROB_type,
   CNTSPROB_alternative, CNTSPROB_stand_attr, CNTSPROB_source_header,
   CNTSPROB_source_footer, CNTSPROB_score_view,
+  CNTSPROB_normalization,
 
   0,
 };
@@ -6515,6 +6526,7 @@ static const unsigned char prob_inheritable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_source_header] = 1,
   [CNTSPROB_source_footer] = 1,
   [CNTSPROB_score_view] = 1,
+  [CNTSPROB_normalization] = 1,
 
   0,
 };
@@ -6652,6 +6664,7 @@ static const struct section_problem_data prob_undef_values =
   .max_open_file_count = -1,
   .max_process_count = -1,
   .score_view = 0,
+  .normalization = { 0 },
 };
 
 static const struct section_problem_data prob_default_values =
@@ -6771,6 +6784,7 @@ static const struct section_problem_data prob_default_values =
   .max_file_size = -1L,
   .max_open_file_count = -1,
   .max_process_count = -1,
+  .normalization = "",
 };
 
 static const int prob_global_map[CNTSPROB_LAST_FIELD] =
