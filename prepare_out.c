@@ -615,6 +615,9 @@ prepare_unparse_unhandled_global(FILE *f, const struct section_global_data *glob
   //GLOBAL_PARAM(tgz_sfx, "s"),
   if (global->tgz_sfx[0] && strcmp(global->tgz_sfx, DFLT_G_TGZ_SFX))
     do_str(f, &ab, "tgz_sfx", global->tgz_sfx);
+  //GLOBAL_PARAM(tgzdir_sfx, "s"),
+  if (global->tgzdir_sfx[0] > 1 && strcmp(global->tgzdir_sfx, DFLT_G_TGZDIR_SFX))
+    do_str(f, &ab, "tgzdir_sfx", global->tgzdir_sfx);
   //GLOBAL_PARAM(ejudge_checkers_dir, "s"),
   do_str(f, &ab, "ejudge_checkers_dir", global->ejudge_checkers_dir);
   //GLOBAL_PARAM(test_pat, "s"),
@@ -625,6 +628,8 @@ prepare_unparse_unhandled_global(FILE *f, const struct section_global_data *glob
   do_str(f, &ab, "info_pat", global->info_pat);
   //GLOBAL_PARAM(tgz_pat, "s"),
   do_str(f, &ab, "tgz_pat", global->tgz_pat);
+  //GLOBAL_PARAM(tgzdir_pat, "s"),
+  do_str(f, &ab, "tgzdir_pat", global->tgzdir_pat);
 
   //GLOBAL_PARAM(socket_path, "s"),
   do_str(f, &ab, "socket_path", global->socket_path);
@@ -1082,6 +1087,18 @@ prepare_unparse_prob(
         || !prob->abstract)
       fprintf(f, "tgz_pat = \"%s\"\n", CARMOR(prob->tgz_pat));
   }
+  if (prob->tgzdir_sfx[0] != 1) {
+    if ((prob->abstract
+         && ((global->tgzdir_sfx[0] && strcmp(prob->tgzdir_sfx, global->tgzdir_sfx))
+             || (!global->tgzdir_sfx[0] && strcmp(prob->tgzdir_sfx, DFLT_G_TGZDIR_SFX))))
+        || !prob->abstract)
+      fprintf(f, "tgzdir_sfx = \"%s\"\n", CARMOR(prob->tgzdir_sfx));
+  }
+  if (prob->tgzdir_pat[0] != 1) {
+    if ((prob->abstract && strcmp(prob->tgzdir_pat, global->tgzdir_pat))
+        || !prob->abstract)
+      fprintf(f, "tgzdir_pat = \"%s\"\n", CARMOR(prob->tgzdir_pat));
+  }
   /*
   if (prob->use_tgz != -1) unparse_bool(f, "use_tgz", prob->use_tgz);
   if (prob->tgz_dir[0])
@@ -1420,6 +1437,11 @@ prepare_unparse_actual_prob(
       fprintf(f, "tgz_pat = \"%s\"\n", CARMOR(prob->tgz_pat));
     } else if (prob->tgz_sfx[0]) {
       fprintf(f, "tgz_sfx = \"%s\"\n", CARMOR(prob->tgz_sfx));
+    }
+    if (prob->tgzdir_pat[0]) {
+      fprintf(f, "tgzdir_pat = \"%s\"\n", CARMOR(prob->tgzdir_pat));
+    } else if (prob->tgzdir_sfx[0]) {
+      fprintf(f, "tgzdir_sfx = \"%s\"\n", CARMOR(prob->tgzdir_sfx));
     }
   }
 
@@ -2648,6 +2670,10 @@ prob_instr(
     prepare_set_prob_value(CNTSPROB_tgz_pat, tmp_prob, abstr, global);
     print_files(f, "TGZ file names",
                 tmp_prob->tgz_sfx, tmp_prob->tgz_pat);
+    prepare_set_prob_value(CNTSPROB_tgzdir_sfx, tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_tgzdir_pat, tmp_prob, abstr, global);
+    print_files(f, "master working directories",
+                tmp_prob->tgzdir_sfx, tmp_prob->tgzdir_pat);
   }
 
   fprintf(f, "\n");

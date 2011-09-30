@@ -3,7 +3,7 @@
 #ifndef __PREPARE_DFLT_H__
 #define __PREPARE_DFLT_H__
 
-/* Copyright (C) 2005-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -40,6 +40,7 @@
 #define DFLT_G_TGZ_DIR            "../tests"
 #define DFLT_G_TGZ_SFX            ".tgz"
 #define DFLT_G_CHECKER_DIR        "../checkers"
+#define DFLT_G_TGZDIR_SFX         ".dir"
 #define DFLT_G_STATEMENT_DIR      "../statements"
 #define DFLT_G_PLUGIN_DIR         "../plugins"
 #define DFLT_G_RUN_LOG_FILE       "run.log"
