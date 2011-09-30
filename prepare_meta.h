@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2011/09/28 08:56:05
+// Generated 2011/09/30 13:57:28
 
 #ifndef __PREPARE_META_H__
 #define __PREPARE_META_H__
@@ -90,6 +90,7 @@ enum
   CNTSGLOB_corr_sfx,
   CNTSGLOB_info_sfx,
   CNTSGLOB_tgz_sfx,
+  CNTSGLOB_tgzdir_sfx,
   CNTSGLOB_ejudge_checkers_dir,
   CNTSGLOB_contest_start_cmd,
   CNTSGLOB_contest_stop_cmd,
@@ -99,6 +100,7 @@ enum
   CNTSGLOB_corr_pat,
   CNTSGLOB_info_pat,
   CNTSGLOB_tgz_pat,
+  CNTSGLOB_tgzdir_pat,
   CNTSGLOB_clardb_plugin,
   CNTSGLOB_rundb_plugin,
   CNTSGLOB_xuser_plugin,
@@ -363,6 +365,7 @@ enum
   CNTSPROB_info_sfx,
   CNTSPROB_tgz_dir,
   CNTSPROB_tgz_sfx,
+  CNTSPROB_tgzdir_sfx,
   CNTSPROB_input_file,
   CNTSPROB_output_file,
   CNTSPROB_test_score_list,
@@ -383,6 +386,7 @@ enum
   CNTSPROB_corr_pat,
   CNTSPROB_info_pat,
   CNTSPROB_tgz_pat,
+  CNTSPROB_tgzdir_pat,
   CNTSPROB_ntests,
   CNTSPROB_tscores,
   CNTSPROB_x_score_tests,
