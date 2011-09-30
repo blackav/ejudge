@@ -111,7 +111,7 @@ struct user_adjustment_info
 };
 struct user_adjustment_map;
 
-/* sizeof(struct section_global_data) == 350028 */
+/* sizeof(struct section_global_data) == 350092 */
 struct section_global_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -292,6 +292,8 @@ struct section_global_data
   unsigned char info_sfx[32];
   /** suffix of the tgz archive files */
   unsigned char tgz_sfx[32];
+  /** suffix of the working directory master copy */
+  unsigned char tgzdir_sfx[32];
   /** path to the built-in checkers */
   path_t ejudge_checkers_dir;
   /** command to run when the contest starts */
@@ -311,6 +313,8 @@ struct section_global_data
   unsigned char info_pat[32];
   /** printf pattern for the files with the working dir archive */
   unsigned char tgz_pat[32];
+  /** printf pattern for the files with the working directory master copy */
+  unsigned char tgzdir_pat[32];
 
   /** the clarification base storage plugin (file, mysql) */
   unsigned char clardb_plugin[32];
@@ -714,7 +718,7 @@ struct section_global_data
   +unsigned char *solution_cmd;
  */
 
-/* sizeof(struct section_problem_data) == 65260 */
+/* sizeof(struct section_problem_data) == 65324 */
 struct section_problem_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -868,6 +872,8 @@ struct section_problem_data
   path_t tgz_dir;
   /** tar test archive suffix */
   unsigned char tgz_sfx[32];
+  /** working directory master copy suffix */
+  unsigned char tgzdir_sfx[32];
   /** input file name */
   unsigned char input_file[256];
   /** output file name */
@@ -909,6 +915,8 @@ struct section_problem_data
   unsigned char info_pat[32];
   /** printf pattern for the tgz archive pattern */
   unsigned char tgz_pat[32];
+  /** printf pattern for the working directory master copy */
+  unsigned char tgzdir_pat[32];
 
   /** number of tests found */
   int ntests META_ATTRIB((meta_private));

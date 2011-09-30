@@ -506,6 +506,10 @@ static const unsigned char * const action_to_help_url_map[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_CHANGE_CORR_PAT] = "Serve.cfg:problem:corr_pat",
   [SSERV_CMD_PROB_CHANGE_INFO_SFX] = "Serve.cfg:problem:info_sfx",
   [SSERV_CMD_PROB_CHANGE_INFO_PAT] = "Serve.cfg:problem:info_pat",
+  [SSERV_CMD_PROB_CHANGE_TGZ_SFX] = "Serve.cfg:problem:tgz_sfx",
+  [SSERV_CMD_PROB_CHANGE_TGZ_PAT] = "Serve.cfg:problem:tgz_pat",
+  [SSERV_CMD_PROB_CHANGE_TGZDIR_SFX] = "Serve.cfg:problem:tgzdir_sfx",
+  [SSERV_CMD_PROB_CHANGE_TGZDIR_PAT] = "Serve.cfg:problem:tgzdir_pat",
   [SSERV_CMD_PROB_CHANGE_STANDARD_CHECKER] = "Serve.cfg:problem:standard_checker",
   [SSERV_CMD_PROB_CHANGE_SCORE_BONUS] = "Serve.cfg:problem:score_bonus",
   [SSERV_CMD_PROB_CHANGE_OPEN_TESTS] = "Serve.cfg:problem:open_tests",
@@ -4748,6 +4752,7 @@ super_html_get_standard_checker_description(const unsigned char *standard_checke
 
   PROBLEM_PARAM(tgz_dir, "s"),
   PROBLEM_PARAM(tgz_sfx, "s"),
+  PROBLEM_PARAM(tgzdir_sfx, "s"),
   PROBLEM_PARAM(test_sets, "x"),
   PROBLEM_PARAM(score_view, "x"),
   PROBLEM_PARAM(deadline, "s"),
@@ -4761,6 +4766,7 @@ super_html_get_standard_checker_description(const unsigned char *standard_checke
   PROBLEM_PARAM(require, "x"),
   *PROBLEM_PARAM(checker_env, "x"),
   PROBLEM_PARAM(tgz_pat, "s"),
+  PROBLEM_PARAM(tgzdir_pat, "s"),
   PROBLEM_PARAM(personal_deadline, "x"),
   *PROBLEM_PARAM(score_bonus, "s"),
 
@@ -5561,6 +5567,96 @@ super_html_print_problem(FILE *f,
                                prob->info_pat,
                                SSERV_CMD_PROB_CHANGE_INFO_PAT,
                                SSERV_CMD_PROB_CLEAR_INFO_PAT,
+                               extra_msg,
+                               session_id, form_row_attrs[row ^= 1],
+                               self_url, extra_args, prob_hidden_vars);
+
+  //PROBLEM_PARAM(tgz_sfx, "s"),
+  extra_msg = 0;
+  if (prob->abstract && prob->use_info == 1
+      && (!prob->tgz_pat[0] || prob->tgz_pat[0] == 1)) extra_msg = "";
+  if (!prob->abstract && tmp_prob->use_info && !tmp_prob->tgz_pat[0]) {
+    if (prob->tgz_sfx[0] == 1)
+      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>",
+               ARMOR(tmp_prob->tgz_sfx));
+    else
+      snprintf(msg_buf, sizeof(msg_buf), "<i>(\"%s\")</i>",
+               ARMOR(tmp_prob->tgz_sfx));
+    extra_msg = msg_buf;
+  }
+  if (extra_msg)
+    print_string_editing_row_3(f, "Suffix of working dir archives:", prob->tgz_sfx,
+                               SSERV_CMD_PROB_CHANGE_TGZ_SFX,
+                               SSERV_CMD_PROB_CLEAR_TGZ_SFX,
+                               extra_msg,
+                               session_id, form_row_attrs[row ^= 1],
+                               self_url, extra_args, prob_hidden_vars);
+
+  //PROBLEM_PARAM(tgz_pat, "s"),
+  extra_msg = 0;
+  if (show_adv && prob->abstract && prob->use_info == 1) extra_msg = "";
+  if (!prob->abstract && tmp_prob->use_info
+      && (show_adv || tmp_prob->tgz_pat[0])) {
+    extra_msg = "";
+    if (prob->tgz_pat[0] == 1)
+      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>",
+               ARMOR(tmp_prob->tgz_pat));
+    else
+      snprintf(msg_buf, sizeof(msg_buf), "<i>(\"%s\")</i>",
+               ARMOR(tmp_prob->tgz_pat));
+    extra_msg = msg_buf;
+  }
+  if (extra_msg)
+    print_string_editing_row_3(f,
+                               "Pattern for working dir archives (overrides tgz_sfx):",
+                               prob->tgz_pat,
+                               SSERV_CMD_PROB_CHANGE_TGZ_PAT,
+                               SSERV_CMD_PROB_CLEAR_TGZ_PAT,
+                               extra_msg,
+                               session_id, form_row_attrs[row ^= 1],
+                               self_url, extra_args, prob_hidden_vars);
+
+  //PROBLEM_PARAM(tgzdir_sfx, "s"),
+  extra_msg = 0;
+  if (prob->abstract && prob->use_info == 1
+      && (!prob->tgzdir_pat[0] || prob->tgzdir_pat[0] == 1)) extra_msg = "";
+  if (!prob->abstract && tmp_prob->use_info && !tmp_prob->tgzdir_pat[0]) {
+    if (prob->tgzdir_sfx[0] == 1)
+      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>",
+               ARMOR(tmp_prob->tgzdir_sfx));
+    else
+      snprintf(msg_buf, sizeof(msg_buf), "<i>(\"%s\")</i>",
+               ARMOR(tmp_prob->tgzdir_sfx));
+    extra_msg = msg_buf;
+  }
+  if (extra_msg)
+    print_string_editing_row_3(f, "Suffix of master working dirs:", prob->tgzdir_sfx,
+                               SSERV_CMD_PROB_CHANGE_TGZDIR_SFX,
+                               SSERV_CMD_PROB_CLEAR_TGZDIR_SFX,
+                               extra_msg,
+                               session_id, form_row_attrs[row ^= 1],
+                               self_url, extra_args, prob_hidden_vars);
+
+  //PROBLEM_PARAM(tgzdir_pat, "s"),
+  extra_msg = 0;
+  if (show_adv && prob->abstract && prob->use_info == 1) extra_msg = "";
+  if (!prob->abstract && tmp_prob->use_info
+      && (show_adv || tmp_prob->tgzdir_pat[0])) {
+    extra_msg = "";
+    if (prob->tgzdir_pat[0] == 1)
+      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>",
+               ARMOR(tmp_prob->tgzdir_pat));
+    else
+      snprintf(msg_buf, sizeof(msg_buf), "<i>(\"%s\")</i>",
+               ARMOR(tmp_prob->tgzdir_pat));
+    extra_msg = msg_buf;
+  }
+  if (extra_msg)
+    print_string_editing_row_3(f,
+                               "Pattern for master working dirs (overrides tgzdir_sfx):",
+                               prob->tgzdir_pat,
+                               SSERV_CMD_PROB_CHANGE_TGZDIR_PAT,
+                               SSERV_CMD_PROB_CLEAR_TGZDIR_PAT,
                                extra_msg,
                                session_id, form_row_attrs[row ^= 1],
                                self_url, extra_args, prob_hidden_vars);
@@ -7381,6 +7477,7 @@ super_html_add_abstract_problem(
   prob->use_tgz = 0;
   snprintf(prob->tgz_dir, sizeof(prob->tgz_dir), "%s", "%Ps");
   snprintf(prob->tgz_sfx, sizeof(prob->tgz_sfx), "%s", ".tgz");
+  snprintf(prob->tgzdir_sfx, sizeof(prob->tgzdir_sfx), "%s", ".dir");
   if (sstate->global && sstate->global->advanced_layout > 0) {
     snprintf(prob->check_cmd, sizeof(prob->check_cmd), "%s", DFLT_P_CHECK_CMD);
   } else {
@@ -7943,6 +8040,42 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
   case SSERV_CMD_PROB_CLEAR_INFO_PAT:
     prob->info_pat[0] = 1;
     prob->info_pat[1] = 0;
+    return 0;
+
+  case SSERV_CMD_PROB_CHANGE_TGZ_SFX:
+    PROB_ASSIGN_STRING(tgz_sfx);
+    return 0;
+
+  case SSERV_CMD_PROB_CLEAR_TGZ_SFX:
+    prob->tgz_sfx[0] = 1;
+    prob->tgz_sfx[1] = 0;
+    return 0;
+
+  case SSERV_CMD_PROB_CHANGE_TGZ_PAT:
+    PROB_ASSIGN_STRING(tgz_pat);
+    return 0;
+
+  case SSERV_CMD_PROB_CLEAR_TGZ_PAT:
+    prob->tgz_pat[0] = 1;
+    prob->tgz_pat[1] = 0;
+    return 0;
+
+  case SSERV_CMD_PROB_CHANGE_TGZDIR_SFX:
+    PROB_ASSIGN_STRING(tgzdir_sfx);
+    return 0;
+
+  case SSERV_CMD_PROB_CLEAR_TGZDIR_SFX:
+    prob->tgzdir_sfx[0] = 1;
+    prob->tgzdir_sfx[1] = 0;
+    return 0;
+
+  case SSERV_CMD_PROB_CHANGE_TGZDIR_PAT:
+    PROB_ASSIGN_STRING(tgzdir_pat);
+    return 0;
+
+  case SSERV_CMD_PROB_CLEAR_TGZDIR_PAT:
+    prob->tgzdir_pat[0] = 1;
+    prob->tgzdir_pat[1] = 0;
     return 0;
 
   case SSERV_CMD_PROB_CHANGE_STANDARD_CHECKER:

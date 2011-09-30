@@ -1734,10 +1734,10 @@ run_tests(struct section_tester_data *tst,
     if (prb->use_tgz) {
       snprintf(tgz_src, sizeof(path_t), "%s/%03d%s",
                var_tgz_dir, cur_test, prb->tgz_sfx);
-      snprintf(tgz_src_dir, sizeof(path_t), "%s/%03d",
-               var_tgz_dir, cur_test);
-      snprintf(prog_working_dir, sizeof(path_t), "%s/%03d",
-               tst->check_dir, cur_test);
+      snprintf(tgz_src_dir, sizeof(path_t), "%s/%03d%s",
+               var_tgz_dir, cur_test, prb->tgzdir_sfx);
+      snprintf(prog_working_dir, sizeof(path_t), "%s/%03d%s",
+               tst->check_dir, cur_test, prb->tgzdir_sfx);
       info("starting: %s", "/bin/tar");
       tsk = task_New();
       task_AddArg(tsk, "/bin/tar");

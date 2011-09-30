@@ -608,12 +608,12 @@ enum
   TESTS_CORR_FILE = 2,
   TESTS_INFO_FILE = 3,
   TESTS_TGZ_FILE = 4,
-  TESTS_TGZ_DIR = 5,
+  TESTS_TGZDIR_FILE = 5,
   TESTS_SAVED_TEST_FILE = 6,
   TESTS_SAVED_CORR_FILE = 7,
   TESTS_SAVED_INFO_FILE = 8,
   TESTS_SAVED_TGZ_FILE = 9,
-  TESTS_SAVED_TGZ_DIR = 10,
+  TESTS_SAVED_TGZDIR_FILE = 10,
   TESTS_README_FILE = 11,
 };
 
@@ -634,7 +634,7 @@ struct test_info
   int corr_idx;
   int info_idx;
   int tgz_idx;
-  int tgz_dir_idx;
+  int tgzdir_idx;
 };
 struct test_dir_info
 {
@@ -679,7 +679,9 @@ scan_test_directory(
         const unsigned char *test_dir,
         const unsigned char *test_pat,
         const unsigned char *corr_pat,
-        const unsigned char *info_pat)
+        const unsigned char *info_pat,
+        const unsigned char *tgz_pat,
+        const unsigned char *tgzdir_pat)
 {
   struct stat stb;
   DIR *d = NULL;
@@ -691,6 +693,7 @@ scan_test_directory(
   int new_a = 0;
   struct test_file_info *new_v = NULL;
   int test_count, corr_count, info_count, common_count, low, high, mid, v, i;
+  int tgz_count, tgzdir_count;
 
   if (stat(test_dir, &stb) < 0) {
     if (os_MakeDirPath2(test_dir, cnts->dir_mode, cnts->dir_group) < 0) {
@@ -801,9 +804,51 @@ scan_test_directory(
     --info_count;
   }
 
+  // detect how many tgz files
+  tgz_count = 0;
+  if (tgz_pat && tgz_pat[0]) {
+    do {
+      ++tgz_count;
+      snprintf(name, sizeof(name), tgz_pat, tgz_count);
+      low = 0; high = files->u;
+      while (low < high) {
+        mid = (low + high) / 2;
+        if (!(v = strcmp(files->v[mid].name, name))) break;
+        if (v < 0) {
+          low = mid + 1;
+        } else {
+          high = mid;
+        }
+      }
+    } while (low < high);
+    --tgz_count;
+  }
+
+  // detect how many tgzdir files
+  tgzdir_count = 0;
+  if (tgzdir_pat && tgzdir_pat[0]) {
+    do {
+      ++tgzdir_count;
+      snprintf(name, sizeof(name), tgzdir_pat, tgzdir_count);
+      low = 0; high = files->u;
+      while (low < high) {
+        mid = (low + high) / 2;
+        if (!(v = strcmp(files->v[mid].name, name))) break;
+        if (v < 0) {
+          low = mid + 1;
+        } else {
+          high = mid;
+        }
+      }
+    } while (low < high);
+    --tgzdir_count;
+  }
+
   common_count = test_count;
   if (corr_count > common_count) common_count = corr_count;
   if (info_count > common_count) common_count = info_count;
+  if (tgz_count > common_count) common_count = tgz_count;
+  if (tgzdir_count > common_count) common_count = tgzdir_count;
   if (common_count > 0) {
     files->test_ref_count = common_count;
     XCALLOC(files->test_refs, common_count);
@@ -812,6 +857,7 @@ scan_test_directory(
       files->test_refs[i].corr_idx = -1;
       files->test_refs[i].info_idx = -1;
       files->test_refs[i].tgz_idx = -1;
+      files->test_refs[i].tgzdir_idx = -1;
     }
   }
 
@@ -874,9 +920,51 @@ scan_test_directory(
     --info_count;
   }
 
+  tgz_count = 0;
+  if (tgz_pat && tgz_pat[0]) {
+    snprintf(saved_pat, sizeof(saved_pat), "%s%s", SAVED_TEST_PREFIX, tgz_pat);
+    do {
+      ++tgz_count;
+      snprintf(name, sizeof(name), saved_pat, tgz_count);
+      low = 0; high = files->u;
+      while (low < high) {
+        mid = (low + high) / 2;
+        if (!(v = strcmp(files->v[mid].name, name))) break;
+        if (v < 0) {
+          low = mid + 1;
+        } else {
+          high = mid;
+        }
+      }
+    } while (low < high);
+    --tgz_count;
+  }
+
+  tgzdir_count = 0;
+  if (tgzdir_pat && tgzdir_pat[0]) {
+    snprintf(saved_pat, sizeof(saved_pat), "%s%s", SAVED_TEST_PREFIX, tgzdir_pat);
+    do {
+      ++tgzdir_count;
+      snprintf(name, sizeof(name), saved_pat, tgzdir_count);
+      low = 0; high = files->u;
+      while (low < high) {
+        mid = (low + high) / 2;
+        if (!(v = strcmp(files->v[mid].name, name))) break;
+        if (v < 0) {
+          low = mid + 1;
+        } else {
+          high = mid;
+        }
+      }
+    } while (low < high);
+    --tgzdir_count;
+  }
+
   common_count = test_count;
   if (corr_count > common_count) common_count = corr_count;
   if (info_count > common_count) common_count = info_count;
+  if (tgz_count > common_count) common_count = tgz_count;
+  if (tgzdir_count > common_count) common_count = tgzdir_count;
   if (common_count > 0) {
     files->saved_ref_count = common_count;
     XCALLOC(files->saved_refs, common_count);
@@ -885,6 +973,7 @@ scan_test_directory(
       files->saved_refs[i].corr_idx = -1;
       files->saved_refs[i].info_idx = -1;
       files->saved_refs[i].tgz_idx = -1;
+      files->saved_refs[i].tgzdir_idx = -1;
     }
   }
 
@@ -939,6 +1028,42 @@ scan_test_directory(
       if (low < high) {
         files->test_refs[i - 1].info_idx = mid;
         files->v[mid].use = TESTS_INFO_FILE;
+        files->v[mid].use_idx = i;
+      }
+    }
+    if (tgz_pat && tgz_pat[0]) {
+      snprintf(name, sizeof(name), tgz_pat, i);
+      low = 0; high = files->u;
+      while (low < high) {
+        mid = (low + high) / 2;
+        if (!(v = strcmp(files->v[mid].name, name))) break;
+        if (v < 0) {
+          low = mid + 1;
+        } else {
+          high = mid;
+        }
+      }
+      if (low < high) {
+        files->test_refs[i - 1].tgz_idx = mid;
+        files->v[mid].use = TESTS_TGZ_FILE;
+        files->v[mid].use_idx = i;
+      }
+    }
+    if (tgzdir_pat && tgzdir_pat[0]) {
+      snprintf(name, sizeof(name), tgzdir_pat, i);
+      low = 0; high = files->u;
+      while (low < high) {
+        mid = (low + high) / 2;
+        if (!(v = strcmp(files->v[mid].name, name))) break;
+        if (v < 0) {
+          low = mid + 1;
+        } else {
+          high = mid;
+        }
+      }
+      if (low < high) {
+        files->test_refs[i - 1].tgzdir_idx = mid;
+        files->v[mid].use = TESTS_TGZDIR_FILE;
         files->v[mid].use_idx = i;
       }
     }
@@ -997,6 +1122,44 @@ scan_test_directory(
       if (low < high) {
         files->saved_refs[i - 1].info_idx = mid;
         files->v[mid].use = TESTS_SAVED_INFO_FILE;
+        files->v[mid].use_idx = i;
+      }
+    }
+    if (tgz_pat && tgz_pat[0]) {
+      snprintf(saved_pat, sizeof(saved_pat), "s_%s", tgz_pat);
+      snprintf(name, sizeof(name), saved_pat, i);
+      low = 0; high = files->u;
+      while (low < high) {
+        mid = (low + high) / 2;
+        if (!(v = strcmp(files->v[mid].name, name))) break;
+        if (v < 0) {
+          low = mid + 1;
+        } else {
+          high = mid;
+        }
+      }
+      if (low < high) {
+        files->saved_refs[i - 1].tgz_idx = mid;
+        files->v[mid].use = TESTS_SAVED_TGZ_FILE;
+        files->v[mid].use_idx = i;
+      }
+    }
+    if (tgzdir_pat && tgzdir_pat[0]) {
+      snprintf(saved_pat, sizeof(saved_pat), "s_%s", tgzdir_pat);
+      snprintf(name, sizeof(name), saved_pat, i);
+      low = 0; high = files->u;
+      while (low < high) {
+        mid = (low + high) / 2;
+        if (!(v = strcmp(files->v[mid].name, name))) break;
+        if (v < 0) {
+          low = mid + 1;
+        } else {
+          high = mid;
+        }
+      }
+      if (low < high) {
+        files->saved_refs[i - 1].tgzdir_idx = mid;
+        files->v[mid].use = TESTS_SAVED_TGZDIR_FILE;
         files->v[mid].use_idx = i;
       }
     }
@@ -1155,11 +1318,14 @@ prepare_test_file_names(
         unsigned char *test_dir,
         unsigned char *test_pat,
         unsigned char *corr_pat,
-        unsigned char *info_pat)
+        unsigned char *info_pat,
+        unsigned char *tgz_pat,
+        unsigned char *tgzdir_pat)
 {
   int retval;
   unsigned char corr_dir[PATH_MAX];
   unsigned char info_dir[PATH_MAX];
+  unsigned char tgz_dir[PATH_MAX];
   unsigned char name1[PATH_MAX];
   unsigned char name2[PATH_MAX];
 
@@ -1169,8 +1335,11 @@ prepare_test_file_names(
   test_pat[0] = 0;
   corr_pat[0] = 0;
   info_pat[0] = 0;
+  tgz_pat[0] = 0;
+  tgzdir_pat[0] = 0;
   corr_dir[0] = 0;
   info_dir[0] = 0;
+  tgz_dir[0] = 0;
 
   if (global->advanced_layout > 0) {
     get_advanced_layout_path(test_dir, buf_size, global, prob, DFLT_P_TEST_DIR, variant);
@@ -1251,6 +1420,49 @@ prepare_test_file_names(
     }
   }
 
+  tgz_dir[0] = 0;
+  tgz_pat[0] = 0;
+  tgzdir_pat[0] = 0;
+  if (prob->use_tgz > 0) {
+    if (global->advanced_layout > 0) {
+      get_advanced_layout_path(tgz_dir, sizeof(tgz_dir), global, prob, DFLT_P_TGZ_DIR, variant);
+    } else if (variant > 0) {
+      snprintf(tgz_dir, sizeof(tgz_dir), "%s-%d", prob->tgz_dir, variant);
+    } else {
+      snprintf(tgz_dir, sizeof(tgz_dir), "%s", prob->tgz_dir);
+    }
+    if (strcmp(tgz_dir, test_dir) != 0) {
+      fprintf(log_f, "tgz_dir and test_dir cannot be different\n");
+      FAIL(S_ERR_UNSUPPORTED_SETTINGS);
+    }
+    if (prob->tgz_pat[0] >= ' ' ) {
+      snprintf(tgz_pat, buf_size, "%s%s", pat_prefix, prob->tgz_pat);
+    } else if (prob->corr_sfx[0] >= ' ') {
+      snprintf(tgz_pat, buf_size, "%s%%03d%s", pat_prefix, prob->tgz_sfx);
+    } else {
+      snprintf(tgz_pat, buf_size, "%s%%03d%s", pat_prefix, ".inf");
+    }
+    snprintf(name1, sizeof(name1), tgz_pat, 1);
+    snprintf(name2, sizeof(name2), tgz_pat, 2);
+    if (!strcmp(name1, name2)) {
+      fprintf(log_f, "invalid tgz files pattern\n");
+      FAIL(S_ERR_UNSUPPORTED_SETTINGS);
+    }
+    if (prob->tgzdir_pat[0] >= ' ' ) {
+      snprintf(tgzdir_pat, buf_size, "%s%s", pat_prefix, prob->tgzdir_pat);
+    } else if (prob->corr_sfx[0] >= ' ') {
+      snprintf(tgzdir_pat, buf_size, "%s%%03d%s", pat_prefix, prob->tgzdir_sfx);
+    } else {
+      snprintf(tgzdir_pat, buf_size, "%s%%03d%s", pat_prefix, ".dir");
+    }
+    snprintf(name1, sizeof(name1), tgzdir_pat, 1);
+    snprintf(name2, sizeof(name2), tgzdir_pat, 2);
+    if (!strcmp(name1, name2)) {
+      fprintf(log_f, "invalid tgzdir files pattern\n");
+      FAIL(S_ERR_UNSUPPORTED_SETTINGS);
+    }
+  }
+
 cleanup:
   return retval;
 }
@@ -1273,6 +1485,8 @@ super_serve_op_TESTS_TESTS_VIEW_PAGE(
   unsigned char test_pat[PATH_MAX];
   unsigned char corr_pat[PATH_MAX];
   unsigned char info_pat[PATH_MAX];
+  unsigned char tgz_pat[PATH_MAX];
+  unsigned char tgzdir_pat[PATH_MAX];
   struct test_dir_info td_info;
   int i;
   unsigned char buf[1024], hbuf[1024];
@@ -1306,11 +1520,12 @@ super_serve_op_TESTS_TESTS_VIEW_PAGE(
   }
 
   retval = prepare_test_file_names(log_f, phr, cnts, global, prob, variant, NULL,
-                                   sizeof(test_dir), test_dir, test_pat, corr_pat, info_pat);
+                                   sizeof(test_dir), test_dir, test_pat, corr_pat, info_pat,
+                                   tgz_pat, tgzdir_pat);
   if (retval < 0) goto cleanup;
   retval = 0;
 
-  retval = scan_test_directory(log_f, &td_info, cnts, test_dir, test_pat, corr_pat, info_pat);
+  retval = scan_test_directory(log_f, &td_info, cnts, test_dir, test_pat, corr_pat, info_pat, tgz_pat, tgzdir_pat);
   if (retval < 0) goto cleanup;
 
   snprintf(buf, sizeof(buf), "serve-control: %s, contest %d (%s), tests for problem %s",
@@ -1532,6 +1747,8 @@ swap_files(
         const unsigned char *test_pat,
         const unsigned char *corr_pat,
         const unsigned char *info_pat,
+        const unsigned char *tgz_pat,
+        const unsigned char *tgzdir_pat,
         const unsigned char *src_prefix,
         const unsigned char *dst_prefix,
         const unsigned char *tmp_prefix,
@@ -1548,6 +1765,12 @@ swap_files(
   unsigned char info_src_path[PATH_MAX];
   unsigned char info_dst_path[PATH_MAX];
   unsigned char info_tmp_path[PATH_MAX];
+  unsigned char tgz_src_path[PATH_MAX];
+  unsigned char tgz_dst_path[PATH_MAX];
+  unsigned char tgz_tmp_path[PATH_MAX];
+  unsigned char tgzdir_src_path[PATH_MAX];
+  unsigned char tgzdir_dst_path[PATH_MAX];
+  unsigned char tgzdir_tmp_path[PATH_MAX];
 
   make_prefixed_path(test_src_path, sizeof(test_src_path), test_dir, src_prefix, test_pat, src_num);
   make_prefixed_path(test_dst_path, sizeof(test_dst_path), test_dir, dst_prefix, test_pat, dst_num);
@@ -1558,10 +1781,18 @@ swap_files(
   make_prefixed_path(info_src_path, sizeof(info_src_path), test_dir, src_prefix, info_pat, src_num);
   make_prefixed_path(info_dst_path, sizeof(info_dst_path), test_dir, dst_prefix, info_pat, dst_num);
   make_prefixed_path(info_tmp_path, sizeof(info_tmp_path), test_dir, tmp_prefix, info_pat, dst_num);
+  make_prefixed_path(tgz_src_path, sizeof(tgz_src_path), test_dir, src_prefix, tgz_pat, src_num);
+  make_prefixed_path(tgz_dst_path, sizeof(tgz_dst_path), test_dir, dst_prefix, tgz_pat, dst_num);
+  make_prefixed_path(tgz_tmp_path, sizeof(tgz_tmp_path), test_dir, tmp_prefix, tgz_pat, dst_num);
+  make_prefixed_path(tgzdir_src_path, sizeof(tgzdir_src_path), test_dir, src_prefix, tgzdir_pat, src_num);
+  make_prefixed_path(tgzdir_dst_path, sizeof(tgzdir_dst_path), test_dir, dst_prefix, tgzdir_pat, dst_num);
+  make_prefixed_path(tgzdir_tmp_path, sizeof(tgzdir_tmp_path), test_dir, tmp_prefix, tgzdir_pat, dst_num);
 
   if (logged_unlink(log_f, test_tmp_path) < 0) FAIL(S_ERR_FS_ERROR);
   if (logged_unlink(log_f, corr_tmp_path) < 0) FAIL(S_ERR_FS_ERROR);
   if (logged_unlink(log_f, info_tmp_path) < 0) FAIL(S_ERR_FS_ERROR);
+  if (logged_unlink(log_f, tgz_tmp_path) < 0) FAIL(S_ERR_FS_ERROR);
+  //if (logged_unlink(log_f, tgzdir_tmp_path) < 0) FAIL(S_ERR_FS_ERROR);
 
   // DST->TMP
   if (logged_rename(log_f, test_dst_path, test_tmp_path) < 0) goto fs_error;
@@ -1569,6 +1800,10 @@ swap_files(
   if (logged_rename(log_f, corr_dst_path, corr_tmp_path) < 0) goto fs_error;
   ++stage;
   if (logged_rename(log_f, info_dst_path, info_tmp_path) < 0) goto fs_error;
+  ++stage;
+  if (logged_rename(log_f, tgz_dst_path, tgz_tmp_path) < 0) goto fs_error;
+  ++stage;
+  if (logged_rename(log_f, tgzdir_dst_path, tgzdir_tmp_path) < 0) goto fs_error;
   ++stage;
 
   // SRC->DST
@@ -1578,6 +1813,10 @@ swap_files(
   ++stage;
   if (logged_rename(log_f, info_src_path, info_dst_path) < 0) goto fs_error;
   ++stage;
+  if (logged_rename(log_f, tgz_src_path, tgz_dst_path) < 0) goto fs_error;
+  ++stage;
+  if (logged_rename(log_f, tgzdir_src_path, tgzdir_dst_path) < 0) goto fs_error;
+  ++stage;
 
   // TMP->SRC
   if (logged_rename(log_f, test_tmp_path, test_src_path) < 0) goto fs_error;
@@ -1586,17 +1825,27 @@ swap_files(
   ++stage;
   if (logged_rename(log_f, info_tmp_path, info_src_path) < 0) goto fs_error;
   ++stage;
+  if (logged_rename(log_f, tgz_tmp_path, tgz_src_path) < 0) goto fs_error;
+  ++stage;
+  if (logged_rename(log_f, tgzdir_tmp_path, tgzdir_src_path) < 0) goto fs_error;
+  ++stage;
 
 cleanup:
   return retval;
 
 fs_error:
-  if (stage >= 9) logged_rename(log_f, info_src_path, info_tmp_path);
-  if (stage >= 8) logged_rename(log_f, corr_src_path, corr_tmp_path);
-  if (stage >= 7) logged_rename(log_f, test_src_path, test_tmp_path);
-  if (stage >= 6) logged_rename(log_f, info_dst_path, info_src_path);
-  if (stage >= 5) logged_rename(log_f, corr_dst_path, corr_src_path);
-  if (stage >= 4) logged_rename(log_f, test_dst_path, test_src_path);
+  if (stage >= 15) logged_rename(log_f, tgzdir_src_path, tgzdir_tmp_path);
+  if (stage >= 14) logged_rename(log_f, tgz_src_path, tgz_tmp_path);
+  if (stage >= 13) logged_rename(log_f, info_src_path, info_tmp_path);
+  if (stage >= 12) logged_rename(log_f, corr_src_path, corr_tmp_path);
+  if (stage >= 11) logged_rename(log_f, test_src_path, test_tmp_path);
+  if (stage >= 10) logged_rename(log_f, tgzdir_dst_path, tgzdir_src_path);
+  if (stage >= 9) logged_rename(log_f, tgz_dst_path, tgz_src_path);
+  if (stage >= 8) logged_rename(log_f, info_dst_path, info_src_path);
+  if (stage >= 7) logged_rename(log_f, corr_dst_path, corr_src_path);
+  if (stage >= 6) logged_rename(log_f, test_dst_path, test_src_path);
+  if (stage >= 5) logged_rename(log_f, tgzdir_tmp_path, tgzdir_dst_path);
+  if (stage >= 4) logged_rename(log_f, tgz_tmp_path, tgz_dst_path);
   if (stage >= 3) logged_rename(log_f, info_tmp_path, info_dst_path);
   if (stage >= 2) logged_rename(log_f, corr_tmp_path, corr_dst_path);
   if (stage >= 1) logged_rename(log_f, test_tmp_path, test_dst_path);
@@ -1610,6 +1859,8 @@ move_files(
         const unsigned char *test_pat,
         const unsigned char *corr_pat,
         const unsigned char *info_pat,
+        const unsigned char *tgz_pat,
+        const unsigned char *tgzdir_pat,        
         const unsigned char *src_prefix,
         const unsigned char *dst_prefix,
         const unsigned char *tmp_prefix,
@@ -1626,6 +1877,12 @@ move_files(
   unsigned char info_src_path[PATH_MAX];
   unsigned char info_dst_path[PATH_MAX];
   unsigned char info_tmp_path[PATH_MAX];
+  unsigned char tgz_src_path[PATH_MAX];
+  unsigned char tgz_dst_path[PATH_MAX];
+  unsigned char tgz_tmp_path[PATH_MAX];
+  unsigned char tgzdir_src_path[PATH_MAX];
+  unsigned char tgzdir_dst_path[PATH_MAX];
+  unsigned char tgzdir_tmp_path[PATH_MAX];
 
   make_prefixed_path(test_src_path, sizeof(test_src_path), test_dir, src_prefix, test_pat, src_num);
   make_prefixed_path(test_dst_path, sizeof(test_dst_path), test_dir, dst_prefix, test_pat, dst_num);
@@ -1636,10 +1893,18 @@ move_files(
   make_prefixed_path(info_src_path, sizeof(info_src_path), test_dir, src_prefix, info_pat, src_num);
   make_prefixed_path(info_dst_path, sizeof(info_dst_path), test_dir, dst_prefix, info_pat, dst_num);
   make_prefixed_path(info_tmp_path, sizeof(info_tmp_path), test_dir, tmp_prefix, info_pat, dst_num);
+  make_prefixed_path(tgz_src_path, sizeof(tgz_src_path), test_dir, src_prefix, tgz_pat, src_num);
+  make_prefixed_path(tgz_dst_path, sizeof(tgz_dst_path), test_dir, dst_prefix, tgz_pat, dst_num);
+  make_prefixed_path(tgz_tmp_path, sizeof(tgz_tmp_path), test_dir, tmp_prefix, tgz_pat, dst_num);
+  make_prefixed_path(tgzdir_src_path, sizeof(tgzdir_src_path), test_dir, src_prefix, tgzdir_pat, src_num);
+  make_prefixed_path(tgzdir_dst_path, sizeof(tgzdir_dst_path), test_dir, dst_prefix, tgzdir_pat, dst_num);
+  make_prefixed_path(tgzdir_tmp_path, sizeof(tgzdir_tmp_path), test_dir, tmp_prefix, tgzdir_pat, dst_num);
 
   if (logged_unlink(log_f, test_tmp_path) < 0) FAIL(S_ERR_FS_ERROR);
   if (logged_unlink(log_f, corr_tmp_path) < 0) FAIL(S_ERR_FS_ERROR);
   if (logged_unlink(log_f, info_tmp_path) < 0) FAIL(S_ERR_FS_ERROR);
+  if (logged_unlink(log_f, tgz_tmp_path) < 0) FAIL(S_ERR_FS_ERROR);
+  //if (logged_unlink(log_f, tgzdir_tmp_path) < 0) FAIL(S_ERR_FS_ERROR);
 
   // DST->TMP
   if (logged_rename(log_f, test_dst_path, test_tmp_path) < 0) goto fs_error;
@@ -1647,6 +1912,10 @@ move_files(
   if (logged_rename(log_f, corr_dst_path, corr_tmp_path) < 0) goto fs_error;
   ++stage;
   if (logged_rename(log_f, info_dst_path, info_tmp_path) < 0) goto fs_error;
+  ++stage;
+  if (logged_rename(log_f, tgz_dst_path, tgz_tmp_path) < 0) goto fs_error;
+  ++stage;
+  if (logged_rename(log_f, tgzdir_dst_path, tgzdir_tmp_path) < 0) goto fs_error;
   ++stage;
 
   // SRC->DST
@@ -1656,19 +1925,29 @@ move_files(
   ++stage;
   if (logged_rename(log_f, info_src_path, info_dst_path) < 0) goto fs_error;
   ++stage;
+  if (logged_rename(log_f, tgz_src_path, tgz_dst_path) < 0) goto fs_error;
+  ++stage;
+  if (logged_rename(log_f, tgzdir_src_path, tgzdir_dst_path) < 0) goto fs_error;
+  ++stage;
 
   // remove TMP
   logged_unlink(log_f, test_tmp_path);
   logged_unlink(log_f, corr_tmp_path);
   logged_unlink(log_f, info_tmp_path);
+  logged_unlink(log_f, tgz_tmp_path);
+  //logged_unlink(log_f, tgzdir_tmp_path);
 
 cleanup:
   return retval;
 
 fs_error:
-  if (stage >= 6) logged_rename(log_f, info_dst_path, info_src_path);
-  if (stage >= 5) logged_rename(log_f, corr_dst_path, corr_src_path);
-  if (stage >= 4) logged_rename(log_f, test_dst_path, test_src_path);
+  if (stage >= 10) logged_rename(log_f, tgzdir_dst_path, tgzdir_src_path);
+  if (stage >= 9) logged_rename(log_f, tgz_dst_path, tgz_src_path);
+  if (stage >= 8) logged_rename(log_f, info_dst_path, info_src_path);
+  if (stage >= 7) logged_rename(log_f, corr_dst_path, corr_src_path);
+  if (stage >= 6) logged_rename(log_f, test_dst_path, test_src_path);
+  if (stage >= 5) logged_rename(log_f, tgzdir_tmp_path, tgzdir_dst_path);
+  if (stage >= 4) logged_rename(log_f, tgz_tmp_path, tgz_dst_path);
   if (stage >= 3) logged_rename(log_f, info_tmp_path, info_dst_path);
   if (stage >= 2) logged_rename(log_f, corr_tmp_path, corr_dst_path);
   if (stage >= 1) logged_rename(log_f, test_tmp_path, test_dst_path);
@@ -1682,6 +1961,8 @@ delete_test(
         const unsigned char *test_pat,
         const unsigned char *corr_pat,
         const unsigned char *info_pat,
+        const unsigned char *tgz_pat,
+        const unsigned char *tgzdir_pat,
         const unsigned char *prefix,
         int test_count, // 0-based
         int test_num) // 1-based
@@ -1693,27 +1974,41 @@ delete_test(
   unsigned char corr_dst_path[PATH_MAX];
   unsigned char info_src_path[PATH_MAX];
   unsigned char info_dst_path[PATH_MAX];
+  unsigned char tgz_src_path[PATH_MAX];
+  unsigned char tgz_dst_path[PATH_MAX];
+  unsigned char tgzdir_src_path[PATH_MAX];
+  unsigned char tgzdir_dst_path[PATH_MAX];
 
   if (test_num <= 0 || test_num >= test_count) return retval;
 
   make_prefixed_path(test_dst_path, sizeof(test_dst_path), test_dir, prefix, test_pat, test_num);
   make_prefixed_path(corr_dst_path, sizeof(corr_dst_path), test_dir, prefix, corr_pat, test_num);
   make_prefixed_path(info_dst_path, sizeof(info_dst_path), test_dir, prefix, info_pat, test_num);
+  make_prefixed_path(tgz_dst_path, sizeof(tgz_dst_path), test_dir, prefix, tgz_pat, test_num);
+  make_prefixed_path(tgzdir_dst_path, sizeof(tgzdir_dst_path), test_dir, prefix, tgzdir_pat, test_num);
   logged_unlink(log_f, test_dst_path);
   logged_unlink(log_f, corr_dst_path);
   logged_unlink(log_f, info_dst_path);
+  logged_unlink(log_f, tgz_dst_path);
+  //logged_unlink(log_f, tgzdir_dst_path);
 
   for (++test_num; test_num <= test_count; ++test_num) {
     make_prefixed_path(test_dst_path, sizeof(test_dst_path), test_dir, prefix, test_pat, test_num - 1);
     make_prefixed_path(corr_dst_path, sizeof(corr_dst_path), test_dir, prefix, corr_pat, test_num - 1);
     make_prefixed_path(info_dst_path, sizeof(info_dst_path), test_dir, prefix, info_pat, test_num - 1);
+    make_prefixed_path(tgz_dst_path, sizeof(tgz_dst_path), test_dir, prefix, tgz_pat, test_num - 1);
+    make_prefixed_path(tgzdir_dst_path, sizeof(tgzdir_dst_path), test_dir, prefix, tgzdir_pat, test_num - 1);
     make_prefixed_path(test_src_path, sizeof(test_src_path), test_dir, prefix, test_pat, test_num);
     make_prefixed_path(corr_src_path, sizeof(corr_src_path), test_dir, prefix, corr_pat, test_num);
     make_prefixed_path(info_src_path, sizeof(info_src_path), test_dir, prefix, info_pat, test_num);
+    make_prefixed_path(tgz_src_path, sizeof(tgz_src_path), test_dir, prefix, tgz_pat, test_num);
+    make_prefixed_path(tgzdir_src_path, sizeof(tgzdir_src_path), test_dir, prefix, tgzdir_pat, test_num);
     // FIXME: check for errors
     logged_rename(log_f, test_src_path, test_dst_path);
     logged_rename(log_f, corr_src_path, corr_dst_path);
     logged_rename(log_f, info_src_path, info_dst_path);
+    logged_rename(log_f, tgz_src_path, tgz_dst_path);
+    logged_rename(log_f, tgzdir_src_path, tgzdir_dst_path);
   }
 
   return retval;
@@ -1726,6 +2021,8 @@ insert_test(
         const unsigned char *test_pat,
         const unsigned char *corr_pat,
         const unsigned char *info_pat,
+        const unsigned char *tgz_pat,
+        const unsigned char *tgzdir_pat,
         const unsigned char *prefix,
         int test_count, // 0-based
         int test_num) // 1-based
@@ -1737,6 +2034,10 @@ insert_test(
   unsigned char corr_dst_path[PATH_MAX];
   unsigned char info_src_path[PATH_MAX];
   unsigned char info_dst_path[PATH_MAX];
+  unsigned char tgz_src_path[PATH_MAX];
+  unsigned char tgz_dst_path[PATH_MAX];
+  unsigned char tgzdir_src_path[PATH_MAX];
+  unsigned char tgzdir_dst_path[PATH_MAX];
 
   if (test_num <= 0 || test_num > test_count) return retval;
 
@@ -1744,13 +2045,19 @@ insert_test(
     make_prefixed_path(test_dst_path, sizeof(test_dst_path), test_dir, prefix, test_pat, cur_test + 1);
     make_prefixed_path(corr_dst_path, sizeof(corr_dst_path), test_dir, prefix, corr_pat, cur_test + 1);
     make_prefixed_path(info_dst_path, sizeof(info_dst_path), test_dir, prefix, info_pat, cur_test + 1);
+    make_prefixed_path(tgz_dst_path, sizeof(tgz_dst_path), test_dir, prefix, tgz_pat, cur_test + 1);
+    make_prefixed_path(tgzdir_dst_path, sizeof(tgzdir_dst_path), test_dir, prefix, tgzdir_pat, cur_test + 1);
     make_prefixed_path(test_src_path, sizeof(test_src_path), test_dir, prefix, test_pat, cur_test);
     make_prefixed_path(corr_src_path, sizeof(corr_src_path), test_dir, prefix, corr_pat, cur_test);
     make_prefixed_path(info_src_path, sizeof(info_src_path), test_dir, prefix, info_pat, cur_test);
+    make_prefixed_path(tgz_src_path, sizeof(tgz_src_path), test_dir, prefix, tgz_pat, cur_test);
+    make_prefixed_path(tgzdir_src_path, sizeof(tgzdir_src_path), test_dir, prefix, tgzdir_pat, cur_test);
     // FIXME: check for errors
     logged_rename(log_f, test_src_path, test_dst_path);
     logged_rename(log_f, corr_src_path, corr_dst_path);
     logged_rename(log_f, info_src_path, info_dst_path);
+    logged_rename(log_f, tgz_src_path, tgz_dst_path);
+    logged_rename(log_f, tgzdir_src_path, tgzdir_dst_path);
   }
 
   return retval;
@@ -1763,21 +2070,29 @@ check_test_existance(
         const unsigned char *test_pat,
         const unsigned char *corr_pat,
         const unsigned char *info_pat,
+        const unsigned char *tgz_pat,
+        const unsigned char *tgzdir_pat,
         const unsigned char *prefix,
         int test_num) // 1-based
 {
   unsigned char test_path[PATH_MAX];
   unsigned char corr_path[PATH_MAX];
   unsigned char info_path[PATH_MAX];
+  unsigned char tgz_path[PATH_MAX];
+  unsigned char tgzdir_path[PATH_MAX];
   int exists = 0;
 
   make_prefixed_path(test_path, sizeof(test_path), test_dir, prefix, test_pat, test_num);
   make_prefixed_path(corr_path, sizeof(corr_path), test_dir, prefix, corr_pat, test_num);
   make_prefixed_path(info_path, sizeof(info_path), test_dir, prefix, info_pat, test_num);
+  make_prefixed_path(tgz_path, sizeof(tgz_path), test_dir, prefix, tgz_pat, test_num);
+  make_prefixed_path(tgzdir_path, sizeof(tgzdir_path), test_dir, prefix, tgzdir_pat, test_num);
 
   if (test_path[0] && access(test_path, F_OK) >= 0) exists = 1;
   if (corr_path[0] && access(corr_path, F_OK) >= 0) exists = 1;
   if (info_path[0] && access(info_path, F_OK) >= 0) exists = 1;
+  if (tgz_path[0] && access(tgz_path, F_OK) >= 0) exists = 1;
+  if (tgzdir_path[0] && access(tgzdir_path, F_OK) >= 0) exists = 1;
   return exists;
 }
 
@@ -1801,6 +2116,8 @@ super_serve_op_TESTS_TEST_MOVE_UP_ACTION(
   unsigned char test_pat[PATH_MAX];
   unsigned char corr_pat[PATH_MAX];
   unsigned char info_pat[PATH_MAX];
+  unsigned char tgz_pat[PATH_MAX];
+  unsigned char tgzdir_pat[PATH_MAX];
   const unsigned char *pat_prefix = NULL;
   int from_test_num = 0;
   int to_test_num = 0;
@@ -1847,17 +2164,19 @@ super_serve_op_TESTS_TEST_MOVE_UP_ACTION(
   if (to_test_num <= 0 || from_test_num <= 0) goto done;
 
   retval = prepare_test_file_names(log_f, phr, cnts, global, prob, variant, pat_prefix,
-                                   sizeof(test_dir), test_dir, test_pat, corr_pat, info_pat);
+                                   sizeof(test_dir), test_dir, test_pat, corr_pat, info_pat,
+                                   tgz_pat, tgzdir_pat);
   if (retval < 0) goto cleanup;
   retval = 0;
 
   if (phr->opcode == SSERV_OP_TESTS_TEST_MOVE_DOWN_ACTION || phr->opcode == SSERV_OP_TESTS_SAVED_MOVE_DOWN_ACTION) {
-    if (!check_test_existance(log_f, test_dir, test_pat, corr_pat, info_pat, pat_prefix, to_test_num))
+    if (!check_test_existance(log_f, test_dir, test_pat, corr_pat, info_pat, tgz_pat, tgzdir_pat,
+                              pat_prefix, to_test_num))
       goto done;
   }
 
-  retval = swap_files(log_f, test_dir, test_pat, corr_pat, info_pat, pat_prefix, pat_prefix, TEMP_TEST_PREFIX,
-                      from_test_num, to_test_num);
+  retval = swap_files(log_f, test_dir, test_pat, corr_pat, info_pat, tgz_pat, tgzdir_pat,
+                      pat_prefix, pat_prefix, TEMP_TEST_PREFIX, from_test_num, to_test_num);
   if (retval < 0) goto cleanup;
   retval = 0;
 
@@ -1888,6 +2207,8 @@ super_serve_op_TESTS_TEST_MOVE_TO_SAVED_ACTION(
   unsigned char test_pat[PATH_MAX];
   unsigned char corr_pat[PATH_MAX];
   unsigned char info_pat[PATH_MAX];
+  unsigned char tgz_pat[PATH_MAX];
+  unsigned char tgzdir_pat[PATH_MAX];
   struct test_dir_info td_info;
 
   memset(&td_info, 0, sizeof(td_info));
@@ -1919,28 +2240,31 @@ super_serve_op_TESTS_TEST_MOVE_TO_SAVED_ACTION(
   if (test_num <= 0 || test_num >= 1000000) FAIL(S_ERR_INV_TEST_NUM);
 
   retval = prepare_test_file_names(log_f, phr, cnts, global, prob, variant, NULL,
-                                   sizeof(test_dir), test_dir, test_pat, corr_pat, info_pat);
+                                   sizeof(test_dir), test_dir, test_pat, corr_pat, info_pat,
+                                   tgz_pat, tgzdir_pat);
   if (retval < 0) goto cleanup;
   retval = 0;
 
-  retval = scan_test_directory(log_f, &td_info, cnts, test_dir, test_pat, corr_pat, info_pat);
+  retval = scan_test_directory(log_f, &td_info, cnts, test_dir, test_pat, corr_pat, info_pat, tgz_pat, tgzdir_pat);
   if (retval < 0) goto cleanup;
 
   if (phr->opcode == SSERV_OP_TESTS_TEST_MOVE_TO_SAVED_ACTION) {
     if (test_num <= 0 || test_num > td_info.test_ref_count) goto done;
-    if (move_files(log_f, test_dir, test_pat, corr_pat, info_pat, NULL, SAVED_TEST_PREFIX, TEMP_TEST_PREFIX,
+    if (move_files(log_f, test_dir, test_pat, corr_pat, info_pat, tgz_pat, tgzdir_pat,
+                   NULL, SAVED_TEST_PREFIX, TEMP_TEST_PREFIX,
                    test_num, td_info.saved_ref_count + 1) < 0)
       goto cleanup;
-    if (delete_test(log_f, test_dir, test_pat, corr_pat, info_pat, NULL,
-                    td_info.test_ref_count, test_num) < 0)
+    if (delete_test(log_f, test_dir, test_pat, corr_pat, info_pat, tgz_pat, tgzdir_pat,
+                    NULL, td_info.test_ref_count, test_num) < 0)
       goto cleanup;
   } else if (phr->opcode == SSERV_OP_TESTS_SAVED_MOVE_TO_TEST_ACTION) {
     if (test_num <= 0 || test_num > td_info.saved_ref_count) goto done;
-    if (move_files(log_f, test_dir, test_pat, corr_pat, info_pat, SAVED_TEST_PREFIX, NULL, TEMP_TEST_PREFIX,
+    if (move_files(log_f, test_dir, test_pat, corr_pat, info_pat, tgz_pat, tgzdir_pat,
+                   SAVED_TEST_PREFIX, NULL, TEMP_TEST_PREFIX,
                    test_num, td_info.test_ref_count + 1) < 0)
       goto cleanup;
-    if (delete_test(log_f, test_dir, test_pat, corr_pat, info_pat, SAVED_TEST_PREFIX,
-                    td_info.saved_ref_count, test_num) < 0)
+    if (delete_test(log_f, test_dir, test_pat, corr_pat, info_pat, tgz_pat, tgzdir_pat,
+                    SAVED_TEST_PREFIX, td_info.saved_ref_count, test_num) < 0)
       goto cleanup;
   } else {
     FAIL(S_ERR_INV_OPER);
@@ -2125,6 +2449,8 @@ super_serve_op_TESTS_TEST_EDIT_PAGE(
   unsigned char test_pat[PATH_MAX];
   unsigned char corr_pat[PATH_MAX];
   unsigned char info_pat[PATH_MAX];
+  unsigned char tgz_pat[PATH_MAX];
+  unsigned char tgzdir_pat[PATH_MAX];
   unsigned char buf[1024];
   unsigned char hbuf[1024];
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
@@ -2172,7 +2498,8 @@ super_serve_op_TESTS_TEST_EDIT_PAGE(
   if (test_num <= 0 || test_num >= 1000000) FAIL(S_ERR_INV_TEST_NUM);
 
   retval = prepare_test_file_names(log_f, phr, cnts, global, prob, variant, NULL,
-                                   sizeof(test_dir), test_dir, test_pat, corr_pat, info_pat);
+                                   sizeof(test_dir), test_dir, test_pat, corr_pat, info_pat,
+                                   tgz_pat, tgzdir_pat);
   if (retval < 0) goto cleanup;
   retval = 0;
 
@@ -2551,6 +2878,8 @@ super_serve_op_TESTS_TEST_EDIT_ACTION(
   unsigned char test_pat[PATH_MAX];
   unsigned char corr_pat[PATH_MAX];
   unsigned char info_pat[PATH_MAX];
+  unsigned char tgz_pat[PATH_MAX];
+  unsigned char tgzdir_pat[PATH_MAX];
   unsigned char test_tmp_path[PATH_MAX];
   unsigned char corr_tmp_path[PATH_MAX];
   unsigned char info_tmp_path[PATH_MAX];
@@ -2619,7 +2948,8 @@ super_serve_op_TESTS_TEST_EDIT_ACTION(
   if (test_num <= 0 || test_num >= 1000000) FAIL(S_ERR_INV_TEST_NUM);
 
   retval = prepare_test_file_names(log_f, phr, cnts, global, prob, variant, NULL,
-                                   sizeof(test_dir), test_dir, test_pat, corr_pat, info_pat);
+                                   sizeof(test_dir), test_dir, test_pat, corr_pat, info_pat,
+                                   tgz_pat, tgzdir_pat);
   if (retval < 0) goto cleanup;
   retval = 0;
 

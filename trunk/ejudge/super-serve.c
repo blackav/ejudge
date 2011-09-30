@@ -2983,6 +2983,14 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_PROB_CLEAR_INFO_SFX:
   case SSERV_CMD_PROB_CHANGE_INFO_PAT:
   case SSERV_CMD_PROB_CLEAR_INFO_PAT:
+  case SSERV_CMD_PROB_CHANGE_TGZ_SFX:
+  case SSERV_CMD_PROB_CLEAR_TGZ_SFX:
+  case SSERV_CMD_PROB_CHANGE_TGZ_PAT:
+  case SSERV_CMD_PROB_CLEAR_TGZ_PAT:
+  case SSERV_CMD_PROB_CHANGE_TGZDIR_SFX:
+  case SSERV_CMD_PROB_CLEAR_TGZDIR_SFX:
+  case SSERV_CMD_PROB_CHANGE_TGZDIR_PAT:
+  case SSERV_CMD_PROB_CLEAR_TGZDIR_PAT:
   case SSERV_CMD_PROB_CHANGE_STANDARD_CHECKER:
   case SSERV_CMD_PROB_CHANGE_SCORE_BONUS:
   case SSERV_CMD_PROB_CLEAR_SCORE_BONUS:
@@ -3952,6 +3960,14 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_CLEAR_INFO_SFX] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_INFO_PAT] = { cmd_set_value },
   [SSERV_CMD_PROB_CLEAR_INFO_PAT] = { cmd_set_value },
+  [SSERV_CMD_PROB_CHANGE_TGZ_SFX] = { cmd_set_value },
+  [SSERV_CMD_PROB_CLEAR_TGZ_SFX] = { cmd_set_value },
+  [SSERV_CMD_PROB_CHANGE_TGZ_PAT] = { cmd_set_value },
+  [SSERV_CMD_PROB_CLEAR_TGZ_PAT] = { cmd_set_value },
+  [SSERV_CMD_PROB_CHANGE_TGZDIR_SFX] = { cmd_set_value },
+  [SSERV_CMD_PROB_CLEAR_TGZDIR_SFX] = { cmd_set_value },
+  [SSERV_CMD_PROB_CHANGE_TGZDIR_PAT] = { cmd_set_value },
+  [SSERV_CMD_PROB_CLEAR_TGZDIR_PAT] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_STANDARD_CHECKER] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_SCORE_BONUS] = { cmd_set_value },
   [SSERV_CMD_PROB_CLEAR_SCORE_BONUS] = { cmd_set_value },
