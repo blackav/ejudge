@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2011/09/28 08:56:05
+// Generated 2011/09/30 13:57:28
 
 #include "prepare_meta.h"
 #include "prepare.h"
@@ -95,6 +95,7 @@ static struct meta_info_item meta_info_section_global_data_data[] =
   [CNTSGLOB_corr_sfx] = { CNTSGLOB_corr_sfx, 'S', XSIZE(struct section_global_data, corr_sfx), "corr_sfx", XOFFSET(struct section_global_data, corr_sfx) },
   [CNTSGLOB_info_sfx] = { CNTSGLOB_info_sfx, 'S', XSIZE(struct section_global_data, info_sfx), "info_sfx", XOFFSET(struct section_global_data, info_sfx) },
   [CNTSGLOB_tgz_sfx] = { CNTSGLOB_tgz_sfx, 'S', XSIZE(struct section_global_data, tgz_sfx), "tgz_sfx", XOFFSET(struct section_global_data, tgz_sfx) },
+  [CNTSGLOB_tgzdir_sfx] = { CNTSGLOB_tgzdir_sfx, 'S', XSIZE(struct section_global_data, tgzdir_sfx), "tgzdir_sfx", XOFFSET(struct section_global_data, tgzdir_sfx) },
   [CNTSGLOB_ejudge_checkers_dir] = { CNTSGLOB_ejudge_checkers_dir, 'S', XSIZE(struct section_global_data, ejudge_checkers_dir), "ejudge_checkers_dir", XOFFSET(struct section_global_data, ejudge_checkers_dir) },
   [CNTSGLOB_contest_start_cmd] = { CNTSGLOB_contest_start_cmd, 'S', XSIZE(struct section_global_data, contest_start_cmd), "contest_start_cmd", XOFFSET(struct section_global_data, contest_start_cmd) },
   [CNTSGLOB_contest_stop_cmd] = { CNTSGLOB_contest_stop_cmd, 's', XSIZE(struct section_global_data, contest_stop_cmd), "contest_stop_cmd", XOFFSET(struct section_global_data, contest_stop_cmd) },
@@ -104,6 +105,7 @@ static struct meta_info_item meta_info_section_global_data_data[] =
   [CNTSGLOB_corr_pat] = { CNTSGLOB_corr_pat, 'S', XSIZE(struct section_global_data, corr_pat), "corr_pat", XOFFSET(struct section_global_data, corr_pat) },
   [CNTSGLOB_info_pat] = { CNTSGLOB_info_pat, 'S', XSIZE(struct section_global_data, info_pat), "info_pat", XOFFSET(struct section_global_data, info_pat) },
   [CNTSGLOB_tgz_pat] = { CNTSGLOB_tgz_pat, 'S', XSIZE(struct section_global_data, tgz_pat), "tgz_pat", XOFFSET(struct section_global_data, tgz_pat) },
+  [CNTSGLOB_tgzdir_pat] = { CNTSGLOB_tgzdir_pat, 'S', XSIZE(struct section_global_data, tgzdir_pat), "tgzdir_pat", XOFFSET(struct section_global_data, tgzdir_pat) },
   [CNTSGLOB_clardb_plugin] = { CNTSGLOB_clardb_plugin, 'S', XSIZE(struct section_global_data, clardb_plugin), "clardb_plugin", XOFFSET(struct section_global_data, clardb_plugin) },
   [CNTSGLOB_rundb_plugin] = { CNTSGLOB_rundb_plugin, 'S', XSIZE(struct section_global_data, rundb_plugin), "rundb_plugin", XOFFSET(struct section_global_data, rundb_plugin) },
   [CNTSGLOB_xuser_plugin] = { CNTSGLOB_xuser_plugin, 'S', XSIZE(struct section_global_data, xuser_plugin), "xuser_plugin", XOFFSET(struct section_global_data, xuser_plugin) },
@@ -403,6 +405,7 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_info_sfx] = { CNTSPROB_info_sfx, 'S', XSIZE(struct section_problem_data, info_sfx), "info_sfx", XOFFSET(struct section_problem_data, info_sfx) },
   [CNTSPROB_tgz_dir] = { CNTSPROB_tgz_dir, 'S', XSIZE(struct section_problem_data, tgz_dir), "tgz_dir", XOFFSET(struct section_problem_data, tgz_dir) },
   [CNTSPROB_tgz_sfx] = { CNTSPROB_tgz_sfx, 'S', XSIZE(struct section_problem_data, tgz_sfx), "tgz_sfx", XOFFSET(struct section_problem_data, tgz_sfx) },
+  [CNTSPROB_tgzdir_sfx] = { CNTSPROB_tgzdir_sfx, 'S', XSIZE(struct section_problem_data, tgzdir_sfx), "tgzdir_sfx", XOFFSET(struct section_problem_data, tgzdir_sfx) },
   [CNTSPROB_input_file] = { CNTSPROB_input_file, 'S', XSIZE(struct section_problem_data, input_file), "input_file", XOFFSET(struct section_problem_data, input_file) },
   [CNTSPROB_output_file] = { CNTSPROB_output_file, 'S', XSIZE(struct section_problem_data, output_file), "output_file", XOFFSET(struct section_problem_data, output_file) },
   [CNTSPROB_test_score_list] = { CNTSPROB_test_score_list, 'S', XSIZE(struct section_problem_data, test_score_list), "test_score_list", XOFFSET(struct section_problem_data, test_score_list) },
@@ -423,6 +426,7 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_corr_pat] = { CNTSPROB_corr_pat, 'S', XSIZE(struct section_problem_data, corr_pat), "corr_pat", XOFFSET(struct section_problem_data, corr_pat) },
   [CNTSPROB_info_pat] = { CNTSPROB_info_pat, 'S', XSIZE(struct section_problem_data, info_pat), "info_pat", XOFFSET(struct section_problem_data, info_pat) },
   [CNTSPROB_tgz_pat] = { CNTSPROB_tgz_pat, 'S', XSIZE(struct section_problem_data, tgz_pat), "tgz_pat", XOFFSET(struct section_problem_data, tgz_pat) },
+  [CNTSPROB_tgzdir_pat] = { CNTSPROB_tgzdir_pat, 'S', XSIZE(struct section_problem_data, tgzdir_pat), "tgzdir_pat", XOFFSET(struct section_problem_data, tgzdir_pat) },
   [CNTSPROB_ntests] = { CNTSPROB_ntests, 'i', XSIZE(struct section_problem_data, ntests), NULL, XOFFSET(struct section_problem_data, ntests) },
   [CNTSPROB_tscores] = { CNTSPROB_tscores, '?', XSIZE(struct section_problem_data, tscores), NULL, XOFFSET(struct section_problem_data, tscores) },
   [CNTSPROB_x_score_tests] = { CNTSPROB_x_score_tests, '?', XSIZE(struct section_problem_data, x_score_tests), NULL, XOFFSET(struct section_problem_data, x_score_tests) },
