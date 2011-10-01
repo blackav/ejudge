@@ -326,29 +326,41 @@ append_string_quoted(unsigned char **p_t, int *p_a, int *p_u, const unsigned cha
   }
 }
 
-unsigned char *
-testinfo_unparse_cmdline(const struct testinfo_struct *ti)
+static unsigned char *
+unparse_str_array(int arr_u, char **arr_v)
 {
   int i, a = 0, u = 0;
   unsigned char *t = NULL;
 
-  if (ti->cmd_argc <= 0 || !ti->cmd_argv) return strdup("");
-  for (i = 0; i < ti->cmd_argc; ++i) {
+  if (arr_u <= 0 || !arr_v) return strdup("");
+  for (i = 0; i < arr_u; ++i) {
     if (i > 0) append_char(&t, &a, &u, ' ');
-    if (!ti->cmd_argv[i]) {
+    if (!arr_v[i]) {
       append_string(&t, &a, &u, "(null)");
     } else {
-      if (need_quotes(ti->cmd_argv[i])) {
+      if (need_quotes(arr_v[i])) {
         append_char(&t, &a, &u, '\"');
-        append_string_quoted(&t, &a, &u, ti->cmd_argv[i]);
+        append_string_quoted(&t, &a, &u, arr_v[i]);
         append_char(&t, &a, &u, '\"');
       } else {
-        append_string(&t, &a, &u, ti->cmd_argv[i]);
+        append_string(&t, &a, &u, arr_v[i]);
       }
     }
   }
   append_char(&t, &a, &u, 0);
   return t;
+}
+
+unsigned char *
+testinfo_unparse_cmdline(const struct testinfo_struct *ti)
+{
+  return unparse_str_array(ti->cmd_argc, ti->cmd_argv);
+}
+
+unsigned char *
+testinfo_unparse_environ(const struct testinfo_struct *ti)
+{
+  return unparse_str_array(ti->env_u, ti->env_v);
 }
 
 static void
@@ -415,6 +427,11 @@ parse_line(const unsigned char *str, size_t len, testinfo_t *pt)
     pt->cmd_argc = cmd.u;
     pt->cmd_argv = (char**) cmd.v;
     memset(&cmd, 0, sizeof(cmd));
+  } else if (!strcmp(name_buf, "environ")) {
+    if (pt->cmd_argc >= 0) FAIL(TINF_E_VAR_REDEFINED);
+    pt->env_u = cmd.u;
+    pt->env_v = (char**) cmd.v;
+    memset(&cmd, 0, sizeof(cmd));    
   } else if (!strcmp(name_buf, "comment")
              || !strcmp(name_buf, "team_comment")) {
     if (!strcmp(name_buf, "comment")) {
@@ -512,6 +529,12 @@ testinfo_free(testinfo_t *pt)
     for (i = 0; i < pt->cmd_argc; i++)
       if (pt->cmd_argv[i]) free(pt->cmd_argv[i]);
     free(pt->cmd_argv);
+  }
+  if (pt->env_u > 0 && pt->env_v) {
+    for (i = 0; i < pt->env_u; ++i) {
+      if (pt->env_v[i]) free(pt->env_v[i]);
+    }
+    free(pt->env_v);
   }
   if (pt->comment) free(pt->comment);
   if (pt->team_comment) free(pt->team_comment);

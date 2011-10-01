@@ -52,6 +52,8 @@ struct testinfo_struct
   char **cmd_argv;
   char *comment;
   char *team_comment;
+  int env_u;
+  char **env_v;
 };
 typedef struct testinfo_struct testinfo_t;
 
@@ -59,6 +61,7 @@ int testinfo_parse(const char *path, testinfo_t *pt);
 void testinfo_free(testinfo_t *pt);
 const char *testinfo_strerror(int errcode);
 unsigned char *testinfo_unparse_cmdline(const testinfo_t *pt);
+unsigned char *testinfo_unparse_environ(const struct testinfo_struct *ti);
 
 #ifdef __cplusplus
 }
