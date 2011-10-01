@@ -18,6 +18,8 @@
 #include "config.h"
 #include "version.h"
 
+#include "testinfo.h"
+
 #include "reuse_xalloc.h"
 #include "reuse_exec.h"
 
@@ -26,6 +28,17 @@
 #include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
+#include <limits.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <sys/stat.h>
+#include <grp.h>
+
+#define DEFAULT_INPUT_FILE_NAME  "input.txt"
+#define DEFAULT_OUTPUT_FILE_NAME "output.txt"
+#define DEFAULT_ERROR_FILE_NAME  "error.txt"
 
 static const unsigned char *progname;
 
@@ -43,11 +56,16 @@ fatal(const char *format, ...)
   exit(2);
 }
 
-static const unsigned char *input_file = 0;
-static const unsigned char *output_file = 0;
-static const unsigned char *error_file = 0;
+static const unsigned char *stdin_file = 0;
+static const unsigned char *stdout_file = 0;
+static const unsigned char *stderr_file = 0;
 static const unsigned char *working_dir = 0;
 static const unsigned char *kill_signal = 0;
+static const unsigned char *test_file = 0;
+static const unsigned char *corr_file = 0;
+static const unsigned char *info_file = 0;
+static const unsigned char *input_file = 0;
+static const unsigned char *output_file = 0;
 
 static strarray_t env_vars;
 
@@ -56,6 +74,10 @@ static int no_core_dump = 0;
 static int memory_limit = 0;
 static int secure_exec = 0;
 static int security_violation = 0;
+static int use_stdin = 0;
+static int use_stdout = 0;
+static int group = -1;
+static int mode = -1;
 
 static int time_limit = 0;
 static int time_limit_millis = 0;
@@ -108,6 +130,26 @@ parse_size(const unsigned char *name, const unsigned char *opt,
 }
 
 static void
+parse_mode(const unsigned char *name, const unsigned char *opt, int *pval)
+{
+  char *eptr = NULL;
+  int val = 0;
+
+  errno = 0;
+  val = strtol(opt, &eptr, 8);
+  if (errno || val <= 0 || val > 07777) fatal("invalid value for option %s", name);
+  *pval = val;
+}
+
+static void
+parse_group(const unsigned char *name, const unsigned char *opt, int *pval)
+{
+  struct group *grp = getgrnam(opt);
+  if (!grp || grp->gr_gid <= 0) fatal("invalid group for option %s", name);
+  *pval = grp->gr_gid;
+}
+
+static void
 report_version(void)
 {
   printf("%s: ejudge version %s compiled %s\n",
@@ -119,9 +161,16 @@ static const unsigned char help_str[] =
 "--version                print the version and exit\n"
 "--help                   print this help and exit\n"
 "--                       stop option processing\n"
-"--input=FILE             redirect standard input stream from FILE\n"
-"--output=FILE            redirect standard output stream to FILE\n"
-"--error=FILE             redirect standard error stream to FILE\n"
+"--stdin=FILE             redirect standard input stream from FILE\n"
+"--stdout=FILE            redirect standard output stream to FILE\n"
+"--stderr=FILE            redirect standard error stream to FILE\n"
+"--use-stdin              redirect standard input\n"
+"--use-stdout             redirect standard output\n"
+"--test-file=FILE         get the input from FILE\n"
+"--corr-file=FILE         move the output to FILE\n"
+"--info-file=FILE         get the command line parameters from FILE\n"
+"--input-file=FILE        move the input file to FILE\n"
+"--output-file=FILE       expect the output to be in FILE\n"
 "--workdir=DIR            set the working directory to DIR\n"
 "--clear-env              clear all environment\n"
 "--env=VAR=VALUE          set the environment VAR to VALUE\n"
@@ -136,6 +185,8 @@ static const unsigned char help_str[] =
 "--max-vm-size=SIZE       specify the virtual memory size limit\n"
 "--max-stack-size=SIZE    specify the stack size limit\n"
 "--max-data-size=SIZE     specify the heap size limit\n"
+"--mode=MODE              file mode for output file\n"
+"--group=GROUP            file group for output file\n"
   ;
 
 static void
@@ -147,20 +198,105 @@ report_help(void)
 }
 
 static int
+copy_file(
+        const unsigned char *src_dir,
+        const unsigned char *src_file,
+        const unsigned char *dst_dir,
+        const unsigned char *dst_file,
+        int group,
+        int mode)
+{
+  unsigned char src_path[PATH_MAX];
+  unsigned char dst_path[PATH_MAX];
+  int fdr = -1;
+  int fdw = -1;
+  unsigned char buf[4096], *p;
+  int unlink_dst_flag = 0, r, w;
+
+  if (src_dir && src_dir[0]) {
+    snprintf(src_path, sizeof(src_path), "%s/%s", src_dir, src_file);
+  } else {
+    snprintf(src_path, sizeof(src_path), "%s", src_file);
+  }
+
+  if (dst_dir && dst_dir[0]) {
+    snprintf(dst_path, sizeof(dst_path), "%s/%s", dst_dir, dst_file);
+  } else {
+    snprintf(dst_path, sizeof(dst_path), "%s", dst_file);
+  }
+
+  if ((fdr = open(src_path, O_RDONLY, 0)) < 0) {
+    fprintf(stderr, "read open failed for %s: %s\n", src_path, strerror(errno));
+    goto fail;
+  }
+  if ((fdw = open(dst_path, O_WRONLY | O_CREAT | O_TRUNC, 0666)) < 0) {
+    if (errno != EACCES) {
+      fprintf(stderr, "write open failed for %s: %s\n", dst_path, strerror(errno));
+      goto fail;
+    }
+    unlink(dst_path);
+    if ((fdw = open(dst_path, O_WRONLY | O_CREAT | O_TRUNC, 0666)) < 0) {
+      fprintf(stderr, "write open failed for %s: %s\n", dst_path, strerror(errno));
+      goto fail;
+    }
+  }
+
+  unlink_dst_flag = 1;
+
+  while ((r = read(fdr, buf, sizeof(buf))) > 0) {
+    p = buf;
+    while (r > 0) {
+      if ((w = write(fdw, p, r)) <= 0) {
+        fprintf(stderr, "write error for %s: %s\n", dst_path, strerror(errno));
+        goto fail;
+      }
+      p += w; r -= w;
+    }
+  }
+  if (r < 0) {
+    fprintf(stderr, "read error for %s: %s\n", src_path, strerror(errno));
+    goto fail;
+  }
+
+  if (group > 0) fchown(fdw, -1, group);
+  if (mode > 0) fchmod(fdw, mode);
+
+  close(fdw); fdw = -1;
+  close(fdr); fdr = -1;
+  return 0;
+
+fail:
+  if (unlink_dst_flag) unlink(dst_path);
+  if (fdw >= 0) close(fdw);
+  if (fdr >= 0) close(fdr);
+  return -1;
+}
+
+static int
 handle_options(const unsigned char *opt)
 {
   if (!strcmp("--version", opt)) {
     report_version();
   } else if (!strcmp("--help", opt)) {
     report_help();
-  } else if (!strncmp("--input=", opt, 8)) {
-    input_file = opt + 8;
-  } else if (!strncmp("--output=", opt, 9)) {
-    output_file = opt + 9;
-  } else if (!strncmp("--error=", opt, 8)) {
-    error_file = opt + 8;
+  } else if (!strncmp("--stdin=", opt, 8)) {
+    stdin_file = opt + 8;
+  } else if (!strncmp("--stdout=", opt, 9)) {
+    stdout_file = opt + 9;
+  } else if (!strncmp("--stderr=", opt, 9)) {
+    stderr_file = opt + 9;
   } else if (!strncmp("--workdir=", opt, 10)) {
     working_dir = opt + 10;
+  } else if (!strncmp("--test-file=", opt, 12)) {
+    test_file = opt + 12;
+  } else if (!strncmp("--corr-file=", opt, 12)) {
+    corr_file = opt + 12;
+  } else if (!strncmp("--info-file=", opt, 12)) {
+    info_file = opt + 12;
+  } else if (!strncmp("--input_file=", opt, 13)) {
+    input_file = opt + 13;
+  } else if (!strncmp("--output-file=", opt, 14)) {
+    output_file = opt + 14;
   } else if (!strcmp("--clear-env", opt)) {
     clear_env_flag = 1;
   } else if (!strncmp("--env=", opt, 6)) {
@@ -183,12 +319,20 @@ handle_options(const unsigned char *opt)
     secure_exec = 1;
   } else if (!strcmp("--security-violation", opt)) {
     security_violation = 1;
+  } else if (!strcmp("--use-stdin", opt)) {
+    use_stdin = 0;
+  } else if (!strcmp("--use-stdout", opt)) {
+    use_stdout = 0;
   } else if (!strncmp("--max-vm-size=", opt, 14)) {
     parse_size("--max-vm-size", opt + 14, &max_vm_size, 4096, 1 << 30);
   } else if (!strncmp("--max-stack-size=", opt, 17)) {
     parse_size("--max-stack-size", opt + 17, &max_stack_size, 4096, 1 << 30);
   } else if (!strncmp("--max-data-size=", opt, 16)) {
     parse_size("--max-data-size", opt + 16, &max_data_size, 4096, 1 << 30);
+  } else if (!strncmp("--mode=", opt, 7)) {
+    parse_mode("--mode", opt + 7, &mode);
+  } else if (!strncmp("--group=", opt, 8)) {
+    parse_group("--group", opt + 8, &group);
   } else if (!strcmp("--", opt)) {
     return 1;
   } else if (!strncmp("--", opt, 2)) {
@@ -205,20 +349,47 @@ run_program(int argc, char *argv[])
   tTask *tsk = 0;
   int i;
   int retcode = 1;
+  struct testinfo_struct tinfo;
+
+  memset(&tinfo, 0, sizeof(tinfo));
+  if (info_file && (i = testinfo_parse(info_file, &tinfo)) < 0) {
+    fatal("testinfo file parse error: %s", testinfo_strerror(-i));
+  }
+
+  if (test_file && !input_file) {
+    input_file = DEFAULT_INPUT_FILE_NAME;
+  }
+  if (corr_file && !output_file) {
+    output_file = DEFAULT_OUTPUT_FILE_NAME;
+  }
 
   if (!(tsk = task_New())) fatal("cannot create task");
   task_SetQuietFlag(tsk);
   task_pnAddArgs(tsk, argc, argv);
+  task_pnAddArgs(tsk, tinfo.cmd_argc, tinfo.cmd_argv);
   task_SetPathAsArg0(tsk);
   if (working_dir) task_SetWorkingDir(tsk, working_dir);
-  if (input_file) task_SetRedir(tsk, 0, TSR_FILE, input_file, TSK_READ);
-  if (output_file)
-    task_SetRedir(tsk, 0, TSR_FILE, output_file, TSK_WRITE, TSK_FULL_RW);
-  if (error_file)
-    task_SetRedir(tsk, 0, TSR_FILE, error_file, TSK_WRITE, TSK_FULL_RW);
+  if (test_file) {
+    if (copy_file(NULL, test_file, working_dir, input_file, -1, -1) < 0)
+      fatal("copy failed");
+    if (use_stdin) task_SetRedir(tsk, 0, TSR_FILE, input_file, TSK_READ);
+  } else {
+    if (stdin_file) task_SetRedir(tsk, 0, TSR_FILE, stdin_file, TSK_READ);
+  }
+  if (corr_file) {
+    if (use_stdout) task_SetRedir(tsk, 0, TSR_FILE, output_file, TSK_WRITE, TSK_FULL_RW);
+  } else {
+    if (stdout_file)
+      task_SetRedir(tsk, 0, TSR_FILE, stdout_file, TSK_WRITE, TSK_FULL_RW);
+  }
+  if (stderr_file)
+    task_SetRedir(tsk, 0, TSR_FILE, stderr_file, TSK_WRITE, TSK_FULL_RW);
   if (clear_env_flag) task_ClearEnv(tsk);
   for (i = 0; i < env_vars.u; i++)
     task_PutEnv(tsk, env_vars.v[i]);
+  for (i = 0; i < tinfo.env_u; ++i) {
+    task_PutEnv(tsk, tinfo.env_v[i]);
+  }
   if (time_limit_millis > 0)
     if (task_SetMaxTimeMillis(tsk, time_limit_millis) < 0)
       fatal("--time-limit-millis is not supported");
@@ -268,8 +439,17 @@ run_program(int argc, char *argv[])
     }
     fprintf(stderr, "Description: run-time error\n");
   } else {
-    fprintf(stderr, "Status: OK\n");
-    retcode = 0;
+    if (corr_file) {
+      if (copy_file(working_dir, output_file, NULL, corr_file, group, mode) < 0) {
+        fprintf(stderr, "Status: PE\n");
+      } else {
+        fprintf(stderr, "Status: OK\n");
+        retcode = 0;
+      }
+    } else {
+      fprintf(stderr, "Status: OK\n");
+      retcode = 0;
+    }
   }
   fprintf(stderr, "CPUTime: %ld\n", task_GetRunningTime(tsk));
   fprintf(stderr, "RealTime: %ld\n", task_GetRealTime(tsk));
@@ -292,10 +472,3 @@ main(int argc, char *argv[])
 
   return run_program(argc - i, argv + i);
 }
-
-/**
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "tTask")
- * End:
- */

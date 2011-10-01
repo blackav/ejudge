@@ -733,7 +733,8 @@ static void
 setup_environment(
         tpTask tsk,
         char **envs,
-        const unsigned char *ejudge_prefix_dir_env)
+        const unsigned char *ejudge_prefix_dir_env,
+        const struct testinfo_struct *pt)
 {
   int jj;
 
@@ -751,6 +752,11 @@ setup_environment(
       }
     } else {
       task_PutEnv(tsk, envs[jj]);
+    }
+  }
+  if (pt && pt->env_u && pt->env_v) {
+    for (jj = 0; jj < pt->env_u; ++jj) {
+      if (pt->env_v[jj]) task_PutEnv(tsk, pt->env_v[jj]);
     }
   }
 }
@@ -848,7 +854,7 @@ invoke_valuer(
   if (prb->checker_real_time_limit > 0) {
     task_SetMaxRealTime(tsk, prb->checker_real_time_limit);
   }
-  setup_environment(tsk, prb->valuer_env, ejudge_prefix_dir_env);
+  setup_environment(tsk, prb->valuer_env, ejudge_prefix_dir_env, NULL);
   if (global->separate_user_score > 0) {
     snprintf(strbuf, sizeof(strbuf), "EJUDGE_USER_SCORE=1");
     task_PutEnv(tsk, strbuf);
@@ -1806,7 +1812,7 @@ run_tests(struct section_tester_data *tst,
         }
         task_SetPathAsArg0(tsk_int);
         task_SetWorkingDir(tsk_int, prog_working_dir);
-        setup_environment(tsk_int, prb->interactor_env, ejudge_prefix_dir_env);
+        setup_environment(tsk_int, prb->interactor_env, ejudge_prefix_dir_env, NULL);
         task_SetRedir(tsk_int, 0, TSR_DUP, pfd1[0]);
         task_SetRedir(tsk_int, 1, TSR_DUP, pfd2[1]);
         task_SetRedir(tsk_int, pfd1[0], TSR_CLOSE);
@@ -1906,7 +1912,7 @@ run_tests(struct section_tester_data *tst,
       }
 
       if (tst->clear_env) task_ClearEnv(tsk);
-      setup_environment(tsk, tst->start_env, ejudge_prefix_dir_env);
+      setup_environment(tsk, tst->start_env, ejudge_prefix_dir_env, &tstinfo);
 
       if (time_limit_value > 0) {
         if ((time_limit_value % 1000)) {
@@ -2440,8 +2446,8 @@ run_tests(struct section_tester_data *tst,
     if (prb->checker_real_time_limit > 0) {
       task_SetMaxRealTime(tsk, prb->checker_real_time_limit);
     }
-    setup_environment(tsk, prb->checker_env, ejudge_prefix_dir_env);
-    setup_environment(tsk, tst->checker_env, ejudge_prefix_dir_env);
+    setup_environment(tsk, prb->checker_env, ejudge_prefix_dir_env, NULL);
+    setup_environment(tsk, tst->checker_env, ejudge_prefix_dir_env, NULL);
     task_EnableAllSignals(tsk);
 
     task_Start(tsk);

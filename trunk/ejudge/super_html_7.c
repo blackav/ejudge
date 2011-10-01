@@ -2592,12 +2592,18 @@ super_serve_op_TESTS_TEST_EDIT_PAGE(
     make_prefixed_path(path, sizeof(path), test_dir, prefix, info_pat, test_num);
     r = report_file_info(out_f, path, 0, &text, &size, &testinfo);
     xfree(text); text = NULL; size = 0;
-    text = testinfo_unparse_cmdline(&testinfo);
     cl = " class=\"b0\"";
     fprintf(out_f, "<table%s>", cl);
+    text = testinfo_unparse_cmdline(&testinfo);
     fprintf(out_f, "<tr><td%s>%s:</td><td%s>%s</td></tr>",
             cl, "Command line",
             cl, html_input_text(hbuf, sizeof(hbuf), "testinfo_cmdline", 60, "%s", ARMOR(text)));
+    xfree(text); text = NULL;
+    text = testinfo_unparse_environ(&testinfo);
+    fprintf(out_f, "<tr><td%s>%s:</td><td%s>%s</td></tr>",
+            cl, "Environment",
+            cl, html_input_text(hbuf, sizeof(hbuf), "testinfo_environ", 60, "%s", ARMOR(text)));
+    xfree(text); text = NULL;
     buf[0] = 0;
     if (testinfo.exit_code > 0 && testinfo.exit_code < 128) {
       snprintf(buf, sizeof(buf), "%d", testinfo.exit_code);
@@ -2843,6 +2849,7 @@ super_serve_op_TESTS_TEST_EDIT_ACTION(
   int testinfo_exit_code = 0;
   int testinfo_check_stderr = 0;
   const unsigned char *testinfo_cmdline = NULL;
+  const unsigned char *testinfo_environ = NULL;
   const unsigned char *testinfo_comment = NULL;
   const unsigned char *testinfo_user_comment = NULL;
   const unsigned char *test_txt = NULL;
@@ -2853,6 +2860,7 @@ super_serve_op_TESTS_TEST_EDIT_ACTION(
   int r;
   int file_group = -1;
   int file_mode = -1;
+  struct testinfo_struct tinfo;
 
   test_tmp_path[0] = 0;
   corr_tmp_path[0] = 0;
@@ -2860,6 +2868,7 @@ super_serve_op_TESTS_TEST_EDIT_ACTION(
   test_del_path[0] = 0;
   corr_del_path[0] = 0;
   info_del_path[0] = 0;
+  memset(&tinfo, 0, sizeof(tinfo));
 
   ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
@@ -2909,6 +2918,7 @@ super_serve_op_TESTS_TEST_EDIT_ACTION(
     ss_cgi_param_int_opt(phr, "testinfo_check_stderr", &testinfo_check_stderr, 0);
     if (testinfo_check_stderr != 1) testinfo_check_stderr = 0;
     ss_cgi_param(phr, "testinfo_cmdline", &testinfo_cmdline);
+    ss_cgi_param(phr, "testinfo_environ", &testinfo_environ);
     ss_cgi_param(phr, "testinfo_user_comment", &testinfo_user_comment);
     ss_cgi_param(phr, "testinfo_comment", &testinfo_comment);
 
@@ -2927,6 +2937,11 @@ super_serve_op_TESTS_TEST_EDIT_ACTION(
       fprintf(tmp_f, "params = %s\n", text);
     }
     xfree(text); text = NULL;
+    text = fix_string(testinfo_environ);
+    if (text) {
+      fprintf(tmp_f, "environ = %s\n", text);
+    }
+    xfree(text); text = NULL;
     text = fix_string(testinfo_comment);
     if (text) {
       fprintf(tmp_f, "comment = %s\n", c_armor_buf(&ab, text));
@@ -2938,6 +2953,10 @@ super_serve_op_TESTS_TEST_EDIT_ACTION(
     }
     xfree(text); text = NULL;
     fclose(tmp_f); tmp_f = NULL;
+    if (testinfo_parse(info_tmp_path, &tinfo) < 0) {
+      FAIL(S_ERR_INV_TESTINFO);
+    }
+    testinfo_free(&tinfo);
     r = need_file_update(info_out_path, info_tmp_path);
     if (r < 0) FAIL(S_ERR_FS_ERROR);
     if (!r) {

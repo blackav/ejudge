@@ -366,6 +366,7 @@ unsigned char const * const super_proto_op_error_messages[] =
   [S_ERR_INV_EXIT_CODE] = "Invalid exit code",
   [S_ERR_INV_SYS_GROUP] = "Invalid system group",
   [S_ERR_INV_SYS_MODE] = "Invalid system mode",
+  [S_ERR_INV_TESTINFO] = "Invalid test information",
 };
 
 /*
