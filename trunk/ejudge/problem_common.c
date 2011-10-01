@@ -102,11 +102,12 @@ test_visibility_unparse(int value)
 
 const unsigned char * const test_normalization_str[] =
 {
-  [TEST_NORM_NONE] = "none",
+  [TEST_NORM_NONE]    = "none",
   [TEST_NORM_DEFAULT] = "",
-  [TEST_NORM_NL]   = "nl",
-  [TEST_NORM_WS]   = "nlws",
-  [TEST_NORM_NP]   = "nlwsnp",
+  [TEST_NORM_NL]      = "nl",
+  [TEST_NORM_NLWS]    = "nlws",
+  [TEST_NORM_NLWSNP]  = "nlwsnp",
+  [TEST_NORM_NLNP]    = "nlnp",
   [TEST_NORM_LAST] = 0,
 };
 
