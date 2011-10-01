@@ -350,17 +350,33 @@ run_program(int argc, char *argv[])
   int i;
   int retcode = 1;
   struct testinfo_struct tinfo;
+  unsigned char input_path[PATH_MAX];
+  unsigned char output_path[PATH_MAX];
 
   memset(&tinfo, 0, sizeof(tinfo));
+  input_path[0] = 0;
+  output_path[0] = 0;
+
   if (info_file && (i = testinfo_parse(info_file, &tinfo)) < 0) {
     fatal("testinfo file parse error: %s", testinfo_strerror(-i));
   }
 
-  if (test_file && !input_file) {
-    input_file = DEFAULT_INPUT_FILE_NAME;
+  if (test_file) {
+    if (!input_file || !input_file[0]) input_file = DEFAULT_INPUT_FILE_NAME;
+    if (working_dir && working_dir[0]) {
+      snprintf(input_path, sizeof(input_path), "%s/%s", working_dir, input_file);
+    } else {
+      snprintf(input_path, sizeof(input_path), "%s", input_file);
+    }
   }
-  if (corr_file && !output_file) {
-    output_file = DEFAULT_OUTPUT_FILE_NAME;
+
+  if (corr_file) {
+    if (!output_file || !output_file[0]) output_file = DEFAULT_OUTPUT_FILE_NAME;
+    if (working_dir && working_dir[0]) {
+      snprintf(output_path, sizeof(output_path), "%s/%s", working_dir, output_file);
+    } else {
+      snprintf(output_path, sizeof(output_path), "%s", output_file);
+    }
   }
 
   if (!(tsk = task_New())) fatal("cannot create task");
@@ -372,12 +388,12 @@ run_program(int argc, char *argv[])
   if (test_file) {
     if (copy_file(NULL, test_file, working_dir, input_file, -1, -1) < 0)
       fatal("copy failed");
-    if (use_stdin) task_SetRedir(tsk, 0, TSR_FILE, input_file, TSK_READ);
+    if (use_stdin) task_SetRedir(tsk, 0, TSR_FILE, input_path, TSK_READ);
   } else {
     if (stdin_file) task_SetRedir(tsk, 0, TSR_FILE, stdin_file, TSK_READ);
   }
   if (corr_file) {
-    if (use_stdout) task_SetRedir(tsk, 0, TSR_FILE, output_file, TSK_WRITE, TSK_FULL_RW);
+    if (use_stdout) task_SetRedir(tsk, 0, TSR_FILE, output_path, TSK_WRITE, TSK_FULL_RW);
   } else {
     if (stdout_file)
       task_SetRedir(tsk, 0, TSR_FILE, stdout_file, TSK_WRITE, TSK_FULL_RW);
@@ -453,6 +469,9 @@ run_program(int argc, char *argv[])
   }
   fprintf(stderr, "CPUTime: %ld\n", task_GetRunningTime(tsk));
   fprintf(stderr, "RealTime: %ld\n", task_GetRealTime(tsk));
+
+  if (input_path[0]) unlink(input_path);
+  if (output_path[0]) unlink(output_path);
 
   return retcode;
 }
