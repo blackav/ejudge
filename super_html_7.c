@@ -1792,7 +1792,7 @@ swap_files(
   if (logged_unlink(log_f, corr_tmp_path) < 0) FAIL(S_ERR_FS_ERROR);
   if (logged_unlink(log_f, info_tmp_path) < 0) FAIL(S_ERR_FS_ERROR);
   if (logged_unlink(log_f, tgz_tmp_path) < 0) FAIL(S_ERR_FS_ERROR);
-  //if (logged_unlink(log_f, tgzdir_tmp_path) < 0) FAIL(S_ERR_FS_ERROR);
+  if (remove_directory_recursively(tgzdir_tmp_path, 0) < 0) FAIL(S_ERR_FS_ERROR);
 
   // DST->TMP
   if (logged_rename(log_f, test_dst_path, test_tmp_path) < 0) goto fs_error;
@@ -1904,7 +1904,7 @@ move_files(
   if (logged_unlink(log_f, corr_tmp_path) < 0) FAIL(S_ERR_FS_ERROR);
   if (logged_unlink(log_f, info_tmp_path) < 0) FAIL(S_ERR_FS_ERROR);
   if (logged_unlink(log_f, tgz_tmp_path) < 0) FAIL(S_ERR_FS_ERROR);
-  //if (logged_unlink(log_f, tgzdir_tmp_path) < 0) FAIL(S_ERR_FS_ERROR);
+  if (remove_directory_recursively(tgzdir_tmp_path, 0) < 0) FAIL(S_ERR_FS_ERROR);
 
   // DST->TMP
   if (logged_rename(log_f, test_dst_path, test_tmp_path) < 0) goto fs_error;
@@ -1935,7 +1935,7 @@ move_files(
   logged_unlink(log_f, corr_tmp_path);
   logged_unlink(log_f, info_tmp_path);
   logged_unlink(log_f, tgz_tmp_path);
-  //logged_unlink(log_f, tgzdir_tmp_path);
+  remove_directory_recursively(tgzdir_tmp_path, 0);
 
 cleanup:
   return retval;
@@ -1990,7 +1990,7 @@ delete_test(
   logged_unlink(log_f, corr_dst_path);
   logged_unlink(log_f, info_dst_path);
   logged_unlink(log_f, tgz_dst_path);
-  //logged_unlink(log_f, tgzdir_dst_path);
+  remove_directory_recursively(tgzdir_dst_path, 0);
 
   for (++test_num; test_num <= test_count; ++test_num) {
     make_prefixed_path(test_dst_path, sizeof(test_dst_path), test_dir, prefix, test_pat, test_num - 1);
@@ -2297,11 +2297,13 @@ norm_type_select(FILE *out_f, int norm_type)
           "<option value=\"%d\"%s>End of line</option>"
           "<option value=\"%d\"%s>End of line and trailing space</option>"
           "<option value=\"%d\"%s>End of line, trailing space, and non-printable</option>"
+          "<option value=\"%d\"%s>End of line, and non-printable</option>"
           "</select>",
           TEST_NORM_NONE, ss[TEST_NORM_NONE],
           TEST_NORM_NL, ss[TEST_NORM_NL],
-          TEST_NORM_WS, ss[TEST_NORM_WS],
-          TEST_NORM_NP, ss[TEST_NORM_NP]);
+          TEST_NORM_NLWS, ss[TEST_NORM_NLWS],
+          TEST_NORM_NLWSNP, ss[TEST_NORM_NLWSNP],
+          TEST_NORM_NLNP, ss[TEST_NORM_NLNP]);
 }
 
 static int
@@ -2773,12 +2775,15 @@ normalize_text(int mode, const unsigned char *text)
   switch (mode) {
   case TEST_NORM_NONE:
     return xstrdup(text);
-  case TEST_NORM_NP:
+  case TEST_NORM_NLWSNP:
     op_mask |= TEXT_FIX_NP;
-  case TEST_NORM_WS: // fallthrough
+  case TEST_NORM_NLWS:          // fallthrough
     op_mask |= TEXT_FIX_TR_SP | TEXT_FIX_TR_NL;
-  case TEST_NORM_NL: // fallthrough
+  case TEST_NORM_NL:            // fallthrough
     op_mask |= TEXT_FIX_CR | TEXT_FIX_FINAL_NL;
+    break;
+  case TEST_NORM_NLNP:
+    op_mask |= TEXT_FIX_CR | TEXT_FIX_FINAL_NL | TEXT_FIX_NP;
     break;
   default:
     abort();
@@ -2786,61 +2791,6 @@ normalize_text(int mode, const unsigned char *text)
 
   text_normalize_dup(text, tlen, op_mask, &out_text, &out_count, &done_mask);
   return out_text;
-
-  /*
-  char **lines = NULL;
-  int line, slen, outlen = 0;
-  unsigned char *str;
-  unsigned char *outstr = NULL;
-
-  if (mode == 0) {
-    return xstrdup(text);
-  } else {
-    split_to_lines(text, &lines, 0);
-    if (!lines) return xstrdup("");
-    if (!lines[0]) {
-      xfree(lines);
-      return xstrdup("");
-    }
-    if (mode == 1) {
-      for (line = 0; lines[line]; ++line) {
-        slen = strlen(lines[line]);
-        if (slen > 0 && lines[line][slen - 1] == '\n') --slen;
-        if (slen > 0 && lines[line][slen - 1] == '\r') --slen;
-        lines[line][slen] = 0;
-      }
-    } else if (mode == 2) {
-      for (line = 0; lines[line]; ++line) {
-        str = lines[line];
-        slen = strlen(str);
-        while (slen > 0 && isspace(str[slen - 1])) --slen;
-        str[slen] = 0;
-      }
-      while (line > 0 && !lines[line - 1][0]) {
-        xfree(lines[--line]);
-        lines[line] = 0;
-      }
-    } else {
-      abort();
-    }
-    if (!lines[0]) {
-      xfree(lines);
-      return xstrdup("");
-    }
-    for (line = 0; lines[line]; ++line) {
-      outlen += strlen(lines[line]) + 1;
-    }
-    str = outstr = (unsigned char *) xmalloc(outlen + 1);
-    for (line = 0; lines[line]; ++line) {
-      slen = strlen(lines[line]);
-      memcpy(str, lines[line], slen);
-      str += slen;
-      *str++ = '\n';
-    }
-    *str = 0;
-    return outstr;
-  }
-  */
 }
 
 static int
