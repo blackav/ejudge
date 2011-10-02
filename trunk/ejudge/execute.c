@@ -320,9 +320,9 @@ handle_options(const unsigned char *opt)
   } else if (!strcmp("--security-violation", opt)) {
     security_violation = 1;
   } else if (!strcmp("--use-stdin", opt)) {
-    use_stdin = 0;
+    use_stdin = 1;
   } else if (!strcmp("--use-stdout", opt)) {
-    use_stdout = 0;
+    use_stdout = 1;
   } else if (!strncmp("--max-vm-size=", opt, 14)) {
     parse_size("--max-vm-size", opt + 14, &max_vm_size, 4096, 1 << 30);
   } else if (!strncmp("--max-stack-size=", opt, 17)) {
@@ -393,13 +393,13 @@ run_program(int argc, char *argv[])
     if (stdin_file) task_SetRedir(tsk, 0, TSR_FILE, stdin_file, TSK_READ);
   }
   if (corr_file) {
-    if (use_stdout) task_SetRedir(tsk, 0, TSR_FILE, output_path, TSK_WRITE, TSK_FULL_RW);
+    if (use_stdout) task_SetRedir(tsk, 1, TSR_FILE, output_path, TSK_REWRITE, TSK_FULL_RW);
   } else {
     if (stdout_file)
-      task_SetRedir(tsk, 0, TSR_FILE, stdout_file, TSK_WRITE, TSK_FULL_RW);
+      task_SetRedir(tsk, 1, TSR_FILE, stdout_file, TSK_WRITE, TSK_FULL_RW);
   }
   if (stderr_file)
-    task_SetRedir(tsk, 0, TSR_FILE, stderr_file, TSK_WRITE, TSK_FULL_RW);
+    task_SetRedir(tsk, 2, TSR_FILE, stderr_file, TSK_WRITE, TSK_FULL_RW);
   if (clear_env_flag) task_ClearEnv(tsk);
   for (i = 0; i < env_vars.u; i++)
     task_PutEnv(tsk, env_vars.v[i]);
