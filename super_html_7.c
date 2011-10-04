@@ -1980,7 +1980,7 @@ delete_test(
   unsigned char tgzdir_src_path[PATH_MAX];
   unsigned char tgzdir_dst_path[PATH_MAX];
 
-  if (test_num <= 0 || test_num >= test_count) return retval;
+  if (test_num <= 0 || test_num > test_count) return retval;
 
   make_prefixed_path(test_dst_path, sizeof(test_dst_path), test_dir, prefix, test_pat, test_num);
   make_prefixed_path(corr_dst_path, sizeof(corr_dst_path), test_dir, prefix, corr_pat, test_num);
@@ -2889,7 +2889,7 @@ super_serve_op_TESTS_TEST_EDIT_ACTION(
   int file_group = -1;
   int file_mode = -1;
   struct testinfo_struct tinfo;
-  struct test_dir_info dirinfo;
+  struct test_dir_info td_info;
   int insert_mode = 0;
 
   test_tmp_path[0] = 0;
@@ -2899,7 +2899,7 @@ super_serve_op_TESTS_TEST_EDIT_ACTION(
   corr_del_path[0] = 0;
   info_del_path[0] = 0;
   memset(&tinfo, 0, sizeof(tinfo));
-  memset(&dirinfo, 0, sizeof(dirinfo));
+  memset(&td_info, 0, sizeof(td_info));
   if (phr->opcode == SSERV_OP_TESTS_TEST_INSERT_ACTION) insert_mode = 1;
 
   ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
@@ -3058,19 +3058,19 @@ super_serve_op_TESTS_TEST_EDIT_ACTION(
   }
 
   if (insert_mode) {
-    retval = scan_test_directory(log_f, &dirinfo, cnts, test_dir, test_pat, corr_pat, info_pat, tgz_pat, tgzdir_pat);
+    retval = scan_test_directory(log_f, &td_info, cnts, test_dir, test_pat, corr_pat, info_pat, tgz_pat, tgzdir_pat);
     if (retval < 0) goto cleanup;
     retval = 0;
 
-    if (test_num <= dirinfo.test_ref_count) {
+    if (test_num <= td_info.test_ref_count) {
       retval = insert_test(log_f, test_dir, test_pat, corr_pat, info_pat, tgz_pat, tgzdir_pat, NULL,
-                           dirinfo.test_ref_count, test_num);
+                           td_info.test_ref_count, test_num);
       if (retval < 0) goto cleanup;
       retval = 0;
     }
 
-    test_dir_info_free(&dirinfo);
-    memset(&dirinfo, 0, sizeof(dirinfo));
+    test_dir_info_free(&td_info);
+    memset(&td_info, 0, sizeof(td_info));
   }
 
   if (test_tmp_path[0]) {
@@ -3114,7 +3114,7 @@ super_serve_op_TESTS_TEST_EDIT_ACTION(
   ss_redirect_2(out_f, phr, SSERV_OP_TESTS_TESTS_VIEW_PAGE, contest_id, prob_id, variant, 0);
 
 cleanup:
-  test_dir_info_free(&dirinfo);
+  test_dir_info_free(&td_info);
   xfree(text);
   if (tmp_f) fclose(tmp_f);
   if (test_tmp_path[0]) unlink(test_tmp_path);
@@ -3124,5 +3124,240 @@ cleanup:
   if (corr_del_path[0]) unlink(corr_del_path);
   if (info_del_path[0]) unlink(info_del_path);
   html_armor_free(&ab);
+  return retval;
+}
+
+static void
+report_file_2(
+        FILE *out_f,
+        const unsigned char *path,
+        const unsigned char *cl)
+{
+  char *file_t = 0;
+  size_t file_z = 0;
+  struct stat stb;
+
+  if (stat(path, &stb) < 0) {
+    fprintf(out_f, "<td%s valign=\"top\"><i>%s</i></td>", cl, "nonexisting");
+    return;
+  }
+  fprintf(out_f, "<td%s valign=\"top\">", cl);
+  fprintf(out_f, "<i>%s</i><br/>", xml_unparse_date(stb.st_mtime));
+  fprintf(out_f, "<i>%lld</i>", (long long) stb.st_size);
+  if (generic_read_file(&file_t, 0, &file_z, 0, NULL, path, "") < 0) {
+    fprintf(out_f, "<br/><i>%s</i>", "read error");
+  } else if (!is_text_file(file_t, file_z)) {
+    xfree(file_t); file_t = 0; file_z = 0;
+    fprintf(out_f, "<br/><i>%s</i>", "binary file");
+  } else {
+    output_text_file(out_f, file_t, file_z);
+    xfree(file_t); file_t = 0; file_z = 0;
+  }
+  fprintf(out_f, "</td>");
+}
+
+int
+super_serve_op_TESTS_TEST_DELETE_PAGE(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  int contest_id = 0;
+  int prob_id = 0;
+  int variant = 0;
+  int test_num = 0;
+  const struct contest_desc *cnts = NULL;
+  opcap_t caps = 0LL;
+  serve_state_t cs = NULL;
+  const struct section_global_data *global = NULL;
+  const struct section_problem_data *prob = NULL;
+  unsigned char test_dir[PATH_MAX];
+  unsigned char test_pat[PATH_MAX];
+  unsigned char corr_pat[PATH_MAX];
+  unsigned char info_pat[PATH_MAX];
+  unsigned char tgz_pat[PATH_MAX];
+  unsigned char tgzdir_pat[PATH_MAX];
+  unsigned char buf[1024];
+  unsigned char hbuf[1024];
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  const unsigned char *cl = NULL;
+  unsigned char path[PATH_MAX];
+  struct testinfo_struct testinfo;
+
+  memset(&testinfo, 0, sizeof(testinfo));
+
+  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+
+  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
+  get_full_caps(phr, cnts, &caps);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(S_ERR_PERM_DENIED);
+
+  retval = check_other_editors(log_f, out_f, phr, contest_id, cnts);
+  if (retval <= 0) goto cleanup;
+  retval = 0;
+  cs = phr->ss->te_state;
+  global = cs->global;
+
+  ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
+  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
+  if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
+
+  variant = -1;
+  if (prob->variant_num > 0) {
+    ss_cgi_param_int_opt(phr, "variant", &variant, 0);
+    if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
+  }
+
+  ss_cgi_param_int_opt(phr, "test_num", &test_num, 0);
+  if (test_num <= 0 || test_num >= 1000000) FAIL(S_ERR_INV_TEST_NUM);
+
+  retval = prepare_test_file_names(log_f, phr, cnts, global, prob, variant, NULL,
+                                   sizeof(test_dir), test_dir, test_pat, corr_pat, info_pat,
+                                   tgz_pat, tgzdir_pat);
+  if (retval < 0) goto cleanup;
+  retval = 0;
+
+  snprintf(buf, sizeof(buf), "serve-control: %s, contest %d (%s), delete test at position %d for problem %s",
+             phr->html_name, contest_id, ARMOR(cnts->name), test_num, prob->short_name);
+  ss_write_html_header(out_f, phr, buf, 0, NULL);
+  fprintf(out_f, "<h1>%s</h1>\n", buf);
+
+  fprintf(out_f, "<ul>");
+  fprintf(out_f, "<li>%s%s</a></li>",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL, NULL),
+          "Main page");
+  fprintf(out_f, "<li>%s%s</a></li>\n",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
+                        "action=%d&op=%d&contest_id=%d", SSERV_CMD_HTTP_REQUEST,
+                        SSERV_OP_TESTS_MAIN_PAGE, contest_id),
+          "Problems page");
+  fprintf(out_f, "<li>%s%s</a></li>\n",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
+                        "action=%d&op=%d&contest_id=%d&prob_id=%d", SSERV_CMD_HTTP_REQUEST,
+                        SSERV_OP_TESTS_TESTS_VIEW_PAGE, contest_id, prob_id),
+          "Tests page");
+  fprintf(out_f, "</ul>\n");
+
+  html_start_form(out_f, 1, phr->self_url, "");
+  html_hidden(out_f, "SID", "%016llx", phr->session_id);
+  html_hidden(out_f, "action", "%d", SSERV_CMD_HTTP_REQUEST);
+  html_hidden(out_f, "contest_id", "%d", contest_id);
+  html_hidden(out_f, "prob_id", "%d", prob_id);
+  html_hidden(out_f, "test_num", "%d", test_num);
+
+  cl = " class=\"b1\"";
+  fprintf(out_f, "<table%s>", cl);
+  fprintf(out_f, "<tr>");
+  fprintf(out_f, "<td%s>%d</td>", cl, test_num);
+  make_prefixed_path(path, sizeof(path), test_dir, NULL, test_pat, test_num);
+  report_file_2(out_f, path, cl);
+  if (corr_pat[0] > ' ') {
+    make_prefixed_path(path, sizeof(path), test_dir, NULL, corr_pat, test_num);
+    report_file_2(out_f, path, cl);
+  }
+  if (info_pat[0] > ' ') {
+    make_prefixed_path(path, sizeof(path), test_dir, NULL, info_pat, test_num);
+    report_file_2(out_f, path, cl);
+  }
+  fprintf(out_f, "</tr>\n");
+  fprintf(out_f, "</table>\n");
+
+  cl = " class=\"b0\"";
+  fprintf(out_f, "<table%s><tr>", cl);
+  fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+          cl, SSERV_OP_TESTS_CANCEL_ACTION, "Cancel");
+  fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+          cl, SSERV_OP_TESTS_TEST_DELETE_ACTION, "Delete test!");
+  fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+          cl, SSERV_OP_TESTS_TEST_EDIT_PAGE, "Edit this test");
+  fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+          cl, SSERV_OP_TESTS_TEST_MOVE_TO_SAVED_ACTION, "Move this test to saved");
+  fprintf(out_f, "</tr></table>\n");
+
+  fprintf(out_f, "</form>\n");
+
+  ss_write_html_footer(out_f);
+
+cleanup:
+  html_armor_free(&ab);
+  testinfo_free(&testinfo);
+  return retval;
+}
+
+int
+super_serve_op_TESTS_TEST_DELETE_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  int contest_id = 0;
+  int prob_id = 0;
+  int variant = 0;
+  int test_num = 0;
+  const struct contest_desc *cnts = NULL;
+  opcap_t caps = 0LL;
+  serve_state_t cs = NULL;
+  const struct section_global_data *global = NULL;
+  const struct section_problem_data *prob = NULL;
+  unsigned char test_dir[PATH_MAX];
+  unsigned char test_pat[PATH_MAX];
+  unsigned char corr_pat[PATH_MAX];
+  unsigned char info_pat[PATH_MAX];
+  unsigned char tgz_pat[PATH_MAX];
+  unsigned char tgzdir_pat[PATH_MAX];
+  struct test_dir_info td_info;
+
+  memset(&td_info, 0, sizeof(td_info));
+
+  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+
+  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
+  get_full_caps(phr, cnts, &caps);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(S_ERR_PERM_DENIED);
+
+  retval = check_other_editors(log_f, out_f, phr, contest_id, cnts);
+  if (retval <= 0) goto cleanup;
+  retval = 0;
+  cs = phr->ss->te_state;
+  global = cs->global;
+
+  ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
+  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
+  if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
+
+  variant = -1;
+  if (prob->variant_num > 0) {
+    ss_cgi_param_int_opt(phr, "variant", &variant, 0);
+    if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
+  }
+
+  ss_cgi_param_int_opt(phr, "test_num", &test_num, 0);
+  if (test_num <= 0 || test_num >= 1000000) FAIL(S_ERR_INV_TEST_NUM);
+
+  retval = prepare_test_file_names(log_f, phr, cnts, global, prob, variant, NULL,
+                                   sizeof(test_dir), test_dir, test_pat, corr_pat, info_pat,
+                                   tgz_pat, tgzdir_pat);
+  if (retval < 0) goto cleanup;
+  retval = 0;
+
+  retval = scan_test_directory(log_f, &td_info, cnts, test_dir, test_pat, corr_pat, info_pat, tgz_pat, tgzdir_pat);
+  if (retval < 0) goto cleanup;
+  retval = 0;
+
+  retval = delete_test(log_f, test_dir, test_pat, corr_pat, info_pat, tgz_pat, tgzdir_pat, NULL,
+                       td_info.test_ref_count, test_num);
+  if (retval < 0) goto cleanup;
+  retval = 0;
+
+  ss_redirect_2(out_f, phr, SSERV_OP_TESTS_TESTS_VIEW_PAGE, contest_id, prob_id, variant, 0);
+
+cleanup:
+  test_dir_info_free(&td_info);
   return retval;
 }
