@@ -50,6 +50,7 @@
 #define SAVED_TEST_PREFIX      "s_"
 #define TEMP_TEST_PREFIX       "t_"
 #define DEL_TEST_PREFIX        "d_"
+#define NEW_TEST_PREFIX        "n_"
 #define MAX_ONLINE_EDITOR_SIZE (10*1024)
 
 #define ARMOR(s)  html_armor_buf(&ab, (s))
@@ -2014,7 +2015,7 @@ delete_test(
   return retval;
 }
 
-int
+static int
 insert_test(
         FILE *log_f,
         const unsigned char *test_dir,
@@ -2328,7 +2329,8 @@ report_file_info(
         int binary_input,
         unsigned char **p_text,
         int *p_size,
-        struct testinfo_struct *pti)
+        struct testinfo_struct *pti,
+        int insert_mode)
 {
   int retval = 0;
   struct stat stb;
@@ -2340,6 +2342,14 @@ report_file_info(
   *p_size = 0;
   fprintf(out_f, "<table%s>", cl);
   fprintf(out_f, "<tr><td%s>%s:</td><td%s><tt>%s</tt></td></tr>\n", cl ,"Path", cl, path);
+  if (insert_mode) {
+    fprintf(out_f, "<tr><td%s colspan=\"2\" align=\"center\"><i>%s</i></td></tr>\n",
+            cl, "New file");
+    fprintf(out_f, "</table>\n");
+    *p_text = xstrdup("");
+    *p_size = 0;
+    return retval;
+  }
   if (stat(path, &stb) < 0) {
     fprintf(out_f, "<tr><td%s colspan=\"2\" align=\"center\"><font color=\"red\">%s</font></td></tr>\n",
             cl, "File does not exist");
@@ -2464,9 +2474,11 @@ super_serve_op_TESTS_TEST_EDIT_PAGE(
   int size = 0;
   struct testinfo_struct testinfo;
   int norm_type = TEST_NORM_NONE;
+  int insert_mode = 0;
 
   memset(&testinfo, 0, sizeof(testinfo));
 
+  if (phr->opcode == SSERV_OP_TESTS_TEST_INSERT_PAGE) insert_mode = 1;
   ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
   if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
@@ -2505,8 +2517,13 @@ super_serve_op_TESTS_TEST_EDIT_PAGE(
   if (retval < 0) goto cleanup;
   retval = 0;
 
-  snprintf(buf, sizeof(buf), "serve-control: %s, contest %d (%s), test %d for problem %s",
-           phr->html_name, contest_id, ARMOR(cnts->name), test_num, prob->short_name);
+  if (insert_mode) {
+    snprintf(buf, sizeof(buf), "serve-control: %s, contest %d (%s), insert test at position %d for problem %s",
+             phr->html_name, contest_id, ARMOR(cnts->name), test_num, prob->short_name);
+  } else {
+    snprintf(buf, sizeof(buf), "serve-control: %s, contest %d (%s), test %d for problem %s",
+             phr->html_name, contest_id, ARMOR(cnts->name), test_num, prob->short_name);
+  }
   ss_write_html_header(out_f, phr, buf, 0, NULL);
   fprintf(out_f, "<h1>%s</h1>\n", buf);
 
@@ -2536,61 +2553,65 @@ super_serve_op_TESTS_TEST_EDIT_PAGE(
   if (test_pat[0] > ' ') {
     fprintf(out_f, "<h2>%s</h2>\n", "Input file");
     make_prefixed_path(path, sizeof(path), test_dir, prefix, test_pat, test_num);
-    r = report_file_info(out_f, path, prob->binary_input, &text, &size, NULL);
+    r = report_file_info(out_f, path, prob->binary_input, &text, &size, NULL, insert_mode);
     if (prob->binary_input > 0 || r == -2) {
       // what to do?
     } else {
       edit_file_textarea(out_f, "test_txt", 60, 10, text);
     }
     xfree(text); text = NULL; size = 0;
-    cl = " class=\"b0\"";
-    fprintf(out_f, "<table%s><tr>", cl);
-    fprintf(out_f, "<td%s>%s%s</a></td>", cl,
-            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
-                          "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;test_num=%d&amp;file_type=%d",
-                          SSERV_CMD_HTTP_REQUEST,
-                          SSERV_OP_TESTS_TEST_DOWNLOAD, contest_id, prob_id, test_num, 1),
-            "Download file");
-    fprintf(out_f, "<td%s>%s%s</a></td>", cl,
-            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
-                          "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;test_num=%d&amp;file_type=%d",
-                          SSERV_CMD_HTTP_REQUEST,
-                          SSERV_OP_TESTS_TEST_UPLOAD_PAGE, contest_id, prob_id, test_num, 1),
-            "Upload file");
-    fprintf(out_f, "</table>\n");
+    if (!insert_mode) {
+      cl = " class=\"b0\"";
+      fprintf(out_f, "<table%s><tr>", cl);
+      fprintf(out_f, "<td%s>%s%s</a></td>", cl,
+              html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
+                            "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;test_num=%d&amp;file_type=%d",
+                            SSERV_CMD_HTTP_REQUEST,
+                            SSERV_OP_TESTS_TEST_DOWNLOAD, contest_id, prob_id, test_num, 1),
+              "Download file");
+      fprintf(out_f, "<td%s>%s%s</a></td>", cl,
+              html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
+                            "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;test_num=%d&amp;file_type=%d",
+                            SSERV_CMD_HTTP_REQUEST,
+                            SSERV_OP_TESTS_TEST_UPLOAD_PAGE, contest_id, prob_id, test_num, 1),
+              "Upload file");
+      fprintf(out_f, "</table>\n");
+    }
   }
 
   if (corr_pat[0] > ' ') {
     fprintf(out_f, "<h2>%s</h2>\n", "Answer file");
     make_prefixed_path(path, sizeof(path), test_dir, prefix, corr_pat, test_num);
-    r = report_file_info(out_f, path, prob->binary_input, &text, &size, NULL);
+    r = report_file_info(out_f, path, prob->binary_input, &text, &size, NULL, insert_mode);
     if (prob->binary_input > 0 || r == -2) {
       // what to do?
     } else {
       edit_file_textarea(out_f, "corr_txt", 60, 10, text);
     }
     xfree(text); text = NULL; size = 0;
-    cl = " class=\"b0\"";
-    fprintf(out_f, "<table%s><tr>", cl);
-    fprintf(out_f, "<td%s>%s%s</a></td>", cl,
-            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
-                          "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;test_num=%d&amp;file_type=%d",
-                          SSERV_CMD_HTTP_REQUEST,
-                          SSERV_OP_TESTS_TEST_DOWNLOAD, contest_id, prob_id, test_num, 2),
-            "Download file");
-    fprintf(out_f, "<td%s>%s%s</a></td>", cl,
-            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
-                          "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;test_num=%d&amp;file_type=%d",
-                          SSERV_CMD_HTTP_REQUEST,
-                          SSERV_OP_TESTS_TEST_UPLOAD_PAGE, contest_id, prob_id, test_num, 2),
-            "Upload file");
-    fprintf(out_f, "</table>\n");
+    if (!insert_mode) {
+      cl = " class=\"b0\"";
+      fprintf(out_f, "<table%s><tr>", cl);
+      fprintf(out_f, "<td%s>%s%s</a></td>", cl,
+              html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
+                            "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;test_num=%d&amp;file_type=%d",
+                            SSERV_CMD_HTTP_REQUEST,
+                            SSERV_OP_TESTS_TEST_DOWNLOAD, contest_id, prob_id, test_num, 2),
+              "Download file");
+      fprintf(out_f, "<td%s>%s%s</a></td>", cl,
+              html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
+                            "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;test_num=%d&amp;file_type=%d",
+                            SSERV_CMD_HTTP_REQUEST,
+                            SSERV_OP_TESTS_TEST_UPLOAD_PAGE, contest_id, prob_id, test_num, 2),
+              "Upload file");
+      fprintf(out_f, "</table>\n");
+    }
   }
 
   if (info_pat[0] > ' ') {
     fprintf(out_f, "<h2>%s</h2>\n", "Info file");
     make_prefixed_path(path, sizeof(path), test_dir, prefix, info_pat, test_num);
-    r = report_file_info(out_f, path, 0, &text, &size, &testinfo);
+    r = report_file_info(out_f, path, 0, &text, &size, &testinfo, insert_mode);
     xfree(text); text = NULL; size = 0;
     cl = " class=\"b0\"";
     fprintf(out_f, "<table%s>", cl);
@@ -2653,13 +2674,20 @@ super_serve_op_TESTS_TEST_EDIT_PAGE(
   fprintf(out_f, "<table%s><tr>", cl);
   fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
           cl, SSERV_OP_TESTS_CANCEL_ACTION, "Cancel");
-  fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
-          cl, SSERV_OP_TESTS_TEST_EDIT_ACTION, "Save changes");
+  if (insert_mode) {
+    fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+            cl, SSERV_OP_TESTS_TEST_INSERT_ACTION, "Insert test");
+  } else {
+    fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+            cl, SSERV_OP_TESTS_TEST_EDIT_ACTION, "Save changes");
+  }
   fprintf(out_f, "<td%s width=\"100px\">&nbsp;</td>", cl);
-  fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
-          cl, SSERV_OP_TESTS_TEST_DELETE_PAGE, "Delete this test");
-  fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
-          cl, SSERV_OP_TESTS_TEST_MOVE_TO_SAVED_ACTION, "Move this test to saved");
+  if (!insert_mode) {
+    fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+            cl, SSERV_OP_TESTS_TEST_DELETE_PAGE, "Delete this test");
+    fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+            cl, SSERV_OP_TESTS_TEST_MOVE_TO_SAVED_ACTION, "Move this test to saved");
+  }
   fprintf(out_f, "</tr></table>\n");
 
   fprintf(out_f, "</form>\n");
@@ -2861,6 +2889,8 @@ super_serve_op_TESTS_TEST_EDIT_ACTION(
   int file_group = -1;
   int file_mode = -1;
   struct testinfo_struct tinfo;
+  struct test_dir_info dirinfo;
+  int insert_mode = 0;
 
   test_tmp_path[0] = 0;
   corr_tmp_path[0] = 0;
@@ -2869,6 +2899,8 @@ super_serve_op_TESTS_TEST_EDIT_ACTION(
   corr_del_path[0] = 0;
   info_del_path[0] = 0;
   memset(&tinfo, 0, sizeof(tinfo));
+  memset(&dirinfo, 0, sizeof(dirinfo));
+  if (phr->opcode == SSERV_OP_TESTS_TEST_INSERT_ACTION) insert_mode = 1;
 
   ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
@@ -2912,7 +2944,7 @@ super_serve_op_TESTS_TEST_EDIT_ACTION(
   if (retval < 0) goto cleanup;
   retval = 0;
 
-  if (prob->use_info > 0 && info_pat[0]) {
+  if (prob->use_info > 0 && info_pat[0] > ' ') {
     ss_cgi_param_int_opt(phr, "testinfo_exit_code", &testinfo_exit_code, 0);
     if (testinfo_exit_code < 0 || testinfo_exit_code >= 128) FAIL(S_ERR_INV_EXIT_CODE);
     ss_cgi_param_int_opt(phr, "testinfo_check_stderr", &testinfo_check_stderr, 0);
@@ -2922,7 +2954,7 @@ super_serve_op_TESTS_TEST_EDIT_ACTION(
     ss_cgi_param(phr, "testinfo_user_comment", &testinfo_user_comment);
     ss_cgi_param(phr, "testinfo_comment", &testinfo_comment);
 
-    make_prefixed_path(info_tmp_path, sizeof(info_tmp_path), test_dir, TEMP_TEST_PREFIX, info_pat, test_num);
+    make_prefixed_path(info_tmp_path, sizeof(info_tmp_path), test_dir, NEW_TEST_PREFIX, info_pat, test_num);
     make_prefixed_path(info_out_path, sizeof(info_out_path), test_dir, NULL, info_pat, test_num);
     make_prefixed_path(info_del_path, sizeof(info_del_path), test_dir, DEL_TEST_PREFIX, info_pat, test_num);
     if (!(tmp_f = fopen(info_tmp_path, "w"))) FAIL(S_ERR_FS_ERROR);
@@ -2957,11 +2989,14 @@ super_serve_op_TESTS_TEST_EDIT_ACTION(
       FAIL(S_ERR_INV_TESTINFO);
     }
     testinfo_free(&tinfo);
-    r = need_file_update(info_out_path, info_tmp_path);
-    if (r < 0) FAIL(S_ERR_FS_ERROR);
-    if (!r) {
-      unlink(info_tmp_path);
-      info_tmp_path[0] = 0;
+    memset(&tinfo, 0, sizeof(tinfo));
+    if (!insert_mode) {
+      r = need_file_update(info_out_path, info_tmp_path);
+      if (r < 0) FAIL(S_ERR_FS_ERROR);
+      if (!r) {
+        unlink(info_tmp_path);
+        info_tmp_path[0] = 0;
+      }
     }
   }
   if (info_tmp_path[0] && (file_group > 0 || file_mode > 0)) {
@@ -2972,22 +3007,24 @@ super_serve_op_TESTS_TEST_EDIT_ACTION(
   if (norm_type < TEST_NORM_FIRST || norm_type >= TEST_NORM_LAST) norm_type = TEST_NORM_NONE;
   if (norm_type == TEST_NORM_DEFAULT) norm_type = TEST_NORM_NL;
 
-  if (prob->binary_input <= 0 && prob->use_corr > 0 && corr_pat[0]) {
+  if (prob->binary_input <= 0 && prob->use_corr > 0 && corr_pat[0] > ' ') {
     r = ss_cgi_param(phr, "corr_txt", &corr_txt);
     if (r < 0) FAIL(S_ERR_INV_VALUE);
     if (r > 0) {
-      make_prefixed_path(corr_tmp_path, sizeof(corr_tmp_path), test_dir, TEMP_TEST_PREFIX, corr_pat, test_num);
+      make_prefixed_path(corr_tmp_path, sizeof(corr_tmp_path), test_dir, NEW_TEST_PREFIX, corr_pat, test_num);
       make_prefixed_path(corr_out_path, sizeof(corr_out_path), test_dir, NULL, corr_pat, test_num);
       make_prefixed_path(corr_del_path, sizeof(corr_del_path), test_dir, DEL_TEST_PREFIX, corr_pat, test_num);
       text = normalize_text(norm_type, corr_txt);
       r = write_file(corr_tmp_path, text);
       if (r < 0) FAIL(S_ERR_FS_ERROR);
       xfree(text); text = NULL;
-      r = need_file_update(corr_out_path, corr_tmp_path);
-      if (r < 0) FAIL(S_ERR_FS_ERROR);
-      if (!r) {
-        unlink(corr_tmp_path);
-        corr_tmp_path[0] = 0;
+      if (!insert_mode) {
+        r = need_file_update(corr_out_path, corr_tmp_path);
+        if (r < 0) FAIL(S_ERR_FS_ERROR);
+        if (!r) {
+          unlink(corr_tmp_path);
+          corr_tmp_path[0] = 0;
+        }
       }
     }
   }
@@ -2999,23 +3036,41 @@ super_serve_op_TESTS_TEST_EDIT_ACTION(
     r = ss_cgi_param(phr, "test_txt", &test_txt);
     if (r < 0) FAIL(S_ERR_INV_VALUE);
     if (r > 0) {
-      make_prefixed_path(test_tmp_path, sizeof(test_tmp_path), test_dir, TEMP_TEST_PREFIX, test_pat, test_num);
+      make_prefixed_path(test_tmp_path, sizeof(test_tmp_path), test_dir, NEW_TEST_PREFIX, test_pat, test_num);
       make_prefixed_path(test_out_path, sizeof(test_out_path), test_dir, NULL, test_pat, test_num);
       make_prefixed_path(test_del_path, sizeof(test_del_path), test_dir, DEL_TEST_PREFIX, test_pat, test_num);
       text = normalize_text(norm_type, test_txt);
       r = write_file(test_tmp_path, text);
       if (r < 0) FAIL(S_ERR_FS_ERROR);
       xfree(text); text = NULL;
-      r = need_file_update(test_out_path, test_tmp_path);
-      if (r < 0) FAIL(S_ERR_FS_ERROR);
-      if (!r) {
-        unlink(test_tmp_path);
-        test_tmp_path[0] = 0;
+      if (!insert_mode) {
+        r = need_file_update(test_out_path, test_tmp_path);
+        if (r < 0) FAIL(S_ERR_FS_ERROR);
+        if (!r) {
+          unlink(test_tmp_path);
+          test_tmp_path[0] = 0;
+        }
       }
     }
   }
   if (test_tmp_path[0] && (file_group > 0 || file_mode > 0)) {
     file_perms_set(log_f, test_tmp_path, file_group, file_mode, -1, -1);
+  }
+
+  if (insert_mode) {
+    retval = scan_test_directory(log_f, &dirinfo, cnts, test_dir, test_pat, corr_pat, info_pat, tgz_pat, tgzdir_pat);
+    if (retval < 0) goto cleanup;
+    retval = 0;
+
+    if (test_num <= dirinfo.test_ref_count) {
+      retval = insert_test(log_f, test_dir, test_pat, corr_pat, info_pat, tgz_pat, tgzdir_pat, NULL,
+                           dirinfo.test_ref_count, test_num);
+      if (retval < 0) goto cleanup;
+      retval = 0;
+    }
+
+    test_dir_info_free(&dirinfo);
+    memset(&dirinfo, 0, sizeof(dirinfo));
   }
 
   if (test_tmp_path[0]) {
@@ -3059,6 +3114,7 @@ super_serve_op_TESTS_TEST_EDIT_ACTION(
   ss_redirect_2(out_f, phr, SSERV_OP_TESTS_TESTS_VIEW_PAGE, contest_id, prob_id, variant, 0);
 
 cleanup:
+  test_dir_info_free(&dirinfo);
   xfree(text);
   if (tmp_f) fclose(tmp_f);
   if (test_tmp_path[0]) unlink(test_tmp_path);
