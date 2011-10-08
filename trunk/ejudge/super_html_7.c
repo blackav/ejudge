@@ -2478,7 +2478,7 @@ super_serve_op_TESTS_TEST_EDIT_PAGE(
   unsigned char path[PATH_MAX];
   int r;
   unsigned char *text = NULL;
-  int size = 0;
+  ssize_t size = 0;
   struct testinfo_struct testinfo;
   int norm_type = TEST_NORM_NONE;
   int insert_mode = 0;
