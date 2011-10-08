@@ -589,6 +589,13 @@ super_serve_op_TESTS_MAIN_PAGE(
         }
       }
       if (need_makefile) {
+        fprintf(out_f, "<td%s>%s%s</a></td>",
+                cl, 
+                html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                              NULL, "action=%d&amp;op=%d&amp;contest_id=%d&amp;variant=%d&amp;prob_id=%d",
+                              SSERV_CMD_HTTP_REQUEST, SSERV_OP_TESTS_MAKEFILE_EDIT_PAGE,
+                              contest_id, variant, prob_id),
+                "Edit");
       }
       fprintf(out_f, "</tr>");
     } while (++variant <= prob->variant_num);
@@ -2328,7 +2335,7 @@ report_file_info(
         const unsigned char *path,
         int binary_input,
         unsigned char **p_text,
-        int *p_size,
+        ssize_t *p_size,
         struct testinfo_struct *pti,
         int insert_mode)
 {
@@ -2715,6 +2722,11 @@ super_serve_op_TESTS_CANCEL_ACTION(
   const struct section_problem_data *prob = NULL;
   int prob_id = 0;
   int variant = 0;
+  int next_op = SSERV_OP_TESTS_TESTS_VIEW_PAGE;
+
+  if (phr->opcode == SSERV_OP_TESTS_CANCEL_2_ACTION) {
+    next_op = SSERV_OP_TESTS_MAIN_PAGE;
+  }
 
   ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
@@ -2741,7 +2753,7 @@ super_serve_op_TESTS_CANCEL_ACTION(
     if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
   }
 
-  ss_redirect_2(out_f, phr, SSERV_OP_TESTS_TESTS_VIEW_PAGE, contest_id, prob_id, variant, 0);
+  ss_redirect_2(out_f, phr, next_op, contest_id, prob_id, variant, 0);
 
 cleanup:
   return retval;
@@ -3359,5 +3371,123 @@ super_serve_op_TESTS_TEST_DELETE_ACTION(
 
 cleanup:
   test_dir_info_free(&td_info);
+  return retval;
+}
+
+int
+super_serve_op_TESTS_MAKEFILE_EDIT_PAGE(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  int contest_id = 0;
+  int prob_id = 0;
+  int variant = 0;
+  const struct contest_desc *cnts = NULL;
+  opcap_t caps = 0LL;
+  serve_state_t cs = NULL;
+  const struct section_global_data *global = NULL;
+  const struct section_problem_data *prob = NULL;
+  unsigned char makefile_path[PATH_MAX];
+  int r;
+  unsigned char *text = NULL;
+  ssize_t size = 0;
+  const unsigned char *cl = NULL;
+  unsigned char buf[1024], hbuf[1024];
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  FILE *prb_f = NULL;
+  char *prb_t = NULL;
+  size_t prb_z = 0;
+
+  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+
+  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
+  get_full_caps(phr, cnts, &caps);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(S_ERR_PERM_DENIED);
+
+  retval = check_other_editors(log_f, out_f, phr, contest_id, cnts);
+  if (retval <= 0) goto cleanup;
+  retval = 0;
+  cs = phr->ss->te_state;
+  global = cs->global;
+
+  if (global->advanced_layout <= 0) FAIL(S_ERR_INV_CONTEST);
+
+  ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
+  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
+  if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
+
+  variant = -1;
+  if (prob->variant_num > 0) {
+    ss_cgi_param_int_opt(phr, "variant", &variant, 0);
+    if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
+  }
+
+  prb_f = open_memstream(&prb_t, &prb_z);
+  prepare_unparse_actual_prob(prb_f, prob, cs->global, 0);
+  fclose(prb_f); prb_f = NULL;
+
+  snprintf(buf, sizeof(buf), "serve-control: %s, contest %d (%s), problem %s, editing Makefile",
+             phr->html_name, contest_id, ARMOR(cnts->name), prob->short_name);
+  ss_write_html_header(out_f, phr, buf, 0, NULL);
+  fprintf(out_f, "<h1>%s</h1>\n", buf);
+
+  fprintf(out_f, "<ul>");
+  fprintf(out_f, "<li>%s%s</a></li>",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL, NULL),
+          "Main page");
+  fprintf(out_f, "<li>%s%s</a></li>\n",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
+                        "action=%d&op=%d&contest_id=%d", SSERV_CMD_HTTP_REQUEST,
+                        SSERV_OP_TESTS_MAIN_PAGE, contest_id),
+          "Problems page");
+  fprintf(out_f, "<li>%s%s</a></li>\n",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
+                        "action=%d&op=%d&contest_id=%d&prob_id=%d", SSERV_CMD_HTTP_REQUEST,
+                        SSERV_OP_TESTS_TESTS_VIEW_PAGE, contest_id, prob_id),
+          "Tests page");
+  fprintf(out_f, "</ul>\n");
+
+  fprintf(out_f, "<h3>%s</h3>\n", "Config parameters");
+
+  fprintf(out_f, "<pre>%s</pre>\n", ARMOR(prb_t));
+
+  html_start_form(out_f, 1, phr->self_url, "");
+  html_hidden(out_f, "SID", "%016llx", phr->session_id);
+  html_hidden(out_f, "action", "%d", SSERV_CMD_HTTP_REQUEST);
+  html_hidden(out_f, "contest_id", "%d", contest_id);
+  html_hidden(out_f, "prob_id", "%d", prob_id);
+
+  fprintf(out_f, "<h3>%s</h3>\n", "Makefile");
+
+  get_advanced_layout_path(makefile_path, sizeof(makefile_path), global, prob, DFLT_P_MAKEFILE, variant);
+  r = report_file_info(out_f, makefile_path, 0, &text, &size, NULL, 0);
+  edit_file_textarea(out_f, "text", 80, 30, text);
+
+  cl = " class=\"b0\"";
+  fprintf(out_f, "<table%s><tr>", cl);
+  fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+          cl, SSERV_OP_TESTS_CANCEL_2_ACTION, "Cancel");
+  if (r != -2) {
+    fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+            cl, SSERV_OP_TESTS_MAKEFILE_EDIT_ACTION, "Save");
+  }
+  fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+          cl, SSERV_OP_TESTS_MAKEFILE_DELETE_ACTION, "Delete!");
+  fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+          cl, SSERV_OP_TESTS_MAKEFILE_GENERATE_ACTION, "Generate");
+  fprintf(out_f, "</tr></table>\n");
+  fprintf(out_f, "</form>\n");
+
+  ss_write_html_footer(out_f);
+
+cleanup:
+  if (prb_f) fclose(prb_f);
+  xfree(prb_t);
+  html_armor_free(&ab);
+  xfree(text);
   return retval;
 }

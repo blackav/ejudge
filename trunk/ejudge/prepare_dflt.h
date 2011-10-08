@@ -160,6 +160,7 @@
 #define DFLT_P_INFO_DIR           "tests"
 #define DFLT_P_TGZ_DIR            "tests"
 #define DFLT_P_CHECK_CMD          "check"
+#define DFLT_P_MAKEFILE           "Makefile"
 
 #define DFLT_T_WORK_DIR           "work"
 #define DFLT_T_TMP_DIR            "tmp"

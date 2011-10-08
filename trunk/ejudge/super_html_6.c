@@ -4105,7 +4105,7 @@ super_serve_op_USER_DELETE_REG_PAGE(
   if (next_op > 0) {
     html_hidden(out_f, "next_op", "%d", next_op);
   }
-  html_hidden(out_f, "op", "%d", SSERV_OP_USER_EDIT_REG_ACTION);
+  html_hidden(out_f, "op", "%d", SSERV_OP_USER_DELETE_REG_ACTION);
   cl = " class=\"b0\"";
   fprintf(out_f, "<table%s>\n", cl);
   fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%d</td></tr>\n",
