@@ -484,6 +484,28 @@ problem_xml_parse(const unsigned char *path)
   return 0;
 }
 
+static const unsigned char default_problem_xml[] =
+"<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n"
+"<problem\n"
+"   package = \"ru.ejudge\"\n"
+"   id = \"error\"\n"
+"   type = \"standard\">\n"
+"  <statement language=\"ru_RU\">\n"
+"    <title>Ошибка</title>\n"
+"    <description>\n"
+"     <p><font color=\"red\">Problem statement does not exist or invalid!</font></p>\n"
+"    </description>\n"
+"  </statement>\n"
+"</problem>\n";
+
+problem_xml_t
+problem_xml_parse_safe(const unsigned char *path)
+{
+  problem_xml_t prob = problem_xml_parse(path);
+  if (prob) return prob;
+  return problem_xml_parse_string("builtin", default_problem_xml);
+}
+
 problem_xml_t
 problem_xml_parse_string(const unsigned char *path, const unsigned char *str)
 {

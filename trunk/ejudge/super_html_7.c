@@ -1330,7 +1330,7 @@ prepare_test_file_names(
         unsigned char *tgz_pat,
         unsigned char *tgzdir_pat)
 {
-  int retval;
+  int retval = 0;
   unsigned char corr_dir[PATH_MAX];
   unsigned char info_dir[PATH_MAX];
   unsigned char tgz_dir[PATH_MAX];
@@ -3465,7 +3465,7 @@ super_serve_op_TESTS_MAKEFILE_EDIT_PAGE(
 
   get_advanced_layout_path(makefile_path, sizeof(makefile_path), global, prob, DFLT_P_MAKEFILE, variant);
   r = report_file_info(out_f, makefile_path, 0, &text, &size, NULL, 0);
-  edit_file_textarea(out_f, "text", 80, 30, text);
+  edit_file_textarea(out_f, "text", 100, 30, text);
 
   cl = " class=\"b0\"";
   fprintf(out_f, "<table%s><tr>", cl);
@@ -3488,6 +3488,459 @@ cleanup:
   if (prb_f) fclose(prb_f);
   xfree(prb_t);
   html_armor_free(&ab);
+  xfree(text);
+  return retval;
+}
+
+int
+super_serve_op_TESTS_MAKEFILE_EDIT_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  int contest_id = 0;
+  int prob_id = 0;
+  int variant = 0;
+  const struct contest_desc *cnts = NULL;
+  opcap_t caps = 0LL;
+  serve_state_t cs = NULL;
+  const struct section_global_data *global = NULL;
+  const struct section_problem_data *prob = NULL;
+  unsigned char makefile_path[PATH_MAX];
+  unsigned char tmp_makefile_path[PATH_MAX];
+  const unsigned char *text = NULL;
+  unsigned char *text2 = NULL;
+  int r;
+  int file_group = -1;
+  int file_mode = -1;
+
+  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+
+  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
+  get_full_caps(phr, cnts, &caps);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(S_ERR_PERM_DENIED);
+
+  retval = check_other_editors(log_f, out_f, phr, contest_id, cnts);
+  if (retval <= 0) goto cleanup;
+  retval = 0;
+  cs = phr->ss->te_state;
+  global = cs->global;
+
+  if (cnts->file_group) {
+    file_group = file_perms_parse_group(cnts->file_group);
+    if (file_group <= 0) FAIL(S_ERR_INV_SYS_GROUP);
+  }
+  if (cnts->file_mode) {
+    file_mode = file_perms_parse_mode(cnts->file_mode);
+    if (file_mode <= 0) FAIL(S_ERR_INV_SYS_MODE);
+  }
+
+  if (global->advanced_layout <= 0) FAIL(S_ERR_INV_CONTEST);
+
+  ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
+  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
+  if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
+
+  variant = -1;
+  if (prob->variant_num > 0) {
+    ss_cgi_param_int_opt(phr, "variant", &variant, 0);
+    if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
+  }
+  if (ss_cgi_param(phr, "text", &text) <= 0) FAIL(S_ERR_INV_VALUE);
+
+  get_advanced_layout_path(tmp_makefile_path, sizeof(tmp_makefile_path), global, prob, "tmp_Makefile", variant);
+  get_advanced_layout_path(makefile_path, sizeof(makefile_path), global, prob, DFLT_P_MAKEFILE, variant);
+
+  text2 = normalize_text(TEST_NORM_NL, text);
+  if (write_file(tmp_makefile_path, text2) < 0) FAIL(S_ERR_FS_ERROR);
+  if (file_group > 0 || file_mode > 0) {
+    file_perms_set(log_f, tmp_makefile_path, file_group, file_mode, -1, -1);
+  }
+
+  r = need_file_update(makefile_path, tmp_makefile_path);
+  if (r < 0) FAIL(S_ERR_FS_ERROR);
+  if (!r) {
+    unlink(tmp_makefile_path);
+    goto done;
+  }
+  if (logged_rename(log_f, tmp_makefile_path, makefile_path) < 0) {
+    FAIL(S_ERR_FS_ERROR);
+  }
+
+done:
+  ss_redirect_2(out_f, phr, SSERV_OP_TESTS_MAIN_PAGE, contest_id, prob_id, variant, 0);
+
+cleanup:
+  xfree(text2);
+  return retval;
+}
+
+int
+super_serve_op_TESTS_MAKEFILE_DELETE_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  int contest_id = 0;
+  int prob_id = 0;
+  int variant = 0;
+  const struct contest_desc *cnts = NULL;
+  opcap_t caps = 0LL;
+  serve_state_t cs = NULL;
+  const struct section_global_data *global = NULL;
+  const struct section_problem_data *prob = NULL;
+  unsigned char makefile_path[PATH_MAX];
+
+  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+
+  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
+  get_full_caps(phr, cnts, &caps);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(S_ERR_PERM_DENIED);
+
+  retval = check_other_editors(log_f, out_f, phr, contest_id, cnts);
+  if (retval <= 0) goto cleanup;
+  retval = 0;
+  cs = phr->ss->te_state;
+  global = cs->global;
+
+  if (global->advanced_layout <= 0) FAIL(S_ERR_INV_CONTEST);
+
+  ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
+  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
+  if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
+
+  variant = -1;
+  if (prob->variant_num > 0) {
+    ss_cgi_param_int_opt(phr, "variant", &variant, 0);
+    if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
+  }
+
+  get_advanced_layout_path(makefile_path, sizeof(makefile_path), global, prob, DFLT_P_MAKEFILE, variant);
+  if (logged_unlink(log_f, makefile_path) < 0) FAIL(S_ERR_FS_ERROR);
+
+  ss_redirect_2(out_f, phr, SSERV_OP_TESTS_MAIN_PAGE, contest_id, prob_id, variant, 0);
+
+cleanup:
+  return retval;
+}
+
+static const unsigned char ej_makefile_begin[] = "### BEGIN ejudge auto-generated makefile ###";
+static const unsigned char ej_makefile_end[] = "### END ejudge auto-generated makefile ###";
+
+static unsigned char *
+merge_lines(unsigned char **lines, int beg, int end)
+{
+  int i, totlen = 0;
+  unsigned char *str = NULL, *p;
+
+  for (i = beg; i < end; ++i) {
+    totlen += strlen(lines[i]) + 1;
+  }
+  if (totlen <= 0) return NULL;
+
+  p = str = (unsigned char *) xmalloc((totlen + 1) * sizeof(*str));
+  for (i = beg; i < end; ++i) {
+    p = stpcpy(p, lines[i]);
+    *p++ = '\n';
+  }
+  *p = 0;
+  return str;
+}
+
+static void
+extract_makefile_header_footer(
+        const unsigned char *text,
+        unsigned char **p_header,
+        unsigned char **p_footer)
+{
+  unsigned char **lines = NULL;
+  int i, slen, begin_idx = -1, end_idx = -1;
+
+  if (!text || !*text) return;
+  split_to_lines(text, (char***) &lines, 0);
+  if (lines == NULL) return;
+
+  for (i = 0; lines[i]; ++i) {
+    slen = strlen(lines[i]);
+    while (slen > 0 && isspace(lines[i][slen - 1])) --slen;
+    lines[i][slen] = 0;
+    if (begin_idx < 0 && !strcmp(lines[i], ej_makefile_begin)) {
+      begin_idx = i;
+    }
+    if (!strcmp(lines[i], ej_makefile_end)) {
+      end_idx = i;
+    }
+  }
+  if (begin_idx >= 0 && end_idx >= 0 && begin_idx >= end_idx) {
+    begin_idx = -1;
+    end_idx = -1;
+  }
+  if (begin_idx >= 0) {
+    *p_header = merge_lines(lines, 0, begin_idx);
+  }
+  if (end_idx >= 0) {
+    *p_footer = merge_lines(lines, end_idx + 1, i);
+  }
+}
+
+static void
+pattern_to_shell_pattern(
+        unsigned char *buf,
+        int len,
+        const unsigned char *pattern)
+{
+  const unsigned char *src = pattern;
+  unsigned char *dst = buf;
+  int width = -1, prec = -1;
+
+  while (*src) {
+    if (*src == '%') {
+      ++src;
+      if (!*src) continue;
+      if (*src == '%') {
+        *dst++ = *src++;
+        continue;
+      }
+      if (*src == '#' || *src == '0' || *src == '-' || *src == ' ' || *src == '+' || *src == '\'' || *src == 'I') {
+        ++src;
+      }
+      if (*src >= '0' && *src <= '9') {
+        width = 0;
+        while (*src >= '0' && *src <= '9') {
+          width = width * 10 + (*src - '0');
+          ++src;
+        }
+      }
+      if (*src == '.') {
+        ++src;
+        if (*src >= '0' && *src <= '9') {
+          prec = 0;
+          while (*src >= '0' && *src <= '9') {
+            prec = prec * 10 + (*src - '0');
+            ++src;
+          }
+        }
+      }
+      if (*src == 'h') {
+        ++src;
+        if (*src == 'h') ++src;
+      } else if (*src == 'l') {
+        ++src;
+        if (*src == 'l') ++src;
+      } else if (*src == 'L' && *src == 'q' && *src == 'j' && *src == 'z' && *src == 't') {
+        ++src;
+      }
+      if (*src == 'd' || *src == 'i' || *src == 'o' || *src == 'u' || *src == 'x' || *src == 'X'
+          || *src == 'e' || *src == 'E' || *src == 'f' || *src == 'F'
+          || *src == 'g' || *src == 'G' || *src == 'a' || *src == 'A'
+          || *src == 'c' || *src == 's' || *src == 'p' || *src == 'n'
+          || *src == 'C' || *src == 'S' || *src == 'm') {
+        ++src;
+        if (width <= 0) {
+          *dst++ = '*';
+        } else {
+          for (; width; --width) {
+            *dst++ = '?';
+          }
+        }
+      }
+    } else {
+      *dst++ = *src++;
+    }
+  }
+  *dst = 0;
+}
+
+static void
+generate_makefile(
+        FILE *log_f,
+        FILE *mk_f,
+        struct super_http_request_info *phr,
+        const struct contest_desc *cnts,
+        serve_state_t cs,
+        const struct section_global_data *global,
+        const struct section_problem_data *prob,
+        int variant)
+{
+  int retval = 0;
+  unsigned char test_dir[PATH_MAX];
+  unsigned char test_pat[PATH_MAX];
+  unsigned char corr_pat[PATH_MAX];
+  unsigned char info_pat[PATH_MAX];
+  unsigned char tgz_pat[PATH_MAX];
+  unsigned char tgzdir_pat[PATH_MAX];
+  unsigned char test_pr_pat[PATH_MAX];
+  /*
+  int need_c = 0;
+  int need_cpp = 0;
+  int need_java = 0;
+  */
+
+  test_dir[0] = 0;
+  test_pat[0] = 0;
+  corr_pat[0] = 0;
+  info_pat[0] = 0;
+  tgz_pat[0] = 0;
+  tgzdir_pat[0] = 0;
+  test_pr_pat[0] = 0;
+
+  retval = prepare_test_file_names(log_f, phr, cnts, global, prob, variant, NULL,
+                                   sizeof(test_dir), test_dir, test_pat, corr_pat, info_pat,
+                                   tgz_pat, tgzdir_pat);
+  if (retval < 0) return;
+  pattern_to_shell_pattern(test_pr_pat, sizeof(test_pr_pat), test_pat);
+
+  /* detect which languages we'll need */
+
+  fprintf(mk_f, "%s\n", ej_makefile_begin);
+  fprintf(mk_f, "EJUDGE_PREFIX_DIR ?= %s\n", EJUDGE_PREFIX_DIR);
+  fprintf(mk_f, "EJUDGE_CONTESTS_HOME_DIR ?= %s\n", EJUDGE_CONTESTS_HOME_DIR);
+#if defined EJUDGE_LOCAL_DIR
+  fprintf(mk_f, "EJUDGE_LOCAL_DIR ?= %s\n", EJUDGE_LOCAL_DIR);
+#endif /* EJUDGE_LOCAL_DIR */
+  fprintf(mk_f, "\n");
+
+  fprintf(mk_f, "EXECUTE = ${EJUDGE_PREFIX_DIR}/bin/ejudge-execute\n");
+  fprintf(mk_f, "EXECUTE_FLAGS = --quiet");
+  if (prob->use_stdin > 0) fprintf(mk_f, " --use-stdin");
+  if (prob->use_stdout > 0) fprintf(mk_f, " --use-stdout");
+  if (test_pat[0] > ' ') fprintf(mk_f, " --test-pattern=%s", test_pat);
+  if (corr_pat[0] > ' ') fprintf(mk_f, " --corr-pattern=%s", corr_pat);
+  if (info_pat[0] > ' ') fprintf(mk_f, " --info-pattern=%s", info_pat);
+  if (cnts->file_group && cnts->file_group[0]) fprintf(mk_f, " --group=%s", cnts->file_group);
+  if (cnts->file_mode && cnts->file_mode[0]) fprintf(mk_f, " --mode=%s", cnts->file_mode);
+  if (prob->time_limit_millis > 0) {
+    fprintf(mk_f, " --time-limit-millis=%d", prob->time_limit_millis);
+  } else if (prob->time_limit > 0) {
+    fprintf(mk_f, " --time-limit=%d", prob->time_limit);
+  }
+  fprintf(mk_f, "\n");
+  fprintf(mk_f, "\n");
+
+  fprintf(mk_f, "ejudge_make_problem : all\n");
+  fprintf(mk_f, "all : \n");
+  fprintf(mk_f, "\n");
+
+  /* solution compilation part  */
+
+  /* test generation part */
+  if (prob->solution_cmd && prob->solution_cmd[0]) {
+    fprintf(mk_f, "answers : %s\n", prob->solution_cmd);
+    fprintf(mk_f, "\tcd tests; for i in %s; do ${EXECUTE} ${EXECUTE_FLAGS} --test-file=$$i ../%s; done\n",
+            test_pr_pat, prob->solution_cmd);
+    fprintf(mk_f, "\n");
+    fprintf(mk_f, "answer : %s\n", prob->solution_cmd);
+    fprintf(mk_f, "\tcd tests && ${EXECUTE} ${EXECUTE_FLAGS} --test-num=${TEST_NUM} ../%s\n", prob->solution_cmd);
+    fprintf(mk_f, "\n");
+  }
+
+  fprintf(mk_f, "%s\n", ej_makefile_end);
+}
+
+int
+super_serve_op_TESTS_MAKEFILE_GENERATE_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  int contest_id = 0;
+  int prob_id = 0;
+  int variant = 0;
+  const struct contest_desc *cnts = NULL;
+  opcap_t caps = 0LL;
+  serve_state_t cs = NULL;
+  const struct section_global_data *global = NULL;
+  const struct section_problem_data *prob = NULL;
+  unsigned char makefile_path[PATH_MAX];
+  unsigned char tmp_makefile_path[PATH_MAX];
+  int file_group = -1;
+  int file_mode = -1;
+  char *text = 0;
+  size_t size = 0;
+  unsigned char *header = NULL;
+  unsigned char *footer = NULL;
+  FILE *mk_f = NULL;
+  int r;
+
+  tmp_makefile_path[0] = 0;
+
+  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+
+  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
+  get_full_caps(phr, cnts, &caps);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(S_ERR_PERM_DENIED);
+
+  retval = check_other_editors(log_f, out_f, phr, contest_id, cnts);
+  if (retval <= 0) goto cleanup;
+  retval = 0;
+  cs = phr->ss->te_state;
+  global = cs->global;
+
+  if (cnts->file_group) {
+    file_group = file_perms_parse_group(cnts->file_group);
+    if (file_group <= 0) FAIL(S_ERR_INV_SYS_GROUP);
+  }
+  if (cnts->file_mode) {
+    file_mode = file_perms_parse_mode(cnts->file_mode);
+    if (file_mode <= 0) FAIL(S_ERR_INV_SYS_MODE);
+  }
+
+  if (global->advanced_layout <= 0) FAIL(S_ERR_INV_CONTEST);
+
+  ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
+  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
+  if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
+
+  variant = -1;
+  if (prob->variant_num > 0) {
+    ss_cgi_param_int_opt(phr, "variant", &variant, 0);
+    if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
+  }
+
+  get_advanced_layout_path(tmp_makefile_path, sizeof(tmp_makefile_path), global, prob, "tmp_Makefile", variant);
+  get_advanced_layout_path(makefile_path, sizeof(makefile_path), global, prob, DFLT_P_MAKEFILE, variant);
+
+  if (generic_read_file(&text, 0, &size, 0, 0, makefile_path, 0) >= 0) {
+    extract_makefile_header_footer(text, &header, &footer);
+  }
+
+  mk_f = fopen(tmp_makefile_path, "w");
+  if (header) fprintf(mk_f, "%s", header);
+  generate_makefile(log_f, mk_f, phr, cnts, cs, global, prob, variant);
+  if (footer) fprintf(mk_f, "%s", footer);
+  fclose(mk_f); mk_f = NULL;
+
+  if (file_group > 0 || file_mode > 0) {
+    file_perms_set(log_f, tmp_makefile_path, file_group, file_mode, -1, -1);
+  }
+
+  r = need_file_update(makefile_path, tmp_makefile_path);
+  if (r < 0) FAIL(S_ERR_FS_ERROR);
+  if (!r) {
+    unlink(tmp_makefile_path);
+    goto done;
+  }
+  if (logged_rename(log_f, tmp_makefile_path, makefile_path) < 0) {
+    FAIL(S_ERR_FS_ERROR);
+  }
+
+done:
+  ss_redirect_2(out_f, phr, SSERV_OP_TESTS_MAIN_PAGE, contest_id, prob_id, variant, 0);
+
+cleanup:
+  if (mk_f) fclose(mk_f);
+  if (tmp_makefile_path[0]) unlink(tmp_makefile_path);
+  xfree(header);
+  xfree(footer);
   xfree(text);
   return retval;
 }

@@ -410,6 +410,21 @@ run_program(int argc, char *argv[])
   output_path[0] = 0;
   error_path[0] = 0;
 
+  if (test_file && test_file[0] && test_pattern && test_pattern[0]) {
+    // guess test_num from test_file and test_pat
+    // FIXME: dumb!
+    i = 0;
+    do {
+      ++i;
+      snprintf(buf, sizeof(buf), test_pattern, i);
+    } while (i < 1000 && strcmp(buf, test_file) != 0);
+    if (i >= 1000) {
+      fatal("failed to guess test_num from test_file and test_pattern");
+    }
+    test_num = i;
+    test_file = NULL;
+  }
+
   if (test_num > 0) {
     if (test_pattern && test_pattern[0]) {
       snprintf(buf, sizeof(buf), test_pattern, test_num);
