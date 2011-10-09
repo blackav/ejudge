@@ -4,7 +4,7 @@
 #ifndef __PROBLEM_XML_H__
 #define __PROBLEM_XML_H__
 
-/* Copyright (C) 2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -130,6 +130,7 @@ struct problem_desc
 };
 
 problem_xml_t problem_xml_parse(const unsigned char *path);
+problem_xml_t problem_xml_parse_safe(const unsigned char *path);
 problem_xml_t problem_xml_parse_string(const unsigned char *path,
                                        const unsigned char *str);
 problem_xml_t problem_xml_parse_stream(const unsigned char *path, FILE *f);
