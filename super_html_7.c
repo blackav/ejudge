@@ -33,6 +33,7 @@
 #include "fileutl.h"
 #include "testinfo.h"
 #include "file_perms.h"
+#include "ej_process.h"
 
 #include "reuse_xalloc.h"
 #include "reuse_osdeps.h"
@@ -3757,6 +3758,166 @@ pattern_to_shell_pattern(
   *dst = 0;
 }
 
+enum
+{
+  LANG_C = 1,
+  LANG_CPP = 2,
+  LANG_JAVA = 4,
+  LANG_FPC = 8,
+  LANG_DCC = 16,
+};
+
+struct source_suffixes_s
+{
+  unsigned char *suffix;
+  unsigned long mask;
+};
+static const struct source_suffixes_s source_suffixes[] =
+{
+  { ".c", LANG_C },
+  { ".cpp", LANG_CPP },
+  { ".java", LANG_JAVA },
+  { ".pas", LANG_FPC },
+  { ".dpr", LANG_DCC },
+  { 0, 0 },
+};
+
+static const unsigned char *
+get_source_suffix(int mask)
+{
+  int i;
+  for (i = 0; source_suffixes[i].suffix; ++i) {
+    if (source_suffixes[i].mask == mask)
+      return source_suffixes[i].suffix;
+  }
+  return NULL;
+}
+
+static unsigned long
+guess_language_by_cmd(unsigned char *cmd)
+{
+  int len, i;
+  unsigned char path2[PATH_MAX];
+  struct stat stb;
+
+  if (!cmd || !*cmd) return 0;
+  len = strlen(cmd);
+  i = len - 1;
+  while (i >= 0 && cmd[i] != '/' && cmd[i] != '.') --i;
+  if (i >= 0 && cmd[i] == '.') {
+    if (!strcmp(cmd + i, ".class") || !strcmp(cmd + i, ".jar")) return LANG_JAVA;
+    if (!strcmp(cmd + i, ".exe")) {
+      if (i > 0 && cmd[i - 1] != '/' && cmd[i - 1] != '.') {
+        cmd[i] = 0;
+      }
+    }
+  }
+  for (i = 0; source_suffixes[i].suffix; ++i) {
+    snprintf(path2, sizeof(path2), "%s%s", cmd, source_suffixes[i].suffix);
+    if (access(path2, R_OK) >= 0 && stat(path2, &stb) >= 0 && S_ISREG(stb.st_mode)) {
+      return source_suffixes[i].mask;
+    }
+  }
+  return 0;
+}
+
+static unsigned long
+guess_language_by_src(const unsigned char *src)
+{
+  int len, i, j;
+
+  if (!src || !*src) return 0;
+  len = strlen(src);
+  i = len - 1;
+  while (i >= 0 && src[i] != '/' && src[i] != '.') --i;
+  if (i <= 0 || src[i] == '/') return 0;
+  if (src[i - 1] == '/' || src[i - 1] == '.') return 0;
+  for (j = 0; source_suffixes[j].suffix; ++j) {
+    if (!strcmp(src + i, source_suffixes[j].suffix))
+      return source_suffixes[j].mask;
+  }
+  return 0;
+}
+
+static unsigned char *
+get_compiler_path(
+        FILE *log_f,
+        const struct ejudge_cfg *config,
+        const unsigned char *script_dir_default,
+        const unsigned char *lang_short_name)
+{
+  unsigned char script_dir[PATH_MAX];
+  unsigned char version_script[PATH_MAX];
+  char *args[3];
+  unsigned char *stdout_text = NULL;
+  unsigned char *stderr_text = NULL;
+  int retval = 0, slen;
+
+  script_dir[0] = 0;
+  if (!config) config = ejudge_config;
+  if (script_dir_default && script_dir_default[0]) {
+    snprintf(script_dir, sizeof(script_dir), "%s", script_dir_default);
+  }
+  if (!script_dir[0] && config && config->compile_home_dir) {
+    snprintf(script_dir, sizeof(script_dir), "%s/scripts",
+             config->compile_home_dir);
+  }
+#if defined EJUDGE_CONTESTS_HOME_DIR
+  if (!script_dir[0]) {
+    snprintf(script_dir, sizeof(script_dir), "%s/compile/scripts",
+             EJUDGE_CONTESTS_HOME_DIR);
+  }
+#endif
+  snprintf(version_script, sizeof(version_script), "%s/%s-version", script_dir, lang_short_name);
+  args[0] = version_script;
+  args[1] = "-p";
+  args[2] = NULL;
+  retval = ejudge_invoke_process(args, NULL, NULL, NULL, 0, &stdout_text, &stderr_text);
+  if (retval != 0) {
+    if (stderr_text && *stderr_text) {
+      fprintf(log_f, "%s failed:\n---\n%s\n---\n", version_script, stderr_text);
+    } else {
+      fprintf(log_f, "%s failed\n", version_script);
+    }
+    xfree(stdout_text);
+    xfree(stderr_text);
+    return NULL;
+  }
+  xfree(stderr_text); stderr_text = NULL;
+  if (!stdout_text || !*stdout_text) {
+    fprintf(log_f, "%s output is empty\n", version_script);
+    xfree(stdout_text);
+    return NULL;
+  }
+  slen = strlen(stdout_text);
+  while (slen > 0 && isspace(stdout_text[slen - 1])) --slen;
+  stdout_text[slen] = 0;
+  if (!slen) {
+    fprintf(log_f, "%s output is empty\n", version_script);
+    xfree(stdout_text);
+    return NULL;
+  }
+  return stdout_text;
+}
+
+static const unsigned char *
+get_compiler_flags(serve_state_t cs, const unsigned char *lang_short_name)
+{
+  static const unsigned char compiler_flags_prefix[] = "EJUDGE_FLAGS=";
+
+  int lang_id, i;
+  const struct section_language_data *lang;
+  for (lang_id = 1; lang_id <= cs->max_lang; ++lang_id) {
+    if (!(lang = cs->langs[lang_id]) || strcmp(lang->short_name, lang_short_name)) continue;
+    if (!lang->compiler_env) return NULL;
+    for (i = 0; lang->compiler_env[i]; ++i) {
+      if (!strncmp(compiler_flags_prefix, lang->compiler_env[i], sizeof(compiler_flags_prefix) - 1))
+        return lang->compiler_env[i] + sizeof(compiler_flags_prefix) - 1;
+    }
+  }
+  return NULL;
+}
+
 static void
 generate_makefile(
         FILE *log_f,
@@ -3776,11 +3937,12 @@ generate_makefile(
   unsigned char tgz_pat[PATH_MAX];
   unsigned char tgzdir_pat[PATH_MAX];
   unsigned char test_pr_pat[PATH_MAX];
-  /*
-  int need_c = 0;
-  int need_cpp = 0;
-  int need_java = 0;
-  */
+  unsigned long languages = 0;
+  unsigned char tmp_path[PATH_MAX];
+  unsigned char *compiler_path = NULL;
+  const unsigned char *compiler_flags = NULL;
+  int has_header = 0;
+  const unsigned char *source_suffix = NULL;
 
   test_dir[0] = 0;
   test_pat[0] = 0;
@@ -3797,6 +3959,41 @@ generate_makefile(
   pattern_to_shell_pattern(test_pr_pat, sizeof(test_pr_pat), test_pat);
 
   /* detect which languages we'll need */
+  if (prob->source_header && prob->source_header[0]) {
+    languages |= guess_language_by_src(prob->source_header);
+  }
+  if (prob->source_footer && prob->source_footer[0]) {
+    languages |= guess_language_by_src(prob->source_footer);
+  }
+  if (prob->solution_src && prob->solution_src[0]) {
+    languages |= guess_language_by_src(prob->solution_src);
+  }
+
+  // tmp_path is modified by guess_language_by_cmd
+  if (prob->check_cmd && prob->check_cmd[0]) {
+    get_advanced_layout_path(tmp_path, sizeof(tmp_path), global, prob, prob->check_cmd, variant);
+    languages |= guess_language_by_cmd(tmp_path);
+  }
+  if (prob->valuer_cmd && prob->valuer_cmd[0]) {
+    get_advanced_layout_path(tmp_path, sizeof(tmp_path), global, prob, prob->valuer_cmd, variant);
+    languages |= guess_language_by_cmd(tmp_path);
+  }
+  if (prob->interactor_cmd && prob->interactor_cmd[0]) {
+    get_advanced_layout_path(tmp_path, sizeof(tmp_path), global, prob, prob->interactor_cmd, variant);
+    languages |= guess_language_by_cmd(tmp_path);
+  }
+  if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
+    get_advanced_layout_path(tmp_path, sizeof(tmp_path), global, prob, prob->style_checker_cmd, variant);
+    languages |= guess_language_by_cmd(tmp_path);
+  }
+  if (prob->test_checker_cmd && prob->test_checker_cmd[0]) {
+    get_advanced_layout_path(tmp_path, sizeof(tmp_path), global, prob, prob->test_checker_cmd, variant);
+    languages |= guess_language_by_cmd(tmp_path);
+  }
+  if (prob->solution_cmd && prob->solution_cmd[0]) {
+    get_advanced_layout_path(tmp_path, sizeof(tmp_path), global, prob, prob->solution_cmd, variant);
+    languages |= guess_language_by_cmd(tmp_path);
+  }
 
   fprintf(mk_f, "%s\n", ej_makefile_begin);
   fprintf(mk_f, "EJUDGE_PREFIX_DIR ?= %s\n", EJUDGE_PREFIX_DIR);
@@ -3804,6 +4001,25 @@ generate_makefile(
 #if defined EJUDGE_LOCAL_DIR
   fprintf(mk_f, "EJUDGE_LOCAL_DIR ?= %s\n", EJUDGE_LOCAL_DIR);
 #endif /* EJUDGE_LOCAL_DIR */
+  fprintf(mk_f, "\n");
+
+  if ((languages & LANG_C)) {
+    compiler_path = get_compiler_path(log_f, NULL, NULL, "gcc");
+    if (!compiler_path) {
+      fprintf(mk_f, "# C compiler is not found\nCC ?= /bin/false\n");
+    } else {
+      fprintf(mk_f, "CC = %s\n", compiler_path);
+    }
+    xfree(compiler_path); compiler_path = NULL;
+    compiler_flags = get_compiler_flags(cs, "gcc");
+    if (!compiler_flags) {
+      fprintf(mk_f, "CFLAGS = -Wall -g\n");
+    } else {
+      fprintf(mk_f, "CFLAGS = %s\n", compiler_flags);
+    }
+    compiler_flags = NULL;
+    fprintf(mk_f, "CLIBS ?= -lm\n");
+  }
   fprintf(mk_f, "\n");
 
   fprintf(mk_f, "EXECUTE = ${EJUDGE_PREFIX_DIR}/bin/ejudge-execute\n");
@@ -3823,11 +4039,56 @@ generate_makefile(
   fprintf(mk_f, "\n");
   fprintf(mk_f, "\n");
 
+  fprintf(mk_f, "all :");
+  if (prob->solution_cmd && prob->solution_cmd[0]) {
+    fprintf(mk_f, " %s", prob->solution_cmd);
+  }
+  fprintf(mk_f, "\n");
   fprintf(mk_f, "ejudge_make_problem : all\n");
-  fprintf(mk_f, "all : \n");
   fprintf(mk_f, "\n");
 
   /* solution compilation part  */
+  if (prob->solution_cmd && prob->solution_cmd[0]) {
+    if (prob->source_header && prob->source_header[0]) has_header = 1;
+    if (prob->source_footer && prob->source_footer[0]) has_header = 1;
+    if (prob->solution_src && prob->solution_src[0]) {
+      languages = guess_language_by_src(prob->solution_src);
+      source_suffix = get_source_suffix(languages);
+      if (has_header) {
+        fprintf(mk_f, "%s%s :", prob->solution_cmd, source_suffix);
+        if (prob->source_header && prob->source_header[0]) {
+          fprintf(mk_f, " %s", prob->source_header);
+        }
+        fprintf(mk_f, " %s", prob->solution_src);
+        if (prob->source_footer && prob->source_footer[0]) {
+          fprintf(mk_f, " %s", prob->source_footer);
+        }
+        fprintf(mk_f, "\n");
+        fprintf(mk_f, "\tcat $^ > $@\n");
+      }
+      if (languages == LANG_C) {
+        fprintf(mk_f, "%s : %s%s\n", prob->solution_cmd, prob->solution_cmd, source_suffix);
+        fprintf(mk_f, "\t${CC} ${CFLAGS} %s%s -o%s ${CLIBS}\n",
+                prob->solution_cmd, source_suffix, prob->solution_cmd);
+      } else {
+        fprintf(mk_f, "# no information how to build solution '%s' from '%s'\n",
+                prob->solution_cmd, prob->solution_src);
+      }
+    } else if (!has_header) {
+      languages = guess_language_by_cmd(prob->solution_cmd);
+      source_suffix = get_source_suffix(languages);
+      if (languages == LANG_C) {
+        fprintf(mk_f, "%s : %s%s\n", prob->solution_cmd, prob->solution_cmd, source_suffix);
+        fprintf(mk_f, "\t${CC} ${CFLAGS} %s%s -o%s ${CLIBS}\n",
+                prob->solution_cmd, source_suffix, prob->solution_cmd);
+      } else {
+        fprintf(mk_f, "# no information how to build solution '%s'\n", prob->solution_cmd);
+      }
+    } else {
+      fprintf(mk_f, "# no information how to build solution '%s' with header or footer\n", prob->solution_cmd);
+    }
+  }
+  fprintf(mk_f, "\n");
 
   /* test generation part */
   if (prob->solution_cmd && prob->solution_cmd[0]) {
@@ -3839,6 +4100,14 @@ generate_makefile(
     fprintf(mk_f, "\tcd tests && ${EXECUTE} ${EXECUTE_FLAGS} --test-num=${TEST_NUM} ../%s\n", prob->solution_cmd);
     fprintf(mk_f, "\n");
   }
+  fprintf(mk_f, "\n");
+
+  fprintf(mk_f, "clean :\n");
+  fprintf(mk_f, "\t-rm -f *.o");
+  if (prob->solution_cmd && prob->solution_cmd[0]) {
+    fprintf(mk_f, " %s", prob->solution_cmd);
+  }
+  fprintf(mk_f, "\n\n");
 
   fprintf(mk_f, "%s\n", ej_makefile_end);
 }
