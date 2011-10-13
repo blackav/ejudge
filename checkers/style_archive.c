@@ -245,7 +245,7 @@ parse_file_type(const unsigned char *str, int *p_type)
     } else if (str[ind] == '-') {
     } else return -1;
     ++ind; bit >>= 1;
-    if (str[ind] == 'x') {
+    if (str[ind] == 'x' || str[ind] == 's' || str[ind] == 'S') {
       ftype |= bit;
     } else if (str[ind] == '-') {
     } else return -1;
