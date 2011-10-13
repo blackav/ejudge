@@ -337,7 +337,10 @@ check_file_name(const unsigned char *name)
   while (*str && is_valid_char(*str)) {
     ++str;
   }
-  if (*str) {
+  if (*str >= ' ' && *str != 127) {
+    error("invalid character '%c' in file name %s", *str, name);
+    return -1;
+  } else if (*str) {
     error("invalid character with code %d in file name %s", *str, name);
     return -1;
   }
