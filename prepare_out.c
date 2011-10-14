@@ -1239,6 +1239,7 @@ prepare_unparse_prob(
   if (prob->style_checker_cmd[0])
     fprintf(f,"style_checker_cmd = \"%s\"\n",CARMOR(prob->style_checker_cmd));
   do_xstr(f, &ab, "style_checker_env", prob->style_checker_env);
+  do_xstr(f, &ab, "lang_compiler_env", prob->lang_compiler_env);
   if (prob->test_checker_cmd && prob->test_checker_cmd[0]) {
     fprintf(f,"test_checker_cmd = \"%s\"\n", CARMOR(prob->test_checker_cmd));
   }
@@ -1541,6 +1542,7 @@ prepare_unparse_actual_prob(
   if (show_paths && prob->style_checker_cmd[0])
     fprintf(f,"style_checker_cmd = \"%s\"\n",CARMOR(prob->style_checker_cmd));
   do_xstr(f, &ab, "style_checker_env", prob->style_checker_env);
+  do_xstr(f, &ab, "lang_compiler_env", prob->lang_compiler_env);
   if (show_paths && prob->test_checker_cmd && prob->test_checker_cmd[0]) {
     fprintf(f,"test_checker_cmd = \"%s\"\n", CARMOR(prob->test_checker_cmd));
   }

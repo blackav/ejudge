@@ -440,6 +440,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(enable_language, "x"),
   PROBLEM_PARAM(require, "x"),
   PROBLEM_PARAM(standard_checker, "s"),
+  PROBLEM_PARAM(lang_compiler_env, "x"),
   PROBLEM_PARAM(checker_env, "x"),
   PROBLEM_PARAM(valuer_env, "x"),
   PROBLEM_PARAM(interactor_env, "x"),
@@ -940,6 +941,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
   sarray_free(p->disable_language);
   sarray_free(p->enable_language);
   sarray_free(p->require);
+  sarray_free(p->lang_compiler_env);
   sarray_free(p->checker_env);
   sarray_free(p->valuer_env);
   sarray_free(p->interactor_env);
@@ -3387,6 +3389,22 @@ set_defaults(
         }
       }
 
+      if (si != -1 && aprob->lang_compiler_env) {
+        prob->lang_compiler_env = sarray_merge_pf(aprob->lang_compiler_env,
+                                                  prob->lang_compiler_env);
+      }
+      if (prob->lang_compiler_env) {
+        for (j = 0; prob->lang_compiler_env[j]; j++) {
+          prob->lang_compiler_env[j] = varsubst_heap(state,
+                                                     prob->lang_compiler_env[j],
+                                                     1, section_global_params,
+                                                     section_problem_params,
+                                                     section_language_params,
+                                                     section_tester_params);
+          if (!prob->lang_compiler_env[j]) return -1;
+        }
+      }
+
       if (si != -1 && aprob->style_checker_env) {
         prob->style_checker_env = sarray_merge_pf(aprob->style_checker_env,
                                                   prob->style_checker_env);
@@ -5384,6 +5402,7 @@ prepare_copy_problem(const struct section_problem_data *in)
   out->valuer_env = 0;
   out->interactor_env = 0;
   out->style_checker_env = 0;
+  out->lang_compiler_env = 0;
   out->test_checker_env = 0;
   if (in->test_checker_cmd) {
     out->test_checker_cmd = xstrdup(in->test_checker_cmd);
@@ -6246,6 +6265,7 @@ static const int prob_settable_list[] =
   CNTSPROB_variant_num, CNTSPROB_date_penalty, CNTSPROB_group_start_date,
   CNTSPROB_group_deadline, CNTSPROB_disable_language,
   CNTSPROB_enable_language, CNTSPROB_require, CNTSPROB_standard_checker,
+  CNTSPROB_lang_compiler_env,
   CNTSPROB_checker_env, CNTSPROB_valuer_env, CNTSPROB_interactor_env,
   CNTSPROB_style_checker_env, CNTSPROB_test_checker_env, CNTSPROB_lang_time_adj,
   CNTSPROB_lang_time_adj_millis, CNTSPROB_check_cmd, CNTSPROB_valuer_cmd,
@@ -6366,6 +6386,7 @@ static const unsigned char prob_settable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_enable_language] = 1,
   [CNTSPROB_require] = 1,
   [CNTSPROB_standard_checker] = 1,
+  [CNTSPROB_lang_compiler_env] = 1,
   [CNTSPROB_checker_env] = 1,
   [CNTSPROB_valuer_env] = 1,
   [CNTSPROB_interactor_env] = 1,
@@ -6444,7 +6465,7 @@ static const int prob_inheritable_list[] =
   CNTSPROB_group_start_date, CNTSPROB_group_deadline,
   CNTSPROB_disable_language, CNTSPROB_enable_language, CNTSPROB_require,
   CNTSPROB_standard_checker, CNTSPROB_checker_env, CNTSPROB_valuer_env,
-  CNTSPROB_interactor_env, CNTSPROB_style_checker_env,
+  CNTSPROB_interactor_env, CNTSPROB_style_checker_env, CNTSPROB_lang_compiler_env,
   CNTSPROB_test_checker_env, CNTSPROB_lang_time_adj,
   CNTSPROB_lang_time_adj_millis, CNTSPROB_check_cmd, CNTSPROB_valuer_cmd,
   CNTSPROB_interactor_cmd, CNTSPROB_style_checker_cmd,
@@ -6553,6 +6574,7 @@ static const unsigned char prob_inheritable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_enable_language] = 1,
   [CNTSPROB_require] = 1,
   [CNTSPROB_standard_checker] = 1,
+  [CNTSPROB_lang_compiler_env] = 1,
   [CNTSPROB_checker_env] = 1,
   [CNTSPROB_valuer_env] = 1,
   [CNTSPROB_interactor_env] = 1,
@@ -6699,6 +6721,7 @@ static const struct section_problem_data prob_undef_values =
   .disable_language = 0,
   .enable_language = 0,
   .require = 0,
+  .lang_compiler_env = 0,
   .checker_env = 0,
   .valuer_env = 0,
   .interactor_env = 0,

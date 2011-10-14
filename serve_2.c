@@ -935,6 +935,26 @@ serve_packet_name(int run_id, int prio, unsigned char buf[])
   b32_number(num, buf);
 }
 
+static char **
+filter_lang_environ(const unsigned char *lang_short_name, char **environ)
+{
+  int count = 0, i, llen, j = 0;
+  char **env = NULL;
+  llen = strlen(lang_short_name);
+  for (i = 0; environ[i]; ++i) {
+    if (strlen(environ[i]) > llen && strncmp(lang_short_name, environ[i], llen) && environ[i][llen] == '=') {
+      ++count;
+    }
+  }
+  XCALLOC(env, count + 1);
+  for (i = 0; environ[i]; ++i) {
+    if (strlen(environ[i]) > llen && strncmp(lang_short_name, environ[i], llen) && environ[i][llen] == '=') {
+      env[j++] = xstrdup(environ[i] + llen + 1);
+    }
+  }
+  return env;
+}
+
 int
 serve_compile_request(
         serve_state_t state,
@@ -973,6 +993,8 @@ serve_compile_request(
   size_t src_out_size = 0;
   int prio = 0;
   char **sc_env_mem = 0;
+  char **comp_env_mem = NULL;
+  char **comp_env_mem_2 = NULL;
   const unsigned char *compile_src_dir = 0;
   const unsigned char *compile_queue_dir = 0;
 
@@ -1032,6 +1054,17 @@ serve_compile_request(
                global->checker_dir, tmp_path);
       style_checker_cmd = tmp_path_2;
     }
+  }
+
+  if (prob && prob->lang_compiler_env && lang) {
+    comp_env_mem_2 = filter_lang_environ(lang->short_name, prob->lang_compiler_env);
+  }
+
+  if (compiler_env && compiler_env[0] && comp_env_mem_2 && comp_env_mem_2[0]) {
+    comp_env_mem = sarray_merge_pp(compiler_env, comp_env_mem_2);
+    compiler_env = comp_env_mem;
+  } else if (comp_env_mem_2 && comp_env_mem_2[0]) {
+    compiler_env = comp_env_mem_2;
   }
 
   if (style_checker_env && style_checker_env[0] && lang
@@ -1162,6 +1195,8 @@ serve_compile_request(
     }
   }
 
+  sarray_free(comp_env_mem_2);
+  sarray_free(comp_env_mem);
   sarray_free(sc_env_mem);
   xfree(pkt_buf);
   xfree(src_header_text);
@@ -1171,6 +1206,8 @@ serve_compile_request(
   return 0;
 
  failed:
+  sarray_free(comp_env_mem_2);
+  sarray_free(comp_env_mem);
   sarray_free(sc_env_mem);
   xfree(pkt_buf);
   xfree(src_header_text);

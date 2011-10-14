@@ -1375,6 +1375,7 @@ static const struct cnts_edit_info cnts_problem_info[] =
   { NS_PROBLEM, CNTSPROB_enable_text_form, 'Y', 1, 0, 0, 0, 0, "Enable text input form", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_stand_attr, 'S', 1, 1, 1, 1, 0, "Standings attributes", 0, 0 },
   { NS_PROBLEM, CNTSPROB_standard_checker, 142, 1, 0, 0, 0, 0, "Standard checker", 0, 0 },
+  { NS_PROBLEM, CNTSPROB_lang_compiler_env, 'X', 1, 1, 1, 1, SSERV_OP_EDIT_SERVE_PROB_FIELD_DETAIL_PAGE, "Compiler environment", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_check_cmd, 'S', 1, 1, 1, 1, 0, "Checker", 0, 0 /*"Problem.standard_checker"*/ },
   { NS_PROBLEM, CNTSPROB_checker_env, 'X', 1, 1, 1, 1, SSERV_OP_EDIT_SERVE_PROB_FIELD_DETAIL_PAGE, "Checker environment", 0, 0 },
   { NS_PROBLEM, CNTSPROB_scoring_checker, 'Y', 1, 0, 0, 0, 0, "Checker calculates score", 0, 0 },
@@ -6037,6 +6038,7 @@ static const unsigned char prob_reloadable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_enable_language] = 0,
   [CNTSPROB_require] = 0,
   [CNTSPROB_standard_checker] = 1,
+  [CNTSPROB_lang_compiler_env] = 0,
   [CNTSPROB_checker_env] = 0,
   [CNTSPROB_valuer_env] = 0,
   [CNTSPROB_interactor_env] = 0,
@@ -6307,6 +6309,7 @@ cmd_op_clear_serve_prob_field(
 
 const unsigned char prob_editable_details[CNTSPROB_LAST_FIELD] =
 {
+  [CNTSPROB_lang_compiler_env] = 1,
   [CNTSPROB_checker_env] = 1,
   [CNTSPROB_valuer_env] = 1,
   [CNTSPROB_interactor_env] = 1,
@@ -6459,6 +6462,7 @@ cmd_op_edit_serve_prob_field_detail(
   filt_txt = text_area_process_string(valstr, 0, 0);
 
   switch (f_id) {
+  case CNTSPROB_lang_compiler_env:
   case CNTSPROB_checker_env:
   case CNTSPROB_valuer_env:
   case CNTSPROB_interactor_env:
