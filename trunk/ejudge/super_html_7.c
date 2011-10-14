@@ -4018,7 +4018,7 @@ generate_makefile(
       fprintf(mk_f, "CFLAGS = %s\n", compiler_flags);
     }
     compiler_flags = NULL;
-    fprintf(mk_f, "CLIBS ?= -lm\n");
+    fprintf(mk_f, "CLIBS = -lm\n");
   }
   fprintf(mk_f, "\n");
 
