@@ -67,8 +67,6 @@ struct archive_file
   struct archive_entry *v;
 };
 
-
-
 static void
 die(const char *format, ...)
 {
@@ -405,6 +403,11 @@ get_tar_listing(const unsigned char *path, struct archive_file *arch)
   if (!out) return 0;
 
   len = strlen(out);
+  if (len <= 0) {
+    free(out);
+    return 0;
+  }
+
   buf1 = (unsigned char*) malloc(len + 10);
   arg1 = (unsigned char*) malloc(len + 10);
   arg2 = (unsigned char*) malloc(len + 10);
@@ -1644,6 +1647,10 @@ main(int argc, char **argv)
 
   default:
     die("file is not an archive file");
+  }
+
+  if (arch.u <= 0) {
+    die("archive is empty");
   }
 
   if (check_sizes(&arch, max_file_count, max_file_size, max_archive_size) < 0)
