@@ -67,6 +67,8 @@ struct archive_file
   struct archive_entry *v;
 };
 
+
+
 static void
 die(const char *format, ...)
 {
@@ -326,13 +328,35 @@ is_valid_char(int c)
 }
 
 static int
-check_file_name(const unsigned char *name)
+check_file_name(
+        const unsigned char *name,
+        unsigned char **forbidden_names,
+        unsigned char **forbidden_suffixes)
 {
   const unsigned char *str = name;
+  int i, nlen, slen;
 
   if (!str || !*str) {
     error("empty file name");
     return -1;
+  }
+  if (forbidden_names) {
+    for (i = 0; forbidden_names[i]; ++i) {
+      if (!strcmp(forbidden_names[i], str)) {
+        error("file name '%s' is forbidden", str);
+        return -1;
+      }
+    }
+  }
+  if (forbidden_suffixes) {
+    nlen = strlen(str);
+    for (i = 0; forbidden_suffixes[i]; ++i) {
+      slen = strlen(forbidden_suffixes[i]);
+      if (nlen >= slen && !strcmp(str + nlen - slen, forbidden_suffixes[i])) {
+        error("file suffix '%s' is forbidden", forbidden_suffixes[i]);
+        return -1;
+      }
+    }
   }
   while (*str && is_valid_char(*str)) {
     ++str;
@@ -543,7 +567,11 @@ parse_zip_file_type(const unsigned char *mbuf, int *p_type)
 }
 
 static int
-get_zip_listing(const unsigned char *path, struct archive_file *arch)
+get_zip_listing(
+        const unsigned char *path,
+        struct archive_file *arch,
+        unsigned char **forbidden_names,
+        unsigned char **forbidden_suffixes)
 {
   char *cmds[4];
   int r, retval = -1, state = 0, n;
@@ -698,7 +726,7 @@ get_zip_listing(const unsigned char *path, struct archive_file *arch)
       error("invalid compressed size '%s'", comp_size);
       goto cleanup;
     }
-    if (check_file_name(name_ptr) < 0) {
+    if (check_file_name(name_ptr, forbidden_names, forbidden_suffixes) < 0) {
       goto cleanup;
     }
 
@@ -868,12 +896,15 @@ check_sizes(
 }
 
 static int
-check_names(struct archive_file *arch)
+check_names(
+        struct archive_file *arch,
+        unsigned char **forbidden_names,
+        unsigned char **forbidden_suffixes)
 {
   int i;
 
   for (i = 0; i < arch->u; ++i) {
-    if (check_file_name(arch->v[i].name) < 0)
+    if (check_file_name(arch->v[i].name, forbidden_names, forbidden_suffixes) < 0)
       return -1;
   }
 
@@ -1070,7 +1101,9 @@ make_report(
         const unsigned char *input_file_pattern,
         const unsigned char *output_file_pattern,
         int (*unpack_func)(const unsigned char *path,const unsigned char *dir),
-        int ignore_dot_files)
+        int ignore_dot_files,
+        unsigned char **forbidden_names,
+        unsigned char **forbidden_suffixes)
 {
   unsigned char wd[PATH_MAX];
   int wd_created = 0;
@@ -1100,7 +1133,7 @@ make_report(
     goto fail;
   }
   while ((dd = readdir(d))) {
-    if (check_file_name(dd->d_name) < 0) {
+    if (check_file_name(dd->d_name, forbidden_names, forbidden_suffixes) < 0) {
       error("name '%s' is invalid", dd->d_name);
       goto fail;
     }
@@ -1127,7 +1160,7 @@ make_report(
     goto fail;
   }
   while ((dd = readdir(d))) {
-    if (check_file_name(dd->d_name) < 0) {
+    if (check_file_name(dd->d_name, forbidden_names, forbidden_suffixes) < 0) {
       error("name '%s' is invalid", dd->d_name);
       goto fail;
     }
@@ -1243,7 +1276,9 @@ make_make_report(
         const unsigned char *prefix,
         const unsigned char *program_dir,
         const unsigned char *script_name,
-        int (*unpack_func)(const unsigned char *path,const unsigned char *dir))
+        int (*unpack_func)(const unsigned char *path,const unsigned char *dir),
+        unsigned char **forbidden_names,
+        unsigned char **forbidden_suffixes)
 {
   unsigned char wd[PATH_MAX];
   int wd_created = 0;
@@ -1270,7 +1305,7 @@ make_make_report(
   while ((dd = readdir(d))) {
     if (!strcmp(dd->d_name, ".")) continue;
     if (!strcmp(dd->d_name, "..")) continue;
-    if (check_file_name(dd->d_name) < 0) {
+    if (check_file_name(dd->d_name, forbidden_names, forbidden_suffixes) < 0) {
       error("name '%s' is invalid", dd->d_name);
       goto fail;
     }
@@ -1301,7 +1336,7 @@ make_make_report(
   while ((dd = readdir(d))) {
     if (!strcmp(dd->d_name, ".")) continue;
     if (!strcmp(dd->d_name, "..")) continue;
-    if (check_file_name(dd->d_name) < 0) {
+    if (check_file_name(dd->d_name, forbidden_names, forbidden_suffixes) < 0) {
       error("name '%s' is invalid", dd->d_name);
       goto fail;
     }
@@ -1336,6 +1371,34 @@ fail:
   return -1;
 }
 
+static unsigned char **
+split_commas(const unsigned char *str)
+{
+  int i, count = 0;
+  unsigned char **res = NULL;
+  const unsigned char *beg, *cur;
+
+  if (!str || !*str) return NULL;
+  for (i = 0; str[i]; ++i) {
+    if (str[i] == ',')
+      ++count;
+  }
+  res = (unsigned char**) calloc(count + 2, sizeof(res[0]));
+  i = 0;
+  beg = str;
+  while (1) {
+    cur = strchr(beg, ',');
+    if (!cur) {
+      res[i] = strdup(beg);
+      return res;
+    }
+    res[i] = (unsigned char*) calloc(cur - beg + 1, sizeof(res[i][0]));
+    memcpy(res[i], beg, cur - beg);
+    ++i;
+    beg = cur + 1;
+  }
+}
+
 int
 main(int argc, char **argv)
 {
@@ -1360,6 +1423,8 @@ main(int argc, char **argv)
   const unsigned char *env;
   int no_readme_mode = 0;
   int ignore_dot_files = 0;
+  unsigned char **forbidden_suffixes = NULL;
+  unsigned char **forbidden_names = NULL;
 
   signal(SIGPIPE, SIG_IGN);
   memset(&arch, 0, sizeof(arch));
@@ -1424,6 +1489,12 @@ main(int argc, char **argv)
   }
   if ((env = getenv("EJ_IGNORE_DOT_FILES"))) {
     ignore_dot_files = 1;
+  }
+  if ((env = getenv("EJ_FORBIDDEN_NAMES"))) {
+    forbidden_names = split_commas(env);
+  }
+  if ((env = getenv("EJ_FORBIDDEN_SUFFIXES"))) {
+    forbidden_suffixes = split_commas(env);
   }
 
   while (i < argc) {
@@ -1567,7 +1638,7 @@ main(int argc, char **argv)
     break;
 
   case MIME_TYPE_APPL_ZIP:
-    if (get_zip_listing(archive_path, &arch) < 0) return 1;
+    if (get_zip_listing(archive_path, &arch, forbidden_names, forbidden_suffixes) < 0) return 1;
     unpack_func = unpack_zip;
     break;
 
@@ -1577,19 +1648,21 @@ main(int argc, char **argv)
 
   if (check_sizes(&arch, max_file_count, max_file_size, max_archive_size) < 0)
     return 1;
-  if (check_names(&arch) < 0) return 1;
+  if (check_names(&arch, forbidden_names, forbidden_suffixes) < 0) return 1;
 
   if (tests_mode) {
     if (check_tar_tests(&arch, max_test_count, tests_dir, if_patt, of_patt,
                         no_readme_mode, ignore_dot_files) < 0)
       return 1;
     if (make_report(&arch, archive_path, work_dir, "stylearch", tests_dir,
-                    if_patt, of_patt, unpack_func, ignore_dot_files) < 0)
+                    if_patt, of_patt, unpack_func, ignore_dot_files,
+                    forbidden_names, forbidden_suffixes) < 0)
       return 1;
   } else if (make_mode) {
     if (check_make(&arch, program_dir, script_name) < 0)
       return 1;
-    if (make_make_report(&arch, archive_path, work_dir, "makearch", program_dir, script_name, unpack_func) < 0)
+    if (make_make_report(&arch, archive_path, work_dir, "makearch", program_dir, script_name, unpack_func,
+                         forbidden_names, forbidden_suffixes) < 0)
       return 1;
   }
 
