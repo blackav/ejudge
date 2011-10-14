@@ -718,7 +718,7 @@ struct section_global_data
   +unsigned char *solution_cmd;
  */
 
-/* sizeof(struct section_problem_data) == 65324 */
+/* sizeof(struct section_problem_data) == 65328 */
 struct section_problem_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -957,6 +957,8 @@ struct section_problem_data
   char **disable_language;
   char **enable_language;
   char **require;
+  /** environment variables for compilation */
+  ejenvlist_t lang_compiler_env;
   /** environment variables for the problem checker */
   ejenvlist_t checker_env;
   /** environment variables for the problem valuer */
