@@ -514,6 +514,7 @@ static const unsigned char * const action_to_help_url_map[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_CHANGE_SCORE_BONUS] = "Serve.cfg:problem:score_bonus",
   [SSERV_CMD_PROB_CHANGE_OPEN_TESTS] = "Serve.cfg:problem:open_tests",
   [SSERV_CMD_PROB_CHANGE_FINAL_OPEN_TESTS] = "Serve.cfg:problem:final_open_tests",
+  [SSERV_CMD_PROB_CHANGE_LANG_COMPILER_ENV] = "Serve.cfg:problem:lang_compiler_env",
   [SSERV_CMD_PROB_CHANGE_CHECK_CMD] = "Serve.cfg:problem:check_cmd",
   [SSERV_CMD_PROB_CHANGE_CHECKER_ENV] = "Serve.cfg:problem:checker_env",
   [SSERV_CMD_PROB_CHANGE_VALUER_CMD] = "Serve.cfg:problem:valuer_cmd",
@@ -6949,6 +6950,24 @@ super_html_print_problem(FILE *f,
     xfree(checker_env); checker_env = 0;
   }
 
+  //PROBLEM_PARAM(lang_compiler_env, "x"),
+  if (!prob->abstract) {
+    if (!prob->lang_compiler_env || !prob->lang_compiler_env[0]) {
+      extra_msg = "(not set)";
+      checker_env = xstrdup("");
+    } else {
+      extra_msg = "";
+      checker_env = sarray_unparse(prob->lang_compiler_env);
+    }
+    print_string_editing_row_3(f, "Compiler environment:", checker_env,
+                               SSERV_CMD_PROB_CHANGE_LANG_COMPILER_ENV,
+                               SSERV_CMD_PROB_CLEAR_LANG_COMPILER_ENV,
+                               extra_msg,
+                               session_id, form_row_attrs[row ^= 1],
+                               self_url, extra_args, prob_hidden_vars);
+    xfree(checker_env); checker_env = 0;
+  }
+
   //PROBLEM_PARAM(test_checker_cmd, "s"),
   extra_msg = 0;
   if (show_adv) {
@@ -8192,6 +8211,18 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
   case SSERV_CMD_PROB_CLEAR_STYLE_CHECKER_ENV:
     sarray_free(prob->style_checker_env);
     prob->style_checker_env = 0;
+    return 0;
+
+  case SSERV_CMD_PROB_CHANGE_LANG_COMPILER_ENV:
+    if (sarray_parse(param2, &tmp_env) < 0)
+      return -SSERV_ERR_INVALID_PARAMETER;
+    sarray_free(prob->lang_compiler_env);
+    prob->lang_compiler_env = tmp_env;
+    return 0;
+
+  case SSERV_CMD_PROB_CLEAR_LANG_COMPILER_ENV:
+    sarray_free(prob->lang_compiler_env);
+    prob->lang_compiler_env = 0;
     return 0;
 
   case SSERV_CMD_PROB_CHANGE_TEST_CHECKER_CMD:
