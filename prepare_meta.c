@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2011/09/30 13:57:28
+// Generated 2011/10/14 23:32:16
 
 #include "prepare_meta.h"
 #include "prepare.h"
@@ -448,6 +448,7 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_disable_language] = { CNTSPROB_disable_language, 'x', XSIZE(struct section_problem_data, disable_language), "disable_language", XOFFSET(struct section_problem_data, disable_language) },
   [CNTSPROB_enable_language] = { CNTSPROB_enable_language, 'x', XSIZE(struct section_problem_data, enable_language), "enable_language", XOFFSET(struct section_problem_data, enable_language) },
   [CNTSPROB_require] = { CNTSPROB_require, 'x', XSIZE(struct section_problem_data, require), "require", XOFFSET(struct section_problem_data, require) },
+  [CNTSPROB_lang_compiler_env] = { CNTSPROB_lang_compiler_env, 'X', XSIZE(struct section_problem_data, lang_compiler_env), "lang_compiler_env", XOFFSET(struct section_problem_data, lang_compiler_env) },
   [CNTSPROB_checker_env] = { CNTSPROB_checker_env, 'X', XSIZE(struct section_problem_data, checker_env), "checker_env", XOFFSET(struct section_problem_data, checker_env) },
   [CNTSPROB_valuer_env] = { CNTSPROB_valuer_env, 'X', XSIZE(struct section_problem_data, valuer_env), "valuer_env", XOFFSET(struct section_problem_data, valuer_env) },
   [CNTSPROB_interactor_env] = { CNTSPROB_interactor_env, 'X', XSIZE(struct section_problem_data, interactor_env), "interactor_env", XOFFSET(struct section_problem_data, interactor_env) },

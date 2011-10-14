@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2011/09/30 13:57:28
+// Generated 2011/10/14 23:32:16
 
 #ifndef __PREPARE_META_H__
 #define __PREPARE_META_H__
@@ -408,6 +408,7 @@ enum
   CNTSPROB_disable_language,
   CNTSPROB_enable_language,
   CNTSPROB_require,
+  CNTSPROB_lang_compiler_env,
   CNTSPROB_checker_env,
   CNTSPROB_valuer_env,
   CNTSPROB_interactor_env,
