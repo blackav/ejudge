@@ -3941,7 +3941,7 @@ generate_makefile(
   unsigned char tmp_path[PATH_MAX];
   unsigned char *compiler_path = NULL;
   const unsigned char *compiler_flags = NULL;
-  int has_header = 0;
+  int has_header = 0, need_c_libchecker = 0;
   const unsigned char *source_suffix = NULL;
 
   test_dir[0] = 0;
@@ -3990,6 +3990,7 @@ generate_makefile(
     get_advanced_layout_path(tmp_path, sizeof(tmp_path), global, prob, prob->test_checker_cmd, variant);
     languages |= guess_language_by_cmd(tmp_path);
   }
+  if ((languages & LANG_C)) need_c_libchecker = 1;
   if (prob->solution_cmd && prob->solution_cmd[0]) {
     get_advanced_layout_path(tmp_path, sizeof(tmp_path), global, prob, prob->solution_cmd, variant);
     languages |= guess_language_by_cmd(tmp_path);
@@ -4013,12 +4014,16 @@ generate_makefile(
     xfree(compiler_path); compiler_path = NULL;
     compiler_flags = get_compiler_flags(cs, "gcc");
     if (!compiler_flags) {
-      fprintf(mk_f, "CFLAGS = -Wall -g\n");
+      fprintf(mk_f, "CFLAGS = -Wall -g -O2 -std=gnu99\n");
     } else {
       fprintf(mk_f, "CFLAGS = %s\n", compiler_flags);
     }
     compiler_flags = NULL;
     fprintf(mk_f, "CLIBS = -lm\n");
+    if (need_c_libchecker) {
+      fprintf(mk_f, "CLIBCHECKERFLAGS = -Wall -Wno-pointer-sign -g -std=gnu99 -O2 -I${EJUDGE_PREFIX_DIR}/include -L${EJUDGE_PREFIX_DIR}/lib\n");
+      fprintf(mk_f, "CLIBCHECKERLIBS = -lchecker -lm\n");
+    }
   }
   fprintf(mk_f, "\n");
 
