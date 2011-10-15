@@ -4075,6 +4075,7 @@ generate_makefile(
                 prob->solution_cmd, prob->solution_src);
       }
     } else if (!has_header) {
+      get_advanced_layout_path(tmp_path, sizeof(tmp_path), global, prob, prob->solution_cmd, variant);
       languages = guess_language_by_cmd(prob->solution_cmd);
       source_suffix = get_source_suffix(languages);
       if (languages == LANG_C) {
@@ -4203,7 +4204,7 @@ super_serve_op_TESTS_MAKEFILE_GENERATE_ACTION(
   }
 
 done:
-  ss_redirect_2(out_f, phr, SSERV_OP_TESTS_MAIN_PAGE, contest_id, prob_id, variant, 0);
+  ss_redirect_2(out_f, phr, SSERV_OP_TESTS_MAKEFILE_EDIT_PAGE, contest_id, prob_id, variant, 0);
 
 cleanup:
   if (mk_f) fclose(mk_f);
