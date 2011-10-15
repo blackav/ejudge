@@ -4076,7 +4076,7 @@ generate_makefile(
       }
     } else if (!has_header) {
       get_advanced_layout_path(tmp_path, sizeof(tmp_path), global, prob, prob->solution_cmd, variant);
-      languages = guess_language_by_cmd(prob->solution_cmd);
+      languages = guess_language_by_cmd(tmp_path);
       source_suffix = get_source_suffix(languages);
       if (languages == LANG_C) {
         fprintf(mk_f, "%s : %s%s\n", prob->solution_cmd, prob->solution_cmd, source_suffix);

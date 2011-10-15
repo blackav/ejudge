@@ -1391,7 +1391,7 @@ prepare_unparse_actual_prob(
     unparse_bool(f, "score_latest", prob->score_latest);
   if (prob->score_latest_or_unmarked > 0)
     unparse_bool(f, "score_latest_or_unmarked", prob->score_latest_or_unmarked);
-  if (show_paths && prob->xml_file[0])
+  if ((show_paths || (global && global->advanced_layout > 0)) && prob->xml_file[0])
     fprintf(f, "xml_file = \"%s\"\n", CARMOR(prob->xml_file));
   if (show_paths && prob->alternatives_file[0])
     fprintf(f, "alternatives_file = \"%s\"\n", CARMOR(prob->alternatives_file));
@@ -1528,28 +1528,28 @@ prepare_unparse_actual_prob(
 
   if (prob->standard_checker[0])
     fprintf(f, "standard_checker = \"%s\"\n", CARMOR(prob->standard_checker));
-  if (!prob->standard_checker[0] && show_paths && prob->check_cmd[0])
+  if (!prob->standard_checker[0] && (show_paths || (global && global->advanced_layout > 0)) && prob->check_cmd[0])
     fprintf(f, "check_cmd = \"%s\"\n", CARMOR(prob->check_cmd));
   do_xstr(f, &ab, "checker_env", prob->checker_env);
-  if (show_paths && prob->valuer_cmd[0])
+  if ((show_paths || (global && global->advanced_layout > 0)) && prob->valuer_cmd[0])
     fprintf(f, "valuer_cmd = \"%s\"\n", CARMOR(prob->valuer_cmd));
   do_xstr(f, &ab, "valuer_env", prob->valuer_env);
-  if (show_paths && prob->interactor_cmd[0])
+  if ((show_paths || (global && global->advanced_layout > 0)) && prob->interactor_cmd[0])
     fprintf(f,"interactor_cmd = \"%s\"\n",CARMOR(prob->interactor_cmd));
   do_xstr(f, &ab, "interactor_env", prob->interactor_env);
   if (prob->interactor_time_limit > 0)
     fprintf(f, "interactor_time_limit = %d\n", prob->interactor_time_limit);
-  if (show_paths && prob->style_checker_cmd[0])
+  if ((show_paths || (global && global->advanced_layout > 0)) && prob->style_checker_cmd[0])
     fprintf(f,"style_checker_cmd = \"%s\"\n",CARMOR(prob->style_checker_cmd));
   do_xstr(f, &ab, "style_checker_env", prob->style_checker_env);
   do_xstr(f, &ab, "lang_compiler_env", prob->lang_compiler_env);
-  if (show_paths && prob->test_checker_cmd && prob->test_checker_cmd[0]) {
+  if ((show_paths || (global && global->advanced_layout > 0)) && prob->test_checker_cmd && prob->test_checker_cmd[0]) {
     fprintf(f,"test_checker_cmd = \"%s\"\n", CARMOR(prob->test_checker_cmd));
   }
-  if (show_paths && prob->solution_src && prob->solution_src[0]) {
+  if ((show_paths || (global && global->advanced_layout > 0)) && prob->solution_src && prob->solution_src[0]) {
     fprintf(f,"solution_src = \"%s\"\n", CARMOR(prob->solution_src));
   }
-  if (show_paths && prob->solution_cmd && prob->solution_cmd[0]) {
+  if ((show_paths || (global && global->advanced_layout > 0)) && prob->solution_cmd && prob->solution_cmd[0]) {
     fprintf(f,"solution_cmd = \"%s\"\n", CARMOR(prob->solution_cmd));
   }
   do_xstr(f, &ab, "test_checker_env", prob->test_checker_env);
