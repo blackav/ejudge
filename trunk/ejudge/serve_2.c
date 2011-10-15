@@ -942,13 +942,13 @@ filter_lang_environ(const unsigned char *lang_short_name, char **environ)
   char **env = NULL;
   llen = strlen(lang_short_name);
   for (i = 0; environ[i]; ++i) {
-    if (strlen(environ[i]) > llen && strncmp(lang_short_name, environ[i], llen) && environ[i][llen] == '=') {
+    if (strlen(environ[i]) > llen && !strncmp(lang_short_name, environ[i], llen) && environ[i][llen] == '=') {
       ++count;
     }
   }
   XCALLOC(env, count + 1);
   for (i = 0; environ[i]; ++i) {
-    if (strlen(environ[i]) > llen && strncmp(lang_short_name, environ[i], llen) && environ[i][llen] == '=') {
+    if (strlen(environ[i]) > llen && !strncmp(lang_short_name, environ[i], llen) && environ[i][llen] == '=') {
       env[j++] = xstrdup(environ[i] + llen + 1);
     }
   }
