@@ -8598,7 +8598,7 @@ cmd_edit_field_seq(
         goto cannot_change;
       cloned_flag |= f;
     } else {
-      err("%s -> invalid field %d", logbuf, deleted_ids[i]);
+      err("%s -> invalid field %d", logbuf, edited_ids[i]);
       send_reply(p, -ULS_ERR_BAD_FIELD);
       return;
     }
