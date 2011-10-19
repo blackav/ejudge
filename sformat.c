@@ -124,6 +124,8 @@
  *     B - status_en
  *     c - grade
  *     C - number
+ *     0 - field0
+ *     9 - field9
  *  C - contest data
  *   Cn - name
  *   CN - name_en
@@ -606,6 +608,8 @@ sformat_message(
          *   Uh - homepage
          *   UH - phones
          *   UP - languages
+         *   U0 - field0
+         *   U9 - field9
          */
         pf++;
 
@@ -732,6 +736,8 @@ sformat_message(
         case 'u': case 'U': case 'f': case 'F': case 'd': case 'D':
         case 'L': case 'p': case 'h': case 'H': case 'P': case 'r':
         case 'y': case 'Y':
+        case '0': case '1': case '2': case '3': case '4':
+        case '5': case '6': case '7': case '8': case '9':
           break;
         case 0:
           is_invalid = 1;
@@ -788,6 +794,16 @@ sformat_message(
         case 'h': if (ui) papp = ui->homepage; break;
         case 'H': if (ui) papp = ui->phone; break;
         case 'P': if (ui) papp = ui->languages; break;
+        case '0': if (ui) papp = ui->field0; break;
+        case '1': if (ui) papp = ui->field1; break;
+        case '2': if (ui) papp = ui->field2; break;
+        case '3': if (ui) papp = ui->field3; break;
+        case '4': if (ui) papp = ui->field4; break;
+        case '5': if (ui) papp = ui->field5; break;
+        case '6': if (ui) papp = ui->field6; break;
+        case '7': if (ui) papp = ui->field7; break;
+        case '8': if (ui) papp = ui->field8; break;
+        case '9': if (ui) papp = ui->field9; break;
         default:
           abort();
         }
