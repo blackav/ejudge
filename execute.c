@@ -334,7 +334,7 @@ handle_options(const unsigned char *opt)
     corr_file = p;
   } else if ((p = check_option("--info-file", opt))) {
     info_file = p;
-  } else if ((p = check_option("--input_file", opt))) {
+  } else if ((p = check_option("--input-file", opt))) {
     input_file = p;
   } else if ((p = check_option("--output-file", opt))) {
     output_file = p;
