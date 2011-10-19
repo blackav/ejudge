@@ -3919,6 +3919,37 @@ get_compiler_flags(serve_state_t cs, const unsigned char *lang_short_name)
 }
 
 static void
+generate_checker_compilation_rule(
+        FILE *out_f,
+        const unsigned char *what,
+        const struct section_global_data *global,
+        const struct section_problem_data *prob,
+        int variant,
+        const unsigned char *cmd)
+{
+  unsigned char tmp_path[PATH_MAX];
+  unsigned long languages = 0;
+  const unsigned char *source_suffix = NULL;
+
+  if (!cmd || !cmd[0]) return;
+  get_advanced_layout_path(tmp_path, sizeof(tmp_path), global, prob, cmd, variant);
+  languages = guess_language_by_cmd(tmp_path);
+  source_suffix = get_source_suffix(languages);
+  if (languages == LANG_C) {
+    fprintf(out_f, "%s : %s%s\n", cmd, cmd, source_suffix);
+    fprintf(out_f, "\t${CC} ${CLIBCHECKERFLAGS} %s%s -o%s ${CLIBCHECKERLIBS}\n",
+            cmd, source_suffix, cmd);
+  } else if (languages == LANG_CPP) {
+    fprintf(out_f, "%s : %s%s\n", cmd, cmd, source_suffix);
+    fprintf(out_f, "\t${CXX} ${CXXLIBCHECKERFLAGS} %s%s -o%s ${CXXLIBCHECKERLIBS}\n",
+            cmd, source_suffix, cmd);
+  } else {
+    fprintf(out_f, "# no information how to build %s '%s'\n", what, cmd);
+  }
+  fprintf(out_f, "\n");
+}
+
+static void
 generate_makefile(
         FILE *log_f,
         FILE *mk_f,
@@ -3937,11 +3968,12 @@ generate_makefile(
   unsigned char tgz_pat[PATH_MAX];
   unsigned char tgzdir_pat[PATH_MAX];
   unsigned char test_pr_pat[PATH_MAX];
+  unsigned char tgzdir_pr_pat[PATH_MAX];
   unsigned long languages = 0;
   unsigned char tmp_path[PATH_MAX];
   unsigned char *compiler_path = NULL;
   const unsigned char *compiler_flags = NULL;
-  int has_header = 0, need_c_libchecker = 0;
+  int has_header = 0, need_c_libchecker = 0, need_cpp_libchecker = 0;
   const unsigned char *source_suffix = NULL;
 
   test_dir[0] = 0;
@@ -3991,6 +4023,7 @@ generate_makefile(
     languages |= guess_language_by_cmd(tmp_path);
   }
   if ((languages & LANG_C)) need_c_libchecker = 1;
+  if ((languages & LANG_CPP)) need_cpp_libchecker = 1;
   if (prob->solution_cmd && prob->solution_cmd[0]) {
     get_advanced_layout_path(tmp_path, sizeof(tmp_path), global, prob, prob->solution_cmd, variant);
     languages |= guess_language_by_cmd(tmp_path);
@@ -4014,15 +4047,37 @@ generate_makefile(
     xfree(compiler_path); compiler_path = NULL;
     compiler_flags = get_compiler_flags(cs, "gcc");
     if (!compiler_flags) {
-      fprintf(mk_f, "CFLAGS = -Wall -g -O2 -std=gnu99\n");
+      fprintf(mk_f, "CFLAGS = -Wall -g -O2 -std=gnu99 -Wno-pointer-sign\n");
     } else {
       fprintf(mk_f, "CFLAGS = %s\n", compiler_flags);
     }
     compiler_flags = NULL;
     fprintf(mk_f, "CLIBS = -lm\n");
     if (need_c_libchecker) {
-      fprintf(mk_f, "CLIBCHECKERFLAGS = -Wall -Wno-pointer-sign -g -std=gnu99 -O2 -I${EJUDGE_PREFIX_DIR}/include -L${EJUDGE_PREFIX_DIR}/lib\n");
+      fprintf(mk_f, "CLIBCHECKERFLAGS = -Wall -Wno-pointer-sign -g -std=gnu99 -O2 -I${EJUDGE_PREFIX_DIR}/include/ejudge -L${EJUDGE_PREFIX_DIR}/lib -Wl,--rpath,${EJUDGE_PREFIX_DIR}/lib\n");
       fprintf(mk_f, "CLIBCHECKERLIBS = -lchecker -lm\n");
+    }
+  }
+  fprintf(mk_f, "\n");
+
+  if ((languages & LANG_CPP)) {
+    compiler_path = get_compiler_path(log_f, NULL, NULL, "g++");
+    if (!compiler_path) {
+      fprintf(mk_f, "# C++ compiler is not found\nCXX ?= /bin/false\n");
+    } else {
+      fprintf(mk_f, "CXX = %s\n", compiler_path);
+    }
+    xfree(compiler_path); compiler_path = NULL;
+    compiler_flags = get_compiler_flags(cs, "g++");
+    if (!compiler_flags) {
+      fprintf(mk_f, "CXXFLAGS = -Wall -g -O2\n");
+    } else {
+      fprintf(mk_f, "CXXFLAGS = %s\n", compiler_flags);
+    }
+    compiler_flags = NULL;
+    if (need_cpp_libchecker) {
+      fprintf(mk_f, "CXXLIBCHECKERFLAGS = -Wall -g -O2 -I${EJUDGE_PREFIX_DIR}/include/ejudge -L${EJUDGE_PREFIX_DIR}/lib -Wl,--rpath,${EJUDGE_PREFIX_DIR}/lib\n");
+      fprintf(mk_f, "CXXLIBCHECKERLIBS = -lchecker -lm\n");
     }
   }
   fprintf(mk_f, "\n");
@@ -4042,11 +4097,31 @@ generate_makefile(
     fprintf(mk_f, " --time-limit=%d", prob->time_limit);
   }
   fprintf(mk_f, "\n");
+
+  if (prob->tgz_dir > 0) {
+    fprintf(mk_f, "MAKE_ARCHIVE = ${EJUDGE_PREFIX_DIR}/libexec/ejudge/lang/ej-make-archive\n");
+    fprintf(mk_f, "MAKE_ARCHIVE_FLAGS = --tgzdir-pattern=%s --tgz-pattern=%s\n",
+            tgzdir_pat, tgz_pat);
+  }
+
   fprintf(mk_f, "\n");
 
   fprintf(mk_f, "all :");
   if (prob->solution_cmd && prob->solution_cmd[0]) {
     fprintf(mk_f, " %s", prob->solution_cmd);
+  }
+  if ((!prob->standard_checker || !prob->standard_checker[0])
+      && prob->check_cmd && prob->check_cmd[0]) {
+    fprintf(mk_f, " %s", prob->check_cmd);
+  }
+  if (prob->valuer_cmd && prob->valuer_cmd[0]) {
+    fprintf(mk_f, " %s", prob->valuer_cmd);
+  }
+  if (prob->interactor_cmd && prob->interactor_cmd[0]) {
+    fprintf(mk_f, " %s", prob->interactor_cmd);
+  }
+  if (prob->test_checker_cmd && prob->test_checker_cmd[0]) {
+    fprintf(mk_f, " %s", prob->test_checker_cmd);
   }
   fprintf(mk_f, "\n");
   fprintf(mk_f, "ejudge_make_problem : all\n");
@@ -4075,6 +4150,10 @@ generate_makefile(
         fprintf(mk_f, "%s : %s%s\n", prob->solution_cmd, prob->solution_cmd, source_suffix);
         fprintf(mk_f, "\t${CC} ${CFLAGS} %s%s -o%s ${CLIBS}\n",
                 prob->solution_cmd, source_suffix, prob->solution_cmd);
+      } else if (languages == LANG_CPP) {
+        fprintf(mk_f, "%s : %s%s\n", prob->solution_cmd, prob->solution_cmd, source_suffix);
+        fprintf(mk_f, "\t${CXX} ${CXXFLAGS} %s%s -o%s ${CXXLIBS}\n",
+                prob->solution_cmd, source_suffix, prob->solution_cmd);
       } else {
         fprintf(mk_f, "# no information how to build solution '%s' from '%s'\n",
                 prob->solution_cmd, prob->solution_src);
@@ -4087,6 +4166,10 @@ generate_makefile(
         fprintf(mk_f, "%s : %s%s\n", prob->solution_cmd, prob->solution_cmd, source_suffix);
         fprintf(mk_f, "\t${CC} ${CFLAGS} %s%s -o%s ${CLIBS}\n",
                 prob->solution_cmd, source_suffix, prob->solution_cmd);
+      } else if (languages == LANG_CPP) {
+        fprintf(mk_f, "%s : %s%s\n", prob->solution_cmd, prob->solution_cmd, source_suffix);
+        fprintf(mk_f, "\t${CXX} ${CXXFLAGS} %s%s -o%s ${CXXLIBS}\n",
+                prob->solution_cmd, source_suffix, prob->solution_cmd);
       } else {
         fprintf(mk_f, "# no information how to build solution '%s'\n", prob->solution_cmd);
       }
@@ -4095,6 +4178,15 @@ generate_makefile(
     }
   }
   fprintf(mk_f, "\n");
+
+  /* checker compilation part */
+  if (!prob->standard_checker || !prob->standard_checker[0]) {
+    generate_checker_compilation_rule(mk_f, "check", global, prob, variant, prob->check_cmd);
+  }
+
+  generate_checker_compilation_rule(mk_f, "valuer", global, prob, variant, prob->valuer_cmd);
+  generate_checker_compilation_rule(mk_f, "interactor", global, prob, variant, prob->interactor_cmd);
+  generate_checker_compilation_rule(mk_f, "test_checker", global, prob, variant, prob->test_checker_cmd);
 
   /* test generation part */
   if (prob->solution_cmd && prob->solution_cmd[0]) {
@@ -4108,11 +4200,32 @@ generate_makefile(
   }
   fprintf(mk_f, "\n");
 
+  /* archiving */
+  if (prob->use_tgz > 0) {
+    pattern_to_shell_pattern(tgzdir_pr_pat, sizeof(tgzdir_pr_pat), tgzdir_pat);
+    fprintf(mk_f, "archives : \n");
+    fprintf(mk_f, "\tcd tests; for i in %s; do ${MAKE_ARCHIVE} ${MAKE_ARCHIVE_FLAGS} $$i; done;\n",
+            tgzdir_pr_pat);
+  }
+
   fprintf(mk_f, "clean :\n");
   fprintf(mk_f, "\t-rm -f *.o");
   if (prob->solution_cmd && prob->solution_cmd[0]) {
     fprintf(mk_f, " %s", prob->solution_cmd);
   }
+  if ((!prob->standard_checker || !prob->standard_checker[0])
+      && prob->check_cmd && prob->check_cmd[0]) {
+    fprintf(mk_f, " %s", prob->check_cmd);
+  }  
+  if (prob->valuer_cmd && prob->valuer_cmd[0]) {
+    fprintf(mk_f, " %s", prob->valuer_cmd);
+  }  
+  if (prob->interactor_cmd && prob->interactor_cmd[0]) {
+    fprintf(mk_f, " %s", prob->interactor_cmd);
+  }  
+  if (prob->test_checker_cmd && prob->test_checker_cmd[0]) {
+    fprintf(mk_f, " %s", prob->test_checker_cmd);
+  }  
   fprintf(mk_f, "\n\n");
 
   fprintf(mk_f, "%s\n", ej_makefile_end);
