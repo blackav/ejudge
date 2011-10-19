@@ -3990,17 +3990,6 @@ generate_makefile(
   if (retval < 0) return;
   pattern_to_shell_pattern(test_pr_pat, sizeof(test_pr_pat), test_pat);
 
-  /* detect which languages we'll need */
-  if (prob->source_header && prob->source_header[0]) {
-    languages |= guess_language_by_src(prob->source_header);
-  }
-  if (prob->source_footer && prob->source_footer[0]) {
-    languages |= guess_language_by_src(prob->source_footer);
-  }
-  if (prob->solution_src && prob->solution_src[0]) {
-    languages |= guess_language_by_src(prob->solution_src);
-  }
-
   // tmp_path is modified by guess_language_by_cmd
   if (prob->check_cmd && prob->check_cmd[0]) {
     get_advanced_layout_path(tmp_path, sizeof(tmp_path), global, prob, prob->check_cmd, variant);
@@ -4024,6 +4013,18 @@ generate_makefile(
   }
   if ((languages & LANG_C)) need_c_libchecker = 1;
   if ((languages & LANG_CPP)) need_cpp_libchecker = 1;
+
+  /* detect which languages we'll need */
+  if (prob->source_header && prob->source_header[0]) {
+    languages |= guess_language_by_src(prob->source_header);
+  }
+  if (prob->source_footer && prob->source_footer[0]) {
+    languages |= guess_language_by_src(prob->source_footer);
+  }
+  if (prob->solution_src && prob->solution_src[0]) {
+    languages |= guess_language_by_src(prob->solution_src);
+  }
+
   if (prob->solution_cmd && prob->solution_cmd[0]) {
     get_advanced_layout_path(tmp_path, sizeof(tmp_path), global, prob, prob->solution_cmd, variant);
     languages |= guess_language_by_cmd(tmp_path);
@@ -4098,7 +4099,7 @@ generate_makefile(
   }
   fprintf(mk_f, "\n");
 
-  if (prob->tgz_dir > 0) {
+  if (prob->use_tgz > 0) {
     fprintf(mk_f, "MAKE_ARCHIVE = ${EJUDGE_PREFIX_DIR}/libexec/ejudge/lang/ej-make-archive\n");
     fprintf(mk_f, "MAKE_ARCHIVE_FLAGS = --tgzdir-pattern=%s --tgz-pattern=%s\n",
             tgzdir_pat, tgz_pat);
