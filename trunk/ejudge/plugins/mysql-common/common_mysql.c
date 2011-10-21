@@ -301,7 +301,7 @@ prepare_func(
       if (p->first) return xml_err_attrs(p);
       if (p->first_down) return xml_err_nested_elems(p);
       if (state->port > 0) return xml_err_elem_redefined(p);
-      if (xml_parse_int("", p->line, p->column, p->text,
+      if (xml_parse_int(NULL, "", p->line, p->column, p->text,
                         &state->port) < 0) return -1;
     } else if (!strcmp(p->name[0], "charset")) {
       if (xml_leaf_elem(p, &state->charset, 1, 0) < 0) return -1;
@@ -784,7 +784,7 @@ parse_spec_func(
       break;
     case 'i':
       p_ip = XPDEREF(ej_ip_t, data, specs[i].offset);
-      if (xml_parse_ip(0, 0, 0, row[i], p_ip) < 0) goto invalid_format;
+      if (xml_parse_ip(NULL, 0, 0, 0, row[i], p_ip) < 0) goto invalid_format;
       break;
 
     default:
