@@ -482,7 +482,7 @@ parse_access(struct contest_access *acc, char const *path)
     }
     if (ip->allow == -1) ip->allow = 0;
 
-    if (xml_parse_ip_mask(path, ip->b.line, ip->b.column,
+    if (xml_parse_ip_mask(NULL, path, ip->b.line, ip->b.column,
                           ip->b.text, &ip->addr, &ip->mask) < 0) return -1;
     xfree(t->text); t->text = 0;
   }
@@ -886,7 +886,7 @@ parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
         xfree(date_str);
         return -1;
       }
-      if (xml_parse_date(path, t->line, t->column, date_str, (time_t*) contest_desc_get_ptr_nc(cnts, contests_tag_to_meta_map[t->tag])) < 0) {
+      if (xml_parse_date(NULL, path, t->line, t->column, date_str, (time_t*) contest_desc_get_ptr_nc(cnts, contests_tag_to_meta_map[t->tag])) < 0) {
         xfree(date_str); date_str = 0;
         return -1;
       }
@@ -1086,7 +1086,7 @@ parse_one_contest_xml(char const *path, int number, int no_subst_flag)
   xml_err_path = path;
   xml_err_spec = &contests_parse_spec;
 
-  tree = xml_build_tree(path, &contests_parse_spec);
+  tree = xml_build_tree(NULL, path, &contests_parse_spec);
   if (!tree) goto failed;
   if (tree->tag != CONTEST_CONTEST) {
     xml_err_top_level(tree, CONTEST_CONTEST);

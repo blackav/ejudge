@@ -465,22 +465,25 @@ parse_tree(problem_xml_t tree)
 }
 
 problem_xml_t
-problem_xml_parse(const unsigned char *path)
+problem_xml_parse(FILE *log_f, const unsigned char *path)
 {
   struct xml_tree *tree = 0;
   problem_xml_t px = 0;
 
   xml_err_path = path;
   xml_err_spec = &problem_parse_spec;
+  xml_err_file = log_f;
 
-  tree = xml_build_tree(path, &problem_parse_spec);
+  tree = xml_build_tree(log_f, path, &problem_parse_spec);
   if (!tree) goto failed;
   px = (problem_xml_t) tree;
   if (parse_tree(px) < 0) goto failed;
+  xml_err_file = NULL;
   return px;
 
  failed:
   problem_xml_free((problem_xml_t) tree);
+  xml_err_file = NULL;
   return 0;
 }
 
@@ -499,50 +502,56 @@ static const unsigned char default_problem_xml[] =
 "</problem>\n";
 
 problem_xml_t
-problem_xml_parse_safe(const unsigned char *path)
+problem_xml_parse_safe(FILE *log_f, const unsigned char *path)
 {
-  problem_xml_t prob = problem_xml_parse(path);
+  problem_xml_t prob = problem_xml_parse(log_f, path);
   if (prob) return prob;
-  return problem_xml_parse_string("builtin", default_problem_xml);
+  return problem_xml_parse_string(log_f, "builtin", default_problem_xml);
 }
 
 problem_xml_t
-problem_xml_parse_string(const unsigned char *path, const unsigned char *str)
+problem_xml_parse_string(FILE *log_f, const unsigned char *path, const unsigned char *str)
 {
   struct xml_tree *tree = 0;
   problem_xml_t px = 0;
 
   xml_err_path = path;
   xml_err_spec = &problem_parse_spec;
+  xml_err_file = log_f;
 
-  tree = xml_build_tree_str(str, &problem_parse_spec);
+  tree = xml_build_tree_str(log_f, str, &problem_parse_spec);
   if (!tree) goto failed;
   px = (problem_xml_t) tree;
   if (parse_tree(px) < 0) goto failed;
+  xml_err_file = NULL;
   return px;
 
  failed:
   problem_xml_free((problem_xml_t) tree);
+  xml_err_file = NULL;
   return 0;
 }
 
 problem_xml_t
-problem_xml_parse_stream(const unsigned char *path, FILE *f)
+problem_xml_parse_stream(FILE *log_f, const unsigned char *path, FILE *f)
 {
   struct xml_tree *tree = 0;
   problem_xml_t px = 0;
 
   xml_err_path = path;
   xml_err_spec = &problem_parse_spec;
+  xml_err_file = log_f;
 
-  tree = xml_build_tree_file(f, &problem_parse_spec);
+  tree = xml_build_tree_file(log_f, f, &problem_parse_spec);
   if (!tree) goto failed;
   px = (problem_xml_t) tree;
   if (parse_tree(px) < 0) goto failed;
+  xml_err_file = NULL;
   return px;
 
  failed:
   problem_xml_free((problem_xml_t) tree);
+  xml_err_file = NULL;
   return 0;
 }
 
@@ -689,7 +698,6 @@ problem_xml_find_language(
 
 /*
  * Local variables:
- *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")
  * End:
  */

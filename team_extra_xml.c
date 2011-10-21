@@ -186,17 +186,17 @@ parse_warnings(struct xml_tree *t, struct team_extra *te, int *pw_flag)
     for (a = wt->first; a; a = a->next) {
       switch (a->tag) {
       case TE_A_ISSUER_ID:
-        if (xml_parse_int(0, a->line, a->column, a->text, &x) < 0) return -1;
+        if (xml_parse_int(NULL, 0, a->line, a->column, a->text, &x) < 0) return -1;
         if (x <= 0 || x > RUNLOG_MAX_TEAM_ID) 
           return xml_err_attr_invalid(a);
         cur_warn->issuer_id = x;
         break;
       case TE_A_ISSUER_IP:
-        if (xml_parse_ip(0, a->line, a->column, a->text,
+        if (xml_parse_ip(NULL, 0, a->line, a->column, a->text,
                          &cur_warn->issuer_ip) < 0) return -1;
         break;
       case TE_A_DATE:
-        if (xml_parse_date(0, a->line, a->column, a->text,
+        if (xml_parse_date(NULL, 0, a->line, a->column, a->text,
                            &cur_warn->date) < 0) return -1;
         break;
       default:
@@ -247,7 +247,7 @@ parse_status(struct xml_tree *t, struct team_extra *te, int *ps_flag)
   if (t->first) return xml_err_attrs(t);
   if (t->first_down) return xml_err_nested_elems(t);
   if (!t->text) t->text = xstrdup("");
-  if (xml_parse_int(0, t->line, t->column, t->text, &te->status) < 0)
+  if (xml_parse_int(NULL, 0, t->line, t->column, t->text, &te->status) < 0)
     return -1;
   if (te->status < 0) return xml_err_elem_invalid(t);
   return 0;
@@ -264,7 +264,7 @@ team_extra_parse_xml(const unsigned char *path, struct team_extra **pte)
   xml_err_path = path;
   xml_err_spec = &team_extra_parse_spec;
 
-  t = xml_build_tree(path, &team_extra_parse_spec);
+  t = xml_build_tree(NULL, path, &team_extra_parse_spec);
   if (!t) return -1;
   XCALLOC(te, 1);
   if (t->tag != TE_T_TEAM_EXTRA) {

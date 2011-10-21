@@ -2033,7 +2033,7 @@ do_schedule(FILE *log_f,
     return;
   }
 
-  if (xml_parse_date(0, 0, 0, s, &sloc) < 0 || sloc < 0) {
+  if (xml_parse_date(NULL, 0, 0, 0, s, &sloc) < 0 || sloc < 0) {
     ns_error(log_f, NEW_SRV_ERR_INV_TIME_SPEC);
     return;
   }
@@ -2114,7 +2114,7 @@ do_change_finish_time(
     return;
   }
   if (!is_empty_string(s)) {
-    if (xml_parse_date(0, 0, 0, s, &ft) < 0 || ft < 0) {
+    if (xml_parse_date(NULL, 0, 0, 0, s, &ft) < 0 || ft < 0) {
       ns_error(log_f, NEW_SRV_ERR_INV_TIME_SPEC);
       return;
     }
@@ -14349,7 +14349,7 @@ ns_handle_http_request(struct server_framework_state *state,
   if (!(remote_addr = ns_getenv(phr, "REMOTE_ADDR")))
     return ns_html_err_inv_param(fout, phr, 0, "REMOTE_ADDR does not exist");
   if (!strcmp(remote_addr, "::1")) remote_addr = "127.0.0.1";
-  if (xml_parse_ip(0, 0, 0, remote_addr, &phr->ip) < 0)
+  if (xml_parse_ip(NULL, 0, 0, 0, remote_addr, &phr->ip) < 0)
     return ns_html_err_inv_param(fout, phr, 0, "cannot parse REMOTE_ADDR");
 
   // parse the contest_id

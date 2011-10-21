@@ -129,11 +129,11 @@ struct problem_desc
   time_t last_update;
 };
 
-problem_xml_t problem_xml_parse(const unsigned char *path);
-problem_xml_t problem_xml_parse_safe(const unsigned char *path);
-problem_xml_t problem_xml_parse_string(const unsigned char *path,
+problem_xml_t problem_xml_parse(FILE *log_f, const unsigned char *path);
+problem_xml_t problem_xml_parse_safe(FILE *log_f, const unsigned char *path);
+problem_xml_t problem_xml_parse_string(FILE *log_f, const unsigned char *path,
                                        const unsigned char *str);
-problem_xml_t problem_xml_parse_stream(const unsigned char *path, FILE *f);
+problem_xml_t problem_xml_parse_stream(FILE *log_f, const unsigned char *path, FILE *f);
 
 problem_xml_t problem_xml_free(problem_xml_t r);
 

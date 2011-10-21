@@ -1372,7 +1372,7 @@ parse_testsets(char **set_in, int *p_total, struct testset_info **p_info)
 static int
 parse_date(const unsigned char *s, time_t *pd)
 {
-  return xml_parse_date(0, 0, 0, s, pd);
+  return xml_parse_date(NULL, 0, 0, 0, s, pd);
 }
 
 static void
@@ -3199,19 +3199,19 @@ set_defaults(
         if (g->advanced_layout > 0) {
           get_advanced_layout_path(xml_path, sizeof(xml_path), g,
                                    prob, prob->xml_file, j);
-          if (!(prob->xml.a[j - 1] = problem_xml_parse_safe(xml_path))) return -1;
+          if (!(prob->xml.a[j - 1] = problem_xml_parse_safe(NULL, xml_path))) return -1;
         } else {
           prepare_insert_variant_num(fpath, sizeof(fpath), prob->xml_file, j);
-          if (!(prob->xml.a[j - 1] = problem_xml_parse_safe(fpath))) return -1;
+          if (!(prob->xml.a[j - 1] = problem_xml_parse_safe(NULL, fpath))) return -1;
         }
       }
     } else if (prob->xml_file[0]) {
       if (g->advanced_layout > 0) {
         get_advanced_layout_path(xml_path, sizeof(xml_path), g,
                                  prob, prob->xml_file, -1);
-        if (!(prob->xml.p = problem_xml_parse_safe(xml_path))) return -1;
+        if (!(prob->xml.p = problem_xml_parse_safe(NULL, xml_path))) return -1;
       } else {
-        if (!(prob->xml.p = problem_xml_parse_safe(prob->xml_file))) return -1;
+        if (!(prob->xml.p = problem_xml_parse_safe(NULL, prob->xml_file))) return -1;
       }
     }
 

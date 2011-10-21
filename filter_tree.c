@@ -1436,7 +1436,7 @@ filter_tree_eval_node(struct filter_tree_mem *mem,
       {
         time_t tmp = 0;
 
-        if (xml_parse_date(0, 0, 0, p1->v.s, &tmp) < 0 || tmp <= 0)
+        if (xml_parse_date(NULL, 0, 0, 0, p1->v.s, &tmp) < 0 || tmp <= 0)
           return -FILTER_ERR_TIME_CVT;
         res->v.a = tmp;
       }

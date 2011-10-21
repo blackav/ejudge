@@ -456,7 +456,7 @@ ejudge_cfg_parse(char const *path)
   xml_err_path = path;
   xml_err_spec = &ejudge_config_parse_spec;
 
-  tree = xml_build_tree(path, &ejudge_config_parse_spec);
+  tree = xml_build_tree(NULL, path, &ejudge_config_parse_spec);
   if (!tree) return 0;
   if (tree->tag != TG_CONFIG) {
     xml_err_top_level(tree, TG_CONFIG);

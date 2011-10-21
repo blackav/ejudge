@@ -171,9 +171,9 @@ parse_config(char const *path, const unsigned char *default_config)
   xml_err_spec = &users_config_parse_spec;
 
   if (default_config) {
-    tree = xml_build_tree_str(default_config, &users_config_parse_spec);
+    tree = xml_build_tree_str(NULL, default_config, &users_config_parse_spec);
   } else {
-    tree = xml_build_tree(path, &users_config_parse_spec);
+    tree = xml_build_tree(NULL, path, &users_config_parse_spec);
   }
 
   if (!tree) goto failed;
@@ -266,7 +266,7 @@ parse_config(char const *path, const unsigned char *default_config)
         }
         if (ip->allow == -1) ip->allow = 0;
 
-        if (xml_parse_ip_mask(path, ip->b.line, ip->b.column, ip->b.text,
+        if (xml_parse_ip_mask(NULL, path, ip->b.line, ip->b.column, ip->b.text,
                               &ip->addr, &ip->mask) < 0)
           goto failed;
       }

@@ -278,7 +278,7 @@ do_schedule(
 
   if (ns_cgi_param(phr, "sched_time", &s) <= 0)
     return -NEW_SRV_ERR_INV_TIME_SPEC;
-  if (xml_parse_date(0, 0, 0, s, &sloc) < 0 || sloc < 0)
+  if (xml_parse_date(NULL, 0, 0, 0, s, &sloc) < 0 || sloc < 0)
     return -NEW_SRV_ERR_INV_TIME_SPEC;
 
   if (sloc > 0) {

@@ -2098,7 +2098,7 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
         case USERLIST_NN_SIMPLE_REGISTRATION:
           edit_buf[0] = 0;
           get_user_field(edit_buf, sizeof(edit_buf), u, info[cur_i].field, 0);
-          r = xml_parse_bool(0, 0, 0, edit_buf, 0);
+          r = xml_parse_bool(NULL, 0, 0, 0, edit_buf, 0);
           r = yesno(r, "New value for \"%s\"",
                     user_descs[info[cur_i].field].name);
           if (r < 0 || r > 1) goto menu_continue;

@@ -576,7 +576,7 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
     if (!(p_access = get_contest_access_by_num(cnts, param1)))
       return -SSERV_ERR_INVALID_PARAMETER;
     if (param3 < 0 || param3 > 1) return -SSERV_ERR_INVALID_PARAMETER;
-    if (xml_parse_ip_mask(0, -1, 0, param2, &ip_addr, &ip_mask) < 0)
+    if (xml_parse_ip_mask(NULL, 0, -1, 0, param2, &ip_addr, &ip_mask) < 0)
       return -SSERV_ERR_INVALID_PARAMETER;
     contests_add_ip(cnts, p_access, access_tags_map[param1],
                     ip_addr, ip_mask, param5, param3);
@@ -732,7 +732,7 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
   }
 
   if (p_date) {
-    if (xml_parse_date("", 0, 0, param2, p_date) < 0)
+    if (xml_parse_date(NULL, "", 0, 0, param2, p_date) < 0)
       return -SSERV_ERR_INVALID_PARAMETER;
     return 0;
   }

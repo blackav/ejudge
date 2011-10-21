@@ -223,7 +223,7 @@ clar_read_entry(
     ERR_R("[%d]: bad flags: %d", n, cl_state->clars.v[n].flags);
   if (strlen(b2) > IP_STRING_SIZE) ERR_R("[%d]: ip is too long", n);
   if (strlen(b3) > SUBJ_STRING_SIZE) ERR_R("[%d]: subj is too long", n);
-  if (xml_parse_ip(0, n + 1, 0, b2, &r_ip) < 0) ERR_R("[%d]: ip is invalid", n);
+  if (xml_parse_ip(NULL, 0, n + 1, 0, b2, &r_ip) < 0) ERR_R("[%d]: ip is invalid", n);
   cl_state->clars.v[n].a.ip = r_ip;
   base64_decode_str(b3, cl_state->clars.v[n].subj, 0);
   return 0;
