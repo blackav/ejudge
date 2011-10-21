@@ -38,14 +38,20 @@
 enum { MIN_YEAR = 1900, MAX_YEAR = 2100 };
 
 int
-xml_parse_date(unsigned char const *path, int line, int column,
-               unsigned char const *s, time_t *pd)
+xml_parse_date(
+        FILE *log_f,
+        unsigned char const *path,
+        int line,
+        int column,
+        unsigned char const *s,
+        time_t *pd)
 {
   int year = 0, month, day, hour, min, sec, n, slen, i1, i2, i3;
   time_t t;
   struct tm tt, *ptt = 0;
   unsigned char *buf, *w1, *w2;
   unsigned char *dw = 0, *tw = 0;
+  const char msg[] = "invalid date";
 
   memset(&tt, 0, sizeof(tt));
   tt.tm_isdst = -1;
@@ -202,10 +208,18 @@ xml_parse_date(unsigned char const *path, int line, int column,
   return 0;
 
  failed:
-  if (path) {
-    err("%s:%d:%d: invalid date", path, line, column);
-  } else if (line > 0) {
-    err("%d:%d: invalid date", line, column);
+  if (log_f) {
+    if (path) {
+      fprintf(log_f, "%s:%d:%d: %s\n", path, line, column, msg);
+    } else if (line > 0) {
+      fprintf(log_f, "%d:%d: %s\n", line, column, msg);
+    }
+  } else {
+    if (path) {
+      err("%s:%d:%d: %s", path, line, column, msg);
+    } else if (line > 0) {
+      err("%d:%d: %s", line, column, msg);
+    }
   }
   return -1;
 }

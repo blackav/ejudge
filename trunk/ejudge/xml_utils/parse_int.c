@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004,2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -19,16 +19,30 @@
 #include "errlog.h"
 
 int
-xml_parse_int(unsigned char const *path, int line, int column,
-              unsigned char const *str, int *pval)
+xml_parse_int(
+        FILE *log_f,
+        unsigned char const *path,
+        int line,
+        int column,
+        unsigned char const *str,
+        int *pval)
 {
   int x = 0, n = 0;
+  const char msg[] = "cannot parse integer value";
 
   if (!str || sscanf(str, "%d %n", &x, &n) != 1 || str[n]) {
-    if (path) {
-      err("%s:%d:%d: cannot parse integer value", path, line, column);
+    if (log_f) {
+      if (path) {
+        fprintf(log_f, "%s:%d:%d: %s\n", path, line, column, msg);
+      } else {
+        fprintf(log_f, "%d:%d: %s\n", line, column, msg);
+      }
     } else {
-      err("%d:%d: cannot parse integer value", line, column);
+      if (path) {
+        err("%s:%d:%d: %s", path, line, column, msg);
+      } else {
+        err("%d:%d: %s", line, column, msg);
+      }
     }
     return -1;
   }
@@ -36,7 +50,7 @@ xml_parse_int(unsigned char const *path, int line, int column,
   return 0;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")

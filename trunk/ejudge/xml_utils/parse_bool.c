@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2006-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -21,9 +21,16 @@
 #include <string.h>
 
 int
-xml_parse_bool(unsigned char const *path, int line, int column,
-               unsigned char const *str, int *pv)
+xml_parse_bool(
+        FILE *log_f,
+        unsigned char const *path,
+        int line,
+        int column,
+        unsigned char const *str,
+        int *pv)
 {
+  static const char msg[] = "invalid boolean value";
+
   if (!str) goto failed;
   if (!strcasecmp(str, "true")
       || !strcasecmp(str, "yes")
@@ -40,10 +47,18 @@ xml_parse_bool(unsigned char const *path, int line, int column,
   }
 
  failed:
-  if (path) {
-    err("%s:%d:%d: invalid boolean value", path, line, column);
-  } else if (line > 0) {
-    err("%d:%d: invalid boolean value", line, column);
+  if (log_f) {
+    if (path) {
+      fprintf(log_f, "%s:%d:%d: %s\n", path, line, column, msg);
+    } else if (line > 0) {
+      fprintf(log_f, "%d:%d: %s\n", line, column, msg);
+    }
+  } else {
+    if (path) {
+      err("%s:%d:%d: %s", path, line, column, msg);
+    } else if (line > 0) {
+      err("%d:%d: %s", line, column, msg);
+    }
   }
   return -1;
 }
