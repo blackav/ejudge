@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2006-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@ int
 xml_attr_date(struct xml_attr *attr, time_t *value_ptr)
 {
   if (!attr->text) goto invalid_value;
-  if (xml_parse_date(xml_err_path, attr->line, attr->column,
+  if (xml_parse_date(xml_err_file, xml_err_path, attr->line, attr->column,
                      attr->text, value_ptr) < 0)
     goto invalid_value;
   return 0;

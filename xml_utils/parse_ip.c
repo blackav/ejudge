@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,7 @@
 
 int
 xml_parse_ip(
+        FILE *log_f,
         unsigned char const *path,
         int line,
         int column,
@@ -29,15 +30,24 @@ xml_parse_ip(
   unsigned int b1 = 0, b2 = 0, b3 = 0, b4 = 0;
   int n = 0;
   unsigned long ip;
+  const char msg[] = "invalid IP-address";
 
   if (!s || sscanf(s, "%d.%d.%d.%d%n", &b1, &b2, &b3, &b4, &n) != 4
       || s[n] || b1 > 255 || b2 > 255 || b3 > 255 || b4 > 255) {
 #if !defined PYTHON
     if (line > 0) {
-      if (path) {
-        err("%s:%d:%d: invalid IP-address", path, line, column);
+      if (log_f) {
+        if (path) {
+          fprintf(log_f, "%s:%d:%d: %s\n", path, line, column, msg);
+        } else {
+          fprintf(log_f, "%d:%d: %s\n", line, column, msg);
+        }
       } else {
-        err("%d:%d: invalid IP-address", line, column);
+        if (path) {
+          err("%s:%d:%d: %s", path, line, column, msg);
+        } else {
+          err("%d:%d: %s", line, column, msg);
+        }
       }
     }
 #endif

@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -22,6 +22,7 @@
 
 int
 xml_parse_ip_mask(
+        FILE *log_f,
         const unsigned char *path,
         int line,
         int column,
@@ -31,6 +32,7 @@ xml_parse_ip_mask(
 {
   int n = 0;
   unsigned int b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0;
+  const char msg[] = "invalid IP-address";
 
   if (!s) goto failed;
   if (!strcmp(s, "0")) {
@@ -63,16 +65,24 @@ xml_parse_ip_mask(
 
  failed:
   if (line >= 0) {
-    if (path) {
-      err("%s:%d:%d: invalid IP-address", path, line, column);
+    if (log_f) {
+      if (path) {
+        fprintf(log_f, "%s:%d:%d: %s\n", path, line, column, msg);
+      } else {
+        fprintf(log_f, "%d:%d: %s\n", line, column, msg);
+      }
     } else {
-      err("%d:%d: invalid IP-address", line, column);
+      if (path) {
+        err("%s:%d:%d: %s", path, line, column, msg);
+      } else {
+        err("%d:%d: %s", line, column, msg);
+      }
     }
   }
   return -1;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")

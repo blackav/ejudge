@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2005-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -23,12 +23,21 @@ int
 xml_attr_int(struct xml_attr *a, int *pval)
 {
   int x = 0, n = 0;
+  static const char msg[] = "cannot parse integer value";
 
   if (!a || !a->text || sscanf(a->text, "%d %n", &x, &n) != 1 || a->text[n]) {
-    if (xml_err_path) {
-      err("%s:%d:%d: cannot parse integer value", xml_err_path, a->line, a->column);
+    if (xml_err_file) {
+      if (xml_err_path) {
+        fprintf(xml_err_file, "%s:%d:%d: %s\n", xml_err_path, a->line, a->column, msg);
+      } else {
+        fprintf(xml_err_file, "%d:%d: %s\n", a->line, a->column, msg);
+      }
     } else {
-      err("%d:%d: cannot parse integer value", a->line, a->column);
+      if (xml_err_path) {
+        err("%s:%d:%d: %s", xml_err_path, a->line, a->column, msg);
+      } else {
+        err("%d:%d: %s", a->line, a->column, msg);
+      }
     }
     return -1;
   }
