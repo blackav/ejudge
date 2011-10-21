@@ -261,7 +261,7 @@ t3_in_packet_parse_str(
   struct xml_tree *t = 0;
   struct t3_in_packet *r = 0;
 
-  t = xml_build_tree_str(str, &examcheck_parse_spec);
+  t = xml_build_tree_str(NULL, str, &examcheck_parse_spec);
   if (!t) goto failure;
 
   xml_err_path = "<string>";

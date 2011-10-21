@@ -520,7 +520,7 @@ parse_cookies(char const *path, struct xml_tree *cookies,
     for (a = t->first; a; a = a->next) {
       switch (a->tag) {
       case USERLIST_A_IP:
-        if (xml_parse_ip(path, a->line, a->column, a->text, &c->ip) < 0)
+        if (xml_parse_ip(NULL, path, a->line, a->column, a->text, &c->ip) < 0)
           return -1;
         break;
       case USERLIST_A_VALUE:
@@ -546,17 +546,17 @@ parse_cookies(char const *path, struct xml_tree *cookies,
         if (xml_attr_bool(a, &c->team_login) < 0) return -1;
         break;
       case USERLIST_A_EXPIRE:
-        if (xml_parse_date(path, a->line, a->column, a->text, &c->expire) < 0)
+        if (xml_parse_date(NULL, path, a->line, a->column, a->text, &c->expire) < 0)
           return -1;
         break;
       case USERLIST_A_LOCALE_ID:
-        if (xml_parse_int(path, a->line, a->column, a->text, &c->locale_id) < 0)
+        if (xml_parse_int(NULL, path, a->line, a->column, a->text, &c->locale_id) < 0)
           return -1;
         if (c->locale_id < -1 || c->locale_id > 127)
           return xml_err_attr_invalid(a);
         break;
       case USERLIST_A_CONTEST_ID:
-        if (xml_parse_int(path, a->line, a->column, a->text, &c->contest_id) < 0)
+        if (xml_parse_int(NULL, path, a->line, a->column, a->text, &c->contest_id) < 0)
           return -1;
         if (c->contest_id < 0)
           return xml_err_attr_invalid(a);
@@ -745,7 +745,7 @@ parse_members(
         if (p->first) return xml_err_attrs(p);
         if (p->first_down) return xml_err_nested_elems(p);
         if (!p->text || !*p->text) break;
-        if (xml_parse_int(path, p->line, p->column, p->text, &mb->grade) < 0)
+        if (xml_parse_int(NULL, path, p->line, p->column, p->text, &mb->grade) < 0)
           return xml_err_elem_invalid(p);
         if (mb->grade < -1 || mb->grade >= 100000)
           return xml_err_elem_invalid(p);
@@ -789,7 +789,7 @@ parse_contest(char const *path, struct xml_tree *t,
     for (a = p->first; a; a = a->next) {
       switch (a->tag) {
       case USERLIST_A_ID:
-        if (xml_parse_int(path, a->line, a->column, a->text, &reg->id) < 0)
+        if (xml_parse_int(NULL, path, a->line, a->column, a->text, &reg->id) < 0)
           return -1;
         if (reg->id <= 0) return xml_err_attr_invalid(a);
         break;
@@ -817,7 +817,7 @@ parse_contest(char const *path, struct xml_tree *t,
         if (tmp) reg->flags |= USERLIST_UC_DISQUALIFIED;
         break;
       case USERLIST_A_DATE:
-        if (xml_parse_date(path, a->line, a->column, a->text,
+        if (xml_parse_date(NULL, path, a->line, a->column, a->text,
                            &reg->create_time) < 0)
           return -1;
         break;
@@ -964,7 +964,7 @@ parse_cntsinfo(const char *path, struct xml_tree *node,
       if (parse_members(path, p, &ui->b, ui) < 0) return -1;
       break;
     case USERLIST_T_INSTNUM:
-      if (xml_parse_int(path, p->line, p->column, p->text, &ui->instnum) < 0)
+      if (xml_parse_int(NULL, path, p->line, p->column, p->text, &ui->instnum) < 0)
         return -1;
       if (ui->instnum < 0) return xml_err_elem_invalid(p);
       break;
@@ -1018,53 +1018,53 @@ do_parse_user(char const *path, struct userlist_user *usr)
   for (a = usr->b.first; a; a = a->next) {
     switch (a->tag) {
     case USERLIST_A_ID:
-      if (xml_parse_int(path, a->line, a->column, a->text, &usr->id) < 0)
+      if (xml_parse_int(NULL, path, a->line, a->column, a->text, &usr->id) < 0)
         return -1;
       if (usr->id <= 0)
         return xml_err_attr_invalid(a);
       break;
     case USERLIST_A_REGISTERED:
-      if (xml_parse_date(path, a->line, a->column, a->text,
+      if (xml_parse_date(NULL, path, a->line, a->column, a->text,
                      &usr->registration_time) < 0) return -1;
       break;
     case USERLIST_A_LAST_LOGIN:
-      if (xml_parse_date(path, a->line, a->column, a->text,
+      if (xml_parse_date(NULL, path, a->line, a->column, a->text,
                      &usr->last_login_time) < 0) return -1;
       break;
     case USERLIST_A_CNTS_LAST_LOGIN:
       ui = userlist_get_cnts0(usr);
-      if (xml_parse_date(path, a->line, a->column, a->text,
+      if (xml_parse_date(NULL, path, a->line, a->column, a->text,
                      &ui->last_login_time) < 0) return -1;
       break;
     case USERLIST_A_LAST_ACCESS:
-      if (xml_parse_date(path, a->line, a->column, a->text,
+      if (xml_parse_date(NULL, path, a->line, a->column, a->text,
                      &usr->last_access_time) < 0) return -1;
       break;
     case USERLIST_A_LAST_CHANGE:
-      if (xml_parse_date(path, a->line, a->column, a->text,
+      if (xml_parse_date(NULL, path, a->line, a->column, a->text,
                      &usr->last_change_time) < 0) return -1;
       break;
     case USERLIST_A_LAST_INFO_CHANGE:
       ui = userlist_get_cnts0(usr);
-      if (xml_parse_date(path, a->line, a->column, a->text,
+      if (xml_parse_date(NULL, path, a->line, a->column, a->text,
                      &ui->last_change_time) < 0) return -1;
       break;
     case USERLIST_A_LAST_PWDCHANGE:
-      if (xml_parse_date(path, a->line, a->column, a->text,
+      if (xml_parse_date(NULL, path, a->line, a->column, a->text,
                      &usr->last_pwdchange_time) < 0) return -1;
       break;
     case USERLIST_A_LAST_INFO_PWDCHANGE:
       ui = userlist_get_cnts0(usr);
-      if (xml_parse_date(path, a->line, a->column, a->text,
+      if (xml_parse_date(NULL, path, a->line, a->column, a->text,
                      &ui->last_pwdchange_time) < 0) return -1;
       break;
     case USERLIST_A_LAST_MINOR_CHANGE:
-      if (xml_parse_date(path, a->line, a->column, a->text,
+      if (xml_parse_date(NULL, path, a->line, a->column, a->text,
                      &usr->last_minor_change_time) < 0) return -1;
       break;
     case USERLIST_A_INFO_CREATE:
       ui = userlist_get_cnts0(usr);
-      if (xml_parse_date(path, a->line, a->column, a->text,
+      if (xml_parse_date(NULL, path, a->line, a->column, a->text,
                          &ui->create_time) < 0) return -1;
       break;
     case USERLIST_A_PRIVILEGED:
@@ -1180,7 +1180,7 @@ do_parse_user(char const *path, struct userlist_user *usr)
       break;
     case USERLIST_T_INSTNUM:
       ui = userlist_get_cnts0(usr);
-      if (xml_parse_int(path,t->line,t->column,t->text,&ui->instnum) < 0)
+      if (xml_parse_int(NULL, path,t->line,t->column,t->text,&ui->instnum) < 0)
         return -1;
       if (ui->instnum < 0) return xml_err_elem_invalid(t);
       break;
@@ -1474,7 +1474,7 @@ userlist_parse_user_str(char const *str)
   xml_err_path = 0;
   xml_err_spec = &userlist_parse_spec;
 
-  tree = xml_build_tree_str(str, &userlist_parse_spec);
+  tree = xml_build_tree_str(NULL, str, &userlist_parse_spec);
   if (!tree) goto failed;
   if (tree->tag != USERLIST_T_USER) {
     xml_err_top_level(tree, USERLIST_T_USER);
@@ -1497,7 +1497,7 @@ userlist_parse_contests_str(unsigned char const *str)
   xml_err_path = 0;
   xml_err_spec = &userlist_parse_spec;
 
-  tree = xml_build_tree_str(str, &userlist_parse_spec);
+  tree = xml_build_tree_str(NULL, str, &userlist_parse_spec);
   if (!tree) return 0;
   if (tree->tag != USERLIST_T_CONTESTS) {
     xml_err_top_level(tree, USERLIST_T_CONTESTS);
@@ -1520,7 +1520,7 @@ userlist_parse(char const *path)
   xml_err_path = path;
   xml_err_spec = &userlist_parse_spec;
 
-  tree = xml_build_tree(path, &userlist_parse_spec);
+  tree = xml_build_tree(NULL, path, &userlist_parse_spec);
   if (!tree) goto failed;
   if (tree->tag != USERLIST_T_USERLIST) {
     xml_err_top_level(tree, USERLIST_T_USERLIST);
@@ -1544,7 +1544,7 @@ userlist_parse_str(unsigned char const *str)
   xml_err_path = 0;
   xml_err_spec = &userlist_parse_spec;
 
-  tree = xml_build_tree_str(str, &userlist_parse_spec);
+  tree = xml_build_tree_str(NULL, str, &userlist_parse_spec);
   if (!tree) goto failed;
   if (tree->tag != USERLIST_T_USERLIST) {
     xml_err_top_level(tree, USERLIST_T_USERLIST);

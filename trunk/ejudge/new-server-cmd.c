@@ -865,11 +865,11 @@ main(int argc, char *argv[])
   while (i < argc) {
     if (!strcmp(argv[i], "--ip")) {
       if (i + 1 >= argc) startup_error("argument expected for --ip");
-      if (xml_parse_ip(NULL, 0, 0, argv[i + 1], &ip_address) < 0)
+      if (xml_parse_ip(NULL, NULL, 0, 0, argv[i + 1], &ip_address) < 0)
         return 1;
       shift_args(&argc, argv, i, 2);
     } else if (!strncmp(argv[i], "--ip=", 5)) {
-      if (xml_parse_ip(NULL, 0, 0, argv[i] + 5, &ip_address) < 0)
+      if (xml_parse_ip(NULL, NULL, 0, 0, argv[i] + 5, &ip_address) < 0)
         return 1;
       shift_args(&argc, argv, i, 1);
     } else if (!strcmp(argv[i], "--ssl")) {

@@ -1025,7 +1025,7 @@ copy_param(void *cfg, const struct config_parse_info *params,
     }
   } else if (!strcmp(params[i].type, "t")) {
     time_t v = -1, *ptr;
-    if (xml_parse_date(0, 0, 0, varvalue, &v) < 0) {
+    if (xml_parse_date(NULL, 0, 0, 0, varvalue, &v) < 0) {
       fprintf(stderr, "%d: date parameter expected for '%s'\n",
               parsecfg_state.lineno - 1, varname);
       return -1;

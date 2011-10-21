@@ -4,7 +4,7 @@
 #ifndef __EXPAT_IFACE_H__
 #define __EXPAT_IFACE_H__ 1
 
-/* Copyright (C) 2002-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -63,11 +63,11 @@ struct xml_parse_spec
 };
 
 struct xml_tree *
-xml_build_tree(char const *path, const struct xml_parse_spec *spec);
+xml_build_tree(FILE *log_f, char const *path, const struct xml_parse_spec *spec);
 struct xml_tree *
-xml_build_tree_str(char const *str, const struct xml_parse_spec *spec);
+xml_build_tree_str(FILE *log_f, char const *str, const struct xml_parse_spec *spec);
 struct xml_tree *
-xml_build_tree_file(FILE *f, const struct xml_parse_spec *spec);
+xml_build_tree_file(FILE *log_f, FILE *f, const struct xml_parse_spec *spec);
 
 struct xml_tree *
 xml_tree_free(struct xml_tree *tree, const struct xml_parse_spec *spec);

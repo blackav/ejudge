@@ -3160,7 +3160,7 @@ super_html_global_param(struct sid_state *sstate, int cmd,
     GLOB_CLEAR_STRING(stand_symlink_dir);
 
   case SSERV_CMD_GLOB_CHANGE_STAND_IGNORE_AFTER:
-    if (xml_parse_date("", 0, 0, param2, &global->stand_ignore_after) < 0)
+    if (xml_parse_date(NULL, "", 0, 0, param2, &global->stand_ignore_after) < 0)
       return -SSERV_ERR_INVALID_PARAMETER;
     return 0;
 
@@ -3169,7 +3169,7 @@ super_html_global_param(struct sid_state *sstate, int cmd,
     return 0;
 
   case SSERV_CMD_GLOB_CHANGE_APPEAL_DEADLINE:
-    if (xml_parse_date("", 0, 0, param2, &global->appeal_deadline) < 0)
+    if (xml_parse_date(NULL, "", 0, 0, param2, &global->appeal_deadline) < 0)
       return -SSERV_ERR_INVALID_PARAMETER;
     return 0;
 
@@ -3178,7 +3178,7 @@ super_html_global_param(struct sid_state *sstate, int cmd,
     return 0;
 
   case SSERV_CMD_GLOB_CHANGE_CONTEST_FINISH_TIME:
-    if (xml_parse_date("", 0, 0, param2, &global->contest_finish_time) < 0)
+    if (xml_parse_date(NULL, "", 0, 0, param2, &global->contest_finish_time) < 0)
       return -SSERV_ERR_INVALID_PARAMETER;
     return 0;
 
@@ -8354,7 +8354,7 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
   case SSERV_CMD_PROB_CHANGE_START_DATE:
     p_time = &prob->start_date;
   handle_date:;
-    if (xml_parse_date(0, 0, 0, param2, p_time) < 0)
+    if (xml_parse_date(NULL, 0, 0, 0, param2, p_time) < 0)
       return -SSERV_ERR_INVALID_PARAMETER;
     return 0;
 

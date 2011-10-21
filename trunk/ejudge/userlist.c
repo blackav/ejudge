@@ -515,7 +515,7 @@ userlist_set_member_field_str(struct userlist_member *m, int field_id,
       *p_time = 0;
       return 1;
     }
-    if (xml_parse_date(0, 0, 0, field_val, &newt) < 0) return -1;
+    if (xml_parse_date(NULL, 0, 0, 0, field_val, &newt) < 0) return -1;
     if (*p_time == newt) return 0;
     *p_time = newt;
     return 1;
@@ -878,7 +878,7 @@ userlist_set_user_info_field_str(struct userlist_user_info *ui,
     return 1;
   case USERLIST_NC_CREATE_TIME:
     p_time = (time_t*) userlist_get_user_info_field_ptr(ui, field_id);
-    if (xml_parse_date(0, 0, 0, field_val, &newt) < 0) return -1;
+    if (xml_parse_date(NULL, 0, 0, 0, field_val, &newt) < 0) return -1;
     if (newt == *p_time) return 0;
     *p_time = newt;
     return 1;
@@ -1072,7 +1072,7 @@ userlist_is_equal_user_field(const struct userlist_user *u,
     p_time = (const time_t *) userlist_get_user_field_ptr(u, field_id);
     if (!*p_time && !field_val) return 1;
     if (!field_val) return 0;
-    if (xml_parse_date(0, 0, 0, field_val, &newt) < 0) return 0;
+    if (xml_parse_date(NULL, 0, 0, 0, field_val, &newt) < 0) return 0;
     return (*p_time == newt);
   default:
     abort();
@@ -1181,7 +1181,7 @@ userlist_set_user_field_str(struct userlist_user *u,
     return 1;
   case USERLIST_NN_REGISTRATION_TIME:
     p_time = (time_t *) userlist_get_user_field_ptr(u, field_id);
-    if (xml_parse_date(0, 0, 0, field_val, &newt) < 0) return 0;
+    if (xml_parse_date(NULL, 0, 0, 0, field_val, &newt) < 0) return 0;
     if (*p_time == newt) return 0;
     *p_time = newt;
     return 1;

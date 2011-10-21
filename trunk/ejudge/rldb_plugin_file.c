@@ -369,7 +369,7 @@ run_read_entry_v0(struct rldb_file_cnts *cs, int n)
   if (r != 11) ERR_R("[%d]: sscanf returned %d", n, r);
   if (buf[k] != 0) ERR_R("[%d]: excess data", n);
   if (strlen(tip) > RUN_MAX_IP_LEN) ERR_R("[%d]: ip is to long", n);
-  if (xml_parse_ip(0, 0, 0, tip, &ip) < 0) ERR_R("[%d]: cannot parse IP");
+  if (xml_parse_ip(NULL, 0, 0, 0, tip, &ip) < 0) ERR_R("[%d]: cannot parse IP");
   rls->runs[n].a.ip = ip;
   return 0;
 }

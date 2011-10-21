@@ -1091,7 +1091,7 @@ testing_report_parse_xml(const unsigned char *str)
   struct xml_tree *t = 0;
   testing_report_xml_t r = 0;
 
-  t = xml_build_tree_str(str, &testing_report_parse_spec);
+  t = xml_build_tree_str(NULL, str, &testing_report_parse_spec);
   if (!t) goto failure;
 
   xml_err_path = "<string>";

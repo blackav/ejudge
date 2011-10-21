@@ -4,7 +4,7 @@
 #ifndef __XML_UTILS_H__
 #define __XML_UTILS_H__
 
-/* Copyright (C) 2004-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -27,16 +27,16 @@ struct xml_tree;
 struct xml_attr;
 struct xml_parse_spec;
 
-int xml_parse_ip(unsigned char const *path, int line, int column,
+int xml_parse_ip(FILE *log_f, unsigned char const *path, int line, int column,
                  unsigned char const *s, ej_ip_t *pip);
-int xml_parse_date(unsigned char const *path, int line, int column,
+int xml_parse_date(FILE *log_f, unsigned char const *path, int line, int column,
                    unsigned char const *s, time_t *pd);
-int xml_parse_int(unsigned char const *path, int line, int column,
+int xml_parse_int(FILE *log_f, unsigned char const *path, int line, int column,
                   unsigned char const *str, int *pval);
-int xml_parse_ip_mask(const unsigned char *path, int line, int column,
+int xml_parse_ip_mask(FILE *log_f, const unsigned char *path, int line, int column,
                       const unsigned char *s,
                       ej_ip_t *p_ip, ej_ip_t *p_mask);
-int xml_parse_bool(unsigned char const *path, int line, int column,
+int xml_parse_bool(FILE *log_f, unsigned char const *path, int line, int column,
                    unsigned char const *s, int *pv);
 
 void xml_unparse_text(FILE *f, const unsigned char *tag_name,
@@ -50,6 +50,7 @@ const unsigned char *xml_unparse_ip_mask(ej_ip_t addr, ej_ip_t mask);
 
 extern const unsigned char *xml_err_path;
 extern const struct xml_parse_spec *xml_err_spec;
+extern FILE *xml_err_file;
 
 const unsigned char * xml_err_get_elem_name(const struct xml_tree *p);
 const unsigned char * xml_err_get_attr_name(const struct xml_attr *a);

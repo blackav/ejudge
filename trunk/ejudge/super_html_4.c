@@ -4180,7 +4180,7 @@ cmd_op_check_ip_mask(
 
   if (ss_cgi_param(phr, "value", &value) <= 0 || !value)
     FAIL(S_ERR_INV_VALUE);
-  if (xml_parse_ip_mask(0, 0, 0, value, &addr, &mask) < 0)
+  if (xml_parse_ip_mask(NULL, 0, 0, 0, value, &addr, &mask) < 0)
     FAIL(S_ERR_INV_VALUE);
   retval = 0;
 
@@ -4214,7 +4214,7 @@ cmd_op_add_ip(
   p_acc = (struct contest_access**) contest_desc_get_ptr(ecnts, f_id);
   if (ss_cgi_param(phr, "ip_mask", &mask_str) <= 0)
     FAIL(S_ERR_INV_VALUE);
-  if (xml_parse_ip_mask(0, 0, 0, mask_str, &addr, &mask) < 0)
+  if (xml_parse_ip_mask(NULL, 0, 0, 0, mask_str, &addr, &mask) < 0)
     FAIL(S_ERR_INV_VALUE);
   if (ss_cgi_param_int(phr, "ssl_flag", &ssl_flag) < 0
       || ssl_flag < -1 || ssl_flag > 1)
@@ -4327,7 +4327,7 @@ cmd_op_set_rule_ip(
     FAIL(S_ERR_INV_FIELD_ID);
   if (ss_cgi_param(phr, "value", &mask_str) <= 0)
     FAIL(S_ERR_INV_VALUE);
-  if (xml_parse_ip_mask(0, 0, 0, mask_str, &addr, &mask) < 0)
+  if (xml_parse_ip_mask(NULL, 0, 0, 0, mask_str, &addr, &mask) < 0)
     FAIL(S_ERR_INV_VALUE);
   if (!(p = contests_get_ip_rule_nc(acc, subf_id)))
     FAIL(S_ERR_INV_FIELD_ID);

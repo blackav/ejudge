@@ -163,9 +163,9 @@ parse_config(const unsigned char *path, const unsigned char *default_config)
   unsigned char **leaf_elem_addr = 0;
 
   if (default_config) {
-    tree = xml_build_tree_str(default_config, &serve_control_config_parse_spec);
+    tree = xml_build_tree_str(NULL, default_config, &serve_control_config_parse_spec);
   } else {
-    tree = xml_build_tree(path, &serve_control_config_parse_spec);
+    tree = xml_build_tree(NULL, path, &serve_control_config_parse_spec);
   }
   if (!tree) goto failed;
 
