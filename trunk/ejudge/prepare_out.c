@@ -2265,7 +2265,7 @@ prepare_unparse_testers(
     if (!probs[i] || probs[i]->disable_testing > 0) continue;
     if (/*vm_sizes[i] != def_vm_size 
         || stack_sizes[i] != def_stack_size
-        ||*/ file_ios[i] != def_use_files)
+        || file_ios[i] != def_use_files*/ 0)
       need_sep_tester[i] = 1;
   }
 
