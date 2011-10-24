@@ -202,6 +202,7 @@ task_fini_module(void)
 find_prc_in_list(pid_t pid, int stat, struct rusage *pusage)
 {
   int i;
+  unsigned long long elapsed = 0LL;
 
   for (i = 0; i < task_u; i++)
     if (task_v[i] && task_v[i]->pid == pid)
@@ -222,28 +223,24 @@ find_prc_in_list(pid_t pid, int stat, struct rusage *pusage)
   gettimeofday(&task_v[i]->stop_time, 0);
 
   task_active--;
+  elapsed += pusage->ru_utime.tv_sec * 1000;
+  elapsed += pusage->ru_stime.tv_sec * 1000;
+  elapsed += pusage->ru_utime.tv_usec / 1000;
+  elapsed += pusage->ru_stime.tv_usec / 1000;
+  if (task_v[i]->max_time_millis > 0 && elapsed >= task_v[i]->max_time_millis) {
+    task_v[i]->was_timeout = 1;
+  } else if (task_v[i]->max_time > 0 && elapsed >= task_v[i]->max_time * 1000) {
+    task_v[i]->was_timeout = 1;
+  }
+
   if (WIFSIGNALED(stat)) {
     if (linux_ms_time_limit > 0 && WTERMSIG(stat) == SIGKILL
 	&& !task_v[i]->was_timeout && task_v[i]->max_time_millis > 0) {
-      unsigned long long elapsed = 0;
-      
-      elapsed += pusage->ru_utime.tv_sec * 1000;
-      elapsed += pusage->ru_stime.tv_sec * 1000;
-      elapsed += pusage->ru_utime.tv_usec / 1000;
-      elapsed += pusage->ru_stime.tv_usec / 1000;
-      // FIXME: 5 is a magic value, further investigation is needed.
-      if (elapsed + 5 >= task_v[i]->max_time_millis)
+      if (elapsed >= task_v[i]->max_time_millis)
         task_v[i]->was_timeout = 1;
     } else if (linux_ms_time_limit <= 0 && !task_v[i]->was_timeout
                && task_v[i]->max_time_millis > 0) {
-      unsigned long long elapsed = 0;
-
-      elapsed += pusage->ru_utime.tv_sec * 1000;
-      elapsed += pusage->ru_stime.tv_sec * 1000;
-      elapsed += pusage->ru_utime.tv_usec / 1000;
-      elapsed += pusage->ru_stime.tv_usec / 1000;
-      // FIXME: 5 is a magic value, further investigation is needed.
-      if (elapsed + 5 >= task_v[i]->max_time_millis) {
+      if (elapsed >= task_v[i]->max_time_millis) {
         task_v[i]->was_timeout = 1;
         // FIXME: ugly hack: update the process time accounting structure
         pusage->ru_utime.tv_sec = task_v[i]->max_time_millis / 1000;
@@ -252,16 +249,9 @@ find_prc_in_list(pid_t pid, int stat, struct rusage *pusage)
         pusage->ru_stime.tv_usec = 0;
       }
     } else {
-      unsigned long long elapsed = 0;
-
-      elapsed += pusage->ru_utime.tv_sec * 1000;
-      elapsed += pusage->ru_stime.tv_sec * 1000;
-      elapsed += pusage->ru_utime.tv_usec / 1000;
-      elapsed += pusage->ru_stime.tv_usec / 1000;
-      // FIXME: 5 is a magic value, further investigation is needed.
       if (WTERMSIG(stat) == SIGKILL && !task_v[i]->was_timeout
           && task_v[i]->max_time > 0
-          && elapsed +5 >= task_v[i]->max_time * 1000) {
+          && elapsed >= task_v[i]->max_time * 1000) {
         task_v[i]->was_timeout = 1;
       }
     }
@@ -269,14 +259,7 @@ find_prc_in_list(pid_t pid, int stat, struct rusage *pusage)
   } else {
     if (linux_ms_time_limit <= 0 && !task_v[i]->was_timeout
         && task_v[i]->max_time_millis > 0) {
-      unsigned long long elapsed = 0;
-
-      elapsed += pusage->ru_utime.tv_sec * 1000;
-      elapsed += pusage->ru_stime.tv_sec * 1000;
-      elapsed += pusage->ru_utime.tv_usec / 1000;
-      elapsed += pusage->ru_stime.tv_usec / 1000;
-      // FIXME: 5 is a magic value, further investigation is needed.
-      if (elapsed + 5 >= task_v[i]->max_time_millis) {
+      if (elapsed >= task_v[i]->max_time_millis) {
         task_v[i]->was_timeout = 1;
         // FIXME: ugly hack: update the process time accounting structure
         pusage->ru_utime.tv_sec = task_v[i]->max_time_millis / 1000;
@@ -1748,8 +1731,8 @@ task_Start(tTask *tsk)
     if (linux_ms_time_limit > 0 && tsk->max_time_millis > 0) {
       // the kernel supports millisecond-precise time-limits
       memset(&lim, 0, sizeof(lim));
-      lim.rlim_cur = tsk->max_time_millis;
-      lim.rlim_max = tsk->max_time_millis;
+      lim.rlim_cur = tsk->max_time_millis + 1000;
+      lim.rlim_max = tsk->max_time_millis + 1000;
       if (setrlimit(linux_rlimit_code, &lim) < 0) {
         code = MAKECODE(TASK_ERR_LIMIT_CPU_FAILED, errno);
         write(comm_fd + 1, &code, sizeof(code));
@@ -1759,12 +1742,12 @@ task_Start(tTask *tsk)
       ptrace(0x4282, 0, 0, 0);
     } else if (tsk->max_time_millis > 0) {
       // the kernel does not support millisecond-precise time-limits
-      tsk->max_time = (tsk->max_time_millis + 999) / 1000;
+      tsk->max_time = (tsk->max_time_millis + 1999) / 1000;
     }
 #else
     if (tsk->max_time_millis > 0) {
       // the kernel does not support millisecond-precise time-limits
-      tsk->max_time = (tsk->max_time_millis + 999) / 1000;
+      tsk->max_time = (tsk->max_time_millis + 1999) / 1000;
     }
 #endif
 
@@ -1774,15 +1757,15 @@ task_Start(tTask *tsk)
 #ifdef __linux__
       ASSERT(linux_fix_time_flag >= 0);
       if (linux_fix_time_flag > 0) {
-        lim.rlim_cur = tsk->max_time - 1;
-        lim.rlim_max = tsk->max_time - 1;
-      } else {
         lim.rlim_cur = tsk->max_time;
         lim.rlim_max = tsk->max_time;
+      } else {
+        lim.rlim_cur = tsk->max_time + 1;
+        lim.rlim_max = tsk->max_time + 1;
       }
 #else
-      lim.rlim_cur = tsk->max_time;
-      lim.rlim_max = tsk->max_time;
+      lim.rlim_cur = tsk->max_time + 1;
+      lim.rlim_max = tsk->max_time + 1;
 #endif
 
       if (setrlimit(RLIMIT_CPU, &lim) < 0) {
