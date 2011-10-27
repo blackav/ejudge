@@ -161,4 +161,10 @@ problem_xml_find_language(
         int tr_num,
         unsigned char **tr_names);
 
+void
+problem_xml_unparse(FILE *out_f, problem_xml_t prob_xml);
+
+const struct xml_parse_spec *
+problem_xml_get_parse_spec(void);
+
 #endif /* __PROBLEM_XML_H__ */

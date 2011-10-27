@@ -108,6 +108,12 @@ static struct xml_parse_spec problem_parse_spec =
   .unparse_entity = 1,
 };
 
+const struct xml_parse_spec *
+problem_xml_get_parse_spec(void)
+{
+  return &problem_parse_spec;
+}
+
 static void
 node_free(struct xml_tree *t)
 {
@@ -621,7 +627,7 @@ problem_xml_unparse_elem(
     return stmt;
   }
 
-  xml_unparse_raw_tree(fout, t, &problem_parse_spec, vars, vals);
+  xml_unparse_raw_tree_subst(fout, t, &problem_parse_spec, vars, vals);
 
   return stmt;
 }
@@ -666,7 +672,7 @@ problem_xml_unparse_node(
         const unsigned char **vars, /* substitution variables  */
         const unsigned char **vals) /* substitution values */
 {
-  xml_unparse_raw_tree(fout, p, &problem_parse_spec, vars, vals);
+  xml_unparse_raw_tree_subst(fout, p, &problem_parse_spec, vars, vals);
 }
 
 int

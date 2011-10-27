@@ -83,13 +83,6 @@ xml_unparse_tree(FILE *out,
                  int (*attr_print)(FILE *, struct xml_attr const *),
                  void (*fmt_print)(FILE *, struct xml_tree const *, int, int));
 void
-xml_unparse_raw_tree(
-        FILE *out,
-        const struct xml_tree *tree,
-        const struct xml_parse_spec *spec,
-        const unsigned char **vars,
-        const unsigned char **vals);
-void
 xml_unparse_tree_str(char *buf,
                      int buf_size,
                      struct xml_tree const *tree,
@@ -104,5 +97,18 @@ void xml_link_node_last(struct xml_tree *p, struct xml_tree *c);
 
 struct xml_tree *xml_elem_alloc(int tag, const size_t *sizes);
 struct xml_attr *xml_attr_alloc(int tag, const size_t *sizes);
+
+void
+xml_unparse_raw_tree_subst(
+        FILE *out,
+        const struct xml_tree *tree,
+        const struct xml_parse_spec *spec,
+        const unsigned char **vars,
+        const unsigned char **vals);
+void
+xml_unparse_raw_tree(
+        FILE *fout,
+        const struct xml_tree *tree,
+        const struct xml_parse_spec *spec);
 
 #endif /* __EXPAT_IFACE_H__ */

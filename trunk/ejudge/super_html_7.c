@@ -2546,8 +2546,8 @@ super_serve_op_TESTS_TEST_EDIT_PAGE(
           "Problems page");
   fprintf(out_f, "<li>%s%s</a></li>\n",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
-                        "action=%d&op=%d&contest_id=%d&prob_id=%d", SSERV_CMD_HTTP_REQUEST,
-                        SSERV_OP_TESTS_TESTS_VIEW_PAGE, contest_id, prob_id),
+                        "action=%d&op=%d&contest_id=%d&prob_id=%d&variant=%d", SSERV_CMD_HTTP_REQUEST,
+                        SSERV_OP_TESTS_TESTS_VIEW_PAGE, contest_id, prob_id, variant),
           "Tests page");
   fprintf(out_f, "</ul>\n");
 
@@ -2556,6 +2556,7 @@ super_serve_op_TESTS_TEST_EDIT_PAGE(
   html_hidden(out_f, "action", "%d", SSERV_CMD_HTTP_REQUEST);
   html_hidden(out_f, "contest_id", "%d", contest_id);
   html_hidden(out_f, "prob_id", "%d", prob_id);
+  html_hidden(out_f, "variant", "%d", variant);
   html_hidden(out_f, "test_num", "%d", test_num);
 
   if (test_pat[0] > ' ') {
@@ -2573,15 +2574,15 @@ super_serve_op_TESTS_TEST_EDIT_PAGE(
       fprintf(out_f, "<table%s><tr>", cl);
       fprintf(out_f, "<td%s>%s%s</a></td>", cl,
               html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
-                            "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;test_num=%d&amp;file_type=%d",
+                            "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;variant=%d&amp;test_num=%d&amp;file_type=%d",
                             SSERV_CMD_HTTP_REQUEST,
-                            SSERV_OP_TESTS_TEST_DOWNLOAD, contest_id, prob_id, test_num, 1),
+                            SSERV_OP_TESTS_TEST_DOWNLOAD, contest_id, prob_id, variant, test_num, 1),
               "Download file");
       fprintf(out_f, "<td%s>%s%s</a></td>", cl,
               html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
-                            "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;test_num=%d&amp;file_type=%d",
+                            "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;variant=%d&amp;test_num=%d&amp;file_type=%d",
                             SSERV_CMD_HTTP_REQUEST,
-                            SSERV_OP_TESTS_TEST_UPLOAD_PAGE, contest_id, prob_id, test_num, 1),
+                            SSERV_OP_TESTS_TEST_UPLOAD_PAGE, contest_id, prob_id, variant, test_num, 1),
               "Upload file");
       fprintf(out_f, "</table>\n");
     }
@@ -2602,15 +2603,15 @@ super_serve_op_TESTS_TEST_EDIT_PAGE(
       fprintf(out_f, "<table%s><tr>", cl);
       fprintf(out_f, "<td%s>%s%s</a></td>", cl,
               html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
-                            "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;test_num=%d&amp;file_type=%d",
+                            "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;variant=%d&amp;test_num=%d&amp;file_type=%d",
                             SSERV_CMD_HTTP_REQUEST,
-                            SSERV_OP_TESTS_TEST_DOWNLOAD, contest_id, prob_id, test_num, 2),
+                            SSERV_OP_TESTS_TEST_DOWNLOAD, contest_id, prob_id, variant, test_num, 2),
               "Download file");
       fprintf(out_f, "<td%s>%s%s</a></td>", cl,
               html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
-                            "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;test_num=%d&amp;file_type=%d",
+                            "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;variant=%d&amp;test_num=%d&amp;file_type=%d",
                             SSERV_CMD_HTTP_REQUEST,
-                            SSERV_OP_TESTS_TEST_UPLOAD_PAGE, contest_id, prob_id, test_num, 2),
+                            SSERV_OP_TESTS_TEST_UPLOAD_PAGE, contest_id, prob_id, variant, test_num, 2),
               "Upload file");
       fprintf(out_f, "</table>\n");
     }
@@ -2663,9 +2664,9 @@ super_serve_op_TESTS_TEST_EDIT_PAGE(
     fprintf(out_f, "<table%s><tr>", cl);
     fprintf(out_f, "<td%s>%s%s</a></td>", cl,
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
-                          "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;test_num=%d&amp;file_type=%d",
+                          "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;variant=%d&amp;test_num=%d&amp;file_type=%d",
                           SSERV_CMD_HTTP_REQUEST,
-                          SSERV_OP_TESTS_TEST_CLEAR_INF_ACTION, contest_id, prob_id, test_num, 3),
+                          SSERV_OP_TESTS_TEST_CLEAR_INF_ACTION, contest_id, prob_id, variant, test_num, 3),
             "Clear file");
     fprintf(out_f, "</table>\n");
     xfree(text); text = NULL;
@@ -3249,8 +3250,8 @@ super_serve_op_TESTS_TEST_DELETE_PAGE(
           "Problems page");
   fprintf(out_f, "<li>%s%s</a></li>\n",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
-                        "action=%d&op=%d&contest_id=%d&prob_id=%d", SSERV_CMD_HTTP_REQUEST,
-                        SSERV_OP_TESTS_TESTS_VIEW_PAGE, contest_id, prob_id),
+                        "action=%d&op=%d&contest_id=%d&prob_id=%d&variant=%d", SSERV_CMD_HTTP_REQUEST,
+                        SSERV_OP_TESTS_TESTS_VIEW_PAGE, contest_id, prob_id, variant),
           "Tests page");
   fprintf(out_f, "</ul>\n");
 
@@ -3259,6 +3260,7 @@ super_serve_op_TESTS_TEST_DELETE_PAGE(
   html_hidden(out_f, "action", "%d", SSERV_CMD_HTTP_REQUEST);
   html_hidden(out_f, "contest_id", "%d", contest_id);
   html_hidden(out_f, "prob_id", "%d", prob_id);
+  html_hidden(out_f, "variant", "%d", variant);
   html_hidden(out_f, "test_num", "%d", test_num);
 
   cl = " class=\"b1\"";
@@ -3447,8 +3449,8 @@ super_serve_op_TESTS_MAKEFILE_EDIT_PAGE(
           "Problems page");
   fprintf(out_f, "<li>%s%s</a></li>\n",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
-                        "action=%d&op=%d&contest_id=%d&prob_id=%d", SSERV_CMD_HTTP_REQUEST,
-                        SSERV_OP_TESTS_TESTS_VIEW_PAGE, contest_id, prob_id),
+                        "action=%d&op=%d&contest_id=%d&prob_id=%d&variant=%d", SSERV_CMD_HTTP_REQUEST,
+                        SSERV_OP_TESTS_TESTS_VIEW_PAGE, contest_id, prob_id, variant),
           "Tests page");
   fprintf(out_f, "</ul>\n");
 
@@ -3461,6 +3463,7 @@ super_serve_op_TESTS_MAKEFILE_EDIT_PAGE(
   html_hidden(out_f, "action", "%d", SSERV_CMD_HTTP_REQUEST);
   html_hidden(out_f, "contest_id", "%d", contest_id);
   html_hidden(out_f, "prob_id", "%d", prob_id);
+  html_hidden(out_f, "variant", "%d", variant);
 
   fprintf(out_f, "<h3>%s</h3>\n", "Makefile");
 
@@ -4349,8 +4352,22 @@ super_serve_op_TESTS_STATEMENT_EDIT_PAGE(
   serve_state_t cs = NULL;
   const struct section_global_data *global = NULL;
   const struct section_problem_data *prob = NULL;
-  unsigned char buf[1024], hbuf[1024];
+  unsigned char buf[1024], hbuf[1024], vbuf[1024];
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  unsigned char xml_path[PATH_MAX];
+  const unsigned char *cl = NULL;
+  struct stat stb;
+  FILE *err_f = NULL;
+  char *err_t = NULL;
+  size_t err_z = 0;
+  problem_xml_t prob_xml = NULL;
+  int may_read = 0, plain_view = 0;
+  FILE *file_f = NULL;
+  char *file_t = NULL;
+  size_t file_z = 0;
+  struct problem_stmt *prob_stmt = NULL;
+  struct xml_tree *p, *q;
+  int serial;
 
   ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
@@ -4366,8 +4383,6 @@ super_serve_op_TESTS_STATEMENT_EDIT_PAGE(
   cs = phr->ss->te_state;
   global = cs->global;
 
-  if (global->advanced_layout <= 0) FAIL(S_ERR_INV_CONTEST);
-
   ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
   if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
   if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
@@ -4376,6 +4391,17 @@ super_serve_op_TESTS_STATEMENT_EDIT_PAGE(
   if (prob->variant_num > 0) {
     ss_cgi_param_int_opt(phr, "variant", &variant, 0);
     if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
+  }
+  ss_cgi_param_int_opt(phr, "plain_view", &plain_view, 0);
+  if (plain_view != 1) plain_view = 0;
+
+  if (!prob->xml_file || !prob->xml_file[0]) FAIL(S_ERR_INV_PROB_ID);
+  if (cs->global->advanced_layout > 0) {
+    get_advanced_layout_path(xml_path, sizeof(xml_path), cs->global, prob, prob->xml_file, variant);
+  } else if (variant > 0) {
+    prepare_insert_variant_num(xml_path, sizeof(xml_path), prob->xml_file, variant);
+  } else {
+    snprintf(xml_path, sizeof(xml_path), "%s", prob->xml_file);
   }
 
   /*
@@ -4400,16 +4426,342 @@ super_serve_op_TESTS_STATEMENT_EDIT_PAGE(
           "Problems page");
   fprintf(out_f, "<li>%s%s</a></li>\n",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
-                        "action=%d&op=%d&contest_id=%d&prob_id=%d", SSERV_CMD_HTTP_REQUEST,
-                        SSERV_OP_TESTS_TESTS_VIEW_PAGE, contest_id, prob_id),
+                        "action=%d&op=%d&contest_id=%d&prob_id=%d&variant=%d", SSERV_CMD_HTTP_REQUEST,
+                        SSERV_OP_TESTS_TESTS_VIEW_PAGE, contest_id, prob_id, variant),
           "Tests page");
   fprintf(out_f, "</ul>\n");
 
-  fprintf(out_f, "<h3>%s</h3>\n", "Statement file");
+  fprintf(out_f, "<ul>");
+  fprintf(out_f, "<li>%s%s</a></li>\n",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
+                        "action=%d&op=%d&contest_id=%d&prob_id=%d&variant=%d&plain_view=1", SSERV_CMD_HTTP_REQUEST,
+                        SSERV_OP_TESTS_STATEMENT_EDIT_PAGE, contest_id, prob_id, variant),
+          "View as XML text file");
+  fprintf(out_f, "</ul>\n");
+
+  fprintf(out_f, "<h3>%s</h3>\n", "Statement file info");
+  cl = " class=\"b0\"";
+  fprintf(out_f, "<table%s>\n", cl);
+  fprintf(out_f, "<tr><td%s>%s:</td><td%s><tt>%s</tt></td></tr>\n", cl, "Path", cl, ARMOR(xml_path));
+  do {
+    fprintf(out_f, "<tr><td%s>%s:</td><td%s>", cl, "File existance", cl);
+    if (stat(xml_path, &stb) < 0) {
+      fprintf(out_f, "<font color=\"red\">%s</font></td></tr>\n", "File does not exist");
+      break;
+    }
+    fprintf(out_f, "<font color=\"green\">%s</font></td></tr>\n", "OK");
+
+    fprintf(out_f, "<tr><td%s>%s:</td><td%s>", cl, "File readability", cl);
+    if (access(xml_path, R_OK) < 0) {
+      fprintf(out_f, "<font color=\"red\">%s</font></td></tr>\n", "File is not readable");
+      break;
+    }
+    fprintf(out_f, "<font color=\"green\">%s</font></td></tr>\n", "OK");
+    may_read = 1;
+
+    fprintf(out_f, "<tr><td%s>%s:</td><td%s>", cl, "File writeability", cl);
+    if (access(xml_path, W_OK) < 0) {
+      fprintf(out_f, "<font color=\"red\">%s</font>", "File is not writable");
+    } else {
+      fprintf(out_f, "<font color=\"green\">%s</font>", "OK");
+    }
+    fprintf(out_f, "</td></tr>\n");
+
+    fprintf(out_f, "<tr><td%s>%s:</td><td%s>%lld</td></tr>\n", cl, "Size", cl, (long long) stb.st_size);
+    fprintf(out_f, "<tr><td%s>%s:</td><td%s>%04o</td></tr>\n", cl, "Permissions", cl, stb.st_mode & 07777);
+
+    struct passwd *ui = getpwuid(stb.st_uid);
+    if (!ui) {
+      fprintf(out_f, "<tr><td%s>%s:</td><td%s>%d</td></tr>\n",
+              cl, "Owner UID", cl, stb.st_uid);
+    } else {
+      fprintf(out_f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+              cl, "Owner", cl, ui->pw_name);
+    }
+    struct group *gi = getgrgid(stb.st_gid);
+    if (!gi) {
+      fprintf(out_f, "<tr><td%s>%s:</td><td%s>%d</td></tr>\n",
+              cl, "Owner GID", cl, stb.st_gid);
+    } else {
+      fprintf(out_f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+              cl, "Group", cl, gi->gr_name);
+    }
+
+    fprintf(out_f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n", cl, "Last modification", cl,
+            xml_unparse_date(stb.st_mtime));
+  } while (0);
+  fprintf(out_f, "</table>\n");
+
+  if (may_read && !plain_view) {
+    err_f = open_memstream(&err_t, &err_z);
+    prob_xml = problem_xml_parse(err_f, xml_path);
+    fclose(err_f); err_f = NULL;
+
+    if (!prob_xml) {
+      fprintf(out_f, "<h3>%s</h3>\n", "XML parse errors");
+      fprintf(out_f, "<font color=\"red\"><pre>%s</pre></font>\n", ARMOR(err_t));
+    }
+    xfree(err_t); err_t = NULL; err_z = 0;
+  }
+
+  if (plain_view || (may_read && !prob_xml)) {
+    fprintf(out_f, "<h3>%s</h3>\n", "Problem XML file");
+
+    if (generic_read_file(&file_t, 0, &file_z, 0, NULL, xml_path, "") < 0) {
+      file_t = xstrdup("");
+      file_z = 0;
+    }
+
+    html_start_form(out_f, 1, phr->self_url, "");
+    html_hidden(out_f, "SID", "%016llx", phr->session_id);
+    html_hidden(out_f, "action", "%d", SSERV_CMD_HTTP_REQUEST);
+    html_hidden(out_f, "contest_id", "%d", contest_id);
+    html_hidden(out_f, "prob_id", "%d", prob_id);
+    html_hidden(out_f, "variant", "%d", variant);
+    html_hidden(out_f, "plain_view", "%d", 1);
+
+    edit_file_textarea(out_f, "xml_text", 100, 40, file_t);
+
+    cl = " class=\"b0\"";
+    fprintf(out_f, "<table%s><tr>", cl);
+    fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+            cl, SSERV_OP_TESTS_CANCEL_2_ACTION, "Cancel");
+    fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+            cl, SSERV_OP_TESTS_STATEMENT_EDIT_ACTION, "Save");
+    fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+            cl, SSERV_OP_TESTS_STATEMENT_EDIT_2_ACTION, "Save and view");
+    fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+            cl, SSERV_OP_TESTS_STATEMENT_DELETE_ACTION, "Delete!");
+    fprintf(out_f, "</tr></table>\n");
+
+    fprintf(out_f, "</form>\n");
+  } else {
+    fprintf(out_f, "<h3>%s</h3>\n", "Problem description");
+
+    fprintf(out_f, "<script language=\"javascript\">\n"
+            "function setSampleNumToDelete(num)\n"
+            "{\n"
+            "  form_obj = document.getElementById(\"EditForm\");\n"
+            "  form_obj.delete_num.value = num;\n"
+            "}\n"
+            "</script>\n");
+
+    html_start_form_id(out_f, 1, phr->self_url, "EditForm", "");
+    html_hidden(out_f, "SID", "%016llx", phr->session_id);
+    html_hidden(out_f, "action", "%d", SSERV_CMD_HTTP_REQUEST);
+    html_hidden(out_f, "contest_id", "%d", contest_id);
+    html_hidden(out_f, "prob_id", "%d", prob_id);
+    html_hidden(out_f, "variant", "%d", variant);
+    html_hidden(out_f, "delete_num", "%d", -1);
+
+    cl = " class=\"b0\"";
+    fprintf(out_f, "<table%s>", cl);
+    vbuf[0] = 0;
+    if (prob_xml && prob_xml->package) {
+      snprintf(vbuf, sizeof(vbuf), "%s", prob_xml->package);
+    }
+    fprintf(out_f, "<tr><td%s>%s</td><td%s>%s</td></tr>", cl, "Package",
+            cl, html_input_text(buf, sizeof(buf), "prob_package", 60, "%s", vbuf));
+    vbuf[0] = 0;
+    if (prob_xml && prob_xml->id) {
+      snprintf(vbuf, sizeof(vbuf), "%s", prob_xml->id);
+    }
+    fprintf(out_f, "<tr><td%s>%s</td><td%s>%s</td></tr>", cl, "Name",
+            cl, html_input_text(buf, sizeof(buf), "prob_name", 60, "%s", vbuf));
+
+    // for now allow editing of only one (russian or default) statement
+    if (prob_xml) prob_stmt = prob_xml->stmts;
+
+    if (prob_stmt && prob_stmt->title) {
+      file_f = open_memstream(&file_t, &file_z);
+      problem_xml_unparse_node(file_f, prob_stmt->title, NULL, NULL);
+      fclose(file_f); file_f = NULL;
+    }
+    if (file_t == NULL) file_t = xstrdup("");
+    fprintf(out_f, "<tr><td%s>%s</td><td%s>%s</td></tr>", cl, "Title",
+            cl, html_input_text(buf, sizeof(buf), "prob_title", 60, "%s", ARMOR(file_t)));
+    xfree(file_t); file_t = NULL; file_z = 0;
+
+    if (prob_stmt && prob_stmt->desc) {
+      file_f = open_memstream(&file_t, &file_z);
+      problem_xml_unparse_node(file_f, prob_stmt->desc, NULL, NULL);
+      fclose(file_f); file_f = NULL;
+    }
+    if (file_t == NULL) file_t = xstrdup("");
+    fprintf(out_f, "<tr><td%s>%s</td><td%s>", cl, "Description", cl);
+    edit_file_textarea(out_f, "prob_desc", 100, 20, file_t);
+    fprintf(out_f, "</td></tr>\n");
+    xfree(file_t); file_t = NULL; file_z = 0;
+
+    if (prob_stmt && prob_stmt->input_format) {
+      file_f = open_memstream(&file_t, &file_z);
+      problem_xml_unparse_node(file_f, prob_stmt->input_format, NULL, NULL);
+      fclose(file_f); file_f = NULL;
+    }
+    if (file_t == NULL) file_t = xstrdup("");
+    fprintf(out_f, "<tr><td%s>%s</td><td%s>", cl, "Input format", cl);
+    edit_file_textarea(out_f, "prob_input_format", 100, 20, file_t);
+    fprintf(out_f, "</td></tr>\n");
+    xfree(file_t); file_t = NULL; file_z = 0;
+
+    if (prob_stmt && prob_stmt->output_format) {
+      file_f = open_memstream(&file_t, &file_z);
+      problem_xml_unparse_node(file_f, prob_stmt->output_format, NULL, NULL);
+      fclose(file_f); file_f = NULL;
+    }
+    if (file_t == NULL) file_t = xstrdup("");
+    fprintf(out_f, "<tr><td%s>%s</td><td%s>", cl, "Output format", cl);
+    edit_file_textarea(out_f, "prob_output_format", 100, 20, file_t);
+    fprintf(out_f, "</td></tr>\n");
+    xfree(file_t); file_t = NULL; file_z = 0;
+
+    if (prob_stmt && prob_stmt->notes) {
+      file_f = open_memstream(&file_t, &file_z);
+      problem_xml_unparse_node(file_f, prob_stmt->notes, NULL, NULL);
+      fclose(file_f); file_f = NULL;
+    }
+    if (file_t == NULL) file_t = xstrdup("");
+    fprintf(out_f, "<tr><td%s>%s</td><td%s>", cl, "Notes", cl);
+    edit_file_textarea(out_f, "prob_notes", 100, 20, file_t);
+    fprintf(out_f, "</td></tr>\n");
+    xfree(file_t); file_t = NULL; file_z = 0;
+
+    if (prob_xml && prob_xml->examples) {
+      serial = 0;
+      for (p = prob_xml->examples->first_down; p; p = p->right) {
+        if (p->tag != PROB_T_EXAMPLE) continue;
+        ++serial;
+        for (q = p->first_down; q && q->tag != PROB_T_INPUT; q = q->right);
+        if (q && q->tag == PROB_T_INPUT) {
+          file_f = open_memstream(&file_t, &file_z);
+          problem_xml_unparse_node(file_f, q, NULL, NULL);
+          fclose(file_f); file_f = NULL;
+        }
+        if (file_t == NULL) file_t = xstrdup("");
+        fprintf(out_f, "<tr><td%s>%s %d<br/>", cl, "Sample input", serial);
+        fprintf(out_f, "<input onclick=\"setSampleNumToDelete(%d)\" type=\"submit\" name=\"op_%d\" value=\"%s\" />",
+                serial, SSERV_OP_TESTS_STATEMENT_DELETE_SAMPLE_ACTION, "Delete");
+        fprintf(out_f, "</td><td%s>", cl);
+        snprintf(hbuf, sizeof(hbuf), "prob_sample_input_%d", serial);
+        edit_file_textarea(out_f, hbuf, 100, 20, file_t);
+        fprintf(out_f, "</td></tr>\n");
+        xfree(file_t); file_t = NULL; file_z = 0;
+
+        for (q = p->first_down; q && q->tag != PROB_T_OUTPUT; q = q->right);
+        if (q && q->tag == PROB_T_OUTPUT) {
+          file_f = open_memstream(&file_t, &file_z);
+          problem_xml_unparse_node(file_f, q, NULL, NULL);
+          fclose(file_f); file_f = NULL;
+        }
+        if (file_t == NULL) file_t = xstrdup("");
+        fprintf(out_f, "<tr><td%s>%s %d<br/>", cl, "Sample output", serial);
+        fprintf(out_f, "<input onclick=\"setSampleNumToDelete(%d)\" type=\"submit\" name=\"op_%d\" value=\"%s\" />",
+                serial, SSERV_OP_TESTS_STATEMENT_DELETE_SAMPLE_ACTION, "Delete");
+        fprintf(out_f, "</td><td%s>", cl);
+        snprintf(hbuf, sizeof(hbuf), "prob_sample_output_%d", serial);
+        edit_file_textarea(out_f, hbuf, 100, 20, file_t);
+        fprintf(out_f, "</td></tr>\n");
+        xfree(file_t); file_t = NULL; file_z = 0;
+      }
+    }
+
+    fprintf(out_f, "</table>\n");
+
+    cl = " class=\"b0\"";
+    fprintf(out_f, "<table%s><tr>", cl);
+    fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+            cl, SSERV_OP_TESTS_CANCEL_2_ACTION, "Cancel");
+    fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+            cl, SSERV_OP_TESTS_STATEMENT_EDIT_ACTION, "Save");
+    fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+            cl, SSERV_OP_TESTS_STATEMENT_EDIT_4_ACTION, "Save and add a sample");
+    fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+            cl, SSERV_OP_TESTS_STATEMENT_EDIT_3_ACTION, "Save and view as file");
+    fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+            cl, SSERV_OP_TESTS_STATEMENT_DELETE_ACTION, "Delete!");
+    fprintf(out_f, "</tr></table>\n");
+
+    fprintf(out_f, "</form>\n");
+  }
 
   ss_write_html_footer(out_f);
 
 cleanup:
+  problem_xml_free(prob_xml);
+  if (err_f) fclose(err_f);
+  xfree(err_t);
+  if (file_f) fclose(file_f);
+  xfree(file_t);
   html_armor_free(&ab);
+  return retval;
+}
+
+int
+super_serve_op_TESTS_STATEMENT_DELETE_SAMPLE_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  int contest_id = 0;
+  int prob_id = 0;
+  int variant = 0;
+  int delete_num = 0;
+  int plain_view = 0;
+  const struct contest_desc *cnts = NULL;
+  opcap_t caps = 0LL;
+  serve_state_t cs = NULL;
+  const struct section_global_data *global = NULL;
+  const struct section_problem_data *prob = NULL;
+  unsigned char xml_path[PATH_MAX];
+  problem_xml_t prob_xml = NULL;
+
+  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+
+  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
+  get_full_caps(phr, cnts, &caps);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(S_ERR_PERM_DENIED);
+
+  retval = check_other_editors(log_f, out_f, phr, contest_id, cnts);
+  if (retval <= 0) goto cleanup;
+  retval = 0;
+  cs = phr->ss->te_state;
+  global = cs->global;
+
+  ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
+  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
+  if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
+
+  variant = -1;
+  if (prob->variant_num > 0) {
+    ss_cgi_param_int_opt(phr, "variant", &variant, 0);
+    if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
+  }
+  ss_cgi_param_int_opt(phr, "plain_view", &plain_view, 0);
+  if (plain_view != 1) plain_view = 0;
+
+  ss_cgi_param_int_opt(phr, "delete_num", &delete_num, 0);
+  if (delete_num <= 0) goto done;
+
+  if (!prob->xml_file || !prob->xml_file[0]) FAIL(S_ERR_INV_PROB_ID);
+  if (cs->global->advanced_layout > 0) {
+    get_advanced_layout_path(xml_path, sizeof(xml_path), cs->global, prob, prob->xml_file, variant);
+  } else if (variant > 0) {
+    prepare_insert_variant_num(xml_path, sizeof(xml_path), prob->xml_file, variant);
+  } else {
+    snprintf(xml_path, sizeof(xml_path), "%s", prob->xml_file);
+  }
+
+  prob_xml = problem_xml_parse(log_f, xml_path);
+  if (!prob_xml) FAIL(S_ERR_INV_PROB_XML);
+  if (prob_xml->examples) goto done;
+
+done:
+  ss_redirect_2(out_f, phr, SSERV_OP_TESTS_STATEMENT_EDIT_PAGE, contest_id, prob_id, variant, 0);
+
+cleanup:
+  problem_xml_free(prob_xml);
   return retval;
 }
