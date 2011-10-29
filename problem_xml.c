@@ -702,6 +702,141 @@ problem_xml_find_language(
   return 0;
 }
 
+void
+problem_xml_delete_test(problem_xml_t prob_xml, int test_num)
+{
+  int serial;
+  struct xml_tree *p;
+
+  if (!prob_xml || !prob_xml->examples || test_num <= 0) return;
+
+  serial = 0;
+  for (p = prob_xml->examples->first_down; p; p = p->right) {
+    if (p->tag == PROB_T_EXAMPLE && ++serial == test_num) {
+      break;
+    }
+  }
+  if (!p) return;
+
+  xml_unlink_node(p);
+  xml_tree_free(p, &problem_parse_spec);
+  serial = 0;
+  for (p = prob_xml->examples->first_down; p; p = p->right) {
+    if (p->tag == PROB_T_EXAMPLE) ++serial;
+  }
+  if (!serial) {
+    xml_unlink_node(prob_xml->examples);
+    xml_tree_free(prob_xml->examples, &problem_parse_spec);
+    prob_xml->examples = NULL;
+  }
+}
+
+struct xml_tree *
+problem_xml_parse_text(
+        FILE *log_f,
+        const unsigned char *text,
+        int root_node)
+{
+  return xml_parse_text(log_f, text, root_node, &problem_parse_spec);
+}
+
+struct xml_tree *
+problem_xml_free_text(struct xml_tree *xml)
+{
+  return xml_tree_free(xml, &problem_parse_spec);
+}
+
+problem_xml_t
+problem_xml_create(const unsigned char *package, const unsigned char *id)
+{
+  struct xml_tree *p = xml_elem_alloc(PROB_T_PROBLEM, problem_parse_spec.elem_sizes);
+  problem_xml_t xml_prob = (problem_xml_t) p;
+  p->tag = PROB_T_PROBLEM;
+  xml_prob->package = xstrdup(package);
+  xml_prob->id = xstrdup(id);
+  return xml_prob;
+}
+
+struct problem_stmt *
+problem_xml_create_statement(problem_xml_t prob_xml, const unsigned char *lang)
+{
+  struct xml_tree *p = xml_elem_alloc(PROB_T_STATEMENT, problem_parse_spec.elem_sizes);
+  struct problem_stmt *stmt = (struct problem_stmt*) p;
+  p->tag = PROB_T_STATEMENT;
+  stmt->lang = xstrdup(lang);
+  xml_link_node_last(&prob_xml->b, p);
+  if (!prob_xml->stmts) {
+    prob_xml->stmts = prob_xml->last_stmt = stmt;
+  } else {
+    prob_xml->last_stmt->next_stmt = stmt;
+    prob_xml->last_stmt = stmt;
+  }
+  return stmt;
+}
+
+void
+problem_xml_attach_title(struct problem_stmt *stmt, struct xml_tree *title_node)
+{
+  if (!title_node) return;
+
+  xml_link_node_last(&stmt->b, title_node);
+  stmt->title = title_node;
+}
+
+void
+problem_xml_attach_description(struct problem_stmt *stmt, struct xml_tree *description_node)
+{
+  if (!description_node) return;
+
+  xml_link_node_last(&stmt->b, description_node);
+  stmt->desc = description_node;
+}
+
+void
+problem_xml_attach_input_format(struct problem_stmt *stmt, struct xml_tree *input_format_node)
+{
+  if (!input_format_node) return;
+
+  xml_link_node_last(&stmt->b, input_format_node);
+  stmt->input_format = input_format_node;
+}
+
+void
+problem_xml_attach_output_format(struct problem_stmt *stmt, struct xml_tree *output_format_node)
+{
+  if (!output_format_node) return;
+
+  xml_link_node_last(&stmt->b, output_format_node);
+  stmt->output_format = output_format_node;
+}
+
+void
+problem_xml_attach_notes(struct problem_stmt *stmt, struct xml_tree *notes_node)
+{
+  if (!notes_node) return;
+
+  xml_link_node_last(&stmt->b, notes_node);
+  stmt->notes = notes_node;
+}
+
+void
+problem_xml_add_example(problem_xml_t prob_xml, struct xml_tree *input_node, struct xml_tree *output_node)
+{
+  struct xml_tree *examples = NULL;
+  struct xml_tree *example = NULL;
+  if (!(examples = prob_xml->examples)) {
+    examples = xml_elem_alloc(PROB_T_EXAMPLES, problem_parse_spec.elem_sizes);
+    examples->tag = PROB_T_EXAMPLES;
+    xml_link_node_last(&prob_xml->b, examples);
+    prob_xml->examples = examples;
+  }
+  example = xml_elem_alloc(PROB_T_EXAMPLE, problem_parse_spec.elem_sizes);
+  example->tag = PROB_T_EXAMPLE;
+  xml_link_node_last(examples, example);
+  xml_link_node_last(example, input_node);
+  xml_link_node_last(example, output_node);
+}
+
 /*
  * Local variables:
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")

@@ -1152,6 +1152,80 @@ xml_unparse_raw_tree(
   html_armor_free(&sb);
 }
 
+struct xml_tree *
+xml_parse_text(
+        FILE *log_f,
+        const unsigned char *text,
+        int root_node,
+        const struct xml_parse_spec *spec)
+{
+  XML_Parser p = 0;
+  int len, text_len, xml_header_len, elem_len;
+  iconv_t conv_hnd = 0;
+  struct parser_data data;
+  unsigned char xml_header[1024];
+  unsigned char *buf = NULL;
+
+  if (!text) return NULL;
+  if (!spec || !spec->elem_map || !spec->elem_map[root_node]) return NULL;
+
+  memset(&data, 0, sizeof(data));
+  data.log_f = log_f;
+
+  text_len = strlen(text);
+  snprintf(xml_header, sizeof(xml_header), "<?xml version=\"1.0\" encoding=\"%s\"?>\n", EJUDGE_CHARSET);
+  xml_header_len = strlen(xml_header);
+  elem_len = strlen(spec->elem_map[root_node]);
+  len = 1024 + text_len + xml_header_len + elem_len * 2;
+  buf = (unsigned char*) xmalloc(len * sizeof(buf[0]));
+  sprintf(buf, "%s<%s>%s</%s>", xml_header, spec->elem_map[root_node], text, spec->elem_map[root_node]);
+  len = strlen(buf);
+
+  if (!(conv_hnd = iconv_open(EJUDGE_CHARSET, "UTF-8"))) {
+    parse_err(&data, "no conversion is possible from UTF-8 to %s", EJUDGE_CHARSET);
+    goto cleanup_and_exit;
+  }
+
+  if (!(p = XML_ParserCreate(NULL))) {
+    parse_err(&data, "cannot create an XML parser");
+    goto cleanup_and_exit;
+  }
+
+  XML_SetUnknownEncodingHandler(p, encoding_hnd, NULL);
+  XML_SetStartElementHandler(p, start_hnd);
+  XML_SetEndElementHandler(p, end_hnd);
+  XML_SetCharacterDataHandler(p, chardata_hnd);
+  XML_SetUserData(p, &data);
+  XML_UseParserAsHandlerArg(p);
+  if (spec->unparse_entity) {
+    //XML_SetDefaultHandler(p, xml_default_handler);
+    XML_UseForeignDTD(p, 1);
+    XML_SetSkippedEntityHandler(p, xml_skipped_entity_handler);
+  }
+
+  data.spec = spec;
+  data.conv_hnd = conv_hnd;
+
+  if (XML_Parse(p, buf, len, 0) == XML_STATUS_ERROR) {
+    parse_err(&data, "%ld: parse error: %s", (long) XML_GetCurrentLineNumber(p),
+              XML_ErrorString(XML_GetErrorCode(p)));
+    goto cleanup_and_exit;
+  }
+  if (data.err_cntr) goto cleanup_and_exit;
+
+  xfree(buf); buf = NULL;
+  XML_ParserFree(p);
+  iconv_close(conv_hnd);
+  return data.tree;
+
+cleanup_and_exit:
+  xfree(buf);
+  if (conv_hnd) iconv_close(conv_hnd);
+  if (p) XML_ParserFree(p);
+  if (data.tree) xml_tree_free(data.tree, spec);
+  return 0;
+}
+
 /*
  * Local variables:
  *  compile-command: "make"
