@@ -111,4 +111,11 @@ xml_unparse_raw_tree(
         const struct xml_tree *tree,
         const struct xml_parse_spec *spec);
 
+struct xml_tree *
+xml_parse_text(
+        FILE *log_f,
+        const unsigned char *text,
+        int root_node,
+        const struct xml_parse_spec *spec);
+
 #endif /* __EXPAT_IFACE_H__ */

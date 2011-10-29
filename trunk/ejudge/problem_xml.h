@@ -167,4 +167,26 @@ problem_xml_unparse(FILE *out_f, problem_xml_t prob_xml);
 const struct xml_parse_spec *
 problem_xml_get_parse_spec(void);
 
+void
+problem_xml_delete_test(problem_xml_t prob_xml, int test_num);
+
+struct xml_tree *
+problem_xml_parse_text(
+        FILE *log_f,
+        const unsigned char *text,
+        int root_node);
+struct xml_tree *
+problem_xml_free_text(struct xml_tree *xml);
+problem_xml_t
+problem_xml_create(const unsigned char *package, const unsigned char *id);
+struct problem_stmt *
+problem_xml_create_statement(problem_xml_t prob_xml, const unsigned char *lang);
+
+void problem_xml_attach_title(struct problem_stmt *stmt, struct xml_tree *title_node);
+void problem_xml_attach_description(struct problem_stmt *stmt, struct xml_tree *description_node);
+void problem_xml_attach_input_format(struct problem_stmt *stmt, struct xml_tree *input_format_node);
+void problem_xml_attach_output_format(struct problem_stmt *stmt, struct xml_tree *output_format_node);
+void problem_xml_attach_notes(struct problem_stmt *stmt, struct xml_tree *notes_node);
+void problem_xml_add_example(problem_xml_t prob_xml, struct xml_tree *input_node, struct xml_tree *output_node);
+
 #endif /* __PROBLEM_XML_H__ */
