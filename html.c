@@ -1541,7 +1541,7 @@ do_write_kirov_standings(
       run_tests = pe->saved_test - 1;
     } else {
       run_status = pe->status;
-      run_score = pe->saved_score;
+      run_score = pe->score;
       if (run_status == RUN_OK && !prob->variable_full_score) {
         run_score = prob->full_score;
       }
@@ -1551,6 +1551,7 @@ do_write_kirov_standings(
     if (global->score_system == SCORE_OLYMPIAD && accepting_mode) {
       if (run_score < 0) run_score = 0;
       if (run_tests < 0) run_tests = 0;
+      if (run_status == RUN_WRONG_ANSWER_ERR && prob->type != 0) run_status = RUN_PARTIAL;
       switch (run_status) {
       case RUN_OK:
       case RUN_ACCEPTED:
@@ -1605,6 +1606,7 @@ do_write_kirov_standings(
     } else if (global->score_system == SCORE_OLYMPIAD) {
       run_score += pe->score_adj;
       if (run_score < 0) run_score = 0;
+      if (run_status == RUN_WRONG_ANSWER_ERR && prob->type != 0) run_status = RUN_PARTIAL;
       switch (run_status) {
       case RUN_OK:
         full_sol[up_ind] = 1;
@@ -1612,8 +1614,7 @@ do_write_kirov_standings(
         prob_score[up_ind] = run_score;
         att_num[up_ind]++;
         if (global->stand_enable_penalty && prob->ignore_penalty <= 0) {
-          penalty[up_ind] += sec_to_min(global->rounding_mode,
-                                        pe->time - start_time);
+          penalty[up_ind] += sec_to_min(global->rounding_mode, pe->time - start_time);
         }
         //if (run_score > prob->full_score) run_score = prob->full_score;
         break;
@@ -1623,8 +1624,7 @@ do_write_kirov_standings(
         trans_num[up_ind] = 0;
         att_num[up_ind]++;
         if (global->stand_enable_penalty && prob->ignore_penalty <= 0) {
-          penalty[up_ind] += sec_to_min(global->rounding_mode,
-                                        pe->time - start_time);
+          penalty[up_ind] += sec_to_min(global->rounding_mode, pe->time - start_time);
         }
         break;
       case RUN_ACCEPTED:
