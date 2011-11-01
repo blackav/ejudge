@@ -2476,7 +2476,6 @@ run_tests(struct section_tester_data *tst,
     if (prb->scoring_checker && !task_IsTimeout(tsk)
         && task_Status(tsk) == TSK_EXITED
         && (task_ExitCode(tsk) == RUN_WRONG_ANSWER_ERR
-            || task_ExitCode(tsk) == RUN_PRESENTATION_ERR
             || task_ExitCode(tsk) == RUN_OK)) {
       switch (score_system_val) {
       case SCORE_KIROV:
