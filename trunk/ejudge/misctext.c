@@ -2092,6 +2092,160 @@ is_valid_email_address(const unsigned char *email_address)
   return 1;
 }
 
+size_t
+csv_armored_memlen(char const *str, size_t size)
+{
+  unsigned char const *p = (unsigned char const*) str;
+  size_t l = 0;
+  int need_quotes = 0;
+
+  for (size_t i = 0; i < size; ++i, ++p) {
+    if (*p <= ' ' || *p == ';') {
+      need_quotes = 1;
+      ++l;
+    } else if (*p == '"') {
+      need_quotes = 1;
+      l += 2;
+    } else {
+      ++l;
+    }
+  }
+  if (need_quotes) l += 2;
+  return l;
+}
+
+size_t
+csv_armored_strlen(char const *str)
+{
+  const unsigned char *p = (const unsigned char *) str;
+  size_t l = 0;
+  int need_quotes = 0;
+
+  for (; *p; ++p) {
+    if (*p <= ' ' || *p == ';') {
+      need_quotes = 1;
+      ++l;
+    } else if (*p == '"') {
+      need_quotes = 1;
+      l += 2;
+    } else {
+      ++l;
+    }
+  }
+  if (need_quotes) l += 2;
+  return l;
+}
+
+int
+csv_armor_needed(const unsigned char *str, size_t *psz)
+{
+  const unsigned char *p = str;
+  size_t s_sz = 0, d_sz = 0;
+  int need_quotes = 0;
+
+  if (!str) return 0;
+  for (; *p; ++s_sz, ++p) {
+    if (*p <= ' ' || *p == ';') {
+      need_quotes = 1;
+      ++d_sz;
+    } else if (*p == '"') {
+      need_quotes = 1;
+      d_sz += 2;
+    } else {
+      ++d_sz;
+    }
+  }
+  if (need_quotes) d_sz += 2;
+  if (s_sz == d_sz) return 0;
+  *psz = d_sz;
+  return 1;
+}
+
+/*
+int
+c_armor_needed_bin(const unsigned char *str, size_t sz, size_t *psz)
+{
+  const unsigned char *p = str;
+  size_t s_sz = sz, d_sz = 0;
+
+  if (!str || !sz) return 0;
+
+  while (s_sz) {
+    d_sz += armored_c_len_table[*p];
+    p++; s_sz--;
+  }
+  if (d_sz == sz && !*p) return 0;
+  *psz = d_sz;
+  return 1;
+}
+*/
+
+/*
+static int
+c_armor_text(char const *str, int size, char *out)
+{
+  unsigned char const *p = (unsigned char const *) str;
+  char *s = out;
+  unsigned char const *t;
+  int i = size;
+
+  for (; i > 0; p++, i--) {
+    if (!(t = armored_c_translate_table[*p])) {
+      *s++ = *p;
+    } else {
+      while ((*s++ = *t++));
+      s--;
+    }
+  }
+  *s = 0;
+  return s - out;
+}
+*/
+
+static int
+csv_armor_string(char const *str, char *out)
+{
+  unsigned char const *p = (unsigned char const *) str;
+  char *s = out;
+  int need_quotes = 0;
+
+  for (p = (const unsigned char *) str; *p; ++p) {
+    if (*p <= ' ' || *p == ';' || *p == '"') {
+      need_quotes = 1;
+    }
+  }
+
+  if (need_quotes) *s++ = '"';
+  for (p = (const unsigned char *) str;*p; ++p) {
+    if (*p == '"') {
+      *s++ = *p;
+      *s++ = *p;      
+    } else {
+      *s++ = *p;
+    }
+  }
+  if (need_quotes) *s++ = '"';
+
+  *s = 0;
+  return s - out;
+}
+
+const unsigned char *
+csv_armor_buf(struct html_armor_buffer *pb, const unsigned char *s)
+{
+  size_t newsz = 0;
+
+  if (!csv_armor_needed(s, &newsz)) return s;
+  if (newsz >= pb->size) {
+    xfree(pb->buf);
+    if (!pb->size) pb->size = 64;
+    while (newsz >= pb->size) pb->size *= 2;
+    pb->buf = (unsigned char*) xmalloc(pb->size);
+  }
+  csv_armor_string(s, pb->buf);
+  return pb->buf;
+}
+
 /*
  * Local variables:
  *  compile-command: "make"

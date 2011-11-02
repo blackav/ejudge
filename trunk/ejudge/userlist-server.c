@@ -8128,6 +8128,8 @@ cmd_priv_set_passwd_2(
   info("%s -> OK, %d", logbuf, cloned_flag);
 }
 
+#define CSVARMOR(s)  csv_armor_buf(&ab, s)
+
 static void
 do_get_database(FILE *f, int contest_id, const struct contest_desc *cnts)
 {
@@ -8144,7 +8146,7 @@ do_get_database(FILE *f, int contest_id, const struct contest_desc *cnts)
   size_t gen_size = 0;
   const unsigned char *s;
   unsigned char vbuf[1024];
-  const unsigned char *notset = "";
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
 
   static const unsigned char * const cnts_field_names[CONTEST_LAST_FIELD] =
   {
@@ -8186,7 +8188,7 @@ do_get_database(FILE *f, int contest_id, const struct contest_desc *cnts)
       need_members = 1;
 
   // print the header row
-  fprintf(f, "Id;Login;Name;Email;Reg.St;Ban;Lock;Inv");
+  fprintf(f, "Id;Login;Name;Email;Reg;St;Ban;Lock;Inv");
   for (i = 0; i < CONTEST_LAST_FIELD; i++) {
     if (cnts->fields[i] && cnts_field_names[i])
       fprintf(f, ";%s", cnts_field_names[i]);
@@ -8207,7 +8209,14 @@ do_get_database(FILE *f, int contest_id, const struct contest_desc *cnts)
     if (ui) mm = ui->members;
 
     gen_f = open_memstream(&gen_text, &gen_size);
-    fprintf(gen_f, "%d;%s;%s;%s", u->id, u->login, (ui && ui->name)?ui->name:notset, u->email);
+    fprintf(gen_f, "%d;%s", u->id, CSVARMOR(u->login));
+    s = NULL;
+    if (ui) s = ui->name;
+    if (!s) s = "";
+    fprintf(gen_f, ";%s", CSVARMOR(s));
+    s = u->email;
+    if (!s) s = "";
+    fprintf(gen_f, ";%s", CSVARMOR(s));
 
     switch (c->status) {
     case USERLIST_REG_OK:       s = "OK";       break;
@@ -8233,9 +8242,10 @@ do_get_database(FILE *f, int contest_id, const struct contest_desc *cnts)
 
     for (i = 0; i < CONTEST_LAST_FIELD; i++) {
       if (!cnts->fields[i] || !userlist_contest_field_ids[i]) continue;
+      vbuf[0] = 0;
       userlist_get_user_info_field_str(vbuf, sizeof(vbuf),
                                        ui, userlist_contest_field_ids[i], 0);
-      fprintf(gen_f, ";%s", vbuf);
+      fprintf(gen_f, ";%s", CSVARMOR(vbuf));
     }
     close_memstream(gen_f); gen_f = 0;
 
@@ -8254,9 +8264,10 @@ do_get_database(FILE *f, int contest_id, const struct contest_desc *cnts)
 
         for (i = 0; i < CONTEST_LAST_MEMBER_FIELD; i++) {
           if (!cm->fields[i] || !userlist_member_field_ids[i]) continue;
+          vbuf[0] = 0;
           userlist_get_member_field_str(vbuf, sizeof(vbuf), m,
                                         userlist_member_field_ids[i], 0, 0);
-          fprintf(f, ";%s", vbuf);
+          fprintf(f, ";%s", CSVARMOR(vbuf));
         }
         fprintf(f, "\n");
       }
@@ -8270,6 +8281,7 @@ do_get_database(FILE *f, int contest_id, const struct contest_desc *cnts)
     default_unlock_user(u);
   }
   iter->destroy(iter);
+  html_armor_free(&ab);
 }
 
 static void
