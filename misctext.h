@@ -260,4 +260,9 @@ size_str_to_size_t(const unsigned char *str, size_t *p_size);
 int
 is_valid_email_address(const unsigned char *email_address);
 
+size_t csv_armored_memlen(char const *str, size_t size);
+size_t csv_armored_strlen(char const *str);
+int csv_armor_needed(const unsigned char *str, size_t *psz);
+const unsigned char *csv_armor_buf(struct html_armor_buffer *pb, const unsigned char *s);
+
 #endif /* __MISCTEXT_H__ */
