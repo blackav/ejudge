@@ -34,6 +34,7 @@
 #include "testinfo.h"
 #include "file_perms.h"
 #include "ej_process.h"
+#include "sformat.h"
 
 #include "reuse_xalloc.h"
 #include "reuse_osdeps.h"
@@ -4474,6 +4475,74 @@ cleanup:
   return retval;
 }
 
+static int
+write_file_info(
+        FILE *out_f,
+        const unsigned char *path,
+        const unsigned char *title)
+{
+  const unsigned char *cl = "";
+  struct stat stb;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  int may_read = 0;
+
+  fprintf(out_f, "<h3>%s %s</h3>\n", title, "file info");
+  cl = " class=\"b0\"";
+  fprintf(out_f, "<table%s>\n", cl);
+  fprintf(out_f, "<tr><td%s>%s:</td><td%s><tt>%s</tt></td></tr>\n", cl, "Path", cl, ARMOR(path));
+  do {
+    fprintf(out_f, "<tr><td%s>%s:</td><td%s>", cl, "File existance", cl);
+    if (stat(path, &stb) < 0) {
+      fprintf(out_f, "<font color=\"red\">%s</font></td></tr>\n", "File does not exist");
+      break;
+    }
+    fprintf(out_f, "<font color=\"green\">%s</font></td></tr>\n", "OK");
+
+    fprintf(out_f, "<tr><td%s>%s:</td><td%s>", cl, "File readability", cl);
+    if (access(path, R_OK) < 0) {
+      fprintf(out_f, "<font color=\"red\">%s</font></td></tr>\n", "File is not readable");
+      break;
+    }
+    fprintf(out_f, "<font color=\"green\">%s</font></td></tr>\n", "OK");
+    may_read = 1;
+
+    fprintf(out_f, "<tr><td%s>%s:</td><td%s>", cl, "File writeability", cl);
+    if (access(path, W_OK) < 0) {
+      fprintf(out_f, "<font color=\"red\">%s</font>", "File is not writable");
+    } else {
+      fprintf(out_f, "<font color=\"green\">%s</font>", "OK");
+    }
+    fprintf(out_f, "</td></tr>\n");
+
+    fprintf(out_f, "<tr><td%s>%s:</td><td%s>%lld</td></tr>\n", cl, "Size", cl, (long long) stb.st_size);
+    fprintf(out_f, "<tr><td%s>%s:</td><td%s>%04o</td></tr>\n", cl, "Permissions", cl, stb.st_mode & 07777);
+
+    struct passwd *ui = getpwuid(stb.st_uid);
+    if (!ui) {
+      fprintf(out_f, "<tr><td%s>%s:</td><td%s>%d</td></tr>\n",
+              cl, "Owner UID", cl, stb.st_uid);
+    } else {
+      fprintf(out_f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+              cl, "Owner", cl, ui->pw_name);
+    }
+    struct group *gi = getgrgid(stb.st_gid);
+    if (!gi) {
+      fprintf(out_f, "<tr><td%s>%s:</td><td%s>%d</td></tr>\n",
+              cl, "Owner GID", cl, stb.st_gid);
+    } else {
+      fprintf(out_f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+              cl, "Group", cl, gi->gr_name);
+    }
+
+    fprintf(out_f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n", cl, "Last modification", cl,
+            xml_unparse_date(stb.st_mtime));
+  } while (0);
+  fprintf(out_f, "</table>\n");
+
+  html_armor_free(&ab);
+  return may_read;
+}
+
 int
 super_serve_op_TESTS_STATEMENT_EDIT_PAGE(
         FILE *log_f,
@@ -4493,7 +4562,6 @@ super_serve_op_TESTS_STATEMENT_EDIT_PAGE(
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   unsigned char xml_path[PATH_MAX];
   const unsigned char *cl = NULL;
-  struct stat stb;
   FILE *err_f = NULL;
   char *err_t = NULL;
   size_t err_z = 0;
@@ -4565,58 +4633,7 @@ super_serve_op_TESTS_STATEMENT_EDIT_PAGE(
 
   write_problem_editing_links(out_f, phr, contest_id, prob_id, variant, global, prob);
 
-  fprintf(out_f, "<h3>%s</h3>\n", "Statement file info");
-  cl = " class=\"b0\"";
-  fprintf(out_f, "<table%s>\n", cl);
-  fprintf(out_f, "<tr><td%s>%s:</td><td%s><tt>%s</tt></td></tr>\n", cl, "Path", cl, ARMOR(xml_path));
-  do {
-    fprintf(out_f, "<tr><td%s>%s:</td><td%s>", cl, "File existance", cl);
-    if (stat(xml_path, &stb) < 0) {
-      fprintf(out_f, "<font color=\"red\">%s</font></td></tr>\n", "File does not exist");
-      break;
-    }
-    fprintf(out_f, "<font color=\"green\">%s</font></td></tr>\n", "OK");
-
-    fprintf(out_f, "<tr><td%s>%s:</td><td%s>", cl, "File readability", cl);
-    if (access(xml_path, R_OK) < 0) {
-      fprintf(out_f, "<font color=\"red\">%s</font></td></tr>\n", "File is not readable");
-      break;
-    }
-    fprintf(out_f, "<font color=\"green\">%s</font></td></tr>\n", "OK");
-    may_read = 1;
-
-    fprintf(out_f, "<tr><td%s>%s:</td><td%s>", cl, "File writeability", cl);
-    if (access(xml_path, W_OK) < 0) {
-      fprintf(out_f, "<font color=\"red\">%s</font>", "File is not writable");
-    } else {
-      fprintf(out_f, "<font color=\"green\">%s</font>", "OK");
-    }
-    fprintf(out_f, "</td></tr>\n");
-
-    fprintf(out_f, "<tr><td%s>%s:</td><td%s>%lld</td></tr>\n", cl, "Size", cl, (long long) stb.st_size);
-    fprintf(out_f, "<tr><td%s>%s:</td><td%s>%04o</td></tr>\n", cl, "Permissions", cl, stb.st_mode & 07777);
-
-    struct passwd *ui = getpwuid(stb.st_uid);
-    if (!ui) {
-      fprintf(out_f, "<tr><td%s>%s:</td><td%s>%d</td></tr>\n",
-              cl, "Owner UID", cl, stb.st_uid);
-    } else {
-      fprintf(out_f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
-              cl, "Owner", cl, ui->pw_name);
-    }
-    struct group *gi = getgrgid(stb.st_gid);
-    if (!gi) {
-      fprintf(out_f, "<tr><td%s>%s:</td><td%s>%d</td></tr>\n",
-              cl, "Owner GID", cl, stb.st_gid);
-    } else {
-      fprintf(out_f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
-              cl, "Group", cl, gi->gr_name);
-    }
-
-    fprintf(out_f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n", cl, "Last modification", cl,
-            xml_unparse_date(stb.st_mtime));
-  } while (0);
-  fprintf(out_f, "</table>\n");
+  may_read = write_file_info(out_f, xml_path, "Statement");
 
   if (may_read && !plain_view) {
     err_f = open_memstream(&err_t, &err_z);
@@ -5208,6 +5225,304 @@ super_serve_op_TESTS_STATEMENT_DELETE_ACTION(
   snprintf(xml_path_bak, sizeof(xml_path_bak), "%s.bak", xml_path);
 
   if (logged_rename(log_f, xml_path, xml_path_bak) < 0) FAIL(S_ERR_FS_ERROR);
+
+  ss_redirect_2(out_f, phr, SSERV_OP_TESTS_MAIN_PAGE, contest_id, prob_id, variant, 0, NULL);
+
+cleanup:
+  return retval;
+}
+
+int
+super_serve_op_TESTS_SOURCE_HEADER_EDIT_PAGE(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  int contest_id = 0;
+  int prob_id = 0;
+  int variant = 0;
+  const struct contest_desc *cnts = NULL;
+  opcap_t caps = 0LL;
+  serve_state_t cs = NULL;
+  const struct section_global_data *global = NULL;
+  const struct section_problem_data *prob = NULL;
+  const unsigned char *file_name = NULL;
+  const unsigned char *title = NULL;
+  int action = 0, delete_action = 0;
+  unsigned char tmp_path[PATH_MAX];
+  unsigned char file_path[PATH_MAX];
+  unsigned char buf[1024], hbuf[1024];
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  char *file_t = NULL;
+  size_t file_z = 0;
+  const unsigned char *cl = NULL;
+
+  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+
+  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
+  get_full_caps(phr, cnts, &caps);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(S_ERR_PERM_DENIED);
+
+  retval = check_other_editors(log_f, out_f, phr, contest_id, cnts);
+  if (retval <= 0) goto cleanup;
+  retval = 0;
+  cs = phr->ss->te_state;
+  global = cs->global;
+
+  ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
+  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
+  if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
+
+  variant = -1;
+  if (prob->variant_num > 0) {
+    ss_cgi_param_int_opt(phr, "variant", &variant, 0);
+    if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
+  }
+
+  if (phr->opcode == SSERV_OP_TESTS_SOURCE_HEADER_EDIT_PAGE) {
+    file_name = prob->source_header;
+    title = "source header";
+    action = SSERV_OP_TESTS_SOURCE_HEADER_EDIT_ACTION;
+    delete_action = SSERV_OP_TESTS_SOURCE_HEADER_DELETE_ACTION;
+  } else if (phr->opcode == SSERV_OP_TESTS_SOURCE_FOOTER_EDIT_PAGE) {
+    file_name = prob->source_footer;
+    title = "source footer";
+    action = SSERV_OP_TESTS_SOURCE_FOOTER_EDIT_ACTION;
+    delete_action = SSERV_OP_TESTS_SOURCE_FOOTER_DELETE_ACTION;
+  } else if (phr->opcode == SSERV_OP_TESTS_SOLUTION_EDIT_PAGE) {
+    file_name = prob->solution_src;
+    title = "solution";
+    action = SSERV_OP_TESTS_SOLUTION_EDIT_ACTION;
+    delete_action = SSERV_OP_TESTS_SOLUTION_DELETE_ACTION;
+  } else {
+    FAIL(S_ERR_INV_OPER);
+  }
+
+  if (!file_name || !file_name) FAIL(S_ERR_INV_PROB_ID);
+  sformat_message(tmp_path, sizeof(tmp_path), 0, file_name, global, prob, NULL, 0, 0, 0, 0, 0);
+  if (os_IsAbsolutePath(tmp_path)) {
+    snprintf(file_path, sizeof(file_path), "%s", tmp_path);
+  } else if (global->advanced_layout > 0) {
+    get_advanced_layout_path(file_path, sizeof(file_path), global, prob, tmp_path, variant);
+  } else {
+    snprintf(file_path, sizeof(file_path), "%s/%s", global->statement_dir, tmp_path);
+  }
+
+  snprintf(buf, sizeof(buf), "serve-control: %s, contest %d (%s), problem %s, editing %s",
+           phr->html_name, contest_id, ARMOR(cnts->name), prob->short_name, title);
+  ss_write_html_header(out_f, phr, buf, 0, NULL);
+  fprintf(out_f, "<h1>%s</h1>\n", buf);
+
+  fprintf(out_f, "<ul>");
+  fprintf(out_f, "<li>%s%s</a></li>",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL, NULL),
+          "Main page");
+  fprintf(out_f, "<li>%s%s</a></li>\n",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
+                        "action=%d&op=%d&contest_id=%d", SSERV_CMD_HTTP_REQUEST,
+                        SSERV_OP_TESTS_MAIN_PAGE, contest_id),
+          "Problems page");
+  fprintf(out_f, "</ul>\n");
+
+  write_problem_editing_links(out_f, phr, contest_id, prob_id, variant, global, prob);
+
+  write_file_info(out_f, file_path, title);
+
+  fprintf(out_f, "<h3>%s %s</h3>\n", title, "file");
+
+  if (generic_read_file(&file_t, 0, &file_z, 0, NULL, file_path, "") < 0) {
+    file_t = xstrdup("");
+    file_z = 0;
+  }
+
+  html_start_form(out_f, 1, phr->self_url, "");
+  html_hidden(out_f, "SID", "%016llx", phr->session_id);
+  html_hidden(out_f, "action", "%d", SSERV_CMD_HTTP_REQUEST);
+  html_hidden(out_f, "contest_id", "%d", contest_id);
+  html_hidden(out_f, "prob_id", "%d", prob_id);
+  html_hidden(out_f, "variant", "%d", variant);
+
+  edit_file_textarea(out_f, "text", 100, 40, file_t);
+
+  cl = " class=\"b0\"";
+  fprintf(out_f, "<table%s><tr>", cl);
+  fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+          cl, SSERV_OP_TESTS_CANCEL_2_ACTION, "Cancel");
+  fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+          cl, action, "Save");
+  fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+          cl, delete_action, "Delete!");
+  fprintf(out_f, "</tr></table>\n");
+  fprintf(out_f, "</form>\n");
+
+  ss_write_html_footer(out_f);
+
+cleanup:
+  xfree(file_t);
+  html_armor_free(&ab);
+  return retval;
+}
+
+int
+super_serve_op_TESTS_SOURCE_HEADER_EDIT_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  int contest_id = 0;
+  int prob_id = 0;
+  int variant = 0;
+  const struct contest_desc *cnts = NULL;
+  opcap_t caps = 0LL;
+  serve_state_t cs = NULL;
+  const struct section_global_data *global = NULL;
+  const struct section_problem_data *prob = NULL;
+  const unsigned char *file_name = NULL;
+  unsigned char tmp_path[PATH_MAX];
+  unsigned char file_path[PATH_MAX];
+  unsigned char file_path_tmp[PATH_MAX];
+  unsigned char file_path_bak[PATH_MAX];
+  const unsigned char *s = NULL;
+  unsigned char *text = NULL;
+
+  file_path_tmp[0] = 0;
+
+  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+
+  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
+  get_full_caps(phr, cnts, &caps);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(S_ERR_PERM_DENIED);
+
+  retval = check_other_editors(log_f, out_f, phr, contest_id, cnts);
+  if (retval <= 0) goto cleanup;
+  retval = 0;
+  cs = phr->ss->te_state;
+  global = cs->global;
+
+  ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
+  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
+  if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
+
+  variant = -1;
+  if (prob->variant_num > 0) {
+    ss_cgi_param_int_opt(phr, "variant", &variant, 0);
+    if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
+  }
+
+  if (phr->opcode == SSERV_OP_TESTS_SOURCE_HEADER_EDIT_ACTION) {
+    file_name = prob->source_header;
+  } else if (phr->opcode == SSERV_OP_TESTS_SOURCE_FOOTER_EDIT_ACTION) {
+    file_name = prob->source_footer;
+  } else if (phr->opcode == SSERV_OP_TESTS_SOLUTION_EDIT_ACTION) {
+    file_name = prob->solution_src;
+  } else {
+    FAIL(S_ERR_INV_OPER);
+  }
+
+  if (!file_name || !file_name) FAIL(S_ERR_INV_PROB_ID);
+  sformat_message(tmp_path, sizeof(tmp_path), 0, file_name, global, prob, NULL, 0, 0, 0, 0, 0);
+  if (os_IsAbsolutePath(tmp_path)) {
+    snprintf(file_path, sizeof(file_path), "%s", tmp_path);
+  } else if (global->advanced_layout > 0) {
+    get_advanced_layout_path(file_path, sizeof(file_path), global, prob, tmp_path, variant);
+  } else {
+    snprintf(file_path, sizeof(file_path), "%s/%s", global->statement_dir, tmp_path);
+  }
+  snprintf(file_path_tmp, sizeof(file_path_tmp), "%s.tmp", file_path);
+  snprintf(file_path_bak, sizeof(file_path_bak), "%s.bak", file_path);
+
+  ss_cgi_param(phr, "text", &s);
+  text = normalize_textarea(s);
+
+  write_file(file_path_tmp, text);
+  if (!need_file_update(file_path, file_path_tmp)) goto done;
+
+  if (logged_rename(log_f, file_path, file_path_bak) < 0) FAIL(S_ERR_FS_ERROR);
+  if (logged_rename(log_f, file_path_tmp, file_path) < 0) FAIL(S_ERR_FS_ERROR);
+  set_cnts_file_perms(log_f, file_path, cnts);
+  file_path_tmp[0] = 0;
+
+  // FIXME: invoke makefile
+
+done:
+  ss_redirect_2(out_f, phr, SSERV_OP_TESTS_MAIN_PAGE, contest_id, prob_id, variant, 0, NULL);
+
+cleanup:
+  if (file_path_tmp[0]) unlink(file_path_tmp);
+  xfree(text);
+  return retval;
+}
+
+int
+super_serve_op_TESTS_SOURCE_HEADER_DELETE_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  int contest_id = 0;
+  int prob_id = 0;
+  int variant = 0;
+  const struct contest_desc *cnts = NULL;
+  opcap_t caps = 0LL;
+  serve_state_t cs = NULL;
+  const struct section_global_data *global = NULL;
+  const struct section_problem_data *prob = NULL;
+  const unsigned char *file_name = NULL;
+  unsigned char tmp_path[PATH_MAX];
+  unsigned char file_path[PATH_MAX];
+
+  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+
+  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
+  get_full_caps(phr, cnts, &caps);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(S_ERR_PERM_DENIED);
+
+  retval = check_other_editors(log_f, out_f, phr, contest_id, cnts);
+  if (retval <= 0) goto cleanup;
+  retval = 0;
+  cs = phr->ss->te_state;
+  global = cs->global;
+
+  ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
+  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
+  if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
+
+  variant = -1;
+  if (prob->variant_num > 0) {
+    ss_cgi_param_int_opt(phr, "variant", &variant, 0);
+    if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
+  }
+
+  if (phr->opcode == SSERV_OP_TESTS_SOURCE_HEADER_DELETE_ACTION) {
+    file_name = prob->source_header;
+  } else if (phr->opcode == SSERV_OP_TESTS_SOURCE_FOOTER_DELETE_ACTION) {
+    file_name = prob->source_footer;
+  } else if (phr->opcode == SSERV_OP_TESTS_SOLUTION_DELETE_ACTION) {
+    file_name = prob->solution_src;
+  } else {
+    FAIL(S_ERR_INV_OPER);
+  }
+
+  if (!file_name || !file_name) FAIL(S_ERR_INV_PROB_ID);
+  sformat_message(tmp_path, sizeof(tmp_path), 0, file_name, global, prob, NULL, 0, 0, 0, 0, 0);
+  if (os_IsAbsolutePath(tmp_path)) {
+    snprintf(file_path, sizeof(file_path), "%s", tmp_path);
+  } else if (global->advanced_layout > 0) {
+    get_advanced_layout_path(file_path, sizeof(file_path), global, prob, tmp_path, variant);
+  } else {
+    snprintf(file_path, sizeof(file_path), "%s/%s", global->statement_dir, tmp_path);
+  }
+
+  if (logged_unlink(log_f, file_path) < 0) FAIL(S_ERR_FS_ERROR);
 
   ss_redirect_2(out_f, phr, SSERV_OP_TESTS_MAIN_PAGE, contest_id, prob_id, variant, 0, NULL);
 
