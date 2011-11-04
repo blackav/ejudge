@@ -428,7 +428,7 @@ parse_line(const unsigned char *str, size_t len, testinfo_t *pt)
     pt->cmd_argv = (char**) cmd.v;
     memset(&cmd, 0, sizeof(cmd));
   } else if (!strcmp(name_buf, "environ")) {
-    if (pt->cmd_argc >= 0) FAIL(TINF_E_VAR_REDEFINED);
+    if (pt->env_u > 0) FAIL(TINF_E_VAR_REDEFINED);
     pt->env_u = cmd.u;
     pt->env_v = (char**) cmd.v;
     memset(&cmd, 0, sizeof(cmd));    

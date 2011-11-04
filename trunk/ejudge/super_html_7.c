@@ -4444,6 +4444,7 @@ super_serve_op_TESTS_MAKEFILE_GENERATE_ACTION(
   }
 
   mk_f = fopen(tmp_makefile_path, "w");
+  if (!mk_f) FAIL(S_ERR_FS_ERROR);
   if (header) fprintf(mk_f, "%s", header);
   generate_makefile(log_f, mk_f, phr, cnts, cs, global, prob, variant);
   if (footer) fprintf(mk_f, "%s", footer);
