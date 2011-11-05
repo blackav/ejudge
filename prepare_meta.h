@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2011/10/14 23:32:16
+// Generated 2011/11/05 19:15:56
 
 #ifndef __PREPARE_META_H__
 #define __PREPARE_META_H__
@@ -312,6 +312,7 @@ enum
   CNTSPROB_time_limit,
   CNTSPROB_time_limit_millis,
   CNTSPROB_use_ac_not_ok,
+  CNTSPROB_ignore_prev_ac,
   CNTSPROB_team_enable_rep_view,
   CNTSPROB_team_enable_ce_view,
   CNTSPROB_team_show_judge_report,
