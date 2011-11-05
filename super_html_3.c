@@ -452,6 +452,7 @@ static const unsigned char * const action_to_help_url_map[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_CHANGE_TIME_LIMIT_MILLIS] = "Serve.cfg:problem:time_limit_millis",
   [SSERV_CMD_PROB_CHANGE_REAL_TIME_LIMIT] = "Serve.cfg:problem:real_time_limit",
   [SSERV_CMD_PROB_CHANGE_USE_AC_NOT_OK] = "Serve.cfg:problem:use_ac_not_ok",
+  [SSERV_CMD_PROB_CHANGE_IGNORE_PREV_AC] = "Serve.cfg:problem:ignore_prev_ac",
   [SSERV_CMD_PROB_CHANGE_TEAM_ENABLE_REP_VIEW] = "Serve.cfg:problem:team_enable_rep_view",
   [SSERV_CMD_PROB_CHANGE_TEAM_ENABLE_CE_VIEW] = "Serve.cfg:problem:team_enable_ce_view",
   [SSERV_CMD_PROB_CHANGE_TEAM_SHOW_JUDGE_REPORT] = "Serve.cfg:problem:team_show_judge_report",
@@ -6000,6 +6001,24 @@ super_html_print_problem(FILE *f,
                                session_id, form_row_attrs[row ^= 1],
                                self_url, extra_args, prob_hidden_vars);
 
+    if (tmp_prob->use_ac_not_ok > 0) {
+      extra_msg = "Undefined";
+      tmp_prob->ignore_prev_ac = prob->ignore_prev_ac;
+      if (!prob->abstract) {
+        prepare_set_prob_value(CNTSPROB_ignore_prev_ac,
+                               tmp_prob, sup_prob, sstate->global);
+        snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
+                 tmp_prob->ignore_prev_ac?"Yes":"No");
+        extra_msg = msg_buf;
+      }
+      print_boolean_3_select_row(f, "Mark previous AC as IG:",
+                                 prob->ignore_prev_ac,
+                                 SSERV_CMD_PROB_CHANGE_IGNORE_PREV_AC,
+                                 extra_msg,
+                                 session_id, form_row_attrs[row ^= 1],
+                                 self_url, extra_args, prob_hidden_vars);
+    }
+
     //PROBLEM_PARAM(team_enable_rep_view, "d"),
     extra_msg = "Undefined";
     tmp_prob->team_enable_rep_view = prob->team_enable_rep_view;
@@ -7774,6 +7793,10 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
     if (val < -1 || val > 1) return -SSERV_ERR_INVALID_PARAMETER;
     *p_int = val;
     return 0;
+
+  case SSERV_CMD_PROB_CHANGE_IGNORE_PREV_AC:
+    p_int = &prob->ignore_prev_ac;
+    goto handle_boolean_2;
 
   case SSERV_CMD_PROB_CHANGE_TEAM_ENABLE_REP_VIEW:
     p_int = &prob->team_enable_rep_view;
