@@ -718,7 +718,7 @@ struct section_global_data
   +unsigned char *solution_cmd;
  */
 
-/* sizeof(struct section_problem_data) == 65328 */
+/* sizeof(struct section_problem_data) == 65332 */
 struct section_problem_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -766,6 +766,8 @@ struct section_problem_data
   int time_limit_millis;
   /** use AC instead of OK for successful submits */
   ejintbool_t use_ac_not_ok;
+  /** mark previous AC for this problems as IG */
+  ejintbool_t ignore_prev_ac;
   /** enable report viewing for contestants */
   ejintbool_t team_enable_rep_view;
   /** enable compilation error messages viewing for contestants */
