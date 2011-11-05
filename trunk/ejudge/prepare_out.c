@@ -1264,6 +1264,8 @@ prepare_unparse_prob(
  
   if (prob->use_ac_not_ok >= 0)
     unparse_bool(f, "use_ac_not_ok", prob->use_ac_not_ok);
+  if (prob->ignore_prev_ac >= 0)
+    unparse_bool(f, "ignore_prev_ac", prob->ignore_prev_ac);
   if (prob->team_enable_rep_view >= 0)
     unparse_bool(f, "team_enable_rep_view", prob->team_enable_rep_view);
   if (prob->team_enable_ce_view >= 0)
@@ -1572,6 +1574,8 @@ prepare_unparse_actual_prob(
  
   if (prob->use_ac_not_ok > 0)
     unparse_bool(f, "use_ac_not_ok", prob->use_ac_not_ok);
+  if (prob->ignore_prev_ac > 0)
+    unparse_bool(f, "ignore_prev_ac", prob->ignore_prev_ac);
   if (prob->team_enable_rep_view > 0)
     unparse_bool(f, "team_enable_rep_view", prob->team_enable_rep_view);
   if (prob->team_enable_ce_view > 0)
