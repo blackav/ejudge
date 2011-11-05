@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2011/10/14 23:32:16
+// Generated 2011/11/05 19:15:56
 
 #include "prepare_meta.h"
 #include "prepare.h"
@@ -352,6 +352,7 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_time_limit] = { CNTSPROB_time_limit, 'i', XSIZE(struct section_problem_data, time_limit), "time_limit", XOFFSET(struct section_problem_data, time_limit) },
   [CNTSPROB_time_limit_millis] = { CNTSPROB_time_limit_millis, 'i', XSIZE(struct section_problem_data, time_limit_millis), "time_limit_millis", XOFFSET(struct section_problem_data, time_limit_millis) },
   [CNTSPROB_use_ac_not_ok] = { CNTSPROB_use_ac_not_ok, 'B', XSIZE(struct section_problem_data, use_ac_not_ok), "use_ac_not_ok", XOFFSET(struct section_problem_data, use_ac_not_ok) },
+  [CNTSPROB_ignore_prev_ac] = { CNTSPROB_ignore_prev_ac, 'B', XSIZE(struct section_problem_data, ignore_prev_ac), "ignore_prev_ac", XOFFSET(struct section_problem_data, ignore_prev_ac) },
   [CNTSPROB_team_enable_rep_view] = { CNTSPROB_team_enable_rep_view, 'B', XSIZE(struct section_problem_data, team_enable_rep_view), "team_enable_rep_view", XOFFSET(struct section_problem_data, team_enable_rep_view) },
   [CNTSPROB_team_enable_ce_view] = { CNTSPROB_team_enable_ce_view, 'B', XSIZE(struct section_problem_data, team_enable_ce_view), "team_enable_ce_view", XOFFSET(struct section_problem_data, team_enable_ce_view) },
   [CNTSPROB_team_show_judge_report] = { CNTSPROB_team_show_judge_report, 'B', XSIZE(struct section_problem_data, team_show_judge_report), "team_show_judge_report", XOFFSET(struct section_problem_data, team_show_judge_report) },
