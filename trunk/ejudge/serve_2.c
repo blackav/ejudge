@@ -1998,8 +1998,8 @@ serve_read_run_packet(serve_state_t state,
                       const unsigned char *pname)
 {
   path_t rep_path, full_path;
-  int r, rep_flags, rep_size, full_flags;
-  struct run_entry re;
+  int r, rep_flags, rep_size, full_flags, i;
+  struct run_entry re, pe;
   char *reply_buf = 0;          /* need char* for generic_read_file */
   size_t reply_buf_size = 0;
   struct run_reply_packet *reply_pkt = 0;
@@ -2008,6 +2008,7 @@ serve_read_run_packet(serve_state_t state,
   FILE *f = 0;
   int ts8, ts8_us;
   unsigned char time_buf[64];
+  int ignore_prev_ac = 0;
 
   get_current_time(&ts8, &ts8_us);
   if ((r = generic_read_file(&reply_buf, 0, &reply_buf_size, SAFE | REMOVE,
@@ -2080,6 +2081,7 @@ serve_read_run_packet(serve_state_t state,
       && state->probs[re.prob_id] && state->probs[re.prob_id]->use_ac_not_ok
       && reply_pkt->status == RUN_OK) {
     reply_pkt->status = RUN_ACCEPTED;
+    if (state->probs[re.prob_id]->ignore_prev_ac > 0) ignore_prev_ac = 1;
   }
   if (reply_pkt->status == RUN_CHECK_FAILED)
     serve_send_check_failed_email(cnts, reply_pkt->run_id);
@@ -2181,6 +2183,16 @@ serve_read_run_packet(serve_state_t state,
   close_memstream(f); f = 0;
   serve_audit_log(state, reply_pkt->run_id, 0, 0, 0, "%s", audit_text);
   xfree(audit_text); audit_text = 0;
+
+  if (ignore_prev_ac) {
+    for (i = reply_pkt->run_id - 1; i >= 0; --i) {
+      if (run_get_entry(state->runlog_state, i, &pe) < 0) continue;
+      if (pe.status == RUN_ACCEPTED && pe.prob_id == re.prob_id && pe.user_id == re.user_id) {
+        run_change_status_3(state->runlog_state, i, RUN_IGNORED, -1, 0, 0, 0, 0, 0, 0, 0);
+      }
+    }
+  }
+
   run_reply_packet_free(reply_pkt);
 
   return 1;
