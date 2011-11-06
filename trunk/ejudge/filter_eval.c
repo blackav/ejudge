@@ -299,7 +299,7 @@ do_eval(struct filter_env *env,
       res->kind = TOK_STRING_L;
       res->type = FILTER_TYPE_STRING;
       prob_id = env->rentries[r1.v.i].prob_id;
-      if (!prob_id || !env->probs[prob_id]) {
+      if (prob_id <= 0 || prob_id > env->maxprob || !env->probs[prob_id]) {
         res->v.s = envdup(env, "");
       } else {
         res->v.s = envdup(env, env->probs[prob_id]->short_name);
@@ -347,7 +347,7 @@ do_eval(struct filter_env *env,
       res->kind = TOK_STRING_L;
       res->type = FILTER_TYPE_STRING;
       lang_id = env->rentries[r1.v.i].lang_id;
-      if (!lang_id || !env->langs[lang_id]) {
+      if (lang_id <= 0 || lang_id > env->maxlang || !env->langs[lang_id]) {
         res->v.s = envdup(env, "");
       } else {
         res->v.s = envdup(env, env->langs[lang_id]->short_name);
@@ -357,7 +357,7 @@ do_eval(struct filter_env *env,
       res->kind = TOK_STRING_L;
       res->type = FILTER_TYPE_STRING;
       lang_id = env->rentries[r1.v.i].lang_id;
-      if (!lang_id || !env->langs[lang_id]) {
+      if (lang_id <= 0 || lang_id > env->maxlang || !env->langs[lang_id]) {
         res->v.s = envdup(env, "");
       } else {
         res->v.s = envdup(env, env->langs[lang_id]->arch);
@@ -579,7 +579,7 @@ do_eval(struct filter_env *env,
   case TOK_CURPROB:
     res->kind = TOK_STRING_L;
     res->type = FILTER_TYPE_STRING;
-    if (!env->cur->prob_id || !env->probs[env->cur->prob_id]) {
+    if (env->cur->prob_id <= 0 || env->cur->prob_id > env->maxprob || !env->probs[env->cur->prob_id]) {
       res->v.s = envdup(env, "");
     } else {
       res->v.s = envdup(env, env->probs[env->cur->prob_id]->short_name);
@@ -624,7 +624,7 @@ do_eval(struct filter_env *env,
   case TOK_CURLANG:
     res->kind = TOK_STRING_L;
     res->type = FILTER_TYPE_STRING;
-    if (!env->cur->lang_id || !env->langs[env->cur->lang_id]) {
+    if (env->cur->lang_id <= 0 || env->cur->lang_id > env->maxlang || !env->langs[env->cur->lang_id]) {
       res->v.s = envdup(env, "");
     } else {
       res->v.s = envdup(env, env->langs[env->cur->lang_id]->short_name);
@@ -633,7 +633,7 @@ do_eval(struct filter_env *env,
   case TOK_CURARCH:
     res->kind = TOK_STRING_L;
     res->type = FILTER_TYPE_STRING;
-    if (!env->cur->lang_id || !env->langs[env->cur->lang_id]) {
+    if (env->cur->lang_id <= 0 || env->cur->lang_id > env->maxlang || !env->langs[env->cur->lang_id]) {
       res->v.s = envdup(env, "");
     } else {
       res->v.s = envdup(env, env->langs[env->cur->lang_id]->arch);
