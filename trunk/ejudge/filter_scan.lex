@@ -1,7 +1,7 @@
 /* -*- mode: fundamental -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -189,29 +189,29 @@ lett    [A-Za-z_]
 "true" { filter_expr_lval = filter_tree_new_bool(filter_scan_tree_mem, 1); return TOK_BOOL_L; }
 "false" { filter_expr_lval = filter_tree_new_bool(filter_scan_tree_mem, 0); return TOK_BOOL_L; }
 
-"OK" { TR(RUN_OK); }
-"CE" { TR(RUN_COMPILE_ERR); }
-"RT" { TR(RUN_RUN_TIME_ERR); }
-"TL" { TR(RUN_TIME_LIMIT_ERR); }
-"PE" { TR(RUN_PRESENTATION_ERR); }
-"WA" { TR(RUN_WRONG_ANSWER_ERR); }
-"CF" { TR(RUN_CHECK_FAILED); }
-"PT" { TR(RUN_PARTIAL); }
-"AC" { TR(RUN_ACCEPTED); }
-"IG" { TR(RUN_IGNORED); }
-"DQ" { TR(RUN_DISQUALIFIED); }
-"PD" { TR(RUN_PENDING); }
-"ML" { TR(RUN_MEM_LIMIT_ERR); }
-"SE" { TR(RUN_SECURITY_ERR); }
-"SV" { TR(RUN_STYLE_ERR); }
-"RU" { TR(RUN_RUNNING); }
-"CD" { TR(RUN_COMPILED); }
-"CG" { TR(RUN_COMPILING); }
-"AV" { TR(RUN_AVAILABLE); }
-"RJ" { TR(RUN_REJUDGE); }
-"EM" { TR(RUN_EMPTY); }
-"VS" { TR(RUN_VIRTUAL_START); }
-"VT" { TR(RUN_VIRTUAL_STOP); }
+[Oo][Kk] { TR(RUN_OK); }
+[Cc][Ee] { TR(RUN_COMPILE_ERR); }
+[Rr][Tt] { TR(RUN_RUN_TIME_ERR); }
+[Tt][Ll] { TR(RUN_TIME_LIMIT_ERR); }
+[Pp][Ee] { TR(RUN_PRESENTATION_ERR); }
+[Ww][Aa] { TR(RUN_WRONG_ANSWER_ERR); }
+[Cc][Ff] { TR(RUN_CHECK_FAILED); }
+[Pp][Tt] { TR(RUN_PARTIAL); }
+[Aa][Cc] { TR(RUN_ACCEPTED); }
+[Ii][Gg] { TR(RUN_IGNORED); }
+[Dd][Qq] { TR(RUN_DISQUALIFIED); }
+[Pp][Dd] { TR(RUN_PENDING); }
+[Mm][Ll] { TR(RUN_MEM_LIMIT_ERR); }
+[Ss][Ee] { TR(RUN_SECURITY_ERR); }
+[Ss][Vv] { TR(RUN_STYLE_ERR); }
+[Rr][Uu] { TR(RUN_RUNNING); }
+[Cc][Dd] { TR(RUN_COMPILED); }
+[Cc][Gg] { TR(RUN_COMPILING); }
+[Aa][Vv] { TR(RUN_AVAILABLE); }
+[Rr][Jj] { TR(RUN_REJUDGE); }
+[Ee][Mm] { TR(RUN_EMPTY); }
+[Vv][Ss] { TR(RUN_VIRTUAL_START); }
+[Vv][Tt] { TR(RUN_VIRTUAL_STOP); }
 
 0[xX]{hexd}+ { handle_int(); return TOK_INT_L; }
 0{octd}* { handle_int(); return TOK_INT_L; }

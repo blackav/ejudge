@@ -3906,6 +3906,10 @@ enum
   LANG_JAVA = 4,
   LANG_FPC = 8,
   LANG_DCC = 16,
+  LANG_PY = 32,
+  LANG_PL = 64,
+  LANG_SH = 128,
+  LANG_OTHER = 0x100,
 };
 
 struct source_suffixes_s
@@ -3920,6 +3924,9 @@ static const struct source_suffixes_s source_suffixes[] =
   { ".java", LANG_JAVA },
   { ".pas", LANG_FPC },
   { ".dpr", LANG_DCC },
+  { ".py", LANG_PY },
+  { ".pl", LANG_PL },
+  { ".sh", LANG_SH },
   { 0, 0 },
 };
 
@@ -5528,5 +5535,165 @@ super_serve_op_TESTS_SOURCE_HEADER_DELETE_ACTION(
   ss_redirect_2(out_f, phr, SSERV_OP_TESTS_MAIN_PAGE, contest_id, prob_id, variant, 0, NULL);
 
 cleanup:
+  return retval;
+}
+
+int
+super_serve_op_TESTS_CHECKER_CREATE_PAGE(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  int contest_id = 0;
+  int prob_id = 0;
+  int variant = 0;
+  const struct contest_desc *cnts = NULL;
+  opcap_t caps = 0LL;
+  serve_state_t cs = NULL;
+  const struct section_global_data *global = NULL;
+  const struct section_problem_data *prob = NULL;
+  const unsigned char *title = "";
+  const unsigned char *file_name = NULL;
+  unsigned char tmp_path[PATH_MAX];
+  unsigned char file_path[PATH_MAX];
+  unsigned char buf[1024];
+  unsigned char hbuf[1024];
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  int action = 0;
+  const unsigned char *cl = "";
+
+  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+
+  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
+  get_full_caps(phr, cnts, &caps);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(S_ERR_PERM_DENIED);
+
+  retval = check_other_editors(log_f, out_f, phr, contest_id, cnts);
+  if (retval <= 0) goto cleanup;
+  retval = 0;
+  cs = phr->ss->te_state;
+  global = cs->global;
+
+  ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
+  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
+  if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
+
+  variant = -1;
+  if (prob->variant_num > 0) {
+    ss_cgi_param_int_opt(phr, "variant", &variant, 0);
+    if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
+  }
+
+  switch (phr->opcode) {
+  case SSERV_OP_TESTS_STYLE_CHECKER_CREATE_PAGE:
+    if (!prob->style_checker_cmd || !prob->style_checker_cmd[0]) FAIL(S_ERR_INV_OPER);
+    title = "Style checker";
+    file_name = prob->style_checker_cmd;
+    action = SSERV_OP_TESTS_STYLE_CHECKER_CREATE_ACTION;
+    break;
+  case SSERV_OP_TESTS_CHECKER_CREATE_PAGE:
+    if (prob->standard_checker && prob->standard_checker[0]) FAIL(S_ERR_INV_OPER);
+    if (!prob->check_cmd || !prob->check_cmd[0]) FAIL(S_ERR_INV_OPER);
+    title = "Checker";
+    file_name = prob->check_cmd;
+    action = SSERV_OP_TESTS_CHECKER_CREATE_ACTION;
+    break;
+  case SSERV_OP_TESTS_VALUER_CREATE_PAGE:
+    if (!prob->valuer_cmd || !prob->valuer_cmd[0]) FAIL(S_ERR_INV_OPER);
+    title = "Valuer";
+    file_name = prob->valuer_cmd;
+    action = SSERV_OP_TESTS_VALUER_CREATE_ACTION;
+    break;
+  case SSERV_OP_TESTS_INTERACTOR_CREATE_PAGE:
+    if (!prob->interactor_cmd || !prob->interactor_cmd[0]) FAIL(S_ERR_INV_OPER);
+    title = "Interactor";
+    file_name = prob->interactor_cmd;
+    action = SSERV_OP_TESTS_INTERACTOR_CREATE_ACTION;
+    break;
+  case SSERV_OP_TESTS_TEST_CHECKER_CREATE_PAGE:
+    if (!prob->test_checker_cmd || !prob->test_checker_cmd[0]) FAIL(S_ERR_INV_OPER);
+    title = "Test checker";
+    file_name = prob->test_checker_cmd;
+    action = SSERV_OP_TESTS_TEST_CHECKER_CREATE_ACTION;
+    break;
+  default:
+    FAIL(S_ERR_INV_OPER);
+  }
+
+  if (!file_name || !file_name) FAIL(S_ERR_INV_PROB_ID);
+  sformat_message(tmp_path, sizeof(tmp_path), 0, file_name, global, prob, NULL, 0, 0, 0, 0, 0);
+  if (os_IsAbsolutePath(tmp_path)) {
+    snprintf(file_path, sizeof(file_path), "%s", tmp_path);
+  } else if (global->advanced_layout > 0) {
+    get_advanced_layout_path(file_path, sizeof(file_path), global, prob, tmp_path, variant);
+  } else {
+    snprintf(file_path, sizeof(file_path), "%s/%s", global->statement_dir, tmp_path);
+  }
+
+  snprintf(buf, sizeof(buf), "serve-control: %s, contest %d (%s), problem %s, create %s",
+           phr->html_name, contest_id, ARMOR(cnts->name), prob->short_name, title);
+  ss_write_html_header(out_f, phr, buf, 0, NULL);
+  fprintf(out_f, "<h1>%s</h1>\n", buf);
+
+  fprintf(out_f, "<ul>");
+  fprintf(out_f, "<li>%s%s</a></li>",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL, NULL),
+          "Main page");
+  fprintf(out_f, "<li>%s%s</a></li>\n",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
+                        "action=%d&op=%d&contest_id=%d", SSERV_CMD_HTTP_REQUEST,
+                        SSERV_OP_TESTS_MAIN_PAGE, contest_id),
+          "Problems page");
+  fprintf(out_f, "</ul>\n");
+
+  write_problem_editing_links(out_f, phr, contest_id, prob_id, variant, global, prob);
+
+  fprintf(out_f, "<h3>%s</h3>\n", "Choose a language");
+
+  html_start_form(out_f, 1, phr->self_url, "");
+  html_hidden(out_f, "SID", "%016llx", phr->session_id);
+  html_hidden(out_f, "action", "%d", SSERV_CMD_HTTP_REQUEST);
+  html_hidden(out_f, "contest_id", "%d", contest_id);
+  html_hidden(out_f, "prob_id", "%d", prob_id);
+  html_hidden(out_f, "variant", "%d", variant);
+
+  cl = " class=\"b0\"";
+  fprintf(out_f, "<table%s>", cl);
+  fprintf(out_f, "<tr><td%s>%s:</td><td%s><select name=\"language\">", cl, "Programming language", cl);
+  fprintf(out_f, "<option value=\"0\"></option>");
+  fprintf(out_f, "<option value=\"%d\">%s</option>", LANG_C, "C");
+  fprintf(out_f, "<option value=\"%d\">%s</option>", LANG_CPP, "C++");
+  fprintf(out_f, "<option value=\"%d\">%s</option>", LANG_JAVA, "Java");
+  fprintf(out_f, "<option value=\"%d\">%s</option>", LANG_FPC, "Free Pascal");
+  fprintf(out_f, "<option value=\"%d\">%s</option>", LANG_DCC, "Kylix (Delphi)");
+  fprintf(out_f, "<option value=\"%d\">%s</option>", LANG_PY, "Python");
+  fprintf(out_f, "<option value=\"%d\">%s</option>", LANG_PL, "Perl");
+  fprintf(out_f, "<option value=\"%d\">%s</option>", LANG_SH, "Shell");
+  fprintf(out_f, "<option value=\"%d\">%s</option>", LANG_OTHER, "Other scripting language");
+  fprintf(out_f, "</td></tr>\n");
+  fprintf(out_f, "<tr><td%s>%s:</td><td%s><input type=\"checkbox\" name=\"use_testlib\" value=\"1\" /></td></tr>\n",
+          cl, "Use testlib (C++, FPC, DCC)", cl);
+  fprintf(out_f, "<tr><td%s>%s:</td><td%s><input type=\"checkbox\" name=\"use_libchecker\" value=\"1\" /></td></tr>\n",
+          cl, "Use libchecker (C, C++)", cl);
+  fprintf(out_f, "<tr><td%s>%s:</td><td%s><input type=\"checkbox\" name=\"gen_makefile\" value=\"1\" /></td></tr>\n",
+          cl, "Regenerate Makefile", cl);
+  fprintf(out_f, "</table>\n");
+
+  cl = " class=\"b0\"";
+  fprintf(out_f, "<table%s><tr>", cl);
+  fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+          cl, SSERV_OP_TESTS_CANCEL_2_ACTION, "Cancel");
+  fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+          cl, action, "Create");
+  fprintf(out_f, "</tr></table>\n");
+  fprintf(out_f, "</form>\n");
+
+  ss_write_html_footer(out_f);
+
+cleanup:
+  html_armor_free(&ab);
   return retval;
 }
