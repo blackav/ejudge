@@ -24,6 +24,7 @@
 #include "fileutl.h"
 #include "serve_state.h"
 #include "misctext.h"
+#include "mime_type.h"
 
 #include "reuse_xalloc.h"
 #include "reuse_exec.h"
@@ -45,6 +46,7 @@ compare_runs(const serve_state_t state, FILE *fout, int run_id1, int run_id2)
   size_t diff_len = 0;
   char *file_txt = 0;
   size_t file_len = 0;
+  const struct section_problem_data *prob1 = NULL, *prob2 = NULL;
 
   // refuse to do stupid things
   if (run_id1 == run_id2) {
@@ -69,8 +71,19 @@ compare_runs(const serve_state_t state, FILE *fout, int run_id1, int run_id2)
     errcode = -SRV_ERR_BAD_RUN_ID;
     goto cleanup;
   }
-  if (info1.lang_id <= 0 || info1.lang_id > state->max_lang
-      || !state->langs[info1.lang_id] || state->langs[info1.lang_id]->binary) {
+  if (info1.prob_id > 0 && info1.prob_id <= state->max_prob)
+    prob1 = state->probs[info1.prob_id];
+  if (!prob1) {
+    errcode = -SRV_ERR_BAD_PROB_ID;
+    goto cleanup;
+  }
+  if (prob1->type == 0) {
+    if (info1.lang_id <= 0 || info1.lang_id > state->max_lang
+        || !state->langs[info1.lang_id] || state->langs[info1.lang_id]->binary) {
+      errcode = -SRV_ERR_BAD_RUN_ID;
+      goto cleanup;
+    }
+  } else if (info1.mime_type != MIME_TYPE_TEXT) {
     errcode = -SRV_ERR_BAD_RUN_ID;
     goto cleanup;
   }
@@ -85,8 +98,19 @@ compare_runs(const serve_state_t state, FILE *fout, int run_id1, int run_id2)
     errcode = -SRV_ERR_BAD_RUN_ID;
     goto cleanup;
   }
-  if (info2.lang_id <= 0 || info2.lang_id > state->max_lang
-      || !state->langs[info2.lang_id] || state->langs[info2.lang_id]->binary) {
+  if (info2.prob_id > 0 && info2.prob_id <= state->max_prob)
+    prob2 = state->probs[info2.prob_id];
+  if (!prob2) {
+    errcode = -SRV_ERR_BAD_PROB_ID;
+    goto cleanup;
+  }
+  if (prob2->type == 0) {
+    if (info2.lang_id <= 0 || info2.lang_id > state->max_lang
+        || !state->langs[info2.lang_id] || state->langs[info2.lang_id]->binary) {
+      errcode = -SRV_ERR_BAD_LANG_ID;
+      goto cleanup;
+    }
+  } else if (info2.mime_type != MIME_TYPE_TEXT) {
     errcode = -SRV_ERR_BAD_RUN_ID;
     goto cleanup;
   }
