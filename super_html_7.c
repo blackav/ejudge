@@ -5678,6 +5678,8 @@ super_serve_op_TESTS_CHECKER_CREATE_PAGE(
           cl, "Use testlib (C++, FPC, DCC)", cl);
   fprintf(out_f, "<tr><td%s>%s:</td><td%s><input type=\"checkbox\" name=\"use_libchecker\" value=\"1\" /></td></tr>\n",
           cl, "Use libchecker (C, C++)", cl);
+  fprintf(out_f, "<tr><td%s>%s:</td><td%s><input type=\"checkbox\" name=\"use_python3\" value=\"1\" /></td></tr>\n",
+          cl, "Use python3", cl);
   fprintf(out_f, "<tr><td%s>%s:</td><td%s><input type=\"checkbox\" name=\"gen_makefile\" value=\"1\" /></td></tr>\n",
           cl, "Regenerate Makefile", cl);
   fprintf(out_f, "</table>\n");
@@ -5695,5 +5697,152 @@ super_serve_op_TESTS_CHECKER_CREATE_PAGE(
 
 cleanup:
   html_armor_free(&ab);
+  return retval;
+}
+
+/*static*/ int
+create_program(
+        FILE *log_f,
+        const unsigned char *cmd,
+        int lang,
+        int use_testlib,
+        int use_libchecker,
+        int use_python3,
+        int use_corr,
+        int use_info,
+        int use_tgz)
+{
+  int retval = 0;
+  FILE *out_f = NULL;
+  char *out_t = NULL;
+  size_t out_z = 0;
+  unsigned char *compiler_path = NULL;
+  const unsigned char *suffix = NULL;
+  time_t current_time = time(NULL);
+  unsigned char src_path[PATH_MAX];
+
+  out_f = open_memstream(&out_t, &out_z);
+  switch (lang) {
+  case LANG_C:
+    suffix = ".c";
+    fprintf(out_f, "/* Generated %s by ejudge %s */\n\n", xml_unparse_date(current_time), compile_version);
+    if (use_libchecker > 0) {
+      if (use_corr > 0) {
+        fprintf(out_f, "#define NEED_CORR 1\n");
+      }
+      if (use_info > 0) {
+        fprintf(out_f, "#define NEED_INFO 1\n");
+      }
+      if (use_tgz > 0) {
+        fprintf(out_f, "#define NEED_TGZ 1\n");
+      }
+      fprintf(out_f, "#include \"checker.h\"\n\n");
+      fprintf(out_f,
+              "int\n"
+              "main(int argc, char *argv[])\n"
+              "{\n"
+              "    checker_OK();\n"
+              "}\n");
+    } else {
+      fprintf(out_f,
+              "int\n"
+              "main(int argc, char *argv[])\n"
+              "{\n"
+              "    return 0;\n"
+              "}\n");
+    }
+    break;
+  case LANG_CPP:
+    suffix = ".cpp";
+    fprintf(out_f, "/* Generated %s by ejudge %s */\n\n", xml_unparse_date(current_time), compile_version);
+    if (use_libchecker > 0) {
+      if (use_corr > 0) {
+        fprintf(out_f, "#define NEED_CORR 1\n");
+      }
+      if (use_info > 0) {
+        fprintf(out_f, "#define NEED_INFO 1\n");
+      }
+      if (use_tgz > 0) {
+        fprintf(out_f, "#define NEED_TGZ 1\n");
+      }
+      fprintf(out_f, "#include \"checker.h\"\n\n");
+      fprintf(out_f,
+              "int\n"
+              "main(int argc, char *argv[])\n"
+              "{\n"
+              "    checker_OK();\n"
+              "}\n");
+    } else if (use_testlib > 0) {
+      fprintf(out_f, "#include \"testlib.h\"\n\n");
+      fprintf(out_f,
+              "int\n"
+              "main(int argc, char *argv[])\n"
+              "{\n"
+              "    return 0;\n"
+              "}\n");
+    } else {
+      fprintf(out_f,
+              "int\n"
+              "main(int argc, char *argv[])\n"
+              "{\n"
+              "    return 0;\n"
+              "}\n");
+    }
+    break;
+  case LANG_JAVA:
+    suffix = ".java";
+    fprintf(out_f, "/* Generated %s by ejudge %s */\n\n", xml_unparse_date(current_time), compile_version);
+    break;
+  case LANG_FPC:
+    suffix = ".pas";
+    fprintf(out_f, "{ Generated %s by ejudge %s }\n\n", xml_unparse_date(current_time), compile_version);
+    break;
+  case LANG_DCC:
+    suffix = ".dpr";
+    fprintf(out_f, "{ Generated %s by ejudge %s }\n\n", xml_unparse_date(current_time), compile_version);
+    break;
+  case LANG_PY:
+    if (use_python3) {
+      compiler_path = get_compiler_path(log_f, NULL, NULL, "python3");
+      if (compiler_path == NULL) compiler_path = xstrdup("/usr/bin/python3");
+    } else {
+      compiler_path = get_compiler_path(log_f, NULL, NULL, "python");
+      if (compiler_path == NULL) compiler_path = xstrdup("/usr/bin/python");
+    }
+    suffix = ".py";
+    fprintf(out_f, "#! %s\n\n", compiler_path);
+    fprintf(out_f, "# Generated %s by ejudge %s\n\n", xml_unparse_date(current_time), compile_version);
+    break;
+  case LANG_PL:
+    compiler_path = get_compiler_path(log_f, NULL, NULL, "perl");
+    if (compiler_path == NULL) compiler_path = xstrdup("/usr/bin/perl");
+    suffix = ".pl";
+    fprintf(out_f, "#! %s\n\n", compiler_path);
+    fprintf(out_f, "# Generated %s by ejudge %s\n\n", xml_unparse_date(current_time), compile_version);
+    break;
+  case LANG_SH:
+    compiler_path = xstrdup("/bin/sh");
+    suffix = ".sh";
+    fprintf(out_f, "#! %s\n\n", compiler_path);
+    fprintf(out_f, "# Generated %s by ejudge %s\n\n", xml_unparse_date(current_time), compile_version);
+    break;
+  case LANG_OTHER:
+  default:
+    fprintf(log_f, "Unsupported language %d\n", lang);
+    FAIL(S_ERR_INV_VALUE);
+  }
+  fclose(out_f); out_f = NULL;
+
+  if (!out_z) {
+    fprintf(log_f, "Generated source file is empty\n");
+    FAIL(S_ERR_INV_VALUE);
+  }
+
+  snprintf(src_path, sizeof(src_path), "%s%s", cmd, suffix);
+
+cleanup:
+  if (out_f) fclose(out_f);
+  xfree(out_t);
+  xfree(compiler_path);
   return retval;
 }
