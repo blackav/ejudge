@@ -4477,15 +4477,14 @@ cmd_list_all_users(
   close_memstream(f); f = 0;
   ASSERT(xml_size == strlen(xml_ptr));
   out_size = sizeof(*out) + xml_size;
-  out = alloca(out_size);
-  ASSERT(out);
-  memset(out, 0, out_size);
+  out = (typeof(out)) xcalloc(1, out_size);
   out->reply_id = ULS_XML_DATA;
   out->info_len = xml_size;
   memcpy(out->data, xml_ptr, xml_size + 1);
   xfree(xml_ptr);
   enqueue_reply_to_client(p, out_size, out);
   info("%s -> OK, size = %zu", logbuf, xml_size); 
+  xfree(out);
 }
 
 static void
@@ -4555,15 +4554,14 @@ cmd_list_standings_users(
   close_memstream(f); f = 0;
   ASSERT(xml_size == strlen(xml_ptr));
   out_size = sizeof(*out) + xml_size;
-  out = alloca(out_size);
-  ASSERT(out);
-  memset(out, 0, out_size);
+  out = (typeof(out)) xcalloc(1, out_size);
   out->reply_id = ULS_XML_DATA;
   out->info_len = xml_size;
   memcpy(out->data, xml_ptr, xml_size + 1);
   xfree(xml_ptr);
   enqueue_reply_to_client(p, out_size, out);
   info("%s -> OK, size = %zu", logbuf, xml_size); 
+  xfree(out);
 }
 
 static void
