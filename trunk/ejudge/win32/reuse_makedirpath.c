@@ -17,8 +17,10 @@
 
 #include "reuse_logger.h"
 #include "reuse_osdeps.h"
+#include "reuse_xalloc.h"
 
 #include <windows.h>
+#include <ctype.h>
 
 /*
  * NAME:    os_MakeDirPath

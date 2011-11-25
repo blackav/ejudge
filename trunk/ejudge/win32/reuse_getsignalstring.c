@@ -17,6 +17,8 @@
 
 #include "reuse_osdeps.h"
 
+#include <stdio.h>
+
 static const char * const signal_strings[] =
 {
   [0x5] = "Access violation",
