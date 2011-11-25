@@ -18,6 +18,8 @@
 #include "reuse_xalloc.h"
 #include "reuse_osdeps.h"
 
+#include <string.h>
+
 /**
  * NAME:    os_DirName
  * PURPOSE: return dir name from file path

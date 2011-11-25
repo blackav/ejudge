@@ -838,9 +838,8 @@ int
 task_Start(tTask *tsk)
 {
   int     cmdlen = 0;
-  int     i, j;
+  int     i;
   HANDLE  hnd = INVALID_HANDLE_VALUE;
-  int     envlen = 1;
   char   *src, *dst;
   envvar_table_t *envtable = 0;
   JOBOBJECT_BASIC_UI_RESTRICTIONS ui_limit;

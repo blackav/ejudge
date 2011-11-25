@@ -18,6 +18,7 @@
 #include "reuse_osdeps.h"
 
 #include <windows.h>
+#include <stdio.h>
 
 static char errmsg_buf[512];
 
