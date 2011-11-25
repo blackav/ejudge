@@ -6691,3 +6691,8 @@ new_server_html_2.c 6521 0 16584151
 diff.c 6523 0 482802
 userlist-server.c 6525 0 26752514
 super_html_7.c 6526 0 16563923
+win32/reuse_dirname.c 6528 0 102057
+win32/reuse_errormsg.c 6528 0 109121
+win32/reuse_exec.c 6528 0 2776994
+win32/reuse_getsignalstring.c 6528 0 164538
+win32/reuse_makedirpath.c 6528 0 132977
