@@ -1,0 +1,35 @@
+#!/bin/sh
+# $Id$
+# Copyright (c) 2011 Alexander Chernov <cher@ejudge.ru>
+
+# using EJUDGE_FLAGS we may pass additional flags
+
+LANG_CONFIG_DIR="@lang_config_dir@"
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/fbc.cfg"
+
+if [ -f "${EJUDGE_LANG_CONFIG}" ]
+then
+  . "${EJUDGE_LANG_CONFIG}"
+else
+  version="unknown"
+  FBCRUN="fbc"
+  FBCDIR=
+fi
+
+if [ x"${version}" = x ]
+then
+  echo "This language is not supported." >&2
+  exit 1
+fi
+
+if [ x"${FBCDIR}" != x ]
+then
+    PATH="${FBCDIR}:${PATH}"
+fi
+
+unset LANG
+unset LC_ALL
+unset LC_MESSAGES
+unset LANGUAGE
+
+exec "${FBCRUN}" ${EJUDGE_FLAGS} -lang qb "$1"
