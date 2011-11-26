@@ -1,0 +1,115 @@
+#!/bin/sh
+# $Id$
+# Copyright (c) 2011 Alexander Chernov <cher@ejudge.ru>
+
+# compiler script interface is as follows
+# <comp>-version [OPTION]
+# OPTION is:
+#  -r P fully check the availability of the compiler (like configure
+#       script does). P is a proposed path to the compiler (like in
+#       --with-<comp> configure option).
+#       returns failure (exit code 1), if the compiler is not available
+#       or is not functional.
+#       in case of success exit code is 0, and the necessary configuration
+#       variables are written to stdout.
+#  -v   verbose operation (configure mode)
+#  -l   output the compiler name to the stdout (list mode)
+#  -p   write to the stdout the command line of the compiler
+#  -f   write the compiler full name and the compiler version
+
+LANG_CONFIG_DIR="@lang_config_dir@"
+
+common_config() {
+  echo 'long_name="Free Basic"'
+  echo 'src_sfx=".bas"'
+}
+
+failure() {
+  rm -f conftest*
+  echo 'version='
+  echo 'arg="'"${arg}"'"'
+  common_config
+  echo 'FBCRUN=false'
+  echo 'FBCDIR='
+  [ "${verbose}" = 1 ] && echo "no" >&2
+  exit 1
+}
+
+unset LANG
+unset LC_ALL
+unset LC_MESSAGES
+unset LANGUAGE
+
+if [ x"$1" = x-v ]
+then
+  verbose=1
+  shift
+fi
+
+# recheck the language
+if [ x"$1" = x-r ]
+then
+  arg="$2"
+  [ x"$2" != x ] && FBCRUN="$2"
+  [ "${FBCRUN}" = "" ] && FBCRUN="fbc"
+
+  [ "${verbose}" = 1 ] && echo -n "checking whether FreeBasic is available... " >&2
+  "${FBCRUN}" -version >/dev/null 2>&1 || failure
+  version=`"${FBCRUN}" -version 2>&1 | grep "Version" | gawk '{ print $5; }'`|| failure
+  cat > conftest.bas <<EOF
+PRINT "Hello"
+EOF
+  "${FBCRUN}" -lang qb conftest.bas >/dev/null 2>&1 || failure
+  [ -x conftest ] || failure
+  ./conftest >/dev/null 2>&1 || failure
+
+  rm -f ./conftest*
+  FBCDIR=`dirname "${FBCRUN}"`
+  [ "${FBCDIR}" = . ] && FBCDIR=""
+  echo 'version="'"${version}"'"'
+  echo 'arg="'"${arg}"'"'
+  common_config
+  echo 'FBCRUN="'"${FBCRUN}"'"'
+  echo 'FBCDIR="'"${FBCDIR}"'"'
+  [ "${verbose}" = 1 ] && echo "yes, ${FBCRUN}, ${version}" >&2
+  exit 0
+fi
+
+if [ x"$1" = x-l ]
+then
+  echo "FreeBasic compiler [http://freebasic.net]"
+  exit 0
+fi
+
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/fbc.cfg"
+
+if [ -f "${EJUDGE_LANG_CONFIG}" ]
+then
+  . "${EJUDGE_LANG_CONFIG}"
+else
+  FBCRUN="fbc"
+  FBCDIR=
+fi
+
+if [ x"${FBCRUN}" = x -o x"${FBCRUN}" = xfalse ]
+then
+  echo "This language is not supported." >&2
+  exit 1
+fi
+
+if [ x"${FBCDIR}" != x ]
+then
+    PATH="${FBCDIR}:${PATH}"
+fi
+
+if [ x"$1" = x-p ]
+then
+    echo "${FBCRUN}"
+    exit 0
+fi
+    
+"${FBCRUN}" -version >/dev/null 2>&1 || exit 1
+
+[ x"$1" = x-f ] && echo -n "Free Basic "
+
+"${FBCRUN}" -version 2>&1 | grep "Version" | gawk '{ print $5; }'

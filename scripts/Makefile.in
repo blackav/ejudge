@@ -60,6 +60,8 @@ SCRIPTS_IN = \
  bpp-version.in\
  dcc.in\
  dcc-version.in\
+ fbc.in\
+ fbc-version.in\
  fpc.in\
  fpc-version.in\
  g++.in\
