@@ -5008,7 +5008,7 @@ write_xml_team_testing_report(
         fprintf(f, _("<u>--- Correct ---</u>\n"));
         fprintf(f, "%s", ARMOR(t->correct));
       }
-      if (t->correct) {
+      if (t->error) {
         fprintf(f, "<a name=\"%dE\"></a>", t->num);
         fprintf(f, _("<u>--- Stderr ---</u>\n"));
         fprintf(f, "%s", ARMOR(t->error));
