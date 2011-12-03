@@ -6696,3 +6696,4 @@ win32/reuse_errormsg.c 6528 0 109121
 win32/reuse_exec.c 6528 0 2776994
 win32/reuse_getsignalstring.c 6528 0 164538
 win32/reuse_makedirpath.c 6528 0 132977
+html.c 6531 0 14410153
