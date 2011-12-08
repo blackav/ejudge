@@ -6697,3 +6697,4 @@ win32/reuse_exec.c 6528 0 2776994
 win32/reuse_getsignalstring.c 6528 0 164538
 win32/reuse_makedirpath.c 6528 0 132977
 html.c 6531 0 14410153
+new_server_html_2.c 6533 0 16590939
