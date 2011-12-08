@@ -5801,13 +5801,18 @@ ns_write_user_problems_summary(
       switch (status) {
       case RUN_OK:
       case RUN_PARTIAL:
-        fprintf(fout, "<td%s>%d</td><td%s>%s</td>",
-                cl, test - 1, cl,
-                score_view_display(score_buf, sizeof(score_buf),
-                                   cur_prob, best_score[prob_id]));
+        if (global->disable_passed_tests <= 0) {
+          fprintf(fout, "<td%s>%d</td>", cl, test - 1);
+        }
+        fprintf(fout, "<td%s>%s</td>",
+                cl, score_view_display(score_buf, sizeof(score_buf),
+                                       cur_prob, best_score[prob_id]));
         break;
       default:
-        fprintf(fout, "<td%s>&nbsp;</td><td%s>&nbsp;</td>", cl, cl);
+        if (global->disable_passed_tests <= 0) {
+          fprintf(fout, "<td%s>&nbsp;</td>", cl);
+        }
+        fprintf(fout, "<td%s>&nbsp;</td>", cl);
         break;
       }
     } else if (global->score_system == SCORE_MOSCOW) {
