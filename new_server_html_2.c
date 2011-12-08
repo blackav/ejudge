@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -360,7 +360,8 @@ ns_write_priv_all_runs(
     fprintf(f, "<th%s>%s</th><th%s>%s</th></tr>\n",
             cl, _("View source"), cl, _("View report"));
     if (phr->role == USER_ROLE_ADMIN) {
-      snprintf(endrow, sizeof(endrow), "</tr></form>\n");
+      //snprintf(endrow, sizeof(endrow), "</tr></form>\n");
+      snprintf(endrow, sizeof(endrow), "</tr>\n");
     } else {
       snprintf(endrow, sizeof(endrow), "</tr>\n");
     }
@@ -372,10 +373,12 @@ ns_write_priv_all_runs(
 
       displayed_mask[rid / BITS_PER_LONG] |= (1L << (rid % BITS_PER_LONG));
 
+      /*
       if (phr->role == USER_ROLE_ADMIN) {
         html_start_form(f, 1, phr->self_url, phr->hidden_vars);
         html_hidden(f, "run_id", "%d", rid);
       }
+      */
       fprintf(f, "<tr>");
 
       if (pe->status == RUN_EMPTY) {
@@ -397,10 +400,12 @@ ns_write_priv_all_runs(
         }
         fprintf(f, "<td%s>&nbsp;</td>", cl);
         fprintf(f, "<td%s>&nbsp;</td>", cl);
+        /*
         if (phr->role == USER_ROLE_ADMIN) {
           fprintf(f, "<td%s>&nbsp;</td>", cl);
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
+        */
         fprintf(f, "%s", endrow);
         continue;
       }
@@ -442,10 +447,12 @@ ns_write_priv_all_runs(
         } else {
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
+        /*
         if (phr->role == USER_ROLE_ADMIN) {
           fprintf(f, "<td%s>&nbsp;</td>", cl);
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
+        */
         fprintf(f, "%s", endrow);
         continue;
       }
@@ -565,9 +572,11 @@ ns_write_priv_all_runs(
                 _("View"));
       }
       fprintf(f, "</tr>\n");
+      /*
       if (phr->role == USER_ROLE_ADMIN) {
         fprintf(f, "</form>\n");
       }
+      */
     }
 
     fprintf(f, "</table>\n");
