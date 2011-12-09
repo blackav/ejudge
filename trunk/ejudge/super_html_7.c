@@ -3942,19 +3942,26 @@ get_source_suffix(int mask)
 }
 
 static unsigned long
-guess_language_by_cmd(unsigned char *cmd)
+guess_language_by_cmd(unsigned char *cmd, int *p_count)
 {
   int len, i;
   unsigned char path2[PATH_MAX];
   struct stat stb;
+  unsigned long mask = 0;
+  int count = 0;
 
   if (!cmd || !*cmd) return 0;
   len = strlen(cmd);
   i = len - 1;
   while (i >= 0 && cmd[i] != '/' && cmd[i] != '.') --i;
   if (i >= 0 && cmd[i] == '.') {
-    if (!strcmp(cmd + i, ".class") || !strcmp(cmd + i, ".jar")) return LANG_JAVA;
-    if (!strcmp(cmd + i, ".exe")) {
+    if (!strcmp(cmd + i, ".class") || !strcmp(cmd + i, ".jar")) {
+      if (i > 0 && cmd[i - 1] != '/' && cmd[i - 1] != '.') {
+        cmd[i] = 0;
+        mask |= LANG_JAVA;
+        ++count;
+      }
+    } else if (!strcmp(cmd + i, ".exe")) {
       if (i > 0 && cmd[i - 1] != '/' && cmd[i - 1] != '.') {
         cmd[i] = 0;
       }
@@ -3962,11 +3969,14 @@ guess_language_by_cmd(unsigned char *cmd)
   }
   for (i = 0; source_suffixes[i].suffix; ++i) {
     snprintf(path2, sizeof(path2), "%s%s", cmd, source_suffixes[i].suffix);
-    if (access(path2, R_OK) >= 0 && stat(path2, &stb) >= 0 && S_ISREG(stb.st_mode)) {
-      return source_suffixes[i].mask;
+    if (access(path2, R_OK) >= 0 && stat(path2, &stb) >= 0 && S_ISREG(stb.st_mode)
+        && !(mask & source_suffixes[i].mask)) {
+      mask |= source_suffixes[i].mask;
+      ++count;
     }
   }
-  return 0;
+  if (p_count) *p_count = count;
+  return mask;
 }
 
 static unsigned long
@@ -4078,21 +4088,28 @@ generate_checker_compilation_rule(
   unsigned char tmp_path[PATH_MAX];
   unsigned long languages = 0;
   const unsigned char *source_suffix = NULL;
+  int count = 0;
 
   if (!cmd || !cmd[0]) return;
   get_advanced_layout_path(tmp_path, sizeof(tmp_path), global, prob, cmd, variant);
-  languages = guess_language_by_cmd(tmp_path);
-  source_suffix = get_source_suffix(languages);
-  if (languages == LANG_C) {
-    fprintf(out_f, "%s : %s%s\n", cmd, cmd, source_suffix);
-    fprintf(out_f, "\t${CC} ${CLIBCHECKERFLAGS} %s%s -o%s ${CLIBCHECKERLIBS}\n",
-            cmd, source_suffix, cmd);
-  } else if (languages == LANG_CPP) {
-    fprintf(out_f, "%s : %s%s\n", cmd, cmd, source_suffix);
-    fprintf(out_f, "\t${CXX} ${CXXLIBCHECKERFLAGS} %s%s -o%s ${CXXLIBCHECKERLIBS}\n",
-            cmd, source_suffix, cmd);
+  languages = guess_language_by_cmd(tmp_path, &count);
+  if (count <= 0) {
+    fprintf(out_f, "# no known source language is detected for %s '%s'\n", what, cmd);
+  } else if (count > 1) {
+    fprintf(out_f, "# several source languages are detected for %s '%s'\n", what, cmd);
   } else {
-    fprintf(out_f, "# no information how to build %s '%s'\n", what, cmd);
+    source_suffix = get_source_suffix(languages);
+    if (languages == LANG_C) {
+      fprintf(out_f, "%s : %s%s\n", cmd, cmd, source_suffix);
+      fprintf(out_f, "\t${CC} ${CLIBCHECKERFLAGS} %s%s -o%s ${CLIBCHECKERLIBS}\n",
+              cmd, source_suffix, cmd);
+    } else if (languages == LANG_CPP) {
+      fprintf(out_f, "%s : %s%s\n", cmd, cmd, source_suffix);
+      fprintf(out_f, "\t${CXX} ${CXXLIBCHECKERFLAGS} %s%s -o%s ${CXXLIBCHECKERLIBS}\n",
+              cmd, source_suffix, cmd);
+    } else {
+      fprintf(out_f, "# no information how to build %s '%s'\n", what, cmd);
+    }
   }
   fprintf(out_f, "\n");
 }
@@ -4123,6 +4140,7 @@ generate_makefile(
   const unsigned char *compiler_flags = NULL;
   int has_header = 0, need_c_libchecker = 0, need_cpp_libchecker = 0;
   const unsigned char *source_suffix = NULL;
+  int count = 0;
 
   test_dir[0] = 0;
   test_pat[0] = 0;
@@ -4141,23 +4159,23 @@ generate_makefile(
   // tmp_path is modified by guess_language_by_cmd
   if (prob->check_cmd && prob->check_cmd[0]) {
     get_advanced_layout_path(tmp_path, sizeof(tmp_path), global, prob, prob->check_cmd, variant);
-    languages |= guess_language_by_cmd(tmp_path);
+    languages |= guess_language_by_cmd(tmp_path, NULL);
   }
   if (prob->valuer_cmd && prob->valuer_cmd[0]) {
     get_advanced_layout_path(tmp_path, sizeof(tmp_path), global, prob, prob->valuer_cmd, variant);
-    languages |= guess_language_by_cmd(tmp_path);
+    languages |= guess_language_by_cmd(tmp_path, NULL);
   }
   if (prob->interactor_cmd && prob->interactor_cmd[0]) {
     get_advanced_layout_path(tmp_path, sizeof(tmp_path), global, prob, prob->interactor_cmd, variant);
-    languages |= guess_language_by_cmd(tmp_path);
+    languages |= guess_language_by_cmd(tmp_path, NULL);
   }
   if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
     get_advanced_layout_path(tmp_path, sizeof(tmp_path), global, prob, prob->style_checker_cmd, variant);
-    languages |= guess_language_by_cmd(tmp_path);
+    languages |= guess_language_by_cmd(tmp_path, NULL);
   }
   if (prob->test_checker_cmd && prob->test_checker_cmd[0]) {
     get_advanced_layout_path(tmp_path, sizeof(tmp_path), global, prob, prob->test_checker_cmd, variant);
-    languages |= guess_language_by_cmd(tmp_path);
+    languages |= guess_language_by_cmd(tmp_path, NULL);
   }
   if ((languages & LANG_C)) need_c_libchecker = 1;
   if ((languages & LANG_CPP)) need_cpp_libchecker = 1;
@@ -4175,7 +4193,7 @@ generate_makefile(
 
   if (prob->solution_cmd && prob->solution_cmd[0]) {
     get_advanced_layout_path(tmp_path, sizeof(tmp_path), global, prob, prob->solution_cmd, variant);
-    languages |= guess_language_by_cmd(tmp_path);
+    languages |= guess_language_by_cmd(tmp_path, NULL);
   }
 
   fprintf(mk_f, "%s\n", ej_makefile_begin);
@@ -4309,18 +4327,24 @@ generate_makefile(
       }
     } else if (!has_header) {
       get_advanced_layout_path(tmp_path, sizeof(tmp_path), global, prob, prob->solution_cmd, variant);
-      languages = guess_language_by_cmd(tmp_path);
-      source_suffix = get_source_suffix(languages);
-      if (languages == LANG_C) {
-        fprintf(mk_f, "%s : %s%s\n", prob->solution_cmd, prob->solution_cmd, source_suffix);
-        fprintf(mk_f, "\t${CC} ${CFLAGS} %s%s -o%s ${CLIBS}\n",
-                prob->solution_cmd, source_suffix, prob->solution_cmd);
-      } else if (languages == LANG_CPP) {
-        fprintf(mk_f, "%s : %s%s\n", prob->solution_cmd, prob->solution_cmd, source_suffix);
-        fprintf(mk_f, "\t${CXX} ${CXXFLAGS} %s%s -o%s ${CXXLIBS}\n",
-                prob->solution_cmd, source_suffix, prob->solution_cmd);
+      languages = guess_language_by_cmd(tmp_path, &count);
+      if (count <= 0) {
+        fprintf(mk_f, "# no source language to build solution '%s'\n", prob->solution_cmd);
+      } else if (count > 1) {
+        fprintf(mk_f, "# several source languages to build solution '%s'\n", prob->solution_cmd);
       } else {
-        fprintf(mk_f, "# no information how to build solution '%s'\n", prob->solution_cmd);
+        source_suffix = get_source_suffix(languages);
+        if (languages == LANG_C) {
+          fprintf(mk_f, "%s : %s%s\n", prob->solution_cmd, prob->solution_cmd, source_suffix);
+          fprintf(mk_f, "\t${CC} ${CFLAGS} %s%s -o%s ${CLIBS}\n",
+                  prob->solution_cmd, source_suffix, prob->solution_cmd);
+        } else if (languages == LANG_CPP) {
+          fprintf(mk_f, "%s : %s%s\n", prob->solution_cmd, prob->solution_cmd, source_suffix);
+          fprintf(mk_f, "\t${CXX} ${CXXFLAGS} %s%s -o%s ${CXXLIBS}\n",
+                  prob->solution_cmd, source_suffix, prob->solution_cmd);
+        } else {
+          fprintf(mk_f, "# no information how to build solution '%s'\n", prob->solution_cmd);
+        }
       }
     } else {
       fprintf(mk_f, "# no information how to build solution '%s' with header or footer\n", prob->solution_cmd);
@@ -4487,7 +4511,8 @@ static int
 write_file_info(
         FILE *out_f,
         const unsigned char *path,
-        const unsigned char *title)
+        const unsigned char *title,
+        int is_binary_file)
 {
   const unsigned char *cl = "";
   struct stat stb;
@@ -4513,6 +4538,11 @@ write_file_info(
     }
     fprintf(out_f, "<font color=\"green\">%s</font></td></tr>\n", "OK");
     may_read = 1;
+
+    if (is_binary_file) {
+      fprintf(out_f, "<tr><td%s>%s:</td><td%s>", cl, "File is binary", cl);
+      fprintf(out_f, "<font color=\"red\">%s</font></td></tr>\n", "YES");
+    }
 
     fprintf(out_f, "<tr><td%s>%s:</td><td%s>", cl, "File writeability", cl);
     if (access(path, W_OK) < 0) {
@@ -4641,7 +4671,7 @@ super_serve_op_TESTS_STATEMENT_EDIT_PAGE(
 
   write_problem_editing_links(out_f, phr, contest_id, prob_id, variant, global, prob);
 
-  may_read = write_file_info(out_f, xml_path, "Statement");
+  may_read = write_file_info(out_f, xml_path, "Statement", 0);
 
   if (may_read && !plain_view) {
     err_f = open_memstream(&err_t, &err_z);
@@ -5337,7 +5367,7 @@ super_serve_op_TESTS_SOURCE_HEADER_EDIT_PAGE(
 
   write_problem_editing_links(out_f, phr, contest_id, prob_id, variant, global, prob);
 
-  write_file_info(out_f, file_path, title);
+  write_file_info(out_f, file_path, title, 0);
 
   fprintf(out_f, "<h3>%s %s</h3>\n", title, "file");
 
@@ -5630,7 +5660,7 @@ super_serve_op_TESTS_CHECKER_CREATE_PAGE(
   } else if (global->advanced_layout > 0) {
     get_advanced_layout_path(file_path, sizeof(file_path), global, prob, tmp_path, variant);
   } else {
-    snprintf(file_path, sizeof(file_path), "%s/%s", global->statement_dir, tmp_path);
+    snprintf(file_path, sizeof(file_path), "%s/%s", global->checker_dir, tmp_path);
   }
 
   snprintf(buf, sizeof(buf), "serve-control: %s, contest %d (%s), problem %s, create %s",
@@ -5700,9 +5730,10 @@ cleanup:
   return retval;
 }
 
-/*static*/ int
+static int
 create_program(
         FILE *log_f,
+        const struct contest_desc *cnts,
         const unsigned char *cmd,
         int lang,
         int use_testlib,
@@ -5720,6 +5751,11 @@ create_program(
   const unsigned char *suffix = NULL;
   time_t current_time = time(NULL);
   unsigned char src_path[PATH_MAX];
+  unsigned char src_path_tmp[PATH_MAX];
+  unsigned char src_path_bak[PATH_MAX];
+
+  src_path_tmp[0] = 0;
+  src_path_bak[0] = 0;
 
   out_f = open_memstream(&out_t, &out_z);
   switch (lang) {
@@ -5839,10 +5875,487 @@ create_program(
   }
 
   snprintf(src_path, sizeof(src_path), "%s%s", cmd, suffix);
+  snprintf(src_path_tmp, sizeof(src_path_tmp), "%s.tmp", src_path);
+  snprintf(src_path_bak, sizeof(src_path_bak), "%s.bak", src_path);
+
+  write_file(src_path_tmp, out_t);
+  if (!need_file_update(src_path, src_path_tmp)) goto cleanup;
+
+  if (logged_rename(log_f, src_path, src_path_bak) < 0) FAIL(S_ERR_FS_ERROR);
+  if (logged_rename(log_f, src_path_tmp, src_path) < 0) FAIL(S_ERR_FS_ERROR);
+  set_cnts_file_perms(log_f, src_path, cnts);
+  src_path_tmp[0] = 0;
 
 cleanup:
+  if (src_path_tmp[0]) unlink(src_path_tmp);
   if (out_f) fclose(out_f);
   xfree(out_t);
   xfree(compiler_path);
   return retval;
 }
+
+int
+super_serve_op_TESTS_CHECKER_CREATE_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  int contest_id = 0;
+  int prob_id = 0;
+  int variant = 0;
+  int language = 0;
+  const struct contest_desc *cnts = NULL;
+  opcap_t caps = 0LL;
+  serve_state_t cs = NULL;
+  const struct section_global_data *global = NULL;
+  const struct section_problem_data *prob = NULL;
+  int use_testlib = 0;
+  int use_libchecker = 0;
+  int use_python3 = 0;
+  int gen_makefile = 0;
+  int i;
+  const unsigned char *file_name = NULL;
+  int action = 0;
+  unsigned char tmp_path[PATH_MAX];
+  unsigned char file_path[PATH_MAX];
+
+  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+
+  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
+  get_full_caps(phr, cnts, &caps);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(S_ERR_PERM_DENIED);
+
+  retval = check_other_editors(log_f, out_f, phr, contest_id, cnts);
+  if (retval <= 0) goto cleanup;
+  retval = 0;
+  cs = phr->ss->te_state;
+  global = cs->global;
+
+  ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
+  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
+  if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
+
+  variant = -1;
+  if (prob->variant_num > 0) {
+    ss_cgi_param_int_opt(phr, "variant", &variant, 0);
+    if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
+  }
+
+  ss_cgi_param_int_opt(phr, "language", &language, 0);
+  if (language <= 0) FAIL(S_ERR_INV_LANG_ID);
+  for (i = 0; source_suffixes[i].mask; ++i) {
+    if (language == source_suffixes[i].mask)
+      break;
+  }
+  if (!source_suffixes[i].mask) FAIL(S_ERR_INV_LANG_ID);
+
+  ss_cgi_param_int_opt(phr, "use_testlib", &use_testlib, 0);
+  if (use_testlib != 1) use_testlib = 0;
+  ss_cgi_param_int_opt(phr, "use_libchecker", &use_libchecker, 0);
+  if (use_libchecker != 1) use_libchecker = 0;
+  ss_cgi_param_int_opt(phr, "use_python3", &use_python3, 0);
+  if (use_python3 != 1) use_python3 = 0;
+  ss_cgi_param_int_opt(phr, "gen_makefile", &gen_makefile, 0);
+  if (gen_makefile != 1) gen_makefile = 0;
+
+  switch (phr->opcode) {
+  case SSERV_OP_TESTS_STYLE_CHECKER_CREATE_ACTION:
+    if (!prob->style_checker_cmd || !prob->style_checker_cmd[0]) FAIL(S_ERR_INV_OPER);
+    file_name = prob->style_checker_cmd;
+    action = SSERV_OP_TESTS_STYLE_CHECKER_EDIT_PAGE;
+    break;
+  case SSERV_OP_TESTS_CHECKER_CREATE_ACTION:
+    if (prob->standard_checker && prob->standard_checker[0]) FAIL(S_ERR_INV_OPER);
+    if (!prob->check_cmd || !prob->check_cmd[0]) FAIL(S_ERR_INV_OPER);
+    file_name = prob->check_cmd;
+    action = SSERV_OP_TESTS_CHECKER_EDIT_PAGE;
+    break;
+  case SSERV_OP_TESTS_VALUER_CREATE_ACTION:
+    if (!prob->valuer_cmd || !prob->valuer_cmd[0]) FAIL(S_ERR_INV_OPER);
+    file_name = prob->valuer_cmd;
+    action = SSERV_OP_TESTS_VALUER_EDIT_PAGE;
+    break;
+  case SSERV_OP_TESTS_INTERACTOR_CREATE_ACTION:
+    if (!prob->interactor_cmd || !prob->interactor_cmd[0]) FAIL(S_ERR_INV_OPER);
+    file_name = prob->interactor_cmd;
+    action = SSERV_OP_TESTS_INTERACTOR_EDIT_PAGE;
+    break;
+  case SSERV_OP_TESTS_TEST_CHECKER_CREATE_ACTION:
+    if (!prob->test_checker_cmd || !prob->test_checker_cmd[0]) FAIL(S_ERR_INV_OPER);
+    file_name = prob->test_checker_cmd;
+    action = SSERV_OP_TESTS_TEST_CHECKER_EDIT_PAGE;
+    break;
+  default:
+    FAIL(S_ERR_INV_OPER);
+  }
+
+  if (!file_name || !file_name) FAIL(S_ERR_INV_PROB_ID);
+  sformat_message(tmp_path, sizeof(tmp_path), 0, file_name, global, prob, NULL, 0, 0, 0, 0, 0);
+  if (os_IsAbsolutePath(tmp_path)) {
+    snprintf(file_path, sizeof(file_path), "%s", tmp_path);
+  } else if (global->advanced_layout > 0) {
+    get_advanced_layout_path(file_path, sizeof(file_path), global, prob, tmp_path, variant);
+  } else {
+    snprintf(file_path, sizeof(file_path), "%s/%s", global->checker_dir, tmp_path);
+  }
+
+  retval = create_program(log_f, cnts, file_path, language,
+                          use_testlib, use_libchecker,
+                          use_python3, prob->use_corr,
+                          prob->use_info, prob->use_tgz);
+
+  ss_redirect_2(out_f, phr, action, contest_id, prob_id, variant, 0, NULL);
+
+cleanup:
+  return retval;
+}
+
+static void
+test_checker_edit_page_actions(FILE *out_f, int action, int delete_page)
+{
+  const unsigned char *cl = " class=\"b0\"";
+  fprintf(out_f, "<table%s><tr>", cl);
+  fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+          cl, SSERV_OP_TESTS_CANCEL_2_ACTION, "Cancel");
+  if (action > 0) {
+    fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+            cl, action, "Save");
+  }
+  fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+          cl, delete_page, "Delete");
+  fprintf(out_f, "</tr></table>\n");
+  fprintf(out_f, "</form>\n");
+}
+
+int
+super_serve_op_TESTS_CHECKER_EDIT_PAGE(
+        FILE *log_f,
+        FILE *out_f,
+         struct super_http_request_info *phr)
+{
+  int retval = 0;
+  int contest_id = 0;
+  int prob_id = 0;
+  int variant = 0;
+  const struct contest_desc *cnts = NULL;
+  opcap_t caps = 0LL;
+  serve_state_t cs = NULL;
+  const struct section_global_data *global = NULL;
+  const struct section_problem_data *prob = NULL;
+  const unsigned char *file_name = NULL;
+  int action = 0;
+  int create_page = 0;
+  int delete_page = 0;
+  const unsigned char *title = NULL;
+  unsigned char tmp_path[PATH_MAX];
+  unsigned char file_path[PATH_MAX];
+  unsigned char src_file_path[PATH_MAX];
+  unsigned long langs = 0;
+  int count = 0;
+  int i;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  unsigned char buf[1024], hbuf[1024];
+  struct stat stb;
+  char *text = 0;
+  size_t size = 0;
+  const unsigned char *src_suffix = NULL;
+  int is_binary = 0;
+  const unsigned char *src_code_title = "";
+
+  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+
+  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
+  get_full_caps(phr, cnts, &caps);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(S_ERR_PERM_DENIED);
+
+  retval = check_other_editors(log_f, out_f, phr, contest_id, cnts);
+  if (retval <= 0) goto cleanup;
+  retval = 0;
+  cs = phr->ss->te_state;
+  global = cs->global;
+
+  ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
+  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
+  if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
+
+  variant = -1;
+  if (prob->variant_num > 0) {
+    ss_cgi_param_int_opt(phr, "variant", &variant, 0);
+    if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
+  }
+
+  switch (phr->opcode) {
+  case SSERV_OP_TESTS_STYLE_CHECKER_EDIT_PAGE:
+    if (!prob->style_checker_cmd || !prob->style_checker_cmd[0]) FAIL(S_ERR_INV_OPER);
+    title = "Style checker";
+    file_name = prob->style_checker_cmd;
+    create_page = SSERV_OP_TESTS_STYLE_CHECKER_CREATE_PAGE;
+    action = SSERV_OP_TESTS_STYLE_CHECKER_EDIT_ACTION;
+    delete_page = SSERV_OP_TESTS_STYLE_CHECKER_DELETE_PAGE;
+    break;
+  case SSERV_OP_TESTS_CHECKER_EDIT_PAGE:
+    if (prob->standard_checker && prob->standard_checker[0]) FAIL(S_ERR_INV_OPER);
+    if (!prob->check_cmd || !prob->check_cmd[0]) FAIL(S_ERR_INV_OPER);
+    title = "Checker";
+    file_name = prob->check_cmd;
+    create_page = SSERV_OP_TESTS_CHECKER_CREATE_PAGE;
+    action = SSERV_OP_TESTS_CHECKER_EDIT_ACTION;
+    delete_page = SSERV_OP_TESTS_CHECKER_DELETE_PAGE;
+    break;
+  case SSERV_OP_TESTS_VALUER_EDIT_PAGE:
+    if (!prob->valuer_cmd || !prob->valuer_cmd[0]) FAIL(S_ERR_INV_OPER);
+    title = "Valuer";
+    file_name = prob->valuer_cmd;
+    create_page = SSERV_OP_TESTS_VALUER_CREATE_PAGE;
+    action = SSERV_OP_TESTS_VALUER_EDIT_ACTION;
+    delete_page = SSERV_OP_TESTS_VALUER_DELETE_PAGE;
+    break;
+  case SSERV_OP_TESTS_INTERACTOR_EDIT_PAGE:
+    if (!prob->interactor_cmd || !prob->interactor_cmd[0]) FAIL(S_ERR_INV_OPER);
+    title = "Interactor";
+    file_name = prob->interactor_cmd;
+    create_page = SSERV_OP_TESTS_INTERACTOR_CREATE_PAGE;
+    action = SSERV_OP_TESTS_INTERACTOR_EDIT_ACTION;
+    delete_page = SSERV_OP_TESTS_INTERACTOR_DELETE_PAGE;
+    break;
+  case SSERV_OP_TESTS_TEST_CHECKER_EDIT_PAGE:
+    if (!prob->test_checker_cmd || !prob->test_checker_cmd[0]) FAIL(S_ERR_INV_OPER);
+    title = "Test checker";
+    file_name = prob->test_checker_cmd;
+    create_page = SSERV_OP_TESTS_TEST_CHECKER_CREATE_PAGE;
+    action = SSERV_OP_TESTS_TEST_CHECKER_EDIT_ACTION;
+    delete_page = SSERV_OP_TESTS_TEST_CHECKER_DELETE_PAGE;
+    break;
+  default:
+    FAIL(S_ERR_INV_OPER);
+  }
+
+  if (!file_name || !file_name) FAIL(S_ERR_INV_PROB_ID);
+  sformat_message(tmp_path, sizeof(tmp_path), 0, file_name, global, prob, NULL, 0, 0, 0, 0, 0);
+  if (os_IsAbsolutePath(tmp_path)) {
+    snprintf(file_path, sizeof(file_path), "%s", tmp_path);
+  } else if (global->advanced_layout > 0) {
+    get_advanced_layout_path(file_path, sizeof(file_path), global, prob, tmp_path, variant);
+  } else {
+    snprintf(file_path, sizeof(file_path), "%s/%s", global->checker_dir, tmp_path);
+  }
+
+  snprintf(tmp_path, sizeof(tmp_path), "%s", file_path);
+  langs = guess_language_by_cmd(tmp_path, &count);
+
+  if (count <= 0 && access(file_path, F_OK) < 0) {
+    ss_redirect_2(out_f, phr, create_page, contest_id, prob_id, variant, 0, NULL);
+    goto cleanup;
+  }
+
+  snprintf(buf, sizeof(buf), "serve-control: %s, contest %d (%s), problem %s, edit %s",
+           phr->html_name, contest_id, ARMOR(cnts->name), prob->short_name, title);
+  ss_write_html_header(out_f, phr, buf, 0, NULL);
+  fprintf(out_f, "<h1>%s</h1>\n", buf);
+
+  fprintf(out_f, "<ul>");
+  fprintf(out_f, "<li>%s%s</a></li>",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL, NULL),
+          "Main page");
+  fprintf(out_f, "<li>%s%s</a></li>\n",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
+                        "action=%d&op=%d&contest_id=%d", SSERV_CMD_HTTP_REQUEST,
+                        SSERV_OP_TESTS_MAIN_PAGE, contest_id),
+          "Problems page");
+  fprintf(out_f, "</ul>\n");
+
+  write_problem_editing_links(out_f, phr, contest_id, prob_id, variant, global, prob);
+
+  html_start_form(out_f, 1, phr->self_url, "");
+  html_hidden(out_f, "SID", "%016llx", phr->session_id);
+  html_hidden(out_f, "action", "%d", SSERV_CMD_HTTP_REQUEST);
+  html_hidden(out_f, "contest_id", "%d", contest_id);
+  html_hidden(out_f, "prob_id", "%d", prob_id);
+  html_hidden(out_f, "variant", "%d", variant);
+
+  if (count > 1) {
+    fprintf(out_f, "<h2>Several source files are detected for %s</h2>\n", title);
+    fprintf(out_f, "<pre>");
+    for (i = 0; source_suffixes[i].suffix; ++i) {
+      snprintf(file_path, sizeof(file_path), "%s%s", tmp_path, source_suffixes[i].suffix);
+      if (access(file_path, R_OK) >= 0 && stat(file_path, &stb) >= 0 && S_ISREG(stb.st_mode)) {
+        fprintf(out_f, "%s\n", ARMOR(file_path));
+      }
+    }
+    fprintf(out_f, "</pre\n");
+    test_checker_edit_page_actions(out_f, 0, delete_page);
+    goto done;
+  }
+
+  if (count == 0 && access(file_path, F_OK) >= 0) {
+    if (generic_read_file(&text, 0, &size, 0, 0, file_path, 0) < 0 || !text) {
+      fprintf(out_f, "<h2>File is not readable for %s</h2>\n", title);
+      fprintf(out_f, "<p>Failed to read file %s.</p>", ARMOR(file_path));
+      test_checker_edit_page_actions(out_f, 0, delete_page);
+      goto done;
+    }
+    if (is_binary_file(text, size)) {
+      fprintf(out_f, "<h2>Can't do anything with binary file for %s</h2>\n", title);
+      fprintf(out_f, "<p>File %s is binary.</p>", ARMOR(file_path));
+      test_checker_edit_page_actions(out_f, 0, delete_page);
+      goto done;
+    }
+    html_hidden(out_f, "no_source", "%d", 1);
+    snprintf(src_file_path, sizeof(src_file_path), "%s", file_path);
+  } else {
+    src_suffix = get_source_suffix(langs);
+    if (!src_suffix) {
+      fprintf(out_f, "<h2>Invalid language mask %lu for %s</h2>\n", langs, title);
+      test_checker_edit_page_actions(out_f, 0, delete_page);
+      goto done;
+    }
+    html_hidden(out_f, "lang_mask", "%lu", langs);
+    snprintf(src_file_path, sizeof(src_file_path), "%s%s", file_path, src_suffix);
+    if (generic_read_file(&text, 0, &size, 0, 0, src_file_path, 0) >= 0 && text
+        && is_binary_file(text, size)) {
+      is_binary = 1;
+    }
+    src_code_title = " source code";
+  }
+
+  write_file_info(out_f, src_file_path, title, is_binary);
+  fprintf(out_f, "<h3>Edit %s%s</h3>", title, src_code_title);
+  edit_file_textarea(out_f, "text", 100, 40, text);
+  test_checker_edit_page_actions(out_f, action, delete_page);
+
+done:
+  ss_write_html_footer(out_f);
+
+cleanup:
+  html_armor_free(&ab);
+  xfree(text);
+  return retval;
+}
+
+int
+super_serve_op_TESTS_CHECKER_EDIT_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  int contest_id = 0;
+  int prob_id = 0;
+  int variant = 0;
+  const struct contest_desc *cnts = NULL;
+  opcap_t caps = 0LL;
+  serve_state_t cs = NULL;
+  const struct section_global_data *global = NULL;
+  const struct section_problem_data *prob = NULL;
+  const unsigned char *file_name = NULL;
+  unsigned char tmp_path[PATH_MAX];
+  unsigned char tmp2_path[PATH_MAX];
+  unsigned char file_path[PATH_MAX];
+  unsigned char file_path_tmp[PATH_MAX];
+  unsigned char file_path_bak[PATH_MAX];
+  int no_source = 0;
+  int lang_mask = 0;
+  unsigned char *text = NULL;
+  const unsigned char *src_suffix = NULL, *s = NULL;
+
+  file_path_tmp[0] = 0;
+
+  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+
+  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
+  get_full_caps(phr, cnts, &caps);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(S_ERR_PERM_DENIED);
+
+  retval = check_other_editors(log_f, out_f, phr, contest_id, cnts);
+  if (retval <= 0) goto cleanup;
+  retval = 0;
+  cs = phr->ss->te_state;
+  global = cs->global;
+
+  ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
+  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
+  if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
+
+  variant = -1;
+  if (prob->variant_num > 0) {
+    ss_cgi_param_int_opt(phr, "variant", &variant, 0);
+    if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
+  }
+
+  switch (phr->opcode) {
+  case SSERV_OP_TESTS_STYLE_CHECKER_EDIT_ACTION:
+    if (!prob->style_checker_cmd || !prob->style_checker_cmd[0]) FAIL(S_ERR_INV_OPER);
+    file_name = prob->style_checker_cmd;
+    break;
+  case SSERV_OP_TESTS_CHECKER_EDIT_ACTION:
+    if (prob->standard_checker && prob->standard_checker[0]) FAIL(S_ERR_INV_OPER);
+    if (!prob->check_cmd || !prob->check_cmd[0]) FAIL(S_ERR_INV_OPER);
+    file_name = prob->check_cmd;
+    break;
+  case SSERV_OP_TESTS_VALUER_EDIT_ACTION:
+    if (!prob->valuer_cmd || !prob->valuer_cmd[0]) FAIL(S_ERR_INV_OPER);
+    file_name = prob->valuer_cmd;
+    break;
+  case SSERV_OP_TESTS_INTERACTOR_EDIT_ACTION:
+    if (!prob->interactor_cmd || !prob->interactor_cmd[0]) FAIL(S_ERR_INV_OPER);
+    file_name = prob->interactor_cmd;
+    break;
+  case SSERV_OP_TESTS_TEST_CHECKER_EDIT_PAGE:
+    if (!prob->test_checker_cmd || !prob->test_checker_cmd[0]) FAIL(S_ERR_INV_OPER);
+    file_name = prob->test_checker_cmd;
+    break;
+  default:
+    FAIL(S_ERR_INV_OPER);
+  }
+
+  if (!file_name || !file_name) FAIL(S_ERR_INV_PROB_ID);
+  sformat_message(tmp_path, sizeof(tmp_path), 0, file_name, global, prob, NULL, 0, 0, 0, 0, 0);
+  if (os_IsAbsolutePath(tmp_path)) {
+    snprintf(tmp2_path, sizeof(tmp2_path), "%s", tmp_path);
+  } else if (global->advanced_layout > 0) {
+    get_advanced_layout_path(tmp2_path, sizeof(tmp2_path), global, prob, tmp_path, variant);
+  } else {
+    snprintf(tmp2_path, sizeof(tmp2_path), "%s/%s", global->checker_dir, tmp_path);
+  }
+
+  ss_cgi_param_int_opt(phr, "no_source", &no_source, 0);
+  if (no_source != 1) no_source = 0;
+  if (!no_source) {
+    ss_cgi_param_int_opt(phr, "lang_mask", &lang_mask, 0);
+    src_suffix = get_source_suffix(lang_mask);
+    if (!src_suffix) FAIL(S_ERR_INV_LANG_ID);
+    snprintf(file_path, sizeof(file_path), "%s%s", tmp2_path, src_suffix);
+  } else {
+    snprintf(file_path, sizeof(file_path), "%s", tmp2_path);
+  }
+
+  snprintf(file_path_tmp, sizeof(file_path_tmp), "%s.tmp", file_path);
+  snprintf(file_path_bak, sizeof(file_path_bak), "%s.bak", file_path);
+
+  ss_cgi_param(phr, "text", &s);
+  text = normalize_textarea(s);
+
+  write_file(file_path_tmp, text);
+  if (!need_file_update(file_path, file_path_tmp)) goto done;
+
+  if (logged_rename(log_f, file_path, file_path_bak) < 0) FAIL(S_ERR_FS_ERROR);
+  if (logged_rename(log_f, file_path_tmp, file_path) < 0) FAIL(S_ERR_FS_ERROR);
+  set_cnts_file_perms(log_f, file_path, cnts);
+  file_path_tmp[0] = 0;
+
+done:
+  ss_redirect_2(out_f, phr, SSERV_OP_TESTS_MAIN_PAGE, contest_id, prob_id, variant, 0, NULL);
+
+cleanup:
+  xfree(text);
+  if (file_path_tmp[0]) unlink(file_path_tmp);
+  return retval;
+}
+
