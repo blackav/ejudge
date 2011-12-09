@@ -5775,7 +5775,7 @@ create_program(
       fprintf(out_f, "#include \"checker.h\"\n\n");
       fprintf(out_f,
               "int\n"
-              "main(int argc, char *argv[])\n"
+              "checker_main(int argc, char *argv[])\n"
               "{\n"
               "    checker_OK();\n"
               "}\n");
@@ -5804,7 +5804,7 @@ create_program(
       fprintf(out_f, "#include \"checker.h\"\n\n");
       fprintf(out_f,
               "int\n"
-              "main(int argc, char *argv[])\n"
+              "checker_main(int argc, char *argv[])\n"
               "{\n"
               "    checker_OK();\n"
               "}\n");
@@ -6359,3 +6359,346 @@ cleanup:
   return retval;
 }
 
+static void
+strip_known_exe_suffixes(char *str)
+{
+  int len, i;
+
+  if (str == NULL) return;
+  len = strlen(str);
+  for (i = len - 1; i >= 0 && str[i] != '.' && str[i] != '/'; --i) {}
+  if (i <= 0 || str[i] != '.' || str[i - 1] == '/') return;
+  if (!strcmp(str + i, ".class") || !strcmp(str + i, ".jar") || !strcmp(str + i, ".exe")) {
+    str[i] = 0;
+  }
+}
+
+static void
+write_ls_like_line(FILE *out_f, const unsigned char *name, struct stat *stb)
+{
+  static const unsigned char *all_modes = "rwxrwxrwx";
+  int mode = stb->st_mode & 0777;
+  int bit = 0400;
+  int i = 0;
+  for (; bit > 0; bit >>= 1, ++i) {
+    if ((mode & bit) != 0) {
+      putc(all_modes[i], out_f);
+    } else {
+      putc('-', out_f);
+    }
+  }
+  fprintf(out_f, " %4d", stb->st_nlink);
+  struct passwd *ui = getpwuid(stb->st_uid);
+  if (!ui) {
+    fprintf(out_f, " %10d", stb->st_uid);
+  } else {
+    fprintf(out_f, " %10s", ui->pw_name);
+  }
+  struct group *gi = getgrgid(stb->st_gid);
+  if (!gi) {
+    fprintf(out_f, " %10d", stb->st_gid);
+  } else {
+    fprintf(out_f, " %10s", gi->gr_name);
+  }
+  fprintf(out_f, " %16lld", (long long) stb->st_size);
+  fprintf(out_f, " %s", xml_unparse_date(stb->st_mtime));
+  fprintf(out_f, " %s\n", name);
+}
+
+int
+super_serve_op_TESTS_CHECKER_DELETE_PAGE(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  int contest_id = 0;
+  int prob_id = 0;
+  int variant = 0;
+  const struct contest_desc *cnts = NULL;
+  opcap_t caps = 0LL;
+  serve_state_t cs = NULL;
+  const struct section_global_data *global = NULL;
+  const struct section_problem_data *prob = NULL;
+  const unsigned char *file_name = NULL;
+  unsigned char tmp_path[PATH_MAX];
+  unsigned char tmp2_path[PATH_MAX];
+  unsigned char *dirname = NULL;
+  unsigned char *lastname = NULL;
+  int action = 0;
+  FILE *lst_f = NULL;
+  char *lst_t = NULL;
+  size_t lst_z = 0;
+  int count = 0;
+  DIR *d = NULL;
+  struct dirent *dd;
+  struct stat stb;
+  int lastname_len, len;
+  unsigned char buf[1024], hbuf[1024];
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  const unsigned char *title = NULL;
+
+  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+
+  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
+  get_full_caps(phr, cnts, &caps);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(S_ERR_PERM_DENIED);
+
+  retval = check_other_editors(log_f, out_f, phr, contest_id, cnts);
+  if (retval <= 0) goto cleanup;
+  retval = 0;
+  cs = phr->ss->te_state;
+  global = cs->global;
+
+  ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
+  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
+  if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
+
+  variant = -1;
+  if (prob->variant_num > 0) {
+    ss_cgi_param_int_opt(phr, "variant", &variant, 0);
+    if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
+  }
+
+  switch (phr->opcode) {
+  case SSERV_OP_TESTS_STYLE_CHECKER_DELETE_PAGE:
+    if (!prob->style_checker_cmd || !prob->style_checker_cmd[0]) FAIL(S_ERR_INV_OPER);
+    file_name = prob->style_checker_cmd;
+    action = SSERV_OP_TESTS_STYLE_CHECKER_DELETE_ACTION;
+    title = "Style checker";
+    break;
+  case SSERV_OP_TESTS_CHECKER_DELETE_PAGE:
+    if (prob->standard_checker && prob->standard_checker[0]) FAIL(S_ERR_INV_OPER);
+    if (!prob->check_cmd || !prob->check_cmd[0]) FAIL(S_ERR_INV_OPER);
+    file_name = prob->check_cmd;
+    action = SSERV_OP_TESTS_CHECKER_DELETE_ACTION;
+    title = "Checker";
+    break;
+  case SSERV_OP_TESTS_VALUER_DELETE_PAGE:
+    if (!prob->valuer_cmd || !prob->valuer_cmd[0]) FAIL(S_ERR_INV_OPER);
+    file_name = prob->valuer_cmd;
+    action = SSERV_OP_TESTS_VALUER_DELETE_ACTION;
+    title = "Valuer";
+    break;
+  case SSERV_OP_TESTS_INTERACTOR_DELETE_PAGE:
+    if (!prob->interactor_cmd || !prob->interactor_cmd[0]) FAIL(S_ERR_INV_OPER);
+    file_name = prob->interactor_cmd;
+    action = SSERV_OP_TESTS_INTERACTOR_DELETE_ACTION;
+    title = "Interactor";
+    break;
+  case SSERV_OP_TESTS_TEST_CHECKER_DELETE_PAGE:
+    if (!prob->test_checker_cmd || !prob->test_checker_cmd[0]) FAIL(S_ERR_INV_OPER);
+    file_name = prob->test_checker_cmd;
+    action = SSERV_OP_TESTS_TEST_CHECKER_DELETE_ACTION;
+    title = "Test checker";
+    break;
+  default:
+    FAIL(S_ERR_INV_OPER);
+  }
+
+  if (!file_name || !file_name) FAIL(S_ERR_INV_PROB_ID);
+  sformat_message(tmp_path, sizeof(tmp_path), 0, file_name, global, prob, NULL, 0, 0, 0, 0, 0);
+  if (os_IsAbsolutePath(tmp_path)) {
+    snprintf(tmp2_path, sizeof(tmp2_path), "%s", tmp_path);
+  } else if (global->advanced_layout > 0) {
+    get_advanced_layout_path(tmp2_path, sizeof(tmp2_path), global, prob, tmp_path, variant);
+  } else {
+    snprintf(tmp2_path, sizeof(tmp2_path), "%s/%s", global->checker_dir, tmp_path);
+  }
+
+  strip_known_exe_suffixes(tmp2_path);
+  dirname = os_DirName(tmp2_path);
+  if (!dirname || !*dirname) {
+    FAIL(S_ERR_FS_ERROR);
+  }
+  lastname = os_GetLastname(tmp2_path);
+  lastname_len = strlen(lastname);
+  if (!lastname || !*lastname) {
+    FAIL(S_ERR_FS_ERROR);
+  }
+
+  d = opendir(dirname);
+  if (!d) FAIL(S_ERR_FS_ERROR);
+  lst_f = open_memstream(&lst_t, &lst_z);
+  while ((dd = readdir(d))) {
+    if (!strcmp(dd->d_name, ".") || !strcmp(dd->d_name, "..")) continue;
+    len = strlen(dd->d_name);
+    if (len < lastname_len || strncmp(dd->d_name, lastname, lastname_len) != 0) continue;
+    snprintf(tmp_path, sizeof(tmp_path), "%s/%s", dirname, dd->d_name);
+    if (stat(tmp_path, &stb) < 0 || !S_ISREG(stb.st_mode)) continue;
+    write_ls_like_line(lst_f, dd->d_name, &stb);
+    ++count;
+  }
+  fclose(lst_f); lst_f = 0;
+  closedir(d); d = NULL;
+
+  snprintf(buf, sizeof(buf), "serve-control: %s, contest %d (%s), problem %s, delete %s",
+           phr->html_name, contest_id, ARMOR(cnts->name), prob->short_name, title);
+  ss_write_html_header(out_f, phr, buf, 0, NULL);
+  fprintf(out_f, "<h1>%s</h1>\n", buf);
+
+  fprintf(out_f, "<ul>");
+  fprintf(out_f, "<li>%s%s</a></li>",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL, NULL),
+          "Main page");
+  fprintf(out_f, "<li>%s%s</a></li>\n",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
+                        "action=%d&op=%d&contest_id=%d", SSERV_CMD_HTTP_REQUEST,
+                        SSERV_OP_TESTS_MAIN_PAGE, contest_id),
+          "Problems page");
+  fprintf(out_f, "</ul>\n");
+
+  write_problem_editing_links(out_f, phr, contest_id, prob_id, variant, global, prob);
+
+  html_start_form(out_f, 1, phr->self_url, "");
+  html_hidden(out_f, "SID", "%016llx", phr->session_id);
+  html_hidden(out_f, "action", "%d", SSERV_CMD_HTTP_REQUEST);
+  html_hidden(out_f, "contest_id", "%d", contest_id);
+  html_hidden(out_f, "prob_id", "%d", prob_id);
+  html_hidden(out_f, "variant", "%d", variant);
+
+  fprintf(out_f, "<h3>The following %d files to be deleted</h3>\n", count);
+  fprintf(out_f, "<pre>%s</pre>\n", ARMOR(lst_t));
+
+  test_checker_edit_page_actions(out_f, 0, action);
+  ss_write_html_footer(out_f);
+
+cleanup:
+  html_armor_free(&ab);
+  if (d) closedir(d);
+  xfree(lst_t);
+  if (lst_f) fclose(lst_f);
+  xfree(lastname);
+  xfree(dirname);
+  return retval;
+}
+
+int
+super_serve_op_TESTS_CHECKER_DELETE_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  int contest_id = 0;
+  int prob_id = 0;
+  int variant = 0;
+  const struct contest_desc *cnts = NULL;
+  opcap_t caps = 0LL;
+  serve_state_t cs = NULL;
+  const struct section_global_data *global = NULL;
+  const struct section_problem_data *prob = NULL;
+  const unsigned char *file_name = NULL;
+  unsigned char tmp_path[PATH_MAX], tmp2_path[PATH_MAX];
+  unsigned char *dirname = NULL;
+  unsigned char *lastname = NULL;
+  int lastname_len, len;
+  DIR *d = NULL;
+  struct dirent *dd = NULL;
+  struct stat stb;
+  int files_u = 0, files_a = 0;
+  unsigned char **files = NULL;
+  int i;
+
+  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+
+  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
+  get_full_caps(phr, cnts, &caps);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(S_ERR_PERM_DENIED);
+
+  retval = check_other_editors(log_f, out_f, phr, contest_id, cnts);
+  if (retval <= 0) goto cleanup;
+  retval = 0;
+  cs = phr->ss->te_state;
+  global = cs->global;
+
+  ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
+  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
+  if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
+
+  variant = -1;
+  if (prob->variant_num > 0) {
+    ss_cgi_param_int_opt(phr, "variant", &variant, 0);
+    if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
+  }
+
+  switch (phr->opcode) {
+  case SSERV_OP_TESTS_STYLE_CHECKER_DELETE_ACTION:
+    if (!prob->style_checker_cmd || !prob->style_checker_cmd[0]) FAIL(S_ERR_INV_OPER);
+    file_name = prob->style_checker_cmd;
+    break;
+  case SSERV_OP_TESTS_CHECKER_DELETE_ACTION:
+    if (prob->standard_checker && prob->standard_checker[0]) FAIL(S_ERR_INV_OPER);
+    if (!prob->check_cmd || !prob->check_cmd[0]) FAIL(S_ERR_INV_OPER);
+    file_name = prob->check_cmd;
+    break;
+  case SSERV_OP_TESTS_VALUER_DELETE_ACTION:
+    if (!prob->valuer_cmd || !prob->valuer_cmd[0]) FAIL(S_ERR_INV_OPER);
+    file_name = prob->valuer_cmd;
+    break;
+  case SSERV_OP_TESTS_INTERACTOR_DELETE_ACTION:
+    if (!prob->interactor_cmd || !prob->interactor_cmd[0]) FAIL(S_ERR_INV_OPER);
+    file_name = prob->interactor_cmd;
+    break;
+  case SSERV_OP_TESTS_TEST_CHECKER_DELETE_ACTION:
+    if (!prob->test_checker_cmd || !prob->test_checker_cmd[0]) FAIL(S_ERR_INV_OPER);
+    file_name = prob->test_checker_cmd;
+    break;
+  default:
+    FAIL(S_ERR_INV_OPER);
+  }
+
+  if (!file_name || !file_name) FAIL(S_ERR_INV_PROB_ID);
+  sformat_message(tmp_path, sizeof(tmp_path), 0, file_name, global, prob, NULL, 0, 0, 0, 0, 0);
+  if (os_IsAbsolutePath(tmp_path)) {
+    snprintf(tmp2_path, sizeof(tmp2_path), "%s", tmp_path);
+  } else if (global->advanced_layout > 0) {
+    get_advanced_layout_path(tmp2_path, sizeof(tmp2_path), global, prob, tmp_path, variant);
+  } else {
+    snprintf(tmp2_path, sizeof(tmp2_path), "%s/%s", global->checker_dir, tmp_path);
+  }
+
+  strip_known_exe_suffixes(tmp2_path);
+  dirname = os_DirName(tmp2_path);
+  if (!dirname || !*dirname) {
+    FAIL(S_ERR_FS_ERROR);
+  }
+  lastname = os_GetLastname(tmp2_path);
+  lastname_len = strlen(lastname);
+  if (!lastname || !*lastname) {
+    FAIL(S_ERR_FS_ERROR);
+  }
+
+  d = opendir(dirname);
+  if (!d) FAIL(S_ERR_FS_ERROR);
+  while ((dd = readdir(d))) {
+    if (!strcmp(dd->d_name, ".") || !strcmp(dd->d_name, "..")) continue;
+    len = strlen(dd->d_name);
+    if (len < lastname_len || strncmp(dd->d_name, lastname, lastname_len) != 0) continue;
+    snprintf(tmp_path, sizeof(tmp_path), "%s/%s", dirname, dd->d_name);
+    if (stat(tmp_path, &stb) < 0 || !S_ISREG(stb.st_mode)) continue;
+    if (files_u == files_a) {
+      if (!files_a) files_a = 16;
+      files = xrealloc(files, (files_a *= 2) * sizeof(files[0]));
+    }
+    files[files_u++] = xstrdup(dd->d_name);
+  }
+  closedir(d); d = NULL;
+
+  for (i = 0; i < files_u; ++i) {
+    snprintf(tmp_path, sizeof(tmp_path), "%s/%s", dirname, files[i]);
+    unlink(tmp_path);
+  }
+
+  ss_redirect_2(out_f, phr, SSERV_OP_TESTS_MAIN_PAGE, contest_id, prob_id, variant, 0, NULL);
+
+cleanup:
+  if (d) closedir(d);
+  xfree(dirname);
+  xfree(lastname);
+  return retval;
+}
