@@ -84,7 +84,19 @@ then
     exit 1
 fi
 
-${EJ_MAKE_COMMAND} ${EJ_MAKE_ARGS}
+if [ "${EJ_MAKE_CFLAGS}" != "" -a "${EJ_MAKE_CXXFLAGS}" != "" ]
+then
+    ${EJ_MAKE_COMMAND} CFLAGS="${EJ_MAKE_CFLAGS}" CXXFLAGS="${EJ_MAKE_CXXFLAGS}"
+elif [ "${EJ_MAKE_CXXFLAGS}" != "" ]
+then
+    ${EJ_MAKE_COMMAND} CXXFLAGS="${EJ_MAKE_CXXFLAGS}"
+elif [ "${EJ_MAKE_CFLAGS}" != "" ]
+then
+    ${EJ_MAKE_COMMAND} CFLAGS="${EJ_MAKE_CFLAGS}"
+else
+    ${EJ_MAKE_COMMAND}
+fi
+
 if [ $? != 0 ]
 then
     echo "Build failed" 1>&2
