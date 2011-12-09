@@ -121,10 +121,6 @@ enum
     SRCH_LAST
   };
 
-#ifndef XALLOCAZ
-#define XALLOCAZ(p,s) (XALLOCA((p),(s)),XMEMZERO((p),(s)))
-#endif
-
 static struct userlist_clnt *server_conn;
 static struct ejudge_cfg *config;
 static int utf8_mode = 0;
@@ -206,9 +202,9 @@ generic_menu(int min_width, int max_width, /* incl. frame */
   int buflen, i, itemlen, c, answer = -3, cmd;
   va_list args;
   int act_width, item_width, act_height, head_width;
-  unsigned char **item_strs;
+  unsigned char **item_strs = NULL;
   unsigned char const *pc;
-  ITEM **curs_items;
+  ITEM **curs_items = NULL;
   MENU *curs_menu;
   WINDOW *in_win, *out_win, *txt_win;
   PANEL *in_pan, *out_pan, *txt_pan;
@@ -262,9 +258,9 @@ generic_menu(int min_width, int max_width, /* incl. frame */
   }
   ASSERT(item_width > 0);
 
-  XALLOCAZ(item_strs, nitems);
+  XCALLOC(item_strs, nitems);
   for (i = 0; i < nitems; i++) {
-    item_strs[i] = (unsigned char*) alloca(item_width + 1);
+    item_strs[i] = malloc(item_width + 1);
     memset(item_strs[i], ' ', item_width);
     item_strs[i][item_width] = 0;
     itemlen = strlen(items[i]);
@@ -299,7 +295,7 @@ generic_menu(int min_width, int max_width, /* incl. frame */
     rec_line = 1;
   }
 
-  XALLOCAZ(curs_items, nitems + 1);
+  XCALLOC(curs_items, nitems + 1);
   for (i = 0; i < nitems; i++) {
     curs_items[i] = new_item(item_strs[i], 0);
   }
@@ -400,7 +396,10 @@ generic_menu(int min_width, int max_width, /* incl. frame */
   free_menu(curs_menu);
   for (i = 0; i < nitems; i++) {
     free_item(curs_items[i]);
+    xfree(item_strs[i]);
   }
+  xfree(item_strs);
+  xfree(curs_items);
   update_panels();
   doupdate();
   return answer;
@@ -1516,11 +1515,11 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
     tot_items += r + 1;
   }
 
-  XALLOCAZ(descs, tot_items + 1);
-  XALLOCAZ(refs, tot_items + 1);
-  XALLOCAZ(info, tot_items + 1);
+  XCALLOC(descs, tot_items + 1);
+  XCALLOC(refs, tot_items + 1);
+  XCALLOC(info, tot_items + 1);
   for (i = 0; i < tot_items; i++) {
-    XALLOCAZ(descs[i], 512);
+    XCALLOC(descs[i], 512);
   }
 
   j = 0;
@@ -1590,7 +1589,7 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
   }
   ASSERT(j == tot_items);
 
-  XALLOCAZ(items, tot_items + 1);
+  XCALLOC(items, tot_items + 1);
   for (i = 0; i < tot_items; i++) {
     items[i] = new_item(descs[i], 0);
   }
@@ -2283,7 +2282,12 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
   delwin(in_win);
   for (i = 0; i < tot_items; i++) {
     free_item(items[i]);
+    xfree(descs[i]);
   }
+  xfree(descs);
+  xfree(refs);
+  xfree(info);
+  xfree(items);
   return retcode;
 }
 
@@ -2697,7 +2701,7 @@ do_display_registered_users(
   }
 
   /* uu - array of user references */
-  XALLOCAZ(uu,nuser);
+  XCALLOC(uu, nuser);
   for (j = 0, i = 1; i < users->user_map_size; i++) {
     if (users->user_map[i]) uu[j++] = users->user_map[i];
   }
@@ -2720,7 +2724,7 @@ do_display_registered_users(
     qsort(uu, nuser, sizeof(uu[0]), registered_users_sort_func);
   }
 
-  XALLOCAZ(uc, nuser);
+  XCALLOC(uc, nuser);
   for (i = 0; i < nuser; i++) {
     ASSERT(uu[i]->contests);
     for (cc = (struct userlist_contest*) uu[i]->contests->first_down;
@@ -2730,10 +2734,10 @@ do_display_registered_users(
     ASSERT(cc);
     uc[i] = cc;
   }
-  XALLOCAZ(descs, nuser);
-  XALLOCAZ(items, nuser + 1);
+  XCALLOC(descs, nuser);
+  XCALLOC(items, nuser + 1);
   for (i = 0; i < nuser; i++) {
-    descs[i] = alloca(256);
+    descs[i] = xmalloc(256);
     generate_reg_user_item(descs[i], 256, i, uu, uc, sel_users.mask);
     items[i] = new_item(descs[i], 0);
   }
@@ -3448,7 +3452,12 @@ do_display_registered_users(
   doupdate();
   for (i = 0; i < nuser; i++) {
     free_item(items[i]);
+    xfree(descs[i]);
   }
+  xfree(uu);
+  xfree(uc);
+  xfree(descs);
+  xfree(items);
   return retcode;
 }
 
@@ -3519,7 +3528,7 @@ display_contests_menu(unsigned char *upper, int only_choose)
   }
   if (!ncnts) return -1;
 
-  XALLOCAZ(cnts_names, cnts_set_card);
+  XCALLOC(cnts_names, cnts_set_card);
   for (i = 1; i < cnts_set_card; i++) {
     if (contests_get(i, &cc) >= 0) {
       cnts_names[i] = s = xstrdup(cc->name);
@@ -3533,15 +3542,14 @@ display_contests_menu(unsigned char *upper, int only_choose)
     }
   }
 
-  cntsi = alloca(ncnts * sizeof(cntsi[0]));
-  memset(cntsi, 0, sizeof(cntsi[0]) * ncnts);
+  XCALLOC(cntsi, ncnts);
   for (i = 1, j = 0; i < cnts_set_card; i++) {
     if (cnts_set[i]) cntsi[j++] = i;
   }
   ASSERT(j == ncnts);
 
-  XALLOCAZ(descs, ncnts);
-  XALLOCAZ(items, ncnts + 1);
+  XCALLOC(descs, ncnts);
+  XCALLOC(items, ncnts + 1);
 
  restart_menu:
 
@@ -3718,6 +3726,10 @@ display_contests_menu(unsigned char *upper, int only_choose)
     xfree(descs[i]);
   for (i = 1; i < cnts_set_card; i++)
     xfree(cnts_names[i]);
+  xfree(cnts_names);
+  xfree(cntsi);
+  xfree(descs);
+  xfree(items);
   return retval;
 }
 
@@ -3779,8 +3791,7 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
     return -2;
   }
 
-  uu = alloca(nusers * sizeof(uu[0]));
-  memset(uu, 0, nusers * sizeof(uu[0]));
+  XCALLOC(uu, nusers);
   for (i = 1, j = 0; i < users->user_map_size; i++) {
     if (!users->user_map[i]) continue;
     uu[j++] = users->user_map[i];
@@ -3805,8 +3816,7 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
     qsort(uu, nusers, sizeof(uu[0]), registered_users_sort_func);
   }
 
-  descs = alloca(nusers * sizeof(descs[0]));
-  memset(descs, 0, nusers * sizeof(descs[0]));
+  XCALLOC(descs, nusers);
   for (i = 0; i < nusers; i++) {
     name = 0;
     if (uu[i]->cnts0) name = uu[i]->cnts0->name;
@@ -3817,12 +3827,10 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
     len = snprintf(buf, sizeof(buf), "%s%6d  %-16.16s  %-*.*s",
                    g_sel_users.mask[i]?"!":" ",
                    uu[i]->id, uu[i]->login, w + y, w, name);
-    descs[i] = alloca(len + 16);
-    strcpy(descs[i], buf);
+    descs[i] = xstrdup(buf);
   }
 
-  items = alloca((nusers + 1) * sizeof(items[0]));
-  memset(items, 0, sizeof(items[0]) * (nusers + 1));
+  XCALLOC(items, nusers + 1);
   for (i = 0; i < nusers; i++) {
     items[i] = new_item(descs[i], 0);
   }
@@ -4247,8 +4255,12 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
   delwin(in_win);
   for (i = 0; i < nusers; i++) {
     free_item(items[i]);
+    xfree(descs[i]);
   }
   userlist_free(&users->b);
+  xfree(uu);
+  xfree(descs);
+  xfree(items);
   return retval;
 }
 
