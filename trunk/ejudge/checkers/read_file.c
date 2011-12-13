@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -35,7 +35,7 @@ checker_read_file(int ind, char **out, size_t *out_len)
       memcpy(buf, read_buf, read_len);
       buf_len = read_len;
     } else {
-      buf = (unsigned char*) xrealloc(buf, buf_len + read_len);
+      buf = (unsigned char*) xrealloc(buf, buf_len + read_len + 1);
       memcpy(buf + buf_len, read_buf, read_len);
       buf_len += read_len;
       buf[buf_len] = 0;
