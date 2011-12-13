@@ -737,27 +737,28 @@ setup_environment(
         const struct testinfo_struct *pt)
 {
   int jj;
-
-  if (!envs) {
-    fprintf(stderr, "setup_environment: envs == NULL\n");
-    return;
-  }
-
-  for (jj = 0; envs[jj]; jj++) {
-    fprintf(stderr, "setup_environment: %s\n", envs[jj]);
-    if (!strcmp(envs[jj], "EJUDGE_PREFIX_DIR")) {
-      task_PutEnv(tsk, ejudge_prefix_dir_env);
-    } else if (!strchr(envs[jj], '=')) {
-      const unsigned char *envval = getenv(envs[jj]);
-      if (envval) {
-        unsigned char env_buf[1024];
-        snprintf(env_buf, sizeof(env_buf), "%s=%s", envs[jj], envval);
-        task_PutEnv(tsk, env_buf);
+  unsigned char env_buf[1024];
+  const unsigned char *envval = NULL;
+  
+  if (envs) {
+    for (jj = 0; envs[jj]; jj++) {
+      fprintf(stderr, "setup_environment: %p\n", envs[jj]);
+      if (!strcmp(envs[jj], "EJUDGE_PREFIX_DIR")) {
+        task_PutEnv(tsk, ejudge_prefix_dir_env);
+      } else if (!strchr(envs[jj], '=')) {
+        envval = getenv(envs[jj]);
+        fprintf(stderr, "setup_environment:: %p\n", envval);
+        if (envval) {
+          snprintf(env_buf, sizeof(env_buf), "%s=%s", envs[jj], envval);
+          task_PutEnv(tsk, env_buf);
+        }
+      } else {
+        task_PutEnv(tsk, envs[jj]);
       }
-    } else {
-      task_PutEnv(tsk, envs[jj]);
     }
   }
+
+  fprintf(stderr, "setup_environment::: %p\n", pt);
   if (pt && pt->env_u && pt->env_v) {
     for (jj = 0; jj < pt->env_u; ++jj) {
       if (pt->env_v[jj]) {
