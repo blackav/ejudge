@@ -1485,6 +1485,7 @@ run_tests(struct section_tester_data *tst,
   long expected_free_space = 0;
   const struct section_global_data *global = serve_state.global;
 
+  memset(&tstinfo, 0, sizeof(tstinfo));
   ASSERT(tst->problem > 0);
   ASSERT(tst->problem <= serve_state.max_prob);
   ASSERT(serve_state.probs[tst->problem]);
