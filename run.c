@@ -738,9 +738,13 @@ setup_environment(
 {
   int jj;
 
-  if (!envs) return;
+  if (!envs) {
+    fprintf(stderr, "setup_environment: envs == NULL\n");
+    return;
+  }
 
   for (jj = 0; envs[jj]; jj++) {
+    fprintf(stderr, "setup_environment: %s\n", envs[jj]);
     if (!strcmp(envs[jj], "EJUDGE_PREFIX_DIR")) {
       task_PutEnv(tsk, ejudge_prefix_dir_env);
     } else if (!strchr(envs[jj], '=')) {
@@ -756,7 +760,10 @@ setup_environment(
   }
   if (pt && pt->env_u && pt->env_v) {
     for (jj = 0; jj < pt->env_u; ++jj) {
-      if (pt->env_v[jj]) task_PutEnv(tsk, pt->env_v[jj]);
+      if (pt->env_v[jj]) {
+        fprintf(stderr, "setup_environment: %s\n", pt->env_v[jj]);
+        task_PutEnv(tsk, pt->env_v[jj]);
+      }
     }
   }
 }
