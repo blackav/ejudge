@@ -5477,11 +5477,12 @@ priv_view_source(FILE *fout,
 }
 
 static int
-priv_download_source(FILE *fout,
-                     FILE *log_f,
-                     struct http_request_info *phr,
-                     const struct contest_desc *cnts,
-                     struct contest_extra *extra)
+priv_download_source(
+        FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
 {
   serve_state_t cs = extra->serve_state;
   const struct section_global_data *global = cs->global;
@@ -5494,6 +5495,8 @@ priv_download_source(FILE *fout,
   char *run_text = 0;
   size_t run_size = 0;
   int retval = 0;
+  const unsigned char *src_sfx = "";
+  const unsigned char *content_type = "text/plain";
 
   if (parse_run_id(fout, phr, cnts, extra, &run_id, &re) < 0) goto failure;
   if (ns_cgi_param(phr, "no_disp", &s) > 0
@@ -5518,29 +5521,57 @@ priv_download_source(FILE *fout,
     FAIL(NEW_SRV_ERR_DISK_READ_ERROR);
 
   if (prob->type > 0) {
-    fprintf(fout, "Content-type: %s\n", mime_type_get_type(re.mime_type));
-    if (!no_disp) {
-      fprintf(fout, "Content-Disposition: attachment; filename=\"%06d%s\"\n",
-              run_id, mime_type_get_suffix(re.mime_type));
-    }
-    putc_unlocked('\n', fout);
+    content_type = mime_type_get_type(re.mime_type);
+    src_sfx = mime_type_get_suffix(re.mime_type);
   } else {
     if(re.lang_id <= 0 || re.lang_id > cs->max_lang ||
        !(lang = cs->langs[re.lang_id]))
       FAIL(NEW_SRV_ERR_INV_LANG_ID);
+    src_sfx = lang->src_sfx;
+    if (!src_sfx) src_sfx = "";
 
-    if (lang->content_type) {
-      fprintf(fout, "Content-type: %s\n", lang->content_type);
+    if (lang->content_type && lang->content_type[0]) {
+      content_type = lang->content_type;
     } else if (lang->binary) {
-      fprintf(fout, "Content-type: application/octet-stream\n\n");
+      if (re.mime_type <= 0 && !strcmp(src_sfx, ".tar")) {
+        int mime_type = mime_type_guess(global->diff_work_dir, 
+                                        run_text, run_size);
+        switch (mime_type) {
+        case MIME_TYPE_APPL_GZIP: // application/x-gzip
+          src_sfx = ".tar.gz";
+          break;
+        case MIME_TYPE_APPL_TAR:  // application/x-tar
+          src_sfx = ".tar";
+          break;
+        case MIME_TYPE_APPL_ZIP:  // application/zip
+          src_sfx = ".zip";
+          break;
+        case MIME_TYPE_APPL_BZIP2: // application/x-bzip2
+          src_sfx = ".tar.bz2";
+          break;
+        case MIME_TYPE_APPL_7ZIP:  // application/x-7zip
+          src_sfx = ".tar.7z";
+          break;
+        default:
+          mime_type = MIME_TYPE_BINARY;
+          break;
+        }
+        content_type = mime_type_get_type(mime_type);
+      } else {
+        content_type = "application/octet-stream";
+      }
     } else {
-      fprintf(fout, "Content-type: text/plain\n");
-    }
-    if (!no_disp) {
-      fprintf(fout, "Content-Disposition: attachment; filename=\"%06d%s\"\n\n",
-              run_id, lang->src_sfx);
+      content_type = "text/plain";
     }
   }
+
+  fprintf(fout, "Content-type: %s\n", content_type);
+  if (!no_disp) {
+    fprintf(fout, "Content-Disposition: attachment; filename=\"%06d%s\"\n",
+            run_id, src_sfx);
+  }
+  putc_unlocked('\n', fout);
+
   fwrite(run_text, 1, run_size, fout);
 
  cleanup:
