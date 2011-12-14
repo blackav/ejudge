@@ -105,7 +105,7 @@ fi
 
 if [ ! -x "${EJ_PROGRAM_NAME}" ]
 then
-    echo "The executable file is not created or non-existable" 1>&2
+    echo "The executable file is not created or non-executable" 1>&2
     exit 1
 fi
 
