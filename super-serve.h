@@ -296,4 +296,7 @@ struct sid_state* super_serve_sid_state_get_cnts_editor_nc(int contest_id);
 const struct sid_state* super_serve_sid_state_get_test_editor(int contest_id);
 struct sid_state* super_serve_sid_state_get_test_editor_nc(int contest_id);
 
+struct background_process;
+void super_serve_register_process(struct background_process *prc);
+
 #endif /* __SUPER_SERVE_H__ */
