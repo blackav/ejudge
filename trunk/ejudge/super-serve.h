@@ -281,6 +281,9 @@ struct super_http_request_info
 
   // should we use json for reply?
   int json_reply;
+  // should we suspend reply because of background process?
+  int suspend_reply;
+
   unsigned char data[0];
 };
 
