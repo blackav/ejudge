@@ -281,7 +281,7 @@ struct super_http_request_info
 
   // should we use json for reply?
   int json_reply;
-  int data[0];
+  unsigned char data[0];
 };
 
 void super_serve_clear_edited_contest(struct sid_state *sstate);
