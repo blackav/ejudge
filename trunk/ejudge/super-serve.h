@@ -262,8 +262,8 @@ struct super_http_request_info
   // the URL
   ej_ip_t ip;
   int ssl_flag;
-  const unsigned char *self_url; // points into stack buffer
-  const unsigned char *script_name; // points into stack buffer
+  const unsigned char *self_url;
+  const unsigned char *script_name;
   const unsigned char *system_login;
 
   unsigned long long session_id;
@@ -281,6 +281,7 @@ struct super_http_request_info
 
   // should we use json for reply?
   int json_reply;
+  int data[0];
 };
 
 void super_serve_clear_edited_contest(struct sid_state *sstate);
