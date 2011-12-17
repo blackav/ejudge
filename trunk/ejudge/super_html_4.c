@@ -6654,15 +6654,11 @@ super_html_http_request(
         size_t *p_out_z,
         struct super_http_request_info *phr)
 {
-  FILE *out_f = 0, *log_f = 0;
-  char *out_t = 0, *log_t = 0;
-  size_t out_z = 0, log_z = 0;
   int r = 0, n;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   const unsigned char *http_host = 0;
   const unsigned char *script_name = 0;
   const unsigned char *protocol = "http";
-  unsigned char self_url[4096];
   const unsigned char *s = 0;
 
   if (ss_getenv(phr, "SSL_PROTOCOL") || ss_getenv(phr, "HTTPS")) {
@@ -6672,9 +6668,7 @@ super_html_http_request(
   if (!(http_host = ss_getenv(phr, "HTTP_HOST"))) http_host = "localhost";
   if (!(script_name = ss_getenv(phr, "SCRIPT_NAME")))
     script_name = "/cgi-bin/serve-control";
-  snprintf(self_url, sizeof(self_url), "%s://%s%s", protocol, http_host,
-           script_name);
-  phr->self_url = self_url;
+  snprintf(phr->self_url, sizeof(phr->self_url), "%s://%s%s", protocol, http_host, script_name);
   phr->script_name = script_name;
 
   if ((r = ss_cgi_param(phr, "SID", &s)) < 0) {
@@ -6689,49 +6683,53 @@ super_html_http_request(
   }
 
   if (!r) {
-    out_f = open_memstream(&out_t, &out_z);
-    log_f = open_memstream(&log_t, &log_z);
-    r = do_http_request(log_f, out_f, phr);
-    close_memstream(out_f); out_f = 0;
-    close_memstream(log_f); log_f = 0;
+    phr->out_f = open_memstream(&phr->out_t, &phr->out_z);
+    phr->log_f = open_memstream(&phr->log_t, &phr->log_z);
+    r = do_http_request(phr->log_f, phr->out_f, phr);
+    if (r >= 0 && phr->suspend_reply) {
+      html_armor_free(&ab);
+      return;
+    }
+    close_memstream(phr->out_f); phr->out_f = 0;
+    close_memstream(phr->log_f); phr->log_f = 0;
   }
 
   if (r < 0) {
-    xfree(out_t); out_t = 0; out_z = 0;
-    out_f = open_memstream(&out_t, &out_z);
+    xfree(phr->out_t); phr->out_t = 0; phr->out_z = 0;
+    phr->out_f = open_memstream(&phr->out_t, &phr->out_z);
     if (phr->json_reply) {
-      write_json_header(out_f);
-      fprintf(out_f, "{ \"status\": %d, \"text\": \"%s\" }",
+      write_json_header(phr->out_f);
+      fprintf(phr->out_f, "{ \"status\": %d, \"text\": \"%s\" }",
               r, super_proto_op_error_messages[-r]);
     } else {
-      write_html_header(out_f, phr, "Request failed", 0, 0);
+      write_html_header(phr->out_f, phr, "Request failed", 0, 0);
       if (r < -1 && r > -S_ERR_LAST) {
-        fprintf(out_f, "<h1>Request failed: error %d</h1>\n", -r);
-        fprintf(out_f, "<h2>%s</h2>\n", super_proto_op_error_messages[-r]);
+        fprintf(phr->out_f, "<h1>Request failed: error %d</h1>\n", -r);
+        fprintf(phr->out_f, "<h2>%s</h2>\n", super_proto_op_error_messages[-r]);
       } else {
-        fprintf(out_f, "<h1>Request failed</h1>\n");
+        fprintf(phr->out_f, "<h1>Request failed</h1>\n");
       }
-      fprintf(out_f, "<pre><font color=\"red\">%s</font></pre>\n",
-              ARMOR(log_t));
-      write_html_footer(out_f);
+      fprintf(phr->out_f, "<pre><font color=\"red\">%s</font></pre>\n",
+              ARMOR(phr->log_t));
+      write_html_footer(phr->out_f);
     }
-    close_memstream(out_f); out_f = 0;
+    close_memstream(phr->out_f); phr->out_f = 0;
   }
-  xfree(log_t); log_t = 0; log_z = 0;
+  xfree(phr->log_t); phr->log_t = 0; phr->log_z = 0;
 
-  if (!out_t || !*out_t) {
-    xfree(out_t); out_t = 0; out_z = 0;
-    out_f = open_memstream(&out_t, &out_z);
+  if (!phr->out_t || !*phr->out_t) {
+    xfree(phr->out_t); phr->out_t = 0; phr->out_z = 0;
+    phr->out_f = open_memstream(&phr->out_t, &phr->out_z);
     if (phr->json_reply) {
-      write_json_header(out_f);
-      fprintf(out_f, "{ \"status\": %d }", r);
+      write_json_header(phr->out_f);
+      fprintf(phr->out_f, "{ \"status\": %d }", r);
     } else {
-      write_html_header(out_f, phr, "Empty output", 0, 0);
-      fprintf(out_f, "<h1>Empty output</h1>\n");
-      fprintf(out_f, "<p>The output page is empty!</p>\n");
-      write_html_footer(out_f);
+      write_html_header(phr->out_f, phr, "Empty output", 0, 0);
+      fprintf(phr->out_f, "<h1>Empty output</h1>\n");
+      fprintf(phr->out_f, "<p>The output page is empty!</p>\n");
+      write_html_footer(phr->out_f);
     }
-    close_memstream(out_f); out_f = 0;
+    close_memstream(phr->out_f); phr->out_f = 0;
   }
 
   /*
@@ -6740,8 +6738,8 @@ super_html_http_request(
   }
   */
 
-  *p_out_t = out_t;
-  *p_out_z = out_z;
+  *p_out_t = phr->out_t;
+  *p_out_z = phr->out_z;
   html_armor_free(&ab);
 }
 

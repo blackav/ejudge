@@ -528,6 +528,12 @@ new_write_user_runs(
       continue;
     if (re.user_id != uid) continue;
     if (prob_id > 0 && re.prob_id != prob_id) continue;
+
+    cur_prob = 0;
+    if (re.prob_id > 0 && re.prob_id <= state->max_prob)
+      cur_prob = state->probs[re.prob_id];
+    if (!cur_prob) continue;
+
     showed++;
 
     lang = 0;
@@ -547,10 +553,6 @@ new_write_user_runs(
       if (status == RUN_OK || status == RUN_PARTIAL)
         status = RUN_ACCEPTED;
     }
-
-    cur_prob = 0;
-    if (re.prob_id > 0 && re.prob_id <= state->max_prob)
-      cur_prob = state->probs[re.prob_id];
 
     attempts = 0; disq_attempts = 0;
     if (global->score_system == SCORE_KIROV && !re.is_hidden)
