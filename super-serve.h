@@ -283,6 +283,8 @@ struct super_http_request_info
   int json_reply;
   // should we suspend reply because of background process?
   int suspend_reply;
+  // pointer to suspend data (client_state actually)
+  void *suspend_context;
 
   unsigned char data[0];
 };
