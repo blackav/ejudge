@@ -17,6 +17,7 @@
 
 #include "ej_process.h"
 #include "compat.h"
+#include "list_ops.h"
 
 #include "reuse_xalloc.h"
 
@@ -26,9 +27,12 @@
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
 #include <stdarg.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 
 static int
 error(const char *format, ...)
@@ -329,6 +333,469 @@ fail:
   free(out_t);
   if (stdout_text) *stdout_text = 0;
   return -1;
+}
+
+struct background_process *
+background_process_alloc(void)
+{
+  struct background_process *prc;
+
+  XCALLOC(prc, 1);
+  prc->stdin_f = -1;
+  prc->stdout_f = -1;
+  prc->stderr_f = -1;
+  return prc;
+}
+
+struct background_process *
+background_process_free(struct background_process *prc)
+{
+  if (!prc) return NULL;
+
+  xfree(prc->name);
+  xfree(prc->stdin_b);
+  if (prc->stdin_f >= 0) close(prc->stdin_f);
+  if (prc->stdout_f >= 0) close(prc->stdout_f);
+  if (prc->stderr_f >= 0) close(prc->stderr_f);
+  xfree(prc->out.buf);
+  xfree(prc->err.buf);
+
+  memset(prc, 0, sizeof(*prc));
+  prc->stdin_f = -1;
+  prc->stdout_f = -1;
+  prc->stderr_f = -1;
+
+  xfree(prc);
+  return NULL;
+}
+
+struct background_process *
+ejudge_start_process(
+        FILE *log_f,
+        const unsigned char *name,
+        char **args,
+        char **envs,
+        const unsigned char *workdir,
+        const unsigned char *stdin_text,
+        int merge_out_flag,
+        int time_limit_ms,
+        void (*continuation)(struct background_process*),
+        void *user)
+{
+  int in_pipe[2] = { -1, -1 };
+  int out_pipe[2] = { -1, -1 };
+  int err_pipe[2] = { -1, -1 };
+  int pid = 0;
+  struct background_process *prc = NULL;
+  struct timeval tv;
+
+  if (stdin_text && pipe(in_pipe) < 0) {
+    fprintf(log_f, "%s: pipe() failed: %s\n", __FUNCTION__, strerror(errno));
+    goto fail;
+  }
+  if (pipe(out_pipe) < 0) {
+    fprintf(log_f, "%s: pipe() failed: %s\n", __FUNCTION__, strerror(errno));
+    goto fail;
+  }
+  if (merge_out_flag <= 0 && pipe(err_pipe) < 0) {
+    fprintf(log_f, "%s: pipe() failed: %s\n", __FUNCTION__, strerror(errno));
+    goto fail;
+  }
+
+  gettimeofday(&tv, NULL);
+
+  if ((pid = fork()) < 0) {
+    fprintf(log_f, "%s: fork() failed: %s\n", __FUNCTION__, strerror(errno));
+    goto fail;
+  } else if (!pid) {
+    // son
+    fflush(stderr);
+    setpgid(0, 0);
+    if (err_pipe[1] >= 0) {
+      if (dup2(err_pipe[1], 2) < 0) {
+        fprintf(stderr, "%s: dup2() failed in child: %s\n", __FUNCTION__,
+                strerror(errno));
+        fflush(stderr);
+        _exit(1);
+      }
+    } else {
+      if (dup2(out_pipe[1], 2) < 0) {
+        fprintf(stderr, "%s: dup2() failed in child %s\n", __FUNCTION__,
+                strerror(errno));
+        fflush(stderr);
+        _exit(1);
+      }
+    }
+    // from this point the stderr is redirected to the pipe
+    if (dup2(out_pipe[1], 1) < 0) {
+      fprintf(stderr, "%s: dup2() failed in child %s\n", __FUNCTION__,
+              strerror(errno));
+      fflush(stderr);
+      _exit(1);
+    }
+    if (in_pipe[0] < 0) {
+      in_pipe[0] = open("/dev/null", O_RDONLY, 0);
+      if (in_pipe[0] < 0) {
+        fprintf(stderr, "%s: failed to open /dev/null: %s\n", __FUNCTION__,
+                strerror(errno));
+        _exit(1);
+      }
+    }
+    if (dup2(in_pipe[0], 0) < 0) {
+      fprintf(stderr, "%s: dup2() failed in child %s\n", __FUNCTION__,
+              strerror(errno));
+      fflush(stderr);
+      _exit(1);
+    }
+    if (in_pipe[0] >= 0) close(in_pipe[0]);
+    if (in_pipe[1] >= 0) close(in_pipe[1]);
+    if (out_pipe[0] >= 0) close(out_pipe[0]);
+    if (out_pipe[1] >= 0) close(out_pipe[1]);
+    if (err_pipe[0] >= 0) close(err_pipe[0]);
+    if (err_pipe[1] >= 0) close(err_pipe[1]);
+    if (workdir && chdir(workdir) < 0) {
+      fprintf(stderr, "%s: cannot chdir to %s: %s", __FUNCTION__,
+              workdir, strerror(errno));
+      fflush(stderr);
+      _exit(1);
+    }
+    if (envs) {
+      for (int i = 0; envs[i]; ++i) {
+        putenv(envs[i]);
+      }
+    }
+    sigset_t mask;
+    sigemptyset(&mask);
+    sigprocmask(SIG_SETMASK, &mask, 0);
+    execve(args[0], args, environ);
+    fprintf(stderr, "%s: exec failed: %s", __FUNCTION__,
+            strerror(errno));
+    fflush(stderr);
+    _exit(1);
+  }
+
+  setpgid(pid, pid);
+
+  if (in_pipe[0] >= 0) close(in_pipe[0]);
+  in_pipe[0] = -1;
+  if (out_pipe[1] >= 0) close(out_pipe[1]);
+  out_pipe[1] = -1;
+  if (err_pipe[1] >= 0) close(err_pipe[1]);
+  err_pipe[1] = -1;
+
+  prc = background_process_alloc();
+  prc->name = xstrdup(name);
+  if (stdin_text) {
+    prc->stdin_b = xstrdup(stdin_text);
+    prc->stdin_z = strlen(stdin_text);
+  }
+  prc->time_limit_ms = time_limit_ms;
+  prc->kill_grace_ms = 1000;
+  prc->start_time_ms = tv.tv_sec * 1000LL + tv.tv_usec / 1000LL;
+  prc->merge_out_flag = merge_out_flag;
+  prc->stdin_f = in_pipe[1]; in_pipe[1] = -1;
+  fcntl(prc->stdin_f, F_SETFL, fcntl(prc->stdin_f, F_GETFL) | O_NONBLOCK);
+  prc->stdout_f = out_pipe[0]; out_pipe[0] = -1;
+  fcntl(prc->stdout_f, F_SETFL, fcntl(prc->stdout_f, F_GETFL) | O_NONBLOCK);
+  prc->stderr_f = err_pipe[0]; err_pipe[0] = -1;
+  fcntl(prc->stderr_f, F_SETFL, fcntl(prc->stderr_f, F_GETFL) | O_NONBLOCK);
+  prc->state = BACKGROUND_PROCESS_RUNNING;
+  prc->pid = pid;
+  prc->user = user;
+  prc->continuation = continuation;
+
+  return prc;
+
+fail:
+  prc = background_process_free(prc);
+  if (in_pipe[0] >= 0) close(in_pipe[0]);
+  if (in_pipe[1] >= 0) close(in_pipe[1]);
+  if (out_pipe[0] >= 0) close(out_pipe[0]);
+  if (out_pipe[1] >= 0) close(out_pipe[1]);
+  if (err_pipe[0] >= 0) close(err_pipe[0]);
+  if (err_pipe[1] >= 0) close(err_pipe[1]);
+  return NULL;
+}
+
+static int
+trywait(struct background_process *prc, long long current_time_ms)
+{
+  struct rusage usage;
+  int status = 0;
+
+  memset(&usage, 0, sizeof(usage));
+  if (wait4(prc->pid, &status, WNOHANG, &usage) <= 0) return 0;
+  prc->state = BACKGROUND_PROCESS_FINISHED;
+  if (WIFEXITED(status)) {
+    prc->is_exited = 1;
+    prc->exit_code = WEXITSTATUS(status);
+  } else if (WIFSIGNALED(status)) {
+    prc->is_signaled = 1;
+    prc->term_signal = WTERMSIG(status);
+  }
+  prc->utime_ms = usage.ru_utime.tv_sec * 1000LL + usage.ru_utime.tv_usec / 1000LL;
+  prc->stime_ms = usage.ru_stime.tv_sec * 1000LL + usage.ru_stime.tv_usec / 1000LL;
+  prc->maxrss = usage.ru_maxrss;
+  prc->stop_time_ms = current_time_ms;
+  return 1;
+}
+
+static void
+buffer_append_mem(struct background_process_buffer *p, const unsigned char *buf, int size)
+{
+  int exp_size = p->size + size + 1;
+  int new_size = p->allocated;
+  if (exp_size > new_size) {
+    if (!new_size) new_size = 64;
+    while (new_size < exp_size) new_size *= 2;
+    p->buf = xrealloc(p->buf, new_size * sizeof(p->buf[0]));
+    p->allocated = new_size;
+  }
+  memcpy(p->buf + p->size, buf, size);
+  p->size += size;
+  p->buf[p->size] = 0;
+}
+
+static void
+buffer_append_str(struct background_process_buffer *p, const unsigned char *str)
+{
+  if (!str || !*str) return;
+  buffer_append_mem(p, str, strlen(str));
+}
+
+void
+ejudge_check_process_finished(struct background_process *prc)
+{
+  struct timeval tv;
+  long long current_time_ms;
+  const unsigned char *msg = NULL;
+
+  if (!prc || prc->state != BACKGROUND_PROCESS_RUNNING) return;
+
+  gettimeofday(&tv, NULL);
+  current_time_ms = tv.tv_sec * 1000LL + tv.tv_usec / 1000LL;
+  if (prc->kill_time_ms > 0) {
+    // do nothing
+  } else if (prc->term_time_ms > 0) {
+    if (current_time_ms >= prc->term_time_ms + prc->kill_grace_ms) {
+      kill(-prc->pid, SIGKILL);
+      prc->kill_time_ms = current_time_ms;
+      msg = "\nKill signal sent\n";
+    }
+  } else if (prc->time_limit_ms > 0 && current_time_ms >= prc->start_time_ms + prc->time_limit_ms) {
+    kill(-prc->pid, SIGTERM);
+    prc->term_time_ms = current_time_ms;
+    msg = "\nTerm signal sent\n";
+  }
+  if (msg != NULL) {
+    if (prc->merge_out_flag <= 0) {
+      buffer_append_str(&prc->err, msg);
+    } else {
+      buffer_append_str(&prc->out, msg);
+    }
+  }
+
+  // do not check for finishing until all fds are closed
+  if (prc->stdin_f >= 0 || prc->stdout_f >= 0 || prc->stderr_f >= 0) return;
+  trywait(prc, current_time_ms);
+}
+
+void
+background_process_cleanup(struct background_process_head *list)
+{
+  if (!list) return;
+  struct background_process *prc, *next;
+  for (prc = list->first; prc; prc = next) {
+    next = prc->next;
+    if (prc->state == BACKGROUND_PROCESS_GARBAGE) {
+      UNLINK_FROM_LIST(prc, list->first, list->last, prev, next);
+      background_process_free(prc);
+    }
+  }
+}
+
+int
+background_process_set_fds(struct background_process_head *list, int max_fd, void *vprset, void *vpwset)
+{
+  fd_set *prset = (fd_set*) vprset;
+  fd_set *pwset = (fd_set*) vpwset;
+
+  if (!list) return max_fd;
+  struct background_process *prc;
+  for (prc = list->first; prc; prc = prc->next) {
+    if (prc->state != BACKGROUND_PROCESS_RUNNING) continue;
+    if (prc->stdin_f >= 0) {
+      FD_SET(prc->stdin_f, pwset);
+      if (prc->stdin_f > max_fd) max_fd = prc->stdin_f;
+    }
+    if (prc->stdout_f >= 0) {
+      FD_SET(prc->stdout_f, prset);
+      if (prc->stdout_f > max_fd) max_fd = prc->stdout_f;
+    }
+    if (prc->stderr_f >= 0) {
+      FD_SET(prc->stderr_f, prset);
+      if (prc->stderr_f > max_fd) max_fd = prc->stderr_f;
+    }
+  }
+
+  return max_fd;
+}
+
+void
+background_process_readwrite(struct background_process_head *list, void *vprset, void *vpwset)
+{
+  fd_set *prset = (fd_set*) vprset;
+  fd_set *pwset = (fd_set*) vpwset;
+  unsigned char buf[4096];
+
+  if (!list) return;
+  struct background_process *prc;
+  for (prc = list->first; prc; prc = prc->next) {
+    if (prc->state != BACKGROUND_PROCESS_RUNNING) continue;
+    if (prc->stdin_f >= 0 && FD_ISSET(prc->stdin_f, pwset)) {
+      if (!prc->stdin_b || prc->stdin_z <= 0 || prc->stdin_u >= prc->stdin_z) {
+        close(prc->stdin_f); prc->stdin_f = -1;
+      } else {
+        int wsz = prc->stdin_z - prc->stdin_u;
+        while (1) {
+          int w = write(prc->stdin_f, prc->stdin_b + prc->stdin_u, wsz);
+          if (w < 0) {
+            if (errno != EAGAIN) {
+              fprintf(stderr, "%s: write to pipe failed: %s\n", __FUNCTION__, strerror(errno));
+              close(prc->stdin_f); prc->stdin_f = -1;
+              break;
+            } else if (wsz == 1) {
+              break;
+            } else {
+              wsz /= 2;
+            }
+          } else if (w == 0) {
+            fprintf(stderr, "%s: write to pipe returned 0!\n", __FUNCTION__);
+            close(prc->stdin_f); prc->stdin_f = -1;
+            break;
+          } else {
+            prc->stdin_u += w;
+            wsz = prc->stdin_z - prc->stdin_u;
+            if (w <= 0) {
+              close(prc->stdin_f); prc->stdin_f = -1;
+              break;
+            }
+          }
+        }
+      }
+      //FD_CLR(prc->stdin_f, pwset);
+    }
+    if (prc->stdout_f >= 0 && FD_ISSET(prc->stdout_f, prset)) {
+      while (1) {
+        int r = read(prc->stdout_f, buf, sizeof(buf));
+        if (r < 0) {
+          if (errno != EAGAIN) {
+            fprintf(stderr, "%s: read from pipe failed: %s\n", __FUNCTION__, strerror(errno));
+            close(prc->stdout_f); prc->stdout_f = -1;
+          }
+          break;
+        } else if (r == 0) {
+          close(prc->stdout_f); prc->stdout_f = -1;
+          break;
+        } else {
+          buffer_append_mem(&prc->out, buf, r);
+        }
+      }
+      //FD_CLR(prc->stdout_f, prset);
+    }
+    if (prc->stderr_f >= 0 && FD_ISSET(prc->stderr_f, prset)) {
+      while (1) {
+        int r = read(prc->stderr_f, buf, sizeof(buf));
+        if (r < 0) {
+          if (errno != EAGAIN) {
+            fprintf(stderr, "%s: read from pipe failed: %s\n", __FUNCTION__, strerror(errno));
+            close(prc->stderr_f); prc->stderr_f = -1;
+          }
+          break;
+        } else if (r == 0) {
+          close(prc->stderr_f); prc->stderr_f = -1;
+          break;
+        } else {
+          buffer_append_mem(&prc->err, buf, r);
+        }
+      }
+      //FD_CLR(prc->stderr_f, prset);
+    }
+  }
+}
+
+void
+background_process_check_finished(struct background_process_head *list)
+{
+  if (!list) return;
+  struct background_process *prc;
+  for (prc = list->first; prc; prc = prc->next) {
+    ejudge_check_process_finished(prc);
+  }
+}
+
+void
+background_process_register(struct background_process_head *list, struct background_process *prc)
+{
+  if (!list || !prc) return;
+  LINK_FIRST(prc, list->first, list->last, prev, next);
+}
+
+struct background_process *
+background_process_find(struct background_process_head *list, const unsigned char *name)
+{
+  if (!list || !name) return NULL;
+  struct background_process *prc;
+  for (prc = list->first; prc; prc = prc->next) {
+    if (!strcmp(prc->name, name))
+      return prc;
+  }
+  return NULL;
+}
+
+int
+background_process_handle_termination(
+        struct background_process_head *list,
+        int pid,
+        int status,
+        const void *vusage)
+{
+  const struct rusage *pusage = (typeof(pusage)) vusage;
+  if (!list) return 0;
+  struct background_process *prc;
+  for (prc = list->first; prc; prc = prc->next) {
+    if (prc->state == BACKGROUND_PROCESS_RUNNING && prc->pid == pid) {
+      struct timeval tv;
+      gettimeofday(&tv, NULL);
+      long long current_time_ms = tv.tv_sec * 1000LL + tv.tv_usec / 1000LL;
+      prc->state = BACKGROUND_PROCESS_FINISHED;
+      if (WIFEXITED(status)) {
+        prc->is_exited = 1;
+        prc->exit_code = WEXITSTATUS(status);
+      } else if (WIFSIGNALED(status)) {
+        prc->is_signaled = 1;
+        prc->term_signal = WTERMSIG(status);
+      }
+      prc->utime_ms = pusage->ru_utime.tv_sec * 1000LL + pusage->ru_utime.tv_usec / 1000LL;
+      prc->stime_ms = pusage->ru_stime.tv_sec * 1000LL + pusage->ru_stime.tv_usec / 1000LL;
+      prc->maxrss = pusage->ru_maxrss;
+      prc->stop_time_ms = current_time_ms;
+      return 1;
+    }
+  }
+  return 0;
+}
+
+void
+background_process_call_continuations(struct background_process_head *list)
+{
+  if (!list) return;
+  struct background_process *prc;
+  for (prc = list->first; prc; prc = prc->next) {
+    if (prc->state == BACKGROUND_PROCESS_FINISHED && prc->continuation) {
+      prc->continuation(prc);
+    }
+  }
 }
 
 /*
