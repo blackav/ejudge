@@ -6404,7 +6404,7 @@ write_ls_like_line(FILE *out_f, const unsigned char *name, struct stat *stb)
       putc('-', out_f);
     }
   }
-  fprintf(out_f, " %4d", stb->st_nlink);
+  fprintf(out_f, " %4d", (int) stb->st_nlink);
   struct passwd *ui = getpwuid(stb->st_uid);
   if (!ui) {
     fprintf(out_f, " %10d", stb->st_uid);
