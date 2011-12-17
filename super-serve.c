@@ -36,6 +36,8 @@
 #include "super-serve_meta.h"
 #include "sock_op.h"
 #include "compat.h"
+#include "ej_process.h"
+#include "ej_byteorder.h"
 
 #include "reuse_xalloc.h"
 #include "reuse_logger.h"
@@ -74,6 +76,7 @@ enum
   STATE_WRITE,
   STATE_WRITECLOSE,
   STATE_DISCONNECT,
+  STATE_SUSPENDED,
 };
 struct client_state
 {
@@ -107,6 +110,8 @@ struct client_state
   unsigned char *name;
   unsigned char *html_login;
   unsigned char *html_name;
+
+  void *suspend_context;
 };
 
 static int daemon_mode;
@@ -138,6 +143,19 @@ static int userlist_uid = 0;
 static unsigned char *userlist_login = 0;
 
 struct serve_state serve_state;
+
+static struct background_process_head background_processes;
+
+void
+super_serve_register_process(struct background_process *prc)
+{
+  background_process_register(&background_processes, prc);
+}
+struct background_process *
+super_serve_find_process(const unsigned char *name)
+{
+  return background_process_find(&background_processes, name);
+}
 
 static struct client_state *
 client_state_new(int fd)
@@ -1141,6 +1159,7 @@ release_resources(void)
 {
   int i, alive_children, pid, status;
   sigset_t work_mask;
+  struct rusage usage;
 
   sigfillset(&work_mask);
   sigdelset(&work_mask, SIGTERM);
@@ -1189,7 +1208,7 @@ release_resources(void)
     }
 
     sigchld_flag = 0;
-    while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
+    while ((pid = wait4(-1, &status, WNOHANG, &usage)) > 0) {
       for (i = 0; i < extra_a; i++) {
         if (!extras[i]) continue;
         if (extras[i]->serve_used && extras[i]->serve_pid == pid) {
@@ -1224,7 +1243,10 @@ release_resources(void)
         }
       }
       if (i >= extra_a) {
-        err("unregistered child %d terminated", pid);
+        if (!background_process_handle_termination(&background_processes,
+                                                   pid, status, &usage)) {
+          err("unregistered child %d terminated", pid);
+        }
         continue;
       }
     }
@@ -3377,6 +3399,9 @@ cmd_control_server(struct client_state *p, int len,
 }
 
 static void
+cmd_http_request_continuation(struct super_http_request_info *phr);
+
+static void
 cmd_http_request(
         struct client_state *p,
         int pkt_size,
@@ -3388,7 +3413,7 @@ cmd_http_request(
     MAX_PARAM_SIZE = 128 * 1024 * 1024,
   };
 
-  struct super_http_request_info hr;
+  struct super_http_request_info *phr = NULL;
   char *out_t = 0;
   size_t out_z = 0;
   int i, r;
@@ -3401,14 +3426,13 @@ cmd_http_request(
   unsigned long bptr;
   const ej_size_t *arg_sizes, *env_sizes, *param_name_sizes, *param_sizes;
   struct client_state *q;
-
-  memset(&hr, 0, sizeof(hr));
+  unsigned char *out_ptr;
+  int ri_size = sizeof (*phr);
 
   // FIXME: check for passed fd
 
   if (pkt_size < sizeof(*pkt))
     return error_bad_packet_length(p, pkt_size, sizeof(*pkt));
-  //pkt = (const struct super_prot_http_request *) pkt_gen;
 
   if (pkt->arg_num < 0 || pkt->arg_num > MAX_PARAM_NUM) {
     err("%d: too many arguments: %d", p->id, pkt->arg_num);
@@ -3430,12 +3454,38 @@ cmd_http_request(
   if (pkt_size < in_size)
     return error_bad_packet_length(p, pkt_size, in_size);
 
-  XALLOCAZ(args, pkt->arg_num);
-  XALLOCAZ(envs, pkt->env_num);
-  XALLOCAZ(param_names, pkt->param_num);
-  XALLOCAZ(params, pkt->param_num);
-  XALLOCAZ(my_param_sizes, pkt->param_num);
+  ri_size = pkt_bin_align(ri_size);
+  ri_size += sizeof(args[0]) * pkt->arg_num;
+  ri_size = pkt_bin_align(ri_size);
+  ri_size += sizeof(envs[0]) * pkt->env_num;
+  ri_size = pkt_bin_align(ri_size);
+  ri_size += sizeof(param_names[0]) * pkt->param_num;
+  ri_size = pkt_bin_align(ri_size);
+  ri_size += sizeof(params[0]) * pkt->param_num;
+  ri_size = pkt_bin_align(ri_size);
+  ri_size += sizeof(my_param_sizes[0]) * pkt->param_num;
+  ri_size = pkt_bin_align(ri_size);
 
+  phr = xmalloc(ri_size);
+  memset(phr, 0, ri_size);
+  out_ptr = phr->data;
+  pkt_bin_align_addr(out_ptr, phr->data);
+  args = (typeof(args)) out_ptr;
+  out_ptr += sizeof(args[0]) * pkt->arg_num;
+  pkt_bin_align_addr(out_ptr, phr->data);
+  envs = (typeof(envs)) out_ptr;
+  out_ptr += sizeof(envs[0]) * pkt->env_num;
+  pkt_bin_align_addr(out_ptr, phr->data);
+  param_names = (typeof(param_names)) out_ptr;
+  out_ptr += sizeof(param_names[0]) * pkt->param_num;
+  pkt_bin_align_addr(out_ptr, phr->data);
+  params = (typeof(params)) out_ptr;
+  out_ptr += sizeof(params[0]) * pkt->param_num;
+  pkt_bin_align_addr(out_ptr, phr->data);
+  my_param_sizes = (typeof(my_param_sizes)) out_ptr;
+  out_ptr += sizeof(my_param_sizes[0]) * pkt->param_num;
+  pkt_bin_align_addr(out_ptr, phr->data);
+  
   bptr = (unsigned long) pkt;
   bptr += sizeof(*pkt);
   arg_sizes = (const ej_size_t *) bptr;
@@ -3450,6 +3500,7 @@ cmd_http_request(
   for (i = 0; i < pkt->arg_num; i++) {
     if (arg_sizes[i] > MAX_PARAM_SIZE) {
       err("%d: argument %d is too long: %d", p->id, i, arg_sizes[i]);
+      xfree(phr);
       return send_reply(p, -SSERV_ERR_PROTOCOL_ERROR);
     }
     in_size += arg_sizes[i] + 1;
@@ -3457,6 +3508,7 @@ cmd_http_request(
   for (i = 0; i < pkt->env_num; i++) {
     if (env_sizes[i] > MAX_PARAM_SIZE) {
       err("%d: env var %d is too long: %d", p->id, i, env_sizes[i]);
+      xfree(phr);
       return send_reply(p, -SSERV_ERR_PROTOCOL_ERROR);
     }
     in_size += env_sizes[i] + 1;
@@ -3464,23 +3516,28 @@ cmd_http_request(
   for (i = 0; i < pkt->param_num; i++) {
     if (param_name_sizes[i] > MAX_PARAM_SIZE) {
       err("%d: param name %d is too long: %d", p->id, i, param_name_sizes[i]);
+      xfree(phr);
       return send_reply(p, -SSERV_ERR_PROTOCOL_ERROR);
     }
     if (param_sizes[i] > MAX_PARAM_SIZE) {
       err("%d: param %d is too long: %d", p->id, i, param_sizes[i]);
+      xfree(phr);
       return send_reply(p, -SSERV_ERR_PROTOCOL_ERROR);
     }
     in_size += param_name_sizes[i] + 1;
     in_size += param_sizes[i] + 1;
   }
-  if (pkt_size != in_size)
+  if (pkt_size != in_size) {
+    xfree(phr);
     return error_bad_packet_length(p, pkt_size, in_size);
+  }
 
   for (i = 0; i < pkt->arg_num; i++) {
     args[i] = (const unsigned char*) bptr;
     bptr += arg_sizes[i] + 1;
     if (strlen(args[i]) != arg_sizes[i]) {
       err("%d: arg %d length mismatch", p->id, i);
+      xfree(phr);
       return send_reply(p, -SSERV_ERR_PROTOCOL_ERROR);
     }
   }
@@ -3489,6 +3546,7 @@ cmd_http_request(
     bptr += env_sizes[i] + 1;
     if (strlen(envs[i]) != env_sizes[i]) {
       err("%d: env var %d length mismatch", p->id, i);
+      xfree(phr);
       return send_reply(p, -SSERV_ERR_PROTOCOL_ERROR);
     }
   }
@@ -3497,6 +3555,7 @@ cmd_http_request(
     bptr += param_name_sizes[i] + 1;
     if (strlen(param_names[i]) != param_name_sizes[i]) {
       err("%d: param name %d length mismatch", p->id, i);
+      xfree(phr);
       return send_reply(p, -SSERV_ERR_PROTOCOL_ERROR);
     }
     params[i] = (const unsigned char *) bptr;
@@ -3506,44 +3565,67 @@ cmd_http_request(
 
   if ((r = get_peer_local_user(p)) < 0) {
     send_reply(p, r);
+    xfree(phr);
     return;
   }
 
   if (p->client_fds[0] < 0 || p->client_fds[1] < 0) {
     err("cmd_main_page: two file descriptors expected");
+    xfree(phr);
     return send_reply(p, -SSERV_ERR_PROTOCOL_ERROR);
   }
 
-  hr.arg_num = pkt->arg_num;
-  hr.args = args;
-  hr.env_num = pkt->env_num;
-  hr.envs = envs;
-  hr.param_num = pkt->param_num;
-  hr.param_names = param_names;
-  hr.param_sizes = my_param_sizes;
-  hr.params = params;
+  phr->arg_num = pkt->arg_num;
+  phr->args = args;
+  phr->env_num = pkt->env_num;
+  phr->envs = envs;
+  phr->param_num = pkt->param_num;
+  phr->param_names = param_names;
+  phr->param_sizes = my_param_sizes;
+  phr->params = params;
 
-  hr.user_id = p->user_id;
-  hr.priv_level = p->priv_level;
-  hr.login = p->login;
-  hr.name = p->name;
-  hr.html_login = p->html_login;
-  hr.html_name = p->html_name;
-  hr.ip = p->ip;
-  hr.ssl_flag = p->ssl;
-  hr.system_login = userlist_login;
-  hr.userlist_clnt = userlist_clnt;
+  phr->user_id = p->user_id;
+  phr->priv_level = p->priv_level;
+  phr->login = p->login;
+  phr->name = p->name;
+  phr->html_login = p->html_login;
+  phr->html_name = p->html_name;
+  phr->ip = p->ip;
+  phr->ssl_flag = p->ssl;
+  phr->system_login = userlist_login;
+  phr->userlist_clnt = userlist_clnt;
 
-  hr.ss = sid_state_get(p->cookie, p->ip, p->user_id, p->login, p->name);
-  hr.config = config;
+  phr->ss = sid_state_get(p->cookie, p->ip, p->user_id, p->login, p->name);
+  phr->config = config;
 
-  super_html_http_request(&out_t, &out_z, &hr);
+  super_html_http_request(&out_t, &out_z, phr);
+  if (phr->suspend_reply > 0) {
+    p->state = STATE_SUSPENDED;
+    phr->suspend_context = p;
+    phr->continuation = cmd_http_request_continuation;
+    return;
+  }
 
   q = client_state_new_autoclose(p, out_t, out_z);
   info("cmd_http_request: %zu", out_z);
   send_reply(p, SSERV_RPL_OK);
+  xfree(phr);
 
   //cleanup:
+}
+
+static void
+cmd_http_request_continuation(struct super_http_request_info *phr)
+{
+  struct client_state *p = (typeof(p)) phr->suspend_context;
+  close_memstream(phr->out_f); phr->out_f = 0;
+  close_memstream(phr->log_f); phr->log_f = 0;
+  client_state_new_autoclose(p, phr->out_t, phr->out_z);
+  info("cmd_http_request_continuation: %zu", phr->out_z);
+  xfree(phr->log_t); phr->log_t = NULL; phr->log_z = 0;
+  phr->out_t = NULL; phr->out_z = 0;
+  send_reply(p, SSERV_RPL_OK);
+  xfree(phr);
 }
 
 struct packet_handler
@@ -4314,6 +4396,8 @@ handle_control_command(struct client_state *p)
 
   (*packet_handlers[pkt->id].func)(p, p->read_len, pkt);
 
+  if (p->state == STATE_SUSPENDED) return;
+
   if (p->state == STATE_READ_READY) p->state = STATE_READ_LEN;
   if (p->read_buf) xfree(p->read_buf);
   p->read_buf = 0;
@@ -4508,6 +4592,8 @@ do_loop(void)
     while (1) {
       current_time = time(0);
 
+      background_process_cleanup(&background_processes);
+
       if (sid_state_last_check_time < current_time + SID_STATE_CHECK_INTERVAL) {
         sid_state_cleanup();
         sid_state_last_check_time = current_time;
@@ -4563,6 +4649,8 @@ do_loop(void)
           if (cur->dnotify_flag) dnotify_flag = 1;
         }
       }
+
+      fd_max = background_process_set_fds(&background_processes, fd_max, &rset, &wset);
 
       errno = 0;
       n = 0;
@@ -4826,6 +4914,10 @@ do_loop(void)
             write_to_control_connection(cur_clnt);
         }
       }
+
+      background_process_readwrite(&background_processes, &rset, &wset);
+      background_process_check_finished(&background_processes);
+      background_process_call_continuations(&background_processes);
 
       // scan for ready contests
       for (i = 0; i < extra_a; i++) {

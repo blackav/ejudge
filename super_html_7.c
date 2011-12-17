@@ -38,6 +38,7 @@
 
 #include "reuse_xalloc.h"
 #include "reuse_osdeps.h"
+#include "reuse_logger.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -49,6 +50,7 @@
 #include <pwd.h>
 #include <grp.h>
 
+#define MAKE_PATH "/usr/bin/make"
 #define SAVED_TEST_PREFIX      "s_"
 #define TEMP_TEST_PREFIX       "t_"
 #define DEL_TEST_PREFIX        "d_"
@@ -416,7 +418,7 @@ super_serve_op_TESTS_MAIN_PAGE(
         }
         fprintf(out_f, "<td%s>%s</td>", cl, ARMOR(s));
         fprintf(out_f, "<td%s>%s</td>", cl, problem_unparse_type(prob->type));
-        fprintf(out_f, "<td%s><font size=\"-1\"><pre>%s</pre></font></td>", cl, ARMOR(prb_t));
+        fprintf(out_f, "<td%s><div style=\"width: 200px; height: 200px; overflow: auto;\"><pre>%s</pre></div></td>", cl, ARMOR(prb_t));
         free(prb_t); prb_t = NULL; prb_z = 0;
       } else {
         fprintf(out_f, "<td%s>&nbsp;</td>", cl);
@@ -595,13 +597,20 @@ super_serve_op_TESTS_MAIN_PAGE(
         }
       }
       if (need_makefile) {
-        fprintf(out_f, "<td%s>%s%s</a></td>",
-                cl, 
+        fprintf(out_f, "<td%s>", cl);
+        fprintf(out_f, "%s%s</a>",
                 html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                               NULL, "action=%d&amp;op=%d&amp;contest_id=%d&amp;variant=%d&amp;prob_id=%d",
                               SSERV_CMD_HTTP_REQUEST, SSERV_OP_TESTS_MAKEFILE_EDIT_PAGE,
                               contest_id, variant, prob_id),
                 "Edit");
+        fprintf(out_f, "<br/>%s%s</a>",
+                html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                              NULL, "action=%d&amp;op=%d&amp;contest_id=%d&amp;variant=%d&amp;prob_id=%d",
+                              SSERV_CMD_HTTP_REQUEST, SSERV_OP_TESTS_MAKE,
+                              contest_id, variant, prob_id),
+                "Run");
+        fprintf(out_f, "</td>");
       }
       fprintf(out_f, "</tr>");
     } while (++variant <= prob->variant_num);
@@ -717,6 +726,12 @@ write_problem_editing_links(
                           SSERV_CMD_HTTP_REQUEST, SSERV_OP_TESTS_MAKEFILE_EDIT_PAGE,
                           contest_id, variant, prob_id),
             "Edit Makefile");
+    fprintf(out_f, "<li>%s%s</a></li>",
+            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                          NULL, "action=%d&amp;op=%d&amp;contest_id=%d&amp;variant=%d&amp;prob_id=%d",
+                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_TESTS_MAKE,
+                          contest_id, variant, prob_id),
+            "Run make");
   }
   fprintf(out_f, "</ul>\n");
 }
@@ -5426,6 +5441,7 @@ super_serve_op_TESTS_SOURCE_HEADER_EDIT_ACTION(
   unsigned char file_path_bak[PATH_MAX];
   const unsigned char *s = NULL;
   unsigned char *text = NULL;
+  int next_action = SSERV_OP_TESTS_MAIN_PAGE;
 
   file_path_tmp[0] = 0;
 
@@ -5485,11 +5501,10 @@ super_serve_op_TESTS_SOURCE_HEADER_EDIT_ACTION(
   if (logged_rename(log_f, file_path_tmp, file_path) < 0) FAIL(S_ERR_FS_ERROR);
   set_cnts_file_perms(log_f, file_path, cnts);
   file_path_tmp[0] = 0;
-
-  // FIXME: invoke makefile
+  next_action = SSERV_OP_TESTS_MAKE;
 
 done:
-  ss_redirect_2(out_f, phr, SSERV_OP_TESTS_MAIN_PAGE, contest_id, prob_id, variant, 0, NULL);
+  ss_redirect_2(out_f, phr, next_action, contest_id, prob_id, variant, 0, NULL);
 
 cleanup:
   if (file_path_tmp[0]) unlink(file_path_tmp);
@@ -6034,7 +6049,7 @@ int
 super_serve_op_TESTS_CHECKER_EDIT_PAGE(
         FILE *log_f,
         FILE *out_f,
-         struct super_http_request_info *phr)
+        struct super_http_request_info *phr)
 {
   int retval = 0;
   int contest_id = 0;
@@ -6262,6 +6277,7 @@ super_serve_op_TESTS_CHECKER_EDIT_ACTION(
   int lang_mask = 0;
   unsigned char *text = NULL;
   const unsigned char *src_suffix = NULL, *s = NULL;
+  int next_action = SSERV_OP_TESTS_MAIN_PAGE;
 
   file_path_tmp[0] = 0;
 
@@ -6349,9 +6365,10 @@ super_serve_op_TESTS_CHECKER_EDIT_ACTION(
   if (logged_rename(log_f, file_path_tmp, file_path) < 0) FAIL(S_ERR_FS_ERROR);
   set_cnts_file_perms(log_f, file_path, cnts);
   file_path_tmp[0] = 0;
+  next_action = SSERV_OP_TESTS_MAKE;
 
 done:
-  ss_redirect_2(out_f, phr, SSERV_OP_TESTS_MAIN_PAGE, contest_id, prob_id, variant, 0, NULL);
+  ss_redirect_2(out_f, phr, next_action, contest_id, prob_id, variant, 0, NULL);
 
 cleanup:
   xfree(text);
@@ -6701,4 +6718,215 @@ cleanup:
   xfree(dirname);
   xfree(lastname);
   return retval;
+}
+
+static void
+write_pre(FILE *f, int status, const unsigned char *txt)
+{
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  const unsigned char *font1 = "";
+  const unsigned char *font2 = "";
+  if (!txt) {
+    status = 0;
+    txt = "";
+  }
+  if (status < 0) {
+    font1 = "<font color=\"red\">";
+    font2 = "</font>";
+  }
+  fprintf(f, "<pre>%s%s%s</pre>", font1, ARMOR(txt), font2);
+  html_armor_free(&ab);
+}
+
+struct tests_make_context
+{
+  FILE *start_f;
+  char *start_t;
+  size_t start_z;
+  struct super_http_request_info *phr;
+};
+
+static void
+super_serve_op_TESTS_MAKE_continuation(struct background_process *);
+
+int
+super_serve_op_TESTS_MAKE(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  int contest_id = 0;
+  int prob_id = 0;
+  int variant = 0;
+  const struct contest_desc *cnts = NULL;
+  opcap_t caps = 0LL;
+  serve_state_t cs = NULL;
+  const struct section_global_data *global = NULL;
+  const struct section_problem_data *prob = NULL;
+  unsigned char prob_dir[PATH_MAX];
+  unsigned char makefile_path[PATH_MAX];
+  unsigned char buf[1024], hbuf[1024];
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  struct stat stb;
+  struct tests_make_context *cntx = NULL;
+  unsigned char prefix_buf[4096];
+  unsigned char home_buf[4096];
+  unsigned char local_buf[4096];
+
+  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+
+  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
+  get_full_caps(phr, cnts, &caps);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(S_ERR_PERM_DENIED);
+
+  retval = check_other_editors(log_f, out_f, phr, contest_id, cnts);
+  if (retval <= 0) goto cleanup;
+  retval = 0;
+  cs = phr->ss->te_state;
+  global = cs->global;
+
+  ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
+  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
+  if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
+
+  variant = -1;
+  if (prob->variant_num > 0) {
+    ss_cgi_param_int_opt(phr, "variant", &variant, 0);
+    if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
+  }
+
+  if (global->advanced_layout <= 0) FAIL(S_ERR_INV_CONTEST);
+  get_advanced_layout_path(prob_dir, sizeof(prob_dir), global, prob, NULL, variant);
+  snprintf(makefile_path, sizeof(makefile_path), "%s/%s", prob_dir, "Makefile");
+
+  snprintf(buf, sizeof(buf), "serve-control: %s, contest %d (%s), problem %s, running make",
+           phr->html_name, contest_id, ARMOR(cnts->name), prob->short_name);
+  ss_write_html_header(out_f, phr, buf, 0, NULL);
+  fprintf(out_f, "<h1>%s</h1>\n", buf);
+
+  fprintf(out_f, "<ul>");
+  fprintf(out_f, "<li>%s%s</a></li>",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL, NULL),
+          "Main page");
+  fprintf(out_f, "<li>%s%s</a></li>\n",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
+                        "action=%d&op=%d&contest_id=%d", SSERV_CMD_HTTP_REQUEST,
+                        SSERV_OP_TESTS_MAIN_PAGE, contest_id),
+          "Problems page");
+  fprintf(out_f, "</ul>\n");
+
+  write_problem_editing_links(out_f, phr, contest_id, prob_id, variant, global, prob);
+
+  fprintf(out_f, "<h2>%s</h2>\n", "Running make");
+
+  if (stat(prob_dir, &stb) < 0 || !S_ISDIR(stb.st_mode)) {
+    snprintf(buf, sizeof(buf), "Path %s does not exist or not a directory", prob_dir);
+    write_pre(out_f, -1, buf);
+    goto done;
+  }
+  if (access(makefile_path, R_OK) < 0) {
+    snprintf(buf, sizeof(buf), "Makefile %s does not exist or is not readable", makefile_path);
+    write_pre(out_f, -1, buf);
+    goto done;
+  }
+
+  struct background_process *prc = super_serve_find_process("make");
+  if (prc) {
+    snprintf(buf, sizeof(buf), "Another make is running on this server");
+    write_pre(out_f, -1, buf);
+    goto done;
+  }
+
+  char *args[16];
+  int argc = 0;
+
+  args[argc++] = MAKE_PATH;
+  snprintf(prefix_buf, sizeof(prefix_buf), "EJUDGE_PREFIX_DIR=%s", EJUDGE_PREFIX_DIR);
+  args[argc++] = prefix_buf;
+  snprintf(home_buf, sizeof(home_buf), "EJUDGE_CONTESTS_HOME_DIR=%s", EJUDGE_CONTESTS_HOME_DIR);
+  args[argc++] = home_buf;
+#if defined EJUDGE_LOCAL_DIR
+  snprintf(local_buf, sizeof(local_buf), "EJUDGE_LOCAL_DIR=%s", EJUDGE_LOCAL_DIR);
+  args[argc++] = local_buf;
+#endif
+  args[argc++] = "all";
+  args[argc] = NULL;
+
+  XCALLOC(cntx, 1);
+  cntx->start_f = open_memstream(&cntx->start_t, &cntx->start_z);
+  cntx->phr = phr;
+
+  for (int i = 0; args[i]; ++i)
+    fprintf(cntx->start_f, "%s ", args[i]);
+  fprintf(cntx->start_f, "\n");
+
+  prc = ejudge_start_process(cntx->start_f, "make", args, NULL, prob_dir, NULL, 1, 30000,
+                             super_serve_op_TESTS_MAKE_continuation, cntx);
+  if (!prc) {
+    fclose(cntx->start_f); cntx->start_f = NULL;
+    write_pre(out_f, -1, cntx->start_t);
+    goto done;
+  }
+  fprintf(cntx->start_f, "%s: %s.%04d\n", "Start time", xml_unparse_date(prc->start_time_ms / 1000),
+          (int) (prc->start_time_ms % 1000));
+          
+  cntx = NULL;
+  phr->suspend_reply = 1;
+  super_serve_register_process(prc);
+  goto cleanup;
+
+done:
+  ss_write_html_footer(out_f);
+
+cleanup:
+  if (cntx) {
+    if (cntx->start_f) fclose(cntx->start_f);
+    xfree(cntx->start_t);
+  }
+  xfree(cntx);
+  html_armor_free(&ab);
+  return retval;
+}
+
+static void
+super_serve_op_TESTS_MAKE_continuation(struct background_process *prc)
+{
+  ASSERT(prc);
+  ASSERT(prc->state = BACKGROUND_PROCESS_FINISHED);
+
+  struct tests_make_context *cntx = (typeof(cntx)) prc->user;
+  int status_ok = -1;
+  struct super_http_request_info *phr = cntx->phr;
+  cntx->phr = NULL;
+
+  fprintf(cntx->start_f, "%s", prc->out.buf);
+
+  fprintf(cntx->start_f, "%s: %s.%04d\n", "Stop time", xml_unparse_date(prc->stop_time_ms / 1000),
+          (int) (prc->stop_time_ms % 1000));
+  if (prc->is_exited && !prc->exit_code) status_ok = 0;
+  if (prc->is_exited) {
+    fprintf(cntx->start_f, "Process exited with code %d\n", prc->exit_code);
+  } else if (prc->is_signaled) {
+    fprintf(cntx->start_f, "Process terminated with signal %d (%s)\n", prc->term_signal,
+            os_GetSignalString(prc->term_signal));
+  } else {
+    fprintf(cntx->start_f, "!!! Process did not exit nor it was signaled!\n");
+  }
+  fprintf(cntx->start_f, "User: %lld ms\n", prc->utime_ms);
+  fprintf(cntx->start_f, "System: %lld ms\n", prc->stime_ms);
+  fprintf(cntx->start_f, "Max RSS: %ld KiB\n", prc->maxrss);
+
+  if (cntx->start_f) fclose(cntx->start_f);
+  cntx->start_f = NULL;
+
+  write_pre(phr->out_f, status_ok, cntx->start_t);
+  ss_write_html_footer(phr->out_f);
+  xfree(cntx->start_t); cntx->start_t = NULL; cntx->start_z = 0;
+  xfree(cntx); prc->user = NULL;
+  prc->continuation = NULL;
+  prc->state = BACKGROUND_PROCESS_GARBAGE;
+  phr->continuation(phr);
 }
