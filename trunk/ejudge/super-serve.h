@@ -285,6 +285,7 @@ struct super_http_request_info
   int suspend_reply;
   // pointer to suspend data (client_state actually)
   void *suspend_context;
+  void (*continuation)(struct super_http_request_info *);
 
   // output streams
   FILE *out_f;
