@@ -313,5 +313,6 @@ struct sid_state* super_serve_sid_state_get_test_editor_nc(int contest_id);
 
 struct background_process;
 void super_serve_register_process(struct background_process *prc);
+struct background_process *super_serve_find_process(const unsigned char *name);
 
 #endif /* __SUPER_SERVE_H__ */
