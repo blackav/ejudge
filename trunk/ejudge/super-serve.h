@@ -262,7 +262,7 @@ struct super_http_request_info
   // the URL
   ej_ip_t ip;
   int ssl_flag;
-  const unsigned char *self_url;
+  unsigned char self_url[4096];
   const unsigned char *script_name;
   const unsigned char *system_login;
 
@@ -285,6 +285,15 @@ struct super_http_request_info
   int suspend_reply;
   // pointer to suspend data (client_state actually)
   void *suspend_context;
+
+  // output streams
+  FILE *out_f;
+  char *out_t;
+  size_t out_z;
+
+  FILE *log_f;
+  char *log_t;
+  size_t log_z;
 
   unsigned char data[0];
 };
