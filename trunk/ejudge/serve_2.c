@@ -1001,6 +1001,7 @@ serve_compile_request(
   char **comp_env_mem_2 = NULL;
   const unsigned char *compile_src_dir = 0;
   const unsigned char *compile_queue_dir = 0;
+  int errcode = -SERVE_ERR_GENERIC;
 
   if (prob->source_header[0]) {
     sformat_message(tmp_path, sizeof(tmp_path), 0, prob->source_header,
@@ -1015,8 +1016,10 @@ serve_compile_request(
                global->statement_dir, tmp_path);
     }
     if (generic_read_file(&src_header_text, 0, &src_header_size, 0, 0,
-                          tmp_path_2, "") < 0)
+                          tmp_path_2, "") < 0) {
+      errcode = -SERVE_ERR_SRC_HEADER;
       goto failed;
+    }
   }
   if (prob->source_footer[0]) {
     sformat_message(tmp_path, sizeof(tmp_path), 0, prob->source_footer,
@@ -1031,8 +1034,10 @@ serve_compile_request(
                global->statement_dir, tmp_path);
     }
     if (generic_read_file(&src_footer_text, 0, &src_footer_size, 0, 0,
-                          tmp_path_2, "") < 0)
+                          tmp_path_2, "") < 0) {
+      errcode = -SERVE_ERR_SRC_FOOTER;
       goto failed;
+    }
   }
 
   if (accepting_mode == -1) accepting_mode = state->accepting_mode;
@@ -1126,6 +1131,7 @@ serve_compile_request(
 
   if (compile_request_packet_write(&cp, &pkt_len, &pkt_buf) < 0) {
     // FIXME: need reasonable recovery?
+    errcode = -SERVE_ERR_COMPILE_PACKET_WRITE;
     goto failed;
   }
 
@@ -1153,10 +1159,15 @@ serve_compile_request(
     if (len < 0) {
       arch_flags = archive_make_read_path(state, run_arch, sizeof(run_arch),
                                           global->run_archive_dir, run_id,0,0);
-      if (arch_flags < 0) goto failed;
-      if (generic_read_file(&src_text, 0, &src_size, arch_flags, 0,
-                            run_arch, "") < 0)
+      if (arch_flags < 0) {
+        errcode = -SERVE_ERR_SOURCE_READ;
         goto failed;
+      }
+      if (generic_read_file(&src_text, 0, &src_size, arch_flags, 0,
+                            run_arch, "") < 0) {
+        errcode = -SERVE_ERR_SOURCE_READ;
+        goto failed;
+      }
       str = src_text;
       len = src_size;
     }
@@ -1170,31 +1181,42 @@ serve_compile_request(
       memcpy(src_out_text + src_header_size + len, src_footer_text,
              src_footer_size);
     if (generic_write_file(src_out_text, src_out_size, 0,
-                           compile_src_dir, pkt_name, sfx) < 0)
+                           compile_src_dir, pkt_name, sfx) < 0) {
+      errcode = -SERVE_ERR_SOURCE_WRITE;
       goto failed;
+    }
   } else if (len < 0) {
     // copy from archive
     arch_flags = archive_make_read_path(state, run_arch, sizeof(run_arch),
                                         global->run_archive_dir, run_id, 0,0);
-    if (arch_flags < 0) goto failed;
-    if (generic_copy_file(arch_flags, 0, run_arch, "",
-                          0, compile_src_dir, pkt_name, sfx) < 0)
+    if (arch_flags < 0) {
+      errcode = -SERVE_ERR_SOURCE_READ;
       goto failed;
+    }
+    if (generic_copy_file(arch_flags, 0, run_arch, "",
+                          0, compile_src_dir, pkt_name, sfx) < 0) {
+      errcode = -SERVE_ERR_SOURCE_WRITE;
+      goto failed;
+    }
   } else {
     // write from memory
     if (generic_write_file(str, len, 0,
-                           compile_src_dir, pkt_name, sfx) < 0)
+                           compile_src_dir, pkt_name, sfx) < 0) {
+      errcode = -SERVE_ERR_SOURCE_WRITE;
       goto failed;
+    }
   }
 
   if (generic_write_file(pkt_buf, pkt_len, SAFE,
                          compile_queue_dir, pkt_name, "") < 0) {
+    errcode = -SERVE_ERR_COMPILE_PACKET_WRITE;
     goto failed;
   }
 
   if (!no_db_flag) {
     if (run_change_status(state->runlog_state, run_id, RUN_COMPILING, 0, -1,
                           cp.judge_id) < 0) {
+      errcode = -SERVE_ERR_DB;
       goto failed;
     }
   }
@@ -1218,7 +1240,7 @@ serve_compile_request(
   xfree(src_footer_text);
   xfree(src_text);
   xfree(src_out_text);
-  return -1;
+  return errcode;
 }
 
 int
@@ -2426,7 +2448,7 @@ serve_rejudge_run(
 {
   const struct section_global_data *global = state->global;
   struct run_entry re;
-  int accepting_mode = -1, arch_flags = 0;
+  int accepting_mode = -1, arch_flags = 0, r;
   path_t run_arch_path;
   char *run_text = 0;
   size_t run_size = 0;
@@ -2472,19 +2494,23 @@ serve_rejudge_run(
     }
 
     if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
-      serve_compile_request(state, 0 /* str*/, -1 /* len*/, global->contest_id,
-                            run_id, re.user_id, 0 /* lang_id */,
-                            0 /* locale_id */, 1 /* output_only*/,
-                            mime_type_get_suffix(re.mime_type),
-                            NULL /* compiler_env */,
-                            1 /* style_check_only */,
-                            prob->style_checker_cmd,
-                            prob->style_checker_env,
-                            0 /* accepting_mode */,
-                            0 /* priority_adjustment */,
-                            1 /* notify flag */,
-                            prob, NULL /* lang */,
-                            0 /* no_db_flag */);
+      r = serve_compile_request(state, 0 /* str*/, -1 /* len*/, global->contest_id,
+                                run_id, re.user_id, 0 /* lang_id */,
+                                0 /* locale_id */, 1 /* output_only*/,
+                                mime_type_get_suffix(re.mime_type),
+                                NULL /* compiler_env */,
+                                1 /* style_check_only */,
+                                prob->style_checker_cmd,
+                                prob->style_checker_env,
+                                0 /* accepting_mode */,
+                                0 /* priority_adjustment */,
+                                1 /* notify flag */,
+                                prob, NULL /* lang */,
+                                0 /* no_db_flag */);
+      if (r < 0) {
+        err("rejudge_run: serve_compile_request failed: %s", serve_err_str(r));
+        return;
+      }
       serve_audit_log(state, run_id, user_id, ip, ssl_flag,
                       "Command: Rejudge\n");
       return;
@@ -2519,14 +2545,18 @@ serve_rejudge_run(
     accepting_mode = 0;
   }
 
-  serve_compile_request(state, 0, -1, global->contest_id, run_id, re.user_id,
-                        lang->compile_id, re.locale_id,
-                        (prob->type > 0),
-                        lang->src_sfx,
-                        lang->compiler_env,
-                        0, prob->style_checker_cmd,
-                        prob->style_checker_env,
-                        accepting_mode, priority_adjustment, 1, prob, lang, 0);
+  r = serve_compile_request(state, 0, -1, global->contest_id, run_id, re.user_id,
+                            lang->compile_id, re.locale_id,
+                            (prob->type > 0),
+                            lang->src_sfx,
+                            lang->compiler_env,
+                            0, prob->style_checker_cmd,
+                            prob->style_checker_env,
+                            accepting_mode, priority_adjustment, 1, prob, lang, 0);
+  if (r < 0) {
+    err("rejudge_run: serve_compile_request failed: %s", serve_err_str(r));
+    return;
+  }
 
   serve_audit_log(state, run_id, user_id, ip, ssl_flag, "Command: Rejudge\n");
 }
@@ -3778,6 +3808,31 @@ serve_is_problem_deadlined_2(
 
   return serve_is_problem_deadlined(state, user_id, user_login, prob,
                                     p_deadline);
+}
+
+static const unsigned char * const
+serve_err_str_map[] =
+{
+  [SERVE_ERR_GENERIC] = "unidentified error",
+  [SERVE_ERR_SRC_HEADER] = "failed to read source header file",
+  [SERVE_ERR_SRC_FOOTER] = "failed to read source footer file",
+  [SERVE_ERR_COMPILE_PACKET_WRITE] = "failed to write compile packet",
+  [SERVE_ERR_SOURCE_READ] = "failed to read source file",
+  [SERVE_ERR_SOURCE_WRITE] = "failed to write source file",
+  [SERVE_ERR_DB] = "database error",
+};
+
+const unsigned char *
+serve_err_str(int serve_err)
+{
+  const unsigned char *str = NULL;
+  if (!serve_err) return "no error!";
+  if (serve_err < 0) serve_err = -serve_err;
+  if (serve_err >= sizeof(serve_err_str_map) / sizeof(serve_err_str_map[0]))
+    return "unknown error!";
+  str = serve_err_str_map[serve_err];
+  if (!str) str = "unknown error!";
+  return str;
 }
 
 /*

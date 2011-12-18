@@ -2511,6 +2511,30 @@ priv_reset_filter(FILE *fout,
 }
 
 static int
+serve_err_to_new_srv_err_map[] =
+{
+  [SERVE_ERR_GENERIC] = NEW_SRV_ERR_UNKNOWN_ERROR,
+  [SERVE_ERR_SRC_HEADER] = NEW_SRV_ERR_PROB_CONFIG,
+  [SERVE_ERR_SRC_FOOTER] = NEW_SRV_ERR_PROB_CONFIG,
+  [SERVE_ERR_COMPILE_PACKET_WRITE] = NEW_SRV_ERR_DISK_WRITE_ERROR,
+  [SERVE_ERR_SOURCE_READ] = NEW_SRV_ERR_DISK_READ_ERROR,
+  [SERVE_ERR_SOURCE_WRITE] = NEW_SRV_ERR_DISK_WRITE_ERROR,
+  [SERVE_ERR_DB] = NEW_SRV_ERR_DATABASE_FAILED,
+};
+
+static int
+serve_err_to_new_srv_err(int serve_err)
+{
+  if (!serve_err) return 0;
+  if (serve_err < 0) serve_err = -serve_err;
+  if (serve_err >= sizeof(serve_err_to_new_srv_err_map) / sizeof(serve_err_to_new_srv_err_map[0]))
+    return NEW_SRV_ERR_UNKNOWN_ERROR;
+  serve_err = serve_err_to_new_srv_err_map[serve_err];
+  if (!serve_err) serve_err = NEW_SRV_ERR_UNKNOWN_ERROR;
+  return serve_err;
+}
+
+static int
 priv_submit_run(FILE *fout,
                 FILE *log_f,
                 struct http_request_info *phr,
@@ -2522,7 +2546,7 @@ priv_submit_run(FILE *fout,
   const struct section_problem_data *prob = 0;
   const struct section_language_data *lang = 0;
   const unsigned char *s;
-  int prob_id = 0, variant = 0, lang_id = 0, n, max_ans, ans, i, mime_type = 0;
+  int prob_id = 0, variant = 0, lang_id = 0, n, max_ans, ans, i, mime_type = 0, r;
   const unsigned char *errmsg = 0;
   const unsigned char *run_text;
   size_t run_size, ans_size;
@@ -2897,19 +2921,23 @@ priv_submit_run(FILE *fout,
                       run_id);
     } else {
       if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
-        serve_compile_request(cs, run_text, run_size, global->contest_id, 
-                              run_id, phr->user_id, 0 /* lang_id */,
-                              0 /* locale_id */, 1 /* output_only*/,
-                              mime_type_get_suffix(mime_type),
-                              NULL /* compiler_env */,
-                              1 /* style_check_only */,
-                              prob->style_checker_cmd,
-                              prob->style_checker_env,
-                              0 /* accepting_mode */,
-                              0 /* priority_adjustment */,
-                              0 /* notify flag */,
-                              prob, NULL /* lang */,
-                              0 /* no_db_flag */);
+        r = serve_compile_request(cs, run_text, run_size, global->contest_id, 
+                                  run_id, phr->user_id, 0 /* lang_id */,
+                                  0 /* locale_id */, 1 /* output_only*/,
+                                  mime_type_get_suffix(mime_type),
+                                  NULL /* compiler_env */,
+                                  1 /* style_check_only */,
+                                  prob->style_checker_cmd,
+                                  prob->style_checker_env,
+                                  0 /* accepting_mode */,
+                                  0 /* priority_adjustment */,
+                                  0 /* notify flag */,
+                                  prob, NULL /* lang */,
+                                  0 /* no_db_flag */);
+        if (r < 0) {
+          ns_error(log_f, serve_err_to_new_srv_err(r));
+          goto cleanup;
+        }
       } else {
         if (serve_run_request(cs, log_f, run_text, run_size,
                               global->contest_id, run_id,
@@ -2938,19 +2966,23 @@ priv_submit_run(FILE *fout,
     } else {
       /* FIXME: check for XML problem */
       if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
-        serve_compile_request(cs, run_text, run_size, global->contest_id,
-                              run_id, phr->user_id, 0 /* lang_id */,
-                              0 /* locale_id */, 1 /* output_only*/,
-                              mime_type_get_suffix(mime_type),
-                              NULL /* compiler_env */,
-                              1 /* style_check_only */,
-                              prob->style_checker_cmd,
-                              prob->style_checker_env,
-                              0 /* accepting_mode */,
-                              0 /* priority_adjustment */,
-                              0 /* notify flag */,
-                              prob, NULL /* lang */,
-                              0 /* no_db_flag */);
+        r = serve_compile_request(cs, run_text, run_size, global->contest_id,
+                                  run_id, phr->user_id, 0 /* lang_id */,
+                                  0 /* locale_id */, 1 /* output_only*/,
+                                  mime_type_get_suffix(mime_type),
+                                  NULL /* compiler_env */,
+                                  1 /* style_check_only */,
+                                  prob->style_checker_cmd,
+                                  prob->style_checker_env,
+                                  0 /* accepting_mode */,
+                                  0 /* priority_adjustment */,
+                                  0 /* notify flag */,
+                                  prob, NULL /* lang */,
+                                  0 /* no_db_flag */);
+        if (r < 0) {
+          ns_error(log_f, serve_err_to_new_srv_err(r));
+          goto cleanup;
+        }
       } else {      
         if (serve_run_request(cs, log_f, run_text, run_size,
                               global->contest_id, run_id,
@@ -9820,7 +9852,7 @@ unpriv_submit_run(FILE *fout,
   char *log_txt = 0;
   size_t log_len = 0;
   FILE *log_f = 0;
-  int prob_id, n, lang_id = 0, i, ans, max_ans, j;
+  int prob_id, n, lang_id = 0, i, ans, max_ans, j, r;
   const unsigned char *s, *run_text = 0, *text_form_text = 0;
   size_t run_size = 0, ans_size, text_form_size = 0;
   unsigned char *ans_buf, *ans_map, *ans_tmp;
@@ -10277,19 +10309,23 @@ unpriv_submit_run(FILE *fout,
                       run_id);
     } else {
       if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
-        serve_compile_request(cs, run_text, run_size, global->contest_id,
-                              run_id, phr->user_id, 0 /* lang_id */,
-                              0 /* locale_id */, 1 /* output_only*/,
-                              mime_type_get_suffix(mime_type),
-                              NULL /* compiler_env */,
-                              1 /* style_check_only */,
-                              prob->style_checker_cmd,
-                              prob->style_checker_env,
-                              0 /* accepting_mode */,
-                              0 /* priority_adjustment */,
-                              0 /* notify flag */,
-                              prob, NULL /* lang */,
-                              0 /* no_db_flag */);
+        r = serve_compile_request(cs, run_text, run_size, global->contest_id,
+                                  run_id, phr->user_id, 0 /* lang_id */,
+                                  0 /* locale_id */, 1 /* output_only*/,
+                                  mime_type_get_suffix(mime_type),
+                                  NULL /* compiler_env */,
+                                  1 /* style_check_only */,
+                                  prob->style_checker_cmd,
+                                  prob->style_checker_env,
+                                  0 /* accepting_mode */,
+                                  0 /* priority_adjustment */,
+                                  0 /* notify flag */,
+                                  prob, NULL /* lang */,
+                                  0 /* no_db_flag */);
+        if (r < 0) {
+          ns_error(log_f, serve_err_to_new_srv_err(r));
+          goto done;
+        }
       } else {
         if (serve_run_request(cs, log_f, run_text, run_size,
                               global->contest_id, run_id,
@@ -10337,19 +10373,23 @@ unpriv_submit_run(FILE *fout,
       }
 
       if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
-        serve_compile_request(cs, run_text, run_size, global->contest_id,
-                              run_id, phr->user_id, 0 /* lang_id */,
-                              0 /* locale_id */, 1 /* output_only*/,
-                              mime_type_get_suffix(mime_type),
-                              NULL /* compiler_env */,
-                              1 /* style_check_only */,
-                              prob->style_checker_cmd,
-                              prob->style_checker_env,
-                              0 /* accepting_mode */,
-                              0 /* priority_adjustment */,
-                              0 /* notify flag */,
-                              prob, NULL /* lang */,
-                              0 /* no_db_flag */);
+        r = serve_compile_request(cs, run_text, run_size, global->contest_id,
+                                  run_id, phr->user_id, 0 /* lang_id */,
+                                  0 /* locale_id */, 1 /* output_only*/,
+                                  mime_type_get_suffix(mime_type),
+                                  NULL /* compiler_env */,
+                                  1 /* style_check_only */,
+                                  prob->style_checker_cmd,
+                                  prob->style_checker_env,
+                                  0 /* accepting_mode */,
+                                  0 /* priority_adjustment */,
+                                  0 /* notify flag */,
+                                  prob, NULL /* lang */,
+                                  0 /* no_db_flag */);
+        if (r < 0) {
+          ns_error(log_f, serve_err_to_new_srv_err(r));
+          goto done;
+        }
       } else {
         if (serve_run_request(cs, log_f, run_text, run_size,
                               global->contest_id, run_id,
