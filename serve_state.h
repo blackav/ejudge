@@ -41,6 +41,20 @@ struct teamdb_db_callbacks;
 struct userlist_clnt;
 struct ejudge_cfg;
 
+/* error codes */
+enum
+{
+  SERVE_ERR_GENERIC = 1,
+  SERVE_ERR_SRC_HEADER,
+  SERVE_ERR_SRC_FOOTER,
+  SERVE_ERR_COMPILE_PACKET_WRITE,
+  SERVE_ERR_SOURCE_READ,
+  SERVE_ERR_SOURCE_WRITE,
+  SERVE_ERR_DB,
+
+  SERVE_ERR_LAST,
+};
+
 struct user_filter_info
 {
   struct user_filter_info *next;
@@ -395,7 +409,8 @@ serve_compile_request(
         int notify_flag,
         const struct section_problem_data *prob,
         const struct section_language_data *lang,
-        int no_db_flag);
+        int no_db_flag)
+  __attribute__((warn_unused_result));
 
 struct compile_reply_packet;
 int
@@ -643,5 +658,7 @@ serve_is_problem_deadlined_2(
         const unsigned char *user_login,
         int prob_id,
         time_t *p_deadline);
+
+const unsigned char *serve_err_str(int serve_err);
 
 #endif /* __SERVE_STATE_H__ */
