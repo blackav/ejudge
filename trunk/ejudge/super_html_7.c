@@ -257,7 +257,7 @@ check_other_editors(
     }
   }
 
-  phr->ss->te_state = serve_state_destroy(cs, cnts, NULL);
+  phr->ss->te_state = serve_state_destroy(phr->config, cs, cnts, NULL);
 
   if (serve_state_load_contest_config(phr->config, contest_id, cnts, &phr->ss->te_state) < 0)
     goto invalid_serve_cfg;
@@ -273,7 +273,7 @@ check_other_editors(
   return 1;
 
 invalid_serve_cfg:
-  phr->ss->te_state = serve_state_destroy(cs, cnts, NULL);
+  phr->ss->te_state = serve_state_destroy(phr->config, cs, cnts, NULL);
   return -S_ERR_INV_SERVE_CONFIG_PATH;
 }
 

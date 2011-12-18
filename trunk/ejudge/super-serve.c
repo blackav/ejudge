@@ -1654,7 +1654,7 @@ sid_state_clear(struct sid_state *p)
   xfree(p->user_name);
   xfree(p->user_filter);
   bitset_free(&p->marked);
-  serve_state_destroy(p->te_state, NULL, NULL);
+  serve_state_destroy(config, p->te_state, NULL, NULL);
   XMEMZERO(p, 1);
 }
 static struct sid_state*
