@@ -238,7 +238,7 @@ ns_client_destroy_callback(struct client_state *p)
     cs->testing_suspended = cs->saved_testing_suspended;
     serve_update_status_file(cs, 1);
     if (!cs->testing_suspended)
-      serve_judge_suspended(cnts, cs, 0, 0, 0);
+      serve_judge_suspended(ejudge_config, cnts, cs, 0, 0, 0);
   }
   xfree(cs->pending_xml_import); cs->pending_xml_import = 0;
   cs->client_id = -1;
@@ -259,10 +259,10 @@ do_unload_contest(int idx)
   contests_get(contest_id, &cnts);
 
   if (extra->serve_state) {
-    serve_check_stat_generation(extra->serve_state, cnts, 1, utf8_mode);
+    serve_check_stat_generation(ejudge_config, extra->serve_state, cnts, 1, utf8_mode);
     serve_update_status_file(extra->serve_state, 1);
     team_extra_flush(extra->serve_state->team_extra_state);
-    extra->serve_state = serve_state_destroy(extra->serve_state, cnts, ul_conn);
+    extra->serve_state = serve_state_destroy(ejudge_config, extra->serve_state, cnts, ul_conn);
   }
 
   xfree(extra->contest_arm);
@@ -363,7 +363,7 @@ handle_pending_xml_import(const struct contest_desc *cnts, serve_state_t cs)
       cs->testing_suspended = cs->saved_testing_suspended;
       serve_update_status_file(cs, 1);
       if (!cs->testing_suspended)
-        serve_judge_suspended(cnts, cs, 0, 0, 0);
+        serve_judge_suspended(ejudge_config, cnts, cs, 0, 0, 0);
     }
     xfree(cs->pending_xml_import); cs->pending_xml_import = 0;
     cs->client_id = -1; cs->destroy_callback = 0;
@@ -386,7 +386,7 @@ handle_pending_xml_import(const struct contest_desc *cnts, serve_state_t cs)
     cs->testing_suspended = cs->saved_testing_suspended;
     serve_update_status_file(cs, 1);
     if (!cs->testing_suspended)
-      serve_judge_suspended(cnts, cs, 0, 0, 0);
+      serve_judge_suspended(ejudge_config, cnts, cs, 0, 0, 0);
   }
   xfree(cs->pending_xml_import); cs->pending_xml_import = 0;
   cs->client_id = -1; cs->destroy_callback = 0;
@@ -422,7 +422,7 @@ ns_loop_callback(struct server_framework_state *state)
       if ((r = scan_dir(cs->compile_dirs[i].status_dir,
                         packetname, sizeof(packetname))) <= 0)
         continue;
-      serve_read_compile_packet(cs, cnts,
+      serve_read_compile_packet(ejudge_config, cs, cnts,
                                 cs->compile_dirs[i].status_dir,
                                 cs->compile_dirs[i].report_dir,
                                 packetname);
@@ -433,7 +433,7 @@ ns_loop_callback(struct server_framework_state *state)
       if ((r = scan_dir(cs->run_dirs[i].status_dir,
                         packetname, sizeof(packetname))) <= 0)
         continue;
-      serve_read_run_packet(cs, cnts,
+      serve_read_run_packet(ejudge_config, cs, cnts,
                             cs->run_dirs[i].status_dir,
                             cs->run_dirs[i].report_dir,
                             cs->run_dirs[i].full_report_dir,
@@ -1044,7 +1044,7 @@ ns_check_contest_events(serve_state_t cs, const struct contest_desc *cnts)
     }
   }
 
-  if (cs->event_first) serve_handle_events(cnts, cs);
+  if (cs->event_first) serve_handle_events(ejudge_config, cnts, cs);
 }
 
 static void
@@ -3140,7 +3140,7 @@ priv_submit_clar(
     if (cnts->default_locale_num > 0) {
       l10n_setlocale(cnts->default_locale_num);
     }
-    serve_send_email_to_user(cnts, cs, user_id, nsubj, msg_t);
+    serve_send_email_to_user(ejudge_config, cnts, cs, user_id, nsubj, msg_t);
     xfree(msg_t); msg_t = 0; msg_z = 0;
   }
 
@@ -3232,7 +3232,7 @@ priv_set_run_style_error_status(
   if (run_change_status_4(cs->runlog_state, run_id, RUN_STYLE_ERR) < 0)
     goto invalid_param;
   if (global->notify_status_change > 0 && !re.is_hidden) {
-    serve_notify_user_run_status_change(cnts, cs, re.user_id,
+    serve_notify_user_run_status_change(ejudge_config, cnts, cs, re.user_id,
                                         run_id, RUN_STYLE_ERR);
   }
 
@@ -3365,7 +3365,7 @@ priv_submit_run_comment(
     if (cnts->default_locale_num > 0) {
       l10n_setlocale(cnts->default_locale_num);
     }
-    serve_send_email_to_user(cnts, cs, re.user_id, nsubj, msg_t);
+    serve_send_email_to_user(ejudge_config, cnts, cs, re.user_id, nsubj, msg_t);
     xfree(msg_t); msg_t = 0; msg_z = 0;
   }
 
@@ -3533,7 +3533,7 @@ priv_clar_reply(
     if (cnts->default_locale_num > 0) {
       l10n_setlocale(cnts->default_locale_num);
     }
-    serve_send_email_to_user(cnts, cs, from_id, nsubj, msg_t);
+    serve_send_email_to_user(ejudge_config, cnts, cs, from_id, nsubj, msg_t);
     xfree(msg_t); msg_t = 0; msg_z = 0;
   }
 
@@ -3880,7 +3880,7 @@ priv_change_status(
     goto cleanup;
   }
   if (status == RUN_REJUDGE || status == RUN_FULL_REJUDGE) {
-    serve_rejudge_run(cnts, cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+    serve_rejudge_run(ejudge_config, cnts, cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
                       (status == RUN_FULL_REJUDGE), 0);
     goto cleanup;
   }
@@ -3913,7 +3913,7 @@ priv_change_status(
 
   if (cs->global->notify_status_change > 0) {
     if (!re.is_hidden)
-      serve_notify_user_run_status_change(cnts, cs, re.user_id, run_id,
+      serve_notify_user_run_status_change(ejudge_config, cnts, cs, re.user_id, run_id,
                                           status);
   }
 
@@ -3984,7 +3984,7 @@ priv_simple_change_status(
 
   if (cs->global->notify_status_change > 0) {
     if (!re.is_hidden)
-      serve_notify_user_run_status_change(cnts, cs, re.user_id, run_id,
+      serve_notify_user_run_status_change(ejudge_config, cnts, cs, re.user_id, run_id,
                                           status);
   }
 
@@ -4148,7 +4148,7 @@ priv_rejudge_displayed(FILE *fout,
     prio_adj = 10;
   }
 
-  serve_rejudge_by_mask(cnts, cs, phr->user_id, phr->ip, phr->ssl_flag,
+  serve_rejudge_by_mask(ejudge_config, cnts, cs, phr->user_id, phr->ip, phr->ssl_flag,
                         mask_size, mask, force_full, prio_adj);
 
  cleanup:
@@ -4184,7 +4184,7 @@ priv_rejudge_problem(FILE *fout,
     goto cleanup;
   }
 
-  serve_rejudge_problem(cnts,cs,phr->user_id, phr->ip, phr->ssl_flag, prob_id);
+  serve_rejudge_problem(ejudge_config, cnts, cs, phr->user_id, phr->ip, phr->ssl_flag, prob_id);
 
  cleanup:
   return 0;
@@ -4210,10 +4210,10 @@ priv_rejudge_all(FILE *fout,
 
   switch (phr->action) {
   case NEW_SRV_ACTION_REJUDGE_SUSPENDED_2:
-    serve_judge_suspended(cnts, cs, phr->user_id, phr->ip, phr->ssl_flag);
+    serve_judge_suspended(ejudge_config, cnts, cs, phr->user_id, phr->ip, phr->ssl_flag);
     break;
   case NEW_SRV_ACTION_REJUDGE_ALL_2:
-    serve_rejudge_all(cnts, cs, phr->user_id, phr->ip, phr->ssl_flag);
+    serve_rejudge_all(ejudge_config, cnts, cs, phr->user_id, phr->ip, phr->ssl_flag);
     break;
   default:
     abort();
@@ -10329,7 +10329,7 @@ unpriv_submit_run(FILE *fout,
       }
       if (px && px->ans_num > 0) {
         run_get_entry(cs->runlog_state, run_id, &re);
-        serve_judge_built_in_problem(cs, cnts, run_id, 1 /* judge_id */,
+        serve_judge_built_in_problem(ejudge_config, cs, cnts, run_id, 1 /* judge_id */,
                                      variant, cs->accepting_mode, &re,
                                      prob, px, phr->user_id, phr->ip,
                                      phr->ssl_flag);
@@ -10530,7 +10530,7 @@ unpriv_submit_clar(FILE *fout,
     goto done;
   }
 
-  serve_send_clar_notify_email(cs, cnts, phr->user_id, phr->name, subj3, text2);
+  serve_send_clar_notify_email(ejudge_config, cs, cnts, phr->user_id, phr->name, subj3, text2);
 
  done:;
   close_memstream(log_f); log_f = 0;
@@ -10671,7 +10671,7 @@ unpriv_submit_appeal(FILE *fout,
     goto done;
   }
 
-  serve_send_clar_notify_email(cs, cnts, phr->user_id, phr->name, subj3, text2);
+  serve_send_clar_notify_email(ejudge_config, cs, cnts, phr->user_id, phr->name, subj3, text2);
 
  done:;
   close_memstream(log_f); log_f = 0;
