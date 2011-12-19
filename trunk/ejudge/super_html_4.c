@@ -988,6 +988,8 @@ static const struct cnts_edit_info cnts_edit_info[] =
   { NS_CONTEST, CNTS_reg_deadline, 't', 1, 1, 0, 1, 0, "Registration deadline", "Registration deadline", 0 },
   { NS_CONTEST, CNTS_register_email, 's', 1, 1, 1, 1, 0, "Registration email sender", "From: field for registration email", 0 },
   { NS_CONTEST, CNTS_register_url, 's', 1, 1, 1, 1, 0, "URL to complete registration", "URL to complete registration", 0 },
+  { NS_CONTEST, CNTS_register_subject, 's', 1, 1, 1, 1, 0, "Registration letter subject", "Registration letter subject", 0 },
+  { NS_CONTEST, CNTS_register_subject_en, 's', 1, 1, 1, 1, 0, "Registration letter subject (En)", "Registration letter subject (En)", 0 },
   { NS_CONTEST, CNTS_register_email_file, 'e', 1, 1, 1, 1, SSERV_OP_CONTEST_XML_FIELD_EDIT_PAGE, "Registration letter template file", "Registration letter template file", 0 },
   { 0, 0, '-', 0, 0, 0, 0, 0, "Participation Settings", 0, 0 },
   { NS_CONTEST, CNTS_sched_time, 't', 1, 1, 0, 1, 0, "Scheduled start time", "Scheduled start time", 0 },

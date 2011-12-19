@@ -127,6 +127,8 @@ const int contests_tag_to_meta_map[CONTEST_LAST_TAG] =
   [CONTEST_USER_CONTEST] = CNTS_user_contest,
   [CONTEST_LOGO_URL] = CNTS_logo_url,
   [CONTEST_CSS_URL] = CNTS_css_url,
+  [CONTEST_REGISTER_SUBJECT] = CNTS_register_subject,
+  [CONTEST_REGISTER_SUBJECT_EN] = CNTS_register_subject_en,
 };
 const int contests_attr_to_meta_map[CONTEST_LAST_ATTR] =
 {
@@ -239,6 +241,8 @@ char const * const contests_elem_map[] =
   "user_contest",
   "logo_url",
   "css_url",
+  "register_subject",
+  "register_subject_en",
 
   0
 };
@@ -759,6 +763,8 @@ static const unsigned char contest_final_set[CONTEST_LAST_TAG] =
   [CONTEST_USER_CONTEST] = 1,
   [CONTEST_LOGO_URL] = 1,
   [CONTEST_CSS_URL] = 1,
+  [CONTEST_REGISTER_SUBJECT] = 1,
+  [CONTEST_REGISTER_SUBJECT_EN] = 1,
 };
 
 static const unsigned char contest_access_set[CONTEST_LAST_TAG] =
