@@ -1620,12 +1620,32 @@ send_registration_email(
     email_template_size = strlen(email_template);
   }
 
+  unsigned char *email_subject = NULL;
+
+  if (locale_id == 1) {
+    // russian
+    if (cnts->register_subject) {
+      email_subject = cnts->register_subject;
+    } else if (cnts->register_subject_en) {
+      email_subject = cnts->register_subject_en;
+    }
+  } else {
+    // default - english
+    if (cnts->register_subject_en) {
+      email_subject = cnts->register_subject_en;
+    } else if (cnts->register_subject) {
+      email_subject = cnts->register_subject;
+    }
+  }
+
   size_t email_text_size = email_template_size * 4;
   if (email_text_size < 4096) email_text_size = 4096;
   unsigned char *email_text = (unsigned char *) xcalloc(email_text_size, 1);
   sformat_message(email_text, email_text_size, 0, email_template,
                   0, 0, 0, 0, 0, u, cnts, &sformat_data);
-  unsigned char *email_subject = _("You have been registered");
+  if (email_subject == NULL) {
+    email_subject = _("You have been registered");
+  }
   l10n_setlocale(0);
 
   const unsigned char *sender_address = get_email_sender(cnts);
@@ -1890,9 +1910,31 @@ cmd_register_new_2(struct client_state *p,
     sformat_message(buf, buf_size, 0, email_tmpl,
                     0, 0, 0, 0, 0, u, cnts, &sformat_data);
 
+    unsigned char *register_subject = NULL;
+
+    if (data->locale_id == 1) {
+      // russian
+      if (cnts->register_subject) {
+        register_subject = cnts->register_subject;
+      } else if (cnts->register_subject_en) {
+        register_subject = cnts->register_subject_en;
+      }
+    } else {
+      // default - english
+      if (cnts->register_subject_en) {
+        register_subject = cnts->register_subject_en;
+      } else if (cnts->register_subject) {
+        register_subject = cnts->register_subject;
+      }
+    }
+
+    if (register_subject == NULL) {
+      register_subject = _("You have been registered");
+    }
+
     mail_args[0] = "mail";
     mail_args[1] = "";
-    mail_args[2] = _("You have been registered");
+    mail_args[2] = register_subject;
     mail_args[3] = originator_email;
     mail_args[4] = email;
     mail_args[5] = buf;

@@ -270,6 +270,8 @@ contest_tmpl_clone(struct sid_state *sstate,
   subst_param(&cnts->standings_url, 6, substs_from, substs_to);
   subst_param(&cnts->logo_url, 6, substs_from, substs_to);
   subst_param(&cnts->css_url, 6, substs_from, substs_to);
+  subst_param(&cnts->register_subject, 6, substs_from, substs_to);
+  subst_param(&cnts->register_subject_en, 6, substs_from, substs_to);
 
   for (cap = cnts->capabilities.first; cap; cap = (typeof(cap)) cap->b.right)
     if (!strcmp(cap->login, login))
