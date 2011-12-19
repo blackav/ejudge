@@ -118,6 +118,8 @@ enum
     CONTEST_USER_CONTEST,
     CONTEST_LOGO_URL,
     CONTEST_CSS_URL,
+    CONTEST_REGISTER_SUBJECT,
+    CONTEST_REGISTER_SUBJECT_EN,
 
     CONTEST_LAST_TAG
   };
@@ -331,6 +333,8 @@ struct contest_desc
   unsigned char *run_user;
   unsigned char *run_group;
   unsigned char *register_email_file;
+  unsigned char *register_subject;
+  unsigned char *register_subject_en;
   struct contest_access *register_access;
   struct contest_access *users_access;
   struct contest_access *master_access;
