@@ -1949,10 +1949,10 @@ edit_general_form(
   fprintf(fout, "<table class=\"b0\"><tr>");
   fprintf(fout, "<td class=\"b0\">%s</td>",
           ns_submit_button(bb, sizeof(bb), 0,
-                           NEW_SRV_ACTION_REG_CANCEL_GENERAL_EDITING, 0));
+                           NEW_SRV_ACTION_REG_SUBMIT_GENERAL_EDITING, 0));
   fprintf(fout, "<td class=\"b0\">%s</td>",
           ns_submit_button(bb, sizeof(bb), 0,
-                           NEW_SRV_ACTION_REG_SUBMIT_GENERAL_EDITING, 0));
+                           NEW_SRV_ACTION_REG_CANCEL_GENERAL_EDITING, 0));
   fprintf(fout, "</tr></table>");
   fprintf(fout, "</form>\n");
 
@@ -2242,10 +2242,10 @@ edit_member_form(
     fprintf(fout, "<table class=\"b0\"><tr>");
     fprintf(fout, "<td class=\"b0\">%s</td>",
             ns_submit_button(bb, sizeof(bb), 0,
-                             NEW_SRV_ACTION_REG_CANCEL_MEMBER_EDITING, 0));
+                             NEW_SRV_ACTION_REG_SUBMIT_MEMBER_EDITING, 0));
     fprintf(fout, "<td class=\"b0\">%s</td>",
             ns_submit_button(bb, sizeof(bb), 0,
-                             NEW_SRV_ACTION_REG_SUBMIT_MEMBER_EDITING, 0));
+                             NEW_SRV_ACTION_REG_CANCEL_MEMBER_EDITING, 0));
     fprintf(fout, "</table>");
     fprintf(fout, "</form>\n");
   }
