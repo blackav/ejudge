@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2011/05/24 09:20:57
+// Generated 2011/12/19 21:16:44
 
 #ifndef __CONTESTS_META_H__
 #define __CONTESTS_META_H__
@@ -61,6 +61,8 @@ enum
   CNTS_run_user,
   CNTS_run_group,
   CNTS_register_email_file,
+  CNTS_register_subject,
+  CNTS_register_subject_en,
   CNTS_register_access,
   CNTS_users_access,
   CNTS_master_access,
