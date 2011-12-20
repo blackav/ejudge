@@ -1227,6 +1227,7 @@ static const struct cnts_edit_info cnts_global_info[] =
   { NS_GLOBAL, CNTSGLOB_max_file_length, 'z', 1, 1, 1, 1, 0, "Maximum file size to include into testing protocols", 0, "SidState.show_global_6" },
   { NS_GLOBAL, CNTSGLOB_max_line_length, 'z', 1, 1, 1, 1, 0, "Maximum line length to include into testing protocols", 0, "SidState.show_global_6" },
   { NS_GLOBAL, CNTSGLOB_inactivity_timeout, 'd', 1, 1, 1, 1, 0, "Inactivity timeout for `run'", 0, "SidState.show_global_6" },
+  { NS_GLOBAL, CNTSGLOB_ignore_bom, 'Y', 1, 0, 0, 0, 0, "Ignore BOM in text submits", 0, "SidState.show_global_6" },
   { NS_GLOBAL, CNTSGLOB_disable_testing, 'Y', 1, 0, 0, 0, 0, "Disable any testing of submissions", 0, "SidState.show_global_6" },
   { NS_GLOBAL, CNTSGLOB_disable_auto_testing, 'Y', 1, 0, 0, 0, 0, "Disable automatic testing of submissions", 0, "SidState.show_global_6" },
   { NS_GLOBAL, CNTSGLOB_cr_serialization_key, 'd', 1, 1, 1, 1, 0, "Serialization semaphore for `compile' and `run'", 0, "SidState.show_global_6" },

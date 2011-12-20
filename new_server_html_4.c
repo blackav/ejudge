@@ -768,6 +768,8 @@ cmd_submit_run(
   struct timeval precise_time;
   int arch_flags = 0, hidden_flag = 0;
   path_t run_path;
+  unsigned char *utf8_str = NULL;
+  int utf8_len = 0;
 
   // initial permission check
   switch (phr->role) {
@@ -862,8 +864,15 @@ cmd_submit_run(
   // check for binaryness
   switch (prob->type) {
   case PROB_TYPE_STANDARD:
-    if (!lang->binary && strlen(run_text) != run_size) 
-      FAIL(NEW_SRV_ERR_BINARY_FILE);
+    if (!lang->binary && strlen(run_text) != run_size) {
+      // guess utf-16/ucs-2
+      if (((int) run_size) < 0
+          || (utf8_len = ucs2_to_utf8(&utf8_str, run_text, run_size)) < 0) {
+        FAIL(NEW_SRV_ERR_BINARY_FILE);
+      }
+      run_text = utf8_str;
+      run_size = (size_t) utf8_len;
+    }
     break;
   case PROB_TYPE_OUTPUT_ONLY:
   case PROB_TYPE_TESTS:
@@ -879,6 +888,13 @@ cmd_submit_run(
     break;
   case PROB_TYPE_CUSTOM:
     break;
+  }
+
+  if (global->ignore_bom > 0 && !prob->binary && (!lang || !lang->binary)) {
+    if (run_text && run_size >= 3 && run_text[0] == 0xef
+        && run_text[1] == 0xbb && run_text[2] == 0xbf) {
+      run_text += 3; run_size -= 3;
+    }
   }
 
   /* process special kind of answers */
@@ -1164,6 +1180,7 @@ cmd_submit_run(
  cleanup:
   if (ans_f) fclose(ans_f);
   xfree(run_text_2);
+  xfree(utf8_str);
   return retval;
 }
 

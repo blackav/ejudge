@@ -2787,6 +2787,14 @@ priv_submit_run(FILE *fout,
     goto invalid_param;
   }
 
+  // ignore BOM
+  if (global->ignore_bom > 0 && !prob->binary && (!lang || !lang->binary)) {
+    if (run_text && run_size >= 3 && run_text[0] == 0xef
+        && run_text[1] == 0xbb && run_text[2] == 0xbf) {
+      run_text += 3; run_size -= 3;
+    }
+  }
+
   /* check for disabled languages */
   if (lang_id > 0) {
     if (lang->disabled) {
@@ -10073,6 +10081,14 @@ unpriv_submit_run(FILE *fout,
 
   case PROB_TYPE_CUSTOM:
     break;
+  }
+
+  // ignore BOM
+  if (global->ignore_bom > 0 && !prob->binary && (!lang || !lang->binary)) {
+    if (run_text && run_size >= 3 && run_text[0] == 0xef
+        && run_text[1] == 0xbb && run_text[2] == 0xbf) {
+      run_text += 3; run_size -= 3;
+    }
   }
 
   if (global->is_virtual) {
