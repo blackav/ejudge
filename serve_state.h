@@ -410,7 +410,10 @@ serve_compile_request(
         const struct section_problem_data *prob,
         const struct section_language_data *lang,
         int no_db_flag)
-  __attribute__((warn_unused_result));
+#if defined __GNUC__
+  __attribute__((warn_unused_result))
+#endif
+;
 
 struct compile_reply_packet;
 int
