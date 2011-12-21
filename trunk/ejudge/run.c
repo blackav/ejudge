@@ -1480,6 +1480,7 @@ run_tests(struct section_tester_data *tst,
 
   long expected_free_space = 0;
   const struct section_global_data *global = serve_state.global;
+  int disable_stderr;
 
   memset(&tstinfo, 0, sizeof(tstinfo));
   ASSERT(tst->problem > 0);
@@ -1692,6 +1693,9 @@ run_tests(struct section_tester_data *tst,
     pathmake(check_out_path, global->run_work_dir, "/", "checkout", NULL);
     pathmake(score_out_path, global->run_work_dir, "/", "scoreout", NULL);
 
+    unlink(check_out_path);
+    unlink(score_out_path);
+
     if (tst->nwrun_spool_dir[0]) {
       status = invoke_nwrun(global, tst, req_pkt, prb, far,
                             cur_test, 0, &has_real_time,
@@ -1728,6 +1732,17 @@ run_tests(struct section_tester_data *tst,
         total_failed_tests++;
         goto done_this_test;
       }
+    }
+
+    disable_stderr = -1;
+    if (prb->use_info > 0 && tstinfo.disable_stderr >= 0) {
+      disable_stderr = tstinfo.disable_stderr;
+    }
+    if (disable_stderr < 0) {
+      disable_stderr = req_pkt->disable_stderr;
+    }
+    if (disable_stderr < 0) {
+      disable_stderr = 0;
     }
 
     make_writable(tst->check_dir);
@@ -1890,7 +1905,7 @@ run_tests(struct section_tester_data *tst,
             task_SetRedir(tsk, 2, TSR_FILE,output_path,TSK_REWRITE,TSK_FULL_RW);
           } else if (prb->use_stdout && !tst->no_redirect) {
             task_SetRedir(tsk, 1,TSR_FILE,output_path,TSK_REWRITE,TSK_FULL_RW);
-            if (tst->ignore_stderr > 0) {
+            if (tst->ignore_stderr > 0 && disable_stderr <= 0) {
               task_SetRedir(tsk, 2,TSR_FILE, "/dev/null",TSK_WRITE,TSK_FULL_RW);
             } else {
               task_SetRedir(tsk, 2,TSR_FILE,error_path,TSK_REWRITE,TSK_FULL_RW);
@@ -1900,7 +1915,7 @@ run_tests(struct section_tester_data *tst,
             // create empty output file
             tmpfd = open(output_path, O_CREAT | O_TRUNC | O_WRONLY, 0600);
             if (tmpfd >= 0) close(tmpfd);
-            if (tst->ignore_stderr > 0) {
+            if (tst->ignore_stderr > 0 && disable_stderr <= 0) {
               task_SetRedir(tsk, 2, TSR_FILE,"/dev/null",TSK_WRITE,TSK_FULL_RW);
             } else {
               task_SetRedir(tsk, 2,TSR_FILE,error_path,TSK_REWRITE,TSK_FULL_RW);
@@ -1910,8 +1925,10 @@ run_tests(struct section_tester_data *tst,
           // create empty output file
           tmpfd = open(output_path, O_CREAT | O_TRUNC | O_WRONLY, 0600);
           if (tmpfd >= 0) close(tmpfd);
-          if (tst->ignore_stderr > 0) {
+          if (tst->ignore_stderr > 0 && disable_stderr <= 0) {
             task_SetRedir(tsk, 2, TSR_FILE, "/dev/null",TSK_WRITE,TSK_FULL_RW);
+          } else {
+            task_SetRedir(tsk, 2,TSR_FILE,error_path,TSK_REWRITE,TSK_FULL_RW);
           }
         }
       }
@@ -2371,6 +2388,13 @@ run_tests(struct section_tester_data *tst,
     }
 
   run_checker:;
+    if (disable_stderr > 0 && tests[cur_test].error_size > 0) {
+      append_msg_to_log(check_out_path, "non-empty output to stderr");
+      status = RUN_PRESENTATION_ERR;
+      failed_test = cur_test;
+      total_failed_tests++;
+      goto read_checker_output;
+    }
 
     if (prb->variant_num > 0 && !tst->standard_checker_used) {
       var_check_cmd = (unsigned char*) alloca(sizeof(path_t));
