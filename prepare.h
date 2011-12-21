@@ -720,7 +720,7 @@ struct section_global_data
   +unsigned char *solution_cmd;
  */
 
-/* sizeof(struct section_problem_data) == 65332 */
+/* sizeof(struct section_problem_data) == 65336 */
 struct section_problem_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -910,6 +910,8 @@ struct section_problem_data
   ejintbool_t ignore_unmarked;
   /** time-limit for the interactor */
   int interactor_time_limit;
+  /** consider any output to stderr as presentation error */
+  ejintbool_t disable_stderr;
 
   /** printf pattern for the test files */
   unsigned char test_pat[32];
