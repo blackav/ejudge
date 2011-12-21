@@ -93,6 +93,7 @@ run_request_packet_read(
   if ((flags & FLAGS_NOTIFY)) pout->notify_flag = 1;
   if ((flags & FLAGS_ADVANCED_LAYOUT)) pout->advanced_layout = 1;
   if ((flags & FLAGS_SEPARATE_USER_SCORE)) pout->separate_user_score = 1;
+  if ((flags & FLAGS_DISABLE_STDERR)) pout->disable_stderr = 1;
 
   pout->ts1 = cvt_bin_to_host_32(pin->ts1);
   pout->ts1_us = cvt_bin_to_host_32(pin->ts1_us);
@@ -144,7 +145,7 @@ run_request_packet_read(
   *p_out_data = pout;
   return 0;
 
- failed:
+failed:
   err("run_request_packet_read: error %s, %d", "$Revision$", errcode);
   run_request_packet_free(pout);
   return -1;
