@@ -48,6 +48,7 @@ struct testinfo_struct
 {
   int exit_code;
   int check_stderr;
+  int disable_stderr;
   int cmd_argc;
   char **cmd_argv;
   char *comment;

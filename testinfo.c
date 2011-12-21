@@ -461,6 +461,16 @@ parse_line(const unsigned char *str, size_t len, testinfo_t *pt)
         FAIL(TINF_E_INVALID_VALUE);
     }
     pt->check_stderr = x;
+  } else if (!strcmp(name_buf, "disable_stderr")) {
+    if (cmd.u < 1) {
+      x = 1;
+    } else {
+      if (cmd.u > 1) FAIL(TINF_E_MULTIPLE_VALUE);
+      if (sscanf(cmd.v[0], "%d%n", &x, &n) != 1 || cmd.v[0][n]
+          || x < 0 || x > 1)
+        FAIL(TINF_E_INVALID_VALUE);
+    }
+    pt->disable_stderr = x;
   } else {
     FAIL(TINF_E_INVALID_VAR_NAME);
   }
