@@ -1405,6 +1405,8 @@ serve_run_request(
   run_pkt->secure_run = state->global->secure_run;
   run_pkt->notify_flag = notify_flag;
   run_pkt->advanced_layout = state->global->advanced_layout;
+  run_pkt->disable_stderr = prob->disable_stderr;
+  if (run_pkt->disable_stderr < 0) run_pkt->disable_stderr = 0;
   run_pkt->mime_type = mime_type;
   if (run_pkt->secure_run && prob->disable_security) run_pkt->secure_run = 0;
   if (run_pkt->secure_run && lang && lang->disable_security) run_pkt->secure_run = 0;

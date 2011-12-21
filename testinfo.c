@@ -517,6 +517,7 @@ testinfo_parse(const char *path, testinfo_t *pt)
 
   memset(pt, 0, sizeof(*pt));
   pt->cmd_argc = -1;
+  pt->disable_stderr = -1;
   if (!(fin = fopen(path, "r"))) {
     memset(pt, 0, sizeof(*pt));
     return -TINF_E_CANNOT_OPEN;
