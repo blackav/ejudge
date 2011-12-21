@@ -1311,6 +1311,9 @@ prepare_unparse_prob(
   if (prob->ignore_unmarked >= 0
       && ((prob->abstract && prob->ignore_unmarked) || !prob->abstract))
       unparse_bool(f, "ignore_unmarked", prob->ignore_unmarked);
+  if (prob->disable_stderr >= 0
+      && ((prob->abstract && prob->disable_stderr) || !prob->abstract))
+      unparse_bool(f, "disable_stderr", prob->disable_stderr);
   if (prob->enable_text_form >= 0
       && ((prob->abstract && prob->enable_text_form) || !prob->abstract))
       unparse_bool(f, "enable_text_form", prob->enable_text_form);
@@ -1620,6 +1623,8 @@ prepare_unparse_actual_prob(
     unparse_bool(f, "valuer_sets_marked", prob->valuer_sets_marked);
   if (prob->ignore_unmarked > 0)
     unparse_bool(f, "ignore_unmarked", prob->ignore_unmarked);
+  if (prob->disable_stderr > 0)
+    unparse_bool(f, "disable_stderr", prob->disable_stderr);
   if (prob->enable_text_form > 0)
     unparse_bool(f, "enable_text_form", prob->enable_text_form);
   if (prob->stand_ignore_score > 0)
