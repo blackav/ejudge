@@ -41,6 +41,7 @@ struct run_request_packet
   int advanced_layout;          /* advanced files layout */
   int mime_type;                /* mime type of the content */
   int separate_user_score;      /* calculate separate user score */
+  int disable_stderr;           /* consider output to stderr as PE */
   /* time when the compile request was queued by serve */
   int ts1;
   int ts1_us;
