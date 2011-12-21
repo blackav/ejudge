@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2011/12/20 13:16:09
+// Generated 2011/12/21 11:50:53
 
 #include "prepare_meta.h"
 #include "prepare.h"
@@ -424,6 +424,7 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_valuer_sets_marked] = { CNTSPROB_valuer_sets_marked, 'B', XSIZE(struct section_problem_data, valuer_sets_marked), "valuer_sets_marked", XOFFSET(struct section_problem_data, valuer_sets_marked) },
   [CNTSPROB_ignore_unmarked] = { CNTSPROB_ignore_unmarked, 'B', XSIZE(struct section_problem_data, ignore_unmarked), "ignore_unmarked", XOFFSET(struct section_problem_data, ignore_unmarked) },
   [CNTSPROB_interactor_time_limit] = { CNTSPROB_interactor_time_limit, 'i', XSIZE(struct section_problem_data, interactor_time_limit), "interactor_time_limit", XOFFSET(struct section_problem_data, interactor_time_limit) },
+  [CNTSPROB_disable_stderr] = { CNTSPROB_disable_stderr, 'B', XSIZE(struct section_problem_data, disable_stderr), "disable_stderr", XOFFSET(struct section_problem_data, disable_stderr) },
   [CNTSPROB_test_pat] = { CNTSPROB_test_pat, 'S', XSIZE(struct section_problem_data, test_pat), "test_pat", XOFFSET(struct section_problem_data, test_pat) },
   [CNTSPROB_corr_pat] = { CNTSPROB_corr_pat, 'S', XSIZE(struct section_problem_data, corr_pat), "corr_pat", XOFFSET(struct section_problem_data, corr_pat) },
   [CNTSPROB_info_pat] = { CNTSPROB_info_pat, 'S', XSIZE(struct section_problem_data, info_pat), "info_pat", XOFFSET(struct section_problem_data, info_pat) },
