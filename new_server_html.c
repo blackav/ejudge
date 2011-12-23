@@ -8032,6 +8032,15 @@ priv_main_page(FILE *fout,
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
             "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role),
             phr->name_arm, phr->contest_id, extra->contest_arm, _("Main page"));
+
+  fprintf(fout,
+          "<script language=\"javascript\">\n"
+          "var self_url='%s';\n"
+          "var SID='%016llx';\n"
+          "</script>\n",
+          phr->self_url,
+          phr->session_id);
+
   fprintf(fout, "<ul>\n");
   fprintf(fout, "<li>%s%s</a></li>\n",
           ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_USERS, 0),

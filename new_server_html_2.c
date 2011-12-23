@@ -135,8 +135,12 @@ ns_write_priv_all_runs(
   const struct section_problem_data *prob = 0;
   unsigned char cl[128];
   int prob_type = 0;
+  int enable_js_status_menu = 0;
 
   if (!u) u = user_filter_info_allocate(cs, phr->user_id, phr->session_id);
+
+  // FIXME: check permissions
+  enable_js_status_menu = 1;
 
   if (!filter_expr || !*filter_expr ||
       (u->prev_filter_expr && !strcmp(u->prev_filter_expr, filter_expr))){
@@ -551,7 +555,8 @@ ns_write_priv_all_runs(
       }
       run_status_str(pe->status, statstr, sizeof(statstr), prob_type, 0);
       write_html_run_status(cs, f, pe, 0, 1, attempts, disq_attempts,
-                            prev_successes, "b1", 0);
+                            prev_successes, "b1", 0,
+                            enable_js_status_menu);
       /*
       if (phr->role == USER_ROLE_ADMIN) {
         write_change_status_dialog(cs, f, "status", pe->is_imported, "b1");

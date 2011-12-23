@@ -225,7 +225,8 @@ write_html_run_status(
         int disq_attempts,
         int prev_successes,
         const unsigned char *td_class,
-        int disable_failed)
+        int disable_failed,
+        int enable_js_status_menu)
 {
   const struct section_global_data *global = state->global;
   unsigned char status_str[128], score_str[128];
@@ -254,7 +255,11 @@ write_html_run_status(
     pr = state->probs[pe->prob_id];
   run_status_str(status, status_str, sizeof(status_str),
                  pr?pr->type:0, pr?pr->scoring_checker:0);
-  fprintf(f, "<td%s>%s</td>", cl, status_str);
+  if (enable_js_status_menu) {
+    fprintf(f, "<td%s><a href=\"javascript:ej_stat(%d)\">%s</a><div class=\"ej_dd\" id=\"ej_dd_%d\"></div></td>", cl, pe->run_id, status_str, pe->run_id);
+  } else {
+    fprintf(f, "<td%s>%s</td>", cl, status_str);
+  }
 
   if (global->score_system == SCORE_KIROV
       || global->score_system == SCORE_OLYMPIAD
@@ -605,7 +610,7 @@ new_write_user_runs(
 
     write_html_run_status(state, f, &re, 1 /* user_mode */,
                           0, attempts, disq_attempts,
-                          prev_successes, table_class, 0);
+                          prev_successes, table_class, 0, 0);
 
     if (enable_src_view) {
       fprintf(f, "<td%s>", cl);
@@ -4506,7 +4511,7 @@ do_write_public_log(
 
     write_html_run_status(state, f, pe, user_mode,
                           0, attempts, disq_attempts,
-                          prev_successes, 0, 1);
+                          prev_successes, 0, 1, 0);
 
     fputs("</tr>\n", f);
   }
