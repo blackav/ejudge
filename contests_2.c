@@ -125,25 +125,31 @@ unparse_field(
         char const * const field_map[],
         const unsigned char *indent)
 {
-  unsigned char *txt = 0, *arm_txt = 0;
-  size_t arm_sz = 0;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
 
   if (!pf) return;
-  txt = pf->legend;
-  if (txt && *txt && html_armor_needed(txt, &arm_sz)) {
-    arm_txt = (unsigned char*) alloca(arm_sz + 1);
-    html_armor_string(txt, arm_txt);
-    txt = arm_txt;
-  }
   fprintf(f, "%s<%s %s=\"%s\" %s=\"%s\"",
           indent, contests_elem_map[CONTEST_FIELD],
           contests_attr_map[CONTEST_A_ID], field_map[id],
           contests_attr_map[CONTEST_A_MANDATORY], pf->mandatory?"yes":"no");
-  if (txt && *txt) {
-    fprintf(f, ">%s</%s>\n", txt, contests_elem_map[CONTEST_FIELD]);
+  if (pf->separator && pf->separator[0]) {
+    fprintf(f, " %s=\"%s\"", contests_attr_map[CONTEST_A_SEPARATOR],
+            html_armor_buf(&ab, pf->separator));
+  }
+  if (pf->options && pf->options[0]) {
+    fprintf(f, " %s=\"%s\"", contests_attr_map[CONTEST_A_OPTIONS],
+            html_armor_buf(&ab, pf->options));
+  }
+  if (pf->checkbox) {
+    fprintf(f, " %s=\"%s\"", contests_attr_map[CONTEST_A_CHECKBOX], "yes");
+  }
+  if (pf->legend && pf->legend[0]) {
+    fprintf(f, ">%s</%s>\n", html_armor_buf(&ab, pf->legend),
+            contests_elem_map[CONTEST_FIELD]);
   } else {
     fprintf(f, "/>\n");
   }
+  html_armor_free(&ab);
 }
 
 static void
@@ -258,6 +264,16 @@ contests_unparse(FILE *f,
     fprintf(f, "  <%s>%s</%s>\n", contests_elem_map[CONTEST_SCHED_TIME],
             xml_unparse_date(cnts->sched_time),
             contests_elem_map[CONTEST_SCHED_TIME]);
+  }
+  if (cnts->open_time > 0) {
+    fprintf(f, "  <%s>%s</%s>\n", contests_elem_map[CONTEST_OPEN_TIME],
+            xml_unparse_date(cnts->open_time),
+            contests_elem_map[CONTEST_OPEN_TIME]);
+  }
+  if (cnts->close_time > 0) {
+    fprintf(f, "  <%s>%s</%s>\n", contests_elem_map[CONTEST_CLOSE_TIME],
+            xml_unparse_date(cnts->close_time),
+            contests_elem_map[CONTEST_CLOSE_TIME]);
   }
 
   unparse_texts(f, cnts, (const int[]) {

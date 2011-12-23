@@ -79,6 +79,7 @@ html_checkbox(
         unsigned char *buf,
         size_t size,
         const unsigned char *var_name,
+        const unsigned char *value,
         int is_checked);
 
 #endif /* __MISCHTML_H__ */
