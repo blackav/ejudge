@@ -120,6 +120,8 @@ enum
     CONTEST_CSS_URL,
     CONTEST_REGISTER_SUBJECT,
     CONTEST_REGISTER_SUBJECT_EN,
+    CONTEST_OPEN_TIME,
+    CONTEST_CLOSE_TIME,
 
     CONTEST_LAST_TAG
   };
@@ -159,6 +161,7 @@ enum
     CONTEST_A_DISABLE_MEMBER_DELETE,
     CONTEST_A_SEPARATOR,
     CONTEST_A_OPTIONS,
+    CONTEST_A_CHECKBOX,
 
     CONTEST_LAST_ATTR
   };
@@ -249,6 +252,7 @@ struct contest_field
   unsigned char *legend;
   unsigned char *separator;
   unsigned char *options;
+  int checkbox;
 };
 
 struct contest_ip
@@ -301,6 +305,8 @@ struct contest_desc
 
   time_t         reg_deadline;
   time_t         sched_time;
+  time_t         open_time;
+  time_t         close_time;
 
   unsigned char *name;
   unsigned char *name_en;
