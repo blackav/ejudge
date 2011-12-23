@@ -410,3 +410,12 @@ th.cnts_edit_legend {
         margin: 0;
         padding: 0;
 }
+
+div.ej_dd {
+        position: absolute;
+        display: none;
+        margin: 5px; padding: 5px;
+        border: 1px solid #aaa;
+        background-color: #efefef;
+        float: none;
+}

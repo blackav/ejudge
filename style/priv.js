@@ -1,7 +1,7 @@
 /* -*- mode: java; coding: utf-8 -*- */
 // $Id$
 
-// Copyright (C) 2008-2009 Alexander Chernov <cher@ejudge.ru>
+// Copyright (C) 2008-2011 Alexander Chernov <cher@ejudge.ru>
 
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -568,4 +568,68 @@ function formatViolation()
     if (obj.value.length != 0 && obj.value.charAt(obj.value.length - 1) != '\n') obj.value += '\n';
   }
   obj.value += "Нарушение правил оформления программ\n";
+}
+
+function ej_change_stat(run_id, status)
+{
+  if (status == 100) {
+    var d = document.getElementById('ej_dd_' + run_id);
+    if (d == null) return;
+    d.style.display = "none";
+    return;
+  }
+
+  document.location.href = self_url + "?SID=" + SID + "&action=CHANGE_STATUS" + "&run_id=" + run_id + "&status=" + status;
+}
+
+var ej_valid_statuses =
+{
+  100 : "No change",
+  99 : "Rejudge",
+  95 : "Full rejudge",
+  0  : "OK",
+  9  : "Ignored",
+  10 : "Disqualified",
+  14 : "Coding style violation",
+  6  : "Check failed",
+  11 : "Pending check",
+  7  : "Partial solution",
+  8  : "Accepted for testing",
+  1  : "Compilation error",
+  2  : "Run-time error",
+  3  : "Time-limit exceeded",
+  4  : "Presentation error",
+  5  : "Wrong answer",
+  12 : "Memory limit exceeded",
+  13 : "Security violation"
+}
+
+function ej_stat(run_id)
+{
+  var d = document.getElementById('ej_dd_' + run_id);
+  if (d == null) return;
+  if (d.style.display == "block") {
+    d.style.display = "none";
+    return;
+  }
+  d.style.display = "block";
+  if (d.childNodes.length >= 1) {
+    return;
+  }
+  var b = document.createElement("b");
+  var t = document.createTextNode("Change result of run " + run_id);
+  var a = null;
+  b.appendChild(t);
+  d.appendChild(b);
+  for (var p in ej_valid_statuses) {
+    d.appendChild(document.createElement("br"));
+    d.appendChild(document.createTextNode("["));
+    b = document.createElement("a");
+    a = document.createAttribute("href");
+    a.value = "javascript:ej_change_stat(" + run_id + "," + p + ")";
+    b.setAttributeNode(a);
+    b.appendChild(document.createTextNode(ej_valid_statuses[p]));
+    d.appendChild(b);
+    d.appendChild(document.createTextNode("]"));
+  }
 }
