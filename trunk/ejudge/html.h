@@ -162,7 +162,8 @@ write_html_run_status(
         int disq_attempts,
         int prev_successes,
         const unsigned char *td_class,
-        int disable_failed);
+        int disable_failed,
+        int enable_js_status_menu);
 
 int write_xml_testing_report(FILE *f, int user_mode, unsigned char const *txt,
                              ej_cookie_t sid,
