@@ -3,7 +3,7 @@
 
 /* $Id$ */
 
-/* Copyright (C) 2003-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2011 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -58,6 +58,7 @@ enum
   OPCAP_PRIV_EDIT_PASSWD = 33,
   OPCAP_RESTART = 34,
   OPCAP_COMMENT_RUN = 35,
+  OPCAP_UNLOAD_CONTEST = 36,
 
   OPCAP_LAST
 };
