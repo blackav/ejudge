@@ -1809,6 +1809,7 @@ edit_general_form(
         const struct userlist_user *u)
 {
   unsigned char bb[1024];
+  unsigned char buf[1024];
   unsigned char varname[1024];
   int i, ff, j, rr;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
@@ -1818,6 +1819,7 @@ edit_general_form(
   int *user_lang_map = 0;
   const struct userlist_member *m = 0;
   const struct userlist_user_info *ui = 0;
+  int is_checked = 0;
 
   if (u) ui = u->cnts0;
 
@@ -1925,10 +1927,15 @@ edit_general_form(
         fprintf(fout, "<option%s>%s</option>", s, ARMOR(allowed_regions[j]));
       }
       fprintf(fout, "</select></td>\n");
+    } else if (cnts->fields[ff]->checkbox) {
+      xml_parse_bool(NULL, NULL, 0, 0, bb, &is_checked);
+      snprintf(varname, sizeof(varname), "param_%d", ff);
+      fprintf(fout, "<td class=\"b0\">%s</td>",
+              html_checkbox(buf, sizeof(buf), varname, "yes", is_checked));
     } else {
       snprintf(varname, sizeof(varname), "param_%d", ff);
       fprintf(fout, "<td class=\"b0\">%s</td>",
-              html_input_text(bb, sizeof(bb), varname,
+              html_input_text(buf, sizeof(buf), varname,
                               contest_field_desc[ff].size,
                               ARMOR(bb)));
     }

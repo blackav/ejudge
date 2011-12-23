@@ -129,6 +129,8 @@ const int contests_tag_to_meta_map[CONTEST_LAST_TAG] =
   [CONTEST_CSS_URL] = CNTS_css_url,
   [CONTEST_REGISTER_SUBJECT] = CNTS_register_subject,
   [CONTEST_REGISTER_SUBJECT_EN] = CNTS_register_subject_en,
+  [CONTEST_OPEN_TIME] = CNTS_open_time,
+  [CONTEST_CLOSE_TIME] = CNTS_close_time,
 };
 const int contests_attr_to_meta_map[CONTEST_LAST_ATTR] =
 {
@@ -243,6 +245,8 @@ char const * const contests_elem_map[] =
   "css_url",
   "register_subject",
   "register_subject_en",
+  "open_time",
+  "close_time",
 
   0
 };
@@ -283,6 +287,7 @@ char const * const contests_attr_map[] =
   "disable_member_delete",
   "separator",
   "options",
+  "checkbox",
 
   0
 };
@@ -888,6 +893,8 @@ parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
       break;
     case CONTEST_REGISTRATION_DEADLINE:
     case CONTEST_SCHED_TIME:
+    case CONTEST_OPEN_TIME:
+    case CONTEST_CLOSE_TIME:
       if (handle_final_tag(path, t, &date_str) < 0) {
         xfree(date_str);
         return -1;
@@ -971,6 +978,9 @@ parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
             break;
           case CONTEST_A_OPTIONS:
             pf->options = a->text; a->text = 0;
+            break;
+          case CONTEST_A_CHECKBOX:
+            if (xml_attr_bool(a, &pf->checkbox) < 0) return -1;
             break;
           default:
             return xml_err_attr_not_allowed(t, a);
@@ -1192,6 +1202,8 @@ contests_merge(struct contest_desc *pold, struct contest_desc *pnew)
   pold->last_check_time = pnew->last_check_time;
   pold->last_file_time = pnew->last_file_time;
   pold->user_contest_num = pnew->user_contest_num;
+  pold->open_time = pnew->open_time;
+  pold->close_time = pnew->close_time;
 
   pold->default_locale_num = l10n_parse_locale(pold->default_locale);
 }

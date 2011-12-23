@@ -6159,23 +6159,23 @@ priv_upsolving_configuration_1(
   html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
   fprintf(fout, "<table>");
   fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
-          html_checkbox(bb, sizeof(bb), "freeze_standings",
+          html_checkbox(bb, sizeof(bb), "freeze_standings", NULL,
                         freeze_standings?1:0),
           _("Freeze contest standings"));
   fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
-          html_checkbox(bb, sizeof(bb), "view_source",
+          html_checkbox(bb, sizeof(bb), "view_source", NULL,
                         view_source?1:0),
           _("Allow viewing source code"));
   fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
-          html_checkbox(bb, sizeof(bb), "view_protocol",
+          html_checkbox(bb, sizeof(bb), "view_protocol", NULL,
                         view_protocol?1:0),
           _("Allow viewing run report"));
   fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
-          html_checkbox(bb, sizeof(bb), "full_protocol",
+          html_checkbox(bb, sizeof(bb), "full_protocol", NULL,
                         full_proto?1:0),
           _("Allow viewing full protocol"));
   fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
-          html_checkbox(bb, sizeof(bb), "disable_clars",
+          html_checkbox(bb, sizeof(bb), "disable_clars", NULL,
                         disable_clars?1:0),
           _("Disable clarifications"));
   fprintf(fout, "</table>\n");
