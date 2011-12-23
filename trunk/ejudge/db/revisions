@@ -6783,3 +6783,12 @@ html.h 6589 0 578324
 html.c 6589 0 14432302
 new_server_html.c 6589 0 40279528
 new_server_html_2.c 6589 0 16614021
+contests.h 6591 0 1222964
+opcaps.h 6592 0 209669
+opcaps.c 6592 0 587700
+mischtml.h 6593 0 224615
+contests.c 6593 0 4229648
+contests_2.c 6593 0 2105588
+html_checkbox.c 6593 0 104321
+new_server_html.c 6593 0 40281483
+new_server_html_5.c 6593 0 9286480
