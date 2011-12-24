@@ -715,6 +715,22 @@ prepare_force_start_virtual(
   put_cgi_param_f("action", "%d", action);
 }
 
+static void
+prepare_unload_2(
+        const unsigned char *cmd,
+        int argc,
+        char *argv[],
+        int role,
+        int action)
+{
+  if (argc != 2)
+    startup_error("invalid number of arguments for `%s'", cmd);
+  put_cgi_param_f("contest_id", "%d", contest_id);
+  put_cgi_param("login", argv[0]);
+  put_cgi_param("password", argv[1]);
+  put_cgi_param_f("action", "%d", action);
+}
+
 struct command_handler
 {
   const char *cmd;
@@ -780,6 +796,7 @@ static const struct command_handler handler_table[] =
   { "rejudge-all", prepare_simple, 0, 0, NEW_SRV_ACTION_REJUDGE_ALL_2 },
   { "schedule", prepare_schedule, 0, 0, NEW_SRV_ACTION_SCHEDULE },
   { "force-start-virtual", prepare_force_start_virtual, 0, 0, NEW_SRV_ACTION_FORCE_START_VIRTUAL },
+  { "unload-2", prepare_unload_2, 0, 0, NEW_SRV_ACTION_RELOAD_SERVER_2 },
 
   { 0, 0 },
 };

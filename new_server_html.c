@@ -182,8 +182,8 @@ ns_get_contest_extra(int contest_id)
   return p;
 }
 
-static struct contest_extra *
-try_contest_extra(int contest_id)
+struct contest_extra *
+ns_try_contest_extra(int contest_id)
 {
   struct contest_extra *p;
   size_t i, j, k;
@@ -231,7 +231,7 @@ ns_client_destroy_callback(struct client_state *p)
 
   if (p->contest_id <= 0) return;
   if (contests_get(p->contest_id, &cnts) < 0) return;
-  if (!(extra = try_contest_extra(p->contest_id))) return;
+  if (!(extra = ns_try_contest_extra(p->contest_id))) return;
   if (!(cs = extra->serve_state)) return;
   if (!cs->pending_xml_import || cs->client_id < 0) return;
   if (cs->saved_testing_suspended != cs->testing_suspended) {
@@ -644,7 +644,7 @@ ul_conn_callback(struct server_framework_state *state,
       close_ul_connection(state);
       break;
     } else {
-      e = try_contest_extra(contest_id);
+      e = ns_try_contest_extra(contest_id);
       if (!e) {
         err("userlist-server notification: %d - no such contest", contest_id);
         break;
@@ -664,7 +664,7 @@ ul_notification_callback(void *user_data, int contest_id)
 {
   struct contest_extra *e;
 
-  e = try_contest_extra(contest_id);
+  e = ns_try_contest_extra(contest_id);
   if (!e) {
     err("userlist-server notification: %d - no such contest", contest_id);
   } else {
@@ -8686,6 +8686,15 @@ priv_main_page(FILE *fout,
   html_armor_free(&ab);
 }
 
+static void
+priv_reload_server_2(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+}
+
 typedef void (*action_handler_t)(FILE *fout,
                                  struct http_request_info *phr,
                                  const struct contest_desc *cnts,
@@ -8883,6 +8892,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_REPORT] = priv_generic_operation,
   [NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_JUDGE_SCORE] = priv_generic_operation,
   [NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_FINAL_VISIBILITY] = priv_generic_operation,
+  [NEW_SRV_ACTION_RELOAD_SERVER_2] = priv_reload_server_2,
 };
 
 static void
@@ -14406,6 +14416,7 @@ static const unsigned char * const symbolic_action_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_REPORT] = "ADMIN_CHANGE_ONLINE_VIEW_REPORT",
   [NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_JUDGE_SCORE] = "ADMIN_CHANGE_ONLINE_VIEW_JUDGE_SCORE",
   [NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_FINAL_VISIBILITY] = "ADMIN_CHANGE_ONLINE_FINAL_VISIBILITY",
+  [NEW_SRV_ACTION_RELOAD_SERVER_2] = "RELOAD_SERVER_2",
 };
 
 void
