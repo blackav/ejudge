@@ -993,6 +993,8 @@ static const struct cnts_edit_info cnts_edit_info[] =
   { NS_CONTEST, CNTS_register_email_file, 'e', 1, 1, 1, 1, SSERV_OP_CONTEST_XML_FIELD_EDIT_PAGE, "Registration letter template file", "Registration letter template file", 0 },
   { 0, 0, '-', 0, 0, 0, 0, 0, "Participation Settings", 0, 0 },
   { NS_CONTEST, CNTS_sched_time, 't', 1, 1, 0, 1, 0, "Scheduled start time", "Scheduled start time", 0 },
+  { NS_CONTEST, CNTS_open_time, 't', 1, 1, 0, 1, 0, "Virtual contest open time", "Virtual contest open time", 0 },
+  { NS_CONTEST, CNTS_close_time, 't', 1, 1, 0, 1, 0, "Virtual contest close time", "Virtual contest close time", 0 },
   { NS_CONTEST, CNTS_team_url, 's', 1, 1, 1, 1, 0, "URL for the client CGI program", "URL for the client CGI program", 0 },
   { NS_CONTEST, CNTS_standings_url, 's', 1, 1, 1, 1, 0, "URL for the current standings", "URL for the current standings", 0 },
   { NS_CONTEST, CNTS_problems_url, 's', 1, 1, 1, 1, 0, "URL for the problemset", "URL for the problemset", 0 },

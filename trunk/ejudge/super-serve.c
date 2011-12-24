@@ -2648,6 +2648,8 @@ cmd_simple_top_command(struct client_state *p, int len,
   case SSERV_CMD_CNTS_CLEAR_DEFAULT_LOCALE:
   case SSERV_CMD_CNTS_CLEAR_DEADLINE:
   case SSERV_CMD_CNTS_CLEAR_SCHED_TIME:
+  case SSERV_CMD_CNTS_CLEAR_OPEN_TIME:
+  case SSERV_CMD_CNTS_CLEAR_CLOSE_TIME:
   case SSERV_CMD_CNTS_CLEAR_USERS_HEADER:
   case SSERV_CMD_CNTS_CLEAR_USERS_FOOTER:
   case SSERV_CMD_CNTS_CLEAR_REGISTER_HEADER:
@@ -2786,6 +2788,8 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_CNTS_CHANGE_MEMBER_DELETE:
   case SSERV_CMD_CNTS_CHANGE_DEADLINE:
   case SSERV_CMD_CNTS_CHANGE_SCHED_TIME:
+  case SSERV_CMD_CNTS_CHANGE_OPEN_TIME:
+  case SSERV_CMD_CNTS_CHANGE_CLOSE_TIME:
   case SSERV_CMD_CNTS_CHANGE_USERS_HEADER:
   case SSERV_CMD_CNTS_CHANGE_USERS_FOOTER:
   case SSERV_CMD_CNTS_CHANGE_REGISTER_HEADER:
@@ -3729,6 +3733,9 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_CLEAR_USER_CONTEST] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_DEFAULT_LOCALE] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_DEADLINE] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_CLEAR_SCHED_TIME] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_CLEAR_OPEN_TIME] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_CLEAR_CLOSE_TIME] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_USERS_HEADER] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_USERS_FOOTER] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_REGISTER_HEADER] = { cmd_simple_top_command },
@@ -3808,6 +3815,8 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_CHANGE_MEMBER_DELETE] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_DEADLINE] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_SCHED_TIME] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_OPEN_TIME] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_CLOSE_TIME] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_USERS_HEADER] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_USERS_FOOTER] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_REGISTER_HEADER] = { cmd_set_value },

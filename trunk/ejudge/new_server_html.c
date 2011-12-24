@@ -7068,6 +7068,8 @@ unpriv_print_status(
   unsigned char duration_buf[128];
   unsigned char bb[1024];
   time_t tmpt;
+  int enable_virtual_start = 0;
+  const unsigned char *cl = " class=\"b0\"";
 
   if (!cnts->exam_mode) {
     fprintf(fout, "<%s>%s</%s>\n",
@@ -7143,21 +7145,21 @@ unpriv_print_status(
       }
     }
 
-    fprintf(fout, "<table class=\"b0\">");
-    fprintf(fout, "<tr><td class=\"b0\">%s:</td><td class=\"b0\">%s</td></tr>\n",
-            _("Server time"), ctime(&cs->current_time));
+    fprintf(fout, "<table%s>", cl);
+    fprintf(fout, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+            cl, _("Server time"), cl, xml_unparse_date(cs->current_time));
     if (start_time > 0) {
       if (cnts->exam_mode) {
         s = _("Exam start time");
       } else {
         s = _("Contest start time");
       }
-      fprintf(fout, "<tr><td class=\"b0\">%s:</td><td class=\"b0\">%s</td></tr>\n",
-              s, ctime(&start_time));
+      fprintf(fout, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+              cl, s, cl, xml_unparse_date(start_time));
     }
     if (!global->is_virtual && start_time <= 0 && sched_time > 0) {
-      fprintf(fout, "<tr><td class=\"b0\">%s:</td><td class=\"b0\">%s</td></tr>\n",
-              _("Planned start time"), ctime(&sched_time));
+      fprintf(fout, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+              cl, _("Planned start time"), cl, xml_unparse_date(sched_time));
     }
     if (stop_time <= 0 && (duration > 0 || finish_time <= 0)) {
       if (duration > 0) {
@@ -7165,41 +7167,49 @@ unpriv_print_status(
       } else {
         snprintf(duration_buf, sizeof(duration_buf), "%s", _("Unlimited"));
       }
-      fprintf(fout, "<tr><td class=\"b0\">%s:</td><td class=\"b0\">%s</td></tr>\n",
-              _("Duration"), duration_buf);
+      fprintf(fout, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+              cl, _("Duration"), cl, duration_buf);
     }
     if (start_time > 0 && stop_time <= 0 && duration > 0) {
       tmpt = start_time + duration;
-      fprintf(fout, "<tr><td class=\"b0\">%s:</td><td class=\"b0\">%s</td></tr>\n",
-              _("Scheduled end time"), ctime(&tmpt));
+      fprintf(fout, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+              cl, _("Scheduled end time"), cl, xml_unparse_date(tmpt));
     } else if (start_time > 0 && stop_time <= 0 && duration <= 0
                && finish_time > 0) {
-      fprintf(fout, "<tr><td class=\"b0\">%s:</td><td class=\"b0\">%s</td></tr>\n",
-              _("Scheduled end time"), ctime(&finish_time));
+      fprintf(fout, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+              cl, _("Scheduled end time"), cl, xml_unparse_date(finish_time));
     } else if (stop_time) {
-      fprintf(fout, "<tr><td class=\"b0\">%s:</td><td class=\"b0\">%s</td></tr>\n",
-              _("End time"), ctime(&stop_time));
+      fprintf(fout, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+              cl, _("End time"), cl, xml_unparse_date(stop_time));
     }
 
     if (start_time > 0 && stop_time <= 0 && fog_start_time > 0) {
-      fprintf(fout, "<tr><td class=\"b0\">%s:</td><td class=\"b0\">%s</td></tr>\n",
-              _("Standings freeze time"), ctime(&fog_start_time));
+      fprintf(fout, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+              cl, _("Standings freeze time"), cl, xml_unparse_date(fog_start_time));
     } else if (stop_time > 0 && duration > 0 && global->board_fog_time > 0
                && global->board_unfog_time > 0 && !cs->standings_updated
                && cs->current_time < stop_time + global->board_unfog_time) {
       tmpt = stop_time + global->board_unfog_time;
-      fprintf(fout, "<tr><td class=\"b0\">%s:</td><td class=\"b0\">%s</td></tr>\n",
-              _("Standings unfreeze time"), ctime(&tmpt));
+      fprintf(fout, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+              cl, _("Standings unfreeze time"), cl, xml_unparse_date(tmpt));
     }
 
     if (start_time > 0 && stop_time <= 0 && duration > 0) {
       duration_str(0, cs->current_time, start_time, duration_buf, 0);
-      fprintf(fout, "<tr><td class=\"b0\">%s:</td><td class=\"b0\">%s</td></tr>\n",
-              _("Elapsed time"), duration_buf);
+      fprintf(fout, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+              cl, _("Elapsed time"), cl, duration_buf);
       duration_str(0, start_time + duration - cs->current_time, 0,
                    duration_buf, 0);
-      fprintf(fout, "<tr><td class=\"b0\">%s:</td><td class=\"b0\">%s</td></tr>\n",
-              _("Remaining time"), duration_buf);
+      fprintf(fout, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+              cl, _("Remaining time"), cl, duration_buf);
+    }
+    if (start_time <= 0 && global->is_virtual > 0 && cnts->open_time > 0 && cs->current_time < cnts->open_time) {
+      fprintf(fout, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+              cl, _("Virtual contest open time"), cl, xml_unparse_date(cnts->open_time));
+    }
+    if (start_time <= 0 && global->is_virtual > 0 && cnts->close_time > 0) {
+      fprintf(fout, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+              cl, _("Virtual contest close time"), cl, xml_unparse_date(cnts->close_time));
     }
     fprintf(fout, "</table>\n");
   }
@@ -7223,7 +7233,15 @@ unpriv_print_status(
   }
 
   if (!cnts->exam_mode && global->is_virtual && start_time <= 0) {
-    if (global->disable_virtual_start <= 0) {
+    enable_virtual_start = 1;
+    if (global->disable_virtual_start > 0) {
+      enable_virtual_start = 0;
+    } else if (cnts->open_time > 0 && cs->current_time < cnts->open_time) {
+      enable_virtual_start = 0;
+    } else if (cnts->close_time > 0 && cs->current_time >= cnts->close_time) {
+      enable_virtual_start = 0;
+    }
+    if (enable_virtual_start) {
       html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
       if (cnts->exam_mode) {
         fprintf(fout, "<p>%s</p></form>",
@@ -10827,6 +10845,14 @@ unpriv_command(FILE *fout,
   switch (phr->action) {
   case NEW_SRV_ACTION_VIRTUAL_START:
     if (global->disable_virtual_start) {
+      ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
+      goto done;
+    }
+    if (cnts->open_time > 0 && cs->current_time < cnts->open_time) {
+      ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
+      goto done;
+    }
+    if (cnts->close_time > 0 && cs->current_time >= cnts->close_time) {
       ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
       goto done;
     }

@@ -2246,6 +2246,28 @@ super_html_edit_contest_page(FILE *f,
   print_help_url(f, SSERV_CMD_CNTS_CHANGE_SCHED_TIME);
   fprintf(f, "</tr></form>\n");
 
+  html_start_form(f, 1, self_url, hidden_vars);
+  fprintf(f, "<tr%s><td>Virtual contest open date:</td><td>",
+          form_row_attrs[row ^= 1]);
+  html_date_select(f, cnts->open_time);
+  fprintf(f, "</td><td>");
+  html_submit_button(f, SSERV_CMD_CNTS_CHANGE_OPEN_TIME, "Change");
+  html_submit_button(f, SSERV_CMD_CNTS_CLEAR_OPEN_TIME, "Clear");
+  fprintf(f, "</td>");
+  print_help_url(f, SSERV_CMD_CNTS_CHANGE_OPEN_TIME);
+  fprintf(f, "</tr></form>\n");
+
+  html_start_form(f, 1, self_url, hidden_vars);
+  fprintf(f, "<tr%s><td>Virtual contest close date:</td><td>",
+          form_row_attrs[row ^= 1]);
+  html_date_select(f, cnts->close_time);
+  fprintf(f, "</td><td>");
+  html_submit_button(f, SSERV_CMD_CNTS_CHANGE_CLOSE_TIME, "Change");
+  html_submit_button(f, SSERV_CMD_CNTS_CLEAR_CLOSE_TIME, "Clear");
+  fprintf(f, "</td>");
+  print_help_url(f, SSERV_CMD_CNTS_CHANGE_CLOSE_TIME);
+  fprintf(f, "</tr></form>\n");
+
   print_string_editing_row(f, "Registration email sender (From: field):",
                            cnts->register_email,
                            SSERV_CMD_CNTS_CHANGE_REGISTER_EMAIL,
