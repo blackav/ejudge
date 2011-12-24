@@ -76,6 +76,14 @@ super_html_clear_variable(struct sid_state *sstate, int cmd)
   case SSERV_CMD_CNTS_CLEAR_SCHED_TIME:
     cnts->sched_time = 0;
     return 0;
+
+  case SSERV_CMD_CNTS_CLEAR_OPEN_TIME:
+    cnts->open_time = 0;
+    return 0;
+
+  case SSERV_CMD_CNTS_CLEAR_CLOSE_TIME:
+    cnts->close_time = 0;
+    return 0;
     
   case SSERV_CMD_CNTS_CLEAR_NAME: p_str = &cnts->name; break;
   case SSERV_CMD_CNTS_CLEAR_NAME_EN: p_str = &cnts->name_en; break;
@@ -366,6 +374,12 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
     break;
   case SSERV_CMD_CNTS_CHANGE_SCHED_TIME:
     p_date = &cnts->sched_time;
+    break;
+  case SSERV_CMD_CNTS_CHANGE_OPEN_TIME:
+    p_date = &cnts->open_time;
+    break;
+  case SSERV_CMD_CNTS_CHANGE_CLOSE_TIME:
+    p_date = &cnts->close_time;
     break;
   case SSERV_CMD_CNTS_CHANGE_USERS_HEADER:
     p_str = &cnts->users_header_file;
