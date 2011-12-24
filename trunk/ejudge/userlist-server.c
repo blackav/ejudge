@@ -3591,6 +3591,120 @@ cmd_priv_check_user(struct client_state *p, int pkt_len,
 }
 
 static void
+cmd_priv_check_password(
+        struct client_state *p,
+        int pkt_len,
+        struct userlist_pk_do_login *data)
+{
+  unsigned char *login_ptr, *passwd_ptr, *name_ptr;
+  struct passwd_internal pwdint;
+  const struct userlist_user *u = 0;
+  const struct userlist_contest *c = 0;
+  struct userlist_pk_login_ok *out = 0;
+  int login_len, name_len;
+  size_t out_size = 0;
+  ej_tsc_t tsc1, tsc2;
+  unsigned char logbuf[1024];
+  int user_id;
+  const struct userlist_user_info *ui;
+  const unsigned char *name = 0;
+
+  if (pkt_len < sizeof(*data)) {
+    CONN_BAD("packet length too small: %d", pkt_len);
+    return;
+  }
+  login_ptr = data->data;
+  if (strlen(login_ptr) != data->login_length) {
+    CONN_BAD("login length mismatch");
+    return;
+  }
+  passwd_ptr = login_ptr + data->login_length + 1;
+  if (strlen(passwd_ptr) != data->password_length) {
+    CONN_BAD("password length mismatch");
+    return;
+  }
+  if (pkt_len != sizeof(*data) + data->login_length + data->password_length) {
+    CONN_BAD("packet length mismatch");
+    return;
+  }
+
+  snprintf(logbuf, sizeof(logbuf),
+           "PRIV_CHECK_PASSWORD: %s", login_ptr);
+
+  if (p->user_id <= 0) {
+    err("%s -> not authentificated", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+
+  if (is_db_capable(p, OPCAP_LIST_USERS, logbuf)) return;
+
+  if (passwd_convert_to_internal(passwd_ptr, &pwdint) < 0) {
+    err("%s -> invalid password", logbuf);
+    send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+    return;
+  }
+
+  rdtscll(tsc1);
+  if ((user_id = default_get_user_by_login(login_ptr)) <= 0) {
+    err("%s -> WRONG LOGIN", logbuf);
+    send_reply(p, -ULS_ERR_INVALID_LOGIN);
+    return;
+  }
+  if (default_get_user_info_3(user_id, 0, &u, &ui, &c) < 0 || !u) {
+    err("%s -> database error", logbuf);
+    send_reply(p, -ULS_ERR_DB_ERROR);
+    return;
+  }
+  rdtscll(tsc2);
+  if (cpu_frequency > 0) {
+    tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
+  } else {
+    tsc2 = tsc2 - tsc1;
+  }
+
+  if (!u) {
+    err("%s -> WRONG LOGIN", logbuf);
+    send_reply(p, -ULS_ERR_INVALID_LOGIN);
+    return;
+  }
+  if (!u->passwd) {
+    err("%s -> EMPTY PASSWORD", logbuf);
+    send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+    return;
+  }
+  if (passwd_check(&pwdint, u->passwd, u->passwd_method) < 0) {
+    err("%s -> WRONG PASSWORD", logbuf);
+    send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+    return;
+  }
+
+  if (ui) name = ui->name;
+  if (!name || !*name) name = u->login;
+  if (!name) name = "";
+
+  login_len = strlen(u->login);
+  name_len = strlen(name);
+  out_size = sizeof(*out) + login_len + name_len;
+  out = alloca(out_size);
+  memset(out, 0, out_size);
+  login_ptr = out->data;
+  name_ptr = login_ptr + login_len + 1;
+  out->reply_id = ULS_LOGIN_OK;
+  out->user_id = u->id;
+  out->contest_id = 0;
+  out->locale_id = 0;
+  out->priv_level = 0;
+  out->login_len = login_len;
+  out->name_len = name_len;
+  strcpy(login_ptr, u->login);
+  strcpy(name_ptr, name);
+  
+  enqueue_reply_to_client(p, out_size, out);
+  info("%s -> OK, %d", logbuf, out->user_id);
+}
+
+static void
 cmd_check_cookie(struct client_state *p,
                  int pkt_len,
                  struct userlist_pk_check_cookie * data)
@@ -10149,6 +10263,7 @@ static void (*cmd_table[])() =
   [ULS_LIST_ALL_USERS_3] =      cmd_list_all_users_3,
   [ULS_LIST_ALL_USERS_4] =      cmd_list_all_users_4,
   [ULS_GET_GROUP_INFO] =        cmd_get_group_info,
+  [ULS_PRIV_CHECK_PASSWORD] =   cmd_priv_check_password,
 
   [ULS_LAST_CMD] 0
 };

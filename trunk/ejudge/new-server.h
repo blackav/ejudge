@@ -386,6 +386,7 @@ enum
   NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_REPORT,
   NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_JUDGE_SCORE,
   NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_FINAL_VISIBILITY,
+  NEW_SRV_ACTION_RELOAD_SERVER_2,
 
   NEW_SRV_ACTION_LAST,
 };
@@ -457,6 +458,7 @@ int nsdb_get_examiner_count(int contest_id, int prob_id);
 
 
 struct contest_extra *ns_get_contest_extra(int contest_id);
+struct contest_extra *ns_try_contest_extra(int contest_id);
 
 void
 ns_html_err_internal_error(FILE *fout,
