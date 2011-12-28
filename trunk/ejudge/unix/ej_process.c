@@ -493,12 +493,18 @@ ejudge_start_process(
   prc->kill_grace_ms = 1000;
   prc->start_time_ms = tv.tv_sec * 1000LL + tv.tv_usec / 1000LL;
   prc->merge_out_flag = merge_out_flag;
-  prc->stdin_f = in_pipe[1]; in_pipe[1] = -1;
-  fcntl(prc->stdin_f, F_SETFL, fcntl(prc->stdin_f, F_GETFL) | O_NONBLOCK);
-  prc->stdout_f = out_pipe[0]; out_pipe[0] = -1;
-  fcntl(prc->stdout_f, F_SETFL, fcntl(prc->stdout_f, F_GETFL) | O_NONBLOCK);
-  prc->stderr_f = err_pipe[0]; err_pipe[0] = -1;
-  fcntl(prc->stderr_f, F_SETFL, fcntl(prc->stderr_f, F_GETFL) | O_NONBLOCK);
+  if (in_pipe[1] >= 0) {
+    prc->stdin_f = in_pipe[1]; in_pipe[1] = -1;
+    fcntl(prc->stdin_f, F_SETFL, fcntl(prc->stdin_f, F_GETFL) | O_NONBLOCK);
+  }
+  if (out_pipe[0] >= 0) {
+    prc->stdout_f = out_pipe[0]; out_pipe[0] = -1;
+    fcntl(prc->stdout_f, F_SETFL, fcntl(prc->stdout_f, F_GETFL) | O_NONBLOCK);
+  }
+  if (err_pipe[0] >= 0) {
+    prc->stderr_f = err_pipe[0]; err_pipe[0] = -1;
+    fcntl(prc->stderr_f, F_SETFL, fcntl(prc->stderr_f, F_GETFL) | O_NONBLOCK);
+  }
   prc->state = BACKGROUND_PROCESS_RUNNING;
   prc->pid = pid;
   prc->user = user;
