@@ -3628,6 +3628,7 @@ static void
 cmd_http_request_continuation(struct super_http_request_info *phr)
 {
   struct client_state *p = (typeof(p)) phr->suspend_context;
+  info("continuation: %d, %d, %d\n", p->fd, p->client_fds[0], p->client_fds[1]);
   close_memstream(phr->out_f); phr->out_f = 0;
   close_memstream(phr->log_f); phr->log_f = 0;
   client_state_new_autoclose(p, phr->out_t, phr->out_z);
@@ -4673,6 +4674,7 @@ do_loop(void)
 
       fd_max = background_process_set_fds(&background_processes, fd_max, &rset, &wset);
 
+restart_select_dirty_hack:
       errno = 0;
       n = 0;
       if (!sigchld_flag && !hup_flag && !term_flag && !dnotify_flag) {
@@ -4698,6 +4700,27 @@ do_loop(void)
         errno = errcode;
         // end of race condition prone code
 #endif
+      }
+
+      if (n < 0 && errno == EBADF) {
+        // try to identify the guilty file descriptors
+        for (int gfd = 0; gfd <= fd_max; ++gfd) {
+          err("select() failed because of invalid file descriptors");
+          if (FD_ISSET(gfd, &rset)) {
+            if (fcntl(gfd, F_GETFD) < 0) {
+              err("fd %d is invalid (read)", gfd);
+              FD_CLR(gfd, &rset);
+              FD_CLR(gfd, &wset);
+            }
+          }
+          if (FD_ISSET(gfd, &wset)) {
+            if (fcntl(gfd, F_GETFD) < 0) {
+              err("fd %d is invalid (write)", gfd);
+              FD_CLR(gfd, &wset);
+            }
+          }
+        }
+        goto restart_select_dirty_hack;
       }
 
       if (n < 0 && errno != EINTR) {
