@@ -1,7 +1,7 @@
 /* -*- mode:c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -2871,7 +2871,7 @@ generate_contest_xml(FILE *f)
   fprintf(f, "<!-- Generation date: %s -->\n", date_buf);
 
   fprintf(f,
-          "<contest id=\"1\" disable_team_password=\"yes\" new_managed=\"yes\" run_managed=\"yes\">\n"
+          "<contest id=\"1\" disable_team_password=\"yes\" managed=\"yes\" run_managed=\"yes\">\n"
           "  <name>Test contest</name>\n"
           "  <name_en>Test contest</name_en>\n"
           "\n"

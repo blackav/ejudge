@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -931,6 +931,7 @@ diff_func(const unsigned char *path1, const unsigned char *path2)
   return read_process_output(diff_cmdline, 0, 1, 0);
 }
 
+/*
 int
 super_html_serve_probe_run(FILE *f,
                            int priv_level,
@@ -971,18 +972,6 @@ super_html_serve_probe_run(FILE *f,
     return super_html_report_error(f, session_id, self_url, extra_args,
                                    "Contest is not handled");
   }
-  if (!extra->serve_used) {
-    return super_html_report_error(f, session_id, self_url, extra_args,
-                                   "Contest is not managed");
-  }
-  if (extra->serve_pid > 0) {
-    return super_html_report_error(f, session_id, self_url, extra_args,
-                                   "serve is already running");
-  }
-  if (extra->socket_fd < 0) {
-    return super_html_report_error(f, session_id, self_url, extra_args,
-                                   "no socket is opened");
-  }
 
   errcode = super_serve_start_serve_test_mode(cnts, &serve_buf, extra->socket_fd);
   s = html_armor_string_dup(serve_buf);
@@ -999,6 +988,7 @@ super_html_serve_probe_run(FILE *f,
   fprintf(f, "</tr></table>\n");
   return 0;
 }
+*/
 
 int
 super_html_commit_contest(FILE *f,
@@ -1033,7 +1023,6 @@ super_html_commit_contest(FILE *f,
   int i, j;
 
   path_t conf_path;
-  path_t var_path;
   path_t xml_path;
   path_t serve_path;
   path_t serve_path_2 = { 0 };
@@ -1622,15 +1611,6 @@ super_html_commit_contest(FILE *f,
   */
 
   // start serve and create all the necessary dirs
-  snprintf(var_path, sizeof(var_path), "%s/var", cnts->root_dir);
-  if (stat(var_path, &sb) < 0) {
-    unsigned char *serve_buf = 0;
-    fprintf(flog, "starting `serve' in prepare mode:\n\n");
-    i = super_serve_start_serve_test_mode(cnts, &serve_buf, -1);
-    fprintf(flog, "%s\n", serve_buf);
-    xfree(serve_buf);
-  }
-
   close_memstream(flog); flog = 0;
   xfree(xml_header);
   xfree(xml_footer);

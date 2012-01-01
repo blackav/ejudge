@@ -4,7 +4,7 @@
 #ifndef __EJ_PROCESS_H__
 #define __EJ_PROCESS_H__
 
-/* Copyright (C) 2005-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -127,5 +127,7 @@ background_process_handle_termination(
         const void *vusage);
 void
 background_process_call_continuations(struct background_process_head *list);
+void
+background_process_close_fds(struct background_process_head *list);
 
 #endif /* __EJ_PROCESS_H__ */

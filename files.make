@@ -1,7 +1,7 @@
 # -*- Makefile -*-
 # $Id$
 
-# Copyright (C) 2002-2011 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2002-2012 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -296,6 +296,7 @@ PLATFORM_CFILES =\
  $(ARCH)/cpu.c\
  $(ARCH)/file_perms.c\
  $(ARCH)/full_archive.c\
+ $(ARCH)/pollfds.c\
  $(ARCH)/startstop.c\
  $(ARCH)/sock_op_enable_creds.c\
  $(ARCH)/sock_op_get_fds.c\
@@ -388,6 +389,8 @@ CFILES=\
  win32/fmemopen.c\
  unix/open_memstream.c\
  win32/open_memstream.c\
+ unix/pollfds.c\
+ win32/pollfds.c\
  unix/timestamp.c\
  win32/timestamp.c\
  unix/full_archive.c\
@@ -522,6 +525,7 @@ HFILES=\
  opcaps.h\
  parsecfg.h\
  pathutl.h\
+ pollfds.h\
  prepare.h\
  prepare_dflt.h\
  prepare_serve.h\

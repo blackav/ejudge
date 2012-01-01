@@ -3,7 +3,7 @@
 #ifndef __SUPER_SERVE_H__
 #define __SUPER_SERVE_H__
 
-/* Copyright (C) 2004-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -36,33 +36,23 @@
 struct contest_extra
 {
   int id;
-  unsigned char serve_used;
   unsigned char run_used;
   unsigned char dnotify_flag;
-  unsigned char serve_suspended;
   unsigned char run_suspended;
 
-  int serve_pid;
   int run_pid;
-  int socket_fd;
-  int run_dir_fd;
-  int serve_uid;
-  int serve_gid;
   int run_uid;
   int run_gid;
+  int run_wd;                   // inotify watch descriptor
 
   unsigned char *root_dir;
   unsigned char *conf_file;
   unsigned char *var_dir;
 
-  unsigned char *socket_path;
-  unsigned char *log_file;
   unsigned char *run_queue_dir;
   unsigned char *run_log_file;
   unsigned char *messages;
 
-  time_t serve_last_start;
-  time_t serve_suspend_end;
   time_t run_last_start;
   time_t run_suspend_end;
   time_t last_forced_check;

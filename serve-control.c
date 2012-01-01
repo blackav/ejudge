@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -755,12 +755,6 @@ action_view_contest(int cmd)
   if ((contest_id = parse_contest_id()) <= 0) goto invalid_parameter;
 
   switch (cmd) {
-  case SSERV_CMD_VIEW_SERVE_LOG:
-    extra_str = ", serve log";
-    break;
-  case SSERV_CMD_SERVE_MNG_PROBE_RUN:
-    extra_str = ", serve probe run";
-    break;
   case SSERV_CMD_VIEW_RUN_LOG:
     extra_str = ", run log";
     break;
@@ -1420,16 +1414,11 @@ static const int next_action_map[SSERV_CMD_LAST] =
   [SSERV_CMD_CLEAR_MESSAGES] = SSERV_CMD_CONTEST_PAGE,
   [SSERV_CMD_VISIBLE_CONTEST] = SSERV_CMD_CONTEST_PAGE,
   [SSERV_CMD_INVISIBLE_CONTEST] = SSERV_CMD_CONTEST_PAGE,
-  [SSERV_CMD_SERVE_LOG_TRUNC] = SSERV_CMD_CONTEST_PAGE,
-  [SSERV_CMD_SERVE_LOG_DEV_NULL] = SSERV_CMD_CONTEST_PAGE,
-  [SSERV_CMD_SERVE_LOG_FILE] = SSERV_CMD_CONTEST_PAGE,
   [SSERV_CMD_RUN_LOG_TRUNC] = SSERV_CMD_CONTEST_PAGE,
   [SSERV_CMD_RUN_LOG_DEV_NULL] = SSERV_CMD_CONTEST_PAGE,
   [SSERV_CMD_RUN_LOG_FILE] = SSERV_CMD_CONTEST_PAGE,
-  [SSERV_CMD_SERVE_MNG_TERM] = SSERV_CMD_CONTEST_PAGE,
   [SSERV_CMD_RUN_MNG_TERM] = SSERV_CMD_CONTEST_PAGE,
   [SSERV_CMD_CONTEST_RESTART] = SSERV_CMD_CONTEST_PAGE,
-  [SSERV_CMD_SERVE_MNG_RESET_ERROR] = SSERV_CMD_CONTEST_PAGE,
   [SSERV_CMD_RUN_MNG_RESET_ERROR] = SSERV_CMD_CONTEST_PAGE,
 
   [SSERV_CMD_CNTS_BASIC_VIEW] = SSERV_CMD_EDIT_CURRENT_CONTEST,
@@ -2150,12 +2139,6 @@ main(int argc, char *argv[])
   case SSERV_CMD_CONTEST_PAGE:
     action_view_contest(SSERV_CMD_CONTEST_PAGE);
     break;
-  case SSERV_CMD_SERVE_MNG_PROBE_RUN:
-    action_view_contest(SSERV_CMD_SERVE_MNG_PROBE_RUN);
-    break;
-  case SSERV_CMD_VIEW_SERVE_LOG:
-    action_view_contest(SSERV_CMD_VIEW_SERVE_LOG);
-    break;
   case SSERV_CMD_VIEW_RUN_LOG:
     action_view_contest(SSERV_CMD_VIEW_RUN_LOG);
     break;
@@ -2171,16 +2154,11 @@ main(int argc, char *argv[])
   case SSERV_CMD_CLEAR_MESSAGES:
   case SSERV_CMD_VISIBLE_CONTEST:
   case SSERV_CMD_INVISIBLE_CONTEST:
-  case SSERV_CMD_SERVE_LOG_TRUNC:
-  case SSERV_CMD_SERVE_LOG_DEV_NULL:
-  case SSERV_CMD_SERVE_LOG_FILE:
   case SSERV_CMD_RUN_LOG_TRUNC:
   case SSERV_CMD_RUN_LOG_DEV_NULL:
   case SSERV_CMD_RUN_LOG_FILE:
-  case SSERV_CMD_SERVE_MNG_TERM:
   case SSERV_CMD_RUN_MNG_TERM:
   case SSERV_CMD_CONTEST_RESTART:
-  case SSERV_CMD_SERVE_MNG_RESET_ERROR:
   case SSERV_CMD_RUN_MNG_RESET_ERROR:
     action_contest_command(client_action, next_action_map[client_action]);
     break;
