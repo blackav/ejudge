@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -38,6 +38,7 @@
 #include "compat.h"
 #include "ej_process.h"
 #include "ej_byteorder.h"
+#include "pollfds.h"
 
 #include "reuse_xalloc.h"
 #include "reuse_logger.h"
@@ -61,10 +62,12 @@
 #include <time.h>
 #include <string.h>
 #include <ctype.h>
+#include <poll.h>
+#include <sys/inotify.h>
 
 #define SUSPEND_TIMEOUT    60
 #define MAX_IN_PACKET_SIZE 134217728 /* 128 mb */
-#define SPOOL_DIR_CHECK_INTERVAL 10
+#define SPOOL_DIR_CHECK_INTERVAL 60
 
 enum
 {
@@ -133,6 +136,7 @@ static int extra_a;
 static struct contest_extra **extras;
 
 static int control_socket_fd = -1;
+static int run_inotify_fd = -1;
 static unsigned char *control_socket_path = 0;
 static userlist_clnt_t userlist_clnt = 0;
 static struct client_state *clients_first;
@@ -246,12 +250,7 @@ new_contest_extra(int contest_id)
 
   XCALLOC(p, 1);
   p->id = contest_id;
-  p->serve_pid = -1;
   p->run_pid = -1;
-  p->socket_fd = -1;
-  p->run_dir_fd = -1;
-  p->serve_uid = -1;
-  p->serve_gid = -1;
   p->run_uid = -1;
   p->run_gid = -1;
   return p;
@@ -265,14 +264,9 @@ delete_contest_extra(int contest_id)
   if (contest_id <= 0 || contest_id >= extra_a) return 0;
   if (!(p = extras[contest_id])) return 0;
 
-  if (p->socket_path) unlink(p->socket_path);
-  if (p->socket_fd >= 0) close(p->socket_fd);
-  if (p->run_dir_fd >= 0) close(p->run_dir_fd);
   xfree(p->root_dir);
   xfree(p->conf_file);
   xfree(p->var_dir);
-  xfree(p->socket_path);
-  xfree(p->log_file);
   xfree(p->run_queue_dir);
   xfree(p->run_log_file);
   xfree(p->messages);
@@ -336,25 +330,6 @@ handler_child(int signo)
   sigchld_flag = 1;
 }
 
-static volatile int dnotify_flag = 0;
-static void
-dnotify_handler(int signo, siginfo_t *si, void *data)
-{
-#if HAVE_F_NOTIFY - 0 == 1
-  int i;
-
-  if (si->si_fd < 0) return;
-  /* FIXME: have fd -> contest_id map? */
-  for (i = 0; i < extra_a; i++) {
-    if (!extras[i]) continue;
-    if (extras[i]->run_dir_fd == si->si_fd) {
-      extras[i]->dnotify_flag = 1;
-      dnotify_flag = 1;
-    }      
-  }
-#endif
-}
-
 /* for error reporting purposes */
 static FILE *global_error_log = 0;
 static int   global_contest_id = 0;
@@ -377,83 +352,12 @@ startup_err(const char *format, ...)
 }
 
 static void
-prepare_serve_serving(const struct contest_desc *cnts,
-                      struct contest_extra *extra,
-                      int do_serve_manage)
-{
-  unsigned char serve_socket_path[1024] = { 0 };
-  unsigned char serve_log_path[1024];
-  int remove_socket_flag = 0;
-  int cmd_socket = -1;
-  struct sockaddr_un cmd_addr;
-
-  if (slave_mode) return;
-  if (!cnts->managed && do_serve_manage <= 0) return;
-
-  // all contests are now new-managed, so the serve socket is not needed
-  snprintf(serve_socket_path, sizeof(serve_socket_path),
-           "%s/%s", extra->var_dir, "serve");
-  unlink(serve_socket_path);
-  return;
-
-  // FIXME: add a possibility to define socket name
-  snprintf(serve_socket_path, sizeof(serve_socket_path),
-           "%s/%s", extra->var_dir, "serve");
-
-  cmd_socket = socket(PF_UNIX, SOCK_STREAM, 0);
-  if (cmd_socket < 0) {
-    startup_err("socket() failed: %s", os_ErrorMsg());
-    goto cleanup;
-  }
-
-  if (forced_mode) unlink(serve_socket_path);
-  memset(&cmd_addr, 0, sizeof(cmd_addr));
-  cmd_addr.sun_family = AF_UNIX;
-  snprintf(cmd_addr.sun_path, 108, "%s", serve_socket_path);
-  errno = 0;
-  if (bind(cmd_socket, (struct sockaddr *) &cmd_addr, sizeof(cmd_addr)) < 0) {
-    if (errno == EADDRINUSE) {
-      startup_err("socket already exists (contest served?)");
-    } else {
-      startup_err("bind() to %s failed: %s", serve_socket_path, os_ErrorMsg());
-    }
-    goto cleanup;
-  }
-  remove_socket_flag = 1;
-
-  if (chmod(serve_socket_path, 0777) < 0) {
-    startup_err("chmod() failed: %s", os_ErrorMsg());
-    goto cleanup;
-  }
-
-  if (listen(cmd_socket, 5) < 0) {
-    startup_err("listen() failed: %s", os_ErrorMsg());
-    goto cleanup;
-  }
-
-  snprintf(serve_log_path, sizeof(serve_log_path),
-           "%s/%s", extra->var_dir, "messages");
-
-  extra->serve_used = 1;
-  extra->serve_pid = -1;
-  extra->socket_fd = cmd_socket;
-  extra->socket_path = xstrdup(serve_socket_path);
-  extra->log_file = xstrdup(serve_log_path);
-  return;
-
- cleanup:
-  if (remove_socket_flag) unlink(serve_socket_path);
-  if (cmd_socket >= 0) close(cmd_socket);
-}
-
-static void
 prepare_run_serving(const struct contest_desc *cnts,
                     struct contest_extra *extra,
                     int do_run_manage)
 {
   unsigned char run_queue_dir[1024];
   unsigned char run_log_path[1024];
-  int queue_dir_fd = -1;
   struct stat stbuf;
   struct xml_tree *p = 0;
 
@@ -487,15 +391,16 @@ prepare_run_serving(const struct contest_desc *cnts,
   snprintf(run_log_path, sizeof(run_log_path), "%s/ej-run-messages.log",
            extra->var_dir);
 
-  if ((queue_dir_fd = open(run_queue_dir, O_RDONLY, 0)) < 0) {
-    startup_err("run queue directory '%s' cannot be opened: %s",
-                run_queue_dir, os_ErrorMsg());
-    return;
+  if (run_inotify_fd >= 0) {
+    extra->run_wd = inotify_add_watch(run_inotify_fd, run_queue_dir, IN_MOVED_TO);
+    if (extra->run_wd < 0) {
+      err("inotify_add_watch failed for %s: %s", run_queue_dir, os_ErrorMsg());
+      extra->run_wd = 0;
+    }
   }
 
   extra->run_used = 1;
   extra->run_pid = -1;
-  extra->run_dir_fd = queue_dir_fd;
   extra->run_queue_dir = xstrdup(run_queue_dir);
   extra->run_log_file = xstrdup(run_log_path);
 }
@@ -549,349 +454,6 @@ check_user_identity(const unsigned char *prog_name,
 
 static void close_all_client_sockets(void);
 
-int
-super_serve_start_serve_test_mode(const struct contest_desc *cnts,
-                                  unsigned char **p_log,
-                                  int pass_socket)
-{
-  FILE *flog = 0;
-  char *flog_txt = 0;
-  size_t flog_len = 0;
-  int errcode = 0;
-  int pfd[2] = { -1, -1 };
-  int pid, rsz, status, null_fd, i;
-  unsigned char rbuf[4096];
-  unsigned char *corestr = "";
-  unsigned char **args;
-  path_t conf_path, conf_dir;
-  unsigned char sock_str[64];
-
-  flog = open_memstream(&flog_txt, &flog_len);
-
-  if (cnts->conf_dir && os_IsAbsolutePath(cnts->conf_dir)) {
-    snprintf(conf_dir, sizeof(conf_dir), "%s", cnts->conf_dir);
-  } else if (cnts->conf_dir) {
-    snprintf(conf_dir, sizeof(conf_dir), "%s/%s", cnts->root_dir, cnts->conf_dir);
-  } else {
-    snprintf(conf_dir, sizeof(conf_dir), "%s/conf", cnts->root_dir);
-  }
-  snprintf(conf_path, sizeof(conf_path), "%s/serve.cfg", conf_dir);
-
-  if (pipe(pfd) < 0) {
-    fprintf(flog, "error: pipe() failed: %s", os_ErrorMsg());
-    errcode = -1;
-    goto cleanup;
-  }
-
-  if ((pid = fork()) < 0) {
-    fprintf(flog, "error: fork() failed: %s", os_ErrorMsg());
-    errcode = -1;
-    goto cleanup;
-  }
-
-  if (!pid) {
-    // child
-    // redirect streams
-    if (pfd[1] != 1) dup2(pfd[1], 1);
-    if (pfd[1] != 2) dup2(pfd[1], 2);
-    if (pfd[1] != 1 && pfd[1] != 2) close(pfd[1]);
-    close(pfd[0]);
-
-    // close all file descriptors
-    for (i = 0; i < extra_a; i++) {
-      if (!extras[i]) continue;
-      if (!extras[i]->serve_used) continue;
-      if (extras[i]->socket_fd < 0) continue;
-      if (pass_socket >= 0 && extras[i]->socket_fd == pass_socket) continue;
-      close(extras[i]->socket_fd);
-    }
-    for (i = 0; i < extra_a; i++) {
-      if (!extras[i]) continue;
-      if (!extras[i]->run_used) continue;
-      close(extras[i]->run_dir_fd);
-    }
-    close_all_client_sockets();
-
-#if 0
-    // 2. switch uid and gid
-    if (cur->serve_uid >= 0 &&
-        self_uid != cur->serve_uid && setuid(cur->serve_uid) < 0) {
-      err("contest %d [%d] setuid failed: %s",
-          cur->id, self_pid, os_ErrorMsg());
-      _exit(1);
-    }
-    if (cur->serve_gid >= 0 &&
-        self_gid != cur->serve_gid && setgid(cur->serve_gid) < 0) {
-      err("contest %d [%d] setgid failed: %s",
-          cur->id, self_pid, os_ErrorMsg());
-      _exit(1);
-    }
-#endif
-
-    // redirect stdin from /dev/null
-    if ((null_fd = open("/dev/null", O_RDONLY, 0)) < 0) {
-      fprintf(stderr, "open(\"/dev/null\") failed: %s\n", os_ErrorMsg());
-      _exit(1);
-    }
-    if (null_fd != 0) {
-      dup2(null_fd, 0);
-      close(null_fd);
-    }
-
-    // change the current directory
-    if (chdir(cnts->root_dir) < 0) {
-      fprintf(stderr, "chdir(\"%s\") failed: %s\n", cnts->root_dir, os_ErrorMsg());
-      _exit(1);
-    }
-
-    // setup argument vector
-    sock_str[0] = 0;
-    if (pass_socket >= 0) {
-      snprintf(sock_str, sizeof(sock_str), "-S%d", pass_socket);
-    }
-    args = (unsigned char **) alloca(10 * sizeof(args[0]));
-    i = 0;
-    args[i++] = config->serve_path;
-    args[i++] = "-i";
-    if (sock_str[0]) {
-      args[i++] = sock_str;
-    }
-    args[i++] = conf_path;
-    args[i++] = 0;
-
-    // clear procmask
-    sigprocmask(SIG_SETMASK, &original_mask, 0);
-
-    // start serve
-    execve(args[0], (char**) args, environ);
-    fprintf(stderr, "execve(\"%s\") failed: %s\n", args[0], os_ErrorMsg());
-    _exit(1);
-  }
-
-  close(pfd[1]); pfd[1] = -1;
-  while ((rsz = read(pfd[0], rbuf, sizeof(rbuf))) > 0) {
-    fwrite(rbuf, 1 , rsz, flog);
-  }
-  close(pfd[0]); pfd[0] = -1;
-
-  while ((rsz = waitpid(pid, &status, 0)) < 0) {
-    if (errno == EINTR) continue;
-  }
-  ASSERT(rsz == pid);
-
-  if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
-    fprintf(flog, "\nserve process exited normally\n");
-  } else if (WIFEXITED(status)) {
-    fprintf(flog, "\nserve process exited with code %d\n",
-            WEXITSTATUS(status));
-  } else if (WIFSIGNALED(status)) {
-    if (WCOREDUMP(status)) corestr = " (core dumped)";
-    fprintf(flog, "\nserve process terminated by signal %d%s\n",
-            WTERMSIG(status), corestr);
-  }
-
- cleanup:
-  if (pfd[0] >= 0) close(pfd[0]);
-  if (pfd[1] >= 0) close(pfd[1]);
-
-  close_memstream(flog); flog = 0;
-  if (p_log) {
-    *p_log = flog_txt;
-  } else {
-    xfree(flog_txt);
-  }
-  return errcode;
-}
-
-static void
-start_serve(struct contest_extra *cur,
-            time_t current_time,
-            int test_mode)
-{
-  struct sockaddr_un in_addr;
-  int in_addr_len, tmp_fd, pid, i, self_pid, j, null_fd = -1, log_fd = -1, rsz;
-  int status = 0;
-  int pfd[2] = { -1, -1 };
-  unsigned char **args;
-  unsigned char rbuf[4096];
-  const unsigned char *corestr = "";
-
-  if (!cur || cur->serve_pid > 0) return;
-
-  if (!test_mode) {
-    cur->serve_last_start = current_time;
-    global_contest_id = cur->id;
-    global_error_log = 0;
-  }
-
-  if (test_mode) {
-    // create a pipe to receive the serve's startup log
-    if (pipe(pfd) < 0) {
-      startup_err("pipe() failed: %s", os_ErrorMsg());
-      goto process_creation_error;
-    }
-  }
-
-  if ((pid = fork()) < 0) {
-    startup_err("fork() failed: %s", os_ErrorMsg());
-    goto process_creation_error;
-  }
-
-  if (!pid) {
-    // this is child
-    self_pid = getpid();
-
-    // 1. close everything, except one socket
-    for (j = 0; j < extra_a; j++) {
-      if (!extras[j]) continue;
-      if (!extras[j]->serve_used) continue;
-      if (extras[j]->socket_fd < 0) continue;
-      if (extras[j]->socket_fd == cur->socket_fd) continue;
-      close(extras[j]->socket_fd);
-    }
-    for (j = 0; j < extra_a; j++) {
-      if (!extras[j]) continue;
-      if (!extras[j]->run_used) continue;
-      close(extras[j]->run_dir_fd);
-    }
-    close_all_client_sockets();
-    random_cleanup();
-
-    // in test mode immediately redirect stdout and stderr to the pipe
-    if (test_mode) {
-      if (pfd[1] != 1) dup2(pfd[1], 1);
-      if (pfd[1] != 2) dup2(pfd[1], 2);
-      if (pfd[1] != 1 && pfd[1] != 2) close(pfd[1]);
-      close(pfd[0]);
-    }
-
-    // 2. switch uid and gid
-    if (cur->serve_uid >= 0 &&
-        self_uid != cur->serve_uid && setuid(cur->serve_uid) < 0) {
-      err("contest %d [%d] setuid failed: %s",
-          cur->id, self_pid, os_ErrorMsg());
-      _exit(1);
-    }
-    if (cur->serve_gid >= 0 &&
-        self_gid != cur->serve_gid && setgid(cur->serve_gid) < 0) {
-      err("contest %d [%d] setgid failed: %s",
-          cur->id, self_pid, os_ErrorMsg());
-      _exit(1);
-    }
-    // 3. open /dev/null
-    if ((null_fd = open("/dev/null", O_RDONLY, 0)) < 0) {
-      err("contest %d [%d] open(/dev/null) failed: %s",
-          cur->id, self_pid, os_ErrorMsg());
-      _exit(1);
-    }
-    // 4. setup file descriptors 0
-    if (null_fd != 0) {
-      dup2(null_fd, 0);
-      close(null_fd);
-    }
-
-    // 5. change the current directory
-    if (chdir(cur->root_dir) < 0) {
-      err("contest %d [%d] chdir(%s) failed: %s",
-          cur->id, self_pid, cur->root_dir, os_ErrorMsg());
-      _exit(1);
-    }
-
-    // 6. setup new process group
-    if (setpgid(self_pid, self_pid) < 0) {
-      err("contest %d [%d] setpgid failed: %s",
-          cur->id, self_pid, os_ErrorMsg());
-      _exit(1);
-    }
-
-    // 7. setup argument vector
-    args = (unsigned char **) alloca(10 * sizeof(args[0]));
-    i = 0;
-    args[i++] = config->serve_path;
-    if (cur->socket_fd >= 0) {
-      args[i] = (unsigned char *) alloca(256);
-      snprintf(args[i], 256, "-S%d", cur->socket_fd);
-      i++;
-    }
-    if (test_mode) {
-      args[i++] = "-i";
-    }
-    args[i++] = cur->conf_file;
-    args[i++] = 0;
-
-    // 8. clear procmask
-    sigprocmask(SIG_SETMASK, &original_mask, 0);
-
-    // 9. setup file descriptors 1, 2
-    if (!test_mode) {
-      if ((log_fd = open(cur->log_file, O_WRONLY|O_APPEND|O_CREAT, 0600)) < 0){
-        err("contest %d [%d] open(%s) failed: %s",
-            cur->id, self_pid, cur->log_file, os_ErrorMsg());
-        _exit(1);
-      }
-      if (log_fd != 1) dup2(log_fd, 1);
-      if (log_fd != 2) dup2(log_fd, 2);
-      if (log_fd != 1 && log_fd != 2) close(log_fd);
-    }
-
-    // 10. start serve
-    execve(args[0], (char**) args, environ);
-    err("contest %d [%d] execve() failed: %s",
-        cur->id, self_pid, os_ErrorMsg());
-    _exit(1);
-  } // child ends here
-
-  if (!test_mode) {
-    info("contest %d new serve process %d", cur->id, pid);
-    cur->serve_pid = pid;
-    return;
-  }
-
-  close(pfd[1]);
-  while ((rsz = read(pfd[0], rbuf, sizeof(rbuf))) > 0) {
-    if (fwrite(rbuf, 1 , rsz, global_error_log) != rsz) {
-      // FIXME: do better error handling
-      startup_err("fwrite() gave unexpected result");
-    }
-  }
-  if (rsz < 0) {
-    startup_err("read() failed: %s", os_ErrorMsg());
-  }
-  close(pfd[0]);
-
-  while ((rsz = waitpid(pid, &status, 0)) < 0) {
-    if (errno == EINTR) continue;
-    startup_err("waitpid() failed: %s", os_ErrorMsg());
-    // FIXME: recovery?
-    return;
-  }
-  ASSERT(rsz == pid);
-
-  if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
-    fprintf(global_error_log, "\nserve process exited normally\n");
-  } else if (WIFEXITED(status)) {
-    fprintf(global_error_log, "\nserve process exited with code %d\n",
-            WEXITSTATUS(status));
-  } else if (WIFSIGNALED(status)) {
-    if (WCOREDUMP(status)) corestr = " (core dumped)";
-    fprintf(global_error_log, "\nserve process terminated by signal %d%s\n",
-            WTERMSIG(status), corestr);
-  } else {
-    startup_err("unexpected wait status: %08x", status);
-  }
-
-  return;
-
- process_creation_error:
-  // accept a connection anyway
-  in_addr_len = sizeof(in_addr);
-  memset(&in_addr, 0, in_addr_len);
-  tmp_fd = accept(cur->socket_fd, (struct sockaddr*) &in_addr, &in_addr_len);
-  if (tmp_fd >= 0) close(tmp_fd);
-  // FIXME: set a suspend time
-  return;
-}
-
 /*
  * do_{serve,run}_manage may be -1 (use the default value), 0 or 1
  */
@@ -932,14 +494,9 @@ acquire_contest_resources(const struct contest_desc *cnts,
   extra = get_contest_extra(cnts->id);
   memset(extra, 0, sizeof(*extra));
   extra->id = cnts->id;
-  extra->serve_uid = -1;
-  extra->serve_gid = -1;
   extra->run_uid = -1;
   extra->run_gid = -1;
-  extra->serve_pid = -1;
   extra->run_pid = -1;
-  extra->socket_fd = -1;
-  extra->run_dir_fd = -1;
 
   if (!(error_log = open_memstream(&error_log_txt, &error_log_size))) {
     err("acquire_contest_resources: open_memstream failed");
@@ -978,9 +535,6 @@ acquire_contest_resources(const struct contest_desc *cnts,
   }
   extra->conf_file = xstrdup(config_path);
 
-  if (check_user_identity("serve", cnts->serve_user, cnts->serve_group,
-                          &extra->serve_uid, &extra->serve_gid) < 0)
-    goto done;
   if (check_user_identity("run", cnts->run_user, cnts->run_group,
                           &extra->run_uid, &extra->run_gid) < 0)
     goto done;
@@ -993,7 +547,7 @@ acquire_contest_resources(const struct contest_desc *cnts,
    */
   snprintf(var_path, sizeof(var_path), "%s/var", cnts->root_dir);
   if (stat(var_path, &stbuf) < 0) {
-    start_serve(extra, 0, 1);
+    //start_serve(extra, 0, 1);
   }
   // still make an attempt to create var directory
   mkdir(var_path, 0777);
@@ -1007,7 +561,6 @@ acquire_contest_resources(const struct contest_desc *cnts,
   }
   extra->var_dir = xstrdup(var_path);
 
-  prepare_serve_serving(cnts, extra, do_serve_manage);
   prepare_run_serving(cnts, extra, do_run_manage);
 
  done:
@@ -1023,46 +576,6 @@ acquire_contest_resources(const struct contest_desc *cnts,
     }
   }
   extra->messages = error_log_txt;
-}
-
-static void
-install_dnotify_handler(void)
-{
-  int i;
-  struct contest_extra *cur;
-
-  for (i = 1; i < extra_a; i++) {
-    if (!(cur = extras[i])) continue;
-    if (!cur->run_used) continue;
-    //if (!contest_map[i]) continue;
-
-    if (cur->run_pid <= 0) continue;
-
-    ASSERT(cur->run_dir_fd >= 0);
-    /*
-    // should never fail
-    if (fcntl(cur->run_dir_fd, F_SETSIG, SIGRTMIN) < 0) {
-      err("fcntl(...,F_SETSIG,...) failed: %s", os_ErrorMsg());
-      cur->run_used = 0;
-      close(cur->run_dir_fd);
-      cur->run_dir_fd = -1;
-      continue;
-    }
-    if (fcntl(cur->run_dir_fd, F_NOTIFY,
-              DN_CREATE | DN_DELETE | DN_RENAME | DN_MULTISHOT) < 0) {
-      err("fcntl(...,F_NOTIFY,...) failed: %s", os_ErrorMsg());
-      cur->run_used = 0;
-      close(cur->run_dir_fd);
-      cur->run_dir_fd = -1;
-      continue;
-    }
-    */
-
-#if HAVE_F_NOTIFY - 0 == 1
-    fcntl(cur->run_dir_fd, F_SETSIG, SIGRTMIN);
-    fcntl(cur->run_dir_fd, F_NOTIFY, DN_CREATE | DN_DELETE | DN_RENAME | DN_MULTISHOT);
-#endif
-  }
 }
 
 static void
@@ -1085,8 +598,6 @@ acquire_resources(void)
     acquire_contest_resources(cnts, -1, -1);
   }
 
-  install_dnotify_handler();
-
   info("scanning available contests done");
 }
 
@@ -1098,32 +609,6 @@ release_contest_resources(const struct contest_desc *cnts)
 
   if (!cnts) return;
   if (!(extra = get_existing_contest_extra(cnts->id))) return;
-
-  if (extra->serve_used && extra->serve_pid > 0) {
-    if (kill(extra->serve_pid, SIGTERM) < 0) {
-      err("contest %d: killing serve %d failed: %s",
-          cnts->id, extra->serve_pid, os_ErrorMsg());
-    }
-    while (1) {
-      out_pid = waitpid(extra->serve_pid, &status, 0);
-      if (out_pid >= 0 || errno != EINTR) break;
-    }
-    if (out_pid < 0) {
-      err("contest %d: waitpid failed: %s", cnts->id, os_ErrorMsg());
-    } else {
-      ASSERT(extra->serve_pid == out_pid);
-      if (WIFEXITED(status)) {
-        info("contest %d serve [%d] terminated with status %d",
-             extra->id, out_pid, WEXITSTATUS(status));
-      } else if (WIFSIGNALED(status)) {
-        err("contest %d serve [%d] terminated with signal %d (%s)",
-            extra->id, out_pid, WTERMSIG(status), os_GetSignalString(WTERMSIG(status)));
-      } else {
-        err("contest %d serve unknown termination status", extra->id);
-      }
-      extra->serve_pid = -1;
-    }
-  }
 
   if (extra->run_used && extra->run_pid > 0) {
     if (kill(extra->run_pid, SIGTERM) < 0) {
@@ -1168,17 +653,6 @@ release_resources(void)
   sigdelset(&work_mask, SIGCHLD);
 
   // send SIGTERM to all the remaining processes
-  info("sending SIGTERM to all chidrens");
-  for (i = 0; i < extra_a; i++) {
-    if (!extras[i]) continue;
-    if (!extras[i]->serve_used) continue;
-    if (extras[i]->serve_pid > 0) {
-      if (kill(extras[i]->serve_pid, SIGTERM) < 0) {
-        err("contest %d kill to %d failed: %s",
-            extras[i]->id, extras[i]->serve_pid, os_ErrorMsg());
-      }
-    }
-  }
   for (i = 0; i < extra_a; i++) {
     if (!extras[i]) continue;
     if (!extras[i]->run_used) continue;
@@ -1196,8 +670,6 @@ release_resources(void)
     alive_children = 0;
     for (i = 0; i < extra_a; i++) {
       if (!extras[i]) continue;
-      if (extras[i]->serve_used && extras[i]->serve_pid > 0)
-        alive_children++;
       if (extras[i]->run_used && extras[i]->run_pid > 0)
         alive_children++;
     }
@@ -1211,21 +683,6 @@ release_resources(void)
     while ((pid = wait4(-1, &status, WNOHANG, &usage)) > 0) {
       for (i = 0; i < extra_a; i++) {
         if (!extras[i]) continue;
-        if (extras[i]->serve_used && extras[i]->serve_pid == pid) {
-          if (WIFEXITED(status)) {
-            info("contest %d serve [%d] terminated with status %d",
-                 extras[i]->id, pid, WEXITSTATUS(status));
-          } else if (WIFSIGNALED(status)) {
-            err("contest %d serve [%d] terminated with signal %d (%s)",
-                extras[i]->id, pid, WTERMSIG(status),
-                os_GetSignalString(WTERMSIG(status)));
-          } else {
-            err("contest %d serve unknown termination status", 
-                extras[i]->id);
-          }
-          extras[i]->serve_pid = -1;
-          break;
-        }
         if (extras[i]->run_used && extras[i]->run_pid == pid) {
           if (WIFEXITED(status)) {
             info("contest %d run [%d] terminated with status %d",
@@ -1434,6 +891,10 @@ close_all_client_sockets(void)
     if (p->fd >= 0) close(p->fd);
     if (p->client_fds[0] >= 0) close(p->client_fds[0]);
     if (p->client_fds[1] >= 0) close(p->client_fds[1]);
+  }
+  if (run_inotify_fd >= 0) {
+    close(run_inotify_fd);
+    run_inotify_fd = -1;
   }
 }
 
@@ -1986,15 +1447,9 @@ cmd_main_page(struct client_state *p, int len,
       //return send_reply(p, -SSERV_ERR_INVALID_CONTEST);
     }
     break;
-  case SSERV_CMD_VIEW_SERVE_LOG:
   case SSERV_CMD_VIEW_RUN_LOG:
   case SSERV_CMD_VIEW_CONTEST_XML:
   case SSERV_CMD_VIEW_SERVE_CFG:
-  case SSERV_CMD_SERVE_MNG_PROBE_RUN:
-    if ((r = contests_get(pkt->contest_id, &cnts)) < 0 || !cnts) {
-      return send_reply(p, -SSERV_ERR_INVALID_CONTEST);
-    }
-    break;
   case SSERV_CMD_EDIT_CONTEST_XML:
     if ((r = contests_get(pkt->contest_id, &cnts)) < 0 || !cnts) {
       return send_reply(p, -SSERV_ERR_INVALID_CONTEST);
@@ -2034,23 +1489,6 @@ cmd_main_page(struct client_state *p, int len,
     }
     break;
   case SSERV_CMD_CONTEST_PAGE:
-  case SSERV_CMD_SERVE_MNG_PROBE_RUN:
-    if (p->priv_level != PRIV_LEVEL_ADMIN) {
-      err("%d: inappropriate privilege level", p->id);
-      return send_reply(p, -SSERV_ERR_PERMISSION_DENIED);
-    }
-    if (cnts) {
-      if (opcaps_find(&cnts->capabilities, p->login, &caps) < 0) {
-        err("%d: user %d has no privileges", p->id, p->user_id);
-        return send_reply(p, -SSERV_ERR_PERMISSION_DENIED);
-      }
-      if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) {
-        err("%d: user %d has no CONTROL_CONTEST capability",p->id, p->user_id);
-        return send_reply(p, -SSERV_ERR_PERMISSION_DENIED);
-      }
-    }
-    break;
-  case SSERV_CMD_VIEW_SERVE_LOG:
   case SSERV_CMD_VIEW_RUN_LOG:
   case SSERV_CMD_VIEW_CONTEST_XML:
   case SSERV_CMD_VIEW_SERVE_CFG:
@@ -2161,14 +1599,6 @@ cmd_main_page(struct client_state *p, int len,
                                 p->login, p->cookie, p->ip, p->ssl, config,
                                 self_url_ptr, hidden_vars_ptr, extra_args_ptr);
     break;
-  case SSERV_CMD_SERVE_MNG_PROBE_RUN:
-    r = super_html_serve_probe_run(f, p->priv_level, p->user_id,
-                                   pkt->contest_id,
-                                   p->login, p->cookie, p->ip, p->ssl, config,
-                                   self_url_ptr, hidden_vars_ptr,
-                                   extra_args_ptr);
-    break;
-  case SSERV_CMD_VIEW_SERVE_LOG:
   case SSERV_CMD_VIEW_RUN_LOG:
   case SSERV_CMD_VIEW_CONTEST_XML:
   case SSERV_CMD_VIEW_SERVE_CFG:
@@ -2487,16 +1917,11 @@ cmd_simple_command(struct client_state *p, int len,
   case SSERV_CMD_VISIBLE_CONTEST:
     r = super_html_make_visible_contest(rw_cnts, p->user_id, p->login, p->ip);
     break;
-  case SSERV_CMD_SERVE_LOG_TRUNC:
-  case SSERV_CMD_SERVE_LOG_DEV_NULL:
-  case SSERV_CMD_SERVE_LOG_FILE:
   case SSERV_CMD_RUN_LOG_TRUNC:
   case SSERV_CMD_RUN_LOG_DEV_NULL:
   case SSERV_CMD_RUN_LOG_FILE:
-  case SSERV_CMD_SERVE_MNG_TERM:
   case SSERV_CMD_RUN_MNG_TERM:
   case SSERV_CMD_CONTEST_RESTART:
-  case SSERV_CMD_SERVE_MNG_RESET_ERROR:
   case SSERV_CMD_RUN_MNG_RESET_ERROR:
   case SSERV_CMD_CLEAR_MESSAGES:
     r = contest_mngmt_cmd(cnts, pkt->b.id, p->user_id, p->login);
@@ -3648,8 +3073,6 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_PASS_FD] = { cmd_pass_fd },
   [SSERV_CMD_MAIN_PAGE] = { cmd_main_page },
   [SSERV_CMD_CONTEST_PAGE] = { cmd_main_page },
-  [SSERV_CMD_SERVE_MNG_PROBE_RUN] = { cmd_main_page },
-  [SSERV_CMD_VIEW_SERVE_LOG] = { cmd_main_page },
   [SSERV_CMD_VIEW_RUN_LOG] = { cmd_main_page },
   [SSERV_CMD_VIEW_CONTEST_XML] = { cmd_main_page },
   [SSERV_CMD_VIEW_SERVE_CFG] = { cmd_main_page },
@@ -3657,16 +3080,11 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CLOSE_CONTEST] = { cmd_simple_command },
   [SSERV_CMD_INVISIBLE_CONTEST] = { cmd_simple_command },
   [SSERV_CMD_VISIBLE_CONTEST] = { cmd_simple_command },
-  [SSERV_CMD_SERVE_LOG_TRUNC] = { cmd_simple_command },
-  [SSERV_CMD_SERVE_LOG_DEV_NULL] = { cmd_simple_command },
-  [SSERV_CMD_SERVE_LOG_FILE] = { cmd_simple_command },
   [SSERV_CMD_RUN_LOG_TRUNC] = { cmd_simple_command },
   [SSERV_CMD_RUN_LOG_DEV_NULL] = { cmd_simple_command },
   [SSERV_CMD_RUN_LOG_FILE] = { cmd_simple_command },
-  [SSERV_CMD_SERVE_MNG_TERM] = { cmd_simple_command },
   [SSERV_CMD_RUN_MNG_TERM] = { cmd_simple_command },
   [SSERV_CMD_CONTEST_RESTART] = { cmd_simple_command },
-  [SSERV_CMD_SERVE_MNG_RESET_ERROR] = { cmd_simple_command },
   [SSERV_CMD_RUN_MNG_RESET_ERROR] = { cmd_simple_command },
   [SSERV_CMD_CLEAR_MESSAGES] = { cmd_simple_command },
 
@@ -4428,38 +3846,27 @@ handle_control_command(struct client_state *p)
 }
 
 static int
-contest_mngmt_cmd(const struct contest_desc *cnts,
-                  int cmd,
-                  int user_id,
-                  const unsigned char *user_login)
+contest_mngmt_cmd(
+        const struct contest_desc *cnts,
+        int cmd,
+        int user_id,
+        const unsigned char *user_login)
 {
   path_t log_path;
   struct stat stbuf;
   struct contest_extra *extra;
 
   switch (cmd) {
-  case SSERV_CMD_SERVE_LOG_TRUNC:
-    snprintf(log_path, sizeof(log_path), "%s/var/messages", cnts->root_dir);
-    goto do_truncate_log;
   case SSERV_CMD_RUN_LOG_TRUNC:
     snprintf(log_path, sizeof(log_path), "%s/var/ej-run-messages.log", cnts->root_dir);
-    goto do_truncate_log;
-
-  do_truncate_log:
     if (truncate(log_path, 0) < 0 && errno != ENOENT) {
       err("truncate(\"%s\", 0) failed: %s", log_path, os_ErrorMsg());
       return -SSERV_ERR_SYSTEM_ERROR;
     }
     return 0;
 
-  case SSERV_CMD_SERVE_LOG_DEV_NULL:
-    snprintf(log_path, sizeof(log_path), "%s/var/messages", cnts->root_dir);
-    goto do_dev_null;
   case SSERV_CMD_RUN_LOG_DEV_NULL:
     snprintf(log_path, sizeof(log_path), "%s/var/ej-run-messages.log", cnts->root_dir);
-    goto do_dev_null;
-
-  do_dev_null:
     if (unlink(log_path) < 0 && errno != ENOENT) {
       err("unlink(\"%s\") failed: %s", log_path, os_ErrorMsg());
       return -SSERV_ERR_SYSTEM_ERROR;
@@ -4470,14 +3877,8 @@ contest_mngmt_cmd(const struct contest_desc *cnts,
     }
     return 0;
 
-  case SSERV_CMD_SERVE_LOG_FILE:
-    snprintf(log_path, sizeof(log_path), "%s/var/messages", cnts->root_dir);
-    goto do_file;
   case SSERV_CMD_RUN_LOG_FILE:
     snprintf(log_path, sizeof(log_path), "%s/var/ej-run-messages.log", cnts->root_dir);
-    goto do_file;
-
-  do_file:
     if (lstat(log_path, &stbuf) >= 0 && S_ISLNK(stbuf.st_mode)) {
       if (unlink(log_path) < 0) {
         err("unlink(\"%s\") failed: %s", log_path, os_ErrorMsg());
@@ -4486,41 +3887,39 @@ contest_mngmt_cmd(const struct contest_desc *cnts,
     }
     return 0;
 
-  case SSERV_CMD_SERVE_MNG_TERM:
-    extra = get_existing_contest_extra(cnts->id);
-    if (!extra) return -SSERV_ERR_INVALID_CONTEST;
-    if (extra->serve_pid > 0) kill(extra->serve_pid, SIGTERM);
-    return 0;
-
   case SSERV_CMD_RUN_MNG_TERM:
     extra = get_existing_contest_extra(cnts->id);
     if (!extra) return -SSERV_ERR_INVALID_CONTEST;
     if (extra->run_pid > 0) kill(extra->run_pid, SIGTERM);
+    if (run_inotify_fd >= 0) {
+      close(run_inotify_fd);
+      run_inotify_fd = -1;
+    }
     return 0;
 
   case SSERV_CMD_CONTEST_RESTART:
     release_contest_resources(cnts);
     acquire_contest_resources(cnts, -1, -1);
-    install_dnotify_handler();
     extra = get_contest_extra(cnts->id);
     if (extra->run_used && extra->run_queue_dir) {
       if (get_number_of_files(extra->run_queue_dir) > 0) {
-        dnotify_flag = 1;
         extra->dnotify_flag = 1;
       }
     }
-    return 0;
-
-  case SSERV_CMD_SERVE_MNG_RESET_ERROR:
-    extra = get_existing_contest_extra(cnts->id);
-    if (!extra || !extra->serve_suspended) return 0;
-    extra->serve_suspend_end = 0;
+    if (run_inotify_fd >= 0) {
+      close(run_inotify_fd);
+      run_inotify_fd = -1;
+    }
     return 0;
 
   case SSERV_CMD_RUN_MNG_RESET_ERROR:
     extra = get_existing_contest_extra(cnts->id);
     if (!extra || !extra->run_suspended) return 0;
     extra->run_suspend_end = 0;
+    if (run_inotify_fd >= 0) {
+      close(run_inotify_fd);
+      run_inotify_fd = -1;
+    }
     return 0;
 
   case SSERV_CMD_CLEAR_MESSAGES:
@@ -4536,25 +3935,282 @@ contest_mngmt_cmd(const struct contest_desc *cnts,
   }
 }
 
+static void
+handle_control_accept(void *context, void *fds, void *user)
+{
+  struct pollfd *pfd = (struct pollfd *) fds;
+
+  if ((pfd->revents & POLLNVAL)) {
+    err("%s: ppoll invalid request fd=%d", __FUNCTION__, pfd->fd);
+    // FIXME: what to do?
+    abort();
+  }
+  /*
+  if ((pfd->revents & POLLHUP)) {
+    err("%s: ppoll hangup fd=%d", __FUNCTION__, pfd->fd);
+    // FIXME: what to do?
+    abort();
+  }
+  */
+  if ((pfd->revents & POLLERR)) {
+    err("%s: ppoll error fd=%d", __FUNCTION__, pfd->fd);
+    // FIXME: what to do?
+    abort();
+  }
+  if (!(pfd->revents & POLLIN)) {
+    err("%s: ppoll not ready fd=%d", __FUNCTION__, pfd->fd);
+    return;
+  }
+
+  accept_new_control_connection();
+}
+
+static void
+handle_client_read(void *context, void *fds, void *user)
+{
+  struct pollfd *pfd = (struct pollfd *) fds;
+  struct client_state *p = (struct client_state *) user;
+
+  if ((pfd->revents & POLLNVAL)) {
+    err("%s: ppoll invalid request fd=%d", __FUNCTION__, pfd->fd);
+    p->state = STATE_DISCONNECT;
+    return;
+  }
+  /*
+  if ((pfd->revents & POLLHUP)) {
+    err("%s: ppoll hangup fd=%d", __FUNCTION__, pfd->fd);
+    p->state = STATE_DISCONNECT;
+    return;
+  }
+  */
+  if ((pfd->revents & POLLERR)) {
+    err("%s: ppoll error fd=%d", __FUNCTION__, pfd->fd);
+    p->state = STATE_DISCONNECT;
+    return;
+  }
+  if (!(pfd->revents & POLLIN)) {
+    err("%s: ppoll not ready fd=%d", __FUNCTION__, pfd->fd);
+    return;
+  }
+
+  read_from_control_connection(p);
+}
+
+static void
+handle_client_write(void *context, void *fds, void *user)
+{
+  struct pollfd *pfd = (struct pollfd *) fds;
+  struct client_state *p = (struct client_state *) user;
+
+  if ((pfd->revents & POLLNVAL)) {
+    err("%s: ppoll invalid request fd=%d", __FUNCTION__, pfd->fd);
+    p->state = STATE_DISCONNECT;
+    return;
+  }
+  /*
+  if ((pfd->revents & POLLHUP)) {
+    err("%s: ppoll hangup fd=%d", __FUNCTION__, pfd->fd);
+    p->state = STATE_DISCONNECT;
+    return;
+  }
+  */
+  if ((pfd->revents & POLLERR)) {
+    err("%s: ppoll error fd=%d", __FUNCTION__, pfd->fd);
+    p->state = STATE_DISCONNECT;
+    return;
+  }
+  if (!(pfd->revents & POLLOUT)) {
+    err("%s: ppoll not ready fd=%d", __FUNCTION__, pfd->fd);
+    return;
+  }
+
+  write_to_control_connection(p);
+}
+
+static void
+handle_inotify_read(void *context, void *fds, void *user)
+{
+  struct pollfd *pfd = (struct pollfd *) fds;
+  unsigned char buf[8192];
+  int r, cur_ind = 0, init_offset = 0, i;
+  struct inotify_event *pev;
+  struct contest_extra *cur;
+
+  if ((pfd->revents & POLLNVAL)) {
+    err("%s: ppoll invalid request fd=%d", __FUNCTION__, pfd->fd);
+    // FIXME: what to do...
+    return;
+  }
+  if ((pfd->revents & POLLERR)) {
+    err("%s: ppoll error fd=%d", __FUNCTION__, pfd->fd);
+    // FIXME: what to do...
+    return;
+  }
+  if (!(pfd->revents & POLLIN)) {
+    err("%s: ppoll not ready fd=%d", __FUNCTION__, pfd->fd);
+    return;
+  }
+
+  do {
+    r = read(pfd->fd, buf + init_offset, sizeof(buf) - init_offset);
+    if (r < 0 && errno == EINTR) {
+      err("%s: read() returned EINTR fd=%d", __FUNCTION__, pfd->fd);
+      return;
+    }
+    if (r < 0 && errno == EAGAIN) {
+      err("%s: read() returned EAGAIN fd=%d", __FUNCTION__, pfd->fd);
+      return;
+    }
+    if (r < 0) {
+      err("%s: read() failed fd=%d: %s", __FUNCTION__, pfd->fd, os_ErrorMsg());
+      return;
+    }
+    if (r == 0) {
+      err("%s: read() returned 0 fd=%d", __FUNCTION__, pfd->fd);
+      return;
+    }
+    while (cur_ind < r) {
+      if (cur_ind + sizeof(*pev) > r) {
+        init_offset = r - cur_ind;
+        memmove(buf, buf + cur_ind, init_offset);
+        cur_ind = 0;
+        break;
+      }
+      pev = (struct inotify_event *) &buf[cur_ind];
+      if (pev->len < 0 || pev->len > 1024) {
+        err("%s: ridiculuos len: %zu", __FUNCTION__, (size_t) pev->len);
+        return;
+      }
+      if (cur_ind + sizeof(*pev) + pev->len > r) {
+        init_offset = r - cur_ind;
+        memmove(buf, buf + cur_ind, init_offset);
+        cur_ind = 0;
+        break;
+      }
+      cur_ind += sizeof(*pev) + pev->len;
+      fprintf(stderr, "inotify: %d, %u, %u, %u, \"%s\"\n", pev->wd, pev->mask, pev->cookie,
+              pev->len, pev->name);
+      for (i = 0; i < extra_a; i++) {
+        if ((cur = extras[i])
+            && cur->run_used && !cur->run_suspended && cur->run_pid <= 0
+            && cur->run_queue_dir && cur->run_wd == pev->wd) {
+          cur->dnotify_flag = 1;
+        }
+      }
+    }
+  } while (r == sizeof(buf));
+}
+
+static void
+start_run(struct contest_extra *cur, time_t current_time)
+{
+  int pid, j, null_fd = -1, log_fd = -1;
+  unsigned char **args = NULL;
+
+  cur->dnotify_flag = 0;
+  cur->run_last_start = current_time;
+  pid = fork();
+  if (pid < 0) {
+    err("contest %d run fork() failed: %s", cur->id, os_ErrorMsg());
+    /* FIXME: recovery? */
+    return;
+  }
+
+  if (pid > 0) {
+    info("contest %d new run process %d", cur->id, pid);
+    cur->run_pid = pid;
+    return;
+  }
+
+  // this is child
+  pid = getpid();
+
+  // 1. close everything
+  for (j = 0; j < extra_a; j++) {
+    if (!extras[j]) continue;
+    if (!extras[j]->run_used) continue;
+  }
+  close_all_client_sockets();
+  random_cleanup();
+  background_process_close_fds(&background_processes);
+
+  // 2. switch uid and gid
+  if (cur->run_uid >= 0 && self_uid != cur->run_uid && setuid(cur->run_uid) < 0) {
+    err("contest %d [%d] setuid failed: %s", cur->id, pid, os_ErrorMsg());
+    _exit(1);
+  }
+  if (cur->run_gid >= 0 && self_gid != cur->run_gid && setgid(cur->run_gid) < 0) {
+    err("contest %d [%d] setgid failed: %s", cur->id, pid, os_ErrorMsg());
+    _exit(1);
+  }
+
+  // 3. open /dev/null and log file
+  if ((null_fd = open("/dev/null", O_RDONLY, 0)) < 0) {
+    err("contest %d [%d] open(/dev/null) failed: %s", cur->id, pid, os_ErrorMsg());
+    _exit(1);
+  }
+  if ((log_fd = open(cur->run_log_file, O_WRONLY | O_APPEND | O_CREAT, 0600)) < 0) {
+    err("contest %d [%d] open(%s) failed: %s", cur->id, pid, cur->run_log_file, os_ErrorMsg());
+    _exit(1);
+  }
+
+  // 4. setup file descriptors 0
+  if (null_fd != 0) {
+    dup2(null_fd, 0);
+    close(null_fd);
+  }
+
+  // 5. change the current directory
+  if (chdir(cur->root_dir) < 0) {
+    err("contest %d [%d] chdir(%s) failed: %s", cur->id, pid, cur->root_dir, os_ErrorMsg());
+    _exit(1);
+  }
+
+  // 6. setup new process group
+  if (setpgid(pid, pid) < 0) {
+    err("contest %d [%d] setpgid failed: %s", cur->id, pid, os_ErrorMsg());
+    _exit(1);
+  }
+
+  // 7. setup argument vector
+  args = (unsigned char **) alloca(4 * sizeof(args[0]));
+  memset(args, 0, 4 * sizeof(args[0]));
+  args[0] = config->run_path;
+  args[1] = "-S";
+  args[2] = cur->conf_file;
+
+  // 8. clear procmask
+  sigprocmask(SIG_SETMASK, &original_mask, 0);
+
+  // 9. setup file descriptors 1, 2
+  if (log_fd != 1) {
+    dup2(log_fd, 1);
+  }
+  if (log_fd != 2) {
+    dup2(log_fd, 2);
+  }
+  if (log_fd != 1 && log_fd != 2) {
+    close(log_fd);
+  }
+  // 10. start run
+  execve(args[0], (char**) args, environ);
+  err("contest %d [%d] execve() failed: %s", cur->id, pid, os_ErrorMsg());
+  _exit(1);
+}
+
 static int
 do_loop(void)
 {
-  int fd_max, i, socket_fd, n, status, pid, tmp_fd, j;
-  fd_set rset, wset;
-#if HAVE_PSELECT - 0 == 1
-  struct timespec timeout2;
-#else
-  struct timeval timeout;
-#endif
+  int i, n, status, pid;
   sigset_t block_mask, work_mask;
-  struct sockaddr_un in_addr;
-  int in_addr_len;
   struct contest_extra *cur;
-  int null_fd, log_fd, self_pid;
-  unsigned char **args;
   time_t current_time;
   struct client_state *cur_clnt;
-  struct sigaction dn_act;
+  pollfds_t *pfds = pollfds_create();
+  time_t last_scan_time = 0;
+  int has_run_files = 0;
+  int timeout_ms = 0;
+  struct rusage usage;
 
   sigfillset(&block_mask);
   sigfillset(&work_mask);
@@ -4562,7 +4218,6 @@ do_loop(void)
   sigdelset(&work_mask, SIGINT);
   sigdelset(&work_mask, SIGHUP);
   sigdelset(&work_mask, SIGCHLD);
-  sigdelset(&work_mask, SIGRTMIN);
   sigprocmask(SIG_SETMASK, &block_mask, 0);
 
   signal(SIGTERM, handler_term);
@@ -4570,46 +4225,8 @@ do_loop(void)
   signal(SIGHUP, handler_hup);
   signal(SIGCHLD, handler_child);
 
-  memset(&dn_act, 0, sizeof(dn_act));
-  dn_act.sa_sigaction = dnotify_handler;
-  sigfillset(&dn_act.sa_mask);
-  dn_act.sa_flags = SA_SIGINFO;
-  sigaction(SIGRTMIN, &dn_act, NULL);
-
   while (1) {
     acquire_resources();
-
-    /* set directory notification */
-    dnotify_flag = 0;
-    for (i = 0; i < extra_a; i++) {
-      if (!(cur = extras[i])) continue;
-      if (!cur->run_used) continue;
-      ASSERT(cur->run_dir_fd >= 0);
-      ASSERT(cur->run_pid <= 0);
-      // should never fail
-#if HAVE_F_NOTIFY - 0 == 1
-      if (fcntl(cur->run_dir_fd, F_SETSIG, SIGRTMIN) < 0) {
-        err("fcntl(...,F_SETSIG,...) failed: %s", os_ErrorMsg());
-        cur->run_used = 0;
-        close(cur->run_dir_fd);
-        cur->run_dir_fd = -1;
-        continue;
-      }
-      if (fcntl(cur->run_dir_fd, F_NOTIFY,
-                DN_CREATE | DN_DELETE | DN_RENAME | DN_MULTISHOT) < 0) {
-        err("fcntl(...,F_NOTIFY,...) failed: %s", os_ErrorMsg());
-        cur->run_used = 0;
-        close(cur->run_dir_fd);
-        cur->run_dir_fd = -1;
-        continue;
-      }
-#endif
-
-      if (get_number_of_files(cur->run_queue_dir) > 0) {
-        dnotify_flag = 1;
-        cur->dnotify_flag = 1;
-      }
-    }
 
     while (1) {
       current_time = time(0);
@@ -4623,39 +4240,22 @@ do_loop(void)
 
       if (hup_flag || term_flag) break;
 
-      fd_max = -1;
-      FD_ZERO(&rset);
-      FD_ZERO(&wset);
+      pollfds_clear(pfds);
 
-      for (i = 0; i < extra_a; i++) {
-        if (!(cur = extras[i])) continue;
-        if (!cur->serve_used || cur->serve_pid >= 0) continue;
-        if ((socket_fd = cur->socket_fd) < 0) continue;
-        FD_SET(socket_fd, &rset);
-        if (socket_fd > fd_max) fd_max = socket_fd;
-        if (cur->serve_suspended && current_time > cur->serve_suspend_end) {
-          info("contest %d serve suspend time is finished", cur->id);
-          cur->serve_suspended = 0;
-          cur->serve_suspend_end = 0;
+      if (run_inotify_fd < 0) {
+        info("creating inotify file descriptor");
+        if ((run_inotify_fd = inotify_init1(IN_NONBLOCK | IN_CLOEXEC)) < 0) {
+          err("inotify_init1() failed: %s", os_ErrorMsg());
+          return 1;
         }
-      }
-
-      if (control_socket_fd >= 0) {
-        FD_SET(control_socket_fd, &rset);
-        if (control_socket_fd > fd_max) fd_max = control_socket_fd;
-      }
-
-      for (cur_clnt = clients_first; cur_clnt; cur_clnt = cur_clnt->next) {
-        if (cur_clnt->state == STATE_WRITE 
-            || cur_clnt->state == STATE_WRITECLOSE) {
-          ASSERT(cur_clnt->fd >= 0);
-          FD_SET(cur_clnt->fd, &wset);
-          if (cur_clnt->fd > fd_max) fd_max = cur_clnt->fd;
-        } else if (cur_clnt->state >= STATE_READ_CREDS
-                   && cur_clnt->state <= STATE_READ_DATA) {
-          ASSERT(cur_clnt->fd >= 0);
-          FD_SET(cur_clnt->fd, &rset);
-          if (cur_clnt->fd > fd_max) fd_max = cur_clnt->fd;
+        for (i = 0; i < extra_a; i++) {
+          if (!(cur = extras[i])) continue;
+          if (!cur->run_used || !cur->run_queue_dir) continue;
+          cur->run_wd = inotify_add_watch(run_inotify_fd, cur->run_queue_dir, IN_MOVED_TO);
+          if (cur->run_wd < 0) {
+            err("inotify_add_watch failed for %s: %s", cur->run_queue_dir, os_ErrorMsg());
+            cur->run_wd = 0;
+          }
         }
       }
 
@@ -4668,98 +4268,59 @@ do_loop(void)
           info("contest %d run suspend time is finished", cur->id);
           cur->run_suspended = 0;
           cur->run_suspend_end = 0;
-          if (cur->dnotify_flag) dnotify_flag = 1;
         }
       }
 
-      fd_max = background_process_set_fds(&background_processes, fd_max, &rset, &wset);
+      if (last_scan_time <= 0 || last_scan_time + SPOOL_DIR_CHECK_INTERVAL < current_time) {
+        //info("full directory scan");
+        for (i = 0; i < extra_a; i++) {
+          if (!(cur = extras[i])) continue;
+          if (!cur->run_used || cur->run_suspended || cur->run_pid > 0 || !cur->run_queue_dir) continue;
+          if (get_number_of_files(cur->run_queue_dir) > 0) {
+            cur->dnotify_flag = 1;
+            has_run_files = 1;
+          }
+        }
+        last_scan_time = current_time;
+      }
 
-restart_select_dirty_hack:
+      if (control_socket_fd >= 0) {
+        pollfds_add(pfds, control_socket_fd, POLLIN, handle_control_accept, NULL);
+      }
+      if (run_inotify_fd >= 0) {
+        pollfds_add(pfds, run_inotify_fd, POLLIN, handle_inotify_read, NULL);
+      }
+
+      for (cur_clnt = clients_first; cur_clnt; cur_clnt = cur_clnt->next) {
+        if (cur_clnt->state == STATE_WRITE || cur_clnt->state == STATE_WRITECLOSE) {
+          ASSERT(cur_clnt->fd >= 0);
+          pollfds_add(pfds, cur_clnt->fd, POLLOUT, handle_client_write, cur_clnt);
+        } else if (cur_clnt->state >= STATE_READ_CREDS && cur_clnt->state <= STATE_READ_DATA) {
+          ASSERT(cur_clnt->fd >= 0);
+          pollfds_add(pfds, cur_clnt->fd, POLLIN, handle_client_read, cur_clnt);
+        }
+      }
+
       errno = 0;
       n = 0;
-      if (!sigchld_flag && !hup_flag && !term_flag && !dnotify_flag) {
-#if HAVE_PSELECT - 0 == 1
-        timeout2.tv_sec = 10;
-        timeout2.tv_nsec = 0;
-        n = pselect(fd_max + 1, &rset, &wset, 0, &timeout2, &work_mask);
-#else
-        int errcode;
-
-        // set a reasonable timeout in case of race condition
-        timeout.tv_sec = 10;
-        timeout.tv_usec = 0;
-
-        // here's a potential race condition :-(
-        // it cannot be handled properly until Linux
-        // has the proper psignal implementation
-        sigprocmask(SIG_SETMASK, &work_mask, 0);
-        errno = 0;
-        n = select(fd_max + 1, &rset, &wset, 0, &timeout);
-        errcode = errno;
-        sigprocmask(SIG_SETMASK, &block_mask, 0);
-        errno = errcode;
-        // end of race condition prone code
-#endif
+      timeout_ms = 10000;
+      if (sigchld_flag || hup_flag || term_flag || has_run_files) {
+        timeout_ms = 0;
       }
-
-      if (n < 0 && errno == EBADF) {
-        // try to identify the guilty file descriptors
-        for (int gfd = 0; gfd <= fd_max; ++gfd) {
-          err("select() failed because of invalid file descriptors");
-          if (FD_ISSET(gfd, &rset)) {
-            if (fcntl(gfd, F_GETFD) < 0) {
-              err("fd %d is invalid (read)", gfd);
-              FD_CLR(gfd, &rset);
-              FD_CLR(gfd, &wset);
-            }
-          }
-          if (FD_ISSET(gfd, &wset)) {
-            if (fcntl(gfd, F_GETFD) < 0) {
-              err("fd %d is invalid (write)", gfd);
-              FD_CLR(gfd, &wset);
-            }
-          }
-        }
-        goto restart_select_dirty_hack;
-      }
+      n = pollfds_poll(pfds, 10000, &work_mask);
 
       if (n < 0 && errno != EINTR) {
         err("unexpected select error: %s", os_ErrorMsg());
         continue;
       }
 
-      for (i = 0; i < extra_a; i++) {
-        if (!(cur = extras[i])) continue;
-        if (!cur->run_used || cur->run_suspended || cur->run_pid > 0
-            || !cur->run_queue_dir) continue;
-        if (current_time < cur->last_forced_check + SPOOL_DIR_CHECK_INTERVAL)
-          continue;
-        cur->last_forced_check = current_time;
-        if (get_number_of_files(cur->run_queue_dir) > 0) {
-          cur->dnotify_flag = 1;
-          dnotify_flag = 1;
-        }
-      }
+      current_time = time(0);
 
       if (sigchld_flag) {
         sigchld_flag = 0;
-        while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
+        while ((pid = wait4(-1, &status, WNOHANG, &usage)) > 0) {
           for (i = 0; i < extra_a; i++) {
             if (!(cur = extras[i])) continue;
-            if (cur->serve_used && cur->serve_pid == pid) {
-              if (WIFEXITED(status)) {
-                info("contest %d serve [%d] terminated with status %d",
-                     cur->id, pid, WEXITSTATUS(status));
-              } else if (WIFSIGNALED(status)) {
-                err("contest %d serve [%d] terminated with signal %d (%s)",
-                    cur->id, pid, WTERMSIG(status),
-                    os_GetSignalString(WTERMSIG(status)));
-              } else {
-                err("contest %d serve unknown termination status", i);
-              }
-              cur->serve_pid = -1;
-              break;
-            }
             if (cur->run_used && cur->run_pid == pid) {
               if (WIFEXITED(status)) {
                 info("contest %d run [%d] terminated with status %d",
@@ -4772,221 +4333,52 @@ restart_select_dirty_hack:
                 err("contest %d run unknown termination status", i);
               }
 
-#if HAVE_F_NOTIFY - 0 == 1
-              if (fcntl(cur->run_dir_fd, F_SETSIG, SIGRTMIN) < 0) {
-                err("fcntl(...,F_SETSIG,...) failed: %s", os_ErrorMsg());
-                cur->run_used = 0;
-                close(cur->run_dir_fd);
-                cur->run_dir_fd = -1;
-              }
-              if (fcntl(cur->run_dir_fd, F_NOTIFY,
-                        DN_CREATE | DN_DELETE | DN_RENAME | DN_MULTISHOT)< 0) {
-                err("fcntl(...,F_NOTIFY,...) failed: %s", os_ErrorMsg());
-                cur->run_used = 0;
-                close(cur->run_dir_fd);
-                cur->run_dir_fd = -1;
-              }
-#endif
-
               cur->dnotify_flag = 0;
               if (get_number_of_files(cur->run_queue_dir) > 0) {
                 cur->dnotify_flag = 1;
-                dnotify_flag = 1;
               }
               cur->run_pid = -1;
               break;
             }
           }
           if (i >= extra_a) {
-            err("unregistered child %d terminated", pid);
-            continue;
+            if (!background_process_handle_termination(&background_processes, pid, status, &usage)) {
+              err("unregistered child %d terminated", pid);
+              continue;
+            }
           }
         }
       }
 
       if (hup_flag || term_flag) break;
 
-      if (dnotify_flag) {
-        dnotify_flag = 0;
-        for (i = 0; i < extra_a; i++) {
-          if (!(cur = extras[i])) continue;
-          if (!cur->run_used) continue;
-          if (!cur->dnotify_flag) continue;
-          if (cur->run_pid > 0) continue;
-          if (cur->run_suspended) continue;
-          if (current_time == cur->run_last_start) {
-            err("contest %d run respawns too fast, disabling for %d seconds",
-                cur->id, SUSPEND_TIMEOUT);
-            cur->run_suspended = 1;
-            cur->run_suspend_end = current_time + SUSPEND_TIMEOUT;
-            continue;
-          }
-          cur->dnotify_flag = 0;
-          cur->run_last_start = current_time;
-          pid = fork();
-          if (pid < 0) {
-            err("contest %d run fork() failed: %s", cur->id, os_ErrorMsg());
-            /* FIXME: recovery? */
-            continue;
-          }
-          if (pid > 0) {
-            info("contest %d new run process %d", cur->id, pid);
-#if HAVE_F_NOTIFY - 0 == 1
-            fcntl(cur->run_dir_fd, F_NOTIFY, 0);
-#endif
-            cur->run_pid = pid;
-            continue;
-          }
-
-          // this is child
-          self_pid = getpid();
-          cur = extras[i];
-          ASSERT(cur);
-
-          // 1. close everything
-          for (j = 0; j < extra_a; j++) {
-            if (!extras[j]) continue;
-            if (!extras[j]->serve_used) continue;
-            close(extras[j]->socket_fd);
-          }
-          for (j = 0; j < extra_a; j++) {
-            if (!extras[j]) continue;
-            if (!extras[j]->run_used) continue;
-            close(extras[j]->run_dir_fd);
-          }
-          close_all_client_sockets();
-          random_cleanup();
-
-          // 2. switch uid and gid
-          if (cur->run_uid >= 0 &&
-              self_uid != cur->run_uid && setuid(cur->run_uid) < 0) {
-            err("contest %d [%d] setuid failed: %s",
-                cur->id, self_pid, os_ErrorMsg());
-            _exit(1);
-          }
-          if (cur->run_gid >= 0 &&
-              self_gid != cur->run_gid && setgid(cur->run_gid) < 0) {
-            err("contest %d [%d] setgid failed: %s",
-                cur->id, self_pid, os_ErrorMsg());
-            _exit(1);
-          }
-
-          // 3. open /dev/null and log file
-          if ((null_fd = open("/dev/null", O_RDONLY, 0)) < 0) {
-            err("contest %d [%d] open(/dev/null) failed: %s",
-                cur->id, self_pid, os_ErrorMsg());
-            _exit(1);
-          }
-          if ((log_fd = open(cur->run_log_file, O_WRONLY | O_APPEND | O_CREAT,
-                             0600)) < 0) {
-            err("contest %d [%d] open(%s) failed: %s",
-                cur->id, self_pid, cur->run_log_file, os_ErrorMsg());
-            _exit(1);
-          }
-
-          // 4. setup file descriptors 0
-          if (null_fd != 0) {
-            dup2(null_fd, 0);
-            close(null_fd);
-          }
-
-          // 5. change the current directory
-          if (chdir(cur->root_dir) < 0) {
-            err("contest %d [%d] chdir(%s) failed: %s",
-                cur->id, self_pid, cur->root_dir, os_ErrorMsg());
-            _exit(1);
-          }
-
-          // 6. setup new process group
-          if (setpgid(self_pid, self_pid) < 0) {
-            err("contest %d [%d] setpgid failed: %s",
-                cur->id, self_pid, os_ErrorMsg());
-            _exit(1);
-          }
-
-          // 7. setup argument vector
-          args = (unsigned char **) alloca(4 * sizeof(args[0]));
-          memset(args, 0, 4 * sizeof(args[0]));
-          args[0] = config->run_path;
-          args[1] = "-S";
-          args[2] = cur->conf_file;
-
-          // 8. clear procmask
-          sigprocmask(SIG_SETMASK, &original_mask, 0);
-
-          // 9. setup file descriptors 1, 2
-          if (log_fd != 1) {
-            dup2(log_fd, 1);
-          }
-          if (log_fd != 2) {
-            dup2(log_fd, 2);
-          }
-          if (log_fd != 1 && log_fd != 2) {
-            close(log_fd);
-          }
-          // 10. start run
-          execve(args[0], (char**) args, environ);
-          err("contest %d [%d] execve() failed: %s",
-              cur->id, self_pid, os_ErrorMsg());
-          _exit(1);
-        }
-      }
-
+      /*
       if (n <= 0) {
         // timeout expired or signal arrived
         continue;
       }
+      */
 
-      // check for new control connections
-      if (control_socket_fd >= 0 && FD_ISSET(control_socket_fd, &rset)) {
-        accept_new_control_connection();
-      }
+      pollfds_call_handlers(pfds, NULL);
 
-      // read from/write to control sockets
-      for (cur_clnt = clients_first; cur_clnt; cur_clnt = cur_clnt->next) {
-        switch (cur_clnt->state) {
-        case STATE_READ_CREDS:
-        case STATE_READ_FDS:
-        case STATE_READ_LEN:
-        case STATE_READ_DATA:
-          if (FD_ISSET(cur_clnt->fd, &rset))
-            read_from_control_connection(cur_clnt);
-          break;
-        case STATE_WRITE:
-        case STATE_WRITECLOSE:
-          if (FD_ISSET(cur_clnt->fd, &wset))
-            write_to_control_connection(cur_clnt);
-        }
-      }
-
-      background_process_readwrite(&background_processes, &rset, &wset);
-      background_process_check_finished(&background_processes);
-      background_process_call_continuations(&background_processes);
-
-      // scan for ready contests
       for (i = 0; i < extra_a; i++) {
         if (!(cur = extras[i])) continue;
-        if (!cur->serve_used) continue;
-        if (cur->serve_pid >= 0) continue;
-        if (FD_ISSET(cur->socket_fd, &rset)) {
-          if (!cur->serve_suspended && current_time == cur->serve_last_start) {
-            err("contest %d serve respawns too fast, disabling for %d seconds",
-                cur->id, SUSPEND_TIMEOUT);
-            cur->serve_suspended = 1;
-            cur->serve_suspend_end = current_time + SUSPEND_TIMEOUT;
-          }
-          if (cur->serve_suspended) {
-            in_addr_len = sizeof(in_addr);
-            memset(&in_addr, 0, in_addr_len);
-            tmp_fd = accept(cur->socket_fd,
-                            (struct sockaddr*) &in_addr, &in_addr_len);
-            if (tmp_fd >= 0) close(tmp_fd);
-            continue;
-          }
-
-          start_serve(cur, current_time, 0);
+        if (!cur->run_used) continue;
+        if (!cur->dnotify_flag) continue;
+        if (cur->run_pid > 0) continue;
+        if (cur->run_suspended) continue;
+        if (current_time == cur->run_last_start) {
+          err("contest %d run respawns too fast, disabling for %d seconds",
+              cur->id, SUSPEND_TIMEOUT);
+          cur->run_suspended = 1;
+          cur->run_suspend_end = current_time + SUSPEND_TIMEOUT;
+          continue;
         }
+        start_run(cur, current_time);
       }
+
+      background_process_check_finished(&background_processes);
+      background_process_call_continuations(&background_processes);
 
       // execute ready commands from control connections
       for (cur_clnt = clients_first; cur_clnt; cur_clnt = cur_clnt->next) {
@@ -5037,6 +4429,11 @@ prepare_sockets(void)
     }
     if (!config->super_serve_socket) {
       err("<super_serve_socket> must be specified in daemon mode");
+      return 1;
+    }
+
+    if ((run_inotify_fd = inotify_init1(IN_NONBLOCK | IN_CLOEXEC)) < 0) {
+      err("inotify_init1() failed: %s", os_ErrorMsg());
       return 1;
     }
 
@@ -5278,6 +4675,10 @@ main(int argc, char **argv)
   random_cleanup();
   if (control_socket_fd >= 0) close(control_socket_fd);
   if (control_socket_path) unlink(control_socket_path);
+  if (run_inotify_fd >= 0) {
+    close(run_inotify_fd);
+    run_inotify_fd = -1;
+  }
 
   if (hup_flag) start_restart();
   return retcode;

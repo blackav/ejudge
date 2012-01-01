@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -411,7 +411,7 @@ super_html_main_page(FILE *f,
       if (priv_level < PRIV_LEVEL_ADMIN) continue;
 
       if (!(extra = get_existing_contest_extra(contest_id))) continue;
-      if (!extra->serve_used && !extra->run_used) continue;
+      if (/*!extra->serve_used &&*/!extra->run_used) continue;
       cnts = 0;
       errcode = contests_get(contest_id, &cnts);
 
@@ -1140,12 +1140,6 @@ super_html_log_page(FILE *f,
     return -SSERV_ERR_ROOT_DIR_NOT_SET;
   }
   switch (cmd) {
-  case SSERV_CMD_VIEW_SERVE_LOG:
-    snprintf(log_file_path, sizeof(log_file_path),
-             "%s/var/messages", cnts->root_dir);
-    progname = "serve";
-    refresh_action = SSERV_CMD_VIEW_SERVE_LOG;
-    break;
   case SSERV_CMD_VIEW_RUN_LOG:
     snprintf(log_file_path, sizeof(log_file_path),
              "%s/var/ej-run-messages.log", cnts->root_dir);
@@ -1178,7 +1172,6 @@ super_html_log_page(FILE *f,
   }
 
   switch (cmd) {
-  case SSERV_CMD_VIEW_SERVE_LOG:
   case SSERV_CMD_VIEW_RUN_LOG:
     fprintf(f, "<h2><tt>%s</tt> log file</h2>\n", progname);
     break;
@@ -2415,29 +2408,15 @@ super_html_edit_contest_page(FILE *f,
     fprintf(f, "</tr></form>\n");
   }
 
-  /*
-  if (!cnts->new_managed) {
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td>Manage the contest server?</td><td>",
-            form_row_attrs[row ^= 1]);
-    html_boolean_select(f, cnts->managed, "param", 0, 0);
-    fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_CNTS_CHANGE_MANAGED, "Change");
-    fprintf(f, "</td></tr></form>\n");
-  }
-  */
-
-  //if (!cnts->managed) {
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td>Manage the contest server?</td><td>",
-            form_row_attrs[row ^= 1]);
-    html_boolean_select(f, cnts->managed, "param", 0, 0);
-    fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_CNTS_CHANGE_MANAGED, "Change");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_CNTS_CHANGE_MANAGED);
-    fprintf(f, "</tr></form>\n");
-    //}
+  html_start_form(f, 1, self_url, hidden_vars);
+  fprintf(f, "<tr%s><td>Manage the contest server?</td><td>",
+          form_row_attrs[row ^= 1]);
+  html_boolean_select(f, cnts->managed, "param", 0, 0);
+  fprintf(f, "</td><td>");
+  html_submit_button(f, SSERV_CMD_CNTS_CHANGE_MANAGED, "Change");
+  fprintf(f, "</td>");
+  print_help_url(f, SSERV_CMD_CNTS_CHANGE_MANAGED);
+  fprintf(f, "</tr></form>\n");
 
   html_start_form(f, 1, self_url, hidden_vars);
   fprintf(f, "<tr%s><td>Manage the testing server?</td><td>",

@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -9966,7 +9966,7 @@ invoke_make(
   path_t problem_dir;
   struct stat stbuf;
   int r;
-  unsigned char cmd[8196];
+  unsigned char cmd[8192];
 
   get_advanced_layout_path(problem_dir, sizeof(problem_dir), global,
                            prob, NULL, variant);

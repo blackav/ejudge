@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -9062,7 +9062,7 @@ unpriv_load_html_style(struct http_request_info *phr,
   struct contest_extra *extra = 0;
   time_t cur_time = 0;
 #if defined CONF_ENABLE_AJAX && CONF_ENABLE_AJAX
-  unsigned char bb[8196];
+  unsigned char bb[8192];
   char *state_json_txt = 0;
   size_t state_json_len = 0;
   FILE *state_json_f = 0;
