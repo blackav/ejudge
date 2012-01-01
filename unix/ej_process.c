@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,8 +18,10 @@
 #include "ej_process.h"
 #include "compat.h"
 #include "list_ops.h"
+#include "pollfds.h"
 
 #include "reuse_xalloc.h"
+#include "reuse_logger.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -33,6 +35,7 @@
 #include <stdarg.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+#include <poll.h>
 
 static int
 error(const char *format, ...)
@@ -647,6 +650,189 @@ background_process_set_fds(struct background_process_head *list, int max_fd, voi
   return max_fd;
 }
 
+static void
+handle_stdin(void *context, void *fds, void *user)
+{
+  struct pollfd *pfd = (struct pollfd *) fds;
+  struct background_process *prc = (struct background_process *) user;
+
+  ASSERT(prc);
+  ASSERT(prc->stdin_f == pfd->fd);
+
+  if ((pfd->revents & POLLNVAL)) {
+    fprintf(stderr, "%s: ppoll invalid request fd=%d\n", __FUNCTION__, pfd->fd);
+    goto cleanup;
+  }
+  if ((pfd->revents & POLLHUP)) {
+    fprintf(stderr, "%s: ppoll hangup fd=%d\n", __FUNCTION__, pfd->fd);
+    goto cleanup;
+  }
+  if ((pfd->revents & POLLERR)) {
+    fprintf(stderr, "%s: ppoll error fd=%d\n", __FUNCTION__, pfd->fd);
+    goto cleanup;
+  }
+  if (!(pfd->revents & POLLOUT)) {
+    fprintf(stderr, "%s: ppoll not ready fd=%d\n", __FUNCTION__, pfd->fd);
+    return;
+  }
+
+  if (!prc->stdin_b || prc->stdin_z <= 0 || prc->stdin_u >= prc->stdin_z) {
+    close(prc->stdin_f); prc->stdin_f = -1;
+    return;
+  }
+
+  int wsz = prc->stdin_z - prc->stdin_u;
+  while (1) {
+    int w = write(prc->stdin_f, prc->stdin_b + prc->stdin_u, wsz);
+    if (w < 0) {
+      if (errno != EAGAIN) {
+        fprintf(stderr, "%s: write to pipe fd=%d failed: %s\n", __FUNCTION__,
+                pfd->fd, strerror(errno));
+        close(prc->stdin_f); prc->stdin_f = -1;
+        break;
+      } else if (wsz == 1) {
+        break;
+      } else {
+        wsz /= 2;
+      }
+    } else if (w == 0) {
+      fprintf(stderr, "%s: write to pipe fd=%d returned 0!\n", __FUNCTION__,
+              pfd->fd);
+      close(prc->stdin_f); prc->stdin_f = -1;
+      break;
+    } else {
+      prc->stdin_u += w;
+      wsz = prc->stdin_z - prc->stdin_u;
+      if (w <= 0) {
+        close(prc->stdin_f); prc->stdin_f = -1;
+        break;
+      }
+    }
+  }
+  return;
+
+cleanup:
+  close(prc->stdin_f);
+  prc->stdin_f = -1;
+  xfree(prc->stdin_b); prc->stdin_b = NULL;
+  prc->stdin_z = 0; prc->stdin_u = 0;
+}
+
+static void
+handle_stdout(void *context, void *fds, void *user)
+{
+  struct pollfd *pfd = (struct pollfd *) fds;
+  struct background_process *prc = (struct background_process *) user;
+  unsigned char buf[4096];
+
+  ASSERT(prc);
+  ASSERT(prc->stdin_f == pfd->fd);
+
+  if ((pfd->revents & POLLNVAL)) {
+    fprintf(stderr, "%s: ppoll invalid request fd=%d\n", __FUNCTION__, pfd->fd);
+    close(prc->stdin_f); prc->stdin_f = -1;
+    return;
+  }
+  if ((pfd->revents & POLLHUP)) {
+    fprintf(stderr, "%s: ppoll hangup fd=%d\n", __FUNCTION__, pfd->fd);
+    close(prc->stdin_f); prc->stdin_f = -1;
+    return;
+  }
+  if ((pfd->revents & POLLERR)) {
+    fprintf(stderr, "%s: ppoll error fd=%d\n", __FUNCTION__, pfd->fd);
+    close(prc->stdin_f); prc->stdin_f = -1;
+    return;
+  }
+  if (!(pfd->revents & POLLIN)) {
+    fprintf(stderr, "%s: ppoll not ready fd=%d\n", __FUNCTION__, pfd->fd);
+    return;
+  }
+
+  while (1) {
+    int r = read(prc->stdout_f, buf, sizeof(buf));
+    if (r < 0) {
+      if (errno != EAGAIN) {
+        fprintf(stderr, "%s: read from pipe fd=%d failed: %s\n", __FUNCTION__,
+                pfd->fd, strerror(errno));
+        close(prc->stdout_f); prc->stdout_f = -1;
+      }
+      break;
+    } else if (r == 0) {
+      close(prc->stdout_f); prc->stdout_f = -1;
+      break;
+    } else {
+      buffer_append_mem(&prc->out, buf, r);
+    }
+  }
+}
+
+static void
+handle_stderr(void *context, void *fds, void *user)
+{
+  struct pollfd *pfd = (struct pollfd *) fds;
+  struct background_process *prc = (struct background_process *) user;
+  unsigned char buf[4096];
+
+  ASSERT(prc);
+  ASSERT(prc->stdin_f == pfd->fd);
+
+  if ((pfd->revents & POLLNVAL)) {
+    fprintf(stderr, "%s: ppoll invalid request fd=%d\n", __FUNCTION__, pfd->fd);
+    close(prc->stdin_f); prc->stdin_f = -1;
+    return;
+  }
+  if ((pfd->revents & POLLHUP)) {
+    fprintf(stderr, "%s: ppoll hangup fd=%d\n", __FUNCTION__, pfd->fd);
+    close(prc->stdin_f); prc->stdin_f = -1;
+    return;
+  }
+  if ((pfd->revents & POLLERR)) {
+    fprintf(stderr, "%s: ppoll error fd=%d\n", __FUNCTION__, pfd->fd);
+    close(prc->stdin_f); prc->stdin_f = -1;
+    return;
+  }
+  if (!(pfd->revents & POLLIN)) {
+    fprintf(stderr, "%s: ppoll not ready fd=%d\n", __FUNCTION__, pfd->fd);
+    return;
+  }
+
+  while (1) {
+    int r = read(prc->stderr_f, buf, sizeof(buf));
+    if (r < 0) {
+      if (errno != EAGAIN) {
+        fprintf(stderr, "%s: read from pipe fd=%d failed: %s\n", __FUNCTION__, pfd->fd, strerror(errno));
+        close(prc->stderr_f); prc->stderr_f = -1;
+      }
+      break;
+    } else if (r == 0) {
+      close(prc->stderr_f); prc->stderr_f = -1;
+      break;
+    } else {
+      buffer_append_mem(&prc->err, buf, r);
+    }
+  }
+}
+
+void
+background_process_append_pollfd(struct background_process_head *list, void *vp)
+{
+  pollfds_t *pfd = (pollfds_t*) vp;
+  if (!list) return;
+  struct background_process *prc;
+  for (prc = list->first; prc; prc = prc->next) {
+    if (prc->state != BACKGROUND_PROCESS_RUNNING) continue;
+    if (prc->stdin_f >= 0) {
+      pollfds_add(pfd, prc->stdin_f, POLLOUT, handle_stdin, prc);
+    }
+    if (prc->stdout_f >= 0) {
+      pollfds_add(pfd, prc->stdout_f, POLLIN, handle_stdout, prc);
+    }
+    if (prc->stderr_f >= 0) {
+      pollfds_add(pfd, prc->stdout_f, POLLIN, handle_stderr, prc);
+    }
+  }
+}
+
 void
 background_process_readwrite(struct background_process_head *list, void *vprset, void *vpwset)
 {
@@ -801,6 +987,18 @@ background_process_call_continuations(struct background_process_head *list)
     if (prc->state == BACKGROUND_PROCESS_FINISHED && prc->continuation) {
       prc->continuation(prc);
     }
+  }
+}
+
+void
+background_process_close_fds(struct background_process_head *list)
+{
+  if (!list) return;
+  struct background_process *prc;
+  for (prc = list->first; prc; prc = prc->next) {
+    if (prc->stdin_f >= 0) close(prc->stdin_f);
+    if (prc->stdout_f >= 0) close(prc->stdout_f);
+    if (prc->stderr_f >= 0) close(prc->stderr_f);
   }
 }
 
