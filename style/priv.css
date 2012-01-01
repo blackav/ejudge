@@ -419,3 +419,10 @@ div.ej_dd {
         background-color: #efefef;
         float: none;
 }
+
+div.ej_stat_menu_item {
+        display: block;
+        border: 1px solid #aaa;
+        font-family: "DejaVu Sans Mono", "Courier New", "Courier", "monospace";
+        width: 180px;
+}

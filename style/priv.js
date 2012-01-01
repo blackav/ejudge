@@ -1,7 +1,7 @@
 /* -*- mode: java; coding: utf-8 -*- */
 // $Id$
 
-// Copyright (C) 2008-2011 Alexander Chernov <cher@ejudge.ru>
+// Copyright (C) 2008-2012 Alexander Chernov <cher@ejudge.ru>
 
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -622,14 +622,14 @@ function ej_stat(run_id)
   b.appendChild(t);
   d.appendChild(b);
   for (var p in ej_valid_statuses) {
-    d.appendChild(document.createElement("br"));
-    d.appendChild(document.createTextNode("["));
-    b = document.createElement("a");
-    a = document.createAttribute("href");
-    a.value = "javascript:ej_change_stat(" + run_id + "," + p + ")";
-    b.setAttributeNode(a);
-    b.appendChild(document.createTextNode(ej_valid_statuses[p]));
-    d.appendChild(b);
-    d.appendChild(document.createTextNode("]"));
+    t = document.createElement("div");
+    a = document.createAttribute("class");
+    a.value = "ej_stat_menu_item";
+    t.setAttributeNode(a);
+    a = document.createAttribute("onclick");
+    a.value = "ej_change_stat(" + run_id + "," + p + ")";
+    t.setAttributeNode(a);
+    d.appendChild(t);
+    t.appendChild(document.createTextNode(ej_valid_statuses[p]));
   }
 }
