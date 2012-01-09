@@ -1,7 +1,7 @@
 /* -*- mode:c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This library is free software; you can redistribute it and/or
@@ -24,7 +24,7 @@ void reuse_out_of_mem(void);
 /**
  * NAME:    xstrdup
  * PURPOSE: wrapper over strdup function
- * NOTE:    strdup(NULL) returns ""
+ * NOTE:    xstrdup(NULL) returns ""
  */
 char *
 xstrdup(char const*str)
@@ -32,6 +32,22 @@ xstrdup(char const*str)
   char *ptr;
 
   if (str == NULL) str = "";
+  ptr = strdup(str);
+  if (ptr == NULL) reuse_out_of_mem();
+  return ptr;
+}
+
+/**
+ * NAME:    xstrdup2
+ * PURPOSE: wrapper over strdup function
+ * NOTE:    xstrdup2(NULL) returns NULL, xstrdup2("") returns NULL
+ */
+char *
+xstrdup2(const char *str)
+{
+  char *ptr;
+
+  if (!str || !*str) return NULL;
   ptr = strdup(str);
   if (ptr == NULL) reuse_out_of_mem();
   return ptr;
