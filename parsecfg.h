@@ -3,7 +3,7 @@
 #ifndef __PARSECFG_H__
 #define __PARSECFG_H__
 
-/* Copyright (C) 2000-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -35,6 +35,8 @@ struct config_parse_info
   int (*parse_func)(const unsigned char *str, void *ptr, size_t size);
 };
 
+struct meta_methods;
+
 struct config_section_info
 {
   const char               *name;
@@ -43,6 +45,7 @@ struct config_section_info
   int                      *pcounter;
   void (*init_func)(struct generic_section_config *);
   void (*free_func)(struct generic_section_config *);
+  const struct meta_methods *mm;
 };
 
 enum
@@ -101,6 +104,7 @@ char  *sarray_unparse_2(char **a);
 int    sarray_parse(const unsigned char *, char ***);
 int    sarray_parse_2(const unsigned char *, char ***);
 char **sarray_append(char **a1, const unsigned char *str);
+char **sarray_copy(char **a1);
 
 void
 param_subst(unsigned char *buf, size_t size,

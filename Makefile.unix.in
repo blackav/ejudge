@@ -2,7 +2,7 @@
 # $Id$
 # @configure_input@
 
-# Copyright (C) 2000-2011 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2000-2012 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -444,7 +444,7 @@ endif
 locale/ru_RU.${CHARSET}/LC_MESSAGES/ejudge.mo : ejudge.ru_RU.${CHARSET}.po ru_all
 	${MSGFMT} -o $@ -c $<
 
-libcommon.a : $(COMMON_CFILES:.c=.o) filter_scan.o filter_expr.o contests_meta.o super-serve_meta.o prepare_meta.o super_html_6_meta.o
+libcommon.a : $(COMMON_CFILES:.c=.o) filter_scan.o filter_expr.o contests_meta.o super-serve_meta.o prepare_meta.o super_html_6_meta.o super_run_packet_meta.o
 	ar rcv $@ $^
 
 libplatform.a : $(PLATFORM_CFILES:.c=.o)
@@ -459,7 +459,7 @@ libuserlist_clnt.a: $(USERLIST_CLNT_CFILES:.c=.o)
 libnew_server_clnt.a: $(NEW_SERVER_CLNT_CFILES:.c=.o)
 	ar rcv $@ $^
 
-deps.make: cdeps ${CFILES} ${HFILES} filter_expr.c filter_expr.h filter_scan.c contests_meta.c contests_meta.h super-serve_meta.c super-serve_meta.h prepare_meta.c prepare_meta.h
+deps.make: cdeps ${CFILES} ${HFILES} filter_expr.c filter_expr.h filter_scan.c contests_meta.c contests_meta.h super-serve_meta.c super-serve_meta.h prepare_meta.c prepare_meta.h super_run_packet_meta.h
 	./cdeps ${CFILES} filter_expr.c filter_scan.c > deps.make
 
 tags : ${CFILES} ${HFILES} filter_expr.c filter_expr.h filter_scan.c 

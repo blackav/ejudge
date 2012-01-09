@@ -221,6 +221,7 @@ COMMON_CFILES=\
  super_html_6.c\
  super_html_7.c\
  super_proto.c\
+ super_run_packet.c\
  sha.c\
  t3m_dir_listener.c\
  t3m_submits.c\
@@ -558,6 +559,7 @@ HFILES=\
  super_clnt.h\
  super_html.h\
  super_proto.h\
+ super_run_packet.h\
  super-serve.h\
  sha.h\
  t3m_dir_listener.h\
