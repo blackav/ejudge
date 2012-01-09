@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1024,6 +1024,15 @@ prepare_tester_free_func(struct generic_section_config *gp)
   sarray_free(p->checker_env);
   memset(p, 0xab, sizeof(*p));
   xfree(p);
+}
+
+struct section_tester_data *
+prepare_tester_free(struct section_tester_data *tester)
+{
+  if (tester) {
+    prepare_tester_free_func((struct generic_section_config *) tester);
+  }
+  return NULL;
 }
 
 static char*
@@ -2261,6 +2270,12 @@ prepare_parse_memory_limit_type(const unsigned char *str)
       return i;
   return -1;
 }
+const unsigned char *
+prepare_unparse_memory_limit_type(int value)
+{
+  if (value < 0 || value >= MEMLIMIT_TYPE_JAVA) value = 0;
+  return memory_limit_type_str[value];
+}
 
 const unsigned char * const secure_exec_type_str[] =
 {
@@ -2281,6 +2296,12 @@ prepare_parse_secure_exec_type(const unsigned char *str)
     if (secure_exec_type_str[i] && !strcasecmp(str, secure_exec_type_str[i]))
       return i;
   return -1;
+}
+const unsigned char *
+prepare_unparse_secure_exec_type(int value)
+{
+  if (value < 0 || value >= SEXEC_TYPE_LAST) value = 0;
+  return secure_exec_type_str[value];
 }
 
 static void
@@ -2949,7 +2970,7 @@ set_defaults(
   g->team_download_time *= 60;
 
   /* only run needs these parameters */
-  if (mode == PREPARE_RUN) {
+  if (mode == PREPARE_RUN || mode == PREPARE_SERVE) {
     if (!g->max_file_length) {
       g->max_file_length = DFLT_G_MAX_FILE_LENGTH;
       vinfo("global.max_file_length set to %d", g->max_file_length);
@@ -3880,7 +3901,7 @@ set_defaults(
               i, sish, tp->errorcode_file);        
       }
 
-      if (atp && atp->start_env) {
+      if (atp && atp->start_env && !tp->any) {
         tp->start_env = sarray_merge_pf(atp->start_env, tp->start_env);
       }
       if (tp->start_env) {
@@ -3907,7 +3928,7 @@ set_defaults(
         }
       }
 
-      if (mode == PREPARE_RUN) {
+      if (mode == PREPARE_RUN || mode == PREPARE_SERVE) {
         if (!tp->error_file[0] && atp && atp->error_file[0]) {
           sformat_message(tp->error_file, PATH_MAX, 0, atp->error_file,
                           g, state->probs[tp->problem], NULL,
@@ -3920,37 +3941,37 @@ set_defaults(
           snprintf(state->testers[i]->error_file, sizeof(state->testers[i]->error_file),
                    "%s", DFLT_T_ERROR_FILE);
         }
-        if (!tp->check_cmd[0] && state->probs[tp->problem]->standard_checker[0]) {
-          strcpy(tp->check_cmd, state->probs[tp->problem]->standard_checker);
-          pathmake2(tp->check_cmd, g->ejudge_checkers_dir,
-                    "/", tp->check_cmd, NULL);
-          tp->standard_checker_used = 1;
-        }
-        if (!tp->check_cmd[0] && atp && atp->check_cmd[0]) {
-          sformat_message(tp->check_cmd, PATH_MAX, 0, atp->check_cmd,
-                          g, state->probs[tp->problem], NULL,
-                          tp, NULL, 0, 0, 0);
-          vinfo("tester.%d.check_cmd inherited from tester.%s ('%s')",
-                i, sish, tp->check_cmd);        
-        }
-        if (!tp->check_cmd[0] && state->probs[tp->problem]->check_cmd[0]) {
-          strcpy(tp->check_cmd, state->probs[tp->problem]->check_cmd);
-        }
-        if (!state->testers[i]->check_cmd[0]) {
-          err("tester.%d.check_cmd must be set", i);
-          return -1;
-        }
-        if (g->advanced_layout > 0
-            && !os_IsAbsolutePath(state->testers[i]->check_cmd)) {
-          get_advanced_layout_path(fpath, sizeof(fpath), g,
-                                   state->probs[tp->problem],
-                                   state->testers[i]->check_cmd, -1);
-          snprintf(state->testers[i]->check_cmd,
-                   sizeof(state->testers[i]->check_cmd), "%s",
-                   fpath);
-        } else {
-          pathmake2(state->testers[i]->check_cmd, g->checker_dir, "/",
-                    state->testers[i]->check_cmd, NULL);
+        if (!tp->any) {
+          if (!tp->check_cmd[0] && state->probs[tp->problem]->standard_checker[0]) {
+            strcpy(tp->check_cmd, state->probs[tp->problem]->standard_checker);
+            pathmake2(tp->check_cmd, g->ejudge_checkers_dir, "/", tp->check_cmd, NULL);
+            tp->standard_checker_used = 1;
+          }
+          if (!tp->check_cmd[0] && atp && atp->check_cmd[0]) {
+            sformat_message(tp->check_cmd, PATH_MAX, 0, atp->check_cmd,
+                            g, state->probs[tp->problem], NULL,
+                            tp, NULL, 0, 0, 0);
+            vinfo("tester.%d.check_cmd inherited from tester.%s ('%s')",
+                  i, sish, tp->check_cmd);        
+          }
+          if (!tp->check_cmd[0] && state->probs[tp->problem]->check_cmd[0]) {
+            strcpy(tp->check_cmd, state->probs[tp->problem]->check_cmd);
+          }
+          if (!state->testers[i]->check_cmd[0]) {
+            err("tester.%d.check_cmd must be set", i);
+            return -1;
+          }
+          if (g->advanced_layout > 0 && !os_IsAbsolutePath(state->testers[i]->check_cmd)) {
+            get_advanced_layout_path(fpath, sizeof(fpath), g,
+                                     state->probs[tp->problem],
+                                     state->testers[i]->check_cmd, -1);
+            snprintf(state->testers[i]->check_cmd,
+                     sizeof(state->testers[i]->check_cmd), "%s",
+                     fpath);
+          } else {
+            pathmake2(state->testers[i]->check_cmd, g->checker_dir, "/",
+                      state->testers[i]->check_cmd, NULL);
+          }
         }
         if (!tp->start_cmd[0] && atp && atp->start_cmd[0]) {
           sformat_message(tp->start_cmd, PATH_MAX, 0, atp->start_cmd,
@@ -4329,6 +4350,7 @@ create_dirs(serve_state_t state, int mode)
 
   for (i = 1; i <= state->max_tester; i++) {
     if (!state->testers[i]) continue;
+    //if (state->testers[i]->any) continue;
     if (mode == PREPARE_SERVE) {
       if (make_dir(state->testers[i]->run_dir, 0) < 0) return -1;
       if (make_all_dir(state->testers[i]->run_queue_dir, 0777) < 0) return -1;
@@ -4610,6 +4632,9 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
     }
     out->memory_limit_type_val = atp->memory_limit_type_val;
   }
+  snprintf(out->memory_limit_type, sizeof(out->memory_limit_type), 
+           "%s", prepare_unparse_memory_limit_type(out->memory_limit_type_val));
+  
   if (tp->secure_exec_type[0] != 1) {
     out->secure_exec_type_val = prepare_parse_secure_exec_type(tp->secure_exec_type);
     if (out->secure_exec_type_val < 0) {
@@ -4627,6 +4652,8 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
     }
     out->secure_exec_type_val = atp->secure_exec_type_val;
   }
+  snprintf(out->secure_exec_type, sizeof(out->secure_exec_type),
+           "%s", prepare_unparse_secure_exec_type(out->secure_exec_type_val));
 
   out->skip_testing = tp->skip_testing;
   if (out->skip_testing == -1 && atp)

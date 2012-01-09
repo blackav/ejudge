@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -19,6 +19,7 @@
 #include "charsets.h"
 #include "xml_utils.h"
 #include "misctext.h"
+#include "meta_generic.h"
 
 #include "reuse_xalloc.h"
 #include "reuse_logger.h"
@@ -1002,12 +1003,32 @@ read_comment(FILE *f)
 }
 
 static int
-copy_param(void *cfg, const struct config_parse_info *params,
-           char *varname, char *varvalue)
+copy_param(
+        void *cfg,
+        const struct config_section_info *sinfo,
+        char *varname,
+        char *varvalue)
 {
   int i;
   size_t param_size = 0;
+  const struct config_parse_info *params = sinfo->info;
 
+  if (sinfo->mm) {
+    // new metainfo handling code
+    int field_id = sinfo->mm->lookup_field(varname);
+    if (field_id <= 0) {
+      fprintf(stderr, "%d: unknown parameter '%s'\n", parsecfg_state.lineno - 1, varname);
+      return -1;
+    }
+    if (meta_parse_string(stderr, parsecfg_state.lineno - 1, cfg, field_id, sinfo->mm,
+                          varname, varvalue, parsecfg_state.charset_id) < 0) {
+      return -1;
+    }
+
+    return 0;
+  }
+
+  // old config_parse_info manipulation code
   for (i = 0; params[i].name; i++)
     if (!strcmp(params[i].name, varname)) break;
   if (!params[i].name) {
@@ -1177,7 +1198,7 @@ parse_param(char const *path,
     if (!quiet_flag) {
       printf("%d: Value: %s = %s\n", parsecfg_state.lineno - 1, varname, varvalue);
     }
-    if (copy_param(cfg, sinfo, varname, varvalue) < 0) goto cleanup;
+    if (copy_param(cfg, &params[sindex], varname, varvalue) < 0) goto cleanup;
   }
 
   while (c != EOF) {
@@ -1229,7 +1250,7 @@ parse_param(char const *path,
       if (!quiet_flag) {
         printf("%d: Value: %s = %s\n", parsecfg_state.lineno - 1, varname, varvalue);
       }
-      if (copy_param(sect, sinfo, varname, varvalue) < 0) goto cleanup;
+      if (copy_param(sect, &params[sindex], varname, varvalue) < 0) goto cleanup;
     }
   }
 
@@ -1253,7 +1274,6 @@ struct generic_section_config *
 param_make_global_section(struct config_section_info *params)
 {
   int sindex;
-  const struct config_parse_info *sinfo;
   struct generic_section_config *cfg;
 
   parsecfg_state.ncond_var = 0;
@@ -1268,8 +1288,6 @@ param_make_global_section(struct config_section_info *params)
     fprintf(stderr, "Cannot find description of section [global]\n");
     return 0;
   }
-  sinfo = params[sindex].info;
-
   cfg = (struct generic_section_config*) xcalloc(1, params[sindex].size);
   if (params[sindex].init_func) params[sindex].init_func(cfg);
   return cfg;
@@ -1394,7 +1412,8 @@ sarray_merge_pp(char **a1, char **a2)
   return aa;
 }
 
-char **sarray_merge_arr(int n, char ***pa)
+char **
+sarray_merge_arr(int n, char ***pa)
 {
   int newlen = 0, i, j, k;
   char **pptr;
@@ -1723,4 +1742,21 @@ param_subst(
       return;
     }
   }
+}
+
+char **
+sarray_copy(char **a1)
+{
+  int newlen = 0, i = 0, j;
+  char **aa = 0;
+
+  if (!a1 || !a1[0]) return NULL;
+
+  newlen = sarray_len(a1);
+  XCALLOC(aa, newlen + 1);
+  if (a1) {
+    for (j = 0; a1[j]; ++j)
+      aa[i++] = xstrdup(a1[j]);
+  }
+  return aa;
 }

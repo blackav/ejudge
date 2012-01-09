@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2008-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,10 @@
  */
 
 #include "meta_generic.h"
+
+#include "misctext.h"
+#include "xml_utils.h"
+#include "charsets.h"
 
 #include "reuse_xalloc.h"
 #include "reuse_logger.h"
@@ -148,9 +152,295 @@ meta_destroy_fields(const struct meta_methods *mth, void *ptr)
         xfree(*pp);
       }
       break;
+    case 'x':
+    case 'X':
+      {
+        unsigned char ***ppp = (unsigned char ***) fp;
+        if (*ppp) {
+          for (int i = 0; (*ppp)[i]; ++i) {
+            xfree((*ppp)[i]);
+          }
+        }
+      }
+      break;
+    case 's':
+      {
+        unsigned char **pp = (unsigned char **) fp;
+        xfree(*pp);
+      }
+      break;
+
+    case 't':                   /* time_t */
+    case 'b':                   /* ejbytebool_t */
+    case 'B':                   /* ejintbool_t */
+    case 'z':                   /* ejintsize_t */
+    case 'i':                   /* int type */
+    case 'Z':                   /* size_t */
+      break;
+
     default:
       abort();
     }
   }
   memset(ptr, 0, mth->size);
+}
+
+#define CARMOR(s) c_armor_buf(&ab, (s))
+
+void
+meta_unparse_cfg(FILE *out_f, const struct meta_methods *mth, const void *ptr)
+{
+  int field_id, ft, fz;
+  const void *fp;
+  const char *fn;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  unsigned char buf[256];
+
+  if (!ptr) return;
+
+  for (field_id = 1; field_id < mth->last_tag; ++field_id) {
+    ft = mth->get_type(field_id);
+    fp = mth->get_ptr(ptr, field_id);
+    fz = mth->get_size(field_id);
+    fn = mth->get_name(field_id);
+    if (!fp) continue;
+    switch (ft) {
+    case 't':                   /* time_t */
+      fprintf(out_f, "%s = \"%s\"\n", fn, xml_unparse_date(*(const time_t*) fp));
+      break;
+    case 'b':                   /* ejbytebool_t */
+    case 'B':                   /* ejintbool_t */
+      {
+        int b = 0;
+        switch (fz) {
+        case 1:
+          b = *(const char*) fp;
+          break;
+        case 2:
+          b = *(const short*) fp;
+          break;
+        case 4:
+          b = *(const int*) fp;
+          break;
+        case 8:
+          if (*(const long long*) fp > 0) b = 1;
+          break;
+        default:
+          abort();
+        }
+        if (b > 0) {
+          b = 1;
+        } else {
+          b = 0;
+        }
+        fprintf(out_f, "%s = %d\n", fn, b);
+      }
+      break;
+    case 'z':                   /* ejintsize_t */
+    case 'i':                   /* int type */
+      ASSERT(fz == sizeof(int));
+      num_to_size_str(buf, sizeof(buf), *(const int*) fp);
+      fprintf(out_f, "%s = %s\n", fn, buf);
+      break;
+    case 'S':                   /* path_t */
+      fprintf(out_f, "%s = \"%s\"\n", fn, CARMOR((const unsigned char*) fp));
+      break;
+    case 's':                   /* char * type */
+      if (*(const unsigned char **) fp) {
+        fprintf(out_f, "%s = \"%s\"\n", fn, CARMOR(*(const unsigned char**) fp));
+      }
+      break;
+      
+    case 'x':                   /* ejstrlist_t */
+    case 'X':                   /* ejenvlist_t */
+      {
+        const unsigned char **p = *(const unsigned char ***) fp;
+        if (p) {
+          for (int i = 0; p[i]; ++i) {
+            fprintf(out_f, "%s = \"%s\"\n", fn, CARMOR(p[i]));
+          }
+        }
+      }
+      break;
+    case 'Z':                   /* size_t */
+      ASSERT(fz == sizeof(size_t));
+      // special handling of -1
+      if (*(const size_t*) fp == (size_t) -1UL) {
+        snprintf(buf, sizeof(buf), "-1");
+      } else {
+        size_t_to_size_str(buf, sizeof(buf), *(const size_t*) fp);
+      }
+      fprintf(out_f, "%s = %s\n", fn, buf);
+      break;
+    case '0':                   /* ej_int_opt_0_t */
+    case '1':                   /* ej_textbox_t */
+    case '2':                   /* ej_textbox_opt_t */
+    case '3':                   /* ej_checkbox_t */
+    case '4':                   /* ej_int_opt_1_t */
+    case '5':                   /* ej_int_opt_m1_t */
+    default:
+      abort();
+    }
+  }
+  html_armor_free(&ab);
+}
+
+int
+meta_parse_string(
+        FILE *log_f,
+        int lineno,
+        void *obj,
+        int field_id,
+        const struct meta_methods *mm,
+        const unsigned char *name,
+        const unsigned char *value,
+        int charset_id)
+{
+    int ft = mm->get_type(field_id);
+    void *fp = mm->get_ptr_nc(obj, field_id);
+    int fz = mm->get_size(field_id);
+
+    switch (ft) {
+    case 't':                   /* time_t */
+      {
+        time_t v = 0;
+        if (xml_parse_date(NULL, 0, 0, 0, value, &v) < 0) {
+          fprintf(log_f, "%d: date parameter expected for '%s'\n", lineno, name);
+          return -1;
+        }
+        if (v < 0) v = 0;
+        *(time_t*) fp = v;
+      }
+      break;
+    case 'b':                   /* ejbytebool_t */
+    case 'B':                   /* ejintbool_t */
+      {
+        int bval = 0;
+        if (!strcasecmp(value, "yes") || !strcasecmp(value, "true") || !strcasecmp(value, "on")) {
+          bval = 1;
+        } else if (!strcasecmp(value, "no") || !strcasecmp(value, "false") || !strcasecmp(value, "off")) {
+          bval = 0;
+        } else {
+          if (size_str_to_num(value, &bval) < 0) {
+            fprintf(log_f, "%d: invalid value of numeric parameter for '%s'\n", lineno, name);
+            return -1;
+          }
+          if (bval < 0) bval = 0;
+          else if (bval > 0) bval = 1;
+        }
+        switch (fz) {
+        case 1:
+          *(char*) fp = (char) bval;
+          break;
+        case 2:
+          *(short*) fp = (short) bval;
+          break;
+        case 4:
+          *(int*) fp = (int) bval;
+          break;
+        case 8:
+          *(long long*) fp = (long long) bval;
+          break;
+        default:
+          abort();
+        }
+      }
+      break;
+    case 'Z':                   /* size_t */
+      {
+        size_t v = 0;
+        if (size_str_to_size_t(value, &v) < 0) {
+          fprintf(log_f, "%d: invalid value of size parameter for '%s'\n", lineno, name);
+          return -1;
+        }
+        *(size_t*) fp = (size_t) v;
+      }
+      break;
+
+    case 'z':                   /* ejintsize_t */
+    case 'i':                   /* int type */
+      {
+        int v = 0;
+        ASSERT(fz == sizeof(int));
+        if (size_str_to_num(value, &v) < 0) {
+          fprintf(log_f, "%d: invalid value of numeric parameter for '%s'\n", lineno, name);
+          return -1;
+        }
+        *(int*) fp = (int) v;
+      }
+      break;
+
+    case 'S':                   /* path_t */
+      {
+        if (strlen(value) >= fz) {
+          fprintf(log_f, "%d: parameter '%s' is too long\n", lineno, name);
+          return -1;
+        }
+        char *ptr = (char*) fp;
+        strcpy(ptr, value);
+        if (charset_id > 0) {
+          charset_decode_buf(charset_id, ptr, fz);
+        }
+      }
+      break;
+
+    case 'x':                   /* ejstrlist_t */
+    case 'X':                   /* ejenvlist_t */
+      {
+        char ***ppptr = 0;
+        char **pptr = 0;
+        int    j;
+
+        ppptr = (char***) fp;
+        if (!*ppptr) {
+          *ppptr = (char**) xcalloc(16, sizeof(char*));
+          (*ppptr)[15] = (char*) 1;
+        }
+        pptr = *ppptr;
+        for (j = 0; pptr[j]; j++) {
+        }
+        if (pptr[j + 1] == (char*) 1) {
+          int newsize = (j + 2) * 2;
+          char **newptr = (char**) xcalloc(newsize, sizeof(char*));
+          newptr[newsize - 1] = (char*) 1;
+          memcpy(newptr, pptr, j * sizeof(char*));
+          xfree(pptr);
+          pptr = newptr;
+          *ppptr = newptr;
+        }
+        if (charset_id > 0) {
+          pptr[j] = charset_decode_to_heap(charset_id, value);
+        } else {
+          pptr[j] = xstrdup(value);
+        }
+        pptr[j + 1] = 0;
+      }
+      break;
+
+    case '0':                   /* ej_int_opt_0_t */
+    case '1':                   /* ej_textbox_t */
+    case '2':                   /* ej_textbox_opt_t */
+    case '3':                   /* ej_checkbox_t */
+    case '4':                   /* ej_int_opt_1_t */
+    case '5':                   /* ej_int_opt_m1_t */
+      break;
+
+    case 's':                   /* char * type */
+      {
+        char **pptr = (char**) fp;
+        if (*pptr) {
+          xfree(*pptr); *pptr = NULL;
+        }
+        if (charset_id > 0) {
+          *pptr = charset_decode_to_heap(charset_id, value);
+        } else {
+          *pptr = xstrdup(value);
+        }
+      }
+      break;
+    default:
+      abort();
+    }
+
+    return 0;
 }

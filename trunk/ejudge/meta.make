@@ -1,7 +1,7 @@
 # -*- Makefile -*-
 # $Id$
 
-# Copyright (C) 2011 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2011-2012 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -25,3 +25,5 @@ prepare_meta.c prepare_meta.h : prepare.h
 super_html_6_meta.c super_html_6_meta.h : super_html_6.h
 	$(META_CC) super_html_6.h -o super_html_6.out --force-h --meta --meta-struct ss_op_param_USER_CREATE_ONE_ACTION --meta-struct ss_op_param_USER_CREATE_MANY_ACTION --meta-struct ss_op_param_USER_CREATE_FROM_CSV_ACTION --meta-struct ss_op_param_USER_CREATE_REG_ACTION --meta-struct ss_op_param_USER_EDIT_REG_ACTION --meta-timestamp
 
+super_run_packet_meta.c super_run_packet_meta.h : super_run_packet.h
+	$(META_CC) super_run_packet.h -o super_run_packet.out --force-h --meta --meta-struct super_run_in_global_packet --meta-struct super_run_in_problem_packet --meta-struct super_run_in_tester_packet --meta-timestamp
