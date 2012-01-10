@@ -160,6 +160,7 @@ meta_destroy_fields(const struct meta_methods *mth, void *ptr)
           for (int i = 0; (*ppp)[i]; ++i) {
             xfree((*ppp)[i]);
           }
+          xfree(*ppp);
         }
       }
       break;
@@ -259,7 +260,6 @@ meta_unparse_cfg(FILE *out_f, const struct meta_methods *mth, const void *ptr)
           for (int i = 0; p[i]; ++i) {
             fprintf(out_f, "%s = \"%s\"\n", fn, CARMOR(p[i]));
           }
-          xfree(p);
         }
       }
       break;
