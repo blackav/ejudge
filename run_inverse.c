@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2010-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -30,6 +30,7 @@
 #include "curtime.h"
 #include "runlog.h"
 #include "testing_report_xml.h"
+#include "super_run_packet.h"
 
 #include "reuse_xalloc.h"
 #include "reuse_logger.h"
@@ -906,15 +907,18 @@ analyze_results(
         const unsigned char *log_path,
         const struct section_global_data *global,
         const struct section_problem_data *prob,
-        struct run_request_packet *req_pkt,
+        const struct super_run_in_packet *srp,
         struct run_reply_packet *reply_pkt,
-        testing_report_xml_t report_xml)
+        testing_report_xml_t report_xml,
+        int scoring_system)
 {
   int i, j, score = 0;
   int status = RUN_CHECK_FAILED;
   int failed_test = 0;
   int *test_scores = 0;
   int passed_count = 0;
+
+  const struct super_run_in_global_packet *srgp = srp->global;
 
   if (!report_xml->tt_rows) {
     perr(log_f, "tt_rows == NULL");
@@ -948,11 +952,10 @@ analyze_results(
     }
   }
 
-  if (req_pkt->scoring_system == SCORE_OLYMPIAD && req_pkt->accepting_mode) {
+  if (scoring_system == SCORE_OLYMPIAD && srgp->accepting_mode) {
     perr(log_f, "OLYMPIAD accepting mode is not supported");
     goto done;
-  } else if (req_pkt->scoring_system == SCORE_KIROV
-             || req_pkt->scoring_system == SCORE_OLYMPIAD) {
+  } else if (scoring_system == SCORE_KIROV || scoring_system == SCORE_OLYMPIAD) {
     XCALLOC(test_scores, report_xml->tt_row_count);
     if (parse_test_score_list(log_f, NULL, prob, report_xml->tt_row_count,
                               test_scores) < 0) {
@@ -984,7 +987,7 @@ analyze_results(
       score = prob->full_score;
     }
     failed_test = passed_count + 1;
-  } else if (req_pkt->scoring_system == SCORE_MOSCOW) {
+  } else if (scoring_system == SCORE_MOSCOW) {
     if (prob->full_score <= 0) {
       perr(log_f, "full_score must be > 0 in MOSCOW mode");
       goto done;
@@ -1019,7 +1022,7 @@ analyze_results(
       for (i = 0; failed_test > test_scores[i]; i++);
       score = i;
     }
-  } else if (req_pkt->scoring_system == SCORE_ACM) {
+  } else if (scoring_system == SCORE_ACM) {
     // just check that all the tests are passed
     for (i = 0; i < report_xml->tt_row_count; ++i) {
       if (report_xml->tt_rows[i]->must_fail <= 0) {
@@ -1058,13 +1061,14 @@ done:
 void
 run_inverse_testing(
         struct serve_state *state,
-        struct run_request_packet *req_pkt,
+        const struct super_run_in_packet *srp,
         struct run_reply_packet *reply_pkt,
         struct section_problem_data *prob,
         const unsigned char *pkt_name,
         unsigned char *report_path,
         size_t report_path_size,
-        int utf8_mode)
+        int utf8_mode,
+        int scoring_system)
 {
   struct section_global_data *global = state->global;
   int r, i, j;
@@ -1098,6 +1102,8 @@ run_inverse_testing(
         const unsigned char *work_dir) = 0;
   ssize_t ssize;
 
+  const struct super_run_in_global_packet *srgp = srp->global;
+
   make_patterns(prob, test_pat, sizeof(test_pat), corr_pat, sizeof(corr_pat));
 
   snprintf(log_path, sizeof(log_path), "%s/%s.txt",
@@ -1113,10 +1119,10 @@ run_inverse_testing(
 
   /* fill the reply packet with initial values */
   memset(reply_pkt, 0, sizeof(*reply_pkt));
-  reply_pkt->judge_id = req_pkt->judge_id;
-  reply_pkt->contest_id = req_pkt->contest_id;
-  reply_pkt->run_id = req_pkt->run_id;
-  reply_pkt->notify_flag = req_pkt->notify_flag;
+  reply_pkt->judge_id = srgp->judge_id;
+  reply_pkt->contest_id = srgp->contest_id;
+  reply_pkt->run_id = srgp->run_id;
+  reply_pkt->notify_flag = srgp->notify_flag;
   reply_pkt->failed_test = 0;
   reply_pkt->marked_flag = 0;
   reply_pkt->status = RUN_CHECK_FAILED;
@@ -1124,27 +1130,27 @@ run_inverse_testing(
   reply_pkt->user_status = -1;
   reply_pkt->user_tests_passed = -1;
   reply_pkt->user_score = -1;
-  reply_pkt->ts1 = req_pkt->ts1;
-  reply_pkt->ts1_us = req_pkt->ts1_us;
-  reply_pkt->ts2 = req_pkt->ts2;
-  reply_pkt->ts2_us = req_pkt->ts2_us;
-  reply_pkt->ts3 = req_pkt->ts3;
-  reply_pkt->ts3_us = req_pkt->ts3_us;
-  reply_pkt->ts4 = req_pkt->ts4;
-  reply_pkt->ts4_us = req_pkt->ts4_us;
+  reply_pkt->ts1 = srgp->ts1;
+  reply_pkt->ts1_us = srgp->ts1_us;
+  reply_pkt->ts2 = srgp->ts2;
+  reply_pkt->ts2_us = srgp->ts2_us;
+  reply_pkt->ts3 = srgp->ts3;
+  reply_pkt->ts3_us = srgp->ts3_us;
+  reply_pkt->ts4 = srgp->ts4;
+  reply_pkt->ts4_us = srgp->ts4_us;
   get_current_time(&reply_pkt->ts5, &reply_pkt->ts5_us);
 
   /* create the testing report */
   report_xml = testing_report_alloc(reply_pkt->run_id, reply_pkt->judge_id);
   report_xml->status = RUN_CHECK_FAILED;
-  report_xml->scoring_system = req_pkt->scoring_system;
+  report_xml->scoring_system = scoring_system;
   report_xml->archive_available = 0;
   report_xml->correct_available = 1;
   report_xml->info_available = 0;
   report_xml->real_time_available = 1;
   report_xml->max_memory_used_available = 0;
   report_xml->run_tests = 0;
-  report_xml->variant = req_pkt->variant;
+  report_xml->variant = srgp->variant;
   report_xml->accepting_mode = 0;
   report_xml->failed_test = -1;
   report_xml->tests_passed = 0;
@@ -1172,7 +1178,7 @@ run_inverse_testing(
   snprintf(report_path, report_path_size, "%s/%s.xml",
            global->run_work_dir, pkt_name);
 
-  switch (req_pkt->mime_type) {
+  switch (srgp->mime_type) {
   case MIME_TYPE_APPL_GZIP:
   case MIME_TYPE_APPL_BZIP2:
   case MIME_TYPE_APPL_COMPRESS:
@@ -1186,23 +1192,23 @@ run_inverse_testing(
 
   default:
     perr(log_f, "archive of type %d (%s) is not supported",
-         req_pkt->mime_type, mime_type_get_type(req_pkt->mime_type));
+         srgp->mime_type, mime_type_get_type(srgp->mime_type));
     goto cleanup;
   }
   
-  r = generic_copy_file(REMOVE, global->run_exe_dir, pkt_name,req_pkt->exe_sfx,
+  r = generic_copy_file(REMOVE, global->run_exe_dir, pkt_name, srgp->exe_sfx,
                         0, global->run_work_dir, pkt_name,
-                        mime_type_get_suffix(req_pkt->mime_type));
+                        mime_type_get_suffix(srgp->mime_type));
   if (r <= 0) {
     perr(log_f, "failed to read archive file %s/%s%s",
          global->run_work_dir, pkt_name,
-         mime_type_get_suffix(req_pkt->mime_type));
+         mime_type_get_suffix(srgp->mime_type));
     goto cleanup;
   }
 
   snprintf(arch_path, sizeof(arch_path), "%s/%s%s",
            global->run_work_dir, pkt_name,
-           mime_type_get_suffix(req_pkt->mime_type));
+           mime_type_get_suffix(srgp->mime_type));
 
   snprintf(arch_dir,sizeof(arch_dir), "%s/%s", global->run_work_dir, pkt_name);
   if (make_dir(arch_dir, 0) < 0) {
@@ -1248,7 +1254,7 @@ run_inverse_testing(
 
   // invoke test checkers on each test
   r = invoke_test_checker_on_tests(log_f, log_path, global,
-                                   prob, req_pkt->variant,
+                                   prob, srgp->variant,
                                    test_count, tests_dir,
                                    test_pat, corr_pat);
   if (r != RUN_OK) {
@@ -1259,17 +1265,17 @@ run_inverse_testing(
 
   // now we're ready to run our programs on the given tests
   if (global->advanced_layout > 0) {
-    if (prob->variant_num > 0 && req_pkt->variant > 0) {
+    if (prob->variant_num > 0 && srgp->variant > 0) {
       get_advanced_layout_path(sample_dir, sizeof(sample_dir), global, prob,
-                               DFLT_P_TEST_DIR, req_pkt->variant);
+                               DFLT_P_TEST_DIR, srgp->variant);
     } else {
       get_advanced_layout_path(sample_dir, sizeof(sample_dir), global, prob,
                                DFLT_P_TEST_DIR, -1);
     }
   } else {
-    if (prob->variant_num > 0 && req_pkt->variant > 0) {
+    if (prob->variant_num > 0 && srgp->variant > 0) {
       snprintf(sample_dir, sizeof(sample_dir), "%s-%d", prob->test_dir,
-               req_pkt->variant);
+               srgp->variant);
     } else {
       snprintf(sample_dir, sizeof(sample_dir), "%s", prob->test_dir);
     }
@@ -1296,24 +1302,24 @@ run_inverse_testing(
     snprintf(check_cmd, sizeof(check_cmd), "%s/%s",
              global->ejudge_checkers_dir, prob->standard_checker);
   } else if (global->advanced_layout > 0) {
-    if (prob->variant_num > 0 && req_pkt->variant > 0) {
+    if (prob->variant_num > 0 && srgp->variant > 0) {
       get_advanced_layout_path(check_cmd, sizeof(check_cmd),
-                               global, prob, prob->check_cmd, req_pkt->variant);
+                               global, prob, prob->check_cmd, srgp->variant);
     } else {
       get_advanced_layout_path(check_cmd, sizeof(check_cmd),
                                global, prob, prob->check_cmd, -1);
     }
   } else if (os_IsAbsolutePath(prob->check_cmd)) {
-    if (prob->variant_num > 0 && req_pkt->variant > 0) {
+    if (prob->variant_num > 0 && srgp->variant > 0) {
       snprintf(check_cmd, sizeof(check_cmd), "%s-%d", prob->check_cmd,
-               req_pkt->variant);
+               srgp->variant);
     } else {
       snprintf(check_cmd, sizeof(check_cmd), "%s", prob->check_cmd);
     }
   } else {
-    if (prob->variant_num > 0 && req_pkt->variant > 0) {
+    if (prob->variant_num > 0 && srgp->variant > 0) {
       snprintf(check_cmd, sizeof(check_cmd), "%s/%s-%d",
-               global->checker_dir, prob->check_cmd, req_pkt->variant);
+               global->checker_dir, prob->check_cmd, srgp->variant);
     } else {
       snprintf(check_cmd, sizeof(check_cmd), "%s/%s",
                global->checker_dir, prob->check_cmd);
@@ -1397,8 +1403,8 @@ run_inverse_testing(
                               report_xml->tt_cells[i + good_count]);
   }
 
-  analyze_results(log_f, log_path, global, prob, req_pkt, reply_pkt,
-                  report_xml);
+  analyze_results(log_f, log_path, global, prob, srp, reply_pkt, report_xml,
+                  scoring_system);
 
 cleanup:
   /* process the log file */

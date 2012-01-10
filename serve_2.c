@@ -1307,7 +1307,7 @@ serve_run_request(
   struct run_request_packet *run_pkt = 0;
   struct teamdb_export te;
   void *run_pkt_out = 0;
-  size_t run_pkt_out_size = 0;
+  //size_t run_pkt_out_size = 0;
   struct userlist_user_info *ui = 0;
 
   path_t run_exe_dir;
@@ -1323,6 +1323,9 @@ serve_run_request(
   int time_limit_adj_millis = 0;
   struct section_tester_data *refined_tester = NULL;
   const unsigned char *s;
+  FILE *srp_f = NULL;
+  char *srp_t = NULL;
+  size_t srp_z = 0;
 
   get_current_time(&current_time, &current_time_us);
 
@@ -1591,7 +1594,7 @@ serve_run_request(
 
   struct super_run_in_problem_packet *srpp = srp->problem;
   srpp->type = xstrdup(problem_unparse_type(prob->type));
-  srpp->prob_id = prob->tester_id;
+  srpp->id = prob->tester_id;
   srpp->check_presentation = prob->check_presentation;
   srpp->scoring_checker = prob->scoring_checker;
   srpp->use_stdin = prob->use_stdin;
@@ -1812,10 +1815,17 @@ serve_run_request(
 
   super_run_in_packet_set_default(srp);
 
-  // for debugging
-  super_run_in_packet_unparse_cfg(stderr, srp);
+  srp_f = open_memstream(&srp_t, &srp_z);
+  super_run_in_packet_unparse_cfg(srp_f, srp);
+  fclose(srp_f); srp_f = NULL;
+
+  if (generic_write_file(srp_t, srp_z, SAFE, state->global->run_queue_dir, pkt_base, "") < 0) {
+    fprintf(errf, "failed to write run packet\n");
+    goto fail;
+  }
 
   /* generate external representation of the packet */
+  /*
   if (run_request_packet_write(run_pkt, &run_pkt_out_size, &run_pkt_out) < 0) {
     fprintf(errf, "run_request_packet_write failed\n");
     goto fail;
@@ -1826,6 +1836,7 @@ serve_run_request(
     fprintf(errf, "failed to write run packet\n");
     goto fail;
   }
+  */
 
   /* update status */
   xfree(run_pkt_out); run_pkt_out = 0;
@@ -1839,6 +1850,8 @@ serve_run_request(
   return 0;
 
 fail:
+  if (srp_f) fclose(srp_f);
+  xfree(srp_t);
   prepare_tester_free(refined_tester);
   super_run_in_packet_free(srp);
   xfree(run_pkt_out);

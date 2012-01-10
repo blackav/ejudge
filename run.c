@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -37,6 +37,7 @@
 #include "errlog.h"
 #include "misctext.h"
 #include "run.h"
+#include "super_run_packet.h"
 
 #include "reuse_xalloc.h"
 #include "reuse_logger.h"
@@ -216,9 +217,10 @@ unparse_scoring_system(unsigned char *buf, size_t size, int val)
 
 static int
 generate_xml_report(
-        struct run_request_packet *req_pkt,
+        const struct super_run_in_packet *srp,
         struct run_reply_packet *reply_pkt,
         const unsigned char *report_path,
+        int scoring_system,
         int variant,
         int scores,
         int max_score,
@@ -253,9 +255,9 @@ generate_xml_report(
 
   run_status_to_str_short(buf1, sizeof(buf1), reply_pkt->status);
   fprintf(f, "<testing-report run-id=\"%d\" judge-id=\"%d\" status=\"%s\" scoring=\"%s\" archive-available=\"%s\" run-tests=\"%d\"",
-          req_pkt->run_id, req_pkt->judge_id, buf1,
-          unparse_scoring_system(buf2, sizeof(buf2), req_pkt->scoring_system),
-          (req_pkt->full_archive)?"yes":"no", total_tests - 1);
+          srp->global->run_id, srp->global->judge_id, buf1,
+          unparse_scoring_system(buf2, sizeof(buf2), scoring_system),
+          (srp->global->enable_full_archive)?"yes":"no", total_tests - 1);
   if (has_real_time) {
     fprintf(f, " real-time-available=\"yes\"");
   }
@@ -271,21 +273,21 @@ generate_xml_report(
   if (variant > 0) {
     fprintf(f, " variant=\"%d\"", variant);
   }
-  if (req_pkt->scoring_system == SCORE_OLYMPIAD) {
-    fprintf(f, " accepting-mode=\"%s\"", req_pkt->accepting_mode?"yes":"no");
+  if (scoring_system == SCORE_OLYMPIAD) {
+    fprintf(f, " accepting-mode=\"%s\"", srp->global->accepting_mode?"yes":"no");
   }
-  if (req_pkt->scoring_system == SCORE_OLYMPIAD && req_pkt->accepting_mode
+  if (scoring_system == SCORE_OLYMPIAD && srp->global->accepting_mode
       && reply_pkt->status != RUN_ACCEPTED) {
     fprintf(f, " failed-test=\"%d\"", total_tests - 1);
-  } else if (req_pkt->scoring_system == SCORE_ACM && reply_pkt->status != RUN_OK) {
+  } else if (scoring_system == SCORE_ACM && reply_pkt->status != RUN_OK) {
     fprintf(f, " failed-test=\"%d\"", total_tests - 1);
-  } else if (req_pkt->scoring_system == SCORE_OLYMPIAD && !req_pkt->accepting_mode) {
+  } else if (scoring_system == SCORE_OLYMPIAD && !srp->global->accepting_mode) {
     fprintf(f, " tests-passed=\"%d\" score=\"%d\" max-score=\"%d\"",
             reply_pkt->failed_test - 1, reply_pkt->score, max_score);
-  } else if (req_pkt->scoring_system == SCORE_KIROV) {
+  } else if (scoring_system == SCORE_KIROV) {
     fprintf(f, " tests-passed=\"%d\" score=\"%d\" max-score=\"%d\"",
             reply_pkt->failed_test - 1, reply_pkt->score, max_score);
-  } else if (req_pkt->scoring_system == SCORE_MOSCOW) {
+  } else if (scoring_system == SCORE_MOSCOW) {
     if (reply_pkt->status != RUN_OK) {
       fprintf(f, " failed-test=\"%d\"", total_tests - 1);
     }
@@ -300,21 +302,21 @@ generate_xml_report(
   if (marked_flag >= 0) {
     fprintf(f, " marked-flag=\"%s\"", marked_flag?"yes":"no");
   }
-  if (req_pkt->separate_user_score > 0 && reply_pkt->user_status >= 0) {
+  if (srp->global->separate_user_score > 0 && reply_pkt->user_status >= 0) {
     run_status_to_str_short(buf1, sizeof(buf1), reply_pkt->user_status);
     fprintf(f, " user-status=\"%s\"", buf1);
   }
-  if (req_pkt->separate_user_score > 0 && reply_pkt->user_score >= 0) {
+  if (srp->global->separate_user_score > 0 && reply_pkt->user_score >= 0) {
     fprintf(f, " user-score=\"%d\"", reply_pkt->user_score);
   }
-  if (req_pkt->separate_user_score > 0) {
+  if (srp->global->separate_user_score > 0) {
     if (user_max_score < 0) user_max_score = max_score;
     fprintf(f, " user-max-score=\"%d\"", user_max_score);
   }
-  if (req_pkt->separate_user_score > 0 && reply_pkt->user_tests_passed >= 0) {
+  if (srp->global->separate_user_score > 0 && reply_pkt->user_tests_passed >= 0) {
     fprintf(f, " user-tests-passed=\"%d\"", reply_pkt->user_tests_passed);
   }
-  if (req_pkt->separate_user_score > 0 && user_run_tests >= 0) {
+  if (srp->global->separate_user_score > 0 && user_run_tests >= 0) {
     fprintf(f, " user-run-tests=\"%d\"", user_run_tests);
   }
   fprintf(f, " >\n");
@@ -357,10 +359,10 @@ generate_xml_report(
     if (tests[i].max_memory_used > 0) {
       fprintf(f, " max-memory-used=\"%d\"", tests[i].max_memory_used);
     }
-    if (req_pkt->scoring_system == SCORE_OLYMPIAD && !req_pkt->accepting_mode) {
+    if (scoring_system == SCORE_OLYMPIAD && !srp->global->accepting_mode) {
       fprintf(f, " nominal-score=\"%d\" score=\"%d\"",
               tests[i].max_score, tests[i].score);
-    } else if (req_pkt->scoring_system == SCORE_KIROV) {
+    } else if (scoring_system == SCORE_KIROV) {
       fprintf(f, " nominal-score=\"%d\" score=\"%d\"",
               tests[i].max_score, tests[i].score);
     }
@@ -380,7 +382,7 @@ generate_xml_report(
       fprintf(f, " checker-comment=\"%s\"", msg);
       xfree(msg);
     }
-    if (req_pkt->full_archive) {
+    if (srp->global->enable_full_archive) {
       if (tests[i].has_input_digest) {
         digest_to_ascii(DIGEST_SHA1, tests[i].input_digest, buf3);
         fprintf(f, " input-digest=\"%s\"", buf3);
@@ -394,13 +396,13 @@ generate_xml_report(
         fprintf(f, " info-digest=\"%s\"", buf3);
       }
     }
-    if (tests[i].output_size >= 0 && req_pkt->full_archive) {
+    if (tests[i].output_size >= 0 && srp->global->enable_full_archive) {
       fprintf(f, " output-available=\"yes\"");
     }
-    if (tests[i].error_size >= 0 && req_pkt->full_archive) {
+    if (tests[i].error_size >= 0 && srp->global->enable_full_archive) {
       fprintf(f, " stderr-available=\"yes\"");
     }
-    if (tests[i].chk_out_size >= 0 && req_pkt->full_archive) {
+    if (tests[i].chk_out_size >= 0 && srp->global->enable_full_archive) {
       fprintf(f, " checker-output-available=\"yes\"");
     }
     if (tests[i].args && strlen(tests[i].args) >= global->max_cmd_length) {
@@ -415,7 +417,7 @@ generate_xml_report(
       fprintf(f, "      <args>%s</args>\n", ARMOR(tests[i].args));
     }
 
-    if (tests[i].input_size >= 0 && !req_pkt->full_archive) {
+    if (tests[i].input_size >= 0 && !srp->global->enable_full_archive) {
       fprintf(f, "      <input>");
       html_print_by_line(f, utf8_mode, global->max_file_length,
                          global->max_line_length,
@@ -423,7 +425,7 @@ generate_xml_report(
       fprintf(f, "</input>\n");
     }
 
-    if (tests[i].output_size >= 0 && !req_pkt->full_archive) {
+    if (tests[i].output_size >= 0 && !srp->global->enable_full_archive) {
       fprintf(f, "      <output>");
       html_print_by_line(f, utf8_mode, global->max_file_length,
                          global->max_line_length,
@@ -431,7 +433,7 @@ generate_xml_report(
       fprintf(f, "</output>\n");
     }
 
-    if (tests[i].correct_size >= 0 && !req_pkt->full_archive) {
+    if (tests[i].correct_size >= 0 && !srp->global->enable_full_archive) {
       fprintf(f, "      <correct>");
       html_print_by_line(f, utf8_mode, global->max_file_length,
                          global->max_line_length,
@@ -439,7 +441,7 @@ generate_xml_report(
       fprintf(f, "</correct>\n");
     }
 
-    if (tests[i].error_size >= 0 && !req_pkt->full_archive) {
+    if (tests[i].error_size >= 0 && !srp->global->enable_full_archive) {
       fprintf(f, "      <stderr>");
       html_print_by_line(f, utf8_mode, global->max_file_length,
                          global->max_line_length,
@@ -447,7 +449,7 @@ generate_xml_report(
       fprintf(f, "</stderr>\n");
     }
 
-    if (tests[i].chk_out_size >= 0 && !req_pkt->full_archive) {
+    if (tests[i].chk_out_size >= 0 && !srp->global->enable_full_archive) {
       fprintf(f, "      <checker>");
       html_print_by_line(f, utf8_mode, global->max_file_length,
                          global->max_line_length,
@@ -1009,7 +1011,7 @@ static int
 invoke_nwrun(
         const struct section_global_data *global,
         struct section_tester_data *tst,
-        struct run_request_packet *req_pkt,
+        const struct super_run_in_packet *srp,
         struct section_problem_data *prb,
         full_archive_t far,
         int test_num,
@@ -1045,6 +1047,9 @@ invoke_nwrun(
   int remove_out_packet_flag = 0;
   int timeout;
   int wait_time;
+
+  const struct super_run_in_global_packet *srgp = srp->global;
+  const struct super_run_in_problem_packet *srpp = srp->problem;
 
   if (!tst->nwrun_spool_dir[0]) abort();
 
@@ -1082,11 +1087,11 @@ invoke_nwrun(
 
   snprintf(pkt_name, sizeof(pkt_name), "%c%c%d%c%d%c%d%c%d%c%d",
            b32_digits[priority],
-           get_num_prefix(req_pkt->contest_id), req_pkt->contest_id,
-           get_num_prefix(req_pkt->run_id), req_pkt->run_id,
-           get_num_prefix(req_pkt->problem_id), req_pkt->problem_id,
+           get_num_prefix(srgp->contest_id), srgp->contest_id,
+           get_num_prefix(srgp->run_id), srgp->run_id,
+           get_num_prefix(srpp->id), srpp->id,
            get_num_prefix(test_num), test_num,
-           get_num_prefix(req_pkt->judge_id), req_pkt->judge_id);
+           get_num_prefix(srgp->judge_id), srgp->judge_id);
   snprintf(full_in_path, sizeof(full_in_path),
            "%s/in/%s_%s", queue_path, os_NodeName(), pkt_name);
   if (make_dir(full_in_path, 0777) < 0) {
@@ -1121,11 +1126,11 @@ invoke_nwrun(
   }
 
   fprintf(f, "priority = %d\n", priority + 1);
-  fprintf(f, "contest_id = %d\n", req_pkt->contest_id);
-  fprintf(f, "run_id = %d\n", req_pkt->run_id + 1);
-  fprintf(f, "prob_id = %d\n", req_pkt->problem_id);
+  fprintf(f, "contest_id = %d\n", srgp->contest_id);
+  fprintf(f, "run_id = %d\n", srgp->run_id + 1);
+  fprintf(f, "prob_id = %d\n", srpp->id);
   fprintf(f, "test_num = %d\n", test_num);
-  fprintf(f, "judge_id = %d\n", req_pkt->judge_id);
+  fprintf(f, "judge_id = %d\n", srgp->judge_id);
   fprintf(f, "use_contest_id_in_reply = %d\n", 1);
   fprintf(f, "enable_unix2dos = %d\n", 1);
   if (prb->use_stdin > 0 || prb->combined_stdin > 0) {
@@ -1163,13 +1168,13 @@ invoke_nwrun(
   }
   fprintf(f, "max_output_file_size = 60M\n");
   fprintf(f, "max_error_file_size = 16M\n");
-  if (req_pkt->secure_run) {
+  if (srgp->secure_run) {
     fprintf(f, "enable_secure_run = 1\n");
   }
-  if (req_pkt->memory_limit && req_pkt->secure_run) {
+  if (srgp->enable_memory_limit_error && srgp->secure_run) {
     fprintf(f, "enable_memory_limit_error = 1\n");
   }
-  if (req_pkt->security_violation && req_pkt->secure_run) {
+  if (srgp->detect_violations && srgp->secure_run) {
     fprintf(f, "enable_security_violation_error = 1\n");
   }
   fprintf(f, "prob_short_name = \"%s\"\n", prb->short_name);
@@ -1190,7 +1195,7 @@ invoke_nwrun(
 
   // wait for the result package
   snprintf(result_path, sizeof(result_path), "%s/result/%06d",
-           full_spool_dir, req_pkt->contest_id);
+           full_spool_dir, srgp->contest_id);
   make_all_dir(result_path, 0777);
 
   snprintf(full_dir_path, sizeof(full_dir_path),
@@ -1256,19 +1261,19 @@ invoke_nwrun(
   }
 
   // match output and input data
-  if (out_packet->contest_id != req_pkt->contest_id) {
+  if (out_packet->contest_id != srgp->contest_id) {
     chk_printf(result, "contest_id mismatch: %d, %d\n",
-               out_packet->contest_id, req_pkt->contest_id);
+               out_packet->contest_id, srgp->contest_id);
     goto restart_waiting;
   }
-  if (out_packet->run_id - 1 != req_pkt->run_id) {
+  if (out_packet->run_id - 1 != srgp->run_id) {
     chk_printf(result, "run_id mismatch: %d, %d\n",
-               out_packet->run_id, req_pkt->run_id);
+               out_packet->run_id, srgp->run_id);
     goto restart_waiting;
   }
-  if (out_packet->prob_id != req_pkt->problem_id) {
+  if (out_packet->prob_id != srpp->id) {
     chk_printf(result, "prob_id mismatch: %d, %d\n",
-               out_packet->prob_id, req_pkt->problem_id);
+               out_packet->prob_id, srpp->id);
     goto restart_waiting;
   }
   if (out_packet->test_num != test_num) {
@@ -1276,9 +1281,9 @@ invoke_nwrun(
                out_packet->test_num, test_num);
     goto restart_waiting;
   }
-  if (out_packet->judge_id != req_pkt->judge_id) {
+  if (out_packet->judge_id != srgp->judge_id) {
     chk_printf(result, "judge_id mismatch: %d, %d\n",
-               out_packet->judge_id, req_pkt->judge_id);
+               out_packet->judge_id, srgp->judge_id);
     goto restart_waiting;
   }
 
@@ -1318,7 +1323,7 @@ invoke_nwrun(
   }
 
   /* handle the input test data */
-  if (req_pkt->full_archive) {
+  if (srgp->enable_full_archive) {
     filehash_get(test_src_path, result->input_digest);
     result->has_input_digest = 1;
   } else if (prb->binary_input <= 0) {
@@ -1351,7 +1356,7 @@ invoke_nwrun(
     }
 
     result->output_size = out_packet->output_file_orig_size;
-    if (!req_pkt->full_archive
+    if (!srgp->enable_full_archive
         && prb->binary_input <= 0
         && global->max_file_length > 0
         && result->output_size <= global->max_file_length) {
@@ -1375,7 +1380,7 @@ invoke_nwrun(
     snprintf(packet_error_path, sizeof(packet_error_path),
              "%s/%s", out_entry_packet, tst->error_file);
     result->error_size = out_packet->error_file_size;
-    if (!req_pkt->full_archive
+    if (!srgp->enable_full_archive
         && global->max_file_length > 0
         && result->error_size <= global->max_file_length) {
       if (generic_read_file(&result->error,0,0,0,0,packet_error_path,"") < 0) {
@@ -1404,19 +1409,20 @@ invoke_nwrun(
 }
 
 static int
-run_tests(struct section_tester_data *tst,
-          struct run_request_packet *req_pkt,
-          struct run_reply_packet *reply_pkt,
-          int score_system_val,
-          int accept_testing,
-          int accept_partial,
-          int cur_variant,
-          char const *new_name,
-          char const *new_base,
-          char *report_path,                /* path to the report */
-          char *full_report_path,           /* path to the full output dir */
-          const unsigned char *user_spelling,
-          const unsigned char *problem_spelling)
+run_tests(
+        struct section_tester_data *tst,
+        const struct super_run_in_packet *srp,
+        struct run_reply_packet *reply_pkt,
+        int score_system_val,
+        int accept_testing,
+        int accept_partial,
+        int cur_variant,
+        char const *new_name,
+        char const *new_base,
+        char *report_path,                /* path to the report */
+        char *full_report_path,           /* path to the full output dir */
+        const unsigned char *user_spelling,
+        const unsigned char *problem_spelling)
 {
   tTask *tsk = 0;
   int    cur_test;
@@ -1482,6 +1488,9 @@ run_tests(struct section_tester_data *tst,
   const struct section_global_data *global = serve_state.global;
   int disable_stderr;
 
+  const struct super_run_in_global_packet *srgp = srp->global;
+  const struct super_run_in_problem_packet *srpp = srp->problem;
+
   memset(&tstinfo, 0, sizeof(tstinfo));
   ASSERT(tst->problem > 0);
   ASSERT(tst->problem <= serve_state.max_prob);
@@ -1504,7 +1513,7 @@ run_tests(struct section_tester_data *tst,
     if (prb->use_tgz) {
       var_tgz_dir = (unsigned char*) alloca(sizeof(path_t));
     }
-    if (req_pkt->advanced_layout) {
+    if (srgp->advanced_layout) {
       get_advanced_layout_path(var_test_dir, sizeof(path_t), global,
                                prb, DFLT_P_TEST_DIR, cur_variant);
       if (prb->use_corr > 0) {
@@ -1542,7 +1551,7 @@ run_tests(struct section_tester_data *tst,
       }
     }
   } else {
-    if (req_pkt->advanced_layout) {
+    if (srgp->advanced_layout) {
       var_test_dir = (unsigned char*) alloca(sizeof(path_t));
       get_advanced_layout_path(var_test_dir, sizeof(path_t),
                                global, prb, DFLT_P_TEST_DIR, -1);
@@ -1585,7 +1594,7 @@ run_tests(struct section_tester_data *tst,
 
   pathmake(report_path, global->run_work_dir, "/", "report", NULL);
   full_report_path[0] = 0;
-  if (req_pkt->full_archive) {
+  if (srgp->enable_full_archive) {
     pathmake(full_report_path, global->run_work_dir, "/", "full_output", NULL);
     far = full_archive_open_write(full_report_path);
   }
@@ -1684,10 +1693,8 @@ run_tests(struct section_tester_data *tst,
         time_limit_value += tst->time_limit_adj_millis;
       else if (tst->time_limit_adjustment > 0)
         time_limit_value += tst->time_limit_adjustment * 1000;
-      if (req_pkt->time_limit_adj_millis > 0)
-        time_limit_value += req_pkt->time_limit_adj_millis;
-      else if (req_pkt->time_limit_adj > 0)
-        time_limit_value += req_pkt->time_limit_adj * 1000;
+      if (srgp->lang_time_limit_adj_ms > 0)
+        time_limit_value += srgp->lang_time_limit_adj_ms;
     }
 
     pathmake(check_out_path, global->run_work_dir, "/", "checkout", NULL);
@@ -1697,7 +1704,7 @@ run_tests(struct section_tester_data *tst,
     unlink(score_out_path);
 
     if (tst->nwrun_spool_dir[0]) {
-      status = invoke_nwrun(global, tst, req_pkt, prb, far,
+      status = invoke_nwrun(global, tst, srp, prb, far,
                             cur_test, 0, &has_real_time,
                             global->run_work_dir,
                             new_name, test_src, test_base, time_limit_value,
@@ -1739,7 +1746,7 @@ run_tests(struct section_tester_data *tst,
       disable_stderr = tstinfo.disable_stderr;
     }
     if (disable_stderr < 0) {
-      disable_stderr = req_pkt->disable_stderr;
+      disable_stderr = srpp->disable_stderr;
     }
     if (disable_stderr < 0) {
       disable_stderr = 0;
@@ -1972,12 +1979,12 @@ run_tests(struct section_tester_data *tst,
           task_SetDataSize(tsk, tst->max_data_size);
         if (tst->max_vm_size && tst->max_vm_size != -1L)
           task_SetVMSize(tsk, tst->max_vm_size);
-        if (tst->enable_memory_limit_error && req_pkt->memory_limit
-            && req_pkt->secure_run) {
+        if (tst->enable_memory_limit_error && srgp->enable_memory_limit_error
+            && srgp->secure_run) {
           task_EnableMemoryLimitError(tsk);
         }
-        if (tst->enable_memory_limit_error && req_pkt->secure_run
-            && req_pkt->security_violation) {
+        if (tst->enable_memory_limit_error && srgp->secure_run
+            && srgp->detect_violations) {
           task_EnableSecurityViolationError(tsk);
         }
       } else {
@@ -2000,12 +2007,12 @@ run_tests(struct section_tester_data *tst,
             task_SetDataSize(tsk, prb->max_data_size);
           if (prb->max_vm_size && prb->max_vm_size != -1L)
             task_SetVMSize(tsk, prb->max_vm_size);
-          if (tst->enable_memory_limit_error && req_pkt->memory_limit
-              && req_pkt->secure_run) {
+          if (tst->enable_memory_limit_error && srgp->enable_memory_limit_error
+              && srgp->secure_run) {
             task_EnableMemoryLimitError(tsk);
           }
           if (tst->enable_memory_limit_error
-              && req_pkt->secure_run && req_pkt->security_violation) {
+              && srgp->secure_run && srgp->detect_violations) {
             task_EnableSecurityViolationError(tsk);
           }
           break;
@@ -2058,7 +2065,7 @@ run_tests(struct section_tester_data *tst,
       if (tst->secure_exec_type_val > 0) {
         switch (tst->secure_exec_type_val) {
         case SEXEC_TYPE_STATIC:
-          if (req_pkt->secure_run) {
+          if (srgp->secure_run) {
             if (task_EnableSecureExec(tsk) < 0) {
               // FIXME: also report this condition
               err("task_EnableSecureExec() failed");
@@ -2078,7 +2085,7 @@ run_tests(struct section_tester_data *tst,
           }
           break;
         case SEXEC_TYPE_DLL:
-          if (req_pkt->secure_run) {
+          if (srgp->secure_run) {
             task_PutEnv(tsk, "LD_BIND_NOW=1");
             snprintf(flags_buf, sizeof(flags_buf),
                      "LD_PRELOAD=%s/lang/libdropcaps.so", EJUDGE_SCRIPT_DIR);
@@ -2086,7 +2093,7 @@ run_tests(struct section_tester_data *tst,
           }
           break;
         case SEXEC_TYPE_JAVA:
-          if (req_pkt->secure_run) {
+          if (srgp->secure_run) {
             task_PutEnv(tsk, "EJUDGE_JAVA_POLICY=fileio.policy");
             /*
             if (!prb->use_stdin || !prb->use_stdout) {
@@ -2184,7 +2191,7 @@ run_tests(struct section_tester_data *tst,
       has_real_time = 1;
       tests[cur_test].real_time = task_GetRealTime(tsk);
     }
-    if (req_pkt->full_archive) {
+    if (srgp->enable_full_archive) {
       filehash_get(test_src, tests[cur_test].input_digest);
       tests[cur_test].has_input_digest = 1;
     } else {
@@ -2206,7 +2213,7 @@ run_tests(struct section_tester_data *tst,
       file_size = generic_file_size(0, output_path, 0);
     if (file_size >= 0) {
       tests[cur_test].output_size = file_size;
-      if (global->max_file_length > 0 && !req_pkt->full_archive
+      if (global->max_file_length > 0 && !srgp->enable_full_archive
           && file_size <= global->max_file_length) {
         generic_read_file(&tests[cur_test].output, 0, 0, 0,
                           0, output_path, "");
@@ -2221,7 +2228,7 @@ run_tests(struct section_tester_data *tst,
     file_size = generic_file_size(0, error_path, 0);
     if (file_size >= 0) {
       tests[cur_test].error_size = file_size;
-      if (global->max_file_length > 0 && !req_pkt->full_archive
+      if (global->max_file_length > 0 && !srgp->enable_full_archive
           && file_size <= global->max_file_length) {
         generic_read_file(&tests[cur_test].error, 0, 0, 0,
                           0, error_path, "");
@@ -2238,7 +2245,7 @@ run_tests(struct section_tester_data *tst,
       int i;
       unsigned char *args = 0, *s;
 
-      if (req_pkt->full_archive) {
+      if (srgp->enable_full_archive) {
         filehash_get(info_src, tests[cur_test].info_digest);
         tests[cur_test].has_info_digest = 1;
       }
@@ -2268,8 +2275,8 @@ run_tests(struct section_tester_data *tst,
       }
     }
 
-    if (tsk && tst->enable_memory_limit_error && req_pkt->memory_limit
-        && req_pkt->secure_run && task_IsMemoryLimit(tsk)) {
+    if (tsk && tst->enable_memory_limit_error && srgp->enable_memory_limit_error
+        && srgp->secure_run && task_IsMemoryLimit(tsk)) {
       failed_test = cur_test;
       status = RUN_MEM_LIMIT_ERR;
       total_failed_tests++;
@@ -2279,8 +2286,8 @@ run_tests(struct section_tester_data *tst,
       goto done_this_test;
     }
 
-    if (tsk && tst->enable_memory_limit_error && req_pkt->security_violation
-        && req_pkt->secure_run && task_IsSecurityViolation(tsk)) {
+    if (tsk && tst->enable_memory_limit_error && srgp->detect_violations
+        && srgp->secure_run && task_IsSecurityViolation(tsk)) {
       failed_test = cur_test;
       status = RUN_SECURITY_ERR;
       total_failed_tests++;
@@ -2425,7 +2432,7 @@ run_tests(struct section_tester_data *tst,
         pathmake3(corr_path, var_corr_dir, "/", corr_base, NULL);
       }
       task_AddArg(tsk, corr_path);
-      if (req_pkt->full_archive) {
+      if (srgp->enable_full_archive) {
         filehash_get(corr_path, tests[cur_test].correct_digest);
         tests[cur_test].has_correct_digest = 1;
       } else {
@@ -2568,7 +2575,7 @@ run_tests(struct section_tester_data *tst,
     file_size = generic_file_size(0, check_out_path, 0);
     if (file_size >= 0) {
       tests[cur_test].chk_out_size = file_size;
-      if (!req_pkt->full_archive) {
+      if (!srgp->enable_full_archive) {
         generic_read_file(&tests[cur_test].chk_out, 0, 0, 0, 0, check_out_path, "");
       }
       if (far) {
@@ -2704,7 +2711,7 @@ run_tests(struct section_tester_data *tst,
     reply_pkt->score = score;
     get_current_time(&reply_pkt->ts6, &reply_pkt->ts6_us);
 
-    if (global->sound_player[0] && global->extended_sound && !req_pkt->disable_sound) {
+    if (global->sound_player[0] && global->extended_sound && !srgp->disable_sound) {
       unsigned char b1[64], b2[64], b3[64];
 
       snprintf(b1, sizeof(b1), "%d", retcode);
@@ -2745,7 +2752,7 @@ run_tests(struct section_tester_data *tst,
     }
     get_current_time(&reply_pkt->ts6, &reply_pkt->ts6_us);
 
-    if (global->sound_player[0] && global->extended_sound && !req_pkt->disable_sound) {
+    if (global->sound_player[0] && global->extended_sound && !srgp->disable_sound) {
       unsigned char b1[64], b2[64];
 
       snprintf(b1, sizeof(b1), "%d", status);
@@ -2762,7 +2769,7 @@ run_tests(struct section_tester_data *tst,
       task_Wait(tsk);
       task_Delete(tsk);
       tsk = 0;
-    } else if (global->sound_player[0] && !req_pkt->disable_sound) {
+    } else if (global->sound_player[0] && !srgp->disable_sound) {
       // play funny sound
       sound = 0;
       switch (status) {
@@ -2795,7 +2802,7 @@ run_tests(struct section_tester_data *tst,
   user_score = -1;
   user_tests_passed = -1;
   user_run_tests = -1;
-  if (prb->valuer_cmd[0] && !req_pkt->accepting_mode
+  if (prb->valuer_cmd[0] && !srgp->accepting_mode
       && !reply_pkt->status != RUN_CHECK_FAILED) {
     if (invoke_valuer(global, prb, cur_variant, prb->full_score,
                       &score, &marked_flag,
@@ -2837,7 +2844,7 @@ run_tests(struct section_tester_data *tst,
       }
     }
     if (score_system_val == SCORE_KIROV
-        || (score_system_val == SCORE_OLYMPIAD && !req_pkt->accepting_mode)) {
+        || (score_system_val == SCORE_OLYMPIAD && !srgp->accepting_mode)) {
       if (user_score < 0) {
         if (prb->variable_full_score <= 0 && user_status == RUN_OK) {
           if (prb->full_user_score >= 0) {
@@ -2878,7 +2885,7 @@ run_tests(struct section_tester_data *tst,
   reply_pkt->user_score = user_score;
   reply_pkt->user_tests_passed = user_tests_passed;
 
-  generate_xml_report(req_pkt, reply_pkt, report_path, cur_variant,
+  generate_xml_report(srp, reply_pkt, report_path, score_system_val, cur_variant,
                       score, prb->full_score, prb->full_user_score,
                       (prb->use_corr && prb->corr_dir[0]), prb->use_info,
                       report_time_limit_ms, report_real_time_limit_ms,
@@ -2941,9 +2948,6 @@ do_loop(void)
   struct section_tester_data tn, *tst;
   int got_quit_packet = 0;
 
-  char *req_buf = 0;            /* char* is needed for generic_read_file */
-  size_t req_buf_size = 0;
-  struct run_request_packet *req_pkt = 0;
   struct section_problem_data *cur_prob = 0;
   struct run_reply_packet reply_pkt;
   void *reply_pkt_buf = 0;
@@ -2951,6 +2955,13 @@ do_loop(void)
   unsigned char errmsg[512];
   const struct section_global_data *global = serve_state.global;
   const unsigned char *arch = 0;
+
+  char *srp_b = 0;
+  size_t srp_z = 0;
+  struct super_run_in_packet *srp = NULL;
+  struct super_run_in_global_packet *srgp = NULL;
+  struct super_run_in_problem_packet *srpp = NULL;
+  int scoring_system;
 
   memset(&tn, 0, sizeof(tn));
 
@@ -2989,25 +3000,48 @@ do_loop(void)
 
     last_activity_time = time(0);
 
-    req_pkt = run_request_packet_free(req_pkt);
-    xfree(req_buf), req_buf = 0;
-    req_buf_size = 0;
+    srp = super_run_in_packet_free(srp);
+    xfree(srp_b); srp_b = NULL;
+    srp_z = 0;
 
-    r = generic_read_file(&req_buf, 0, &req_buf_size, SAFE | REMOVE,
-                          global->run_queue_dir, pkt_name, "");
+    r = generic_read_file(&srp_b, 0, &srp_z, SAFE | REMOVE, global->run_queue_dir, pkt_name, "");
     if (r == 0) continue;
     if (r < 0) return -1;
 
-    if (run_request_packet_read(req_buf_size, req_buf, &req_pkt) < 0) {
-      /* the request packet is broken. ignore it */
+    if (!strcmp(pkt_name, "QUIT")) {
+      if (managed_mode_flag) {
+        got_quit_packet = 1;
+        info("got force quit run packet");
+      } else {
+        restart_flag = 1;
+      }
+      xfree(srp_b); srp_b = NULL; srp_z = 0;
       continue;
     }
-    if (managed_mode_flag && req_pkt->contest_id == -1) {
+
+    fprintf(stderr, "packet: <<%.*s>>\n", srp_z, srp_b);
+
+    srp = super_run_in_packet_parse_cfg_str(pkt_name, srp_b, srp_z);
+    xfree(srp_b); srp_b = NULL; srp_z = 0;
+    if (!srp) {
+      err("failed to parse file %s", pkt_name);
+      continue;
+    }
+    if (!(srgp = srp->global)) {
+      err("packet %s has no global section", pkt_name);
+      continue;
+    }
+    if (srgp->contest_id <= 0) {
+      err("packet %s: undefined contest_id", pkt_name);
+      continue;
+    }
+
+    if (managed_mode_flag && srgp->restart > 0) {
       got_quit_packet = 1;
       info("got force quit run packet");
       continue;
     }
-    if (req_pkt->contest_id == -1) {
+    if (srgp->restart > 0) {
       restart_flag = 1;
       continue;
     }
@@ -3022,18 +3056,23 @@ do_loop(void)
     }
     */
 
-    if (req_pkt->problem_id > serve_state.max_prob || !serve_state.probs[req_pkt->problem_id]) {
+    if (!(srpp = srp->problem)) {
+      err("packet %s: no [problem] section", pkt_name);
+      continue;
+    }
+
+    if (srpp->id <= 0 || srpp->id > serve_state.max_prob
+        || !(cur_prob = serve_state.probs[srpp->id])) {
       snprintf(errmsg, sizeof(errmsg),
                "problem %d is unknown to the run program\n",
-               req_pkt->problem_id);
+               srpp->id);
       goto report_check_failed_and_continue;
     }
-    cur_prob = serve_state.probs[req_pkt->problem_id];
 
     /* if we are asked to do full testing, but don't want */
-    if ((global->skip_full_testing > 0 && !req_pkt->accepting_mode)
-        || (global->skip_accept_testing > 0 && req_pkt->accepting_mode)) {
-      r = generic_write_file(req_buf, req_buf_size, SAFE,
+    if ((global->skip_full_testing > 0 && !srgp->accepting_mode)
+        || (global->skip_accept_testing > 0 && srgp->accepting_mode)) {
+      r = generic_write_file(srp_b, srp_z, SAFE,
                              global->run_queue_dir, pkt_name, "");
       if (r < 0) return -1;
       info("skipping problem %s", cur_prob->short_name);
@@ -3045,61 +3084,69 @@ do_loop(void)
      * packet back to the spool directory
      */
     if (cur_prob->skip_testing > 0) {
-      r = generic_write_file(req_buf, req_buf_size, SAFE,
-                             global->run_queue_dir, pkt_name, "");
+      r = generic_write_file(srp_b, srp_z, SAFE, global->run_queue_dir, pkt_name, "");
       if (r < 0) return -1;
       info("skipping problem %s", cur_prob->short_name);
       scan_dir_add_ignored(global->run_queue_dir, pkt_name);
       continue;
     }
 
-    if (cur_prob->variant_num <= 0 && req_pkt->variant != 0) {
+    if (cur_prob->variant_num <= 0 && srgp->variant > 0) {
       snprintf(errmsg, sizeof(errmsg),
                "problem %d has no variants, but one was specified\n",
-               req_pkt->problem_id);
+               srpp->id);
       goto report_check_failed_and_continue;
     }
     if (cur_prob->variant_num > 0
-        &&(req_pkt->variant <= 0 || req_pkt->variant > cur_prob->variant_num)) {
+        &&(srgp->variant <= 0 || srgp->variant > cur_prob->variant_num)) {
       snprintf(errmsg, sizeof(errmsg),
                "problem %d has variants, but no variant was specified\n",
-               req_pkt->problem_id);
+               srpp->id);
       goto report_check_failed_and_continue;
     }
 
-    snprintf(run_base, sizeof(run_base), "%06d", req_pkt->run_id);
+    scoring_system = prepare_parse_score_system(srgp->score_system);
+    if (scoring_system < 0) {
+      snprintf(errmsg, sizeof(errmsg),
+               "invalid scoring system '%s'\n",
+               srgp->score_system);
+      goto report_check_failed_and_continue;
+    }
+
+    snprintf(run_base, sizeof(run_base), "%06d", srgp->run_id);
     report_path[0] = 0;
     full_report_path[0] = 0;
 
     if (cur_prob->type == PROB_TYPE_TESTS) {
       cr_serialize_lock(&serve_state);
-      run_inverse_testing(&serve_state, req_pkt, &reply_pkt, cur_prob,
+      run_inverse_testing(&serve_state, srp, &reply_pkt, cur_prob,
                           pkt_name, report_path, sizeof(report_path),
-                          utf8_mode);
+                          utf8_mode, scoring_system);
       cr_serialize_unlock(&serve_state);
     } else {
-      arch = req_pkt->arch;
+      arch = srgp->arch;
+      if (!arch) arch = "";
       if (cur_prob->type > 0 && arch && !*arch) {
         // any tester will work for output-only problems
         arch = 0;
       }
 
       /* regular problem */
-      if (!(tester_id = find_tester(&serve_state, req_pkt->problem_id, arch))){
+      if (!(tester_id = find_tester(&serve_state, srpp->id, arch))){
         snprintf(errmsg, sizeof(errmsg),
                  "no tester found for %d, %s\n",
-                 req_pkt->problem_id, req_pkt->arch);
+                 srpp->id, srgp->arch);
         goto report_check_failed_and_continue;
       }
 
-      info("fount tester %d for pair %d,%s", tester_id, req_pkt->problem_id,
-           req_pkt->arch);
+      info("fount tester %d for pair %d,%s", tester_id, srpp->id,
+           srgp->arch);
       tst = serve_state.testers[tester_id];
 
       if (tst->any) {
         info("tester %d is a default tester", tester_id);
         r = prepare_tester_refinement(&serve_state, &tn, tester_id,
-                                      req_pkt->problem_id);
+                                      srpp->id);
         ASSERT(r >= 0);
         tst = &tn;
       }
@@ -3108,7 +3155,7 @@ do_loop(void)
        * packet back to the spool directory
        */
       if (tst->skip_testing > 0) {
-        r = generic_write_file(req_buf, req_buf_size, SAFE,
+        r = generic_write_file(srp_b, srp_z, SAFE,
                                global->run_queue_dir, pkt_name, "");
         if (r < 0) return -1;
         info("skipping tester <%s,%s>", cur_prob->short_name, tst->arch);
@@ -3122,8 +3169,8 @@ do_loop(void)
       }
 
       snprintf(exe_pkt_name, sizeof(exe_pkt_name), "%s%s", pkt_name,
-               req_pkt->exe_sfx);
-      snprintf(exe_name, sizeof(exe_name), "%s%s", run_base, req_pkt->exe_sfx);
+               srgp->exe_sfx);
+      snprintf(exe_name, sizeof(exe_name), "%s%s", run_base, srgp->exe_sfx);
 
       r = generic_copy_file(REMOVE, global->run_exe_dir, exe_pkt_name, "",
                             0, global->run_work_dir, exe_name, "");
@@ -3136,30 +3183,31 @@ do_loop(void)
 
       /* start filling run_reply_packet */
       memset(&reply_pkt, 0, sizeof(reply_pkt));
-      reply_pkt.judge_id = req_pkt->judge_id;
-      reply_pkt.contest_id = req_pkt->contest_id;
-      reply_pkt.run_id = req_pkt->run_id;
-      reply_pkt.notify_flag = req_pkt->notify_flag;
+      reply_pkt.judge_id = srgp->judge_id;
+      reply_pkt.contest_id = srgp->contest_id;
+      reply_pkt.run_id = srgp->run_id;
+      reply_pkt.notify_flag = srgp->notify_flag;
       reply_pkt.user_status = -1;
       reply_pkt.user_tests_passed = -1;
       reply_pkt.user_score = -1;
-      reply_pkt.ts1 = req_pkt->ts1;
-      reply_pkt.ts1_us = req_pkt->ts1_us;
-      reply_pkt.ts2 = req_pkt->ts2;
-      reply_pkt.ts2_us = req_pkt->ts2_us;
-      reply_pkt.ts3 = req_pkt->ts3;
-      reply_pkt.ts3_us = req_pkt->ts3_us;
-      reply_pkt.ts4 = req_pkt->ts4;
-      reply_pkt.ts4_us = req_pkt->ts4_us;
+      reply_pkt.ts1 = srgp->ts1;
+      reply_pkt.ts1_us = srgp->ts1_us;
+      reply_pkt.ts2 = srgp->ts2;
+      reply_pkt.ts2_us = srgp->ts2_us;
+      reply_pkt.ts3 = srgp->ts3;
+      reply_pkt.ts3_us = srgp->ts3_us;
+      reply_pkt.ts4 = srgp->ts4;
+      reply_pkt.ts4_us = srgp->ts4_us;
       get_current_time(&reply_pkt.ts5, &reply_pkt.ts5_us);
 
       if (cr_serialize_lock(&serve_state) < 0) return -1;
-      if (run_tests(tst, req_pkt, &reply_pkt,
-                    req_pkt->scoring_system, req_pkt->accepting_mode,
-                    req_pkt->accept_partial, req_pkt->variant,
+      if (run_tests(tst, srp, &reply_pkt,
+                    scoring_system, srgp->accepting_mode,
+                    srpp->accept_partial, srgp->variant,
                     exe_name, run_base,
                     report_path, full_report_path,
-                    req_pkt->user_spelling, req_pkt->prob_spelling) < 0) {
+                    NULL /*req_pkt->user_spelling*/,
+                    NULL /*req_pkt->prob_spelling*/) < 0) {
         cr_serialize_unlock(&serve_state);
         return -1;
       }
@@ -3172,12 +3220,27 @@ do_loop(void)
       }
     }
 
-    snprintf(full_report_dir, sizeof(full_report_dir),
-             "%s/%06d/report", global->run_dir, req_pkt->contest_id);
-    snprintf(full_status_dir, sizeof(full_status_dir),
-             "%s/%06d/status", global->run_dir, req_pkt->contest_id);
-    snprintf(full_full_dir, sizeof(full_full_dir),
-             "%s/%06d/output", global->run_dir, req_pkt->contest_id);
+    if (srgp->reply_report_dir && srgp->reply_report_dir[0]) {
+      snprintf(full_report_dir, sizeof(full_report_dir),
+               "%s", srgp->reply_report_dir);
+    } else {
+      snprintf(full_report_dir, sizeof(full_report_dir),
+               "%s/%06d/report", global->run_dir, srgp->contest_id);
+    }
+    if (srgp->reply_spool_dir && srgp->reply_spool_dir[0]) {
+      snprintf(full_status_dir, sizeof(full_status_dir),
+               "%s", srgp->reply_spool_dir);
+    } else {
+      snprintf(full_status_dir, sizeof(full_status_dir),
+               "%s/%06d/status", global->run_dir, srgp->contest_id);
+    }
+    if (srgp->reply_full_archive_dir && srgp->reply_full_archive_dir[0]) {
+      snprintf(full_full_dir, sizeof(full_full_dir),
+               "%s", srgp->reply_full_archive_dir);
+    } else {
+      snprintf(full_full_dir, sizeof(full_full_dir),
+               "%s/%06d/output", global->run_dir, srgp->contest_id);
+    }
              
     if (generic_copy_file(0, NULL, report_path, "",
                           0, full_report_dir, run_base, "") < 0)
@@ -3211,20 +3274,20 @@ do_loop(void)
 
   report_check_failed_and_continue:;
     memset(&reply_pkt, 0, sizeof(reply_pkt));
-    reply_pkt.judge_id = req_pkt->judge_id;
-    reply_pkt.contest_id = req_pkt->contest_id;
-    reply_pkt.run_id = req_pkt->run_id;
+    reply_pkt.judge_id = srgp->judge_id;
+    reply_pkt.contest_id = srgp->contest_id;
+    reply_pkt.run_id = srgp->run_id;
     reply_pkt.user_status = -1;
     reply_pkt.user_tests_passed = -1;
     reply_pkt.user_score = -1;
-    reply_pkt.ts1 = req_pkt->ts1;
-    reply_pkt.ts1_us = req_pkt->ts1_us;
-    reply_pkt.ts2 = req_pkt->ts2;
-    reply_pkt.ts2_us = req_pkt->ts2_us;
-    reply_pkt.ts3 = req_pkt->ts3;
-    reply_pkt.ts3_us = req_pkt->ts3_us;
-    reply_pkt.ts4 = req_pkt->ts4;
-    reply_pkt.ts4_us = req_pkt->ts4_us;
+    reply_pkt.ts1 = srgp->ts1;
+    reply_pkt.ts1_us = srgp->ts1_us;
+    reply_pkt.ts2 = srgp->ts2;
+    reply_pkt.ts2_us = srgp->ts2_us;
+    reply_pkt.ts3 = srgp->ts3;
+    reply_pkt.ts3_us = srgp->ts3_us;
+    reply_pkt.ts4 = srgp->ts4;
+    reply_pkt.ts4_us = srgp->ts4_us;
     get_current_time(&reply_pkt.ts5, &reply_pkt.ts5_us);
     reply_pkt.ts6 = reply_pkt.ts5;
     reply_pkt.ts6_us = reply_pkt.ts5_us;
@@ -3250,9 +3313,9 @@ do_loop(void)
     clear_directory(global->run_work_dir);
   }
 
-  req_pkt = run_request_packet_free(req_pkt);
-  xfree(req_buf), req_buf = 0;
-  req_buf_size = 0;
+  srp = super_run_in_packet_free(srp);
+  xfree(srp_b); srp_b = NULL;
+  srp_z = 0;
 
   return 0;
 }
