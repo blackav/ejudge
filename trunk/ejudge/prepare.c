@@ -629,6 +629,24 @@ global_parse_score_system(
   return 0;
 }
 
+int
+prepare_parse_score_system(const unsigned char *str)
+{
+  if (!str || !str[0]) {
+    return SCORE_ACM;
+  } else if (!strcasecmp(str, "acm")) {
+    return SCORE_ACM;
+  } else if (!strcasecmp(str, "kirov")) {
+    return SCORE_KIROV;
+  } else if (!strcasecmp(str, "olympiad")) {
+    return SCORE_OLYMPIAD;
+  } else if (!strcasecmp(str, "moscow")) {
+    return SCORE_MOSCOW;
+  } else {
+    return -1;
+  }
+}
+
 static int
 global_parse_rounding_mode(
         const unsigned char *str,

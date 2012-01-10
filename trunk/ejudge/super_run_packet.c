@@ -44,6 +44,7 @@ super_run_in_global_packet_init(struct generic_section_config *gp)
   p->mime_type = -1;
   p->notify_flag = -1;
   p->advanced_layout = -1;
+  p->disable_sound = -1;
 }
 
 void
@@ -67,6 +68,7 @@ super_run_in_global_packet_set_default(struct generic_section_config *gp)
   if (p->mime_type < 0) p->mime_type = 0;
   if (p->notify_flag < 0) p->notify_flag = 0;
   if (p->advanced_layout < 0) p->advanced_layout = 0;
+  if (p->disable_sound < 0) p->disable_sound = 0;
 }
 
 struct super_run_in_global_packet *
@@ -275,6 +277,7 @@ void
 super_run_in_packet_unparse_cfg(FILE *out_f, struct super_run_in_packet *p)
 {
   if (p) {
+    fprintf(out_f, "# -*- coding: utf-8 -*-\n\n");
     meta_unparse_cfg(out_f, &meta_super_run_in_global_packet_methods, p->global);
     fprintf(out_f, "\n[problem]\n\n");
     meta_unparse_cfg(out_f, &meta_super_run_in_problem_packet_methods, p->problem);
@@ -301,5 +304,18 @@ super_run_in_packet_parse_cfg(const unsigned char *path, FILE *f)
     }
   }
 
+  super_run_in_packet_set_default(pkt);
+
   return pkt;
+}
+
+struct super_run_in_packet *
+super_run_in_packet_parse_cfg_str(const unsigned char *path, char *buf, size_t size)
+{
+  FILE *f = fmemopen(buf, size, "r");
+  if (!f) return NULL;
+  // FIXME: parse_param closes 'f'
+  struct super_run_in_packet *pkg = super_run_in_packet_parse_cfg(path, f);
+  //fclose(f); f = NULL;
+  return pkg;
 }

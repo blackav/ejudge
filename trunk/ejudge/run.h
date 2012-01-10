@@ -3,7 +3,7 @@
 #ifndef __RUN_H__
 #define __RUN_H__
 
-/* Copyright (C) 2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -24,17 +24,19 @@ struct run_request_packet;
 struct run_reply_packet;
 struct section_global_data;
 struct section_problem_data;
+struct super_run_in_packet;
 
 void
 run_inverse_testing(
         struct serve_state *state,
-        struct run_request_packet *req_pkt,
+        const struct super_run_in_packet *srp,
         struct run_reply_packet *reply_pkt,
         struct section_problem_data *prob,
         const unsigned char *pkt_name,
         unsigned char *report_path,
         size_t report_path_size,
-        int utf8_mode);
+        int utf8_mode,
+        int scoring_system);
 
 #endif /* __RUN_H__ */
 

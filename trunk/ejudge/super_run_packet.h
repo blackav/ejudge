@@ -72,6 +72,8 @@ struct super_run_in_global_packet
   int ts4_us;
   int lang_time_limit_adj_ms;
   unsigned char *exe_sfx;
+  ejintbool_t restart;
+  ejintbool_t disable_sound;
 };
 
 struct super_run_in_problem_packet
@@ -79,7 +81,7 @@ struct super_run_in_problem_packet
   struct generic_section_config g META_ATTRIB((meta_hidden));
 
   unsigned char *type;
-  int prob_id;
+  int id;
   ejintbool_t check_presentation;
   ejintbool_t scoring_checker;
   ejintbool_t use_stdin;
@@ -181,5 +183,8 @@ super_run_in_packet_free(struct super_run_in_packet *p);
 
 void
 super_run_in_packet_unparse_cfg(FILE *out_f, struct super_run_in_packet *p);
+
+struct super_run_in_packet *
+super_run_in_packet_parse_cfg_str(const unsigned char *path, char *buf, size_t size);
 
 #endif /* __SUPER_RUN_PACKET_H__ */

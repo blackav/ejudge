@@ -3,7 +3,7 @@
 #ifndef __PREPARE_H__
 #define __PREPARE_H__
 
-/* Copyright (C) 2000-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1337,6 +1337,8 @@ int *prepare_parse_score_tests(const unsigned char *str, int score);
 const unsigned char *prepare_unparse_problem_type(int val);
 int prepare_parse_memory_limit_type(const unsigned char *str);
 int prepare_parse_secure_exec_type(const unsigned char *str);
+int
+prepare_parse_score_system(const unsigned char *str);
 int
 prepare_insert_variant_num(
         unsigned char *buf,
