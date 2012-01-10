@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/01/10 00:53:05
+// Generated 2012/01/10 13:55:39
 
 #include "super_run_packet_meta.h"
 #include "super_run_packet.h"
@@ -52,6 +52,8 @@ static struct meta_info_item meta_info_super_run_in_global_packet_data[] =
   [META_SUPER_RUN_IN_GLOBAL_PACKET_ts4_us] = { META_SUPER_RUN_IN_GLOBAL_PACKET_ts4_us, 'i', XSIZE(struct super_run_in_global_packet, ts4_us), "ts4_us", XOFFSET(struct super_run_in_global_packet, ts4_us) },
   [META_SUPER_RUN_IN_GLOBAL_PACKET_lang_time_limit_adj_ms] = { META_SUPER_RUN_IN_GLOBAL_PACKET_lang_time_limit_adj_ms, 'i', XSIZE(struct super_run_in_global_packet, lang_time_limit_adj_ms), "lang_time_limit_adj_ms", XOFFSET(struct super_run_in_global_packet, lang_time_limit_adj_ms) },
   [META_SUPER_RUN_IN_GLOBAL_PACKET_exe_sfx] = { META_SUPER_RUN_IN_GLOBAL_PACKET_exe_sfx, 's', XSIZE(struct super_run_in_global_packet, exe_sfx), "exe_sfx", XOFFSET(struct super_run_in_global_packet, exe_sfx) },
+  [META_SUPER_RUN_IN_GLOBAL_PACKET_restart] = { META_SUPER_RUN_IN_GLOBAL_PACKET_restart, 'B', XSIZE(struct super_run_in_global_packet, restart), "restart", XOFFSET(struct super_run_in_global_packet, restart) },
+  [META_SUPER_RUN_IN_GLOBAL_PACKET_disable_sound] = { META_SUPER_RUN_IN_GLOBAL_PACKET_disable_sound, 'B', XSIZE(struct super_run_in_global_packet, disable_sound), "disable_sound", XOFFSET(struct super_run_in_global_packet, disable_sound) },
 };
 
 int meta_super_run_in_global_packet_get_type(int tag)
@@ -107,7 +109,7 @@ const struct meta_methods meta_super_run_in_global_packet_methods =
 static struct meta_info_item meta_info_super_run_in_problem_packet_data[] =
 {
   [META_SUPER_RUN_IN_PROBLEM_PACKET_type] = { META_SUPER_RUN_IN_PROBLEM_PACKET_type, 's', XSIZE(struct super_run_in_problem_packet, type), "type", XOFFSET(struct super_run_in_problem_packet, type) },
-  [META_SUPER_RUN_IN_PROBLEM_PACKET_prob_id] = { META_SUPER_RUN_IN_PROBLEM_PACKET_prob_id, 'i', XSIZE(struct super_run_in_problem_packet, prob_id), "prob_id", XOFFSET(struct super_run_in_problem_packet, prob_id) },
+  [META_SUPER_RUN_IN_PROBLEM_PACKET_id] = { META_SUPER_RUN_IN_PROBLEM_PACKET_id, 'i', XSIZE(struct super_run_in_problem_packet, id), "id", XOFFSET(struct super_run_in_problem_packet, id) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_check_presentation] = { META_SUPER_RUN_IN_PROBLEM_PACKET_check_presentation, 'B', XSIZE(struct super_run_in_problem_packet, check_presentation), "check_presentation", XOFFSET(struct super_run_in_problem_packet, check_presentation) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_scoring_checker] = { META_SUPER_RUN_IN_PROBLEM_PACKET_scoring_checker, 'B', XSIZE(struct super_run_in_problem_packet, scoring_checker), "scoring_checker", XOFFSET(struct super_run_in_problem_packet, scoring_checker) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_use_stdin] = { META_SUPER_RUN_IN_PROBLEM_PACKET_use_stdin, 'B', XSIZE(struct super_run_in_problem_packet, use_stdin), "use_stdin", XOFFSET(struct super_run_in_problem_packet, use_stdin) },

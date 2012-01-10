@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/01/10 00:53:05
+// Generated 2012/01/10 13:55:39
 
 #ifndef __SUPER_RUN_PACKET_META_H__
 #define __SUPER_RUN_PACKET_META_H__
@@ -47,6 +47,8 @@ enum
   META_SUPER_RUN_IN_GLOBAL_PACKET_ts4_us,
   META_SUPER_RUN_IN_GLOBAL_PACKET_lang_time_limit_adj_ms,
   META_SUPER_RUN_IN_GLOBAL_PACKET_exe_sfx,
+  META_SUPER_RUN_IN_GLOBAL_PACKET_restart,
+  META_SUPER_RUN_IN_GLOBAL_PACKET_disable_sound,
 
   META_SUPER_RUN_IN_GLOBAL_PACKET_LAST_FIELD,
 };
@@ -67,7 +69,7 @@ extern const struct meta_methods meta_super_run_in_global_packet_methods;
 enum
 {
   META_SUPER_RUN_IN_PROBLEM_PACKET_type = 1,
-  META_SUPER_RUN_IN_PROBLEM_PACKET_prob_id,
+  META_SUPER_RUN_IN_PROBLEM_PACKET_id,
   META_SUPER_RUN_IN_PROBLEM_PACKET_check_presentation,
   META_SUPER_RUN_IN_PROBLEM_PACKET_scoring_checker,
   META_SUPER_RUN_IN_PROBLEM_PACKET_use_stdin,
