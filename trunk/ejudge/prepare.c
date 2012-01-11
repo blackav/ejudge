@@ -7497,6 +7497,7 @@ prepare_parse_test_score_list(
     if (score < 0 || score > 100000) {
       goto fail;
     }
+    s += n;
     ++cur_index;
     if (cur_index > max_index) max_index = cur_index;
   }
@@ -7539,6 +7540,7 @@ prepare_parse_test_score_list(
     if (score < 0 || score > 100000) {
       goto fail;
     }
+    s += n;
     ++cur_index;
     arr[cur_index] = score;
   }
