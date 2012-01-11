@@ -1,6 +1,6 @@
 /* $Id$ */
 
-/* Copyright (C) 1998-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1998-2012 Alexander Chernov <cher@ejudge.ru> */
 /* Created: <1998-01-21 14:33:28 cher> */
 
 /*
@@ -798,6 +798,18 @@ task_SetMaxRealTime(tTask *tsk, int time)
   if (tsk->state != TSK_STOPPED) return 0;
 
   tsk->max_real_time = time;
+  return 0;
+}
+
+int
+task_SetMaxRealTimeMillis(tTask *tsk, int time_ms)
+{
+  task_init_module();
+  ASSERT(tsk);
+  bury_dead_prc();
+  if (tsk->state != TSK_STOPPED) return 0;
+
+  tsk->max_real_time = (time_ms + 999) / 1000;
   return 0;
 }
 
