@@ -1831,6 +1831,7 @@ serve_run_request(
     fprintf(errf, "failed to write run packet\n");
     goto fail;
   }
+  xfree(srp_t); srp_t = NULL;
 
   /* generate external representation of the packet */
   /*
@@ -1854,6 +1855,7 @@ serve_run_request(
     }
   }
 
+  prepare_tester_free(refined_tester);
   super_run_in_packet_free(srp);
   return 0;
 

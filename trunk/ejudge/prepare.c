@@ -2301,6 +2301,7 @@ const unsigned char * const secure_exec_type_str[] =
   [SEXEC_TYPE_STATIC] = "static",
   [SEXEC_TYPE_DLL] = "dll",
   [SEXEC_TYPE_JAVA] = "java",
+  [SEXEC_TYPE_DLL32] = "dll32",
 
   [SEXEC_TYPE_LAST] = 0,
 };
