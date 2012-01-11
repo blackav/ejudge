@@ -1602,6 +1602,8 @@ serve_run_request(
   srpp->combined_stdin = prob->combined_stdin;
   srpp->combined_stdout = prob->combined_stdout;
   srpp->ignore_exit_code = prob->ignore_exit_code;
+  srpp->binary_input = prob->binary_input;
+  srpp->binary_output = prob->binary_input;
   srpp->real_time_limit_ms = prob->real_time_limit * 1000;
   if (prob->time_limit_millis > 0) {
     srpp->time_limit_ms = prob->time_limit_millis;
@@ -1623,6 +1625,7 @@ serve_run_request(
   srpp->short_name = xstrdup(prob->short_name);
   srpp->long_name = xstrdup(prob->long_name);
   srpp->internal_name = xstrdup2(prob->internal_name);
+  srpp->open_tests = xstrdup2(prob->open_tests);
 
   if (srgp->advanced_layout > 0) {
     get_advanced_layout_path(pathbuf, sizeof(pathbuf), state->global, prob, DFLT_P_TEST_DIR, variant);
@@ -1713,14 +1716,19 @@ serve_run_request(
   srpp->interactor_env = sarray_copy(prob->interactor_env);
   srpp->test_checker_env = sarray_copy(prob->test_checker_env);
   if (prob->check_cmd && prob->check_cmd[0]) {
-    if (srgp->advanced_layout > 0) {
-      get_advanced_layout_path(pathbuf, sizeof(pathbuf), state->global, prob, prob->check_cmd, variant);
-      srpp->check_cmd = xstrdup(pathbuf);
-    } else if (variant > 0) {
-      snprintf(pathbuf, sizeof(pathbuf), "%s-%d", prob->check_cmd, variant);
-      srpp->check_cmd = xstrdup(pathbuf);
-    } else {
+    if (os_IsAbsolutePath(prob->check_cmd)) {
       srpp->check_cmd = xstrdup(prob->check_cmd);
+    } else {
+      if (srgp->advanced_layout > 0) {
+        get_advanced_layout_path(pathbuf, sizeof(pathbuf), state->global, prob, prob->check_cmd, variant);
+        srpp->check_cmd = xstrdup(pathbuf);
+      } else if (variant > 0) {
+        snprintf(pathbuf, sizeof(pathbuf), "%s/%s-%d", state->global->checker_dir, prob->check_cmd, variant);
+        srpp->check_cmd = xstrdup(pathbuf);
+      } else {
+        snprintf(pathbuf, sizeof(pathbuf), "%s/%s", state->global->checker_dir, prob->check_cmd);
+        srpp->check_cmd = xstrdup(pathbuf);
+      }
     }
   }
   if (prob->valuer_cmd && prob->valuer_cmd[0]) {

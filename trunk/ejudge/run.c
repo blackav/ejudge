@@ -220,7 +220,6 @@ generate_xml_report(
         const struct super_run_in_packet *srp,
         struct run_reply_packet *reply_pkt,
         const unsigned char *report_path,
-        int scoring_system,
         int variant,
         int scores,
         int max_score,
@@ -244,6 +243,7 @@ generate_xml_report(
   unsigned char *msg = 0;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   struct section_global_data *global = serve_state.global;
+  const struct super_run_in_global_packet *srgp = srp->global;
 
   if (!(f = fopen(report_path, "w"))) {
     err("generate_xml_report: cannot open protocol file %s", report_path);
@@ -255,9 +255,9 @@ generate_xml_report(
 
   run_status_to_str_short(buf1, sizeof(buf1), reply_pkt->status);
   fprintf(f, "<testing-report run-id=\"%d\" judge-id=\"%d\" status=\"%s\" scoring=\"%s\" archive-available=\"%s\" run-tests=\"%d\"",
-          srp->global->run_id, srp->global->judge_id, buf1,
-          unparse_scoring_system(buf2, sizeof(buf2), scoring_system),
-          (srp->global->enable_full_archive)?"yes":"no", total_tests - 1);
+          srgp->run_id, srgp->judge_id, buf1,
+          unparse_scoring_system(buf2, sizeof(buf2), srgp->scoring_system_val),
+          (srgp->enable_full_archive)?"yes":"no", total_tests - 1);
   if (has_real_time) {
     fprintf(f, " real-time-available=\"yes\"");
   }
@@ -273,21 +273,21 @@ generate_xml_report(
   if (variant > 0) {
     fprintf(f, " variant=\"%d\"", variant);
   }
-  if (scoring_system == SCORE_OLYMPIAD) {
-    fprintf(f, " accepting-mode=\"%s\"", srp->global->accepting_mode?"yes":"no");
+  if (srgp->scoring_system_val == SCORE_OLYMPIAD) {
+    fprintf(f, " accepting-mode=\"%s\"", srgp->accepting_mode?"yes":"no");
   }
-  if (scoring_system == SCORE_OLYMPIAD && srp->global->accepting_mode
+  if (srgp->scoring_system_val == SCORE_OLYMPIAD && srgp->accepting_mode
       && reply_pkt->status != RUN_ACCEPTED) {
     fprintf(f, " failed-test=\"%d\"", total_tests - 1);
-  } else if (scoring_system == SCORE_ACM && reply_pkt->status != RUN_OK) {
+  } else if (srgp->scoring_system_val == SCORE_ACM && reply_pkt->status != RUN_OK) {
     fprintf(f, " failed-test=\"%d\"", total_tests - 1);
-  } else if (scoring_system == SCORE_OLYMPIAD && !srp->global->accepting_mode) {
+  } else if (srgp->scoring_system_val == SCORE_OLYMPIAD && !srgp->accepting_mode) {
     fprintf(f, " tests-passed=\"%d\" score=\"%d\" max-score=\"%d\"",
             reply_pkt->failed_test - 1, reply_pkt->score, max_score);
-  } else if (scoring_system == SCORE_KIROV) {
+  } else if (srgp->scoring_system_val == SCORE_KIROV) {
     fprintf(f, " tests-passed=\"%d\" score=\"%d\" max-score=\"%d\"",
             reply_pkt->failed_test - 1, reply_pkt->score, max_score);
-  } else if (scoring_system == SCORE_MOSCOW) {
+  } else if (srgp->scoring_system_val == SCORE_MOSCOW) {
     if (reply_pkt->status != RUN_OK) {
       fprintf(f, " failed-test=\"%d\"", total_tests - 1);
     }
@@ -302,21 +302,21 @@ generate_xml_report(
   if (marked_flag >= 0) {
     fprintf(f, " marked-flag=\"%s\"", marked_flag?"yes":"no");
   }
-  if (srp->global->separate_user_score > 0 && reply_pkt->user_status >= 0) {
+  if (srgp->separate_user_score > 0 && reply_pkt->user_status >= 0) {
     run_status_to_str_short(buf1, sizeof(buf1), reply_pkt->user_status);
     fprintf(f, " user-status=\"%s\"", buf1);
   }
-  if (srp->global->separate_user_score > 0 && reply_pkt->user_score >= 0) {
+  if (srgp->separate_user_score > 0 && reply_pkt->user_score >= 0) {
     fprintf(f, " user-score=\"%d\"", reply_pkt->user_score);
   }
-  if (srp->global->separate_user_score > 0) {
+  if (srgp->separate_user_score > 0) {
     if (user_max_score < 0) user_max_score = max_score;
     fprintf(f, " user-max-score=\"%d\"", user_max_score);
   }
-  if (srp->global->separate_user_score > 0 && reply_pkt->user_tests_passed >= 0) {
+  if (srgp->separate_user_score > 0 && reply_pkt->user_tests_passed >= 0) {
     fprintf(f, " user-tests-passed=\"%d\"", reply_pkt->user_tests_passed);
   }
-  if (srp->global->separate_user_score > 0 && user_run_tests >= 0) {
+  if (srgp->separate_user_score > 0 && user_run_tests >= 0) {
     fprintf(f, " user-run-tests=\"%d\"", user_run_tests);
   }
   fprintf(f, " >\n");
@@ -359,10 +359,10 @@ generate_xml_report(
     if (tests[i].max_memory_used > 0) {
       fprintf(f, " max-memory-used=\"%d\"", tests[i].max_memory_used);
     }
-    if (scoring_system == SCORE_OLYMPIAD && !srp->global->accepting_mode) {
+    if (srgp->scoring_system_val == SCORE_OLYMPIAD && !srgp->accepting_mode) {
       fprintf(f, " nominal-score=\"%d\" score=\"%d\"",
               tests[i].max_score, tests[i].score);
-    } else if (scoring_system == SCORE_KIROV) {
+    } else if (srgp->scoring_system_val == SCORE_KIROV) {
       fprintf(f, " nominal-score=\"%d\" score=\"%d\"",
               tests[i].max_score, tests[i].score);
     }
@@ -382,7 +382,7 @@ generate_xml_report(
       fprintf(f, " checker-comment=\"%s\"", msg);
       xfree(msg);
     }
-    if (srp->global->enable_full_archive) {
+    if (srgp->enable_full_archive) {
       if (tests[i].has_input_digest) {
         digest_to_ascii(DIGEST_SHA1, tests[i].input_digest, buf3);
         fprintf(f, " input-digest=\"%s\"", buf3);
@@ -396,13 +396,13 @@ generate_xml_report(
         fprintf(f, " info-digest=\"%s\"", buf3);
       }
     }
-    if (tests[i].output_size >= 0 && srp->global->enable_full_archive) {
+    if (tests[i].output_size >= 0 && srgp->enable_full_archive) {
       fprintf(f, " output-available=\"yes\"");
     }
-    if (tests[i].error_size >= 0 && srp->global->enable_full_archive) {
+    if (tests[i].error_size >= 0 && srgp->enable_full_archive) {
       fprintf(f, " stderr-available=\"yes\"");
     }
-    if (tests[i].chk_out_size >= 0 && srp->global->enable_full_archive) {
+    if (tests[i].chk_out_size >= 0 && srgp->enable_full_archive) {
       fprintf(f, " checker-output-available=\"yes\"");
     }
     if (tests[i].args && strlen(tests[i].args) >= global->max_cmd_length) {
@@ -417,7 +417,7 @@ generate_xml_report(
       fprintf(f, "      <args>%s</args>\n", ARMOR(tests[i].args));
     }
 
-    if (tests[i].input_size >= 0 && !srp->global->enable_full_archive) {
+    if (tests[i].input_size >= 0 && !srgp->enable_full_archive) {
       fprintf(f, "      <input>");
       html_print_by_line(f, utf8_mode, global->max_file_length,
                          global->max_line_length,
@@ -425,7 +425,7 @@ generate_xml_report(
       fprintf(f, "</input>\n");
     }
 
-    if (tests[i].output_size >= 0 && !srp->global->enable_full_archive) {
+    if (tests[i].output_size >= 0 && !srgp->enable_full_archive) {
       fprintf(f, "      <output>");
       html_print_by_line(f, utf8_mode, global->max_file_length,
                          global->max_line_length,
@@ -433,7 +433,7 @@ generate_xml_report(
       fprintf(f, "</output>\n");
     }
 
-    if (tests[i].correct_size >= 0 && !srp->global->enable_full_archive) {
+    if (tests[i].correct_size >= 0 && !srgp->enable_full_archive) {
       fprintf(f, "      <correct>");
       html_print_by_line(f, utf8_mode, global->max_file_length,
                          global->max_line_length,
@@ -441,7 +441,7 @@ generate_xml_report(
       fprintf(f, "</correct>\n");
     }
 
-    if (tests[i].error_size >= 0 && !srp->global->enable_full_archive) {
+    if (tests[i].error_size >= 0 && !srgp->enable_full_archive) {
       fprintf(f, "      <stderr>");
       html_print_by_line(f, utf8_mode, global->max_file_length,
                          global->max_line_length,
@@ -449,7 +449,7 @@ generate_xml_report(
       fprintf(f, "</stderr>\n");
     }
 
-    if (tests[i].chk_out_size >= 0 && !srp->global->enable_full_archive) {
+    if (tests[i].chk_out_size >= 0 && !srgp->enable_full_archive) {
       fprintf(f, "      <checker>");
       html_print_by_line(f, utf8_mode, global->max_file_length,
                          global->max_line_length,
@@ -770,7 +770,7 @@ setup_environment(
 static int
 invoke_valuer(
         const struct section_global_data *global,
-        const struct section_problem_data *prb,
+        const struct super_run_in_packet *srp,
         int cur_variant,
         int max_score,
         int *p_score,
@@ -796,6 +796,9 @@ invoke_valuer(
   size_t err_len = 0, cmt_len = 0, jcmt_len = 0;
   unsigned char strbuf[1024];
 
+  const struct super_run_in_global_packet *srgp = srp->global;
+  const struct super_run_in_problem_packet *srpp = srp->problem;
+
 #ifdef EJUDGE_PREFIX_DIR
   snprintf(ejudge_prefix_dir_env, sizeof(ejudge_prefix_dir_env),
            "EJUDGE_PREFIX_DIR=%s", EJUDGE_PREFIX_DIR);
@@ -813,9 +816,9 @@ invoke_valuer(
     goto cleanup;
   }
   fprintf(f, "%d\n", total_tests - 1);
-  for (i = 1; i <= total_tests; i++) {
+  for (i = 1; i < total_tests; i++) {
     fprintf(f, "%d", tests[i].status);
-    if (prb->scoring_checker) {
+    if (srpp->scoring_checker > 0) {
       fprintf(f, " %d", tests[i].checker_score);
     } else {
       fprintf(f, " %d", tests[i].score);
@@ -834,17 +837,7 @@ invoke_valuer(
   }
   f = 0;
 
-  if (global->advanced_layout > 0) {
-    get_advanced_layout_path(valuer_cmd, sizeof(valuer_cmd), global, 
-                             prb, prb->valuer_cmd, cur_variant);
-  } else {
-    if (prb->variant_num > 0) {
-      snprintf(valuer_cmd, sizeof(valuer_cmd), "%s-%d", prb->valuer_cmd,
-               cur_variant);
-    } else {
-      snprintf(valuer_cmd, sizeof(valuer_cmd), "%s", prb->valuer_cmd);
-    }
-  }
+  snprintf(valuer_cmd, sizeof(valuer_cmd), srpp->valuer_cmd);
 
   info("starting valuer: %s %s %s", valuer_cmd, score_cmt, score_jcmt);
 
@@ -857,11 +850,11 @@ invoke_valuer(
   task_SetRedir(tsk, 2, TSR_FILE, score_err, TSK_REWRITE, TSK_FULL_RW);
   task_SetWorkingDir(tsk, global->run_work_dir);
   task_SetPathAsArg0(tsk);
-  if (prb->checker_real_time_limit > 0) {
-    task_SetMaxRealTime(tsk, prb->checker_real_time_limit);
+  if (srpp->checker_real_time_limit_ms > 0) {
+    task_SetMaxRealTimeMillis(tsk, srpp->checker_real_time_limit_ms);
   }
-  setup_environment(tsk, prb->valuer_env, ejudge_prefix_dir_env, NULL);
-  if (global->separate_user_score > 0) {
+  setup_environment(tsk, srpp->valuer_env, ejudge_prefix_dir_env, NULL);
+  if (srgp->separate_user_score > 0) {
     snprintf(strbuf, sizeof(strbuf), "EJUDGE_USER_SCORE=1");
     task_PutEnv(tsk, strbuf);
   }
@@ -890,7 +883,7 @@ invoke_valuer(
   task_Delete(tsk); tsk = 0;
 
   if (read_valuer_score(score_res, score_err, "valuer", max_score,
-                        prb->valuer_sets_marked, global->separate_user_score,
+                        srpp->valuer_sets_marked, srgp->separate_user_score,
                         p_score, p_marked, p_user_status, p_user_score, p_user_tests_passed) < 0) {
     goto cleanup;
   }
@@ -1009,10 +1002,8 @@ static const unsigned char b32_digits[]=
 
 static int
 invoke_nwrun(
-        const struct section_global_data *global,
         struct section_tester_data *tst,
         const struct super_run_in_packet *srp,
-        struct section_problem_data *prb,
         full_archive_t far,
         int test_num,
         int priority,
@@ -1133,38 +1124,38 @@ invoke_nwrun(
   fprintf(f, "judge_id = %d\n", srgp->judge_id);
   fprintf(f, "use_contest_id_in_reply = %d\n", 1);
   fprintf(f, "enable_unix2dos = %d\n", 1);
-  if (prb->use_stdin > 0 || prb->combined_stdin > 0) {
+  if (srpp->use_stdin > 0 || srpp->combined_stdin > 0) {
     fprintf(f, "redirect_stdin = %d\n", 1);
   } else {
     fprintf(f, "disable_stdin = %d\n", 1);
   }
-  if (prb->combined_stdin > 0) {
+  if (srpp->combined_stdin > 0) {
     fprintf(f, "combined_stdin = %d\n", 1);
   }
-  if (prb->use_stdout > 0 || prb->combined_stdout > 0) {
+  if (srpp->use_stdout > 0 || srpp->combined_stdout > 0) {
     fprintf(f, "redirect_stdout = %d\n", 1);
   } else {
     fprintf(f, "ignore_stdout = %d\n", 1);
   }
-  if (prb->combined_stdout > 0) {
+  if (srpp->combined_stdout > 0) {
     fprintf(f, "combined_stdout = %d\n", 1);
   }
   fprintf(f, "redirect_stderr = %d\n", 1);
   fprintf(f, "time_limit_millis = %ld\n", time_limit_millis);
-  if (prb->real_time_limit > 0) {
-    fprintf(f, "real_time_limit_millis = %d\n", prb->real_time_limit * 1000);
+  if (srpp->real_time_limit_ms > 0) {
+    fprintf(f, "real_time_limit_millis = %d\n", srpp->real_time_limit_ms);
   }
-  if (prb->max_stack_size > 0) {
+  if (srpp->max_stack_size != 0 && srpp->max_stack_size != (size_t) -1L) {
     fprintf(f, "max_stack_size = %" EJ_PRINTF_ZSPEC "u\n",
-            EJ_PRINTF_ZCAST(prb->max_stack_size));
+            EJ_PRINTF_ZCAST(srpp->max_stack_size));
   }
-  if (prb->max_data_size > 0) {
+  if (srpp->max_data_size != 0 && srpp->max_data_size != (size_t) -1L) {
     fprintf(f, "max_data_size = %" EJ_PRINTF_ZSPEC "u\n",
-            EJ_PRINTF_ZCAST(prb->max_data_size));
+            EJ_PRINTF_ZCAST(srpp->max_data_size));
   }
-  if (prb->max_vm_size > 0) {
+  if (srpp->max_vm_size != 0 && srpp->max_vm_size != (size_t) -1L) {
     fprintf(f, "max_vm_size = %" EJ_PRINTF_ZSPEC "u\n",
-            EJ_PRINTF_ZCAST(prb->max_vm_size));
+            EJ_PRINTF_ZCAST(srpp->max_vm_size));
   }
   fprintf(f, "max_output_file_size = 60M\n");
   fprintf(f, "max_error_file_size = 16M\n");
@@ -1177,12 +1168,12 @@ invoke_nwrun(
   if (srgp->detect_violations && srgp->secure_run) {
     fprintf(f, "enable_security_violation_error = 1\n");
   }
-  fprintf(f, "prob_short_name = \"%s\"\n", prb->short_name);
+  fprintf(f, "prob_short_name = \"%s\"\n", srpp->short_name);
   fprintf(f, "program_name = \"%s\"\n", exe_basename);
   fprintf(f, "test_file_name = \"%s\"\n", test_basename);
-  fprintf(f, "input_file_name = \"%s\"\n", prb->input_file);
-  fprintf(f, "output_file_name = \"%s\"\n", prb->output_file);
-  fprintf(f, "result_file_name = \"%s\"\n", prb->output_file);
+  fprintf(f, "input_file_name = \"%s\"\n", srpp->input_file);
+  fprintf(f, "output_file_name = \"%s\"\n", srpp->output_file);
+  fprintf(f, "result_file_name = \"%s\"\n", srpp->output_file);
   fprintf(f, "error_file_name = \"%s\"\n", tst->error_file);
   fprintf(f, "log_file_name = \"%s\"\n", tst->error_file);
 
@@ -1210,7 +1201,7 @@ invoke_nwrun(
   // wait for the result package
   // timeout is 2 * real_time_limit
   timeout = 0;
-  if (prb->real_time_limit > 0) timeout = 3 * prb->real_time_limit * 1000;
+  if (srpp->real_time_limit_ms > 0) timeout = 3 * srpp->real_time_limit_ms;
   if (timeout <= 0) timeout = 3 * time_limit_millis;
   wait_time = 0;
 
@@ -1326,11 +1317,11 @@ invoke_nwrun(
   if (srgp->enable_full_archive) {
     filehash_get(test_src_path, result->input_digest);
     result->has_input_digest = 1;
-  } else if (prb->binary_input <= 0) {
+  } else if (srpp->binary_input <= 0) {
     file_size = generic_file_size(0, test_src_path, 0);
     if (file_size >= 0) {
       result->input_size = file_size;
-      if (global->max_file_length > 0 && file_size <= global->max_file_length) {
+      if (srgp->max_file_length > 0 && file_size <= srgp->max_file_length) {
         if (generic_read_file(&result->input, 0, 0, 0, 0, test_src_path, "")<0){
           chk_printf(result, "generic_read_file(%s) failed\n", test_src_path);
           goto fail;
@@ -1343,11 +1334,11 @@ invoke_nwrun(
   if (out_packet->output_file_existed > 0
       && out_packet->output_file_too_big <= 0) {
     snprintf(packet_output_path, sizeof(packet_output_path),
-             "%s/%s", out_entry_packet, prb->output_file);
+             "%s/%s", out_entry_packet, srpp->output_file);
     if (result->status == RUN_OK) {
       // copy file into the working directory for further checking
       snprintf(check_output_path, sizeof(check_output_path),
-               "%s/%s", tst->check_dir, prb->output_file);
+               "%s/%s", tst->check_dir, srpp->output_file);
       if (fast_copy_file(packet_output_path, check_output_path) < 0) {
         chk_printf(result, "copy_file(%s, %s) failed\n",
                    packet_output_path, check_output_path);
@@ -1357,9 +1348,9 @@ invoke_nwrun(
 
     result->output_size = out_packet->output_file_orig_size;
     if (!srgp->enable_full_archive
-        && prb->binary_input <= 0
-        && global->max_file_length > 0
-        && result->output_size <= global->max_file_length) {
+        && srpp->binary_input <= 0
+        && srgp->max_file_length > 0
+        && result->output_size <= srgp->max_file_length) {
       if (generic_read_file(&result->output,0,0,0,0,packet_output_path,"")<0) {
         chk_printf(result, "generic_read_file(%s) failed\n",
                    packet_output_path);
@@ -1381,8 +1372,8 @@ invoke_nwrun(
              "%s/%s", out_entry_packet, tst->error_file);
     result->error_size = out_packet->error_file_size;
     if (!srgp->enable_full_archive
-        && global->max_file_length > 0
-        && result->error_size <= global->max_file_length) {
+        && srgp->max_file_length > 0
+        && result->error_size <= srgp->max_file_length) {
       if (generic_read_file(&result->error,0,0,0,0,packet_error_path,"") < 0) {
         chk_printf(result, "generic_read_file(%s) failed\n",
                    packet_error_path);
@@ -1413,7 +1404,6 @@ run_tests(
         struct section_tester_data *tst,
         const struct super_run_in_packet *srp,
         struct run_reply_packet *reply_pkt,
-        int score_system_val,
         int accept_testing,
         int accept_partial,
         int cur_variant,
@@ -1449,13 +1439,11 @@ run_tests(
   int    total_failed_tests = 0;
   int    ec = -100;            /* FIXME: magic */
   int    marked_flag = -1;
-  struct section_problem_data *prb;
   const char *sound;
   unsigned char *var_test_dir = 0;
   unsigned char *var_corr_dir = 0;
   unsigned char *var_info_dir = 0;
   unsigned char *var_tgz_dir = 0;
-  unsigned char *var_check_cmd;
   unsigned char *var_interactor_cmd = 0;
   testinfo_t tstinfo;
   int errcode;
@@ -1476,9 +1464,17 @@ run_tests(
   int has_real_time = 0;
   int has_max_memory_used = 0;
   int has_user_score, user_status, user_score, user_tests_passed, user_run_tests;
+  unsigned char bname[64];
+  unsigned char check_cmd[PATH_MAX];
 
   int pfd1[2], pfd2[2];
   tpTask tsk_int = 0;
+
+  int *open_tests_val = NULL;
+  int open_tests_count = 0;
+
+  int *test_score_val = NULL;
+  int test_score_count = 0;
 
 #ifdef HAVE_TERMIOS_H
   struct termios term_attrs;
@@ -1492,105 +1488,26 @@ run_tests(
   const struct super_run_in_problem_packet *srpp = srp->problem;
 
   memset(&tstinfo, 0, sizeof(tstinfo));
-  ASSERT(tst->problem > 0);
-  ASSERT(tst->problem <= serve_state.max_prob);
-  ASSERT(serve_state.probs[tst->problem]);
-  prb = serve_state.probs[tst->problem];
+  if (srpp->open_tests && srpp->open_tests[0]) {
+    // FIXME: handle errors
+    prepare_parse_open_tests(stderr, srpp->open_tests, &open_tests_val, &open_tests_count);
+  }
+
+  if (srpp->test_score_list && srpp->test_score_list[0]) {
+    // FIXME: handle errors
+    prepare_parse_test_score_list(stderr, srpp->test_score_list, &test_score_val, &test_score_count);
+  }
 
 #ifdef EJUDGE_PREFIX_DIR
   snprintf(ejudge_prefix_dir_env, sizeof(ejudge_prefix_dir_env),
            "EJUDGE_PREFIX_DIR=%s", EJUDGE_PREFIX_DIR);
 #endif /* EJUDGE_PREFIX_DIR */
 
-  if (cur_variant > 0) {
-    var_test_dir = (unsigned char*) alloca(sizeof(path_t));
-    if (prb->use_corr) {
-      var_corr_dir = (unsigned char*) alloca(sizeof(path_t));
-    }
-    if (prb->use_info) {
-      var_info_dir = (unsigned char*) alloca(sizeof(path_t));
-    }
-    if (prb->use_tgz) {
-      var_tgz_dir = (unsigned char*) alloca(sizeof(path_t));
-    }
-    if (srgp->advanced_layout) {
-      get_advanced_layout_path(var_test_dir, sizeof(path_t), global,
-                               prb, DFLT_P_TEST_DIR, cur_variant);
-      if (prb->use_corr > 0) {
-        get_advanced_layout_path(var_corr_dir, sizeof(path_t), global,
-                                 prb, DFLT_P_CORR_DIR, cur_variant);
-      }
-      if (prb->use_info > 0) {
-        get_advanced_layout_path(var_info_dir, sizeof(path_t), global,
-                                 prb, DFLT_P_INFO_DIR, cur_variant);
-      }
-      if (prb->use_tgz > 0) {
-        get_advanced_layout_path(var_tgz_dir, sizeof(path_t), global,
-                                 prb, DFLT_P_TGZ_DIR, cur_variant);
-      }
-    } else {
-      snprintf(var_test_dir, sizeof(path_t),"%s-%d",prb->test_dir,cur_variant);
-      if (prb->use_corr) {
-        snprintf(var_corr_dir, sizeof(path_t),"%s-%d",prb->corr_dir,cur_variant);
-      }
-      if (prb->use_info) {
-        snprintf(var_info_dir,sizeof(path_t),"%s-%d",prb->info_dir,cur_variant);
-      }
-      if (prb->use_tgz) {
-        snprintf(var_tgz_dir, sizeof(path_t), "%s-%d", prb->tgz_dir,cur_variant);
-      }
-    }
-    if (prb->interactor_cmd[0]) {
-      var_interactor_cmd = (unsigned char*) alloca(sizeof(path_t));
-      if (global->advanced_layout > 0) {
-        get_advanced_layout_path(var_interactor_cmd, sizeof(path_t),
-                                 global, prb, prb->interactor_cmd, cur_variant);
-      } else {
-        snprintf(var_interactor_cmd, sizeof(path_t), "%s-%d",
-                 prb->interactor_cmd, cur_variant);
-      }
-    }
-  } else {
-    if (srgp->advanced_layout) {
-      var_test_dir = (unsigned char*) alloca(sizeof(path_t));
-      get_advanced_layout_path(var_test_dir, sizeof(path_t),
-                               global, prb, DFLT_P_TEST_DIR, -1);
-      if (prb->use_corr) {
-        var_corr_dir = (unsigned char*) alloca(sizeof(path_t));
-        get_advanced_layout_path(var_corr_dir, sizeof(path_t),
-                                 global, prb, DFLT_P_CORR_DIR, -1);
-      }
-      if (prb->use_info) {
-        var_info_dir = (unsigned char*) alloca(sizeof(path_t));
-        get_advanced_layout_path(var_info_dir, sizeof(path_t),
-                                 global, prb, DFLT_P_INFO_DIR, -1);
-      }
-      if (prb->use_tgz) {
-        var_tgz_dir = (unsigned char*) alloca(sizeof(path_t));
-        get_advanced_layout_path(var_tgz_dir, sizeof(path_t),
-                                 global, prb, DFLT_P_TGZ_DIR, -1);
-      }
-      if (prb->interactor_cmd[0]) {
-        var_interactor_cmd = (unsigned char*) alloca(sizeof(path_t));
-        get_advanced_layout_path(var_interactor_cmd, sizeof(path_t),
-                                 global, prb, prb->interactor_cmd, -1);
-      }
-    } else {
-      var_test_dir = prb->test_dir;
-      if (prb->use_corr) {
-        var_corr_dir = prb->corr_dir;
-      }
-      if (prb->use_info) {
-        var_info_dir = prb->info_dir;
-      }
-      if (prb->use_tgz) {
-        var_tgz_dir = prb->tgz_dir;
-      }
-      if (prb->interactor_cmd[0]) {
-        var_interactor_cmd = prb->interactor_cmd;
-      }
-    }
-  }
+  var_test_dir = srpp->test_dir;
+  var_corr_dir = srpp->corr_dir;
+  var_info_dir = srpp->info_dir;
+  var_tgz_dir = srpp->tgz_dir;
+  var_interactor_cmd = srpp->interactor_cmd;
 
   pathmake(report_path, global->run_work_dir, "/", "report", NULL);
   full_report_path[0] = 0;
@@ -1604,7 +1521,7 @@ run_tests(
   cur_test = 1;
 
   /* at this point the executable is copied into the working dir */
-  if (!prb->type > 0 && tst->prepare_cmd[0]) {
+  if (!srpp->type_val && tst->prepare_cmd[0]) {
     info("starting: %s %s", tst->prepare_cmd, new_name);
     tsk = task_New();
     task_AddArg(tsk, tst->prepare_cmd);
@@ -1625,7 +1542,7 @@ run_tests(
   expected_free_space = get_expected_free_space(tst->check_dir);
 
   pathmake3(exe_path, tst->check_dir, "/", new_name, NULL);
-  if (prb->use_tgz) {
+  if (srpp->use_tgz > 0) {
 #ifdef __WIN32__
     snprintf(arg0_path, sizeof(arg0_path), "%s%s..%s%s", tst->check_dir,
              CONF_DIRSEP, CONF_DIRSEP, new_name);
@@ -1640,7 +1557,7 @@ run_tests(
 #endif
   }
   
-  if (tst->is_dos && !prb->binary_input) copy_flag = CONVERT;
+  if (tst->is_dos && !srpp->binary_input) copy_flag = CONVERT;
 
   error_code[0] = 0;
   if (tst->errorcode_file[0]) {
@@ -1648,20 +1565,12 @@ run_tests(
   }
 
   while (1) {
-    if (score_system_val == SCORE_OLYMPIAD
+    if (srgp->scoring_system_val == SCORE_OLYMPIAD
         && accept_testing
-        && cur_test > prb->tests_to_accept) break;
+        && cur_test > srpp->tests_to_accept) break;
 
-    if (prb->test_pat[0]) {
-      sprintf(test_base, prb->test_pat, cur_test);
-    } else {
-      sprintf(test_base, "%03d%s", cur_test, prb->test_sfx);
-    }
-    if (prb->corr_pat[0]) {
-      sprintf(corr_base, prb->corr_pat, cur_test);
-    } else {
-      sprintf(corr_base, "%03d%s", cur_test, prb->corr_sfx);
-    }
+    sprintf(test_base, srpp->test_pat, cur_test);
+    sprintf(corr_base, srpp->corr_pat, cur_test);
     pathmake(test_src, var_test_dir, "/", test_base, NULL);
     if (os_CheckAccess(test_src, REUSE_R_OK) < 0) {
       // testing is done as no tests left in the testing directory
@@ -1680,13 +1589,16 @@ run_tests(
     tests[cur_test].error_size = -1;
     tests[cur_test].correct_size = -1;
     tests[cur_test].chk_out_size = -1;
-    tests[cur_test].visibility = cntsprob_get_test_visibility(prb, cur_test, 0);
+    if (open_tests_val && cur_test > 0 && cur_test < open_tests_count) {
+      tests[cur_test].visibility = open_tests_val[cur_test];
+    } else {
+      tests[cur_test].visibility = TV_NORMAL;
+    }
 
     time_limit_value = 0;
-    if (prb->time_limit_millis > 0)
-      time_limit_value += prb->time_limit_millis;
-    else if (prb->time_limit > 0)
-      time_limit_value += prb->time_limit * 1000;
+    if (srpp->time_limit_ms > 0) {
+      time_limit_value += srpp->time_limit_ms;
+    }
     if (time_limit_value > 0) {
       // adjustment works only for limited time
       if (tst->time_limit_adj_millis > 0)
@@ -1704,7 +1616,7 @@ run_tests(
     unlink(score_out_path);
 
     if (tst->nwrun_spool_dir[0]) {
-      status = invoke_nwrun(global, tst, srp, prb, far,
+      status = invoke_nwrun(tst, srp, far,
                             cur_test, 0, &has_real_time,
                             global->run_work_dir,
                             new_name, test_src, test_base, time_limit_value,
@@ -1722,15 +1634,9 @@ run_tests(
     }
 
     /* Load test information file */
-    if (prb->use_info) {
-      if (prb->info_pat[0]) {
-        unsigned char info_base[64];
-        snprintf(info_base, sizeof(info_base), prb->info_pat, cur_test);
-        snprintf(info_src, sizeof(path_t), "%s/%s", var_info_dir, info_base);
-      } else {
-        snprintf(info_src, sizeof(path_t), "%s/%03d%s",
-                 var_info_dir, cur_test, prb->info_sfx);
-      }
+    if (srpp->use_info > 0) {
+      snprintf(bname, sizeof(bname), srpp->info_pat, cur_test);
+      snprintf(info_src, sizeof(path_t), "%s/%s", var_info_dir, bname);
       if ((errcode = testinfo_parse(info_src, &tstinfo)) < 0) {
         err("Cannot parse test info file '%s': %s", info_src,
             testinfo_strerror(-errcode));
@@ -1742,7 +1648,7 @@ run_tests(
     }
 
     disable_stderr = -1;
-    if (prb->use_info > 0 && tstinfo.disable_stderr >= 0) {
+    if (srpp->use_info > 0 && tstinfo.disable_stderr >= 0) {
       disable_stderr = tstinfo.disable_stderr;
     }
     if (disable_stderr < 0) {
@@ -1761,16 +1667,15 @@ run_tests(
                       0, tst->check_dir, new_name, "");
     make_executable(exe_path);
 
-    if (!prb->use_tgz) {
+    if (!srpp->use_tgz) {
       snprintf(prog_working_dir, sizeof(path_t), "%s", tst->check_dir);
     }
-    if (prb->use_tgz) {
-      snprintf(tgz_src, sizeof(path_t), "%s/%03d%s",
-               var_tgz_dir, cur_test, prb->tgz_sfx);
-      snprintf(tgz_src_dir, sizeof(path_t), "%s/%03d%s",
-               var_tgz_dir, cur_test, prb->tgzdir_sfx);
-      snprintf(prog_working_dir, sizeof(path_t), "%s/%03d%s",
-               tst->check_dir, cur_test, prb->tgzdir_sfx);
+    if (srpp->use_tgz > 0) {
+      snprintf(bname, sizeof(bname), srpp->tgz_pat, cur_test);
+      snprintf(tgz_src, sizeof(tgz_src), "%s/%s", var_tgz_dir, bname);
+      snprintf(bname, sizeof(bname), srpp->tgzdir_pat, cur_test);
+      snprintf(tgz_src_dir, sizeof(tgz_src_dir), "%s/%s", var_tgz_dir, bname);
+      snprintf(prog_working_dir, sizeof(prog_working_dir), "%s/%s", tst->check_dir, bname);
       info("starting: %s", "/bin/tar");
       tsk = task_New();
       task_AddArg(tsk, "/bin/tar");
@@ -1794,18 +1699,17 @@ run_tests(
 
     /* copy the test */
     generic_copy_file(0, NULL, test_src, "",
-                      copy_flag, tst->check_dir, prb->input_file, "");
+                      copy_flag, tst->check_dir, srpp->input_file, "");
 
-    pathmake(input_path, tst->check_dir, "/", prb->input_file, NULL);
-    pathmake(output_path, tst->check_dir, "/", prb->output_file, NULL);
+    pathmake(input_path, tst->check_dir, "/", srpp->input_file, NULL);
+    pathmake(output_path, tst->check_dir, "/", srpp->output_file, NULL);
     pathmake(error_path, tst->check_dir, "/", tst->error_file, NULL);
 
     if (var_interactor_cmd) {
-      pathmake(output_path, global->run_work_dir, "/",
-               prb->output_file, NULL);
+      pathmake(output_path, global->run_work_dir, "/", srpp->output_file, NULL);
     }
 
-    if (prb->type > 0) {
+    if (srpp->type_val > 0) {
       /* output-only problem */
       // copy exe_path -> output_path
       generic_copy_file(0, NULL, exe_path, "", 0, NULL, output_path, "");
@@ -1828,18 +1732,13 @@ run_tests(
         task_AddArg(tsk_int, var_interactor_cmd);
         task_AddArg(tsk_int, test_src);
         task_AddArg(tsk_int, output_path);
-        if (prb->use_corr && prb->corr_dir[0]) {
-          if (global->advanced_layout > 0) {
-            snprintf(corr_path, sizeof(corr_path), "%s/%s", var_corr_dir,
-                     corr_base);
-          } else {
-            pathmake3(corr_path, var_corr_dir, "/", corr_base, NULL);
-          }
+        if (srpp->use_corr > 0) {
+          snprintf(corr_path, sizeof(corr_path), "%s/%s", var_corr_dir, corr_base);
           task_AddArg(tsk_int, corr_path);
         }
         task_SetPathAsArg0(tsk_int);
         task_SetWorkingDir(tsk_int, prog_working_dir);
-        setup_environment(tsk_int, prb->interactor_env, ejudge_prefix_dir_env, NULL);
+        setup_environment(tsk_int, srpp->interactor_env, ejudge_prefix_dir_env, NULL);
         task_SetRedir(tsk_int, 0, TSR_DUP, pfd1[0]);
         task_SetRedir(tsk_int, 1, TSR_DUP, pfd2[1]);
         task_SetRedir(tsk_int, pfd1[0], TSR_CLOSE);
@@ -1849,8 +1748,8 @@ run_tests(
         task_SetRedir(tsk_int, 2, TSR_FILE, check_out_path, TSK_REWRITE, 
                       TSK_FULL_RW);
         task_EnableAllSignals(tsk_int);
-        if (prb->interactor_time_limit > 0) {
-          task_SetMaxTime(tsk_int, prb->interactor_time_limit);
+        if (srpp->interactor_time_limit_ms > 0) {
+          task_SetMaxTimeMillis(tsk_int, srpp->interactor_time_limit_ms);
         }
 
         if (task_Start(tsk_int) < 0) {
@@ -1870,12 +1769,12 @@ run_tests(
         unsigned char env_buf[1024];
         info("starting: %s %s", tst->start_cmd, arg0_path);
         task_AddArg(tsk, tst->start_cmd);
-        if (prb->input_file[0]) {
-          snprintf(env_buf, sizeof(env_buf), "INPUT_FILE=%s", prb->input_file);
+        if (srpp->input_file && srpp->input_file[0]) {
+          snprintf(env_buf, sizeof(env_buf), "INPUT_FILE=%s", srpp->input_file);
           task_PutEnv(tsk, env_buf);
         }
-        if (prb->output_file[0]) {
-          snprintf(env_buf, sizeof(env_buf),"OUTPUT_FILE=%s", prb->output_file);
+        if (srpp->output_file && srpp->output_file[0]) {
+          snprintf(env_buf, sizeof(env_buf),"OUTPUT_FILE=%s", srpp->output_file);
           task_PutEnv(tsk, env_buf);
         }
       } else {
@@ -1883,7 +1782,7 @@ run_tests(
       }
       //task_AddArg(tsk, exe_path);
       task_AddArg(tsk, arg0_path);
-      if (prb->use_info && tstinfo.cmd_argc >= 1) {
+      if (srpp->use_info > 0 && tstinfo.cmd_argc >= 1) {
         task_pnAddArgs(tsk, tstinfo.cmd_argc, (char**) tstinfo.cmd_argv);
       }
       task_SetPathAsArg0(tsk);
@@ -1902,15 +1801,15 @@ run_tests(
         task_SetRedir(tsk, pfd2[1], TSR_CLOSE);
       } else {
         if (!tst->no_redirect || managed_mode_flag) {
-          if (prb->use_stdin && !tst->no_redirect) {
+          if (srpp->use_stdin && !tst->no_redirect) {
             task_SetRedir(tsk, 0, TSR_FILE, input_path, TSK_READ);
           } else {
             task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ);
           }
-          if (prb->use_stdout && prb->use_info && tstinfo.check_stderr) {
+          if (srpp->use_stdout && srpp->use_info && tstinfo.check_stderr) {
             task_SetRedir(tsk, 1, TSR_FILE, "/dev/null", TSK_WRITE,TSK_FULL_RW);
             task_SetRedir(tsk, 2, TSR_FILE,output_path,TSK_REWRITE,TSK_FULL_RW);
-          } else if (prb->use_stdout && !tst->no_redirect) {
+          } else if (srpp->use_stdout && !tst->no_redirect) {
             task_SetRedir(tsk, 1,TSR_FILE,output_path,TSK_REWRITE,TSK_FULL_RW);
             if (tst->ignore_stderr > 0 && disable_stderr <= 0) {
               task_SetRedir(tsk, 2,TSR_FILE, "/dev/null",TSK_WRITE,TSK_FULL_RW);
@@ -1954,9 +1853,11 @@ run_tests(
         report_time_limit_ms = time_limit_value;
       }
 
-      if (prb->real_time_limit>0)task_SetMaxRealTime(tsk,prb->real_time_limit);
-      if (report_real_time_limit_ms < 0 && prb->real_time_limit > 0) {
-        report_real_time_limit_ms = prb->real_time_limit * 1000;
+      if (srpp->real_time_limit_ms > 0) {
+        task_SetMaxRealTimeMillis(tsk, srpp->real_time_limit_ms);
+      }
+      if (report_real_time_limit_ms < 0 && srpp->real_time_limit_ms > 0) {
+        report_real_time_limit_ms = srpp->real_time_limit_ms;
       }
       if (tst->kill_signal[0]) task_SetKillSignal(tsk, tst->kill_signal);
       if (tst->no_core_dump) task_DisableCoreDump(tsk);
@@ -2001,12 +1902,12 @@ run_tests(
                   prb->max_stack_size,
                   prb->max_data_size);
 #endif
-          if (prb->max_stack_size && prb->max_stack_size != -1L)
-            task_SetStackSize(tsk, prb->max_stack_size);
-          if (prb->max_data_size && prb->max_data_size != -1L)
-            task_SetDataSize(tsk, prb->max_data_size);
-          if (prb->max_vm_size && prb->max_vm_size != -1L)
-            task_SetVMSize(tsk, prb->max_vm_size);
+          if (srpp->max_stack_size && srpp->max_stack_size != (size_t) -1L)
+            task_SetStackSize(tsk, srpp->max_stack_size);
+          if (srpp->max_data_size && srpp->max_data_size != (size_t) -1L)
+            task_SetDataSize(tsk, srpp->max_data_size);
+          if (srpp->max_vm_size && srpp->max_vm_size != (size_t) -1L)
+            task_SetVMSize(tsk, srpp->max_vm_size);
           if (tst->enable_memory_limit_error && srgp->enable_memory_limit_error
               && srgp->secure_run) {
             task_EnableMemoryLimitError(tsk);
@@ -2019,17 +1920,17 @@ run_tests(
         case MEMLIMIT_TYPE_JAVA:
           java_flags_ptr = flags_buf;
           java_flags_ptr += sprintf(java_flags_ptr, "EJUDGE_JAVA_FLAGS=");
-          if (prb->max_vm_size && prb->max_vm_size != -1L) {
+          if (srpp->max_vm_size && srpp->max_vm_size != (size_t) -1L) {
             java_flags_ptr += sprintf(java_flags_ptr, "-Xmx%s",
                                       size_t_to_size(bb, sizeof(bb),
-                                                     prb->max_vm_size));
+                                                     srpp->max_vm_size));
           }
-          if (prb->max_stack_size && prb->max_stack_size != -1L) {
+          if (srpp->max_stack_size && srpp->max_stack_size != (size_t) -1L) {
             if (java_flags_ptr[-1] != '=') *java_flags_ptr++ = ' ';
             *java_flags_ptr = 0;
             java_flags_ptr += sprintf(java_flags_ptr, "-Xss%s",
                                       size_t_to_size(bb, sizeof(bb),
-                                                     prb->max_stack_size));
+                                                     srpp->max_stack_size));
                                                      
           }
           if (java_flags_ptr[-1] != '=') {
@@ -2122,17 +2023,17 @@ run_tests(
 #endif
       task_EnableAllSignals(tsk);
 
-      if (prb->max_core_size != -1L) {
-        task_SetMaxCoreSize(tsk, prb->max_core_size);
+      if (srpp->max_core_size && srpp->max_core_size != (size_t) -1L) {
+        task_SetMaxCoreSize(tsk, srpp->max_core_size);
       }
-      if (prb->max_file_size != -1L) {
-        task_SetMaxFileSize(tsk, prb->max_file_size);
+      if (srpp->max_file_size && srpp->max_file_size != (size_t) -1L) {
+        task_SetMaxFileSize(tsk, srpp->max_file_size);
       }
-      if (prb->max_open_file_count >= 0) {
-        task_SetMaxOpenFileCount(tsk, prb->max_open_file_count);
+      if (srpp->max_open_file_count > 0) {
+        task_SetMaxOpenFileCount(tsk, srpp->max_open_file_count);
       }
-      if (prb->max_process_count >= 0) {
-        task_SetMaxProcessCount(tsk, prb->max_process_count);
+      if (srpp->max_process_count > 0) {
+        task_SetMaxProcessCount(tsk, srpp->max_process_count);
       }
 
       if (task_Start(tsk) < 0) {
@@ -2197,7 +2098,7 @@ run_tests(
     } else {
       // ignore file if binary_input
       file_size = -1;
-      if (prb->binary_input <= 0)
+      if (srpp->binary_input <= 0)
         file_size = generic_file_size(0, test_src, 0);
       if (file_size >= 0) {
         tests[cur_test].input_size = file_size;
@@ -2209,7 +2110,7 @@ run_tests(
       }
     }
     file_size = -1;
-    if (prb->binary_input <= 0)
+    if (srpp->binary_input <= 0)
       file_size = generic_file_size(0, output_path, 0);
     if (file_size >= 0) {
       tests[cur_test].output_size = file_size;
@@ -2240,7 +2141,7 @@ run_tests(
         full_archive_append_file(far, arch_entry_name, 0, error_path);
       }
     }
-    if (prb->use_info) {
+    if (srpp->use_info) {
       size_t cmd_args_len = 0;
       int i;
       unsigned char *args = 0, *s;
@@ -2307,7 +2208,7 @@ run_tests(
       goto done_this_test;
     }
 
-    if (tsk && prb->use_info && tstinfo.exit_code > 0) {
+    if (tsk && srpp->use_info && tstinfo.exit_code > 0) {
       if (task_Status(tsk) == TSK_SIGNALED) {
         tests[cur_test].code = 256; /* FIXME: magic */
         tests[cur_test].termsig = task_TermSignal(tsk);
@@ -2329,11 +2230,11 @@ run_tests(
         tsk_int = 0;
         goto done_this_test;
       }
-    } else if (tsk && ((error_code[0] && !prb->ignore_exit_code && ec != 0)
+    } else if (tsk && ((error_code[0] && !srpp->ignore_exit_code && ec != 0)
                        || (!error_code[0]
-                           && ((!prb->ignore_exit_code
+                           && ((!srpp->ignore_exit_code
                                 && task_IsAbnormal(tsk))
-                               || (prb->ignore_exit_code
+                               || (srpp->ignore_exit_code
                                    && task_Status(tsk) == TSK_SIGNALED))))) {
       /* runtime error */
       if (error_code[0]) {
@@ -2403,41 +2304,35 @@ run_tests(
       goto read_checker_output;
     }
 
-    if (prb->variant_num > 0 && !tst->standard_checker_used) {
-      var_check_cmd = (unsigned char*) alloca(sizeof(path_t));
-      snprintf(var_check_cmd, sizeof(path_t),
-               "%s-%d", tst->check_cmd, cur_variant);
+    if (srpp->standard_checker && srpp->standard_checker[0]) {
+      snprintf(check_cmd, sizeof(check_cmd), "%s/%s",
+               global->ejudge_checkers_dir, srpp->standard_checker);
     } else {
-      var_check_cmd = tst->check_cmd;
+      snprintf(check_cmd, sizeof(check_cmd), "%s", srpp->check_cmd);
     }
 
     /* now start checker */
     /* checker <input data> <output result> <corr answer> <info file> */
-    info("starting checker: %s %s %s", var_check_cmd, test_src,
-         prb->output_file);
+    info("starting checker: %s %s %s", check_cmd, test_src,
+         srpp->output_file);
 
     tsk = task_New();
-    task_AddArg(tsk, var_check_cmd);
+    task_AddArg(tsk, check_cmd);
     task_AddArg(tsk, test_src);
     if (var_interactor_cmd) {
       task_AddArg(tsk, output_path);
     } else {
-      task_AddArg(tsk, prb->output_file);
+      task_AddArg(tsk, srpp->output_file);
     }
-    if (prb->use_corr && prb->corr_dir[0]) {
-      if (global->advanced_layout > 0) {
-        snprintf(corr_path, sizeof(corr_path), "%s/%s", var_corr_dir,
-                 corr_base);
-      } else {
-        pathmake3(corr_path, var_corr_dir, "/", corr_base, NULL);
-      }
+    if (srpp->use_corr) {
+      snprintf(corr_path, sizeof(corr_path), "%s/%s", var_corr_dir, corr_base);
       task_AddArg(tsk, corr_path);
       if (srgp->enable_full_archive) {
         filehash_get(corr_path, tests[cur_test].correct_digest);
         tests[cur_test].has_correct_digest = 1;
       } else {
         file_size = -1;
-        if (prb->binary_input <= 0)
+        if (srpp->binary_input <= 0)
           file_size = generic_file_size(0, corr_path, 0);
         if (file_size >= 0) {
           tests[cur_test].correct_size = file_size;
@@ -2449,15 +2344,15 @@ run_tests(
         }
       }
     }
-    if (prb->use_info) {
+    if (srpp->use_info) {
       task_AddArg(tsk, info_src);
     }
-    if (prb->use_tgz) {
+    if (srpp->use_tgz) {
       task_AddArg(tsk, tgz_src_dir);
       task_AddArg(tsk, prog_working_dir);
     }
     task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ);
-    if (prb->scoring_checker > 0) {
+    if (srpp->scoring_checker > 0) {
       task_SetRedir(tsk, 1, TSR_FILE, score_out_path,
                     TSK_REWRITE, TSK_FULL_RW);
       if (var_interactor_cmd) {
@@ -2479,10 +2374,10 @@ run_tests(
     }
     task_SetWorkingDir(tsk, tst->check_dir);
     task_SetPathAsArg0(tsk);
-    if (prb->checker_real_time_limit > 0) {
-      task_SetMaxRealTime(tsk, prb->checker_real_time_limit);
+    if (srpp->checker_real_time_limit_ms > 0) {
+      task_SetMaxRealTimeMillis(tsk, srpp->checker_real_time_limit_ms);
     }
-    setup_environment(tsk, prb->checker_env, ejudge_prefix_dir_env, NULL);
+    setup_environment(tsk, srpp->checker_env, ejudge_prefix_dir_env, NULL);
     setup_environment(tsk, tst->checker_env, ejudge_prefix_dir_env, NULL);
     task_EnableAllSignals(tsk);
 
@@ -2509,17 +2404,24 @@ run_tests(
     }
 
     force_check_failed = 0;
-    if (prb->scoring_checker && !task_IsTimeout(tsk)
+    if (srpp->scoring_checker && !task_IsTimeout(tsk)
         && task_Status(tsk) == TSK_EXITED
         && (task_ExitCode(tsk) == RUN_WRONG_ANSWER_ERR
             || task_ExitCode(tsk) == RUN_OK)) {
-      switch (score_system_val) {
+      switch (srgp->scoring_system_val) {
       case SCORE_KIROV:
       case SCORE_OLYMPIAD:
-        test_max_score = prb->tscores[cur_test];
+        test_max_score = -1;
+        if (test_score_val && cur_test > 0 && cur_test < test_score_count) {
+          test_max_score = test_score_val[cur_test];
+        }
+        if (test_max_score < 0) {
+          test_max_score = srpp->test_score;
+        }
+        if (test_max_score < 0) test_max_score = 0;
         break;
       case SCORE_MOSCOW:
-        test_max_score = prb->full_score - 1;
+        test_max_score = srpp->full_score - 1;
         break;
       case SCORE_ACM:
         test_max_score = 0;
@@ -2587,7 +2489,7 @@ run_tests(
     }
 
   done_this_test:
-    if (prb->use_info) {
+    if (srpp->use_info) {
       testinfo_free(&tstinfo);
     }
     tests[cur_test].status = status;
@@ -2595,9 +2497,9 @@ run_tests(
     total_tests++;
     if (status > 0) {
       // test failed, how to react on this
-      if (score_system_val == SCORE_ACM) break;
-      if (score_system_val == SCORE_MOSCOW) break;
-      if (score_system_val == SCORE_OLYMPIAD
+      if (srgp->scoring_system_val == SCORE_ACM) break;
+      if (srgp->scoring_system_val == SCORE_MOSCOW) break;
+      if (srgp->scoring_system_val == SCORE_OLYMPIAD
           && accept_testing && !accept_partial) break;
     }
     clear_directory(tst->check_dir);
@@ -2605,24 +2507,30 @@ run_tests(
 
   /* TESTING COMPLETED (SOMEHOW) */
 
-  if (score_system_val == SCORE_OLYMPIAD && accept_testing) {
+  /* look for RUN_CHECK_FAILED status */
+  for (jj = 1; jj < total_tests; ++jj) {
+    if (tests[jj].status == RUN_CHECK_FAILED) break;
+  }
+  if (jj < total_tests) {
+    reply_pkt->status = RUN_CHECK_FAILED;
+    get_current_time(&reply_pkt->ts6, &reply_pkt->ts6_us);
+    goto done2;
+  }
+
+  if (srgp->scoring_system_val == SCORE_OLYMPIAD && accept_testing) {
     if (accept_partial) {
       status = RUN_ACCEPTED;
       failed_test = 1;
       // FIXME: this seems broken?
-      for (jj = 1; jj <= prb->tests_to_accept; jj++) {
+      for (jj = 1; jj <= srpp->tests_to_accept; jj++) {
         if (tests[jj].status == RUN_OK)
           failed_test++;
-        else if (tests[jj].status == RUN_CHECK_FAILED)
-          status = RUN_CHECK_FAILED;
       }
-    } else if (prb->min_tests_to_accept >= 0) {
+    } else if (srpp->min_tests_to_accept >= 0) {
       if (!failed_test) {
         status = RUN_ACCEPTED;
         failed_test = cur_test;
-      } else if (tests[failed_test].status == RUN_CHECK_FAILED) {
-        status = RUN_CHECK_FAILED;
-      } else if (failed_test > prb->min_tests_to_accept)
+      } else if (failed_test > srpp->min_tests_to_accept)
         status = RUN_ACCEPTED;
     } else {
       if (!failed_test) { 
@@ -2634,28 +2542,37 @@ run_tests(
     reply_pkt->failed_test = failed_test;
     reply_pkt->score = -1;
     get_current_time(&reply_pkt->ts6, &reply_pkt->ts6_us);
-  } else if (score_system_val == SCORE_KIROV
-             || score_system_val == SCORE_OLYMPIAD) {
+  } else if (srgp->scoring_system_val == SCORE_KIROV
+             || srgp->scoring_system_val == SCORE_OLYMPIAD) {
     int retcode = RUN_OK;
 
-    for (jj = 1; jj <= prb->ntests; jj++) {
+    for (jj = 1; jj < total_tests; jj++) {
+      int this_score = -1;
+      if (jj < test_score_count) {
+        this_score = test_score_val[jj];
+      }
+      if (this_score < 0) {
+        this_score = srpp->test_score;
+      }
+      if (this_score < 0) {
+        this_score = 0;
+      }
       tests[jj].score = 0;
-      tests[jj].max_score = prb->tscores[jj];
-      if (prb->scoring_checker
+      tests[jj].max_score = this_score;
+      if (srpp->scoring_checker
           && (tests[jj].status == RUN_OK
               || tests[jj].status == RUN_PRESENTATION_ERR
               || tests[jj].status == RUN_WRONG_ANSWER_ERR)) {
       } else if (tests[jj].status == RUN_OK) {
-        score += prb->tscores[jj];
-        tests[jj].score = prb->tscores[jj];
+        score += this_score;
+        tests[jj].score = this_score;
       }
-      if (tests[jj].status == RUN_CHECK_FAILED) {
-        retcode = RUN_CHECK_FAILED;
-      } else if (tests[jj].status != RUN_OK && retcode != RUN_CHECK_FAILED) {
+      if (tests[jj].status != RUN_OK) {
         retcode = RUN_PARTIAL;
       }
     }
 
+#if 0
     if (retcode == RUN_PARTIAL && prb->ts_total > 0) {
       int ts;
 
@@ -2700,8 +2617,9 @@ run_tests(
         }
       }
     }
+#endif
 
-    if (!total_failed_tests) score = prb->full_score;
+    if (!total_failed_tests) score = srpp->full_score;
 
     /* ATTENTION: number of passed test returned is greater than actual by 1,
      * and it is returned in the `failed_test' field
@@ -2736,8 +2654,10 @@ run_tests(
     reply_pkt->status = status;
     reply_pkt->failed_test = failed_test;
     reply_pkt->score = -1;
-    if (score_system_val == SCORE_MOSCOW) {
-      reply_pkt->score = prb->full_score;
+#if 0
+    // FIXME!
+    if (srgp->scoring_system_val == SCORE_MOSCOW) {
+      reply_pkt->score = srpp->full_score;
       if (status != RUN_OK) {
         int s;
 
@@ -2750,6 +2670,7 @@ run_tests(
         }
       }
     }
+#endif
     get_current_time(&reply_pkt->ts6, &reply_pkt->ts6_us);
 
     if (global->sound_player[0] && global->extended_sound && !srgp->disable_sound) {
@@ -2795,6 +2716,8 @@ run_tests(
     }
   }
 
+done2:
+
   get_current_time(&reply_pkt->ts7, &reply_pkt->ts7_us);
 
   has_user_score = 0;
@@ -2802,9 +2725,9 @@ run_tests(
   user_score = -1;
   user_tests_passed = -1;
   user_run_tests = -1;
-  if (prb->valuer_cmd[0] && !srgp->accepting_mode
+  if (srpp->valuer_cmd && srpp->valuer_cmd[0] && !srgp->accepting_mode
       && !reply_pkt->status != RUN_CHECK_FAILED) {
-    if (invoke_valuer(global, prb, cur_variant, prb->full_score,
+    if (invoke_valuer(global, srp, cur_variant, srpp->full_score,
                       &score, &marked_flag,
                       &user_status, &user_score, &user_tests_passed,
                       &valuer_errors, &valuer_comment,
@@ -2843,14 +2766,14 @@ run_tests(
         }
       }
     }
-    if (score_system_val == SCORE_KIROV
-        || (score_system_val == SCORE_OLYMPIAD && !srgp->accepting_mode)) {
+    if (srgp->scoring_system_val == SCORE_KIROV
+        || (srgp->scoring_system_val == SCORE_OLYMPIAD && !srgp->accepting_mode)) {
       if (user_score < 0) {
-        if (prb->variable_full_score <= 0 && user_status == RUN_OK) {
-          if (prb->full_user_score >= 0) {
-            user_score = prb->full_user_score;
+        if (srpp->variable_full_score <= 0 && user_status == RUN_OK) {
+          if (srpp->full_user_score >= 0) {
+            user_score = srpp->full_user_score;
           } else {
-            user_score = prb->full_score;
+            user_score = srpp->full_score;
           }
         } else {
           user_score = 0;
@@ -2860,11 +2783,11 @@ run_tests(
               user_score += tests[cur_test].score;
             }
           }
-          if (prb->variable_full_score <= 0) {
-            if (prb->full_user_score >= 0 && user_score > prb->full_user_score) {
-              user_score = prb->full_user_score;
-            } else if (user_score > prb->full_score) {
-              user_score = prb->full_score;
+          if (srpp->variable_full_score <= 0) {
+            if (srpp->full_user_score >= 0 && user_score > srpp->full_user_score) {
+              user_score = srpp->full_user_score;
+            } else if (user_score > srpp->full_score) {
+              user_score = srpp->full_score;
             }
           }
         }
@@ -2885,9 +2808,9 @@ run_tests(
   reply_pkt->user_score = user_score;
   reply_pkt->user_tests_passed = user_tests_passed;
 
-  generate_xml_report(srp, reply_pkt, report_path, score_system_val, cur_variant,
-                      score, prb->full_score, prb->full_user_score,
-                      (prb->use_corr && prb->corr_dir[0]), prb->use_info,
+  generate_xml_report(srp, reply_pkt, report_path, cur_variant,
+                      score, srpp->full_score, srpp->full_user_score,
+                      srpp->use_corr, srpp->use_info,
                       report_time_limit_ms, report_real_time_limit_ms,
                       has_real_time, has_max_memory_used, marked_flag,
                       user_run_tests,
@@ -2913,6 +2836,8 @@ run_tests(
   xfree(valuer_comment);
   xfree(valuer_judge_comment);
   xfree(valuer_errors);
+  xfree(open_tests_val);
+  xfree(test_score_val);
   for (cur_test = 1; cur_test < total_tests; cur_test++) {
     xfree(tests[cur_test].input);
     xfree(tests[cur_test].output);
@@ -2948,7 +2873,6 @@ do_loop(void)
   struct section_tester_data tn, *tst;
   int got_quit_packet = 0;
 
-  struct section_problem_data *cur_prob = 0;
   struct run_reply_packet reply_pkt;
   void *reply_pkt_buf = 0;
   size_t reply_pkt_buf_size = 0;
@@ -2961,7 +2885,6 @@ do_loop(void)
   struct super_run_in_packet *srp = NULL;
   struct super_run_in_global_packet *srgp = NULL;
   struct super_run_in_problem_packet *srpp = NULL;
-  int scoring_system;
 
   memset(&tn, 0, sizeof(tn));
 
@@ -3061,21 +2984,13 @@ do_loop(void)
       continue;
     }
 
-    if (srpp->id <= 0 || srpp->id > serve_state.max_prob
-        || !(cur_prob = serve_state.probs[srpp->id])) {
-      snprintf(errmsg, sizeof(errmsg),
-               "problem %d is unknown to the run program\n",
-               srpp->id);
-      goto report_check_failed_and_continue;
-    }
-
     /* if we are asked to do full testing, but don't want */
     if ((global->skip_full_testing > 0 && !srgp->accepting_mode)
         || (global->skip_accept_testing > 0 && srgp->accepting_mode)) {
       r = generic_write_file(srp_b, srp_z, SAFE,
                              global->run_queue_dir, pkt_name, "");
       if (r < 0) return -1;
-      info("skipping problem %s", cur_prob->short_name);
+      info("skipping problem %s", srpp->short_name);
       scan_dir_add_ignored(global->run_queue_dir, pkt_name);
       continue;
     }
@@ -3083,6 +2998,7 @@ do_loop(void)
     /* if this problem is marked as "skip_testing" put the
      * packet back to the spool directory
      */
+#if 0
     if (cur_prob->skip_testing > 0) {
       r = generic_write_file(srp_b, srp_z, SAFE, global->run_queue_dir, pkt_name, "");
       if (r < 0) return -1;
@@ -3090,43 +3006,22 @@ do_loop(void)
       scan_dir_add_ignored(global->run_queue_dir, pkt_name);
       continue;
     }
-
-    if (cur_prob->variant_num <= 0 && srgp->variant > 0) {
-      snprintf(errmsg, sizeof(errmsg),
-               "problem %d has no variants, but one was specified\n",
-               srpp->id);
-      goto report_check_failed_and_continue;
-    }
-    if (cur_prob->variant_num > 0
-        &&(srgp->variant <= 0 || srgp->variant > cur_prob->variant_num)) {
-      snprintf(errmsg, sizeof(errmsg),
-               "problem %d has variants, but no variant was specified\n",
-               srpp->id);
-      goto report_check_failed_and_continue;
-    }
-
-    scoring_system = prepare_parse_score_system(srgp->score_system);
-    if (scoring_system < 0) {
-      snprintf(errmsg, sizeof(errmsg),
-               "invalid scoring system '%s'\n",
-               srgp->score_system);
-      goto report_check_failed_and_continue;
-    }
+#endif
 
     snprintf(run_base, sizeof(run_base), "%06d", srgp->run_id);
     report_path[0] = 0;
     full_report_path[0] = 0;
 
-    if (cur_prob->type == PROB_TYPE_TESTS) {
+    if (srpp->type_val == PROB_TYPE_TESTS) {
       cr_serialize_lock(&serve_state);
-      run_inverse_testing(&serve_state, srp, &reply_pkt, cur_prob,
+      run_inverse_testing(&serve_state, srp, &reply_pkt,
                           pkt_name, report_path, sizeof(report_path),
-                          utf8_mode, scoring_system);
+                          utf8_mode);
       cr_serialize_unlock(&serve_state);
     } else {
       arch = srgp->arch;
       if (!arch) arch = "";
-      if (cur_prob->type > 0 && arch && !*arch) {
+      if (srpp->type_val > 0 && arch && !*arch) {
         // any tester will work for output-only problems
         arch = 0;
       }
@@ -3158,7 +3053,7 @@ do_loop(void)
         r = generic_write_file(srp_b, srp_z, SAFE,
                                global->run_queue_dir, pkt_name, "");
         if (r < 0) return -1;
-        info("skipping tester <%s,%s>", cur_prob->short_name, tst->arch);
+        info("skipping tester <%s,%s>", srpp->short_name, tst->arch);
         scan_dir_add_ignored(global->run_queue_dir, pkt_name);
         if (tst == &tn) {
           sarray_free(tst->start_env); tst->start_env = 0;
@@ -3202,12 +3097,12 @@ do_loop(void)
 
       if (cr_serialize_lock(&serve_state) < 0) return -1;
       if (run_tests(tst, srp, &reply_pkt,
-                    scoring_system, srgp->accepting_mode,
+                    srgp->accepting_mode,
                     srpp->accept_partial, srgp->variant,
                     exe_name, run_base,
                     report_path, full_report_path,
-                    NULL /*req_pkt->user_spelling*/,
-                    NULL /*req_pkt->prob_spelling*/) < 0) {
+                    srgp->user_spelling,
+                    srpp->spelling) < 0) {
         cr_serialize_unlock(&serve_state);
         return -1;
       }

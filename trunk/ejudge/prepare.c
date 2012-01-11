@@ -7450,6 +7450,112 @@ cntsprob_get_test_visibility(
   return prob->open_tests_val[num];
 }
 
+int
+prepare_parse_test_score_list(
+        FILE *log_f,
+        const unsigned char *test_score_list,
+        int **pscores,
+        int *pcount)
+{
+  int *arr = NULL;
+
+  *pscores = NULL;
+  *pcount = 0;
+  if (!test_score_list || !*test_score_list) return 0;
+
+  int cur_index = 0;
+  int max_index = 0;
+  int ind, score, n;
+  const unsigned char *s = test_score_list;
+  while (1) {
+    while (isspace(*s)) ++s;
+    if (!*s) break;
+
+    if (*s == '[') {
+      ind = -1;
+      ++s;
+      if (sscanf(s, "%d%n", &ind, &n) != 1) {
+        goto fail;
+      }
+      if (ind <= 0 || ind >= 100000) {
+        goto fail;
+      }
+      s += n;
+      while (isspace(*s)) ++s;
+      if (*s != ']') {
+        goto fail;
+      }
+      ++s;
+      cur_index = ind - 1;
+    }
+
+    score = -1;
+    if (sscanf(s, "%d%n", &score, &n) != 1) {
+      goto fail;
+    }
+    if (score < 0 || score > 100000) {
+      goto fail;
+    }
+    ++cur_index;
+    if (cur_index > max_index) max_index = cur_index;
+  }
+
+  if (max_index <= 0) return 0;
+
+  cur_index = 0;
+  s = test_score_list;
+  XCALLOC(arr, max_index + 1);
+  for (n = 0; n <= max_index; ++n) {
+    arr[n] = -1;
+  }
+
+  while (1) {
+    while (isspace(*s)) ++s;
+    if (!*s) break;
+
+    if (*s == '[') {
+      ind = -1;
+      ++s;
+      if (sscanf(s, "%d%n", &ind, &n) != 1) {
+        goto fail;
+      }
+      if (ind <= 0 || ind >= 100000) {
+        goto fail;
+      }
+      s += n;
+      while (isspace(*s)) ++s;
+      if (*s != ']') {
+        goto fail;
+      }
+      ++s;
+      cur_index = ind - 1;
+    }
+
+    score = -1;
+    if (sscanf(s, "%d%n", &score, &n) != 1) {
+      goto fail;
+    }
+    if (score < 0 || score > 100000) {
+      goto fail;
+    }
+    ++cur_index;
+    arr[cur_index] = score;
+  }
+
+  *pscores = arr;
+  *pcount = max_index + 1;
+  return 0;
+
+fail:
+  if (log_f) {
+    fprintf(log_f, "invalid test_score_list '%s'\n", test_score_list);
+  } else {
+    err("invalid test_score_list '%s'", test_score_list);
+  }
+  xfree(arr);
+  return -1;
+}
+
 /*
  * Local variables:
  *  compile-command: "make"

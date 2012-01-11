@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2007-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -41,7 +41,7 @@ problem_parse_type(const unsigned char *str)
 {
   int i;
 
-  if (!str) return 0;
+  if (!str || !*str) return 0;
   for (i = 0; i < PROB_TYPE_LAST; i++)
     if (problem_type_str[i] && !strcasecmp(str, problem_type_str[i]))
       return i;

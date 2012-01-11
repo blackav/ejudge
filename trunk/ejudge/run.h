@@ -31,12 +31,10 @@ run_inverse_testing(
         struct serve_state *state,
         const struct super_run_in_packet *srp,
         struct run_reply_packet *reply_pkt,
-        struct section_problem_data *prob,
         const unsigned char *pkt_name,
         unsigned char *report_path,
         size_t report_path_size,
-        int utf8_mode,
-        int scoring_system);
+        int utf8_mode);
 
 #endif /* __RUN_H__ */
 

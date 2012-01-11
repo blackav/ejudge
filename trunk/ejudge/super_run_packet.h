@@ -51,6 +51,7 @@ struct super_run_in_global_packet
   int user_id;
   unsigned char *user_login;
   unsigned char *user_name;
+  unsigned char *user_spelling;
   unsigned char *score_system;
   ejintbool_t is_virtual;
   ejintsize_t max_file_length;
@@ -74,6 +75,8 @@ struct super_run_in_global_packet
   unsigned char *exe_sfx;
   ejintbool_t restart;
   ejintbool_t disable_sound;
+
+  int scoring_system_val META_ATTRIB((meta_hidden));
 };
 
 struct super_run_in_problem_packet
@@ -89,6 +92,8 @@ struct super_run_in_problem_packet
   ejintbool_t combined_stdin;
   ejintbool_t combined_stdout;
   ejintbool_t ignore_exit_code;
+  ejintbool_t binary_input;
+  ejintbool_t binary_output;
   int real_time_limit_ms;
   int time_limit_ms;
   ejintbool_t use_ac_not_ok;
@@ -140,6 +145,10 @@ struct super_run_in_problem_packet
   size_t max_file_size;
   int max_open_file_count;
   int max_process_count;
+  unsigned char *spelling;
+  unsigned char *open_tests;
+
+  int type_val META_ATTRIB((meta_hidden));
 };
 
 struct super_run_in_tester_packet
