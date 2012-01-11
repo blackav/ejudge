@@ -1993,6 +1993,14 @@ run_tests(
             task_PutEnv(tsk, flags_buf);
           }
           break;
+        case SEXEC_TYPE_DLL32:
+          if (srgp->secure_run) {
+            task_PutEnv(tsk, "LD_BIND_NOW=1");
+            snprintf(flags_buf, sizeof(flags_buf),
+                     "LD_PRELOAD=%s/lang/libdropcaps32.so", EJUDGE_SCRIPT_DIR);
+            task_PutEnv(tsk, flags_buf);
+          }
+          break;
         case SEXEC_TYPE_JAVA:
           if (srgp->secure_run) {
             task_PutEnv(tsk, "EJUDGE_JAVA_POLICY=fileio.policy");
