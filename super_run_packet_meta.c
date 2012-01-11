@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/01/10 13:55:39
+// Generated 2012/01/11 17:48:53
 
 #include "super_run_packet_meta.h"
 #include "super_run_packet.h"
@@ -31,6 +31,7 @@ static struct meta_info_item meta_info_super_run_in_global_packet_data[] =
   [META_SUPER_RUN_IN_GLOBAL_PACKET_user_id] = { META_SUPER_RUN_IN_GLOBAL_PACKET_user_id, 'i', XSIZE(struct super_run_in_global_packet, user_id), "user_id", XOFFSET(struct super_run_in_global_packet, user_id) },
   [META_SUPER_RUN_IN_GLOBAL_PACKET_user_login] = { META_SUPER_RUN_IN_GLOBAL_PACKET_user_login, 's', XSIZE(struct super_run_in_global_packet, user_login), "user_login", XOFFSET(struct super_run_in_global_packet, user_login) },
   [META_SUPER_RUN_IN_GLOBAL_PACKET_user_name] = { META_SUPER_RUN_IN_GLOBAL_PACKET_user_name, 's', XSIZE(struct super_run_in_global_packet, user_name), "user_name", XOFFSET(struct super_run_in_global_packet, user_name) },
+  [META_SUPER_RUN_IN_GLOBAL_PACKET_user_spelling] = { META_SUPER_RUN_IN_GLOBAL_PACKET_user_spelling, 's', XSIZE(struct super_run_in_global_packet, user_spelling), "user_spelling", XOFFSET(struct super_run_in_global_packet, user_spelling) },
   [META_SUPER_RUN_IN_GLOBAL_PACKET_score_system] = { META_SUPER_RUN_IN_GLOBAL_PACKET_score_system, 's', XSIZE(struct super_run_in_global_packet, score_system), "score_system", XOFFSET(struct super_run_in_global_packet, score_system) },
   [META_SUPER_RUN_IN_GLOBAL_PACKET_is_virtual] = { META_SUPER_RUN_IN_GLOBAL_PACKET_is_virtual, 'B', XSIZE(struct super_run_in_global_packet, is_virtual), "is_virtual", XOFFSET(struct super_run_in_global_packet, is_virtual) },
   [META_SUPER_RUN_IN_GLOBAL_PACKET_max_file_length] = { META_SUPER_RUN_IN_GLOBAL_PACKET_max_file_length, 'z', XSIZE(struct super_run_in_global_packet, max_file_length), "max_file_length", XOFFSET(struct super_run_in_global_packet, max_file_length) },
@@ -117,6 +118,8 @@ static struct meta_info_item meta_info_super_run_in_problem_packet_data[] =
   [META_SUPER_RUN_IN_PROBLEM_PACKET_combined_stdin] = { META_SUPER_RUN_IN_PROBLEM_PACKET_combined_stdin, 'B', XSIZE(struct super_run_in_problem_packet, combined_stdin), "combined_stdin", XOFFSET(struct super_run_in_problem_packet, combined_stdin) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_combined_stdout] = { META_SUPER_RUN_IN_PROBLEM_PACKET_combined_stdout, 'B', XSIZE(struct super_run_in_problem_packet, combined_stdout), "combined_stdout", XOFFSET(struct super_run_in_problem_packet, combined_stdout) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_ignore_exit_code] = { META_SUPER_RUN_IN_PROBLEM_PACKET_ignore_exit_code, 'B', XSIZE(struct super_run_in_problem_packet, ignore_exit_code), "ignore_exit_code", XOFFSET(struct super_run_in_problem_packet, ignore_exit_code) },
+  [META_SUPER_RUN_IN_PROBLEM_PACKET_binary_input] = { META_SUPER_RUN_IN_PROBLEM_PACKET_binary_input, 'B', XSIZE(struct super_run_in_problem_packet, binary_input), "binary_input", XOFFSET(struct super_run_in_problem_packet, binary_input) },
+  [META_SUPER_RUN_IN_PROBLEM_PACKET_binary_output] = { META_SUPER_RUN_IN_PROBLEM_PACKET_binary_output, 'B', XSIZE(struct super_run_in_problem_packet, binary_output), "binary_output", XOFFSET(struct super_run_in_problem_packet, binary_output) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_real_time_limit_ms] = { META_SUPER_RUN_IN_PROBLEM_PACKET_real_time_limit_ms, 'i', XSIZE(struct super_run_in_problem_packet, real_time_limit_ms), "real_time_limit_ms", XOFFSET(struct super_run_in_problem_packet, real_time_limit_ms) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_time_limit_ms] = { META_SUPER_RUN_IN_PROBLEM_PACKET_time_limit_ms, 'i', XSIZE(struct super_run_in_problem_packet, time_limit_ms), "time_limit_ms", XOFFSET(struct super_run_in_problem_packet, time_limit_ms) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_use_ac_not_ok] = { META_SUPER_RUN_IN_PROBLEM_PACKET_use_ac_not_ok, 'B', XSIZE(struct super_run_in_problem_packet, use_ac_not_ok), "use_ac_not_ok", XOFFSET(struct super_run_in_problem_packet, use_ac_not_ok) },
@@ -168,6 +171,8 @@ static struct meta_info_item meta_info_super_run_in_problem_packet_data[] =
   [META_SUPER_RUN_IN_PROBLEM_PACKET_max_file_size] = { META_SUPER_RUN_IN_PROBLEM_PACKET_max_file_size, 'Z', XSIZE(struct super_run_in_problem_packet, max_file_size), "max_file_size", XOFFSET(struct super_run_in_problem_packet, max_file_size) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_max_open_file_count] = { META_SUPER_RUN_IN_PROBLEM_PACKET_max_open_file_count, 'i', XSIZE(struct super_run_in_problem_packet, max_open_file_count), "max_open_file_count", XOFFSET(struct super_run_in_problem_packet, max_open_file_count) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_max_process_count] = { META_SUPER_RUN_IN_PROBLEM_PACKET_max_process_count, 'i', XSIZE(struct super_run_in_problem_packet, max_process_count), "max_process_count", XOFFSET(struct super_run_in_problem_packet, max_process_count) },
+  [META_SUPER_RUN_IN_PROBLEM_PACKET_spelling] = { META_SUPER_RUN_IN_PROBLEM_PACKET_spelling, 's', XSIZE(struct super_run_in_problem_packet, spelling), "spelling", XOFFSET(struct super_run_in_problem_packet, spelling) },
+  [META_SUPER_RUN_IN_PROBLEM_PACKET_open_tests] = { META_SUPER_RUN_IN_PROBLEM_PACKET_open_tests, 's', XSIZE(struct super_run_in_problem_packet, open_tests), "open_tests", XOFFSET(struct super_run_in_problem_packet, open_tests) },
 };
 
 int meta_super_run_in_problem_packet_get_type(int tag)

@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/01/10 13:55:39
+// Generated 2012/01/11 17:48:53
 
 #ifndef __SUPER_RUN_PACKET_META_H__
 #define __SUPER_RUN_PACKET_META_H__
@@ -26,6 +26,7 @@ enum
   META_SUPER_RUN_IN_GLOBAL_PACKET_user_id,
   META_SUPER_RUN_IN_GLOBAL_PACKET_user_login,
   META_SUPER_RUN_IN_GLOBAL_PACKET_user_name,
+  META_SUPER_RUN_IN_GLOBAL_PACKET_user_spelling,
   META_SUPER_RUN_IN_GLOBAL_PACKET_score_system,
   META_SUPER_RUN_IN_GLOBAL_PACKET_is_virtual,
   META_SUPER_RUN_IN_GLOBAL_PACKET_max_file_length,
@@ -77,6 +78,8 @@ enum
   META_SUPER_RUN_IN_PROBLEM_PACKET_combined_stdin,
   META_SUPER_RUN_IN_PROBLEM_PACKET_combined_stdout,
   META_SUPER_RUN_IN_PROBLEM_PACKET_ignore_exit_code,
+  META_SUPER_RUN_IN_PROBLEM_PACKET_binary_input,
+  META_SUPER_RUN_IN_PROBLEM_PACKET_binary_output,
   META_SUPER_RUN_IN_PROBLEM_PACKET_real_time_limit_ms,
   META_SUPER_RUN_IN_PROBLEM_PACKET_time_limit_ms,
   META_SUPER_RUN_IN_PROBLEM_PACKET_use_ac_not_ok,
@@ -128,6 +131,8 @@ enum
   META_SUPER_RUN_IN_PROBLEM_PACKET_max_file_size,
   META_SUPER_RUN_IN_PROBLEM_PACKET_max_open_file_count,
   META_SUPER_RUN_IN_PROBLEM_PACKET_max_process_count,
+  META_SUPER_RUN_IN_PROBLEM_PACKET_spelling,
+  META_SUPER_RUN_IN_PROBLEM_PACKET_open_tests,
 
   META_SUPER_RUN_IN_PROBLEM_PACKET_LAST_FIELD,
 };
