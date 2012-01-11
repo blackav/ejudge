@@ -20,6 +20,8 @@
 #include "reuse_xalloc.h"
 #include "meta_generic.h"
 #include "super_run_packet_meta.h"
+#include "prepare.h"
+#include "errlog.h"
 
 #include <string.h>
 
@@ -45,6 +47,8 @@ super_run_in_global_packet_init(struct generic_section_config *gp)
   p->notify_flag = -1;
   p->advanced_layout = -1;
   p->disable_sound = -1;
+
+  p->scoring_system_val = -1;
 }
 
 void
@@ -69,6 +73,14 @@ super_run_in_global_packet_set_default(struct generic_section_config *gp)
   if (p->notify_flag < 0) p->notify_flag = 0;
   if (p->advanced_layout < 0) p->advanced_layout = 0;
   if (p->disable_sound < 0) p->disable_sound = 0;
+
+  if (p->scoring_system_val < 0) {
+    p->scoring_system_val = prepare_parse_score_system(p->score_system);
+    if (p->scoring_system_val < 0 || p->scoring_system_val >= SCORE_TOTAL) {
+      err("invalid scoring system '%s'", p->score_system);
+      p->scoring_system_val = SCORE_ACM;
+    }
+  }
 }
 
 struct super_run_in_global_packet *
@@ -102,6 +114,8 @@ super_run_in_problem_packet_init(struct generic_section_config *gp)
   p->combined_stdin = -1;
   p->combined_stdout = -1;
   p->ignore_exit_code = -1;
+  p->binary_input = -1;
+  p->binary_output = -1;
   p->real_time_limit_ms = -1;
   p->time_limit_ms = -1;
   p->use_ac_not_ok = -1;
@@ -121,6 +135,8 @@ super_run_in_problem_packet_init(struct generic_section_config *gp)
   p->disable_stderr = -1;
   p->max_open_file_count = -1;
   p->max_process_count = -1;
+
+  p->type_val = -1;
 }
 
 void
@@ -136,6 +152,8 @@ super_run_in_problem_packet_set_default(struct generic_section_config *gp)
   if (p->combined_stdin < 0) p->combined_stdin = 0;
   if (p->combined_stdout < 0) p->combined_stdout = 0;
   if (p->ignore_exit_code < 0) p->ignore_exit_code = 0;
+  if (p->binary_input < 0) p->binary_input = 0;
+  if (p->binary_output < 0) p->binary_output = 0;
   if (p->real_time_limit_ms < 0) p->real_time_limit_ms = 0;
   if (p->time_limit_ms < 0) p->time_limit_ms = 0;
   if (p->use_ac_not_ok < 0) p->use_ac_not_ok = 0;
@@ -155,6 +173,14 @@ super_run_in_problem_packet_set_default(struct generic_section_config *gp)
   if (p->disable_stderr < 0) p->disable_stderr = 0;
   if (p->max_open_file_count < 0) p->max_open_file_count = 0;
   if (p->max_process_count < 0) p->max_process_count = 0;
+
+  if (p->type_val < 0) {
+    p->type_val = problem_parse_type(p->type);
+    if (p->type_val < 0 || p->type_val >= PROB_TYPE_LAST) {
+      err("invalid problem type '%s'", p->type);
+      p->type_val = 0;
+    }
+  }
 }
 
 struct super_run_in_problem_packet *

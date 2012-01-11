@@ -89,33 +89,6 @@ static void perr(FILE *f, const char *format, ...)
   fprintf(f, "Error: %s\n", buf);
 }
 
-static void
-make_patterns(
-        const struct section_problem_data *prob,
-        unsigned char *test_pat,
-        size_t test_pat_size,
-        unsigned char *corr_pat,
-        size_t corr_pat_size)
-{
-  if (prob->test_pat[0]) {
-    snprintf(test_pat, test_pat_size, "%s", prob->test_pat);
-  } else if (prob->test_sfx[0]) {
-    snprintf(test_pat, test_pat_size, "%%03d%s", prob->test_sfx);
-  } else {
-    snprintf(test_pat, test_pat_size, "%%03d.dat");
-  }
-
-  if (prob->use_corr > 0) {
-    if (prob->corr_pat[0]) {
-      snprintf(corr_pat, corr_pat_size, "%s", prob->corr_pat);
-    } else if (prob->corr_sfx[0]) {
-      snprintf(corr_pat, corr_pat_size, "%%03d%s", prob->corr_sfx);
-    } else {
-      snprintf(corr_pat, corr_pat_size, "%%03d.ans");
-    }
-  }
-}
-
 static int
 invoke_tar(
         FILE *log_f,
@@ -196,7 +169,6 @@ invoke_zip(
 static int
 count_tests(
         FILE *log_f,
-        const struct section_problem_data *prob,
         const unsigned char *tests_dir,
         const unsigned char *test_pat,
         const unsigned char *corr_pat)
@@ -312,7 +284,7 @@ fail:
 static int
 normalize_tests(
         FILE *log_f,
-        const struct section_problem_data *prob,
+        const struct super_run_in_packet *srp,
         int test_count,
         const unsigned char *tests_dir,
         const unsigned char *test_pat,
@@ -324,7 +296,7 @@ normalize_tests(
   path_t test_name;
   path_t corr_name;
 
-  if (prob->binary_input > 0) return 0;
+  if (srp->problem->binary_input > 0) return 0;
 
   for (num = 1; num <= test_count; ++num) {
     snprintf(test_name, sizeof(test_name), test_pat, num);
@@ -347,7 +319,7 @@ invoke_test_checker(
         FILE *log_f,
         const unsigned char *log_path,
         const unsigned char *test_checker_cmd,
-        const struct section_problem_data *prob,
+        const struct super_run_in_packet *srp,
         int num,
         const unsigned char *work_dir,
         const unsigned char *input_file,
@@ -355,6 +327,8 @@ invoke_test_checker(
 {
   tpTask tsk = 0;
   int i, r;
+
+  const struct super_run_in_problem_packet *srpp = srp->problem;
 
   tsk = task_New();
   task_AddArg(tsk, test_checker_cmd);
@@ -366,12 +340,12 @@ invoke_test_checker(
   task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ, 0);
   task_SetRedir(tsk, 1, TSR_FILE, log_path, TSK_APPEND, TSK_FULL_RW);
   task_SetRedir(tsk, 2, TSR_FILE, log_path, TSK_APPEND, TSK_FULL_RW);
-  if (prob->test_checker_env) {
-    for (i = 0; prob->test_checker_env[i]; ++i)
-      task_PutEnv(tsk, prob->test_checker_env[i]);
+  if (srpp->test_checker_env) {
+    for (i = 0; srpp->test_checker_env[i]; ++i)
+      task_PutEnv(tsk, srpp->test_checker_env[i]);
   }
-  if (prob->checker_real_time_limit > 0) {
-    task_SetMaxRealTime(tsk, prob->checker_real_time_limit);
+  if (srpp->checker_real_time_limit_ms > 0) {
+    task_SetMaxRealTimeMillis(tsk, srpp->checker_real_time_limit_ms);
   }
 
   fflush(log_f);
@@ -433,8 +407,7 @@ static int
 invoke_test_checker_on_tests(
         FILE *log_f,
         const unsigned char *log_path,
-        const struct section_global_data *global,
-        const struct section_problem_data *prob,
+        const struct super_run_in_packet *srp,
         int variant,
         int test_count,
         const unsigned char *tests_dir,
@@ -448,32 +421,12 @@ invoke_test_checker_on_tests(
   path_t test_checker_cmd;
   int retval = RUN_OK, r, num;
 
-  if (!prob->test_checker_cmd || !prob->test_checker_cmd[0])
+  const struct super_run_in_problem_packet *srpp = srp->problem;
+
+  if (!srpp->test_checker_cmd || !srpp->test_checker_cmd[0])
     return 0;
 
-  if (prob->variant_num > 0 && variant > 0) {
-    if (global->advanced_layout > 0) {
-      get_advanced_layout_path(test_checker_cmd, sizeof(test_checker_cmd),
-                               global, prob, prob->test_checker_cmd, variant);
-    } else if (os_IsAbsolutePath(prob->test_checker_cmd)) {
-      snprintf(test_checker_cmd, sizeof(test_checker_cmd), "%s-%d",
-               prob->test_checker_cmd, variant);
-    } else {
-      snprintf(test_checker_cmd, sizeof(test_checker_cmd), "%s/%s-%d",
-               global->checker_dir, prob->test_checker_cmd, variant);
-    }
-  } else {
-    if (global->advanced_layout > 0) {
-      get_advanced_layout_path(test_checker_cmd, sizeof(test_checker_cmd),
-                               global, prob, prob->test_checker_cmd, -1);
-    } else if (os_IsAbsolutePath(prob->test_checker_cmd)) {
-      snprintf(test_checker_cmd, sizeof(test_checker_cmd), "%s",
-               prob->test_checker_cmd);
-    } else {
-      snprintf(test_checker_cmd, sizeof(test_checker_cmd), "%s/%s",
-               global->checker_dir, prob->test_checker_cmd);
-    }
-  }
+  snprintf(test_checker_cmd, sizeof(test_checker_cmd), "%s", srpp->test_checker_cmd);
 
   if ((r = os_IsFile(test_checker_cmd)) < 0) {
     perr(log_f, "test checker %s does not exist", test_checker_cmd);
@@ -494,7 +447,7 @@ invoke_test_checker_on_tests(
     snprintf(test_path, sizeof(test_path), "%s/%s", tests_dir, test_name);
     snprintf(corr_path, sizeof(corr_path), "%s/%s", tests_dir, corr_name);
 
-    r = invoke_test_checker(log_f, log_path, test_checker_cmd, prob,
+    r = invoke_test_checker(log_f, log_path, test_checker_cmd, srp,
                             num, tests_dir, test_path, corr_path);
     ASSERT(r == RUN_OK || r == RUN_PRESENTATION_ERR || r == RUN_CHECK_FAILED);
     if (r == RUN_CHECK_FAILED) {
@@ -520,8 +473,7 @@ static int
 invoke_test_program(
         FILE *log_f,
         const unsigned char *log_path,
-        const struct section_global_data *global,
-        const struct section_problem_data *prob,
+        const struct super_run_in_packet *srp,
         int num,
         const unsigned char *check_dir,
         const unsigned char *exe_path,
@@ -538,17 +490,13 @@ invoke_test_program(
   int retval = RUN_CHECK_FAILED;
   int r;
 
-  snprintf(check_exe, sizeof(check_exe), "%s/%s", check_dir, exe_name);
-  snprintf(input_path, sizeof(input_path), "%s/%s", check_dir,
-           prob->input_file);
-  snprintf(output_path, sizeof(output_path), "%s/%s", check_dir,
-           prob->output_file);
+  const struct super_run_in_problem_packet *srpp = srp->problem;
 
-  if (prob->time_limit_millis > 0) {
-    time_limit_ms = prob->time_limit_millis;
-  } else if (prob->time_limit > 0) {
-    time_limit_ms = prob->time_limit * 1000;
-  }
+  snprintf(check_exe, sizeof(check_exe), "%s/%s", check_dir, exe_name);
+  snprintf(input_path, sizeof(input_path), "%s/%s", check_dir, srpp->input_file);
+  snprintf(output_path, sizeof(output_path), "%s/%s", check_dir, srpp->output_file);
+
+  time_limit_ms = srpp->time_limit_ms;
 
   clear_check_dir = 1;
   if (generic_copy_file(0, 0, exe_path, 0, 0, check_dir, exe_name, 0) < 0) {
@@ -560,7 +508,7 @@ invoke_test_program(
     goto cleanup;
   }
   if (generic_copy_file(0, 0, input_file, 0, 0, check_dir,
-                        prob->input_file, 0) < 0) {
+                        srpp->input_file, 0) < 0) {
     perr(log_f, "failed to copy %s to %s", input_file, input_path);
     goto cleanup;
   }
@@ -573,12 +521,12 @@ invoke_test_program(
   task_AddArg(tsk, check_exe);
   task_SetPathAsArg0(tsk);
   task_SetWorkingDir(tsk, check_dir);
-  if (prob->combined_stdin > 0 || prob->use_stdin > 0) {
+  if (srpp->combined_stdin > 0 || srpp->use_stdin > 0) {
     task_SetRedir(tsk, 0, TSR_FILE, input_path, TSK_READ, 0);
   } else {
     task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ, 0);
   }
-  if (prob->combined_stdout > 0 || prob->use_stdout > 0) {
+  if (srpp->combined_stdout > 0 || srpp->use_stdout > 0) {
     task_SetRedir(tsk, 1, TSR_FILE, output_path, TSK_REWRITE, TSK_FULL_RW);
   } else {
     task_SetRedir(tsk, 1, TSR_FILE, "/dev/null", TSK_WRITE, TSK_FULL_RW);
@@ -590,17 +538,17 @@ invoke_test_program(
   } else if (time_limit_ms > 0) {
     task_SetMaxTimeMillis(tsk, time_limit_ms);
   }
-  if (prob->real_time_limit > 0) {
-    task_SetMaxRealTime(tsk, prob->real_time_limit);
+  if (srpp->real_time_limit_ms > 0) {
+    task_SetMaxRealTimeMillis(tsk, srpp->real_time_limit_ms);
   }
-  if (prob->max_stack_size && prob->max_stack_size != -1L) {
-    task_SetStackSize(tsk, prob->max_stack_size);
+  if (srpp->max_stack_size && srpp->max_stack_size != (size_t) -1L) {
+    task_SetStackSize(tsk, srpp->max_stack_size);
   }
-  if (prob->max_data_size && prob->max_data_size != -1L) {
-    task_SetDataSize(tsk, prob->max_data_size);
+  if (srpp->max_data_size && srpp->max_data_size != (size_t) -1L) {
+    task_SetDataSize(tsk, srpp->max_data_size);
   }
-  if (prob->max_vm_size && prob->max_vm_size != -1L) {
-    task_SetVMSize(tsk, prob->max_vm_size);
+  if (srpp->max_vm_size && srpp->max_vm_size != (size_t) -1L) {
+    task_SetVMSize(tsk, srpp->max_vm_size);
   }
   /* no security restrictions and memory limits */
   if (task_Start(tsk) < 0) {
@@ -649,7 +597,7 @@ static int
 invoke_checker(
         FILE *log_f,
         const unsigned char *log_path,
-        const struct section_problem_data *prob,
+        const struct super_run_in_packet *srp,
         const unsigned char *check_dir,
         const unsigned char *check_cmd,
         const unsigned char *exe_name,
@@ -663,6 +611,8 @@ invoke_checker(
   int r, i;
   int retval = RUN_CHECK_FAILED;
 
+  const struct super_run_in_problem_packet *srpp = srp->problem;
+
   tsk = task_New();
   task_AddArg(tsk, check_cmd);
   task_SetPathAsArg0(tsk);
@@ -670,12 +620,12 @@ invoke_checker(
   task_AddArg(tsk, input_path);
   task_AddArg(tsk, output_path);
   task_AddArg(tsk, correct_path);
-  if (prob->checker_real_time_limit > 0) {
-    task_SetMaxRealTime(tsk, prob->checker_real_time_limit);
+  if (srpp->checker_real_time_limit_ms > 0) {
+    task_SetMaxRealTimeMillis(tsk, srpp->checker_real_time_limit_ms);
   }
-  if (prob->checker_env) {
-    for (i = 0; prob->checker_env[i]; ++i)
-      task_PutEnv(tsk, prob->checker_env[i]);
+  if (srpp->checker_env) {
+    for (i = 0; srpp->checker_env[i]; ++i)
+      task_PutEnv(tsk, srpp->checker_env[i]);
   }
   task_EnableAllSignals(tsk);
   task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ, 0);
@@ -730,8 +680,7 @@ static int
 invoke_sample_program(
         FILE *log_f,
         const unsigned char *log_path,
-        const struct section_global_data *global,
-        const struct section_problem_data *prob,
+        const struct super_run_in_packet *srp,
         const unsigned char *check_dir,
         const unsigned char *exe_path,
         const unsigned char *exe_name,
@@ -750,6 +699,8 @@ invoke_sample_program(
   path_t corr_path;
   path_t out_path;
 
+  const struct super_run_in_problem_packet *srpp = srp->problem;
+
   /* no sense to continue if operation on the check_dir failed */
   if (make_writable(check_dir) < 0) {
     perr(log_f, "cannot make writable directory %s", check_dir);
@@ -762,7 +713,7 @@ invoke_sample_program(
     return RUN_CHECK_FAILED;
   }
 
-  snprintf(out_path, sizeof(out_path), "%s/%s", check_dir, prob->output_file);
+  snprintf(out_path, sizeof(out_path), "%s/%s", check_dir, srpp->output_file);
 
   for (num = 1; num <= test_count; ++num) {
     snprintf(test_name, sizeof(test_name), test_pat, num);
@@ -773,14 +724,14 @@ invoke_sample_program(
     fprintf(log_f, "Starting %s on test %d\n", exe_name, num);
     fflush(log_f);
 
-    r = invoke_test_program(log_f, log_path, global, prob, num, check_dir,
+    r = invoke_test_program(log_f, log_path, srp, num, check_dir,
                             exe_path, exe_name, test_path,
                             tt_cell_row[num - 1]);
     if (r == RUN_OK) {
       fprintf(log_f, "Starting checker %s\n", check_cmd);
       fflush(log_f);
 
-      invoke_checker(log_f, log_path, prob, check_dir, check_cmd,
+      invoke_checker(log_f, log_path, srp, check_dir, check_cmd,
                      exe_name, num, test_path, out_path, corr_path,
                      tt_cell_row[num - 1]);
     }
@@ -809,7 +760,7 @@ static int
 parse_test_score_list(
         FILE *log_f,
         const unsigned char *pfx,
-        const struct section_problem_data *prob,
+        const struct super_run_in_packet *srp,
         int test_count,
         int *test_scores)
 {
@@ -817,20 +768,22 @@ parse_test_score_list(
   char *eptr;
   const unsigned char *list_txt;
 
-  if (prob->test_score < 0) {
-    plog(log_f, pfx, "test_score %d < 0", prob->test_score);
+  const struct super_run_in_problem_packet *srpp = srp->problem;
+
+  if (srpp->test_score < 0) {
+    plog(log_f, pfx, "test_score %d < 0", srpp->test_score);
     return -1;
   }
-  if (prob->full_score < 0) {
-    plog(log_f, pfx, "full_score %d < 0", prob->full_score);
+  if (srpp->full_score < 0) {
+    plog(log_f, pfx, "full_score %d < 0", srpp->full_score);
     return -1;
   }
 
   for (i = 0; i < test_count; ++i)
-    test_scores[i] = prob->test_score;
+    test_scores[i] = srpp->test_score;
 
-  if (!prob->test_score_list || !prob->test_score_list[0]) return 0;
-  list_txt = prob->test_score_list;
+  if (!srpp->test_score_list || !srpp->test_score_list[0]) return 0;
+  list_txt = srpp->test_score_list;
 
   j = 0; i = 0;
   while (1) {
@@ -884,7 +837,7 @@ parse_test_score_list(
       plog(log_f, pfx, "score < 0 in \"%s\"", list_txt + j);
       return -1;
     }
-    if (v > prob->full_score) {
+    if (v > srpp->full_score) {
       plog(log_f, pfx, "score > full_score in \"%s\"", list_txt + j);
       return -1;
     }
@@ -895,7 +848,7 @@ parse_test_score_list(
   for (i = 0, j = 0; i < test_count; ++i)
     j += test_scores[i];
 
-  if (j > prob->full_score) {
+  if (j > srpp->full_score) {
     plog(log_f, pfx, "summ of test scores > full_score");
     return -1;
   }
@@ -905,12 +858,9 @@ static void
 analyze_results(
         FILE *log_f,
         const unsigned char *log_path,
-        const struct section_global_data *global,
-        const struct section_problem_data *prob,
         const struct super_run_in_packet *srp,
         struct run_reply_packet *reply_pkt,
-        testing_report_xml_t report_xml,
-        int scoring_system)
+        testing_report_xml_t report_xml)
 {
   int i, j, score = 0;
   int status = RUN_CHECK_FAILED;
@@ -919,6 +869,7 @@ analyze_results(
   int passed_count = 0;
 
   const struct super_run_in_global_packet *srgp = srp->global;
+  const struct super_run_in_problem_packet *srpp = srp->problem;
 
   if (!report_xml->tt_rows) {
     perr(log_f, "tt_rows == NULL");
@@ -952,12 +903,13 @@ analyze_results(
     }
   }
 
-  if (scoring_system == SCORE_OLYMPIAD && srgp->accepting_mode) {
+  if (srgp->scoring_system_val == SCORE_OLYMPIAD && srgp->accepting_mode) {
     perr(log_f, "OLYMPIAD accepting mode is not supported");
     goto done;
-  } else if (scoring_system == SCORE_KIROV || scoring_system == SCORE_OLYMPIAD) {
+  } else if (srgp->scoring_system_val == SCORE_KIROV
+             || srgp->scoring_system_val == SCORE_OLYMPIAD) {
     XCALLOC(test_scores, report_xml->tt_row_count);
-    if (parse_test_score_list(log_f, NULL, prob, report_xml->tt_row_count,
+    if (parse_test_score_list(log_f, NULL, srp, report_xml->tt_row_count,
                               test_scores) < 0) {
       goto done;
     }
@@ -983,21 +935,21 @@ analyze_results(
         }
       }
     }
-    if (status == RUN_OK && prob->variable_full_score <= 0) {
-      score = prob->full_score;
+    if (status == RUN_OK && srpp->variable_full_score <= 0) {
+      score = srpp->full_score;
     }
     failed_test = passed_count + 1;
-  } else if (scoring_system == SCORE_MOSCOW) {
-    if (prob->full_score <= 0) {
+  } else if (srgp->scoring_system_val == SCORE_MOSCOW) {
+    if (srpp->full_score <= 0) {
       perr(log_f, "full_score must be > 0 in MOSCOW mode");
       goto done;
     }
-    test_scores = prepare_parse_score_tests(prob->score_tests,prob->full_score);
+    test_scores = prepare_parse_score_tests(srpp->score_tests, srpp->full_score);
     if (!test_scores) {
       perr(log_f, "invalid score_tests");
       goto done;
     }
-    test_scores[prob->full_score - 1] = report_xml->tt_row_count + 1;
+    test_scores[srpp->full_score - 1] = report_xml->tt_row_count + 1;
     for (i = 0; i < report_xml->tt_row_count; ++i) {
       if (report_xml->tt_rows[i]->must_fail <= 0) {
         // this sample program must be OK
@@ -1017,12 +969,12 @@ analyze_results(
     }
     if (failed_test <= 0) {
       status = RUN_OK;
-      score = prob->full_score;
+      score = srpp->full_score;
     } else {
       for (i = 0; failed_test > test_scores[i]; i++);
       score = i;
     }
-  } else if (scoring_system == SCORE_ACM) {
+  } else if (srgp->scoring_system_val == SCORE_ACM) {
     // just check that all the tests are passed
     for (i = 0; i < report_xml->tt_row_count; ++i) {
       if (report_xml->tt_rows[i]->must_fail <= 0) {
@@ -1063,12 +1015,10 @@ run_inverse_testing(
         struct serve_state *state,
         const struct super_run_in_packet *srp,
         struct run_reply_packet *reply_pkt,
-        struct section_problem_data *prob,
         const unsigned char *pkt_name,
         unsigned char *report_path,
         size_t report_path_size,
-        int utf8_mode,
-        int scoring_system)
+        int utf8_mode)
 {
   struct section_global_data *global = state->global;
   int r, i, j;
@@ -1086,8 +1036,6 @@ run_inverse_testing(
   FILE *log_f = 0, *rep_f = 0;
   unsigned char *log_text = 0;
   size_t log_size = 0;
-  path_t test_pat = { 0 };
-  path_t corr_pat = { 0 };
   struct testing_report_cell ***tt_cells = 0, *tt_cell = 0;
   struct testing_report_row **tt_rows = 0, *tt_row = 0;
   int tt_row_count = 0;
@@ -1103,8 +1051,7 @@ run_inverse_testing(
   ssize_t ssize;
 
   const struct super_run_in_global_packet *srgp = srp->global;
-
-  make_patterns(prob, test_pat, sizeof(test_pat), corr_pat, sizeof(corr_pat));
+  const struct super_run_in_problem_packet *srpp = srp->problem;
 
   snprintf(log_path, sizeof(log_path), "%s/%s.txt",
            global->run_work_dir, pkt_name);
@@ -1143,7 +1090,7 @@ run_inverse_testing(
   /* create the testing report */
   report_xml = testing_report_alloc(reply_pkt->run_id, reply_pkt->judge_id);
   report_xml->status = RUN_CHECK_FAILED;
-  report_xml->scoring_system = scoring_system;
+  report_xml->scoring_system = srgp->scoring_system_val;
   report_xml->archive_available = 0;
   report_xml->correct_available = 1;
   report_xml->info_available = 0;
@@ -1155,20 +1102,16 @@ run_inverse_testing(
   report_xml->failed_test = -1;
   report_xml->tests_passed = 0;
   report_xml->score = 0;
-  report_xml->max_score = prob->full_score;
+  report_xml->max_score = srpp->full_score;
   report_xml->marked_flag = 0;
   report_xml->tests_mode = 1;
 
-  if (prob->time_limit_millis > 0) {
-    time_limit_ms = prob->time_limit_millis;
-  } else if (prob->time_limit > 0) {
-    time_limit_ms = prob->time_limit * 1000;
-  }
+  time_limit_ms = srpp->time_limit_ms;
   if (time_limit_ms > 0) {
     report_xml->time_limit_ms = time_limit_ms;
   }
-  if (prob->real_time_limit > 0) {
-    report_xml->real_time_limit_ms = prob->real_time_limit * 1000;
+  if (srpp->real_time_limit_ms > 0) {
+    report_xml->real_time_limit_ms = srpp->real_time_limit_ms;
   }
   if ((log_text = os_NodeName())) {
     report_xml->host = xstrdup(log_text);
@@ -1235,7 +1178,7 @@ run_inverse_testing(
   }
 
   // count tests
-  test_count = count_tests(log_f, prob, tests_dir, test_pat, corr_pat);
+  test_count = count_tests(log_f, tests_dir, srpp->test_pat, srpp->corr_pat);
   if (test_count < 0) {
     perr(log_f, "failed to count tests in %s", tests_dir);
     goto cleanup;
@@ -1246,41 +1189,23 @@ run_inverse_testing(
   }
 
   // normalize test contents
-  if (normalize_tests(log_f, prob, test_count, tests_dir, test_pat,
-                      corr_pat) < 0) {
+  if (normalize_tests(log_f, srp, test_count, tests_dir, srpp->test_pat,
+                      srpp->corr_pat) < 0) {
     perr(log_f, "failed to normalize tests");
     goto presentation_error;
   }
 
   // invoke test checkers on each test
-  r = invoke_test_checker_on_tests(log_f, log_path, global,
-                                   prob, srgp->variant,
+  r = invoke_test_checker_on_tests(log_f, log_path, srp, srgp->variant,
                                    test_count, tests_dir,
-                                   test_pat, corr_pat);
+                                   srpp->test_pat, srpp->corr_pat);
   if (r != RUN_OK) {
     reply_pkt->status = r;
     report_xml->status = r;
     goto cleanup;
   }
 
-  // now we're ready to run our programs on the given tests
-  if (global->advanced_layout > 0) {
-    if (prob->variant_num > 0 && srgp->variant > 0) {
-      get_advanced_layout_path(sample_dir, sizeof(sample_dir), global, prob,
-                               DFLT_P_TEST_DIR, srgp->variant);
-    } else {
-      get_advanced_layout_path(sample_dir, sizeof(sample_dir), global, prob,
-                               DFLT_P_TEST_DIR, -1);
-    }
-  } else {
-    if (prob->variant_num > 0 && srgp->variant > 0) {
-      snprintf(sample_dir, sizeof(sample_dir), "%s-%d", prob->test_dir,
-               srgp->variant);
-    } else {
-      snprintf(sample_dir, sizeof(sample_dir), "%s", prob->test_dir);
-    }
-  }
-
+  snprintf(sample_dir, sizeof(sample_dir), "%s", srpp->test_dir);
   snprintf(good_dir, sizeof(good_dir), "%s/%s", sample_dir, GOOD_DIR_NAME);
   snprintf(fail_dir, sizeof(fail_dir), "%s/%s", sample_dir, FAIL_DIR_NAME);
 
@@ -1297,34 +1222,13 @@ run_inverse_testing(
     goto cleanup;
   }
 
-  // get checker path
-  if (prob->standard_checker[0]) {
+  if (srpp->standard_checker && srpp->standard_checker[0]) {
     snprintf(check_cmd, sizeof(check_cmd), "%s/%s",
-             global->ejudge_checkers_dir, prob->standard_checker);
-  } else if (global->advanced_layout > 0) {
-    if (prob->variant_num > 0 && srgp->variant > 0) {
-      get_advanced_layout_path(check_cmd, sizeof(check_cmd),
-                               global, prob, prob->check_cmd, srgp->variant);
-    } else {
-      get_advanced_layout_path(check_cmd, sizeof(check_cmd),
-                               global, prob, prob->check_cmd, -1);
-    }
-  } else if (os_IsAbsolutePath(prob->check_cmd)) {
-    if (prob->variant_num > 0 && srgp->variant > 0) {
-      snprintf(check_cmd, sizeof(check_cmd), "%s-%d", prob->check_cmd,
-               srgp->variant);
-    } else {
-      snprintf(check_cmd, sizeof(check_cmd), "%s", prob->check_cmd);
-    }
+             global->ejudge_checkers_dir, srpp->standard_checker);
   } else {
-    if (prob->variant_num > 0 && srgp->variant > 0) {
-      snprintf(check_cmd, sizeof(check_cmd), "%s/%s-%d",
-               global->checker_dir, prob->check_cmd, srgp->variant);
-    } else {
-      snprintf(check_cmd, sizeof(check_cmd), "%s/%s",
-               global->checker_dir, prob->check_cmd);
-    }
+    snprintf(check_cmd, sizeof(check_cmd), "%s", srpp->check_cmd);
   }
+
   r = os_IsFile(check_cmd);
   if (r < 0) {
     perr(log_f, "checker %s does not exist", check_cmd);
@@ -1389,22 +1293,21 @@ run_inverse_testing(
 
   for (i = 0; i < good_count; ++i) {
     snprintf(exe_path, sizeof(exe_path), "%s/%s", good_dir, good_files[i]);
-    r = invoke_sample_program(log_f, log_path, global, prob, check_dir,
+    r = invoke_sample_program(log_f, log_path, srp, check_dir,
                               exe_path, good_files[i], check_cmd, test_count,
-                              tests_dir, test_pat, corr_pat,
+                              tests_dir, srpp->test_pat, srpp->corr_pat,
                               report_xml->tt_rows[i], report_xml->tt_cells[i]);
   }
   for (i = 0; i < fail_count; ++i) {
     snprintf(exe_path, sizeof(exe_path), "%s/%s", fail_dir, fail_files[i]);
-    r = invoke_sample_program(log_f, log_path, global, prob, check_dir,
+    r = invoke_sample_program(log_f, log_path, srp, check_dir,
                               exe_path, fail_files[i], check_cmd, test_count,
-                              tests_dir, test_pat, corr_pat,
+                              tests_dir, srpp->test_pat, srpp->corr_pat,
                               report_xml->tt_rows[i + good_count],
                               report_xml->tt_cells[i + good_count]);
   }
 
-  analyze_results(log_f, log_path, global, prob, srp, reply_pkt, report_xml,
-                  scoring_system);
+  analyze_results(log_f, log_path, srp, reply_pkt, report_xml);
 
 cleanup:
   /* process the log file */
@@ -1445,7 +1348,8 @@ cleanup:
     fprintf(rep_f, "Content-type: text/xml\n\n");
     fprintf(rep_f, "<?xml version=\"1.0\" encoding=\"%s\"?>\n", EJUDGE_CHARSET);
     testing_report_unparse_xml(rep_f, utf8_mode,
-                               global->max_file_length, global->max_line_length,
+                               srgp->max_file_length,
+                               srgp->max_line_length,
                                report_xml);
     fclose(rep_f); rep_f = 0;
   }

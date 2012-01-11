@@ -1398,9 +1398,23 @@ get_advanced_layout_path(
         int variant);
 
 int
+prepare_parse_open_tests(
+        FILE *flog,
+        const unsigned char *str,
+        int **p_vals,
+        int *p_count);
+
+int
 cntsprob_get_test_visibility(
         const struct section_problem_data *prob,
         int num,
         int final_mode);
+
+int
+prepare_parse_test_score_list(
+        FILE *log_f,
+        const unsigned char *test_score_list,
+        int **pscores,
+        int *pcount);
 
 #endif /* __PREPARE_H__ */
