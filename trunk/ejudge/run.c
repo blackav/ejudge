@@ -242,7 +242,6 @@ generate_xml_report(
   int i;
   unsigned char *msg = 0;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
-  struct section_global_data *global = serve_state.global;
   const struct super_run_in_global_packet *srgp = srp->global;
 
   if (!(f = fopen(report_path, "w"))) {
@@ -405,7 +404,7 @@ generate_xml_report(
     if (tests[i].chk_out_size >= 0 && srgp->enable_full_archive) {
       fprintf(f, " checker-output-available=\"yes\"");
     }
-    if (tests[i].args && strlen(tests[i].args) >= global->max_cmd_length) {
+    if (tests[i].args && strlen(tests[i].args) >= srgp->max_cmd_length) {
       fprintf(f, " args-too-long=\"yes\"");
     }
     if (tests[i].visibility > 0) {
@@ -413,46 +412,46 @@ generate_xml_report(
     }
     fprintf(f, " >\n");
 
-    if (tests[i].args && strlen(tests[i].args) < global->max_cmd_length) {
+    if (tests[i].args && strlen(tests[i].args) < srgp->max_cmd_length) {
       fprintf(f, "      <args>%s</args>\n", ARMOR(tests[i].args));
     }
 
     if (tests[i].input_size >= 0 && !srgp->enable_full_archive) {
       fprintf(f, "      <input>");
-      html_print_by_line(f, utf8_mode, global->max_file_length,
-                         global->max_line_length,
+      html_print_by_line(f, utf8_mode, srgp->max_file_length,
+                         srgp->max_line_length,
                          tests[i].input, tests[i].input_size);
       fprintf(f, "</input>\n");
     }
 
     if (tests[i].output_size >= 0 && !srgp->enable_full_archive) {
       fprintf(f, "      <output>");
-      html_print_by_line(f, utf8_mode, global->max_file_length,
-                         global->max_line_length,
+      html_print_by_line(f, utf8_mode, srgp->max_file_length,
+                         srgp->max_line_length,
                          tests[i].output, tests[i].output_size);
       fprintf(f, "</output>\n");
     }
 
     if (tests[i].correct_size >= 0 && !srgp->enable_full_archive) {
       fprintf(f, "      <correct>");
-      html_print_by_line(f, utf8_mode, global->max_file_length,
-                         global->max_line_length,
+      html_print_by_line(f, utf8_mode, srgp->max_file_length,
+                         srgp->max_line_length,
                          tests[i].correct, tests[i].correct_size);
       fprintf(f, "</correct>\n");
     }
 
     if (tests[i].error_size >= 0 && !srgp->enable_full_archive) {
       fprintf(f, "      <stderr>");
-      html_print_by_line(f, utf8_mode, global->max_file_length,
-                         global->max_line_length,
+      html_print_by_line(f, utf8_mode, srgp->max_file_length,
+                         srgp->max_line_length,
                          tests[i].error, tests[i].error_size);
       fprintf(f, "</stderr>\n");
     }
 
     if (tests[i].chk_out_size >= 0 && !srgp->enable_full_archive) {
       fprintf(f, "      <checker>");
-      html_print_by_line(f, utf8_mode, global->max_file_length,
-                         global->max_line_length,
+      html_print_by_line(f, utf8_mode, srgp->max_file_length,
+                         srgp->max_line_length,
                          tests[i].chk_out, tests[i].chk_out_size);
       fprintf(f, "</checker>\n");
     }
@@ -2110,8 +2109,7 @@ run_tests(
         file_size = generic_file_size(0, test_src, 0);
       if (file_size >= 0) {
         tests[cur_test].input_size = file_size;
-        if (global->max_file_length > 0
-            && file_size <= global->max_file_length) {
+        if (srgp->max_file_length > 0 && file_size <= srgp->max_file_length) {
           generic_read_file(&tests[cur_test].input, 0, 0, 0,
                             0, test_src, "");
         }
@@ -2122,8 +2120,8 @@ run_tests(
       file_size = generic_file_size(0, output_path, 0);
     if (file_size >= 0) {
       tests[cur_test].output_size = file_size;
-      if (global->max_file_length > 0 && !srgp->enable_full_archive
-          && file_size <= global->max_file_length) {
+      if (srgp->max_file_length > 0 && !srgp->enable_full_archive
+          && file_size <= srgp->max_file_length) {
         generic_read_file(&tests[cur_test].output, 0, 0, 0,
                           0, output_path, "");
       }
@@ -2137,8 +2135,8 @@ run_tests(
     file_size = generic_file_size(0, error_path, 0);
     if (file_size >= 0) {
       tests[cur_test].error_size = file_size;
-      if (global->max_file_length > 0 && !srgp->enable_full_archive
-          && file_size <= global->max_file_length) {
+      if (srgp->max_file_length > 0 && !srgp->enable_full_archive
+          && file_size <= srgp->max_file_length) {
         generic_read_file(&tests[cur_test].error, 0, 0, 0,
                           0, error_path, "");
       }
@@ -2344,8 +2342,7 @@ run_tests(
           file_size = generic_file_size(0, corr_path, 0);
         if (file_size >= 0) {
           tests[cur_test].correct_size = file_size;
-          if (global->max_file_length > 0
-              && file_size <= global->max_file_length) {
+          if (srgp->max_file_length > 0 && file_size <= srgp->max_file_length) {
             generic_read_file(&tests[cur_test].correct, 0, 0, 0,
                               0, corr_path, "");
           }
@@ -2751,7 +2748,7 @@ done2:
     user_score = -1;
     user_tests_passed = -1;
     user_run_tests = -1;
-  } else if (global->separate_user_score <= 0) {
+  } else if (srgp->separate_user_score <= 0) {
     user_status = -1;
     user_score = -1;
     user_tests_passed = -1;
