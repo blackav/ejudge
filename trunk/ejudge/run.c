@@ -2386,7 +2386,6 @@ run_tests(
       task_SetMaxRealTimeMillis(tsk, srpp->checker_real_time_limit_ms);
     }
     setup_environment(tsk, srpp->checker_env, ejudge_prefix_dir_env, NULL);
-    setup_environment(tsk, tst->checker_env, ejudge_prefix_dir_env, NULL);
     task_EnableAllSignals(tsk);
 
     task_Start(tsk);
@@ -3065,7 +3064,6 @@ do_loop(void)
         scan_dir_add_ignored(global->run_queue_dir, pkt_name);
         if (tst == &tn) {
           sarray_free(tst->start_env); tst->start_env = 0;
-          sarray_free(tst->checker_env); tst->checker_env = 0;
           sarray_free(tst->super); tst->super = 0;
         }
         continue;
@@ -3118,7 +3116,6 @@ do_loop(void)
 
       if (tst == &tn) {
         sarray_free(tst->start_env); tst->start_env = 0;
-        sarray_free(tst->checker_env); tst->checker_env = 0;
         sarray_free(tst->super); tst->super = 0;
       }
     }
@@ -3254,9 +3251,8 @@ static int
 process_default_testers(void)
 {
   int total = 0;
-  int i, j, k, n;
+  int i, j, k;
   unsigned char *prob_flags = 0;
-  unsigned char *var_check_cmd = 0;
   struct section_tester_data *tp, *tq;
   struct section_problem_data *ts;
 
@@ -3306,17 +3302,6 @@ process_default_testers(void)
       if (prepare_tester_refinement(&serve_state, &tn, i, k) < 0) return -1;
       if (create_tester_dirs(&tn) < 0) return -1;
 
-      if (ts->variant_num > 0 && !tn.standard_checker_used) {
-        if (!var_check_cmd)
-          var_check_cmd = (unsigned char*) alloca(sizeof(path_t));
-        for (n = 1; n <= ts->variant_num; n++) {
-          snprintf(var_check_cmd, sizeof(path_t), "%s-%d", tn.check_cmd, n);
-          if (check_executable(var_check_cmd) < 0) return -1;
-        }
-      } else {
-        if (check_executable(tn.check_cmd) < 0) return -1;
-      }
-
       /* check working dirs */
       if (make_writable(tn.check_dir) < 0) return -1;
       if (check_writable_dir(tn.check_dir) < 0) return -1;
@@ -3325,7 +3310,6 @@ process_default_testers(void)
       total++;
 
       sarray_free(tn.start_env);
-      sarray_free(tn.checker_env);
       sarray_free(tn.super);
     }
   }
@@ -3336,7 +3320,7 @@ process_default_testers(void)
 static int
 check_config(void)
 {
-  int     i, n1 = 0, n2, j, n, k;
+  int     i, n1 = 0, n2, j, k;
   int     total = 0;
 
   struct section_problem_data *prb = 0;
@@ -3345,7 +3329,6 @@ check_config(void)
   unsigned char *var_corr_dir;
   unsigned char *var_info_dir;
   unsigned char *var_tgz_dir;
-  unsigned char *var_check_cmd = 0;
   problem_xml_t px;
   const struct section_global_data *global = serve_state.global;
 
@@ -3836,18 +3819,6 @@ check_config(void)
     if (serve_state.testers[i]->any) continue;
     prb = serve_state.probs[serve_state.testers[i]->problem];
     total++;
-
-    if (prb->variant_num > 0 && !serve_state.testers[i]->standard_checker_used) {
-      if (!var_check_cmd)
-        var_check_cmd = (unsigned char*) alloca(sizeof(path_t));
-      for (n = 1; n <= prb->variant_num; n++) {
-        snprintf(var_check_cmd, sizeof(path_t),
-                 "%s-%d", serve_state.testers[i]->check_cmd, n);
-        if (check_executable(var_check_cmd) < 0) return -1;
-      }
-    } else {
-      if (check_executable(serve_state.testers[i]->check_cmd) < 0) return -1;
-    }
 
     /* check working dirs */
     if (make_writable(serve_state.testers[i]->check_dir) < 0) return -1;
