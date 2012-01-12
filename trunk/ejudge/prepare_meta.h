@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/01/11 18:20:07
+// Generated 2012/01/12 11:30:02
 
 #ifndef __PREPARE_META_H__
 #define __PREPARE_META_H__
@@ -561,11 +561,8 @@ enum
   CNTSTESTER_error_file,
   CNTSTESTER_prepare_cmd,
   CNTSTESTER_start_cmd,
-  CNTSTESTER_check_cmd,
   CNTSTESTER_nwrun_spool_dir,
   CNTSTESTER_start_env,
-  CNTSTESTER_checker_env,
-  CNTSTESTER_standard_checker_used,
   CNTSTESTER_memory_limit_type_val,
   CNTSTESTER_secure_exec_type_val,
 
