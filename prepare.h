@@ -1210,18 +1210,12 @@ struct section_tester_data
   path_t prepare_cmd;
   /** helper to start testing */
   path_t start_cmd;
-  /** checker */
-  path_t check_cmd;
   /** nwrun spool directory */
   path_t nwrun_spool_dir;
 
   /** environment variables for start_cmd */
   ejenvlist_t start_env;
-  /** environment variables for checker */
-  ejenvlist_t checker_env;
 
-  /** internal: the standard checker is used */
-  int standard_checker_used META_ATTRIB((meta_private));
   /** internal: parsed memory_limit_type */
   int memory_limit_type_val META_ATTRIB((meta_private));
   /** internal: parsed secure_exec_type */

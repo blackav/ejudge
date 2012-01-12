@@ -9403,17 +9403,6 @@ super_html_read_serve(FILE *flog,
   }
   */
 
-  // very simple rule for check_cmd extraction:
-  // check_cmd for all abstract checkers must be the same
-  for (i = 0; i < sstate->atester_total; i++) {
-    if (!check_cmd[0])
-      snprintf(check_cmd, sizeof(check_cmd), "%s", sstate->atesters[i]->check_cmd);
-    if (strcmp(check_cmd, sstate->atesters[i]->check_cmd)) {
-      fprintf(flog, "conflicting check_cmd for abstract testers\n");
-      return -1;
-    }
-  }
-
   // assign this check_cmd to all abstract problems without check_cmd
   for (i = 0; i < sstate->aprob_u; i++)
     if (!(aprob = sstate->aprobs[i])->check_cmd[0])

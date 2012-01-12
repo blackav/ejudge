@@ -558,12 +558,10 @@ static const struct config_parse_info section_tester_params[] =
   TESTER_PARAM(error_file, "s"),
 
   TESTER_PARAM(prepare_cmd, "s"),
-  TESTER_PARAM(check_cmd, "s"),
   TESTER_PARAM(start_cmd, "s"),
   TESTER_PARAM(nwrun_spool_dir, "s"),
 
   TESTER_PARAM(start_env, "x"),
-  TESTER_PARAM(checker_env, "x"),
 
   { 0, 0, 0, 0 }
 };
@@ -1039,7 +1037,6 @@ prepare_tester_free_func(struct generic_section_config *gp)
 
   sarray_free(p->super);
   sarray_free(p->start_env);
-  sarray_free(p->checker_env);
   memset(p, 0xab, sizeof(*p));
   xfree(p);
 }
@@ -1170,7 +1167,6 @@ static const struct inheritance_info tester_inheritance_info[] =
   TESTER_INH(check_dir, path, path),
   TESTER_INH(errorcode_file, path, path),
   TESTER_INH(error_file, path, path),
-  TESTER_INH(check_cmd, path, path),
   TESTER_INH(start_cmd, path, path),
   TESTER_INH(prepare_cmd, path, path),
   TESTER_INH(memory_limit_type, path2, path),
@@ -3933,19 +3929,6 @@ set_defaults(
           if (!tp->start_env[j]) return -1;
         }
       }
-      if (atp && atp->checker_env) {
-        tp->checker_env = sarray_merge_pf(atp->checker_env, tp->checker_env);
-      }
-      if (tp->checker_env) {
-        for (j = 0; tp->checker_env[j]; j++) {
-          tp->checker_env[j] = varsubst_heap(state, tp->checker_env[j], 1,
-                                             section_global_params,
-                                             section_problem_params,
-                                             section_language_params,
-                                             section_tester_params);
-          if (!tp->checker_env[j]) return -1;
-        }
-      }
 
       if (mode == PREPARE_RUN || mode == PREPARE_SERVE) {
         if (!tp->error_file[0] && atp && atp->error_file[0]) {
@@ -3959,38 +3942,6 @@ set_defaults(
           vinfo("tester.%d.error_file set to %s", i, DFLT_T_ERROR_FILE);
           snprintf(state->testers[i]->error_file, sizeof(state->testers[i]->error_file),
                    "%s", DFLT_T_ERROR_FILE);
-        }
-        if (!tp->any) {
-          if (!tp->check_cmd[0] && state->probs[tp->problem]->standard_checker[0]) {
-            strcpy(tp->check_cmd, state->probs[tp->problem]->standard_checker);
-            pathmake2(tp->check_cmd, g->ejudge_checkers_dir, "/", tp->check_cmd, NULL);
-            tp->standard_checker_used = 1;
-          }
-          if (!tp->check_cmd[0] && atp && atp->check_cmd[0]) {
-            sformat_message(tp->check_cmd, PATH_MAX, 0, atp->check_cmd,
-                            g, state->probs[tp->problem], NULL,
-                            tp, NULL, 0, 0, 0);
-            vinfo("tester.%d.check_cmd inherited from tester.%s ('%s')",
-                  i, sish, tp->check_cmd);        
-          }
-          if (!tp->check_cmd[0] && state->probs[tp->problem]->check_cmd[0]) {
-            strcpy(tp->check_cmd, state->probs[tp->problem]->check_cmd);
-          }
-          if (!state->testers[i]->check_cmd[0]) {
-            err("tester.%d.check_cmd must be set", i);
-            return -1;
-          }
-          if (g->advanced_layout > 0 && !os_IsAbsolutePath(state->testers[i]->check_cmd)) {
-            get_advanced_layout_path(fpath, sizeof(fpath), g,
-                                     state->probs[tp->problem],
-                                     state->testers[i]->check_cmd, -1);
-            snprintf(state->testers[i]->check_cmd,
-                     sizeof(state->testers[i]->check_cmd), "%s",
-                     fpath);
-          } else {
-            pathmake2(state->testers[i]->check_cmd, g->checker_dir, "/",
-                      state->testers[i]->check_cmd, NULL);
-          }
         }
         if (!tp->start_cmd[0] && atp && atp->start_cmd[0]) {
           sformat_message(tp->start_cmd, PATH_MAX, 0, atp->start_cmd,
@@ -4739,6 +4690,7 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
   }
 
   /* copy checker_env */
+  /*
   out->checker_env = sarray_merge_pf(tp->checker_env, out->checker_env);
   if (atp && atp->checker_env) {
     out->checker_env = sarray_merge_pf(atp->checker_env, out->checker_env);
@@ -4753,6 +4705,7 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
       if (!out->checker_env[j]) return -1;
     }
   }
+  */
 
   /* copy errorcode_file */
   strcpy(out->errorcode_file, tp->errorcode_file);
@@ -4772,37 +4725,6 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
   if (!out->error_file[0]) {
     snprintf(out->error_file, sizeof(out->error_file),
              "%s",  DFLT_T_ERROR_FILE);
-  }
-
-  /* copy check_cmd */
-  if (prb->standard_checker[0]) {
-    strcpy(out->check_cmd, prb->standard_checker);
-    pathmake2(out->check_cmd, state->global->ejudge_checkers_dir,
-              "/", out->check_cmd,NULL);
-    out->standard_checker_used = 1;
-  } else {
-    strcpy(out->check_cmd, tp->check_cmd);
-    if (!out->check_cmd[0] && atp && atp->check_cmd[0]) {
-      sformat_message(out->check_cmd, sizeof(out->check_cmd), 0,
-                      atp->check_cmd, state->global, prb, NULL, out,
-                      NULL, 0, 0, 0);
-    }
-    if (!out->check_cmd[0] && prb->check_cmd[0])
-      strcpy(out->check_cmd, prb->check_cmd);
-    if (!out->check_cmd[0]) {
-      err("default tester for architecture '%s': check_cmd must be set",
-          out->arch);
-      return -1;
-    }
-    if (state->global->advanced_layout > 0
-        && !os_IsAbsolutePath(out->check_cmd)) {
-      get_advanced_layout_path(start_path, sizeof(start_path),
-                               state->global, prb, out->check_cmd, -1);
-      snprintf(out->check_cmd, sizeof(out->check_cmd), "%s", start_path);
-    } else {
-      pathmake2(out->check_cmd, state->global->checker_dir, "/",
-                out->check_cmd, NULL);
-    }
   }
 
   /* copy valuer_cmd */
