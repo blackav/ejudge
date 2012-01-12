@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/01/11 18:20:07
+// Generated 2012/01/12 11:30:02
 
 #include "prepare_meta.h"
 #include "prepare.h"
@@ -671,11 +671,8 @@ static struct meta_info_item meta_info_section_tester_data_data[] =
   [CNTSTESTER_error_file] = { CNTSTESTER_error_file, 'S', XSIZE(struct section_tester_data, error_file), "error_file", XOFFSET(struct section_tester_data, error_file) },
   [CNTSTESTER_prepare_cmd] = { CNTSTESTER_prepare_cmd, 'S', XSIZE(struct section_tester_data, prepare_cmd), "prepare_cmd", XOFFSET(struct section_tester_data, prepare_cmd) },
   [CNTSTESTER_start_cmd] = { CNTSTESTER_start_cmd, 'S', XSIZE(struct section_tester_data, start_cmd), "start_cmd", XOFFSET(struct section_tester_data, start_cmd) },
-  [CNTSTESTER_check_cmd] = { CNTSTESTER_check_cmd, 'S', XSIZE(struct section_tester_data, check_cmd), "check_cmd", XOFFSET(struct section_tester_data, check_cmd) },
   [CNTSTESTER_nwrun_spool_dir] = { CNTSTESTER_nwrun_spool_dir, 'S', XSIZE(struct section_tester_data, nwrun_spool_dir), "nwrun_spool_dir", XOFFSET(struct section_tester_data, nwrun_spool_dir) },
   [CNTSTESTER_start_env] = { CNTSTESTER_start_env, 'X', XSIZE(struct section_tester_data, start_env), "start_env", XOFFSET(struct section_tester_data, start_env) },
-  [CNTSTESTER_checker_env] = { CNTSTESTER_checker_env, 'X', XSIZE(struct section_tester_data, checker_env), "checker_env", XOFFSET(struct section_tester_data, checker_env) },
-  [CNTSTESTER_standard_checker_used] = { CNTSTESTER_standard_checker_used, 'i', XSIZE(struct section_tester_data, standard_checker_used), NULL, XOFFSET(struct section_tester_data, standard_checker_used) },
   [CNTSTESTER_memory_limit_type_val] = { CNTSTESTER_memory_limit_type_val, 'i', XSIZE(struct section_tester_data, memory_limit_type_val), NULL, XOFFSET(struct section_tester_data, memory_limit_type_val) },
   [CNTSTESTER_secure_exec_type_val] = { CNTSTESTER_secure_exec_type_val, 'i', XSIZE(struct section_tester_data, secure_exec_type_val), NULL, XOFFSET(struct section_tester_data, secure_exec_type_val) },
 };
