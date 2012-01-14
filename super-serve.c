@@ -4632,16 +4632,6 @@ main(int argc, char **argv)
     err("contests directory is invalid");
     return 1;
   }
-  if (!slave_mode) {
-    if (!config->serve_path || !*config->serve_path) {
-      err("serve_path is not defined");
-      return 1;
-    }
-    if (access(config->serve_path, X_OK) < 0) {
-      err("serve_path '%s' is not executable", config->serve_path);
-      return 1;
-    }
-  }
   if (config->run_path && config->run_path[0]
       && access(config->run_path, X_OK) < 0) {
     err("run_path '%s' is not executable", config->run_path);

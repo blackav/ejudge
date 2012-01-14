@@ -4,7 +4,7 @@
 #ifndef __EJUDGE_CFG_H__
 #define __EJUDGE_CFG_H__ 1
 
-/* Copyright (C) 2002-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -65,7 +65,6 @@ struct ejudge_cfg
   unsigned char *server_main_url;
   unsigned char *admin_email;
   unsigned char *l10n_dir;
-  unsigned char *serve_path;
   unsigned char *run_path;
   unsigned char *charset;
   unsigned char *config_dir;

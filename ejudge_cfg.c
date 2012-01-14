@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -414,7 +414,7 @@ static const size_t cfg_final_offsets[TG_LAST_TAG] =
   [TG_SERVER_NAME] = CONFIG_OFFSET(server_name),
   [TG_SERVER_NAME_EN] = CONFIG_OFFSET(server_name_en),
   [TG_SERVER_MAIN_URL] = CONFIG_OFFSET(server_main_url),
-  [TG_SERVE_PATH] = CONFIG_OFFSET(serve_path),
+  //[TG_SERVE_PATH] = CONFIG_OFFSET(serve_path),
   [TG_L10N_DIR] = CONFIG_OFFSET(l10n_dir),
   [TG_RUN_PATH] = CONFIG_OFFSET(run_path),
   [TG_CHARSET] = CONFIG_OFFSET(charset),
@@ -522,6 +522,8 @@ ejudge_cfg_parse(char const *path)
     case TG_COMPILE_SERVERS:
       if (parse_compile_servers(cfg, p) < 0) goto failed;
       break;
+    case TG_SERVE_PATH:
+      break;
     default:
       xml_err_elem_not_allowed(p);
       break;
@@ -598,12 +600,6 @@ ejudge_cfg_parse(char const *path)
     xfree(cfg->compile_log);
     cfg->compile_log = xstrdup(pathbuf);
   }
-
-  // ignore the defined value
-#if defined EJUDGE_SERVE_PATH
-  xfree(cfg->serve_path);
-  cfg->serve_path = xstrdup(EJUDGE_SERVE_PATH);
-#endif /* EJUDGE_SERVE_PATH */
 
 #if defined EJUDGE_RUN_PATH
   xfree(cfg->run_path);
