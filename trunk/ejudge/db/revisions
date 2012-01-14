@@ -6863,3 +6863,8 @@ run.c 6624 0 9870725
 prepare.c 6624 0 19322520
 super_html_3.c 6624 0 31626603
 run.c 6626 0 9860618
+ejudge_cfg.h 6628 0 267206
+ejudge-setup.c 6628 0 10219053
+super-serve.c 6628 0 13348948
+ejudge_cfg.c 6628 0 1480086
+super_html_2.c 6628 0 4988868
