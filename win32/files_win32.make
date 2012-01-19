@@ -1,7 +1,7 @@
 # -*- Makefile -*-
 # $Id$
 
-# Copyright (C) 2009-2011 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2009-2012 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -54,6 +54,8 @@ WIN32_COMMON_CFILES=\
  sformat.c\
  sha.c\
  shellcfg_parse.c\
+ super_run_packet.c\
+ super_run_packet_meta.c\
  team_extra.c\
  testinfo.c\
  testing_report_xml.c\
