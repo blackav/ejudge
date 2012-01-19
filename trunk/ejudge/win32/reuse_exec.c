@@ -1,6 +1,6 @@
 /* $Id$ */
 
-/* Copyright (C) 1999-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1999-2012 Alexander Chernov <cher@ejudge.ru> */
 /* Created: <1999-07-20 11:05:09 cher> */
 
 /*
@@ -498,6 +498,17 @@ task_SetMaxRealTime(tTask *tsk, int secs)
   ASSERT(tsk->state == TSK_STOPPED);
 
   tsk->max_real_time = secs;
+  return 0;
+}
+
+int
+task_SetMaxRealTimeMillis(tTask *tsk, int msecs)
+{
+  ASSERT(tsk);
+  ASSERT(msecs >= 0);
+  ASSERT(tsk->state == TSK_STOPPED);
+
+  tsk->max_real_time = (msecs + 999) / 1000;
   return 0;
 }
 
