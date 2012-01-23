@@ -3,7 +3,7 @@
 #ifndef __TEAMDB_H__
 #define __TEAMDB_H__
 
-/* Copyright (C) 2000-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -41,7 +41,7 @@ struct teamdb_db_callbacks
 };
 struct userlist_user;
 
-teamdb_state_t teamdb_init(void);
+teamdb_state_t teamdb_init(int contest_id);
 teamdb_state_t teamdb_destroy(teamdb_state_t);
 
 int teamdb_open_client(teamdb_state_t state,

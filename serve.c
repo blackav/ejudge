@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -159,7 +159,7 @@ main(int argc, char *argv[])
     err("contest_id is not defined");
     return 1;
   }
-  serve_state.teamdb_state = teamdb_init();
+  serve_state.teamdb_state = teamdb_init(global->contest_id);
   serve_state.team_extra_state = team_extra_init();
   team_extra_set_dir(serve_state.team_extra_state, global->team_extra_dir);
   if (!initialize_mode) {
