@@ -3,7 +3,7 @@
 #ifndef __TEAMDB_PRIV_H__
 #define __TEAMDB_PRIV_H__
 
-/* Copyright (C) 2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -52,6 +52,9 @@ struct old_db_state
 
 struct teamdb_state
 {
+  int contest_id;
+  int nref;
+
   struct teamdb_db_callbacks *callbacks;
   int need_update;
   int pseudo_vintage;
@@ -62,7 +65,6 @@ struct teamdb_state
   int total_participants;
   struct userlist_user **participants;
   struct userlist_contest **u_contests;
-  int contest_id;
 
   int extra_out_of_sync;
   int extra_num;

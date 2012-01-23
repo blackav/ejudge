@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -44,11 +44,12 @@
 #include <signal.h>
 
 teamdb_state_t
-teamdb_init(void)
+teamdb_init(int contest_id)
 {
   teamdb_state_t state;
 
   XCALLOC(state, 1);
+  state->contest_id = contest_id;
   state->old.shm_id = -1;
   return state;
 }

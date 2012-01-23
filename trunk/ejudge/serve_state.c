@@ -54,13 +54,13 @@
 #include "win32_compat.h"
 
 serve_state_t
-serve_state_init(void)
+serve_state_init(int contest_id)
 {
   serve_state_t state;
 
   XCALLOC(state, 1);
   state->clarlog_state = clar_init();
-  state->teamdb_state = teamdb_init();
+  state->teamdb_state = teamdb_init(contest_id);
   state->team_extra_state = team_extra_init();
   state->runlog_state = run_init(state->teamdb_state);
   return state;
@@ -664,7 +664,7 @@ serve_state_load_contest_config(
     goto failure;
   }
 
-  state = serve_state_init();
+  state = serve_state_init(contest_id);
   state->config_path = xstrdup(config_path);
   state->current_time = time(0);
   state->load_time = state->current_time;
@@ -740,7 +740,7 @@ serve_state_load_contest(
     goto failure;
   }
 
-  state = serve_state_init();
+  state = serve_state_init(contest_id);
   state->config_path = xstrdup(config_path);
   state->current_time = time(0);
   state->load_time = state->current_time;
