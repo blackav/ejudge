@@ -6868,3 +6868,11 @@ ejudge-setup.c 6628 0 10219053
 super-serve.c 6628 0 13348948
 ejudge_cfg.c 6628 0 1480086
 super_html_2.c 6628 0 4988868
+serve_state.h 6631 0 1546433
+teamdb.h 6631 0 306642
+teamdb_priv.h 6631 0 149957
+fix-db.c 6631 0 1763380
+serve.c 6631 0 502677
+win32/reuse_exec.c 6630 0 2791504
+serve_state.c 6631 0 2571990
+teamdb.c 6631 0 1533155
