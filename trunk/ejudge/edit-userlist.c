@@ -1,7 +1,7 @@
 /* -*- mode:c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -3743,7 +3743,6 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
   struct userlist_user **uu = 0;
   unsigned char **descs = 0;
   unsigned char buf[1024];
-  int len;
   ITEM **items;
   MENU *menu;
   WINDOW *in_win, *out_win;
@@ -3824,9 +3823,9 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
 
     w = 50; y = 0;
     if (utf8_mode) w = utf8_cnt(name, w, &y);
-    len = snprintf(buf, sizeof(buf), "%s%6d  %-16.16s  %-*.*s",
-                   g_sel_users.mask[i]?"!":" ",
-                   uu[i]->id, uu[i]->login, w + y, w, name);
+    snprintf(buf, sizeof(buf), "%s%6d  %-16.16s  %-*.*s",
+             g_sel_users.mask[i]?"!":" ",
+             uu[i]->id, uu[i]->login, w + y, w, name);
     descs[i] = xstrdup(buf);
   }
 
@@ -4107,9 +4106,9 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
       if (!name) name = "";
       w = 50; y = 0;
       if (utf8_mode) w = utf8_cnt(name, w, &y);
-      len = snprintf(buf, sizeof(buf), "%s%6d  %-16.16s  %-*.*s",
-                     g_sel_users.mask[i]?"!":" ",
-                     uu[i]->id, uu[i]->login, w + y, w, name);
+      snprintf(buf, sizeof(buf), "%s%6d  %-16.16s  %-*.*s",
+               g_sel_users.mask[i]?"!":" ",
+               uu[i]->id, uu[i]->login, w + y, w, name);
       strcpy(descs[i], buf);
       menu_driver(menu, REQ_DOWN_ITEM);
       goto menu_continue;
@@ -4163,9 +4162,9 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
           if (!name) name = "";
           w = 50; y = 0;
           if (utf8_mode) w = utf8_cnt(name, w, &y);
-          len = snprintf(buf, sizeof(buf), "%s%6d  %-16.16s  %-*.*s",
-                         g_sel_users.mask[j]?"!":" ",
-                         uu[j]->id, uu[j]->login, w + y, w, name);
+          snprintf(buf, sizeof(buf), "%s%6d  %-16.16s  %-*.*s",
+                   g_sel_users.mask[j]?"!":" ",
+                   uu[j]->id, uu[j]->login, w + y, w, name);
           strcpy(descs[j], buf);
         }
         memset(g_sel_users.mask, 0, g_sel_users.allocated);
@@ -4208,9 +4207,9 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
           if (!name) name = "";
           w = 50; y = 0;
           if (utf8_mode) w = utf8_cnt(name, w, &y);
-          len = snprintf(buf, sizeof(buf), "%s%6d  %-16.16s  %-*.*s",
-                         g_sel_users.mask[j]?"!":" ",
-                         uu[j]->id, uu[j]->login, w + y, w, name);
+          snprintf(buf, sizeof(buf), "%s%6d  %-16.16s  %-*.*s",
+                   g_sel_users.mask[j]?"!":" ",
+                   uu[j]->id, uu[j]->login, w + y, w, name);
           strcpy(descs[j], buf);
         }
         memset(g_sel_users.mask, 0, g_sel_users.allocated);

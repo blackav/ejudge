@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2011-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -2847,7 +2847,6 @@ super_serve_op_TESTS_CANCEL_ACTION(
   const struct contest_desc *cnts = 0;
   opcap_t caps = 0LL;
   serve_state_t cs = NULL;
-  const struct section_global_data *global = NULL;
   const struct section_problem_data *prob = NULL;
   int prob_id = 0;
   int variant = 0;
@@ -2870,7 +2869,6 @@ super_serve_op_TESTS_CANCEL_ACTION(
   retval = 0;
   retval = 0;
   cs = phr->ss->te_state;
-  global = cs->global;
 
   ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
   if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
@@ -4970,7 +4968,7 @@ super_serve_op_TESTS_STATEMENT_EDIT_ACTION(
   ss_cgi_param_int_opt(phr, "delete_num", &delete_num, 0);
 
   if (!prob->xml_file || !prob->xml_file[0]) FAIL(S_ERR_INV_PROB_ID);
-  if (cs->global->advanced_layout > 0) {
+  if (global->advanced_layout > 0) {
     get_advanced_layout_path(xml_path, sizeof(xml_path), cs->global, prob, prob->xml_file, variant);
   } else if (variant > 0) {
     prepare_insert_variant_num(xml_path, sizeof(xml_path), prob->xml_file, variant);
@@ -5182,7 +5180,7 @@ super_serve_op_TESTS_STATEMENT_EDIT_2_ACTION(
   }
 
   if (!prob->xml_file || !prob->xml_file[0]) FAIL(S_ERR_INV_PROB_ID);
-  if (cs->global->advanced_layout > 0) {
+  if (global->advanced_layout > 0) {
     get_advanced_layout_path(xml_path, sizeof(xml_path), cs->global, prob, prob->xml_file, variant);
   } else if (variant > 0) {
     prepare_insert_variant_num(xml_path, sizeof(xml_path), prob->xml_file, variant);
@@ -5268,8 +5266,8 @@ super_serve_op_TESTS_STATEMENT_DELETE_ACTION(
   }
 
   if (!prob->xml_file || !prob->xml_file[0]) FAIL(S_ERR_INV_PROB_ID);
-  if (cs->global->advanced_layout > 0) {
-    get_advanced_layout_path(xml_path, sizeof(xml_path), cs->global, prob, prob->xml_file, variant);
+  if (global->advanced_layout > 0) {
+    get_advanced_layout_path(xml_path, sizeof(xml_path), global, prob, prob->xml_file, variant);
   } else if (variant > 0) {
     prepare_insert_variant_num(xml_path, sizeof(xml_path), prob->xml_file, variant);
   } else {

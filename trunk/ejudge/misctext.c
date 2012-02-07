@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -2010,9 +2010,9 @@ ucs2_to_utf8(
   out_count = 0;
   for (i = 0; i < u16len; i += 2) {
     if (is_be) {
-      c = (u16str[i] << 8) | u16str[i + 1];
+      c = (u16p[i] << 8) | u16p[i + 1];
     } else {
-      c = (u16str[i + 1] << 8) | u16str[i];
+      c = (u16p[i + 1] << 8) | u16p[i];
     }
 
     if (c <= 0x7f) {

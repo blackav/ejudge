@@ -4486,7 +4486,7 @@ super_html_lang_cmd(struct sid_state *sstate, int cmd,
                     int lang_id, const unsigned char *param2,
                     int param3, int param4)
 {
-  struct section_language_data *pl_old, *pl_new;
+  struct section_language_data *pl_new;
   int val, n;
   int *p_int;
   size_t *p_size, zval;
@@ -4500,7 +4500,6 @@ super_html_lang_cmd(struct sid_state *sstate, int cmd,
     return -SSERV_ERR_INVALID_PARAMETER;
   }
 
-  pl_old = sstate->cs_langs[lang_id];
   pl_new = 0;
   if (sstate->cs_loc_map[lang_id] > 0)
     pl_new = sstate->langs[sstate->cs_loc_map[lang_id]];
@@ -10133,7 +10132,7 @@ super_html_check_tests(FILE *f,
   struct stat stbuf;
   int total_tests = 0, v_total_tests = 0;
   unsigned char hbuf[1024];
-  int file_group, file_mode, dir_group, dir_mode;
+  int file_group, file_mode;
   int already_compiled = 0;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   path_t test_checker_cmd;
@@ -10157,8 +10156,6 @@ super_html_check_tests(FILE *f,
 
   file_group = file_perms_parse_group(cnts->file_group);
   file_mode = file_perms_parse_mode(cnts->file_mode);
-  dir_group = file_perms_parse_group(cnts->dir_group);
-  dir_mode = file_perms_parse_mode(cnts->dir_mode);
 
   mkpath(conf_path, cnts->root_dir, cnts->conf_dir, DFLT_G_CONF_DIR);
   mkpath(g_test_path, conf_path, global->test_dir, DFLT_G_TEST_DIR);

@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -240,11 +240,11 @@ void
 path_normalize(unsigned char *path, size_t size)
 {
   unsigned char **split = 0;
-  int n, i, j, len;
+  int i, j, len;
   unsigned char *t;
 
   if (!os_IsAbsolutePath(path)) return;
-  n = path_split(path, &split);
+  path_split(path, &split);
   i = j = 1;
   while (split[i]) {
     if (!strcmp(split[i], "..")) {

@@ -236,6 +236,7 @@ normalize_file(
                                 TEXT_FIX_CR | TEXT_FIX_TR_SP
                                 | TEXT_FIX_FINAL_NL | TEXT_FIX_TR_NL,
                                 &out_count, &out_mask);
+  (void) out_size;
   if (out_count) {
     snprintf(out_path, sizeof(out_path), "%s.tmp", path);
     if (!(out_f = fopen(out_path, "w"))) {

@@ -12534,7 +12534,6 @@ unpriv_main_page(FILE *fout,
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   unsigned char *last_source = 0;
   unsigned char dbuf[1024];
-  unsigned char wbuf[1024];
   int upper_tab_id = 0, next_prob_id;
   problem_xml_t px;
   unsigned char prev_group_name[256] = { 0 };
@@ -12641,7 +12640,6 @@ unpriv_main_page(FILE *fout,
         } else {
           div_class = "nProbBad";
         }
-        wbuf[0] = 0;
         /*
         if (global->problem_tab_size > 0)
           snprintf(wbuf, sizeof(wbuf), " width=\"%dpx\"",
@@ -13459,7 +13457,6 @@ unpriv_main_page(FILE *fout,
       } else {
         div_class = "nProbBad";
       }
-      wbuf[0] = 0;
       /*
       if (global->problem_tab_size > 0)
         snprintf(wbuf, sizeof(wbuf), " width=\"%dpx\"",

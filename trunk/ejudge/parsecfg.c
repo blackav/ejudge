@@ -1141,7 +1141,6 @@ parse_param(char const *path,
 {
   struct generic_section_config  *cfg = NULL;
   struct generic_section_config **psect, *sect;
-  const struct config_parse_info       *sinfo;
 
   char           sectname[32];
   char           varname[32];
@@ -1163,7 +1162,6 @@ parse_param(char const *path,
     fprintf(stderr, "Cannot find description of section [global]\n");
     goto cleanup;
   }
-  sinfo = params[sindex].info;
 
   if (!f && !(f = fopen(path, "r"))) {
     fprintf(stderr, "Cannot open configuration file %s\n", path);
@@ -1218,7 +1216,6 @@ parse_param(char const *path,
               sectname);
       goto cleanup;
     }
-    sinfo = params[sindex].info;
     if (params[sindex].pcounter) (*params[sindex].pcounter)++;
 
     sect = (struct generic_section_config*) xcalloc(1, params[sindex].size);

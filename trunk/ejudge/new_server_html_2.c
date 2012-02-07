@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -123,7 +123,6 @@ ns_write_priv_all_runs(
   const unsigned char *examinable_str;
   const unsigned char *marked_str;
   const unsigned char *saved_str;
-  const unsigned char *rejudge_dis_str;
   unsigned long *displayed_mask = 0;
   int displayed_size = 0;
   unsigned char bb[1024];
@@ -480,10 +479,8 @@ ns_write_priv_all_runs(
       }
       run_time = pe->time;
       imported_str = "";
-      rejudge_dis_str = "";
       if (pe->is_imported) {
         imported_str = "*";
-        rejudge_dis_str = " disabled=\"1\"";
       }
       if (pe->is_hidden) {
         imported_str = "#";
@@ -1761,8 +1758,6 @@ ns_write_priv_report(const serve_state_t cs,
   char *rep_text = 0, *html_text;
   size_t rep_len = 0, html_len;
   int rep_flag, content_type;
-  const unsigned char *t6 = _("Refresh");
-  const unsigned char *t7 = _("View team report");
   const unsigned char *start_ptr = 0;
   struct run_entry re;
   const struct section_global_data *global = cs->global;
@@ -1780,8 +1775,6 @@ ns_write_priv_report(const serve_state_t cs,
   };
 
   if (team_report_flag && global->team_enable_rep_view) {
-    t7 = t6;
-    t6 = _("View report");
     report_dir = global->team_report_archive_dir;
     if (global->team_show_judge_report) {
       report_dir = global->report_archive_dir;
@@ -1806,12 +1799,6 @@ ns_write_priv_report(const serve_state_t cs,
     ns_error(log_f, NEW_SRV_ERR_INV_PROB_ID);
     goto done;
   }
-
-  /*
-  print_nav_buttons(state, f, run_id, sid, self_url, hidden_vars, extra_args,
-                    _("Main page"), 0, 0, 0, _("View source"), t6, t7);
-  fprintf(f, "<hr>\n");
-  */
 
   rep_flag = archive_make_read_path(cs, rep_path, sizeof(rep_path),
                                     global->xml_report_archive_dir,
@@ -5157,7 +5144,6 @@ ns_get_user_problems_summary(
         int *all_attempts)            /* all attempts count */
 {
   const struct section_global_data *global = cs->global;
-  time_t start_time;
   int total_runs, run_id, cur_score, total_teams;
   struct run_entry re;
   struct section_problem_data *cur_prob = 0;
@@ -5166,11 +5152,6 @@ ns_get_user_problems_summary(
   int status, score;
   int separate_user_score = 0;
 
-  if (global->is_virtual) {
-    start_time = run_get_virtual_start_time(cs->runlog_state, user_id);
-  } else {
-    start_time = run_get_start_time(cs->runlog_state);
-  }
   total_runs = run_get_total(cs->runlog_state);
   total_teams = teamdb_get_max_team_id(cs->teamdb_state) + 1;
   separate_user_score = global->separate_user_score > 0 && cs->online_view_judge_score <= 0;
@@ -5632,8 +5613,7 @@ ns_write_user_problems_summary(
         int *prev_successes)          /* the number of prev. successes */
 {
   const struct section_global_data *global = cs->global;
-  time_t start_time;
-  int total_runs, total_teams, prob_id, total_score = 0;
+  int prob_id, total_score = 0;
   struct run_entry re;
   struct section_problem_data *cur_prob = 0;
   unsigned char *s;
@@ -5645,13 +5625,6 @@ ns_write_user_problems_summary(
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   int separate_user_score = 0;
 
-  if (global->is_virtual) {
-    start_time = run_get_virtual_start_time(cs->runlog_state, user_id);
-  } else {
-    start_time = run_get_start_time(cs->runlog_state);
-  }
-  total_runs = run_get_total(cs->runlog_state);
-  total_teams = teamdb_get_max_team_id(cs->teamdb_state) + 1;
   separate_user_score = global->separate_user_score > 0 && cs->online_view_judge_score <= 0;
 
   if (table_class && *table_class) {
@@ -5736,18 +5709,16 @@ ns_write_user_problems_summary(
       continue;
     }
 
-    int status, test, score;
+    int status, test;
     run_get_entry(cs->runlog_state, best_run[prob_id], &re);
     if (separate_user_score > 0 && re.is_saved) {
       status = re.saved_status;
       act_status = re.saved_status;
       test = re.saved_test;
-      score = re.saved_score;
     } else {
       status = re.status;
       act_status = re.status;
       test = re.test;
-      score = re.score;
     }
     if (global->score_system == SCORE_OLYMPIAD && accepting_mode) {
       if (act_status == RUN_OK || act_status == RUN_PARTIAL
@@ -5897,7 +5868,7 @@ ns_examiners_page(
   unsigned char **logins = 0, **names = 0, *roles = 0;
   unsigned char *login = 0, *name = 0;
   unsigned char bb[1024];
-  const unsigned char *s = 0, *s_beg = 0, *s_end = 0;
+  const unsigned char *s_beg = 0, *s_end = 0;
   unsigned char nbuf[1024];
   int exam_role_count = 0, chief_role_count = 0, add_count, ex_num;
   int assignable_runs, assigned_runs;
@@ -6003,8 +5974,6 @@ ns_examiners_page(
     for (i = 1; i <= max_user_id; i++) {
       if (!(roles[i] & (1 << USER_ROLE_CHIEF_EXAMINER)))
         continue;
-      s = "";
-      if (i == user_id) s = " selected=\"selected\"";
       fprintf(fout, "<option value=\"%d\">", i);
       if (!names[i])
         fprintf(fout, "%s", logins[i]);

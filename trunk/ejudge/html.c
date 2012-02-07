@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -356,7 +356,6 @@ write_text_run_status(
   const struct section_global_data *global = state->global;
   unsigned char status_str[64], score_str[64];
   struct section_problem_data *pr = 0;
-  int need_extra_col = 0;
   int status, score, test;
   int separate_user_score = 0;
 
@@ -375,11 +374,6 @@ write_text_run_status(
     pr = state->probs[pe->prob_id];
   run_status_to_str_short(status_str, sizeof(status_str), status);
   fprintf(f, "%s;", status_str);
-
-  if (global->score_system == SCORE_KIROV
-      || global->score_system == SCORE_OLYMPIAD
-      || global->score_system == SCORE_MOSCOW)
-    need_extra_col = 1;
 
   if (status >= RUN_PSEUDO_FIRST && status <= RUN_PSEUDO_LAST) {
     return;
@@ -471,7 +465,7 @@ new_write_user_runs(
   struct section_problem_data *cur_prob;
   struct section_language_data *lang = 0;
   unsigned char *cl = "";
-  int status, score;
+  int status;
   int enable_src_view = 0;
   int enable_rep_view = 0;
   int separate_user_score = 0;
@@ -547,10 +541,8 @@ new_write_user_runs(
 
     if (separate_user_score > 0 && re.is_saved) {
       status = re.saved_status;
-      score = re.saved_score;
     } else {
       status = re.status;
-      score = re.score;
     }
 
     if (global->score_system == SCORE_OLYMPIAD
@@ -2679,10 +2671,8 @@ do_write_moscow_standings(
   time_t udur = 0;
   time_t last_success_time = 0;
   time_t last_success_start = 0;
-  time_t last_success_dur = 0;
   time_t last_submit_time = 0;
   time_t last_submit_start = 0;
-  time_t last_submit_dur = 0;
 
   int r_tot;                    /* total number of runs */
   const struct run_entry *runs; /* the pointer to the PRIMARY runs storage */
@@ -2987,11 +2977,9 @@ do_write_moscow_standings(
         last_success_run = i;
         last_success_time = pe->time;
         last_success_start = ustart;
-        last_success_dur = udur;
         last_submit_run = i;
         last_submit_time = pe->time;
         last_submit_start = ustart;
-        last_submit_dur = udur;
       }
     } else if (run_is_failed_attempt(pe->status)) {
       if (pe->score > up_score[up_ind]) {
@@ -3006,7 +2994,6 @@ do_write_moscow_standings(
         last_submit_run = i;
         last_submit_time = pe->time;
         last_submit_start = ustart;
-        last_submit_dur = udur;
       }
     } else if ((pe->status == RUN_COMPILE_ERR || pe->status == RUN_STYLE_ERR)
                && !prob->ignore_compile_errors) {
@@ -3016,7 +3003,6 @@ do_write_moscow_standings(
         last_submit_run = i;
         last_submit_time = pe->time;
         last_submit_start = ustart;
-        last_submit_dur = udur;
       }
     } else if (pe->status == RUN_COMPILE_ERR || pe->status == RUN_STYLE_ERR) {
       // silently ignore compilation error
@@ -4450,17 +4436,15 @@ do_write_public_log(
   fprintf(f, "</tr>\n");
 
   for (i = total - 1; i >= 0; i--) {
-    int status, score;
+    int status;
 
     pe = &runs[i];
     if (pe->is_hidden) continue;
 
     if (separate_user_score > 0 && user_mode && pe->is_saved) {
       status = pe->saved_status;
-      score = pe->saved_score;
     } else {
       status = pe->status;
-      score = pe->score;
     }
 
     cur_prob = 0;

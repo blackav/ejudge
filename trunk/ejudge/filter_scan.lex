@@ -1,7 +1,7 @@
 /* -*- mode: fundamental -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -230,7 +230,7 @@ lett    [A-Za-z_]
 static void
 handle_int(void)
 {
-  unsigned char *buf, *eptr;
+  unsigned char *buf;
   int val;
   char *tmpeptr = 0;
 
@@ -239,7 +239,6 @@ handle_int(void)
   memcpy(buf, yytext, yyleng);
   errno = 0;
   val = strtol(buf, &tmpeptr, 0);
-  eptr = tmpeptr;
   if (errno) {
     (*filter_scan_err)(filter_scan_user_data, "value is out of range");
     val = 0;

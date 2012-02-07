@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2008-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -393,7 +393,7 @@ update_language_scripts(
   path_t script_out;
   DIR *d = 0;
   struct dirent *dd;
-  int nlen, need_update = -1, i, j;
+  int nlen, i, j;
   struct stat is, os;
   FILE *upd_f = 0;
   char *upd_t = 0;
@@ -407,7 +407,6 @@ update_language_scripts(
   for (i = 0; in_dirs[i]; i++) {
     if (!(d = opendir(in_dirs[i]))) continue;
     while ((dd = readdir(d))) {
-      need_update = -1;
       if ((nlen = strlen(dd->d_name)) <= 3) continue;
       if (strcmp(dd->d_name + nlen - 3, ".in") != 0) continue;
       snprintf(script_base, sizeof(script_base), "%.*s", nlen - 3, dd->d_name);
@@ -677,7 +676,6 @@ lang_configure_screen(
 {
   WINDOW *in_win = 0, *out_win = 0;
   PANEL *in_pan = 0, *out_pan = 0;
-  int c;
 
   if (lang_configured) return;
   lang_configured = 1;
@@ -710,7 +708,7 @@ lang_configure_screen(
   if (!batch_mode) {
     ncurses_print_help("Press any key");
     doupdate();
-    c = getch();
+    (void) getch();
   }
 
   if (in_pan) del_panel(in_pan);

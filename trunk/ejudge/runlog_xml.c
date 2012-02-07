@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -722,7 +722,7 @@ unparse_runlog_xml(
   time_t ts;
   int max_user_id;
   unsigned char *astr1, *astr2, *val1, *val2;
-  size_t alen1, alen2, asize1, asize2, csize;
+  size_t alen1, alen2, asize1, asize2;
   unsigned char status_buf[32];
   const struct section_global_data *global = state->global;
   path_t fpath;
@@ -960,7 +960,6 @@ unparse_runlog_xml(
                                         global->run_archive_dir,
                                         i, 0, 1)) >= 0) {
       if (generic_read_file(&ftext, 0, &fsize, flags, 0, fpath, 0) >= 0) {
-        csize = 0;
         fprintf(f, "      <%s %s=\"%zu\">%s</%s>\n",
                 elem_map[RUNLOG_T_SOURCE], attr_map[RUNLOG_A_SIZE], fsize,
                 encode_file(&b1, &b2, ftext, fsize),
@@ -1004,7 +1003,6 @@ unparse_runlog_xml(
                                         global->audit_log_dir,
                                         i, 0, 1)) >= 0) {
       if (generic_read_file(&ftext, 0, &fsize, flags, 0, fpath, 0) >= 0) {
-        csize = 0;
         fprintf(f, "      <%s %s=\"%zu\">%s</%s>\n",
                 elem_map[RUNLOG_T_AUDIT], attr_map[RUNLOG_A_SIZE], fsize,
                 encode_file(&b1, &b2, ftext, fsize),
