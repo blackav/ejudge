@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-12-24 22:25+0400\n"
+"POT-Creation-Date: 2012-02-07 14:52+0400\n"
 "PO-Revision-Date: 2011-12-24 22:28+0400\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -3744,9 +3744,6 @@ msgstr "Посмотреть положение участников"
 
 msgid "View submitted answer"
 msgstr "Сданный ответ"
-
-msgid "View team report"
-msgstr "Просмотреть пользовательский протокол"
 
 msgid "View testing queue"
 msgstr "Просмотр очереди тестирования"
