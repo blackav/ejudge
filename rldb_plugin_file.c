@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2008-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1005,7 +1005,7 @@ get_insert_run_id(
   struct rldb_file_cnts *cs = (struct rldb_file_cnts*) cdata;
   struct runlog_state *rls = cs->rl_state;
 
-  int i, j, k;
+  int i, j;
   struct run_entry *runs = 0;
 
   ASSERT(rls->run_u <= rls->run_a);
@@ -1050,7 +1050,6 @@ get_insert_run_id(
       if (runs[i].time > t) break;
       if (runs[i].time < t) continue;
       // runs[i].time == t
-      k = i;
       while (runs[i].status == RUN_EMPTY || runs[i].time == t) i++;
       j = i - 1;
       while (runs[j].status == RUN_EMPTY) j--;

@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -2438,6 +2438,7 @@ set_user_xml_func(void *data,
         oom = userlist_get_member_nc(ui->members, nm->serial, &orole, &onum);
         ASSERT(oom == om);
         ASSERT(orole == nrole);
+        (void) oom;
       }
       handled_members[handled_members_count++] = om;
     }
@@ -2841,6 +2842,7 @@ move_member_func(
     link_node = &ui->b;
   }
 
+  (void) link_node;
   /*
     as a result of cloning a new member may be created.
     its serial is storied in copied_from field.

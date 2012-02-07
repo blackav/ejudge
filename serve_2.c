@@ -2516,7 +2516,7 @@ serve_read_run_packet(
                             reply_pkt->run_id, 0, 0) < 0)
       goto failed;
     if (generic_copy_file(REMOVE, run_full_archive_dir, pname, "",
-                          0, 0, full_path, "") < 0)
+                          full_flags, 0, full_path, "") < 0)
       goto failed;
   }
 

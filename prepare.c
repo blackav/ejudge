@@ -4448,7 +4448,6 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
   struct section_tester_data *tp, *atp = 0;
   struct section_problem_data *prb;
   int si, j;
-  unsigned char *sish = 0;
   path_t start_path;
 
   ASSERT(out);
@@ -4475,7 +4474,6 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
       err("abstract tester '%s' not found", tp->super[0]);
       return -1;
     }
-    sish = atp->name;
   }
 
   memset(out, 0, sizeof(*out));

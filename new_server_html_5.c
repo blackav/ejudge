@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2007-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -388,6 +388,7 @@ create_autoassigned_account_page(
     if (cnts->members[i] && cnts->members[i]->max_count > 0)
       allowed_info_edit = 1;
 
+  (void) allowed_info_edit;
   get_client_url(client_url, sizeof(client_url), cnts, phr->self_url);
 
   if (ns_cgi_param(phr, "email", &email) <= 0) email = 0;
@@ -1335,6 +1336,7 @@ main_page_view_info(
   }
 
   err_count = userlist_count_info_errors(cnts, u, ui, mmm, role_err_count);
+  (void) err_count;
 
   fprintf(fout, "<br/>\n");
   if (phr->reg_status < 0) {

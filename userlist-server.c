@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -4489,6 +4489,7 @@ cmd_get_user_info(struct client_state *p,
   }
 
   orig_contest_id = data->contest_id;
+  (void) orig_contest_id;
   if (data->contest_id) {
     if (full_get_contest(p, logbuf, &data->contest_id, &cnts) < 0) return;
   }
@@ -9113,6 +9114,7 @@ cmd_import_csv_users(
   fprintf(log_f, "Operation completed successfully\n");
   close_memstream(log_f); log_f = 0;
   retval = ULS_TEXT_DATA;
+  (void) retval;
 
  cleanup:
   if (log_f) close_memstream(log_f);

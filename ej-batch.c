@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2010-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1046,7 +1046,7 @@ compile_dir_handler(
   struct compile_reply_packet *pkt = 0;
   struct submit_block_info *sb = 0;
   struct compile_spool_out_dirs *sp = 0;
-  int run_index, report_len;
+  int report_len;
   unsigned char *report_txt = 0;
 
   /* find spool_dir in compile_spool */
@@ -1092,7 +1092,6 @@ compile_dir_handler(
         pkt->contest_id, pkt->run_id);
     goto cleanup;
   }
-  run_index = pkt->run_id - sb->first_run_id;
 
   if (sb->compile_result_handler) {
     sb->compile_result_handler(sb->data, sb, pkt, report_txt, report_len);

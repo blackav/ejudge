@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -231,6 +231,7 @@ main(int argc, char *argv[])
   } else {
     startup_error("invalid command");
   }
+  (void) cmd;
 
   if (!(pid = start_find_process("ej-compile", 0))) {
     op_error("ej-compile is not running");

@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -666,7 +666,6 @@ main(int argc, char *argv[])
   enum { SUBST_SIZE = 16 };
   const unsigned char *subst_src[SUBST_SIZE];
   const unsigned char *subst_dst[SUBST_SIZE];
-  int subst_idx = 0;
   const unsigned char **subst_src_ptr = 0;
   const unsigned char **subst_dst_ptr = 0;
 
@@ -828,9 +827,9 @@ main(int argc, char *argv[])
 
   memset(subst_src, 0, sizeof(subst_src));
   memset(subst_dst, 0, sizeof(subst_dst));
-  subst_idx = 0;
 
 #ifdef __WIN32__
+  int subst_idx = 0;
   if (compile_home_dir[0]) {
     if (ejudge_config) {
       subst_src[subst_idx] = ejudge_config->compile_home_dir;

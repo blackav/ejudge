@@ -1,7 +1,7 @@
 /* -*- mode:c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2008-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -290,7 +290,6 @@ visual_save_config(const unsigned char *header)
 {
   WINDOW *in_win = 0, *out_win = 0;
   PANEL *in_pan = 0, *out_pan = 0;
-  int c;
 
   out_win = newwin(LINES - 2, COLS, 1, 0);
   in_win = newwin(LINES - 4, COLS - 2, 2, 1);
@@ -317,7 +316,7 @@ visual_save_config(const unsigned char *header)
   save_config_files(0, in_win);
   ncurses_print_help("Press any key");
   doupdate();
-  c = getch();
+  (void) getch();
 
   if (in_pan) del_panel(in_pan);
   if (out_pan) del_panel(out_pan);

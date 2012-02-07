@@ -1772,6 +1772,7 @@ cmd_main_page(struct client_state *p, int len,
   close_memstream(f); f = 0;
   if (!html_ptr) html_ptr = xstrdup("");
   q = client_state_new_autoclose(p, html_ptr, html_len);
+  (void) q;
 
   info("cmd_main_page: %zu", html_len);
   send_reply(p, SSERV_RPL_OK);
@@ -1853,6 +1854,7 @@ cmd_create_contest(struct client_state *p, int len,
   close_memstream(f); f = 0;
   if (!html_ptr) html_ptr = xstrdup("");
   q = client_state_new_autoclose(p, html_ptr, html_len);
+  (void) q;
 
   info("cmd_create_contest: %zu", html_len);
   send_reply(p, SSERV_RPL_OK);
@@ -3042,6 +3044,7 @@ cmd_http_request(
   }
 
   q = client_state_new_autoclose(p, out_t, out_z);
+  (void) q;
   info("cmd_http_request: %zu", out_z);
   send_reply(p, SSERV_RPL_OK);
   xfree(phr);
@@ -4307,7 +4310,7 @@ do_loop(void)
       if (sigchld_flag || hup_flag || term_flag || has_run_files) {
         timeout_ms = 0;
       }
-      n = pollfds_poll(pfds, 10000, &work_mask);
+      n = pollfds_poll(pfds, timeout_ms, &work_mask);
 
       if (n < 0 && errno != EINTR) {
         err("unexpected select error: %s", os_ErrorMsg());

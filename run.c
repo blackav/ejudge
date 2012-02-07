@@ -1034,7 +1034,6 @@ invoke_nwrun(
   struct generic_section_config *generic_out_packet = 0;
   struct nwrun_out_packet *out_packet = 0;
   long file_size;
-  int remove_out_packet_flag = 0;
   int timeout;
   int wait_time;
 
@@ -1241,7 +1240,6 @@ invoke_nwrun(
   }
 
   // parse the resulting packet
-  remove_out_packet_flag = 1;
   snprintf(tmp_in_path, sizeof(tmp_in_path), "%s/packet.cfg",
            out_entry_packet);
   generic_out_packet = nwrun_out_packet_parse(tmp_in_path, &out_packet);
@@ -1481,7 +1479,7 @@ run_tests(
 
   long expected_free_space = 0;
   const struct section_global_data *global = serve_state.global;
-  int disable_stderr;
+  int disable_stderr = 0;
 
   const struct super_run_in_global_packet *srgp = srp->global;
   const struct super_run_in_problem_packet *srpp = srp->problem;
