@@ -726,21 +726,21 @@ handle_stdout(void *context, void *fds, void *user)
   unsigned char buf[4096];
 
   ASSERT(prc);
-  ASSERT(prc->stdin_f == pfd->fd);
+  ASSERT(prc->stdout_f == pfd->fd);
 
   if ((pfd->revents & POLLNVAL)) {
     fprintf(stderr, "%s: ppoll invalid request fd=%d\n", __FUNCTION__, pfd->fd);
-    close(prc->stdin_f); prc->stdin_f = -1;
+    close(prc->stdout_f); prc->stdout_f = -1;
     return;
   }
   if ((pfd->revents & POLLHUP)) {
     fprintf(stderr, "%s: ppoll hangup fd=%d\n", __FUNCTION__, pfd->fd);
-    close(prc->stdin_f); prc->stdin_f = -1;
+    close(prc->stdout_f); prc->stdout_f = -1;
     return;
   }
   if ((pfd->revents & POLLERR)) {
     fprintf(stderr, "%s: ppoll error fd=%d\n", __FUNCTION__, pfd->fd);
-    close(prc->stdin_f); prc->stdin_f = -1;
+    close(prc->stdout_f); prc->stdout_f = -1;
     return;
   }
   if (!(pfd->revents & POLLIN)) {
@@ -774,21 +774,21 @@ handle_stderr(void *context, void *fds, void *user)
   unsigned char buf[4096];
 
   ASSERT(prc);
-  ASSERT(prc->stdin_f == pfd->fd);
+  ASSERT(prc->stderr_f == pfd->fd);
 
   if ((pfd->revents & POLLNVAL)) {
     fprintf(stderr, "%s: ppoll invalid request fd=%d\n", __FUNCTION__, pfd->fd);
-    close(prc->stdin_f); prc->stdin_f = -1;
+    close(prc->stderr_f); prc->stderr_f = -1;
     return;
   }
   if ((pfd->revents & POLLHUP)) {
     fprintf(stderr, "%s: ppoll hangup fd=%d\n", __FUNCTION__, pfd->fd);
-    close(prc->stdin_f); prc->stdin_f = -1;
+    close(prc->stderr_f); prc->stderr_f = -1;
     return;
   }
   if ((pfd->revents & POLLERR)) {
     fprintf(stderr, "%s: ppoll error fd=%d\n", __FUNCTION__, pfd->fd);
-    close(prc->stdin_f); prc->stdin_f = -1;
+    close(prc->stderr_f); prc->stderr_f = -1;
     return;
   }
   if (!(pfd->revents & POLLIN)) {
