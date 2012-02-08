@@ -130,4 +130,7 @@ background_process_call_continuations(struct background_process_head *list);
 void
 background_process_close_fds(struct background_process_head *list);
 
+void
+background_process_append_pollfd(struct background_process_head *list, void *vp);
+
 #endif /* __EJ_PROCESS_H__ */
