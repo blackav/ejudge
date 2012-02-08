@@ -6900,7 +6900,9 @@ super_serve_op_TESTS_MAKE_continuation(struct background_process *prc)
   struct super_http_request_info *phr = cntx->phr;
   cntx->phr = NULL;
 
-  fprintf(cntx->start_f, "%s", prc->out.buf);
+  if (prc->out.buf) {
+    fprintf(cntx->start_f, "%s", prc->out.buf);
+  }
 
   fprintf(cntx->start_f, "%s: %s.%04d\n", "Stop time", xml_unparse_date(prc->stop_time_ms / 1000),
           (int) (prc->stop_time_ms % 1000));

@@ -4304,6 +4304,8 @@ do_loop(void)
         }
       }
 
+      background_process_append_pollfd(&background_processes, pfds);
+
       errno = 0;
       n = 0;
       timeout_ms = 10000;
