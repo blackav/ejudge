@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -235,6 +235,7 @@ const unsigned char * const super_proto_op_names[SSERV_OP_LAST] =
   [SSERV_OP_TESTS_STATEMENT_DELETE_ACTION] = "TESTS_STATEMENT_DELETE_ACTION",
   [SSERV_OP_TESTS_STATEMENT_DELETE_SAMPLE_ACTION] = "TESTS_STATEMENT_DELETE_SAMPLE_ACTION",
   [SSERV_OP_TESTS_TESTS_VIEW_PAGE] = "TESTS_TESTS_VIEW_PAGE",
+  [SSERV_OP_TESTS_GENERATE_ANSWERS_PAGE] = "GENERATE_ANSWERS_PAGE",
   [SSERV_OP_TESTS_SOURCE_HEADER_EDIT_PAGE] = "TESTS_SOURCE_HEADER_EDIT_PAGE",
   [SSERV_OP_TESTS_SOURCE_HEADER_EDIT_ACTION] = "TESTS_SOURCE_HEADER_EDIT_ACTION",
   [SSERV_OP_TESTS_SOURCE_HEADER_DELETE_ACTION] = "TESTS_SOURCE_HEADER_DELETE_ACTION",
@@ -399,6 +400,7 @@ const int super_proto_op_redirect[SSERV_OP_LAST] =
   [SSERV_OP_TESTS_TEST_INSERT_ACTION] = SSERV_OP_TESTS_TEST_EDIT_ACTION,
 
   [SSERV_OP_TESTS_CANCEL_2_ACTION] = SSERV_OP_TESTS_CANCEL_ACTION,
+  [SSERV_OP_TESTS_GENERATE_ANSWERS_PAGE] = SSERV_OP_TESTS_MAKE,
 };
 
 unsigned char const * const super_proto_op_error_messages[] =
