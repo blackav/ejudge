@@ -720,7 +720,7 @@ write_problem_editing_links(
             "Edit interactor");
   }
   if (prob->test_checker_cmd && prob->test_checker_cmd[0]) {
-    fprintf(out_f, "<li>%s%s</a><li>",
+    fprintf(out_f, "<li>%s%s</a></li>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                           NULL, "action=%d&amp;op=%d&amp;contest_id=%d&amp;variant=%d&amp;prob_id=%d",
                           SSERV_CMD_HTTP_REQUEST, SSERV_OP_TESTS_TEST_CHECKER_EDIT_PAGE,
@@ -1737,7 +1737,7 @@ super_serve_op_TESTS_TESTS_VIEW_PAGE(
       report_file(out_f, test_dir, &td_info, td_info.test_refs[i].info_idx, cl);
     }
     fprintf(out_f, "<td%s>", cl);
-    fprintf(out_f, "&nbsp;%s[%s]</a>",
+    fprintf(out_f, "%s[%s]</a>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                           "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;test_num=%d", SSERV_CMD_HTTP_REQUEST,
                           SSERV_OP_TESTS_TEST_MOVE_UP_ACTION, contest_id, prob_id, i + 1),
@@ -1747,7 +1747,7 @@ super_serve_op_TESTS_TESTS_VIEW_PAGE(
                           "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;test_num=%d", SSERV_CMD_HTTP_REQUEST,
                           SSERV_OP_TESTS_TEST_MOVE_DOWN_ACTION, contest_id, prob_id, i + 1),
             "Move down");
-    fprintf(out_f, "&nbsp;%s[%s]</a>",
+    fprintf(out_f, "<br/>%s[%s]</a>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                           "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;test_num=%d", SSERV_CMD_HTTP_REQUEST,
                           SSERV_OP_TESTS_TEST_MOVE_TO_SAVED_ACTION, contest_id, prob_id, i + 1),
@@ -1757,12 +1757,26 @@ super_serve_op_TESTS_TESTS_VIEW_PAGE(
                           "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;test_num=%d", SSERV_CMD_HTTP_REQUEST,
                           SSERV_OP_TESTS_TEST_INSERT_PAGE, contest_id, prob_id, i + 1),
             "Insert before");
-    fprintf(out_f, "&nbsp;%s[%s]</a>",
+    fprintf(out_f, "<br/>%s[%s]</a>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                           "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;test_num=%d", SSERV_CMD_HTTP_REQUEST,
                           SSERV_OP_TESTS_TEST_EDIT_PAGE, contest_id, prob_id, i + 1),
             "Edit");
-    fprintf(out_f, "&nbsp;%s[%s]</a>",
+    if (prob->test_checker_cmd && prob->test_checker_cmd[0]) {
+      fprintf(out_f, "&nbsp;%s[%s]</a>",
+              html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
+                            "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;test_num=%d", SSERV_CMD_HTTP_REQUEST,
+                            SSERV_OP_TESTS_TEST_CHECK_ACTION, contest_id, prob_id, i + 1),
+              "Check input");
+    }
+    if (prob->solution_cmd && prob->solution_cmd[0]) {
+      fprintf(out_f, "&nbsp;%s[%s]</a>",
+              html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
+                            "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;test_num=%d", SSERV_CMD_HTTP_REQUEST,
+                            SSERV_OP_TESTS_TEST_GENERATE_ACTION, contest_id, prob_id, i + 1),
+              "Generate output");
+    }
+    fprintf(out_f, "<br/>%s[%s]</a>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                           "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;test_num=%d", SSERV_CMD_HTTP_REQUEST,
                           SSERV_OP_TESTS_TEST_DELETE_PAGE, contest_id, prob_id, i + 1),
@@ -1779,6 +1793,14 @@ super_serve_op_TESTS_TESTS_VIEW_PAGE(
                         "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;test_num=%d", SSERV_CMD_HTTP_REQUEST,
                         SSERV_OP_TESTS_TEST_INSERT_PAGE, contest_id, prob_id, i + 1),
           "Add a new test after the last test");
+  if (prob->test_checker_cmd && prob->test_checker_cmd[0]) {
+    fprintf(out_f, "</td><td%s>", cl);
+    fprintf(out_f, "&nbsp;%s[%s]</a>",
+            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
+                          "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d", SSERV_CMD_HTTP_REQUEST,
+                          SSERV_OP_TESTS_CHECK_TESTS_PAGE, contest_id, prob_id),
+            "Check all tests");
+  }
   if (prob->solution_cmd && prob->solution_cmd[0]) {
     fprintf(out_f, "</td><td%s>", cl);
     fprintf(out_f, "&nbsp;%s[%s]</a>",
@@ -3040,6 +3062,11 @@ struct tests_make_one_test_context
   char *start_t;
   size_t start_z;
   struct super_http_request_info *phr;
+  int contest_id;
+  int prob_id;
+  int variant;
+  int test_num;
+  int next_action;
 };
 
 static void
@@ -3090,9 +3117,6 @@ start_background_make(
   return prc;
 }
 
-static void
-super_serve_op_TESTS_TEST_EDIT_ACTION_continuation_1(struct background_process *);
-
 int
 super_serve_op_TESTS_TEST_EDIT_ACTION(
         FILE *log_f,
@@ -3142,10 +3166,7 @@ super_serve_op_TESTS_TEST_EDIT_ACTION(
   struct testinfo_struct tinfo;
   struct test_dir_info td_info;
   int insert_mode = 0;
-  unsigned char buf[1024], hbuf[1024], errbuf[1024];
-  unsigned char prob_dir[PATH_MAX];
-  unsigned char makefile_path[PATH_MAX];
-  struct tests_make_one_test_context *cntx = NULL;
+  unsigned char buf[1024];
 
   test_tmp_path[0] = 0;
   corr_tmp_path[0] = 0;
@@ -3153,7 +3174,6 @@ super_serve_op_TESTS_TEST_EDIT_ACTION(
   test_del_path[0] = 0;
   corr_del_path[0] = 0;
   info_del_path[0] = 0;
-  errbuf[0] = 0;
   memset(&tinfo, 0, sizeof(tinfo));
   memset(&td_info, 0, sizeof(td_info));
   if (phr->opcode == SSERV_OP_TESTS_TEST_INSERT_ACTION) insert_mode = 1;
@@ -3367,73 +3387,17 @@ super_serve_op_TESTS_TEST_EDIT_ACTION(
     }
   }
 
-  // FIXME: run the test checker
   if (prob->test_checker_cmd && prob->test_checker_cmd[0]) {
-    get_advanced_layout_path(prob_dir, sizeof(prob_dir), global, prob, NULL, variant);
-    get_advanced_layout_path(makefile_path, sizeof(makefile_path), global, prob, DFLT_P_MAKEFILE, variant);
-    if (access(makefile_path, R_OK) < 0) {
-      snprintf(errbuf, sizeof(errbuf), "Makefile %s does not exist or is not readable", makefile_path);
-      goto fail_page;
+    buf[0] = 0;
+    if (prob->solution_cmd && prob->solution_cmd[0]) {
+      snprintf(buf, sizeof(buf), "next_action=%d", SSERV_OP_TESTS_TEST_GENERATE_ACTION);
     }
-    struct background_process *prc = super_serve_find_process("make");
-    if (prc) {
-      snprintf(errbuf, sizeof(errbuf), "Another make is running on this server");
-      goto fail_page;
-    }
-
-    XCALLOC(cntx, 1);
-    cntx->start_f = open_memstream(&cntx->start_t, &cntx->start_z);
-    cntx->phr = phr;
-
-    prc = start_background_make(cntx->start_f, prob_dir, test_num, "check_test", 
-                                super_serve_op_TESTS_TEST_EDIT_ACTION_continuation_1, cntx);
-    /*
-    char *args[16];
-    int argc = 0;
-    unsigned char prefix_buf[1024];
-    unsigned char home_buf[1024];
-    unsigned char local_buf[1024];
-
-    args[argc++] = MAKE_PATH;
-    snprintf(prefix_buf, sizeof(prefix_buf), "EJUDGE_PREFIX_DIR=%s", EJUDGE_PREFIX_DIR);
-    args[argc++] = prefix_buf;
-    snprintf(home_buf, sizeof(home_buf), "EJUDGE_CONTESTS_HOME_DIR=%s", EJUDGE_CONTESTS_HOME_DIR);
-    args[argc++] = home_buf;
-#if defined EJUDGE_LOCAL_DIR
-    snprintf(local_buf, sizeof(local_buf), "EJUDGE_LOCAL_DIR=%s", EJUDGE_LOCAL_DIR);
-    args[argc++] = local_buf;
-#endif
-    args[argc++] = (unsigned char*) target;
-    args[argc] = NULL;
-
-    //////// !!!!!
-
-
-  for (int i = 0; args[i]; ++i)
-    fprintf(cntx->start_f, "%s ", args[i]);
-  fprintf(cntx->start_f, "\n");
-
-  prc = ejudge_start_process(cntx->start_f, "make", args, NULL, prob_dir, NULL, 1, 30000,
-                             super_serve_op_TESTS_MAKE_continuation, cntx);
-  if (!prc) {
-    fclose(cntx->start_f); cntx->start_f = NULL;
-    write_pre(out_f, -1, cntx->start_t);
-    goto done;
-  }
-  fprintf(cntx->start_f, "%s: %s.%04d\n", "Start time", xml_unparse_date(prc->start_time_ms / 1000),
-          (int) (prc->start_time_ms % 1000));
-          
-  cntx = NULL;
-  phr->suspend_reply = 1;
-  super_serve_register_process(prc);
-  goto cleanup;
-    */
-
-
-
+    ss_redirect_2(out_f, phr, SSERV_OP_TESTS_TEST_CHECK_ACTION, contest_id, prob_id, variant, test_num, buf);
   }
 
-  // FIXME: run the solution
+  if (prob->solution_cmd && prob->solution_cmd[0]) {
+    ss_redirect_2(out_f, phr, SSERV_OP_TESTS_TEST_GENERATE_ACTION, contest_id, prob_id, variant, test_num, NULL);
+  }
 
   ss_redirect_2(out_f, phr, SSERV_OP_TESTS_TESTS_VIEW_PAGE, contest_id, prob_id, variant, 0, NULL);
 
@@ -3449,46 +3413,6 @@ cleanup:
   if (info_del_path[0]) unlink(info_del_path);
   html_armor_free(&ab);
   return retval;
-
-fail_page:
-  snprintf(buf, sizeof(buf), "serve-control: %s, contest %d (%s), test %d for problem %s FAILED",
-           phr->html_name, contest_id, ARMOR(cnts->name), test_num, prob->short_name);
-  ss_write_html_header(out_f, phr, buf, 0, NULL);
-  fprintf(out_f, "<h1>%s</h1>\n", buf);
-
-  fprintf(out_f, "<ul>");
-  fprintf(out_f, "<li>%s%s</a></li>",
-          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL, NULL),
-          "Main page");
-  fprintf(out_f, "<li>%s%s</a></li>\n",
-          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
-                        "action=%d&op=%d&contest_id=%d", SSERV_CMD_HTTP_REQUEST,
-                        SSERV_OP_TESTS_MAIN_PAGE, contest_id),
-          "Problems page");
-  fprintf(out_f, "</ul>\n");
-
-  write_problem_editing_links(out_f, phr, contest_id, prob_id, variant, global, prob);
-
-  fprintf(out_f, "<ul>");
-  fprintf(out_f, "<li>%s%s %d</a></li>\n",
-          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
-                        "action=%d&op=%d&contest_id=%d&prob_id=%d&variant=%d&test_num=%d",
-                        SSERV_CMD_HTTP_REQUEST,
-                        SSERV_OP_TESTS_TEST_EDIT_PAGE, contest_id, prob_id, variant, test_num),
-          "Edit test", test_num);
-  fprintf(out_f, "</ul>\n");
-
-  if (errbuf[0]) {
-    write_pre(out_f, -1, errbuf);
-  }
-
-  ss_write_html_footer(out_f);
-  goto cleanup;
-}
-
-static void
-super_serve_op_TESTS_TEST_EDIT_ACTION_continuation_1(struct background_process *prc)
-{
 }
 
 static void
@@ -4497,6 +4421,13 @@ generate_makefile(
   }
   fprintf(mk_f, "\n");
 
+  if (prob->test_checker_cmd && prob->test_checker_cmd[0]) {
+    fprintf(mk_f, "TC_EXECUTE_FLAGS = --quiet --use-stdin");
+    if (test_pat[0] > ' ') fprintf(mk_f, " --test-pattern=%s", test_pat);
+    if (info_pat[0] > ' ') fprintf(mk_f, " --info-pattern=%s", info_pat);
+    fprintf(mk_f, "\n");
+  }
+
   if (prob->use_tgz > 0) {
     fprintf(mk_f, "MAKE_ARCHIVE = ${EJUDGE_PREFIX_DIR}/libexec/ejudge/lang/ej-make-archive\n");
     fprintf(mk_f, "MAKE_ARCHIVE_FLAGS = --tgzdir-pattern=%s --tgz-pattern=%s\n",
@@ -4601,6 +4532,15 @@ generate_makefile(
     fprintf(mk_f, "\n");
     fprintf(mk_f, "answer : %s\n", prob->solution_cmd);
     fprintf(mk_f, "\tcd tests && ${EXECUTE} ${EXECUTE_FLAGS} --test-num=${TEST_NUM} ../%s\n", prob->solution_cmd);
+    fprintf(mk_f, "\n");
+  }
+  if (prob->test_checker_cmd && prob->test_checker_cmd[0]) {
+    fprintf(mk_f, "check_tests : %s\n", prob->test_checker_cmd);
+    fprintf(mk_f, "\tcd tests; for i in %s; do ${EXECUTE} ${TC_EXECUTE_FLAGS} --test-file=$$i ../%s; done\n",
+            test_pr_pat, prob->test_checker_cmd);
+    fprintf(mk_f, "\n");    
+    fprintf(mk_f, "check_test : %s\n", prob->test_checker_cmd);
+    fprintf(mk_f, "\tcd tests && ${EXECUTE} ${TC_EXECUTE_FLAGS} --test-num=${TEST_NUM} ../%s\n", prob->test_checker_cmd);
     fprintf(mk_f, "\n");
   }
   fprintf(mk_f, "\n");
@@ -6594,7 +6534,7 @@ super_serve_op_TESTS_CHECKER_EDIT_ACTION(
     if (!prob->interactor_cmd || !prob->interactor_cmd[0]) FAIL(S_ERR_INV_OPER);
     file_name = prob->interactor_cmd;
     break;
-  case SSERV_OP_TESTS_TEST_CHECKER_EDIT_PAGE:
+  case SSERV_OP_TESTS_TEST_CHECKER_EDIT_ACTION:
     if (!prob->test_checker_cmd || !prob->test_checker_cmd[0]) FAIL(S_ERR_INV_OPER);
     file_name = prob->test_checker_cmd;
     break;
@@ -7114,6 +7054,8 @@ super_serve_op_TESTS_MAKE(
 
   if (phr->opcode == SSERV_OP_TESTS_GENERATE_ANSWERS_PAGE) {
     target = "answers";
+  } else if (phr->opcode == SSERV_OP_TESTS_CHECK_TESTS_PAGE) {
+    target = "check_tests";
   }
 
   char *args[16];
@@ -7202,6 +7144,259 @@ super_serve_op_TESTS_MAKE_continuation(struct background_process *prc)
 
   write_pre(phr->out_f, status_ok, cntx->start_t);
   ss_write_html_footer(phr->out_f);
+  xfree(cntx->start_t); cntx->start_t = NULL; cntx->start_z = 0;
+  xfree(cntx); prc->user = NULL;
+  prc->continuation = NULL;
+  prc->state = BACKGROUND_PROCESS_GARBAGE;
+  phr->continuation(phr);
+}
+
+static void
+super_serve_op_TESTS_TEST_CHECK_ACTION_continuation(struct background_process *prc);
+
+int
+super_serve_op_TESTS_TEST_CHECK_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  int contest_id = 0;
+  int prob_id = 0;
+  int variant = 0;
+  int test_num = 0;
+  const struct contest_desc *cnts = NULL;
+  opcap_t caps = 0LL;
+  serve_state_t cs = NULL;
+  const struct section_global_data *global = NULL;
+  const struct section_problem_data *prob = NULL;
+  unsigned char prob_dir[PATH_MAX];
+  unsigned char makefile_path[PATH_MAX];
+  unsigned char errbuf[1024], buf[1024], hbuf[1024];
+  struct tests_make_one_test_context *cntx = NULL;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  int next_action = 0;
+  unsigned char *target = "";
+
+  errbuf[0] = 0;
+
+  if (phr->opcode == SSERV_OP_TESTS_TEST_CHECK_ACTION) {
+    target = "check_test";
+  } else if (phr->opcode == SSERV_OP_TESTS_TEST_GENERATE_ACTION) {
+    target = "answer";
+  } else {
+    FAIL(S_ERR_NOT_IMPLEMENTED);
+  }
+
+  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+
+  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
+  get_full_caps(phr, cnts, &caps);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(S_ERR_PERM_DENIED);
+
+  retval = check_other_editors(log_f, out_f, phr, contest_id, cnts);
+  if (retval <= 0) goto cleanup;
+  retval = 0;
+  cs = phr->ss->te_state;
+  global = cs->global;
+
+  ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
+  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
+  if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
+
+  variant = -1;
+  if (prob->variant_num > 0) {
+    ss_cgi_param_int_opt(phr, "variant", &variant, 0);
+    if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
+  }
+
+  ss_cgi_param_int_opt(phr, "test_num", &test_num, 0);
+  if (test_num <= 0 || test_num >= 1000000) FAIL(S_ERR_INV_TEST_NUM);
+
+  ss_cgi_param_int_opt(phr, "next_action", &next_action, 0);
+  // FIXME: check valid next_action
+  if (next_action <= 0) next_action = SSERV_OP_TESTS_TESTS_VIEW_PAGE;
+
+  if (!prob->test_checker_cmd || !prob->test_checker_cmd[0]) FAIL(S_ERR_INV_PROB_ID);
+
+  get_advanced_layout_path(prob_dir, sizeof(prob_dir), global, prob, NULL, variant);
+  get_advanced_layout_path(makefile_path, sizeof(makefile_path), global, prob, DFLT_P_MAKEFILE, variant);
+  if (access(makefile_path, R_OK) < 0) {
+    snprintf(errbuf, sizeof(errbuf), "Makefile %s does not exist or is not readable", makefile_path);
+    goto fail_page;
+  }
+  struct background_process *prc = super_serve_find_process("make");
+  if (prc) {
+    snprintf(errbuf, sizeof(errbuf), "Another make is running on this server");
+    goto fail_page;
+  }
+
+  XCALLOC(cntx, 1);
+  cntx->start_f = open_memstream(&cntx->start_t, &cntx->start_z);
+  cntx->phr = phr;
+  cntx->contest_id = contest_id;
+  cntx->prob_id = prob_id;
+  cntx->variant = variant;
+  cntx->test_num = test_num;
+  cntx->next_action = next_action;
+
+  prc = start_background_make(cntx->start_f, prob_dir, test_num, target, 
+                              super_serve_op_TESTS_TEST_CHECK_ACTION_continuation, cntx);
+  if (!prc) {
+    fclose(cntx->start_f); cntx->start_f = NULL;
+    snprintf(errbuf, sizeof(errbuf), "%s", cntx->start_t);
+    xfree(cntx->start_t); cntx->start_t = NULL; cntx->start_z = 0;
+    goto fail_page;
+  }
+  cntx = NULL;
+  phr->suspend_reply = 1;
+  super_serve_register_process(prc);
+
+cleanup:
+  xfree(cntx);
+  html_armor_free(&ab);
+  return retval;
+
+fail_page:
+  snprintf(buf, sizeof(buf), "serve-control: %s, contest %d (%s), test %d for problem %s FAILED",
+           phr->html_name, contest_id, ARMOR(cnts->name), test_num, prob->short_name);
+  ss_write_html_header(out_f, phr, buf, 0, NULL);
+  fprintf(out_f, "<h1>%s</h1>\n", buf);
+
+  fprintf(out_f, "<ul>");
+  fprintf(out_f, "<li>%s%s</a></li>",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL, NULL),
+          "Main page");
+  fprintf(out_f, "<li>%s%s</a></li>\n",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
+                        "action=%d&op=%d&contest_id=%d", SSERV_CMD_HTTP_REQUEST,
+                        SSERV_OP_TESTS_MAIN_PAGE, contest_id),
+          "Problems page");
+  fprintf(out_f, "</ul>\n");
+
+  write_problem_editing_links(out_f, phr, contest_id, prob_id, variant, global, prob);
+
+  fprintf(out_f, "<ul>");
+  fprintf(out_f, "<li>%s%s %d</a></li>\n",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
+                        "action=%d&op=%d&contest_id=%d&prob_id=%d&variant=%d&test_num=%d",
+                        SSERV_CMD_HTTP_REQUEST,
+                        SSERV_OP_TESTS_TEST_EDIT_PAGE, contest_id, prob_id, variant, test_num),
+          "Edit test", test_num);
+  fprintf(out_f, "</ul>\n");
+
+  if (errbuf[0]) {
+    write_pre(out_f, -1, errbuf);
+  }
+
+  ss_write_html_footer(out_f);
+  goto cleanup;
+}
+
+static void
+super_serve_op_TESTS_TEST_CHECK_ACTION_continuation(struct background_process *prc)
+{
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+
+  ASSERT(prc);
+  ASSERT(prc->state = BACKGROUND_PROCESS_FINISHED);
+
+  struct tests_make_one_test_context *cntx = (typeof(cntx)) prc->user;
+  int status_ok = -1;
+  struct super_http_request_info *phr = cntx->phr;
+  cntx->phr = NULL;
+
+  if (prc->out.buf) {
+    fprintf(cntx->start_f, "%s", prc->out.buf);
+  }
+  fprintf(cntx->start_f, "%s: %s.%04d\n", "Stop time", xml_unparse_date(prc->stop_time_ms / 1000),
+          (int) (prc->stop_time_ms % 1000));
+  if (prc->is_exited && !prc->exit_code) status_ok = 0;
+  if (prc->is_exited) {
+    fprintf(cntx->start_f, "Process exited with code %d\n", prc->exit_code);
+  } else if (prc->is_signaled) {
+    fprintf(cntx->start_f, "Process terminated with signal %d (%s)\n", prc->term_signal,
+            os_GetSignalString(prc->term_signal));
+  } else {
+    fprintf(cntx->start_f, "!!! Process did not exit nor it was signaled!\n");
+  }
+  fprintf(cntx->start_f, "User: %lld ms\n", prc->utime_ms);
+  fprintf(cntx->start_f, "System: %lld ms\n", prc->stime_ms);
+  fprintf(cntx->start_f, "Max RSS: %ld KiB\n", prc->maxrss);
+
+  unsigned char buf[1024], hbuf[1024];
+  const struct contest_desc *cnts = NULL;
+  if (contests_get(cntx->contest_id, &cnts) < 0 || !cnts) {
+    // FIXME: what to do?
+    abort();
+  }
+  serve_state_t cs = phr->ss->te_state;
+  if (!cs) {
+    // FIXME: what to do?
+    abort();
+  }
+  const struct section_global_data *global = cs->global;
+  if (!global) {
+    // FIXME: what to do?
+    abort();
+  }
+  const struct section_problem_data *prob = NULL;
+  if (cntx->prob_id <= 0 || cntx->prob_id > cs->max_prob || !(prob = cs->probs[cntx->prob_id])) {
+    // FIXME: what to do?
+    abort();
+  }
+
+  if (status_ok >= 0) {
+    if (cntx->start_f) fclose(cntx->start_f);
+    cntx->start_f = NULL;
+    xfree(cntx->start_t); cntx->start_t = NULL; cntx->start_z = 0;
+
+    ss_redirect_2(phr->out_f, phr, cntx->next_action, cntx->contest_id, cntx->prob_id, cntx->variant, cntx->test_num, NULL);
+
+    xfree(cntx); prc->user = NULL;
+    prc->continuation = NULL;
+    prc->state = BACKGROUND_PROCESS_GARBAGE;
+    phr->continuation(phr);
+    return;
+  }
+
+  // report error
+  if (cntx->start_f) fclose(cntx->start_f);
+  cntx->start_f = NULL;
+
+  snprintf(buf, sizeof(buf), "serve-control: %s, contest %d (%s), test %d for problem %s FAILED",
+           phr->html_name, cntx->contest_id, ARMOR(cnts->name), cntx->test_num, prob->short_name);
+  ss_write_html_header(phr->out_f, phr, buf, 0, NULL);
+  fprintf(phr->out_f, "<h1>%s</h1>\n", buf);
+
+  fprintf(phr->out_f, "<ul>");
+  fprintf(phr->out_f, "<li>%s%s</a></li>",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL, NULL),
+          "Main page");
+  fprintf(phr->out_f, "<li>%s%s</a></li>\n",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
+                        "action=%d&op=%d&contest_id=%d", SSERV_CMD_HTTP_REQUEST,
+                        SSERV_OP_TESTS_MAIN_PAGE, cntx->contest_id),
+          "Problems page");
+  fprintf(phr->out_f, "</ul>\n");
+
+  write_problem_editing_links(phr->out_f, phr, cntx->contest_id, cntx->prob_id, cntx->variant, global, prob);
+
+  fprintf(phr->out_f, "<ul>");
+  fprintf(phr->out_f, "<li>%s%s %d</a></li>\n",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
+                        "action=%d&op=%d&contest_id=%d&prob_id=%d&variant=%d&test_num=%d",
+                        SSERV_CMD_HTTP_REQUEST,
+                        SSERV_OP_TESTS_TEST_EDIT_PAGE, cntx->contest_id, cntx->prob_id, cntx->variant, cntx->test_num),
+          "Edit test", cntx->test_num);
+  fprintf(phr->out_f, "</ul>\n");
+
+  write_pre(phr->out_f, status_ok, cntx->start_t);
+
+  ss_write_html_footer(phr->out_f);
+
   xfree(cntx->start_t); cntx->start_t = NULL; cntx->start_z = 0;
   xfree(cntx); prc->user = NULL;
   prc->continuation = NULL;
