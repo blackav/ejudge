@@ -155,8 +155,6 @@ get_full_caps(const struct super_http_request_info *phr, const struct contest_de
   return 0;
 }
 
-
-
 static int
 check_other_editors(
         FILE *log_f,
@@ -243,11 +241,12 @@ check_other_editors(
     return 0;
   }
 
-  if ((cs = phr->ss->te_state) && cs->last_timestamp > 0 && cs->last_check_time + 10 >= current_time) {
+  if ((cs = phr->ss->te_state) && cs->contest_id == contest_id
+      && cs->last_timestamp > 0 && cs->last_check_time + 10 >= current_time) {
     return 1;
   }
 
-  if (cs && cs->last_timestamp > 0) {
+  if (cs && cs->last_timestamp > 0 && cs->contest_id == contest_id) {
     if (!cs->config_path) goto invalid_serve_cfg;
     if (stat(cs->config_path, &stb) < 0) goto invalid_serve_cfg;
     if (!S_ISREG(stb.st_mode)) goto invalid_serve_cfg;
@@ -411,13 +410,25 @@ super_serve_op_TESTS_MAIN_PAGE(
         fclose(prb_f); prb_f = NULL;
 
         fprintf(out_f, "<td%s>%d</td>", cl, prob_id);
-        fprintf(out_f, "<td%s>%s</td>", cl, ARMOR(prob->short_name));
-        fprintf(out_f, "<td%s>%s</td>", cl, ARMOR(prob->long_name));
+        fprintf(out_f, "<td%s>%s%s</a></td>", cl,
+                html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
+                              "contest_id=%d&action=%d", contest_id,
+                              SSERV_CMD_EDIT_SERVE_CFG_PROB),
+                ARMOR(prob->short_name));
+        fprintf(out_f, "<td%s>%s%s</a></td>", cl,
+                html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
+                              "contest_id=%d&action=%d", contest_id,
+                              SSERV_CMD_EDIT_SERVE_CFG_PROB),
+                ARMOR(prob->long_name));
         s = prob->short_name;
         if (prob->internal_name[0]) {
           s = prob->internal_name;
         }
-        fprintf(out_f, "<td%s>%s</td>", cl, ARMOR(s));
+        fprintf(out_f, "<td%s>%s%s</a></td>", cl,
+                html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
+                              "contest_id=%d&action=%d", contest_id,
+                              SSERV_CMD_EDIT_SERVE_CFG_PROB),
+                ARMOR(s));
         fprintf(out_f, "<td%s>%s</td>", cl, problem_unparse_type(prob->type));
         fprintf(out_f, "<td%s><div style=\"width: 200px; height: 200px; overflow: auto;\"><pre>%s</pre></div></td>", cl, ARMOR(prb_t));
         free(prb_t); prb_t = NULL; prb_z = 0;
@@ -743,8 +754,6 @@ write_problem_editing_links(
   }
   fprintf(out_f, "</ul>\n");
 }
-
-
 
 // file classification
 enum

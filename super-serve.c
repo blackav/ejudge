@@ -1451,6 +1451,7 @@ cmd_main_page(struct client_state *p, int len,
   case SSERV_CMD_VIEW_CONTEST_XML:
   case SSERV_CMD_VIEW_SERVE_CFG:
   case SSERV_CMD_EDIT_CONTEST_XML:
+  case SSERV_CMD_EDIT_SERVE_CFG_PROB:
     if ((r = contests_get(pkt->contest_id, &cnts)) < 0 || !cnts) {
       return send_reply(p, -SSERV_ERR_INVALID_CONTEST);
     }
@@ -1512,6 +1513,7 @@ cmd_main_page(struct client_state *p, int len,
     break;
 
   case SSERV_CMD_EDIT_CONTEST_XML:
+  case SSERV_CMD_EDIT_SERVE_CFG_PROB:
   case SSERV_CMD_CHECK_TESTS:
     if (p->priv_level != PRIV_LEVEL_ADMIN) {
       err("%d: inappropriate privilege level", p->id);
@@ -1628,6 +1630,7 @@ cmd_main_page(struct client_state *p, int len,
                                      self_url_ptr, hidden_vars_ptr, extra_args_ptr);
     break;
   case SSERV_CMD_EDIT_CONTEST_XML:
+  case SSERV_CMD_EDIT_SERVE_CFG_PROB:
     if (sstate->edited_cnts && sstate->edited_cnts->id == cnts->id) {
       r = super_html_edit_contest_page(f, p->priv_level, p->user_id, p->login,
                                        p->cookie, p->ip, config, sstate,
@@ -1656,9 +1659,16 @@ cmd_main_page(struct client_state *p, int len,
     }
     sstate->edited_cnts = rw_cnts;
     super_html_load_serve_cfg(rw_cnts, config, sstate);
-    r = super_html_edit_contest_page(f, p->priv_level, p->user_id, p->login,
-                                     p->cookie, p->ip, config, sstate,
-                                     self_url_ptr, hidden_vars_ptr, extra_args_ptr);
+    if (pkt->b.id == SSERV_CMD_EDIT_SERVE_CFG_PROB) {
+      r = super_html_edit_problems(f, p->priv_level, p->user_id, p->login,
+                                   p->cookie, p->ip, config, sstate,
+                                   self_url_ptr, hidden_vars_ptr,
+                                   extra_args_ptr);
+    } else {
+      r = super_html_edit_contest_page(f, p->priv_level, p->user_id, p->login,
+                                       p->cookie, p->ip, config, sstate,
+                                       self_url_ptr, hidden_vars_ptr, extra_args_ptr);
+    }
     break;
   case SSERV_CMD_CHECK_TESTS:
     if ((r = contests_load(pkt->contest_id, &rw_cnts)) < 0 || !rw_cnts) {
@@ -3122,6 +3132,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_SHOW_PERMISSIONS] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_HIDE_PERMISSIONS] = { cmd_simple_top_command },
   [SSERV_CMD_EDIT_CONTEST_XML] = { cmd_main_page },
+  [SSERV_CMD_EDIT_SERVE_CFG_PROB] = { cmd_main_page },
   [SSERV_CMD_CHECK_TESTS] = { cmd_main_page },
   [SSERV_CMD_CNTS_EDIT_PERMISSION] = { cmd_main_page },
   [SSERV_CMD_CNTS_SHOW_FORM_FIELDS] = { cmd_simple_top_command },
