@@ -656,6 +656,11 @@ write_problem_editing_links(
   unsigned char hbuf[1024];
 
   fprintf(out_f, "<ul>");
+  fprintf(out_f, "<li>%s%s</a></li>\n",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
+                        "contest_id=%d&action=%d&prob_id=%d", contest_id,
+                        SSERV_CMD_EDIT_SERVE_CFG_PROB, prob_id),
+          "Edit settings");
   if (prob->xml_file && prob->xml_file[0]) {
     fprintf(out_f, "<li>%s%s</a></li>\n",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
