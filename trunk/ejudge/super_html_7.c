@@ -412,13 +412,13 @@ super_serve_op_TESTS_MAIN_PAGE(
         fprintf(out_f, "<td%s>%d</td>", cl, prob_id);
         fprintf(out_f, "<td%s>%s%s</a></td>", cl,
                 html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
-                              "contest_id=%d&action=%d", contest_id,
-                              SSERV_CMD_EDIT_SERVE_CFG_PROB),
+                              "contest_id=%d&action=%d&prob_id=%d", contest_id,
+                              SSERV_CMD_EDIT_SERVE_CFG_PROB, prob_id),
                 ARMOR(prob->short_name));
         fprintf(out_f, "<td%s>%s%s</a></td>", cl,
                 html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
-                              "contest_id=%d&action=%d", contest_id,
-                              SSERV_CMD_EDIT_SERVE_CFG_PROB),
+                              "contest_id=%d&action=%d&prob_id=%d", contest_id,
+                              SSERV_CMD_EDIT_SERVE_CFG_PROB, prob_id),
                 ARMOR(prob->long_name));
         s = prob->short_name;
         if (prob->internal_name[0]) {
@@ -426,8 +426,8 @@ super_serve_op_TESTS_MAIN_PAGE(
         }
         fprintf(out_f, "<td%s>%s%s</a></td>", cl,
                 html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
-                              "contest_id=%d&action=%d", contest_id,
-                              SSERV_CMD_EDIT_SERVE_CFG_PROB),
+                              "contest_id=%d&action=%d&prob_id=%d", contest_id,
+                              SSERV_CMD_EDIT_SERVE_CFG_PROB, prob_id),
                 ARMOR(s));
         fprintf(out_f, "<td%s>%s</td>", cl, problem_unparse_type(prob->type));
         fprintf(out_f, "<td%s><div style=\"width: 200px; height: 200px; overflow: auto;\"><pre>%s</pre></div></td>", cl, ARMOR(prb_t));

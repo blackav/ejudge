@@ -751,6 +751,7 @@ action_view_contest(int cmd)
 {
   int contest_id, r;
   unsigned char *extra_str = "";
+  unsigned int flags = 0;
 
   if ((contest_id = parse_contest_id()) <= 0) goto invalid_parameter;
 
@@ -779,13 +780,21 @@ action_view_contest(int cmd)
     break;
   }
 
+  if (cmd == SSERV_CMD_EDIT_SERVE_CFG_PROB) {
+    const unsigned char *s = cgi_param("prob_id");
+    int prob_id = 0, n = 0;
+    if (s && sscanf(s, "%d%n", &prob_id, &n) == 1 && !s[n] && prob_id > 0 && prob_id <= EJ_MAX_PROB_ID) {
+      flags = prob_id;
+    }
+  }
+
   open_super_server();
   client_put_header(stdout, 0, 0, config->charset, 1, 0,
                     "%s: %s, %d%s", "serve-control", user_name, contest_id,
                     extra_str);
   fflush(stdout);
   r = super_clnt_main_page(super_serve_fd, 1, cmd,
-                           contest_id, 0, 0, self_url, hidden_vars, "");
+                           contest_id, 0, flags, self_url, hidden_vars, "");
   if (r < 0) {
     printf("<h2><font color=\"red\">%s</font></h2>\n",
            super_proto_strerror(-r));

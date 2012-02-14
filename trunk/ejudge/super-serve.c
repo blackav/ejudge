@@ -1387,6 +1387,17 @@ super_serve_move_edited_contest(struct sid_state *dst, struct sid_state *src)
 }
 
 static void
+activate_problem(struct sid_state *sstate, int prob_id)
+{
+  if (!sstate) return;
+  if (prob_id <= 0 || prob_id >= sstate->prob_a || !sstate->probs || !sstate->prob_flags || !sstate->probs[prob_id]) return;
+  for (int i = 1; i < sstate->prob_a; ++i) {
+    sstate->prob_flags[i] &= ~SID_STATE_SHOW_HIDDEN;
+  }
+  sstate->prob_flags[prob_id] |= SID_STATE_SHOW_HIDDEN;
+}
+
+static void
 cmd_main_page(struct client_state *p, int len,
               struct prot_super_pkt_main_page *pkt)
 {
@@ -1660,6 +1671,7 @@ cmd_main_page(struct client_state *p, int len,
     sstate->edited_cnts = rw_cnts;
     super_html_load_serve_cfg(rw_cnts, config, sstate);
     if (pkt->b.id == SSERV_CMD_EDIT_SERVE_CFG_PROB) {
+      activate_problem(sstate, pkt->flags);
       r = super_html_edit_problems(f, p->priv_level, p->user_id, p->login,
                                    p->cookie, p->ip, config, sstate,
                                    self_url_ptr, hidden_vars_ptr,
