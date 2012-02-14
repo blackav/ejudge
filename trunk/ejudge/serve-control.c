@@ -764,6 +764,9 @@ action_view_contest(int cmd)
   case SSERV_CMD_EDIT_CONTEST_XML:
     extra_str = ", editing contest.xml";
     break;
+  case SSERV_CMD_EDIT_SERVE_CFG_PROB:
+    extra_str = ", editing serve.cfg";
+    break;
   case SSERV_CMD_VIEW_SERVE_CFG:
     extra_str = ", serve.cfg";
     break;
@@ -2239,6 +2242,7 @@ main(int argc, char *argv[])
     break;
   case SSERV_CMD_CHECK_TESTS:
   case SSERV_CMD_EDIT_CONTEST_XML:
+  case SSERV_CMD_EDIT_SERVE_CFG_PROB:
     action_view_contest(client_action);
     break;
   case SSERV_CMD_CNTS_EDIT_PERMISSION:
