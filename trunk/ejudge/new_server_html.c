@@ -10759,7 +10759,7 @@ unpriv_submit_appeal(FILE *fout,
     goto done;
   }
 
-  if (clar_add_text(cs->clarlog_state, clar_id, text3, text_len) < 0) {
+  if (clar_add_text(cs->clarlog_state, clar_id, text3, text3_len) < 0) {
     ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
     goto done;
   }
