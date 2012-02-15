@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -818,10 +818,11 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
 
     case TR_A_TESTS_PASSED:
       if (xml_attr_int(a, &x) < 0) return -1;
-      if (x < 0 || x > EJ_MAX_TEST_NUM) {
+      if (x < -1 || x > EJ_MAX_TEST_NUM) {
         xml_err_attr_invalid(a);
         return -1;
       }
+      if (x < 0) x = 0;
       r->tests_passed = x;
       a_tests_passed = a;
       break;
