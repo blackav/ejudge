@@ -4270,10 +4270,19 @@ do_loop(void)
 
       if (run_inotify_fd < 0) {
         info("creating inotify file descriptor");
+#if 0
         if ((run_inotify_fd = inotify_init1(IN_NONBLOCK | IN_CLOEXEC)) < 0) {
           err("inotify_init1() failed: %s", os_ErrorMsg());
           return 1;
         }
+#else
+        if ((run_inotify_fd = inotify_init()) < 0) {
+          err("inotify_init() failed: %s", os_ErrorMsg());
+          return 1;
+        }
+        fcntl(run_inotify_fd, F_SETFL, fcntl(run_inotify_fd, F_GETFL) | O_NONBLOCK);
+        fcntl(run_inotify_fd, F_SETFD, FD_CLOEXEC);
+#endif
         for (i = 0; i < extra_a; i++) {
           if (!(cur = extras[i])) continue;
           if (!cur->run_used || !cur->run_queue_dir) continue;
@@ -4460,10 +4469,19 @@ prepare_sockets(void)
       return 1;
     }
 
+#if 0
     if ((run_inotify_fd = inotify_init1(IN_NONBLOCK | IN_CLOEXEC)) < 0) {
       err("inotify_init1() failed: %s", os_ErrorMsg());
       return 1;
     }
+#else
+    if ((run_inotify_fd = inotify_init()) < 0) {
+      err("inotify_init() failed: %s", os_ErrorMsg());
+      return 1;
+    }
+    fcntl(run_inotify_fd, F_SETFL, fcntl(run_inotify_fd, F_GETFL) | O_NONBLOCK);
+    fcntl(run_inotify_fd, F_SETFD, FD_CLOEXEC);
+#endif
 
     // create a control socket
     if ((control_socket_fd = socket(PF_UNIX, SOCK_STREAM, 0)) < 0) {
