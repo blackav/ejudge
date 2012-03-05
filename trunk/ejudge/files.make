@@ -347,6 +347,7 @@ CFILES=\
  edit-userlist.c\
  ej-ncheck.c\
  ej-batch.c\
+ ej-super-run.c\
  ejudge-configure-compilers.c\
  ejudge-control.c\
  ejudge-setup.c\
