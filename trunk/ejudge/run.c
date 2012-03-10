@@ -2947,7 +2947,7 @@ do_loop(void)
     fprintf(stderr, "packet: <<%.*s>>\n", (int) srp_z, srp_b);
 
     srp = super_run_in_packet_parse_cfg_str(pkt_name, srp_b, srp_z);
-    xfree(srp_b); srp_b = NULL; srp_z = 0;
+    //xfree(srp_b); srp_b = NULL; srp_z = 0;
     if (!srp) {
       err("failed to parse file %s", pkt_name);
       continue;
