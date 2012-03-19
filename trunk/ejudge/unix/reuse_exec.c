@@ -722,6 +722,58 @@ task_PutEnv(tTask *tsk, char const *s)
   return 0;
 }
 
+int
+task_SetEnv(tTask *tsk, const char *name, const char *value)
+{
+  task_init_module();
+  ASSERT(tsk);
+  ASSERT(name);
+
+  if (!value) {
+    return task_PutEnv(tsk, name);
+  } else {
+    int nlen = strlen(name);
+    int vlen = strlen(value);
+    if (nlen + vlen < 65536) {
+      unsigned char *b = (unsigned char*) alloca((nlen + vlen + 2) * sizeof(*b));
+      memcpy(b, name, nlen);
+      b[nlen] = '=';
+      memcpy(b + nlen + 1, value, vlen);
+      b[nlen + vlen + 1] = 0;
+      return task_PutEnv(tsk, b);
+    } else {
+      unsigned char *b = (unsigned char*) xmalloc((nlen + vlen + 2) * sizeof(*b));
+      memcpy(b, name, nlen);
+      b[nlen] = '=';
+      memcpy(b + nlen + 1, value, vlen);
+      b[nlen + vlen + 1] = 0;
+      int r = task_PutEnv(tsk, b);
+      xfree(b);
+      return r;
+    }
+  }
+}
+
+int
+task_FormatEnv(tTask *tsk, const char *name, const char *format, ...)
+{
+  unsigned char buf[16384];
+  unsigned char buf2[16384];
+  va_list args;
+
+  task_init_module();
+  ASSERT(tsk);
+  ASSERT(name);
+
+  va_start(args, format);
+  vsnprintf(buf, sizeof(buf), format, args);
+  va_end(args);
+
+  snprintf(buf2, sizeof(buf2), "%s=%s", name, buf);
+  return task_PutEnv(tsk, buf2);
+}
+
+
 /**
  * NAME:    task_ClearEnv
  * PURPOSE: set the 'clear environment' flag
@@ -1167,14 +1219,15 @@ task_SetKillSignal(tTask *tsk, char const *signame)
   static char *
 print_as_shell_redir(int oflags)
 {
-  if ((oflags & O_RDWR))
+  if ((oflags & O_ACCMODE) == O_RDWR)
     return "<>";
-  if ((oflags & O_APPEND))
-    return ">>";
-  if ((oflags & O_WRONLY))
-    return ">";
-  if ((oflags & O_RDONLY))
+  if ((oflags & O_ACCMODE) == O_RDONLY)
     return "<";
+  if ((oflags & O_ACCMODE) == O_WRONLY) {
+    if ((oflags & O_APPEND))
+      return ">>";
+    return ">";
+  }
   return "?";
 }
 
@@ -1200,7 +1253,7 @@ task_PrintArgs(tTask *tsk)
   if (!tsk->path && tsk->args.u > 0)
     tsk->path = xstrdup(tsk->args.v[0]);
 
-  if (verbose_flag)
+  if (1 /*verbose_flag*/)
     {
       if (tsk->main) {
         fprintf(stderr, "task_Start: 0x%08lx(%d):",
@@ -1368,7 +1421,7 @@ task_Start(tTask *tsk)
   if (!tsk->path && tsk->args.u > 0)
     tsk->path = xstrdup(tsk->args.v[0]);
 
-  if (verbose_flag) task_PrintArgs(tsk);
+  //if (verbose_flag) task_PrintArgs(tsk);
 
   if (tsk->main) {
     int code;
