@@ -86,6 +86,8 @@ handle_packet(serve_state_t state, const unsigned char *pkt_name)
   unsigned char full_status_dir[PATH_MAX];
   unsigned char full_full_dir[PATH_MAX];
 
+  struct section_global_data *global = state->global;
+
   struct run_reply_packet reply_pkt;
   void *reply_pkt_buf = 0;
   size_t reply_pkt_buf_size = 0;
@@ -99,7 +101,7 @@ handle_packet(serve_state_t state, const unsigned char *pkt_name)
     goto cleanup;
   }
 
-  fprintf(stderr, "packet: <<%.*s>>\n", (int) srp_z, srp_b);
+  //fprintf(stderr, "packet: <<%.*s>>\n", (int) srp_z, srp_b);
 
   srp = super_run_in_packet_parse_cfg_str(pkt_name, srp_b, srp_z);
   if (!srp) {
@@ -151,46 +153,26 @@ handle_packet(serve_state_t state, const unsigned char *pkt_name)
 
   // copy full report from temporary location
   if (generic_copy_file(0, NULL, report_path, "", 0, full_report_dir, run_base, "") < 0) {
-    // FIXME: handle
     goto cleanup;
   }
 
   if (full_report_path[0] && generic_copy_file(0, NULL, full_report_path, "", 0, full_full_dir, run_base, "") < 0) {
-    // FIXME: handle
     goto cleanup;
   }
 
   if (run_reply_packet_write(&reply_pkt, &reply_pkt_buf_size, &reply_pkt_buf) < 0) {
-    /* FIXME: do something, if this is possible.
-     * However, unability to generate a reply packet only
-     * means that invalid data passed, which should be reported
-     * immediately as internal error!
-     */
     goto cleanup;
   }
 
   if (generic_write_file(reply_pkt_buf, reply_pkt_buf_size, SAFE, full_status_dir, run_base, "") < 0) {
-    // FIXME:
     goto cleanup;
   }
-
-#if 0
-    
-    xfree(reply_pkt_buf);
-    reply_pkt_buf = 0;
-    clear_directory(global->run_work_dir);
-    last_activity_time = time(0);
-    continue;
-
-#endif
-
-
-
 
 cleanup:
   xfree(srp_b); srp_b = NULL; srp_z = 0;
   srp = super_run_in_packet_free(srp);
   xfree(reply_pkt_buf); reply_pkt_buf = NULL;
+  clear_directory(global->run_work_dir);
 }
 
 static int
@@ -234,9 +216,8 @@ do_loop(serve_state_t state)
     }
 
     if (!r) {
-      interrupt_enable();
-      os_Sleep(global->sleep_time);
-      interrupt_disable();
+      scan_dir_add_ignored(super_run_spool_path, pkt_name);
+      info("scan_dir race, ignoring packet %s", pkt_name);
       continue;
     }
 
@@ -253,11 +234,13 @@ write_help(void)
   printf("%s: ejudge testing super server\n"
          "Usage: %s [OPTIONS]\n"
          "  OPTIONS:\n"
-         "    --help    write message and exit\n"
-         "    --version report version and exit\n"
-         "    -u USER   specify the user to run under\n"
-         "    -g GROUP  specify the group to run under\n"
-         "    -D        daemon mode\n",
+         "    --help       write message and exit\n"
+         "    --version    report version and exit\n"
+         "    -u USER      specify the user to run under\n"
+         "    -g GROUP     specify the group to run under\n"
+         "    -D           daemon mode\n"
+         "    -s ARCH      ignore specified architecture\n"
+         "    -i CNTS:PROB ignore specified problem\n",
          program_name, program_name);
   exit(0);
 }
@@ -273,13 +256,63 @@ write_version(void)
 static void
 create_directories(void)
 {
-  snprintf(super_run_spool_path, sizeof(super_run_spool_path), "%s/%s",
+  snprintf(super_run_spool_path, sizeof(super_run_spool_path), "%s/var/%s",
            super_run_path, "queue");
-  snprintf(super_run_exe_path, sizeof(super_run_exe_path), "%s/%s",
+  snprintf(super_run_exe_path, sizeof(super_run_exe_path), "%s/var/%s",
            super_run_path, "exe");
   make_dir(super_run_path, 0755);
   make_all_dir(super_run_spool_path, 0777);
   make_dir(super_run_exe_path, 0777);
+}
+
+static int
+create_working_directories(serve_state_t state)
+{
+  struct section_global_data *global = state->global;
+  const unsigned char *hostname = os_NodeName();
+  int pid = getpid();
+  unsigned char work_dir[PATH_MAX];
+  unsigned char check_dir[PATH_MAX];
+  int retval = 0;
+
+  if (!global->run_work_dir || !global->run_work_dir[0]) {
+    snprintf(global->run_work_dir, sizeof(global->run_work_dir), 
+             "%s/var/work", super_run_path);
+  }
+  if (!global->run_check_dir || !global->run_check_dir[0]) {
+    snprintf(global->run_check_dir, sizeof(global->run_check_dir),
+             "%s/var/check", super_run_path);
+  }
+
+  snprintf(work_dir, sizeof(work_dir), "%s/%s_%d", global->run_work_dir, hostname, pid);
+  snprintf(check_dir, sizeof(check_dir), "%s/%s_%d", global->run_check_dir, hostname, pid);
+  snprintf(global->run_work_dir, sizeof(global->run_work_dir), "%s", work_dir);
+  snprintf(global->run_check_dir, sizeof(global->run_check_dir), "%s", check_dir);
+
+  if (os_MakeDirPath(global->run_work_dir, 0755) < 0) {
+    err("failed to create working directory '%s'", global->run_work_dir);
+    retval = -1;
+  }
+  if (os_MakeDirPath(global->run_check_dir, 0755) < 0) {
+    err("failed to create check directory '%s'", global->run_check_dir);
+    retval = -1;
+  }
+
+  return retval;
+}
+
+static void
+remove_working_directory(serve_state_t state)
+{
+  struct section_global_data *global = state->global;
+
+  if (!global) return;
+  if (global->run_work_dir && global->run_work_dir[0]) {
+    remove_directory_recursively(global->run_work_dir, 0);
+  }
+  if (global->run_check_dir && global->run_check_dir[0]) {
+    remove_directory_recursively(global->run_check_dir, 0);
+  }
 }
 
 static void
@@ -336,6 +369,7 @@ main(int argc, char *argv[])
   int pid;
   unsigned char ejudge_xml_path[PATH_MAX];
   serve_state_t state = &serve_state;
+  int retval = 0;
 
   program_name = os_GetBasename(argv[0]);
   start_set_self_args(argc, argv);
@@ -404,12 +438,19 @@ main(int argc, char *argv[])
   }
   collect_sections(state);
 
-  // run_work_dir, run_check_dir, cr_serialization_key
-
-  if (do_loop(state) < 0) {
-    return 1;
+  if (create_working_directories(state) < 0) {
+    retval = 1;
+    goto cleanup;
   }
 
-  return 0;
+  // go daemon here
+
+  if (do_loop(state) < 0) {
+    retval = 1;
+  }
+
+cleanup:
+  remove_working_directory(state);
+  return retval;
 }
 

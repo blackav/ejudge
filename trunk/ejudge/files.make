@@ -194,6 +194,7 @@ COMMON_CFILES=\
  random.c\
  reports.c\
  rldb_plugin_file.c\
+ run_common.c\
  run_inverse.c\
  runlog.c\
  runlog_import.c\

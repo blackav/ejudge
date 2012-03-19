@@ -83,6 +83,8 @@ int      task_SetMaxRealTime(tpTask, int);
 int      task_SetMaxRealTimeMillis(tpTask, int);
 
 int      task_PutEnv(tpTask, char const *);
+int      task_SetEnv(tTask *tsk, const char *name, const char *value);
+int      task_FormatEnv(tTask *tsk, const char *name, const char *format, ...);
 int      task_ClearEnv(tpTask);
 
 int      task_SetKillSignal(tpTask, char const *);
