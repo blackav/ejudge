@@ -938,7 +938,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->interactor_time_limit = -1;
 }
 
-static void free_testsets(int t, struct testset_info *p);
+void prepare_free_testsets(int t, struct testset_info *p);
 static void free_deadline_penalties(int t, struct penalty_info *p);
 static void free_personal_deadlines(int t, struct pers_dead_info *p);
 void prepare_free_group_dates(struct group_dates *gd);
@@ -976,7 +976,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
   xfree(p->score_bonus_val);
   xfree(p->open_tests_val);
   xfree(p->final_open_tests_val);
-  free_testsets(p->ts_total, p->ts_infos);
+  prepare_free_testsets(p->ts_total, p->ts_infos);
   free_deadline_penalties(p->dp_total, p->dp_infos);
   free_personal_deadlines(p->pd_total, p->pd_infos);
   xfree(p->unhandled_vars);
@@ -1267,8 +1267,8 @@ process_abstract_tester(serve_state_t state, int i)
   return 0;
 }
 
-static void
-free_testsets(int t, struct testset_info *p)
+void
+prepare_free_testsets(int t, struct testset_info *p)
 {
   int i;
 
@@ -1321,8 +1321,8 @@ prepare_parse_score_tests(const unsigned char *str,
   return ps;
 }
 
-static int
-parse_testsets(char **set_in, int *p_total, struct testset_info **p_info)
+int
+prepare_parse_testsets(char **set_in, int *p_total, struct testset_info **p_info)
 {
   int total = 0;
   struct testset_info *info = 0;
@@ -3639,9 +3639,9 @@ set_defaults(
     prepare_set_prob_value(CNTSPROB_checker_real_time_limit, prob, aprob, g);
 
     if (prob->test_sets) {
-      if (parse_testsets(prob->test_sets,
-                         &prob->ts_total,
-                         &prob->ts_infos) < 0)
+      if (prepare_parse_testsets(prob->test_sets,
+                                 &prob->ts_total,
+                                 &prob->ts_infos) < 0)
         return -1;
     }
   }

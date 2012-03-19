@@ -1412,4 +1412,12 @@ prepare_parse_test_score_list(
         int **pscores,
         int *pcount);
 
+int
+prepare_parse_testsets(
+        char **set_in,
+        int *p_total,
+        struct testset_info **p_info);
+void
+prepare_free_testsets(int t, struct testset_info *p);
+
 #endif /* __PREPARE_H__ */
