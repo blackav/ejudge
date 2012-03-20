@@ -44,6 +44,7 @@ WIN32_COMMON_CFILES=\
  problem_xml.c\
  protocol.c\
  random.c\
+ run_common.c\
  run_inverse.c\
  runlog.c\
  runlog_static.c\
