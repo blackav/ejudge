@@ -470,11 +470,11 @@ write_xml_testing_report(
     }
   }
 
-  if (r->time_limit_ms > 0 && max_cpu_time_tl) {
+  if (r->time_limit_ms > 0 && max_cpu_time_tl > 0) {
     fprintf(f, "<big>Max. CPU time: &gt;%d.%03d (time-limit exceeded)<br><br></big>\n", r->time_limit_ms / 1000, r->time_limit_ms % 1000);
   } else if (max_cpu_time_tl > 0) {
     fprintf(f, "<big>Max. CPU time: %d.%03d (time-limit exceeded)<br><br></big>\n", max_cpu_time / 1000, max_cpu_time % 1000);
-  } else if (!max_cpu_time_tl) {
+  } else if (!max_cpu_time_tl && max_cpu_time >= 0) {
     fprintf(f, "<big>Max. CPU time: %d.%03d<br><br></big>\n",
             max_cpu_time / 1000, max_cpu_time % 1000);
   }

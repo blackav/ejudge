@@ -2370,6 +2370,8 @@ dur_to_str(unsigned char *buf, size_t size, int sec1, int usec1,
   return buf;
 }
 
+#define BAD_PACKET() do { bad_packet_line = __LINE__; goto bad_packet_error; } while (0)
+
 int
 serve_read_run_packet(
         const struct ejudge_cfg *config,
@@ -2392,6 +2394,7 @@ serve_read_run_packet(
   int ts8, ts8_us;
   unsigned char time_buf[64];
   int ignore_prev_ac = 0;
+  int bad_packet_line = 0;
 
   get_current_time(&ts8, &ts8_us);
   if ((r = generic_read_file(&reply_buf, 0, &reply_buf_size, SAFE | REMOVE,
@@ -2422,12 +2425,12 @@ serve_read_run_packet(
   }
 
   if (!serve_is_valid_status(state, reply_pkt->status, 2))
-    goto bad_packet_error;
+    BAD_PACKET();
 
   if (state->global->score_system == SCORE_OLYMPIAD) {
     if (re.prob_id < 1 || re.prob_id > state->max_prob
         || !state->probs[re.prob_id])
-      goto bad_packet_error;
+      BAD_PACKET();
   } else if (state->global->score_system == SCORE_KIROV) {
     /*
     if (status != RUN_PARTIAL && status != RUN_OK
@@ -2435,10 +2438,10 @@ serve_read_run_packet(
     */
     if (re.prob_id < 1 || re.prob_id > state->max_prob
         || !state->probs[re.prob_id])
-      goto bad_packet_error;
+      BAD_PACKET();
     if (reply_pkt->score < 0
         || reply_pkt->score > state->probs[re.prob_id]->full_score)
-      goto bad_packet_error;
+      BAD_PACKET();
     /*
     for (n = 0; n < serve_state.probs[re.prob_id]->dp_total; n++)
       if (re.timestamp < serve_state.probs[re.prob_id]->dp_infos[n].deadline)
@@ -2453,10 +2456,10 @@ serve_read_run_packet(
   } else if (state->global->score_system == SCORE_MOSCOW) {
     if (re.prob_id < 1 || re.prob_id > state->max_prob
         || !state->probs[re.prob_id])
-      goto bad_packet_error;
+      BAD_PACKET();
     if (reply_pkt->score < 0
         || reply_pkt->score > state->probs[re.prob_id]->full_score)
-      goto bad_packet_error;
+      BAD_PACKET();
   } else {
     reply_pkt->score = -1;
   }
@@ -2581,7 +2584,7 @@ serve_read_run_packet(
   return 1;
 
  bad_packet_error:
-  err("bad_packet");
+  err("bad_packet: %s, %d", __FILE__, bad_packet_line);
 
  failed:
   xfree(reply_buf);

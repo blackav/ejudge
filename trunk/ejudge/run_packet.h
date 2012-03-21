@@ -3,7 +3,7 @@
 #ifndef __RUN_PACKET_H__
 #define __RUN_PACKET_H__
 
-/* Copyright (C) 2005-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -120,5 +120,9 @@ run_reply_packet_write(const struct run_reply_packet *in_data,
 
 struct run_reply_packet *
 run_reply_packet_free(struct run_reply_packet *in_data);
+
+void
+run_reply_packet_dump(
+        const struct run_reply_packet *in_data);
 
 #endif /* __RUN_PACKET_H__ */
