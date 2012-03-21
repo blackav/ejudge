@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -95,6 +95,33 @@ run_reply_packet_write(
   err("run_reply_packet_write: error %s, %d", "$Revision$", errcode);
   xfree(out_data);
   return -1;
+}
+
+#include "xml_utils.h"
+
+void
+run_reply_packet_dump(
+        const struct run_reply_packet *in_data)
+{
+  fprintf(stderr, "=== packet dump ===\n");
+  fprintf(stderr, "judge_id = %d\n", in_data->judge_id);
+  fprintf(stderr, "contest_id = %d\n", in_data->contest_id);
+  fprintf(stderr, "status = %d\n", in_data->status);
+  fprintf(stderr, "failed_test = %d\n", in_data->failed_test);
+  fprintf(stderr, "score = %d\n", in_data->score);
+  fprintf(stderr, "notify_flag = %d\n", in_data->notify_flag);
+  fprintf(stderr, "marked_flag = %d\n", in_data->marked_flag);
+  fprintf(stderr, "has_user_score = %d\n", in_data->has_user_score);
+  fprintf(stderr, "user_status = %d\n", in_data->user_status);
+  fprintf(stderr, "user_tests_passed = %d\n", in_data->user_tests_passed);
+  fprintf(stderr, "user_score = %d\n", in_data->user_score);
+  fprintf(stderr, "ts1 = \"%s.%06d\"\n", xml_unparse_date(in_data->ts1), in_data->ts1_us);
+  fprintf(stderr, "ts2 = \"%s.%06d\"\n", xml_unparse_date(in_data->ts2), in_data->ts2_us);
+  fprintf(stderr, "ts3 = \"%s.%06d\"\n", xml_unparse_date(in_data->ts3), in_data->ts3_us);
+  fprintf(stderr, "ts4 = \"%s.%06d\"\n", xml_unparse_date(in_data->ts4), in_data->ts4_us);
+  fprintf(stderr, "ts5 = \"%s.%06d\"\n", xml_unparse_date(in_data->ts5), in_data->ts5_us);
+  fprintf(stderr, "ts6 = \"%s.%06d\"\n", xml_unparse_date(in_data->ts6), in_data->ts6_us);
+  fprintf(stderr, "ts7 = \"%s.%06d\"\n", xml_unparse_date(in_data->ts7), in_data->ts7_us);
 }
 
 /*

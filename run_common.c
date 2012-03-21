@@ -779,6 +779,8 @@ invoke_valuer(
   }
   task_EnableAllSignals(tsk);
 
+  task_PrintArgs(tsk);
+
   if (task_Start(tsk) < 0) {
     append_msg_to_log(score_err, "valuer failed to start");
     goto cleanup;
@@ -1390,6 +1392,8 @@ invoke_interactor(
     task_SetMaxTimeMillis(tsk_int, time_limit_ms);
   }
 
+  task_PrintArgs(tsk_int);
+
   if (task_Start(tsk_int) < 0) {
     task_Delete(tsk_int);
     tsk_int = NULL;
@@ -1942,10 +1946,10 @@ run_one_test(
     } else {
       if (srpp->use_stdout > 0) {
         task_SetRedir(tsk, 1, TSR_FILE, output_path, TSK_REWRITE, TSK_FULL_RW);
-        touch_file(output_path);
       } else {
         task_SetRedir(tsk, 1, TSR_FILE, "/dev/null", TSK_WRITE, TSK_FULL_RW);
       }
+      touch_file(output_path);
       if (tst && tst->ignore_stderr > 0 && disable_stderr <= 0) {
         task_SetRedir(tsk, 2, TSR_FILE, "/dev/null", TSK_WRITE, TSK_FULL_RW);
       } else {
@@ -2244,7 +2248,7 @@ run_one_test(
   if (tsk_int) {
     int exitcode = task_ExitCode(tsk_int);
     if (!exitcode) {
-    } else if (exitcode == RUN_PRESENTATION_ERR && exitcode == RUN_WRONG_ANSWER_ERR) {
+    } else if (exitcode == RUN_PRESENTATION_ERR || exitcode == RUN_WRONG_ANSWER_ERR) {
       status = exitcode;
       goto cleanup;
     } else {
@@ -2719,7 +2723,7 @@ run_tests(
   }
 
   if (srpp->score_tests && srpp->score_tests[0]) {
-    if (!prepare_parse_score_tests(srpp->score_tests, srpp->full_score)) {
+    if (!(score_tests_val = prepare_parse_score_tests(srpp->score_tests, srpp->full_score))) {
       append_msg_to_log(messages_path, "failed to parse score_tests = '%s'", srpp->score_tests);
       goto check_failed;
     }
@@ -2866,7 +2870,7 @@ run_tests(
           reply_pkt->score = tests.data[tests.size - 1].checker_score;
         } else {
           int s;
-          for (s = 0; tests.size - 1 > score_tests_val[s]; ++s);
+          for (s = 0; score_tests_val[s] && tests.size - 1 > score_tests_val[s]; ++s);
           reply_pkt->score = s;
         }
       }
@@ -2992,7 +2996,7 @@ check_failed:
     get_current_time(&reply_pkt->ts6, &reply_pkt->ts6_us);
   }
 
-  reply_pkt->status = RUN_CHECK_FAILED;
+  status = RUN_CHECK_FAILED;
   has_user_score = 0;
   user_status = -1;
   user_score = -1;
