@@ -1983,7 +1983,9 @@ swap_files(
   if (logged_unlink(log_f, corr_tmp_path) < 0) FAIL(S_ERR_FS_ERROR);
   if (logged_unlink(log_f, info_tmp_path) < 0) FAIL(S_ERR_FS_ERROR);
   if (logged_unlink(log_f, tgz_tmp_path) < 0) FAIL(S_ERR_FS_ERROR);
-  if (remove_directory_recursively(tgzdir_tmp_path, 0) < 0) FAIL(S_ERR_FS_ERROR);
+  if (tgzdir_pat && *tgzdir_pat) {
+    if (remove_directory_recursively(tgzdir_tmp_path, 0) < 0) FAIL(S_ERR_FS_ERROR);
+  }
 
   // DST->TMP
   if (logged_rename(log_f, test_dst_path, test_tmp_path) < 0) goto fs_error;
@@ -2095,7 +2097,9 @@ move_files(
   if (logged_unlink(log_f, corr_tmp_path) < 0) FAIL(S_ERR_FS_ERROR);
   if (logged_unlink(log_f, info_tmp_path) < 0) FAIL(S_ERR_FS_ERROR);
   if (logged_unlink(log_f, tgz_tmp_path) < 0) FAIL(S_ERR_FS_ERROR);
-  if (remove_directory_recursively(tgzdir_tmp_path, 0) < 0) FAIL(S_ERR_FS_ERROR);
+  if (tgzdir_pat && *tgzdir_pat) {
+    if (remove_directory_recursively(tgzdir_tmp_path, 0) < 0) FAIL(S_ERR_FS_ERROR);
+  }
 
   // DST->TMP
   if (logged_rename(log_f, test_dst_path, test_tmp_path) < 0) goto fs_error;
@@ -2126,7 +2130,9 @@ move_files(
   logged_unlink(log_f, corr_tmp_path);
   logged_unlink(log_f, info_tmp_path);
   logged_unlink(log_f, tgz_tmp_path);
-  remove_directory_recursively(tgzdir_tmp_path, 0);
+  if (tgzdir_pat && *tgzdir_pat) {
+    remove_directory_recursively(tgzdir_tmp_path, 0);
+  }
 
 cleanup:
   return retval;
@@ -2181,7 +2187,9 @@ delete_test(
   logged_unlink(log_f, corr_dst_path);
   logged_unlink(log_f, info_dst_path);
   logged_unlink(log_f, tgz_dst_path);
-  remove_directory_recursively(tgzdir_dst_path, 0);
+  if (tgzdir_pat && *tgzdir_pat) {
+    remove_directory_recursively(tgzdir_dst_path, 0);
+  }
 
   for (++test_num; test_num <= test_count; ++test_num) {
     make_prefixed_path(test_dst_path, sizeof(test_dst_path), test_dir, prefix, test_pat, test_num - 1);
