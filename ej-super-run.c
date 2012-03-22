@@ -39,6 +39,12 @@
 #include <limits.h>
 #include <unistd.h>
 
+struct ignored_problem_info
+{
+  int contest_id;
+  unsigned char *short_name;
+};
+
 #define SUPER_RUN_DIRECTORY "super-run"
 
 static const unsigned char *program_name = 0;
@@ -238,6 +244,7 @@ write_help(void)
          "    --version    report version and exit\n"
          "    -u USER      specify the user to run under\n"
          "    -g GROUP     specify the group to run under\n"
+         "    -C DIR       specify the working directory\n"
          "    -D           daemon mode\n"
          "    -s ARCH      ignore specified architecture\n"
          "    -i CNTS:PROB ignore specified problem\n",
@@ -319,6 +326,7 @@ static void
 collect_sections(serve_state_t state)
 {
   struct generic_section_config *p;
+  struct section_global_data *global = NULL;
   struct section_tester_data    *t;
   int abstr_tester_count = 0, i;
 
@@ -327,7 +335,7 @@ collect_sections(serve_state_t state)
       if (state->global != NULL) {
         fatal("duplicate global section");
       }
-      state->global = (struct section_global_data*) p;
+      global = state->global = (struct section_global_data*) p;
     } else if (!strcmp(p->name, "problem")) {
       fatal("section [problem] is not supported");
     } else if (!strcmp(p->name, "language")) {
@@ -343,6 +351,9 @@ collect_sections(serve_state_t state)
     }
   }
 
+  if (!global) {
+    fatal("no global section");
+  }
   if (abstr_tester_count <= 0) {
     fatal("no abstract testers");
   }
@@ -358,6 +369,28 @@ collect_sections(serve_state_t state)
       }
     }
   }
+
+#if defined EJUDGE_SCRIPT_DIR
+  if (!global->script_dir[0]) {
+    snprintf(global->script_dir, sizeof(global->script_dir), "%s", EJUDGE_SCRIPT_DIR);
+  }
+  if (!global->ejudge_checkers_dir[0]) {
+    snprintf(global->ejudge_checkers_dir, sizeof(global->ejudge_checkers_dir),
+             "%s/checkers", EJUDGE_SCRIPT_DIR);
+  }
+#endif
+
+  if (!global->ejudge_checkers_dir[0]) {
+    fatal("ejudge_checkers_dir parameter is undefined");
+  }
+}
+
+int
+parse_ignored_problem(
+        const unsigned char *arg,
+        struct ignored_problem_info *info)
+{
+  return 0;
 }
 
 int
@@ -370,6 +403,11 @@ main(int argc, char *argv[])
   unsigned char ejudge_xml_path[PATH_MAX];
   serve_state_t state = &serve_state;
   int retval = 0;
+  int daemon_mode = 0;
+  const unsigned char *user = NULL, *group = NULL, *workdir = NULL;
+  int ignored_archs_count = 0, ignored_problems_count = 0;
+  unsigned char **ignored_archs = NULL;
+  struct ignored_problem_info *ignored_problems = NULL;
 
   program_name = os_GetBasename(argv[0]);
   start_set_self_args(argc, argv);
@@ -377,18 +415,57 @@ main(int argc, char *argv[])
   argv_restart[argc_restart++] = argv[0];
   ejudge_xml_path[0] = 0;
 
+  XCALLOC(ignored_archs, argc);
+  XCALLOC(ignored_problems, argc);
+
+  /*
+         "    -s ARCH      ignore specified architecture\n"
+         "    -i CNTS:PROB ignore specified problem\n",
+   */
+
   while (cur_arg < argc) {
     if (!strcmp(argv[cur_arg], "--help")) {
       write_help();
     } else if (!strcmp(argv[cur_arg], "--version")) {
       write_version();
+    } else if (!strcmp(argv[cur_arg], "-u")) {
+      if (cur_arg + 1 >= argc) fatal("argument expected for -u");
+      user = argv[cur_arg + 1];
+      cur_arg += 2;
+    } else if (!strcmp(argv[cur_arg], "-g")) {
+      if (cur_arg + 1 >= argc) fatal("argument expected for -g");
+      group = argv[cur_arg + 1];
+      cur_arg += 2;
+    } else if (!strcmp(argv[cur_arg], "-C")) {
+      if (cur_arg + 1 >= argc) fatal("argument expected for -C");
+      workdir = argv[cur_arg + 1];
+      cur_arg += 2;
+    } else if (!strcmp(argv[cur_arg], "-D")) {
+      daemon_mode = 1;
+      ++cur_arg;
+    } else if (!strcmp(argv[cur_arg], "-s")) {
+      if (cur_arg + 1 >= argc) fatal("argument expected for -s");
+      ignored_archs[ignored_archs_count++] = xstrdup(argv[cur_arg + 1]);
+      argv_restart[argc_restart++] = argv[cur_arg];
+      argv_restart[argc_restart++] = argv[cur_arg + 1];
+      cur_arg += 2;
+    } else if (!strcmp(argv[cur_arg], "-i")) {
+      if (cur_arg + 1 >= argc) fatal("argument expected for -i");
+      if (parse_ignored_problem(argv[cur_arg + 1], &ignored_problems[ignored_problems_count++]) < 0) {
+        fatal("invalid argument for -i: '%s'", argv[cur_arg + 1]);
+      }
+      argv_restart[argc_restart++] = argv[cur_arg];
+      argv_restart[argc_restart++] = argv[cur_arg + 1];
+      cur_arg += 2;
+    } else {
+      fatal("invalid command line parameter");
     }
   }
 
   argv_restart[argc_restart] = NULL;
   start_set_args(argv_restart);
 
-  if ((pid = start_find_process("ej-super-server", 0)) > 0) {
+  if ((pid = start_find_process("ej-super-run", 0)) > 0) {
     fatal("is already running as pid %d", pid);
   }
 
@@ -422,13 +499,13 @@ main(int argc, char *argv[])
   }
   snprintf(super_run_path, sizeof(super_run_path), "%s/%s", contests_home_dir, SUPER_RUN_DIRECTORY);
   snprintf(super_run_conf_path, sizeof(super_run_conf_path), "%s/conf/super-run.cfg", super_run_path);
-  create_directories();
 
-#if defined __unix__
-  if (getuid() == 0) {
-    fatal("will not run as the root");
+  if (!workdir || *workdir) {
+    workdir = super_run_path;
   }
-#endif
+  if (start_prepare(user, group, workdir) < 0) return 1;
+
+  create_directories();
 
   if (!strcasecmp(EJUDGE_CHARSET, "UTF-8")) utf8_mode = 1;
 
@@ -443,6 +520,7 @@ main(int argc, char *argv[])
     goto cleanup;
   }
 
+  (void) daemon_mode;
   // go daemon here
 
   if (do_loop(state) < 0) {

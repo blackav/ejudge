@@ -2077,6 +2077,9 @@ serve_read_compile_packet(
     goto report_check_failed;
   }
 
+  snprintf(pkt_name, sizeof(pkt_name), "%06d", comp_pkt->run_id);
+  snprintf(run_arch_path, sizeof(run_arch_path), "%s/%s.txt", compile_report_dir, pkt_name);
+
   if (comp_pkt->status == RUN_CHECK_FAILED
       || comp_pkt->status == RUN_COMPILE_ERR
       || comp_pkt->status == RUN_STYLE_ERR) {
@@ -2096,6 +2099,21 @@ serve_read_compile_packet(
                global->xml_report_archive_dir, comp_pkt->run_id,
                report_size);
       goto report_check_failed;
+    }
+
+    if (generic_read_file(&run_text, 0, &run_size, 0, 0, run_arch_path, 0) >= 0) {
+      arch_flags = archive_make_write_path(state,
+                                           run_arch_path, sizeof(run_arch_path),
+                                           global->report_archive_dir,
+                                           comp_pkt->run_id, run_size, 0);
+      if (arch_flags >= 0) {
+        if (archive_dir_prepare(state, global->report_archive_dir,
+                                comp_pkt->run_id, 0, 1) >= 0) {
+          generic_write_file(run_text, run_size, arch_flags,
+                             0, run_arch_path, 0);
+        }
+      }
+      xfree(run_text); run_text = 0; run_size = 0;
     }
   }
 
@@ -2190,9 +2208,6 @@ serve_read_compile_packet(
 
   if ((prob && prob->style_checker_cmd && prob->style_checker_cmd[0])
       || (lang && lang->style_checker_cmd && lang->style_checker_cmd[0])) {
-    snprintf(pkt_name, sizeof(pkt_name), "%06d", comp_pkt->run_id);
-    snprintf(run_arch_path, sizeof(run_arch_path), "%s/%s.txt",
-             compile_report_dir, pkt_name);
     if (generic_read_file(&run_text, 0, &run_size, 0, 0, run_arch_path, 0) >= 0){
       arch_flags = archive_make_write_path(state,
                                            run_arch_path, sizeof(run_arch_path),

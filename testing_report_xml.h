@@ -3,7 +3,7 @@
 #ifndef __TESTING_REPORT_XML_H__
 #define __TESTING_REPORT_XML_H__
 
-/* Copyright (C) 2005-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -124,6 +124,7 @@ typedef struct testing_report_xml
   unsigned char *valuer_errors;
   unsigned char *host;
   unsigned char *errors;
+  unsigned char *compiler_output;
 
   struct testing_report_test **tests;
 
