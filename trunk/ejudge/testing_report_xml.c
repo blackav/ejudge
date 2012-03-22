@@ -43,6 +43,7 @@
   <valuer_errors>T</valuer_errors>
   <host>T</host>
   <errors>T</errors>
+  [<compiler_output>T</compiler_output>]
   <tests>
     <test num="N" status="O" [exit-code="N"] [term-signal="N"] time="N" real-time="N" [max-memory-used="N"] [nominal-score="N" score="N"] [comment="S"] [team-comment="S"] [checker-comment="S"] [exit-comment="S"] output-available="B" stderr-available="B" checker-output-available="B" args-too-long="B" [input-digest="X"] [correct-digest="X"] [visibility="O"]>
        [<args>T</args>]
@@ -84,6 +85,7 @@ enum
   TR_T_TTROW,
   TR_T_TTCELLS,
   TR_T_TTCELL,
+  TR_T_COMPILER_OUTPUT,
 
   TR_T_LAST_TAG,
 };
@@ -164,6 +166,7 @@ static const char * const elem_map[] =
   [TR_T_TTROW] = "ttrow",
   [TR_T_TTCELLS] = "ttcells",
   [TR_T_TTCELL] = "ttcell",
+  [TR_T_COMPILER_OUTPUT] = "compiler_output",
 
   [TR_T_LAST_TAG] = 0,
 };
@@ -1054,6 +1057,9 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
     case TR_T_ERRORS:
       if (xml_leaf_elem(t2, &r->errors, 1, 1) < 0) return -1;
       break;
+    case TR_T_COMPILER_OUTPUT:
+      if (xml_leaf_elem(t2, &r->compiler_output, 1, 1) < 0) return -1;
+      break;
     case TR_T_TESTS:
       if (was_tests) {
         xml_err(t2, "duplicated element <tests>");
@@ -1150,6 +1156,7 @@ testing_report_free(testing_report_xml_t r)
   xfree(r->valuer_errors); r->valuer_errors = 0;
   xfree(r->host); r->host = 0;
   xfree(r->errors); r->errors = 0;
+  xfree(r->compiler_output); r->compiler_output = 0;
 
   if (r->tt_rows) {
     for (i = 0; i < r->tt_row_count; ++i) {
@@ -1375,6 +1382,7 @@ testing_report_unparse_xml(
   unparse_string_elem(out, &ab, TR_T_VALUER_ERRORS, r->valuer_errors);
   unparse_string_elem(out, &ab, TR_T_HOST, r->host);
   unparse_string_elem(out, &ab, TR_T_ERRORS, r->errors);
+  unparse_string_elem(out, &ab, TR_T_COMPILER_OUTPUT, r->compiler_output);
 
   if (r->run_tests > 0 && r->tests) {
     fprintf(out, "  <%s>\n", elem_map[TR_T_TESTS]);

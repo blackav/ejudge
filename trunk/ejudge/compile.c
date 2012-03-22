@@ -81,7 +81,6 @@ check_style_only(
   path_t txt_path;
   path_t work_src_path;
   path_t work_log_path;
-  path_t work_txt_path;
   int r, i;
   const unsigned char *src_sfx = "";
   tpTask tsk = 0;
@@ -98,8 +97,6 @@ check_style_only(
            global->compile_work_dir, run_name, src_sfx);
   snprintf(work_log_path, sizeof(work_log_path), "%s/%s.log",
            global->compile_work_dir, run_name);
-  snprintf(work_txt_path, sizeof(work_txt_path), "%s/%s.txt",
-           global->compile_work_dir, run_name);
 
   r = generic_copy_file(REMOVE, global->compile_src_dir, pkt_name, src_sfx,
                         0, global->compile_work_dir, run_name, src_sfx);
@@ -115,21 +112,24 @@ check_style_only(
     goto internal_error;
   }
 
-  info("Starting: %s %s", req->style_checker, work_src_path);
+  //info("Starting: %s %s", req->style_checker, work_src_path);
   tsk = task_New();
   task_AddArg(tsk, req->style_checker);
   task_AddArg(tsk, work_src_path);
   task_SetPathAsArg0(tsk);
   task_SetWorkingDir(tsk, global->compile_work_dir);
   task_EnableProcessGroup(tsk);
-  task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_WRITE);
-  task_SetRedir(tsk, 1, TSR_FILE, work_txt_path, TSK_REWRITE, 0777);
-  task_SetRedir(tsk, 2, TSR_FILE, work_log_path, TSK_REWRITE, 0777);
+  task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ);
+  task_SetRedir(tsk, 1, TSR_FILE, work_log_path, TSK_REWRITE, 0777);
+  task_SetRedir(tsk, 2, TSR_DUP, 1);
   if (req->sc_env_num > 0) {
     for (i = 0; i < req->sc_env_num; i++)
       task_PutEnv(tsk, req->sc_env_vars[i]);
   }
   task_EnableAllSignals(tsk);
+
+  task_PrintArgs(tsk);
+
   if (task_Start(tsk) < 0) {
     err("Failed to start style checker process");
     snprintf(msgbuf, sizeof(msgbuf), "Failed to start style checker %s\n",
@@ -173,12 +173,12 @@ check_style_only(
     rpl->status = RUN_STYLE_ERR;
     get_current_time(&rpl->ts3, &rpl->ts3_us);
     generic_copy_file(0, 0, work_log_path, "", 0, 0, log_path, "");
-    generic_copy_file(0, 0, work_txt_path, "", 0, 0, txt_path, "");
+    generic_copy_file(0, 0, work_log_path, "", 0, 0, txt_path, "");
   } else {
     // success
     rpl->status = RUN_OK;
     get_current_time(&rpl->ts3, &rpl->ts3_us);
-    generic_copy_file(0, 0, work_txt_path, "", 0, 0, txt_path, "");
+    generic_copy_file(0, 0, work_log_path, "", 0, 0, txt_path, "");
   }
 
   if (compile_reply_packet_write(rpl, &reply_bin_size, &reply_bin) < 0)
@@ -216,7 +216,6 @@ do_loop(void)
   path_t src_path;
   path_t exe_path;
   path_t log_path;
-  path_t txt_path;
 
   path_t exe_out;
   path_t log_out;
@@ -361,7 +360,6 @@ do_loop(void)
     pathmake(src_path, global->compile_work_dir, "/", src_name, NULL);
     pathmake(exe_path, global->compile_work_dir, "/", exe_name, NULL);
     pathmake(log_path, global->compile_work_dir, "/", "log", NULL);
-    pathmake(txt_path, global->compile_work_dir, "/", "txt", NULL);
     /* the resulting executable file */
     pathmake(exe_out, report_dir, "/", exe_name, NULL);
 
@@ -391,16 +389,16 @@ do_loop(void)
     } else {
       if (req->style_checker) {
         /* run style checker */
-        info("Starting: %s %s", req->style_checker, src_path);
+        //info("Starting: %s %s", req->style_checker, src_path);
         tsk = task_New();
         task_AddArg(tsk, req->style_checker);
         task_AddArg(tsk, src_path);
         task_SetPathAsArg0(tsk);
         task_SetWorkingDir(tsk, global->compile_work_dir);
         task_EnableProcessGroup(tsk);
-        task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_WRITE);
-        task_SetRedir(tsk, 1, TSR_FILE, txt_path, TSK_REWRITE, 0777);
-        task_SetRedir(tsk, 2, TSR_FILE, log_path, TSK_REWRITE, 0777);
+        task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ);
+        task_SetRedir(tsk, 1, TSR_FILE, log_path, TSK_REWRITE, 0777);
+        task_SetRedir(tsk, 2, TSR_DUP, 1);
         if (req->sc_env_num > 0) {
           for (i = 0; i < req->sc_env_num; i++)
             task_PutEnv(tsk, req->sc_env_vars[i]);
@@ -409,6 +407,9 @@ do_loop(void)
           task_SetMaxRealTime(tsk, lang->compile_real_time_limit);
         }
         task_EnableAllSignals(tsk);
+
+        task_PrintArgs(tsk);
+
         if (task_Start(tsk) < 0) {
           err("Failed to start style checker process");
           tail_message = "\n\nFailed to start style checker";
@@ -435,7 +436,7 @@ do_loop(void)
       }
 
       if (!ce_flag) {
-        info("Starting: %s %s %s", lang->cmd, src_name, exe_name);
+        //info("Starting: %s %s %s", lang->cmd, src_name, exe_name);
         tsk = task_New();
         task_AddArg(tsk, lang->cmd);
         task_AddArg(tsk, src_name);
@@ -469,8 +470,8 @@ do_loop(void)
             task_PutEnv(tsk, req->env_vars[i]);
         }
         task_SetWorkingDir(tsk, global->compile_work_dir);
-        task_SetRedir(tsk, 1, TSR_FILE, log_path, TSK_REWRITE, 0777);
-        task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_WRITE);
+        task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ);
+        task_SetRedir(tsk, 1, TSR_FILE, log_path, TSK_APPEND, 0777);
         task_SetRedir(tsk, 2, TSR_DUP, 1);
         if (lang->compile_real_time_limit > 0) {
           task_SetMaxRealTime(tsk, lang->compile_real_time_limit);
@@ -482,6 +483,8 @@ do_loop(void)
           // FIXME: propose reasonable recovery?
           return -1;
         }
+
+        task_PrintArgs(tsk);
 
         task_Start(tsk);
         task_Wait(tsk);
@@ -542,9 +545,7 @@ do_loop(void)
         r = generic_copy_file(0, 0, log_path, "", 0, 0, log_out, "");
       } else {
         r = generic_copy_file(0, 0, exe_path, "", 0, 0, exe_out, "");
-      }
-      if (generic_file_size(0, txt_path, "") > 0) {
-        generic_copy_file(0, 0, txt_path, "", 0, 0, txt_out, "");
+        generic_copy_file(0, 0, log_path, "", 0, 0, txt_out, "");
       }
       if (r >= 0 && generic_write_file(rpl_pkt, rpl_size, SAFE,
                                        status_dir, run_name, "") >= 0)
