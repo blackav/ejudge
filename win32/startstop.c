@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2008-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -76,6 +76,15 @@ start_find_process(const unsigned char *name, int *p_uid)
 {
 #if STARTSTOP_DEBUG - 0
   printf("win32/startstop.c: start_find_process\n");
+#endif /* STARTSTOP_DEBUG - 0 */
+  return 0;
+}
+
+int
+start_daemon(const unsigned char *log_path)
+{
+#if STARTSTOP_DEBUG - 0
+  printf("win32/startstop.c: start_daemon\n");
 #endif /* STARTSTOP_DEBUG - 0 */
   return 0;
 }
