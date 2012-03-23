@@ -28,6 +28,8 @@
 #include "interrupt.h"
 #include "super_run_packet.h"
 #include "run_packet.h"
+#include "run.h"
+#include "curtime.h"
 
 #include "reuse_xalloc.h"
 #include "reuse_osdeps.h"
@@ -54,6 +56,7 @@ static unsigned char super_run_path[PATH_MAX];
 static unsigned char super_run_spool_path[PATH_MAX];
 static unsigned char super_run_exe_path[PATH_MAX];
 static unsigned char super_run_conf_path[PATH_MAX];
+static unsigned char super_run_log_path[PATH_MAX];
 static int utf8_mode = 0;
 static struct serve_state serve_state;
 static int restart_flag = 0;
@@ -123,6 +126,18 @@ is_packet_to_ignore(
   return 0;
 }
 
+static const struct section_tester_data *
+find_abstract_tester(serve_state_t state, const unsigned char *arch)
+{
+  if (!state || !arch || state->max_abstr_tester <= 0) return NULL;
+  for (int i = 0; i < state->max_abstr_tester; ++i) {
+    if (!strcmp(arch, state->abstr_testers[i]->arch)) {
+      return state->abstr_testers[i];
+    }
+  }
+  return NULL;
+}
+
 static int
 handle_packet(
         serve_state_t state,
@@ -142,6 +157,9 @@ handle_packet(
   unsigned char full_status_dir[PATH_MAX];
   unsigned char full_full_dir[PATH_MAX];
 
+  unsigned char exe_pkt_name[PATH_MAX];
+  unsigned char exe_name[PATH_MAX];
+
   struct section_global_data *global = state->global;
 
   struct run_reply_packet reply_pkt;
@@ -150,6 +168,7 @@ handle_packet(
   int retval = 1;
   unsigned char *arch = NULL;
   unsigned char *short_name = NULL;
+  const struct section_tester_data *tst = NULL;
 
   memset(&reply_pkt, 0, sizeof(reply_pkt));
 
@@ -193,6 +212,7 @@ handle_packet(
   if (!arch) arch = "";
   short_name = srpp->short_name;
   if (!short_name) short_name = "";
+
   if (is_packet_to_ignore(pkt_name, srgp->contest_id, short_name, arch)) {
     retval = 0;
     generic_write_file(srp_b, srp_z, SAFE, super_run_spool_path, pkt_name, "");
@@ -203,141 +223,62 @@ handle_packet(
   report_path[0] = 0;
   full_report_path[0] = 0;
 
-
-
-
-  /*
-    if (srpp->type_val == PROB_TYPE_TESTS) {
-      cr_serialize_lock(&serve_state);
-      run_inverse_testing(&serve_state, srp, &reply_pkt,
-                          pkt_name, report_path, sizeof(report_path),
-                          utf8_mode);
-      cr_serialize_unlock(&serve_state);
-    } else {
-      arch = srgp->arch;
-      if (!arch) arch = "";
-      if (srpp->type_val > 0 && arch && !*arch) {
-        // any tester will work for output-only problems
-        arch = 0;
-      }
-
-
-      if (!(tester_id = find_tester(&serve_state, srpp->id, arch))){
-        snprintf(errmsg, sizeof(errmsg),
-                 "no tester found for %d, %s\n",
-                 srpp->id, srgp->arch);
-        goto report_check_failed_and_continue;
-      }
-
-      info("fount tester %d for pair %d,%s", tester_id, srpp->id,
-           srgp->arch);
-      tst = serve_state.testers[tester_id];
-
-      if (tst->any) {
-        info("tester %d is a default tester", tester_id);
-        r = prepare_tester_refinement(&serve_state, &tn, tester_id,
-                                      srpp->id);
-        ASSERT(r >= 0);
-        tst = &tn;
-      }
-
-      if (tst->skip_testing > 0) {
-        r = generic_write_file(srp_b, srp_z, SAFE,
-                               global->run_queue_dir, pkt_name, "");
-        if (r < 0) return -1;
-        info("skipping tester <%s,%s>", srpp->short_name, tst->arch);
-        scan_dir_add_ignored(global->run_queue_dir, pkt_name);
-        if (tst == &tn) {
-          sarray_free(tst->start_env); tst->start_env = 0;
-          sarray_free(tst->super); tst->super = 0;
-        }
-        continue;
-      }
-
-      snprintf(exe_pkt_name, sizeof(exe_pkt_name), "%s%s", pkt_name,
-               srgp->exe_sfx);
-      snprintf(exe_name, sizeof(exe_name), "%s%s", run_base, srgp->exe_sfx);
-
-      r = generic_copy_file(REMOVE, global->run_exe_dir, exe_pkt_name, "",
-                            0, global->run_work_dir, exe_name, "");
-      if (r <= 0) {
-        snprintf(errmsg, sizeof(errmsg),
-                 "failed to copy executable file %s/%s\n",
-                 global->run_exe_dir, exe_pkt_name);
-        goto report_check_failed_and_continue;
-      }
-
-      // start filling run_reply_packet 
-      memset(&reply_pkt, 0, sizeof(reply_pkt));
-      reply_pkt.judge_id = srgp->judge_id;
-      reply_pkt.contest_id = srgp->contest_id;
-      reply_pkt.run_id = srgp->run_id;
-      reply_pkt.notify_flag = srgp->notify_flag;
-      reply_pkt.user_status = -1;
-      reply_pkt.user_tests_passed = -1;
-      reply_pkt.user_score = -1;
-      reply_pkt.ts1 = srgp->ts1;
-      reply_pkt.ts1_us = srgp->ts1_us;
-      reply_pkt.ts2 = srgp->ts2;
-      reply_pkt.ts2_us = srgp->ts2_us;
-      reply_pkt.ts3 = srgp->ts3;
-      reply_pkt.ts3_us = srgp->ts3_us;
-      reply_pkt.ts4 = srgp->ts4;
-      reply_pkt.ts4_us = srgp->ts4_us;
-      get_current_time(&reply_pkt.ts5, &reply_pkt.ts5_us);
-
-      if (cr_serialize_lock(&serve_state) < 0) return -1;
-      run_tests(ejudge_config, &serve_state, tst, srp, &reply_pkt,
-                srgp->accepting_mode,
-                srpp->accept_partial, srgp->variant,
-                exe_name, run_base,
-                report_path, full_report_path,
-                srgp->user_spelling,
-                srpp->spelling, utf8_mode);
-      if (cr_serialize_unlock(&serve_state) < 0) return -1;
-
-      if (tst == &tn) {
-        sarray_free(tst->start_env); tst->start_env = 0;
-        sarray_free(tst->super); tst->super = 0;
+  if (srpp->type_val == PROB_TYPE_TESTS) {
+    cr_serialize_lock(state);
+    run_inverse_testing(state, srp, &reply_pkt,
+                        pkt_name, report_path, sizeof(report_path),
+                        utf8_mode);
+    cr_serialize_unlock(state);
+  } else {
+    if (!srpp->type_val) {
+      tst = find_abstract_tester(state, arch);
+      if (!tst) {
+        err("no support for architecture %s here", arch);
+        retval = 0;
+        generic_write_file(srp_b, srp_z, SAFE, super_run_spool_path, pkt_name, "");
+        goto cleanup;
       }
     }
 
-    if (srgp->reply_report_dir && srgp->reply_report_dir[0]) {
-      snprintf(full_report_dir, sizeof(full_report_dir),
-               "%s", srgp->reply_report_dir);
-    } else {
-      snprintf(full_report_dir, sizeof(full_report_dir),
-               "%s/%06d/report", global->run_dir, srgp->contest_id);
-    }
-    if (srgp->reply_spool_dir && srgp->reply_spool_dir[0]) {
-      snprintf(full_status_dir, sizeof(full_status_dir),
-               "%s", srgp->reply_spool_dir);
-    } else {
-      snprintf(full_status_dir, sizeof(full_status_dir),
-               "%s/%06d/status", global->run_dir, srgp->contest_id);
-    }
-    if (srgp->reply_full_archive_dir && srgp->reply_full_archive_dir[0]) {
-      snprintf(full_full_dir, sizeof(full_full_dir),
-               "%s", srgp->reply_full_archive_dir);
-    } else {
-      snprintf(full_full_dir, sizeof(full_full_dir),
-               "%s/%06d/output", global->run_dir, srgp->contest_id);
-    }
-             
-    if (generic_copy_file(0, NULL, report_path, "",
-                          0, full_report_dir, run_base, "") < 0)
-      return -1;
-    if (full_report_path[0]
-        && generic_copy_file(0, NULL, full_report_path, "",
-                             0, full_full_dir,
-                             run_base, "") < 0)
-      return -1;
+    snprintf(exe_pkt_name, sizeof(exe_pkt_name), "%s%s", pkt_name, srgp->exe_sfx);
+    snprintf(exe_name, sizeof(exe_name), "%s%s", run_base, srgp->exe_sfx);
 
-    //run_reply_packet_dump(&reply_pkt);
-*/
+    r = generic_copy_file(REMOVE, super_run_exe_path, exe_pkt_name, "",
+                          0, global->run_work_dir, exe_name, "");
+    if (r <= 0) {
+      // FIXME: handle this differently?
+      retval = 0;
+      generic_write_file(srp_b, srp_z, SAFE, super_run_spool_path, pkt_name, "");
+      goto cleanup;
+    }
 
+    reply_pkt.judge_id = srgp->judge_id;
+    reply_pkt.contest_id = srgp->contest_id;
+    reply_pkt.run_id = srgp->run_id;
+    reply_pkt.notify_flag = srgp->notify_flag;
+    reply_pkt.user_status = -1;
+    reply_pkt.user_tests_passed = -1;
+    reply_pkt.user_score = -1;
+    reply_pkt.ts1 = srgp->ts1;
+    reply_pkt.ts1_us = srgp->ts1_us;
+    reply_pkt.ts2 = srgp->ts2;
+    reply_pkt.ts2_us = srgp->ts2_us;
+    reply_pkt.ts3 = srgp->ts3;
+    reply_pkt.ts3_us = srgp->ts3_us;
+    reply_pkt.ts4 = srgp->ts4;
+    reply_pkt.ts4_us = srgp->ts4_us;
+    get_current_time(&reply_pkt.ts5, &reply_pkt.ts5_us);
 
-  // FIXME: do actions
+    if (cr_serialize_lock(state) < 0) return -1;
+    run_tests(ejudge_config, state, tst, srp, &reply_pkt,
+              srgp->accepting_mode,
+              srpp->accept_partial, srgp->variant,
+              exe_name, run_base,
+              report_path, full_report_path,
+              srgp->user_spelling,
+              srpp->spelling, utf8_mode);
+    if (cr_serialize_unlock(state) < 0) return -1;
+  }
 
   if (srgp->reply_report_dir && srgp->reply_report_dir[0]) {
     snprintf(full_report_dir, sizeof(full_report_dir), "%s", srgp->reply_report_dir);
@@ -366,6 +307,8 @@ handle_packet(
   if (full_report_path[0] && generic_copy_file(0, NULL, full_report_path, "", 0, full_full_dir, run_base, "") < 0) {
     goto cleanup;
   }
+
+  //run_reply_packet_dump(&reply_pkt);
 
   if (run_reply_packet_write(&reply_pkt, &reply_pkt_buf_size, &reply_pkt_buf) < 0) {
     goto cleanup;
@@ -547,6 +490,7 @@ collect_sections(serve_state_t state)
   struct section_global_data *global = NULL;
   struct section_tester_data    *t;
   int abstr_tester_count = 0, i;
+  unsigned char start_path[PATH_MAX];
 
   for (p = state->config; p; p = p->next) {
     if (!strcmp(p->name, "") || !strcmp(p->name, "global")) {
@@ -600,6 +544,48 @@ collect_sections(serve_state_t state)
 
   if (!global->ejudge_checkers_dir[0]) {
     fatal("ejudge_checkers_dir parameter is undefined");
+  }
+
+  for (i = 0; i < state->max_abstr_tester; ++i) {
+    if (!(t = state->abstr_testers[i])) continue;
+
+    if (t->memory_limit_type[0] >= ' ') {
+      t->memory_limit_type_val = prepare_parse_memory_limit_type(t->memory_limit_type);
+      if (t->memory_limit_type_val < 0) {
+        fatal("invalid memory_limit_type `%s'", t->memory_limit_type);
+      }
+    }
+
+    if (t->secure_exec_type[0] >= ' ') {
+      t->secure_exec_type_val = prepare_parse_secure_exec_type(t->secure_exec_type);
+      if (t->secure_exec_type_val < 0) {
+        fatal("invalid secure_exec_type `%s'", t->secure_exec_type);
+      }
+    }
+
+    if (t->start_cmd && t->start_cmd[0]) {
+      if (!os_IsAbsolutePath(t->start_cmd)) {
+        snprintf(start_path, sizeof(start_path), "%s", t->start_cmd);
+        if (ejudge_config && ejudge_config->compile_home_dir) {
+          pathmake2(start_path, ejudge_config->compile_home_dir,
+                    "/", "scripts", "/", start_path, NULL);
+        } else if (ejudge_config && ejudge_config->contests_home_dir) {
+          pathmake2(start_path, ejudge_config->contests_home_dir,
+                    "/", "compile", "/", "scripts", "/", start_path, NULL);
+        }
+#if defined EJUDGE_CONTESTS_HOME_DIR
+        else {
+          pathmake2(start_path, EJUDGE_CONTESTS_HOME_DIR,
+                    "/", "compile", "/", "scripts", "/", start_path, NULL);
+        }
+#endif
+        if (access(start_path, X_OK) >= 0) {
+          snprintf(t->start_cmd, sizeof(t->start_cmd), "%s", start_path);
+        } else {
+          pathmake2(t->start_cmd, global->script_dir, "/", "lang", "/", t->start_cmd, NULL);
+        }
+      }
+    }
   }
 }
 
@@ -834,6 +820,7 @@ main(int argc, char *argv[])
   }
   snprintf(super_run_path, sizeof(super_run_path), "%s/%s", contests_home_dir, SUPER_RUN_DIRECTORY);
   snprintf(super_run_conf_path, sizeof(super_run_conf_path), "%s/conf/super-run.cfg", super_run_path);
+  snprintf(super_run_log_path, sizeof(super_run_log_path), "%s/var/ej-super-run.log", contests_home_dir);
 
   if (os_IsFile(super_run_path) < 0) {
     create_configs(super_run_path, super_run_conf_path);
@@ -862,12 +849,20 @@ main(int argc, char *argv[])
     goto cleanup;
   }
 
-  (void) daemon_mode;
-  // go daemon here
+  if (daemon_mode) {
+    if (start_daemon(super_run_log_path) < 0) {
+      retval = 1;
+      goto cleanup;
+    }
+  }
+
+  fprintf(stderr, "%s %s, compiled %s\n", program_name, compile_version, compile_date);
 
   if (do_loop(state) < 0) {
     retval = 1;
   }
+
+  if (interrupt_restart_requested()) start_restart();
 
 cleanup:
   remove_working_directory(state);

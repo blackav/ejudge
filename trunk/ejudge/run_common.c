@@ -925,7 +925,7 @@ static int
 invoke_nwrun(
         const struct ejudge_cfg *config,
         serve_state_t state,
-        struct section_tester_data *tst,
+        const struct section_tester_data *tst,
         const struct super_run_in_packet *srp,
         full_archive_t far,
         int test_num,
@@ -1601,7 +1601,7 @@ run_one_test(
         const struct ejudge_cfg *config,
         serve_state_t state,
         const struct super_run_in_packet *srp,
-        struct section_tester_data *tst,
+        const struct section_tester_data *tst,
         int cur_test,
         struct testinfo_vector *tests,
         full_archive_t far,
@@ -2072,6 +2072,8 @@ run_one_test(
   if (srpp->max_process_count > 0) {
     task_SetMaxProcessCount(tsk, srpp->max_process_count);
   }
+
+  //task_PrintArgs(tsk);
 
   if (task_Start(tsk) < 0) {
     /* failed to start task */
@@ -2606,7 +2608,7 @@ void
 run_tests(
         const struct ejudge_cfg *config,
         serve_state_t state,
-        struct section_tester_data *tst,
+        const struct section_tester_data *tst,
         const struct super_run_in_packet *srp,
         struct run_reply_packet *reply_pkt,
         int accept_testing,

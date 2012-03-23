@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -131,6 +131,7 @@ command_start(
   int userlist_server_started = 0;
   int super_serve_started = 0;
   int compile_started = 0;
+  int super_run_started = 0;
   int job_server_started = 0;
   int new_server_started = 0;
 
@@ -234,6 +235,33 @@ command_start(
     compile_started = 1;
   }
 
+  // start compile
+  if (!master_mode) {
+    snprintf(path, sizeof(path), "%s/ej-super-run", EJUDGE_SERVER_BIN_PATH);
+    tsk = task_New();
+    task_AddArg(tsk, path);
+    task_AddArg(tsk, "-D");
+    if (user) {
+      task_AddArg(tsk, "-u");
+      task_AddArg(tsk, user);
+    }
+    if (group) {
+      task_AddArg(tsk, "-g");
+      task_AddArg(tsk, group);
+    }
+    if (workdir) {
+      snprintf(path, sizeof(path), "%s/compile", workdir);
+      task_AddArg(tsk, "-C");
+      task_AddArg(tsk, path);
+    }
+    task_SetPathAsArg0(tsk);
+    task_Start(tsk);
+    task_Wait(tsk);
+    if (task_IsAbnormal(tsk)) goto failed;
+    task_Delete(tsk); tsk = 0;
+    super_run_started = 1;
+  }
+
   // start job-server
   if (!slave_mode) {
     snprintf(path, sizeof(path), "%s/ej-jobs", EJUDGE_SERVER_BIN_PATH);
@@ -305,6 +333,9 @@ command_start(
   if (compile_started) {
     invoke_stopper("ej-compile", ejudge_xml_path);
   }
+  if (super_run_started) {
+    invoke_stopper("ej-super-run", ejudge_xml_path);
+  }
   if (job_server_started) {
     invoke_stopper("ej-jobs", ejudge_xml_path);
   }
@@ -327,6 +358,9 @@ command_stop(
   }
   if (!master_mode) {
     invoke_stopper("ej-compile", ejudge_xml_path);
+  }
+  if (!master_mode) {
+    invoke_stopper("ej-super-run", ejudge_xml_path);
   }
   invoke_stopper("ej-super-server", ejudge_xml_path);
   if (!slave_mode) {
