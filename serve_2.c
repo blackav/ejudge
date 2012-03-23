@@ -1304,10 +1304,7 @@ serve_run_request(
   unsigned char pkt_base[EJ_SERVE_PACKET_NAME_SIZE];
   unsigned char exe_out_name[256];
   unsigned char exe_in_name[256];
-  struct run_request_packet *run_pkt = 0;
   struct teamdb_export te;
-  void *run_pkt_out = 0;
-  //size_t run_pkt_out_size = 0;
   struct userlist_user_info *ui = 0;
 
   path_t run_exe_dir;
@@ -1445,77 +1442,6 @@ serve_run_request(
     ui = 0;
     if (te.user) ui = te.user->cnts0;
   }
-
-  /* create an internal representation of run packet */
-  XALLOCAZ(run_pkt, 1);
-
-  run_pkt->judge_id = judge_id;
-  run_pkt->contest_id = contest_id;
-  run_pkt->run_id = run_id;
-  run_pkt->problem_id = prob->tester_id;
-  run_pkt->accepting_mode = accepting_mode;
-  run_pkt->scoring_system = state->global->score_system;
-  run_pkt->separate_user_score = state->global->separate_user_score;
-  run_pkt->variant = variant;
-  run_pkt->accept_partial = prob->accept_partial;
-  run_pkt->user_id = user_id;
-  run_pkt->disable_sound = state->global->disable_sound;
-  run_pkt->full_archive = state->global->enable_full_archive;
-  run_pkt->memory_limit = state->global->enable_memory_limit_error;
-  run_pkt->secure_run = secure_run;
-  run_pkt->notify_flag = notify_flag;
-  run_pkt->advanced_layout = state->global->advanced_layout;
-  run_pkt->disable_stderr = prob->disable_stderr;
-  if (run_pkt->disable_stderr < 0) run_pkt->disable_stderr = 0;
-  run_pkt->mime_type = mime_type;
-  run_pkt->security_violation = state->global->detect_violations;
-  run_pkt->ts4 = current_time;
-  run_pkt->ts4_us = current_time_us;
-  if (comp_pkt) {
-    run_pkt->ts1 = comp_pkt->ts1;
-    run_pkt->ts1_us = comp_pkt->ts1_us;
-    run_pkt->ts2 = comp_pkt->ts2;
-    run_pkt->ts2_us = comp_pkt->ts2_us;
-    run_pkt->ts3 = comp_pkt->ts3;
-    run_pkt->ts3_us = comp_pkt->ts3_us;
-  } else {
-    run_pkt->ts3 = run_pkt->ts4;
-    run_pkt->ts3_us = run_pkt->ts4_us;
-    run_pkt->ts2 = run_pkt->ts4;
-    run_pkt->ts2_us = run_pkt->ts4_us;
-    run_pkt->ts1 = run_pkt->ts4;
-    run_pkt->ts1_us = run_pkt->ts4_us;
-  }
-  run_pkt->exe_sfx = exe_sfx;
-  run_pkt->arch = arch;
-  run_pkt->time_limit_adj_millis = time_limit_adj_millis;
-  run_pkt->time_limit_adj = time_limit_adj;
-
-  if (!no_db_flag) {
-    /* in new binary packet format we don't care about neither "special"
-     * characters in spellings nor about spelling length
-     */
-    if (ui && ui->spelling && ui->spelling[0]) {
-      run_pkt->user_spelling = ui->spelling;
-    }
-    if (!run_pkt->user_spelling && ui && ui->name
-        && ui->name[0]) {
-      run_pkt->user_spelling = ui->name;
-    }
-    if (!run_pkt->user_spelling && te.login && te.user->login
-        && te.user->login[0]) {
-      run_pkt->user_spelling = te.user->login;
-    }
-    /* run_pkt->user_spelling is allowed to be NULL */
-  }
-
-  if (prob->spelling[0]) {
-    run_pkt->prob_spelling = prob->spelling;
-  }
-  if (!run_pkt->prob_spelling) {
-    run_pkt->prob_spelling = prob->short_name;
-  }
-  /* run_pkt->prob_spelling is allowed to be NULL */
 
   // new run packet creation
   srp = super_run_in_packet_alloc();
@@ -1833,22 +1759,7 @@ serve_run_request(
   }
   xfree(srp_t); srp_t = NULL;
 
-  /* generate external representation of the packet */
-  /*
-  if (run_request_packet_write(run_pkt, &run_pkt_out_size, &run_pkt_out) < 0) {
-    fprintf(errf, "run_request_packet_write failed\n");
-    goto fail;
-  }
-
-  if (generic_write_file(run_pkt_out, run_pkt_out_size, SAFE,
-                         state->global->run_queue_dir, pkt_base, "") < 0) {
-    fprintf(errf, "failed to write run packet\n");
-    goto fail;
-  }
-  */
-
   /* update status */
-  xfree(run_pkt_out); run_pkt_out = 0;
   if (!no_db_flag) {
     if (run_change_status(state->runlog_state, run_id, RUN_RUNNING, 0, -1, judge_id) < 0) {
       goto fail;
@@ -1864,7 +1775,6 @@ fail:
   xfree(srp_t);
   prepare_tester_free(refined_tester);
   super_run_in_packet_free(srp);
-  xfree(run_pkt_out);
   return -1;
 }
 
@@ -2960,18 +2870,6 @@ serve_invoke_stop_script(serve_state_t state)
   task_Delete(tsk);
 }
 
-void
-serve_send_run_quit(const serve_state_t state)
-{
-  void *pkt_buf = 0;
-  size_t pkt_size = 0;
-
-  run_request_packet_quit(&pkt_size, &pkt_buf);
-  generic_write_file(pkt_buf, pkt_size, SAFE, state->global->run_queue_dir,
-                     "QUIT", "");
-  xfree(pkt_buf);
-}
-
 static unsigned char olympiad_rejudgeable_runs[RUN_LAST + 1] =
 {
   [RUN_OK]               = 1,
@@ -3800,7 +3698,7 @@ testing_queue_unlock_entry(
         const unsigned char *out_path,
         const unsigned char *packet_name);
 
-static int
+static struct super_run_in_packet *
 testing_queue_lock_entry(
         int contest_id,
         const unsigned char *run_queue_dir,
@@ -3808,13 +3706,13 @@ testing_queue_lock_entry(
         unsigned char *out_name,
         size_t out_size,
         unsigned char *out_path,
-        size_t out_path_size,
-        struct run_request_packet **packet)
+        size_t out_path_size)
 {
   path_t dir_path;
   struct stat sb;
   char *pkt_buf = 0;
   size_t pkt_size = 0;
+  struct super_run_in_packet *srp = NULL;
 
   snprintf(out_name, out_size, "%s_%d_%s",
            os_NodeName(), getpid(), packet_name);
@@ -3826,47 +3724,44 @@ testing_queue_lock_entry(
   if (rename(dir_path, out_path) < 0) {
     err("testing_queue_lock_entry: rename for %s failed: %s",
         packet_name, os_ErrorMsg());
-    return -1;
+    return NULL;
   }
   if (stat(out_path, &sb) < 0) {
     err("testing_queue_lock_entry: stat for %s failed: %s",
         packet_name, os_ErrorMsg());
-    return -1;
+    return NULL;
   }
   if (!S_ISREG(sb.st_mode)) {
     err("testing_queue_lock_entry: invalid file type of %s", out_path);
-    return -1;
+    return NULL;
   }
   if (sb.st_nlink != 1) {
     err("testing_queue_lock_entry: file %s has been linked several times",
         out_path);
     unlink(out_path);
-    return -1;
+    return NULL;
   }
 
   if (generic_read_file(&pkt_buf, 0, &pkt_size, 0, 0, out_path, 0) < 0) {
     // no attempt to recover...
-    return -1;
+    return NULL;
   }
 
-  if (run_request_packet_read(pkt_size, pkt_buf, packet) < 0 || !*packet) {
-    *packet = 0;
+  if (!(srp = super_run_in_packet_parse_cfg_str(packet_name, pkt_buf, pkt_size))) {
     xfree(pkt_buf); pkt_buf = 0;
-    // no attempt to recover either...
-    return -1;
+    return NULL;
   }
 
   xfree(pkt_buf); pkt_buf = 0;
   pkt_size = 0;
 
-  if ((*packet)->contest_id != contest_id) {
-    // contest_id mismatch
+  if (!srp->global || srp->global->contest_id != contest_id) {
+    srp = super_run_in_packet_free(srp);
     testing_queue_unlock_entry(run_queue_dir, out_path, packet_name);
-    *packet = run_request_packet_free(*packet);
-    return -1;
+    return NULL;
   }
 
-  return 0;
+  return srp;
 }
 
 static int
@@ -3918,27 +3813,36 @@ serve_testing_queue_delete(
   const unsigned char *run_queue_dir = state->global->run_queue_dir;
   path_t out_path;
   path_t out_name;
-  struct run_request_packet *packet = 0;
   path_t exe_path;
   struct run_entry re;
+  struct super_run_in_packet *srp = NULL;
+  const unsigned char *exe_sfx = NULL;
 
-  if (testing_queue_lock_entry(cnts->id, run_queue_dir, packet_name,
-                               out_name, sizeof(out_name),
-                               out_path, sizeof(out_path), &packet) < 0)
+  if (!(srp = testing_queue_lock_entry(cnts->id, run_queue_dir, packet_name,
+                                       out_name, sizeof(out_name),
+                                       out_path, sizeof(out_path))))
     return -1;
 
+  if (!srp->global) {
+    srp = super_run_in_packet_free(srp);
+    return -1;
+  }
+
+  exe_sfx = srp->global->exe_sfx;
+  if (!exe_sfx) exe_sfx = "";
+
   snprintf(exe_path, sizeof(exe_path), "%s/%s%s",
-           state->global->run_exe_dir, packet_name, packet->exe_sfx);
+           state->global->run_exe_dir, packet_name, exe_sfx);
   unlink(out_path);
   unlink(exe_path);
 
-  if (run_get_entry(state->runlog_state, packet->run_id, &re) >= 0
+  if (run_get_entry(state->runlog_state, srp->global->run_id, &re) >= 0
       && re.status == RUN_RUNNING
-      && re.judge_id == packet->judge_id) {
-    run_change_status_4(state->runlog_state, packet->run_id, RUN_PENDING);
+      && re.judge_id == srp->global->judge_id) {
+    run_change_status_4(state->runlog_state, srp->global->run_id, RUN_PENDING);
   }
 
-  packet = run_request_packet_free(packet);
+  srp = super_run_in_packet_free(srp);
   return 0;
 }
 
@@ -3953,38 +3857,45 @@ serve_testing_queue_change_priority(
   const unsigned char *run_exe_dir = state->global->run_exe_dir;
   path_t out_path;
   path_t out_name;
-  struct run_request_packet *packet = 0;
   path_t new_packet_name;
   path_t exe_path;
   path_t new_exe_path;
+  struct super_run_in_packet *srp = NULL;
+  const unsigned char *exe_sfx = NULL;
 
-  if (testing_queue_lock_entry(cnts->id, run_queue_dir, packet_name,
-                               out_name, sizeof(out_name),
-                               out_path, sizeof(out_path), &packet) < 0)
-    return -1;
+  if (!(srp = testing_queue_lock_entry(cnts->id, run_queue_dir, packet_name,
+                                       out_name, sizeof(out_name),
+                                       out_path, sizeof(out_path)))) {
+    goto fail;
+  }
+  if (!srp->global) goto fail;
+
+  exe_sfx = srp->global->exe_sfx;
+  if (!exe_sfx) exe_sfx = "";
 
   snprintf(new_packet_name, sizeof(new_packet_name), "%s", packet_name);
   new_packet_name[0] = get_priority_code(get_priority_value(new_packet_name[0]) + adjustment);
   if (!strcmp(packet_name, new_packet_name)) {
-    packet = run_request_packet_free(packet);
-    return 0;
+    goto fail;
   }
 
-  snprintf(exe_path, sizeof(exe_path), "%s/%s%s",
-           run_exe_dir, packet_name, packet->exe_sfx);
-  snprintf(new_exe_path, sizeof(new_exe_path), "%s/%s%s",
-           run_exe_dir, new_packet_name, packet->exe_sfx);
+  snprintf(exe_path, sizeof(exe_path), "%s/%s%s", run_exe_dir, packet_name, exe_sfx);
+  snprintf(new_exe_path, sizeof(new_exe_path), "%s/%s%s", run_exe_dir, new_packet_name, exe_sfx);
   if (rename(exe_path, new_exe_path) < 0) {
     err("serve_testing_queue_up: rename %s -> %s failed: %s",
         exe_path, new_exe_path, os_ErrorMsg());
     testing_queue_unlock_entry(run_queue_dir, out_path, packet_name);
-    packet = run_request_packet_free(packet);
-    return -1;
+    goto fail;
   }
 
   testing_queue_unlock_entry(run_queue_dir, out_path, new_packet_name);
-  packet = run_request_packet_free(packet);
+
+  srp = super_run_in_packet_free(srp);
   return 0;
+
+fail:
+  srp = super_run_in_packet_free(srp);
+  return -1;
 }
 
 static void

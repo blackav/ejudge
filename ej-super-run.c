@@ -38,6 +38,7 @@
 #include <stdarg.h>
 #include <limits.h>
 #include <unistd.h>
+#include <ctype.h>
 
 struct ignored_problem_info
 {
@@ -58,6 +59,11 @@ static struct serve_state serve_state;
 static int restart_flag = 0;
 static unsigned char *contests_home_dir = NULL;
 
+static int ignored_archs_count = 0;
+static int ignored_problems_count = 0;
+static unsigned char **ignored_archs = NULL;
+static struct ignored_problem_info *ignored_problems = NULL;
+
 static void
 fatal(const char *format, ...)
   __attribute__((noreturn, format(printf, 1, 2)));
@@ -75,8 +81,52 @@ fatal(const char *format, ...)
   exit(1);
 }
 
-static void
-handle_packet(serve_state_t state, const unsigned char *pkt_name)
+static int
+is_packet_to_ignore(
+        const unsigned char *pkt_name,
+        int contest_id,
+        const unsigned char *short_name,
+        const unsigned char *arch)
+{
+  int i;
+
+  if (ignored_archs_count > 0) {
+    for (i = 0; i < ignored_archs_count; ++i) {
+      if (!strcmp(ignored_archs[i], arch))
+        break;
+    }
+    if (i < ignored_archs_count) {
+      info("packet %s: ignored because of arch == '%s'", pkt_name, arch);
+      return 1;
+    }
+  }
+  if (ignored_problems_count > 0) {
+    for (i = 0; i < ignored_problems_count; ++i) {
+      if (ignored_problems[i].contest_id > 0 && ignored_problems[i].short_name) {
+        if (contest_id == ignored_problems[i].contest_id
+            && !strcmp(short_name, ignored_problems[i].short_name))
+          break;
+      } else if (ignored_problems[i].contest_id > 0) {
+        if (contest_id == ignored_problems[i].contest_id)
+          break;
+      } else if (ignored_problems[i].short_name) {
+        if (!strcmp(short_name, ignored_problems[i].short_name))
+          break;
+      }
+    }
+    if (i < ignored_problems_count) {
+      info("packet %s: ignored because of contest_id == %d, short_name == '%s'",
+           pkt_name, contest_id, short_name);
+      return 1;
+    }
+  }
+  return 0;
+}
+
+static int
+handle_packet(
+        serve_state_t state,
+        const unsigned char *pkt_name)
 {
   int r;
   char *srp_b = 0;
@@ -97,17 +147,24 @@ handle_packet(serve_state_t state, const unsigned char *pkt_name)
   struct run_reply_packet reply_pkt;
   void *reply_pkt_buf = 0;
   size_t reply_pkt_buf_size = 0;
+  int retval = 1;
+  unsigned char *arch = NULL;
+  unsigned char *short_name = NULL;
 
   memset(&reply_pkt, 0, sizeof(reply_pkt));
 
   r = generic_read_file(&srp_b, 0, &srp_z, SAFE | REMOVE, super_run_spool_path, pkt_name, "");
-  if (r == 0) goto cleanup;
+  if (r == 0) {
+    // ignore this packet
+    retval = 0;
+    goto cleanup;
+  }
   if (r < 0) {
     err("generic_read_file failed for packet %s in %s", pkt_name, super_run_spool_path);
     goto cleanup;
   }
 
-  //fprintf(stderr, "packet: <<%.*s>>\n", (int) srp_z, srp_b);
+  fprintf(stderr, "packet: <<%.*s>>\n", (int) srp_z, srp_b);
 
   srp = super_run_in_packet_parse_cfg_str(pkt_name, srp_b, srp_z);
   if (!srp) {
@@ -132,9 +189,153 @@ handle_packet(serve_state_t state, const unsigned char *pkt_name)
     goto cleanup;
   }
 
+  arch = srgp->arch;
+  if (!arch) arch = "";
+  short_name = srpp->short_name;
+  if (!short_name) short_name = "";
+  if (is_packet_to_ignore(pkt_name, srgp->contest_id, short_name, arch)) {
+    retval = 0;
+    generic_write_file(srp_b, srp_z, SAFE, super_run_spool_path, pkt_name, "");
+    goto cleanup;
+  }
+
   snprintf(run_base, sizeof(run_base), "%06d", srgp->run_id);
   report_path[0] = 0;
   full_report_path[0] = 0;
+
+
+
+
+  /*
+    if (srpp->type_val == PROB_TYPE_TESTS) {
+      cr_serialize_lock(&serve_state);
+      run_inverse_testing(&serve_state, srp, &reply_pkt,
+                          pkt_name, report_path, sizeof(report_path),
+                          utf8_mode);
+      cr_serialize_unlock(&serve_state);
+    } else {
+      arch = srgp->arch;
+      if (!arch) arch = "";
+      if (srpp->type_val > 0 && arch && !*arch) {
+        // any tester will work for output-only problems
+        arch = 0;
+      }
+
+
+      if (!(tester_id = find_tester(&serve_state, srpp->id, arch))){
+        snprintf(errmsg, sizeof(errmsg),
+                 "no tester found for %d, %s\n",
+                 srpp->id, srgp->arch);
+        goto report_check_failed_and_continue;
+      }
+
+      info("fount tester %d for pair %d,%s", tester_id, srpp->id,
+           srgp->arch);
+      tst = serve_state.testers[tester_id];
+
+      if (tst->any) {
+        info("tester %d is a default tester", tester_id);
+        r = prepare_tester_refinement(&serve_state, &tn, tester_id,
+                                      srpp->id);
+        ASSERT(r >= 0);
+        tst = &tn;
+      }
+
+      if (tst->skip_testing > 0) {
+        r = generic_write_file(srp_b, srp_z, SAFE,
+                               global->run_queue_dir, pkt_name, "");
+        if (r < 0) return -1;
+        info("skipping tester <%s,%s>", srpp->short_name, tst->arch);
+        scan_dir_add_ignored(global->run_queue_dir, pkt_name);
+        if (tst == &tn) {
+          sarray_free(tst->start_env); tst->start_env = 0;
+          sarray_free(tst->super); tst->super = 0;
+        }
+        continue;
+      }
+
+      snprintf(exe_pkt_name, sizeof(exe_pkt_name), "%s%s", pkt_name,
+               srgp->exe_sfx);
+      snprintf(exe_name, sizeof(exe_name), "%s%s", run_base, srgp->exe_sfx);
+
+      r = generic_copy_file(REMOVE, global->run_exe_dir, exe_pkt_name, "",
+                            0, global->run_work_dir, exe_name, "");
+      if (r <= 0) {
+        snprintf(errmsg, sizeof(errmsg),
+                 "failed to copy executable file %s/%s\n",
+                 global->run_exe_dir, exe_pkt_name);
+        goto report_check_failed_and_continue;
+      }
+
+      // start filling run_reply_packet 
+      memset(&reply_pkt, 0, sizeof(reply_pkt));
+      reply_pkt.judge_id = srgp->judge_id;
+      reply_pkt.contest_id = srgp->contest_id;
+      reply_pkt.run_id = srgp->run_id;
+      reply_pkt.notify_flag = srgp->notify_flag;
+      reply_pkt.user_status = -1;
+      reply_pkt.user_tests_passed = -1;
+      reply_pkt.user_score = -1;
+      reply_pkt.ts1 = srgp->ts1;
+      reply_pkt.ts1_us = srgp->ts1_us;
+      reply_pkt.ts2 = srgp->ts2;
+      reply_pkt.ts2_us = srgp->ts2_us;
+      reply_pkt.ts3 = srgp->ts3;
+      reply_pkt.ts3_us = srgp->ts3_us;
+      reply_pkt.ts4 = srgp->ts4;
+      reply_pkt.ts4_us = srgp->ts4_us;
+      get_current_time(&reply_pkt.ts5, &reply_pkt.ts5_us);
+
+      if (cr_serialize_lock(&serve_state) < 0) return -1;
+      run_tests(ejudge_config, &serve_state, tst, srp, &reply_pkt,
+                srgp->accepting_mode,
+                srpp->accept_partial, srgp->variant,
+                exe_name, run_base,
+                report_path, full_report_path,
+                srgp->user_spelling,
+                srpp->spelling, utf8_mode);
+      if (cr_serialize_unlock(&serve_state) < 0) return -1;
+
+      if (tst == &tn) {
+        sarray_free(tst->start_env); tst->start_env = 0;
+        sarray_free(tst->super); tst->super = 0;
+      }
+    }
+
+    if (srgp->reply_report_dir && srgp->reply_report_dir[0]) {
+      snprintf(full_report_dir, sizeof(full_report_dir),
+               "%s", srgp->reply_report_dir);
+    } else {
+      snprintf(full_report_dir, sizeof(full_report_dir),
+               "%s/%06d/report", global->run_dir, srgp->contest_id);
+    }
+    if (srgp->reply_spool_dir && srgp->reply_spool_dir[0]) {
+      snprintf(full_status_dir, sizeof(full_status_dir),
+               "%s", srgp->reply_spool_dir);
+    } else {
+      snprintf(full_status_dir, sizeof(full_status_dir),
+               "%s/%06d/status", global->run_dir, srgp->contest_id);
+    }
+    if (srgp->reply_full_archive_dir && srgp->reply_full_archive_dir[0]) {
+      snprintf(full_full_dir, sizeof(full_full_dir),
+               "%s", srgp->reply_full_archive_dir);
+    } else {
+      snprintf(full_full_dir, sizeof(full_full_dir),
+               "%s/%06d/output", global->run_dir, srgp->contest_id);
+    }
+             
+    if (generic_copy_file(0, NULL, report_path, "",
+                          0, full_report_dir, run_base, "") < 0)
+      return -1;
+    if (full_report_path[0]
+        && generic_copy_file(0, NULL, full_report_path, "",
+                             0, full_full_dir,
+                             run_base, "") < 0)
+      return -1;
+
+    //run_reply_packet_dump(&reply_pkt);
+*/
+
 
   // FIXME: do actions
 
@@ -179,10 +380,12 @@ cleanup:
   srp = super_run_in_packet_free(srp);
   xfree(reply_pkt_buf); reply_pkt_buf = NULL;
   clear_directory(global->run_work_dir);
+  return retval;
 }
 
-static int
-do_loop(serve_state_t state)
+int
+do_loop(
+        serve_state_t state)
 {
   struct section_global_data *global = state->global;
   unsigned char pkt_name[PATH_MAX];
@@ -211,6 +414,7 @@ do_loop(serve_state_t state)
     }
     if (restart_flag) break;
 
+    pkt_name[0] = 0;
     r = scan_dir(super_run_spool_path, pkt_name, sizeof(pkt_name));
     if (r < 0) {
       err("scan_dir failed for %s, waiting...", super_run_spool_path);
@@ -222,12 +426,16 @@ do_loop(serve_state_t state)
     }
 
     if (!r) {
-      scan_dir_add_ignored(super_run_spool_path, pkt_name);
-      info("scan_dir race, ignoring packet %s", pkt_name);
+      interrupt_enable();
+      os_Sleep(global->sleep_time);
+      interrupt_disable();
       continue;
     }
 
-    handle_packet(state, pkt_name);
+    r = handle_packet(state, pkt_name);
+    if (!r) {
+      scan_dir_add_ignored(super_run_spool_path, pkt_name);
+    }
   }
 
   return 0;
@@ -267,9 +475,9 @@ create_directories(void)
            super_run_path, "queue");
   snprintf(super_run_exe_path, sizeof(super_run_exe_path), "%s/var/%s",
            super_run_path, "exe");
-  make_dir(super_run_path, 0755);
+  os_MakeDirPath(super_run_spool_path, 0777);
+  os_MakeDirPath(super_run_exe_path, 0777);
   make_all_dir(super_run_spool_path, 0777);
-  make_dir(super_run_exe_path, 0777);
 }
 
 static int
@@ -282,6 +490,16 @@ create_working_directories(serve_state_t state)
   unsigned char check_dir[PATH_MAX];
   int retval = 0;
 
+#if defined EJUDGE_LOCAL_DIR
+  if (!global->run_work_dir || !global->run_work_dir[0]) {
+    snprintf(global->run_work_dir, sizeof(global->run_work_dir),
+             "%s/%s/work", EJUDGE_LOCAL_DIR, SUPER_RUN_DIRECTORY);
+  }
+  if (!global->run_check_dir || !global->run_check_dir[0]) {
+    snprintf(global->run_check_dir, sizeof(global->run_check_dir),
+             "%s/%s/check", EJUDGE_LOCAL_DIR, SUPER_RUN_DIRECTORY);
+  }
+#endif
   if (!global->run_work_dir || !global->run_work_dir[0]) {
     snprintf(global->run_work_dir, sizeof(global->run_work_dir), 
              "%s/var/work", super_run_path);
@@ -385,12 +603,137 @@ collect_sections(serve_state_t state)
   }
 }
 
-int
+static int
 parse_ignored_problem(
         const unsigned char *arg,
         struct ignored_problem_info *info)
 {
+  // [ CONTEST-ID : PROBLEM-SHORT-NAME ]
+  const unsigned char *c = arg;
+  int x, n;
+  unsigned char *s = NULL;
+
+  info->contest_id = 0;
+
+  if (!arg) return -1;
+  while (isspace(*c)) ++c;
+  if (!*c) return -1;
+  if (isdigit(*c)) {
+    if (sscanf(c, "%d%n", &x, &n) != 1) return -1;
+    if (x < 0 || x > 1000000) return -1;
+    info->contest_id = x;
+    c += n;
+    while (isspace(*c)) ++c;
+  }
+  if (*c != ':') return -1;
+  ++c;
+  while (isspace(*c)) ++c;
+  if (!*c) return 0;
+  s = (unsigned char*) xmalloc((strlen(arg) + 1) * sizeof(*s));
+  info->short_name = s;
+  while (*c && !isspace(*c)) *s++ = *c++;
+  *s = 0;
+  while (isspace(*c)) ++c;
+  if (*c) return -1;
   return 0;
+}
+
+static void
+create_configs(
+        const unsigned char *super_run_path,
+        const unsigned char *super_run_conf_path)
+{
+  unsigned char dir_path[PATH_MAX];
+  FILE *f = NULL;
+
+  if (os_MakeDirPath(super_run_path, 0775) < 0)
+    fatal("cannot create directory '%s'", super_run_path);
+  snprintf(dir_path, sizeof(dir_path), "%s/var", super_run_path);
+  if (os_MakeDir(dir_path, 0775) < 0)
+    fatal("cannot create directory '%s'", dir_path);
+  snprintf(dir_path, sizeof(dir_path), "%s/conf", super_run_path);
+  if (os_MakeDir(dir_path, 0775) < 0)
+    fatal("cannot create directory '%s'", dir_path);
+
+  if (!(f = fopen(super_run_conf_path, "w")))
+    fatal("cannot open file '%s' for writing", super_run_conf_path);
+  fprintf(f, "sleep_time = 1000\n\n");
+
+  fprintf(f,
+          "[tester]\n"
+          "name = Generic\n"
+          "arch = \"\"\n"
+          "abstract\n"
+          "no_core_dump\n"
+          "enable_memory_limit_error\n"
+          "kill_signal = KILL\n"
+          "memory_limit_type = \"default\"\n"
+          "secure_exec_type = \"static\"\n"
+          "clear_env\n"
+          "start_env = \"PATH=/usr/local/bin:/usr/bin:/bin\"\n"
+          "start_env = \"LANG=C\"\n"
+          "start_env = \"HOME\"\n\n");
+
+  fprintf(f,
+          "[tester]\n"
+          "name = Linux-shared\n"
+          "arch = \"linux-shared\"\n"
+          "abstract\n"
+          "no_core_dump\n"
+          "enable_memory_limit_error\n"
+          "kill_signal = KILL\n"
+          "memory_limit_type = \"default\"\n"
+          "secure_exec_type = \"dll\"\n"
+          "clear_env\n"
+          "start_env = \"PATH=/usr/local/bin:/usr/bin:/bin\"\n"
+          "start_env = \"LANG=C\"\n"
+          "start_env = \"HOME\"\n\n");
+
+  fprintf(f,
+          "[tester]\n"
+          "name = Linux-java\n"
+          "arch = \"java\"\n"
+          "abstract\n"
+          "no_core_dump\n"
+          "kill_signal = TERM\n"
+          "memory_limit_type = \"java\"\n"
+          "secure_exec_type = \"java\"\n"
+          "start_cmd = \"runjava\"\n"
+          "start_env = \"LANG=C\"\n"
+          "start_env = \"EJUDGE_PREFIX_DIR\"\n\n");
+
+  fprintf(f,
+          "[tester]\n"
+          "name = Linux-msil\n"
+          "arch = \"msil\"\n"
+          "abstract\n"
+          "no_core_dump\n"
+          "kill_signal = TERM\n"
+          "start_cmd = \"runmono\"\n"
+          "start_env = \"LANG=C\"\n"
+          "start_env = \"EJUDGE_PREFIX_DIR\"\n\n");
+
+  fprintf(f, "[tester]\n"
+          "name = DOSTester\n"
+          "arch = dos\n"
+          "abstract\n"
+          "no_core_dump\n"
+          "no_redirect\n"
+          "ignore_stderr\n"
+          "time_limit_adjustment\n"
+          "is_dos\n"
+          "kill_signal = KILL\n"
+          "memory_limit_type = \"dos\"\n"
+          "errorcode_file = \"retcode.txt\"\n"
+          "start_cmd = \"dosrun3\"\n\n");
+
+  fprintf(f, "[tester]\n"
+          "name = Win32\n"
+          "arch = win32\n"
+          "abstract\n"
+          "nwrun_spool_dir = \"win32_nwrun\"\n\n");
+
+  fclose(f); f = NULL;
 }
 
 int
@@ -405,9 +748,6 @@ main(int argc, char *argv[])
   int retval = 0;
   int daemon_mode = 0;
   const unsigned char *user = NULL, *group = NULL, *workdir = NULL;
-  int ignored_archs_count = 0, ignored_problems_count = 0;
-  unsigned char **ignored_archs = NULL;
-  struct ignored_problem_info *ignored_problems = NULL;
 
   program_name = os_GetBasename(argv[0]);
   start_set_self_args(argc, argv);
@@ -417,11 +757,6 @@ main(int argc, char *argv[])
 
   XCALLOC(ignored_archs, argc);
   XCALLOC(ignored_problems, argc);
-
-  /*
-         "    -s ARCH      ignore specified architecture\n"
-         "    -i CNTS:PROB ignore specified problem\n",
-   */
 
   while (cur_arg < argc) {
     if (!strcmp(argv[cur_arg], "--help")) {
@@ -499,6 +834,13 @@ main(int argc, char *argv[])
   }
   snprintf(super_run_path, sizeof(super_run_path), "%s/%s", contests_home_dir, SUPER_RUN_DIRECTORY);
   snprintf(super_run_conf_path, sizeof(super_run_conf_path), "%s/conf/super-run.cfg", super_run_path);
+
+  if (os_IsFile(super_run_path) < 0) {
+    create_configs(super_run_path, super_run_conf_path);
+    if (os_IsFile(super_run_path) != OSPK_DIR) {
+      fatal("path '%s' must be a directory", super_run_path);
+    }
+  }
 
   if (!workdir || *workdir) {
     workdir = super_run_path;

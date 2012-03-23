@@ -2282,7 +2282,6 @@ priv_contest_operation(FILE *fout,
 
   case NEW_SRV_ACTION_RELOAD_SERVER:
     extra->last_access_time = 0;
-    serve_send_run_quit(cs);
     break;
 
   case NEW_SRV_ACTION_UPDATE_STANDINGS_2:
@@ -2292,7 +2291,6 @@ priv_contest_operation(FILE *fout,
   case NEW_SRV_ACTION_RESET_2:
     serve_reset_contest(cnts, cs);
     extra->last_access_time = 0;
-    serve_send_run_quit(cs);
     break;
 
   case NEW_SRV_ACTION_SQUEEZE_RUNS:
