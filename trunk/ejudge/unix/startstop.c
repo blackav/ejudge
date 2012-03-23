@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -34,6 +34,7 @@
 #include <dirent.h>
 #include <errno.h>
 #include <string.h>
+#include <fcntl.h>
 
 static path_t self_exe;
 static char **self_argv;
@@ -182,6 +183,29 @@ start_kill(int pid, int op)
   case START_STOP: signum = SIGTERM; break;
   }
   return kill(pid, signum);
+}
+
+int
+start_daemon(const unsigned char *log_path)
+{
+  int log_fd = -1;
+  int pid;
+
+  if ((log_fd = open(log_path, O_WRONLY | O_CREAT | O_APPEND, 0600)) < 0) {
+    err("cannot open log file `%s'", log_path);
+    return -1;
+  }
+  close(0);
+  if (open("/dev/null", O_RDONLY) < 0) return -1;
+  close(1);
+  if (open("/dev/null", O_WRONLY) < 0) return -1;
+  close(2); dup(log_fd); close(log_fd);
+
+  if ((pid = fork()) < 0) return -1;
+  if (pid > 0) _exit(0);
+  if (setsid() < 0) return -1;
+
+  return 0;
 }
 
 /*
