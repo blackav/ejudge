@@ -6961,3 +6961,10 @@ run_packet_1.c 6668 0 496440
 run_packet_2.c 6668 0 506402
 run_packet_3.c 6668 0 107449
 serve_2.c 6668 0 10931808
+run.h 6670 0 269278
+startstop.h 6670 0 102751
+ej-super-run.c 6670 0 2132952
+ejudge-control.c 6670 0 917830
+unix/startstop.c 6672 0 416813
+win32/startstop.c 6671 0 171251
+run_common.c 6670 0 7469254
