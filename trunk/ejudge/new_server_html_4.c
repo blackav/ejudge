@@ -333,7 +333,6 @@ cmd_operation(
     break;
   case NEW_SRV_ACTION_RELOAD_SERVER:
     extra->last_access_time = 0;
-    serve_send_run_quit(cs);
     break;
   case NEW_SRV_ACTION_START_CONTEST:
     run_get_times(cs->runlog_state, &start_time, 0, &duration, &stop_time, 0);
@@ -1929,9 +1928,6 @@ cmd_reload_server_2(
   info("unload_contest_2: %s: %d: contest unload", ejudge_login, phr->contest_id);
   if (extra) {
     extra->last_access_time = 0;
-    if (extra->serve_state) {
-      serve_send_run_quit(extra->serve_state);
-    }
   }
   retval = 0;
 

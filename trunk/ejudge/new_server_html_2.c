@@ -48,6 +48,7 @@
 #include "compat.h"
 #include "run_packet.h"
 #include "prepare_dflt.h"
+#include "super_run_packet.h"
 
 #include "reuse_xalloc.h"
 #include "reuse_logger.h"
@@ -6125,7 +6126,7 @@ struct testing_queue_entry
   unsigned char *entry_name;
   int priority;
   time_t mtime;
-  struct run_request_packet *packet;
+  struct super_run_in_packet *packet;
 };
 
 struct testing_queue_vec
@@ -6157,7 +6158,7 @@ scan_run_queue(
   path_t path;
   char *pkt_buf = 0;
   size_t pkt_size = 0;
-  struct run_request_packet *packet = 0;
+  struct super_run_in_packet *srp = NULL;
   int priority = 0;
 
   memset(vec, 0, sizeof(*vec));
@@ -6176,8 +6177,7 @@ scan_run_queue(
     if (generic_read_file(&pkt_buf, 0, &pkt_size, 0, 0, path, 0) < 0)
       continue;
 
-    if (run_request_packet_read(pkt_size, pkt_buf, &packet) < 0 || !packet) {
-      packet = 0;
+    if (!(srp = super_run_in_packet_parse_cfg_str(dd->d_name, pkt_buf, pkt_size))) {
       xfree(pkt_buf); pkt_buf = 0;
       pkt_size = 0;
       continue;
@@ -6186,8 +6186,13 @@ scan_run_queue(
     xfree(pkt_buf); pkt_buf = 0;
     pkt_size = 0;
 
-    if (packet->contest_id != contest_id) {
-      packet = run_request_packet_free(packet);
+    if (!srp->global || !srp->problem) {
+      srp = super_run_in_packet_free(srp);
+      continue;
+    }
+
+    if (srp->global->contest_id != contest_id) {
+      srp = super_run_in_packet_free(srp);
       continue;
     }
 
@@ -6216,7 +6221,7 @@ scan_run_queue(
     vec->v[vec->u].entry_name = xstrdup(dd->d_name);
     vec->v[vec->u].priority = priority;
     vec->v[vec->u].mtime = sb.st_mtime;
-    vec->v[vec->u].packet = packet; packet = 0;
+    vec->v[vec->u].packet = srp; srp = 0;
     vec->u++;
   }
 
@@ -6241,6 +6246,7 @@ ns_write_testing_queue(
   int i, prob_id, user_id;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   unsigned char hbuf[1024];
+  const unsigned char *arch;
 
   memset(&vec, 0, sizeof(vec));
   scan_run_queue(global->run_queue_dir, cnts->id, &vec);
@@ -6285,22 +6291,25 @@ ns_write_testing_queue(
           cl, _("Create time"),
           cl, _("Actions"));
   for (i = 0; i < vec.u; ++i) {
+    arch = vec.v[i].packet->global->arch;
+    if (!arch) arch = "";
+
     fprintf(fout, "<tr>");
     fprintf(fout, "<td%s>%d</td>", cl, i + 1);
     fprintf(fout, "<td%s>%s</td>", cl, vec.v[i].entry_name);
     fprintf(fout, "<td%s>%d</td>", cl, vec.v[i].priority);
-    fprintf(fout, "<td%s>%d</td>", cl, vec.v[i].packet->run_id);
-    prob_id = vec.v[i].packet->problem_id;
+    fprintf(fout, "<td%s>%d</td>", cl, vec.v[i].packet->global->run_id);
+    prob_id = vec.v[i].packet->problem->id;
     if (prob_id > 0 && prob_id <= cs->max_prob && cs->probs[prob_id]) {
       fprintf(fout, "<td%s>%s</td>", cl, cs->probs[prob_id]->short_name);
     } else {
       fprintf(fout, "<td%s>Problem %d</td>", cl, prob_id);
     }
-    user_id = vec.v[i].packet->user_id;
+    user_id = vec.v[i].packet->global->user_id;
     fprintf(fout, "<td%s>%s</td>", cl,
             ARMOR(teamdb_get_name_2(cs->teamdb_state, user_id)));
-    fprintf(fout, "<td%s>%s</td>", cl, vec.v[i].packet->arch);
-    fprintf(fout, "<td%s>%d</td>", cl, vec.v[i].packet->judge_id);
+    fprintf(fout, "<td%s>%s</td>", cl, arch);
+    fprintf(fout, "<td%s>%d</td>", cl, vec.v[i].packet->global->judge_id);
     fprintf(fout, "<td%s>%s</td>", cl, xml_unparse_date(vec.v[i].mtime));
     fprintf(fout, "<td%s>", cl);
     fprintf(fout, "&nbsp;&nbsp;<a href=\"%s\">X</a>",
@@ -6332,7 +6341,7 @@ ns_write_testing_queue(
 
   for (i = 0; i < vec.u; ++i) {
     xfree(vec.v[i].entry_name);
-    run_request_packet_free(vec.v[i].packet);
+    super_run_in_packet_free(vec.v[i].packet);
   }
   xfree(vec.v); vec.v = 0;
   vec.a = vec.u = 0;
