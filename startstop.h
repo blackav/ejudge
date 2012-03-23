@@ -4,7 +4,7 @@
 #ifndef __STARTSTOP_H__
 #define __STARTSTOP_H__
 
-/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -36,5 +36,6 @@ int
 start_find_process(const unsigned char *name, int *p_uid);
 
 int start_kill(int pid, int op);
+int start_daemon(const unsigned char *log_path);
 
 #endif /* __STARTSTOP_H__ */

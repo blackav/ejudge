@@ -85,7 +85,7 @@ void
 run_tests(
         const struct ejudge_cfg *config,
         struct serve_state *state,
-        struct section_tester_data *tst,
+        const struct section_tester_data *tst,
         const struct super_run_in_packet *srp,
         struct run_reply_packet *reply_pkt,
         int accept_testing,
