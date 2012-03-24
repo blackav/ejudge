@@ -130,17 +130,20 @@ enum
   MNG_STAT_FAILED,
   MNG_STAT_RUNNING,
   MNG_STAT_WAITING,
-  MNG_STAT_LAST = MNG_STAT_WAITING,
+  MNG_STAT_SUPER_RUN,
+  MNG_STAT_LAST = MNG_STAT_SUPER_RUN,
 };
 static int
 get_run_management_status(const struct contest_desc *cnts,
                           struct contest_extra *extra)
 {
-  if (!cnts->run_managed && (!extra || !extra->run_used)) {
+  if (cnts->run_managed) {
+    return MNG_STAT_SUPER_RUN;
+  } else if (!cnts->old_run_managed && (!extra || !extra->run_used)) {
     return MNG_STAT_NOT_MANAGED;
   } else if (!extra || !extra->run_used) {
     return MNG_STAT_TEMP_NOT_MANAGED;
-  } else if (!cnts->run_managed) {
+  } else if (!cnts->old_run_managed) {
     if (extra->run_suspended) {
       return MNG_STAT_TEMP_FAILED;
     } else if (extra->run_pid > 0) {
@@ -433,6 +436,8 @@ super_html_main_page(FILE *f,
             if (p->tag == CONTEST_RUN_MANAGED_ON)
               fprintf(f, " %s", p->text);
           fprintf(f, "</i></td>\n");
+        } else if (cnts->run_managed) {
+          fprintf(f, "<td><i>Super-run</i></td>\n");
         } else {
           fprintf(f, "<td><i>Not managed</i></td>\n");
         }
@@ -475,6 +480,8 @@ super_html_main_page(FILE *f,
             if (p->tag == CONTEST_RUN_MANAGED_ON)
               fprintf(f, " %s", p->text);
           fprintf(f, "</i></td>\n");
+        } else if (cnts->run_managed) {
+          fprintf(f, "<td><i>Super-run</i></td>\n");
         } else {
           fprintf(f, "<td><i>Not managed</i></td>\n");
         }
@@ -522,7 +529,7 @@ super_html_main_page(FILE *f,
 
     // report run mastering status
     if (priv_level >= PRIV_LEVEL_ADMIN) {
-      if (!cnts->run_managed && (!extra || !extra->run_used)) {
+      if (!cnts->old_run_managed && (!extra || !extra->run_used)) {
         cnt = 0;
         if (cnts && cnts->slave_rules) {
           for (p = cnts->slave_rules->first_down; p; p = p->right)
@@ -535,12 +542,14 @@ super_html_main_page(FILE *f,
             if (p->tag == CONTEST_RUN_MANAGED_ON)
               fprintf(f, " %s", p->text);
           fprintf(f, "</i></td>\n");
+        } else if (cnts->run_managed) {
+          fprintf(f, "<td><i>Super-run</i></td>\n");
         } else {
           fprintf(f, "<td><i>Not managed</i></td>\n");
         }
       } else if (!extra || !extra->run_used) {
         fprintf(f, "<td bgcolor=\"#ffff88\">Not yet managed</td>\n");
-      } else if (!cnts->run_managed) {
+      } else if (!cnts->old_run_managed) {
         // still managed, but not necessary
         if (extra->run_suspended) {
           fprintf(f, "<td bgcolor=\"#ff8888\">Failed, not managed</td>\n");
@@ -644,6 +653,7 @@ static const unsigned char * const mng_status_table[] =
   [MNG_STAT_FAILED] = "managed, failed to start",
   [MNG_STAT_RUNNING] = "managed, running as pid %d",
   [MNG_STAT_WAITING] = "managed, waiting",
+  [MNG_STAT_SUPER_RUN] = "super run",
 };
 
 int
@@ -928,6 +938,9 @@ super_html_contest_page(FILE *f,
                          "Do probe run");
       */
       break;
+    case MNG_STAT_SUPER_RUN:
+      fprintf(f, "&nbsp;");
+      break;
     default:
       abort();
     }
@@ -1053,15 +1066,17 @@ super_html_contest_page(FILE *f,
   fprintf(f, "</table>\n");
 
   if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0) {
-    fprintf(f, "<p>");
-    html_start_form(f, 1, self_url, new_hidden_vars);
-    html_submit_button(f, SSERV_CMD_CONTEST_RESTART, "Restart management");
-    fprintf(f, "</form>\n");
+    if (!cnts->run_managed) {
+      fprintf(f, "<p>");
+      html_start_form(f, 1, self_url, new_hidden_vars);
+      html_submit_button(f, SSERV_CMD_CONTEST_RESTART, "Restart management");
+      fprintf(f, "</form></p>\n");
+    }
 
     fprintf(f, "<p>");
     html_start_form(f, 1, self_url, new_hidden_vars);
     html_submit_button(f, SSERV_CMD_CHECK_TESTS, "Check contest settings");
-    fprintf(f, "</form>\n");
+    fprintf(f, "</form></p>\n");
   }
 
   fprintf(f, "<table border=\"0\"><tr>");
@@ -1486,13 +1501,14 @@ super_html_run_managed_contest(struct contest_desc *cnts, int user_id,
   unsigned char *txt1, *txt2;
   unsigned char audit_str[1024];
 
-  if (cnts->run_managed) return 0;
+  if (cnts->old_run_managed) return 0;
   if ((errcode = super_html_parse_contest_xml(cnts->id, &txt1, &txt2)) < 0)
     return errcode;
 
-  cnts->run_managed = 1;
+  cnts->old_run_managed = 1;
+  cnts->run_managed = 0;
   snprintf(audit_str, sizeof(audit_str),
-           "<!-- audit: run_unmanaged->run_managed %s %d (%s) %s -->\n",
+           "<!-- audit: run_unmanaged->old_run_managed %s %d (%s) %s -->\n",
            xml_unparse_date(time(0)), user_id, user_login, xml_unparse_ip(ip));
 
   if ((errcode = contests_save_xml(cnts, txt1, txt2, audit_str)) < 0) {
@@ -1516,13 +1532,13 @@ super_html_run_unmanaged_contest(struct contest_desc *cnts, int user_id,
   unsigned char *txt1, *txt2;
   unsigned char audit_str[1024];
 
-  if (!cnts->run_managed) return 0;
+  if (!cnts->old_run_managed) return 0;
   if ((errcode = super_html_parse_contest_xml(cnts->id, &txt1, &txt2)) < 0)
     return errcode;
 
-  cnts->run_managed = 0;
+  cnts->old_run_managed = 0;
   snprintf(audit_str, sizeof(audit_str),
-           "<!-- audit: run_managed->run_unmanaged %s %d (%s) %s -->\n",
+           "<!-- audit: old_run_managed->run_unmanaged %s %d (%s) %s -->\n",
            xml_unparse_date(time(0)), user_id, user_login, xml_unparse_ip(ip));
 
   if ((errcode = contests_save_xml(cnts, txt1, txt2, audit_str)) < 0) {
@@ -2419,7 +2435,7 @@ super_html_edit_contest_page(FILE *f,
   fprintf(f, "</tr></form>\n");
 
   html_start_form(f, 1, self_url, hidden_vars);
-  fprintf(f, "<tr%s><td>Manage the testing server?</td><td>",
+  fprintf(f, "<tr%s><td>User ej-super-run for testing?</td><td>",
           form_row_attrs[row ^= 1]);
   html_boolean_select(f, cnts->run_managed, "param", 0, 0);
   fprintf(f, "</td><td>");
@@ -2427,6 +2443,18 @@ super_html_edit_contest_page(FILE *f,
   fprintf(f, "</td>");
   print_help_url(f, SSERV_CMD_CNTS_CHANGE_RUN_MANAGED);
   fprintf(f, "</tr></form>\n");
+
+  if (!cnts->run_managed) {
+    html_start_form(f, 1, self_url, hidden_vars);
+    fprintf(f, "<tr%s><td>Testing compabilitiy mode?</td><td>",
+            form_row_attrs[row ^= 1]);
+    html_boolean_select(f, cnts->old_run_managed, "param", 0, 0);
+    fprintf(f, "</td><td>");
+    html_submit_button(f, SSERV_CMD_CNTS_CHANGE_OLD_RUN_MANAGED, "Change");
+    fprintf(f, "</td>");
+    print_help_url(f, SSERV_CMD_CNTS_CHANGE_OLD_RUN_MANAGED);
+    fprintf(f, "</tr></form>\n");
+  }
 
   if (sstate->advanced_view) {
     html_start_form(f, 1, self_url, hidden_vars);

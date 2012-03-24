@@ -1126,7 +1126,7 @@ cmd_submit_run(
                                   0 /* no_db_flag */) < 0)
           FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
       } else {
-        if (serve_run_request(cs, stderr, run_text, run_size,
+        if (serve_run_request(cs, cnts, stderr, run_text, run_size,
                               global->contest_id, run_id,
                               phr->user_id, prob->id, 0, variant, 0, -1, -1, 0,
                               mime_type, 0, 0, 0) < 0)
@@ -1165,7 +1165,7 @@ cmd_submit_run(
                                   0 /* no_db_flag */) < 0)
           FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
       } else {
-        if (serve_run_request(cs, stderr, run_text, run_size,
+        if (serve_run_request(cs, cnts, stderr, run_text, run_size,
                               global->contest_id, run_id,
                               phr->user_id, prob->id, 0, variant, 0, -1, -1, 0,
                               mime_type, 0, 0, 0) < 0)

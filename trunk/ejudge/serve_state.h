@@ -419,6 +419,7 @@ struct compile_reply_packet;
 int
 serve_run_request(
         serve_state_t state,
+        const struct contest_desc *cnts,
         FILE *errf,
         const unsigned char *run_text,
         size_t run_size,

@@ -2945,7 +2945,7 @@ priv_submit_run(FILE *fout,
           goto cleanup;
         }
       } else {
-        if (serve_run_request(cs, log_f, run_text, run_size,
+        if (serve_run_request(cs, cnts, log_f, run_text, run_size,
                               global->contest_id, run_id,
                               phr->user_id, prob_id, 0, variant, 0, -1, -1, 0,
                               mime_type, 0, 0, 0) < 0) {
@@ -2990,7 +2990,7 @@ priv_submit_run(FILE *fout,
           goto cleanup;
         }
       } else {      
-        if (serve_run_request(cs, log_f, run_text, run_size,
+        if (serve_run_request(cs, cnts, log_f, run_text, run_size,
                               global->contest_id, run_id,
                               phr->user_id, prob_id, 0, variant, 0, -1, -1, 0,
                               mime_type, 0, 0, 0) < 0) {
@@ -10378,7 +10378,7 @@ unpriv_submit_run(FILE *fout,
           goto done;
         }
       } else {
-        if (serve_run_request(cs, log_f, run_text, run_size,
+        if (serve_run_request(cs, cnts, log_f, run_text, run_size,
                               global->contest_id, run_id,
                               phr->user_id, prob_id, 0, variant, 0, -1, -1, 1,
                               mime_type, 0, 0, 0) < 0) {
@@ -10442,7 +10442,7 @@ unpriv_submit_run(FILE *fout,
           goto done;
         }
       } else {
-        if (serve_run_request(cs, log_f, run_text, run_size,
+        if (serve_run_request(cs, cnts, log_f, run_text, run_size,
                               global->contest_id, run_id,
                               phr->user_id, prob_id, 0, variant, 0, -1, -1, 1,
                               mime_type, 0, 0, 0) < 0) {

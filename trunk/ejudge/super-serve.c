@@ -374,7 +374,7 @@ prepare_run_serving(const struct contest_desc *cnts,
   } else if (master_mode) {
     return;
   } else {
-    if (!cnts->run_managed && do_run_manage <= 0) return;
+    if (!cnts->old_run_managed && do_run_manage <= 0) return;
   }
 
   snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/run/queue/dir",
@@ -466,7 +466,7 @@ acquire_contest_resources(const struct contest_desc *cnts,
   char *error_log_txt = 0;
   size_t error_log_size = 0;
   struct contest_extra *extra;
-  int i, run_managed = 0;
+  int i, old_run_managed = 0;
   struct stat stbuf;
   unsigned char config_path[1024];
   unsigned char var_path[1024];
@@ -479,16 +479,16 @@ acquire_contest_resources(const struct contest_desc *cnts,
         if (!strcasecmp(hostname, p->text))
           break;
       }
-      if (p) run_managed = 1;
+      if (p) old_run_managed = 1;
     }
   } else if (!master_mode) {
-    run_managed = cnts->run_managed;
+    old_run_managed = cnts->old_run_managed;
   }
 
   if (!cnts->managed && do_serve_manage <= 0
-      && !run_managed && do_run_manage <= 0) return;
+      && !old_run_managed && do_run_manage <= 0) return;
 
-  if (slave_mode && run_managed)
+  if (slave_mode && old_run_managed)
     info("contest %d will be served in slave mode", cnts->id);
 
   extra = get_contest_extra(cnts->id);
@@ -2231,6 +2231,7 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_CNTS_CHANGE_SEND_PASSWD_EMAIL:
   case SSERV_CMD_CNTS_CHANGE_MANAGED:
   case SSERV_CMD_CNTS_CHANGE_RUN_MANAGED:
+  case SSERV_CMD_CNTS_CHANGE_OLD_RUN_MANAGED:
   case SSERV_CMD_CNTS_CHANGE_CLEAN_USERS:
   case SSERV_CMD_CNTS_CHANGE_CLOSED:
   case SSERV_CMD_CNTS_CHANGE_INVISIBLE:
@@ -3254,6 +3255,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_CHANGE_SEND_PASSWD_EMAIL] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_MANAGED] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_RUN_MANAGED] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_OLD_RUN_MANAGED] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_CLEAN_USERS] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_CLOSED] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_INVISIBLE] = { cmd_set_value },

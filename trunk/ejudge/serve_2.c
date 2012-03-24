@@ -1277,6 +1277,7 @@ find_lang_specific_value(
 int
 serve_run_request(
         serve_state_t state,
+        const struct contest_desc *cnts,
         FILE *errf,
         const unsigned char *run_text,
         size_t run_size,
@@ -1359,16 +1360,15 @@ serve_run_request(
     goto fail;
   }
 
-  if (state->testers[cn]->run_dir[0]) {
-    snprintf(run_exe_dir, sizeof(run_exe_dir),
-             "%s/exe", state->testers[cn]->run_dir);
-    snprintf(run_queue_dir, sizeof(run_queue_dir),
-             "%s/queue", state->testers[cn]->run_dir);
+  if (cnts && cnts->run_managed) {
+    snprintf(run_exe_dir, sizeof(run_exe_dir), "%s/super-run/var/exe", EJUDGE_CONTESTS_HOME_DIR);
+    snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/super-run/var/queue", EJUDGE_CONTESTS_HOME_DIR);
+  } else if (state->testers[cn]->run_dir[0]) {
+    snprintf(run_exe_dir, sizeof(run_exe_dir), "%s/exe", state->testers[cn]->run_dir);
+    snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/queue", state->testers[cn]->run_dir);
   } else {
-    snprintf(run_exe_dir, sizeof(run_exe_dir), "%s/exe", 
-             state->global->run_dir);
-    snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/queue",
-             state->global->run_dir);
+    snprintf(run_exe_dir, sizeof(run_exe_dir), "%s/exe", state->global->run_dir);
+    snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/queue", state->global->run_dir);
   }
 
   if (prob->variant_num <= 0 && variant > 0) {
@@ -1418,13 +1418,13 @@ serve_run_request(
   if (!run_text) {
     snprintf(exe_in_name, sizeof(exe_in_name), "%06d%s", run_id, exe_sfx);
     if (generic_copy_file(REMOVE, compile_report_dir, exe_in_name, "",
-                          0, state->global->run_exe_dir,exe_out_name, "") < 0) {
+                          0, run_exe_dir,exe_out_name, "") < 0) {
       fprintf(errf, "copying failed");
       goto fail;
     }
   } else {
     if (generic_write_file(run_text, run_size, 0,
-                           state->global->run_exe_dir, exe_out_name, "") < 0) {
+                           run_exe_dir, exe_out_name, "") < 0) {
       fprintf(errf, "writing failed");
       goto fail;
     }
@@ -1511,6 +1511,7 @@ serve_run_request(
   srgp->reply_packet_name = xstrdup(buf);
   snprintf(pathbuf, sizeof(pathbuf), "%s/%06d/report", state->global->run_dir, contest_id);
   srgp->reply_report_dir = xstrdup(pathbuf);
+
   snprintf(pathbuf, sizeof(pathbuf), "%s/%06d/status", state->global->run_dir, contest_id);
   srgp->reply_spool_dir = xstrdup(pathbuf);
   if (srgp->enable_full_archive > 0) {
@@ -1753,7 +1754,7 @@ serve_run_request(
   super_run_in_packet_unparse_cfg(srp_f, srp);
   fclose(srp_f); srp_f = NULL;
 
-  if (generic_write_file(srp_t, srp_z, SAFE, state->global->run_queue_dir, pkt_base, "") < 0) {
+  if (generic_write_file(srp_t, srp_z, SAFE, run_queue_dir, pkt_base, "") < 0) {
     fprintf(errf, "failed to write run packet\n");
     goto fail;
   }
@@ -2145,7 +2146,7 @@ serve_read_compile_packet(
       goto report_check_failed;
   }
 
-  if (serve_run_request(state, stderr, run_text, run_size,
+  if (serve_run_request(state, cnts, stderr, run_text, run_size,
                         global->contest_id, comp_pkt->run_id,
                         re.user_id, re.prob_id, re.lang_id, 0,
                         comp_extra->priority_adjustment,
@@ -2799,7 +2800,7 @@ serve_rejudge_run(
                           0, run_arch_path, 0) < 0)
       return;
 
-    serve_run_request(state, stderr, run_text, run_size,
+    serve_run_request(state, cnts, stderr, run_text, run_size,
                       global->contest_id, run_id,
                       re.user_id, re.prob_id, 0, 0, priority_adjustment,
                       -1, accepting_mode, 1, re.mime_type, 0, 0, 0);
@@ -3810,13 +3811,22 @@ serve_testing_queue_delete(
         const serve_state_t state,
         const unsigned char *packet_name)
 {
-  const unsigned char *run_queue_dir = state->global->run_queue_dir;
   path_t out_path;
   path_t out_name;
   path_t exe_path;
   struct run_entry re;
   struct super_run_in_packet *srp = NULL;
   const unsigned char *exe_sfx = NULL;
+  unsigned char run_queue_dir[PATH_MAX];
+  unsigned char run_exe_dir[PATH_MAX];
+
+  if (cnts && cnts->run_managed) {
+    snprintf(run_exe_dir, sizeof(run_exe_dir), "%s/super-run/var/exe", EJUDGE_CONTESTS_HOME_DIR);
+    snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/super-run/var/queue", EJUDGE_CONTESTS_HOME_DIR);
+  } else {
+    snprintf(run_exe_dir, sizeof(run_exe_dir), "%s/exe", state->global->run_dir);
+    snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/queue", state->global->run_dir);
+  }
 
   if (!(srp = testing_queue_lock_entry(cnts->id, run_queue_dir, packet_name,
                                        out_name, sizeof(out_name),
@@ -3831,8 +3841,7 @@ serve_testing_queue_delete(
   exe_sfx = srp->global->exe_sfx;
   if (!exe_sfx) exe_sfx = "";
 
-  snprintf(exe_path, sizeof(exe_path), "%s/%s%s",
-           state->global->run_exe_dir, packet_name, exe_sfx);
+  snprintf(exe_path, sizeof(exe_path), "%s/%s%s", run_exe_dir, packet_name, exe_sfx);
   unlink(out_path);
   unlink(exe_path);
 
@@ -3853,8 +3862,6 @@ serve_testing_queue_change_priority(
         const unsigned char *packet_name,
         int adjustment)
 {
-  const unsigned char *run_queue_dir = state->global->run_queue_dir;
-  const unsigned char *run_exe_dir = state->global->run_exe_dir;
   path_t out_path;
   path_t out_name;
   path_t new_packet_name;
@@ -3862,6 +3869,16 @@ serve_testing_queue_change_priority(
   path_t new_exe_path;
   struct super_run_in_packet *srp = NULL;
   const unsigned char *exe_sfx = NULL;
+  unsigned char run_queue_dir[PATH_MAX];
+  unsigned char run_exe_dir[PATH_MAX];
+
+  if (cnts && cnts->run_managed) {
+    snprintf(run_exe_dir, sizeof(run_exe_dir), "%s/super-run/var/exe", EJUDGE_CONTESTS_HOME_DIR);
+    snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/super-run/var/queue", EJUDGE_CONTESTS_HOME_DIR);
+  } else {
+    snprintf(run_exe_dir, sizeof(run_exe_dir), "%s/exe", state->global->run_dir);
+    snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/queue", state->global->run_dir);
+  }
 
   if (!(srp = testing_queue_lock_entry(cnts->id, run_queue_dir, packet_name,
                                        out_name, sizeof(out_name),
@@ -3899,11 +3916,18 @@ fail:
 }
 
 static void
-collect_run_packets(const serve_state_t state, strarray_t *vec)
+collect_run_packets(const struct contest_desc *cnts, const serve_state_t state, strarray_t *vec)
 {
   path_t dir_path;
   DIR *d = 0;
   struct dirent *dd;
+  unsigned char run_queue_dir[PATH_MAX];
+
+  if (cnts && cnts->run_managed) {
+    snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/super-run/var/queue", EJUDGE_CONTESTS_HOME_DIR);
+  } else {
+    snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/queue", state->global->run_dir);
+  }
 
   memset(vec, 0, sizeof(*vec));
   snprintf(dir_path, sizeof(dir_path), "%s/dir", state->global->run_queue_dir);
@@ -3926,7 +3950,7 @@ serve_testing_queue_delete_all(
   strarray_t vec;
   int i;
 
-  collect_run_packets(state, &vec);
+  collect_run_packets(cnts, state, &vec);
   for (i = 0; i < vec.u; ++i) {
     serve_testing_queue_delete(cnts, state, vec.v[i]);
   }
@@ -3944,7 +3968,7 @@ serve_testing_queue_change_priority_all(
   strarray_t vec;
   int i;
 
-  collect_run_packets(state, &vec);
+  collect_run_packets(cnts, state, &vec);
   for (i = 0; i < vec.u; ++i) {
     serve_testing_queue_change_priority(cnts, state, vec.v[i], adjustment);
   }
