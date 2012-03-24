@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2011/12/23 21:50:13
+// Generated 2012/03/24 18:53:57
 
 #include "contests_meta.h"
 #include "contests.h"
@@ -33,6 +33,7 @@ static struct meta_info_item meta_info_contest_desc_data[] =
   [CNTS_personal] = { CNTS_personal, 'b', XSIZE(struct contest_desc, personal), "personal", XOFFSET(struct contest_desc, personal) },
   [CNTS_allow_reg_data_edit] = { CNTS_allow_reg_data_edit, 'b', XSIZE(struct contest_desc, allow_reg_data_edit), "allow_reg_data_edit", XOFFSET(struct contest_desc, allow_reg_data_edit) },
   [CNTS_disable_member_delete] = { CNTS_disable_member_delete, 'b', XSIZE(struct contest_desc, disable_member_delete), "disable_member_delete", XOFFSET(struct contest_desc, disable_member_delete) },
+  [CNTS_old_run_managed] = { CNTS_old_run_managed, 'b', XSIZE(struct contest_desc, old_run_managed), "old_run_managed", XOFFSET(struct contest_desc, old_run_managed) },
   [CNTS_reg_deadline] = { CNTS_reg_deadline, 't', XSIZE(struct contest_desc, reg_deadline), "reg_deadline", XOFFSET(struct contest_desc, reg_deadline) },
   [CNTS_sched_time] = { CNTS_sched_time, 't', XSIZE(struct contest_desc, sched_time), "sched_time", XOFFSET(struct contest_desc, sched_time) },
   [CNTS_open_time] = { CNTS_open_time, 't', XSIZE(struct contest_desc, open_time), "open_time", XOFFSET(struct contest_desc, open_time) },
