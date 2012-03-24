@@ -1003,6 +1003,7 @@ static const struct cnts_edit_info cnts_edit_info[] =
   { 0, 0, '-', 0, 0, 0, 0, 0, "Contest Management", 0, 0 },
   { NS_CONTEST, CNTS_managed, 'y', 1, 0, 0, 0, 0, "Enable the contest service", "Enable the contest service", 0 },
   { NS_CONTEST, CNTS_run_managed, 'y', 1, 0, 0, 0, 0, "Enable the run service", "Enable the run service", 0 },
+  { NS_CONTEST, CNTS_old_run_managed, 'y', 1, 0, 0, 0, 0, "Run service compatibility mode", "Run server compatibility mode", 0 },
   { NS_CONTEST, CNTS_closed, 'y', 1, 0, 0, 0, 0, "Close the contest for participants", "Close the contest for participants", 0 },
   { NS_CONTEST, CNTS_invisible, 'y', 1, 0, 0, 0, 0, "Hide the contest for administrators", "Hide the contest for administrators", 0 },
 

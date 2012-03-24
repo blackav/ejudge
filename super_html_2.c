@@ -357,6 +357,9 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
   case SSERV_CMD_CNTS_CHANGE_RUN_MANAGED:
     p_bool = &cnts->run_managed;
     break;
+  case SSERV_CMD_CNTS_CHANGE_OLD_RUN_MANAGED:
+    p_bool = &cnts->old_run_managed;
+    break;
   case SSERV_CMD_CNTS_CHANGE_CLEAN_USERS:
     p_bool = &cnts->clean_users;
     break;

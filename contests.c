@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -156,6 +156,7 @@ const int contests_attr_to_meta_map[CONTEST_LAST_ATTR] =
   [CONTEST_A_ALLOW_REG_DATA_EDIT] = CNTS_allow_reg_data_edit,
   [CONTEST_A_ENABLE_PASSWORD_RECOVERY] = CNTS_enable_password_recovery,
   [CONTEST_A_DISABLE_MEMBER_DELETE] = CNTS_disable_member_delete,
+  [CONTEST_A_OLD_RUN_MANAGED] = CNTS_old_run_managed,
 };
 
 char const * const contests_elem_map[] =
@@ -288,6 +289,7 @@ char const * const contests_attr_map[] =
   "separator",
   "options",
   "checkbox",
+  "old_run_managed",
 
   0
 };
@@ -805,6 +807,7 @@ static const unsigned char contest_bool_attr_set[CONTEST_LAST_ATTR] =
   [CONTEST_A_ALLOW_REG_DATA_EDIT] = 1,
   [CONTEST_A_ENABLE_PASSWORD_RECOVERY] = 1,
   [CONTEST_A_DISABLE_MEMBER_DELETE] = 1,
+  [CONTEST_A_OLD_RUN_MANAGED] = 1,
 };
 
 static void

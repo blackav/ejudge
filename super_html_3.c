@@ -200,6 +200,7 @@ static const unsigned char * const action_to_help_url_map[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_CHANGE_SEND_PASSWD_EMAIL] = "Contest.xml:send_passwd_email",
   [SSERV_CMD_CNTS_CHANGE_MANAGED] = "Contest.xml:managed",
   [SSERV_CMD_CNTS_CHANGE_RUN_MANAGED] = "Contest.xml:run_managed",
+  [SSERV_CMD_CNTS_CHANGE_OLD_RUN_MANAGED] = "Contest.xml:old_run_managed",
   [SSERV_CMD_CNTS_CHANGE_CLEAN_USERS] = "Contest.xml:clean_users",
   [SSERV_CMD_CNTS_CHANGE_CLOSED] = "Contest.xml:closed",
   [SSERV_CMD_CNTS_CHANGE_INVISIBLE] = "Contest.xml:invisible",
