@@ -36,6 +36,7 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <poll.h>
+#include <sys/utsname.h>
 
 static int
 error(const char *format, ...)
@@ -1000,6 +1001,70 @@ background_process_close_fds(struct background_process_head *list)
     if (prc->stdout_f >= 0) close(prc->stdout_f);
     if (prc->stderr_f >= 0) close(prc->stderr_f);
   }
+}
+
+unsigned char **
+ejudge_get_host_names(void)
+{
+  int names_z = 4, names_u = 0, len;
+  unsigned char **names = NULL;
+  FILE *f = NULL;
+  unsigned char buf[1024], *s, nbuf[1024];
+  struct utsname uname_buf;
+
+  static const unsigned char pat1[] = "inet addr:";
+  static const unsigned char pat2[] = "inet6 addr:";
+
+  XCALLOC(names, names_z);
+  if (!(f = popen("/sbin/ifconfig", "r"))) goto fail;
+
+  while (fgets(buf, sizeof(buf), f)) {
+    len = strlen(buf);
+    if (len + 10 > sizeof(buf)) {
+      // line is too long in ifconfig
+      goto fail;
+    }
+    while (len > 0 && isspace(buf[len - 1])) --len;
+    buf[len] = 0;
+    nbuf[0] = 0;
+    if ((s = strstr(buf, pat1))) {
+      sscanf(s + sizeof(pat1) - 1, "%s", nbuf);
+    } else if ((s = strstr(buf, pat2))) {
+      sscanf(s + sizeof(pat2) - 1, "%s", nbuf);
+    }
+
+    if (nbuf[0]) {
+      if (names_u + 1 >= names_z) {
+        XREALLOC(names, (names_z *= 2));
+      }
+      names[names_u++] = xstrdup(nbuf);
+      names[names_u] = NULL;
+    }
+  }
+  pclose(f); f = NULL;
+
+  if (uname(&uname_buf) >= 0) {
+    if (names_u + 1 >= names_z) {
+      XREALLOC(names, (names_z *= 2));
+    }
+    names[names_u++] = xstrdup(uname_buf.nodename);
+    names[names_u] = NULL;
+  }
+
+cleanup:
+  if (f) {
+    pclose(f); f = NULL;
+  }
+  return names;
+
+fail:
+  if (names) {
+    for (int i = 0; names[i]; ++i) {
+      xfree(names[i]);
+    }
+    xfree(names); names = NULL;
+  }
+  goto cleanup;
 }
 
 /*
