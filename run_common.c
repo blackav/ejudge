@@ -2831,7 +2831,7 @@ run_tests(
       }
     }
 
-    if (total_max_score > srpp->full_score) {
+    if (total_max_score > srpp->full_score && (!srpp->valuer_cmd || !srpp->valuer_cmd[0])) {
       append_msg_to_log(messages_path, "Max total score (%d) is greater than full_score",
                         total_max_score, srpp->full_score);
       goto check_failed;
