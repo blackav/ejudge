@@ -23,6 +23,7 @@
 #include "pathutl.h"
 #include "errlog.h"
 
+#include "reuse_xalloc.h"
 #include "reuse_osdeps.h"
 
 #include <stdio.h>
@@ -172,6 +173,58 @@ start_find_process(const unsigned char *name, int *p_uid)
  cleanup:
   if (d) closedir(d);
   return retval;
+}
+
+int
+start_find_all_processes(const unsigned char *name, int **p_pids)
+{
+  DIR *d = 0;
+  struct dirent *dd;
+  char *eptr;
+  int pid, nlen, mypid, dlen;
+  path_t fpath, xpath, dpath;
+  long llen;
+  int a = 0, u = 0;
+  int *pids = NULL;
+
+  nlen = strlen(name);
+  mypid = getpid();
+
+  snprintf(dpath, sizeof(dpath), "%s (deleted)", name);
+  dlen = strlen(dpath);
+
+  if (!(d = opendir("/proc"))) return -1;
+  while ((dd = readdir(d))) {
+    eptr = 0; errno = 0;
+    pid = strtol(dd->d_name, &eptr, 10);
+    if (errno || *eptr || eptr == dd->d_name || pid <= 0 || pid == mypid)
+      continue;
+    snprintf(fpath, sizeof(fpath), "/proc/%d/exe", pid);
+    xpath[0] = 0;
+    llen = readlink(fpath, xpath, sizeof(xpath));
+    if (llen <= 0 || llen >= sizeof(xpath)) continue;
+    xpath[llen] = 0;
+    if (llen < nlen + 1) continue;
+    if (xpath[llen - nlen - 1] == '/' && !strcmp(xpath + llen - nlen, name)) {
+      if (u >= a) {
+        if (!a) a = 4;
+        XREALLOC(pids, a);
+      }
+      pids[u++] = pid;
+    }
+    if (llen < dlen + 1) continue;
+    if (xpath[llen - dlen - 1] == '/' && !strcmp(xpath + llen - dlen, dpath)) {
+      if (u >= a) {
+        if (!a) a = 4;
+        XREALLOC(pids, a);
+      }
+      pids[u++] = pid;
+    }
+  }
+  closedir(d); d = 0;
+
+  *p_pids = pids;
+  return u;
 }
 
 int
