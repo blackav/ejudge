@@ -103,7 +103,8 @@ main(int argc, char *argv[])
   struct ejudge_cfg *config = 0;
   int signum = 0;
   const unsigned char *signame = "";
-  int pid;
+  int pid_count;
+  int *pids = NULL;
 
   program_name = os_GetBasename(argv[0]);
   if (argc < 2) startup_error("not enough parameters");
@@ -142,12 +143,20 @@ main(int argc, char *argv[])
     startup_error("invalid command");
   }
 
-  if (!(pid = start_find_process("ej-super-run", 0))) {
+  if ((pid_count = start_find_all_processes("ej-super-run", &pids)) < 0) {
+    op_error("cannot get the list of processes from /proc");
+  } else if (!pid_count) {
     op_error("ej-super-run is not running");
-  } else if (pid > 0) {
-    fprintf(stderr, "%s: ej-super-run is running as pid %d\n", program_name, pid);
-    fprintf(stderr, "%s: sending it the %s signal\n", program_name, signame);
-    if (start_kill(pid, signum) < 0) op_error("failed: %s", os_ErrorMsg());
+  } else {
+    fprintf(stderr, "%s: ej-super-run is running as pids", program_name);
+    for (i = 0; i < pid_count; ++i) {
+      fprintf(stderr, " %d", pids[i]);
+    }
+    fprintf(stderr, "\n");
+    fprintf(stderr, "%s: sending them the %s signal\n", program_name, signame);
+    for (i = 0; i < pid_count; ++i) {
+      if (start_kill(pids[i], signum) < 0) op_error("failed: %s", os_ErrorMsg());
+    }
   }
 
   return 0;

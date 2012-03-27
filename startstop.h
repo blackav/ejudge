@@ -34,6 +34,8 @@ void start_restart(void);
 
 int
 start_find_process(const unsigned char *name, int *p_uid);
+int
+start_find_all_processes(const unsigned char *name, int **p_pids);
 
 int start_kill(int pid, int op);
 int start_daemon(const unsigned char *log_path);

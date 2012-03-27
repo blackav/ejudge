@@ -96,6 +96,7 @@ struct ejudge_cfg
   opcaplist_t capabilities;
 
   struct xml_tree *plugin_list;
+  struct xml_tree *hosts_options;
 };
 
 struct ejudge_cfg *ejudge_cfg_parse(char const *);
@@ -108,5 +109,18 @@ ejudge_cfg_get_plugin_config(
         const struct ejudge_cfg *cfg,
         const unsigned char *type,
         const unsigned char *name);
+
+const unsigned char *
+ejudge_cfg_get_host_option(
+        const struct ejudge_cfg *cfg,
+        unsigned char **host_names,
+        const unsigned char *option_name);
+int
+ejudge_cfg_get_host_option_int(
+        const struct ejudge_cfg *cfg,
+        unsigned char **host_names,
+        const unsigned char *option_name,
+        int default_value,
+        int error_value);
 
 #endif /* __EJUDGE_CFG_H__ */

@@ -133,4 +133,7 @@ background_process_close_fds(struct background_process_head *list);
 void
 background_process_append_pollfd(struct background_process_head *list, void *vp);
 
+unsigned char **
+ejudge_get_host_names(void);
+
 #endif /* __EJ_PROCESS_H__ */
