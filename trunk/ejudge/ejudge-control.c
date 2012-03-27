@@ -21,6 +21,7 @@
 
 #include "ejudge_cfg.h"
 #include "pathutl.h"
+#include "ej_process.h"
 
 #include "reuse_logger.h"
 #include "reuse_osdeps.h"
@@ -123,7 +124,8 @@ command_start(
         int force_mode,
         int slave_mode,
         int all_run_serve,
-        int master_mode)
+        int master_mode,
+        int super_run_parallelism)
 {
   tTask *tsk = 0;
   path_t path;
@@ -207,7 +209,7 @@ command_start(
   task_Delete(tsk); tsk = 0;
   super_serve_started = 1;
 
-  // start compile
+  // start ej-compile
   if (!master_mode) {
     snprintf(path, sizeof(path), "%s/ej-compile", EJUDGE_SERVER_BIN_PATH);
     tsk = task_New();
@@ -235,34 +237,36 @@ command_start(
     compile_started = 1;
   }
 
-  // start compile
+  // start ej-super-run
   if (!master_mode) {
-    snprintf(path, sizeof(path), "%s/ej-super-run", EJUDGE_SERVER_BIN_PATH);
-    tsk = task_New();
-    task_AddArg(tsk, path);
-    task_AddArg(tsk, "-D");
-    if (user) {
-      task_AddArg(tsk, "-u");
-      task_AddArg(tsk, user);
-    }
-    if (group) {
-      task_AddArg(tsk, "-g");
-      task_AddArg(tsk, group);
-    }
-    if (workdir) {
-      snprintf(path, sizeof(path), "%s/compile", workdir);
-      task_AddArg(tsk, "-C");
+    for (int i = 0; i < super_run_parallelism; ++i) {
+      snprintf(path, sizeof(path), "%s/ej-super-run", EJUDGE_SERVER_BIN_PATH);
+      tsk = task_New();
       task_AddArg(tsk, path);
+      task_AddArg(tsk, "-D");
+      if (user) {
+        task_AddArg(tsk, "-u");
+        task_AddArg(tsk, user);
+      }
+      if (group) {
+        task_AddArg(tsk, "-g");
+        task_AddArg(tsk, group);
+      }
+      if (workdir) {
+        snprintf(path, sizeof(path), "%s/compile", workdir);
+        task_AddArg(tsk, "-C");
+        task_AddArg(tsk, path);
+      }
+      task_SetPathAsArg0(tsk);
+      task_Start(tsk);
+      task_Wait(tsk);
+      if (task_IsAbnormal(tsk)) goto failed;
+      task_Delete(tsk); tsk = 0;
     }
-    task_SetPathAsArg0(tsk);
-    task_Start(tsk);
-    task_Wait(tsk);
-    if (task_IsAbnormal(tsk)) goto failed;
-    task_Delete(tsk); tsk = 0;
     super_run_started = 1;
   }
 
-  // start job-server
+  // start ej-jobs
   if (!slave_mode) {
     snprintf(path, sizeof(path), "%s/ej-jobs", EJUDGE_SERVER_BIN_PATH);
     tsk = task_New();
@@ -383,10 +387,19 @@ main(int argc, char *argv[])
   int slave_mode = 0;
   int all_run_serve = 0;
   int master_mode = 0;
+  int parallelism = 1;
+  unsigned char **host_names = NULL;
 
   logger_set_level(-1, LOG_WARNING);
   program_name = os_GetBasename(argv[0]);
   if (argc < 2) startup_error("not enough parameters");
+
+  if (!(host_names = ejudge_get_host_names())) {
+    startup_error("cannot obtain the list of host names");
+  }
+  if (!host_names[0]) {
+    startup_error("cannot determine the name of the host");
+  }
 
   while (i < argc) {
     if (!strcmp(argv[i], "--help")) {
@@ -441,9 +454,14 @@ main(int argc, char *argv[])
 
   if (!(config = ejudge_cfg_parse(ejudge_xml_path))) return 1;
 
+  parallelism = ejudge_cfg_get_host_option_int(config, host_names, "parallelism", 1, 0);
+  if (parallelism <= 0 || parallelism > 128) {
+    startup_error("invalid value of parallelism host option");
+  }
+
   if (!strcmp(command, "start")) {
     if (command_start(config, user, group, ejudge_xml_path, force_mode,
-                      slave_mode, all_run_serve, master_mode) < 0) 
+                      slave_mode, all_run_serve, master_mode, parallelism) < 0) 
       r = 1;
   } else if (!strcmp(command, "stop")) {
     if (command_stop(config, ejudge_xml_path, slave_mode, master_mode) < 0)

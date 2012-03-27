@@ -30,6 +30,7 @@
 #include "run_packet.h"
 #include "run.h"
 #include "curtime.h"
+#include "ej_process.h"
 
 #include "reuse_xalloc.h"
 #include "reuse_osdeps.h"
@@ -66,6 +67,8 @@ static int ignored_archs_count = 0;
 static int ignored_problems_count = 0;
 static unsigned char **ignored_archs = NULL;
 static struct ignored_problem_info *ignored_problems = NULL;
+
+static unsigned char **host_names = NULL;
 
 static void
 fatal(const char *format, ...)
@@ -728,7 +731,8 @@ main(int argc, char *argv[])
   char **argv_restart = 0;
   int argc_restart = 0;
   int cur_arg = 1;
-  int pid;
+  int pid_count;
+  int *pids = NULL;
   unsigned char ejudge_xml_path[PATH_MAX];
   serve_state_t state = &serve_state;
   int retval = 0;
@@ -786,8 +790,11 @@ main(int argc, char *argv[])
   argv_restart[argc_restart] = NULL;
   start_set_args(argv_restart);
 
-  if ((pid = start_find_process("ej-super-run", 0)) > 0) {
-    fatal("is already running as pid %d", pid);
+  if (!(host_names = ejudge_get_host_names())) {
+    fatal("cannot obtain the list of host names");
+  }
+  if (!host_names[0]) {
+    fatal("cannot determine the name of the host");
   }
 
   if (!ejudge_xml_path[0]) {
@@ -807,6 +814,23 @@ main(int argc, char *argv[])
 
   ejudge_config = ejudge_cfg_parse(ejudge_xml_path);
   if (!ejudge_config) return 1;
+
+  int parallelism = ejudge_cfg_get_host_option_int(ejudge_config, host_names, "parallelism", 1, 0);
+  if (parallelism <= 0 || parallelism > 128) {
+    fatal("invalid value of parallelism host option");
+  }
+
+  if ((pid_count = start_find_all_processes("ej-super-run", &pids)) < 0) {
+    fatal("cannot get the list of processes");
+  }
+  if (pid_count >= parallelism) {
+    fprintf(stderr, "%d", pids[0]);
+    for (int i = 1; i < pid_count; ++i) {
+      fprintf(stderr, " %d", pids[i]);
+    }
+    fprintf(stderr, "\n");
+    fatal("%d processes are already running", pid_count);
+  }
 
   if (!contests_home_dir && ejudge_config->contests_home_dir) {
     contests_home_dir = ejudge_config->contests_home_dir;
@@ -844,16 +868,16 @@ main(int argc, char *argv[])
   }
   collect_sections(state);
 
-  if (create_working_directories(state) < 0) {
-    retval = 1;
-    goto cleanup;
-  }
-
   if (daemon_mode) {
     if (start_daemon(super_run_log_path) < 0) {
       retval = 1;
       goto cleanup;
     }
+  }
+
+  if (create_working_directories(state) < 0) {
+    retval = 1;
+    goto cleanup;
   }
 
   fprintf(stderr, "%s %s, compiled %s\n", program_name, compile_version, compile_date);

@@ -34,6 +34,7 @@
 #include <string.h>
 #include <limits.h>
 #include <ctype.h>
+#include <errno.h>
 
 #if HAVE_PWD_H
 #include <pwd.h>
@@ -92,6 +93,7 @@ enum
     TG_NEW_SERVER_LOG,
     TG_DEFAULT_CLARDB_PLUGIN,
     TG_DEFAULT_RUNDB_PLUGIN,
+    TG_HOSTS_OPTIONS,
 
     TG__BARRIER,
     TG__DEFAULT,
@@ -170,6 +172,7 @@ static char const * const elem_map[] =
   "new_server_log",
   "default_clardb_plugin",
   "default_rundb_plugin",
+  "hosts_options",
   0,
   "_default",
 
@@ -209,6 +212,7 @@ static size_t elem_sizes[TG_LAST_TAG] =
 static const unsigned char verbatim_flags[TG_LAST_TAG] =
 {
   [TG_PLUGIN] = 1,
+  [TG_HOSTS_OPTIONS] = 1,
 };
 
 static struct xml_parse_spec ejudge_config_parse_spec =
@@ -524,6 +528,9 @@ ejudge_cfg_parse(char const *path)
       break;
     case TG_SERVE_PATH:
       break;
+    case TG_HOSTS_OPTIONS:
+      cfg->hosts_options = p;
+      break;
     default:
       xml_err_elem_not_allowed(p);
       break;
@@ -749,6 +756,79 @@ ejudge_cfg_get_plugin_config(
       return plg->data;
   }
   return NULL;
+}
+
+static struct xml_attr *
+get_attr_by_name(struct xml_tree *p, const unsigned char *name)
+{
+  struct xml_attr *a;
+  if (!p) return NULL;
+  for (a = p->first; a; a = a->next) {
+    if (a->tag != ejudge_config_parse_spec.default_attr) continue;
+    if (!strcmp(a->name[0], name)) return a;
+  }
+  return NULL;
+}
+
+const unsigned char *
+ejudge_cfg_get_host_option(
+        const struct ejudge_cfg *cfg,
+        unsigned char **host_names,
+        const unsigned char *option_name)
+{
+  struct xml_tree *p, *q;
+  struct xml_attr *a, *b;
+  int  i;
+
+  if (!cfg || !cfg->hosts_options) return NULL;
+  for (p = cfg->hosts_options->first_down; p; p = p->right) {
+    if (p->tag != ejudge_config_parse_spec.default_elem) continue;
+    if (strcmp(p->name[0], "host") != 0) continue;
+    if (!(a = get_attr_by_name(p, "name"))) continue;
+    for (i = 0; host_names[i]; ++i) {
+      if (!strcmp(host_names[i], a->text))
+        break;
+    }
+    if (!host_names[i]) continue;
+    for (q = p->first_down; q; q = q->right) {
+      if (q->tag != ejudge_config_parse_spec.default_elem) continue;
+      if (strcmp(q->name[0], "option") != 0) continue;
+      if (!(a = get_attr_by_name(q, "name"))) continue;
+      if (!(b = get_attr_by_name(q, "value"))) continue;
+      if (!strcmp(a->text, option_name)) return b->text;
+    }
+  }
+
+  return NULL;
+}
+
+int
+ejudge_cfg_get_host_option_int(
+        const struct ejudge_cfg *cfg,
+        unsigned char **host_names,
+        const unsigned char *option_name,
+        int default_value,
+        int error_value)
+{
+  const unsigned char *str = ejudge_cfg_get_host_option(cfg, host_names, option_name);
+  int len;
+  unsigned char *buf;
+  long val;
+  char *eptr = NULL;
+
+  if (!str) return default_value;
+  len = strlen(str);
+  if (len > 1024) return error_value;
+  buf = alloca(len + 1);
+  strcpy(buf, str);
+  while (len > 0 && isspace(buf[len - 1])) --len;
+  buf[len] = 0;
+  if (len <= 0) return default_value;
+
+  errno = 0;
+  val = strtol(buf, &eptr, 10);
+  if (errno || *eptr) return error_value;
+  return val;
 }
 
 /*
