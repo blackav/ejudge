@@ -134,6 +134,7 @@ ejudge_invoke_process(
         char **args,
         char **envs,
         const unsigned char *workdir,
+        const unsigned char *stdin_file,
         const unsigned char *stdin_text,
         int merge_out_flag,
         unsigned char **stdout_text,
@@ -142,7 +143,7 @@ ejudge_invoke_process(
   char *err_t = 0, *out_t = 0;
   size_t err_z = 0, out_z = 0;
   FILE *err_f = 0, *out_f = 0;
-  int pid, out_p[2] = {-1, -1}, err_p[2] = {-1, -1}, in_p[2] = {-1, -1};
+  int pid, out_p[2] = {-1, -1}, err_p[2] = {-1, -1}, in_p[2] = {-1, -1}, in_fd = -1;
   int maxfd, n, status, retcode = 0;
   const unsigned char *stdin_ptr;
   size_t stdin_len;
@@ -155,10 +156,18 @@ ejudge_invoke_process(
   stdin_ptr = stdin_text;
   stdin_len = strlen(stdin_text);
 
-  if (pipe(in_p) < 0) {
-    err_f = open_memstream(&err_t, &err_z);
-    fferror(err_f, "pipe failed: %s", strerror(errno));
-    goto fail;
+  if (!stdin_file) {
+    if (pipe(in_p) < 0) {
+      err_f = open_memstream(&err_t, &err_z);
+      fferror(err_f, "pipe failed: %s", strerror(errno));
+      goto fail;
+    }
+  } else {
+    if ((in_fd = open(stdin_file, O_RDONLY, 0)) < 0) {
+      err_f = open_memstream(&err_t, &err_z);
+      fferror(err_f, "cannot open file %s: %s", stdin_file, strerror(errno));
+      goto fail;
+    }
   }
   if (pipe(out_p) < 0) {
     err_f = open_memstream(&err_t, &err_z);
@@ -179,7 +188,11 @@ ejudge_invoke_process(
     goto fail;
   } else if (!pid) {
     fflush(stderr);
-    dup2(in_p[0], 0); close(in_p[0]); close(in_p[1]);
+    if (in_fd >= 0) {
+      dup2(in_fd, 0); close(in_fd);
+    } else {
+      dup2(in_p[0], 0); close(in_p[0]); close(in_p[1]);
+    }
     dup2(out_p[1], 1); close(out_p[0]); close(out_p[1]);
     if (!merge_out_flag) {
       dup2(err_p[1], 2); close(err_p[0]); close(err_p[1]);
@@ -208,7 +221,12 @@ ejudge_invoke_process(
   }
 
   /* parent */
-  close(in_p[0]); in_p[0] = -1;
+  if (in_fd >= 0) {
+    close(in_fd); in_fd = -1;
+  }
+  if (in_p[0] >= 0) {
+    close(in_p[0]); in_p[0] = -1;
+  }
   close(out_p[1]); out_p[1] = -1;
   if (err_p[1] >= 0) {
     close(err_p[1]);
@@ -321,6 +339,7 @@ ejudge_invoke_process(
   return retcode;
 
 fail:
+  if (in_fd >= 0) close(in_fd);
   if (in_p[0] >= 0) close(in_p[0]);
   if (in_p[1] >= 0) close(in_p[1]);
   if (out_p[0] >= 0) close(out_p[0]);
