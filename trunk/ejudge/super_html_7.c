@@ -4208,7 +4208,7 @@ get_compiler_path(
   args[0] = version_script;
   args[1] = "-p";
   args[2] = NULL;
-  retval = ejudge_invoke_process(args, NULL, NULL, NULL, 0, &stdout_text, &stderr_text);
+  retval = ejudge_invoke_process(args, NULL, NULL, NULL, NULL, 0, &stdout_text, &stderr_text);
   if (retval != 0) {
     if (stderr_text && *stderr_text) {
       fprintf(log_f, "%s failed:\n---\n%s\n---\n", version_script, stderr_text);

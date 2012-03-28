@@ -9655,9 +9655,7 @@ invoke_test_checker(
         const unsigned char *ans_sfx)
 {
   path_t tst_name;
-  path_t ans_name;
   path_t tst_path;
-  path_t ans_path;
   int retval = 0;
   char *args[4];
   unsigned char *out_text = 0;
@@ -9672,22 +9670,13 @@ invoke_test_checker(
   }
   snprintf(tst_path, sizeof(tst_path), "%s/%s", tst_dir, tst_name);
 
-  if (ans_pat && *ans_pat) {
-    snprintf(ans_name, sizeof(ans_name), ans_pat, n);
-  } else {
-    snprintf(ans_name, sizeof(ans_name), "%03d%s", n, ans_sfx);
-  }
-  snprintf(ans_path, sizeof(ans_path), "%s/%s", ans_dir, ans_name);
-
   args[0] = (char*) test_checker_cmd;
-  args[1] = tst_path;
-  args[2] = ans_path;
-  args[3] = NULL;
+  args[1] = NULL;
 
-  retval = ejudge_invoke_process(args, test_checker_env, tst_dir, NULL,
+  retval = ejudge_invoke_process(args, test_checker_env, tst_dir, tst_path, NULL,
                                  1, &out_text, &err_text);
   if ((err_text && *err_text) || (out_text && *out_text) || retval != 0) {
-    fprintf(flog, "%s %s %s\n", test_checker_cmd, tst_path, ans_path);
+    fprintf(flog, "%s %s\n", test_checker_cmd, tst_path);
   }
   if (err_text) {
     fprintf(flog, "%s", err_text);
@@ -9726,7 +9715,7 @@ invoke_compile_process(
   args[2] = (char*) cmd;
   args[3] = 0;
 
-  retval = ejudge_invoke_process(args, NULL, cur_dir, NULL, 1,
+  retval = ejudge_invoke_process(args, NULL, cur_dir, NULL, NULL, 1,
                                  &out_text, &err_text);
   if (err_text) {
     fprintf(flog, "%s", err_text);
