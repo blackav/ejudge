@@ -3,7 +3,7 @@
 #ifndef __SUPER_HTML_H__
 #define __SUPER_HTML_H__
 
-/* Copyright (C) 2004-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -527,5 +527,16 @@ super_html_add_abstract_problem(
 
 const unsigned char *
 super_html_get_standard_checker_description(const unsigned char *standard_checker);
+
+struct serve_state;
+int
+super_serve_generate_makefile(
+        FILE  *log_f,
+        const struct contest_desc *cnts,
+        struct serve_state *cs,
+        struct sid_state *sstate,
+        const struct section_global_data *global,
+        const struct section_problem_data *prob,
+        int variant);
 
 #endif /* __SUPER_HTML_H__ */
