@@ -2589,6 +2589,40 @@ check_output_only(
 
   cur_info->status = status;
 
+  // output file
+  file_size = -1;
+  if (srpp->binary_input <= 0) {
+    file_size = generic_file_size(0, output_path, 0);
+  }
+  if (file_size >= 0) {
+    cur_info->output_size = file_size;
+    if (srgp->max_file_length > 0 && !srgp->enable_full_archive && file_size <= srgp->max_file_length) {
+      generic_read_file(&cur_info->output, 0, 0, 0, 0, output_path, "");
+    }
+    if (far) {
+      snprintf(arch_entry_name, sizeof(arch_entry_name), "%06d.o", cur_test);
+      full_archive_append_file(far, arch_entry_name, 0, output_path);
+    }
+  }
+
+  file_size = -1;
+  if (srpp->use_corr) {
+    if (srgp->enable_full_archive) {
+      filehash_get(corr_src, cur_info->correct_digest);
+      cur_info->has_correct_digest = 1;
+    } else {
+      if (srpp->binary_input <= 0) {
+        file_size = generic_file_size(0, corr_src, 0);
+      }
+      if (file_size >= 0) {
+        cur_info->correct_size = file_size;
+        if (srgp->max_file_length > 0 && file_size <= srgp->max_file_length) {
+          generic_read_file(&cur_info->correct, 0, 0, 0, 0, corr_src, "");
+        }
+      }
+    }
+  }
+
   file_size = generic_file_size(0, check_out_path, 0);
   if (file_size >= 0) {
     cur_info->chk_out_size = file_size;
@@ -2697,9 +2731,8 @@ run_tests(
   }
 
   if (srpp->type_val) {
-    check_output_only(global, srgp, srpp, far, exe_name, &tests, check_cmd,
-                      ejudge_prefix_dir_env);
-
+    status = check_output_only(global, srgp, srpp, far, exe_name, &tests, check_cmd,
+                               ejudge_prefix_dir_env);
     goto done;
   }
 
