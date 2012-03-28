@@ -4573,7 +4573,7 @@ generate_makefile(
   /* test generation part */
   if (prob->solution_cmd && prob->solution_cmd[0]) {
     fprintf(mk_f, "answers : %s\n", prob->solution_cmd);
-    fprintf(mk_f, "\tcd tests; for i in %s; do ${EXECUTE} ${EXECUTE_FLAGS} --test-file=$$i ../%s; done\n",
+    fprintf(mk_f, "\tcd tests; for i in %s; do ${EXECUTE} ${EXECUTE_FLAGS} --test-file=$$i ../%s || { echo 'Solution failed on' $$i; exit 1; }; done\n",
             test_pr_pat, prob->solution_cmd);
     fprintf(mk_f, "\n");
     fprintf(mk_f, "answer : %s\n", prob->solution_cmd);
@@ -4582,7 +4582,7 @@ generate_makefile(
   }
   if (prob->test_checker_cmd && prob->test_checker_cmd[0]) {
     fprintf(mk_f, "check_tests : %s\n", prob->test_checker_cmd);
-    fprintf(mk_f, "\tcd tests; for i in %s; do ${EXECUTE} ${TC_EXECUTE_FLAGS} --test-file=$$i ../%s; done\n",
+    fprintf(mk_f, "\tcd tests && for i in %s; do ${EXECUTE} ${TC_EXECUTE_FLAGS} --test-file=$$i ../%s || { echo 'Test check failed on' $$i; exit 1; }; done\n",
             test_pr_pat, prob->test_checker_cmd);
     fprintf(mk_f, "\n");    
     fprintf(mk_f, "check_test : %s\n", prob->test_checker_cmd);
@@ -4598,7 +4598,7 @@ generate_makefile(
   if (prob->use_tgz > 0) {
     pattern_to_shell_pattern(tgzdir_pr_pat, sizeof(tgzdir_pr_pat), tgzdir_pat);
     fprintf(mk_f, "archives : \n");
-    fprintf(mk_f, "\tcd tests; for i in %s; do ${MAKE_ARCHIVE} ${MAKE_ARCHIVE_FLAGS} $$i; done;\n",
+    fprintf(mk_f, "\tcd tests && for i in %s; do ${MAKE_ARCHIVE} ${MAKE_ARCHIVE_FLAGS} $$i || { echo 'Archive failed on' $$i; exit 1; }; done;\n",
             tgzdir_pr_pat);
   }
 

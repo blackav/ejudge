@@ -10207,6 +10207,10 @@ super_html_check_tests(FILE *f,
     prepare_set_prob_value(CNTSPROB_test_score, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_full_score, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_full_user_score, tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_solution_cmd, tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_solution_src, tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_source_header, tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_source_footer, tmp_prob, abstr, global);
     mkpath(test_path, g_test_path, tmp_prob->test_dir, "");
     if (tmp_prob->use_corr) {
       prepare_set_prob_value(CNTSPROB_corr_dir, tmp_prob, abstr, 0);
@@ -10234,13 +10238,13 @@ super_html_check_tests(FILE *f,
 
     if (global->advanced_layout > 0) {
       if (prob->variant_num <= 0) {
-        if (super_serve_generate_makefile(flog, cnts, NULL, sstate, global, prob, 0) < 0)
+        if (super_serve_generate_makefile(flog, cnts, NULL, sstate, global, tmp_prob, 0) < 0)
           goto check_failed;
         if ((j = invoke_make(flog, config, global, tmp_prob, -1)) < 0)
           goto check_failed;
       } else {
         for (variant = 1; variant <= prob->variant_num; ++variant) {
-          if (super_serve_generate_makefile(flog, cnts, NULL, sstate, global, prob, variant) < 0)
+          if (super_serve_generate_makefile(flog, cnts, NULL, sstate, global, tmp_prob, variant) < 0)
             goto check_failed;
           if ((j = invoke_make(flog, config, global, tmp_prob, variant)) < 0)
             goto check_failed;
