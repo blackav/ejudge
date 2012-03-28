@@ -1467,7 +1467,6 @@ report_file(
 static int
 prepare_test_file_names(
         FILE *log_f,
-        struct super_http_request_info *phr,
         const struct contest_desc *cnts,
         const struct section_global_data *global,
         const struct section_problem_data *prob,
@@ -1678,7 +1677,7 @@ super_serve_op_TESTS_TESTS_VIEW_PAGE(
     if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
   }
 
-  retval = prepare_test_file_names(log_f, phr, cnts, global, prob, variant, NULL,
+  retval = prepare_test_file_names(log_f, cnts, global, prob, variant, NULL,
                                    sizeof(test_dir), test_dir, test_pat, corr_pat, info_pat,
                                    tgz_pat, tgzdir_pat);
   if (retval < 0) goto cleanup;
@@ -2362,7 +2361,7 @@ super_serve_op_TESTS_TEST_MOVE_UP_ACTION(
   }
   if (to_test_num <= 0 || from_test_num <= 0) goto done;
 
-  retval = prepare_test_file_names(log_f, phr, cnts, global, prob, variant, pat_prefix,
+  retval = prepare_test_file_names(log_f, cnts, global, prob, variant, pat_prefix,
                                    sizeof(test_dir), test_dir, test_pat, corr_pat, info_pat,
                                    tgz_pat, tgzdir_pat);
   if (retval < 0) goto cleanup;
@@ -2438,7 +2437,7 @@ super_serve_op_TESTS_TEST_MOVE_TO_SAVED_ACTION(
   ss_cgi_param_int_opt(phr, "test_num", &test_num, 0);
   if (test_num <= 0 || test_num >= 1000000) FAIL(S_ERR_INV_TEST_NUM);
 
-  retval = prepare_test_file_names(log_f, phr, cnts, global, prob, variant, NULL,
+  retval = prepare_test_file_names(log_f, cnts, global, prob, variant, NULL,
                                    sizeof(test_dir), test_dir, test_pat, corr_pat, info_pat,
                                    tgz_pat, tgzdir_pat);
   if (retval < 0) goto cleanup;
@@ -2713,7 +2712,7 @@ super_serve_op_TESTS_TEST_EDIT_PAGE(
   ss_cgi_param_int_opt(phr, "test_num", &test_num, 0);
   if (test_num <= 0 || test_num >= 1000000) FAIL(S_ERR_INV_TEST_NUM);
 
-  retval = prepare_test_file_names(log_f, phr, cnts, global, prob, variant, NULL,
+  retval = prepare_test_file_names(log_f, cnts, global, prob, variant, NULL,
                                    sizeof(test_dir), test_dir, test_pat, corr_pat, info_pat,
                                    tgz_pat, tgzdir_pat);
   if (retval < 0) goto cleanup;
@@ -3236,7 +3235,7 @@ super_serve_op_TESTS_TEST_EDIT_ACTION(
   ss_cgi_param_int_opt(phr, "test_num", &test_num, 0);
   if (test_num <= 0 || test_num >= 1000000) FAIL(S_ERR_INV_TEST_NUM);
 
-  retval = prepare_test_file_names(log_f, phr, cnts, global, prob, variant, NULL,
+  retval = prepare_test_file_names(log_f, cnts, global, prob, variant, NULL,
                                    sizeof(test_dir), test_dir, test_pat, corr_pat, info_pat,
                                    tgz_pat, tgzdir_pat);
   if (retval < 0) goto cleanup;
@@ -3524,7 +3523,7 @@ super_serve_op_TESTS_TEST_DELETE_PAGE(
   ss_cgi_param_int_opt(phr, "test_num", &test_num, 0);
   if (test_num <= 0 || test_num >= 1000000) FAIL(S_ERR_INV_TEST_NUM);
 
-  retval = prepare_test_file_names(log_f, phr, cnts, global, prob, variant, NULL,
+  retval = prepare_test_file_names(log_f, cnts, global, prob, variant, NULL,
                                    sizeof(test_dir), test_dir, test_pat, corr_pat, info_pat,
                                    tgz_pat, tgzdir_pat);
   if (retval < 0) goto cleanup;
@@ -3651,7 +3650,7 @@ super_serve_op_TESTS_TEST_DELETE_ACTION(
   ss_cgi_param_int_opt(phr, "test_num", &test_num, 0);
   if (test_num <= 0 || test_num >= 1000000) FAIL(S_ERR_INV_TEST_NUM);
 
-  retval = prepare_test_file_names(log_f, phr, cnts, global, prob, variant, NULL,
+  retval = prepare_test_file_names(log_f, cnts, global, prob, variant, NULL,
                                    sizeof(test_dir), test_dir, test_pat, corr_pat, info_pat,
                                    tgz_pat, tgzdir_pat);
   if (retval < 0) goto cleanup;
@@ -4237,18 +4236,30 @@ get_compiler_path(
 }
 
 static const unsigned char *
-get_compiler_flags(serve_state_t cs, const unsigned char *lang_short_name)
+get_compiler_flags(
+        serve_state_t cs,
+        struct sid_state *sstate,
+        const unsigned char *lang_short_name)
 {
   static const unsigned char compiler_flags_prefix[] = "EJUDGE_FLAGS=";
 
   int lang_id, i;
   const struct section_language_data *lang;
-  for (lang_id = 1; lang_id <= cs->max_lang; ++lang_id) {
-    if (!(lang = cs->langs[lang_id]) || strcmp(lang->short_name, lang_short_name)) continue;
-    if (!lang->compiler_env) return NULL;
-    for (i = 0; lang->compiler_env[i]; ++i) {
-      if (!strncmp(compiler_flags_prefix, lang->compiler_env[i], sizeof(compiler_flags_prefix) - 1))
-        return lang->compiler_env[i] + sizeof(compiler_flags_prefix) - 1;
+
+  if (cs) {
+    for (lang_id = 1; lang_id <= cs->max_lang; ++lang_id) {
+      if (!(lang = cs->langs[lang_id]) || strcmp(lang->short_name, lang_short_name)) continue;
+      if (!lang->compiler_env) return NULL;
+      for (i = 0; lang->compiler_env[i]; ++i) {
+        if (!strncmp(compiler_flags_prefix, lang->compiler_env[i], sizeof(compiler_flags_prefix) - 1))
+          return lang->compiler_env[i] + sizeof(compiler_flags_prefix) - 1;
+      }
+    }
+  } else if (sstate) {
+    if (sstate->lang_a <= 0 || !sstate->langs || !sstate->lang_opts) return NULL;
+    for (lang_id = 1; lang_id < sstate->lang_a; ++lang_id) {
+      if (!(lang = sstate->langs[lang_id]) || strcmp(lang->short_name, lang_short_name)) continue;
+      return sstate->lang_opts[lang_id];
     }
   }
   return NULL;
@@ -4296,9 +4307,9 @@ static void
 generate_makefile(
         FILE *log_f,
         FILE *mk_f,
-        struct super_http_request_info *phr,
         const struct contest_desc *cnts,
         serve_state_t cs,
+        struct sid_state *sstate,
         const struct section_global_data *global,
         const struct section_problem_data *prob,
         int variant)
@@ -4328,7 +4339,7 @@ generate_makefile(
   tgzdir_pat[0] = 0;
   test_pr_pat[0] = 0;
 
-  retval = prepare_test_file_names(log_f, phr, cnts, global, prob, variant, NULL,
+  retval = prepare_test_file_names(log_f, cnts, global, prob, variant, NULL,
                                    sizeof(test_dir), test_dir, test_pat, corr_pat, info_pat,
                                    tgz_pat, tgzdir_pat);
   if (retval < 0) return;
@@ -4390,7 +4401,7 @@ generate_makefile(
       fprintf(mk_f, "CC = %s\n", compiler_path);
     }
     xfree(compiler_path); compiler_path = NULL;
-    compiler_flags = get_compiler_flags(cs, "gcc");
+    compiler_flags = get_compiler_flags(cs, sstate, "gcc");
     if (!compiler_flags) {
       fprintf(mk_f, "CFLAGS = -Wall -g -O2 -std=gnu99 -Wno-pointer-sign\n");
     } else {
@@ -4413,7 +4424,7 @@ generate_makefile(
       fprintf(mk_f, "CXX = %s\n", compiler_path);
     }
     xfree(compiler_path); compiler_path = NULL;
-    compiler_flags = get_compiler_flags(cs, "g++");
+    compiler_flags = get_compiler_flags(cs, sstate, "g++");
     if (!compiler_flags) {
       fprintf(mk_f, "CXXFLAGS = -Wall -g -O2\n");
     } else {
@@ -4458,6 +4469,16 @@ generate_makefile(
 
   fprintf(mk_f, "\n");
 
+  fprintf(mk_f, "NORMALIZE = ${EJUDGE_PREFIX_DIR}/libexec/ejudge/bin/ej-normalize\n");
+  fprintf(mk_f, "NORMALIZE_FLAGS = --workdir=tests");
+  if (test_pat[0] > ' ') fprintf(mk_f, " --test-pattern=%s", test_pat);
+  if (corr_pat[0] > ' ') fprintf(mk_f, " --corr-pattern=%s", corr_pat);
+  if (cnts->file_group && cnts->file_group[0]) fprintf(mk_f, " --group=%s", cnts->file_group);
+  if (cnts->file_mode && cnts->file_mode[0]) fprintf(mk_f, " --mode=%s", cnts->file_mode);
+  if (prob->binary_input > 0) fprintf(mk_f, " --binary-input");
+  if (prob->normalization && prob->normalization[0]) fprintf(mk_f, " --type=%s", prob->normalization);
+  fprintf(mk_f, "\n\n");
+
   fprintf(mk_f, "all :");
   if (prob->solution_cmd && prob->solution_cmd[0]) {
     fprintf(mk_f, " %s", prob->solution_cmd);
@@ -4476,8 +4497,11 @@ generate_makefile(
     fprintf(mk_f, " %s", prob->test_checker_cmd);
   }
   fprintf(mk_f, "\n");
-  fprintf(mk_f, "ejudge_make_problem : all\n");
-  fprintf(mk_f, "\n");
+  fprintf(mk_f, "check_settings : all normalize");
+  if (prob->test_checker_cmd && prob->test_checker_cmd[0]) {
+    fprintf(mk_f, " check_tests");
+  }
+  fprintf(mk_f, "\n\n");
 
   /* solution compilation part  */
   if (prob->solution_cmd && prob->solution_cmd[0]) {
@@ -4567,6 +4591,9 @@ generate_makefile(
   }
   fprintf(mk_f, "\n");
 
+  fprintf(mk_f, "normalize :\n"
+          "\t${NORMALIZE} ${NORMALIZE_FLAGS} --all-tests\n\n");
+
   /* archiving */
   if (prob->use_tgz > 0) {
     pattern_to_shell_pattern(tgzdir_pr_pat, sizeof(tgzdir_pr_pat), tgzdir_pat);
@@ -4599,6 +4626,78 @@ generate_makefile(
 }
 
 int
+super_serve_generate_makefile(
+        FILE  *log_f,
+        const struct contest_desc *cnts,
+        serve_state_t cs,
+        struct sid_state *sstate,
+        const struct section_global_data *global,
+        const struct section_problem_data *prob,
+        int variant)
+{
+  int retval = 0;
+  unsigned char makefile_path[PATH_MAX];
+  unsigned char tmp_makefile_path[PATH_MAX];
+  int file_group = -1;
+  int file_mode = -1;
+  char *text = 0;
+  size_t size = 0;
+  unsigned char *header = NULL;
+  unsigned char *footer = NULL;
+  FILE *mk_f = NULL;
+  int r;
+
+  tmp_makefile_path[0] = 0;
+
+  if (cnts->file_group) {
+    file_group = file_perms_parse_group(cnts->file_group);
+    if (file_group <= 0) FAIL(S_ERR_INV_SYS_GROUP);
+  }
+  if (cnts->file_mode) {
+    file_mode = file_perms_parse_mode(cnts->file_mode);
+    if (file_mode <= 0) FAIL(S_ERR_INV_SYS_MODE);
+  }
+
+  if (global->advanced_layout <= 0) FAIL(S_ERR_INV_CONTEST);
+
+  get_advanced_layout_path(tmp_makefile_path, sizeof(tmp_makefile_path), global, prob, "tmp_Makefile", variant);
+  get_advanced_layout_path(makefile_path, sizeof(makefile_path), global, prob, DFLT_P_MAKEFILE, variant);
+
+  if (generic_read_file(&text, 0, &size, 0, 0, makefile_path, 0) >= 0) {
+    extract_makefile_header_footer(text, &header, &footer);
+  }
+
+  mk_f = fopen(tmp_makefile_path, "w");
+  if (!mk_f) FAIL(S_ERR_FS_ERROR);
+  if (header) fprintf(mk_f, "%s", header);
+  generate_makefile(log_f, mk_f, cnts, cs, sstate, global, prob, variant);
+  if (footer) fprintf(mk_f, "%s", footer);
+  fclose(mk_f); mk_f = NULL;
+
+  if (file_group > 0 || file_mode > 0) {
+    file_perms_set(log_f, tmp_makefile_path, file_group, file_mode, -1, -1);
+  }
+
+  r = need_file_update(makefile_path, tmp_makefile_path);
+  if (r < 0) FAIL(S_ERR_FS_ERROR);
+  if (!r) {
+    unlink(tmp_makefile_path);
+    goto cleanup;
+  }
+  if (logged_rename(log_f, tmp_makefile_path, makefile_path) < 0) {
+    FAIL(S_ERR_FS_ERROR);
+  }
+
+cleanup:
+  if (mk_f) fclose(mk_f);
+  if (tmp_makefile_path[0]) unlink(tmp_makefile_path);
+  xfree(header);
+  xfree(footer);
+  xfree(text);
+  return retval;
+}
+
+int
 super_serve_op_TESTS_MAKEFILE_GENERATE_ACTION(
         FILE *log_f,
         FILE *out_f,
@@ -4613,18 +4712,6 @@ super_serve_op_TESTS_MAKEFILE_GENERATE_ACTION(
   serve_state_t cs = NULL;
   const struct section_global_data *global = NULL;
   const struct section_problem_data *prob = NULL;
-  unsigned char makefile_path[PATH_MAX];
-  unsigned char tmp_makefile_path[PATH_MAX];
-  int file_group = -1;
-  int file_mode = -1;
-  char *text = 0;
-  size_t size = 0;
-  unsigned char *header = NULL;
-  unsigned char *footer = NULL;
-  FILE *mk_f = NULL;
-  int r;
-
-  tmp_makefile_path[0] = 0;
 
   ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
@@ -4640,15 +4727,6 @@ super_serve_op_TESTS_MAKEFILE_GENERATE_ACTION(
   cs = phr->ss->te_state;
   global = cs->global;
 
-  if (cnts->file_group) {
-    file_group = file_perms_parse_group(cnts->file_group);
-    if (file_group <= 0) FAIL(S_ERR_INV_SYS_GROUP);
-  }
-  if (cnts->file_mode) {
-    file_mode = file_perms_parse_mode(cnts->file_mode);
-    if (file_mode <= 0) FAIL(S_ERR_INV_SYS_MODE);
-  }
-
   if (global->advanced_layout <= 0) FAIL(S_ERR_INV_CONTEST);
 
   ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
@@ -4661,43 +4739,12 @@ super_serve_op_TESTS_MAKEFILE_GENERATE_ACTION(
     if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
   }
 
-  get_advanced_layout_path(tmp_makefile_path, sizeof(tmp_makefile_path), global, prob, "tmp_Makefile", variant);
-  get_advanced_layout_path(makefile_path, sizeof(makefile_path), global, prob, DFLT_P_MAKEFILE, variant);
-
-  if (generic_read_file(&text, 0, &size, 0, 0, makefile_path, 0) >= 0) {
-    extract_makefile_header_footer(text, &header, &footer);
+  retval = super_serve_generate_makefile(log_f, cnts, cs, NULL, global, prob, variant);
+  if (!retval) {
+    ss_redirect_2(out_f, phr, SSERV_OP_TESTS_MAKEFILE_EDIT_PAGE, contest_id, prob_id, variant, 0, NULL);
   }
-
-  mk_f = fopen(tmp_makefile_path, "w");
-  if (!mk_f) FAIL(S_ERR_FS_ERROR);
-  if (header) fprintf(mk_f, "%s", header);
-  generate_makefile(log_f, mk_f, phr, cnts, cs, global, prob, variant);
-  if (footer) fprintf(mk_f, "%s", footer);
-  fclose(mk_f); mk_f = NULL;
-
-  if (file_group > 0 || file_mode > 0) {
-    file_perms_set(log_f, tmp_makefile_path, file_group, file_mode, -1, -1);
-  }
-
-  r = need_file_update(makefile_path, tmp_makefile_path);
-  if (r < 0) FAIL(S_ERR_FS_ERROR);
-  if (!r) {
-    unlink(tmp_makefile_path);
-    goto done;
-  }
-  if (logged_rename(log_f, tmp_makefile_path, makefile_path) < 0) {
-    FAIL(S_ERR_FS_ERROR);
-  }
-
-done:
-  ss_redirect_2(out_f, phr, SSERV_OP_TESTS_MAKEFILE_EDIT_PAGE, contest_id, prob_id, variant, 0, NULL);
 
 cleanup:
-  if (mk_f) fclose(mk_f);
-  if (tmp_makefile_path[0]) unlink(tmp_makefile_path);
-  xfree(header);
-  xfree(footer);
-  xfree(text);
   return retval;
 }
 

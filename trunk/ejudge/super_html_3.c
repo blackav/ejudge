@@ -9959,9 +9959,9 @@ invoke_make(
   }
 
 #if defined EJUDGE_LOCAL_DIR
-  snprintf(cmd, sizeof(cmd), "make EJUDGE_PREFIX_DIR=\"%s\" EJUDGE_CONTESTS_HOME_DIR=\"%s\" EJUDGE_LOCAL_DIR=\"%s\" ejudge_make_problem", EJUDGE_PREFIX_DIR, EJUDGE_CONTESTS_HOME_DIR, EJUDGE_LOCAL_DIR);
+  snprintf(cmd, sizeof(cmd), "make EJUDGE_PREFIX_DIR=\"%s\" EJUDGE_CONTESTS_HOME_DIR=\"%s\" EJUDGE_LOCAL_DIR=\"%s\" check_settings", EJUDGE_PREFIX_DIR, EJUDGE_CONTESTS_HOME_DIR, EJUDGE_LOCAL_DIR);
 #else
-  snprintf(cmd, sizeof(cmd), "make EJUDGE_PREFIX_DIR=\"%s\" EJUDGE_CONTESTS_HOME_DIR=\"%s\" ejudge_make_problem", EJUDGE_PREFIX_DIR, EJUDGE_CONTESTS_HOME_DIR);
+  snprintf(cmd, sizeof(cmd), "make EJUDGE_PREFIX_DIR=\"%s\" EJUDGE_CONTESTS_HOME_DIR=\"%s\" check_settings", EJUDGE_PREFIX_DIR, EJUDGE_CONTESTS_HOME_DIR);
 #endif
   r = invoke_compile_process(flog, problem_dir, cmd);
   if (r < 0) {
@@ -10232,19 +10232,21 @@ super_html_check_tests(FILE *f,
       }
     }
 
-    /* check for Makefile and invoke make if necessary */
     if (global->advanced_layout > 0) {
       if (prob->variant_num <= 0) {
+        if (super_serve_generate_makefile(flog, cnts, NULL, sstate, global, prob, 0) < 0)
+          goto check_failed;
         if ((j = invoke_make(flog, config, global, tmp_prob, -1)) < 0)
           goto check_failed;
-        if (j > 0) already_compiled = 1;
       } else {
         for (variant = 1; variant <= prob->variant_num; ++variant) {
+          if (super_serve_generate_makefile(flog, cnts, NULL, sstate, global, prob, variant) < 0)
+            goto check_failed;
           if ((j = invoke_make(flog, config, global, tmp_prob, variant)) < 0)
             goto check_failed;
-          if (j > 0) already_compiled = 1;
         }
       }
+      continue;
     }
 
     if (!tmp_prob->standard_checker[0] && !already_compiled) {
