@@ -333,12 +333,14 @@ invoke_test_checker(
 
   tsk = task_New();
   task_AddArg(tsk, test_checker_cmd);
+  /*
   task_AddArg(tsk, input_file);
   task_AddArg(tsk, output_file);
+  */
   task_SetPathAsArg0(tsk);
   task_EnableAllSignals(tsk);
   if (work_dir) task_SetWorkingDir(tsk, work_dir);
-  task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ, 0);
+  task_SetRedir(tsk, 0, TSR_FILE, input_file, TSK_READ, 0);
   task_SetRedir(tsk, 1, TSR_FILE, log_path, TSK_APPEND, TSK_FULL_RW);
   task_SetRedir(tsk, 2, TSR_FILE, log_path, TSK_APPEND, TSK_FULL_RW);
   if (srpp->test_checker_env) {

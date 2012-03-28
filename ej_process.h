@@ -83,6 +83,7 @@ ejudge_invoke_process(
         char **args,
         char **envs,
         const unsigned char *workdir,
+        const unsigned char *stdin_file,
         const unsigned char *stdin_text,
         int merge_out_flag,
         unsigned char **stdout_text,
