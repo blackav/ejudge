@@ -2587,6 +2587,10 @@ check_output_only(
                           global->run_work_dir, ejudge_prefix_dir_env,
                           0, NULL);
 
+  if (status == RUN_PRESENTATION_ERR || status == RUN_WRONG_ANSWER_ERR) {
+    status = RUN_PARTIAL;
+  }
+
   cur_info->status = status;
 
   // output file
