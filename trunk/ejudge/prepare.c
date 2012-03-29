@@ -1460,7 +1460,7 @@ parse_deadline_penalties(char **dpstr, int *p_total,
       err("%d: invalid date specification %s", i + 1, b1);
       goto failure;
     }
-    v[i].deadline = tt;
+    v[i].date = tt;
     v[i].penalty = x;
   }
 
@@ -1524,7 +1524,7 @@ parse_personal_deadlines(char **pdstr, int *p_total,
       strcpy(s2, "2038/01/19");
     }
 
-    if (parse_date(s2, &dinfo[i].deadline) < 0) {
+    if (parse_date(s2, &dinfo[i].p.date) < 0) {
       err("%d: invalid date specification %s", i + 1, s2);
       return -1;
     }

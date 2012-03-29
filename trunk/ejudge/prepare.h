@@ -76,16 +76,17 @@ struct testset_info
 
 struct penalty_info
 {
-  time_t deadline;
+  time_t date;
   int penalty;
+  int scale; // 1 - secs, 60 - mins, 3600 ...
+  int decay;
 };
 
 struct group_date_info
 {
   unsigned char *group_name;
   int group_ind;
-  time_t date;
-  int penalty;
+  struct penalty_info p;
 };
 
 struct group_dates
@@ -100,8 +101,7 @@ struct pers_dead_info
 {
   unsigned char *login;
   int user_id;
-  time_t deadline;
-  int penalty;
+  struct penalty_info p;
 };
 
 struct user_adjustment_info

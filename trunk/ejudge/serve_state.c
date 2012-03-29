@@ -497,7 +497,7 @@ parse_group_dates(
       return -1;
     }
 
-    if (xml_parse_date(NULL, NULL, 0, 0, pcur, &gd->info[i].date) < 0) {
+    if (xml_parse_date(NULL, NULL, 0, 0, pcur, &gd->info[i].p.date) < 0) {
       err("contest %d: problem %s: %s: line %d: invalid date",
           contest_id, prob->short_name, var_name, i + 1);
       return -1;
