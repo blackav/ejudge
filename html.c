@@ -114,7 +114,7 @@ calc_kirov_score(
 
   // get date_penalty
   for (dpi = 0; dpi < pr->dp_total; dpi++)
-    if (pe->time < pr->dp_infos[dpi].deadline)
+    if (pe->time < pr->dp_infos[dpi].date)
       break;
   if (dpi < pr->dp_total) {
     date_penalty = pr->dp_infos[dpi].penalty;

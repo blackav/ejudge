@@ -4011,7 +4011,7 @@ serve_is_problem_started(
       }
     }
     if (i < prob->gsd.count) {
-      return (state->current_time >= prob->gsd.info[i].date);
+      return (state->current_time >= prob->gsd.info[i].p.date);
     }
     if (prob->start_date <= 0) return 1;
     return (state->current_time >= prob->start_date);
@@ -4053,9 +4053,9 @@ serve_is_problem_deadlined(
   /* personal deadlines */
   if (prob->pd_total > 0) {
     for (i = 0, pdinfo = prob->pd_infos; i < prob->pd_total; i++, pdinfo++) {
-      if (!strcmp(user_login, pdinfo->login) && pdinfo->deadline > 0) {
-        if (p_deadline) *p_deadline = pdinfo->deadline;
-        return (state->current_time >= pdinfo->deadline);
+      if (!strcmp(user_login, pdinfo->login) && pdinfo->p.date > 0) {
+        if (p_deadline) *p_deadline = pdinfo->p.date;
+        return (state->current_time >= pdinfo->p.date);
       }
     }
   }
@@ -4079,8 +4079,8 @@ serve_is_problem_deadlined(
       }
     }
     if (i < prob->gdl.count) {
-      if (p_deadline) *p_deadline = prob->gdl.info[i].date;
-      return (state->current_time >= prob->gdl.info[i].date);
+      if (p_deadline) *p_deadline = prob->gdl.info[i].p.date;
+      return (state->current_time >= prob->gdl.info[i].p.date);
     }
   }
 

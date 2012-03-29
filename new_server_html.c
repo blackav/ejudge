@@ -11678,7 +11678,7 @@ html_problem_selection(serve_state_t cs,
 
       // find date penalty
       for (dpi = 0; dpi < prob->dp_total; dpi++)
-        if (cs->current_time < prob->dp_infos[dpi].deadline)
+        if (cs->current_time < prob->dp_infos[dpi].date)
           break;
       if (dpi < prob->dp_total)
         user_penalty = prob->dp_infos[dpi].penalty;
@@ -11740,7 +11740,7 @@ html_problem_selection_2(serve_state_t cs,
 
     // find date penalty
     for (dpi = 0; dpi < prob->dp_total; dpi++)
-      if (cs->current_time < prob->dp_infos[dpi].deadline)
+      if (cs->current_time < prob->dp_infos[dpi].date)
         break;
 
     if (user_deadline > 0 && cs->global->show_deadline)
