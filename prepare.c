@@ -1462,23 +1462,37 @@ parse_penalty_expression(
   while (isspace(*s)) ++s;
   if (!*s) goto done;
   if (*s != '/') goto fail;
+  ++s;
   while (isspace(*s)) ++s;
+  if (*s >= '0' && *s <= '9') {
+    errno = 0; eptr = NULL;
+    x = strtol(s, &eptr, 10);
+    if (errno) goto fail;
+    if (x <= 0 || x > 100000) goto fail;
+    s = (const unsigned char *) eptr;
+  } else {
+    x = 1;
+  }
   if (*s == 's' || *s == 'S') {
-    p->scale = 1;
+    p->scale = x;
+    ++s;
   } else if (*s == 'm' || *s == 'M') {
-    p->scale = 60;
+    p->scale = 60 * x;
+    ++s;
   } else if (*s == 'h' || *s == 'H') {
-    p->scale = 60*60;
+    p->scale = 60*60 * x;
+    ++s;
   } else if (*s == 'd' || *s == 'D') {
-    p->scale = 60*60*24;
+    p->scale = 60*60*24 * x;
+    ++s;
   } else if (*s == 'w' || *s == 'W') {
-    p->scale = 60*60*24*7;
+    p->scale = 60*60*24*7 * x;
+    ++s;
   } else goto fail;
   while (isspace(*s)) ++s;
   if (*s) goto fail;
 
 done:
-  fprintf(stderr, ">>penalty: %d, %d, %d\n", p->penalty, p->decay, p->scale);
   return 0;
 
 fail:
