@@ -1413,10 +1413,83 @@ free_deadline_penalties(int t, struct penalty_info *p)
 }
 
 static int
+parse_penalty_expression(
+        const unsigned char *expr,
+        struct penalty_info *p)
+{
+  const unsigned char *s = expr;
+  char *eptr = NULL;
+  int m = 0, x;
+  // [+|-]BASE[(+|-)DECAY[/SCALE]]
+  p->penalty = 0;
+  p->scale = 0;
+  p->decay = 0;
+
+  while (isspace(*s)) ++s;
+  if (*s == '+') {
+    ++s;
+  } else if (*s == '-') {
+    m = 1;
+    ++s;
+  }
+  if (*s < '0' || *s > '9') goto fail;
+  errno = 0;
+  x = strtol(s, &eptr, 10);
+  if (errno) goto fail;
+  if (x > 100000) goto fail;
+  s = (const unsigned char*) eptr;
+  if (m) x = -x;
+  p->penalty = x;
+  while (isspace(*s)) ++s;
+  if (!*s) goto done;
+  if (*s == '+') {
+    m = 0;
+    ++s;
+  } else if (*s == '-') {
+    m = 1;
+    ++s;
+  } else goto fail;
+  while (isspace(*s)) ++s;
+  if (*s < '0' || *s > '9') goto fail;
+  errno = 0; eptr = NULL;
+  x = strtol(s, &eptr, 10);
+  if (errno) goto fail;
+  if (x > 100000) goto fail;
+  s = (const unsigned char *) eptr;
+  if (m) x = -x;
+  p->decay = x;
+  p->scale = 1;
+  while (isspace(*s)) ++s;
+  if (!*s) goto done;
+  if (*s != '/') goto fail;
+  while (isspace(*s)) ++s;
+  if (*s == 's' || *s == 'S') {
+    p->scale = 1;
+  } else if (*s == 'm' || *s == 'M') {
+    p->scale = 60;
+  } else if (*s == 'h' || *s == 'H') {
+    p->scale = 60*60;
+  } else if (*s == 'd' || *s == 'D') {
+    p->scale = 60*60*24;
+  } else if (*s == 'w' || *s == 'W') {
+    p->scale = 60*60*24*7;
+  } else goto fail;
+  while (isspace(*s)) ++s;
+  if (*s) goto fail;
+
+done:
+  fprintf(stderr, ">>penalty: %d, %d, %d\n", p->penalty, p->decay, p->scale);
+  return 0;
+
+fail:
+  return -1;
+}
+
+static int
 parse_deadline_penalties(char **dpstr, int *p_total,
                          struct penalty_info **p_pens)
 {
-  int total = 0, i, n, x;
+  int total = 0, i, n;
   struct penalty_info *v = 0;
   const char *s;
   size_t maxlen = 0, curlen;
@@ -1451,8 +1524,7 @@ parse_deadline_penalties(char **dpstr, int *p_total,
       err("%d: invalid date penalty specification %s", i + 1, s);
       goto failure;
     }
-    n = x = 0;
-    if (sscanf(b2, "%d%n", &x, &n) != 1 || b2[n]) {
+    if (parse_penalty_expression(b2, &v[i]) < 0) {
       err("%d: invalid penalty specification %s", i + 1, b2);
       goto failure;
     }
@@ -1461,7 +1533,6 @@ parse_deadline_penalties(char **dpstr, int *p_total,
       goto failure;
     }
     v[i].date = tt;
-    v[i].penalty = x;
   }
 
   /*

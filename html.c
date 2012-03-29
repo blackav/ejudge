@@ -80,6 +80,7 @@ int
 calc_kirov_score(
         unsigned char *outbuf,
         size_t outsize,
+        time_t start_time,
         int separate_user_score,
         int user_mode,
         const struct run_entry *pe,
@@ -90,8 +91,10 @@ calc_kirov_score(
         int *p_date_penalty,
         int format)
 {
-  int score, init_score, dpi, date_penalty = 0, score_mult = 1, score_bonus = 0;
-  int status;
+  int score, init_score, dpi, score_mult = 1, score_bonus = 0;
+  int status, dp = 0;
+  time_t base_time = 0;
+  struct penalty_info *pi = NULL;
 
   ASSERT(pe);
   ASSERT(pr);
@@ -113,13 +116,22 @@ calc_kirov_score(
   if (pr->score_multiplier > 1) score_mult = pr->score_multiplier;
 
   // get date_penalty
-  for (dpi = 0; dpi < pr->dp_total; dpi++)
-    if (pe->time < pr->dp_infos[dpi].date)
-      break;
-  if (dpi < pr->dp_total) {
-    date_penalty = pr->dp_infos[dpi].penalty;
+  if (pr->dp_total > 0) {
+    if (pr->start_date > 0) {
+      base_time = pr->start_date;
+    } else if (start_time > 0) {
+      base_time = start_time;
+    }
+    for (dpi = 0; dpi < pr->dp_total; dpi++)
+      if (pe->time < pr->dp_infos[dpi].date)
+        break;
+    if (dpi < pr->dp_total) {
+      if (dpi > 0) {
+        base_time = pr->dp_infos[dpi - 1].date;
+      }
+      pi = &pr->dp_infos[dpi];
+    }
   }
-  if (p_date_penalty) *p_date_penalty = date_penalty;
 
   // count the bonus depending on the number of previous successes
   if (status == RUN_OK && pr->score_bonus_total > 0) {
@@ -129,7 +141,14 @@ calc_kirov_score(
 
   // score_mult is applied to the initial score
   // run_penalty is subtracted, but date_penalty is added
-  score = init_score * score_mult - attempts * pr->run_penalty + date_penalty + pe->score_adj - disq_attempts * pr->disqualified_penalty + score_bonus;
+
+  if (base_time > 0 && pi) {
+    time_t offset = pe->time - base_time;
+    if (offset < 0) offset = 0;
+    dp = pi->penalty + pi->decay * (offset / pi->scale);
+  }
+  if (p_date_penalty) *p_date_penalty = dp;
+  score = init_score * score_mult - attempts * pr->run_penalty + dp + pe->score_adj - disq_attempts * pr->disqualified_penalty + score_bonus;
   //if (score > pr->full_score) score = pr->full_score;
   if (score < 0) score = 0;
   if (!outbuf) return score;
@@ -162,9 +181,8 @@ calc_kirov_score(
       run_penalty_str[0] = 0;
     }
 
-    if (date_penalty != 0) {
-      snprintf(date_penalty_str, sizeof(date_penalty_str),
-               "%+d", date_penalty);
+    if (dp != 0) {
+      snprintf(date_penalty_str, sizeof(date_penalty_str), "%+d", dp);
     } else {
       date_penalty_str[0] = 0;
     }
@@ -218,6 +236,7 @@ void
 write_html_run_status(
         const serve_state_t state,
         FILE *f,
+        time_t start_time,
         const struct run_entry *pe,
         int user_mode, /* works for separate_user_score */
         int priv_level,
@@ -335,7 +354,7 @@ write_html_run_status(
     fprintf(f, "<td%s>%s</td>", cl, _("N/A"));
   } else {
     calc_kirov_score(score_str, sizeof(score_str),
-                     separate_user_score, user_mode,
+                     start_time, separate_user_score, user_mode,
                      pe, pr, attempts,
                      disq_attempts, prev_successes, 0, 0);
     fprintf(f, "<td%s>%s</td>", cl, score_str);
@@ -346,6 +365,7 @@ void
 write_text_run_status(
         const serve_state_t state,
         FILE *f,
+        time_t start_time,
         struct run_entry *pe,
         int user_mode,
         int priv_level,
@@ -428,7 +448,7 @@ write_text_run_status(
     fprintf(f, ";");
   } else {
     calc_kirov_score(score_str, sizeof(score_str),
-                     separate_user_score, user_mode,
+                     start_time, separate_user_score, user_mode,
                      pe, pr, attempts,
                      disq_attempts, prev_successes, 0, 1);
     fprintf(f, "%s;", score_str);
@@ -600,7 +620,7 @@ new_write_user_runs(
     fprintf(f, "<td%s>%s</td>", cl, prob_str);
     fprintf(f, "<td%s>%s</td>", cl, lang_str);
 
-    write_html_run_status(state, f, &re, 1 /* user_mode */,
+    write_html_run_status(state, f, start_time, &re, 1 /* user_mode */,
                           0, attempts, disq_attempts,
                           prev_successes, table_class, 0, 0);
 
@@ -1662,7 +1682,7 @@ do_write_kirov_standings(
       if (run_score == -1) run_score = 0;
       if (prob->score_latest_or_unmarked > 0) {
         if (run_status == RUN_OK) {
-          score = calc_kirov_score(0, 0,
+          score = calc_kirov_score(0, 0, start_time,
                                    separate_user_score, user_mode,
                                    pe, prob, att_num[up_ind],
                                    disq_num[up_ind],
@@ -1688,7 +1708,7 @@ do_write_kirov_standings(
           last_submit_run = k;
           last_success_run = k;
         } else if (run_status == RUN_PARTIAL || (run_status == RUN_WRONG_ANSWER_ERR && prob->type != 0)) {
-          score = calc_kirov_score(0, 0,
+          score = calc_kirov_score(0, 0, start_time,
                                    separate_user_score, user_mode,
                                    pe, prob, att_num[up_ind],
                                    disq_num[up_ind], RUN_TOO_MANY, 0, 0);
@@ -1735,7 +1755,7 @@ do_write_kirov_standings(
               || pe->is_marked) {
             marked_flag[up_ind] = pe->is_marked;
             if (!full_sol[up_ind]) sol_att[up_ind]++;
-            score = calc_kirov_score(0, 0,
+            score = calc_kirov_score(0, 0, start_time,
                                      separate_user_score, user_mode,
                                      pe, prob, att_num[up_ind],
                                      disq_num[up_ind],
@@ -1761,7 +1781,7 @@ do_write_kirov_standings(
               || pe->is_marked) {
             marked_flag[up_ind] = pe->is_marked;
             if (!full_sol[up_ind]) sol_att[up_ind]++;
-            score = calc_kirov_score(0, 0,
+            score = calc_kirov_score(0, 0, start_time,
                                      separate_user_score, user_mode,
                                      pe, prob, att_num[up_ind],
                                      disq_num[up_ind], RUN_TOO_MANY, 0, 0);
@@ -1777,7 +1797,7 @@ do_write_kirov_standings(
           }
         } else if (run_status == RUN_WRONG_ANSWER_ERR && prob->type != 0) {
           if (!full_sol[up_ind]) sol_att[up_ind]++;
-          score = calc_kirov_score(0, 0,
+          score = calc_kirov_score(0, 0, start_time,
                                    separate_user_score, user_mode,
                                    pe, prob, att_num[up_ind],
                                    disq_num[up_ind], RUN_TOO_MANY, 0, 0);
@@ -4493,7 +4513,7 @@ do_write_public_log(
       fprintf(f, "<td>%s</td>", state->langs[pe->lang_id]->short_name);
     else fprintf(f, "<td>??? - %d</td>", pe->lang_id);
 
-    write_html_run_status(state, f, pe, user_mode,
+    write_html_run_status(state, f, start_time, pe, user_mode,
                           0, attempts, disq_attempts,
                           prev_successes, 0, 1, 0);
 

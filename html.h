@@ -3,7 +3,7 @@
 #ifndef __HTML_H__
 #define __HTML_H__
 
-/* Copyright (C) 2000-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -137,11 +137,13 @@ void write_runs_dump(const serve_state_t, FILE *f, const unsigned char *,
                      unsigned char const *charset);
 struct run_entry;
 struct section_problem_data;
+struct penalty_info;
 
 int
 calc_kirov_score(
         unsigned char *outbuf,
         size_t outsize,
+        time_t start_time,
         int separate_user_score,
         int user_mode,
         const struct run_entry *pe,
@@ -155,6 +157,7 @@ void
 write_html_run_status(
         const serve_state_t,
         FILE *f,
+        time_t start_time,
         const struct run_entry *pe,
         int user_mode,
         int priv_level,
@@ -230,6 +233,7 @@ void
 write_text_run_status(
         const serve_state_t state,
         FILE *f,
+        time_t start_time,
         struct run_entry *pe,
         int user_mode,
         int priv_level,
