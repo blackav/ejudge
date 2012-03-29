@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1706,7 +1706,7 @@ do_dump_master_runs(
         orig_score = prob->full_score;
       snprintf(base_score_buf, sizeof(base_score_buf), "%d", orig_score);
       csv_rec[F_BASE_SCORE] = base_score_buf;
-      score = calc_kirov_score(0, 0, 0, 0, pe, prob, attempts, disq_attempts,
+      score = calc_kirov_score(0, 0, start_time, 0, 0, pe, prob, attempts, disq_attempts,
                                prev_successes, &date_penalty, 0);
       snprintf(score_buf, sizeof(score_buf), "%d", score);
       csv_rec[F_TOTAL_SCORE] = score_buf;

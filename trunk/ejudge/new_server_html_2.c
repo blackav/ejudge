@@ -552,7 +552,7 @@ ns_write_priv_all_runs(
         fprintf(f, "<td%s>??? - %d</td>", cl, pe->lang_id);
       }
       run_status_str(pe->status, statstr, sizeof(statstr), prob_type, 0);
-      write_html_run_status(cs, f, pe, 0, 1, attempts, disq_attempts,
+      write_html_run_status(cs, f, start_time, pe, 0, 1, attempts, disq_attempts,
                             prev_successes, "b1", 0,
                             enable_js_status_menu);
       /*
@@ -4551,7 +4551,7 @@ ns_write_user_run_status(
 
   fprintf(fout, "%d;%s;%s;%u;%s;%s;", run_id, run_kind_str, dur_str, re.size,
           prob_str, lang_str);
-  write_text_run_status(cs, fout, &re, 1 /* user_mode */, 0, attempts,
+  write_text_run_status(cs, fout, start_time, &re, 1 /* user_mode */, 0, attempts,
                         disq_attempts, prev_successes);
   fprintf(fout, "\n");
 
@@ -5152,10 +5152,21 @@ ns_get_user_problems_summary(
   unsigned char *marked_flag = 0;
   int status, score;
   int separate_user_score = 0;
+  time_t start_time;
 
   total_runs = run_get_total(cs->runlog_state);
   total_teams = teamdb_get_max_team_id(cs->teamdb_state) + 1;
   separate_user_score = global->separate_user_score > 0 && cs->online_view_judge_score <= 0;
+
+  if (global->is_virtual) {
+    if (run_get_virtual_start_entry(cs->runlog_state, user_id, &re) < 0) {
+      start_time = run_get_start_time(cs->runlog_state);
+    } else {
+      start_time = re.time;
+    }
+  } else {
+    start_time = run_get_start_time(cs->runlog_state);
+  }
 
   memset(best_run, -1, sizeof(best_run[0]) * (cs->max_prob + 1));
   XCALLOC(user_flag, (cs->max_prob + 1) * total_teams);
@@ -5296,7 +5307,8 @@ ns_get_user_problems_summary(
       case RUN_OK:
         solved_flag[re.prob_id] = 1;
         best_run[re.prob_id] = run_id;
-        cur_score = calc_kirov_score(0, 0, separate_user_score, 1 /* user_mode */, &re, cur_prob, 0, 0, 0, 0, 0);
+        cur_score = calc_kirov_score(0, 0, start_time,
+                                     separate_user_score, 1 /* user_mode */, &re, cur_prob, 0, 0, 0, 0, 0);
         //if (cur_score > best_score[re.prob_id])
         best_score[re.prob_id] = cur_score;
         break;
@@ -5316,7 +5328,7 @@ ns_get_user_problems_summary(
         solved_flag[re.prob_id] = 0;
         best_run[re.prob_id] = run_id;
         attempts[re.prob_id]++;
-        cur_score = calc_kirov_score(0, 0, separate_user_score,
+        cur_score = calc_kirov_score(0, 0, start_time, separate_user_score,
                                      1 /* user_mode */,
                                      &re, cur_prob, 0, 0, 0, 0, 0);
         //if (cur_score > best_score[re.prob_id])
@@ -5348,7 +5360,7 @@ ns_get_user_problems_summary(
 
         switch (status) {
         case RUN_OK:
-          cur_score = calc_kirov_score(0, 0, separate_user_score,
+          cur_score = calc_kirov_score(0, 0, start_time, separate_user_score,
                                        1 /* user_mode */, &re, cur_prob,
                                        attempts[re.prob_id],
                                        disqualified[re.prob_id],
@@ -5382,7 +5394,7 @@ ns_get_user_problems_summary(
           break;
 
         case RUN_PARTIAL:
-          cur_score = calc_kirov_score(0, 0, separate_user_score,
+          cur_score = calc_kirov_score(0, 0, start_time, separate_user_score,
                                        1 /* user_mode */, &re, cur_prob,
                                        attempts[re.prob_id],
                                        disqualified[re.prob_id],
@@ -5421,7 +5433,7 @@ ns_get_user_problems_summary(
         switch (status) {
         case RUN_OK:
           solved_flag[re.prob_id] = 1;
-          cur_score = calc_kirov_score(0, 0, separate_user_score,
+          cur_score = calc_kirov_score(0, 0, start_time, separate_user_score,
                                        1 /* user_mode */, &re, cur_prob,
                                        attempts[re.prob_id],
                                        disqualified[re.prob_id],
@@ -5458,7 +5470,7 @@ ns_get_user_problems_summary(
 
         case RUN_PARTIAL:
           solved_flag[re.prob_id] = 0;
-          cur_score = calc_kirov_score(0, 0, separate_user_score,
+          cur_score = calc_kirov_score(0, 0, start_time, separate_user_score,
                                        1 /* user_mode */, &re, cur_prob,
                                        attempts[re.prob_id],
                                        disqualified[re.prob_id],
