@@ -143,9 +143,12 @@ calc_kirov_score(
   // run_penalty is subtracted, but date_penalty is added
 
   if (base_time > 0 && pi) {
-    time_t offset = pe->time - base_time;
-    if (offset < 0) offset = 0;
-    dp = pi->penalty + pi->decay * (offset / pi->scale);
+    dp = pi->penalty;
+    if (pi->scale > 0) {
+      time_t offset = pe->time - base_time;
+      if (offset < 0) offset = 0;
+      dp += pi->decay * (offset / pi->scale);
+    }
   }
   if (p_date_penalty) *p_date_penalty = dp;
   score = init_score * score_mult - attempts * pr->run_penalty + dp + pe->score_adj - disq_attempts * pr->disqualified_penalty + score_bonus;
