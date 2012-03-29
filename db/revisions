@@ -7013,3 +7013,8 @@ new_server_html.c 6694 0 40387390
 prepare.c 6694 0 19320834
 serve_2.c 6694 0 11045708
 serve_state.c 6694 0 2572166
+html.h 6696 0 586618
+html.c 6696 0 14435801
+new_server_html_2.c 6696 0 16579706
+new_server_html_4.c 6696 0 5431890
+prepare.c 6696 0 19427535
