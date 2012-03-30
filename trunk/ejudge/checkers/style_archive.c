@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2010-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -393,7 +393,7 @@ get_tar_listing(const unsigned char *path, struct archive_file *arch)
   cmds[3] = "--quoting-style=c";
   cmds[4] = 0;
 
-  r = ejudge_invoke_process(cmds, NULL, NULL, NULL, 0, &out, &err);
+  r = ejudge_invoke_process(cmds, NULL, NULL, NULL, NULL, 0, &out, &err);
   if (r != 0) {
     error("archiver exit code: %d", r);
     fprintf(stderr, "%s\n", err);
@@ -599,7 +599,7 @@ get_zip_listing(
   cmds[2] = (char*) path;
   cmds[3] = 0;
 
-  r = ejudge_invoke_process(cmds, NULL, NULL, NULL, 0, &out, &err);
+  r = ejudge_invoke_process(cmds, NULL, NULL, NULL, NULL, 0, &out, &err);
   if (r != 0) {
     error("archiver exit code: %d", r);
     fprintf(stderr, "%s\n", err);
@@ -778,7 +778,7 @@ unpack_tar(const unsigned char *path, const unsigned char *dir)
   cmds[4] = (char*) dir;
   cmds[5] = 0;
 
-  r = ejudge_invoke_process(cmds, NULL, NULL, NULL, 0, &out, &err);
+  r = ejudge_invoke_process(cmds, NULL, NULL, NULL, NULL, 0, &out, &err);
   if (r != 0) {
     error("archiver exit code: %d", r);
     fprintf(stderr, "%s", err);
@@ -802,7 +802,7 @@ unpack_zip(const unsigned char *path, const unsigned char *dir)
   cmds[2] = (char*) path;
   cmds[3] = 0;
 
-  r = ejudge_invoke_process(cmds, NULL, dir, NULL, 0, &out, &err);
+  r = ejudge_invoke_process(cmds, NULL, dir, NULL, NULL, 0, &out, &err);
   if (r != 0) {
     error("archiver exit code: %d", r);
     fprintf(stderr, "%s", err);
