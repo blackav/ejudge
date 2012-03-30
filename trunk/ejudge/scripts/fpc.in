@@ -1,6 +1,6 @@
 #!/bin/sh
 # $Id$
-# Copyright (c) 2002-2008 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2002-2012 Alexander Chernov <cher@ejudge.ru>
 
 # using EJUDGE_FLAGS we may pass additional flags
 
@@ -32,11 +32,7 @@ unset LC_ALL
 unset LC_MESSAGES
 unset LANGUAGE
 
-# These compilation options enables various run-time checks
-#${FPCRUN} -Ci -Co -Cr -Ct -So -XS $1 -o${2}
-
-# No run-time checks
-"${FPCRUN}" ${EJUDGE_FLAGS} -So -XS "$1" "-o$2"
+"${FPCRUN}" ${EJUDGE_FLAGS} -XS "$1" "-o$2"
 
 #if the output file is not created - compile error
 [ -f "$2" ] || exit 1
