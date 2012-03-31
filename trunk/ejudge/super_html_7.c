@@ -4391,6 +4391,7 @@ generate_makefile(
 #if defined EJUDGE_LOCAL_DIR
   fprintf(mk_f, "EJUDGE_LOCAL_DIR ?= %s\n", EJUDGE_LOCAL_DIR);
 #endif /* EJUDGE_LOCAL_DIR */
+  fprintf(mk_f, "EJUDGE_SERVER_BIN_PATH ?= %s\n", EJUDGE_SERVER_BIN_PATH);
   fprintf(mk_f, "\n");
 
   if ((languages & LANG_C)) {
@@ -4469,7 +4470,7 @@ generate_makefile(
 
   fprintf(mk_f, "\n");
 
-  fprintf(mk_f, "NORMALIZE = ${EJUDGE_PREFIX_DIR}/libexec/ejudge/bin/ej-normalize\n");
+  fprintf(mk_f, "NORMALIZE = ${EJUDGE_SERVER_BIN_PATH}/ej-normalize\n");
   fprintf(mk_f, "NORMALIZE_FLAGS = --workdir=tests");
   if (test_pat[0] > ' ') fprintf(mk_f, " --test-pattern=%s", test_pat);
   if (corr_pat[0] > ' ') fprintf(mk_f, " --corr-pattern=%s", corr_pat);

@@ -1849,7 +1849,7 @@ run_one_test(
     }
   }
 
-  if (tst && tst->is_dos && !srpp->binary_input) copy_flag = CONVERT;
+  if (tst && tst->is_dos > 0 && !srpp->binary_input) copy_flag = CONVERT;
 
   /* copy the test */
   if (generic_copy_file(0, NULL, test_src, "", copy_flag, check_dir, srpp->input_file, "") < 0) {
@@ -1959,7 +1959,7 @@ run_one_test(
     }
   }
 
-  if (tst && tst->clear_env) task_ClearEnv(tsk);
+  if (tst && tst->clear_env > 0) task_ClearEnv(tsk);
   setup_environment(tsk, tst->start_env, ejudge_prefix_dir_env, &tstinfo);
 
   if (time_limit_value_ms > 0) {
@@ -1977,7 +1977,7 @@ run_one_test(
   }
 
   if (tst && tst->kill_signal && tst->kill_signal[0]) task_SetKillSignal(tsk, tst->kill_signal);
-  if (tst && tst->no_core_dump) task_DisableCoreDump(tsk);
+  if (tst && tst->no_core_dump > 0) task_DisableCoreDump(tsk);
 
   if (!tst || tst->memory_limit_type_val < 0) {
     if (srpp->max_stack_size && srpp->max_stack_size != (ssize_t) -1L)
@@ -1995,7 +1995,7 @@ run_one_test(
         task_SetDataSize(tsk, srpp->max_data_size);
       if (srpp->max_vm_size && srpp->max_vm_size != (ssize_t) -1L)
         task_SetVMSize(tsk, srpp->max_vm_size);
-      if (tst->enable_memory_limit_error && srgp->enable_memory_limit_error && srgp->secure_run) {
+      if (tst->enable_memory_limit_error > 0 && srgp->enable_memory_limit_error && srgp->secure_run) {
         task_EnableMemoryLimitError(tsk);
       }
       break;
@@ -2037,7 +2037,7 @@ run_one_test(
     }
   }
 
-  if (tst && tst->enable_memory_limit_error && srgp->secure_run && srgp->detect_violations) {
+  if (tst && tst->enable_memory_limit_error > 0 && srgp->secure_run && srgp->detect_violations) {
     switch (tst->secure_exec_type_val) {
     case SEXEC_TYPE_STATIC:
     case SEXEC_TYPE_DLL:
@@ -2048,7 +2048,7 @@ run_one_test(
   }
 
 #ifdef HAVE_TERMIOS_H
-  if (tst && tst->no_redirect && isatty(0)) {
+  if (tst && tst->no_redirect > 0 && isatty(0)) {
     /* we need to save terminal state since if the program
      * is killed with SIGKILL, the terminal left in random state
      */
@@ -2099,7 +2099,7 @@ run_one_test(
 
   /* restore the terminal state */
 #ifdef HAVE_TERMIOS_H
-  if (tst && tst->no_redirect && isatty(0)) {
+  if (tst && tst->no_redirect > 0 && isatty(0)) {
     if (tcsetattr(0, TCSADRAIN, &term_attrs) < 0)
       err("tcsetattr failed: %s", os_ErrorMsg());
   }
@@ -2207,13 +2207,13 @@ run_one_test(
     goto cleanup;
   }
 
-  if (tst && tst->enable_memory_limit_error && srgp->enable_memory_limit_error
+  if (tst && tst->enable_memory_limit_error > 0 && srgp->enable_memory_limit_error
       && srgp->secure_run && task_IsMemoryLimit(tsk)) {
     status = RUN_MEM_LIMIT_ERR;
     goto cleanup;
   }
 
-  if (tst && tst->enable_memory_limit_error && srgp->detect_violations
+  if (tst && tst->enable_memory_limit_error > 0 && srgp->detect_violations
       && srgp->secure_run && task_IsSecurityViolation(tsk)) {
     status = RUN_SECURITY_ERR;
     goto cleanup;
