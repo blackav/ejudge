@@ -2521,6 +2521,7 @@ check_output_only(
         const struct section_global_data *global,
         const struct super_run_in_global_packet *srgp,
         const struct super_run_in_problem_packet *srpp,
+        struct run_reply_packet *reply_pkt,
         full_archive_t far,
         const unsigned char *exe_name,
         struct testinfo_vector *tests,
@@ -2587,11 +2588,24 @@ check_output_only(
                           global->run_work_dir, ejudge_prefix_dir_env,
                           0, NULL);
 
+  cur_info->status = status;
+
   if (status == RUN_PRESENTATION_ERR || status == RUN_WRONG_ANSWER_ERR) {
     status = RUN_PARTIAL;
   }
 
-  cur_info->status = status;
+  // FIXME: scoring checker
+  if (status == RUN_OK) {
+    if (srpp->variable_full_score && srpp->scoring_checker) {
+      reply_pkt->score = cur_info->checker_score;
+    } else {
+      reply_pkt->score = srpp->full_score;
+    }
+    reply_pkt->failed_test = 2;
+  } else {
+    reply_pkt->score = cur_info->score;
+    reply_pkt->failed_test = 1;
+  }
 
   // output file
   file_size = -1;
@@ -2735,7 +2749,7 @@ run_tests(
   }
 
   if (srpp->type_val) {
-    status = check_output_only(global, srgp, srpp, far, exe_name, &tests, check_cmd,
+    status = check_output_only(global, srgp, srpp, reply_pkt, far, exe_name, &tests, check_cmd,
                                ejudge_prefix_dir_env);
     goto done;
   }
