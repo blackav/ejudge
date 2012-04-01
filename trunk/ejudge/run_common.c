@@ -1550,6 +1550,8 @@ invoke_checker(
   }
 
   int exitcode = task_ExitCode(tsk);
+  if (exitcode == 1) exitcode = RUN_WRONG_ANSWER_ERR;
+  if (exitcode == 2) exitcode = RUN_PRESENTATION_ERR;
   if (exitcode != RUN_OK && exitcode != RUN_PRESENTATION_ERR
       && exitcode != RUN_WRONG_ANSWER_ERR && exitcode != RUN_CHECK_FAILED) {
     append_msg_to_log(check_out_path, "checker exited with code %d", exitcode);
@@ -2196,6 +2198,8 @@ run_one_test(
       goto check_failed;
     }
     int exitcode = task_ExitCode(tsk_int);
+    if (exitcode == 1) exitcode = RUN_WRONG_ANSWER_ERR;
+    if (exitcode == 2) exitcode = RUN_PRESENTATION_ERR;
     if (exitcode != RUN_OK && exitcode != RUN_PRESENTATION_ERR && exitcode != RUN_WRONG_ANSWER_ERR) {
       append_msg_to_log(check_out_path, "interactor exited with code %d", exitcode);
       goto check_failed;

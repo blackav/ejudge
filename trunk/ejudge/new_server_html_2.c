@@ -804,6 +804,7 @@ ns_write_all_clars(
   struct user_filter_info *u = 0;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   const unsigned char *clar_subj = 0;
+  const unsigned char *judge_name = NULL;
 
   u = user_filter_info_allocate(cs, phr->user_id, phr->session_id);
 
@@ -933,9 +934,16 @@ ns_write_all_clars(
     if (!clar.from) {
       if (!clar.j_from)
         fprintf(f, "<td%s><b>%s</b></td>", cl, _("judges"));
-      else
-        fprintf(f, "<td%s><b>%s</b> (%s)</td>", cl, _("judges"),
-                ARMOR(teamdb_get_name_2(cs->teamdb_state, clar.j_from)));
+      else {
+        judge_name = teamdb_get_name_2(cs->teamdb_state, clar.j_from);
+        if (!judge_name) {
+          fprintf(f, "<td%s><b>%s</b> (invalid id %d)</td>", cl, _("judges"),
+                  clar.j_from);
+        } else {
+          fprintf(f, "<td%s><b>%s</b> (%s)</td>", cl, _("judges"),
+                  ARMOR(judge_name));
+        }
+      }
     } else {
       fprintf(f, "<td%s>%s</td>", cl,
               ARMOR(teamdb_get_name_2(cs->teamdb_state, clar.from)));

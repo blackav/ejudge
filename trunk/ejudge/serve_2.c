@@ -2011,8 +2011,10 @@ serve_read_compile_packet(
                report_size);
       goto report_check_failed;
     }
+  }
 
-    if (generic_read_file(&run_text, 0, &run_size, 0, 0, run_arch_path, 0) >= 0) {
+  if (generic_read_file(&run_text, 0, &run_size, 0, 0, run_arch_path, 0) >= 0) {
+    if (run_size > 0) {
       arch_flags = archive_make_write_path(state,
                                            run_arch_path, sizeof(run_arch_path),
                                            global->report_archive_dir,
@@ -2024,8 +2026,8 @@ serve_read_compile_packet(
                              0, run_arch_path, 0);
         }
       }
-      xfree(run_text); run_text = 0; run_size = 0;
     }
+    xfree(run_text); run_text = 0; run_size = 0;
   }
 
   if (comp_pkt->status == RUN_CHECK_FAILED) {
