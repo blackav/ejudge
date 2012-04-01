@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -26,8 +26,7 @@ checker_read_file_by_line(int ind,
   size_t lb_a = 0, lb_u = 0;
   unsigned char *b_v = 0;
   size_t b_a = 0, b_u = 0;
-  unsigned char tv[512];
-  size_t tl;
+  int c;
 
   lb_a = 128;
   lb_v = (char **) xcalloc(lb_a, sizeof(lb_v[0]));
@@ -37,28 +36,33 @@ checker_read_file_by_line(int ind,
   b_v = (unsigned char *) xmalloc(b_a);
   b_v[0] = 0;
 
-  while (fgets(tv, sizeof(tv), f_arr[ind])) {
-    tl = strlen(tv);
-    if (tl + b_u >= b_a) {
-      while (tl + b_u >= b_a) b_a *= 2;
-      b_v = (unsigned char*) xrealloc(b_v, b_a);
+  while ((c = getc(f_arr[ind])) != EOF) {
+    if (!c) fatal_read(ind, "\\0 byte in file");
+    if (b_u + 1 >= b_a) {
+      b_v = (unsigned char*) xrealloc(b_v, (b_a *= 2) * sizeof(b_v[0]));
     }
-    memcpy(b_v + b_u, tv, tl + 1);
-    b_u += tl;
+    b_v[b_u++] = c;
+    b_v[b_u] = 0;
+    if (c != '\n') continue;
 
-    if (tl < sizeof(tv) - 1 || feof(f_arr[ind])) {
-      if (lb_u >= lb_a - 1) {
-        lb_a *= 2;
-        lb_v = (char **) xrealloc(lb_v, lb_a * sizeof(lb_v[0]));
-      }
-      lb_v[lb_u] = xstrdup(b_v);
-      lb_v[++lb_u] = 0;
-      b_u = 0;
-      b_v[0] = 0;
+    if (lb_u + 1 >= lb_a) {
+      lb_a *= 2;
+      lb_v = (char **) xrealloc(lb_v, lb_a * sizeof(lb_v[0]));
     }
+    lb_v[lb_u++] = xstrdup(b_v);
+    lb_v[lb_u] = NULL;
+    b_u = 0;
+    b_v[b_u] = 0;
   }
   if (ferror(f_arr[ind])) {
     fatal_CF("Input error from %s file", f_arr_names[ind]);
+  }
+  if (b_u > 0) {
+    if (lb_u + 1 >= lb_a) {
+      lb_v = xrealloc(lb_v, (lb_a *= 2) * sizeof(lb_v[0]));
+    }
+    lb_v[lb_u++] = xstrdup(b_v);
+    lb_v[lb_u] = NULL;
   }
 
   if (out_lines_num) *out_lines_num = lb_u;
