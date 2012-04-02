@@ -4302,6 +4302,15 @@ generate_checker_compilation_rule(
     } else if (languages == LANG_DCC) {
       fprintf(out_f, "%s: %s%s\n", cmd, cmd, source_suffix);
       fprintf(out_f, "\t${DCC} ${DCCTESTLIBFLAGS} %s%s\n", cmd, source_suffix);
+    } else if (languages == LANG_JAVA) {
+      fprintf(out_f, "%s: %s%s\n", cmd, cmd, source_suffix);
+      fprintf(out_f, "\t${JAVAC} -cp testlib4j.jar %s%s\n", cmd, source_suffix);
+      fprintf(out_f, "\t${JAR} cf %s.jar *.class\n", cmd);
+      fprintf(out_f, "\trm -f *.class\n");
+      fprintf(out_f, "\techo '#! /bin/sh' > %s\n", cmd);
+      fprintf(out_f, "\techo 'd=`dirname $$0`' >> %s\n", cmd);
+      fprintf(out_f, "\techo 'exec ${JAVA} -cp $$d/testlib4j.jar:$$d/%s.jar ru.ifmo.testlib.CheckerFramework %s \"$$@\"' >> %s\n", cmd, cmd, cmd);
+      fprintf(out_f, "\tchmod +x %s\n", cmd);
     } else {
       fprintf(out_f, "# no information how to build %s '%s'\n", what, cmd);
     }
@@ -4420,8 +4429,8 @@ generate_makefile(
       fprintf(mk_f, "CLIBCHECKERFLAGS = -Wall -Wno-pointer-sign -g -std=gnu99 -O2 -I${EJUDGE_PREFIX_DIR}/include/ejudge -L${EJUDGE_PREFIX_DIR}/lib -Wl,--rpath,${EJUDGE_PREFIX_DIR}/lib\n");
       fprintf(mk_f, "CLIBCHECKERLIBS = -lchecker -lm\n");
     }
+    fprintf(mk_f, "\n");
   }
-  fprintf(mk_f, "\n");
 
   if ((languages & LANG_CPP)) {
     compiler_path = get_compiler_path(log_f, NULL, NULL, "g++");
@@ -4442,8 +4451,8 @@ generate_makefile(
       fprintf(mk_f, "CXXLIBCHECKERFLAGS = -Wall -g -O2 -I${EJUDGE_PREFIX_DIR}/include/ejudge -L${EJUDGE_PREFIX_DIR}/lib -Wl,--rpath,${EJUDGE_PREFIX_DIR}/lib\n");
       fprintf(mk_f, "CXXLIBCHECKERLIBS = -lchecker -lm\n");
     }
+    fprintf(mk_f, "\n");
   }
-  fprintf(mk_f, "\n");
 
   if ((languages & LANG_FPC)) {
     compiler_path = get_compiler_path(log_f, NULL, NULL, "fpc");
@@ -4458,8 +4467,8 @@ generate_makefile(
     fprintf(mk_f, "FPCFLAGS = %s\n", compiler_flags);
     compiler_flags = NULL;
     fprintf(mk_f, "FPCTESTLIBFLAGS = -Fu%s/share/ejudge/testlib/fpc\n", EJUDGE_PREFIX_DIR);
+    fprintf(mk_f, "\n");
   }
-  fprintf(mk_f, "\n");
 
   if ((languages & LANG_DCC)) {
     compiler_path = get_compiler_path(log_f, NULL, NULL, "dcc");
@@ -4474,8 +4483,32 @@ generate_makefile(
     fprintf(mk_f, "DCCFLAGS = %s\n", compiler_flags);
     compiler_flags = NULL;
     fprintf(mk_f, "DCCTESTLIBFLAGS = -U%s/share/ejudge/testlib/delphi\n", EJUDGE_PREFIX_DIR);
+    fprintf(mk_f, "\n");
   }
-  fprintf(mk_f, "\n");
+
+  if ((languages & LANG_JAVA)) {
+    compiler_path = get_compiler_path(log_f, NULL, NULL, "javac");
+    if (!compiler_path) {
+      fprintf(mk_f, "# JAVAC compiler is not found\n"
+              "JAVAC ?= /bin/false\n");
+    } else {
+      fprintf(mk_f, "JAVAC = %s\n", compiler_path);
+      unsigned char *dn = os_DirName(compiler_path);
+      if (!dn || !*dn || !strcmp(dn, ".")) {
+        fprintf(mk_f, "JAVA = java\n"
+                "JAR = jar\n");
+      } else {
+        fprintf(mk_f, "JAVA = %s/java\n"
+                "JAR = %s/jar\n", dn, dn);
+      }
+      xfree(dn); dn = NULL;
+    }
+    xfree(compiler_path); compiler_path = NULL;
+    compiler_flags = get_compiler_flags(cs, sstate, "javac");
+    if (!compiler_flags) compiler_flags = "";
+    fprintf(mk_f, "JAVACFLAGS = %s\n", compiler_flags);
+    fprintf(mk_f, "\n");
+  }
 
   fprintf(mk_f, "EXECUTE = ${EJUDGE_PREFIX_DIR}/bin/ejudge-execute\n");
   fprintf(mk_f, "EXECUTE_FLAGS = --quiet");
