@@ -4296,6 +4296,12 @@ generate_checker_compilation_rule(
       fprintf(out_f, "%s : %s%s\n", cmd, cmd, source_suffix);
       fprintf(out_f, "\t${CXX} ${CXXLIBCHECKERFLAGS} %s%s -o%s ${CXXLIBCHECKERLIBS}\n",
               cmd, source_suffix, cmd);
+    } else if (languages == LANG_FPC) {
+      fprintf(out_f, "%s: %s%s\n", cmd, cmd, source_suffix);
+      fprintf(out_f, "\t${FPC} ${FPCTESTLIBFLAGS} %s%s\n", cmd, source_suffix);
+    } else if (languages == LANG_DCC) {
+      fprintf(out_f, "%s: %s%s\n", cmd, cmd, source_suffix);
+      fprintf(out_f, "\t${DCC} ${DCCTESTLIBFLAGS} %s%s\n", cmd, source_suffix);
     } else {
       fprintf(out_f, "# no information how to build %s '%s'\n", what, cmd);
     }
@@ -4436,6 +4442,38 @@ generate_makefile(
       fprintf(mk_f, "CXXLIBCHECKERFLAGS = -Wall -g -O2 -I${EJUDGE_PREFIX_DIR}/include/ejudge -L${EJUDGE_PREFIX_DIR}/lib -Wl,--rpath,${EJUDGE_PREFIX_DIR}/lib\n");
       fprintf(mk_f, "CXXLIBCHECKERLIBS = -lchecker -lm\n");
     }
+  }
+  fprintf(mk_f, "\n");
+
+  if ((languages & LANG_FPC)) {
+    compiler_path = get_compiler_path(log_f, NULL, NULL, "fpc");
+    if (!compiler_path) {
+      fprintf(mk_f, "# FPC compiler is not found\nFPC ?= /bin/false\n");
+    } else {
+      fprintf(mk_f, "FPC = %s\n", compiler_path);
+    }
+    xfree(compiler_path); compiler_path = NULL;
+    compiler_flags = get_compiler_flags(cs, sstate, "fpc");
+    if (!compiler_flags) compiler_flags = "";
+    fprintf(mk_f, "FPCFLAGS = %s\n", compiler_flags);
+    compiler_flags = NULL;
+    fprintf(mk_f, "FPCTESTLIBFLAGS = -Fu%s/share/ejudge/testlib/fpc\n", EJUDGE_PREFIX_DIR);
+  }
+  fprintf(mk_f, "\n");
+
+  if ((languages & LANG_DCC)) {
+    compiler_path = get_compiler_path(log_f, NULL, NULL, "dcc");
+    if (!compiler_path) {
+      fprintf(mk_f, "# DCC compiler is not found\nDCC ?= /bin/false\n");
+    } else {
+      fprintf(mk_f, "DCC = %s\n", compiler_path);
+    }
+    xfree(compiler_path); compiler_path = NULL;
+    compiler_flags = get_compiler_flags(cs, sstate, "dcc");
+    if (!compiler_flags) compiler_flags = "";
+    fprintf(mk_f, "DCCFLAGS = %s\n", compiler_flags);
+    compiler_flags = NULL;
+    fprintf(mk_f, "DCCTESTLIBFLAGS = -U%s/share/ejudge/testlib/delphi\n", EJUDGE_PREFIX_DIR);
   }
   fprintf(mk_f, "\n");
 
