@@ -4,7 +4,7 @@
 #ifndef __NEW_SERVER_H__
 #define __NEW_SERVER_H__
 
-/* Copyright (C) 2006-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -495,8 +495,9 @@ void
 ns_html_err_cnts_unavailable(FILE *fout,
                              struct http_request_info *phr,
                              int priv_mode,
+                             const unsigned char *messages,
                              const char *format, ...)
-  __attribute__((format(printf, 4, 5)));
+  __attribute__((format(printf, 5, 6)));
 void
 ns_html_err_ul_server_down(FILE *fout,
                            struct http_request_info *phr,
