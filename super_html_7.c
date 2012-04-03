@@ -4175,6 +4175,35 @@ guess_language_by_src(const unsigned char *src)
 }
 
 static unsigned char *
+get_compiler_script(
+        FILE *log_f,
+        const struct ejudge_cfg *config,
+        const unsigned char *script_dir_default,
+        const unsigned char *lang_short_name)
+{
+  unsigned char script_dir[PATH_MAX];
+  unsigned char compiler_script[PATH_MAX];
+
+  script_dir[0] = 0;
+  if (!config) config = ejudge_config;
+  if (script_dir_default && script_dir_default[0]) {
+    snprintf(script_dir, sizeof(script_dir), "%s", script_dir_default);
+  }
+  if (!script_dir[0] && config && config->compile_home_dir) {
+    snprintf(script_dir, sizeof(script_dir), "%s/scripts",
+             config->compile_home_dir);
+  }
+#if defined EJUDGE_CONTESTS_HOME_DIR
+  if (!script_dir[0]) {
+    snprintf(script_dir, sizeof(script_dir), "%s/compile/scripts",
+             EJUDGE_CONTESTS_HOME_DIR);
+  }
+#endif
+  snprintf(compiler_script, sizeof(compiler_script), "%s/%s", script_dir, lang_short_name);
+  return xstrdup(compiler_script);
+}
+
+static unsigned char *
 get_compiler_path(
         FILE *log_f,
         const struct ejudge_cfg *config,
@@ -4308,8 +4337,8 @@ generate_checker_compilation_rule(
       fprintf(out_f, "\t${JAR} cf %s.jar *.class\n", cmd);
       fprintf(out_f, "\trm -f *.class\n");
       fprintf(out_f, "\techo '#! /bin/sh' > %s\n", cmd);
-      fprintf(out_f, "\techo 'd=`dirname $$0`' >> %s\n", cmd);
-      fprintf(out_f, "\techo 'exec ${JAVA} -cp $$d/testlib4j.jar:$$d/%s.jar ru.ifmo.testlib.CheckerFramework %s \"$$@\"' >> %s\n", cmd, cmd, cmd);
+      fprintf(out_f, "\techo 'd=\"`dirname $$0`\"' >> %s\n", cmd);
+      fprintf(out_f, "\techo 'exec ${JAVA} -cp \"$$d/testlib4j.jar:$$d/%s.jar\" ru.ifmo.testlib.CheckerFramework %s \"$$@\"' >> %s\n", cmd, cmd, cmd);
       fprintf(out_f, "\tchmod +x %s\n", cmd);
     } else {
       fprintf(out_f, "# no information how to build %s '%s'\n", what, cmd);
@@ -4504,6 +4533,13 @@ generate_makefile(
       xfree(dn); dn = NULL;
     }
     xfree(compiler_path); compiler_path = NULL;
+    compiler_path = get_compiler_script(log_f, NULL, NULL, "javac");
+    if (!compiler_path) {
+      fprintf(mk_f, "JAVACHELP ?= /bin/false\n");
+    } else {
+      fprintf(mk_f, "JAVACHELP = %s\n", compiler_path);
+    }
+    xfree(compiler_path); compiler_path = NULL;
     compiler_flags = get_compiler_flags(cs, sstate, "javac");
     if (!compiler_flags) compiler_flags = "";
     fprintf(mk_f, "JAVACFLAGS = %s\n", compiler_flags);
@@ -4629,6 +4665,16 @@ generate_makefile(
         } else if (languages == LANG_DCC) {
           fprintf(mk_f, "%s : %s%s\n", prob->solution_cmd, prob->solution_cmd, source_suffix);
           fprintf(mk_f, "\t${DCC} ${DCCFLAGS} %s%s\n", prob->solution_cmd, source_suffix);
+        } else if (languages == LANG_JAVA) {
+          fprintf(mk_f, "%s : %s%s\n", prob->solution_cmd, prob->solution_cmd, source_suffix);
+          fprintf(mk_f, "\t${JAVACHELP} %s%s %s%s\n", prob->solution_cmd, source_suffix,
+                  prob->solution_cmd, ".jar");
+          fprintf(mk_f, "\trm -f *.class\n");
+          fprintf(mk_f, "\techo '#! /bin/sh' > %s\n", prob->solution_cmd);
+          fprintf(mk_f, "\techo 'd=\"`dirname $$0`\"' >> %s\n", prob->solution_cmd);
+          fprintf(mk_f, "\techo 'exec ${JAVA} -jar \"$$d/%s.jar\" \"$$@\"' >> %s\n",
+                  prob->solution_cmd, prob->solution_cmd);
+          fprintf(mk_f, "\tchmod +x %s\n", prob->solution_cmd);
         } else {
           fprintf(mk_f, "# no information how to build solution '%s'\n", prob->solution_cmd);
         }
