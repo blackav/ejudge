@@ -4340,6 +4340,9 @@ generate_checker_compilation_rule(
       fprintf(out_f, "\techo 'd=\"`dirname $$0`\"' >> %s\n", cmd);
       fprintf(out_f, "\techo 'exec ${JAVA} -cp \"$$d/testlib4j.jar:$$d/%s.jar\" ru.ifmo.testlib.CheckerFramework %s \"$$@\"' >> %s\n", cmd, cmd, cmd);
       fprintf(out_f, "\tchmod +x %s\n", cmd);
+    } else if (languages == LANG_PY) {
+      fprintf(out_f, "%s: %s%s\n", cmd, cmd, source_suffix);
+      fprintf(out_f, "\t${PYCHELPER} %s%s %s\n", cmd, source_suffix, cmd);
     } else {
       fprintf(out_f, "# no information how to build %s '%s'\n", what, cmd);
     }
@@ -4535,14 +4538,26 @@ generate_makefile(
     xfree(compiler_path); compiler_path = NULL;
     compiler_path = get_compiler_script(log_f, NULL, NULL, "javac");
     if (!compiler_path) {
-      fprintf(mk_f, "JAVACHELP ?= /bin/false\n");
+      fprintf(mk_f, "JAVACHELPER ?= /bin/false\n");
     } else {
-      fprintf(mk_f, "JAVACHELP = %s\n", compiler_path);
+      fprintf(mk_f, "JAVACHELPER = %s\n", compiler_path);
     }
     xfree(compiler_path); compiler_path = NULL;
     compiler_flags = get_compiler_flags(cs, sstate, "javac");
     if (!compiler_flags) compiler_flags = "";
     fprintf(mk_f, "JAVACFLAGS = %s\n", compiler_flags);
+    fprintf(mk_f, "\n");
+  }
+
+  if ((languages & LANG_PY)) {
+    compiler_path = get_compiler_script(log_f, NULL, NULL, "python3");
+    if (!compiler_path) compiler_path = get_compiler_script(log_f, NULL, NULL, "python");
+    if (!compiler_path) {
+      fprintf(mk_f, "PYCHELPER ?= /bin/false\n");
+    } else {
+      fprintf(mk_f, "PYCHELPER = %s\n", compiler_path);
+    }
+    xfree(compiler_path); compiler_path = NULL;
     fprintf(mk_f, "\n");
   }
 
@@ -4667,7 +4682,7 @@ generate_makefile(
           fprintf(mk_f, "\t${DCC} ${DCCFLAGS} %s%s\n", prob->solution_cmd, source_suffix);
         } else if (languages == LANG_JAVA) {
           fprintf(mk_f, "%s : %s%s\n", prob->solution_cmd, prob->solution_cmd, source_suffix);
-          fprintf(mk_f, "\t${JAVACHELP} %s%s %s%s\n", prob->solution_cmd, source_suffix,
+          fprintf(mk_f, "\t${JAVACHELPER} %s%s %s%s\n", prob->solution_cmd, source_suffix,
                   prob->solution_cmd, ".jar");
           fprintf(mk_f, "\trm -f *.class\n");
           fprintf(mk_f, "\techo '#! /bin/sh' > %s\n", prob->solution_cmd);
@@ -4675,6 +4690,9 @@ generate_makefile(
           fprintf(mk_f, "\techo 'exec ${JAVA} -jar \"$$d/%s.jar\" \"$$@\"' >> %s\n",
                   prob->solution_cmd, prob->solution_cmd);
           fprintf(mk_f, "\tchmod +x %s\n", prob->solution_cmd);
+        } else if (languages == LANG_PY) {
+          fprintf(mk_f, "%s : %s%s\n", prob->solution_cmd, prob->solution_cmd, source_suffix);
+          fprintf(mk_f, "\t${PYCHELPER} %s%s %s\n", prob->solution_cmd, source_suffix, prob->solution_cmd);
         } else {
           fprintf(mk_f, "# no information how to build solution '%s'\n", prob->solution_cmd);
         }
