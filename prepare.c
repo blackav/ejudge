@@ -4510,6 +4510,7 @@ prepare(
   write_log(0, LOG_INFO, "configuration file parsed ok");
   if (collect_sections(state, mode) < 0) return -1;
 
+  /*
   if (!state->max_lang && mode == PREPARE_COMPILE) {
     err("no languages specified");
     return -1;
@@ -4522,6 +4523,7 @@ prepare(
     err("no testers specified");
     return -1;
   }
+  */
   if (set_defaults(state, mode, subst_src, subst_dst) < 0) return -1;
   return 0;
 }
