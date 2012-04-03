@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -29,6 +29,8 @@
 #include "xml_utils.h"
 #include "copyright.h"
 #include "team_extra.h"
+
+#include "reuse_xalloc.h"
 
 #include <stdarg.h>
 
@@ -574,6 +576,7 @@ void
 ns_html_err_cnts_unavailable(FILE *fout,
                              struct http_request_info *phr,
                              int priv_mode,
+                             const unsigned char *messages,
                              const char *format, ...)
 {
   const struct contest_desc *cnts = 0;
@@ -627,6 +630,13 @@ ns_html_err_cnts_unavailable(FILE *fout,
   }
   fprintf(fout, "<p>%s</p>\n",
           _("The contest is temporarily not available. Please, retry the request a bit later."));
+
+  if (messages) {
+    unsigned char *a = html_armor_string_dup(messages);
+    fprintf(fout, "<pre><font color=\"red\">%s</font></pre>\n", a);
+    xfree(a); a = NULL;
+  }
+
   ns_footer(fout, footer, copyright, phr->locale_id);
   l10n_setlocale(0);
 }

@@ -4623,6 +4623,12 @@ generate_makefile(
           fprintf(mk_f, "%s : %s%s\n", prob->solution_cmd, prob->solution_cmd, source_suffix);
           fprintf(mk_f, "\t${CXX} ${CXXFLAGS} %s%s -o%s ${CXXLIBS}\n",
                   prob->solution_cmd, source_suffix, prob->solution_cmd);
+        } else if (languages == LANG_FPC) {
+          fprintf(mk_f, "%s : %s%s\n", prob->solution_cmd, prob->solution_cmd, source_suffix);
+          fprintf(mk_f, "\t${FPC} ${FPCFLAGS} %s%s\n",  prob->solution_cmd, source_suffix);
+        } else if (languages == LANG_DCC) {
+          fprintf(mk_f, "%s : %s%s\n", prob->solution_cmd, prob->solution_cmd, source_suffix);
+          fprintf(mk_f, "\t${DCC} ${DCCFLAGS} %s%s\n", prob->solution_cmd, source_suffix);
         } else {
           fprintf(mk_f, "# no information how to build solution '%s'\n", prob->solution_cmd);
         }
