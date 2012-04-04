@@ -1,7 +1,7 @@
 # -*- mode: po; coding: koi8-r -*-
 # ejudge messages catalog
 # $Id$
-# Copyright (C) 2002-2011 Alexander Chernov <cher@ejudge.ru>
+# Copyright (C) 2002-2012 Alexander Chernov <cher@ejudge.ru>
 #
 msgid ""
 msgstr ""
