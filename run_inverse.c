@@ -379,6 +379,8 @@ invoke_test_checker(
     return RUN_CHECK_FAILED;
   }
   r = task_ExitCode(tsk);
+  if (r == 1) r = RUN_WRONG_ANSWER_ERR;
+  if (r == 2) r = RUN_PRESENTATION_ERR;
   if (r != RUN_OK && r != RUN_COMPILE_ERR && r != RUN_PRESENTATION_ERR
       && r != RUN_WRONG_ANSWER_ERR && r != RUN_CHECK_FAILED) {
     perr(log_f, "test checker %s exit code %d invalid on test %d",
