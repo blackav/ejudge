@@ -4658,7 +4658,7 @@ cmd_op_create_new_contest(
   }
 
   if (!templ_cnts) {
-    phr->ss->edited_cnts = contest_tmpl_new(contest_id, phr->login, phr->self_url, phr->system_login, phr->config);
+    phr->ss->edited_cnts = contest_tmpl_new(contest_id, phr->login, phr->self_url, phr->system_login, phr->ip, phr->ssl_flag, phr->config);
     phr->ss->global = prepare_new_global_section(contest_id, phr->ss->edited_cnts->root_dir, phr->config);
   } else {
     super_html_load_serve_cfg(templ_cnts, phr->config, phr->ss);

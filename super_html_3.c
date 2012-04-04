@@ -10568,6 +10568,21 @@ check_failed:
   fprintf(f, "<p><pre><font color=\"red\">%s</font></pre></p>\n",
           ARMOR(flog_txt));
   xfree(flog_txt);
+
+  fprintf(f, "<table border=\"0\"><tr>");
+  fprintf(f, "<td>%sTo the top</a></td>",
+          html_hyperref(hbuf, sizeof(hbuf), session_id, self_url,extra_args,0));
+  fprintf(f, "<td>%sBack</a></td>",
+          html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
+                        "contest_id=%d&action=%d", cnts->id,
+                        SSERV_CMD_CONTEST_PAGE));
+  fprintf(f, "<td>");
+  html_start_form(f, 1, self_url, hidden_vars);
+  fprintf(f, "<input type=\"hidden\" name=\"contest_id\" value=\"%d\"/>", cnts->id);
+  html_submit_button(f, SSERV_CMD_CHECK_TESTS, "Check again");
+  fprintf(f, "</form></td>\n");
+  fprintf(f, "</tr></table>\n");
+
   html_armor_free(&ab);
   return 0;
 }

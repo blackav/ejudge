@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -53,6 +53,8 @@ contest_tmpl_new(int contest_id,
                  const unsigned char *login,
                  const unsigned char *self_url,
                  const unsigned char *ss_login,
+                 ej_ip_t ip,
+                 int ssl_flag,
                  const struct ejudge_cfg *ejudge_config)
 {
   struct contest_desc *cnts;
@@ -111,6 +113,13 @@ contest_tmpl_new(int contest_id,
   cnts->serve_control_access = acc = new_contest_access(CONTEST_SERVE_CONTROL_ACCESS);
   xml_link_node_last(&cnts->b, &acc->b);
 
+  contests_add_ip(cnts, &cnts->register_access, CONTEST_REGISTER_ACCESS, ip, 0xffffffff, ssl_flag, 1);
+  contests_add_ip(cnts, &cnts->users_access, CONTEST_USERS_ACCESS, ip, 0xffffffff, ssl_flag, 1);
+  contests_add_ip(cnts, &cnts->master_access, CONTEST_MASTER_ACCESS, ip, 0xffffffff, ssl_flag, 1);
+  contests_add_ip(cnts, &cnts->judge_access, CONTEST_JUDGE_ACCESS, ip, 0xffffffff, ssl_flag, 1);
+  contests_add_ip(cnts, &cnts->team_access, CONTEST_TEAM_ACCESS, ip, 0xffffffff, ssl_flag, 1);
+  contests_add_ip(cnts, &cnts->serve_control_access, CONTEST_SERVE_CONTROL_ACCESS, ip, 0xffffffff, ssl_flag, 1);
+
   t = contests_new_node(CONTEST_CAPS);
   xml_link_node_last(&cnts->b, t);
   cnts->caps_node = t;
@@ -124,7 +133,8 @@ contest_tmpl_new(int contest_id,
 
   if (ss_login && *ss_login && strcmp(cap->login, ss_login)) {
     cap = (typeof(cap)) contests_new_node(CONTEST_CAP);
-    cap->caps |= 1ULL << OPCAP_MAP_CONTEST;
+    for (i = 0; i < OPCAP_LAST; i++)
+      cap->caps |= 1ULL << i;
     cap->login = xstrdup(ss_login);
     xml_link_node_last(t, &cap->b);
   }

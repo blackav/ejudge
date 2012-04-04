@@ -3477,6 +3477,16 @@ ns_write_priv_standings(
             ARMOR(u->stand_error_msgs));
   }
 
+  const unsigned char *cl = " class=\"b0\"";
+  fprintf(f, "<table%s><tr>", cl);
+  fprintf(f, "<td%s>%s%s</a></td>",
+          cl, ns_aref(bb, sizeof(bb), phr, NEW_SRV_ACTION_MAIN_PAGE, 0),
+          _("Main page"));
+  fprintf(f, "<td%s>%s%s</a></td>",
+          cl, ns_aref(bb, sizeof(bb), phr, NEW_SRV_ACTION_STANDINGS, 0),
+          _("Refresh"));
+  fprintf(f, "</tr></table>\n");
+
   if (state->global->score_system == SCORE_KIROV
       || state->global->score_system == SCORE_OLYMPIAD)
     do_write_kirov_standings(state, cnts, f, 0, 1, 0, 0, 0, 0, 0, 0 /*accepting_mode*/, 1, 0, 0, u, 0 /* user_mode */);

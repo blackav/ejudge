@@ -5231,6 +5231,8 @@ prepare_new_global_section(int contest_id, const unsigned char *root_dir,
   snprintf(global->root_dir, sizeof(global->root_dir), "%s", root_dir);
   strcpy(global->conf_dir, DFLT_G_CONF_DIR);
 
+  global->advanced_layout = 1;
+
   strcpy(global->test_dir, "../tests");
   strcpy(global->corr_dir, "../tests");
   strcpy(global->info_dir, "../tests");

@@ -1857,7 +1857,7 @@ cmd_create_contest(struct client_state *p, int len,
   case SSERV_CMD_CREATE_CONTEST_2:
     r = super_html_create_contest_2(f, p->priv_level, p->user_id, p->login,
                                     userlist_login,
-                                    p->cookie, p->ip, config, sstate,
+                                    p->cookie, p->ip, p->ssl, config, sstate,
                                     pkt->num_mode, pkt->templ_mode,
                                     pkt->contest_id, pkt->templ_id,
                                     self_url_ptr, hidden_vars_ptr, extra_args_ptr);

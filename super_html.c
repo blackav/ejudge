@@ -3349,6 +3349,7 @@ static const char * contest_cap_descs[] =
   [OPCAP_PRIV_EDIT_PASSWD] = "View and edit passwords for privileged users",
   [OPCAP_RESTART] = "Restart the server programs",
   [OPCAP_COMMENT_RUN] = "Comment the runs",
+  [OPCAP_UNLOAD_CONTEST] = "Unload contests",
 };
 
 void
@@ -4124,6 +4125,7 @@ super_html_create_contest_2(FILE *f,
                             const unsigned char *ss_login,
                             ej_cookie_t session_id,
                             ej_ip_t ip_address,
+                            int ssl_flag,
                             struct ejudge_cfg *config,
                             struct sid_state *sstate,
                             int num_mode,
@@ -4188,6 +4190,8 @@ super_html_create_contest_2(FILE *f,
                                            login,
                                            self_url,
                                            ss_login,
+                                           ip_address,
+                                           ssl_flag,
                                            config);
     sstate->global = prepare_new_global_section(contest_id,
                                                 sstate->edited_cnts->root_dir,
