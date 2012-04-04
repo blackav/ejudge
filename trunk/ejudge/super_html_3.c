@@ -9878,7 +9878,7 @@ recompile_checker(
       fprintf(f, "Error: Free Pascal support is not configured\n");
       return -1;
     }
-    snprintf(cmd, sizeof(cmd), "%s -Fu%s/share/ejudge/testlib/fpc %s",
+    snprintf(cmd, sizeof(cmd), "%s -dEJUDGE -Fu%s/share/ejudge/testlib/fpc %s",
              fpc_path, EJUDGE_PREFIX_DIR, filename2);
     break;
   case CHECKER_LANG_DPR:
@@ -9887,7 +9887,7 @@ recompile_checker(
       fprintf(f, "Error: Delphi (Kylix) support is not configured\n");
       return -1;
     }
-    snprintf(cmd, sizeof(cmd), "%s -U%s/share/ejudge/testlib/delphi %s",
+    snprintf(cmd, sizeof(cmd), "%s -DEJUDGE -U%s/share/ejudge/testlib/delphi %s",
              dcc_path, EJUDGE_PREFIX_DIR, filename2);
     break;
   case CHECKER_LANG_C:
@@ -9896,7 +9896,7 @@ recompile_checker(
       fprintf(f, "Error: GNU C support is not configured\n");
       return -1;
     }
-    snprintf(cmd, sizeof(cmd), "%s -std=gnu99 -O2 -Wall -I%s/include/ejudge -L%s/lib -Wl,--rpath,%s/lib %s -o %s -lchecker -lm", gcc_path, EJUDGE_PREFIX_DIR, EJUDGE_PREFIX_DIR, EJUDGE_PREFIX_DIR, filename2, filename);
+    snprintf(cmd, sizeof(cmd), "%s -DEJUDGE -std=gnu99 -O2 -Wall -I%s/include/ejudge -L%s/lib -Wl,--rpath,%s/lib %s -o %s -lchecker -lm", gcc_path, EJUDGE_PREFIX_DIR, EJUDGE_PREFIX_DIR, EJUDGE_PREFIX_DIR, filename2, filename);
     break;
   case CHECKER_LANG_CPP:
     gpp_path = get_compiler_path(config, "g++", gpp_path);
@@ -9904,7 +9904,7 @@ recompile_checker(
       fprintf(f, "Error: GNU C++ support is not configured\n");
       return -1;
     }
-    snprintf(cmd, sizeof(cmd), "%s -O2 -Wall -I%s/include/ejudge -L%s/lib -Wl,--rpath,%s/lib %s -o %s -lchecker -lm", gpp_path, EJUDGE_PREFIX_DIR, EJUDGE_PREFIX_DIR, EJUDGE_PREFIX_DIR, filename2, filename);
+    snprintf(cmd, sizeof(cmd), "%s -DEJUDGE -O2 -Wall -I%s/include/ejudge -L%s/lib -Wl,--rpath,%s/lib %s -o %s -lchecker -lm", gpp_path, EJUDGE_PREFIX_DIR, EJUDGE_PREFIX_DIR, EJUDGE_PREFIX_DIR, filename2, filename);
     break;
 
   default:

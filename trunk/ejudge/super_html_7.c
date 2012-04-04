@@ -4319,18 +4319,18 @@ generate_checker_compilation_rule(
     source_suffix = get_source_suffix(languages);
     if (languages == LANG_C) {
       fprintf(out_f, "%s : %s%s\n", cmd, cmd, source_suffix);
-      fprintf(out_f, "\t${CC} ${CLIBCHECKERFLAGS} %s%s -o%s ${CLIBCHECKERLIBS}\n",
+      fprintf(out_f, "\t${CC} -DEJUDGE  ${CLIBCHECKERFLAGS} %s%s -o%s ${CLIBCHECKERLIBS}\n",
               cmd, source_suffix, cmd);
     } else if (languages == LANG_CPP) {
       fprintf(out_f, "%s : %s%s\n", cmd, cmd, source_suffix);
-      fprintf(out_f, "\t${CXX} ${CXXLIBCHECKERFLAGS} %s%s -o%s ${CXXLIBCHECKERLIBS}\n",
+      fprintf(out_f, "\t${CXX} -DEJUDGE ${CXXLIBCHECKERFLAGS} %s%s -o%s ${CXXLIBCHECKERLIBS}\n",
               cmd, source_suffix, cmd);
     } else if (languages == LANG_FPC) {
       fprintf(out_f, "%s: %s%s\n", cmd, cmd, source_suffix);
-      fprintf(out_f, "\t${FPC} ${FPCTESTLIBFLAGS} %s%s\n", cmd, source_suffix);
+      fprintf(out_f, "\t${FPC} -dEJUDGE ${FPCTESTLIBFLAGS} %s%s\n", cmd, source_suffix);
     } else if (languages == LANG_DCC) {
       fprintf(out_f, "%s: %s%s\n", cmd, cmd, source_suffix);
-      fprintf(out_f, "\t${DCC} ${DCCTESTLIBFLAGS} %s%s\n", cmd, source_suffix);
+      fprintf(out_f, "\t${DCC} -DEJUDGE ${DCCTESTLIBFLAGS} %s%s\n", cmd, source_suffix);
     } else if (languages == LANG_JAVA) {
       fprintf(out_f, "%s: %s%s\n", cmd, cmd, source_suffix);
       fprintf(out_f, "\t${JAVAC} -cp testlib4j.jar %s%s\n", cmd, source_suffix);
@@ -4338,7 +4338,7 @@ generate_checker_compilation_rule(
       fprintf(out_f, "\trm -f *.class\n");
       fprintf(out_f, "\techo '#! /bin/sh' > %s\n", cmd);
       fprintf(out_f, "\techo 'd=\"`dirname $$0`\"' >> %s\n", cmd);
-      fprintf(out_f, "\techo 'exec ${JAVA} -cp \"$$d/testlib4j.jar:$$d/%s.jar\" ru.ifmo.testlib.CheckerFramework %s \"$$@\"' >> %s\n", cmd, cmd, cmd);
+      fprintf(out_f, "\techo 'exec ${JAVA} -DEJUDGE=1 -cp \"$$d/testlib4j.jar:$$d/%s.jar\" ru.ifmo.testlib.CheckerFramework %s \"$$@\"' >> %s\n", cmd, cmd, cmd);
       fprintf(out_f, "\tchmod +x %s\n", cmd);
     } else if (languages == LANG_PY) {
       fprintf(out_f, "%s: %s%s\n", cmd, cmd, source_suffix);
@@ -4647,11 +4647,11 @@ generate_makefile(
       }
       if (languages == LANG_C) {
         fprintf(mk_f, "%s : %s%s\n", prob->solution_cmd, prob->solution_cmd, source_suffix);
-        fprintf(mk_f, "\t${CC} ${CFLAGS} %s%s -o%s ${CLIBS}\n",
+        fprintf(mk_f, "\t${CC} -DEJUDGE ${CFLAGS} %s%s -o%s ${CLIBS}\n",
                 prob->solution_cmd, source_suffix, prob->solution_cmd);
       } else if (languages == LANG_CPP) {
         fprintf(mk_f, "%s : %s%s\n", prob->solution_cmd, prob->solution_cmd, source_suffix);
-        fprintf(mk_f, "\t${CXX} ${CXXFLAGS} %s%s -o%s ${CXXLIBS}\n",
+        fprintf(mk_f, "\t${CXX} -DEJUDGE ${CXXFLAGS} %s%s -o%s ${CXXLIBS}\n",
                 prob->solution_cmd, source_suffix, prob->solution_cmd);
       } else {
         fprintf(mk_f, "# no information how to build solution '%s' from '%s'\n",
@@ -4668,18 +4668,18 @@ generate_makefile(
         source_suffix = get_source_suffix(languages);
         if (languages == LANG_C) {
           fprintf(mk_f, "%s : %s%s\n", prob->solution_cmd, prob->solution_cmd, source_suffix);
-          fprintf(mk_f, "\t${CC} ${CFLAGS} %s%s -o%s ${CLIBS}\n",
+          fprintf(mk_f, "\t${CC} -DEJUDGE ${CFLAGS} %s%s -o%s ${CLIBS}\n",
                   prob->solution_cmd, source_suffix, prob->solution_cmd);
         } else if (languages == LANG_CPP) {
           fprintf(mk_f, "%s : %s%s\n", prob->solution_cmd, prob->solution_cmd, source_suffix);
-          fprintf(mk_f, "\t${CXX} ${CXXFLAGS} %s%s -o%s ${CXXLIBS}\n",
+          fprintf(mk_f, "\t${CXX} -DEJUDGE ${CXXFLAGS} %s%s -o%s ${CXXLIBS}\n",
                   prob->solution_cmd, source_suffix, prob->solution_cmd);
         } else if (languages == LANG_FPC) {
           fprintf(mk_f, "%s : %s%s\n", prob->solution_cmd, prob->solution_cmd, source_suffix);
-          fprintf(mk_f, "\t${FPC} ${FPCFLAGS} %s%s\n",  prob->solution_cmd, source_suffix);
+          fprintf(mk_f, "\t${FPC} -dEJUDGE ${FPCFLAGS} %s%s\n",  prob->solution_cmd, source_suffix);
         } else if (languages == LANG_DCC) {
           fprintf(mk_f, "%s : %s%s\n", prob->solution_cmd, prob->solution_cmd, source_suffix);
-          fprintf(mk_f, "\t${DCC} ${DCCFLAGS} %s%s\n", prob->solution_cmd, source_suffix);
+          fprintf(mk_f, "\t${DCC} -DEJUDGE ${DCCFLAGS} %s%s\n", prob->solution_cmd, source_suffix);
         } else if (languages == LANG_JAVA) {
           fprintf(mk_f, "%s : %s%s\n", prob->solution_cmd, prob->solution_cmd, source_suffix);
           fprintf(mk_f, "\t${JAVACHELPER} %s%s %s%s\n", prob->solution_cmd, source_suffix,
@@ -4687,7 +4687,7 @@ generate_makefile(
           fprintf(mk_f, "\trm -f *.class\n");
           fprintf(mk_f, "\techo '#! /bin/sh' > %s\n", prob->solution_cmd);
           fprintf(mk_f, "\techo 'd=\"`dirname $$0`\"' >> %s\n", prob->solution_cmd);
-          fprintf(mk_f, "\techo 'exec ${JAVA} -jar \"$$d/%s.jar\" \"$$@\"' >> %s\n",
+          fprintf(mk_f, "\techo 'exec ${JAVA} -DEJUDGE=1 -jar \"$$d/%s.jar\" \"$$@\"' >> %s\n",
                   prob->solution_cmd, prob->solution_cmd);
           fprintf(mk_f, "\tchmod +x %s\n", prob->solution_cmd);
         } else if (languages == LANG_PY) {
