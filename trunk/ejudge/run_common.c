@@ -633,6 +633,7 @@ read_valuer_score(
 
   *p_score = x;
   if (valuer_sets_marked > 0 && p_marked) *p_marked = y;
+  if (p_marked && *p_marked < 0) *p_marked = 0;
   if (separate_user_score > 0) {
     if (p_user_status && user_status >= 0) *p_user_status = user_status;
     if (p_user_score && user_score >= 0) *p_user_score = user_score;
