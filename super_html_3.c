@@ -10188,6 +10188,10 @@ super_html_check_tests(FILE *f,
       continue;
     }
 
+    prepare_set_prob_value(CNTSPROB_use_stdin, tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_use_stdout, tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_combined_stdin, tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_combined_stdout, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_scoring_checker, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_manual_checking, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_examinator_num, tmp_prob, abstr, global);
@@ -10219,6 +10223,7 @@ super_html_check_tests(FILE *f,
       mkpath(corr_path, g_corr_path, tmp_prob->corr_dir, "");
     }
     prepare_set_prob_value(CNTSPROB_use_info, tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_use_tgz, tmp_prob, abstr, global);
     if (tmp_prob->use_info) {
       prepare_set_prob_value(CNTSPROB_info_dir, tmp_prob, abstr, 0);
       prepare_set_prob_value(CNTSPROB_info_sfx, tmp_prob, abstr, global);
