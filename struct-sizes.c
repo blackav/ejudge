@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2007-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -24,6 +24,7 @@
 #include "prepare.h"
 #include "super-serve.h"
 #include "compile_packet_priv.h"
+#include "problem_config.h"
 
 #include <stdio.h>
 
@@ -39,5 +40,6 @@ int main(void)
   printf("section_tester_data:   %zu\n", sizeof(struct section_tester_data));
   printf("sid_state:             %zu\n", sizeof(struct sid_state));
   printf("compile_packet:        %zu\n", sizeof(struct compile_request_bin_packet));
+  printf("problem_config_section:%zu\n", sizeof(struct problem_config_section));
   return 0;
 }

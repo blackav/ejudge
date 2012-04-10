@@ -88,7 +88,7 @@ problem_config_section_parse_cfg(const unsigned char *path, FILE *f)
 }
 
 struct problem_config_section *
-super_run_in_packet_parse_cfg_str(const unsigned char *path, char *buf, size_t size)
+problem_config_section_parse_cfg_str(const unsigned char *path, char *buf, size_t size)
 {
   FILE *f = fmemopen(buf, size, "r");
   if (!f) return NULL;
@@ -99,7 +99,7 @@ super_run_in_packet_parse_cfg_str(const unsigned char *path, char *buf, size_t s
 static struct problem_config_section default_values;
 
 void
-super_run_in_packet_unparse_cfg(FILE *out_f, const struct problem_config_section *p)
+problem_config_section_unparse_cfg(FILE *out_f, const struct problem_config_section *p)
 {
   if (default_values.manual_checking >= 0) {
     problem_config_section_init((struct generic_section_config *) p);
