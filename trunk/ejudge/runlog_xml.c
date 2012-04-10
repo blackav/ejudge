@@ -762,12 +762,18 @@ unparse_runlog_xml(
             xml_unparse_date(phead->finish_time));
   }
   if (global->board_fog_time > 0) {
+    fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_FOG_TIME], global->board_fog_time);
+    if (global->board_unfog_time > 0) {
+      fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_UNFOG_TIME], global->board_unfog_time);
+    }
+    /*
     fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_FOG_TIME],
             xml_unparse_date(global->board_fog_time));
     if (global->board_unfog_time > 0) {
       fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_UNFOG_TIME],
               xml_unparse_date(global->board_unfog_time));
     }
+    */
   }
   fprintf(f, ">\n");
   if (external_mode) {
@@ -927,9 +933,15 @@ unparse_runlog_xml(
     if (!external_mode && pp->locale_id >= 0) {
       fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_LOCALE_ID], pp->locale_id);
     }
-    fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_SCORE], pp->score);
-    fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_SCORE_ADJ], pp->score_adj);
-    fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_TEST], pp->test);
+    if (pp->score >= 0) {
+      fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_SCORE], pp->score);
+    }
+    if (pp->score_adj > 0) {
+      fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_SCORE_ADJ], pp->score_adj);
+    }
+    if (pp->test > 0) {
+      fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_TEST], pp->test);
+    }
     if (!external_mode) {
       fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_AUTHORITATIVE],
               (!pp->is_imported)?"yes":"no");
