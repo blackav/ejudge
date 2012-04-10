@@ -304,11 +304,11 @@ super_run_in_packet_unparse_cfg(FILE *out_f, struct super_run_in_packet *p)
 {
   if (p) {
     fprintf(out_f, "# -*- coding: utf-8 -*-\n\n");
-    meta_unparse_cfg(out_f, &meta_super_run_in_global_packet_methods, p->global);
+    meta_unparse_cfg(out_f, &meta_super_run_in_global_packet_methods, p->global, NULL);
     fprintf(out_f, "\n[problem]\n\n");
-    meta_unparse_cfg(out_f, &meta_super_run_in_problem_packet_methods, p->problem);
+    meta_unparse_cfg(out_f, &meta_super_run_in_problem_packet_methods, p->problem, NULL);
     fprintf(out_f, "\n[tester]\n\n");
-    meta_unparse_cfg(out_f, &meta_super_run_in_tester_packet_methods, p->tester);
+    meta_unparse_cfg(out_f, &meta_super_run_in_tester_packet_methods, p->tester, NULL);
   }
 }
 

@@ -189,10 +189,10 @@ meta_destroy_fields(const struct meta_methods *mth, void *ptr)
 #define CARMOR(s) c_armor_buf(&ab, (s))
 
 void
-meta_unparse_cfg(FILE *out_f, const struct meta_methods *mth, const void *ptr)
+meta_unparse_cfg(FILE *out_f, const struct meta_methods *mth, const void *ptr, const void *default_ptr)
 {
   int field_id, ft, fz;
-  const void *fp;
+  const void *fp, *dfp;
   const char *fn;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   unsigned char buf[256];
@@ -204,10 +204,14 @@ meta_unparse_cfg(FILE *out_f, const struct meta_methods *mth, const void *ptr)
     fp = mth->get_ptr(ptr, field_id);
     fz = mth->get_size(field_id);
     fn = mth->get_name(field_id);
+    dfp = NULL;
+    if (default_ptr) dfp = mth->get_ptr(default_ptr, field_id);
     if (!fp) continue;
     switch (ft) {
     case 't':                   /* time_t */
-      fprintf(out_f, "%s = \"%s\"\n", fn, xml_unparse_date(*(const time_t*) fp));
+      if (!dfp || *(const time_t *) dfp != *(const time_t *) fp) {
+        fprintf(out_f, "%s = \"%s\"\n", fn, xml_unparse_date(*(const time_t*) fp));
+      }
       break;
     case 'b':                   /* ejbytebool_t */
     case 'B':                   /* ejintbool_t */
@@ -229,19 +233,23 @@ meta_unparse_cfg(FILE *out_f, const struct meta_methods *mth, const void *ptr)
         default:
           abort();
         }
-        if (b > 0) {
-          b = 1;
-        } else {
-          b = 0;
+        if (!dfp || b >= 0) {
+          if (b > 0) {
+            b = 1;
+          } else {
+            b = 0;
+          }
+          fprintf(out_f, "%s = %d\n", fn, b);
         }
-        fprintf(out_f, "%s = %d\n", fn, b);
       }
       break;
     case 'z':                   /* ejintsize_t */
     case 'i':                   /* int type */
       ASSERT(fz == sizeof(int));
-      num_to_size_str(buf, sizeof(buf), *(const int*) fp);
-      fprintf(out_f, "%s = %s\n", fn, buf);
+      if (!dfp || *(const int *) dfp != *(const int*) fp) {
+        num_to_size_str(buf, sizeof(buf), *(const int*) fp);
+        fprintf(out_f, "%s = %s\n", fn, buf);
+      }
       break;
     case 'S':                   /* path_t */
       fprintf(out_f, "%s = \"%s\"\n", fn, CARMOR((const unsigned char*) fp));
@@ -265,13 +273,15 @@ meta_unparse_cfg(FILE *out_f, const struct meta_methods *mth, const void *ptr)
       break;
     case 'Z':                   /* size_t */
       ASSERT(fz == sizeof(size_t));
-      // special handling of -1
-      if (*(const size_t*) fp == (size_t) -1UL) {
-        snprintf(buf, sizeof(buf), "-1");
-      } else {
-        size_t_to_size_str(buf, sizeof(buf), *(const size_t*) fp);
+      if (!dfp || *(const size_t*) dfp != *(const size_t*) fp) {
+        // special handling of -1
+        if (*(const size_t*) fp == (size_t) -1UL) {
+          snprintf(buf, sizeof(buf), "-1");
+        } else {
+          size_t_to_size_str(buf, sizeof(buf), *(const size_t*) fp);
+        }
+        fprintf(out_f, "%s = %s\n", fn, buf);
       }
-      fprintf(out_f, "%s = %s\n", fn, buf);
       break;
     case '0':                   /* ej_int_opt_0_t */
     case '1':                   /* ej_textbox_t */

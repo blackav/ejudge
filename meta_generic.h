@@ -79,6 +79,7 @@ void
 meta_unparse_cfg(
         FILE *out_f,
         const struct meta_methods *mth,
-        const void *ptr);
+        const void *ptr,
+        const void *default_ptr);
 
 #endif /* __META_GENERIC_H__ */

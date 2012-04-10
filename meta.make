@@ -13,6 +13,10 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Lesser General Public License for more details.
 
+META_C_FILES = contests_meta.c super-serve_meta.c prepare_meta.c super_html_6_meta.c super_run_packet_meta.c problem_config_meta.c
+META_H_FILES = $(META_C_FILES:.c=.h)
+META_O_FILES = $(META_C_FILES:.c=.o)
+
 contests_meta.c contests_meta.h : contests.h
 	$(META_CC) contests.h -o contests.out --force-h --meta --meta-struct contest_desc --meta-enum-prefix CNTS --meta-func-prefix contest_desc --meta-timestamp
 
@@ -27,3 +31,7 @@ super_html_6_meta.c super_html_6_meta.h : super_html_6.h
 
 super_run_packet_meta.c super_run_packet_meta.h : super_run_packet.h
 	$(META_CC) super_run_packet.h -o super_run_packet.out --force-h --meta --meta-struct super_run_in_global_packet --meta-struct super_run_in_problem_packet --meta-struct super_run_in_tester_packet --meta-timestamp
+
+problem_config_meta.c problem_config_meta.h : problem_config.h
+	$(META_CC) problem_config.h -o problem_config.out --force-h --meta --meta-struct problem_config_section  --meta-timestamp
+
