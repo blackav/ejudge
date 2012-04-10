@@ -177,9 +177,9 @@ problem_config_section_free(struct generic_section_config *gp);
 struct problem_config_section *
 problem_config_section_parse_cfg(const unsigned char *path, FILE *f);
 struct problem_config_section *
-super_run_in_packet_parse_cfg_str(const unsigned char *path, char *buf, size_t size);
+problem_config_section_parse_cfg_str(const unsigned char *path, char *buf, size_t size);
 void
-super_run_in_packet_unparse_cfg(FILE *out_f, const struct problem_config_section *p);
+problem_config_section_unparse_cfg(FILE *out_f, const struct problem_config_section *p);
 
 
 #endif /* __PROBLEM_CONFIG_H__ */
