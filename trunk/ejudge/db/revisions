@@ -7052,3 +7052,9 @@ super_html_3.c 6725 0 31683572
 super_html_4.c 6725 0 19260007
 run_common.c 6729 0 7623767
 super_html_3.c 6729 0 31717492
+meta_generic.h 6732 0 160528
+problem_config.h 6733 0 465720
+meta_generic.c 6732 0 849647
+problem_config.c 6733 0 276511
+runlog_xml.c 6732 0 2344274
+super_run_packet.c 6732 0 948934
