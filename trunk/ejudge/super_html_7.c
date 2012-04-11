@@ -4562,7 +4562,7 @@ generate_makefile(
   }
 
   fprintf(mk_f, "EXECUTE = ${EJUDGE_PREFIX_DIR}/bin/ejudge-execute\n");
-  fprintf(mk_f, "EXECUTE_FLAGS = --quiet");
+  fprintf(mk_f, "EXECUTE_FLAGS = ");
   if (prob->use_stdin > 0) fprintf(mk_f, " --use-stdin");
   if (prob->use_stdout > 0) fprintf(mk_f, " --use-stdout");
   if (test_pat[0] > ' ') fprintf(mk_f, " --test-pattern=%s", test_pat);
@@ -4578,7 +4578,7 @@ generate_makefile(
   fprintf(mk_f, "\n");
 
   if (prob->test_checker_cmd && prob->test_checker_cmd[0]) {
-    fprintf(mk_f, "TC_EXECUTE_FLAGS = --quiet --use-stdin");
+    fprintf(mk_f, "TC_EXECUTE_FLAGS = --use-stdin");
     if (test_pat[0] > ' ') fprintf(mk_f, " --test-pattern=%s", test_pat);
     if (info_pat[0] > ' ') fprintf(mk_f, " --info-pattern=%s", info_pat);
     fprintf(mk_f, "\n");
@@ -4715,17 +4715,15 @@ generate_makefile(
   /* test generation part */
   if (prob->solution_cmd && prob->solution_cmd[0]) {
     fprintf(mk_f, "answers : %s\n", prob->solution_cmd);
-    fprintf(mk_f, "\tcd tests; for i in %s; do ${EXECUTE} ${EXECUTE_FLAGS} --test-file=$$i ../%s || { echo 'Solution failed on' $$i; exit 1; }; done\n",
-            test_pr_pat, prob->solution_cmd);
+    fprintf(mk_f, "\t${EXECUTE} ${EXECUTE_FLAGS} --update-corr --test-dir=%s --workdir=%s --all-tests %s\n", "tests", "tests", prob->solution_cmd);
     fprintf(mk_f, "\n");
     fprintf(mk_f, "answer : %s\n", prob->solution_cmd);
-    fprintf(mk_f, "\tcd tests && ${EXECUTE} ${EXECUTE_FLAGS} --test-num=${TEST_NUM} ../%s\n", prob->solution_cmd);
+    fprintf(mk_f, "\tcd tests && ${EXECUTE} ${EXECUTE_FLAGS} --update-corr --test-num=${TEST_NUM} ../%s\n", prob->solution_cmd);
     fprintf(mk_f, "\n");
   }
   if (prob->test_checker_cmd && prob->test_checker_cmd[0]) {
     fprintf(mk_f, "check_tests : %s\n", prob->test_checker_cmd);
-    fprintf(mk_f, "\tcd tests && for i in %s; do ${EXECUTE} ${TC_EXECUTE_FLAGS} --test-file=$$i ../%s || { echo 'Test check failed on' $$i; exit 1; }; done\n",
-            test_pr_pat, prob->test_checker_cmd);
+    fprintf(mk_f, "\t${EXECUTE} ${TC_EXECUTE_FLAGS} --test-dir=%s --workdir=%s --all-tests %s\n", "tests", "tests", prob->test_checker_cmd);
     fprintf(mk_f, "\n");    
     fprintf(mk_f, "check_test : %s\n", prob->test_checker_cmd);
     fprintf(mk_f, "\tcd tests && ${EXECUTE} ${TC_EXECUTE_FLAGS} --test-num=${TEST_NUM} ../%s\n", prob->test_checker_cmd);

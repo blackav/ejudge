@@ -10188,6 +10188,7 @@ super_html_check_tests(FILE *f,
       continue;
     }
 
+    prepare_set_prob_value(CNTSPROB_normalization, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_use_stdin, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_use_stdout, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_combined_stdin, tmp_prob, abstr, global);
