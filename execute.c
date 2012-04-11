@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -19,9 +19,11 @@
 #include "version.h"
 
 #include "testinfo.h"
+#include "fileutl.h"
 
 #include "reuse_xalloc.h"
 #include "reuse_exec.h"
+#include "reuse_osdeps.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -89,6 +91,7 @@ static const unsigned char *error_file = 0;
 static const unsigned char *test_pattern = 0;
 static const unsigned char *corr_pattern = 0;
 static const unsigned char *info_pattern = 0;
+static const unsigned char *test_dir = 0;
 
 static strarray_t env_vars;
 
@@ -103,6 +106,8 @@ static int group = -1;
 static int mode = -1;
 static int test_num = 0;
 static int quiet_flag = 0;
+static int update_corr = 0;
+static int all_tests = 0;
 
 static int time_limit = 0;
 static int time_limit_millis = 0;
@@ -174,6 +179,37 @@ parse_group(const unsigned char *name, const unsigned char *opt, int *pval)
   *pval = grp->gr_gid;
 }
 
+static const unsigned char * const run_status_str[] =
+{
+  [RUN_OK] = "OK",
+  [RUN_COMPILE_ERR] = "CE",
+  [RUN_RUN_TIME_ERR] = "RT",
+  [RUN_TIME_LIMIT_ERR] = "TL",
+  [RUN_PRESENTATION_ERR] = "PE",
+  [RUN_WRONG_ANSWER_ERR] = "WA",
+  [RUN_CHECK_FAILED] = "CF",
+  [RUN_PARTIAL] = "PT",
+  [RUN_ACCEPTED] = "AC",
+  [RUN_IGNORED] = "IG",
+  [RUN_DISQUALIFIED] = "DQ",
+  [RUN_PENDING] = "PD",
+  [RUN_MEM_LIMIT_ERR] = "ML",
+  [RUN_SECURITY_ERR] = "SE",
+  [RUN_STYLE_ERR] = "SV",
+};
+
+static const unsigned char * const
+get_run_status_str(int status)
+{
+  if (status < 0 || status >= sizeof(run_status_str) / sizeof(run_status_str[0])
+      || !run_status_str[status]) {
+    static unsigned char buf[64];
+    snprintf(buf, sizeof(buf), "%d", status);
+    return buf;
+  }
+  return run_status_str[status];
+}
+
 static void
 report_version(void)
 {
@@ -216,6 +252,9 @@ static const unsigned char help_str[] =
 "--test-pattern=PATTERN   printf-style patter for test files\n"
 "--corr-pattern=PATTERN   printf-style patter for corr files\n"
 "--info-pattern=PATTERN   printf-style patter for info files\n"
+"--update-corr            update the correct output file\n"
+"--test-dir=DIR           directory with tests\n"
+"--all-tests              run through all tests in the directory\n"
 "--quiet                  be quiet\n"
   ;
 
@@ -381,6 +420,12 @@ handle_options(const unsigned char *opt)
     corr_pattern = p;
   } else if ((p = check_option("--info-pattern", opt))) {
     info_pattern = p;
+  } else if (!strcmp("--update-corr", opt)) {
+    update_corr = 1;
+  } else if ((p = check_option("--test-dir", opt))) {
+    test_dir = p;
+  } else if (!strcmp("--all-tests", opt)) {
+    all_tests = 1;
   } else if (!strcmp("--quiet", opt)) {
     quiet_flag = 1;
   } else if (!strcmp("--", opt)) {
@@ -394,7 +439,7 @@ handle_options(const unsigned char *opt)
 }
 
 static int
-run_program(int argc, char *argv[])
+run_program(int argc, char *argv[], long *p_cpu_time, long *p_real_time)
 {
   tTask *tsk = 0;
   int i;
@@ -410,33 +455,35 @@ run_program(int argc, char *argv[])
   output_path[0] = 0;
   error_path[0] = 0;
 
-  if (test_file && test_file[0] && test_pattern && test_pattern[0]) {
-    // guess test_num from test_file and test_pat
-    // FIXME: dumb!
-    i = 0;
-    do {
-      ++i;
-      snprintf(buf, sizeof(buf), test_pattern, i);
-    } while (i < 1000 && strcmp(buf, test_file) != 0);
-    if (i >= 1000) {
-      fatal("failed to guess test_num from test_file and test_pattern");
+  if (!all_tests) {
+    if (test_file && test_file[0] && test_pattern && test_pattern[0]) {
+      // guess test_num from test_file and test_pat
+      // FIXME: dumb!
+      i = 0;
+      do {
+        ++i;
+        snprintf(buf, sizeof(buf), test_pattern, i);
+      } while (i < 1000 && strcmp(buf, test_file) != 0);
+      if (i >= 1000) {
+        fatal("failed to guess test_num from test_file and test_pattern");
+      }
+      test_num = i;
+      test_file = NULL;
     }
-    test_num = i;
-    test_file = NULL;
-  }
 
-  if (test_num > 0) {
-    if (test_pattern && test_pattern[0]) {
-      snprintf(buf, sizeof(buf), test_pattern, test_num);
-      test_file = strdup(buf);
-    }
-    if (corr_pattern && corr_pattern[0]) {
-      snprintf(buf, sizeof(buf), corr_pattern, test_num);
-      corr_file = strdup(buf);
-    }
-    if (info_pattern && info_pattern[0]) {
-      snprintf(buf, sizeof(buf), info_pattern, test_num);
-      info_file = strdup(buf);
+    if (test_num > 0) {
+      if (test_pattern && test_pattern[0]) {
+        snprintf(buf, sizeof(buf), test_pattern, test_num);
+        test_file = strdup(buf);
+      }
+      if (corr_pattern && corr_pattern[0]) {
+        snprintf(buf, sizeof(buf), corr_pattern, test_num);
+        corr_file = strdup(buf);
+      }
+      if (info_pattern && info_pattern[0]) {
+        snprintf(buf, sizeof(buf), info_pattern, test_num);
+        info_file = strdup(buf);
+      }
     }
   }
 
@@ -532,52 +579,62 @@ run_program(int argc, char *argv[])
   }
   task_Wait(tsk);
   if (memory_limit && task_IsMemoryLimit(tsk)) {
-    fprintf(stderr, "Status: ML\n"
-            "Description: memory limit exceeded\n");
+    if (all_tests <= 0) {
+      fprintf(stderr, "Status: ML\n"
+              "Description: memory limit exceeded\n");
+    }
     retcode = RUN_MEM_LIMIT_ERR;
   } else if (security_violation && task_IsSecurityViolation(tsk)) {
-    fprintf(stderr, "Status: SV\n"
-            "Description: security violation\n");
+    if (all_tests <= 0) {
+      fprintf(stderr, "Status: SV\n"
+              "Description: security violation\n");
+    }
     retcode = RUN_SECURITY_ERR;
   } else if (task_IsTimeout(tsk)) {
-    fprintf(stderr, "Status: TL\n"
-            "Description: time limit exceeded\n");
+    if (all_tests <= 0) {
+      fprintf(stderr, "Status: TL\n"
+              "Description: time limit exceeded\n");
+    }
     retcode = RUN_TIME_LIMIT_ERR;
   } else if (task_IsAbnormal(tsk)
              && (!info_file || tinfo.exit_code <= 0 || task_Status(tsk) != TSK_EXITED
                  || task_ExitCode(tsk) != tinfo.exit_code)) {
-    fprintf(stderr, "Status: RT\n");
-    if (task_Status(tsk) == TSK_SIGNALED) {
-      fprintf(stderr, "Signal: %d\n", task_TermSignal(tsk));
-    } else {
-      fprintf(stderr, "Exitcode: %d\n", task_ExitCode(tsk));
+    if (all_tests <= 0) {
+      fprintf(stderr, "Status: RT\n");
+      if (task_Status(tsk) == TSK_SIGNALED) {
+        fprintf(stderr, "Signal: %d\n", task_TermSignal(tsk));
+      } else {
+        fprintf(stderr, "Exitcode: %d\n", task_ExitCode(tsk));
+      }
+      fprintf(stderr, "Description: run-time error\n");
     }
-    fprintf(stderr, "Description: run-time error\n");
     retcode = RUN_RUN_TIME_ERR;
   } else {
     if (info_file && tinfo.check_stderr > 0) {
       if (copy_file(working_dir, error_file, NULL, corr_file, group, mode) < 0) {
         fprintf(stderr, "Status: PE\n");
       } else {
-        if (quiet_flag <= 0) fprintf(stderr, "Status: OK\n");
+        if (quiet_flag <= 0 && all_tests <= 0) fprintf(stderr, "Status: OK\n");
         retcode = 0;
       }
-    } else if (corr_file) {
+    } else if (corr_file && update_corr > 0) {
       if (copy_file(working_dir, output_file, NULL, corr_file, group, mode) < 0) {
         fprintf(stderr, "Status: PE\n");
       } else {
-        if (quiet_flag <= 0) fprintf(stderr, "Status: OK\n");
+        if (quiet_flag <= 0 && all_tests <= 0) fprintf(stderr, "Status: OK\n");
         retcode = 0;
       }
     } else {
-      if (quiet_flag <= 0) fprintf(stderr, "Status: OK\n");
+      if (quiet_flag <= 0 && all_tests <= 0) fprintf(stderr, "Status: OK\n");
       retcode = 0;
     }
   }
-  if (quiet_flag <= 0) {
+  if (quiet_flag <= 0 && all_tests <= 0) {
     fprintf(stderr, "CPUTime: %ld\n", task_GetRunningTime(tsk));
     fprintf(stderr, "RealTime: %ld\n", task_GetRealTime(tsk));
   }
+  if (p_cpu_time) *p_cpu_time = task_GetRunningTime(tsk);
+  if (p_real_time) *p_real_time = task_GetRealTime(tsk);
 
 cleanup:
   task_Delete(tsk); tsk = NULL;
@@ -586,6 +643,96 @@ cleanup:
   if (error_path[0]) unlink(error_path);
 
   return retcode;
+}
+
+static int
+run_all_tests(int argc, char *argv[])
+{
+  unsigned char tmp_work_dir[PATH_MAX];
+  unsigned char abs_prog_name[PATH_MAX];
+  unsigned char abs_test_dir[PATH_MAX];
+  unsigned char abs_work_dir[PATH_MAX];
+  unsigned char *current_dir = NULL;
+  unsigned char test_base[PATH_MAX];
+  unsigned char test_path[PATH_MAX];
+  unsigned char corr_base[PATH_MAX];
+  unsigned char corr_path[PATH_MAX];
+  unsigned char info_base[PATH_MAX];
+  unsigned char info_path[PATH_MAX];
+  const unsigned char *s;
+  int pid = getpid(), serial = 0;
+  int retval = 0, status;
+  long cpu_time, real_time;
+
+  tmp_work_dir[0] = 0;
+
+  if (!(current_dir = os_GetWorkingDir())) fatal("getcwd() failed");
+
+  if (!working_dir || !*working_dir) {
+    s = getenv("TMPDIR");
+    if (!s) s = getenv("TEMPDIR");
+#if defined P_tmpdir
+    if (!s) s = P_tmpdir;
+#endif
+    if (!s) s = "/tmp";
+    while (1) {
+      snprintf(tmp_work_dir, sizeof(tmp_work_dir), "%s/%d.%d", s, pid, ++serial);
+      if (mkdir(tmp_work_dir, 0700) >= 0) break;
+      if (errno != EEXIST) {
+        fatal("cannot create directory %s: %s", tmp_work_dir, os_ErrorMsg());
+      }
+    }
+    working_dir = xstrdup(tmp_work_dir);
+  }
+  if (!os_IsAbsolutePath(working_dir)) {
+    snprintf(abs_work_dir, sizeof(abs_work_dir), "%s/%s", current_dir, working_dir);
+    working_dir = xstrdup(abs_work_dir);
+  }
+
+  if (!os_IsAbsolutePath(argv[0])) {
+    snprintf(abs_prog_name, sizeof(abs_prog_name), "%s/%s", current_dir, argv[0]);
+    argv[0] = xstrdup(abs_prog_name);
+  }
+  if (!os_IsAbsolutePath(test_dir)) {
+    snprintf(abs_test_dir, sizeof(abs_test_dir), "%s/%s", current_dir, test_dir);
+    test_dir = xstrdup(abs_test_dir);
+  }
+
+  serial = 0;
+  while (1) {
+    snprintf(test_base, sizeof(test_base), test_pattern, ++serial);
+    snprintf(test_path, sizeof(test_path), "%s/%s", test_dir, test_base);
+    test_file = xstrdup(test_path);
+    if (os_CheckAccess(test_path, REUSE_F_OK) < 0) break;
+    corr_path[0] = 0;
+    info_path[0] = 0;
+    corr_file = NULL;
+    info_file = NULL;
+    if (corr_pattern && corr_pattern[0]) {
+      snprintf(corr_base, sizeof(corr_base), corr_pattern, serial);
+      snprintf(corr_path, sizeof(corr_path), "%s/%s", test_dir, corr_base);
+      corr_file = xstrdup(corr_path);
+    }
+    if (info_pattern && info_pattern[0]) {
+      snprintf(info_base, sizeof(info_base), info_pattern, serial);
+      snprintf(info_path, sizeof(info_path), "%s/%s", test_dir, info_base);
+      info_file = xstrdup(info_path);
+    }
+    cpu_time = 0;
+    real_time = 0;
+    status = run_program(argc, argv, &cpu_time, &real_time);
+    if (status == RUN_CHECK_FAILED) retval = RUN_CHECK_FAILED;
+    if (status != RUN_OK && retval == RUN_OK) retval = RUN_PARTIAL;
+    if (quiet_flag <= 0) {
+      printf("%-8d%-8.8s%-8ld%-8ld\n", serial, get_run_status_str(status),
+             cpu_time, real_time);
+    }
+  }
+
+  if (tmp_work_dir[0]) {
+    remove_directory_recursively(tmp_work_dir, 0);
+  }
+  return retval;
 }
 
 int
@@ -601,5 +748,11 @@ main(int argc, char *argv[])
   }
   if (i == argc) fatal("no program to execute");
 
-  return run_program(argc - i, argv + i);
+  if (all_tests > 0) {
+    if (!test_dir) fatal("--test-dir must be specified in --all-tests mode");
+    if (!test_pattern || !*test_pattern) fatal("--test-pattern must be specified in --all-tests mode");
+    return run_all_tests(argc - i, argv + i);
+  }
+
+  return run_program(argc - i, argv + i, NULL, NULL);
 }
