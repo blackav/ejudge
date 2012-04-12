@@ -573,7 +573,13 @@ super_html_main_page(FILE *f,
       fprintf(f, "<td>&nbsp;</td>\n");
     }
 
-    fprintf(f, "<td>%sEdit users</a></td>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d&op=%d&contest_id=%d", SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE, contest_id));
+    if (priv_level >= PRIV_LEVEL_JUDGE
+        && opcaps_check(caps, OPCAP_LIST_USERS) >= 0
+        && contests_check_serve_control_ip_2(cnts, ip_address, ssl)) {
+      fprintf(f, "<td>%sEdit users</a></td>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d&op=%d&contest_id=%d", SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE, contest_id));
+    } else {
+      fprintf(f, "<td>&nbsp;</td>\n");
+    }
 
     if (priv_level >= PRIV_LEVEL_ADMIN
         && opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0
