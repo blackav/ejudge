@@ -7385,7 +7385,8 @@ super_serve_op_TESTS_TEST_CHECK_ACTION(
   struct tests_make_one_test_context *cntx = NULL;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   int next_action = 0;
-  unsigned char *target = "";
+  const unsigned char *target = "";
+  const unsigned char *command = NULL;
 
   errbuf[0] = 0;
 
@@ -7415,6 +7416,14 @@ super_serve_op_TESTS_TEST_CHECK_ACTION(
   if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
   if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
 
+  if (phr->opcode == SSERV_OP_TESTS_TEST_CHECK_ACTION) {
+    command = prob->test_checker_cmd;
+  } else if (phr->opcode == SSERV_OP_TESTS_TEST_GENERATE_ACTION) {
+    command = prob->solution_cmd;
+  } else {
+    FAIL(S_ERR_NOT_IMPLEMENTED);
+  }
+
   variant = -1;
   if (prob->variant_num > 0) {
     ss_cgi_param_int_opt(phr, "variant", &variant, 0);
@@ -7428,7 +7437,7 @@ super_serve_op_TESTS_TEST_CHECK_ACTION(
   // FIXME: check valid next_action
   if (next_action <= 0) next_action = SSERV_OP_TESTS_TESTS_VIEW_PAGE;
 
-  if (!prob->test_checker_cmd || !prob->test_checker_cmd[0]) FAIL(S_ERR_INV_PROB_ID);
+  if (!command || !command[0]) FAIL(S_ERR_INV_PROB_ID);
 
   get_advanced_layout_path(prob_dir, sizeof(prob_dir), global, prob, NULL, variant);
   get_advanced_layout_path(makefile_path, sizeof(makefile_path), global, prob, DFLT_P_MAKEFILE, variant);
