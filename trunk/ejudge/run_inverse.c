@@ -671,7 +671,7 @@ invoke_checker(
   if (r == RUN_CHECK_FAILED) {
     perr(log_f, "checker %s for %s status CHECK_FAILED on test %d",
          check_cmd, exe_name, num);
-    goto cleanup;
+    r = RUN_PRESENTATION_ERR;
   }
   retval = r;
 
@@ -1021,6 +1021,7 @@ run_inverse_testing(
         const struct super_run_in_packet *srp,
         struct run_reply_packet *reply_pkt,
         const unsigned char *pkt_name,
+        const unsigned char *run_exe_dir,
         unsigned char *report_path,
         size_t report_path_size,
         int utf8_mode)
@@ -1054,6 +1055,7 @@ run_inverse_testing(
         const unsigned char *arch_path,
         const unsigned char *work_dir) = 0;
   ssize_t ssize;
+  const unsigned char *arch_sfx = NULL;
 
   const struct super_run_in_global_packet *srgp = srp->global;
   const struct super_run_in_problem_packet *srpp = srp->problem;
@@ -1128,14 +1130,25 @@ run_inverse_testing(
 
   switch (srgp->mime_type) {
   case MIME_TYPE_APPL_GZIP:
+    unpack_func = invoke_tar;
+    arch_sfx = ".tar.gz";
+    break;
   case MIME_TYPE_APPL_BZIP2:
+    unpack_func = invoke_tar;
+    arch_sfx = ".tar.bz2";
+    break;
   case MIME_TYPE_APPL_COMPRESS:
+    unpack_func = invoke_tar;
+    arch_sfx = ".tar.Z";
+    break;
   case MIME_TYPE_APPL_TAR:
     unpack_func = invoke_tar;
+    arch_sfx = ".tar";
     break;
 
   case MIME_TYPE_APPL_ZIP:
     unpack_func = invoke_zip;
+    arch_sfx = ".zip";
     break;
 
   default:
@@ -1143,20 +1156,17 @@ run_inverse_testing(
          srgp->mime_type, mime_type_get_type(srgp->mime_type));
     goto cleanup;
   }
-  
-  r = generic_copy_file(REMOVE, global->run_exe_dir, pkt_name, srgp->exe_sfx,
-                        0, global->run_work_dir, pkt_name,
-                        mime_type_get_suffix(srgp->mime_type));
+
+  r = generic_copy_file(REMOVE, run_exe_dir, pkt_name, srgp->exe_sfx,
+                        0, global->run_work_dir, pkt_name, arch_sfx);
   if (r <= 0) {
     perr(log_f, "failed to read archive file %s/%s%s",
-         global->run_work_dir, pkt_name,
-         mime_type_get_suffix(srgp->mime_type));
+         global->run_work_dir, pkt_name, arch_sfx);
     goto cleanup;
   }
 
   snprintf(arch_path, sizeof(arch_path), "%s/%s%s",
-           global->run_work_dir, pkt_name,
-           mime_type_get_suffix(srgp->mime_type));
+           global->run_work_dir, pkt_name, arch_sfx);
 
   snprintf(arch_dir,sizeof(arch_dir), "%s/%s", global->run_work_dir, pkt_name);
   if (make_dir(arch_dir, 0) < 0) {
