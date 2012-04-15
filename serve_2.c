@@ -1353,6 +1353,26 @@ serve_run_request(
   if (lang) arch = lang->arch;
   if (lang) exe_sfx = lang->exe_sfx;
 
+  if (prob->type == PROB_TYPE_TESTS) {
+    switch (mime_type) {
+    case MIME_TYPE_APPL_GZIP:
+      exe_sfx = ".tar.gz";
+      break;
+    case MIME_TYPE_APPL_BZIP2:
+      exe_sfx = ".tar.bz2";
+      break;
+    case MIME_TYPE_APPL_COMPRESS:
+      exe_sfx = ".tar.Z";
+      break;
+    case MIME_TYPE_APPL_TAR:
+      exe_sfx = ".tar";
+      break;
+    case MIME_TYPE_APPL_ZIP:
+      exe_sfx = ".zip";
+      break;
+    }
+  }
+
   cn = find_tester(state, prob_id, arch);
   if (cn < 1 || cn > state->max_tester || !state->testers[cn]) {
     fprintf(errf, "no appropriate checker for <%s>, <%s>\n",

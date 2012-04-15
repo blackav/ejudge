@@ -266,7 +266,8 @@ do_loop(void)
     if (srpp->type_val == PROB_TYPE_TESTS) {
       cr_serialize_lock(&serve_state);
       run_inverse_testing(&serve_state, srp, &reply_pkt,
-                          pkt_name, report_path, sizeof(report_path),
+                          pkt_name, global->run_exe_dir,
+                          report_path, sizeof(report_path),
                           utf8_mode);
       cr_serialize_unlock(&serve_state);
     } else {

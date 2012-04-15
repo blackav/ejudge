@@ -229,7 +229,8 @@ handle_packet(
   if (srpp->type_val == PROB_TYPE_TESTS) {
     cr_serialize_lock(state);
     run_inverse_testing(state, srp, &reply_pkt,
-                        pkt_name, report_path, sizeof(report_path),
+                        pkt_name, super_run_exe_path,
+                        report_path, sizeof(report_path),
                         utf8_mode);
     cr_serialize_unlock(state);
   } else {

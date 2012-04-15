@@ -4096,6 +4096,19 @@ get_source_suffix(int mask)
 }
 
 static unsigned long
+find_suffix(const unsigned char *str)
+{
+  if (!str || !*str) return 0;
+  int len = strlen(str);
+  for (int i = 0; source_suffixes[i].suffix; ++i) {
+    int len2 = strlen(source_suffixes[i].suffix);
+    if (len >= len2 && !strcmp(str + len - len2, source_suffixes[i].suffix))
+      return source_suffixes[i].mask;
+  }
+  return 0;
+}
+
+static unsigned long
 guess_language_by_cmd(unsigned char *cmd, int *p_count)
 {
   int len, i;
@@ -4131,6 +4144,79 @@ guess_language_by_cmd(unsigned char *cmd, int *p_count)
   }
   if (p_count) *p_count = count;
   return mask;
+}
+
+static unsigned char **
+collect_suitable_names(const unsigned char *path, unsigned long *p_mask)
+{
+  unsigned char **names = NULL;
+  int names_a = 0, names_u = 0;
+  unsigned long m;
+  DIR *d = NULL;
+  struct dirent *dd;
+  unsigned char path2[PATH_MAX];
+  struct stat stb;
+
+  if (!(d = opendir(path))) return NULL;
+  while ((dd = readdir(d))) {
+    if (dd->d_name[0] == '.') continue;
+    snprintf(path2, sizeof(path2), "%s/%s", path, dd->d_name);
+    if (stat(path2, &stb) < 0) continue;
+    if (!S_ISREG(stb.st_mode)) continue;
+    if (!(m = find_suffix(dd->d_name))) continue;
+    if (!names) {
+      names_a = 8;
+      XCALLOC(names, names_a);
+    } else if (names_u >= names_a - 1) {
+      names_a *= 2;
+      XREALLOC(names, names_a);
+    }
+    names[names_u++] = xstrdup(dd->d_name);
+    names[names_u] = NULL;
+    if (p_mask) *p_mask |= m;
+  }
+  closedir(d);
+
+  return names;
+}
+
+static unsigned char *
+remove_src_suffix(const unsigned char *str)
+{
+  if (!str || !*str) return NULL;
+  int len = strlen(str);
+  for (int i = 0; source_suffixes[i].suffix; ++i) {
+    int len2 = strlen(source_suffixes[i].suffix);
+    if (len > len2 && !strcmp(str + len - len2, source_suffixes[i].suffix))
+      return xmemdup(str, len - len2);
+  }
+  return 0;
+}
+
+static unsigned char **
+make_exe_suitable_names(unsigned char **names)
+{
+  unsigned char **exes = NULL;
+  if (!names) return NULL;
+  int count;
+  for (count = 0; names[count]; ++count) {}
+  XCALLOC(exes, count + 1);
+  for (int i = 0; i < count; ++i) {
+    exes[i] = remove_src_suffix(names[i]);
+  }
+  return exes;
+}
+
+static unsigned char **
+free_suitable_names(unsigned char **ss)
+{
+  if (ss) {
+    for (int i = 0; ss[i]; ++i) {
+      xfree(ss[i]);
+    }
+    xfree(ss);
+  }
+  return NULL;
 }
 
 static const unsigned char *
@@ -4351,6 +4437,87 @@ generate_checker_compilation_rule(
 }
 
 static void
+generate_solution_compilation_rule(
+        FILE *mk_f,
+        const unsigned char *dir_prefix,
+        const unsigned char *exe_name,
+        const unsigned char *src_name,
+        const unsigned char *src_suffix,
+        unsigned long language)
+{
+  unsigned char full_src_name[PATH_MAX];
+  unsigned char full_exe_name[PATH_MAX];
+  unsigned char last_src_name[PATH_MAX];
+  unsigned char last_exe_name[PATH_MAX];
+  const unsigned char *sep = "/";
+  unsigned char cd_cmd[PATH_MAX];
+
+  if (!dir_prefix || !*dir_prefix) {
+    dir_prefix = "";
+    sep = "";
+  } else if (!strcmp(dir_prefix, "/")) {
+    sep = "";
+  }
+  cd_cmd[0] = 0;
+  if (dir_prefix && *dir_prefix) {
+    snprintf(cd_cmd, sizeof(cd_cmd), "cd \"%s\" && ", dir_prefix);
+  }
+
+  // FIXME: transform exe_name to src_name correctly
+  if (src_name && !src_suffix && !language) {
+    // check for exe_name != NULL
+    language = guess_language_by_src(src_name);
+    src_suffix = get_source_suffix(language);
+    snprintf(full_src_name, sizeof(full_src_name), "%s%s%s", dir_prefix, sep, src_name);
+    snprintf(last_src_name, sizeof(last_src_name), "%s", src_name);
+    snprintf(full_exe_name, sizeof(full_exe_name), "%s%s%s", dir_prefix, sep, exe_name);
+    snprintf(last_exe_name, sizeof(last_exe_name), "%s", exe_name);
+  } else if (!src_name && language) {
+    src_suffix = get_source_suffix(language);
+    src_name = exe_name;
+    snprintf(full_src_name, sizeof(full_src_name), "%s%s%s%s", dir_prefix, sep, src_name, src_suffix);
+    snprintf(last_src_name, sizeof(last_src_name), "%s%s", src_name, src_suffix);
+    snprintf(full_exe_name, sizeof(full_exe_name), "%s%s%s", dir_prefix, sep, exe_name);
+    snprintf(last_exe_name, sizeof(last_exe_name), "%s", exe_name);
+  } else if (!src_name && src_suffix) {
+    language = guess_language_by_src(src_suffix);
+    src_name = exe_name;    
+    snprintf(full_src_name, sizeof(full_src_name), "%s%s%s%s", dir_prefix, sep, src_name, src_suffix);
+    snprintf(last_src_name, sizeof(last_src_name), "%s%s", src_name, src_suffix);
+    snprintf(full_exe_name, sizeof(full_exe_name), "%s%s%s", dir_prefix, sep, exe_name);
+    snprintf(last_exe_name, sizeof(last_exe_name), "%s", exe_name);
+  }
+
+  if (language == LANG_C) {
+    fprintf(mk_f, "%s : %s\n", full_exe_name, full_src_name);
+    fprintf(mk_f, "\t%s${CC} -DEJUDGE ${CFLAGS} %s -o%s ${CLIBS}\n",
+            cd_cmd, last_src_name, last_exe_name);
+  } else if (language == LANG_CPP) {
+    fprintf(mk_f, "%s : %s\n", full_exe_name, full_src_name);
+    fprintf(mk_f, "\t%s${CXX} -DEJUDGE ${CXXFLAGS} %s -o%s ${CXXLIBS}\n",
+            cd_cmd, last_src_name, last_exe_name);
+  } else if (language == LANG_FPC) {
+    fprintf(mk_f, "%s : %s\n", full_exe_name, full_src_name);
+    fprintf(mk_f, "\t%s${FPC} -dEJUDGE ${FPCFLAGS} %s\n", cd_cmd, last_src_name);
+  } else if (language == LANG_DCC) {
+    fprintf(mk_f, "%s : %s\n", full_exe_name, full_src_name);
+    fprintf(mk_f, "\t%s${DCC} -DEJUDGE ${DCCFLAGS} %s\n", cd_cmd, last_src_name);
+  } else if (language == LANG_JAVA) {
+    fprintf(mk_f, "%s : %s\n", full_exe_name, full_src_name);
+    fprintf(mk_f, "\t%s${JAVACHELPER} %s %s%s\n", cd_cmd, last_src_name, last_exe_name, ".jar");
+    fprintf(mk_f, "\t%srm -f *.class\n", cd_cmd);
+    fprintf(mk_f, "\t%secho '#! /bin/sh' > %s\n", cd_cmd, last_exe_name);
+    fprintf(mk_f, "\t%secho 'd=\"`dirname $$0`\"' >> %s\n", cd_cmd, last_exe_name);
+    fprintf(mk_f, "\t%secho 'exec ${JAVA} -DEJUDGE=1 -jar \"$$d/%s.jar\" \"$$@\"' >> %s\n",
+            cd_cmd, last_exe_name, last_exe_name);
+    fprintf(mk_f, "\t%schmod +x %s\n", cd_cmd, last_exe_name);
+  } else if (language == LANG_PY) {
+    fprintf(mk_f, "%s : %s\n", full_exe_name, full_src_name);
+    fprintf(mk_f, "\t%s${PYCHELPER} %s %s\n", cd_cmd, last_src_name, last_exe_name);
+  }
+}
+
+static void
 generate_makefile(
         FILE *log_f,
         FILE *mk_f,
@@ -4377,6 +4544,10 @@ generate_makefile(
   int has_header = 0, need_c_libchecker = 0, need_cpp_libchecker = 0;
   const unsigned char *source_suffix = NULL;
   int count = 0;
+  unsigned char **good_names = NULL;
+  unsigned char **fail_names = NULL;
+  unsigned char **good_exe_names = NULL;
+  unsigned char **fail_exe_names = NULL;
 
   test_dir[0] = 0;
   test_pat[0] = 0;
@@ -4416,20 +4587,29 @@ generate_makefile(
   if ((languages & LANG_C)) need_c_libchecker = 1;
   if ((languages & LANG_CPP)) need_cpp_libchecker = 1;
 
-  /* detect which languages we'll need */
-  if (prob->source_header && prob->source_header[0]) {
-    languages |= guess_language_by_src(prob->source_header);
-  }
-  if (prob->source_footer && prob->source_footer[0]) {
-    languages |= guess_language_by_src(prob->source_footer);
-  }
-  if (prob->solution_src && prob->solution_src[0]) {
-    languages |= guess_language_by_src(prob->solution_src);
-  }
+  if (prob->type == PROB_TYPE_TESTS) {
+    get_advanced_layout_path(tmp_path, sizeof(tmp_path), global, prob, "tests/good", variant);
+    good_names = collect_suitable_names(tmp_path, &languages);
+    good_exe_names = make_exe_suitable_names(good_names);
+    get_advanced_layout_path(tmp_path, sizeof(tmp_path), global, prob, "tests/fail", variant);
+    fail_names = collect_suitable_names(tmp_path, &languages);
+    fail_exe_names = make_exe_suitable_names(fail_names);
+  } else if (prob->type == PROB_TYPE_STANDARD) {
+    /* detect which languages we'll need */
+    if (prob->source_header && prob->source_header[0]) {
+      languages |= guess_language_by_src(prob->source_header);
+    }
+    if (prob->source_footer && prob->source_footer[0]) {
+      languages |= guess_language_by_src(prob->source_footer);
+    }
+    if (prob->solution_src && prob->solution_src[0]) {
+      languages |= guess_language_by_src(prob->solution_src);
+    }
 
-  if (prob->solution_cmd && prob->solution_cmd[0]) {
-    get_advanced_layout_path(tmp_path, sizeof(tmp_path), global, prob, prob->solution_cmd, variant);
-    languages |= guess_language_by_cmd(tmp_path, NULL);
+    if (prob->solution_cmd && prob->solution_cmd[0]) {
+      get_advanced_layout_path(tmp_path, sizeof(tmp_path), global, prob, prob->solution_cmd, variant);
+      languages |= guess_language_by_cmd(tmp_path, NULL);
+    }
   }
 
   fprintf(mk_f, "%s\n", ej_makefile_begin);
@@ -4619,12 +4799,19 @@ generate_makefile(
   if (prob->test_checker_cmd && prob->test_checker_cmd[0]) {
     fprintf(mk_f, " %s", prob->test_checker_cmd);
   }
-  fprintf(mk_f, "\n");
-  fprintf(mk_f, "check_settings : all normalize");
-  if (prob->test_checker_cmd && prob->test_checker_cmd[0]) {
-    fprintf(mk_f, " check_tests");
+  if (prob->type == PROB_TYPE_TESTS) {
+    fprintf(mk_f, " good_progs fail_progs");
   }
-  fprintf(mk_f, "\n\n");
+  fprintf(mk_f, "\n");
+  if (prob->type == PROB_TYPE_TESTS) {
+    fprintf(mk_f, "check_settings : all\n\n");
+  } else {
+    fprintf(mk_f, "check_settings : all normalize");
+    if (prob->test_checker_cmd && prob->test_checker_cmd[0]) {
+      fprintf(mk_f, " check_tests");
+    }
+    fprintf(mk_f, "\n\n");
+  }
 
   /* solution compilation part  */
   if (prob->solution_cmd && prob->solution_cmd[0]) {
@@ -4645,18 +4832,7 @@ generate_makefile(
         fprintf(mk_f, "\n");
         fprintf(mk_f, "\tcat $^ > $@\n");
       }
-      if (languages == LANG_C) {
-        fprintf(mk_f, "%s : %s%s\n", prob->solution_cmd, prob->solution_cmd, source_suffix);
-        fprintf(mk_f, "\t${CC} -DEJUDGE ${CFLAGS} %s%s -o%s ${CLIBS}\n",
-                prob->solution_cmd, source_suffix, prob->solution_cmd);
-      } else if (languages == LANG_CPP) {
-        fprintf(mk_f, "%s : %s%s\n", prob->solution_cmd, prob->solution_cmd, source_suffix);
-        fprintf(mk_f, "\t${CXX} -DEJUDGE ${CXXFLAGS} %s%s -o%s ${CXXLIBS}\n",
-                prob->solution_cmd, source_suffix, prob->solution_cmd);
-      } else {
-        fprintf(mk_f, "# no information how to build solution '%s' from '%s'\n",
-                prob->solution_cmd, prob->solution_src);
-      }
+      generate_solution_compilation_rule(mk_f, NULL, prob->solution_cmd, NULL, NULL, languages);
     } else if (!has_header) {
       get_advanced_layout_path(tmp_path, sizeof(tmp_path), global, prob, prob->solution_cmd, variant);
       languages = guess_language_by_cmd(tmp_path, &count);
@@ -4665,37 +4841,7 @@ generate_makefile(
       } else if (count > 1) {
         fprintf(mk_f, "# several source languages to build solution '%s'\n", prob->solution_cmd);
       } else {
-        source_suffix = get_source_suffix(languages);
-        if (languages == LANG_C) {
-          fprintf(mk_f, "%s : %s%s\n", prob->solution_cmd, prob->solution_cmd, source_suffix);
-          fprintf(mk_f, "\t${CC} -DEJUDGE ${CFLAGS} %s%s -o%s ${CLIBS}\n",
-                  prob->solution_cmd, source_suffix, prob->solution_cmd);
-        } else if (languages == LANG_CPP) {
-          fprintf(mk_f, "%s : %s%s\n", prob->solution_cmd, prob->solution_cmd, source_suffix);
-          fprintf(mk_f, "\t${CXX} -DEJUDGE ${CXXFLAGS} %s%s -o%s ${CXXLIBS}\n",
-                  prob->solution_cmd, source_suffix, prob->solution_cmd);
-        } else if (languages == LANG_FPC) {
-          fprintf(mk_f, "%s : %s%s\n", prob->solution_cmd, prob->solution_cmd, source_suffix);
-          fprintf(mk_f, "\t${FPC} -dEJUDGE ${FPCFLAGS} %s%s\n",  prob->solution_cmd, source_suffix);
-        } else if (languages == LANG_DCC) {
-          fprintf(mk_f, "%s : %s%s\n", prob->solution_cmd, prob->solution_cmd, source_suffix);
-          fprintf(mk_f, "\t${DCC} -DEJUDGE ${DCCFLAGS} %s%s\n", prob->solution_cmd, source_suffix);
-        } else if (languages == LANG_JAVA) {
-          fprintf(mk_f, "%s : %s%s\n", prob->solution_cmd, prob->solution_cmd, source_suffix);
-          fprintf(mk_f, "\t${JAVACHELPER} %s%s %s%s\n", prob->solution_cmd, source_suffix,
-                  prob->solution_cmd, ".jar");
-          fprintf(mk_f, "\trm -f *.class\n");
-          fprintf(mk_f, "\techo '#! /bin/sh' > %s\n", prob->solution_cmd);
-          fprintf(mk_f, "\techo 'd=\"`dirname $$0`\"' >> %s\n", prob->solution_cmd);
-          fprintf(mk_f, "\techo 'exec ${JAVA} -DEJUDGE=1 -jar \"$$d/%s.jar\" \"$$@\"' >> %s\n",
-                  prob->solution_cmd, prob->solution_cmd);
-          fprintf(mk_f, "\tchmod +x %s\n", prob->solution_cmd);
-        } else if (languages == LANG_PY) {
-          fprintf(mk_f, "%s : %s%s\n", prob->solution_cmd, prob->solution_cmd, source_suffix);
-          fprintf(mk_f, "\t${PYCHELPER} %s%s %s\n", prob->solution_cmd, source_suffix, prob->solution_cmd);
-        } else {
-          fprintf(mk_f, "# no information how to build solution '%s'\n", prob->solution_cmd);
-        }
+        generate_solution_compilation_rule(mk_f, NULL, prob->solution_cmd, NULL, NULL, languages);
       }
     } else {
       fprintf(mk_f, "# no information how to build solution '%s' with header or footer\n", prob->solution_cmd);
@@ -4713,37 +4859,68 @@ generate_makefile(
   generate_checker_compilation_rule(mk_f, "test_checker", global, prob, variant, prob->test_checker_cmd);
 
   /* test generation part */
-  if (prob->solution_cmd && prob->solution_cmd[0]) {
-    fprintf(mk_f, "answers : %s\n", prob->solution_cmd);
-    fprintf(mk_f, "\t${EXECUTE} ${EXECUTE_FLAGS} --update-corr --test-dir=%s --workdir=%s --all-tests %s\n", "tests", "tests", prob->solution_cmd);
+  if (prob->type != PROB_TYPE_TESTS) {
+    if (prob->solution_cmd && prob->solution_cmd[0]) {
+      fprintf(mk_f, "answers : %s\n", prob->solution_cmd);
+      fprintf(mk_f, "\t${EXECUTE} ${EXECUTE_FLAGS} --update-corr --test-dir=%s --workdir=%s --all-tests %s\n", "tests", "tests", prob->solution_cmd);
+      fprintf(mk_f, "\n");
+      fprintf(mk_f, "answer : %s\n", prob->solution_cmd);
+      fprintf(mk_f, "\tcd tests && ${EXECUTE} ${EXECUTE_FLAGS} --update-corr --test-num=${TEST_NUM} ../%s\n", prob->solution_cmd);
+      fprintf(mk_f, "\n");
+    }
+    if (prob->test_checker_cmd && prob->test_checker_cmd[0]) {
+      fprintf(mk_f, "check_tests : %s\n", prob->test_checker_cmd);
+      fprintf(mk_f, "\t${EXECUTE} ${TC_EXECUTE_FLAGS} --test-dir=%s --workdir=%s --all-tests %s\n", "tests", "tests", prob->test_checker_cmd);
+      fprintf(mk_f, "\n");    
+      fprintf(mk_f, "check_test : %s\n", prob->test_checker_cmd);
+      fprintf(mk_f, "\tcd tests && ${EXECUTE} ${TC_EXECUTE_FLAGS} --test-num=${TEST_NUM} ../%s\n", prob->test_checker_cmd);
+      fprintf(mk_f, "\n");
+    }
     fprintf(mk_f, "\n");
-    fprintf(mk_f, "answer : %s\n", prob->solution_cmd);
-    fprintf(mk_f, "\tcd tests && ${EXECUTE} ${EXECUTE_FLAGS} --update-corr --test-num=${TEST_NUM} ../%s\n", prob->solution_cmd);
-    fprintf(mk_f, "\n");
-  }
-  if (prob->test_checker_cmd && prob->test_checker_cmd[0]) {
-    fprintf(mk_f, "check_tests : %s\n", prob->test_checker_cmd);
-    fprintf(mk_f, "\t${EXECUTE} ${TC_EXECUTE_FLAGS} --test-dir=%s --workdir=%s --all-tests %s\n", "tests", "tests", prob->test_checker_cmd);
-    fprintf(mk_f, "\n");    
-    fprintf(mk_f, "check_test : %s\n", prob->test_checker_cmd);
-    fprintf(mk_f, "\tcd tests && ${EXECUTE} ${TC_EXECUTE_FLAGS} --test-num=${TEST_NUM} ../%s\n", prob->test_checker_cmd);
-    fprintf(mk_f, "\n");
-  }
-  fprintf(mk_f, "\n");
 
-  fprintf(mk_f, "normalize :\n"
-          "\t${NORMALIZE} ${NORMALIZE_FLAGS} --all-tests\n\n");
+    fprintf(mk_f, "normalize :\n"
+            "\t${NORMALIZE} ${NORMALIZE_FLAGS} --all-tests\n\n");
 
-  /* archiving */
-  if (prob->use_tgz > 0) {
-    pattern_to_shell_pattern(tgzdir_pr_pat, sizeof(tgzdir_pr_pat), tgzdir_pat);
-    fprintf(mk_f, "archives : \n");
-    fprintf(mk_f, "\tcd tests && for i in %s; do ${MAKE_ARCHIVE} ${MAKE_ARCHIVE_FLAGS} $$i || { echo 'Archive failed on' $$i; exit 1; }; done;\n",
-            tgzdir_pr_pat);
+    /* archiving */
+    if (prob->use_tgz > 0) {
+      pattern_to_shell_pattern(tgzdir_pr_pat, sizeof(tgzdir_pr_pat), tgzdir_pat);
+      fprintf(mk_f, "archives : \n");
+      fprintf(mk_f, "\tcd tests && for i in %s; do ${MAKE_ARCHIVE} ${MAKE_ARCHIVE_FLAGS} $$i || { echo 'Archive failed on' $$i; exit 1; }; done;\n",
+              tgzdir_pr_pat);
+    }
+  }
+
+  // "Tests" problem
+  if (prob->type == PROB_TYPE_TESTS) {
+    fprintf(mk_f, "good_progs :");
+    if (good_exe_names) {
+      for (int i = 0; good_exe_names[i]; ++i) {
+        fprintf(mk_f, " %s/%s", "tests/good", good_exe_names[i]);
+      }
+    }
+    fprintf(mk_f, "\n");
+    fprintf(mk_f, "fail_progs :");
+    if (fail_exe_names) {
+      for (int i = 0; fail_exe_names[i]; ++i) {
+        fprintf(mk_f, " %s/%s", "tests/fail", fail_exe_names[i]);
+      }
+    }
+    fprintf(mk_f, "\n");
+
+    if (good_exe_names) {
+      for (int i = 0; good_exe_names[i]; ++i) {
+        generate_solution_compilation_rule(mk_f, "tests/good", good_exe_names[i], good_names[i], NULL, 0);
+      }
+    }
+    if (fail_exe_names) {
+      for (int i = 0; fail_exe_names[i]; ++i) {
+        generate_solution_compilation_rule(mk_f, "tests/fail", fail_exe_names[i], fail_names[i], NULL, 0);
+      }
+    }
   }
 
   fprintf(mk_f, "clean :\n");
-  fprintf(mk_f, "\t-rm -f *.o");
+  fprintf(mk_f, "\t-rm -f *.o *.class *.exe *~ *.bak");
   if (prob->solution_cmd && prob->solution_cmd[0]) {
     fprintf(mk_f, " %s", prob->solution_cmd);
   }
@@ -4760,9 +4937,31 @@ generate_makefile(
   if (prob->test_checker_cmd && prob->test_checker_cmd[0]) {
     fprintf(mk_f, " %s", prob->test_checker_cmd);
   }  
-  fprintf(mk_f, "\n\n");
+  fprintf(mk_f, "\n");
+  if (prob->type == PROB_TYPE_TESTS) {
+    fprintf(mk_f, "\t-cd tests/good && rm -f *.o *.class *.jar *.exe *~ *.bak");
+    if (good_exe_names) {
+      for (int i = 0; good_exe_names[i]; ++i) {
+        fprintf(mk_f, " %s", good_exe_names[i]);
+      }
+    }
+    fprintf(mk_f, "\n");
+    fprintf(mk_f, "\t-cd tests/fail && rm -f *.o *.class *.jar *.exe *~ *.bak");
+    if (fail_exe_names) {
+      for (int i = 0; fail_exe_names[i]; ++i) {
+        fprintf(mk_f, " %s", fail_exe_names[i]);
+      }
+    }
+    fprintf(mk_f, "\n");
+  }
+  fprintf(mk_f, "\n");
 
   fprintf(mk_f, "%s\n", ej_makefile_end);
+
+  good_names = free_suitable_names(good_names);
+  good_exe_names = free_suitable_names(good_exe_names);
+  fail_names = free_suitable_names(fail_names);
+  fail_exe_names = free_suitable_names(fail_exe_names);
 }
 
 int

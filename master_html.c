@@ -298,11 +298,11 @@ write_xml_tests_report(
 
   fprintf(f, "<table%s>\n", cl1);
   fprintf(f, "<tr>");
-  fprintf(f, "<td%s>&nbsp;</td>", cl1);
-  fprintf(f, "<td%s>&nbsp;</td>", cl1);
-  fprintf(f, "<td%s>&nbsp;</td>", cl1);
+  fprintf(f, "<th%s width=\"30px\">NN</td>", cl1);
+  fprintf(f, "<th%s width=\"120px\">Prog. name</td>", cl1);
+  fprintf(f, "<th%s width=\"50px\" align=\"center\">Goodness</td>", cl1);
   for (j = 0; j < r->tt_column_count; ++j) {
-    fprintf(f, "<td%s>%d</td>", cl1, j + 1);
+    fprintf(f, "<th%s width=\"40px\" align=\"center\">%d</td>", cl1, j + 1);
   }
   fprintf(f, "</tr>\n");
   for (i = 0; i < r->tt_row_count; ++i) {
@@ -323,22 +323,26 @@ write_xml_tests_report(
         bgcolor = BGCOLOR_FAIL;
       }
     }
-    fail_str = "pass";
-    if (trr->must_fail) fail_str = "fail";
+    fail_str = "PASS";
+    font_color = " color=\"green\"";
+    if (trr->must_fail) {
+      fail_str = "FAIL";
+      font_color = " color=\"red\"";
+    }
     fprintf(f, "<td%s%s>%d</td>", cl1, bgcolor, i + 1);
     fprintf(f, "<td%s%s><tt>%s</tt></td>", cl1, bgcolor, ARMOR(trr->name));
-    fprintf(f, "<td%s%s>%s</td>", cl1, bgcolor, fail_str);
+    fprintf(f, "<td%s%s align=\"center\"><font%s><b>%s</b></font></td>", cl1, bgcolor, font_color, fail_str);
     for (j = 0; j < r->tt_column_count; ++j) {
       trc = r->tt_cells[i][j];
       if (trc->status == RUN_CHECK_FAILED) {
-        bgcolor = BGCOLOR_CHECK_FAILED;
+        font_color = "";
       } else if (trc->status == RUN_OK) {
-        bgcolor = BGCOLOR_PASS;
+        font_color = " color=\"green\"";
       } else {
-        bgcolor = BGCOLOR_FAIL;
+        font_color = " color=\"red\"";
       }
       run_status_to_str_short(buf, sizeof(buf), trc->status);
-      fprintf(f, "<td%s%s><tt>%s</tt></td>", cl1, bgcolor, buf);
+      fprintf(f, "<td%s%s align=\"center\"><tt><font%s>%s</font></tt></td>", cl1, bgcolor, font_color, buf);
     }
     fprintf(f, "</tr>\n");
   }

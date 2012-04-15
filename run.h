@@ -72,6 +72,7 @@ run_inverse_testing(
         const struct super_run_in_packet *srp,
         struct run_reply_packet *reply_pkt,
         const unsigned char *pkt_name,
+        const unsigned char *run_exe_dir,
         unsigned char *report_path,
         size_t report_path_size,
         int utf8_mode);
