@@ -2595,7 +2595,9 @@ check_output_only(
 
   cur_info->status = status;
 
-  if (status == RUN_PRESENTATION_ERR || status == RUN_WRONG_ANSWER_ERR) {
+  if ((status == RUN_PRESENTATION_ERR || status == RUN_WRONG_ANSWER_ERR)
+      && (srgp->scoring_system_val == SCORE_KIROV
+          || (srgp->scoring_system_val == SCORE_OLYMPIAD && srgp->accepting_mode <= 0))) {
     status = RUN_PARTIAL;
   }
 
