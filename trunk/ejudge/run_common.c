@@ -655,17 +655,46 @@ static void
 setup_environment(
         tpTask tsk,
         char **envs,
-        const unsigned char *ejudge_prefix_dir_env,
-        const struct testinfo_struct *pt)
+        const struct testinfo_struct *pt,
+        int force_ejudge_env)
 {
   int jj;
   unsigned char env_buf[1024];
   const unsigned char *envval = NULL;
   
+  if (force_ejudge_env > 0) {
+#if defined EJUDGE_PREFIX_DIR
+    task_SetEnv(tsk, "EJUDGE_PREFIX_DIR", EJUDGE_PREFIX_DIR);
+#endif
+#if defined EJUDGE_CONTESTS_HOME_DIR
+    task_SetEnv(tsk, "EJUDGE_CONTESTS_HOME_DIR", EJUDGE_CONTESTS_HOME_DIR);
+#endif
+#if defined EJUDGE_LOCAL_DIR
+    task_SetEnv(tsk, "EJUDGE_LOCAL_DIR", EJUDGE_LOCAL_DIR);
+#endif
+#if defined EJUDGE_SERVER_BIN_PATH
+    task_SetEnv(tsk, "EJUDGE_SERVER_BIN_PATH", EJUDGE_SERVER_BIN_PATH);
+#endif
+  }
+
   if (envs) {
     for (jj = 0; envs[jj]; jj++) {
-      if (!strcmp(envs[jj], "EJUDGE_PREFIX_DIR")) {
-        task_PutEnv(tsk, ejudge_prefix_dir_env);
+      if (force_ejudge_env <= 0 && !strcmp(envs[jj], "EJUDGE_PREFIX_DIR")) {
+#if defined EJUDGE_PREFIX_DIR
+        task_SetEnv(tsk, "EJUDGE_PREFIX_DIR", EJUDGE_PREFIX_DIR);
+#endif
+      } else if (force_ejudge_env <= 0 && !strcmp(envs[jj], "EJUDGE_CONTESTS_HOME_DIR")) {
+#if defined EJUDGE_CONTESTS_HOME_DIR
+        task_SetEnv(tsk, "EJUDGE_CONTESTS_HOME_DIR", EJUDGE_CONTESTS_HOME_DIR);
+#endif
+      } else if (force_ejudge_env <= 0 && !strcmp(envs[jj], "EJUDGE_LOCAL_DIR")) {
+#if defined EJUDGE_LOCAL_DIR
+        task_SetEnv(tsk, "EJUDGE_LOCAL_DIR", EJUDGE_LOCAL_DIR);
+#endif
+      } else if (force_ejudge_env <= 0 && !strcmp(envs[jj], "EJUDGE_SERVER_BIN_PATH")) {
+#if defined EJUDGE_SERVER_BIN_PATH
+        task_SetEnv(tsk, "EJUDGE_SERVER_BIN_PATH", EJUDGE_SERVER_BIN_PATH);
+#endif
       } else if (!strchr(envs[jj], '=')) {
         envval = getenv(envs[jj]);
         if (envval) {
@@ -704,7 +733,6 @@ invoke_valuer(
         char **p_cmt_txt,
         char **p_jcmt_txt)
 {
-  path_t ejudge_prefix_dir_env;
   path_t score_list;
   path_t score_res;
   path_t score_err;
@@ -720,12 +748,6 @@ invoke_valuer(
 
   const struct super_run_in_global_packet *srgp = srp->global;
   const struct super_run_in_problem_packet *srpp = srp->problem;
-
-  ejudge_prefix_dir_env[0] = 0;
-#ifdef EJUDGE_PREFIX_DIR
-  snprintf(ejudge_prefix_dir_env, sizeof(ejudge_prefix_dir_env),
-           "EJUDGE_PREFIX_DIR=%s", EJUDGE_PREFIX_DIR);
-#endif /* EJUDGE_PREFIX_DIR */
 
   pathmake(score_list, global->run_work_dir, "/", "score_list", NULL);
   pathmake(score_res, global->run_work_dir, "/", "score_res", NULL);
@@ -779,7 +801,7 @@ invoke_valuer(
   if (srpp->checker_real_time_limit_ms > 0) {
     task_SetMaxRealTimeMillis(tsk, srpp->checker_real_time_limit_ms);
   }
-  setup_environment(tsk, srpp->valuer_env, ejudge_prefix_dir_env, NULL);
+  setup_environment(tsk, srpp->valuer_env, NULL, 1);
   if (srgp->separate_user_score > 0) {
     snprintf(strbuf, sizeof(strbuf), "EJUDGE_USER_SCORE=1");
     task_PutEnv(tsk, strbuf);
@@ -1374,12 +1396,6 @@ invoke_interactor(
         long time_limit_ms)
 {
   tpTask tsk_int = NULL;
-  unsigned char ejudge_prefix_dir_env[PATH_MAX];
-
-  ejudge_prefix_dir_env[0] = 0;
-#ifdef EJUDGE_PREFIX_DIR
-  snprintf(ejudge_prefix_dir_env, sizeof(ejudge_prefix_dir_env), "EJUDGE_PREFIX_DIR=%s", EJUDGE_PREFIX_DIR);
-#endif /* EJUDGE_PREFIX_DIR */
 
   tsk_int = task_New();
   task_AddArg(tsk_int, interactor_cmd);
@@ -1390,11 +1406,12 @@ invoke_interactor(
   }
   task_SetPathAsArg0(tsk_int);
   task_SetWorkingDir(tsk_int, working_dir);
-  setup_environment(tsk_int, interactor_env, ejudge_prefix_dir_env, NULL);
+  setup_environment(tsk_int, interactor_env, NULL, 1);
   task_SetRedir(tsk_int, 0, TSR_DUP, stdin_fd);
   task_SetRedir(tsk_int, 1, TSR_DUP, stdout_fd);
   task_SetRedir(tsk_int, 2, TSR_FILE, check_out_path, TSK_REWRITE, TSK_FULL_RW);
   task_EnableAllSignals(tsk_int);
+  task_IgnoreSIGPIPE(tsk_int);
   if (time_limit_ms > 0) {
     task_SetMaxTimeMillis(tsk_int, time_limit_ms);
   }
@@ -1484,7 +1501,6 @@ invoke_checker(
         const unsigned char *score_out_path,
         const unsigned char *check_out_path,
         const unsigned char *check_dir,
-        const unsigned char *ejudge_prefix_dir_env,
         int test_score_count,
         const int *test_score_val)
 {
@@ -1528,7 +1544,7 @@ invoke_checker(
   if (srpp->checker_real_time_limit_ms > 0) {
     task_SetMaxRealTimeMillis(tsk, srpp->checker_real_time_limit_ms);
   }
-  setup_environment(tsk, srpp->checker_env, ejudge_prefix_dir_env, NULL);
+  setup_environment(tsk, srpp->checker_env, NULL, 1);
   task_EnableAllSignals(tsk);
 
   task_PrintArgs(tsk);
@@ -1635,8 +1651,6 @@ run_one_test(
   const struct super_run_in_global_packet *srgp = srp->global;
   const struct super_run_in_problem_packet *srpp = srp->problem;
 
-  unsigned char ejudge_prefix_dir_env[PATH_MAX];
-
   unsigned char test_base[PATH_MAX];
   unsigned char corr_base[PATH_MAX];
   unsigned char info_base[PATH_MAX];
@@ -1696,12 +1710,6 @@ run_one_test(
       && cur_test > srpp->tests_to_accept) {
     return -1;
   }
-
-  ejudge_prefix_dir_env[0] = 0;
-#ifdef EJUDGE_PREFIX_DIR
-  snprintf(ejudge_prefix_dir_env, sizeof(ejudge_prefix_dir_env),
-           "EJUDGE_PREFIX_DIR=%s", EJUDGE_PREFIX_DIR);
-#endif /* EJUDGE_PREFIX_DIR */
 
   test_base[0] = 0;
   test_src[0] = 0;
@@ -1972,7 +1980,7 @@ run_one_test(
   }
 
   if (tst && tst->clear_env > 0) task_ClearEnv(tsk);
-  setup_environment(tsk, tst->start_env, ejudge_prefix_dir_env, &tstinfo);
+  setup_environment(tsk, tst->start_env, &tstinfo, 0);
 
   if (time_limit_value_ms > 0) {
     if ((time_limit_value_ms % 1000)) {
@@ -2308,8 +2316,7 @@ run_checker:;
                           check_cmd, test_src, output_path_to_check,
                           corr_src, info_src, tgzdir_src,
                           working_dir, score_out_path, check_out_path,
-                          check_dir, ejudge_prefix_dir_env,
-                          test_score_count, test_score_val);
+                          check_dir, test_score_count, test_score_val);
 
   // read the checker output
 read_checker_output:;
@@ -2539,8 +2546,7 @@ check_output_only(
         full_archive_t far,
         const unsigned char *exe_name,
         struct testinfo_vector *tests,
-        const unsigned char *check_cmd,
-        const unsigned char *ejudge_prefix_dir_env)
+        const unsigned char *check_cmd)
 {
   int cur_test = 1;
   struct testinfo *cur_info = NULL;
@@ -2599,8 +2605,7 @@ check_output_only(
                           check_cmd, test_src, output_path,
                           corr_src, NULL, NULL,
                           global->run_work_dir, score_out_path, check_out_path,
-                          global->run_work_dir, ejudge_prefix_dir_env,
-                          0, NULL);
+                          global->run_work_dir, 0, NULL);
 
   cur_info->status = status;
 
@@ -2719,7 +2724,6 @@ run_tests(
   int user_run_tests = -1;
   int marked_flag = 0;
 
-  unsigned char ejudge_prefix_dir_env[PATH_MAX];
   unsigned char messages_path[PATH_MAX];
   unsigned char check_dir[PATH_MAX];
   unsigned char check_cmd[PATH_MAX];
@@ -2772,8 +2776,7 @@ run_tests(
   }
 
   if (srpp->type_val) {
-    status = check_output_only(global, srgp, srpp, reply_pkt, far, exe_name, &tests, check_cmd,
-                               ejudge_prefix_dir_env);
+    status = check_output_only(global, srgp, srpp, reply_pkt, far, exe_name, &tests, check_cmd);
     goto done;
   }
 
@@ -2804,11 +2807,6 @@ run_tests(
       goto check_failed;
     }
   }
-
-#ifdef EJUDGE_PREFIX_DIR
-  snprintf(ejudge_prefix_dir_env, sizeof(ejudge_prefix_dir_env),
-           "EJUDGE_PREFIX_DIR=%s", EJUDGE_PREFIX_DIR);
-#endif /* EJUDGE_PREFIX_DIR */
 
   if (!srpp->type_val && tst && tst->prepare_cmd && tst->prepare_cmd[0]) {
     if (invoke_prepare_cmd(tst->prepare_cmd, global->run_work_dir, exe_name, messages_path) < 0) {
