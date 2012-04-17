@@ -630,6 +630,12 @@ task_EnableAllSignals(tTask *tsk)
 }
 
 int
+task_IgnoreSIGPIPE(tTask *tsk)
+{
+  return 0;
+}
+
+int
 task_DisableCoreDump(tTask *tsk)
 {
   ASSERT(tsk);
