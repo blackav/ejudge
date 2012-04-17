@@ -98,6 +98,7 @@ struct tTask
   int    clear_env;             /* clear the environment? */
   int    quiet_flag;            /* be quiet */
   int    enable_all_signals;    /* unmask all signals after fork */
+  int    ignore_sigpipe;        /* ignore SIGPIPE after fork */
   int    enable_process_group;  /* create a new process group */
   ssize_t max_core_size;        /* maximum size of core files */
   ssize_t max_file_size;        /* maximum size of created files */
@@ -1033,6 +1034,15 @@ task_EnableAllSignals(tTask *tsk)
 }
 
 int
+task_IgnoreSIGPIPE(tTask *tsk)
+{
+  task_init_module();
+  ASSERT(tsk);
+  tsk->ignore_sigpipe = 1;
+  return 0;
+}
+
+int
 task_EnableProcessGroup(tTask *tsk)
 {
   task_init_module();
@@ -1859,6 +1869,10 @@ task_Start(tTask *tsk)
     if (tsk->enable_all_signals) {
       sigemptyset(&ss);
       sigprocmask(SIG_SETMASK, &ss, 0);
+    }
+
+    if (tsk->ignore_sigpipe) {
+      signal(SIGPIPE, SIG_IGN);
     }
 
     errno = 0;
