@@ -178,7 +178,7 @@ generate_xml_report(
   fprintf(f, "<testing-report run-id=\"%d\" judge-id=\"%d\" status=\"%s\" scoring=\"%s\" archive-available=\"%s\" run-tests=\"%d\"",
           srgp->run_id, srgp->judge_id, buf1,
           unparse_scoring_system(buf2, sizeof(buf2), srgp->scoring_system_val),
-          (srgp->enable_full_archive)?"yes":"no", total_tests - 1);
+          (srgp->enable_full_archive > 0)?"yes":"no", total_tests - 1);
   if (has_real_time) {
     fprintf(f, " real-time-available=\"yes\"");
   }
@@ -303,7 +303,7 @@ generate_xml_report(
       fprintf(f, " checker-comment=\"%s\"", msg);
       xfree(msg);
     }
-    if (srgp->enable_full_archive) {
+    if (srgp->enable_full_archive > 0) {
       if (tests[i].has_input_digest) {
         digest_to_ascii(DIGEST_SHA1, tests[i].input_digest, buf3);
         fprintf(f, " input-digest=\"%s\"", buf3);
@@ -317,13 +317,13 @@ generate_xml_report(
         fprintf(f, " info-digest=\"%s\"", buf3);
       }
     }
-    if (tests[i].output_size >= 0 && srgp->enable_full_archive) {
+    if (tests[i].output_size >= 0 && srgp->enable_full_archive > 0) {
       fprintf(f, " output-available=\"yes\"");
     }
-    if (tests[i].error_size >= 0 && srgp->enable_full_archive) {
+    if (tests[i].error_size >= 0 && srgp->enable_full_archive > 0) {
       fprintf(f, " stderr-available=\"yes\"");
     }
-    if (tests[i].chk_out_size >= 0 && srgp->enable_full_archive) {
+    if (tests[i].chk_out_size >= 0 && srgp->enable_full_archive > 0) {
       fprintf(f, " checker-output-available=\"yes\"");
     }
     if (tests[i].args && strlen(tests[i].args) >= srgp->max_cmd_length) {
@@ -338,7 +338,7 @@ generate_xml_report(
       fprintf(f, "      <args>%s</args>\n", ARMOR(tests[i].args));
     }
 
-    if (tests[i].input_size >= 0 && !srgp->enable_full_archive) {
+    if (tests[i].input_size >= 0 && srgp->enable_full_archive <= 0) {
       fprintf(f, "      <input>");
       html_print_by_line(f, utf8_mode, srgp->max_file_length,
                          srgp->max_line_length,
@@ -346,7 +346,7 @@ generate_xml_report(
       fprintf(f, "</input>\n");
     }
 
-    if (tests[i].output_size >= 0 && !srgp->enable_full_archive) {
+    if (tests[i].output_size >= 0 && srgp->enable_full_archive <= 0) {
       fprintf(f, "      <output>");
       html_print_by_line(f, utf8_mode, srgp->max_file_length,
                          srgp->max_line_length,
@@ -354,7 +354,7 @@ generate_xml_report(
       fprintf(f, "</output>\n");
     }
 
-    if (tests[i].correct_size >= 0 && !srgp->enable_full_archive) {
+    if (tests[i].correct_size >= 0 && srgp->enable_full_archive <= 0) {
       fprintf(f, "      <correct>");
       html_print_by_line(f, utf8_mode, srgp->max_file_length,
                          srgp->max_line_length,
@@ -362,7 +362,7 @@ generate_xml_report(
       fprintf(f, "</correct>\n");
     }
 
-    if (tests[i].error_size >= 0 && !srgp->enable_full_archive) {
+    if (tests[i].error_size >= 0 && srgp->enable_full_archive <= 0) {
       fprintf(f, "      <stderr>");
       html_print_by_line(f, utf8_mode, srgp->max_file_length,
                          srgp->max_line_length,
@@ -370,7 +370,7 @@ generate_xml_report(
       fprintf(f, "</stderr>\n");
     }
 
-    if (tests[i].chk_out_size >= 0 && !srgp->enable_full_archive) {
+    if (tests[i].chk_out_size >= 0 && srgp->enable_full_archive <= 0) {
       fprintf(f, "      <checker>");
       html_print_by_line(f, utf8_mode, srgp->max_file_length,
                          srgp->max_line_length,
@@ -471,47 +471,50 @@ read_checker_score(
         const unsigned char *log_path,
         const unsigned char *what,
         int max_score,
+        int default_score, // if >= 0, allow failure
         int *p_score)
 {
   char *score_buf = 0;
   size_t score_buf_size = 0;
   int x, n, r;
 
-  r = generic_read_file(&score_buf, 0, &score_buf_size, 0,
-                        0, path, "");
+  r = generic_read_file(&score_buf, 0, &score_buf_size, 0, 0, path, "");
   if (r < 0) {
     append_msg_to_log(log_path, "Cannot read the %s score output", what);
-    return -1;
+    goto fail;
   }
   if (strlen(score_buf) != score_buf_size) {
     append_msg_to_log(log_path, "The %s score output is binary", what);
-    xfree(score_buf);
-    return -1;
+    goto fail;
   }
 
   while (score_buf_size > 0 && isspace(score_buf[score_buf_size - 1]))
     score_buf[--score_buf_size] = 0;
   if (!score_buf_size) {
     append_msg_to_log(log_path, "The %s score output is empty", what);
-    xfree(score_buf);
-    return -1;
+    goto fail;
   }
 
   if (sscanf(score_buf, "%d%n", &x, &n) != 1 || score_buf[n]) {
-    append_msg_to_log(log_path, "The %s score output (%s) is invalid",
-                      what, score_buf);
-    xfree(score_buf);
-    return -1;
+    append_msg_to_log(log_path, "The %s score output (%s) is invalid", what, score_buf);
+    goto fail;
   }
   if (x < 0 || x > max_score) {
     append_msg_to_log(log_path, "The %s score (%d) is invalid", what, x);
-    xfree(score_buf);
-    return -1;
+    goto fail;
   }
 
   *p_score = x;
   xfree(score_buf);
   return 0;
+
+fail:
+  xfree(score_buf);
+  if (default_score >= 0) {
+    if (p_score) *p_score = default_score;
+    return 0;
+  }
+  return -1;
 }
 
 static int
@@ -738,11 +741,14 @@ invoke_valuer(
   fprintf(f, "%d\n", total_tests - 1);
   for (i = 1; i < total_tests; i++) {
     fprintf(f, "%d", tests[i].status);
+    /*
     if (srpp->scoring_checker > 0) {
       fprintf(f, " %d", tests[i].checker_score);
     } else {
       fprintf(f, " %d", tests[i].score);
     }
+    */
+    fprintf(f, " %d", tests[i].score);
     fprintf(f, " %ld", tests[i].times);
     fprintf(f, "\n");
   }
@@ -1236,7 +1242,7 @@ invoke_nwrun(
   }
 
   /* handle the input test data */
-  if (srgp->enable_full_archive) {
+  if (srgp->enable_full_archive > 0) {
     filehash_get(test_src_path, result->input_digest);
     result->has_input_digest = 1;
   } else if (srpp->binary_input <= 0) {
@@ -1269,7 +1275,7 @@ invoke_nwrun(
     }
 
     result->output_size = out_packet->output_file_orig_size;
-    if (!srgp->enable_full_archive
+    if (srgp->enable_full_archive <= 0
         && srpp->binary_input <= 0
         && srgp->max_file_length > 0
         && result->output_size <= srgp->max_file_length) {
@@ -1293,7 +1299,7 @@ invoke_nwrun(
     snprintf(packet_error_path, sizeof(packet_error_path),
              "%s/%s", out_entry_packet, tst->error_file);
     result->error_size = out_packet->error_file_size;
-    if (!srgp->enable_full_archive
+    if (srgp->enable_full_archive <= 0
         && srgp->max_file_length > 0
         && result->error_size <= srgp->max_file_length) {
       if (generic_read_file(&result->error,0,0,0,0,packet_error_path,"") < 0) {
@@ -1486,6 +1492,7 @@ invoke_checker(
   int write_log_mode = TSK_REWRITE;
   int status = RUN_CHECK_FAILED;
   int test_max_score = -1;
+  int default_score = -1;
 
   tsk = task_New();
   task_AddArg(tsk, check_cmd);
@@ -1565,7 +1572,7 @@ invoke_checker(
     goto cleanup;
   }
 
-  if (srpp->scoring_checker) {
+  if (srpp->scoring_checker > 0) {
     switch (srgp->scoring_system_val) {
     case SCORE_KIROV:
     case SCORE_OLYMPIAD:
@@ -1587,8 +1594,10 @@ invoke_checker(
     default:
       abort();
     }
+    if (status == RUN_OK) default_score = test_max_score;
     if (read_checker_score(score_out_path, check_out_path, "checker",
-                           test_max_score, &cur_info->checker_score) < 0) {
+                           test_max_score, default_score,
+                           &cur_info->score /*&cur_info->checker_score*/) < 0) {
       status = RUN_CHECK_FAILED;
       goto cleanup;
     }
@@ -2124,7 +2133,7 @@ run_one_test(
 
   // input file
   file_size = -1;
-  if (srgp->enable_full_archive) {
+  if (srgp->enable_full_archive > 0) {
     filehash_get(test_src, cur_info->input_digest);
     cur_info->has_input_digest = 1;
   } else {
@@ -2146,7 +2155,7 @@ run_one_test(
   }
   if (file_size >= 0) {
     cur_info->output_size = file_size;
-    if (srgp->max_file_length > 0 && !srgp->enable_full_archive && file_size <= srgp->max_file_length) {
+    if (srgp->max_file_length > 0 && srgp->enable_full_archive <= 0 && file_size <= srgp->max_file_length) {
       generic_read_file(&cur_info->output, 0, 0, 0, 0, output_path, "");
     }
     if (far) {
@@ -2162,7 +2171,7 @@ run_one_test(
   }
   if (file_size >= 0) {
     cur_info->error_size = file_size;
-    if (srgp->max_file_length > 0 && !srgp->enable_full_archive && file_size <= srgp->max_file_length) {
+    if (srgp->max_file_length > 0 && srgp->enable_full_archive <= 0 && file_size <= srgp->max_file_length) {
       generic_read_file(&cur_info->error, 0, 0, 0, 0, error_path, "");
     }
     if (far) {
@@ -2173,7 +2182,7 @@ run_one_test(
 
   // command-line arguments and environment
   if (srpp->use_info) {
-    if (srgp->enable_full_archive) {
+    if (srgp->enable_full_archive > 0) {
       filehash_get(info_src, cur_info->info_digest);
       cur_info->has_info_digest = 1;
     }
@@ -2275,7 +2284,7 @@ run_checker:;
 
   file_size = -1;
   if (srpp->use_corr) {
-    if (srgp->enable_full_archive) {
+    if (srgp->enable_full_archive > 0) {
       filehash_get(corr_src, cur_info->correct_digest);
       cur_info->has_correct_digest = 1;
     } else {
@@ -2308,7 +2317,7 @@ read_checker_output:;
   file_size = generic_file_size(0, check_out_path, 0);
   if (file_size >= 0) {
     cur_info->chk_out_size = file_size;
-    if (!srgp->enable_full_archive) {
+    if (srgp->enable_full_archive <= 0) {
       generic_read_file(&cur_info->chk_out, 0, 0, 0, 0, check_out_path, "");
     }
     if (far) {
@@ -2603,8 +2612,15 @@ check_output_only(
 
   // FIXME: scoring checker
   if (status == RUN_OK) {
-    if (srpp->variable_full_score && srpp->scoring_checker) {
+    /*
+    if (srpp->variable_full_score > 0 && srpp->scoring_checker > 0) {
       reply_pkt->score = cur_info->checker_score;
+    } else {
+      reply_pkt->score = srpp->full_score;
+    }
+    */
+    if (srpp->variable_full_score > 0) {
+      reply_pkt->score = cur_info->score;
     } else {
       reply_pkt->score = srpp->full_score;
     }
@@ -2621,7 +2637,7 @@ check_output_only(
   }
   if (file_size >= 0) {
     cur_info->output_size = file_size;
-    if (srgp->max_file_length > 0 && !srgp->enable_full_archive && file_size <= srgp->max_file_length) {
+    if (srgp->max_file_length > 0 && srgp->enable_full_archive <= 0 && file_size <= srgp->max_file_length) {
       generic_read_file(&cur_info->output, 0, 0, 0, 0, output_path, "");
     }
     if (far) {
@@ -2631,8 +2647,8 @@ check_output_only(
   }
 
   file_size = -1;
-  if (srpp->use_corr) {
-    if (srgp->enable_full_archive) {
+  if (srpp->use_corr > 0) {
+    if (srgp->enable_full_archive > 0) {
       filehash_get(corr_src, cur_info->correct_digest);
       cur_info->has_correct_digest = 1;
     } else {
@@ -2651,7 +2667,7 @@ check_output_only(
   file_size = generic_file_size(0, check_out_path, 0);
   if (file_size >= 0) {
     cur_info->chk_out_size = file_size;
-    if (!srgp->enable_full_archive) {
+    if (srgp->enable_full_archive <= 0) {
       generic_read_file(&cur_info->chk_out, 0, 0, 0, 0, check_out_path, "");
     }
     if (far) {
@@ -2737,7 +2753,7 @@ run_tests(
   report_path[0] = 0;
   pathmake(report_path, global->run_work_dir, "/", "report", NULL);
   full_report_path[0] = 0;
-  if (srgp->enable_full_archive) {
+  if (srgp->enable_full_archive > 0) {
     pathmake(full_report_path, global->run_work_dir, "/", "full_output", NULL);
     far = full_archive_open_write(full_report_path);
   }
@@ -2880,9 +2896,13 @@ run_tests(
       tests.data[cur_test].max_score = this_score;
       total_max_score += this_score;
       
-      if (srpp->scoring_checker) {
+      if (srpp->scoring_checker > 0) {
+        /*
         total_score += tests.data[cur_test].checker_score;
         tests.data[cur_test].score = tests.data[cur_test].checker_score;
+        */
+        total_score += tests.data[cur_test].score;
+        tests.data[cur_test].score = tests.data[cur_test].score;
       } else if (tests.data[cur_test].status == RUN_OK) {
         total_score += this_score;
         tests.data[cur_test].score = this_score;
@@ -2926,8 +2946,9 @@ run_tests(
     if (srgp->scoring_system_val == SCORE_MOSCOW) {
       reply_pkt->score = srpp->full_score;
       if (status != RUN_OK) {
-        if (srpp->scoring_checker) {
-          reply_pkt->score = tests.data[tests.size - 1].checker_score;
+        if (srpp->scoring_checker > 0) {
+          //reply_pkt->score = tests.data[tests.size - 1].checker_score;
+          reply_pkt->score = tests.data[tests.size - 1].score;
         } else {
           int s;
           for (s = 0; score_tests_val[s] && tests.size - 1 > score_tests_val[s]; ++s);

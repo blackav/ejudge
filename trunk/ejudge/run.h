@@ -56,7 +56,7 @@ struct testinfo
   unsigned char *comment;       /* judge's comment */
   unsigned char *team_comment;  /* team's comment */
   unsigned char *exit_comment;  /* comment on exit status */
-  int            checker_score;
+  //  int            checker_score;
   int            visibility;    /* test visibility */
 };
 
