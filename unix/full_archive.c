@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -33,8 +33,32 @@
 #include <zlib.h>
 #include <stdio.h>
 #include <sys/mman.h>
+#include <errno.h>
+
+#if defined CONF_HAS_LIBZIP
+#include <zip.h>
+#endif
 
 static const unsigned char file_sig[8] = "Ej. Ar.";
+
+#if defined CONF_HAS_LIBZIP
+static full_archive_t full_archive_open_write_zip(const unsigned char *path);
+static full_archive_t full_archive_open_read_zip(const unsigned char *path);
+static full_archive_t full_archive_close_zip(full_archive_t af);
+static int
+full_archive_append_file_zip(
+        full_archive_t af,
+        const unsigned char *entry_name,
+        unsigned int flags,
+        const unsigned char *path);
+static int
+full_archive_find_file_zip(
+        full_archive_t af,
+        const unsigned char *name,
+        long *p_raw_size,
+        unsigned int *p_flags,
+        unsigned char **p_data);
+#endif
 
 full_archive_t
 full_archive_open_write(const unsigned char *path)
@@ -43,7 +67,18 @@ full_archive_open_write(const unsigned char *path)
   int fd = -1;
   struct full_archive_file_header header;
   char *buf;
-  int wtot, wsz;
+  int wtot, wsz, plen;
+
+  if (!path || !*path) {
+    err("full_archive_open_write: path == NULL");
+    goto failure;
+  }
+
+#if defined CONF_HAS_LIBZIP
+  if ((plen = strlen(path)) > 4 && !strcmp(path + plen - 4, ".zip")) {
+    return full_archive_open_write_zip(path);
+  }
+#endif
 
   if ((fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0600)) < 0) {
     err("full_archive_open_write: cannot open: %s", os_ErrorMsg());
@@ -82,6 +117,12 @@ full_archive_close(full_archive_t af)
 {
   if (!af) return 0;
 
+#if defined CONF_HAS_LIBZIP
+  if (af->zip_mode) {
+    return full_archive_close_zip(af);
+  }
+#endif
+
   ASSERT(af->fd >= 0);
 
   if (af->mptr) {
@@ -94,10 +135,11 @@ full_archive_close(full_archive_t af)
 }
 
 int
-full_archive_append_file(full_archive_t af,
-                         const unsigned char *entry_name,
-                         unsigned int flags,
-                         const unsigned char *path)
+full_archive_append_file(
+        full_archive_t af,
+        const unsigned char *entry_name,
+        unsigned int flags,
+        const unsigned char *path)
 {
   size_t entry_name_len;
   size_t header_size;
@@ -111,6 +153,12 @@ full_archive_append_file(full_archive_t af,
 
   ASSERT(af);
   ASSERT(path);
+
+#if defined CONF_HAS_LIBZIP
+  if (af->zip_mode) {
+    return full_archive_append_file_zip(af, entry_name, flags, path);
+  }
+#endif
 
   if (af->fd < 0) {
     err("full_archive_append_file: file descriptor is invalid");
@@ -205,12 +253,23 @@ full_archive_append_file(full_archive_t af,
 full_archive_t
 full_archive_open_read(const unsigned char *path)
 {
-  int fd = -1;
+  int fd = -1, plen;
   void *mptr = 0;
   size_t msize = 0;
   struct stat finfo;
   struct full_archive_file_header *fhead = 0;
   full_archive_t af = 0;
+
+  if (!path || !*path) {
+    err("full_archive_open_read: path == NULL");
+    goto failure;
+  }
+
+#if defined CONF_HAS_LIBZIP
+  if ((plen = strlen(path)) > 4 && !strcmp(path + plen - 4, ".zip")) {
+    return full_archive_open_read_zip(path);
+  }
+#endif
 
   if ((fd = open(path, O_RDONLY, 0)) < 0) {
     err("full_archive_open_read: cannot open `%s': %s", path, os_ErrorMsg());
@@ -258,12 +317,12 @@ full_archive_open_read(const unsigned char *path)
 }
 
 int
-full_archive_find_file(full_archive_t af,
-                       const unsigned char *name,
-                       long *p_size,
-                       long *p_raw_size,
-                       unsigned int *p_flags,
-                       const unsigned char **p_data)
+full_archive_find_file(
+        full_archive_t af,
+        const unsigned char *name,
+        long *p_raw_size,
+        unsigned int *p_flags,
+        unsigned char **p_data)
 {
   const unsigned char *cur_ptr;
   const unsigned char *end_ptr = af->mptr + af->msize;
@@ -272,6 +331,13 @@ full_archive_find_file(full_archive_t af,
   int errcode = 0;
 
   ASSERT(af);
+
+#if defined CONF_HAS_LIBZIP
+  if (af->zip_mode) {
+    return full_archive_find_file_zip(af, name, p_raw_size, p_flags, p_data);
+  }
+#endif
+
   ASSERT(af->mptr);
 
   cur_ptr = af->mptr + sizeof(struct full_archive_file_header);
@@ -327,10 +393,22 @@ full_archive_find_file(full_archive_t af,
     }
 
     if (!strcmp(cur_head->name, name)) {
-      *p_size = cur_head->size;
       *p_raw_size = cur_head->raw_size;
       *p_flags = cur_head->flags;
-      *p_data = cur_ptr;
+
+      if (cur_head->raw_size <= 0) {
+        *p_data = xmalloc(1);
+        **p_data = 0;
+        return 1;
+      }
+
+      *p_data = xmalloc(cur_head->raw_size + 1);
+      if (uncompress(*p_data, p_raw_size, cur_ptr, cur_head->size) != Z_OK) {
+        xfree(*p_data);
+        errcode = 13;
+        goto failure;
+      }
+      (*p_data)[cur_head->raw_size] = 0;
       return 1;
     }
 
@@ -350,9 +428,184 @@ full_archive_find_file(full_archive_t af,
   return -1;
 }
 
+#if defined CONF_HAS_LIBZIP
+static full_archive_t
+full_archive_open_write_zip(const unsigned char *path)
+{
+  full_archive_t af = NULL;
+  int zip_err = 0;
+  struct zip *zzz = NULL;
+  char errbuf[1024];
+
+  if (!(zzz = zip_open(path, ZIP_CREATE, &zip_err))) {
+    zip_error_to_str(errbuf, sizeof(errbuf), zip_err, errno);
+    err("%s: failed to open ZIP '%s': %s", __FUNCTION__, path, errbuf);
+    goto cleanup;
+  }
+
+  XCALLOC(af, 1);
+  af->zip_mode = 1;
+  af->hzip = zzz;
+  return af;
+
+cleanup:
+  return NULL;
+}
+
+static full_archive_t
+full_archive_open_read_zip(const unsigned char *path)
+{
+  full_archive_t af = NULL;
+  int zip_err = 0;
+  struct zip *zzz = NULL;
+  char errbuf[1024];
+
+  if (!(zzz = zip_open(path, ZIP_CHECKCONS, &zip_err))) {
+    zip_error_to_str(errbuf, sizeof(errbuf), zip_err, errno);
+    err("%s: failed to open ZIP '%s': %s", __FUNCTION__, path, errbuf);
+    goto cleanup;
+  }
+
+  XCALLOC(af, 1);
+  af->zip_mode = 1;
+  af->hzip = zzz;
+  return af;
+
+cleanup:
+  return NULL;
+}
+
+static full_archive_t
+full_archive_close_zip(full_archive_t af)
+{
+  if (!af) return NULL;
+
+  ASSERT(af->zip_mode);
+  if (af->hzip) {
+    if (zip_close(af->hzip) < 0) {
+      err("%s: close failed: %s", __FUNCTION__, zip_strerror(af->hzip));
+    }
+  }
+  memset(af, 0, sizeof(*af));
+  xfree(af);
+  return NULL;
+}
+
+static int
+full_archive_append_file_zip(
+        full_archive_t af,
+        const unsigned char *entry_name,
+        unsigned int flags,
+        const unsigned char *path)
+{
+  struct zip_source *zsrc = NULL;
+  char *file_buf = NULL;
+  size_t file_size = 0;
+
+  ASSERT(af);
+  ASSERT(af->zip_mode);
+  ASSERT(af->hzip);
+
+  if (generic_read_file(&file_buf, 0, &file_size, 0, 0, path, 0) < 0) {
+    err("%s: read of '%s' failed", __FUNCTION__, path);
+    goto cleanup;
+  }
+
+  if (!(zsrc = zip_source_buffer(af->hzip, file_buf, file_size, 1))) {
+    err("%s: append of '%s' failed: %s", __FUNCTION__, path, zip_strerror(af->hzip));
+    goto cleanup;
+  }
+  file_buf = NULL;
+
+  if (zip_add(af->hzip, entry_name, zsrc) < 0) {
+    err("%s: append of '%s' failed: %s", __FUNCTION__, path, zip_strerror(af->hzip));
+    goto cleanup;
+  }
+
+  zsrc = NULL;
+  return 0;
+
+cleanup:
+  if (zsrc) {
+    zip_source_free(zsrc); zsrc = NULL;
+  }
+  xfree(file_buf);
+  return -1;
+}
+
+static int
+full_archive_find_file_zip(
+        full_archive_t af,
+        const unsigned char *name,
+        long *p_raw_size,
+        unsigned int *p_flags,
+        unsigned char **p_data)
+{
+  int file_ind = 0;
+  struct zip_stat zs;
+  unsigned char *data = NULL, *ptr;
+  struct zip_file *zf = NULL;
+  long rz, remz;
+
+  ASSERT(af);
+  ASSERT(af->zip_mode);
+  ASSERT(af->hzip);
+
+  if (p_flags) *p_flags = 0;
+
+  if ((file_ind = zip_name_locate(af->hzip, name, 0)) < 0) {
+    err("%s: file '%s' does not exist", __FUNCTION__, name);
+    return 0;
+  }
+
+  zip_stat_init(&zs);
+  if (zip_stat_index(af->hzip, file_ind, 0, &zs) < 0) {
+    err("%s: file '%s' stat failed", __FUNCTION__, name);
+    goto cleanup;
+  }
+
+  if (zs.size <= 0) {
+    *p_raw_size = 0;
+    *p_data = xmalloc(1);
+    **p_data = 0;
+    return 1;
+  }
+
+  *p_raw_size = zs.size;
+  data = xmalloc(zs.size + 1);
+  if (!(zf = zip_fopen_index(af->hzip, file_ind, 0))) {
+    err("%s: failed to open entry '%s': %s", __FUNCTION__, name, zip_strerror(af->hzip));
+    goto cleanup;
+  }
+  ptr = data; remz = zs.size;
+  while (remz > 0) {
+    if ((rz = zip_fread(zf, ptr, remz)) < 0) {
+      err("%s: read error: %s", __FUNCTION__, zip_file_strerror(zf));
+      goto cleanup;
+    }
+    if (!rz) {
+      err("%s: read returned 0", __FUNCTION__);
+      goto cleanup;
+    }
+    ptr += rz;
+    remz -= rz;
+  }
+
+  zip_fclose(zf); zf = NULL;
+  data[zs.size] = 0;
+  *p_data = data;
+  return 1;
+
+cleanup:
+  if (zf) zip_fclose(zf);
+  xfree(data);
+  return -1;
+}
+#endif
+
 /*
  * Local variables:
- *  compile-command: "make"
+ *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  * End:
  */
