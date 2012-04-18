@@ -2167,8 +2167,7 @@ write_from_archive(const serve_state_t cs,
   unsigned char fnbuf[64];
   int rep_flag = 0, arch_flags = 0;
   path_t arch_path;
-  long arch_size = 0, arch_raw_size = 0;
-  const unsigned char *arch_data = 0;
+  long arch_raw_size = 0;
   unsigned char *text = 0;
 
   if (!flag) {
@@ -2179,25 +2178,17 @@ write_from_archive(const serve_state_t cs,
   snprintf(fnbuf, sizeof(fnbuf), "%06d%s", test_num, suffix);
 
   rep_flag = archive_make_read_path(cs, arch_path, sizeof(arch_path),
-                                    dir, run_id, 0, 0);
+                                    dir, run_id, 0, ZIP);
   if (rep_flag < 0 || !(far = full_archive_open_read(arch_path))) {
     ns_error(log_f, NEW_SRV_ERR_TEST_NONEXISTANT);
     goto done;
   }
 
-  rep_flag = full_archive_find_file(far, fnbuf, &arch_size, &arch_raw_size,
-                                    &arch_flags, &arch_data);
+  rep_flag = full_archive_find_file(far, fnbuf, &arch_raw_size,
+                                    &arch_flags, &text);
   if (rep_flag <= 0) {
     ns_error(log_f, NEW_SRV_ERR_TEST_NONEXISTANT);
     goto done;
-  }
-
-  if (arch_raw_size > 0) {
-    text = (unsigned char*) xmalloc(arch_raw_size);
-    if (uncompress(text, &arch_raw_size, arch_data, arch_size) != Z_OK) {
-      ns_error(log_f, NEW_SRV_ERR_DISK_READ_ERROR);
-      goto done;
-    }
   }
 
   fprintf(fout, "Content-type: text/plain\n\n");
@@ -2272,7 +2263,13 @@ ns_write_tests(const serve_state_t cs, FILE *fout, FILE *log_f,
     goto done;
   }
 
+  /*
   if (prb->type > 0) {
+    ns_error(log_f, NEW_SRV_ERR_TEST_UNAVAILABLE);
+    goto done;
+  }
+  */
+  if (prb->type != PROB_TYPE_STANDARD && prb->type != PROB_TYPE_OUTPUT_ONLY) {
     ns_error(log_f, NEW_SRV_ERR_TEST_UNAVAILABLE);
     goto done;
   }
@@ -3820,7 +3817,7 @@ do_add_row(
   serve_move_files_to_insert_run(cs, run_id);
   arch_flags = archive_make_write_path(cs, run_path, sizeof(run_path),
                                        cs->global->run_archive_dir, run_id,
-                                       run_size, 0);
+                                       run_size, 0, 0);
   if (arch_flags < 0) {
     run_undo_add_record(cs->runlog_state, run_id);
     fprintf(log_f, _("Cannot allocate space to store run row %d\n"), row);

@@ -3,7 +3,7 @@
 #ifndef __FULL_ARCHIVE_H__
 #define __FULL_ARCHIVE_H__
 
-/* Copyright (C) 2005-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,9 +18,19 @@
  */
 
 #include "reuse_integral.h"
+#include "config.h"
+
+#if defined CONF_HAS_LIBZIP
+#include <zip.h>
+#endif
 
 struct full_archive
 {
+#if defined CONF_HAS_LIBZIP
+  int zip_mode;
+
+  struct zip *hzip;
+#endif
   int fd;
 
   // for writing
@@ -59,9 +69,8 @@ int full_archive_append_file(full_archive_t af,
                              const unsigned char *path);
 int full_archive_find_file(full_archive_t af,
                            const unsigned char *name,
-                           long *p_size,
                            long *p_raw_size,
                            unsigned int *p_flags,
-                           const unsigned char **p_data);
+                           unsigned char **p_data);
 
 #endif /* __FULL_ARCHIVE_H__ */

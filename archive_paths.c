@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -160,7 +160,12 @@ archive_make_read_path(const serve_state_t state,
       return -1;
     }
     pp = path + make_hier_path(path, size, base_dir, serial);
-    if (gzip_preferred) {
+    if ((gzip_preferred & ZIP)) {
+      sprintf(pp, "/%s%06d.zip", name_prefix, serial);
+      if (stat(path, &sb) >= 0 && S_ISREG(sb.st_mode)) return ZIP;
+      sprintf(pp, "/%s%06d", name_prefix, serial);
+      if (stat(path, &sb) >= 0 && S_ISREG(sb.st_mode)) return 0;
+    } else if (gzip_preferred) {
       if (state->global->use_gzip) {
         sprintf(pp, "/%s%06d.gz", name_prefix, serial);
         if (stat(path, &sb) >= 0 && S_ISREG(sb.st_mode)) return GZIP;
@@ -177,7 +182,12 @@ archive_make_read_path(const serve_state_t state,
     }
   }
 
-  if (gzip_preferred) {
+  if ((gzip_preferred & ZIP)) {
+    snprintf(path, size, "%s/%s%06d.zip", base_dir, name_prefix, serial);
+    if (stat(path, &sb) >= 0 && S_ISREG(sb.st_mode)) return ZIP;
+    snprintf(path, size, "%s/%s%06d", base_dir, name_prefix, serial);
+    if (stat(path, &sb) >= 0 && S_ISREG(sb.st_mode)) return 0;
+  } else if (gzip_preferred) {
     if (state->global->use_gzip) {
       snprintf(path, size, "%s/%s%06d.gz", base_dir, name_prefix, serial);
       if (stat(path, &sb) >= 0 && S_ISREG(sb.st_mode)) return GZIP;
@@ -198,10 +208,15 @@ archive_make_read_path(const serve_state_t state,
 }
 
 int
-archive_make_write_path(const serve_state_t state,
-                        unsigned char *path, size_t size,
-                        const unsigned char *base_dir, int serial,
-                        size_t file_size, const unsigned char *name_prefix)
+archive_make_write_path(
+        const serve_state_t state,
+        unsigned char *path,
+        size_t size,
+        const unsigned char *base_dir,
+        int serial,
+        size_t file_size,
+        const unsigned char *name_prefix,
+        int zip_mode)
 {
   unsigned char *pp;
 
@@ -215,23 +230,33 @@ archive_make_write_path(const serve_state_t state,
 
   if (state->global->use_dir_hierarchy) {
     pp = path + make_hier_path(path, size, base_dir, serial);
-    if (state->global->use_gzip && file_size > state->global->min_gzip_size) {
-      sprintf(pp, "/%s%06d.gz", name_prefix, serial);
-      return GZIP;
+    if ((zip_mode & ZIP)) {
+      sprintf(pp, "/%s%06d.zip", name_prefix, serial);
+      return ZIP;
+    } else {
+      if (zip_mode >= 0 && state->global->use_gzip && file_size > state->global->min_gzip_size) {
+        sprintf(pp, "/%s%06d.gz", name_prefix, serial);
+        return GZIP;
+      }
+      sprintf(pp, "/%s%06d", name_prefix, serial);
+      return 0;
     }
-    sprintf(pp, "/%s%06d", name_prefix, serial);
-    return 0;
   } else {
-    if (state->global->use_gzip && file_size > state->global->min_gzip_size) {
-      snprintf(path, size, "%s/%s%06d.gz", base_dir, name_prefix, serial);
-      return GZIP;
+    if ((zip_mode & ZIP)) {
+      snprintf(path, size, "%s/%s%06d.zip", base_dir, name_prefix, serial);
+      return ZIP;
+    } else {
+      if (zip_mode >= 0 && state->global->use_gzip && file_size > state->global->min_gzip_size) {
+        snprintf(path, size, "%s/%s%06d.gz", base_dir, name_prefix, serial);
+        return GZIP;
+      }
+      snprintf(path, size, "%s/%s%06d", base_dir, name_prefix, serial);
+      return 0;
     }
-    snprintf(path, size, "%s/%s%06d", base_dir, name_prefix, serial);
-    return 0;
   }
 }
 
-int
+static int
 archive_make_move_path(const serve_state_t state,
                        unsigned char *path, size_t size,
                        const unsigned char *base_dir, int serial,
@@ -249,14 +274,20 @@ archive_make_move_path(const serve_state_t state,
 
   if (state->global->use_dir_hierarchy) {
     pp = path + make_hier_path(path, size, base_dir, serial);
-    if (state->global->use_gzip && (flags & GZIP)) {
+    if ((flags & ZIP)) {
+      sprintf(pp, "/%s%06d.zip", name_prefix, serial);
+      return ZIP;
+    } else if (state->global->use_gzip && (flags & GZIP)) {
       sprintf(pp, "/%s%06d.gz", name_prefix, serial);
       return GZIP;
     }
     sprintf(pp, "/%s%06d", name_prefix, serial);
     return 0;
   } else {
-    if (state->global->use_gzip && (flags & GZIP)) {
+    if ((flags & ZIP)) {
+      snprintf(path, size, "%s/%s%06d.zip", base_dir, name_prefix, serial);
+      return ZIP;
+    } else if (state->global->use_gzip && (flags & GZIP)) {
       snprintf(path, size, "%s/%s%06d.gz", base_dir, name_prefix, serial);
       return GZIP;
     }
@@ -301,12 +332,15 @@ archive_rename(const serve_state_t state,
 }
 
 int
-archive_remove(const serve_state_t state,
-               const unsigned char *base_dir, int serial,
-               const unsigned char *name_prefix)
+archive_remove(
+        const serve_state_t state,
+        const unsigned char *base_dir,
+        int serial,
+        const unsigned char *name_prefix)
 {
   unsigned char *path, *pp;
   size_t plen;
+  unsigned char path2[PATH_MAX];
 
   if (!name_prefix) name_prefix = "";
   plen = strlen(base_dir) + strlen(name_prefix) + 128;
@@ -316,14 +350,18 @@ archive_remove(const serve_state_t state,
     pp = path + make_hier_path(path, plen, base_dir, serial);
     pp += sprintf(pp, "/%s%06d", name_prefix, serial);
     unlink(path);
-    strcpy(pp, ".gz");
-    unlink(path);
+    snprintf(path2, sizeof(path2), "%s.zip", path);
+    unlink(path2);
+    snprintf(path2, sizeof(path2), "%s.gz", path);
+    unlink(path2);
   }
 
   pp = path + sprintf(path, "%s/%s%06d", base_dir, name_prefix, serial);
   unlink(path);
-  strcpy(pp, ".gz");
-  unlink(path);
+  snprintf(path2, sizeof(path2), "%s.zip", path);
+  unlink(path2);
+  snprintf(path2, sizeof(path2), "%s.gz", path);
+  unlink(path2);
 
   return 0;
 }

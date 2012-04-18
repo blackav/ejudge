@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -55,7 +55,7 @@ rename_archive_files(const serve_state_t state, FILE *flog, int num, int *map)
     }
     if (state->global->enable_full_archive) {
       archive_rename(state, state->global->full_archive_dir,
-                     flog, i, "", i, "_", 0);
+                     flog, i, "", i, "_", ZIP);
     }
     archive_rename(state, state->global->audit_log_dir,
                    flog, i, "", i, "_", 0);
@@ -76,7 +76,7 @@ rename_archive_files(const serve_state_t state, FILE *flog, int num, int *map)
     }
     if (state->global->enable_full_archive) {
       archive_rename(state, state->global->full_archive_dir,
-                     flog, i, "_", map[i], "", 0);
+                     flog, i, "_", map[i], "", ZIP);
     }
     archive_rename(state, state->global->audit_log_dir, flog,
                    i, "_", map[i], "", 0);
@@ -752,7 +752,7 @@ runlog_import_xml(
 
     arch_flags = archive_make_write_path(state, run_path, sizeof(run_path),
                                          global->run_archive_dir, j,
-                                         in_data[i].source.size, 0);
+                                         in_data[i].source.size, 0, 0);
     if (arch_flags < 0) {
       fprintf(flog, "ERROR: failed to create source write path for run %d", j);
       continue;
@@ -769,7 +769,7 @@ runlog_import_xml(
 
     if (in_data[i].audit.data) {
       arch_flags = archive_make_write_path(state, run_path, sizeof(run_path),
-                                           global->audit_log_dir, j, 0, 0);
+                                           global->audit_log_dir, j, 0, 0, 0);
       if (arch_flags < 0) {
         fprintf(flog, "ERROR: failed to create audit write path for run %d", j);
         continue;

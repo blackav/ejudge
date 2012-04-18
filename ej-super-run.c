@@ -308,9 +308,15 @@ handle_packet(
     goto cleanup;
   }
 
+#if defined CONF_HAS_LIBZIP
+  if (full_report_path[0] && generic_copy_file(0, NULL, full_report_path, "", 0, full_full_dir, run_base, ".zip") < 0) {
+    goto cleanup;
+  }
+#else
   if (full_report_path[0] && generic_copy_file(0, NULL, full_report_path, "", 0, full_full_dir, run_base, "") < 0) {
     goto cleanup;
   }
+#endif
 
   //run_reply_packet_dump(&reply_pkt);
 
