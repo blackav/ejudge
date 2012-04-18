@@ -814,7 +814,7 @@ serve_move_files_to_insert_run(serve_state_t state, int run_id)
     archive_rename(state, global->xml_report_archive_dir, 0, i, 0, i + 1, 0, 0);
     archive_rename(state, global->report_archive_dir, 0, i, 0, i + 1, 0, 0);
     archive_rename(state, global->team_report_archive_dir, 0,i,0,i + 1,0,0);
-    archive_rename(state, global->full_archive_dir, 0, i, 0, i + 1, 0, 0);
+    archive_rename(state, global->full_archive_dir, 0, i, 0, i + 1, 0, ZIP);
   }
 }
 
@@ -843,7 +843,7 @@ serve_audit_log(serve_state_t state, int run_id, int user_id,
            ltm->tm_hour, ltm->tm_min, ltm->tm_sec);
 
   archive_make_write_path(state, audit_path, sizeof(audit_path),
-                          state->global->audit_log_dir, run_id, 0, 0);
+                          state->global->audit_log_dir, run_id, 0, 0, 0);
   if (archive_dir_prepare(state, state->global->audit_log_dir,
                           run_id, 0, 1) < 0) return;
   if (!(f = fopen(audit_path, "a"))) return;
@@ -2023,7 +2023,7 @@ serve_read_compile_packet(
 
     rep_flags = archive_make_write_path(state, rep_path, sizeof(rep_path),
                                         global->xml_report_archive_dir,
-                                        comp_pkt->run_id, report_size, 0);
+                                        comp_pkt->run_id, report_size, 0, 0);
     if (rep_flags < 0) {
       snprintf(errmsg, sizeof(errmsg),
                "archive_make_write_path: %s, %d, %ld failed\n",
@@ -2038,7 +2038,7 @@ serve_read_compile_packet(
       arch_flags = archive_make_write_path(state,
                                            run_arch_path, sizeof(run_arch_path),
                                            global->report_archive_dir,
-                                           comp_pkt->run_id, run_size, 0);
+                                           comp_pkt->run_id, run_size, 0, 0);
       if (arch_flags >= 0) {
         if (archive_dir_prepare(state, global->report_archive_dir,
                                 comp_pkt->run_id, 0, 1) >= 0) {
@@ -2145,7 +2145,7 @@ serve_read_compile_packet(
       arch_flags = archive_make_write_path(state,
                                            run_arch_path, sizeof(run_arch_path),
                                            global->report_archive_dir,
-                                           comp_pkt->run_id, run_size, 0);
+                                           comp_pkt->run_id, run_size, 0, 0);
       if (arch_flags >= 0) {
         if (archive_dir_prepare(state, global->report_archive_dir,
                                 comp_pkt->run_id, 0, 1) >= 0) {
@@ -2196,7 +2196,7 @@ serve_read_compile_packet(
   report_size = strlen(errmsg);
   rep_flags = archive_make_write_path(state, rep_path, sizeof(rep_path),
                                       state->global->xml_report_archive_dir,
-                                      comp_pkt->run_id, report_size, 0);
+                                      comp_pkt->run_id, report_size, 0, 0);
   if (archive_dir_prepare(state, state->global->xml_report_archive_dir,
                           comp_pkt->run_id, 0, 0) < 0)
     goto non_fatal_error;
@@ -2343,6 +2343,7 @@ serve_read_run_packet(
   unsigned char time_buf[64];
   int ignore_prev_ac = 0;
   int bad_packet_line = 0;
+  const unsigned char *full_suffix = "";
 
   get_current_time(&ts8, &ts8_us);
   if ((r = generic_read_file(&reply_buf, 0, &reply_buf_size, SAFE | REMOVE,
@@ -2452,7 +2453,7 @@ serve_read_run_packet(
   if (rep_size < 0) goto failed;
   rep_flags = archive_make_write_path(state, rep_path, sizeof(rep_path),
                                       state->global->xml_report_archive_dir,
-                                      reply_pkt->run_id, rep_size, 0);
+                                      reply_pkt->run_id, rep_size, 0, 0);
   if (archive_dir_prepare(state, state->global->xml_report_archive_dir,
                           reply_pkt->run_id, 0, 0) < 0)
     goto failed;
@@ -2460,13 +2461,18 @@ serve_read_run_packet(
                         rep_flags, 0, rep_path, "") < 0)
     goto failed;
   if (state->global->enable_full_archive) {
+    full_flags = -1;
+    if (generic_file_size(run_full_archive_dir, pname, ".zip") >= 0) {
+      full_flags = ZIP;
+      full_suffix = ".zip";
+    }
     full_flags = archive_make_write_path(state, full_path, sizeof(full_path),
                                          state->global->full_archive_dir,
-                                         reply_pkt->run_id, 0, 0);
+                                         reply_pkt->run_id, 0, 0, full_flags);
     if (archive_dir_prepare(state, state->global->full_archive_dir,
                             reply_pkt->run_id, 0, 0) < 0)
       goto failed;
-    if (generic_copy_file(REMOVE, run_full_archive_dir, pname, "",
+    if (generic_copy_file(REMOVE, run_full_archive_dir, pname, full_suffix,
                           full_flags, 0, full_path, "") < 0)
       goto failed;
   }
@@ -2721,7 +2727,7 @@ serve_judge_built_in_problem(
   */
   rep_flags = archive_make_write_path(state, rep_path, sizeof(rep_path),
                                       global->xml_report_archive_dir,
-                                      run_id, xml_len, 0);
+                                      run_id, xml_len, 0, 0);
   archive_dir_prepare(state, global->xml_report_archive_dir, run_id, 0, 0);
   generic_write_file(xml_buf, xml_len, rep_flags, 0, rep_path, "");
   serve_audit_log(state, run_id, 0, 0, 0,
@@ -3258,7 +3264,7 @@ serve_squeeze_runs(serve_state_t state)
       archive_rename(state, state->global->report_archive_dir, 0, i, 0, j, 0, 1);
       archive_rename(state, state->global->team_report_archive_dir, 0, i, 0, j, 0, 0);
       if (state->global->enable_full_archive) {
-        archive_rename(state, state->global->full_archive_dir, 0, i, 0, j, 0, 0);
+        archive_rename(state, state->global->full_archive_dir, 0, i, 0, j, 0, ZIP);
       }
       archive_rename(state, state->global->audit_log_dir, 0, i, 0, j, 0, 1);
     }

@@ -2758,7 +2758,11 @@ run_tests(
   pathmake(report_path, global->run_work_dir, "/", "report", NULL);
   full_report_path[0] = 0;
   if (srgp->enable_full_archive > 0) {
+#if defined CONF_HAS_LIBZIP
+    pathmake(full_report_path, global->run_work_dir, "/", "full_output", ".zip", NULL);
+#else
     pathmake(full_report_path, global->run_work_dir, "/", "full_output", NULL);
+#endif
     far = full_archive_open_write(full_report_path);
   }
 

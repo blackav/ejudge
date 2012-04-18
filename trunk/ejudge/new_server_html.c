@@ -2869,7 +2869,7 @@ priv_submit_run(FILE *fout,
                           
   arch_flags = archive_make_write_path(cs, run_path, sizeof(run_path),
                                        global->run_archive_dir, run_id,
-                                       run_size, 0);
+                                       run_size, 0, 0);
   if (arch_flags < 0) {
     run_undo_add_record(cs->runlog_state, run_id);
     ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
@@ -3248,7 +3248,7 @@ priv_set_run_style_error_status(
 
   rep_flags = archive_make_write_path(cs, rep_path, sizeof(rep_path),
                                       global->xml_report_archive_dir,
-                                      run_id, text2_len, 0);
+                                      run_id, text2_len, 0, 0);
   if (rep_flags < 0) {
     snprintf(errmsg, sizeof(errmsg),
              "archive_make_write_path: %s, %d, %zu failed\n",
@@ -4467,7 +4467,7 @@ priv_new_run(FILE *fout,
   serve_move_files_to_insert_run(cs, run_id);
   arch_flags = archive_make_write_path(cs, run_path, sizeof(run_path),
                                        global->run_archive_dir, run_id,
-                                       run_size, 0);
+                                       run_size, 0, 0);
   if (arch_flags < 0) {
     run_undo_add_record(cs->runlog_state, run_id);
     ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
@@ -10344,7 +10344,7 @@ unpriv_submit_run(FILE *fout,
                           
   arch_flags = archive_make_write_path(cs, run_path, sizeof(run_path),
                                        global->run_archive_dir, run_id,
-                                       run_size, 0);
+                                       run_size, 0, 0);
   if (arch_flags < 0) {
     run_undo_add_record(cs->runlog_state, run_id);
     ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
@@ -13748,7 +13748,7 @@ unpriv_xml_update_answer(
 
   arch_flags = archive_make_write_path(cs, run_path, sizeof(run_path),
                                        global->run_archive_dir, run_id,
-                                       run_size, 0);
+                                       run_size, 0, 0);
   if (arch_flags < 0) {
     if (new_flag) run_undo_add_record(cs->runlog_state, run_id);
     FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);

@@ -1059,7 +1059,7 @@ cmd_submit_run(
                           
   arch_flags = archive_make_write_path(cs, run_path, sizeof(run_path),
                                        global->run_archive_dir, run_id,
-                                       run_size, 0);
+                                       run_size, 0, 0);
   if (arch_flags < 0) {
     run_undo_add_record(cs->runlog_state, run_id);
     FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);

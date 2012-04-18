@@ -3,7 +3,7 @@
 #ifndef __FILEUTL_H__
 #define __FILEUTL_H__
 
-/* Copyright (C) 2000-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -25,7 +25,7 @@ void  scan_dir_add_ignored(const unsigned char *dir,
                            const unsigned char *filename);
 
 /* operation flags */
-enum { SAFE = 1, REMOVE = 2, CONVERT = 4, PIPE = 8, GZIP = 16, KEEP_ON_FAIL = 32 };
+enum { SAFE = 1, REMOVE = 2, CONVERT = 4, PIPE = 8, GZIP = 16, KEEP_ON_FAIL = 32, ZIP = 64 };
 
 int generic_read_file(char **buf, size_t maxsz, size_t *readsz, int flags,
                       char const *dir, char const *name, char const *sfx);
