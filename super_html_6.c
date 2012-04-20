@@ -232,6 +232,7 @@ is_contest_privileged(
         const struct userlist_user *u)
 {
   opcap_t caps = 0;
+  if (!cnts) return 0;
   if (opcaps_find(&cnts->capabilities, u->login, &caps) >= 0) return 1;
   return 0;
 }
