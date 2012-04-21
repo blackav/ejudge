@@ -3330,6 +3330,8 @@ ns_set_stand_filter(
     return;
   }
 
+  xfree(u->stand_error_msgs); u->stand_error_msgs = NULL;
+
   if (!IS_EQUAL(stand_user_expr)) {
     if (!*stand_user_expr) {
       u->stand_user_expr = 0;
