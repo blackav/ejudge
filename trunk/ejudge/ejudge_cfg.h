@@ -22,6 +22,7 @@
 #include "opcaps.h"
 
 #include <stdio.h>
+#include <time.h>
 
 struct ejudge_plugin
 {
@@ -42,6 +43,17 @@ struct ejudge_cfg_user_map
   int system_uid;
   unsigned char *system_user_str;
   unsigned char *local_user_str;
+};
+
+struct ejudge_cfg;
+struct ejudge_cfg_caps_file
+{
+  unsigned char *base_path;
+  unsigned char *path;
+  int error_flag;
+  struct ejudge_cfg *root;
+  time_t last_caps_file_check;
+  time_t last_caps_file_mtime;
 };
 
 struct ejudge_cfg
@@ -90,6 +102,7 @@ struct ejudge_cfg
   unsigned char *new_server_log;
   unsigned char *default_clardb_plugin;
   unsigned char *default_rundb_plugin;
+  unsigned char *caps_file;
   struct xml_tree *user_map;
   struct xml_tree *compile_servers;
 
@@ -97,6 +110,8 @@ struct ejudge_cfg
 
   struct xml_tree *plugin_list;
   struct xml_tree *hosts_options;
+
+  struct ejudge_cfg_caps_file *caps_file_info;
 };
 
 struct ejudge_cfg *ejudge_cfg_parse(char const *);
@@ -122,5 +137,26 @@ ejudge_cfg_get_host_option_int(
         const unsigned char *option_name,
         int default_value,
         int error_value);
+
+void
+ejudge_cfg_refresh_caps_file(const struct ejudge_cfg *cfg);
+struct ejudge_cfg_caps_file *
+ejudge_cfg_create_caps_file(const unsigned char *base_path);
+struct ejudge_cfg_caps_file *
+ejudge_cfg_free_caps_file(struct ejudge_cfg_caps_file *info);
+
+int
+ejudge_cfg_opcaps_find(
+        const struct ejudge_cfg *cfg,
+        const unsigned char *login_str, 
+        opcap_t *p_caps);
+const unsigned char *
+ejudge_cfg_user_map_find(
+        const struct ejudge_cfg *cfg,
+        const unsigned char *system_user_str);
+const unsigned char *
+ejudge_cfg_user_map_find_uid(
+        const struct ejudge_cfg *cfg,
+        int system_user_id);
 
 #endif /* __EJUDGE_CFG_H__ */

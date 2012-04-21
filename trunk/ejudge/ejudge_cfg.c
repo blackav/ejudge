@@ -35,6 +35,8 @@
 #include <limits.h>
 #include <ctype.h>
 #include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #if HAVE_PWD_H
 #include <pwd.h>
@@ -94,6 +96,7 @@ enum
     TG_DEFAULT_CLARDB_PLUGIN,
     TG_DEFAULT_RUNDB_PLUGIN,
     TG_HOSTS_OPTIONS,
+    TG_CAPS_FILE,
 
     TG__BARRIER,
     TG__DEFAULT,
@@ -173,6 +176,7 @@ static char const * const elem_map[] =
   "default_clardb_plugin",
   "default_rundb_plugin",
   "hosts_options",
+  "caps_file",
   0,
   "_default",
 
@@ -446,15 +450,15 @@ static const size_t cfg_final_offsets[TG_LAST_TAG] =
   [TG_NEW_SERVER_LOG] = CONFIG_OFFSET(new_server_log),
   [TG_DEFAULT_CLARDB_PLUGIN] = CONFIG_OFFSET(default_clardb_plugin),
   [TG_DEFAULT_RUNDB_PLUGIN] = CONFIG_OFFSET(default_rundb_plugin),
+  [TG_CAPS_FILE] = CONFIG_OFFSET(caps_file),
 };
 
 struct ejudge_cfg *
-ejudge_cfg_parse(char const *path)
+ejudge_cfg_do_parse(char const *path)
 {
   struct xml_tree *tree = 0, *p;
   struct ejudge_cfg *cfg = 0;
   struct xml_attr *a;
-  unsigned char pathbuf[PATH_MAX];
   unsigned char **p_str;
 
   xml_err_path = path;
@@ -545,6 +549,20 @@ ejudge_cfg_parse(char const *path)
 #else
   cfg->l10n = 0;
 #endif
+  return cfg;
+
+ failed:
+  if (tree) ejudge_cfg_free((struct ejudge_cfg *) tree);
+  return 0;
+}
+
+struct ejudge_cfg *
+ejudge_cfg_parse(char const *path)
+{
+  struct ejudge_cfg *cfg = 0;
+  unsigned char pathbuf[PATH_MAX];
+
+  cfg = ejudge_cfg_do_parse(path);
 
   if (!cfg->db_path) {
     xml_err_elem_undefined(&cfg->b, TG_USERDB_FILE);
@@ -624,17 +642,21 @@ ejudge_cfg_parse(char const *path)
   }
 #endif /* EJUDGE_SCRIPT_DIR */
 
+  cfg->caps_file_info = ejudge_cfg_create_caps_file(path);
+
   //ejudge_cfg_unparse(cfg, stdout);
   return cfg;
 
  failed:
-  if (tree) ejudge_cfg_free((struct ejudge_cfg *) tree);
+  if (cfg) ejudge_cfg_free(cfg);
   return 0;
 }
 
 struct ejudge_cfg *
 ejudge_cfg_free(struct ejudge_cfg *cfg)
 {
+  if (!cfg) return NULL;
+  ejudge_cfg_free_caps_file(cfg->caps_file_info);
   xml_tree_free((struct xml_tree*) cfg, &ejudge_config_parse_spec);
   return 0;
 }
@@ -829,6 +851,188 @@ ejudge_cfg_get_host_option_int(
   val = strtol(buf, &eptr, 10);
   if (errno || *eptr) return error_value;
   return val;
+}
+
+struct ejudge_cfg_caps_file *
+ejudge_cfg_create_caps_file(const unsigned char *base_path)
+{
+  struct ejudge_cfg_caps_file *info = NULL;
+  XCALLOC(info, 1);
+  if (base_path) info->base_path = xstrdup(base_path);
+  return info;
+}
+
+struct ejudge_cfg_caps_file *
+ejudge_cfg_free_caps_file(struct ejudge_cfg_caps_file *info)
+{
+  if (!info) return NULL;
+  ejudge_cfg_free(info->root);
+  xfree(info->path);
+  xfree(info->base_path);
+  memset(info, 0, sizeof(*info));
+  xfree(info);
+  return NULL;
+}
+
+enum { CAPS_FILE_CHECK_INTERVAL = 10 };
+
+void
+ejudge_cfg_refresh_caps_file(const struct ejudge_cfg *cfg)
+{
+  unsigned char path[PATH_MAX];
+  unsigned char dirname[PATH_MAX];
+
+  if (!cfg) return;
+  struct ejudge_cfg_caps_file *inf = cfg->caps_file_info;
+  if (!inf || inf->error_flag) return;
+
+  if (!inf->path) {
+    if (!cfg->caps_file) return;
+    if (os_IsAbsolutePath(cfg->caps_file)) {
+      snprintf(path, sizeof(path), "%s", cfg->caps_file);
+    } else {
+      if (!inf->base_path) {
+        snprintf(path, sizeof(path), "%s/%s", EJUDGE_CONF_DIR, cfg->caps_file);
+      } else if (!os_IsAbsolutePath(inf->base_path)) {
+        err("%s: ejudge.xml configuration path %s is relative", __FUNCTION__, inf->base_path);
+        inf->error_flag = 1;
+        return;
+      } else if (os_IsFile(inf->base_path) < 0) {
+        err("%s: ejudge.xml configuration path %s does not exist", __FUNCTION__, inf->base_path);
+        inf->error_flag = 1;
+        return;
+      } else if (os_IsFile(inf->base_path) == OSPK_DIR) {
+        snprintf(path, sizeof(path), "%s/%s", inf->base_path, cfg->caps_file);
+      } else if (os_IsFile(inf->base_path) == OSPK_REG) {
+        os_rDirName(inf->base_path, dirname, sizeof(dirname));
+        snprintf(path, sizeof(path), "%s/%s", dirname, cfg->caps_file);
+      } else {
+        err("%s: ejudge.xml configuration path %s is invalid", __FUNCTION__, inf->base_path);
+        inf->error_flag = 1;
+        return;
+      }
+    }
+    inf->path = xstrdup(path);
+  }
+
+  time_t cur_time = time(NULL);
+  if (inf->last_caps_file_check > 0 && cur_time < inf->last_caps_file_check + CAPS_FILE_CHECK_INTERVAL)
+    return;
+  inf->last_caps_file_check = cur_time;
+
+  info("checking %s", inf->path);
+
+  // FIXME: win32 compilation
+  struct stat stbuf;
+  if (stat(inf->path, &stbuf) < 0) {
+    // remove the existing capabilities
+    if (inf->root) {
+      ejudge_cfg_free(inf->root);
+      inf->root = NULL;
+      inf->last_caps_file_mtime = 0;
+    }
+    return;
+  }
+
+  if (inf->last_caps_file_mtime > 0 && inf->last_caps_file_mtime == stbuf.st_mtime)
+    return;
+  inf->last_caps_file_mtime = stbuf.st_mtime;
+
+  info("reloading %s", inf->path);
+
+  struct ejudge_cfg *new_cfg = ejudge_cfg_do_parse(inf->path);
+  if (!new_cfg) {
+    err("%s: %s parsing failed", __FUNCTION__, inf->path);
+    return;
+  }
+
+  /*
+  for (const struct opcap_list_item *p = new_cfg->capabilities.first; p; p = (const struct opcap_list_item*) p->b.right) {
+    fprintf(stderr, "%s: %016llx\n", p->login, p->caps);
+  }
+
+  if (new_cfg->user_map) {
+    for (const struct xml_tree *p = new_cfg->user_map->first_down; p; p = p->right) {
+      const struct ejudge_cfg_user_map *m = (const struct ejudge_cfg_user_map*) p;
+      fprintf(stderr, "%s -> %s\n", m->system_user_str, m->local_user_str);
+    }
+  }
+  */
+
+  ejudge_cfg_free(inf->root);
+  inf->root = new_cfg;
+  return;
+}
+
+int
+ejudge_cfg_opcaps_find(
+        const struct ejudge_cfg *cfg,
+        const unsigned char *login_str, 
+        opcap_t *p_caps)
+{
+  int r;
+
+  if (p_caps) *p_caps = 0;
+  if (!login_str || !*login_str) return -1;
+  r = opcaps_find(&cfg->capabilities, login_str, p_caps);
+  if (r >= 0) return r;
+
+  ejudge_cfg_refresh_caps_file(cfg);
+  if (!cfg->caps_file_info) return -1;
+  if (!cfg->caps_file_info->root) return -1;
+  return opcaps_find(&cfg->caps_file_info->root->capabilities, login_str, p_caps);
+}
+
+const unsigned char *
+ejudge_cfg_user_map_find(
+        const struct ejudge_cfg *cfg,
+        const unsigned char *system_user_str)
+{
+  if (!system_user_str || !*system_user_str) return NULL;
+  if (!cfg || !cfg->user_map) return NULL;
+  for (const struct xml_tree *p = cfg->user_map->first_down; p; p = p->right) {
+    const struct ejudge_cfg_user_map *m = (const struct ejudge_cfg_user_map*) p;
+    if (m->system_user_str && !strcmp(system_user_str, m->system_user_str)) {
+      return m->local_user_str;
+    }
+  }
+
+  ejudge_cfg_refresh_caps_file(cfg);
+  if (!cfg->caps_file_info || !cfg->caps_file_info->root || !cfg->caps_file_info->root->user_map) return NULL;
+  for (const struct xml_tree *p = cfg->caps_file_info->root->user_map->first_down; p; p = p->right) {
+    const struct ejudge_cfg_user_map *m = (const struct ejudge_cfg_user_map*) p;
+    if (m->system_user_str && !strcmp(system_user_str, m->system_user_str)) {
+      return m->local_user_str;
+    }
+  }
+
+  return NULL;
+}
+
+const unsigned char *
+ejudge_cfg_user_map_find_uid(
+        const struct ejudge_cfg *cfg,
+        int system_user_id)
+{
+  if (system_user_id <= 0) return NULL;
+  if (!cfg || !cfg->user_map) return NULL;
+  for (const struct xml_tree *p = cfg->user_map->first_down; p; p = p->right) {
+    const struct ejudge_cfg_user_map *m = (const struct ejudge_cfg_user_map*) p;
+    if (m->system_uid == system_user_id) {
+      return m->local_user_str;
+    }
+  }
+
+  ejudge_cfg_refresh_caps_file(cfg);
+  if (!cfg->caps_file_info || !cfg->caps_file_info->root || !cfg->caps_file_info->root->user_map) return NULL;
+  for (const struct xml_tree *p = cfg->caps_file_info->root->user_map->first_down; p; p = p->right) {
+    const struct ejudge_cfg_user_map *m = (const struct ejudge_cfg_user_map*) p;
+    if (m->system_uid == system_user_id) {
+      return m->local_user_str;
+    }
+  }
+
+  return NULL;
 }
 
 /*

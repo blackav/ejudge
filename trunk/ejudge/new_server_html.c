@@ -9056,7 +9056,7 @@ privileged_entry_point(
     phr->caps = caps;
   }
   phr->dbcaps = 0;
-  if (opcaps_find(&ejudge_config->capabilities, phr->login, &caps) >= 0) {
+  if (ejudge_cfg_opcaps_find(ejudge_config, phr->login, &caps) >= 0) {
     phr->dbcaps = caps;
   }
 

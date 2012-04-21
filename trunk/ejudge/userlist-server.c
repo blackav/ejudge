@@ -210,8 +210,10 @@ static int server_finish_time = 0;
 static const struct common_loaded_plugin *uldb_default = 0;
 
 /* the map from system uids into the local uids */
+/* for removal
 static int *system_uid_map;
 static size_t system_uid_map_size;
+*/
 
 /* Various strings subject for localization */
 #define _(x) x
@@ -664,6 +666,7 @@ generate_random_password(int size, unsigned char *buf)
 }
 
 /* build the map from the system uids to the local uids */
+/* for removal
 static void
 build_system_uid_map(struct xml_tree *xml_user_map)
 {
@@ -694,8 +697,10 @@ build_system_uid_map(struct xml_tree *xml_user_map)
     system_uid_map[m->system_uid] = i;
   }
 }
+*/
 
 /* remove the entry from the system uid->local uid map upon removal */
+/* for removal
 static void
 remove_from_system_uid_map(int uid)
 {
@@ -707,6 +712,7 @@ remove_from_system_uid_map(int uid)
       system_uid_map[i] = -1;
   }
 }
+ */
 
 static int
 send_email_message(unsigned char const *to,
@@ -900,6 +906,16 @@ get_uid_caps(const opcaplist_t *list, int uid, opcap_t *pcap)
 }
 
 static int
+get_global_uid_caps(const struct ejudge_cfg *cfg, int user_id, opcap_t *pcap)
+{
+  unsigned char *login_str = default_get_login(user_id);
+  if (!login_str) return -1;
+  int r = ejudge_cfg_opcaps_find(cfg, login_str, pcap);
+  xfree(login_str);
+  return r;
+}
+
+static int
 is_admin(struct client_state *p, const unsigned char *pfx)
 {
   if (p->user_id <= 0) {
@@ -957,7 +973,7 @@ is_db_capable(struct client_state *p, int bit, const unsigned char *pfx)
 {
   opcap_t caps;
 
-  if (get_uid_caps(&config->capabilities, p->user_id, &caps) < 0) {
+  if (get_global_uid_caps(config, p->user_id, &caps) < 0) {
     if (pfx) {
       err("%s -> no capability %d", pfx, bit);
     } else {
@@ -983,7 +999,7 @@ check_db_capable(struct client_state *p, int bit)
 {
   opcap_t caps;
 
-  if (get_uid_caps(&config->capabilities, p->user_id, &caps) < 0) return -1;
+  if (get_global_uid_caps(config, p->user_id, &caps) < 0) return -1;
   if (opcaps_check(caps, bit) < 0) return -1;
   return 0;
 }
@@ -1042,7 +1058,7 @@ is_dbcnts_capable(
   opcap_t caps;
 
   // have general DB capability
-  if (get_uid_caps(&config->capabilities, p->user_id, &caps) >= 0
+  if (get_global_uid_caps(config, p->user_id, &caps) >= 0
       && opcaps_check(caps, bit) >= 0)
     return 0;
 
@@ -1089,7 +1105,7 @@ check_dbcnts_capable(
   opcap_t caps;
 
   // have general DB capability
-  if (get_uid_caps(&config->capabilities, p->user_id, &caps) >= 0
+  if (get_global_uid_caps(config, p->user_id, &caps) >= 0
       && opcaps_check(caps, bit) >= 0)
     return 0;
 
@@ -1390,7 +1406,7 @@ is_privileged_user(const struct userlist_user *u)
   opcap_t caps;
 
   if (u->is_privileged) return 0;
-  return opcaps_find(&config->capabilities, u->login, &caps);
+  return ejudge_cfg_opcaps_find(config, u->login, &caps);
 }
 
 static int
@@ -1402,7 +1418,7 @@ is_privileged_cnts_user(
 
   if (u->is_privileged) return 0;
   if (cnts && opcaps_find(&cnts->capabilities, u->login, &caps) >= 0) return 0;
-  return opcaps_find(&config->capabilities, u->login, &caps);
+  return ejudge_cfg_opcaps_find(config, u->login, &caps);
 }
 
 static int
@@ -1416,7 +1432,7 @@ is_privileged_cnts2_user(
   if (u->is_privileged) return 0;
   if (cnts2 && opcaps_find(&cnts2->capabilities,u->login,&caps) >= 0) return 0;
   if (cnts && opcaps_find(&cnts->capabilities, u->login, &caps) >= 0) return 0;
-  return opcaps_find(&config->capabilities, u->login, &caps);
+  return ejudge_cfg_opcaps_find(config, u->login, &caps);
 }
 
 struct passwd_internal
@@ -2300,7 +2316,7 @@ cmd_recover_password_1(struct client_state *p,
   }
 
   if (opcaps_find(&cnts->capabilities, login, &caps) >= 0
-      || opcaps_find(&config->capabilities, login, &caps) >= 0) {
+      || ejudge_cfg_opcaps_find(config, login, &caps) >= 0) {
     err("%s -> privileged user", logbuf);
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
@@ -2479,7 +2495,7 @@ cmd_recover_password_2(struct client_state *p,
   }
 
   if (opcaps_find(&cnts->capabilities, u->login, &caps) >= 0
-      || opcaps_find(&config->capabilities, u->login, &caps) >= 0) {
+      || ejudge_cfg_opcaps_find(config, u->login, &caps) >= 0) {
     err("%s -> privileged user", logbuf);
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
@@ -2588,7 +2604,7 @@ do_remove_user(const struct userlist_user *u)
       update_userlist_table(reg->id);
   }
 
-  remove_from_system_uid_map(u->id);
+  //remove_from_system_uid_map(u->id);
   default_remove_user(u->id);
 }
 
@@ -3337,7 +3353,7 @@ cmd_priv_login(struct client_state *p, int pkt_len,
       return;
     }
   } else {
-    if (get_uid_caps(&config->capabilities, u->id, &caps) < 0) {
+    if (get_global_uid_caps(config, u->id, &caps) < 0) {
       err("%s -> NOT PRIVILEGED", logbuf);
       send_reply(p, -ULS_ERR_NO_PERMS);
       return;
@@ -4127,7 +4143,7 @@ cmd_priv_check_cookie(struct client_state *p,
       return;
     }
   } else {
-    if (get_uid_caps(&config->capabilities, u->id, &caps) < 0) {
+    if (get_global_uid_caps(config, u->id, &caps) < 0) {
       err("%s -> NOT PRIVILEGED", logbuf);
       send_reply(p, -ULS_ERR_NO_PERMS);
       return;
@@ -6245,8 +6261,6 @@ static void
 cmd_admin_process(struct client_state *p, int pkt_len,
                   struct userlist_packet *data)
 {
-  struct ejudge_cfg_user_map *um = 0;
-  struct xml_tree *ut = 0;
   unsigned char logbuf[1024];
   const struct userlist_user *u = 0;
   const struct userlist_user_info *ui;
@@ -6269,22 +6283,17 @@ cmd_admin_process(struct client_state *p, int pkt_len,
     return;
   }
 
-  if (config->user_map) {
-    for (ut = config->user_map->first_down; ut; ut = ut->right) {
-      um = (struct ejudge_cfg_user_map*) ut;
-      if (um->system_uid == p->peer_uid) break;
-    }
-  }
-  if (!ut) {
+  const unsigned char *ejudge_login = ejudge_cfg_user_map_find_uid(config, p->peer_uid);
+  if (!ejudge_login) {
     err("%s -> user is not found in the user id map", logbuf);
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
   }
 
   snprintf(logbuf, sizeof(logbuf), "ADMIN_PROCESS: %d, %d, %s",
-           p->peer_pid, p->peer_uid, um->local_user_str);
+           p->peer_pid, p->peer_uid, ejudge_login);
 
-  if ((user_id = default_get_user_by_login(um->local_user_str)) <= 0) {
+  if ((user_id = default_get_user_by_login(ejudge_login)) <= 0) {
     err("%s -> local user does not exist", logbuf);
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
@@ -8485,8 +8494,6 @@ static int
 check_restart_permissions(struct client_state *p)
 {
   struct passwd *sysp = 0;
-  struct xml_tree *um = 0;
-  struct ejudge_cfg_user_map *m = 0;
   opcap_t caps = 0;
 
   if (!p->peer_uid) return 1;   /* root is allowed */
@@ -8495,14 +8502,10 @@ check_restart_permissions(struct client_state *p)
     err("no user %d in system tables", p->peer_uid);
     return -1;
   }
-  if (!config->user_map) return 0;
-  for (um = config->user_map->first_down; um; um = um->right) {
-    m = (struct ejudge_cfg_user_map*) um;
-    if (!strcmp(m->system_user_str, sysp->pw_name)) break;
-  }
-  if (!um) return 0;
+  const unsigned char *ejudge_login = ejudge_cfg_user_map_find(config, sysp->pw_name);
+  if (!ejudge_login) return 0;
 
-  if (opcaps_find(&config->capabilities, m->local_user_str, &caps) < 0)
+  if (ejudge_cfg_opcaps_find(config, ejudge_login, &caps) < 0)
     return 0;
   if (opcaps_check(caps, OPCAP_RESTART) < 0) return 0;
   return 1;
@@ -11096,7 +11099,7 @@ main(int argc, char *argv[])
   }
 
   // initialize system uid->local uid map
-  build_system_uid_map(config->user_map);
+  //build_system_uid_map(config->user_map);
 
   /*
   return 0;

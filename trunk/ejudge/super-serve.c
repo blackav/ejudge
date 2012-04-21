@@ -1485,7 +1485,7 @@ cmd_main_page(struct client_state *p, int len,
   // check permissions: MASTER_PAGE
   switch (pkt->b.id) {
   case SSERV_CMD_MAIN_PAGE:
-    if (opcaps_find(&config->capabilities, p->login, &caps) < 0) {
+    if (ejudge_cfg_opcaps_find(config, p->login, &caps) < 0) {
       err("%d: user %d has no privileges", p->id, p->user_id);
       return send_reply(p, -SSERV_ERR_PERMISSION_DENIED);
     }
@@ -1513,7 +1513,7 @@ cmd_main_page(struct client_state *p, int len,
       err("%d: inappropriate privilege level", p->id);
       return send_reply(p, -SSERV_ERR_PERMISSION_DENIED);
     }
-    if (opcaps_find(&config->capabilities, p->login, &caps) < 0) {
+    if (ejudge_cfg_opcaps_find(config, p->login, &caps) < 0) {
       err("%d: user %d has no privileges", p->id, p->user_id);
       return send_reply(p, -SSERV_ERR_PERMISSION_DENIED);
     }
@@ -2795,8 +2795,6 @@ static int
 check_restart_permissions(struct client_state *p)
 {
   struct passwd *sysp = 0;
-  struct xml_tree *um = 0;
-  struct ejudge_cfg_user_map *m = 0;
   opcap_t caps = 0;
 
   if (!p->peer_uid) return 1;   /* root is allowed */
@@ -2805,14 +2803,10 @@ check_restart_permissions(struct client_state *p)
     err("no user %d in system tables", p->peer_uid);
     return -1;
   }
-  if (!config->user_map) return 0;
-  for (um = config->user_map->first_down; um; um = um->right) {
-    m = (struct ejudge_cfg_user_map*) um;
-    if (!strcmp(m->system_user_str, sysp->pw_name)) break;
-  }
-  if (!um) return 0;
+  const unsigned char *ejudge_login = ejudge_cfg_user_map_find(config, sysp->pw_name);
+  if (!ejudge_login) return 0;
 
-  if (opcaps_find(&config->capabilities, m->local_user_str, &caps) < 0)
+  if (ejudge_cfg_opcaps_find(config, ejudge_login, &caps) < 0)
     return 0;
   if (opcaps_check(caps, OPCAP_RESTART) < 0) return 0;
   return 1;
