@@ -4564,7 +4564,7 @@ cmd_op_create_new_contest_page(
 
   if (phr->priv_level != PRIV_LEVEL_ADMIN)
     FAIL(S_ERR_PERM_DENIED);
-  if (opcaps_find(&phr->config->capabilities, phr->login, &phr->caps) < 0)
+  if (ejudge_cfg_opcaps_find(phr->config, phr->login, &phr->caps) < 0)
     FAIL(S_ERR_PERM_DENIED);
   if (opcaps_check(phr->caps, OPCAP_EDIT_CONTEST) < 0)
     FAIL(S_ERR_PERM_DENIED);
@@ -4625,7 +4625,7 @@ cmd_op_create_new_contest(
     FAIL(S_ERR_CONTEST_EDITED);
   if (phr->priv_level != PRIV_LEVEL_ADMIN)
     FAIL(S_ERR_PERM_DENIED);
-  if (opcaps_find(&phr->config->capabilities, phr->login, &phr->caps) < 0)
+  if (ejudge_cfg_opcaps_find(phr->config, phr->login, &phr->caps) < 0)
     FAIL(S_ERR_PERM_DENIED);
   if (opcaps_check(phr->caps, OPCAP_EDIT_CONTEST) < 0)
     FAIL(S_ERR_PERM_DENIED);

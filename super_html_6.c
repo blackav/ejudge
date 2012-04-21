@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2011-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -210,7 +210,7 @@ ss_select(
 static int
 get_global_caps(const struct super_http_request_info *phr, opcap_t *pcap)
 {
-  return opcaps_find(&phr->config->capabilities, phr->login, pcap);
+  return ejudge_cfg_opcaps_find(phr->config, phr->login, pcap);
 }
 static int
 get_contest_caps(const struct super_http_request_info *phr, const struct contest_desc *cnts, opcap_t *pcap)
@@ -223,7 +223,7 @@ is_globally_privileged(const struct super_http_request_info *phr, const struct u
 {
   opcap_t caps = 0;
   if (u->is_privileged) return 1;
-  if (opcaps_find(&phr->config->capabilities, u->login, &caps) >= 0) return 1;
+  if (ejudge_cfg_opcaps_find(phr->config, u->login, &caps) >= 0) return 1;
   return 0;
 }
 static int
@@ -244,7 +244,7 @@ is_privileged(
 {
   opcap_t caps = 0;
   if (u->is_privileged) return 1;
-  if (opcaps_find(&phr->config->capabilities, u->login, &caps) >= 0) return 1;
+  if (ejudge_cfg_opcaps_find(phr->config, u->login, &caps) >= 0) return 1;
   if (!cnts) return 0;
   if (opcaps_find(&cnts->capabilities, u->login, &caps) >= 0) return 1;
   return 0;

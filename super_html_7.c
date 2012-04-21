@@ -149,7 +149,7 @@ get_full_caps(const struct super_http_request_info *phr, const struct contest_de
 {
   opcap_t caps1 = 0, caps2 = 0;
 
-  opcaps_find(&phr->config->capabilities, phr->login, &caps1);
+  ejudge_cfg_opcaps_find(phr->config, phr->login, &caps1);
   opcaps_find(&cnts->capabilities, phr->login, &caps2);
   *pcap = caps1 | caps2;
   return 0;

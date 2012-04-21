@@ -1860,17 +1860,7 @@ cmd_reload_server_2(
     if (!pwd || !pwd->pw_name) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
     //fprintf(fout, "system login: %s\n", pwd->pw_name);
     if (!ejudge_config) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
-    if (!ejudge_config->user_map) {
-      fprintf(stderr, "ejudge.xml <user_map> is empty or nonexistant\n");
-      FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
-    }
-    for (const struct xml_tree *p = ejudge_config->user_map->first_down; p; p = p->right) {
-      const struct ejudge_cfg_user_map *m = (const struct ejudge_cfg_user_map*) p;
-      if (m->system_user_str && !strcmp(pwd->pw_name, m->system_user_str)) {
-        ejudge_login = m->local_user_str;
-        break;
-      }
-    }
+    ejudge_login = ejudge_cfg_user_map_find(ejudge_config, pwd->pw_name);
     if (!ejudge_login) {
       fprintf(stderr, "no system user %s is mapped in <user_map> in ejudge.xml\n", pwd->pw_name);
       FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
@@ -1905,7 +1895,7 @@ cmd_reload_server_2(
     //fprintf(fout, "user_id: %d\nname: %s\n", phr->user_id, phr->name);
   }
 
-  if (opcaps_find(&ejudge_config->capabilities, ejudge_login, &caps) < 0) {
+  if (ejudge_cfg_opcaps_find(ejudge_config, ejudge_login, &caps) < 0) {
     if (opcaps_find(&cnts->capabilities, ejudge_login, &caps) < 0) {
       fprintf(stderr, "unload_contest_2: %s: ejudge.xml->no caps, contest.xml->no caps\n", ejudge_login);
       FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
