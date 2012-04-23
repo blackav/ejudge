@@ -219,6 +219,76 @@ static const unsigned char verbatim_flags[TG_LAST_TAG] =
   [TG_HOSTS_OPTIONS] = 1,
 };
 
+static void
+node_free(struct xml_tree *t)
+{
+  switch (t->tag) {
+  case TG_CONFIG:
+    {
+      struct ejudge_cfg *p = (struct ejudge_cfg*) t;
+      xfree(p->socket_path);
+      xfree(p->db_path);
+      xfree(p->contests_dir);
+      xfree(p->email_program);
+      xfree(p->register_url);
+      xfree(p->register_email);
+      xfree(p->server_name);
+      xfree(p->server_name_en);
+      xfree(p->server_main_url);
+      xfree(p->admin_email);
+      xfree(p->l10n_dir);
+      xfree(p->run_path);
+      xfree(p->charset);
+      xfree(p->config_dir);
+      xfree(p->contests_home_dir);
+      xfree(p->full_cgi_data_dir);
+      xfree(p->compile_home_dir);
+      xfree(p->testing_work_dir);
+      xfree(p->script_dir);
+      xfree(p->plugin_dir);
+      xfree(p->var_dir);
+      xfree(p->userlist_log);
+      xfree(p->super_serve_log);
+      xfree(p->job_server_log);
+      xfree(p->compile_log);
+      xfree(p->super_serve_socket);
+      xfree(p->super_serve_user);
+      xfree(p->super_serve_group);
+      xfree(p->userlist_user);
+      xfree(p->userlist_group);
+      xfree(p->job_server_spool);
+      xfree(p->job_server_work);
+      xfree(p->new_server_socket);
+      xfree(p->new_server_log);
+      xfree(p->default_clardb_plugin);
+      xfree(p->default_rundb_plugin);
+      xfree(p->caps_file);
+    }
+    break;
+  case TG_MAP:
+    {
+      struct ejudge_cfg_user_map *p = (struct ejudge_cfg_user_map *) t;
+      xfree(p->system_user_str);
+      xfree(p->local_user_str);
+    }
+    break;
+  case TG_CAP:
+    {
+      struct opcap_list_item *p = (struct opcap_list_item*) t;
+      xfree(p->login);
+    }
+    break;
+  case TG_PLUGIN:
+    {
+      struct ejudge_plugin *p = (struct ejudge_plugin *) t;
+      xfree(p->name);
+      xfree(p->type);
+      xfree(p->path);
+    }
+    break;
+  }
+}
+
 static struct xml_parse_spec ejudge_config_parse_spec =
 {
   .elem_map = elem_map,
@@ -229,7 +299,7 @@ static struct xml_parse_spec ejudge_config_parse_spec =
   .default_attr = AT__DEFAULT,
   .elem_alloc = NULL,
   .attr_alloc = NULL,
-  .elem_free = NULL,
+  .elem_free = node_free,
   .attr_free = NULL,
   .verbatim_flags = verbatim_flags,
 };
@@ -320,7 +390,7 @@ parse_capabilities(struct ejudge_cfg *cfg, struct xml_tree *ct)
     if (p->first->next) return xml_err_elem_invalid(p);
     if (p->first->tag != AT_LOGIN)
       return xml_err_attr_not_allowed(p, p->first);
-    pp->login = p->first->text;
+    pp->login = p->first->text; p->first->text = NULL;
     //if (xml_empty_text(p) < 0) return -1;
     if (opcaps_parse(p->text, &pp->caps) < 0) {
       xml_err(p, "invalid capabilities");
@@ -473,6 +543,8 @@ ejudge_cfg_do_parse(char const *path)
   cfg = (struct ejudge_cfg *) tree;
   xfree(cfg->b.text); cfg->b.text = 0;
   cfg->l10n = -1;
+
+  cfg->ejudge_xml_path = xstrdup(path);
 
   for (a = cfg->b.first; a; a = a->next) {
     switch (a->tag) {
@@ -657,6 +729,7 @@ ejudge_cfg_free(struct ejudge_cfg *cfg)
 {
   if (!cfg) return NULL;
   ejudge_cfg_free_caps_file(cfg->caps_file_info);
+  xfree(cfg->ejudge_xml_path);
   xml_tree_free((struct xml_tree*) cfg, &ejudge_config_parse_spec);
   return 0;
 }

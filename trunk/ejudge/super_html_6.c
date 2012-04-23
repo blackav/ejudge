@@ -36,13 +36,20 @@
 #include "charsets.h"
 #include "csv.h"
 #include "bitset.h"
+#include "fileutl.h"
 
 #include "reuse_xalloc.h"
+#include "reuse_osdeps.h"
 
 #include <stdarg.h>
 #include <printf.h>
 #include <limits.h>
 #include <errno.h>
+#include <sys/types.h>
+#include <pwd.h>
+#include <unistd.h>
+#include <ctype.h>
+#include <sys/stat.h>
 
 #define ARMOR(s)  html_armor_buf(&ab, (s))
 #define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
@@ -8328,5 +8335,476 @@ super_serve_op_GROUP_DELETE_ACTION(
 cleanup:
   userlist_free(&users->b); users = 0;
   xfree(xml_text); xml_text = 0;
+  return retval;
+}
+
+static void
+find_elem_positions(
+        unsigned char *text,
+        int size,
+        int *p_user_map_count,
+        int *p_user_map_begin,
+        int *p_user_map_end,
+        int *p_caps_count,
+        int *p_caps_begin,
+        int *p_caps_end)
+{
+  unsigned char *xml_text = xmemdup(text, size);
+  unsigned char *pos = xml_text;
+
+  // preprocess
+  while (*pos) {
+    if (pos[0] == '<' && pos[1] == '?'
+        && pos[2] == 'x' && pos[3] == 'm' && pos[4] == 'l'
+        && isspace(pos[5])) {
+      pos[0] = ' '; pos[1] = ' '; pos[2] = ' '; pos[3] = ' '; pos[4] = ' ';
+      pos += 5;
+      while (pos[0] && (pos[0] != '?' || pos[1] != '>')) {
+        *pos++ = ' ';
+      }
+      if (pos[0] == '?' && pos[1] == '>') {
+        pos[0] = ' ';
+        pos[1] = ' ';
+        pos += 2;
+      }
+    } else if (pos[0] == '<' && pos[1] == '!' && pos[2] == '-' && pos[3] == '-') {
+      pos[0] = ' '; pos[1] = ' '; pos[2] = ' '; pos[3] = ' ';
+      pos += 4;
+      while (pos[0] && (pos[0] != '-' || pos[1] != '-' || pos[2] != '>')) {
+        *pos++ = ' ';
+      }
+      if (pos[0] == '-' && pos[1] == '-' && pos[2] == '>') {
+        pos[0] = ' '; pos[1] = ' '; pos[2] = ' ';
+        pos += 3;
+      }
+    } else if (pos[0] == '"') {
+      *pos++ = ' ';
+      while (pos[0] && pos[0] != '"') {
+        *pos++ = ' ';
+      }
+      if (pos[0] == '"') {
+        *pos++ = ' ';
+      }
+    } else if (pos[0] == '\'') {
+      *pos++ = ' ';
+      while (pos[0] && pos[0] != '\'') {
+        *pos++ = ' ';
+      }
+      if (pos[0] == '\'') {
+        *pos++ = ' ';
+      }
+    } else if (pos[0] < ' ' && pos[0] != '\n') {
+      *pos++ = ' ';
+    } else if (pos[0] == 127) {
+      *pos++ = ' ';
+    } else {
+      ++pos;
+    }
+  }
+
+  *p_user_map_count = 0;
+  *p_user_map_begin = -1;
+  *p_user_map_end = -1;
+  *p_caps_count = 0;
+  *p_caps_begin = -1;
+  *p_caps_end = -1;
+
+  // detect <user_map>
+  if ((pos = strstr(xml_text, "<user_map>"))) {
+    if (strstr(pos + 1, "<user_map>")) {
+      *p_user_map_count = 2;
+    } else {
+      *p_user_map_count = 1;
+      *p_user_map_begin = pos - xml_text;
+      if ((pos = strstr(pos, "</user_map>"))) {
+        *p_user_map_end = pos - xml_text + 11;
+      }
+    }
+  }
+
+  // detect <caps>
+  if ((pos = strstr(xml_text, "<caps>"))) {
+    if (strstr(pos + 1, "<caps>")) {
+      *p_caps_count = 2;
+    } else {
+      *p_caps_count = 1;
+      *p_caps_begin = pos - xml_text;
+      if ((pos = strstr(pos, "</caps>"))) {
+        *p_caps_end = pos - xml_text + 7;
+      }
+    }
+  }
+
+  xfree(xml_text);
+}
+
+#define DEFAULT_CAPS_FILE "capabilities.xml"
+
+static int
+migration_page(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  struct ejudge_cfg *file_config = NULL;
+  char *text = NULL;
+  size_t size = 0;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  char *new_map_t = NULL, *new_caps_t = NULL, *ext_caps_t = NULL, *new_full_t = NULL;
+  size_t new_map_z = 0, new_caps_z = 0, ext_caps_z = 0, new_full_z = 0;
+  FILE *f = NULL;
+  int c;
+  unsigned char ejudge_xml_tmp_path[PATH_MAX];
+  unsigned char caps_xml_tmp_path[PATH_MAX];
+
+  ejudge_xml_tmp_path[0] = 0;
+  caps_xml_tmp_path[0] = 0;
+
+  int sys_user_id = getuid();
+  struct passwd *sys_pwd = getpwuid(sys_user_id);
+  if (!sys_pwd || !sys_pwd->pw_name) {
+    fprintf(log_f, "ejudge processes run as uid %d, which is nonexistant\n", sys_user_id);
+    FAIL(S_ERR_PERM_DENIED);
+  }
+
+  const unsigned char *ejudge_login = ejudge_cfg_user_map_find(phr->config, sys_pwd->pw_name);
+  if (!ejudge_login) {
+    fprintf(log_f, "ejudge unix user %s is not mapped to ejudge internal user\n", sys_pwd->pw_name);
+    FAIL(S_ERR_PERM_DENIED);
+  }
+
+  if (phr->config->caps_file) {
+    fprintf(log_f, "configuration file is already updated\n");
+    FAIL(S_ERR_INV_OPER);
+  }
+  if (!phr->config->ejudge_xml_path) {
+    fprintf(log_f, "ejudge.xml path is undefined\n");
+    FAIL(S_ERR_INV_OPER);
+  }
+
+  file_config = ejudge_cfg_parse(phr->config->ejudge_xml_path);
+  if (!file_config) {
+    fprintf(log_f, "cannot parse ejudge.xml\n");
+    FAIL(S_ERR_INV_OPER);
+  }
+  if (file_config->caps_file) {
+    ss_redirect(out_f, phr, SSERV_OP_EJUDGE_XML_MUST_RESTART, NULL);
+    goto cleanup;
+  }
+  file_config = ejudge_cfg_free(file_config);
+
+  if (generic_read_file(&text, 0, &size, 0, 0, phr->config->ejudge_xml_path, 0) < 0) {
+    fprintf(log_f, "failed to read ejudge.xml file from '%s'\n", phr->config->ejudge_xml_path);
+    FAIL(S_ERR_FS_ERROR);
+  }
+  if (size != strlen(text)) {
+    fprintf(log_f, "ejudge.xml '%s' contains \\0 byte\n", phr->config->ejudge_xml_path);
+    FAIL(S_ERR_INV_OPER);
+  }
+
+  int um_count = -1, um_begin = -1, um_end = -1, caps_count = -1, caps_begin = -1, caps_end = -1;
+  find_elem_positions(text, (int) size, &um_count, &um_begin, &um_end,
+                      &caps_count, &caps_begin, &caps_end);
+  if (um_count != 1 || um_begin < 0 || um_end < 0 || caps_count != 1 || caps_begin < 0 || caps_end < 0) {
+    fprintf(log_f, "sorry cannot process '%s'\n", phr->config->ejudge_xml_path);
+    FAIL(S_ERR_INV_OPER);
+  }
+  int p1_begin = um_begin, p1_end = um_end, p2_begin = caps_begin, p2_end = caps_end;
+  if (caps_begin < um_begin) {
+    p1_begin = caps_begin;
+    p1_end = caps_end;
+    p2_begin = um_begin;
+    p2_end = um_end;
+  }
+
+  f = open_memstream(&new_map_t, &new_map_z);
+  fprintf(f, "<user_map>\n"
+          "    <map system_user=\"%s\" local_user=\"%s\" />\n"
+          "  </user_map>",
+          sys_pwd->pw_name, ejudge_login);
+  fclose(f); f = NULL;
+  f = open_memstream(&new_caps_t, &new_caps_z);
+  fprintf(f, "<caps_file>%s</caps_file>\n"
+          "  <caps>\n"
+          "    <cap login=\"%s\">FULL_SET</cap>\n"
+          "  </caps>", DEFAULT_CAPS_FILE, ejudge_login);
+  fclose(f); f = NULL;
+  f = open_memstream(&ext_caps_t, &ext_caps_z);
+  fprintf(f, "<?xml version=\"1.0\" encoding=\"%s\"?>\n"
+          "<config>\n", EJUDGE_CHARSET);
+  fprintf(f, "  <user_map>\n");
+  if (phr->config->user_map) {
+    for (const struct xml_tree *p = phr->config->user_map->first_down; p; p = p->right) {
+      const struct ejudge_cfg_user_map *m = (const struct ejudge_cfg_user_map*) p;
+      if (strcmp(m->local_user_str, ejudge_login) != 0) {
+        fprintf(f, "    <map system_user=\"%s\"", ARMOR(m->system_user_str));
+        fprintf(f, " local_user=\"%s\" />\n", ARMOR(m->local_user_str));
+      }
+    }
+  }
+  fprintf(f, "  </user_map>\n");
+  fprintf(f, "  <caps>\n");
+  if (phr->config->capabilities.first) {
+    for (const struct opcap_list_item *p = phr->config->capabilities.first; p;
+         p = (const struct opcap_list_item*) p->b.right) {
+      if (strcmp(p->login, ejudge_login) != 0) {
+        fprintf(f, "    <cap login=\"%s\">\n", ARMOR(p->login));
+        unsigned char *s = opcaps_unparse(6, 60, p->caps);
+        fprintf(f, "%s", s);
+        xfree(s);
+        fprintf(f, "    </cap>\n");
+      }
+    }
+  }
+  fprintf(f, "  </caps>\n");
+  fprintf(f, "</config>\n");
+  fclose(f); f = NULL;
+  f = open_memstream(&new_full_t, &new_full_z);
+  c = text[p1_begin]; text[p1_begin] = 0;
+  fprintf(f, "%s", text);
+  text[p1_begin] = c;
+  fprintf(f, "%s", new_map_t);
+  c = text[p2_begin]; text[p2_begin] = 0;
+  fprintf(f, "%s", text + p1_end);
+  text[p2_begin] = c;
+  fprintf(f, "%s", new_caps_t);
+  fprintf(f, "%s", text + p2_end);
+  fclose(f); f = NULL;
+
+  // FIXME: check, that the new files are correct (can be parsed)
+
+  if (phr->opcode == SSERV_OP_EJUDGE_XML_UPDATE_ACTION) {
+    unsigned char dirname[PATH_MAX];
+    dirname[0] = 0;
+    os_rDirName(phr->config->ejudge_xml_path, dirname, sizeof(dirname));
+    if (!dirname[0] || !strcmp(dirname, ".")) FAIL(S_ERR_FS_ERROR);
+    int pid = getpid();
+    time_t cur_time = time(0);
+    struct tm *ptm = localtime(&cur_time);
+    snprintf(ejudge_xml_tmp_path, sizeof(ejudge_xml_tmp_path),
+             "%s.tmp.%04d%02d%02d.%d", phr->config->ejudge_xml_path,
+             ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday, pid);
+    snprintf(caps_xml_tmp_path, sizeof(caps_xml_tmp_path),
+             "%s/%s.tmp.%04d%02d%02d.%d", dirname, DEFAULT_CAPS_FILE,
+             ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday, pid);
+    unsigned char ejudge_xml_bak_path[PATH_MAX];
+    snprintf(ejudge_xml_bak_path, sizeof(ejudge_xml_bak_path),
+             "%s.bak.%04d%02d%02d", phr->config->ejudge_xml_path,
+             ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday);
+    if (generic_write_file(new_full_t, new_full_z, 0, NULL, ejudge_xml_tmp_path, NULL) < 0) {
+      fprintf(log_f, "failed to write '%s'\n", ejudge_xml_tmp_path);
+      FAIL(S_ERR_FS_ERROR);
+    }
+    if (generic_write_file(ext_caps_t, ext_caps_z, 0, NULL, caps_xml_tmp_path, NULL) < 0) {
+      fprintf(log_f, "failed to write '%s'\n", caps_xml_tmp_path);
+      FAIL(S_ERR_FS_ERROR);
+    }
+    chmod(caps_xml_tmp_path, 0600);
+    struct stat stb;
+    if (stat(phr->config->ejudge_xml_path, &stb) > 0 && S_ISREG(stb.st_mode)) {
+      chown(ejudge_xml_tmp_path, -1, stb.st_gid);
+      chmod(ejudge_xml_tmp_path, stb.st_mode & 07777);
+    }
+    unsigned char caps_xml_path[PATH_MAX];
+    snprintf(caps_xml_path, sizeof(caps_xml_path), "%s/%s", dirname, DEFAULT_CAPS_FILE);
+    if (rename(caps_xml_tmp_path, caps_xml_path) < 0) {
+      fprintf(log_f, "failed to rename '%s' -> '%s'\n", caps_xml_tmp_path, caps_xml_path);
+      FAIL(S_ERR_FS_ERROR);
+    }
+    caps_xml_tmp_path[0] = 0;
+    if (rename(phr->config->ejudge_xml_path, ejudge_xml_bak_path) < 0) {
+      fprintf(log_f, "failed to rename '%s' -> '%s'\n", phr->config->ejudge_xml_path, ejudge_xml_bak_path);
+      unlink(caps_xml_path);
+      FAIL(S_ERR_FS_ERROR);
+    }
+    if (rename(ejudge_xml_tmp_path, phr->config->ejudge_xml_path) < 0) {
+      fprintf(log_f, "failed to rename '%s' -> '%s'\n", ejudge_xml_tmp_path, phr->config->ejudge_xml_path);
+      rename(ejudge_xml_bak_path, phr->config->ejudge_xml_path);
+      unlink(caps_xml_path);
+      FAIL(S_ERR_FS_ERROR);
+    }
+    ejudge_xml_tmp_path[0] = 0;
+
+    ss_redirect(out_f, phr, SSERV_OP_EJUDGE_XML_MUST_RESTART, NULL);
+    goto cleanup;
+  }
+
+  unsigned char buf[1024];
+  unsigned char hbuf[1024];
+
+  snprintf(buf, sizeof(buf), "serve-control: %s, upgrade of ejudge.xml", phr->html_name);
+  ss_write_html_header(out_f, phr, buf, 0, NULL);
+
+  fprintf(out_f, "<h1>%s</h1>\n", buf);
+
+  fprintf(out_f, "<ul>");
+  fprintf(out_f, "<li>%s%s</a></li>",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                        NULL, NULL),
+          "Main page");
+  fprintf(out_f, "<li>%s%s</a></li>",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                        NULL, "action=%d&amp;op=%d",
+                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE),
+          "Browse users");
+  fprintf(out_f, "<li>%s%s</a></li>",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                        NULL, "action=%d&amp;op=%d",
+                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_GROUP_BROWSE_PAGE),
+          "Browse groups");
+  fprintf(out_f, "</ul>\n");
+
+  fprintf(out_f,
+          "<p>This version of ejudge supports the improved format of the global ejudge.xml"
+          " configuration file. Now, user mappings and global user capabilities are stored"
+          " in a separate file, which can be edited using the web-interface. Updates to"
+          " this file are read on-the-fly, so no ejudge restart will be necessary.</p>\n"
+          "<p>In order to enable this new functionality the ejudge.xml global configuration"
+          " file has to be modified as follows. Ejudge can now apply these updates.</p>\n"
+          "<p>Please, review these updates.</p>\n"
+          "<p>After the updates are applied you have to restart ejudge.</p>\n");
+
+  fprintf(out_f, "<h3>Changes to ejudge.xml</h3>\n");
+
+  const unsigned char *cl = " class=\"b1\"";
+  fprintf(out_f, "<table%s>\n", cl);
+  fprintf(out_f, "<tr><th%s>Original ejudge.xml</th><th%s>New ejudge.xml</th></tr>\n", cl, cl);
+  fprintf(out_f, "<tr><td%s valign=\"top\"><pre>", cl);
+  c = text[p1_begin]; text[p1_begin] = 0;
+  fprintf(out_f, "%s", ARMOR(text));
+  text[p1_begin] = c; c = text[p1_end]; text[p1_end] = 0;
+  fprintf(out_f, "<font color=\"red\">%s</font>", ARMOR(text + p1_begin));
+  text[p1_end] = c; c = text[p2_begin]; text[p2_begin] = 0;
+  fprintf(out_f, "%s", ARMOR(text + p1_end));
+  text[p2_begin] = c; c = text[p2_end]; text[p2_end] = 0;
+  fprintf(out_f, "<font color=\"red\">%s</font>", ARMOR(text + p2_begin));
+  text[p2_end] = c;
+  fprintf(out_f, "%s", ARMOR(text + p2_end));
+  fprintf(out_f, "</pre></td><td%s valign=\"top\"><pre>", cl);
+  c = text[p1_begin]; text[p1_begin] = 0;
+  fprintf(out_f, "%s", ARMOR(text));
+  text[p1_begin] = c;
+  fprintf(out_f, "<font color=\"green\">%s</font>", ARMOR(new_map_t));
+  c = text[p2_begin]; text[p2_begin] = 0;
+  fprintf(out_f, "%s", ARMOR(text + p1_end));
+  text[p2_begin] = c;
+  fprintf(out_f, "<font color=\"green\">%s</font>", ARMOR(new_caps_t));
+  fprintf(out_f, "%s", ARMOR(text + p2_end));
+  fprintf(out_f, "</pre></td></tr>\n");
+  fprintf(out_f, "</table>\n");
+
+  fprintf(out_f, "<h3>New file %s</h3>\n", DEFAULT_CAPS_FILE);
+
+  fprintf(out_f, "<table%s>\n", cl);
+  fprintf(out_f, "<tr><td%s valign=\"top\"><pre><font color=\"green\">%s</font></pre></td></tr>\n",
+          cl, ARMOR(ext_caps_t));
+  fprintf(out_f, "</table>\n");
+
+  html_start_form(out_f, 1, phr->self_url, "");
+  html_hidden(out_f, "SID", "%016llx", phr->session_id);
+  html_hidden(out_f, "action", "%d", SSERV_CMD_HTTP_REQUEST);
+
+  cl = " class=\"b0\"";
+  fprintf(out_f, "<table%s>\n", cl);
+  fprintf(out_f, "<tr><td%s>", cl);
+  fprintf(out_f, "<input type=\"submit\" name=\"op_%d\" value=\"%s\" />",
+          SSERV_OP_EJUDGE_XML_CANCEL_ACTION, "No, cancel action");
+  fprintf(out_f, "&nbsp;<input type=\"submit\" name=\"op_%d\" value=\"%s\" />",
+          SSERV_OP_EJUDGE_XML_UPDATE_ACTION, "Yes, apply the updates!");
+  fprintf(out_f, "</td></tr>\n");
+  fprintf(out_f, "</table>\n");
+  fprintf(out_f, "</form>\n");
+
+  ss_write_html_footer(out_f);
+
+cleanup:
+  if (ejudge_xml_tmp_path[0]) unlink(ejudge_xml_tmp_path);
+  if (caps_xml_tmp_path[0]) unlink(caps_xml_tmp_path);
+  if (f) fclose(f);
+  xfree(new_map_t);
+  xfree(new_caps_t);
+  xfree(ext_caps_t);
+  xfree(new_full_t);
+  html_armor_free(&ab);
+  xfree(text);
+  ejudge_cfg_free(file_config);
+  return retval;
+}
+
+int
+super_serve_op_USER_MAP_MAIN_PAGE(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  opcap_t caps = 0;
+
+  if (get_global_caps(phr, &caps) < 0 || opcaps_check(caps, OPCAP_PRIV_EDIT_USER) < 0) {
+    FAIL(S_ERR_PERM_DENIED);
+  }
+
+  if (!phr->config->caps_file) {
+    return migration_page(log_f, out_f, phr);
+  }
+
+cleanup:
+  return retval;
+}
+
+int
+super_serve_op_EJUDGE_XML_UPDATE_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  return migration_page(log_f, out_f, phr);
+}
+
+int
+super_serve_op_EJUDGE_XML_CANCEL_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  fprintf(out_f, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\nLocation: %s?SID=%016llx\n\n", EJUDGE_CHARSET, phr->self_url, phr->session_id);
+  return 0;
+}
+
+int
+super_serve_op_EJUDGE_XML_MUST_RESTART(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  unsigned char buf[1024];
+  unsigned char hbuf[1024];
+
+  snprintf(buf, sizeof(buf), "serve-control: %s, you must restart ejudge", phr->html_name);
+  ss_write_html_header(out_f, phr, buf, 0, NULL);
+
+  fprintf(out_f, "<h1>%s</h1>\n", buf);
+
+  fprintf(out_f, "<ul>");
+  fprintf(out_f, "<li>%s%s</a></li>",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                        NULL, NULL),
+          "Main page");
+  fprintf(out_f, "<li>%s%s</a></li>",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                        NULL, "action=%d&amp;op=%d",
+                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE),
+          "Browse users");
+  fprintf(out_f, "<li>%s%s</a></li>",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                        NULL, "action=%d&amp;op=%d",
+                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_GROUP_BROWSE_PAGE),
+          "Browse groups");
+  fprintf(out_f, "</ul>\n");
+
+  fprintf(out_f, "<p>Now you must restart ejudge.</p>");
+
   return retval;
 }

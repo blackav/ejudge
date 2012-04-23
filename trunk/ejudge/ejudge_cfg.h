@@ -112,6 +112,7 @@ struct ejudge_cfg
   struct xml_tree *hosts_options;
 
   struct ejudge_cfg_caps_file *caps_file_info;
+  unsigned char *ejudge_xml_path;
 };
 
 struct ejudge_cfg *ejudge_cfg_parse(char const *);
