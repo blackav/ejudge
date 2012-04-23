@@ -7106,3 +7106,13 @@ new_server_html_4.c 6758 0 5398988
 super_html_4.c 6758 0 19259449
 super_html_6.c 6758 0 25415303
 super_html_7.c 6758 0 22331403
+ejudge_cfg.h 6761 0 388063
+super_proto.h 6761 0 3088181
+super-serve.c 6761 0 13473191
+unix/pollfds.c 6760 0 206616
+ejudge_cfg.c 6761 0 2319382
+opcaps.c 6761 0 593505
+super_html.c 6761 0 12051304
+super_html_6.c 6761 0 26699629
+super_proto.c 6761 0 2104881
+opcaps_2.c 6762 0 199855
