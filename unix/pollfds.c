@@ -57,8 +57,8 @@ pollfds_free(pollfds_t *pfd)
   if (pfd) {
     xfree(pfd->fds);
     xfree(pfd->extras);
-    xfree(pfd);
     memset(pfd, 0, sizeof(*pfd));
+    xfree(pfd);
   }
   return NULL;
 }
