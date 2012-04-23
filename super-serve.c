@@ -4443,6 +4443,7 @@ do_loop(void)
     //hup_flag = 0;
   }
 
+  pfds = pollfds_free(pfds);
   return 0;
 }
 

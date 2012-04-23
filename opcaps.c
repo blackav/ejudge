@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -216,7 +216,9 @@ opcaps_parse(unsigned char const *str, opcap_t *pcap)
       memset(str3, 0, len + 10);
       memcpy(str3, q, e - q);
 
-      if (!strcmp("OBSERVER_SET", str3)) {
+      if (!strcmp("FULL_SET", str3)) {
+        lcap |= ((1ULL << OPCAP_LAST) - 1);
+      } else if (!strcmp("OBSERVER_SET", str3)) {
         lcap |= OPCAP_OBSERVER_PERMS;
       } else if (!strcmp("JUDGE_SET", str3)) {
         lcap |= OPCAP_JUDGE_PERMS;
