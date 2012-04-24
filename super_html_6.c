@@ -8740,6 +8740,10 @@ super_serve_op_USER_MAP_MAIN_PAGE(
 {
   int retval = 0;
   opcap_t caps = 0;
+  unsigned char buf[1024];
+  unsigned char hbuf[1024];
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  int serial = 0;
 
   if (get_global_caps(phr, &caps) < 0 || opcaps_check(caps, OPCAP_PRIV_EDIT_USER) < 0) {
     FAIL(S_ERR_PERM_DENIED);
@@ -8749,7 +8753,65 @@ super_serve_op_USER_MAP_MAIN_PAGE(
     return migration_page(log_f, out_f, phr);
   }
 
+  snprintf(buf, sizeof(buf), "serve-control: %s, user map", phr->html_name);
+  ss_write_html_header(out_f, phr, buf, 0, NULL);
+
+  fprintf(out_f, "<h1>%s</h1>\n", buf);
+
+  fprintf(out_f, "<ul>");
+  fprintf(out_f, "<li>%s%s</a></li>",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                        NULL, NULL),
+          "Main page");
+  fprintf(out_f, "</ul>");
+
+  ejudge_cfg_refresh_caps_file(phr->config, 1);
+
+  const unsigned char *cl = " class=\"b1\"";
+  fprintf(out_f, "<table%s>\n", cl);
+  fprintf(out_f, "<tr><th%s>System (unix) user</th><th%s>Ejudge user</th></tr>\n", cl, cl);
+  if (phr->config->caps_file_info && phr->config->caps_file_info->root
+      && phr->config->caps_file_info->root->user_map) {
+    for (const struct xml_tree *p = phr->config->caps_file_info->root->user_map->first_down;
+         p; p = p->right) {
+      ++serial;
+      const struct ejudge_cfg_user_map *m = (const struct ejudge_cfg_user_map*) p;
+      fprintf(out_f, "<tr>");
+      fprintf(out_f, "<td%s>%s</td>", cl, ARMOR(m->system_user_str));
+      fprintf(out_f, "<td%s>%s</td>", cl, ARMOR(m->local_user_str));
+      fprintf(out_f, "<td%s>%s%s</a>", cl,
+              html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                            NULL, "action=%d&amp;op=%d&amp;serial=%d",
+                            SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_MAP_DELETE_ACTION,
+                            serial),
+              "[Delete]");
+      fprintf(out_f, "</tr>\n");
+    }
+  }
+  fprintf(out_f, "</table>\n");
+
+  fprintf(out_f, "<h3>Create new mapping</h3>\n");
+
+  html_start_form(out_f, 1, phr->self_url, "");
+  html_hidden(out_f, "SID", "%016llx", phr->session_id);
+  html_hidden(out_f, "action", "%d", SSERV_CMD_HTTP_REQUEST);
+  cl = " class=\"b0\"";
+  fprintf(out_f, "<table%s>\n", cl);
+
+  fprintf(out_f, "<tr><td%s>%s:</td><td%s><input type=\"text\" size=\"40\" name=\"unix_login\" /></td></tr>\n",
+          cl, "Unix login", cl);
+  fprintf(out_f, "<tr><td%s>%s:</td><td%s><input type=\"text\" size=\"40\" name=\"ejudge_login\" /></td></tr>\n",
+          cl, "Ejudge login", cl);
+
+  fprintf(out_f, "<tr><td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></tr></td>\n",
+          cl, SSERV_OP_USER_MAP_ADD_ACTION, "Create mapping");
+  fprintf(out_f, "</table>\n");
+  fprintf(out_f, "</form>\n");
+
+  ss_write_html_footer(out_f);
+
 cleanup:
+  html_armor_free(&ab);
   return retval;
 }
 
@@ -8759,7 +8821,17 @@ super_serve_op_EJUDGE_XML_UPDATE_ACTION(
         FILE *out_f,
         struct super_http_request_info *phr)
 {
+  int retval = 0;
+  opcap_t caps = 0;
+
+  if (get_global_caps(phr, &caps) < 0 || opcaps_check(caps, OPCAP_PRIV_EDIT_USER) < 0) {
+    FAIL(S_ERR_PERM_DENIED);
+  }
+
   return migration_page(log_f, out_f, phr);
+
+cleanup:
+  return retval;
 }
 
 int
@@ -8806,5 +8878,619 @@ super_serve_op_EJUDGE_XML_MUST_RESTART(
 
   fprintf(out_f, "<p>Now you must restart ejudge.</p>");
 
+  return retval;
+}
+
+static int
+save_caps_file(FILE *log_f, const struct ejudge_cfg *cfg)
+{
+  int retval = 0;
+  unsigned char caps_xml_tmp_path[PATH_MAX];
+  unsigned char caps_xml_bak_path[PATH_MAX];
+  FILE *f = NULL;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+
+  caps_xml_tmp_path[0] = 0;
+  caps_xml_bak_path[0] = 0;
+
+  if (!cfg->caps_file) return 0;
+  if (!cfg->caps_file_info) return 0;
+  if (!cfg->caps_file_info->root) return 0;
+  if (!cfg->caps_file_info->path) return 0;
+
+  struct ejudge_cfg *root = cfg->caps_file_info->root;
+  int pid = getpid();
+  time_t cur_time = time(0);
+  struct tm *ptm = localtime(&cur_time);
+
+  snprintf(caps_xml_tmp_path, sizeof(caps_xml_tmp_path),
+           "%s.tmp.%04d%02d%02d.%d", cfg->caps_file_info->path,
+           ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday, pid);
+  snprintf(caps_xml_bak_path, sizeof(caps_xml_bak_path),
+           "%s.bak.%04d%02d%02d", cfg->caps_file_info->path,
+           ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday);
+
+  if (!(f = fopen(caps_xml_tmp_path, "w"))) {
+    fprintf(log_f, "failed to open '%s' for writing\n", caps_xml_tmp_path);
+    FAIL(S_ERR_FS_ERROR);
+  }
+
+  fprintf(f, "<?xml version=\"1.0\" encoding=\"%s\"?>\n"
+          "<config>\n", EJUDGE_CHARSET);
+  fprintf(f, "  <user_map>\n");
+  if (root->user_map) {
+    for (const struct xml_tree *p = root->user_map->first_down; p; p = p->right) {
+      const struct ejudge_cfg_user_map *m = (const struct ejudge_cfg_user_map*) p;
+      fprintf(f, "    <map system_user=\"%s\"", ARMOR(m->system_user_str));
+      fprintf(f, " local_user=\"%s\" />\n", ARMOR(m->local_user_str));
+    }
+  }
+  fprintf(f, "  </user_map>\n");
+  fprintf(f, "  <caps>\n");
+  if (root->capabilities.first) {
+    for (const struct opcap_list_item *p = root->capabilities.first; p;
+         p = (const struct opcap_list_item*) p->b.right) {
+      fprintf(f, "    <cap login=\"%s\">\n", ARMOR(p->login));
+      unsigned char *s = opcaps_unparse(6, 60, p->caps);
+      fprintf(f, "%s", s);
+      xfree(s);
+      fprintf(f, "    </cap>\n");
+    }
+  }
+  fprintf(f, "  </caps>\n");
+  fprintf(f, "</config>\n");
+  fclose(f); f = NULL;
+
+  struct stat stb;
+  if (stat(cfg->caps_file_info->path, &stb) > 0 && S_ISREG(stb.st_mode)) {
+    chown(caps_xml_tmp_path, -1, stb.st_gid);
+    chmod(caps_xml_tmp_path, stb.st_mode & 07777);
+  } else {
+    chmod(caps_xml_tmp_path, 0600);
+  }
+
+  errno = 0;
+  if (link(cfg->caps_file_info->path, caps_xml_bak_path) < 0 && errno != EEXIST) {
+    fprintf(log_f, "failed to link '%s' -> '%s'\n", cfg->caps_file_info->path, caps_xml_bak_path);
+    FAIL(S_ERR_FS_ERROR);
+  }
+  if (rename(caps_xml_tmp_path, cfg->caps_file_info->path) < 0) {
+    fprintf(log_f, "failed to rename '%s' -> '%s'\n", caps_xml_tmp_path, cfg->caps_file_info->path);
+    unlink(caps_xml_bak_path);
+    FAIL(S_ERR_FS_ERROR);
+  }
+  caps_xml_tmp_path[0] = 0;
+
+cleanup:
+  html_armor_free(&ab);
+  if (f) fclose(f);
+  if (caps_xml_tmp_path[0]) unlink(caps_xml_tmp_path);
+  return retval;
+}
+
+int
+super_serve_op_USER_MAP_DELETE_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  opcap_t caps = 0;
+
+  if (get_global_caps(phr, &caps) < 0 || opcaps_check(caps, OPCAP_PRIV_EDIT_USER) < 0) {
+    FAIL(S_ERR_PERM_DENIED);
+  }
+  if (!phr->config->caps_file) goto done;
+
+  ejudge_cfg_refresh_caps_file(phr->config, 1);
+
+  if (!phr->config->caps_file_info) goto done;
+  if (!phr->config->caps_file_info->root) goto done;
+  if (!phr->config->caps_file_info->root->user_map) goto done;
+
+  int serial = -1;
+  ss_cgi_param_int_opt(phr, "serial", &serial, -1);
+  if (serial <= 0) goto done;
+  int i = 1;
+  struct xml_tree *p = phr->config->caps_file_info->root->user_map->first_down;
+  for (;p && i != serial; p = p->right, ++i) {
+  }
+  if (!p) goto done;
+  xml_unlink_node(p);
+  p = ejudge_cfg_free_subtree(p);
+
+  if ((retval = save_caps_file(log_f, phr->config)) < 0) goto cleanup;
+
+done:
+  ss_redirect(out_f, phr, SSERV_OP_USER_MAP_MAIN_PAGE, NULL);
+
+cleanup:
+  ejudge_cfg_refresh_caps_file(phr->config, 1);
+  return retval;
+}
+
+int
+super_serve_op_USER_MAP_ADD_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  opcap_t caps = 0;
+
+  if (get_global_caps(phr, &caps) < 0 || opcaps_check(caps, OPCAP_PRIV_EDIT_USER) < 0) {
+    FAIL(S_ERR_PERM_DENIED);
+  }
+
+  if (!phr->config->caps_file) {
+    fprintf(log_f, "<caps_file> element is undefined in ejudge.xml\n");
+    FAIL(S_ERR_INV_OPER);
+  }
+
+  if (!phr->config->caps_file_info || !phr->config->caps_file_info->root) {
+    fprintf(log_f, "invalid <caps_file> element in ejudge.xml\n");
+    FAIL(S_ERR_INV_OPER);
+  }
+
+  const unsigned char *unix_login = NULL;
+  const unsigned char *ejudge_login = NULL;
+  if (ss_cgi_param(phr, "unix_login", &unix_login) <= 0) {
+    fprintf(log_f, "unix login is undefined\n");
+    FAIL(S_ERR_INV_OPER);
+  }
+  if (ss_cgi_param(phr, "ejudge_login", &ejudge_login) <= 0) {
+    fprintf(log_f, "ejudge login is undefined\n");
+    FAIL(S_ERR_INV_OPER);
+  }
+  struct passwd *pwd = getpwnam(unix_login);
+  if (!pwd) {
+    fprintf(log_f, "unix login '%s' does not exist\n", unix_login);
+    FAIL(S_ERR_INV_OPER);
+  }
+  if (pwd->pw_uid <= 0) {
+    fprintf(log_f, "unix login '%s' is root login\n", unix_login);
+    FAIL(S_ERR_INV_OPER);
+  }
+
+  int user_id = 0;
+  int r = userlist_clnt_lookup_user(phr->userlist_clnt, ejudge_login, 0, &user_id, NULL);
+  if (r < 0 && r != -ULS_ERR_INVALID_LOGIN) {
+    FAIL(S_ERR_DB_ERROR);
+  }
+  if (r < 0) {
+    fprintf(log_f, "ejudge login '%s' does not exist\n", ejudge_login);
+    FAIL(S_ERR_INV_OPER);
+  }
+
+  const unsigned char *ex_ejudge_login = ejudge_cfg_user_map_find_simple(phr->config, unix_login);
+  if (ex_ejudge_login && !strcmp(ex_ejudge_login, ejudge_login)) goto done;
+  if (ex_ejudge_login) {
+    fprintf(log_f, "mapping of unix login '%s' cannot be changed\n", unix_login);
+    FAIL(S_ERR_INV_OPER);
+  }
+  ex_ejudge_login = ejudge_cfg_user_map_find_simple(phr->config->caps_file_info->root, unix_login);
+  if (ex_ejudge_login && !strcmp(ex_ejudge_login, ejudge_login)) goto done;
+  if (ex_ejudge_login) {
+    fprintf(log_f, "mapping of unix login '%s' to ejudge login '%s' already exists\n", unix_login, ex_ejudge_login);
+    FAIL(S_ERR_INV_OPER);
+  }
+
+  ejudge_cfg_user_map_add(phr->config->caps_file_info->root, unix_login, ejudge_login);
+
+  if ((retval = save_caps_file(log_f, phr->config)) < 0) goto cleanup;
+
+done:
+  ss_redirect(out_f, phr, SSERV_OP_USER_MAP_MAIN_PAGE, NULL);
+
+cleanup:
+  ejudge_cfg_refresh_caps_file(phr->config, 1);
+  return retval;
+}
+
+int
+super_serve_op_CAPS_MAIN_PAGE(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  opcap_t caps = 0;
+  unsigned char buf[1024];
+  unsigned char hbuf[1024];
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  int serial = 0;
+
+  if (get_global_caps(phr, &caps) < 0 || opcaps_check(caps, OPCAP_PRIV_EDIT_USER) < 0) {
+    FAIL(S_ERR_PERM_DENIED);
+  }
+
+  if (!phr->config->caps_file) {
+    return migration_page(log_f, out_f, phr);
+  }
+
+  snprintf(buf, sizeof(buf), "serve-control: %s, global user capabilities", phr->html_name);
+  ss_write_html_header(out_f, phr, buf, 0, NULL);
+
+  fprintf(out_f, "<h1>%s</h1>\n", buf);
+
+  fprintf(out_f, "<ul>");
+  fprintf(out_f, "<li>%s%s</a></li>",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                        NULL, NULL),
+          "Main page");
+  fprintf(out_f, "</ul>");
+
+  ejudge_cfg_refresh_caps_file(phr->config, 1);
+  const struct ejudge_cfg *root = phr->config->caps_file_info->root;
+
+  const unsigned char *cl = " class=\"b1\"";
+  fprintf(out_f, "<table%s>\n", cl);
+  fprintf(out_f, "<tr><th%s>User</th><th%s>Capabilities</th><th%s>Actions</th></tr>\n", cl, cl, cl);
+  if (root) {
+    for (const struct xml_tree *p = (struct xml_tree*) root->capabilities.first; p; p = p->right) {
+      ++serial;
+      const struct opcap_list_item *c = (const struct opcap_list_item*) p;
+      fprintf(out_f, "<tr>");
+      fprintf(out_f, "<td%s>%s</td>", cl, ARMOR(c->login));
+      unsigned char *str = opcaps_unparse(0, 60, c->caps);
+      fprintf(out_f, "<td%s><pre>%s</pre></td>", cl, str);
+      xfree(str); str = NULL;
+      fprintf(out_f, "<td%s>%s%s</a>", cl,
+              html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                            NULL, "action=%d&amp;op=%d&amp;serial=%d",
+                            SSERV_CMD_HTTP_REQUEST, SSERV_OP_CAPS_EDIT_PAGE,
+                            serial),
+              "[Edit]");
+      fprintf(out_f, "&nbsp;%s%s</a></td>",
+              html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                            NULL, "action=%d&amp;op=%d&amp;serial=%d",
+                            SSERV_CMD_HTTP_REQUEST, SSERV_OP_CAPS_DELETE_ACTION,
+                            serial),
+              "[Delete]");
+      fprintf(out_f, "</tr>\n");
+    }
+  }
+  fprintf(out_f, "</table>\n");
+
+  fprintf(out_f, "<h3>Create new global user capability</h3>\n");
+
+  html_start_form(out_f, 1, phr->self_url, "");
+  html_hidden(out_f, "SID", "%016llx", phr->session_id);
+  html_hidden(out_f, "action", "%d", SSERV_CMD_HTTP_REQUEST);
+  cl = " class=\"b0\"";
+  fprintf(out_f, "<table%s>\n", cl);
+
+  fprintf(out_f, "<tr><td%s>%s:</td><td%s><input type=\"text\" size=\"40\" name=\"ejudge_login\" /></td></tr>\n",
+          cl, "Login", cl);
+
+  fprintf(out_f, "<tr><td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></tr></td>\n",
+          cl, SSERV_OP_CAPS_ADD_ACTION, "Create");
+  fprintf(out_f, "</table>\n");
+  fprintf(out_f, "</form>\n");
+
+  ss_write_html_footer(out_f);
+
+cleanup:
+  html_armor_free(&ab);
+  return retval;
+}
+
+int
+super_serve_op_CAPS_DELETE_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  opcap_t caps = 0;
+
+  if (get_global_caps(phr, &caps) < 0 || opcaps_check(caps, OPCAP_PRIV_EDIT_USER) < 0) {
+    FAIL(S_ERR_PERM_DENIED);
+  }
+  if (!phr->config->caps_file) goto done;
+
+  ejudge_cfg_refresh_caps_file(phr->config, 1);
+
+  if (!phr->config->caps_file_info) goto done;
+  if (!phr->config->caps_file_info->root) goto done;
+  struct ejudge_cfg *root = phr->config->caps_file_info->root;
+
+  if (!root->capabilities.first) goto done;
+
+  int serial = -1;
+  ss_cgi_param_int_opt(phr, "serial", &serial, -1);
+  if (serial <= 0) goto done;
+
+  int i = 1;
+  struct opcap_list_item *p = root->capabilities.first;
+  for (; p && i != serial; p = (struct opcap_list_item*) p->b.right, ++i) {
+  }
+  if (!p) goto done;
+  xml_unlink_node(&p->b);
+  ejudge_cfg_free_subtree(&p->b);
+  root->capabilities.first = (struct opcap_list_item*) root->caps_node->first_down;
+  if (!root->capabilities.first) {
+    xml_unlink_node(root->caps_node);
+    ejudge_cfg_free_subtree(root->caps_node);
+    root->caps_node = NULL;
+  }
+
+  if ((retval = save_caps_file(log_f, phr->config)) < 0) goto cleanup;
+
+done:
+  ss_redirect(out_f, phr, SSERV_OP_CAPS_MAIN_PAGE, NULL);
+
+cleanup:
+  ejudge_cfg_refresh_caps_file(phr->config, 1);
+  return retval;
+}
+
+int
+super_serve_op_CAPS_ADD_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  opcap_t caps = 0;
+
+  if (get_global_caps(phr, &caps) < 0 || opcaps_check(caps, OPCAP_PRIV_EDIT_USER) < 0) {
+    FAIL(S_ERR_PERM_DENIED);
+  }
+
+  if (!phr->config->caps_file) {
+    fprintf(log_f, "<caps_file> element is undefined in ejudge.xml\n");
+    FAIL(S_ERR_INV_OPER);
+  }
+
+  ejudge_cfg_refresh_caps_file(phr->config, 1);
+
+  if (!phr->config->caps_file_info || !phr->config->caps_file_info->root) {
+    fprintf(log_f, "invalid <caps_file> element in ejudge.xml\n");
+    FAIL(S_ERR_INV_OPER);
+  }
+
+  struct ejudge_cfg *root = phr->config->caps_file_info->root;
+
+  const unsigned char *ejudge_login = NULL;
+  if (ss_cgi_param(phr, "ejudge_login", &ejudge_login) <= 0 || !ejudge_login) {
+    fprintf(log_f, "ejudge login is undefined\n");
+    FAIL(S_ERR_INV_OPER);
+  }
+
+  int user_id = 0;
+  int r = userlist_clnt_lookup_user(phr->userlist_clnt, ejudge_login, 0, &user_id, NULL);
+  if (r < 0 && r != -ULS_ERR_INVALID_LOGIN) {
+    FAIL(S_ERR_DB_ERROR);
+  }
+  if (r < 0) {
+    fprintf(log_f, "ejudge login '%s' does not exist\n", ejudge_login);
+    FAIL(S_ERR_INV_OPER);
+  }
+
+  if (opcaps_find(&phr->config->capabilities, ejudge_login, &caps) >= 0) {
+    fprintf(log_f, "capabilities for '%s' aready exist and cannot be changed\n", ejudge_login);
+    FAIL(S_ERR_INV_OPER);
+  }
+  if (opcaps_find(&root->capabilities, ejudge_login, &caps) >= 0) {
+    fprintf(log_f, "capabilities for '%s' already exist\n", ejudge_login);
+    FAIL(S_ERR_INV_OPER);
+  }
+
+  ejudge_cfg_caps_add(root, ejudge_login, 0);
+
+  if ((retval = save_caps_file(log_f, phr->config)) < 0) goto cleanup;
+
+  ss_redirect(out_f, phr, SSERV_OP_CAPS_MAIN_PAGE, NULL);
+
+cleanup:
+  ejudge_cfg_refresh_caps_file(phr->config, 1);
+  return retval;
+}
+
+static const unsigned char * const global_cap_descs[] =
+{
+  [OPCAP_MASTER_LOGIN] = "Allowed login to serve-control with administrative capabilities",
+  [OPCAP_JUDGE_LOGIN] = "Allowed login to serve-control with less capabilities",
+  [OPCAP_SUBMIT_RUN] = NULL,
+  [OPCAP_MAP_CONTEST] = NULL, //"Reserved",
+  [OPCAP_LIST_USERS] = "Allowed to obtain the whole user list",
+  [OPCAP_PRIV_EDIT_REG] = "Allowed to edit registration info of any privileged users in any contest",
+  [OPCAP_CREATE_USER] = "Allowed to create a new user",
+  [OPCAP_GET_USER] = "Allowed to obtain the detailed info for any user",
+  [OPCAP_EDIT_USER] = "Allowed to modify data of any non-privileged user",
+  [OPCAP_DELETE_USER] = "Allowed to delete any non-privileged user",
+  [OPCAP_PRIV_EDIT_USER] = "Allowed to modify data of any privileged user",
+  [OPCAP_PRIV_DELETE_USER] = "Allowed to delete any privileged user",
+  [OPCAP_EDIT_CONTEST] = "Allowed to edit settings of any contest",
+  [OPCAP_CREATE_REG] = "Allowed to register any non-privileged user to any contest",
+  [OPCAP_EDIT_REG] = "Alower to edit registration info of any non-privileged user in any contest",
+  [OPCAP_DELETE_REG] = "Allowed to delete registration of any non-privileged user in any contest",
+  [OPCAP_PRIV_CREATE_REG] = "Allowed to register any privileged user to any contest",
+  [OPCAP_PRIV_DELETE_REG] = "Allowed to delete registration of any privileged user in any contest",
+  [OPCAP_DUMP_USERS] = "Allowed to dump all users in CSV format",
+  [OPCAP_DUMP_RUNS] = NULL,
+  [OPCAP_DUMP_STANDINGS] = NULL,
+  [OPCAP_VIEW_STANDINGS] = NULL,
+  [OPCAP_VIEW_SOURCE] = NULL,
+  [OPCAP_VIEW_REPORT] = NULL,
+  [OPCAP_VIEW_CLAR] = NULL,
+  [OPCAP_EDIT_RUN] = NULL,
+  [OPCAP_REJUDGE_RUN] = NULL,
+  [OPCAP_NEW_MESSAGE] = NULL,
+  [OPCAP_REPLY_MESSAGE] = NULL,
+  [OPCAP_CONTROL_CONTEST] = NULL,
+  [OPCAP_IMPORT_XML_RUNS] = NULL,
+  [OPCAP_PRINT_RUN] = NULL,
+  [OPCAP_EDIT_PASSWD] = "Allowed to change registration password of any non-privileged user",
+  [OPCAP_PRIV_EDIT_PASSWD] = "Allowed to change registration password of any privileged user",
+  [OPCAP_RESTART] = "Allowed to restart ejudge processes",
+  [OPCAP_COMMENT_RUN] = NULL,
+  [OPCAP_UNLOAD_CONTEST] = "Allowed to force reload of any contest",
+};
+
+int
+super_serve_op_CAPS_EDIT_PAGE(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  opcap_t caps = 0;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+
+  if (get_global_caps(phr, &caps) < 0 || opcaps_check(caps, OPCAP_PRIV_EDIT_USER) < 0) {
+    FAIL(S_ERR_PERM_DENIED);
+  }
+
+  if (!phr->config->caps_file) {
+    fprintf(log_f, "<caps_file> element is undefined in ejudge.xml\n");
+    FAIL(S_ERR_INV_OPER);
+  }
+
+  ejudge_cfg_refresh_caps_file(phr->config, 1);
+
+  if (!phr->config->caps_file_info || !phr->config->caps_file_info->root) {
+    fprintf(log_f, "invalid <caps_file> element in ejudge.xml\n");
+    FAIL(S_ERR_INV_OPER);
+  }
+
+  struct ejudge_cfg *root = phr->config->caps_file_info->root;
+
+  int serial = -1;
+  ss_cgi_param_int_opt(phr, "serial", &serial, -1);
+  if (serial <= 0) FAIL(S_ERR_INV_OPER);
+
+  int i = 1;
+  struct opcap_list_item *p = root->capabilities.first;
+  for (; p && i != serial; p = (struct opcap_list_item*) p->b.right, ++i) {
+  }
+  if (!p) FAIL(S_ERR_INV_OPER);
+
+  unsigned char buf[1024];
+  unsigned char hbuf[1024];
+
+  snprintf(buf, sizeof(buf), "serve-control: %s, global capabilities for %s", phr->html_name, ARMOR(p->login));
+  ss_write_html_header(out_f, phr, buf, 0, NULL);
+
+  fprintf(out_f, "<h1>%s</h1>\n", buf);
+
+  fprintf(out_f, "<ul>");
+  fprintf(out_f, "<li>%s%s</a></li>",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                        NULL, NULL),
+          "Main page");
+  fprintf(out_f, "<li>%s%s</a></li>",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                        NULL, "action=%d&amp;op=%d",
+                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_CAPS_MAIN_PAGE),
+          "Global user capabilities");
+  fprintf(out_f, "</ul>");
+
+  html_start_form(out_f, 1, phr->self_url, "");
+  html_hidden(out_f, "SID", "%016llx", phr->session_id);
+  html_hidden(out_f, "action", "%d", SSERV_CMD_HTTP_REQUEST);
+  html_hidden(out_f, "serial", "%d", serial);
+
+  const unsigned char *cl = " class=\"b1\"";
+  fprintf(out_f, "<table%s>", cl);
+  for (int cap = 0; cap < OPCAP_LAST; ++cap) {
+    if (!global_cap_descs[cap]) continue;
+    const unsigned char *s = "";
+    if (opcaps_check(p->caps, cap) >= 0) s = " checked=\"yes\"";
+    fprintf(out_f, "<tr>"
+            "<td%s>%d</td>"
+            "<td%s><input type=\"checkbox\" name=\"cap_%d\"%s /></td>"
+            "<td%s><tt>%s</tt></td>"
+            "<td%s>%s</td>"
+            "</tr>\n",
+            cl, cap, cl, cap, s, cl, opcaps_get_name(cap),
+            cl, global_cap_descs[cap]);
+  }
+  fprintf(out_f, "</table>");
+
+  cl = " class=\"b0\"";
+  fprintf(out_f, "<table%s>\n", cl);
+  fprintf(out_f, "<tr><td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>\n",
+          cl, SSERV_OP_CAPS_EDIT_CANCEL_ACTION, "Cancel");
+  fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td></tr>\n",
+          cl, SSERV_OP_CAPS_EDIT_SAVE_ACTION, "Save");
+  fprintf(out_f, "</table>\n");
+
+  fprintf(out_f, "</form>\n");
+
+  ss_write_html_footer(out_f);
+
+cleanup:
+  html_armor_free(&ab);
+  return retval;
+}
+
+int
+super_serve_op_CAPS_EDIT_CANCEL_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  ss_redirect(out_f, phr, SSERV_OP_CAPS_MAIN_PAGE, NULL);
+  return 0;
+}
+
+int
+super_serve_op_CAPS_EDIT_SAVE_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  opcap_t caps = 0;
+
+  if (get_global_caps(phr, &caps) < 0 || opcaps_check(caps, OPCAP_PRIV_EDIT_USER) < 0) {
+    FAIL(S_ERR_PERM_DENIED);
+  }
+
+  if (!phr->config->caps_file) {
+    fprintf(log_f, "<caps_file> element is undefined in ejudge.xml\n");
+    FAIL(S_ERR_INV_OPER);
+  }
+
+  ejudge_cfg_refresh_caps_file(phr->config, 1);
+
+  if (!phr->config->caps_file_info || !phr->config->caps_file_info->root) {
+    fprintf(log_f, "invalid <caps_file> element in ejudge.xml\n");
+    FAIL(S_ERR_INV_OPER);
+  }
+
+  struct ejudge_cfg *root = phr->config->caps_file_info->root;
+
+  int serial = -1;
+  ss_cgi_param_int_opt(phr, "serial", &serial, -1);
+  if (serial <= 0) FAIL(S_ERR_INV_OPER);
+
+  int i = 1;
+  struct opcap_list_item *p = root->capabilities.first;
+  for (; p && i != serial; p = (struct opcap_list_item*) p->b.right, ++i) {
+  }
+  if (!p) FAIL(S_ERR_INV_OPER);
+
+  opcap_t new_caps = 0;
+  for (int cap = 0; cap < OPCAP_LAST; ++cap) {
+    unsigned char nbuf[64];
+    snprintf(nbuf, sizeof(nbuf), "cap_%d", cap);
+    const unsigned char *s = NULL;
+    if (ss_cgi_param(phr, nbuf, &s) > 0 && s) {
+      new_caps |= 1ULL << cap;
+    }
+  }
+
+  if (p->caps != new_caps) {
+    p->caps = new_caps;
+    if ((retval = save_caps_file(log_f, phr->config)) < 0) goto cleanup;
+  }
+
+  ss_redirect(out_f, phr, SSERV_OP_CAPS_MAIN_PAGE, NULL);
+
+cleanup:
+  ejudge_cfg_refresh_caps_file(phr->config, 1);
   return retval;
 }
