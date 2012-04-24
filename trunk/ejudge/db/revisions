@@ -7116,3 +7116,8 @@ super_html.c 6761 0 12051304
 super_html_6.c 6761 0 26699629
 super_proto.c 6761 0 2104881
 opcaps_2.c 6762 0 199855
+ejudge_cfg.h 6764 0 432009
+super_proto.h 6764 0 3104378
+ejudge_cfg.c 6764 0 2483660
+super_html_6.c 6764 0 28508898
+super_proto.c 6764 0 2133824
