@@ -219,6 +219,14 @@ static const unsigned char verbatim_flags[TG_LAST_TAG] =
   [TG_HOSTS_OPTIONS] = 1,
 };
 
+static struct xml_tree *
+new_node(int tag)
+{
+  struct xml_tree *p = xml_elem_alloc(tag, elem_sizes);
+  p->tag = tag;
+  return p;
+}
+
 static void
 node_free(struct xml_tree *t)
 {
@@ -376,6 +384,7 @@ parse_capabilities(struct ejudge_cfg *cfg, struct xml_tree *ct)
 
   if (cfg->capabilities.first) return xml_err_elem_redefined(ct);
 
+  cfg->caps_node = ct;
   xfree(ct->text); ct->text = 0;
   if (ct->first) return xml_err_attrs(ct);
   p = ct->first_down;
@@ -734,6 +743,15 @@ ejudge_cfg_free(struct ejudge_cfg *cfg)
   return 0;
 }
 
+struct xml_tree *
+ejudge_cfg_free_subtree(struct xml_tree *p)
+{
+  if (p) {
+    xml_tree_free((struct xml_tree*) p, &ejudge_config_parse_spec);
+  }
+  return 0;
+}
+
 static void
 fmt_func(FILE *o, struct xml_tree const *p, int s, int n)
 {
@@ -950,7 +968,7 @@ ejudge_cfg_free_caps_file(struct ejudge_cfg_caps_file *info)
 enum { CAPS_FILE_CHECK_INTERVAL = 10 };
 
 void
-ejudge_cfg_refresh_caps_file(const struct ejudge_cfg *cfg)
+ejudge_cfg_refresh_caps_file(const struct ejudge_cfg *cfg, int force_flag)
 {
   unsigned char path[PATH_MAX];
   unsigned char dirname[PATH_MAX];
@@ -989,7 +1007,7 @@ ejudge_cfg_refresh_caps_file(const struct ejudge_cfg *cfg)
   }
 
   time_t cur_time = time(NULL);
-  if (inf->last_caps_file_check > 0 && cur_time < inf->last_caps_file_check + CAPS_FILE_CHECK_INTERVAL)
+  if (inf->last_caps_file_check > 0 && cur_time < inf->last_caps_file_check + CAPS_FILE_CHECK_INTERVAL && !force_flag)
     return;
   inf->last_caps_file_check = cur_time;
 
@@ -1007,7 +1025,7 @@ ejudge_cfg_refresh_caps_file(const struct ejudge_cfg *cfg)
     return;
   }
 
-  if (inf->last_caps_file_mtime > 0 && inf->last_caps_file_mtime == stbuf.st_mtime)
+  if (inf->last_caps_file_mtime > 0 && inf->last_caps_file_mtime == stbuf.st_mtime && !force_flag)
     return;
   inf->last_caps_file_mtime = stbuf.st_mtime;
 
@@ -1050,7 +1068,7 @@ ejudge_cfg_opcaps_find(
   r = opcaps_find(&cfg->capabilities, login_str, p_caps);
   if (r >= 0) return r;
 
-  ejudge_cfg_refresh_caps_file(cfg);
+  ejudge_cfg_refresh_caps_file(cfg, 0);
   if (!cfg->caps_file_info) return -1;
   if (!cfg->caps_file_info->root) return -1;
   return opcaps_find(&cfg->caps_file_info->root->capabilities, login_str, p_caps);
@@ -1070,7 +1088,7 @@ ejudge_cfg_user_map_find(
     }
   }
 
-  ejudge_cfg_refresh_caps_file(cfg);
+  ejudge_cfg_refresh_caps_file(cfg, 0);
   if (!cfg->caps_file_info || !cfg->caps_file_info->root || !cfg->caps_file_info->root->user_map) return NULL;
   for (const struct xml_tree *p = cfg->caps_file_info->root->user_map->first_down; p; p = p->right) {
     const struct ejudge_cfg_user_map *m = (const struct ejudge_cfg_user_map*) p;
@@ -1096,7 +1114,7 @@ ejudge_cfg_user_map_find_uid(
     }
   }
 
-  ejudge_cfg_refresh_caps_file(cfg);
+  ejudge_cfg_refresh_caps_file(cfg, 0);
   if (!cfg->caps_file_info || !cfg->caps_file_info->root || !cfg->caps_file_info->root->user_map) return NULL;
   for (const struct xml_tree *p = cfg->caps_file_info->root->user_map->first_down; p; p = p->right) {
     const struct ejudge_cfg_user_map *m = (const struct ejudge_cfg_user_map*) p;
@@ -1106,6 +1124,60 @@ ejudge_cfg_user_map_find_uid(
   }
 
   return NULL;
+}
+
+const unsigned char *
+ejudge_cfg_user_map_find_simple(
+        const struct ejudge_cfg *cfg,
+        const unsigned char *system_user_str)
+{
+  if (!system_user_str || !*system_user_str) return NULL;
+  if (!cfg || !cfg->user_map) return NULL;
+  for (const struct xml_tree *p = cfg->user_map->first_down; p; p = p->right) {
+    const struct ejudge_cfg_user_map *m = (const struct ejudge_cfg_user_map*) p;
+    if (m->system_user_str && !strcmp(system_user_str, m->system_user_str)) {
+      return m->local_user_str;
+    }
+  }
+  return NULL;
+}
+
+void
+ejudge_cfg_user_map_add(
+        struct ejudge_cfg *cfg,
+        const unsigned char *unix_login,
+        const unsigned char *ejudge_login)
+{
+  if (!cfg) return;
+  struct xml_tree *um = cfg->user_map;
+  if (!um) {
+    um = new_node(TG_USER_MAP);
+    xml_link_node_last(&cfg->b, um);
+    cfg->user_map = um;
+  }
+  struct ejudge_cfg_user_map *m = (struct ejudge_cfg_user_map*) new_node(TG_MAP);
+  xml_link_node_last(um, &m->b);
+  m->system_user_str = xstrdup(unix_login);
+  m->local_user_str = xstrdup(ejudge_login);
+}
+
+void
+ejudge_cfg_caps_add(
+        struct ejudge_cfg *cfg,
+        const unsigned char *login,
+        opcap_t caps)
+{
+  struct opcap_list_item *cap_node;
+
+  if (!cfg->caps_node) {
+    cfg->caps_node = new_node(TG_CAPS);
+    xml_link_node_last(&cfg->b, cfg->caps_node);
+  }
+  cap_node = (typeof(cap_node)) new_node(TG_CAP);
+  if (!cfg->capabilities.first) cfg->capabilities.first = cap_node;
+  cap_node->login = xstrdup(login);
+  cap_node->caps = caps;
+  xml_link_node_last(cfg->caps_node, &cap_node->b);
 }
 
 /*

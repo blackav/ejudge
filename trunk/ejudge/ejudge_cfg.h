@@ -107,6 +107,7 @@ struct ejudge_cfg
   struct xml_tree *compile_servers;
 
   opcaplist_t capabilities;
+  struct xml_tree *caps_node;
 
   struct xml_tree *plugin_list;
   struct xml_tree *hosts_options;
@@ -117,6 +118,7 @@ struct ejudge_cfg
 
 struct ejudge_cfg *ejudge_cfg_parse(char const *);
 struct ejudge_cfg *ejudge_cfg_free(struct ejudge_cfg *);
+struct xml_tree   *ejudge_cfg_free_subtree(struct xml_tree *p);
 void ejudge_cfg_unparse(struct ejudge_cfg *, FILE *);
 void ejudge_cfg_unparse_plugins(struct ejudge_cfg *cfg, FILE *f);
 const struct xml_parse_spec *ejudge_cfg_get_spec(void);
@@ -140,7 +142,7 @@ ejudge_cfg_get_host_option_int(
         int error_value);
 
 void
-ejudge_cfg_refresh_caps_file(const struct ejudge_cfg *cfg);
+ejudge_cfg_refresh_caps_file(const struct ejudge_cfg *cfg, int force_flag);
 struct ejudge_cfg_caps_file *
 ejudge_cfg_create_caps_file(const unsigned char *base_path);
 struct ejudge_cfg_caps_file *
@@ -159,5 +161,20 @@ const unsigned char *
 ejudge_cfg_user_map_find_uid(
         const struct ejudge_cfg *cfg,
         int system_user_id);
+const unsigned char *
+ejudge_cfg_user_map_find_simple(
+        const struct ejudge_cfg *cfg,
+        const unsigned char *system_user_str);
+
+void
+ejudge_cfg_user_map_add(
+        struct ejudge_cfg *cfg,
+        const unsigned char *unix_login,
+        const unsigned char *ejudge_login);
+void
+ejudge_cfg_caps_add(
+        struct ejudge_cfg *cfg,
+        const unsigned char *login,
+        opcap_t caps);
 
 #endif /* __EJUDGE_CFG_H__ */
