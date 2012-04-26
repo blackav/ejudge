@@ -166,7 +166,8 @@ write_html_run_status(
         int prev_successes,
         const unsigned char *td_class,
         int disable_failed,
-        int enable_js_status_menu);
+        int enable_js_status_menu,
+        int run_fields);
 
 int write_xml_testing_report(FILE *f, int user_mode, unsigned char const *txt,
                              ej_cookie_t sid,
@@ -247,5 +248,48 @@ score_view_display(
         size_t size,
         const struct section_problem_data *prob,
         int score);
+
+/* run field selection flags */
+enum
+{
+  RUN_VIEW_RUN_ID,
+  RUN_VIEW_SIZE,
+  RUN_VIEW_TIME,
+  RUN_VIEW_ABS_TIME,
+  RUN_VIEW_REL_TIME,
+  RUN_VIEW_NSEC,
+  RUN_VIEW_USER_ID,
+  RUN_VIEW_USER_LOGIN,
+  RUN_VIEW_USER_NAME,
+  RUN_VIEW_PROB_ID,
+  RUN_VIEW_PROB_NAME,
+  RUN_VIEW_LANG_ID,
+  RUN_VIEW_LANG_NAME,
+  RUN_VIEW_IP,
+  RUN_VIEW_SHA1,
+  RUN_VIEW_SCORE,
+  RUN_VIEW_TEST,
+  RUN_VIEW_SCORE_ADJ,
+  RUN_VIEW_STATUS,
+  RUN_VIEW_VARIANT,
+  RUN_VIEW_MIME_TYPE,
+  RUN_VIEW_SAVED_SCORE,
+  RUN_VIEW_SAVED_TEST,
+  RUN_VIEW_SAVED_STATUS,
+
+  RUN_VIEW_LAST,
+
+  RUN_VIEW_DEFAULT = (1 << RUN_VIEW_RUN_ID)
+  | (1 << RUN_VIEW_TIME)
+  | (1 << RUN_VIEW_SIZE)
+  | (1 << RUN_VIEW_IP)
+  | (1 << RUN_VIEW_USER_ID)
+  | (1 << RUN_VIEW_USER_NAME)
+  | (1 << RUN_VIEW_PROB_NAME)
+  | (1 << RUN_VIEW_LANG_NAME)
+  | (1 << RUN_VIEW_STATUS)
+  | (1 << RUN_VIEW_TEST)
+  | (1 << RUN_VIEW_SCORE)
+};
 
 #endif /* __HTML_H__ */

@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -179,7 +179,7 @@ extend_team_map(team_extra_state_t state, int user_id)
 }
 
 static struct team_extra *
-get_entry(team_extra_state_t state, int user_id)
+get_entry(team_extra_state_t state, int user_id, int try_flag)
 {
   struct team_extra *te = state->team_map[user_id];
   path_t rpath;
@@ -189,6 +189,7 @@ get_entry(team_extra_state_t state, int user_id)
 
   make_read_path(state, rpath, sizeof(rpath), user_id);
   if (os_CheckAccess(rpath, REUSE_F_OK) < 0) {
+    if (try_flag) return NULL;
     XCALLOC(te, 1);
     te->user_id = user_id;
     state->team_map[user_id] = te;
@@ -229,7 +230,7 @@ team_extra_get_entry(team_extra_state_t state, int user_id)
   ASSERT(user_id > 0 && user_id <= EJ_MAX_USER_ID);
   if (user_id >= state->team_map_size) extend_team_map(state, user_id);
 
-  tmpval = get_entry(state, user_id);
+  tmpval = get_entry(state, user_id, 0);
   if (tmpval == (struct team_extra*) -1) tmpval = 0;
   return tmpval;
 }
@@ -263,7 +264,7 @@ team_extra_get_clar_status(team_extra_state_t state, int user_id, int clar_id)
   ASSERT(clar_id >= 0 && clar_id <= EJ_MAX_CLAR_ID);
 
   if (user_id >= state->team_map_size) extend_team_map(state, user_id);
-  te = get_entry(state, user_id);
+  te = get_entry(state, user_id, 0);
   if (te == (struct team_extra*) -1) return -1;
   ASSERT(te->user_id == user_id);
 
@@ -282,7 +283,7 @@ team_extra_set_clar_status(team_extra_state_t state, int user_id, int clar_id)
   ASSERT(clar_id >= 0 && clar_id <= EJ_MAX_CLAR_ID);
 
   if (user_id >= state->team_map_size) extend_team_map(state, user_id);
-  te = get_entry(state, user_id);
+  te = get_entry(state, user_id, 0);
   if (te == (struct team_extra*) -1) return -1;
   ASSERT(te->user_id == user_id);
   if (clar_id >= te->clar_map_size) extend_clar_map(te, clar_id);
@@ -329,7 +330,7 @@ team_extra_append_warning(team_extra_state_t state, int user_id,
   ASSERT(user_id > 0 && user_id <= EJ_MAX_USER_ID);
 
   if (user_id >= state->team_map_size) extend_team_map(state, user_id);
-  te = get_entry(state, user_id);
+  te = get_entry(state, user_id, 0);
   if (te == (struct team_extra*) -1) return -1;
   ASSERT(te->user_id == user_id);
 
@@ -359,7 +360,7 @@ team_extra_set_status(team_extra_state_t state, int user_id, int status)
   ASSERT(user_id > 0 && user_id <= EJ_MAX_USER_ID);
 
   if (user_id >= state->team_map_size) extend_team_map(state, user_id);
-  te = get_entry(state, user_id);
+  te = get_entry(state, user_id, 0);
   if (te == (struct team_extra*) -1) return -1;
   ASSERT(te->user_id == user_id);
 
@@ -378,7 +379,7 @@ team_extra_set_disq_comment(team_extra_state_t state, int user_id,
   ASSERT(user_id > 0 && user_id <= EJ_MAX_USER_ID);
 
   if (user_id >= state->team_map_size) extend_team_map(state, user_id);
-  te = get_entry(state, user_id);
+  te = get_entry(state, user_id, 0);
   if (te == (struct team_extra*) -1) return -1;
   ASSERT(te->user_id == user_id);
 
@@ -388,9 +389,34 @@ team_extra_set_disq_comment(team_extra_state_t state, int user_id,
   return 1;
 }
 
-/*
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- * End:
- */
+int
+team_extra_get_run_fields(team_extra_state_t state, int user_id)
+{
+  struct team_extra *te;
+
+  ASSERT(user_id > 0 && user_id <= EJ_MAX_USER_ID);
+
+  if (user_id >= state->team_map_size) extend_team_map(state, user_id);
+  te = get_entry(state, user_id, 1);
+  if (!te || te == (struct team_extra*) -1) return 0;
+  ASSERT(te->user_id == user_id);
+  return te->run_fields;
+}
+
+int
+team_extra_set_run_fields(team_extra_state_t state, int user_id, int run_fields)
+{
+  struct team_extra *te;
+
+  ASSERT(user_id > 0 && user_id <= EJ_MAX_USER_ID);
+
+  if (user_id >= state->team_map_size) extend_team_map(state, user_id);
+  te = get_entry(state, user_id, 0);
+  if (te == (struct team_extra*) -1) return -1;
+  ASSERT(te->user_id == user_id);
+
+  if (te->run_fields == run_fields) return 0;
+  te->run_fields = run_fields;
+  te->is_dirty = 1;
+  return 1;
+}
