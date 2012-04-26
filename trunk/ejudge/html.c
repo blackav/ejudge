@@ -248,7 +248,8 @@ write_html_run_status(
         int prev_successes,
         const unsigned char *td_class,
         int disable_failed,
-        int enable_js_status_menu)
+        int enable_js_status_menu,
+        int run_fields)
 {
   const struct section_global_data *global = state->global;
   unsigned char status_str[128], score_str[128];
@@ -277,10 +278,12 @@ write_html_run_status(
     pr = state->probs[pe->prob_id];
   run_status_str(status, status_str, sizeof(status_str),
                  pr?pr->type:0, pr?pr->scoring_checker:0);
-  if (enable_js_status_menu) {
-    fprintf(f, "<td%s><a href=\"javascript:ej_stat(%d)\">%s</a><div class=\"ej_dd\" id=\"ej_dd_%d\"></div></td>", cl, pe->run_id, status_str, pe->run_id);
-  } else {
-    fprintf(f, "<td%s>%s</td>", cl, status_str);
+  if (run_fields & (1 << RUN_VIEW_STATUS)) {
+    if (enable_js_status_menu) {
+      fprintf(f, "<td%s><a href=\"javascript:ej_stat(%d)\">%s</a><div class=\"ej_dd\" id=\"ej_dd_%d\"></div></td>", cl, pe->run_id, status_str, pe->run_id);
+    } else {
+      fprintf(f, "<td%s>%s</td>", cl, status_str);
+    }
   }
 
   if (global->score_system == SCORE_KIROV
@@ -289,14 +292,18 @@ write_html_run_status(
     need_extra_col = 1;
 
   if (status >= RUN_PSEUDO_FIRST && status <= RUN_PSEUDO_LAST) {
-    fprintf(f, "<td%s>&nbsp;</td>", cl);
-    if (need_extra_col) {
+    if (run_fields & (1 << RUN_VIEW_TEST)) {
+        fprintf(f, "<td%s>&nbsp;</td>", cl);
+      }
+    if (need_extra_col && run_fields & (1 << RUN_VIEW_SCORE)) {
       fprintf(f, "<td%s>&nbsp;</td>", cl);
     }
     return;
   } else if (status > RUN_MAX_STATUS) {
-    fprintf(f, "<td%s>%s</td>", cl, _("N/A"));
-    if (need_extra_col) {
+    if (run_fields & (1 << RUN_VIEW_TEST)) {
+      fprintf(f, "<td%s>%s</td>", cl, _("N/A"));
+    }
+    if (need_extra_col && run_fields & (1 << RUN_VIEW_SCORE)) {
       fprintf(f, "<td%s>%s</td>", cl, _("N/A"));
     }
     return;
@@ -311,56 +318,68 @@ write_html_run_status(
   case RUN_PENDING:
   case RUN_COMPILE_ERR:
   case RUN_STYLE_ERR:
-    fprintf(f, "<td%s>%s</td>", cl, _("N/A"));
-    if (need_extra_col) {
+    if (run_fields & (1 << RUN_VIEW_TEST)) {
+      fprintf(f, "<td%s>%s</td>", cl, _("N/A"));
+    }
+    if (need_extra_col && run_fields & (1 << RUN_VIEW_SCORE)) {
       fprintf(f, "<td%s>%s</td>", cl, _("N/A"));
     }
     return;
   }
 
   if (global->score_system == SCORE_ACM) {
-    if (!disable_failed) {
+    if (run_fields & (1 << RUN_VIEW_TEST)) {
+      if (!disable_failed) {
+        if (status == RUN_OK || status == RUN_ACCEPTED || test <= 0
+            || global->disable_failed_test_view > 0) {
+          fprintf(f, "<td%s>%s</td>", cl, _("N/A"));
+        } else {
+          fprintf(f, "<td%s>%d</td>", cl, test);
+        }
+      } else {
+        fprintf(f, "<td%s>&nbsp;</td>", cl);
+      }
+    }
+    return;
+  }
+
+  if (global->score_system == SCORE_MOSCOW) {
+    if (run_fields & (1 << RUN_VIEW_TEST)) {
       if (status == RUN_OK || status == RUN_ACCEPTED || test <= 0
           || global->disable_failed_test_view > 0) {
         fprintf(f, "<td%s>%s</td>", cl, _("N/A"));
       } else {
         fprintf(f, "<td%s>%d</td>", cl, test);
       }
-    } else {
-      fprintf(f, "<td%s>&nbsp;</td>", cl);
+    }
+    if (run_fields & (1 << RUN_VIEW_SCORE)) {
+      if (status == RUN_OK) {
+        fprintf(f, "<td%s><b>%d</b></td>", cl, score);
+      } else {
+        fprintf(f, "<td%s>%d</td>", cl, score);
+      }
     }
     return;
   }
 
-  if (global->score_system == SCORE_MOSCOW) {
-    if (status == RUN_OK || status == RUN_ACCEPTED || test <= 0
-        || global->disable_failed_test_view > 0) {
+  if (run_fields & (1 << RUN_VIEW_TEST)) {
+    if (test <= 0) {
       fprintf(f, "<td%s>%s</td>", cl, _("N/A"));
     } else {
-      fprintf(f, "<td%s>%d</td>", cl, test);
+      fprintf(f, "<td%s>%d</td>", cl, test - 1);
     }
-    if (status == RUN_OK) {
-      fprintf(f, "<td%s><b>%d</b></td>", cl, score);
+  }
+
+  if (run_fields & (1 << RUN_VIEW_SCORE)) {
+    if (score < 0 || !pr) {
+      fprintf(f, "<td%s>%s</td>", cl, _("N/A"));
     } else {
-      fprintf(f, "<td%s>%d</td>", cl, score);
+      calc_kirov_score(score_str, sizeof(score_str),
+                       start_time, separate_user_score, user_mode,
+                       pe, pr, attempts,
+                       disq_attempts, prev_successes, 0, 0);
+      fprintf(f, "<td%s>%s</td>", cl, score_str);
     }
-    return;
-  }
-
-  if (test <= 0) {
-    fprintf(f, "<td%s>%s</td>", cl, _("N/A"));
-  } else {
-    fprintf(f, "<td%s>%d</td>", cl, test - 1);
-  }
-
-  if (score < 0 || !pr) {
-    fprintf(f, "<td%s>%s</td>", cl, _("N/A"));
-  } else {
-    calc_kirov_score(score_str, sizeof(score_str),
-                     start_time, separate_user_score, user_mode,
-                     pe, pr, attempts,
-                     disq_attempts, prev_successes, 0, 0);
-    fprintf(f, "<td%s>%s</td>", cl, score_str);
   }
 }
 
@@ -625,7 +644,7 @@ new_write_user_runs(
 
     write_html_run_status(state, f, start_time, &re, 1 /* user_mode */,
                           0, attempts, disq_attempts,
-                          prev_successes, table_class, 0, 0);
+                          prev_successes, table_class, 0, 0, RUN_VIEW_DEFAULT);
 
     if (enable_src_view) {
       fprintf(f, "<td%s>", cl);
@@ -4518,7 +4537,7 @@ do_write_public_log(
 
     write_html_run_status(state, f, start_time, pe, user_mode,
                           0, attempts, disq_attempts,
-                          prev_successes, 0, 1, 0);
+                          prev_successes, 0, 1, 0, RUN_VIEW_DEFAULT);
 
     fputs("</tr>\n", f);
   }

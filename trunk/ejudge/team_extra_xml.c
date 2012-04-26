@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -28,6 +28,7 @@
 #include "reuse_logger.h"
 
 #include <ctype.h>
+#include <errno.h>
 
 #ifndef EJUDGE_CHARSET
 #define EJUDGE_CHARSET EJ_INTERNAL_CHARSET
@@ -48,6 +49,7 @@ enum
   TE_T_COMMENT,
   TE_T_STATUS,
   TE_T_DISQ_COMMENT,
+  TE_T_RUN_FIELDS,
 
   TE_T_LAST_TAG,
 };
@@ -71,6 +73,7 @@ static const char * const elem_map[] =
   [TE_T_COMMENT]      = "comment",
   [TE_T_STATUS]       = "status",
   [TE_T_DISQ_COMMENT] = "disq_comment",
+  [TE_T_RUN_FIELDS]   = "run_fields",
   [TE_T_LAST_TAG]     = 0,
 };
 static const char * const attr_map[] =
@@ -254,6 +257,22 @@ parse_status(struct xml_tree *t, struct team_extra *te, int *ps_flag)
 }
 
 int
+parse_run_felds(struct xml_tree *t, struct team_extra *te)
+{
+  if (!t) return 0;
+  if (t->first) return xml_err_attrs(t);
+  if (t->first_down) return xml_err_nested_elems(t);
+  if (!t->text) return 0;
+  int flags = 0;
+  char *eptr = 0;
+  errno = 0;
+  flags = strtol(t->text, &eptr, 16);
+  if (errno || *eptr || flags <= 0) return 0;
+  te->run_fields = flags;
+  return 0;
+}
+
+int
 team_extra_parse_xml(const unsigned char *path, struct team_extra **pte)
 {
   struct xml_tree *t = 0, *t2 = 0;
@@ -312,6 +331,9 @@ team_extra_parse_xml(const unsigned char *path, struct team_extra **pte)
       if (te->disq_comment) return xml_err_elem_redefined(t2);
       te->disq_comment = t2->text;
       t2->text = 0;
+      break;
+    case TE_T_RUN_FIELDS:
+      if (parse_run_felds(t2, te) < 0) goto cleanup;
       break;
     default:
       xml_err_elem_not_allowed(t2);
@@ -373,6 +395,9 @@ team_extra_unparse_xml(FILE *f, struct team_extra *te)
   if (te->disq_comment) {
     xml_unparse_text(f, elem_map[TE_T_DISQ_COMMENT], te->disq_comment, "  ");
   }
+  if (te->run_fields > 0) {
+    fprintf(f, "  <%s>%08x</%s>\n", elem_map[TE_T_RUN_FIELDS], te->run_fields, elem_map[TE_T_RUN_FIELDS]);
+  }
   fprintf(f, "</%s>\n", elem_map[TE_T_TEAM_EXTRA]);
   return 0;
 }
@@ -380,6 +405,5 @@ team_extra_unparse_xml(FILE *f, struct team_extra *te)
 /*
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  * End:
  */
