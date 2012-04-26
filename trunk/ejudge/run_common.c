@@ -1457,6 +1457,19 @@ make_java_limits(unsigned char *buf, int blen, size_t max_vm_size, size_t max_st
   }
 }
 
+static void
+make_mono_limits(unsigned char *buf, int blen, size_t max_vm_size, size_t max_stack_size)
+{
+  unsigned char bv[1024];
+  // stack limit is not supported
+  if (max_vm_size == (ssize_t) -1) max_vm_size = 0;
+  buf[0] = 0;
+  if (max_vm_size) {
+    snprintf(buf, blen, "MONO_GC_PARAMS=max-heap-size=%s",
+             size_t_to_size(bv, sizeof(bv), max_vm_size));
+  }
+}
+
 static unsigned char *
 report_args_and_env(testinfo_t *ti)
 {
@@ -2027,6 +2040,12 @@ run_one_test(
       break;
     case MEMLIMIT_TYPE_DOS:
       break;
+    case MEMLIMIT_TYPE_MONO:
+      make_mono_limits(mem_limit_buf, sizeof(mem_limit_buf), srpp->max_vm_size, srpp->max_stack_size);
+      if (mem_limit_buf[0]) {
+        task_PutEnv(tsk, mem_limit_buf);
+      }
+      break;
     default:
       abort();
     }
@@ -2051,6 +2070,9 @@ run_one_test(
       break;
     case SEXEC_TYPE_JAVA:
       task_PutEnv(tsk, "EJUDGE_JAVA_POLICY=fileio.policy");
+      break;
+    case SEXEC_TYPE_MONO:
+      // nothing secure
       break;
     default:
       abort();

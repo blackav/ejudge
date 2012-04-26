@@ -705,6 +705,8 @@ create_configs(
           "abstract\n"
           "no_core_dump\n"
           "kill_signal = TERM\n"
+          "memory_limit_type = \"mono\"\n"
+          "secure_exec_type = \"mono\"\n"
           "start_cmd = \"runmono\"\n"
           "start_env = \"LANG=C\"\n"
           "start_env = \"EJUDGE_PREFIX_DIR\"\n\n");
