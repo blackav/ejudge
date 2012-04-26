@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-02-07 14:52+0400\n"
+"POT-Creation-Date: 2012-04-25 12:31+0400\n"
 "PO-Revision-Date: 2011-12-24 22:28+0400\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -3270,9 +3270,6 @@ msgstr "פוףפיעןקבמיו תבקועûומן"
 
 msgid "TESTING IN PROGRESS..."
 msgstr "יהופ פוףפיעןקבמיו..."
-
-msgid "Team ID"
-msgstr "ID כֱֽֿ־ִÙ"
 
 msgid "Team name"
 msgstr "מֱÚ׳ֱ־ֵֹ ֱֻֽֿ־ִÙ"
