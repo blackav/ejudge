@@ -2952,6 +2952,11 @@ run_tests(
           //reply_pkt->score = tests.data[tests.size - 1].checker_score;
           reply_pkt->score = tests.data[tests.size - 1].score;
         } else {
+          if (!score_tests_val) {
+            append_msg_to_log(messages_path, "score_tests parameter is undefined");
+            goto check_failed;
+          }
+
           int s;
           for (s = 0; score_tests_val[s] && tests.size - 1 > score_tests_val[s]; ++s);
           reply_pkt->score = s;
