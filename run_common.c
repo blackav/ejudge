@@ -195,14 +195,14 @@ generate_xml_report(
     fprintf(f, " variant=\"%d\"", variant);
   }
   if (srgp->scoring_system_val == SCORE_OLYMPIAD) {
-    fprintf(f, " accepting-mode=\"%s\"", srgp->accepting_mode?"yes":"no");
+    fprintf(f, " accepting-mode=\"%s\"", (srgp->accepting_mode > 0)?"yes":"no");
   }
-  if (srgp->scoring_system_val == SCORE_OLYMPIAD && srgp->accepting_mode
+  if (srgp->scoring_system_val == SCORE_OLYMPIAD && srgp->accepting_mode > 0
       && reply_pkt->status != RUN_ACCEPTED) {
     fprintf(f, " failed-test=\"%d\"", total_tests - 1);
   } else if (srgp->scoring_system_val == SCORE_ACM && reply_pkt->status != RUN_OK) {
     fprintf(f, " failed-test=\"%d\"", total_tests - 1);
-  } else if (srgp->scoring_system_val == SCORE_OLYMPIAD && !srgp->accepting_mode) {
+  } else if (srgp->scoring_system_val == SCORE_OLYMPIAD && srgp->accepting_mode <= 0) {
     fprintf(f, " tests-passed=\"%d\" score=\"%d\" max-score=\"%d\"",
             reply_pkt->failed_test - 1, reply_pkt->score, max_score);
   } else if (srgp->scoring_system_val == SCORE_KIROV) {
@@ -280,7 +280,7 @@ generate_xml_report(
     if (tests[i].max_memory_used > 0) {
       fprintf(f, " max-memory-used=\"%d\"", tests[i].max_memory_used);
     }
-    if (srgp->scoring_system_val == SCORE_OLYMPIAD && !srgp->accepting_mode) {
+    if (srgp->scoring_system_val == SCORE_OLYMPIAD && srgp->accepting_mode <= 0) {
       fprintf(f, " nominal-score=\"%d\" score=\"%d\"",
               tests[i].max_score, tests[i].score);
     } else if (srgp->scoring_system_val == SCORE_KIROV) {
@@ -1110,13 +1110,13 @@ invoke_nwrun(
   }
   fprintf(f, "max_output_file_size = 60M\n");
   fprintf(f, "max_error_file_size = 16M\n");
-  if (srgp->secure_run) {
+  if (srgp->secure_run > 0) {
     fprintf(f, "enable_secure_run = 1\n");
   }
-  if (srgp->enable_memory_limit_error && srgp->secure_run) {
+  if (srgp->enable_memory_limit_error > 0 && srgp->secure_run > 0) {
     fprintf(f, "enable_memory_limit_error = 1\n");
   }
-  if (srgp->detect_violations && srgp->secure_run) {
+  if (srgp->detect_violations > 0 && srgp->secure_run > 0) {
     fprintf(f, "enable_security_violation_error = 1\n");
   }
   fprintf(f, "prob_short_name = \"%s\"\n", srpp->short_name);
@@ -1516,13 +1516,13 @@ invoke_checker(
 
   task_AddArg(tsk, test_src);
   task_AddArg(tsk, output_path);
-  if (srpp->use_corr) {
+  if (srpp->use_corr > 0) {
     task_AddArg(tsk, corr_src);
   }
-  if (srpp->use_info) {
+  if (srpp->use_info > 0) {
     task_AddArg(tsk, info_src);
   }
-  if (srpp->use_tgz) {
+  if (srpp->use_tgz > 0) {
     task_AddArg(tsk, tgzdir_src);
     task_AddArg(tsk, working_dir);
   }
@@ -1869,7 +1869,7 @@ run_one_test(
     }
   }
 
-  if (tst && tst->is_dos > 0 && !srpp->binary_input) copy_flag = CONVERT;
+  if (tst && tst->is_dos > 0 && srpp->binary_input <= 0) copy_flag = CONVERT;
 
   /* copy the test */
   if (generic_copy_file(0, NULL, test_src, "", copy_flag, check_dir, srpp->input_file, "") < 0) {
@@ -2015,7 +2015,7 @@ run_one_test(
         task_SetDataSize(tsk, srpp->max_data_size);
       if (srpp->max_vm_size && srpp->max_vm_size != (ssize_t) -1L)
         task_SetVMSize(tsk, srpp->max_vm_size);
-      if (tst->enable_memory_limit_error > 0 && srgp->enable_memory_limit_error && srgp->secure_run) {
+      if (tst->enable_memory_limit_error > 0 && srgp->enable_memory_limit_error > 0 && srgp->secure_run > 0) {
         task_EnableMemoryLimitError(tsk);
       }
       break;
@@ -2032,7 +2032,7 @@ run_one_test(
     }
   }
 
-  if (tst && tst->secure_exec_type_val > 0 && srgp->secure_run) {
+  if (tst && tst->secure_exec_type_val > 0 && srgp->secure_run > 0) {
     switch (tst->secure_exec_type_val) {
     case SEXEC_TYPE_STATIC:
       if (task_EnableSecureExec(tsk) < 0) {
@@ -2057,7 +2057,7 @@ run_one_test(
     }
   }
 
-  if (tst && tst->enable_memory_limit_error > 0 && srgp->secure_run && srgp->detect_violations) {
+  if (tst && tst->enable_memory_limit_error > 0 && srgp->secure_run > 0 && srgp->detect_violations > 0) {
     switch (tst->secure_exec_type_val) {
     case SEXEC_TYPE_STATIC:
     case SEXEC_TYPE_DLL:
@@ -2189,7 +2189,7 @@ run_one_test(
   }
 
   // command-line arguments and environment
-  if (srpp->use_info) {
+  if (srpp->use_info > 0) {
     if (srgp->enable_full_archive > 0) {
       filehash_get(info_src, cur_info->info_digest);
       cur_info->has_info_digest = 1;
@@ -2229,14 +2229,14 @@ run_one_test(
     goto cleanup;
   }
 
-  if (tst && tst->enable_memory_limit_error > 0 && srgp->enable_memory_limit_error
-      && srgp->secure_run && task_IsMemoryLimit(tsk)) {
+  if (tst && tst->enable_memory_limit_error > 0 && srgp->enable_memory_limit_error > 0
+      && srgp->secure_run > 0 && task_IsMemoryLimit(tsk)) {
     status = RUN_MEM_LIMIT_ERR;
     goto cleanup;
   }
 
-  if (tst && tst->enable_memory_limit_error > 0 && srgp->detect_violations
-      && srgp->secure_run && task_IsSecurityViolation(tsk)) {
+  if (tst && tst->enable_memory_limit_error > 0 && srgp->detect_violations > 0
+      && srgp->secure_run > 0 && task_IsSecurityViolation(tsk)) {
     status = RUN_SECURITY_ERR;
     goto cleanup;
   }
@@ -2255,7 +2255,7 @@ run_one_test(
     cur_info->code = task_ExitCode(tsk);
   }
 
-  if (srpp->use_info && tstinfo.exit_code > 0) {
+  if (srpp->use_info > 0 && tstinfo.exit_code > 0) {
     if (cur_info->code != tstinfo.exit_code) {
       status = RUN_WRONG_ANSWER_ERR;
       goto cleanup;
@@ -2291,7 +2291,7 @@ run_checker:;
   }
 
   file_size = -1;
-  if (srpp->use_corr) {
+  if (srpp->use_corr > 0) {
     if (srgp->enable_full_archive > 0) {
       filehash_get(corr_src, cur_info->correct_digest);
       cur_info->has_correct_digest = 1;
@@ -2494,7 +2494,7 @@ play_sound(
 
   if (!global->sound_player || !global->sound_player[0] || disable_sound > 0) return;
 
-  if (global->extended_sound) {
+  if (global->extended_sound > 0) {
     tsk = task_New();
     task_AddArg(tsk, global->sound_player);
     snprintf(b1, sizeof(b1), "%d", status);
@@ -2951,7 +2951,7 @@ run_tests(
         if (srpp->scoring_checker > 0) {
           //reply_pkt->score = tests.data[tests.size - 1].checker_score;
           reply_pkt->score = tests.data[tests.size - 1].score;
-        } else {
+        } else if (!srpp->valuer_cmd || !srpp->valuer_cmd[0]) {
           if (!score_tests_val) {
             append_msg_to_log(messages_path, "score_tests parameter is undefined");
             goto check_failed;
@@ -2965,7 +2965,7 @@ run_tests(
     }
   }
 
-  if (srpp->valuer_cmd && srpp->valuer_cmd[0] && !srgp->accepting_mode
+  if (srpp->valuer_cmd && srpp->valuer_cmd[0] && srgp->accepting_mode <= 0
       && !reply_pkt->status != RUN_CHECK_FAILED) {
     if (invoke_valuer(global, srp, tests.size, tests.data,
                       cur_variant, srpp->full_score,
@@ -3003,7 +3003,7 @@ run_tests(
       }
     }
     if (srgp->scoring_system_val == SCORE_KIROV
-        || (srgp->scoring_system_val == SCORE_OLYMPIAD && !srgp->accepting_mode)) {
+        || (srgp->scoring_system_val == SCORE_OLYMPIAD && srgp->accepting_mode <= 0)) {
       if (user_score < 0) {
         if (srpp->variable_full_score <= 0 && user_status == RUN_OK) {
           if (srpp->full_user_score >= 0) {

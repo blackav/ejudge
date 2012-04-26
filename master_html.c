@@ -484,12 +484,12 @@ write_xml_testing_report(
   }
 
   if (r->host && !user_mode) {
-    fprintf(f, "<big>Tested on host: %s</big>\n", r->host);
+    fprintf(f, "<big>Tested on host: %s</big><br/><br/>\n", r->host);
   }
 
   if (r->comment) {
     s = html_armor_string_dup(r->comment);
-    fprintf(f, "<big>Note: %s.<br><br></big>\n", s);
+    fprintf(f, "<big>Note: %s.<br><br></big><br/><br/>\n", s);
     xfree(s);
   }
 
