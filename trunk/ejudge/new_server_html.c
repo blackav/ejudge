@@ -6780,6 +6780,50 @@ priv_stand_filter_operation(
 }
 
 static int
+priv_change_run_fields(
+        FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  int retval = 0;
+  const serve_state_t cs = extra->serve_state;
+
+  if (phr->role <= 0) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+  const unsigned char *s = NULL;
+  if (ns_cgi_param(phr, "cancel", &s) > 0 && s) goto cleanup;
+
+  struct user_filter_info *u = user_filter_info_allocate(cs, phr->user_id, phr->session_id);
+  if (!u) goto cleanup;
+
+  if (ns_cgi_param(phr, "reset", &s) > 0 && s) {
+    if (u->run_fields <= 0) goto cleanup;
+    u->run_fields = 0;
+    team_extra_set_run_fields(cs->team_extra_state, phr->user_id, 0);
+    team_extra_flush(cs->team_extra_state);
+    goto cleanup;
+  }
+
+  int new_fields = 0;
+  for (int i = 0; i < RUN_VIEW_LAST; ++i) {
+    unsigned char nbuf[64];
+    snprintf(nbuf, sizeof(nbuf), "field_%d", i);
+    if (ns_cgi_param(phr, nbuf, &s) > 0 && s) {
+      new_fields |= 1 << i;
+    }
+  }
+  if (new_fields == u->run_fields) goto cleanup;
+  u->run_fields = new_fields;
+  team_extra_set_run_fields(cs->team_extra_state, phr->user_id, u->run_fields);
+  team_extra_flush(cs->team_extra_state);
+
+cleanup:
+  return retval;
+}
+
+static int
 priv_admin_contest_settings(
         FILE *fout,
         FILE *log_f,
@@ -7400,6 +7444,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_REPORT] = priv_contest_operation,
   [NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_JUDGE_SCORE] = priv_contest_operation,
   [NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_FINAL_VISIBILITY] = priv_contest_operation,
+  [NEW_SRV_ACTION_CHANGE_RUN_FIELDS] = priv_change_run_fields,
 
   /* for priv_generic_page */
   [NEW_SRV_ACTION_VIEW_REPORT] = priv_view_report,
@@ -8909,6 +8954,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_JUDGE_SCORE] = priv_generic_operation,
   [NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_FINAL_VISIBILITY] = priv_generic_operation,
   [NEW_SRV_ACTION_RELOAD_SERVER_2] = priv_reload_server_2,
+  [NEW_SRV_ACTION_CHANGE_RUN_FIELDS] = priv_generic_operation,
 };
 
 static unsigned char *
@@ -14480,6 +14526,7 @@ static const unsigned char * const symbolic_action_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_JUDGE_SCORE] = "ADMIN_CHANGE_ONLINE_VIEW_JUDGE_SCORE",
   [NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_FINAL_VISIBILITY] = "ADMIN_CHANGE_ONLINE_FINAL_VISIBILITY",
   [NEW_SRV_ACTION_RELOAD_SERVER_2] = "RELOAD_SERVER_2",
+  [NEW_SRV_ACTION_CHANGE_RUN_FIELDS] = "CHANGE_RUN_FIELDS",
 };
 
 void

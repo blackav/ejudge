@@ -281,9 +281,9 @@ enum
 
   RUN_VIEW_DEFAULT = (1 << RUN_VIEW_RUN_ID)
   | (1 << RUN_VIEW_TIME)
-  | (1 << RUN_VIEW_SIZE)
-  | (1 << RUN_VIEW_IP)
-  | (1 << RUN_VIEW_USER_ID)
+  //| (1 << RUN_VIEW_SIZE)
+  //| (1 << RUN_VIEW_IP)
+  //| (1 << RUN_VIEW_USER_ID)
   | (1 << RUN_VIEW_USER_NAME)
   | (1 << RUN_VIEW_PROB_NAME)
   | (1 << RUN_VIEW_LANG_NAME)
