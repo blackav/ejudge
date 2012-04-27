@@ -319,6 +319,7 @@ static unsigned int user_id;
 static unsigned char *user_login;
 static unsigned char *user_name;
 static unsigned char *user_password;
+static unsigned char *http_host;
 static unsigned char *self_url;
 static int ssl_flag;
 static int super_serve_fd = -1;
@@ -329,11 +330,11 @@ static unsigned char hidden_vars[1024];
 static void
 make_self_url(void)
 {
-  unsigned char *http_host = getenv("HTTP_HOST");
   unsigned char *script_name = getenv("SCRIPT_NAME");
   unsigned char fullname[1024];
   unsigned char *protocol = "http";
 
+  http_host = getenv("HTTP_HOST");
   if (getenv("SSL_PROTOCOL") || getenv("HTTPS")) {
     ssl_flag = 1;
     protocol = "https";
@@ -2967,7 +2968,7 @@ main(int argc, char *argv[])
   /* default (main) screen */
   open_super_server();
   client_put_header(stdout, 0, 0, config->charset, 1, 0,
-                    "%s: %s", "serve-control", user_name);
+                    "%s: %s@%s", "serve-control", user_login, http_host);
   fflush(stdout);
   r = super_clnt_main_page(super_serve_fd, 1, SSERV_CMD_MAIN_PAGE, 0,
                            0, 0, self_url, hidden_vars, "");
