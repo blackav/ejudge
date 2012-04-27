@@ -633,3 +633,168 @@ function ej_stat(run_id)
     t.appendChild(document.createTextNode(ej_valid_statuses[p]));
   }
 }
+
+var ej_valid_fields =
+{
+  0 : "Run ID",
+  1 : "Size",
+  2 : "Time",
+  3 : "Absolute Time",
+  4 : "Relative Time",
+  5 : "Nsec",
+  6 : "User ID",
+  7 : "User Login",
+  8 : "User Name",
+  9 : "Prob ID",
+  10 : "Prob Name",
+  11 : "Lang ID",
+  12 : "Lang Name",
+  13 : "IP",
+  14 : "SHA1",
+  15 : "Score",
+  16 : "Test",
+  17 : "Score Adj",
+  18 : "Result",
+  19 : "Variant",
+  20 : "Mime Type",
+  21 : "Saved Score",
+  22 : "Saved Test",
+  23 : "Saved Result"
+}
+
+function ej_field_popup(field_mask)
+{
+  var d = document.getElementById("ej_field_popup");
+  if (d == null) return;
+  if (d.style.display == "block") {
+    d.style.display = "none";
+    return;
+  }
+  d.style.display = "block";
+  if (d.childNodes.length >= 1) {
+    return;
+  }
+
+  var b = document.createElement("form");
+  var a = document.createAttribute("method");
+  a.value = "post";
+  b.setAttributeNode(a);
+  a = document.createAttribute("action");
+  a.value = self_url;
+  b.setAttributeNode(a);
+  d.appendChild(b);
+
+  var h = document.createElement("input");
+  a = document.createAttribute("type");
+  a.value = "hidden";
+  h.setAttributeNode(a);
+  a = document.createAttribute("name");
+  a.value = "SID";
+  h.setAttributeNode(a);
+  a = document.createAttribute("value");
+  a.value = SID;
+  h.setAttributeNode(a);
+  b.appendChild(h);
+  h = document.createElement("input");
+  a = document.createAttribute("type");
+  a.value = "hidden";
+  h.setAttributeNode(a);
+  a = document.createAttribute("name");
+  a.value = "action";
+  h.setAttributeNode(a);
+  a = document.createAttribute("value");
+  a.value = "CHANGE_RUN_FIELDS";
+  h.setAttributeNode(a);
+  b.appendChild(h);
+
+  var t = document.createElement("table");
+  a = document.createAttribute("class");
+  a.value = "b0";
+  t.setAttributeNode(a);
+  b.appendChild(t);
+
+  var r = null;
+  var e = null;
+  var s = null;
+  for (var p in ej_valid_fields) {
+    r = document.createElement("tr");
+    t.appendChild(r);
+    e = document.createElement("td");
+    a = document.createAttribute("class");
+    a.value = "b0";
+    r.appendChild(e);
+    s = document.createElement("input");
+    a = document.createAttribute("type");
+    a.value = "checkbox";
+    s.setAttributeNode(a);
+    a = document.createAttribute("name");
+    a.value = "field_" + p;
+    s.setAttributeNode(a);
+    if (((1 << p) & field_mask) != 0) {
+      a = document.createAttribute("checked");
+      a.value = "checked";
+      s.setAttributeNode(a);
+    }
+    e.appendChild(s);
+
+    e = document.createElement("td");
+    a = document.createAttribute("class");
+    a.value = "b0";
+    r.appendChild(e);
+    e.appendChild(document.createTextNode(ej_valid_fields[p]));
+  }
+
+  t = document.createElement("table");
+  a = document.createAttribute("class");
+  a.value = "b0";
+  t.setAttributeNode(a);
+  b.appendChild(t);
+  r = document.createElement("tr");
+  t.appendChild(r);
+  e = document.createElement("td");
+  a = document.createAttribute("class");
+  a.value = "b0";
+  r.appendChild(e);
+  s = document.createElement("input");
+  a = document.createAttribute("type");
+  a.value = "submit";
+  s.setAttributeNode(a);
+  a = document.createAttribute("name");
+  a.value = "cancel";
+  s.setAttributeNode(a);
+  a = document.createAttribute("value");
+  a.value = "Cancel";
+  s.setAttributeNode(a);
+  e.appendChild(s);
+
+  e = document.createElement("td");
+  a = document.createAttribute("class");
+  a.value = "b0";
+  r.appendChild(e);
+  s = document.createElement("input");
+  a = document.createAttribute("type");
+  a.value = "submit";
+  s.setAttributeNode(a);
+  a = document.createAttribute("name");
+  a.value = "set";
+  s.setAttributeNode(a);
+  a = document.createAttribute("value");
+  a.value = "Change";
+  s.setAttributeNode(a);
+  e.appendChild(s);
+  e = document.createElement("td");
+  a = document.createAttribute("class");
+  a.value = "b0";
+  r.appendChild(e);
+  s = document.createElement("input");
+  a = document.createAttribute("type");
+  a.value = "submit";
+  s.setAttributeNode(a);
+  a = document.createAttribute("name");
+  a.value = "reset";
+  s.setAttributeNode(a);
+  a = document.createAttribute("value");
+  a.value = "Set default";
+  s.setAttributeNode(a);
+  e.appendChild(s);
+}
