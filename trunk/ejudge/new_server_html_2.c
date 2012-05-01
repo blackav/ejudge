@@ -2366,8 +2366,8 @@ ns_priv_edit_clar_page(
 {
   unsigned char hbuf[1024];
   struct clar_entry_v1 clar;
-  const unsigned char *clar_subj = 0;
-  time_t start_time;
+  //const unsigned char *clar_subj = 0;
+  //time_t start_time;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   const unsigned char *from_str = NULL, *to_str = NULL;
   unsigned char from_buf[128], to_buf[128];
@@ -2381,8 +2381,8 @@ ns_priv_edit_clar_page(
     ns_error(log_f, NEW_SRV_ERR_INV_CLAR_ID);
     goto done;
   }
-  start_time = run_get_start_time(cs->runlog_state);
-  clar_subj = clar_get_subject(cs->clarlog_state, clar_id);
+  //start_time = run_get_start_time(cs->runlog_state);
+  //clar_subj = clar_get_subject(cs->clarlog_state, clar_id);
 
   fprintf(f, "<h2>%s %d", _("Message"), clar_id);
   if (opcaps_check(phr->caps, OPCAP_VIEW_CLAR) >= 0) {
