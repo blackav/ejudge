@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -531,6 +531,73 @@ clar_add_text(
         size_t size)
 {
   return state->iface->add_text(state->cnts, clar_id, text, size);
+}
+
+int
+clar_modify_text(
+        clarlog_state_t state,
+        int clar_id,
+        unsigned char *text,
+        size_t size)
+{
+  return state->iface->modify_text(state->cnts, clar_id, text, size);
+}
+
+int
+clar_modify_record(
+        clarlog_state_t state,
+        int clar_id,
+        int mask,
+        const struct clar_entry_v1 *pclar)
+{
+  if (clar_id < 0 || clar_id >= state->clars.u) ERR_R("bad id: %d", clar_id);
+  struct clar_entry_v1 *pe = &state->clars.v[clar_id];
+
+  if (mask & (1 << CLAR_FIELD_SIZE)) {
+    pe->size = pclar->size;
+  }
+  if (mask & (1 << CLAR_FIELD_FROM)) {
+    pe->from = pclar->from;
+  }
+  if (mask & (1 << CLAR_FIELD_TO)) {
+    pe->to = pclar->to;
+  }
+  if (mask & (1 << CLAR_FIELD_J_FROM)) {
+    pe->j_from = pclar->j_from;
+  }
+  if (mask & (1 << CLAR_FIELD_FLAGS)) {
+    pe->flags = pclar->flags;
+  }
+  if (mask & (1 << CLAR_FIELD_HIDE_FLAG)) {
+    pe->hide_flag = pclar->hide_flag;
+  }
+  if (mask & (1 << CLAR_FIELD_SSL_FLAG)) {
+    pe->ssl_flag = pclar->ssl_flag;
+  }
+  if (mask & (1 << CLAR_FIELD_APPEAL_FLAG)) {
+    pe->appeal_flag = pclar->appeal_flag;
+  }
+  if (mask & (1 << CLAR_FIELD_IP)) {
+    pe->ip6_flag = 0;
+    pe->a.ip = pclar->a.ip;
+  }
+  if (mask & (1 << CLAR_FIELD_LOCALE_ID)) {
+    pe->locale_id = pclar->locale_id;
+  }
+  if (mask & (1 << CLAR_FIELD_IN_REPLY_TO)) {
+    pe->in_reply_to = pclar->in_reply_to;
+  }
+  if (mask & (1 << CLAR_FIELD_RUN_ID)) {
+    pe->run_id = pclar->run_id;
+  }
+  if (mask & (1 << CLAR_FIELD_CHARSET)) {
+    snprintf(pe->charset, sizeof(pe->charset), "%s", pclar->charset);
+  }
+  if (mask & (1 << CLAR_FIELD_SUBJECT)) {
+    snprintf(pe->subj, sizeof(pe->subj), "%s", pclar->subj);
+  }
+
+  return state->iface->modify_record(state->cnts, clar_id, mask, pclar);
 }
 
 /*

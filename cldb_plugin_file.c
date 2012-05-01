@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2008-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -99,6 +99,18 @@ add_text_func(
         int clar_id,
         const unsigned char *text,
         size_t size);
+static int
+modify_text_func(
+        struct cldb_plugin_cnts *cdata,
+        int clar_id,
+        const unsigned char *text,
+        size_t size);
+static int
+modify_record_func(
+        struct cldb_plugin_cnts *cdata,
+        int clar_id,
+        int mask,
+        const struct clar_entry_v1 *pe);
 
 struct cldb_plugin_iface cldb_plugin_file =
 {
@@ -124,6 +136,8 @@ struct cldb_plugin_iface cldb_plugin_file =
   set_charset_func,
   get_raw_text_func,
   add_text_func,
+  modify_text_func,
+  modify_record_func,
 };
 
 static struct common_plugin_data *
@@ -606,6 +620,34 @@ add_text_func(
   return generic_write_file(text, size, 0, cs->clar_archive_dir, name_buf, "");
 }
 
+static int
+modify_text_func(
+        struct cldb_plugin_cnts *cdata,
+        int clar_id,
+        const unsigned char *text,
+        size_t size)
+{
+  struct cldb_file_cnts *cs = (struct cldb_file_cnts*) cdata;
+  unsigned char name_buf[64];
+
+  if (!cs->clar_archive_dir) {
+    err("clar_archive_dir is undefined");
+    return -1;
+  }
+  snprintf(name_buf, sizeof(name_buf), "%06d", clar_id);
+  return generic_write_file(text, size, 0, cs->clar_archive_dir, name_buf, "");
+}
+
+static int
+modify_record_func(
+        struct cldb_plugin_cnts *cdata,
+        int clar_id,
+        int mask,
+        const struct clar_entry_v1 *pe)
+{
+  struct cldb_file_cnts *cs = (struct cldb_file_cnts*) cdata;
+  return do_flush_entry(cs, clar_id);
+}
 
 /*
  * Local variables:
