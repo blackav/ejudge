@@ -7139,3 +7139,11 @@ html.h 6777 0 647899
 new-server.h 6777 0 2330251
 new_server_html.c 6777 0 40594687
 serve-control.c 6779 0 9634193
+clarlog.h 6782 0 358864
+cldb_plugin.h 6782 0 236238
+new-server.h 6782 0 2381406
+serve-control.c 6782 0 9640331
+clarlog.c 6782 0 1244719
+cldb_plugin_file.c 6782 0 1425135
+new_server_html.c 6782 0 40715944
+new_server_html_2.c 6782 0 18362366
