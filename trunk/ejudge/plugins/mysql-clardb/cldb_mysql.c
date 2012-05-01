@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2008-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -81,6 +81,14 @@ static int
 get_raw_text_func(struct cldb_plugin_cnts *, int, unsigned char **,size_t*);
 static int
 add_text_func(struct cldb_plugin_cnts *, int, const unsigned char *, size_t);
+static int
+modify_text_func(struct cldb_plugin_cnts *, int, const unsigned char *, size_t);
+static int
+modify_record_func(
+        struct cldb_plugin_cnts *cdata,
+        int clar_id,
+        int mask,
+        const struct clar_entry_v1 *pe);
 
 /* plugin entry point */
 struct cldb_plugin_iface plugin_cldb_mysql =
@@ -107,6 +115,8 @@ struct cldb_plugin_iface plugin_cldb_mysql =
   set_charset_func,
   get_raw_text_func,
   add_text_func,
+  modify_text_func,
+  modify_record_func,
 };
 
 static struct common_plugin_data *
@@ -676,9 +686,139 @@ add_text_func(
   return -1;
 }
 
+static int
+modify_text_func(
+        struct cldb_plugin_cnts *cdata,
+        int clar_id,
+        const unsigned char *text,
+        size_t size)
+{
+  struct cldb_mysql_cnts *cs = (struct cldb_mysql_cnts*) cdata;
+  struct cldb_mysql_state *state = cs->plugin_state;
+  struct common_mysql_iface *mi = state->mi;
+  struct common_mysql_state *md = state->md;
+  FILE *cmd_f = 0;
+  char *cmd_t = 0;
+  size_t cmd_z = 0;
+
+  if (!text) {
+    text = "";
+    size = 0;
+  }
+  if (strlen(text) != size) {
+    err("clar text is binary: clar_id = %d, contest_id = %d",
+        clar_id, cs->contest_id);
+    goto fail;
+  }
+
+  cmd_f = open_memstream(&cmd_t, &cmd_z);
+  fprintf(cmd_f, "MODIFY %sclartexts SET clar_text = ", md->table_prefix);
+  mi->write_escaped_string(md, cmd_f, NULL, text);
+  fprintf(cmd_f, " WHERE clar_id = %d AND contest_id = %d", clar_id, cs->contest_id);
+  close_memstream(cmd_f); cmd_f = 0;
+  if (mi->simple_query(md, cmd_t, cmd_z) < 0) goto fail;
+  xfree(cmd_t); cmd_t = 0;
+  return 0;
+
+ fail:
+  if (cmd_f) fclose(cmd_f);
+  xfree(cmd_t);
+  return -1;
+}
+
+static int
+modify_record_func(
+        struct cldb_plugin_cnts *cdata,
+        int clar_id,
+        int mask,
+        const struct clar_entry_v1 *pe)
+{
+  struct cldb_mysql_cnts *cs = (struct cldb_mysql_cnts*) cdata;
+  struct cldb_mysql_state *state = cs->plugin_state;
+  struct common_mysql_iface *mi = state->mi;
+  struct common_mysql_state *md = state->md;
+
+  FILE *cmd_f = 0;
+  char *cmd_t = 0;
+  size_t cmd_z = 0;
+  const unsigned char *sep = "";
+  const unsigned char *sep1 = ", ";
+
+  cmd_f = open_memstream(&cmd_t, &cmd_z);
+  fprintf(cmd_f, "MODIFY %sclars SET ", md->table_prefix);
+
+  if (mask & (1 << CLAR_FIELD_SIZE)) {
+    fprintf(cmd_f, " size = %d", pe->size);
+    sep = sep1;
+  }
+  if (mask & (1 << CLAR_FIELD_FROM)) {
+    fprintf(cmd_f, " user_from = %d", pe->from);
+    sep = sep1;
+  }
+  if (mask & (1 << CLAR_FIELD_TO)) {
+    fprintf(cmd_f, " user_to = %d", pe->to);
+    sep = sep1;
+  }
+  if (mask & (1 << CLAR_FIELD_J_FROM)) {
+    fprintf(cmd_f, " j_from = %d", pe->j_from);
+    sep = sep1;
+  }
+  if (mask & (1 << CLAR_FIELD_FLAGS)) {
+    fprintf(cmd_f, " flags = %d", pe->flags);
+    sep = sep1;
+  }
+  if (mask & (1 << CLAR_FIELD_HIDE_FLAG)) {
+    fprintf(cmd_f, " hide_flag = %d", pe->hide_flag);
+    sep = sep1;
+  }
+  if (mask & (1 << CLAR_FIELD_SSL_FLAG)) {
+    fprintf(cmd_f, " ssl_flag = %d", pe->ssl_flag);
+    sep = sep1;
+  }
+  if (mask & (1 << CLAR_FIELD_APPEAL_FLAG)) {
+    fprintf(cmd_f, " appeal_flag = %d", pe->appeal_flag);
+    sep = sep1;
+  }
+  if (mask & (1 << CLAR_FIELD_IP)) {
+    fprintf(cmd_f, " ip_version = %d", 4);
+    sep = sep1;
+    mi->write_escaped_string(md, cmd_f, sep, xml_unparse_ip(pe->a.ip));
+  }
+  if (mask & (1 << CLAR_FIELD_LOCALE_ID)) {
+    fprintf(cmd_f, " locale_id = %d", pe->locale_id);
+    sep = sep1;
+  }
+  if (mask & (1 << CLAR_FIELD_IN_REPLY_TO)) {
+    fprintf(cmd_f, " in_reply_to = %d", pe->in_reply_to);
+    sep = sep1;
+  }
+  if (mask & (1 << CLAR_FIELD_RUN_ID)) {
+    fprintf(cmd_f, " run_id = %d", pe->run_id);
+    sep = sep1;
+  }
+  if (mask & (1 << CLAR_FIELD_CHARSET)) {
+    mi->write_escaped_string(md, cmd_f, sep, pe->charset);
+    sep = sep1;
+  }
+  if (mask & (1 << CLAR_FIELD_SUBJECT)) {
+    mi->write_escaped_string(md, cmd_f, sep, pe->subj);
+    sep = sep1;
+  }
+
+  fprintf(cmd_f, " WHERE clar_id = %d AND contest_id = %d", clar_id, cs->contest_id);
+  close_memstream(cmd_f); cmd_f = 0;
+  if (mi->simple_query(md, cmd_t, cmd_z) < 0) goto fail;
+  xfree(cmd_t); cmd_t = 0;
+  return 0;
+
+ fail:
+  if (cmd_f) fclose(cmd_f);
+  xfree(cmd_t);
+  return -1;
+}
+
 /*
  * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "MYSQL")
+ *  compile-command: "make -C ../.."
  * End:
  */
