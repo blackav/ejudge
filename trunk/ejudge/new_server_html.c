@@ -5660,6 +5660,45 @@ priv_view_clar(FILE *fout,
 }
 
 static int
+priv_edit_clar_page(
+        FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  int clar_id, n;
+  const unsigned char *s;
+
+  if (ns_cgi_param(phr, "clar_id", &s) <= 0
+      || sscanf(s, "%d%n", &clar_id, &n) != 1 || s[n]
+      || clar_id < 0 || clar_id >= clar_get_total(cs->clarlog_state)) {
+    ns_html_err_inv_param(fout, phr, 1, "cannot parse clar_id");
+    return -1;
+  }
+
+  if (opcaps_check(phr->caps, OPCAP_EDIT_RUN) < 0) {
+    ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
+    goto cleanup;
+  }
+
+  l10n_setlocale(phr->locale_id);
+  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+            "%s [%s, %d, %s]: %s %d", ns_unparse_role(phr->role),
+            phr->name_arm, phr->contest_id, extra->contest_arm,
+            _("Editing clar"), clar_id);
+
+  ns_priv_edit_clar_page(cs, fout, log_f, phr, cnts, extra, clar_id);
+
+  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
+  l10n_setlocale(0);
+
+ cleanup:
+  return 0;
+}
+
+static int
 priv_standings(FILE *fout,
                FILE *log_f,
                struct http_request_info *phr,
@@ -7445,6 +7484,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_JUDGE_SCORE] = priv_contest_operation,
   [NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_FINAL_VISIBILITY] = priv_contest_operation,
   [NEW_SRV_ACTION_CHANGE_RUN_FIELDS] = priv_change_run_fields,
+  [NEW_SRV_ACTION_PRIV_EDIT_CLAR_ACTION] = ns_priv_edit_clar_action,
 
   /* for priv_generic_page */
   [NEW_SRV_ACTION_VIEW_REPORT] = priv_view_report,
@@ -7508,6 +7548,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_MARK_DISPLAYED_2] = priv_clear_displayed,
   [NEW_SRV_ACTION_UNMARK_DISPLAYED_2] = priv_clear_displayed,
   [NEW_SRV_ACTION_ADMIN_CONTEST_SETTINGS] = priv_admin_contest_settings,
+  [NEW_SRV_ACTION_PRIV_EDIT_CLAR_PAGE] = priv_edit_clar_page,
 };
 
 static void
@@ -8955,6 +8996,8 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_FINAL_VISIBILITY] = priv_generic_operation,
   [NEW_SRV_ACTION_RELOAD_SERVER_2] = priv_reload_server_2,
   [NEW_SRV_ACTION_CHANGE_RUN_FIELDS] = priv_generic_operation,
+  [NEW_SRV_ACTION_PRIV_EDIT_CLAR_PAGE] = priv_generic_page,
+  [NEW_SRV_ACTION_PRIV_EDIT_CLAR_ACTION] = priv_generic_operation,
 };
 
 static unsigned char *
@@ -14527,6 +14570,8 @@ static const unsigned char * const symbolic_action_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_FINAL_VISIBILITY] = "ADMIN_CHANGE_ONLINE_FINAL_VISIBILITY",
   [NEW_SRV_ACTION_RELOAD_SERVER_2] = "RELOAD_SERVER_2",
   [NEW_SRV_ACTION_CHANGE_RUN_FIELDS] = "CHANGE_RUN_FIELDS",
+  [NEW_SRV_ACTION_PRIV_EDIT_CLAR_PAGE] = "PRIV_EDIT_CLAR_PAGE",
+  [NEW_SRV_ACTION_PRIV_EDIT_CLAR_ACTION] = "PRIV_EDIT_CLAR_ACTION",
 };
 
 void

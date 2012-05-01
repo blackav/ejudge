@@ -2242,6 +2242,7 @@ ns_write_priv_clar(const serve_state_t cs,
   unsigned char bb[1024];
   unsigned char b1[1024], b2[1024];
   const unsigned char *clar_subj = 0;
+  unsigned char hbuf[1024];
 
   if (clar_id < 0 || clar_id >= clar_get_total(cs->clarlog_state)
       || clar_get_record(cs->clarlog_state, clar_id, &clar) < 0
@@ -2252,7 +2253,14 @@ ns_write_priv_clar(const serve_state_t cs,
   start_time = run_get_start_time(cs->runlog_state);
   clar_subj = clar_get_subject(cs->clarlog_state, clar_id);
 
-  fprintf(f, "<h2>%s %d</h2>\n", _("Message"), clar_id);
+  fprintf(f, "<h2>%s %d", _("Message"), clar_id);
+  if (phr->role == USER_ROLE_ADMIN && opcaps_check(phr->caps, OPCAP_EDIT_RUN) >= 0) {
+    fprintf(f, " [<a href=\"%s\">%s</a>]",
+            ns_url(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_PRIV_EDIT_CLAR_PAGE,
+                   "clar_id=%d", clar_id),
+            "Edit");
+  }
+  fprintf(f, "</h2>\n");
   fprintf(f, "<table border=\"0\">\n");
   fprintf(f, "<tr><td>%s:</td><td>%d</td></tr>\n", _("Clar ID"), clar_id);
   if (clar.hide_flag)
@@ -2346,6 +2354,421 @@ ns_write_priv_clar(const serve_state_t cs,
   xfree(msg_txt);
 }
 
+void
+ns_priv_edit_clar_page(
+        const serve_state_t cs,
+        FILE *f,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        int clar_id)
+{
+  unsigned char hbuf[1024];
+  struct clar_entry_v1 clar;
+  const unsigned char *clar_subj = 0;
+  time_t start_time;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  const unsigned char *from_str = NULL, *to_str = NULL;
+  unsigned char from_buf[128], to_buf[128];
+  const unsigned char *s;
+  unsigned char *msg_txt = NULL;
+  size_t msg_len = 0;
+
+  if (clar_id < 0 || clar_id >= clar_get_total(cs->clarlog_state)
+      || clar_get_record(cs->clarlog_state, clar_id, &clar) < 0
+      || clar.id < 0) {
+    ns_error(log_f, NEW_SRV_ERR_INV_CLAR_ID);
+    goto done;
+  }
+  start_time = run_get_start_time(cs->runlog_state);
+  clar_subj = clar_get_subject(cs->clarlog_state, clar_id);
+
+  fprintf(f, "<h2>%s %d", _("Message"), clar_id);
+  if (opcaps_check(phr->caps, OPCAP_VIEW_CLAR) >= 0) {
+    fprintf(f, " [<a href=\"%s\">%s</a>]",
+            ns_url(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_CLAR,
+                   "clar_id=%d", clar_id),
+            "View");
+  }
+  fprintf(f, "</h2>\n");
+
+  html_start_form(f, 2, phr->self_url, phr->hidden_vars);
+  fprintf(f, "<input type=\"hidden\" name=\"action\" value=\"%d\" />\n", NEW_SRV_ACTION_PRIV_EDIT_CLAR_ACTION);
+  fprintf(f, "<input type=\"hidden\" name=\"clar_id\" value=\"%d\" />\n", clar_id);
+  unsigned char *cl = " class=\"b0\"";
+  fprintf(f, "<table%s>\n", cl);
+
+  fprintf(f, "<tr><td%s>%s:</td><td%s>%d</td></tr>\n", cl, "Clar ID", cl, clar_id);
+  fprintf(f, "<tr><td%s>%s:</td><td%s>%s.%06d</td></tr>\n", cl, "Time", cl, xml_unparse_date(clar.time),
+          clar.nsec / 1000);
+  fprintf(f, "<tr><td%s>%s:</td><td%s>%d</td></tr>\n", cl, "Size", cl, clar.size);
+
+  if (clar.from <= 0 && clar.to <= 0) {
+    from_str = "judges";
+    to_str = "all";
+  } else if (clar.from <= 0) {
+    from_str = "judges";
+  } else if (clar.to <= 0) {
+    to_str = "judges";
+  }
+  if (clar.from > 0) {
+    if (!(from_str = teamdb_get_login(cs->teamdb_state, clar.from))) {
+      snprintf(from_buf, sizeof(from_buf), "#%d", clar.from);
+      from_str = from_buf;
+    }
+  }
+  if (clar.to > 0) {
+    if (!(to_str = teamdb_get_login(cs->teamdb_state, clar.to))) {
+      snprintf(to_buf, sizeof(to_buf), "#%d", clar.to);
+      to_str = to_buf;
+    }
+  }
+
+  fprintf(f, "<tr><td%s>%s:</td><td%s><input type=\"text\" name=\"from\" size=\"40\" value=\"%s\" /></td></tr>\n",
+          cl, "From (Login or #Id)", cl, ARMOR(from_str));
+  fprintf(f, "<tr><td%s>%s:</td><td%s><input type=\"text\" name=\"to\" size=\"40\" value=\"%s\" /></td></tr>\n",
+          cl, "To (Login or #Id)", cl, ARMOR(to_str));
+  from_buf[0] = 0; from_str = from_buf;
+  if (clar.j_from > 0) {
+    if (!(from_str = teamdb_get_login(cs->teamdb_state, clar.j_from))) {
+      snprintf(from_buf, sizeof(from_buf), "#%d", clar.j_from);
+      from_str = from_buf;
+    }
+  }
+  fprintf(f, "<tr><td%s>%s:</td><td%s><input type=\"text\" name=\"j_from\" size=\"40\" value=\"%s\" /></td></tr>\n",
+          cl, "Judge from (Login or #Id)", cl, ARMOR(from_str));
+
+  fprintf(f, "<tr><td%s>%s:</td><td%s><select name=\"flags\" value=\"%d\">", cl, "Flags", cl, clar.flags);
+  static const unsigned char * const clar_flags[] = { "New", "Viewed", "Answered", NULL };
+  for (int i = 0; clar_flags[i]; ++i) {
+    if (i == clar.flags) s = " selected=\"selected\"";
+    fprintf(f, "<option value=\"%d\"%s>%s</option>", i, s, ARMOR(clar_flags[i]));
+  }
+  fprintf(f, "</td></tr>\n");
+
+  s = "";
+  if (clar.hide_flag) s = " checked=\"checked\"";
+  fprintf(f, "<tr><td%s>%s?</td><td%s><input type=\"checkbox\" name=\"hide_flag\"%s /></td></tr>\n",
+          cl, "Hidden", cl, s);
+  s = "";
+  if (clar.appeal_flag) s = " checked=\"checked\"";
+  fprintf(f, "<tr><td%s>%s?</td><td%s><input type=\"checkbox\" name=\"appeal_flag\"%s /></td></tr>\n",
+          cl, "Apellation", cl, s);
+  
+  fprintf(f, "<tr><td%s>%s:</td><td%s><input type=\"text\" name=\"ip\" size=\"40\" value=\"%s\" /></td></tr>\n",
+          cl, "IP", cl, xml_unparse_ip(clar.a.ip));
+  s = "";
+  if (clar.ssl_flag) s = " checked=\"checked\"";
+  fprintf(f, "<tr><td%s>%s?</td><td%s><input type=\"checkbox\" name=\"ssl_flag\"%s /></td></tr>\n",
+          cl, "SSL", cl, s);
+
+  from_buf[0] = 0;
+  if (clar.locale_id >= 0) snprintf(from_buf, sizeof(from_buf), "%d", clar.locale_id);
+  fprintf(f, "<tr><td%s>%s:</td><td%s><input type=\"text\" name=\"locale_id\" size=\"40\" value=\"%s\" /></td></tr>\n",
+          cl, "Locale", cl, from_buf);
+
+  from_buf[0] = 0;
+  if (clar.in_reply_to > 0) snprintf(from_buf, sizeof(from_buf), "%d", clar.in_reply_to - 1);
+  fprintf(f, "<tr><td%s>%s:</td><td%s><input type=\"text\" name=\"in_reply_to\" size=\"40\" value=\"%s\" /></td></tr>\n",
+          cl, "In reply to", cl, from_buf);
+
+  from_buf[0] = 0;
+  if (clar.run_id > 0) snprintf(from_buf, sizeof(from_buf), "%d", clar.run_id - 1);
+  fprintf(f, "<tr><td%s>%s:</td><td%s><input type=\"text\" name=\"run_id\" size=\"40\" value=\"%s\" /></td></tr>\n",
+          cl, "Run ID", cl, from_buf);
+
+  fprintf(f, "<tr><td%s>%s:</td><td%s><input type=\"text\" name=\"charset\" size=\"40\" value=\"%s\" /></td></tr>\n",
+          cl, "Charset", cl, clar.charset);
+  fprintf(f, "<tr><td%s>%s:</td><td%s><input type=\"text\" name=\"subject\" size=\"80\" value=\"%s\" /></td></tr>\n",
+          cl, "Subject", cl, clar.subj);
+  fprintf(f, "</table>\n");
+
+  clar_get_text(cs->clarlog_state, clar_id, &msg_txt, &msg_len);
+  fprintf(f, "<p><textarea name=\"text\" rows=\"20\" cols=\"60\">%s</textarea></p>\n", ARMOR(msg_txt));
+
+  fprintf(f, "<table%s><tr>\n", cl);
+  fprintf(f, "<td%s><input type=\"submit\" name=\"save\" value=\"Save\" /></td>", cl);
+  fprintf(f, "<td%s><input type=\"submit\" name=\"cancel\" value=\"Cancel\" /></td>", cl);
+  fprintf(f, "</tr></table>\n");  
+  fprintf(f, "</form>\n");
+
+done:;
+  xfree(msg_txt);
+  html_armor_free(&ab);
+}
+
+
+// 0 - undefined or empty, -1 - invalid, 1 - ok
+static int
+parse_user_field(
+        const serve_state_t cs,
+        struct http_request_info *phr,
+        const unsigned char *name,
+        int all_enabled,
+        int judges_enabled,
+        int *p_user_id)
+{
+  const unsigned char *s = NULL;
+  unsigned char *str = NULL;
+  int r = ns_cgi_param(phr, name, &s);
+  char *eptr = NULL;
+  int user_id = 0;
+
+  if (r <= 0) return r;
+  if (is_empty_string(s)) return 0;
+  str = text_input_process_string(s, 0, 0);
+  if (!str || !*str) {
+    xfree(str);
+    return 0;
+  }
+  if (str[0] == '#') {
+    if (!str[1]) goto fail;
+    str[0] = ' ';
+    errno = 0;
+    user_id = strtol(str, &eptr, 10);
+    if (errno || *eptr) goto fail;
+    if (!teamdb_lookup(cs->teamdb_state, user_id)) goto fail;
+    goto done;
+  }
+  if (!strcasecmp(str, "all")) {
+    if (!all_enabled) goto fail;
+    user_id = 0;
+    goto done;
+  }
+  if (!strcasecmp(str, "judges")) {
+    if (!judges_enabled) goto fail;
+    user_id = 0;
+    goto done;
+  }
+  if ((user_id = teamdb_lookup_login(cs->teamdb_state, str)) > 0) goto done;
+  errno = 0;
+  user_id = strtol(str, &eptr, 10);
+  if (errno || *eptr) goto fail;
+  if (!teamdb_lookup(cs->teamdb_state, user_id)) goto fail;
+
+done:
+  *p_user_id = user_id;
+  xfree(str);
+  return 1;
+
+fail:
+  xfree(str);
+  return -1;
+}
+
+#define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
+
+int
+ns_priv_edit_clar_action(
+        FILE *out_f,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  int retval = 0, r;
+  int clar_id = -1;
+  struct clar_entry_v1 clar, new_clar;
+  const unsigned char *s = NULL;
+  int new_from = 0, new_to = 0, new_j_from = 0, new_flags = 0;
+  int new_hide_flag = 0, new_appeal_flag = 0, new_ssl_flag = 0;
+  int new_locale_id = 0, new_in_reply_to = -1, new_run_id = -1;
+  int new_size = 0;
+  ej_ip_t new_ip = 0;
+  unsigned char *new_charset = NULL;
+  unsigned char *new_subject = NULL;
+  unsigned char *new_text = NULL;
+  unsigned char *old_text = NULL;
+  size_t old_size = 0;
+  int mask = 0;
+
+  if (opcaps_check(phr->caps, OPCAP_EDIT_RUN) < 0) {
+    FAIL(NEW_SRV_ERR_INV_CLAR_ID);
+  }
+
+  if (ns_cgi_param_int(phr, "clar_id", &clar_id) < 0
+      || clar_id < 0 || clar_id >= clar_get_total(cs->clarlog_state)
+      || clar_get_record(cs->clarlog_state, clar_id, &clar) < 0
+      || clar.id < 0) {
+    FAIL(NEW_SRV_ERR_INV_CLAR_ID);
+  }
+
+  if (ns_cgi_param(phr, "cancel", &s) > 0 && *s) goto cleanup;
+  s = NULL;
+  if (ns_cgi_param(phr, "save", &s) <= 0 || !*s) goto cleanup;
+
+  if (parse_user_field(cs, phr, "from", 0, 1, &new_from) <= 0) {
+    fprintf(log_f, "invalid 'from' field value\n");
+    FAIL(NEW_SRV_ERR_INV_PARAM);
+  }
+  if (parse_user_field(cs, phr, "to", (new_from == 0), (new_from > 0), &new_to) <= 0) {
+    fprintf(log_f, "invalid 'to' field value\n");
+    FAIL(NEW_SRV_ERR_INV_PARAM);
+  }
+  if (!new_from) {
+    r = parse_user_field(cs, phr, "j_from", 0, 0, &new_j_from);
+    if (r < 0) {
+      fprintf(log_f, "invalid 'j_from' field value\n");
+      FAIL(NEW_SRV_ERR_INV_PARAM);
+    }
+    if (!r || new_j_from <= 0) new_j_from = 0;
+  }
+  if (ns_cgi_param_int(phr, "flags", &new_flags) < 0 || new_flags < 0 || new_flags > 2) {
+    fprintf(log_f, "invalid 'flags' field value\n");
+    FAIL(NEW_SRV_ERR_INV_PARAM);
+  }
+  if (ns_cgi_param(phr, "hide_flag", &s) > 0) new_hide_flag = 1;
+  if (ns_cgi_param(phr, "appeal_flag", &s) > 0) new_appeal_flag = 1;
+  if (ns_cgi_param(phr, "ssl_flag", &s) > 0) new_ssl_flag = 1;
+  if ((r = ns_cgi_param(phr, "ip", &s)) < 0) {
+    fprintf(log_f, "invalid 'ip' field value\n");
+    FAIL(NEW_SRV_ERR_INV_PARAM);
+  }
+  if (!r || !s || !*s) s = "127.0.0.1";
+  if (xml_parse_ip(NULL, 0, 0, 0, s, &new_ip) < 0) {
+    fprintf(log_f, "invalid 'ip' field value\n");
+    FAIL(NEW_SRV_ERR_INV_PARAM);
+  }
+  if (ns_cgi_param_int_opt(phr, "locale_id", &new_locale_id, 0) < 0) {
+    fprintf(log_f, "invalid 'locale_id' field value\n");
+    FAIL(NEW_SRV_ERR_INV_PARAM);
+  }
+  // FIXME: check for valid locales better
+  if (new_locale_id != 0 && new_locale_id != 1) {
+    fprintf(log_f, "invalid 'locale_id' field value\n");
+    FAIL(NEW_SRV_ERR_INV_PARAM);
+  }
+  if (ns_cgi_param_int_opt(phr, "in_reply_to", &new_in_reply_to, -1) < 0) {
+    fprintf(log_f, "invalid 'in_reply_to' field value\n");
+    FAIL(NEW_SRV_ERR_INV_PARAM);    
+  }
+  if (new_in_reply_to < -1 || new_in_reply_to >= clar_get_total(cs->clarlog_state)) {
+    fprintf(log_f, "invalid 'in_reply_to' field value\n");
+    FAIL(NEW_SRV_ERR_INV_PARAM);    
+  }
+  ++new_in_reply_to;
+  if (ns_cgi_param_int_opt(phr, "run_id", &new_run_id, -1) < 0) {
+    fprintf(log_f, "invalid 'run_id' field value\n");
+    FAIL(NEW_SRV_ERR_INV_PARAM);    
+  }
+  if (new_run_id < -1 || new_run_id >= run_get_total(cs->runlog_state)) {
+    fprintf(log_f, "invalid 'run_id' field value\n");
+    FAIL(NEW_SRV_ERR_INV_PARAM);    
+  }
+  ++new_run_id;
+
+  s = NULL;
+  if ((r = ns_cgi_param(phr, "charset", &s)) < 0) {
+    fprintf(log_f, "invalid 'charset' field value\n");
+    FAIL(NEW_SRV_ERR_INV_PARAM);    
+  }
+  if (!r || !s) s = "";
+  new_charset = text_input_process_string(s, 0, 0);
+  // FIXME: validate charset
+  xfree(new_charset);
+  new_charset = xstrdup(EJUDGE_CHARSET);
+
+  s = NULL;
+  if ((r = ns_cgi_param(phr, "subject", &s)) < 0) {
+    fprintf(log_f, "invalid 'subject' field value\n");
+    FAIL(NEW_SRV_ERR_INV_PARAM);    
+  }
+  if (!r || !s) s = "";
+  new_subject = text_input_process_string(s, 0, 0);
+
+  s = NULL;
+  if ((r = ns_cgi_param(phr, "text", &s)) < 0) {
+    fprintf(log_f, "invalid 'text' field value\n");
+    FAIL(NEW_SRV_ERR_INV_PARAM);    
+  }
+  if (!r || !s) s = "";
+  new_text = text_area_process_string(s, 0, 0);
+  new_size = strlen(new_text);
+
+  if (clar_get_text(cs->clarlog_state, clar_id, &old_text, &old_size) < 0
+      || new_size != old_size || strcmp(new_text, old_text) != 0) {
+    if (clar_modify_text(cs->clarlog_state, clar_id, new_text, new_size) < 0) {
+      FAIL(NEW_SRV_ERR_DATABASE_FAILED);
+    }
+  }
+
+  // **from, **to, **j_from, **flags, **hide_flag, **appeal_flag, **ip, **ssl_flag
+  // **locale_id, **in_reply_to, **run_id, **charset, **subject, *text
+
+  memset(&new_clar, 0, sizeof(new_clar));
+  if (clar.from != new_from) {
+    new_clar.from = new_from;
+    mask |= 1 << CLAR_FIELD_FROM;
+  }
+  if (clar.to != new_to) {
+    new_clar.to = new_to;
+    mask |= 1 << CLAR_FIELD_TO;
+  }
+  if (clar.j_from != new_j_from) {
+    new_clar.j_from = new_j_from;
+    mask |= 1 << CLAR_FIELD_J_FROM;
+  }
+  if (clar.flags != new_flags) {
+    new_clar.flags = new_flags;
+    mask |= 1 << CLAR_FIELD_FLAGS;
+  }
+  if (clar.hide_flag != new_hide_flag) {
+    new_clar.hide_flag = new_hide_flag;
+    mask |= 1 << CLAR_FIELD_HIDE_FLAG;
+  }
+  if (clar.appeal_flag != new_appeal_flag) {
+    new_clar.appeal_flag = new_appeal_flag;
+    mask |= 1 << CLAR_FIELD_APPEAL_FLAG;
+  }
+  // FIXME: do better
+  if (clar.a.ip != new_ip) {
+    new_clar.a.ip = new_ip;
+    new_clar.ip6_flag = 0;
+    mask |= 1 << CLAR_FIELD_IP;
+  }
+  if (clar.ssl_flag != new_ssl_flag) {
+    new_clar.ssl_flag = new_ssl_flag;
+    mask |= 1 << CLAR_FIELD_SSL_FLAG;
+  }
+  if (clar.locale_id != new_locale_id) {
+    new_clar.locale_id = new_locale_id;
+    mask |= 1 << CLAR_FIELD_LOCALE_ID;
+  }
+  if (clar.in_reply_to != new_in_reply_to) {
+    new_clar.in_reply_to = new_in_reply_to;
+    mask |= 1 << CLAR_FIELD_IN_REPLY_TO;
+  }
+  if (clar.run_id != new_run_id) {
+    new_clar.run_id = new_run_id;
+    mask |= 1 << CLAR_FIELD_RUN_ID;
+  }
+  if (clar.size != new_size) {
+    new_clar.size = new_size;
+    mask |= 1 << CLAR_FIELD_SIZE;
+  }
+  if (strcmp(clar.charset, new_charset) != 0) {
+    snprintf(new_clar.charset, sizeof(new_clar.charset), "%s", new_charset);
+    mask |= 1 << CLAR_FIELD_CHARSET;
+  }
+  if (strcmp(clar.subj, new_subject) != 0) {
+    snprintf(new_clar.subj, sizeof(new_clar.subj), "%s", new_subject);
+    mask |= 1 << CLAR_FIELD_SUBJECT;
+  }
+  if (mask <= 0) goto cleanup;
+
+  if (clar_modify_record(cs->clarlog_state, clar_id, mask, &new_clar) < 0) {
+    FAIL(NEW_SRV_ERR_DATABASE_FAILED);
+  }
+
+cleanup:
+  xfree(old_text);
+  xfree(new_charset);
+  xfree(new_subject);
+  xfree(new_text);
+  return retval;
+}
 
 static void
 write_from_contest_dir(

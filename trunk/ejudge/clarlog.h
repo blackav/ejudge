@@ -3,7 +3,7 @@
 #ifndef __CLARLOG_H__
 #define __CLARLOG_H__
 
-/* Copyright (C) 2000-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -31,6 +31,29 @@ struct clarlog_state;
 typedef struct clarlog_state *clarlog_state_t;
 
 enum { CLAR_ENTRY_SUBJ_SIZE = 32, CLAR_ENTRY_CHARSET_SIZE = 16 };
+
+enum
+{
+  CLAR_FIELD_ID,
+  CLAR_FIELD_SIZE,
+  CLAR_FIELD_TIME,
+  CLAR_FIELD_NSEC,
+  CLAR_FIELD_FROM,
+  CLAR_FIELD_TO,
+  CLAR_FIELD_J_FROM,
+  CLAR_FIELD_FLAGS,
+  CLAR_FIELD_HIDE_FLAG,
+  CLAR_FIELD_SSL_FLAG,
+  CLAR_FIELD_APPEAL_FLAG,
+  CLAR_FIELD_IP,
+  CLAR_FIELD_LOCALE_ID,
+  CLAR_FIELD_IN_REPLY_TO,
+  CLAR_FIELD_RUN_ID,
+  CLAR_FIELD_CHARSET,
+  CLAR_FIELD_SUBJECT,
+
+  CLAR_FIELD_LAST,
+};
 
 struct clar_entry_v1
 {
@@ -137,5 +160,17 @@ clar_add_text(
         int clar_id,
         unsigned char *text,
         size_t size);
+int
+clar_modify_text(
+        clarlog_state_t state,
+        int clar_id,
+        unsigned char *text,
+        size_t size);
+int
+clar_modify_record(
+        clarlog_state_t state,
+        int clar_id,
+        int mask,
+        const struct clar_entry_v1 *pclar);
 
 #endif /* __CLARLOG_H__ */

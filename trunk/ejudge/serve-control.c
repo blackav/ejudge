@@ -501,8 +501,7 @@ static void display_login_page(void) __attribute__((noreturn));
 static void
 display_login_page(void)
 {
-  client_put_header(stdout, 0, 0, config->charset, 1, 0,
-                    "Enter password - serve-control");
+  client_put_header(stdout, 0, 0, config->charset, 1, 0, "serve-control: %s", http_host);
 
   puts(form_header_simple);
   printf("<table>"
@@ -791,7 +790,7 @@ action_view_contest(int cmd)
 
   open_super_server();
   client_put_header(stdout, 0, 0, config->charset, 1, 0,
-                    "%s: %s, %d%s", "serve-control", user_name, contest_id,
+                    "%s: %s@%s, %d%s", "serve-control", user_login, http_host, contest_id,
                     extra_str);
   fflush(stdout);
   r = super_clnt_main_page(super_serve_fd, 1, cmd,
@@ -834,7 +833,7 @@ action_create_contest(void)
 
   open_super_server();
   client_put_header(stdout, 0, 0, config->charset, 1, 0,
-                    "%s: %s, creating new contest", "serve-control", user_name);
+                    "%s: %s@%s, creating new contest", "serve-control", user_login, http_host);
   fflush(stdout);
 
   r = super_clnt_main_page(super_serve_fd, 1, SSERV_CMD_CREATE_CONTEST,
@@ -855,7 +854,7 @@ action_edit_current_contest(int cmd)
 
   open_super_server();
   client_put_header(stdout, 0, 0, config->charset, 1, 0,
-                    "%s: %s, editing contest", "serve-control", user_name);
+                    "%s: %s@%s, editing contest", "serve-control", user_login, http_host);
   fflush(stdout);
 
   r = super_clnt_main_page(super_serve_fd, 1, cmd,
@@ -883,8 +882,8 @@ action_edit_permissions(void)
 
   open_super_server();
   client_put_header(stdout, 0, 0, config->charset, 1, 0,
-                    "%s: %s, editing permissions for contest", "serve-control",
-                    user_name);
+                    "%s: %s@%s, editing permissions for contest", "serve-control",
+                    user_login, http_host);
   fflush(stdout);
 
   r = super_clnt_main_page(super_serve_fd, 1, SSERV_CMD_CNTS_EDIT_PERMISSION,
@@ -935,7 +934,7 @@ action_create_contest_2(void)
 
   open_super_server();
   client_put_header(stdout, 0, 0, config->charset, 1, 0,
-                    "%s: %s, editing new contest", "serve-control", user_name);
+                    "%s: %s@%s, editing new contest", "serve-control", user_login, http_host);
   fflush(stdout);
 
   r = super_clnt_create_contest(super_serve_fd, 1, SSERV_CMD_CREATE_CONTEST_2,
