@@ -31,6 +31,7 @@
 #endif /* __RCC__ */
 #endif /* META_ATTRIB */
 
+/* sizeof(struct problem_config_section) == 544 */
 struct problem_config_section
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -167,6 +168,7 @@ struct problem_config_section
   ejenvlist_t interactor_env;
   ejenvlist_t style_checker_env;
   ejenvlist_t test_checker_env;
+  ejenvlist_t init_env;
 };
 
 void

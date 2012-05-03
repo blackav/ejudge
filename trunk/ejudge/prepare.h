@@ -723,7 +723,7 @@ struct section_global_data
   +unsigned char *solution_cmd;
  */
 
-/* sizeof(struct section_problem_data) == 65340 */
+/* sizeof(struct section_problem_data) == 65344 */
 struct section_problem_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -978,6 +978,8 @@ struct section_problem_data
   ejenvlist_t style_checker_env;
   /** environment variables for the test checker */
   ejenvlist_t test_checker_env;
+  /** environment variables for the init-style interactor */
+  ejenvlist_t init_env;
   /** checker program */
   path_t check_cmd;
   /** valuer program */
