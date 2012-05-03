@@ -27,7 +27,7 @@ void
 problem_config_section_init(struct generic_section_config *gp)
 {
   for (int field_id = META_PROBLEM_CONFIG_SECTION_manual_checking;
-       field_id < META_PROBLEM_CONFIG_SECTION_test_checker_env;
+       field_id < META_PROBLEM_CONFIG_SECTION_init_env;
        ++field_id) {
     // 'B' - ejintbool_t
     // 'i' - int

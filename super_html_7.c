@@ -300,6 +300,7 @@ super_serve_op_TESTS_MAIN_PAGE(
   int need_valuer = 0;
   int need_interactor = 0;
   int need_test_checker = 0;
+  int need_init = 0;
   int need_makefile = 0;
   int need_header = 0;
   int need_footer = 0;
@@ -331,6 +332,7 @@ super_serve_op_TESTS_MAIN_PAGE(
     if (prob->valuer_cmd && prob->valuer_cmd[0]) need_valuer = 1;
     if (prob->interactor_cmd && prob->interactor_cmd[0]) need_interactor = 1;
     if (prob->test_checker_cmd && prob->test_checker_cmd[0]) need_test_checker = 1;
+    if (prob->init_cmd && prob->init_cmd[0]) need_init = 1;
     if (prob->source_header && prob->source_header[0]) need_header = 1;
     if (prob->source_footer && prob->source_footer[0]) need_footer = 1;
     if ((prob->solution_src && prob->solution_src[0])
@@ -390,6 +392,9 @@ super_serve_op_TESTS_MAIN_PAGE(
   }
   if (need_test_checker) {
     fprintf(out_f, "<th%s>%s</th>", cl, "Test checker");
+  }
+  if (need_init) {
+    fprintf(out_f, "<th%s>%s</th>", cl, "Init-style interactor");
   }
   if (need_makefile) {
     fprintf(out_f, "<th%s>%s</th>", cl, "Makefile");
@@ -615,6 +620,19 @@ super_serve_op_TESTS_MAIN_PAGE(
           fprintf(out_f, "<td%s>&nbsp;</td>", cl);
         }
       }
+      if (need_init) {
+        if (prob->init_cmd && prob->init_cmd[0]) {
+          fprintf(out_f, "<td%s>%s%s</a></td>",
+                  cl, 
+                  html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                                NULL, "action=%d&amp;op=%d&amp;contest_id=%d&amp;variant=%d&amp;prob_id=%d",
+                                SSERV_CMD_HTTP_REQUEST, SSERV_OP_TESTS_INIT_EDIT_PAGE,
+                                contest_id, variant, prob_id),
+                  "Edit");
+        } else {
+          fprintf(out_f, "<td%s>&nbsp;</td>", cl);
+        }
+      }
       if (need_makefile) {
         fprintf(out_f, "<td%s>", cl);
         fprintf(out_f, "%s%s</a>",
@@ -742,6 +760,14 @@ write_problem_editing_links(
                           SSERV_CMD_HTTP_REQUEST, SSERV_OP_TESTS_TEST_CHECKER_EDIT_PAGE,
                           contest_id, variant, prob_id),
             "Edit test checker");
+  }
+  if (prob->init_cmd && prob->init_cmd[0]) {
+    fprintf(out_f, "<li>%s%s</a></li>",
+            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                          NULL, "action=%d&amp;op=%d&amp;contest_id=%d&amp;variant=%d&amp;prob_id=%d",
+                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_TESTS_INIT_EDIT_PAGE,
+                          contest_id, variant, prob_id),
+            "Edit init-style interactor");
   }
   if (global->advanced_layout > 0) {
     fprintf(out_f, "<li>%s%s</a></li>",
@@ -4584,6 +4610,10 @@ generate_makefile(
     get_advanced_layout_path(tmp_path, sizeof(tmp_path), global, prob, prob->test_checker_cmd, variant);
     languages |= guess_language_by_cmd(tmp_path, NULL);
   }
+  if (prob->init_cmd && prob->init_cmd[0]) {
+    get_advanced_layout_path(tmp_path, sizeof(tmp_path), global, prob, prob->init_cmd, variant);
+    languages |= guess_language_by_cmd(tmp_path, NULL);
+  }
   if ((languages & LANG_C)) need_c_libchecker = 1;
   if ((languages & LANG_CPP)) need_cpp_libchecker = 1;
 
@@ -4799,6 +4829,9 @@ generate_makefile(
   if (prob->test_checker_cmd && prob->test_checker_cmd[0]) {
     fprintf(mk_f, " %s", prob->test_checker_cmd);
   }
+  if (prob->init_cmd && prob->init_cmd[0]) {
+    fprintf(mk_f, " %s", prob->init_cmd);
+  }
   if (prob->type == PROB_TYPE_TESTS) {
     fprintf(mk_f, " good_progs fail_progs");
   }
@@ -4857,6 +4890,7 @@ generate_makefile(
   generate_checker_compilation_rule(mk_f, "valuer", global, prob, variant, prob->valuer_cmd);
   generate_checker_compilation_rule(mk_f, "interactor", global, prob, variant, prob->interactor_cmd);
   generate_checker_compilation_rule(mk_f, "test_checker", global, prob, variant, prob->test_checker_cmd);
+  generate_checker_compilation_rule(mk_f, "init", global, prob, variant, prob->init_cmd);
 
   /* test generation part */
   if (prob->type != PROB_TYPE_TESTS) {
@@ -4936,6 +4970,9 @@ generate_makefile(
   }  
   if (prob->test_checker_cmd && prob->test_checker_cmd[0]) {
     fprintf(mk_f, " %s", prob->test_checker_cmd);
+  }  
+  if (prob->init_cmd && prob->init_cmd[0]) {
+    fprintf(mk_f, " %s", prob->init_cmd);
   }  
   fprintf(mk_f, "\n");
   if (prob->type == PROB_TYPE_TESTS) {
@@ -6283,6 +6320,12 @@ super_serve_op_TESTS_CHECKER_CREATE_PAGE(
     file_name = prob->test_checker_cmd;
     action = SSERV_OP_TESTS_TEST_CHECKER_CREATE_ACTION;
     break;
+  case SSERV_OP_TESTS_INIT_CREATE_PAGE:
+    if (!prob->init_cmd || !prob->init_cmd[0]) FAIL(S_ERR_INV_OPER);
+    title = "Init-style interactor";
+    file_name = prob->init_cmd;
+    action = SSERV_OP_TESTS_INIT_CREATE_ACTION;
+    break;
   default:
     FAIL(S_ERR_INV_OPER);
   }
@@ -6622,6 +6665,11 @@ super_serve_op_TESTS_CHECKER_CREATE_ACTION(
     file_name = prob->test_checker_cmd;
     action = SSERV_OP_TESTS_TEST_CHECKER_EDIT_PAGE;
     break;
+  case SSERV_OP_TESTS_INIT_CREATE_ACTION:
+    if (!prob->init_cmd || !prob->init_cmd[0]) FAIL(S_ERR_INV_OPER);
+    file_name = prob->init_cmd;
+    action = SSERV_OP_TESTS_INIT_EDIT_PAGE;
+    break;
   default:
     FAIL(S_ERR_INV_OPER);
   }
@@ -6764,6 +6812,14 @@ super_serve_op_TESTS_CHECKER_EDIT_PAGE(
     create_page = SSERV_OP_TESTS_TEST_CHECKER_CREATE_PAGE;
     action = SSERV_OP_TESTS_TEST_CHECKER_EDIT_ACTION;
     delete_page = SSERV_OP_TESTS_TEST_CHECKER_DELETE_PAGE;
+    break;
+  case SSERV_OP_TESTS_INIT_EDIT_PAGE:
+    if (!prob->init_cmd || !prob->init_cmd[0]) FAIL(S_ERR_INV_OPER);
+    title = "Init-style interactor";
+    file_name = prob->init_cmd;
+    create_page = SSERV_OP_TESTS_INIT_CREATE_PAGE;
+    action = SSERV_OP_TESTS_INIT_EDIT_ACTION;
+    delete_page = SSERV_OP_TESTS_INIT_DELETE_PAGE;
     break;
   default:
     FAIL(S_ERR_INV_OPER);
@@ -6945,6 +7001,10 @@ super_serve_op_TESTS_CHECKER_EDIT_ACTION(
   case SSERV_OP_TESTS_TEST_CHECKER_EDIT_ACTION:
     if (!prob->test_checker_cmd || !prob->test_checker_cmd[0]) FAIL(S_ERR_INV_OPER);
     file_name = prob->test_checker_cmd;
+    break;
+  case SSERV_OP_TESTS_INIT_EDIT_ACTION:
+    if (!prob->init_cmd || !prob->init_cmd[0]) FAIL(S_ERR_INV_OPER);
+    file_name = prob->init_cmd;
     break;
   default:
     FAIL(S_ERR_INV_OPER);
@@ -7130,6 +7190,12 @@ super_serve_op_TESTS_CHECKER_DELETE_PAGE(
     action = SSERV_OP_TESTS_TEST_CHECKER_DELETE_ACTION;
     title = "Test checker";
     break;
+  case SSERV_OP_TESTS_INIT_DELETE_PAGE:
+    if (!prob->init_cmd || !prob->init_cmd[0]) FAIL(S_ERR_INV_OPER);
+    file_name = prob->init_cmd;
+    action = SSERV_OP_TESTS_INIT_DELETE_ACTION;
+    title = "Init-style interactor";
+    break;
   default:
     FAIL(S_ERR_INV_OPER);
   }
@@ -7283,6 +7349,10 @@ super_serve_op_TESTS_CHECKER_DELETE_ACTION(
   case SSERV_OP_TESTS_TEST_CHECKER_DELETE_ACTION:
     if (!prob->test_checker_cmd || !prob->test_checker_cmd[0]) FAIL(S_ERR_INV_OPER);
     file_name = prob->test_checker_cmd;
+    break;
+  case SSERV_OP_TESTS_INIT_DELETE_ACTION:
+    if (!prob->init_cmd || !prob->init_cmd[0]) FAIL(S_ERR_INV_OPER);
+    file_name = prob->init_cmd;
     break;
   default:
     FAIL(S_ERR_INV_OPER);
