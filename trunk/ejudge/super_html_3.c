@@ -531,6 +531,8 @@ static const unsigned char * const action_to_help_url_map[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_CHANGE_STYLE_CHECKER_ENV] = "Serve.cfg:problem:style_checker_env",
   [SSERV_CMD_PROB_CHANGE_TEST_CHECKER_CMD] = "Serve.cfg:problem:test_checker_cmd",
   [SSERV_CMD_PROB_CHANGE_TEST_CHECKER_ENV] = "Serve.cfg:problem:test_checker_env",
+  [SSERV_CMD_PROB_CHANGE_INIT_CMD] = "Serve.cfg:problem:init_cmd",
+  [SSERV_CMD_PROB_CHANGE_INIT_ENV] = "Serve.cfg:problem:init_env",
   [SSERV_CMD_PROB_CHANGE_SOLUTION_SRC] = "Serve.cfg:problem:solution_src",
   [SSERV_CMD_PROB_CHANGE_SOLUTION_CMD] = "Serve.cfg:problem:solution_cmd",
   [SSERV_CMD_PROB_CHANGE_LANG_TIME_ADJ] = "Serve.cfg:problem:lang_time_adj",
@@ -7065,6 +7067,48 @@ super_html_print_problem(FILE *f,
     xfree(checker_env); checker_env = 0;
   }
 
+  //PROBLEM_PARAM(init_cmd, "s"),
+  extra_msg = 0;
+  if (show_adv) {
+    if (prob->abstract) extra_msg = "";
+    if (!prob->abstract && !prob->standard_checker[0]) {
+      extra_msg = "";
+      prepare_set_prob_value(CNTSPROB_init_cmd,
+                             tmp_prob, sup_prob, sstate->global);
+      snprintf(msg_buf, sizeof(msg_buf), "<i>(%s\"%s\")</i>",
+               prob->init_cmd?"Default - ":"",
+               ARMOR(tmp_prob->init_cmd));
+      extra_msg = msg_buf;
+      xfree(tmp_prob->init_cmd); tmp_prob->init_cmd = 0;
+    }
+  }
+  if (extra_msg)
+    print_string_editing_row_3(f, "Init-style interactor name:",
+                               prob->init_cmd,
+                               SSERV_CMD_PROB_CHANGE_INIT_CMD,
+                               SSERV_CMD_PROB_CLEAR_INIT_CMD,
+                               extra_msg,
+                               session_id, form_row_attrs[row ^= 1],
+                               self_url, extra_args, prob_hidden_vars);
+
+  //PROBLEM_PARAM(init_env, "x"),
+  if (!prob->abstract) {
+    if (!prob->init_env || !prob->init_env[0]) {
+      extra_msg = "(not set)";
+      checker_env = xstrdup("");
+    } else {
+      extra_msg = "";
+      checker_env = sarray_unparse(prob->init_env);
+    }
+    print_string_editing_row_3(f, "Init-style interactor environment:", checker_env,
+                               SSERV_CMD_PROB_CHANGE_INIT_ENV,
+                               SSERV_CMD_PROB_CLEAR_INIT_ENV,
+                               extra_msg,
+                               session_id, form_row_attrs[row ^= 1],
+                               self_url, extra_args, prob_hidden_vars);
+    xfree(checker_env); checker_env = 0;
+  }
+
   //PROBLEM_PARAM(solution_src, "s"),
   extra_msg = 0;
   if (show_adv) {
@@ -8308,6 +8352,28 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
   case SSERV_CMD_PROB_CLEAR_TEST_CHECKER_ENV:
     sarray_free(prob->test_checker_env);
     prob->test_checker_env = 0;
+    return 0;
+
+  case SSERV_CMD_PROB_CHANGE_INIT_CMD:
+    xfree(prob->init_cmd);
+    prob->init_cmd = xstrdup(param2);
+    return 0;
+
+  case SSERV_CMD_PROB_CLEAR_INIT_CMD:
+    xfree(prob->init_cmd);
+    prob->init_cmd = 0;
+    return 0;
+
+  case SSERV_CMD_PROB_CHANGE_INIT_ENV:
+    if (sarray_parse(param2, &tmp_env) < 0)
+      return -SSERV_ERR_INVALID_PARAMETER;
+    sarray_free(prob->init_env);
+    prob->init_env = tmp_env;
+    return 0;
+
+  case SSERV_CMD_PROB_CLEAR_INIT_ENV:
+    sarray_free(prob->init_env);
+    prob->init_env = 0;
     return 0;
 
   case SSERV_CMD_PROB_CHANGE_SOLUTION_SRC:
