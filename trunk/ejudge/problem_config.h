@@ -140,6 +140,7 @@ struct problem_config_section
   unsigned char *interactor_cmd;
   unsigned char *style_checker_cmd;
   unsigned char *test_checker_cmd;
+  unsigned char *init_cmd;
   unsigned char *solution_src;
   unsigned char *solution_cmd;
   unsigned char *score_bonus;

@@ -137,6 +137,7 @@ struct super_run_in_problem_packet
   unsigned char *valuer_cmd;
   unsigned char *interactor_cmd;
   unsigned char *test_checker_cmd;
+  unsigned char *init_cmd;
   unsigned char *solution_cmd;
   size_t max_vm_size;
   size_t max_data_size;
