@@ -723,7 +723,7 @@ struct section_global_data
   +unsigned char *solution_cmd;
  */
 
-/* sizeof(struct section_problem_data) == 65336 */
+/* sizeof(struct section_problem_data) == 65340 */
 struct section_problem_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -988,6 +988,8 @@ struct section_problem_data
   path_t style_checker_cmd;
   /** test checker program */
   unsigned char *test_checker_cmd;
+  /** start/stop init-style interactor */
+  unsigned char *init_cmd;
   /** solution source file */
   unsigned char *solution_src;
   /** solution command */
@@ -1130,7 +1132,7 @@ struct section_language_data
   int disabled_by_config META_ATTRIB((meta_private));
 };
 
-/* sizeof(struct section_tester_data) == 54324 */
+/* sizeof(struct section_tester_data) == 50204 */
 struct section_tester_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
