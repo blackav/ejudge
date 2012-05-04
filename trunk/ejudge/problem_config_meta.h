@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/04/10 18:15:58
+// Generated 2012/05/03 08:27:40
 
 #ifndef __PROBLEM_CONFIG_META_H__
 #define __PROBLEM_CONFIG_META_H__
@@ -109,6 +109,7 @@ enum
   META_PROBLEM_CONFIG_SECTION_interactor_cmd,
   META_PROBLEM_CONFIG_SECTION_style_checker_cmd,
   META_PROBLEM_CONFIG_SECTION_test_checker_cmd,
+  META_PROBLEM_CONFIG_SECTION_init_cmd,
   META_PROBLEM_CONFIG_SECTION_solution_src,
   META_PROBLEM_CONFIG_SECTION_solution_cmd,
   META_PROBLEM_CONFIG_SECTION_score_bonus,
@@ -133,6 +134,7 @@ enum
   META_PROBLEM_CONFIG_SECTION_interactor_env,
   META_PROBLEM_CONFIG_SECTION_style_checker_env,
   META_PROBLEM_CONFIG_SECTION_test_checker_env,
+  META_PROBLEM_CONFIG_SECTION_init_env,
 
   META_PROBLEM_CONFIG_SECTION_LAST_FIELD,
 };
