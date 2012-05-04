@@ -6143,17 +6143,18 @@ super_serve_op_USER_SAVE_ACTION(
     }
     if (opcaps_check(gcaps, bit) < 0) FAIL(S_ERR_PERM_DENIED);
 
-    changed_count = 0;
+    
     if (strcmp(u->login, other_login_str) != 0) {
-      changed_ids[changed_count] = USERLIST_NN_LOGIN;
-      changed_strs[changed_count] = other_login_str;
-      ++changed_count;
+      if (userlist_clnt_edit_field(phr->userlist_clnt, ULS_EDIT_FIELD, other_user_id, contest_id, 0, 
+                                   USERLIST_NN_LOGIN, other_login_str))
+        FAIL(S_ERR_DB_ERROR);        
     }
     if (strcmp(u->email, email_str) != 0) {
-      changed_ids[changed_count] = USERLIST_NN_EMAIL;
-      changed_strs[changed_count] = email_str;
-      ++changed_count;
+      if (userlist_clnt_edit_field(phr->userlist_clnt, ULS_EDIT_FIELD, other_user_id, contest_id, 0, 
+                                   USERLIST_NN_EMAIL, email_str))
+        FAIL(S_ERR_DB_ERROR);        
     }
+    changed_count = 0;
     for (int i = 0; (field_id = global_checkbox_ids[i]); ++i) {
       const void *ptr = userlist_get_user_field_ptr(u, field_id);
       if (ptr) {
@@ -6166,10 +6167,12 @@ super_serve_op_USER_SAVE_ACTION(
       }
     }
 
-    if (userlist_clnt_edit_field_seq(phr->userlist_clnt, ULS_EDIT_FIELD_SEQ,
-                                     other_user_id, contest_id, 0, 0, changed_count,
-                                     NULL, changed_ids, changed_strs) < 0) {
-      FAIL(S_ERR_DB_ERROR);
+    if (changed_count > 0) {
+      if (userlist_clnt_edit_field_seq(phr->userlist_clnt, ULS_EDIT_FIELD_SEQ,
+                                       other_user_id, contest_id, 0, 0, changed_count,
+                                       NULL, changed_ids, changed_strs) < 0) {
+        FAIL(S_ERR_DB_ERROR);
+      }
     }
   }
 
