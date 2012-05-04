@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -2869,7 +2869,8 @@ set_reg_flags_func(
   ASSERT(cmd >= 0 && cmd <= 4);
   value &= USERLIST_UC_ALL;
 
-  if (!cmd || !value) return 0;
+  if (!cmd) return 0;
+  if (cmd != 4 && !value) return 0;
 
   cmd_f = open_memstream(&cmd_t, &cmd_z);
   fprintf(cmd_f, "UPDATE %scntsregs SET ", state->md->table_prefix);
