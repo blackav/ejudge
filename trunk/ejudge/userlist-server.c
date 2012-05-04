@@ -3789,8 +3789,7 @@ cmd_check_cookie(struct client_state *p,
     return;
   }
 
-  if (default_get_user_info_2(cookie->user_id, data->contest_id, &u, &ui) < 0
-      || !u) {
+  if (default_get_user_info_2(cookie->user_id, data->contest_id, &u, &ui) < 0 || !u) {
     err("%s -> database error", logbuf);
     send_reply(p, -ULS_ERR_DB_ERROR);
     return;
@@ -7532,8 +7531,7 @@ cmd_user_op(
       }
       if (is_dbcnts_capable(p, cnts, OPCAP_GET_USER, logbuf) < 0) return;
     }
-    if (default_get_user_info_2(data->user_id, data->contest_id, &u, &ui) < 0
-        || !u)
+    if (default_get_user_info_2(data->user_id, data->contest_id, &u, &ui) < 0 || !u)
       goto invalid_user;
     if (!ui || !ui->team_passwd) goto empty_password;
     default_set_reg_passwd(data->user_id, ui->team_passwd_method,
@@ -7577,8 +7575,7 @@ cmd_user_op(
       }
       if (is_dbcnts_capable(p, cnts, OPCAP_GET_USER, logbuf) < 0) return;
     }
-    if (default_get_user_info_2(data->user_id, data->contest_id, &u, &ui) < 0
-        || !u)
+    if (default_get_user_info_2(data->user_id, data->contest_id, &u, &ui) < 0 || !u)
       goto invalid_user;
     if (!ui->team_passwd) break;
     default_set_reg_passwd(data->user_id, ui->team_passwd_method,
@@ -7711,8 +7708,7 @@ cmd_lookup_user(struct client_state *p,
     return;
   }
   if ((user_id = default_get_user_by_login(login_ptr)) <= 0
-      || default_get_user_info_2(user_id, data->contest_id, &u, &ui) < 0
-      || !u || !ui) {
+      || default_get_user_info_2(user_id, data->contest_id, &u, &ui) < 0 || !u) {
     err("%s -> NO SUCH USER", logbuf);
     send_reply(p, -ULS_ERR_INVALID_LOGIN);
     return;
@@ -7770,8 +7766,7 @@ cmd_lookup_user_id(struct client_state *p,
   }
   if (is_dbcnts_capable(p, cnts, OPCAP_LIST_USERS, logbuf)) return;
   
-  if (default_get_user_info_2(data->user_id, data->contest_id, &u, &ui) < 0
-      || !u || !ui) {
+  if (default_get_user_info_2(data->user_id, data->contest_id, &u, &ui) < 0 || !u) {
     err("%s -> NO SUCH USER", logbuf);
     send_reply(p, -ULS_ERR_BAD_UID);
     return;
