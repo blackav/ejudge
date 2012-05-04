@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/04/10 18:15:58
+// Generated 2012/05/03 08:27:40
 
 #include "problem_config_meta.h"
 #include "problem_config.h"
@@ -114,6 +114,7 @@ static struct meta_info_item meta_info_problem_config_section_data[] =
   [META_PROBLEM_CONFIG_SECTION_interactor_cmd] = { META_PROBLEM_CONFIG_SECTION_interactor_cmd, 's', XSIZE(struct problem_config_section, interactor_cmd), "interactor_cmd", XOFFSET(struct problem_config_section, interactor_cmd) },
   [META_PROBLEM_CONFIG_SECTION_style_checker_cmd] = { META_PROBLEM_CONFIG_SECTION_style_checker_cmd, 's', XSIZE(struct problem_config_section, style_checker_cmd), "style_checker_cmd", XOFFSET(struct problem_config_section, style_checker_cmd) },
   [META_PROBLEM_CONFIG_SECTION_test_checker_cmd] = { META_PROBLEM_CONFIG_SECTION_test_checker_cmd, 's', XSIZE(struct problem_config_section, test_checker_cmd), "test_checker_cmd", XOFFSET(struct problem_config_section, test_checker_cmd) },
+  [META_PROBLEM_CONFIG_SECTION_init_cmd] = { META_PROBLEM_CONFIG_SECTION_init_cmd, 's', XSIZE(struct problem_config_section, init_cmd), "init_cmd", XOFFSET(struct problem_config_section, init_cmd) },
   [META_PROBLEM_CONFIG_SECTION_solution_src] = { META_PROBLEM_CONFIG_SECTION_solution_src, 's', XSIZE(struct problem_config_section, solution_src), "solution_src", XOFFSET(struct problem_config_section, solution_src) },
   [META_PROBLEM_CONFIG_SECTION_solution_cmd] = { META_PROBLEM_CONFIG_SECTION_solution_cmd, 's', XSIZE(struct problem_config_section, solution_cmd), "solution_cmd", XOFFSET(struct problem_config_section, solution_cmd) },
   [META_PROBLEM_CONFIG_SECTION_score_bonus] = { META_PROBLEM_CONFIG_SECTION_score_bonus, 's', XSIZE(struct problem_config_section, score_bonus), "score_bonus", XOFFSET(struct problem_config_section, score_bonus) },
@@ -138,6 +139,7 @@ static struct meta_info_item meta_info_problem_config_section_data[] =
   [META_PROBLEM_CONFIG_SECTION_interactor_env] = { META_PROBLEM_CONFIG_SECTION_interactor_env, 'X', XSIZE(struct problem_config_section, interactor_env), "interactor_env", XOFFSET(struct problem_config_section, interactor_env) },
   [META_PROBLEM_CONFIG_SECTION_style_checker_env] = { META_PROBLEM_CONFIG_SECTION_style_checker_env, 'X', XSIZE(struct problem_config_section, style_checker_env), "style_checker_env", XOFFSET(struct problem_config_section, style_checker_env) },
   [META_PROBLEM_CONFIG_SECTION_test_checker_env] = { META_PROBLEM_CONFIG_SECTION_test_checker_env, 'X', XSIZE(struct problem_config_section, test_checker_env), "test_checker_env", XOFFSET(struct problem_config_section, test_checker_env) },
+  [META_PROBLEM_CONFIG_SECTION_init_env] = { META_PROBLEM_CONFIG_SECTION_init_env, 'X', XSIZE(struct problem_config_section, init_env), "init_env", XOFFSET(struct problem_config_section, init_env) },
 };
 
 int meta_problem_config_section_get_type(int tag)

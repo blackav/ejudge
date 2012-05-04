@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/01/11 17:48:53
+// Generated 2012/05/03 08:27:40
 
 #include "super_run_packet_meta.h"
 #include "super_run_packet.h"
@@ -159,10 +159,12 @@ static struct meta_info_item meta_info_super_run_in_problem_packet_data[] =
   [META_SUPER_RUN_IN_PROBLEM_PACKET_valuer_env] = { META_SUPER_RUN_IN_PROBLEM_PACKET_valuer_env, 'X', XSIZE(struct super_run_in_problem_packet, valuer_env), "valuer_env", XOFFSET(struct super_run_in_problem_packet, valuer_env) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_interactor_env] = { META_SUPER_RUN_IN_PROBLEM_PACKET_interactor_env, 'X', XSIZE(struct super_run_in_problem_packet, interactor_env), "interactor_env", XOFFSET(struct super_run_in_problem_packet, interactor_env) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_test_checker_env] = { META_SUPER_RUN_IN_PROBLEM_PACKET_test_checker_env, 'X', XSIZE(struct super_run_in_problem_packet, test_checker_env), "test_checker_env", XOFFSET(struct super_run_in_problem_packet, test_checker_env) },
+  [META_SUPER_RUN_IN_PROBLEM_PACKET_init_env] = { META_SUPER_RUN_IN_PROBLEM_PACKET_init_env, 'X', XSIZE(struct super_run_in_problem_packet, init_env), "init_env", XOFFSET(struct super_run_in_problem_packet, init_env) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_check_cmd] = { META_SUPER_RUN_IN_PROBLEM_PACKET_check_cmd, 's', XSIZE(struct super_run_in_problem_packet, check_cmd), "check_cmd", XOFFSET(struct super_run_in_problem_packet, check_cmd) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_valuer_cmd] = { META_SUPER_RUN_IN_PROBLEM_PACKET_valuer_cmd, 's', XSIZE(struct super_run_in_problem_packet, valuer_cmd), "valuer_cmd", XOFFSET(struct super_run_in_problem_packet, valuer_cmd) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_interactor_cmd] = { META_SUPER_RUN_IN_PROBLEM_PACKET_interactor_cmd, 's', XSIZE(struct super_run_in_problem_packet, interactor_cmd), "interactor_cmd", XOFFSET(struct super_run_in_problem_packet, interactor_cmd) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_test_checker_cmd] = { META_SUPER_RUN_IN_PROBLEM_PACKET_test_checker_cmd, 's', XSIZE(struct super_run_in_problem_packet, test_checker_cmd), "test_checker_cmd", XOFFSET(struct super_run_in_problem_packet, test_checker_cmd) },
+  [META_SUPER_RUN_IN_PROBLEM_PACKET_init_cmd] = { META_SUPER_RUN_IN_PROBLEM_PACKET_init_cmd, 's', XSIZE(struct super_run_in_problem_packet, init_cmd), "init_cmd", XOFFSET(struct super_run_in_problem_packet, init_cmd) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_solution_cmd] = { META_SUPER_RUN_IN_PROBLEM_PACKET_solution_cmd, 's', XSIZE(struct super_run_in_problem_packet, solution_cmd), "solution_cmd", XOFFSET(struct super_run_in_problem_packet, solution_cmd) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_max_vm_size] = { META_SUPER_RUN_IN_PROBLEM_PACKET_max_vm_size, 'Z', XSIZE(struct super_run_in_problem_packet, max_vm_size), "max_vm_size", XOFFSET(struct super_run_in_problem_packet, max_vm_size) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_max_data_size] = { META_SUPER_RUN_IN_PROBLEM_PACKET_max_data_size, 'Z', XSIZE(struct super_run_in_problem_packet, max_data_size), "max_data_size", XOFFSET(struct super_run_in_problem_packet, max_data_size) },

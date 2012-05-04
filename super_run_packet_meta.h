@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/01/11 17:48:53
+// Generated 2012/05/03 08:27:40
 
 #ifndef __SUPER_RUN_PACKET_META_H__
 #define __SUPER_RUN_PACKET_META_H__
@@ -119,10 +119,12 @@ enum
   META_SUPER_RUN_IN_PROBLEM_PACKET_valuer_env,
   META_SUPER_RUN_IN_PROBLEM_PACKET_interactor_env,
   META_SUPER_RUN_IN_PROBLEM_PACKET_test_checker_env,
+  META_SUPER_RUN_IN_PROBLEM_PACKET_init_env,
   META_SUPER_RUN_IN_PROBLEM_PACKET_check_cmd,
   META_SUPER_RUN_IN_PROBLEM_PACKET_valuer_cmd,
   META_SUPER_RUN_IN_PROBLEM_PACKET_interactor_cmd,
   META_SUPER_RUN_IN_PROBLEM_PACKET_test_checker_cmd,
+  META_SUPER_RUN_IN_PROBLEM_PACKET_init_cmd,
   META_SUPER_RUN_IN_PROBLEM_PACKET_solution_cmd,
   META_SUPER_RUN_IN_PROBLEM_PACKET_max_vm_size,
   META_SUPER_RUN_IN_PROBLEM_PACKET_max_data_size,
