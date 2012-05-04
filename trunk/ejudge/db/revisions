@@ -7170,3 +7170,4 @@ super_proto.c 6789 0 2196052
 win32/full_archive.c 6790 0 459572
 new_server_html_2.c 6791 0 18372655
 userlist-server.c 6793 0 27085067
+plugins/mysql-userlist/uldb_mysql.c 6795 0 12881443
