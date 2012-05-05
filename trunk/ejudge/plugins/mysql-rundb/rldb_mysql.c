@@ -393,6 +393,15 @@ load_runs(struct rldb_mysql_cnts *cs)
     if (ri.status == RUN_EMPTY) {
       xfree(ri.hash); ri.hash = 0;
       xfree(ri.mime_type); ri.mime_type = 0;
+
+      expand_runs(rls, ri.run_id);
+      re = &rls->runs[ri.run_id];
+      memset(re, 0, sizeof(*re));
+
+      re->run_id = ri.run_id;
+      re->time = ri.create_time;
+      re->nsec = ri.create_nsec;
+      re->status = ri.status;
       continue;
     }
     if (ri.user_id <= 0) db_error_inv_value_fail(md, "user_id");
@@ -645,13 +654,16 @@ find_insert_point(
   if (run_id < 0) return 0;
 
   if (rls->runs[run_id].time < create_time) {
-    run_id++;
+    // preserve RUN_EMPTY runs anyway
+    run_id = rls->run_u;
+    //run_id++;
     expand_runs(rls, run_id);
     return run_id;
   }
   if (rls->runs[run_id].time == create_time
       && rls->runs[run_id].nsec < create_nsec) {
-    run_id++;
+    run_id = rls->run_u;
+    //run_id++;
     expand_runs(rls, run_id);
     return run_id;
   }
