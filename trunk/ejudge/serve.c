@@ -189,7 +189,7 @@ main(int argc, char *argv[])
     return 1;
   serve_load_status_file(&serve_state);
   serve_build_compile_dirs(&serve_state);
-  serve_build_run_dirs(&serve_state);
+  serve_build_run_dirs(&serve_state, global->contest_id);
   if (serve_create_symlinks(&serve_state) < 0) return 1;
   serve_state.current_time = time(0);
   serve_update_status_file(&serve_state, 1);

@@ -508,17 +508,34 @@ do_build_run_dirs(serve_state_t state,
 }
 
 void
-serve_build_run_dirs(serve_state_t state)
+serve_build_run_dirs(serve_state_t state, int contest_id)
 {
   int i;
 
-  for (i = 1; i <= state->max_tester; i++) {
-    if (!state->testers[i]) continue;
-    //if (state->testers[i]->any) continue;
-    do_build_run_dirs(state, state->testers[i]->run_status_dir,
-                      state->testers[i]->run_report_dir,
-                      state->testers[i]->run_team_report_dir,
-                      state->testers[i]->run_full_archive_dir);
+  if (state->global->super_run_dir && state->global->super_run_dir[0]) {
+    unsigned char status_dir[PATH_MAX];
+    unsigned char report_dir[PATH_MAX];
+    unsigned char team_report_dir[PATH_MAX];
+    unsigned char full_report_dir[PATH_MAX];
+
+    snprintf(status_dir, sizeof(status_dir),
+             "%s/var/%06d/status", state->global->super_run_dir, contest_id);
+    snprintf(report_dir, sizeof(report_dir),
+             "%s/var/%06d/report", state->global->super_run_dir, contest_id);
+    snprintf(full_report_dir, sizeof(full_report_dir),
+             "%s/var/%06d/output", state->global->super_run_dir, contest_id);
+    snprintf(team_report_dir, sizeof(team_report_dir),
+             "%s/var/%06d/teamreporta", state->global->super_run_dir, contest_id);
+    do_build_run_dirs(state, status_dir, report_dir, team_report_dir, full_report_dir);
+  } else {
+    for (i = 1; i <= state->max_tester; i++) {
+      if (!state->testers[i]) continue;
+      //if (state->testers[i]->any) continue;
+      do_build_run_dirs(state, state->testers[i]->run_status_dir,
+                        state->testers[i]->run_report_dir,
+                        state->testers[i]->run_team_report_dir,
+                        state->testers[i]->run_full_archive_dir);
+    }
   }
 }
 
