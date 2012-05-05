@@ -151,6 +151,7 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(contest_stop_cmd, "S"),
   GLOBAL_PARAM(description_file, "s"),
   GLOBAL_PARAM(contest_plugin_file, "s"),
+  GLOBAL_PARAM(super_run_dir, "S"),
 
   GLOBAL_PARAM(clardb_plugin, "s"),
   GLOBAL_PARAM(rundb_plugin, "s"),
@@ -833,6 +834,7 @@ prepare_global_free_func(struct generic_section_config *gp)
   xfree(p->full_exam_protocol_footer_txt);
   xfree(p->contest_stop_cmd);
   sarray_free(p->load_user_group);
+  xfree(p->super_run_dir);
 
   memset(p, 0xab, sizeof(*p));
   xfree(p);

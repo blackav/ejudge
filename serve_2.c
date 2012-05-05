@@ -1297,6 +1297,7 @@ serve_run_request(
         int no_db_flag)
 {
   int cn;
+  struct section_global_data *global = state->global;
   struct section_problem_data *prob;
   struct section_language_data *lang = 0;
   unsigned char *arch = 0, *exe_sfx = "";
@@ -1381,14 +1382,19 @@ serve_run_request(
   }
 
   if (cnts && cnts->run_managed) {
-    snprintf(run_exe_dir, sizeof(run_exe_dir), "%s/super-run/var/exe", EJUDGE_CONTESTS_HOME_DIR);
-    snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/super-run/var/queue", EJUDGE_CONTESTS_HOME_DIR);
+    if (global->super_run_dir && global->super_run_dir[0]) {
+      snprintf(run_exe_dir, sizeof(run_exe_dir), "%s/var/exe", global->super_run_dir);
+      snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/var/queue", global->super_run_dir);
+    } else {
+      snprintf(run_exe_dir, sizeof(run_exe_dir), "%s/super-run/var/exe", EJUDGE_CONTESTS_HOME_DIR);
+      snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/super-run/var/queue", EJUDGE_CONTESTS_HOME_DIR);
+    }
   } else if (state->testers[cn]->run_dir[0]) {
     snprintf(run_exe_dir, sizeof(run_exe_dir), "%s/exe", state->testers[cn]->run_dir);
     snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/queue", state->testers[cn]->run_dir);
   } else {
-    snprintf(run_exe_dir, sizeof(run_exe_dir), "%s/exe", state->global->run_dir);
-    snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/queue", state->global->run_dir);
+    snprintf(run_exe_dir, sizeof(run_exe_dir), "%s/exe", global->run_dir);
+    snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/queue", global->run_dir);
   }
 
   if (prob->variant_num <= 0 && variant > 0) {
@@ -1419,15 +1425,14 @@ serve_run_request(
     judge_id = state->compile_request_id++;
   }
   if (accepting_mode < 0) {
-    if (state->global->score_system == SCORE_OLYMPIAD
-        && state->global->is_virtual > 0) {
+    if (global->score_system == SCORE_OLYMPIAD && global->is_virtual > 0) {
       accepting_mode = 1;
     } else {
       accepting_mode = state->accepting_mode;
     }
   }
 
-  secure_run = state->global->secure_run;
+  secure_run = global->secure_run;
   if (secure_run && prob->disable_security) secure_run = 0;
   if (secure_run && lang && lang->disable_security) secure_run = 0;
 
@@ -1473,16 +1478,16 @@ serve_run_request(
   srgp->variant = variant;
   srgp->user_id = user_id;
   srgp->accepting_mode = accepting_mode;
-  srgp->separate_user_score = state->global->separate_user_score;
+  srgp->separate_user_score = global->separate_user_score;
   srgp->mime_type = mime_type;
-  srgp->score_system = xstrdup(unparse_scoring_system(buf, sizeof(buf), state->global->score_system));
-  srgp->is_virtual = state->global->is_virtual;
+  srgp->score_system = xstrdup(unparse_scoring_system(buf, sizeof(buf), global->score_system));
+  srgp->is_virtual = global->is_virtual;
   srgp->notify_flag = notify_flag;
-  srgp->advanced_layout = state->global->advanced_layout;
-  srgp->enable_full_archive = state->global->enable_full_archive;
+  srgp->advanced_layout = global->advanced_layout;
+  srgp->enable_full_archive = global->enable_full_archive;
   srgp->secure_run = secure_run;
-  srgp->enable_memory_limit_error = state->global->enable_memory_limit_error;
-  srgp->detect_violations = state->global->detect_violations;
+  srgp->enable_memory_limit_error = global->enable_memory_limit_error;
+  srgp->detect_violations = global->detect_violations;
   srgp->priority = prio;
   srgp->arch = xstrdup(arch);
   if (comp_pkt) {
@@ -1516,9 +1521,9 @@ serve_run_request(
       srgp->user_name = xstrdup(ui->name);
     }
   }
-  srgp->max_file_length = state->global->max_file_length;
-  srgp->max_line_length = state->global->max_line_length;
-  srgp->max_cmd_length = state->global->max_cmd_length;
+  srgp->max_file_length = global->max_file_length;
+  srgp->max_line_length = global->max_line_length;
+  srgp->max_cmd_length = global->max_cmd_length;
   if (time_limit_adj_millis > 0) {
     srgp->lang_time_limit_adj_ms = time_limit_adj_millis;
   } else if (time_limit_adj > 0) {
@@ -1529,14 +1534,25 @@ serve_run_request(
   }
   snprintf(buf, sizeof(buf), "%06d", run_id);
   srgp->reply_packet_name = xstrdup(buf);
-  snprintf(pathbuf, sizeof(pathbuf), "%s/%06d/report", state->global->run_dir, contest_id);
-  srgp->reply_report_dir = xstrdup(pathbuf);
 
-  snprintf(pathbuf, sizeof(pathbuf), "%s/%06d/status", state->global->run_dir, contest_id);
-  srgp->reply_spool_dir = xstrdup(pathbuf);
-  if (srgp->enable_full_archive > 0) {
-    snprintf(pathbuf, sizeof(pathbuf), "%s/%06d/output", state->global->run_dir, contest_id);
-    srgp->reply_full_archive_dir = xstrdup(pathbuf);
+  if (global->super_run_dir && global->super_run_dir[0]) {
+    snprintf(pathbuf, sizeof(pathbuf), "%s/var/%06d/report", global->super_run_dir, contest_id);
+    srgp->reply_report_dir = xstrdup(pathbuf);
+    snprintf(pathbuf, sizeof(pathbuf), "%s/var/%06d/status", global->super_run_dir, contest_id);
+    srgp->reply_spool_dir = xstrdup(pathbuf);
+    if (srgp->enable_full_archive > 0) {
+      snprintf(pathbuf, sizeof(pathbuf), "%s/var/%06d/output", global->super_run_dir, contest_id);
+      srgp->reply_full_archive_dir = xstrdup(pathbuf);
+    }
+  } else {
+    snprintf(pathbuf, sizeof(pathbuf), "%s/%06d/report", global->run_dir, contest_id);
+    srgp->reply_report_dir = xstrdup(pathbuf);
+    snprintf(pathbuf, sizeof(pathbuf), "%s/%06d/status", global->run_dir, contest_id);
+    srgp->reply_spool_dir = xstrdup(pathbuf);
+    if (srgp->enable_full_archive > 0) {
+      snprintf(pathbuf, sizeof(pathbuf), "%s/%06d/output", global->run_dir, contest_id);
+      srgp->reply_full_archive_dir = xstrdup(pathbuf);
+    }
   }
 
   struct super_run_in_problem_packet *srpp = srp->problem;
@@ -1575,7 +1591,7 @@ serve_run_request(
   srpp->open_tests = xstrdup2(prob->open_tests);
 
   if (srgp->advanced_layout > 0) {
-    get_advanced_layout_path(pathbuf, sizeof(pathbuf), state->global, prob, DFLT_P_TEST_DIR, variant);
+    get_advanced_layout_path(pathbuf, sizeof(pathbuf), global, prob, DFLT_P_TEST_DIR, variant);
     srpp->test_dir = xstrdup(pathbuf);
   } else if (variant > 0) {
     snprintf(pathbuf, sizeof(pathbuf), "%s-%d", prob->test_dir, variant);
@@ -1585,7 +1601,7 @@ serve_run_request(
   }
   if (prob->use_corr > 0) {
     if (srgp->advanced_layout > 0) {
-      get_advanced_layout_path(pathbuf, sizeof(pathbuf), state->global, prob, DFLT_P_CORR_DIR, variant);
+      get_advanced_layout_path(pathbuf, sizeof(pathbuf), global, prob, DFLT_P_CORR_DIR, variant);
       srpp->corr_dir = xstrdup(pathbuf);
     } else if (variant > 0) {
       snprintf(pathbuf, sizeof(pathbuf), "%s-%d", prob->corr_dir, variant);
@@ -1596,7 +1612,7 @@ serve_run_request(
   }
   if (prob->use_info > 0) {
     if (srgp->advanced_layout > 0) {
-      get_advanced_layout_path(pathbuf, sizeof(pathbuf), state->global, prob, DFLT_P_INFO_DIR, variant);
+      get_advanced_layout_path(pathbuf, sizeof(pathbuf), global, prob, DFLT_P_INFO_DIR, variant);
       srpp->info_dir = xstrdup(pathbuf);
     } else if (variant > 0) {
       snprintf(pathbuf, sizeof(pathbuf), "%s-%d", prob->info_dir, variant);
@@ -1607,7 +1623,7 @@ serve_run_request(
   }
   if (prob->use_tgz > 0) {
     if (srgp->advanced_layout > 0) {
-      get_advanced_layout_path(pathbuf, sizeof(pathbuf), state->global, prob, DFLT_P_TGZ_DIR, variant);
+      get_advanced_layout_path(pathbuf, sizeof(pathbuf), global, prob, DFLT_P_TGZ_DIR, variant);
       srpp->tgz_dir = xstrdup(pathbuf);
     } else if (variant > 0) {
       snprintf(pathbuf, sizeof(pathbuf), "%s-%d", prob->tgz_dir, variant);
@@ -1668,20 +1684,20 @@ serve_run_request(
       srpp->check_cmd = xstrdup(prob->check_cmd);
     } else {
       if (srgp->advanced_layout > 0) {
-        get_advanced_layout_path(pathbuf, sizeof(pathbuf), state->global, prob, prob->check_cmd, variant);
+        get_advanced_layout_path(pathbuf, sizeof(pathbuf), global, prob, prob->check_cmd, variant);
         srpp->check_cmd = xstrdup(pathbuf);
       } else if (variant > 0) {
-        snprintf(pathbuf, sizeof(pathbuf), "%s/%s-%d", state->global->checker_dir, prob->check_cmd, variant);
+        snprintf(pathbuf, sizeof(pathbuf), "%s/%s-%d", global->checker_dir, prob->check_cmd, variant);
         srpp->check_cmd = xstrdup(pathbuf);
       } else {
-        snprintf(pathbuf, sizeof(pathbuf), "%s/%s", state->global->checker_dir, prob->check_cmd);
+        snprintf(pathbuf, sizeof(pathbuf), "%s/%s", global->checker_dir, prob->check_cmd);
         srpp->check_cmd = xstrdup(pathbuf);
       }
     }
   }
   if (prob->valuer_cmd && prob->valuer_cmd[0]) {
     if (srgp->advanced_layout > 0) {
-      get_advanced_layout_path(pathbuf, sizeof(pathbuf), state->global, prob, prob->valuer_cmd, variant);
+      get_advanced_layout_path(pathbuf, sizeof(pathbuf), global, prob, prob->valuer_cmd, variant);
       srpp->valuer_cmd = xstrdup(pathbuf);
     } else if (variant > 0) {
       snprintf(pathbuf, sizeof(pathbuf), "%s-%d", prob->valuer_cmd, variant);
@@ -1692,7 +1708,7 @@ serve_run_request(
   }
   if (prob->interactor_cmd && prob->interactor_cmd[0]) {
     if (srgp->advanced_layout > 0) {
-      get_advanced_layout_path(pathbuf, sizeof(pathbuf), state->global, prob, prob->interactor_cmd, variant);
+      get_advanced_layout_path(pathbuf, sizeof(pathbuf), global, prob, prob->interactor_cmd, variant);
       srpp->interactor_cmd = xstrdup(pathbuf);
     } else if (variant > 0) {
       snprintf(pathbuf, sizeof(pathbuf), "%s-%d", prob->interactor_cmd, variant);
@@ -1703,7 +1719,7 @@ serve_run_request(
   }
   if (prob->test_checker_cmd && prob->test_checker_cmd[0]) {
     if (srgp->advanced_layout > 0) {
-      get_advanced_layout_path(pathbuf, sizeof(pathbuf), state->global, prob, prob->test_checker_cmd, variant);
+      get_advanced_layout_path(pathbuf, sizeof(pathbuf), global, prob, prob->test_checker_cmd, variant);
       srpp->test_checker_cmd = xstrdup(pathbuf);
     } else if (variant > 0) {
       snprintf(pathbuf, sizeof(pathbuf), "%s-%d", prob->test_checker_cmd, variant);
@@ -1714,7 +1730,7 @@ serve_run_request(
   }
   if (prob->init_cmd && prob->init_cmd[0]) {
     if (srgp->advanced_layout > 0) {
-      get_advanced_layout_path(pathbuf, sizeof(pathbuf), state->global, prob, prob->init_cmd, variant);
+      get_advanced_layout_path(pathbuf, sizeof(pathbuf), global, prob, prob->init_cmd, variant);
       srpp->init_cmd = xstrdup(pathbuf);
     } else if (variant > 0) {
       snprintf(pathbuf, sizeof(pathbuf), "%s-%d", prob->init_cmd, variant);
@@ -1725,7 +1741,7 @@ serve_run_request(
   }
   if (prob->solution_cmd && prob->solution_cmd[0]) {
     if (srgp->advanced_layout > 0) {
-      get_advanced_layout_path(pathbuf, sizeof(pathbuf), state->global, prob, prob->solution_cmd, variant);
+      get_advanced_layout_path(pathbuf, sizeof(pathbuf), global, prob, prob->solution_cmd, variant);
       srpp->solution_cmd = xstrdup(pathbuf);
     } else if (variant > 0) {
       snprintf(pathbuf, sizeof(pathbuf), "%s-%d", prob->solution_cmd, variant);
