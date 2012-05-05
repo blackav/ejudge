@@ -311,6 +311,7 @@ handle_packet(
   }
   if (full_status_dir[0]) {
     os_MakeDirPath(full_status_dir, 0777);
+    make_all_dir(full_status_dir, 0777);
   }
 
   // copy full report from temporary location
