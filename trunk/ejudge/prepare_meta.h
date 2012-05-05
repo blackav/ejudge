@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/05/03 08:27:40
+// Generated 2012/05/05 21:19:14
 
 #ifndef __PREPARE_META_H__
 #define __PREPARE_META_H__
@@ -97,6 +97,7 @@ enum
   CNTSGLOB_contest_stop_cmd,
   CNTSGLOB_description_file,
   CNTSGLOB_contest_plugin_file,
+  CNTSGLOB_super_run_dir,
   CNTSGLOB_test_pat,
   CNTSGLOB_corr_pat,
   CNTSGLOB_info_pat,
