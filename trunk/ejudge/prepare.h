@@ -114,7 +114,7 @@ struct user_adjustment_info
 };
 struct user_adjustment_map;
 
-/* sizeof(struct section_global_data) == 350096 */
+/* sizeof(struct section_global_data) == 350100 */
 struct section_global_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -309,6 +309,9 @@ struct section_global_data
   path_t description_file;
   /** path to the contest plugin */
   path_t contest_plugin_file;
+
+  /** directory for non-default super-run directory */
+  unsigned char *super_run_dir;
 
   /** printf pattern for the files with tests */
   unsigned char test_pat[32];
