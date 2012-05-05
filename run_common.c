@@ -1382,6 +1382,82 @@ cleanup:
   return retval;
 }
 
+static int
+invoke_init_cmd(
+        const unsigned char *init_cmd,
+        const unsigned char *subcommand,
+        const unsigned char *test_src_path,
+        const unsigned char *corr_src_path,
+        const unsigned char *working_dir,
+        const unsigned char *check_out_path,
+        char **init_env,
+        long real_time_limit_ms)
+{
+  tpTask tsk = NULL;
+  int status = 0;
+
+  tsk = task_New();
+  task_AddArg(tsk, init_cmd);
+  if (subcommand && *subcommand) {
+    task_AddArg(tsk, subcommand);
+  }
+  if (test_src_path && *test_src_path) {
+    task_AddArg(tsk, test_src_path);
+  }
+  if (corr_src_path && *corr_src_path) {
+    task_AddArg(tsk, corr_src_path);
+  }
+  task_SetPathAsArg0(tsk);
+  if (working_dir && *working_dir) {
+    task_SetWorkingDir(tsk, working_dir);
+  }
+  setup_environment(tsk, init_env, NULL, 1);
+  task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ);
+  task_SetRedir(tsk, 1, TSR_FILE, check_out_path, TSK_APPEND, TSK_FULL_RW);
+  task_SetRedir(tsk, 2, TSR_DUP, 1);
+  task_EnableAllSignals(tsk);
+  if (real_time_limit_ms > 0) {
+    task_SetMaxRealTimeMillis(tsk, real_time_limit_ms);
+  }
+
+  if (task_Start(tsk) < 0) {
+    append_msg_to_log(check_out_path, "failed to start init_cmd %s", init_cmd);
+    status = RUN_CHECK_FAILED;
+    goto cleanup;
+  }
+
+  task_Wait(tsk);
+
+  if (task_IsTimeout(tsk)) {
+    append_msg_to_log(check_out_path, "init_cmd timeout (%ld ms)", task_GetRunningTime(tsk));
+    err("init_cmd timeout (%ld ms)", task_GetRunningTime(tsk));
+    status = RUN_CHECK_FAILED;
+    goto cleanup;
+  }
+
+  if (task_Status(tsk) == TSK_SIGNALED) {
+    int signo = task_TermSignal(tsk);
+    append_msg_to_log(check_out_path, "init_cmd terminated with signal %d (%s)",
+                      signo, os_GetSignalString(signo));
+    status = RUN_CHECK_FAILED;
+    goto cleanup;
+  }
+
+  int exitcode = task_ExitCode(tsk);
+  if (exitcode == 1) exitcode = RUN_WRONG_ANSWER_ERR;
+  if (exitcode == 2) exitcode = RUN_PRESENTATION_ERR;
+  if (exitcode != RUN_OK && exitcode != RUN_PRESENTATION_ERR
+      && exitcode != RUN_WRONG_ANSWER_ERR && exitcode != RUN_CHECK_FAILED) {
+    append_msg_to_log(check_out_path, "init_cmd exited with code %d", exitcode);
+    status = RUN_CHECK_FAILED;
+    goto cleanup;
+  }
+
+cleanup:
+  task_Delete(tsk);
+  return status;
+}
+
 static tpTask
 invoke_interactor(
         const unsigned char *interactor_cmd,
@@ -1409,7 +1485,7 @@ invoke_interactor(
   setup_environment(tsk_int, interactor_env, NULL, 1);
   task_SetRedir(tsk_int, 0, TSR_DUP, stdin_fd);
   task_SetRedir(tsk_int, 1, TSR_DUP, stdout_fd);
-  task_SetRedir(tsk_int, 2, TSR_FILE, check_out_path, TSK_REWRITE, TSK_FULL_RW);
+  task_SetRedir(tsk_int, 2, TSR_FILE, check_out_path, TSK_APPEND, TSK_FULL_RW);
   task_EnableAllSignals(tsk_int);
   task_IgnoreSIGPIPE(tsk_int);
   if (time_limit_ms > 0) {
@@ -1518,7 +1594,6 @@ invoke_checker(
         const int *test_score_val)
 {
   tpTask tsk = NULL;
-  int write_log_mode = TSK_REWRITE;
   int status = RUN_CHECK_FAILED;
   int test_max_score = -1;
   int default_score = -1;
@@ -1540,16 +1615,12 @@ invoke_checker(
     task_AddArg(tsk, working_dir);
   }
 
-  if (srpp->interactor_cmd && srpp->interactor_cmd[0]) {
-    write_log_mode = TSK_APPEND;
-  }
-
   task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ);
   if (srpp->scoring_checker > 0) {
     task_SetRedir(tsk, 1, TSR_FILE, score_out_path, TSK_REWRITE, TSK_FULL_RW);
-    task_SetRedir(tsk, 2, TSR_FILE, check_out_path, write_log_mode, TSK_FULL_RW);
+    task_SetRedir(tsk, 2, TSR_FILE, check_out_path, TSK_APPEND, TSK_FULL_RW);
   } else {
-    task_SetRedir(tsk, 1, TSR_FILE, check_out_path, write_log_mode, TSK_FULL_RW);
+    task_SetRedir(tsk, 1, TSR_FILE, check_out_path, TSK_APPEND, TSK_FULL_RW);
     task_SetRedir(tsk, 2, TSR_DUP, 1);
   }
 
@@ -1701,6 +1772,7 @@ run_one_test(
   int copy_flag = 0;
   int error_code_value = 0;
   long long file_size;
+  int init_cmd_started = 0;
 
   int pfd1[2] = { -1, -1 };
   int pfd2[2] = { -1, -1 };
@@ -1905,7 +1977,16 @@ run_one_test(
     snprintf(output_path, sizeof(output_path), "%s/%s", global->run_work_dir, srpp->output_file);
   }
 
-  // FIXME: handle output-only problem somewhere else
+  if (srpp->init_cmd && srpp->init_cmd[0]) {
+    status = invoke_init_cmd(srpp->init_cmd, "start", test_src, corr_src, working_dir, check_out_path,
+                             srpp->init_env, srpp->checker_real_time_limit_ms);
+    if (status != 0) {
+      append_msg_to_log(check_out_path, "init_cmd failed to start with code 0");
+      status = RUN_CHECK_FAILED;
+      goto check_failed;
+    }
+    init_cmd_started = 1;
+  }
 
 #ifndef __WIN32__
   if (srpp->interactor_cmd && srpp->interactor_cmd[0]) {
@@ -2342,6 +2423,12 @@ run_checker:;
 
   // read the checker output
 read_checker_output:;
+  if (init_cmd_started) {
+    int new_status = invoke_init_cmd(srpp->init_cmd, "stop", test_src, corr_src, working_dir, check_out_path,
+                                     srpp->init_env, srpp->checker_real_time_limit_ms);
+    if (!status) status = new_status;
+    init_cmd_started = 0;
+  }
 
   file_size = generic_file_size(0, check_out_path, 0);
   if (file_size >= 0) {
@@ -2356,6 +2443,12 @@ read_checker_output:;
   }
 
 cleanup:;
+  if (init_cmd_started) {
+    int new_status = invoke_init_cmd(srpp->init_cmd, "stop", test_src, corr_src, working_dir, check_out_path,
+                                     srpp->init_env, srpp->checker_real_time_limit_ms);
+    if (!status) status = new_status;
+    init_cmd_started = 0;
+  }
 
   cur_info->status = status;
   if (pfd1[0] >= 0) close(pfd1[0]);
@@ -2614,6 +2707,10 @@ check_output_only(
            global->run_work_dir, cur_test);
   snprintf(score_out_path, sizeof(score_out_path), "%s/scoreout_%d.txt",
            global->run_work_dir, cur_test);
+
+  // do we need it?
+  unlink(check_out_path);
+  unlink(score_out_path);
 
   cur_info->input_size = -1;
   cur_info->output_size = -1;
