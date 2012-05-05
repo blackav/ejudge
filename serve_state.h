@@ -348,7 +348,7 @@ int serve_get_cnts_caps(serve_state_t state, const struct contest_desc *,
                         int user_id, opcap_t *out_caps);
 
 void serve_build_compile_dirs(serve_state_t state);
-void serve_build_run_dirs(serve_state_t state);
+void serve_build_run_dirs(serve_state_t state, int contest_id);
 
 int serve_create_symlinks(serve_state_t state);
 
