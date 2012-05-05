@@ -303,6 +303,16 @@ handle_packet(
              contests_home_dir, srgp->contest_id, srgp->contest_id);
   }
 
+  if (full_report_dir[0]) {
+    os_MakeDirPath(full_report_dir, 0777);
+  }
+  if (full_full_dir[0]) {
+    os_MakeDirPath(full_full_dir, 0777);
+  }
+  if (full_status_dir[0]) {
+    os_MakeDirPath(full_status_dir, 0777);
+  }
+
   // copy full report from temporary location
   if (generic_copy_file(0, NULL, report_path, "", 0, full_report_dir, run_base, "") < 0) {
     goto cleanup;
