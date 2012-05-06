@@ -525,7 +525,7 @@ serve_build_run_dirs(serve_state_t state, int contest_id)
     snprintf(full_report_dir, sizeof(full_report_dir),
              "%s/var/%06d/output", state->global->super_run_dir, contest_id);
     snprintf(team_report_dir, sizeof(team_report_dir),
-             "%s/var/%06d/teamreporta", state->global->super_run_dir, contest_id);
+             "%s/var/%06d/teamreports", state->global->super_run_dir, contest_id);
     do_build_run_dirs(state, status_dir, report_dir, team_report_dir, full_report_dir);
   } else {
     for (i = 1; i <= state->max_tester; i++) {
@@ -1553,12 +1553,12 @@ serve_run_request(
   srgp->reply_packet_name = xstrdup(buf);
 
   if (global->super_run_dir && global->super_run_dir[0]) {
-    snprintf(pathbuf, sizeof(pathbuf), "%s/var/%06d/report", global->super_run_dir, contest_id);
+    snprintf(pathbuf, sizeof(pathbuf), "var/%06d/report", contest_id);
     srgp->reply_report_dir = xstrdup(pathbuf);
-    snprintf(pathbuf, sizeof(pathbuf), "%s/var/%06d/status", global->super_run_dir, contest_id);
+    snprintf(pathbuf, sizeof(pathbuf), "var/%06d/status", contest_id);
     srgp->reply_spool_dir = xstrdup(pathbuf);
     if (srgp->enable_full_archive > 0) {
-      snprintf(pathbuf, sizeof(pathbuf), "%s/var/%06d/output", global->super_run_dir, contest_id);
+      snprintf(pathbuf, sizeof(pathbuf), "var/%06d/output", contest_id);
       srgp->reply_full_archive_dir = xstrdup(pathbuf);
     }
   } else {
