@@ -31,6 +31,7 @@
 #include "run.h"
 #include "curtime.h"
 #include "ej_process.h"
+#include "xml_utils.h"
 
 #include "reuse_xalloc.h"
 #include "reuse_osdeps.h"
@@ -42,6 +43,8 @@
 #include <limits.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 struct ignored_problem_info
 {
@@ -285,19 +288,34 @@ handle_packet(
   }
 
   if (srgp->reply_report_dir && srgp->reply_report_dir[0]) {
-    snprintf(full_report_dir, sizeof(full_report_dir), "%s", srgp->reply_report_dir);
+    if (os_IsAbsolutePath(srgp->reply_report_dir)) {
+      snprintf(full_report_dir, sizeof(full_report_dir), "%s", srgp->reply_report_dir);
+    } else {
+      snprintf(full_report_dir, sizeof(full_report_dir), "%s/%s/%s",
+               EJUDGE_CONTESTS_HOME_DIR, SUPER_RUN_DIRECTORY, srgp->reply_report_dir);
+    }
   } else {
     snprintf(full_report_dir, sizeof(full_report_dir), "%s/%06d/var/run/%06d/report",
              contests_home_dir, srgp->contest_id, srgp->contest_id);
   }
   if (srgp->reply_spool_dir && srgp->reply_spool_dir[0]) {
-    snprintf(full_status_dir, sizeof(full_status_dir), "%s", srgp->reply_spool_dir);
+    if (os_IsAbsolutePath(srgp->reply_spool_dir)) {
+      snprintf(full_status_dir, sizeof(full_status_dir), "%s", srgp->reply_spool_dir);
+    } else {
+      snprintf(full_status_dir, sizeof(full_status_dir), "%s/%s/%s",
+               EJUDGE_CONTESTS_HOME_DIR, SUPER_RUN_DIRECTORY, srgp->reply_spool_dir);
+    }
   } else {
     snprintf(full_status_dir, sizeof(full_status_dir), "%s/%06d/var/run/%06d/status",
              contests_home_dir, srgp->contest_id, srgp->contest_id);
   }
   if (srgp->reply_full_archive_dir && srgp->reply_full_archive_dir[0]) {
-    snprintf(full_full_dir, sizeof(full_full_dir), "%s", srgp->reply_full_archive_dir);
+    if (os_IsAbsolutePath(srgp->reply_full_archive_dir)) {
+      snprintf(full_full_dir, sizeof(full_full_dir), "%s", srgp->reply_full_archive_dir);
+    } else {
+      snprintf(full_status_dir, sizeof(full_status_dir), "%s/%s/%s",
+               EJUDGE_CONTESTS_HOME_DIR, SUPER_RUN_DIRECTORY, srgp->reply_full_archive_dir);
+    }
   } else {
     snprintf(full_full_dir, sizeof(full_full_dir), "%s/%06d/var/run/%06d/output",
              contests_home_dir, srgp->contest_id, srgp->contest_id);
@@ -745,6 +763,37 @@ create_configs(
   fclose(f); f = NULL;
 }
 
+const unsigned char * const
+upgrade_times[] =
+{
+  "2012/05/01 00:00:00",
+
+  NULL
+};
+
+static void
+remove_if_upgrade_needed(const unsigned char *path)
+{
+  struct stat stb;
+
+  if (!path || !*path) return;
+  if (stat(path, &stb) < 0) return;
+  if (!S_ISREG(stb.st_mode)) return;
+  for (int i = 0; upgrade_times[i]; ++i) {
+    time_t t = 0;
+    if (xml_parse_date(NULL, 0, 0, 0, upgrade_times[i], &t) < 0) continue;
+    if (t <= 0) continue;
+    if (stb.st_mtime < t) {
+      struct tm *tt = localtime(&t);
+      unsigned char bak_path[PATH_MAX];
+      snprintf(bak_path, sizeof(bak_path), "%s.%04d%02d%02d", path,
+               tt->tm_year + 1900, tt->tm_mon + 1, tt->tm_mday);
+      rename(path, bak_path);
+      return;
+    }
+  }
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -866,7 +915,9 @@ main(int argc, char *argv[])
   snprintf(super_run_conf_path, sizeof(super_run_conf_path), "%s/conf/super-run.cfg", super_run_path);
   snprintf(super_run_log_path, sizeof(super_run_log_path), "%s/var/ej-super-run.log", contests_home_dir);
 
-  if (os_IsFile(super_run_path) < 0) {
+  remove_if_upgrade_needed(super_run_conf_path);
+
+  if (os_IsFile(super_run_conf_path) < 0) {
     create_configs(super_run_path, super_run_conf_path);
     if (os_IsFile(super_run_path) != OSPK_DIR) {
       fatal("path '%s' must be a directory", super_run_path);
