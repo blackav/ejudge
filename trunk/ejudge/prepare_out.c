@@ -601,6 +601,9 @@ prepare_unparse_unhandled_global(FILE *f, const struct section_global_data *glob
 {
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
 
+  //GLOBAL_PARAM(super_run_dir, "S"),
+  do_str(f, &ab, "super_run_dir", global->super_run_dir);
+
   //GLOBAL_PARAM(tests_to_accept, "d"),
   if (global->tests_to_accept >= 0
       && global->tests_to_accept != DFLT_G_TESTS_TO_ACCEPT)
