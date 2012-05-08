@@ -645,7 +645,10 @@ ns_write_priv_all_runs(
 
         fprintf(f, "<td%s>&nbsp;</td>", cl);
         if (phr->role == USER_ROLE_ADMIN) {
-          fprintf(f, "<td%s>%s</td>", cl, BUTTON(NEW_SRV_ACTION_CLEAR_RUN));
+          fprintf(f, "<td%s>", cl);
+          html_start_form(f, 1, phr->self_url, phr->hidden_vars);
+          fprintf(f, "%s", BUTTON(NEW_SRV_ACTION_CLEAR_RUN));
+          fprintf(f, "</form></td>");
         } else {
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
