@@ -332,29 +332,6 @@ expand_runs(struct runlog_state *rls, int run_id)
 }
 
 static int
-parse_sha1(const unsigned char *str, ruint32_t *psha1)
-{
-  const unsigned char *s = str;
-  unsigned char buf[3];
-  int i, v;
-  unsigned char *eptr;
-  unsigned char *optr = (unsigned char*) psha1;
-  char *tmpeptr = 0;
-
-  if (!str || strlen(str) != 40) return -1;
-  for (i = 0; i < 20; i++) {
-    buf[0] = *s++;
-    buf[1] = *s++;
-    buf[2] = 0;
-    v = strtol(buf, &tmpeptr, 16);
-    eptr = tmpeptr;
-    if (v < 0 || v > 255 || *eptr) return -1;
-    *optr++ = v;
-  }
-  return 0;
-}
-
-static int
 load_runs(struct rldb_mysql_cnts *cs)
 {
   struct rldb_mysql_state *state = cs->plugin_state;
@@ -407,7 +384,7 @@ load_runs(struct rldb_mysql_cnts *cs)
     if (ri.user_id <= 0) db_error_inv_value_fail(md, "user_id");
     if (ri.prob_id < 0) db_error_inv_value_fail(md, "prob_id");
     if (ri.lang_id < 0) db_error_inv_value_fail(md, "lang_id");
-    if (ri.hash && parse_sha1(ri.hash, sha1) < 0)
+    if (ri.hash && parse_sha1(sha1, ri.hash) < 0)
       db_error_inv_value_fail(md, "hash");
     if (ri.ip_version != 4) db_error_inv_value_fail(md, "ip_version");
     if (ri.mime_type && (mime_type = mime_type_parse(ri.mime_type)) < 0)
