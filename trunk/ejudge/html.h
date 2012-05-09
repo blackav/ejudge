@@ -217,7 +217,8 @@ void
 write_change_status_dialog(const serve_state_t state,
                            FILE *f, unsigned char const *var_name,
                            int disable_rejudge_flag,
-                           const unsigned char *td_class);
+                           const unsigned char *td_class,
+                           int cur_value, int is_readonly);
 
 int
 write_xml_team_accepting_report(FILE *f, const unsigned char *txt,

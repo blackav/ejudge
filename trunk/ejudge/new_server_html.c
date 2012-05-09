@@ -5152,10 +5152,10 @@ priv_view_users_page(
   fprintf(fout, "<table>\n");
   fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
           _("First User_Id"),
-          html_input_text(bb, sizeof(bb), "first_user_id", 16, 0));
+          html_input_text(bb, sizeof(bb), "first_user_id", 16, 0, 0));
   fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
           _("Last User_Id (incl.)"),
-          html_input_text(bb, sizeof(bb), "last_user_id", 16, 0));
+          html_input_text(bb, sizeof(bb), "last_user_id", 16, 0, 0));
   fprintf(fout, "</table>\n");
 
   fprintf(fout, "<h2>Available actions</h2>\n");
@@ -5699,6 +5699,45 @@ priv_edit_clar_page(
 }
 
 static int
+priv_edit_run_page(
+        FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  int run_id, n;
+  const unsigned char *s;
+
+  if (ns_cgi_param(phr, "run_id", &s) <= 0
+      || sscanf(s, "%d%n", &run_id, &n) != 1 || s[n]
+      || run_id < 0 || run_id >= run_get_total(cs->runlog_state)) {
+    ns_html_err_inv_param(fout, phr, 1, "cannot parse run_id");
+    return -1;
+  }
+
+  if (opcaps_check(phr->caps, OPCAP_EDIT_RUN) < 0) {
+    ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
+    goto cleanup;
+  }
+
+  l10n_setlocale(phr->locale_id);
+  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+            "%s [%s, %d, %s]: %s %d", ns_unparse_role(phr->role),
+            phr->name_arm, phr->contest_id, extra->contest_arm,
+            _("Editing run"), run_id);
+
+  ns_priv_edit_run_page(cs, fout, log_f, phr, cnts, extra, run_id);
+
+  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
+  l10n_setlocale(0);
+
+ cleanup:
+  return 0;
+}
+
+static int
 priv_standings(FILE *fout,
                FILE *log_f,
                struct http_request_info *phr,
@@ -6197,23 +6236,23 @@ priv_upsolving_configuration_1(
   fprintf(fout, "<table>");
   fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
           html_checkbox(bb, sizeof(bb), "freeze_standings", NULL,
-                        freeze_standings?1:0),
+                        freeze_standings?1:0, 0),
           _("Freeze contest standings"));
   fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
           html_checkbox(bb, sizeof(bb), "view_source", NULL,
-                        view_source?1:0),
+                        view_source?1:0, 0),
           _("Allow viewing source code"));
   fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
           html_checkbox(bb, sizeof(bb), "view_protocol", NULL,
-                        view_protocol?1:0),
+                        view_protocol?1:0, 0),
           _("Allow viewing run report"));
   fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
           html_checkbox(bb, sizeof(bb), "full_protocol", NULL,
-                        full_proto?1:0),
+                        full_proto?1:0, 0),
           _("Allow viewing full protocol"));
   fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
           html_checkbox(bb, sizeof(bb), "disable_clars", NULL,
-                        disable_clars?1:0),
+                        disable_clars?1:0, 0),
           _("Disable clarifications"));
   fprintf(fout, "</table>\n");
 
@@ -6331,22 +6370,22 @@ priv_assign_cyphers_1(
   fprintf(fout, "<table>\n");
 
   fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
-          html_input_text(bb, sizeof(bb), "prefix", 16, 0),
+          html_input_text(bb, sizeof(bb), "prefix", 16, 0, 0),
           _("Cypher prefix"));
   fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
-          html_input_text(bb, sizeof(bb), "min_num", 16, 0),
+          html_input_text(bb, sizeof(bb), "min_num", 16, 0, 0),
           _("Minimal random number"));
   fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
-          html_input_text(bb, sizeof(bb), "max_num", 16, 0),
+          html_input_text(bb, sizeof(bb), "max_num", 16, 0, 0),
           _("Maximal random number"));
   fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
-          html_input_text(bb, sizeof(bb), "seed", 16, 0),
+          html_input_text(bb, sizeof(bb), "seed", 16, 0, 0),
           _("Random seed"));
   fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
-          html_input_text(bb, sizeof(bb), "mult", 16, 0),
+          html_input_text(bb, sizeof(bb), "mult", 16, 0, 0),
           _("Mult parameter"));
   fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
-          html_input_text(bb, sizeof(bb), "shift", 16, 0),
+          html_input_text(bb, sizeof(bb), "shift", 16, 0, 0),
           _("Shift parameter"));
   fprintf(fout, "<tr><td>%s</td><td>&nbsp;</td></tr>\n",
           BUTTON(NEW_SRV_ACTION_ASSIGN_CYPHERS_2));
@@ -7485,6 +7524,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_FINAL_VISIBILITY] = priv_contest_operation,
   [NEW_SRV_ACTION_CHANGE_RUN_FIELDS] = priv_change_run_fields,
   [NEW_SRV_ACTION_PRIV_EDIT_CLAR_ACTION] = ns_priv_edit_clar_action,
+  [NEW_SRV_ACTION_PRIV_EDIT_RUN_ACTION] = ns_priv_edit_run_action,
 
   /* for priv_generic_page */
   [NEW_SRV_ACTION_VIEW_REPORT] = priv_view_report,
@@ -7549,6 +7589,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_UNMARK_DISPLAYED_2] = priv_clear_displayed,
   [NEW_SRV_ACTION_ADMIN_CONTEST_SETTINGS] = priv_admin_contest_settings,
   [NEW_SRV_ACTION_PRIV_EDIT_CLAR_PAGE] = priv_edit_clar_page,
+  [NEW_SRV_ACTION_PRIV_EDIT_RUN_PAGE] = priv_edit_run_page,
 };
 
 static void
@@ -8998,6 +9039,8 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CHANGE_RUN_FIELDS] = priv_generic_operation,
   [NEW_SRV_ACTION_PRIV_EDIT_CLAR_PAGE] = priv_generic_page,
   [NEW_SRV_ACTION_PRIV_EDIT_CLAR_ACTION] = priv_generic_operation,
+  [NEW_SRV_ACTION_PRIV_EDIT_RUN_PAGE] = priv_generic_page,
+  [NEW_SRV_ACTION_PRIV_EDIT_RUN_ACTION] = priv_generic_operation,
 };
 
 static unsigned char *
@@ -9375,9 +9418,9 @@ unpriv_page_forgot_password_1(FILE *fout, struct http_request_info *phr,
   html_start_form(fout, 1, phr->self_url, "");
   html_hidden(fout, "contest_id", "%d", phr->contest_id);
   fprintf(fout, "<table><tr><td class=\"menu\">%s:</td><td class=\"menu\">%s</td></tr>\n",
-          _("Login"), html_input_text(bb, sizeof(bb), "login", 16, 0));
+          _("Login"), html_input_text(bb, sizeof(bb), "login", 16, 0, 0));
   fprintf(fout, "<tr><td class=\"menu\">%s:</td><td class=\"menu\">%s</td></tr>\n",
-          _("E-mail"), html_input_text(bb, sizeof(bb), "email", 16, 0));
+          _("E-mail"), html_input_text(bb, sizeof(bb), "email", 16, 0, NULL));
   fprintf(fout, "<tr><td class=\"menu\">&nbsp;</td><td class=\"menu\">%s</td></tr></table></form>\n",
           BUTTON(NEW_SRV_ACTION_FORGOT_PASSWORD_2));
 
@@ -9604,7 +9647,7 @@ unpriv_page_forgot_password_3(FILE *fout, struct http_request_info *phr,
     html_hidden(fout, "action", "%d", NEW_SRV_ACTION_REG_LOGIN);
   }
   fprintf(fout, "<table><tr><td class=\"menu\">%s:</td><td class=\"menu\">%s</td></tr>\n",
-          _("Login"), html_input_text(bb, sizeof(bb), "login", 16, "%s", ARMOR(login)));
+          _("Login"), html_input_text(bb, sizeof(bb), "login", 16, 0, "%s", ARMOR(login)));
   fprintf(fout, "<tr><td class=\"menu\">%s:</td><td class=\"menu\"><input type=\"password\" size=\"16\" name=\"password\" value=\"%s\"/></td></tr>\n",
           _("Password"), ARMOR(passwd));
   fprintf(fout, "<tr><td class=\"menu\">&nbsp;</td><td class=\"menu\">%s</td></tr></table></form>\n",
@@ -9693,7 +9736,8 @@ unprivileged_page_login_page(FILE *fout, struct http_request_info *phr,
   ss = 0;
   if (ns_cgi_param(phr, "login", &s) > 0) ss = ARMOR(s);
   if (!ss) ss = "";
-  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: %s</div></td>\n", _("login"), html_input_text(bb, sizeof(bb), "login", 8, "%s", ss));
+  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: %s</div></td>\n", _("login"),
+          html_input_text(bb, sizeof(bb), "login", 8, 0, "%s", ss));
 
   ss = 0;
   if (ns_cgi_param(phr, "password", &s) > 0) ss = ARMOR(s);
@@ -14572,6 +14616,8 @@ static const unsigned char * const symbolic_action_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CHANGE_RUN_FIELDS] = "CHANGE_RUN_FIELDS",
   [NEW_SRV_ACTION_PRIV_EDIT_CLAR_PAGE] = "PRIV_EDIT_CLAR_PAGE",
   [NEW_SRV_ACTION_PRIV_EDIT_CLAR_ACTION] = "PRIV_EDIT_CLAR_ACTION",
+  [NEW_SRV_ACTION_PRIV_EDIT_RUN_PAGE] = "PRIV_EDIT_RUN_PAGE",
+  [NEW_SRV_ACTION_PRIV_EDIT_RUN_ACTION] = "PRIV_EDIT_RUN_ACTION",
 };
 
 void

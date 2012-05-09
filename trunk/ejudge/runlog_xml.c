@@ -203,29 +203,6 @@ static struct xml_parse_spec runlog_parse_spec =
 };
 
 static int
-parse_sha1(const unsigned char *str, ruint32_t *psha1)
-{
-  const unsigned char *s = str;
-  unsigned char buf[3];
-  int i, v;
-  unsigned char *eptr;
-  unsigned char *optr = (unsigned char*) psha1;
-  char *tmpeptr = 0;
-
-  if (!str || strlen(str) != 40) return -1;
-  for (i = 0; i < 20; i++) {
-    buf[0] = *s++;
-    buf[1] = *s++;
-    buf[2] = 0;
-    v = strtol(buf, &tmpeptr, 16);
-    eptr = tmpeptr;
-    if (v < 0 || v > 255 || *eptr) return -1;
-    *optr++ = v;
-  }
-  return 0;
-}
-
-static int
 parse_status(const unsigned char *str)
 {
   int n, x;
@@ -378,7 +355,7 @@ process_run_elements(struct xml_tree *xt, struct run_xml_helpers *helper)
         break;
       case RUNLOG_A_SHA1:
         if (!xa->text) goto empty_attr_value;
-        if (parse_sha1(xa->text, xr->r.sha1) < 0) goto invalid_attr_value;
+        if (parse_sha1(xr->r.sha1, xa->text) < 0) goto invalid_attr_value;
         break;
       case RUNLOG_A_USER_ID:
         if (!xa->text) goto empty_attr_value;

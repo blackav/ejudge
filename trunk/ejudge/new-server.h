@@ -390,6 +390,8 @@ enum
   NEW_SRV_ACTION_CHANGE_RUN_FIELDS,
   NEW_SRV_ACTION_PRIV_EDIT_CLAR_PAGE,
   NEW_SRV_ACTION_PRIV_EDIT_CLAR_ACTION,
+  NEW_SRV_ACTION_PRIV_EDIT_RUN_PAGE,
+  NEW_SRV_ACTION_PRIV_EDIT_RUN_ACTION,
 
   NEW_SRV_ACTION_LAST,
 };
@@ -632,6 +634,24 @@ ns_priv_edit_clar_page(
 
 int
 ns_priv_edit_clar_action(
+        FILE *out_f,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra);
+
+void
+ns_priv_edit_run_page(
+        const serve_state_t cs,
+        FILE *f,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        int run_id);
+
+int
+ns_priv_edit_run_action(
         FILE *out_f,
         FILE *log_f,
         struct http_request_info *phr,

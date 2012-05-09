@@ -241,8 +241,10 @@ login_page(
     html_hidden(fout, "locale_id", "%d", phr->locale_id);
   fprintf(fout, "<div class=\"user_actions\"><table class=\"menu\"><tr>\n");
 
-  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: %s</div></td>", _("login"), html_input_text(bb, sizeof(bb), "login", 20, "%s", ARMOR(login)));
-  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: %s</div></td>", _("password"), html_input_password(bb, sizeof(bb), "password", 20, "%s", ARMOR(password)));
+  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: %s</div></td>", _("login"),
+          html_input_text(bb, sizeof(bb), "login", 20, 0, "%s", ARMOR(login)));
+  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: %s</div></td>", _("password"),
+          html_input_password(bb, sizeof(bb), "password", 20, "%s", ARMOR(password)));
   if (!cnts->disable_locale_change) {
     fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: ",
             _("language"));
@@ -407,7 +409,8 @@ create_autoassigned_account_page(
     html_hidden(fout, "locale_id", "%d", phr->locale_id);
   fprintf(fout, "<div class=\"user_actions\"><table class=\"menu\"><tr>\n");
 
-  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">e-mail: %s</div></td>", html_input_text(bb, sizeof(bb), "email", 20, "%s", ARMOR(email)));
+  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">e-mail: %s</div></td>",
+          html_input_text(bb, sizeof(bb), "email", 20, 0, "%s", ARMOR(email)));
 
   fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s</div></td>", ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_REG_CREATE_ACCOUNT, _("Create account")));
 
@@ -554,8 +557,10 @@ create_account_page(
     html_hidden(fout, "locale_id", "%d", phr->locale_id);
   fprintf(fout, "<div class=\"user_actions\"><table class=\"menu\"><tr>\n");
 
-  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: %s</div></td>", _("login"), html_input_text(bb, sizeof(bb), "login", 20, "%s", ARMOR(login)));
-  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">e-mail: %s</div></td>", html_input_text(bb, sizeof(bb), "email", 20, "%s", ARMOR(email)));
+  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: %s</div></td>", _("login"),
+          html_input_text(bb, sizeof(bb), "login", 20, 0, "%s", ARMOR(login)));
+  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">e-mail: %s</div></td>",
+          html_input_text(bb, sizeof(bb), "email", 20, 0, "%s", ARMOR(email)));
 
   if (!cnts->disable_locale_change) {
     fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: ",
@@ -1851,7 +1856,7 @@ edit_general_form(
       comment = __("contains invalid characters");
     }
     fprintf(fout, "<td class=\"b0\">%s</td>",
-            html_input_text(bb, sizeof(bb), "name", 64, ARMOR(bb)));
+            html_input_text(bb, sizeof(bb), "name", 64, 0, "%s", ARMOR(bb)));
 
     if (!comment) comment = "&nbsp;";
     fprintf(fout, "<td class=\"b0\"><font color=\"red\"><i>%s</i></font></td>", comment);
@@ -1933,13 +1938,13 @@ edit_general_form(
       xml_parse_bool(NULL, NULL, 0, 0, bb, &is_checked);
       snprintf(varname, sizeof(varname), "param_%d", ff);
       fprintf(fout, "<td class=\"b0\">%s</td>",
-              html_checkbox(buf, sizeof(buf), varname, "yes", is_checked));
+              html_checkbox(buf, sizeof(buf), varname, "yes", is_checked, 0));
     } else {
       snprintf(varname, sizeof(varname), "param_%d", ff);
       fprintf(fout, "<td class=\"b0\">%s</td>",
               html_input_text(buf, sizeof(buf), varname,
-                              contest_field_desc[ff].size,
-                              ARMOR(bb)));
+                              contest_field_desc[ff].size, 0,
+                              "%s", ARMOR(bb)));
     }
   
     if (!comment) comment = "&nbsp;";
@@ -2234,8 +2239,8 @@ edit_member_form(
       snprintf(varname, sizeof(varname), "%sparam_%d", var_prefix, ff);
       fprintf(fout, "<td class=\"b0\">%s</td>",
               html_input_text(bb, sizeof(bb), varname,
-                              member_field_desc[ff].size,
-                              ARMOR(bb)));
+                              member_field_desc[ff].size, 0,
+                              "%s", ARMOR(bb)));
       break;
     }
 

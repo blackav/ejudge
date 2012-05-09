@@ -3,7 +3,7 @@
 #ifndef __MISCTEXT_H__
 #define __MISCTEXT_H__
 
-/* Copyright (C) 2000-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -54,6 +54,8 @@ void html_armor_free(struct html_armor_buffer *pb);
 
 char *duration_str(int show_astr, time_t cur,
                    time_t time, char *buf, int len);
+char *
+duration_str_2(unsigned char *buf, int len, time_t dur, int nsec);
 char *duration_min_str(time_t time, char *buf, int len);
 
 int  message_quoted_size(char const *);
@@ -80,6 +82,7 @@ int get_content_type(const unsigned char *txt, const unsigned char **p_start_ptr
 unsigned char *dos2unix_str(const unsigned char *s);
 size_t dos2unix_buf(unsigned char *s, size_t size);
 unsigned char *unparse_sha1(const void *shabuf);
+int parse_sha1(void *shabuf, const unsigned char *str);
 
 void allowed_list_parse(
         const unsigned char *str,

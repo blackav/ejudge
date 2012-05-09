@@ -4588,7 +4588,7 @@ cmd_op_create_new_contest_page(
 
   fprintf(out_f, "<table border=\"0\">");
   fprintf(out_f, "<tr><td>Contest number:</td><td>%s</td></tr>\n",
-          html_input_text(buf, sizeof(buf), "contest_id", 20, "%d", recomm_id));
+          html_input_text(buf, sizeof(buf), "contest_id", 20, 0, "%d", recomm_id));
   fprintf(out_f, "<tr><td>Contest template:</td><td>");
   fprintf(out_f, "<select name=\"templ_id\">"
           "<option value=\"0\">From scratch</option>");

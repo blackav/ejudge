@@ -602,19 +602,19 @@ super_serve_op_USER_BROWSE_PAGE(
   s = user_filter;
   if (!s) s = "";
   fprintf(out_f, "<!--<tr><td class=\"b0\">Filter:</td><td class=\"b0\">%s</td></tr>-->",
-          html_input_text(buf, sizeof(buf), "user_filter", 50, "%s", ARMOR(s)));
+          html_input_text(buf, sizeof(buf), "user_filter", 50, 0, "%s", ARMOR(s)));
   hbuf[0] = 0;
   if (phr->ss->user_filter_set) {
     snprintf(hbuf, sizeof(hbuf), "%d", user_offset);
   }
   fprintf(out_f, "<tr><td class=\"b0\">Offset:</td><td class=\"b0\">%s</td></tr>",
-          html_input_text(buf, sizeof(buf), "user_offset", 10, "%s", hbuf));
+          html_input_text(buf, sizeof(buf), "user_offset", 10, 0, "%s", hbuf));
   hbuf[0] = 0;
   if (phr->ss->user_filter_set) {
     snprintf(hbuf, sizeof(hbuf), "%d", user_count);
   }
   fprintf(out_f, "<tr><td class=\"b0\">Count:</td><td class=\"b0\">%s</td></tr>",
-          html_input_text(buf, sizeof(buf), "user_count", 10, "%s", hbuf));
+          html_input_text(buf, sizeof(buf), "user_count", 10, 0, "%s", hbuf));
   fprintf(out_f, "<tr><td class=\"b0\">&nbsp;</td><td class=\"b0\"><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td></tr>",
           SSERV_OP_USER_FILTER_CHANGE_ACTION, "Change");
   fprintf(out_f, "</table>");
@@ -634,7 +634,7 @@ super_serve_op_USER_BROWSE_PAGE(
     snprintf(hbuf, sizeof(hbuf), "%d", contest_id);
   }
   fprintf(out_f, "<td%s>%s</td>", cl,
-          html_input_text(buf, sizeof(buf), "jump_contest_id", 10, "%s", hbuf));
+          html_input_text(buf, sizeof(buf), "jump_contest_id", 10, 0, "%s", hbuf));
   fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td></tr>",
           cl, SSERV_OP_USER_JUMP_CONTEST_ACTION, "Jump");
   fprintf(out_f, "<tr><td%s><b>%s:</b></td>", cl, "Jump to group");
@@ -643,7 +643,7 @@ super_serve_op_USER_BROWSE_PAGE(
     snprintf(hbuf, sizeof(hbuf), "%d", group_id);
   }
   fprintf(out_f, "<td%s>%s</td>", cl,
-          html_input_text(buf, sizeof(buf), "jump_group_id", 10, "%s", hbuf));
+          html_input_text(buf, sizeof(buf), "jump_group_id", 10, 0, "%s", hbuf));
   fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td></tr>",
           cl, SSERV_OP_USER_JUMP_GROUP_ACTION, "Jump");
   fprintf(out_f, "</table>\n");
@@ -2799,12 +2799,12 @@ super_serve_op_USER_DETAIL_PAGE(
   if (!s) s = "";
   fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>&nbsp;</td><td%s>%s</td><td%s>&nbsp;</td></tr>\n",
           cl, "User login", cl, cl, 
-          html_input_text(buf, sizeof(hbuf), "other_login", 50, "%s", ARMOR(s)), cl);
+          html_input_text(buf, sizeof(hbuf), "other_login", 50, 0, "%s", ARMOR(s)), cl);
   s = u->email;
   if (!s) s = "";
   fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>&nbsp;</td><td%s>%s</td><td%s>&nbsp;</td></tr>\n",
           cl, "User e-mail", cl, cl, 
-          html_input_text(buf, sizeof(buf), "email", 50, "%s", ARMOR(s)), cl);
+          html_input_text(buf, sizeof(buf), "email", 50, 0, "%s", ARMOR(s)), cl);
   fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>&nbsp;</td><td%s>",
           cl, "Password", cl, cl);
   if (!u->passwd) {
@@ -7758,19 +7758,19 @@ super_serve_op_GROUP_BROWSE_PAGE(
   s = group_filter;
   if (!s) s = "";
   fprintf(out_f, "<!--<tr><td class=\"b0\">Filter:</td><td class=\"b0\">%s</td></tr>-->",
-          html_input_text(buf, sizeof(buf), "group_filter", 50, "%s", ARMOR(s)));
+          html_input_text(buf, sizeof(buf), "group_filter", 50, 0, "%s", ARMOR(s)));
   hbuf[0] = 0;
   if (phr->ss->group_filter_set) {
     snprintf(hbuf, sizeof(hbuf), "%d", group_offset);
   }
   fprintf(out_f, "<tr><td class=\"b0\">Offset:</td><td class=\"b0\">%s</td></tr>",
-          html_input_text(buf, sizeof(buf), "group_offset", 10, "%s", hbuf));
+          html_input_text(buf, sizeof(buf), "group_offset", 10, 0, "%s", hbuf));
   hbuf[0] = 0;
   if (phr->ss->group_filter_set) {
     snprintf(hbuf, sizeof(hbuf), "%d", group_count);
   }
   fprintf(out_f, "<tr><td class=\"b0\">Count:</td><td class=\"b0\">%s</td></tr>",
-          html_input_text(buf, sizeof(buf), "group_count", 10, "%s", hbuf));
+          html_input_text(buf, sizeof(buf), "group_count", 10, 0, "%s", hbuf));
   fprintf(out_f, "<tr><td class=\"b0\">&nbsp;</td><td class=\"b0\"><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td></tr>",
           SSERV_OP_GROUP_FILTER_CHANGE_ACTION, "Change");
   fprintf(out_f, "</table>");
