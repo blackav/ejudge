@@ -253,6 +253,60 @@ duration_str(int show_astr, time_t cur, time_t start, char *buf, int len)
   return buf;
 }
 
+enum
+{
+  SECS_PER_MONTH = 30 * 24 * 60 * 60,
+  SECS_PER_WEEK = 7 * 24 * 60 * 60,
+  SECS_PER_DAY = 24 * 60 * 60,
+  SECS_PER_HOUR = 60 * 60,
+  SECS_PER_MIN = 60,
+};
+
+char *
+duration_str_2(unsigned char *buf, int len, time_t dur, int nsec)
+{
+  if (dur >= SECS_PER_MONTH) {
+    int months = (int)(dur / SECS_PER_MONTH);
+    dur %= SECS_PER_MONTH;
+    int days = (int)(dur / SECS_PER_DAY);
+    dur %= SECS_PER_DAY;
+    int hours = (int)(dur / SECS_PER_HOUR);
+    dur %= SECS_PER_HOUR;
+    int mins = (int)(dur / SECS_PER_MIN);
+    dur %= SECS_PER_MIN;
+    int secs = (int)(dur);
+    snprintf(buf, len, "%d month(s) %d day(s) %d:%02d:%02d.%06d", months, days, hours, mins, secs, nsec / 1000);
+  } else if (dur >= SECS_PER_WEEK) {
+    int weeks = (int)(dur / SECS_PER_WEEK);
+    dur %= SECS_PER_WEEK;
+    int days = (int)(dur / SECS_PER_DAY);
+    dur %= SECS_PER_DAY;
+    int hours = (int)(dur / SECS_PER_HOUR);
+    dur %= SECS_PER_HOUR;
+    int mins = (int)(dur / SECS_PER_MIN);
+    dur %= SECS_PER_MIN;
+    int secs = (int)(dur);
+    snprintf(buf, len, "%d week(s) %d day(s) %d:%02d:%02d.%06d", weeks, days, hours, mins, secs, nsec / 1000);
+  } else if (dur >= SECS_PER_DAY) {
+    int days = (int)(dur / SECS_PER_DAY);
+    dur %= SECS_PER_DAY;
+    int hours = (int)(dur / SECS_PER_HOUR);
+    dur %= SECS_PER_HOUR;
+    int mins = (int)(dur / SECS_PER_MIN);
+    dur %= SECS_PER_MIN;
+    int secs = (int)(dur);
+    snprintf(buf, len, "%d day(s) %d:%02d:%02d.%06d", days, hours, mins, secs, nsec / 1000);
+  } else {
+    int hours = (int)(dur / SECS_PER_HOUR);
+    dur %= SECS_PER_HOUR;
+    int mins = (int)(dur / SECS_PER_MIN);
+    dur %= SECS_PER_MIN;
+    int secs = (int)(dur);
+    snprintf(buf, len, "%d:%02d:%02d.%06d", hours, mins, secs, nsec / 1000);
+  }
+  return buf;
+}
+
 char *
 duration_min_str(time_t time, char *buf, int len)
 {
@@ -584,6 +638,47 @@ unparse_sha1(const void *shabuf)
   *p = 0;
 
   return buf;
+}
+
+int
+parse_sha1(void *shabuf, const unsigned char *str)
+{
+  unsigned char *out = (unsigned char *) shabuf;
+  const unsigned char *p = str;
+
+  if (!str || !*str) return 0;
+  while (isspace(*p)) ++p;
+  if (!*p) return 0;
+
+  for (int i = 0; i < 20; ++i) {
+    int c = *p++;
+    if (!c) return -1;
+    int val = 0;
+    if (c >= '0' && c <= '9') {
+      val |= (c - '0') << 4;
+    } else if (c >= 'a' && c <= 'f') {
+      val |= (c - 'a' + 10) << 4;
+    } else if (c >= 'A' && c <= 'F') {
+      val |= (c - 'A' + 10) << 4;
+    } else {
+      return -1;
+    }
+    c = *p++;
+    if (!c) return -1;
+    if (c >= '0' && c <= '9') {
+      val |= c - '0';
+    } else if (c >= 'a' && c <= 'f') {
+      val |= c - 'a' + 10;
+    } else if (c >= 'A' && c <= 'F') {
+      val |= c - 'A' + 10;
+    } else {
+      return -1;
+    }
+    *out++ = val;
+  }
+  while (isspace(*p)) ++p;
+  if (*p) return -1;
+  return 1;
 }
 
 void

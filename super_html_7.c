@@ -2847,12 +2847,12 @@ super_serve_op_TESTS_TEST_EDIT_PAGE(
     text = testinfo_unparse_cmdline(&testinfo);
     fprintf(out_f, "<tr><td%s>%s:</td><td%s>%s</td></tr>",
             cl, "Command line",
-            cl, html_input_text(hbuf, sizeof(hbuf), "testinfo_cmdline", 60, "%s", ARMOR(text)));
+            cl, html_input_text(hbuf, sizeof(hbuf), "testinfo_cmdline", 60, 0, "%s", ARMOR(text)));
     xfree(text); text = NULL;
     text = testinfo_unparse_environ(&testinfo);
     fprintf(out_f, "<tr><td%s>%s:</td><td%s>%s</td></tr>",
             cl, "Environment",
-            cl, html_input_text(hbuf, sizeof(hbuf), "testinfo_environ", 60, "%s", ARMOR(text)));
+            cl, html_input_text(hbuf, sizeof(hbuf), "testinfo_environ", 60, 0, "%s", ARMOR(text)));
     xfree(text); text = NULL;
     buf[0] = 0;
     if (testinfo.exit_code > 0 && testinfo.exit_code < 128) {
@@ -2860,7 +2860,7 @@ super_serve_op_TESTS_TEST_EDIT_PAGE(
     }
     fprintf(out_f, "<tr><td%s>%s:</td><td%s>%s</td></tr>",
             cl, "Expected exit code",
-            cl, html_input_text(hbuf, sizeof(hbuf), "testinfo_exit_code", 60, "%s", buf));
+            cl, html_input_text(hbuf, sizeof(hbuf), "testinfo_exit_code", 60, 0, "%s", buf));
     s = ""; s2 = "";
     if (testinfo.check_stderr > 0) {
       s2 = " selected=\"selected\"";
@@ -2873,12 +2873,12 @@ super_serve_op_TESTS_TEST_EDIT_PAGE(
     if (!s) s = "";
     fprintf(out_f, "<tr><td%s>%s:</td><td%s>%s</td></tr>",
             cl, "User comment",
-            cl, html_input_text(hbuf, sizeof(hbuf), "testinfo_user_comment", 60, "%s", ARMOR(s)));
+            cl, html_input_text(hbuf, sizeof(hbuf), "testinfo_user_comment", 60, 0, "%s", ARMOR(s)));
     s = testinfo.comment;
     if (!s) s = "";
     fprintf(out_f, "<tr><td%s>%s:</td><td%s>%s</td></tr>",
             cl, "Judge comment",
-            cl, html_input_text(hbuf, sizeof(hbuf), "testinfo_comment", 60, "%s", ARMOR(s)));
+            cl, html_input_text(hbuf, sizeof(hbuf), "testinfo_comment", 60, 0, "%s", ARMOR(s)));
     fprintf(out_f, "</table>\n");
     cl = " class=\"b0\"";
     fprintf(out_f, "<table%s><tr>", cl);
@@ -5359,13 +5359,13 @@ super_serve_op_TESTS_STATEMENT_EDIT_PAGE(
       snprintf(vbuf, sizeof(vbuf), "%s", prob_xml->package);
     }
     fprintf(out_f, "<tr><td%s>%s</td><td%s>%s</td></tr>", cl, "Package",
-            cl, html_input_text(buf, sizeof(buf), "prob_package", 60, "%s", vbuf));
+            cl, html_input_text(buf, sizeof(buf), "prob_package", 60, 0, "%s", vbuf));
     vbuf[0] = 0;
     if (prob_xml && prob_xml->id) {
       snprintf(vbuf, sizeof(vbuf), "%s", prob_xml->id);
     }
     fprintf(out_f, "<tr><td%s>%s</td><td%s>%s</td></tr>", cl, "Name",
-            cl, html_input_text(buf, sizeof(buf), "prob_name", 60, "%s", vbuf));
+            cl, html_input_text(buf, sizeof(buf), "prob_name", 60, 0, "%s", vbuf));
 
     // for now allow editing of only one (russian or default) statement
     if (prob_xml) prob_stmt = prob_xml->stmts;
@@ -5377,7 +5377,7 @@ super_serve_op_TESTS_STATEMENT_EDIT_PAGE(
     }
     if (file_t == NULL) file_t = xstrdup("");
     fprintf(out_f, "<tr><td%s>%s</td><td%s>%s</td></tr>", cl, "Title",
-            cl, html_input_text(buf, sizeof(buf), "prob_title", 60, "%s", ARMOR(file_t)));
+            cl, html_input_text(buf, sizeof(buf), "prob_title", 60, 0, "%s", ARMOR(file_t)));
     xfree(file_t); file_t = NULL; file_z = 0;
 
     if (prob_stmt && prob_stmt->desc) {

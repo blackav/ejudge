@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -24,6 +24,7 @@ unsigned char *
 html_input_text(unsigned char *buf, size_t size,
                 const unsigned char *var_name,
                 int text_size,
+                int is_disabled,
                 const char *format,
                 ...)
 {
@@ -31,6 +32,9 @@ html_input_text(unsigned char *buf, size_t size,
   unsigned char bformat[1024] = { 0 };
   unsigned char bsize[128];
   unsigned char bname[128];
+  const unsigned char *dis = "";
+
+  if (is_disabled) dis = " disabled=\"disabled\"";
 
   if (format && *format) {
     va_start(args, format);
@@ -43,8 +47,8 @@ html_input_text(unsigned char *buf, size_t size,
   bname[0] = 0;
   if (var_name) snprintf(bname, sizeof(bname), " name=\"%s\"", var_name);
 
-  snprintf(buf, size, "<input type=\"text\"%s%s value=\"%s\"/>",
-           bsize, bname, bformat);
+  snprintf(buf, size, "<input type=\"text\"%s%s%s value=\"%s\"/>",
+           bsize, bname, dis, bformat);
   return buf;
 }
 

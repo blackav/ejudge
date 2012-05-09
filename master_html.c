@@ -148,14 +148,21 @@ static const int acm_status_list[] =
 };
 
 void
-write_change_status_dialog(const serve_state_t state,
-                           FILE *f, unsigned char const *var_name,
-                           int disable_rejudge_flag,
-                           const unsigned char *td_class)
+write_change_status_dialog(
+        const serve_state_t state,
+        FILE *f,
+        unsigned char const *var_name,
+        int disable_rejudge_flag,
+        const unsigned char *td_class,
+        int cur_value,
+        int is_disabled)
 {
   const int * cur_status_list = 0;
   int i;
   unsigned char cl[128] = { 0 };
+  const unsigned char *dis = "";
+
+  if (is_disabled) dis = " disabled=\"disabled\"";
 
   if (!var_name) var_name = "status";
   if (td_class && *td_class) {
@@ -180,11 +187,13 @@ write_change_status_dialog(const serve_state_t state,
     else cur_status_list = acm_status_list;
   }
 
-  fprintf(f, "<td%s><select name=\"%s\"><option value=\"\"></option>",
-          cl, var_name);
+  fprintf(f, "<td%s><select name=\"%s\"%s><option value=\"\"></option>",
+          cl, var_name, dis);
   for (i = 0; cur_status_list[i] != -1; i++) {
-    fprintf(f, "<option value=\"%d\">%s</option>",
-            cur_status_list[i], change_status_strings[cur_status_list[i]]);
+    const unsigned char *s = "";
+    if (cur_value == cur_status_list[i]) s = " selected=\"selected\"";
+    fprintf(f, "<option value=\"%d\"%s>%s</option>",
+            cur_status_list[i], s, change_status_strings[cur_status_list[i]]);
   }
   fprintf(f, "</select></td>\n");
 }
