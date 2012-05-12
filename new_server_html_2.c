@@ -334,15 +334,18 @@ ns_write_priv_all_runs(
   if (!u->error_msgs) {
     switch (global->score_system) {
     case SCORE_ACM:
-      str1 = _("Failed test");
+      //str1 = _("Failed test");
+      str1 = "Failed";
       break;
     case SCORE_KIROV:
     case SCORE_OLYMPIAD:
-      str1 = _("Tests passed");
+      //str1 = _("Tests passed");
+      str1 = "Tests";
       str2 = _("Score");
       break;
     case SCORE_MOSCOW:
-      str1 = _("Failed test");
+      //str1 = _("Failed test");
+      str1 = "Failed";
       str2 = _("Score");
       break;
     default:
@@ -438,7 +441,7 @@ ns_write_priv_all_runs(
      */
 
     fprintf(f, "<th%s>%s</th><th%s>%s&nbsp;<a href=\"javascript:ej_field_popup(%d)\">&gt;&gt;</a><div class=\"ej_dd\" id=\"ej_field_popup\"></div></th></tr>\n",
-            cl, _("View source"), cl, _("View report"), run_fields);
+            cl, "Source", cl, "Report", run_fields);
     if (phr->role == USER_ROLE_ADMIN) {
       //snprintf(endrow, sizeof(endrow), "</tr></form>\n");
       snprintf(endrow, sizeof(endrow), "</tr>\n");
@@ -1413,11 +1416,11 @@ ns_write_priv_source(const serve_state_t state,
   fprintf(f, "</h2>\n");
 
   fprintf(f, "<table>\n");
-  fprintf(f, "<tr><td>%s:</td><td>%d</td></tr>\n", _("Run ID"), info.run_id);
+  fprintf(f, "<tr><td style=\"width: 10em;\">%s:</td><td>%d</td></tr>\n", _("Run ID"), info.run_id);
   fprintf(f, "<tr><td>%s:</td><td>%s:%d</td></tr>\n",
           _("Submission time"), duration_str(1, info.time, 0, 0, 0), info.nsec);
   fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
-          _("Contest time"), duration_str(0, run_time, start_time, 0, 0));
+          _("Contest time"), duration_str_2(filtbuf1, sizeof(filtbuf1), run_time - start_time, info.nsec));
 
   // IP-address
   fprintf(f, "<tr><td>%s:</td>", _("Originator IP"));
@@ -1428,24 +1431,6 @@ ns_write_priv_source(const serve_state_t state,
                   "filter_expr=%s", filtbuf2),
           xml_unparse_ip(info.a.ip));
   fprintf(f, "</tr>\n");
-
-  // size
-  snprintf(filtbuf1, sizeof(filtbuf1), "size == size(%d)", run_id);
-  url_armor_string(filtbuf2, sizeof(filtbuf2), filtbuf1);
-  fprintf(f, "<tr><td>%s:</td><td>%s%u</a></td></tr>\n",
-          _("Size"),
-          ns_aref(filtbuf3, sizeof(filtbuf3), phr, 0,
-                  "filter_expr=%s", filtbuf2),
-          info.size);
-
-  // hash code
-  snprintf(filtbuf1, sizeof(filtbuf1), "hash == hash(%d)", run_id);
-  url_armor_string(filtbuf2, sizeof(filtbuf2), filtbuf1);
-  fprintf(f, "<tr><td>%s:</td><td>%s%s</a></td></tr>\n",
-          _("Hash value"),
-          ns_aref(filtbuf3, sizeof(filtbuf3), phr, 0,
-                  "filter_expr=%s", filtbuf2),
-          unparse_sha1(info.sha1));
 
   // user_id
   snprintf(filtbuf1, sizeof(filtbuf1), "uid == %d", info.user_id);
@@ -1468,16 +1453,20 @@ ns_write_priv_source(const serve_state_t state,
   if (prob) {
     snprintf(filtbuf1, sizeof(filtbuf1), "prob == \"%s\"",  prob->short_name);
     url_armor_string(filtbuf2, sizeof(filtbuf2), filtbuf1);
-    ps1 = ns_aref(filtbuf3, sizeof(filtbuf3), phr, 0,
-                  "filter_expr=%s", filtbuf2);
-    ps2 = "</a>";
-    ss = prob->short_name;
+    fprintf(f, "<tr><td>%s:</td><td>%s%s - %s</a>",
+            "Problem", ns_aref(filtbuf3, sizeof(filtbuf3), phr, 0, "filter_expr=%s", filtbuf2),
+            prob->short_name, ARMOR(prob->long_name));
+    if (prob->xml_file && prob->xml_file[0]) {
+      fprintf(f, " %s[%s]</a>",
+              ns_aref(filtbuf3, sizeof(filtbuf3), phr,
+                      NEW_SRV_ACTION_PRIV_SUBMIT_PAGE,
+                      "problem=%d", prob->id),
+              "Statement");
+    }
+    fprintf(f, "</td></tr>\n");
   } else {
-    ps1 = ""; ps2 = "";
-    snprintf(bb, sizeof(bb), "??? - %d", info.prob_id);
-    ss = bb;
+    fprintf(f, "<tr><td>%s:</td><td>#%d</td></tr>\n", "Problem", info.prob_id);
   }
-  fprintf(f, "<tr><td>%s:</td><td>%s%s%s</td></tr>\n", _("Problem"), ps1, ss, ps2);
 
   // variant
   if (prob && prob->variant_num > 0) {
@@ -1506,61 +1495,23 @@ ns_write_priv_source(const serve_state_t state,
   if (lang) {
     snprintf(filtbuf1, sizeof(filtbuf1), "lang == \"%s\"", lang->short_name);
     url_armor_string(filtbuf2, sizeof(filtbuf2), filtbuf1);
-    ps1 = ns_aref(filtbuf3, sizeof(filtbuf3), phr, 0,
-                  "filter_expr=%s", filtbuf2);
-    ps2 = "</a>";
-    ss = lang->short_name;
+    fprintf(f, "<tr><td>%s:</td><td>%s%s - %s</a></td></tr>\n", _("Language"),
+            ns_aref(filtbuf3, sizeof(filtbuf3), phr, 0, "filter_expr=%s", filtbuf2),
+            lang->short_name, ARMOR(lang->long_name));
   } else if (!info.lang_id) {
-    ps1 = ps2 = "";
-    ss = "N/A";
+    fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n", _("Language"), "N/A");
   } else {
-    snprintf(bb, sizeof(bb), "??? - %d", info.lang_id);
-    ps1 = ps2 = "";
-    ss = bb;
+    fprintf(f, "<tr><td>%s:</td><td>#%d</td></tr>\n", _("Language"), info.lang_id);
   }
-  fprintf(f, "<tr><td>%s:</td><td>%s%s%s</td></tr>\n", _("Language"), ps1, ss, ps2);
-
-  // mime_type
-  if (!info.lang_id) {
-    fprintf(f, "<tr><td>%s</td><td>%s</td></tr>\n",
-            _("Content type"), mime_type_get_type(info.mime_type));
-  }
-
-  // is_imported
-  fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
-          _("Imported?"), html_unparse_bool(bb, sizeof(bb), info.is_imported));
-
-  // is_hidden
-  fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
-          _("Hidden?"), html_unparse_bool(bb, sizeof(bb), info.is_hidden));
-
-  // is_examinable
-  /*
-  fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
-          _("Examinable?"),
-          html_unparse_bool(bb, sizeof(bb), info.is_examinable));
-  */
-
-  // is_marked
-  fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
-          _("Marked?"),
-          html_unparse_bool(bb, sizeof(bb), info.is_marked));
-
-  // is_saved
-  fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
-          _("Saved?"),
-          html_unparse_bool(bb, sizeof(bb), info.is_saved));
-
-  // is_readonly
-  fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
-          _("Read-only?"), html_unparse_bool(bb, sizeof(bb), info.is_readonly));
-
-  // locale_id
-  fprintf(f, "<tr><td>%s:</td><td>%d</td></tr>\n", _("Locale ID"), info.locale_id);
 
   // status
-  fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
-          _("Status"), run_status_str(info.status, 0, 0, 0, 0));
+  run_status_to_str_short(bb, sizeof(bb), info.status);
+  snprintf(filtbuf1, sizeof(filtbuf1), "status == %s", bb);
+  url_armor_string(filtbuf2, sizeof(filtbuf2), filtbuf1);
+  fprintf(f, "<tr><td>%s:</td><td>%s%s</a></td></tr>\n",
+          _("Status"),
+          ns_aref(filtbuf3, sizeof(filtbuf3), phr, 0, "filter_expr=%s", filtbuf2),
+          run_status_str(info.status, 0, 0, 0, 0));
 
   if (global->score_system == SCORE_KIROV
       || global->score_system == SCORE_OLYMPIAD) {
@@ -1579,10 +1530,6 @@ ns_write_priv_source(const serve_state_t state,
       snprintf(bb, sizeof(bb), "%d", info.score);
     }
     fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n", _("Score gained"), bb);
-
-    // score_adj
-    fprintf(f, "<tr><td>%s:</td><td>%d</td></tr>\n", _("Score adjustment"),
-            info.score_adj);
   } else if (global->score_system == SCORE_MOSCOW) {
     // the first failed test
     if (info.test <= 0) {
@@ -1599,10 +1546,6 @@ ns_write_priv_source(const serve_state_t state,
       snprintf(bb, sizeof(bb), "%d", info.score);
     }
     fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n", _("Score gained"), bb);
-
-    // score_adj
-    fprintf(f, "<tr><td>%s:</td><td>%d</td></tr>\n", _("Score adjustment"),
-            info.score_adj);
   } else {
     // ACM scoring system
     // first failed test
@@ -1614,8 +1557,99 @@ ns_write_priv_source(const serve_state_t state,
     fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n", _("Failed test"), bb);
   }
 
+  // is_marked
+  fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
+          _("Marked?"),
+          html_unparse_bool(bb, sizeof(bb), info.is_marked));
+  fprintf(f, "</table>\n");
+
+  /// additional info
+  fprintf(f, "<script language=\"javascript\">\n");
+  fprintf(f,
+          "function setDivVisibility(oper, value)\n"
+          "{\n"
+          "  obj1 = document.getElementById(\"Show\" + oper + \"Div\");\n"
+          "  obj2 = document.getElementById(\"Hide\" + oper + \"Div\");\n"
+          "  if (value) {\n"
+          "    obj1.style.display = \"none\";\n"
+          "    obj2.style.display = \"\";\n"
+          "  } else {\n"
+          "    obj1.style.display = \"\";\n"
+          "    obj2.style.display = \"none\";\n"
+          "  }\n"
+          "}\n"
+          "");
+  fprintf(f, "</script>\n");
+
+  fprintf(f, "<div id=\"ShowExtraDiv\">");
+  fprintf(f, "<a onclick=\"setDivVisibility('Extra', true)\">[%s]</a>\n", "More info");
+  fprintf(f, "</div>");
+  fprintf(f, "<div style=\"display: none;\" id=\"HideExtraDiv\">");
+  fprintf(f, "<a onclick=\"setDivVisibility('Extra', false)\">[%s]</a><br/>\n", "Hide extended info");
+
+  fprintf(f, "<table>\n");
+
+  // mime_type
+  if (!info.lang_id) {
+    fprintf(f, "<tr><td>%s</td><td>%s</td></tr>\n",
+            _("Content type"), mime_type_get_type(info.mime_type));
+  }
+
+  // is_imported
+  fprintf(f, "<tr><td style=\"width: 10em;\">%s:</td><td>%s</td></tr>\n",
+          _("Imported?"), html_unparse_bool(bb, sizeof(bb), info.is_imported));
+
+  // is_hidden
+  fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
+          _("Hidden?"), html_unparse_bool(bb, sizeof(bb), info.is_hidden));
+
+  // is_examinable
+  /*
+  fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
+          _("Examinable?"),
+          html_unparse_bool(bb, sizeof(bb), info.is_examinable));
+  */
+
+  // is_saved
+  fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
+          _("Saved?"),
+          html_unparse_bool(bb, sizeof(bb), info.is_saved));
+
+  // is_readonly
+  fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
+          _("Read-only?"), html_unparse_bool(bb, sizeof(bb), info.is_readonly));
+
+  // locale_id
+  fprintf(f, "<tr><td>%s:</td><td>%d</td></tr>\n", _("Locale ID"), info.locale_id);
+
+  // score_adj
+  if (global->score_system != SCORE_ACM) {
+    fprintf(f, "<tr><td>%s:</td><td>%d</td></tr>\n", _("Score adjustment"),
+            info.score_adj);
+  }
+
+  // size
+  snprintf(filtbuf1, sizeof(filtbuf1), "size == size(%d)", run_id);
+  url_armor_string(filtbuf2, sizeof(filtbuf2), filtbuf1);
+  fprintf(f, "<tr><td>%s:</td><td>%s%u</a></td></tr>\n",
+          _("Size"),
+          ns_aref(filtbuf3, sizeof(filtbuf3), phr, 0,
+                  "filter_expr=%s", filtbuf2),
+          info.size);
+
+  // hash code
+  snprintf(filtbuf1, sizeof(filtbuf1), "hash == hash(%d)", run_id);
+  url_armor_string(filtbuf2, sizeof(filtbuf2), filtbuf1);
+  fprintf(f, "<tr><td>%s:</td><td>%s%s</a></td></tr>\n",
+          _("Hash value"),
+          ns_aref(filtbuf3, sizeof(filtbuf3), phr, 0,
+                  "filter_expr=%s", filtbuf2),
+          unparse_sha1(info.sha1));
+
   fprintf(f, "<tr><td>%s:</td><td>%d</td></tr>\n", _("Pages printed"), info.pages);
   fprintf(f, "</table>\n");
+
+  fprintf(f, "</div>\n");
 
   fprintf(f, "<p>%s%s</a></p>\n",
           ns_aref(filtbuf3, sizeof(filtbuf3), phr,
@@ -2946,6 +2980,11 @@ ns_priv_edit_run_action(
     }
     switch (new_info.status) {
     case RUN_OK:
+      if (global->score_system == SCORE_ACM || global->score_system == SCORE_MOSCOW) {
+        value = 0;
+      }
+      break;
+
     case RUN_COMPILE_ERR:
     case RUN_CHECK_FAILED:
     case RUN_ACCEPTED:
