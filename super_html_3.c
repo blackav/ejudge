@@ -6906,7 +6906,7 @@ super_html_print_problem(FILE *f,
   extra_msg = 0;
   if (show_adv) {
     if (prob->abstract) extra_msg = "";
-    if (!prob->abstract && !prob->standard_checker[0]) {
+    if (!prob->abstract) {
       extra_msg = "";
       prepare_set_prob_value(CNTSPROB_interactor_cmd,
                              tmp_prob, sup_prob, sstate->global);
@@ -6971,7 +6971,7 @@ super_html_print_problem(FILE *f,
   extra_msg = 0;
   if (show_adv) {
     if (prob->abstract) extra_msg = "";
-    if (!prob->abstract && !prob->standard_checker[0]) {
+    if (!prob->abstract) {
       extra_msg = "";
       prepare_set_prob_value(CNTSPROB_style_checker_cmd,
                              tmp_prob, sup_prob, sstate->global);
@@ -7029,7 +7029,7 @@ super_html_print_problem(FILE *f,
   extra_msg = 0;
   if (show_adv) {
     if (prob->abstract) extra_msg = "";
-    if (!prob->abstract && !prob->standard_checker[0]) {
+    if (!prob->abstract) {
       extra_msg = "";
       prepare_set_prob_value(CNTSPROB_test_checker_cmd,
                              tmp_prob, sup_prob, sstate->global);
@@ -7071,7 +7071,7 @@ super_html_print_problem(FILE *f,
   extra_msg = 0;
   if (show_adv) {
     if (prob->abstract) extra_msg = "";
-    if (!prob->abstract && !prob->standard_checker[0]) {
+    if (!prob->abstract) {
       extra_msg = "";
       prepare_set_prob_value(CNTSPROB_init_cmd,
                              tmp_prob, sup_prob, sstate->global);
@@ -7113,7 +7113,7 @@ super_html_print_problem(FILE *f,
   extra_msg = 0;
   if (show_adv) {
     if (prob->abstract) extra_msg = "";
-    if (!prob->abstract && !prob->standard_checker[0]) {
+    if (!prob->abstract) {
       extra_msg = "";
       prepare_set_prob_value(CNTSPROB_solution_src,
                              tmp_prob, sup_prob, sstate->global);
@@ -7137,7 +7137,7 @@ super_html_print_problem(FILE *f,
   extra_msg = 0;
   if (show_adv) {
     if (prob->abstract) extra_msg = "";
-    if (!prob->abstract && !prob->standard_checker[0]) {
+    if (!prob->abstract) {
       extra_msg = "";
       prepare_set_prob_value(CNTSPROB_solution_cmd,
                              tmp_prob, sup_prob, sstate->global);
