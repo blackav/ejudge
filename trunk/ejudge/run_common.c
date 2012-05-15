@@ -3013,7 +3013,6 @@ run_tests(
       if (this_score < 0) {
         this_score = 0;
       }
-      tests.data[cur_test].score = 0;
       tests.data[cur_test].max_score = this_score;
       total_max_score += this_score;
       
@@ -3023,10 +3022,9 @@ run_tests(
         tests.data[cur_test].score = tests.data[cur_test].checker_score;
         */
         total_score += tests.data[cur_test].score;
-        tests.data[cur_test].score = tests.data[cur_test].score;
       } else if (tests.data[cur_test].status == RUN_OK) {
-        total_score += this_score;
         tests.data[cur_test].score = this_score;
+        total_score += this_score;
       }
     }
 
