@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -25,6 +25,8 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
+#include <limits.h>
 
 #define MAX_NAME_SIZE      63
 #define MAX_VALUE_SIZE     EJ_MAX_CGI_VALUE_LEN
@@ -58,6 +60,7 @@ static int param_u;
 static char *query;
 static int   query_ind;
 static int   source = 0;
+static int   content_length = INT_MAX;
 
 #define MARK_PLACE fprintf(stderr, "DEBUG: %s, %d\n", __FILE__, __LINE__)
 
@@ -69,6 +72,8 @@ do_get_char()
     if (!query[query_ind]) return EOF;
     return query[query_ind++];
   } else {
+    if (content_length <= 0) return EOF;
+    --content_length;
     return getchar();
   }
 }
@@ -410,6 +415,23 @@ cgi_read(char const *charset)
     /* got a multipart/form-data */
     return parse_multipart(charset);
   }
+
+  const unsigned char *cl = getenv("CONTENT_LENGTH");
+  if (cl) {
+    errno = 0;
+    char *eptr = NULL;
+    int val = strtol(cl, &eptr, 10);
+    if (errno || *eptr || val < 0) {
+      bad_request(charset);
+      exit(0);
+    }
+    if (val > MAX_CONTENT_LENGTH) {
+      request_too_large(charset);
+      exit(0);
+    }
+    content_length = val;
+  }
+
   source = 1;
   if (do_cgi_read() < 0) return -1;
   return 0;
