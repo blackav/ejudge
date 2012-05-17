@@ -380,6 +380,13 @@ serve_load_status_file(serve_state_t state)
   memcpy(state->prob_prio, status.prob_prio, sizeof(state->prob_prio));
 }
 
+void
+serve_remove_status_file(serve_state_t state)
+{
+  if (!state || !state->global) return;
+  relaxed_remove(state->global->status_dir, "dir/status");
+}
+
 int
 serve_check_user_quota(serve_state_t state, int user_id, size_t size)
 {
@@ -3290,6 +3297,10 @@ serve_reset_contest(const struct contest_desc *cnts, serve_state_t state)
     clear_directory(state->global->audit_log_dir);
   if (state->global->team_extra_dir[0])
     clear_directory(state->global->team_extra_dir);
+
+  unsigned char path[PATH_MAX];
+  snprintf(path, sizeof(path), "%s/dir", state->global->status_dir);
+  clear_directory(path);
 }
 
 void

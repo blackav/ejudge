@@ -338,6 +338,7 @@ void serve_update_internal_xml_log(serve_state_t state,
                                    const struct contest_desc *cnts);
 int  serve_update_status_file(serve_state_t state, int force_flag);
 void serve_load_status_file(serve_state_t state);
+void serve_remove_status_file(serve_state_t state);
 
 int serve_check_user_quota(serve_state_t, int user_id, size_t size);
 int serve_check_clar_quota(serve_state_t, int user_id, size_t size);
