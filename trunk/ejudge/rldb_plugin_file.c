@@ -873,7 +873,7 @@ static struct rldb_plugin_cnts *
 close_func(struct rldb_plugin_cnts *cdata)
 {
   struct rldb_file_cnts *cs = (struct rldb_file_cnts*) cdata;
-  struct runlog_state *rls = cs->rl_state;
+  struct runlog_state *rls = NULL;
 
   if (!cs) return 0;
   rls = cs->rl_state;
