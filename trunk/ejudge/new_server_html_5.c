@@ -729,8 +729,9 @@ create_account(
   }
 
   if (ul_error < 0) goto failed;
-  fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\nLocation: %s?contest_id=%d&action=%d",
-          EJUDGE_CHARSET, phr->self_url, phr->contest_id, next_action);
+  //fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\nLocation: %s?contest_id=%d&action=%d",
+  //        EJUDGE_CHARSET, phr->self_url, phr->contest_id, next_action);
+  fprintf(fout, "Location: %s?contest_id=%d&action=%d", phr->self_url, phr->contest_id, next_action);
   if (phr->locale_id > 0) fprintf(fout, "&locale_id=%d", phr->locale_id);
   if (cnts->simple_registration) {
     if (new_login && *new_login) fprintf(fout,"&login=%s",URLARMOR(new_login));
@@ -744,9 +745,10 @@ create_account(
   goto cleanup;
 
  failed:
-  fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\nLocation: %s?contest_id=%d&action=%d",
-          EJUDGE_CHARSET, phr->self_url, phr->contest_id,
-          NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE);
+  //fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\nLocation: %s?contest_id=%d&action=%d",
+  //        EJUDGE_CHARSET, phr->self_url, phr->contest_id,
+  //        NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE);
+  fprintf(fout, "Location: %s?contest_id=%d&action=%d", phr->self_url, phr->contest_id, NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE);
   if (phr->locale_id > 0) fprintf(fout, "&locale_id=%d", phr->locale_id);
   if (login && *login) fprintf(fout, "&login=%s", URLARMOR(login));
   if (email && *email) fprintf(fout, "&email=%s", URLARMOR(email));
@@ -958,14 +960,16 @@ change_locale(FILE *fout, struct http_request_info *phr)
                                phr->session_id, phr->locale_id);
     }
 
-    fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\nLocation: %s?SID=%016llx", EJUDGE_CHARSET, phr->self_url,
-            phr->session_id);
+    //fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\nLocation: %s?SID=%016llx", EJUDGE_CHARSET, phr->self_url,
+    //        phr->session_id);
+    fprintf(fout, "Location: %s?SID=%016llx", phr->self_url, phr->session_id);
     if (next_action > 0) fprintf(fout, "&action=%d", next_action);
     fprintf(fout, "\n\n");
     return;
   }
 
-  fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\nLocation: %s", EJUDGE_CHARSET, phr->self_url);
+  //fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\nLocation: %s", EJUDGE_CHARSET, phr->self_url);
+  fprintf(fout, "Location: %s", phr->self_url);
   if (phr->contest_id > 0) {
     fprintf(fout, "%scontest_id=%d", sep, phr->contest_id);
     sep = "&";
