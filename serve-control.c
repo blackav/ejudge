@@ -613,7 +613,8 @@ client_put_refresh_header(unsigned char const *coding,
   vfprintf(stdout, format, args);
   fputs("\n</h1>\n", stdout);
   */
-  printf("Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\nLocation: %s\n\n", EJUDGE_CHARSET, url);
+  //printf("Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\nLocation: %s\n\n", EJUDGE_CHARSET, url);
+  printf("Location: %s\n\n", url);
 }
 
 static int

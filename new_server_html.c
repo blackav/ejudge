@@ -998,13 +998,15 @@ ns_refresh_page(FILE *fout, struct http_request_info *phr, int new_action,
     ns_url_unescaped(url, sizeof(url), phr, new_action, 0);
   }
 
-  fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\nLocation: %s\n\n", EJUDGE_CHARSET, url);
+  //fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\nLocation: %s\n\n", EJUDGE_CHARSET, url);
+  fprintf(fout, "Location: %s\n\n", url);
 }
 
 void
 ns_refresh_page_2(FILE *fout, const unsigned char *url)
 {
-  fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\nLocation: %s\n\n", EJUDGE_CHARSET, url);
+  //fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\nLocation: %s\n\n", EJUDGE_CHARSET, url);
+  fprintf(fout, "Location: %s\n\n", url);
 }
 
 void

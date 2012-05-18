@@ -113,7 +113,8 @@ ss_redirect(
     ss_url_unescaped(url, sizeof(url), phr, SSERV_CMD_HTTP_REQUEST, new_op, 0);
   }
 
-  fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\nLocation: %s\n\n", EJUDGE_CHARSET, url);
+  //fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\nLocation: %s\n\n", EJUDGE_CHARSET, url);
+  fprintf(fout, "Location: %s\n\n", url);
 }
 
 void
@@ -154,7 +155,8 @@ ss_redirect_2(
 
   xfree(o_str); o_str = 0; o_len = 0;
 
-  fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\nLocation: %s\n\n", EJUDGE_CHARSET, url);
+  //fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\nLocation: %s\n\n", EJUDGE_CHARSET, url);
+  fprintf(fout, "Location: %s\n\n", url);
 }
 
 static unsigned char *
@@ -8843,7 +8845,8 @@ super_serve_op_EJUDGE_XML_CANCEL_ACTION(
         FILE *out_f,
         struct super_http_request_info *phr)
 {
-  fprintf(out_f, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\nLocation: %s?SID=%016llx\n\n", EJUDGE_CHARSET, phr->self_url, phr->session_id);
+  //fprintf(out_f, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\nLocation: %s?SID=%016llx\n\n", EJUDGE_CHARSET, phr->self_url, phr->session_id);
+  fprintf(out_f, "Location: %s?SID=%016llx\n\n", phr->self_url, phr->session_id);
   return 0;
 }
 

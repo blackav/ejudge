@@ -515,7 +515,8 @@ refresh_page(
              phr->session_id, buf);
   }
 
-  fprintf(out_f, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\nLocation: %s\n\n", EJUDGE_CHARSET, url);
+  //fprintf(out_f, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\nLocation: %s\n\n", EJUDGE_CHARSET, url);
+  fprintf(out_f, "Location: %s\n\n", url);
 }
 
 typedef int (*handler_func_t)(FILE *log_f, FILE *out_f, struct super_http_request_info *phr);
