@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2001-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2001-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -45,6 +45,12 @@
  *   PS - problem standings name
  *   PL - problem internal name
  *  L - language data
+ *   Li - id
+ *   Ln - short name
+ *   Ll - long name
+ *   La - arch
+ *   Ls - src_sfx
+ *   Le - exe_sfx
  *  T - tester data
  *  M - team data
  *   Mi - team id
@@ -372,9 +378,19 @@ sformat_message(
           pf++;
         }
         break;
+        /*
+         * Li - id
+         * Ln - short name
+         * Ll - long name
+         * La - arch
+         * Ls - src_sfx
+         * Le - exe_sfx
+         */
       case 'L':
         pf++;
         switch (*pf) {
+        case 'i': case 'n': case 'l': case 'a': case 's': case 'e':
+          break;
         case 0:
           is_invalid = 1;
           break;
@@ -386,6 +402,31 @@ sformat_message(
         if (!is_invalid && !lang_data) is_invalid = 1;
         if (!is_invalid) {
           switch (*pf) {
+          case 'i':
+            need_int_format = 1;
+            int_format_value = 0;
+            if (lang_data) int_format_value = lang_data->id;
+            break;
+          case 'n':
+            papp = "";
+            if (lang_data) papp = lang_data->short_name;
+            break;
+          case 'l':
+            papp = "";
+            if (lang_data) papp = lang_data->long_name;
+            break;
+          case 'a':
+            papp = "";
+            if (lang_data) papp = lang_data->arch;
+            break;
+          case 's':
+            papp = "";
+            if (lang_data) papp = lang_data->src_sfx;
+            break;
+          case 'e':
+            papp = "";
+            if (lang_data) papp = lang_data->exe_sfx;
+            break;
           default:
             abort();
           }
