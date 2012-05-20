@@ -2160,6 +2160,10 @@ run_one_test(
     }
   }
 
+  if (tst && tst->secure_exec_type_val == SEXEC_TYPE_JAVA && srgp->secure_run <= 0) {
+    task_PutEnv(tsk, "EJUDGE_JAVA_POLICY=none");
+  }
+
   if (tst && tst->enable_memory_limit_error > 0 && srgp->secure_run > 0 && srgp->detect_violations > 0) {
     switch (tst->secure_exec_type_val) {
     case SEXEC_TYPE_STATIC:
