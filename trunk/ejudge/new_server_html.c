@@ -2511,30 +2511,6 @@ priv_reset_filter(FILE *fout,
 }
 
 static int
-serve_err_to_new_srv_err_map[] =
-{
-  [SERVE_ERR_GENERIC] = NEW_SRV_ERR_UNKNOWN_ERROR,
-  [SERVE_ERR_SRC_HEADER] = NEW_SRV_ERR_PROB_CONFIG,
-  [SERVE_ERR_SRC_FOOTER] = NEW_SRV_ERR_PROB_CONFIG,
-  [SERVE_ERR_COMPILE_PACKET_WRITE] = NEW_SRV_ERR_DISK_WRITE_ERROR,
-  [SERVE_ERR_SOURCE_READ] = NEW_SRV_ERR_DISK_READ_ERROR,
-  [SERVE_ERR_SOURCE_WRITE] = NEW_SRV_ERR_DISK_WRITE_ERROR,
-  [SERVE_ERR_DB] = NEW_SRV_ERR_DATABASE_FAILED,
-};
-
-static int
-serve_err_to_new_srv_err(int serve_err)
-{
-  if (!serve_err) return 0;
-  if (serve_err < 0) serve_err = -serve_err;
-  if (serve_err >= sizeof(serve_err_to_new_srv_err_map) / sizeof(serve_err_to_new_srv_err_map[0]))
-    return NEW_SRV_ERR_UNKNOWN_ERROR;
-  serve_err = serve_err_to_new_srv_err_map[serve_err];
-  if (!serve_err) serve_err = NEW_SRV_ERR_UNKNOWN_ERROR;
-  return serve_err;
-}
-
-static int
 priv_submit_run(FILE *fout,
                 FILE *log_f,
                 struct http_request_info *phr,
@@ -2901,21 +2877,20 @@ priv_submit_run(FILE *fout,
                       "  Testing disabled for this problem or language\n",
                       run_id);
     } else {
-      if (serve_compile_request(cs, run_text, run_size, global->contest_id,
-                                run_id, phr->user_id,
-                                lang->compile_id, phr->locale_id, 0,
-                                lang->src_sfx,
-                                lang->compiler_env,
-                                0, prob->style_checker_cmd,
-                                prob->style_checker_env,
-                                -1, 0, 0, prob, lang, 0) < 0) {
-        ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
-        goto cleanup;
-      }
       serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
                       "Command: submit\n"
                       "Status: ok\n"
                       "Run-id: %d\n", run_id);
+      if ((r = serve_compile_request(cs, run_text, run_size, global->contest_id,
+                                     run_id, phr->user_id,
+                                     lang->compile_id, phr->locale_id, 0,
+                                     lang->src_sfx,
+                                     lang->compiler_env,
+                                     0, prob->style_checker_cmd,
+                                     prob->style_checker_env,
+                                     -1, 0, 0, prob, lang, 0)) < 0) {
+        serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
+      }
     }
   } else if (prob->manual_checking > 0) {
     // manually tested outputs
@@ -2928,6 +2903,10 @@ priv_submit_run(FILE *fout,
                       "  This problem is checked manually.\n",
                       run_id);
     } else {
+      serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+                      "Command: submit\n"
+                      "Status: ok\n"
+                      "Run-id: %d\n", run_id);
       if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
         r = serve_compile_request(cs, run_text, run_size, global->contest_id, 
                                   run_id, phr->user_id, 0 /* lang_id */,
@@ -2943,8 +2922,7 @@ priv_submit_run(FILE *fout,
                                   prob, NULL /* lang */,
                                   0 /* no_db_flag */);
         if (r < 0) {
-          ns_error(log_f, serve_err_to_new_srv_err(r));
-          goto cleanup;
+          serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
         }
       } else {
         if (serve_run_request(cs, cnts, log_f, run_text, run_size,
@@ -2955,10 +2933,6 @@ priv_submit_run(FILE *fout,
           goto cleanup;
         }
       }
-      serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
-                      "Command: submit\n"
-                      "Status: ok\n"
-                      "Run-id: %d\n", run_id);
     }
   } else {
     // automatically tested outputs
@@ -2972,6 +2946,10 @@ priv_submit_run(FILE *fout,
                       "  Testing disabled for this problem\n",
                       run_id);
     } else {
+      serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+                      "Command: submit\n"
+                      "Status: ok\n"
+                      "Run-id: %d\n", run_id);
       /* FIXME: check for XML problem */
       if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
         r = serve_compile_request(cs, run_text, run_size, global->contest_id,
@@ -2988,8 +2966,7 @@ priv_submit_run(FILE *fout,
                                   prob, NULL /* lang */,
                                   0 /* no_db_flag */);
         if (r < 0) {
-          ns_error(log_f, serve_err_to_new_srv_err(r));
-          goto cleanup;
+          serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
         }
       } else {      
         if (serve_run_request(cs, cnts, log_f, run_text, run_size,
@@ -3000,10 +2977,6 @@ priv_submit_run(FILE *fout,
           goto cleanup;
         }
       }
-      serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
-                      "Command: submit\n"
-                      "Status: ok\n"
-                      "Run-id: %d\n", run_id);
     }
   }
 
@@ -10509,21 +10482,20 @@ unpriv_submit_run(FILE *fout,
                       "  Testing disabled for this problem or language\n",
                       run_id);
     } else {
-      if (serve_compile_request(cs, run_text, run_size, global->contest_id,
-                                run_id, phr->user_id,
-                                lang->compile_id, phr->locale_id, 0,
-                                lang->src_sfx,
-                                lang->compiler_env,
-                                0, prob->style_checker_cmd,
-                                prob->style_checker_env,
-                                -1, 0, 1, prob, lang, 0) < 0) {
-        ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
-        goto done;
-      }
       serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
                       "Command: submit\n"
                       "Status: ok\n"
                       "Run-id: %d\n", run_id);
+      if ((r = serve_compile_request(cs, run_text, run_size, global->contest_id,
+                                     run_id, phr->user_id,
+                                     lang->compile_id, phr->locale_id, 0,
+                                     lang->src_sfx,
+                                     lang->compiler_env,
+                                     0, prob->style_checker_cmd,
+                                     prob->style_checker_env,
+                                     -1, 0, 1, prob, lang, 0)) < 0) {
+        serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
+      }
     }
   } else if (prob->manual_checking > 0 && !accept_immediately) {
     // manually tested outputs
@@ -10536,6 +10508,10 @@ unpriv_submit_run(FILE *fout,
                       "  This problem is checked manually.\n",
                       run_id);
     } else {
+      serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+                      "Command: submit\n"
+                      "Status: ok\n"
+                      "Run-id: %d\n", run_id);
       if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
         r = serve_compile_request(cs, run_text, run_size, global->contest_id,
                                   run_id, phr->user_id, 0 /* lang_id */,
@@ -10551,8 +10527,7 @@ unpriv_submit_run(FILE *fout,
                                   prob, NULL /* lang */,
                                   0 /* no_db_flag */);
         if (r < 0) {
-          ns_error(log_f, serve_err_to_new_srv_err(r));
-          goto done;
+          serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
         }
       } else {
         if (serve_run_request(cs, cnts, log_f, run_text, run_size,
@@ -10563,11 +10538,6 @@ unpriv_submit_run(FILE *fout,
           goto done;
         }
       }
-
-      serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
-                      "Command: submit\n"
-                      "Status: ok\n"
-                      "Run-id: %d\n", run_id);
     }
   } else {
     if (accept_immediately) {
@@ -10586,6 +10556,11 @@ unpriv_submit_run(FILE *fout,
                       "  Testing disabled for this problem\n",
                       run_id);
     } else {
+      serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+                      "Command: submit\n"
+                      "Status: ok\n"
+                      "Run-id: %d\n", run_id);
+
       if (prob->variant_num > 0 && prob->xml.a) {
         px = prob->xml.a[variant -  1];
       } else {
@@ -10615,8 +10590,7 @@ unpriv_submit_run(FILE *fout,
                                   prob, NULL /* lang */,
                                   0 /* no_db_flag */);
         if (r < 0) {
-          ns_error(log_f, serve_err_to_new_srv_err(r));
-          goto done;
+          serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
         }
       } else {
         if (serve_run_request(cs, cnts, log_f, run_text, run_size,
@@ -10627,11 +10601,6 @@ unpriv_submit_run(FILE *fout,
           goto done;
         }
       }
-
-      serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
-                      "Command: submit\n"
-                      "Status: ok\n"
-                      "Run-id: %d\n", run_id);
     }
   }
 

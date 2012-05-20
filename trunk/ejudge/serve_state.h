@@ -667,4 +667,12 @@ serve_is_problem_deadlined_2(
 
 const unsigned char *serve_err_str(int serve_err);
 
+void
+serve_report_check_failed(
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        serve_state_t state,
+        int run_id,
+        const unsigned char *error_text);
+
 #endif /* __SERVE_STATE_H__ */

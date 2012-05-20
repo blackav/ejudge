@@ -44,6 +44,7 @@
 #include "ejudge_cfg.h"
 #include "super_run_packet.h"
 #include "prepare_dflt.h"
+#include "testing_report_xml.h"
 
 #include "reuse_xalloc.h"
 #include "reuse_logger.h"
@@ -2790,6 +2791,59 @@ serve_judge_built_in_problem(
 }
 
 void
+serve_report_check_failed(
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        serve_state_t state,
+        int run_id,
+        const unsigned char *error_text)
+{
+  const struct section_global_data *global = state->global;
+  testing_report_xml_t tr = testing_report_alloc(run_id, 0);
+  FILE *tr_f = NULL;
+  size_t tr_z = 0;
+  char *tr_t = NULL;
+  unsigned char tr_p[PATH_MAX];
+  int flags = 0;
+
+  tr->status = RUN_CHECK_FAILED;
+  tr->scoring_system = global->score_system;
+  tr->marked_flag = 0;
+  tr->user_status = -1;
+  tr->errors = xstrdup(error_text);
+
+  tr_f = open_memstream(&tr_t, &tr_z);
+  fprintf(tr_f, "Content-type: text/xml\n\n");
+  fprintf(tr_f, "<?xml version=\"1.0\" encoding=\"%s\"?>\n", EJUDGE_CHARSET);
+  testing_report_unparse_xml(tr_f, 1/*utf8_mode*/, global->max_file_length, global->max_line_length, tr);
+  fclose(tr_f); tr_f = NULL;
+  tr = testing_report_free(tr);
+
+  serve_audit_log(state, run_id, 0, 0, 0,
+                  "Status: check failed\n"
+                  "Run-id: %d\n"
+                  "  %s\n\n",
+                  run_id, error_text);
+
+  flags = archive_make_write_path(state, tr_p, sizeof(tr_p), global->xml_report_archive_dir,
+                                  run_id, tr_z, 0, 0);
+  if (flags < 0) {
+    err("archive_make_write_path: %s, %d, %ld failed\n", global->xml_report_archive_dir, run_id, (long) tr_z);
+  } else {
+    if (archive_dir_prepare(state, global->xml_report_archive_dir, run_id, NULL, 0) < 0) {
+      err("archive_dir_prepare: %s, %d failed\n", global->xml_report_archive_dir, run_id);
+    } else {
+      generic_write_file(tr_t, tr_z, flags, NULL, tr_p, NULL);
+    }
+  }
+  xfree(tr_t); tr_t = NULL;
+
+  if (run_change_status_4(state->runlog_state, run_id, RUN_CHECK_FAILED) < 0) {
+    err("run_change_status_4: %d, RUN_CHECK_FAILED failed\n", run_id);
+  }
+}
+
+void
 serve_rejudge_run(
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
@@ -2863,6 +2917,7 @@ serve_rejudge_run(
                                 prob, NULL /* lang */,
                                 0 /* no_db_flag */);
       if (r < 0) {
+        serve_report_check_failed(config, cnts, state, run_id, serve_err_str(r));
         err("rejudge_run: serve_compile_request failed: %s", serve_err_str(r));
         return;
       }
@@ -2909,6 +2964,7 @@ serve_rejudge_run(
                             prob->style_checker_env,
                             accepting_mode, priority_adjustment, 1, prob, lang, 0);
   if (r < 0) {
+    serve_report_check_failed(config, cnts, state, run_id, serve_err_str(r));
     err("rejudge_run: serve_compile_request failed: %s", serve_err_str(r));
     return;
   }
