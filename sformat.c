@@ -677,12 +677,16 @@ sformat_message(
           }
           if (is_invalid) break;
           pf++;
-          if (sscanf(pf, "%d%n", &nmemb, &n) != 1) {
-            is_invalid = 1;
-            break;
+          if (*pf >= '0' && *pf <= '9') {
+            if (sscanf(pf, "%d%n", &nmemb, &n) != 1) {
+              is_invalid = 1;
+              break;
+            }
+            nmemb--;
+            pf += n;
+          } else {
+            nmemb = 0;
           }
-          nmemb--;
-          pf += n;
           /*
            * f - firstname
            * F - firstname_en
