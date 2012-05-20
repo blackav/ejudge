@@ -441,6 +441,11 @@ write_xml_testing_report(
     }
   }
 
+  if (r->errors && r->errors[0]) {
+    fprintf(f, "<font color=\"red\"><b><u>%s</u></b><br/><pre>%s</pre></font>\n",
+            "Errors", ARMOR(r->errors));
+  }
+
   if (r->valuer_comment || r->valuer_judge_comment || r->valuer_errors) {
     fprintf(f, "<h3>%s</h3>\n", _("Valuer information"));
     if (r->valuer_comment) {
