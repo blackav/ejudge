@@ -385,9 +385,19 @@ user_filter_info_allocate(serve_state_t state, int user_id,
 
 void serve_move_files_to_insert_run(serve_state_t state, int run_id);
 
-void serve_audit_log(serve_state_t, int, int,
-                     ej_ip_t, int, const char *, ...)
-  __attribute__((format(printf, 6, 7)));
+void
+serve_audit_log(
+        serve_state_t state,
+        int run_id,
+        int user_id,
+        ej_ip_t ip,
+        int ssl_flag,
+        const unsigned char *command,
+        const unsigned char *status,
+        int run_status,
+        const char *format,
+        ...)
+  __attribute__((format(printf, 9, 10)));
 
 void serve_packet_name(int run_id, int prio, unsigned char buf[]);
 

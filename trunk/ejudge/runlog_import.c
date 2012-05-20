@@ -785,11 +785,7 @@ runlog_import_xml(
       }
     }
 
-    serve_audit_log(state, j, 0, 0, 0,
-                    "Command: import\n"
-                    "Status: success\n"
-                    "Run-id: %d\n",
-                    j);
+    serve_audit_log(state, j, 0, 0, 0, "import", "ok", -1, NULL);
   }
   fprintf(flog, "Merge complete\n");
 
@@ -820,6 +816,5 @@ runlog_import_xml(
 /*
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "DIR")
  * End:
  */

@@ -1077,18 +1077,13 @@ cmd_submit_run(
     if (prob->disable_auto_testing > 0
         || (prob->disable_testing > 0 && prob->enable_compilation <= 0)
         || lang->disable_auto_testing || lang->disable_testing) {
-      run_change_status_4(cs->runlog_state, run_id, RUN_PENDING);
       serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
-                      "Command: submit\n"
-                      "Status: pending\n"
-                      "Run-id: %d\n"
-                      "  Testing disabled for this problem or language\n",
-                      run_id);
+                        "submit", "ok", RUN_PENDING,
+                        "  Testing disabled for this problem or language");
+      run_change_status_4(cs->runlog_state, run_id, RUN_PENDING);
     } else {
       serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
-                      "Command: submit\n"
-                      "Status: ok\n"
-                      "Run-id: %d\n", run_id);
+                        "submit", "ok", RUN_COMPILING, NULL);
       if ((r = serve_compile_request(cs, run_text, run_size, global->contest_id,
                                      run_id, phr->user_id,
                                      lang->compile_id, phr->locale_id, 0,
@@ -1103,19 +1098,13 @@ cmd_submit_run(
   } else if (prob->manual_checking > 0) {
     // manually tested outputs
     if (prob->check_presentation <= 0) {
-      run_change_status_4(cs->runlog_state, run_id, RUN_ACCEPTED);
       serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
-                      "Command: submit\n"
-                      "Status: accepted for testing\n"
-                      "Run-id: %d\n"
-                      "  This problem is checked manually.\n",
-                      run_id);
+                        "submit", "ok", RUN_ACCEPTED,
+                        "  This problem is checked manually");
+      run_change_status_4(cs->runlog_state, run_id, RUN_ACCEPTED);
     } else {
       serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
-                      "Command: submit\n"
-                      "Status: ok\n"
-                      "Run-id: %d\n", run_id);
-
+                        "submit", "ok", RUN_COMPILING, NULL);
       if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
         if ((r = serve_compile_request(cs, run_text, run_size, global->contest_id,
                                        run_id, phr->user_id, 0 /* lang_id */,
@@ -1143,18 +1132,13 @@ cmd_submit_run(
   } else {
     if (prob->disable_auto_testing > 0
         || (prob->disable_testing > 0 && prob->enable_compilation <= 0)) {
-      run_change_status_4(cs->runlog_state, run_id, RUN_PENDING);
       serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
-                      "Command: submit\n"
-                      "Status: pending\n"
-                      "Run-id: %d\n"
-                      "  Testing disabled for this problem\n",
-                      run_id);
+                        "submit", "ok", RUN_PENDING,
+                        "  Testing disabled for this problem");
+      run_change_status_4(cs->runlog_state, run_id, RUN_PENDING);
     } else {
       serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
-                      "Command: submit\n"
-                      "Status: ok\n"
-                      "Run-id: %d\n", run_id);
+                        "submit", "ok", RUN_COMPILING, NULL);
 
       if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
         if ((r = serve_compile_request(cs, run_text, run_size, global->contest_id,

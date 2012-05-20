@@ -827,7 +827,7 @@ serve_move_files_to_insert_run(serve_state_t state, int run_id)
 
     archive_rename(state, global->audit_log_dir, 0, i, 0, i + 1, 0, 0);
     serve_audit_log(state, i + 1, 0, 0, 0,
-                    "Command: rename\n"
+                    "rename", "ok", -1,
                     "From-run-id: %d\n"
                     "To-run-id: %d\n", i, i + 1);
 
@@ -844,8 +844,17 @@ serve_move_files_to_insert_run(serve_state_t state, int run_id)
 }
 
 void
-serve_audit_log(serve_state_t state, int run_id, int user_id,
-                ej_ip_t ip, int ssl_flag, const char *format, ...)
+serve_audit_log(
+        serve_state_t state,
+        int run_id,
+        int user_id,
+        ej_ip_t ip,
+        int ssl_flag,
+        const unsigned char *command,
+        const unsigned char *status,
+        int run_status,
+        const char *format,
+        ...)
 {
   unsigned char buf[16384];
   unsigned char tbuf[128];
@@ -855,10 +864,14 @@ serve_audit_log(serve_state_t state, int run_id, int user_id,
   FILE *f;
   unsigned char *login;
   size_t buf_len;
+  unsigned char status_buf[64];
 
-  va_start(args, format);
-  vsnprintf(buf, sizeof(buf), format, args);
-  va_end(args);
+  buf[0] = 0;
+  if (format && *format) {
+    va_start(args, format);
+    vsnprintf(buf, sizeof(buf), format, args);
+    va_end(args);
+  }
   buf_len = strlen(buf);
   while (buf_len > 0 && isspace(buf[buf_len - 1])) buf[--buf_len] = 0;
 
@@ -876,8 +889,8 @@ serve_audit_log(serve_state_t state, int run_id, int user_id,
   fprintf(f, "Date: %s\n", tbuf);
   if (!user_id) {
     fprintf(f, "From: SYSTEM\n");
-  } else if (user_id <= 0) {
-    fprintf(f, "From: unauthentificated user\n");
+  } else if (user_id < 0) {
+    fprintf(f, "From: invalid user %d\n", user_id);
   } else if (!(login = teamdb_get_login(state->teamdb_state, user_id))){
     fprintf(f, "From: user %d (login unknown)\n", user_id);
   } else {
@@ -886,7 +899,25 @@ serve_audit_log(serve_state_t state, int run_id, int user_id,
   if (ip) {
     fprintf(f, "Ip: %s%s\n", xml_unparse_ip(ip), ssl_flag?"/SSL":"");
   }
-  fprintf(f, "%s\n\n", buf);
+  if (command && *command) {
+    fprintf(f, "Command: %s\n", command);
+  }
+  if (status && *status) {
+    fprintf(f, "Status: %s\n", status);
+  }
+  if (run_id >= 0) {
+    fprintf(f, "Run-id: %d\n", run_id);
+  }
+  if (run_status >= 0) {
+    run_status_to_str_short(status_buf, sizeof(status_buf), run_status);
+    fprintf(f, "Run-status: %s\n", status_buf);
+  }
+
+  if (buf[0]) {
+    fprintf(f, "%s\n\n", buf);
+  } else {
+    fprintf(f, "\n");
+  }
 
   fclose(f);
 }
@@ -2532,7 +2563,6 @@ serve_read_run_packet(
 
   /* add auditing information */
   if (!(f = open_memstream(&audit_text, &audit_text_size))) return 1;
-  fprintf(f, "Status: Judging complete\n");
   fprintf(f, "  Profiling information:\n");
   fprintf(f, "  Request start time:                %s\n",
           time_to_str(time_buf, sizeof(time_buf),
@@ -2574,7 +2604,8 @@ serve_read_run_packet(
                      ts8, ts8_us));
   fprintf(f, "\n");
   close_memstream(f); f = 0;
-  serve_audit_log(state, reply_pkt->run_id, 0, 0, 0, "%s", audit_text);
+  serve_audit_log(state, reply_pkt->run_id, 0, 0, 0,
+                  NULL, "testing completed", reply_pkt->status, "%s", audit_text);
   xfree(audit_text); audit_text = 0;
 
   if (ignore_prev_ac) {
@@ -2760,9 +2791,7 @@ serve_judge_built_in_problem(
   close_memstream(f); f = 0;
 
   serve_audit_log(state, run_id, user_id, ip, ssl_flag,
-                  "Command: submit\n"
-                  "Status: ok\n"
-                  "Run-id: %d\n", run_id);
+                  "submit", "ok", status, NULL);
 
   if (status == RUN_CHECK_FAILED)
     serve_send_check_failed_email(config, cnts, run_id);
@@ -2783,8 +2812,6 @@ serve_judge_built_in_problem(
                                       run_id, xml_len, 0, 0);
   archive_dir_prepare(state, global->xml_report_archive_dir, run_id, 0, 0);
   generic_write_file(xml_buf, xml_len, rep_flags, 0, rep_path, "");
-  serve_audit_log(state, run_id, 0, 0, 0,
-                  "Status: judging complete (built-in)\n");
 
   xfree(xml_buf); xml_buf = 0;
   html_armor_free(&ab);
@@ -2820,10 +2847,8 @@ serve_report_check_failed(
   tr = testing_report_free(tr);
 
   serve_audit_log(state, run_id, 0, 0, 0,
-                  "Status: check failed\n"
-                  "Run-id: %d\n"
-                  "  %s\n\n",
-                  run_id, error_text);
+                  NULL, "check failed", -1,
+                  "  %s\n\n", error_text);
 
   flags = archive_make_write_path(state, tr_p, sizeof(tr_p), global->xml_report_archive_dir,
                                   run_id, tr_z, 0, 0);
@@ -2869,6 +2894,9 @@ serve_rejudge_run(
   if (run_get_entry(state->runlog_state, run_id, &re) < 0) return;
   if (re.is_imported) return;
   if (re.is_readonly) return;
+
+  serve_audit_log(state, run_id, user_id, ip, ssl_flag,
+                  "rejudge", "ok", RUN_COMPILING, NULL);
  
   if (re.prob_id <= 0 || re.prob_id > state->max_prob
       || !(prob = state->probs[re.prob_id])) {
@@ -2921,8 +2949,6 @@ serve_rejudge_run(
         err("rejudge_run: serve_compile_request failed: %s", serve_err_str(r));
         return;
       }
-      serve_audit_log(state, run_id, user_id, ip, ssl_flag,
-                      "Command: Rejudge\n");
       return;
     }
 
@@ -2940,8 +2966,6 @@ serve_rejudge_run(
                       re.user_id, re.prob_id, 0, 0, priority_adjustment,
                       -1, accepting_mode, 1, re.mime_type, 0, 0, 0);
     xfree(run_text);
-
-    serve_audit_log(state, run_id, user_id, ip, ssl_flag, "Command: Rejudge\n");
     return;
   }
 
@@ -2968,8 +2992,6 @@ serve_rejudge_run(
     err("rejudge_run: serve_compile_request failed: %s", serve_err_str(r));
     return;
   }
-
-  serve_audit_log(state, run_id, user_id, ip, ssl_flag, "Command: Rejudge\n");
 }
 
 void
@@ -3741,7 +3763,10 @@ serve_clear_by_mask(serve_state_t state,
         archive_remove(state, global->report_archive_dir, r, 0);
         archive_remove(state, global->team_report_archive_dir, r, 0);
         archive_remove(state, global->full_archive_dir, r, 0);
-        archive_remove(state, global->audit_log_dir, r, 0);
+        //archive_remove(state, global->audit_log_dir, r, 0);
+
+        serve_audit_log(state, r, user_id, ip, ssl_flag,
+                        "clear-run", "ok", -1, NULL);
       }
     }
   }
@@ -3762,10 +3787,10 @@ serve_ignore_by_mask(serve_state_t state,
 
   switch (new_status) {
   case RUN_IGNORED:
-    cmd = "Ignore";
+    cmd = "ignore";
     break;
   case RUN_DISQUALIFIED:
-    cmd = "Disqualify";
+    cmd = "disqualify";
     break;
   default:
     abort();
@@ -3793,7 +3818,8 @@ serve_ignore_by_mask(serve_state_t state,
       archive_remove(state, global->report_archive_dir, r, 0);
       archive_remove(state, global->team_report_archive_dir, r, 0);
       archive_remove(state, global->full_archive_dir, r, 0);
-      serve_audit_log(state, r, user_id, ip, ssl_flag, "Command: %s\n", cmd);
+      serve_audit_log(state, r, user_id, ip, ssl_flag,
+                      cmd, "ok", new_status, NULL);
     }
   }
 }
@@ -3810,9 +3836,16 @@ serve_mark_by_mask(
 {
   int total_runs, r;
   struct run_entry re;
+  const unsigned char *audit_cmd = NULL;
 
   ASSERT(mask_size > 0);
   mark_value = !!mark_value;
+
+  if (mark_value) {
+    audit_cmd = "set-marked";
+  } else {
+    audit_cmd = "set-unmarked";
+  }
 
   total_runs = run_get_total(state->runlog_state);
   if (total_runs > mask_size * BITS_PER_LONG) {
@@ -3830,6 +3863,9 @@ serve_mark_by_mask(
 
     re.is_marked = mark_value;
     run_set_entry(state->runlog_state, r, RE_IS_MARKED, &re);
+
+    serve_audit_log(state, r, user_id, ip, ssl_flag,
+                    audit_cmd, "ok", -1, NULL);
   }
 }
 

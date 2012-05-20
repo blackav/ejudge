@@ -3343,6 +3343,10 @@ ns_priv_edit_run_action(
   if (run_set_entry(cs->runlog_state, run_id, mask, &new_info) < 0)
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
 
+  serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+                  "edit-run", "ok", -1,
+                  "  mask: 0x%08x", mask);
+
 cleanup:;
   return retval;
 }
@@ -5108,11 +5112,7 @@ do_add_row(
   run_set_entry(cs->runlog_state, run_id, RE_STATUS | RE_TEST | RE_SCORE, re);
 
   serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
-                  "Command: new_run\n"
-                  "Status: %s\n"
-                  "Run-id: %d\n",
-                  run_status_str(re->status, 0, 0, 0, 0),
-                  run_id);
+                  "priv-new-run", "ok", re->status, NULL);
   return run_id;
 }
 

@@ -2869,18 +2869,13 @@ priv_submit_run(FILE *fout,
     if (prob->disable_auto_testing > 0
         || (prob->disable_testing > 0 && prob->enable_compilation <= 0)
         || lang->disable_auto_testing || lang->disable_testing) {
-      run_change_status_4(cs->runlog_state, run_id, RUN_PENDING);
       serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
-                      "Command: submit\n"
-                      "Status: pending\n"
-                      "Run-id: %d\n"
-                      "  Testing disabled for this problem or language\n",
-                      run_id);
+                      "priv-submit", "ok", RUN_PENDING,
+                      "  Testing disabled for this problem or language");
+      run_change_status_4(cs->runlog_state, run_id, RUN_PENDING);
     } else {
       serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
-                      "Command: submit\n"
-                      "Status: ok\n"
-                      "Run-id: %d\n", run_id);
+                      "priv-submit", "ok", RUN_COMPILING, NULL);
       if ((r = serve_compile_request(cs, run_text, run_size, global->contest_id,
                                      run_id, phr->user_id,
                                      lang->compile_id, phr->locale_id, 0,
@@ -2895,18 +2890,13 @@ priv_submit_run(FILE *fout,
   } else if (prob->manual_checking > 0) {
     // manually tested outputs
     if (prob->check_presentation <= 0) {
-      run_change_status_4(cs->runlog_state, run_id, RUN_ACCEPTED);
       serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
-                      "Command: submit\n"
-                      "Status: accepted for testing\n"
-                      "Run-id: %d\n"
-                      "  This problem is checked manually.\n",
-                      run_id);
+                      "priv-submit", "ok", RUN_ACCEPTED, 
+                      "  This problem is checked manually");
+      run_change_status_4(cs->runlog_state, run_id, RUN_ACCEPTED);
     } else {
       serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
-                      "Command: submit\n"
-                      "Status: ok\n"
-                      "Run-id: %d\n", run_id);
+                      "priv-submit", "ok", RUN_COMPILING, NULL);
       if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
         r = serve_compile_request(cs, run_text, run_size, global->contest_id, 
                                   run_id, phr->user_id, 0 /* lang_id */,
@@ -2938,18 +2928,13 @@ priv_submit_run(FILE *fout,
     // automatically tested outputs
     if (prob->disable_auto_testing > 0
         || (prob->disable_testing > 0 && prob->enable_compilation <= 0)) {
-      run_change_status_4(cs->runlog_state, run_id, RUN_PENDING);
       serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
-                      "Command: submit\n"
-                      "Status: pending\n"
-                      "Run-id: %d\n"
-                      "  Testing disabled for this problem\n",
-                      run_id);
+                      "priv-submit", "ok", RUN_PENDING,
+                      "  Testing disabled for this problem");
+      run_change_status_4(cs->runlog_state, run_id, RUN_PENDING);
     } else {
       serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
-                      "Command: submit\n"
-                      "Status: ok\n"
-                      "Run-id: %d\n", run_id);
+                      "priv-submit", "ok", RUN_COMPILING, NULL);
       /* FIXME: check for XML problem */
       if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
         r = serve_compile_request(cs, run_text, run_size, global->contest_id,
@@ -3244,6 +3229,10 @@ priv_set_run_style_error_status(
   }
   if (run_change_status_4(cs->runlog_state, run_id, RUN_STYLE_ERR) < 0)
     goto invalid_param;
+
+  serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+                  "set-style-error", "ok", RUN_STYLE_ERR, NULL);
+
   if (global->notify_status_change > 0 && !re.is_hidden) {
     serve_notify_user_run_status_change(ejudge_config, cnts, cs, re.user_id,
                                         run_id, RUN_STYLE_ERR);
@@ -3346,6 +3335,23 @@ priv_submit_run_comment(
                         re.saved_score, user_status, re.saved_test,
                         user_score);
   }
+
+  const unsigned char *audit_cmd = NULL;
+  int status = -1;
+  if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT) {
+    audit_cmd = "comment-run";
+  } else if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_OK) {
+    audit_cmd = "comment-run-ok";
+    status = RUN_OK;
+  } else if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_IGNORE) {
+    audit_cmd = "comment-run-ignore";
+    status = RUN_IGNORED;
+  } else {
+    abort();
+  }
+
+  serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+                  audit_cmd, "ok", status, NULL);
 
   if (global->notify_clar_reply) {
     unsigned char nsubj[1024];
@@ -3660,7 +3666,10 @@ priv_clear_run(FILE *fout, FILE *log_f,
   archive_remove(cs, global->report_archive_dir, run_id, 0);
   archive_remove(cs, global->team_report_archive_dir, run_id, 0);
   archive_remove(cs, global->full_archive_dir, run_id, 0);
-  archive_remove(cs, global->audit_log_dir, run_id, 0);
+  //archive_remove(cs, global->audit_log_dir, run_id, 0);
+
+  serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+                  "clear-run", "ok", -1, NULL);
 
  cleanup:
   return retval;
@@ -3698,6 +3707,12 @@ priv_edit_run(FILE *fout, FILE *log_f,
   const unsigned char *s, *param_str = 0;
   int param_int = 0, param_bool = 0;
   int ne_mask = 0;
+  const unsigned char *audit_cmd = NULL;
+  unsigned char old_buf[1024];
+  unsigned char new_buf[1024];
+
+  old_buf[0] = 0;
+  new_buf[0] = 0;
 
   if (parse_run_id(fout, phr, cnts, extra, &run_id, &re) < 0) return -1;
   if (ns_cgi_param(phr, "param", &s) <= 0) {
@@ -3752,18 +3767,27 @@ priv_edit_run(FILE *fout, FILE *log_f,
     if ((ne.user_id = teamdb_lookup_login(cs->teamdb_state, param_str)) <= 0)
       FAIL(NEW_SRV_ERR_INV_USER_LOGIN);
     ne_mask = RE_USER_ID;
+    audit_cmd = "change-user-id";
+    snprintf(old_buf, sizeof(old_buf), "%d", re.user_id);
+    snprintf(new_buf, sizeof(new_buf), "%d", ne.user_id);
     break;
   case NEW_SRV_ACTION_CHANGE_RUN_USER_ID:
     if (teamdb_lookup(cs->teamdb_state, param_int) <= 0)
       FAIL(NEW_SRV_ERR_INV_USER_ID);
     ne.user_id = param_int;
     ne_mask = RE_USER_ID;
+    audit_cmd = "change-user-id";
+    snprintf(old_buf, sizeof(old_buf), "%d", re.user_id);
+    snprintf(new_buf, sizeof(new_buf), "%d", ne.user_id);
     break;
   case NEW_SRV_ACTION_CHANGE_RUN_PROB_ID:
     if (param_int <= 0 || param_int > cs->max_prob || !cs->probs[param_int])
       FAIL(NEW_SRV_ERR_INV_PROB_ID);
     ne.prob_id = param_int;
     ne_mask = RE_PROB_ID;
+    audit_cmd = "change-prob-id";
+    snprintf(old_buf, sizeof(old_buf), "%d", re.prob_id);
+    snprintf(new_buf, sizeof(new_buf), "%d", ne.prob_id);
     break;
   case NEW_SRV_ACTION_CHANGE_RUN_VARIANT:
     if (re.prob_id <= 0 || re.prob_id > cs->max_prob
@@ -3780,12 +3804,18 @@ priv_edit_run(FILE *fout, FILE *log_f,
     }
     ne.variant = param_int;
     ne_mask = RE_VARIANT;
+    audit_cmd = "change-variant";
+    snprintf(old_buf, sizeof(old_buf), "%d", re.variant);
+    snprintf(new_buf, sizeof(new_buf), "%d", ne.variant);
     break;
   case NEW_SRV_ACTION_CHANGE_RUN_LANG_ID:
     if (param_int <= 0 || param_int > cs->max_lang || !cs->langs[param_int])
       FAIL(NEW_SRV_ERR_INV_LANG_ID);
     ne.lang_id = param_int;
     ne_mask = RE_LANG_ID;
+    audit_cmd = "change-lang-id";
+    snprintf(old_buf, sizeof(old_buf), "%d", re.lang_id);
+    snprintf(new_buf, sizeof(new_buf), "%d", ne.lang_id);
     break;
   case NEW_SRV_ACTION_CHANGE_RUN_TEST:
     if (param_int < -1 || param_int >= 100000)
@@ -3795,6 +3825,9 @@ priv_edit_run(FILE *fout, FILE *log_f,
       param_int++;
     ne.test = param_int;
     ne_mask = RE_TEST;
+    audit_cmd = "change-test";
+    snprintf(old_buf, sizeof(old_buf), "%d", re.test);
+    snprintf(new_buf, sizeof(new_buf), "%d", ne.test);
     break;
   case NEW_SRV_ACTION_CHANGE_RUN_SCORE:
     /*
@@ -3809,6 +3842,9 @@ priv_edit_run(FILE *fout, FILE *log_f,
       FAIL(NEW_SRV_ERR_INV_SCORE);
     ne.score = param_int;
     ne_mask = RE_SCORE;
+    audit_cmd = "change-score";
+    snprintf(old_buf, sizeof(old_buf), "%d", re.score);
+    snprintf(new_buf, sizeof(new_buf), "%d", ne.score);
     break;
   case NEW_SRV_ACTION_CHANGE_RUN_SCORE_ADJ:
     if (global->score_system != SCORE_KIROV
@@ -3818,36 +3854,60 @@ priv_edit_run(FILE *fout, FILE *log_f,
       FAIL(NEW_SRV_ERR_INV_SCORE_ADJ);
     ne.score_adj = param_int;
     ne_mask = RE_SCORE_ADJ;
+    audit_cmd = "change-score-adj";
+    snprintf(old_buf, sizeof(old_buf), "%d", re.score_adj);
+    snprintf(new_buf, sizeof(new_buf), "%d", ne.score_adj);
     break;
   case NEW_SRV_ACTION_CHANGE_RUN_PAGES:
     if (param_int < 0 || param_int >= 100000)
       FAIL(NEW_SRV_ERR_INV_PAGES);
     ne.pages = param_int;
     ne_mask = RE_PAGES;
+    audit_cmd = "change-pages";
+    snprintf(old_buf, sizeof(old_buf), "%d", re.pages);
+    snprintf(new_buf, sizeof(new_buf), "%d", ne.pages);
     break;
   case NEW_SRV_ACTION_CHANGE_RUN_IS_IMPORTED:
     ne.is_imported = param_bool;
     ne_mask = RE_IS_IMPORTED;
+    audit_cmd = "change-is-imported";
+    snprintf(old_buf, sizeof(old_buf), "%d", re.is_imported);
+    snprintf(new_buf, sizeof(new_buf), "%d", ne.is_imported);
     break;
   case NEW_SRV_ACTION_CHANGE_RUN_IS_HIDDEN:
     ne.is_hidden = param_bool;
     ne_mask = RE_IS_HIDDEN;
+    audit_cmd = "change-is-hidden";
+    snprintf(old_buf, sizeof(old_buf), "%d", re.is_hidden);
+    snprintf(new_buf, sizeof(new_buf), "%d", ne.is_hidden);
     break;
   case NEW_SRV_ACTION_CHANGE_RUN_IS_EXAMINABLE:
     ne.is_examinable = param_bool;
     ne_mask = RE_IS_EXAMINABLE;
+    audit_cmd = "change-is-examinable";
+    snprintf(old_buf, sizeof(old_buf), "%d", re.is_examinable);
+    snprintf(new_buf, sizeof(new_buf), "%d", ne.is_examinable);
     break;
   case NEW_SRV_ACTION_CHANGE_RUN_IS_READONLY:
     ne.is_readonly = param_bool;
     ne_mask = RE_IS_READONLY;
+    audit_cmd = "change-is-readonly";
+    snprintf(old_buf, sizeof(old_buf), "%d", re.is_readonly);
+    snprintf(new_buf, sizeof(new_buf), "%d", ne.is_readonly);
     break;
   case NEW_SRV_ACTION_CHANGE_RUN_IS_MARKED:
     ne.is_marked = param_bool;
     ne_mask = RE_IS_MARKED;
+    audit_cmd = "change-is-marked";
+    snprintf(old_buf, sizeof(old_buf), "%d", re.is_marked);
+    snprintf(new_buf, sizeof(new_buf), "%d", ne.is_marked);
     break;
   case NEW_SRV_ACTION_CHANGE_RUN_IS_SAVED:
     ne.is_saved = param_bool;
     ne_mask = RE_IS_SAVED;
+    audit_cmd = "change-is-saved";
+    snprintf(old_buf, sizeof(old_buf), "%d", re.is_saved);
+    snprintf(new_buf, sizeof(new_buf), "%d", ne.is_saved);
     break;
   }
 
@@ -3855,6 +3915,12 @@ priv_edit_run(FILE *fout, FILE *log_f,
 
   if (run_set_entry(cs->runlog_state, run_id, ne_mask, &ne) < 0)
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
+
+  serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+                  audit_cmd, "ok", -1,
+                  "  Old value: %s\n"
+                  "  New value: %s\n",
+                  old_buf, new_buf);
 
  cleanup:
   return retval;
@@ -3924,6 +3990,9 @@ priv_change_status(
     goto cleanup;
   }
 
+  serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+                  "change-status", "ok", status, NULL);
+
   if (cs->global->notify_status_change > 0) {
     if (!re.is_hidden)
       serve_notify_user_run_status_change(ejudge_config, cnts, cs, re.user_id, run_id,
@@ -3952,13 +4021,16 @@ priv_simple_change_status(
   int run_id, status, flags;
   struct run_entry new_run, re;
   const struct section_problem_data *prob = 0;
+  const unsigned char *audit_cmd = NULL;
 
   if (parse_run_id(fout, phr, cnts, extra, &run_id, 0) < 0) goto failure;
 
   if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_IGNORE) {
     status = RUN_IGNORED;
+    audit_cmd = "set-ignored";
   } else if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_OK) {
     status = RUN_OK;
+    audit_cmd = "set-ok";
   } else {
     errmsg = "invalid status";
     goto invalid_param;
@@ -3994,6 +4066,9 @@ priv_simple_change_status(
     ns_error(log_f, NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
     goto cleanup;
   }
+
+  serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+                  audit_cmd, "ok", status, NULL);
 
   if (cs->global->notify_status_change > 0) {
     if (!re.is_hidden)
@@ -4461,10 +4536,7 @@ priv_new_run(FILE *fout,
   run_set_entry(cs->runlog_state, run_id, re_flags, &re);
 
   serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
-                  "Command: new_run\n"
-                  "Status: pending\n"
-                  "Run-id: %d\n",
-                  run_id);
+                  "priv-new-run", "ok", RUN_PENDING, NULL);
 
  cleanup:
   return retval;
@@ -8946,7 +9018,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_DOWNLOAD_ARCHIVE_1] = priv_generic_page,
   [NEW_SRV_ACTION_DOWNLOAD_ARCHIVE_2] = priv_generic_page,
   [NEW_SRV_ACTION_UPLOAD_RUNLOG_CSV_1] = priv_generic_page,
-  [NEW_SRV_ACTION_UPLOAD_RUNLOG_CSV_2] = priv_generic_page,
+  [NEW_SRV_ACTION_UPLOAD_RUNLOG_CSV_2] = priv_generic_page, /// FIXME: do audit logging
   [NEW_SRV_ACTION_VIEW_RUNS_DUMP] = priv_generic_page,
   [NEW_SRV_ACTION_EXPORT_XML_RUNS] = priv_generic_page,
   [NEW_SRV_ACTION_WRITE_XML_RUNS] = priv_generic_page,
@@ -9015,7 +9087,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRIV_EDIT_CLAR_PAGE] = priv_generic_page,
   [NEW_SRV_ACTION_PRIV_EDIT_CLAR_ACTION] = priv_generic_operation,
   [NEW_SRV_ACTION_PRIV_EDIT_RUN_PAGE] = priv_generic_page,
-  [NEW_SRV_ACTION_PRIV_EDIT_RUN_ACTION] = priv_generic_operation,
+  [NEW_SRV_ACTION_PRIV_EDIT_RUN_ACTION] = priv_generic_operation, ///
 };
 
 static unsigned char *
@@ -10014,9 +10086,7 @@ unpriv_print_run(FILE *fout,
   }
 
   serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
-                  "Command: print\n"
-                  "Status: ok\n"
-                  "  %d pages printed\n", n);
+                  "print", "ok", -1, "  %d pages printed\n", n);
 
  done:
   close_memstream(log_f); log_f = 0;
@@ -10474,18 +10544,13 @@ unpriv_submit_run(FILE *fout,
         || (prob->disable_testing > 0 && prob->enable_compilation <= 0)
         || lang->disable_auto_testing || lang->disable_testing
         || cs->testing_suspended) {
-      run_change_status_4(cs->runlog_state, run_id, RUN_PENDING);
       serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
-                      "Command: submit\n"
-                      "Status: pending\n"
-                      "Run-id: %d\n"
-                      "  Testing disabled for this problem or language\n",
-                      run_id);
+                      "submit", "ok", RUN_PENDING,
+                      "  Testing disabled for this problem or language");
+      run_change_status_4(cs->runlog_state, run_id, RUN_PENDING);
     } else {
       serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
-                      "Command: submit\n"
-                      "Status: ok\n"
-                      "Run-id: %d\n", run_id);
+                      "submit", "ok", RUN_COMPILING, NULL);
       if ((r = serve_compile_request(cs, run_text, run_size, global->contest_id,
                                      run_id, phr->user_id,
                                      lang->compile_id, phr->locale_id, 0,
@@ -10500,18 +10565,13 @@ unpriv_submit_run(FILE *fout,
   } else if (prob->manual_checking > 0 && !accept_immediately) {
     // manually tested outputs
     if (prob->check_presentation <= 0) {
-      run_change_status_4(cs->runlog_state, run_id, RUN_ACCEPTED);
       serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
-                      "Command: submit\n"
-                      "Status: accepted for testing\n"
-                      "Run-id: %d\n"
-                      "  This problem is checked manually.\n",
-                      run_id);
+                      "submit", "ok", RUN_ACCEPTED,
+                      "  This problem is checked manually");
+      run_change_status_4(cs->runlog_state, run_id, RUN_ACCEPTED);
     } else {
       serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
-                      "Command: submit\n"
-                      "Status: ok\n"
-                      "Run-id: %d\n", run_id);
+                      "submit", "ok", RUN_COMPILING, NULL);
       if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
         r = serve_compile_request(cs, run_text, run_size, global->contest_id,
                                   run_id, phr->user_id, 0 /* lang_id */,
@@ -10541,25 +10601,18 @@ unpriv_submit_run(FILE *fout,
     }
   } else {
     if (accept_immediately) {
-      run_change_status_4(cs->runlog_state, run_id, RUN_ACCEPTED);
       serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
-                      "Command: submit\n"
-                      "Status: accepted\n"
-                      "Run-id: %d\n", run_id);
+                      "submit", "ok", RUN_ACCEPTED, NULL);
+      run_change_status_4(cs->runlog_state, run_id, RUN_ACCEPTED);
     } else if (prob->disable_auto_testing > 0
         || (prob->disable_testing > 0 && prob->enable_compilation <= 0)) {
-      run_change_status_4(cs->runlog_state, run_id, RUN_PENDING);
       serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
-                      "Command: submit\n"
-                      "Status: pending\n"
-                      "Run-id: %d\n"
-                      "  Testing disabled for this problem\n",
-                      run_id);
+                      "submit", "ok", RUN_PENDING,
+                      "  Testing disabled for this problem");
+      run_change_status_4(cs->runlog_state, run_id, RUN_PENDING);
     } else {
       serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
-                      "Command: submit\n"
-                      "Status: ok\n"
-                      "Run-id: %d\n", run_id);
+                      "submit", "ok", RUN_COMPILING, NULL);
 
       if (prob->variant_num > 0 && prob->xml.a) {
         px = prob->xml.a[variant -  1];
@@ -13876,10 +13929,7 @@ unpriv_xml_update_answer(
                 RE_SIZE | RE_SHA1 | RE_STATUS | RE_TEST | RE_SCORE, &nv);
 
   serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
-                  "Command: submit\n"
-                  "Status: accepted\n"
-                  "Run-id: %d\n", run_id);
-
+                  "update-answer", "ok", RUN_ACCEPTED, NULL);
 
  cleanup:
   fprintf(fout, "Content-type: text/plain; charset=%s\n"
