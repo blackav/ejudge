@@ -3987,6 +3987,7 @@ serve_testing_queue_delete(
         const serve_state_t state,
         const unsigned char *packet_name)
 {
+  const struct section_global_data *global = state->global;
   path_t out_path;
   path_t out_name;
   path_t exe_path;
@@ -3997,11 +3998,16 @@ serve_testing_queue_delete(
   unsigned char run_exe_dir[PATH_MAX];
 
   if (cnts && cnts->run_managed) {
-    snprintf(run_exe_dir, sizeof(run_exe_dir), "%s/super-run/var/exe", EJUDGE_CONTESTS_HOME_DIR);
-    snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/super-run/var/queue", EJUDGE_CONTESTS_HOME_DIR);
+    if (global && global->super_run_dir && global->super_run_dir[0]) {
+      snprintf(run_exe_dir, sizeof(run_exe_dir), "%s/var/exe", global->super_run_dir);
+      snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/var/queue", global->super_run_dir);
+    } else {
+      snprintf(run_exe_dir, sizeof(run_exe_dir), "%s/super-run/var/exe", EJUDGE_CONTESTS_HOME_DIR);
+      snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/super-run/var/queue", EJUDGE_CONTESTS_HOME_DIR);
+    }
   } else {
-    snprintf(run_exe_dir, sizeof(run_exe_dir), "%s/exe", state->global->run_dir);
-    snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/queue", state->global->run_dir);
+    snprintf(run_exe_dir, sizeof(run_exe_dir), "%s/exe", global->run_dir);
+    snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/queue", global->run_dir);
   }
 
   if (!(srp = testing_queue_lock_entry(cnts->id, run_queue_dir, packet_name,
@@ -4038,6 +4044,7 @@ serve_testing_queue_change_priority(
         const unsigned char *packet_name,
         int adjustment)
 {
+  const struct section_global_data *global = state->global;
   path_t out_path;
   path_t out_name;
   path_t new_packet_name;
@@ -4049,11 +4056,16 @@ serve_testing_queue_change_priority(
   unsigned char run_exe_dir[PATH_MAX];
 
   if (cnts && cnts->run_managed) {
-    snprintf(run_exe_dir, sizeof(run_exe_dir), "%s/super-run/var/exe", EJUDGE_CONTESTS_HOME_DIR);
-    snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/super-run/var/queue", EJUDGE_CONTESTS_HOME_DIR);
+    if (global && global->super_run_dir && global->super_run_dir[0]) {
+      snprintf(run_exe_dir, sizeof(run_exe_dir), "%s/var/exe", global->super_run_dir);
+      snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/var/queue", global->super_run_dir);
+    } else {
+      snprintf(run_exe_dir, sizeof(run_exe_dir), "%s/super-run/var/exe", EJUDGE_CONTESTS_HOME_DIR);
+      snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/super-run/var/queue", EJUDGE_CONTESTS_HOME_DIR);
+    }
   } else {
-    snprintf(run_exe_dir, sizeof(run_exe_dir), "%s/exe", state->global->run_dir);
-    snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/queue", state->global->run_dir);
+    snprintf(run_exe_dir, sizeof(run_exe_dir), "%s/exe", global->run_dir);
+    snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/queue", global->run_dir);
   }
 
   if (!(srp = testing_queue_lock_entry(cnts->id, run_queue_dir, packet_name,
@@ -4094,19 +4106,24 @@ fail:
 static void
 collect_run_packets(const struct contest_desc *cnts, const serve_state_t state, strarray_t *vec)
 {
+  const struct section_global_data *global = state->global;
   path_t dir_path;
   DIR *d = 0;
   struct dirent *dd;
   unsigned char run_queue_dir[PATH_MAX];
 
   if (cnts && cnts->run_managed) {
-    snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/super-run/var/queue", EJUDGE_CONTESTS_HOME_DIR);
+    if (global && global->super_run_dir && global->super_run_dir[0]) {
+      snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/var/queue", global->super_run_dir);
+    } else {
+      snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/super-run/var/queue", EJUDGE_CONTESTS_HOME_DIR);
+    }
   } else {
-    snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/queue", state->global->run_dir);
+    snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/queue", global->run_dir);
   }
 
   memset(vec, 0, sizeof(*vec));
-  snprintf(dir_path, sizeof(dir_path), "%s/dir", state->global->run_queue_dir);
+  snprintf(dir_path, sizeof(dir_path), "%s/dir", global->run_queue_dir);
   if (!(d = opendir(dir_path))) return;
 
   while ((dd = readdir(d))) {

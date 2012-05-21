@@ -7490,10 +7490,12 @@ scan_run_queue(
       continue;
     }
 
+    /*
     if (srp->global->contest_id != contest_id) {
       srp = super_run_in_packet_free(srp);
       continue;
     }
+    */
 
     priority = 0;
     if (dd->d_name[0] >= '0' && dd->d_name[0] <= '9') {
@@ -7546,9 +7548,21 @@ ns_write_testing_queue(
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   unsigned char hbuf[1024];
   const unsigned char *arch;
+  unsigned char run_queue_dir[PATH_MAX];
+  const unsigned char *queue_dir = NULL;
 
   memset(&vec, 0, sizeof(vec));
-  scan_run_queue(global->run_queue_dir, cnts->id, &vec);
+  if(cnts && cnts->run_managed) {
+    if (global->super_run_dir && global->super_run_dir[0]) {
+      snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/var/queue", global->super_run_dir);
+    } else {
+      snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/super-run/var/queue", EJUDGE_CONTESTS_HOME_DIR);
+    }
+    queue_dir = run_queue_dir;
+  } else {
+    queue_dir = global->run_queue_dir;
+  }
+  scan_run_queue(queue_dir, cnts->id, &vec);
 
   snprintf(cl, sizeof(cl), " class=\"%s\"", "b0");
   fprintf(fout, "<table%s><tr>", cl);
@@ -7578,8 +7592,10 @@ ns_write_testing_queue(
           "<th%s>%s</th>"
           "<th%s>%s</th>"
           "<th%s>%s</th>"
+          "<th%s>%s</th>"
           "</tr>\n",
           cl, "NN",
+          cl, "ContestId",
           cl, _("Packet name"),
           cl, _("Priority"),
           cl, "RunId",
@@ -7590,25 +7606,45 @@ ns_write_testing_queue(
           cl, _("Create time"),
           cl, _("Actions"));
   for (i = 0; i < vec.u; ++i) {
-    arch = vec.v[i].packet->global->arch;
+    const struct super_run_in_global_packet *srgp = vec.v[i].packet->global;
+    const struct super_run_in_problem_packet *srpp = vec.v[i].packet->problem;
+
+    arch = srgp->arch;
     if (!arch) arch = "";
 
     fprintf(fout, "<tr>");
     fprintf(fout, "<td%s>%d</td>", cl, i + 1);
+    fprintf(fout, "<td%s>%d</td>", cl, srgp->contest_id);
     fprintf(fout, "<td%s>%s</td>", cl, vec.v[i].entry_name);
     fprintf(fout, "<td%s>%d</td>", cl, vec.v[i].priority);
-    fprintf(fout, "<td%s>%d</td>", cl, vec.v[i].packet->global->run_id);
-    prob_id = vec.v[i].packet->problem->id;
-    if (prob_id > 0 && prob_id <= cs->max_prob && cs->probs[prob_id]) {
-      fprintf(fout, "<td%s>%s</td>", cl, cs->probs[prob_id]->short_name);
+    fprintf(fout, "<td%s>%d</td>", cl, srgp->run_id);
+    if (srgp->contest_id == cnts->id) {
+      prob_id = srpp->id;
+      if (prob_id > 0 && prob_id <= cs->max_prob && cs->probs[prob_id]) {
+        fprintf(fout, "<td%s>%s</td>", cl, cs->probs[prob_id]->short_name);
+      } else {
+        fprintf(fout, "<td%s>Problem %d</td>", cl, prob_id);
+      }
+      user_id = srgp->user_id;
+      fprintf(fout, "<td%s>%s</td>", cl,
+              ARMOR(teamdb_get_name_2(cs->teamdb_state, user_id)));
     } else {
-      fprintf(fout, "<td%s>Problem %d</td>", cl, prob_id);
+      // use packet-provided info
+      if (srpp->short_name && srpp->short_name[0]) {
+        fprintf(fout, "<td%s>%s</td>", cl, srpp->short_name);
+      } else {
+        fprintf(fout, "<td%s>Problem %d</td>", cl, srpp->id);
+      }
+      if (srgp->user_name && srgp->user_name[0]) {
+        fprintf(fout, "<td%s>%s</td>", cl, srgp->user_name);
+      } else if (srgp->user_login && srgp->user_login[0]) {
+        fprintf(fout, "<td%s>%s</td>", cl, srgp->user_login);
+      } else {
+        fprintf(fout, "<td%s>User %d</td>", cl, srgp->user_id);
+      }
     }
-    user_id = vec.v[i].packet->global->user_id;
-    fprintf(fout, "<td%s>%s</td>", cl,
-            ARMOR(teamdb_get_name_2(cs->teamdb_state, user_id)));
     fprintf(fout, "<td%s>%s</td>", cl, arch);
-    fprintf(fout, "<td%s>%d</td>", cl, vec.v[i].packet->global->judge_id);
+    fprintf(fout, "<td%s>%d</td>", cl, srgp->judge_id);
     fprintf(fout, "<td%s>%s</td>", cl, xml_unparse_date(vec.v[i].mtime));
     fprintf(fout, "<td%s>", cl);
     fprintf(fout, "&nbsp;&nbsp;<a href=\"%s\">X</a>",
