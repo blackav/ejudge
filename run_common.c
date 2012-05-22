@@ -2972,6 +2972,12 @@ run_tests(
   /* TESTING COMPLETED */
   get_current_time(&reply_pkt->ts6, &reply_pkt->ts6_us);
 
+  // no tests?
+  if (tests.size <= 1) {
+    append_msg_to_log(messages_path, "No tests found");
+    goto check_failed;
+  }
+
   // check failed?
   for (cur_test = 1; cur_test < tests.size; ++cur_test) {
     if (tests.data[cur_test].status == RUN_CHECK_FAILED) break;
