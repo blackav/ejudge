@@ -2829,6 +2829,7 @@ ns_priv_edit_run_action(
   ej_ip_t new_ip = 0;
   ruint32_t new_sha1[5];
   time_t start_time = 0;
+  int need_rejudge = 0;
 
   memset(&new_info, 0, sizeof(new_info));
 
@@ -2953,6 +2954,10 @@ ns_priv_edit_run_action(
     fprintf(log_f, "invalid 'status' field value\n");
     FAIL(NEW_SRV_ERR_INV_PARAM);    
   }
+  if (value == RUN_REJUDGE || value == RUN_FULL_REJUDGE) {
+    need_rejudge = value;
+    value = info.status;
+  }
   if (info.status != value) {
     // FIXME: handle rejudge request
     if (value >= RUN_MAX_STATUS) {
@@ -2970,10 +2975,10 @@ ns_priv_edit_run_action(
     fprintf(log_f, "invalid 'test' field value\n");
     FAIL(NEW_SRV_ERR_INV_PARAM);
   }
+  if (global->score_system == SCORE_KIROV || global->score_system == SCORE_OLYMPIAD) {
+    ++value;
+  }
   if (info.test != value) {
-    if (global->score_system == SCORE_KIROV || global->score_system == SCORE_OLYMPIAD) {
-      ++value;
-    }
     if (value < 0 || value > 100000) {
       fprintf(log_f, "invalid 'test' field value\n");
       FAIL(NEW_SRV_ERR_INV_PARAM);
@@ -3346,6 +3351,11 @@ ns_priv_edit_run_action(
   serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
                   "edit-run", "ok", -1,
                   "  mask: 0x%08x", mask);
+
+  if (need_rejudge > 0) {
+    serve_rejudge_run(ejudge_config, cnts, cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+                      (need_rejudge == RUN_FULL_REJUDGE), 0);
+  }
 
 cleanup:;
   return retval;
