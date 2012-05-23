@@ -1,3 +1,23 @@
+2011-10-21 (r6491) Alexander Chernov  <cher@ejudge.ru>
+
+	* attr_date.c: copyright notice is updated;
+	use of 'xml_parse_date' is updated.
+
+	* attr_int.c: copyright notice is updated;
+	'xml_err_file' is used for output, if non-NULL.
+
+	* err_variables.c: copyright notice is updated;
+	'xml_err_file' global variable is added.
+
+	* parse_bool.c, parse_int.c, parse_ip.c, parse_ip_mask.c: copyright notice is updated;
+	(parse_ip_mask) 'log_f' parameter is added.
+
+	* parse_date.c:
+	(xml_parse_date) 'log_f' parameter is added.
+
+	* xml_err.c, xml_err_a.c: copyright notice is updated;
+	'xml_err_file' is used for output, if non-NULL.
+
 2011-03-26 (r6129) Alexander Chernov  <cher@ejudge.ru>
 
 	* empty_text.c, parse_date.c:

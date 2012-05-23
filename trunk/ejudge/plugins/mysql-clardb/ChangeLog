@@ -1,3 +1,14 @@
+2012-05-01 (r6781) Alexander Chernov  <cher@ejudge.ru>
+
+	* cldb_mysql.c: copyright notice is updated;
+	(modify_text_func) new function;
+	(modify_record_func) new function.
+
+2011-07-17 (r6410) Alexander Chernov  <cher@ejudge.ru>
+
+	* cldb_mysql.c:
+	(prepare_func) 'const' added to 'config' parameter.
+
 2011-03-27 (r6188) Alexander Chernov  <cher@ejudge.ru>
 
 	* main.make, Makefile.in:

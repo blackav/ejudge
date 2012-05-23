@@ -1,3 +1,18 @@
+2012-04-01 (r6708) Alexander Chernov  <cher@ejudge.ru>
+
+	* read_file_by_line.c: copyright notice is updated;
+	(checker_read_file_by_line) an obscure bug is fixed.
+
+2012-03-30 (r6700) Alexander Chernov  <cher@ejudge.ru>
+
+	* style_archive.c: copyright notice is updated;
+	calls of 'ejudge_invoke_process' are updated.
+
+2011-12-13 (r6554) Alexander Chernov  <cher@ejudge.ru>
+
+	* read_file.c: copyright notice is updated;
+	(checker_read_file) off by one bug is fixed.
+
 2011-06-30 (r6386) Alexander Chernov  <cher@ejudge.ru>
 
 	* style_archive.c: copyright notice is updated;

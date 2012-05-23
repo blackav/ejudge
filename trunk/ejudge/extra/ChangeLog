@@ -1,3 +1,12 @@
+2011-10-19 (r6482) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.in: ej-make-archive program is added.
+
+2011-10-19 (r6481) Alexander Chernov  <cher@ejudge.ru>
+
+	* ej-make-archive.c:
+	initial revision
+
 2011-05-02 (r6293) Alexander Chernov  <cher@ejudge.ru>
 
 	* Makefile.in: copyright notice is updated;

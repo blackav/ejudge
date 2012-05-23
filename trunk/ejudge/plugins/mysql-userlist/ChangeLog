@@ -1,3 +1,16 @@
+2012-05-04 (r6795) Alexander Chernov  <cher@ejudge.ru>
+
+	* uldb_mysql.c: copyright notice is updated;
+	(set_reg_flags_func) value == 0 is allowed for cmd == 4.
+
+2011-07-17 (r6408) Alexander Chernov  <cher@ejudge.ru>
+
+	* methods.inc.c:
+	(prepare_func) 'const' added to 'config' parameter.
+
+	* uldb_mysql.c:
+	(prepare_func) 'const' added to 'config' parameter.
+
 2011-06-19 (r6376) Alexander Chernov  <cher@ejudge.ru>
 
 	* uldb_mysql.c:

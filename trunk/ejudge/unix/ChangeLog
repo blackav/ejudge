@@ -1,3 +1,88 @@
+2012-04-23 (r6760) Alexander Chernov  <cher@ejudge.ru>
+
+	* pollfds.c:
+	(pollfds_free) a free bug is fixed.
+
+2012-04-18 (r6751) Alexander Chernov  <cher@ejudge.ru>
+
+	* full_archive.c: copyright notice is updated;
+	zip archives is supported for the files with ".zip" suffixes;
+	(full_archive_find_file) 'p_size' param is removed;
+	  'p_data' now is used to return the unpacked data.
+
+2012-04-17 (r6747) Alexander Chernov  <cher@ejudge.ru>
+
+	* reuse_exec.c:
+	(task_IgnoreSIGPIPE) new function.
+
+2012-03-28 (r6681) Alexander Chernov  <cher@ejudge.ru>
+
+	* ej_process.c:
+	(ejudge_invoke_process) 'stdin_file' parameter is added.
+
+2012-03-27 (r6676) Alexander Chernov  <cher@ejudge.ru>
+
+	* ej_process.c:
+	<sys/utsname.h> is included;
+	(ejudge_get_host_names) new function is implemented.
+
+	* startstop.c:
+	"reuse_xalloc.h" is included;
+	(start_find_all_processes) new function is implemented.
+
+2012-03-23 (r6672) Alexander Chernov  <cher@ejudge.ru>
+
+	* startstop.c: copyright notice is updated;
+	(start_daemon) new function.
+
+2012-03-19 (r6658) Alexander Chernov  <cher@ejudge.ru>
+
+	* reuse_exec.c:
+	(task_SetEnv) new function;
+	(task_FormatEnv) new function;
+	(print_as_shell_redir) fixed;
+	(task_PrintArgs) args are printed always.
+
+2012-01-11 (r6618) Alexander Chernov  <cher@ejudge.ru>
+
+	* reuse_exec.c: copyright notice is updated;
+	(task_SetMaxRealTimeMillis) new function is added.
+
+2012-01-01 (r6605) Alexander Chernov  <cher@ejudge.ru>
+
+	* ej_process.c: copyright notice is updated;
+	"pollfds.h" is included;
+	"reuse_logger.h" is included;
+	<poll.h> is included;
+	(handle_stdin) new function;
+	(handle_stdout) new function;
+	(handle_stderr) new function;
+	(background_process_append_pollfd) new function;
+	(background_process_close_fds) new function.
+
+	* pollfds.c: initial revision.
+
+2011-12-28 (r6599) Alexander Chernov  <cher@ejudge.ru>
+
+	* ej_process.c:
+	(ejudge_start_process) file descriptor handling is improved.
+
+2011-12-17 (r6567) Alexander Chernov  <cher@ejudge.ru>
+
+	* ej_process.c:
+	framework for background processes. is implemented.
+
+2011-10-24 (r6494) Alexander Chernov  <cher@ejudge.ru>
+
+	* reuse_exec.c:
+	(find_prc_in_list) time-limit error detection is improved;
+	(task_Start) time-limit error detection is improved.
+
+2011-09-07 (r6418) Alexander Chernov  <cher@ejudge.ru>
+
+	* reuse_makedirpath.c:
+	(os_MakeDirPath2) new function is added.
+
 2011-06-18 (r6367) Alexander Chernov  <cher@ejudge.ru>
 
 	* reuse_exec.c:
