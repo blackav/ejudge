@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2010-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -52,9 +52,9 @@ static const struct config_parse_info nwrun_in_params[] =
   NWRUN_IN_PARAM(combined_stdout, "d"),
   NWRUN_IN_PARAM(time_limit_millis, "d"),
   NWRUN_IN_PARAM(real_time_limit_millis, "d"),
-  NWRUN_IN_PARAM(max_stack_size, "d"),
-  NWRUN_IN_PARAM(max_data_size, "d"),
-  NWRUN_IN_PARAM(max_vm_size, "d"),
+  NWRUN_IN_PARAM(max_stack_size, "z"),
+  NWRUN_IN_PARAM(max_data_size, "z"),
+  NWRUN_IN_PARAM(max_vm_size, "z"),
   NWRUN_IN_PARAM(max_output_file_size, "d"),
   NWRUN_IN_PARAM(max_error_file_size, "d"),
   NWRUN_IN_PARAM(enable_memory_limit_error, "d"),
@@ -143,7 +143,7 @@ static const struct config_parse_info nwrun_out_params[] =
   NWRUN_OUT_PARAM(cpu_time_millis, "d"),
   NWRUN_OUT_PARAM(real_time_available, "d"),
   NWRUN_OUT_PARAM(real_time_millis, "d"),
-  NWRUN_OUT_PARAM(max_memory_used, "d"),
+  NWRUN_OUT_PARAM(max_memory_used, "z"),
   NWRUN_OUT_PARAM(is_signaled, "d"),
   NWRUN_OUT_PARAM(signal_num, "d"),
   NWRUN_OUT_PARAM(exit_code, "d"),
@@ -231,7 +231,7 @@ nwrun_out_packet_print(FILE *fout, const struct nwrun_out_packet *result)
   }
 
   if (result->max_memory_used > 0) {
-    fprintf(fout, "max_memory_used = %d\n", result->max_memory_used);
+    fprintf(fout, "max_memory_used = %lu\n", (unsigned long) result->max_memory_used);
   }
 
   fprintf(fout, "is_signaled = %d\n", result->is_signaled);
