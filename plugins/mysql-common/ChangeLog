@@ -1,3 +1,19 @@
+2012-05-05 (r6799) Alexander Chernov  <cher@ejudge.ru>
+
+	* common_mysql.c: copyright notice is updated;
+	(parse_spec_func) invalid IPs are replaced with "127.0.0.127".
+
+2011-10-21 (r6492) Alexander Chernov  <cher@ejudge.ru>
+
+	* common_mysql.c:
+	(prepare_func) use of 'xml_parse_int' is updated;
+	(parse_spec_func) use of 'xml_parse_ip' is updated.
+
+2011-07-17 (r6411) Alexander Chernov  <cher@ejudge.ru>
+
+	* common_mysql.c:
+	(prepare_func) 'const' added to 'config' parameter.
+
 2011-03-27 (r6188) Alexander Chernov  <cher@ejudge.ru>
 
 	* main.make, Makefile.in:

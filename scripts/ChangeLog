@@ -1,3 +1,21 @@
+2012-03-30 (r6701) Alexander Chernov  <cher@ejudge.ru>
+
+	* fpc.in: copyright notice is updated;
+	TPC compatibility mode is removed.
+
+2011-12-14 (r6557) Alexander Chernov  <cher@ejudge.ru>
+
+	* make.in: typo is fixed.
+
+2011-12-09 (r6539) Alexander Chernov  <cher@ejudge.ru>
+
+	* make.in: EJ_MAKE_CFLAGS, EJ_MAKE_CXXFLAGS are supported.
+
+2011-09-07 (r6416) Alexander Chernov  <cher@ejudge.ru>
+
+	* javac-version.in: copyright notice is updated;
+	support for java 7 is added.
+
 2011-04-01 (r6213) Alexander Chernov  <cher@ejudge.ru>
 
 	* php-version.in:

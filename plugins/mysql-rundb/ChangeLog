@@ -1,3 +1,28 @@
+2012-05-09 (r6814) Alexander Chernov  <cher@ejudge.ru>
+
+	* rldb_mysql.c:
+	(parse_sha1) function is moved to misctext.[ch];
+	(load_runs) use of 'parse_sha1' is updated.
+
+2012-05-05 (r6800) Alexander Chernov  <cher@ejudge.ru>
+
+	* rldb_mysql.c: copyright notice is updated;
+	(load_runs) EMPTY runs are not ignored;
+	(find_insert_point) EMPTY runs are not ignored.
+
+2012-02-07 (r6633) Alexander Chernov  <cher@ejudge.ru>
+
+	* rldb_mysql.c: copyright notice is updated;
+	gcc 4.6 warning fixed.
+
+2011-07-17 (r6409) Alexander Chernov  <cher@ejudge.ru>
+
+	* methods.inc.c:
+	(prepare_func) 'const' added to 'config' parameter.
+
+	* rldb_mysql.c
+	(prepare_func) 'const' added to 'config' parameter.
+
 2011-03-27 (r6188) Alexander Chernov  <cher@ejudge.ru>
 
 	* main.make, Makefile.in:

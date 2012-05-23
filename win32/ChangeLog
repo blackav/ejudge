@@ -1,3 +1,23 @@
+2012-05-03 (r6790) Alexander Chernov  <cher@ejudge.ru>
+
+	* full_archive.c:
+	win32 fixes
+
+2012-04-17 (r6748) Alexander Chernov  <cher@ejudge.ru>
+
+	* reuse_exec.c:
+	(task_IgnoreSIGPIPE) new function.
+
+2012-03-23 (r6671) Alexander Chernov  <cher@ejudge.ru>
+
+	* startstop.c: copyright notice is updated;
+	(start_daemon) new function dummy.
+
+2012-01-01 (r6604) Alexander Chernov  <cher@ejudge.ru>
+
+	* pollfds.c:
+	initial revision
+
 2011-04-04 (r6227) Alexander Chernov  <cher@ejudge.ru>
 
 	* reuse_exec.c, reuse_getlastname.c, reuse_getsignalstring.c, reuse_nodename.c, reuse_isabsolutepath.c, reuse_sleep.c, reuse_isfile.c, files_win32.make, reuse_checkaccess.c, reuse_dirname.c, reuse_getworkingdir.c, reuse_logger.c, reuse_errormsg.c:
