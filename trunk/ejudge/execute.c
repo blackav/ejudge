@@ -131,7 +131,7 @@ parse_int(const unsigned char *name, const unsigned char *opt, int *pval,
 
 static void
 parse_size(const unsigned char *name, const unsigned char *opt,
-           long long *pval, long long minval, long long maxval)
+           long long *pval, long long minval)
 {
   int n;
   long long v;
@@ -151,7 +151,14 @@ parse_size(const unsigned char *name, const unsigned char *opt,
     n++;
   }
   if (opt[n]) goto invalid_value;
-  if (v < minval || v > maxval) goto invalid_value;
+  if (v < minval) goto invalid_value;
+  if (sizeof(size_t) == 4) {
+    if (v >= 0x80000000U) goto invalid_value;
+  } else if (sizeof(size_t) == 8) {
+    if (v >= 0x8000000000000000LLU) goto invalid_value;
+  } else {
+    abort();
+  }
   *pval = v;
   return;
 
@@ -403,11 +410,11 @@ handle_options(const unsigned char *opt)
   } else if (!strcmp("--use-stdout", opt)) {
     use_stdout = 1;
   } else if ((p = check_option((n = "--max-vm-size"), opt))) {
-    parse_size(n, p, &max_vm_size, 4096, 1 << 30);
+    parse_size(n, p, &max_vm_size, 4096);
   } else if ((p = check_option((n = "--max-stack-size"), opt))) {
-    parse_size(n, p, &max_stack_size, 4096, 1 << 30);
+    parse_size(n, p, &max_stack_size, 4096);
   } else if ((p = check_option((n = "--max-data-size"), opt))) {
-    parse_size(n, p, &max_data_size, 4096, 1 << 30);
+    parse_size(n, p, &max_data_size, 4096);
   } else if ((p = check_option((n = "--mode"), opt))) {
     parse_mode(n, p, &mode);
   } else if ((p = check_option((n = "--group"), opt))) {

@@ -1516,8 +1516,8 @@ make_java_limits(unsigned char *buf, int blen, size_t max_vm_size, size_t max_st
 {
   unsigned char bv[1024], bs[1024];
 
-  if (max_vm_size == (ssize_t) -1) max_vm_size = 0;
-  if (max_stack_size == (ssize_t) -1) max_stack_size = 0;
+  if (max_vm_size == (ssize_t) -1L) max_vm_size = 0;
+  if (max_stack_size == (ssize_t) -1L) max_stack_size = 0;
   buf[0] = 0;
   if (max_vm_size && max_stack_size) {
     snprintf(buf, blen, "EJUDGE_JAVA_FLAGS=-Xmx%s -Xss%s",
@@ -1538,7 +1538,7 @@ make_mono_limits(unsigned char *buf, int blen, size_t max_vm_size, size_t max_st
 {
   unsigned char bv[1024];
   // stack limit is not supported
-  if (max_vm_size == (ssize_t) -1) max_vm_size = 0;
+  if (max_vm_size == (ssize_t) -1L) max_vm_size = 0;
   buf[0] = 0;
   if (max_vm_size) {
     snprintf(buf, blen, "MONO_GC_PARAMS=max-heap-size=%s",

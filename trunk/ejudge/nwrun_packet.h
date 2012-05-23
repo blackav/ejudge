@@ -3,7 +3,7 @@
 #ifndef __NWRUN_PACKET_H__
 #define __NWRUN_PACKET_H__
 
-/* Copyright (C) 2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -45,9 +45,9 @@ struct nwrun_in_packet
   int combined_stdout;
   int time_limit_millis;
   int real_time_limit_millis;
-  int max_stack_size;
-  int max_data_size;
-  int max_vm_size;
+  size_t max_stack_size;
+  size_t max_data_size;
+  size_t max_vm_size;
   int max_output_file_size;
   int max_error_file_size;
   int enable_memory_limit_error;
@@ -92,7 +92,7 @@ struct nwrun_out_packet
   int real_time_millis;
   int real_time_available;
 
-  int max_memory_used;
+  size_t max_memory_used;
 
   int is_signaled;
   int signal_num;
