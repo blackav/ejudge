@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -106,6 +106,9 @@ run_init(teamdb_state_t ts)
   XCALLOC(p, 1);
   p->teamdb_state = ts;
   p->user_flags.nuser = -1;
+
+  p->max_user_id = -1;
+  p->user_count = -1;
 
   return p;
 }
@@ -409,6 +412,12 @@ run_add_record(
     memcpy(re.sha1, sha1, sizeof(state->runs[i].sha1));
     flags |= RE_SHA1;
   }
+
+  if (state->max_user_id >= 0 && re.user_id > state->max_user_id) {
+    state->max_user_id = re.user_id;
+  }
+  state->user_count = -1;
+
   if (state->iface->add_entry(state->cnts, i, &re, flags) < 0) return -1;
   return i;
 }
@@ -420,6 +429,7 @@ run_undo_add_record(runlog_state_t state, int run_id)
     err("run_undo_add_record: invalid run_id");
     return -1;
   }
+  state->user_count = -1;
   return state->iface->undo_add_entry(state->cnts, run_id);
 }
 
@@ -841,6 +851,8 @@ run_reset(
   xfree(state->ut_table);
   state->ut_table = 0;
   state->ut_size = 0;
+  state->max_user_id = -1;
+  state->user_count = -1;
 
   return state->iface->reset(state->cnts, init_duration, init_sched_time,
                              init_finish_time);
@@ -1049,6 +1061,8 @@ run_set_entry(
   if ((mask & RE_USER_ID) && te.user_id != in->user_id) {
     te.user_id = in->user_id;
     f = 1;
+    state->max_user_id = -1;
+    state->user_count = -1;
   }
   if ((mask & RE_PROB_ID) && te.prob_id != in->prob_id) {
     te.prob_id = in->prob_id;
@@ -1323,6 +1337,12 @@ run_virtual_start(
   re.status = RUN_VIRTUAL_START;
   pvt->start_time = t;
   pvt->status = V_VIRTUAL_USER;
+
+  if (state->max_user_id >= 0 && user_id > state->max_user_id) {
+    state->max_user_id = user_id;
+  }
+  state->user_count = -1;
+
   return state->iface->add_entry(state->cnts, i, &re, RE_USER_ID | RE_IP | RE_SSL_FLAG | RE_STATUS);
 }
 
@@ -1373,6 +1393,12 @@ run_virtual_stop(
   re.ssl_flag = ssl_flag;
   re.status = RUN_VIRTUAL_STOP;
   pvt->stop_time = t;
+
+  if (state->max_user_id >= 0 && user_id > state->max_user_id) {
+    state->max_user_id = user_id;
+  }
+  state->user_count = -1;
+
   return state->iface->add_entry(state->cnts, i, &re, RE_USER_ID | RE_IP | RE_SSL_FLAG | RE_STATUS);
 }
 
@@ -1423,6 +1449,10 @@ run_clear_entry(runlog_state_t state, int run_id)
     /* maybe update indices */
     break;
   }
+
+  state->max_user_id = -1;
+  state->user_count = -1;
+
   return state->iface->clear_entry(state->cnts, run_id);
 }
 
@@ -1430,6 +1460,10 @@ int
 run_forced_clear_entry(runlog_state_t state, int run_id)
 {
   if (run_id < 0 || run_id >= state->run_u) ERR_R("bad runid: %d", run_id);
+
+  state->max_user_id = -1;
+  state->user_count = -1;
+
   return state->iface->clear_entry(state->cnts, run_id);
 }
 
@@ -1883,6 +1917,8 @@ build_indices(runlog_state_t state)
   }
   if (max_team_id <= 0) return;
 
+  state->max_user_id = max_team_id;
+
   state->ut_size = 128;
   while (state->ut_size <= max_team_id)
     state->ut_size *= 2;
@@ -2100,6 +2136,44 @@ run_get_all_statistics(
   }
 }
 
+int
+run_get_max_user_id(runlog_state_t state)
+{
+  if (state->max_user_id < 0) {
+    int max_user_id = 0;
+    for (int i = 0; i < state->run_u; ++i) {
+      const struct run_entry *p = &state->runs[i];
+      if (p->status != RUN_EMPTY && p->user_id > 0 && p->user_id > max_user_id) {
+        max_user_id = p->user_id;
+      }
+    }
+    state->max_user_id = max_user_id;
+  }
+  return state->max_user_id;
+}
+
+int
+run_get_total_users(runlog_state_t state)
+{
+  if (state->user_count < 0) {
+    int user_id_bound = run_get_max_user_id(state) + 1;
+    int user_count = 0;
+    if (user_id_bound > 1) {
+      unsigned char *map = (unsigned char*) xcalloc(user_id_bound, sizeof(map[0]));
+      for (int run_id = 0; run_id < state->run_u; ++run_id) {
+        const struct run_entry *p = &state->runs[run_id];
+        if (p->status != RUN_EMPTY && p->user_id > 0 && p->user_id < user_id_bound) {
+          map[p->user_id] = 1;
+        }
+      }
+      for (int user_id = 1; user_id < user_id_bound; ++user_id) {
+        user_count += map[user_id];
+      }
+    }
+    state->user_count = user_count;
+  }
+  return state->user_count;
+}
 
 /*
  * Local variables:

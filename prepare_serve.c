@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -24,6 +24,7 @@
 #include "teamdb.h"
 #include "errlog.h"
 #include "serve_state.h"
+#include "runlog.h"
 
 #include "reuse_xalloc.h"
 
@@ -52,7 +53,11 @@ find_variant(
     pmap->user_map_size = 0;
     pmap->user_map = 0;
 
-    pmap->user_map_size = teamdb_get_max_team_id(state->teamdb_state) + 1;
+    if (state->global->disable_user_database > 0) {
+      pmap->user_map_size = run_get_max_user_id(state->runlog_state) + 1;
+    } else {
+      pmap->user_map_size = teamdb_get_max_team_id(state->teamdb_state) + 1;
+    }
     XCALLOC(pmap->user_map, pmap->user_map_size);
 
     for (i = 0; i < pmap->u; i++) {
@@ -102,7 +107,11 @@ find_user_variant(
     pmap->user_map_size = 0;
     pmap->user_map = 0;
 
-    pmap->user_map_size = teamdb_get_max_team_id(state->teamdb_state) + 1;
+    if (state->global->disable_user_database > 0) {
+      pmap->user_map_size = run_get_max_user_id(state->runlog_state) + 1;
+    } else {
+      pmap->user_map_size = teamdb_get_max_team_id(state->teamdb_state) + 1;
+    }
     XCALLOC(pmap->user_map, pmap->user_map_size);
 
     for (i = 0; i < pmap->u; i++) {
@@ -146,7 +155,11 @@ find_user_priority_adjustment(const serve_state_t state, int user_id)
     }
     xfree(pmap->user_map);
 
-    pmap->user_map_size = teamdb_get_max_team_id(state->teamdb_state) + 1;
+    if (state->global->disable_user_database > 0) {
+      pmap->user_map_size = run_get_max_user_id(state->runlog_state) + 1;
+    } else {
+      pmap->user_map_size = teamdb_get_max_team_id(state->teamdb_state) + 1;
+    }
     XCALLOC(pmap->user_map, pmap->user_map_size);
 
     for (i = 0; pinfo[i].login; i++) {
@@ -202,6 +215,5 @@ prepare_serve_defaults(serve_state_t state, const struct contest_desc **p_cnts)
 /*
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  * End:
  */

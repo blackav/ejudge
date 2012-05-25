@@ -1074,7 +1074,11 @@ generate_daily_statistics(
    * u_ind[0..u_tot-1] - index array:   team_idx -> team_id
    * u_rev[0..u_max-1] - reverse index: team_id -> team_idx
    */
-  u_max = teamdb_get_max_team_id(state->teamdb_state) + 1;
+  if (state->global->disable_user_database > 0) {
+    u_max = run_get_max_user_id(state->runlog_state) + 1;
+  } else {
+    u_max = teamdb_get_max_team_id(state->teamdb_state) + 1;
+  }
   XALLOCAZ(u_ind, u_max);
   XALLOCAZ(u_rev, u_max);
   XALLOCAZ(u_reg, u_max);

@@ -4,7 +4,7 @@
 #ifndef __RUNLOG_STATE_H__
 #define __RUNLOG_STATE_H__
 
-/* Copyright (C) 2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -58,6 +58,9 @@ struct runlog_state
   int ut_size;
   struct user_entry **ut_table;
   struct user_flags_info_s user_flags;
+
+  int max_user_id;
+  int user_count;
 
   // the managing plugin information
   struct rldb_plugin_iface *iface;

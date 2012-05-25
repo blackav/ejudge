@@ -764,7 +764,11 @@ unparse_runlog_xml(
     fprintf(f, "  <%s>%s</%s>\n", elem_map[RUNLOG_T_NAME],
             val1, elem_map[RUNLOG_T_NAME]);
     fprintf(f, "  <%s>\n", elem_map[RUNLOG_T_USERS]);
-    max_user_id = teamdb_get_max_team_id(state->teamdb_state);
+    if (global->disable_user_database > 0) {
+      max_user_id = run_get_max_user_id(state->runlog_state);
+    } else {
+      max_user_id = teamdb_get_max_team_id(state->teamdb_state);
+    }
     for (i = 1; i <= max_user_id; i++) {
       if (teamdb_lookup(state->teamdb_state, i) <= 0) continue;
       if ((flags = teamdb_get_flags(state->teamdb_state, i)) < 0) continue;

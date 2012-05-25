@@ -554,12 +554,17 @@ serve_create_symlinks(serve_state_t state)
   unsigned char dst_path[PATH_MAX];
   path_t stand_file;
   int npages, pgn;
+  int total_users = 0;
 
   if (state->global->stand_symlink_dir[0] && state->global->htdocs_dir[0]) {
     if (state->global->users_on_page > 0) {
       // FIXME: check, that standings_file_name depends on page number
-      npages = (teamdb_get_total_teams(state->teamdb_state)
-                + state->global->users_on_page - 1)
+      if (state->global->disable_user_database > 0) {
+        total_users = run_get_total_users(state->runlog_state);
+      } else {
+        total_users = teamdb_get_total_teams(state->teamdb_state);
+      }
+      npages = (total_users + state->global->users_on_page - 1)
         / state->global->users_on_page;
       for (pgn = 0; pgn < npages; pgn++) {
         if (!pgn) {
@@ -3233,7 +3238,11 @@ serve_rejudge_problem(
       && !state->accepting_mode) {
     // rejudge only "ACCEPTED", "OK", "PARTIAL SOLUTION" runs,
     // considering only the last run for the given participant
-    total_ids = teamdb_get_max_team_id(state->teamdb_state) + 1;
+    if (state->global->disable_user_database > 0) {
+      total_ids = run_get_max_user_id(state->runlog_state) + 1;
+    } else {
+      total_ids = teamdb_get_max_team_id(state->teamdb_state) + 1;
+    }
 
     if (total_ids <= 0) return;
     flag = (unsigned char *) alloca(total_ids);
@@ -3311,7 +3320,11 @@ serve_rejudge_all(
     // rejudge only "ACCEPTED", "OK", "PARTIAL SOLUTION" runs,
     // considering only the last run for the given problem and
     // the given participant
-    total_ids = teamdb_get_max_team_id(state->teamdb_state) + 1;
+    if (state->global->disable_user_database > 0) {
+      total_ids = run_get_max_user_id(state->runlog_state) + 1;
+    } else {
+      total_ids = teamdb_get_max_team_id(state->teamdb_state) + 1;
+    }
     total_probs = state->max_prob + 1;
     size = total_ids * total_probs;
 
