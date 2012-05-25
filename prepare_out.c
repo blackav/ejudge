@@ -490,6 +490,10 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
     unparse_bool(f, "ignore_bom", global->ignore_bom);
   if (global->disable_auto_refresh > 0)
     unparse_bool(f, "disable_auto_refresh", global->disable_auto_refresh);
+  if (global->disable_user_database > 0)
+    unparse_bool(f, "disable_user_database", global->disable_user_database);
+  if (global->enable_max_stack_size > 0)
+    unparse_bool(f, "enable_max_stack_size", global->enable_max_stack_size);
 
   //???
   unparse_bool(f, "enable_l10n", global->enable_l10n);

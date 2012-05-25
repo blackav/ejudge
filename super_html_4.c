@@ -1108,6 +1108,7 @@ static const struct cnts_edit_info cnts_global_info[] =
   { NS_GLOBAL, CNTSGLOB_secure_run, 'Y', 1, 0, 0, 0, 0, "Run programs securely", "Run programs securely (needs kernel patch)", 0 },
   { NS_GLOBAL, CNTSGLOB_enable_memory_limit_error, 'Y', 1, 0, 0, 0, 0, "Enable support for MemoryLimit error", "Enable support for MemoryLimit error (needs kernel patch)", 0 },
   { NS_GLOBAL, CNTSGLOB_detect_violations, 'Y', 1, 0, 0, 0, 0, "Detect security violations", "Detect security violations (needs kernel patch)", 0 },
+  { NS_GLOBAL, CNTSGLOB_enable_max_stack_size, 'Y', 1, 0, 0, 0, 0, "Assume max_stack_size == max_vm_size", 0, 0 },
   { NS_GLOBAL, CNTSGLOB_standings_locale, 134, 1, 1, 0, 1, 0, "Standings locale", 0, 0 },
 
   { NS_SID_STATE, SSSS_show_global_1, '-', 1, 0, 0, 0, 0, "Contestant's capabilities", 0, 0 },
@@ -1240,6 +1241,7 @@ static const struct cnts_edit_info cnts_global_info[] =
   { NS_GLOBAL, CNTSGLOB_enable_continue, 'Y', 1, 0, 0, 0, 0, "Enable contest continuation", 0, "SidState.show_global_6" },
   { NS_GLOBAL, CNTSGLOB_enable_report_upload, 'Y', 1, 0, 0, 0, 0, "Enable testing protocol upload", 0, "SidState.show_global_6" },
   { NS_GLOBAL, CNTSGLOB_enable_runlog_merge, 'Y', 1, 0, 0, 0, 0, "Enable run database merging", 0, "SidState.show_global_6" },
+  { NS_GLOBAL, CNTSGLOB_disable_user_database, 'Y', 1, 0, 0, 0, 0, "Disable loading of the user database", 0, "SidState.show_global_6" },
   { NS_GLOBAL, CNTSGLOB_enable_l10n, 'Y', 1, 0, 0, 0, 0, "Enable message translation", 0, "SidState.show_global_6" },
   { NS_GLOBAL, CNTSGLOB_charset, 'S', 1, 1, 1, 1, 0, "Character set", 0, "SidState.show_global_6" },
   { NS_GLOBAL, CNTSGLOB_standings_charset, 'S', 1, 1, 1, 1, 0, "Standings character set", 0, "SidState.show_global_6" },

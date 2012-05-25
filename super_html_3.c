@@ -293,6 +293,8 @@ static const unsigned char * const action_to_help_url_map[SSERV_CMD_LAST] =
   [SSERV_CMD_GLOB_CHANGE_ENABLE_FULL_ARCHIVE] = "Serve.cfg:global:enable_full_archive",
   [SSERV_CMD_GLOB_CHANGE_ADVANCED_LAYOUT] = "Serve.cfg:global:advanced_layout",
   [SSERV_CMD_GLOB_CHANGE_IGNORE_BOM] = "Serve.cfg:global:ignore_bom",
+  [SSERV_CMD_GLOB_CHANGE_DISABLE_USER_DATABASE] = "Serve.cfg:global:disable_user_database",
+  [SSERV_CMD_GLOB_CHANGE_ENABLE_MAX_STACK_SIZE] = "Serve.cfg:global:enable_max_stack_size",
   [SSERV_CMD_GLOB_CHANGE_DISABLE_AUTO_REFRESH] = "Serve.cfg:global:disable_auto_refresh",
   [SSERV_CMD_GLOB_CHANGE_ALWAYS_SHOW_PROBLEMS] = "Serve.cfg:global:always_show_problems",
   [SSERV_CMD_GLOB_CHANGE_DISABLE_USER_STANDINGS] = "Serve.cfg:global:disable_user_standings",
@@ -1084,6 +1086,13 @@ super_html_edit_global_parameters(FILE *f,
   print_boolean_select_row(f, "Detect security violations:",
                            global->detect_violations,
                            SSERV_CMD_GLOB_CHANGE_DETECT_VIOLATIONS,
+                           session_id, form_row_attrs[row ^= 1],
+                           self_url, extra_args, hidden_vars);
+
+  //GLOBAL_PARAM(enable_max_stack_size, "d"),
+  print_boolean_select_row(f, "Assume max_stack_size == max_vm_size:",
+                           global->enable_max_stack_size,
+                           SSERV_CMD_GLOB_CHANGE_ENABLE_MAX_STACK_SIZE,
                            session_id, form_row_attrs[row ^= 1],
                            self_url, extra_args, hidden_vars);
 
@@ -2607,6 +2616,17 @@ super_html_edit_global_parameters(FILE *f,
     print_help_url(f, SSERV_CMD_GLOB_CHANGE_ENABLE_RUNLOG_MERGE);
     fprintf(f, "</tr></form>\n");
 
+    //GLOBAL_PARAM(disable_user_database, "d"),
+    html_start_form(f, 1, self_url, hidden_vars);
+    fprintf(f, "<tr%s><td>Disable user database loading:</td><td>",
+            form_row_attrs[row ^= 1]);
+    html_boolean_select(f, global->disable_user_database, "param", 0, 0);
+    fprintf(f, "</td><td>");
+    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_DISABLE_USER_DATABASE, "Change");
+    fprintf(f, "</td>");
+    print_help_url(f, SSERV_CMD_GLOB_CHANGE_DISABLE_USER_DATABASE);
+    fprintf(f, "</tr></form>\n");
+
     //GLOBAL_PARAM(enable_l10n, "d"),
     html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<tr%s><td>Enable message translation:</td><td>",
@@ -2960,6 +2980,14 @@ super_html_global_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_GLOB_CHANGE_IGNORE_BOM:
     p_int = &global->ignore_bom;
+    goto handle_boolean;
+
+  case SSERV_CMD_GLOB_CHANGE_DISABLE_USER_DATABASE:
+    p_int = &global->disable_user_database;
+    goto handle_boolean;
+
+  case SSERV_CMD_GLOB_CHANGE_ENABLE_MAX_STACK_SIZE:
+    p_int = &global->enable_max_stack_size;
     goto handle_boolean;
 
   case SSERV_CMD_GLOB_CHANGE_DISABLE_AUTO_REFRESH:

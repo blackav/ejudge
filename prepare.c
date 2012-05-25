@@ -116,6 +116,8 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(advanced_layout, "d"),
   GLOBAL_PARAM(ignore_bom, "d"),
   GLOBAL_PARAM(disable_auto_refresh, "d"),
+  GLOBAL_PARAM(disable_user_database, "d"),
+  GLOBAL_PARAM(enable_max_stack_size, "d"),
 
   GLOBAL_PARAM(stand_ignore_after, "t"),
   GLOBAL_PARAM(appeal_deadline, "t"),
@@ -793,6 +795,8 @@ global_init_func(struct generic_section_config *gp)
   p->advanced_layout = -1;
   p->ignore_bom = -1;
   p->disable_auto_refresh = -1;
+  p->disable_user_database = -1;
+  p->enable_max_stack_size = -1;
 
   p->compile_max_vm_size = -1L;
   p->compile_max_stack_size = -1L;
