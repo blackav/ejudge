@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/05/05 21:19:14
+// Generated 2012/05/25 11:41:20
 
 #include "prepare_meta.h"
 #include "prepare.h"
@@ -35,6 +35,8 @@ static struct meta_info_item meta_info_section_global_data_data[] =
   [CNTSGLOB_enable_memory_limit_error] = { CNTSGLOB_enable_memory_limit_error, 'B', XSIZE(struct section_global_data, enable_memory_limit_error), "enable_memory_limit_error", XOFFSET(struct section_global_data, enable_memory_limit_error) },
   [CNTSGLOB_advanced_layout] = { CNTSGLOB_advanced_layout, 'B', XSIZE(struct section_global_data, advanced_layout), "advanced_layout", XOFFSET(struct section_global_data, advanced_layout) },
   [CNTSGLOB_ignore_bom] = { CNTSGLOB_ignore_bom, 'B', XSIZE(struct section_global_data, ignore_bom), "ignore_bom", XOFFSET(struct section_global_data, ignore_bom) },
+  [CNTSGLOB_disable_user_database] = { CNTSGLOB_disable_user_database, 'B', XSIZE(struct section_global_data, disable_user_database), "disable_user_database", XOFFSET(struct section_global_data, disable_user_database) },
+  [CNTSGLOB_enable_max_stack_size] = { CNTSGLOB_enable_max_stack_size, 'B', XSIZE(struct section_global_data, enable_max_stack_size), "enable_max_stack_size", XOFFSET(struct section_global_data, enable_max_stack_size) },
   [CNTSGLOB_stand_ignore_after] = { CNTSGLOB_stand_ignore_after, 't', XSIZE(struct section_global_data, stand_ignore_after), "stand_ignore_after", XOFFSET(struct section_global_data, stand_ignore_after) },
   [CNTSGLOB_contest_finish_time] = { CNTSGLOB_contest_finish_time, 't', XSIZE(struct section_global_data, contest_finish_time), "contest_finish_time", XOFFSET(struct section_global_data, contest_finish_time) },
   [CNTSGLOB_appeal_deadline] = { CNTSGLOB_appeal_deadline, 't', XSIZE(struct section_global_data, appeal_deadline), "appeal_deadline", XOFFSET(struct section_global_data, appeal_deadline) },
