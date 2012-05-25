@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/05/03 08:27:40
+// Generated 2012/05/25 11:41:20
 
 #include "super_run_packet_meta.h"
 #include "super_run_packet.h"
@@ -28,6 +28,7 @@ static struct meta_info_item meta_info_super_run_in_global_packet_data[] =
   [META_SUPER_RUN_IN_GLOBAL_PACKET_secure_run] = { META_SUPER_RUN_IN_GLOBAL_PACKET_secure_run, 'B', XSIZE(struct super_run_in_global_packet, secure_run), "secure_run", XOFFSET(struct super_run_in_global_packet, secure_run) },
   [META_SUPER_RUN_IN_GLOBAL_PACKET_detect_violations] = { META_SUPER_RUN_IN_GLOBAL_PACKET_detect_violations, 'B', XSIZE(struct super_run_in_global_packet, detect_violations), "detect_violations", XOFFSET(struct super_run_in_global_packet, detect_violations) },
   [META_SUPER_RUN_IN_GLOBAL_PACKET_enable_memory_limit_error] = { META_SUPER_RUN_IN_GLOBAL_PACKET_enable_memory_limit_error, 'B', XSIZE(struct super_run_in_global_packet, enable_memory_limit_error), "enable_memory_limit_error", XOFFSET(struct super_run_in_global_packet, enable_memory_limit_error) },
+  [META_SUPER_RUN_IN_GLOBAL_PACKET_enable_max_stack_size] = { META_SUPER_RUN_IN_GLOBAL_PACKET_enable_max_stack_size, 'B', XSIZE(struct super_run_in_global_packet, enable_max_stack_size), "enable_max_stack_size", XOFFSET(struct super_run_in_global_packet, enable_max_stack_size) },
   [META_SUPER_RUN_IN_GLOBAL_PACKET_user_id] = { META_SUPER_RUN_IN_GLOBAL_PACKET_user_id, 'i', XSIZE(struct super_run_in_global_packet, user_id), "user_id", XOFFSET(struct super_run_in_global_packet, user_id) },
   [META_SUPER_RUN_IN_GLOBAL_PACKET_user_login] = { META_SUPER_RUN_IN_GLOBAL_PACKET_user_login, 's', XSIZE(struct super_run_in_global_packet, user_login), "user_login", XOFFSET(struct super_run_in_global_packet, user_login) },
   [META_SUPER_RUN_IN_GLOBAL_PACKET_user_name] = { META_SUPER_RUN_IN_GLOBAL_PACKET_user_name, 's', XSIZE(struct super_run_in_global_packet, user_name), "user_name", XOFFSET(struct super_run_in_global_packet, user_name) },

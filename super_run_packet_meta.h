@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/05/03 08:27:40
+// Generated 2012/05/25 11:41:20
 
 #ifndef __SUPER_RUN_PACKET_META_H__
 #define __SUPER_RUN_PACKET_META_H__
@@ -23,6 +23,7 @@ enum
   META_SUPER_RUN_IN_GLOBAL_PACKET_secure_run,
   META_SUPER_RUN_IN_GLOBAL_PACKET_detect_violations,
   META_SUPER_RUN_IN_GLOBAL_PACKET_enable_memory_limit_error,
+  META_SUPER_RUN_IN_GLOBAL_PACKET_enable_max_stack_size,
   META_SUPER_RUN_IN_GLOBAL_PACKET_user_id,
   META_SUPER_RUN_IN_GLOBAL_PACKET_user_login,
   META_SUPER_RUN_IN_GLOBAL_PACKET_user_name,
