@@ -54,6 +54,13 @@ teamdb_init(int contest_id)
   return state;
 }
 
+void teamdb_disable(teamdb_state_t state, int disable_flag)
+{
+  if (state && disable_flag > 0) {
+    state->disabled = 1;
+  }
+}
+
 void
 teamdb_register_update_hook(teamdb_state_t state, void (*func)(void *),
                             void *user_ptr)
@@ -160,6 +167,8 @@ teamdb_refresh(teamdb_state_t state)
   size_t xml_size = 0;
   const struct contest_desc *cnts = 0;
   int user_contest_id = state->contest_id;
+
+  if (state->disabled) return 0;
 
   if (state->contest_id > 0) contests_get(state->contest_id, &cnts);
   if (cnts && cnts->user_contest_num) user_contest_id = cnts->user_contest_num;
@@ -306,6 +315,7 @@ teamdb_open_client(teamdb_state_t state, unsigned char const *socket_path,
   state->contest_id = id;
   state->old.server_path = xstrdup(socket_path);
   state->callbacks = 0;
+  if (state->disabled) return 0;
   if (open_connection(&state->old, state->contest_id) < 0) return -1;
   if (teamdb_refresh(state) < 0) return -1;
   return 0;
@@ -314,6 +324,10 @@ teamdb_open_client(teamdb_state_t state, unsigned char const *socket_path,
 /*inline*/ int
 teamdb_lookup_client(teamdb_state_t state, int teamno)
 {
+  if (state->disabled) {
+    if (teamno <= 0) return 0;
+    return 1;
+  }
   if (!state->users || teamno <= 0 || teamno >= state->users->user_map_size
       || !state->users->user_map[teamno]) return 0;
   return 1;
@@ -330,6 +344,8 @@ int
 teamdb_lookup_login(teamdb_state_t state, char const *login)
 {
   int i;
+
+  if (state->disabled) return -1;
 
   if (teamdb_refresh(state) < 0) return -1;
   if (!state->participants) return -1;
@@ -348,6 +364,8 @@ teamdb_lookup_name(teamdb_state_t state, char const *name)
   int i;
   const unsigned char *v;
   const struct userlist_user *u = 0;
+
+  if (state->disabled) return -1;
 
   if (teamdb_refresh(state) < 0) return -1;
   if (!state->participants) return -1;
@@ -371,6 +389,8 @@ teamdb_lookup_cypher(teamdb_state_t state, char const *cypher)
   const struct userlist_user *u;
   const struct userlist_user_info *ui;
 
+  if (state->disabled) return -1;
+
   if (teamdb_refresh(state) < 0) return -1;
   if (!state->participants) return -1;
   for (i = 0; i < state->total_participants; i++) {
@@ -386,6 +406,13 @@ char *
 teamdb_get_login(teamdb_state_t state, int teamid)
 {
   unsigned char *login = 0;
+
+  if (state->disabled) {
+    static unsigned char login_buf[64];
+    snprintf(login_buf, sizeof(login_buf), "User #%d", teamid);
+    return login_buf;
+  }
+
   if (teamdb_refresh(state) < 0) return 0;
   if (!teamdb_lookup_client(state, teamid)) {
     err("teamdb_get_login: bad id: %d", teamid);
@@ -401,6 +428,12 @@ teamdb_get_name(teamdb_state_t state, int teamid)
 {
   unsigned char *name = 0;
   const struct userlist_user_info *ui = 0;
+
+  if (state->disabled) {
+    static unsigned char login_buf[64];
+    snprintf(login_buf, sizeof(login_buf), "User #%d", teamid);
+    return login_buf;
+  }
 
   if (teamdb_refresh(state) < 0) return 0;
   if (!teamdb_lookup_client(state, teamid)) {
@@ -419,6 +452,12 @@ teamdb_get_name_2(teamdb_state_t state, int teamid)
   unsigned char *name = 0;
   const struct userlist_user_info *ui = 0;
 
+  if (state->disabled) {
+    static unsigned char login_buf[64];
+    snprintf(login_buf, sizeof(login_buf), "User #%d", teamid);
+    return login_buf;
+  }
+
   if (teamdb_refresh(state) < 0) return 0;
   if (!teamdb_lookup_client(state, teamid)) {
     err("teamdb_get_login: bad id: %d", teamid);
@@ -434,6 +473,12 @@ const unsigned char *
 teamdb_get_cypher(teamdb_state_t state, int user_id)
 {
   const struct userlist_user_info *ui = 0;
+
+  if (state->disabled) {
+    static unsigned char login_buf[64];
+    snprintf(login_buf, sizeof(login_buf), "User #%d", user_id);
+    return login_buf;
+  }
 
   if (teamdb_refresh(state) < 0) return 0;
   if (!teamdb_lookup_client(state, user_id)) {
@@ -471,6 +516,8 @@ teamdb_convert_flags(int old_flags)
 int
 teamdb_get_flags(teamdb_state_t state, int id)
 {
+  if (state->disabled) return 0;
+
   if (teamdb_refresh(state) < 0) return TEAM_BANNED;
   if (!teamdb_lookup_client(state, id)) {
     err("teamdb_get_flags: bad team id %d (contest_id %d)", id,
@@ -484,6 +531,8 @@ teamdb_get_flags(teamdb_state_t state, int id)
 const struct userlist_user *
 teamdb_get_userlist(teamdb_state_t state, int user_id)
 {
+  if (state->disabled) return 0;
+
   if (teamdb_refresh(state) < 0) return 0;
   if (!teamdb_lookup_client(state, user_id)) {
     err("teamdb_get_login: bad id: %d", user_id);
@@ -495,6 +544,8 @@ teamdb_get_userlist(teamdb_state_t state, int user_id)
 int
 teamdb_get_max_team_id(teamdb_state_t state)
 {
+  if (state->disabled) return 0;
+
   if (teamdb_refresh(state) < 0) return 0;
   return state->users->user_map_size - 1;
 }
@@ -502,6 +553,8 @@ teamdb_get_max_team_id(teamdb_state_t state)
 int
 teamdb_get_total_teams(teamdb_state_t state)
 {
+  if (state->disabled) return 0;
+
   if (teamdb_refresh(state) < 0) return 0;
   return state->total_participants;
 }
@@ -512,6 +565,14 @@ teamdb_export_team(teamdb_state_t state, int tid, struct teamdb_export *pdata)
   struct userlist_user *uu;
   unsigned char *u_login, *u_name = 0;
   int u_flags;
+
+  if (state->disabled) {
+    XMEMZERO(pdata, 1);
+    pdata->id = tid;
+    snprintf(pdata->login, sizeof(pdata->login), "User #%d", tid);
+    snprintf(pdata->name, sizeof(pdata->name), "User #%d", tid);
+    return 0;
+  }
 
   if (teamdb_refresh(state) < 0) return -1;
   if (!teamdb_lookup_client(state, tid)) {
@@ -626,6 +687,12 @@ teamdb_get_user_status_map(teamdb_state_t state, int *p_size, int **p_map)
   int *map = 0;
   struct userlist_contest *uc;
   int old_flags, new_flags;
+
+  if (state->disabled) {
+    *p_size = 0;
+    *p_map = 0;
+    return 0;
+  }
 
   if (teamdb_refresh(state) < 0) return -1;
 

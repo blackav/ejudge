@@ -44,6 +44,8 @@ struct userlist_user;
 teamdb_state_t teamdb_init(int contest_id);
 teamdb_state_t teamdb_destroy(teamdb_state_t);
 
+void teamdb_disable(teamdb_state_t state, int disable_flag);
+
 int teamdb_open_client(teamdb_state_t state,
                        unsigned char const *socket_path, int contest_id);
 int teamdb_set_callbacks(teamdb_state_t state,
