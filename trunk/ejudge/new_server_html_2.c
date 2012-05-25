@@ -3702,7 +3702,11 @@ ns_write_online_users(
           cl, _("User name"),
           cl, _("IP address"));
 
-  max_user_id = teamdb_get_max_team_id(cs->teamdb_state);
+  if (cs->global->disable_user_database > 0) {
+    max_user_id = run_get_max_user_id(cs->runlog_state);
+  } else {
+    max_user_id = teamdb_get_max_team_id(cs->teamdb_state);
+  }
   for (i = 1; i <= max_user_id; i++) {
     if (i >= extra->user_access_idx.a) continue;
     if ((j = extra->user_access_idx.v[i]) < 0) continue;
@@ -3807,7 +3811,11 @@ ns_write_user_ips(
     ui->ips[ui->ip_u++] = re.a.ip;
   }
 
-  max_user_id = teamdb_get_max_team_id(cs->teamdb_state);
+  if (cs->global->disable_user_database > 0) {
+    max_user_id = run_get_max_user_id(cs->runlog_state);
+  } else {
+    max_user_id = teamdb_get_max_team_id(cs->teamdb_state);
+  }
   for (i = 1; i < u_a && i <= max_user_id; ++i) {
     if (!(ui = uu[i])) continue;
     if (!teamdb_lookup(cs->teamdb_state, i)) continue;
@@ -6452,7 +6460,11 @@ ns_get_user_problems_summary(
   time_t start_time;
 
   total_runs = run_get_total(cs->runlog_state);
-  total_teams = teamdb_get_max_team_id(cs->teamdb_state) + 1;
+  if (global->disable_user_database > 0) {
+    total_teams = run_get_max_user_id(cs->runlog_state) + 1;
+  } else {
+    total_teams = teamdb_get_max_team_id(cs->teamdb_state) + 1;
+  }
   separate_user_score = global->separate_user_score > 0 && cs->online_view_judge_score <= 0;
 
   if (global->is_virtual) {

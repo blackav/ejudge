@@ -6470,6 +6470,9 @@ priv_assign_cyphers_2(
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   unsigned char *csv_reply = 0;
 
+  if (cs->global->disable_user_database > 0)
+    FAIL(NEW_SRV_ERR_INV_ACTION);
+
   if (phr->role < USER_ROLE_ADMIN)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   if (opcaps_check(phr->caps, OPCAP_EDIT_REG) < 0)

@@ -1397,9 +1397,13 @@ do_write_kirov_standings(
 
   /* prune participants, which did not send any solution */
   /* t_runs - 1, if the participant should remain */
-  t_max = teamdb_get_max_team_id(state->teamdb_state) + 1;
+  if (global->disable_user_database > 0) {
+    t_max = run_get_max_user_id(state->runlog_state) + 1;
+  } else {
+    t_max = teamdb_get_max_team_id(state->teamdb_state) + 1;
+  }
   t_runs = alloca(t_max);
-  if (global->prune_empty_users) {
+  if (global->prune_empty_users || global->disable_user_database > 0) {
     memset(t_runs, 0, t_max);
     for (k = 0; k < r_tot; k++) {
       if (runs[k].status == RUN_EMPTY || runs[k].status == RUN_VIRTUAL_START
@@ -2857,9 +2861,13 @@ do_write_moscow_standings(
   r_tot = run_get_total(state->runlog_state);
   runs = run_get_entries_ptr(state->runlog_state);
 
-  u_max = teamdb_get_max_team_id(state->teamdb_state) + 1;
+  if (global->disable_user_database > 0) {
+    u_max = run_get_max_user_id(state->runlog_state) + 1;
+  } else {
+    u_max = teamdb_get_max_team_id(state->teamdb_state) + 1;
+  }
   u_runs = (unsigned char*) alloca(u_max);
-  if (global->prune_empty_users) {
+  if (global->prune_empty_users || global->disable_user_database > 0) {
     memset(u_runs, 0, u_max);
     for (i = 0; i < r_tot; i++)
       if (runs[i].status != RUN_EMPTY
@@ -3770,9 +3778,13 @@ do_write_standings(
   r_tot = run_get_total(state->runlog_state);
   runs = run_get_entries_ptr(state->runlog_state);
 
-  t_max = teamdb_get_max_team_id(state->teamdb_state) + 1;
+  if (global->disable_user_database > 0) {
+    t_max = run_get_max_user_id(state->runlog_state) + 1;
+  } else {
+    t_max = teamdb_get_max_team_id(state->teamdb_state) + 1;
+  }
   t_runs = alloca(t_max);
-  if (global->prune_empty_users) {
+  if (global->prune_empty_users || global->disable_user_database > 0) {
     memset(t_runs, 0, t_max);
     for (k = 0; k < r_tot; k++) {
       if (runs[k].status == RUN_EMPTY) continue;

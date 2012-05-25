@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -38,6 +38,16 @@ teamdb_get_user_map(
   teamdb_state_t state = cs->teamdb_state;
   struct filter_env env;
   struct run_entry fake_entries[1];
+
+  if (state->disabled) {
+    for (i = 1; i < u_max; ++i) {
+      if (!u_runs[i]) continue;
+      u_rev[i] = u_tot;
+      u_ind[u_tot++] = i;
+    }
+    *p_u_tot = u_tot;
+    return;
+  }
 
   *p_u_tot = u_tot;
   if (!state->users || state->users->user_map_size <= 0) {
