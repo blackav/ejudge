@@ -673,6 +673,10 @@ serve_state_load_contest_config(
     goto failure;
   if (prepare_serve_defaults(state, NULL) < 0) goto failure;
 
+  if (state->global) {
+    teamdb_disable(state->teamdb_state, state->global->disable_user_database);
+  }
+
   *p_state = state;
 
   return 1;
@@ -752,6 +756,7 @@ serve_state_load_contest(
   if (create_dirs(state, PREPARE_SERVE) < 0) goto failure;
 
   global = state->global;
+  teamdb_disable(state->teamdb_state, global->disable_user_database);
 
   /* find olympiad_mode problems in KIROV contests */
   if (global->score_system == SCORE_KIROV) {

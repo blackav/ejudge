@@ -54,6 +54,7 @@ struct teamdb_state
 {
   int contest_id;
   int nref;
+  int disabled;
 
   struct teamdb_db_callbacks *callbacks;
   int need_update;
