@@ -1096,15 +1096,15 @@ invoke_nwrun(
   if (srpp->real_time_limit_ms > 0) {
     fprintf(f, "real_time_limit_millis = %d\n", srpp->real_time_limit_ms);
   }
-  if (srpp->max_stack_size != 0 && srpp->max_stack_size != (size_t) -1L) {
+  if (srpp->max_stack_size != 0) {
     fprintf(f, "max_stack_size = %" EJ_PRINTF_ZSPEC "u\n",
             EJ_PRINTF_ZCAST(srpp->max_stack_size));
   }
-  if (srpp->max_data_size != 0 && srpp->max_data_size != (size_t) -1L) {
+  if (srpp->max_data_size != 0) {
     fprintf(f, "max_data_size = %" EJ_PRINTF_ZSPEC "u\n",
             EJ_PRINTF_ZCAST(srpp->max_data_size));
   }
-  if (srpp->max_vm_size != 0 && srpp->max_vm_size != (size_t) -1L) {
+  if (srpp->max_vm_size != 0) {
     fprintf(f, "max_vm_size = %" EJ_PRINTF_ZSPEC "u\n",
             EJ_PRINTF_ZCAST(srpp->max_vm_size));
   }
@@ -1516,8 +1516,6 @@ make_java_limits(unsigned char *buf, int blen, size_t max_vm_size, size_t max_st
 {
   unsigned char bv[1024], bs[1024];
 
-  if (max_vm_size == (ssize_t) -1L) max_vm_size = 0;
-  if (max_stack_size == (ssize_t) -1L) max_stack_size = 0;
   buf[0] = 0;
   if (max_vm_size && max_stack_size) {
     snprintf(buf, blen, "EJUDGE_JAVA_FLAGS=-Xmx%s -Xss%s",
@@ -1538,7 +1536,6 @@ make_mono_limits(unsigned char *buf, int blen, size_t max_vm_size, size_t max_st
 {
   unsigned char bv[1024];
   // stack limit is not supported
-  if (max_vm_size == (ssize_t) -1L) max_vm_size = 0;
   buf[0] = 0;
   if (max_vm_size) {
     snprintf(buf, blen, "MONO_GC_PARAMS=max-heap-size=%s",
@@ -2094,20 +2091,26 @@ run_one_test(
   if (tst && tst->no_core_dump > 0) task_DisableCoreDump(tsk);
 
   if (!tst || tst->memory_limit_type_val < 0) {
-    if (srpp->max_stack_size && srpp->max_stack_size != (ssize_t) -1L)
+    if (srpp->max_stack_size) {
       task_SetStackSize(tsk, srpp->max_stack_size);
-    if (srpp->max_data_size && srpp->max_data_size != (ssize_t) -1L)
+    } else if (srgp->enable_max_stack_size > 0 && srpp->max_vm_size) {
+      task_SetStackSize(tsk, srpp->max_vm_size);
+    }
+    if (srpp->max_data_size)
       task_SetDataSize(tsk, srpp->max_data_size);
-    if (srpp->max_vm_size && srpp->max_vm_size != (ssize_t) -1L)
+    if (srpp->max_vm_size)
       task_SetVMSize(tsk, srpp->max_vm_size);
   } else {
     switch (tst->memory_limit_type_val) {
     case MEMLIMIT_TYPE_DEFAULT:
-      if (srpp->max_stack_size && srpp->max_stack_size != (ssize_t) -1L)
+      if (srpp->max_stack_size) {
         task_SetStackSize(tsk, srpp->max_stack_size);
-      if (srpp->max_data_size && srpp->max_data_size != (ssize_t) -1L)
+      } else if (srgp->enable_max_stack_size > 0 && srpp->max_vm_size) {
+        task_SetStackSize(tsk, srpp->max_vm_size);
+      }
+      if (srpp->max_data_size)
         task_SetDataSize(tsk, srpp->max_data_size);
-      if (srpp->max_vm_size && srpp->max_vm_size != (ssize_t) -1L)
+      if (srpp->max_vm_size)
         task_SetVMSize(tsk, srpp->max_vm_size);
       if (tst->enable_memory_limit_error > 0 && srgp->enable_memory_limit_error > 0 && srgp->secure_run > 0) {
         task_EnableMemoryLimitError(tsk);
@@ -2827,7 +2830,7 @@ run_tests(
 {
   const struct section_global_data *global = state->global;
   const struct super_run_in_global_packet *srgp = srp->global;
-  const struct super_run_in_problem_packet *srpp = srp->problem;
+  /*const*/ struct super_run_in_problem_packet *srpp = srp->problem;
 
   full_archive_t far = NULL;
 
@@ -2874,6 +2877,10 @@ run_tests(
 
   init_testinfo_vector(&tests);
   messages_path[0] = 0;
+
+  if (srpp->max_vm_size == (size_t) -1L) srpp->max_vm_size = 0;
+  if (srpp->max_data_size == (size_t) -1L) srpp->max_data_size = 0;
+  if (srpp->max_stack_size == (size_t) -1L) srpp->max_stack_size = 0;
 
   snprintf(messages_path, sizeof(messages_path), "%s/%s", global->run_work_dir, "messages");
 
