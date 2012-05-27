@@ -1787,6 +1787,7 @@ enum
   ARCH_PERL,
   ARCH_MSIL,
   ARCH_WIN32,
+  ARCH_VALGRIND,
 
   ARCH_LAST,
 };
@@ -1801,6 +1802,8 @@ static const unsigned char * const supported_archs[] =
   "perl",
   "msil",
   "win32",
+  "valgrind",
+
   0,
 };
 static const unsigned char * const arch_abstract_names [] =
@@ -1813,6 +1816,8 @@ static const unsigned char * const arch_abstract_names [] =
   "Perl",
   "Linux-msil",
   "Win32",
+  "Valgrind",
+
   0,
 };
 
@@ -2023,6 +2028,23 @@ generate_abstract_tester(
             arch_abstract_names[arch], supported_archs[arch]);
     break;
 
+  case ARCH_VALGRIND:
+    fprintf(f,
+            "[tester]\n"
+            "name = Valgrind\n"
+            "arch = \"valgrind\"\n"
+            "abstract\n"
+            "no_core_dump\n"
+            "kill_signal = TERM\n"
+            "memory_limit_type = \"valgrind\"\n"
+            "secure_exec_type = \"valgrind\"\n"
+            "clear_env\n"
+            "start_cmd = \"runvg\"\n"
+            "start_env = \"PATH=/usr/local/bin:/usr/bin:/bin\"\n"
+            "start_env = \"LANG=C\"\n"
+            "start_env = \"HOME\"\n\n");
+    break;
+
   default:
     abort();
   }
@@ -2112,6 +2134,9 @@ generate_concrete_tester(FILE *f, int arch,
     break;
 
   case ARCH_WIN32:
+    break;
+
+  case ARCH_VALGRIND:
     break;
 
   default:

@@ -2130,6 +2130,9 @@ run_one_test(
         task_PutEnv(tsk, mem_limit_buf);
       }
       break;
+    case MEMLIMIT_TYPE_VALGRIND:
+      //???
+      break;
     default:
       abort();
     }
@@ -2156,6 +2159,9 @@ run_one_test(
       task_PutEnv(tsk, "EJUDGE_JAVA_POLICY=fileio.policy");
       break;
     case SEXEC_TYPE_MONO:
+      // nothing secure
+      break;
+    case SEXEC_TYPE_VALGRIND:
       // nothing secure
       break;
     default:

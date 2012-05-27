@@ -760,6 +760,21 @@ create_configs(
           "abstract\n"
           "nwrun_spool_dir = \"win32_nwrun\"\n\n");
 
+  fprintf(f,
+          "[tester]\n"
+          "name = Valgrind\n"
+          "arch = \"valgrind\"\n"
+          "abstract\n"
+          "no_core_dump\n"
+          "kill_signal = TERM\n"
+          "memory_limit_type = \"valgrind\"\n"
+          "secure_exec_type = \"valgrind\"\n"
+          "clear_env\n"
+          "start_cmd = \"runvg\"\n"
+          "start_env = \"PATH=/usr/local/bin:/usr/bin:/bin\"\n"
+          "start_env = \"LANG=C\"\n"
+          "start_env = \"HOME\"\n\n");
+
   fclose(f); f = NULL;
 }
 
@@ -767,6 +782,7 @@ const unsigned char * const
 upgrade_times[] =
 {
   "2012/05/01 00:00:00",
+  "2012/05/26 00:00:00",
 
   NULL
 };
