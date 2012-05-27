@@ -2,7 +2,7 @@
 # $Id$
 # @configure_input@
 
-# Copyright (C) 2004-2011 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2004-2012 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -66,12 +66,16 @@ SCRIPTS_IN = \
  fpc-version.in\
  g++.in\
  g++-version.in\
+ g++-vg.in\
+ g++-vg-version.in\
  g77.in\
  g77-version.in\
  gfortran.in\
  gfortran-version.in\
  gcc.in\
  gcc-version.in\
+ gcc-vg.in\
+ gcc-vg-version.in\
  gcj.in\
  gcj-version.in\
  gpc.in\
@@ -108,6 +112,7 @@ SCRIPTS_IN = \
  make-version.in\
  ghc.in\
  ghc-version.in\
+ runvg.in\
  runjava.in\
  runmono.in\
  runperl.in
