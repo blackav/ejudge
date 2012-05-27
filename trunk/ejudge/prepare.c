@@ -2366,6 +2366,7 @@ const unsigned char * const memory_limit_type_str[] =
   [MEMLIMIT_TYPE_DOS] = "dos",
   [MEMLIMIT_TYPE_JAVA] = "java",
   [MEMLIMIT_TYPE_MONO] = "mono",
+  [MEMLIMIT_TYPE_VALGRIND] = "valgrind",
 
   [MEMLIMIT_TYPE_LAST] = 0,
 };
@@ -2395,6 +2396,7 @@ const unsigned char * const secure_exec_type_str[] =
   [SEXEC_TYPE_JAVA] = "java",
   [SEXEC_TYPE_DLL32] = "dll32",
   [SEXEC_TYPE_MONO] = "mono",
+  [SEXEC_TYPE_VALGRIND] = "valgrind",
 
   [SEXEC_TYPE_LAST] = 0,
 };
