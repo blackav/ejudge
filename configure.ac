@@ -1,5 +1,5 @@
 dnl $Id$
-dnl Copyright (C) 2004-2011 Alexander Chernov <cher@ejudge.ru>
+dnl Copyright (C) 2004-2012 Alexander Chernov <cher@ejudge.ru>
 
 AC_INIT(ejudge,2.3)
 AC_PREREQ(2.59)
@@ -383,6 +383,10 @@ AC_CHECK_HEADER([ncurses.h],[ac_cv_has_ncurses=1],[ac_cv_has_ncurses=0])
 dnl check zlib library
 AC_CHECK_HEADER([zip.h],[ac_cv_has_libzip=1],[ac_cv_has_libzip=0])
 AC_CHECK_LIB([zip],[zip_open],[ac_cv_has_lib_libzip=-lzip],[ac_cv_has_lib_libzip=])
+
+dnl check libcurl library
+AC_CHECK_HEADER([curl/curl.h],[ac_cv_has_libcurl=1],[ac_cv_has_libcurl=0])
+AC_CHECK_LIB([curl],[curl_easy_init],[ac_cv_has_lib_libcurl=-lcurl],[ac_cv_has_lib_libcurl=])
 
 dnl Libcap checking stuff
 ac_cv_has_libcap=1
@@ -1007,6 +1011,7 @@ AC_SUBST(ac_cv_has_lib_iconv)
 AC_SUBST(ac_cv_has_lib_libiconv)
 AC_SUBST(ac_cv_has_lib_intl)
 AC_SUBST(ac_cv_has_lib_libzip)
+AC_SUBST(ac_cv_has_lib_libcurl)
 AC_SUBST(ac_cv_meta_cc)
 AC_SUBST(ac_cv_need_32)
 AC_SUBST(ac_cv_need_64)
@@ -1016,6 +1021,11 @@ AC_SUBST(ac_cv_libcap_link)
 AC_SUBST(ac_cv_ejudge_server_bin_path_m)
 AC_SUBST(ac_cv_lang_config_dir)
 AC_SUBST(ac_cv_lang_config_dir_expanded)
+
+if [[ x"${ac_cv_has_libcurl}" = x1 -a x"${ac_cv_has_lib_libcurl}" != x ]]
+then
+  AC_DEFINE(CONF_HAS_LIBCURL,1)
+fi
 
 if [[ x"${ac_cv_has_libzip}" = x1 -a x"${ac_cv_has_lib_libzip}" != x ]]
 then
