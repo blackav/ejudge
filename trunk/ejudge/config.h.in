@@ -127,6 +127,9 @@
 /* libzip available */
 #undef CONF_HAS_LIBZIP
 
+/* libcurl available */
+#undef CONF_HAS_LIBCURL
+
 /* DOS path rules */
 #undef CONF_DOS_FILENAMING
 
