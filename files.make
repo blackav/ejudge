@@ -183,6 +183,7 @@ COMMON_CFILES=\
  parsecfg_2.c\
  pathutl.c\
  plugin.c\
+ polygon_packet.c\
  prepare.c\
  prepare_out.c\
  prepare_serve.c\
@@ -532,6 +533,7 @@ HFILES=\
  parsecfg.h\
  pathutl.h\
  pollfds.h\
+ polygon_packet.h\
  prepare.h\
  prepare_dflt.h\
  prepare_serve.h\

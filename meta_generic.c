@@ -39,7 +39,7 @@ meta_build_automaton(const struct meta_info_item *item, int item_num)
   ASSERT(item);
   ASSERT(item_num);
 
-  fprintf(stderr, "Building the automaton\n");
+  //fprintf(stderr, "Building the automaton\n");
   memset(cmap, 0, sizeof(cmap));
   cmap[0] = 1;
   for (i = 0; i < item_num; ++i) {
@@ -58,7 +58,7 @@ meta_build_automaton(const struct meta_info_item *item, int item_num)
   for (i = ' '; i < 127; i++)
     if (cmap[i])
       remap[i] = j++;
-  fprintf(stderr, "%d characters remapped\n", j);
+  //fprintf(stderr, "%d characters remapped\n", j);
 
   XCALLOC(atm, 1);
   memcpy(atm->remap, remap, sizeof(atm->remap));
@@ -93,11 +93,11 @@ meta_build_automaton(const struct meta_info_item *item, int item_num)
       cur_st = atm->st_u++;
     }
     if (atm->st[cur_st][0] < 0) {
-      fprintf(stderr, "items %d and %d are the same\n", -atm->st[cur_st][0], i);
+      //fprintf(stderr, "items %d and %d are the same\n", -atm->st[cur_st][0], i);
     }
     atm->st[cur_st][0] = -i;
   }
-  fprintf(stderr, "The automaton has %d states\n", atm->st_u);
+  //fprintf(stderr, "The automaton has %d states\n", atm->st_u);
 
   /*
   fprintf(stderr, "automaton:\n");
@@ -217,28 +217,30 @@ meta_unparse_cfg(FILE *out_f, const struct meta_methods *mth, const void *ptr, c
     case 'B':                   /* ejintbool_t */
       {
         int b = 0;
+        int db = 0;
         switch (fz) {
         case 1:
           b = *(const char*) fp;
+          if (dfp) db = *(const char*) dfp;
           break;
         case 2:
           b = *(const short*) fp;
+          if (dfp) db = *(const short*) dfp;
           break;
         case 4:
           b = *(const int*) fp;
+          if (dfp) db = *(const int*) dfp;
           break;
         case 8:
           if (*(const long long*) fp > 0) b = 1;
+          if (dfp && *(const long long*) dfp > 0) db = 1;
           break;
         default:
           abort();
         }
-        if (!dfp || b >= 0) {
-          if (b > 0) {
-            b = 1;
-          } else {
-            b = 0;
-          }
+        if (dfp && b != db && b >= 0) {
+          fprintf(out_f, "%s = %d\n", fn, b);
+        } else if (!dfp && b > 0) {
           fprintf(out_f, "%s = %d\n", fn, b);
         }
       }
