@@ -31,7 +31,7 @@
 #endif /* __RCC__ */
 #endif /* META_ATTRIB */
 
-/* sizeof(struct problem_config_section) == 544 */
+/* sizeof(struct problem_config_section) == 552 */
 struct problem_config_section
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -111,6 +111,7 @@ struct problem_config_section
 
   unsigned char *type;
   unsigned char *long_name;
+  unsigned char *long_name_en;
   unsigned char *stand_name;
   unsigned char *internal_name;
   unsigned char *test_dir;
@@ -148,6 +149,7 @@ struct problem_config_section
   unsigned char *open_tests;
   unsigned char *final_open_tests;
   unsigned char *extid;
+  unsigned char *revision;
 
   char **test_sets;
   char **date_penalty;
