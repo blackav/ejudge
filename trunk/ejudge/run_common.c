@@ -1717,6 +1717,7 @@ run_one_test(
         const unsigned char *exe_name,
         const unsigned char *report_path,
         const unsigned char *check_cmd,
+        char **start_env,
         int open_tests_count,
         const int *open_tests_val,
         int test_score_count,
@@ -2071,7 +2072,7 @@ run_one_test(
   }
 
   if (tst && tst->clear_env > 0) task_ClearEnv(tsk);
-  setup_environment(tsk, tst->start_env, &tstinfo, 0);
+  setup_environment(tsk, start_env, &tstinfo, 0);
 
   if (time_limit_value_ms > 0) {
     if ((time_limit_value_ms % 1000)) {
@@ -2816,6 +2817,43 @@ check_output_only(
   return status;
 }
 
+static char **
+merge_env(char **env1, char **env2)
+{
+  if ((!env1 || !env1[0]) && (!env2 || !env2[0])) return NULL;
+  if (!env1 || !env1[0]) return sarray_copy(env2);
+  if (!env2 || !env2[0]) return sarray_copy(env1);
+
+  int len1 = sarray_len(env1);
+  int len2 = sarray_len(env2);
+  char **res = NULL;
+  XCALLOC(res, len1 + len2 + 1);
+  int j = 0;
+  for (int i = 0; i < len2; ++i) {
+    res[j++] = xstrdup(env2[i]);
+  }
+  for (int k = 0; k < len1; ++k) {
+    unsigned char env_name[1024];
+    char *s = strchr(env1[k], '=');
+    if (!s) {
+      snprintf(env_name, sizeof(env_name), "%s", env1[k]);
+    } else {
+      snprintf(env_name, sizeof(env_name), "%.*s", (int) (s - env1[k]), env1[k]);
+    }
+    int envlen = strlen(env_name);
+    int i;
+    for (i = 0; i < j; ++i) {
+      if (!strncmp(env_name, res[i], envlen) && (res[i][envlen] == '=' || res[i][envlen] == '\0'))
+        break;
+    }
+    if (i >= j) {
+      res[j++] = xstrdup(env1[k]);
+    }
+  }
+
+  return res;
+}
+
 void
 run_tests(
         const struct ejudge_cfg *config,
@@ -2837,6 +2875,7 @@ run_tests(
   const struct section_global_data *global = state->global;
   const struct super_run_in_global_packet *srgp = srp->global;
   /*const*/ struct super_run_in_problem_packet *srpp = srp->problem;
+  const struct super_run_in_tester_packet *srtp = srp->tester;
 
   full_archive_t far = NULL;
 
@@ -2881,6 +2920,9 @@ run_tests(
   long report_time_limit_ms = -1;
   long report_real_time_limit_ms = -1;
 
+  char **merged_start_env = NULL;
+  char **start_env = NULL;
+
   init_testinfo_vector(&tests);
   messages_path[0] = 0;
 
@@ -2889,6 +2931,15 @@ run_tests(
   if (srpp->max_stack_size == (size_t) -1L) srpp->max_stack_size = 0;
 
   snprintf(messages_path, sizeof(messages_path), "%s/%s", global->run_work_dir, "messages");
+
+  if (tst && tst->start_env && tst->start_env[0] && srtp && srtp->start_env && srtp->start_env[0]) {
+    merged_start_env = merge_env(tst->start_env, srtp->start_env);
+    start_env = merged_start_env;
+  } else if (tst && tst->start_env && tst->start_env[0]) {
+    start_env = tst->start_env;
+  } else if (srtp && srtp->start_env && srtp->start_env[0]) {
+    start_env = srtp->start_env;
+  }
 
   report_path[0] = 0;
   pathmake(report_path, global->run_work_dir, "/", "report", NULL);
@@ -2964,7 +3015,7 @@ run_tests(
         && cur_test > srpp->tests_to_accept) break;
 
     status = run_one_test(config, state, srp, tst, cur_test, &tests,
-                          far, exe_name, report_path, check_cmd,
+                          far, exe_name, report_path, check_cmd, start_env,
                           open_tests_count, open_tests_val,
                           test_score_count, test_score_val,
                           expected_free_space,
@@ -3217,6 +3268,7 @@ done:;
   xfree(valuer_comment);
   xfree(valuer_judge_comment);
   xfree(additional_comment);
+  merged_start_env = sarray_free(merged_start_env);
   return;
 
 check_failed:
