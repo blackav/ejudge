@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/05/03 08:27:40
+// Generated 2012/06/01 08:04:35
 
 #include "problem_config_meta.h"
 #include "problem_config.h"
@@ -84,6 +84,7 @@ static struct meta_info_item meta_info_problem_config_section_data[] =
   [META_PROBLEM_CONFIG_SECTION_max_file_size] = { META_PROBLEM_CONFIG_SECTION_max_file_size, 'Z', XSIZE(struct problem_config_section, max_file_size), "max_file_size", XOFFSET(struct problem_config_section, max_file_size) },
   [META_PROBLEM_CONFIG_SECTION_type] = { META_PROBLEM_CONFIG_SECTION_type, 's', XSIZE(struct problem_config_section, type), "type", XOFFSET(struct problem_config_section, type) },
   [META_PROBLEM_CONFIG_SECTION_long_name] = { META_PROBLEM_CONFIG_SECTION_long_name, 's', XSIZE(struct problem_config_section, long_name), "long_name", XOFFSET(struct problem_config_section, long_name) },
+  [META_PROBLEM_CONFIG_SECTION_long_name_en] = { META_PROBLEM_CONFIG_SECTION_long_name_en, 's', XSIZE(struct problem_config_section, long_name_en), "long_name_en", XOFFSET(struct problem_config_section, long_name_en) },
   [META_PROBLEM_CONFIG_SECTION_stand_name] = { META_PROBLEM_CONFIG_SECTION_stand_name, 's', XSIZE(struct problem_config_section, stand_name), "stand_name", XOFFSET(struct problem_config_section, stand_name) },
   [META_PROBLEM_CONFIG_SECTION_internal_name] = { META_PROBLEM_CONFIG_SECTION_internal_name, 's', XSIZE(struct problem_config_section, internal_name), "internal_name", XOFFSET(struct problem_config_section, internal_name) },
   [META_PROBLEM_CONFIG_SECTION_test_dir] = { META_PROBLEM_CONFIG_SECTION_test_dir, 's', XSIZE(struct problem_config_section, test_dir), "test_dir", XOFFSET(struct problem_config_section, test_dir) },
@@ -121,6 +122,7 @@ static struct meta_info_item meta_info_problem_config_section_data[] =
   [META_PROBLEM_CONFIG_SECTION_open_tests] = { META_PROBLEM_CONFIG_SECTION_open_tests, 's', XSIZE(struct problem_config_section, open_tests), "open_tests", XOFFSET(struct problem_config_section, open_tests) },
   [META_PROBLEM_CONFIG_SECTION_final_open_tests] = { META_PROBLEM_CONFIG_SECTION_final_open_tests, 's', XSIZE(struct problem_config_section, final_open_tests), "final_open_tests", XOFFSET(struct problem_config_section, final_open_tests) },
   [META_PROBLEM_CONFIG_SECTION_extid] = { META_PROBLEM_CONFIG_SECTION_extid, 's', XSIZE(struct problem_config_section, extid), "extid", XOFFSET(struct problem_config_section, extid) },
+  [META_PROBLEM_CONFIG_SECTION_revision] = { META_PROBLEM_CONFIG_SECTION_revision, 's', XSIZE(struct problem_config_section, revision), "revision", XOFFSET(struct problem_config_section, revision) },
   [META_PROBLEM_CONFIG_SECTION_test_sets] = { META_PROBLEM_CONFIG_SECTION_test_sets, 'x', XSIZE(struct problem_config_section, test_sets), "test_sets", XOFFSET(struct problem_config_section, test_sets) },
   [META_PROBLEM_CONFIG_SECTION_date_penalty] = { META_PROBLEM_CONFIG_SECTION_date_penalty, 'x', XSIZE(struct problem_config_section, date_penalty), "date_penalty", XOFFSET(struct problem_config_section, date_penalty) },
   [META_PROBLEM_CONFIG_SECTION_group_start_date] = { META_PROBLEM_CONFIG_SECTION_group_start_date, 'x', XSIZE(struct problem_config_section, group_start_date), "group_start_date", XOFFSET(struct problem_config_section, group_start_date) },

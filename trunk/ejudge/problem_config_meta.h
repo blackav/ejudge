@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/05/03 08:27:40
+// Generated 2012/06/01 08:04:35
 
 #ifndef __PROBLEM_CONFIG_META_H__
 #define __PROBLEM_CONFIG_META_H__
@@ -79,6 +79,7 @@ enum
   META_PROBLEM_CONFIG_SECTION_max_file_size,
   META_PROBLEM_CONFIG_SECTION_type,
   META_PROBLEM_CONFIG_SECTION_long_name,
+  META_PROBLEM_CONFIG_SECTION_long_name_en,
   META_PROBLEM_CONFIG_SECTION_stand_name,
   META_PROBLEM_CONFIG_SECTION_internal_name,
   META_PROBLEM_CONFIG_SECTION_test_dir,
@@ -116,6 +117,7 @@ enum
   META_PROBLEM_CONFIG_SECTION_open_tests,
   META_PROBLEM_CONFIG_SECTION_final_open_tests,
   META_PROBLEM_CONFIG_SECTION_extid,
+  META_PROBLEM_CONFIG_SECTION_revision,
   META_PROBLEM_CONFIG_SECTION_test_sets,
   META_PROBLEM_CONFIG_SECTION_date_penalty,
   META_PROBLEM_CONFIG_SECTION_group_start_date,
