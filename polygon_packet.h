@@ -56,7 +56,7 @@ struct polygon_packet
     unsigned char *problem_xml_name;
     unsigned char *testset;
 
-    char **ids;
+    char **id;
 };
 
 void

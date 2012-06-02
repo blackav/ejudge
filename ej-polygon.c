@@ -50,7 +50,6 @@
 #endif
 
 #define DEFAULT_POLYGON_URL "http://codecenter.sgu.ru/polygon"
-#define DEFAULT_USER_AGENT  "Mozilla/5.0 (Windows NT 5.1) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.164 Safari/535.19 YE"
 #define DEFAULT_ARCH        "$linux"
 #define DEFAULT_SLEEP_INTERVAL 10
 #define DEFAULT_PROBLEM_XML_NAME "problem.xml"
@@ -2261,9 +2260,6 @@ main(int argc, char **argv)
     if (!pkt->polygon_url) {
         pkt->polygon_url = xstrdup(DEFAULT_POLYGON_URL);
     }
-    if (!pkt->user_agent) {
-        pkt->user_agent = xstrdup(DEFAULT_USER_AGENT);
-    }
     if (!pkt->arch) {
         pkt->arch = xstrdup(DEFAULT_ARCH);
     }
@@ -2275,6 +2271,13 @@ main(int argc, char **argv)
     }
     if (!pkt->testset) {
         pkt->testset = xstrdup(DEFAULT_TESTSET);
+    }
+    if (!pkt->user_agent) {
+        unsigned char ua_buf[1024];
+        snprintf(ua_buf, sizeof(ua_buf), "%s: ejudge version %s compiled %s",
+                 progname, compile_version, compile_date);
+        fprintf(stderr, ">>%s\n", ua_buf);
+        pkt->user_agent = xstrdup(ua_buf);
     }
     if (pkt->working_dir) {
         if (chdir(pkt->working_dir) < 0)
@@ -2291,20 +2294,24 @@ main(int argc, char **argv)
 
     int info_count = 0;
     struct ProblemInfo *infos = NULL;
-    if (pkt->ids) {
-        for (; pkt->ids[info_count]; ++info_count) {}
+    if (pkt->id) {
+        for (; pkt->id[info_count]; ++info_count) {}
         if (info_count > 0) {
             XCALLOC(infos, info_count);
         }
-        for (int i = 0; pkt->ids[i]; ++i) {
+        for (int i = 0; pkt->id[i]; ++i) {
             infos[i].key_id = -1;
+            unsigned char *id_str = pkt->id[i];
+            if (!strncmp(id_str, "polygon:", 8)) {
+                id_str += 8;
+            }
             char *eptr = NULL;
             errno = 0;
-            int val = strtol(pkt->ids[i], &eptr, 10);
+            int val = strtol(id_str, &eptr, 10);
             if (!errno && !*eptr && val > 0) {
                 infos[i].key_id = val;
             } else {
-                infos[i].key_name = xstrdup(pkt->ids[i]);
+                infos[i].key_name = xstrdup(id_str);
             }
         }
     }
