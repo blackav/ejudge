@@ -75,7 +75,17 @@ struct section_problem_data;
 struct section_tester_data;
 struct serve_state;
 
-/* sizeof(struct sid_state) == 496 */
+struct update_state
+{
+  time_t start_time;
+  unsigned char *working_dir;
+  unsigned char *conf_file;
+  unsigned char *log_file;
+  unsigned char *status_file;
+  unsigned char *pid_file;
+};
+
+/* sizeof(struct sid_state) == 500 */
 struct sid_state
 {
   struct sid_state *next;
@@ -223,6 +233,8 @@ struct sid_state
 
   bitset_t marked;
 
+  struct update_state *update_state;
+
   /* serve state for test editing */
   struct serve_state *te_state;
 };
@@ -305,5 +317,10 @@ struct sid_state* super_serve_sid_state_get_test_editor_nc(int contest_id);
 struct background_process;
 void super_serve_register_process(struct background_process *prc);
 struct background_process *super_serve_find_process(const unsigned char *name);
+
+struct update_state *
+update_state_create(void);
+struct update_state *
+update_state_free(struct update_state *us);
 
 #endif /* __SUPER_SERVE_H__ */
