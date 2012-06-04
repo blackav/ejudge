@@ -78,6 +78,7 @@ struct serve_state;
 struct update_state
 {
   time_t start_time;
+  int create_mode;
   unsigned char *working_dir;
   unsigned char *conf_file;
   unsigned char *log_file;
