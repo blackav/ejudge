@@ -82,6 +82,7 @@ struct problem_config_section
   ejintbool_t ignore_unmarked;
   ejintbool_t disable_stderr;
 
+  int id;
   int real_time_limit;
   int time_limit;
   int time_limit_millis;
@@ -110,6 +111,7 @@ struct problem_config_section
   size_t max_file_size;
 
   unsigned char *type;
+  unsigned char *short_name;
   unsigned char *long_name;
   unsigned char *long_name_en;
   unsigned char *stand_name;

@@ -37,6 +37,7 @@ struct polygon_packet
 
     int sleep_interval;
     ejintbool_t enable_max_stack_size;
+    ejintbool_t create_mode;
 
     unsigned char *polygon_url;
     unsigned char *login;
@@ -57,12 +58,18 @@ struct polygon_packet
     unsigned char *testset;
 
     char **id;
+    char **ejudge_id;
+    char **ejudge_short_name;
 };
 
+struct polygon_packet *
+polygon_packet_alloc(void);
 void
 polygon_packet_free(struct generic_section_config *gp);
 struct polygon_packet*
 polygon_packet_parse(const unsigned char *path, FILE *f);
+void
+polygon_packet_unparse(FILE *out_f, const struct polygon_packet *p);
 
 #endif /* __POLYGON_PACKET_H__ */
 
