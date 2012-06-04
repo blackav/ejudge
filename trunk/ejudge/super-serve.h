@@ -79,6 +79,7 @@ struct update_state
 {
   time_t start_time;
   int create_mode;
+  int contest_id;
   unsigned char *working_dir;
   unsigned char *conf_file;
   unsigned char *log_file;
