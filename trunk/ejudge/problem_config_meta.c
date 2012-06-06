@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/06/01 08:04:35
+// Generated 2012/06/04 08:23:01
 
 #include "problem_config_meta.h"
 #include "problem_config.h"
@@ -58,6 +58,7 @@ static struct meta_info_item meta_info_problem_config_section_data[] =
   [META_PROBLEM_CONFIG_SECTION_valuer_sets_marked] = { META_PROBLEM_CONFIG_SECTION_valuer_sets_marked, 'B', XSIZE(struct problem_config_section, valuer_sets_marked), "valuer_sets_marked", XOFFSET(struct problem_config_section, valuer_sets_marked) },
   [META_PROBLEM_CONFIG_SECTION_ignore_unmarked] = { META_PROBLEM_CONFIG_SECTION_ignore_unmarked, 'B', XSIZE(struct problem_config_section, ignore_unmarked), "ignore_unmarked", XOFFSET(struct problem_config_section, ignore_unmarked) },
   [META_PROBLEM_CONFIG_SECTION_disable_stderr] = { META_PROBLEM_CONFIG_SECTION_disable_stderr, 'B', XSIZE(struct problem_config_section, disable_stderr), "disable_stderr", XOFFSET(struct problem_config_section, disable_stderr) },
+  [META_PROBLEM_CONFIG_SECTION_id] = { META_PROBLEM_CONFIG_SECTION_id, 'i', XSIZE(struct problem_config_section, id), "id", XOFFSET(struct problem_config_section, id) },
   [META_PROBLEM_CONFIG_SECTION_real_time_limit] = { META_PROBLEM_CONFIG_SECTION_real_time_limit, 'i', XSIZE(struct problem_config_section, real_time_limit), "real_time_limit", XOFFSET(struct problem_config_section, real_time_limit) },
   [META_PROBLEM_CONFIG_SECTION_time_limit] = { META_PROBLEM_CONFIG_SECTION_time_limit, 'i', XSIZE(struct problem_config_section, time_limit), "time_limit", XOFFSET(struct problem_config_section, time_limit) },
   [META_PROBLEM_CONFIG_SECTION_time_limit_millis] = { META_PROBLEM_CONFIG_SECTION_time_limit_millis, 'i', XSIZE(struct problem_config_section, time_limit_millis), "time_limit_millis", XOFFSET(struct problem_config_section, time_limit_millis) },
@@ -83,6 +84,7 @@ static struct meta_info_item meta_info_problem_config_section_data[] =
   [META_PROBLEM_CONFIG_SECTION_max_core_size] = { META_PROBLEM_CONFIG_SECTION_max_core_size, 'Z', XSIZE(struct problem_config_section, max_core_size), "max_core_size", XOFFSET(struct problem_config_section, max_core_size) },
   [META_PROBLEM_CONFIG_SECTION_max_file_size] = { META_PROBLEM_CONFIG_SECTION_max_file_size, 'Z', XSIZE(struct problem_config_section, max_file_size), "max_file_size", XOFFSET(struct problem_config_section, max_file_size) },
   [META_PROBLEM_CONFIG_SECTION_type] = { META_PROBLEM_CONFIG_SECTION_type, 's', XSIZE(struct problem_config_section, type), "type", XOFFSET(struct problem_config_section, type) },
+  [META_PROBLEM_CONFIG_SECTION_short_name] = { META_PROBLEM_CONFIG_SECTION_short_name, 's', XSIZE(struct problem_config_section, short_name), "short_name", XOFFSET(struct problem_config_section, short_name) },
   [META_PROBLEM_CONFIG_SECTION_long_name] = { META_PROBLEM_CONFIG_SECTION_long_name, 's', XSIZE(struct problem_config_section, long_name), "long_name", XOFFSET(struct problem_config_section, long_name) },
   [META_PROBLEM_CONFIG_SECTION_long_name_en] = { META_PROBLEM_CONFIG_SECTION_long_name_en, 's', XSIZE(struct problem_config_section, long_name_en), "long_name_en", XOFFSET(struct problem_config_section, long_name_en) },
   [META_PROBLEM_CONFIG_SECTION_stand_name] = { META_PROBLEM_CONFIG_SECTION_stand_name, 's', XSIZE(struct problem_config_section, stand_name), "stand_name", XOFFSET(struct problem_config_section, stand_name) },

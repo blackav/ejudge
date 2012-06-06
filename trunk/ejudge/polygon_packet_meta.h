@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/06/02 08:50:54
+// Generated 2012/06/04 08:23:01
 
 #ifndef __POLYGON_PACKET_META_H__
 #define __POLYGON_PACKET_META_H__
@@ -10,6 +10,7 @@ enum
 {
   META_POLYGON_PACKET_sleep_interval = 1,
   META_POLYGON_PACKET_enable_max_stack_size,
+  META_POLYGON_PACKET_create_mode,
   META_POLYGON_PACKET_polygon_url,
   META_POLYGON_PACKET_login,
   META_POLYGON_PACKET_password,
@@ -28,6 +29,8 @@ enum
   META_POLYGON_PACKET_problem_xml_name,
   META_POLYGON_PACKET_testset,
   META_POLYGON_PACKET_id,
+  META_POLYGON_PACKET_ejudge_id,
+  META_POLYGON_PACKET_ejudge_short_name,
 
   META_POLYGON_PACKET_LAST_FIELD,
 };
