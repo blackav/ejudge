@@ -9932,7 +9932,6 @@ super_serve_op_IMPORT_FROM_POLYGON_ACTION(
   pp->polygon_url = polygon_url; polygon_url = NULL;
   pp->login = polygon_login; polygon_login = NULL;
   pp->password = polygon_password; polygon_password = NULL;
-  pp->user_agent = xstrdup("-");
   pp->working_dir = xstrdup(working_dir);
   pp->log_file = xstrdup(log_path);
   pp->status_file = xstrdup(stat_path);
@@ -10889,7 +10888,6 @@ super_serve_op_UPDATE_FROM_POLYGON_ACTION(
   pp->polygon_url = polygon_url; polygon_url = NULL;
   pp->login = polygon_login; polygon_login = NULL;
   pp->password = polygon_password; polygon_password = NULL;
-  pp->user_agent = xstrdup("-");
   pp->working_dir = xstrdup(working_dir);
   pp->log_file = xstrdup(log_path);
   pp->status_file = xstrdup(stat_path);
