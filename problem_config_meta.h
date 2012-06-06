@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/06/01 08:04:35
+// Generated 2012/06/04 08:23:01
 
 #ifndef __PROBLEM_CONFIG_META_H__
 #define __PROBLEM_CONFIG_META_H__
@@ -53,6 +53,7 @@ enum
   META_PROBLEM_CONFIG_SECTION_valuer_sets_marked,
   META_PROBLEM_CONFIG_SECTION_ignore_unmarked,
   META_PROBLEM_CONFIG_SECTION_disable_stderr,
+  META_PROBLEM_CONFIG_SECTION_id,
   META_PROBLEM_CONFIG_SECTION_real_time_limit,
   META_PROBLEM_CONFIG_SECTION_time_limit,
   META_PROBLEM_CONFIG_SECTION_time_limit_millis,
@@ -78,6 +79,7 @@ enum
   META_PROBLEM_CONFIG_SECTION_max_core_size,
   META_PROBLEM_CONFIG_SECTION_max_file_size,
   META_PROBLEM_CONFIG_SECTION_type,
+  META_PROBLEM_CONFIG_SECTION_short_name,
   META_PROBLEM_CONFIG_SECTION_long_name,
   META_PROBLEM_CONFIG_SECTION_long_name_en,
   META_PROBLEM_CONFIG_SECTION_stand_name,

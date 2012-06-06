@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/01/01 22:05:38
+// Generated 2012/06/04 18:22:16
 
 #ifndef __SUPER_SERVE_META_H__
 #define __SUPER_SERVE_META_H__
@@ -129,6 +129,7 @@ enum
   SSSS_group_user_offset,
   SSSS_group_user_count,
   SSSS_marked,
+  SSSS_update_state,
   SSSS_te_state,
 
   SSSS_LAST_FIELD,
