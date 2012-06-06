@@ -1879,11 +1879,13 @@ generate_abstract_tester(
             "enable_memory_limit_error\n"
             "kill_signal = KILL\n"
             "memory_limit_type = \"default\"\n"
-            "secure_exec_type = \"static\"\n"
-            "clear_env\n"
-            "start_env = \"PATH=/usr/local/bin:/usr/bin:/bin\"\n"
-            "start_env = \"HOME\"\n",
+            "secure_exec_type = \"static\"\n",
             arch_abstract_names[arch], supported_archs[arch]);
+    if (!atst) {
+      fprintf(f, "clear_env\n"
+              "start_env = \"PATH=/usr/local/bin:/usr/bin:/bin\"\n"
+              "start_env = \"HOME\"\n");
+    }
     /*
     if (max_vm_size != -1L)
       fprintf(f, "max_vm_size = %s\n",
@@ -1909,10 +1911,7 @@ generate_abstract_tester(
             "enable_memory_limit_error\n"
             "kill_signal = KILL\n"
             "memory_limit_type = \"default\"\n"
-            "secure_exec_type = \"dll\"\n"
-            "clear_env\n"
-            "start_env = \"PATH=/usr/local/bin:/usr/bin:/bin\"\n"
-            "start_env = \"HOME\"\n",
+            "secure_exec_type = \"dll\"\n",
             arch_abstract_names[arch], supported_archs[arch]);
     /*
     if (max_vm_size != -1L)
@@ -1929,6 +1928,11 @@ generate_abstract_tester(
               "start_env = \"LD_PRELOAD=${script_dir}/lang/libdropcaps.so\"\n");
 #endif
     */
+    if (!atst) {
+      fprintf(f, "clear_env\n"
+              "start_env = \"PATH=/usr/local/bin:/usr/bin:/bin\"\n"
+              "start_env = \"HOME\"\n");
+    }
     break;
 
   case ARCH_JAVA:
@@ -1941,9 +1945,7 @@ generate_abstract_tester(
             "kill_signal = TERM\n"
             "memory_limit_type = \"java\"\n"
             "secure_exec_type = \"java\"\n"
-            "start_cmd = \"runjava%s\"\n"
-            "start_env = \"LANG=C\"\n"
-            "start_env = \"EJUDGE_PREFIX_DIR\"\n",
+            "start_cmd = \"runjava%s\"\n",
             arch_abstract_names[arch], supported_archs[arch],
             arch == ARCH_JAVA14?"14":"");
     /* FIXME: add special java parameter
@@ -1966,6 +1968,10 @@ generate_abstract_tester(
       fprintf(f, "start_env = \"EJUDGE_JAVA_POLICY=fileio.policy\"\n");
     }
     */
+    if (!atst) {
+      fprintf(f, "start_env = \"LANG=C\"\n"
+              "start_env = \"EJUDGE_PREFIX_DIR\"\n");
+    }
     break;
 
   case ARCH_DOS:
@@ -2013,10 +2019,12 @@ generate_abstract_tester(
             "kill_signal = TERM\n"
             //            "memory_limit_type = \"java\"\n"
             //            "secure_exec_type = \"java\"\n"
-            "start_cmd = \"runmono\"\n"
-            "start_env = \"LANG=C\"\n"
-            "start_env = \"EJUDGE_PREFIX_DIR\"\n",
+            "start_cmd = \"runmono\"\n",
             arch_abstract_names[arch], supported_archs[arch]);
+    if (!atst) {
+      fprintf(f, "start_env = \"LANG=C\"\n"
+              "start_env = \"EJUDGE_PREFIX_DIR\"\n");
+    }
     break;
 
   case ARCH_WIN32:
@@ -2038,15 +2046,24 @@ generate_abstract_tester(
             "kill_signal = TERM\n"
             "memory_limit_type = \"valgrind\"\n"
             "secure_exec_type = \"valgrind\"\n"
-            "clear_env\n"
-            "start_cmd = \"runvg\"\n"
-            "start_env = \"PATH=/usr/local/bin:/usr/bin:/bin\"\n"
-            "start_env = \"LANG=C\"\n"
-            "start_env = \"HOME\"\n\n");
+            "start_cmd = \"runvg\"\n");
+    if (!atst) {
+      fprintf(f, "clear_env\n"
+              "start_env = \"PATH=/usr/local/bin:/usr/bin:/bin\"\n"
+              "start_env = \"LANG=C\"\n"
+              "start_env = \"HOME\"\n");
+    }
     break;
 
   default:
     abort();
+  }
+
+  if (atst) {
+    if (atst->clear_env > 0) {
+      unparse_bool(f, "clear_env", atst->clear_env);
+    }
+    do_xstr(f, &ab, "start_env", atst->start_env);
   }
 
   if (atst && atst->check_dir[0]) {
