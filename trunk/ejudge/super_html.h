@@ -542,4 +542,11 @@ super_serve_generate_makefile(
         const struct section_problem_data *prob,
         int variant);
 
+void
+problem_id_to_short_name(int num, unsigned char *buf);
+struct section_problem_data *
+super_html_create_problem(
+        struct sid_state *sstate,
+        int prob_id);
+
 #endif /* __SUPER_HTML_H__ */

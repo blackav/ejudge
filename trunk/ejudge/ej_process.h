@@ -137,4 +137,9 @@ background_process_append_pollfd(struct background_process_head *list, void *vp)
 unsigned char **
 ejudge_get_host_names(void);
 
+int
+ejudge_start_daemon_process(
+        char **args,
+        const unsigned char *workdir);
+
 #endif /* __EJ_PROCESS_H__ */

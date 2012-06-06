@@ -60,6 +60,7 @@ enum UpdateState
 {
     STATE_NOT_STARTED,
     STATE_NOT_FOUND,
+    STATE_ALREADY_EXISTS,
     STATE_FAILED,
     STATE_INFO_LOADED,
     STATE_RUNNING,
@@ -74,6 +75,8 @@ struct ProblemInfo
 {
     int key_id;
     unsigned char *key_name;
+    int ejudge_id;
+    unsigned char *ejudge_short_name;
     int state;
     int problem_id;
     unsigned char *problem_name;
@@ -645,6 +648,7 @@ const unsigned char * update_statuses[] =
 {
     [STATE_NOT_STARTED] = "NOT_STARTED",
     [STATE_NOT_FOUND] = "NOT_FOUND",
+    [STATE_ALREADY_EXISTS] = "ALREADY_EXISTS",
     [STATE_FAILED] = "FAILED",
     [STATE_INFO_LOADED] = "INFO_LOADED",
     [STATE_RUNNING] = "RUNNING",
@@ -677,6 +681,7 @@ free_problem_infos(struct ProblemInfo *infos, int count)
     if (!infos || count <= 0) return;
     for (int i = 0; i < count; ++i) {
         xfree(infos[i].key_name);
+        xfree(infos[i].ejudge_short_name);
         xfree(infos[i].problem_name);
         xfree(infos[i].author);
         xfree(infos[i].edit_session);
@@ -1703,6 +1708,14 @@ process_polygon_zip(
 
     unsigned char problem_path[PATH_MAX];
     snprintf(problem_path, sizeof(problem_path), "%s/%s", pkt->problem_dir, pi->problem_name);
+    if (pkt->create_mode > 0) {
+        struct stat stb;
+        if (stat(problem_path, &stb) > 0) {
+            fprintf(log_f, "file or directory '%s' aready exists\n", problem_path);
+            pi->state = STATE_ALREADY_EXISTS;
+            goto cleanup;
+        }
+    }
     if (os_MakeDirPath2(problem_path, pkt->dir_mode, pkt->dir_group) < 0) {
         fprintf(log_f, "failed to create directory '%s'\n", problem_path);
         goto zip_error;
@@ -1892,6 +1905,12 @@ process_polygon_zip(
     unsigned char buf[1024];
 
     prob_cfg = problem_config_section_alloc();
+    if (pi->ejudge_id > 0) {
+        prob_cfg->id = pi->ejudge_id;
+    }
+    if (pi->ejudge_short_name) {
+        prob_cfg->short_name = xstrdup(pi->ejudge_short_name);
+    }
     prob_cfg->internal_name = xstrdup(pi->problem_name);
     snprintf(buf, sizeof(buf), "polygon:%s", pi->problem_name);
     prob_cfg->extid = xstrdup(buf);
@@ -1978,7 +1997,7 @@ zip_error:
 static int
 check_problem_status(
         FILE *log_f,
-        const struct polygon_packet *pkg,
+        const struct polygon_packet *pkt,
         const struct DownloadInterface *dif,
         struct DownloadData *ddata,
         const struct ZipInterface *zif,
@@ -1992,8 +2011,8 @@ check_problem_status(
     if (pi->state != STATE_INFO_LOADED) goto cleanup;
 
     if (pi->latest_rev == pi->package_rev) {
-        snprintf(zip_path, sizeof(zip_path), "%s/%s-%d%s.zip", pkg->download_dir,
-                 pi->problem_name, pi->package_rev, pkg->arch);
+        snprintf(zip_path, sizeof(zip_path), "%s/%s-%d%s.zip", pkt->download_dir,
+                 pi->problem_name, pi->package_rev, pkt->arch);
         if (stat(zip_path, &stb) >= 0) {
             if (!S_ISREG(stb.st_mode)) {
                 fprintf(log_f, "file %s is not a regular file\n", zip_path);
@@ -2003,6 +2022,10 @@ check_problem_status(
             if (access(zip_path, R_OK) < 0) {
                 fprintf(log_f, "file %s is not readable\n", zip_path);
                 pi->state = STATE_FAILED;
+                goto cleanup;
+            }
+            if (pkt->create_mode > 0) {
+                pi->state = STATE_ALREADY_EXISTS;
                 goto cleanup;
             }
             pi->state = STATE_ACTUAL;
@@ -2092,11 +2115,11 @@ check_problem_status(
 
     fprintf(log_f, "Archive size: %ld\n", (long) dif->get_page_size(ddata));
 
-    snprintf(zip_path, sizeof(zip_path), "%s/%s-%d%s.zip", pkg->download_dir,
-             pi->problem_name, pi->package_rev, pkg->arch);
+    snprintf(zip_path, sizeof(zip_path), "%s/%s-%d%s.zip", pkt->download_dir,
+             pi->problem_name, pi->package_rev, pkt->arch);
 
     if (save_file(log_f, zip_path, dif->get_page_text(ddata), dif->get_page_size(ddata),
-                  pkg->file_mode, pkg->file_group, NULL)) {
+                  pkt->file_mode, pkt->file_group, NULL)) {
         pi->state = STATE_FAILED;
         goto cleanup;
     }
@@ -2104,7 +2127,7 @@ check_problem_status(
     //file_downloaded:
 
     pi->state = STATE_DOWNLOADED;
-    process_polygon_zip(log_f, pkg, zif, zip_path, pi);
+    process_polygon_zip(log_f, pkt, zif, zip_path, pi);
 
 cleanup:
     free_revision_info(&rinfo);
@@ -2114,7 +2137,7 @@ cleanup:
 static int
 check_problem_statuses(
         FILE *log_f,
-        const struct polygon_packet *pkg,
+        const struct polygon_packet *pkt,
         const struct DownloadInterface *dif,
         struct DownloadData *ddata,
         const struct ZipInterface *zif,
@@ -2123,7 +2146,7 @@ check_problem_statuses(
 {
     int running_count = 0;
     for (int num = 0; num < info_count; ++num) {
-        running_count += check_problem_status(log_f, pkg, dif, ddata, zif, &infos[num]);
+        running_count += check_problem_status(log_f, pkt, dif, ddata, zif, &infos[num]);
     }
     return running_count;
 }
@@ -2300,6 +2323,8 @@ main(int argc, char **argv)
         if (info_count > 0) {
             XCALLOC(infos, info_count);
         }
+        int ej_id_len = sarray_len(pkt->ejudge_id);
+        int ej_name_len = sarray_len(pkt->ejudge_short_name);
         for (int i = 0; pkt->id[i]; ++i) {
             infos[i].key_id = -1;
             unsigned char *id_str = pkt->id[i];
@@ -2313,6 +2338,17 @@ main(int argc, char **argv)
                 infos[i].key_id = val;
             } else {
                 infos[i].key_name = xstrdup(id_str);
+            }
+            if (i < ej_id_len) {
+                eptr = NULL;
+                errno = 0;
+                val = strtol(pkt->ejudge_id[i], &eptr, 10);
+                if (!errno && !*eptr && val > 0) {
+                    infos[i].ejudge_id = val;
+                }
+            }
+            if (i < ej_name_len) {
+                infos[i].ejudge_short_name = xstrdup(pkt->ejudge_short_name[i]);
             }
         }
     }
@@ -2344,11 +2380,18 @@ main(int argc, char **argv)
     for (int i = 0; i < info_count; ++i) {
         if (infos[i].key_id > 0) {
             fprintf(st_f, "%d;", infos[i].key_id);
-        } else {
+        } else if (infos[i].key_name) {
             fprintf(st_f, "%s;", infos[i].key_name);
+        } else {
+            fprintf(st_f, ";");
         }
         fprintf(st_f, "%s;", update_statuses[infos[i].state]);
-        fprintf(st_f, "%d;%s;", infos[i].problem_id, infos[i].problem_name);
+        fprintf(st_f, "%d;", infos[i].problem_id);
+        if (infos[i].problem_name) {
+            fprintf(st_f, "%s;", infos[i].problem_name);
+        } else {
+            fprintf(st_f, ";");
+        }
         fprintf(st_f, "\n");
     }
     if (pkt->status_file) {

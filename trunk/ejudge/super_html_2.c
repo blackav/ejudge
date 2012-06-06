@@ -1638,8 +1638,20 @@ super_html_commit_contest(FILE *f,
   }
 
   fprintf(f, "<table border=\"0\"><tr>");
-  fprintf(f, "<td>%sTo the top</a></td></tr></table>\n",
+  fprintf(f, "<td>%sTo the top</a></td>\n",
           html_hyperref(hbuf, sizeof(hbuf), session_id, self_url,extra_args,0));
+
+  unsigned char new_hidden_vars[1024];
+  snprintf(new_hidden_vars, sizeof(new_hidden_vars),
+           "%s<input type=\"hidden\" name=\"contest_id\" value=\"%d\"/>",
+           hidden_vars, cnts->id);
+
+  fprintf(f, "<td>");
+  html_start_form(f, 1, self_url, new_hidden_vars);
+  fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\"/>",
+          SSERV_CMD_CHECK_TESTS, "Check contest settings");
+  fprintf(f, "</form></td>\n");
+  fprintf(f, "</tr></table>\n");
 
   super_serve_clear_edited_contest(sstate);
   return 0;
