@@ -1140,7 +1140,8 @@ parse_param(char const *path,
             int *p_cond_count)
 {
   struct generic_section_config  *cfg = NULL;
-  struct generic_section_config **psect, *sect;
+  struct generic_section_config **psect = &cfg, *sect = NULL;
+  const struct config_section_info *cur_info = NULL;
 
   char           sectname[32];
   char           varname[32];
@@ -1156,24 +1157,29 @@ parse_param(char const *path,
 
   /* found the global section description */
   for (sindex = 0; params[sindex].name; sindex++) {
-    if (!strcmp(params[sindex].name, "global")) break;
+    if (!strcmp(params[sindex].name, "global")) {
+      cur_info = &params[sindex];
+      break;
+    }
   }
-  if (!params[sindex].name) {
+  /*
+  if (!cur_info) {
     fprintf(stderr, "Cannot find description of section [global]\n");
     goto cleanup;
   }
+  */
 
   if (!f && !(f = fopen(path, "r"))) {
     fprintf(stderr, "Cannot open configuration file %s\n", path);
     goto cleanup;
   }
 
-  cfg = (struct generic_section_config*) xcalloc(1, params[sindex].size);
-  if (params[sindex].init_func)
-    params[sindex].init_func(cfg);
-  cfg->next = 0;
-  psect = &cfg->next;
-  sect = NULL;
+  if (cur_info) {
+    cfg = (struct generic_section_config*) xcalloc(1, cur_info->size);
+    if (cur_info->init_func) cur_info->init_func(cfg);
+    cfg->next = NULL;
+    psect = &cfg->next;
+  }
 
   while (1) {
     c = read_first_char(f);
@@ -1196,7 +1202,11 @@ parse_param(char const *path,
     if (!quiet_flag) {
       printf("%d: Value: %s = %s\n", parsecfg_state.lineno - 1, varname, varvalue);
     }
-    if (copy_param(cfg, &params[sindex], varname, varvalue) < 0) goto cleanup;
+    if (!cur_info) {
+      fprintf(stderr, "Cannot find description of section [global]\n");
+      goto cleanup;
+    }
+    if (copy_param(cfg, cur_info, varname, varvalue) < 0) goto cleanup;
   }
 
   while (c != EOF) {
@@ -1209,20 +1219,21 @@ parse_param(char const *path,
       goto cleanup;
     }
     for (sindex = 0; params[sindex].name; sindex++) {
-      if (!strcmp(params[sindex].name, sectname)) break;
+      if (!strcmp(params[sindex].name, sectname)) {
+        cur_info = &params[sindex];
+        break;
+      }
     }
-    if (!params[sindex].name) {
-      fprintf(stderr, "Cannot find description of section [%s]\n",
-              sectname);
+    if (!cur_info) {
+      fprintf(stderr, "Cannot find description of section [%s]\n", sectname);
       goto cleanup;
     }
-    if (params[sindex].pcounter) (*params[sindex].pcounter)++;
+    if (cur_info->pcounter) (*cur_info->pcounter)++;
 
-    sect = (struct generic_section_config*) xcalloc(1, params[sindex].size);
+    sect = (struct generic_section_config*) xcalloc(1, cur_info->size);
     strcpy(sect->name, sectname);
-    if (params[sindex].init_func)
-      params[sindex].init_func(sect);
-    sect->next = 0;
+    if (cur_info->init_func) cur_info->init_func(sect);
+    sect->next = NULL;
     *psect = sect;
     psect = &sect->next;
 
@@ -1247,7 +1258,7 @@ parse_param(char const *path,
       if (!quiet_flag) {
         printf("%d: Value: %s = %s\n", parsecfg_state.lineno - 1, varname, varvalue);
       }
-      if (copy_param(sect, &params[sindex], varname, varvalue) < 0) goto cleanup;
+      if (copy_param(sect, cur_info, varname, varvalue) < 0) goto cleanup;
     }
   }
 

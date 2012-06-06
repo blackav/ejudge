@@ -309,6 +309,27 @@ get_contest_extra(int num)
   return extras[num];
 }
 
+struct update_state *
+update_state_create(void)
+{
+  struct update_state *us = NULL;
+  XCALLOC(us, 1);
+  return us;
+}
+
+struct update_state *
+update_state_free(struct update_state *us)
+{
+  if (us) {
+    xfree(us->conf_file);
+    xfree(us->log_file);
+    xfree(us->status_file);
+    xfree(us->pid_file);
+    xfree(us);
+  }
+  return NULL;
+}
+
 static volatile int term_flag;
 static void
 handler_term(int signo)
@@ -1116,6 +1137,7 @@ sid_state_clear(struct sid_state *p)
   xfree(p->user_filter);
   bitset_free(&p->marked);
   serve_state_destroy(config, p->te_state, NULL, NULL);
+  update_state_free(p->update_state);
   XMEMZERO(p, 1);
 }
 static struct sid_state*

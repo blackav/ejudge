@@ -7479,7 +7479,15 @@ super_html_edit_problems(FILE *f,
   }
 
   // add new concrete problem
-  fprintf(f, "<tr%s><td colspan=\"4\" align=\"center\"><b>Add new problem</b></td></tr>\n", prob_row_attr);
+  fprintf(f, "<tr%s><td colspan=\"4\" align=\"center\"><b>Add new problem</b>", prob_row_attr);
+  if (sstate->update_state) {
+    fprintf(f, " [<a href=\"%s?SID=%16llx&amp;action=%d&amp;op=%d\">Download is in progress</a>]",
+          self_url, session_id, SSERV_CMD_HTTP_REQUEST, SSERV_OP_DOWNLOAD_PROGRESS_PAGE);
+  } else {
+    fprintf(f, " [<a href=\"%s?SID=%16llx&amp;action=%d&amp;op=%d\">Import from Polygon</a>]",
+            self_url, session_id, SSERV_CMD_HTTP_REQUEST, SSERV_OP_IMPORT_FROM_POLYGON_PAGE);
+  }
+  fprintf(f, "</td></tr>\n");
   html_start_form(f, 1, self_url, hidden_vars);
   fprintf(f, "<tr%s><td>Id (optional):</td><td>", form_row_attrs[0]);
   html_edit_text_form(f, 0, 0, "prob_id", "");
@@ -7498,24 +7506,33 @@ super_html_edit_problems(FILE *f,
   return 0;
 }
 
-int
-super_html_add_problem(
+void
+problem_id_to_short_name(int num, unsigned char *buf)
+{
+  if (num < 0) num = 0;
+  unsigned char *s = buf;
+  if (!num) {
+    *s++ = 'A';
+    *s = 0;
+  } else {
+    while (num > 0) {
+      *s++ = 'A' + (num % 26);
+      num /= 26;
+    }
+    *s-- = 0;
+    unsigned char *q = buf;
+    while (q < s) {
+      unsigned char t = *q; *q = *s; *s = t;
+      ++q; --s;
+    }
+  }
+}
+
+struct section_problem_data *
+super_html_create_problem(
         struct sid_state *sstate,
         int prob_id)
 {
-  int i, x;
-  struct section_problem_data *prob = 0;
-
-  if (prob_id < 0 || prob_id > EJ_MAX_PROB_ID)
-    return -1;
-
-  if (!prob_id) {
-    for (i = 1; i < sstate->prob_a; i++)
-      if (!sstate->probs[i])
-        break;
-    prob_id = i;
-  }
-
   if (prob_id >= sstate->prob_a) {
     int new_prob_a = sstate->prob_a;
     struct section_problem_data **new_probs;
@@ -7537,24 +7554,39 @@ super_html_add_problem(
   }
  
   if (sstate->probs[prob_id])
-    return -SSERV_ERR_DUPLICATED_PROBLEM;
+    return NULL;
 
-  prob = prepare_alloc_problem();
+  struct section_problem_data *prob = prepare_alloc_problem();
   prepare_problem_init_func(&prob->g);
   sstate->cfg = param_merge(&prob->g, sstate->cfg);
   sstate->probs[prob_id] = prob;
   prob->id = prob_id;
   sstate->prob_flags[prob_id] = 0;
+  return prob;
+}
 
-  if (prob_id == 1) {
-    prob->short_name[0] = 'A';
-    i = 1;
-  } else {
-    for (x = prob_id - 1, i = 0; x; x /= 26, ++i) {
-      prob->short_name[i] = 'A' + x % 26;
-    }
+int
+super_html_add_problem(
+        struct sid_state *sstate,
+        int prob_id)
+{
+  int i;
+  struct section_problem_data *prob = 0;
+
+  if (prob_id < 0 || prob_id > EJ_MAX_PROB_ID)
+    return -1;
+
+  if (!prob_id) {
+    for (i = 1; i < sstate->prob_a; i++)
+      if (!sstate->probs[i])
+        break;
+    prob_id = i;
   }
-  prob->short_name[i] = 0;
+
+  prob = super_html_create_problem(sstate, prob_id);
+  if (!prob) return -SSERV_ERR_DUPLICATED_PROBLEM;
+
+  problem_id_to_short_name(prob_id - 1, prob->short_name);
   if (sstate->aprob_u == 1)
     snprintf(prob->super, sizeof(prob->super), "%s",
              sstate->aprobs[0]->short_name);

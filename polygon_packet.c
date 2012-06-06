@@ -61,6 +61,17 @@ polygon_packet_parse(const unsigned char *path, FILE *f)
     return (struct polygon_packet*) cfg;
 }
 
+static struct polygon_packet default_values;
+
+void
+polygon_packet_unparse(FILE *out_f, const struct polygon_packet *p)
+{
+    if (p) {
+        fprintf(out_f, "# -*- coding: utf-8 -*-\n\n");
+        meta_unparse_cfg(out_f, &meta_polygon_packet_methods, p, &default_values);
+    }
+}
+
 /*
  * Local variables:
  *  c-basic-offset: 4

@@ -37,6 +37,10 @@
 #include "csv.h"
 #include "bitset.h"
 #include "fileutl.h"
+#include "polygon_packet.h"
+#include "prepare.h"
+#include "ej_process.h"
+#include "problem_config.h"
 
 #include "reuse_xalloc.h"
 #include "reuse_osdeps.h"
@@ -50,6 +54,7 @@
 #include <unistd.h>
 #include <ctype.h>
 #include <sys/stat.h>
+#include <signal.h>
 
 #define ARMOR(s)  html_armor_buf(&ab, (s))
 #define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
@@ -159,6 +164,36 @@ ss_redirect_2(
   fprintf(fout, "Location: %s\n\n", url);
 }
 
+static void
+ss_redirect_3(
+        FILE *fout,
+        struct super_http_request_info *phr,
+        int action,
+        const char *format, ...)
+  __attribute__((format(printf, 4, 5)));
+static void
+ss_redirect_3(
+        FILE *fout,
+        struct super_http_request_info *phr,
+        int action,
+        const char *format, ...)
+{
+  unsigned char buf[1024];
+  va_list args;
+
+  fprintf(fout, "Location: %s?SID=%016llx", phr->self_url, phr->session_id);
+  if (action > 0) {
+    fprintf(fout, "&action=%d", action);
+  }
+  if (format) {
+    va_start(args, format);
+    vsnprintf(buf, sizeof(buf), format, args);
+    va_end(args);
+    fprintf(fout, "&%s", buf);
+  }
+  fprintf(fout, "\n\n");
+}
+
 static unsigned char *
 fix_string(const unsigned char *s)
 {
@@ -173,6 +208,35 @@ fix_string(const unsigned char *s)
   int i = 0;
   while (i < len && (s[i] <= ' ' || s[i] == 127)) ++i;
   if (i >= len) return xstrdup("");
+
+  unsigned char *out = (unsigned char *) xmalloc(len + 1);
+  int j = 0;
+  for (; i < len; ++i, ++j) {
+    if (s[i] <= ' ' || s[i] == 127) {
+      out[j] = ' ';
+    } else {
+      out[j] = s[i];
+    }
+  }
+  out[j] = 0;
+
+  return out;
+}
+
+static unsigned char *
+fix_string_2(const unsigned char *s)
+{
+  if (!s) return NULL;
+
+  int len = strlen(s);
+  if (len < 0) return NULL;
+
+  while (len > 0 && (s[len - 1] <= ' ' || s[len - 1] == 127)) --len;
+  if (len <= 0) return NULL;
+
+  int i = 0;
+  while (i < len && (s[i] <= ' ' || s[i] == 127)) ++i;
+  if (i >= len) return NULL;
 
   unsigned char *out = (unsigned char *) xmalloc(len + 1);
   int j = 0;
@@ -9498,5 +9562,1078 @@ super_serve_op_CAPS_EDIT_SAVE_ACTION(
 
 cleanup:
   ejudge_cfg_refresh_caps_file(phr->config, 1);
+  return retval;
+}
+
+static int
+get_saved_auth(
+        const unsigned char *ej_login,
+        unsigned char **p_poly_login,
+        unsigned char **p_poly_password,
+        unsigned char **p_poly_url)
+{
+  unsigned char path[PATH_MAX];
+  FILE *f = NULL;
+  unsigned char lb[1024], pb[1024], ub[1024];
+
+  lb[0] = 0;
+  pb[0] = 0;
+  ub[0] = 0;
+  snprintf(path, sizeof(path), "%s/db/%s", EJUDGE_CONF_DIR, ej_login);
+  if (!(f = fopen(path, "r"))) return -1;
+  (void) (fgets(lb, sizeof(lb), f) && fgets(pb, sizeof(pb), f) && fgets(ub, sizeof(ub), f));
+  fclose(f); f = NULL;
+  int ll = strlen(lb);
+  while (ll > 0 && isspace(lb[ll - 1])) --ll;
+  lb[ll] = 0;
+  ll = strlen(pb);
+  while (ll > 0 && isspace(pb[ll - 1])) --ll;
+  pb[ll] = 0;
+  ll = strlen(ub);
+  while (ll > 0 && isspace(ub[ll - 1])) --ll;
+  ub[ll] = 0;
+
+  *p_poly_login = xstrdup(lb);
+  *p_poly_password = xstrdup(pb);
+  *p_poly_url = xstrdup(ub);
+  return 1;
+}
+
+static void
+save_auth(
+        const unsigned char *ej_login,
+        const unsigned char *poly_login,
+        const unsigned char *poly_password,
+        const unsigned char *poly_url)
+{
+  unsigned char path[PATH_MAX];
+  FILE *f = NULL;
+
+  if (!poly_login) poly_login = "";
+  if (!poly_password) poly_password = "";
+  if (!poly_url) poly_url = "";
+
+  snprintf(path, sizeof(path), "%s/db/%s", EJUDGE_CONF_DIR, ej_login);
+  if (!(f = fopen(path, "w"))) {
+    return;
+  }
+  fprintf(f, "%s\n%s\n%s\n", poly_login, poly_password, poly_url);
+  fflush(f);
+  if (ferror(f)) {
+    fclose(f); unlink(path);
+    return;
+  }
+  fclose(f);
+  chmod(path, 0600);
+}
+
+int
+super_serve_op_IMPORT_FROM_POLYGON_PAGE(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  opcap_t caps = 0, lcaps = 0;
+  struct sid_state *ss = phr->ss;
+  unsigned char buf[1024];
+  unsigned char hbuf[1024];
+  unsigned char prob_buf[64];
+  const unsigned char *cl;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  unsigned char *saved_login = NULL;
+  unsigned char *saved_password = NULL;
+  unsigned char *saved_url = NULL;
+
+  if (!ss->edited_cnts || !ss->global) {
+    FAIL(S_ERR_NO_EDITED_CNTS);
+  }
+
+  get_global_caps(phr, &caps);
+  get_contest_caps(phr, ss->edited_cnts, &lcaps);
+  caps |= lcaps;
+
+  if (opcaps_check(lcaps, OPCAP_EDIT_CONTEST) < 0) {
+    FAIL(S_ERR_PERM_DENIED);
+  }
+
+  if (ss->global->advanced_layout <= 0) {
+    fprintf(log_f, "advanced_layout must be set\n");
+    FAIL(S_ERR_INV_OPER);
+  }
+
+  if (ss->update_state) {
+    ss_redirect(out_f, phr, SSERV_OP_DOWNLOAD_PROGRESS_PAGE, NULL);
+    goto cleanup;
+  }
+
+  problem_id_to_short_name(ss->prob_a - 1, prob_buf);
+
+  get_saved_auth(phr->login, &saved_login, &saved_password, &saved_url);
+  if (!saved_login) saved_login = xstrdup("");
+  if (!saved_password) saved_password = xstrdup("");
+  if (!saved_url) saved_url = xstrdup("");
+
+  snprintf(buf, sizeof(buf), "serve-control: %s, importing problem from polygon", phr->html_name);
+  ss_write_html_header(out_f, phr, buf, 0, NULL);
+
+  fprintf(out_f, "<h1>%s</h1>\n", buf);
+
+  fprintf(out_f, "<ul>");
+  fprintf(out_f, "<li>%s%s</a></li>",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                        NULL, NULL),
+          "Main page");
+  fprintf(out_f, "<li>%s%s</a></li>",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                        NULL, "action=%d",
+                        SSERV_CMD_EDIT_CURRENT_CONTEST),
+          "General settings (contest.xml)");
+  fprintf(out_f, "<li>%s%s</a></li>",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                        NULL, "action=%d",
+                        SSERV_CMD_EDIT_CURRENT_GLOBAL),
+          "Global settings (serve.cfg)");
+  fprintf(out_f, "<li>%s%s</a></li>",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                        NULL, "action=%d",
+                        SSERV_CMD_EDIT_CURRENT_LANG),
+          "Language settings (serve.cfg)");
+  fprintf(out_f, "<li>%s%s</a></li>",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                        NULL, "action=%d",
+                        SSERV_CMD_EDIT_CURRENT_PROB),
+          "Problems (serve.cfg)");
+  fprintf(out_f, "<li>%s%s</a></li>",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                        NULL, "action=%d",
+                        SSERV_CMD_PROB_EDIT_VARIANTS),
+          "Variants (variant.map)");
+  fprintf(out_f, "</ul>");
+
+  html_start_form(out_f, 1, phr->self_url, "");
+  html_hidden(out_f, "SID", "%016llx", phr->session_id);
+  html_hidden(out_f, "action", "%d", SSERV_CMD_HTTP_REQUEST);
+  cl = " class=\"b0\"";
+  fprintf(out_f, "<table%s>\n", cl);
+
+  fprintf(out_f, "<tr><td colspan=\"2\" align=\"center\"%s><b>Ejudge problem identification</b></td></tr>\n", cl);
+  fprintf(out_f, "<tr><td%s>%s:</td><td%s><input type=\"text\" size=\"40\" name=\"ejudge_id\" /></td></tr>\n",
+          cl, "Id", cl);
+  fprintf(out_f, "<tr><td%s><b>%s</b> *:</td><td%s><input type=\"text\" size=\"40\" name=\"ejudge_short_name\" value=\"%s\" /></td></tr>\n",
+          cl, "Short name", cl, prob_buf);
+
+  fprintf(out_f, "<tr><td colspan=\"2\" align=\"center\"%s><b>Polygon information</b></td></tr>\n", cl);
+  fprintf(out_f, "<tr><td%s><b>%s</b> *:</td><td%s><input type=\"text\" size=\"40\" name=\"polygon_login\" value=\"%s\" /></td></tr>\n",
+          cl, "Login", cl, ARMOR(saved_login));
+  fprintf(out_f, "<tr><td%s><b>%s</b> *:</td><td%s><input type=\"password\" size=\"40\" name=\"polygon_password\" value=\"%s\"  /></td></tr>\n",
+          cl, "Password", cl, ARMOR(saved_password));
+
+  fprintf(out_f, "<tr><td%s>%s:</td><td%s><input type=\"checkbox\" name=\"%s\" value=\"1\" checked=\"checked\" /></td></tr>\n",
+          cl, "Save auth info", cl, "save_auth");
+  fprintf(out_f, "<tr><td%s><b>%s</b> *:</td><td%s><input type=\"text\" size=\"60\" name=\"polygon_id\" /></td></tr>\n",
+          cl, "Problem id/name", cl);
+  fprintf(out_f, "<tr><td%s>%s:</td><td%s><input type=\"text\" size=\"60\" name=\"polygon_url\" value=\"%s\" /></td></tr>\n",
+          cl, "Polygon URL", cl, ARMOR(saved_url));
+  fprintf(out_f, "<tr><td%s>%s:</td><td%s><input type=\"checkbox\" name=\"%s\" value=\"1\" checked=\"checked\" /></td></tr>\n",
+          cl, "Assume max_vm_size == max_stack_size", cl, "max_stack_size");
+  
+  fprintf(out_f, "<tr><td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></tr></td>\n",
+          cl, SSERV_OP_IMPORT_FROM_POLYGON_ACTION, "Import");
+  fprintf(out_f, "</table>\n");
+  fprintf(out_f, "</form>\n");
+
+  ss_write_html_footer(out_f);
+
+cleanup:
+  html_armor_free(&ab);
+  xfree(saved_login);
+  xfree(saved_password);
+  xfree(saved_url);
+  return retval;
+}
+
+int
+super_serve_op_IMPORT_FROM_POLYGON_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  opcap_t caps = 0, lcaps = 0;
+  struct sid_state *ss = phr->ss;
+  int ej_prob_id = 0;
+  const unsigned char *s = NULL;
+  int r;
+  unsigned char *ej_short_name = NULL;
+  unsigned char *polygon_login = NULL;
+  unsigned char *polygon_password = NULL;
+  unsigned char *polygon_id = NULL;
+  unsigned char *polygon_url = NULL;
+  int save_auth_flag = 0;
+  int max_stack_size_flag = 0;
+  struct polygon_packet *pp = NULL;
+  const struct contest_desc *cnts = ss->edited_cnts;
+  struct update_state *us = NULL;
+  FILE *f = NULL;
+
+  if (!ss->edited_cnts || !ss->global) {
+    FAIL(S_ERR_NO_EDITED_CNTS);
+  }
+
+  get_global_caps(phr, &caps);
+  get_contest_caps(phr, ss->edited_cnts, &lcaps);
+  caps |= lcaps;
+
+  if (opcaps_check(lcaps, OPCAP_EDIT_CONTEST) < 0) {
+    FAIL(S_ERR_PERM_DENIED);
+  }
+
+  if (ss->update_state) {
+    fprintf(log_f, "there is a background update running\n");
+    FAIL(S_ERR_INV_OPER);
+  }
+
+  if (ss->global->advanced_layout <= 0) {
+    fprintf(log_f, "advanced_layout must be set\n");
+    FAIL(S_ERR_INV_OPER);
+  }
+
+  ss_cgi_param_int_opt(phr, "ejudge_id", &ej_prob_id, 0);
+  if (ej_prob_id < 0) {
+    fprintf(log_f, "ejudge problem id (%d) is invalid\n", ej_prob_id);
+    FAIL(S_ERR_INV_OPER);
+  }
+  if (ej_prob_id > EJ_MAX_PROB_ID) {
+    fprintf(log_f, "ejudge problem id (%d) is too big\n", ej_prob_id);
+    FAIL(S_ERR_INV_OPER);
+  }
+  if (ej_prob_id < ss->prob_a && ss->probs[ej_prob_id]) {
+    fprintf(log_f, "ejudge problem id (%d) is already used\n", ej_prob_id);
+    FAIL(S_ERR_INV_OPER);
+  }
+
+  if ((r = ss_cgi_param(phr, "ejudge_short_name", &s)) < 0) {
+    fprintf(log_f, "ejudge problem short name is invalid\n");
+    FAIL(S_ERR_INV_OPER);
+  }
+  if (!r) {
+    fprintf(log_f, "ejudge problem short name is undefined\n");
+    FAIL(S_ERR_INV_OPER);
+  }
+  ej_short_name = fix_string_2(s);
+  if (!ej_short_name) {
+    fprintf(log_f, "ejudge problem short name is undefined\n");
+    FAIL(S_ERR_INV_OPER);
+  }
+  // FIXME: check for valid characters
+
+  if ((r = ss_cgi_param(phr, "polygon_login", &s)) < 0) {
+    fprintf(log_f, "polygon login is invalid\n");
+    FAIL(S_ERR_INV_OPER);
+  }
+  if (!r || !s || !*s) {
+    fprintf(log_f, "polygon login is undefined\n");
+    FAIL(S_ERR_INV_OPER);
+  }
+  polygon_login = xstrdup(s);
+
+  if ((r = ss_cgi_param(phr, "polygon_password", &s)) < 0) {
+    fprintf(log_f, "polygon password is invalid\n");
+    FAIL(S_ERR_INV_OPER);
+  }
+  if (!r || !s || !*s) {
+    fprintf(log_f, "polygon password is undefined\n");
+    FAIL(S_ERR_INV_OPER);
+  }
+  polygon_password = xstrdup(s);
+
+  if (ss_cgi_param(phr, "save_auth", &s) > 0) save_auth_flag = 1;
+
+  if ((r = ss_cgi_param(phr, "polygon_id", &s)) < 0) {
+    fprintf(log_f, "polygon problem id/name is invalid\n");
+    FAIL(S_ERR_INV_OPER);
+  }
+  if (!r) {
+    fprintf(log_f, "polygon problem id/name is undefined\n");
+    FAIL(S_ERR_INV_OPER);
+  }
+  polygon_id = fix_string_2(s);
+  if (!polygon_id) {
+    fprintf(log_f, "polygon problem id/name is undefined\n");
+    FAIL(S_ERR_INV_OPER);
+  }
+
+  if ((r = ss_cgi_param(phr, "polygon_url", &s)) < 0) {
+    fprintf(log_f, "polygon url is invalid\n");
+    FAIL(S_ERR_INV_OPER);
+  } else if (r > 0) {
+    polygon_url = fix_string_2(s);
+  }
+
+  if (ss_cgi_param(phr, "max_stack_size", &s) > 0) max_stack_size_flag = 1;
+
+  if (save_auth_flag) {
+    save_auth(phr->login, polygon_login, polygon_password, polygon_url);
+  }
+
+  s = getenv("TMPDIR");
+  if (!s) s = getenv("TEMPDIR");
+#if defined P_tmpdir
+  if (!s) s = P_tmpdir;
+#endif
+  if (!s) s = "/tmp";
+
+  time_t cur_time = time(NULL);
+  unsigned char rand_base[PATH_MAX];
+  unsigned char working_dir[PATH_MAX];
+  snprintf(rand_base, sizeof(rand_base), "%s_%d", phr->login, (int) cur_time);
+  snprintf(working_dir, sizeof(working_dir), "%s/ej_download_%s", s, rand_base);
+
+  if (mkdir(working_dir, 0700) < 0) {
+    if (errno != EEXIST) {
+      fprintf(log_f, "mkdir '%s' failed: %s\n", working_dir, os_ErrorMsg());
+      FAIL(S_ERR_FS_ERROR);
+    }
+    int serial = 1;
+    for (; serial < 10; ++serial) {
+      snprintf(working_dir, sizeof(working_dir), "%s/ej_download_%s_%d", s, rand_base, serial);
+      if (mkdir(working_dir, 0700) >= 0) break;
+      if (errno != EEXIST) {
+        fprintf(log_f, "mkdir '%s' failed: %s\n", working_dir, os_ErrorMsg());
+        FAIL(S_ERR_FS_ERROR);
+      }
+    }
+    if (serial >= 10) {
+      fprintf(log_f, "failed to create working directory '%s': too many attempts\n", working_dir);
+      FAIL(S_ERR_OPERATION_FAILED);
+    }
+  }
+
+  unsigned char conf_path[PATH_MAX];
+  unsigned char log_path[PATH_MAX];
+  unsigned char pid_path[PATH_MAX];
+  unsigned char stat_path[PATH_MAX];
+  unsigned char download_path[PATH_MAX];
+  unsigned char problem_path[PATH_MAX];
+  unsigned char start_path[PATH_MAX];
+
+  snprintf(conf_path, sizeof(conf_path), "%s/conf.cfg", working_dir);
+  snprintf(log_path, sizeof(log_path), "%s/log.txt", working_dir);
+  snprintf(pid_path, sizeof(pid_path), "%s/pid.txt", working_dir);
+  snprintf(stat_path, sizeof(stat_path), "%s/stat.txt", working_dir);
+  snprintf(download_path, sizeof(download_path), "%s/download", cnts->root_dir);
+  snprintf(problem_path, sizeof(problem_path), "%s/problems", cnts->root_dir);
+  snprintf(start_path, sizeof(start_path), "%s/ej-polygon", EJUDGE_SERVER_BIN_PATH);
+
+  pp = polygon_packet_alloc();
+  pp->enable_max_stack_size = max_stack_size_flag;
+  pp->create_mode = 1;
+  pp->polygon_url = polygon_url; polygon_url = NULL;
+  pp->login = polygon_login; polygon_login = NULL;
+  pp->password = polygon_password; polygon_password = NULL;
+  pp->user_agent = xstrdup("-");
+  pp->working_dir = xstrdup(working_dir);
+  pp->log_file = xstrdup(log_path);
+  pp->status_file = xstrdup(stat_path);
+  pp->pid_file = xstrdup(pid_path);
+  pp->download_dir = xstrdup(download_path);
+  pp->problem_dir = xstrdup(problem_path);
+  pp->dir_mode = xstrdup2(cnts->dir_mode);
+  pp->dir_group = xstrdup2(cnts->dir_group);
+  pp->file_mode = xstrdup2(cnts->file_mode);
+  pp->file_group = xstrdup2(cnts->file_group);
+  XCALLOC(pp->id, 2);
+  pp->id[0] = polygon_id; polygon_id = NULL;
+  if (ej_prob_id > 0) {
+    unsigned char buf[64];
+    snprintf(buf, sizeof(buf), "%d", ej_prob_id);
+    XCALLOC(pp->ejudge_id, 2);
+    pp->ejudge_id[0] = xstrdup(buf);
+  }
+  if (ej_short_name) {
+    XCALLOC(pp->ejudge_short_name, 2);
+    pp->ejudge_short_name[0] = ej_short_name; ej_short_name = NULL;
+  }
+
+  if (!(f = fopen(conf_path, "w"))) {
+    fprintf(log_f, "failed to open file '%s': %s\n", conf_path, os_ErrorMsg());
+    FAIL(S_ERR_OPERATION_FAILED);
+  }
+  polygon_packet_unparse(f, pp);
+  fclose(f); f = NULL;
+
+  us = update_state_create();
+  us->start_time = cur_time;
+  us->contest_id = cnts->id;
+  us->create_mode = 1;
+  us->working_dir = xstrdup(working_dir);
+  us->conf_file = xstrdup(conf_path);
+  us->log_file = xstrdup(log_path);
+  us->status_file = xstrdup(stat_path);
+  us->pid_file = xstrdup(pid_path);
+  ss->update_state = us; us = NULL;
+
+  char *args[3];
+  args[0] = "/home/cher/ejudge/ej-polygon";
+  args[1] = conf_path;
+  args[2] = NULL;
+  ejudge_start_daemon_process(args, working_dir);
+
+  ss_redirect(out_f, phr, SSERV_OP_DOWNLOAD_PROGRESS_PAGE, NULL);
+
+cleanup:
+  xfree(ej_short_name);
+  xfree(polygon_login);
+  xfree(polygon_password);
+  xfree(polygon_id);
+  xfree(polygon_url);
+  polygon_packet_free((struct generic_section_config*) pp);
+  update_state_free(us);
+  return retval;
+}
+
+struct download_status
+{
+  unsigned char *key;
+  unsigned char *status;
+  unsigned char *polygon_id;
+  unsigned char *polygon_name;
+};
+
+static int
+read_download_status(
+        FILE *log_f,
+        const unsigned char *path,
+        FILE *f,
+        int *p_exit_code,
+        int *p_count,
+        struct download_status **p_statuses)
+{
+  unsigned char buf[1024];
+  int len, exit_code = -1, n, count = 0;
+  struct download_status *statuses = NULL;
+
+  if (!fgets(buf, sizeof(buf), f)) {
+    fprintf(log_f, "%s: unexpected EOF for exit_code\n", path);
+    goto fail;
+  }
+  if ((len = strlen(buf)) + 1 >= sizeof(buf)) {
+    fprintf(log_f, "%s: exit_code line is too long\n", path);
+    goto fail;
+  }
+  while (len > 0 && isspace(buf[len - 1])) --len;
+  buf[len] = 0;
+  if (len <= 0) {
+    fprintf(log_f, "%s: exit_code line is empty\n", path);
+    goto fail;
+  }
+  if (sscanf(buf, "%d%n", &exit_code, &n) != 1 || buf[n] || exit_code < 0 || exit_code >= 256) {
+    fprintf(log_f, "%s: exit_code is invalid\n", path);
+    goto fail;
+  }
+
+  if (!fgets(buf, sizeof(buf), f)) {
+    fprintf(log_f, "%s: unexpected EOF for count\n", path);
+    goto fail;
+  }
+  if ((len = strlen(buf)) + 1 >= sizeof(buf)) {
+    fprintf(log_f, "%s: count line is too long\n", path);
+    goto fail;
+  }
+  while (len > 0 && isspace(buf[len - 1])) --len;
+  buf[len] = 0;
+  if (len <= 0) {
+    fprintf(log_f, "%s: count line is empty\n", path);
+    goto fail;
+  }
+  if (sscanf(buf, "%d%n", &count, &n) != 1 || buf[n] || count <= 0 || count > 1024) {
+    fprintf(log_f, "%s: count is invalid\n", path);
+    goto fail;
+  }
+
+  XCALLOC(statuses, count);
+  for (int i = 0; i < count; ++i) {
+    if (!fgets(buf, sizeof(buf), f)) {
+      fprintf(log_f, "%s: unexpected EOF for status[%d]\n", path, i + 1);
+      goto fail;
+    }
+    if ((len = strlen(buf)) + 1 >= sizeof(buf)) {
+      fprintf(log_f, "%s: status[%d] line is too long\n", path, i + 1);
+      goto fail;
+    }
+    while (len > 0 && isspace(buf[len - 1])) --len;
+    buf[len] = 0;
+    if (len <= 0) {
+      fprintf(log_f, "%s: status[%d] line is empty\n", path, i + 1);
+      goto fail;
+    }
+    unsigned char *s = buf, *q;
+    if (!(q = strchr(s, ';'))) q = strchr(s, 0);
+    statuses[i].key = xmemdup(s, q - s);
+    s = q;
+    if (*s == ';') ++s;
+    if (!(q = strchr(s, ';'))) q = strchr(s, 0);
+    statuses[i].status = xmemdup(s, q - s);
+    s = q;
+    if (*s == ';') ++s;
+    if (!(q = strchr(s, ';'))) q = strchr(s, 0);
+    statuses[i].polygon_id = xmemdup(s, q - s);
+    s = q;
+    if (*s == ';') ++s;
+    if (!(q = strchr(s, ';'))) q = strchr(s, 0);
+    statuses[i].polygon_name = xmemdup(s, q - s);
+    s = q;
+    if (*s == ';') ++s;
+  }
+
+  *p_exit_code = exit_code;
+  *p_count = count;
+  *p_statuses = statuses;
+  return count;
+
+fail:
+  if (statuses) {
+    for (int i = 0; i < count; ++i) {
+      xfree(statuses[i].key);
+      xfree(statuses[i].status);
+      xfree(statuses[i].polygon_id);
+      xfree(statuses[i].polygon_name);
+    }
+    xfree(statuses);
+  }
+  return -1;
+}
+
+int
+super_serve_op_DOWNLOAD_PROGRESS_PAGE(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  struct sid_state *ss = phr->ss;
+  unsigned char buf[1024];
+  time_t cur_time = time(NULL);
+  struct update_state *us;
+  FILE *f = NULL;
+  int pid = 0;
+  unsigned char hbuf[1024];
+  int exit_code = -1, count = 0;
+  struct download_status *statuses = NULL;
+  const unsigned char *cl, *s;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  struct polygon_packet *pp = NULL;
+  char *cfg_text = NULL;
+  size_t cfg_size = 0;
+  int start_mode = 0;
+  int successes = 0, failures = 0;
+
+  if (!(us = ss->update_state)) {
+    snprintf(buf, sizeof(buf), "serve-control: %s, no download process", phr->html_name);
+  } else {
+    if (us->status_file && (f = fopen(us->status_file, "r"))) {
+      read_download_status(stderr, us->status_file, f, &exit_code, &count, &statuses);
+      fclose(f); f = NULL;
+      snprintf(buf, sizeof(buf), "serve-control: %s, download complete", phr->html_name);
+    } else if (us->pid_file && (f = fopen(us->pid_file, "r"))) {
+      if (fscanf(f, "%d", &pid) <= 0 || pid <= 0) pid = 0;
+      fclose(f); f = NULL;
+      snprintf(buf, sizeof(buf), "serve-control: %s, download in progress", phr->html_name);
+    } else if (us->start_time > 0 && cur_time < us->start_time + 5) {
+      snprintf(buf, sizeof(buf), "serve-control: %s, download started", phr->html_name);
+      start_mode = 1;
+    } else {
+      snprintf(buf, sizeof(buf), "serve-control: %s, download failed to start", phr->html_name);
+    }
+  }
+
+  ss_write_html_header(out_f, phr, buf, 0, NULL);
+
+  fprintf(out_f, "<h1>%s</h1>\n", buf);
+
+  fprintf(out_f, "<ul>");
+  fprintf(out_f, "<li>%s%s</a></li>",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                        NULL, NULL),
+          "Main page");
+  if (ss->edited_cnts) {
+    fprintf(out_f, "<li>%s%s</a></li>",
+            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                          NULL, "action=%d",
+                          SSERV_CMD_EDIT_CURRENT_CONTEST),
+            "General settings (contest.xml)");
+    fprintf(out_f, "<li>%s%s</a></li>",
+            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                          NULL, "action=%d",
+                          SSERV_CMD_EDIT_CURRENT_GLOBAL),
+            "Global settings (serve.cfg)");
+    fprintf(out_f, "<li>%s%s</a></li>",
+            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                          NULL, "action=%d",
+                          SSERV_CMD_EDIT_CURRENT_LANG),
+            "Language settings (serve.cfg)");
+    fprintf(out_f, "<li>%s%s</a></li>",
+            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                          NULL, "action=%d",
+                          SSERV_CMD_EDIT_CURRENT_PROB),
+            "Problems (serve.cfg)");
+    fprintf(out_f, "<li>%s%s</a></li>",
+            html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                          NULL, "action=%d",
+                          SSERV_CMD_PROB_EDIT_VARIANTS),
+            "Variants (variant.map)");
+  }
+  fprintf(out_f, "</ul>");
+
+  fprintf(out_f, "<ul>");
+  fprintf(out_f, "<li>%s%s</a></li>",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                        NULL, "action=%d&amp;op=%d",
+                        SSERV_CMD_HTTP_REQUEST, SSERV_OP_DOWNLOAD_PROGRESS_PAGE),
+          "Refresh");
+  fprintf(out_f, "</ul>");
+
+  if (exit_code >= 0) {
+    fprintf(out_f, "<h2>Download complete with code %d</h2>\n", exit_code);
+    cl = " class=\"b1\"";
+    fprintf(out_f, "<table%s>\n", cl);
+    fprintf(out_f, "<tr><th%s>%s</th><th%s>%s</th><th%s>%s</th><th%s>%s</th></tr>\n",
+            cl, "Key", cl, "Status", cl, "Polygon Id", cl, "Polygon Name");
+    for (int i = 0; i < count; ++i) {
+      if (statuses[i].status &&
+          (!strcmp(statuses[i].status, "ACTUAL") || !strcmp(statuses[i].status, "UPDATED"))) {
+        s = " bgcolor=\"#ddffdd\"";
+        ++successes;
+      } else {
+        s = " bgcolor=\"#ffdddd\"";
+        ++failures;
+      }
+
+      fprintf(out_f, "<tr%s>", s);
+      fprintf(out_f, "<td%s><tt>%s</tt></td>", cl, ARMOR(statuses[i].key));
+      fprintf(out_f, "<td%s><tt>%s</tt></td>", cl, ARMOR(statuses[i].status));
+      fprintf(out_f, "<td%s><tt>%s</tt></td>", cl, ARMOR(statuses[i].polygon_id));
+      fprintf(out_f, "<td%s><tt>%s</tt></td>", cl, ARMOR(statuses[i].polygon_name));
+      fprintf(out_f, "</tr>");
+    }
+    fprintf(out_f, "</table>\n");
+    fprintf(out_f, "<p><b>Successes: %d, failures: %d.</b></p>\n", successes, failures);
+  } if (pid > 0) {
+    fprintf(out_f, "<h2>Download in progress (process pid %d)</h2>\n", pid);
+  }
+
+  if (us && us->conf_file) {
+    f = fopen(us->conf_file, "r");
+    if (f) {
+      pp = polygon_packet_parse(us->conf_file, f);
+      f = NULL;
+      if (pp) {
+        if (pp->password) {
+          xfree(pp->password); pp->password = xstrdup("*");
+        }
+        f = open_memstream(&cfg_text, &cfg_size);
+        polygon_packet_unparse(f, pp);
+        fclose(f); f = NULL;
+      }
+    }
+  }
+
+  if (exit_code >= 0) {
+    html_start_form(out_f, 1, phr->self_url, "");
+    html_hidden(out_f, "SID", "%016llx", phr->session_id);
+    html_hidden(out_f, "action", "%d", SSERV_CMD_HTTP_REQUEST);
+    if (failures > 0) {
+      fprintf(out_f, "<input type=\"submit\" name=\"op_%d\" value=\"%s\" />",
+              SSERV_OP_DOWNLOAD_CLEANUP_ACTION, "Clean up");
+    } else if (us->create_mode || ss->edited_cnts) {
+      cl = " class=\"b0\"";
+      fprintf(out_f, "<table%s><tr>", cl);
+      fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+              cl, SSERV_OP_DOWNLOAD_CLEANUP_ACTION, "Clean up");
+      fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+              cl, SSERV_OP_DOWNLOAD_CLEANUP_AND_IMPORT_ACTION, "Clean up and import settings");
+      fprintf(out_f, "</tr></table>\n");
+    } else {
+      cl = " class=\"b0\"";
+      fprintf(out_f, "<table%s><tr>", cl);
+      fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+              cl, SSERV_OP_DOWNLOAD_CLEANUP_ACTION, "Clean up");
+      fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
+              cl, SSERV_OP_DOWNLOAD_CLEANUP_AND_CHECK_ACTION, "Clean up and check settings");
+      fprintf(out_f, "</tr></table>\n");
+      fprintf(out_f, "<p>Note: problem settings, such as time limits, input/output file names, etc will not be updated!</p>");
+    }
+    fprintf(out_f, "</form>\n");
+  } else if (pid > 0) {
+    html_start_form(out_f, 1, phr->self_url, "");
+    html_hidden(out_f, "SID", "%016llx", phr->session_id);
+    html_hidden(out_f, "action", "%d", SSERV_CMD_HTTP_REQUEST);
+    fprintf(out_f, "<input type=\"submit\" name=\"op_%d\" value=\"%s\" />",
+            SSERV_OP_DOWNLOAD_KILL_ACTION, "Terminate download");
+    fprintf(out_f, "</form>\n");
+  } else if (us && !start_mode) {
+    html_start_form(out_f, 1, phr->self_url, "");
+    html_hidden(out_f, "SID", "%016llx", phr->session_id);
+    html_hidden(out_f, "action", "%d", SSERV_CMD_HTTP_REQUEST);
+    fprintf(out_f, "<input type=\"submit\" name=\"op_%d\" value=\"%s\" />",
+            SSERV_OP_DOWNLOAD_CLEANUP_ACTION, "Clean up");
+    fprintf(out_f, "</form>\n");
+  }
+
+  if (cfg_text && *cfg_text) {
+    fprintf(out_f, "<h2>Request configuration file</h2>\n");
+    fprintf(out_f, "<pre>%s</pre>\n", ARMOR(cfg_text));
+    xfree(cfg_text); cfg_text = NULL; cfg_size = 0;
+  }
+
+  if (us && us->log_file && generic_read_file(&cfg_text, 0, &cfg_size, 0, 0, us->log_file, 0) >= 0 && cfg_text) {
+    fprintf(out_f, "<h2>Log file</h2>\n");
+    fprintf(out_f, "<pre>%s</pre>\n", ARMOR(cfg_text));
+    xfree(cfg_text); cfg_text = NULL; cfg_size = 0;
+  }
+
+  ss_write_html_footer(out_f);
+
+  xfree(cfg_text);
+  polygon_packet_free((struct generic_section_config*) pp);
+  html_armor_free(&ab);
+  if (statuses) {
+    for (int i = 0; i < count; ++i) {
+      xfree(statuses[i].key);
+      xfree(statuses[i].status);
+      xfree(statuses[i].polygon_id);
+      xfree(statuses[i].polygon_name);
+    }
+    xfree(statuses);
+  }
+  return retval;
+}
+
+int
+super_serve_op_DOWNLOAD_CLEANUP_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  struct sid_state *ss = phr->ss;
+  struct update_state *us = ss->update_state;
+  int pid = 0;
+  FILE *f = NULL;
+
+  if (!us) {
+    // redirect to main page
+    ss_redirect_3(out_f, phr, 0, NULL);
+    goto cleanup;
+  }
+  if (us->pid_file) {
+    f = fopen(us->pid_file, "r");
+    if (f && fscanf(f, "%d", &pid) == 1 && pid > 0 && kill(pid, 0) >= 0) {
+      ss_redirect(out_f, phr, SSERV_OP_DOWNLOAD_PROGRESS_PAGE, NULL);
+      goto cleanup;
+    }
+  }
+  if (us->working_dir) {
+    remove_directory_recursively(us->working_dir, 0);
+  }
+  ss->update_state = NULL;
+
+  if (ss->edited_cnts) {
+    ss_redirect_3(out_f, phr, SSERV_CMD_EDIT_CURRENT_PROB, NULL);
+    goto cleanup;
+  }
+  if (us->contest_id <= 0) {
+    ss_redirect_3(out_f, phr, 0, NULL);
+    goto cleanup;
+  }
+
+  int action = SSERV_CMD_CONTEST_PAGE;
+  if (phr->opcode == SSERV_OP_DOWNLOAD_CLEANUP_AND_CHECK_ACTION) action = SSERV_CMD_CHECK_TESTS;
+  ss_redirect_3(out_f, phr, action, "contest_id=%d", us->contest_id);
+
+cleanup:
+  if (f) fclose(f);
+  update_state_free(us);
+  return retval;
+}
+
+int
+super_serve_op_DOWNLOAD_KILL_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  struct sid_state *ss = phr->ss;
+  struct update_state *us = ss->update_state;
+  int pid = 0;
+  FILE *f = NULL;
+
+  if (!us) {
+    // redirect to main page
+    ss_redirect_3(out_f, phr, 0, NULL);
+    goto cleanup;
+  }
+  if (us->pid_file) {
+    f = fopen(us->pid_file, "r");
+    if (f && fscanf(f, "%d", &pid) == 1 && pid > 0) {
+      kill(pid, SIGTERM);
+    }
+  }
+
+  ss_redirect(out_f, phr, SSERV_OP_DOWNLOAD_PROGRESS_PAGE, NULL);
+
+cleanup:
+  if (f) fclose(f);
+  return retval;
+}
+
+static int
+do_import_problem(
+        FILE *log_f,
+        struct super_http_request_info *phr,
+        const unsigned char *internal_name)
+{
+  int retval = 0;
+  struct sid_state *ss = phr->ss;
+  FILE *f = NULL;
+  struct problem_config_section *cfg = NULL;
+
+  if (!internal_name || !*internal_name) {
+    fprintf(log_f, "internal name is empty\n");
+    FAIL(S_ERR_OPERATION_FAILED);
+  }
+  for (int prob_id = 1; prob_id < ss->prob_a; ++prob_id) {
+    struct section_problem_data *prob = ss->probs[prob_id];
+    if (prob && prob->internal_name && !strcmp(prob->internal_name, internal_name)) {
+      fprintf(log_f, "internal name '%s' is not unique in this contest\n", internal_name);
+      FAIL(S_ERR_OPERATION_FAILED);
+    }
+    if (prob && prob->short_name && !strcmp(prob->short_name, internal_name)) {
+      fprintf(log_f, "internal name '%s' matches short name in this contest\n", internal_name);
+      FAIL(S_ERR_OPERATION_FAILED);
+    }
+  }
+
+  unsigned char problem_dir[PATH_MAX];
+  snprintf(problem_dir, sizeof(problem_dir), "%s/problems/%s", ss->edited_cnts->root_dir, internal_name);
+
+  unsigned char config_file[PATH_MAX];
+  snprintf(config_file, sizeof(config_file), "%s/problem.cfg", problem_dir);
+  if (!(f = fopen(config_file, "r"))) {
+    fprintf(log_f, "cannot open '%s' for reading: %s\n", config_file, os_ErrorMsg());
+    FAIL(S_ERR_OPERATION_FAILED);
+  }
+  cfg = problem_config_section_parse_cfg(config_file, f);
+  f = NULL;
+  if (!cfg) {
+    fprintf(log_f, "failed to parse '%s'\n", config_file);
+    FAIL(S_ERR_OPERATION_FAILED);
+  }
+
+  if (cfg->id < 0) cfg->id = 0;
+  if (cfg->id > EJ_MAX_PROB_ID) {
+    fprintf(log_f, "invalid problem id %d\n", cfg->id);
+    FAIL(S_ERR_OPERATION_FAILED);
+  }
+  if (cfg->id > 0 && cfg->id < ss->prob_a && ss->probs[cfg->id]) {
+    fprintf(log_f, "problem id %d is already used\n", cfg->id);
+    FAIL(S_ERR_OPERATION_FAILED);
+  }
+  if (!cfg->internal_name || !*cfg->internal_name) {
+    fprintf(log_f, "internal_name is undefined in '%s'\n", config_file);
+    FAIL(S_ERR_OPERATION_FAILED);
+  }
+  if (strcmp(cfg->internal_name, internal_name)) {
+    fprintf(log_f, "internal_name (%s) in '%s' does not match the status file (%s)\n",
+            cfg->internal_name, config_file, internal_name);
+    FAIL(S_ERR_OPERATION_FAILED);
+  }
+
+  if (cfg->short_name && *cfg->short_name) {
+    for (int prob_id = 1; prob_id < ss->prob_a; ++prob_id) {
+      struct section_problem_data *prob = ss->probs[prob_id];
+      if (prob && prob->short_name && !strcmp(prob->short_name, cfg->short_name)) {
+        fprintf(log_f, "short name '%s' is not unique in this contest\n", cfg->short_name);
+        FAIL(S_ERR_OPERATION_FAILED);
+      }
+      if (prob && prob->internal_name && !strcmp(prob->internal_name, cfg->short_name)) {
+        fprintf(log_f, "short name '%s' matches internal name in this contest\n", cfg->short_name);
+        FAIL(S_ERR_OPERATION_FAILED);
+      }
+    }
+    if (cfg->id <= 0) cfg->id = ss->prob_a;
+  } else {
+    if (cfg->id <= 0) cfg->id = ss->prob_a;
+    unsigned char name_buf[32];
+    problem_id_to_short_name(cfg->id - 1, name_buf);
+    for (int prob_id = 1; prob_id < ss->prob_a; ++prob_id) {
+      struct section_problem_data *prob = ss->probs[prob_id];
+      if (prob && prob->short_name && !strcmp(prob->short_name, name_buf)) {
+        fprintf(log_f, "failed to auto-assign short_name\n");
+        FAIL(S_ERR_OPERATION_FAILED);
+      }
+      if (prob && prob->internal_name && !strcmp(prob->internal_name, name_buf)) {
+        fprintf(log_f, "failed to auto-assign short_name\n");
+        FAIL(S_ERR_OPERATION_FAILED);
+      }
+    }
+    xfree(cfg->short_name); cfg->short_name = xstrdup(name_buf);
+  }
+
+  struct section_problem_data *super_prob = NULL;
+  if (ss->aprob_u == 1) super_prob = ss->aprobs[0];
+
+  struct section_problem_data *prob = super_html_create_problem(ss, cfg->id);
+  if (!prob) {
+    fprintf(log_f, "failed to create a problem\n");
+    FAIL(S_ERR_OPERATION_FAILED);
+  }
+  snprintf(prob->short_name, sizeof(prob->short_name), "%s", cfg->short_name);
+  if (super_prob) {
+    snprintf(prob->super, sizeof(prob->super), "%s", super_prob->short_name);
+  }
+  snprintf(prob->internal_name, sizeof(prob->internal_name), "%s", cfg->internal_name);
+  if (cfg->extid) prob->extid = xstrdup(cfg->extid);
+  if (cfg->long_name) snprintf(prob->long_name, sizeof(prob->long_name), "%s", cfg->long_name);
+  long time_limit_ms = 0;
+  if (cfg->time_limit_millis > 0) {
+    prob->time_limit_millis = cfg->time_limit_millis;
+    time_limit_ms = cfg->time_limit_millis;
+  } else if (cfg->time_limit > 0) {
+    prob->time_limit = cfg->time_limit;
+    time_limit_ms = cfg->time_limit * 1000;
+  }
+  long real_time_limit_ms = 0;
+  if (super_prob && super_prob->real_time_limit > 0) real_time_limit_ms = super_prob->real_time_limit * 1000;
+  if (time_limit_ms > 0 && time_limit_ms * 2 > real_time_limit_ms) {
+    prob->real_time_limit = (time_limit_ms * 2 + 999) / 1000;
+  }
+  if (cfg->use_stdin > 0) {
+    prob->use_stdin = 1;
+  } else if (!cfg->use_stdin) {
+    prob->use_stdin = 0;
+    snprintf(prob->input_file, sizeof(prob->input_file), "%s", cfg->input_file);
+  }
+  if (cfg->use_stdout > 0) {
+    prob->use_stdout = 1;
+  } else if (!cfg->use_stdout) {
+    prob->use_stdout = 0;
+    snprintf(prob->output_file, sizeof(prob->output_file), "%s", cfg->output_file);
+  }
+  if (cfg->max_vm_size != (size_t) -1L && cfg->max_vm_size) {
+    prob->max_vm_size = cfg->max_vm_size;
+  }
+  if (cfg->max_stack_size != (size_t) -1L && cfg->max_stack_size) {
+    prob->max_stack_size = cfg->max_stack_size;
+  }
+  if (cfg->test_pat && cfg->test_pat[0]) {
+    snprintf(prob->test_pat, sizeof(prob->test_pat), "%s", cfg->test_pat);
+  }
+  if (cfg->use_corr > 0) {
+    prob->use_corr = 1;
+  } else if (!cfg->use_corr) {
+    prob->use_corr = 0;
+  }
+  if (cfg->corr_pat && cfg->corr_pat[0]) {
+    snprintf(prob->corr_pat, sizeof(prob->corr_pat), "%s", cfg->corr_pat);
+  }
+  if (cfg->standard_checker && cfg->standard_checker[0]) {
+    snprintf(prob->standard_checker, sizeof(prob->standard_checker), "%s", cfg->standard_checker);
+  } else if (cfg->check_cmd && cfg->check_cmd[0]) {
+    snprintf(prob->check_cmd, sizeof(prob->check_cmd), "%s", cfg->check_cmd);
+  }
+  if (cfg->checker_env && cfg->checker_env[0]) {
+    prob->checker_env = sarray_copy(cfg->checker_env);
+  }
+  if (cfg->test_checker_cmd && cfg->test_checker_cmd[0]) {
+    prob->test_checker_cmd = xstrdup(cfg->test_checker_cmd);
+  }
+  if (cfg->solution_cmd && cfg->solution_cmd[0]) {
+    prob->solution_cmd = xstrdup(cfg->solution_cmd);
+  }
+
+cleanup:
+  if (f) fclose(f);
+  problem_config_section_free((struct generic_section_config*) cfg);
+  return retval;
+}
+
+int
+super_serve_op_DOWNLOAD_CLEANUP_AND_IMPORT_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  struct sid_state *ss = phr->ss;
+  struct update_state *us = ss->update_state;
+  FILE *f = NULL;
+  int exit_code = -1, count = 0, successes = 0, failures = 0;
+  struct download_status *statuses = NULL;
+
+  if (!us) {
+    int action = 0;
+    if (ss->global) {
+      action = SSERV_CMD_EDIT_CURRENT_PROB;
+    } else if (ss->edited_cnts) {
+      action = SSERV_CMD_EDIT_CURRENT_CONTEST;
+    }
+    ss_redirect_3(out_f, phr, action, NULL);
+    goto cleanup;
+  }
+  if (!ss->global || !us->status_file || us->create_mode <= 0) {
+    ss_redirect(out_f, phr, SSERV_OP_DOWNLOAD_PROGRESS_PAGE, NULL);
+    goto cleanup;
+  }
+
+  if (!(f = fopen(us->status_file, "r"))) {
+    ss_redirect(out_f, phr, SSERV_OP_DOWNLOAD_PROGRESS_PAGE, NULL);
+    goto cleanup;
+  }
+  read_download_status(stderr, us->status_file, f, &exit_code, &count, &statuses);
+  fclose(f); f = NULL;
+  if (exit_code != 0 || count <= 0) {
+    ss_redirect(out_f, phr, SSERV_OP_DOWNLOAD_PROGRESS_PAGE, NULL);
+    goto cleanup;
+  }
+  for (int i = 0; i < count; ++i) {
+    if (statuses[i].status &&
+        (!strcmp(statuses[i].status, "ACTUAL") || !strcmp(statuses[i].status, "UPDATED"))) {
+      ++successes;
+    } else {
+      ++failures;
+    }
+  }
+  if (failures > 0) {
+    ss_redirect(out_f, phr, SSERV_OP_DOWNLOAD_PROGRESS_PAGE, NULL);
+    goto cleanup;
+  }
+
+  for (int i = 0; i < count; ++i) {
+    int val = do_import_problem(log_f, phr, statuses[i].polygon_name);
+    if (val) retval = val;
+  }
+
+  if (us->working_dir) {
+    remove_directory_recursively(us->working_dir, 0);
+  }
+  ss->update_state = NULL;
+  update_state_free(us); us = NULL;
+
+  ss_redirect_3(out_f, phr, SSERV_CMD_EDIT_CURRENT_PROB, NULL);
+
+cleanup:
+  if (f) fclose(f);
+  if (statuses) {
+    for (int i = 0; i < count; ++i) {
+      xfree(statuses[i].key);
+      xfree(statuses[i].status);
+      xfree(statuses[i].polygon_id);
+      xfree(statuses[i].polygon_name);
+    }
+    xfree(statuses);
+  }
   return retval;
 }
