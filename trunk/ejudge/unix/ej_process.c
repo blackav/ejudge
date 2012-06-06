@@ -37,6 +37,7 @@
 #include <sys/resource.h>
 #include <poll.h>
 #include <sys/utsname.h>
+#include <dirent.h>
 
 static int
 error(const char *format, ...)
@@ -1084,6 +1085,55 @@ fail:
     xfree(names); names = NULL;
   }
   goto cleanup;
+}
+
+int
+ejudge_start_daemon_process(
+        char **args,
+        const unsigned char *workdir)
+{
+  int pid;
+
+  if ((pid = fork()) < 0) {
+    fprintf(stderr, "%s: fork() failed: %s\n", __FUNCTION__, strerror(errno));
+    return -1;
+  }
+  if (pid > 0) {
+    while (waitpid(pid, NULL, 0) < 0 && errno == EINTR) {}
+    // check exit status?
+    return 0;
+  }
+
+  // now in child
+  if ((pid = fork()) != 0) _exit(pid < 0);
+
+  // now in grandchild
+  if (workdir) {
+    if (chdir(workdir) < 0) _exit(1);
+  }
+
+  DIR *d;
+  struct dirent *dd;
+  int max_fd = -1;
+  if ((d = opendir("/proc/self/fd"))) {
+    while ((dd = readdir(d))) {
+      int n = strtol(dd->d_name, NULL, 10);
+      if (n > max_fd) max_fd = n;
+    }
+    closedir(d);
+  }
+  if (max_fd < 0) max_fd = 1024;
+  for (int fd = 3; fd <= max_fd; ++fd) {
+    close(fd);
+  }
+  close(0); open("/dev/null", O_RDONLY, 0);
+  dup2(2, 1);
+
+  sigset_t mask;
+  sigemptyset(&mask);
+  sigprocmask(SIG_SETMASK, &mask, 0);
+  execve(args[0], args, environ);
+  _exit(1);
 }
 
 /*
