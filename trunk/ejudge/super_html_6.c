@@ -9790,7 +9790,7 @@ super_serve_op_IMPORT_FROM_POLYGON_ACTION(
   }
 
   if (ss->update_state) {
-    fprintf(log_f, "there is a background update running\n");
+    fprintf(log_f, "there is a background update in progress\n");
     FAIL(S_ERR_INV_OPER);
   }
 
@@ -9975,7 +9975,7 @@ super_serve_op_IMPORT_FROM_POLYGON_ACTION(
   ss->update_state = us; us = NULL;
 
   char *args[3];
-  args[0] = "/home/cher/ejudge/ej-polygon";
+  args[0] = start_path;
   args[1] = conf_path;
   args[2] = NULL;
   ejudge_start_daemon_process(args, working_dir);
@@ -10634,6 +10634,313 @@ cleanup:
       xfree(statuses[i].polygon_name);
     }
     xfree(statuses);
+  }
+  return retval;
+}
+
+int
+super_serve_op_UPDATE_FROM_POLYGON_PAGE(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  opcap_t caps = 0, lcaps = 0;
+  struct sid_state *ss = phr->ss;
+  unsigned char buf[1024];
+  unsigned char hbuf[1024];
+  const unsigned char *cl;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  unsigned char *saved_login = NULL;
+  unsigned char *saved_password = NULL;
+  unsigned char *saved_url = NULL;
+  int contest_id = 0;
+  const struct contest_desc *cnts = NULL;
+
+  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+
+  get_global_caps(phr, &caps);
+  get_contest_caps(phr, cnts, &lcaps);
+  caps |= lcaps;
+
+  if (opcaps_check(lcaps, OPCAP_EDIT_CONTEST) < 0) {
+    FAIL(S_ERR_PERM_DENIED);
+  }
+
+  if (ss->update_state) {
+    ss_redirect(out_f, phr, SSERV_OP_DOWNLOAD_PROGRESS_PAGE, NULL);
+    goto cleanup;
+  }
+
+  get_saved_auth(phr->login, &saved_login, &saved_password, &saved_url);
+  if (!saved_login) saved_login = xstrdup("");
+  if (!saved_password) saved_password = xstrdup("");
+  if (!saved_url) saved_url = xstrdup("");
+
+  snprintf(buf, sizeof(buf), "serve-control: %s, updating problem from polygon", phr->html_name);
+  ss_write_html_header(out_f, phr, buf, 0, NULL);
+
+  fprintf(out_f, "<h1>%s</h1>\n", buf);
+
+  fprintf(out_f, "<ul>");
+  fprintf(out_f, "<li>%s%s</a></li>\n",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
+                        NULL, NULL),
+          "Main page");
+  fprintf(out_f, "<li>%sDetails</a></li>\n",
+          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
+                        "contest_id=%d&action=%d", contest_id,
+                        SSERV_CMD_CONTEST_PAGE));
+  fprintf(out_f, "</ul>");
+
+  html_start_form(out_f, 1, phr->self_url, "");
+  html_hidden(out_f, "SID", "%016llx", phr->session_id);
+  html_hidden(out_f, "action", "%d", SSERV_CMD_HTTP_REQUEST);
+  html_hidden(out_f, "contest_id", "%d", contest_id);
+  cl = " class=\"b0\"";
+  fprintf(out_f, "<table%s>\n", cl);
+
+  fprintf(out_f, "<tr><td colspan=\"2\" align=\"center\"%s><b>Polygon information</b></td></tr>\n", cl);
+  fprintf(out_f, "<tr><td%s><b>%s</b> *:</td><td%s><input type=\"text\" size=\"40\" name=\"polygon_login\" value=\"%s\" /></td></tr>\n",
+          cl, "Login", cl, ARMOR(saved_login));
+  fprintf(out_f, "<tr><td%s><b>%s</b> *:</td><td%s><input type=\"password\" size=\"40\" name=\"polygon_password\" value=\"%s\"  /></td></tr>\n",
+          cl, "Password", cl, ARMOR(saved_password));
+
+  fprintf(out_f, "<tr><td%s>%s:</td><td%s><input type=\"checkbox\" name=\"%s\" value=\"1\" checked=\"checked\" /></td></tr>\n",
+          cl, "Save auth info", cl, "save_auth");
+  fprintf(out_f, "<tr><td%s>%s:</td><td%s><input type=\"text\" size=\"60\" name=\"polygon_url\" value=\"%s\" /></td></tr>\n",
+          cl, "Polygon URL", cl, ARMOR(saved_url));
+  
+  fprintf(out_f, "<tr><td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></tr></td>\n",
+          cl, SSERV_OP_UPDATE_FROM_POLYGON_ACTION, "Update");
+  fprintf(out_f, "</table>\n");
+  fprintf(out_f, "</form>\n");
+
+  ss_write_html_footer(out_f);
+
+cleanup:
+  html_armor_free(&ab);
+  xfree(saved_login);
+  xfree(saved_password);
+  xfree(saved_url);
+  return retval;
+}
+
+int
+super_serve_op_UPDATE_FROM_POLYGON_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  opcap_t caps = 0, lcaps = 0;
+  struct sid_state *ss = phr->ss;
+  const unsigned char *s = NULL;
+  int r;
+  unsigned char *polygon_login = NULL;
+  unsigned char *polygon_password = NULL;
+  unsigned char *polygon_url = NULL;
+  int save_auth_flag = 0;
+  struct polygon_packet *pp = NULL;
+  const struct contest_desc *cnts = NULL;
+  struct update_state *us = NULL;
+  FILE *f = NULL;
+  int contest_id = 0;
+  int free_edited_cnts_flag = 0;
+
+  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+
+  get_global_caps(phr, &caps);
+  get_contest_caps(phr, cnts, &lcaps);
+  caps |= lcaps;
+
+  if (opcaps_check(lcaps, OPCAP_EDIT_CONTEST) < 0) {
+    FAIL(S_ERR_PERM_DENIED);
+  }
+
+  if (ss->update_state) {
+    fprintf(log_f, "there is a background update in progress\n");
+    FAIL(S_ERR_INV_OPER);
+  }
+
+  if (ss->edited_cnts || ss->global) {
+    fprintf(log_f, "a contest is opened for editing at the moment\n");
+    FAIL(S_ERR_INV_OPER);
+  }
+
+  free_edited_cnts_flag = 1;
+  struct contest_desc *rw_cnts = NULL;
+  if (contests_load(contest_id, &rw_cnts) < 0 || !rw_cnts) FAIL(S_ERR_INV_CONTEST);
+  ss->edited_cnts = rw_cnts; rw_cnts = NULL;
+  super_html_load_serve_cfg(ss->edited_cnts, phr->config, ss);
+  if (!ss->global) {
+    fprintf(log_f, "failed to load the contest configuration file\n");
+    FAIL(S_ERR_INV_OPER);
+  }
+
+  if (ss->global->advanced_layout <= 0) {
+    fprintf(log_f, "advanced_layout must be set\n");
+    FAIL(S_ERR_INV_OPER);
+  }
+
+  if (ss->prob_a <= 1) {
+    fprintf(log_f, "contest contains no problems\n");
+    FAIL(S_ERR_INV_OPER);
+  }
+
+  int polygon_count = 0;
+  for (int prob_id = 1; prob_id < ss->prob_a; ++prob_id) {
+    const struct section_problem_data *prob = ss->probs[prob_id];
+    if (prob && prob->extid && !strncmp("polygon:", prob->extid, 8))
+      ++polygon_count;
+  }
+  if (polygon_count <= 0) {
+    fprintf(log_f, "no problems to update (no problems imported from polygon)\n");
+    FAIL(S_ERR_INV_OPER);
+  }
+
+  if ((r = ss_cgi_param(phr, "polygon_login", &s)) < 0) {
+    fprintf(log_f, "polygon login is invalid\n");
+    FAIL(S_ERR_INV_OPER);
+  }
+  if (!r || !s || !*s) {
+    fprintf(log_f, "polygon login is undefined\n");
+    FAIL(S_ERR_INV_OPER);
+  }
+  polygon_login = xstrdup(s);
+
+  if ((r = ss_cgi_param(phr, "polygon_password", &s)) < 0) {
+    fprintf(log_f, "polygon password is invalid\n");
+    FAIL(S_ERR_INV_OPER);
+  }
+  if (!r || !s || !*s) {
+    fprintf(log_f, "polygon password is undefined\n");
+    FAIL(S_ERR_INV_OPER);
+  }
+  polygon_password = xstrdup(s);
+
+  if (ss_cgi_param(phr, "save_auth", &s) > 0) save_auth_flag = 1;
+
+  if ((r = ss_cgi_param(phr, "polygon_url", &s)) < 0) {
+    fprintf(log_f, "polygon url is invalid\n");
+    FAIL(S_ERR_INV_OPER);
+  } else if (r > 0) {
+    polygon_url = fix_string_2(s);
+  }
+
+  if (save_auth_flag) {
+    save_auth(phr->login, polygon_login, polygon_password, polygon_url);
+  }
+
+  s = getenv("TMPDIR");
+  if (!s) s = getenv("TEMPDIR");
+#if defined P_tmpdir
+  if (!s) s = P_tmpdir;
+#endif
+  if (!s) s = "/tmp";
+
+  time_t cur_time = time(NULL);
+  unsigned char rand_base[PATH_MAX];
+  unsigned char working_dir[PATH_MAX];
+  snprintf(rand_base, sizeof(rand_base), "%s_%d", phr->login, (int) cur_time);
+  snprintf(working_dir, sizeof(working_dir), "%s/ej_download_%s", s, rand_base);
+
+  if (mkdir(working_dir, 0700) < 0) {
+    if (errno != EEXIST) {
+      fprintf(log_f, "mkdir '%s' failed: %s\n", working_dir, os_ErrorMsg());
+      FAIL(S_ERR_FS_ERROR);
+    }
+    int serial = 1;
+    for (; serial < 10; ++serial) {
+      snprintf(working_dir, sizeof(working_dir), "%s/ej_download_%s_%d", s, rand_base, serial);
+      if (mkdir(working_dir, 0700) >= 0) break;
+      if (errno != EEXIST) {
+        fprintf(log_f, "mkdir '%s' failed: %s\n", working_dir, os_ErrorMsg());
+        FAIL(S_ERR_FS_ERROR);
+      }
+    }
+    if (serial >= 10) {
+      fprintf(log_f, "failed to create working directory '%s': too many attempts\n", working_dir);
+      FAIL(S_ERR_OPERATION_FAILED);
+    }
+  }
+
+  unsigned char conf_path[PATH_MAX];
+  unsigned char log_path[PATH_MAX];
+  unsigned char pid_path[PATH_MAX];
+  unsigned char stat_path[PATH_MAX];
+  unsigned char download_path[PATH_MAX];
+  unsigned char problem_path[PATH_MAX];
+  unsigned char start_path[PATH_MAX];
+
+  snprintf(conf_path, sizeof(conf_path), "%s/conf.cfg", working_dir);
+  snprintf(log_path, sizeof(log_path), "%s/log.txt", working_dir);
+  snprintf(pid_path, sizeof(pid_path), "%s/pid.txt", working_dir);
+  snprintf(stat_path, sizeof(stat_path), "%s/stat.txt", working_dir);
+  snprintf(download_path, sizeof(download_path), "%s/download", cnts->root_dir);
+  snprintf(problem_path, sizeof(problem_path), "%s/problems", cnts->root_dir);
+  snprintf(start_path, sizeof(start_path), "%s/ej-polygon", EJUDGE_SERVER_BIN_PATH);
+
+  pp = polygon_packet_alloc();
+  pp->polygon_url = polygon_url; polygon_url = NULL;
+  pp->login = polygon_login; polygon_login = NULL;
+  pp->password = polygon_password; polygon_password = NULL;
+  pp->user_agent = xstrdup("-");
+  pp->working_dir = xstrdup(working_dir);
+  pp->log_file = xstrdup(log_path);
+  pp->status_file = xstrdup(stat_path);
+  pp->pid_file = xstrdup(pid_path);
+  pp->download_dir = xstrdup(download_path);
+  pp->problem_dir = xstrdup(problem_path);
+  pp->dir_mode = xstrdup2(cnts->dir_mode);
+  pp->dir_group = xstrdup2(cnts->dir_group);
+  pp->file_mode = xstrdup2(cnts->file_mode);
+  pp->file_group = xstrdup2(cnts->file_group);
+  XCALLOC(pp->id, polygon_count + 1);
+  for (int prob_id = 1, ind = 0; prob_id < ss->prob_a; ++prob_id) {
+    const struct section_problem_data *prob = ss->probs[prob_id];
+    if (prob && prob->extid && !strncmp("polygon:", prob->extid, 8)) {
+      pp->id[ind++] = xstrdup(prob->extid + 8);
+    }
+  }
+
+  if (!(f = fopen(conf_path, "w"))) {
+    fprintf(log_f, "failed to open file '%s': %s\n", conf_path, os_ErrorMsg());
+    FAIL(S_ERR_OPERATION_FAILED);
+  }
+  polygon_packet_unparse(f, pp);
+  fclose(f); f = NULL;
+
+  us = update_state_create();
+  us->start_time = cur_time;
+  us->contest_id = cnts->id;
+  us->working_dir = xstrdup(working_dir);
+  us->conf_file = xstrdup(conf_path);
+  us->log_file = xstrdup(log_path);
+  us->status_file = xstrdup(stat_path);
+  us->pid_file = xstrdup(pid_path);
+  ss->update_state = us; us = NULL;
+
+  char *args[3];
+  args[0] = start_path;
+  args[1] = conf_path;
+  args[2] = NULL;
+  ejudge_start_daemon_process(args, working_dir);
+
+  ss_redirect(out_f, phr, SSERV_OP_DOWNLOAD_PROGRESS_PAGE, NULL);
+
+cleanup:
+  xfree(polygon_login);
+  xfree(polygon_password);
+  xfree(polygon_url);
+  polygon_packet_free((struct generic_section_config*) pp);
+  update_state_free(us);
+  if (free_edited_cnts_flag) {
+    super_serve_clear_edited_contest(ss);
   }
   return retval;
 }

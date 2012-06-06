@@ -975,6 +975,9 @@ prepare_unparse_prob(
     fprintf(f, "internal_name = \"%s\"\n", CARMOR(prob->internal_name));
   }
 
+  if (prob->extid && prob->extid[0])
+    fprintf(f, "extid = \"%s\"\n", CARMOR(prob->extid));
+
   if ((prob->abstract && prob->type > 0)
       || (!prob->abstract && prob->type >= 0))
     fprintf(f, "type = \"%s\"\n", problem_unparse_type(prob->type));
@@ -1337,7 +1340,6 @@ prepare_unparse_prob(
   if (!prob->abstract && prob->stand_column[0]) {
     fprintf(f, "stand_column = \"%s\"\n", CARMOR(prob->stand_column));
   }
-
 
   if (!prob->abstract && prob->start_date > 0)
     fprintf(f, "start_date = \"%s\"\n", xml_unparse_date(prob->start_date));
@@ -1756,8 +1758,6 @@ prepare_unparse_unhandled_prob(
   do_str(f, &ab, "statement_file", prob->statement_file);
   //PROBLEM_PARAM(alternative, "x"),
   do_xstr(f, &ab, "alternative", prob->alternative);
-  //PROBLEM_PARAM(extid, "S"),
-  do_str(f, &ab, "extid", prob->extid);
 
   html_armor_free(&ab);
 }

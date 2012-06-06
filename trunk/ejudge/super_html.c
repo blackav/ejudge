@@ -1073,6 +1073,14 @@ super_html_contest_page(FILE *f,
 
   fprintf(f, "</table>\n");
 
+  fprintf(f, "<p>");
+  fprintf(f, "<td>[%sUpdate problems from Polygon</a>]</td>",
+          html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
+                        "contest_id=%d&action=%d&op=%d",
+                        contest_id, SSERV_CMD_HTTP_REQUEST,
+                        SSERV_OP_UPDATE_FROM_POLYGON_PAGE));
+  fprintf(f, "</p>\n");
+
   if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0) {
     if (!cnts->run_managed) {
       fprintf(f, "<p>");
