@@ -2967,6 +2967,12 @@ run_tests(
     snprintf(check_cmd, sizeof(check_cmd), "%s", srpp->check_cmd);
   }
 
+  if ((!srpp->standard_checker || !srpp->standard_checker[0])
+      && (!srpp->check_cmd || !srpp->check_cmd[0])) {
+    append_msg_to_log(messages_path, "neither 'check_cmd' nor 'standard_checker' is defined");
+    goto check_failed;
+  }
+
   if (srpp->type_val) {
     status = check_output_only(global, srgp, srpp, reply_pkt, far, exe_name, &tests, check_cmd);
     goto done;
@@ -3285,4 +3291,3 @@ check_failed:
   user_run_tests = -1;
   goto done;
 }
-

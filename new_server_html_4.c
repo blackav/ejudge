@@ -1137,10 +1137,24 @@ cmd_submit_run(
                         "  Testing disabled for this problem");
       run_change_status_4(cs->runlog_state, run_id, RUN_PENDING);
     } else {
-      serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+      problem_xml_t px = NULL;
+      if (prob->variant_num > 0 && prob->xml.a && variant > 0) {
+        px = prob->xml.a[variant -  1];
+      } else if (prob->variant_num <= 0) {
+        px = prob->xml.p;
+      }
+      if (px && px->ans_num > 0) {
+        struct run_entry re;
+        run_get_entry(cs->runlog_state, run_id, &re);
+        serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+                        "submit", "ok", RUN_RUNNING, NULL);
+        serve_judge_built_in_problem(ejudge_config, cs, cnts, run_id, 1 /* judge_id */,
+                                     variant, cs->accepting_mode, &re,
+                                     prob, px, phr->user_id, phr->ip,
+                                     phr->ssl_flag);
+      } else if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
+        serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
                         "submit", "ok", RUN_COMPILING, NULL);
-
-      if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
         if ((r = serve_compile_request(cs, run_text, run_size, global->contest_id,
                                        run_id, phr->user_id, 0 /* lang_id */,
                                        0 /* locale_id */, 1 /* output_only*/,
@@ -1157,6 +1171,8 @@ cmd_submit_run(
           serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
         }
       } else {
+        serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+                        "submit", "ok", RUN_RUNNING, NULL);
         if (serve_run_request(cs, cnts, stderr, run_text, run_size,
                               global->contest_id, run_id,
                               phr->user_id, prob->id, 0, variant, 0, -1, -1, 0,
