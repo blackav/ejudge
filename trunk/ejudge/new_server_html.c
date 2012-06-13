@@ -10105,6 +10105,589 @@ unpriv_print_run(FILE *fout,
   xfree(log_txt);
 }
 
+int
+ns_submit_run(
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        const unsigned char *prob_param_name,
+        const unsigned char *lang_param_name,
+        int enable_ans_collect,
+        int admin_mode,
+        int *p_run_id,
+        int *p_mime_type,
+        int *p_next_prob_id)
+{
+  int retval = 0, r;
+  int prob_id = 0, lang_id = 0;
+  serve_state_t cs = extra->serve_state;
+  const struct section_global_data *global = cs->global;
+  const struct section_problem_data *prob = NULL;
+  const struct section_language_data *lang = NULL;
+  unsigned char *utf8_str = NULL;
+  ssize_t utf8_len = 0;
+  const unsigned char *s;
+  const unsigned char *run_text = NULL;
+  ssize_t run_size = 0;
+  size_t tmpsz;
+  char *ans_text = NULL;
+  int skip_mime_type_test = 0;
+
+  if (!prob_param_name) prob_param_name = "prob_id";
+  if (ns_cgi_param(phr, prob_param_name, &s) <= 0 || !s) {
+    FAIL(NEW_SRV_ERR_INV_PROB_ID);
+  }
+  for (prob_id = 1; prob_id <= cs->max_prob; ++prob_id) {
+    if ((prob = cs->probs[prob_id]) && prob->short_name && !strcmp(s, prob->short_name))
+      break;
+  }
+  if (prob_id > cs->max_prob) {
+    char *eptr = NULL;
+    errno = 0;
+    prob_id = strtol(s, &eptr, 10);
+    if (errno || *eptr || prob_id <= 0 || prob_id > cs->max_prob || !(prob = cs->probs[prob_id])) {
+      FAIL(NEW_SRV_ERR_INV_PROB_ID);
+    }
+  }
+
+  if (prob->type == PROB_TYPE_STANDARD) {
+    // "STANDARD" problems need programming language identifier
+    if (!lang_param_name) lang_param_name = "lang_id";
+    if (ns_cgi_param(phr, lang_param_name, &s) <= 0 || !s) {
+      FAIL(NEW_SRV_ERR_INV_LANG_ID);
+    }
+    for (lang_id = 1; lang_id <= cs->max_lang; ++lang_id) {
+      if ((lang = cs->langs[lang_id]) && lang->short_name && !strcmp(lang->short_name, s))
+        break;
+    }
+    if (lang_id > cs->max_lang) {
+      char *eptr = NULL;
+      errno = 0;
+      lang_id = strtol(s, &eptr, 10);
+      if (errno || *eptr || lang_id <= 0 || lang_id > cs->max_lang || !(lang = cs->langs[lang_id])) {
+        FAIL(NEW_SRV_ERR_INV_LANG_ID);
+      }
+    }
+  }
+
+  switch (prob->type) {
+  case PROB_TYPE_STANDARD:
+  case PROB_TYPE_OUTPUT_ONLY:
+    r = ns_cgi_param_bin(phr, "file", &run_text, &tmpsz); run_size = tmpsz;
+    if (r <= 0 || !run_text || run_size <= 0) {
+      if (prob->enable_text_form > 0) {
+        r = ns_cgi_param_bin(phr, "text_form", &run_text, &tmpsz); run_size = tmpsz;
+        if (r <= 0 || !run_text || run_size <= 0) {
+          FAIL(NEW_SRV_ERR_FILE_EMPTY);
+        }
+        if (run_size != strlen(run_text)) {
+          FAIL(NEW_SRV_ERR_BINARY_FILE);
+        }
+        skip_mime_type_test = 1;
+      } else {
+        FAIL(NEW_SRV_ERR_FILE_UNSPECIFIED);
+      }
+    }
+    break;
+
+  case PROB_TYPE_TESTS:
+  case PROB_TYPE_TEXT_ANSWER:
+  case PROB_TYPE_SHORT_ANSWER:
+  case PROB_TYPE_SELECT_ONE:
+    r = ns_cgi_param_bin(phr, "file", &run_text, &tmpsz); run_size = tmpsz;
+    if (r <= 0 || !run_text || run_size <= 0) {
+      FAIL(NEW_SRV_ERR_FILE_UNSPECIFIED);
+    }
+    break;
+
+  case PROB_TYPE_SELECT_MANY: 
+    if (enable_ans_collect > 0) {
+      // "ans_*"
+      int max_ans = -1;
+      for (int i = 0; i < phr->param_num; ++i) {
+        if (!strncmp(phr->param_names[i], "ans_", 4) && isdigit(phr->param_names[i][4])) {
+          char *eptr = NULL;
+          errno = 0;
+          int ans = strtol(phr->param_names[i] + 4, &eptr, 10);
+          if (errno || *eptr || ans < 0 || ans > 65535) {
+            FAIL(NEW_SRV_ERR_INV_ANSWER);
+          }
+          if (ans > max_ans) max_ans = ans;
+        }
+      }
+      if (max_ans >= 0) {
+        unsigned char *ans_map = NULL;
+        XCALLOC(ans_map, max_ans + 1);
+        for (int i = 0; i < phr->param_num; ++i) {
+          if (!strncmp(phr->param_names[i], "ans_", 4) && isdigit(phr->param_names[i][4])) {
+            char *eptr = NULL;
+            errno = 0;
+            int ans = strtol(phr->param_names[i] + 4, &eptr, 10);
+            if (!errno && !*eptr && ans >= 0 && ans <= max_ans) {
+              ans_map[ans] = 1;
+            }
+          }
+        }
+        int nonfirst = 0;
+        FILE *f = open_memstream(&ans_text, &tmpsz);
+        for (int ans = 0; ans <= max_ans; ++ans) {
+          if (ans_map[ans]) {
+            if (nonfirst) putc(' ', f);
+            nonfirst = 1;
+            fprintf(f, "%d", ans);
+          }
+        }
+        if (nonfirst) putc('\n', f);
+        fclose(f); f = NULL;
+        xfree(ans_map); ans_map = NULL;
+        run_text = ans_text; run_size = tmpsz;
+      } else {
+        run_text = ""; run_size = 0;
+      }
+    } else {
+      r = ns_cgi_param_bin(phr, "file", &run_text, &tmpsz); run_size = tmpsz;
+      if (r <= 0 || !run_text || run_size <= 0) {
+        run_text = ""; run_size = 0;
+      }
+    }
+    break;
+  case PROB_TYPE_CUSTOM:
+    {
+      // invoke problem plugin
+      struct problem_plugin_iface *plg = NULL;
+      load_problem_plugin(cs, prob_id);
+      if (!(plg = cs->prob_extras[prob_id].plugin) || !plg->parse_form) {
+        FAIL(NEW_SRV_ERR_PLUGIN_NOT_AVAIL);
+      }
+      if ((ans_text = (*plg->parse_form)(cs->prob_extras[prob_id].plugin_data, log_f, phr, cnts, extra))) {
+        run_text = ans_text;
+        run_size = strlen(ans_text);
+      } else {
+        // FIXME: ERROR?
+        run_text = ""; run_size = 0;
+      }
+    }
+    break;
+  }
+
+  switch (prob->type) {
+  case PROB_TYPE_STANDARD:
+    if (lang->binary <= 0 && strlen(run_text) != run_size) {
+      if ((utf8_len = ucs2_to_utf8(&utf8_str, run_text, run_size)) < 0) {
+        FAIL(NEW_SRV_ERR_BINARY_FILE);
+      }
+      run_text = utf8_str;
+      run_size = utf8_len;
+    }
+    if (prob->disable_ctrl_chars > 0 && has_control_characters(run_text)) {
+      FAIL(NEW_SRV_ERR_INV_CHAR);
+    }
+    break;
+  case PROB_TYPE_OUTPUT_ONLY:
+    if (prob->binary_input <= 0 && prob->binary <= 0 && strlen(run_text) != run_size) {
+      FAIL(NEW_SRV_ERR_BINARY_FILE);
+    }
+    break;
+  case PROB_TYPE_TEXT_ANSWER:
+  case PROB_TYPE_SHORT_ANSWER:
+  case PROB_TYPE_SELECT_MANY:
+    if (strlen(run_text) != run_size) {
+      FAIL(NEW_SRV_ERR_BINARY_FILE);
+    }
+    break;
+
+  case PROB_TYPE_SELECT_ONE:
+    {
+      if (strlen(run_text) != run_size) {
+        FAIL(NEW_SRV_ERR_BINARY_FILE);
+      }
+      const unsigned char *eptr1 = run_text + run_size;
+      while (eptr1 > run_text && isspace(eptr1[-1])) --eptr1;
+      if (eptr1 == run_text) {
+        FAIL(NEW_SRV_ERR_ANSWER_UNSPECIFIED);
+      }
+      char *eptr2 = NULL;
+      errno = 0;
+      int ans_val = strtol(run_text, &eptr2, 10);
+      if (errno || eptr1 != (const unsigned char *) eptr2 || ans_val < 0) {
+        FAIL(NEW_SRV_ERR_INV_ANSWER);
+      }
+    }
+    break;
+
+  case PROB_TYPE_TESTS:
+  case PROB_TYPE_CUSTOM:
+    break;
+  }
+
+  // ignore BOM
+  if (global->ignore_bom > 0 && prob->binary <= 0 && (!lang || lang->binary <= 0)) {
+    if (run_text && run_size >= 3 && run_text[0] == 0xef && run_text[1] == 0xbb && run_text[2] == 0xbf) {
+      run_text += 3; run_size -= 3;
+    }
+  }
+
+  time_t start_time = 0;
+  time_t stop_time = 0;
+  if (global->is_virtual > 0 && !admin_mode) {
+    start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
+    stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
+  } else {
+    start_time = run_get_start_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state);
+  }
+
+  // availability checks
+  if (!admin_mode && cs->clients_suspended) {
+    FAIL(NEW_SRV_ERR_CLIENTS_SUSPENDED);
+  }
+  if (!admin_mode && start_time <= 0) {
+    FAIL(NEW_SRV_ERR_CONTEST_NOT_STARTED);
+  }
+  if (!admin_mode && stop_time > 0) {
+    FAIL(NEW_SRV_ERR_CONTEST_ALREADY_FINISHED);
+  }
+  if (!admin_mode && serve_check_user_quota(cs, phr->user_id, run_size) < 0) {
+    FAIL(NEW_SRV_ERR_RUN_QUOTA_EXCEEDED);
+  }
+  if (!admin_mode && !serve_is_problem_started(cs, phr->user_id, prob)) {
+    FAIL(NEW_SRV_ERR_PROB_UNAVAILABLE);
+  }
+  time_t user_deadline = 0;
+  if (!admin_mode && serve_is_problem_deadlined(cs, phr->user_id, phr->login, prob, &user_deadline)) {
+    FAIL(NEW_SRV_ERR_PROB_DEADLINE_EXPIRED);
+  }
+
+  int mime_type = 0;
+  if (p_mime_type) *p_mime_type = 0;
+  if (!admin_mode && lang_id > 0) {
+    if (lang->disabled > 0) {
+      FAIL(NEW_SRV_ERR_LANG_DISABLED);
+    }
+    if (lang->insecure > 0 && global->secure_run > 0 && prob->disable_security <= 0) {
+      FAIL(NEW_SRV_ERR_LANG_DISABLED);
+    }
+    if (prob->enable_language) {
+      char **lang_list = prob->enable_language;
+      int i;
+      for (i = 0; lang_list[i]; ++i)
+        if (!strcmp(lang_list[i], lang->short_name))
+          break;
+      if (!lang_list[i]) {
+        FAIL(NEW_SRV_ERR_LANG_NOT_AVAIL_FOR_PROBLEM);
+      }
+    } else if (prob->disable_language) {
+      char **lang_list = prob->disable_language;
+      int i;
+      for (i = 0; lang_list[i]; ++i)
+        if (!strcmp(lang_list[i], lang->short_name))
+          break;
+      if (lang_list[i]) {
+        FAIL(NEW_SRV_ERR_LANG_DISABLED_FOR_PROBLEM);
+      }
+    }
+  } else if (!admin_mode && !skip_mime_type_test) {
+    // guess the content-type and check it against the list
+    if ((mime_type = mime_type_guess(global->diff_work_dir, run_text, run_size)) < 0) {
+      FAIL(NEW_SRV_ERR_CANNOT_DETECT_CONTENT_TYPE);
+    }
+    if (p_mime_type) *p_mime_type = mime_type;
+    const unsigned char *mime_type_str = mime_type_get_type(mime_type);
+    if (prob->enable_language) {
+      char **lang_list = prob->enable_language;
+      int i;
+      for (i = 0; lang_list[i]; i++)
+        if (!strcmp(lang_list[i], mime_type_str))
+          break;
+      if (!lang_list[i]) {
+        FAIL(NEW_SRV_ERR_CONTENT_TYPE_NOT_AVAILABLE);
+      }
+    } else if (prob->disable_language) {
+      char **lang_list = prob->disable_language;
+      int i;
+      for (i = 0; lang_list[i]; i++)
+        if (!strcmp(lang_list[i], mime_type_str))
+          break;
+      if (lang_list[i]) {
+        FAIL(NEW_SRV_ERR_CONTENT_TYPE_DISABLED);
+      }
+    }
+  }
+
+  int variant = 0;
+  if (prob->variant_num > 0) {
+    if (admin_mode) {
+      if (ns_cgi_param_int_opt(phr, "variant", &variant, 0) < 0) {
+        FAIL(NEW_SRV_ERR_INV_VARIANT);
+      }
+      if (!variant && (variant = find_variant(cs, phr->user_id, prob_id, 0)) <= 0) {
+        FAIL(NEW_SRV_ERR_VARIANT_UNASSIGNED);
+      }
+      if (variant < 0 || variant > prob->variant_num) {
+        FAIL(NEW_SRV_ERR_INV_VARIANT);
+      }
+    } else {
+      if ((variant = find_variant(cs, phr->user_id, prob_id, 0)) <= 0) {
+        FAIL(NEW_SRV_ERR_VARIANT_UNASSIGNED);
+      }
+    }
+  }
+
+  ruint32_t shaval[5];
+  sha_buffer(run_text, run_size, shaval);
+
+  int run_id = 0;
+  if (!admin_mode && global->ignore_duplicated_runs != 0) {
+    if ((run_id = run_find_duplicate(cs->runlog_state, phr->user_id, prob_id,
+                                     lang_id, variant, run_size, shaval)) >= 0) {
+      if (p_run_id) *p_run_id = run_id;
+      FAIL(NEW_SRV_ERR_DUPLICATE_SUBMIT);
+    }
+  }
+
+  unsigned char *acc_probs = NULL;
+  if (!admin_mode && prob->disable_submit_after_ok > 0
+      && global->score_system != SCORE_OLYMPIAD && !cs->accepting_mode) {
+    if (!acc_probs) {
+      XALLOCAZ(acc_probs, cs->max_prob + 1);
+      run_get_accepted_set(cs->runlog_state, phr->user_id,
+                           cs->accepting_mode, cs->max_prob, acc_probs);
+    }
+    if (acc_probs[prob_id]) {
+      FAIL(NEW_SRV_ERR_PROB_ALREADY_SOLVED);
+    }
+  }
+
+  if (!admin_mode && prob->require) {
+    if (!acc_probs) {
+      XALLOCAZ(acc_probs, cs->max_prob + 1);
+      run_get_accepted_set(cs->runlog_state, phr->user_id,
+                           cs->accepting_mode, cs->max_prob, acc_probs);
+    }
+    int i;
+    for (i = 0; prob->require[i]; ++i) {
+      int j;
+      for (j = 1; j <= cs->max_prob; ++j)
+        if (cs->probs[j] && !strcmp(cs->probs[j]->short_name, prob->require[i]))
+          break;
+      if (j > cs->max_prob || !acc_probs[j]) break;
+    }
+    if (prob->require[i]) {
+      FAIL(NEW_SRV_ERR_NOT_ALL_REQ_SOLVED);
+    }
+  }
+
+  int accept_immediately = 0;
+  if (prob->type == PROB_TYPE_SELECT_ONE || prob->type == PROB_TYPE_SELECT_MANY) {
+    // add this run and if we're in olympiad accepting mode mark as accepted
+    if (global->score_system == SCORE_OLYMPIAD && cs->accepting_mode)
+      accept_immediately = 1;
+  }
+
+  // OK, so all checks are done, now we add this submit to the database
+  int is_hidden = 0;
+  int db_variant = variant;
+  struct timeval precise_time;
+  gettimeofday(&precise_time, 0);
+  if (admin_mode) {
+    is_hidden = 1;
+  } else {
+    db_variant = 0;
+  }
+
+  run_id = run_add_record(cs->runlog_state, 
+                          precise_time.tv_sec, precise_time.tv_usec * 1000,
+                          run_size, shaval,
+                          phr->ip, phr->ssl_flag,
+                          phr->locale_id, phr->user_id,
+                          prob_id, lang_id, db_variant, is_hidden, mime_type);
+  if (run_id < 0) {
+    FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
+  }
+  serve_move_files_to_insert_run(cs, run_id);
+
+  unsigned char run_path[PATH_MAX];
+  run_path[0] = 0;
+  int arch_flags = archive_make_write_path(cs, run_path, sizeof(run_path),
+                                           global->run_archive_dir, run_id,
+                                           run_size, 0, 0);
+  if (arch_flags < 0) {
+    run_undo_add_record(cs->runlog_state, run_id);
+    FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
+  }
+  if (archive_dir_prepare(cs, global->run_archive_dir, run_id, 0, 0) < 0) {
+    run_undo_add_record(cs->runlog_state, run_id);
+    FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
+  }
+  if (generic_write_file(run_text, run_size, arch_flags, 0, run_path, "") < 0) {
+    run_undo_add_record(cs->runlog_state, run_id);
+    FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
+  }
+  if (*p_run_id) *p_run_id = run_id;
+
+  if (accept_immediately) {
+    serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+                    "submit", "ok", RUN_ACCEPTED, NULL);
+    run_change_status_4(cs->runlog_state, run_id, RUN_ACCEPTED);
+    goto done;
+  }
+
+  if (prob->disable_auto_testing > 0
+      || (prob->disable_testing > 0 && prob->enable_compilation <= 0)
+      || cs->testing_suspended) {
+    serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+                    "submit", "ok", RUN_PENDING,
+                    "  Testing disabled for this problem");
+    run_change_status_4(cs->runlog_state, run_id, RUN_PENDING);
+    goto done;
+  }
+
+  if (prob->type == PROB_TYPE_STANDARD) {
+    if (lang->disable_auto_testing > 0 || lang->disable_testing > 0) {
+      serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+                      "submit", "ok", RUN_PENDING,
+                      "  Testing disabled for this language");
+      run_change_status_4(cs->runlog_state, run_id, RUN_PENDING);
+      goto done;
+    }
+
+    serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+                    "submit", "ok", RUN_COMPILING, NULL);
+    r = serve_compile_request(cs, run_text, run_size, global->contest_id,
+                              run_id, phr->user_id,
+                              lang->compile_id, phr->locale_id, 0 /* output_only */,
+                              lang->src_sfx,
+                              lang->compiler_env,
+                              0 /* style_check_only */,
+                              prob->style_checker_cmd,
+                              prob->style_checker_env,
+                              -1 /* accepting_mode */, 0 /* priority_adjustment */,
+                              1 /* notify_flag */, prob, lang, 0 /* no_db_flag */);
+    if (r < 0) {
+      serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
+      goto cleanup;
+    }
+    goto done;
+  }
+
+  /* manually checked problems */
+  if (prob->manual_checking > 0) {
+    if (prob->check_presentation <= 0) {
+      serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+                      "submit", "ok", RUN_ACCEPTED,
+                      "  This problem is checked manually");
+      run_change_status_4(cs->runlog_state, run_id, RUN_ACCEPTED);
+      goto done;
+    }
+
+    if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
+      serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+                      "submit", "ok", RUN_COMPILING, NULL);
+      r = serve_compile_request(cs, run_text, run_size, global->contest_id,
+                                run_id, phr->user_id, 0 /* lang_id */,
+                                0 /* locale_id */, 1 /* output_only */,
+                                mime_type_get_suffix(mime_type),
+                                NULL /* compiler_env */,
+                                1 /* style_check_only */,
+                                prob->style_checker_cmd,
+                                prob->style_checker_env,
+                                0 /* accepting_mode */,
+                                0 /* priority_adjustment */,
+                                0 /* notify flag */,
+                                prob, NULL /* lang */,
+                                0 /* no_db_flag */);
+      if (r < 0) {
+        serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
+        goto cleanup;
+      }
+      goto done;
+    }
+
+    serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+                    "submit", "ok", RUN_RUNNING, NULL);
+    r = serve_run_request(cs, cnts, log_f, run_text, run_size,
+                          global->contest_id, run_id,
+                          phr->user_id, prob_id, 0, variant, 0, -1, -1, 1,
+                          mime_type, 0, 0, 0);
+    if (r < 0) {
+      serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
+      goto cleanup;
+    }
+    goto done;
+  }
+
+  /* built-in problem checker */
+  problem_xml_t px = NULL;
+  if (prob->variant_num > 0 && prob->xml.a && variant > 0) {
+    px = prob->xml.a[variant - 1];
+  } else if (prob->variant_num <= 0) {
+    px = prob->xml.p;
+  }
+  if (px && px->ans_num > 0) {
+    struct run_entry re;
+    run_get_entry(cs->runlog_state, run_id, &re);
+    serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+                    "submit", "ok", RUN_RUNNING, NULL);
+    serve_judge_built_in_problem(ejudge_config, cs, cnts, run_id, 1 /* judge_id */,
+                                 variant, cs->accepting_mode, &re,
+                                 prob, px, phr->user_id, phr->ip,
+                                 phr->ssl_flag);
+    goto done;
+  }
+
+  if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
+    r = serve_compile_request(cs, run_text, run_size, cnts->id,
+                              run_id, phr->user_id, 0 /* lang_id */,
+                              0 /* locale_id */, 1 /* output_only */,
+                              mime_type_get_suffix(mime_type),
+                              NULL /* compiler_env */,
+                              1 /* style_check_only */,
+                              prob->style_checker_cmd,
+                              prob->style_checker_env,
+                              0 /* accepting_mode */,
+                              0 /* priority_adjustment */,
+                              0 /* notify flag */,
+                              prob, NULL /* lang */,
+                              0 /* no_db_flag */);
+    if (r < 0) {
+      serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
+      goto cleanup;
+    }
+    goto done;
+  }
+
+  r = serve_run_request(cs, cnts, log_f, run_text, run_size,
+                        global->contest_id, run_id,
+                        phr->user_id, prob_id, 0, variant, 0, -1, -1, 1,
+                        mime_type, 0, 0, 0);
+  if (r < 0) {
+    serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
+    goto cleanup;
+  }
+
+done:
+  if (global->problem_navigation > 0) {
+    int i = prob->id;
+    if (prob->advance_to_next > 0) {
+      for (++i; i <= cs->max_prob; ++i) {
+        const struct section_problem_data *prob2 = cs->probs[i];
+        if (!prob2) continue;
+        if (!serve_is_problem_started(cs, phr->user_id, prob2)) continue;
+        // FIXME: standard applicability checks
+        break;
+      }
+      if (i > cs->max_prob) i = 0;
+    }
+    if (*p_next_prob_id) *p_next_prob_id = i;
+  }
+
+cleanup:
+  xfree(ans_text);
+  xfree(utf8_str);
+  return retval;
+}
+
 static void
 unpriv_submit_run(FILE *fout,
                   struct http_request_info *phr,
@@ -10614,9 +11197,6 @@ unpriv_submit_run(FILE *fout,
                       "  Testing disabled for this problem");
       run_change_status_4(cs->runlog_state, run_id, RUN_PENDING);
     } else {
-      serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
-                      "submit", "ok", RUN_COMPILING, NULL);
-
       if (prob->variant_num > 0 && prob->xml.a) {
         px = prob->xml.a[variant -  1];
       } else {
@@ -10624,6 +11204,8 @@ unpriv_submit_run(FILE *fout,
       }
       if (px && px->ans_num > 0) {
         run_get_entry(cs->runlog_state, run_id, &re);
+        serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+                        "submit", "ok", RUN_RUNNING, NULL);
         serve_judge_built_in_problem(ejudge_config, cs, cnts, run_id, 1 /* judge_id */,
                                      variant, cs->accepting_mode, &re,
                                      prob, px, phr->user_id, phr->ip,
@@ -10632,6 +11214,9 @@ unpriv_submit_run(FILE *fout,
       }
 
       if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
+        serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+                        "submit", "ok", RUN_COMPILING, NULL);
+
         r = serve_compile_request(cs, run_text, run_size, global->contest_id,
                                   run_id, phr->user_id, 0 /* lang_id */,
                                   0 /* locale_id */, 1 /* output_only*/,
@@ -10649,6 +11234,9 @@ unpriv_submit_run(FILE *fout,
           serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
         }
       } else {
+        serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+                        "submit", "ok", RUN_RUNNING, NULL);
+
         if (serve_run_request(cs, cnts, log_f, run_text, run_size,
                               global->contest_id, run_id,
                               phr->user_id, prob_id, 0, variant, 0, -1, -1, 1,
