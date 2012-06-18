@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2007-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -70,6 +70,10 @@ int main(void)
     return 1;
   }
   fprintf(stderr, "t6: linux version %d\n", linux_version);
+  if (linux_version >= 3000000) {
+    fprintf(stderr, "t6: patch for linux >= 3.0.0 does not support millisecond time limits\n");
+    return 0;
+  }
 
   if ((p = fork()) < 0) {
     fprintf(stderr, "failed: unexpected fork() error: %s\n", strerror(errno));
