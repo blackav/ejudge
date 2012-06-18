@@ -38,6 +38,7 @@
 #include <signal.h>
 #include <string.h>
 #include <time.h>
+#include <limits.h>
 
 #ifdef __linux__
 #include <sys/ptrace.h>
@@ -127,6 +128,7 @@ struct tTask
   strarray_t env;               /* environment variables */
 
   char *last_error_msg;         /* last error text */
+  unsigned long used_vm_size;   /* maximum used VM size (if available) */
 };
 
 #define PIDARR_SIZE 32
@@ -836,8 +838,8 @@ task_SetMaxTimeMillis(tTask *tsk, int time)
 }
 
 /**
- * NAME:    task_SetMaxTime
- * PURPOSE: set the maximum time for the process
+ * NAME:    task_SetMaxRealTime
+ * PURPOSE: set the maximum real (astronomic) time for the process
  * ARGS:    tsk  - task
  *          time - the maximum time in seconds
  * RETURN:  0 - successful completion
@@ -1817,12 +1819,12 @@ task_Start(tTask *tsk)
       ptrace(0x4282, 0, 0, 0);
     } else if (tsk->max_time_millis > 0) {
       // the kernel does not support millisecond-precise time-limits
-      tsk->max_time = (tsk->max_time_millis + 1999) / 1000;
+      tsk->max_time = (tsk->max_time_millis + 999) / 1000;
     }
 #else
     if (tsk->max_time_millis > 0) {
       // the kernel does not support millisecond-precise time-limits
-      tsk->max_time = (tsk->max_time_millis + 1999) / 1000;
+      tsk->max_time = (tsk->max_time_millis + 999) / 1000;
     }
 #endif
 
@@ -1996,6 +1998,236 @@ task_Wait(tTask *tsk)
   return tsk;
 }
 
+struct process_info
+{
+  char state;
+  int ppid;
+  int pgrp;
+  int session;
+  int tty_nr;
+  int tpgid;
+  unsigned flags;
+  unsigned long minflt;
+  unsigned long cminflt;
+  unsigned long majflt;
+  unsigned long cmajflt;
+  unsigned long utime;
+  unsigned long stime;
+  unsigned long cutime;
+  unsigned long cstime;
+  long priority;
+  long nice;
+  long num_threads;
+  long itrealvalue;
+  long long starttime;
+  unsigned long vsize;
+  long rss;
+  unsigned long rsslim;
+  unsigned long startcode;
+  unsigned long endcode;
+  unsigned long startstack;
+  unsigned long kstkesp;
+  unsigned long kstkeip;
+  unsigned long signal;
+  unsigned long blocked;
+  unsigned long sigignore;
+  unsigned long sigcatch;
+  unsigned long wchan;
+  unsigned long nswap;
+  unsigned long cnswap;
+  int exit_signal;
+  int processor;
+  long clock_ticks;
+};
+
+static int
+parse_proc_pid_stat(int pid, struct process_info *info)
+{
+  unsigned char path[PATH_MAX];
+  FILE *f = NULL;
+  unsigned char buf[8192];
+  int blen;
+
+  memset(info, 0, sizeof(*info));
+  snprintf(path, sizeof(path), "/proc/%d/stat", pid);
+  f = fopen(path, "r");
+  if (!f) goto fail;
+  if (!fgets(buf, sizeof(buf), f)) goto fail;
+  blen = strlen(buf);
+  if (blen + 1 == sizeof(buf)) goto fail;
+  fclose(f); f = NULL;
+
+  unsigned char *p = strrchr(buf, ')');
+  if (!p) goto fail;
+  ++p;
+
+  int r = sscanf(p, " %c%d%d%d%d%d%u%lu%lu%lu%lu%lu%lu%lu%lu%ld%ld%ld%ld%llu%lu%ld%lu%lu%lu%lu%lu%lu%lu%lu%lu%lu%lu%lu%lu%d%d",
+                 &info->state,
+                 &info->ppid,
+                 &info->pgrp,
+                 &info->session,
+                 &info->tty_nr,
+                 &info->tpgid,
+                 &info->flags,
+                 &info->minflt,
+                 &info->cminflt,
+                 &info->majflt,
+                 &info->cmajflt,
+                 &info->utime,
+                 &info->stime,
+                 &info->cutime,
+                 &info->cstime,
+                 &info->priority,
+                 &info->nice,
+                 &info->num_threads,
+                 &info->itrealvalue,
+                 &info->starttime,
+                 &info->vsize,
+                 &info->rss,
+                 &info->rsslim,
+                 &info->startcode,
+                 &info->endcode,
+                 &info->startstack,
+                 &info->kstkesp,
+                 &info->kstkeip,
+                 &info->signal,
+                 &info->blocked,
+                 &info->sigignore,
+                 &info->sigcatch,
+                 &info->wchan,
+                 &info->nswap,
+                 &info->cnswap,
+                 &info->exit_signal,
+                 &info->processor);
+  if (r != 37) goto fail;
+
+  if ((info->clock_ticks = sysconf(_SC_CLK_TCK)) <= 0) goto fail;
+
+  return 0;
+
+fail:
+  if (f) fclose(f);
+  return -1;
+}
+
+tTask *
+task_NewWait(tTask *tsk)
+{
+  task_init_module();
+  ASSERT(tsk);
+
+  bury_dead_prc();
+
+  if (tsk->state == TSK_ERROR || tsk->state == TSK_STOPPED)
+    return NULL;
+  if (tsk->state == TSK_SIGNALED || tsk->state == TSK_EXITED)
+    return tsk;
+  ASSERT(tsk->state == TSK_RUNNING);
+
+  sigset_t bs;
+  sigemptyset(&bs);
+  sigaddset(&bs, SIGCHLD);
+
+  struct timeval cur_time, rt_timeout;
+  gettimeofday(&cur_time, NULL);
+  if (tsk->max_real_time > 0) {
+    rt_timeout = cur_time;
+    rt_timeout.tv_sec += tsk->max_real_time;
+  }
+
+  long long max_time_ms = 0;
+  if (tsk->max_time_millis > 0) {
+    max_time_ms = tsk->max_time_millis;
+  } else if (tsk->max_time > 0) {
+    max_time_ms = tsk->max_time * 1000;
+  }
+
+  int pid, stat = 0;
+  struct rusage usage;
+  unsigned long used_vm_size = 0;
+
+  while (1) {
+    pid = wait4(tsk->pid, &stat, WNOHANG, &usage);
+    if (pid < 0) {
+      write_log(LOG_REUSE, LOG_ERROR, "task_NewWait: wait4 failed: %s\n", os_ErrorMsg());
+      // FIXME: recover?
+      return tsk;
+    }
+    if (pid > 0 && pid != tsk->pid) {
+      find_prc_in_list(pid, stat, &usage);
+      continue;
+    }
+    if (pid > 0) {
+      find_prc_in_list(pid, stat, &usage);
+      tsk->used_vm_size = used_vm_size;
+      return tsk;
+    }
+
+    if (tsk->max_real_time > 0) {
+      gettimeofday(&cur_time, NULL);
+      if (cur_time.tv_sec > rt_timeout.tv_sec
+          || (cur_time.tv_sec == rt_timeout.tv_sec && cur_time.tv_usec >= rt_timeout.tv_usec)) {
+        if (tsk->enable_process_group > 0) {
+          kill(-tsk->pid, tsk->termsig);
+        } else {
+          kill(tsk->pid, tsk->termsig);
+        }
+        tsk->was_timeout = 1;
+        tsk->used_vm_size = used_vm_size;
+        break;
+      }
+    }
+
+    struct process_info info;
+    if (parse_proc_pid_stat(tsk->pid, &info) >= 0) {
+      if (max_time_ms > 0) {
+        long long cur_utime = info.utime + info.stime;
+        cur_utime = (cur_utime * 1000) / info.clock_ticks;
+        //fprintf(stderr, "CPUTime: %lld\n", cur_utime);
+        if (cur_utime >= max_time_ms) {
+          if (tsk->enable_process_group > 0) {
+            kill(-tsk->pid, tsk->termsig);
+          } else {
+            kill(tsk->pid, tsk->termsig);
+          }
+          tsk->was_timeout = 1;
+          tsk->used_vm_size = used_vm_size;
+          break;
+        }
+      }
+      if (info.vsize > 0 && info.vsize > used_vm_size) {
+        used_vm_size = info.vsize;
+        //fprintf(stderr, "VMSize: %lu\n", used_vm_size);
+      }
+    }
+
+    // wait 0.1 s
+    struct timespec wt;
+    wt.tv_sec = 0;
+    wt.tv_nsec = 100000000;
+    sigtimedwait(&bs, 0, &wt);
+  }
+
+  while (1) {
+    pid = wait4(tsk->pid, &stat, 0, &usage);
+    if (pid < 0) {
+      write_log(LOG_REUSE, LOG_ERROR, "task_NewWait: wait4 failed: %s\n", os_ErrorMsg());
+      // FIXME: recover?
+      return tsk;
+    }
+    if (pid > 0 && pid != tsk->pid) {
+      find_prc_in_list(pid, stat, &usage);
+      continue;
+    }
+    if (pid > 0) {
+      find_prc_in_list(pid, stat, &usage);
+      return tsk;
+    }
+  }
+
+  return tsk;
+}
+
 /**
  * NAME:    task_Status
  * PURPOSE: return task status
@@ -2086,8 +2318,7 @@ long
 task_GetMemoryUsed(tTask *tsk)
 {
   ASSERT(tsk);
-  //return tsk->used_vm_size;
-  return 0;
+  return tsk->used_vm_size;
 }
 
 int
@@ -2283,7 +2514,8 @@ linux_set_fix_flag(void)
     linux_ptrace_code = 0x4280;
     linux_rlimit_code = 15;
   } else {
-    // FIXME: yet unsupported version, don't even try
+    linux_ptrace_code = 0x4280;
+    linux_rlimit_code = 0;
   }
 
   // check for millisecond time limit
