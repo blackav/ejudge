@@ -456,6 +456,7 @@ run_program(int argc, char *argv[], long *p_cpu_time, long *p_real_time)
   unsigned char output_path[PATH_MAX];
   unsigned char error_path[PATH_MAX];
   unsigned char buf[1024];
+  long used_vm_size;
 
   memset(&tinfo, 0, sizeof(tinfo));
   input_path[0] = 0;
@@ -584,7 +585,7 @@ run_program(int argc, char *argv[], long *p_cpu_time, long *p_real_time)
     retcode = RUN_CHECK_FAILED;
     goto cleanup;
   }
-  task_Wait(tsk);
+  task_NewWait(tsk);
   if (memory_limit && task_IsMemoryLimit(tsk)) {
     if (all_tests <= 0) {
       fprintf(stderr, "Status: ML\n"
@@ -639,6 +640,10 @@ run_program(int argc, char *argv[], long *p_cpu_time, long *p_real_time)
   if (quiet_flag <= 0 && all_tests <= 0) {
     fprintf(stderr, "CPUTime: %ld\n", task_GetRunningTime(tsk));
     fprintf(stderr, "RealTime: %ld\n", task_GetRealTime(tsk));
+    used_vm_size = task_GetMemoryUsed(tsk);
+    if (used_vm_size > 0) {
+      fprintf(stderr, "VMSize: %ld\n", used_vm_size);
+    }
   }
   if (p_cpu_time) *p_cpu_time = task_GetRunningTime(tsk);
   if (p_real_time) *p_real_time = task_GetRealTime(tsk);

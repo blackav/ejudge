@@ -279,7 +279,7 @@ generate_xml_report(
       fprintf(f, " real-time=\"%ld\"", tests[i].real_time);
     }
     if (tests[i].max_memory_used > 0) {
-      fprintf(f, " max-memory-used=\"%d\"", tests[i].max_memory_used);
+      fprintf(f, " max-memory-used=\"%lu\"", tests[i].max_memory_used);
     }
     if (srgp->scoring_system_val == SCORE_OLYMPIAD && srgp->accepting_mode <= 0) {
       fprintf(f, " nominal-score=\"%d\" score=\"%d\"",
@@ -2226,10 +2226,11 @@ run_one_test(
   if (pfd2[1] >= 0) close(pfd2[1]);
   pfd1[0] = pfd1[1] = pfd2[0] = pfd2[1] = -1;
 
-  task_Wait(tsk);
+  task_NewWait(tsk);
 
-  info("CPU time = %ld, real time = %ld",
-       (long) task_GetRunningTime(tsk), (long) task_GetRealTime(tsk));
+  info("CPU time = %ld, real time = %ld, used_vm_size = %ld",
+       (long) task_GetRunningTime(tsk), (long) task_GetRealTime(tsk),
+       (long) task_GetMemoryUsed(tsk));
 
   if (error_code[0]) {
     error_code_value = read_error_code(error_code);
@@ -2256,6 +2257,8 @@ run_one_test(
   cur_info->times = task_GetRunningTime(tsk);
   *p_has_real_time = 1;
   cur_info->real_time = task_GetRealTime(tsk);
+  cur_info->max_memory_used = task_GetMemoryUsed(tsk);
+  if (cur_info->max_memory_used > 0) *p_has_max_memory_used = 1;
 
   // input file
   file_size = -1;
