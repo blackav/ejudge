@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2007-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -2863,7 +2863,7 @@ write_xml_tex_testing_report(
       fprintf(fout, " & %d.%03d", t->real_time / 1000, t->real_time % 1000);
     }
     if (r->max_memory_used_available) {
-      fprintf(fout, " & %d", t->max_memory_used);
+      fprintf(fout, " & %lu", t->max_memory_used);
     }
 
     // extra information
