@@ -2199,6 +2199,8 @@ task_NewWait(tTask *tsk)
         used_vm_size = info.vsize;
         //fprintf(stderr, "VMSize: %lu\n", used_vm_size);
       }
+    } else {
+      fprintf(stderr, "Failed to parse /proc/PID/stat\n");
     }
 
     // wait 0.1 s
