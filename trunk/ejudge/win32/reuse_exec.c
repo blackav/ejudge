@@ -1342,6 +1342,12 @@ task_Wait(tTask *tsk)
   return tsk;
 }
 
+tTask *
+task_NewWait(tTask *tsk)
+{
+  return task_Wait(tsk);
+}
+
 int
 task_Status(tTask *tsk)
 {
