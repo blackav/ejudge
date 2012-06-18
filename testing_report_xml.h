@@ -36,8 +36,8 @@ struct testing_report_test
   int has_input_digest;
   int has_correct_digest;
   int has_info_digest;
-  int max_memory_used;
   int visibility;
+  unsigned long max_memory_used;
 
   unsigned char input_digest[32];
   unsigned char correct_digest[32];

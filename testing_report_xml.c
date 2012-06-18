@@ -267,6 +267,7 @@ parse_test(struct xml_tree *t, testing_report_xml_t r)
   struct xml_attr *a;
   struct xml_tree *t2;
   int x;
+  unsigned long ulx;
 
   if (t->tag != TR_T_TEST) {
     xml_err_elem_not_allowed(t);
@@ -319,12 +320,9 @@ parse_test(struct xml_tree *t, testing_report_xml_t r)
       p->real_time = x;
       break;
     case TR_A_MAX_MEMORY_USED:
-      if (xml_attr_int(a, &x) < 0) goto failure;
-      if (x < 0) {
-        xml_err_attr_invalid(a);
-        goto failure;
-      }
-      p->max_memory_used = x;
+      ulx = 0;
+      if (xml_attr_ulong(a, &ulx) < 0) goto failure;
+      p->max_memory_used = ulx;
       break;
     case TR_A_EXIT_CODE:
       if (xml_attr_int(a, &x) < 0) goto failure;
@@ -1406,7 +1404,7 @@ testing_report_unparse_xml(
         fprintf(out, " %s=\"%d\"", attr_map[TR_A_REAL_TIME], t->real_time);
       }
       if (r->max_memory_used_available > 0 && t->max_memory_used > 0) {
-        fprintf(out, " %s=\"%d\"", attr_map[TR_A_MAX_MEMORY_USED],
+        fprintf(out, " %s=\"%lu\"", attr_map[TR_A_MAX_MEMORY_USED],
                 t->max_memory_used);
       }
       if (r->scoring_system == SCORE_OLYMPIAD && r->accepting_mode <= 0) {
@@ -1504,6 +1502,5 @@ testing_report_unparse_xml(
 /*
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  * End:
  */

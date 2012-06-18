@@ -565,7 +565,7 @@ write_xml_testing_report(
       }
     }
     if (r->max_memory_used_available) {
-      fprintf(f, "<td%s>%d</td>", cl1, t->max_memory_used);
+      fprintf(f, "<td%s>%lu</td>", cl1, t->max_memory_used);
     }
 
     // extra information
@@ -1447,6 +1447,5 @@ generate_daily_statistics(
 /*
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")
  * End:
  */

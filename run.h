@@ -35,7 +35,7 @@ struct testinfo
   int            max_score;     /* maximal score for this test */
   long           times;         /* execution time */
   long           real_time;     /* execution real time */
-  int            max_memory_used;
+  unsigned long  max_memory_used;
   char          *input;         /* the input */
   long           input_size;
   int            has_input_digest;
