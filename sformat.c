@@ -266,7 +266,7 @@ sformat_message(
           right_align = 0;
           put_zeros = 0;
           break;
-        case 'L':
+        case 'a':
           locale_dependant = 1;
           break;
         case '0':
