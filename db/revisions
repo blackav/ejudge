@@ -7322,3 +7322,4 @@ run_common.c 6896 0 8191467
 testing_report_xml.c 6895 0 3181314
 xml_utils/attr_ulong.c 6891 0 122429
 unix/reuse_exec.c 6899 0 4937741
+sformat.c 6902 0 1938971
