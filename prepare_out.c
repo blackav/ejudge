@@ -1781,6 +1781,7 @@ enum
 {
   ARCH_LINUX,
   ARCH_LINUX_SHARED,
+  ARCH_LINUX_SHARED_32,
   ARCH_DOS,
   ARCH_JAVA,
   ARCH_JAVA14,
@@ -1796,6 +1797,7 @@ static const unsigned char * const supported_archs[] =
 {
   "",                           /* default - Linux static */
   "linux-shared",
+  "linux-shared-32",
   "dos",
   "java",
   "java14",
@@ -1810,6 +1812,7 @@ static const unsigned char * const arch_abstract_names [] =
 {
   "Generic",
   "Linux-shared",
+  "linux-shared-32",
   "DOSTester",
   "Linux-java",
   "Linux-java14",
@@ -1928,6 +1931,24 @@ generate_abstract_tester(
               "start_env = \"LD_PRELOAD=${script_dir}/lang/libdropcaps.so\"\n");
 #endif
     */
+    if (!atst) {
+      fprintf(f, "clear_env\n"
+              "start_env = \"PATH=/usr/local/bin:/usr/bin:/bin\"\n"
+              "start_env = \"HOME\"\n");
+    }
+    break;
+
+  case ARCH_LINUX_SHARED_32:
+    fprintf(f, "[tester]\n"
+            "name = %s\n"
+            "arch = \"%s\"\n"
+            "abstract\n"
+            "no_core_dump\n"
+            "enable_memory_limit_error\n"
+            "kill_signal = KILL\n"
+            "memory_limit_type = \"default\"\n"
+            "secure_exec_type = \"dll32\"\n",
+            arch_abstract_names[arch], supported_archs[arch]);
     if (!atst) {
       fprintf(f, "clear_env\n"
               "start_env = \"PATH=/usr/local/bin:/usr/bin:/bin\"\n"
@@ -2104,6 +2125,7 @@ generate_concrete_tester(FILE *f, int arch,
   switch (arch) {
   case ARCH_LINUX:
   case ARCH_LINUX_SHARED:
+  case ARCH_LINUX_SHARED_32:
     /*
     if (max_vm_size != -1L) {
       fprintf(f, "max_vm_size = %s\n",
