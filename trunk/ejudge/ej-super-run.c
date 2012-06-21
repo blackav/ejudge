@@ -716,6 +716,21 @@ create_configs(
 
   fprintf(f,
           "[tester]\n"
+          "name = Linux-shared-32\n"
+          "arch = \"linux-shared-32\"\n"
+          "abstract\n"
+          "no_core_dump\n"
+          "enable_memory_limit_error\n"
+          "kill_signal = KILL\n"
+          "memory_limit_type = \"default\"\n"
+          "secure_exec_type = \"dll32\"\n"
+          "clear_env\n"
+          "start_env = \"PATH=/usr/local/bin:/usr/bin:/bin\"\n"
+          "start_env = \"LANG=C\"\n"
+          "start_env = \"HOME\"\n\n");
+
+  fprintf(f,
+          "[tester]\n"
           "name = Linux-java\n"
           "arch = \"java\"\n"
           "abstract\n"
@@ -783,6 +798,7 @@ upgrade_times[] =
 {
   "2012/05/01 00:00:00",
   "2012/05/26 00:00:00",
+  "2012/06/21 00:00:00",
 
   NULL
 };
