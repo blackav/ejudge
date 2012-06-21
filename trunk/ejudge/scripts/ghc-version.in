@@ -1,6 +1,6 @@
 #!/bin/sh
 # $Id$
-# Copyright (c) 2011 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2011-2012 Alexander Chernov <cher@ejudge.ru>
 
 # compiler script interface is as follows
 # <comp>-version [OPTION]
@@ -23,7 +23,7 @@ common_config() {
   echo 'long_name="The Glasgow Haskell Compiler"'
   echo 'src_sfx=".hs"'
   echo 'arch="linux-shared"'
-  echo 'insecure=1'
+#  echo 'insecure=1'
 }
 
 failure() {
