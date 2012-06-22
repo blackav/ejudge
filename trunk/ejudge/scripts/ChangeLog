@@ -1,3 +1,29 @@
+2012-06-21 (r6904) Alexander Chernov  <cher@ejudge.ru>
+
+	* dcc-version.in: copyright notice is updated;
+	architecture is linux-shared-32.
+
+	* gfortran-version.in: copyright notice is updated;
+	language is defined secure.
+
+	* ghc-version.in: copyright notice is updated;
+	language is defined secure.
+
+2012-06-19 (r6901) Alexander Chernov  <cher@ejudge.ru>
+
+	* gprolog.in: copyright notice is updated;
+	command line arguments are updated.
+
+2012-05-27 (r6861) Alexander Chernov  <cher@ejudge.ru>
+
+	* runvg.in, g++-vg.in, gcc-vg.in, g++-vg-version.in, gcc-vg-version.in:
+	initial revision
+
+2012-05-27 (r6860) Alexander Chernov  <cher@ejudge.ru>
+
+	* lang_ids.cfg, Makefile.in:
+	gcc-vg, g++-vg compilators support is added.
+
 2012-03-30 (r6701) Alexander Chernov  <cher@ejudge.ru>
 
 	* fpc.in: copyright notice is updated;

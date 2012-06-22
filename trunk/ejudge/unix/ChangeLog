@@ -1,3 +1,24 @@
+2012-06-18 (r6894) Alexander Chernov  <cher@ejudge.ru>
+
+	* reuse_exec.c:
+	<limits.h> is included;
+	(struct tTask) 'used_vm_size' field is added;
+	(task_Start) milliseconds time limit to seconds time limit conversion
+	  is fixed;
+	(struct process_info) new structure to store the information from
+	  "/proc/PID/stat";
+	(parse_proc_pid_stat) new function;
+	(task_NewWait) new function, new implementation of task_Wait, based
+	  on regular polling the process state from /proc/PID/stat;
+	(task_GetMemoryUsed) returns the value of 'used_vm_size' field;
+	(linux_set_fix_flag) updated for linux kernel >= 3.0.0.
+
+2012-06-06 (r6878) Alexander Chernov  <cher@ejudge.ru>
+
+	* ej_process.c:
+	<dirent.h> is included;
+	(ejudge_start_daemon_process) new function.
+
 2012-04-23 (r6760) Alexander Chernov  <cher@ejudge.ru>
 
 	* pollfds.c:

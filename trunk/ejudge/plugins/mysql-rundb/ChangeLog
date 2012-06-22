@@ -20,7 +20,7 @@
 	* methods.inc.c:
 	(prepare_func) 'const' added to 'config' parameter.
 
-	* rldb_mysql.c
+	* rldb_mysql.c:
 	(prepare_func) 'const' added to 'config' parameter.
 
 2011-03-27 (r6188) Alexander Chernov  <cher@ejudge.ru>
