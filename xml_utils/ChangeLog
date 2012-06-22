@@ -1,3 +1,8 @@
+2012-06-18 (r6891) Alexander Chernov  <cher@ejudge.ru>
+
+	* attr_ulong.c:
+	initial revision
+
 2011-10-21 (r6491) Alexander Chernov  <cher@ejudge.ru>
 
 	* attr_date.c: copyright notice is updated;

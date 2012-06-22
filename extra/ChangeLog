@@ -1,3 +1,8 @@
+2012-06-18 (r6892) Alexander Chernov  <cher@ejudge.ru>
+
+	* t6.c: copyright notice is updated;
+	patch for the linux kernel v3 is supported (no millisection rlimit).
+
 2011-10-19 (r6482) Alexander Chernov  <cher@ejudge.ru>
 
 	* Makefile.in: ej-make-archive program is added.

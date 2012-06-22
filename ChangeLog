@@ -1,3 +1,318 @@
+2012-06-21 (r6905) Alexander Chernov  <cher@ejudge.ru>
+
+	* ej-super-run.c:
+	linux-shared-32 architecture is supported.
+
+	* prepare_out.c:
+	linux-shared-32 architecture is supported.
+
+2012-06-20 (r6902) Alexander Chernov  <cher@ejudge.ru>
+
+	* sformat.c:
+	(sformat_message) locale-specific switch changed to 'a' instead of 'L'.
+
+2012-06-18 (r6896) Alexander Chernov  <cher@ejudge.ru>
+
+	* execute.c:
+	(run_program) 'task_NewWait' is used instead of 'task_Wait';
+	  the memory size, used by process is stored.
+
+	* run_common.c:
+	(generate_xml_report) unparsing of 'max_memory_used' is updated;
+	(run_one_test) 'task_NewWait' is used;
+	  the process max vm size is tracked and stored in 'max_memory_used'
+	  field.
+
+2012-06-18 (r6895) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make:
+	'xml_utils/attr_ulong.c is added.
+
+	* reuse_exec.h:
+	(task_NewWait) new function prototype is added.
+
+	* run.h:
+	(struct testinfo) field 'max_memory_used' now has unsigned long type.
+
+	* xml_utils.h: copyright notice is updated;
+	(xml_attr_ulong) new function prototype is added.
+
+	* testing_report_xml.h:
+	(struct testing_report_test) field 'max_memory_used' now has
+	  unsigned long type.
+
+	* master_html.c:
+	(write_xml_testing_report) format spec for 'max_memory_used'
+	  field is updated.
+
+	* reports.c: copyright notice is updated;
+	(write_xml_tex_testing_report) format spec for 'max_memory_used'
+	  is updated.
+
+	* testing_report_xml.c:
+	(parse_test) "max-memory-used" attribute is parsed to the
+	  unsigned long field 'max_memory_used';
+	(testing_report_unparse_xml) unparsing of 'max_memory_used'
+	  is updated.
+
+2012-06-13 (r6889) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server.h:
+	(ns_submit_run) new function prototype.
+
+	* new_server_html.c:
+	(ns_submit_run) new function is implemented.
+
+	* new_server_html_4.c:
+	(cmd_submit_run) support for internally judged problems is added.
+
+	* run_common.c:
+	(run_tests) check for undefined 'check_cmd' and 'standard_checker'
+	is added.
+
+2012-06-08 (r6887) Alexander Chernov  <cher@ejudge.ru>
+
+	* ej-polygon.c:
+	(curl_iface_login_action_func) 'CURLOPT_POSTFIELDS' is used instead of
+	'CURLOPT_COPYPOSTFIELDS'.
+
+2012-06-06 (r6885) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare_out.c:
+	(generate_abstract_tester) the original values of 'start_env'
+	configuration is preserved.
+
+2012-06-06 (r6881) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_proto.h:
+	"update from polygon" functionality is implemented.
+
+	* prepare_out.c:
+	'extid' is properly handled.
+
+	* super_html.c, super_html_6.c, super_proto.c:
+	"update from polygon" functionality is implemented.
+
+2012-06-06 (r6879) Alexander Chernov  <cher@ejudge.ru>
+
+	* ej_process.h:
+	(ejudge_start_daemon_process) new function prototype.
+
+	* super_html.h:
+	(problem_id_to_short_name) new function prototype;
+	(super_html_create_problem) new function prototype.
+
+	* super_proto.h:
+	"import from Polygon" is implemented.
+
+	* super_html_6.c:
+	"import from Polygon" is implemented.
+
+	* ej-polygon.c:
+	new state 'ALREADY_EXISTS';
+	(struct ProblemInfo) new fields 'ejudge_id', 'ejudge_short_name';
+	(process_polygon_zip) 'create_mode' is handled;
+	(main) NULL problem_name is handled.
+
+	* parsecfg.c:
+	(parse_param) configuration files without "global" section
+	are supported.
+
+	* polygon_packet.c:
+	(polygon_packet_unparse) new function.
+
+	* super_html_2.c:
+	(super_html_commit_contest) "Check contest settings" button is added.
+
+	* super_html_3.c:
+	(super_html_edit_problems) "Import from Polygon" link is added;
+	(problem_id_to_short_name) new function;
+	(super_html_create_problem) new function;
+	(super_html_add_problem) 'super_html_create_problem' is used.
+
+	* super_proto.c:
+	"import from polygon" is implemented.
+
+	* super-serve.c:
+	(update_state_create) new function;
+	(update_state_free) new function;
+	(sid_state_clear) 'update_state' is freed.
+
+2012-06-04 (r6877) Alexander Chernov  <cher@ejudge.ru>
+
+	* super-serve.h:
+	(struct update_state) 'contest_id' field is added.
+
+2012-06-04 (r6876) Alexander Chernov  <cher@ejudge.ru>
+
+	* super-serve.h:
+	(struct update_state) 'create_mode' field is added.
+
+2012-06-04 (r6875) Alexander Chernov  <cher@ejudge.ru>
+
+	* polygon_packet.h:
+	(struct polygon_packet) new fields 'create_mode', 'ejudge_id',
+	  'ejudge_short_name';
+	(polygon_packet_alloc) new function prototype;
+	(polygon_packet_unparse) new function prototype.
+
+	* problem_config.h:
+	(struct problem_config_section) fields 'id', 'short_name' are added.
+
+	* super-serve.h:
+	(struct update_state) new structure;
+	(struct sid_state) field 'update_state' is added;
+	(update_state_create) new function prototype;
+	(update_state_free) new function prototype.
+
+2012-06-02 (r6869) Alexander Chernov  <cher@ejudge.ru>
+
+	* run_common.c:
+	(run_one_test) 'start_env' parameter is added;
+	(merge_env) new function to merge the environment;
+	(run_tests) the 'start_env' environment from the tester section of the
+	testing packet is merged to the 'start_env' environment of the tester
+	section of the configuration file.
+
+2012-06-02 (r6868) Alexander Chernov  <cher@ejudge.ru>
+
+	* polygon_packet.h:
+	(struct polygon_packet) 'ids' field is renamed to 'id'.
+
+	* ej-polygon.c:
+	minor improvements according to the documentation.
+
+2012-06-01 (r6867) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in:
+	LIBZIP is added to ej-normalize.
+
+	* files.make:
+	polygon_packet.[ch] are added.
+
+	* meta.make:
+	rules for polygon_packet_meta.[ch] are added.
+
+	* polygon_packet.h: initial revision.
+
+	* problem_config.h:
+	(struct problem_config_section) new fields 'long_name_en', 'revision'
+	  are added.
+
+	* ej-polygon.c: implemented.
+
+	* meta_generic.c:
+	(meta_build_automaton) debug output is commented out;
+	(meta_unparse_cfg) boolean output is improved.
+
+	* polygon_packet.c: initial revision.
+
+	* problem_config.c:
+	(problem_config_section_unparse_cfg) a bug is fixed.
+
+2012-05-28 (r6865) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in:
+	ej-polygon compilation rules are added.
+
+	* files.make:
+	ej-polygon.c is added.
+
+	* config.h.in:
+	CONF_HAS_LIBCURL is added.
+
+	* ej-polygon.c: initial revision.
+
+2012-05-28 (r6864) Alexander Chernov  <cher@ejudge.ru>
+
+	* configure.ac: copyright notice is updated;
+	check for libcurl is added.
+
+2012-05-27 (r6862) Alexander Chernov  <cher@ejudge.ru>
+
+	* ej-super-run.c, prepare.c, prepare_out.c, run_common.c:
+	'valgrind' arch is supported.
+
+2012-05-26 (r6859) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	memory limit type and secure exec type for valgrind are added.
+
+2012-05-26 (r6857) Alexander Chernov  <cher@ejudge.ru>
+
+	* run_common.c:
+	'enable_max_stack_size' packet global parameter is supported.
+
+2012-05-25 (r6855) Alexander Chernov  <cher@ejudge.ru>
+
+	* runlog.h: copyright notice is updated;
+	(run_get_max_user_id) new function prototype;
+	(run_get_total_users) new function prototype.
+
+	* runlog_state.h: copyright notice is updated;
+	(struct runlog_state) new fields 'max_user_id', 'user_count'.
+
+	* html.c, master_html.c, new_server_html_2.c, runlog_xml.c:
+	'disable_user_database' mode is supported.
+
+	* new_server_html.c:
+	(priv_assign_cyphers_2) no action in 'disable_user_database' mode.
+
+	* prepare_serve.c: copyright notice is updated;
+	'disable_user_database' mode is supported.
+
+	* runlog.c: copyright notice is updated;
+	'max_user_id', 'user_count' are maintained;
+	(run_get_max_user_id) new function;
+	(run_get_total_users) new function.
+
+	* serve_2.c:
+	'disable_user_database' mode is supported.
+
+	* teamdb_2.c: copyright notice is updated;
+	(teamdb_get_user_map) 'disabled' mode is handled.
+
+2012-05-25 (r6853) Alexander Chernov  <cher@ejudge.ru>
+
+	* teamdb.h:
+	(teamdb_disable) new function prototype.
+
+	* teamdb_priv.h:
+	(struct teamdb_state) 'disabled' field is added.
+
+	* serve_state.c:
+	'disable_user_database' global configuration variable is handled.
+
+	* teamdb.c:
+	(teamdb_disable) new function;
+	'disabled' flag is handled.
+
+2012-05-25 (r6851) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_proto.h:
+	editing of 'disable_user_database', 'enable_max_stack_size'
+	global configuration variables is supported.
+
+	* prepare.c, prepare_out.c:
+	'disable_user_database', 'enable_max_stack_size' global configuration
+	variables are supported.
+
+	* serve-control.c, super_html_3.c, super_html_4.c, super-serve.c:
+	editing of 'disable_user_database', 'enable_max_stack_size'
+	global configuration variables is supported.
+
+	* super_run_packet.c:
+	'enable_max_stack_size' global parameter is supported.
+
+2012-05-25 (r6850) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_global_data) new fields:
+	  'disable_user_database', 'enable_max_stack_size'.
+
+	* super_run_packet.h:
+	(struct super_run_in_global_packet) new field 'enable_max_stack_size'.
+
 2012-05-23 (r6846) Alexander Chernov  <cher@ejudge.ru>
 
 	* nwrun_packet.h: copyright notice is updated;
