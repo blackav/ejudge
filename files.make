@@ -202,13 +202,9 @@ COMMON_CFILES=\
  runlog_import.c\
  runlog_static.c\
  runlog_xml.c\
- run_packet_1.c\
- run_packet_2.c\
- run_packet_3.c\
  run_packet_4.c\
  run_packet_5.c\
  run_packet_6.c\
- run_packet_7.c\
  send_job_packet.c\
  server_framework.c\
  serve_2.c\
