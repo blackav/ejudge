@@ -3,7 +3,7 @@
 #ifndef __RUN_PACKET_PRIV_H__
 #define __RUN_PACKET_PRIV_H__
 
-/* Copyright (C) 2005-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -20,12 +20,6 @@
 #include "reuse_integral.h"
 
 /* various private data structures and constants for run packets */
-
-/* bits for flags */
-#define FLAGS_PUT_SCORING_SYSTEM(s) ((s & 0xf))
-#define FLAGS_GET_SCORING_SYSTEM(f) ((f & 0xf))
-
-#define RUN_REQUEST_PACKET_VERSION 2
 
 enum
 {
@@ -44,42 +38,6 @@ enum
   FLAGS_DISABLE_STDERR       = 0x10000,
 
   FLAGS_ALL_MASK             = 0x1ffff, /* scoring system incl. */
-};
-
-/* serve->run binary packet structure */
-/* little-endian byte ordering is assumed */
-struct run_request_bin_packet
-{
-  ruint32_t packet_len;
-  rint32_t  version;
-  rint32_t  contest_id;
-  rint32_t  run_id;
-  rint32_t  problem_id;
-  rint32_t  user_id;
-  rint32_t  time_limit_adj;
-  rint32_t  time_limit_adj_millis;
-  rint32_t  mime_type;
-  ruint32_t flags;              /* incl. scoring system */
-  rint32_t  ts1;
-  rint32_t  ts1_us;
-  rint32_t  ts2;
-  rint32_t  ts2_us;
-  rint32_t  ts3;
-  rint32_t  ts3_us;
-  rint32_t  ts4;
-  rint32_t  ts4_us;
-  ruint16_t judge_id;
-  ruint16_t user_spelling_len;
-  ruint16_t prob_spelling_len;
-  ruint8_t  exe_sfx_len;
-  ruint8_t  arch_len;
-  ruint8_t  variant;
-  unsigned char pad[51];        /* padding to 128 bytes */
-  /* exe_sfx */
-  /* arch */
-  /* user spelling */
-  /* prob spelling */
-  /* padding to 16-byte boundary */
 };
 
 /* run->serve binary packet structure */
