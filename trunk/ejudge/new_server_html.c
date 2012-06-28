@@ -3882,11 +3882,13 @@ priv_edit_run(FILE *fout, FILE *log_f,
     snprintf(new_buf, sizeof(new_buf), "%d", ne.is_hidden);
     break;
   case NEW_SRV_ACTION_CHANGE_RUN_IS_EXAMINABLE:
+    /*
     ne.is_examinable = param_bool;
     ne_mask = RE_IS_EXAMINABLE;
     audit_cmd = "change-is-examinable";
     snprintf(old_buf, sizeof(old_buf), "%d", re.is_examinable);
     snprintf(new_buf, sizeof(new_buf), "%d", ne.is_examinable);
+    */
     break;
   case NEW_SRV_ACTION_CHANGE_RUN_IS_READONLY:
     ne.is_readonly = param_bool;

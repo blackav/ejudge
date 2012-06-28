@@ -691,9 +691,11 @@ ns_write_priv_all_runs(
         imported_str = "#";
       }
       examinable_str = "";
+      /*
       if (pe->is_examinable) {
         examinable_str = "!";
       }
+      */
       marked_str = "";
       if (pe->is_marked) {
         marked_str = "@";
