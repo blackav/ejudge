@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -507,7 +507,8 @@ do_eval(struct filter_env *env,
     case TOK_EXAMINABLE:
       res->kind = TOK_BOOL_L;
       res->type = FILTER_TYPE_BOOL;
-      res->v.b = env->rentries[r1.v.i].is_examinable;
+      //res->v.b = env->rentries[r1.v.i].is_examinable;
+      res->v.b = 0;
       break;
     case TOK_CYPHER:
       res->kind = TOK_STRING_L;
@@ -781,7 +782,8 @@ do_eval(struct filter_env *env,
   case TOK_CUREXAMINABLE:
     res->kind = TOK_BOOL_L;
     res->type = FILTER_TYPE_BOOL;
-    res->v.b = env->cur->is_examinable;
+    //res->v.b = env->cur->is_examinable;
+    res->v.b = 0;
     break;
   case TOK_CURCYPHER:
     res->kind = TOK_STRING_L;
@@ -852,12 +854,14 @@ do_eval(struct filter_env *env,
     res->kind = TOK_BOOL_L;
     res->type = FILTER_TYPE_BOOL;
     res->v.b = 0;
+    /*
     for (c = 0; c < 3; c++) {
       if (env->rentries[r1.v.i].examiners[c] == r2.v.i) {
         res->v.b = 1;
         break;
       }
     }
+    */
     break;
 
   case TOK_CUREXAMINATOR:
@@ -866,12 +870,14 @@ do_eval(struct filter_env *env,
     res->kind = TOK_BOOL_L;
     res->type = FILTER_TYPE_BOOL;
     res->v.b = 0;
+    /*
     for (c = 0; c < 3; c++) {
       if (env->cur->examiners[c] == r1.v.i) {
         res->v.b = 1;
         break;
       }
     }
+    */
     break;
 
   case TOK_INUSERGROUP:
@@ -920,6 +926,5 @@ filter_tree_bool_eval(struct filter_env *env,
 /*
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list" "jmp_buf")
  * End:
  */

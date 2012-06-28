@@ -247,10 +247,12 @@ struct run_entry
   unsigned char  ipv6_flag;     /* 1 */
   unsigned char  ssl_flag;      /* 1 */
   rint16_t       mime_type;     /* 2 */
-  unsigned char  is_examinable; /* 1 */
+  //unsigned char  is_examinable; /* 1 */
+  unsigned char  unused1;       /* 1 */
   unsigned char  is_marked;     /* 1 */
-  int            examiners[3];  /* 12 */
-  int            exam_score[3]; /* 12 */
+  //int            examiners[3];  /* 12 */
+  //int            exam_score[3]; /* 12 */
+  unsigned char  unused2[24];   /* 24 */
   rint32_t       saved_score;   /* 4 */
   rint16_t       saved_test;    /* 2 */
   unsigned char  saved_status;  /* 1 */

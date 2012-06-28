@@ -1108,10 +1108,12 @@ run_set_entry(
     te.score_adj = in->score_adj;
     f = 1;
   }
+  /*
   if ((mask & RE_IS_EXAMINABLE) && te.is_examinable != in->is_examinable) {
     te.is_examinable = in->is_examinable;
     f = 1;
   }
+  */
   if ((mask & RE_IS_MARKED) && te.is_marked != in->is_marked) {
     te.is_marked = in->is_marked;
     f = 1;
@@ -2080,6 +2082,9 @@ run_count_examinable_runs(
         int exam_num,
         int *p_assigned)
 {
+  return 0;
+
+  /*
   int count = 0, i, assigned_count = 0, j;
   const struct run_entry *p;
 
@@ -2099,6 +2104,7 @@ run_count_examinable_runs(
   }
   if (p_assigned) *p_assigned = assigned_count;
   return count;
+  */
 }
 
 int
@@ -2178,6 +2184,5 @@ run_get_total_users(runlog_state_t state)
 /*
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")
  * End:
  */

@@ -461,7 +461,7 @@ process_run_elements(struct xml_tree *xt, struct run_xml_helpers *helper)
         if (xml_attr_bool_byte(xa, &xr->r.is_hidden) < 0) return -1;
         break;
       case RUNLOG_A_EXAMINABLE:
-        if (xml_attr_bool_byte(xa, &xr->r.is_examinable) < 0) return -1;
+        //if (xml_attr_bool_byte(xa, &xr->r.is_examinable) < 0) return -1;
         break;
       case RUNLOG_A_NSEC:
         if (!xa->text) goto empty_attr_value;
@@ -939,9 +939,11 @@ unparse_runlog_xml(
     if (!external_mode && pp->pages > 0) {
       fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_PAGES], pp->pages);
     }
+    /*
     if (pp->is_examinable) {
       fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_EXAMINABLE], "yes");
     }
+    */
     if (!source_mode || pp->status >= RUN_MAX_STATUS) {
       fprintf(f, "/>\n");
       continue;

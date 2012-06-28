@@ -1191,7 +1191,7 @@ add_entry_func(
     de->score_adj = re->score_adj;
   }
   if ((flags & RE_IS_EXAMINABLE)) {
-    de->is_examinable = re->is_examinable;
+    //de->is_examinable = re->is_examinable;
   }
   if ((flags & RE_JUDGE_ID)) {
     de->judge_id = re->judge_id;
@@ -1203,10 +1203,10 @@ add_entry_func(
     de->mime_type = re->mime_type;
   }
   if ((flags & RE_EXAMINERS)) {
-    memcpy(de->examiners, re->examiners, sizeof(de->examiners));
+    //memcpy(de->examiners, re->examiners, sizeof(de->examiners));
   }
   if ((flags & RE_EXAM_SCORE)) {
-    memcpy(de->exam_score, re->exam_score, sizeof(de->exam_score));
+    //memcpy(de->exam_score, re->exam_score, sizeof(de->exam_score));
   }
   if ((flags & RE_IS_MARKED)) {
     de->is_marked = re->is_marked;
@@ -1601,6 +1601,5 @@ change_status_4_func(
 /*
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  * End:
  */
