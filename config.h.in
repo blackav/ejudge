@@ -130,6 +130,9 @@
 /* libcurl available */
 #undef CONF_HAS_LIBCURL
 
+/* libuuid available */
+#undef CONF_HAS_LIBUUID
+
 /* DOS path rules */
 #undef CONF_DOS_FILENAMING
 
