@@ -1049,7 +1049,7 @@ cmd_submit_run(
 
   run_id = run_add_record(cs->runlog_state, 
                           precise_time.tv_sec, precise_time.tv_usec * 1000,
-                          run_size, shaval,
+                          run_size, shaval, NULL,
                           phr->ip, phr->ssl_flag,
                           phr->locale_id, phr->user_id,
                           prob->id, lang_id, variant, hidden_flag, mime_type);

@@ -40,6 +40,10 @@
 #include <ctype.h>
 #include <zlib.h>
 
+#if CONF_HAS_LIBUUID - 0 != 0
+#include <uuid/uuid.h>
+#endif
+
 #ifndef EJUDGE_CHARSET
 #define EJUDGE_CHARSET EJ_INTERNAL_CHARSET
 #endif /* EJUDGE_CHARSET */
@@ -116,6 +120,7 @@ enum
   RUNLOG_A_LANG_SHORT,
   RUNLOG_A_PROB_SHORT,
   RUNLOG_A_LOGIN,
+  RUNLOG_A_RUN_UUID,
 
   RUNLOG_LAST_ATTR,
 };
@@ -180,6 +185,7 @@ static const char * const attr_map[] =
   [RUNLOG_A_LANG_SHORT]       = "lang_short",
   [RUNLOG_A_PROB_SHORT]       = "prob_short",
   [RUNLOG_A_LOGIN]            = "login",
+  [RUNLOG_A_RUN_UUID]         = "run_uuid",
 
   [RUNLOG_LAST_ATTR] 0,
 };
@@ -487,6 +493,13 @@ process_run_elements(struct xml_tree *xt, struct run_xml_helpers *helper)
           goto invalid_attr_value;
         if (iv < 0 || iv > 255) goto invalid_attr_value;
         xr->r.pages = iv;
+        break;
+      case RUNLOG_A_RUN_UUID:
+#if CONF_HAS_LIBUUID - 0 != 0
+        if (xa->text && xa->text[0]) {
+          uuid_parse(xa->text, (void*) xr->r.run_uuid);
+        }
+#endif
         break;
       default:
         return xml_err_attr_not_allowed(xt, xa);
@@ -859,6 +872,13 @@ unparse_runlog_xml(
     ts -= phead->start_time;
     if (ts < 0) ts = 0;
     fprintf(f, " %s=\"%ld\"", attr_map[RUNLOG_A_TIME], ts);
+#if CONF_HAS_LIBUUID - 0 != 0
+    if (pp->run_uuid[0] || pp->run_uuid[1] || pp->run_uuid[2] || pp->run_uuid[3]) {
+      char uuid_buf[64];
+      uuid_unparse((void*) pp->run_uuid, uuid_buf);
+      fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_RUN_UUID], uuid_buf);
+    }
+#endif
     if (!external_mode && pp->size > 0) {
       fprintf(f, " %s=\"%u\"", attr_map[RUNLOG_A_SIZE], pp->size);
     }
@@ -1019,6 +1039,5 @@ unparse_runlog_xml(
 /*
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "DIR")
  * End:
  */

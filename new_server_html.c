@@ -2835,7 +2835,7 @@ priv_submit_run(FILE *fout,
 
   run_id = run_add_record(cs->runlog_state, 
                           precise_time.tv_sec, precise_time.tv_usec * 1000,
-                          run_size, shaval,
+                          run_size, shaval, NULL,
                           phr->ip, phr->ssl_flag,
                           phr->locale_id, phr->user_id,
                           prob_id, lang_id, variant, 1, mime_type);
@@ -4511,7 +4511,7 @@ priv_new_run(FILE *fout,
 
   run_id = run_add_record(cs->runlog_state, 
                           precise_time.tv_sec, precise_time.tv_usec * 1000,
-                          run_size, shaval,
+                          run_size, shaval, NULL,
                           phr->ip, phr->ssl_flag, phr->locale_id,
                           user_id, prob_id, lang_id, variant,
                           is_hidden, mime_type);
@@ -10500,7 +10500,7 @@ ns_submit_run(
 
   run_id = run_add_record(cs->runlog_state, 
                           precise_time.tv_sec, precise_time.tv_usec * 1000,
-                          run_size, shaval,
+                          run_size, shaval, NULL,
                           phr->ip, phr->ssl_flag,
                           phr->locale_id, phr->user_id,
                           prob_id, lang_id, db_variant, is_hidden, mime_type);
@@ -11098,7 +11098,7 @@ unpriv_submit_run(FILE *fout,
 
   run_id = run_add_record(cs->runlog_state, 
                           precise_time.tv_sec, precise_time.tv_usec * 1000,
-                          run_size, shaval,
+                          run_size, shaval, NULL,
                           phr->ip, phr->ssl_flag,
                           phr->locale_id, phr->user_id,
                           prob_id, lang_id, 0, 0, mime_type);
@@ -14487,7 +14487,7 @@ unpriv_xml_update_answer(
     gettimeofday(&precise_time, 0);
     run_id = run_add_record(cs->runlog_state, 
                             precise_time.tv_sec, precise_time.tv_usec * 1000,
-                            run_size, shaval,
+                            run_size, shaval, NULL,
                             phr->ip, phr->ssl_flag,
                             phr->locale_id, phr->user_id,
                             prob_id, 0, 0, 0, 0);
