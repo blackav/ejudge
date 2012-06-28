@@ -418,6 +418,7 @@ load_runs(struct rldb_mysql_cnts *cs)
     re->pages = ri.pages;
     re->ssl_flag = ri.ssl_flag;
     re->mime_type = mime_type;
+    /*
     re->is_examinable = ri.is_examinable;
     re->examiners[0] = ri.examiners0;
     re->examiners[1] = ri.examiners1;
@@ -425,6 +426,7 @@ load_runs(struct rldb_mysql_cnts *cs)
     re->exam_score[0] = ri.exam_score0;
     re->exam_score[1] = ri.exam_score1;
     re->exam_score[2] = ri.exam_score2;
+    */
     re->is_marked = ri.is_marked;
     re->is_saved = ri.is_saved;
     re->saved_status = ri.saved_status;
@@ -861,10 +863,12 @@ generate_update_entry_clause(
     fprintf(f, "%sis_readonly = %d", sep, re->is_readonly);
     sep = comma;
   }
+  /*
   if ((flags & RE_IS_EXAMINABLE)) {
     fprintf(f, "%sis_examinable = %d", sep, re->is_examinable);
     sep = comma;
   }
+  */
   if ((flags & RE_MIME_TYPE)) {
     if (re->mime_type > 0) {
       fprintf(f, "%smime_type = '%s'", sep, mime_type_get_type(re->mime_type));
@@ -874,16 +878,20 @@ generate_update_entry_clause(
     sep = comma;
   }
   if ((flags & RE_EXAMINERS)) {
+    /*
     fprintf(f, "%sexaminers0 = %d", sep, re->examiners[0]);
     sep = comma;
     fprintf(f, "%sexaminers1 = %d", sep, re->examiners[1]);
     fprintf(f, "%sexaminers2 = %d", sep, re->examiners[2]);
+    */
   }
   if ((flags & RE_EXAM_SCORE)) {
+    /*
     fprintf(f, "%sexam_score0 = %d", sep, re->exam_score[0]);
     sep = comma;
     fprintf(f, "%sexam_score1 = %d", sep, re->exam_score[1]);
     fprintf(f, "%sexam_score2 = %d", sep, re->exam_score[2]);
+    */
   }
   if ((flags & RE_IS_MARKED)) {
     fprintf(f, "%sis_marked = %d", sep, re->is_marked);
@@ -978,13 +986,13 @@ update_entry(
     dst->mime_type = src->mime_type;
   }
   if ((flags & RE_IS_EXAMINABLE)) {
-    dst->is_examinable = src->is_examinable;
+    //dst->is_examinable = src->is_examinable;
   }
   if ((flags & RE_EXAMINERS)) {
-    memcpy(dst->examiners, src->examiners, sizeof(dst->examiners));
+    //memcpy(dst->examiners, src->examiners, sizeof(dst->examiners));
   }
   if ((flags & RE_EXAM_SCORE)) {
-    memcpy(dst->exam_score, src->exam_score, sizeof(dst->exam_score));
+    //memcpy(dst->exam_score, src->exam_score, sizeof(dst->exam_score));
   }
   if ((flags & RE_IS_MARKED)) {
     dst->is_marked = src->is_marked;
@@ -1463,16 +1471,18 @@ put_entry_func(
   ri.is_imported = re->is_imported;
   ri.is_hidden = re->is_hidden;
   ri.is_readonly = re->is_readonly;
-  ri.is_examinable = re->is_examinable;
+  //ri.is_examinable = re->is_examinable;
   if (re->mime_type) {
     ri.mime_type = (unsigned char*) mime_type_get_type(re->mime_type);
   }
+  /*
   ri.examiners0 = re->examiners[0];
   ri.examiners1 = re->examiners[1];
   ri.examiners2 = re->examiners[2];
   ri.exam_score0 = re->exam_score[0];
   ri.exam_score1 = re->exam_score[1];
   ri.exam_score2 = re->exam_score[2];
+  */
   ri.last_change_time = curtime.tv_sec;
   ri.last_change_nsec = curtime.tv_usec * 1000;
   ri.is_marked = re->is_marked;
