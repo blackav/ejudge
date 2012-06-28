@@ -2130,6 +2130,8 @@ task_NewWait(tTask *tsk)
 
   struct timeval cur_time, rt_timeout;
   gettimeofday(&cur_time, NULL);
+  rt_timeout.tv_sec = 0;
+  rt_timeout.tv_usec = 0;
   if (tsk->max_real_time > 0) {
     rt_timeout = cur_time;
     rt_timeout.tv_sec += tsk->max_real_time;

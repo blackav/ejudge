@@ -1687,7 +1687,7 @@ invoke_latex(
   return retval;
 }
 
-static char * dvips_args[] =
+static const char * const dvips_args[2] =
 {
   "/usr/bin/dvips",
   0,
@@ -1708,7 +1708,7 @@ invoke_dvips(
 
   if (!(tsk = task_New())) goto cleanup;
   task_SetWorkingDir(tsk, work_dir);
-  task_pzAddArgs(tsk, dvips_args);
+  task_pzAddArgs(tsk, (char**) dvips_args);
   task_AddArg(tsk, dvi_path);
   task_AddArg(tsk, "-o");
   task_SetPathAsArg0(tsk);

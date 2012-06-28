@@ -362,7 +362,7 @@ curl_iface_login_action_func(struct DownloadData *data)
     file = open_memstream(&data->page_text, &data->page_size);
     curl_easy_setopt(data->curl, CURLOPT_WRITEFUNCTION, NULL);
     curl_easy_setopt(data->curl, CURLOPT_WRITEDATA, file);
-    curl_easy_setopt(data->curl, CURLOPT_POSTFIELDS, param_buf);
+    curl_easy_setopt(data->curl, CURLOPT_POSTFIELDS, (char*) param_buf);
     curl_easy_setopt(data->curl, CURLOPT_POST, 1);
     res = curl_easy_perform(data->curl);
     fclose(file); file = NULL;
