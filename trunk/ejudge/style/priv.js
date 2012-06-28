@@ -659,7 +659,8 @@ var ej_valid_fields =
   20 : "Mime Type",
   21 : "Saved Score",
   22 : "Saved Test",
-  23 : "Saved Result"
+  23 : "Saved Result",
+  24 : "UUID"
 }
 
 function ej_field_popup(field_mask)
