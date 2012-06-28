@@ -1464,7 +1464,6 @@ put_entry_func(
   char *cmd_t = 0;
   size_t cmd_z = 0;
   FILE *cmd_f = 0;
-  char uuid_buf[40];
 
   ASSERT(re);
   ASSERT(re->run_id >= 0);
@@ -1494,10 +1493,15 @@ put_entry_func(
       || re->sha1[4]) {
     ri.hash = unparse_sha1(re->sha1);
   }
-  if (re->run_uuid[0] || re->run_uuid[1] || re->run_uuid[2] || re->run_uuid[3]) {
-    uuid_unparse((void*) re->run_uuid, uuid_buf);
-    ri.run_uuid = uuid_buf;
+#if CONF_HAS_LIBUUID
+  {
+    char uuid_buf[40];
+    if (re->run_uuid[0] || re->run_uuid[1] || re->run_uuid[2] || re->run_uuid[3]) {
+      uuid_unparse((void*) re->run_uuid, uuid_buf);
+      ri.run_uuid = uuid_buf;
+    }
   }
+#endif
   ri.score = re->score;
   ri.test_num = re->test;
   ri.score_adj = re->score_adj;
