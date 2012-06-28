@@ -51,6 +51,10 @@
 #define _(x) x
 #endif
 
+#if CONF_HAS_LIBUUID - 0 != 0
+#include <uuid/uuid.h>
+#endif
+
 #define ERR_R(t, args...) do { do_err_r(__FUNCTION__ , t , ##args); return -1; } while (0)
 #define ERR_C(t, args...) do { do_err_r(__FUNCTION__ , t , ##args); goto _cleanup; } while (0)
 
@@ -291,6 +295,7 @@ run_add_record(
         int            nsec,
         size_t         size,
         const ruint32_t sha1[5],
+        const ruint32_t uuid[4],
         ruint32_t      ip,
         int            ssl_flag,
         int            locale_id,
@@ -412,6 +417,17 @@ run_add_record(
     memcpy(re.sha1, sha1, sizeof(state->runs[i].sha1));
     flags |= RE_SHA1;
   }
+#if CONF_HAS_LIBUUID - 0 != 0
+  if (!uuid) {
+    ruint32_t tmp_uuid[4];
+    uuid_generate((void*) tmp_uuid);
+    memcpy(re.run_uuid, tmp_uuid, sizeof(re.run_uuid));
+    flags |= RE_RUN_UUID;
+  } else {
+    memcpy(re.run_uuid, uuid, sizeof(re.run_uuid));
+    flags |= RE_RUN_UUID;
+  }
+#endif
 
   if (state->max_user_id >= 0 && re.user_id > state->max_user_id) {
     state->max_user_id = re.user_id;
@@ -1056,6 +1072,10 @@ run_set_entry(
   }
   if ((mask & RE_SHA1) && memcmp(te.sha1,in->sha1,sizeof(te.sha1))) {
     memcpy(te.sha1, in->sha1, sizeof(te.sha1));
+    f = 1;
+  }
+  if ((mask & RE_RUN_UUID) && memcmp(te.run_uuid, in->run_uuid, sizeof(te.run_uuid))) {
+    memcpy(te.run_uuid, in->run_uuid, sizeof(te.run_uuid));
     f = 1;
   }
   if ((mask & RE_USER_ID) && te.user_id != in->user_id) {

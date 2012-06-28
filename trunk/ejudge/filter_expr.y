@@ -1,7 +1,7 @@
 /* -*- mode: fundamental -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -103,6 +103,8 @@ static void *filter_expr_user_data;
 %token TOK_CURSIZE   "cursize"
 %token TOK_HASH      "hash"
 %token TOK_CURHASH   "curhash"
+%token TOK_UUID      "uuid"
+%token TOK_CURUUID   "curuuid"
 %token TOK_IP        "ip"
 %token TOK_CURIP     "curip"
 %token TOK_PROB      "prob"
@@ -285,6 +287,9 @@ exprA :
 | "hash" { $1->kind = TOK_CURHASH; $$ = $1; }
 | "hash" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
 | "curhash" { $$ = $1; }
+| "uuid" { $1->kind = TOK_CURUUID; $$ = $1; }
+| "uuid" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
+| "curuuid" { $$ = $1; }
 | "ip" { $1->kind = TOK_CURIP; $$ = $1; }
 | "ip" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
 | "curip" { $$ = $1; }
@@ -1104,6 +1109,5 @@ filter_expr_init_parser(struct filter_tree_mem *mem,
 /*
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list" "jmp_buf")
  * End:
  */

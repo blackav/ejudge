@@ -88,6 +88,7 @@ int run_add_record(runlog_state_t state,
                    int            nsec,
                    size_t         size,
                    const ruint32_t sha1[5],
+                   const ruint32_t uuid[4],
                    ruint32_t      ip,
                    int            ssl_flag,
                    int            locale_id,
@@ -214,7 +215,8 @@ enum
     RE_SAVED_STATUS  = 0x01000000,
     RE_SAVED_SCORE   = 0x02000000,
     RE_SAVED_TEST    = 0x04000000,
-    RE_ALL           = 0x003FFFFF,
+    RE_RUN_UUID      = 0x08000000,
+    RE_ALL           = 0x0FFFFFFF,
   };
 
 /* structure size is 128 bytes */
@@ -252,7 +254,8 @@ struct run_entry
   unsigned char  is_marked;     /* 1 */
   //int            examiners[3];  /* 12 */
   //int            exam_score[3]; /* 12 */
-  unsigned char  unused2[24];   /* 24 */
+  ruint32_t      run_uuid[4];   /* 16 */
+  unsigned char  unused2[8];    /* 8 */
   rint32_t       saved_score;   /* 4 */
   rint16_t       saved_test;    /* 2 */
   unsigned char  saved_status;  /* 1 */
