@@ -42,6 +42,10 @@
 #include <errno.h>
 #include <sys/time.h>
 
+#if CONF_HAS_LIBUUID - 0 != 0
+#include <uuid/uuid.h>
+#endif
+
 struct rldb_mysql_state
 {
   int nref;
@@ -165,7 +169,7 @@ do_create(struct rldb_mysql_state *state)
   if (mi->simple_fquery(md, create_runs_query, md->table_prefix) < 0)
     db_error_fail(md);
   if (mi->simple_fquery(md,
-                        "INSERT INTO %sconfig VALUES ('run_version', '2') ;",
+                        "INSERT INTO %sconfig VALUES ('run_version', '3') ;",
                         md->table_prefix) < 0)
     db_error_fail(md);
   return 0;
@@ -214,7 +218,12 @@ do_open(struct rldb_mysql_state *state)
       return -1;
     if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '2' WHERE config_key = 'run_version' ;", md->table_prefix) < 0)
       return -1;
-  } else if (run_version != 2) {
+  } else if (run_version == 2) {
+    if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN run_uuid CHAR(40) DEFAULT NULL AFTER hash", md->table_prefix) < 0)
+      return -1;
+    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '3' WHERE config_key = 'run_version' ;", md->table_prefix) < 0)
+      return -1;
+  } else if (run_version != 3) {
     err("run_version == %d is not supported", run_version);
     return -1;
   }
@@ -342,6 +351,7 @@ load_runs(struct rldb_mysql_cnts *cs)
   struct run_entry *re;
   int i, mime_type;
   ruint32_t sha1[5];
+  ruint32_t run_uuid[4];
 
   memset(&ri, 0, sizeof(ri));
   if (mi->fquery(md, RUNS_ROW_WIDTH,
@@ -356,6 +366,7 @@ load_runs(struct rldb_mysql_cnts *cs)
     if (mi->next_row(md) < 0) goto fail;
     memset(&ri, 0, sizeof(ri));
     memset(sha1, 0, sizeof(sha1));
+    memset(run_uuid, 0, sizeof(run_uuid));
     mime_type = 0;
     if (mi->parse_spec(md, md->field_count, md->row, md->lengths,
                        RUNS_ROW_WIDTH, runs_spec, &ri) < 0)
@@ -386,6 +397,11 @@ load_runs(struct rldb_mysql_cnts *cs)
     if (ri.lang_id < 0) db_error_inv_value_fail(md, "lang_id");
     if (ri.hash && parse_sha1(sha1, ri.hash) < 0)
       db_error_inv_value_fail(md, "hash");
+    if (ri.run_uuid) {
+#if CONF_HAS_LIBUUID - 0 != 0
+      uuid_parse(ri.run_uuid, (void*) run_uuid);
+#endif
+    }
     if (ri.ip_version != 4) db_error_inv_value_fail(md, "ip_version");
     if (ri.mime_type && (mime_type = mime_type_parse(ri.mime_type)) < 0)
       db_error_inv_value_fail(md, "mime_type");
@@ -405,6 +421,7 @@ load_runs(struct rldb_mysql_cnts *cs)
     re->a.ip = ri.ip;
     re->ipv6_flag = 0;
     memcpy(re->sha1, sha1, sizeof(re->sha1));
+    memcpy(re->run_uuid, run_uuid, sizeof(re->run_uuid));
     re->score = ri.score;
     re->test = ri.test_num;
     re->score_adj = ri.score_adj;
@@ -823,6 +840,18 @@ generate_update_entry_clause(
     }
     sep =comma;
   }
+  if ((flags & RE_RUN_UUID)) {
+#if CONF_HAS_LIBUUID - 0 != 0
+    if (!re->run_uuid[0] && !re->run_uuid[1] && !re->run_uuid[2] && !re->run_uuid[3]) {
+      fprintf(f, "%srun_uuid = NULL", sep);
+    } else {
+      char uuid_buf[40];
+      uuid_unparse((void*) re->run_uuid, uuid_buf);
+      fprintf(f, "%srun_uuid = '%s'", sep, uuid_buf);
+    }
+    sep =comma;
+#endif
+  }
   if ((flags & RE_SCORE)) {
     fprintf(f, "%sscore = %d", sep, re->score);
     sep = comma;
@@ -945,6 +974,9 @@ update_entry(
   }
   if ((flags & RE_SHA1)) {
     memcpy(dst->sha1, src->sha1, sizeof(dst->sha1));
+  }
+  if ((flags & RE_RUN_UUID)) {
+    memcpy(dst->run_uuid, src->run_uuid, sizeof(dst->run_uuid));
   }
   if ((flags & RE_SCORE)) {
     dst->score = src->score;
@@ -1432,6 +1464,7 @@ put_entry_func(
   char *cmd_t = 0;
   size_t cmd_z = 0;
   FILE *cmd_f = 0;
+  char uuid_buf[40];
 
   ASSERT(re);
   ASSERT(re->run_id >= 0);
@@ -1460,6 +1493,10 @@ put_entry_func(
   if (re->sha1[0] || re->sha1[1] || re->sha1[2] || re->sha1[3]
       || re->sha1[4]) {
     ri.hash = unparse_sha1(re->sha1);
+  }
+  if (re->run_uuid[0] || re->run_uuid[1] || re->run_uuid[2] || re->run_uuid[3]) {
+    uuid_unparse((void*) re->run_uuid, uuid_buf);
+    ri.run_uuid = uuid_buf;
   }
   ri.score = re->score;
   ri.test_num = re->test;
