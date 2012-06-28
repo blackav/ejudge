@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2008-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -30,6 +30,7 @@ static const char create_runs_query[] =
 "        ip_version TINYINT NOT NULL DEFAULT 4, "
 "        ip VARCHAR(64) NOT NULL, "
 "        hash VARCHAR (128), "
+"        run_uuid CHAR(40), "
 "        score INT NOT NULL, "
 "        test_num INT NOT NULL, "
 "        score_adj INT NOT NULL, "
@@ -73,34 +74,35 @@ struct run_entry_internal
   int ip_version;               /* 10 */
   ej_ip_t ip;
   unsigned char *hash;
+  unsigned char *run_uuid;
   int score;
-  int test_num;
-  int score_adj;                /* 15 */
+  int test_num;                 /* 15 */
+  int score_adj;
   int locale_id;
   int judge_id;
   int variant;
-  int pages;
-  int is_imported;              /* 20 */
+  int pages;                    /* 20 */
+  int is_imported;
   int is_hidden;
   int is_readonly;
   int is_examinable;
-  unsigned char *mime_type;
-  int examiners0;               /* 25 */
+  unsigned char *mime_type;     /* 25 */
+  int examiners0;
   int examiners1;
   int examiners2;
   int exam_score0;
-  int exam_score1;
-  int exam_score2;              /* 30 */
+  int exam_score1;              /* 30 */
+  int exam_score2;
   time_t last_change_time;
   int last_change_nsec;
   int is_marked;
-  int is_saved;
-  int saved_status;             /* 35 */
+  int is_saved;                 /* 35 */
+  int saved_status;
   int saved_score;
   int saved_test;
 };
 
-enum { RUNS_ROW_WIDTH = 38 };
+enum { RUNS_ROW_WIDTH = 39 };
 
 #define RUNS_OFFSET(f) XOFFSET(struct run_entry_internal, f)
 static const struct common_mysql_parse_spec runs_spec[RUNS_ROW_WIDTH] =
@@ -118,6 +120,7 @@ static const struct common_mysql_parse_spec runs_spec[RUNS_ROW_WIDTH] =
   { 0, 'd', "ip_version", RUNS_OFFSET(ip_version), 0 },
   { 0, 'i', "ip", RUNS_OFFSET(ip), 0, },
   { 1, 's', "hash", RUNS_OFFSET(hash), 0 },
+  { 1, 's', "run_uuid", RUNS_OFFSET(run_uuid), 0 },
   { 0, 'd', "score", RUNS_OFFSET(score), 0 },
   { 0, 'd', "test_num", RUNS_OFFSET(test_num), 0 },
   { 0, 'd', "score_adj", RUNS_OFFSET(score_adj), 0 },
