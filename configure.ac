@@ -388,6 +388,10 @@ dnl check libcurl library
 AC_CHECK_HEADER([curl/curl.h],[ac_cv_has_libcurl=1],[ac_cv_has_libcurl=0])
 AC_CHECK_LIB([curl],[curl_easy_init],[ac_cv_has_lib_libcurl=-lcurl],[ac_cv_has_lib_libcurl=])
 
+dnl check libuuid library
+AC_CHECK_HEADER([uuid/uuid.h],[ac_cv_has_libuuid=1],[ac_cv_has_libuuid=0])
+AC_CHECK_LIB([uuid],[uuid_parse],[ac_cv_has_lib_libuuid=-luuid],[ac_cv_has_lib_libuuid=])
+
 dnl Libcap checking stuff
 ac_cv_has_libcap=1
 if [[ x"${ac_cv_libcap_root}" = xno ]]
@@ -1012,6 +1016,7 @@ AC_SUBST(ac_cv_has_lib_libiconv)
 AC_SUBST(ac_cv_has_lib_intl)
 AC_SUBST(ac_cv_has_lib_libzip)
 AC_SUBST(ac_cv_has_lib_libcurl)
+AC_SUBST(ac_cv_has_lib_libuuid)
 AC_SUBST(ac_cv_meta_cc)
 AC_SUBST(ac_cv_need_32)
 AC_SUBST(ac_cv_need_64)
@@ -1021,6 +1026,11 @@ AC_SUBST(ac_cv_libcap_link)
 AC_SUBST(ac_cv_ejudge_server_bin_path_m)
 AC_SUBST(ac_cv_lang_config_dir)
 AC_SUBST(ac_cv_lang_config_dir_expanded)
+
+if [[ x"${ac_cv_has_libuuid}" = x1 -a x"${ac_cv_has_lib_libuuid}" != x ]]
+then
+  AC_DEFINE(CONF_HAS_LIBUUID,1)
+fi
 
 if [[ x"${ac_cv_has_libcurl}" = x1 -a x"${ac_cv_has_lib_libcurl}" != x ]]
 then
