@@ -121,6 +121,7 @@ COMMON_CFILES=\
  archive_paths.c\
  base64.c\
  bitset.c\
+ build_support.c\
  cgi.c\
  charsets.c\
  clarlog.c\
@@ -219,6 +220,7 @@ COMMON_CFILES=\
  super_html_5.c\
  super_html_6.c\
  super_html_7.c\
+ super_html_8.c\
  super_proto.c\
  super_run_packet.c\
  sha.c\
@@ -347,6 +349,7 @@ CFILES=\
  edit-userlist.c\
  ej-ncheck.c\
  ej-batch.c\
+ ej-import-contest.c\
  ej-normalize.c\
  ej-polygon.c\
  ej-super-run.c\
@@ -478,6 +481,7 @@ HFILES=\
  archive_paths.h\
  base64.h\
  bitset.h\
+ build_support.h\
  cgi.h\
  charsets.h\
  clarlog.h\

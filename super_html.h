@@ -548,5 +548,10 @@ struct section_problem_data *
 super_html_create_problem(
         struct sid_state *sstate,
         int prob_id);
+void
+super_html_serve_unparse_serve_cfg(
+        FILE *f,
+        const struct ejudge_cfg *config,
+        const struct sid_state *sstate);
 
 #endif /* __SUPER_HTML_H__ */
