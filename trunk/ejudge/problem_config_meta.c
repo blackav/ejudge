@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/06/04 08:23:01
+// Generated 2012/07/03 08:15:01
 
 #include "problem_config_meta.h"
 #include "problem_config.h"
@@ -37,7 +37,6 @@ static struct meta_info_item meta_info_problem_config_section_data[] =
   [META_PROBLEM_CONFIG_SECTION_use_corr] = { META_PROBLEM_CONFIG_SECTION_use_corr, 'B', XSIZE(struct problem_config_section, use_corr), "use_corr", XOFFSET(struct problem_config_section, use_corr) },
   [META_PROBLEM_CONFIG_SECTION_use_info] = { META_PROBLEM_CONFIG_SECTION_use_info, 'B', XSIZE(struct problem_config_section, use_info), "use_info", XOFFSET(struct problem_config_section, use_info) },
   [META_PROBLEM_CONFIG_SECTION_use_tgz] = { META_PROBLEM_CONFIG_SECTION_use_tgz, 'B', XSIZE(struct problem_config_section, use_tgz), "use_tgz", XOFFSET(struct problem_config_section, use_tgz) },
-  [META_PROBLEM_CONFIG_SECTION_tests_to_accept] = { META_PROBLEM_CONFIG_SECTION_tests_to_accept, 'B', XSIZE(struct problem_config_section, tests_to_accept), "tests_to_accept", XOFFSET(struct problem_config_section, tests_to_accept) },
   [META_PROBLEM_CONFIG_SECTION_accept_partial] = { META_PROBLEM_CONFIG_SECTION_accept_partial, 'B', XSIZE(struct problem_config_section, accept_partial), "accept_partial", XOFFSET(struct problem_config_section, accept_partial) },
   [META_PROBLEM_CONFIG_SECTION_disable_user_submit] = { META_PROBLEM_CONFIG_SECTION_disable_user_submit, 'B', XSIZE(struct problem_config_section, disable_user_submit), "disable_user_submit", XOFFSET(struct problem_config_section, disable_user_submit) },
   [META_PROBLEM_CONFIG_SECTION_disable_tab] = { META_PROBLEM_CONFIG_SECTION_disable_tab, 'B', XSIZE(struct problem_config_section, disable_tab), "disable_tab", XOFFSET(struct problem_config_section, disable_tab) },
@@ -76,6 +75,7 @@ static struct meta_info_item meta_info_problem_config_section_data[] =
   [META_PROBLEM_CONFIG_SECTION_interactor_time_limit] = { META_PROBLEM_CONFIG_SECTION_interactor_time_limit, 'i', XSIZE(struct problem_config_section, interactor_time_limit), "interactor_time_limit", XOFFSET(struct problem_config_section, interactor_time_limit) },
   [META_PROBLEM_CONFIG_SECTION_max_open_file_count] = { META_PROBLEM_CONFIG_SECTION_max_open_file_count, 'i', XSIZE(struct problem_config_section, max_open_file_count), "max_open_file_count", XOFFSET(struct problem_config_section, max_open_file_count) },
   [META_PROBLEM_CONFIG_SECTION_max_process_count] = { META_PROBLEM_CONFIG_SECTION_max_process_count, 'i', XSIZE(struct problem_config_section, max_process_count), "max_process_count", XOFFSET(struct problem_config_section, max_process_count) },
+  [META_PROBLEM_CONFIG_SECTION_tests_to_accept] = { META_PROBLEM_CONFIG_SECTION_tests_to_accept, 'i', XSIZE(struct problem_config_section, tests_to_accept), "tests_to_accept", XOFFSET(struct problem_config_section, tests_to_accept) },
   [META_PROBLEM_CONFIG_SECTION_deadline] = { META_PROBLEM_CONFIG_SECTION_deadline, 't', XSIZE(struct problem_config_section, deadline), "deadline", XOFFSET(struct problem_config_section, deadline) },
   [META_PROBLEM_CONFIG_SECTION_start_date] = { META_PROBLEM_CONFIG_SECTION_start_date, 't', XSIZE(struct problem_config_section, start_date), "start_date", XOFFSET(struct problem_config_section, start_date) },
   [META_PROBLEM_CONFIG_SECTION_max_vm_size] = { META_PROBLEM_CONFIG_SECTION_max_vm_size, 'Z', XSIZE(struct problem_config_section, max_vm_size), "max_vm_size", XOFFSET(struct problem_config_section, max_vm_size) },
