@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/06/04 08:23:01
+// Generated 2012/07/03 08:15:01
 
 #ifndef __PROBLEM_CONFIG_META_H__
 #define __PROBLEM_CONFIG_META_H__
@@ -32,7 +32,6 @@ enum
   META_PROBLEM_CONFIG_SECTION_use_corr,
   META_PROBLEM_CONFIG_SECTION_use_info,
   META_PROBLEM_CONFIG_SECTION_use_tgz,
-  META_PROBLEM_CONFIG_SECTION_tests_to_accept,
   META_PROBLEM_CONFIG_SECTION_accept_partial,
   META_PROBLEM_CONFIG_SECTION_disable_user_submit,
   META_PROBLEM_CONFIG_SECTION_disable_tab,
@@ -71,6 +70,7 @@ enum
   META_PROBLEM_CONFIG_SECTION_interactor_time_limit,
   META_PROBLEM_CONFIG_SECTION_max_open_file_count,
   META_PROBLEM_CONFIG_SECTION_max_process_count,
+  META_PROBLEM_CONFIG_SECTION_tests_to_accept,
   META_PROBLEM_CONFIG_SECTION_deadline,
   META_PROBLEM_CONFIG_SECTION_start_date,
   META_PROBLEM_CONFIG_SECTION_max_vm_size,
