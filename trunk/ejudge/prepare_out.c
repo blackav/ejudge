@@ -1311,7 +1311,7 @@ prepare_unparse_prob(
         || !prob->abstract)
       unparse_bool(f, "hidden", prob->hidden);
   }
-  if (prob->stand_hide_time)
+  if (prob->stand_hide_time > 0)
     unparse_bool(f, "stand_hide_time", prob->stand_hide_time);
   if (prob->advance_to_next >= 0
       && ((prob->abstract && prob->advance_to_next) || !prob->abstract))

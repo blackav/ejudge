@@ -2300,7 +2300,6 @@ main(int argc, char **argv)
         unsigned char ua_buf[1024];
         snprintf(ua_buf, sizeof(ua_buf), "%s: ejudge version %s compiled %s",
                  progname, compile_version, compile_date);
-        fprintf(stderr, ">>%s\n", ua_buf);
         pkt->user_agent = xstrdup(ua_buf);
     }
     if (pkt->working_dir) {
