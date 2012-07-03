@@ -60,7 +60,6 @@ struct problem_config_section
   ejintbool_t use_corr;
   ejintbool_t use_info;
   ejintbool_t use_tgz;
-  ejintbool_t tests_to_accept;
   ejintbool_t accept_partial;
   ejintbool_t disable_user_submit;
   ejintbool_t disable_tab;
@@ -100,6 +99,7 @@ struct problem_config_section
   int interactor_time_limit;
   int max_open_file_count;
   int max_process_count;
+  int tests_to_accept;
 
   time_t deadline;
   time_t start_date;
