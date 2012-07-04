@@ -69,6 +69,10 @@ const unsigned char * const opcaps_cap_list [] =
   [OPCAP_RESTART] =               "RESTART",
   [OPCAP_COMMENT_RUN] =           "COMMENT_RUN",
   [OPCAP_UNLOAD_CONTEST] =        "UNLOAD_CONTEST",
+  [OPCAP_LOCAL_0] =               "LOCAL_0",
+  [OPCAP_LOCAL_1] =               "LOCAL_1",
+  [OPCAP_LOCAL_2] =               "LOCAL_2",
+  [OPCAP_LOCAL_3] =               "LOCAL_3",
 
   [OPCAP_LAST]                    0
 };
