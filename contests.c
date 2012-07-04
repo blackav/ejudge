@@ -132,6 +132,8 @@ const int contests_tag_to_meta_map[CONTEST_LAST_TAG] =
   [CONTEST_OPEN_TIME] = CNTS_open_time,
   [CONTEST_CLOSE_TIME] = CNTS_close_time,
   [CONTEST_EXT_ID] = CNTS_ext_id,
+  [CONTEST_UPDATE_TIME] = CNTS_update_time,
+  [CONTEST_PROBLEM_COUNT] = CNTS_problem_count,
 };
 const int contests_attr_to_meta_map[CONTEST_LAST_ATTR] =
 {
@@ -158,6 +160,7 @@ const int contests_attr_to_meta_map[CONTEST_LAST_ATTR] =
   [CONTEST_A_ENABLE_PASSWORD_RECOVERY] = CNTS_enable_password_recovery,
   [CONTEST_A_DISABLE_MEMBER_DELETE] = CNTS_disable_member_delete,
   [CONTEST_A_OLD_RUN_MANAGED] = CNTS_old_run_managed,
+  [CONTEST_A_READY] = CNTS_ready,
 };
 
 char const * const contests_elem_map[] =
@@ -250,6 +253,8 @@ char const * const contests_elem_map[] =
   "open_time",
   "close_time",
   "ext_id",
+  "update_time",
+  "problem_count",
 
   0
 };
@@ -292,6 +297,7 @@ char const * const contests_attr_map[] =
   "options",
   "checkbox",
   "old_run_managed",
+  "ready",
 
   0
 };
@@ -775,6 +781,7 @@ static const unsigned char contest_final_set[CONTEST_LAST_TAG] =
   [CONTEST_REGISTER_SUBJECT] = 1,
   [CONTEST_REGISTER_SUBJECT_EN] = 1,
   [CONTEST_EXT_ID]  = 1,
+  [CONTEST_PROBLEM_COUNT] = 1,
 };
 
 static const unsigned char contest_access_set[CONTEST_LAST_TAG] =
@@ -811,6 +818,7 @@ static const unsigned char contest_bool_attr_set[CONTEST_LAST_ATTR] =
   [CONTEST_A_ENABLE_PASSWORD_RECOVERY] = 1,
   [CONTEST_A_DISABLE_MEMBER_DELETE] = 1,
   [CONTEST_A_OLD_RUN_MANAGED] = 1,
+  [CONTEST_A_READY] = 1,
 };
 
 static void
@@ -901,6 +909,7 @@ parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
     case CONTEST_SCHED_TIME:
     case CONTEST_OPEN_TIME:
     case CONTEST_CLOSE_TIME:
+    case CONTEST_UPDATE_TIME:
       if (handle_final_tag(path, t, &date_str) < 0) {
         xfree(date_str);
         return -1;
