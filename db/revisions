@@ -7364,3 +7364,6 @@ opcaps.h 6930 0 214953
 opcaps.c 6930 0 603195
 contests.h 6932 0 1231560
 contests.c 6932 0 4239188
+contests.h 6934 0 1243554
+contests.c 6934 0 4258683
+contests_2.c 6934 0 2128265
