@@ -146,6 +146,7 @@ COMMON_CFILES=\
  digest_4.c\
  digest_5.c\
  dos2unix_str.c\
+ ej_import_packet.c\
  ejudge_cfg.c\
  errlog.c\
  expat_iface.c\
@@ -503,6 +504,7 @@ HFILES=\
  digest_io.h\
  ejudge_cfg.h\
  ejudge_plugin.h\
+ ej_import_packet.h\
  ej_limits.h\
  ej_process.h\
  ej_types.h\

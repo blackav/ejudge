@@ -13,7 +13,7 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Lesser General Public License for more details.
 
-META_C_FILES = contests_meta.c super-serve_meta.c prepare_meta.c super_html_6_meta.c super_run_packet_meta.c problem_config_meta.c polygon_packet_meta.c
+META_C_FILES = contests_meta.c super-serve_meta.c prepare_meta.c super_html_6_meta.c super_run_packet_meta.c problem_config_meta.c polygon_packet_meta.c ej_import_packet_meta.c
 META_H_FILES = $(META_C_FILES:.c=.h)
 META_O_FILES = $(META_C_FILES:.c=.o)
 
@@ -37,3 +37,6 @@ problem_config_meta.c problem_config_meta.h : problem_config.h
 
 polygon_packet_meta.c polygon_packet_meta.h : polygon_packet.h
 	$(META_CC) polygon_packet.h -o polygon_packet.out --force-h --meta --meta-struct polygon_packet --meta-timestamp 
+
+ej_import_packet_meta.c ej_import_packet_meta.h : ej_import_packet.h
+	$(META_CC) ej_import_packet.h -o ej_import_packet.out --force-h --meta --meta-struct ej_import_packet --meta-timestamp 
