@@ -71,7 +71,7 @@ contests_write_header(FILE *f, const struct contest_desc *cnts)
     CONTEST_A_DISABLE_PASSWORD_CHANGE, CONTEST_A_DISABLE_LOCALE_CHANGE,
     CONTEST_A_PERSONAL, CONTEST_A_ALLOW_REG_DATA_EDIT,
     CONTEST_A_DISABLE_MEMBER_DELETE, CONTEST_A_CLOSED, CONTEST_A_INVISIBLE,
-    CONTEST_A_MANAGED, CONTEST_A_RUN_MANAGED, CONTEST_A_OLD_RUN_MANAGED,
+    CONTEST_A_MANAGED, CONTEST_A_RUN_MANAGED, CONTEST_A_OLD_RUN_MANAGED, CONTEST_A_READY,
     0
   };
   for (i = 0; flist[i]; ++i) {
@@ -275,6 +275,11 @@ contests_unparse(FILE *f,
             xml_unparse_date(cnts->close_time),
             contests_elem_map[CONTEST_CLOSE_TIME]);
   }
+  if (cnts->update_time > 0) {
+    fprintf(f, "  <%s>%s</%s>\n", contests_elem_map[CONTEST_UPDATE_TIME],
+            xml_unparse_date(cnts->update_time),
+            contests_elem_map[CONTEST_UPDATE_TIME]);
+  }
 
   unparse_texts(f, cnts, (const int[]) {
     CONTEST_REGISTER_EMAIL, CONTEST_REGISTER_URL, CONTEST_TEAM_URL,
@@ -337,6 +342,8 @@ contests_unparse(FILE *f,
     CONTEST_USER_NAME_COMMENT, CONTEST_ALLOWED_LANGUAGES,
     CONTEST_ALLOWED_REGIONS, CONTEST_CF_NOTIFY_EMAIL,
     CONTEST_CLAR_NOTIFY_EMAIL, CONTEST_DAILY_STAT_EMAIL,
+
+    CONTEST_EXT_ID, CONTEST_PROBLEM_COUNT,
 
     0,
   });

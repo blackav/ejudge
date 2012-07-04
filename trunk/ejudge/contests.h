@@ -123,6 +123,8 @@ enum
     CONTEST_OPEN_TIME,
     CONTEST_CLOSE_TIME,
     CONTEST_EXT_ID,
+    CONTEST_UPDATE_TIME,
+    CONTEST_PROBLEM_COUNT,
 
     CONTEST_LAST_TAG
   };
@@ -164,6 +166,7 @@ enum
     CONTEST_A_OPTIONS,
     CONTEST_A_CHECKBOX,
     CONTEST_A_OLD_RUN_MANAGED,
+    CONTEST_A_READY,
 
     CONTEST_LAST_ATTR
   };
@@ -305,11 +308,13 @@ struct contest_desc
   ejbytebool_t allow_reg_data_edit;
   ejbytebool_t disable_member_delete;
   ejbytebool_t old_run_managed;
+  ejbytebool_t ready;
 
   time_t         reg_deadline;
   time_t         sched_time;
   time_t         open_time;
   time_t         close_time;
+  time_t         update_time;
 
   unsigned char *name;
   unsigned char *name_en;
@@ -386,6 +391,7 @@ struct contest_desc
   unsigned char *logo_url;
   unsigned char *css_url;
   unsigned char *ext_id;
+  unsigned char *problem_count;
 
   struct xml_tree *slave_rules;
 
