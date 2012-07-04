@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/07/04 11:22:54
+// Generated 2012/07/04 12:23:19
 
 #include "contests_meta.h"
 #include "contests.h"
@@ -34,10 +34,12 @@ static struct meta_info_item meta_info_contest_desc_data[] =
   [CNTS_allow_reg_data_edit] = { CNTS_allow_reg_data_edit, 'b', XSIZE(struct contest_desc, allow_reg_data_edit), "allow_reg_data_edit", XOFFSET(struct contest_desc, allow_reg_data_edit) },
   [CNTS_disable_member_delete] = { CNTS_disable_member_delete, 'b', XSIZE(struct contest_desc, disable_member_delete), "disable_member_delete", XOFFSET(struct contest_desc, disable_member_delete) },
   [CNTS_old_run_managed] = { CNTS_old_run_managed, 'b', XSIZE(struct contest_desc, old_run_managed), "old_run_managed", XOFFSET(struct contest_desc, old_run_managed) },
+  [CNTS_ready] = { CNTS_ready, 'b', XSIZE(struct contest_desc, ready), "ready", XOFFSET(struct contest_desc, ready) },
   [CNTS_reg_deadline] = { CNTS_reg_deadline, 't', XSIZE(struct contest_desc, reg_deadline), "reg_deadline", XOFFSET(struct contest_desc, reg_deadline) },
   [CNTS_sched_time] = { CNTS_sched_time, 't', XSIZE(struct contest_desc, sched_time), "sched_time", XOFFSET(struct contest_desc, sched_time) },
   [CNTS_open_time] = { CNTS_open_time, 't', XSIZE(struct contest_desc, open_time), "open_time", XOFFSET(struct contest_desc, open_time) },
   [CNTS_close_time] = { CNTS_close_time, 't', XSIZE(struct contest_desc, close_time), "close_time", XOFFSET(struct contest_desc, close_time) },
+  [CNTS_update_time] = { CNTS_update_time, 't', XSIZE(struct contest_desc, update_time), "update_time", XOFFSET(struct contest_desc, update_time) },
   [CNTS_name] = { CNTS_name, 's', XSIZE(struct contest_desc, name), "name", XOFFSET(struct contest_desc, name) },
   [CNTS_name_en] = { CNTS_name_en, 's', XSIZE(struct contest_desc, name_en), "name_en", XOFFSET(struct contest_desc, name_en) },
   [CNTS_main_url] = { CNTS_main_url, 's', XSIZE(struct contest_desc, main_url), "main_url", XOFFSET(struct contest_desc, main_url) },
@@ -111,6 +113,7 @@ static struct meta_info_item meta_info_contest_desc_data[] =
   [CNTS_logo_url] = { CNTS_logo_url, 's', XSIZE(struct contest_desc, logo_url), "logo_url", XOFFSET(struct contest_desc, logo_url) },
   [CNTS_css_url] = { CNTS_css_url, 's', XSIZE(struct contest_desc, css_url), "css_url", XOFFSET(struct contest_desc, css_url) },
   [CNTS_ext_id] = { CNTS_ext_id, 's', XSIZE(struct contest_desc, ext_id), "ext_id", XOFFSET(struct contest_desc, ext_id) },
+  [CNTS_problem_count] = { CNTS_problem_count, 's', XSIZE(struct contest_desc, problem_count), "problem_count", XOFFSET(struct contest_desc, problem_count) },
   [CNTS_slave_rules] = { CNTS_slave_rules, '?', XSIZE(struct contest_desc, slave_rules), "slave_rules", XOFFSET(struct contest_desc, slave_rules) },
   [CNTS_user_contest_num] = { CNTS_user_contest_num, 'i', XSIZE(struct contest_desc, user_contest_num), "user_contest_num", XOFFSET(struct contest_desc, user_contest_num) },
   [CNTS_default_locale_num] = { CNTS_default_locale_num, 'i', XSIZE(struct contest_desc, default_locale_num), "default_locale_num", XOFFSET(struct contest_desc, default_locale_num) },
