@@ -131,6 +131,7 @@ const int contests_tag_to_meta_map[CONTEST_LAST_TAG] =
   [CONTEST_REGISTER_SUBJECT_EN] = CNTS_register_subject_en,
   [CONTEST_OPEN_TIME] = CNTS_open_time,
   [CONTEST_CLOSE_TIME] = CNTS_close_time,
+  [CONTEST_EXT_ID] = CNTS_ext_id,
 };
 const int contests_attr_to_meta_map[CONTEST_LAST_ATTR] =
 {
@@ -248,6 +249,7 @@ char const * const contests_elem_map[] =
   "register_subject_en",
   "open_time",
   "close_time",
+  "ext_id",
 
   0
 };
@@ -772,6 +774,7 @@ static const unsigned char contest_final_set[CONTEST_LAST_TAG] =
   [CONTEST_CSS_URL] = 1,
   [CONTEST_REGISTER_SUBJECT] = 1,
   [CONTEST_REGISTER_SUBJECT_EN] = 1,
+  [CONTEST_EXT_ID]  = 1,
 };
 
 static const unsigned char contest_access_set[CONTEST_LAST_TAG] =
@@ -1854,6 +1857,5 @@ contests_get_member_name(int ff)
 /*
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "DIR")
  * End:
  */

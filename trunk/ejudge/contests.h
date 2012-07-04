@@ -122,6 +122,7 @@ enum
     CONTEST_REGISTER_SUBJECT_EN,
     CONTEST_OPEN_TIME,
     CONTEST_CLOSE_TIME,
+    CONTEST_EXT_ID,
 
     CONTEST_LAST_TAG
   };
@@ -384,6 +385,7 @@ struct contest_desc
   unsigned char *reg_welcome_file;
   unsigned char *logo_url;
   unsigned char *css_url;
+  unsigned char *ext_id;
 
   struct xml_tree *slave_rules;
 
