@@ -10942,3 +10942,53 @@ cleanup:
   }
   return retval;
 }
+
+int
+super_serve_op_IMPORT_PROBLEMS_BATCH_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  opcap_t caps = 0LL;
+  const unsigned char *path = NULL;
+
+  get_global_caps(phr, &caps);
+
+  if (opcaps_check(caps, OPCAP_EDIT_CONTEST) < 0) {
+    FAIL(S_ERR_PERM_DENIED);
+  }
+
+  if (ss_cgi_param(phr, "path", &path) <= 0 || !path || !*path) {
+    fprintf(log_f, "'path' parameter is undefined");
+    FAIL(S_ERR_OPERATION_FAILED);
+  }
+
+  struct stat stb;
+  if (stat(path, &stb) < 0) {
+    fprintf(log_f, "'path' ('%s') does not exist", path);
+    FAIL(S_ERR_OPERATION_FAILED);
+  }
+  if (!S_ISREG(stb.st_mode)) {
+    fprintf(log_f, "'path' ('%s') is not a regular file", path);
+    FAIL(S_ERR_OPERATION_FAILED);
+  }
+  if (access(path, R_OK) < 0) {
+    fprintf(log_f, "'path' ('%s') is not readable", path);
+    FAIL(S_ERR_OPERATION_FAILED);
+  }
+
+  unsigned char start_path[PATH_MAX];
+  snprintf(start_path, sizeof(start_path), "%s/ej-import-contest", EJUDGE_SERVER_BIN_PATH);
+  char *args[3];
+  args[0] = start_path;
+  args[1] = (char*) path;
+  args[2] = NULL;
+  ejudge_start_daemon_process(args, NULL);
+
+  fprintf(out_f, "Content-type: text/plain\n\n");
+  fprintf(out_f, "OK\n");
+
+cleanup:
+  return retval;
+}

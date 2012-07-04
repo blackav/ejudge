@@ -33,6 +33,7 @@
 #include "prepare_meta.h"
 #include "prepare_dflt.h"
 #include "pathutl.h"
+#include "ej_import_packet.h"
 
 #include "reuse_osdeps.h"
 #include "reuse_xalloc.h"
@@ -1572,7 +1573,7 @@ do_import_contest(
 
         if (!p->cfg->max_vm_size || p->cfg->max_vm_size == (size_t) -1L) {
             warning("'max_vm_size' attribute is undefined in '%s', default value is %zu",
-                    rel_path, 256 * 1024 * 1024);
+                    rel_path, (size_t) 256 * (size_t) 1024 * (size_t) 1024);
             p->cfg->max_vm_size = 256 * 1024 * 1024;
         }
         if (!p->cfg->max_stack_size || p->cfg->max_stack_size == (size_t) -1L) {
@@ -1928,14 +1929,7 @@ sid_state_create(
 int
 main(int argc, char **argv)
 {
-    const unsigned char *log_file = NULL;
-    int require_master_solution = 0;
     unsigned long required_solution_mask = 0;
-    int require_test_checker = 0;
-    const unsigned char *remote_addr = NULL;
-    int user_id = 0;
-    const unsigned char *user_login = NULL;
-    const unsigned char *user_name = NULL;
 
     progname = os_GetLastname(argv[0]);
 
@@ -1945,34 +1939,6 @@ main(int argc, char **argv)
             report_version();
         } else if (!strcmp(argv[cur_arg], "--help")) {
             report_help();
-        } else if (!strncmp(argv[cur_arg], "--log-file=", 11)) {
-            log_file = argv[cur_arg] + 11;
-            ++cur_arg;
-        } else if (!strcmp(argv[cur_arg], "--require-master-solution")) {
-            require_master_solution = 1;
-            ++cur_arg;
-        } else if (!strcmp(argv[cur_arg], "--require-test-checker")) {
-            require_test_checker = 1;
-            ++cur_arg;
-        } else if (!strncmp(argv[cur_arg], "--required-solution=", 20)) {
-            unsigned long mask = build_find_suffix(argv[cur_arg] + 20);
-            if (!mask) fatal("unsupported suffix '%s'", argv[cur_arg] + 20);
-            required_solution_mask |= mask;
-            ++cur_arg;
-        } else if (!strncmp(argv[cur_arg], "--remote-addr=", 14)) {
-            remote_addr = argv[cur_arg++] + 14;
-        } else if (!strncmp(argv[cur_arg], "--user-id=", 10)) {
-            char *eptr = NULL;
-            errno = 0;
-            user_id = strtol(argv[cur_arg] + 10, &eptr, 10);
-            if (errno || *eptr || user_id < 0) {
-                fatal("invalid user id '%s'", argv[cur_arg] + 10);
-            }
-            ++cur_arg;
-        } else if (!strncmp(argv[cur_arg], "--user-login=", 13)) {
-            user_login = argv[cur_arg++] + 13;
-        } else if (!strncmp(argv[cur_arg], "--user-name=", 12)) {
-            user_name = argv[cur_arg++] + 12;
         } else if (!strcmp(argv[cur_arg], "--")) {
             ++cur_arg;
             break;
@@ -1984,63 +1950,98 @@ main(int argc, char **argv)
     }
 
     if (cur_arg >= argc) {
-        fatal("contest_id expected");
+        fatal("packet path is expected");
     }
-
-    char *eptr = NULL;
-    errno = 0;
-    int contest_id = strtol(argv[cur_arg++], &eptr, 10);
-    if (errno || *eptr || contest_id <= 0) {
-        fatal("contest_id is invalid");
-    }
-
-    const unsigned char *arch_file = NULL;
-    if (cur_arg >= argc) {
-        fatal("archive file is expected");
-    }
-    arch_file = argv[cur_arg++];
-    if (cur_arg < argc) {
+    if (cur_arg < argc - 1) {
         fatal("too many arguments");
     }
 
-    if (log_file) {
-        log_f = fopen(log_file, "w");
-        if (!log_f) fatal("cannot open log file '%s': %s", log_file, os_ErrorMsg());
+    FILE *f = fopen(argv[cur_arg], "r");
+    if (!f) {
+        fatal("cannot open packet file '%s'", argv[cur_arg]);
+    }
+
+    struct ej_import_packet *pkt = ej_import_packet_parse(argv[cur_arg], f);
+    f = NULL;
+    if (!pkt) {
+        fatal("failed to parse packet file '%s'", argv[cur_arg]);
+    }
+
+    if (pkt->log_file) {
+        log_f = fopen(pkt->log_file, "w");
+        if (!log_f) fatal("cannot open log file '%s': %s", pkt->log_file, os_ErrorMsg());
     } else {
         log_f = stderr;
     }
 
-    if (!remote_addr) remote_addr = "127.0.0.1";
-    ej_ip_t ip;
-    if (xml_parse_ip(NULL, NULL, 0, 0, remote_addr, &ip) < 0) {
-        fatal("invalid IP-address '%s'", remote_addr);
+    if (pkt->pid_file) {
+        FILE *f = fopen(pkt->pid_file, "w");
+        if (!f) fatal2("'pid_file' path '%s' cannot be opened for write", pkt->pid_file);
+        fprintf(f, "%d\n", getpid());
+        fflush(f);
+        if (ferror(f)) fatal2("'pid_file' path '%s' write error", pkt->pid_file);
+        fclose(f); f = NULL;
     }
-    if (user_id <= 0) {
-        user_id = getuid();
-        struct passwd *pwd = getpwuid(user_id);
+
+    if (!pkt->remote_addr) pkt->remote_addr = xstrdup("127.0.0.1");
+    ej_ip_t ip;
+    if (xml_parse_ip(NULL, NULL, 0, 0, pkt->remote_addr, &ip) < 0) {
+        fatal2("invalid IP-address '%s'", pkt->remote_addr);
+    }
+    if (pkt->user_id <= 0) {
+        pkt->user_id = getuid();
+        struct passwd *pwd = getpwuid(pkt->user_id);
         if (!pwd) {
-            fatal("user with uid %d is not in the system database", user_id);
+            fatal2("user with uid %d is not in the system database", pkt->user_id);
         } else {
-            user_login = pwd->pw_name;
-            user_name = pwd->pw_gecos;
+            pkt->user_login = xstrdup(pwd->pw_name);
+            pkt->user_name = xstrdup(pwd->pw_gecos);
         }
     } else {
-        if (!user_login) {
+        if (!pkt->user_login) {
             unsigned char buf[256];
-            snprintf(buf, sizeof(buf), "ejudge_user_%d", user_id);
-            user_login = xstrdup(buf);
+            snprintf(buf, sizeof(buf), "ejudge_user_%d", pkt->user_id);
+            pkt->user_login = xstrdup(buf);
         }
-        if (!user_name) {
+        if (!pkt->user_name) {
             unsigned char buf[256];
-            snprintf(buf, sizeof(buf), "Ejudge user %d", user_id);
-            user_name = xstrdup(buf);
+            snprintf(buf, sizeof(buf), "Ejudge user %d", pkt->user_id);
+            pkt->user_name = xstrdup(buf);
         }
     }
 
-    struct sid_state *ss = sid_state_create(0ULL, ip, user_id, user_login, user_name);
+    if (pkt->required_solutions) {
+        for (int i = 0; pkt->required_solutions; ++i) {
+            unsigned long mask = build_find_suffix(pkt->required_solutions[i]);
+            if (!mask) {
+                fatal2("source suffix '%s' is not supported", pkt->required_solutions[i]);
+            }
+            required_solution_mask |= mask;
+        }
+    }
 
-    do_import_contest(contest_id, ss, arch_file, require_master_solution, required_solution_mask,
-                      require_test_checker);
+    if (pkt->require_master_solution < 0) pkt->require_master_solution = 0;
+    if (pkt->require_test_checker < 0) pkt->require_test_checker = 0;
+
+    struct sid_state *ss = sid_state_create(0ULL, ip, pkt->user_id, pkt->user_login, pkt->user_name);
+
+    if (!exit_code) {
+        do_import_contest(pkt->contest_id, ss, pkt->archive_file, pkt->require_master_solution,
+                          required_solution_mask, pkt->require_test_checker);
+    }
+
+    if (pkt->status_file) {
+        FILE *f = fopen(pkt->status_file, "w");
+        if (!f) fatal2("'status_file' path '%s' cannot be opened for write", pkt->status_file);
+        fprintf(f, "%d\n", exit_code);
+        fflush(f);
+        if (ferror(f)) fatal2("'status_file' path '%s' write error", pkt->status_file);
+        fclose(f); f = NULL;
+    }
+
+    if (pkt->pid_file) {
+        unlink(pkt->pid_file);
+    }
 
     if (log_f != stderr) {
         fclose(log_f);
