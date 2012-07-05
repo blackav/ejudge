@@ -1055,6 +1055,7 @@ enum
   SSERV_OP_DOWNLOAD_CLEANUP_AND_IMPORT_ACTION,
   SSERV_OP_UPDATE_FROM_POLYGON_PAGE,
   SSERV_OP_UPDATE_FROM_POLYGON_ACTION,
+  SSERV_OP_IMPORT_PROBLEMS_BATCH_ACTION,
 
   SSERV_OP_LAST,
 };
@@ -1238,5 +1239,6 @@ struct prot_super_pkt_http_request
 extern const unsigned char * const super_proto_op_names[SSERV_OP_LAST];
 extern const int super_proto_op_redirect[SSERV_OP_LAST];
 extern unsigned char const * const super_proto_op_error_messages[];
+extern const unsigned char * const super_proto_cmd_names[SSERV_CMD_LAST];
 
 #endif /* __SUPER_PROTO_H__ */

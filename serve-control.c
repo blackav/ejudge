@@ -41,6 +41,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <ctype.h>
+#include <errno.h>
 
 /*
 #if CONF_HAS_LIBINTL - 0 == 1
@@ -571,18 +572,37 @@ vhyperref(unsigned char *buf, size_t size,
 }
 
 static void
+parse_action(void)
+{
+  unsigned char *s = cgi_param("action");
+  if (!s || !*s) return;
+  unsigned char *q;
+  for (q = s; isdigit(*q); ++q) {}
+  if (!*q) {
+    char *eptr = NULL;
+    errno = 0;
+    long val = strtol(s, &eptr, 10);
+    if (!errno && !*eptr && val > 0 && val < SSERV_CMD_LAST) {
+      client_action = val;
+    }
+    return;
+  }
+  for (int i = 1; i < SSERV_CMD_LAST; ++i) {
+    if (!strcasecmp(super_proto_cmd_names[i], s)) {
+      client_action = i;
+      return;
+    }
+  }
+}
+
+static void
 read_state_params(void)
 {
   unsigned char *s;
   int x, n;
 
   client_action = 0;
-  if ((s = cgi_param("action"))) {
-    n = 0; x = 0;
-    if (sscanf(s, "%d%n", &x, &n) == 1 && !s[n]
-        && x > 0 && x < SSERV_CMD_LAST)
-      client_action = x;
-  }
+  parse_action();
   if (!client_action && (s = cgi_nname("action_", 7))) {
     n = 0; x = 0;
     if (sscanf(s, "action_%d%n", &x, &n) == 1 && !s[n]
@@ -2995,6 +3015,5 @@ main(int argc, char *argv[])
 /*
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")
  * End:
  */
