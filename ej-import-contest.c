@@ -63,6 +63,7 @@
 #define SERVE_CFG     "serve.cfg"
 #define BACKUP_DIR    "backup"
 #define CONF_DIR      "conf"
+#define ZIP_CONTENT_TYPE "application/zip"
 
 static const unsigned char *progname = NULL;
 static FILE *log_f = NULL;
@@ -962,10 +963,64 @@ generate_makefile(struct sid_state *ss,
 }
 
 static void
+update_contest_xml(
+        int contest_id,
+        struct sid_state *ss,
+        int ready,
+        time_t update_time,
+        int problem_count)
+{
+    struct contest_desc *rw_cnts = NULL;
+    unsigned char *xml_header = NULL;
+    unsigned char *xml_footer = NULL;
+
+    if (contests_load(contest_id, &rw_cnts) < 0 || !rw_cnts) {
+        goto cleanup;
+    }
+
+    rw_cnts->ready = ready;
+    if (update_time > 0) {
+        rw_cnts->update_time = update_time;
+    }
+    xfree(rw_cnts->problem_count); rw_cnts->problem_count = NULL;
+    if (problem_count > 0) {
+        unsigned char buf[64];
+        snprintf(buf, sizeof(buf), "%d", problem_count);
+        rw_cnts->problem_count = xstrdup(buf);
+    }
+
+    unsigned char xml_path[PATH_MAX];
+    contests_make_path(xml_path, sizeof(xml_path), contest_id);
+    if (super_html_get_contest_header_and_footer(xml_path, &xml_header, &xml_footer) < 0)
+        goto cleanup;
+
+    unsigned char audit_rec[PATH_MAX];
+    snprintf(audit_rec, sizeof(audit_rec),
+             "<!-- audit: edited %s %d (%s) %s -->\n",
+             xml_unparse_date(time(NULL)), ss->user_id, ss->user_login,
+             xml_unparse_ip(ss->remote_addr));
+
+    if (!xml_header) {
+        unsigned char hbuf[PATH_MAX];
+        snprintf(hbuf, sizeof(hbuf),
+                 "<!-- $%s$ -->\n", "Id");
+        xml_header = xstrdup(hbuf);
+    }
+    if (!xml_footer) xml_footer = xstrdup("\n");
+
+    contests_unparse_and_save(rw_cnts, NULL, xml_header, xml_footer,
+                              audit_rec, NULL, NULL);
+cleanup:
+    xfree(xml_header);
+    xfree(xml_footer);
+}
+
+static void
 do_import_contest(
         int contest_id,
         struct sid_state *ss,
         const unsigned char *arch_file,
+        const unsigned char *content_type,
         int require_master_solution,
         unsigned long required_solution_mask,
         int require_test_checker)
@@ -978,6 +1033,8 @@ do_import_contest(
     unsigned char working_dir[PATH_MAX];
     unsigned char *serve_header = NULL;
     unsigned char *serve_footer = NULL;
+    int contest_problem_count = 0;
+    time_t contest_update_time = 0;
 
     working_dir[0] = 0;
 
@@ -1091,7 +1148,7 @@ do_import_contest(
 
     /* unpack the archive */
     char *args[10];
-    if (ends_with_nocase(arch_path, ".zip")) {
+    if (ends_with_nocase(arch_path, ".zip") || (content_type && !strcasecmp(content_type, ZIP_CONTENT_TYPE))) {
         // use zip unpacker
         info("unpacking archive with %s", UNZIP_PATH);
         args[0] = UNZIP_PATH;
@@ -1893,7 +1950,18 @@ do_import_contest(
         }
     }
 
+    if (!exit_code) {
+        contest_update_time = time(NULL);
+        contest_problem_count = 0;
+        for (int i = 1; i < ss->prob_a; ++i) {
+            struct section_problem_data *prob = ss->probs[i];
+            if (!prob) continue;
+            ++contest_problem_count;
+        }
+    }
+
 cleanup:;
+    update_contest_xml(contest_id, ss, !exit_code, contest_update_time, contest_problem_count);
     xfree(serve_header);
     xfree(serve_footer);
     xfree(stdout_text);
@@ -2011,7 +2079,7 @@ main(int argc, char **argv)
     }
 
     if (pkt->required_solutions) {
-        for (int i = 0; pkt->required_solutions; ++i) {
+        for (int i = 0; pkt->required_solutions[i]; ++i) {
             unsigned long mask = build_find_suffix(pkt->required_solutions[i]);
             if (!mask) {
                 fatal2("source suffix '%s' is not supported", pkt->required_solutions[i]);
@@ -2026,8 +2094,8 @@ main(int argc, char **argv)
     struct sid_state *ss = sid_state_create(0ULL, ip, pkt->user_id, pkt->user_login, pkt->user_name);
 
     if (!exit_code) {
-        do_import_contest(pkt->contest_id, ss, pkt->archive_file, pkt->require_master_solution,
-                          required_solution_mask, pkt->require_test_checker);
+        do_import_contest(pkt->contest_id, ss, pkt->archive_file, pkt->content_type,
+                          pkt->require_master_solution, required_solution_mask, pkt->require_test_checker);
     }
 
     if (pkt->status_file) {

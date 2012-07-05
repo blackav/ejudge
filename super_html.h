@@ -553,5 +553,10 @@ super_html_serve_unparse_serve_cfg(
         FILE *f,
         const struct ejudge_cfg *config,
         const struct sid_state *sstate);
+int
+super_html_get_contest_header_and_footer(
+        const unsigned char *path,
+        unsigned char **before_start,
+        unsigned char **after_end);
 
 #endif /* __SUPER_HTML_H__ */
