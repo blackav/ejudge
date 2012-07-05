@@ -6595,6 +6595,32 @@ void *super_html_6_force_link_ptr = super_html_6_force_link;
 extern void super_html_7_force_link(void);
 void *super_html_7_force_link_ptr = super_html_7_force_link;
 
+static int
+parse_opcode(struct super_http_request_info *phr, int *p_opcode)
+{
+  const unsigned char *s = NULL;
+  if (ss_cgi_param(phr, "op", &s) <= 0 || !s || !*s) return S_ERR_INV_OPER;
+  const unsigned char *q;
+  for (q = s; isdigit(*q); ++q) {}
+  if (!*q) {
+    char *eptr = NULL;
+    errno = 0;
+    long val = strtol(s, &eptr, 10);
+    if (errno || *eptr) return S_ERR_INV_OPER;
+    if (val <= 0 || val >= SSERV_OP_LAST) return S_ERR_INV_OPER;
+    *p_opcode = val;
+    return 0;
+  }
+
+  for (int i = 1; i < SSERV_OP_LAST; ++i) {
+    if (!strcasecmp(super_proto_op_names[i], s)) {
+      *p_opcode = i;
+      return 0;
+    }
+  }
+  return S_ERR_INV_OPER;
+}
+
 static void *self_dl_handle = 0;
 static int
 do_http_request(FILE *log_f, FILE *out_f, struct super_http_request_info *phr)
@@ -6608,8 +6634,7 @@ do_http_request(FILE *log_f, FILE *out_f, struct super_http_request_info *phr)
     if (sscanf(s, "op_%d%n", &opcode, &n) != 1 || s[n]
         || opcode <= 0 || opcode >= SSERV_OP_LAST)
       FAIL(S_ERR_INV_OPER);
-  } else if (ss_cgi_param_int(phr, "op", &opcode) < 0
-      || opcode <= 0 || opcode >= SSERV_OP_LAST)
+  } else if (parse_opcode(phr, &opcode) < 0)
     FAIL(S_ERR_INV_OPER);
 
   if (!super_proto_op_names[opcode]) FAIL(S_ERR_INV_OPER);
