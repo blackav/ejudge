@@ -1160,3 +1160,53 @@ super_html_serve_unparse_and_save(
 
   return 1;
 }
+
+int
+super_html_get_contest_header_and_footer(
+        const unsigned char *path,
+        unsigned char **before_start,
+        unsigned char **after_end)
+{
+  char *xml_text = 0, *p1, *p2, *p3;
+  unsigned char *s1 = 0, *s2 = 0;
+  size_t xml_text_size = 0;
+  struct stat sb;
+  int errcode = 0;
+
+  if (stat(path, &sb) < 0) return -SSERV_ERR_FILE_NOT_EXIST;
+
+  if (generic_read_file(&xml_text, 0, &xml_text_size, 0, 0, path, 0) < 0)
+    return -SSERV_ERR_FILE_READ_ERROR;
+
+  if (!(p1 = strstr(xml_text, "<contest "))) {
+    errcode = -SSERV_ERR_FILE_FORMAT_INVALID;
+    goto failure;
+  }
+  if (!(p2 = strstr(xml_text, "</contest>"))) {
+    errcode = -SSERV_ERR_FILE_FORMAT_INVALID;
+    goto failure;
+  }
+  p3 = xml_text;
+  if (!strncmp(p3, "<?xml ", 6)) {
+    while (*p3 != '\n' && p3 < p1) p3++;
+    if (*p3 == '\n') p3++;
+  }
+    
+  s1 = xmalloc(xml_text_size + 1);
+  s2 = xmalloc(xml_text_size + 1);
+
+  memcpy(s1, p3, p1 - p3);
+  s1[p1 - p3] = 0;
+  strcpy(s2, p2 + 10);
+
+  *before_start = s1;
+  *after_end = s2;
+
+  xfree(xml_text);
+  return 0;
+
+ failure:
+  xfree(xml_text);
+  return errcode;
+}
+
