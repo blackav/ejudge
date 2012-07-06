@@ -7221,6 +7221,18 @@ priv_print_problem_exam_protocol(
   return retval;
 }
 
+static int
+ping_page(
+        FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  fprintf(fout, "Content-type: text/plain\n\nOK\n");
+  return 0;
+}
+
 static void
 unpriv_print_status(
         FILE *fout,
@@ -7642,6 +7654,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_ADMIN_CONTEST_SETTINGS] = priv_admin_contest_settings,
   [NEW_SRV_ACTION_PRIV_EDIT_CLAR_PAGE] = priv_edit_clar_page,
   [NEW_SRV_ACTION_PRIV_EDIT_RUN_PAGE] = priv_edit_run_page,
+  [NEW_SRV_ACTION_PING] = ping_page,
 };
 
 static void
@@ -9093,6 +9106,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRIV_EDIT_CLAR_ACTION] = priv_generic_operation,
   [NEW_SRV_ACTION_PRIV_EDIT_RUN_PAGE] = priv_generic_page,
   [NEW_SRV_ACTION_PRIV_EDIT_RUN_ACTION] = priv_generic_operation, ///
+  [NEW_SRV_ACTION_PING] = priv_generic_page,
 };
 
 static unsigned char *
@@ -15232,6 +15246,7 @@ static const unsigned char * const symbolic_action_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRIV_EDIT_CLAR_ACTION] = "PRIV_EDIT_CLAR_ACTION",
   [NEW_SRV_ACTION_PRIV_EDIT_RUN_PAGE] = "PRIV_EDIT_RUN_PAGE",
   [NEW_SRV_ACTION_PRIV_EDIT_RUN_ACTION] = "PRIV_EDIT_RUN_ACTION",
+  [NEW_SRV_ACTION_PING] = "PING",
 };
 
 void
