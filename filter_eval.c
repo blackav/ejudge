@@ -23,13 +23,10 @@
 #include "teamdb.h"
 #include "userlist.h"
 #include "archive_paths.h"
+#include "ej_uuid.h"
 
 #include "reuse_logger.h"
 #include "reuse_mempage.h"
-
-#if CONF_HAS_LIBUUID - 0 != 0
-#include <uuid/uuid.h>
-#endif
 
 static unsigned char *envdup(struct filter_env *env,
                              unsigned char const *str)
@@ -296,21 +293,9 @@ do_eval(struct filter_env *env,
       memcpy(res->v.h, env->rentries[r1.v.i].sha1, sizeof(env->cur->sha1));
       break;
     case TOK_UUID:
-      {
-        char uuid_buf[40];
-        uuid_buf[0] = 0;
-#if CONF_HAS_LIBUUID - 0 != 0
-        {
-          const ruint32_t *pu = env->rentries[r1.v.i].run_uuid;
-          if (pu[0] || pu[1] || pu[2] || pu[3]) {
-            uuid_unparse((void*) pu, uuid_buf);
-          }
-        }
-#endif
-        res->kind = TOK_STRING_L;
-        res->type = FILTER_TYPE_STRING;
-        res->v.s = envdup(env, uuid_buf);
-      }
+      res->kind = TOK_STRING_L;
+      res->type = FILTER_TYPE_STRING;
+      res->v.s = envdup(env, ej_uuid_unparse(env->rentries[r1.v.i].run_uuid, ""));
       break;
     case TOK_IP:
       res->kind = TOK_IP_L;
@@ -595,21 +580,9 @@ do_eval(struct filter_env *env,
     memcpy(res->v.h, env->cur->sha1, sizeof(env->cur->sha1));
     break;
   case TOK_CURUUID:
-    {
-      char uuid_buf[40];
-      uuid_buf[0] = 0;
-#if CONF_HAS_LIBUUID - 0 != 0
-      {
-        const ruint32_t *pu = env->cur->run_uuid;
-        if (pu[0] || pu[1] || pu[2] || pu[3]) {
-          uuid_unparse((void*) pu, uuid_buf);
-        }
-      }
-#endif
-      res->kind = TOK_STRING_L;
-      res->type = FILTER_TYPE_STRING;
-      res->v.s = envdup(env, uuid_buf);
-    }
+    res->kind = TOK_STRING_L;
+    res->type = FILTER_TYPE_STRING;
+    res->v.s = envdup(env, ej_uuid_unparse(env->cur->run_uuid, ""));
     break;
   case TOK_CURIP:
     res->kind = TOK_IP_L;

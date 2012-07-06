@@ -985,6 +985,7 @@ ns_submit_run(
         const unsigned char *prob_param_name,
         const unsigned char *lang_param_name,
         int enable_ans_collect,
+        int enable_path,
         int admin_mode,
         int *p_run_id,
         int *p_mime_type,
