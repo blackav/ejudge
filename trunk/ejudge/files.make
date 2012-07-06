@@ -148,6 +148,7 @@ COMMON_CFILES=\
  dos2unix_str.c\
  ej_import_packet.c\
  ejudge_cfg.c\
+ ej_uuid.c\
  errlog.c\
  expat_iface.c\
  filehash.c\
@@ -508,6 +509,7 @@ HFILES=\
  ej_limits.h\
  ej_process.h\
  ej_types.h\
+ ej_uuid.h\
  errlog.h\
  expat_iface.h\
  filehash.h\

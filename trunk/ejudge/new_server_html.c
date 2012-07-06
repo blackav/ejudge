@@ -10130,6 +10130,7 @@ ns_submit_run(
         const unsigned char *prob_param_name,
         const unsigned char *lang_param_name,
         int enable_ans_collect,
+        int enable_path,
         int admin_mode,
         int *p_run_id,
         int *p_mime_type,
@@ -10149,6 +10150,7 @@ ns_submit_run(
   size_t tmpsz;
   char *ans_text = NULL;
   int skip_mime_type_test = 0;
+  char *run_file = NULL;
 
   if (!prob_param_name) prob_param_name = "prob_id";
   if (ns_cgi_param(phr, prob_param_name, &s) <= 0 || !s) {
@@ -10190,7 +10192,17 @@ ns_submit_run(
   switch (prob->type) {
   case PROB_TYPE_STANDARD:
   case PROB_TYPE_OUTPUT_ONLY:
-    r = ns_cgi_param_bin(phr, "file", &run_text, &tmpsz); run_size = tmpsz;
+    if (enable_path > 0) {
+      const unsigned char *path = NULL;
+      if (ns_cgi_param(phr, "path", &path) <= 0 || !path) FAIL(NEW_SRV_ERR_FILE_UNSPECIFIED);
+      if (generic_read_file(&run_file, 0, &tmpsz, 0, NULL, path, NULL) < 0)
+        FAIL(NEW_SRV_ERR_FILE_UNSPECIFIED);
+      run_text = run_file;
+      run_size = tmpsz;
+      r = 1;
+    } else {
+      r = ns_cgi_param_bin(phr, "file", &run_text, &tmpsz); run_size = tmpsz;
+    }
     if (r <= 0 || !run_text || run_size <= 0) {
       if (prob->enable_text_form > 0) {
         r = ns_cgi_param_bin(phr, "text_form", &run_text, &tmpsz); run_size = tmpsz;
@@ -10211,7 +10223,17 @@ ns_submit_run(
   case PROB_TYPE_TEXT_ANSWER:
   case PROB_TYPE_SHORT_ANSWER:
   case PROB_TYPE_SELECT_ONE:
-    r = ns_cgi_param_bin(phr, "file", &run_text, &tmpsz); run_size = tmpsz;
+    if (enable_path > 0) {
+      const unsigned char *path = NULL;
+      if (ns_cgi_param(phr, "path", &path) <= 0 || !path) FAIL(NEW_SRV_ERR_FILE_UNSPECIFIED);
+      if (generic_read_file(&run_file, 0, &tmpsz, 0, NULL, path, NULL) < 0)
+        FAIL(NEW_SRV_ERR_FILE_UNSPECIFIED);
+      run_text = run_file;
+      run_size = tmpsz;
+      r = 1;
+    } else {
+      r = ns_cgi_param_bin(phr, "file", &run_text, &tmpsz); run_size = tmpsz;
+    }
     if (r <= 0 || !run_text || run_size <= 0) {
       FAIL(NEW_SRV_ERR_FILE_UNSPECIFIED);
     }
@@ -10262,7 +10284,17 @@ ns_submit_run(
         run_text = ""; run_size = 0;
       }
     } else {
-      r = ns_cgi_param_bin(phr, "file", &run_text, &tmpsz); run_size = tmpsz;
+      if (enable_path > 0) {
+        const unsigned char *path = NULL;
+        if (ns_cgi_param(phr, "path", &path) <= 0 || !path) FAIL(NEW_SRV_ERR_FILE_UNSPECIFIED);
+        if (generic_read_file(&run_file, 0, &tmpsz, 0, NULL, path, NULL) < 0)
+          FAIL(NEW_SRV_ERR_FILE_UNSPECIFIED);
+        run_text = run_file;
+        run_size = tmpsz;
+        r = 1;
+      } else {
+        r = ns_cgi_param_bin(phr, "file", &run_text, &tmpsz); run_size = tmpsz;
+      }
       if (r <= 0 || !run_text || run_size <= 0) {
         run_text = ""; run_size = 0;
       }
@@ -10701,6 +10733,7 @@ done:
 cleanup:
   xfree(ans_text);
   xfree(utf8_str);
+  xfree(run_file);
   return retval;
 }
 

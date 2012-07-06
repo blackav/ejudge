@@ -28,6 +28,7 @@
 #include "runlog_state.h"
 #include "rldb_plugin.h"
 #include "prepare.h"
+#include "ej_uuid.h"
 
 #include "reuse_xalloc.h"
 #include "reuse_logger.h"
@@ -49,10 +50,6 @@
 #define _(x) gettext(x)
 #else
 #define _(x) x
-#endif
-
-#if CONF_HAS_LIBUUID - 0 != 0
-#include <uuid/uuid.h>
 #endif
 
 #define ERR_R(t, args...) do { do_err_r(__FUNCTION__ , t , ##args); return -1; } while (0)
@@ -420,7 +417,7 @@ run_add_record(
 #if CONF_HAS_LIBUUID - 0 != 0
   if (!uuid) {
     ruint32_t tmp_uuid[4];
-    uuid_generate((void*) tmp_uuid);
+    ej_uuid_generate(tmp_uuid);
     memcpy(re.run_uuid, tmp_uuid, sizeof(re.run_uuid));
     flags |= RE_RUN_UUID;
   } else {

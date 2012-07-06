@@ -49,6 +49,7 @@
 #include "run_packet.h"
 #include "prepare_dflt.h"
 #include "super_run_packet.h"
+#include "ej_uuid.h"
 
 #include "reuse_xalloc.h"
 #include "reuse_logger.h"
@@ -61,10 +62,6 @@
 #include <sys/wait.h>
 #include <ctype.h>
 #include <dirent.h>
-
-#if CONF_HAS_LIBUUID - 0 != 0
-#include <uuid/uuid.h>
-#endif
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
@@ -731,17 +728,7 @@ ns_write_priv_all_runs(
                 marked_str, saved_str);
       }
       if (run_fields & (1 << RUN_VIEW_RUN_UUID)) {
-#if CONF_HAS_LIBUUID - 0 != 0
-        if (pe->run_uuid[0] || pe->run_uuid[1] || pe->run_uuid[2] || pe->run_uuid[3]) {
-          char uuid_buf[40];
-          uuid_unparse((void*) pe->run_uuid, uuid_buf);
-          fprintf(f, "<td%s>%s</td>", cl, uuid_buf);
-        } else {
-          fprintf(f, "<td%s>&nbsp;</td>", cl);
-        }
-#else
-        fprintf(f, "<td%s>&nbsp;</td>", cl);
-#endif
+        fprintf(f, "<td%s>%s</td>", cl, ej_uuid_unparse(pe->run_uuid, "&nbsp;"));
       }
       if (run_fields & (1 << RUN_VIEW_TIME)) {
         fprintf(f, "<td%s>%s</td>", cl, durstr);
@@ -1451,14 +1438,7 @@ ns_write_priv_source(const serve_state_t state,
           _("Contest time"), duration_str_2(filtbuf1, sizeof(filtbuf1), run_time - start_time, info.nsec));
 
 #if CONF_HAS_LIBUUID - 0 != 0
-  {
-    char uuid_buf[40];
-    uuid_buf[0] = 0;
-    if (info.run_uuid[0] || info.run_uuid[1] || info.run_uuid[2] || info.run_uuid[3]) {
-      uuid_unparse((void*) info.run_uuid, uuid_buf);
-    }
-    fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n", "UUID", uuid_buf);
-  }
+  fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n", "UUID", ej_uuid_unparse(info.run_uuid, ""));
 #endif
 
   // IP-address
@@ -2818,16 +2798,9 @@ ns_priv_edit_run_page(
                               "%s", unparse_sha1(info.sha1)));
 
 #if CONF_HAS_LIBUUID - 0 != 0
-  {
-    char uuid_buf[40];
-    uuid_buf[0] = 0;
-    if (info.run_uuid[0] || info.run_uuid[1] || info.run_uuid[2] || info.run_uuid[3]) {
-      uuid_unparse((void*) info.run_uuid, uuid_buf);
-    }
-    fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n", cl, "UUID",
-            cl, html_input_text(hbuf, sizeof(hbuf), "uuid", 60, info.is_readonly,
-                                "%s", uuid_buf));
-  }
+  fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n", cl, "UUID",
+          cl, html_input_text(hbuf, sizeof(hbuf), "uuid", 60, info.is_readonly,
+                              "%s", ej_uuid_unparse(info.run_uuid, "")));
 #endif
 
   if (!info.lang_id) {
@@ -3339,7 +3312,7 @@ ns_priv_edit_run_action(
   }
   if (r > 0 && s && *s) {
     ruint32_t new_uuid[4];
-    if (uuid_parse(s, (void*) new_uuid) < 0) {
+    if (ej_uuid_parse(s, new_uuid) < 0) {
       fprintf(log_f, "invalid 'uuid' field value\n");
       FAIL(NEW_SRV_ERR_INV_PARAM);    
     }

@@ -32,6 +32,7 @@
 #include "archive_paths.h"
 #include "fileutl.h"
 #include "base64.h"
+#include "ej_uuid.h"
 
 #include "reuse_xalloc.h"
 #include "reuse_logger.h"
@@ -39,10 +40,6 @@
 #include <errno.h>
 #include <ctype.h>
 #include <zlib.h>
-
-#if CONF_HAS_LIBUUID - 0 != 0
-#include <uuid/uuid.h>
-#endif
 
 #ifndef EJUDGE_CHARSET
 #define EJUDGE_CHARSET EJ_INTERNAL_CHARSET
@@ -497,7 +494,7 @@ process_run_elements(struct xml_tree *xt, struct run_xml_helpers *helper)
       case RUNLOG_A_RUN_UUID:
 #if CONF_HAS_LIBUUID - 0 != 0
         if (xa->text && xa->text[0]) {
-          uuid_parse(xa->text, (void*) xr->r.run_uuid);
+          ej_uuid_parse(xa->text, xr->r.run_uuid);
         }
 #endif
         break;
@@ -874,9 +871,7 @@ unparse_runlog_xml(
     fprintf(f, " %s=\"%ld\"", attr_map[RUNLOG_A_TIME], ts);
 #if CONF_HAS_LIBUUID - 0 != 0
     if (pp->run_uuid[0] || pp->run_uuid[1] || pp->run_uuid[2] || pp->run_uuid[3]) {
-      char uuid_buf[64];
-      uuid_unparse((void*) pp->run_uuid, uuid_buf);
-      fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_RUN_UUID], uuid_buf);
+      fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_RUN_UUID], ej_uuid_unparse(pp->run_uuid, ""));
     }
 #endif
     if (!external_mode && pp->size > 0) {
