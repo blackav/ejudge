@@ -53,6 +53,7 @@
 #include "sformat.h"
 #include "charsets.h"
 #include "compat.h"
+#include "ej_uuid.h"
 
 #include "reuse_xalloc.h"
 #include "reuse_logger.h"
@@ -7233,6 +7234,28 @@ ping_page(
   return 0;
 }
 
+static int
+priv_submit_run_batch_page(
+        FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  int retval = 0;
+  int run_id = 0;
+
+  if (opcaps_check(phr->caps, OPCAP_SUBMIT_RUN) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+  retval = ns_submit_run(log_f, phr, cnts, extra, NULL, NULL, 1, 1, 1, 1, &run_id, NULL, NULL);
+  if (retval >= 0) retval = run_id;
+
+cleanup:
+  fprintf(fout, "Content-type: text/plain\n\n%d\n", retval);
+  return 0;
+}
+
 static void
 unpriv_print_status(
         FILE *fout,
@@ -7655,6 +7678,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRIV_EDIT_CLAR_PAGE] = priv_edit_clar_page,
   [NEW_SRV_ACTION_PRIV_EDIT_RUN_PAGE] = priv_edit_run_page,
   [NEW_SRV_ACTION_PING] = ping_page,
+  [NEW_SRV_ACTION_SUBMIT_RUN_BATCH] = priv_submit_run_batch_page,
 };
 
 static void
@@ -9107,6 +9131,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRIV_EDIT_RUN_PAGE] = priv_generic_page,
   [NEW_SRV_ACTION_PRIV_EDIT_RUN_ACTION] = priv_generic_operation, ///
   [NEW_SRV_ACTION_PING] = priv_generic_page,
+  [NEW_SRV_ACTION_SUBMIT_RUN_BATCH] = priv_generic_page,
 };
 
 static unsigned char *
@@ -10131,6 +10156,7 @@ ns_submit_run(
         const unsigned char *lang_param_name,
         int enable_ans_collect,
         int enable_path,
+        int enable_uuid,
         int admin_mode,
         int *p_run_id,
         int *p_mime_type,
@@ -10151,6 +10177,8 @@ ns_submit_run(
   char *ans_text = NULL;
   int skip_mime_type_test = 0;
   char *run_file = NULL;
+  ruint32_t uuid[4] = { 0, 0, 0, 0 };
+  ruint32_t *uuid_ptr = NULL;
 
   if (!prob_param_name) prob_param_name = "prob_id";
   if (ns_cgi_param(phr, prob_param_name, &s) <= 0 || !s) {
@@ -10485,6 +10513,16 @@ ns_submit_run(
   ruint32_t shaval[5];
   sha_buffer(run_text, run_size, shaval);
 
+  if (enable_uuid) {
+    const unsigned char *uuid_str = NULL;
+    if (ns_cgi_param(phr, "uuid", &uuid_str) > 0 && uuid_str && *uuid_str) {
+      if (ej_uuid_parse(uuid_str, uuid) < 0) {
+        FAIL(NEW_SRV_ERR_INV_PARAM);
+      }
+      uuid_ptr = uuid;
+    }
+  }
+
   int run_id = 0;
   if (!admin_mode && global->ignore_duplicated_runs != 0) {
     if ((run_id = run_find_duplicate(cs->runlog_state, phr->user_id, prob_id,
@@ -10546,7 +10584,7 @@ ns_submit_run(
 
   run_id = run_add_record(cs->runlog_state, 
                           precise_time.tv_sec, precise_time.tv_usec * 1000,
-                          run_size, shaval, NULL,
+                          run_size, shaval, uuid_ptr,
                           phr->ip, phr->ssl_flag,
                           phr->locale_id, phr->user_id,
                           prob_id, lang_id, db_variant, is_hidden, mime_type);
@@ -15280,6 +15318,7 @@ static const unsigned char * const symbolic_action_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRIV_EDIT_RUN_PAGE] = "PRIV_EDIT_RUN_PAGE",
   [NEW_SRV_ACTION_PRIV_EDIT_RUN_ACTION] = "PRIV_EDIT_RUN_ACTION",
   [NEW_SRV_ACTION_PING] = "PING",
+  [NEW_SRV_ACTION_SUBMIT_RUN_BATCH] = "SUBMIT_RUN_BATCH",
 };
 
 void

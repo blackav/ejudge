@@ -393,6 +393,7 @@ enum
   NEW_SRV_ACTION_PRIV_EDIT_RUN_PAGE,
   NEW_SRV_ACTION_PRIV_EDIT_RUN_ACTION,
   NEW_SRV_ACTION_PING,
+  NEW_SRV_ACTION_SUBMIT_RUN_BATCH,
 
   NEW_SRV_ACTION_LAST,
 };
@@ -986,6 +987,7 @@ ns_submit_run(
         const unsigned char *lang_param_name,
         int enable_ans_collect,
         int enable_path,
+        int enable_uuid,
         int admin_mode,
         int *p_run_id,
         int *p_mime_type,
