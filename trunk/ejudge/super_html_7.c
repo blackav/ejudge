@@ -2894,8 +2894,8 @@ write_file(const unsigned char *path, const unsigned char *data)
   return 0;
 }
 
-static int
-set_cnts_file_perms(
+int
+super_html_set_cnts_file_perms(
         FILE *log_f,
         const unsigned char *path,
         const struct contest_desc *cnts)
@@ -4441,7 +4441,7 @@ super_serve_op_TESTS_STATEMENT_EDIT_ACTION(
 
   if (logged_rename(log_f, xml_path, xml_path_bak) < 0) FAIL(S_ERR_FS_ERROR);
   if (logged_rename(log_f, xml_path_tmp, xml_path) < 0) FAIL(S_ERR_FS_ERROR);
-  set_cnts_file_perms(log_f, xml_path, cnts);
+  super_html_set_cnts_file_perms(log_f, xml_path, cnts);
   xml_path_tmp[0] = 0;
 
 done:
@@ -4552,7 +4552,7 @@ super_serve_op_TESTS_STATEMENT_EDIT_2_ACTION(
 
   if (logged_rename(log_f, xml_path, xml_path_bak) < 0) FAIL(S_ERR_FS_ERROR);
   if (logged_rename(log_f, xml_path_tmp, xml_path) < 0) FAIL(S_ERR_FS_ERROR);
-  set_cnts_file_perms(log_f, xml_path, cnts);
+  super_html_set_cnts_file_perms(log_f, xml_path, cnts);
   xml_path_tmp[0] = 0;
 
 done:
@@ -4893,7 +4893,7 @@ super_serve_op_TESTS_SOURCE_HEADER_EDIT_ACTION(
 
   if (logged_rename(log_f, file_path, file_path_bak) < 0) FAIL(S_ERR_FS_ERROR);
   if (logged_rename(log_f, file_path_tmp, file_path) < 0) FAIL(S_ERR_FS_ERROR);
-  set_cnts_file_perms(log_f, file_path, cnts);
+  super_html_set_cnts_file_perms(log_f, file_path, cnts);
   file_path_tmp[0] = 0;
   next_action = SSERV_OP_TESTS_MAKE;
 
@@ -5299,7 +5299,7 @@ create_program(
 
   if (logged_rename(log_f, src_path, src_path_bak) < 0) FAIL(S_ERR_FS_ERROR);
   if (logged_rename(log_f, src_path_tmp, src_path) < 0) FAIL(S_ERR_FS_ERROR);
-  set_cnts_file_perms(log_f, src_path, cnts);
+  super_html_set_cnts_file_perms(log_f, src_path, cnts);
   src_path_tmp[0] = 0;
 
 cleanup:
@@ -5781,7 +5781,7 @@ super_serve_op_TESTS_CHECKER_EDIT_ACTION(
 
   if (logged_rename(log_f, file_path, file_path_bak) < 0) FAIL(S_ERR_FS_ERROR);
   if (logged_rename(log_f, file_path_tmp, file_path) < 0) FAIL(S_ERR_FS_ERROR);
-  set_cnts_file_perms(log_f, file_path, cnts);
+  super_html_set_cnts_file_perms(log_f, file_path, cnts);
   file_path_tmp[0] = 0;
   next_action = SSERV_OP_TESTS_MAKE;
 

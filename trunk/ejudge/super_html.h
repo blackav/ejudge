@@ -558,5 +558,10 @@ super_html_get_contest_header_and_footer(
         const unsigned char *path,
         unsigned char **before_start,
         unsigned char **after_end);
+int
+super_html_set_cnts_file_perms(
+        FILE *log_f,
+        const unsigned char *path,
+        const struct contest_desc *cnts);
 
 #endif /* __SUPER_HTML_H__ */

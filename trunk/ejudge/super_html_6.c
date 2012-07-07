@@ -10992,3 +10992,121 @@ super_serve_op_IMPORT_PROBLEMS_BATCH_ACTION(
 cleanup:
   return retval;
 }
+
+int
+super_serve_op_CREATE_CONTEST_BATCH_ACTION(
+        FILE *log_f,
+        FILE *out_f,
+        struct super_http_request_info *phr)
+{
+  int retval = 0;
+  opcap_t caps = 0LL;
+  int contest_id = 0;
+  char *cfg_file_text = NULL;
+  size_t cfg_file_size = 0;
+  char *out_text = NULL;
+  size_t out_size = 0;
+  FILE *out_file = NULL;
+  unsigned char errbuf[1024];
+
+  errbuf[0] = 0;
+  get_global_caps(phr, &caps);
+
+  if (opcaps_check(caps, OPCAP_EDIT_CONTEST) < 0) {
+    snprintf(errbuf, sizeof(errbuf), "permission denied");
+    FAIL(S_ERR_PERM_DENIED);
+  }
+  if (ss_cgi_param_int(phr, "contest_id", &contest_id) < 0) {
+    snprintf(errbuf, sizeof(errbuf), "contest_id is undefined");
+    FAIL(S_ERR_INV_CONTEST);
+  }
+  if (contest_id < 0) {
+    snprintf(errbuf, sizeof(errbuf), "contest_id is invalid");
+    FAIL(S_ERR_INV_CONTEST);
+  }
+  if (!contest_id) {
+    const int *contests = NULL;
+    int contest_num = contests_get_list(&contests);
+    if (!contests || contest_num <= 0) {
+      contest_id = 1;
+    } else {
+      contest_id = contests[contest_num - 1] + 1;
+    }
+  }
+  const struct contest_desc *cnts = NULL;
+  if (contests_get(contest_id, &cnts) >= 0) {
+    snprintf(errbuf, sizeof(errbuf), "contest %d already exist", contest_id);
+    FAIL(S_ERR_INV_CONTEST);
+  }
+
+  const unsigned char *xml_path = NULL;
+  if (ss_cgi_param(phr, "xml_path", &xml_path) < 0 || !xml_path) {
+    snprintf(errbuf, sizeof(errbuf), "xml_path is undefined");
+    FAIL(S_ERR_INV_OPER);
+  }
+  const unsigned char *cfg_path = NULL;
+  if (ss_cgi_param(phr, "cfg_path", &cfg_path) < 0 || !cfg_path) {
+    snprintf(errbuf, sizeof(errbuf), "cfg_path is undefined");
+    FAIL(S_ERR_INV_OPER);
+  }
+
+  struct contest_desc *rw_cnts = NULL;
+  if (contests_load_file(xml_path, &rw_cnts) < 0 || !rw_cnts) {
+    snprintf(errbuf, sizeof(errbuf), "failed to load contest.xml file '%s'", xml_path);
+    FAIL(S_ERR_INV_OPER);
+  }
+  if (generic_read_file(&cfg_file_text, 0, &cfg_file_size, 0, NULL, cfg_path, NULL) < 0) {
+    snprintf(errbuf, sizeof(errbuf), "failed to load serve.cfg file '%s'", cfg_path);
+    FAIL(S_ERR_INV_OPER);
+  }
+
+  rw_cnts->id = contest_id;
+  if (contests_unparse_and_save(rw_cnts, NULL, NULL, NULL, NULL, NULL, NULL) < 0) {
+    snprintf(errbuf, sizeof(errbuf), "failed to write contest.xml file");
+    FAIL(S_ERR_INV_OPER);
+  }
+
+  unsigned char contest_dir[PATH_MAX];
+  snprintf(contest_dir, sizeof(contest_dir), "%s/%06d", EJUDGE_CONTESTS_HOME_DIR, contest_id);
+  if (os_MakeDirPath2(contest_dir, rw_cnts->dir_mode, rw_cnts->dir_group) < 0) {
+    snprintf(errbuf, sizeof(errbuf), "failed to create '%s'", contest_dir);
+    FAIL(S_ERR_INV_OPER);
+  }
+  unsigned char conf_dir[PATH_MAX];
+  snprintf(conf_dir, sizeof(conf_dir), "%s/conf", contest_dir);
+  if (os_MakeDirPath2(contest_dir, rw_cnts->dir_mode, rw_cnts->dir_group) < 0) {
+    snprintf(errbuf, sizeof(errbuf), "failed to create '%s'", conf_dir);
+    FAIL(S_ERR_INV_OPER);
+  }
+
+  out_file = open_memstream(&out_text, &out_size);
+  fprintf(out_file,
+          "# -*- coding: utf-8 -*-\n"
+          "contest_id = %d\n\n%s\n",
+          contest_id, cfg_file_text);
+  fclose(out_file); out_file = NULL;
+
+  unsigned char serve_cfg_path[PATH_MAX];
+  snprintf(serve_cfg_path, sizeof(serve_cfg_path), "%s/serve.cfg", conf_dir);
+  if (generic_write_file(out_text, out_size, 0, NULL, serve_cfg_path, NULL) < 0) {
+    snprintf(errbuf, sizeof(errbuf), "failed to create '%s'", serve_cfg_path);
+    FAIL(S_ERR_INV_OPER);
+  }
+  if (super_html_set_cnts_file_perms(stderr, serve_cfg_path, rw_cnts) < 0) {
+    snprintf(errbuf, sizeof(errbuf), "failed to change permissions on '%s'", serve_cfg_path);
+    FAIL(S_ERR_INV_OPER);
+  }
+  retval = contest_id;
+
+cleanup:
+  fprintf(out_f, "Content-type: text/plain\n\n");
+  fprintf(out_f, "%d\n", retval);
+  if (errbuf[0]) {
+    fprintf(out_f, "%s\n", errbuf);
+  }
+
+  if (out_file) fclose(out_file);
+  xfree(out_text);
+  xfree(cfg_file_text);
+  return 0;
+}
