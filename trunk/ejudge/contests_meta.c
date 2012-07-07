@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/07/04 12:23:19
+// Generated 2012/07/07 19:37:14
 
 #include "contests_meta.h"
 #include "contests.h"

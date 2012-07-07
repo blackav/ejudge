@@ -7391,3 +7391,10 @@ runlog.c 6945 0 4785411
 runlog_xml.c 6945 0 2350926
 new-server.h 6947 0 2458676
 new_server_html.c 6947 0 42756694
+contests.h 6949 0 1251207
+contests.c 6949 0 4283282
+super_html.h 6950 0 1611307
+super_proto.h 6950 0 3175440
+super_html_6.c 6950 0 32728374
+super_html_7.c 6950 0 19064350
+super_proto.c 6950 0 5976029
