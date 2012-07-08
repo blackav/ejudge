@@ -11061,6 +11061,7 @@ super_serve_op_CREATE_CONTEST_BATCH_ACTION(
   }
 
   rw_cnts->id = contest_id;
+  xfree(rw_cnts->root_dir); rw_cnts->root_dir = NULL;
   if (contests_unparse_and_save(rw_cnts, NULL, NULL, NULL, NULL, NULL, NULL) < 0) {
     snprintf(errbuf, sizeof(errbuf), "failed to write contest.xml file");
     FAIL(S_ERR_INV_OPER);
@@ -11074,7 +11075,7 @@ super_serve_op_CREATE_CONTEST_BATCH_ACTION(
   }
   unsigned char conf_dir[PATH_MAX];
   snprintf(conf_dir, sizeof(conf_dir), "%s/conf", contest_dir);
-  if (os_MakeDirPath2(contest_dir, rw_cnts->dir_mode, rw_cnts->dir_group) < 0) {
+  if (os_MakeDirPath2(conf_dir, rw_cnts->dir_mode, rw_cnts->dir_group) < 0) {
     snprintf(errbuf, sizeof(errbuf), "failed to create '%s'", conf_dir);
     FAIL(S_ERR_INV_OPER);
   }

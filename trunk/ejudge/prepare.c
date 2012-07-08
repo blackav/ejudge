@@ -5945,7 +5945,7 @@ prepare_set_prob_value(
     break;
 
   case CNTSPROB_input_file:
-    if (!out->input_file[0] && abstr && abstr->input_file[0]) {
+    if (!out->input_file[0] && abstr && abstr->input_file[0] && abstr->input_file[0] != 1) {
       sformat_message(out->input_file, PATH_MAX, 0, abstr->input_file,
                       NULL, out, NULL, NULL, NULL, 0, 0, 0);
     }
@@ -5955,7 +5955,7 @@ prepare_set_prob_value(
     break;
 
   case CNTSPROB_output_file:
-    if (!out->output_file[0] && abstr && abstr->output_file[0]) {
+    if (!out->output_file[0] && abstr && abstr->output_file[0] && abstr->input_file[0] != 1) {
       sformat_message(out->output_file, PATH_MAX, 0, abstr->output_file,
                       NULL, out, NULL, NULL, NULL, 0, 0, 0);
     }
@@ -5981,7 +5981,7 @@ prepare_set_prob_value(
     break;
 
   case CNTSPROB_test_dir:
-    if (!out->test_dir[0] && abstr && abstr->test_dir[0]) {
+    if (!out->test_dir[0] && abstr && abstr->test_dir[0] && abstr->test_dir[0] != 1) {
       sformat_message(out->test_dir, PATH_MAX, 0, abstr->test_dir,
                       NULL, out, NULL, NULL, NULL, 0, 0, 0);
     }
@@ -5994,7 +5994,7 @@ prepare_set_prob_value(
     break;
 
   case CNTSPROB_corr_dir:
-    if (!out->corr_dir[0] && abstr && abstr->corr_dir[0]) {
+    if (!out->corr_dir[0] && abstr && abstr->corr_dir[0] && abstr->corr_dir[0] != 1) {
       sformat_message(out->corr_dir, PATH_MAX, 0, abstr->corr_dir,
                       NULL, out, NULL, NULL, NULL, 0, 0, 0);
     }
@@ -6004,7 +6004,7 @@ prepare_set_prob_value(
     break;
 
   case CNTSPROB_info_dir:
-    if (!out->info_dir[0] && abstr && abstr->info_dir[0]) {
+    if (!out->info_dir[0] && abstr && abstr->info_dir[0] && abstr->info_dir[0] != 1) {
       sformat_message(out->info_dir, PATH_MAX, 0, abstr->info_dir,
                       NULL, out, NULL, NULL, NULL, 0, 0, 0);
     }
@@ -6017,7 +6017,7 @@ prepare_set_prob_value(
     break;
 
   case CNTSPROB_tgz_dir:
-    if (!out->tgz_dir[0] && abstr && abstr->tgz_dir[0]) {
+    if (!out->tgz_dir[0] && abstr && abstr->tgz_dir[0] && abstr->tgz_dir[0] != 1) {
       sformat_message(out->tgz_dir, PATH_MAX, 0, abstr->tgz_dir,
                       NULL, out, NULL, NULL, NULL, 0, 0, 0);
     }
@@ -6159,7 +6159,7 @@ prepare_set_prob_value(
     break;
 
   case CNTSPROB_score_bonus:
-    if (!out->score_bonus[0] && abstr && abstr->score_bonus[0]) {
+    if (!out->score_bonus[0] && abstr && abstr->score_bonus[0] && abstr->score_bonus[0] != 1) {
       strcpy(out->score_bonus, abstr->score_bonus);
     }
     /*
@@ -6171,7 +6171,7 @@ prepare_set_prob_value(
     break;
 
   case CNTSPROB_check_cmd:
-    if (!out->check_cmd[0] && abstr && abstr->check_cmd[0]) {
+    if (!out->check_cmd[0] && abstr && abstr->check_cmd[0] && abstr->check_cmd[0] != 1) {
       sformat_message(out->check_cmd, PATH_MAX, 0, abstr->check_cmd,
                       NULL, out, NULL, NULL, NULL, 0, 0, 0);
     }
@@ -6183,7 +6183,7 @@ prepare_set_prob_value(
     break;
 
   case CNTSPROB_valuer_cmd:
-    if (!out->valuer_cmd[0] && abstr && abstr->valuer_cmd[0]) {
+    if (!out->valuer_cmd[0] && abstr && abstr->valuer_cmd[0] && abstr->valuer_cmd[0] != 1) {
       sformat_message(out->valuer_cmd, PATH_MAX, 0, abstr->valuer_cmd,
                       NULL, out, NULL, NULL, NULL, 0, 0, 0);
     }
@@ -6193,7 +6193,7 @@ prepare_set_prob_value(
     break;
 
   case CNTSPROB_interactor_cmd:
-    if (!out->interactor_cmd[0] && abstr && abstr->interactor_cmd[0]) {
+    if (!out->interactor_cmd[0] && abstr && abstr->interactor_cmd[0] && abstr->interactor_cmd[0] != 1) {
       sformat_message(out->interactor_cmd, PATH_MAX, 0, abstr->interactor_cmd,
                       NULL, out, NULL, NULL, NULL, 0, 0, 0);
     }
@@ -6204,7 +6204,7 @@ prepare_set_prob_value(
     break;
 
   case CNTSPROB_style_checker_cmd:
-    if (!out->style_checker_cmd[0] && abstr && abstr->style_checker_cmd[0]) {
+    if (!out->style_checker_cmd[0] && abstr && abstr->style_checker_cmd[0] && abstr->style_checker_cmd[0] != 1) {
       sformat_message(out->style_checker_cmd, PATH_MAX, 0,
                       abstr->style_checker_cmd,
                       NULL, out, NULL, NULL, NULL, 0, 0, 0);
@@ -6280,7 +6280,7 @@ prepare_set_prob_value(
     break;
 
   case CNTSPROB_statement_file:
-    if (!out->statement_file[0] && abstr && abstr->statement_file[0]) {
+    if (!out->statement_file[0] && abstr && abstr->statement_file[0] && abstr->statement_file[0] != 1) {
       sformat_message(out->statement_file, PATH_MAX, 0, abstr->statement_file,
                       NULL, out, NULL, NULL, NULL, 0, 0, 0);
     }
@@ -6290,7 +6290,7 @@ prepare_set_prob_value(
     break;
 
   case CNTSPROB_alternatives_file:
-    if (!out->alternatives_file[0] && abstr && abstr->alternatives_file[0]) {
+    if (!out->alternatives_file[0] && abstr && abstr->alternatives_file[0] && abstr->alternatives_file[0] != 1) {
       sformat_message(out->alternatives_file, PATH_MAX, 0,
                       abstr->alternatives_file,
                       NULL, out, NULL, NULL, NULL, 0, 0, 0);
@@ -6301,7 +6301,7 @@ prepare_set_prob_value(
     break;
 
   case CNTSPROB_plugin_file:
-    if (!out->plugin_file[0] && abstr && abstr->plugin_file[0]) {
+    if (!out->plugin_file[0] && abstr && abstr->plugin_file[0] && abstr->plugin_file[0] != 1) {
       sformat_message(out->plugin_file, PATH_MAX, 0, abstr->plugin_file,
                       NULL, out, NULL, NULL, NULL, 0, 0, 0);
     }
@@ -6311,32 +6311,32 @@ prepare_set_prob_value(
     break;
 
   case CNTSPROB_stand_attr:
-    if (!out->stand_attr[0] && abstr && abstr->stand_attr[0]) {
+    if (!out->stand_attr[0] && abstr && abstr->stand_attr[0] && abstr->stand_attr[0] != 1) {
       snprintf(out->stand_attr, sizeof(out->stand_attr), "%s",
                abstr->stand_attr);
     }
     break;
 
   case CNTSPROB_source_header:
-    if (!out->source_header[0] && abstr && abstr->source_header[0]) {
+    if (!out->source_header[0] && abstr && abstr->source_header[0] && abstr->source_header[0] != 1) {
       strcpy(out->source_header, abstr->source_header);
     }
     break;
 
   case CNTSPROB_source_footer:
-    if (!out->source_footer[0] && abstr && abstr->source_footer[0]) {
+    if (!out->source_footer[0] && abstr && abstr->source_footer[0] && abstr->source_footer[0] != 1) {
       strcpy(out->source_footer, abstr->source_footer);
     }
     break;
 
   case CNTSPROB_normalization:
-    if (!out->normalization[0] && abstr && abstr->normalization[0]) {
+    if (!out->normalization[0] && abstr && abstr->normalization[0] && abstr->normalization[0] != 1) {
       strcpy(out->normalization, abstr->normalization);
     }
     break;
 
   case CNTSPROB_xml_file:
-    if (!out->xml_file[0] && abstr && abstr->xml_file[0]) {
+    if (!out->xml_file[0] && abstr && abstr->xml_file[0] && abstr->xml_file[0] != 1) {
       sformat_message(out->xml_file, sizeof(out->xml_file), 0,
                       abstr->xml_file, 0, out, 0, 0, 0, 0, 0, 0);
     }
