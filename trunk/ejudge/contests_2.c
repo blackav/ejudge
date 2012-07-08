@@ -455,9 +455,9 @@ contests_unparse_and_save(
 
   f = open_memstream(&new_text, &new_size);
   fprintf(f, "<?xml version=\"1.0\" encoding=\"%s\" ?>\n", charset);
-  fputs(header, f);
+  if (header) fputs(header, f);
   contests_unparse(f, cnts);
-  fputs(footer, f);
+  if (footer) fputs(footer, f);
   close_memstream(f); f = 0;
 
   contests_make_path(xml_path, sizeof(xml_path), cnts->id);
@@ -493,7 +493,7 @@ contests_unparse_and_save(
   fwrite(new_text, 1, new_size, f);
   xfree(new_text); new_text = 0;
   new_size = 0;
-  fputs(add_footer, f);
+  if (add_footer) fputs(add_footer, f);
   if (ferror(f)) {
     fclose(f);
     unlink(tmp_path);
