@@ -988,7 +988,10 @@ ns_submit_run(
         int enable_ans_collect,
         int enable_path,
         int enable_uuid,
+        int enable_user_id,
+        int enable_status,
         int admin_mode,
+        int is_hidden,
         int *p_run_id,
         int *p_mime_type,
         int *p_next_prob_id);
