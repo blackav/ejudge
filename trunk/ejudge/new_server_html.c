@@ -7248,7 +7248,7 @@ priv_submit_run_batch_page(
   if (opcaps_check(phr->caps, OPCAP_SUBMIT_RUN) < 0)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
-  retval = ns_submit_run(log_f, phr, cnts, extra, NULL, NULL, 1, 1, 1, 1, &run_id, NULL, NULL);
+  retval = ns_submit_run(log_f, phr, cnts, extra, NULL, NULL, 1, 1, 1, 1, 1, 1, 0, &run_id, NULL, NULL);
   if (retval >= 0) retval = run_id;
 
 cleanup:
@@ -10157,13 +10157,16 @@ ns_submit_run(
         int enable_ans_collect,
         int enable_path,
         int enable_uuid,
+        int enable_user_id,
+        int enable_status,
         int admin_mode,
+        int is_hidden,
         int *p_run_id,
         int *p_mime_type,
         int *p_next_prob_id)
 {
   int retval = 0, r;
-  int prob_id = 0, lang_id = 0;
+  int user_id = 0, prob_id = 0, lang_id = 0, status = -1;
   serve_state_t cs = extra->serve_state;
   const struct section_global_data *global = cs->global;
   const struct section_problem_data *prob = NULL;
@@ -10404,11 +10407,22 @@ ns_submit_run(
     }
   }
 
+  if (enable_user_id > 0) {
+    if (ns_cgi_param_int(phr, "user_id", &user_id) < 0 || user_id <= 0)
+      FAIL(NEW_SRV_ERR_INV_USER_ID);
+  } else {
+    user_id = phr->user_id;
+  }
+  if (enable_status > 0) {
+    if (ns_cgi_param_int(phr, "status", &status) < 0 || status < 0)
+      FAIL(NEW_SRV_ERR_INV_STATUS);
+  }
+
   time_t start_time = 0;
   time_t stop_time = 0;
   if (global->is_virtual > 0 && !admin_mode) {
-    start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
-    stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
+    start_time = run_get_virtual_start_time(cs->runlog_state, user_id);
+    stop_time = run_get_virtual_stop_time(cs->runlog_state, user_id, cs->current_time);
   } else {
     start_time = run_get_start_time(cs->runlog_state);
     stop_time = run_get_stop_time(cs->runlog_state);
@@ -10424,14 +10438,14 @@ ns_submit_run(
   if (!admin_mode && stop_time > 0) {
     FAIL(NEW_SRV_ERR_CONTEST_ALREADY_FINISHED);
   }
-  if (!admin_mode && serve_check_user_quota(cs, phr->user_id, run_size) < 0) {
+  if (!admin_mode && serve_check_user_quota(cs, user_id, run_size) < 0) {
     FAIL(NEW_SRV_ERR_RUN_QUOTA_EXCEEDED);
   }
-  if (!admin_mode && !serve_is_problem_started(cs, phr->user_id, prob)) {
+  if (!admin_mode && !serve_is_problem_started(cs, user_id, prob)) {
     FAIL(NEW_SRV_ERR_PROB_UNAVAILABLE);
   }
   time_t user_deadline = 0;
-  if (!admin_mode && serve_is_problem_deadlined(cs, phr->user_id, phr->login, prob, &user_deadline)) {
+  if (!admin_mode && serve_is_problem_deadlined(cs, user_id, phr->login, prob, &user_deadline)) {
     FAIL(NEW_SRV_ERR_PROB_DEADLINE_EXPIRED);
   }
 
@@ -10497,14 +10511,14 @@ ns_submit_run(
       if (ns_cgi_param_int_opt(phr, "variant", &variant, 0) < 0) {
         FAIL(NEW_SRV_ERR_INV_VARIANT);
       }
-      if (!variant && (variant = find_variant(cs, phr->user_id, prob_id, 0)) <= 0) {
+      if (!variant && (variant = find_variant(cs, user_id, prob_id, 0)) <= 0) {
         FAIL(NEW_SRV_ERR_VARIANT_UNASSIGNED);
       }
       if (variant < 0 || variant > prob->variant_num) {
         FAIL(NEW_SRV_ERR_INV_VARIANT);
       }
     } else {
-      if ((variant = find_variant(cs, phr->user_id, prob_id, 0)) <= 0) {
+      if ((variant = find_variant(cs, user_id, prob_id, 0)) <= 0) {
         FAIL(NEW_SRV_ERR_VARIANT_UNASSIGNED);
       }
     }
@@ -10525,7 +10539,7 @@ ns_submit_run(
 
   int run_id = 0;
   if (!admin_mode && global->ignore_duplicated_runs != 0) {
-    if ((run_id = run_find_duplicate(cs->runlog_state, phr->user_id, prob_id,
+    if ((run_id = run_find_duplicate(cs->runlog_state, user_id, prob_id,
                                      lang_id, variant, run_size, shaval)) >= 0) {
       if (p_run_id) *p_run_id = run_id;
       FAIL(NEW_SRV_ERR_DUPLICATE_SUBMIT);
@@ -10537,7 +10551,7 @@ ns_submit_run(
       && global->score_system != SCORE_OLYMPIAD && !cs->accepting_mode) {
     if (!acc_probs) {
       XALLOCAZ(acc_probs, cs->max_prob + 1);
-      run_get_accepted_set(cs->runlog_state, phr->user_id,
+      run_get_accepted_set(cs->runlog_state, user_id,
                            cs->accepting_mode, cs->max_prob, acc_probs);
     }
     if (acc_probs[prob_id]) {
@@ -10548,7 +10562,7 @@ ns_submit_run(
   if (!admin_mode && prob->require) {
     if (!acc_probs) {
       XALLOCAZ(acc_probs, cs->max_prob + 1);
-      run_get_accepted_set(cs->runlog_state, phr->user_id,
+      run_get_accepted_set(cs->runlog_state, user_id,
                            cs->accepting_mode, cs->max_prob, acc_probs);
     }
     int i;
@@ -10572,13 +10586,14 @@ ns_submit_run(
   }
 
   // OK, so all checks are done, now we add this submit to the database
-  int is_hidden = 0;
   int db_variant = variant;
   struct timeval precise_time;
   gettimeofday(&precise_time, 0);
   if (admin_mode) {
-    is_hidden = 1;
+    if (is_hidden < 0) is_hidden = 0;
+    if (is_hidden > 1) is_hidden = 1;
   } else {
+    is_hidden = 0;
     db_variant = 0;
   }
 
@@ -10586,7 +10601,7 @@ ns_submit_run(
                           precise_time.tv_sec, precise_time.tv_usec * 1000,
                           run_size, shaval, uuid_ptr,
                           phr->ip, phr->ssl_flag,
-                          phr->locale_id, phr->user_id,
+                          phr->locale_id, user_id,
                           prob_id, lang_id, db_variant, is_hidden, mime_type);
   if (run_id < 0) {
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
@@ -10613,16 +10628,17 @@ ns_submit_run(
   if (*p_run_id) *p_run_id = run_id;
 
   if (accept_immediately) {
-    serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+    serve_audit_log(cs, run_id, user_id, phr->ip, phr->ssl_flag,
                     "submit", "ok", RUN_ACCEPTED, NULL);
     run_change_status_4(cs->runlog_state, run_id, RUN_ACCEPTED);
     goto done;
   }
 
-  if (prob->disable_auto_testing > 0
+  if ((status >= 0 && status == RUN_PENDING)
+      || prob->disable_auto_testing > 0
       || (prob->disable_testing > 0 && prob->enable_compilation <= 0)
       || cs->testing_suspended) {
-    serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+    serve_audit_log(cs, run_id, user_id, phr->ip, phr->ssl_flag,
                     "submit", "ok", RUN_PENDING,
                     "  Testing disabled for this problem");
     run_change_status_4(cs->runlog_state, run_id, RUN_PENDING);
@@ -10631,17 +10647,17 @@ ns_submit_run(
 
   if (prob->type == PROB_TYPE_STANDARD) {
     if (lang->disable_auto_testing > 0 || lang->disable_testing > 0) {
-      serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+      serve_audit_log(cs, run_id, user_id, phr->ip, phr->ssl_flag,
                       "submit", "ok", RUN_PENDING,
                       "  Testing disabled for this language");
       run_change_status_4(cs->runlog_state, run_id, RUN_PENDING);
       goto done;
     }
 
-    serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+    serve_audit_log(cs, run_id, user_id, phr->ip, phr->ssl_flag,
                     "submit", "ok", RUN_COMPILING, NULL);
     r = serve_compile_request(cs, run_text, run_size, global->contest_id,
-                              run_id, phr->user_id,
+                              run_id, user_id,
                               lang->compile_id, phr->locale_id, 0 /* output_only */,
                               lang->src_sfx,
                               lang->compiler_env,
@@ -10660,7 +10676,7 @@ ns_submit_run(
   /* manually checked problems */
   if (prob->manual_checking > 0) {
     if (prob->check_presentation <= 0) {
-      serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+      serve_audit_log(cs, run_id, user_id, phr->ip, phr->ssl_flag,
                       "submit", "ok", RUN_ACCEPTED,
                       "  This problem is checked manually");
       run_change_status_4(cs->runlog_state, run_id, RUN_ACCEPTED);
@@ -10668,10 +10684,10 @@ ns_submit_run(
     }
 
     if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
-      serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+      serve_audit_log(cs, run_id, user_id, phr->ip, phr->ssl_flag,
                       "submit", "ok", RUN_COMPILING, NULL);
       r = serve_compile_request(cs, run_text, run_size, global->contest_id,
-                                run_id, phr->user_id, 0 /* lang_id */,
+                                run_id, user_id, 0 /* lang_id */,
                                 0 /* locale_id */, 1 /* output_only */,
                                 mime_type_get_suffix(mime_type),
                                 NULL /* compiler_env */,
@@ -10690,11 +10706,11 @@ ns_submit_run(
       goto done;
     }
 
-    serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+    serve_audit_log(cs, run_id, user_id, phr->ip, phr->ssl_flag,
                     "submit", "ok", RUN_RUNNING, NULL);
     r = serve_run_request(cs, cnts, log_f, run_text, run_size,
                           global->contest_id, run_id,
-                          phr->user_id, prob_id, 0, variant, 0, -1, -1, 1,
+                          user_id, prob_id, 0, variant, 0, -1, -1, 1,
                           mime_type, 0, 0, 0);
     if (r < 0) {
       serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
@@ -10713,18 +10729,18 @@ ns_submit_run(
   if (px && px->ans_num > 0) {
     struct run_entry re;
     run_get_entry(cs->runlog_state, run_id, &re);
-    serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+    serve_audit_log(cs, run_id, user_id, phr->ip, phr->ssl_flag,
                     "submit", "ok", RUN_RUNNING, NULL);
     serve_judge_built_in_problem(ejudge_config, cs, cnts, run_id, 1 /* judge_id */,
                                  variant, cs->accepting_mode, &re,
-                                 prob, px, phr->user_id, phr->ip,
+                                 prob, px, user_id, phr->ip,
                                  phr->ssl_flag);
     goto done;
   }
 
   if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
     r = serve_compile_request(cs, run_text, run_size, cnts->id,
-                              run_id, phr->user_id, 0 /* lang_id */,
+                              run_id, user_id, 0 /* lang_id */,
                               0 /* locale_id */, 1 /* output_only */,
                               mime_type_get_suffix(mime_type),
                               NULL /* compiler_env */,
@@ -10745,7 +10761,7 @@ ns_submit_run(
 
   r = serve_run_request(cs, cnts, log_f, run_text, run_size,
                         global->contest_id, run_id,
-                        phr->user_id, prob_id, 0, variant, 0, -1, -1, 1,
+                        user_id, prob_id, 0, variant, 0, -1, -1, 1,
                         mime_type, 0, 0, 0);
   if (r < 0) {
     serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
@@ -10759,13 +10775,13 @@ done:
       for (++i; i <= cs->max_prob; ++i) {
         const struct section_problem_data *prob2 = cs->probs[i];
         if (!prob2) continue;
-        if (!serve_is_problem_started(cs, phr->user_id, prob2)) continue;
+        if (!serve_is_problem_started(cs, user_id, prob2)) continue;
         // FIXME: standard applicability checks
         break;
       }
       if (i > cs->max_prob) i = 0;
     }
-    if (*p_next_prob_id) *p_next_prob_id = i;
+    if (p_next_prob_id) *p_next_prob_id = i;
   }
 
 cleanup:
