@@ -482,7 +482,7 @@ super_html_main_page(FILE *f,
             if (p->tag == CONTEST_RUN_MANAGED_ON)
               fprintf(f, " %s", p->text);
           fprintf(f, "</i></td>\n");
-        } else if (cnts->run_managed) {
+        } else if (cnts && cnts->run_managed) {
           fprintf(f, "<td><i>Super-run</i></td>\n");
         } else {
           fprintf(f, "<td><i>Not managed</i></td>\n");
@@ -544,7 +544,7 @@ super_html_main_page(FILE *f,
             if (p->tag == CONTEST_RUN_MANAGED_ON)
               fprintf(f, " %s", p->text);
           fprintf(f, "</i></td>\n");
-        } else if (cnts->run_managed) {
+        } else if (cnts && cnts->run_managed) {
           fprintf(f, "<td><i>Super-run</i></td>\n");
         } else {
           fprintf(f, "<td><i>Not managed</i></td>\n");
@@ -1082,7 +1082,7 @@ super_html_contest_page(FILE *f,
   fprintf(f, "</p>\n");
 
   if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0) {
-    if (!cnts->run_managed) {
+    if (cnts && !cnts->run_managed) {
       fprintf(f, "<p>");
       html_start_form(f, 1, self_url, new_hidden_vars);
       html_submit_button(f, SSERV_CMD_CONTEST_RESTART, "Restart management");
