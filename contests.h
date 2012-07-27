@@ -435,6 +435,7 @@ int contests_load_file(const unsigned char *path, struct contest_desc **p_cnts);
 struct contest_desc *contests_free(struct contest_desc *cnts);
 void contests_free_2(struct xml_tree *t);
 struct xml_tree *contests_new_node(int tag);
+void contests_clear_cache(void);
 
 const unsigned char *contests_strerror(int);
 

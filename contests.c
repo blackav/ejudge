@@ -1628,6 +1628,12 @@ contests_get_set(const unsigned char **p_map)
   return gl_state.max_num + 1;
 }
 
+void
+contests_clear_cache(void)
+{
+  gl_state.last_check_time = 0;
+}
+
 int
 contests_get(int number, const struct contest_desc **p_desc)
 {
