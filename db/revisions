@@ -7405,3 +7405,6 @@ super_html_6.c 6954 0 32732794
 new-server.h 6955 0 2464468
 new_server_html.c 6955 0 42784655
 super_html.c 6957 0 12078952
+contests.h 6959 0 1254355
+contests.c 6959 0 4289397
+super_html_6.c 6959 0 32735112
