@@ -11098,6 +11098,7 @@ super_serve_op_CREATE_CONTEST_BATCH_ACTION(
     FAIL(S_ERR_INV_OPER);
   }
   retval = contest_id;
+  contests_clear_cache();
 
 cleanup:
   fprintf(out_f, "Content-type: text/plain\n\n");
