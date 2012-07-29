@@ -579,7 +579,14 @@ function ej_change_stat(run_id, status)
     return;
   }
 
-  document.location.href = self_url + "?SID=" + SID + "&action=CHANGE_STATUS" + "&run_id=" + run_id + "&status=" + status;
+  var form = document.forms["ChangeStatusForm"];
+  if (form !== undefined && form != null) {
+    form.run_id.value = run_id;
+    form.status.value = status;
+    form.submit();
+  }
+
+  //  document.location.href = self_url + "?SID=" + SID + "&action=CHANGE_STATUS" + "&run_id=" + run_id + "&status=" + status;
 }
 
 var ej_valid_statuses =
