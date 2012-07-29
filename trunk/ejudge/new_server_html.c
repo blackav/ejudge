@@ -10625,7 +10625,7 @@ ns_submit_run(
     run_undo_add_record(cs->runlog_state, run_id);
     FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
   }
-  if (*p_run_id) *p_run_id = run_id;
+  if (p_run_id) *p_run_id = run_id;
 
   if (accept_immediately) {
     serve_audit_log(cs, run_id, user_id, phr->ip, phr->ssl_flag,

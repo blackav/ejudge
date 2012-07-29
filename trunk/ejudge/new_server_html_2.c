@@ -353,6 +353,14 @@ ns_write_priv_all_runs(
       abort();
     }
 
+    // this is a hidden form to change status
+    fprintf(f, "<form id=\"ChangeStatusForm\" method=\"POST\" action=\"%s\">\n"
+            "<input type=\"hidden\" name=\"SID\" value=\"%016llx\" />\n"
+            "<input type=\"hidden\" name=\"action\" value=\"%d\" />\n"
+            "<input type=\"hidden\" name=\"run_id\" value=\"\" />\n"
+            "<input type=\"hidden\" name=\"status\" value=\"\" />\n"
+            "</form>\n", phr->self_url, phr->session_id, NEW_SRV_ACTION_CHANGE_STATUS);
+
     // FIXME: class should be a parameter
     snprintf(cl, sizeof(cl), " class=\"b1\"");
 

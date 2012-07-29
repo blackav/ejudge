@@ -1632,6 +1632,7 @@ void
 contests_clear_cache(void)
 {
   gl_state.last_check_time = 0;
+  gl_state.last_update_time = 0;
 }
 
 int
