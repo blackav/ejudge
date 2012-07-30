@@ -1109,6 +1109,9 @@ struct section_language_data
   /** environment to pass to the style checker */
   ejenvlist_t style_checker_env;
 
+  /** external id (for external application binding) */
+  unsigned char *extid;
+
   /** do not test this language automatically */
   ejintbool_t disable_auto_testing;
   /** do not test this language at all */

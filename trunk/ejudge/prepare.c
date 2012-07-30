@@ -520,6 +520,7 @@ static const struct config_parse_info section_language_params[] =
   LANGUAGE_PARAM(compile_dir_index, "d"),
   LANGUAGE_PARAM(compile_real_time_limit, "d"),
   LANGUAGE_PARAM(compiler_env, "x"),
+  LANGUAGE_PARAM(extid, "S"),
 
   { 0, 0, 0, 0 }
 };

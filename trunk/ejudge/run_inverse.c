@@ -483,6 +483,7 @@ invoke_test_program(
         const unsigned char *check_dir,
         const unsigned char *exe_path,
         const unsigned char *exe_name,
+        const unsigned char *extra_suffix, // if some extra file to be copied, like .jar file
         const unsigned char *input_file,
         struct testing_report_cell *tt_cell)
 {
@@ -507,6 +508,12 @@ invoke_test_program(
   if (generic_copy_file(0, 0, exe_path, 0, 0, check_dir, exe_name, 0) < 0) {
     perr(log_f, "failed to copy %s to %s", exe_path, check_exe);
     goto cleanup;
+  }
+  if (extra_suffix) {
+    if (generic_copy_file(0, 0, exe_path, extra_suffix, 0, check_dir, exe_name, extra_suffix) < 0) {
+      perr(log_f, "failed to copy %s%s to %s", exe_path, extra_suffix, check_exe);
+      goto cleanup;
+    }
   }
   if (make_executable(check_exe) < 0) {
     perr(log_f, "failed to set executable bit on %s", check_exe);
@@ -689,6 +696,7 @@ invoke_sample_program(
         const unsigned char *check_dir,
         const unsigned char *exe_path,
         const unsigned char *exe_name,
+        const unsigned char *extra_suffix,
         const unsigned char *check_cmd,
         int test_count,
         const unsigned char *tests_dir,
@@ -730,7 +738,7 @@ invoke_sample_program(
     fflush(log_f);
 
     r = invoke_test_program(log_f, log_path, srp, num, check_dir,
-                            exe_path, exe_name, test_path,
+                            exe_path, exe_name, extra_suffix, test_path,
                             tt_cell_row[num - 1]);
     if (r == RUN_OK) {
       fprintf(log_f, "Starting checker %s\n", check_cmd);
@@ -1038,6 +1046,7 @@ run_inverse_testing(
   int good_count = 0, fail_count = 0;
   unsigned char **good_files = 0, **fail_files = 0;
   path_t exe_path;
+  path_t extra_path;
   path_t log_path;
   FILE *log_f = 0, *rep_f = 0;
   unsigned char *log_text = 0;
@@ -1056,6 +1065,7 @@ run_inverse_testing(
         const unsigned char *work_dir) = 0;
   ssize_t ssize;
   const unsigned char *arch_sfx = NULL;
+  const unsigned char *extra_suffix = NULL;
 
   const struct super_run_in_global_packet *srgp = srp->global;
   const struct super_run_in_problem_packet *srpp = srp->problem;
@@ -1307,16 +1317,28 @@ run_inverse_testing(
   report_xml->tt_cells = tt_cells; tt_cells = 0;
 
   for (i = 0; i < good_count; ++i) {
+    extra_suffix = NULL;
     snprintf(exe_path, sizeof(exe_path), "%s/%s", good_dir, good_files[i]);
+    // check for .jar addition
+    snprintf(extra_path, sizeof(extra_path), "%s.jar", exe_path);
+    if (os_CheckAccess(extra_path, REUSE_R_OK) >= 0) {
+      extra_suffix = ".jar";
+    }
     r = invoke_sample_program(log_f, log_path, srp, check_dir,
-                              exe_path, good_files[i], check_cmd, test_count,
+                              exe_path, good_files[i], extra_suffix, check_cmd, test_count,
                               tests_dir, srpp->test_pat, srpp->corr_pat,
                               report_xml->tt_rows[i], report_xml->tt_cells[i]);
   }
   for (i = 0; i < fail_count; ++i) {
+    extra_suffix = NULL;
     snprintf(exe_path, sizeof(exe_path), "%s/%s", fail_dir, fail_files[i]);
+    // check for .jar addition
+    snprintf(extra_path, sizeof(extra_path), "%s.jar", exe_path);
+    if (os_CheckAccess(extra_path, REUSE_R_OK) >= 0) {
+      extra_suffix = ".jar";
+    }
     r = invoke_sample_program(log_f, log_path, srp, check_dir,
-                              exe_path, fail_files[i], check_cmd, test_count,
+                              exe_path, fail_files[i], extra_suffix, check_cmd, test_count,
                               tests_dir, srpp->test_pat, srpp->corr_pat,
                               report_xml->tt_rows[i + good_count],
                               report_xml->tt_cells[i + good_count]);
