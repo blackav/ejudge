@@ -28,6 +28,7 @@
 #include "fileutl.h"
 #include "ej_process.h"
 #include "super_proto.h"
+#include "misctext.h"
 
 #include "reuse_xalloc.h"
 #include "reuse_osdeps.h"
@@ -869,7 +870,7 @@ super_load_cs_languages(
         int r = ejudge_invoke_process(args, NULL, NULL, "/dev/null", NULL, 0, &stdout_text, &stderr_text);
         if (!r) {
           if (!stdout_text) stdout_text = xstrdup("");
-          sstate->cs_lang_names[cur_lang] = stdout_text;
+          sstate->cs_lang_names[cur_lang] = chop2(stdout_text);
           stdout_text = NULL;
         } else {
           sstate->cs_lang_names[cur_lang] = xstrdup("");

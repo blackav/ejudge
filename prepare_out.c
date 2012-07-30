@@ -834,6 +834,9 @@ prepare_unparse_lang(
     fprintf(f, "long_name = \"%s\"\n", CARMOR(long_name));
   else if (lang->long_name[0])
     fprintf(f, "long_name = \"%s\"\n", CARMOR(lang->long_name));
+  if (lang->extid && lang->extid[0]) {
+    fprintf(f, "extid = \"%s\"\n", CARMOR(lang->extid));
+  }
   if (lang->arch[0])
     fprintf(f, "arch = \"%s\"\n", CARMOR(lang->arch));
   fprintf(f, "src_sfx = \"%s\"\n", CARMOR(lang->src_sfx));

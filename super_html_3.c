@@ -422,6 +422,7 @@ static const unsigned char * const action_to_help_url_map[SSERV_CMD_LAST] =
   [SSERV_CMD_LANG_CHANGE_DISABLED] = "Serve.cfg:language:disabled",
   [SSERV_CMD_LANG_CHANGE_INSECURE] = "Serve.cfg:language:insecure",
   [SSERV_CMD_LANG_CHANGE_LONG_NAME] = "Serve.cfg:language:long_name",
+  [SSERV_CMD_LANG_CHANGE_EXTID] = "Serve.cfg:language:extid",
   [SSERV_CMD_LANG_CHANGE_DISABLE_SECURITY] = "Serve.cfg:language:disable_security",
   [SSERV_CMD_LANG_CHANGE_DISABLE_AUTO_TESTING] = "Serve.cfg:language:disable_auto_testing",
   [SSERV_CMD_LANG_CHANGE_DISABLE_TESTING] = "Serve.cfg:language:disable_testing",
@@ -3999,6 +4000,15 @@ super_html_edit_languages(
                              form_row_attrs[row ^= 1],
                              self_url, extra_args, lang_hidden_vars);
 
+    //LANGUAGE_PARAM(extid, "S"),
+    print_string_editing_row(f, "Language external name:", lang->extid,
+                             SSERV_CMD_LANG_CHANGE_EXTID,
+                             SSERV_CMD_LANG_CLEAR_EXTID,
+                             0,
+                             session_id, 
+                             form_row_attrs[row ^= 1],
+                             self_url, extra_args, lang_hidden_vars);
+
     //LANGUAGE_PARAM(disabled, "d"),
     print_boolean_select_row(f, "Disable this language for participants",
                              lang->disabled,
@@ -4396,6 +4406,14 @@ super_html_lang_cmd(struct sid_state *sstate, int cmd,
     snprintf(pl_new->long_name, sizeof(pl_new->long_name), "%s", param2);
     break;
 
+  case SSERV_CMD_LANG_CHANGE_EXTID:
+    if (!pl_new) return 0;
+    xfree(pl_new->extid); pl_new->extid = NULL;
+    if (param2 && param2[0]) {
+      pl_new->extid = xstrdup(param2);
+    }
+    break;
+
   case SSERV_CMD_LANG_CHANGE_CONTENT_TYPE:
     if (!pl_new) return 0;
     snprintf(pl_new->content_type, sizeof(pl_new->content_type), "%s", param2);
@@ -4409,6 +4427,11 @@ super_html_lang_cmd(struct sid_state *sstate, int cmd,
   case SSERV_CMD_LANG_CLEAR_LONG_NAME:
     if (!pl_new) return 0;
     pl_new->long_name[0] = 0;
+    break;
+
+  case SSERV_CMD_LANG_CLEAR_EXTID:
+    if (!pl_new) return 0;
+    xfree(pl_new->extid); pl_new->extid = NULL;
     break;
 
   case SSERV_CMD_LANG_CLEAR_CONTENT_TYPE:
