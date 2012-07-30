@@ -1147,6 +1147,64 @@ process_problems_page(
     }
 }
 
+static time_t
+parse_time(FILE *log_f, const unsigned char *param_name, const unsigned char *buf)
+{
+    int year, month, mday, hour, min, sec, n;
+
+    year = month = mday = hour = min = sec = n = -1;
+    if (sscanf(buf, "%d-%d-%d %d:%d:%d%n", &year, &month, &mday, &hour, &min, &sec, &n) == 6 && !buf[n]) {
+    } else {
+        year = month = mday = n = -1;
+        hour = min = sec = 0;
+        if (sscanf(buf, "%d-%d-%d%n", &year, &month, &mday, &n) == 3 && !buf[n]) {
+        } else {
+            fprintf(log_f, "failed to parse %s: %s\n", param_name, buf);
+            return -1;
+        }
+    }
+    if (year < 1980 || year > 2030) {
+        fprintf(log_f, "invalid year in %s: %d\n", param_name, year);
+        return -1;
+    }
+    if (month <= 0 || month > 12) {
+        fprintf(log_f, "invalid month in %s: %d\n", param_name, month);
+        return -1;
+    }
+    if (mday <= 0 || mday > 31) {
+        fprintf(log_f, "invalid day in %s: %d\n", param_name, mday);
+        return -1;
+    }
+    if (hour < 0 || hour >= 24) {
+        fprintf(log_f, "invalid hour in %s: %d\n", param_name, hour);
+        return -1;
+    }
+    if (min < 0 || min >= 60) {
+        fprintf(log_f, "invalid min in %s: %d\n", param_name, min);
+        return -1;
+    }
+    if (sec < 0 || sec > 60) {
+        fprintf(log_f, "invalid sec in %s: %d\n", param_name, sec);
+        return -1;
+    }
+
+    struct tm ltm;
+    memset(&ltm, 0, sizeof(ltm));
+    ltm.tm_isdst = -1;
+    ltm.tm_year = year - 1900;
+    ltm.tm_mon = month - 1;
+    ltm.tm_mday = mday;
+    ltm.tm_hour = hour;
+    ltm.tm_min = min;
+    ltm.tm_sec = sec;
+    time_t lt = mktime(&ltm);
+    if (lt < 0) {
+        fprintf(log_f, "invalid %s: %s\n", param_name, buf);
+        return -1;
+    }
+    return lt;
+}
+
 static int
 find_revision(FILE *log_f, const unsigned char *text, int revision, struct RevisionInfo *ri)
 {
@@ -1225,34 +1283,9 @@ find_revision(FILE *log_f, const unsigned char *text, int revision, struct Revis
             fprintf(log_f, "failed to extract the content of column 3 (creation time): %.60s...\n", s);
             goto cleanup;
         }
-        int year = -1, month = -1, mday = -1, n = -1;
-        if (sscanf(buf, "%d-%d-%d%n", &year, &month, &mday, &n) != 3 || buf[n]) {
-            fprintf(log_f, "failed to parse creation time: %s\n", buf);
-            goto cleanup;
-        }
-        if (year < 1980 || year > 2030) {
-            fprintf(log_f, "invalid year in creation time: %d\n", year);
-            goto cleanup;
-        }
-        if (month <= 0 || month > 12) {
-            fprintf(log_f, "invalid month in creation time: %d\n", month);
-            goto cleanup;
-        }
-        if (mday <= 0 || mday > 31) {
-            fprintf(log_f, "invalid day in creation time: %d\n", mday);
-            goto cleanup;
-        }
-        struct tm ltm;
-        memset(&ltm, 0, sizeof(ltm));
-        ltm.tm_isdst = -1;
-        ltm.tm_year = year - 1900;
-        ltm.tm_mon = month - 1;
-        ltm.tm_mday = mday;
-        time_t lt = mktime(&ltm);
-        if (lt == (time_t) -1) {
-            fprintf(log_f, "invalid creation time: %s\n", buf);
-            goto cleanup;
-        }
+
+        time_t lt = parse_time(log_f, "creation time", buf);
+        if (lt < 0) goto cleanup;
         ri->creation_time = lt;
 
         if (!(s = strstr(s, "<td>"))) {
