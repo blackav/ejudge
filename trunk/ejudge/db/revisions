@@ -138,13 +138,9 @@ protocol.c 2760 0 243359
 runlog.c 3138 0 4558798
 runlog_import.c 2674 0 1764627
 runlog_xml.c 3136 0 1672088
-run_packet_1.c 2775 0 434455
-run_packet_2.c 2775 0 466216
-run_packet_3.c 1937 0 104977
 run_packet_4.c 2775 0 282827
 run_packet_5.c 2775 0 291438
 run_packet_6.c 1937 0 94037
-run_packet_7.c 1940 0 106316
 send_job_packet.c 2833 0 183066
 sformat.c 3042 0 1675980
 super_html.c 3038 0 9962177
@@ -1901,8 +1897,6 @@ serve-control.c 3969 0 7958441
 super-serve.c 3969 0 11803724
 prepare.c 3969 0 13396350
 prepare_out.c 3969 0 5688588
-run_packet_1.c 3969 0 451215
-run_packet_2.c 3969 0 486581
 serve_2.c 3969 0 6505207
 super_html_3.c 3969 0 21892791
 misctext.h 3971 0 266657
@@ -1993,7 +1987,6 @@ expat_iface.c 4010 0 1762411
 misctext.c 4010 0 957811
 new_server_html.c 4011 0 28298934
 prepare.c 4011 0 13516114
-run_packet_7.c 4011 0 114392
 uldb_plugin.h 4014 0 633208
 userlist.h 4014 0 1326773
 uldb_plugin_xml.c 4014 0 5970770
@@ -2611,8 +2604,6 @@ unix/fileutl.c 4271 0 2995608
 new_server_html.c 4272 0 33118571
 prepare.c 4272 0 14054631
 prepare_out.c 4272 0 6056361
-run_packet_1.c 4272 0 455431
-run_packet_2.c 4272 0 490995
 serve_2.c 4272 0 7561515
 prepare.c 4274 0 14053986
 ejudge-setup.c 4280 0 9884633
@@ -2869,8 +2860,6 @@ serve-control.c 4487 0 8491283
 super-serve.c 4487 0 12379215
 prepare.c 4487 0 13804183
 prepare_out.c 4487 0 6341580
-run_packet_1.c 4487 0 461210
-run_packet_2.c 4487 0 496930
 super_html_3.c 4487 0 22806737
 ejudge-setup.c 4488 0 9982809
 new_server_html_2.c 4488 0 13853610
@@ -3106,8 +3095,6 @@ prepare.c 4599 0 13872386
 prepare_serve.c 4599 0 528203
 reports.c 4599 0 8879927
 runlog_xml.c 4599 0 2189551
-run_packet_1.c 4599 0 461441
-run_packet_2.c 4599 0 497161
 run_packet_4.c 4599 0 283234
 run_packet_5.c 4599 0 291845
 send_job_packet.c 4599 0 195983
@@ -3444,11 +3431,8 @@ compile_packet_1.c 4910 0 448668
 compile_packet_2.c 4910 0 366229
 compile_packet_4.c 4910 0 334322
 compile_packet_5.c 4910 0 278175
-run_packet_1.c 4910 0 467084
-run_packet_2.c 4910 0 475698
 run_packet_4.c 4910 0 271923
 run_packet_5.c 4910 0 285939
-run_packet_7.c 4910 0 116715
 testing_report_xml.c 4910 0 1379916
 new_server_html_4.c 4913 0 4657523
 ej_limits.h 4915 0 271206
@@ -4082,8 +4066,6 @@ serve_state.h 5315 0 1090821
 run.c 5315 0 7152456
 new_server_html.c 5315 0 37407875
 new_server_html_4.c 5315 0 4645324
-run_packet_1.c 5315 0 471100
-run_packet_2.c 5315 0 479838
 run_packet_4.c 5315 0 280237
 run_packet_5.c 5315 0 295072
 serve_2.c 5315 0 8034464
@@ -4856,13 +4838,9 @@ protocol.c 5675 0 243363
 random.c 5675 0 243279
 reports.c 5675 0 8865994
 runlog_xml.c 5675 0 2322227
-run_packet_1.c 5675 0 471121
-run_packet_2.c 5675 0 479859
-run_packet_3.c 5675 0 104965
 run_packet_4.c 5675 0 280258
 run_packet_5.c 5675 0 295093
 run_packet_6.c 5675 0 94025
-run_packet_7.c 5675 0 116722
 send_job_packet.c 5675 0 195982
 serve_state.c 5675 0 1528968
 sformat.c 5675 0 1811465
@@ -5190,8 +5168,6 @@ new_server_html.c 5817 0 39082314
 new_server_html_2.c 5817 0 15245744
 prepare.c 5817 0 17441398
 prepare_out.c 5817 0 6726310
-run_packet_1.c 5817 0 476221
-run_packet_2.c 5817 0 485115
 serve_2.c 5817 0 8792462
 super_html_3.c 5817 0 25312049
 run.c 5820 0 9638015
@@ -5306,8 +5282,6 @@ run_packet_priv.h 5891 0 229341
 serve_state.h 5891 0 1221166
 new_server_html.c 5891 0 39313088
 new_server_html_4.c 5891 0 4780629
-run_packet_1.c 5891 0 483344
-run_packet_2.c 5891 0 493014
 serve_2.c 5891 0 9137167
 run.h 5893 0 60567
 run_inverse.c 5893 0 60475
@@ -5559,8 +5533,6 @@ super-serve.c 6076 0 14089731
 super_html_3.c 6076 0 26756217
 run_packet.h 6077 0 343601
 run_packet_priv.h 6077 0 238776
-run_packet_1.c 6077 0 489236
-run_packet_2.c 6077 0 499062
 run_packet_4.c 6077 0 314529
 run_packet_5.c 6077 0 313007
 prepare.h 6078 0 4004825
@@ -5766,13 +5738,9 @@ run_inverse.c 6136 0 3533418
 runlog.c 6136 0 4600017
 runlog_import.c 6135 0 2221991
 runlog_xml.c 6135 0 2322218
-run_packet_1.c 6136 0 489243
-run_packet_2.c 6136 0 499069
-run_packet_3.c 6135 0 105173
 run_packet_4.c 6136 0 320095
 run_packet_5.c 6136 0 318446
 run_packet_6.c 6135 0 94233
-run_packet_7.c 6135 0 116703
 send_job_packet.c 6135 0 195964
 server_framework.c 6135 0 1622838
 serve_2.c 6137 0 9527417
@@ -5893,9 +5861,6 @@ run_inverse.c 6146 0 3533405
 runlog.c 6146 0 4600004
 runlog_import.c 6146 0 2221986
 runlog_xml.c 6146 0 2322203
-run_packet_1.c 6146 0 489231
-run_packet_2.c 6146 0 499057
-run_packet_3.c 6146 0 105168
 run_packet_4.c 6146 0 320083
 run_packet_5.c 6146 0 318434
 run_packet_6.c 6146 0 94228
@@ -6083,9 +6048,6 @@ compile_packet_3.c 6172 0 127295
 compile_packet_4.c 6172 0 337761
 compile_packet_5.c 6172 0 281878
 compile_packet_6.c 6172 0 105453
-run_packet_1.c 6172 0 489207
-run_packet_2.c 6172 0 499033
-run_packet_3.c 6172 0 105145
 run_packet_4.c 6172 0 320059
 run_packet_5.c 6172 0 318410
 run_packet_6.c 6172 0 94205
@@ -6144,7 +6106,6 @@ serve_2.c 6200 0 9560285
 serve_state.c 6200 0 2414730
 super_html_3.c 6200 0 27153453
 run.c 6202 0 10010883
-run_packet_1.c 6204 0 489227
 serve_2.c 6204 0 9567439
 reuse_exec.h 6207 0 348667
 nwrun.c 6207 0 1944640
@@ -6774,8 +6735,6 @@ super_html_3.c 6584 0 31651114
 super_html_4.c 6584 0 19238110
 run_packet.h 6585 0 351264
 run_packet_priv.h 6585 0 243758
-run_packet_1.c 6585 0 494153
-run_packet_2.c 6585 0 504115
 run.c 6586 0 10139088
 testinfo.c 6586 0 1052874
 serve_2.c 6586 0 9996449
@@ -6957,9 +6916,6 @@ ej-super-run.c 6668 0 2126646
 new_server_html.c 6668 0 40386137
 new_server_html_2.c 6668 0 16543927
 new_server_html_4.c 6668 0 5429676
-run_packet_1.c 6668 0 496440
-run_packet_2.c 6668 0 506402
-run_packet_3.c 6668 0 107449
 serve_2.c 6668 0 10931808
 run.h 6670 0 269278
 startstop.h 6670 0 102751
@@ -7045,7 +7001,6 @@ contest_tmpl.c 6725 0 1013380
 master_html.c 6725 0 3376894
 new_server_html_2.c 6725 0 16623996
 prepare.c 6725 0 19442211
-run_packet_3.c 6725 0 107441
 serve_state.c 6725 0 2572155
 super_html.c 6725 0 11995333
 super_html_3.c 6725 0 31683572
@@ -7326,9 +7281,6 @@ sformat.c 6902 0 1938971
 ej-super-run.c 6905 0 2432855
 prepare_out.c 6905 0 9004381
 run_packet.h 6911 0 166532
-run_packet_1.c 6911 0 57053
-run_packet_2.c 6911 0 57054
-run_packet_3.c 6911 0 57055
 run_packet_priv.h 6913 0 161641
 runlog.h 6916 0 983090
 filter_eval.c 6916 0 1886716
@@ -7411,3 +7363,12 @@ super_html_6.c 6959 0 32735112
 contests.c 6962 0 4292298
 new_server_html.c 6962 0 42784626
 new_server_html_2.c 6962 0 20190541
+prepare.h 6965 0 4288876
+super_proto.h 6964 0 3179796
+serve-control.c 6964 0 9733526
+super-serve.c 6964 0 13566253
+prepare.c 6964 0 19647008
+prepare_out.c 6964 0 9024576
+run_inverse.c 6964 0 3369817
+super_html_3.c 6964 0 29409825
+super_html_8.c 6964 0 2908307

@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/05/26 14:12:01
+// Generated 2012/07/30 12:57:52
 
 #include "prepare_meta.h"
 #include "prepare.h"
@@ -568,6 +568,7 @@ static struct meta_info_item meta_info_section_language_data_data[] =
   [CNTSLANG_cmd] = { CNTSLANG_cmd, 'S', XSIZE(struct section_language_data, cmd), "cmd", XOFFSET(struct section_language_data, cmd) },
   [CNTSLANG_style_checker_cmd] = { CNTSLANG_style_checker_cmd, 'S', XSIZE(struct section_language_data, style_checker_cmd), "style_checker_cmd", XOFFSET(struct section_language_data, style_checker_cmd) },
   [CNTSLANG_style_checker_env] = { CNTSLANG_style_checker_env, 'X', XSIZE(struct section_language_data, style_checker_env), "style_checker_env", XOFFSET(struct section_language_data, style_checker_env) },
+  [CNTSLANG_extid] = { CNTSLANG_extid, 's', XSIZE(struct section_language_data, extid), "extid", XOFFSET(struct section_language_data, extid) },
   [CNTSLANG_disable_auto_testing] = { CNTSLANG_disable_auto_testing, 'B', XSIZE(struct section_language_data, disable_auto_testing), "disable_auto_testing", XOFFSET(struct section_language_data, disable_auto_testing) },
   [CNTSLANG_disable_testing] = { CNTSLANG_disable_testing, 'B', XSIZE(struct section_language_data, disable_testing), "disable_testing", XOFFSET(struct section_language_data, disable_testing) },
   [CNTSLANG_max_vm_size] = { CNTSLANG_max_vm_size, 'Z', XSIZE(struct section_language_data, max_vm_size), "max_vm_size", XOFFSET(struct section_language_data, max_vm_size) },
