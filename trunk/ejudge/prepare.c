@@ -3772,7 +3772,7 @@ set_defaults(
   if (mode == PREPARE_SERVE) {
     int var_prob_num = 0;
 
-    for (i = 0; i <= state->max_prob; i++) {
+    for (i = 1; i <= state->max_prob; i++) {
       if (!(prob = state->probs[i])) continue;
       if (prob && prob->variant_num > 0) var_prob_num++;
     }
