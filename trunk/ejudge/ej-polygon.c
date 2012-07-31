@@ -903,6 +903,9 @@ extract_raw_td_content(const unsigned char *s, unsigned char *out, const unsigne
     return 1;
 }
 
+static time_t
+parse_time(FILE *log_f, const unsigned char *param_name, const unsigned char *buf);
+
 static void
 process_problem_row(
         FILE *log_f,
@@ -1029,50 +1032,10 @@ process_problem_row(
         fprintf(log_f, "failed to extract the content of column 6 (modification time): %.60s...\n", s);
         goto cleanup;
     }
-    int year = -1, month = -1, mday = -1, hour = -1, minute = -1, sec = -1;
-    if (sscanf(buf, "%d-%d-%d %d:%d:%d%n", &year, &month, &mday, &hour, &minute, &sec, &n) != 6 || buf[n]) {
-        fprintf(log_f, "failed to parse modification time: %s\n", s);
-        goto cleanup;
-    }
-    if (year < 1980 || year > 2030) {
-        fprintf(log_f, "invalid year in modification time: %d\n", year);
-        goto cleanup;
-    }
-    if (month <= 0 || month > 12) {
-        fprintf(log_f, "invalid month in modification time: %d\n", month);
-        goto cleanup;
-    }
-    if (mday <= 0 || mday > 31) {
-        fprintf(log_f, "invalid day in modification time: %d\n", mday);
-        goto cleanup;
-    }
-    if (hour < 0 || hour >= 24) {
-        fprintf(log_f, "invalid hour in modification time: %d\n", hour);
-        goto cleanup;
-    }
-    if (minute < 0 || minute >= 60) {
-        fprintf(log_f, "invalid minute in modification time: %d\n", minute);
-        goto cleanup;
-    }
-    if (sec < 0 || sec > 60) {
-        fprintf(log_f, "invalid second in modification time: %d\n", sec);
-        goto cleanup;
-    }
 
-    struct tm ltm;
-    memset(&ltm, 0, sizeof(ltm));
-    ltm.tm_isdst = -1;
-    ltm.tm_year = year - 1900;
-    ltm.tm_mon = month - 1;
-    ltm.tm_mday = mday;
-    ltm.tm_hour = hour;
-    ltm.tm_min = minute;
-    ltm.tm_sec = sec;
-    time_t lt = mktime(&ltm);
-    if (lt == (time_t) -1) {
-        fprintf(log_f, "invalid modification time: %s\n", buf);
-        goto cleanup;
-    }
+    time_t lt = parse_time(log_f, "modification time", buf);
+    if (lt < 0) goto cleanup;
+
     pi->mtime = lt;
 
     if (!(s = strstr(s, "<td>"))) {
@@ -1779,6 +1742,26 @@ process_polygon_zip(
         snprintf(path2, sizeof(path2), pi->corr_pat, num);
         snprintf(path3, sizeof(path3), "%s/%s", tests_path, path2);
         if (copy_from_zip(log_f, pkt, zif, zid, zip_path, path1, path3)) goto zip_error;
+    }
+
+    // remote the remaining files, which match the test file pattern
+    int removed_flag = 1;
+    for (int num = pi->test_count + 1; removed_flag; ++num) {
+        removed_flag = 0;
+        unsigned char path2[PATH_MAX];
+        snprintf(path2, sizeof(path2), pi->test_pat, num);
+        unsigned char path3[PATH_MAX];
+        snprintf(path3, sizeof(path3), "%s/%s", tests_path, path2);
+        if (access(path3, F_OK) >= 0) {
+            unlink(path3);
+            removed_flag = 1;
+        }
+        snprintf(path2, sizeof(path2), pi->corr_pat, num);
+        snprintf(path3, sizeof(path3), "%s/%s", tests_path, path2);
+        if (access(path3, F_OK) >= 0) {
+            unlink(path3);
+            removed_flag = 1;
+        }
     }
 
     for (struct xml_tree *t1 = tree->first_down; t1; t1 = t1->right) {
