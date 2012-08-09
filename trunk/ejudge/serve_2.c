@@ -1199,7 +1199,7 @@ serve_compile_request(
     goto failed;
   }
 
-  prio = 0;
+  prio = global->priority_adjustment;
   if (lang) prio += lang->priority_adjustment;
   if (prob) prio += prob->priority_adjustment;
   prio += find_user_priority_adjustment(state, user_id);
@@ -1472,7 +1472,7 @@ serve_run_request(
   }
 
   /* calculate a priority */
-  prio = 0;
+  prio = global->priority_adjustment;
   if (lang) prio += lang->priority_adjustment;
   prio += prob->priority_adjustment;
   prio += find_user_priority_adjustment(state, user_id);
@@ -3891,6 +3891,7 @@ testing_queue_unlock_entry(
 static struct super_run_in_packet *
 testing_queue_lock_entry(
         int contest_id,
+        const unsigned char *user_login,
         const unsigned char *run_queue_dir,
         const unsigned char *packet_name,
         unsigned char *out_name,
@@ -3946,6 +3947,16 @@ testing_queue_lock_entry(
   pkt_size = 0;
 
   if (!srp->global || srp->global->contest_id != contest_id) {
+    // do allow locking if the user has CONTROL_CONTEST capability on that contest
+    const struct contest_desc *cnts = NULL;
+    opcap_t caps = 0;
+    if (srp->global && user_login
+        && contests_get(srp->global->contest_id, &cnts) >= 0
+        && cnts
+        && opcaps_find(&cnts->capabilities, user_login, &caps) >= 0
+        && opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0) {
+      return srp;
+    }
     srp = super_run_in_packet_free(srp);
     testing_queue_unlock_entry(run_queue_dir, out_path, packet_name);
     return NULL;
@@ -3998,7 +4009,8 @@ int
 serve_testing_queue_delete(
         const struct contest_desc *cnts,
         const serve_state_t state,
-        const unsigned char *packet_name)
+        const unsigned char *packet_name,
+        const unsigned char *user_login)
 {
   const struct section_global_data *global = state->global;
   path_t out_path;
@@ -4023,7 +4035,7 @@ serve_testing_queue_delete(
     snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/queue", global->run_dir);
   }
 
-  if (!(srp = testing_queue_lock_entry(cnts->id, run_queue_dir, packet_name,
+  if (!(srp = testing_queue_lock_entry(cnts->id, user_login, run_queue_dir, packet_name,
                                        out_name, sizeof(out_name),
                                        out_path, sizeof(out_path))))
     return -1;
@@ -4055,7 +4067,8 @@ serve_testing_queue_change_priority(
         const struct contest_desc *cnts,
         const serve_state_t state,
         const unsigned char *packet_name,
-        int adjustment)
+        int adjustment,
+        const unsigned char *user_login)
 {
   const struct section_global_data *global = state->global;
   path_t out_path;
@@ -4081,7 +4094,7 @@ serve_testing_queue_change_priority(
     snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/queue", global->run_dir);
   }
 
-  if (!(srp = testing_queue_lock_entry(cnts->id, run_queue_dir, packet_name,
+  if (!(srp = testing_queue_lock_entry(cnts->id, user_login, run_queue_dir, packet_name,
                                        out_name, sizeof(out_name),
                                        out_path, sizeof(out_path)))) {
     goto fail;
@@ -4094,7 +4107,10 @@ serve_testing_queue_change_priority(
   snprintf(new_packet_name, sizeof(new_packet_name), "%s", packet_name);
   new_packet_name[0] = get_priority_code(get_priority_value(new_packet_name[0]) + adjustment);
   if (!strcmp(packet_name, new_packet_name)) {
-    goto fail;
+    // already hit min or max priority
+    testing_queue_unlock_entry(run_queue_dir, out_path, packet_name);
+    srp = super_run_in_packet_free(srp);
+    return 0;
   }
 
   snprintf(exe_path, sizeof(exe_path), "%s/%s%s", run_exe_dir, packet_name, exe_sfx);
@@ -4151,14 +4167,15 @@ collect_run_packets(const struct contest_desc *cnts, const serve_state_t state, 
 int
 serve_testing_queue_delete_all(
         const struct contest_desc *cnts,
-        const serve_state_t state)
+        const serve_state_t state,
+        const unsigned char *user_login)
 {
   strarray_t vec;
   int i;
 
   collect_run_packets(cnts, state, &vec);
   for (i = 0; i < vec.u; ++i) {
-    serve_testing_queue_delete(cnts, state, vec.v[i]);
+    serve_testing_queue_delete(cnts, state, vec.v[i], user_login);
   }
 
   xstrarrayfree(&vec);
@@ -4169,14 +4186,15 @@ int
 serve_testing_queue_change_priority_all(
         const struct contest_desc *cnts,
         const serve_state_t state,
-        int adjustment)
+        int adjustment,
+        const unsigned char *user_login)
 {
   strarray_t vec;
   int i;
 
   collect_run_packets(cnts, state, &vec);
   for (i = 0; i < vec.u; ++i) {
-    serve_testing_queue_change_priority(cnts, state, vec.v[i], adjustment);
+    serve_testing_queue_change_priority(cnts, state, vec.v[i], adjustment, user_login);
   }
 
   xstrarrayfree(&vec);
