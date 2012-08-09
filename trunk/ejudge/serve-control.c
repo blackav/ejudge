@@ -588,7 +588,7 @@ parse_action(void)
     return;
   }
   for (int i = 1; i < SSERV_CMD_LAST; ++i) {
-    if (!strcasecmp(super_proto_cmd_names[i], s)) {
+    if (super_proto_cmd_names[i] && !strcasecmp(super_proto_cmd_names[i], s)) {
       client_action = i;
       return;
     }
