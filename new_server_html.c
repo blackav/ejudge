@@ -6831,13 +6831,13 @@ priv_testing_queue_operation(
 
   switch (phr->action) {
   case NEW_SRV_ACTION_TESTING_DELETE:
-    serve_testing_queue_delete(cnts, cs, packet_name);
+    serve_testing_queue_delete(cnts, cs, packet_name, phr->login);
     break;
   case NEW_SRV_ACTION_TESTING_UP:
-    serve_testing_queue_change_priority(cnts, cs, packet_name, -1);
+    serve_testing_queue_change_priority(cnts, cs, packet_name, -1, phr->login);
     break;
   case NEW_SRV_ACTION_TESTING_DOWN:
-    serve_testing_queue_change_priority(cnts, cs, packet_name, 1);
+    serve_testing_queue_change_priority(cnts, cs, packet_name, 1, phr->login);
     break;
   default:
     FAIL(NEW_SRV_ERR_INV_PARAM);
@@ -6863,13 +6863,13 @@ priv_whole_testing_queue_operation(
 
   switch (phr->action) {
   case NEW_SRV_ACTION_TESTING_DELETE_ALL:
-    serve_testing_queue_delete_all(cnts, cs);
+    serve_testing_queue_delete_all(cnts, cs, phr->login);
     break;
   case NEW_SRV_ACTION_TESTING_UP_ALL:
-    serve_testing_queue_change_priority_all(cnts, cs, -1);
+    serve_testing_queue_change_priority_all(cnts, cs, -1, phr->login);
     break;
   case NEW_SRV_ACTION_TESTING_DOWN_ALL:
-    serve_testing_queue_change_priority_all(cnts, cs, 1);
+    serve_testing_queue_change_priority_all(cnts, cs, 1, phr->login);
     break;
   default:
     FAIL(NEW_SRV_ERR_INV_PARAM);
