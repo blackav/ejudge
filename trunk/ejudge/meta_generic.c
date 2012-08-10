@@ -246,10 +246,16 @@ meta_unparse_cfg(FILE *out_f, const struct meta_methods *mth, const void *ptr, c
       }
       break;
     case 'z':                   /* ejintsize_t */
-    case 'i':                   /* int type */
       ASSERT(fz == sizeof(int));
       if (!dfp || *(const int *) dfp != *(const int*) fp) {
         num_to_size_str(buf, sizeof(buf), *(const int*) fp);
+        fprintf(out_f, "%s = %s\n", fn, buf);
+      }
+      break;
+    case 'i':                   /* int type */
+      ASSERT(fz == sizeof(int));
+      if (!dfp || *(const int *) dfp != *(const int*) fp) {
+        snprintf(buf, sizeof(buf), "%d", *(const int*) fp);
         fprintf(out_f, "%s = %s\n", fn, buf);
       }
       break;
