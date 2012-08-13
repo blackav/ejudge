@@ -86,8 +86,8 @@ SCRIPTS_IN = \
  kumir-version.in\
  mzscheme.in\
  mzscheme-version.in\
- nasm.in\
- nasm-version.in\
+ nasm-x86.in\
+ nasm-x86-version.in\
  qb.in\
  qb-version.in\
  perl.in\

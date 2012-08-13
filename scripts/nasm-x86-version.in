@@ -1,0 +1,137 @@
+#!/bin/sh
+# $Id$
+# Copyright (c) 2012 Alexander Chernov <cher@ejudge.ru>
+
+# compiler script interface is as follows
+# <comp>-version [OPTION]
+# OPTION is:
+#  -r P fully check the availability of the compiler (like configure
+#       script does). P is a proposed path to the compiler (like in
+#       --with-<comp> configure option).
+#       returns failure (exit code 1), if the compiler is not available
+#       or is not functional.
+#       in case of success exit code is 0, and the necessary configuration
+#       variables are written to stdout.
+#  -v   verbose operation (configure mode)
+#  -l   output the compiler name to the stdout (list mode)
+#  -p   write to the stdout the command line of the compiler
+#  -f   write the compiler full name and the compiler version
+
+LANG_CONFIG_DIR="@lang_config_dir@"
+
+common_config() {
+  echo 'long_name="NASM"'
+  echo 'src_sfx=".asm"'
+  echo 'arch="linux-shared-32"'
+}
+
+failure() {
+  rm -f conftest*
+  echo 'version='
+  echo 'arg="'"${arg}"'"'
+  common_config
+  echo 'NASMRUN=false'
+  echo 'NASMDIR='
+  echo 'GCCRUN=false'
+  echo 'GCCDIR='
+  [ "${verbose}" = 1 ] && echo "no" >&2
+  exit 1
+}
+
+unset LANG
+unset LC_ALL
+unset LC_MESSAGES
+unset LANGUAGE
+
+if [ x"$1" = x-v ]
+then
+  verbose=1
+  shift
+fi
+
+# recheck the language
+if [ x"$1" = x-r ]
+then
+  arg="$2"
+  [ x"$2" != x ] && NASMRUN="$2"
+  [ "${NASMRUN}" = "" ] && NASMRUN="nasm"
+  [ "${GCCRUN}" = "" ] && GCCRUN="gcc"
+
+  [ "${verbose}" = 1 ] && echo -n "checking whether NASM is available... " >&2
+  "${NASMRUN}" -v >/dev/null 2>&1 || failure
+  version=`"${NASMRUN}" -v 2>&1 | grep "NASM version" | gawk '{ print $3; }'`|| failure
+  cat > conftest.asm <<EOF
+SECTION .text
+
+GLOBAL main
+main:
+    XOR EAX, EAX
+    RET
+EOF
+  "${NASMRUN}" -f elf conftest.asm -o conftest.o >/dev/null 2>&1 || failure
+  [ -f conftest.o ] || failure
+  "${GCCRUN}" -m32 -o conftest conftest.o >/dev/null 2>&1 || failure
+  [ -x conftest ] || failure
+  ./conftest >/dev/null 2>&1 || failure
+
+  rm -f ./conftest*
+  NASMDIR=`dirname "${NASMRUN}"`
+  GCCDIR=`dirname "${GCCRUN}"`
+  [ "${NASMDIR}" = . ] && NASMDIR=""
+  [ "${GCCDIR}" = . ] && GCCDIR=""
+  echo 'version="'"${version}"'"'
+  echo 'arg="'"${arg}"'"'
+  common_config
+  echo 'NASMRUN="'"${NASMRUN}"'"'
+  echo 'NASMDIR="'"${NASMDIR}"'"'
+  echo 'GCCRUN="'"${GCCRUN}"'"'
+  echo 'GCCDIR="'"${GCCDIR}"'"'
+  [ "${verbose}" = 1 ] && echo "yes, ${NASMRUN} and ${GCCRUN}, ${version}" >&2
+  exit 0
+fi
+
+if [ x"$1" = x-l ]
+then
+  echo "NASM [http://nasm.us]"
+  exit 0
+fi
+
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/nasm-x86.cfg"
+
+if [ -f "${EJUDGE_LANG_CONFIG}" ]
+then
+  . "${EJUDGE_LANG_CONFIG}"
+else
+  NASMRUN="nasm"
+  NASMDIR=
+  GCCRUN="gcc"
+  GCCDIR=
+fi
+
+if [ x"${NASMRUN}" = x -o x"${NASMRUN}" = xfalse -o x"${GCCRUN}" = x -o x"${GCCRUN}" = xfalse ]
+then
+  echo "This language is not supported." >&2
+  exit 1
+fi
+
+if [ x"${NASMDIR}" != x ]
+then
+    PATH="${NASMDIR}:${PATH}"
+fi
+
+if [ x"${GCCDIR}" != x ]
+then
+    PATH="${GCCDIR}:${PATH}"
+fi
+
+if [ x"$1" = x-p ]
+then
+    echo "${NASMRUN}"
+    exit 0
+fi
+    
+"${NASMRUN}" -v >/dev/null 2>&1 || exit 1
+
+[ x"$1" = x-f ] && echo -n "NASM "
+
+"${NASMRUN}" -v 2>&1 | grep "NASM version" | gawk '{ print $3; }'

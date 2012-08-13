@@ -1,0 +1,47 @@
+#!/bin/sh
+# $Id$
+# Copyright (c) 2012 Alexander Chernov <cher@ejudge.ru>
+
+# using EJUDGE_FLAGS we may pass additional flags
+
+LANG_CONFIG_DIR="@lang_config_dir@"
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/nasm-x86.cfg"
+
+if [ -f "${EJUDGE_LANG_CONFIG}" ]
+then
+  . "${EJUDGE_LANG_CONFIG}"
+else
+  version="unknown"
+  NASMRUN="nasm"
+  NASMDIR=
+  GCCRUN="gcc"
+  GCCDIR=
+fi
+
+if [ x"${version}" = x ]
+then
+  echo "This language is not supported." >&2
+  exit 1
+fi
+
+if [ x"${NASMDIR}" != x ]
+then
+    PATH="${NASMDIR}:${PATH}"
+fi
+
+if [ x"${GCCDIR}" != x ]
+then
+    PATH="${GCCDIR}:${PATH}"
+fi
+
+[ x"${EJUDGE_FLAGS}" = x ] && EJUDGE_FLAGS="-Werror"
+
+unset LANG
+unset LC_ALL
+unset LC_MESSAGES
+unset LANGUAGE
+
+cp -p "${LANG_CONFIG_DIR}/nasm/io.inc" .
+
+"${NASMRUN}" ${EJUDGE_FLAGS} -DUNIX -f elf "$1" -o "$2.o" || exit $?
+exec "${GCCRUN}" -m32 -o "$2" "$2.o" 
