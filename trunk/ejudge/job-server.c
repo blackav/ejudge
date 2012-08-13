@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -610,20 +610,22 @@ int
 main(int argc, char *argv[])
 {
   int cur_arg = 1, j = 0;
-  int daemon_mode = 0;
+  int daemon_mode = 0, restart_mode = 0;
   unsigned char *ejudge_xml_path = 0;
-  int log_fd = -1;
   int pid;
   const unsigned char *user = 0, *group = 0, *workdir = 0;
   char **argv_restart = 0;
 
   start_set_self_args(argc, argv);
-  XCALLOC(argv_restart, argc + 1);
+  XCALLOC(argv_restart, argc + 2);
   argv_restart[j++] = argv[0];
 
   while (cur_arg < argc) {
     if (!strcmp(argv[cur_arg], "-D")) {
       daemon_mode = 1;
+      cur_arg++;
+    } else if (!strcmp(argv[cur_arg], "-R")) {
+      restart_mode = 1;
       cur_arg++;
     } else if (!strcmp(argv[cur_arg], "-u")) {
       if (cur_arg + 1 >= argc) { 
@@ -649,6 +651,7 @@ main(int argc, char *argv[])
     } else
       break;
   }
+  argv_restart[j++] = "-R";
   if (cur_arg < argc) {
     argv_restart[j++] = argv[cur_arg];
     ejudge_xml_path = argv[cur_arg++];
@@ -690,19 +693,15 @@ main(int argc, char *argv[])
   }
 
   if (daemon_mode) {
-    log_fd = open(job_server_log_path, O_WRONLY | O_CREAT | O_APPEND, 0600);
-    if (log_fd < 0) {
-      err("cannot open log file `%s'", job_server_log_path);
+    if (start_open_log(job_server_log_path) < 0)
       return 1;
-    }
-    close(0);
-    if (open("/dev/null", O_RDONLY) < 0) return 1;
-    close(1);
-    if (open("/dev/null", O_WRONLY) < 0) return 1;
-    close(2); dup(log_fd); close(log_fd);
+
     if ((pid = fork()) < 0) return 1;
     if (pid > 0) _exit(0);
     setsid();
+  } else if (restart_mode) {
+    if (start_open_log(job_server_log_path) < 0)
+      return 1;
   }
 
   if (prepare_directory_notify() < 0) return 1;

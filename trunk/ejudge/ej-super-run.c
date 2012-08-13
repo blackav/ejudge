@@ -837,12 +837,12 @@ main(int argc, char *argv[])
   unsigned char ejudge_xml_path[PATH_MAX];
   serve_state_t state = &serve_state;
   int retval = 0;
-  int daemon_mode = 0;
+  int daemon_mode = 0, restart_mode = 0;
   const unsigned char *user = NULL, *group = NULL, *workdir = NULL;
 
   program_name = os_GetBasename(argv[0]);
   start_set_self_args(argc, argv);
-  XCALLOC(argv_restart, argc + 1);
+  XCALLOC(argv_restart, argc + 2);
   argv_restart[argc_restart++] = argv[0];
   ejudge_xml_path[0] = 0;
 
@@ -869,6 +869,9 @@ main(int argc, char *argv[])
     } else if (!strcmp(argv[cur_arg], "-D")) {
       daemon_mode = 1;
       ++cur_arg;
+    } else if (!strcmp(argv[cur_arg], "-R")) {
+      restart_mode = 1;
+      ++cur_arg;
     } else if (!strcmp(argv[cur_arg], "-s")) {
       if (cur_arg + 1 >= argc) fatal("argument expected for -s");
       ignored_archs[ignored_archs_count++] = xstrdup(argv[cur_arg + 1]);
@@ -887,6 +890,8 @@ main(int argc, char *argv[])
       fatal("invalid command line parameter");
     }
   }
+
+  argv_restart[argc_restart++] = "-R";
 
   argv_restart[argc_restart] = NULL;
   start_set_args(argv_restart);
@@ -973,6 +978,11 @@ main(int argc, char *argv[])
 
   if (daemon_mode) {
     if (start_daemon(super_run_log_path) < 0) {
+      retval = 1;
+      goto cleanup;
+    }
+  } else if (restart_mode) {
+    if (start_open_log(super_run_log_path) < 0) {
       retval = 1;
       goto cleanup;
     }

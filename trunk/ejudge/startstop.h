@@ -39,5 +39,6 @@ start_find_all_processes(const unsigned char *name, int **p_pids);
 
 int start_kill(int pid, int op);
 int start_daemon(const unsigned char *log_path);
+int start_open_log(const unsigned char *log_path);
 
 #endif /* __STARTSTOP_H__ */
