@@ -63,6 +63,7 @@ struct serve_state serve_state;
 static int initialize_mode = 0;
 
 static int daemon_mode;
+static int restart_mode;
 
 static int
 check_style_only(
@@ -639,7 +640,6 @@ main(int argc, char *argv[])
 
 #if HAVE_SETSID - 0
   path_t  log_path;
-  int log_fd = -1;
 #endif /* HAVE_SETSID */
 
   int pid = -1;
@@ -671,7 +671,7 @@ main(int argc, char *argv[])
   const unsigned char **subst_dst_ptr = 0;
 
   start_set_self_args(argc, argv);
-  XCALLOC(argv_restart, argc + 1);
+  XCALLOC(argv_restart, argc + 2);
   argv_restart[j++] = argv[0];
 
   //if (argc == 1) goto print_usage;
@@ -687,6 +687,9 @@ main(int argc, char *argv[])
       key = argv[i++];
     } else if (!strcmp(argv[i], "-D")) {
       daemon_mode = 1;
+      i++;
+    } else if (!strcmp(argv[i], "-R")) {
+      restart_mode = 1;
       i++;
     } else if (!strncmp(argv[i], "-D", 2)) {
       if (cpp_opts[0]) pathcat(cpp_opts, " ");
@@ -720,6 +723,7 @@ main(int argc, char *argv[])
       goto print_usage;
     } else break;
   }
+  argv_restart[j++] = "-R";
   if (i < argc) {
     compile_cfg_path = argv[i];
     argv_restart[j++] = argv[i++];
@@ -896,21 +900,21 @@ main(int argc, char *argv[])
   if (initialize_mode) return 0;
 
 #if HAVE_SETSID - 0
-  if (daemon_mode) {
-    // FIXME: make log file tunable?
-    snprintf(log_path, sizeof(log_path), "%s/ej-compile.log",
-             serve_state.global->var_dir);
+  log_path[0] = 0;
+#if defined EJUDGE_CONTESTS_HOME_DIR
+  if (!log_path[0]) {
+    snprintf(log_path, sizeof(log_path), "%s/var/ej-compile.log", EJUDGE_CONTESTS_HOME_DIR);
+  }
+#endif
+  if (!log_path[0]) {
+    snprintf(log_path, sizeof(log_path), "%s/ej-compile.log", serve_state.global->var_dir);
+  }
 
+  if (daemon_mode) {
     // daemonize itself
-    if ((log_fd = open(log_path, O_WRONLY | O_CREAT | O_APPEND, 0600)) < 0) {
-      err("cannot open log file `%s'", log_path);
+    if (start_open_log(log_path) < 0)
       return 1;
-    }
-    close(0);
-    if (open("/dev/null", O_RDONLY) < 0) return 1;
-    close(1);
-    if (open("/dev/null", O_WRONLY) < 0) return 1;
-    close(2); dup(log_fd); close(log_fd);
+
     if ((pid = fork()) < 0) return 1;
     if (pid > 0) _exit(0);
     if (setsid() < 0) return 1;
@@ -918,6 +922,9 @@ main(int argc, char *argv[])
 #if HAVE_OPEN_MEMSTREAM - 0 == 1
     fprintf(stderr, "%s", lang_log_t);
 #endif /* HAVE_OPEN_MEMSTREAM */
+  } else if (restart_mode) {
+    if (start_open_log(log_path) < 0)
+      return 1;
   }
 #endif /* HAVE_SETSID */
 
