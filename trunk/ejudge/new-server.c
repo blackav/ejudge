@@ -638,7 +638,7 @@ main(int argc, char *argv[])
   time(&server_start_time);
   start_set_self_args(argc, argv);
   /* certain options should be removed for restart */
-  XCALLOC(argv_restart, argc + 1);
+  XCALLOC(argv_restart, argc + 2);
   argv_restart[j++] = argv[0];
 
   params.program_name = argv[0];
@@ -662,6 +662,9 @@ main(int argc, char *argv[])
     } else if (!strcmp(argv[i], "-C")) {
       if (++i >= argc) startup_error("invalid usage");
       workdir = argv[i++];
+    } else if (!strcmp(argv[i], "-R")) {
+      params.restart_mode_flag = 1;
+      ++i;
     } else if (!strcmp(argv[i], "--")) {
       argv_restart[j++] = argv[i];
       i++;
@@ -671,6 +674,7 @@ main(int argc, char *argv[])
     } else
       break;
   }
+  argv_restart[j++] = "-R";
   if (i < argc) {
     argv_restart[j++] = argv[i];
     ejudge_xml_path = argv[i++];

@@ -4,7 +4,7 @@
 #ifndef __SERVER_FRAMEWORK_H__
 #define __SERVER_FRAMEWORK_H__
 
-/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -65,6 +65,7 @@ struct new_server_prot_packet;
 struct server_framework_params
 {
   int daemon_mode_flag;
+  int restart_mode_flag;
   int force_socket_flag;
   unsigned char *program_name;
   unsigned char *socket_path;
