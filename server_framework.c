@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -716,7 +716,7 @@ nsf_prepare(struct server_framework_state *state)
   act.sa_handler = sigchld_handler;
   sigaction(SIGCHLD, &act, 0);
 
-  if (state->params->daemon_mode_flag) {
+  if (state->params->daemon_mode_flag || state->params->restart_mode_flag) {
     log_path = state->params->log_path;
     if (!log_path) log_path = "/dev/null";
     if ((log_fd = open(log_path, O_WRONLY | O_CREAT | O_APPEND, 0600)) < 0) {
