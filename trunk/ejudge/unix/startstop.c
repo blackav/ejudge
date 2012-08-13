@@ -241,9 +241,24 @@ start_kill(int pid, int op)
 int
 start_daemon(const unsigned char *log_path)
 {
-  int log_fd = -1;
   int pid;
 
+  if (start_open_log(log_path) < 0)
+    return -1;
+
+  if ((pid = fork()) < 0) return -1;
+  if (pid > 0) _exit(0);
+  if (setsid() < 0) return -1;
+
+  return 0;
+}
+
+int
+start_open_log(const unsigned char *log_path)
+{
+  int log_fd = -1;
+
+  if (!log_path) log_path = "/dev/null";
   if ((log_fd = open(log_path, O_WRONLY | O_CREAT | O_APPEND, 0600)) < 0) {
     err("cannot open log file `%s'", log_path);
     return -1;
@@ -253,11 +268,6 @@ start_daemon(const unsigned char *log_path)
   close(1);
   if (open("/dev/null", O_WRONLY) < 0) return -1;
   close(2); dup(log_fd); close(log_fd);
-
-  if ((pid = fork()) < 0) return -1;
-  if (pid > 0) _exit(0);
-  if (setsid() < 0) return -1;
-
   return 0;
 }
 
