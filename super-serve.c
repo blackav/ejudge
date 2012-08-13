@@ -118,6 +118,7 @@ struct client_state
 };
 
 static int daemon_mode;
+static int restart_mode;
 static int autonomous_mode;
 static int forced_mode;
 static int slave_mode;
@@ -4489,7 +4490,6 @@ static int
 prepare_sockets(void)
 {
   struct sockaddr_un addr;
-  int log_fd;
   pid_t pid;
   path_t socket_dir;
 
@@ -4555,19 +4555,15 @@ prepare_sockets(void)
 
   // daemonize itself
   if (daemon_mode) {
-    if ((log_fd = open(config->super_serve_log,
-                       O_WRONLY | O_CREAT | O_APPEND, 0600)) < 0) {
-      err("cannot open log file `%s'", config->super_serve_log);
+    if (start_open_log(config->super_serve_log) < 0)
       return 1;
-    }
-    close(0);
-    if (open("/dev/null", O_RDONLY) < 0) return 1;
-    close(1);
-    if (open("/dev/null", O_WRONLY) < 0) return 1;
-    close(2); dup(log_fd); close(log_fd);
+
     if ((pid = fork()) < 0) return 1;
     if (pid > 0) _exit(0);
     if (setsid() < 0) return 1;
+  } else if (restart_mode) {
+    if (start_open_log(config->super_serve_log) < 0)
+      return 1;
   }
 
   return 0;
@@ -4621,7 +4617,7 @@ main(int argc, char **argv)
 
   program_name = os_GetBasename(argv[0]);
   start_set_self_args(argc, argv);
-  XCALLOC(argv_restart, argc + 1);
+  XCALLOC(argv_restart, argc + 2);
   argv_restart[j++] = argv[0];
 
   while (cur_arg < argc) {
@@ -4631,6 +4627,9 @@ main(int argc, char **argv)
       write_version();
     } else if (!strcmp(argv[cur_arg], "-D")) {
       daemon_mode = 1;
+      cur_arg++;
+    } else if (!strcmp(argv[cur_arg], "-R")) {
+      restart_mode = 1;
       cur_arg++;
     } else if (!strcmp(argv[cur_arg], "-a")) {
       autonomous_mode = 1;
@@ -4668,6 +4667,7 @@ main(int argc, char **argv)
       break;
     }
   }
+  argv_restart[j++] = "-R";
   if (cur_arg < argc) {
     ejudge_xml_path = argv[cur_arg];
     argv_restart[j++] = argv[cur_arg];
