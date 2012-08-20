@@ -177,7 +177,7 @@ zip_packet_class_parse(
   }
   if (zs.size > MAX_ROOT_XML_SIZE) {
     logerr("entry '%s' it too big (size = %ld) in '%s'",
-           ROOT_XML_FILE_NAME, zs.size, path);
+           ROOT_XML_FILE_NAME, (long) zs.size, path);
     goto cleanup;
   }
 
