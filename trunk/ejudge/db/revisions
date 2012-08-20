@@ -7395,3 +7395,4 @@ compile.c 6986 0 2378173
 ej_types.h 6990 0 277280
 xml_utils.h 6990 0 366519
 xml_utils/parse_ip.c 6989 0 462357
+ejudge-setup.c 6992 0 10332072
