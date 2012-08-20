@@ -2,7 +2,7 @@
 # $Id$
 # @configure_input@
 
-# Copyright (C) 2006-2011 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2006-2012 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -38,7 +38,7 @@ WERROR=@ac_cv_werror_flag@
 ifdef RELEASE
 CDEBUGFLAGS=-O2 -Wall -DNDEBUG -DRELEASE ${WERROR}
 else
-CDEBUGFLAGS=-g -Wall ${WERROR}
+CDEBUGFLAGS=-g -Wall ${WERROR} -O
 endif
 ifdef STATIC
 CDEBUGFLAGS += -static
