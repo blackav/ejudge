@@ -3,7 +3,7 @@
 #ifndef __EJ_TYPES_H__
 #define __EJ_TYPES_H__
 
-/* Copyright (C) 2005-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -26,6 +26,13 @@ typedef ruint32_t ej_size_t;     /* size_t as stored in files */
 typedef ruint32_t ej_ip_t;       /* IP address as stored in files */
 typedef unsigned long long ej_cookie_t;   /* cookie */
 typedef unsigned long long ej_tsc_t; /* timestamp counter type */
+
+/** IPv6-ready IP address structure */
+typedef struct ej_ip6_t
+{
+  ruint32_t v4; /// IPv4, if 0, then IPv6 is considered
+  unsigned char v6[16];
+} ej_ip6_t;
 
 /* types for meta-info generator */
 typedef unsigned char ejbytebool_t;
