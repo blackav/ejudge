@@ -469,9 +469,11 @@ copy_string(struct section_problem_data *p,
 {
     int ct = meta_problem_config_section_get_type(c_name);
     ASSERT(ct == 's');
+    (void) ct;
     unsigned char *cv = *(unsigned char**) meta_problem_config_section_get_ptr(c, c_name);
     int pt = cntsprob_get_type(p_name);
     ASSERT(pt == 's' || pt == 'S');
+    (void) pt;
     if (pt == 'S') {
         // fixed-length string
         size_t z = cntsprob_get_size(p_name);
@@ -537,6 +539,7 @@ copy_suffix(
     ASSERT(t == 'S');
     t = cntsprob_get_type(pp_name);
     ASSERT(t == 'S');
+    (void) t;
     size_t zs = cntsprob_get_size(ps_name);
     size_t zp = cntsprob_get_size(pp_name);
     const unsigned char *csv = *(const unsigned char**) meta_problem_config_section_get_ptr(c, cs_name);
@@ -606,6 +609,7 @@ copy_strarray(
     ASSERT(t == 'x' || t == 'X');
     t = cntsprob_get_type(p_name);
     ASSERT(t == 'x' || t == 'X');
+    (void) t;
     char ***cv = (char ***) meta_problem_config_section_get_ptr(c, c_name);
     char ***pv = (char ***) cntsprob_get_ptr_nc(p, p_name);
     if (*cv) {
