@@ -1815,7 +1815,7 @@ static const unsigned char * const arch_abstract_names [] =
 {
   "Generic",
   "Linux-shared",
-  "linux-shared-32",
+  "Linux-shared-32",
   "DOSTester",
   "Linux-java",
   "Linux-java14",

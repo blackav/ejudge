@@ -843,6 +843,7 @@ do_generate_makefile(
   unsigned char test_pr_pat[PATH_MAX];
   unsigned char tgzdir_pr_pat[PATH_MAX];
   unsigned long languages = 0;
+  unsigned long enabled_languages = 0;
   unsigned char tmp_path[PATH_MAX];
   unsigned char *compiler_path = NULL;
   const unsigned char *compiler_flags = NULL;
@@ -946,6 +947,7 @@ do_generate_makefile(
       fprintf(mk_f, "# C compiler is not found\nCC ?= /bin/false\n");
     } else {
       fprintf(mk_f, "CC = %s\n", compiler_path);
+      enabled_languages |= LANG_C;
     }
     xfree(compiler_path); compiler_path = NULL;
     compiler_flags = build_get_compiler_flags(cs, sstate, "gcc");
@@ -969,6 +971,7 @@ do_generate_makefile(
       fprintf(mk_f, "# C++ compiler is not found\nCXX ?= /bin/false\n");
     } else {
       fprintf(mk_f, "CXX = %s\n", compiler_path);
+      enabled_languages |= LANG_CPP;
     }
     xfree(compiler_path); compiler_path = NULL;
     compiler_flags = build_get_compiler_flags(cs, sstate, "g++");
@@ -991,6 +994,7 @@ do_generate_makefile(
       fprintf(mk_f, "# FPC compiler is not found\nFPC ?= /bin/false\n");
     } else {
       fprintf(mk_f, "FPC = %s\n", compiler_path);
+      enabled_languages |= LANG_FPC;
     }
     xfree(compiler_path); compiler_path = NULL;
     compiler_flags = build_get_compiler_flags(cs, sstate, "fpc");
@@ -1007,6 +1011,7 @@ do_generate_makefile(
       fprintf(mk_f, "# DCC compiler is not found\nDCC ?= /bin/false\n");
     } else {
       fprintf(mk_f, "DCC = %s\n", compiler_path);
+      enabled_languages |= LANG_DCC;
     }
     xfree(compiler_path); compiler_path = NULL;
     compiler_flags = build_get_compiler_flags(cs, sstate, "dcc");
@@ -1033,6 +1038,7 @@ do_generate_makefile(
                 "JAR = %s/jar\n", dn, dn);
       }
       xfree(dn); dn = NULL;
+      enabled_languages |= LANG_JAVA;
     }
     xfree(compiler_path); compiler_path = NULL;
     compiler_path = build_get_compiler_script(log_f, ejudge_config, NULL, "javac");
@@ -1055,6 +1061,7 @@ do_generate_makefile(
       fprintf(mk_f, "PYCHELPER ?= /bin/false\n");
     } else {
       fprintf(mk_f, "PYCHELPER = %s\n", compiler_path);
+      enabled_languages |= LANG_PY;
     }
     xfree(compiler_path); compiler_path = NULL;
     fprintf(mk_f, "\n");
@@ -1066,6 +1073,7 @@ do_generate_makefile(
       fprintf(mk_f, "KUMCHELPER ?= /bin/false\n");
     } else {
       fprintf(mk_f, "KUMCHELPER = %s\n", compiler_path);
+      enabled_languages |= LANG_KUM;
     }
     xfree(compiler_path); compiler_path = NULL;
     fprintf(mk_f, "\n");
