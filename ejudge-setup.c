@@ -113,11 +113,11 @@ static int config_ejudge_lang_config_dir_modified;
 static unsigned char config_ejudge_run_path[PATH_MAX];
 static int config_ejudge_run_path_modified;
 
-static unsigned char config_user_id[64];
-static unsigned char config_login[64];
-static unsigned char config_email[256];
-static unsigned char config_name[256];
-static unsigned char config_password_txt[256];
+static unsigned char config_user_id[64] = "1";
+static unsigned char config_login[64] = "ejudge";
+static unsigned char config_email[256] = "ejudge@localhost";
+static unsigned char config_name[256] = "ejudge administrator";
+static unsigned char config_password_txt[256] = "ejudge";
 static unsigned char config_password_sha1[64];
 
 static unsigned char config_charset[256];
@@ -4238,6 +4238,7 @@ main(int argc, char **argv)
     save_install_script(1, "ejudge-install.sh");
   } else {
     //answer = ncurses_yesno(0, initial_warning);
+    make_sha1_passwd(config_password_sha1, "ejudge");
     if (answer == 1) {
       do_main_menu();
     }
