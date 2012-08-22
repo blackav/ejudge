@@ -115,6 +115,8 @@ EOF
 fi
 
 dnl setup default values
+[[ x"${ac_cv_contests_home_dir}" = x -o x"${ac_cv_contests_home_dir}" = xyes ]] && ac_cv_contests_home_dir="/home/judges"
+
 [[ x"${ac_cv_local_dir}" = xyes ]] && ac_cv_local_dir="/var/lib/ejudge"
 if [[ x"${ac_cv_local_dir}" != x ]]
 then
@@ -122,12 +124,11 @@ then
   [[ x"${ac_cv_super_serve_socket}" = x -o x"${ac_cv_super_serve_socket}" = xyes ]] && ac_cv_super_serve_socket="${ac_cv_local_dir}/sockets/super-serve"
   [[ x"${ac_cv_new_server_socket}" = x -o x"${ac_cv_new_server_socket}" = xyes ]] && ac_cv_new_server_socket="${ac_cv_local_dir}/sockets/new-server"
 else
-  [[ x"${ac_cv_socket_path}" = x -o x"${ac_cv_socket_path}" = xyes ]] && ac_cv_socket_path="/tmp/userlist-socket"
-  [[ x"${ac_cv_super_serve_socket}" = x -o x"${ac_cv_super_serve_socket}" = xyes ]] && ac_cv_super_serve_socket="/tmp/super-serve-socket"
-  [[ x"${ac_cv_new_server_socket}" = x -o x"${ac_cv_new_server_socket}" = xyes ]] && ac_cv_new_server_socket="/tmp/new-server-socket"
+  [[ x"${ac_cv_socket_path}" = x -o x"${ac_cv_socket_path}" = xyes ]] && ac_cv_socket_path="${ac_cv_contests_home_dir}/var/socket/userlist-socket"
+  [[ x"${ac_cv_super_serve_socket}" = x -o x"${ac_cv_super_serve_socket}" = xyes ]] && ac_cv_super_serve_socket="${ac_cv_contests_home_dir}/var/socket/super-serve-socket"
+  [[ x"${ac_cv_new_server_socket}" = x -o x"${ac_cv_new_server_socket}" = xyes ]] && ac_cv_new_server_socket="${ac_cv_contests_home_dir}/var/socket/new-server-socket"
 fi
 
-[[ x"${ac_cv_contests_home_dir}" = x -o x"${ac_cv_contests_home_dir}" = xyes ]] && ac_cv_contests_home_dir="/home/judges"
 [[ x"${ac_cv_conf_dir}" = x -o x"${ac_cv_conf_dir}" = xyes ]] && ac_cv_conf_dir="${ac_cv_contests_home_dir}/data"
 [[ x"${ac_cv_cgi_conf_dir}" = x -o x"${ac_cv_cgi_conf_dir}" = xyes ]] && ac_cv_cgi_conf_dir="../cgi-data"
 [[ x"${ac_cv_style_prefix}" = x -o x"${ac_cv_style_prefix}" = xyes ]] && ac_cv_style_prefix="/ejudge/"
