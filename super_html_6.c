@@ -9358,7 +9358,7 @@ cleanup:
   return retval;
 }
 
-static const unsigned char * const global_cap_descs[] =
+static const unsigned char * const global_cap_descs[OPCAP_LAST] =
 {
   [OPCAP_MASTER_LOGIN] = "Allowed login to serve-control with administrative capabilities",
   [OPCAP_JUDGE_LOGIN] = "Allowed login to serve-control with less capabilities",
@@ -9397,6 +9397,10 @@ static const unsigned char * const global_cap_descs[] =
   [OPCAP_RESTART] = "Allowed to restart ejudge processes",
   [OPCAP_COMMENT_RUN] = NULL,
   [OPCAP_UNLOAD_CONTEST] = "Allowed to force reload of any contest",
+  [OPCAP_LOCAL_0] = "Local capability 0",
+  [OPCAP_LOCAL_1] = "Local capability 1",
+  [OPCAP_LOCAL_2] = "Local capability 2",
+  [OPCAP_LOCAL_3] = "Local capability 3",
 };
 
 int
