@@ -2059,9 +2059,12 @@ serve_read_compile_packet(
   struct section_language_data *lang = 0;
   int arch_flags;
   path_t run_arch_path;
-  char *run_text = 0;
-  size_t run_size = 0;
+  char *run_text = 0, *txt_text = 0;
+  size_t run_size = 0, txt_size = 0;
   path_t pkt_name;
+  path_t txt_report_path;
+  path_t txt_packet_path;
+  size_t min_txt_size = 1;
 
   if ((r = generic_read_file(&comp_pkt_buf, 0, &comp_pkt_size, SAFE | REMOVE,
                              compile_status_dir, pname, "")) <= 0)
@@ -2098,7 +2101,6 @@ serve_read_compile_packet(
   }
 
   snprintf(pkt_name, sizeof(pkt_name), "%06d", comp_pkt->run_id);
-  snprintf(run_arch_path, sizeof(run_arch_path), "%s/%s.txt", compile_report_dir, pkt_name);
 
   if (comp_pkt->status == RUN_CHECK_FAILED
       || comp_pkt->status == RUN_COMPILE_ERR
@@ -2122,21 +2124,23 @@ serve_read_compile_packet(
     }
   }
 
-  if (generic_read_file(&run_text, 0, &run_size, 0, 0, run_arch_path, 0) >= 0) {
-    if (run_size > 0) {
-      arch_flags = archive_make_write_path(state,
-                                           run_arch_path, sizeof(run_arch_path),
-                                           global->report_archive_dir,
-                                           comp_pkt->run_id, run_size, 0, 0);
-      if (arch_flags >= 0) {
-        if (archive_dir_prepare(state, global->report_archive_dir,
-                                comp_pkt->run_id, 0, 1) >= 0) {
-          generic_write_file(run_text, run_size, arch_flags,
-                             0, run_arch_path, 0);
-        }
-      }
-    }
-    xfree(run_text); run_text = 0; run_size = 0;
+  if ((prob && prob->style_checker_cmd && prob->style_checker_cmd[0])
+      || (lang && lang->style_checker_cmd && lang->style_checker_cmd[0])) {
+    min_txt_size = 0;
+  }
+  snprintf(txt_packet_path, sizeof(txt_packet_path), "%s/%s.txt", compile_report_dir, pkt_name);
+  if (generic_read_file(&txt_text, 0, &txt_size, REMOVE, NULL, txt_packet_path, NULL) >= 0
+      && txt_size >= min_txt_size
+      && (arch_flags = archive_make_write_path(state,
+                                               txt_report_path,
+                                               sizeof(txt_report_path),
+                                               global->report_archive_dir,
+                                               comp_pkt->run_id, txt_size,
+                                               0, 0)) >= 0
+      && archive_dir_prepare(state, global->report_archive_dir,
+                             comp_pkt->run_id, 0, 1) >= 0) {
+    generic_write_file(txt_text, txt_size, arch_flags,
+                       0, txt_report_path, 0);
   }
 
   if (comp_pkt->status == RUN_CHECK_FAILED) {
@@ -2228,24 +2232,6 @@ serve_read_compile_packet(
    * so far compilation is successful, and now we prepare a run packet
    */
 
-  if ((prob && prob->style_checker_cmd && prob->style_checker_cmd[0])
-      || (lang && lang->style_checker_cmd && lang->style_checker_cmd[0])) {
-    if (generic_read_file(&run_text, 0, &run_size, 0, 0, run_arch_path, 0) >= 0){
-      arch_flags = archive_make_write_path(state,
-                                           run_arch_path, sizeof(run_arch_path),
-                                           global->report_archive_dir,
-                                           comp_pkt->run_id, run_size, 0, 0);
-      if (arch_flags >= 0) {
-        if (archive_dir_prepare(state, global->report_archive_dir,
-                                comp_pkt->run_id, 0, 1) >= 0) {
-          generic_write_file(run_text, run_size, arch_flags,
-                             0, run_arch_path, 0);
-        }
-      }
-      xfree(run_text); run_text = 0; run_size = 0;
-    }
-  }
-
   if (prob && prob->type > 0 && prob->style_checker_cmd && prob->style_checker_cmd[0]) {
     arch_flags = archive_make_read_path(state, run_arch_path,
                                         sizeof(run_arch_path),
@@ -2271,6 +2257,7 @@ serve_read_compile_packet(
 
  success:
   xfree(comp_pkt_buf);
+  xfree(txt_text);
   compile_reply_packet_free(comp_pkt);
   return 1;
 
@@ -2295,6 +2282,7 @@ serve_read_compile_packet(
 
  non_fatal_error:
   xfree(comp_pkt_buf);
+  xfree(txt_text);
   compile_reply_packet_free(comp_pkt);
   return 0;
 }
