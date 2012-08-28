@@ -1,6 +1,6 @@
 #!/bin/sh
 # $Id$
-# Copyright (c) 2005-2008 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2005-2012 Alexander Chernov <cher@ejudge.ru>
 
 LANG_CONFIG_DIR="@lang_config_dir@"
 
@@ -47,7 +47,7 @@ then
 :-initialization(main).
 main :- write('OK'), halt.
 EOF
-  "${GPLCRUN}" -L --no-top-level conftest.pro -o conftest >/dev/null 2>&1 || failure
+  "${GPLCRUN}" conftest.pro -o conftest >/dev/null 2>&1 || failure
   [ -x conftest ] || failure
   ./conftest >/dev/null 2>&1 || failure
 
