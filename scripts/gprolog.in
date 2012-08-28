@@ -32,4 +32,4 @@ unset LC_ALL
 unset LC_MESSAGES
 unset LANGUAGE
 
-exec "${GPLCRUN}" --min-size --no-top-level ${EJUDGE_FLAGS} "$1" -o "$2"
+exec "${GPLCRUN}" --min-size ${EJUDGE_FLAGS} "$1" -o "$2"
