@@ -5734,7 +5734,9 @@ super_serve_op_USER_CREATE_MANY_ACTION(
 
   XCALLOC(cnts_name_strs, serial_count);
   if (cnts) {
-    if (!params.cnts_name_template || !*params.cnts_name_template) FAIL(S_ERR_INV_CNTS_NAME_TEMPLATE);
+    if (!params.cnts_name_template || !*params.cnts_name_template) {
+      params.cnts_name_template = xstrdup(params.login_template);
+    }
     memset(printf_arg_types, 0, sizeof(printf_arg_types));
     printf_arg_count = parse_printf_format(params.cnts_name_template, 10, printf_arg_types);
     if (printf_arg_count != 0 && printf_arg_count != 1)
