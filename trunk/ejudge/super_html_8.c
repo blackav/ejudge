@@ -280,11 +280,29 @@ super_html_read_serve(
     if (prepare_check_forbidden_lang(flog, lang) < 0)
       return -1;
 
+    /*
     if (lang->compile_id <= 0 || lang->compile_id >= sstate->cs_lang_total
         || !sstate->cs_langs[lang->compile_id]) {
+    }
+    */
+    if (lang->compile_id <= 0
+        || lang->compile_id >= sstate->cs_lang_total
+        || !sstate->cs_langs[lang->compile_id]
+        || strcmp(lang->short_name, sstate->cs_langs[lang->compile_id]->short_name) != 0) {
+      lang->compile_id = 0;
+    }
+    for (int j = 1; j < sstate->cs_lang_total; ++j) {
+      if (sstate->cs_langs[j]
+          && !strcmp(lang->short_name, sstate->cs_langs[j]->short_name)) {
+        lang->compile_id = j;
+        break;
+      }
+    }
+    if (lang->compile_id <= 0) {
       fprintf(flog, "Invalid compile_id\n");
       return -1;
     }
+
     sstate->loc_cs_map[lang->id] = lang->compile_id;
     sstate->cs_loc_map[lang->compile_id] = lang->id;
 
