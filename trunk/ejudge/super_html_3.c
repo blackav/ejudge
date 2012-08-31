@@ -4236,7 +4236,7 @@ super_html_lang_activate(
   lang_id = super_html_find_lang_id(sstate, cs_lang);
   if (lang_id <= 0) return;
   lang->id = lang_id;
-  lang->compile_id = lang_id;
+  lang->compile_id = cs_lang_id;
   /*
   max_id = 0;
   for (i = 1; i < sstate->lang_a; i++)
