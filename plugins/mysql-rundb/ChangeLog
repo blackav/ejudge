@@ -1,3 +1,16 @@
+2012-06-28 (r6920) Alexander Chernov  <cher@ejudge.ru>
+
+	* tables.inc.c: copyright notice is updated;
+	'run_uuid' table column is supported.
+
+	* rldb_mysql.c:
+	'run_uuid' table column is supported.
+
+2012-06-28 (r6915) Alexander Chernov  <cher@ejudge.ru>
+
+	* rldb_mysql.c:
+	'examinable', 'examiners', and 'exam_score' fields are no longer used.
+
 2012-05-09 (r6814) Alexander Chernov  <cher@ejudge.ru>
 
 	* rldb_mysql.c:
