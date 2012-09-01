@@ -1,3 +1,8 @@
+2012-08-07 (r6973) Alexander Chernov  <cher@ejudge.ru>
+
+	* style_archive.c:
+	(check_tar_tests) 'tests' is not mandatory (might be missing in zips).
+
 2012-04-01 (r6708) Alexander Chernov  <cher@ejudge.ru>
 
 	* read_file_by_line.c: copyright notice is updated;

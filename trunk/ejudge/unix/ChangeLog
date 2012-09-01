@@ -1,3 +1,13 @@
+2012-08-13 (r6983) Alexander Chernov  <cher@ejudge.ru>
+
+	* startstop.c:
+	(start_open_log) new function.
+
+2012-06-28 (r6925) Alexander Chernov  <cher@ejudge.ru>
+
+	* reuse_exec.c:
+	gcc compilation fixes.
+
 2012-06-18 (r6894) Alexander Chernov  <cher@ejudge.ru>
 
 	* reuse_exec.c:

@@ -1,3 +1,479 @@
+2012-08-31 (r7016) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_html_3.c:
+	(super_html_lang_activate) invalid assingment of compile_id is fixed.
+
+2012-08-31 (r7014) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_html_8.c:
+	(super_html_read_serve) picking up a compile_id for a language
+	is improved.
+
+2012-08-31 (r7012) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_html_6.c:
+	(super_serve_op_USER_CREATE_MANY_ACTION) name template is set
+	to login template by default.
+
+2012-08-28 (r7006) Alexander Chernov  <cher@ejudge.ru>
+
+	* super-serve.c:
+	(serve_read_compile_packet) handling of '.txt' files with compilation
+	  warnings is improved.
+
+	* serve_2.c:
+	missing headers <sys/time.h>, <sys/resource.h> are included.
+
+2012-08-22 (r7003) Alexander Chernov  <cher@ejudge.ru>
+
+	* ejudge-setup.c:
+	default user identity is specified.
+
+2012-08-22 (r7001) Alexander Chernov  <cher@ejudge.ru>
+
+	* configure.ac:
+	default socket paths are changed.
+
+2012-08-20 (r6990) Alexander Chernov  <cher@ejudge.ru>
+
+	* ej_types.h: copyright notice is updated;
+	(ej_ip6_t) new structure to hold IPv4/IPv6 address.
+
+	* xml_utils.h:
+	(xml_parse_ip6) new function prototype.
+
+2012-08-13 (r6986) Alexander Chernov  <cher@ejudge.ru>
+
+	* compile.c:
+	(main) "-R" option is supported;
+	  'start_open_log' is called.
+
+2012-08-13 (r6984) Alexander Chernov  <cher@ejudge.ru>
+
+	* startstop.h:
+	(start_open_log) new function prototype.
+
+	* ej-super-run.c:
+	(main) "-R" option is supported;
+	  'start_open_log' is called.
+
+	* job-server.c: copyright notice is updated;
+	(main) "-R" option is supported;
+	  'start_open_log' is called.
+
+	* server_framework.c:
+	"startstop.h" is included;
+	(nsf_prepare) 'start_open_log' is called.
+
+	* super-serve.c:
+	(prepare_sockets) 'start_open_log' is called;
+	(main) "-R" option is supported.
+
+	* userlist-server.c:
+	(main) "-R" option is supported;
+	  'start_open_log' is called.
+
+2012-08-13 (r6981) Alexander Chernov  <cher@ejudge.ru>
+
+	* server_framework.h: copyright notice is updated;
+	(struct server_framework_params) 'restart_mode_flag' field is added;
+
+	* new-server.c:
+	(main) "-R" option is supported for restart.
+
+	* server_framework.c: copyright notice is updated;
+	(nsf_prepare) 'restart_mode_flag' is handled.
+
+2012-08-09 (r6976) Alexander Chernov  <cher@ejudge.ru>
+
+	* serve_state.h:
+	(serve_testing_queue_delete) 'user_login' parameter is added;
+	(serve_testing_queue_change_priority) 'user_login' parameter is added;
+	(serve_testing_queue_delete_all) 'user_login' parameter is added;
+	(serve_testing_queue_change_priority_all) 'user_login' parameter added.
+
+	* new_server_html.c:
+	(priv_testing_queue_operation) calls of testing queue functions
+	  are updated;
+	(priv_whole_testing_queue_operation) calls of testing queue functions
+	  are updated.
+
+	* serve_2.c:
+	(serve_compile_request) global priority adjustment is handled;
+	(serve_run_request) global priority adjustment is handled;
+	(testing_queue_unlock_entry) 'user_login' parameter is added;
+	  the user permissions are checked if the packet's contest_id
+	  is different from the current contest_id;
+	(serve_testing_queue_delete) 'user_login' parameter is added;
+	(serve_testing_queue_change_priority) 'user_login' parameter is added;
+	(serve_testing_queue_delete_all) 'user_login' parameter is added;
+	(serve_testing_queue_change_priority_all) 'user_login' parameter added.
+
+2012-07-31 (r6969) Alexander Chernov  <cher@ejudge.ru>
+
+	* ej-polygon.c:
+	(process_polygon_zip) the files matching the test file and the answer
+	file patterns remaining from the previous package are removed from
+	the test directory;
+	(process_problem_row) modification time parsing is improved.
+
+2012-07-30 (r6964) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_language_data) 'extid' field is added.
+
+	* super_proto.h:
+	editing of 'extid' language configuration variable is supported.
+
+	* prepare.c, prepare_out.c:
+	'extid' language configuration variable is handled.
+
+	* run_inverse.c:
+	(invoke_test_program) 'extra_suffix' parameter is added;
+	extra file is copied to the test directory, if extra_suffix is specified;
+	(invoke_sample_program) 'extra_suffix' parameter is added;
+	(run_inverse_testing) '.jar' additional file is supported.
+
+	* serve-control.c, super_html_3.c, super-serve.c:
+	editing of 'extid' language configuration variable is supported.
+
+	* super_html_8.c:
+	"misctext.h" is included;
+	(super_load_cs_languages) trailing whitespace is removed from the version string.
+
+2012-07-29 (r6962) Alexander Chernov  <cher@ejudge.ru>
+
+	* contests.c:
+	(contests_clear_cache) 'last_update_time' is cleared as well.
+
+	* new_server_html.c:
+	(ns_submit_run) p_run_id is properly used.
+
+	* new_server_html_2.c:
+	(ns_write_priv_all_runs) form template for change status is generated.
+
+2012-07-27 (r6959) Alexander Chernov  <cher@ejudge.ru>
+
+	* contests.h:
+	(contests_clear_cache) new function prototype.
+
+	* contests.c:
+	(contests_clear_cache) new function.
+
+	* super_html_6.c:
+	(super_serve_op_CREATE_CONTEST_BATCH_ACTION) contests cache is cleared.
+
+2012-07-23 (r6957) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_html.c:
+	null pointer dereference in case of XML parse error is fixed.
+
+2012-07-09 (r6955) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server.h:
+	(ns_submit_run) 'enable_user_id', 'enable_status', 'is_hidden' parameters are added.
+
+	* new_server_html.c:
+	(ns_submit_run) 'enable_user_id', 'enable_status', 'is_hidden' parameters are added.
+
+2012-07-07 (r6950) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_html.h:
+	(super_html_set_cnts_file_perms) new prototype.
+
+	* super_proto.h:
+	'CREATE_CONTEST_BATCH_ACTION' is added.
+
+	* super_html_6.c:
+	(super_serve_op_CREATE_CONTEST_BATCH_ACTION) new function.
+
+	* super_html_7.c:
+	(super_html_set_cnts_file_perms) renamed from 'set_cnts_file_perms'.
+
+	* super_proto.c:
+	'CREATE_CONTEST_BATCH_ACTION' is supported.
+
+2012-07-07 (r6949) Alexander Chernov  <cher@ejudge.ru>
+
+	* contests.h:
+	(contests_load_file) new function prototype.
+
+	* contests.c:
+	(parse_one_contest_xml) 'number' parameter is removed;
+	(contests_load_file) new function.
+
+2012-07-06 (r6947) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server.h:
+	new request 'SUBMIT_RUN_BATCH' is added;
+	(ns_submit_run) 'enable_uuid' parameter is added.
+
+	* new_server_html.c:
+	"ej_uuid.h" is included;
+	(priv_submit_run_batch_page) new function;
+	(ns_submit_run) 'enable_uuid' parameter is added;
+	  uuid is parsed in 'enable_uuid' mode.
+
+2012-07-06 (r6945) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make:
+	ej_uuid.[ch] are added.
+
+	* ej_uuid.h: initial revision.
+
+	* new-server.h:
+	(ns_submit_run) 'enable_path' parameter is added.
+
+	* ej_uuid.c: initial revision.
+
+	* new_server_html.c:
+	(ns_submit_run) 'enable_path' parameter is added;
+	  'path' request parameter, which contains the path to the source
+	  file is handled in 'enable_path' mode.
+
+	* filter_eval.c, new_server_html_2.c, runlog.c, runlog_xml.c:
+	"ej_uuid.h" is used instead of <uuid/uuid.h>.
+
+2012-07-06 (r6943) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server.h:
+	'PING' request is added.
+
+	* new_server_html.c:
+	'PING' request is supported.
+
+2012-07-05 (r6941) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_proto.h:
+	'IMPORT_PROBLEMS_BATCH_ACTION' is added;
+	'super_proto_cmd_names' is added.
+
+	* serve-control.c:
+	<errno.h> is included;
+	(parse_action) new function that supports symbolic
+	  names for commands.
+
+	* super_html_4.c:
+	(parse_opcode) new function that supports symbolic
+	  names for opcodes.
+
+	* super_proto.c:
+	array of super-serve commands is added.
+
+2012-07-05 (r6939) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_html.h:
+	(super_html_get_contest_header_and_footer) new function prototype.
+
+	* ej-import-contest.c:
+	'contest.xml' is updated with the results of import.
+
+	* super_html_2.c:
+	(get_contest_header_and_footer) moved to 'super_html_8.c'.
+
+	* super_html_8.c:
+	(super_html_get_contest_header_and_footer) moved here from
+	'super_html_2.c'.
+
+2012-07-04 (r6937) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make:
+	ej_import_packet.[ch] are added.
+
+	* meta.make:
+	rules for ej_import_packet_meta.[ch] are added.
+
+	* ej-import-contest.c:
+	config file is used instead of command line args.
+
+	* super_html_6.c:
+	'IMPORT_PROBLEMS_BATCH_ACTION" handler is added.
+
+2012-07-04 (r6936) Alexander Chernov  <cher@ejudge.ru>
+
+	* ej_import_packet.c, ej_import_packet.h:
+	initial revision
+
+2012-07-04 (r6934) Alexander Chernov  <cher@ejudge.ru>
+
+	* contests.h:
+	new attrubute "ready" is added;
+	new elements <update_time>, <problem_count> are added.
+
+	* contests.c, contests_2.c:
+	new attrubute "ready" is supported;
+	new elements <update_time>, <problem_count> are supported.
+
+2012-07-04 (r6932) Alexander Chernov  <cher@ejudge.ru>
+
+	* contests.h:
+	support for <ext_id> element is added.
+
+	* contests.c:
+	support for <ext_id> element is added.
+
+2012-07-04 (r6930) Alexander Chernov  <cher@ejudge.ru>
+
+	* opcaps.h: copyright notice is updated;
+	new capability bits 'LOCAL_0' ... 'LOCAL_3' are added.
+
+	* opcaps.c:
+	new capability bits 'LOCAL_0' ... 'LOCAL_3' are supported.
+
+2012-07-03 (r6928) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in:
+	rules for compilation of 'ej-import-contest' are added.
+
+	* files.make:
+	build_support.c, super_html_8.c are added;
+	ej-import-contest.c is added;
+	build_support.h is added.
+
+	* build_support.h: initial revision.
+
+	* super_html.h:
+	(super_html_serve_unparse_serve_cfg) prototype is added.
+
+	* build_support.c: initial revision.
+
+	* ej-import-contest.c: initial revision.
+
+	* ej-polygon.c:
+	(main) debugging output is removed.
+
+	* prepare_out.c:
+	(prepare_unparse_prob) invalid unparsing of 'stand_hide_time'
+	  is fixed.
+
+	* super_html_3.c:
+	"build_support.h" is included;
+	(super_load_cs_languages) moved to 'super_html_8.c';
+	(super_html_create_problem) the same;
+	(unparse_serve_cfg) the same;
+	(super_html_serve_unparse_serve_cfg) the same;
+	(super_html_get_serve_header_and_footer) the same;
+	(do_load_file) the same;
+	(super_html_read_serve) the same;
+
+	* super_html_7.c:
+	"build_support.h" is included;
+	(prepare_test_file_names) moved to 'build_support.c'
+	  as 'build_prepare_test_file_names';
+	(merge_lines) moved to 'build_support.c';
+	(extract_makefile_header_footer) moved to 'build_support.c';
+	(pattern_to_shell_pattern) moved to 'build_support.c';
+	(get_source_suffix) moved to 'build_support.c';
+	(find_suffix) moved to 'build_support.c';
+	(guess_language_by_cmd) the same;
+	(collect_suitable_names) the same;
+	(remove_src_suffix) the same;
+	(make_exe_suitable_names) the same;
+	(free_suitable_names) the same;
+	(replace_cmd_suffix) the same;
+	(guess_language_by_cmd) the same;
+	(get_compiler_script) the same;
+	(get_compiler_path) the same;
+	(get_compiler_flags) the same;
+	(generate_checker_compilation_rule) the same;
+	(generate_solution_compilation_rule) the same;
+	(generate_makefile) the same;
+	(super_serve_generate_makefile) the same.
+
+	* super_html_8.c: initial revision.
+
+2012-07-03 (r6927) Alexander Chernov  <cher@ejudge.ru>
+
+	* problem_config.h:
+	(struct problem_config_section) 'tests_to_accept' field type
+	is changed to 'int'.
+
+2012-06-28 (r6925) Alexander Chernov  <cher@ejudge.ru>
+
+	* reports.c, ej-polygon.c:
+	gcc compilation fixes.
+
+2012-06-28 (r6922) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.unix.in:
+	libuuid is used where needed.
+
+	* html.h:
+	'RUN_VIEW_RUN_UUID' is added.
+
+	* runlog.h:
+	(run_add_record) 'uuid' parameter is added.
+
+	* filter_eval.c, filter_expr.y, filter_scan.lex:
+	'uuid' primary expression is supported.
+
+	* new_server_html.c, new_server_html_4.c:
+	calls of 'run_add_record' are updated.
+
+	* new_server_html_2.c:
+	(ns_write_priv_all_runs) 'run_uuid' field is supported;
+	(ns_write_priv_source) 'run_uuid' field is supported;
+	(ns_priv_edit_run_page) 'run_uuid' field is supported;
+	(ns_priv_edit_run_action) 'run_uuid' field is supported;
+	(do_add_row) call of 'run_add_record' is updated.
+
+	* runlog.c, runlog_xml.c:
+	'run_uuid' field is supported.
+
+2012-06-28 (r6918) Alexander Chernov  <cher@ejudge.ru>
+
+	* config.h.in:
+	CONF_HAS_LIBUUID is added.
+
+2012-06-28 (r6917) Alexander Chernov  <cher@ejudge.ru>
+
+	* configure.ac:
+	check for libuuid is added.
+
+2012-06-28 (r6916) Alexander Chernov  <cher@ejudge.ru>
+
+	* runlog.h:
+	(struct run_entry) 'is_examinable', 'examiners', 'exam_score'
+	fields are removed.
+
+	* filter_eval.c: copyright notice is updated;
+	predicates on 'is_examinable', 'examiners', 'exam_score' always
+	return 0.
+
+	* new_server_html.c:
+	(priv_edit_run) 'is_examinable' change is ignored.
+
+	* new_server_html_2.c:
+	(ns_write_priv_all_runs) 'is_examinable' is ignored.
+
+	* rldb_plugin_file.c:
+	changes to 'is_examinable', 'examiners', 'exam_score' are ignored;
+	reading of those fields returns 0.
+
+	* runlog.c:
+	changes to 'is_examinable', 'examiners', 'exam_score' are ignored;
+	reading of those fields returns 0.
+
+	* runlog_xml.c:
+	'is_examinable' field is ignored on reading and writing.
+
+2012-06-27 (r6913) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make:
+	run_packet_1.c, run_packet_2.c, run_packet_3.c, run_packet_7.c
+	are removed.
+
+	* run_packet_priv.h:
+	(struct run_request_bin_packet) removed.
+
+2012-06-27 (r6911) Alexander Chernov  <cher@ejudge.ru>
+
+	* run_packet.h:
+	obsolete code is removed.
+
+	* run_packet_1.c, run_packet_2.c, run_packet_3.c:
+	obsolete code is removed.
+
 2012-06-21 (r6905) Alexander Chernov  <cher@ejudge.ru>
 
 	* ej-super-run.c:
