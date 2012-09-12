@@ -1556,7 +1556,7 @@ report_args_and_env(testinfo_t *ti)
   for (i = 0; i < ti->cmd_argc; i++) {
     cmd_args_len += 16;
     if (ti->cmd_argv[i]) {
-      cmd_args_len += strlen(ti->cmd_argv[i] + 16);
+      cmd_args_len += strlen(ti->cmd_argv[i]) + 16;
     }
   }
   if (cmd_args_len > 0) {
