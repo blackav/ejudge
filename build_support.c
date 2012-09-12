@@ -669,7 +669,7 @@ build_prepare_test_file_names(
     }
     if (prob->info_pat[0] >= ' ' ) {
       snprintf(info_pat, buf_size, "%s%s", pat_prefix, prob->info_pat);
-    } else if (prob->corr_sfx[0] >= ' ') {
+    } else if (prob->info_sfx[0] >= ' ') {
       snprintf(info_pat, buf_size, "%s%%03d%s", pat_prefix, prob->info_sfx);
     } else {
       snprintf(info_pat, buf_size, "%s%%03d%s", pat_prefix, ".inf");
@@ -699,10 +699,10 @@ build_prepare_test_file_names(
     }
     if (prob->tgz_pat[0] >= ' ' ) {
       snprintf(tgz_pat, buf_size, "%s%s", pat_prefix, prob->tgz_pat);
-    } else if (prob->corr_sfx[0] >= ' ') {
+    } else if (prob->tgz_sfx[0] >= ' ') {
       snprintf(tgz_pat, buf_size, "%s%%03d%s", pat_prefix, prob->tgz_sfx);
     } else {
-      snprintf(tgz_pat, buf_size, "%s%%03d%s", pat_prefix, ".inf");
+      snprintf(tgz_pat, buf_size, "%s%%03d%s", pat_prefix, ".tgz");
     }
     snprintf(name1, sizeof(name1), tgz_pat, 1);
     snprintf(name2, sizeof(name2), tgz_pat, 2);
@@ -712,7 +712,7 @@ build_prepare_test_file_names(
     }
     if (prob->tgzdir_pat[0] >= ' ' ) {
       snprintf(tgzdir_pat, buf_size, "%s%s", pat_prefix, prob->tgzdir_pat);
-    } else if (prob->corr_sfx[0] >= ' ') {
+    } else if (prob->tgzdir_sfx[0] >= ' ') {
       snprintf(tgzdir_pat, buf_size, "%s%%03d%s", pat_prefix, prob->tgzdir_sfx);
     } else {
       snprintf(tgzdir_pat, buf_size, "%s%%03d%s", pat_prefix, ".dir");
