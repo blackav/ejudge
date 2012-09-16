@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2008-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -64,6 +64,8 @@ run_status_str(
   case RUN_MEM_LIMIT_ERR:    s = _("Memory limit exceeded"); break;
   case RUN_SECURITY_ERR:     s = _("Security violation");  break;
   case RUN_STYLE_ERR:        s = _("Coding style violation"); break;
+  case RUN_WALL_TIME_LIMIT_ERR: s = _("Wall time-limit exceeded"); break;
+  case RUN_PENDING_REVIEW:   s = _("Pending review");      break;
   case RUN_RUNNING:          s = _("Running...");          break;
   case RUN_COMPILED:         s = _("Compiled");            break;
   case RUN_COMPILING:        s = _("Compiling...");        break;
@@ -86,6 +88,7 @@ static const unsigned char is_failed_attempt_table[RUN_LAST + 1] =
 {
   [RUN_RUN_TIME_ERR]     = 1,
   [RUN_TIME_LIMIT_ERR]   = 1,
+  [RUN_WALL_TIME_LIMIT_ERR] = 1,
   [RUN_PRESENTATION_ERR] = 1,
   [RUN_WRONG_ANSWER_ERR] = 1,
   [RUN_MEM_LIMIT_ERR]    = 1,
@@ -103,6 +106,7 @@ static const unsigned char is_valid_test_status_table[RUN_LAST + 1] =
   [RUN_OK]               = 1,
   [RUN_RUN_TIME_ERR]     = 1,
   [RUN_TIME_LIMIT_ERR]   = 1,
+  [RUN_WALL_TIME_LIMIT_ERR] = 1,
   [RUN_PRESENTATION_ERR] = 1,
   [RUN_WRONG_ANSWER_ERR] = 1,
   [RUN_MEM_LIMIT_ERR]    = 1,
@@ -122,10 +126,12 @@ static const unsigned char is_team_report_available_table[RUN_LAST + 1] =
   [RUN_COMPILE_ERR]      = 1,
   [RUN_RUN_TIME_ERR]     = 1,
   [RUN_TIME_LIMIT_ERR]   = 1,
+  [RUN_WALL_TIME_LIMIT_ERR] = 1,
   [RUN_PRESENTATION_ERR] = 1,
   [RUN_WRONG_ANSWER_ERR] = 1,
   [RUN_PARTIAL]          = 1,
   [RUN_ACCEPTED]         = 1,
+  [RUN_PENDING_REVIEW]   = 1,
   [RUN_MEM_LIMIT_ERR]    = 1,
   [RUN_SECURITY_ERR]     = 1,
   [RUN_STYLE_ERR]        = 1,
@@ -143,11 +149,13 @@ static const unsigned char is_report_available_table[RUN_LAST + 1] =
   [RUN_COMPILE_ERR]      = 1,
   [RUN_RUN_TIME_ERR]     = 1,
   [RUN_TIME_LIMIT_ERR]   = 1,
+  [RUN_WALL_TIME_LIMIT_ERR] = 1,
   [RUN_PRESENTATION_ERR] = 1,
   [RUN_WRONG_ANSWER_ERR] = 1,
   [RUN_CHECK_FAILED]     = 1,
   [RUN_PARTIAL]          = 1,
   [RUN_ACCEPTED]         = 1,
+  [RUN_PENDING_REVIEW]   = 1,
   [RUN_MEM_LIMIT_ERR]    = 1,
   [RUN_SECURITY_ERR]     = 1,
   [RUN_STYLE_ERR]        = 1,
@@ -186,6 +194,8 @@ static const struct str_to_status_data str_to_status_table[] =
   { "ML", RUN_MEM_LIMIT_ERR },
   { "SE", RUN_SECURITY_ERR },
   { "SV", RUN_STYLE_ERR },
+  { "WT", RUN_WALL_TIME_LIMIT_ERR },
+  { "PR", RUN_PENDING_REVIEW },
   { "RU", RUN_RUNNING },
   { "CD", RUN_COMPILED },
   { "CG", RUN_COMPILING },
@@ -226,6 +236,8 @@ static const unsigned char run_valid_statuses[RUN_LAST + 1] =
   [RUN_MEM_LIMIT_ERR]    = 1,
   [RUN_SECURITY_ERR]     = 1,
   [RUN_STYLE_ERR]        = 1,
+  [RUN_WALL_TIME_LIMIT_ERR] = 1,
+  [RUN_PENDING_REVIEW]   = 1,
   [RUN_VIRTUAL_START]    = 1,
   [RUN_VIRTUAL_STOP]     = 1,
   [RUN_EMPTY]            = 1,
@@ -258,6 +270,8 @@ static const unsigned char run_valid_user_statuses[RUN_LAST + 1] =
   [RUN_MEM_LIMIT_ERR]    = 1,
   [RUN_SECURITY_ERR]     = 1,
   [RUN_STYLE_ERR]        = 1,
+  [RUN_WALL_TIME_LIMIT_ERR] = 1,
+  [RUN_PENDING_REVIEW]   = 1,
   [RUN_RUNNING]          = 1,
   [RUN_COMPILED]         = 1,
   [RUN_COMPILING]        = 1,
@@ -287,6 +301,8 @@ static const unsigned char run_source_available_statuses[RUN_LAST + 1] =
   [RUN_MEM_LIMIT_ERR]    = 1,
   [RUN_SECURITY_ERR]     = 1,
   [RUN_STYLE_ERR]        = 1,
+  [RUN_WALL_TIME_LIMIT_ERR] = 1,
+  [RUN_PENDING_REVIEW]   = 1,
   [RUN_RUNNING]          = 1,
   [RUN_COMPILED]         = 1,
   [RUN_COMPILING]        = 1,

@@ -59,6 +59,8 @@ enum
   RUN_MEM_LIMIT_ERR    = 12,
   RUN_SECURITY_ERR     = 13,
   RUN_STYLE_ERR        = 14,
+  RUN_WALL_TIME_LIMIT_ERR = 15,
+  RUN_PENDING_REVIEW   = 16,
 };
 
 static const unsigned char *progname;
@@ -203,6 +205,8 @@ static const unsigned char * const run_status_str[] =
   [RUN_MEM_LIMIT_ERR] = "ML",
   [RUN_SECURITY_ERR] = "SE",
   [RUN_STYLE_ERR] = "SV",
+  [RUN_WALL_TIME_LIMIT_ERR] = "WT",
+  [RUN_PENDING_REVIEW] = "PR",
 };
 
 static const unsigned char * const

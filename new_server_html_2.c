@@ -3026,6 +3026,7 @@ ns_priv_edit_run_action(
     case RUN_COMPILE_ERR:
     case RUN_CHECK_FAILED:
     case RUN_ACCEPTED:
+    case RUN_PENDING_REVIEW:
     case RUN_IGNORED:
     case RUN_DISQUALIFIED:
     case RUN_PENDING:
@@ -3035,6 +3036,7 @@ ns_priv_edit_run_action(
 
     case RUN_RUN_TIME_ERR:
     case RUN_TIME_LIMIT_ERR:
+    case RUN_WALL_TIME_LIMIT_ERR:
     case RUN_PRESENTATION_ERR:
     case RUN_WRONG_ANSWER_ERR:
     case RUN_PARTIAL:
@@ -3081,6 +3083,7 @@ ns_priv_edit_run_action(
       case RUN_COMPILE_ERR:
       case RUN_CHECK_FAILED:
       case RUN_ACCEPTED:
+      case RUN_PENDING_REVIEW:
       case RUN_IGNORED:
       case RUN_DISQUALIFIED:
       case RUN_PENDING:
@@ -3090,6 +3093,7 @@ ns_priv_edit_run_action(
 
       case RUN_RUN_TIME_ERR:
       case RUN_TIME_LIMIT_ERR:
+      case RUN_WALL_TIME_LIMIT_ERR:
       case RUN_PRESENTATION_ERR:
       case RUN_WRONG_ANSWER_ERR:
       case RUN_PARTIAL:
@@ -3177,6 +3181,7 @@ ns_priv_edit_run_action(
         case RUN_COMPILE_ERR:
         case RUN_CHECK_FAILED:
         case RUN_ACCEPTED:
+        case RUN_PENDING_REVIEW:
         case RUN_IGNORED:
         case RUN_DISQUALIFIED:
         case RUN_PENDING:
@@ -3186,6 +3191,7 @@ ns_priv_edit_run_action(
 
         case RUN_RUN_TIME_ERR:
         case RUN_TIME_LIMIT_ERR:
+        case RUN_WALL_TIME_LIMIT_ERR:
         case RUN_PRESENTATION_ERR:
         case RUN_WRONG_ANSWER_ERR:
         case RUN_PARTIAL:
@@ -3232,6 +3238,7 @@ ns_priv_edit_run_action(
           case RUN_COMPILE_ERR:
           case RUN_CHECK_FAILED:
           case RUN_ACCEPTED:
+          case RUN_PENDING_REVIEW:
           case RUN_IGNORED:
           case RUN_DISQUALIFIED:
           case RUN_PENDING:
@@ -3241,6 +3248,7 @@ ns_priv_edit_run_action(
 
           case RUN_RUN_TIME_ERR:
           case RUN_TIME_LIMIT_ERR:
+          case RUN_WALL_TIME_LIMIT_ERR:
           case RUN_PRESENTATION_ERR:
           case RUN_WRONG_ANSWER_ERR:
           case RUN_PARTIAL:
@@ -6087,6 +6095,7 @@ static int get_accepting_passed_tests(
   switch (re->status) {
   case RUN_OK:
   case RUN_ACCEPTED:
+  case RUN_PENDING_REVIEW:
   case RUN_PARTIAL:
     if (prob->accept_partial <= 0 && prob->min_tests_to_accept < 0)
       return prob->tests_to_accept;
@@ -6094,6 +6103,7 @@ static int get_accepting_passed_tests(
 
   case RUN_RUN_TIME_ERR:
   case RUN_TIME_LIMIT_ERR:
+  case RUN_WALL_TIME_LIMIT_ERR:
   case RUN_PRESENTATION_ERR:
   case RUN_WRONG_ANSWER_ERR:
   case RUN_MEM_LIMIT_ERR:
@@ -6292,6 +6302,7 @@ ns_write_olympiads_user_runs(
       case RUN_COMPILE_ERR:
       case RUN_RUN_TIME_ERR:
       case RUN_TIME_LIMIT_ERR:
+      case RUN_WALL_TIME_LIMIT_ERR:
       case RUN_MEM_LIMIT_ERR:
       case RUN_SECURITY_ERR:
       case RUN_STYLE_ERR:
@@ -6310,6 +6321,7 @@ ns_write_olympiads_user_runs(
       case RUN_OK:
       case RUN_PARTIAL:
       case RUN_ACCEPTED:
+      case RUN_PENDING_REVIEW:
         re.status = RUN_ACCEPTED;
         if (prob && prob->type != PROB_TYPE_STANDARD) {
           snprintf(tests_buf, sizeof(tests_buf), "&nbsp;");
@@ -6332,6 +6344,7 @@ ns_write_olympiads_user_runs(
       case RUN_WRONG_ANSWER_ERR:
       case RUN_RUN_TIME_ERR:
       case RUN_TIME_LIMIT_ERR:
+      case RUN_WALL_TIME_LIMIT_ERR:
       case RUN_MEM_LIMIT_ERR:
       case RUN_SECURITY_ERR:
         if (prob && prob->type != PROB_TYPE_STANDARD) {
@@ -6392,6 +6405,7 @@ ns_write_olympiads_user_runs(
         break;
 
       case RUN_ACCEPTED:
+      case RUN_PENDING_REVIEW:
         if (prob && !latest_flag[prob->id]) run_latest = 1;
         if (prob && prob->type != PROB_TYPE_STANDARD) {
           snprintf(tests_buf, sizeof(tests_buf), "&nbsp;");
@@ -6404,6 +6418,7 @@ ns_write_olympiads_user_runs(
 
       case RUN_RUN_TIME_ERR:
       case RUN_TIME_LIMIT_ERR:
+      case RUN_WALL_TIME_LIMIT_ERR:
       case RUN_PRESENTATION_ERR:
       case RUN_WRONG_ANSWER_ERR:
       case RUN_CHECK_FAILED:
@@ -6590,6 +6605,7 @@ ns_get_user_problems_summary(
         case RUN_OK:
         case RUN_PARTIAL:
         case RUN_ACCEPTED:
+        case RUN_PENDING_REVIEW:
         case RUN_WRONG_ANSWER_ERR:
           status = RUN_ACCEPTED;
           break;
@@ -6597,6 +6613,7 @@ ns_get_user_problems_summary(
         case RUN_COMPILE_ERR:
         case RUN_RUN_TIME_ERR:
         case RUN_TIME_LIMIT_ERR:
+        case RUN_WALL_TIME_LIMIT_ERR:
         case RUN_CHECK_FAILED:
         case RUN_MEM_LIMIT_ERR:
         case RUN_SECURITY_ERR:
@@ -6606,6 +6623,7 @@ ns_get_user_problems_summary(
         }
         switch (status) {
         case RUN_ACCEPTED:
+        case RUN_PENDING_REVIEW:
           accepted_flag[re.prob_id] = 1;
           best_run[re.prob_id] = run_id;
           break;
@@ -6636,6 +6654,7 @@ ns_get_user_problems_summary(
         case RUN_OK:
         case RUN_PARTIAL:
         case RUN_ACCEPTED:
+        case RUN_PENDING_REVIEW:
           accepted_flag[re.prob_id] = 1;
           best_run[re.prob_id] = run_id;
           break;
@@ -6643,6 +6662,7 @@ ns_get_user_problems_summary(
         case RUN_COMPILE_ERR:
         case RUN_RUN_TIME_ERR:
         case RUN_TIME_LIMIT_ERR:
+        case RUN_WALL_TIME_LIMIT_ERR:
         case RUN_PRESENTATION_ERR:
         case RUN_WRONG_ANSWER_ERR:
         case RUN_CHECK_FAILED:
@@ -6685,6 +6705,7 @@ ns_get_user_problems_summary(
       case RUN_COMPILE_ERR:
       case RUN_RUN_TIME_ERR:
       case RUN_TIME_LIMIT_ERR:
+      case RUN_WALL_TIME_LIMIT_ERR:
       case RUN_PRESENTATION_ERR:
       case RUN_WRONG_ANSWER_ERR:
       case RUN_CHECK_FAILED:
@@ -6705,6 +6726,7 @@ ns_get_user_problems_summary(
         break;
 
       case RUN_ACCEPTED:
+      case RUN_PENDING_REVIEW:
         break;
 
       case RUN_IGNORED:
@@ -6755,6 +6777,7 @@ ns_get_user_problems_summary(
 
         case RUN_RUN_TIME_ERR:
         case RUN_TIME_LIMIT_ERR:
+        case RUN_WALL_TIME_LIMIT_ERR:
         case RUN_PRESENTATION_ERR:
         case RUN_WRONG_ANSWER_ERR:
         case RUN_CHECK_FAILED:
@@ -6784,6 +6807,7 @@ ns_get_user_problems_summary(
           break;
 
         case RUN_ACCEPTED:
+        case RUN_PENDING_REVIEW:
         case RUN_PENDING:
           pending_flag[re.prob_id] = 1;
           attempts[re.prob_id]++;
@@ -6830,6 +6854,7 @@ ns_get_user_problems_summary(
 
         case RUN_RUN_TIME_ERR:
         case RUN_TIME_LIMIT_ERR:
+        case RUN_WALL_TIME_LIMIT_ERR:
         case RUN_PRESENTATION_ERR:
         case RUN_WRONG_ANSWER_ERR:
         case RUN_CHECK_FAILED:
@@ -6860,6 +6885,7 @@ ns_get_user_problems_summary(
           break;
 
         case RUN_ACCEPTED:
+        case RUN_PENDING_REVIEW:
         case RUN_PENDING:
           pending_flag[re.prob_id] = 1;
           attempts[re.prob_id]++;
@@ -6898,6 +6924,7 @@ ns_get_user_problems_summary(
         break;
       case RUN_RUN_TIME_ERR:
       case RUN_TIME_LIMIT_ERR:
+      case RUN_WALL_TIME_LIMIT_ERR:
       case RUN_PRESENTATION_ERR:
       case RUN_WRONG_ANSWER_ERR:
       case RUN_CHECK_FAILED:
@@ -6918,6 +6945,7 @@ ns_get_user_problems_summary(
         break;
 
       case RUN_ACCEPTED:
+      case RUN_PENDING_REVIEW:
       case RUN_PENDING:
         pending_flag[re.prob_id] = 1;
         attempts[re.prob_id]++;
@@ -6946,6 +6974,7 @@ ns_get_user_problems_summary(
         break;
       case RUN_RUN_TIME_ERR:
       case RUN_TIME_LIMIT_ERR:
+      case RUN_WALL_TIME_LIMIT_ERR:
       case RUN_PRESENTATION_ERR:
       case RUN_WRONG_ANSWER_ERR:
       case RUN_CHECK_FAILED:
@@ -6961,6 +6990,7 @@ ns_get_user_problems_summary(
         break;
  
       case RUN_ACCEPTED:
+      case RUN_PENDING_REVIEW:
       case RUN_PENDING:
         pending_flag[re.prob_id] = 1;
         attempts[re.prob_id]++;
@@ -7117,6 +7147,7 @@ ns_write_user_problems_summary(
         switch (act_status) {
         case RUN_RUN_TIME_ERR:
         case RUN_TIME_LIMIT_ERR:
+        case RUN_WALL_TIME_LIMIT_ERR:
         case RUN_PRESENTATION_ERR:
         case RUN_WRONG_ANSWER_ERR:
         case RUN_MEM_LIMIT_ERR:
@@ -7182,6 +7213,7 @@ ns_write_user_problems_summary(
         break;
       case RUN_RUN_TIME_ERR:
       case RUN_TIME_LIMIT_ERR:
+      case RUN_WALL_TIME_LIMIT_ERR:
       case RUN_PRESENTATION_ERR:
       case RUN_WRONG_ANSWER_ERR:
       case RUN_MEM_LIMIT_ERR:
@@ -7202,6 +7234,7 @@ ns_write_user_problems_summary(
       switch (status) {
       case RUN_RUN_TIME_ERR:
       case RUN_TIME_LIMIT_ERR:
+      case RUN_WALL_TIME_LIMIT_ERR:
       case RUN_PRESENTATION_ERR:
       case RUN_WRONG_ANSWER_ERR:
       case RUN_MEM_LIMIT_ERR:

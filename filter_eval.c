@@ -52,6 +52,7 @@ is_latest(struct filter_env *env, int rid)
   case RUN_OK:
   case RUN_PARTIAL:
   case RUN_ACCEPTED:
+  case RUN_PENDING_REVIEW:
     break;
   default:
     return 0;
@@ -65,6 +66,7 @@ is_latest(struct filter_env *env, int rid)
     case RUN_OK:
     case RUN_PARTIAL:
     case RUN_ACCEPTED:
+    case RUN_PENDING_REVIEW:
       return 0;
     }
   }

@@ -82,6 +82,8 @@ static const unsigned char * const change_status_strings[RUN_LAST + 1] =
   [RUN_MEM_LIMIT_ERR]    = "Mem. limit exceeded",
   [RUN_SECURITY_ERR]     = "Security violation",
   [RUN_STYLE_ERR]        = "Coding style violation",
+  [RUN_WALL_TIME_LIMIT_ERR] = "Wall time-limit exceeded",
+  [RUN_PENDING_REVIEW]   = "Pending review",
   [RUN_PENDING]          = "Mark as PENDING",
   [RUN_FULL_REJUDGE]     = "FULL Rejudge",
   [RUN_REJUDGE]          = "Rejudge",
@@ -89,13 +91,13 @@ static const unsigned char * const change_status_strings[RUN_LAST + 1] =
 static const int kirov_no_rejudge_status_list[] =
 {
   RUN_IGNORED, RUN_DISQUALIFIED, RUN_PENDING,
-  RUN_OK, RUN_COMPILE_ERR, RUN_PARTIAL, RUN_ACCEPTED, RUN_STYLE_ERR,
+  RUN_OK, RUN_COMPILE_ERR, RUN_PARTIAL, RUN_ACCEPTED, RUN_STYLE_ERR, RUN_PENDING_REVIEW,
   -1,
 };
 static const int kirov_status_list[] =
 {
   RUN_REJUDGE, RUN_IGNORED, RUN_DISQUALIFIED, RUN_PENDING,
-  RUN_OK, RUN_COMPILE_ERR, RUN_PARTIAL, RUN_ACCEPTED, RUN_STYLE_ERR,
+  RUN_OK, RUN_COMPILE_ERR, RUN_PARTIAL, RUN_ACCEPTED, RUN_STYLE_ERR, RUN_PENDING_REVIEW,
   -1,
 };
 static const int olymp_accepting_no_rejudge_status_list[] =
@@ -103,7 +105,7 @@ static const int olymp_accepting_no_rejudge_status_list[] =
   RUN_IGNORED, RUN_DISQUALIFIED, RUN_PENDING, RUN_ACCEPTED,
   RUN_OK, RUN_PARTIAL, RUN_COMPILE_ERR, RUN_RUN_TIME_ERR, RUN_TIME_LIMIT_ERR,
   RUN_PRESENTATION_ERR, RUN_WRONG_ANSWER_ERR, RUN_MEM_LIMIT_ERR, RUN_SECURITY_ERR,
-  RUN_STYLE_ERR,
+  RUN_STYLE_ERR, RUN_WALL_TIME_LIMIT_ERR, RUN_PENDING_REVIEW,
   -1,
 };
 static const int olymp_accepting_status_list[] =
@@ -111,7 +113,7 @@ static const int olymp_accepting_status_list[] =
   RUN_REJUDGE, RUN_FULL_REJUDGE, RUN_IGNORED, RUN_DISQUALIFIED, RUN_PENDING,
   RUN_ACCEPTED, RUN_OK, RUN_PARTIAL, RUN_COMPILE_ERR, RUN_RUN_TIME_ERR,
   RUN_TIME_LIMIT_ERR, RUN_PRESENTATION_ERR, RUN_WRONG_ANSWER_ERR,
-  RUN_MEM_LIMIT_ERR, RUN_SECURITY_ERR, RUN_STYLE_ERR,
+  RUN_MEM_LIMIT_ERR, RUN_SECURITY_ERR, RUN_STYLE_ERR, RUN_WALL_TIME_LIMIT_ERR, RUN_PENDING_REVIEW,
   -1,
 };
 static const int olymp_judging_no_rejudge_status_list[] =
@@ -119,7 +121,7 @@ static const int olymp_judging_no_rejudge_status_list[] =
   RUN_IGNORED, RUN_DISQUALIFIED, RUN_PENDING,
   RUN_OK, RUN_PARTIAL,  RUN_ACCEPTED, RUN_COMPILE_ERR, RUN_RUN_TIME_ERR,
   RUN_TIME_LIMIT_ERR, RUN_PRESENTATION_ERR, RUN_WRONG_ANSWER_ERR,
-  RUN_MEM_LIMIT_ERR, RUN_SECURITY_ERR, RUN_STYLE_ERR,
+  RUN_MEM_LIMIT_ERR, RUN_SECURITY_ERR, RUN_STYLE_ERR, RUN_WALL_TIME_LIMIT_ERR, RUN_PENDING_REVIEW,
   -1,
 };
 static const int olymp_judging_status_list[] =
@@ -127,7 +129,7 @@ static const int olymp_judging_status_list[] =
   RUN_REJUDGE, RUN_IGNORED, RUN_DISQUALIFIED, RUN_PENDING,
   RUN_OK,  RUN_PARTIAL, RUN_ACCEPTED, RUN_COMPILE_ERR, RUN_RUN_TIME_ERR,
   RUN_TIME_LIMIT_ERR, RUN_PRESENTATION_ERR, RUN_WRONG_ANSWER_ERR,
-  RUN_MEM_LIMIT_ERR, RUN_SECURITY_ERR, RUN_STYLE_ERR,
+  RUN_MEM_LIMIT_ERR, RUN_SECURITY_ERR, RUN_STYLE_ERR, RUN_WALL_TIME_LIMIT_ERR, RUN_PENDING_REVIEW,
   -1,
 };
 static const int acm_no_rejudge_status_list[] =
@@ -135,7 +137,7 @@ static const int acm_no_rejudge_status_list[] =
   RUN_IGNORED, RUN_DISQUALIFIED, RUN_PENDING,
   RUN_OK, RUN_COMPILE_ERR, RUN_RUN_TIME_ERR, RUN_TIME_LIMIT_ERR,
   RUN_PRESENTATION_ERR, RUN_WRONG_ANSWER_ERR, RUN_MEM_LIMIT_ERR, RUN_SECURITY_ERR, RUN_ACCEPTED,
-  RUN_STYLE_ERR,
+  RUN_STYLE_ERR, RUN_WALL_TIME_LIMIT_ERR, RUN_PENDING_REVIEW,
   -1,
 };
 static const int acm_status_list[] =
@@ -143,7 +145,7 @@ static const int acm_status_list[] =
   RUN_REJUDGE, RUN_IGNORED, RUN_DISQUALIFIED, RUN_PENDING,
   RUN_OK, RUN_COMPILE_ERR, RUN_RUN_TIME_ERR, RUN_TIME_LIMIT_ERR,
   RUN_PRESENTATION_ERR, RUN_WRONG_ANSWER_ERR, RUN_MEM_LIMIT_ERR, RUN_SECURITY_ERR, RUN_ACCEPTED,
-  RUN_STYLE_ERR,
+  RUN_STYLE_ERR, RUN_WALL_TIME_LIMIT_ERR, RUN_PENDING_REVIEW,
   -1,
 };
 
@@ -250,7 +252,7 @@ write_xml_tests_report(
 
   if (r->status == RUN_CHECK_FAILED) {
     font_color = " color=\"magenta\"";
-  } else if (r->status == RUN_OK || r->status == RUN_ACCEPTED) {
+  } else if (r->status == RUN_OK || r->status == RUN_ACCEPTED || r->status == RUN_PENDING_REVIEW) {
     font_color = " color=\"green\"";
   } else {
     font_color = " color=\"red\"";
@@ -417,7 +419,7 @@ write_xml_testing_report(
   }
 
   // report the testing status
-  if (r->status == RUN_OK || r->status == RUN_ACCEPTED) {
+  if (r->status == RUN_OK || r->status == RUN_ACCEPTED || r->status == RUN_PENDING_REVIEW) {
     font_color = "green";
   } else {
     font_color = "red";
@@ -436,7 +438,7 @@ write_xml_testing_report(
     fprintf(f, _("Score gained: %d (out of %d).<br><br></big>\n"),
             r->score, r->max_score);
   } else {
-    if (r->status != RUN_OK && r->status != RUN_ACCEPTED) {
+    if (r->status != RUN_OK && r->status != RUN_ACCEPTED && r->status != RUN_PENDING_REVIEW) {
       fprintf(f, _("<big>Failed test: %d.<br><br></big>\n"), r->failed_test);
     }
   }
@@ -479,6 +481,7 @@ write_xml_testing_report(
       }
       break;
     case RUN_TIME_LIMIT_ERR:
+    case RUN_WALL_TIME_LIMIT_ERR:
       if (max_cpu_time_tl <= 0 || max_cpu_time < 0
           || max_cpu_time < r->tests[i]->time) {
         max_cpu_time = r->tests[i]->time;
@@ -539,14 +542,14 @@ write_xml_testing_report(
     if (!(t = r->tests[i])) continue;
     fprintf(f, "<tr>");
     fprintf(f, "<td%s>%d</td>", cl1, t->num);
-    if (t->status == RUN_OK || t->status == RUN_ACCEPTED) {
+    if (t->status == RUN_OK || t->status == RUN_ACCEPTED || t->status == RUN_PENDING_REVIEW) {
       font_color = "green";
     } else {
       font_color = "red";
     }
     fprintf(f, "<td%s><font color=\"%s\">%s</font></td>\n", cl1,
             font_color, run_status_str(t->status, 0, 0, 0, 0));
-    if (user_mode && t->status == RUN_TIME_LIMIT_ERR) {
+    if (user_mode && (t->status == RUN_TIME_LIMIT_ERR || t->status == RUN_WALL_TIME_LIMIT_ERR)) {
       // tell lies about the running time in case of time limit :)
       if (r->time_limit_ms > 0) {
         fprintf(f, "<td%s>&gt;%d.%03d</td>", cl1,
@@ -573,6 +576,7 @@ write_xml_testing_report(
     switch (t->status) {
     case RUN_OK:
     case RUN_ACCEPTED:
+    case RUN_PENDING_REVIEW:
       if (t->checker_comment) {
         s = html_armor_string_dup(t->checker_comment);
         fprintf(f, "%s", s);
@@ -594,6 +598,7 @@ write_xml_testing_report(
       break;
 
     case RUN_TIME_LIMIT_ERR:
+    case RUN_WALL_TIME_LIMIT_ERR:
       fprintf(f, "&nbsp;");
       break;
 
@@ -1240,6 +1245,7 @@ generate_daily_statistics(
 
     case RUN_RUN_TIME_ERR:
     case RUN_TIME_LIMIT_ERR:
+    case RUN_WALL_TIME_LIMIT_ERR:
     case RUN_PRESENTATION_ERR:
     case RUN_WRONG_ANSWER_ERR:
     case RUN_MEM_LIMIT_ERR:
@@ -1260,6 +1266,7 @@ generate_daily_statistics(
       break;
 
     case RUN_ACCEPTED:
+    case RUN_PENDING_REVIEW:
       total_ac++;
       u_ac[u]++;
       u_total[u]++;
@@ -1344,6 +1351,8 @@ generate_daily_statistics(
     fprintf(f, "    Memory limit exceeded: %d\n", total_status[RUN_MEM_LIMIT_ERR]);
   if (total_status[RUN_SECURITY_ERR] > 0)
     fprintf(f, "    Security violation:    %d\n", total_status[RUN_SECURITY_ERR]);
+  if (total_status[RUN_WALL_TIME_LIMIT_ERR] > 0)
+    fprintf(f, "    Wall time-limit exceeded:%d\n", total_status[RUN_WALL_TIME_LIMIT_ERR]);
   if (total_status[RUN_PARTIAL] > 0)
     fprintf(f, "    Partial solution:      %d\n", total_status[RUN_PARTIAL]);
   if (total_ce > 0)

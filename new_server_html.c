@@ -3190,7 +3190,7 @@ priv_set_run_style_error_status(
     ns_error(log_f, NEW_SRV_ERR_USER_ID_NONEXISTANT, re.user_id);
     goto cleanup;
   }
-  if (re.status != RUN_ACCEPTED && opcaps_check(phr->caps, OPCAP_EDIT_RUN)<0){
+  if ((re.status != RUN_ACCEPTED && re.status != RUN_PENDING_REVIEW) && opcaps_check(phr->caps, OPCAP_EDIT_RUN)<0){
     ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
     goto cleanup;    
   }
@@ -4053,7 +4053,7 @@ priv_simple_change_status(
     ns_error(log_f, NEW_SRV_ERR_INV_RUN_ID);
     goto cleanup;
   }
-  if (re.status != RUN_ACCEPTED && opcaps_check(phr->caps, OPCAP_EDIT_RUN)<0){
+  if ((re.status != RUN_ACCEPTED && re.status != RUN_PENDING_REVIEW) && opcaps_check(phr->caps, OPCAP_EDIT_RUN)<0){
     ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
     goto cleanup;    
   }
@@ -12015,10 +12015,12 @@ unpriv_view_test(FILE *fout,
   case RUN_OK:
   case RUN_RUN_TIME_ERR:
   case RUN_TIME_LIMIT_ERR:
+  case RUN_WALL_TIME_LIMIT_ERR:
   case RUN_PRESENTATION_ERR:
   case RUN_WRONG_ANSWER_ERR:
   case RUN_PARTIAL:
   case RUN_ACCEPTED:
+  case RUN_PENDING_REVIEW:
   case RUN_MEM_LIMIT_ERR:
   case RUN_SECURITY_ERR:
     break;
@@ -12116,10 +12118,12 @@ unpriv_view_report(FILE *fout,
   case RUN_COMPILE_ERR:
   case RUN_RUN_TIME_ERR:
   case RUN_TIME_LIMIT_ERR:
+  case RUN_WALL_TIME_LIMIT_ERR:
   case RUN_PRESENTATION_ERR:
   case RUN_WRONG_ANSWER_ERR:
   case RUN_PARTIAL:
   case RUN_ACCEPTED:
+  case RUN_PENDING_REVIEW:
   case RUN_MEM_LIMIT_ERR:
   case RUN_SECURITY_ERR:
   case RUN_STYLE_ERR:
