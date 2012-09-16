@@ -2296,9 +2296,11 @@ serve_is_valid_status(serve_state_t state, int status, int mode)
     case RUN_PARTIAL:
     case RUN_RUN_TIME_ERR:
     case RUN_TIME_LIMIT_ERR:
+    case RUN_WALL_TIME_LIMIT_ERR:
     case RUN_PRESENTATION_ERR:
     case RUN_WRONG_ANSWER_ERR:
     case RUN_ACCEPTED:
+    case RUN_PENDING_REVIEW:
     case RUN_CHECK_FAILED:
     case RUN_MEM_LIMIT_ERR:
     case RUN_SECURITY_ERR:
@@ -2321,6 +2323,7 @@ serve_is_valid_status(serve_state_t state, int status, int mode)
     case RUN_PARTIAL:
     case RUN_CHECK_FAILED:
     case RUN_ACCEPTED:
+    case RUN_PENDING_REVIEW:
       return 1;
     case RUN_COMPILE_ERR:
     case RUN_STYLE_ERR:
@@ -2337,8 +2340,10 @@ serve_is_valid_status(serve_state_t state, int status, int mode)
     switch (status) {
     case RUN_OK:
     case RUN_ACCEPTED:
+    case RUN_PENDING_REVIEW:
     case RUN_RUN_TIME_ERR:
     case RUN_TIME_LIMIT_ERR:
+    case RUN_WALL_TIME_LIMIT_ERR:
     case RUN_PRESENTATION_ERR:
     case RUN_WRONG_ANSWER_ERR:
     case RUN_CHECK_FAILED:
@@ -2492,7 +2497,7 @@ serve_read_run_packet(
   if (re.prob_id >= 1 && re.prob_id <= state->max_prob
       && state->probs[re.prob_id] && state->probs[re.prob_id]->use_ac_not_ok
       && reply_pkt->status == RUN_OK) {
-    reply_pkt->status = RUN_ACCEPTED;
+    reply_pkt->status = RUN_PENDING_REVIEW;
     if (state->probs[re.prob_id]->ignore_prev_ac > 0) ignore_prev_ac = 1;
   }
   if (reply_pkt->status == RUN_CHECK_FAILED)
@@ -2604,7 +2609,8 @@ serve_read_run_packet(
   if (ignore_prev_ac) {
     for (i = reply_pkt->run_id - 1; i >= 0; --i) {
       if (run_get_entry(state->runlog_state, i, &pe) < 0) continue;
-      if (pe.status == RUN_ACCEPTED && pe.prob_id == re.prob_id && pe.user_id == re.user_id) {
+      if ((pe.status == RUN_ACCEPTED || pe.status == RUN_PENDING_REVIEW)
+          && pe.prob_id == re.prob_id && pe.user_id == re.user_id) {
         run_change_status_3(state->runlog_state, i, RUN_IGNORED, -1, 0, 0, 0, 0, 0, 0, 0);
       }
     }
@@ -3028,11 +3034,13 @@ static unsigned char olympiad_rejudgeable_runs[RUN_LAST + 1] =
   [RUN_COMPILE_ERR]      = 0,
   [RUN_RUN_TIME_ERR]     = 0,
   [RUN_TIME_LIMIT_ERR]   = 0,
+  [RUN_WALL_TIME_LIMIT_ERR] = 0,
   [RUN_PRESENTATION_ERR] = 0,
   [RUN_WRONG_ANSWER_ERR] = 0,
   [RUN_CHECK_FAILED]     = 0,
   [RUN_PARTIAL]          = 1,
   [RUN_ACCEPTED]         = 1,
+  [RUN_PENDING_REVIEW]   = 1,
   [RUN_IGNORED]          = 0,
   [RUN_DISQUALIFIED]     = 0,
   [RUN_PENDING]          = 0,
@@ -3054,11 +3062,13 @@ static unsigned char olympiad_output_only_rejudgeable_runs[RUN_LAST + 1] =
   [RUN_COMPILE_ERR]      = 0,
   [RUN_RUN_TIME_ERR]     = 0,
   [RUN_TIME_LIMIT_ERR]   = 0,
+  [RUN_WALL_TIME_LIMIT_ERR] = 0,
   [RUN_PRESENTATION_ERR] = 0,
   [RUN_WRONG_ANSWER_ERR] = 1,
   [RUN_CHECK_FAILED]     = 0,
   [RUN_PARTIAL]          = 1,
   [RUN_ACCEPTED]         = 1,
+  [RUN_PENDING_REVIEW]   = 1,
   [RUN_IGNORED]          = 0,
   [RUN_DISQUALIFIED]     = 0,
   [RUN_PENDING]          = 0,
@@ -3080,11 +3090,13 @@ static unsigned char generally_rejudgable_runs[RUN_LAST + 1] =
   [RUN_COMPILE_ERR]      = 1,
   [RUN_RUN_TIME_ERR]     = 1,
   [RUN_TIME_LIMIT_ERR]   = 1,
+  [RUN_WALL_TIME_LIMIT_ERR] = 1,
   [RUN_PRESENTATION_ERR] = 1,
   [RUN_WRONG_ANSWER_ERR] = 1,
   [RUN_CHECK_FAILED]     = 1,
   [RUN_PARTIAL]          = 1,
   [RUN_ACCEPTED]         = 1,
+  [RUN_PENDING_REVIEW]   = 1,
   [RUN_IGNORED]          = 1,
   [RUN_DISQUALIFIED]     = 1,
   [RUN_PENDING]          = 1,
@@ -3726,7 +3738,7 @@ serve_judge_virtual_olympiad(
       prob = cs->probs[re.prob_id];
     if (!prob) continue;
     if (prob->disable_testing || prob->disable_auto_testing) continue;
-    if (s != RUN_OK && s != RUN_PARTIAL && s != RUN_ACCEPTED
+    if (s != RUN_OK && s != RUN_PARTIAL && s != RUN_ACCEPTED && s != RUN_PENDING_REVIEW
         && (s != RUN_WRONG_ANSWER_ERR || prob->type == PROB_TYPE_STANDARD))
         continue;
     if (latest_runs[re.prob_id] < 0) latest_runs[re.prob_id] = run_id;

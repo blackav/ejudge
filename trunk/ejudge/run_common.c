@@ -1234,6 +1234,7 @@ invoke_nwrun(
       && result->status != RUN_PRESENTATION_ERR
       && result->status != RUN_RUN_TIME_ERR
       && result->status != RUN_TIME_LIMIT_ERR
+      && result->status != RUN_WALL_TIME_LIMIT_ERR
       && result->status != RUN_CHECK_FAILED
       && result->status != RUN_MEM_LIMIT_ERR
       && result->status != RUN_SECURITY_ERR) {
@@ -2642,6 +2643,7 @@ play_sound(
     const unsigned char *sound = NULL;
     switch (status) {
     case RUN_TIME_LIMIT_ERR:   sound = global->timelimit_sound;    break;
+    case RUN_WALL_TIME_LIMIT_ERR: sound = global->timelimit_sound; break;
     case RUN_RUN_TIME_ERR:     sound = global->runtime_sound;      break;
     case RUN_CHECK_FAILED:     sound = global->internal_sound;     break;
     case RUN_PRESENTATION_ERR: sound = global->presentation_sound; break;

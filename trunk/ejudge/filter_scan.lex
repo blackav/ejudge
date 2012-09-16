@@ -206,6 +206,8 @@ lett    [A-Za-z_]
 [Mm][Ll] { TR(RUN_MEM_LIMIT_ERR); }
 [Ss][Ee] { TR(RUN_SECURITY_ERR); }
 [Ss][Vv] { TR(RUN_STYLE_ERR); }
+[Ww][Tt] { TR(RUN_WALL_TIME_LIMIT_ERR); }
+[Pp][Rr] { TR(RUN_PENDING_REVIEW); }
 [Rr][Uu] { TR(RUN_RUNNING); }
 [Cc][Dd] { TR(RUN_COMPILED); }
 [Cc][Gg] { TR(RUN_COMPILING); }
