@@ -3,7 +3,7 @@
 
 /* $Id$ */
 
-/* Copyright (C) 2003-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -66,8 +66,9 @@ enum
   RUN_MEM_LIMIT_ERR    = 12,
   RUN_SECURITY_ERR     = 13,
   RUN_STYLE_ERR        = 14,
+  RUN_WALL_TIME_LIMIT_ERR = 15,
 
-  RUN_MAX_STATUS       = 14,
+  RUN_MAX_STATUS       = 16,
 };
 
 /* S-expression types */
