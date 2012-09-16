@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-05-09 11:29+0400\n"
-"PO-Revision-Date: 2012-05-01 08:25+0400\n"
+"POT-Creation-Date: 2012-09-16 17:31+0400\n"
+"PO-Revision-Date: 2012-09-16 17:34+0400\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -1144,7 +1144,6 @@ msgstr "Редактирование общей информации"
 msgid "Editing member info"
 msgstr "Редактирование участников"
 
-#, fuzzy
 msgid "Editing run"
 msgstr "Редактирование сообщения"
 
@@ -2450,6 +2449,9 @@ msgstr "Уже есть ждущий импорт XML"
 
 msgid "Pending check"
 msgstr "Ожидает проверки"
+
+msgid "Pending review"
+msgstr "Ожидает подтверждения"
 
 msgid "Permission denied"
 msgstr "В доступе отказано"
@@ -3811,6 +3813,9 @@ msgstr "Виртуальный турнир не может быть начат"
 
 msgid "Virtual stop"
 msgstr "Окончание виртуального турнира"
+
+msgid "Wall time-limit exceeded"
+msgstr "Превышено реальное время работы"
 
 msgid "Warning explanation for the user (mandatory)"
 msgstr "Объяснение для участника (обязательно)"
