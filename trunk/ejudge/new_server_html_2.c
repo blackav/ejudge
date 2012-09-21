@@ -2614,7 +2614,7 @@ ns_priv_edit_run_page(
     ns_error(log_f, NEW_SRV_ERR_INV_RUN_ID);
     goto done;
   }
-  if (info.status < 0 || info.status >= RUN_MAX_STATUS) {
+  if (info.status < 0 || info.status > RUN_MAX_STATUS) {
     ns_error(log_f, NEW_SRV_ERR_INV_RUN_ID);
     goto done;
   }
@@ -2875,7 +2875,7 @@ ns_priv_edit_run_action(
   if (run_get_entry(cs->runlog_state, run_id, &info) < 0) {
     FAIL(NEW_SRV_ERR_INV_RUN_ID);
   }
-  if (info.status < 0 || info.status >= RUN_MAX_STATUS) {
+  if (info.status < 0 || info.status > RUN_MAX_STATUS) {
     FAIL(NEW_SRV_ERR_INV_RUN_ID);
   }
 
@@ -2991,7 +2991,7 @@ ns_priv_edit_run_action(
   }
   if (info.status != value) {
     // FIXME: handle rejudge request
-    if (value >= RUN_MAX_STATUS) {
+    if (value > RUN_MAX_STATUS) {
       fprintf(log_f, "invalid 'status' field value\n");
       FAIL(NEW_SRV_ERR_INV_PARAM);    
     }
@@ -3151,7 +3151,7 @@ ns_priv_edit_run_action(
         FAIL(NEW_SRV_ERR_INV_PARAM);    
       }
       if (info.saved_status != value || !info.is_saved) {
-        if (value >= RUN_MAX_STATUS) {
+        if (value > RUN_MAX_STATUS) {
           fprintf(log_f, "invalid 'saved_status' field value\n");
           FAIL(NEW_SRV_ERR_INV_PARAM);
         }
