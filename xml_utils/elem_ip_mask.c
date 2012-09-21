@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -27,6 +27,11 @@ xml_elem_ip_mask(struct xml_tree *tree,
   unsigned int b1, b2, b3, b4;
   int n;
 
+  if (!strcmp(tree->text, "0")) {
+    *addr_ptr = 0;
+    *mask_ptr = 0;
+    return 0;
+  }
   if (sscanf(tree->text, "%u.%u.%u.%u %n", &b1, &b2, &b3, &b4, &n) == 4
       && !tree->text[n] && b1 <= 255 && b2 <= 255 && b3 <= 255 && b4 <= 255) {
     *addr_ptr = b1 << 24 | b2 << 16 | b3 << 8 | b4;
