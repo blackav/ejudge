@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -21,6 +21,13 @@
 int checker_main(int argc, char **argv)
 {
   char user_buf[1024], corr_buf[1024];
+
+  if (getenv("EJ_REQUIRE_NL")) {
+    if (fseek(f_out, -1L, SEEK_END) >= 0) {
+      if (getc(f_out) != '\n') fatal_PE("no final \\n in the output file");
+      fseek(f_out, 0L, SEEK_SET);
+    }
+  }
 
   checker_read_buf_2(1, "user_ans", 1, user_buf, sizeof(user_buf), 0, 0);
   checker_read_buf_2(2, "corr_ans", 1, corr_buf, sizeof(corr_buf), 0, 0);

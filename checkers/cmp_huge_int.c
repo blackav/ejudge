@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -63,6 +63,13 @@ checker_main(int argc, char *argv[])
   char *outdbuf = 0, *corrdbuf = 0;
   size_t outdsz = 0, corrdsz = 0;
   char *outval, *corrval;
+
+  if (getenv("EJ_REQUIRE_NL")) {
+    if (fseek(f_out, -1L, SEEK_END) >= 0) {
+      if (getc(f_out) != '\n') fatal_PE("no final \\n in the output file");
+      fseek(f_out, 0L, SEEK_SET);
+    }
+  }
 
   corrval = checker_read_buf_2(2,"corr",1,corrsbuf,BUFSIZE,&corrdbuf,&corrdsz);
   checker_corr_eof();
