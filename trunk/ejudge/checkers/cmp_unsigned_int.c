@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -23,6 +23,13 @@
 int checker_main(int argc, char **argv)
 {
   unsigned int out_ans, corr_ans;
+
+  if (getenv("EJ_REQUIRE_NL")) {
+    if (fseek(f_out, -1L, SEEK_END) >= 0) {
+      if (getc(f_out) != '\n') fatal_PE("no final \\n in the output file");
+      fseek(f_out, 0L, SEEK_SET);
+    }
+  }
 
   checker_read_corr_unsigned_int("corr_ans", 1, &corr_ans);
   checker_corr_eof();
