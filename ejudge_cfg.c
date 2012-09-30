@@ -644,6 +644,7 @@ ejudge_cfg_parse(char const *path)
   unsigned char pathbuf[PATH_MAX];
 
   cfg = ejudge_cfg_do_parse(path);
+  if (!cfg) return NULL;
 
   if (!cfg->db_path) {
     xml_err_elem_undefined(&cfg->b, TG_USERDB_FILE);
