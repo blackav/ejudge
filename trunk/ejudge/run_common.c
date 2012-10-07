@@ -1364,7 +1364,7 @@ invoke_tar(
   info("starting: %s", tar_path);
   tsk = task_New();
   task_AddArg(tsk, tar_path);
-  task_AddArg(tsk, "xfz");
+  task_AddArg(tsk, "xfvz");
   task_AddArg(tsk, archive_path);
   task_SetPathAsArg0(tsk);
   task_SetWorkingDir(tsk, working_dir);
