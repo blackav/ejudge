@@ -1343,6 +1343,8 @@ prepare_unparse_prob(
   if (!prob->abstract && prob->stand_column[0]) {
     fprintf(f, "stand_column = \"%s\"\n", CARMOR(prob->stand_column));
   }
+  if (prob->stand_name[0] >= ' ')
+    fprintf(f, "stand_name = \"%s\"\n", CARMOR(prob->stand_name));
 
   if (!prob->abstract && prob->start_date > 0)
     fprintf(f, "start_date = \"%s\"\n", xml_unparse_date(prob->start_date));
