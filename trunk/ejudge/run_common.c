@@ -1454,6 +1454,7 @@ invoke_init_cmd(
     status = RUN_CHECK_FAILED;
     goto cleanup;
   }
+  status = exitcode;
 
 cleanup:
   task_Delete(tsk);
