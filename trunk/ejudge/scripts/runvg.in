@@ -6,6 +6,7 @@
 # Usage: runvg file
 
 runfile="$1"
+shift
 
 LANG_CONFIG_DIR="@lang_config_dir@"
 [ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/gcc-vg.cfg"
@@ -19,5 +20,5 @@ fi
 
 [ x"${EJUDGE_VG_FLAGS}" != x ] || EJUDGE_VG_FLAGS="--quiet --error-exitcode=1 --leak-check=full"
 
-exec valgrind ${EJUDGE_VG_FLAGS} "${runfile}"
+exec valgrind ${EJUDGE_VG_FLAGS} "${runfile}" "$@"
 
