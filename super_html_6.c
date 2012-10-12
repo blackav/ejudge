@@ -9690,7 +9690,7 @@ super_serve_op_IMPORT_FROM_POLYGON_PAGE(
   }
 
   int prob_id = find_free_prob_id(ss);
-  problem_id_to_short_name(prob_id, prob_buf);
+  problem_id_to_short_name(prob_id - 1, prob_buf);
 
   get_saved_auth(phr->login, &saved_login, &saved_password, &saved_url);
   if (!saved_login) saved_login = xstrdup("");
