@@ -9633,6 +9633,22 @@ save_auth(
   chmod(path, 0600);
 }
 
+static int
+find_free_prob_id(const struct sid_state *ss)
+{
+  if (ss->prob_a <= 1) return 1;
+  if (ss->probs[ss->prob_a - 1]) return ss->prob_a;
+
+  int prob_id = ss->prob_a - 1;
+  while (prob_id > 0 && !ss->probs[prob_id]) --prob_id;
+  if (prob_id <= 0) {
+    prob_id = 1;
+  } else {
+    ++prob_id;
+  }
+  return prob_id;
+}
+
 int
 super_serve_op_IMPORT_FROM_POLYGON_PAGE(
         FILE *log_f,
@@ -9673,13 +9689,7 @@ super_serve_op_IMPORT_FROM_POLYGON_PAGE(
     goto cleanup;
   }
 
-  int prob_id = ss->prob_a - 1;
-  while (prob_id > 0 && !ss->probs[prob_id]) --prob_id;
-  if (prob_id <= 0) {
-    prob_id = 1;
-  } else {
-    ++prob_id;
-  }
+  int prob_id = find_free_prob_id(ss);
   problem_id_to_short_name(prob_id, prob_buf);
 
   get_saved_auth(phr->login, &saved_login, &saved_password, &saved_url);
@@ -10475,9 +10485,9 @@ do_import_problem(
         FAIL(S_ERR_OPERATION_FAILED);
       }
     }
-    if (cfg->id <= 0) cfg->id = ss->prob_a;
+    if (cfg->id <= 0) cfg->id = find_free_prob_id(ss);
   } else {
-    if (cfg->id <= 0) cfg->id = ss->prob_a;
+    if (cfg->id <= 0) cfg->id = find_free_prob_id(ss);
     unsigned char name_buf[32];
     problem_id_to_short_name(cfg->id - 1, name_buf);
     for (int prob_id = 1; prob_id < ss->prob_a; ++prob_id) {
