@@ -9673,7 +9673,14 @@ super_serve_op_IMPORT_FROM_POLYGON_PAGE(
     goto cleanup;
   }
 
-  problem_id_to_short_name(ss->prob_a - 1, prob_buf);
+  int prob_id = ss->prob_a - 1;
+  while (prob_id > 0 && !ss->probs[prob_id]) --prob_id;
+  if (prob_id <= 0) {
+    prob_id = 1;
+  } else {
+    ++prob_id;
+  }
+  problem_id_to_short_name(prob_id, prob_buf);
 
   get_saved_auth(phr->login, &saved_login, &saved_password, &saved_url);
   if (!saved_login) saved_login = xstrdup("");
