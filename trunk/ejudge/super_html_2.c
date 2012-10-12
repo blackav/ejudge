@@ -1088,9 +1088,11 @@ super_html_commit_contest(FILE *f,
       for (i = 1; i < sstate->prob_a; i++)
         if (sstate->probs[i]) j++;
     }
+    /*
     if (!j)
       return super_html_report_error(f, session_id, self_url, extra_args,
                                      "No problems defined");
+    */
     if (sstate->probs) {
       for (i = 1; i < sstate->prob_a; i++)
         if (sstate->probs[i] && sstate->probs[i]->variant_num > 0)
@@ -1661,6 +1663,5 @@ super_html_commit_contest(FILE *f,
 /*
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list" "fd_set" "DIR")
  * End:
  */
