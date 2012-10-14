@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -175,7 +175,7 @@ do_print_run(const serve_state_t state, int run_id,
 
   if (global->disable_banner_page > 0) {
     if (state->langs[info.lang_id]) sfx = state->langs[info.lang_id]->src_sfx;
-    user_name = teamdb_get_name_2(state->teamdb_state, info.user_id);
+    user_name = teamdb_get_login(state->teamdb_state, info.user_id);
     if (!user_name) user_name = "";
     location = "";
     if (ui && ui->location)
