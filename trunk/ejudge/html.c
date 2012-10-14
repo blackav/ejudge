@@ -312,13 +312,18 @@ write_html_run_status(
   switch (status) {
   case RUN_CHECK_FAILED:
     if (priv_level > 0) break;
+    goto dona;
+  case RUN_OK:
+    if (global->score_system == SCORE_KIROV) break;
+    goto dona;
   case RUN_ACCEPTED:
-  case RUN_PENDING_REVIEW:
+    //case RUN_PENDING_REVIEW:
   case RUN_IGNORED:
   case RUN_DISQUALIFIED:
   case RUN_PENDING:
   case RUN_COMPILE_ERR:
   case RUN_STYLE_ERR:
+  dona:
     if (run_fields & (1 << RUN_VIEW_TEST)) {
       fprintf(f, "<td%s>%s</td>", cl, _("N/A"));
     }
