@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2006 Alexander Chernov <cher@unicorn.cmc.msu.ru> */
+/* Copyright (C) 2005-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -27,9 +27,15 @@ cpu_get_bogomips(void)
   return -1;
 }
 
-/**
+void
+cpu_get_performance_info(unsigned char **p_model, unsigned char **p_mhz)
+{
+  *p_model = NULL;
+  *p_mhz = NULL;
+}
+
+/*
  * Local variables:
  *  compile-command: "make -C .."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  * End:
  */
