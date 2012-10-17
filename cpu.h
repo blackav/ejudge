@@ -3,7 +3,7 @@
 #ifndef __CPU_H__
 #define __CPU_H__
 
-/* Copyright (C) 2005 Alexander Chernov <cher@unicorn.cmc.msu.ru> */
+/* Copyright (C) 2005-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,5 +18,6 @@
  */
 
 int cpu_get_bogomips(void);
+void cpu_get_performance_info(unsigned char **p_model, unsigned char **p_mhz);
 
 #endif /* __CPU_H__ */

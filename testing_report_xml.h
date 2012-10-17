@@ -123,6 +123,8 @@ typedef struct testing_report_xml
   unsigned char *valuer_judge_comment;
   unsigned char *valuer_errors;
   unsigned char *host;
+  unsigned char *cpu_model;
+  unsigned char *cpu_mhz;
   unsigned char *errors;
   unsigned char *compiler_output;
 
