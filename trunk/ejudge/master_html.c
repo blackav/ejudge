@@ -293,6 +293,12 @@ write_xml_tests_report(
   if (r->host && !user_mode) {
     fprintf(f, "<p><big>Tested on host: %s</big></p>\n", r->host);
   }
+  if (r->cpu_model && !user_mode) {
+    fprintf(f, "<p>CPU model: %s</p>\n", r->cpu_model);
+  }
+  if (r->cpu_mhz && !user_mode) {
+    fprintf(f, "<p>CPU MHz: %s</p>\n", r->cpu_mhz);
+  }
 
   if (r->tt_row_count <= 0 || r->tt_column_count <= 0) {
     fprintf(f, "<p>%s</p>\n",
@@ -502,6 +508,12 @@ write_xml_testing_report(
 
   if (r->host && !user_mode) {
     fprintf(f, "<big>Tested on host: %s</big><br/><br/>\n", r->host);
+  }
+  if (r->cpu_model && !user_mode) {
+    fprintf(f, "<p>CPU model: %s</p>\n", r->cpu_model);
+  }
+  if (r->cpu_mhz && !user_mode) {
+    fprintf(f, "<p>CPU MHz: %s</p>\n", r->cpu_mhz);
   }
 
   if (r->comment) {

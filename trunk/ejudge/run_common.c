@@ -36,6 +36,7 @@
 #include "nwrun_packet.h"
 #include "filehash.h"
 #include "curtime.h"
+#include "cpu.h"
 
 #include "reuse_xalloc.h"
 #include "reuse_osdeps.h"
@@ -158,7 +159,9 @@ generate_xml_report(
         const unsigned char *additional_comment,
         const unsigned char *valuer_comment,
         const unsigned char *valuer_judge_comment,
-        const unsigned char *valuer_errors)
+        const unsigned char *valuer_errors,
+        const unsigned char *cpu_model,
+        const unsigned char *cpu_mhz)
 {
   FILE *f = 0;
   unsigned char buf1[32], buf2[32], buf3[128];
@@ -260,6 +263,12 @@ generate_xml_report(
   }
   if ((msg = os_NodeName())) {
     fprintf(f, "  <host>%s</host>\n", msg);
+  }
+  if (cpu_model) {
+    fprintf(f, "  <cpu-model>%s</cpu-model>\n", cpu_model);
+  }
+  if (cpu_mhz) {
+    fprintf(f, "  <cpu-mhz>%s</cpu-mhz>\n", cpu_mhz);
   }
 
   fprintf(f, "  <tests>\n");
@@ -2930,6 +2939,11 @@ run_tests(
   char **merged_start_env = NULL;
   char **start_env = NULL;
 
+  unsigned char *cpu_model = NULL;
+  unsigned char *cpu_mhz = NULL;
+
+  cpu_get_performance_info(&cpu_model, &cpu_mhz);
+
   init_testinfo_vector(&tests);
   messages_path[0] = 0;
 
@@ -3267,7 +3281,8 @@ done:;
                       has_real_time, has_max_memory_used, marked_flag,
                       user_run_tests,
                       additional_comment, valuer_comment,
-                      valuer_judge_comment, valuer_errors);
+                      valuer_judge_comment, valuer_errors,
+                      cpu_model, cpu_mhz);
 
   get_current_time(&reply_pkt->ts7, &reply_pkt->ts7_us);
 
@@ -3282,6 +3297,8 @@ done:;
   xfree(valuer_judge_comment);
   xfree(additional_comment);
   merged_start_env = sarray_free(merged_start_env);
+  xfree(cpu_model);
+  xfree(cpu_mhz);
   return;
 
 check_failed:

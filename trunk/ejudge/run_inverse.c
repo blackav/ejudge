@@ -31,6 +31,7 @@
 #include "runlog.h"
 #include "testing_report_xml.h"
 #include "super_run_packet.h"
+#include "cpu.h"
 
 #include "reuse_xalloc.h"
 #include "reuse_logger.h"
@@ -1070,6 +1071,9 @@ run_inverse_testing(
   const struct super_run_in_global_packet *srgp = srp->global;
   const struct super_run_in_problem_packet *srpp = srp->problem;
 
+  unsigned char *cpu_model = NULL;
+  unsigned char *cpu_mhz = NULL;
+
   snprintf(log_path, sizeof(log_path), "%s/%s.txt",
            global->run_work_dir, pkt_name);
   if (!(log_f = fopen(log_path, "w"))) {
@@ -1134,6 +1138,9 @@ run_inverse_testing(
     report_xml->host = xstrdup(log_text);
   }
   log_text = 0;
+  cpu_get_performance_info(&cpu_model, &cpu_mhz);
+  report_xml->cpu_model = cpu_model; cpu_model = NULL;
+  report_xml->cpu_mhz = cpu_mhz; cpu_mhz = NULL;
 
   snprintf(report_path, report_path_size, "%s/%s.xml",
            global->run_work_dir, pkt_name);
@@ -1430,6 +1437,8 @@ cleanup:
     xfree(fail_files);
     fail_files = 0; fail_count = 0;
   }
+  xfree(cpu_model);
+  xfree(cpu_mhz);
 
   //clear_directory(global->run_work_dir);
   return;
