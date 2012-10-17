@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005 Alexander Chernov <cher@unicorn.cmc.msu.ru> */
+/* Copyright (C) 2005-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,8 @@
  */
 
 #include "cpu.h"
+
+#include "reuse_xalloc.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -53,9 +55,51 @@ cpu_get_bogomips(void)
   return -1;
 }
 
-/**
+void
+cpu_get_performance_info(unsigned char **p_model, unsigned char **p_mhz)
+{
+  FILE *f = NULL;
+  unsigned char buf[1024];
+  unsigned char *model = NULL;
+  unsigned char *mhz = NULL;
+
+  if (p_model) *p_model = NULL;
+  if (p_mhz) *p_mhz = NULL;
+
+  if (!(f = fopen("/proc/cpuinfo", "r"))) goto failure;
+  while (fgets(buf, sizeof(buf), f)) {
+    int buflen = strlen(buf);
+    if (buflen > sizeof(buf) - 3) goto failure; // string is too long
+    while (buflen > 0 && isspace(buf[buflen - 1])) buf[--buflen] = 0;
+
+    unsigned char *s = strchr(buf, ':');
+    if (s && s[1] == ' ') s += 2;
+    else if (s) ++s;
+
+    if (!strncasecmp(buf, "model name", 10)) {
+      if (model) xfree(model);
+      model = xstrdup(s);
+      if (mhz) break;
+    } else if (!strncasecmp(buf, "cpu mhz", 7)) {
+      if (mhz) xfree(mhz);
+      mhz = xstrdup(s);
+      if (model) break;
+    }
+  }
+  fclose(f);
+
+  if (p_model) *p_model = model;
+  else xfree(model);
+  if (p_mhz) *p_mhz = mhz;
+  else xfree(mhz);
+  return;
+
+ failure:
+  if (f) fclose(f);
+}
+
+/*
  * Local variables:
  *  compile-command: "make -C .."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  * End:
  */
