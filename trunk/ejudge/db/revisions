@@ -7440,3 +7440,11 @@ super_html_2.c 7049 0 4946743
 super_html_6.c 7049 0 32783291
 html.c 7051 0 14603944
 printing.c 7051 0 758459
+cpu.h 7055 0 66156
+testing_report_xml.h 7055 0 297430
+unix/cpu.c 7053 0 199855
+win32/cpu.c 7054 0 79518
+master_html.c 7055 0 3534808
+run_common.c 7055 0 8239240
+run_inverse.c 7055 0 3393721
+testing_report_xml.c 7055 0 3223698
