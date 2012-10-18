@@ -2178,6 +2178,7 @@ write_languages_page(
   unsigned char buf[1024];
   const struct edit_page_desc *pg = &edit_page_descs[2];
   const struct contest_desc *ecnts = phr->ss->edited_cnts;
+  unsigned char cs_conf_file[PATH_MAX];
 
   if (phr->ss->serve_parse_errors) {
     fprintf(out_f, "<h2><tt>serve.cfg</tt> cannot be edited</h2>\n"
@@ -2197,7 +2198,8 @@ write_languages_page(
   }
 
   if (!phr->ss->cs_langs_loaded) {
-    super_load_cs_languages(phr->config, phr->ss, global->extra_compile_dirs, 1);
+    super_load_cs_languages(phr->config, phr->ss, global->extra_compile_dirs,
+                            1, cs_conf_file, sizeof(cs_conf_file));
   }
 
   if (!phr->ss->cs_langs) {

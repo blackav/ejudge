@@ -89,6 +89,7 @@ super_html_read_serve(
   path_t tmppath;
   unsigned char *prob_no_any = 0;
   size_t cs_spool_dir_len = 0;
+  unsigned char cs_conf_file[PATH_MAX];
 
   if (!cnts) {
     fprintf(flog, "No contest XML description\n");
@@ -268,7 +269,8 @@ super_html_read_serve(
   }
 
   // load the compilation server state and establish correspondence
-  if (super_load_cs_languages(config, sstate, global->extra_compile_dirs, 0) < 0) {
+  if (super_load_cs_languages(config, sstate, global->extra_compile_dirs, 0,
+                              cs_conf_file, sizeof(cs_conf_file)) < 0) {
     fprintf(flog, "Failed to load compilation server configuration\n");
     return -1;
   }
@@ -285,6 +287,19 @@ super_html_read_serve(
         || !sstate->cs_langs[lang->compile_id]) {
     }
     */
+    // improve error messaging
+    if (lang->compile_id > 0 && lang->compile_id < sstate->cs_lang_total
+        && sstate->cs_langs[lang->compile_id]
+        && strcmp(lang->short_name, sstate->cs_langs[lang->compile_id]->short_name) != 0) {
+      fprintf(flog,
+              "contest configuration file '%s' specifies language short name '%s' for language %d\n"
+              "and it is different from language short name '%s' in compilation configuration file '%s'\n",
+              path, lang->short_name, lang->compile_id,
+              sstate->cs_langs[lang->compile_id]->short_name,
+              cs_conf_file);
+      return -1;
+    }
+
     if (lang->compile_id <= 0
         || lang->compile_id >= sstate->cs_lang_total
         || !sstate->cs_langs[lang->compile_id]
@@ -727,9 +742,10 @@ super_load_cs_languages(
         const struct ejudge_cfg *config,
         struct sid_state *sstate,
         char **extra_compile_dirs,
-        int check_version_flag)
+        int check_version_flag,
+        unsigned char *cs_conf_file_buf,
+        int cs_conf_file_len)
 {
-  path_t cs_conf_dir;
   path_t extra_cs_conf_path;
   struct generic_section_config *cfg = 0, *p;
   struct section_language_data *lp;
@@ -743,9 +759,9 @@ super_load_cs_languages(
   if (!sstate->compile_home_dir) {
     sstate->compile_home_dir = xstrdup(config->compile_home_dir);
   }
-  snprintf(cs_conf_dir, sizeof(cs_conf_dir), "%s/conf/compile.cfg",
+  snprintf(cs_conf_file_buf, cs_conf_file_len, "%s/conf/compile.cfg",
            sstate->compile_home_dir);
-  if (!(cfg = prepare_parse_config_file(cs_conf_dir, 0))) return -1;
+  if (!(cfg = prepare_parse_config_file(cs_conf_file_buf, 0))) return -1;
   sstate->cs_cfg = cfg;
 
   if (extra_compile_dirs) {
@@ -788,7 +804,7 @@ super_load_cs_languages(
     if (strcmp(p->name, "language") != 0) continue;
     lp = (typeof(lp)) p;
     if (lp->id < 0) {
-      fprintf(stderr, "%s: language identifier is negative\n", cs_conf_dir);
+      fprintf(stderr, "%s: language identifier is negative\n", cs_conf_file_buf);
       goto failed;
     }
     if (!lp->id) lp->id = cur_lang++;
@@ -796,7 +812,7 @@ super_load_cs_languages(
   }
 
   if (max_lang <= 0) {
-    fprintf(stderr, "%s: no languages defined\n", cs_conf_dir);
+    fprintf(stderr, "%s: no languages defined\n", cs_conf_file_buf);
     goto failed;
   }
 
@@ -821,7 +837,7 @@ super_load_cs_languages(
     if (strcmp(p->name, "language") != 0) continue;
     lp = (typeof(lp)) p;
     if (sstate->cs_langs[lp->id]) {
-      fprintf(stderr, "%s: duplicated language id %d\n", cs_conf_dir, lp->id);
+      fprintf(stderr, "%s: duplicated language id %d\n", cs_conf_file_buf, lp->id);
       goto failed;
     }
     sstate->cs_langs[lp->id] = lp;

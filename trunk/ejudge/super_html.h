@@ -449,7 +449,10 @@ super_load_cs_languages(
         const struct ejudge_cfg *config,
         struct sid_state *sstate,
         char **extra_compile_dirs,
-        int check_version_flag);
+        int check_version_flag,
+        unsigned char *cs_conf_file_buf,
+        int cs_conf_file_len);
+
 void
 super_html_lang_activate(
         struct sid_state *sstate,
