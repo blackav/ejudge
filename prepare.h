@@ -732,7 +732,7 @@ struct section_global_data
   +unsigned char *solution_cmd;
  */
 
-/* sizeof(struct section_problem_data) == 65344/65568 */
+/* sizeof(struct section_problem_data) == 65348/65576 */
 struct section_problem_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -1009,6 +1009,8 @@ struct section_problem_data
   char **lang_time_adj;
   /** time limit milliseconds adjustments depending on language (priority over lang_time_adj) */
   char **lang_time_adj_millis;
+  /** tester specially for this problem */
+  unsigned char *super_run_dir;
 
   /** alternatives for test-like problems */
   char **alternative;
