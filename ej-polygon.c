@@ -1182,13 +1182,14 @@ find_revision(FILE *log_f, const unsigned char *text, int revision, struct Revis
     if (!p) return 0;
     p = strstr(p, "<tbody>");
     if (!p) return 0;
+    const unsigned char *endp = strstr(p, "</tbody>");
 
     while (1) {
         free(tr); tr = NULL;
         free(buf); buf = NULL;
 
         p = strstr(p, "<tr>");
-        if (!p) break;
+        if (!p || p >= endp) break;
         p += 4;
         const unsigned char *s = p;
         const unsigned char *q = strstr(p, "</tr>");
@@ -2100,6 +2101,10 @@ check_problem_status(
     }
     if (!strcasecmp(rinfo.state, "RUNNING")) {
         pi->state = STATE_RUNNING;
+        goto cleanup;
+    }
+    if (!strcasecmp(rinfo.state, "FAILED")) {
+        pi->state = STATE_FAILED;
         goto cleanup;
     }
     if (strcasecmp(rinfo.state, "READY")) {
