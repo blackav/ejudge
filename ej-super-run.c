@@ -53,6 +53,7 @@ struct ignored_problem_info
 };
 
 #define SUPER_RUN_DIRECTORY "super-run"
+static unsigned char *super_run_dir = NULL;
 
 static const unsigned char *program_name = 0;
 struct ejudge_cfg *ejudge_config = NULL;
@@ -292,7 +293,7 @@ handle_packet(
       snprintf(full_report_dir, sizeof(full_report_dir), "%s", srgp->reply_report_dir);
     } else {
       snprintf(full_report_dir, sizeof(full_report_dir), "%s/%s/%s",
-               EJUDGE_CONTESTS_HOME_DIR, SUPER_RUN_DIRECTORY, srgp->reply_report_dir);
+               EJUDGE_CONTESTS_HOME_DIR, super_run_dir, srgp->reply_report_dir);
     }
   } else {
     snprintf(full_report_dir, sizeof(full_report_dir), "%s/%06d/var/run/%06d/report",
@@ -303,7 +304,7 @@ handle_packet(
       snprintf(full_status_dir, sizeof(full_status_dir), "%s", srgp->reply_spool_dir);
     } else {
       snprintf(full_status_dir, sizeof(full_status_dir), "%s/%s/%s",
-               EJUDGE_CONTESTS_HOME_DIR, SUPER_RUN_DIRECTORY, srgp->reply_spool_dir);
+               EJUDGE_CONTESTS_HOME_DIR, super_run_dir, srgp->reply_spool_dir);
     }
   } else {
     snprintf(full_status_dir, sizeof(full_status_dir), "%s/%06d/var/run/%06d/status",
@@ -314,7 +315,8 @@ handle_packet(
       snprintf(full_full_dir, sizeof(full_full_dir), "%s", srgp->reply_full_archive_dir);
     } else {
       snprintf(full_status_dir, sizeof(full_status_dir), "%s/%s/%s",
-               EJUDGE_CONTESTS_HOME_DIR, SUPER_RUN_DIRECTORY, srgp->reply_full_archive_dir);
+               EJUDGE_CONTESTS_HOME_DIR, super_run_dir,
+               srgp->reply_full_archive_dir);
     }
   } else {
     snprintf(full_full_dir, sizeof(full_full_dir), "%s/%06d/var/run/%06d/output",
@@ -475,11 +477,11 @@ create_working_directories(serve_state_t state)
 #if defined EJUDGE_LOCAL_DIR
   if (!global->run_work_dir || !global->run_work_dir[0]) {
     snprintf(global->run_work_dir, sizeof(global->run_work_dir),
-             "%s/%s/work", EJUDGE_LOCAL_DIR, SUPER_RUN_DIRECTORY);
+             "%s/%s/work", EJUDGE_LOCAL_DIR, super_run_dir);
   }
   if (!global->run_check_dir || !global->run_check_dir[0]) {
     snprintf(global->run_check_dir, sizeof(global->run_check_dir),
-             "%s/%s/check", EJUDGE_LOCAL_DIR, SUPER_RUN_DIRECTORY);
+             "%s/%s/check", EJUDGE_LOCAL_DIR, super_run_dir);
   }
 #endif
   if (!global->run_work_dir || !global->run_work_dir[0]) {
@@ -837,7 +839,7 @@ main(int argc, char *argv[])
   unsigned char ejudge_xml_path[PATH_MAX];
   serve_state_t state = &serve_state;
   int retval = 0;
-  int daemon_mode = 0, restart_mode = 0;
+  int daemon_mode = 0, restart_mode = 0, alternate_log_mode = 0;
   const unsigned char *user = NULL, *group = NULL, *workdir = NULL;
 
   program_name = os_GetBasename(argv[0]);
@@ -878,6 +880,17 @@ main(int argc, char *argv[])
       argv_restart[argc_restart++] = argv[cur_arg];
       argv_restart[argc_restart++] = argv[cur_arg + 1];
       cur_arg += 2;
+    } else if (!strcmp(argv[cur_arg], "-a")) {
+      argv_restart[argc_restart++] = argv[cur_arg];
+      alternate_log_mode = 1;
+      ++cur_arg;
+    } else if (!strcmp(argv[cur_arg], "-p")) {
+      if (cur_arg + 1 >= argc) fatal("argument expected for -p");
+      xfree(super_run_dir); super_run_dir = NULL;
+      super_run_dir = xstrdup(argv[cur_arg + 1]);
+      argv_restart[argc_restart++] = argv[cur_arg];
+      argv_restart[argc_restart++] = argv[cur_arg + 1];
+      cur_arg += 2;
     } else if (!strcmp(argv[cur_arg], "-i")) {
       if (cur_arg + 1 >= argc) fatal("argument expected for -i");
       if (parse_ignored_problem(argv[cur_arg + 1], &ignored_problems[ignored_problems_count++]) < 0) {
@@ -901,6 +914,9 @@ main(int argc, char *argv[])
   }
   if (!host_names[0]) {
     fatal("cannot determine the name of the host");
+  }
+  if (!super_run_dir) {
+    super_run_dir = xstrdup(SUPER_RUN_DIRECTORY);
   }
 
   if (!ejudge_xml_path[0]) {
@@ -948,9 +964,22 @@ main(int argc, char *argv[])
   if (os_IsFile(contests_home_dir) != OSPK_DIR) {
     fatal("contests home directory is not a directory");
   }
-  snprintf(super_run_path, sizeof(super_run_path), "%s/%s", contests_home_dir, SUPER_RUN_DIRECTORY);
+  snprintf(super_run_path, sizeof(super_run_path), "%s/%s", contests_home_dir, super_run_dir);
   snprintf(super_run_conf_path, sizeof(super_run_conf_path), "%s/conf/super-run.cfg", super_run_path);
-  snprintf(super_run_log_path, sizeof(super_run_log_path), "%s/var/ej-super-run.log", contests_home_dir);
+
+  super_run_log_path[0] = 0;
+  if (alternate_log_mode) {
+#if defined EJUDGE_LOCAL_DIR
+    snprintf(super_run_log_path, sizeof(super_run_log_path),
+      "%s/%s/ej-super-run.log", EJUDGE_LOCAL_DIR, super_run_dir);
+#endif
+    if (!super_run_log_path[0]) {
+      snprintf(super_run_log_path, sizeof(super_run_log_path), 
+               "%s/var/ej-super-run.log", super_run_path);
+    }
+  } else {
+    snprintf(super_run_log_path, sizeof(super_run_log_path), "%s/var/ej-super-run.log", contests_home_dir);
+  }
 
   remove_if_upgrade_needed(super_run_conf_path);
 
