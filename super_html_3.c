@@ -3816,6 +3816,7 @@ super_html_edit_languages(
   int row = 1;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   unsigned char num_buf[1024];
+  unsigned char cs_conf_file[PATH_MAX];
 
   if (!global) {
     super_html_contest_page_menu(f, session_id, sstate, 3, self_url,
@@ -3841,7 +3842,8 @@ super_html_edit_languages(
   }
 
   if (!sstate->cs_langs_loaded) {
-    super_load_cs_languages(config, sstate, global->extra_compile_dirs, 1);
+    super_load_cs_languages(config, sstate, global->extra_compile_dirs, 1,
+                            cs_conf_file, sizeof(cs_conf_file));
   }
 
   if (!sstate->cs_langs) {
