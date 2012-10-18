@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/07/30 12:57:52
+// Generated 2012/10/18 23:46:50
 
 #ifndef __PREPARE_META_H__
 #define __PREPARE_META_H__
@@ -431,6 +431,7 @@ enum
   CNTSPROB_solution_cmd,
   CNTSPROB_lang_time_adj,
   CNTSPROB_lang_time_adj_millis,
+  CNTSPROB_super_run_dir,
   CNTSPROB_alternative,
   CNTSPROB_personal_deadline,
   CNTSPROB_pd_total,
