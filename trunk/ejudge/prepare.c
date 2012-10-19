@@ -483,6 +483,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(score_view, "x"),
   PROBLEM_PARAM(extid, "S"),
   PROBLEM_PARAM(normalization, "s"),
+  PROBLEM_PARAM(super_run_dir, "S"),
 
   { 0, 0, 0, 0 }
 };
@@ -966,6 +967,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
   xfree(p->init_cmd);
   xfree(p->solution_src);
   xfree(p->solution_cmd);
+  xfree(p->super_run_dir);
   sarray_free(p->test_sets);
   sarray_free(p->date_penalty);
   sarray_free(p->group_start_date);
@@ -3437,6 +3439,7 @@ set_defaults(
     prepare_set_prob_value(CNTSPROB_init_cmd, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_solution_src, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_solution_cmd, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_super_run_dir, prob, aprob, g);
 
     prepare_set_prob_value(CNTSPROB_max_vm_size, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_max_stack_size, prob, aprob, g);
@@ -5515,7 +5518,10 @@ prepare_copy_problem(const struct section_problem_data *in)
     out->solution_src = xstrdup(in->solution_src);
   }
   if (in->solution_cmd) {
-    out->solution_cmd = xstrdup(out->solution_cmd);
+    out->solution_cmd = xstrdup(in->solution_cmd);
+  }
+  if (in->super_run_dir) {
+    out->super_run_dir = xstrdup(in->super_run_dir);
   }
   out->lang_time_adj = 0;
   out->lang_time_adj_millis = 0;
@@ -6311,6 +6317,14 @@ prepare_set_prob_value(
     }
     break;
 
+  case CNTSPROB_super_run_dir:
+    if (!out->super_run_dir && abstr && abstr->super_run_dir) {
+      sformat_message(tmp_buf, sizeof(tmp_buf), 0, abstr->super_run_dir,
+                      NULL, out, NULL, NULL, NULL, 0, 0, 0);
+      out->super_run_dir = xstrdup(tmp_buf);
+    }
+    break;
+
   case CNTSPROB_stand_attr:
     if (!out->stand_attr[0] && abstr && abstr->stand_attr[0] && abstr->stand_attr[0] != 1) {
       snprintf(out->stand_attr, sizeof(out->stand_attr), "%s",
@@ -6412,7 +6426,7 @@ static const int prob_settable_list[] =
   CNTSPROB_alternative, CNTSPROB_stand_attr, CNTSPROB_source_header,
   CNTSPROB_source_footer, CNTSPROB_score_view,
   CNTSPROB_open_tests, CNTSPROB_final_open_tests,
-  CNTSPROB_normalization,
+  CNTSPROB_normalization, CNTSPROB_super_run_dir,
 
   0
 };
@@ -6559,6 +6573,7 @@ static const unsigned char prob_settable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_open_tests] = 1,
   [CNTSPROB_final_open_tests] = 1,
   [CNTSPROB_normalization] = 1,
+  [CNTSPROB_super_run_dir] = 1,
 };
 
 static const int prob_inheritable_list[] =
@@ -6614,7 +6629,7 @@ static const int prob_inheritable_list[] =
   CNTSPROB_plugin_file, CNTSPROB_xml_file, CNTSPROB_type,
   CNTSPROB_alternative, CNTSPROB_stand_attr, CNTSPROB_source_header,
   CNTSPROB_source_footer, CNTSPROB_score_view,
-  CNTSPROB_normalization,
+  CNTSPROB_normalization, CNTSPROB_super_run_dir,
 
   0,
 };
@@ -6749,6 +6764,7 @@ static const unsigned char prob_inheritable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_source_footer] = 1,
   [CNTSPROB_score_view] = 1,
   [CNTSPROB_normalization] = 1,
+  [CNTSPROB_super_run_dir] = 1,
 
   0,
 };
@@ -6894,6 +6910,7 @@ static const struct section_problem_data prob_undef_values =
   .max_process_count = -1,
   .score_view = 0,
   .normalization = { 0 },
+  .super_run_dir = NULL,
 };
 
 static const struct section_problem_data prob_default_values =
@@ -7019,6 +7036,7 @@ static const struct section_problem_data prob_default_values =
   .max_open_file_count = -1,
   .max_process_count = -1,
   .normalization = "",
+  .super_run_dir = NULL,
 };
 
 static const int prob_global_map[CNTSPROB_LAST_FIELD] =
