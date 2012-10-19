@@ -1443,7 +1443,10 @@ serve_run_request(
   }
 
   if (cnts && cnts->run_managed) {
-    if (global->super_run_dir && global->super_run_dir[0]) {
+    if (prob->super_run_dir && prob->super_run_dir[0]) {
+      snprintf(run_exe_dir, sizeof(run_exe_dir), "%s/var/exe", prob->super_run_dir);
+      snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/var/queue", prob->super_run_dir);
+    } else if (global->super_run_dir && global->super_run_dir[0]) {
       snprintf(run_exe_dir, sizeof(run_exe_dir), "%s/var/exe", global->super_run_dir);
       snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/var/queue", global->super_run_dir);
     } else {
