@@ -1358,6 +1358,9 @@ prepare_unparse_prob(
     fprintf(f, "source_footer = \"%s\"\n", CARMOR(prob->source_footer));
   if (prob->normalization[0])
     fprintf(f, "normalization = \"%s\"\n", CARMOR(prob->normalization));
+  if (prob->super_run_dir && prob->super_run_dir[0]) {
+    fprintf(f,"super_run_dir = \"%s\"\n", CARMOR(prob->super_run_dir));
+  }
 
   fprintf(f, "\n");
   if (prob->unhandled_vars) fprintf(f, "%s\n", prob->unhandled_vars);
