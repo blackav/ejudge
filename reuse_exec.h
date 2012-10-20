@@ -117,6 +117,7 @@ long     task_GetRealTime(tpTask);
 void     task_Log(tpTask, int fac, int sev);
 int      task_IsAbnormal(tpTask);
 int      task_IsTimeout(tpTask);
+int      task_IsRealTimeout(tpTask);
 int      task_IsMemoryLimit(tpTask);
 int      task_IsSecurityViolation(tpTask);
 int      task_GetPipe(tpTask, int);

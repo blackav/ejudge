@@ -2356,6 +2356,10 @@ run_one_test(
     }
   }
 
+  if (task_IsRealTimeout(tsk)) {
+    status = RUN_WALL_TIME_LIMIT_ERR;
+    goto cleanup;
+  }
   if (task_IsTimeout(tsk)) {
     status = RUN_TIME_LIMIT_ERR;
     goto cleanup;
