@@ -86,6 +86,7 @@ struct tTask
   int    max_time_millis;       /* maximal allowed time in milliseconds */
   int    max_real_time;         /* maximal allowed realtime */
   int    was_timeout;           /* was the timeout happened? */
+  int    was_real_timeout;      /* was the real time limit exceeded? */
   int    was_memory_limit;      /* was the memory limit happened? */
   int    was_security_violation;/* was the security violation happened? */
   int    termsig;               /* termination signal */
@@ -1945,6 +1946,7 @@ task_Wait(tTask *tsk)
         } else {
           kill(tsk->pid, tsk->termsig);
         }
+        tsk->was_real_timeout = 1;
         tsk->was_timeout = 1;
         /*
         fprintf(stderr, "EXEC: TASK_WAIT: 1: REAL TIME TIMEOUT %ld.%09ld\n",
@@ -1961,6 +1963,7 @@ task_Wait(tTask *tsk)
           kill(tsk->pid, tsk->termsig);
         }
         tsk->was_timeout = 1;
+        tsk->was_real_timeout = 1;
         //fprintf(stderr, "EXEC: TASK_WAIT: 2: REAL TIME TIMEOUT %d\n", n);
         break;
       }
@@ -2175,6 +2178,7 @@ task_NewWait(tTask *tsk)
           kill(tsk->pid, tsk->termsig);
         }
         tsk->was_timeout = 1;
+        tsk->was_real_timeout = 1;
         tsk->used_vm_size = used_vm_size;
         break;
       }
@@ -2315,7 +2319,16 @@ task_IsTimeout(tTask *tsk)
   task_init_module();
   ASSERT(tsk);
   if (tsk->state != TSK_EXITED && tsk->state != TSK_SIGNALED) return -1;
-  return tsk->was_timeout;
+  return tsk->was_timeout || tsk->was_real_timeout;
+}
+
+int
+task_IsRealTimeout(tTask *tsk)
+{
+  task_init_module();
+  ASSERT(tsk);
+  if (tsk->state != TSK_EXITED && tsk->state != TSK_SIGNALED) return -1;
+  return tsk->was_real_timeout;
 }
 
 long
