@@ -34,6 +34,18 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+static void
+fix_path_component(unsigned char *buf, int size, const unsigned char *str)
+{
+  if (!str) str = "";
+  snprintf(buf, size, "%s", str);
+  for (int i = 0; buf[i]; ++i) {
+    if (buf[i] <= ' ' || buf[i] == 0x7f || buf[i] == '/' || buf[i] == '\\') {
+      buf[i] = '_';
+    }
+  }
+}
+
 static int
 print_banner_page(const serve_state_t state,
                   const unsigned char *banner_path, int run_id,
@@ -113,7 +125,6 @@ do_print_run(const serve_state_t state, int run_id,
 {
   const struct section_global_data *global = state->global;
   unsigned char *banner_path = 0;
-  unsigned char *program_path = 0;
   unsigned char *ps_path = 0;
   unsigned char *log_path = 0;
   unsigned char *sfx = "";
@@ -128,6 +139,9 @@ do_print_run(const serve_state_t state, int run_id,
   struct teamdb_export teaminfo;
   const unsigned char *printer_name = 0, *user_name = 0, *location = 0;
   const struct userlist_user_info *ui = 0;
+  unsigned char program_path[PATH_MAX];
+
+  program_path[0] = 0;
 
   if (run_id < 0 || run_id >= run_get_total(state->runlog_state)) {
     errcode = -SRV_ERR_BAD_RUN_ID;
@@ -175,18 +189,23 @@ do_print_run(const serve_state_t state, int run_id,
 
   if (global->disable_banner_page > 0) {
     if (state->langs[info.lang_id]) sfx = state->langs[info.lang_id]->src_sfx;
-    user_name = teamdb_get_login(state->teamdb_state, info.user_id);
+    user_name = teamdb_get_name_2(state->teamdb_state, info.user_id);
     if (!user_name) user_name = "";
     location = "";
     if (ui && ui->location)
       location = ui->location;
-    program_path = (unsigned char*) alloca(strlen(global->print_work_dir) + 64 + strlen(user_name) + strlen(location));
-    sprintf(program_path, "%s/%06d_%s_%s%s", global->print_work_dir, run_id,
-            user_name, location, sfx);
+    unsigned char fixed_user_name[PATH_MAX];
+    unsigned char fixed_location[PATH_MAX];
+    fix_path_component(fixed_user_name, sizeof(fixed_user_name), user_name);
+    fix_path_component(fixed_location, sizeof(fixed_location), location);
+
+    snprintf(program_path, sizeof(program_path),
+             "%s/%06d_%s_%s%s", global->print_work_dir, run_id,
+             fixed_user_name, fixed_location, sfx);
   } else {
     if (state->langs[info.lang_id]) sfx = state->langs[info.lang_id]->src_sfx;
-    program_path = (unsigned char*) alloca(strlen(global->print_work_dir) + 64);
-    sprintf(program_path, "%s/%06d%s", global->print_work_dir, run_id, sfx);
+    snprintf(program_path, sizeof(program_path),
+             "%s/%06d%s", global->print_work_dir, run_id, sfx);
   }
 
   arch_flags = archive_make_read_path(state, run_arch, sizeof(run_arch),
@@ -280,7 +299,7 @@ do_print_run(const serve_state_t state, int run_id,
  cleanup:
   if (tsk) task_Delete(tsk);
   if (banner_path) unlink(banner_path);
-  if (program_path) unlink(program_path);
+  if (program_path[0]) unlink(program_path);
   if (ps_path) unlink(ps_path);
   if (log_path) unlink(log_path);
   return errcode;
