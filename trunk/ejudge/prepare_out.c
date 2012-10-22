@@ -235,6 +235,8 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
     unparse_bool(f, "enable_printing", global->enable_printing);
   if (global->disable_banner_page != DFLT_G_DISABLE_BANNER_PAGE)
     unparse_bool(f, "disable_banner_page", global->disable_banner_page);
+  if (global->printout_uses_login > 0)
+    unparse_bool(f, "printout_uses_login", global->printout_uses_login);
   if (global->prune_empty_users != DFLT_G_PRUNE_EMPTY_USERS)
     unparse_bool(f, "prune_empty_users", global->prune_empty_users);
   if (global->enable_full_archive != DFLT_G_ENABLE_FULL_ARCHIVE)
@@ -2858,6 +2860,5 @@ prepare_unparse_variants(FILE *f, const struct variant_map *vmap,
 /*
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list" "fd_set" "DIR")
  * End:
  */

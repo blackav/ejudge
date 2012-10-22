@@ -1126,6 +1126,7 @@ static const struct cnts_edit_info cnts_global_info[] =
   { NS_GLOBAL, CNTSGLOB_show_deadline, 'Y', 1, 0, 0, 0, 0, "Show problem submit deadline", 0, "SidState.show_global_1" },
   { NS_GLOBAL, CNTSGLOB_enable_printing, 'Y', 1, 0, 0, 0, 0, "Enable printing of submissions by contestants", 0, "SidState.show_global_1" },
   { NS_GLOBAL, CNTSGLOB_disable_banner_page, 'Y', 1, 0, 0, 0, 0, "Disable banner page in printouts", 0, "SidState.show_global_1 Global.enable_printing &&" },
+  { NS_GLOBAL, CNTSGLOB_printout_uses_login, 'Y', 1, 0, 0, 0, 0, "Show login rather than name in printouts", 0, "SidState.show_global_1 Global.enable_printing &&" },
   { NS_GLOBAL, CNTSGLOB_prune_empty_users, 'Y', 1, 0, 0, 0, 0, "Do not show contestants with no submits in the standings", 0, "SidState.show_global_1" },
   { NS_GLOBAL, CNTSGLOB_enable_full_archive, 'Y', 1, 0, 0, 0, 0, "Store the full output in the archive", 0, "SidState.show_global_1" },
   { NS_GLOBAL, CNTSGLOB_always_show_problems, 'Y', 1, 0, 0, 0, 0, "Problem statements are available before the contest start", 0, "SidState.show_global_1" },
@@ -6786,6 +6787,5 @@ super_html_http_request(
 /*
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list" "fd_set" "DIR")
  * End:
  */

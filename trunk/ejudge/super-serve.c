@@ -2600,6 +2600,7 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_GLOB_CHANGE_SHOW_DEADLINE:
   case SSERV_CMD_GLOB_CHANGE_ENABLE_PRINTING:
   case SSERV_CMD_GLOB_CHANGE_DISABLE_BANNER_PAGE:
+  case SSERV_CMD_GLOB_CHANGE_PRINTOUT_USES_LOGIN:
   case SSERV_CMD_GLOB_CHANGE_PRUNE_EMPTY_USERS:
   case SSERV_CMD_GLOB_CHANGE_ENABLE_FULL_ARCHIVE:
   case SSERV_CMD_GLOB_CHANGE_ADVANCED_LAYOUT:
@@ -3646,6 +3647,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_GLOB_CHANGE_SHOW_DEADLINE] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_ENABLE_PRINTING] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_DISABLE_BANNER_PAGE] = { cmd_set_value },
+  [SSERV_CMD_GLOB_CHANGE_PRINTOUT_USES_LOGIN] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_PRUNE_EMPTY_USERS] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_ENABLE_FULL_ARCHIVE] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_ADVANCED_LAYOUT] = { cmd_set_value },
@@ -4760,6 +4762,5 @@ main(int argc, char **argv)
 /*
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list" "fd_set" "DIR")
  * End:
  */
