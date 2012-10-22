@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/10/18 23:46:50
+// Generated 2012/10/22 23:55:43
 
 #include "prepare_meta.h"
 #include "prepare.h"
@@ -262,6 +262,7 @@ static struct meta_info_item meta_info_section_global_data_data[] =
   [CNTSGLOB_variant_map] = { CNTSGLOB_variant_map, '?', XSIZE(struct section_global_data, variant_map), NULL, XOFFSET(struct section_global_data, variant_map) },
   [CNTSGLOB_enable_printing] = { CNTSGLOB_enable_printing, 'B', XSIZE(struct section_global_data, enable_printing), "enable_printing", XOFFSET(struct section_global_data, enable_printing) },
   [CNTSGLOB_disable_banner_page] = { CNTSGLOB_disable_banner_page, 'B', XSIZE(struct section_global_data, disable_banner_page), "disable_banner_page", XOFFSET(struct section_global_data, disable_banner_page) },
+  [CNTSGLOB_printout_uses_login] = { CNTSGLOB_printout_uses_login, 'B', XSIZE(struct section_global_data, printout_uses_login), "printout_uses_login", XOFFSET(struct section_global_data, printout_uses_login) },
   [CNTSGLOB_team_page_quota] = { CNTSGLOB_team_page_quota, 'i', XSIZE(struct section_global_data, team_page_quota), "team_page_quota", XOFFSET(struct section_global_data, team_page_quota) },
   [CNTSGLOB_compile_max_vm_size] = { CNTSGLOB_compile_max_vm_size, 'Z', XSIZE(struct section_global_data, compile_max_vm_size), "compile_max_vm_size", XOFFSET(struct section_global_data, compile_max_vm_size) },
   [CNTSGLOB_compile_max_stack_size] = { CNTSGLOB_compile_max_stack_size, 'Z', XSIZE(struct section_global_data, compile_max_stack_size), "compile_max_stack_size", XOFFSET(struct section_global_data, compile_max_stack_size) },
