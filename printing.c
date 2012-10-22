@@ -189,7 +189,11 @@ do_print_run(const serve_state_t state, int run_id,
 
   if (global->disable_banner_page > 0) {
     if (state->langs[info.lang_id]) sfx = state->langs[info.lang_id]->src_sfx;
-    user_name = teamdb_get_name_2(state->teamdb_state, info.user_id);
+    if (global->printout_uses_login > 0) {
+      user_name = teamdb_get_login(state->teamdb_state, info.user_id);
+    } else {
+      user_name = teamdb_get_name_2(state->teamdb_state, info.user_id);
+    }
     if (!user_name) user_name = "";
     location = "";
     if (ui && ui->location)
@@ -320,6 +324,5 @@ team_print_run(const serve_state_t state, int run_id, int user_id)
 /*
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "tpTask")
  * End:
  */

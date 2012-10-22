@@ -2874,6 +2874,20 @@ merge_env(char **env1, char **env2)
   return res;
 }
 
+static int
+is_piped_core_dump(void)
+{
+  int fd = open("/proc/sys/kernel/core_pattern", O_RDONLY, 0);
+  if (fd < 0) return 0;
+  char c = 0;
+  if (read(fd, &c, sizeof(c)) == sizeof(c) && c == '|') {
+    close(fd);
+    return 1;
+  }
+  close(fd);
+  return 0;
+}
+
 void
 run_tests(
         const struct ejudge_cfg *config,
@@ -2956,6 +2970,15 @@ run_tests(
   if (srpp->max_stack_size == (size_t) -1L) srpp->max_stack_size = 0;
 
   snprintf(messages_path, sizeof(messages_path), "%s/%s", global->run_work_dir, "messages");
+
+  if (is_piped_core_dump()) {
+    append_msg_to_log(messages_path,
+                      "ATTENTION: core file pattern in /proc/sys/kernel/core_pattern\n"
+                      "is set to pipe the core file to a helper program.\n"
+                      "This is NOT RECOMMENDED for correct judging.\n"
+                      "Please, modify the core_pattern file.\n"
+                      "For example, consider disabling abrtd.\n");
+  }
 
   if (tst && tst->start_env && tst->start_env[0] && srtp && srtp->start_env && srtp->start_env[0]) {
     merged_start_env = merge_env(tst->start_env, srtp->start_env);

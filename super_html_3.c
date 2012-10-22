@@ -290,6 +290,7 @@ static const unsigned char * const action_to_help_url_map[SSERV_CMD_LAST] =
   [SSERV_CMD_GLOB_CHANGE_SHOW_DEADLINE] = "Serve.cfg:global:show_deadline",
   [SSERV_CMD_GLOB_CHANGE_ENABLE_PRINTING] = "Serve.cfg:global:enable_printing",
   [SSERV_CMD_GLOB_CHANGE_DISABLE_BANNER_PAGE] = "Serve.cfg:global:disable_banner_page",
+  [SSERV_CMD_GLOB_CHANGE_PRINTOUT_USES_LOGIN] = "Serve.cfg:global:printout_uses_login",
   [SSERV_CMD_GLOB_CHANGE_PRUNE_EMPTY_USERS] = "Serve.cfg:global:prune_empty_users",
   [SSERV_CMD_GLOB_CHANGE_ENABLE_FULL_ARCHIVE] = "Serve.cfg:global:enable_full_archive",
   [SSERV_CMD_GLOB_CHANGE_ADVANCED_LAYOUT] = "Serve.cfg:global:advanced_layout",
@@ -777,6 +778,7 @@ Participant's capabilities
   GLOBAL_PARAM(ignore_compile_errors, "d"),
   GLOBAL_PARAM(enable_printing, "d"),
   GLOBAL_PARAM(disable_banner_page, "d"),
+  GLOBAL_PARAM(printout_uses_login, "d"),
   GLOBAL_PARAM(ignore_duplicated_runs, "d"),
   GLOBAL_PARAM(report_error_code, "d"),
   GLOBAL_PARAM(show_deadline, "d"),
@@ -1284,6 +1286,19 @@ super_html_edit_global_parameters(FILE *f,
       html_submit_button(f, SSERV_CMD_GLOB_CHANGE_DISABLE_BANNER_PAGE, "Change");
       fprintf(f, "</td>");
       print_help_url(f, SSERV_CMD_GLOB_CHANGE_DISABLE_BANNER_PAGE);
+      fprintf(f, "</tr></form>\n");
+    }
+
+    if (global->enable_printing > 0 && global->disable_banner_page > 0) {
+      //GLOBAL_PARAM(printout_uses_login, "d"),
+      html_start_form(f, 1, self_url, hidden_vars);
+      fprintf(f, "<tr%s><td>Show login (not name) on printouts:</td><td>",
+              form_row_attrs[row ^= 1]);
+      html_boolean_select(f, global->printout_uses_login, "param", 0, 0);
+      fprintf(f, "</td><td>");
+      html_submit_button(f, SSERV_CMD_GLOB_CHANGE_PRINTOUT_USES_LOGIN, "Change");
+      fprintf(f, "</td>");
+      print_help_url(f, SSERV_CMD_GLOB_CHANGE_PRINTOUT_USES_LOGIN);
       fprintf(f, "</tr></form>\n");
     }
 
@@ -2966,6 +2981,10 @@ super_html_global_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_GLOB_CHANGE_DISABLE_BANNER_PAGE:
     p_int = &global->disable_banner_page;
+    goto handle_boolean;
+
+  case SSERV_CMD_GLOB_CHANGE_PRINTOUT_USES_LOGIN:
+    p_int = &global->printout_uses_login;
     goto handle_boolean;
 
   case SSERV_CMD_GLOB_CHANGE_PRUNE_EMPTY_USERS:
