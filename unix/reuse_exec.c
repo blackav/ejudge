@@ -2186,6 +2186,10 @@ task_NewWait(tTask *tsk)
 
     struct process_info info;
     if (parse_proc_pid_stat(tsk->pid, &info) >= 0) {
+      if (info.vsize > 0 && info.vsize > used_vm_size) {
+        used_vm_size = info.vsize;
+        //fprintf(stderr, "VMSize: %lu\n", used_vm_size);
+      }
       if (max_time_ms > 0) {
         long long cur_utime = info.utime + info.stime;
         cur_utime = (cur_utime * 1000) / info.clock_ticks;
@@ -2200,10 +2204,6 @@ task_NewWait(tTask *tsk)
           tsk->used_vm_size = used_vm_size;
           break;
         }
-      }
-      if (info.vsize > 0 && info.vsize > used_vm_size) {
-        used_vm_size = info.vsize;
-        //fprintf(stderr, "VMSize: %lu\n", used_vm_size);
       }
     } else {
       fprintf(stderr, "Failed to parse /proc/PID/stat\n");
