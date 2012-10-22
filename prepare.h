@@ -116,7 +116,7 @@ struct user_adjustment_info
 };
 struct user_adjustment_map;
 
-/* sizeof(struct section_global_data) == 350108/350264 */
+/* sizeof(struct section_global_data) == 350112/350264 */
 struct section_global_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -669,6 +669,8 @@ struct section_global_data
   ejintbool_t enable_printing;
   /** disable banner page on printouts */
   ejintbool_t disable_banner_page;
+  /** use participant login rather then name on printouts */
+  ejintbool_t printout_uses_login;
   /** printing quota (in pages) */
   int team_page_quota;
 
