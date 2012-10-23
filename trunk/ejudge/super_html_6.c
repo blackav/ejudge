@@ -9746,6 +9746,15 @@ super_serve_op_IMPORT_FROM_POLYGON_PAGE(
   fprintf(out_f, "<tr><td%s><b>%s</b> *:</td><td%s><input type=\"text\" size=\"40\" name=\"ejudge_short_name\" value=\"%s\" /></td></tr>\n",
           cl, "Short name", cl, prob_buf);
 
+  fprintf(out_f, "<tr><td%s><b>%s</b>:</td><td%s>"
+          "<select name=\"language_priority\">"
+          "<option></option"
+          "<option>ru,en</option>"
+          "<option>en,ru</option>"
+          "</select>"
+          "</td></tr>\n",
+          cl, "Language priority", cl);
+
   fprintf(out_f, "<tr><td colspan=\"2\" align=\"center\"%s><b>Polygon information</b></td></tr>\n", cl);
   fprintf(out_f, "<tr><td%s><b>%s</b> *:</td><td%s><input type=\"text\" size=\"40\" name=\"polygon_login\" value=\"%s\" /></td></tr>\n",
           cl, "Login", cl, ARMOR(saved_login));
@@ -9793,6 +9802,7 @@ super_serve_op_IMPORT_FROM_POLYGON_ACTION(
   unsigned char *polygon_password = NULL;
   unsigned char *polygon_id = NULL;
   unsigned char *polygon_url = NULL;
+  const unsigned char *language_priority = NULL;
   int save_auth_flag = 0;
   int max_stack_size_flag = 0;
   struct polygon_packet *pp = NULL;
@@ -9896,6 +9906,13 @@ super_serve_op_IMPORT_FROM_POLYGON_ACTION(
 
   if (ss_cgi_param(phr, "max_stack_size", &s) > 0) max_stack_size_flag = 1;
 
+  if (ss_cgi_param(phr, "language_priority", &s) > 0 && *s) {
+    if (!strcmp(language_priority, "ru,en")
+        || !strcmp(language_priority, "en,ru")) {
+      language_priority = s;
+    }
+  }
+
   if (save_auth_flag) {
     save_auth(phr->login, polygon_login, polygon_password, polygon_url);
   }
@@ -9955,6 +9972,7 @@ super_serve_op_IMPORT_FROM_POLYGON_ACTION(
   pp->polygon_url = polygon_url; polygon_url = NULL;
   pp->login = polygon_login; polygon_login = NULL;
   pp->password = polygon_password; polygon_password = NULL;
+  pp->language_priority = xstrdup2(language_priority);
   pp->working_dir = xstrdup(working_dir);
   pp->log_file = xstrdup(log_path);
   pp->status_file = xstrdup(stat_path);
