@@ -1939,8 +1939,13 @@ process_polygon_zip(
         prob_cfg->time_limit_millis = pi->time_limit_ms;
     }
     if (pi->long_name_ru && pi->long_name_en) {
-        prob_cfg->long_name = xstrdup(pi->long_name_ru);
-        prob_cfg->long_name_en = xstrdup(pi->long_name_en);
+        if (pkt->language_priority
+            && !strcasecmp(pkt->language_priority, "en,ru")) {
+            prob_cfg->long_name = xstrdup(pi->long_name_en);
+        } else {
+            prob_cfg->long_name = xstrdup(pi->long_name_ru);
+            prob_cfg->long_name_en = xstrdup(pi->long_name_en);
+        }
     } else if (pi->long_name_ru) {
         prob_cfg->long_name = xstrdup(pi->long_name_ru);
     } else if (pi->long_name_en) {
