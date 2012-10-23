@@ -56,6 +56,7 @@ struct polygon_packet
     unsigned char *working_dir;
     unsigned char *problem_xml_name;
     unsigned char *testset;
+    unsigned char *language_priority;
 
     char **id;
     char **ejudge_id;
