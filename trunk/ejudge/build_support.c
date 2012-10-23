@@ -1099,6 +1099,11 @@ do_generate_makefile(
     fprintf(mk_f, "TC_EXECUTE_FLAGS = --use-stdin");
     if (test_pat[0] > ' ') fprintf(mk_f, " --test-pattern=%s", test_pat);
     if (info_pat[0] > ' ') fprintf(mk_f, " --info-pattern=%s", info_pat);
+    if (prob->test_checker_env && prob->test_checker_env[0]) {
+      for (int i = 0; prob->test_checker_env[i]; ++i) {
+        fprintf(mk_f, " --env=%s", prob->test_checker_env[i]);
+      }
+    }
     fprintf(mk_f, "\n");
   }
 

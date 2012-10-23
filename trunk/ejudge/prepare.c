@@ -5517,6 +5517,7 @@ prepare_copy_problem(const struct section_problem_data *in)
   if (in->test_checker_cmd) {
     out->test_checker_cmd = xstrdup(in->test_checker_cmd);
   }
+  out->test_checker_env = sarray_copy(in->test_checker_env);
   out->init_env = 0;
   if (in->init_cmd) {
     out->init_cmd = xstrdup(in->init_cmd);
