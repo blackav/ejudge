@@ -1000,7 +1000,7 @@ check_config(void)
         prb->tscores[j] = prb->test_score;
 
       // test_score_list overrides test_score
-      if (prb->test_score_list[0]) {
+      if (prb->test_score_list && prb->test_score_list[0]) {
         char const *s = prb->test_score_list;
         int tn = 1;
         int was_indices = 0;
