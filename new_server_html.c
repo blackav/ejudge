@@ -7717,7 +7717,11 @@ priv_generic_operation(FILE *fout,
                     phr->next_run_id);
     }
     */
-    ns_refresh_page(fout, phr, r, phr->next_extra);
+    if (phr->plain_text) {
+      fprintf(fout, "Content-type: text/plain\n\n%d\n", 0);
+    } else {
+      ns_refresh_page(fout, phr, r, phr->next_extra);
+    }
   } else {
     html_error_status_page(fout, phr, cnts, extra, log_txt, rr, 0);
   }
@@ -15390,6 +15394,10 @@ ns_handle_http_request(struct server_framework_state *state,
       return ns_html_err_inv_param(fout, phr, 0, "cannot parse contest_id");
   }
 
+  if (ns_cgi_param(phr, "plain_text", &s) > 0) {
+    phr->plain_text = 1;
+  }
+
   // parse the session_id
   if ((r = ns_cgi_param(phr, "SID", &s)) < 0)
     return ns_html_err_inv_param(fout, phr, 0, "cannot parse SID");
@@ -15472,6 +15480,5 @@ ns_handle_http_request(struct server_framework_state *state,
 /*
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")
  * End:
  */

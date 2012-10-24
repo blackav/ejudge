@@ -76,6 +76,7 @@ struct http_request_info
   int role;
   int action;
   int user_id;
+  int plain_text;
   int json_reply;
   int reg_status;
   int reg_flags;
