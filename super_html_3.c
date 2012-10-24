@@ -7845,11 +7845,13 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_PROB_CHANGE_TEST_SCORE_LIST:
     // FIXME: check for correctness
-    PROB_ASSIGN_STRING(test_score_list);
+    xfree(prob->test_score_list);
+    prob->test_score_list = xstrdup(param2);
     return 0;
 
   case SSERV_CMD_PROB_CLEAR_TEST_SCORE_LIST:
-    PROB_CLEAR_STRING(test_score_list);
+    xfree(prob->test_score_list);
+    prob->test_score_list = NULL;
     return 0;
 
   case SSERV_CMD_PROB_CHANGE_SCORE_TESTS:

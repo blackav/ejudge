@@ -434,7 +434,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(tgzdir_sfx, "s"),
   PROBLEM_PARAM(input_file, "s"),
   PROBLEM_PARAM(output_file, "s"),
-  PROBLEM_PARAM(test_score_list, "s"),
+  PROBLEM_PARAM(test_score_list, "S"),
   PROBLEM_PARAM(score_tests, "s"),
   PROBLEM_PARAM(test_sets, "x"),
   PROBLEM_PARAM(deadline, "t"),
@@ -970,6 +970,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
   xfree(p->solution_src);
   xfree(p->solution_cmd);
   xfree(p->super_run_dir);
+  xfree(p->test_score_list);
   sarray_free(p->test_sets);
   sarray_free(p->date_penalty);
   sarray_free(p->group_start_date);
@@ -6862,7 +6863,7 @@ static const struct section_problem_data prob_undef_values =
   .tgzdir_sfx = { 1, 0 },
   .input_file = { 0 },
   .output_file = { 0 },
-  .test_score_list = { 1, 0 },
+  .test_score_list = NULL,
   .score_tests = { 1, 0 },
   .standard_checker = { 1, 0 },
   .spelling = { 1, 0 },
@@ -7007,7 +7008,7 @@ static const struct section_problem_data prob_default_values =
   .tgzdir_sfx = "",
   .input_file = "input",
   .output_file = "output",
-  .test_score_list = "",
+  .test_score_list = NULL,
   .score_tests = "",
   .standard_checker = "",
   .spelling = "",

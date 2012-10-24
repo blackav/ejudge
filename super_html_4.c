@@ -1368,7 +1368,7 @@ static const struct cnts_edit_info cnts_problem_info[] =
   { NS_PROBLEM, CNTSPROB_test_score, 'd', 1, 1, 1, 1, 0, "Score for one passed test", 0, "Global.score_system SCORE_KIROV == Global.score_system SCORE_OLYMPIAD == ||" },
   { NS_PROBLEM, CNTSPROB_run_penalty, 'd', 1, 1, 1, 1, 0, "Penalty for a failed submit", 0, "Global.score_system SCORE_KIROV ==" },
   { NS_PROBLEM, CNTSPROB_disqualified_penalty, 'd', 1, 1, 1, 1, 0, "Penalty for a disqualified submit", 0, "Global.score_system SCORE_KIROV ==" },
-  { NS_PROBLEM, CNTSPROB_test_score_list, 'S', 1, 1, 1, 1, 0, "Test scores for tests", 0, "Global.score_system SCORE_KIROV == Global.score_system SCORE_OLYMPIAD == ||" },
+  { NS_PROBLEM, CNTSPROB_test_score_list, 's', 1, 1, 1, 1, 0, "Test scores for tests", 0, "Global.score_system SCORE_KIROV == Global.score_system SCORE_OLYMPIAD == ||" },
   { NS_PROBLEM, CNTSPROB_acm_run_penalty, 'd', 1, 1, 1, 1, 0, "Penalty for a submit", 0, "SidState.prob_show_adv Global.score_system SCORE_ACM == Global.score_system SCORE_MOSCOW == || &&" },
   { NS_PROBLEM, CNTSPROB_score_tests, 'S', 1, 1, 1, 1, 0, "Tests for problem scoring", 0, "Global.score_system SCORE_MOSCOW ==" },
   { NS_PROBLEM, CNTSPROB_test_sets, 'x', 1, 1, 1, 1, 0, "Specially scored test sets", 0, "SidState.prob_show_adv Global.score_system SCORE_KIROV == Global.score_system SCORE_OLYMPIAD == || &&" },
