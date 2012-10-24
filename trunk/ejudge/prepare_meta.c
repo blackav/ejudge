@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/10/22 23:55:43
+// Generated 2012/10/24 09:22:54
 
 #include "prepare_meta.h"
 #include "prepare.h"
@@ -414,7 +414,7 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_tgzdir_sfx] = { CNTSPROB_tgzdir_sfx, 'S', XSIZE(struct section_problem_data, tgzdir_sfx), "tgzdir_sfx", XOFFSET(struct section_problem_data, tgzdir_sfx) },
   [CNTSPROB_input_file] = { CNTSPROB_input_file, 'S', XSIZE(struct section_problem_data, input_file), "input_file", XOFFSET(struct section_problem_data, input_file) },
   [CNTSPROB_output_file] = { CNTSPROB_output_file, 'S', XSIZE(struct section_problem_data, output_file), "output_file", XOFFSET(struct section_problem_data, output_file) },
-  [CNTSPROB_test_score_list] = { CNTSPROB_test_score_list, 'S', XSIZE(struct section_problem_data, test_score_list), "test_score_list", XOFFSET(struct section_problem_data, test_score_list) },
+  [CNTSPROB_test_score_list] = { CNTSPROB_test_score_list, 's', XSIZE(struct section_problem_data, test_score_list), "test_score_list", XOFFSET(struct section_problem_data, test_score_list) },
   [CNTSPROB_score_tests] = { CNTSPROB_score_tests, 'S', XSIZE(struct section_problem_data, score_tests), "score_tests", XOFFSET(struct section_problem_data, score_tests) },
   [CNTSPROB_standard_checker] = { CNTSPROB_standard_checker, 'S', XSIZE(struct section_problem_data, standard_checker), "standard_checker", XOFFSET(struct section_problem_data, standard_checker) },
   [CNTSPROB_spelling] = { CNTSPROB_spelling, 'S', XSIZE(struct section_problem_data, spelling), "spelling", XOFFSET(struct section_problem_data, spelling) },
