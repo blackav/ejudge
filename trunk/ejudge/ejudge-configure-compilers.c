@@ -344,8 +344,11 @@ visual_setup(unsigned char **keys, unsigned char **vals)
   script_in_dirs[1] = script_in_dir1;
   script_in_dirs[2] = 0;
   lang_configure_screen(script_dir, script_in_dirs,
-                        config_dir, tmp_work_dir, keys, vals, header, 0);
+                        config_dir, tmp_work_dir,
+                        config->compile_home_dir,
+                        keys, vals, header, 0);
   while (lang_config_menu(script_dir, script_in_dirs, tmp_work_dir,
+                          config->compile_home_dir,
                           header, utf8_mode, &cur_item));
 
   j = ncurses_yesno(0, "\\begin{center}\nSave the configuration updates?\n\\end{center}\n");
@@ -742,6 +745,7 @@ main(int argc, char **argv)
   script_in_dirs[1] = script_in_dir1;
   script_in_dirs[2] = 0;
   lang_configure_batch(script_dir, script_in_dirs, config_dir, tmp_work_dir,
+                       config->compile_home_dir,
                        keys, vals, stderr);
   save_config_files(stderr, 0);
   if (tmp_work_dir[0]) remove_directory_recursively(tmp_work_dir, 0);

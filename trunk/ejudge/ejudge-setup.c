@@ -3269,7 +3269,7 @@ do_preview_menu(void)
   snprintf(script_dir, sizeof(script_dir), "%s/lang",
            tmp_work_dir);
   lang_configure_screen(script_dir, script_in_dirs, 0,
-                        tmp_work_dir, 0, 0, preview_header, 0);
+                        tmp_work_dir, NULL, 0, 0, preview_header, 0);
 
   while (1) {
     mvwprintw(stdscr, 0, 0, "Ejudge %s configurator > File preview",
@@ -3899,7 +3899,7 @@ preview_install_script(void)
   script_in_dirs[1] = 0;
   snprintf(script_dir, sizeof(script_dir), "%s/lang", tmp_work_dir);
   lang_configure_screen(script_dir, script_in_dirs, 0,
-                        tmp_work_dir, 0, 0, header, 0);
+                        tmp_work_dir, NULL, 0, 0, header, 0);
 
   /*
   snprintf(script_dir, sizeof(script_dir), "%s/lang",
@@ -3936,7 +3936,7 @@ save_install_script(int batch_mode, const unsigned char *output_name)
   script_in_dirs[0] = script_in_dir0;
   script_in_dirs[1] = 0;
   snprintf(script_dir, sizeof(script_dir), "%s/lang", tmp_work_dir);
-  lang_configure_screen(script_dir, script_in_dirs, 0, tmp_work_dir,
+  lang_configure_screen(script_dir, script_in_dirs, 0, tmp_work_dir, NULL,
                         0, 0, header, batch_mode);
 
   if (check_install_script_validity() < 0) return;
@@ -4048,7 +4048,7 @@ do_main_menu(void)
       script_in_dirs[0] = script_in_dir0;
       script_in_dirs[1] = 0;
       snprintf(script_dir, sizeof(script_dir), "%s/lang", tmp_work_dir);
-      while (lang_config_menu(script_dir, script_in_dirs, tmp_work_dir,
+      while (lang_config_menu(script_dir, script_in_dirs, tmp_work_dir, NULL,
                               header, utf8_mode, &cur_lang_item));
       break;
     case 4:
@@ -4252,6 +4252,5 @@ main(int argc, char **argv)
 /*
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list" "WINDOW" "ITEM" "PANEL" "MENU")
  * End:
  */
