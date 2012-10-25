@@ -47,12 +47,17 @@ struct lang_id_info
 {
   unsigned char *lang;
   int id;
+  int fixed;
 };
 
 static int lang_id_configured = 0;
 static int lang_id_total = 0;
-static int lang_id_max_id = 0;
+static int lang_id_reserved = 0;
 static struct lang_id_info *lang_id_infos = 0;
+
+static int lang_id_set_max_id = 0;
+static int lang_id_set_size = 0;
+static unsigned char *lang_id_set = NULL;
 
 struct lang_config_info *
 lang_config_get_first(void)
@@ -176,69 +181,184 @@ static void log_printf(FILE *out_f, WINDOW *out_win, const char *format, ...)
 }
 
 static void
+append_lang_id_info(const unsigned char *lang, int id, int fixed)
+{
+  if (lang_id_total >= lang_id_reserved) {
+    int newr = lang_id_reserved * 2;
+    if (!newr) newr = 32;
+    struct lang_id_info *newi = calloc(newr, sizeof(newi[0]));
+    if (lang_id_reserved > 0) {
+      memcpy(newi, lang_id_infos, lang_id_reserved * sizeof(newi[0]));
+    }
+    xfree(lang_id_infos);
+    lang_id_infos = newi;
+    lang_id_reserved = newr;
+  }
+
+  lang_id_infos[lang_id_total].lang = xstrdup(lang);
+  lang_id_infos[lang_id_total].id = id;
+  lang_id_infos[lang_id_total].fixed = fixed;
+  ++lang_id_total;
+}
+
+static void
+add_to_lang_id_set(int id)
+{
+  ASSERT(id > 0);
+  if (id >= lang_id_set_size) {
+    int newz = lang_id_set_size;
+    if (!newz) newz = 128;
+    while (id >= newz) newz *= 2;
+    unsigned char *news = calloc(newz, sizeof(news[0]));
+    if (lang_id_set_size > 0) {
+      memcpy(news, lang_id_set, lang_id_set_size);
+    }
+    xfree(lang_id_set); lang_id_set = news;
+    lang_id_set_size = newz;
+  }
+  lang_id_set[id] = 1;
+  if (id > lang_id_set_max_id) lang_id_set_max_id = id;
+}
+
+static int
+process_compile_cfg(
+        FILE *log_f,
+        const unsigned char *compile_home_dir)
+{
+  if (!compile_home_dir) return 0;
+
+  unsigned char compile_cfg_path[PATH_MAX];
+  snprintf(compile_cfg_path, sizeof(compile_cfg_path),
+           "%s/conf/compile.cfg", compile_home_dir);
+  if (access(compile_cfg_path, R_OK) < 0) return 0;
+
+  int cond_count = 0;
+  struct generic_section_config *cfg = NULL;
+  cfg = prepare_parse_config_file(compile_cfg_path, &cond_count);
+  if (!cfg) {
+    fprintf(log_f, "failed to parse '%s'\n", compile_cfg_path);
+    return -1;
+  }
+
+  struct generic_section_config *p;
+  for (p = cfg; p; p = p->next) {
+    if (!strcmp(p->name, "language")) {
+      struct section_language_data *lang = (struct section_language_data*) p;
+      if (!lang->short_name || !lang->short_name[0]) continue;
+      if (lang->id <= 0) continue;
+      int i;
+      for (i = 0; i < lang_id_total; ++i) {
+        if (!strcmp(lang_id_infos[i].lang, lang->short_name))
+          break;
+      }
+      if (i < lang_id_total) continue;
+      for (i = 0; i < lang_id_total; ++i) {
+        if (lang_id_infos[i].id == lang->id)
+          break;
+      }
+      if (i < lang_id_total) continue;
+      append_lang_id_info(lang->short_name, lang->id, 1);
+    }
+  }
+
+  cfg = prepare_free_config(cfg);
+  return lang_id_total;
+}
+
+static int
+process_lang_id_file(
+        FILE *log_f,
+        const unsigned char *path)
+{
+  FILE *in_f = NULL;
+  shellconfig_t cfg = NULL;
+  int count = 0;
+
+  if (!path) return 0;
+  if (access(path, R_OK) < 0) return 0;
+
+  if (!(in_f = fopen(path, "r"))) {
+    fprintf(log_f, "cannot open '%s'\n", path);
+    return -1;
+  }
+
+  if (!(cfg = shellconfig_parse(log_f, in_f, path))) {
+    fclose(in_f); in_f = NULL;
+    return -1;
+  }
+  for (int i = 0; i < cfg->usage; ++i) {
+    errno = 0;
+    char *eptr = NULL;
+    int val = strtol(cfg->values[i], &eptr, 10);
+    if (errno || *eptr || val <= 0 || val > EJ_MAX_LANG_ID) {
+      fprintf(log_f, "invalid language id `%s' for language `%s'\n",
+              cfg->values[i], cfg->names[i]);
+      shellconfig_free(cfg);
+      if (in_f) fclose(in_f);
+      return -1;
+    }
+    int j;
+    for (j = 0; j < lang_id_total; ++j) {
+      if (!strcmp(lang_id_infos[j].lang, cfg->names[i]))
+        break;
+    }
+    if (j < lang_id_total) continue;
+    append_lang_id_info(cfg->names[i], val, 0);
+    ++count;
+  }
+
+  shellconfig_free(cfg);
+  if (in_f) fclose(in_f);
+  return count;
+}
+
+static void
 parse_lang_id_file(
         const unsigned char *script_dir,
+        const unsigned char *compile_home_dir,
         FILE *err_f,
         WINDOW *win)
 {
   path_t id_file;
-  FILE *in_f = 0;
   FILE *log_f = 0;
   char *log_t = 0;
   size_t log_z = 0;
-  shellconfig_t cfg = 0;
-  int i, val, j;
-  char *eptr;
 
   if (lang_id_configured) return;
   lang_id_configured = 1;
 
-  snprintf(id_file, sizeof(id_file), "%s/lang_ids.cfg", script_dir);
-  if (!(in_f = fopen(id_file, "r"))) {
-#if defined EJUDGE_SCRIPT_DIR
-    snprintf(id_file, sizeof(id_file), "%s/lang/lang_ids.cfg",
-             EJUDGE_SCRIPT_DIR);
-    in_f = fopen(id_file, "r");
-#endif
-  }
-  if (!in_f) {
-    log_printf(err_f, win, "cannot open lang_ids.cfg\n");
-    goto cleanup;
-  }
   if (!(log_f = open_memstream(&log_t, &log_z))) goto cleanup;
-  if (!(cfg = shellconfig_parse(log_f, in_f, id_file))) {
-    close_memstream(log_f); log_f = 0;
+  if (process_compile_cfg(log_f, compile_home_dir) < 0) {
+    close_memstream(log_f); log_f = NULL;
     log_printf(err_f, win, "%s", log_t);
     goto cleanup;
   }
+
+  snprintf(id_file, sizeof(id_file), "%s/lang_ids.cfg", script_dir);
+  if (process_lang_id_file(log_f, id_file) < 0) {
+    close_memstream(log_f); log_f = NULL;
+    log_printf(err_f, win, "%s", log_t);
+    goto cleanup;
+  }
+
+#if defined EJUDGE_SCRIPT_DIR
+  snprintf(id_file, sizeof(id_file), "%s/lang/lang_ids.cfg",
+           EJUDGE_SCRIPT_DIR);
+  if (process_lang_id_file(log_f, id_file) < 0) {
+    close_memstream(log_f); log_f = NULL;
+    log_printf(err_f, win, "%s", log_t);
+    goto cleanup;
+  }
+#endif
+
   close_memstream(log_f); log_f = 0;
   xfree(log_t); log_t = 0; log_z = 0;
-  fclose(in_f); in_f = 0;
 
-  lang_id_total = cfg->usage;
-  lang_id_max_id = 0;
-  XCALLOC(lang_id_infos, lang_id_total);
-  for (i = 0, j = 0; i < lang_id_total; i++) {
-    errno = 0;
-    val = strtol(cfg->values[i], &eptr, 10);
-    if (errno || *eptr || val <= 0 || val > EJ_MAX_LANG_ID) {
-      log_printf(err_f, win, "invalid language id `%s' for language `%s'\n",
-                 cfg->values[i], cfg->names[i]);
-    } else {
-      lang_id_infos[j].lang = xstrdup(cfg->names[i]);
-      lang_id_infos[j].id = val;
-      if (val > lang_id_max_id) lang_id_max_id = val;
-      ++j;
-    }
-  }
-  lang_id_total = j;
   if (!lang_id_total) {
     log_printf(err_f, win, "no language ids are configured\n");
   }
 
  cleanup:
-  shellconfig_free(cfg);
-  if (in_f) fclose(in_f);
   if (log_f) fclose(log_f);
   xfree(log_t);
 }
@@ -247,27 +367,51 @@ static void
 assign_lang_ids(void)
 {
   struct lang_config_info *p;
-  struct lang_config_info **m;
   int i;
 
-  if (lang_id_total <= 0 || lang_id_max_id <= 0) return;
+  if (lang_id_total <= 0) return;
   for (p = lang_first; p; p = p->next)
     p->id = 0;
 
-  XALLOCAZ(m, lang_id_max_id + 1);
-  for (i = lang_id_total - 1; i >= 0; --i) {
-    ASSERT(lang_id_infos[i].id > 0 && lang_id_infos[i].id <= lang_id_max_id);
-    if (m[lang_id_infos[i].id] && m[lang_id_infos[i].id]->enabled) continue;
-    for (p = lang_first; p; p = p->next) {
-      if (p->short_name && !strcmp(lang_id_infos[i].lang, p->short_name))
+  if (lang_id_set_size > 0) {
+    memset(lang_id_set, 0, lang_id_set_size * sizeof(lang_id_set[0]));
+  }
+  lang_id_set_max_id = 0;
+
+  // assign "fixed" language ids (guaranteed to be unique)
+  for (p = lang_first; p; p = p->next) {
+    if (p->enabled <= 0) continue;
+    for (i = 0; i < lang_id_total; ++i) {
+      if (!strcmp(lang_id_infos[i].lang, p->short_name)
+          && lang_id_infos[i].fixed)
         break;
-      //else if (!p->short_name && !strcmp(lang_id_infos[i].lang, p->lang))
-      //break;
     }
-    if (!p) continue;
-    if (m[lang_id_infos[i].id]) m[lang_id_infos[i].id]->id = 0;
+    if (i >= lang_id_total) continue;
     p->id = lang_id_infos[i].id;
-    m[p->id] = p;
+    add_to_lang_id_set(p->id);
+  }
+
+  // assign non-conflicting language ids on first come basis
+  for (p = lang_first; p; p = p->next) {
+    if (p->enabled <= 0 || p->id > 0) continue;
+    for (i = 0; i < lang_id_total; ++i) {
+      if (!strcmp(lang_id_infos[i].lang, p->short_name))
+        break;
+    }
+    if (i >= lang_id_total) continue;
+    if (lang_id_infos[i].id < lang_id_set_size
+        && lang_id_set[lang_id_infos[i].id]) {
+      continue;
+    }
+    p->id = lang_id_infos[i].id;
+    add_to_lang_id_set(p->id);
+  }
+
+  // process unknown or conflicting languages
+  for (p = lang_first; p; p = p->next) {
+    if (p->enabled <= 0 || p->id > 0) continue;
+    p->id = lang_id_set_max_id + 1;
+    add_to_lang_id_set(p->id);
   }
 }
 
@@ -618,6 +762,7 @@ reconfigure_all_languages(
         const unsigned char * const *script_in_dirs,
         const unsigned char *config_dir,
         const unsigned char *working_dir,
+        const unsigned char *compile_home_dir,
         unsigned char **keys,
         unsigned char **values,
         FILE *log_f,
@@ -629,7 +774,7 @@ reconfigure_all_languages(
   int len;
 
   update_language_scripts(script_dir, script_in_dirs, log_f, win);
-  parse_lang_id_file(script_dir, log_f, win);
+  parse_lang_id_file(script_dir, compile_home_dir, log_f, win);
 
   if (!(d = opendir(script_dir))) {
     return;
@@ -669,6 +814,7 @@ lang_configure_screen(
         const unsigned char * const * script_in_dirs,
         const unsigned char *config_dir,
         const unsigned char *working_dir,
+        const unsigned char *compile_home_dir,
         unsigned char **keys,
         unsigned char **values,
         const unsigned char *header,
@@ -703,7 +849,8 @@ lang_configure_screen(
   doupdate();
 
   reconfigure_all_languages(script_dir, script_in_dirs, config_dir,
-                            working_dir, keys, values, 0, in_win);
+                            working_dir, compile_home_dir,
+                            keys, values, 0, in_win);
 
   if (!batch_mode) {
     ncurses_print_help("Press any key");
@@ -723,12 +870,14 @@ lang_configure_batch(
         const unsigned char * const * script_in_dirs,
         const unsigned char *config_dir,
         const unsigned char *working_dir,
+        const unsigned char *compile_home_dir,
         unsigned char **keys,
         unsigned char **values,
         FILE *log_f)
 {
   reconfigure_all_languages(script_dir, script_in_dirs, config_dir,
-                            working_dir, keys, values, log_f, 0);
+                            working_dir, compile_home_dir,
+                            keys, values, log_f, 0);
 }
 
 static int
@@ -744,6 +893,7 @@ lang_config_menu(
         const unsigned char *script_dir,
         const unsigned char * const * script_in_dirs,
         const unsigned char *working_dir,
+        const unsigned char *compile_home_dir,
         const unsigned char *header,
         int utf8_mode,
         int *p_cur_item)
@@ -764,7 +914,8 @@ lang_config_menu(
   unsigned char lang_id_buf[32];
 
   lang_configure_screen(script_dir, script_in_dirs, 0,
-                        working_dir, 0, 0, header, 0);
+                        working_dir, compile_home_dir,
+                        0, 0, header, 0);
   assign_lang_ids();
 
   for (pcfg = lang_first; pcfg; pcfg = pcfg->next) {
