@@ -7492,3 +7492,4 @@ ejudge-configure-compilers.c 7090 0 1702646
 ejudge-setup.c 7090 0 10337959
 lang_config_vis.c 7090 0 2570975
 lang_config_vis.c 7092 0 2611351
+misctext.c 7094 0 3830262
