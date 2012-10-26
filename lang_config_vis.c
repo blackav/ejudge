@@ -407,10 +407,36 @@ assign_lang_ids(void)
     add_to_lang_id_set(p->id);
   }
 
-  // process unknown or conflicting languages
+  // process conflicting languages
   for (p = lang_first; p; p = p->next) {
     if (p->enabled <= 0 || p->id > 0) continue;
-    p->id = lang_id_set_max_id + 1;
+    for (i = 0; i < lang_id_total; ++i) {
+      if (!strcmp(lang_id_infos[i].lang, p->short_name))
+        break;
+    }
+    if (i >= lang_id_total) continue;
+    for (i = 89; i > 0; --i) {
+      if (i >= lang_id_set_size || !lang_id_set[i]) {
+        break;
+      }
+    }
+    if (i <= 0) break;
+
+    p->id = i;
+    add_to_lang_id_set(p->id);
+  }
+
+  // process unknown languages
+  for (p = lang_first; p; p = p->next) {
+    if (p->enabled <= 0 || p->id > 0) continue;
+    for (i = 90; i < 10000; ++i) {
+      if (i >= lang_id_set_size || !lang_id_set[i]) {
+        break;
+      }
+    }
+    if (i >= 10000) break;
+
+    p->id = i;
     add_to_lang_id_set(p->id);
   }
 }
