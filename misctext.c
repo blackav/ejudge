@@ -28,6 +28,7 @@
 #include <time.h>
 #include <ctype.h>
 #include <errno.h>
+#include <limits.h>
 
 #include "win32_compat.h"
 
