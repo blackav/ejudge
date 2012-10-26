@@ -5515,6 +5515,9 @@ prepare_copy_problem(const struct section_problem_data *in)
   out->style_checker_env = 0;
   out->lang_compiler_env = 0;
   out->test_checker_env = 0;
+  if (in->test_score_list) {
+    out->test_score_list = xstrdup(in->test_score_list);
+  }
   if (in->test_checker_cmd) {
     out->test_checker_cmd = xstrdup(in->test_checker_cmd);
   }
