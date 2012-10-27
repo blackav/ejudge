@@ -2293,12 +2293,14 @@ cmd_recover_password_1(struct client_state *p,
       return;
     }
   } else {
+    /*
     if (!c) {
       err("%s -> not registered", logbuf);
       send_reply(p, -ULS_ERR_NO_PERMS);
       return;
     }
-    if (c->status != USERLIST_REG_OK || c->flags != 0) {
+    */
+    if (c && (c->status != USERLIST_REG_OK || c->flags != 0)) {
       err("%s -> not ordinary user", logbuf);
       send_reply(p, -ULS_ERR_NO_PERMS);
       return;
@@ -2476,17 +2478,19 @@ cmd_recover_password_2(struct client_state *p,
       return;
     }
   } else {
+    /*
     if (!c) {
       err("%s -> not registered", logbuf);
       send_reply(p, -ULS_ERR_NO_PERMS);
       return;
     }
-    if (c->status != USERLIST_REG_OK || c->flags != 0) {
+    */
+    if (c && (c->status != USERLIST_REG_OK || c->flags != 0)) {
       err("%s -> not ordinary user", logbuf);
       send_reply(p, -ULS_ERR_NO_PERMS);
       return;
     }
-    regstatus = c->status;
+    if (c) regstatus = c->status;
   }
   if (!u || !u->email || !strchr(u->email, '@')) {
     err("%s -> invalid e-mail", logbuf);
