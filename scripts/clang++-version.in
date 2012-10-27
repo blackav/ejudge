@@ -1,0 +1,104 @@
+#!/bin/sh
+# $Id$
+# Copyright (c) 2012 Alexander Chernov <cher@ejudge.ru>
+
+LANG_CONFIG_DIR="@lang_config_dir@"
+
+common_config() {
+  echo 'long_name="clang C++"'
+  echo 'src_sfx=".cpp"'
+  echo 'arch="linux-shared"'
+}
+
+failure() {
+  rm -f conftest*
+  echo 'version='
+  echo 'arg="'"${arg}"'"'
+  common_config
+  echo 'CLANGRUN=false'
+  echo 'CLANGDIR='
+  [ "${verbose}" = 1 ] && echo "no" >&2
+  exit 1
+}
+
+unset LANG
+unset LC_ALL
+unset LC_MESSAGES
+unset LANGUAGE
+
+if [ x"$1" = x-v ]
+then
+  verbose=1
+  shift
+fi
+
+# recheck the language
+if [ x"$1" = x-r ]
+then
+  arg="$2"
+  [ x"$2" != x ] && CLANGRUN="$2"
+  [ "${CLANGRUN}" = "" ] && CLANGRUN="clang++"
+
+  [ "${verbose}" = 1 ] && echo -n "checking whether clang C++ is available..." >&2
+  "${CLANGRUN}" -v >/dev/null 2>/dev/null || failure
+  version=`"${CLANGRUN}" -v 2>&1 | grep "clang version" | gawk '{ print $3; }'` || failure
+  [ "${version}" != "" ] || failure
+  cat > conftest.cpp <<EOF
+#include <iostream>
+using namespace std;
+int main() { cout << "ok" << endl; return 0; }
+EOF
+  "${CLANGRUN}" conftest.cpp -o conftest 2>/dev/null >/dev/null || failure
+  [ -x conftest ] || failure
+  ./conftest 2>/dev/null >/dev/null || failure
+
+  rm -f ./conftest*
+  CLANGDIR=`dirname "${CLANGRUN}"`
+  [ "${CLANGDIR}" = . ] && CLANGDIR=""
+  echo 'version="'"${version}"'"'
+  echo 'arg="'"${arg}"'"'
+  common_config
+  echo 'CLANGRUN="'"${CLANGRUN}"'"'
+  echo 'CLANGDIR="'"${CLANGDIR}"'"'
+  [ "${verbose}" = 1 ] && echo "yes, ${CLANGRUN}, ${version}" >&2
+  exit 0
+fi
+
+if [ x"$1" = x-l ]
+then
+  echo "clang C++ compiler [http://llvm.org]"
+  exit 0
+fi
+
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/clang++.cfg"
+
+if [ -f "${EJUDGE_LANG_CONFIG}" ]
+then
+  . "${EJUDGE_LANG_CONFIG}"
+else
+  CLANGRUN="clang++"
+  CLANGDIR=
+fi
+
+if [ x"${CLANGRUN}" = x -o x"${CLANGRUN}" = xfalse ]
+then
+  echo "This language is not supported." >&2
+  exit 1
+fi
+
+if [ x"${CLANGDIR}" != x ]
+then
+    PATH="${CLANGDIR}:${PATH}"
+fi
+
+if [ x"$1" = x-p ]
+then
+    echo "${CLANGRUN}"
+    exit 0
+fi
+    
+"${CLANGRUN}" -v 2>/dev/null >/dev/null || exit 1
+
+[ x"$1" = x-f ] && echo -n "clang C++ "
+
+"${CLANGRUN}" -v 2>&1 | grep "clang version" | gawk '{ print $3; }'
