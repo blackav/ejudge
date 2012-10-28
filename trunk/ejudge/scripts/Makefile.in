@@ -114,6 +114,12 @@ SCRIPTS_IN = \
  make-version.in\
  ghc.in\
  ghc-version.in\
+ clang.in\
+ clang-version.in\
+ clang++.in\
+ clang++-version.in\
+ gccgo.in\
+ gccgo-version.in\
  runvg.in\
  runjava.in\
  runmono.in\
