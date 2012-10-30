@@ -41,7 +41,7 @@ then
 
   [ "${verbose}" = 1 ] && echo -n "checking whether GNU Fortran is available..." >&2
   "${GFORTRANRUN}" -v >/dev/null 2>/dev/null || failure
-  version=`"${GFORTRANRUN}" --version | grep "GCC" | gawk '{ print $(NF); }'` || failure
+  version=`"${GFORTRANRUN}" --version | grep "GCC" | gawk '{ print $4; }'` || failure
   [ "${version}" != x ] || failure
   echo "        END" > conftest.for
   "${GFORTRANRUN}" -static conftest.for -o conftest 2>/dev/null >/dev/null || failure
@@ -97,6 +97,6 @@ fi
 
 [ x"$1" = x-f ] && echo -n "GNU Fortran "
 
-"${GFORTRANRUN}" --version | grep "GNU Fortran" | grep "GCC" | gawk '{ print $(NF); }'
+"${GFORTRANRUN}" --version | grep "GNU Fortran" | grep "GCC" | gawk '{ print $4; }'
 [ $? != 0 -a $? != 1 ] && exit 1
 exit 0
