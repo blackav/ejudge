@@ -5,7 +5,7 @@ AC_INIT(ejudge,2.3)
 AC_PREREQ(2.59)
 AC_REVISION($Revision$)
 
-AC_PREFIX_DEFAULT([$HOME/inst-ejudge])
+AC_PREFIX_DEFAULT([/opt/ejudge])
 AC_PROG_INSTALL
 AC_PROG_AWK
 AC_PROG_GREP
@@ -612,7 +612,7 @@ then
   fi
   dnl split --libs output into library paths, adding -rpath specs
 
-  if [[ x"${ac_cv_has_mysql}" = x1 ]]
+  if [[ x"${ac_cv_rpath}" != xno -a x"${ac_cv_has_mysql}" = x1 ]]
   then
     for xx in ${tmp_libs}
     do
