@@ -1009,6 +1009,7 @@ write_runs_dump(const serve_state_t state, FILE *f, const unsigned char *url,
     fprintf(f, "%s;", statstr);
     fprintf(f, "%d;%d;", re.score, re.score_adj);
     fprintf(f, "%d;", re.test);
+    fprintf(f, "%d;", (re.passed_mode > 0));
     fprintf(f, "%d;", re.is_imported);
     fprintf(f, "%d;", re.is_hidden);
     fprintf(f, "%d;", re.is_readonly);
