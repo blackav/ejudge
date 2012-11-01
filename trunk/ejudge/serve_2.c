@@ -1278,7 +1278,7 @@ serve_compile_request(
   }
 
   if (!no_db_flag) {
-    if (run_change_status(state->runlog_state, run_id, RUN_COMPILING, 0, -1,
+    if (run_change_status(state->runlog_state, run_id, RUN_COMPILING, 0, 1, -1,
                           cp.judge_id) < 0) {
       errcode = -SERVE_ERR_DB;
       goto failed;
@@ -1874,7 +1874,7 @@ serve_run_request(
 
   /* update status */
   if (!no_db_flag) {
-    if (run_change_status(state->runlog_state, run_id, RUN_RUNNING, 0, -1, judge_id) < 0) {
+    if (run_change_status(state->runlog_state, run_id, RUN_RUNNING, 0, 1, -1, judge_id) < 0) {
       goto fail;
     }
   }
@@ -2228,7 +2228,7 @@ serve_read_compile_packet(
   }
 
   if (run_change_status(state->runlog_state, comp_pkt->run_id, RUN_COMPILED,
-                        0, -1, comp_pkt->judge_id) < 0)
+                        0, 1, -1, comp_pkt->judge_id) < 0)
     goto non_fatal_error;
 
   /*
@@ -2522,9 +2522,9 @@ serve_read_run_packet(
       user_score = reply_pkt->user_score;
     }
     if (run_change_status_3(state->runlog_state, reply_pkt->run_id,
-                            reply_pkt->status, reply_pkt->failed_test,
+                            reply_pkt->status, reply_pkt->tests_passed, 1,
                             reply_pkt->score, 0, reply_pkt->marked_flag,
-                            has_user_score, user_status, user_tests_passed + 1,
+                            has_user_score, user_status, user_tests_passed,
                             user_score) < 0)
       goto failed;
   }
@@ -2614,7 +2614,7 @@ serve_read_run_packet(
       if (run_get_entry(state->runlog_state, i, &pe) < 0) continue;
       if ((pe.status == RUN_ACCEPTED || pe.status == RUN_PENDING_REVIEW)
           && pe.prob_id == re.prob_id && pe.user_id == re.user_id) {
-        run_change_status_3(state->runlog_state, i, RUN_IGNORED, -1, 0, 0, 0, 0, 0, 0, 0);
+        run_change_status_3(state->runlog_state, i, RUN_IGNORED, 0, 1, 0, 0, 0, 0, 0, 0, 0);
       }
     }
   }
@@ -2799,7 +2799,8 @@ serve_judge_built_in_problem(
     serve_send_check_failed_email(config, cnts, run_id);
 
   /* FIXME: handle database update error */
-  run_change_status_3(state->runlog_state, run_id, glob_status, failed_test,
+  (void) failed_test;
+  run_change_status_3(state->runlog_state, run_id, glob_status, passed_tests, 1,
                       score, 0, 0, 0, 0, 0, 0);
   serve_update_standings_file(state, cnts, 0);
   /*

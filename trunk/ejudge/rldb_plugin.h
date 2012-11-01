@@ -4,7 +4,7 @@
 #ifndef __RLDB_PLUGIN_H__
 #define __RLDB_PLUGIN_H__
 
-/* Copyright (C) 2008-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -85,6 +85,7 @@ struct rldb_plugin_iface
                        int run_id,
                        int new_status,
                        int new_test,
+                       int new_passed_mode,
                        int new_score,
                        int judge_id);
   // start the contest
@@ -133,6 +134,7 @@ struct rldb_plugin_iface
                          int run_id,
                          int new_status,
                          int new_test,
+                         int new_passed_mode,
                          int new_score,
                          int judge_id,
                          int is_marked);
@@ -143,6 +145,7 @@ struct rldb_plugin_iface
                          int run_id,
                          int new_status,
                          int new_test,
+                         int new_passed_mode,
                          int new_score,
                          int judge_id,
                          int is_marked,
