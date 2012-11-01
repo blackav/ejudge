@@ -1223,6 +1223,9 @@ add_entry_func(
   if ((flags & RE_SAVED_TEST)) {
     de->saved_test = re->saved_test;
   }
+  if ((flags & RE_PASSED_MODE)) {
+    de->passed_mode = re->passed_mode;
+  }
 
   return do_flush_entry(cs, run_id);
 }

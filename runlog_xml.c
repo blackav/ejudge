@@ -118,6 +118,7 @@ enum
   RUNLOG_A_PROB_SHORT,
   RUNLOG_A_LOGIN,
   RUNLOG_A_RUN_UUID,
+  RUNLOG_A_PASSED_MODE,
 
   RUNLOG_LAST_ATTR,
 };
@@ -183,6 +184,7 @@ static const char * const attr_map[] =
   [RUNLOG_A_PROB_SHORT]       = "prob_short",
   [RUNLOG_A_LOGIN]            = "login",
   [RUNLOG_A_RUN_UUID]         = "run_uuid",
+  [RUNLOG_A_PASSED_MODE]      = "passed_mode",
 
   [RUNLOG_LAST_ATTR] 0,
 };
@@ -450,7 +452,7 @@ process_run_elements(struct xml_tree *xt, struct run_xml_helpers *helper)
         n = 0;
         if (sscanf(xa->text, "%d %n", &iv, &n) != 1 || xa->text[n])
           goto invalid_attr_value;
-        if (iv < 0 || iv > 127) goto invalid_attr_value;
+        if (iv < 0 || iv > 32767) goto invalid_attr_value;
         xr->r.test = iv;
         break;
       case RUNLOG_A_AUTHORITATIVE:
@@ -497,6 +499,9 @@ process_run_elements(struct xml_tree *xt, struct run_xml_helpers *helper)
           ej_uuid_parse(xa->text, xr->r.run_uuid);
         }
 #endif
+        break;
+      case RUNLOG_A_PASSED_MODE:
+        if (xml_attr_bool_byte(xa, &xr->r.passed_mode) < 0) return -1;
         break;
       default:
         return xml_err_attr_not_allowed(xt, xa);
@@ -959,6 +964,10 @@ unparse_runlog_xml(
       fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_EXAMINABLE], "yes");
     }
     */
+    if (pp->passed_mode) {
+      fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_PASSED_MODE],
+              (pp->passed_mode)?"yes":"no");
+    }
     if (!source_mode || pp->status >= RUN_MAX_STATUS) {
       fprintf(f, "/>\n");
       continue;

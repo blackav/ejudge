@@ -1151,6 +1151,10 @@ run_set_entry(
     te.saved_test = in->saved_test;
     f = 1;
   }
+  if ((mask & RE_PASSED_MODE) && te.passed_mode != in->passed_mode) {
+    te.passed_mode = in->passed_mode;
+    f = 1;
+  }
 
   /* check consistency of a new record */
   if (te.status == RUN_VIRTUAL_START || te.status == RUN_VIRTUAL_STOP
