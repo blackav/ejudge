@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2008-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -86,6 +86,7 @@ change_status_func(
         int run_id,
         int new_status,
         int new_test,
+        int new_passed_mode,
         int new_score,
         int judge_id);
 
@@ -172,6 +173,7 @@ change_status_2_func(
         int run_id,
         int new_status,
         int new_test,
+        int new_passed_mode,
         int new_score,
         int new_judge_id,
         int new_is_marked);
@@ -187,6 +189,7 @@ change_status_3_func(
         int run_id,
         int new_status,
         int new_test,
+        int new_passed_mode,
         int new_score,
         int new_judge_id,
         int new_is_marked,

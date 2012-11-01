@@ -1149,6 +1149,7 @@ change_status_func(
         int run_id,
         int new_status,
         int new_test,
+        int new_passed_mode,
         int new_score,
         int new_judge_id)
 {
@@ -1158,11 +1159,12 @@ change_status_func(
   memset(&te, 0, sizeof(te));
   te.status = new_status;
   te.test = new_test;
+  te.passed_mode = new_passed_mode;
   te.score = new_score;
   te.judge_id = new_judge_id;
 
   return do_update_entry(cs, run_id, &te,
-                         RE_STATUS | RE_TEST | RE_SCORE | RE_JUDGE_ID);
+                         RE_STATUS | RE_TEST | RE_SCORE | RE_JUDGE_ID | RE_PASSED_MODE);
 }
 
 static void
@@ -1586,6 +1588,7 @@ change_status_2_func(
         int run_id,
         int new_status,
         int new_test,
+        int new_passed_mode,
         int new_score,
         int new_judge_id,
         int new_is_marked)
@@ -1596,12 +1599,13 @@ change_status_2_func(
   memset(&te, 0, sizeof(te));
   te.status = new_status;
   te.test = new_test;
+  te.passed_mode = new_passed_mode;
   te.score = new_score;
   te.judge_id = new_judge_id;
   te.is_marked = new_is_marked;
 
   return do_update_entry(cs, run_id, &te,
-                         RE_STATUS | RE_TEST | RE_SCORE | RE_JUDGE_ID | RE_IS_MARKED);
+                         RE_STATUS | RE_TEST | RE_SCORE | RE_JUDGE_ID | RE_IS_MARKED | RE_PASSED_MODE);
 }
 
 static int
@@ -1628,6 +1632,7 @@ change_status_3_func(
         int run_id,
         int new_status,
         int new_test,
+        int new_passed_mode,
         int new_score,
         int new_judge_id,
         int new_is_marked,
@@ -1642,6 +1647,7 @@ change_status_3_func(
   memset(&te, 0, sizeof(te));
   te.status = new_status;
   te.test = new_test;
+  te.passed_mode = new_passed_mode;
   te.score = new_score;
   te.judge_id = new_judge_id;
   te.is_marked = new_is_marked;
@@ -1652,7 +1658,7 @@ change_status_3_func(
 
   return do_update_entry(cs, run_id, &te,
                          RE_STATUS | RE_TEST | RE_SCORE | RE_JUDGE_ID | RE_IS_MARKED
-                         | RE_IS_SAVED | RE_SAVED_STATUS | RE_SAVED_TEST | RE_SAVED_SCORE);
+                         | RE_IS_SAVED | RE_SAVED_STATUS | RE_SAVED_TEST | RE_SAVED_SCORE | RE_PASSED_MODE);
 }
 
 static int
