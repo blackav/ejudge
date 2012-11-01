@@ -336,6 +336,11 @@ write_html_run_status(
 
   if (global->score_system == SCORE_ACM) {
     if (run_fields & (1 << RUN_VIEW_TEST)) {
+      if (pe->passed_mode > 0) {
+        // if passed_mode is set, in 'test' the number of ok tests is stored
+        // add +1 for compatibility, until the legend is updated
+        ++test;
+      }
       if (!disable_failed) {
         if (status == RUN_OK || status == RUN_ACCEPTED || status == RUN_PENDING_REVIEW || test <= 0
             || global->disable_failed_test_view > 0) {
@@ -352,6 +357,11 @@ write_html_run_status(
 
   if (global->score_system == SCORE_MOSCOW) {
     if (run_fields & (1 << RUN_VIEW_TEST)) {
+      if (pe->passed_mode > 0) {
+        // if passed_mode is set, in 'test' the number of ok tests is stored
+        // add +1 for compatibility, until the legend is updated
+        ++test;
+      }
       if (status == RUN_OK || status == RUN_ACCEPTED || status == RUN_PENDING_REVIEW || test <= 0
           || global->disable_failed_test_view > 0) {
         fprintf(f, "<td%s>%s</td>", cl, _("N/A"));
@@ -371,17 +381,40 @@ write_html_run_status(
 
   if (run_fields & (1 << RUN_VIEW_TEST)) {
     if (global->score_system == SCORE_OLYMPIAD) {
-      // we have to guess what to report: the count of passed tests
-      // or the number of the first failed test...
-      if (status == RUN_RUN_TIME_ERR
-          || status == RUN_TIME_LIMIT_ERR
-          || status == RUN_PRESENTATION_ERR
-          || status == RUN_WRONG_ANSWER_ERR
-          || status == RUN_MEM_LIMIT_ERR
-          || status == RUN_SECURITY_ERR
-          || status == RUN_WALL_TIME_LIMIT_ERR) {
-        // do like ACM
-        if (test <= 0) {
+      if (pe->passed_mode > 0) {
+        // always report the count of passed tests
+        if (test < 0) {
+          fprintf(f, "<td%s>%s</td>", cl, _("N/A"));
+        } else {
+          fprintf(f, "<td%s>%d</td>", cl, test);
+        }
+      } else {
+        // we have to guess what to report: the count of passed tests
+        // or the number of the first failed test...
+        if (status == RUN_RUN_TIME_ERR
+            || status == RUN_TIME_LIMIT_ERR
+            || status == RUN_PRESENTATION_ERR
+            || status == RUN_WRONG_ANSWER_ERR
+            || status == RUN_MEM_LIMIT_ERR
+            || status == RUN_SECURITY_ERR
+            || status == RUN_WALL_TIME_LIMIT_ERR) {
+          // do like ACM
+          if (test <= 0) {
+            fprintf(f, "<td%s>%s</td>", cl, _("N/A"));
+          } else {
+            fprintf(f, "<td%s><i>%d</i></td>", cl, test);
+          }
+        } else {
+          if (test <= 0) {
+            fprintf(f, "<td%s>%s</td>", cl, _("N/A"));
+          } else {
+            fprintf(f, "<td%s>%d</td>", cl, test - 1);
+          }
+        }
+      }
+    } else {
+      if (pe->passed_mode > 0) {
+        if (test < 0) {
           fprintf(f, "<td%s>%s</td>", cl, _("N/A"));
         } else {
           fprintf(f, "<td%s>%d</td>", cl, test);
@@ -392,12 +425,6 @@ write_html_run_status(
         } else {
           fprintf(f, "<td%s>%d</td>", cl, test - 1);
         }
-      }
-    } else {
-      if (test <= 0) {
-        fprintf(f, "<td%s>%s</td>", cl, _("N/A"));
-      } else {
-        fprintf(f, "<td%s>%d</td>", cl, test - 1);
       }
     }
   }
@@ -469,6 +496,9 @@ write_text_run_status(
   }
 
   if (global->score_system == SCORE_ACM) {
+    if (pe->passed_mode > 0) {
+      ++test;
+    }
     if (status == RUN_OK || status == RUN_ACCEPTED || status == RUN_PENDING_REVIEW || test <= 0
         || global->disable_failed_test_view > 0) {
       fprintf(f, ";");
@@ -479,6 +509,9 @@ write_text_run_status(
   }
 
   if (global->score_system == SCORE_MOSCOW) {
+    if (pe->passed_mode > 0) {
+      ++test;
+    }
     if (status == RUN_OK || status == RUN_ACCEPTED || status == RUN_PENDING_REVIEW || test <= 0
         || global->disable_failed_test_view > 0) {
       fprintf(f, ";");
@@ -493,10 +526,18 @@ write_text_run_status(
     return;
   }
 
-  if (test <= 0) {
-    fprintf(f, ";");
+  if (pe->passed_mode > 0) {
+    if (test < 0) {
+      fprintf(f, ";");
+    } else {
+      fprintf(f, "%d;", test);
+    }
   } else {
-    fprintf(f, "%d;", test - 1);
+    if (test <= 0) {
+      fprintf(f, ";");
+    } else {
+      fprintf(f, "%d;", test - 1);
+    }
   }
 
   if (score < 0 || !pr) {
@@ -1616,14 +1657,18 @@ do_write_kirov_standings(
         if (prob->full_user_score >= 0) run_score = prob->full_user_score;
         else run_score = prob->full_score;
       }
-      run_tests = pe->saved_test - 1;
+      run_tests = pe->saved_test;
     } else {
       run_status = pe->status;
       run_score = pe->score;
       if (run_status == RUN_OK && !prob->variable_full_score) {
         run_score = prob->full_score;
       }
-      run_tests = pe->test - 1;
+      if (pe->passed_mode > 0) {
+        run_tests = pe->test;
+      } else {
+        run_tests = pe->test - 1;
+      }
     }
 
     if (global->score_system == SCORE_OLYMPIAD && accepting_mode) {

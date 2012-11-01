@@ -587,7 +587,11 @@ user_report_generate(
       if (run_get_entry(cs->runlog_state, run_ids[i], &re) < 0) abort();
       if (re.status == RUN_OK || re.status == RUN_PARTIAL)
         re.status = RUN_ACCEPTED;
-      passed_tests = re.test - 1;
+      if (re.passed_mode > 0) {
+        passed_tests = re.test;
+      } else {
+        passed_tests = re.test - 1;
+      }
       if (passed_tests > prob->tests_to_accept)
         passed_tests = prob->tests_to_accept;
       if (re.lang_id <= 0 || re.lang_id > cs->max_lang
@@ -1258,10 +1262,18 @@ full_user_report_generate(
         cur_score = prob->full_score;
 
       // print the table
-      if (re.test > 0) {
-        fprintf(fout, " & %d", re.test - 1);
+      if (re.passed_mode > 0) {
+        if (re.test >= 0) {
+          fprintf(fout, " & %d", re.test);
+        } else {
+          fprintf(fout, " &");
+        }
       } else {
-        fprintf(fout, " &");
+        if (re.test > 0) {
+          fprintf(fout, " & %d", re.test - 1);
+        } else {
+          fprintf(fout, " &");
+        }
       }
       if (re.score >= 0) {
         fprintf(fout, " & %d", cur_score);
@@ -2409,7 +2421,11 @@ ns_olympiad_final_user_report(
       if (run_get_entry(cs->runlog_state, run_ids[i], &re) < 0) abort();
       if (re.status == RUN_OK || re.status == RUN_PARTIAL)
         re.status = RUN_ACCEPTED;
-      passed_tests = re.test - 1;
+      if (re.passed_mode > 0) {
+        passed_tests = re.test;
+      } else {
+        passed_tests = re.test - 1;
+      }
       if (passed_tests > prob->tests_to_accept)
         passed_tests = prob->tests_to_accept;
       if (re.lang_id <= 0 || re.lang_id > cs->max_lang
@@ -3314,10 +3330,18 @@ problem_report_generate(
       fprintf(fout, "%s & %s & %s & %s & %s\\\\\n\\hline\n",
               _("Problem"), use_exam_cypher?_("Cypher"):_("Name"), _("Tests passed"), _("Score"), _("Status"));
       fprintf(fout, "%s & %s", probname, TARMOR(user_str[user_id]));
-      if (re.test > 0) {
-        fprintf(fout, " & %d", re.test - 1);
+      if (re.passed_mode > 0) {
+        if (re.test >= 0) {
+          fprintf(fout, " & %d", re.test);
+        } else {
+          fprintf(fout, " &");
+        }
       } else {
-        fprintf(fout, " &");
+        if (re.test > 0) {
+          fprintf(fout, " & %d", re.test - 1);
+        } else {
+          fprintf(fout, " &");
+        }
       }
       if (re.score >= 0) {
         fprintf(fout, " & %d", re.score);

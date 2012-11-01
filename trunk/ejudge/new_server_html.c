@@ -3825,7 +3825,8 @@ priv_edit_run(FILE *fout, FILE *log_f,
         || global->score_system == SCORE_OLYMPIAD)
       param_int++;
     ne.test = param_int;
-    ne_mask = RE_TEST;
+    ne.passed_mode = 1;
+    ne_mask = RE_TEST | RE_PASSED_MODE;
     audit_cmd = "change-test";
     snprintf(old_buf, sizeof(old_buf), "%d", re.test);
     snprintf(new_buf, sizeof(new_buf), "%d", ne.test);
@@ -4497,7 +4498,8 @@ priv_new_run(FILE *fout,
         || tests < -1 || tests > 100000)
       FAIL(NEW_SRV_ERR_INV_TEST);
     re.test = tests;
-    re_flags |= RE_TEST;
+    re.passed_mode = 1;
+    re_flags |= RE_TEST | RE_PASSED_MODE;
   }
   if (ns_cgi_param(phr, "score", &s) > 0 && *s) {
     if (sscanf(s, "%d%n", &score, &n) != 1 || s[n]

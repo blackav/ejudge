@@ -1540,15 +1540,25 @@ ns_write_priv_source(const serve_state_t state,
           ns_aref(filtbuf3, sizeof(filtbuf3), phr, 0, "filter_expr=%s", filtbuf2),
           run_status_str(info.status, 0, 0, 0, 0));
 
-  if (global->score_system == SCORE_KIROV
-      || global->score_system == SCORE_OLYMPIAD) {
-    // test (number of tests passed)
-    if (info.test <= 0) {
+  if (info.passed_mode > 0) {
+    if (info.test < 0) {
       snprintf(bb, sizeof(bb), "N/A");
     } else {
-      snprintf(bb, sizeof(bb), "%d", info.test - 1);
+      snprintf(bb, sizeof(bb), "%d", info.test);
     }
     fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n", _("Tests passed"), bb);
+  }
+  if (global->score_system == SCORE_KIROV
+      || global->score_system == SCORE_OLYMPIAD) {
+    if (info.passed_mode <= 0) {
+      // test (number of tests passed)
+      if (info.test <= 0) {
+        snprintf(bb, sizeof(bb), "N/A");
+      } else {
+        snprintf(bb, sizeof(bb), "%d", info.test - 1);
+      }
+      fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n", _("Tests passed"), bb);
+    }
 
     // score
     if (info.score < 0) {
@@ -1558,13 +1568,15 @@ ns_write_priv_source(const serve_state_t state,
     }
     fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n", _("Score gained"), bb);
   } else if (global->score_system == SCORE_MOSCOW) {
-    // the first failed test
-    if (info.test <= 0) {
-      snprintf(bb, sizeof(bb), "N/A");
-    } else {
-      snprintf(bb, sizeof(bb), "%d", info.test);
+    if (info.passed_mode <= 0) {
+      // the first failed test
+      if (info.test <= 0) {
+        snprintf(bb, sizeof(bb), "N/A");
+      } else {
+        snprintf(bb, sizeof(bb), "%d", info.test);
+      }
+      fprintf(f, "<tr><td>%s:</td><td><i>%s</i></td></tr>\n", _("Failed test"), bb);
     }
-    fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n", _("Failed test"), bb);
 
     // score
     if (info.score < 0) {
@@ -1575,13 +1587,15 @@ ns_write_priv_source(const serve_state_t state,
     fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n", _("Score gained"), bb);
   } else {
     // ACM scoring system
-    // first failed test
-    if (info.test <= 0) {
-      snprintf(bb, sizeof(bb), "N/A");
-    } else {
-      snprintf(bb, sizeof(bb), "%d", info.test);
+    if (info.passed_mode <= 0) {
+      // first failed test
+      if (info.test <= 0) {
+        snprintf(bb, sizeof(bb), "N/A");
+      } else {
+        snprintf(bb, sizeof(bb), "%d", info.test);
+      }
+      fprintf(f, "<tr><td>%s:</td><td><i>%s</i></td></tr>\n", _("Failed test"), bb);
     }
-    fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n", _("Failed test"), bb);
   }
 
   // is_marked
@@ -2725,18 +2739,25 @@ ns_priv_edit_run_page(
   fprintf(f, "</tr>\n");
 
   buf[0] = 0;
-  if (global->score_system == SCORE_KIROV || global->score_system == SCORE_OLYMPIAD) {
-    if (info.test > 0) {
-      snprintf(buf, sizeof(buf), "%d", info.test - 1);
-    }
-    s = "Tests passed";
-  } else if (global->score_system == SCORE_MOSCOW || global->score_system == SCORE_ACM) {
-    if (info.test > 0) {
+  if (info.passed_mode > 0) {
+    if (info.test >= 0) {
       snprintf(buf, sizeof(buf), "%d", info.test);
     }
-    s = "Failed test";
+    s = "Tests passed";
   } else {
-    abort();
+    if (global->score_system == SCORE_KIROV || global->score_system == SCORE_OLYMPIAD) {
+      if (info.test > 0) {
+        snprintf(buf, sizeof(buf), "%d", info.test - 1);
+      }
+      s = "Tests passed";
+    } else if (global->score_system == SCORE_MOSCOW || global->score_system == SCORE_ACM) {
+      if (info.test > 0) {
+        snprintf(buf, sizeof(buf), "%d", info.test);
+      }
+      s = "Failed test";
+    } else {
+      abort();
+    }
   }
   fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n", cl, s,
           cl, html_input_text(hbuf, sizeof(hbuf), "test", 20, info.is_readonly, "%s", buf));
@@ -3006,10 +3027,16 @@ ns_priv_edit_run_action(
     fprintf(log_f, "invalid 'test' field value\n");
     FAIL(NEW_SRV_ERR_INV_PARAM);
   }
+  if (info.test != value || info.passed_mode <= 0) {
+    new_info.test = value;
+    new_info.passed_mode = 1;
+    mask |= RE_TEST | RE_PASSED_MODE;
+  }
+  /*
   if (global->score_system == SCORE_KIROV || global->score_system == SCORE_OLYMPIAD) {
     ++value;
   }
-  if (info.test != value) {
+  if (info._test != value) {
     if (value < 0 || value > 100000) {
       fprintf(log_f, "invalid 'test' field value\n");
       FAIL(NEW_SRV_ERR_INV_PARAM);
@@ -3046,9 +3073,10 @@ ns_priv_edit_run_action(
       }
       break;
     }
-    new_info.test = value;
+    new_info._test = value;
     mask |= RE_TEST;
   }
+  */
 
   if (global->score_system == SCORE_KIROV || global->score_system == SCORE_OLYMPIAD
       || global->score_system == SCORE_MOSCOW) {
@@ -5454,8 +5482,10 @@ ns_upload_csv_runs(
         goto cleanup;
       }
       runs[row].test = x;
+      runs[row].passed_mode = 1;
     } else {
-      runs[row].test = 1;
+      runs[row].test = 0;
+      runs[row].passed_mode = 1;
     }
 
     if (col_ind[CSV_SCORE] < 0) {
@@ -5778,8 +5808,10 @@ ns_upload_csv_results(
         goto cleanup;
       }
       pe->test = x;
+      pe->passed_mode = 1;
     } else {
-      pe->test = 1;
+      pe->test = 0;
+      pe->passed_mode = 1;
     }
 
     if (col_ind[CSV_SCORE] < 0) {
@@ -5831,7 +5863,8 @@ ns_upload_csv_results(
       do_add_row(phr, cs, log_f, row, &runs[row], run_size, run_text);
     }
     run_set_entry(cs->runlog_state, runs[row].run_id,
-                  RE_STATUS | RE_TEST | RE_SCORE, &runs[row]);
+                  RE_STATUS | RE_TEST | RE_SCORE | RE_PASSED_MODE,
+                  &runs[row]);
   }
 
   retval = 0;
@@ -6107,7 +6140,10 @@ static int get_accepting_passed_tests(
   case RUN_MEM_LIMIT_ERR:
   case RUN_SECURITY_ERR:
     r = re->test;
-    if (r > 0) r--;
+    if (re->passed_mode > 0) {
+    } else {
+      if (r > 0) r--;
+    }
     // whether this ever possible?
     if (r > prob->tests_to_accept) r = prob->tests_to_accept;
     return r;
@@ -6372,7 +6408,11 @@ ns_write_olympiads_user_runs(
         if (prob && prob->type != PROB_TYPE_STANDARD) {
           snprintf(tests_buf, sizeof(tests_buf), "&nbsp;");
         } else {
-          snprintf(tests_buf, sizeof(tests_buf), "%d", re.test - 1);
+          if (re.passed_mode > 0) {
+            snprintf(tests_buf, sizeof(tests_buf), "%d", re.test);
+          } else {
+            snprintf(tests_buf, sizeof(tests_buf), "%d", re.test - 1);
+          }
           report_allowed = 1;
         }
         if (prob && !latest_flag[prob->id]) run_latest = 1;
@@ -6386,7 +6426,11 @@ ns_write_olympiads_user_runs(
         if (prob && prob->type != PROB_TYPE_STANDARD) {
           snprintf(tests_buf, sizeof(tests_buf), "&nbsp;");
         } else {
-          snprintf(tests_buf, sizeof(tests_buf), "%d", re.test - 1);
+          if (re.passed_mode > 0) {
+            snprintf(tests_buf, sizeof(tests_buf), "%d", re.test);
+          } else {
+            snprintf(tests_buf, sizeof(tests_buf), "%d", re.test - 1);
+          }
         }
         report_allowed = 1;
         if (prob && !latest_flag[prob->id]) run_latest = 1;
@@ -6408,7 +6452,11 @@ ns_write_olympiads_user_runs(
         if (prob && prob->type != PROB_TYPE_STANDARD) {
           snprintf(tests_buf, sizeof(tests_buf), "&nbsp;");
         } else {
-          snprintf(tests_buf, sizeof(tests_buf), "%d", re.test - 1);
+          if (re.passed_mode > 0) {
+            snprintf(tests_buf, sizeof(tests_buf), "%d", re.test);
+          } else {
+            snprintf(tests_buf, sizeof(tests_buf), "%d", re.test - 1);
+          }
         }
         report_allowed = 1;
         snprintf(score_buf, sizeof(score_buf), "&nbsp;");
@@ -6425,7 +6473,11 @@ ns_write_olympiads_user_runs(
         if (prob && prob->type != PROB_TYPE_STANDARD) {
           snprintf(tests_buf, sizeof(tests_buf), "&nbsp;");
         } else {
-          snprintf(tests_buf, sizeof(tests_buf), "%d", re.test);
+          if (re.passed_mode > 0) {
+            snprintf(tests_buf, sizeof(tests_buf), "%d", re.test);
+          } else {
+            snprintf(tests_buf, sizeof(tests_buf), "%d", re.test);
+          }
         }
         report_allowed = 1;
         snprintf(score_buf, sizeof(score_buf), "&nbsp;");
@@ -7170,10 +7222,17 @@ ns_write_user_problems_summary(
                   score_view_display(score_buf, sizeof(score_buf),
                                      cur_prob, best_score[prob_id]));
         } else {
-          fprintf(fout, "<td%s>%d</td><td%s>%s</td>",
-                  cl, test - 1, cl,
-                  score_view_display(score_buf, sizeof(score_buf),
-                                     cur_prob, best_score[prob_id]));
+          if (re.passed_mode > 0) { 
+            fprintf(fout, "<td%s>%d</td><td%s>%s</td>",
+                    cl, test, cl,
+                    score_view_display(score_buf, sizeof(score_buf),
+                                       cur_prob, best_score[prob_id]));
+          } else {
+            fprintf(fout, "<td%s>%d</td><td%s>%s</td>",
+                    cl, test - 1, cl,
+                    score_view_display(score_buf, sizeof(score_buf),
+                                       cur_prob, best_score[prob_id]));
+          }
         }
         break;
       default:
@@ -7189,7 +7248,11 @@ ns_write_user_problems_summary(
       case RUN_OK:
       case RUN_PARTIAL:
         if (global->disable_passed_tests <= 0) {
-          fprintf(fout, "<td%s>%d</td>", cl, test - 1);
+          if (re.passed_mode > 0) {
+            fprintf(fout, "<td%s>%d</td>", cl, test);
+          } else {
+            fprintf(fout, "<td%s>%d</td>", cl, test - 1);
+          }
         }
         fprintf(fout, "<td%s>%s</td>",
                 cl, score_view_display(score_buf, sizeof(score_buf),
@@ -7959,6 +8022,5 @@ ns_write_admin_contest_settings(
 /*
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")
  * End:
  */

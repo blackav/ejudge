@@ -1643,14 +1643,22 @@ do_dump_master_runs(
     if (global->score_system == SCORE_ACM) {
       if (has_failed_test_num[pe->status]) {
         snprintf(failed_test_buf, sizeof(failed_test_buf), "%d", pe->test);
-        csv_rec[F_FAILED_TEST] = failed_test_buf;
+        if (pe->passed_mode > 0) {
+          csv_rec[F_PASSED_TESTS] = failed_test_buf;
+        } else {
+          csv_rec[F_FAILED_TEST] = failed_test_buf;
+        }
       }
       write_csv_record(fout, F_TOTAL_FIELDS, csv_rec);
       continue;
     } else if (global->score_system == SCORE_MOSCOW) {
       if (has_failed_test_num[pe->status]) {
         snprintf(failed_test_buf, sizeof(failed_test_buf), "%d", pe->test);
-        csv_rec[F_FAILED_TEST] = failed_test_buf;
+        if (pe->passed_mode > 0) {
+          csv_rec[F_PASSED_TESTS] = failed_test_buf;
+        } else {
+          csv_rec[F_FAILED_TEST] = failed_test_buf;
+        }
       }
       snprintf(score_buf, sizeof(score_buf), "%d", pe->score);
       csv_rec[F_TOTAL_SCORE] = score_buf;
@@ -1658,13 +1666,18 @@ do_dump_master_runs(
       write_csv_record(fout, F_TOTAL_FIELDS, csv_rec);
       continue;
     } else if (global->score_system == SCORE_OLYMPIAD) {
-      if (has_failed_test_num[pe->status]) {
-        snprintf(failed_test_buf, sizeof(failed_test_buf), "%d", pe->test);
-        csv_rec[F_FAILED_TEST] = failed_test_buf;
-      }
-      if (has_passed_tests[pe->status]) {
+      if (pe->passed_mode > 0 && pe->test >= 0) {
         snprintf(passed_tests_buf, sizeof(passed_tests_buf), "%d", pe->test);
-        csv_rec[F_PASSED_TESTS] = passed_tests_buf;
+        csv_rec[F_PASSED_TESTS] = passed_tests_buf;        
+      } else {
+        if (has_failed_test_num[pe->status]) {
+          snprintf(failed_test_buf, sizeof(failed_test_buf), "%d", pe->test);
+          csv_rec[F_FAILED_TEST] = failed_test_buf;
+        }
+        if (has_passed_tests[pe->status]) {
+          snprintf(passed_tests_buf, sizeof(passed_tests_buf), "%d", pe->test);
+          csv_rec[F_PASSED_TESTS] = passed_tests_buf;
+        }
       }
       if (has_olympiad_score[pe->status]) {
         snprintf(score_buf, sizeof(score_buf), "%d", pe->score);
@@ -1679,7 +1692,11 @@ do_dump_master_runs(
         continue;
       }
 
-      snprintf(passed_tests_buf, sizeof(passed_tests_buf), "%d", pe->test - 1);
+      if (pe->passed_mode > 0) {
+        snprintf(passed_tests_buf, sizeof(passed_tests_buf), "%d", pe->test);
+      } else {
+        snprintf(passed_tests_buf, sizeof(passed_tests_buf), "%d", pe->test - 1);
+      }
       csv_rec[F_PASSED_TESTS] = passed_tests_buf;
 
       prev_successes = RUN_TOO_MANY;

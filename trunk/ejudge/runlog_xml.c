@@ -940,8 +940,14 @@ unparse_runlog_xml(
     if (pp->score_adj > 0) {
       fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_SCORE_ADJ], pp->score_adj);
     }
-    if (pp->test > 0) {
-      fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_TEST], pp->test);
+    if (pp->passed_mode > 0) {
+      if (pp->test >= 0) {
+        fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_TEST], pp->test);
+      }
+    } else {
+      if (pp->test > 0) {
+        fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_TEST], pp->test);
+      }
     }
     if (!external_mode) {
       fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_AUTHORITATIVE],
@@ -964,9 +970,9 @@ unparse_runlog_xml(
       fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_EXAMINABLE], "yes");
     }
     */
-    if (pp->passed_mode) {
+    if (pp->passed_mode > 0) {
       fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_PASSED_MODE],
-              (pp->passed_mode)?"yes":"no");
+              (pp->passed_mode > 0)?"yes":"no");
     }
     if (!source_mode || pp->status >= RUN_MAX_STATUS) {
       fprintf(f, "/>\n");
