@@ -169,7 +169,7 @@ do_create(struct rldb_mysql_state *state)
   if (mi->simple_fquery(md, create_runs_query, md->table_prefix) < 0)
     db_error_fail(md);
   if (mi->simple_fquery(md,
-                        "INSERT INTO %sconfig VALUES ('run_version', '3') ;",
+                        "INSERT INTO %sconfig VALUES ('run_version', '4') ;",
                         md->table_prefix) < 0)
     db_error_fail(md);
   return 0;
@@ -218,12 +218,23 @@ do_open(struct rldb_mysql_state *state)
       return -1;
     if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '2' WHERE config_key = 'run_version' ;", md->table_prefix) < 0)
       return -1;
-  } else if (run_version == 2) {
+    run_version = 2;
+  }
+  if (run_version == 2) {
     if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN run_uuid CHAR(40) DEFAULT NULL AFTER hash", md->table_prefix) < 0)
       return -1;
     if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '3' WHERE config_key = 'run_version' ;", md->table_prefix) < 0)
       return -1;
-  } else if (run_version != 3) {
+    run_version = 3;
+  }
+  if (run_version == 3) {
+    if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN passed_mode TINYINT NOT NULL DEFAULT 0 AFTER saved_test", md->table_prefix) < 0)
+      return -1;
+    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '4' WHERE config_key = 'run_version' ;", md->table_prefix) < 0)
+      return -1;
+    run_version = 4;
+  }
+  if (run_version != 4) {
     err("run_version == %d is not supported", run_version);
     return -1;
   }
@@ -449,6 +460,7 @@ load_runs(struct rldb_mysql_cnts *cs)
     re->saved_status = ri.saved_status;
     re->saved_score = ri.saved_score;
     re->saved_test = ri.saved_test;
+    re->passed_mode = ri.passed_mode;
   }
   return 1;
 
@@ -942,6 +954,10 @@ generate_update_entry_clause(
     fprintf(f, "%ssaved_test = %d", sep, re->saved_test);
     sep = comma;
   }
+  if ((flags & RE_PASSED_MODE)) {
+    fprintf(f, "%spassed_mode = %d", sep, re->passed_mode);
+    sep = comma;
+  }
 
   gettimeofday(&curtime, 0);
   fprintf(f, "%slast_change_time = ", sep);
@@ -1040,6 +1056,9 @@ update_entry(
   }
   if ((flags & RE_SAVED_TEST)) {
     dst->saved_test = src->saved_test;
+  }
+  if ((flags & RE_PASSED_MODE)) {
+    dst->passed_mode = src->passed_mode;
   }
 }
 
@@ -1531,6 +1550,7 @@ put_entry_func(
   ri.saved_status = re->saved_status;
   ri.saved_score = re->saved_score;
   ri.saved_test = re->saved_test;
+  ri.passed_mode = re->passed_mode;
 
   cmd_f = open_memstream(&cmd_t, &cmd_z);
   fprintf(cmd_f, "INSERT INTO %sruns VALUES ( ", state->md->table_prefix);
