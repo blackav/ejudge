@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -64,6 +64,8 @@ run_reply_packet_read(
   FAIL_IF(pout->status < 0 || pout->status > RUN_MAX_STATUS);
   pout->failed_test = cvt_bin_to_host_32(pin->failed_test);
   FAIL_IF(pout->failed_test < -1 || pout->failed_test > EJ_MAX_TEST_NUM);
+  pout->tests_passed = cvt_bin_to_host_32(pin->tests_passed);
+  FAIL_IF(pout->tests_passed < -1 || pout->tests_passed > EJ_MAX_TEST_NUM);
   pout->score = cvt_bin_to_host_32(pin->score);
   FAIL_IF(pout->score < -1 || pout->score > EJ_MAX_SCORE);
 

@@ -61,6 +61,8 @@ run_reply_packet_write(
   out_data->status = cvt_host_to_bin_32(in_data->status);
   FAIL_IF(in_data->failed_test < -1 || in_data->failed_test > EJ_MAX_TEST_NUM);
   out_data->failed_test = cvt_host_to_bin_32(in_data->failed_test);
+  FAIL_IF(in_data->tests_passed < -1 || in_data->tests_passed > EJ_MAX_TEST_NUM);
+  out_data->tests_passed = cvt_host_to_bin_32(in_data->tests_passed);
   FAIL_IF(in_data->score < -1 || in_data->score > EJ_MAX_SCORE);
   out_data->score = cvt_host_to_bin_32(in_data->score);
   out_data->user_status = cvt_host_to_bin_32(in_data->user_status);
@@ -108,6 +110,7 @@ run_reply_packet_dump(
   fprintf(stderr, "contest_id = %d\n", in_data->contest_id);
   fprintf(stderr, "status = %d\n", in_data->status);
   fprintf(stderr, "failed_test = %d\n", in_data->failed_test);
+  fprintf(stderr, "tests_passed = %d\n", in_data->tests_passed);
   fprintf(stderr, "score = %d\n", in_data->score);
   fprintf(stderr, "notify_flag = %d\n", in_data->notify_flag);
   fprintf(stderr, "marked_flag = %d\n", in_data->marked_flag);

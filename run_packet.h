@@ -26,6 +26,7 @@ struct run_reply_packet
   int run_id;
   int status;
   int failed_test;
+  int tests_passed;
   int score;
   int notify_flag;
   int marked_flag;

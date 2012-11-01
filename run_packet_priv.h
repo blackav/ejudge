@@ -51,6 +51,7 @@ struct run_reply_bin_packet
   rint32_t  run_id;
   rint32_t  status;
   rint32_t  failed_test;
+  rint32_t  tests_passed;
   rint32_t  score;
   rint32_t  user_status;
   rint32_t  user_tests_passed;

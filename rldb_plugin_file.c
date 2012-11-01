@@ -114,6 +114,7 @@ change_status_func(
         int run_id,
         int new_status,
         int new_test,
+        int new_passed_mode,
         int new_score,
         int judge_id);
 static int
@@ -176,6 +177,7 @@ change_status_2_func(
         int run_id,
         int new_status,
         int new_test,
+        int new_passed_mode,
         int new_score,
         int judge_id,
         int is_marked);
@@ -189,6 +191,7 @@ change_status_3_func(
         int run_id,
         int new_status,
         int new_test,
+        int new_passed_mode,
         int new_score,
         int judge_id,
         int is_marked,
@@ -1260,6 +1263,7 @@ change_status_func(
         int run_id,
         int new_status,
         int new_test,
+        int new_passed_mode,
         int new_score,
         int judge_id)
 {
@@ -1270,6 +1274,7 @@ change_status_func(
 
   rls->runs[run_id].status = new_status;
   rls->runs[run_id].test = new_test;
+  rls->runs[run_id].passed_mode = new_passed_mode;
   rls->runs[run_id].score = new_score;
   rls->runs[run_id].judge_id = judge_id;
   return do_flush_entry(cs, run_id);
@@ -1511,6 +1516,7 @@ change_status_2_func(
         int run_id,
         int new_status,
         int new_test,
+        int new_passed_mode,
         int new_score,
         int judge_id,
         int is_marked)
@@ -1522,6 +1528,7 @@ change_status_2_func(
 
   rls->runs[run_id].status = new_status;
   rls->runs[run_id].test = new_test;
+  rls->runs[run_id].passed_mode = new_passed_mode;
   rls->runs[run_id].score = new_score;
   rls->runs[run_id].judge_id = judge_id;
   rls->runs[run_id].is_marked = is_marked;
@@ -1553,6 +1560,7 @@ change_status_3_func(
         int run_id,
         int new_status,
         int new_test,
+        int new_passed_mode,
         int new_score,
         int judge_id,
         int is_marked,
@@ -1568,6 +1576,7 @@ change_status_3_func(
 
   rls->runs[run_id].status = new_status;
   rls->runs[run_id].test = new_test;
+  rls->runs[run_id].passed_mode = new_passed_mode;
   rls->runs[run_id].score = new_score;
   rls->runs[run_id].judge_id = judge_id;
   rls->runs[run_id].is_marked = is_marked;

@@ -452,6 +452,7 @@ run_change_status(
         int runid,
         int newstatus,
         int newtest,
+        int newpassedmode,
         int newscore,
         int judge_id)
 {
@@ -476,7 +477,7 @@ run_change_status(
     ERR_R("this entry is read-only");
 
   return state->iface->change_status(state->cnts, runid, newstatus, newtest,
-                                     newscore, judge_id);
+                                     newpassedmode, newscore, judge_id);
 }
 
 int
@@ -485,6 +486,7 @@ run_change_status_2(
         int runid,
         int newstatus,
         int newtest,
+        int newpassedmode,
         int newscore,
         int judge_id,
         int is_marked)
@@ -510,7 +512,7 @@ run_change_status_2(
     ERR_R("this entry is read-only");
 
   return state->iface->change_status_2(state->cnts, runid, newstatus, newtest,
-                                       newscore, judge_id, is_marked);
+                                       newpassedmode, newscore, judge_id, is_marked);
 }
 
 int
@@ -519,6 +521,7 @@ run_change_status_3(
         int runid,
         int newstatus,
         int newtest,
+        int newpassedmode,
         int newscore,
         int judge_id,
         int is_marked,
@@ -548,7 +551,7 @@ run_change_status_3(
     ERR_R("this entry is read-only");
 
   return state->iface->change_status_3(state->cnts, runid, newstatus, newtest,
-                                       newscore, judge_id, is_marked,
+                                       newpassedmode, newscore, judge_id, is_marked,
                                        has_user_score, user_status,
                                        user_tests_passed, user_score);
 }

@@ -3332,7 +3332,7 @@ priv_submit_run_comment(
       if (user_score < 0) user_score = 0;
     }
     run_change_status_3(cs->runlog_state, run_id, RUN_OK,
-                        full_score, re.test, 0, 0,
+                        full_score, re.test, re.passed_mode, 0, 0,
                         re.saved_score, user_status, re.saved_test,
                         user_score);
   }

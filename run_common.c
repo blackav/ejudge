@@ -203,20 +203,22 @@ generate_xml_report(
   }
   if (srgp->scoring_system_val == SCORE_OLYMPIAD && srgp->accepting_mode > 0
       && reply_pkt->status != RUN_ACCEPTED) {
-    fprintf(f, " failed-test=\"%d\"", total_tests - 1);
+    fprintf(f, " tests-passed=\"%d\" failed-test=\"%d\"", reply_pkt->tests_passed, total_tests - 1);
   } else if (srgp->scoring_system_val == SCORE_ACM && reply_pkt->status != RUN_OK) {
-    fprintf(f, " failed-test=\"%d\"", total_tests - 1);
+    fprintf(f, " tests-passed=\"%d\" failed-test=\"%d\"", reply_pkt->tests_passed, total_tests - 1);
   } else if (srgp->scoring_system_val == SCORE_OLYMPIAD && srgp->accepting_mode <= 0) {
     fprintf(f, " tests-passed=\"%d\" score=\"%d\" max-score=\"%d\"",
-            reply_pkt->failed_test - 1, reply_pkt->score, max_score);
+            reply_pkt->tests_passed, reply_pkt->score, max_score);
   } else if (srgp->scoring_system_val == SCORE_KIROV) {
     fprintf(f, " tests-passed=\"%d\" score=\"%d\" max-score=\"%d\"",
-            reply_pkt->failed_test - 1, reply_pkt->score, max_score);
+            reply_pkt->tests_passed, reply_pkt->score, max_score);
   } else if (srgp->scoring_system_val == SCORE_MOSCOW) {
     if (reply_pkt->status != RUN_OK) {
       fprintf(f, " failed-test=\"%d\"", total_tests - 1);
     }
-    fprintf(f, " score=\"%d\" max-score=\"%d\"", reply_pkt->score, max_score);
+    fprintf(f, " tests-passed=\"%d\" score=\"%d\" max-score=\"%d\"", reply_pkt->tests_passed, reply_pkt->score, max_score);
+  } else {
+    fprintf(f, " tests-passed=\"%d\"", reply_pkt->tests_passed);
   }
   if (report_time_limit_ms > 0) {
     fprintf(f, " time-limit-ms=\"%d\"", report_time_limit_ms);
@@ -2783,9 +2785,11 @@ check_output_only(
       reply_pkt->score = srpp->full_score;
     }
     reply_pkt->failed_test = 2;
+    reply_pkt->tests_passed = 1;
   } else {
     reply_pkt->score = cur_info->score;
     reply_pkt->failed_test = 1;
+    reply_pkt->tests_passed = 0;
   }
 
   // output file
@@ -2928,6 +2932,7 @@ run_tests(
   int user_tests_passed = -1;
   int user_run_tests = -1;
   int marked_flag = 0;
+  int tests_passed = 0;
 
   unsigned char messages_path[PATH_MAX];
   unsigned char check_dir[PATH_MAX];
@@ -3079,6 +3084,7 @@ run_tests(
       status = RUN_OK;
       break;
     }
+    if (status == RUN_OK) ++tests_passed;
     if (status > 0) {
       if (srgp->scoring_system_val == SCORE_ACM) break;
       if (srgp->scoring_system_val == SCORE_MOSCOW) break;
@@ -3095,6 +3101,8 @@ run_tests(
     append_msg_to_log(messages_path, "No tests found");
     goto check_failed;
   }
+
+  reply_pkt->tests_passed = tests_passed;
 
   // check failed?
   for (cur_test = 1; cur_test < tests.size; ++cur_test) {
