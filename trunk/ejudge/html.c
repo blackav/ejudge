@@ -299,7 +299,7 @@ write_html_run_status(
       fprintf(f, "<td%s>&nbsp;</td>", cl);
     }
     return;
-  } else if (status > RUN_MAX_STATUS) {
+  } else if (status < 0 || status > RUN_MAX_STATUS) {
     if (run_fields & (1 << RUN_VIEW_TEST)) {
       fprintf(f, "<td%s>%s</td>", cl, _("N/A"));
     }
@@ -314,9 +314,10 @@ write_html_run_status(
     if (priv_level > 0) break;
     goto dona;
   case RUN_OK:
-    if (global->score_system == SCORE_KIROV) break;
+    if (global->score_system == SCORE_KIROV
+        || global->score_system == SCORE_OLYMPIAD) break;
     goto dona;
-  case RUN_ACCEPTED:
+    //case RUN_ACCEPTED:
     //case RUN_PENDING_REVIEW:
   case RUN_IGNORED:
   case RUN_DISQUALIFIED:
@@ -369,10 +370,35 @@ write_html_run_status(
   }
 
   if (run_fields & (1 << RUN_VIEW_TEST)) {
-    if (test <= 0) {
-      fprintf(f, "<td%s>%s</td>", cl, _("N/A"));
+    if (global->score_system == SCORE_OLYMPIAD) {
+      // we have to guess what to report: the count of passed tests
+      // or the number of the first failed test...
+      if (status == RUN_RUN_TIME_ERR
+          || status == RUN_TIME_LIMIT_ERR
+          || status == RUN_PRESENTATION_ERR
+          || status == RUN_WRONG_ANSWER_ERR
+          || status == RUN_MEM_LIMIT_ERR
+          || status == RUN_SECURITY_ERR
+          || status == RUN_WALL_TIME_LIMIT_ERR) {
+        // do like ACM
+        if (test <= 0) {
+          fprintf(f, "<td%s>%s</td>", cl, _("N/A"));
+        } else {
+          fprintf(f, "<td%s>%d</td>", cl, test);
+        }
+      } else {
+        if (test <= 0) {
+          fprintf(f, "<td%s>%s</td>", cl, _("N/A"));
+        } else {
+          fprintf(f, "<td%s>%d</td>", cl, test - 1);
+        }
+      }
     } else {
-      fprintf(f, "<td%s>%d</td>", cl, test - 1);
+      if (test <= 0) {
+        fprintf(f, "<td%s>%s</td>", cl, _("N/A"));
+      } else {
+        fprintf(f, "<td%s>%d</td>", cl, test - 1);
+      }
     }
   }
 
