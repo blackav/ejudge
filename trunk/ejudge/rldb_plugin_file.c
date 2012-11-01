@@ -360,7 +360,7 @@ run_read_entry_v0(struct rldb_file_cnts *cs, int n)
 
   memset(buf, 0, sizeof(buf));
   if (run_read_record_v0(cs, buf, RUN_RECORD_SIZE) < 0) return -1;
-  r = sscanf(buf, " %lld %d %u %hd %d %d %d %hhu %d %d %s %n",
+  r = sscanf(buf, " %lld %d %u %hd %d %d %d %hhu %hd %d %s %n",
              &rls->runs[n].time, &rls->runs[n].run_id,
              &rls->runs[n].size, &rls->runs[n].locale_id,
              &rls->runs[n].user_id, &rls->runs[n].lang_id,

@@ -238,7 +238,10 @@ struct run_entry
   }              a;             /* 16 */
   ruint32_t      sha1[5];       /* 20 */
   rint32_t       score;         /* 4 */
-  rint32_t       test;          /* 4 */
+  //rint32_t       test;          /* 4 */
+  rint16_t       test;          /* 2 */
+  unsigned char  is_passed;     /* 1 */
+  unsigned char  unused3;       /* 1 */
   rint32_t       score_adj;     /* 4 */
   rint16_t       locale_id;     /* 2 */
   ruint16_t      judge_id;      /* 2 */
