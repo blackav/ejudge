@@ -3448,7 +3448,8 @@ ns_priv_edit_run_action(
 
   if (need_rejudge > 0) {
     serve_rejudge_run(ejudge_config, cnts, cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
-                      (need_rejudge == RUN_FULL_REJUDGE), 0);
+                      (need_rejudge == RUN_FULL_REJUDGE),
+                      DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT);
   }
 
 cleanup:;

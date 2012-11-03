@@ -54,6 +54,7 @@
 #include "charsets.h"
 #include "compat.h"
 #include "ej_uuid.h"
+#include "prepare_dflt.h"
 
 #include "reuse_xalloc.h"
 #include "reuse_logger.h"
@@ -239,7 +240,8 @@ ns_client_destroy_callback(struct client_state *p)
     cs->testing_suspended = cs->saved_testing_suspended;
     serve_update_status_file(cs, 1);
     if (!cs->testing_suspended)
-      serve_judge_suspended(ejudge_config, cnts, cs, 0, 0, 0);
+      serve_judge_suspended(ejudge_config, cnts, cs, 0, 0, 0,
+                            DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT);
   }
   xfree(cs->pending_xml_import); cs->pending_xml_import = 0;
   cs->client_id = -1;
@@ -364,7 +366,8 @@ handle_pending_xml_import(const struct contest_desc *cnts, serve_state_t cs)
       cs->testing_suspended = cs->saved_testing_suspended;
       serve_update_status_file(cs, 1);
       if (!cs->testing_suspended)
-        serve_judge_suspended(ejudge_config, cnts, cs, 0, 0, 0);
+        serve_judge_suspended(ejudge_config, cnts, cs, 0, 0, 0,
+                              DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT);
     }
     xfree(cs->pending_xml_import); cs->pending_xml_import = 0;
     cs->client_id = -1; cs->destroy_callback = 0;
@@ -387,7 +390,8 @@ handle_pending_xml_import(const struct contest_desc *cnts, serve_state_t cs)
     cs->testing_suspended = cs->saved_testing_suspended;
     serve_update_status_file(cs, 1);
     if (!cs->testing_suspended)
-      serve_judge_suspended(ejudge_config, cnts, cs, 0, 0, 0);
+      serve_judge_suspended(ejudge_config, cnts, cs, 0, 0, 0,
+                            DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT);
   }
   xfree(cs->pending_xml_import); cs->pending_xml_import = 0;
   cs->client_id = -1; cs->destroy_callback = 0;
@@ -3964,7 +3968,8 @@ priv_change_status(
   }
   if (status == RUN_REJUDGE || status == RUN_FULL_REJUDGE) {
     serve_rejudge_run(ejudge_config, cnts, cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
-                      (status == RUN_FULL_REJUDGE), 0);
+                      (status == RUN_FULL_REJUDGE),
+                      DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT);
     goto cleanup;
   }
   if (!serve_is_valid_status(cs, status, 1)) {
@@ -4293,7 +4298,7 @@ priv_rejudge_problem(FILE *fout,
     goto cleanup;
   }
 
-  serve_rejudge_problem(ejudge_config, cnts, cs, phr->user_id, phr->ip, phr->ssl_flag, prob_id);
+  serve_rejudge_problem(ejudge_config, cnts, cs, phr->user_id, phr->ip, phr->ssl_flag, prob_id, DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT);
 
  cleanup:
   return 0;
@@ -4319,10 +4324,10 @@ priv_rejudge_all(FILE *fout,
 
   switch (phr->action) {
   case NEW_SRV_ACTION_REJUDGE_SUSPENDED_2:
-    serve_judge_suspended(ejudge_config, cnts, cs, phr->user_id, phr->ip, phr->ssl_flag);
+    serve_judge_suspended(ejudge_config, cnts, cs, phr->user_id, phr->ip, phr->ssl_flag, DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT);
     break;
   case NEW_SRV_ACTION_REJUDGE_ALL_2:
-    serve_rejudge_all(ejudge_config, cnts, cs, phr->user_id, phr->ip, phr->ssl_flag);
+    serve_rejudge_all(ejudge_config, cnts, cs, phr->user_id, phr->ip, phr->ssl_flag, DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT);
     break;
   default:
     abort();
