@@ -596,13 +596,20 @@ set_runlog_func(
         struct run_entry *entries)
 {
   struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts*) cdata;
+  struct rldb_mysql_state *state = cs->plugin_state;
+  struct common_mysql_iface *mi = state->mi;
+  struct common_mysql_state *md = state->md;
   struct runlog_state *rls = cs->rl_state;
   int i;
 
-  // only work for empty runlog
-  if (rls->run_u > 0) {
-    err("rldb_mysql: set_runlog: runlog is not empty");
-    return -1;
+  mi->simple_fquery(md, "DELETE FROM %sruns WHERE contest_id = %d ;",
+                    md->table_prefix, cs->contest_id);
+
+  rls->run_u = 0;
+  if (rls->run_a > 0) {
+    memset(rls->runs, 0, sizeof(rls->runs[0]) * rls->run_a);
+    for (i = 0; i < rls->run_a; ++i)
+      rls->runs[i].status = RUN_EMPTY;
   }
 
   // FIXME: handle errors
