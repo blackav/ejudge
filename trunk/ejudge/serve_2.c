@@ -2943,7 +2943,7 @@ serve_rejudge_run(
                                 prob->style_checker_cmd,
                                 prob->style_checker_env,
                                 0 /* accepting_mode */,
-                                0 /* priority_adjustment */,
+                                priority_adjustment,
                                 1 /* notify flag */,
                                 prob, NULL /* lang */,
                                 0 /* no_db_flag */);
@@ -3227,7 +3227,8 @@ serve_rejudge_problem(
         int user_id,
         ej_ip_t ip,
         int ssl_flag,
-        int prob_id)
+        int prob_id,
+        int priority_adjustment)
 {
   int total_runs, r;
   struct run_entry re;
@@ -3262,7 +3263,8 @@ serve_rejudge_problem(
       if (re.prob_id != prob_id) continue;
       if (flag[re.user_id]) continue;
       flag[re.user_id] = 1;
-      serve_rejudge_run(config, cnts, state, r, user_id, ip, ssl_flag, 0, 0);
+      serve_rejudge_run(config, cnts, state, r, user_id, ip, ssl_flag, 0,
+                        priority_adjustment);
     }
     return;
   }
@@ -3272,7 +3274,8 @@ serve_rejudge_problem(
         && is_generally_rejudgable(state, &re, INT_MAX)
         && re.status != RUN_IGNORED && re.status != RUN_DISQUALIFIED
         && re.prob_id == prob_id) {
-      serve_rejudge_run(config, cnts, state, r, user_id, ip, ssl_flag, 0, 0);
+      serve_rejudge_run(config, cnts, state, r, user_id, ip, ssl_flag, 0,
+                        priority_adjustment);
     }
   }
 }
@@ -3284,7 +3287,8 @@ serve_judge_suspended(
         serve_state_t state,
         int user_id,
         ej_ip_t ip,
-        int ssl_flag)
+        int ssl_flag,
+        int priority_adjustment)
 {
   int total_runs, r;
   struct run_entry re;
@@ -3299,7 +3303,8 @@ serve_judge_suspended(
     if (run_get_entry(state->runlog_state, r, &re) >= 0
         && is_generally_rejudgable(state, &re, INT_MAX)
         && re.status == RUN_PENDING) {
-      serve_rejudge_run(config, cnts, state, r, user_id, ip, ssl_flag, 0, 0);
+      serve_rejudge_run(config, cnts, state, r, user_id, ip, ssl_flag, 0,
+                        priority_adjustment);
     }
   }
 }
@@ -3311,7 +3316,8 @@ serve_rejudge_all(
         serve_state_t state,
         int user_id,
         ej_ip_t ip,
-        int ssl_flag)
+        int ssl_flag,
+        int priority_adjustment)
 {
   int total_runs, r, size, idx, total_ids, total_probs;
   struct run_entry re;
@@ -3346,7 +3352,8 @@ serve_rejudge_all(
       idx = re.user_id * total_probs + re.prob_id;
       if (flag[idx]) continue;
       flag[idx] = 1;
-      serve_rejudge_run(config, cnts, state, r, user_id, ip, ssl_flag, 0, 0);
+      serve_rejudge_run(config, cnts, state, r, user_id, ip, ssl_flag, 0,
+                        priority_adjustment);
     }
     return;
   }
@@ -3355,7 +3362,8 @@ serve_rejudge_all(
     if (run_get_entry(state->runlog_state, r, &re) >= 0
         && is_generally_rejudgable(state, &re, INT_MAX)
         && re.status != RUN_IGNORED && re.status != RUN_DISQUALIFIED) {
-      serve_rejudge_run(config, cnts, state, r, user_id, ip, ssl_flag, 0, 0);
+      serve_rejudge_run(config, cnts, state, r, user_id, ip, ssl_flag, 0,
+                        priority_adjustment);
     }
   }
 }
@@ -3668,7 +3676,8 @@ handle_judge_olympiad_event(
     goto done;
   // already judged somehow
   if (rs.judge_id > 0) goto done;
-  serve_judge_virtual_olympiad(config, cnts, cs, p->user_id, re.run_id);
+  serve_judge_virtual_olympiad(config, cnts, cs, p->user_id, re.run_id,
+                               DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT);
   if (p->handler) (*p->handler)(cnts, cs, p);
 
  done:
@@ -3708,7 +3717,8 @@ serve_judge_virtual_olympiad(
         const struct contest_desc *cnts,
         serve_state_t cs,
         int user_id,
-        int run_id)
+        int run_id,
+        int priority_adjustment)
 {
   const struct section_global_data *global = cs->global;
   const struct section_problem_data *prob;
@@ -3751,7 +3761,8 @@ serve_judge_virtual_olympiad(
 
   for (i = 1; i <= cs->max_prob; i++) {
     if (latest_runs[i] >= 0)
-      serve_rejudge_run(config, cnts, cs, latest_runs[i], user_id, 0, 0, 1, 10);
+      serve_rejudge_run(config, cnts, cs, latest_runs[i], user_id, 0, 0, 1,
+                        priority_adjustment);
   }
   run_set_judge_id(cs->runlog_state, vstart_id, 1);
 }

@@ -509,7 +509,8 @@ serve_rejudge_problem(
         int user_id,
         ej_ip_t ip,
         int ssl_flag,
-        int prob_id);
+        int prob_id,
+        int priority_adjustment);
 
 void
 serve_judge_suspended(
@@ -518,7 +519,8 @@ serve_judge_suspended(
         serve_state_t state,
         int user_id,
         ej_ip_t ip,
-        int ssl_flag);
+        int ssl_flag,
+        int priority_adjustment);
 
 void
 serve_rejudge_all(
@@ -527,7 +529,8 @@ serve_rejudge_all(
         serve_state_t state,
         int user_id,
         ej_ip_t ip,
-        int ssl_flag);
+        int ssl_flag,
+        int priority_adjustment);
 
 int
 serve_read_compile_packet(
@@ -589,7 +592,8 @@ void serve_judge_virtual_olympiad(
         const struct contest_desc *,
         serve_state_t cs,
         int user_id,
-        int run_id);
+        int run_id,
+        int priority_adjustment);
 
 void serve_clear_by_mask(serve_state_t state,
                          int user_id, ej_ip_t ip, int ssl_flag,
