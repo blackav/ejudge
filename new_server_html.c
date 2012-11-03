@@ -13530,14 +13530,14 @@ unpriv_main_page(FILE *fout,
         if (i == prob_id) {
           li_attr = "  id=\"nTopNavSelected\"";
           div_class = "nProbCurrent";
-        } else if (prob->disable_user_submit > 0) {
-          div_class = "nProbDisabled";
         } else if (!all_attempts[i]) {
           div_class = "nProbEmpty";
         } else if (pending_flag[i] || trans_flag[i]) {
           div_class = "nProbTrans";
         } else if (accepted_flag[i] || solved_flag[i]) {
           div_class = "nProbOk";
+        } else if (prob->disable_user_submit > 0) {
+          div_class = "nProbDisabled";
         } else {
           div_class = "nProbBad";
         }
@@ -14303,14 +14303,14 @@ unpriv_main_page(FILE *fout,
 
       if (i == prob_id) {
         cc = "probCurrent";
-      } else if (prob->disable_user_submit > 0) {
-        cc = "probDisabled";
       } else if (!all_attempts[i]) {
         cc = "probEmpty";
       } else if (pending_flag[i] || trans_flag[i]) {
         cc = "probTrans";
       } else if (accepted_flag[i] || solved_flag[i]) {
         cc = "probOk";
+      } else if (prob->disable_user_submit > 0) {
+        cc = "probDisabled";
       } else {
         cc = "probBad";
       }
@@ -14347,14 +14347,14 @@ unpriv_main_page(FILE *fout,
       if (i == upper_tab_id) {
         div_class = "nProbCurrent";
         li_attr = " id=\"nBottomNavSelected\"";
-      } else if (prob->disable_user_submit > 0) {
-        div_class = "nProbDisabled";
       } else if (!all_attempts[i]) {
         div_class = "nProbEmpty";
       } else if (pending_flag[i] || trans_flag[i]) {
         div_class = "nProbTrans";
       } else if (accepted_flag[i] || solved_flag[i]) {
         div_class = "nProbOk";
+      } else if (prob->disable_user_submit > 0) {
+        div_class = "nProbDisabled";
       } else {
         div_class = "nProbBad";
       }
