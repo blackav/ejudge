@@ -3989,6 +3989,23 @@ priv_change_status(
     new_run.score = prob->full_score;
     flags |= RE_SCORE;
   }
+
+  if (prob->type >= PROB_TYPE_OUTPUT_ONLY
+      && prob->type <= PROB_TYPE_SELECT_MANY) {
+    if (status == RUN_OK) {
+      new_run.test = 1;
+      new_run.passed_mode = 1;
+      flags |= RE_TEST | RE_PASSED_MODE;
+    } else if (status == RUN_WRONG_ANSWER_ERR
+               || status == RUN_PRESENTATION_ERR
+               || status == RUN_PARTIAL) {
+      new_run.test = 0;
+      new_run.passed_mode = 1;
+      new_run.score = 0;
+      flags |= RE_TEST | RE_PASSED_MODE | RE_SCORE;
+    }
+  }
+
   if (run_set_entry(cs->runlog_state, run_id, flags, &new_run) < 0) {
     ns_error(log_f, NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
     goto cleanup;
