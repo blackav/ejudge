@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2010-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -403,7 +403,8 @@ handle_packet(
   unsigned char run_output_path[EJ_PATH_MAX];
   unsigned char full_output_path[EJ_PATH_MAX];
   unsigned char run_error_path[EJ_PATH_MAX];
-  unsigned char log_file_path[EJ_PATH_MAX];
+  //unsigned char log_file_path[EJ_PATH_MAX];
+  unsigned char error_file_path[EJ_PATH_MAX];
   unsigned char result_file_path[EJ_PATH_MAX];
 
   ssize_t error_file_size;
@@ -514,12 +515,13 @@ handle_packet(
         result->error_file_size = error_file_size;
       }
 
-      if (packet->log_file_name[0]) {
-        snprintf(log_file_path, sizeof(log_file_path), "%s/%s",
-                 result_path, packet->log_file_name);
-        if (fast_copy_file(run_error_path, log_file_path) < 0) {
+      if (packet->error_file_name[0]) {
+        snprintf(error_file_path, sizeof(error_file_path), "%s/%s",
+                 result_path, packet->error_file_name);
+		info("Copy: %s -> %s", run_error_path, error_file_path);
+        if (fast_copy_file(run_error_path, error_file_path) < 0) {
           snprintf(result->comment, sizeof(result->comment),
-                   "copy failed: %s -> %s", run_error_path, log_file_path);
+                   "copy failed: %s -> %s", run_error_path, error_file_path);
           goto cleanup;
         }
       }
@@ -527,6 +529,7 @@ handle_packet(
   }
 
   /* copy the program output */
+  info("Copying program output");
   output_file_size = generic_file_size("", run_output_path, "");
   if (output_file_size < 0) {
     if (!result->comment[0]) {
@@ -551,6 +554,7 @@ handle_packet(
 
   snprintf(result_file_path, sizeof(result_file_path), "%s/%s",
            result_path, packet->result_file_name);
+  info("Copy: %s -> %s", run_output_path, result_file_path);
   if (fast_copy_file(run_output_path, result_file_path) < 0) {
     snprintf(result->comment, sizeof(result->comment),
              "copy failed: %s -> %s", run_output_path, result_file_path);
@@ -586,6 +590,8 @@ read_packet(const unsigned char *dir_path)
   packet_config = nwrun_in_packet_parse(packet_conf_file, &packet);
   if (!packet_config) goto cleanup;
 
+  nwrun_in_packet_print(stderr, packet_config);
+  
   /* setup packet defaults */
   if (packet->contest_id <= 0) {
     err("contest_id is not set");
@@ -688,6 +694,8 @@ read_packet(const unsigned char *dir_path)
   }
   nwrun_out_packet_print(f, &result);
   fclose(f); f = 0;
+
+  nwrun_out_packet_print(stderr, &result); 
 
   if (rename(result_in_dir, result_dir_dir) < 0) {
     err("rename: %s -> %s failed: %s", result_in_dir, result_dir_dir, os_ErrorMsg());
