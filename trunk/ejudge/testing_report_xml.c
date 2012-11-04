@@ -675,7 +675,7 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
 {
   struct xml_attr *a;
   int x, was_tests = 0, was_ttrows = 0, was_ttcells = 0;
-  struct xml_attr *a_failed_test = 0, *a_tests_passed = 0, *a_score = 0;
+  struct xml_attr *a_failed_test = 0, *a_score = 0;
   struct xml_attr *a_max_score = 0;
   struct xml_tree *t2;
   int i, j;
@@ -831,7 +831,6 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
       }
       if (x < 0) x = 0;
       r->tests_passed = x;
-      a_tests_passed = a;
       break;
     case TR_A_USER_TESTS_PASSED:
       if (xml_attr_int(a, &x) < 0) return -1;
@@ -966,10 +965,12 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
       return -1;
     }
     */
+    /*
     if (r->tests_passed >= 0) {
       xml_err_attr_not_allowed(t, a_tests_passed);
       return -1;
     }
+    */
     if (r->score >= 0) {
       xml_err_attr_not_allowed(t, a_score);
       return -1;
