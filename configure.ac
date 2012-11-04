@@ -149,8 +149,8 @@ case "${target}" in
     ac_cv_conf_dos_filenaming=1
     ac_cv_dir_separator='\\'
     ac_cv_path_separator=';'
-    CFLAGS="${CFLAGS} -mno-cygwin"
-    LDFLAGS="${LDFLAGS} -mno-cygwin"
+    #CFLAGS="${CFLAGS} -mno-cygwin"
+    #LDFLAGS="${LDFLAGS} -mno-cygwin"
     AC_MSG_RESULT([win32])
     ;;
   *)
@@ -392,6 +392,9 @@ AC_CHECK_LIB([curl],[curl_easy_init],[ac_cv_has_lib_libcurl=-lcurl],[ac_cv_has_l
 dnl check libuuid library
 AC_CHECK_HEADER([uuid/uuid.h],[ac_cv_has_libuuid=1],[ac_cv_has_libuuid=0])
 AC_CHECK_LIB([uuid],[uuid_parse],[ac_cv_has_lib_libuuid=-luuid],[ac_cv_has_lib_libuuid=])
+
+dnl check regex library
+AC_CHECK_HEADER([regex.h],[ac_cv_has_regex=1],[ac_cv_has_regex=0])
 
 dnl Libcap checking stuff
 ac_cv_has_libcap=1
@@ -1027,6 +1030,11 @@ AC_SUBST(ac_cv_libcap_link)
 AC_SUBST(ac_cv_ejudge_server_bin_path_m)
 AC_SUBST(ac_cv_lang_config_dir)
 AC_SUBST(ac_cv_lang_config_dir_expanded)
+
+if [[ x"${ac_cv_has_regex}" = x1 ]]
+then
+  AC_DEFINE(CONF_HAS_REGEX,1)
+fi
 
 if [[ x"${ac_cv_has_libuuid}" = x1 -a x"${ac_cv_has_lib_libuuid}" != x ]]
 then

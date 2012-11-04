@@ -133,6 +133,9 @@
 /* libuuid available */
 #undef CONF_HAS_LIBUUID
 
+/* regex.h available */
+#undef CONF_HAS_REGEX
+
 /* DOS path rules */
 #undef CONF_DOS_FILENAMING
 
