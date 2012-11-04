@@ -615,15 +615,19 @@ then
   fi
   dnl split --libs output into library paths, adding -rpath specs
 
-  if [[ x"${ac_cv_rpath}" != xno -a x"${ac_cv_has_mysql}" = x1 ]]
+  if [[ x"${ac_cv_has_mysql}" = x1 ]]
   then
     for xx in ${tmp_libs}
     do
       case "$xx" in
         -L*)
           [[ x"${ac_cv_mysql_lib_opt}" != x ]] && ac_cv_mysql_lib_opt="${ac_cv_mysql_lib_opt} "
-          tmp_rpath=`echo "$xx" | sed s+-L+-Wl,-rpath,+`
-          ac_cv_mysql_lib_opt="${ac_cv_mysql_lib_opt}${xx} ${tmp_rpath}"
+          ac_cv_mysql_lib_opt="${ac_cv_mysql_lib_opt}${xx}"
+          if [[ x"${ac_cv_rpath}" != xno ]]
+          then
+            tmp_rpath=`echo "$xx" | sed s+-L+-Wl,-rpath,+`
+            ac_cv_mysql_lib_opt="${ac_cv_mysql_lib_opt} ${tmp_rpath}"
+          fi
           ;;
         -l*)
           [[ x"${ac_cv_mysql_libs}" != x ]] && ac_cv_mysql_libs="${ac_cv_mysql_libs} "
@@ -635,12 +639,6 @@ then
           ;;
       esac
     done
-  fi
-
-  if [[ x"${ac_cv_rpath}" = xno -a x"${ac_cv_has_mysql}" = x1 ]]
-  then
-    dnl save choice to keep MYSQL_LIB not empty
-    ac_cv_mysql_libs="-L."
   fi
 
   if [[ x"${ac_cv_has_mysql}" = x1 ]]
