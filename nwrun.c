@@ -590,7 +590,7 @@ read_packet(const unsigned char *dir_path)
   packet_config = nwrun_in_packet_parse(packet_conf_file, &packet);
   if (!packet_config) goto cleanup;
 
-  nwrun_in_packet_print(stderr, packet_config);
+  nwrun_in_packet_print(stderr, (const struct nwrun_in_packet *) packet_config);
   
   /* setup packet defaults */
   if (packet->contest_id <= 0) {
