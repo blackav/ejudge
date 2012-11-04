@@ -637,6 +637,12 @@ then
     done
   fi
 
+  if [[ x"${ac_cv_rpath}" != xno -a x"${ac_cv_has_mysql}" = x1 ]]
+  then
+    dnl save choice to keep MYSQL_LIB not empty
+    ac_cv_mysql_libs="-L."
+  fi
+
   if [[ x"${ac_cv_has_mysql}" = x1 ]]
   then
     AC_MSG_RESULT([ok])
