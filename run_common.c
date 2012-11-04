@@ -977,7 +977,8 @@ invoke_nwrun(
         const unsigned char *test_src_path,
         const unsigned char *test_basename,
         long time_limit_millis,
-        struct testinfo *result)
+        struct testinfo *result,
+        const unsigned char *check_dir)
 {
   path_t full_spool_dir;
   path_t pkt_name;
@@ -994,6 +995,8 @@ invoke_nwrun(
   path_t packet_output_path;
   path_t packet_error_path;
   path_t arch_entry_name;
+  path_t error_file_name;
+  path_t log_file_name;
   FILE *f = 0;
   int r;
   struct generic_section_config *generic_out_packet = 0;
@@ -1071,6 +1074,16 @@ invoke_nwrun(
     goto fail;
   }
 
+  error_file_name[0] = 0;
+  if (tst && tst->error_file && tst->error_file[0] >= ' ') {
+    snprintf(error_file_name, sizeof(error_file_name), "%s", tst->error_file);
+  } else {
+    snprintf(error_file_name, sizeof(error_file_name), "%s", "errors.txt");
+  }
+
+  log_file_name[0] = 0;
+  snprintf(log_file_name, sizeof(log_file_name), "%s", "log.txt");
+
   // make the description file
   snprintf(tmp_in_path, sizeof(tmp_in_path), "%s/packet.cfg", full_in_path);
   f = fopen(tmp_in_path, "w");
@@ -1137,8 +1150,8 @@ invoke_nwrun(
   fprintf(f, "input_file_name = \"%s\"\n", srpp->input_file);
   fprintf(f, "output_file_name = \"%s\"\n", srpp->output_file);
   fprintf(f, "result_file_name = \"%s\"\n", srpp->output_file);
-  fprintf(f, "error_file_name = \"%s\"\n", tst->error_file);
-  fprintf(f, "log_file_name = \"%s\"\n", tst->error_file);
+  fprintf(f, "error_file_name = \"%s\"\n", error_file_name);
+  fprintf(f, "log_file_name = \"%s\"\n", log_file_name);
 
   fflush(f);
   if (ferror(f)) {
@@ -1301,7 +1314,7 @@ invoke_nwrun(
     if (result->status == RUN_OK) {
       // copy file into the working directory for further checking
       snprintf(check_output_path, sizeof(check_output_path),
-               "%s/%s", tst->check_dir, srpp->output_file);
+               "%s/%s", check_dir, srpp->output_file);
       if (fast_copy_file(packet_output_path, check_output_path) < 0) {
         chk_printf(result, "copy_file(%s, %s) failed\n",
                    packet_output_path, check_output_path);
@@ -1332,7 +1345,7 @@ invoke_nwrun(
   /* handle the program error file */
   if (out_packet->error_file_existed > 0) {
     snprintf(packet_error_path, sizeof(packet_error_path),
-             "%s/%s", out_entry_packet, tst->error_file);
+             "%s/%s", out_entry_packet, error_file_name);
     result->error_size = out_packet->error_file_size;
     if (srgp->enable_full_archive <= 0
         && srgp->max_file_length > 0
@@ -1897,7 +1910,8 @@ run_one_test(
                           tst, srp, far,
                           cur_test, 0, p_has_real_time,
                           global->run_work_dir,
-                          exe_name, test_src, test_base, time_limit_value_ms, cur_info);
+                          exe_name, test_src, test_base, time_limit_value_ms,
+                          cur_info, check_dir);
     if (cur_info->max_memory_used > 0) {
       *p_has_max_memory_used = 1;
     }
@@ -2446,9 +2460,11 @@ run_checker:;
     }
   }
 
-  output_path_to_check = srpp->output_file;
-  if (srpp->interactor_cmd && srpp->interactor_cmd[0]) {
-    output_path_to_check = output_path;
+  if (!output_path_to_check) {
+    output_path_to_check = srpp->output_file;
+    if (srpp->interactor_cmd && srpp->interactor_cmd[0]) {
+      output_path_to_check = output_path;
+    }
   }
   status = invoke_checker(srgp, srpp, cur_test, cur_info,
                           check_cmd, test_src, output_path_to_check,
