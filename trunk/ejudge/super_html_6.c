@@ -9907,8 +9907,8 @@ super_serve_op_IMPORT_FROM_POLYGON_ACTION(
   if (ss_cgi_param(phr, "max_stack_size", &s) > 0) max_stack_size_flag = 1;
 
   if (ss_cgi_param(phr, "language_priority", &s) > 0 && *s) {
-    if (!strcmp(language_priority, "ru,en")
-        || !strcmp(language_priority, "en,ru")) {
+    if (!strcmp(s, "ru,en")
+        || !strcmp(s, "en,ru")) {
       language_priority = s;
     }
   }
