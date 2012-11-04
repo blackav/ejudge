@@ -69,6 +69,7 @@ WIN32_COMMON_CFILES=\
  xml_utils/attr_bool_byte.c\
  xml_utils/attr_date.c\
  xml_utils/attr_int.c\
+ xml_utils/attr_ulong.c\
  xml_utils/elem_ip_mask.c\
  xml_utils/empty_text.c\
  xml_utils/err_attrs.c\
