@@ -1039,7 +1039,12 @@ task_Start(tTask *tsk)
           rw_mode   = GENERIC_READ;
           open_mode = OPEN_EXISTING;
           sh_mode   = FILE_SHARE_READ | FILE_SHARE_WRITE;
-          break;  
+          break;
+		case TSK_APPEND:
+		  rw_mode = GENERIC_WRITE;
+		  open_mode = CREATE_ALWAYS;
+          sh_mode   = FILE_SHARE_READ | FILE_SHARE_WRITE;
+		  break;
         default:
           SWERR(("unsupported open mode: %d", p->u.s.oflag));
         }
@@ -1382,6 +1387,12 @@ task_IsTimeout(tTask *tsk)
   if (tsk->max_time_millis > 0 && tsk->used_time >= tsk->max_time_millis) return 1;
   if (tsk->max_time > 0 && tsk->used_time >= tsk->max_time * 1000) return 1;
   return 0;       
+}
+
+int
+task_IsRealTimeout(tTask *tsk)
+{
+  return 0;
 }
 
 int

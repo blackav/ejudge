@@ -48,8 +48,6 @@ WIN32_COMMON_CFILES=\
  run_inverse.c\
  runlog.c\
  runlog_static.c\
- run_packet_1.c\
- run_packet_3.c\
  run_packet_5.c\
  serve_state.c\
  sformat.c\
