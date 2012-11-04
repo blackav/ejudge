@@ -122,6 +122,50 @@ nwrun_in_packet_free(struct generic_section_config *config)
   return 0;
 }
 
+void
+nwrun_in_packet_print(FILE *fout, const struct nwrun_in_packet *p)
+{
+  if (!p) return;
+
+  fprintf(fout, "# -*- coding: utf-8 -*-\n\n");
+
+  fprintf(fout, "priority = %d\n", p->priority);
+  fprintf(fout, "contest_id = %d\n", p->contest_id);
+  fprintf(fout, "run_id = %d\n", p->run_id);
+  fprintf(fout, "prob_id = %d\n", p->prob_id);
+  fprintf(fout, "test_num = %d\n", p->test_num);
+  fprintf(fout, "judge_id = %d\n", p->judge_id);
+  fprintf(fout, "use_contest_id_in_reply = %d\n", p->use_contest_id_in_reply);
+  fprintf(fout, "enable_unix2dos = %d\n", p->enable_unix2dos);
+  fprintf(fout, "disable_stdin = %d\n", p->disable_stdin);
+  fprintf(fout, "ignore_stdout = %d\n", p->ignore_stdout);
+  fprintf(fout, "ignore_stderr = %d\n", p->ignore_stderr);
+  fprintf(fout, "redirect_stdin = %d\n", p->redirect_stdin);
+  fprintf(fout, "redirect_stdout = %d\n", p->redirect_stdout);
+  fprintf(fout, "redirect_stderr = %d\n", p->redirect_stderr);
+  fprintf(fout, "combined_stdin = %d\n", p->combined_stdin);
+  fprintf(fout, "combined_stdout = %d\n", p->combined_stdout);
+  fprintf(fout, "time_limit_millis = %d\n", p->time_limit_millis);
+  fprintf(fout, "real_time_limit_millis = %d\n", p->real_time_limit_millis);
+  fprintf(fout, "max_stack_size = %lld\n", (long long) p->max_stack_size);
+  fprintf(fout, "max_data_size = %lld\n", (long long) p->max_data_size);
+  fprintf(fout, "max_vm_size = %lld\n", (long long) p->max_vm_size);
+  fprintf(fout, "max_output_file_size = %lld\n", (long long) p->max_output_file_size);
+  fprintf(fout, "max_error_file_size = %lld\n", (long long) p->max_error_file_size);
+  fprintf(fout, "enable_memory_limit_error = %d\n", p->enable_memory_limit_error);
+  fprintf(fout, "enable_security_violation_error = %d\n", p->enable_security_violation_error);
+  fprintf(fout, "enable_secure_run = %d\n", p->enable_secure_run);
+
+  fprintf(fout, "prob_short_name = %s\n", p->prob_short_name);
+  fprintf(fout, "program_name = %s\n", p->program_name);
+  fprintf(fout, "test_file_name = %s\n", p->test_file_name);
+  fprintf(fout, "input_file_name = %s\n", p->input_file_name);
+  fprintf(fout, "output_file_name = %s\n", p->output_file_name);
+  fprintf(fout, "result_file_name = %s\n", p->result_file_name);
+  fprintf(fout, "error_file_name = %s\n", p->error_file_name);
+  fprintf(fout, "log_file_name = %s\n", p->log_file_name);
+}
+
 #define NWRUN_OUT_OFFSET(x)   XOFFSET(struct nwrun_out_packet, x)
 #define NWRUN_OUT_SIZE(x)     XFSIZE(struct nwrun_out_packet, x)
 #define NWRUN_OUT_PARAM(x, t) { #x, t, NWRUN_OUT_OFFSET(x), NWRUN_OUT_SIZE(x) }
