@@ -439,7 +439,9 @@ write_help(void)
          "    -C DIR       specify the working directory\n"
          "    -D           daemon mode\n"
          "    -s ARCH      ignore specified architecture\n"
-         "    -i CNTS:PROB ignore specified problem\n",
+         "    -i CNTS:PROB ignore specified problem\n"
+         "    -p DIR       specify alternate name for super-run directory\n"
+         "    -a           write log file to alternate location\n",
          program_name, program_name);
   exit(0);
 }
@@ -699,6 +701,7 @@ create_configs(
           "clear_env\n"
           "start_env = \"PATH=/usr/local/bin:/usr/bin:/bin\"\n"
           "start_env = \"LANG=C\"\n"
+          "start_env = \"LC_CTYPE=C\"\n"
           "start_env = \"HOME\"\n\n");
 
   fprintf(f,
@@ -714,6 +717,7 @@ create_configs(
           "clear_env\n"
           "start_env = \"PATH=/usr/local/bin:/usr/bin:/bin\"\n"
           "start_env = \"LANG=C\"\n"
+          "start_env = \"LC_CTYPE=C\"\n"
           "start_env = \"HOME\"\n\n");
 
   fprintf(f,
@@ -729,6 +733,7 @@ create_configs(
           "clear_env\n"
           "start_env = \"PATH=/usr/local/bin:/usr/bin:/bin\"\n"
           "start_env = \"LANG=C\"\n"
+          "start_env = \"LC_CTYPE=C\"\n"
           "start_env = \"HOME\"\n\n");
 
   fprintf(f,
@@ -742,6 +747,7 @@ create_configs(
           "secure_exec_type = \"java\"\n"
           "start_cmd = \"runjava\"\n"
           "start_env = \"LANG=C\"\n"
+          "start_env = \"LC_CTYPE=C\"\n"
           "start_env = \"EJUDGE_PREFIX_DIR\"\n\n");
 
   fprintf(f,
@@ -755,6 +761,7 @@ create_configs(
           "secure_exec_type = \"mono\"\n"
           "start_cmd = \"runmono\"\n"
           "start_env = \"LANG=C\"\n"
+          "start_env = \"LC_CTYPE=C\"\n"
           "start_env = \"EJUDGE_PREFIX_DIR\"\n\n");
 
   fprintf(f, "[tester]\n"
@@ -790,6 +797,7 @@ create_configs(
           "start_cmd = \"runvg\"\n"
           "start_env = \"PATH=/usr/local/bin:/usr/bin:/bin\"\n"
           "start_env = \"LANG=C\"\n"
+          "start_env = \"LC_CTYPE=C\"\n"
           "start_env = \"HOME\"\n\n");
 
   fclose(f); f = NULL;
@@ -801,6 +809,7 @@ upgrade_times[] =
   "2012/05/01 00:00:00",
   "2012/05/26 00:00:00",
   "2012/06/21 00:00:00",
+  "2012/11/05 00:00:00",
 
   NULL
 };
