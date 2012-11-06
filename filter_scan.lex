@@ -207,6 +207,7 @@ lett    [A-Za-z_]
 [Ss][Ee] { TR(RUN_SECURITY_ERR); }
 [Ss][Vv] { TR(RUN_STYLE_ERR); }
 [Ww][Tt] { TR(RUN_WALL_TIME_LIMIT_ERR); }
+[Rr][Jj] { TR(RUN_REJECTED); }
 [Pp][Rr] { TR(RUN_PENDING_REVIEW); }
 [Rr][Uu] { TR(RUN_RUNNING); }
 [Cc][Dd] { TR(RUN_COMPILED); }

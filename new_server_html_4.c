@@ -1285,6 +1285,7 @@ static const unsigned char has_kirov_score[RUN_LAST + 1] =
   [RUN_PARTIAL]          = 1,
   [RUN_ACCEPTED]         = 1,
   [RUN_STYLE_ERR]        = 1,
+  [RUN_REJECTED]         = 1,
 };
 
 // field codes

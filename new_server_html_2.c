@@ -1845,7 +1845,7 @@ ns_write_priv_source(const serve_state_t state,
   fprintf(f, "<td%s>%s</td>", cl,
           BUTTON(NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_OK));
   fprintf(f, "<td%s>%s</td>", cl,
-          BUTTON(NEW_SRV_ACTION_PRIV_SET_RUN_STYLE_ERR));
+          BUTTON(NEW_SRV_ACTION_PRIV_SET_RUN_REJECTED));
   fprintf(f, "</tr></table>\n");
   fprintf(f, "</form>\n");
 
@@ -3056,6 +3056,7 @@ ns_priv_edit_run_action(
     case RUN_DISQUALIFIED:
     case RUN_PENDING:
     case RUN_STYLE_ERR:
+    case RUN_REJECTED:
       value = 0;
       break;
 
@@ -3114,6 +3115,7 @@ ns_priv_edit_run_action(
       case RUN_DISQUALIFIED:
       case RUN_PENDING:
       case RUN_STYLE_ERR:
+      case RUN_REJECTED:
         value = 0;
         break;
 
@@ -3212,6 +3214,7 @@ ns_priv_edit_run_action(
         case RUN_DISQUALIFIED:
         case RUN_PENDING:
         case RUN_STYLE_ERR:
+        case RUN_REJECTED:
           value = 0;
           break;
 
@@ -3269,6 +3272,7 @@ ns_priv_edit_run_action(
           case RUN_DISQUALIFIED:
           case RUN_PENDING:
           case RUN_STYLE_ERR:
+          case RUN_REJECTED:
             value = 0;
             break;
 
@@ -6371,6 +6375,7 @@ ns_write_olympiads_user_runs(
 
       case RUN_COMPILE_ERR:
       case RUN_STYLE_ERR:
+      case RUN_REJECTED:
         report_allowed = 1;
         snprintf(tests_buf, sizeof(tests_buf), "&nbsp;");
         break;
@@ -6442,6 +6447,7 @@ ns_write_olympiads_user_runs(
         break;
       case RUN_COMPILE_ERR:
       case RUN_STYLE_ERR:
+      case RUN_REJECTED:
         snprintf(tests_buf, sizeof(tests_buf), "&nbsp;");
         snprintf(score_buf, sizeof(score_buf), "&nbsp;");
         report_allowed = 1;
@@ -6537,7 +6543,9 @@ ns_write_olympiads_user_runs(
     }
     if (report_comment && *report_comment) {
       fprintf(fout, "<td%s>%s</td>", cl, report_comment);
-    } else if ((re.status == RUN_COMPILE_ERR || re.status == RUN_STYLE_ERR)
+    } else if ((re.status == RUN_COMPILE_ERR
+                || re.status == RUN_STYLE_ERR
+                || re.status == RUN_REJECTED)
           && (enable_rep_view || global->team_enable_ce_view)
           && report_allowed) {
       fprintf(fout, "<td%s>%s%s</a></td>", cl,
@@ -6669,6 +6677,7 @@ ns_get_user_problems_summary(
         case RUN_MEM_LIMIT_ERR:
         case RUN_SECURITY_ERR:
         case RUN_STYLE_ERR:
+        case RUN_REJECTED:
           status = RUN_CHECK_FAILED;
           break;
         }
@@ -6720,6 +6729,7 @@ ns_get_user_problems_summary(
         case RUN_MEM_LIMIT_ERR:
         case RUN_SECURITY_ERR:
         case RUN_STYLE_ERR:
+        case RUN_REJECTED:
           if (!accepted_flag[re.prob_id]) {
             best_run[re.prob_id] = run_id;
           }
@@ -6763,6 +6773,7 @@ ns_get_user_problems_summary(
       case RUN_MEM_LIMIT_ERR:
       case RUN_SECURITY_ERR:
       case RUN_STYLE_ERR:
+      case RUN_REJECTED:
         break;
 
       case RUN_PARTIAL:
@@ -6816,6 +6827,7 @@ ns_get_user_problems_summary(
 
         case RUN_COMPILE_ERR:
         case RUN_STYLE_ERR:
+        case RUN_REJECTED:
           if (cur_prob->ignore_compile_errors > 0) continue;
           solved_flag[re.prob_id] = 0;
           attempts[re.prob_id]++;
@@ -6891,6 +6903,7 @@ ns_get_user_problems_summary(
 
         case RUN_COMPILE_ERR:
         case RUN_STYLE_ERR:
+        case RUN_REJECTED:
           if (!cur_prob->ignore_compile_errors) {
             solved_flag[re.prob_id] = 0;
             attempts[re.prob_id]++;
@@ -6963,6 +6976,7 @@ ns_get_user_problems_summary(
 
       case RUN_COMPILE_ERR:
       case RUN_STYLE_ERR:
+      case RUN_REJECTED:
         if (!cur_prob->ignore_compile_errors) {
           attempts[re.prob_id]++;
           cur_score = 0;
@@ -7018,6 +7032,7 @@ ns_get_user_problems_summary(
 
       case RUN_COMPILE_ERR:
       case RUN_STYLE_ERR:
+      case RUN_REJECTED:
         if (!cur_prob->ignore_compile_errors) {
           attempts[re.prob_id]++;
           best_run[re.prob_id] = run_id;

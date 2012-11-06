@@ -64,6 +64,7 @@ run_status_str(
   case RUN_MEM_LIMIT_ERR:    s = _("Memory limit exceeded"); break;
   case RUN_SECURITY_ERR:     s = _("Security violation");  break;
   case RUN_STYLE_ERR:        s = _("Coding style violation"); break;
+  case RUN_REJECTED:         s = _("Rejected"); break;
   case RUN_WALL_TIME_LIMIT_ERR: s = _("Wall time-limit exceeded"); break;
   case RUN_PENDING_REVIEW:   s = _("Pending review");      break;
   case RUN_RUNNING:          s = _("Running...");          break;
@@ -135,6 +136,7 @@ static const unsigned char is_team_report_available_table[RUN_LAST + 1] =
   [RUN_MEM_LIMIT_ERR]    = 1,
   [RUN_SECURITY_ERR]     = 1,
   [RUN_STYLE_ERR]        = 1,
+  [RUN_REJECTED]         = 1,
 };
 int
 run_is_team_report_available(int status)
@@ -159,6 +161,7 @@ static const unsigned char is_report_available_table[RUN_LAST + 1] =
   [RUN_MEM_LIMIT_ERR]    = 1,
   [RUN_SECURITY_ERR]     = 1,
   [RUN_STYLE_ERR]        = 1,
+  [RUN_REJECTED]         = 1,
 };
 int
 run_is_report_available(int status)
@@ -196,6 +199,7 @@ static const struct str_to_status_data str_to_status_table[] =
   { "SV", RUN_STYLE_ERR },
   { "WT", RUN_WALL_TIME_LIMIT_ERR },
   { "PR", RUN_PENDING_REVIEW },
+  { "RJ", RUN_REJECTED },
   { "RU", RUN_RUNNING },
   { "CD", RUN_COMPILED },
   { "CG", RUN_COMPILING },
@@ -238,6 +242,7 @@ static const unsigned char run_valid_statuses[RUN_LAST + 1] =
   [RUN_STYLE_ERR]        = 1,
   [RUN_WALL_TIME_LIMIT_ERR] = 1,
   [RUN_PENDING_REVIEW]   = 1,
+  [RUN_REJECTED]         = 1,
   [RUN_VIRTUAL_START]    = 1,
   [RUN_VIRTUAL_STOP]     = 1,
   [RUN_EMPTY]            = 1,
@@ -272,6 +277,7 @@ static const unsigned char run_valid_user_statuses[RUN_LAST + 1] =
   [RUN_STYLE_ERR]        = 1,
   [RUN_WALL_TIME_LIMIT_ERR] = 1,
   [RUN_PENDING_REVIEW]   = 1,
+  [RUN_REJECTED]         = 1,
   [RUN_RUNNING]          = 1,
   [RUN_COMPILED]         = 1,
   [RUN_COMPILING]        = 1,
@@ -303,6 +309,7 @@ static const unsigned char run_source_available_statuses[RUN_LAST + 1] =
   [RUN_STYLE_ERR]        = 1,
   [RUN_WALL_TIME_LIMIT_ERR] = 1,
   [RUN_PENDING_REVIEW]   = 1,
+  [RUN_REJECTED]         = 1,
   [RUN_RUNNING]          = 1,
   [RUN_COMPILED]         = 1,
   [RUN_COMPILING]        = 1,
