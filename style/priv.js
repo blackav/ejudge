@@ -597,7 +597,7 @@ var ej_valid_statuses =
   0  : "OK",
   9  : "Ignored",
   10 : "Disqualified",
-  14 : "Coding style violation",
+  17 : "Rejected",
   6  : "Check failed",
   11 : "Pending check",
   7  : "Partial solution",
@@ -610,7 +610,8 @@ var ej_valid_statuses =
   4  : "Presentation error",
   5  : "Wrong answer",
   12 : "Memory limit exceeded",
-  13 : "Security violation"
+  13 : "Security violation",
+  14 : "Coding style violation"
 }
 
 function ej_stat(run_id)
