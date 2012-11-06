@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -176,7 +176,7 @@ const unsigned char * const ns_submit_button_labels[NEW_SRV_ACTION_LAST]=
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_OK] = __("Send run comment and OK run"),
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_IGNORE] = __("Just ignore the run"),
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_OK] = __("Just OK the run"),
-  [NEW_SRV_ACTION_PRIV_SET_RUN_STYLE_ERR] = __("Set STYLE_ERR run status"),
+  [NEW_SRV_ACTION_PRIV_SET_RUN_REJECTED] = __("Set REJECTED run status"),
   [NEW_SRV_ACTION_MARK_DISPLAYED_2] = __("Mark displayed runs"),
   [NEW_SRV_ACTION_UNMARK_DISPLAYED_2] = __("Unmark displayed runs"),
   [NEW_SRV_ACTION_SET_STAND_FILTER] = __("Set filter"),

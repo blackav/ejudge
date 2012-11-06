@@ -2310,6 +2310,7 @@ serve_is_valid_status(serve_state_t state, int status, int mode)
       return 1;
     case RUN_COMPILE_ERR:
     case RUN_STYLE_ERR:
+    case RUN_REJECTED:
     case RUN_FULL_REJUDGE:
     case RUN_REJUDGE:
     case RUN_IGNORED:
@@ -2330,6 +2331,7 @@ serve_is_valid_status(serve_state_t state, int status, int mode)
       return 1;
     case RUN_COMPILE_ERR:
     case RUN_STYLE_ERR:
+    case RUN_REJECTED:
     case RUN_REJUDGE:
     case RUN_IGNORED:
     case RUN_DISQUALIFIED:
@@ -2355,6 +2357,7 @@ serve_is_valid_status(serve_state_t state, int status, int mode)
       return 1;
     case RUN_COMPILE_ERR:
     case RUN_STYLE_ERR:
+    case RUN_REJECTED:
     case RUN_REJUDGE:
     case RUN_IGNORED:
     case RUN_DISQUALIFIED:
@@ -3051,6 +3054,7 @@ static unsigned char olympiad_rejudgeable_runs[RUN_LAST + 1] =
   [RUN_MEM_LIMIT_ERR]    = 0,
   [RUN_SECURITY_ERR]     = 0,
   [RUN_STYLE_ERR]        = 0,
+  [RUN_REJECTED]         = 0,
   [RUN_VIRTUAL_START]    = 0,
   [RUN_VIRTUAL_STOP]     = 0,
   [RUN_EMPTY]            = 0,
@@ -3079,6 +3083,7 @@ static unsigned char olympiad_output_only_rejudgeable_runs[RUN_LAST + 1] =
   [RUN_MEM_LIMIT_ERR]    = 0,
   [RUN_SECURITY_ERR]     = 0,
   [RUN_STYLE_ERR]        = 0,
+  [RUN_REJECTED]         = 0,
   [RUN_VIRTUAL_START]    = 0,
   [RUN_VIRTUAL_STOP]     = 0,
   [RUN_EMPTY]            = 0,
@@ -3107,6 +3112,7 @@ static unsigned char generally_rejudgable_runs[RUN_LAST + 1] =
   [RUN_MEM_LIMIT_ERR]    = 1,
   [RUN_SECURITY_ERR]     = 1,
   [RUN_STYLE_ERR]        = 1,
+  [RUN_REJECTED]         = 1,
   [RUN_VIRTUAL_START]    = 0,
   [RUN_VIRTUAL_STOP]     = 0,
   [RUN_EMPTY]            = 0,

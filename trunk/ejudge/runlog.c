@@ -738,7 +738,9 @@ run_get_attempts(
       continue;
     if (state->runs[i].user_id != state->runs[runid].user_id) continue;
     if (state->runs[i].prob_id != state->runs[runid].prob_id) continue;
-    if ((state->runs[i].status == RUN_COMPILE_ERR || state->runs[i].status == RUN_STYLE_ERR)
+    if ((state->runs[i].status == RUN_COMPILE_ERR
+         || state->runs[i].status == RUN_STYLE_ERR
+         || state->runs[i].status == RUN_REJECTED)
         && skip_ce_flag) continue;
     if (state->runs[i].status == RUN_IGNORED) continue;
     if (state->runs[i].is_hidden) continue;

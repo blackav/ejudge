@@ -432,6 +432,7 @@ user_report_generate(
         case RUN_MEM_LIMIT_ERR:
         case RUN_SECURITY_ERR:
         case RUN_STYLE_ERR:
+        case RUN_REJECTED:
           break;
 
         default:
@@ -475,6 +476,7 @@ user_report_generate(
         case RUN_MEM_LIMIT_ERR:
         case RUN_SECURITY_ERR:
         case RUN_STYLE_ERR:
+        case RUN_REJECTED:
           run_ids[re.prob_id] = run_id;
           break;
 
@@ -1046,6 +1048,7 @@ full_user_report_generate(
         case RUN_MEM_LIMIT_ERR:
         case RUN_SECURITY_ERR:
         case RUN_STYLE_ERR:
+        case RUN_REJECTED:
           break;
 
         default:
@@ -1089,6 +1092,7 @@ full_user_report_generate(
         case RUN_MEM_LIMIT_ERR:
         case RUN_SECURITY_ERR:
         case RUN_STYLE_ERR:
+        case RUN_REJECTED:
           run_ids[re.prob_id] = run_id;
           break;
 
@@ -2265,6 +2269,7 @@ ns_olympiad_final_user_report(
         case RUN_MEM_LIMIT_ERR:
         case RUN_SECURITY_ERR:
         case RUN_STYLE_ERR:
+        case RUN_REJECTED:
           break;
 
         default:
@@ -2308,6 +2313,7 @@ ns_olympiad_final_user_report(
         case RUN_MEM_LIMIT_ERR:
         case RUN_SECURITY_ERR:
         case RUN_STYLE_ERR:
+        case RUN_REJECTED:
           run_ids[re.prob_id] = run_id;
           break;
 
@@ -3139,6 +3145,7 @@ problem_report_generate(
       case RUN_MEM_LIMIT_ERR:
       case RUN_SECURITY_ERR:
       case RUN_STYLE_ERR:
+      case RUN_REJECTED:
         break;
 
       default:
@@ -3190,6 +3197,7 @@ problem_report_generate(
       case RUN_MEM_LIMIT_ERR:
       case RUN_SECURITY_ERR:
       case RUN_STYLE_ERR:
+      case RUN_REJECTED:
         run_ids[user_id] = run_id;
         break;
 

@@ -324,6 +324,7 @@ write_html_run_status(
   case RUN_PENDING:
   case RUN_COMPILE_ERR:
   case RUN_STYLE_ERR:
+  case RUN_REJECTED:
   dona:
     if (run_fields & (1 << RUN_VIEW_TEST)) {
       fprintf(f, "<td%s>%s</td>", cl, _("N/A"));
@@ -492,6 +493,7 @@ write_text_run_status(
   case RUN_PENDING:
   case RUN_COMPILE_ERR:
   case RUN_STYLE_ERR:
+  case RUN_REJECTED:
     return;
   }
 
@@ -1702,6 +1704,7 @@ do_write_kirov_standings(
       case RUN_MEM_LIMIT_ERR:
       case RUN_SECURITY_ERR:
       case RUN_STYLE_ERR:
+      case RUN_REJECTED:
         if (!full_sol[up_ind]) sol_att[up_ind]++;
         if (run_tests > prob->tests_to_accept)
           run_tests = prob->tests_to_accept;
@@ -1770,6 +1773,7 @@ do_write_kirov_standings(
       case RUN_MEM_LIMIT_ERR:
       case RUN_SECURITY_ERR:
       case RUN_STYLE_ERR:
+      case RUN_REJECTED:
         att_num[up_ind]++;
         break;
       case RUN_DISQUALIFIED:
@@ -1837,7 +1841,9 @@ do_write_kirov_standings(
           if (!full_sol[up_ind]) tot_att[pind]++;
           full_sol[up_ind] = 0;
           last_submit_run = k;
-        } else if ((run_status == RUN_COMPILE_ERR || run_status == RUN_STYLE_ERR)
+        } else if ((run_status == RUN_COMPILE_ERR
+                    || run_status == RUN_STYLE_ERR
+                    || run_status == RUN_REJECTED)
                    && !prob->ignore_compile_errors) {
           if (!full_sol[up_ind]) sol_att[up_ind]++;
           att_num[up_ind]++;
@@ -1916,7 +1922,9 @@ do_write_kirov_standings(
           att_num[up_ind]++;
           if (!full_sol[up_ind]) tot_att[pind]++;
           last_submit_run = k;
-        } else if ((run_status == RUN_COMPILE_ERR || run_status == RUN_STYLE_ERR)
+        } else if ((run_status == RUN_COMPILE_ERR 
+                    || run_status == RUN_STYLE_ERR
+                    || run_status == RUN_REJECTED)
                    && !prob->ignore_compile_errors) {
           if (!full_sol[up_ind]) sol_att[up_ind]++;
           att_num[up_ind]++;
@@ -3129,7 +3137,9 @@ do_write_moscow_standings(
         last_submit_time = pe->time;
         last_submit_start = ustart;
       }
-    } else if ((pe->status == RUN_COMPILE_ERR || pe->status == RUN_STYLE_ERR)
+    } else if ((pe->status == RUN_COMPILE_ERR
+                || pe->status == RUN_STYLE_ERR
+                || pe->status == RUN_REJECTED)
                && !prob->ignore_compile_errors) {
       up_totatt[up_ind]++;
       p_att[p]++;
@@ -3138,7 +3148,9 @@ do_write_moscow_standings(
         last_submit_time = pe->time;
         last_submit_start = ustart;
       }
-    } else if (pe->status == RUN_COMPILE_ERR || pe->status == RUN_STYLE_ERR) {
+    } else if (pe->status == RUN_COMPILE_ERR
+               || pe->status == RUN_STYLE_ERR
+               || pe->status == RUN_REJECTED) {
       // silently ignore compilation error
     } else if (pe->status == RUN_CHECK_FAILED) {
       up_cf[up_ind] = 1;
@@ -4011,7 +4023,9 @@ do_write_standings(
         last_success_time = run_time;
         last_success_start = start_time;
       }
-    } else if ((pe->status == RUN_COMPILE_ERR || pe->status == RUN_STYLE_ERR)
+    } else if ((pe->status == RUN_COMPILE_ERR
+                || pe->status == RUN_STYLE_ERR
+                || pe->status == RUN_REJECTED)
                && !prob->ignore_compile_errors) {
       if (calc[up_ind] <= 0) {
         calc[up_ind]--;

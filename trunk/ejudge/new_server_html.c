@@ -3232,15 +3232,15 @@ priv_set_run_style_error_status(
              global->xml_report_archive_dir, run_id, text2_len);
     goto invalid_param;
   }
-  if (run_change_status_4(cs->runlog_state, run_id, RUN_STYLE_ERR) < 0)
+  if (run_change_status_4(cs->runlog_state, run_id, RUN_REJECTED) < 0)
     goto invalid_param;
 
   serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
-                  "set-style-error", "ok", RUN_STYLE_ERR, NULL);
+                  "set-rejected", "ok", RUN_REJECTED, NULL);
 
   if (global->notify_status_change > 0 && !re.is_hidden) {
     serve_notify_user_run_status_change(ejudge_config, cnts, cs, re.user_id,
-                                        run_id, RUN_STYLE_ERR);
+                                        run_id, RUN_REJECTED);
   }
 
  cleanup:
@@ -7620,7 +7620,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_OK] = priv_submit_run_comment,
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_IGNORE] = priv_simple_change_status,
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_OK] = priv_simple_change_status,
-  [NEW_SRV_ACTION_PRIV_SET_RUN_STYLE_ERR] = priv_set_run_style_error_status,
+  [NEW_SRV_ACTION_PRIV_SET_RUN_REJECTED] = priv_set_run_style_error_status,
   [NEW_SRV_ACTION_TESTING_DELETE] = priv_testing_queue_operation,
   [NEW_SRV_ACTION_TESTING_UP] = priv_testing_queue_operation,
   [NEW_SRV_ACTION_TESTING_DOWN] = priv_testing_queue_operation,
@@ -9135,7 +9135,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_IP_USERS] = priv_generic_page,
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_IGNORE] = priv_generic_operation,
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_OK] = priv_generic_operation,
-  [NEW_SRV_ACTION_PRIV_SET_RUN_STYLE_ERR] = priv_generic_operation,
+  [NEW_SRV_ACTION_PRIV_SET_RUN_REJECTED] = priv_generic_operation,
   [NEW_SRV_ACTION_VIEW_TESTING_QUEUE] = priv_generic_page,
   [NEW_SRV_ACTION_TESTING_DELETE] = priv_generic_operation,
   [NEW_SRV_ACTION_TESTING_UP] = priv_generic_operation,
@@ -12155,6 +12155,7 @@ unpriv_view_report(FILE *fout,
   case RUN_MEM_LIMIT_ERR:
   case RUN_SECURITY_ERR:
   case RUN_STYLE_ERR:
+  case RUN_REJECTED:
     // these statuses have viewable reports
     break;
   default:
@@ -12170,7 +12171,9 @@ unpriv_view_report(FILE *fout,
   if (enable_rep_view) enable_rep_view = prob->team_enable_rep_view;
   if (!enable_rep_view
       && (!prob->team_enable_ce_view
-          || (re.status != RUN_COMPILE_ERR && re.status != RUN_STYLE_ERR))) {
+          || (re.status != RUN_COMPILE_ERR
+              && re.status != RUN_STYLE_ERR
+              && re.status != RUN_REJECTED))) {
     ns_error(log_f, NEW_SRV_ERR_REPORT_VIEW_DISABLED);
     goto done;
   }
@@ -12184,13 +12187,17 @@ unpriv_view_report(FILE *fout,
     }
     content_type = get_content_type(rep_text, &rep_start);
     if (content_type != CONTENT_TYPE_XML
-        && re.status != RUN_COMPILE_ERR && re.status != RUN_STYLE_ERR) {
+        && re.status != RUN_COMPILE_ERR
+        && re.status != RUN_STYLE_ERR
+        && re.status != RUN_REJECTED) {
       ns_error(log_f, NEW_SRV_ERR_REPORT_UNAVAILABLE);
       goto done;
     }
   } else {
     if (prob->team_enable_ce_view
-        && (re.status == RUN_COMPILE_ERR || re.status == RUN_STYLE_ERR))
+        && (re.status == RUN_COMPILE_ERR
+            || re.status == RUN_STYLE_ERR
+            || re.status == RUN_REJECTED))
       arch_dir = global->report_archive_dir;
     else if (prob->team_show_judge_report)
       arch_dir = global->report_archive_dir;
@@ -15342,7 +15349,7 @@ static const unsigned char * const symbolic_action_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_OK] = "PRIV_SUBMIT_RUN_COMMENT_AND_OK",
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_IGNORE] = "PRIV_SUBMIT_RUN_JUST_IGNORE",
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_OK] = "PRIV_SUBMIT_RUN_JUST_OK",
-  [NEW_SRV_ACTION_PRIV_SET_RUN_STYLE_ERR] = "PRIV_SET_RUN_STYLE_ERR",
+  [NEW_SRV_ACTION_PRIV_SET_RUN_REJECTED] = "PRIV_SET_RUN_REJECTED",
   [NEW_SRV_ACTION_VIEW_TESTING_QUEUE] = "VIEW_TESTING_QUEUE",
   [NEW_SRV_ACTION_TESTING_DELETE] = "TESTING_DELETE",
   [NEW_SRV_ACTION_TESTING_UP] = "TESTING_UP",
