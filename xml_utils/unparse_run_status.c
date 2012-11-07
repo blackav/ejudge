@@ -39,6 +39,7 @@ static const unsigned char tree_result_strs[RUN_LAST + 1][4] =
   [RUN_STYLE_ERR] =        "SV",
   [RUN_WALL_TIME_LIMIT_ERR] = "WT",
   [RUN_PENDING_REVIEW] =   "PR",
+  [RUN_REJECTED] =         "RJ",
   [RUN_VIRTUAL_START] =    "VS",
   [RUN_VIRTUAL_STOP] =     "VT",
   [RUN_EMPTY] =            "EM",
