@@ -4173,7 +4173,7 @@ collect_run_packets(const struct contest_desc *cnts, const serve_state_t state, 
   }
 
   memset(vec, 0, sizeof(*vec));
-  snprintf(dir_path, sizeof(dir_path), "%s/dir", global->run_queue_dir);
+  snprintf(dir_path, sizeof(dir_path), "%s/dir", run_queue_dir);
   if (!(d = opendir(dir_path))) return;
 
   while ((dd = readdir(d))) {
