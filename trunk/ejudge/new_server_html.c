@@ -4247,7 +4247,7 @@ priv_rejudge_displayed(FILE *fout,
   unsigned long *mask = 0;
   size_t mask_size;
   int force_full = 0;
-  int prio_adj = 0;
+  int prio_adj = DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT;
   int retval = 0;
 
   if (parse_run_mask(phr, 0, 0, &mask_size, &mask) < 0) goto invalid_param;
