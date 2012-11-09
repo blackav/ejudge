@@ -75,61 +75,60 @@ serve_update_standings_file(serve_state_t state,
                             const struct contest_desc *cnts,
                             int force_flag)
 {
+  struct section_global_data *global = state->global;
   time_t start_time, stop_time, duration;
   int p = 0, charset_id = 0;
 
   run_get_times(state->runlog_state, &start_time, 0, &duration, &stop_time, 0);
 
   while (1) {
-    if (state->global->is_virtual) break;
+    if (global->is_virtual) break;
     if (force_flag) break;
-    if (!state->global->autoupdate_standings) return;
+    if (!global->autoupdate_standings) return;
     if (!duration) break;
-    if (!state->global->board_fog_time) break;
+    if (!global->board_fog_time) break;
 
     ASSERT(state->current_time >= start_time);
-    ASSERT(state->global->board_fog_time >= 0);
-    ASSERT(state->global->board_unfog_time >= 0);
+    ASSERT(global->board_fog_time >= 0);
+    ASSERT(global->board_unfog_time >= 0);
     
     p = run_get_fog_period(state->runlog_state, state->current_time,
-                           state->global->board_fog_time,
-                           state->global->board_unfog_time);
+                           global->board_fog_time, global->board_unfog_time);
     if (p == 1) return;
     break;
   }
 
-  if (!state->global->is_virtual) {
+  if (!global->is_virtual) {
     p = run_get_fog_period(state->runlog_state, state->current_time,
-                           state->global->board_fog_time,
-                           state->global->board_unfog_time);
+                           global->board_fog_time, global->board_unfog_time);
   }
-  charset_id = charset_get_id(state->global->standings_charset);
-  l10n_setlocale(state->global->standings_locale_id);
-  write_standings(state, cnts, state->global->status_dir,
-                  state->global->standings_file_name,
-                  state->global->users_on_page,
-                  state->global->stand_header_txt,
-                  state->global->stand_footer_txt,
+  charset_id = charset_get_id(global->standings_charset);
+  l10n_setlocale(global->standings_locale_id);
+  write_standings(state, cnts, global->status_dir,
+                  global->standings_file_name,
+                  global->users_on_page,
+                  global->stand_header_txt,
+                  global->stand_footer_txt,
                   state->accepting_mode, 0, charset_id, 1 /* user_mode */);
-  if (state->global->stand2_file_name[0]) {
-    charset_id = charset_get_id(state->global->stand2_charset);
-    write_standings(state, cnts, state->global->status_dir,
-                    state->global->stand2_file_name, 0,
-                    state->global->stand2_header_txt,
-                    state->global->stand2_footer_txt,
+  if (global->stand2_file_name[0]) {
+    charset_id = charset_get_id(global->stand2_charset);
+    write_standings(state, cnts, global->status_dir,
+                    global->stand2_file_name, 0,
+                    global->stand2_header_txt,
+                    global->stand2_footer_txt,
                     state->accepting_mode, 0, charset_id, 1 /* user_mode */);
   }
   l10n_setlocale(0);
-  if (state->global->is_virtual) return;
+  if (global->is_virtual) return;
   switch (p) {
   case 0:
-    state->global->start_standings_updated = 1;
+    global->start_standings_updated = 1;
     break;
   case 1:
-    state->global->fog_standings_updated = 1;
+    global->fog_standings_updated = 1;
     break;
   case 2:
-    state->global->unfog_standings_updated = 1;
+    global->unfog_standings_updated = 1;
     break;
   }
 }
@@ -138,35 +137,35 @@ void
 serve_update_public_log_file(serve_state_t state,
                              const struct contest_desc *cnts)
 {
+  struct section_global_data *global = state->global;
   time_t start_time, stop_time, duration;
   int p, charset_id = 0;
 
-  if (!state->global->plog_update_time) return;
-  if (state->current_time < state->last_update_public_log + state->global->plog_update_time) return;
+  if (!global->plog_update_time) return;
+  if (state->current_time < state->last_update_public_log + global->plog_update_time) return;
 
   run_get_times(state->runlog_state, &start_time, 0, &duration, &stop_time, 0);
 
   while (1) {
     if (!duration) break;
-    if (!state->global->board_fog_time) break;
+    if (!global->board_fog_time) break;
 
     ASSERT(state->current_time >= start_time);
-    ASSERT(state->global->board_fog_time >= 0);
-    ASSERT(state->global->board_unfog_time >= 0);
+    ASSERT(global->board_fog_time >= 0);
+    ASSERT(global->board_unfog_time >= 0);
     
     p = run_get_fog_period(state->runlog_state, state->current_time,
-                           state->global->board_fog_time,
-                           state->global->board_unfog_time);
+                           global->board_fog_time, global->board_unfog_time);
     if (p == 1) return;
     break;
   }
 
-  charset_id = charset_get_id(state->global->plog_charset);
-  l10n_setlocale(state->global->standings_locale_id);
-  write_public_log(state, cnts, state->global->status_dir,
-                   state->global->plog_file_name,
-                   state->global->plog_header_txt,
-                   state->global->plog_footer_txt,
+  charset_id = charset_get_id(global->plog_charset);
+  l10n_setlocale(global->standings_locale_id);
+  write_public_log(state, cnts, global->status_dir,
+                   global->plog_file_name,
+                   global->plog_header_txt,
+                   global->plog_footer_txt,
                    charset_id, 1 /* user_mode */);
   state->last_update_public_log = state->current_time;
   l10n_setlocale(0);
@@ -237,6 +236,7 @@ serve_update_internal_xml_log(serve_state_t state,
 int
 serve_update_status_file(serve_state_t state, int force_flag)
 {
+  const struct section_global_data *global = state->global;
   struct prot_serve_status_v2 status;
   time_t t1, t2, t3, t4, t5;
   int p;
@@ -257,17 +257,17 @@ serve_update_status_file(serve_state_t state, int force_flag)
   status.stop_time = t4;
   status.total_runs = run_get_total(state->runlog_state);
   status.total_clars = clar_get_total(state->clarlog_state);
-  status.clars_disabled = state->global->disable_clars;
-  status.team_clars_disabled = state->global->disable_team_clars;
-  status.score_system = state->global->score_system;
+  status.clars_disabled = global->disable_clars;
+  status.team_clars_disabled = global->disable_team_clars;
+  status.score_system = global->score_system;
   status.clients_suspended = state->clients_suspended;
   status.testing_suspended = state->testing_suspended;
-  status.download_interval = state->global->team_download_time / 60;
-  status.is_virtual = state->global->is_virtual;
-  status.continuation_enabled = state->global->enable_continue;
-  status.printing_enabled = state->global->enable_printing;
+  status.download_interval = global->team_download_time / 60;
+  status.is_virtual = global->is_virtual;
+  status.continuation_enabled = global->enable_continue;
+  status.printing_enabled = global->enable_printing;
   status.printing_suspended = state->printing_suspended;
-  status.always_show_problems = state->global->always_show_problems;
+  status.always_show_problems = global->always_show_problems;
   status.accepting_mode = state->accepting_mode;
   status.testing_finished = state->testing_finished;
 
@@ -282,9 +282,9 @@ serve_update_status_file(serve_state_t state, int force_flag)
   status.online_view_judge_score = state->online_view_judge_score;
   status.online_final_visibility = state->online_final_visibility;
 
-  if (status.start_time && status.duration && state->global->board_fog_time > 0
+  if (status.start_time && status.duration && global->board_fog_time > 0
       && !status.is_virtual) {
-    status.freeze_time = status.start_time + status.duration - state->global->board_fog_time;
+    status.freeze_time = status.start_time + status.duration - global->board_fog_time;
     if (status.freeze_time < status.start_time) {
       status.freeze_time = status.start_time;
     }
@@ -292,10 +292,10 @@ serve_update_status_file(serve_state_t state, int force_flag)
   status.finish_time = t5;
   //if (status.duration) status.continuation_enabled = 0;
 
-  if (!state->global->is_virtual) {
+  if (!global->is_virtual) {
     p = run_get_fog_period(state->runlog_state, state->current_time,
-                           state->global->board_fog_time, state->global->board_unfog_time);
-    if (p == 1 && state->global->autoupdate_standings) {
+                           global->board_fog_time, global->board_unfog_time);
+    if (p == 1 && global->autoupdate_standings) {
       status.standings_frozen = 1;
     }
   }
@@ -309,7 +309,7 @@ serve_update_status_file(serve_state_t state, int force_flag)
   memcpy(status.prob_prio, state->prob_prio, sizeof(status.prob_prio));
 
   generic_write_file((char*) &status, sizeof(status), SAFE,
-                     state->global->status_dir, "status", "");
+                     global->status_dir, "status", "");
   state->last_update_status_file = state->current_time;
   return 1;
 }
@@ -317,13 +317,14 @@ serve_update_status_file(serve_state_t state, int force_flag)
 void
 serve_load_status_file(serve_state_t state)
 {
+  struct section_global_data *global = state->global;
   struct prot_serve_status_v2 status;
   size_t stat_len = 0;
   char *ptr = 0;
 
-  if (generic_read_file(&ptr, 0, &stat_len, 0, state->global->status_dir,
+  if (generic_read_file(&ptr, 0, &stat_len, 0, global->status_dir,
                         "dir/status", "") < 0) {
-    if (state->global->score_system == SCORE_OLYMPIAD)
+    if (global->score_system == SCORE_OLYMPIAD)
       state->accepting_mode = 1;
     return;
   }
@@ -331,7 +332,7 @@ serve_load_status_file(serve_state_t state)
     info("load_status_file: length %zu does not match %zu",
          stat_len, sizeof(status));
     xfree(ptr);
-    if (state->global->score_system == SCORE_OLYMPIAD)
+    if (global->score_system == SCORE_OLYMPIAD)
       state->accepting_mode = 1;
     return;
   }
@@ -339,7 +340,7 @@ serve_load_status_file(serve_state_t state)
   xfree(ptr);
   if (status.magic != PROT_SERVE_STATUS_MAGIC_V2) {
     info("load_status_file: bad magic value");
-    if (state->global->score_system == SCORE_OLYMPIAD)
+    if (global->score_system == SCORE_OLYMPIAD)
       state->accepting_mode = 1;
     return;
   }
@@ -349,11 +350,11 @@ serve_load_status_file(serve_state_t state)
   state->testing_suspended = status.testing_suspended;
   info("load_status_file: testing_suspended = %d", state->testing_suspended);
   state->accepting_mode = status.accepting_mode;
-  if (state->global->score_system == SCORE_OLYMPIAD
-      && state->global->is_virtual) {
+  if (global->score_system == SCORE_OLYMPIAD
+      && global->is_virtual) {
     state->accepting_mode = 1;
   }
-  if (state->global->score_system != SCORE_OLYMPIAD) {
+  if (global->score_system != SCORE_OLYMPIAD) {
     state->accepting_mode = 0;
   }
   info("load_status_file: accepting_mode = %d", state->accepting_mode);
@@ -518,22 +519,23 @@ do_build_run_dirs(serve_state_t state,
 void
 serve_build_run_dirs(serve_state_t state, int contest_id)
 {
+  const struct section_global_data *global = state->global;
   int i;
 
-  if (state->global->super_run_dir && state->global->super_run_dir[0]) {
+  if (global->super_run_dir && global->super_run_dir[0]) {
     unsigned char status_dir[PATH_MAX];
     unsigned char report_dir[PATH_MAX];
     unsigned char team_report_dir[PATH_MAX];
     unsigned char full_report_dir[PATH_MAX];
 
     snprintf(status_dir, sizeof(status_dir),
-             "%s/var/%06d/status", state->global->super_run_dir, contest_id);
+             "%s/var/%06d/status", global->super_run_dir, contest_id);
     snprintf(report_dir, sizeof(report_dir),
-             "%s/var/%06d/report", state->global->super_run_dir, contest_id);
+             "%s/var/%06d/report", global->super_run_dir, contest_id);
     snprintf(full_report_dir, sizeof(full_report_dir),
-             "%s/var/%06d/output", state->global->super_run_dir, contest_id);
+             "%s/var/%06d/output", global->super_run_dir, contest_id);
     snprintf(team_report_dir, sizeof(team_report_dir),
-             "%s/var/%06d/teamreports", state->global->super_run_dir, contest_id);
+             "%s/var/%06d/teamreports", global->super_run_dir, contest_id);
     do_build_run_dirs(state, status_dir, report_dir, team_report_dir, full_report_dir);
   } else {
     for (i = 1; i <= state->max_tester; i++) {
@@ -550,34 +552,35 @@ serve_build_run_dirs(serve_state_t state, int contest_id)
 int
 serve_create_symlinks(serve_state_t state)
 {
+  const struct section_global_data *global = state->global;  
   unsigned char src_path[PATH_MAX];
   unsigned char dst_path[PATH_MAX];
   path_t stand_file;
   int npages, pgn;
   int total_users = 0;
 
-  if (state->global->stand_symlink_dir[0] && state->global->htdocs_dir[0]) {
-    if (state->global->users_on_page > 0) {
+  if (global->stand_symlink_dir[0] && global->htdocs_dir[0]) {
+    if (global->users_on_page > 0) {
       // FIXME: check, that standings_file_name depends on page number
-      if (state->global->disable_user_database > 0) {
+      if (global->disable_user_database > 0) {
         total_users = run_get_total_users(state->runlog_state);
       } else {
         total_users = teamdb_get_total_teams(state->teamdb_state);
       }
-      npages = (total_users + state->global->users_on_page - 1)
-        / state->global->users_on_page;
+      npages = (total_users + global->users_on_page - 1)
+        / global->users_on_page;
       for (pgn = 0; pgn < npages; pgn++) {
         if (!pgn) {
           snprintf(stand_file, sizeof(stand_file),
-                   state->global->standings_file_name, pgn + 1);
+                   global->standings_file_name, pgn + 1);
         } else {
           snprintf(stand_file, sizeof(stand_file),
-                   state->global->stand_file_name_2, pgn + 1);
+                   global->stand_file_name_2, pgn + 1);
         }
         snprintf(src_path, sizeof(src_path), "%s/dir/%s",
-                 state->global->status_dir, stand_file);
+                 global->status_dir, stand_file);
         snprintf(dst_path, sizeof(dst_path), "%s/%s/%s",
-                 state->global->htdocs_dir, state->global->stand_symlink_dir,
+                 global->htdocs_dir, global->stand_symlink_dir,
                  stand_file);
         os_normalize_path(dst_path);
         if (unlink(dst_path) < 0 && errno != ENOENT) {
@@ -591,10 +594,10 @@ serve_create_symlinks(serve_state_t state)
       }
     } else {
       snprintf(src_path, sizeof(src_path), "%s/dir/%s",
-               state->global->status_dir, state->global->standings_file_name);
+               global->status_dir, global->standings_file_name);
       snprintf(dst_path, sizeof(dst_path), "%s/%s/%s",
-               state->global->htdocs_dir, state->global->stand_symlink_dir,
-               state->global->standings_file_name);
+               global->htdocs_dir, global->stand_symlink_dir,
+               global->standings_file_name);
       os_normalize_path(dst_path);
       if (unlink(dst_path) < 0 && errno != ENOENT) {
         err("unlink %s failed: %s", dst_path, os_ErrorMsg());
@@ -606,13 +609,13 @@ serve_create_symlinks(serve_state_t state)
       }
     }
   }
-  if (state->global->stand2_symlink_dir[0] && state->global->htdocs_dir[0]
-      && state->global->stand2_file_name[0]) {
+  if (global->stand2_symlink_dir[0] && global->htdocs_dir[0]
+      && global->stand2_file_name[0]) {
     snprintf(src_path, sizeof(src_path), "%s/dir/%s",
-             state->global->status_dir, state->global->stand2_file_name);
+             global->status_dir, global->stand2_file_name);
     snprintf(dst_path, sizeof(dst_path), "%s/%s/%s",
-             state->global->htdocs_dir, state->global->stand2_symlink_dir,
-             state->global->stand2_file_name);
+             global->htdocs_dir, global->stand2_symlink_dir,
+             global->stand2_file_name);
     os_normalize_path(dst_path);
     if (unlink(dst_path) < 0 && errno != ENOENT) {
       err("unlink %s failed: %s", dst_path, os_ErrorMsg());
@@ -623,14 +626,14 @@ serve_create_symlinks(serve_state_t state)
       //return -1;
     }
   }
-  if (state->global->plog_symlink_dir[0] && state->global->htdocs_dir[0]
-      && state->global->plog_file_name[0]
-      && state->global->plog_update_time > 0) {
+  if (global->plog_symlink_dir[0] && global->htdocs_dir[0]
+      && global->plog_file_name[0]
+      && global->plog_update_time > 0) {
     snprintf(src_path, sizeof(src_path), "%s/dir/%s",
-             state->global->status_dir, state->global->plog_file_name);
+             global->status_dir, global->plog_file_name);
     snprintf(dst_path, sizeof(dst_path), "%s/%s/%s",
-             state->global->htdocs_dir, state->global->plog_symlink_dir,
-             state->global->plog_file_name);
+             global->htdocs_dir, global->plog_symlink_dir,
+             global->plog_file_name);
     os_normalize_path(dst_path);
     if (unlink(dst_path) < 0 && errno != ENOENT) {
       err("unlink %s failed: %s", dst_path, os_ErrorMsg());
@@ -2238,7 +2241,7 @@ serve_read_compile_packet(
   if (prob && prob->type > 0 && prob->style_checker_cmd && prob->style_checker_cmd[0]) {
     arch_flags = archive_make_read_path(state, run_arch_path,
                                         sizeof(run_arch_path),
-                                        state->global->run_archive_dir,
+                                        global->run_archive_dir,
                                         comp_pkt->run_id, 0, 0);
     if (arch_flags < 0) goto report_check_failed;
     if (generic_read_file(&run_text, 0, &run_size, arch_flags,
@@ -2274,9 +2277,9 @@ serve_read_compile_packet(
     goto non_fatal_error;
   report_size = strlen(errmsg);
   rep_flags = archive_make_write_path(state, rep_path, sizeof(rep_path),
-                                      state->global->xml_report_archive_dir,
+                                      global->xml_report_archive_dir,
                                       comp_pkt->run_id, report_size, 0, 0);
-  if (archive_dir_prepare(state, state->global->xml_report_archive_dir,
+  if (archive_dir_prepare(state, global->xml_report_archive_dir,
                           comp_pkt->run_id, 0, 0) < 0)
     goto non_fatal_error;
   /* error code is ignored */
@@ -2418,6 +2421,7 @@ serve_read_run_packet(
         const unsigned char *run_full_archive_dir,
         const unsigned char *pname)
 {
+  const struct section_global_data *global = state->global;
   path_t rep_path, full_path;
   int r, rep_flags, rep_size, full_flags, i;
   struct run_entry re, pe;
@@ -2464,20 +2468,19 @@ serve_read_run_packet(
   if (!serve_is_valid_status(state, reply_pkt->status, 2))
     BAD_PACKET();
 
-  if (state->global->score_system == SCORE_OLYMPIAD) {
-    if (re.prob_id < 1 || re.prob_id > state->max_prob
-        || !state->probs[re.prob_id])
-      BAD_PACKET();
-  } else if (state->global->score_system == SCORE_KIROV) {
+  const struct section_problem_data *prob = NULL;
+  if (re.prob_id >= 1 && re.prob_id <= state->max_prob)
+    prob = state->probs[re.prob_id];
+  if (!prob) BAD_PACKET();
+
+  if (global->score_system == SCORE_OLYMPIAD) {
+  } else if (global->score_system == SCORE_KIROV) {
     /*
     if (status != RUN_PARTIAL && status != RUN_OK
         && status != RUN_CHECK_FAILED) goto bad_packet_error;
     */
-    if (re.prob_id < 1 || re.prob_id > state->max_prob
-        || !state->probs[re.prob_id])
-      BAD_PACKET();
     if (reply_pkt->score < 0
-        || reply_pkt->score > state->probs[re.prob_id]->full_score)
+        || reply_pkt->score > prob->full_score)
       BAD_PACKET();
     /*
     for (n = 0; n < serve_state.probs[re.prob_id]->dp_total; n++)
@@ -2490,21 +2493,21 @@ serve_read_run_packet(
       if (score < 0) score = 0;
     }
     */
-  } else if (state->global->score_system == SCORE_MOSCOW) {
-    if (re.prob_id < 1 || re.prob_id > state->max_prob
-        || !state->probs[re.prob_id])
-      BAD_PACKET();
+  } else if (global->score_system == SCORE_MOSCOW) {
     if (reply_pkt->score < 0
-        || reply_pkt->score > state->probs[re.prob_id]->full_score)
+        || reply_pkt->score > prob->full_score)
       BAD_PACKET();
   } else {
     reply_pkt->score = -1;
   }
-  if (re.prob_id >= 1 && re.prob_id <= state->max_prob
-      && state->probs[re.prob_id] && state->probs[re.prob_id]->use_ac_not_ok
-      && reply_pkt->status == RUN_OK) {
+
+  if (global->score_system == SCORE_OLYMPIAD
+      && reply_pkt->status == RUN_ACCEPTED
+      && prob->ignore_prev_ac > 0) {
+    ignore_prev_ac = 1;
+  } else if (prob->use_ac_not_ok > 0 && reply_pkt->status == RUN_OK) {
     reply_pkt->status = RUN_PENDING_REVIEW;
-    if (state->probs[re.prob_id]->ignore_prev_ac > 0) ignore_prev_ac = 1;
+    if (prob->ignore_prev_ac > 0) ignore_prev_ac = 1;
   }
   if (reply_pkt->status == RUN_CHECK_FAILED)
     serve_send_check_failed_email(config, cnts, reply_pkt->run_id);
@@ -2518,7 +2521,7 @@ serve_read_run_packet(
     int user_status = 0;
     int user_tests_passed = 0;
     int user_score = 0;
-    if (state->global->separate_user_score > 0 && reply_pkt->has_user_score) {
+    if (global->separate_user_score > 0 && reply_pkt->has_user_score) {
       has_user_score = 1;
       user_status = reply_pkt->user_status;
       user_tests_passed = reply_pkt->user_tests_passed;
@@ -2532,7 +2535,7 @@ serve_read_run_packet(
       goto failed;
   }
   serve_update_standings_file(state, cnts, 0);
-  if (state->global->notify_status_change > 0 && !re.is_hidden
+  if (global->notify_status_change > 0 && !re.is_hidden
       && reply_pkt->notify_flag) {
     serve_notify_user_run_status_change(config, cnts, state, re.user_id,
                                         reply_pkt->run_id, reply_pkt->status);
@@ -2540,24 +2543,24 @@ serve_read_run_packet(
   rep_size = generic_file_size(run_report_dir, pname, "");
   if (rep_size < 0) goto failed;
   rep_flags = archive_make_write_path(state, rep_path, sizeof(rep_path),
-                                      state->global->xml_report_archive_dir,
+                                      global->xml_report_archive_dir,
                                       reply_pkt->run_id, rep_size, 0, 0);
-  if (archive_dir_prepare(state, state->global->xml_report_archive_dir,
+  if (archive_dir_prepare(state, global->xml_report_archive_dir,
                           reply_pkt->run_id, 0, 0) < 0)
     goto failed;
   if (generic_copy_file(REMOVE, run_report_dir, pname, "",
                         rep_flags, 0, rep_path, "") < 0)
     goto failed;
-  if (state->global->enable_full_archive) {
+  if (global->enable_full_archive) {
     full_flags = -1;
     if (generic_file_size(run_full_archive_dir, pname, ".zip") >= 0) {
       full_flags = ZIP;
       full_suffix = ".zip";
     }
     full_flags = archive_make_write_path(state, full_path, sizeof(full_path),
-                                         state->global->full_archive_dir,
+                                         global->full_archive_dir,
                                          reply_pkt->run_id, 0, 0, full_flags);
-    if (archive_dir_prepare(state, state->global->full_archive_dir,
+    if (archive_dir_prepare(state, global->full_archive_dir,
                             reply_pkt->run_id, 0, 0) < 0)
       goto failed;
     if (generic_copy_file(REMOVE, run_full_archive_dir, pname, full_suffix,
@@ -3377,44 +3380,46 @@ serve_rejudge_all(
 void
 serve_reset_contest(const struct contest_desc *cnts, serve_state_t state)
 {
+  struct section_global_data *global = state->global;
   time_t contest_finish_time = 0;
 
-  if (state->global->contest_finish_time > 0) {
-    contest_finish_time = state->global->contest_finish_time;
+  if (global->contest_finish_time > 0) {
+    contest_finish_time = global->contest_finish_time;
   }
   if (contest_finish_time > 0 && contest_finish_time <= state->current_time) {
     contest_finish_time = 0;
   }
-  run_reset(state->runlog_state, state->global->contest_time,
+  run_reset(state->runlog_state, global->contest_time,
             cnts->sched_time, contest_finish_time);
   run_set_duration(state->runlog_state,
-                   state->global->contest_time);
+                   global->contest_time);
   clar_reset(state->clarlog_state);
 
   /* clear all submissions and clarifications */
-  if (state->global->xml_report_archive_dir[0])
-    clear_directory(state->global->xml_report_archive_dir);
-  if (state->global->report_archive_dir[0])
-    clear_directory(state->global->report_archive_dir);
-  if (state->global->run_archive_dir[0])
-    clear_directory(state->global->run_archive_dir);
-  if (state->global->team_report_archive_dir[0])
-    clear_directory(state->global->team_report_archive_dir);
-  if (state->global->full_archive_dir[0])
-    clear_directory(state->global->full_archive_dir);
-  if (state->global->audit_log_dir[0])
-    clear_directory(state->global->audit_log_dir);
-  if (state->global->team_extra_dir[0])
-    clear_directory(state->global->team_extra_dir);
+  if (global->xml_report_archive_dir[0])
+    clear_directory(global->xml_report_archive_dir);
+  if (global->report_archive_dir[0])
+    clear_directory(global->report_archive_dir);
+  if (global->run_archive_dir[0])
+    clear_directory(global->run_archive_dir);
+  if (global->team_report_archive_dir[0])
+    clear_directory(global->team_report_archive_dir);
+  if (global->full_archive_dir[0])
+    clear_directory(global->full_archive_dir);
+  if (global->audit_log_dir[0])
+    clear_directory(global->audit_log_dir);
+  if (global->team_extra_dir[0])
+    clear_directory(global->team_extra_dir);
 
   unsigned char path[PATH_MAX];
-  snprintf(path, sizeof(path), "%s/dir", state->global->status_dir);
+  snprintf(path, sizeof(path), "%s/dir", global->status_dir);
   clear_directory(path);
 }
 
 void
 serve_squeeze_runs(serve_state_t state)
 {
+  const struct section_global_data *global = state->global;
   int i, j, tot;
 
   // sorry...
@@ -3424,24 +3429,24 @@ serve_squeeze_runs(serve_state_t state)
   for (i = 0, j = 0; i < tot; i++) {
     if (run_get_status(state->runlog_state, i) == RUN_EMPTY) continue;
     if (i != j) {
-      archive_rename(state, state->global->run_archive_dir, 0, i, 0, j, 0, 0);
-      archive_rename(state, state->global->xml_report_archive_dir, 0, i, 0, j, 0, 1);
-      archive_rename(state, state->global->report_archive_dir, 0, i, 0, j, 0, 1);
-      archive_rename(state, state->global->team_report_archive_dir, 0, i, 0, j, 0, 0);
-      if (state->global->enable_full_archive) {
-        archive_rename(state, state->global->full_archive_dir, 0, i, 0, j, 0, ZIP);
+      archive_rename(state, global->run_archive_dir, 0, i, 0, j, 0, 0);
+      archive_rename(state, global->xml_report_archive_dir, 0, i, 0, j, 0, 1);
+      archive_rename(state, global->report_archive_dir, 0, i, 0, j, 0, 1);
+      archive_rename(state, global->team_report_archive_dir, 0, i, 0, j, 0, 0);
+      if (global->enable_full_archive) {
+        archive_rename(state, global->full_archive_dir, 0, i, 0, j, 0, ZIP);
       }
-      archive_rename(state, state->global->audit_log_dir, 0, i, 0, j, 0, 1);
+      archive_rename(state, global->audit_log_dir, 0, i, 0, j, 0, 1);
     }
     j++;
   }
   for (; j < tot; j++) {
-    archive_remove(state, state->global->run_archive_dir, j, 0);
-    archive_remove(state, state->global->xml_report_archive_dir, j, 0);
-    archive_remove(state, state->global->report_archive_dir, j, 0);
-    archive_remove(state, state->global->team_report_archive_dir, j, 0);
-    archive_remove(state, state->global->full_archive_dir, j, 0);
-    archive_remove(state, state->global->audit_log_dir, j, 0);
+    archive_remove(state, global->run_archive_dir, j, 0);
+    archive_remove(state, global->xml_report_archive_dir, j, 0);
+    archive_remove(state, global->report_archive_dir, j, 0);
+    archive_remove(state, global->team_report_archive_dir, j, 0);
+    archive_remove(state, global->full_archive_dir, j, 0);
+    archive_remove(state, global->audit_log_dir, j, 0);
   }
   run_squeeze_log(state->runlog_state);
 
