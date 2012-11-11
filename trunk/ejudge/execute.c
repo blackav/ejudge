@@ -87,12 +87,14 @@ static const unsigned char *kill_signal = 0;
 static const unsigned char *test_file = 0;
 static const unsigned char *corr_file = 0;
 static const unsigned char *info_file = 0;
+static const unsigned char *tgzdir_file = 0;
 static const unsigned char *input_file = 0;
 static const unsigned char *output_file = 0;
 static const unsigned char *error_file = 0;
 static const unsigned char *test_pattern = 0;
 static const unsigned char *corr_pattern = 0;
 static const unsigned char *info_pattern = 0;
+static const unsigned char *tgzdir_pattern = 0;
 static const unsigned char *test_dir = 0;
 
 static strarray_t env_vars;
@@ -118,6 +120,8 @@ static int real_time_limit = 0;
 static long long max_vm_size = 0;
 static long long max_stack_size = 0;
 static long long max_data_size = 0;
+
+static unsigned char *current_dir = NULL;
 
 static void
 parse_int(const unsigned char *name, const unsigned char *opt, int *pval,
@@ -431,6 +435,8 @@ handle_options(const unsigned char *opt)
     corr_pattern = p;
   } else if ((p = check_option("--info-pattern", opt))) {
     info_pattern = p;
+  } else if ((p = check_option("--tgzdir-pattern", opt))) {
+    tgzdir_pattern = p;
   } else if (!strcmp("--update-corr", opt)) {
     update_corr = 1;
   } else if ((p = check_option("--test-dir", opt))) {
@@ -495,6 +501,10 @@ run_program(int argc, char *argv[], long *p_cpu_time, long *p_real_time)
       if (info_pattern && info_pattern[0]) {
         snprintf(buf, sizeof(buf), info_pattern, test_num);
         info_file = strdup(buf);
+      }
+      if (tgzdir_pattern && tgzdir_pattern[0]) {
+        snprintf(buf, sizeof(buf), tgzdir_pattern, test_num);
+        tgzdir_file = strdup(buf);
       }
     }
   }
@@ -583,6 +593,8 @@ run_program(int argc, char *argv[], long *p_cpu_time, long *p_real_time)
     if (task_EnableSecurityViolationError(tsk) < 0)
       fatal("--security-violation is not supported");
 
+  task_PrintArgs(tsk);
+
   if (task_Start(tsk) < 0) {
     fprintf(stderr, "Status: CF\n"
             "Description: cannot start task: %s\n", task_GetErrorMessage(tsk));
@@ -668,21 +680,20 @@ run_all_tests(int argc, char *argv[])
   unsigned char abs_prog_name[PATH_MAX];
   unsigned char abs_test_dir[PATH_MAX];
   unsigned char abs_work_dir[PATH_MAX];
-  unsigned char *current_dir = NULL;
   unsigned char test_base[PATH_MAX];
   unsigned char test_path[PATH_MAX];
   unsigned char corr_base[PATH_MAX];
   unsigned char corr_path[PATH_MAX];
   unsigned char info_base[PATH_MAX];
   unsigned char info_path[PATH_MAX];
+  unsigned char tgzdir_base[PATH_MAX];
+  unsigned char tgzdir_path[PATH_MAX];
   const unsigned char *s;
   int pid = getpid(), serial = 0;
   int retval = 0, status;
   long cpu_time, real_time;
 
   tmp_work_dir[0] = 0;
-
-  if (!(current_dir = os_GetWorkingDir())) fatal("getcwd() failed");
 
   if (!working_dir || !*working_dir) {
     s = getenv("TMPDIR");
@@ -734,6 +745,11 @@ run_all_tests(int argc, char *argv[])
       snprintf(info_path, sizeof(info_path), "%s/%s", test_dir, info_base);
       info_file = xstrdup(info_path);
     }
+    if (tgzdir_pattern && tgzdir_pattern[0]) {
+      snprintf(tgzdir_base, sizeof(tgzdir_base), tgzdir_pattern, serial);
+      snprintf(tgzdir_path, sizeof(tgzdir_path), "%s/%s", test_dir, tgzdir_path);
+      tgzdir_file = xstrdup(tgzdir_path);
+    }
     cpu_time = 0;
     real_time = 0;
     status = run_program(argc, argv, &cpu_time, &real_time);
@@ -763,6 +779,8 @@ main(int argc, char *argv[])
     if (r > 0) break;
   }
   if (i == argc) fatal("no program to execute");
+
+  if (!(current_dir = os_GetWorkingDir())) fatal("getcwd() failed");
 
   if (all_tests > 0) {
     if (!test_dir) fatal("--test-dir must be specified in --all-tests mode");
