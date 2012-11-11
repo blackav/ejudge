@@ -1086,6 +1086,7 @@ do_generate_makefile(
   if (test_pat[0] > ' ') fprintf(mk_f, " --test-pattern=%s", test_pat);
   if (corr_pat[0] > ' ') fprintf(mk_f, " --corr-pattern=%s", corr_pat);
   if (info_pat[0] > ' ') fprintf(mk_f, " --info-pattern=%s", info_pat);
+  if (tgzdir_pat[0] > ' ') fprintf(mk_f, " --tgzdir-pattern=%s", tgzdir_pat);
   if (cnts->file_group && cnts->file_group[0]) fprintf(mk_f, " --group=%s", cnts->file_group);
   if (cnts->file_mode && cnts->file_mode[0]) fprintf(mk_f, " --mode=%s", cnts->file_mode);
   if (prob->time_limit_millis > 0) {
