@@ -3113,7 +3113,10 @@ run_tests(
   get_current_time(&reply_pkt->ts6, &reply_pkt->ts6_us);
 
   // no tests?
-  if (tests.size <= 1) {
+  if (srgp->scoring_system_val == SCORE_OLYMPIAD
+      && accept_testing > 0 && srpp->tests_to_accept <= 0) {
+    // no tests is ok
+  } else if (tests.size <= 1) {
     append_msg_to_log(messages_path, "No tests found");
     goto check_failed;
   }
