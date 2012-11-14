@@ -1824,6 +1824,7 @@ serve_run_request(
   srpp->max_file_size = prob->max_file_size;
   srpp->max_open_file_count = prob->max_open_file_count;
   srpp->max_process_count = prob->max_process_count;
+  srpp->enable_process_group = prob->enable_process_group;
 
   struct super_run_in_tester_packet *srtp = srp->tester;
   struct section_tester_data *tester = state->testers[cn];

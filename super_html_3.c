@@ -493,6 +493,7 @@ static const unsigned char * const action_to_help_url_map[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_CHANGE_VALUER_SETS_MARKED] = "Serve.cfg:problem:valuer_sets_marked",
   [SSERV_CMD_PROB_CHANGE_IGNORE_UNMARKED] = "Serve.cfg:problem:ignore_unmarked",
   [SSERV_CMD_PROB_CHANGE_DISABLE_STDERR] = "Serve.cfg:problem:disable_stderr",
+  [SSERV_CMD_PROB_CHANGE_ENABLE_PROCESS_GROUP] = "Serve.cfg:problem:enable_process_group",
   [SSERV_CMD_PROB_CHANGE_ENABLE_TEXT_FORM] = "Serve.cfg:problem:enable_text_form",
   [SSERV_CMD_PROB_CHANGE_STAND_IGNORE_SCORE] = "Serve.cfg:problem:stand_ignore_score",
   [SSERV_CMD_PROB_CHANGE_STAND_LAST_COLUMN] = "Serve.cfg:problem:stand_last_column",
@@ -5890,6 +5891,24 @@ super_html_print_problem(FILE *f,
     }
   }
 
+  if (show_adv) {
+    //PROBLEM_PARAM(enable_process_group, "d"),
+    extra_msg = "Undefined";
+    if (!prob->abstract) {
+      prepare_set_prob_value(CNTSPROB_enable_process_group,
+                             tmp_prob, sup_prob, sstate->global);
+      snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
+               tmp_prob->enable_process_group?"Yes":"No");
+      extra_msg = msg_buf;
+    }
+    print_boolean_3_select_row(f,"Use separate process group:",
+                               prob->enable_process_group,
+                               SSERV_CMD_PROB_CHANGE_ENABLE_PROCESS_GROUP,
+                               extra_msg,
+                               session_id, form_row_attrs[row ^= 1],
+                               self_url, extra_args, prob_hidden_vars);
+  }
+
   //PROBLEM_PARAM(checker_real_time_limit, "d"),
   if (show_adv) {
     extra_msg = "";
@@ -7906,6 +7925,10 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_PROB_CHANGE_DISABLE_STDERR:
     p_int = &prob->disable_stderr;
+    goto handle_boolean_1;
+
+  case SSERV_CMD_PROB_CHANGE_ENABLE_PROCESS_GROUP:
+    p_int = &prob->enable_process_group;
     goto handle_boolean_1;
 
   case SSERV_CMD_PROB_CHANGE_ENABLE_TEXT_FORM:

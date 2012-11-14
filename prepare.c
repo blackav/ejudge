@@ -400,6 +400,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(valuer_sets_marked, "d"),
   PROBLEM_PARAM(ignore_unmarked, "d"),
   PROBLEM_PARAM(disable_stderr, "d"),
+  PROBLEM_PARAM(enable_process_group, "d"),
   PROBLEM_PARAM(enable_text_form, "d"),
   PROBLEM_PARAM(stand_ignore_score, "d"),
   PROBLEM_PARAM(stand_last_column, "d"),
@@ -931,6 +932,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->valuer_sets_marked = -1;
   p->ignore_unmarked = -1;
   p->disable_stderr = -1;
+  p->enable_process_group = -1;
   p->enable_text_form = -1;
   p->stand_ignore_score = -1;
   p->stand_last_column = -1;
@@ -3402,6 +3404,7 @@ set_defaults(
     prepare_set_prob_value(CNTSPROB_valuer_sets_marked, prob, aprob, g);    
     prepare_set_prob_value(CNTSPROB_ignore_unmarked, prob, aprob, g);    
     prepare_set_prob_value(CNTSPROB_disable_stderr, prob, aprob, g);    
+    prepare_set_prob_value(CNTSPROB_enable_process_group, prob, aprob, g);    
     prepare_set_prob_value(CNTSPROB_enable_text_form, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_stand_ignore_score, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_stand_last_column, prob, aprob, g);
@@ -5892,6 +5895,11 @@ prepare_set_prob_value(
       out->disable_stderr = 0;
     break;
 
+  case CNTSPROB_enable_process_group:
+    if (out->enable_process_group < 0 && abstr)
+      out->enable_process_group = abstr->enable_process_group;
+    break;
+
   case CNTSPROB_enable_text_form:
     if (out->enable_text_form == -1 && abstr)
       out->enable_text_form = abstr->enable_text_form;
@@ -6411,7 +6419,8 @@ static const int prob_settable_list[] =
   CNTSPROB_priority_adjustment, CNTSPROB_spelling, CNTSPROB_stand_hide_time,
   CNTSPROB_advance_to_next, CNTSPROB_disable_ctrl_chars,
   CNTSPROB_valuer_sets_marked, CNTSPROB_ignore_unmarked,
-  CNTSPROB_disable_stderr, CNTSPROB_enable_text_form,
+  CNTSPROB_disable_stderr, CNTSPROB_enable_process_group,
+  CNTSPROB_enable_text_form,
   CNTSPROB_stand_ignore_score, CNTSPROB_stand_last_column,
   CNTSPROB_score_multiplier, CNTSPROB_prev_runs_to_show,
   CNTSPROB_max_vm_size, CNTSPROB_max_stack_size, CNTSPROB_max_data_size,
@@ -6505,6 +6514,7 @@ static const unsigned char prob_settable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_valuer_sets_marked] = 1,
   [CNTSPROB_ignore_unmarked] = 1,
   [CNTSPROB_disable_stderr] = 1,
+  [CNTSPROB_enable_process_group] = 1,
   [CNTSPROB_enable_text_form] = 1,
   [CNTSPROB_stand_ignore_score] = 1,
   [CNTSPROB_stand_last_column] = 1,
@@ -6615,6 +6625,7 @@ static const int prob_inheritable_list[] =
   CNTSPROB_stand_hide_time, CNTSPROB_advance_to_next,
   CNTSPROB_disable_ctrl_chars, CNTSPROB_valuer_sets_marked,
   CNTSPROB_ignore_unmarked, CNTSPROB_disable_stderr,
+  CNTSPROB_enable_process_group,
   CNTSPROB_enable_text_form, CNTSPROB_stand_ignore_score,
   CNTSPROB_stand_last_column, CNTSPROB_score_multiplier,
   CNTSPROB_prev_runs_to_show, CNTSPROB_max_vm_size,
@@ -6705,6 +6716,7 @@ static const unsigned char prob_inheritable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_valuer_sets_marked] = 1,
   [CNTSPROB_ignore_unmarked] = 1,
   [CNTSPROB_disable_stderr] = 1,
+  [CNTSPROB_enable_process_group] = 1,
   [CNTSPROB_enable_text_form] = 1,
   [CNTSPROB_stand_ignore_score] = 1,
   [CNTSPROB_stand_last_column] = 1,
@@ -6844,6 +6856,7 @@ static const struct section_problem_data prob_undef_values =
   .valuer_sets_marked = -1,
   .ignore_unmarked = -1,
   .disable_stderr = -1,
+  .enable_process_group = -1,
   .enable_text_form = -1,
   .stand_ignore_score = -1,
   .stand_last_column = -1,
@@ -6987,6 +7000,7 @@ static const struct section_problem_data prob_default_values =
   .valuer_sets_marked = 0,
   .ignore_unmarked = 0,
   .disable_stderr = 0,
+  .enable_process_group = 0,
   .enable_text_form = 0,
   .stand_ignore_score = 0,
   .stand_last_column = 0,
