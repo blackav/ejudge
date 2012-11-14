@@ -80,6 +80,7 @@ struct problem_config_section
   ejintbool_t valuer_sets_marked;
   ejintbool_t ignore_unmarked;
   ejintbool_t disable_stderr;
+  ejintbool_t enable_process_group;
 
   int id;
   int real_time_limit;
