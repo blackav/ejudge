@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/07/03 08:15:01
+// Generated 2012/11/14 23:17:35
 
 #include "problem_config_meta.h"
 #include "problem_config.h"
@@ -57,6 +57,7 @@ static struct meta_info_item meta_info_problem_config_section_data[] =
   [META_PROBLEM_CONFIG_SECTION_valuer_sets_marked] = { META_PROBLEM_CONFIG_SECTION_valuer_sets_marked, 'B', XSIZE(struct problem_config_section, valuer_sets_marked), "valuer_sets_marked", XOFFSET(struct problem_config_section, valuer_sets_marked) },
   [META_PROBLEM_CONFIG_SECTION_ignore_unmarked] = { META_PROBLEM_CONFIG_SECTION_ignore_unmarked, 'B', XSIZE(struct problem_config_section, ignore_unmarked), "ignore_unmarked", XOFFSET(struct problem_config_section, ignore_unmarked) },
   [META_PROBLEM_CONFIG_SECTION_disable_stderr] = { META_PROBLEM_CONFIG_SECTION_disable_stderr, 'B', XSIZE(struct problem_config_section, disable_stderr), "disable_stderr", XOFFSET(struct problem_config_section, disable_stderr) },
+  [META_PROBLEM_CONFIG_SECTION_enable_process_group] = { META_PROBLEM_CONFIG_SECTION_enable_process_group, 'B', XSIZE(struct problem_config_section, enable_process_group), "enable_process_group", XOFFSET(struct problem_config_section, enable_process_group) },
   [META_PROBLEM_CONFIG_SECTION_id] = { META_PROBLEM_CONFIG_SECTION_id, 'i', XSIZE(struct problem_config_section, id), "id", XOFFSET(struct problem_config_section, id) },
   [META_PROBLEM_CONFIG_SECTION_real_time_limit] = { META_PROBLEM_CONFIG_SECTION_real_time_limit, 'i', XSIZE(struct problem_config_section, real_time_limit), "real_time_limit", XOFFSET(struct problem_config_section, real_time_limit) },
   [META_PROBLEM_CONFIG_SECTION_time_limit] = { META_PROBLEM_CONFIG_SECTION_time_limit, 'i', XSIZE(struct problem_config_section, time_limit), "time_limit", XOFFSET(struct problem_config_section, time_limit) },

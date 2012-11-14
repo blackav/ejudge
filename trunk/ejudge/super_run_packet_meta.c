@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/05/25 11:41:20
+// Generated 2012/11/14 23:17:35
 
 #include "super_run_packet_meta.h"
 #include "super_run_packet.h"
@@ -176,6 +176,7 @@ static struct meta_info_item meta_info_super_run_in_problem_packet_data[] =
   [META_SUPER_RUN_IN_PROBLEM_PACKET_max_process_count] = { META_SUPER_RUN_IN_PROBLEM_PACKET_max_process_count, 'i', XSIZE(struct super_run_in_problem_packet, max_process_count), "max_process_count", XOFFSET(struct super_run_in_problem_packet, max_process_count) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_spelling] = { META_SUPER_RUN_IN_PROBLEM_PACKET_spelling, 's', XSIZE(struct super_run_in_problem_packet, spelling), "spelling", XOFFSET(struct super_run_in_problem_packet, spelling) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_open_tests] = { META_SUPER_RUN_IN_PROBLEM_PACKET_open_tests, 's', XSIZE(struct super_run_in_problem_packet, open_tests), "open_tests", XOFFSET(struct super_run_in_problem_packet, open_tests) },
+  [META_SUPER_RUN_IN_PROBLEM_PACKET_enable_process_group] = { META_SUPER_RUN_IN_PROBLEM_PACKET_enable_process_group, 'B', XSIZE(struct super_run_in_problem_packet, enable_process_group), "enable_process_group", XOFFSET(struct super_run_in_problem_packet, enable_process_group) },
 };
 
 int meta_super_run_in_problem_packet_get_type(int tag)
