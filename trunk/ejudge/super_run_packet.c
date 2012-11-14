@@ -137,6 +137,7 @@ super_run_in_problem_packet_init(struct generic_section_config *gp)
   p->disable_stderr = -1;
   p->max_open_file_count = -1;
   p->max_process_count = -1;
+  p->enable_process_group = -1;
 
   p->type_val = -1;
 }

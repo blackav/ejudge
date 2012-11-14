@@ -2059,6 +2059,7 @@ run_one_test(
   }
   task_SetPathAsArg0(tsk);
   task_SetWorkingDir(tsk, working_dir);
+  if (srpp->enable_process_group > 0) task_EnableProcessGroup(tsk);
 
   if (srpp->interactor_cmd && srpp->interactor_cmd[0]) {
     task_SetRedir(tsk, 0, TSR_DUP, pfd2[0]);

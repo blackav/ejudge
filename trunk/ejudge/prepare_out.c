@@ -1333,6 +1333,10 @@ prepare_unparse_prob(
   if (prob->disable_stderr >= 0
       && ((prob->abstract && prob->disable_stderr) || !prob->abstract))
       unparse_bool(f, "disable_stderr", prob->disable_stderr);
+  if ((prob->abstract > 0 && prob->enable_process_group > 0)
+      || (!prob->abstract && prob->enable_process_group >= 0)) {
+    unparse_bool(f, "enable_process_group", prob->enable_process_group);
+  }
   if (prob->enable_text_form >= 0
       && ((prob->abstract && prob->enable_text_form) || !prob->abstract))
       unparse_bool(f, "enable_text_form", prob->enable_text_form);
@@ -1652,6 +1656,8 @@ prepare_unparse_actual_prob(
     unparse_bool(f, "ignore_unmarked", prob->ignore_unmarked);
   if (prob->disable_stderr > 0)
     unparse_bool(f, "disable_stderr", prob->disable_stderr);
+  if (prob->enable_process_group > 0)
+    unparse_bool(f, "enable_process_group", prob->enable_process_group);
   if (prob->enable_text_form > 0)
     unparse_bool(f, "enable_text_form", prob->enable_text_form);
   if (prob->stand_ignore_score > 0)
