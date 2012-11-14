@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/05/25 11:41:20
+// Generated 2012/11/14 23:17:35
 
 #ifndef __SUPER_RUN_PACKET_META_H__
 #define __SUPER_RUN_PACKET_META_H__
@@ -136,6 +136,7 @@ enum
   META_SUPER_RUN_IN_PROBLEM_PACKET_max_process_count,
   META_SUPER_RUN_IN_PROBLEM_PACKET_spelling,
   META_SUPER_RUN_IN_PROBLEM_PACKET_open_tests,
+  META_SUPER_RUN_IN_PROBLEM_PACKET_enable_process_group,
 
   META_SUPER_RUN_IN_PROBLEM_PACKET_LAST_FIELD,
 };
