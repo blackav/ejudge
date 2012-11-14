@@ -150,6 +150,7 @@ struct super_run_in_problem_packet
   int max_process_count;
   unsigned char *spelling;
   unsigned char *open_tests;
+  ejintbool_t enable_process_group;
 
   int type_val META_ATTRIB((meta_hidden));
 };

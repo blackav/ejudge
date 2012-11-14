@@ -926,6 +926,8 @@ struct section_problem_data
   int interactor_time_limit;
   /** consider any output to stderr as presentation error */
   ejintbool_t disable_stderr;
+  /** use process groups */
+  ejintbool_t enable_process_group;
 
   /** printf pattern for the test files */
   unsigned char test_pat[32];
