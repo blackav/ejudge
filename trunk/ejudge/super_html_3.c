@@ -539,6 +539,7 @@ static const unsigned char * const action_to_help_url_map[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_CHANGE_TEST_CHECKER_ENV] = "Serve.cfg:problem:test_checker_env",
   [SSERV_CMD_PROB_CHANGE_INIT_CMD] = "Serve.cfg:problem:init_cmd",
   [SSERV_CMD_PROB_CHANGE_INIT_ENV] = "Serve.cfg:problem:init_env",
+  [SSERV_CMD_PROB_CHANGE_START_ENV] = "Serve.cfg:problem:start_env",
   [SSERV_CMD_PROB_CHANGE_SOLUTION_SRC] = "Serve.cfg:problem:solution_src",
   [SSERV_CMD_PROB_CHANGE_SOLUTION_CMD] = "Serve.cfg:problem:solution_cmd",
   [SSERV_CMD_PROB_CHANGE_LANG_TIME_ADJ] = "Serve.cfg:problem:lang_time_adj",
@@ -6740,6 +6741,24 @@ super_html_print_problem(FILE *f,
                                self_url, extra_args, prob_hidden_vars);
   }
 
+  //PROBLEM_PARAM(start_env, "x"),
+  if (!prob->abstract && show_adv) {
+    if (!prob->start_env || !prob->start_env[0]) {
+      extra_msg = "(not set)";
+      checker_env = xstrdup("");
+    } else {
+      extra_msg = "";
+      checker_env = sarray_unparse(prob->start_env);
+    }
+    print_string_editing_row_3(f, "Start environment:", checker_env,
+                               SSERV_CMD_PROB_CHANGE_START_ENV,
+                               SSERV_CMD_PROB_CLEAR_START_ENV,
+                               extra_msg,
+                               session_id, form_row_attrs[row ^= 1],
+                               self_url, extra_args, prob_hidden_vars);
+    xfree(checker_env);
+  }
+
   //PROBLEM_PARAM(valuer_cmd, "s"),
   extra_msg = 0;
   if (show_adv) {
@@ -8288,6 +8307,18 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
   case SSERV_CMD_PROB_CLEAR_INIT_ENV:
     sarray_free(prob->init_env);
     prob->init_env = 0;
+    return 0;
+
+  case SSERV_CMD_PROB_CHANGE_START_ENV:
+    if (sarray_parse(param2, &tmp_env) < 0)
+      return -SSERV_ERR_INVALID_PARAMETER;
+    sarray_free(prob->start_env);
+    prob->start_env = tmp_env;
+    return 0;
+
+  case SSERV_CMD_PROB_CLEAR_START_ENV:
+    sarray_free(prob->start_env);
+    prob->start_env = 0;
     return 0;
 
   case SSERV_CMD_PROB_CHANGE_SOLUTION_SRC:

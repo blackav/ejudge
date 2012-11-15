@@ -672,6 +672,7 @@ merge_problem_section(
         { CNTSPROB_valuer_sets_marked, META_PROBLEM_CONFIG_SECTION_valuer_sets_marked },
         { CNTSPROB_ignore_unmarked, META_PROBLEM_CONFIG_SECTION_ignore_unmarked },
         { CNTSPROB_disable_stderr, META_PROBLEM_CONFIG_SECTION_disable_stderr },
+        { CNTSPROB_enable_process_group, META_PROBLEM_CONFIG_SECTION_enable_process_group },
 
         { 0, 0 },
     };
@@ -869,6 +870,7 @@ merge_problem_section(
         { CNTSPROB_style_checker_env, META_PROBLEM_CONFIG_SECTION_style_checker_env },
         { CNTSPROB_test_checker_env, META_PROBLEM_CONFIG_SECTION_test_checker_env },
         { CNTSPROB_init_env, META_PROBLEM_CONFIG_SECTION_init_env },
+        { CNTSPROB_start_env, META_PROBLEM_CONFIG_SECTION_start_env },
 
         { 0,  0 },
     };

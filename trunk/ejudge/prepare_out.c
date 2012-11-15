@@ -1271,6 +1271,7 @@ prepare_unparse_prob(
   }
   do_xstr(f, &ab, "test_checker_env", prob->test_checker_env);
   do_xstr(f, &ab, "init_env", prob->init_env);
+  do_xstr(f, &ab, "start_env", prob->start_env);
   do_xstr(f, &ab, "lang_time_adj", prob->lang_time_adj);
   do_xstr(f, &ab, "lang_time_adj_millis", prob->lang_time_adj_millis);
   do_xstr(f, &ab, "test_sets", prob->test_sets);
@@ -1591,6 +1592,7 @@ prepare_unparse_actual_prob(
   }
   do_xstr(f, &ab, "test_checker_env", prob->test_checker_env);
   do_xstr(f, &ab, "init_env", prob->init_env);
+  do_xstr(f, &ab, "start_env", prob->start_env);
   do_xstr(f, &ab, "lang_time_adj", prob->lang_time_adj);
   do_xstr(f, &ab, "lang_time_adj_millis", prob->lang_time_adj_millis);
   do_xstr(f, &ab, "test_sets", prob->test_sets);

@@ -1746,6 +1746,7 @@ serve_run_request(
   srpp->interactor_env = sarray_copy(prob->interactor_env);
   srpp->test_checker_env = sarray_copy(prob->test_checker_env);
   srpp->init_env = sarray_copy(prob->init_env);
+  srpp->start_env = sarray_copy(prob->start_env);
   if (prob->check_cmd && prob->check_cmd[0]) {
     if (os_IsAbsolutePath(prob->check_cmd)) {
       srpp->check_cmd = xstrdup(prob->check_cmd);
