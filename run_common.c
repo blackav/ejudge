@@ -2895,6 +2895,18 @@ merge_env(char **env1, char **env2)
   return res;
 }
 
+static char **
+merge_env_2(char **env1, char **env2)
+{
+  if ((!env1 || !env1[0]) && (!env2 || !env2[0])) return NULL;
+  if (!env1 || !env1[0]) return sarray_copy(env2);
+  if (!env2 || !env2[0]) return env1;
+
+  char **res = merge_env(env1, env2);
+  sarray_free(env1);
+  return res;
+}
+
 static int
 is_piped_core_dump(void)
 {
@@ -3002,14 +3014,16 @@ run_tests(
                       "For example, consider disabling abrtd.\n");
   }
 
-  if (tst && tst->start_env && tst->start_env[0] && srtp && srtp->start_env && srtp->start_env[0]) {
-    merged_start_env = merge_env(tst->start_env, srtp->start_env);
-    start_env = merged_start_env;
-  } else if (tst && tst->start_env && tst->start_env[0]) {
-    start_env = tst->start_env;
-  } else if (srtp && srtp->start_env && srtp->start_env[0]) {
-    start_env = srtp->start_env;
+  if (tst) {
+    merged_start_env = merge_env_2(merged_start_env, tst->start_env);
   }
+  if (srtp) {
+    merged_start_env = merge_env_2(merged_start_env, srtp->start_env);
+  }
+  if (srpp) {
+    merged_start_env = merge_env_2(merged_start_env, srpp->start_env);
+  }
+  start_env = merged_start_env;
 
   report_path[0] = 0;
   pathmake(report_path, global->run_work_dir, "/", "report", NULL);

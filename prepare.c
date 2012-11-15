@@ -455,6 +455,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(style_checker_env, "x"),
   PROBLEM_PARAM(test_checker_env, "x"),
   PROBLEM_PARAM(init_env, "x"),
+  PROBLEM_PARAM(start_env, "x"),
   PROBLEM_PARAM(lang_time_adj, "x"),
   PROBLEM_PARAM(lang_time_adj_millis, "x"),
   PROBLEM_PARAM(check_cmd, "s"),
@@ -987,6 +988,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
   sarray_free(p->style_checker_env);
   sarray_free(p->test_checker_env);
   sarray_free(p->init_env);
+  sarray_free(p->start_env);
   sarray_free(p->lang_time_adj);
   sarray_free(p->lang_time_adj_millis);
   sarray_free(p->personal_deadline);
@@ -3611,6 +3613,22 @@ set_defaults(
         }
       }
 
+      if (si != -1 && aprob->start_env) {
+        prob->start_env = sarray_merge_pf(aprob->start_env,
+                                          prob->start_env);
+      }
+      if (prob->start_env) {
+        for (j = 0; prob->start_env[j]; j++) {
+          prob->start_env[j] = varsubst_heap(state,
+                                             prob->start_env[j],
+                                             1, section_global_params,
+                                             section_problem_params,
+                                             section_language_params,
+                                             section_tester_params);
+          if (!prob->start_env[j]) return -1;
+        }
+      }
+
       /* score bonus */
       prepare_set_prob_value(CNTSPROB_score_bonus, prob, aprob, g);
       if (prob->score_bonus[0]) {
@@ -5526,6 +5544,7 @@ prepare_copy_problem(const struct section_problem_data *in)
   }
   out->test_checker_env = sarray_copy(in->test_checker_env);
   out->init_env = 0;
+  out->start_env = 0;
   if (in->init_cmd) {
     out->init_cmd = xstrdup(in->init_cmd);
   }
@@ -6436,7 +6455,8 @@ static const int prob_settable_list[] =
   CNTSPROB_enable_language, CNTSPROB_require, CNTSPROB_standard_checker,
   CNTSPROB_lang_compiler_env,
   CNTSPROB_checker_env, CNTSPROB_valuer_env, CNTSPROB_interactor_env,
-  CNTSPROB_style_checker_env, CNTSPROB_test_checker_env, CNTSPROB_init_env, CNTSPROB_lang_time_adj,
+  CNTSPROB_style_checker_env, CNTSPROB_test_checker_env, CNTSPROB_init_env,
+  CNTSPROB_start_env, CNTSPROB_lang_time_adj,
   CNTSPROB_lang_time_adj_millis, CNTSPROB_check_cmd, CNTSPROB_valuer_cmd,
   CNTSPROB_interactor_cmd, CNTSPROB_style_checker_cmd,
   CNTSPROB_test_checker_cmd, CNTSPROB_init_cmd, CNTSPROB_solution_src, CNTSPROB_solution_cmd,
@@ -6565,6 +6585,7 @@ static const unsigned char prob_settable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_style_checker_env] = 1,
   [CNTSPROB_test_checker_env] = 1,
   [CNTSPROB_init_env] = 1,
+  [CNTSPROB_start_env] = 1,
   [CNTSPROB_lang_time_adj] = 1,
   [CNTSPROB_lang_time_adj_millis] = 1,
   [CNTSPROB_check_cmd] = 1,
@@ -6642,7 +6663,8 @@ static const int prob_inheritable_list[] =
   CNTSPROB_disable_language, CNTSPROB_enable_language, CNTSPROB_require,
   CNTSPROB_standard_checker, CNTSPROB_checker_env, CNTSPROB_valuer_env,
   CNTSPROB_interactor_env, CNTSPROB_style_checker_env, CNTSPROB_lang_compiler_env,
-  CNTSPROB_test_checker_env, CNTSPROB_init_env, CNTSPROB_lang_time_adj,
+  CNTSPROB_test_checker_env, CNTSPROB_init_env, CNTSPROB_start_env,
+  CNTSPROB_lang_time_adj,
   CNTSPROB_lang_time_adj_millis, CNTSPROB_check_cmd, CNTSPROB_valuer_cmd,
   CNTSPROB_interactor_cmd, CNTSPROB_style_checker_cmd,
   CNTSPROB_test_checker_cmd, CNTSPROB_init_cmd, CNTSPROB_solution_src, CNTSPROB_solution_cmd,
@@ -6760,6 +6782,7 @@ static const unsigned char prob_inheritable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_style_checker_env] = 1,
   [CNTSPROB_test_checker_env] = 1,
   [CNTSPROB_init_env] = 1,
+  [CNTSPROB_start_env] = 1,
   [CNTSPROB_lang_time_adj] = 1,
   [CNTSPROB_lang_time_adj_millis] = 1,
   [CNTSPROB_check_cmd] = 1,
@@ -6913,6 +6936,7 @@ static const struct section_problem_data prob_undef_values =
   .style_checker_env = 0,
   .test_checker_env = 0,
   .init_env = 0,
+  .start_env = 0,
   .check_cmd = { 1, 0 },
   .valuer_cmd = { 1, 0 },
   .interactor_cmd = { 1, 0 },
