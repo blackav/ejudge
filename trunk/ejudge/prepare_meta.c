@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/11/14 23:17:35
+// Generated 2012/11/15 17:14:09
 
 #include "prepare_meta.h"
 #include "prepare.h"
@@ -463,6 +463,7 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_style_checker_env] = { CNTSPROB_style_checker_env, 'X', XSIZE(struct section_problem_data, style_checker_env), "style_checker_env", XOFFSET(struct section_problem_data, style_checker_env) },
   [CNTSPROB_test_checker_env] = { CNTSPROB_test_checker_env, 'X', XSIZE(struct section_problem_data, test_checker_env), "test_checker_env", XOFFSET(struct section_problem_data, test_checker_env) },
   [CNTSPROB_init_env] = { CNTSPROB_init_env, 'X', XSIZE(struct section_problem_data, init_env), "init_env", XOFFSET(struct section_problem_data, init_env) },
+  [CNTSPROB_start_env] = { CNTSPROB_start_env, 'X', XSIZE(struct section_problem_data, start_env), "start_env", XOFFSET(struct section_problem_data, start_env) },
   [CNTSPROB_check_cmd] = { CNTSPROB_check_cmd, 'S', XSIZE(struct section_problem_data, check_cmd), "check_cmd", XOFFSET(struct section_problem_data, check_cmd) },
   [CNTSPROB_valuer_cmd] = { CNTSPROB_valuer_cmd, 'S', XSIZE(struct section_problem_data, valuer_cmd), "valuer_cmd", XOFFSET(struct section_problem_data, valuer_cmd) },
   [CNTSPROB_interactor_cmd] = { CNTSPROB_interactor_cmd, 'S', XSIZE(struct section_problem_data, interactor_cmd), "interactor_cmd", XOFFSET(struct section_problem_data, interactor_cmd) },
