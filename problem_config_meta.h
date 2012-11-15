@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/11/14 23:17:35
+// Generated 2012/11/15 17:14:09
 
 #ifndef __PROBLEM_CONFIG_META_H__
 #define __PROBLEM_CONFIG_META_H__
@@ -140,6 +140,7 @@ enum
   META_PROBLEM_CONFIG_SECTION_style_checker_env,
   META_PROBLEM_CONFIG_SECTION_test_checker_env,
   META_PROBLEM_CONFIG_SECTION_init_env,
+  META_PROBLEM_CONFIG_SECTION_start_env,
 
   META_PROBLEM_CONFIG_SECTION_LAST_FIELD,
 };

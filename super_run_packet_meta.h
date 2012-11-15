@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/11/14 23:17:35
+// Generated 2012/11/15 17:14:09
 
 #ifndef __SUPER_RUN_PACKET_META_H__
 #define __SUPER_RUN_PACKET_META_H__
@@ -121,6 +121,7 @@ enum
   META_SUPER_RUN_IN_PROBLEM_PACKET_interactor_env,
   META_SUPER_RUN_IN_PROBLEM_PACKET_test_checker_env,
   META_SUPER_RUN_IN_PROBLEM_PACKET_init_env,
+  META_SUPER_RUN_IN_PROBLEM_PACKET_start_env,
   META_SUPER_RUN_IN_PROBLEM_PACKET_check_cmd,
   META_SUPER_RUN_IN_PROBLEM_PACKET_valuer_cmd,
   META_SUPER_RUN_IN_PROBLEM_PACKET_interactor_cmd,

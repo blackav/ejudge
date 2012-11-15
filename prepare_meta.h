@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/11/14 23:17:35
+// Generated 2012/11/15 17:14:09
 
 #ifndef __PREPARE_META_H__
 #define __PREPARE_META_H__
@@ -423,6 +423,7 @@ enum
   CNTSPROB_style_checker_env,
   CNTSPROB_test_checker_env,
   CNTSPROB_init_env,
+  CNTSPROB_start_env,
   CNTSPROB_check_cmd,
   CNTSPROB_valuer_cmd,
   CNTSPROB_interactor_cmd,
