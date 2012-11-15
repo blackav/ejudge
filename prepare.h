@@ -993,6 +993,8 @@ struct section_problem_data
   ejenvlist_t test_checker_env;
   /** environment variables for the init-style interactor */
   ejenvlist_t init_env;
+  /** environment variables for the program itself */
+  ejenvlist_t start_env;
   /** checker program */
   path_t check_cmd;
   /** valuer program */

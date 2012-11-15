@@ -135,6 +135,7 @@ struct super_run_in_problem_packet
   ejenvlist_t interactor_env;
   ejenvlist_t test_checker_env;
   ejenvlist_t init_env;
+  ejenvlist_t start_env;
   unsigned char *check_cmd;
   unsigned char *valuer_cmd;
   unsigned char *interactor_cmd;

@@ -174,6 +174,7 @@ struct problem_config_section
   ejenvlist_t style_checker_env;
   ejenvlist_t test_checker_env;
   ejenvlist_t init_env;
+  ejenvlist_t start_env;
 };
 
 void
