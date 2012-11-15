@@ -1364,6 +1364,7 @@ serve_run_request(
   struct section_global_data *global = state->global;
   struct section_problem_data *prob;
   struct section_language_data *lang = 0;
+  const struct section_tester_data *tester = NULL;
   unsigned char *arch = 0, *exe_sfx = "";
   const unsigned char *user_name;
   int prio;
@@ -1439,11 +1440,14 @@ serve_run_request(
   }
 
   cn = find_tester(state, prob_id, arch);
+  if (cn >= 1 && cn <= state->max_tester) tester = state->testers[cn];
+  /*
   if (cn < 1 || cn > state->max_tester || !state->testers[cn]) {
     fprintf(errf, "no appropriate checker for <%s>, <%s>\n",
             prob->short_name, arch);
     goto fail;
   }
+  */
 
   if (cnts && cnts->run_managed) {
     if (prob->super_run_dir && prob->super_run_dir[0]) {
@@ -1456,9 +1460,9 @@ serve_run_request(
       snprintf(run_exe_dir, sizeof(run_exe_dir), "%s/super-run/var/exe", EJUDGE_CONTESTS_HOME_DIR);
       snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/super-run/var/queue", EJUDGE_CONTESTS_HOME_DIR);
     }
-  } else if (state->testers[cn]->run_dir[0]) {
-    snprintf(run_exe_dir, sizeof(run_exe_dir), "%s/exe", state->testers[cn]->run_dir);
-    snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/queue", state->testers[cn]->run_dir);
+  } else if (tester && tester->run_dir && tester->run_dir[0]) {
+    snprintf(run_exe_dir, sizeof(run_exe_dir), "%s/exe", tester->run_dir);
+    snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/queue", tester->run_dir);
   } else {
     snprintf(run_exe_dir, sizeof(run_exe_dir), "%s/exe", global->run_dir);
     snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/queue", global->run_dir);
@@ -1482,7 +1486,7 @@ serve_run_request(
   if (lang) prio += lang->priority_adjustment;
   prio += prob->priority_adjustment;
   prio += find_user_priority_adjustment(state, user_id);
-  prio += state->testers[cn]->priority_adjustment;
+  if (tester) prio += tester->priority_adjustment;
   prio += priority_adjustment;
   if (prob_id < EJ_SERVE_STATE_TOTAL_PROBS)
     prio += state->prob_prio[prob_id];
@@ -1827,43 +1831,46 @@ serve_run_request(
   srpp->max_process_count = prob->max_process_count;
   srpp->enable_process_group = prob->enable_process_group;
 
-  struct super_run_in_tester_packet *srtp = srp->tester;
-  struct section_tester_data *tester = state->testers[cn];
+  if (tester) {
+    struct super_run_in_tester_packet *srtp = srp->tester;
 
-  if (tester->any) {
-    refined_tester = prepare_alloc_tester();
-    prepare_tester_refinement(state, refined_tester, cn, prob->id);
-    tester = refined_tester;
-  }
+    if (tester->any) {
+      refined_tester = prepare_alloc_tester();
+      prepare_tester_refinement(state, refined_tester, cn, prob->id);
+      tester = refined_tester;
+    }
 
-  srtp->name = xstrdup(tester->name);
-  srtp->is_dos = tester->is_dos;
-  srtp->no_redirect = tester->no_redirect;
-  srtp->priority_adjustment = tester->priority_adjustment;
-  srtp->arch = xstrdup(tester->arch);
-  srtp->key = xstrdup2(tester->key);
-  s = tester->memory_limit_type;
-  if (s && s[0] && s[0] != 1) {
-    srtp->memory_limit_type = xstrdup(s);
+    srtp->name = xstrdup(tester->name);
+    srtp->is_dos = tester->is_dos;
+    srtp->no_redirect = tester->no_redirect;
+    srtp->priority_adjustment = tester->priority_adjustment;
+    srtp->arch = xstrdup(tester->arch);
+    srtp->key = xstrdup2(tester->key);
+    s = tester->memory_limit_type;
+    if (s && s[0] && s[0] != 1) {
+      srtp->memory_limit_type = xstrdup(s);
+    }
+    s = tester->secure_exec_type;
+    if (s && s[0] && s[0] != 1) {
+      srtp->secure_exec_type = xstrdup(s);
+    }
+    srtp->no_core_dump = tester->no_core_dump;
+    srtp->enable_memory_limit_error = tester->enable_memory_limit_error;
+    srtp->kill_signal = xstrdup(tester->kill_signal);
+    srtp->clear_env = tester->clear_env;
+    if (tester->time_limit_adj_millis > 0) {
+      srtp->time_limit_adjustment_ms = tester->time_limit_adj_millis;
+    } else if (tester->time_limit_adjustment > 0) {
+      srtp->time_limit_adjustment_ms = tester->time_limit_adjustment;
+    }
+    srtp->errorcode_file = xstrdup2(tester->errorcode_file);
+    srtp->error_file = xstrdup2(tester->error_file);
+    srtp->prepare_cmd = xstrdup2(tester->prepare_cmd);
+    srtp->start_cmd = xstrdup2(tester->start_cmd);
+    srtp->start_env = sarray_copy(tester->start_env);
+  } else {
+    super_run_in_packet_free_tester(srp);
   }
-  s = tester->secure_exec_type;
-  if (s && s[0] && s[0] != 1) {
-    srtp->secure_exec_type = xstrdup(s);
-  }
-  srtp->no_core_dump = tester->no_core_dump;
-  srtp->enable_memory_limit_error = tester->enable_memory_limit_error;
-  srtp->kill_signal = xstrdup(tester->kill_signal);
-  srtp->clear_env = tester->clear_env;
-  if (tester->time_limit_adj_millis > 0) {
-    srtp->time_limit_adjustment_ms = tester->time_limit_adj_millis;
-  } else if (tester->time_limit_adjustment > 0) {
-    srtp->time_limit_adjustment_ms = tester->time_limit_adjustment;
-  }
-  srtp->errorcode_file = xstrdup2(tester->errorcode_file);
-  srtp->error_file = xstrdup2(tester->error_file);
-  srtp->prepare_cmd = xstrdup2(tester->prepare_cmd);
-  srtp->start_cmd = xstrdup2(tester->start_cmd);
-  srtp->start_env = sarray_copy(tester->start_env);
 
   super_run_in_packet_set_default(srp);
 

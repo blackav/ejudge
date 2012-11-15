@@ -4158,6 +4158,7 @@ set_defaults(
     }
   }
 
+#if 0
   if (mode == PREPARE_SERVE) {
     /* check language/checker pairs */
     for (i = 1; i <= state->max_lang; i++) {
@@ -4171,6 +4172,7 @@ set_defaults(
       }
     }
   }
+#endif
 
   // if no problem has long_name, disable it
   g->disable_prob_long_name = 0;
