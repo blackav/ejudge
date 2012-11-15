@@ -194,6 +194,8 @@ void
 super_run_in_packet_set_default(struct super_run_in_packet *p);
 struct super_run_in_packet *
 super_run_in_packet_free(struct super_run_in_packet *p);
+void
+super_run_in_packet_free_tester(struct super_run_in_packet *p);
 
 void
 super_run_in_packet_unparse_cfg(FILE *out_f, struct super_run_in_packet *p);
