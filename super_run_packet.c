@@ -284,6 +284,15 @@ super_run_in_packet_free(struct super_run_in_packet *p)
   return NULL;
 }
 
+void
+super_run_in_packet_free_tester(struct super_run_in_packet *p)
+{
+  if (p) {
+    super_run_in_tester_packet_free((struct generic_section_config*) p->tester);
+    p->tester = NULL;
+  }
+}
+
 struct config_section_info super_run_in_packet_info[] =
 {
   { "global", sizeof(struct super_run_in_global_packet), NULL, NULL,
