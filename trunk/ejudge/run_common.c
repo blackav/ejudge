@@ -2435,8 +2435,8 @@ run_one_test(
   }
 
   if (pg_not_empty) {
-    status = RUN_RUN_TIME_ERR;
-    goto cleanup;
+    status = RUN_SECURITY_ERR;
+    goto read_checker_output;
   }
 
   task_Delete(tsk); tsk = NULL;
