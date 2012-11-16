@@ -53,6 +53,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <signal.h>
 #ifndef __MINGW32__
 #include <sys/vfs.h>
 #endif
@@ -1798,6 +1799,7 @@ run_one_test(
   int error_code_value = 0;
   long long file_size;
   int init_cmd_started = 0;
+  int pg_not_empty = 0;
 
   int pfd1[2] = { -1, -1 };
   int pfd2[2] = { -1, -1 };
@@ -2274,6 +2276,18 @@ run_one_test(
 
   if (tsk_int) task_Wait(tsk_int);
 
+  if (srpp->enable_process_group > 0) {
+    int pid = task_GetPid(tsk);
+    if (kill(-pid, 0) >= 0) {
+      // there exist some processes beloging to the process group
+      append_msg_to_log(check_out_path,
+                        "There exist processes belonging to the process group of the program being tested\n");
+      pg_not_empty = 1;
+      kill(-pid, SIGKILL);
+    }
+  }
+
+
   /* set normal permissions for the working directory */
   make_writable(check_dir);
   /* make the output file readable */
@@ -2416,6 +2430,11 @@ run_one_test(
   } else if (srpp->ignore_exit_code > 0) {
     // do not analyze exit code
   } else if (cur_info->code != 0) {
+    status = RUN_RUN_TIME_ERR;
+    goto cleanup;
+  }
+
+  if (pg_not_empty) {
     status = RUN_RUN_TIME_ERR;
     goto cleanup;
   }
