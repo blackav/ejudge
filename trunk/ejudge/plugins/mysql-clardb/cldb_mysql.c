@@ -712,7 +712,7 @@ modify_text_func(
   }
 
   cmd_f = open_memstream(&cmd_t, &cmd_z);
-  fprintf(cmd_f, "MODIFY %sclartexts SET clar_text = ", md->table_prefix);
+  fprintf(cmd_f, "UPDATE %sclartexts SET clar_text = ", md->table_prefix);
   mi->write_escaped_string(md, cmd_f, NULL, text);
   fprintf(cmd_f, " WHERE clar_id = %d AND contest_id = %d", clar_id, cs->contest_id);
   close_memstream(cmd_f); cmd_f = 0;
@@ -745,7 +745,7 @@ modify_record_func(
   const unsigned char *sep1 = ", ";
 
   cmd_f = open_memstream(&cmd_t, &cmd_z);
-  fprintf(cmd_f, "MODIFY %sclars SET ", md->table_prefix);
+  fprintf(cmd_f, "UPDATE %sclars SET ", md->table_prefix);
 
   if (mask & (1 << CLAR_FIELD_SIZE)) {
     fprintf(cmd_f, " size = %d", pe->size);
