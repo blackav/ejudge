@@ -748,59 +748,61 @@ modify_record_func(
   fprintf(cmd_f, "UPDATE %sclars SET ", md->table_prefix);
 
   if (mask & (1 << CLAR_FIELD_SIZE)) {
-    fprintf(cmd_f, " size = %d", pe->size);
+    fprintf(cmd_f, "%ssize = %d", sep, pe->size);
     sep = sep1;
   }
   if (mask & (1 << CLAR_FIELD_FROM)) {
-    fprintf(cmd_f, " user_from = %d", pe->from);
+    fprintf(cmd_f, "%suser_from = %d", sep, pe->from);
     sep = sep1;
   }
   if (mask & (1 << CLAR_FIELD_TO)) {
-    fprintf(cmd_f, " user_to = %d", pe->to);
+    fprintf(cmd_f, "%suser_to = %d", sep, pe->to);
     sep = sep1;
   }
   if (mask & (1 << CLAR_FIELD_J_FROM)) {
-    fprintf(cmd_f, " j_from = %d", pe->j_from);
+    fprintf(cmd_f, "%sj_from = %d", sep, pe->j_from);
     sep = sep1;
   }
   if (mask & (1 << CLAR_FIELD_FLAGS)) {
-    fprintf(cmd_f, " flags = %d", pe->flags);
+    fprintf(cmd_f, "%sflags = %d", sep, pe->flags);
     sep = sep1;
   }
   if (mask & (1 << CLAR_FIELD_HIDE_FLAG)) {
-    fprintf(cmd_f, " hide_flag = %d", pe->hide_flag);
+    fprintf(cmd_f, "%shide_flag = %d", sep, pe->hide_flag);
     sep = sep1;
   }
   if (mask & (1 << CLAR_FIELD_SSL_FLAG)) {
-    fprintf(cmd_f, " ssl_flag = %d", pe->ssl_flag);
+    fprintf(cmd_f, "%sssl_flag = %d", sep, pe->ssl_flag);
     sep = sep1;
   }
   if (mask & (1 << CLAR_FIELD_APPEAL_FLAG)) {
-    fprintf(cmd_f, " appeal_flag = %d", pe->appeal_flag);
+    fprintf(cmd_f, "%sappeal_flag = %d", sep, pe->appeal_flag);
     sep = sep1;
   }
   if (mask & (1 << CLAR_FIELD_IP)) {
-    fprintf(cmd_f, " ip_version = %d", 4);
+    fprintf(cmd_f, "%sip_version = %d", sep, 4);
     sep = sep1;
     mi->write_escaped_string(md, cmd_f, sep, xml_unparse_ip(pe->a.ip));
   }
   if (mask & (1 << CLAR_FIELD_LOCALE_ID)) {
-    fprintf(cmd_f, " locale_id = %d", pe->locale_id);
+    fprintf(cmd_f, "%slocale_id = %d", sep, pe->locale_id);
     sep = sep1;
   }
   if (mask & (1 << CLAR_FIELD_IN_REPLY_TO)) {
-    fprintf(cmd_f, " in_reply_to = %d", pe->in_reply_to);
+    fprintf(cmd_f, "%sin_reply_to = %d", sep, pe->in_reply_to);
     sep = sep1;
   }
   if (mask & (1 << CLAR_FIELD_RUN_ID)) {
-    fprintf(cmd_f, " run_id = %d", pe->run_id);
+    fprintf(cmd_f, "%srun_id = %d", sep, pe->run_id);
     sep = sep1;
   }
   if (mask & (1 << CLAR_FIELD_CHARSET)) {
+    fprintf(cmd_f, "%s", sep);
     mi->write_escaped_string(md, cmd_f, sep, pe->charset);
     sep = sep1;
   }
   if (mask & (1 << CLAR_FIELD_SUBJECT)) {
+    fprintf(cmd_f, "%s", sep);
     mi->write_escaped_string(md, cmd_f, sep, pe->subj);
     sep = sep1;
   }
