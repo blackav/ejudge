@@ -1468,7 +1468,24 @@ int
 task_ErrorCode(tTask *tsk, int *p_exit_code, int *p_error)
 {
   return 0;
-  NOT_IMPLEMENTED();
+}
+
+int
+task_Kill(tTask *tsk)
+{
+  return 0;
+}
+
+int
+task_TryProcessGroup(tTask *tsk)
+{
+  return 0;
+}
+
+int
+task_KillProcessGroup(tTask *tsk)
+{
+  return 0;
 }
 
 static envvar_table_t *
