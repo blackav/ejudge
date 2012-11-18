@@ -2459,6 +2459,21 @@ task_Kill(tTask *tsk)
   return 0;
 }
 
+int
+task_TryProcessGroup(tTask *tsk)
+{
+  task_init_module();
+  return kill(-tsk->pid, 0);
+}
+
+int
+task_KillProcessGroup(tTask *tsk)
+{
+  task_init_module();
+  kill(-tsk->pid, SIGKILL);
+  return 0;
+}
+
 /**
  * NAME:    task_GetPid
  * PURPOSE: get the pid of the process
