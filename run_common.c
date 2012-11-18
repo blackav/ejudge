@@ -2276,15 +2276,12 @@ run_one_test(
 
   if (tsk_int) task_Wait(tsk_int);
 
-  if (srpp->enable_process_group > 0) {
-    int pid = task_GetPid(tsk);
-    if (kill(-pid, 0) >= 0) {
-      // there exist some processes beloging to the process group
-      append_msg_to_log(check_out_path,
-                        "There exist processes belonging to the process group of the program being tested\n");
-      pg_not_empty = 1;
-      kill(-pid, SIGKILL);
-    }
+  if (srpp->enable_process_group > 0 && task_TryProcessGroup(tsk) >= 0) {
+    // there exist some processes beloging to the process group
+    append_msg_to_log(check_out_path,
+                      "There exist processes belonging to the process group of the program being tested\n");
+    pg_not_empty = 1;
+    task_KillProcessGroup(tsk);
   }
 
 
