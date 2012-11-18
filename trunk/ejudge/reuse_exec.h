@@ -108,6 +108,8 @@ int      task_Start(tpTask);
 tpTask   task_Wait(tpTask);
 tpTask   task_NewWait(tpTask);
 int      task_Kill(tpTask);
+int      task_TryProcessGroup(tpTask);
+int      task_KillProcessGroup(tpTask);
 int      task_Status(tpTask);
 int      task_TermSignal(tpTask);
 int      task_ExitCode(tpTask);
