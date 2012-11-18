@@ -917,6 +917,8 @@ generate_makefile(struct sid_state *ss,
     prepare_set_prob_value(CNTSPROB_use_stdout, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_combined_stdin, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_combined_stdout, tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_input_file, tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_output_file, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_scoring_checker, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_manual_checking, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_examinator_num, tmp_prob, abstr, global);
