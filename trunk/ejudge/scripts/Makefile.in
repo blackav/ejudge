@@ -112,6 +112,8 @@ SCRIPTS_IN = \
  vbnc-version.in\
  make.in\
  make-version.in\
+ make-vg.in\
+ make-vg-version.in\
  ghc.in\
  ghc-version.in\
  clang.in\

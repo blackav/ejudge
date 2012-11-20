@@ -12,7 +12,7 @@ LANG_CONFIG_DIR="@lang_config_dir@"
 common_config() {
   echo 'long_name="Make"'
   echo 'src_sfx=".tar"'
-  echo 'arch="linux-shared"'
+  echo 'arch="valgrind"'
 }
 
 failure() {
@@ -59,7 +59,7 @@ then
   exit 0
 fi
 
-[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/make.cfg"
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/make-vg.cfg"
 
 if [ -f "${EJUDGE_LANG_CONFIG}" ]
 then
