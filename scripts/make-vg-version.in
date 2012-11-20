@@ -10,7 +10,7 @@
 LANG_CONFIG_DIR="@lang_config_dir@"
 
 common_config() {
-  echo 'long_name="Make"'
+  echo 'long_name="Make (valgrind)"'
   echo 'src_sfx=".tar"'
   echo 'arch="valgrind"'
 }
@@ -55,7 +55,7 @@ fi
 
 if [ x"$1" = x-l ]
 then
-  echo "Make"
+  echo "Make (valgrind)"
   exit 0
 fi
 
@@ -80,7 +80,7 @@ then
     exit 0
 fi
 
-[ x"$1" = x-f ] && echo -n "Make "
+[ x"$1" = x-f ] && echo -n "Make (valgrind) "
 
 make --version | grep Make | gawk '{print $3}'
 
