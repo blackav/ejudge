@@ -1348,15 +1348,15 @@ make_make_report(
     }
     snprintf(fp, sizeof(fp), "%s/%s", td, dd->d_name);
     if (lstat(fp, &stb) < 0) {
-      error("entry %s does not exist", td);
+      error("entry %s does not exist", fp);
       goto fail;
     }
     if (!S_ISREG(stb.st_mode)) {
-      error("directory %s is not a directory", td);
+      error("entry %s is not a regular file", fp);
       goto fail;
     }
     if (access(td, R_OK | W_OK) < 0) {
-      error("directory %s has invalid permissions", td);
+      error("entry %s has invalid permissions", fp);
       goto fail;
     }
     if (read_text_file(fp, dd->d_name, &txt, &len) >= 0) {
