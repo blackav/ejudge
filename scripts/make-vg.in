@@ -1,0 +1,127 @@
+#!/bin/sh
+# $Id$
+# Copyright (c) 2012 Alexander Chernov <cher@ejudge.ru>
+
+# Environment variables:
+#  EJ_MAKE_COMMAND
+#  EJ_MAKE_ARGS
+#  EJ_PROGRAM_DIR
+#  EJ_PROGRAM_NAME
+
+srcfile="$1"
+dstfile="$2"
+
+LANG_CONFIG_DIR="@lang_config_dir@"
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/make-vg.cfg"
+
+if [ -f "${EJUDGE_LANG_CONFIG}" ]
+then
+  . "${EJUDGE_LANG_CONFIG}"
+else
+  version="generic"
+  MAKERUN="make"
+fi
+
+[ x"${EJ_MAKE_COMMAND}" != x ] || EJ_MAKE_COMMAND="make"
+[ x"${EJ_PROGRAM_DIR}" != x ] || EJ_PROGRAM_DIR="solution"
+[ x"${EJ_PROGRAM_NAME}" != x ] || EJ_PROGRAM_NAME="solution"
+
+# 1. detect the type of the archive
+#  7z:  "7-zip archive data"
+#  tar: "POSIX tar archive (GNU)"
+#  bz2: "bzip2 compressed data"
+#  gz:  "gzip compressed data"
+if [ ! -f "${srcfile}" ]
+then
+  echo "No source file ${srcfile}" 1>&2
+  exit 1
+fi
+
+t=`file "${srcfile}"`
+case "$t" in
+    *7-zip\ archive\ data*)
+        cmd="7z x";;
+    *POSIX\ tar\ archive*)
+        cmd="tar xf";;
+    *bzip2\ compressed\ data*)
+        cmd="tar xfj";;
+    *gzip\ compressed\ data*)
+        cmd="tar xfz";;
+    *)
+        echo "Unsupported file type ${t}" 1>&2
+        exit 1;;
+esac
+if [ x"${cmd}" = x ]
+then
+    echo "Unsupported file type ${t}" 1>&2
+    exit 1
+fi
+
+# 2. unpack the archive
+${cmd} "${srcfile}"
+if [ $? != 0 ]
+then
+    echo "Failed to uncompress the archive" 1>&2
+    exit 1
+fi
+if [ ! -d "${EJ_PROGRAM_DIR}" ]
+then
+    echo "The archive does not contain directory ${EJ_PROGRAM_DIR}" 1>&2
+    exit 1
+fi
+
+# 3. execute
+curdir=`pwd`
+if [ x"${curdir}" = x ]
+then
+    echo "Invalid current directory" 1>&2
+    exit 1
+fi
+
+if ! cd "${EJ_PROGRAM_DIR}"
+then
+    echo "Failed to change the current directory to ${EJ_PROGRAM_DIR}" 1>&2
+    exit 1
+fi
+
+if [ "${EJ_MAKE_CFLAGS}" != "" -a "${EJ_MAKE_CXXFLAGS}" != "" ]
+then
+    ${EJ_MAKE_COMMAND} CFLAGS="${EJ_MAKE_CFLAGS}" CXXFLAGS="${EJ_MAKE_CXXFLAGS}"
+elif [ "${EJ_MAKE_CXXFLAGS}" != "" ]
+then
+    ${EJ_MAKE_COMMAND} CXXFLAGS="${EJ_MAKE_CXXFLAGS}"
+elif [ "${EJ_MAKE_CFLAGS}" != "" ]
+then
+    ${EJ_MAKE_COMMAND} CFLAGS="${EJ_MAKE_CFLAGS}"
+else
+    ${EJ_MAKE_COMMAND}
+fi
+
+if [ $? != 0 ]
+then
+    echo "Build failed" 1>&2
+    exit 1
+fi
+
+if [ ! -x "${EJ_PROGRAM_NAME}" ]
+then
+    echo "The executable file is not created or non-executable" 1>&2
+    exit 1
+fi
+
+# 4. copy the result
+cd "${curdir}"
+if [ $? != 0 ]
+then
+    echo "Invalid current directory" 1>&2
+    exit 1
+fi
+
+mv "${EJ_PROGRAM_DIR}"/"${EJ_PROGRAM_NAME}" "${dstfile}"
+if [ $? != 0 ]
+then
+    echo "Failed to move the executable file" 1>&2
+    exit 1
+fi
+
+exit 0
