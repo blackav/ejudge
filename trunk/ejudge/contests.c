@@ -596,11 +596,13 @@ handle_final_tag(char const *path, struct xml_tree *t, unsigned char **ps)
         path, t->line, t->column, contests_elem_map[t->tag]);
     return -1;
   }
+  /*
   if (!t->text || !*t->text) {
     err("%s:%d:%d: empty element <%s>", path, t->line, t->column,
         contests_elem_map[t->tag]);
     return -1;
   }
+  */
   if (t->first_down) {
     err("%s:%d:%d: element <%s> cannot contain nested elements",
         path, t->line, t->column, contests_elem_map[t->tag]);
