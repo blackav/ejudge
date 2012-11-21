@@ -94,7 +94,7 @@ rm -f "${EJ_PROGRAM_NAME}"
 ${EJ_MAKE_COMMAND} clean
 if [ $? != 0 ]
 then
-    echo "Makefile does not have 'clean' rule" 1>&2
+    echo "Makefile does not have 'clean' rule or it failed" 1>&2
     exit 1
 fi
 
