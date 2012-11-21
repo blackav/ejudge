@@ -1,6 +1,6 @@
 #!/bin/sh
 # $Id$
-# Copyright (c) 2011 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2012 Alexander Chernov <cher@ejudge.ru>
 
 # Environment variables:
 #  EJ_MAKE_COMMAND
@@ -81,6 +81,20 @@ fi
 if ! cd "${EJ_PROGRAM_DIR}"
 then
     echo "Failed to change the current directory to ${EJ_PROGRAM_DIR}" 1>&2
+    exit 1
+fi
+
+# touch all files to quell "Modification time in future" warning
+touch *
+
+# remove the expected executable file (just in case)
+rm -f "${EJ_PROGRAM_NAME}"
+
+# remove all working file
+${EJ_MAKE_COMMAND} clean
+if [ $? != 0 ]
+then
+    echo "Makefile does not have 'clean' rule" 1>&2
     exit 1
 fi
 
