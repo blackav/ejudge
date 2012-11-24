@@ -1,3 +1,8 @@
+2012-11-20 (r7182) Alexander Chernov  <cher@ejudge.ru>
+
+	* make-vg-version.in, Makefile.in, make-version.in, make-vg.in, lang_ids.cfg:
+	support for make-valgrind language processor is added.
+
 2012-06-21 (r6904) Alexander Chernov  <cher@ejudge.ru>
 
 	* dcc-version.in: copyright notice is updated;

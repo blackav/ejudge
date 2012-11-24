@@ -1,3 +1,15 @@
+2012-09-25 (r7036) Alexander Chernov  <cher@ejudge.ru>
+
+	* cmp_sexpr.c, cmp_long_double_seq.c, cmp_int_seq.c, cmp_huge_int.c, cmp_unsigned_long_long.c, cmp_double.c, cmp_long_long.c, cmp_file.c, cmp_double_seq.c, cmp_unsigned_long_long_seq.c, cmp_unsigned_int.c, cmp_long_long_seq.c, cmp_file_nospace.c, cmp_long_double.c, cmp_int.c, cmp_yesno.c, cmp_unsigned_int_seq.c:
+	copyright notice is updated;
+	added support for 'EJ_REQUIRE_NL' environment variable
+	to check that the output file ends with '\n'.
+
+2012-09-16 (r7025) Alexander Chernov  <cher@ejudge.ru>
+
+	* checker_internal.h: copyright notice is updated;
+	new run status RUN_WALL_TIME_LIMIT_ERR is added.
+
 2012-08-07 (r6973) Alexander Chernov  <cher@ejudge.ru>
 
 	* style_archive.c:

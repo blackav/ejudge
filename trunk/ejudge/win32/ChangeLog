@@ -1,3 +1,24 @@
+2012-11-18 (r7179) Alexander Chernov  <cher@ejudge.ru>
+
+	* reuse_exec.c:
+	(task_Kill) new function;
+	(task_TryProcessGroup) new function;
+	(task_KillProcessGroup) new function.
+
+2012-11-04 (r7136) Alexander Chernov  <cher@ejudge.ru>
+
+	* files_win32.make:
+	obsolete files are removed.
+
+	* reuse_exec.c:
+	(task_Start) APPEND mode is supported for redirected files;
+	(task_IsRealTimeout) stub is added.
+
+2012-10-17 (r7054) Alexander Chernov  <cher@ejudge.ru>
+
+	* cpu.c: copyright notice is updated;
+	(cpu_get_performance_info) new function.
+
 2012-06-18 (r6893) Alexander Chernov  <cher@ejudge.ru>
 
 	* reuse_exec.c:

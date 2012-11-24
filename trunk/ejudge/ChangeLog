@@ -1,3 +1,495 @@
+2012-11-20 (r7184) Alexander Chernov  <cher@ejudge.ru>
+
+	* contests.c:
+	(handle_final_tag) empty elements are allowed.
+
+2012-11-18 (r7180) Alexander Chernov  <cher@ejudge.ru>
+
+	* reuse_exec.h:
+	(task_TryProcessGroup) new function prototype;
+	(task_KillProcessGroup) new function prototype.
+
+	* run_common.c:
+	(run_one_test) new functions from "reuse_exec.h" are used.
+
+2012-11-18 (r7176) Alexander Chernov  <cher@ejudge.ru>
+
+	* build_support.c, ej-import-contest.c, super_html_3.c:
+	(do_generate_makefile) 'input_file' and 'output_file' problem
+	configuration variables are handled.
+
+2012-11-15 (r7167) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.c:
+	(set_defaults) missing tester section is allowed.
+
+	* serve_2.c:
+	(serve_run_request) missing tester section is handled correctly.
+
+	* super_run_packet.c:
+	(super_run_in_packet_free_tester) new function.
+
+2012-11-15 (r7166) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_run_packet.h:
+	(super_run_in_packet_free_tester) new function prototype.
+
+2012-11-15 (r7164) Alexander Chernov  <cher@ejudge.ru>
+
+	* ej-import-contest.c:
+	support for 'enable_process_group' and 'start_env' problem
+	configuration variables is added.
+
+	* prepare.c, prepare_out.c:
+	'start_env' problem configuration variable is added.
+
+	* run_common.c:
+	'start_env' problem configuration variable is handled.
+
+	* serve-control.c, super_html_3.c, super_html_4.c, super-serve.c, super_proto.c:
+	editing of 'start_env' problem configuration variable is supported.
+
+	* serve_2.c:
+	(serve_run_request) 'start_env' problem configuration variable is
+	passed to the tester.
+
+2012-11-15 (r7163) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_problem_data) 'start_env' field is added.
+
+	* problem_config.h:
+	(struct problem_config_section) 'start_env' field is added.
+
+	* super_proto.h:
+	editing of 'start_env' problem configuration variable is supported.
+
+	* super_run_packet.h:
+	(struct super_run_in_problem_packet) 'start_env' field is added.
+
+2012-11-14 (r7161) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.c, prepare_out.c:
+	'enable_process_group' problem configuration variable is added.
+
+	* run_common.c:
+	(run_one_test) 'enable_process_group' is handled.
+
+	* serve-control.c, super_html_3.c, super_html_4.c, super_proto.c, super-serve.c:
+	editing of 'enable_process_group' problem configuration variable
+	is supported.
+
+	* serve_2.c:
+	'enable_process_group' is passed to the tester.
+
+	* super_run_packet.c:
+	'enable_process_group' is supported.
+
+2012-11-14 (r7160) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_problem_data) 'enable_process_group' field is added.
+
+	* problem_config.h:
+	(struct problem_config_section) 'enable_process_group' field is added.
+
+	* super_proto.h:
+	editing of 'enable_process_group' parameter is supported.
+
+	* super_run_packet.h:
+	(struct super_run_in_problem_packet) 'enable_process_group' is added.
+
+2012-11-14 (r7159) Alexander Chernov  <cher@ejudge.ru>
+
+	* run_common.c:
+	(run_tests) 0 tests is ok situation for OLYMPIAD contests in
+	accepting mode with tests_to_accept == 0.
+
+2012-11-11 (r7157) Alexander Chernov  <cher@ejudge.ru>
+
+	* execute.c:
+	some support for --tgzdir-pattern option is implemented.
+
+2012-11-09 (r7154) Alexander Chernov  <cher@ejudge.ru>
+
+	* serve_2.c:
+	'ignore_prev_ac' works for OLYMPIAD contests.
+
+2012-11-07 (r7150) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html_2.c:
+	(ns_write_priv_all_runs) bug in form generation for virtual
+	start/stop entry removal is fixed.
+
+2012-11-06 (r7147) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server.h:
+	action 'NEW_SRV_ACTION_PRIV_SET_RUN_STYLE_ERR' renamed to
+	  'NEW_SRV_ACTION_PRIV_SET_RUN_REJECTED'.
+
+	* runlog.h:
+	'RUN_REJECTED' status is added.
+
+	* filter_scan.lex, html.c, master_html.c, new_server_html.c, new_server_html_2.c, new_server_html_4.c, reports.c, runlog.c, runlog_static.c, serve_2.c:
+	RUN_REJECTED status is handled.
+
+	* new_server_tables.c: copyright notice is updated;
+	action 'NEW_SRV_ACTION_PRIV_SET_RUN_STYLE_ERR' renamed to
+	  'NEW_SRV_ACTION_PRIV_SET_RUN_REJECTED'.
+
+2012-11-05 (r7145) Alexander Chernov  <cher@ejudge.ru>
+
+	* ej-super-run.c:
+	LC_CTYPE is set to C in all testing configurations.
+
+2012-11-04 (r7143) Alexander Chernov  <cher@ejudge.ru>
+
+	* configure.ac:
+	mysql linking options are really needed.
+
+2012-11-04 (r7141) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_run_packet.c:
+	(super_run_in_problem_packet_set_default) 'min_tests_to_accept'
+	  should not be set to 0 by default.
+
+2012-11-04 (r7137) Alexander Chernov  <cher@ejudge.ru>
+
+	* nwrun_packet.h:
+	(nwrun_in_packet_print) new function prototype.
+
+	* filter_tree.c:
+	missing <regex.h> is handled (based on CONF_HAS_REGEX).
+
+	* nwrun.c: copyright notice is updated;
+	bugfixes.
+
+	* nwrun_packet.c:
+	(nwrun_in_packet_print) new function.
+
+2012-11-04 (r7130) Alexander Chernov  <cher@ejudge.ru>
+
+	* run_common.c:
+	(invoke_nwrun) 'check_dir' parameter is added;
+	cases for invalid or missing 'tst' pointer are properly handled.
+
+	* testing_report_xml.c:
+	"tests-passed" attribute is allowed in ACM mode.
+
+2012-11-04 (r7126) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.win32.in: copyright notice is updated;
+	-mno-cygwin is removed.
+
+	* config.h.in:
+	CONF_HAS_REGEX is added.
+
+	* configure.ac:
+	check for <regex.h> is added.
+
+2012-11-03 (r7123) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare_dflt.h: copyright notice is updated;
+	'DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT' is added with value 10.
+
+	* serve_state.h:
+	(serve_rejudge_problem) 'priority_adjustment' parameter is added;
+	(serve_judge_suspended) 'priority_adjustment' parameter is added;
+	(serve_rejudge_all) 'priority_adjustment' parameter is added;
+	(serve_judge_virtual_olympiad) the same.
+
+	* new_server_html.c, new_server_html_4.c:
+	"prepare_dflt.h" is included;
+	calls to 'serve_judge_suspended', 'serve_rejudge_run',
+	'serve_rejudge_problem' are updated.
+
+	* new_server_html_2.c:
+	calls to 'serve_judge_suspended', 'serve_rejudge_run',
+	'serve_rejudge_problem' are updated.
+
+	* serve_2.c:
+	(serve_rejudge_problem) 'priority_adjustment' parameter is added;
+	(serve_judge_suspended) 'priority_adjustment' parameter is added;
+	(serve_rejudge_all) 'priority_adjustment' parameter is added;
+	(serve_judge_virtual_olympiad) the same.
+
+	* serve_state.c:
+	(serve_state_destroy) call to 'serve_judge_suspended' is updated.
+
+2012-11-01 (r7117) Alexander Chernov  <cher@ejudge.ru>
+
+	* runlog.h:
+	(struct run_entry) type of 'passed_mode' is changed to signed char.
+
+	* html.c, master_html.c, new_server_html.c, new_server_html_2.c, new_server_html_4.c, reports.c:
+	'passed_mode' field of 'run_entry' is properly handled.
+
+	* rldb_plugin_file.c, runlog_xml.c:
+	handling of 'passed_mode' field is improved.
+
+2012-11-01 (r7114) Alexander Chernov  <cher@ejudge.ru>
+
+	* rldb_plugin.h: copyright notice is updated;
+	(run_change_status) 'new_passed_mode' parameter is added;
+	(run_change_status_2) the same;
+	(run_change_status_3) the same.
+
+	* runlog.h:
+	(run_change_status) 'newpassedmode' parameter is added;
+	(run_change_status_2) the same;
+	(run_change_status_3) the same.
+
+	* run_packet.h:
+	(struct run_reply_packet) field 'tests_passed' is added.
+
+	* run_packet_priv.h:
+	(struct run_reply_bin_packet) field 'tests_passed' is added.
+
+	* new_server_html.c:
+	(priv_submit_run_comment) call of 'run_change_status_3' is updated.
+
+	* rldb_plugin_file.c:
+	(change_status_func) 'new_passed_mode' parameter is added;
+	(change_status_2_func) 'new_passed_mode' parameter is added;
+	(change_status_3_func) 'new_passed_mode' parameter is added.
+
+	* run_common.c:
+	(generate_xml_report) 'tests-passed' attribute is always generated;
+	(check_output_only) 'tests_passed' field is filled up;
+	(run_tests) 'tests_passed' field is filled up.
+
+	* runlog.c:
+	(run_change_status) 'newpassedmode' parameter is added;
+	(run_change_status_2) the same;
+	(run_change_status_3) the same.
+
+	* run_packet_4.c: copyright notice is updated;
+	(run_reply_packet_read) 'tests_passed' field is processed.
+
+	* run_packet_5.c: copyright notice is updated;
+	(run_reply_packet_write) 'tests_passed' field is processed;
+	(run_reply_packet_dump) the same.
+
+	* serve_2.c:
+	calls of 'run_change_status*' are updated.
+
+2012-11-01 (r7111) Alexander Chernov  <cher@ejudge.ru>
+
+	* rldb_plugin_file.c, runlog.c, runlog_xml.c:
+	handling of new field 'passed_mode' is added.
+
+2012-11-01 (r7109) Alexander Chernov  <cher@ejudge.ru>
+
+	* runlog.h:
+	(struct run_entry) 'test' field size reduced to 2;
+	  new field 'is_passed' is added.
+
+2012-11-01 (r7107) Alexander Chernov  <cher@ejudge.ru>
+
+	* html.c:
+	(write_html_run_status) test printing is improved.
+
+2012-10-31 (r7105) Alexander Chernov  <cher@ejudge.ru>
+
+	* configure.ac:
+	--disable-rpath is supported for mysql options detection.
+
+2012-10-27 (r7098) Alexander Chernov  <cher@ejudge.ru>
+
+	* userlist-server.c:
+	password recovery rules are relaxed.
+
+2012-10-25 (r7090) Alexander Chernov  <cher@ejudge.ru>
+
+	* lang_config_vis.h: copyright notice is updated;
+	(lang_configure_screen) 'compile_home_dir' parameter is added;
+	(lang_configure_batch) 'compile_home_dir' parameter is added;
+	(lang_config_menu) 'compile_home_dir' parameter is added.
+
+	* lang_config_vis.c:
+	the scheme of assigning language ids is reworked and improved;
+	(struct lang_id_info) field 'fixed' is added;
+	(append_lang_id_info) new function;
+	(add_to_lang_id_set) new function;
+	(process_compile_cfg) new function;
+	(process_lang_id_file) new function;
+	(parse_lang_id_file) reworked to parse the current 'compile.cfg'
+	file and extract language ids from it;
+	(assign_lang_ids) reworked to minimize conflicts.
+	(reconfigure_all_languages) 'compile_home_dir' parameter is added;
+	(lang_configure_screen) 'compile_home_dir' parameter is added;
+	(lang_configure_batch) 'compile_home_dir' parameter is added;
+	(lang_config_menu) 'compile_home_dir' parameter is added.
+
+	* ejudge-configure-compilers.c:
+	(visual_setup) calls of 'lang_configure_screen', 'lang_config_menu'
+	are updated;
+	(main) call of 'lang_configure_batch' is updated.
+
+	* ejudge-setup.c:
+	(do_preview_menu) call of 'lang_configure_screen' is updated;
+	(preview_install_script) the same;
+	(save_install_script) the same;
+	(do_main_menu) call of 'lang_config_menu' is updated.
+
+2012-10-24 (r7088) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server.h:
+	(struct http_request_info) 'plain_text' field is added.
+
+	* new_server_html.c:
+	(priv_generic_operation) 'plain_text' mode is supported;
+	(ns_handle_http_request) 'plain_text' request parameter is handled.
+
+2012-10-24 (r7086) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_problem_data) 'test_score_list' type is changed
+	  from char[256] to char*.
+
+	* prepare.c, prepare_out.c, run.c, super_html_3.c, super_html_4.c:
+	'test_score_list' type is changed from char[256] to char*.
+
+2012-10-23 (r7082) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_html_6.c:
+	(super_serve_op_IMPORT_FROM_POLYGON_PAGE) language priority selection
+	dialog is added;
+	(super_serve_op_IMPORT_FROM_POLYGON_ACTION) language priority selection
+	is handled.
+
+2012-10-23 (r7080) Alexander Chernov  <cher@ejudge.ru>
+
+	* ej-polygon.c:
+	(process_polygon_zip) 'language_priority' packet parameter is handled.
+
+2012-10-23 (r7079) Alexander Chernov  <cher@ejudge.ru>
+
+	* polygon_packet.h:
+	(struct polygon_packet) field 'language_priority' is added.
+
+2012-10-22 (r7077) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_proto.h:
+	editing of 'printout_uses_login' global configuration variable
+	is supported.
+
+	* prepare.c, prepare_out.c:
+	'printout_uses_login' global configuration variable is supported.
+
+	* printing.c:
+	(do_print_run) 'printout_uses_login' is honored.
+
+	* run_common.c:
+	(is_piped_core_dump) new function;
+	(run_tests) warning is issued, if core dumping is setup to use
+	a helper program.
+
+	* serve-control.c, super_html_3.c, super_html_4.c, super_proto.c, super-serve.c:
+	editing of 'printout_uses_login' global configuration variable
+	is supported.
+
+2012-10-22 (r7076) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_global_data) field 'printout_uses_login' is added.
+
+2012-10-21 (r7072) Alexander Chernov  <cher@ejudge.ru>
+
+	* printing.c:
+	contestant name and location are escaped properly
+	before using them as path components.
+
+2012-10-20 (r7070) Alexander Chernov  <cher@ejudge.ru>
+
+	* reuse_exec.h:
+	(task_IsRealTimeout) new function prototype.
+
+	* run_common.c:
+	(run_one_test) 'RUN_WALL_TIME_LIMIT_ERR' error code is supported.
+
+2012-10-19 (r7067) Alexander Chernov  <cher@ejudge.ru>
+
+	* serve_2.c:
+	problem configuration variable 'super_run_dir' is supported.
+
+2012-10-19 (r7065) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.c, prepare_out.c:
+	support for 'super_run_dir' problem configuration variable is added.
+
+2012-10-18 (r7062) Alexander Chernov  <cher@ejudge.ru>
+
+	* ej-polygon.c:
+	a couple of bugs is fixed.
+
+2012-10-18 (r7061) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_problem_data) 'super_run_dir' field is added.
+
+2012-10-18 (r7059) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_html.h:
+	(super_load_cs_languages) 'cs_conf_file_buf',
+	  'cs_conf_file_len' parameters are added.
+
+	* super_html_3.c:
+	(super_html_edit_languages) call to 'super_load_cs_languages'
+	  is updated.
+
+	* super_html_4.c:
+	(write_languages_page) call to 'super_load_cs_languages' is updated.
+
+	* super_html_8.c:
+	(super_html_read_serve) call to 'super_load_cs_languages' is updated;
+	  error reporting is improved;
+	(super_load_cs_languages) 'cs_conf_file_buf', 'cs_conf_file_len'
+	  parameters are added.
+
+2012-10-18 (r7057) Alexander Chernov  <cher@ejudge.ru>
+
+	* ej-super-run.c:
+	added support for variable "super-run" prefix in the program's
+	working paths;
+	added '-a' option to allow specifying alternate location
+	of the log file;
+	added '-p' option to allow specifying alternate prefix to the
+	working paths.
+
+2012-10-17 (r7055) Alexander Chernov  <cher@ejudge.ru>
+
+	* cpu.h: copyright notice is updated;
+	(cpu_get_performance_info) function prototype is added.
+
+	* testing_report_xml.h:
+	(struct testing_report_xml) fields 'cpu_model', 'cpu_mhz' are added.
+
+	* master_html.c:
+	'cpu_model' and 'cpu_mhz' are reported to judges.
+
+	* run_common.c, run_inverse.c:
+	"cpu.h" is included;
+	'cpu_model' and 'cpu_mhz' are saved to testing report.
+
+	* testing_report_xml.c:
+	elements <cpu_model> and <cpu_mhz> are supported.
+
+2012-10-12 (r7049) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_html_2.c: creation of contests with no problems
+	is enabled.
+
+2012-10-12 (r7048) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_html_6.c:
+	problem id assignment during Polygon import is improved.
+
+2012-09-16 (r7027) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html_4.c, filter_eval.c, reports.c, filter_scan.lex, execute.c, new_server_html.c, html.c, filter_tree.c, serve_2.c, runlog.h, run_common.c, runlog_static.c, ej-batch.c, master_html.c, clean-users.c, new_server_html_2.c:
+	new run statuses RUN_WALL_TIME_LIMIT_ERR, RUN_PENDING_REVIEW are added.
+
 2012-08-31 (r7016) Alexander Chernov  <cher@ejudge.ru>
 
 	* super_html_3.c:

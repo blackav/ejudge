@@ -1,3 +1,24 @@
+2012-11-18 (r7178) Alexander Chernov  <cher@ejudge.ru>
+
+	* reuse_exec.c:
+	(task_TryProcessGroup) new function;
+	(task_KillProcessGroup) new function.
+
+2012-10-20 (r7069) Alexander Chernov  <cher@ejudge.ru>
+
+	* reuse_exec.c:
+	(struct tTask) field 'was_real_timeout' is added;
+	(task_Wait) 'was_real_timeout' field is used;
+	(task_NewWait) 'was_real_timeout' field is used;
+	(task_IsTimeout) 'was_real_timeout' field is used;
+	(task_IsRealTimeout) new function.
+
+2012-10-17 (r7053) Alexander Chernov  <cher@ejudge.ru>
+
+	* cpu.c: copyright noticei is updated;
+	"reuse_xalloc.h" is included;
+	(cpu_get_performance_info) new function.
+
 2012-08-13 (r6983) Alexander Chernov  <cher@ejudge.ru>
 
 	* startstop.c:

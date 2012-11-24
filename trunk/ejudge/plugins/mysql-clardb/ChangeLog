@@ -1,3 +1,8 @@
+2012-11-17 (r7174) Alexander Chernov  <cher@ejudge.ru>
+
+	* cldb_mysql.c:
+	bug in SQL query is fixed.
+
 2012-05-01 (r6781) Alexander Chernov  <cher@ejudge.ru>
 
 	* cldb_mysql.c: copyright notice is updated;

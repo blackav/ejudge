@@ -1,3 +1,31 @@
+2012-11-03 (r7124) Alexander Chernov  <cher@ejudge.ru>
+
+	* rldb_mysql.c:
+	(set_runlog_func) non-empty runlog case is handled.
+
+2012-11-01 (r7116) Alexander Chernov  <cher@ejudge.ru>
+
+	* rldb_mysql.c:
+	'passed_mode' field handling is improved.
+
+2012-11-01 (r7113) Alexander Chernov  <cher@ejudge.ru>
+
+	* methods.inc.c: copyright notice is updated;
+	(change_status_func) 'new_passed_mode' parameter is added;
+	(change_status_2_func) the same;
+	(change_status_3_func) the same.
+
+	* rldb_plugin.c:
+	(change_status_func) 'new_passed_mode' parameter is added;
+	(change_status_2_func) the same;
+	(change_status_3_func) the same.
+
+2012-11-01 (r7110) Alexander Chernov  <cher@ejudge.ru>
+
+	* rldb_mysql.c, tables.inc.c:
+	run_version is boosted to 4;
+	handling of new column 'run_version' is added.
+
 2012-06-28 (r6920) Alexander Chernov  <cher@ejudge.ru>
 
 	* tables.inc.c: copyright notice is updated;
