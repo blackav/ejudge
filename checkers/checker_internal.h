@@ -68,7 +68,7 @@ enum
   RUN_STYLE_ERR        = 14,
   RUN_WALL_TIME_LIMIT_ERR = 15,
 
-  RUN_MAX_STATUS       = 16,
+  RUN_MAX_STATUS       = 17,
 };
 
 /* S-expression types */
