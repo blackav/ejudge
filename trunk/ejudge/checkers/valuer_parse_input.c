@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -36,7 +36,7 @@ valuer_parse_input(
   for (i = 0; i < test_count; ++i) {
     if (scanf("%d%d%d", &v1, &v2, &v3) != 3)
       fatal_CF("Cannot read test description %d", i + 1);
-    if (v1 < 0 || v1 > 14)
+    if (v1 < 0 || v1 >= RUN_MAX_STATUS)
       fatal_CF("Invalid result %d in description %d", v1, i + 1);
     if (v2 < 0 || v2 > 999999)
       fatal_CF("Invalid score %d in description %d", v2, i + 1);
