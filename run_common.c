@@ -757,7 +757,6 @@ invoke_valuer(
   tpTask tsk = 0;
   char *err_txt = 0, *cmt_txt = 0, *jcmt_txt = 0;
   size_t err_len = 0, cmt_len = 0, jcmt_len = 0;
-  unsigned char strbuf[1024];
 
   const struct super_run_in_global_packet *srgp = srp->global;
   const struct super_run_in_problem_packet *srpp = srp->problem;
@@ -816,9 +815,12 @@ invoke_valuer(
   }
   setup_environment(tsk, srpp->valuer_env, NULL, 1);
   if (srgp->separate_user_score > 0) {
-    snprintf(strbuf, sizeof(strbuf), "EJUDGE_USER_SCORE=1");
-    task_PutEnv(tsk, strbuf);
+    task_SetEnv(tsk, "EJUDGE_USER_SCORE", "1");
   }
+  if (srpp->valuer_sets_marked > 0) {
+    task_SetEnv(tsk, "EJUDGE_MARKED", "1");
+  }
+  task_SetEnv(tsk, "EJUDGE", "1");
   task_EnableAllSignals(tsk);
 
   task_PrintArgs(tsk);
@@ -1511,6 +1513,7 @@ invoke_interactor(
   task_SetPathAsArg0(tsk_int);
   task_SetWorkingDir(tsk_int, working_dir);
   setup_environment(tsk_int, interactor_env, NULL, 1);
+  task_SetEnv(tsk_int, "EJUDGE", "1");
   task_SetRedir(tsk_int, 0, TSR_DUP, stdin_fd);
   task_SetRedir(tsk_int, 1, TSR_DUP, stdout_fd);
   task_SetRedir(tsk_int, 2, TSR_FILE, check_out_path, TSK_APPEND, TSK_FULL_RW);
@@ -1654,6 +1657,10 @@ invoke_checker(
     task_SetMaxRealTimeMillis(tsk, srpp->checker_real_time_limit_ms);
   }
   setup_environment(tsk, srpp->checker_env, NULL, 1);
+  if (srpp->scoring_checker > 0) {
+    task_SetEnv(tsk, "EJUDGE_SCORING_CHECKER", "1");
+  }
+  task_SetEnv(tsk, "EJUDGE", "1");
   task_EnableAllSignals(tsk);
 
   task_PrintArgs(tsk);
