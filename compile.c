@@ -29,7 +29,7 @@
 #include "errlog.h"
 #include "parsecfg.h"
 #include "fileutl.h"
-#include "cr_serialize.h"
+//#include "cr_serialize.h"
 #include "interrupt.h"
 #include "runlog.h"
 #include "compile_packet.h"
@@ -242,7 +242,7 @@ do_loop(void)
   struct section_language_data *lang = 0;
   const struct section_global_data *global = serve_state.global;
 
-  if (cr_serialize_init(&serve_state) < 0) return -1;
+  // if (cr_serialize_init(&serve_state) < 0) return -1;
   interrupt_init();
   interrupt_disable();
 
@@ -479,33 +479,25 @@ do_loop(void)
         }
         task_EnableAllSignals(tsk);
         
-
+        /*
         if (cr_serialize_lock(&serve_state) < 0) {
           // FIXME: propose reasonable recovery?
           return -1;
         }
+        */
 
         task_PrintArgs(tsk);
-
         task_Start(tsk);
         task_Wait(tsk);
+
+        /*
         if (cr_serialize_unlock(&serve_state) < 0) {
           // FIXME: propose reasonable recovery?
           return -1;
         }
-
-        /*
-          if (task_IsTimeout(tsk)) {
-          err("Compilation process timed out");
-          snprintf(msgbuf, sizeof(msgbuf), "compilation process timed out\n");
-          goto report_internal_error;
-          }
         */
 
         if (task_IsTimeout(tsk)) {
-          /* FIXME: this does not work in case of gcc/g++, since the
-           * time is consumed by the children of gcc/g++ compiler driver...
-           */
           err("Compilation process timed out");
           tail_message = "\n\nCompilation process timed out";
           ce_flag = 1;

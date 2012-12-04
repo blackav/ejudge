@@ -20,7 +20,7 @@
 
 #include "prepare.h"
 #include "runlog.h"
-#include "cr_serialize.h"
+//#include "cr_serialize.h"
 #include "testinfo.h"
 #include "interrupt.h"
 #include "run_packet.h"
@@ -139,7 +139,7 @@ do_loop(void)
 
   memset(&tn, 0, sizeof(tn));
 
-  if (cr_serialize_init(&serve_state) < 0) return -1;
+  //if (cr_serialize_init(&serve_state) < 0) return -1;
   interrupt_init();
   interrupt_disable();
 
@@ -264,12 +264,12 @@ do_loop(void)
     full_report_path[0] = 0;
 
     if (srpp->type_val == PROB_TYPE_TESTS) {
-      cr_serialize_lock(&serve_state);
+      //cr_serialize_lock(&serve_state);
       run_inverse_testing(&serve_state, srp, &reply_pkt,
                           pkt_name, global->run_exe_dir,
                           report_path, sizeof(report_path),
                           utf8_mode);
-      cr_serialize_unlock(&serve_state);
+      //cr_serialize_unlock(&serve_state);
     } else {
       arch = srgp->arch;
       if (!arch) arch = "";
@@ -346,7 +346,7 @@ do_loop(void)
       reply_pkt.ts4_us = srgp->ts4_us;
       get_current_time(&reply_pkt.ts5, &reply_pkt.ts5_us);
 
-      if (cr_serialize_lock(&serve_state) < 0) return -1;
+      //if (cr_serialize_lock(&serve_state) < 0) return -1;
       run_tests(ejudge_config, &serve_state, tst, srp, &reply_pkt,
                 srgp->accepting_mode,
                 srpp->accept_partial, srgp->variant,
@@ -354,7 +354,7 @@ do_loop(void)
                 report_path, full_report_path,
                 srgp->user_spelling,
                 srpp->spelling, utf8_mode);
-      if (cr_serialize_unlock(&serve_state) < 0) return -1;
+      //if (cr_serialize_unlock(&serve_state) < 0) return -1;
 
       if (tst == &tn) {
         sarray_free(tst->start_env); tst->start_env = 0;
