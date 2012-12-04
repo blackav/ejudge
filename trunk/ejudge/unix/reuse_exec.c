@@ -2185,13 +2185,14 @@ task_NewWait(tTask *tsk)
     }
 
     struct process_info info;
+    long long cur_utime = 0;
     if (parse_proc_pid_stat(tsk->pid, &info) >= 0) {
       if (info.vsize > 0 && info.vsize > used_vm_size) {
         used_vm_size = info.vsize;
         //fprintf(stderr, "VMSize: %lu\n", used_vm_size);
       }
       if (max_time_ms > 0) {
-        long long cur_utime = info.utime + info.stime;
+        cur_utime = info.utime + info.stime;
         cur_utime = (cur_utime * 1000) / info.clock_ticks;
         //fprintf(stderr, "CPUTime: %lld\n", cur_utime);
         if (cur_utime >= max_time_ms) {
@@ -2207,12 +2208,22 @@ task_NewWait(tTask *tsk)
       }
     } else {
       fprintf(stderr, "Failed to parse /proc/PID/stat\n");
+      cur_utime = 1000; // not to poll too often
     }
 
     // wait 0.1 s
     struct timespec wt;
     wt.tv_sec = 0;
-    wt.tv_nsec = 100000000;
+    if (cur_utime >= 500) {
+      // if running time >= 0.5 s poll each 0.1 s
+      wt.tv_nsec = 100000000;
+    } else if (cur_utime >= 10) {
+      // if running time >= 0.01 s poll each 0.01 s
+      wt.tv_nsec = 10000000;
+    } else {
+      // poll each 0.002 s
+      wt.tv_nsec = 2000000;
+    }
     sigtimedwait(&bs, 0, &wt);
   }
 
