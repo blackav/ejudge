@@ -2409,7 +2409,7 @@ dur_to_str(unsigned char *buf, size_t size, int sec1, int usec1,
     snprintf(buf, size, "N/A");
     return buf;
   }
-  if ((d = sec2 * 1000000 + usec2 - (sec1 * 1000000 + usec1)) < 0) {
+  if ((d = sec2 * 1000000LL + usec2 - (sec1 * 1000000LL + usec1)) < 0) {
     snprintf(buf, size, "t1 > t2");
     return buf;
   }
