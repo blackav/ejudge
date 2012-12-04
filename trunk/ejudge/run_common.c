@@ -31,7 +31,7 @@
 #include "full_archive.h"
 #include "win32_compat.h"
 #include "ejudge_cfg.h"
-#include "cr_serialize.h"
+//#include "cr_serialize.h"
 #include "interrupt.h"
 #include "nwrun_packet.h"
 #include "filehash.h"
@@ -1198,11 +1198,11 @@ invoke_nwrun(
       goto fail;
     }
 
-    cr_serialize_unlock(state);
+    //cr_serialize_unlock(state);
     interrupt_enable();
     os_Sleep(100);
     interrupt_disable();
-    cr_serialize_lock(state);
+    //cr_serialize_lock(state);
 
     // more appropriate interval?
     wait_time += 100;

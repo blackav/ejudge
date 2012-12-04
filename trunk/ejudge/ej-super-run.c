@@ -24,7 +24,7 @@
 #include "fileutl.h"
 #include "errlog.h"
 #include "prepare.h"
-#include "cr_serialize.h"
+//#include "cr_serialize.h"
 #include "interrupt.h"
 #include "super_run_packet.h"
 #include "run_packet.h"
@@ -231,12 +231,12 @@ handle_packet(
   full_report_path[0] = 0;
 
   if (srpp->type_val == PROB_TYPE_TESTS) {
-    cr_serialize_lock(state);
+    //cr_serialize_lock(state);
     run_inverse_testing(state, srp, &reply_pkt,
                         pkt_name, super_run_exe_path,
                         report_path, sizeof(report_path),
                         utf8_mode);
-    cr_serialize_unlock(state);
+    //cr_serialize_unlock(state);
   } else {
     if (!srpp->type_val) {
       tst = find_abstract_tester(state, arch);
@@ -277,7 +277,7 @@ handle_packet(
     reply_pkt.ts4_us = srgp->ts4_us;
     get_current_time(&reply_pkt.ts5, &reply_pkt.ts5_us);
 
-    if (cr_serialize_lock(state) < 0) return -1;
+    //if (cr_serialize_lock(state) < 0) return -1;
     run_tests(ejudge_config, state, tst, srp, &reply_pkt,
               srgp->accepting_mode,
               srpp->accept_partial, srgp->variant,
@@ -285,7 +285,7 @@ handle_packet(
               report_path, full_report_path,
               srgp->user_spelling,
               srpp->spelling, utf8_mode);
-    if (cr_serialize_unlock(state) < 0) return -1;
+    //if (cr_serialize_unlock(state) < 0) return -1;
   }
 
   if (srgp->reply_report_dir && srgp->reply_report_dir[0]) {
@@ -377,12 +377,14 @@ do_loop(
 
   if (global->sleep_time <= 0) global->sleep_time = 1000;
 
+  /*
   if (state->global->cr_serialization_key > 0) {
     if (cr_serialize_init(state) < 0) {
       err("cr_serialize_init() failed");
       return -1;
     }
   }
+  */
   interrupt_init();
   interrupt_disable();
 
