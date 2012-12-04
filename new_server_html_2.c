@@ -6129,6 +6129,9 @@ static int get_accepting_passed_tests(
   const unsigned char *start_ptr = 0;
   int r, i, t;
 
+  // problem is deleted?
+  if (!prob) return 0;
+
   switch (re->status) {
   case RUN_OK:
   case RUN_ACCEPTED:
