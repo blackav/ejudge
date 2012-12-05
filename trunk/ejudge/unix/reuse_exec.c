@@ -1900,6 +1900,8 @@ task_Start(tTask *tsk)
   tTask *
 task_Wait(tTask *tsk)
 {
+  return task_NewWait(tsk);
+
   pid_t pid;
   int   stat, n;
   struct rusage usage;
