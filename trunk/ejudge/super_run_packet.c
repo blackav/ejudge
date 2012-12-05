@@ -111,6 +111,9 @@ super_run_in_problem_packet_init(struct generic_section_config *gp)
 
   p->check_presentation = -1;
   p->scoring_checker = -1;
+  p->interactive_valuer = -1;
+  p->disable_pe = -1;
+  p->disable_wtl = -1;
   p->use_stdin = -1;
   p->use_stdout = -1;
   p->combined_stdin = -1;
@@ -150,6 +153,9 @@ super_run_in_problem_packet_set_default(struct generic_section_config *gp)
 
   if (p->check_presentation < 0) p->check_presentation = 0;
   if (p->scoring_checker < 0) p->scoring_checker = 0;
+  if (p->interactive_valuer < 0) p->interactive_valuer = 0;
+  if (p->disable_pe < 0) p->disable_pe = 0;
+  if (p->disable_wtl < 0) p->disable_wtl = 0;
   if (p->use_stdin < 0) p->use_stdin = 0;
   if (p->use_stdout < 0) p->use_stdout = 0;
   if (p->combined_stdin < 0) p->combined_stdin = 0;

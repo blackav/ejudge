@@ -1390,10 +1390,13 @@ static const struct cnts_edit_info cnts_problem_info[] =
   { NS_PROBLEM, CNTSPROB_standard_checker, 142, 1, 0, 0, 0, 0, "Standard checker", 0, 0 },
   { NS_PROBLEM, CNTSPROB_lang_compiler_env, 'X', 1, 1, 1, 1, SSERV_OP_EDIT_SERVE_PROB_FIELD_DETAIL_PAGE, "Compiler environment", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_check_cmd, 'S', 1, 1, 1, 1, 0, "Checker", 0, 0 /*"Problem.standard_checker"*/ },
+  { NS_PROBLEM, CNTSPROB_disable_pe, 'Y', 1, 0, 0, 0, 0, "Treat PE as WA", 0, 0 },
+  { NS_PROBLEM, CNTSPROB_disable_wtl, 'Y', 1, 0, 0, 0, 0, "Treat WTL as TL", 0, 0 },
   { NS_PROBLEM, CNTSPROB_checker_env, 'X', 1, 1, 1, 1, SSERV_OP_EDIT_SERVE_PROB_FIELD_DETAIL_PAGE, "Checker environment", 0, 0 },
   { NS_PROBLEM, CNTSPROB_scoring_checker, 'Y', 1, 0, 0, 0, 0, "Checker calculates score", 0, 0 },
   { NS_PROBLEM, CNTSPROB_valuer_cmd, 'S', 1, 1, 1, 1, 0, "Valuer", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_valuer_sets_marked, 'Y', 1, 0, 0, 0, 0, "Valuer sets _marked_ flag", 0, "SidState.prob_show_adv" },
+  { NS_PROBLEM, CNTSPROB_interactive_valuer, 'Y', 1, 0, 0, 0, 0, "Valuer works interactively", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_valuer_env, 'X', 1, 1, 1, 1, SSERV_OP_EDIT_SERVE_PROB_FIELD_DETAIL_PAGE, "Valuer environment", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_interactor_cmd, 'S', 1, 1, 1, 1, 0, "Interactor", 0, "SidState.prob_show_adv"  },
   { NS_PROBLEM, CNTSPROB_interactor_env, 'X', 1, 1, 1, 1, SSERV_OP_EDIT_SERVE_PROB_FIELD_DETAIL_PAGE, "Interactor environment", 0, "SidState.prob_show_adv" },
@@ -5956,6 +5959,9 @@ cmd_op_set_sid_state_prob_field(
 static const unsigned char prob_reloadable_set[CNTSPROB_LAST_FIELD] =
 {
   [CNTSPROB_scoring_checker] = 0,
+  [CNTSPROB_interactive_valuer] = 0,
+  [CNTSPROB_disable_pe] = 0,
+  [CNTSPROB_disable_wtl] = 0,
   [CNTSPROB_manual_checking] = 1,  
   [CNTSPROB_examinator_num] = 0,
   [CNTSPROB_check_presentation] = 1,

@@ -345,6 +345,9 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(tester_id, "d"),
   PROBLEM_PARAM(abstract, "d"),
   PROBLEM_PARAM(scoring_checker, "d"),  
+  PROBLEM_PARAM(interactive_valuer, "d"),  
+  PROBLEM_PARAM(disable_pe, "d"),  
+  PROBLEM_PARAM(disable_wtl, "d"),  
   PROBLEM_PARAM(manual_checking, "d"),  
   PROBLEM_PARAM(examinator_num, "d"),  
   PROBLEM_PARAM(check_presentation, "d"),  
@@ -877,6 +880,9 @@ prepare_problem_init_func(struct generic_section_config *gp)
 
   p->type = -1;
   p->scoring_checker = -1;
+  p->interactive_valuer = -1;
+  p->disable_pe = -1;
+  p->disable_wtl = -1;
   p->manual_checking = -1;
   p->check_presentation = -1;
   p->use_stdin = -1;
@@ -3411,6 +3417,9 @@ set_defaults(
     prepare_set_prob_value(CNTSPROB_stand_ignore_score, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_stand_last_column, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_scoring_checker, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_interactive_valuer, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_disable_pe, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_disable_wtl, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_manual_checking, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_examinator_num, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_check_presentation, prob, aprob, g);
@@ -5097,7 +5106,10 @@ prepare_set_abstr_problem_defaults(struct section_problem_data *prob,
 
   if (prob->type < 0) prob->type = 0;
   if (prob->scoring_checker < 0) prob->scoring_checker = 0;
-  if (prob->scoring_checker < 0) prob->manual_checking = 0;
+  if (prob->interactive_valuer < 0) prob->interactive_valuer = 0;
+  if (prob->disable_pe < 0) prob->disable_pe = 0;
+  if (prob->disable_wtl < 0) prob->disable_wtl = 0;
+  if (prob->manual_checking < 0) prob->manual_checking = 0;
   if (prob->examinator_num < 0) prob->examinator_num = 0;
   if (prob->check_presentation < 0) prob->check_presentation = 0;
   if (prob->use_stdin < 0) prob->use_stdin = 0;
@@ -5598,6 +5610,24 @@ prepare_set_prob_value(
     if (out->scoring_checker == -1 && abstr)
       out->scoring_checker = abstr->scoring_checker;
     if (out->scoring_checker == -1) out->scoring_checker = 0;
+    break;
+
+  case CNTSPROB_interactive_valuer:
+    if (out->interactive_valuer == -1 && abstr)
+      out->interactive_valuer = abstr->interactive_valuer;
+    if (out->interactive_valuer == -1) out->interactive_valuer = 0;
+    break;
+
+  case CNTSPROB_disable_pe:
+    if (out->disable_pe == -1 && abstr)
+      out->disable_pe = abstr->disable_pe;
+    if (out->disable_pe == -1) out->disable_pe = 0;
+    break;
+
+  case CNTSPROB_disable_wtl:
+    if (out->disable_wtl == -1 && abstr)
+      out->disable_wtl = abstr->disable_wtl;
+    if (out->disable_wtl == -1) out->disable_wtl = 0;
     break;
 
   case CNTSPROB_manual_checking:
@@ -6418,7 +6448,8 @@ static const int prob_settable_list[] =
   CNTSPROB_super, CNTSPROB_short_name, CNTSPROB_long_name,
   CNTSPROB_group_name, CNTSPROB_stand_name, CNTSPROB_stand_column,
   CNTSPROB_internal_name, 
-  CNTSPROB_scoring_checker, CNTSPROB_manual_checking, CNTSPROB_examinator_num,
+  CNTSPROB_scoring_checker, CNTSPROB_interactive_valuer, CNTSPROB_disable_pe, CNTSPROB_disable_wtl,
+  CNTSPROB_manual_checking, CNTSPROB_examinator_num,
   CNTSPROB_check_presentation, CNTSPROB_use_stdin, CNTSPROB_use_stdout,
   CNTSPROB_combined_stdin, CNTSPROB_combined_stdout,
   CNTSPROB_binary_input, CNTSPROB_binary, CNTSPROB_ignore_exit_code,
@@ -6480,6 +6511,9 @@ static const unsigned char prob_settable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_tester_id] = 1,
   [CNTSPROB_abstract] = 1,
   [CNTSPROB_scoring_checker] = 1,  
+  [CNTSPROB_interactive_valuer] = 1,  
+  [CNTSPROB_disable_pe] = 1,  
+  [CNTSPROB_disable_wtl] = 1,  
   [CNTSPROB_manual_checking] = 1,  
   [CNTSPROB_examinator_num] = 1,  
   [CNTSPROB_check_presentation] = 1,  
@@ -6623,7 +6657,8 @@ static const unsigned char prob_settable_set[CNTSPROB_LAST_FIELD] =
 
 static const int prob_inheritable_list[] =
 {
-  CNTSPROB_scoring_checker, CNTSPROB_manual_checking,  
+  CNTSPROB_scoring_checker, CNTSPROB_interactive_valuer, CNTSPROB_disable_pe, CNTSPROB_disable_wtl,
+  CNTSPROB_manual_checking,  
   CNTSPROB_examinator_num, CNTSPROB_check_presentation,
   CNTSPROB_use_stdin, CNTSPROB_use_stdout,
   CNTSPROB_combined_stdin, CNTSPROB_combined_stdout,
@@ -6684,6 +6719,9 @@ static const int prob_inheritable_list[] =
 static const unsigned char prob_inheritable_set[CNTSPROB_LAST_FIELD] =
 {
   [CNTSPROB_scoring_checker] = 1,
+  [CNTSPROB_interactive_valuer] = 1,
+  [CNTSPROB_disable_pe] = 1,
+  [CNTSPROB_disable_wtl] = 1,
   [CNTSPROB_manual_checking] = 1,  
   [CNTSPROB_examinator_num] = 1,
   [CNTSPROB_check_presentation] = 1,
@@ -6828,6 +6866,9 @@ static const struct section_problem_data prob_undef_values =
   .examinator_num = -1,
   .check_presentation = -1,
   .scoring_checker = -1,
+  .interactive_valuer = -1,
+  .disable_pe = -1,
+  .disable_wtl = -1,
   .use_stdin = -1,
   .use_stdout = -1,
   .combined_stdin = -1,
@@ -6973,6 +7014,9 @@ static const struct section_problem_data prob_default_values =
   .examinator_num = 0,
   .check_presentation = 0,
   .scoring_checker = 0,
+  .interactive_valuer = 0,
+  .disable_pe = 0,
+  .disable_wtl = 0,
   .use_stdin = 0,
   .use_stdout = 0,
   .combined_stdin = 0,

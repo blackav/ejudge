@@ -994,6 +994,15 @@ prepare_unparse_prob(
   if ((prob->abstract && prob->scoring_checker == 1)
       || (!prob->abstract && prob->scoring_checker >= 0))
     unparse_bool(f, "scoring_checker", prob->scoring_checker);
+  if ((prob->abstract && prob->interactive_valuer == 1)
+      || (!prob->abstract && prob->interactive_valuer >= 0))
+    unparse_bool(f, "interactive_valuer", prob->interactive_valuer);
+  if ((prob->abstract && prob->disable_pe == 1)
+      || (!prob->abstract && prob->disable_pe >= 0))
+    unparse_bool(f, "disable_pe", prob->disable_pe);
+  if ((prob->abstract && prob->disable_wtl == 1)
+      || (!prob->abstract && prob->disable_wtl >= 0))
+    unparse_bool(f, "disable_wtl", prob->disable_wtl);
   if ((prob->abstract && prob->manual_checking == 1)
       || (!prob->abstract && prob->manual_checking >= 0))
     unparse_bool(f, "manual_checking", prob->manual_checking);
@@ -1396,6 +1405,12 @@ prepare_unparse_actual_prob(
 
   if (prob->scoring_checker > 0)
     unparse_bool(f, "scoring_checker", prob->scoring_checker);
+  if (prob->interactive_valuer > 0)
+    unparse_bool(f, "interactive_valuer", prob->interactive_valuer);
+  if (prob->disable_pe > 0)
+    unparse_bool(f, "disable_pe", prob->disable_pe);
+  if (prob->disable_wtl > 0)
+    unparse_bool(f, "disable_wtl", prob->disable_wtl);
   if (prob->manual_checking > 0)
     unparse_bool(f, "manual_checking", prob->manual_checking);
   if (prob->examinator_num > 0)
@@ -2307,6 +2322,9 @@ prepare_unparse_testers(
     tmp_prob = prepare_copy_problem(probs[i]);
     prepare_set_prob_value(CNTSPROB_type, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_scoring_checker, tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_interactive_valuer, tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_disable_pe, tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_disable_wtl, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_manual_checking, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_examinator_num, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_check_presentation,tmp_prob, abstr, global);
