@@ -301,6 +301,29 @@ scan_dir(char const *partial_path, char *found_item, size_t fi_size)
   return 0;
 }
 
+int
+get_file_list(const char *partial_path, strarray_t *files)
+{
+  path_t         dir_path;
+  DIR           *d = NULL;
+  struct dirent *de;
+
+  snprintf(dir_path, sizeof(dir_path), "%s/dir", partial_path);
+  files->u = 0;
+
+  if (!(d = opendir(dir_path))) {
+    return -1;
+  }
+  while ((de = readdir(d))) {
+    if (!strcmp(de->d_name, ".") || !strcmp(de->d_name, "..")) continue;
+    xexpand(files);
+    files->v[files->u++] = xstrdup(de->d_name);
+  }
+  closedir(d); d = NULL;
+
+  return 0;
+}
+
 static int
 do_write_file(char const *buf, size_t sz, char const *dst, int flags)
 {
