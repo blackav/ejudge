@@ -2461,15 +2461,17 @@ run_one_test(
 
   if (tsk_int) {
     int exitcode = task_ExitCode(tsk_int);
+    if (exitcode == 1) exitcode = RUN_WRONG_ANSWER_ERR;
+    if (exitcode == 2) exitcode = RUN_PRESENTATION_ERR;
     if (!exitcode) {
     } else if (exitcode == RUN_PRESENTATION_ERR || exitcode == RUN_WRONG_ANSWER_ERR) {
       if (exitcode == RUN_PRESENTATION_ERR && srpp->disable_pe > 0) {
         exitcode = RUN_WRONG_ANSWER_ERR;
       }
       status = exitcode;
-      goto cleanup;
+      goto read_checker_output;
     } else {
-      abort();
+      goto check_failed;
     }
 
     task_Delete(tsk_int); tsk_int = NULL;
