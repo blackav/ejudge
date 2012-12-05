@@ -41,6 +41,8 @@
 #define ferror_unlocked(x) ferror(x)
 #endif
 
+static int name_sort_func(const void *p1, const void *p2);
+
 void
 get_uniq_prefix(char *prefix)
 {
@@ -320,6 +322,10 @@ get_file_list(const char *partial_path, strarray_t *files)
     files->v[files->u++] = xstrdup(de->d_name);
   }
   closedir(d); d = NULL;
+
+  if (files->u > 0) {
+    qsort(files->v, files->u, sizeof(files->v[0]), name_sort_func);
+  }
 
   return 0;
 }
