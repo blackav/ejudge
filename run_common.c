@@ -1420,7 +1420,8 @@ invoke_init_cmd(
         const unsigned char *working_dir,
         const unsigned char *check_out_path,
         char **init_env,
-        long real_time_limit_ms)
+        long real_time_limit_ms,
+        int disable_pe)
 {
   tpTask tsk = NULL;
   int status = 0;
@@ -1475,6 +1476,9 @@ invoke_init_cmd(
   int exitcode = task_ExitCode(tsk);
   if (exitcode == 1) exitcode = RUN_WRONG_ANSWER_ERR;
   if (exitcode == 2) exitcode = RUN_PRESENTATION_ERR;
+  if (exitcode == RUN_PRESENTATION_ERR && disable_pe > 0) {
+    exitcode = RUN_WRONG_ANSWER_ERR;
+  }
   if (exitcode != RUN_OK && exitcode != RUN_PRESENTATION_ERR
       && exitcode != RUN_WRONG_ANSWER_ERR && exitcode != RUN_CHECK_FAILED) {
     append_msg_to_log(check_out_path, "init_cmd exited with code %d", exitcode);
@@ -1692,6 +1696,9 @@ invoke_checker(
   int exitcode = task_ExitCode(tsk);
   if (exitcode == 1) exitcode = RUN_WRONG_ANSWER_ERR;
   if (exitcode == 2) exitcode = RUN_PRESENTATION_ERR;
+  if (exitcode == RUN_PRESENTATION_ERR && srpp->disable_pe > 0) {
+    exitcode = RUN_WRONG_ANSWER_ERR;
+  }
   if (exitcode != RUN_OK && exitcode != RUN_PRESENTATION_ERR
       && exitcode != RUN_WRONG_ANSWER_ERR && exitcode != RUN_CHECK_FAILED) {
     append_msg_to_log(check_out_path, "checker exited with code %d", exitcode);
@@ -2014,7 +2021,7 @@ run_one_test(
 
   if (srpp->init_cmd && srpp->init_cmd[0]) {
     status = invoke_init_cmd(srpp->init_cmd, "start", test_src, corr_src, working_dir, check_out_path,
-                             srpp->init_env, srpp->checker_real_time_limit_ms);
+                             srpp->init_env, srpp->checker_real_time_limit_ms, srpp->disable_pe);
     if (status != 0) {
       append_msg_to_log(check_out_path, "init_cmd failed to start with code 0");
       status = RUN_CHECK_FAILED;
@@ -2385,6 +2392,9 @@ run_one_test(
     int exitcode = task_ExitCode(tsk_int);
     if (exitcode == 1) exitcode = RUN_WRONG_ANSWER_ERR;
     if (exitcode == 2) exitcode = RUN_PRESENTATION_ERR;
+    if (exitcode == RUN_PRESENTATION_ERR && srpp->disable_pe > 0) {
+      exitcode = RUN_WRONG_ANSWER_ERR;
+    }
     if (exitcode != RUN_OK && exitcode != RUN_PRESENTATION_ERR && exitcode != RUN_WRONG_ANSWER_ERR) {
       append_msg_to_log(check_out_path, "interactor exited with code %d", exitcode);
       goto check_failed;
@@ -2392,7 +2402,11 @@ run_one_test(
   }
 
   if (task_IsRealTimeout(tsk)) {
-    status = RUN_WALL_TIME_LIMIT_ERR;
+    if (srpp->disable_wtl > 0) {
+      status = RUN_TIME_LIMIT_ERR;
+    } else {
+      status = RUN_WALL_TIME_LIMIT_ERR;
+    }
     goto cleanup;
   }
   if (task_IsTimeout(tsk)) {
@@ -2449,6 +2463,9 @@ run_one_test(
     int exitcode = task_ExitCode(tsk_int);
     if (!exitcode) {
     } else if (exitcode == RUN_PRESENTATION_ERR || exitcode == RUN_WRONG_ANSWER_ERR) {
+      if (exitcode == RUN_PRESENTATION_ERR && srpp->disable_pe > 0) {
+        exitcode = RUN_WRONG_ANSWER_ERR;
+      }
       status = exitcode;
       goto cleanup;
     } else {
@@ -2462,7 +2479,11 @@ run_checker:;
 
   if (disable_stderr > 0 && cur_info->error_size > 0) {
     append_msg_to_log(check_out_path, "non-empty output to stderr");
-    status = RUN_PRESENTATION_ERR;
+    if (srpp->disable_pe > 0) {
+      status = RUN_WRONG_ANSWER_ERR;
+    } else {
+      status = RUN_PRESENTATION_ERR;
+    }
     goto read_checker_output;
   }
 
@@ -2500,7 +2521,7 @@ run_checker:;
 read_checker_output:;
   if (init_cmd_started) {
     int new_status = invoke_init_cmd(srpp->init_cmd, "stop", test_src, corr_src, working_dir, check_out_path,
-                                     srpp->init_env, srpp->checker_real_time_limit_ms);
+                                     srpp->init_env, srpp->checker_real_time_limit_ms, srpp->disable_pe);
     if (!status) status = new_status;
     init_cmd_started = 0;
   }
@@ -2520,7 +2541,7 @@ read_checker_output:;
 cleanup:;
   if (init_cmd_started) {
     int new_status = invoke_init_cmd(srpp->init_cmd, "stop", test_src, corr_src, working_dir, check_out_path,
-                                     srpp->init_env, srpp->checker_real_time_limit_ms);
+                                     srpp->init_env, srpp->checker_real_time_limit_ms, srpp->disable_pe);
     if (!status) status = new_status;
     init_cmd_started = 0;
   }
