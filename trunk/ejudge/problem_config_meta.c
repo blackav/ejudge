@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/11/15 17:14:09
+// Generated 2012/12/05 18:27:31
 
 #include "problem_config_meta.h"
 #include "problem_config.h"
@@ -16,6 +16,9 @@ static struct meta_info_item meta_info_problem_config_section_data[] =
   [META_PROBLEM_CONFIG_SECTION_manual_checking] = { META_PROBLEM_CONFIG_SECTION_manual_checking, 'B', XSIZE(struct problem_config_section, manual_checking), "manual_checking", XOFFSET(struct problem_config_section, manual_checking) },
   [META_PROBLEM_CONFIG_SECTION_check_presentation] = { META_PROBLEM_CONFIG_SECTION_check_presentation, 'B', XSIZE(struct problem_config_section, check_presentation), "check_presentation", XOFFSET(struct problem_config_section, check_presentation) },
   [META_PROBLEM_CONFIG_SECTION_scoring_checker] = { META_PROBLEM_CONFIG_SECTION_scoring_checker, 'B', XSIZE(struct problem_config_section, scoring_checker), "scoring_checker", XOFFSET(struct problem_config_section, scoring_checker) },
+  [META_PROBLEM_CONFIG_SECTION_interactive_valuer] = { META_PROBLEM_CONFIG_SECTION_interactive_valuer, 'B', XSIZE(struct problem_config_section, interactive_valuer), "interactive_valuer", XOFFSET(struct problem_config_section, interactive_valuer) },
+  [META_PROBLEM_CONFIG_SECTION_disable_pe] = { META_PROBLEM_CONFIG_SECTION_disable_pe, 'B', XSIZE(struct problem_config_section, disable_pe), "disable_pe", XOFFSET(struct problem_config_section, disable_pe) },
+  [META_PROBLEM_CONFIG_SECTION_disable_wtl] = { META_PROBLEM_CONFIG_SECTION_disable_wtl, 'B', XSIZE(struct problem_config_section, disable_wtl), "disable_wtl", XOFFSET(struct problem_config_section, disable_wtl) },
   [META_PROBLEM_CONFIG_SECTION_use_stdin] = { META_PROBLEM_CONFIG_SECTION_use_stdin, 'B', XSIZE(struct problem_config_section, use_stdin), "use_stdin", XOFFSET(struct problem_config_section, use_stdin) },
   [META_PROBLEM_CONFIG_SECTION_use_stdout] = { META_PROBLEM_CONFIG_SECTION_use_stdout, 'B', XSIZE(struct problem_config_section, use_stdout), "use_stdout", XOFFSET(struct problem_config_section, use_stdout) },
   [META_PROBLEM_CONFIG_SECTION_combined_stdin] = { META_PROBLEM_CONFIG_SECTION_combined_stdin, 'B', XSIZE(struct problem_config_section, combined_stdin), "combined_stdin", XOFFSET(struct problem_config_section, combined_stdin) },

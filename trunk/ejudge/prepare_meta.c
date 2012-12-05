@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/11/15 17:14:09
+// Generated 2012/12/05 18:27:31
 
 #include "prepare_meta.h"
 #include "prepare.h"
@@ -343,6 +343,9 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_examinator_num] = { CNTSPROB_examinator_num, 'i', XSIZE(struct section_problem_data, examinator_num), "examinator_num", XOFFSET(struct section_problem_data, examinator_num) },
   [CNTSPROB_check_presentation] = { CNTSPROB_check_presentation, 'B', XSIZE(struct section_problem_data, check_presentation), "check_presentation", XOFFSET(struct section_problem_data, check_presentation) },
   [CNTSPROB_scoring_checker] = { CNTSPROB_scoring_checker, 'B', XSIZE(struct section_problem_data, scoring_checker), "scoring_checker", XOFFSET(struct section_problem_data, scoring_checker) },
+  [CNTSPROB_interactive_valuer] = { CNTSPROB_interactive_valuer, 'B', XSIZE(struct section_problem_data, interactive_valuer), "interactive_valuer", XOFFSET(struct section_problem_data, interactive_valuer) },
+  [CNTSPROB_disable_pe] = { CNTSPROB_disable_pe, 'B', XSIZE(struct section_problem_data, disable_pe), "disable_pe", XOFFSET(struct section_problem_data, disable_pe) },
+  [CNTSPROB_disable_wtl] = { CNTSPROB_disable_wtl, 'B', XSIZE(struct section_problem_data, disable_wtl), "disable_wtl", XOFFSET(struct section_problem_data, disable_wtl) },
   [CNTSPROB_use_stdin] = { CNTSPROB_use_stdin, 'B', XSIZE(struct section_problem_data, use_stdin), "use_stdin", XOFFSET(struct section_problem_data, use_stdin) },
   [CNTSPROB_use_stdout] = { CNTSPROB_use_stdout, 'B', XSIZE(struct section_problem_data, use_stdout), "use_stdout", XOFFSET(struct section_problem_data, use_stdout) },
   [CNTSPROB_combined_stdin] = { CNTSPROB_combined_stdin, 'B', XSIZE(struct section_problem_data, combined_stdin), "combined_stdin", XOFFSET(struct section_problem_data, combined_stdin) },

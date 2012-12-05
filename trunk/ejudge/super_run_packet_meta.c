@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/11/15 21:44:07
+// Generated 2012/12/05 18:27:31
 
 #include "super_run_packet_meta.h"
 #include "super_run_packet.h"
@@ -114,6 +114,9 @@ static struct meta_info_item meta_info_super_run_in_problem_packet_data[] =
   [META_SUPER_RUN_IN_PROBLEM_PACKET_id] = { META_SUPER_RUN_IN_PROBLEM_PACKET_id, 'i', XSIZE(struct super_run_in_problem_packet, id), "id", XOFFSET(struct super_run_in_problem_packet, id) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_check_presentation] = { META_SUPER_RUN_IN_PROBLEM_PACKET_check_presentation, 'B', XSIZE(struct super_run_in_problem_packet, check_presentation), "check_presentation", XOFFSET(struct super_run_in_problem_packet, check_presentation) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_scoring_checker] = { META_SUPER_RUN_IN_PROBLEM_PACKET_scoring_checker, 'B', XSIZE(struct super_run_in_problem_packet, scoring_checker), "scoring_checker", XOFFSET(struct super_run_in_problem_packet, scoring_checker) },
+  [META_SUPER_RUN_IN_PROBLEM_PACKET_interactive_valuer] = { META_SUPER_RUN_IN_PROBLEM_PACKET_interactive_valuer, 'B', XSIZE(struct super_run_in_problem_packet, interactive_valuer), "interactive_valuer", XOFFSET(struct super_run_in_problem_packet, interactive_valuer) },
+  [META_SUPER_RUN_IN_PROBLEM_PACKET_disable_pe] = { META_SUPER_RUN_IN_PROBLEM_PACKET_disable_pe, 'B', XSIZE(struct super_run_in_problem_packet, disable_pe), "disable_pe", XOFFSET(struct super_run_in_problem_packet, disable_pe) },
+  [META_SUPER_RUN_IN_PROBLEM_PACKET_disable_wtl] = { META_SUPER_RUN_IN_PROBLEM_PACKET_disable_wtl, 'B', XSIZE(struct super_run_in_problem_packet, disable_wtl), "disable_wtl", XOFFSET(struct super_run_in_problem_packet, disable_wtl) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_use_stdin] = { META_SUPER_RUN_IN_PROBLEM_PACKET_use_stdin, 'B', XSIZE(struct super_run_in_problem_packet, use_stdin), "use_stdin", XOFFSET(struct super_run_in_problem_packet, use_stdin) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_use_stdout] = { META_SUPER_RUN_IN_PROBLEM_PACKET_use_stdout, 'B', XSIZE(struct super_run_in_problem_packet, use_stdout), "use_stdout", XOFFSET(struct super_run_in_problem_packet, use_stdout) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_combined_stdin] = { META_SUPER_RUN_IN_PROBLEM_PACKET_combined_stdin, 'B', XSIZE(struct super_run_in_problem_packet, combined_stdin), "combined_stdin", XOFFSET(struct super_run_in_problem_packet, combined_stdin) },

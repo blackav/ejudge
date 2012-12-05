@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/11/15 21:44:07
+// Generated 2012/12/05 18:27:31
 
 #ifndef __SUPER_RUN_PACKET_META_H__
 #define __SUPER_RUN_PACKET_META_H__
@@ -74,6 +74,9 @@ enum
   META_SUPER_RUN_IN_PROBLEM_PACKET_id,
   META_SUPER_RUN_IN_PROBLEM_PACKET_check_presentation,
   META_SUPER_RUN_IN_PROBLEM_PACKET_scoring_checker,
+  META_SUPER_RUN_IN_PROBLEM_PACKET_interactive_valuer,
+  META_SUPER_RUN_IN_PROBLEM_PACKET_disable_pe,
+  META_SUPER_RUN_IN_PROBLEM_PACKET_disable_wtl,
   META_SUPER_RUN_IN_PROBLEM_PACKET_use_stdin,
   META_SUPER_RUN_IN_PROBLEM_PACKET_use_stdout,
   META_SUPER_RUN_IN_PROBLEM_PACKET_combined_stdin,
