@@ -2239,9 +2239,11 @@ serve_read_compile_packet(
     goto success;
   }
 
+  /*
   if (run_change_status(state->runlog_state, comp_pkt->run_id, RUN_COMPILED,
                         0, 1, -1, comp_pkt->judge_id) < 0)
     goto non_fatal_error;
+  */
 
   /*
    * so far compilation is successful, and now we prepare a run packet
