@@ -88,6 +88,9 @@ struct super_run_in_problem_packet
   int id;
   ejintbool_t check_presentation;
   ejintbool_t scoring_checker;
+  ejintbool_t interactive_valuer;
+  ejintbool_t disable_pe;
+  ejintbool_t disable_wtl;
   ejintbool_t use_stdin;
   ejintbool_t use_stdout;
   ejintbool_t combined_stdin;

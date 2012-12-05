@@ -734,7 +734,7 @@ struct section_global_data
   +unsigned char *solution_cmd;
  */
 
-/* sizeof(struct section_problem_data) == 65348/65576 */
+/* sizeof(struct section_problem_data) == 65116/? */
 struct section_problem_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -754,6 +754,12 @@ struct section_problem_data
   ejintbool_t check_presentation;
   /** 1, if the checker calculates test score */
   ejintbool_t scoring_checker;
+  /** 1, if the valuer works in parallel with testing */
+  ejintbool_t interactive_valuer;
+  /** 1, if PEs are converted to WAs */
+  ejintbool_t disable_pe;
+  /** 1, if WTLs are converted to TLs */
+  ejintbool_t disable_wtl;
   /** 1, if solution uses stdin for input */
   ejintbool_t use_stdin;
   /** 1, if solution uses stdout for output */
