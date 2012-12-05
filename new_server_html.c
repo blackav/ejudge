@@ -406,8 +406,10 @@ ns_loop_callback(struct server_framework_state *state)
   struct contest_extra *e;
   serve_state_t cs;
   const struct contest_desc *cnts;
-  int contest_id, i, r, eind;
-  path_t packetname;
+  int contest_id, i, eind;
+  strarray_t files;
+
+  memset(&files, 0, sizeof(files));
 
   for (eind = 0; eind < extra_u; eind++) {
     e = extras[eind];
@@ -424,26 +426,32 @@ ns_loop_callback(struct server_framework_state *state)
     serve_update_internal_xml_log(e->serve_state, cnts);
 
     for (i = 0; i < cs->compile_dirs_u; i++) {
-      if ((r = scan_dir(cs->compile_dirs[i].status_dir,
-                        packetname, sizeof(packetname))) <= 0)
+      if (get_file_list(cs->compile_dirs[i].status_dir, &files) < 0)
         continue;
-      serve_read_compile_packet(ejudge_config, cs, cnts,
-                                cs->compile_dirs[i].status_dir,
-                                cs->compile_dirs[i].report_dir,
-                                packetname);
+      if (files.u <= 0) continue;
+      for (int j = 0; j < files.u; ++j) {
+        serve_read_compile_packet(ejudge_config, cs, cnts,
+                                  cs->compile_dirs[i].status_dir,
+                                  cs->compile_dirs[i].report_dir,
+                                  files.v[j]);
+      }
       e->last_access_time = cur_time;
+      xstrarrayfree(&files);
     }
 
     for (i = 0; i < cs->run_dirs_u; i++) {
-      if ((r = scan_dir(cs->run_dirs[i].status_dir,
-                        packetname, sizeof(packetname))) <= 0)
+      if (get_file_list(cs->run_dirs[i].status_dir, &files) < 0
+          || files.u <= 0)
         continue;
-      serve_read_run_packet(ejudge_config, cs, cnts,
-                            cs->run_dirs[i].status_dir,
-                            cs->run_dirs[i].report_dir,
-                            cs->run_dirs[i].full_report_dir,
-                            packetname);
+      for (int j = 0; j < files.u; ++j) {
+        serve_read_run_packet(ejudge_config, cs, cnts,
+                              cs->run_dirs[i].status_dir,
+                              cs->run_dirs[i].report_dir,
+                              cs->run_dirs[i].full_report_dir,
+                              files.v[j]);
+      }
       e->last_access_time = cur_time;
+      xstrarrayfree(&files);
     }
 
     if (cs->pending_xml_import && !serve_count_transient_runs(cs))
@@ -451,6 +459,7 @@ ns_loop_callback(struct server_framework_state *state)
   }
 
   ns_unload_expired_contests(cur_time);
+  xstrarrayfree(&files);
 }
 
 void
