@@ -1417,6 +1417,7 @@ invoke_init_cmd(
         const unsigned char *subcommand,
         const unsigned char *test_src_path,
         const unsigned char *corr_src_path,
+        const unsigned char *info_src_path,
         const unsigned char *working_dir,
         const unsigned char *check_out_path,
         char **init_env,
@@ -1436,6 +1437,9 @@ invoke_init_cmd(
   }
   if (corr_src_path && *corr_src_path) {
     task_AddArg(tsk, corr_src_path);
+  }
+  if (info_src_path && *info_src_path) {
+    task_AddArg(tsk, info_src_path);
   }
   task_SetPathAsArg0(tsk);
   if (working_dir && *working_dir) {
@@ -2020,7 +2024,8 @@ run_one_test(
   }
 
   if (srpp->init_cmd && srpp->init_cmd[0]) {
-    status = invoke_init_cmd(srpp->init_cmd, "start", test_src, corr_src, working_dir, check_out_path,
+    status = invoke_init_cmd(srpp->init_cmd, "start", test_src, corr_src,
+                             info_src, working_dir, check_out_path,
                              srpp->init_env, srpp->checker_real_time_limit_ms, srpp->disable_pe);
     if (status != 0) {
       append_msg_to_log(check_out_path, "init_cmd failed to start with code 0");
@@ -2522,7 +2527,8 @@ run_checker:;
   // read the checker output
 read_checker_output:;
   if (init_cmd_started) {
-    int new_status = invoke_init_cmd(srpp->init_cmd, "stop", test_src, corr_src, working_dir, check_out_path,
+    int new_status = invoke_init_cmd(srpp->init_cmd, "stop", test_src,
+                                     corr_src, info_src, working_dir, check_out_path,
                                      srpp->init_env, srpp->checker_real_time_limit_ms, srpp->disable_pe);
     if (!status) status = new_status;
     init_cmd_started = 0;
@@ -2542,7 +2548,7 @@ read_checker_output:;
 
 cleanup:;
   if (init_cmd_started) {
-    int new_status = invoke_init_cmd(srpp->init_cmd, "stop", test_src, corr_src, working_dir, check_out_path,
+    int new_status = invoke_init_cmd(srpp->init_cmd, "stop", test_src, corr_src,  info_src, working_dir, check_out_path,
                                      srpp->init_env, srpp->checker_real_time_limit_ms, srpp->disable_pe);
     if (!status) status = new_status;
     init_cmd_started = 0;
