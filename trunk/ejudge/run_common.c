@@ -820,6 +820,9 @@ invoke_valuer(
   if (srpp->valuer_sets_marked > 0) {
     task_SetEnv(tsk, "EJUDGE_MARKED", "1");
   }
+  if (srpp->interactive_valuer > 0) {
+    task_SetEnv(tsk, "EJUDGE_INTERACTIVE", "1");
+  }
   task_SetEnv(tsk, "EJUDGE", "1");
   task_EnableAllSignals(tsk);
 
@@ -911,6 +914,64 @@ invoke_valuer(
   unlink(score_jcmt);
   return retval;
 }
+
+#ifndef __WIN32__
+/*static*/ tpTask
+start_interactive_valuer(
+        const struct section_global_data *global,
+        const struct super_run_in_packet *srp,
+        const unsigned char *score_err_file,
+        const unsigned char *score_cmt_file,
+        const unsigned char *score_jcmt_file,
+        int stdin_fd,
+        int stdout_fd)
+{
+  const struct super_run_in_global_packet *srgp = srp->global;
+  const struct super_run_in_problem_packet *srpp = srp->problem;
+  path_t valuer_cmd;
+  tpTask tsk = NULL;
+
+  snprintf(valuer_cmd, sizeof(valuer_cmd), srpp->valuer_cmd);
+
+  info("starting interactive valuer: %s %s %s",
+       valuer_cmd, score_cmt_file, score_jcmt_file);
+
+  tsk = task_New();
+  task_AddArg(tsk, valuer_cmd);
+  task_AddArg(tsk, score_cmt_file);
+  task_AddArg(tsk, score_jcmt_file);
+  task_SetRedir(tsk, 0, TSR_DUP, stdin_fd);
+  task_SetRedir(tsk, 1, TSR_DUP, stdout_fd);
+  task_SetRedir(tsk, 2, TSR_FILE, score_err_file, TSK_REWRITE, TSK_FULL_RW);
+  task_SetWorkingDir(tsk, global->run_work_dir);
+  task_SetPathAsArg0(tsk);
+  if (srpp->checker_real_time_limit_ms > 0) {
+    task_SetMaxRealTimeMillis(tsk, srpp->checker_real_time_limit_ms);
+  }
+  setup_environment(tsk, srpp->valuer_env, NULL, 1);
+  if (srgp->separate_user_score > 0) {
+    task_SetEnv(tsk, "EJUDGE_USER_SCORE", "1");
+  }
+  if (srpp->valuer_sets_marked > 0) {
+    task_SetEnv(tsk, "EJUDGE_MARKED", "1");
+  }
+  if (srpp->interactive_valuer > 0) {
+    task_SetEnv(tsk, "EJUDGE_INTERACTIVE", "1");
+  }
+  task_SetEnv(tsk, "EJUDGE", "1");
+  task_EnableAllSignals(tsk);
+
+  task_PrintArgs(tsk);
+
+  if (task_Start(tsk) < 0) {
+    append_msg_to_log(score_err_file, "valuer failed to start");
+    task_Delete(tsk);
+    return NULL;
+  }
+
+  return tsk;
+}
+#endif
 
 static long
 get_expected_free_space(const unsigned char *path)
@@ -3046,6 +3107,12 @@ run_tests(
   unsigned char *cpu_model = NULL;
   unsigned char *cpu_mhz = NULL;
 
+  // ejudge->valuer pipe
+  int evfds[2] = { -1, -1 };
+  // valuer->ejudge pipe
+  int vefds[2] = { -1, -1 };
+  tpTask valuer_tsk = NULL;
+
   cpu_get_performance_info(&cpu_model, &cpu_mhz);
 
   init_testinfo_vector(&tests);
@@ -3150,6 +3217,33 @@ run_tests(
   /* calculate the expected free space in check_dir */
   expected_free_space = get_expected_free_space(check_dir);
 
+  if (srpp->interactive_valuer) {
+    /*
+    if (pipe(pfd1) < 0) {
+      append_msg_to_log(check_out_path, "pipe() failed: %s", os_ErrorMsg());
+      goto check_failed;
+    }
+    fcntl(pfd1[0], F_SETFD, FD_CLOEXEC);
+    fcntl(pfd1[1], F_SETFD, FD_CLOEXEC);
+    if (pipe(pfd2) < 0) {
+      append_msg_to_log(check_out_path, "pipe() failed: %s", os_ErrorMsg());
+      goto check_failed;
+    }
+    fcntl(pfd2[0], F_SETFD, FD_CLOEXEC);
+    fcntl(pfd2[1], F_SETFD, FD_CLOEXEC);
+    */
+    /*
+start_interactive_valuer(
+        const struct section_global_data *global,
+        const struct super_run_in_packet *srp,
+        const unsigned char *score_err_file,
+        const unsigned char *score_cmt_file,
+        const unsigned char *score_jcmt_file,
+        int stdin_fd,
+        int stdout_fd)
+    */
+  }
+
   while (1) {
     ++cur_test;
     if (srgp->scoring_system_val == SCORE_OLYMPIAD
@@ -3174,6 +3268,9 @@ run_tests(
       if (srgp->scoring_system_val == SCORE_OLYMPIAD
           && accept_testing && !accept_partial) break;
     }
+  }
+
+  if (valuer_tsk) {
   }
 
   /* TESTING COMPLETED */
@@ -3406,6 +3503,16 @@ done:;
                       cpu_model, cpu_mhz);
 
   get_current_time(&reply_pkt->ts7, &reply_pkt->ts7_us);
+
+  if (evfds[0] >= 0) close(evfds[0]);
+  if (evfds[1] >= 0) close(evfds[1]);
+  if (vefds[0] >= 0) close(vefds[0]);
+  if (vefds[1] >= 0) close(vefds[1]);
+  if (valuer_tsk) {
+    task_Kill(valuer_tsk);
+    task_Wait(valuer_tsk);
+    task_Delete(valuer_tsk);
+  }
 
   if (far) full_archive_close(far);
   free_testinfo_vector(&tests);
