@@ -2468,7 +2468,9 @@ task_Kill(tTask *tsk)
 {
   task_init_module();
   ASSERT(tsk);
-  kill(tsk->pid, tsk->termsig);
+  if (tsk->pid > 0) {
+    kill(tsk->pid, tsk->termsig);
+  }
   return 0;
 }
 
@@ -2483,7 +2485,9 @@ int
 task_KillProcessGroup(tTask *tsk)
 {
   task_init_module();
-  kill(-tsk->pid, SIGKILL);
+  if (tsk->pid > 0) {
+    kill(-tsk->pid, SIGKILL);
+  }
   return 0;
 }
 
