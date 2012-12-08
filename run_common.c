@@ -37,6 +37,7 @@
 #include "filehash.h"
 #include "curtime.h"
 #include "cpu.h"
+#include "ej_process.h"
 
 #include "reuse_xalloc.h"
 #include "reuse_osdeps.h"
@@ -531,6 +532,154 @@ fail:
 }
 
 static int
+parse_valuer_score(
+        const unsigned char *log_path,
+        const unsigned char *in_buf,
+        ssize_t in_buf_size,
+        int enable_reply_next, // enable -1 as score
+        int max_score,
+        int valuer_sets_marked,
+        int separate_user_score,
+        int *p_was_reply_next,
+        int *p_score,
+        int *p_marked,
+        int *p_user_status,
+        int *p_user_score,
+        int *p_user_tests_passed)
+{
+  if (p_marked) *p_marked = -1;
+
+  if (in_buf_size < 0 || in_buf_size > 1024) {
+    append_msg_to_log(log_path, "valuer reply too long (%lld)", (long long) in_buf_size);
+    goto fail;
+  }
+  unsigned char *buf = alloca(in_buf_size + 1);
+  memcpy(buf, in_buf, in_buf_size);
+  buf[in_buf_size] = 0;
+  int buflen = strlen(buf);
+  if (buflen != in_buf_size) {
+    append_msg_to_log(log_path, "valuer reply contains '\0' byte");
+    goto fail;
+  }
+  for (unsigned char *s = buf; *s; ++s) {
+    if (*s == '\n' || *s == '\r' || *s == '\r') *s = ' ';
+  }
+  for (unsigned char *s = buf; *s; ++s) {
+    if (*s < ' ' || *s == 0x7f) {
+      append_msg_to_log(log_path, "valuer reply contains control chars");
+      goto fail;
+    }
+  }
+  while (buflen > 0 && buf[buflen - 1] == ' ') --buflen;
+  buf[buflen] = 0;
+  if (buflen <= 0) {
+    append_msg_to_log(log_path, "valuer reply is empty");
+    goto fail;
+  }
+  int idx = 0, n, v_score = -2;
+  int lineno = 0;
+
+  if (sscanf(buf + idx, "%d%n", &v_score, &n) != 1) {
+    lineno = __LINE__;
+    goto invalid_reply;
+  }
+  idx += n;
+  if (buf[idx] != ' ' && buf[idx] != 0) {
+    lineno = __LINE__;
+    goto invalid_reply;
+  }
+  if (enable_reply_next > 0 && v_score == -1) {
+    if (buf[idx]) {
+      lineno = __LINE__;
+      goto invalid_reply;
+    }
+    if (p_was_reply_next) *p_was_reply_next = 1;
+    return 0;
+  }
+  if (v_score < 0 || v_score > max_score) {
+    lineno = __LINE__;
+    goto invalid_reply;
+  }
+  int v_marked = 0;
+  if (valuer_sets_marked > 0) {
+    if (sscanf(buf + idx, "%d%n", &v_marked, &n) != 1) {
+      lineno = __LINE__;
+      goto invalid_reply;
+    }
+    idx += n;
+    if (buf[idx] != ' ' && buf[idx] != 0) {
+      lineno = __LINE__;
+      goto invalid_reply;
+    }
+    if (v_marked < 0 || v_marked > 1) {
+      lineno = __LINE__;
+      goto invalid_reply;
+    }
+  }
+  int v_user_status = -1, v_user_score = -1, v_user_tests_passed = -1;
+  if (separate_user_score > 0) {
+    if (sscanf(buf + idx, "%d%n", &v_user_status, &n) != 1) {
+      lineno = __LINE__;
+      goto invalid_reply;
+    }
+    idx += n;
+    if (buf[idx] != ' ' && buf[idx] != 0) {
+      lineno = __LINE__;
+      goto invalid_reply;
+    }
+    if (v_user_status < -1 || v_user_status > RUN_MAX_STATUS) {
+      lineno = __LINE__;
+      goto invalid_reply;
+    }
+    if (sscanf(buf + idx, "%d%n", &v_user_score, &n) != 1) {
+      lineno = __LINE__;
+      goto invalid_reply;
+    }
+    idx += n;
+    if (buf[idx] != ' ' && buf[idx] != 0) {
+      lineno = __LINE__;
+      goto invalid_reply;
+    }
+    if (v_user_score < -1 || v_user_score > max_score) {
+      lineno = __LINE__;
+      goto invalid_reply;
+    }
+    if (sscanf(buf + idx, "%d%n", &v_user_tests_passed, &n) != 1) {
+      lineno = __LINE__;
+      goto invalid_reply;
+    }
+    idx += n;
+    if (buf[idx] != ' ' && buf[idx] != 0) {
+      lineno = __LINE__;
+      goto invalid_reply;
+    }
+    if (v_user_tests_passed < -1 || v_user_tests_passed > EJ_MAX_TEST_NUM) {
+      lineno = __LINE__;
+      goto invalid_reply;
+    }
+  }
+  if (buf[idx]) {
+    lineno = __LINE__;
+    goto invalid_reply;
+  }
+
+  if (p_was_reply_next) *p_was_reply_next = 0;
+  if (p_score) *p_score = v_score;
+  if (p_marked) *p_marked = v_marked;
+  if (p_user_status) *p_user_status = v_user_status;
+  if (p_user_score) *p_user_score = v_user_score;
+  if (p_user_tests_passed) *p_user_tests_passed = v_user_tests_passed;
+  return 0;
+
+invalid_reply:
+  append_msg_to_log(log_path, "valuer reply '%s' is invalid (code %d)", buf,
+                    lineno);
+
+fail:
+  return -1;
+}
+
+static int
 read_valuer_score(
         const unsigned char *path,
         const unsigned char *log_path,
@@ -544,9 +693,9 @@ read_valuer_score(
         int *p_user_score,
         int *p_user_tests_passed)
 {
-  char *score_buf = 0, *p;
+  char *score_buf = 0;
   size_t score_buf_size = 0;
-  int x, y, n, r, user_status = -1, user_score = -1, user_tests_passed = -1;
+  int r;
 
   if (p_marked) *p_marked = -1;
 
@@ -556,112 +705,15 @@ read_valuer_score(
     append_msg_to_log(log_path, "Cannot read the %s score output", what);
     return -1;
   }
-  if (strlen(score_buf) != score_buf_size) {
-    append_msg_to_log(log_path, "The %s score output is binary", what);
-    goto fail;
-  }
 
-  while (score_buf_size > 0 && isspace(score_buf[score_buf_size - 1]))
-    score_buf[--score_buf_size] = 0;
-  if (!score_buf_size) {
-    append_msg_to_log(log_path, "The %s score output is empty", what);
-    goto fail;
-  }
+  r = parse_valuer_score(log_path, score_buf, score_buf_size,
+                         0, max_score, valuer_sets_marked, separate_user_score,
+                         NULL, p_score, p_marked,
 
-  p = score_buf;
-  if (sscanf(p, "%d%n", &x, &n) != 1) {
-    append_msg_to_log(log_path, "The %s score output (%s) is invalid",
-                      what, score_buf);
-    goto fail;
-  }
-  if (x < 0 || x > max_score) {
-    append_msg_to_log(log_path, "The %s score (%d) is invalid", what, x);
-    goto fail;
-  }
-  p += n;
-
-  if (valuer_sets_marked > 0) {
-    if (sscanf(p, "%d%n", &y, &n) != 1) {
-      append_msg_to_log(log_path, "The %s marked_flag output (%s) is invalid",
-                        what, score_buf);
-      goto fail;
-    }
-    if (y < 0 || y > 1) {
-      append_msg_to_log(log_path, "The %s marked_flag (%d) is invalid", what,y);
-      goto fail;
-    }
-    p += n;
-  }
-
-  if (separate_user_score > 0) {
-    while (isspace(*p)) ++p;
-    if (*p) {
-      if (sscanf(p, "%d%n", &user_status, &n) != 1) {
-        append_msg_to_log(log_path, "The %s user_status output (%s) is invalid",
-                          what, score_buf);
-        goto fail;
-      }
-      p += n;
-      if (user_status >= 0) {
-        if (user_status != RUN_OK && user_status != RUN_PARTIAL) {
-          append_msg_to_log(log_path, "The %s user_status output (%d) is invalid",
-                            what, user_status);
-          goto fail;
-        }
-      } else {
-        user_status = -1;
-      }
-    }
-    while (isspace(*p)) ++p;
-    if (*p) {
-      if (sscanf(p, "%d%n", &user_score, &n) != 1) {
-        append_msg_to_log(log_path, "The %s user_score output (%s) is invalid",
-                          what, score_buf);
-        goto fail;
-      }
-      p += n;
-      if (user_score >= 0) {
-        // do some more checking...
-      } else {
-        user_score = -1;
-      }
-    }
-    while (isspace(*p)) ++p;
-    if (*p) {
-      if (sscanf(p, "%d%n", &user_tests_passed, &n) != 1) {
-        append_msg_to_log(log_path, "The %s user_tests_passed output (%s) is invalid",
-                          what, score_buf);
-        goto fail;
-      }
-      p += n;
-      if (user_tests_passed >= 0) {
-        // do some more checking
-      } else {
-        user_tests_passed = -1;
-      }
-    }
-  }
-
-  if (*p) {
-    append_msg_to_log(log_path, "The %s output is invalid", what);
-    goto fail;
-  }
-
-  *p_score = x;
-  if (valuer_sets_marked > 0 && p_marked) *p_marked = y;
-  if (p_marked && *p_marked < 0) *p_marked = 0;
-  if (separate_user_score > 0) {
-    if (p_user_status && user_status >= 0) *p_user_status = user_status;
-    if (p_user_score && user_score >= 0) *p_user_score = user_score;
-    if (p_user_tests_passed && user_tests_passed >= 0) *p_user_tests_passed = user_tests_passed;
-  }
+                         p_user_status, p_user_score, p_user_tests_passed);
 
   xfree(score_buf);
-  return 0;
-
-fail:
-  xfree(score_buf);
-  return -1;
+  return r;
 }
 
 static void
@@ -729,6 +781,40 @@ setup_environment(
   }
 }
 
+static void
+read_log_file(const unsigned char *path, char **p_text)
+{
+  char *text = NULL;
+  size_t size = 0;
+
+  if (p_text) *p_text = NULL;
+  if (generic_read_file(&text, 0, &size, 0, 0, path, "") < 0) {
+    return;
+  }
+  if (text) {
+    while (size > 0 && isspace(text[size - 1])) --size;
+    text[size] = 0;
+    if (!size) {
+      xfree(text);
+      text = NULL;
+    }
+  }
+  if (text) {
+    for (int i = 0; i < size; ++i) {
+      if (text[i] == 0x7f) {
+        text[i] = ' ';
+      } else if (text[i] < ' ' && text[i] != '\n') {
+        text[i] = ' ';
+      }
+    }
+  }
+  if (p_text) {
+    *p_text = text;
+  } else {
+    xfree(text);
+  }
+}
+
 static int
 invoke_valuer(
         const struct section_global_data *global,
@@ -755,8 +841,6 @@ invoke_valuer(
   FILE *f = 0;
   int i, retval = -1;
   tpTask tsk = 0;
-  char *err_txt = 0, *cmt_txt = 0, *jcmt_txt = 0;
-  size_t err_len = 0, cmt_len = 0, jcmt_len = 0;
 
   const struct super_run_in_global_packet *srgp = srp->global;
   const struct super_run_in_problem_packet *srpp = srp->problem;
@@ -855,56 +939,16 @@ invoke_valuer(
                         p_score, p_marked, p_user_status, p_user_score, p_user_tests_passed) < 0) {
     goto cleanup;
   }
-  generic_read_file(&cmt_txt, 0, &cmt_len, 0, 0, score_cmt, "");
-  if (cmt_txt) {
-    while (cmt_len > 0 && isspace(cmt_txt[cmt_len - 1])) cmt_len--;
-    cmt_txt[cmt_len] = 0;
-    if (!cmt_len) {
-      xfree(cmt_txt);
-      cmt_txt = 0;
-    }
-  }
-  generic_read_file(&jcmt_txt, 0, &jcmt_len, 0, 0, score_jcmt, "");
-  if (jcmt_txt) {
-    while (jcmt_len > 0 && isspace(jcmt_txt[jcmt_len - 1])) jcmt_len--;
-    jcmt_txt[jcmt_len] = 0;
-    if (!jcmt_len) {
-      xfree(jcmt_txt);
-      jcmt_txt = 0;
-    }
-  }
-
-  if (p_cmt_txt) {
-    *p_cmt_txt = cmt_txt;
-    cmt_txt = 0;
-  }
-  if (p_jcmt_txt) {
-    *p_jcmt_txt = jcmt_txt;
-    jcmt_txt = 0;
-  }
+  read_log_file(score_cmt, p_cmt_txt);
+  read_log_file(score_jcmt, p_jcmt_txt);
   retval = 0;
 
  cleanup:
-  generic_read_file(&err_txt, 0, &err_len, 0, 0, score_err, "");
-  if (err_txt) {
-    while (err_len > 0 && isspace(err_txt[err_len - 1])) err_len--;
-    err_txt[err_len] = 0;
-    if (!err_len) {
-      xfree(err_txt); err_txt = 0;
-    }
-  }
+  read_log_file(score_err, p_err_txt);
 
   if (tsk) {
     task_Delete(tsk);
     tsk = 0;
-  }
-
-  xfree(cmt_txt); cmt_txt = 0;
-  xfree(jcmt_txt); jcmt_txt = 0;
-  if (p_err_txt) {
-    *p_err_txt = err_txt; err_txt = 0;
-  } else {
-    xfree(err_txt); err_txt = 0;
   }
 
   unlink(score_list);
@@ -916,13 +960,13 @@ invoke_valuer(
 }
 
 #ifndef __WIN32__
-/*static*/ tpTask
+static tpTask
 start_interactive_valuer(
         const struct section_global_data *global,
         const struct super_run_in_packet *srp,
-        const unsigned char *score_err_file,
-        const unsigned char *score_cmt_file,
-        const unsigned char *score_jcmt_file,
+        const unsigned char *valuer_err_file,
+        const unsigned char *valuer_cmt_file,
+        const unsigned char *valuer_jcmt_file,
         int stdin_fd,
         int stdout_fd)
 {
@@ -934,15 +978,15 @@ start_interactive_valuer(
   snprintf(valuer_cmd, sizeof(valuer_cmd), srpp->valuer_cmd);
 
   info("starting interactive valuer: %s %s %s",
-       valuer_cmd, score_cmt_file, score_jcmt_file);
+       valuer_cmd, valuer_cmt_file, valuer_jcmt_file);
 
   tsk = task_New();
   task_AddArg(tsk, valuer_cmd);
-  task_AddArg(tsk, score_cmt_file);
-  task_AddArg(tsk, score_jcmt_file);
+  task_AddArg(tsk, valuer_cmt_file);
+  task_AddArg(tsk, valuer_jcmt_file);
   task_SetRedir(tsk, 0, TSR_DUP, stdin_fd);
   task_SetRedir(tsk, 1, TSR_DUP, stdout_fd);
-  task_SetRedir(tsk, 2, TSR_FILE, score_err_file, TSK_REWRITE, TSK_FULL_RW);
+  task_SetRedir(tsk, 2, TSR_FILE, valuer_err_file, TSK_REWRITE, TSK_FULL_RW);
   task_SetWorkingDir(tsk, global->run_work_dir);
   task_SetPathAsArg0(tsk);
   if (srpp->checker_real_time_limit_ms > 0) {
@@ -964,7 +1008,7 @@ start_interactive_valuer(
   task_PrintArgs(tsk);
 
   if (task_Start(tsk) < 0) {
-    append_msg_to_log(score_err_file, "valuer failed to start");
+    append_msg_to_log(valuer_err_file, "valuer failed to start");
     task_Delete(tsk);
     return NULL;
   }
@@ -3112,6 +3156,19 @@ run_tests(
   // valuer->ejudge pipe
   int vefds[2] = { -1, -1 };
   tpTask valuer_tsk = NULL;
+  unsigned char valuer_err_file[PATH_MAX];
+  unsigned char valuer_cmt_file[PATH_MAX];
+  unsigned char valuer_jcmt_file[PATH_MAX];
+
+  int valuer_score = -1;
+  int valuer_marked = -1;
+  int valuer_user_status = -1;
+  int valuer_user_score = -1;
+  int valuer_user_tests_passed = -1;
+
+  valuer_err_file[0] = 0;
+  valuer_cmt_file[0] = 0;
+  valuer_jcmt_file[0] = 0;
 
   cpu_get_performance_info(&cpu_model, &cpu_mhz);
 
@@ -3218,7 +3275,8 @@ run_tests(
   expected_free_space = get_expected_free_space(check_dir);
 
 #ifndef __WIN32__
-  if (srpp->interactive_valuer) {
+  if (srpp->interactive_valuer > 0 && srpp->valuer_cmd && srpp->valuer_cmd[0]
+      && srgp->accepting_mode <= 0) {
     if (pipe(evfds) < 0
         || fcntl(evfds[0], F_SETFD, FD_CLOEXEC) < 0
         || fcntl(evfds[1], F_SETFD, FD_CLOEXEC) < 0
@@ -3228,19 +3286,26 @@ run_tests(
       append_msg_to_log(messages_path, "pipe() failed: %s", os_ErrorMsg());
       goto check_failed;
     }
-    /*
-start_interactive_valuer(
-        const struct section_global_data *global,
-        const struct super_run_in_packet *srp,
-        const unsigned char *score_err_file,
-        const unsigned char *score_cmt_file,
-        const unsigned char *score_jcmt_file,
-        int stdin_fd,
-        int stdout_fd)
-    */
+    snprintf(valuer_err_file, sizeof(valuer_err_file), "%s/score_err",
+             global->run_work_dir);
+    snprintf(valuer_cmt_file, sizeof(valuer_cmt_file), "%s/score_cmt",
+             global->run_work_dir);
+    snprintf(valuer_jcmt_file, sizeof(valuer_jcmt_file), "%s/score_jcmt",
+             global->run_work_dir);
+    valuer_tsk = start_interactive_valuer(global, srp,
+                                          valuer_err_file,
+                                          valuer_cmt_file,
+                                          valuer_jcmt_file,
+                                          evfds[0], vefds[1]);
+    if (!valuer_tsk) {
+      append_msg_to_log(messages_path, "failed to start interactive valuer");
+      goto check_failed;
+    }
     close(evfds[0]); evfds[0] = -1;
     close(vefds[1]); vefds[1] = -1;
     if (ejudge_timed_write(evfds[1], "-1\n", 3, 100) < 0) {
+      append_msg_to_log(messages_path, "interactive valuer write failed");
+      goto check_failed;
     }
   }
 #endif
@@ -3269,9 +3334,87 @@ start_interactive_valuer(
       if (srgp->scoring_system_val == SCORE_OLYMPIAD
           && accept_testing && !accept_partial) break;
     }
+    if (valuer_tsk) {
+      unsigned char buf[1024];
+      snprintf(buf, sizeof(buf), "%d %d %ld\n",
+               tests.data[cur_test].status, tests.data[cur_test].score,
+               tests.data[cur_test].times);
+      ssize_t buflen = strlen(buf);
+      if (ejudge_timed_write(evfds[1], buf, buflen, 100) < 0) {
+        append_msg_to_log(messages_path, "interactive valuer write failed");
+        goto check_failed;
+      }
+      buflen = ejudge_timed_fdgets(vefds[0], buf, sizeof(buf), 100);
+      if (buflen < 0) {
+        append_msg_to_log(messages_path, "interactive valuer read failed");
+        goto check_failed;
+      }
+      if (!buflen) {
+        append_msg_to_log(messages_path, "interactive valuer unexpected EOF");
+        goto check_failed;
+      }
+
+      int was_reply_next = 0;
+      if (parse_valuer_score(messages_path, buf, buflen, 1, srpp->full_score,
+                             srpp->valuer_sets_marked,
+                             srgp->separate_user_score,
+                             &was_reply_next,
+                             &valuer_score,
+                             &valuer_marked,
+                             &valuer_user_status,
+                             &valuer_user_score,
+                             &valuer_user_tests_passed) < 0) {
+        append_msg_to_log(messages_path, "interactive valuer protocol error");
+        goto check_failed;
+      }
+
+      if (was_reply_next) {
+        continue;
+      }
+                             
+      close(evfds[1]); evfds[1] = -1;
+      task_Wait(valuer_tsk);
+      if (task_IsAbnormal(valuer_tsk)) {
+        append_msg_to_log(messages_path, "interactive valuer terminated abnormally");
+        goto check_failed;
+      }
+      task_Delete(valuer_tsk); valuer_tsk = NULL;
+      close(vefds[0]); vefds[0] = -1;
+      break;
+    }
   }
 
   if (valuer_tsk) {
+    unsigned char buf[1024];
+    close(evfds[1]); evfds[1] = -1;
+    ssize_t buflen = ejudge_timed_fdgets(vefds[0], buf, sizeof(buf), 100);
+    if (buflen < 0) {
+      append_msg_to_log(messages_path, "interactive valuer read failed");
+      goto check_failed;
+    }
+    if (!buflen) {
+      append_msg_to_log(messages_path, "interactive valuer unexpected EOF");
+      goto check_failed;
+    }
+    if (parse_valuer_score(messages_path, buf, buflen, 0, srpp->full_score,
+                           srpp->valuer_sets_marked,
+                           srgp->separate_user_score,
+                           NULL,
+                           &valuer_score,
+                           &valuer_marked,
+                           &valuer_user_status,
+                           &valuer_user_score,
+                           &valuer_user_tests_passed) < 0) {
+      append_msg_to_log(messages_path, "interactive valuer protocol error");
+      goto check_failed;
+    }
+    task_Wait(valuer_tsk);
+    if (task_IsAbnormal(valuer_tsk)) {
+      append_msg_to_log(messages_path, "interactive valuer terminated abnormally");
+      goto check_failed;
+    }
+    task_Delete(valuer_tsk); valuer_tsk = NULL;
+    close(vefds[0]); vefds[0] = -1;
   }
 
   /* TESTING COMPLETED */
@@ -3402,18 +3545,32 @@ start_interactive_valuer(
     }
   }
 
-  if (srpp->valuer_cmd && srpp->valuer_cmd[0] && srgp->accepting_mode <= 0
-      && !reply_pkt->status != RUN_CHECK_FAILED) {
-    if (invoke_valuer(global, srp, tests.size, tests.data,
-                      cur_variant, srpp->full_score,
-                      &total_score, &marked_flag,
-                      &user_status, &user_score, &user_tests_passed,
-                      &valuer_errors, &valuer_comment,
-                      &valuer_judge_comment) < 0) {
-      goto check_failed;
-    } else {
-      reply_pkt->score = total_score;
-      reply_pkt->marked_flag = marked_flag;
+  if (srpp->valuer_cmd && srpp->valuer_cmd[0] && srgp->accepting_mode <= 0) {
+    if (srpp->interactive_valuer <= 0
+        && reply_pkt->status != RUN_CHECK_FAILED) {
+      if (invoke_valuer(global, srp, tests.size, tests.data,
+                        cur_variant, srpp->full_score,
+                        &total_score, &marked_flag,
+                        &user_status, &user_score, &user_tests_passed,
+                        &valuer_errors, &valuer_comment,
+                        &valuer_judge_comment) < 0) {
+        goto check_failed;
+      } else {
+        reply_pkt->score = total_score;
+        reply_pkt->marked_flag = marked_flag;
+      }
+    } else if (srpp->interactive_valuer > 0) {
+      total_score = valuer_score;
+      marked_flag = valuer_marked;
+      user_status = valuer_user_status;
+      user_score = valuer_user_score;
+      user_tests_passed = valuer_user_tests_passed;
+      read_log_file(valuer_cmt_file, &valuer_comment);
+      read_log_file(valuer_jcmt_file, &valuer_judge_comment);
+      read_log_file(valuer_err_file, &valuer_errors);
+      unlink(valuer_cmt_file);
+      unlink(valuer_jcmt_file);
+      unlink(valuer_err_file);
     }
   }
 
