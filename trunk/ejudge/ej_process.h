@@ -142,4 +142,18 @@ ejudge_start_daemon_process(
         char **args,
         const unsigned char *workdir);
 
+int
+ejudge_timed_write(
+        int fd,
+        const void *data,
+        ssize_t size,
+        int timeout_ms);
+
+ssize_t
+ejudge_timed_fdgets(
+        int fd,
+        unsigned char *buf,
+        ssize_t size,
+        int timeout_ms);
+
 #endif /* __EJ_PROCESS_H__ */

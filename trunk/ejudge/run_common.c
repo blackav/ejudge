@@ -3217,21 +3217,17 @@ run_tests(
   /* calculate the expected free space in check_dir */
   expected_free_space = get_expected_free_space(check_dir);
 
+#ifndef __WIN32__
   if (srpp->interactive_valuer) {
-    /*
-    if (pipe(pfd1) < 0) {
-      append_msg_to_log(check_out_path, "pipe() failed: %s", os_ErrorMsg());
+    if (pipe(evfds) < 0
+        || fcntl(evfds[0], F_SETFD, FD_CLOEXEC) < 0
+        || fcntl(evfds[1], F_SETFD, FD_CLOEXEC) < 0
+        || pipe(vefds) < 0
+        || fcntl(vefds[0], F_SETFD, FD_CLOEXEC) < 0
+        || fcntl(vefds[1], F_SETFD, FD_CLOEXEC) < 0) {
+      append_msg_to_log(messages_path, "pipe() failed: %s", os_ErrorMsg());
       goto check_failed;
     }
-    fcntl(pfd1[0], F_SETFD, FD_CLOEXEC);
-    fcntl(pfd1[1], F_SETFD, FD_CLOEXEC);
-    if (pipe(pfd2) < 0) {
-      append_msg_to_log(check_out_path, "pipe() failed: %s", os_ErrorMsg());
-      goto check_failed;
-    }
-    fcntl(pfd2[0], F_SETFD, FD_CLOEXEC);
-    fcntl(pfd2[1], F_SETFD, FD_CLOEXEC);
-    */
     /*
 start_interactive_valuer(
         const struct section_global_data *global,
@@ -3242,7 +3238,12 @@ start_interactive_valuer(
         int stdin_fd,
         int stdout_fd)
     */
+    close(evfds[0]); evfds[0] = -1;
+    close(vefds[1]); vefds[1] = -1;
+    if (ejudge_timed_write(evfds[1], "-1\n", 3, 100) < 0) {
+    }
   }
+#endif
 
   while (1) {
     ++cur_test;
