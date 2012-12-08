@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2009 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2012 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -27,9 +27,30 @@ read_process_output(const unsigned char *cmd,
   return 0;
 }
 
+int
+ejudge_timed_write(
+        int fd,
+        const void *data,
+        ssize_t size,
+        int timeout_ms)
+{
+  fprintf(stderr, "%s: not implemented\n", __FUNCTION__);
+  return -1;
+}
+
+int
+ejudge_timed_fdgets(
+        int fd,
+        unsigned char *buf,
+        ssize_t size,
+        int timeout_ms)
+{
+  fprintf(stderr, "%s: not implemented\n", __FUNCTION__);
+  return -1;
+}
+
 /*
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list" "fd_set" "DIR")
  * End:
  */
