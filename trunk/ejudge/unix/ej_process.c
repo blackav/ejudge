@@ -1136,9 +1136,204 @@ ejudge_start_daemon_process(
   _exit(1);
 }
 
+int
+ejudge_timed_write(
+        int fd,
+        const void *data,
+        ssize_t size,
+        int timeout_ms)
+{
+  if (size <= 0) {
+    fprintf(stderr, "%s: invalid size: %lld\n", __FUNCTION__, (long long) size);
+    goto fail;
+  }
+  if (timeout_ms <= 0) {
+    fprintf(stderr, "%s: invalid timeout %d\n", __FUNCTION__, timeout_ms);
+    goto fail;
+  }
+  int flags = fcntl(fd, F_GETFL);
+  if (flags < 0) {
+    fprintf(stderr, "%s: %d: fcntl failed: %s\n", __FUNCTION__, __LINE__, strerror(errno));
+    goto fail;
+  }
+  if (!(flags & O_NONBLOCK)) {
+    if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) < 0) {
+      fprintf(stderr, "%s: %d: fcntl failed: %s\n", __FUNCTION__, __LINE__, strerror(errno));
+      goto fail;
+    }
+  }
+  struct timeval cur;
+  gettimeofday(&cur, NULL);
+  long long cur_ms = cur.tv_sec * 1000LL + cur.tv_usec / 1000;
+  long long break_ms = cur_ms + timeout_ms;
+  const unsigned char *cur_data = (const unsigned char*) data;
+  while (1) {
+    long long wait_ms = break_ms - cur_ms;
+    if (wait_ms <= 0) {
+      fprintf(stderr, "%s: write time-out\n", __FUNCTION__);
+      goto fail;
+    }
+    struct timeval wait_tv;
+    wait_tv.tv_sec = wait_ms / 1000;
+    wait_tv.tv_usec = (wait_ms % 1000) * 1000;
+    fd_set wfd;
+    FD_ZERO(&wfd);
+    FD_SET(fd, &wfd);
+    int n = select(fd + 1, NULL, &wfd, NULL, &wait_tv);
+    if (n < 0 && errno == EINTR) {
+      gettimeofday(&cur, NULL);
+      cur_ms = cur.tv_sec * 1000LL + cur.tv_usec / 1000;
+      continue;
+    }
+    if (n < 0) {
+      fprintf(stderr, "%s: select failed: %s\n", __FUNCTION__, strerror(errno));
+      goto fail;
+    }
+    if (n == 0) {
+      fprintf(stderr, "%s: write time-out\n", __FUNCTION__);
+      goto fail;
+    }
+    if (!FD_ISSET(fd, &wfd)) {
+      gettimeofday(&cur, NULL);
+      cur_ms = cur.tv_sec * 1000LL + cur.tv_usec / 1000;
+      continue;
+    }
+    while (1) {
+      ssize_t w = write(fd, cur_data, size);
+      if (w < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
+        break;
+      }
+      if (w < 0) {
+        fprintf(stderr, "%s: write failed: %s\n", __FUNCTION__, strerror(errno));
+        goto fail;
+      }
+      if (w == 0) {
+        fprintf(stderr, "%s: write returned 0\n", __FUNCTION__);
+        goto fail;
+      }
+      cur_data += w;
+      size -= w;
+      if (!size) {
+        goto success;
+      }
+    }
+    gettimeofday(&cur, NULL);
+    cur_ms = cur.tv_sec * 1000LL + cur.tv_usec / 1000;
+  }
+
+success:
+  return 0;
+
+fail:
+  return -1;
+}
+
+ssize_t
+ejudge_timed_fdgets(
+        int fd,
+        unsigned char *buf,
+        ssize_t size,
+        int timeout_ms)
+{
+  if (size < 2) {
+    fprintf(stderr, "%s: invalid size: %lld\n", __FUNCTION__, (long long) size);
+    goto fail;
+  }
+  if (timeout_ms <= 0) {
+    fprintf(stderr, "%s: invalid timeout %d\n", __FUNCTION__, timeout_ms);
+    goto fail;
+  }
+  int flags = fcntl(fd, F_GETFL);
+  if (flags < 0) {
+    fprintf(stderr, "%s: %d: fcntl failed: %s\n", __FUNCTION__, __LINE__, strerror(errno));
+    goto fail;
+  }
+  if (!(flags & O_NONBLOCK)) {
+    if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) < 0) {
+      fprintf(stderr, "%s: %d: fcntl failed: %s\n", __FUNCTION__, __LINE__, strerror(errno));
+      goto fail;
+    }
+  }
+  struct timeval cur;
+  gettimeofday(&cur, NULL);
+  long long cur_ms = cur.tv_sec * 1000LL + cur.tv_usec / 1000;
+  long long break_ms = cur_ms + timeout_ms;
+  unsigned char *cur_buf = (unsigned char*) buf;
+  ssize_t cur_size = size - 1;
+  while (1) {
+    long long wait_ms = break_ms - cur_ms;
+    if (wait_ms <= 0) {
+      fprintf(stderr, "%s: read time-out\n", __FUNCTION__);
+      goto fail;
+    }
+    struct timeval wait_tv;
+    wait_tv.tv_sec = wait_ms / 1000;
+    wait_tv.tv_usec = (wait_ms % 1000) * 1000;
+    fd_set rfd;
+    FD_ZERO(&rfd);
+    FD_SET(fd, &rfd);
+    int n = select(fd + 1, &rfd, NULL, NULL, &wait_tv);
+    if (n < 0 && errno == EINTR) {
+      gettimeofday(&cur, NULL);
+      cur_ms = cur.tv_sec * 1000LL + cur.tv_usec / 1000;
+      continue;
+    }
+    if (n < 0) {
+      fprintf(stderr, "%s: select failed: %s\n", __FUNCTION__, strerror(errno));
+      goto fail;
+    }
+    if (n == 0) {
+      fprintf(stderr, "%s: read time-out\n", __FUNCTION__);
+      goto fail;
+    }
+    if (!FD_ISSET(fd, &rfd)) {
+      gettimeofday(&cur, NULL);
+      cur_ms = cur.tv_sec * 1000LL + cur.tv_usec / 1000;
+      continue;
+    }
+    while (1) {
+      ssize_t r = read(fd, cur_buf, cur_size);
+      if (r < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
+        break;
+      }
+      if (r < 0) {
+        fprintf(stderr, "%s: read failed: %s\n", __FUNCTION__, strerror(errno));
+        goto fail;
+      }
+      if (!r) {
+        // EOF
+        cur_size = size - 1 - cur_size;
+        buf[cur_size] = 0;
+        return cur_size;
+      }
+      cur_size -= r; cur_buf += r;
+      ssize_t len = size - 1 - cur_size;
+      buf[len] = 0;
+      if (strlen(buf) != len) {
+        // '\0' in the middle
+        fprintf(stderr, "%s: \\0 byte in read data\n", __FUNCTION__);
+        goto fail;
+      }
+      char *pp = strchr(buf, '\n');
+      if (pp && pp[1]) {
+        // '\n' not in the last byte
+        fprintf(stderr, "%s: \\n in the middle of read data\n", __FUNCTION__);
+        goto fail;
+      }
+      if (pp || !cur_size) {
+        return len;
+      }
+    }
+    gettimeofday(&cur, NULL);
+    cur_ms = cur.tv_sec * 1000LL + cur.tv_usec / 1000;
+  }
+
+fail:
+  return -1;
+}
+
 /*
  * Local variables:
  *  compile-command: "make -C .."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list" "fd_set" "DIR")
  * End:
  */
