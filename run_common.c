@@ -536,11 +536,11 @@ parse_valuer_score(
         const unsigned char *log_path,
         const unsigned char *in_buf,
         ssize_t in_buf_size,
-        int enable_reply_next, // enable -1 as score
+        int enable_reply_next_num, // enable < 0 as score (next test num)
         int max_score,
         int valuer_sets_marked,
         int separate_user_score,
-        int *p_was_reply_next,
+        int *p_reply_next_num,
         int *p_score,
         int *p_marked,
         int *p_user_status,
@@ -588,12 +588,12 @@ parse_valuer_score(
     lineno = __LINE__;
     goto invalid_reply;
   }
-  if (enable_reply_next > 0 && v_score == -1) {
+  if (enable_reply_next_num > 0 && v_score < 0) {
     if (buf[idx]) {
       lineno = __LINE__;
       goto invalid_reply;
     }
-    if (p_was_reply_next) *p_was_reply_next = 1;
+    if (p_reply_next_num) *p_reply_next_num = -v_score;
     return 0;
   }
   if (v_score < 0 || v_score > max_score) {
@@ -663,7 +663,7 @@ parse_valuer_score(
     goto invalid_reply;
   }
 
-  if (p_was_reply_next) *p_was_reply_next = 0;
+  if (p_reply_next_num) *p_reply_next_num = 0;
   if (p_score) *p_score = v_score;
   if (p_marked) *p_marked = v_marked;
   if (p_user_status) *p_user_status = v_user_status;
@@ -1824,7 +1824,7 @@ invoke_checker(
       test_max_score = srpp->test_score;
     }
     if (test_max_score < 0) test_max_score = 0;
-      break;
+    break;
   case SCORE_MOSCOW:
     test_max_score = srpp->full_score - 1;
     break;
@@ -3066,6 +3066,36 @@ is_piped_core_dump(void)
   return 0;
 }
 
+static void
+append_skipped_test(
+        const struct super_run_in_problem_packet *srpp,
+        int cur_test,
+        struct testinfo_vector *tests,
+        int test_score_count,
+        const int *test_score_val)
+{
+  if (tests->size >= tests->reserved) {
+    tests->reserved *= 2;
+    if (!tests->reserved) tests->reserved = 32;
+    tests->data = (typeof(tests->data)) xrealloc(tests->data, tests->reserved * sizeof(tests->data[0]));
+  }
+  struct testinfo *cur_info = &tests->data[cur_test];
+  memset(cur_info, 0, sizeof(*cur_info));
+  ++tests->size;
+
+  cur_info->status = RUN_SKIPPED;
+
+  int test_max_score = -1;
+  if (test_score_val && cur_test > 0 && cur_test < test_score_count) {
+    test_max_score = test_score_val[cur_test];
+  }
+  if (test_max_score < 0) {
+    test_max_score = srpp->test_score;
+  }
+  if (test_max_score < 0) test_max_score = 0;
+  cur_info->max_score = test_max_score;
+}
+
 void
 run_tests(
         const struct ejudge_cfg *config,
@@ -3338,11 +3368,11 @@ run_tests(
         goto check_failed;
       }
 
-      int was_reply_next = 0;
+      int reply_next_num = 0;
       if (parse_valuer_score(messages_path, buf, buflen, 1, srpp->full_score,
                              srpp->valuer_sets_marked,
                              srgp->separate_user_score,
-                             &was_reply_next,
+                             &reply_next_num,
                              &valuer_score,
                              &valuer_marked,
                              &valuer_user_status,
@@ -3352,7 +3382,18 @@ run_tests(
         goto check_failed;
       }
 
-      if (was_reply_next) {
+      if (reply_next_num > 0) {
+        if (reply_next_num == 1) continue;
+        if (reply_next_num <= cur_test) {
+          append_msg_to_log(messages_path, "interactive valuer returned invalid next test number %d", reply_next_num);
+          goto check_failed;
+        }
+
+        for (++cur_test; cur_test < reply_next_num; ++cur_test) {
+          append_skipped_test(srpp, cur_test, &tests, test_score_count,
+                              test_score_val);
+        }
+        --cur_test;
         continue;
       }
                              

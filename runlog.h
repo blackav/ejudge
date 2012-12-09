@@ -44,7 +44,8 @@ enum
   RUN_WALL_TIME_LIMIT_ERR = 15,
   RUN_PENDING_REVIEW   = 16,
   RUN_REJECTED         = 17,
-  RUN_MAX_STATUS       = 17,
+  RUN_SKIPPED          = 18,
+  RUN_MAX_STATUS       = 18,
 
   RUN_PSEUDO_FIRST     = 20,
   RUN_VIRTUAL_START    = 20,
