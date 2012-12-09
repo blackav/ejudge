@@ -60,7 +60,7 @@ static int param_u;
 static char *query;
 static int   query_ind;
 static int   source = 0;
-static int   content_length = INT_MAX;
+static int   content_length = 0;
 
 #define MARK_PLACE fprintf(stderr, "DEBUG: %s, %d\n", __FILE__, __LINE__)
 
