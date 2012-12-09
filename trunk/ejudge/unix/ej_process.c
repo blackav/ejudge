@@ -1136,29 +1136,63 @@ ejudge_start_daemon_process(
   _exit(1);
 }
 
+static void
+msg(const unsigned char *path, const char *function, int lineno,
+    const char *format, ...)
+  __attribute__((format(printf, 4, 5)));
+static void
+msg(const unsigned char *path, const char *function, int lineno,
+    const char *format, ...)
+{
+  va_list args;
+  char buf[1024];
+
+  va_start(args, format);
+  vsnprintf(buf, sizeof(buf), format, args);
+  va_end(args);
+
+  int revision = 0;
+  sscanf("$Revision$", "$" "Revision:%d", &revision);
+
+  if (!path) {
+    fprintf(stderr, "%s: %d: %d: %s\n", function, lineno, revision, buf);
+  } else {
+    FILE *f = fopen(path, "a");
+    if (f) {
+      fprintf(f, "%s: %d: %d: %s\n", function, lineno, revision, buf);
+      fflush(f);
+      fclose(f);
+      f = NULL;
+    }
+  }
+}
+
+#define MSG(p,f,...) msg(p,__FUNCTION__,__LINE__,f, ## __VA_ARGS__)
+
 int
 ejudge_timed_write(
+        const unsigned char *log,
         int fd,
         const void *data,
         ssize_t size,
         int timeout_ms)
 {
   if (size <= 0) {
-    fprintf(stderr, "%s: invalid size: %lld\n", __FUNCTION__, (long long) size);
+    MSG(log, "invalid size: %lld", (long long) size);
     goto fail;
   }
   if (timeout_ms <= 0) {
-    fprintf(stderr, "%s: invalid timeout %d\n", __FUNCTION__, timeout_ms);
+    MSG(log, "invalid timeout %d", timeout_ms);
     goto fail;
   }
   int flags = fcntl(fd, F_GETFL);
   if (flags < 0) {
-    fprintf(stderr, "%s: %d: fcntl failed: %s\n", __FUNCTION__, __LINE__, strerror(errno));
+    MSG(log, "fcntl failed: %s", strerror(errno));
     goto fail;
   }
   if (!(flags & O_NONBLOCK)) {
     if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) < 0) {
-      fprintf(stderr, "%s: %d: fcntl failed: %s\n", __FUNCTION__, __LINE__, strerror(errno));
+      MSG(log, "fcntl failed: %s", strerror(errno));
       goto fail;
     }
   }
@@ -1170,7 +1204,7 @@ ejudge_timed_write(
   while (1) {
     long long wait_ms = break_ms - cur_ms;
     if (wait_ms <= 0) {
-      fprintf(stderr, "%s: write time-out\n", __FUNCTION__);
+      MSG(log, "write time-out");
       goto fail;
     }
     struct timeval wait_tv;
@@ -1186,11 +1220,11 @@ ejudge_timed_write(
       continue;
     }
     if (n < 0) {
-      fprintf(stderr, "%s: select failed: %s\n", __FUNCTION__, strerror(errno));
+      MSG(log, "select failed: %s", strerror(errno));
       goto fail;
     }
     if (n == 0) {
-      fprintf(stderr, "%s: write time-out\n", __FUNCTION__);
+      MSG(log, "write time-out");
       goto fail;
     }
     if (!FD_ISSET(fd, &wfd)) {
@@ -1204,11 +1238,11 @@ ejudge_timed_write(
         break;
       }
       if (w < 0) {
-        fprintf(stderr, "%s: write failed: %s\n", __FUNCTION__, strerror(errno));
+        MSG(log, "write failed: %s", strerror(errno));
         goto fail;
       }
       if (w == 0) {
-        fprintf(stderr, "%s: write returned 0\n", __FUNCTION__);
+        MSG(log, "write returned 0");
         goto fail;
       }
       cur_data += w;
@@ -1230,27 +1264,28 @@ fail:
 
 ssize_t
 ejudge_timed_fdgets(
+        const unsigned char *log,
         int fd,
         unsigned char *buf,
         ssize_t size,
         int timeout_ms)
 {
   if (size < 2) {
-    fprintf(stderr, "%s: invalid size: %lld\n", __FUNCTION__, (long long) size);
+    MSG(log, "invalid size: %lld", (long long) size);
     goto fail;
   }
   if (timeout_ms <= 0) {
-    fprintf(stderr, "%s: invalid timeout %d\n", __FUNCTION__, timeout_ms);
+    MSG(log, "invalid timeout %d", timeout_ms);
     goto fail;
   }
   int flags = fcntl(fd, F_GETFL);
   if (flags < 0) {
-    fprintf(stderr, "%s: %d: fcntl failed: %s\n", __FUNCTION__, __LINE__, strerror(errno));
+    MSG(log, "fcntl failed: %s", strerror(errno));
     goto fail;
   }
   if (!(flags & O_NONBLOCK)) {
     if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) < 0) {
-      fprintf(stderr, "%s: %d: fcntl failed: %s\n", __FUNCTION__, __LINE__, strerror(errno));
+      MSG(log, "fcntl failed: %s", strerror(errno));
       goto fail;
     }
   }
@@ -1263,7 +1298,7 @@ ejudge_timed_fdgets(
   while (1) {
     long long wait_ms = break_ms - cur_ms;
     if (wait_ms <= 0) {
-      fprintf(stderr, "%s: read time-out\n", __FUNCTION__);
+      MSG(log, "read time-out");
       goto fail;
     }
     struct timeval wait_tv;
@@ -1279,11 +1314,11 @@ ejudge_timed_fdgets(
       continue;
     }
     if (n < 0) {
-      fprintf(stderr, "%s: select failed: %s\n", __FUNCTION__, strerror(errno));
+      MSG(log, "select failed: %s", strerror(errno));
       goto fail;
     }
     if (n == 0) {
-      fprintf(stderr, "%s: read time-out\n", __FUNCTION__);
+      MSG(log, "read time-out");
       goto fail;
     }
     if (!FD_ISSET(fd, &rfd)) {
@@ -1297,7 +1332,7 @@ ejudge_timed_fdgets(
         break;
       }
       if (r < 0) {
-        fprintf(stderr, "%s: read failed: %s\n", __FUNCTION__, strerror(errno));
+        MSG(log, "read failed: %s", strerror(errno));
         goto fail;
       }
       if (!r) {
@@ -1311,13 +1346,13 @@ ejudge_timed_fdgets(
       buf[len] = 0;
       if (strlen(buf) != len) {
         // '\0' in the middle
-        fprintf(stderr, "%s: \\0 byte in read data\n", __FUNCTION__);
+        MSG(log, "\\0 byte in read data");
         goto fail;
       }
       char *pp = strchr(buf, '\n');
       if (pp && pp[1]) {
         // '\n' not in the last byte
-        fprintf(stderr, "%s: \\n in the middle of read data\n", __FUNCTION__);
+        MSG(log, "\\n in the middle of read data");
         goto fail;
       }
       if (pp || !cur_size) {
