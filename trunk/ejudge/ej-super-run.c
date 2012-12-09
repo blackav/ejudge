@@ -24,7 +24,6 @@
 #include "fileutl.h"
 #include "errlog.h"
 #include "prepare.h"
-//#include "cr_serialize.h"
 #include "interrupt.h"
 #include "super_run_packet.h"
 #include "run_packet.h"
@@ -45,6 +44,7 @@
 #include <ctype.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <signal.h>
 
 struct ignored_problem_info
 {
@@ -852,6 +852,8 @@ main(int argc, char *argv[])
   int retval = 0;
   int daemon_mode = 0, restart_mode = 0, alternate_log_mode = 0;
   const unsigned char *user = NULL, *group = NULL, *workdir = NULL;
+
+  signal(SIGPIPE, SIG_IGN);
 
   program_name = os_GetBasename(argv[0]);
   start_set_self_args(argc, argv);

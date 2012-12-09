@@ -3364,7 +3364,7 @@ run_tests(
       }
       task_Delete(valuer_tsk); valuer_tsk = NULL;
       close(vefds[0]); vefds[0] = -1;
-      append_msg_to_log(messages_path, "testing was completed prematurely because of interactive interactor");
+      append_msg_to_log(messages_path, "testing was completed prematurely because of interactive valuer");
       break;
     }
   }
