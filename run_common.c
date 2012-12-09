@@ -784,13 +784,14 @@ setup_environment(
 static void
 read_log_file(const unsigned char *path, char **p_text)
 {
-  char *text = NULL;
+  char *stext = NULL;
   size_t size = 0;
 
   if (p_text) *p_text = NULL;
-  if (generic_read_file(&text, 0, &size, 0, 0, path, "") < 0) {
+  if (generic_read_file(&stext, 0, &size, 0, 0, path, "") < 0) {
     return;
   }
+  unsigned char *text = (unsigned char*) stext;
   if (text) {
     while (size > 0 && isspace(text[size - 1])) --size;
     text[size] = 0;
