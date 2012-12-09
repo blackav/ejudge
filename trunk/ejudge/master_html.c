@@ -524,7 +524,8 @@ write_xml_testing_report(
 
   if (r->comment) {
     s = html_armor_string_dup(r->comment);
-    fprintf(f, "<big>Note: %s.<br><br></big><br/><br/>\n", s);
+    fprintf(f, "<big><u>Testing messages</u>:</big><br/><br/>\n");
+    fprintf(f, "<pre>%s</pre>\n", s);
     xfree(s);
   }
 

@@ -859,13 +859,6 @@ invoke_valuer(
   fprintf(f, "%d\n", total_tests - 1);
   for (i = 1; i < total_tests; i++) {
     fprintf(f, "%d", tests[i].status);
-    /*
-    if (srpp->scoring_checker > 0) {
-      fprintf(f, " %d", tests[i].checker_score);
-    } else {
-      fprintf(f, " %d", tests[i].score);
-    }
-    */
     fprintf(f, " %d", tests[i].score);
     fprintf(f, " %ld", tests[i].times);
     fprintf(f, "\n");
@@ -986,7 +979,7 @@ start_interactive_valuer(
   task_AddArg(tsk, valuer_jcmt_file);
   task_SetRedir(tsk, 0, TSR_DUP, stdin_fd);
   task_SetRedir(tsk, 1, TSR_DUP, stdout_fd);
-  task_SetRedir(tsk, 2, TSR_FILE, valuer_err_file, TSK_REWRITE, TSK_FULL_RW);
+  task_SetRedir(tsk, 2, TSR_FILE, valuer_err_file, TSK_APPEND, TSK_FULL_RW);
   task_SetWorkingDir(tsk, global->run_work_dir);
   task_SetPathAsArg0(tsk);
   if (srpp->checker_real_time_limit_ms > 0) {
@@ -1820,35 +1813,37 @@ invoke_checker(
     goto cleanup;
   }
 
-  if (srpp->scoring_checker > 0) {
-    switch (srgp->scoring_system_val) {
-    case SCORE_KIROV:
-    case SCORE_OLYMPIAD:
-      test_max_score = -1;
-      if (test_score_val && cur_test > 0 && cur_test < test_score_count) {
-        test_max_score = test_score_val[cur_test];
-      }
-      if (test_max_score < 0) {
-        test_max_score = srpp->test_score;
-      }
-      if (test_max_score < 0) test_max_score = 0;
-      break;
-    case SCORE_MOSCOW:
-      test_max_score = srpp->full_score - 1;
-      break;
-    case SCORE_ACM:
-      test_max_score = 0;
-      break;
-    default:
-      abort();
+  switch (srgp->scoring_system_val) {
+  case SCORE_KIROV:
+  case SCORE_OLYMPIAD:
+    test_max_score = -1;
+    if (test_score_val && cur_test > 0 && cur_test < test_score_count) {
+      test_max_score = test_score_val[cur_test];
     }
+    if (test_max_score < 0) {
+      test_max_score = srpp->test_score;
+    }
+    if (test_max_score < 0) test_max_score = 0;
+      break;
+  case SCORE_MOSCOW:
+    test_max_score = srpp->full_score - 1;
+    break;
+  case SCORE_ACM:
+    test_max_score = 0;
+    break;
+  default:
+    abort();
+  }
+  if (srpp->scoring_checker > 0) {
     if (status == RUN_OK) default_score = test_max_score;
     if (read_checker_score(score_out_path, check_out_path, "checker",
                            test_max_score, default_score,
-                           &cur_info->score /*&cur_info->checker_score*/) < 0) {
+                           &cur_info->score) < 0) {
       status = RUN_CHECK_FAILED;
       goto cleanup;
     }
+  } else {
+    if (status == RUN_OK) cur_info->score = test_max_score;
   }
 
 cleanup:
@@ -2946,13 +2941,6 @@ check_output_only(
 
   // FIXME: scoring checker
   if (status == RUN_OK) {
-    /*
-    if (srpp->variable_full_score > 0 && srpp->scoring_checker > 0) {
-      reply_pkt->score = cur_info->checker_score;
-    } else {
-      reply_pkt->score = srpp->full_score;
-    }
-    */
     if (srpp->variable_full_score > 0) {
       reply_pkt->score = cur_info->score;
     } else {
@@ -3156,7 +3144,6 @@ run_tests(
   // valuer->ejudge pipe
   int vefds[2] = { -1, -1 };
   tpTask valuer_tsk = NULL;
-  unsigned char valuer_err_file[PATH_MAX];
   unsigned char valuer_cmt_file[PATH_MAX];
   unsigned char valuer_jcmt_file[PATH_MAX];
 
@@ -3166,7 +3153,6 @@ run_tests(
   int valuer_user_score = -1;
   int valuer_user_tests_passed = -1;
 
-  valuer_err_file[0] = 0;
   valuer_cmt_file[0] = 0;
   valuer_jcmt_file[0] = 0;
 
@@ -3286,14 +3272,12 @@ run_tests(
       append_msg_to_log(messages_path, "pipe() failed: %s", os_ErrorMsg());
       goto check_failed;
     }
-    snprintf(valuer_err_file, sizeof(valuer_err_file), "%s/score_err",
-             global->run_work_dir);
     snprintf(valuer_cmt_file, sizeof(valuer_cmt_file), "%s/score_cmt",
              global->run_work_dir);
     snprintf(valuer_jcmt_file, sizeof(valuer_jcmt_file), "%s/score_jcmt",
              global->run_work_dir);
     valuer_tsk = start_interactive_valuer(global, srp,
-                                          valuer_err_file,
+                                          messages_path,
                                           valuer_cmt_file,
                                           valuer_jcmt_file,
                                           evfds[0], vefds[1]);
@@ -3303,7 +3287,7 @@ run_tests(
     }
     close(evfds[0]); evfds[0] = -1;
     close(vefds[1]); vefds[1] = -1;
-    if (ejudge_timed_write(evfds[1], "-1\n", 3, 100) < 0) {
+    if (ejudge_timed_write(messages_path, evfds[1], "-1\n", 3, 100) < 0) {
       append_msg_to_log(messages_path, "interactive valuer write failed");
       goto check_failed;
     }
@@ -3340,11 +3324,11 @@ run_tests(
                tests.data[cur_test].status, tests.data[cur_test].score,
                tests.data[cur_test].times);
       ssize_t buflen = strlen(buf);
-      if (ejudge_timed_write(evfds[1], buf, buflen, 100) < 0) {
+      if (ejudge_timed_write(messages_path, evfds[1], buf, buflen, 100) < 0) {
         append_msg_to_log(messages_path, "interactive valuer write failed");
         goto check_failed;
       }
-      buflen = ejudge_timed_fdgets(vefds[0], buf, sizeof(buf), 100);
+      buflen = ejudge_timed_fdgets(messages_path, vefds[0], buf, sizeof(buf), 100);
       if (buflen < 0) {
         append_msg_to_log(messages_path, "interactive valuer read failed");
         goto check_failed;
@@ -3380,6 +3364,7 @@ run_tests(
       }
       task_Delete(valuer_tsk); valuer_tsk = NULL;
       close(vefds[0]); vefds[0] = -1;
+      append_msg_to_log(messages_path, "testing was completed prematurely because of interactive interactor");
       break;
     }
   }
@@ -3387,7 +3372,7 @@ run_tests(
   if (valuer_tsk) {
     unsigned char buf[1024];
     close(evfds[1]); evfds[1] = -1;
-    ssize_t buflen = ejudge_timed_fdgets(vefds[0], buf, sizeof(buf), 100);
+    ssize_t buflen = ejudge_timed_fdgets(messages_path, vefds[0], buf, sizeof(buf), 100);
     if (buflen < 0) {
       append_msg_to_log(messages_path, "interactive valuer read failed");
       goto check_failed;
@@ -3480,10 +3465,6 @@ run_tests(
       total_max_score += this_score;
       
       if (srpp->scoring_checker > 0) {
-        /*
-        total_score += tests.data[cur_test].checker_score;
-        tests.data[cur_test].score = tests.data[cur_test].checker_score;
-        */
         total_score += tests.data[cur_test].score;
       } else if (tests.data[cur_test].status == RUN_OK) {
         tests.data[cur_test].score = this_score;
@@ -3529,7 +3510,6 @@ run_tests(
       reply_pkt->score = srpp->full_score;
       if (status != RUN_OK) {
         if (srpp->scoring_checker > 0) {
-          //reply_pkt->score = tests.data[tests.size - 1].checker_score;
           reply_pkt->score = tests.data[tests.size - 1].score;
         } else if (!srpp->valuer_cmd || !srpp->valuer_cmd[0]) {
           if (!score_tests_val) {
@@ -3567,10 +3547,10 @@ run_tests(
       user_tests_passed = valuer_user_tests_passed;
       read_log_file(valuer_cmt_file, &valuer_comment);
       read_log_file(valuer_jcmt_file, &valuer_judge_comment);
-      read_log_file(valuer_err_file, &valuer_errors);
       unlink(valuer_cmt_file);
       unlink(valuer_jcmt_file);
-      unlink(valuer_err_file);
+      reply_pkt->score = total_score;
+      reply_pkt->marked_flag = marked_flag;
     }
   }
 

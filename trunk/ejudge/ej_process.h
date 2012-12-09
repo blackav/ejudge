@@ -144,6 +144,7 @@ ejudge_start_daemon_process(
 
 int
 ejudge_timed_write(
+        const unsigned char *log,
         int fd,
         const void *data,
         ssize_t size,
@@ -151,6 +152,7 @@ ejudge_timed_write(
 
 ssize_t
 ejudge_timed_fdgets(
+        const unsigned char *log,
         int fd,
         unsigned char *buf,
         ssize_t size,
