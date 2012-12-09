@@ -29,6 +29,7 @@ read_process_output(const unsigned char *cmd,
 
 int
 ejudge_timed_write(
+        const unsigned char *log,
         int fd,
         const void *data,
         ssize_t size,
@@ -40,6 +41,7 @@ ejudge_timed_write(
 
 int
 ejudge_timed_fdgets(
+        const unsigned char *log,
         int fd,
         unsigned char *buf,
         ssize_t size,
