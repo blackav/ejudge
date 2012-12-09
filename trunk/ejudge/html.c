@@ -4928,11 +4928,13 @@ write_xml_team_testing_report(
     }
   }
 
+  /*
   if (r->comment) {
     s = html_armor_string_dup(r->comment);
     fprintf(f, "<big>Note: %s.<br/><br/></big>\n", s);
     xfree(s);
   }
+  */
 
   if (r->valuer_comment) {
     fprintf(f, "<p><b>%s</b>:<br/></p><pre>%s</pre>\n", _("Valuer comments"),

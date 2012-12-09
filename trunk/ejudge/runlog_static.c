@@ -66,6 +66,7 @@ run_status_str(
   case RUN_STYLE_ERR:        s = _("Coding style violation"); break;
   case RUN_REJECTED:         s = _("Rejected"); break;
   case RUN_WALL_TIME_LIMIT_ERR: s = _("Wall time-limit exceeded"); break;
+  case RUN_SKIPPED:          s = _("Skipped"); break;
   case RUN_PENDING_REVIEW:   s = _("Pending review");      break;
   case RUN_RUNNING:          s = _("Running...");          break;
   case RUN_COMPILED:         s = _("Compiled");            break;
@@ -113,6 +114,7 @@ static const unsigned char is_valid_test_status_table[RUN_LAST + 1] =
   [RUN_MEM_LIMIT_ERR]    = 1,
   [RUN_SECURITY_ERR]     = 1,
   [RUN_CHECK_FAILED]     = 1,
+  [RUN_SKIPPED]          = 1,
 };
 int
 run_is_valid_test_status(int status)
@@ -200,6 +202,7 @@ static const struct str_to_status_data str_to_status_table[] =
   { "WT", RUN_WALL_TIME_LIMIT_ERR },
   { "PR", RUN_PENDING_REVIEW },
   { "RJ", RUN_REJECTED },
+  { "SK", RUN_SKIPPED },
   { "RU", RUN_RUNNING },
   { "CD", RUN_COMPILED },
   { "CG", RUN_COMPILING },
@@ -417,6 +420,5 @@ run_fix_runlog_time(
 /*
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "DIR" "gzFile")
  * End:
  */
