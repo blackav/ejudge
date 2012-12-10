@@ -20,6 +20,8 @@
 #include <climits>
 #include <unistd.h>
 #include <cctype>
+#include <vector>
+#include <algorithm>
 
 using namespace std;
 
@@ -67,8 +69,56 @@ static bool marked_flag;
 static bool user_score_flag;
 static bool interactive_flag;
 
+class Group
+{
+    string group_id;
+    int first = 0;
+    int last = 0;
+    vector<string> requires;
+    bool offline = false;
+    int score = 0;
+
+    int passed_count = 0;
+    string comment;
+
+public:
+    Group() {}
+
+    void set_group_id(const string &group_id_) { group_id = group_id_; }
+    const string &get_group_id() const { return group_id; }
+
+    void set_range(int first, int last)
+    {
+        this->first = first; 
+        this->last = last;
+    }
+    int get_first() const { return first; }
+    int get_last() const { return last; }
+
+    void add_requires(const string &s) { requires.push_back(s); }
+    const vector<string> &get_requires() const { return requires; }
+
+    void set_offline(bool offline) { this->offline = offline; }
+    bool get_offline() const { return offline; }
+
+    void set_score(int score) { this->score = score; }
+    int get_score() const { return score; }
+
+    void inc_passed_count() { ++passed_count; }
+    int get_passed_count() const { return passed_count; }
+    bool is_passed() const { return passed_count == (last - first + 1); }
+
+    void set_comment(const string &comment_) { comment = comment_; }
+    const string &get_comment() const { return comment; }
+    bool has_comment() const { return comment.length() > 0; }
+};
+
 class ConfigParser
 {
+public:
+    const int T_EOF = 256;
+    const int T_IDENT = 257;
+
 private:
     FILE *in_f = NULL;
     string path;
@@ -80,8 +130,11 @@ private:
     int c_pos;
 
     string token;
+    int t_type;
     int t_line;
     int t_pos;
+
+    vector<Group> groups;
 
 public:
     ConfigParser()
@@ -111,17 +164,20 @@ public:
 
     void next_token()
     {
-        if (in_c == EOF) {
-            token = "";
-        }
         while (1) {
             while (isspace(in_c)) next_char();
             if (in_c != '#') break;
             while (in_c != EOF && in_c != '\n') next_char();
             if (in_c == '\n') next_char();
         }
+        if (in_c == EOF) {
+            t_type = T_EOF;
+            token = "";
+            return;
+        }
         if (isalnum(in_c)) {
             token = "";
+            t_type = T_IDENT;
             t_line = c_line;
             t_pos = c_pos;
             while (isalnum(in_c)) {
@@ -134,31 +190,141 @@ public:
         if (in_c == '\"') {
         }
         */
-        if (in_c == ';') {
+        if (in_c == ';' || in_c == '{' || in_c == '}' || in_c == '-' || in_c == ',') {
             t_line = c_line;
             t_pos = c_pos;
             token = ";";
+            t_type = in_c;
+            next_char();
             return;
         }
-        if (in_c == '{') {
-            t_line = c_line;
-            t_pos = c_pos;
-            token = "{";
-            return;
+        scan_error("invalid character");
+    }
+
+    void scan_error(const char *format, ...) const
+        __attribute__((noreturn, format(printf, 2, 3)));
+    void parse_error(const char *format, ...) const
+        __attribute__((noreturn, format(printf, 2, 3)));
+
+    void parse_group()
+    {
+        Group g;
+
+        if (token != "group") parse_error("'group' expected");
+        next_token();
+        if (t_type != T_IDENT) parse_error("IDENT expected");
+        if (find_group(token) != NULL) parse_error("group %s already defined", token.c_str());
+        g.set_group_id(token);
+        next_token();
+        if (t_type != '{') parse_error("'{' expected");
+        next_token();
+        while (1) {
+            if (token == "tests") {
+                next_token();
+                int first = -1, last = -1;
+                try {
+                    first = stoi(token);
+                } catch (...) {
+                    parse_error("NUM expected");
+                }
+                if (first <= 0) parse_error("invalid test number");
+                next_token();
+                if (t_type == '-') {
+                    next_token();
+                    try {
+                        last = stoi(token);
+                    } catch (...) {
+                        parse_error("NUM expected");
+                    }
+                    if (last <= 0) parse_error("invalid test number");
+                    if (last < first) parse_error("invalid range");
+                    next_token();
+                } else {
+                    last = first;
+                }
+                g.set_range(first, last);
+                if (t_type != ';') parse_error("';' expected");
+                next_token();
+            } else if (token == "requires") {
+                next_token();
+                if (t_type != T_IDENT) parse_error("IDENT expected");
+                g.add_requires(token);
+                next_token();
+                while (t_type == ',') {
+                    next_token();
+                    if (t_type != T_IDENT) parse_error("IDENT expected");
+                    g.add_requires(token);
+                    next_token();
+                }
+                if (t_type != ';') parse_error("';' expected");
+                next_token();
+            } else if (token == "offline") {
+                next_token();
+                if (t_type != ';') parse_error("';' expected");
+                next_token();
+                g.set_offline(true);
+            } else if (token == "score") {
+                next_token();
+                if (t_type != T_IDENT) parse_error("NUM expected");
+                int score = -1;
+                try {
+                    score = stoi(token);
+                } catch (...) {
+                    parse_error("NUM expected");
+                }
+                if (score < 0) parse_error("invalid score");
+                next_token();
+                if (t_type != ';') parse_error("';' expected");
+                next_token();
+                g.set_score(score);
+            } else {
+                break;
+            }
         }
-        if (in_c == '}') {
-            t_line = c_line;
-            t_pos = c_pos;
-            token = "}";
-            return;
-        }
-        die("%s: %d: %d: invalid character", path.c_str(), c_line, c_pos);
+        if (t_type != '}') parse_error("'}' expected");
+        next_token();
+        groups.push_back(g);
     }
 
     void parse_groups()
     {
         while (token == "group") {
-            next_token();
+            parse_group();
+        }
+        if (groups.size() <= 0) parse_error("no groups defined");
+        sort(groups.begin(), groups.end(), [](const Group &g1, const Group &g2) -> bool { return g1.get_first() < g2.get_first(); });
+        for (int i = 1; i < int(groups.size()); ++i) {
+            if (groups[i].get_first() <= groups[i - 1].get_last()) {
+                parse_error("groups %s and %s overlap", groups[i - 1].get_group_id().c_str(), groups[i].get_group_id().c_str());
+            }
+            if (groups[i].get_first() != groups[i - 1].get_last() + 1) {
+                parse_error("hole between groups %s and %s", groups[i - 1].get_group_id().c_str(), groups[i].get_group_id().c_str());
+            }
+        }
+        for (int i = 0; i < int(groups.size()); ++i) {
+            const vector<string> &r = groups[i].get_requires();
+            for (int j = 0; j < int(r.size()); ++j) {
+                int k;
+                for (k = 0; k < i; ++k) {
+                    if (groups[k].get_group_id() == r[j])
+                        break;
+                }
+                if (k >= i) {
+                    parse_error("no group %s before group %s", r[j].c_str(), groups[i].get_group_id().c_str());
+                }
+            }
+        }
+        int i;
+        for (i = 0; i < int(groups.size()); ++i) {
+            if (groups[i].get_offline())
+                break;
+        }
+        if (i < int(groups.size())) {
+            for (; i < int(groups.size()); ++i) {
+                if (!groups[i].get_offline()) {
+                    parse_error("all offline groups must follow all online groups");
+                }
+            }
         }
     }
 
@@ -173,10 +339,58 @@ public:
         next_token();
         parse_groups();
         if (token != "") {
-            die("%s: %d: %d: parse error", path.c_str(), t_line, t_pos);
+            parse_error("EOF expected");
         }
     }
+
+    const Group *find_group(const string &id) const
+    {
+        for (auto i = groups.begin(); i != groups.end(); ++i) {
+            if (i->get_group_id() == id)
+                return &(*i);
+        }
+        return NULL;
+    }
+
+    Group *find_group(int test_num)
+    {
+        for (auto i = groups.begin(); i != groups.end(); ++i) {
+            if (i->get_first() <= test_num && test_num <= i->get_last())
+                return &(*i);
+        }
+        return NULL;
+    }
+
+    const vector<Group> &get_groups() const { return groups; }
 };
+
+void
+ConfigParser::parse_error(const char *format, ...) const
+{
+    va_list args;
+    char buf[1024];
+
+    va_start(args, format);
+    snprintf(buf, sizeof(buf), format, args);
+    va_end(args);
+
+    fprintf(stderr, "%s: %d: %d: parse error: %s\n", path.c_str(), t_line, t_pos, buf);
+    exit(RUN_CHECK_FAILED);
+}
+
+void
+ConfigParser::scan_error(const char *format, ...) const
+{
+    va_list args;
+    char buf[1024];
+
+    va_start(args, format);
+    snprintf(buf, sizeof(buf), format, args);
+    va_end(args);
+
+    fprintf(stderr, "%s: %d: %d: scan error: %s\n", path.c_str(), c_line, c_pos, buf);
+    exit(RUN_CHECK_FAILED);
+}
 
 int
 main(int argc, char *argv[])
@@ -210,6 +424,113 @@ main(int argc, char *argv[])
     string configpath = selfdir + "/valuer.cfg";
     ConfigParser parser;
     parser.parse(configpath);
+
+    if (!interactive_flag) die("non-interactive mode not yet supported");
+    int total_count = -2;
+    if (scanf("%d", &total_count) != 1) die("expected the count of tests");
+    if (total_count != -1) die("count value must be -1");
+
+    int test_num = 0, t_status, t_score, t_time;
+    while (scanf("%d%d%d", &t_status, &t_score, &t_time) == 3) {
+        ++test_num;
+        Group *g = parser.find_group(test_num);
+        if (g == NULL) die("unexpected test number %d", test_num);
+        if (t_status == RUN_OK) {
+            // just go to the next test...
+            g->inc_passed_count();
+            printf("%d\n", -1);
+            fflush(stdout);
+        } else {
+            if (test_num < g->get_last() && !g->get_offline()) {
+                char buf[1024];
+                snprintf(buf, sizeof(buf), 
+                         "Тестирование на тестах %d-%d не выполнялось, "
+                         "так как тест %d не пройден, и оценка за группу тестов %s - 0 баллов.\n",
+                         test_num + 1, g->get_last(), test_num, g->get_group_id().c_str());
+                g->set_comment(string(buf));
+            }
+            test_num = g->get_last() + 1;
+            while (1) {
+                g = parser.find_group(test_num);
+                if (g == NULL) {
+                    printf("%d\n", -test_num);
+                    fflush(stdout);
+                    --test_num;
+                    break;
+                }
+                const vector<string> &req = g->get_requires();
+                if (req.size() <= 0) {
+                    printf("%d\n", -test_num);
+                    fflush(stdout);
+                    --test_num;
+                    break;
+                }
+                int i;
+                const Group *gg = NULL;
+                for (i = 0; i < int(req.size()); ++i) {
+                    gg = parser.find_group(req[i]);
+                    if (gg == NULL) die("group %s not found", req[i].c_str());
+                    if (!gg->is_passed()) break;
+                }
+                if (i >= int(req.size())) {
+                    // all requirements are ok
+                    printf("%d\n", -test_num);
+                    fflush(stdout);
+                    --test_num;
+                    break;
+                }
+                if (!g->get_offline()) {
+                    char buf[1024];
+                    snprintf(buf, sizeof(buf), 
+                             "Тестирование на тестах %d-%d не выполнялось, "
+                             "так как не пройдена одна из требуемых групп %s.\n",
+                             g->get_first(), g->get_last(), gg->get_group_id().c_str());
+                    g->set_comment(string(buf));
+                } else if (g->get_offline() && !gg->get_offline()) {
+                    char buf[1024];
+                    snprintf(buf, sizeof(buf), 
+                             "Тестирование на тестах %d-%d не будет выполняться после окончания тура, "
+                             "так как не пройдена одна из требуемых групп %s.\n",
+                             g->get_first(), g->get_last(), gg->get_group_id().c_str());
+                    g->set_comment(string(buf));
+                }
+                test_num = g->get_last() + 1;
+            }
+        }
+    }
+
+    FILE *fcmt = fopen(argv[1], "w");
+    if (!fcmt) die("cannot open file '%s' for writing", argv[1]);
+
+    int score = 0, user_status = RUN_OK, user_score = 0, user_tests_passed = 0;
+    for (const Group &g : parser.get_groups()) {
+        if (g.has_comment()) {
+            fprintf(fcmt, "%s", g.get_comment().c_str());
+        }
+        if (g.get_offline()) {
+            if (g.is_passed()) {
+                score += g.get_score();
+            }
+        } else {
+            user_tests_passed += g.get_passed_count();
+            if (g.is_passed()) {
+                user_score += g.get_score();
+                score += g.get_score();
+            } else {
+                user_status = RUN_PARTIAL;
+            }
+        }
+    }
+
+    printf("%d", score);
+    if (marked_flag) {
+        printf(" %d", 1);
+    }
+    if (user_score_flag) {
+        printf(" %d %d %d", user_status, user_score, user_tests_passed);
+    }
+    printf("\n");
+    fflush(stdout);
 }
 
 /*
