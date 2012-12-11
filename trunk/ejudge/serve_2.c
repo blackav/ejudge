@@ -1665,6 +1665,11 @@ serve_run_request(
   srpp->open_tests = xstrdup2(prob->open_tests);
 
   if (srgp->advanced_layout > 0) {
+    get_advanced_layout_path(pathbuf, sizeof(pathbuf), global, prob, NULL, variant);
+    srpp->problem_dir = xstrdup(pathbuf);
+  }
+
+  if (srgp->advanced_layout > 0) {
     get_advanced_layout_path(pathbuf, sizeof(pathbuf), global, prob, DFLT_P_TEST_DIR, variant);
     srpp->test_dir = xstrdup(pathbuf);
   } else if (variant > 0) {
