@@ -882,6 +882,9 @@ invoke_valuer(
   task_AddArg(tsk, valuer_cmd);
   task_AddArg(tsk, score_cmt);
   task_AddArg(tsk, score_jcmt);
+  if (srpp->problem_dir && srpp->problem_dir[0]) {
+    task_AddArg(tsk, srpp->problem_dir);
+  }
   task_SetRedir(tsk, 0, TSR_FILE, score_list, TSK_READ);
   task_SetRedir(tsk, 1, TSR_FILE, score_res, TSK_REWRITE, TSK_FULL_RW);
   task_SetRedir(tsk, 2, TSR_FILE, score_err, TSK_REWRITE, TSK_FULL_RW);
@@ -977,6 +980,9 @@ start_interactive_valuer(
   task_AddArg(tsk, valuer_cmd);
   task_AddArg(tsk, valuer_cmt_file);
   task_AddArg(tsk, valuer_jcmt_file);
+  if (srpp->problem_dir && srpp->problem_dir[0]) {
+    task_AddArg(tsk, srpp->problem_dir);
+  }
   task_SetRedir(tsk, 0, TSR_DUP, stdin_fd);
   task_SetRedir(tsk, 1, TSR_DUP, stdout_fd);
   task_SetRedir(tsk, 2, TSR_FILE, valuer_err_file, TSK_APPEND, TSK_FULL_RW);
