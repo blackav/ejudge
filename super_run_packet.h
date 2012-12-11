@@ -115,6 +115,7 @@ struct super_run_in_problem_packet
   unsigned char *short_name;
   unsigned char *long_name;
   unsigned char *internal_name;
+  unsigned char *problem_dir;
   unsigned char *test_dir;
   unsigned char *corr_dir;
   unsigned char *info_dir;
