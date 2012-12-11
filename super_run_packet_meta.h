@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/12/05 18:27:31
+// Generated 2012/12/11 13:19:12
 
 #ifndef __SUPER_RUN_PACKET_META_H__
 #define __SUPER_RUN_PACKET_META_H__
@@ -101,6 +101,7 @@ enum
   META_SUPER_RUN_IN_PROBLEM_PACKET_short_name,
   META_SUPER_RUN_IN_PROBLEM_PACKET_long_name,
   META_SUPER_RUN_IN_PROBLEM_PACKET_internal_name,
+  META_SUPER_RUN_IN_PROBLEM_PACKET_problem_dir,
   META_SUPER_RUN_IN_PROBLEM_PACKET_test_dir,
   META_SUPER_RUN_IN_PROBLEM_PACKET_corr_dir,
   META_SUPER_RUN_IN_PROBLEM_PACKET_info_dir,

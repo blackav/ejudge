@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/12/05 18:27:31
+// Generated 2012/12/11 13:19:12
 
 #include "super_run_packet_meta.h"
 #include "super_run_packet.h"
@@ -141,6 +141,7 @@ static struct meta_info_item meta_info_super_run_in_problem_packet_data[] =
   [META_SUPER_RUN_IN_PROBLEM_PACKET_short_name] = { META_SUPER_RUN_IN_PROBLEM_PACKET_short_name, 's', XSIZE(struct super_run_in_problem_packet, short_name), "short_name", XOFFSET(struct super_run_in_problem_packet, short_name) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_long_name] = { META_SUPER_RUN_IN_PROBLEM_PACKET_long_name, 's', XSIZE(struct super_run_in_problem_packet, long_name), "long_name", XOFFSET(struct super_run_in_problem_packet, long_name) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_internal_name] = { META_SUPER_RUN_IN_PROBLEM_PACKET_internal_name, 's', XSIZE(struct super_run_in_problem_packet, internal_name), "internal_name", XOFFSET(struct super_run_in_problem_packet, internal_name) },
+  [META_SUPER_RUN_IN_PROBLEM_PACKET_problem_dir] = { META_SUPER_RUN_IN_PROBLEM_PACKET_problem_dir, 's', XSIZE(struct super_run_in_problem_packet, problem_dir), "problem_dir", XOFFSET(struct super_run_in_problem_packet, problem_dir) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_test_dir] = { META_SUPER_RUN_IN_PROBLEM_PACKET_test_dir, 's', XSIZE(struct super_run_in_problem_packet, test_dir), "test_dir", XOFFSET(struct super_run_in_problem_packet, test_dir) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_corr_dir] = { META_SUPER_RUN_IN_PROBLEM_PACKET_corr_dir, 's', XSIZE(struct super_run_in_problem_packet, corr_dir), "corr_dir", XOFFSET(struct super_run_in_problem_packet, corr_dir) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_info_dir] = { META_SUPER_RUN_IN_PROBLEM_PACKET_info_dir, 's', XSIZE(struct super_run_in_problem_packet, info_dir), "info_dir", XOFFSET(struct super_run_in_problem_packet, info_dir) },
