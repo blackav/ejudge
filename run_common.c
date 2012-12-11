@@ -31,7 +31,6 @@
 #include "full_archive.h"
 #include "win32_compat.h"
 #include "ejudge_cfg.h"
-//#include "cr_serialize.h"
 #include "interrupt.h"
 #include "nwrun_packet.h"
 #include "filehash.h"
@@ -3072,6 +3071,8 @@ append_skipped_test(
         const struct super_run_in_problem_packet *srpp,
         int cur_test,
         struct testinfo_vector *tests,
+        int open_tests_count,
+        const int *open_tests_val,
         int test_score_count,
         const int *test_score_val)
 {
@@ -3085,6 +3086,11 @@ append_skipped_test(
   ++tests->size;
 
   cur_info->status = RUN_SKIPPED;
+
+  cur_info->visibility = TV_NORMAL;
+  if (open_tests_val && cur_test > 0 && cur_test < open_tests_count) {
+    cur_info->visibility = open_tests_val[cur_test];
+  }
 
   int test_max_score = -1;
   if (test_score_val && cur_test > 0 && cur_test < test_score_count) {
@@ -3391,8 +3397,9 @@ run_tests(
         }
 
         for (++cur_test; cur_test < reply_next_num; ++cur_test) {
-          append_skipped_test(srpp, cur_test, &tests, test_score_count,
-                              test_score_val);
+          append_skipped_test(srpp, cur_test, &tests,
+                              open_tests_count, open_tests_val,
+                              test_score_count, test_score_val);
         }
         --cur_test;
         continue;
