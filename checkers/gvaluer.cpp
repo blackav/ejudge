@@ -395,25 +395,29 @@ ConfigParser::scan_error(const char *format, ...) const
 int
 main(int argc, char *argv[])
 {
-    if (argc != 3) die("invalid number of arguments");
+    if (argc < 3 || argc > 4) die("invalid number of arguments");
 
     string self(argv[0]);
     string selfdir;
-    size_t pos = self.find_last_of('/');
-    if (pos == string::npos) {
-        char buf[PATH_MAX];
-        if (!getcwd(buf, sizeof(buf))) die("getcwd() failed");
-        selfdir = buf;
-    } else if (pos == 0) {
-        die("won't work in the root directory");
-    } else if (self[0] == '/') {
-        selfdir = self.substr(0, pos);
+    if (argc == 3) {
+        size_t pos = self.find_last_of('/');
+        if (pos == string::npos) {
+            char buf[PATH_MAX];
+            if (!getcwd(buf, sizeof(buf))) die("getcwd() failed");
+            selfdir = buf;
+        } else if (pos == 0) {
+            die("won't work in the root directory");
+        } else if (self[0] == '/') {
+            selfdir = self.substr(0, pos);
+        } else {
+            char buf[PATH_MAX];
+            if (!getcwd(buf, sizeof(buf))) die("getcwd() failed");
+            selfdir = buf;
+            if (selfdir != "/") selfdir += '/';
+            selfdir += self.substr(0, pos);
+        }
     } else {
-        char buf[PATH_MAX];
-        if (!getcwd(buf, sizeof(buf))) die("getcwd() failed");
-        selfdir = buf;
-        if (selfdir != "/") selfdir += '/';
-        selfdir += self.substr(0, pos);
+        selfdir = argv[3];
     }
 
     if (!getenv("EJUDGE")) die("EJUDGE environment variable must be set");
