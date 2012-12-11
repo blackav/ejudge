@@ -69,6 +69,7 @@ static bool marked_flag;
 static bool user_score_flag;
 static bool interactive_flag;
 
+class ConfigParser;
 class Group
 {
     string group_id;
@@ -77,8 +78,10 @@ class Group
     vector<string> requires;
     bool offline = false;
     int score = 0;
+    int test_score = -1;
 
     int passed_count = 0;
+    int total_score = 0;
     string comment;
 
 public:
@@ -111,7 +114,42 @@ public:
     void set_comment(const string &comment_) { comment = comment_; }
     const string &get_comment() const { return comment; }
     bool has_comment() const { return comment.length() > 0; }
+
+    void set_test_score(int ts) { test_score = ts; }
+    int get_test_score() const { return test_score; }
+
+    bool meet_requirements(const ConfigParser &cfg, const Group *& grp) const;
+
+    void add_total_score()
+    {
+        if (test_score > 0) total_score += test_score;
+    }
+    int get_total_score() const { return total_score; }
+
+    void format_comment(const char *format, ...) __attribute__((format(printf, 2, 3)));
+
+    int calc_score() const
+    {
+        if (test_score < 0 && passed_count == (last - first + 1)) {
+            return score;
+        } else if (test_score >= 0) {
+            return total_score;
+        }
+        return 0;
+    }
 };
+
+void
+Group::format_comment(const char *format, ...)
+{
+    va_list args;
+    char buf[1024];
+
+    va_start(args, format);
+    snprintf(buf, sizeof(buf), format, args);
+    va_end(args);
+    comment = buf;
+}
 
 class ConfigParser
 {
@@ -175,12 +213,12 @@ public:
             token = "";
             return;
         }
-        if (isalnum(in_c)) {
+        if (isalnum(in_c) || in_c == '_') {
             token = "";
             t_type = T_IDENT;
             t_line = c_line;
             t_pos = c_pos;
-            while (isalnum(in_c)) {
+            while (isalnum(in_c) || in_c == '_') {
                 token += char(in_c);
                 next_char();
             }
@@ -277,6 +315,20 @@ public:
                 if (t_type != ';') parse_error("';' expected");
                 next_token();
                 g.set_score(score);
+            } else if (token == "test_score") {
+                next_token();
+                if (t_type != T_IDENT) parse_error("NUM expected");
+                int test_score = -1;
+                try {
+                    test_score = stoi(token);
+                } catch (...) {
+                    parse_error("NUM expected");
+                }
+                if (test_score < 0) parse_error("invalid test_score");
+                next_token();
+                if (t_type != ';') parse_error("';' expected");
+                next_token();
+                g.set_test_score(test_score);
             } else {
                 break;
             }
@@ -392,6 +444,28 @@ ConfigParser::scan_error(const char *format, ...) const
     exit(RUN_CHECK_FAILED);
 }
 
+bool
+Group::meet_requirements(const ConfigParser &cfg, const Group *&grp) const
+{
+    if (requires.size() <= 0) {
+        grp = NULL;
+        return true;
+    }
+    int i;
+    const Group *gg = NULL;
+    for (i = 0; i < int(requires.size()); ++i) {
+        gg = cfg.find_group(requires[i]);
+        if (gg == NULL) die("group %s not found", requires[i].c_str());
+        if (!gg->is_passed()) break;
+    }
+    if (i >= int(requires.size())) {
+        grp = NULL;
+        return true;
+    }
+    grp = gg;
+    return false;
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -434,73 +508,46 @@ main(int argc, char *argv[])
     if (scanf("%d", &total_count) != 1) die("expected the count of tests");
     if (total_count != -1) die("count value must be -1");
 
-    int test_num = 0, t_status, t_score, t_time;
+    int test_num = 1, t_status, t_score, t_time;
     while (scanf("%d%d%d", &t_status, &t_score, &t_time) == 3) {
-        ++test_num;
         Group *g = parser.find_group(test_num);
         if (g == NULL) die("unexpected test number %d", test_num);
         if (t_status == RUN_OK) {
             // just go to the next test...
             g->inc_passed_count();
-            printf("%d\n", -1);
-            fflush(stdout);
+            g->add_total_score();
+            ++test_num;
+        } else if (g->get_test_score() >= 0) {
+            // by-test score, just go on
+            ++test_num;
         } else {
             if (test_num < g->get_last() && !g->get_offline()) {
-                char buf[1024];
-                snprintf(buf, sizeof(buf), 
-                         "Тестирование на тестах %d-%d не выполнялось, "
-                         "так как тест %d не пройден, и оценка за группу тестов %s - 0 баллов.\n",
-                         test_num + 1, g->get_last(), test_num, g->get_group_id().c_str());
-                g->set_comment(string(buf));
+                g->format_comment("Тестирование на тестах %d-%d не выполнялось, "
+                                  "так как тест %d не пройден, и оценка за группу тестов %s - 0 баллов.\n",
+                                  test_num + 1, g->get_last(), test_num, g->get_group_id().c_str());
             }
             test_num = g->get_last() + 1;
-            while (1) {
-                g = parser.find_group(test_num);
-                if (g == NULL) {
-                    printf("%d\n", -test_num);
-                    fflush(stdout);
-                    --test_num;
-                    break;
-                }
-                const vector<string> &req = g->get_requires();
-                if (req.size() <= 0) {
-                    printf("%d\n", -test_num);
-                    fflush(stdout);
-                    --test_num;
-                    break;
-                }
-                int i;
-                const Group *gg = NULL;
-                for (i = 0; i < int(req.size()); ++i) {
-                    gg = parser.find_group(req[i]);
-                    if (gg == NULL) die("group %s not found", req[i].c_str());
-                    if (!gg->is_passed()) break;
-                }
-                if (i >= int(req.size())) {
-                    // all requirements are ok
-                    printf("%d\n", -test_num);
-                    fflush(stdout);
-                    --test_num;
-                    break;
-                }
-                if (!g->get_offline()) {
-                    char buf[1024];
-                    snprintf(buf, sizeof(buf), 
-                             "Тестирование на тестах %d-%d не выполнялось, "
-                             "так как не пройдена одна из требуемых групп %s.\n",
-                             g->get_first(), g->get_last(), gg->get_group_id().c_str());
-                    g->set_comment(string(buf));
-                } else if (g->get_offline() && !gg->get_offline()) {
-                    char buf[1024];
-                    snprintf(buf, sizeof(buf), 
-                             "Тестирование на тестах %d-%d не будет выполняться после окончания тура, "
-                             "так как не пройдена одна из требуемых групп %s.\n",
-                             g->get_first(), g->get_last(), gg->get_group_id().c_str());
-                    g->set_comment(string(buf));
-                }
-                test_num = g->get_last() + 1;
-            }
         }
+        if (test_num <= g->get_last()) {
+            printf("%d\n", -1);
+            fflush(stdout);
+            continue;
+        }
+        const Group *gg = NULL;
+        while ((g = parser.find_group(test_num)) && !g->meet_requirements(parser, gg)) {
+            if (!g->get_offline()) {
+                g->format_comment("Тестирование на тестах %d-%d не выполнялось, "
+                                  "так как не пройдена одна из требуемых групп %s.\n",
+                                  g->get_first(), g->get_last(), gg->get_group_id().c_str());
+            } else if (g->get_offline() && !gg->get_offline()) {
+                g->format_comment("Тестирование на тестах %d-%d не будет выполняться после окончания тура, "
+                                  "так как не пройдена одна из требуемых групп %s.\n",
+                                  g->get_first(), g->get_last(), gg->get_group_id().c_str());
+            }
+            test_num = g->get_last() + 1;
+        }
+        printf("%d\n", -test_num);
+        fflush(stdout);
     }
 
     FILE *fcmt = fopen(argv[1], "w");
@@ -512,15 +559,12 @@ main(int argc, char *argv[])
             fprintf(fcmt, "%s", g.get_comment().c_str());
         }
         if (g.get_offline()) {
-            if (g.is_passed()) {
-                score += g.get_score();
-            }
+            score += g.calc_score();
         } else {
             user_tests_passed += g.get_passed_count();
-            if (g.is_passed()) {
-                user_score += g.get_score();
-                score += g.get_score();
-            } else {
+            score += g.calc_score();
+            user_score += g.calc_score();
+            if (!g.is_passed()) {
                 user_status = RUN_PARTIAL;
             }
         }
