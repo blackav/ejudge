@@ -360,6 +360,9 @@ build_replace_cmd_suffix(unsigned char *buf, int size, const unsigned char *cmd,
   return buf;
 }
 
+static int
+is_makefile_rule_needed(const unsigned char *path);
+
 static void
 build_generate_checker_compilation_rule(
         FILE *out_f,
@@ -374,7 +377,8 @@ build_generate_checker_compilation_rule(
   const unsigned char *source_suffix = NULL;
   int count = 0;
 
-  if (!cmd || !cmd[0]) return;
+  if (!is_makefile_rule_needed(cmd)) return;
+
   get_advanced_layout_path(tmp_path, sizeof(tmp_path), global, prob, cmd, variant);
   languages = build_guess_language_by_cmd(tmp_path, &count);
   if (count <= 0) {
@@ -821,6 +825,22 @@ logged_rename(
   return 0;
 }
 
+static int
+is_makefile_rule_needed(const unsigned char *path)
+{
+  // empty value
+  if (!path || !path[0]) return 0;
+  // absolute path
+  if (path[0] == '/') return 0;
+  // relative-to-parent path
+  if (path[0] == '.' && path[1] == '.' && path[2] == '/') return 0;
+  // format substitution
+  if (path[0] == '%') return 0;
+  // variable substitution
+  if (path[0] == '$') return 0;
+  return 1;
+}
+
 static void
 do_generate_makefile(
         FILE *log_f,
@@ -872,27 +892,27 @@ do_generate_makefile(
   build_pattern_to_shell_pattern(test_pr_pat, sizeof(test_pr_pat), test_pat);
 
   // tmp_path is modified by guess_language_by_cmd
-  if (prob->check_cmd && prob->check_cmd[0]) {
+  if (is_makefile_rule_needed(prob->check_cmd)) {
     get_advanced_layout_path(tmp_path, sizeof(tmp_path), global, prob, prob->check_cmd, variant);
     languages |= build_guess_language_by_cmd(tmp_path, NULL);
   }
-  if (prob->valuer_cmd && prob->valuer_cmd[0]) {
+  if (is_makefile_rule_needed(prob->valuer_cmd)) {
     get_advanced_layout_path(tmp_path, sizeof(tmp_path), global, prob, prob->valuer_cmd, variant);
     languages |= build_guess_language_by_cmd(tmp_path, NULL);
   }
-  if (prob->interactor_cmd && prob->interactor_cmd[0]) {
+  if (is_makefile_rule_needed(prob->interactor_cmd)) {
     get_advanced_layout_path(tmp_path, sizeof(tmp_path), global, prob, prob->interactor_cmd, variant);
     languages |= build_guess_language_by_cmd(tmp_path, NULL);
   }
-  if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
+  if (is_makefile_rule_needed(prob->style_checker_cmd)) {
     get_advanced_layout_path(tmp_path, sizeof(tmp_path), global, prob, prob->style_checker_cmd, variant);
     languages |= build_guess_language_by_cmd(tmp_path, NULL);
   }
-  if (prob->test_checker_cmd && prob->test_checker_cmd[0]) {
+  if (is_makefile_rule_needed(prob->test_checker_cmd)) {
     get_advanced_layout_path(tmp_path, sizeof(tmp_path), global, prob, prob->test_checker_cmd, variant);
     languages |= build_guess_language_by_cmd(tmp_path, NULL);
   }
-  if (prob->init_cmd && prob->init_cmd[0]) {
+  if (is_makefile_rule_needed(prob->init_cmd)) {
     get_advanced_layout_path(tmp_path, sizeof(tmp_path), global, prob, prob->init_cmd, variant);
     languages |= build_guess_language_by_cmd(tmp_path, NULL);
   }
@@ -1137,19 +1157,19 @@ do_generate_makefile(
     fprintf(mk_f, " %s", prob->solution_cmd);
   }
   if ((!prob->standard_checker || !prob->standard_checker[0])
-      && prob->check_cmd && prob->check_cmd[0]) {
+      && is_makefile_rule_needed(prob->check_cmd)) {
     fprintf(mk_f, " %s", prob->check_cmd);
   }
-  if (prob->valuer_cmd && prob->valuer_cmd[0]) {
+  if (is_makefile_rule_needed(prob->valuer_cmd)) {
     fprintf(mk_f, " %s", prob->valuer_cmd);
   }
-  if (prob->interactor_cmd && prob->interactor_cmd[0]) {
+  if (is_makefile_rule_needed(prob->interactor_cmd)) {
     fprintf(mk_f, " %s", prob->interactor_cmd);
   }
-  if (prob->test_checker_cmd && prob->test_checker_cmd[0]) {
+  if (is_makefile_rule_needed(prob->test_checker_cmd)) {
     fprintf(mk_f, " %s", prob->test_checker_cmd);
   }
-  if (prob->init_cmd && prob->init_cmd[0]) {
+  if (is_makefile_rule_needed(prob->init_cmd)) {
     fprintf(mk_f, " %s", prob->init_cmd);
   }
   if (prob->type == PROB_TYPE_TESTS) {
@@ -1291,19 +1311,19 @@ do_generate_makefile(
     fprintf(mk_f, " %s", prob->solution_cmd);
   }
   if ((!prob->standard_checker || !prob->standard_checker[0])
-      && prob->check_cmd && prob->check_cmd[0]) {
+      && is_makefile_rule_needed(prob->check_cmd)) {
     fprintf(mk_f, " %s", prob->check_cmd);
   }  
-  if (prob->valuer_cmd && prob->valuer_cmd[0]) {
+  if (is_makefile_rule_needed(prob->valuer_cmd)) {
     fprintf(mk_f, " %s", prob->valuer_cmd);
   }  
-  if (prob->interactor_cmd && prob->interactor_cmd[0]) {
+  if (is_makefile_rule_needed(prob->interactor_cmd)) {
     fprintf(mk_f, " %s", prob->interactor_cmd);
   }  
-  if (prob->test_checker_cmd && prob->test_checker_cmd[0]) {
+  if (is_makefile_rule_needed(prob->test_checker_cmd)) {
     fprintf(mk_f, " %s", prob->test_checker_cmd);
   }  
-  if (prob->init_cmd && prob->init_cmd[0]) {
+  if (is_makefile_rule_needed(prob->init_cmd)) {
     fprintf(mk_f, " %s", prob->init_cmd);
   }  
   if (has_solutions) {
