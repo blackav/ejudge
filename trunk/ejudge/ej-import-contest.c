@@ -698,6 +698,7 @@ merge_problem_section(
         { CNTSPROB_checker_real_time_limit, META_PROBLEM_CONFIG_SECTION_checker_real_time_limit, 0 },
         { CNTSPROB_score_multiplier, META_PROBLEM_CONFIG_SECTION_score_multiplier, 0 },
         { CNTSPROB_prev_runs_to_show, META_PROBLEM_CONFIG_SECTION_prev_runs_to_show, 0 },
+        { CNTSPROB_max_user_run_count, META_PROBLEM_CONFIG_SECTION_max_user_run_count, 0 },
         { CNTSPROB_interactor_time_limit, META_PROBLEM_CONFIG_SECTION_interactor_time_limit, 0 },
         { CNTSPROB_max_open_file_count, META_PROBLEM_CONFIG_SECTION_max_open_file_count, 0 },
         { CNTSPROB_max_process_count, META_PROBLEM_CONFIG_SECTION_max_process_count, 0 },

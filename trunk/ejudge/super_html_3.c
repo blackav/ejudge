@@ -482,6 +482,7 @@ static const unsigned char * const action_to_help_url_map[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_CHANGE_TEST_SCORE] = "Serve.cfg:problem:test_score",
   [SSERV_CMD_PROB_CHANGE_RUN_PENALTY] = "Serve.cfg:problem:run_penalty",
   [SSERV_CMD_PROB_CHANGE_ACM_RUN_PENALTY] = "Serve.cfg:problem:acm_run_penalty",
+  [SSERV_CMD_PROB_CHANGE_MAX_USER_RUN_COUNT] = "Serve.cfg:problem:max_user_run_count",
   [SSERV_CMD_PROB_CHANGE_DISQUALIFIED_PENALTY] = "Serve.cfg:problem:disqualified_penalty",
   [SSERV_CMD_PROB_CHANGE_VARIABLE_FULL_SCORE] = "Serve.cfg:problem:variable_full_score",
   [SSERV_CMD_PROB_CHANGE_TEST_SCORE_LIST] = "Serve.cfg:problem:test_score_list",
@@ -6579,6 +6580,27 @@ super_html_print_problem(FILE *f,
   }
 
   if (show_adv) {
+    //PROBLEM_PARAM(max_user_run_count, "d"),
+    extra_msg = "";
+    if (prob->max_user_run_count < 0) {
+      if (prob->abstract) {
+        extra_msg = "<i>(Undefined)</i>";
+      } else {
+        prepare_set_prob_value(CNTSPROB_max_user_run_count,
+                               tmp_prob, sup_prob, sstate->global);
+        snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %d)</i>",
+                 tmp_prob->max_user_run_count);
+        extra_msg = msg_buf;
+      }
+    }
+    print_int_editing_row(f, "Max submissions for the problem:",
+                          prob->max_user_run_count, extra_msg,
+                          SSERV_CMD_PROB_CHANGE_MAX_USER_RUN_COUNT,
+                          session_id, form_row_attrs[row ^= 1],
+                          self_url, extra_args, prob_hidden_vars);
+  }
+
+  if (show_adv) {
     //PROBLEM_PARAM(hidden, "d"),
       extra_msg = "Undefined";
       if (!prob->abstract) {
@@ -7943,6 +7965,10 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_PROB_CHANGE_ACM_RUN_PENALTY:
     p_int = &prob->acm_run_penalty;
+    goto handle_int_1;
+
+  case SSERV_CMD_PROB_CHANGE_MAX_USER_RUN_COUNT:
+    p_int = &prob->max_user_run_count;
     goto handle_int_1;
 
   case SSERV_CMD_PROB_CHANGE_DISQUALIFIED_PENALTY:
