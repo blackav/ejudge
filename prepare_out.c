@@ -1292,6 +1292,9 @@ prepare_unparse_prob(
   if (!prob->abstract && prob->variant_num > 0) {
     fprintf(f, "variant_num = %d\n", prob->variant_num);
   }
+  if (prob->max_user_run_count > 0) {
+    fprintf(f, "max_user_run_count = %d\n", prob->max_user_run_count);
+  }
  
   if (prob->use_ac_not_ok >= 0)
     unparse_bool(f, "use_ac_not_ok", prob->use_ac_not_ok);
@@ -1665,6 +1668,8 @@ prepare_unparse_actual_prob(
     unparse_bool(f, "advance_to_next", prob->advance_to_next);
   if (prob->prev_runs_to_show > 0)
     fprintf(f, "prev_runs_to_show = %d\n", prob->prev_runs_to_show);    
+  if (prob->max_user_run_count > 0)
+    fprintf(f, "max_user_run_count = %d\n", prob->max_user_run_count);
   if (prob->disable_ctrl_chars > 0)
     unparse_bool(f, "disable_ctrl_chars", prob->disable_ctrl_chars);
   if (prob->valuer_sets_marked > 0)

@@ -409,6 +409,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(stand_last_column, "d"),
   PROBLEM_PARAM(score_multiplier, "d"),
   PROBLEM_PARAM(prev_runs_to_show, "d"),
+  PROBLEM_PARAM(max_user_run_count, "d"),
   PROBLEM_ALIAS(output_only, type, "d"),
   PROBLEM_PARAM(max_vm_size, "z"),
   PROBLEM_PARAM(max_stack_size, "z"),
@@ -957,6 +958,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->max_open_file_count = -1;
   p->max_process_count = -1;
   p->interactor_time_limit = -1;
+  p->max_user_run_count = -1;
 }
 
 void prepare_free_testsets(int t, struct testset_info *p);
@@ -3471,6 +3473,7 @@ set_defaults(
     prepare_set_prob_value(CNTSPROB_source_header, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_source_footer, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_normalization, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_max_user_run_count, prob, aprob, g);
 
     if (prob->priority_adjustment == -1000 && si != -1 &&
         aprob->priority_adjustment != -1000) {
@@ -5844,6 +5847,13 @@ prepare_set_prob_value(
       out->skip_testing = 0;
     break;
 
+  case CNTSPROB_max_user_run_count:
+    if (out->max_user_run_count < 0 && abstr)
+      out->max_user_run_count = abstr->max_user_run_count;
+    if (out->max_user_run_count < 0)
+      out->max_user_run_count = 0;
+    break;
+
   case CNTSPROB_full_score:
     if (out->full_score == -1 && abstr) out->full_score = abstr->full_score;
     if (out->full_score == -1) out->full_score = DFLT_P_FULL_SCORE;
@@ -6475,6 +6485,7 @@ static const int prob_settable_list[] =
   CNTSPROB_enable_text_form,
   CNTSPROB_stand_ignore_score, CNTSPROB_stand_last_column,
   CNTSPROB_score_multiplier, CNTSPROB_prev_runs_to_show,
+  CNTSPROB_max_user_run_count,
   CNTSPROB_max_vm_size, CNTSPROB_max_stack_size, CNTSPROB_max_data_size,
   CNTSPROB_max_core_size, CNTSPROB_max_file_size,
   CNTSPROB_max_open_file_count, CNTSPROB_max_process_count,
@@ -6576,6 +6587,7 @@ static const unsigned char prob_settable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_stand_last_column] = 1,
   [CNTSPROB_score_multiplier] = 1,
   [CNTSPROB_prev_runs_to_show] = 1,
+  [CNTSPROB_max_user_run_count] = 1,
   [CNTSPROB_max_vm_size] = 1,
   [CNTSPROB_max_stack_size] = 1,
   [CNTSPROB_max_data_size] = 1,
@@ -6686,7 +6698,8 @@ static const int prob_inheritable_list[] =
   CNTSPROB_enable_process_group,
   CNTSPROB_enable_text_form, CNTSPROB_stand_ignore_score,
   CNTSPROB_stand_last_column, CNTSPROB_score_multiplier,
-  CNTSPROB_prev_runs_to_show, CNTSPROB_max_vm_size,
+  CNTSPROB_prev_runs_to_show, CNTSPROB_max_user_run_count,
+  CNTSPROB_max_vm_size,
   CNTSPROB_max_stack_size, CNTSPROB_max_data_size,
   CNTSPROB_max_core_size, CNTSPROB_max_file_size,
   CNTSPROB_max_open_file_count, CNTSPROB_max_process_count,
@@ -6784,6 +6797,7 @@ static const unsigned char prob_inheritable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_stand_last_column] = 1,
   [CNTSPROB_score_multiplier] = 1,
   [CNTSPROB_prev_runs_to_show] = 1,
+  [CNTSPROB_max_user_run_count] = 1,
   [CNTSPROB_max_vm_size] = 1,
   [CNTSPROB_max_stack_size] = 1,
   [CNTSPROB_max_data_size] = 1,
@@ -6917,6 +6931,7 @@ static const struct section_problem_data prob_undef_values =
   .stand_hide_time = -1,
   .score_multiplier = -1,
   .prev_runs_to_show = -1,
+  .max_user_run_count = -1,
   .advance_to_next = -1,
   .disable_ctrl_chars = -1,
   .valuer_sets_marked = -1,
@@ -7065,6 +7080,7 @@ static const struct section_problem_data prob_default_values =
   .stand_hide_time = 0,
   .score_multiplier = 0,
   .prev_runs_to_show = 0,
+  .max_user_run_count = 0,
   .advance_to_next = 0,
   .disable_ctrl_chars = 0,
   .valuer_sets_marked = 0,
