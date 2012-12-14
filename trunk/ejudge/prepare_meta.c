@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/12/05 18:27:31
+// Generated 2012/12/14 22:42:37
 
 #include "prepare_meta.h"
 #include "prepare.h"
@@ -393,6 +393,7 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_stand_hide_time] = { CNTSPROB_stand_hide_time, 'B', XSIZE(struct section_problem_data, stand_hide_time), "stand_hide_time", XOFFSET(struct section_problem_data, stand_hide_time) },
   [CNTSPROB_score_multiplier] = { CNTSPROB_score_multiplier, 'i', XSIZE(struct section_problem_data, score_multiplier), "score_multiplier", XOFFSET(struct section_problem_data, score_multiplier) },
   [CNTSPROB_prev_runs_to_show] = { CNTSPROB_prev_runs_to_show, 'i', XSIZE(struct section_problem_data, prev_runs_to_show), "prev_runs_to_show", XOFFSET(struct section_problem_data, prev_runs_to_show) },
+  [CNTSPROB_max_user_run_count] = { CNTSPROB_max_user_run_count, 'i', XSIZE(struct section_problem_data, max_user_run_count), "max_user_run_count", XOFFSET(struct section_problem_data, max_user_run_count) },
   [CNTSPROB_advance_to_next] = { CNTSPROB_advance_to_next, 'B', XSIZE(struct section_problem_data, advance_to_next), "advance_to_next", XOFFSET(struct section_problem_data, advance_to_next) },
   [CNTSPROB_disable_ctrl_chars] = { CNTSPROB_disable_ctrl_chars, 'B', XSIZE(struct section_problem_data, disable_ctrl_chars), "disable_ctrl_chars", XOFFSET(struct section_problem_data, disable_ctrl_chars) },
   [CNTSPROB_enable_text_form] = { CNTSPROB_enable_text_form, 'B', XSIZE(struct section_problem_data, enable_text_form), "enable_text_form", XOFFSET(struct section_problem_data, enable_text_form) },

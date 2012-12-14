@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/12/05 18:27:31
+// Generated 2012/12/14 22:42:37
 
 #ifndef __PREPARE_META_H__
 #define __PREPARE_META_H__
@@ -353,6 +353,7 @@ enum
   CNTSPROB_stand_hide_time,
   CNTSPROB_score_multiplier,
   CNTSPROB_prev_runs_to_show,
+  CNTSPROB_max_user_run_count,
   CNTSPROB_advance_to_next,
   CNTSPROB_disable_ctrl_chars,
   CNTSPROB_enable_text_form,

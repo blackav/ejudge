@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/12/05 18:27:31
+// Generated 2012/12/14 22:42:37
 
 #include "problem_config_meta.h"
 #include "problem_config.h"
@@ -76,6 +76,7 @@ static struct meta_info_item meta_info_problem_config_section_data[] =
   [META_PROBLEM_CONFIG_SECTION_priority_adjustment] = { META_PROBLEM_CONFIG_SECTION_priority_adjustment, 'i', XSIZE(struct problem_config_section, priority_adjustment), "priority_adjustment", XOFFSET(struct problem_config_section, priority_adjustment) },
   [META_PROBLEM_CONFIG_SECTION_score_multiplier] = { META_PROBLEM_CONFIG_SECTION_score_multiplier, 'i', XSIZE(struct problem_config_section, score_multiplier), "score_multiplier", XOFFSET(struct problem_config_section, score_multiplier) },
   [META_PROBLEM_CONFIG_SECTION_prev_runs_to_show] = { META_PROBLEM_CONFIG_SECTION_prev_runs_to_show, 'i', XSIZE(struct problem_config_section, prev_runs_to_show), "prev_runs_to_show", XOFFSET(struct problem_config_section, prev_runs_to_show) },
+  [META_PROBLEM_CONFIG_SECTION_max_user_run_count] = { META_PROBLEM_CONFIG_SECTION_max_user_run_count, 'i', XSIZE(struct problem_config_section, max_user_run_count), "max_user_run_count", XOFFSET(struct problem_config_section, max_user_run_count) },
   [META_PROBLEM_CONFIG_SECTION_interactor_time_limit] = { META_PROBLEM_CONFIG_SECTION_interactor_time_limit, 'i', XSIZE(struct problem_config_section, interactor_time_limit), "interactor_time_limit", XOFFSET(struct problem_config_section, interactor_time_limit) },
   [META_PROBLEM_CONFIG_SECTION_max_open_file_count] = { META_PROBLEM_CONFIG_SECTION_max_open_file_count, 'i', XSIZE(struct problem_config_section, max_open_file_count), "max_open_file_count", XOFFSET(struct problem_config_section, max_open_file_count) },
   [META_PROBLEM_CONFIG_SECTION_max_process_count] = { META_PROBLEM_CONFIG_SECTION_max_process_count, 'i', XSIZE(struct problem_config_section, max_process_count), "max_process_count", XOFFSET(struct problem_config_section, max_process_count) },
