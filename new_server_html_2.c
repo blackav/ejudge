@@ -2959,17 +2959,25 @@ ns_priv_edit_run_action(
     prob = cs->probs[new_info.prob_id];
   }
   if (prob && prob->variant_num > 0) {
+    value = -1;
     if (ns_cgi_param_int(phr, "variant", &value) < 0 || value < 0) {
+      /*
       fprintf(log_f, "invalid 'variant' field value\n");
       FAIL(NEW_SRV_ERR_INV_PARAM);
-    }
-    if (info.variant != value) {
-      if (value > prob->variant_num) {
-        fprintf(log_f, "invalid 'variant' field value\n");
-        FAIL(NEW_SRV_ERR_INV_PARAM);
+      */
+      if (info.variant > 0) {
+        new_info.variant = 0;
+        mask |= RE_VARIANT;
       }
-      new_info.variant = value;
-      mask |= RE_VARIANT;
+    } else {
+      if (info.variant != value) {
+        if (value > prob->variant_num) {
+          fprintf(log_f, "invalid 'variant' field value\n");
+          FAIL(NEW_SRV_ERR_INV_PARAM);
+        }
+        new_info.variant = value;
+        mask |= RE_VARIANT;
+      }
     }
   }
 
