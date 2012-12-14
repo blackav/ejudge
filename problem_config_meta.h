@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/12/05 18:27:31
+// Generated 2012/12/14 22:42:37
 
 #ifndef __PROBLEM_CONFIG_META_H__
 #define __PROBLEM_CONFIG_META_H__
@@ -71,6 +71,7 @@ enum
   META_PROBLEM_CONFIG_SECTION_priority_adjustment,
   META_PROBLEM_CONFIG_SECTION_score_multiplier,
   META_PROBLEM_CONFIG_SECTION_prev_runs_to_show,
+  META_PROBLEM_CONFIG_SECTION_max_user_run_count,
   META_PROBLEM_CONFIG_SECTION_interactor_time_limit,
   META_PROBLEM_CONFIG_SECTION_max_open_file_count,
   META_PROBLEM_CONFIG_SECTION_max_process_count,
