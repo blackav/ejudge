@@ -1929,7 +1929,7 @@ process_polygon_zip(
         prob_cfg->short_name = xstrdup(pi->ejudge_short_name);
     }
     prob_cfg->internal_name = xstrdup(pi->problem_name);
-    snprintf(buf, sizeof(buf), "polygon:%s", pi->problem_name);
+    snprintf(buf, sizeof(buf), "polygon:%d", pi->problem_id);
     prob_cfg->extid = xstrdup(buf);
     snprintf(buf, sizeof(buf), "%d", pi->package_rev);
     prob_cfg->revision = xstrdup(buf);
