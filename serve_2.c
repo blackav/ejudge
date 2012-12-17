@@ -2270,7 +2270,7 @@ serve_read_compile_packet(
 
   if (serve_run_request(state, cnts, stderr, run_text, run_size,
                         global->contest_id, comp_pkt->run_id,
-                        re.user_id, re.prob_id, re.lang_id, 0,
+                        re.user_id, re.prob_id, re.lang_id, re.variant,
                         comp_extra->priority_adjustment,
                         comp_pkt->judge_id, comp_extra->accepting_mode,
                         comp_extra->notify_flag, re.mime_type,
@@ -2991,7 +2991,8 @@ serve_rejudge_run(
 
     serve_run_request(state, cnts, stderr, run_text, run_size,
                       global->contest_id, run_id,
-                      re.user_id, re.prob_id, 0, 0, priority_adjustment,
+                      re.user_id, re.prob_id, re.lang_id,
+                      re.variant, priority_adjustment,
                       -1, accepting_mode, 1, re.mime_type, 0, 0, 0);
     xfree(run_text);
     return;
