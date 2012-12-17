@@ -1,3 +1,182 @@
+2012-12-14 (r7248) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html_2.c:
+	(ns_priv_edit_run_action) variant editing is improved.
+
+2012-12-14 (r7246) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_problem_data) 'max_user_run_count' field is added.
+
+	* problem_config.h:
+	(struct problem_config_section) 'max_user_run_count' field is added.
+
+	* super_proto.h:
+	editing of 'max_user_run_count' problem configuration variable
+	is supported.
+
+	* ej-import-contest.c:
+	'max_user_run_count' problem configuration variable is supported.
+
+	* prepare.c, prepare_out.c:
+	'max_user_run_count' problem configuration variable is supported.
+
+	* serve-control.c, super-serve.c, super_html_3.c, super_proto.c:
+	editing of 'max_user_run_count' problem configuration variable
+	is supported.
+
+2012-12-12 (r7244) Alexander Chernov  <cher@ejudge.ru>
+
+	* build_support.c:
+	(is_makefile_rule_needed) new function;
+	(do_generate_makefile) rules only for those files, which are
+	  marked by 'is_makefile_rule_needed' are generated.
+
+2012-12-11 (r7241) Alexander Chernov  <cher@ejudge.ru>
+
+	* run_common.c:
+	'problem_dir' incoming parameter is passed to the valuer.
+
+	* serve_2.c:
+	'problem_dir' parameter is passed to ej-super-run.
+
+2012-12-11 (r7239) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_run_packet.h:
+	(struct super_run_in_problem_packet) 'problem_dir' field is added.
+
+2012-12-11 (r7237) Alexander Chernov  <cher@ejudge.ru>
+
+	* run_common.c:
+	SKIPPED tests are correctly marked HIDDEN.
+
+2012-12-09 (r7233) Alexander Chernov  <cher@ejudge.ru>
+
+	* cgi.c:
+	default content_length is 0, not INT_MAX.
+
+2012-12-09 (r7230) Alexander Chernov  <cher@ejudge.ru>
+
+	* run.h:
+	(struct testinfo) 'checker_score' is removed.
+
+	* runlog.h:
+	RUN_SKIPPED is added.
+
+	* html.c:
+	(write_xml_team_testing_report) comment is not printed.
+
+	* run_common.c:
+	improvements to the interactive valuer support.
+
+	* runlog_static.c:
+	RUN_SKIPPED is added.
+
+2012-12-09 (r7224) Alexander Chernov  <cher@ejudge.ru>
+
+	* ej_process.h:
+	(ejudge_timed_write) 'log' parameter is added;
+	(ejudge_timed_fdgets) 'log' parameter is added.
+
+	* master_html.c:
+	(write_xml_testing_report) 'Note' renamed to 'Testing messages'.
+
+	* run_common.c:
+	interative valuer improvements.
+
+2012-12-08 (r7220) Alexander Chernov  <cher@ejudge.ru>
+
+	* run_common.c:
+	"ej_process.h" is included;
+	(parse_valuer_score) new function;
+	(read_log_file) new function;
+	(run_tests) initial implementation of interactive valuer support.
+
+2012-12-08 (r7218) Alexander Chernov  <cher@ejudge.ru>
+
+	* ej_process.h:
+	(ejudge_timed_write) new function prototype;
+	(ejudge_timed_fdgets) new function prototype.
+
+	* run_common.c:
+	progress in implementing interactive valuer.
+
+2012-12-05 (r7208) Alexander Chernov  <cher@ejudge.ru>
+
+	* ej-import-contest.c, super_run_packet.c:
+	'interactive_valuer', 'disable_pe', 'disable_wtl' configuration
+	variables are supported.
+
+	* prepare.c, prepare_out.c, serve_2.c:
+	'interactive_valuer', 'disable_pe', 'disable_wtl' problem configuration
+	variables are supported.
+
+	* run_common.c:
+	'disable_pe', 'disable_wtl' problem configuration variables are handled.
+
+	* serve-control.c, super_html_3.c, super_html_4.c, super_proto.c, super-serve.c:
+	editing of 'interactive_valuer', 'disable_pe', 'disable_wtl' problem
+	configuration variables is supported.
+
+2012-12-05 (r7206) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_problem_data) new fields 'interactive_valuer',
+	'disable_pe', 'disable_wtl' are added.
+
+	* problem_config.h:
+	(struct problem_config_section) new fields 'interactive_valuer',
+	'disable_pe', 'disable_wtl' are added.
+
+	* super_proto.h:
+	editing of new problem configuration variables 'interactive_valuer',
+	'disable_pe', 'disable_wtl' is supported.
+
+	* super_run_packet.h:
+	(struct super_run_in_problem_packet) new fields 'interactive_valuer',
+	'disable_pe', 'disable_wtl' are added.
+
+2012-12-05 (r7204) Alexander Chernov  <cher@ejudge.ru>
+
+	* serve_2.c:
+	(serve_read_compile_packet) RUN_COMPILED status change is skipped.
+
+2012-12-05 (r7201) Alexander Chernov  <cher@ejudge.ru>
+
+	* fileutl.h:
+	"reuse_xalloc.h" is included;
+	(get_file_list) new function prototype.
+
+	* new_server_html.c:
+	(ns_loop_callback) all compile and run reply packets are processed
+	instead of only one.
+
+2012-12-04 (r7198) Alexander Chernov  <cher@ejudge.ru>
+
+	* compile.c, ej-super-run.c, run.c, run_common.c:
+	semaphore-based serialization is commented out.
+
+2012-12-04 (r7196) Alexander Chernov  <cher@ejudge.ru>
+
+	* run_common.c:
+	(invoke_valuer) 'EJUDGE_MARKED' environment variable is set to '1' if
+	  'valuer_sets_marked' is set;
+	  'EJUDGE' environment variable is set to '1';
+	(invoke_interactor) 'EJUDGE' environment variable is set to '1';
+	(invoke_checker) 'EJUDGE_SCORING_CHECKER' environment variable is set
+	  to '1' if 'scoring_checker' is set;
+	  'EJUDGE' environment variable is set to '1'.
+
+2012-12-04 (r7194) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html_2.c:
+	(get_accepting_passed_tests) deleted problems are handled better.
+
+2012-12-04 (r7193) Alexander Chernov  <cher@ejudge.ru>
+
+	* serve_2.c:
+	(dur_to_str) integer overflow is fixed.
+
 2012-11-20 (r7184) Alexander Chernov  <cher@ejudge.ru>
 
 	* contests.c:

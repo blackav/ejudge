@@ -1,3 +1,8 @@
+2012-12-09 (r7228) Alexander Chernov  <cher@ejudge.ru>
+
+	* unparse_run_status.c:
+	RUN_SKIPPED status is supported.
+
 2012-11-07 (r7149) Alexander Chernov  <cher@ejudge.ru>
 
 	* unparse_run_status.c:

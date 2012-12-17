@@ -1,3 +1,33 @@
+2012-12-09 (r7223) Alexander Chernov  <cher@ejudge.ru>
+
+	* ej_process.c:
+	(ejudge_timed_write) 'log' parameter is added;
+	(ejudge_timed_fdgets) 'log' parameter is added.
+
+2012-12-08 (r7217) Alexander Chernov  <cher@ejudge.ru>
+
+	* ej_process.c:
+	(ejudge_timed_write) new function;
+	(ejudge_timed_fdgets) new function.
+
+2012-12-05 (r7203) Alexander Chernov  <cher@ejudge.ru>
+
+	* fileutl.c:
+	(get_file_list) the list of files is sorted.
+
+	* reuse_exec.c:
+	(task_Wait) redirect to 'task_NewWait'.
+
+2012-12-05 (r7200) Alexander Chernov  <cher@ejudge.ru>
+
+	* fileutl.c:
+	(get_file_list) new function.
+
+2012-12-04 (r7192) Alexander Chernov  <cher@ejudge.ru>
+
+	* reuse_exec.c:
+	(task_NewWait) polling intervals are improved.
+
 2012-11-18 (r7178) Alexander Chernov  <cher@ejudge.ru>
 
 	* reuse_exec.c:

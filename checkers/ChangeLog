@@ -1,3 +1,21 @@
+2012-12-11 (r7240) Alexander Chernov  <cher@ejudge.ru>
+
+	* gvaluer.cpp:
+	argv[3] is handled, if set to the problem directory.
+
+2012-12-09 (r7229) Alexander Chernov  <cher@ejudge.ru>
+
+	* checker_internal.h:
+	RUN_SKIPPED status is added.
+
+2012-11-27 (r7191) Alexander Chernov  <cher@ejudge.ru>
+
+	* checker_internal.h:
+	RUN_MAX_STATUS is set to 17.
+
+	* valuer_parse_input.c:
+	(valuer_parse_input) RUN_MAX_STATUS is used.
+
 2012-09-25 (r7036) Alexander Chernov  <cher@ejudge.ru>
 
 	* cmp_sexpr.c, cmp_long_double_seq.c, cmp_int_seq.c, cmp_huge_int.c, cmp_unsigned_long_long.c, cmp_double.c, cmp_long_long.c, cmp_file.c, cmp_double_seq.c, cmp_unsigned_long_long_seq.c, cmp_unsigned_int.c, cmp_long_long_seq.c, cmp_file_nospace.c, cmp_long_double.c, cmp_int.c, cmp_yesno.c, cmp_unsigned_int_seq.c:
