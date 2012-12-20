@@ -1,3 +1,15 @@
+2012-12-20 (r7259) Alexander Chernov  <cher@ejudge.ru>
+
+	* serve_state.h:
+	(serve_compile_request) 'variant' parameter is added.
+
+	* new_server_html.c, new_server_html_4.c, ej-batch.c:
+	calls to 'serve_compile_request' are updated.
+
+	* serve_2.c:
+	(serve_compile_request) 'variant' parameter is added;
+	(serve_rejudge_run) call of 'serve_compile_request' is updated.
+
 2012-12-14 (r7248) Alexander Chernov  <cher@ejudge.ru>
 
 	* new_server_html_2.c:
