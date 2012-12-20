@@ -577,6 +577,7 @@ process_submit(
                             sb.run_id /* run_id */,
                             1 /* user_id */,
                             lang->compile_id,
+                            0 /* variant */,
                             1 /* locale_id */,
                             0 /* output_only */,
                             lang->src_sfx /* sfx */,

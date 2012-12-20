@@ -1087,7 +1087,8 @@ cmd_submit_run(
                         "submit", "ok", RUN_COMPILING, NULL);
       if ((r = serve_compile_request(cs, run_text, run_size, global->contest_id,
                                      run_id, phr->user_id,
-                                     lang->compile_id, phr->locale_id, 0,
+                                     lang->compile_id, variant,
+                                     phr->locale_id, 0,
                                      lang->src_sfx,
                                      lang->compiler_env,
                                      0, prob->style_checker_cmd,
@@ -1108,7 +1109,7 @@ cmd_submit_run(
                         "submit", "ok", RUN_COMPILING, NULL);
       if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
         if ((r = serve_compile_request(cs, run_text, run_size, global->contest_id,
-                                       run_id, phr->user_id, 0 /* lang_id */,
+                                       run_id, phr->user_id, 0 /* lang_id */, variant,
                                        0 /* locale_id */, 1 /* output_only*/,
                                        mime_type_get_suffix(mime_type),
                                        NULL /* compiler_env */,
@@ -1157,7 +1158,7 @@ cmd_submit_run(
         serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
                         "submit", "ok", RUN_COMPILING, NULL);
         if ((r = serve_compile_request(cs, run_text, run_size, global->contest_id,
-                                       run_id, phr->user_id, 0 /* lang_id */,
+                                       run_id, phr->user_id, 0 /* lang_id */, variant,
                                        0 /* locale_id */, 1 /* output_only*/,
                                        mime_type_get_suffix(mime_type),
                                        NULL /* compiler_env */,

@@ -1035,6 +1035,7 @@ serve_compile_request(
         int run_id,
         int user_id,
         int lang_id,
+        int variant,
         int locale_id,
         int output_only,
         unsigned char const *sfx,
@@ -1070,6 +1071,16 @@ serve_compile_request(
   const unsigned char *compile_queue_dir = 0;
   int errcode = -SERVE_ERR_GENERIC;
 
+  if (prob->variant_num <= 0 && variant > 0) {
+    goto failed;
+  }
+  if (prob->variant_num > 0) {
+    if (variant <= 0) variant = find_variant(state, user_id, prob->id, 0);
+    if (variant <= 0) {
+      goto failed;
+    }
+  }
+
   if (prob->source_header[0]) {
     sformat_message(tmp_path, sizeof(tmp_path), 0, prob->source_header,
                     global, prob, lang, 0, 0, 0, 0, 0);
@@ -1095,7 +1106,7 @@ serve_compile_request(
       snprintf(tmp_path_2, sizeof(tmp_path_2), "%s", tmp_path);
     } else if (global->advanced_layout > 0) {
       get_advanced_layout_path(tmp_path_2, sizeof(tmp_path_2),
-                               global, prob, tmp_path, -1);
+                               global, prob, tmp_path, variant);
     } else {
       snprintf(tmp_path_2, sizeof(tmp_path_2), "%s/%s",
                global->statement_dir, tmp_path);
@@ -1123,7 +1134,7 @@ serve_compile_request(
       style_checker_cmd = tmp_path;
     } else if (global->advanced_layout > 0) {
       get_advanced_layout_path(tmp_path_2, sizeof(tmp_path_2),
-                               global, prob, tmp_path, -1);
+                               global, prob, tmp_path, variant);
       style_checker_cmd = tmp_path_2;
     } else {
       snprintf(tmp_path_2, sizeof(tmp_path_2), "%s/%s",
@@ -2960,7 +2971,7 @@ serve_rejudge_run(
 
     if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
       r = serve_compile_request(state, 0 /* str*/, -1 /* len*/, global->contest_id,
-                                run_id, re.user_id, 0 /* lang_id */,
+                                run_id, re.user_id, 0 /* lang_id */, re.variant,
                                 0 /* locale_id */, 1 /* output_only*/,
                                 mime_type_get_suffix(re.mime_type),
                                 NULL /* compiler_env */,
@@ -3009,7 +3020,7 @@ serve_rejudge_run(
   }
 
   r = serve_compile_request(state, 0, -1, global->contest_id, run_id, re.user_id,
-                            lang->compile_id, re.locale_id,
+                            lang->compile_id, re.variant, re.locale_id,
                             (prob->type > 0),
                             lang->src_sfx,
                             lang->compiler_env,
