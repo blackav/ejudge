@@ -2272,6 +2272,7 @@ ns_priv_edit_clar_page(
   fprintf(f, "<tr><td%s>%s:</td><td%s><select name=\"flags\" value=\"%d\">", cl, "Flags", cl, clar.flags);
   static const unsigned char * const clar_flags[] = { "New", "Viewed", "Answered", NULL };
   for (int i = 0; clar_flags[i]; ++i) {
+    s = "";
     if (i == clar.flags) s = " selected=\"selected\"";
     fprintf(f, "<option value=\"%d\"%s>%s</option>", i, s, ARMOR(clar_flags[i]));
   }
