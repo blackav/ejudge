@@ -5119,6 +5119,7 @@ write_xml_team_testing_report(
     fprintf(f, "<pre>");
     for (i = 0; i < r->run_tests; i++) {
       if (!(t = r->tests[i])) continue;
+      if (t->status == RUN_SKIPPED) continue;
       visibility = cntsprob_get_test_visibility(prob, i + 1, state->online_final_visibility);
       if (visibility == TV_FULLIFMARKED) {
         visibility = TV_HIDDEN;
