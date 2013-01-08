@@ -781,6 +781,7 @@ write_xml_testing_report(
   fprintf(f, "<pre>");
   for (i = 0; i < r->run_tests; i++) {
     if (!(t = r->tests[i])) continue;
+    if (t->status == RUN_SKIPPED) continue;
     if (!t->args && !t->args_too_long && !t->input
         && !t->output && !t->error && !t->correct && !t->checker) continue;
 
