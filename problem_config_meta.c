@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/12/14 22:42:37
+// Generated 2013/01/20 09:12:00
 
 #include "problem_config_meta.h"
 #include "problem_config.h"
@@ -29,6 +29,7 @@ static struct meta_info_item meta_info_problem_config_section_data[] =
   [META_PROBLEM_CONFIG_SECTION_olympiad_mode] = { META_PROBLEM_CONFIG_SECTION_olympiad_mode, 'B', XSIZE(struct problem_config_section, olympiad_mode), "olympiad_mode", XOFFSET(struct problem_config_section, olympiad_mode) },
   [META_PROBLEM_CONFIG_SECTION_score_latest] = { META_PROBLEM_CONFIG_SECTION_score_latest, 'B', XSIZE(struct problem_config_section, score_latest), "score_latest", XOFFSET(struct problem_config_section, score_latest) },
   [META_PROBLEM_CONFIG_SECTION_score_latest_or_unmarked] = { META_PROBLEM_CONFIG_SECTION_score_latest_or_unmarked, 'B', XSIZE(struct problem_config_section, score_latest_or_unmarked), "score_latest_or_unmarked", XOFFSET(struct problem_config_section, score_latest_or_unmarked) },
+  [META_PROBLEM_CONFIG_SECTION_score_latest_marked] = { META_PROBLEM_CONFIG_SECTION_score_latest_marked, 'B', XSIZE(struct problem_config_section, score_latest_marked), "score_latest_marked", XOFFSET(struct problem_config_section, score_latest_marked) },
   [META_PROBLEM_CONFIG_SECTION_use_ac_not_ok] = { META_PROBLEM_CONFIG_SECTION_use_ac_not_ok, 'B', XSIZE(struct problem_config_section, use_ac_not_ok), "use_ac_not_ok", XOFFSET(struct problem_config_section, use_ac_not_ok) },
   [META_PROBLEM_CONFIG_SECTION_ignore_prev_ac] = { META_PROBLEM_CONFIG_SECTION_ignore_prev_ac, 'B', XSIZE(struct problem_config_section, ignore_prev_ac), "ignore_prev_ac", XOFFSET(struct problem_config_section, ignore_prev_ac) },
   [META_PROBLEM_CONFIG_SECTION_team_enable_rep_view] = { META_PROBLEM_CONFIG_SECTION_team_enable_rep_view, 'B', XSIZE(struct problem_config_section, team_enable_rep_view), "team_enable_rep_view", XOFFSET(struct problem_config_section, team_enable_rep_view) },
