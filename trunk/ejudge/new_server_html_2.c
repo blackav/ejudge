@@ -8001,7 +8001,7 @@ ns_write_admin_contest_settings(
     if (cs->online_view_judge_score > 0) s = " selected=\"selected\"";
     fprintf(fout, "<option value=\"%d\"%s>%s</option>", 1, s, _("Yes"));
     fprintf(fout, "</select>%s",
-            BUTTON(NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_REPORT));
+            BUTTON(NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_JUDGE_SCORE));
     fprintf(fout, "</form>");
     fprintf(fout, "</td>");
     fprintf(fout, "</tr>\n");
