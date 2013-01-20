@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -460,6 +460,7 @@ static const unsigned char * const action_to_help_url_map[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_CHANGE_OLYMPIAD_MODE] = "Serve.cfg:problem:olympiad_mode",
   [SSERV_CMD_PROB_CHANGE_SCORE_LATEST] = "Serve.cfg:problem:score_latest",
   [SSERV_CMD_PROB_CHANGE_SCORE_LATEST_OR_UNMARKED] = "Serve.cfg:problem:score_latest_or_unmarked",
+  [SSERV_CMD_PROB_CHANGE_SCORE_LATEST_MARKED] = "Serve.cfg:problem:score_latest_marked",
   [SSERV_CMD_PROB_CHANGE_TIME_LIMIT] = "Serve.cfg:problem:time_limit",
   [SSERV_CMD_PROB_CHANGE_TIME_LIMIT_MILLIS] = "Serve.cfg:problem:time_limit_millis",
   [SSERV_CMD_PROB_CHANGE_REAL_TIME_LIMIT] = "Serve.cfg:problem:real_time_limit",
@@ -6254,6 +6255,22 @@ super_html_print_problem(FILE *f,
                                extra_msg,
                                session_id, form_row_attrs[row ^= 1],
                                self_url, extra_args, prob_hidden_vars);
+
+    //PROBLEM_PARAM(score_latest_marked, "d"),
+    extra_msg = 0;
+    if (!prob->abstract) {
+      prepare_set_prob_value(CNTSPROB_score_latest_marked,
+                             tmp_prob, sup_prob, sstate->global);
+      snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
+               tmp_prob->score_latest_marked?"Yes":"No");
+      extra_msg = msg_buf;
+    }
+    print_boolean_3_select_row(f, "Score the latest marked submit?", prob->score_latest_marked,
+                               SSERV_CMD_PROB_CHANGE_SCORE_LATEST_MARKED,
+                               extra_msg,
+                               session_id, form_row_attrs[row ^= 1],
+                               self_url, extra_args, prob_hidden_vars);
+
   }
 
   if (sstate->global && sstate->global->score_system != SCORE_ACM) {
@@ -7590,6 +7607,7 @@ super_html_add_abstract_problem(
   prob->olympiad_mode = 0;
   prob->score_latest = 0;
   prob->score_latest_or_unmarked = 0;
+  prob->score_latest_marked = 0;
   prob->time_limit = 1;
   prob->time_limit_millis = 0;
   prob->real_time_limit = 5;
@@ -7865,6 +7883,10 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_PROB_CHANGE_SCORE_LATEST_OR_UNMARKED:
     p_int = &prob->score_latest_or_unmarked;
+    goto handle_boolean_1;
+
+  case SSERV_CMD_PROB_CHANGE_SCORE_LATEST_MARKED:
+    p_int = &prob->score_latest_marked;
     goto handle_boolean_1;
 
   case SSERV_CMD_PROB_CHANGE_TIME_LIMIT:

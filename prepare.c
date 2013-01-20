@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -361,6 +361,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(olympiad_mode, "d"),
   PROBLEM_PARAM(score_latest, "d"),
   PROBLEM_PARAM(score_latest_or_unmarked, "d"),
+  PROBLEM_PARAM(score_latest_marked, "d"),
   PROBLEM_PARAM(time_limit, "d"),
   PROBLEM_PARAM(time_limit_millis, "d"),
   PROBLEM_PARAM(real_time_limit, "d"),
@@ -896,6 +897,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->olympiad_mode = -1;
   p->score_latest = -1;
   p->score_latest_or_unmarked = -1;
+  p->score_latest_marked = -1;
   p->time_limit = -1;
   p->time_limit_millis = -1;
   p->real_time_limit = -1;
@@ -3435,6 +3437,7 @@ set_defaults(
     prepare_set_prob_value(CNTSPROB_olympiad_mode, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_score_latest, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_score_latest_or_unmarked, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_score_latest_marked, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_time_limit, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_time_limit_millis, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_real_time_limit, prob, aprob, g);
@@ -5125,6 +5128,7 @@ prepare_set_abstr_problem_defaults(struct section_problem_data *prob,
   if (prob->olympiad_mode < 0) prob->olympiad_mode = 0;
   if (prob->score_latest < 0) prob->score_latest = 0;
   if (prob->score_latest_or_unmarked < 0) prob->score_latest_or_unmarked = 0;
+  if (prob->score_latest_marked < 0) prob->score_latest_marked = 0;
   if (prob->time_limit < 0) prob->time_limit = 0;
   if (prob->time_limit_millis < 0) prob->time_limit_millis = 0;
   if (prob->real_time_limit < 0) prob->real_time_limit = 0;
@@ -5701,6 +5705,11 @@ prepare_set_prob_value(
   case CNTSPROB_score_latest_or_unmarked:
     if (out->score_latest_or_unmarked == -1 && abstr) out->score_latest_or_unmarked = abstr->score_latest_or_unmarked;
     if (out->score_latest_or_unmarked == -1) out->score_latest_or_unmarked = 0;
+    break;
+
+  case CNTSPROB_score_latest_marked:
+    if (out->score_latest_marked == -1 && abstr) out->score_latest_marked = abstr->score_latest_marked;
+    if (out->score_latest_marked == -1) out->score_latest_marked = 0;
     break;
 
   case CNTSPROB_time_limit:
@@ -6464,7 +6473,7 @@ static const int prob_settable_list[] =
   CNTSPROB_combined_stdin, CNTSPROB_combined_stdout,
   CNTSPROB_binary_input, CNTSPROB_binary, CNTSPROB_ignore_exit_code,
   CNTSPROB_olympiad_mode,
-  CNTSPROB_score_latest, CNTSPROB_score_latest_or_unmarked, CNTSPROB_time_limit, CNTSPROB_time_limit_millis,
+  CNTSPROB_score_latest, CNTSPROB_score_latest_or_unmarked, CNTSPROB_score_latest_marked, CNTSPROB_time_limit, CNTSPROB_time_limit_millis,
   CNTSPROB_real_time_limit, CNTSPROB_interactor_time_limit, CNTSPROB_use_ac_not_ok, CNTSPROB_ignore_prev_ac,
   CNTSPROB_team_enable_rep_view, CNTSPROB_team_enable_ce_view,
   CNTSPROB_team_show_judge_report, CNTSPROB_ignore_compile_errors,
@@ -6538,6 +6547,7 @@ static const unsigned char prob_settable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_olympiad_mode] = 1,
   [CNTSPROB_score_latest] = 1,
   [CNTSPROB_score_latest_or_unmarked] = 1,
+  [CNTSPROB_score_latest_marked] = 1,
   [CNTSPROB_time_limit] = 1,
   [CNTSPROB_time_limit_millis] = 1,
   [CNTSPROB_real_time_limit] = 1,
@@ -6676,6 +6686,7 @@ static const int prob_inheritable_list[] =
   CNTSPROB_combined_stdin, CNTSPROB_combined_stdout,
   CNTSPROB_binary_input, CNTSPROB_binary,
   CNTSPROB_ignore_exit_code, CNTSPROB_olympiad_mode, CNTSPROB_score_latest, CNTSPROB_score_latest_or_unmarked,
+  CNTSPROB_score_latest_marked,
   CNTSPROB_time_limit, CNTSPROB_time_limit_millis, CNTSPROB_real_time_limit,
   CNTSPROB_interactor_time_limit,
   CNTSPROB_use_ac_not_ok, CNTSPROB_ignore_prev_ac, CNTSPROB_team_enable_rep_view,
@@ -6748,6 +6759,7 @@ static const unsigned char prob_inheritable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_olympiad_mode] = 1,
   [CNTSPROB_score_latest] = 1,
   [CNTSPROB_score_latest_or_unmarked] = 1,
+  [CNTSPROB_score_latest_marked] = 1,
   [CNTSPROB_time_limit] = 1,
   [CNTSPROB_time_limit_millis] = 1,
   [CNTSPROB_real_time_limit] = 1,
@@ -6893,6 +6905,7 @@ static const struct section_problem_data prob_undef_values =
   .olympiad_mode = -1,
   .score_latest = -1,
   .score_latest_or_unmarked = -1,
+  .score_latest_marked = -1,
   .real_time_limit = -1,
   .time_limit = -1,
   .time_limit_millis = -1,
@@ -7042,6 +7055,7 @@ static const struct section_problem_data prob_default_values =
   .olympiad_mode = 0,
   .score_latest = 0,
   .score_latest_or_unmarked = 0,
+  .score_latest_marked = 0,
   .real_time_limit = 0,
   .time_limit = 0,
   .time_limit_millis = 0,
