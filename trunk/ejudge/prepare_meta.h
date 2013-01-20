@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/12/14 22:42:37
+// Generated 2013/01/20 09:12:00
 
 #ifndef __PREPARE_META_H__
 #define __PREPARE_META_H__
@@ -316,6 +316,7 @@ enum
   CNTSPROB_olympiad_mode,
   CNTSPROB_score_latest,
   CNTSPROB_score_latest_or_unmarked,
+  CNTSPROB_score_latest_marked,
   CNTSPROB_real_time_limit,
   CNTSPROB_time_limit,
   CNTSPROB_time_limit_millis,

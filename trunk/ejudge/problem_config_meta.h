@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/12/14 22:42:37
+// Generated 2013/01/20 09:12:00
 
 #ifndef __PROBLEM_CONFIG_META_H__
 #define __PROBLEM_CONFIG_META_H__
@@ -24,6 +24,7 @@ enum
   META_PROBLEM_CONFIG_SECTION_olympiad_mode,
   META_PROBLEM_CONFIG_SECTION_score_latest,
   META_PROBLEM_CONFIG_SECTION_score_latest_or_unmarked,
+  META_PROBLEM_CONFIG_SECTION_score_latest_marked,
   META_PROBLEM_CONFIG_SECTION_use_ac_not_ok,
   META_PROBLEM_CONFIG_SECTION_ignore_prev_ac,
   META_PROBLEM_CONFIG_SECTION_team_enable_rep_view,

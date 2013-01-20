@@ -1792,6 +1792,9 @@ do_write_kirov_standings(
     } else {
       // KIROV system with variations
       if (run_score == -1) run_score = 0;
+
+
+      /////
       if (prob->score_latest_or_unmarked > 0) {
         if (run_status == RUN_OK) {
           score = calc_kirov_score(0, 0, start_time,
@@ -1946,6 +1949,7 @@ do_write_kirov_standings(
           /* something strange... */
         }
       }
+      /////
     }
   }
 
