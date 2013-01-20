@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -2422,6 +2422,7 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_PROB_CHANGE_OLYMPIAD_MODE:
   case SSERV_CMD_PROB_CHANGE_SCORE_LATEST:
   case SSERV_CMD_PROB_CHANGE_SCORE_LATEST_OR_UNMARKED:
+  case SSERV_CMD_PROB_CHANGE_SCORE_LATEST_MARKED:
   case SSERV_CMD_PROB_CHANGE_TIME_LIMIT:
   case SSERV_CMD_PROB_CHANGE_TIME_LIMIT_MILLIS:
   case SSERV_CMD_PROB_CHANGE_REAL_TIME_LIMIT:
@@ -3480,6 +3481,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_CHANGE_OLYMPIAD_MODE] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_SCORE_LATEST] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_SCORE_LATEST_OR_UNMARKED] = { cmd_set_value },
+  [SSERV_CMD_PROB_CHANGE_SCORE_LATEST_MARKED] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_TIME_LIMIT] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_TIME_LIMIT_MILLIS] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_REAL_TIME_LIMIT] = { cmd_set_value },

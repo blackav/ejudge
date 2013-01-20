@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1046,6 +1046,9 @@ prepare_unparse_prob(
   if ((prob->abstract && prob->score_latest_or_unmarked == 1)
       || (!prob->abstract && prob->score_latest_or_unmarked >= 0))
     unparse_bool(f, "score_latest_or_unmarked", prob->score_latest_or_unmarked);
+  if ((prob->abstract && prob->score_latest_marked == 1)
+      || (!prob->abstract && prob->score_latest_marked >= 0))
+    unparse_bool(f, "score_latest_marked", prob->score_latest_marked);
   if (prob->xml_file[0])
     fprintf(f, "xml_file = \"%s\"\n", CARMOR(prob->xml_file));
   if (prob->alternatives_file[0])
@@ -1444,6 +1447,8 @@ prepare_unparse_actual_prob(
     unparse_bool(f, "score_latest", prob->score_latest);
   if (prob->score_latest_or_unmarked > 0)
     unparse_bool(f, "score_latest_or_unmarked", prob->score_latest_or_unmarked);
+  if (prob->score_latest_marked > 0)
+    unparse_bool(f, "score_latest_marked", prob->score_latest_marked);
   if ((show_paths || (global && global->advanced_layout > 0)) && prob->xml_file[0])
     fprintf(f, "xml_file = \"%s\"\n", CARMOR(prob->xml_file));
   if (show_paths && prob->alternatives_file[0])

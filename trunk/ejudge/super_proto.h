@@ -4,7 +4,7 @@
 #ifndef __SUPER_PROTO_H__
 #define __SUPER_PROTO_H__
 
-/* Copyright (C) 2004-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -608,6 +608,7 @@ enum
   SSERV_CMD_PROB_CHANGE_OLYMPIAD_MODE,
   SSERV_CMD_PROB_CHANGE_SCORE_LATEST,
   SSERV_CMD_PROB_CHANGE_SCORE_LATEST_OR_UNMARKED,
+  SSERV_CMD_PROB_CHANGE_SCORE_LATEST_MARKED,
   SSERV_CMD_PROB_CHANGE_TIME_LIMIT,
   SSERV_CMD_PROB_CHANGE_TIME_LIMIT_MILLIS,
   SSERV_CMD_PROB_CHANGE_REAL_TIME_LIMIT,

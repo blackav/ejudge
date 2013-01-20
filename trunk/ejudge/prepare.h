@@ -3,7 +3,7 @@
 #ifndef __PREPARE_H__
 #define __PREPARE_H__
 
-/* Copyright (C) 2000-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -734,7 +734,7 @@ struct section_global_data
   +unsigned char *solution_cmd;
  */
 
-/* sizeof(struct section_problem_data) == 65120/? */
+/* sizeof(struct section_problem_data) == ?/? */
 struct section_problem_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -780,6 +780,8 @@ struct section_problem_data
   ejintbool_t score_latest;
   /** for KIROV contests: score the latest submit or the best unmarked */
   ejintbool_t score_latest_or_unmarked;
+  /** for KIROV contests: score the latest marked submit */
+  ejintbool_t score_latest_marked;
   /** maximum astronomical time for a problem (seconds) */
   int real_time_limit;
   /** time limit in seconds */
