@@ -78,6 +78,7 @@ class Group
     vector<string> requires;
     bool offline = false;
     bool sets_marked = false;
+    bool skip = false;
     int score = 0;
     int test_score = -1;
 
@@ -107,6 +108,9 @@ public:
 
     void set_sets_marked(bool sets_marked) { this->sets_marked = sets_marked; }
     bool get_sets_marked() const { return sets_marked; }
+
+    void set_skip(bool skip) { this->skip = skip; }
+    bool get_skip() const { return skip; }
 
     void set_score(int score) { this->score = score; }
     int get_score() const { return score; }
@@ -311,6 +315,11 @@ public:
                 if (t_type != ';') parse_error("';' expected");
                 next_token();
                 g.set_sets_marked(true);
+            } else if (token == "skip") {
+                next_token();
+                if (t_type != ';') parse_error("';' expected");
+                next_token();
+                g.set_skip(true);
             } else if (token == "score") {
                 next_token();
                 if (t_type != T_IDENT) parse_error("NUM expected");
@@ -533,9 +542,11 @@ main(int argc, char *argv[])
             ++test_num;
         } else {
             if (test_num < g->get_last() && !g->get_offline()) {
-                g->format_comment("Тестирование на тестах %d-%d не выполнялось, "
-                                  "так как тест %d не пройден, и оценка за группу тестов %s - 0 баллов.\n",
-                                  test_num + 1, g->get_last(), test_num, g->get_group_id().c_str());
+                char buf[1024];
+                snprintf(buf, sizeof(buf), "Тестирование на тестах %d-%d не выполнялось, "
+                         "так как тест %d не пройден, и оценка за группу тестов %s - 0 баллов.\n",
+                         test_num + 1, g->get_last(), test_num, g->get_group_id().c_str());
+                g->set_comment(string(buf));
             }
             test_num = g->get_last() + 1;
         }
@@ -547,21 +558,21 @@ main(int argc, char *argv[])
         const Group *gg = NULL;
         while ((g = parser.find_group(test_num)) && !g->meet_requirements(parser, gg)) {
             if (!g->get_offline()) {
-                g->format_comment("Тестирование на тестах %d-%d не выполнялось, "
-                                  "так как не пройдена одна из требуемых групп %s.\n",
-                                  g->get_first(), g->get_last(), gg->get_group_id().c_str());
+                char buf[1024];
+                snprintf(buf, sizeof(buf), "Тестирование на тестах %d-%d не выполнялось, "
+                         "так как не пройдена одна из требуемых групп %s.\n",
+                         g->get_first(), g->get_last(), gg->get_group_id().c_str());
+                g->set_comment(string(buf));
             } else if (g->get_offline() && !gg->get_offline()) {
                 char buf[1024];
                 snprintf(buf, sizeof(buf), "Тестирование на тестах %d-%d не будет выполняться после окончания тура, "
-                                  "так как не пройдена одна из требуемых групп %s.\n",
-                                  g->get_first(), g->get_last(), gg->get_group_id().c_str());
+                         "так как не пройдена одна из требуемых групп %s.\n",
+                         g->get_first(), g->get_last(), gg->get_group_id().c_str());
                 g->set_comment(string(buf));
-                /*                
-                g->format_comment("Тестирование на тестах %d-%d не будет выполняться после окончания тура, "
-                                  "так как не пройдена одна из требуемых групп %s.\n",
-                                  g->get_first(), g->get_last(), gg->get_group_id().c_str());
-                */
             }
+            test_num = g->get_last() + 1;
+        }
+        while ((g = parser.find_group(test_num)) && g->get_skip()) {
             test_num = g->get_last() + 1;
         }
         printf("%d\n", -test_num);
