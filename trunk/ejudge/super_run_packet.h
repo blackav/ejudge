@@ -3,7 +3,7 @@
 #ifndef __SUPER_RUN_PACKET_H__
 #define __SUPER_RUN_PACKET_H__
 
-/* Copyright (C) 2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -76,6 +76,7 @@ struct super_run_in_global_packet
   unsigned char *exe_sfx;
   ejintbool_t restart;
   ejintbool_t disable_sound;
+  ejintbool_t is_dos;
 
   int scoring_system_val META_ATTRIB((meta_hidden));
 };

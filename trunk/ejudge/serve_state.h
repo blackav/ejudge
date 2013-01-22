@@ -3,7 +3,7 @@
 #ifndef __SERVE_STATE_H__
 #define __SERVE_STATE_H__
 
-/* Copyright (C) 2006-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -314,6 +314,7 @@ struct compile_run_extra
   int accepting_mode;
   int priority_adjustment;
   int notify_flag;
+  int is_dos;
 };
 
 serve_state_t serve_state_init(int contest_id);

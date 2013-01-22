@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -2106,7 +2106,9 @@ run_one_test(
     }
   }
 
-  if (tst && tst->is_dos > 0 && srpp->binary_input <= 0) copy_flag = CONVERT;
+  int is_dos = srgp->is_dos;
+  if (tst && tst->is_dos > 0) is_dos = tst->is_dos;
+  if (is_dos > 0 && srpp->binary_input <= 0) copy_flag = CONVERT;
 
   /* copy the test */
   if (generic_copy_file(0, NULL, test_src, "", copy_flag, check_dir, srpp->input_file, "") < 0) {

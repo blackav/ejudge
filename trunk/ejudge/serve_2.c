@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1206,6 +1206,9 @@ serve_compile_request(
   rx.accepting_mode = accepting_mode;
   rx.priority_adjustment = priority_adjustment;
   rx.notify_flag = notify_flag;
+  if (lang) {
+    rx.is_dos = lang->is_dos;
+  }
 
   if (compile_request_packet_write(&cp, &pkt_len, &pkt_buf) < 0) {
     // FIXME: need reasonable recovery?
@@ -1594,6 +1597,7 @@ serve_run_request(
     if (lang->key && lang->key[0]) {
       srgp->lang_key = xstrdup(lang->key);
     }
+    srgp->is_dos = lang->is_dos;
   }
   if (!no_db_flag) {
     if (te.login && te.login[0]) {

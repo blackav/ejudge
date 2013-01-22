@@ -856,6 +856,8 @@ prepare_unparse_lang(
     unparse_bool(f, "insecure", lang->insecure);
   if (lang->disable_security)
     unparse_bool(f, "disable_security", lang->disable_security);
+  if (lang->is_dos > 0)
+    unparse_bool(f, "is_dos", lang->is_dos);
   if (lang->binary)
     unparse_bool(f, "binary", lang->binary);
   if (lang->disable_auto_testing)
