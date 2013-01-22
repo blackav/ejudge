@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/12/11 13:19:12
+// Generated 2013/01/22 22:15:42
 
 #include "super_run_packet_meta.h"
 #include "super_run_packet.h"
@@ -56,6 +56,7 @@ static struct meta_info_item meta_info_super_run_in_global_packet_data[] =
   [META_SUPER_RUN_IN_GLOBAL_PACKET_exe_sfx] = { META_SUPER_RUN_IN_GLOBAL_PACKET_exe_sfx, 's', XSIZE(struct super_run_in_global_packet, exe_sfx), "exe_sfx", XOFFSET(struct super_run_in_global_packet, exe_sfx) },
   [META_SUPER_RUN_IN_GLOBAL_PACKET_restart] = { META_SUPER_RUN_IN_GLOBAL_PACKET_restart, 'B', XSIZE(struct super_run_in_global_packet, restart), "restart", XOFFSET(struct super_run_in_global_packet, restart) },
   [META_SUPER_RUN_IN_GLOBAL_PACKET_disable_sound] = { META_SUPER_RUN_IN_GLOBAL_PACKET_disable_sound, 'B', XSIZE(struct super_run_in_global_packet, disable_sound), "disable_sound", XOFFSET(struct super_run_in_global_packet, disable_sound) },
+  [META_SUPER_RUN_IN_GLOBAL_PACKET_is_dos] = { META_SUPER_RUN_IN_GLOBAL_PACKET_is_dos, 'B', XSIZE(struct super_run_in_global_packet, is_dos), "is_dos", XOFFSET(struct super_run_in_global_packet, is_dos) },
 };
 
 int meta_super_run_in_global_packet_get_type(int tag)

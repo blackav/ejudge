@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/12/11 13:19:12
+// Generated 2013/01/22 22:15:42
 
 #ifndef __SUPER_RUN_PACKET_META_H__
 #define __SUPER_RUN_PACKET_META_H__
@@ -51,6 +51,7 @@ enum
   META_SUPER_RUN_IN_GLOBAL_PACKET_exe_sfx,
   META_SUPER_RUN_IN_GLOBAL_PACKET_restart,
   META_SUPER_RUN_IN_GLOBAL_PACKET_disable_sound,
+  META_SUPER_RUN_IN_GLOBAL_PACKET_is_dos,
 
   META_SUPER_RUN_IN_GLOBAL_PACKET_LAST_FIELD,
 };
