@@ -1106,6 +1106,8 @@ struct section_language_data
   ejintbool_t insecure;
   /** disable security restrictions for this language */
   ejintbool_t disable_security;
+  /** perform unix->dos conversion */
+  ejintbool_t is_dos;
   /** language short name */
   unsigned char short_name[32];
   /** language long name */

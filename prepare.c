@@ -508,6 +508,7 @@ static const struct config_parse_info section_language_params[] =
   LANGUAGE_PARAM(priority_adjustment, "d"),
   LANGUAGE_PARAM(insecure, "d"),
   LANGUAGE_PARAM(disable_security, "d"),
+  LANGUAGE_PARAM(is_dos, "d"),
   LANGUAGE_PARAM(short_name, "s"),
   LANGUAGE_PARAM(long_name, "s"),
   LANGUAGE_PARAM(key, "s"),
