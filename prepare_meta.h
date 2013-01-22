@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2013/01/20 09:12:00
+// Generated 2013/01/22 22:15:42
 
 #ifndef __PREPARE_META_H__
 #define __PREPARE_META_H__
@@ -492,6 +492,7 @@ enum
   CNTSLANG_priority_adjustment,
   CNTSLANG_insecure,
   CNTSLANG_disable_security,
+  CNTSLANG_is_dos,
   CNTSLANG_short_name,
   CNTSLANG_long_name,
   CNTSLANG_key,
