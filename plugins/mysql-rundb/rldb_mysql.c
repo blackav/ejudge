@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2008-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -169,7 +169,7 @@ do_create(struct rldb_mysql_state *state)
   if (mi->simple_fquery(md, create_runs_query, md->table_prefix) < 0)
     db_error_fail(md);
   if (mi->simple_fquery(md,
-                        "INSERT INTO %sconfig VALUES ('run_version', '4') ;",
+                        "INSERT INTO %sconfig VALUES ('run_version', '5') ;",
                         md->table_prefix) < 0)
     db_error_fail(md);
   return 0;
@@ -234,7 +234,14 @@ do_open(struct rldb_mysql_state *state)
       return -1;
     run_version = 4;
   }
-  if (run_version != 4) {
+  if (run_version == 4) {
+    if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN eoln_type TINYINT NOT NULL DEFAULT 0 AFTER passed_mode", md->table_prefix) < 0)
+      return -1;
+    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '5' WHERE config_key = 'run_version' ;", md->table_prefix) < 0)
+      return -1;
+    run_version = 5;
+  }
+  if (run_version != 5) {
     err("run_version == %d is not supported", run_version);
     return -1;
   }
@@ -461,6 +468,7 @@ load_runs(struct rldb_mysql_cnts *cs)
     re->saved_score = ri.saved_score;
     re->saved_test = ri.saved_test;
     re->passed_mode = ri.passed_mode;
+    re->eoln_type = ri.eoln_type;
   }
   return 1;
 
@@ -965,6 +973,10 @@ generate_update_entry_clause(
     fprintf(f, "%spassed_mode = %d", sep, !!re->passed_mode);
     sep = comma;
   }
+  if ((flags & RE_EOLN_TYPE)) {
+    fprintf(f, "%seoln_type = %d", sep, !!re->eoln_type);
+    sep = comma;
+  }
 
   gettimeofday(&curtime, 0);
   fprintf(f, "%slast_change_time = ", sep);
@@ -1066,6 +1078,9 @@ update_entry(
   }
   if ((flags & RE_PASSED_MODE)) {
     dst->passed_mode = src->passed_mode;
+  }
+  if ((flags & RE_EOLN_TYPE)) {
+    dst->eoln_type = src->eoln_type;
   }
 }
 
@@ -1560,6 +1575,7 @@ put_entry_func(
   ri.saved_score = re->saved_score;
   ri.saved_test = re->saved_test;
   ri.passed_mode = re->passed_mode;
+  ri.eoln_type = re->eoln_type;
 
   cmd_f = open_memstream(&cmd_t, &cmd_z);
   fprintf(cmd_f, "INSERT INTO %sruns VALUES ( ", state->md->table_prefix);
@@ -1698,6 +1714,5 @@ change_status_4_func(
 /*
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "MYSQL")
  * End:
  */
