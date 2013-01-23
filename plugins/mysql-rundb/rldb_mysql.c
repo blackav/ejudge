@@ -974,7 +974,7 @@ generate_update_entry_clause(
     sep = comma;
   }
   if ((flags & RE_EOLN_TYPE)) {
-    fprintf(f, "%seoln_type = %d", sep, !!re->eoln_type);
+    fprintf(f, "%seoln_type = %d", sep, re->eoln_type);
     sep = comma;
   }
 
