@@ -1370,6 +1370,7 @@ serve_run_request(
         int accepting_mode,
         int notify_flag,
         int mime_type,
+        int eoln_type,
         const unsigned char *compile_report_dir,
         const struct compile_reply_packet *comp_pkt,
         int no_db_flag)
@@ -1592,12 +1593,14 @@ serve_run_request(
   }
   srgp->ts4 = current_time;
   srgp->ts4_us = current_time_us;
+  srgp->is_dos = 0;
+  if (eoln_type == EOLN_CRLF) srgp->is_dos = 1;
   if (lang) {
     srgp->lang_short_name = xstrdup(lang->short_name);
     if (lang->key && lang->key[0]) {
       srgp->lang_key = xstrdup(lang->key);
     }
-    srgp->is_dos = lang->is_dos;
+    if (eoln_type <= 0) srgp->is_dos = lang->is_dos;
   }
   if (!no_db_flag) {
     if (te.login && te.login[0]) {
@@ -2288,7 +2291,7 @@ serve_read_compile_packet(
                         re.user_id, re.prob_id, re.lang_id, re.variant,
                         comp_extra->priority_adjustment,
                         comp_pkt->judge_id, comp_extra->accepting_mode,
-                        comp_extra->notify_flag, re.mime_type,
+                        comp_extra->notify_flag, re.mime_type, re.eoln_type,
                         compile_report_dir, comp_pkt, 0) < 0) {
     snprintf(errmsg, sizeof(errmsg), "failed to write run packet\n");
     goto report_check_failed;
@@ -3008,7 +3011,8 @@ serve_rejudge_run(
                       global->contest_id, run_id,
                       re.user_id, re.prob_id, re.lang_id,
                       re.variant, priority_adjustment,
-                      -1, accepting_mode, 1, re.mime_type, 0, 0, 0);
+                      -1, accepting_mode, 1, re.mime_type, re.eoln_type,
+                      0, 0, 0);
     xfree(run_text);
     return;
   }

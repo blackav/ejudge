@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1127,7 +1127,7 @@ cmd_submit_run(
         if (serve_run_request(cs, cnts, stderr, run_text, run_size,
                               global->contest_id, run_id,
                               phr->user_id, prob->id, 0, variant, 0, -1, -1, 0,
-                              mime_type, 0, 0, 0) < 0)
+                              mime_type, 0, 0, 0, 0) < 0)
           FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
       }
     }
@@ -1178,7 +1178,7 @@ cmd_submit_run(
         if (serve_run_request(cs, cnts, stderr, run_text, run_size,
                               global->contest_id, run_id,
                               phr->user_id, prob->id, 0, variant, 0, -1, -1, 0,
-                              mime_type, 0, 0, 0) < 0)
+                              mime_type, 0, 0, 0, 0) < 0)
           FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
       }
     }

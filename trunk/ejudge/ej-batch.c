@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2010-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -684,6 +684,7 @@ process_compile_packet(
                         0 /* accepting_mode */,
                         0 /* notify_flag */,
                         0 /* mime_type */,
+                        0, /* eoln_type */
                         0 /* compile_report_dir */,
                         0 /* comp_pkt */,
                         1 /* no_db_flag */);

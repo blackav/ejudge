@@ -136,4 +136,6 @@ enum
   EOLN_CRLF
 };
 
+const unsigned char *eoln_type_unparse_html(int value);
+
 #endif /* __EJ_TYPES_H__ */
