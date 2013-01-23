@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2008-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1154,6 +1154,9 @@ add_entry_func(
   if ((flags & RE_SHA1)) {
     memcpy(de->sha1, re->sha1, sizeof(de->sha1));
   }
+  if ((flags & RE_RUN_UUID)) {
+    memcpy(de->run_uuid, re->run_uuid, sizeof(de->run_uuid));
+  }
   if ((flags & RE_USER_ID)) {
     de->user_id = re->user_id;
   }
@@ -1228,6 +1231,9 @@ add_entry_func(
   }
   if ((flags & RE_PASSED_MODE)) {
     de->passed_mode = re->passed_mode;
+  }
+  if ((flags & RE_EOLN_TYPE)) {
+    de->eoln_type = re->eoln_type;
   }
 
   return do_flush_entry(cs, run_id);

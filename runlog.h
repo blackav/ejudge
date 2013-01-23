@@ -3,7 +3,7 @@
 #ifndef __RUNLOG_H__
 #define __RUNLOG_H__
 
-/* Copyright (C) 2000-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -230,7 +230,8 @@ enum
     RE_SAVED_TEST    = 0x04000000,
     RE_RUN_UUID      = 0x08000000,
     RE_PASSED_MODE   = 0x10000000,
-    RE_ALL           = 0x1FFFFFFF,
+    RE_EOLN_TYPE     = 0x20000000,
+    RE_ALL           = 0x3FFFFFFF,
   };
 
 /* structure size is 128 bytes */
@@ -266,7 +267,7 @@ struct run_entry
   unsigned char  ssl_flag;      /* 1 */
   rint16_t       mime_type;     /* 2 */
   //unsigned char  is_examinable; /* 1 */
-  unsigned char  unused1;       /* 1 */
+  unsigned char  eoln_type;     /* 1 */
   unsigned char  is_marked;     /* 1 */
   //int            examiners[3];  /* 12 */
   //int            exam_score[3]; /* 12 */

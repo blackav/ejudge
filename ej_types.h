@@ -3,7 +3,7 @@
 #ifndef __EJ_TYPES_H__
 #define __EJ_TYPES_H__
 
-/* Copyright (C) 2005-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -127,5 +127,13 @@ enum
 
 int test_normalization_parse(const unsigned char *);
 const unsigned char *test_normalization_unparse(int normalization);
+
+/* valid end-of-line types for input files */
+enum
+{
+  EOLN_UNDEFINED,
+  EOLN_LF,
+  EOLN_CRLF
+};
 
 #endif /* __EJ_TYPES_H__ */
