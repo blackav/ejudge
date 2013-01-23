@@ -1,14 +1,14 @@
 # -*- mode: po; coding: koi8-r -*-
 # ejudge messages catalog
 # $Id$
-# Copyright (C) 2002-2012 Alexander Chernov <cher@ejudge.ru>
+# Copyright (C) 2002-2013 Alexander Chernov <cher@ejudge.ru>
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-01-23 11:21+0400\n"
-"PO-Revision-Date: 2013-01-23 11:47+0400\n"
+"POT-Creation-Date: 2013-01-23 14:15+0400\n"
+"PO-Revision-Date: 2013-01-23 14:39+0400\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -1029,6 +1029,9 @@ msgstr "Удалить роль НАБЛЮДАТЕЛЯ"
 #, c-format
 msgid "Deleting role %d of user %d from contest %d failed"
 msgstr "Удаление роли %d у пользователя %d в турнире %d не удалось"
+
+msgid "Desired EOLN Type"
+msgstr "Желаемый тип концов строк"
 
 msgid "Detailed information about participant"
 msgstr "Подробная информация об участнике"
