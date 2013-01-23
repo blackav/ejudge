@@ -1,0 +1,35 @@
+#!/bin/sh
+# $Id$
+# Copyright (c) 2013 Alexander Chernov <cher@ejudge.ru>
+
+# A script for compilation of Pascal ABC.NET programs using the mono compiler.
+# Usage: pasabc-linux in-file out-file
+
+# using EJUDGE_FLAGS we may pass additional flags
+
+LANG_CONFIG_DIR="@lang_config_dir@"
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/pasabc-linux.cfg"
+
+if [ -f "${EJUDGE_LANG_CONFIG}" ]
+then
+  . "${EJUDGE_LANG_CONFIG}"
+else
+  version="unknown"
+  MONORUN="mono"
+  PASABC="/usr/local/pasabc/pabcnetcclear.exe"
+fi
+
+if [ x"${version}" = x ]
+then
+  echo "This language is not supported." >&2
+  exit 1
+fi
+
+PATH=`dirname "${PASABC}"`:"${PATH}"
+
+unset LANG
+unset LC_ALL
+unset LC_MESSAGES
+unset LANGUAGE
+
+exec "${MONORUN}" "${PASABC}" ${EJUDGE_FLAGS} "$1"

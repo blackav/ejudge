@@ -1,0 +1,117 @@
+#!/bin/sh
+# $Id$
+# Copyright (c) 2013 Alexander Chernov <cher@ejudge.ru>
+
+LANG_CONFIG_DIR="@lang_config_dir@"
+
+common_config() {
+  echo 'long_name="Pascal ABC.NET (Mono)"'
+  echo 'src_sfx=".pas"'
+  echo 'exe_sfx=".exe"'
+  echo 'arch="msil"'
+  echo 'insecure=1'
+  echo 'is_dos=1'
+}
+
+failure() {
+  rm -f conftest*
+  echo 'version='
+  echo 'arg="'"${arg}"'"'
+  common_config
+  echo 'MONORUN=false'
+  echo 'MONOVER='
+  echo 'PASABC='
+  [ "${verbose}" = 1 ] && echo "no" >&2
+  exit 1
+}
+
+unset LANG
+unset LC_ALL
+unset LC_MESSAGES
+unset LANGUAGE
+
+if [ x"$1" = x-v ]
+then
+  verbose=1
+  shift
+fi
+
+# recheck the language
+if [ x"$1" = x-r ]
+then
+  arg="$2"
+  [ x"$2" != x ] && PASABC="$2"
+  [ "${PASABC}" = "" ] && PASABC="/usr/local/pasabc/pabcnetcclear.exe"
+
+  [ "${verbose}" = 1 ] && echo -n "checking whether Pascal ABC.NET (Mono) is available..." >&2
+  PASABCDIR=`dirname "${PASABC}"` || failure
+  [ "${PASABCDIR}" != . ] || failure
+  [ -d "${PASABCDIR}" ] || failure
+
+  MONORUN="mono"
+
+  "${MONORUN}" --version >/dev/null 2>&1 || failure
+  MONOVER=`"${MONORUN}" --version 2>&1 | grep "version" | awk '{gsub(",","",$5); print $5;}'` || failure
+  [ "${MONOVER}" != "" ] || failure
+
+  "${MONORUN}" "${PASABC}" >/dev/null 2>&1 || failure
+
+  PASABC2="${PASABCDIR}"/pabcnetc.exe
+  version=`"${MONORUN}" "${PASABC2}" </dev/null 2>/dev/null | grep "PascalABCCompiler.Core" | awk '{ print $2 }'` || failure
+  [ "${version}" != "" ] || failure
+
+  cat > conftest.pas <<EOF
+program test;
+begin
+end.
+EOF
+  "${MONORUN}" "${PASABC}" conftest.pas >/dev/null 2>&1 </dev/null || failure
+  "${MONORUN}" conftest.exe >/dev/null 2>&1 || failure
+
+  rm -f ./conftest*
+  echo 'version="'"${version}"'"'
+  echo 'arg="'"${arg}"'"'
+  common_config
+  echo 'MONORUN="'"${MONORUN}"'"'
+  echo 'MONODIR="'"${MONODIR}"'"'
+  echo 'MONOVER="'"${MONOVER}"'"'
+  echo 'PASABC="'"${PASABC}"'"'
+  [ "${verbose}" = 1 ] && echo "yes, ${PASABC}, ${version}" >&2
+  exit 0
+fi
+
+if [ x"$1" = x-l ]
+then
+  echo "Pascal ABC.NET (Mono) compiler [http://pascalabc.net]"
+  exit 0
+fi
+
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/pasabc-linux.cfg"
+
+if [ -f "${EJUDGE_LANG_CONFIG}" ]
+then
+  . "${EJUDGE_LANG_CONFIG}"
+else
+  MONORUN="mono"
+  PASABC="/usr/local/pasabc/pabcnetcclear.exe"
+fi
+
+if [ x"${PASABC}" = x -o x"${PASABC}" = xfalse ]
+then
+  echo "This language is not supported." >&2
+  exit 1
+fi
+
+if [ x"$1" = x-p ]
+then
+    echo "${PASABC}"
+    exit 0
+fi
+
+"${MONORUN}" "${PASABC}" </dev/null >/dev/null 2>/dev/null || exit 1
+    
+[ x"$1" = x-f ] && echo -n "Pascal ABC.NET (Mono) "
+
+PASABC2=`dirname "${PASABC}"`/pabcnetc.exe
+
+"${MONORUN}" "${PASABC2}" </dev/null 2>/dev/null | grep "PascalABCCompiler.Core" | awk '{ print $2 }'
