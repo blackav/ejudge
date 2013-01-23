@@ -774,6 +774,7 @@ cmd_submit_run(
   path_t run_path;
   unsigned char *utf8_str = NULL;
   int utf8_len = 0;
+  int eoln_type = 0;
 
   // initial permission check
   switch (phr->role) {
@@ -858,6 +859,11 @@ cmd_submit_run(
       FAIL(NEW_SRV_ERR_INV_LANG_ID);
     lang_id = i;
     lang = cs->langs[i];
+
+    if (cs->global->enable_eoln_select > 0) {
+      ns_cgi_param_int_opt(phr, "eoln_type", &eoln_type, 0);
+      if (eoln_type < 0 || eoln_type > EOLN_CRLF) eoln_type = 0;
+    }
   }
 
   /* get the source */
@@ -1053,7 +1059,8 @@ cmd_submit_run(
                           run_size, shaval, NULL,
                           phr->ip, phr->ssl_flag,
                           phr->locale_id, phr->user_id,
-                          prob->id, lang_id, variant, hidden_flag, mime_type);
+                          prob->id, lang_id, eoln_type,
+                          variant, hidden_flag, mime_type);
   if (run_id < 0)
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   serve_move_files_to_insert_run(cs, run_id);

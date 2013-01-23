@@ -299,6 +299,7 @@ run_add_record(
         int            team,
         int            problem,
         int            language,
+        int            eoln_type,
         int            variant,
         int            is_hidden,
         int            mime_type)
@@ -399,6 +400,7 @@ run_add_record(
   re.locale_id = locale_id;
   re.user_id = team;
   re.lang_id = language;
+  re.eoln_type = eoln_type;
   re.prob_id = problem;
   re.status = 99;
   re.test = 0;
@@ -409,7 +411,7 @@ run_add_record(
   re.variant = variant;
   re.is_hidden = is_hidden;
   re.mime_type = mime_type;
-  flags = RE_SIZE | RE_LOCALE_ID | RE_USER_ID | RE_LANG_ID | RE_PROB_ID | RE_STATUS | RE_TEST | RE_SCORE | RE_IP | RE_SSL_FLAG | RE_VARIANT | RE_IS_HIDDEN | RE_MIME_TYPE;
+  flags = RE_SIZE | RE_LOCALE_ID | RE_USER_ID | RE_LANG_ID | RE_PROB_ID | RE_STATUS | RE_TEST | RE_SCORE | RE_IP | RE_SSL_FLAG | RE_VARIANT | RE_IS_HIDDEN | RE_MIME_TYPE | RE_EOLN_TYPE;
   if (sha1) {
     memcpy(re.sha1, sha1, sizeof(state->runs[i].sha1));
     flags |= RE_SHA1;
