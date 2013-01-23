@@ -429,6 +429,7 @@ static const unsigned char * const action_to_help_url_map[SSERV_CMD_LAST] =
   [SSERV_CMD_LANG_CHANGE_DISABLE_AUTO_TESTING] = "Serve.cfg:language:disable_auto_testing",
   [SSERV_CMD_LANG_CHANGE_DISABLE_TESTING] = "Serve.cfg:language:disable_testing",
   [SSERV_CMD_LANG_CHANGE_BINARY] = "Serve.cfg:language:binary",
+  [SSERV_CMD_LANG_CHANGE_IS_DOS] = "Serve.cfg:language:is_dos",
   [SSERV_CMD_LANG_CHANGE_MAX_VM_SIZE] = "Serve.cfg:language:max_vm_size",
   [SSERV_CMD_LANG_CHANGE_MAX_STACK_SIZE] = "Serve.cfg:language:max_stack_size",
   [SSERV_CMD_LANG_CHANGE_MAX_FILE_SIZE] = "Serve.cfg:language:max_file_size",
@@ -4103,6 +4104,14 @@ super_html_edit_languages(
                              form_row_attrs[row ^= 1],
                              self_url, extra_args, lang_hidden_vars);
 
+    //LANGUAGE_PARAM(is_dos, "d"),
+    print_boolean_select_row(f, "Perform UNIX->DOS conversion",
+                             lang->is_dos,
+                             SSERV_CMD_LANG_CHANGE_IS_DOS,
+                             session_id,
+                             form_row_attrs[row ^= 1],
+                             self_url, extra_args, lang_hidden_vars);
+
     //LANGUAGE_PARAM(max_vm_size, "d"),
     if (lang->max_vm_size == -1L || lang->max_vm_size == 0) {
       num_buf[0] = 0;
@@ -4517,6 +4526,11 @@ super_html_lang_cmd(struct sid_state *sstate, int cmd,
   case SSERV_CMD_LANG_CHANGE_BINARY:
     if (!pl_new) return 0;
     p_int = &pl_new->binary;
+    goto handle_boolean;
+
+  case SSERV_CMD_LANG_CHANGE_IS_DOS:
+    if (!pl_new) return 0;
+    p_int = &pl_new->is_dos;
     goto handle_boolean;
 
   case SSERV_CMD_LANG_CHANGE_MAX_VM_SIZE:
