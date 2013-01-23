@@ -99,6 +99,7 @@ int run_add_record(runlog_state_t state,
                    int            team,
                    int            problem,
                    int            language,
+                   int            eoln_type,
                    int            variant,
                    int            is_hidden,
                    int            mime_type);

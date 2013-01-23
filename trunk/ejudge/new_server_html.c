@@ -2553,6 +2553,7 @@ priv_submit_run(FILE *fout,
   size_t text_form_size = 0;
   unsigned char *utf8_str = 0;
   int utf8_len = 0;
+  int eoln_type = 0;
 
   if (ns_cgi_param_int(phr, "problem", &prob_id) < 0) {
     errmsg = "problem is not set or binary";
@@ -2619,6 +2620,10 @@ priv_submit_run(FILE *fout,
     if (lang_id <= 0 || lang_id > cs->max_lang || !(lang = cs->langs[lang_id])){
       errmsg = "lang_id is invalid";
       goto invalid_param;
+    }
+    if (cs->global->enable_eoln_select > 0) {
+      ns_cgi_param_int_opt(phr, "eoln_type", &eoln_type, 0);
+      if (eoln_type < 0 || eoln_type > EOLN_CRLF) eoln_type = 0;
     }
   }
 
@@ -2852,7 +2857,8 @@ priv_submit_run(FILE *fout,
                           run_size, shaval, NULL,
                           phr->ip, phr->ssl_flag,
                           phr->locale_id, phr->user_id,
-                          prob_id, lang_id, variant, 1, mime_type);
+                          prob_id, lang_id, eoln_type,
+                          variant, 1, mime_type);
   if (run_id < 0) {
     ns_error(log_f, NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
     goto cleanup;
@@ -4548,7 +4554,7 @@ priv_new_run(FILE *fout,
                           precise_time.tv_sec, precise_time.tv_usec * 1000,
                           run_size, shaval, NULL,
                           phr->ip, phr->ssl_flag, phr->locale_id,
-                          user_id, prob_id, lang_id, variant,
+                          user_id, prob_id, lang_id, 0, variant,
                           is_hidden, mime_type);
   if (run_id < 0) FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   serve_move_files_to_insert_run(cs, run_id);
@@ -8092,6 +8098,15 @@ priv_submit_page(
       }
     }
     fprintf(fout, "</td></tr>\n");
+
+    if (cs->global->enable_eoln_select > 0) {
+      fprintf(fout, "<tr><td%s>%s:</td><td%s><select name=\"eoln_type\"%s>",
+              "", "EOLN Type", "", "");
+      fprintf(fout, "<option value=\"0\"></option>");
+      fprintf(fout, "<option value=\"1\"%s>LF (Unix/MacOS)</option>", "");
+      fprintf(fout, "<option value=\"2\"%s>CRLF (Windows/DOS)</option>", "");
+      fprintf(fout, "</select></td></tr>\n");
+    }
   }
 
   /* solution/answer form */
@@ -8811,6 +8826,15 @@ priv_main_page(FILE *fout,
                   i, cs->langs[i]->short_name, ARMOR(cs->langs[i]->long_name));
         }
         fprintf(fout, "</select></td></tr>\n");
+
+        if (global->enable_eoln_select > 0) {
+          fprintf(fout, "<tr><td%s>%s:</td><td%s><select name=\"eoln_type\"%s>",
+                  "", "EOLN Type", "", "");
+          fprintf(fout, "<option value=\"0\"></option>");
+          fprintf(fout, "<option value=\"1\"%s>LF (Unix/MacOS)</option>", "");
+          fprintf(fout, "<option value=\"2\"%s>CRLF (Windows/DOS)</option>", "");
+          fprintf(fout, "</select></td></tr>\n");
+        }
       }
 
       switch (prob->type) {
@@ -10220,6 +10244,7 @@ ns_submit_run(
   char *run_file = NULL;
   ruint32_t uuid[4] = { 0, 0, 0, 0 };
   ruint32_t *uuid_ptr = NULL;
+  int eoln_type = 0;
 
   if (!prob_param_name) prob_param_name = "prob_id";
   if (ns_cgi_param(phr, prob_param_name, &s) <= 0 || !s) {
@@ -10255,6 +10280,10 @@ ns_submit_run(
       if (errno || *eptr || lang_id <= 0 || lang_id > cs->max_lang || !(lang = cs->langs[lang_id])) {
         FAIL(NEW_SRV_ERR_INV_LANG_ID);
       }
+    }
+    if (cs->global->enable_eoln_select > 0) {
+      ns_cgi_param_int_opt(phr, "eoln_type", &eoln_type, 0);
+      if (eoln_type < 0 || eoln_type > EOLN_CRLF) eoln_type = 0;
     }
   }
 
@@ -10640,7 +10669,8 @@ ns_submit_run(
                           run_size, shaval, uuid_ptr,
                           phr->ip, phr->ssl_flag,
                           phr->locale_id, user_id,
-                          prob_id, lang_id, db_variant, is_hidden, mime_type);
+                          prob_id, lang_id, eoln_type,
+                          db_variant, is_hidden, mime_type);
   if (run_id < 0) {
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   }
@@ -10866,6 +10896,7 @@ unpriv_submit_run(FILE *fout,
   int skip_mime_type_test = 0;
   unsigned char *utf8_str = 0;
   int utf8_len = 0;
+  int eoln_type = 0;
 
   l10n_setlocale(phr->locale_id);
   log_f = open_memstream(&log_txt, &log_len);
@@ -10886,6 +10917,10 @@ unpriv_submit_run(FILE *fout,
         || !(lang = cs->langs[lang_id])) {
       ns_error(log_f, NEW_SRV_ERR_INV_LANG_ID);
       goto done;
+    }
+    if (global->enable_eoln_select > 0) {
+      ns_cgi_param_int_opt(phr, "eoln_type", &eoln_type, 0);
+      if (eoln_type < 0 || eoln_type > EOLN_CRLF) eoln_type = 0;
     }
   }
 
@@ -11241,7 +11276,7 @@ unpriv_submit_run(FILE *fout,
                           run_size, shaval, NULL,
                           phr->ip, phr->ssl_flag,
                           phr->locale_id, phr->user_id,
-                          prob_id, lang_id, 0, 0, mime_type);
+                          prob_id, lang_id, eoln_type, 0, 0, mime_type);
   if (run_id < 0) {
     ns_error(log_f, NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
     goto done;
@@ -13057,17 +13092,19 @@ unpriv_page_header(FILE *fout,
 }
 
 static int
-get_last_language(serve_state_t cs, int user_id)
+get_last_language(serve_state_t cs, int user_id, int *p_last_eoln_type)
 {
   int total_runs = run_get_total(cs->runlog_state), run_id;
   struct run_entry re;
 
+  if (p_last_eoln_type) *p_last_eoln_type = 0;
   for (run_id = total_runs - 1; run_id >= 0; run_id--) {
     if (run_get_entry(cs->runlog_state, run_id, &re) < 0) continue;
     if (!run_is_source_available(re.status)) continue;
     if (re.user_id != user_id) continue;
     if (re.lang_id <= 0 || re.lang_id > cs->max_lang || !cs->langs[re.lang_id])
       continue;
+    if (p_last_eoln_type) *p_last_eoln_type = re.eoln_type;
     return re.lang_id;
   }
   return 0;
@@ -13942,6 +13979,7 @@ unpriv_main_page(FILE *fout,
                 prob_id);
         fprintf(fout, "<table class=\"b0\">");
         if (!prob->type) {
+          int last_eoln_type = 0;
           for (i = 1; i <= cs->max_lang; i++) {
             if (!cs->langs[i] || cs->langs[i]->disabled
                 || (cs->langs[i]->insecure && global->secure_run)) continue;
@@ -13967,7 +14005,7 @@ unpriv_main_page(FILE *fout,
                     cs->langs[lang_id]->short_name,
                     cs->langs[lang_id]->long_name);
           } else {
-            last_lang_id = get_last_language(cs, phr->user_id);
+            last_lang_id = get_last_language(cs, phr->user_id, &last_eoln_type);
             fprintf(fout, "<tr><td class=\"b0\">%s:</td><td class=\"b0\">", _("Language"));
             fprintf(fout, "<select name=\"lang_id\"><option value=\"\">");
             for (i = 1; i <= cs->max_lang; i++) {
@@ -13990,6 +14028,19 @@ unpriv_main_page(FILE *fout,
                       i, cc, cs->langs[i]->short_name, cs->langs[i]->long_name);
             }
             fprintf(fout, "</select></td></tr>");
+          }
+
+          if (cs->global->enable_eoln_select > 0) {
+            fprintf(fout, "<tr><td%s>%s:</td><td%s><select name=\"eoln_type\"%s>",
+                    "", _("Desired EOLN Type"), "", "");
+            fprintf(fout, "<option value=\"0\"></option>");
+            cc = "";
+            if (last_eoln_type == 1) cc = " selected=\"selected=\"";
+            fprintf(fout, "<option value=\"1\"%s>LF (Unix/MacOS)</option>", cc);
+            cc = "";
+            if (last_eoln_type == 2) cc = " selected=\"selected=\"";
+            fprintf(fout, "<option value=\"2\"%s>CRLF (Windows/DOS)</option>", cc);
+            fprintf(fout, "</select></td></tr>\n");
           }
         }
         switch (prob->type) {
@@ -14642,7 +14693,7 @@ unpriv_xml_update_answer(
                             run_size, shaval, NULL,
                             phr->ip, phr->ssl_flag,
                             phr->locale_id, phr->user_id,
-                            prob_id, 0, 0, 0, 0);
+                            prob_id, 0, 0, 0, 0, 0);
     if (run_id < 0) FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
     serve_move_files_to_insert_run(cs, run_id);
     new_flag = 1;

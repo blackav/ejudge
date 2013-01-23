@@ -5251,7 +5251,7 @@ do_add_row(
                           precise_time.tv_sec, precise_time.tv_usec * 1000,
                           run_size, re->sha1, NULL,
                           phr->ip, phr->ssl_flag, phr->locale_id,
-                          re->user_id, re->prob_id, re->lang_id,
+                          re->user_id, re->prob_id, re->lang_id, re->eoln_type,
                           re->variant, re->is_hidden, re->mime_type);
   if (run_id < 0) {
     fprintf(log_f, _("Failed to add row %d to runlog\n"), row);
