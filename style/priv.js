@@ -1,7 +1,7 @@
 /* -*- mode: java; coding: utf-8 -*- */
 // $Id$
 
-// Copyright (C) 2008-2012 Alexander Chernov <cher@ejudge.ru>
+// Copyright (C) 2008-2013 Alexander Chernov <cher@ejudge.ru>
 
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -670,7 +670,8 @@ var ej_valid_fields =
   21 : "Saved Score",
   22 : "Saved Test",
   23 : "Saved Result",
-  24 : "UUID"
+  24 : "UUID",
+  25 : "EOLN Type"
 }
 
 function ej_field_popup(field_mask)
