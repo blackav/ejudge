@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -419,6 +419,9 @@ ns_write_priv_all_runs(
     if (run_fields & (1 << RUN_VIEW_LANG_NAME)) {
       fprintf(f, "<th%s>%s</th>", cl, "Language");
     }
+    if (run_fields & (1 << RUN_VIEW_EOLN_TYPE)) {
+      fprintf(f, "<th%s>%s</th>", cl, "EOLN Type");
+    }
     if (run_fields & (1 << RUN_VIEW_STATUS)) {
       fprintf(f, "<th%s>%s</th>", cl, "Result");
     }
@@ -535,6 +538,9 @@ ns_write_priv_all_runs(
         if (run_fields & (1 << RUN_VIEW_PROB_NAME)) {
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
+        if (run_fields & (1 << RUN_VIEW_EOLN_TYPE)) {
+          fprintf(f, "<td%s>&nbsp;</td>", cl);
+        }
         if (run_fields & (1 << RUN_VIEW_VARIANT)) {
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
@@ -640,6 +646,9 @@ ns_write_priv_all_runs(
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
         if (run_fields & (1 << RUN_VIEW_LANG_NAME)) {
+          fprintf(f, "<td%s>&nbsp;</td>", cl);
+        }
+        if (run_fields & (1 << RUN_VIEW_EOLN_TYPE)) {
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
         if (run_fields & (1 << RUN_VIEW_STATUS)) {
@@ -822,6 +831,9 @@ ns_write_priv_all_runs(
         } else {
           fprintf(f, "<td%s>??? - %d</td>", cl, pe->lang_id);
         }
+      }
+      if (run_fields & (1 << RUN_VIEW_EOLN_TYPE)) {
+        fprintf(f, "<td%s>%s</td>", cl, eoln_type_unparse_html(pe->eoln_type));
       }
 
       run_status_str(pe->status, statstr, sizeof(statstr), prob_type, 0);
@@ -1530,6 +1542,12 @@ ns_write_priv_source(const serve_state_t state,
     fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n", _("Language"), "N/A");
   } else {
     fprintf(f, "<tr><td>%s:</td><td>#%d</td></tr>\n", _("Language"), info.lang_id);
+  }
+
+  // EOLN type
+  if (info.eoln_type) {
+    fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n", _("EOLN Type"),
+            eoln_type_unparse_html(info.eoln_type));
   }
 
   // status
@@ -2736,6 +2754,17 @@ ns_priv_edit_run_page(
   }
   fprintf(f, "</select></td></tr>\n");
 
+  fprintf(f, "<tr><td%s>%s:</td><td%s><select name=\"eoln_type\"%s>",
+          cl, "EOLN Type", cl, dis);
+  fprintf(f, "<option value=\"0\"></option>");
+  s = "";
+  if (info.eoln_type == 1) s = " selected=\"selected\"";
+  fprintf(f, "<option value=\"1\"%s>LF (Unix/MacOS)</option>", s);
+  s = "";
+  if (info.eoln_type == 2) s = " selected=\"selected\"";
+  fprintf(f, "<option value=\"2\"%s>CRLF (Windows/DOS)</option>", s);
+  fprintf(f, "</select></td></tr>\n");
+
   fprintf(f, "<tr><td%s>%s:</td>", cl, "Status");
   write_change_status_dialog(cs, f, NULL, info.is_imported, "b0", info.status, info.is_readonly);
   fprintf(f, "</tr>\n");
@@ -2789,9 +2818,7 @@ ns_priv_edit_run_page(
     fprintf(f, "</tr>\n");
     buf[0] = 0;
     if (global->score_system == SCORE_KIROV || global->score_system == SCORE_OLYMPIAD) {
-      if (info.saved_test > 0) {
-        snprintf(buf, sizeof(buf), "%d", info.saved_test - 1);
-      }
+      snprintf(buf, sizeof(buf), "%d", info.saved_test);
       s = "Saved tests passed";
     } else if (global->score_system == SCORE_MOSCOW || global->score_system == SCORE_ACM) {
       if (info.saved_test > 0) {
@@ -3003,6 +3030,19 @@ ns_priv_edit_run_action(
     mask |= RE_LANG_ID;
   } else {
     new_info.lang_id = info.lang_id;
+  }
+
+  value = -1;
+  if (ns_cgi_param_int(phr, "eoln_type", &value) < 0
+      || value < 0 || value > EOLN_CRLF) {
+    fprintf(log_f, "invalid 'eoln_type' field value\n");
+    FAIL(NEW_SRV_ERR_INV_PARAM);    
+  }
+  if (info.eoln_type != value) {
+    new_info.eoln_type = value;
+    mask |= RE_EOLN_TYPE;
+  } else {
+    new_info.eoln_type = info.eoln_type;
   }
 
   const struct section_language_data *lang = NULL;

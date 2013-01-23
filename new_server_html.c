@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -2933,7 +2933,7 @@ priv_submit_run(FILE *fout,
         if (serve_run_request(cs, cnts, log_f, run_text, run_size,
                               global->contest_id, run_id,
                               phr->user_id, prob_id, 0, variant, 0, -1, -1, 0,
-                              mime_type, 0, 0, 0) < 0) {
+                              mime_type, 0, 0, 0, 0) < 0) {
           ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
           goto cleanup;
         }
@@ -2972,7 +2972,7 @@ priv_submit_run(FILE *fout,
         if (serve_run_request(cs, cnts, log_f, run_text, run_size,
                               global->contest_id, run_id,
                               phr->user_id, prob_id, 0, variant, 0, -1, -1, 0,
-                              mime_type, 0, 0, 0) < 0) {
+                              mime_type, 0, 0, 0, 0) < 0) {
           ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
           goto cleanup;
         }
@@ -10750,7 +10750,7 @@ ns_submit_run(
     r = serve_run_request(cs, cnts, log_f, run_text, run_size,
                           global->contest_id, run_id,
                           user_id, prob_id, 0, variant, 0, -1, -1, 1,
-                          mime_type, 0, 0, 0);
+                          mime_type, 0, 0, 0, 0);
     if (r < 0) {
       serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
       goto cleanup;
@@ -10801,7 +10801,7 @@ ns_submit_run(
   r = serve_run_request(cs, cnts, log_f, run_text, run_size,
                         global->contest_id, run_id,
                         user_id, prob_id, 0, variant, 0, -1, -1, 1,
-                        mime_type, 0, 0, 0);
+                        mime_type, 0, 0, 0, 0);
   if (r < 0) {
     serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
     goto cleanup;
@@ -11322,7 +11322,7 @@ unpriv_submit_run(FILE *fout,
         if (serve_run_request(cs, cnts, log_f, run_text, run_size,
                               global->contest_id, run_id,
                               phr->user_id, prob_id, 0, variant, 0, -1, -1, 1,
-                              mime_type, 0, 0, 0) < 0) {
+                              mime_type, 0, 0, 0, 0) < 0) {
           ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
           goto done;
         }
@@ -11383,7 +11383,7 @@ unpriv_submit_run(FILE *fout,
         if (serve_run_request(cs, cnts, log_f, run_text, run_size,
                               global->contest_id, run_id,
                               phr->user_id, prob_id, 0, variant, 0, -1, -1, 1,
-                              mime_type, 0, 0, 0) < 0) {
+                              mime_type, 0, 0, 0, 0) < 0) {
           ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
           goto done;
         }

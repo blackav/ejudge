@@ -449,6 +449,7 @@ serve_run_request(
         int accepting_mode,
         int notify_flag,
         int mime_type,
+        int eoln_type,
         const unsigned char *compile_report_dir,
         const struct compile_reply_packet *comp_pkt,
         int no_db_flag);
