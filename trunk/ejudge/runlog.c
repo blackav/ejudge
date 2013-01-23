@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1158,6 +1158,10 @@ run_set_entry(
   }
   if ((mask & RE_PASSED_MODE) && te.passed_mode != in->passed_mode) {
     te.passed_mode = in->passed_mode;
+    f = 1;
+  }
+  if ((mask & RE_EOLN_TYPE) && te.eoln_type != in->eoln_type) {
+    te.eoln_type = in->eoln_type;
     f = 1;
   }
 
