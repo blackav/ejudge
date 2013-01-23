@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2013/01/22 22:15:42
+// Generated 2013/01/23 13:11:00
 
 #include "prepare_meta.h"
 #include "prepare.h"
@@ -69,6 +69,7 @@ static struct meta_info_item meta_info_section_global_data_data[] =
   [CNTSGLOB_notify_status_change] = { CNTSGLOB_notify_status_change, 'B', XSIZE(struct section_global_data, notify_status_change), "notify_status_change", XOFFSET(struct section_global_data, notify_status_change) },
   [CNTSGLOB_memoize_user_results] = { CNTSGLOB_memoize_user_results, 'B', XSIZE(struct section_global_data, memoize_user_results), "memoize_user_results", XOFFSET(struct section_global_data, memoize_user_results) },
   [CNTSGLOB_disable_auto_refresh] = { CNTSGLOB_disable_auto_refresh, 'B', XSIZE(struct section_global_data, disable_auto_refresh), "disable_auto_refresh", XOFFSET(struct section_global_data, disable_auto_refresh) },
+  [CNTSGLOB_enable_eoln_select] = { CNTSGLOB_enable_eoln_select, 'B', XSIZE(struct section_global_data, enable_eoln_select), "enable_eoln_select", XOFFSET(struct section_global_data, enable_eoln_select) },
   [CNTSGLOB_name] = { CNTSGLOB_name, 'S', XSIZE(struct section_global_data, name), "name", XOFFSET(struct section_global_data, name) },
   [CNTSGLOB_root_dir] = { CNTSGLOB_root_dir, 'S', XSIZE(struct section_global_data, root_dir), "root_dir", XOFFSET(struct section_global_data, root_dir) },
   [CNTSGLOB_serve_socket] = { CNTSGLOB_serve_socket, 'S', XSIZE(struct section_global_data, serve_socket), "serve_socket", XOFFSET(struct section_global_data, serve_socket) },
