@@ -282,6 +282,7 @@ static const unsigned char * const action_to_help_url_map[SSERV_CMD_LAST] =
   [SSERV_CMD_GLOB_CHANGE_JUDGE_REPORT] = "Serve.cfg:global:team_show_judge_report",
   [SSERV_CMD_GLOB_CHANGE_DISABLE_CLARS] = "Serve.cfg:global:disable_clars",
   [SSERV_CMD_GLOB_CHANGE_DISABLE_TEAM_CLARS] = "Serve.cfg:global:disable_team_clars",
+  [SSERV_CMD_GLOB_CHANGE_ENABLE_EOLN_SELECT] = "Serve.cfg:global:enable_eoln_select",
   [SSERV_CMD_GLOB_CHANGE_DISABLE_SUBMIT_AFTER_OK] = "Serve.cfg:global:disable_submit_after_ok",
   [SSERV_CMD_GLOB_CHANGE_IGNORE_COMPILE_ERRORS] = "Serve.cfg:global:ignore_compile_errors",
   [SSERV_CMD_GLOB_CHANGE_DISABLE_FAILED_TEST_VIEW] = "Serve.cfg:global:disable_failed_test_view",
@@ -781,6 +782,7 @@ Participant's capabilities
   GLOBAL_PARAM(ignore_compile_errors, "d"),
   GLOBAL_PARAM(disable_clars, "d"),
   GLOBAL_PARAM(disable_team_clars, "d"),
+  GLOBAL_PARAM(enable_eoln_select, "d"),
   GLOBAL_PARAM(disable_submit_after_ok, "d"),
   GLOBAL_PARAM(ignore_compile_errors, "d"),
   GLOBAL_PARAM(enable_printing, "d"),
@@ -1228,6 +1230,16 @@ super_html_edit_global_parameters(FILE *f,
       print_help_url(f, SSERV_CMD_GLOB_CHANGE_DISABLE_TEAM_CLARS);
       fprintf(f, "</tr></form>\n");
     }
+
+    //GLOBAL_PARAM(enable_eoln_select, "d"),
+    html_start_form(f, 1, self_url, hidden_vars);
+    fprintf(f, "<tr%s><td>Participants may select desired EOLN type:</td><td>", form_row_attrs[row ^= 1]);
+    html_boolean_select(f, global->enable_eoln_select, "param", 0, 0);
+    fprintf(f, "</td><td>");
+    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_ENABLE_EOLN_SELECT, "Change");
+    fprintf(f, "</td>");
+    print_help_url(f, SSERV_CMD_GLOB_CHANGE_ENABLE_EOLN_SELECT);
+    fprintf(f, "</tr></form>\n");
 
     //GLOBAL_PARAM(disable_submit_after_ok, "d"),
     html_start_form(f, 1, self_url, hidden_vars);
@@ -2956,6 +2968,10 @@ super_html_global_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_GLOB_CHANGE_DISABLE_TEAM_CLARS:
     p_int = &global->disable_team_clars;
+    goto handle_boolean;
+
+  case SSERV_CMD_GLOB_CHANGE_ENABLE_EOLN_SELECT:
+    p_int = &global->enable_eoln_select;
     goto handle_boolean;
 
   case SSERV_CMD_GLOB_CHANGE_DISABLE_SUBMIT_AFTER_OK:

@@ -239,6 +239,8 @@ struct section_global_data
   ejintbool_t memoize_user_results;
   /** disable standings auto-refresh */
   ejintbool_t disable_auto_refresh;
+  /** participants may select wanted EOLN type for tests */
+  ejintbool_t enable_eoln_select;
 
   /** @deprecated the name of the contest */
   unsigned char name[256];
