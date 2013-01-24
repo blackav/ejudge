@@ -41,7 +41,7 @@ if [ x"$1" = x-r ]
 then
   arg="$2"
   [ x"$2" != x ] && PASABC="$2"
-  [ "${PASABC}" = "" ] && PASABC="/usr/local/pasabc/pabcnetcclear.exe"
+  [ "${PASABC}" = "" ] && PASABC="/usr/local/pasabc/pabcnetc.exe"
 
   [ "${verbose}" = 1 ] && echo -n "checking whether Pascal ABC.NET (Mono) is available..." >&2
   PASABCDIR=`dirname "${PASABC}"` || failure
@@ -54,10 +54,10 @@ then
   MONOVER=`"${MONORUN}" --version 2>&1 | grep "version" | awk '{gsub(",","",$5); print $5;}'` || failure
   [ "${MONOVER}" != "" ] || failure
 
-  "${MONORUN}" "${PASABC}" >/dev/null 2>&1 || failure
+  [ -f "${PASABC}" ] || failure
+  #"${MONORUN}" "${PASABC}" >/dev/null 2>&1 </dev/null || failure
 
-  PASABC2="${PASABCDIR}"/pabcnetc.exe
-  version=`"${MONORUN}" "${PASABC2}" </dev/null 2>/dev/null | grep "PascalABCCompiler.Core" | awk '{ print $2 }'` || failure
+  version=`"${MONORUN}" "${PASABC}" </dev/null 2>/dev/null | grep "PascalABCCompiler.Core" | awk '{ print $2 }'` || failure
   [ "${version}" != "" ] || failure
 
   cat > conftest.pas <<EOF
@@ -93,7 +93,7 @@ then
   . "${EJUDGE_LANG_CONFIG}"
 else
   MONORUN="mono"
-  PASABC="/usr/local/pasabc/pabcnetcclear.exe"
+  PASABC="/usr/local/pasabc/pabcnetc.exe"
 fi
 
 if [ x"${PASABC}" = x -o x"${PASABC}" = xfalse ]
@@ -112,6 +112,4 @@ fi
     
 [ x"$1" = x-f ] && echo -n "Pascal ABC.NET (Mono) "
 
-PASABC2=`dirname "${PASABC}"`/pabcnetc.exe
-
-"${MONORUN}" "${PASABC2}" </dev/null 2>/dev/null | grep "PascalABCCompiler.Core" | awk '{ print $2 }'
+"${MONORUN}" "${PASABC}" </dev/null 2>/dev/null | grep "PascalABCCompiler.Core" | awk '{ print $2 }'
