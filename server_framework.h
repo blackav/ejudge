@@ -4,7 +4,7 @@
 #ifndef __SERVER_FRAMEWORK_H__
 #define __SERVER_FRAMEWORK_H__
 
-/* Copyright (C) 2006-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -83,7 +83,7 @@ struct server_framework_params
   void (*cleanup_client)(struct server_framework_state *,
                          struct client_state *);
   void (*free_memory)(struct server_framework_state *, void *);
-  void (*loop_start)(struct server_framework_state *);
+  int  (*loop_start)(struct server_framework_state *);
   void (*post_select)(struct server_framework_state *);
 };
 

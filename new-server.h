@@ -4,7 +4,7 @@
 #ifndef __NEW_SERVER_H__
 #define __NEW_SERVER_H__
 
-/* Copyright (C) 2006-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -536,7 +536,7 @@ void ns_remove_session(ej_cookie_t session_id);
 
 void ns_unload_contests(void);
 
-void ns_loop_callback(struct server_framework_state *state);
+int  ns_loop_callback(struct server_framework_state *state);
 void ns_post_select_callback(struct server_framework_state *state);
 
 unsigned char *

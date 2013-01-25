@@ -399,7 +399,9 @@ handle_pending_xml_import(const struct contest_desc *cnts, serve_state_t cs)
   p->destroy_callback = 0;
 }
 
-void
+enum { MAX_WORK_BATCH = 100 };
+
+int
 ns_loop_callback(struct server_framework_state *state)
 {
   time_t cur_time = time(0);
@@ -408,6 +410,7 @@ ns_loop_callback(struct server_framework_state *state)
   const struct contest_desc *cnts;
   int contest_id, i, eind;
   strarray_t files;
+  int count = 0;
 
   memset(&files, 0, sizeof(files));
 
@@ -429,7 +432,8 @@ ns_loop_callback(struct server_framework_state *state)
       if (get_file_list(cs->compile_dirs[i].status_dir, &files) < 0)
         continue;
       if (files.u <= 0) continue;
-      for (int j = 0; j < files.u; ++j) {
+      for (int j = 0; j < files.u && count < MAX_WORK_BATCH; ++j) {
+        ++count;
         serve_read_compile_packet(ejudge_config, cs, cnts,
                                   cs->compile_dirs[i].status_dir,
                                   cs->compile_dirs[i].report_dir,
@@ -443,7 +447,8 @@ ns_loop_callback(struct server_framework_state *state)
       if (get_file_list(cs->run_dirs[i].status_dir, &files) < 0
           || files.u <= 0)
         continue;
-      for (int j = 0; j < files.u; ++j) {
+      for (int j = 0; j < files.u && count < MAX_WORK_BATCH; ++j) {
+        ++count;
         serve_read_run_packet(ejudge_config, cs, cnts,
                               cs->run_dirs[i].status_dir,
                               cs->run_dirs[i].report_dir,
@@ -460,6 +465,7 @@ ns_loop_callback(struct server_framework_state *state)
 
   ns_unload_expired_contests(cur_time);
   xstrarrayfree(&files);
+  return count < MAX_WORK_BATCH;
 }
 
 void
