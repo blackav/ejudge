@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -530,7 +530,8 @@ nsf_main_loop(struct server_framework_state *state)
   int mode;
 
   while (1) {
-    if (state->params->loop_start) state->params->loop_start(state);
+    int work_done = 1;
+    if (state->params->loop_start) work_done = state->params->loop_start(state);
 
     fd_max = -1;
     FD_ZERO(&rset);
@@ -568,6 +569,7 @@ nsf_main_loop(struct server_framework_state *state)
     timeout.tv_sec = state->params->select_timeout;
     if (timeout.tv_sec <= 0) timeout.tv_sec = 10;
     timeout.tv_usec = 0;
+    if (!work_done) timeout.tv_sec = 0;
 
     // here's a potential race condition :-(
     // it cannot be handled properly until Linux
