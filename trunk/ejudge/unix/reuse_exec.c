@@ -2388,6 +2388,13 @@ task_GetRunningTime(tTask *tsk)
   millis += (tsk->usage.ru_utime.tv_usec + tsk->usage.ru_stime.tv_usec + 500) / 1000;
   millis += tsk->usage.ru_utime.tv_sec * 1000;
   millis += tsk->usage.ru_stime.tv_sec * 1000;
+  if (millis > 100000) {
+    fprintf(stderr, "SUSPICIOUS RUNNING TIME: %ld\n", millis);
+    fprintf(stderr, "ru_utime.tv_sec: %ld\n", tsk->usage.ru_utime.tv_sec);
+    fprintf(stderr, "ru_utime.tv_usec: %ld\n", tsk->usage.ru_utime.tv_usec);
+    fprintf(stderr, "ru_stime.tv_sec: %ld\n", tsk->usage.ru_stime.tv_sec);
+    fprintf(stderr, "ru_stime.tv_usec: %ld\n", tsk->usage.ru_stime.tv_usec);
+  }
   return millis;
 }
 
