@@ -3840,9 +3840,12 @@ set_defaults(
     for (i = 1; i <= state->max_tester; i++) {
       struct section_tester_data *tp = 0;
       struct section_tester_data *atp = 0;
+      const struct section_problem_data *tp_prob = 0;
 
       if (!state->testers[i]) continue;
       tp = state->testers[i];
+      if (state->probs && tp->problem > 0 && tp->problem <= state->max_prob)
+        tp_prob = state->probs[tp->problem];
 
       /* we hardly can do any reasonable in this case */
       if (tp->any && mode == PREPARE_RUN) {
@@ -3892,7 +3895,7 @@ set_defaults(
       if (mode == PREPARE_RUN) {
         if (!tp->check_dir[0] && atp && atp->check_dir[0]) {
           sformat_message(tp->check_dir, PATH_MAX, 0, atp->check_dir,
-                          g, state->probs[tp->problem], NULL,
+                          g, tp_prob, NULL,
                           tp, NULL, 0, 0, 0);
         }
         if (!tp->check_dir[0]) {
@@ -3909,7 +3912,7 @@ set_defaults(
       if (mode == PREPARE_SERVE) {
         if (!tp->run_dir[0] && atp && atp->run_dir[0]) {
           sformat_message(tp->run_dir, PATH_MAX, 0, atp->run_dir,
-                          g, state->probs[tp->problem], NULL,
+                          g, tp_prob, NULL,
                           tp, NULL, 0, 0, 0);
           vinfo("tester.%d.run_dir inherited from tester.%s ('%s')",
                i, sish, tp->run_dir);
@@ -4076,7 +4079,7 @@ set_defaults(
       }
       if (!tp->errorcode_file[0] && atp && atp->errorcode_file) {
         sformat_message(tp->errorcode_file, PATH_MAX, 0, atp->errorcode_file,
-                        g, state->probs[tp->problem], NULL,
+                        g, tp_prob, NULL,
                         tp, NULL, 0, 0, 0);
         vinfo("tester.%d.errorcode_file inherited from tester.%s ('%s')",
               i, sish, tp->errorcode_file);        
@@ -4099,7 +4102,7 @@ set_defaults(
       if (mode == PREPARE_RUN || mode == PREPARE_SERVE) {
         if (!tp->error_file[0] && atp && atp->error_file[0]) {
           sformat_message(tp->error_file, PATH_MAX, 0, atp->error_file,
-                          g, state->probs[tp->problem], NULL,
+                          g, tp_prob, NULL,
                           tp, NULL, 0, 0, 0);
           vinfo("tester.%d.error_file inherited from tester.%s ('%s')",
                 i, sish, tp->error_file);        
@@ -4111,7 +4114,7 @@ set_defaults(
         }
         if (!tp->start_cmd[0] && atp && atp->start_cmd[0]) {
           sformat_message(tp->start_cmd, PATH_MAX, 0, atp->start_cmd,
-                          g, state->probs[tp->problem], NULL,
+                          g, tp_prob, NULL,
                           tp, NULL, 0, 0, 0);
           vinfo("tester.%d.start_cmd inherited from tester.%s ('%s')",
                 i, sish, tp->start_cmd);        
@@ -4142,7 +4145,7 @@ set_defaults(
 
         if (!tp->prepare_cmd[0] && atp && atp->prepare_cmd[0]) {
           sformat_message(tp->prepare_cmd, PATH_MAX, 0, atp->prepare_cmd,
-                          g, state->probs[tp->problem], NULL,
+                          g, tp_prob, NULL,
                           tp, NULL, 0, 0, 0);
           vinfo("tester.%d.prepare_cmd inherited from tester.%s ('%s')",
                 i, sish, tp->prepare_cmd);        
@@ -4154,7 +4157,7 @@ set_defaults(
 
         if (!tp->nwrun_spool_dir[0] && atp && atp->nwrun_spool_dir[0]) {
           sformat_message(tp->nwrun_spool_dir, PATH_MAX, 0,atp->nwrun_spool_dir,
-                          g, state->probs[tp->problem], NULL,
+                          g, tp_prob, NULL,
                           tp, NULL, 0, 0, 0);
         }
         if (tp->nwrun_spool_dir[0]) {
