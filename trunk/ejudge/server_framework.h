@@ -19,6 +19,7 @@
  */
 
 #include <unistd.h>
+#include <time.h>
 
 enum
 {
@@ -146,6 +147,8 @@ struct server_framework_job
   int id;
   int prio;
   int contest_id;
+  time_t start_time;
+  unsigned char *title;
 };
 
 void ns_add_job(struct server_framework_job *job);

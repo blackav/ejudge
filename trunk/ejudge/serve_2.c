@@ -3430,6 +3430,7 @@ static void
 rejudge_all_destroy_func(
         struct server_framework_job *job)
 {
+  xfree(job->title);
   xfree(job);
 }
 
@@ -3477,6 +3478,7 @@ create_rejudge_all_job(
 
   rj->b.vt = &rejudge_all_funcs;
   rj->b.contest_id = cnts->id;
+  rj->b.title = xstrdup("Full rejudge");
   rj->config = config;
   rj->cnts = cnts;
   rj->state = state;
