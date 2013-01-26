@@ -1,6 +1,6 @@
 /* $Id$ */
 
-/* Copyright (C) 1998-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1998-2013 Alexander Chernov <cher@ejudge.ru> */
 /* Created: <1998-01-21 14:33:28 cher> */
 
 /*
@@ -227,6 +227,16 @@ find_prc_in_list(pid_t pid, int stat, struct rusage *pusage)
   gettimeofday(&task_v[i]->stop_time, 0);
 
   task_active--;
+
+  // workaround for broken usage ru_stime field
+  if (pusage->ru_stime.tv_sec > 100000) {
+    fprintf(stderr, "BOGUS ru_stime VALUE, fixing it to be 0\n");
+    fprintf(stderr, "ru_stime.tv_sec: %ld\n", pusage->ru_stime.tv_sec);
+    fprintf(stderr, "ru_stime.tv_usec: %ld\n", pusage->ru_stime.tv_usec);
+    pusage->ru_stime.tv_sec = 0;
+    pusage->ru_stime.tv_usec = 0;
+  }
+
   elapsed += pusage->ru_utime.tv_sec * 1000;
   elapsed += pusage->ru_stime.tv_sec * 1000;
   elapsed += pusage->ru_utime.tv_usec / 1000;
@@ -314,6 +324,7 @@ bury_dead_prc(void)
           find_prc_in_list(pid, stat, &usage);
         }
 
+      memset(&usage, 0, sizeof(usage));
       pid = wait4(-1, &stat, WNOHANG, &usage);
       if (pid > 0)
         {
@@ -1973,9 +1984,11 @@ task_Wait(tTask *tsk)
         //fprintf(stderr, "EXEC: TASK_WAIT: SIGTIMEDWAIT RETURNED %d\n", n);
       } else {
         int done = 0;
+        memset(&usage, 0, sizeof(usage));
         while ((pid = wait4(-1, &stat, WNOHANG, &usage)) > 0) {
           find_prc_in_list(pid, stat, &usage);
           if (pid == tsk->pid) done = 1;
+          memset(&usage, 0, sizeof(usage));
         }
         if (done) break;
       }
@@ -1985,6 +1998,7 @@ task_Wait(tTask *tsk)
   }
 
   while (tsk->state == TSK_RUNNING) {
+    memset(&usage, 0, sizeof(usage));
     pid = wait4(-1, &stat, 0, &usage);
     if (pid == -1 && errno == ECHILD) {
       snprintf(errbuf, sizeof(errbuf), "wait4 returned -1 (no child)");
@@ -1998,7 +2012,9 @@ task_Wait(tTask *tsk)
       tsk->code = 0;
       return tsk;
     }
-    find_prc_in_list(pid, stat, &usage);
+    if (pid > 0) {
+      find_prc_in_list(pid, stat, &usage);
+    }
   }
   return tsk;
 }
@@ -2154,6 +2170,7 @@ task_NewWait(tTask *tsk)
   unsigned long used_vm_size = 0;
 
   while (1) {
+    memset(&usage, 0, sizeof(usage));
     pid = wait4(tsk->pid, &stat, WNOHANG, &usage);
     if (pid < 0) {
       write_log(LOG_REUSE, LOG_ERROR, "task_NewWait: wait4 failed: %s\n", os_ErrorMsg());
@@ -2230,6 +2247,7 @@ task_NewWait(tTask *tsk)
   }
 
   while (1) {
+    memset(&usage, 0, sizeof(usage));
     pid = wait4(tsk->pid, &stat, 0, &usage);
     if (pid < 0) {
       write_log(LOG_REUSE, LOG_ERROR, "task_NewWait: wait4 failed: %s\n", os_ErrorMsg());
@@ -2388,7 +2406,7 @@ task_GetRunningTime(tTask *tsk)
   millis += (tsk->usage.ru_utime.tv_usec + tsk->usage.ru_stime.tv_usec + 500) / 1000;
   millis += tsk->usage.ru_utime.tv_sec * 1000;
   millis += tsk->usage.ru_stime.tv_sec * 1000;
-  if (millis > 100000) {
+  if (millis > 100000 || millis < 0) {
     fprintf(stderr, "SUSPICIOUS RUNNING TIME: %ld\n", millis);
     fprintf(stderr, "ru_utime.tv_sec: %ld\n", tsk->usage.ru_utime.tv_sec);
     fprintf(stderr, "ru_utime.tv_usec: %ld\n", tsk->usage.ru_utime.tv_usec);
@@ -2585,6 +2603,7 @@ linux_set_fix_flag(void)
       _exit(0);
     }
 
+    memset(&usage, 0, sizeof(usage));
     if (wait4(pid, &status, 0, &usage) != pid) return;
     linux_ms_time_limit = 0;
     if (WIFEXITED(status) && WEXITSTATUS(status) == 0)
@@ -2606,6 +2625,7 @@ linux_set_fix_flag(void)
       _exit(1);
     }
 
+    memset(&usage, 0, sizeof(usage));
     retcode = wait4(pid, &status, 0, &usage);
     // FIXME: we should not leave a process running...
     if (retcode != pid) return;
