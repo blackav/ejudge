@@ -2515,8 +2515,9 @@ run_one_test(
   }
 
   // debug
-  if (cur_info->times > 100000) {
-    append_msg_to_log(check_out_path, "ridiculous running time");
+  if (cur_info->times > 1000000 || cur_info->times < 0) {
+    append_msg_to_log(check_out_path, "bogus running time %ld",
+                      cur_info->times);
     goto check_failed;
   }
 
