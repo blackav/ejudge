@@ -45,6 +45,7 @@
 #include "super_run_packet.h"
 #include "prepare_dflt.h"
 #include "testing_report_xml.h"
+#include "server_framework.h"
 
 #include "reuse_xalloc.h"
 #include "reuse_logger.h"
@@ -3192,6 +3193,31 @@ is_generally_rejudgable(const serve_state_t state,
 
 #define BITS_PER_LONG (8*sizeof(unsigned long)) 
 
+struct rejudge_by_mask_job
+{
+  struct server_framework_job b;
+};
+
+static void
+rejudge_by_mask_destroy_func(struct server_framework_job *job)
+{
+}
+
+static int
+rejudge_by_mask_run_func(
+        struct server_framework_job *job,
+        int *p_count,
+        int max_count)
+{
+  return 1;
+}
+
+static const struct server_framework_job_funcs rejudge_by_mask_funcs =
+{
+  rejudge_by_mask_destroy_func,
+  rejudge_by_mask_run_func,
+};
+
 /* Since we're provided the exact set of runs to rejudge, we ignore
  * "latest" condition in OLYMPIAD contests, or DISQUALIFIED or IGNORED
  * runs
@@ -3266,6 +3292,32 @@ serve_rejudge_by_mask(
     }
   }
 }
+
+struct rejudge_problem_job
+{
+  struct server_framework_job b;
+};
+
+static void
+rejudge_problem_destroy_func(
+        struct server_framework_job *job)
+{
+}
+
+static int
+rejudge_problem_run_func(
+        struct server_framework_job *job,
+        int *p_count,
+        int max_count)
+{
+  return 1;
+}
+
+static const struct server_framework_job_funcs rejudge_problem_funcs =
+{
+  rejudge_problem_destroy_func,
+  rejudge_problem_run_func,
+};
 
 void
 serve_rejudge_problem(
@@ -3357,8 +3409,61 @@ serve_judge_suspended(
   }
 }
 
-void
-serve_rejudge_all(
+struct rejudge_all_job
+{
+  struct server_framework_job b;
+
+  // passed parameters
+  const struct ejudge_cfg *config;
+  const struct contest_desc *cnts;
+  serve_state_t state;
+  int user_id;
+  ej_ip_t ip;
+  int ssl_flag;
+  int priority_adjustment;
+
+  int total_runs;
+  int cur_run;
+};
+
+static void
+rejudge_all_destroy_func(
+        struct server_framework_job *job)
+{
+  xfree(job);
+}
+
+static int
+rejudge_all_run_func(
+        struct server_framework_job *job,
+        int *p_count,
+        int max_count)
+{
+  struct rejudge_all_job *rj = (struct rejudge_all_job*) job;
+  struct run_entry re;
+
+  rj->total_runs = run_get_total(rj->state->runlog_state);
+  for (; rj->cur_run < rj->total_runs && *p_count < max_count; ++rj->cur_run, ++(*p_count)) {
+    if (run_get_entry(rj->state->runlog_state, rj->cur_run, &re) >= 0
+        && is_generally_rejudgable(rj->state, &re, INT_MAX)
+        && re.status != RUN_IGNORED && re.status != RUN_DISQUALIFIED) {
+      serve_rejudge_run(rj->config, rj->cnts, rj->state,
+                        rj->cur_run, rj->user_id, rj->ip, rj->ssl_flag, 0,
+                        rj->priority_adjustment);
+    }
+  }
+
+  return (rj->cur_run >= rj->total_runs);
+}
+
+static const struct server_framework_job_funcs rejudge_all_funcs =
+{
+  rejudge_all_destroy_func,
+  rejudge_all_run_func,
+};
+
+static struct server_framework_job *
+create_rejudge_all_job(
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
         serve_state_t state,
@@ -3366,6 +3471,34 @@ serve_rejudge_all(
         ej_ip_t ip,
         int ssl_flag,
         int priority_adjustment)
+{
+  struct rejudge_all_job *rj = NULL;
+  XCALLOC(rj, 1);
+
+  rj->b.vt = &rejudge_all_funcs;
+  rj->b.contest_id = cnts->id;
+  rj->config = config;
+  rj->cnts = cnts;
+  rj->state = state;
+  rj->user_id = user_id;
+  rj->ip = ip;
+  rj->ssl_flag = ssl_flag;
+  rj->priority_adjustment = priority_adjustment;
+  rj->total_runs = run_get_total(state->runlog_state);
+
+  return (struct server_framework_job *) rj;
+}
+
+struct server_framework_job *
+serve_rejudge_all(
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        serve_state_t state,
+        int user_id,
+        ej_ip_t ip,
+        int ssl_flag,
+        int priority_adjustment,
+        int create_job_flag)
 {
   int total_runs, r, size, idx, total_ids, total_probs;
   struct run_entry re;
@@ -3386,7 +3519,7 @@ serve_rejudge_all(
     total_probs = state->max_prob + 1;
     size = total_ids * total_probs;
 
-    if (total_ids <= 0 || total_probs <= 0) return;
+    if (total_ids <= 0 || total_probs <= 0) return NULL;
     flag = (unsigned char *) alloca(size);
     memset(flag, 0, size);
     for (r = total_runs - 1; r >= 0; r--) {
@@ -3403,7 +3536,12 @@ serve_rejudge_all(
       serve_rejudge_run(config, cnts, state, r, user_id, ip, ssl_flag, 0,
                         priority_adjustment);
     }
-    return;
+    return NULL;
+  }
+
+  if (create_job_flag) {
+    return create_rejudge_all_job(config, cnts, state, user_id, ip,
+                                  ssl_flag, priority_adjustment);
   }
 
   for (r = 0; r < total_runs; r++) {
@@ -3414,6 +3552,7 @@ serve_rejudge_all(
                         priority_adjustment);
     }
   }
+  return NULL;
 }
 
 void

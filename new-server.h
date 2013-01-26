@@ -1000,4 +1000,8 @@ ns_submit_run(
 extern int utf8_mode;
 extern time_t server_start_time;
 
+struct server_framework_job;
+void ns_add_job(struct server_framework_job *job);
+void ns_remove_job(struct server_framework_job *job);
+
 #endif /* __NEW_SERVER_H__ */
