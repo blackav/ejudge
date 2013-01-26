@@ -4772,7 +4772,7 @@ priv_confirmation_page(FILE *fout,
             prob->short_name, ARMOR(prob->long_name));
     break;
   case NEW_SRV_ACTION_REJUDGE_ALL_1:
-    fprintf(fout, "<p>Attention! %d runs will be rejudged.</p>\n",
+    fprintf(fout, "<p><b>Attention! %d runs will be rejudged.</b></p>\n",
             total_runs);
     break;
   }
@@ -4803,7 +4803,7 @@ priv_confirmation_page(FILE *fout,
     fprintf(fout, "<option value=\"0\"%s>Foreground Mode</option>", s);
     s = "";
     if (total_runs >= 5000) s = " selected=\"selected\"";
-    fprintf(fout, "<option value=\"0\"%s>Background Mode</option>", s);
+    fprintf(fout, "<option value=\"1\"%s>Background Mode</option>", s);
     fprintf(fout, "</select>\n");
     break;
   }
