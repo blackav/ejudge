@@ -361,6 +361,7 @@ ns_add_job(struct server_framework_job *job)
 {
   if (!job) return;
   job->id = ++job_serial;
+  job->start_time = time(NULL);
   ++job_count;
   job->prev = job_last;
   job->next = NULL;
@@ -8568,6 +8569,18 @@ priv_main_page(FILE *fout,
     fprintf(fout, "<p><big><b>%s: %d, %s</b></big></p>\n",
             _("Max number of users was"), cs->max_online_count,
             xml_unparse_date(cs->max_online_time));
+  }
+
+  if (job_count > 0) {
+    fprintf(fout, "<p><b>%s: %d</b></p>\n", "Background jobs", job_count);
+    fprintf(fout, "<table class=\"b1\">");
+    for (struct server_framework_job *job = job_first; job; job = job->next) {
+      fprintf(fout, "<tr><td%s>%d</td><td%s>%s</td><td%s>%s</td></tr>\n",
+              " class=\"b1\"", job->id,
+              " class=\"b1\"", xml_unparse_date(job->start_time),
+              " class=\"b1\"", job->title);
+    }
+    fprintf(fout, "</table>\n");
   }
 
   if (phr->role == USER_ROLE_ADMIN
