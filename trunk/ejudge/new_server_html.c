@@ -14038,7 +14038,7 @@ unpriv_main_page(FILE *fout,
 
           if (cs->global->enable_eoln_select > 0) {
             fprintf(fout, "<tr><td%s>%s:</td><td%s><select name=\"eoln_type\"%s>",
-                    "", _("Desired EOLN Type"), "", "");
+                    " class=\"b0\"", _("Desired EOLN Type"), " class=\"b0\"", "");
             fprintf(fout, "<option value=\"0\"></option>");
             cc = "";
             if (last_eoln_type == 1) cc = " selected=\"selected=\"";
