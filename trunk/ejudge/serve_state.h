@@ -525,7 +525,8 @@ serve_judge_suspended(
         int ssl_flag,
         int priority_adjustment);
 
-void
+struct server_framework_job;
+struct server_framework_job *
 serve_rejudge_all(
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
@@ -533,7 +534,8 @@ serve_rejudge_all(
         int user_id,
         ej_ip_t ip,
         int ssl_flag,
-        int priority_adjustment);
+        int priority_adjustment,
+        int create_job_flag);
 
 int
 serve_read_compile_packet(

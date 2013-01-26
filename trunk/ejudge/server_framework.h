@@ -132,4 +132,23 @@ void nsf_err_packet_too_small(struct server_framework_state *,
 void nsf_err_protocol_error(struct server_framework_state *,
                             struct client_state *);
 
+struct server_framework_job;
+struct server_framework_job_funcs
+{
+  void (*destroy)(struct server_framework_job *);
+  int  (*run)(struct server_framework_job *, int *p_tick_value, int max_value);
+};
+
+struct server_framework_job
+{
+  const struct server_framework_job_funcs *vt;
+  struct server_framework_job *prev, *next;
+  int id;
+  int prio;
+  int contest_id;
+};
+
+void ns_add_job(struct server_framework_job *job);
+void ns_remove_job(struct server_framework_job *job);
+
 #endif /* __SERVER_FRAMEWORK_H__ */

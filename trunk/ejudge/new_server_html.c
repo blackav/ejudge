@@ -90,6 +90,9 @@ enum { CONTEST_EXPIRE_TIME = 300 };
 static struct contest_extra **extras = 0;
 static size_t extra_a = 0, extra_u = 0;
 
+static struct server_framework_job *job_first, *job_last;
+static int job_count, job_serial;
+
 static void unprivileged_page_login(FILE *fout,
                                     struct http_request_info *phr,
                                     int orig_locale_id);
@@ -353,6 +356,41 @@ ns_unload_expired_contests(time_t cur_time)
   extra_u = j;
 }
 
+void
+ns_add_job(struct server_framework_job *job)
+{
+  if (!job) return;
+  job->id = ++job_serial;
+  ++job_count;
+  job->prev = job_last;
+  job->next = NULL;
+  if (job_last) {
+    job_last->next = job;
+  } else {
+    job_first = job;
+  }
+  job_last = job;
+}
+
+void
+ns_remove_job(struct server_framework_job *job)
+{
+  if (job->next) {
+    job->next->prev = job->prev;
+  } else {
+    job_last = job->prev;
+  }
+  if (job->prev) {
+    job->prev->next = job->next;
+  } else {
+    job_first = job->next;
+  }
+  job->next = NULL;
+  job->prev = NULL;
+  job->vt->destroy(job);
+  --job_count;
+}
+
 static void
 handle_pending_xml_import(const struct contest_desc *cnts, serve_state_t cs)
 {
@@ -413,6 +451,16 @@ ns_loop_callback(struct server_framework_state *state)
   int count = 0;
 
   memset(&files, 0, sizeof(files));
+
+  if (job_first) {
+    if (job_first->contest_id > 0) {
+      e = ns_try_contest_extra(job_first->contest_id);
+      e->last_access_time = cur_time;
+    }
+    if (job_first->vt->run(job_first, &count, MAX_WORK_BATCH)) {
+      ns_remove_job(job_first);
+    }
+  }
 
   for (eind = 0; eind < extra_u; eind++) {
     e = extras[eind];
@@ -4338,6 +4386,10 @@ priv_rejudge_all(FILE *fout,
                  struct contest_extra *extra)
 {
   serve_state_t cs = extra->serve_state;
+  int background_mode = 0;
+
+  ns_cgi_param_int_opt(phr, "background_mode", &background_mode, 0);
+  if (background_mode != 1) background_mode = 0;
 
   if (opcaps_check(phr->caps, OPCAP_REJUDGE_RUN) < 0) {
     ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
@@ -4349,7 +4401,8 @@ priv_rejudge_all(FILE *fout,
     serve_judge_suspended(ejudge_config, cnts, cs, phr->user_id, phr->ip, phr->ssl_flag, DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT);
     break;
   case NEW_SRV_ACTION_REJUDGE_ALL_2:
-    serve_rejudge_all(ejudge_config, cnts, cs, phr->user_id, phr->ip, phr->ssl_flag, DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT);
+    ns_add_job(serve_rejudge_all(ejudge_config, cnts, cs, phr->user_id, phr->ip, phr->ssl_flag, DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT, background_mode));
+    
     break;
   default:
     abort();
@@ -4659,6 +4712,7 @@ priv_confirmation_page(FILE *fout,
   const unsigned char *s;
   int disable_ok = 0, runs_count = 0;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  int total_runs = run_get_total(cs->runlog_state);
 
   switch (phr->action) {
   case NEW_SRV_ACTION_REJUDGE_DISPLAYED_1:
@@ -4717,6 +4771,10 @@ priv_confirmation_page(FILE *fout,
     fprintf(fout, "<p>%s %s(%s)?</p>\n", _("Rejudge problem"),
             prob->short_name, ARMOR(prob->long_name));
     break;
+  case NEW_SRV_ACTION_REJUDGE_ALL_1:
+    fprintf(fout, "<p>Attention! %d runs will be rejudged.</p>\n",
+            total_runs);
+    break;
   }
 
   fprintf(fout, "<table border=\"0\"><tr><td>");
@@ -4737,6 +4795,16 @@ priv_confirmation_page(FILE *fout,
     break;
   case NEW_SRV_ACTION_REJUDGE_PROBLEM_1:
     html_hidden(fout, "prob_id", "%d", prob_id);
+    break;
+  case NEW_SRV_ACTION_REJUDGE_ALL_1:
+    fprintf(fout, "<select name=\"background_mode\">");
+    s = "";
+    if (total_runs < 5000) s = " selected=\"selected\"";
+    fprintf(fout, "<option value=\"0\"%s>Foreground Mode</option>", s);
+    s = "";
+    if (total_runs >= 5000) s = " selected=\"selected\"";
+    fprintf(fout, "<option value=\"0\"%s>Background Mode</option>", s);
+    fprintf(fout, "</select>\n");
     break;
   }
 
