@@ -437,7 +437,7 @@ handle_pending_xml_import(const struct contest_desc *cnts, serve_state_t cs)
   p->destroy_callback = 0;
 }
 
-enum { MAX_WORK_BATCH = 100 };
+enum { MAX_WORK_BATCH = 10 };
 
 int
 ns_loop_callback(struct server_framework_state *state)
