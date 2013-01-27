@@ -244,7 +244,7 @@ ns_client_destroy_callback(struct client_state *p)
     serve_update_status_file(cs, 1);
     if (!cs->testing_suspended)
       serve_judge_suspended(ejudge_config, cnts, cs, 0, 0, 0,
-                            DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT);
+                            DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT, 0);
   }
   xfree(cs->pending_xml_import); cs->pending_xml_import = 0;
   cs->client_id = -1;
@@ -406,7 +406,7 @@ handle_pending_xml_import(const struct contest_desc *cnts, serve_state_t cs)
       serve_update_status_file(cs, 1);
       if (!cs->testing_suspended)
         serve_judge_suspended(ejudge_config, cnts, cs, 0, 0, 0,
-                              DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT);
+                              DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT, 0);
     }
     xfree(cs->pending_xml_import); cs->pending_xml_import = 0;
     cs->client_id = -1; cs->destroy_callback = 0;
@@ -430,7 +430,7 @@ handle_pending_xml_import(const struct contest_desc *cnts, serve_state_t cs)
     serve_update_status_file(cs, 1);
     if (!cs->testing_suspended)
       serve_judge_suspended(ejudge_config, cnts, cs, 0, 0, 0,
-                            DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT);
+                            DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT, 0);
   }
   xfree(cs->pending_xml_import); cs->pending_xml_import = 0;
   cs->client_id = -1; cs->destroy_callback = 0;
@@ -4320,9 +4320,13 @@ priv_rejudge_displayed(FILE *fout,
   int force_full = 0;
   int prio_adj = DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT;
   int retval = 0;
+  int background_mode = 0;
 
   if (parse_run_mask(phr, 0, 0, &mask_size, &mask) < 0) goto invalid_param;
   if (!mask_size) FAIL(NEW_SRV_ERR_NO_RUNS_TO_REJUDGE);
+  ns_cgi_param_int_opt(phr, "background_mode", &background_mode, 0);
+  if (background_mode != 1) background_mode = 0;
+
   if (opcaps_check(phr->caps, OPCAP_REJUDGE_RUN) < 0)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
@@ -4333,8 +4337,10 @@ priv_rejudge_displayed(FILE *fout,
     prio_adj = 10;
   }
 
-  serve_rejudge_by_mask(ejudge_config, cnts, cs, phr->user_id, phr->ip, phr->ssl_flag,
-                        mask_size, mask, force_full, prio_adj);
+  ns_add_job(serve_rejudge_by_mask(ejudge_config, cnts, cs, phr->user_id,
+                                   phr->ip, phr->ssl_flag,
+                                   mask_size, mask, force_full, prio_adj,
+                                   background_mode));
 
  cleanup:
   xfree(mask);
@@ -4357,6 +4363,7 @@ priv_rejudge_problem(FILE *fout,
   const struct section_problem_data *prob = 0;
   const unsigned char *s;
   int prob_id, n;
+  int background_mode = 0;
 
   if (ns_cgi_param(phr, "prob_id", &s) <= 0
       || sscanf(s, "%d%n", &prob_id, &n) != 1 || s[n]
@@ -4364,12 +4371,18 @@ priv_rejudge_problem(FILE *fout,
       || !(prob = cs->probs[prob_id])
       || prob->disable_testing)
     goto invalid_param;
+  ns_cgi_param_int_opt(phr, "background_mode", &background_mode, 0);
+  if (background_mode != 1) background_mode = 0;
+
   if (opcaps_check(phr->caps, OPCAP_REJUDGE_RUN) < 0) {
     ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
     goto cleanup;
   }
 
-  serve_rejudge_problem(ejudge_config, cnts, cs, phr->user_id, phr->ip, phr->ssl_flag, prob_id, DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT);
+  ns_add_job(serve_rejudge_problem(ejudge_config, cnts, cs, phr->user_id,
+                                   phr->ip, phr->ssl_flag, prob_id,
+                                   DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT,
+                                   background_mode));
 
  cleanup:
   return 0;
@@ -4399,7 +4412,7 @@ priv_rejudge_all(FILE *fout,
 
   switch (phr->action) {
   case NEW_SRV_ACTION_REJUDGE_SUSPENDED_2:
-    serve_judge_suspended(ejudge_config, cnts, cs, phr->user_id, phr->ip, phr->ssl_flag, DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT);
+    ns_add_job(serve_judge_suspended(ejudge_config, cnts, cs, phr->user_id, phr->ip, phr->ssl_flag, DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT, background_mode));
     break;
   case NEW_SRV_ACTION_REJUDGE_ALL_2:
     ns_add_job(serve_rejudge_all(ejudge_config, cnts, cs, phr->user_id, phr->ip, phr->ssl_flag, DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT, background_mode));

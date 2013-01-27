@@ -481,7 +481,9 @@ serve_rejudge_run(
         int ssl_flag,
         int force_full_rejudge,
         int priority_adjustment);
-void
+
+struct server_framework_job;
+struct server_framework_job *
 serve_rejudge_by_mask(
         const struct ejudge_cfg *config,
         const struct contest_desc *,
@@ -492,7 +494,8 @@ serve_rejudge_by_mask(
         int mask_size,
         unsigned long *mask,
         int force_flag,
-        int priority_adjustment);
+        int priority_adjustment,
+        int create_job_flag);
 
 void
 serve_mark_by_mask(
@@ -504,7 +507,7 @@ serve_mark_by_mask(
         unsigned long *mask,
         int mark_value);
 
-void
+struct server_framework_job *
 serve_rejudge_problem(
         const struct ejudge_cfg *config,
         const struct contest_desc *cnst,
@@ -513,9 +516,10 @@ serve_rejudge_problem(
         ej_ip_t ip,
         int ssl_flag,
         int prob_id,
-        int priority_adjustment);
+        int priority_adjustment,
+        int create_job_flag);
 
-void
+struct server_framework_job *
 serve_judge_suspended(
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
@@ -523,9 +527,9 @@ serve_judge_suspended(
         int user_id,
         ej_ip_t ip,
         int ssl_flag,
-        int priority_adjustment);
+        int priority_adjustment,
+        int create_job_flag);
 
-struct server_framework_job;
 struct server_framework_job *
 serve_rejudge_all(
         const struct ejudge_cfg *config,
