@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2005-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,6 +18,7 @@
 #include "curtime.h"
 
 #include <sys/time.h>
+#include <stdlib.h>
 
 void
 get_current_time(int *p_sec, int *p_usec)
@@ -28,4 +29,15 @@ get_current_time(int *p_sec, int *p_usec)
   gettimeofday(&tv, 0);
   if (p_sec) *p_sec = tv.tv_sec;
   if (p_usec) *p_usec = tv.tv_usec;
+}
+
+long long
+get_current_time_ms(void)
+{
+  struct timeval tv;
+
+  gettimeofday(&tv, NULL);
+  long long result = tv.tv_sec * 1000LL;
+  result += (tv.tv_usec + 500LL) / 1000LL;
+  return result;
 }
