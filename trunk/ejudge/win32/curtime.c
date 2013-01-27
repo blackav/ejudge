@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2005-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -30,4 +30,17 @@ get_current_time(int *p_sec, int *p_usec)
   GetSystemTime(&t2);
   if (p_sec) *p_sec = t1;
   if (p_usec) *p_usec = t2.wMilliseconds * 1000;
+}
+
+long long
+get_current_time_ms(void)
+{
+  time_t t1;
+  SYSTEMTIME t2;
+
+  time(&t1);
+  GetSystemTime(&t2);
+  long long result = t1 * 1000LL;
+  result += t2.wMilliseconds;
+  return result;
 }
