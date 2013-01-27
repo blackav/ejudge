@@ -3,7 +3,7 @@
 #ifndef __CURTIME_H__
 #define __CURTIME_H__
 
-/* Copyright (C) 2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2005-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,5 +18,6 @@
  */
 
 void get_current_time(int *p_sec, int *p_usec);
+long long get_current_time_ms(void);
 
 #endif /* __CURTIME_H__ */

@@ -1110,7 +1110,6 @@ invoke_nwrun(
   struct nwrun_out_packet *out_packet = 0;
   long file_size;
   int timeout;
-  int wait_time;
 
   const struct super_run_in_global_packet *srgp = srp->global;
   const struct super_run_in_problem_packet *srpp = srp->problem;
@@ -1286,7 +1285,9 @@ invoke_nwrun(
   timeout = 0;
   if (srpp->real_time_limit_ms > 0) timeout = 3 * srpp->real_time_limit_ms;
   if (timeout <= 0) timeout = 3 * time_limit_millis;
-  wait_time = 0;
+
+  long long wait_end_time = get_current_time_ms();
+  wait_end_time += timeout;
 
   while (1) {
     r = scan_dir(result_path, result_pkt_name, sizeof(result_pkt_name));
@@ -1297,7 +1298,9 @@ invoke_nwrun(
 
     if (r > 0) break;
 
-    if (wait_time >= timeout) {
+    long long cur_time_ms = get_current_time_ms();
+
+    if (cur_time_ms >= wait_end_time) {
       chk_printf(result, "invoke_nwrun: timeout!\n");
       goto fail;
     }
@@ -1307,9 +1310,6 @@ invoke_nwrun(
     os_Sleep(100);
     interrupt_disable();
     //cr_serialize_lock(state);
-
-    // more appropriate interval?
-    wait_time += 100;
   }
 
   snprintf(dir_entry_packet, sizeof(dir_entry_packet), "%s/dir/%s",
