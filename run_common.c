@@ -1288,6 +1288,7 @@ invoke_nwrun(
 
   long long wait_end_time = get_current_time_ms();
   wait_end_time += timeout;
+  //fprintf(stderr, "end time: %lld\n", wait_end_time);
 
   while (1) {
     r = scan_dir(result_path, result_pkt_name, sizeof(result_pkt_name));
@@ -1299,6 +1300,7 @@ invoke_nwrun(
     if (r > 0) break;
 
     long long cur_time_ms = get_current_time_ms();
+    //fprintf(stderr, "time: %lld\n", cur_time_ms);
 
     if (cur_time_ms >= wait_end_time) {
       chk_printf(result, "invoke_nwrun: timeout!\n");
