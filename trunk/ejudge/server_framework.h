@@ -138,6 +138,7 @@ struct server_framework_job_funcs
 {
   void (*destroy)(struct server_framework_job *);
   int  (*run)(struct server_framework_job *, int *p_tick_value, int max_value);
+  unsigned char * (*get_status)(struct server_framework_job *);
 };
 
 struct server_framework_job

@@ -3457,10 +3457,27 @@ rejudge_all_run_func(
   return (rj->cur_run >= rj->total_runs);
 }
 
+static unsigned char *
+rejudge_all_get_status(
+        struct server_framework_job *job)
+{
+  struct rejudge_all_job *rj = (struct rejudge_all_job*) job;
+
+  rj->total_runs = run_get_total(rj->state->runlog_state);
+  if (rj->total_runs <= 0 || rj->cur_run < 0) {
+    return xstrdup("done");
+  }
+  unsigned char buf[1024];
+  snprintf(buf, sizeof(buf), "%lld%% done",
+           rj->cur_run * 100LL / rj->total_runs);
+  return xstrdup(buf);
+}
+
 static const struct server_framework_job_funcs rejudge_all_funcs =
 {
   rejudge_all_destroy_func,
   rejudge_all_run_func,
+  rejudge_all_get_status,
 };
 
 static struct server_framework_job *
@@ -3478,7 +3495,7 @@ create_rejudge_all_job(
 
   rj->b.vt = &rejudge_all_funcs;
   rj->b.contest_id = cnts->id;
-  rj->b.title = xstrdup("Full rejudge");
+  rj->b.title = xstrdup("Full rejudge initialization");
   rj->config = config;
   rj->cnts = cnts;
   rj->state = state;

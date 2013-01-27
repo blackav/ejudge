@@ -8575,10 +8575,23 @@ priv_main_page(FILE *fout,
     fprintf(fout, "<p><b>%s: %d</b></p>\n", "Background jobs", job_count);
     fprintf(fout, "<table class=\"b1\">");
     for (struct server_framework_job *job = job_first; job; job = job->next) {
-      fprintf(fout, "<tr><td%s>%d</td><td%s>%s</td><td%s>%s</td></tr>\n",
+      fprintf(fout, "<tr><td%s>%d</td><td%s>%s</td><td%s>%s</td><td%s>",
               " class=\"b1\"", job->id,
               " class=\"b1\"", xml_unparse_date(job->start_time),
-              " class=\"b1\"", job->title);
+              " class=\"b1\"", job->title,
+              " class=\"b1\"");
+      if (job->vt->get_status) {
+        unsigned char *str = job->vt->get_status(job);
+        if (str && *str) {
+          fprintf(fout, "%s", str);
+        } else {
+          fprintf(fout, "&nbsp;");
+        }
+        xfree(str);
+      } else {
+        fprintf(fout, "&nbsp;");
+      }
+      fprintf(fout, "</td></tr>\n");
     }
     fprintf(fout, "</table>\n");
   }
