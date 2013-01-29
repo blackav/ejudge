@@ -3196,6 +3196,17 @@ is_generally_rejudgable(const serve_state_t state,
 struct rejudge_by_mask_job
 {
   struct server_framework_job b;
+
+  const struct ejudge_cfg *config;
+  const struct contest_desc *cnts;
+  serve_state_t state;
+  int user_id;
+  ej_ip_t ip;
+  int ssl_flag;
+  int mask_size;
+  unsigned long *mask;
+  int force_flag;
+  int priority_adjustment;
 };
 
 static void
@@ -3227,7 +3238,17 @@ static const struct server_framework_job_funcs rejudge_by_mask_funcs =
 };
 
 static struct server_framework_job *
-create_rejudge_by_mask_job()
+create_rejudge_by_mask_job(
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        serve_state_t state,
+        int user_id,
+        ej_ip_t ip,
+        int ssl_flag,
+        int mask_size,
+        unsigned long *mask,
+        int force_flag,
+        int priority_adjustment)
 {
   return NULL;
 }
@@ -3257,7 +3278,9 @@ serve_rejudge_by_mask(
 
   struct server_framework_job *job = NULL;
   if (create_job_flag) {
-    job = create_rejudge_by_mask_job();
+    job = create_rejudge_by_mask_job(config, cnts, state, user_id, ip,
+                                     ssl_flag, mask_size, mask,
+                                     force_flag, priority_adjustment);
     if (job) return job;
   }
 
@@ -3319,6 +3342,15 @@ serve_rejudge_by_mask(
 struct rejudge_problem_job
 {
   struct server_framework_job b;
+
+  const struct ejudge_cfg *config;
+  const struct contest_desc *cnts;
+  serve_state_t state;
+  int user_id;
+  ej_ip_t ip;
+  int ssl_flag;
+  int prob_id;
+  int priority_adjustment;
 };
 
 static void
@@ -3351,7 +3383,15 @@ static const struct server_framework_job_funcs rejudge_problem_funcs =
 };
 
 static struct server_framework_job *
-create_rejudge_problem_job()
+create_rejudge_problem_job(
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        serve_state_t state,
+        int user_id,
+        ej_ip_t ip,
+        int ssl_flag,
+        int prob_id,
+        int priority_adjustment)
 {
   return NULL;
 }
@@ -3378,7 +3418,9 @@ serve_rejudge_problem(
 
   struct server_framework_job *job = NULL;
   if (create_job_flag) {
-    job = create_rejudge_problem_job();
+    job = create_rejudge_problem_job(config, cnts, state, user_id, ip,
+                                     ssl_flag, prob_id,
+                                     priority_adjustment);
     if (job) return job;
   }
 
@@ -3429,6 +3471,14 @@ serve_rejudge_problem(
 struct judge_suspended_job
 {
   struct server_framework_job b;
+
+  const struct ejudge_cfg *config;
+  const struct contest_desc *cnts;
+  serve_state_t state;
+  int user_id;
+  ej_ip_t ip;
+  int ssl_flag;
+  int priority_adjustment;
 };
 
 static void
@@ -3461,7 +3511,14 @@ static const struct server_framework_job_funcs judge_suspended_funcs =
 };
 
 struct server_framework_job *
-create_judge_suspended_job()
+create_judge_suspended_job(
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        serve_state_t state,
+        int user_id,
+        ej_ip_t ip,
+        int ssl_flag,
+        int priority_adjustment)
 {
   return NULL;
 }
@@ -3482,7 +3539,8 @@ serve_judge_suspended(
 
   struct server_framework_job *job = NULL;
   if (create_job_flag) {
-    job = create_judge_suspended_job();
+    job = create_judge_suspended_job(config, cnts, state, user_id, ip,
+                                     ssl_flag, priority_adjustment);
     if (job) return job;
   }
 
