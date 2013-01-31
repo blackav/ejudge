@@ -2493,6 +2493,9 @@ run_one_test(
   }
 
   if (tsk_int) {
+    info("interactor CPU time = %ld, real time = %ld, used_vm_size = %ld",
+         (long) task_GetRunningTime(tsk_int), (long) task_GetRealTime(tsk_int),
+         (long) task_GetMemoryUsed(tsk_int));
     if (task_IsTimeout(tsk_int)) {
       append_msg_to_log(check_out_path, "interactor timeout");
       err("interactor timeout");
