@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -908,7 +908,7 @@ gzip_copy_file(int sfd, int sf, int dfd, int df)
       goto cleanup;
     }
   } else if (sf == 0 && df == (GZIP|CONVERT)) {
-    while ((c = getc(gz_src)) != EOF) {
+    while ((c = getc(f_src)) != EOF) {
       if (c == '\r') do_conv = 0;
       if (c == '\n' && do_conv) {
         if (gzputc(gz_dst, '\r') < 0) goto gzputc_error;
