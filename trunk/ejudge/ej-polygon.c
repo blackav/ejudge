@@ -533,7 +533,7 @@ zip_open_func(FILE *log_f, const unsigned char *path)
     char errbuf[1024];
     struct ZipData *zdata = NULL;
 
-    if (!(zzz = zip_open(path, ZIP_CHECKCONS, &zip_err))) {
+    if (!(zzz = zip_open(path, 0, &zip_err))) {
         zip_error_to_str(errbuf, sizeof(errbuf), zip_err, errno);
         fprintf(log_f, "%s: failed to open ZIP '%s': %s\n", __FUNCTION__, path, errbuf);
     } else {
