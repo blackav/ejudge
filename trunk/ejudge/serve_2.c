@@ -3207,27 +3207,60 @@ struct rejudge_by_mask_job
   unsigned long *mask;
   int force_flag;
   int priority_adjustment;
+
+  int cur_id;
 };
 
 static void
-rejudge_by_mask_destroy_func(struct server_framework_job *job)
+rejudge_by_mask_destroy_func(struct server_framework_job *j)
 {
+  struct rejudge_by_mask_job* job = (struct rejudge_by_mask_job*) j;
+
+  xfree(job->mask);
+  xfree(job);
 }
 
 static int
 rejudge_by_mask_run_func(
-        struct server_framework_job *job,
+        struct server_framework_job *j,
         int *p_count,
         int max_count)
 {
-  return 1;
+  struct rejudge_by_mask_job* job = (struct rejudge_by_mask_job*) j;
+
+  int total_runs = run_get_total(job->state->runlog_state);
+  if (total_runs > job->mask_size * BITS_PER_LONG) {
+    total_runs = job->mask_size * BITS_PER_LONG;
+  }
+
+  struct run_entry re;
+  for (; job->cur_id < total_runs && *p_count < max_count; ++job->cur_id, ++(*p_count)) {
+    if (run_get_entry(job->state->runlog_state, job->cur_id, &re) >= 0
+        && is_generally_rejudgable(job->state, &re, INT_MAX)
+        && (job->mask[job->cur_id / BITS_PER_LONG] & (1L << (job->cur_id % BITS_PER_LONG)))) {
+      serve_rejudge_run(job->config, job->cnts, job->state, job->cur_id,
+                        job->user_id, job->ip, job->ssl_flag,
+                        job->force_flag, job->priority_adjustment);
+    }
+  }
+
+  return *p_count >= total_runs;
 }
 
 static unsigned char *
 rejudge_by_mask_get_status_func(
-        struct server_framework_job *job)
+        struct server_framework_job *j)
 {
-  return NULL;
+  struct rejudge_by_mask_job *job = (struct rejudge_by_mask_job*) j;
+
+  int total_runs = run_get_total(job->state->runlog_state);
+  if (total_runs <= 0 || job->cur_id < 0) {
+    return xstrdup("done");
+  }
+  unsigned char buf[1024];
+  snprintf(buf, sizeof(buf), "%lld%% done",
+           job->cur_id * 100LL / total_runs);
+  return xstrdup(buf);
 }
 
 static const struct server_framework_job_funcs rejudge_by_mask_funcs =
@@ -3250,7 +3283,24 @@ create_rejudge_by_mask_job(
         int force_flag,
         int priority_adjustment)
 {
-  return NULL;
+  struct rejudge_by_mask_job *job = NULL;
+
+  XCALLOC(job, 1);
+  job->config = config;
+  job->cnts = cnts;
+  job->state = state;
+  job->user_id = user_id;
+  job->ip = ip;
+  job->ssl_flag = ssl_flag;
+  job->mask_size = mask_size;
+  if (mask_size > 0) {
+    XCALLOC(job->mask, mask_size);
+    memcpy(job->mask, mask, mask_size * sizeof(job->mask[0]));
+  }
+  job->force_flag = force_flag;
+  job->priority_adjustment = priority_adjustment;
+
+  return (struct server_framework_job*) job;
 }
 
 /* Since we're provided the exact set of runs to rejudge, we ignore
@@ -3351,28 +3401,58 @@ struct rejudge_problem_job
   int ssl_flag;
   int prob_id;
   int priority_adjustment;
+
+  int cur_id;
 };
 
 static void
 rejudge_problem_destroy_func(
-        struct server_framework_job *job)
+        struct server_framework_job *j)
 {
+  struct rejudge_problem_job *job = (struct rejudge_problem_job*) j;
+
+  xfree(job);
 }
 
 static int
 rejudge_problem_run_func(
-        struct server_framework_job *job,
+        struct server_framework_job *j,
         int *p_count,
         int max_count)
 {
-  return 1;
+  struct rejudge_problem_job *job = (struct rejudge_problem_job*) j;
+  struct run_entry re;
+
+  int total_runs = run_get_total(job->state->runlog_state);
+
+  for (; job->cur_id < total_runs && *p_count < max_count; ++job->cur_id, ++(*p_count)) {
+    if (run_get_entry(job->state->runlog_state, job->cur_id, &re) >= 0
+        && is_generally_rejudgable(job->state, &re, INT_MAX)
+        && re.status != RUN_IGNORED && re.status != RUN_DISQUALIFIED
+        && re.prob_id == job->prob_id) {
+      serve_rejudge_run(job->config, job->cnts, job->state, job->cur_id,
+                        job->user_id, job->ip, job->ssl_flag, 0,
+                        job->priority_adjustment);
+    }
+  }
+
+  return *p_count >= max_count;
 }
 
 static unsigned char *
 rejudge_problem_get_status_func(
-        struct server_framework_job *job)
+        struct server_framework_job *j)
 {
-  return NULL;
+  struct rejudge_problem_job *job = (struct rejudge_problem_job*) j;
+
+  int total_runs = run_get_total(job->state->runlog_state);
+  if (total_runs <= 0 || job->cur_id < 0) {
+    return xstrdup("done");
+  }
+  unsigned char buf[1024];
+  snprintf(buf, sizeof(buf), "%lld%% done",
+           job->cur_id * 100LL / total_runs);
+  return xstrdup(buf);
 }
 
 static const struct server_framework_job_funcs rejudge_problem_funcs =
@@ -3393,7 +3473,19 @@ create_rejudge_problem_job(
         int prob_id,
         int priority_adjustment)
 {
-  return NULL;
+  struct rejudge_problem_job *job = NULL;
+
+  XCALLOC(job, 1);
+  job->config = config;
+  job->cnts = cnts;
+  job->state = state;
+  job->user_id = user_id;
+  job->ip = ip;
+  job->ssl_flag = ssl_flag;
+  job->prob_id = prob_id;
+  job->priority_adjustment = priority_adjustment;
+
+  return (struct server_framework_job*) job;
 }
 
 struct server_framework_job *
