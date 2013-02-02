@@ -108,7 +108,7 @@ then
     exit 0
 fi
 
-"${MONORUN}" "${PASABC}" </dev/null >/dev/null 2>/dev/null || exit 1
+"${MONORUN}" "${PASABC}" </dev/null >/dev/null 2>/dev/null 
     
 [ x"$1" = x-f ] && echo -n "Pascal ABC.NET (Mono) "
 
