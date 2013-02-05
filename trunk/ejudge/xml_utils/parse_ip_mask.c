@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -27,8 +27,8 @@ xml_parse_ip_mask(
         int line,
         int column,
         const unsigned char *s,
-        ej_ip_t *p_addr,
-        ej_ip_t *p_mask)
+        ej_ip4_t *p_addr,
+        ej_ip4_t *p_mask)
 {
   int n = 0;
   unsigned int b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0;
@@ -85,6 +85,5 @@ xml_parse_ip_mask(
 /*
  * Local variables:
  *  compile-command: "make -C .."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  * End:
  */

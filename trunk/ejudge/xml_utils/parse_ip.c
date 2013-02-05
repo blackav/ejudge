@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -30,7 +30,7 @@ xml_parse_ip(
         int line,
         int column,
         unsigned char const *s,
-        ej_ip_t *pip)
+        ej_ip4_t *pip)
 {
   unsigned int b1 = 0, b2 = 0, b3 = 0, b4 = 0;
   int n = 0;
@@ -65,6 +65,7 @@ xml_parse_ip(
 
 #define fail() do { return -__LINE__; } while (0)
 
+/*
 // parse states
 enum { FIRST_GROUP, IPV4_GROUP, IPV4_NETSIZE, IPV6_EMPTY_FIRST_GROUP, IPV6_GROUP };
 
@@ -253,10 +254,10 @@ xml_parse_ip6(
   // FIXME: report error
   return r;
 }
+*/
 
 /*
  * Local variables:
  *  compile-command: "make -C .."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  * End:
  */
