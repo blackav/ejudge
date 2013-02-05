@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -20,7 +20,7 @@
 int
 userlist_clnt_logout(struct userlist_clnt *clnt,
                      int cmd,
-                     ej_ip_t origin_ip,
+                     ej_ip4_t origin_ip,
                      int ssl,
                      ej_cookie_t cookie)
 {
@@ -51,6 +51,5 @@ userlist_clnt_logout(struct userlist_clnt *clnt,
 /*
  * Local variables:
  *  compile-command: "make -C .."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  * End:
  */

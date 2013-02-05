@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -21,7 +21,7 @@ int
 userlist_clnt_recover_passwd_2(
         struct userlist_clnt *clnt,
         int cmd,
-        ej_ip_t ip,
+        ej_ip4_t ip,
         int ssl_flag,
         int contest_id,
         ej_cookie_t cookie,
@@ -91,6 +91,5 @@ userlist_clnt_recover_passwd_2(
 /*
  * Local variables:
  *  compile-command: "make -C .."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  * End:
  */
