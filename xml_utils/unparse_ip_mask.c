@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2005-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,7 +18,7 @@
 #include "xml_utils.h"
 
 const unsigned char *
-xml_unparse_ip_mask(ej_ip_t addr, ej_ip_t mask)
+xml_unparse_ip_mask(ej_ip4_t addr, ej_ip4_t mask)
 {
   static unsigned char buf[64];
   int n;
@@ -58,9 +58,8 @@ xml_unparse_ip_mask(ej_ip_t addr, ej_ip_t mask)
   return buf;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make -C .."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  * End:
  */
