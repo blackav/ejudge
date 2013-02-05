@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -291,7 +291,7 @@ filter_tree_new_hash(struct filter_tree_mem *mem, ruint32_t *val)
 }
 
 struct filter_tree *
-filter_tree_new_ip(struct filter_tree_mem *mem, ej_ip_t val)
+filter_tree_new_ip(struct filter_tree_mem *mem, ej_ip4_t val)
 {
   struct filter_tree *p;
 
@@ -680,7 +680,7 @@ filter_tree_hash_str(unsigned char *buf, size_t size, ruint32_t *val)
 }
 
 int
-filter_tree_ip_str(unsigned char *buf, size_t size, ej_ip_t val)
+filter_tree_ip_str(unsigned char *buf, size_t size, ej_ip4_t val)
 {
   return snprintf(buf, size, "%u.%u.%u.%u",
                   val >> 24, (val >> 16) & 0xff,
@@ -1623,6 +1623,5 @@ filter_tree_is_value_node(struct filter_tree *p)
 /*
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list" "tPageDesc")
  * End:
  */

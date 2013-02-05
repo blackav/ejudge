@@ -3,7 +3,7 @@
 #ifndef __TEAMDB_H__
 #define __TEAMDB_H__
 
-/* Copyright (C) 2000-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -96,7 +96,7 @@ int teamdb_get_uid_by_pid(teamdb_state_t,
                           int *p_uid,
                           int *p_priv_level,
                           ej_cookie_t *p_cookie,
-                          ej_ip_t *p_ip,
+                          ej_ip4_t *p_ip,
                           int *p_ssl);
 
 void teamdb_register_update_hook(teamdb_state_t, void (*)(void *), void *);

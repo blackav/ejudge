@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2001-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2001-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -317,7 +317,7 @@ parse_config(char const *path, const unsigned char *default_config)
 
 static struct config_node *config;
 static struct userlist_clnt *server_conn;
-static ej_ip_t user_ip;
+static ej_ip4_t user_ip;
 static int user_contest_id = 0;
 static int client_locale_id;
 static unsigned char *self_url;
@@ -697,6 +697,5 @@ main(int argc, char const *argv[])
 /*
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")
  * End:
  */

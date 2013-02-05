@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -951,7 +951,7 @@ super_html_commit_contest(FILE *f,
                           int user_id,
                           const unsigned char *login,
                           ej_cookie_t session_id,
-                          ej_ip_t ip_address,
+                          ej_ip4_t ip_address,
                           struct ejudge_cfg *config,
                           struct userlist_clnt *us_conn,
                           struct sid_state *sstate,

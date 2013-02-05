@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -128,7 +128,7 @@ invoke_serve_cmd(int argc, char *argv[])
 struct ejudge_cfg *config;
 static int contest_id;
 static const struct contest_desc *cnts;
-static ej_ip_t ip_address;
+static ej_ip4_t ip_address;
 static int ssl_flag;
 static int session_mode;
 static const unsigned char *script_name = 0;

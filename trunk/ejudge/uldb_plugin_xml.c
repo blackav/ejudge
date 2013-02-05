@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -72,7 +72,7 @@ static int new_user_func(void *, const unsigned char *login,
 static int remove_user_func(void *, int);
 static int get_cookie_func(void *, ej_cookie_t,
                            const struct userlist_cookie **);
-static int new_cookie_func(void *, int, ej_ip_t, int, ej_cookie_t, time_t,
+static int new_cookie_func(void *, int, ej_ip4_t, int, ej_cookie_t, time_t,
                            int, int, int, int, int, int,
                            const struct userlist_cookie **);
 static int remove_cookie_func(void *data, const struct userlist_cookie *c);
@@ -877,7 +877,7 @@ get_cookie_func(void *data,
 static int
 new_cookie_func(void *data,
                 int user_id,
-                ej_ip_t ip, int ssl_flag,
+                ej_ip4_t ip, int ssl_flag,
                 ej_cookie_t value, time_t expire,
                 int contest_id,
                 int locale_id,
@@ -4188,6 +4188,5 @@ get_next_user_id_func(
 /*
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  * End:
  */

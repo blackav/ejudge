@@ -75,7 +75,7 @@ struct run_entry_v1
   rint32_t       submission;
   ej_time_t      timestamp;
   ej_size_t      size;
-  ej_ip_t        ip;
+  ej_ip4_t       ip;
   ruint32_t      sha1[5];
   rint32_t       team;
   rint32_t       problem;
@@ -1331,7 +1331,7 @@ run_virtual_start(
         runlog_state_t state,
         int user_id,
         time_t t,
-        ej_ip_t ip,
+        ej_ip4_t ip,
         int ssl_flag,
         int nsec)
 {
@@ -1385,7 +1385,7 @@ run_virtual_stop(
         runlog_state_t state,
         int user_id,
         time_t t,
-        ej_ip_t ip,
+        ej_ip4_t ip,
         int ssl_flag,
         int nsec)
 {

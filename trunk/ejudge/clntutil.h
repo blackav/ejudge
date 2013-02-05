@@ -3,7 +3,7 @@
 #ifndef __CLNTUTIL_H__
 #define __CLNTUTIL_H__
 
-/* Copyright (C) 2000-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -72,10 +72,10 @@ void  client_put_header(FILE *out, unsigned char const *template,
                         char const *format, ...)
   __attribute__((format(printf, 7, 8)));
 void  client_put_footer(FILE *out, unsigned char const *template);
-ej_ip_t parse_client_ip(void);
+ej_ip4_t parse_client_ip(void);
 
 #endif /* __CLNTUTIL_H__ */
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  * End:

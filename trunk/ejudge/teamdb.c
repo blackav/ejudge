@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -664,7 +664,7 @@ teamdb_get_uid_by_pid(teamdb_state_t state, int system_uid, int system_gid,
                       int system_pid,
                       int *p_uid, int *p_priv_level,
                       ej_cookie_t *p_cookie,
-                      ej_ip_t *p_ip, int *p_ssl)
+                      ej_ip4_t *p_ip, int *p_ssl)
 {
   int r;
 

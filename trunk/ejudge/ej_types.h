@@ -23,16 +23,18 @@
 typedef rint32_t  ej_time_t;     /* time_t as stored in files */
 typedef long long ej_time64_t;   /* time_t for new file formats */
 typedef ruint32_t ej_size_t;     /* size_t as stored in files */
-typedef ruint32_t ej_ip_t;       /* IP address as stored in files */
+typedef ruint32_t ej_ip4_t;      /* IP address as stored in files */
 typedef unsigned long long ej_cookie_t;   /* cookie */
 typedef unsigned long long ej_tsc_t; /* timestamp counter type */
 
 /** IPv6-ready IP address structure */
+/*
 typedef struct ej_ip6_t
 {
   ruint32_t v4; /// IPv4, if 0, then IPv6 is considered
   unsigned char v6[16];
 } ej_ip6_t;
+*/
 
 /* types for meta-info generator */
 typedef unsigned char ejbytebool_t;

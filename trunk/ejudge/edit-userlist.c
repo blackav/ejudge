@@ -1,7 +1,7 @@
 /* -*- mode:c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1267,7 +1267,7 @@ static const struct user_field_desc member_descs[] =
 };
 
 static unsigned char *
-unparse_ip(ej_ip_t ip)
+unparse_ip(ej_ip4_t ip)
 {
   static char buf[64];
 
@@ -5362,6 +5362,5 @@ main(int argc, char **argv)
 /*
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list" "WINDOW" "ITEM" "PANEL" "MENU")
  * End:
  */

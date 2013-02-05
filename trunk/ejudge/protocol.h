@@ -4,7 +4,7 @@
 #ifndef __PROTOCOL_H__
 #define __PROTOCOL_H__
 
-/* Copyright (C) 2002-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -300,7 +300,7 @@ struct prot_serve_pkt_submit_run
   int user_id;
   int contest_id;
   int locale_id;
-  ej_ip_t ip;
+  ej_ip4_t ip;
   int ssl;
   int prob_id;
   int lang_id;
@@ -315,7 +315,7 @@ struct prot_serve_pkt_submit_run_2
 
   int user_id;
   int contest_id;
-  ej_ip_t ip;
+  ej_ip4_t ip;
   int ssl;
   int prob_size;
   int lang_size;
@@ -331,7 +331,7 @@ struct prot_serve_pkt_submit_clar
   int user_id;
   int contest_id;
   int locale_id;
-  ej_ip_t ip;
+  ej_ip4_t ip;
   int ssl;
   int dest_user_id;
   int ref_clar_id;
@@ -362,7 +362,7 @@ struct prot_serve_pkt_master_page
   int user_id;
   int contest_id;
   int locale_id;
-  ej_ip_t ip;
+  ej_ip4_t ip;
   int ssl;
   int priv_level;
   int first_run;
@@ -450,7 +450,7 @@ struct prot_serve_pkt_run_info
   int score_adj;
   int is_readonly;
   int pages;
-  ej_ip_t ip;
+  ej_ip4_t ip;
   int ssl;
   int user_login_len;
   int run_src_len;

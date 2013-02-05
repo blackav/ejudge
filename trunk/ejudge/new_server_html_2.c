@@ -2425,7 +2425,7 @@ ns_priv_edit_clar_action(
   int new_hide_flag = 0, new_appeal_flag = 0, new_ssl_flag = 0;
   int new_locale_id = 0, new_in_reply_to = -1, new_run_id = -1;
   int new_size = 0;
-  ej_ip_t new_ip = 0;
+  ej_ip4_t new_ip = 0;
   unsigned char *new_charset = NULL;
   unsigned char *new_subject = NULL;
   unsigned char *new_text = NULL;
@@ -2907,7 +2907,7 @@ ns_priv_edit_run_action(
   const unsigned char *s = NULL;
   int mask = 0;
   int new_is_readonly = 0, value = 0;
-  ej_ip_t new_ip = 0;
+  ej_ip4_t new_ip = 0;
   ruint32_t new_sha1[5];
   time_t start_time = 0;
   int need_rejudge = 0;
@@ -3886,7 +3886,7 @@ struct user_ip_item
 
   int ip_u;
   int ip_a;
-  ej_ip_t *ips;
+  ej_ip4_t *ips;
 };
 
 int
@@ -3997,7 +3997,7 @@ ns_write_user_ips(
 
 struct ip_user_item
 {
-  ej_ip_t ip;
+  ej_ip4_t ip;
   int uid_u, uid_a;
   int *uids;
 };

@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -319,7 +319,7 @@ team_extra_flush(team_extra_state_t state)
 
 int
 team_extra_append_warning(team_extra_state_t state, int user_id,
-                          int issuer_id, ej_ip_t issuer_ip,
+                          int issuer_id, ej_ip4_t issuer_ip,
                           time_t issue_date,
                           const unsigned char *txt,
                           const unsigned char *cmt)

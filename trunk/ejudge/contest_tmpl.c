@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -53,7 +53,7 @@ contest_tmpl_new(int contest_id,
                  const unsigned char *login,
                  const unsigned char *self_url,
                  const unsigned char *ss_login,
-                 ej_ip_t ip,
+                 ej_ip4_t ip,
                  int ssl_flag,
                  const struct ejudge_cfg *ejudge_config)
 {

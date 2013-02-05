@@ -4,7 +4,7 @@
 #ifndef __USERLIST_H__
 #define __USERLIST_H__
 
-/* Copyright (C) 2002-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -400,7 +400,7 @@ struct userlist_cookie
   struct xml_tree b;
 
   int user_id;
-  ej_ip_t ip;
+  ej_ip4_t ip;
   int ssl;
   ej_cookie_t cookie;
   time_t expire;

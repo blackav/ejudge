@@ -4,7 +4,7 @@
 #ifndef __ULDB_PLUGIN_H__
 #define __ULDB_PLUGIN_H__
 
-/* Copyright (C) 2006-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -94,7 +94,7 @@ struct uldb_plugin_iface
   int (*get_cookie)(void *, ej_cookie_t, const struct userlist_cookie **);
   // create a new cookie
   int (*new_cookie)(void *, int user_id,
-                    ej_ip_t ip, int ssl_flag,
+                    ej_ip4_t ip, int ssl_flag,
                     ej_cookie_t cookie, time_t,
                     int contest_id,
                     int locale_id,

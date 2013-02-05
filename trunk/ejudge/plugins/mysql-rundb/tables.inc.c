@@ -74,7 +74,7 @@ struct run_entry_internal
   int status;
   int ssl_flag;
   int ip_version;               /* 10 */
-  ej_ip_t ip;
+  ej_ip4_t ip;
   unsigned char *hash;
   unsigned char *run_uuid;
   int score;

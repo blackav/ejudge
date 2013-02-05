@@ -3,7 +3,7 @@
 #ifndef __SUPER_SERVE_H__
 #define __SUPER_SERVE_H__
 
-/* Copyright (C) 2004-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -93,7 +93,7 @@ struct sid_state
   struct sid_state *next;
   struct sid_state *prev;
   ej_cookie_t sid;
-  ej_ip_t remote_addr;
+  ej_ip4_t remote_addr;
   time_t init_time;
   unsigned long flags;
   struct contest_desc *edited_cnts;
@@ -264,7 +264,7 @@ struct super_http_request_info
   int opcode;
 
   // the URL
-  ej_ip_t ip;
+  ej_ip4_t ip;
   int ssl_flag;
   unsigned char self_url[4096];
   const unsigned char *script_name;
