@@ -256,6 +256,173 @@ xml_parse_ip6(
 }
 */
 
+#if 0
+#define fail() do { return -__LINE__; } while (0)
+
+static int
+read_hex(const unsigned char **p_ptr, const unsigned char *eptr)
+{
+  const unsigned char *ptr = *p_ptr;
+  if (ptr >= eptr || !isxdigit(*ptr)) fail();
+  unsigned int w = 0;
+  for (;ptr < eptr && isxdigit(*ptr) && w < 0x10000; ++ptr) {
+    unsigned d = 0;
+    if (*ptr >= '0' && *ptr <= '9') {
+      d = *ptr - '0';
+    } else if (*ptr >= 'A' && *ptr <= 'F') {
+      d = *ptr - 'A' + 10;
+    } else if (*ptr >= 'a' && *ptr <= 'f') {
+      d = *ptr - 'a' + 10;
+    } else {
+      *p_ptr = ptr;
+      fail();
+    }
+    w = (w << 4) | d;
+  }
+  *p_ptr = ptr;
+  if (w >= 0x10000) {
+    fail();
+  }
+  w = ((w & 0xff) << 8) | (w >> 8);
+  return w;
+}
+
+int
+parse_ipv6(const char *str, unsigned short addr[])
+{
+  if (!str) fail();
+
+  const unsigned char *bptr = (const unsigned char *) str;
+  const unsigned char *eptr = (const unsigned char *) str + strlen(str);
+  while (bptr < eptr && isspace(*bptr)) ++bptr;
+  while (bptr < eptr && isspace(eptr[-1])) --eptr;
+  if (bptr >= eptr) fail();
+
+  memset(addr, 0, sizeof(addr[0]) * 8);
+  int addrsize = 8;
+
+  int dcnt = 0;
+  const unsigned char *last_col = NULL;
+  const unsigned char *sep = NULL;
+  const unsigned char *ptr = (const unsigned char *) bptr;
+  for (; ptr < eptr; ++ptr) {
+    if (isxdigit(*ptr)) {
+      // nothing
+    } else if (*ptr == ':') {
+      if (ptr < eptr && ptr[1] == ':') {
+        if (sep) fail();
+        sep = ptr;
+        ++ptr;
+        last_col = ptr;
+      } else {
+        last_col = ptr;
+      }
+    } else if (*ptr == '.') {
+      ++dcnt;
+    } else {
+      // invalid character
+      fail();
+    }
+  }
+
+  if (dcnt > 0) {
+    if (!last_col) {
+      // plain IPv4: parse or fail?
+      ptr = bptr;
+    } else {
+      ptr = last_col + 1;
+    }
+
+    unsigned int value = 0;
+    for (int i = 0; i < 4; ++i) {
+      if (ptr >= eptr) fail();
+      if (!isdigit(*ptr)) fail();
+      unsigned int b = 0;
+      while (ptr < eptr && isdigit(*ptr) && b < 256) {
+        b = b * 10 + (*ptr - '0');
+        ++ptr;
+      }
+      if (b >= 256) fail();
+      value = (value << 8) | b;
+      if (i < 3) {
+        if (ptr >= eptr || *ptr != '.') fail();
+        ++ptr;
+      }
+    }
+    addr[6] = value >> 16;
+    addr[7] = value & 0xffff;
+    if (!last_col) {
+      return 0;
+    }
+    if (sep + 1 != last_col) {
+      // remove the last :
+      eptr = last_col;
+    } else {
+      // preserve the last ::
+      eptr = last_col + 1;
+    }
+    addrsize = 6;
+  }
+
+  if (!sep) {
+    ptr = bptr;
+    if (ptr >= eptr) fail();
+    for (int i = 0; i < addrsize; ++i) {
+      int w = read_hex(&ptr, eptr);
+      if (w < 0) return w;
+      addr[i] = w;
+      if (i < addrsize - 1) {
+        if (ptr >= eptr || *ptr != ':') fail();
+        ++ptr;
+      }
+    }
+    return 0;
+  }
+
+  // process the first part to '::'
+  const unsigned char *ep1 = sep;
+  int pos1 = 0;
+  if (bptr < ep1) {
+    ptr = bptr;
+    while (ptr < ep1) {
+      if (pos1 >= addrsize) fail();
+      int w = read_hex(&ptr, ep1);
+      if (w < 0) return w;
+      addr[pos1++] = w;
+      if (ptr < ep1) {
+        if (*ptr != ':') fail();
+        ++ptr;
+      }
+    }
+  }
+
+  // process the last part back to '::'
+  bptr = sep + 2;
+  if (bptr >= eptr) {
+    return 0;
+  }
+
+  int pos2 = addrsize - 1;
+  for (ptr = bptr; ptr < eptr; ++ptr) {
+    if (*ptr == ':') --pos2;
+  }
+  if (pos1 > pos2) fail();
+
+  ptr = bptr;
+  while (ptr < eptr) {
+    if (pos2 >= addrsize) fail();
+    int w = read_hex(&ptr, eptr);
+    if (w < 0) return w;
+    addr[pos2++] = w;
+    if (ptr < eptr) {
+      if (*ptr != ':') fail();
+      ++ptr;
+    }
+  }
+  return 0;
+}
+#endif
+
 /*
  * Local variables:
  *  compile-command: "make -C .."
