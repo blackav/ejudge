@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2008-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -632,7 +632,7 @@ parse_spec_func(
   char *eptr;
   unsigned long long uq;
   unsigned long long *p_uq;
-  ej_ip_t *p_ip;
+  ej_ip4_t *p_ip;
 
   if (field_count != spec_num) {
     err("wrong field_count (%d instead of %d). invalid table format?",
@@ -783,7 +783,7 @@ parse_spec_func(
       *p_time = t;
       break;
     case 'i':
-      p_ip = XPDEREF(ej_ip_t, data, specs[i].offset);
+      p_ip = XPDEREF(ej_ip4_t, data, specs[i].offset);
       if (!row[i]) {
         xml_parse_ip(NULL, 0, 0, 0, "127.0.0.127", p_ip);
       } else if (xml_parse_ip(NULL, 0, 0, 0, row[i], p_ip) < 0) {
@@ -823,7 +823,7 @@ unparse_spec_func(
   const int *p_int;
   const unsigned long long *p_uq;
   unsigned long long uq;
-  ej_ip_t *p_ip;
+  ej_ip4_t *p_ip;
 
   va_start(args, data);
   for (i = 0; i < spec_num; ++i) {
@@ -890,7 +890,7 @@ unparse_spec_func(
       break;
 
     case 'i':
-      p_ip = XPDEREF(ej_ip_t, data, specs[i].offset);
+      p_ip = XPDEREF(ej_ip4_t, data, specs[i].offset);
       fprintf(fout, "%s'%s'", sep, xml_unparse_ip(*p_ip));
       break;
 
@@ -987,6 +987,5 @@ parse_int_func(
 /*
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "MYSQL")
  * End:
  */

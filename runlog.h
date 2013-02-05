@@ -247,7 +247,7 @@ struct run_entry
   rint32_t       lang_id;       /* 4 */
   union
   {
-    ej_ip_t        ip;
+    ej_ip4_t       ip;
     unsigned char  ip6[16];
   }              a;             /* 16 */
   ruint32_t      sha1[5];       /* 20 */
@@ -304,8 +304,8 @@ const struct run_entry *run_get_entries_ptr(runlog_state_t);
 time_t run_get_virtual_start_time(runlog_state_t, int user_id);
 time_t run_get_virtual_stop_time(runlog_state_t, int user_id, time_t cur_time);
 int run_get_virtual_status(runlog_state_t, int user_id);
-int run_virtual_start(runlog_state_t, int user_id, time_t, ej_ip_t, int, int);
-int run_virtual_stop(runlog_state_t, int user_id, time_t, ej_ip_t, int, int);
+int run_virtual_start(runlog_state_t, int user_id, time_t, ej_ip4_t, int, int);
+int run_virtual_stop(runlog_state_t, int user_id, time_t, ej_ip4_t, int, int);
 int run_get_virtual_info(runlog_state_t state, int user_id,
                          struct run_entry *vs, struct run_entry *ve);
 

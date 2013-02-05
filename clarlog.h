@@ -3,7 +3,7 @@
 #ifndef __CLARLOG_H__
 #define __CLARLOG_H__
 
-/* Copyright (C) 2000-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -71,7 +71,7 @@ struct clar_entry_v1
   unsigned char appeal_flag;    /* 1 */
   union
   {
-    ej_ip_t ip;
+    ej_ip4_t ip;
     unsigned char ip6[16];
   } a;                          /* 16 */
   unsigned short locale_id;     /* 2 */
@@ -101,7 +101,7 @@ int clar_add_record(
         time_t          time,
         int             nsec,
         size_t          size,
-        ej_ip_t         ip,
+        ej_ip4_t        ip,
         int             ssl_flag,
         int             from,
         int             to,

@@ -4,7 +4,7 @@
 #ifndef __XML_UTILS_H__
 #define __XML_UTILS_H__
 
-/* Copyright (C) 2004-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -28,14 +28,14 @@ struct xml_attr;
 struct xml_parse_spec;
 
 int xml_parse_ip(FILE *log_f, unsigned char const *path, int line, int column,
-                 unsigned char const *s, ej_ip_t *pip);
+                 unsigned char const *s, ej_ip4_t *pip);
 int xml_parse_date(FILE *log_f, unsigned char const *path, int line, int column,
                    unsigned char const *s, time_t *pd);
 int xml_parse_int(FILE *log_f, unsigned char const *path, int line, int column,
                   unsigned char const *str, int *pval);
 int xml_parse_ip_mask(FILE *log_f, const unsigned char *path, int line, int column,
                       const unsigned char *s,
-                      ej_ip_t *p_ip, ej_ip_t *p_mask);
+                      ej_ip4_t *p_ip, ej_ip4_t *p_mask);
 int xml_parse_bool(FILE *log_f, unsigned char const *path, int line, int column,
                    unsigned char const *s, int *pv);
 
@@ -44,9 +44,9 @@ void xml_unparse_text(FILE *f, const unsigned char *tag_name,
                       unsigned char const *indent);
 
 const unsigned char *xml_unparse_bool(int b);
-const unsigned char *xml_unparse_ip(ej_ip_t ip);
+const unsigned char *xml_unparse_ip(ej_ip4_t ip);
 const unsigned char *xml_unparse_date(time_t d);
-const unsigned char *xml_unparse_ip_mask(ej_ip_t addr, ej_ip_t mask);
+const unsigned char *xml_unparse_ip_mask(ej_ip4_t addr, ej_ip4_t mask);
 
 extern const unsigned char *xml_err_path;
 extern const struct xml_parse_spec *xml_err_spec;
@@ -89,6 +89,7 @@ int xml_attr_date(struct xml_attr *attr, time_t *value_ptr);
 int xml_elem_ip_mask(struct xml_tree *tree,
                      unsigned int *addr_ptr, unsigned int *mask_ptr);
 
+/*
 int
 xml_parse_ip6(
         FILE *log_f,
@@ -97,6 +98,7 @@ xml_parse_ip6(
         int column,
         unsigned char const *s,
         ej_ip6_t *pip);
+*/
 
 #endif /* __XML_UTILS_H__ */
 

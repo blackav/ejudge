@@ -359,7 +359,7 @@ run_read_entry_v0(struct rldb_file_cnts *cs, int n)
   char buf[RUN_RECORD_SIZE + 16];
   char tip[RUN_RECORD_SIZE + 16];
   int  k, r;
-  ej_ip_t ip;
+  ej_ip4_t ip;
 
   memset(buf, 0, sizeof(buf));
   if (run_read_record_v0(cs, buf, RUN_RECORD_SIZE) < 0) return -1;
@@ -547,7 +547,7 @@ struct run_entry_v1
   rint32_t       submission;
   ej_time_t      timestamp;
   ej_size_t      size;
-  ej_ip_t        ip;
+  ej_ip4_t       ip;
   ruint32_t      sha1[5];
   rint32_t       team;
   rint32_t       problem;

@@ -4,7 +4,7 @@
 #ifndef __CONTESTS_H__
 #define __CONTESTS_H__
 
-/* Copyright (C) 2002-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -443,19 +443,19 @@ const unsigned char *contests_strerror(int);
 int contests_lock(int);
 int contests_unlock(int);
 
-int contests_check_ip(int, int, ej_ip_t, int);
-int contests_check_register_ip(int, ej_ip_t, int);
-int contests_check_register_ip_2(const struct contest_desc *, ej_ip_t, int);
-int contests_check_users_ip(int, ej_ip_t, int);
-int contests_check_users_ip_2(const struct contest_desc *, ej_ip_t, int);
-int contests_check_master_ip(int, ej_ip_t, int);
-int contests_check_master_ip_2(const struct contest_desc *, ej_ip_t, int);
-int contests_check_judge_ip(int, ej_ip_t, int);
-int contests_check_judge_ip_2(const struct contest_desc *, ej_ip_t, int);
-int contests_check_team_ip(int, ej_ip_t, int);
-int contests_check_team_ip_2(const struct contest_desc *, ej_ip_t, int);
-int contests_check_serve_control_ip(int num, ej_ip_t ip, int ssl);
-int contests_check_serve_control_ip_2(const struct contest_desc *, ej_ip_t, int);
+int contests_check_ip(int, int, ej_ip4_t, int);
+int contests_check_register_ip(int, ej_ip4_t, int);
+int contests_check_register_ip_2(const struct contest_desc *, ej_ip4_t, int);
+int contests_check_users_ip(int, ej_ip4_t, int);
+int contests_check_users_ip_2(const struct contest_desc *, ej_ip4_t, int);
+int contests_check_master_ip(int, ej_ip4_t, int);
+int contests_check_master_ip_2(const struct contest_desc *, ej_ip4_t, int);
+int contests_check_judge_ip(int, ej_ip4_t, int);
+int contests_check_judge_ip_2(const struct contest_desc *, ej_ip4_t, int);
+int contests_check_team_ip(int, ej_ip4_t, int);
+int contests_check_team_ip_2(const struct contest_desc *, ej_ip4_t, int);
+int contests_check_serve_control_ip(int num, ej_ip4_t ip, int ssl);
+int contests_check_serve_control_ip_2(const struct contest_desc *, ej_ip4_t, int);
 
 void contests_set_load_callback(void (*f)(const struct contest_desc *));
 void contests_set_unload_callback(void (*f)(const struct contest_desc *));
@@ -510,8 +510,8 @@ contests_add_ip(
         struct contest_desc *cnts,
         struct contest_access **p_acc,
         int tag,
-        ej_ip_t addr,
-        ej_ip_t mask,
+        ej_ip4_t addr,
+        ej_ip4_t mask,
         int ssl_flag,
         int default_allow);
 struct contest_ip *

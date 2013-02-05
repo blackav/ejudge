@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1207,7 +1207,7 @@ static int
 new_cookie_func(
         void *data,
         int user_id,
-        ej_ip_t ip,
+        ej_ip4_t ip,
         int ssl_flag,
         ej_cookie_t cookie,
         time_t expire,
@@ -5317,6 +5317,5 @@ fail:
 /*
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "MYSQL")
  * End:
  */

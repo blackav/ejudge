@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2008-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -177,7 +177,7 @@ struct clar_entry_internal
   int hide_flag;
   int ssl_flag;
   int appeal_flag;
-  ej_ip_t ip;
+  ej_ip4_t ip;
   int locale_id;
   int in_reply_to;
   int run_id;

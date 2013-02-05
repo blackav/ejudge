@@ -109,7 +109,7 @@ struct client_state
   int user_id;
   int priv_level;
   ej_cookie_t cookie;
-  ej_ip_t ip;
+  ej_ip4_t ip;
   int ssl;
   unsigned char *login;
   unsigned char *name;
@@ -1003,7 +1003,7 @@ get_peer_local_user(struct client_state *p)
   int r;
   int uid, priv_level, ssl;
   ej_cookie_t cookie;
-  ej_ip_t ip;
+  ej_ip4_t ip;
   unsigned char *login, *name;
 
   if (p->user_id > 0) return p->user_id;
@@ -1089,7 +1089,7 @@ sid_state_find(ej_cookie_t sid)
 static struct sid_state*
 sid_state_add(
         ej_cookie_t sid,
-        ej_ip_t remote_addr,
+        ej_ip4_t remote_addr,
         int user_id,
         const unsigned char *user_login,
         const unsigned char *user_name)
@@ -1120,7 +1120,7 @@ sid_state_add(
 static struct sid_state*
 sid_state_get(
         ej_cookie_t sid,
-        ej_ip_t remote_addr,
+        ej_ip4_t remote_addr,
         int user_id,
         const unsigned char *user_login,
         const unsigned char *user_name)

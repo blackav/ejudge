@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -76,7 +76,7 @@ static struct generic_section_config *config;
 static struct client_section_global_data    *global;
 static unsigned char *client_charset = 0;
 static int ssl_flag = 0;
-static ej_ip_t client_ip;
+static ej_ip4_t client_ip;
 
 static void
 global_init_func(struct generic_section_config *gp)
@@ -99,14 +99,14 @@ check_config_exist(unsigned char const *path)
 }
 
 static int
-check_access_rules(char **rules, ej_ip_t ip, int ssl_flag)
+check_access_rules(char **rules, ej_ip4_t ip, int ssl_flag)
 {
   int i, r, n, mode, ssl_mode;
   unsigned char *s;
   unsigned char b1[1024];
   unsigned char b2[1024];
   unsigned char b3[1024];
-  ej_ip_t cur_ip, cur_mask;
+  ej_ip4_t cur_ip, cur_mask;
 
   if (!rules) return 0;
   for (i = 0; rules[i]; i++) {
@@ -271,6 +271,5 @@ main(int argc, char *argv[])
 /*
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")
  * End:
  */

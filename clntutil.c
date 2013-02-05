@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -566,13 +566,13 @@ client_make_form_headers(unsigned char const *self_url)
           self_url);  
 }
 
-ej_ip_t
+ej_ip4_t
 parse_client_ip(void)
 {
   unsigned int b1, b2, b3, b4;
   int n = 0;
   unsigned char *s = getenv("REMOTE_ADDR");
-  ej_ip_t client_ip = 0;
+  ej_ip4_t client_ip = 0;
 
   if (!s) return client_ip;
 
@@ -591,6 +591,5 @@ parse_client_ip(void)
 /*
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")
  * End:
  */

@@ -391,7 +391,7 @@ serve_audit_log(
         serve_state_t state,
         int run_id,
         int user_id,
-        ej_ip_t ip,
+        ej_ip4_t ip,
         int ssl_flag,
         const unsigned char *command,
         const unsigned char *status,
@@ -477,7 +477,7 @@ serve_rejudge_run(
         serve_state_t state,
         int run_id,
         int user_id,
-        ej_ip_t ip,
+        ej_ip4_t ip,
         int ssl_flag,
         int force_full_rejudge,
         int priority_adjustment);
@@ -489,7 +489,7 @@ serve_rejudge_by_mask(
         const struct contest_desc *,
         serve_state_t state,
         int user_id,
-        ej_ip_t ip,
+        ej_ip4_t ip,
         int ssl_flag,
         int mask_size,
         unsigned long *mask,
@@ -501,7 +501,7 @@ void
 serve_mark_by_mask(
         serve_state_t state,
         int user_id,
-        ej_ip_t ip,
+        ej_ip4_t ip,
         int ssl_flag,
         int mask_size,
         unsigned long *mask,
@@ -513,7 +513,7 @@ serve_rejudge_problem(
         const struct contest_desc *cnst,
         serve_state_t state,
         int user_id,
-        ej_ip_t ip,
+        ej_ip4_t ip,
         int ssl_flag,
         int prob_id,
         int priority_adjustment,
@@ -525,7 +525,7 @@ serve_judge_suspended(
         const struct contest_desc *cnts,
         serve_state_t state,
         int user_id,
-        ej_ip_t ip,
+        ej_ip4_t ip,
         int ssl_flag,
         int priority_adjustment,
         int create_job_flag);
@@ -536,7 +536,7 @@ serve_rejudge_all(
         const struct contest_desc *cnts,
         serve_state_t state,
         int user_id,
-        ej_ip_t ip,
+        ej_ip4_t ip,
         int ssl_flag,
         int priority_adjustment,
         int create_job_flag);
@@ -574,7 +574,7 @@ serve_judge_built_in_problem(
         const struct section_problem_data *prob,
         struct problem_desc *px,
         int user_id,
-        ej_ip_t ip,
+        ej_ip4_t ip,
         int ssl_flag);
 
 void serve_invoke_start_script(serve_state_t state);
@@ -605,10 +605,10 @@ void serve_judge_virtual_olympiad(
         int priority_adjustment);
 
 void serve_clear_by_mask(serve_state_t state,
-                         int user_id, ej_ip_t ip, int ssl_flag,
+                         int user_id, ej_ip4_t ip, int ssl_flag,
                          int mask_size, unsigned long *mask);
 void serve_ignore_by_mask(serve_state_t state,
-                          int user_id, ej_ip_t ip, int ssl_flag,
+                          int user_id, ej_ip4_t ip, int ssl_flag,
                           int mask_size, unsigned long *mask,
                           int new_status);
 void

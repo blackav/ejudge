@@ -313,7 +313,7 @@ static const unsigned char default_config[] =
 "</serve_control_config>\n";
 
 static struct config_node *config;
-static ej_ip_t user_ip;
+static ej_ip4_t user_ip;
 static userlist_clnt_t userlist_conn;
 static ej_cookie_t session_id;
 static unsigned int user_id;

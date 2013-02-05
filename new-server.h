@@ -69,7 +69,7 @@ struct http_request_info
   const unsigned char *self_url;
   const unsigned char *script_name;
   int ssl_flag;
-  ej_ip_t ip;
+  ej_ip4_t ip;
   ej_cookie_t session_id;
   int contest_id;
   int locale_id;
@@ -401,7 +401,7 @@ enum
 
 struct last_access_info
 {
-  ej_ip_t ip;
+  ej_ip4_t ip;
   int     ssl;
   time_t  time;
   int     user_id;

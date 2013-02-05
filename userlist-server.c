@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -159,7 +159,7 @@ struct client_state
   int contest_id;
   int priv_level;
   ej_cookie_t cookie;
-  ej_ip_t ip;
+  ej_ip4_t ip;
   int ssl;
   int cnts_login;               /* 1, if logged to contest */
 
@@ -11166,6 +11166,5 @@ main(int argc, char *argv[])
 /*
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "XML_Parser" "XML_Char" "XML_Encoding" "va_list" "gzFile")
  * End:
  */

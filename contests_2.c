@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2008-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -682,8 +682,8 @@ contests_add_ip(
         struct contest_desc *cnts,
         struct contest_access **p_acc,
         int tag,
-        ej_ip_t addr,
-        ej_ip_t mask,
+        ej_ip4_t addr,
+        ej_ip4_t mask,
         int ssl_flag,
         int default_allow)
 {
@@ -948,6 +948,5 @@ contests_set_member_field(
 /*
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "DIR")
  * End:
  */

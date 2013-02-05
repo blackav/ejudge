@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2008-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -205,7 +205,7 @@ clar_read_entry(
 
   int r_time;
   unsigned int r_size;
-  ej_ip_t r_ip;
+  ej_ip4_t r_ip;
 
   memset(buf, 0, sizeof(buf));
   memset(&cl_state->clars.v[n], 0, sizeof(cl_state->clars.v[0]));

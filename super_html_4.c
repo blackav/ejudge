@@ -4193,7 +4193,7 @@ cmd_op_check_ip_mask(
 {
   int retval = 0;
   const unsigned char *value = 0;
-  ej_ip_t addr, mask;
+  ej_ip4_t addr, mask;
 
   phr->json_reply = 1;
 
@@ -4220,7 +4220,7 @@ cmd_op_add_ip(
   int default_allow = -1;
   struct contest_access **p_acc;
   int f_id;
-  ej_ip_t addr, mask;
+  ej_ip4_t addr, mask;
 
   phr->json_reply = 1;
 
@@ -4331,7 +4331,7 @@ cmd_op_set_rule_ip(
   struct contest_ip *p;
   int f_id, subf_id;
   const unsigned char *mask_str = 0;
-  ej_ip_t addr = 0, mask = 0;
+  ej_ip4_t addr = 0, mask = 0;
 
   phr->json_reply = 1;
 

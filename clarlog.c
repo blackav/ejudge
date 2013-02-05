@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -166,7 +166,7 @@ clar_add_record(
         time_t          time,
         int             nsec,
         size_t          size,
-        ej_ip_t         ip,
+        ej_ip4_t        ip,
         int             ssl_flag,
         int             from,
         int             to,

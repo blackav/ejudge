@@ -1991,7 +1991,7 @@ cleanup:;
 static struct sid_state*
 sid_state_create(
         ej_cookie_t sid,
-        ej_ip_t remote_addr,
+        ej_ip4_t remote_addr,
         int user_id,
         const unsigned char *user_login,
         const unsigned char *user_name)
@@ -2068,7 +2068,7 @@ main(int argc, char **argv)
     }
 
     if (!pkt->remote_addr) pkt->remote_addr = xstrdup("127.0.0.1");
-    ej_ip_t ip;
+    ej_ip4_t ip;
     if (xml_parse_ip(NULL, NULL, 0, 0, pkt->remote_addr, &ip) < 0) {
         fatal2("invalid IP-address '%s'", pkt->remote_addr);
     }
