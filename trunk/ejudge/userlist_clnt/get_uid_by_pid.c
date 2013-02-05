@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -26,7 +26,7 @@ userlist_clnt_get_uid_by_pid(struct userlist_clnt *clnt,
                              int *p_uid,
                              int *p_priv_level,
                              ej_cookie_t *p_cookie,
-                             ej_ip_t *p_ip,
+                             ej_ip4_t *p_ip,
                              int *p_ssl)
 {
   struct userlist_pk_get_uid_by_pid *out = 0;
@@ -70,6 +70,5 @@ userlist_clnt_get_uid_by_pid(struct userlist_clnt *clnt,
 /*
  * Local variables:
  *  compile-command: "make -C .."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  * End:
  */
