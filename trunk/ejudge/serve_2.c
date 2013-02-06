@@ -398,7 +398,7 @@ serve_check_user_quota(serve_state_t state, int user_id, size_t size)
 
   if (size > state->global->max_run_size) return -1;
   run_get_team_usage(state->runlog_state, user_id, &num, &total);
-  if (num > state->global->max_run_num
+  if (num >= state->global->max_run_num
       || total + size > state->global->max_run_total)
     return -1;
   return 0;
@@ -412,7 +412,7 @@ serve_check_clar_quota(serve_state_t state, int user_id, size_t size)
 
   if (size > state->global->max_clar_size) return -1;
   clar_get_user_usage(state->clarlog_state, user_id, &num, &total);
-  if (num > state->global->max_clar_num
+  if (num >= state->global->max_clar_num
       || total + size > state->global->max_clar_total)
     return -1;
   return 0;
