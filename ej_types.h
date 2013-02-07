@@ -28,13 +28,23 @@ typedef unsigned long long ej_cookie_t;   /* cookie */
 typedef unsigned long long ej_tsc_t; /* timestamp counter type */
 
 /** IPv6-ready IP address structure */
-/*
-typedef struct ej_ip6_t
+typedef struct ej_ip_t
 {
-  ruint32_t v4; /// IPv4, if 0, then IPv6 is considered
-  unsigned char v6[16];
-} ej_ip6_t;
-*/
+  unsigned char ipv6_flag;
+  unsigned char pad1[3];
+  union
+  {
+    struct
+    {
+      unsigned char pad2[12];
+      ruint32_t addr;
+    } v4;
+    struct
+    {
+      unsigned char addr[16];
+    } v6;
+  } u;
+} ej_ip_t;
 
 /* types for meta-info generator */
 typedef unsigned char ejbytebool_t;

@@ -28,28 +28,42 @@ xml_unparse_ip(ej_ip4_t ip)
   return buf;
 }
 
-#if 0
-void
-unparse_ipv6(FILE *out, unsigned short data[8])
+const unsigned char *
+xml_unparse_ipv6(const ej_ip_t *p_addr)
 {
+  static char buf[64];
+
+  if (!p_addr->ipv6_flag) {
+    snprintf(buf, sizeof(buf), "%u.%u.%u.%u",
+             p_addr->u.v4.addr >> 24, (p_addr->u.v4.addr >> 16) & 0xff,
+             (p_addr->u.v4.addr >> 8) & 0xff, p_addr->u.v4.addr & 0xff);
+    return buf;
+  }
+
+  const unsigned short *data = (const unsigned short*) p_addr->u.v6.addr;
+  char *out = buf;
+
   if (!data[0] && !data[1] && !data[2] && !data[3] && !data[4]
       && (!data[5] || data[5] == 0xffff)) {
     if (!data[5] && !data[6]) {
       if (!data[7]) {
-        fprintf(out, "::");
-        return;
+        *out++ = ':';
+        *out++ = ':';
+        *out = 0;
+        return buf;
       } else {
-        fprintf(out, "::%x", (data[7] >> 8) | ((data[7] & 0xff) << 8));
-        return;
+        sprintf(out, "::%x", (data[7] >> 8) | ((data[7] & 0xff) << 8));
+        return buf;
       }
     }
-    fprintf(out, "::");
+    *out++ = ':';
+    *out++ = ':';
     if (data[5]) {
-      fprintf(out, "ffff:");
+      out += sprintf(out, "ffff:");
     }
-    fprintf(out, "%d.%d.%d.%d",
+    sprintf(out, "%d.%d.%d.%d",
             data[6] >> 8, data[6] & 0xff, data[7] >> 8, data[7] & 0xff);
-    return;
+    return buf;
   }
 
   // find longest zero run
@@ -72,28 +86,34 @@ unparse_ipv6(FILE *out, unsigned short data[8])
 
   if (run_start < 0) {
     for (int i = 0; i < 8; ++i) {
-      fprintf(out, "%x", (data[i] >> 8) | ((data[i] & 0xff) << 8));
+      out += sprintf(out, "%x", (data[i] >> 8) | ((data[i] & 0xff) << 8));
       if (i < 7) {
-        fprintf(out, ":");
+        *out++ = ':';
+        *out = 0;
       }
     }
   } else {
     for (int i = 0; i < run_start; ++i) {
-      fprintf(out, "%x", (data[i] >> 8) | ((data[i] & 0xff) << 8));
+      out += sprintf(out, "%x", (data[i] >> 8) | ((data[i] & 0xff) << 8));
       if (i < run_start - 1) {
-        fprintf(out, ":");
+        *out++ = ':';
+        *out = 0;
       }
     }
-    fprintf(out, "::");
+    *out++ = ':';
+    *out++ = ':';
+    *out = 0;
     for (int i = run_start + run_len; i < 8; ++i) {
-      fprintf(out, "%x", (data[i] >> 8) | ((data[i] & 0xff) << 8));
+      out += sprintf(out, "%x", (data[i] >> 8) | ((data[i] & 0xff) << 8));
       if (i < 7) {
-        fprintf(out, ":");
+        *out++ = ':';
+        *out = 0;
       }
     }
   }
+
+  return buf;
 }
-#endif
 
 /*
  * Local variables:
