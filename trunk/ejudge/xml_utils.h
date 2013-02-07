@@ -89,16 +89,21 @@ int xml_attr_date(struct xml_attr *attr, time_t *value_ptr);
 int xml_elem_ip_mask(struct xml_tree *tree,
                      unsigned int *addr_ptr, unsigned int *mask_ptr);
 
-/*
 int
-xml_parse_ip6(
+xml_do_parse_ipv6(
+        const unsigned char *bptr,
+        const unsigned char *eptr,
+        ej_ip_t *p_addr);
+int
+xml_parse_ipv6(
         FILE *log_f,
         unsigned char const *path,
         int line,
         int column,
         unsigned char const *s,
-        ej_ip6_t *pip);
-*/
+        ej_ip_t *p_addr);
+const unsigned char *
+xml_unparse_ipv6(const ej_ip_t *p_addr);
 
 #endif /* __XML_UTILS_H__ */
 
