@@ -95,6 +95,10 @@ xml_do_parse_ipv6(
         const unsigned char *eptr,
         ej_ip_t *p_addr);
 int
+xml_parse_ipv6_2(
+        unsigned char const *s,
+        ej_ip_t *p_addr);
+int
 xml_parse_ipv6(
         FILE *log_f,
         unsigned char const *path,
@@ -104,6 +108,10 @@ xml_parse_ipv6(
         ej_ip_t *p_addr);
 const unsigned char *
 xml_unparse_ipv6(const ej_ip_t *p_addr);
+
+const ej_ip_t *
+xml_make_ipv6(ej_ip4_t addr, ej_ip_t *p_addr);
+ej_ip4_t xml_make_ipv4(const ej_ip_t *p_addr);
 
 #endif /* __XML_UTILS_H__ */
 

@@ -2574,7 +2574,7 @@ ns_priv_edit_clar_action(
   // FIXME: do better
   if (clar.a.ip != new_ip) {
     new_clar.a.ip = new_ip;
-    new_clar.ip6_flag = 0;
+    new_clar.ipv6_flag = 0;
     mask |= 1 << CLAR_FIELD_IP;
   }
   if (clar.ssl_flag != new_ssl_flag) {
