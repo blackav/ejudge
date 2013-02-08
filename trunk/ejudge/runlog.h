@@ -248,7 +248,7 @@ struct run_entry
   union
   {
     ej_ip4_t       ip;
-    unsigned char  ip6[16];
+    unsigned char  ipv6[16];
   }              a;             /* 16 */
   ruint32_t      sha1[5];       /* 20 */
   rint32_t       score;         /* 4 */
@@ -392,5 +392,10 @@ int
 run_get_max_user_id(runlog_state_t state);
 int
 run_get_total_users(runlog_state_t state);
+
+void
+run_entry_to_ipv6(const struct run_entry *p_re, ej_ip_t *p_ip);
+void
+ipv6_to_run_entry(const ej_ip_t *p_ip, struct run_entry *p_re);
 
 #endif /* __RUNLOG_H__ */
