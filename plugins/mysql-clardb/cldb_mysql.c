@@ -177,7 +177,7 @@ struct clar_entry_internal
   int hide_flag;
   int ssl_flag;
   int appeal_flag;
-  ej_ip4_t ip;
+  ej_ip_t ip;
   int locale_id;
   int in_reply_to;
   int run_id;
@@ -203,7 +203,7 @@ static const struct common_mysql_parse_spec clars_spec[CLARS_ROW_WIDTH] =
   { 0, 'b', "hide_flag", CLARS_OFFSET(hide_flag), 0 },
   { 0, 'b', "ssl_flag", CLARS_OFFSET(ssl_flag), 0 },
   { 0, 'b', "appeal_flag", CLARS_OFFSET(appeal_flag), 0 },
-  { 0, 'i', "ip", CLARS_OFFSET(ip), 0 },
+  { 0, 'I', "ip", CLARS_OFFSET(ip), 0 },
   { 0, 'd', "locale_id", CLARS_OFFSET(locale_id), 0 },
   { 0, 'd', "in_reply_to", CLARS_OFFSET(in_reply_to), 0 },
   { 0, 'd', "run_id", CLARS_OFFSET(run_id), 0 },
@@ -404,7 +404,6 @@ open_func(
     if (cl.user_to < 0) db_error_inv_value_fail(md, "user_to");
     if (cl.j_from < 0) db_error_inv_value_fail(md, "j_from");
     if (cl.flags < 0 || cl.flags > 2) db_error_inv_value_fail(md, "flags");
-    if (cl.ip_version != 4) db_error_inv_value_fail(md, "ip_version");
     if (cl.locale_id < 0 || cl.locale_id > 255)
       db_error_inv_value_fail(md, "locale_id");
     if (cl.in_reply_to < 0) db_error_inv_value_fail(md, "in_reply_to");
@@ -440,10 +439,10 @@ open_func(
     ce->to = cl.user_to;
     ce->j_from = cl.j_from;
     ce->flags = cl.flags;
-    ce->ip6_flag = 0;
     ce->ssl_flag = cl.ssl_flag;
     ce->appeal_flag = cl.appeal_flag;
-    ce->a.ip = cl.ip;
+    ipv6_to_clar_entry(&cl.ip, ce);
+    ce->ipv6_flag = cl.ip.ipv6_flag;
     ce->locale_id = cl.locale_id;
     ce->in_reply_to = cl.in_reply_to;
     ce->run_id = cl.run_id;
@@ -529,11 +528,12 @@ add_entry_func(struct cldb_plugin_cnts *cdata, int clar_id)
   cc.user_to = ce->to;
   cc.j_from = ce->j_from;
   cc.flags = ce->flags;
-  cc.ip_version = 4;
   cc.hide_flag = ce->hide_flag;
   cc.ssl_flag = ce->ssl_flag;
   cc.appeal_flag = ce->appeal_flag;
-  cc.ip = ce->a.ip;
+  cc.ip_version = 4;
+  clar_entry_to_ipv6(ce, &cc.ip);
+  if (cc.ip.ipv6_flag) cc.ip_version = 6;
   cc.locale_id = ce->locale_id;
   cc.in_reply_to = ce->in_reply_to;
   cc.run_id = ce->run_id;
@@ -780,9 +780,13 @@ modify_record_func(
     sep = sep1;
   }
   if (mask & (1 << CLAR_FIELD_IP)) {
-    fprintf(cmd_f, "%sip_version = %d", sep, 4);
+    int ip_version  = 4;
+    if (pe->ipv6_flag) ip_version = 6;
+    fprintf(cmd_f, "%sip_version = %d", sep, ip_version);
     sep = sep1;
-    mi->write_escaped_string(md, cmd_f, sep, xml_unparse_ip(pe->a.ip));
+    ej_ip_t ipv6;
+    clar_entry_to_ipv6(pe, &ipv6);
+    mi->write_escaped_string(md, cmd_f, sep, xml_unparse_ipv6(&ipv6));
   }
   if (mask & (1 << CLAR_FIELD_LOCALE_ID)) {
     fprintf(cmd_f, "%slocale_id = %d", sep, pe->locale_id);
