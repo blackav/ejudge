@@ -2907,10 +2907,13 @@ priv_submit_run(FILE *fout,
   sha_buffer(run_text, run_size, shaval);
   gettimeofday(&precise_time, 0);
 
+  ej_ip_t ipv6;
+  xml_make_ipv6(phr->ip, &ipv6);
+
   run_id = run_add_record(cs->runlog_state, 
                           precise_time.tv_sec, precise_time.tv_usec * 1000,
                           run_size, shaval, NULL,
-                          phr->ip, phr->ssl_flag,
+                          &ipv6, phr->ssl_flag,
                           phr->locale_id, phr->user_id,
                           prob_id, lang_id, eoln_type,
                           variant, 1, mime_type);
@@ -4629,10 +4632,13 @@ priv_new_run(FILE *fout,
   if (!lang) lang_id = 0;
   gettimeofday(&precise_time, 0);
 
+  ej_ip_t ipv6;
+  xml_make_ipv6(phr->ip, &ipv6);
+
   run_id = run_add_record(cs->runlog_state, 
                           precise_time.tv_sec, precise_time.tv_usec * 1000,
                           run_size, shaval, NULL,
-                          phr->ip, phr->ssl_flag, phr->locale_id,
+                          &ipv6, phr->ssl_flag, phr->locale_id,
                           user_id, prob_id, lang_id, 0, variant,
                           is_hidden, mime_type);
   if (run_id < 0) FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
@@ -10783,10 +10789,13 @@ ns_submit_run(
     db_variant = 0;
   }
 
+  ej_ip_t ipv6;
+  xml_make_ipv6(phr->ip, &ipv6);
+
   run_id = run_add_record(cs->runlog_state, 
                           precise_time.tv_sec, precise_time.tv_usec * 1000,
                           run_size, shaval, uuid_ptr,
-                          phr->ip, phr->ssl_flag,
+                          &ipv6, phr->ssl_flag,
                           phr->locale_id, user_id,
                           prob_id, lang_id, eoln_type,
                           db_variant, is_hidden, mime_type);
@@ -11390,10 +11399,13 @@ unpriv_submit_run(FILE *fout,
   // OK, so all checks are done, now we add this submit to the database
   gettimeofday(&precise_time, 0);
 
+  ej_ip_t ipv6;
+  xml_make_ipv6(phr->ip, &ipv6);
+
   run_id = run_add_record(cs->runlog_state, 
                           precise_time.tv_sec, precise_time.tv_usec * 1000,
                           run_size, shaval, NULL,
-                          phr->ip, phr->ssl_flag,
+                          &ipv6, phr->ssl_flag,
                           phr->locale_id, phr->user_id,
                           prob_id, lang_id, eoln_type, 0, 0, mime_type);
   if (run_id < 0) {
@@ -11951,8 +11963,10 @@ unpriv_command(FILE *fout,
       goto done;
     }
     gettimeofday(&precise_time, 0);
+    ej_ip_t ipv6;
+    xml_make_ipv6(phr->ip, &ipv6);
     run_id = run_virtual_start(cs->runlog_state, phr->user_id,
-                               precise_time.tv_sec, phr->ip, phr->ssl_flag,
+                               precise_time.tv_sec, &ipv6, phr->ssl_flag,
                                precise_time.tv_usec * 1000);
     if (run_id < 0) {
       ns_error(log_f, NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
@@ -11977,8 +11991,9 @@ unpriv_command(FILE *fout,
       goto done;
     }
     gettimeofday(&precise_time, 0);
+    xml_make_ipv6(phr->ip, &ipv6);
     run_id = run_virtual_stop(cs->runlog_state, phr->user_id,
-                              precise_time.tv_sec, phr->ip, phr->ssl_flag,
+                              precise_time.tv_sec, &ipv6, phr->ssl_flag,
                               precise_time.tv_usec * 1000);
     if (run_id < 0) {
       ns_error(log_f, NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
@@ -14811,10 +14826,12 @@ unpriv_xml_update_answer(
   run_id = run_find(cs->runlog_state, -1, 0, phr->user_id, prob->id, 0);
   if (run_id < 0) {
     gettimeofday(&precise_time, 0);
+    ej_ip_t ipv6;
+    xml_make_ipv6(phr->ip, &ipv6);
     run_id = run_add_record(cs->runlog_state, 
                             precise_time.tv_sec, precise_time.tv_usec * 1000,
                             run_size, shaval, NULL,
-                            phr->ip, phr->ssl_flag,
+                            &ipv6, phr->ssl_flag,
                             phr->locale_id, phr->user_id,
                             prob_id, 0, 0, 0, 0, 0);
     if (run_id < 0) FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);

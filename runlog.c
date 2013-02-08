@@ -293,7 +293,7 @@ run_add_record(
         size_t         size,
         const ruint32_t sha1[5],
         const ruint32_t uuid[4],
-        ruint32_t      ip,
+        const ej_ip_t *pip,
         int            ssl_flag,
         int            locale_id,
         int            team,
@@ -405,8 +405,7 @@ run_add_record(
   re.status = 99;
   re.test = 0;
   re.score = -1;
-  re.a.ip = ip;
-  re.ipv6_flag = 0;
+  ipv6_to_run_entry(pip, &re);
   re.ssl_flag = ssl_flag;
   re.variant = variant;
   re.is_hidden = is_hidden;
@@ -1331,7 +1330,7 @@ run_virtual_start(
         runlog_state_t state,
         int user_id,
         time_t t,
-        ej_ip4_t ip,
+        const ej_ip_t *pip,
         int ssl_flag,
         int nsec)
 {
@@ -1365,8 +1364,7 @@ run_virtual_start(
 
   memset(&re, 0, sizeof(re));
   re.user_id = user_id;
-  re.a.ip = ip;
-  re.ipv6_flag = 0;
+  ipv6_to_run_entry(pip, &re);
   re.ssl_flag = ssl_flag;
   re.status = RUN_VIRTUAL_START;
   pvt->start_time = t;
@@ -1385,7 +1383,7 @@ run_virtual_stop(
         runlog_state_t state,
         int user_id,
         time_t t,
-        ej_ip4_t ip,
+        const ej_ip_t *pip,
         int ssl_flag,
         int nsec)
 {
@@ -1422,8 +1420,7 @@ run_virtual_stop(
     return -1;
   memset(&re, 0, sizeof(re));
   re.user_id = user_id;
-  re.a.ip = ip;
-  re.ipv6_flag = 0;
+  ipv6_to_run_entry(pip, &re);
   re.ssl_flag = ssl_flag;
   re.status = RUN_VIRTUAL_STOP;
   pvt->stop_time = t;
