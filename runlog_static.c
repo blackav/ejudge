@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2008-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -415,6 +415,31 @@ run_fix_runlog_time(
 
   return 0;
 
+}
+
+void
+run_entry_to_ipv6(const struct run_entry *p_re, ej_ip_t *p_ip)
+{
+  memset(p_ip, 0, sizeof(*p_ip));
+  if (p_re->ipv6_flag) {
+    p_ip->ipv6_flag = 1;
+    memcpy(p_ip->u.v6.addr, p_re->a.ipv6, sizeof(p_ip->u.v6.addr));
+  } else {
+    p_ip->u.v4.addr = p_re->a.ip;
+  }
+}
+
+void
+ipv6_to_run_entry(const ej_ip_t *p_ip, struct run_entry *p_re)
+{
+  p_re->ipv6_flag = 0;
+  memset(&p_re->a, 0, sizeof(p_re->a));
+  if (p_ip->ipv6_flag) {
+    p_re->ipv6_flag = 1;
+    memcpy(p_re->a.ipv6, p_ip->u.v6.addr, sizeof(p_re->a.ipv6));
+  } else {
+    p_re->a.ip = p_ip->u.v4.addr;
+  }
 }
 
 /*
