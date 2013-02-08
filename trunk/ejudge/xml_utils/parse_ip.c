@@ -236,6 +236,15 @@ xml_do_parse_ipv6(
 }
 
 int
+xml_parse_ipv6_2(
+        unsigned char const *s,
+        ej_ip_t *p_addr)
+{
+  if (!s) return -1;
+  return xml_do_parse_ipv6(s, s + strlen(s), p_addr);
+}
+
+int
 xml_parse_ipv6(
         FILE *log_f,
         unsigned char const *path,
@@ -250,6 +259,24 @@ xml_parse_ipv6(
     return r;
   }
   return 0;
+}
+
+const ej_ip_t *
+xml_make_ipv6(ej_ip4_t addr, ej_ip_t *p_addr)
+{
+  memset(p_addr, 0, sizeof(*p_addr));
+  p_addr->u.v4.addr = addr;
+  return p_addr;
+}
+
+ej_ip4_t
+xml_make_ipv4(const ej_ip_t *p_addr)
+{
+  if (p_addr->ipv6_flag) {
+    return 0x7f00007f;
+  } else {
+    return p_addr->u.v4.addr;
+  }
 }
 
 /*
