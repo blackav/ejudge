@@ -420,7 +420,7 @@ load_runs(struct rldb_mysql_cnts *cs)
       uuid_parse(ri.run_uuid, (void*) run_uuid);
 #endif
     }
-    if (ri.ip_version != 4) db_error_inv_value_fail(md, "ip_version");
+    //if (ri.ip_version != 4) db_error_inv_value_fail(md, "ip_version");
     if (ri.mime_type && (mime_type = mime_type_parse(ri.mime_type)) < 0)
       db_error_inv_value_fail(md, "mime_type");
     xfree(ri.hash); ri.hash = 0;
@@ -436,8 +436,7 @@ load_runs(struct rldb_mysql_cnts *cs)
     re->user_id = ri.user_id;
     re->prob_id = ri.prob_id;
     re->lang_id = ri.lang_id;
-    re->a.ip = ri.ip;
-    re->ipv6_flag = 0;
+    ipv6_to_run_entry(&ri.ip, re);
     memcpy(re->sha1, sha1, sizeof(re->sha1));
     memcpy(re->run_uuid, run_uuid, sizeof(re->run_uuid));
     re->score = ri.score;
@@ -854,9 +853,13 @@ generate_update_entry_clause(
     sep = comma;
   }
   if ((flags & RE_IP)) {
-    fprintf(f, "%sip_version = 4", sep);
+    int ip_version = 4;
+    if (re->ipv6_flag) ip_version = 6;
+    fprintf(f, "%sip_version = %d", sep, ip_version);
     sep = comma;
-    fprintf(f, "%sip = '%s'", sep, xml_unparse_ip(re->a.ip));
+    ej_ip_t ipv6;
+    run_entry_to_ipv6(re, &ipv6);
+    fprintf(f, "%sip = '%s'", sep, xml_unparse_ipv6(&ipv6));
   }
   if ((flags & RE_SHA1)) {
     if (!re->sha1[0] && !re->sha1[1] && !re->sha1[2]
@@ -1529,8 +1532,9 @@ put_entry_func(
   ri.prob_id = re->prob_id;
   ri.lang_id = re->lang_id;
   ri.status = re->status;
-  ri.ip = re->a.ip;
   ri.ip_version = 4;
+  if (re->ipv6_flag) ri.ip_version = 6;
+  run_entry_to_ipv6(re, &ri.ip);
   ri.ssl_flag = re->ssl_flag;
   if (re->sha1[0] || re->sha1[1] || re->sha1[2] || re->sha1[3]
       || re->sha1[4]) {
