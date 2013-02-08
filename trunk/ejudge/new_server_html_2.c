@@ -5247,10 +5247,12 @@ do_add_row(
   path_t run_path;
 
   gettimeofday(&precise_time, 0);
+  ej_ip_t ipv6;
+  xml_make_ipv6(phr->ip, &ipv6);
   run_id = run_add_record(cs->runlog_state, 
                           precise_time.tv_sec, precise_time.tv_usec * 1000,
                           run_size, re->sha1, NULL,
-                          phr->ip, phr->ssl_flag, phr->locale_id,
+                          &ipv6, phr->ssl_flag, phr->locale_id,
                           re->user_id, re->prob_id, re->lang_id, re->eoln_type,
                           re->variant, re->is_hidden, re->mime_type);
   if (run_id < 0) {

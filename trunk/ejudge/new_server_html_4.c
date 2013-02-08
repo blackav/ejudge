@@ -1053,11 +1053,12 @@ cmd_submit_run(
   }
 
   gettimeofday(&precise_time, 0);
-
+  ej_ip_t ipv6;
+  xml_make_ipv6(phr->ip, &ipv6);
   run_id = run_add_record(cs->runlog_state, 
                           precise_time.tv_sec, precise_time.tv_usec * 1000,
                           run_size, shaval, NULL,
-                          phr->ip, phr->ssl_flag,
+                          &ipv6, phr->ssl_flag,
                           phr->locale_id, phr->user_id,
                           prob->id, lang_id, eoln_type,
                           variant, hidden_flag, mime_type);
