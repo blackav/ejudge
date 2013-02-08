@@ -74,7 +74,7 @@ struct run_entry_internal
   int status;
   int ssl_flag;
   int ip_version;               /* 10 */
-  ej_ip4_t ip;
+  ej_ip_t ip;
   unsigned char *hash;
   unsigned char *run_uuid;
   int score;
@@ -103,7 +103,7 @@ struct run_entry_internal
   int saved_score;
   int saved_test;
   int passed_mode;
-  int eoln_type;
+  int eoln_type;                /* 40 */
 };
 
 enum { RUNS_ROW_WIDTH = 41 };
@@ -122,7 +122,7 @@ static const struct common_mysql_parse_spec runs_spec[RUNS_ROW_WIDTH] =
   { 0, 'd', "status", RUNS_OFFSET(status), 0, },
   { 0, 'b', "ssl_flag", RUNS_OFFSET(ssl_flag), 0 },
   { 0, 'd', "ip_version", RUNS_OFFSET(ip_version), 0 },
-  { 0, 'i', "ip", RUNS_OFFSET(ip), 0, },
+  { 0, 'I', "ip", RUNS_OFFSET(ip), 0, },
   { 1, 's', "hash", RUNS_OFFSET(hash), 0 },
   { 1, 's', "run_uuid", RUNS_OFFSET(run_uuid), 0 },
   { 0, 'd', "score", RUNS_OFFSET(score), 0 },
