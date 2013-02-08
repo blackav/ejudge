@@ -166,7 +166,7 @@ clar_add_record(
         time_t          time,
         int             nsec,
         size_t          size,
-        ej_ip4_t        ip,
+        const ej_ip_t   *pip,
         int             ssl_flag,
         int             from,
         int             to,
@@ -218,7 +218,7 @@ clar_add_record(
   pc->flags = flags;
   pc->j_from = j_from;
   pc->hide_flag = hide_flag;
-  pc->a.ip = ip;
+  ipv6_to_clar_entry(pip, pc);
   pc->ssl_flag = ssl_flag;
   pc->locale_id = locale_id;
   pc->in_reply_to = in_reply_to;
@@ -578,8 +578,8 @@ clar_modify_record(
     pe->appeal_flag = pclar->appeal_flag;
   }
   if (mask & (1 << CLAR_FIELD_IP)) {
-    pe->ip6_flag = 0;
-    pe->a.ip = pclar->a.ip;
+    pe->ipv6_flag = pclar->ipv6_flag;
+    pe->a = pclar->a;
   }
   if (mask & (1 << CLAR_FIELD_LOCALE_ID)) {
     pe->locale_id = pclar->locale_id;
@@ -600,9 +600,33 @@ clar_modify_record(
   return state->iface->modify_record(state->cnts, clar_id, mask, pclar);
 }
 
+void
+clar_entry_to_ipv6(const struct clar_entry_v1 *pe, ej_ip_t *p_ip)
+{
+  memset(p_ip, 0, sizeof(*p_ip));
+  if (pe->ipv6_flag) {
+    p_ip->ipv6_flag = 1;
+    memcpy(p_ip->u.v6.addr, pe->a.ipv6, sizeof(p_ip->u.v6.addr));
+  } else {
+    p_ip->u.v4.addr = pe->a.ip;
+  }
+}
+
+void
+ipv6_to_clar_entry(const ej_ip_t *p_ip, struct clar_entry_v1 *pe)
+{
+  pe->ipv6_flag = 0;
+  memset(&pe->a, 0, sizeof(pe->a));
+  if (p_ip->ipv6_flag) {
+    pe->ipv6_flag = 1;
+    memcpy(pe->a.ipv6, p_ip->u.v6.addr, sizeof(pe->a.ipv6));
+  } else {
+    pe->a.ip = p_ip->u.v4.addr;
+  }
+}
+
 /*
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  * End:
  */

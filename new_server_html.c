@@ -3172,12 +3172,14 @@ priv_submit_clar(
   text3 = alloca(subj_len + text_len + 32);
   text3_len = sprintf(text3, "Subject: %s\n\n%s\n", subj2, text2);
 
+  ej_ip_t ipv6;
   gettimeofday(&precise_time, 0);
   if ((clar_id = clar_add_record(cs->clarlog_state,
                                  precise_time.tv_sec,
                                  precise_time.tv_usec * 1000,
                                  text3_len,
-                                 phr->ip, phr->ssl_flag,
+                                 xml_make_ipv6(phr->ip, &ipv6),
+                                 phr->ssl_flag,
                                  0, user_id, 0, phr->user_id,
                                  hide_flag, phr->locale_id, 0, 0, 0,
                                  utf8_mode, NULL, subj2)) < 0) {
@@ -3373,12 +3375,14 @@ priv_submit_run_comment(
   text3 = alloca(subj_len + text_len + 32);
   text3_len = sprintf(text3, "Subject: %s\n\n%s\n", subj2, text2);
 
+  ej_ip_t ipv6;
   gettimeofday(&precise_time, 0);
   if ((clar_id = clar_add_record(cs->clarlog_state,
                                  precise_time.tv_sec,
                                  precise_time.tv_usec * 1000,
                                  text3_len,
-                                 phr->ip, phr->ssl_flag,
+                                 xml_make_ipv6(phr->ip, &ipv6),
+                                 phr->ssl_flag,
                                  0, re.user_id, 0, phr->user_id,
                                  0, phr->locale_id, 0, run_id + 1, 0,
                                  utf8_mode, NULL, subj2)) < 0) {
@@ -3579,12 +3583,14 @@ priv_clar_reply(
   from_id = clar.from;
   if (phr->action == NEW_SRV_ACTION_CLAR_REPLY_ALL) from_id = 0;
 
+  ej_ip_t ipv6;
   gettimeofday(&precise_time, 0);
   clar_id = clar_add_record(cs->clarlog_state,
                             precise_time.tv_sec,
                             precise_time.tv_usec * 1000,
                             msg_len,
-                            phr->ip, phr->ssl_flag,
+                            xml_make_ipv6(phr->ip, &ipv6),
+                            phr->ssl_flag,
                             0, from_id, 0, phr->user_id, 0,
                             clar.locale_id, in_reply_to + 1, 0, 0,
                             utf8_mode, NULL,
@@ -11684,12 +11690,14 @@ unpriv_submit_clar(FILE *fout,
     goto done;
   }
 
+  ej_ip_t ipv6;
   gettimeofday(&precise_time, 0);
   if ((clar_id = clar_add_record(cs->clarlog_state,
                                  precise_time.tv_sec,
                                  precise_time.tv_usec * 1000,
                                  text3_len,
-                                 phr->ip, phr->ssl_flag,
+                                 xml_make_ipv6(phr->ip, &ipv6),
+                                 phr->ssl_flag,
                                  phr->user_id, 0, 0, 0, 0,
                                  phr->locale_id, 0, 0, 0,
                                  utf8_mode, NULL, subj3)) < 0) {
@@ -11825,12 +11833,14 @@ unpriv_submit_appeal(FILE *fout,
     goto done;
   }
 
+  ej_ip_t ipv6;
   gettimeofday(&precise_time, 0);
   if ((clar_id = clar_add_record(cs->clarlog_state,
                                  precise_time.tv_sec,
                                  precise_time.tv_usec * 1000,
                                  text3_len,
-                                 phr->ip, phr->ssl_flag,
+                                 xml_make_ipv6(phr->ip, &ipv6),
+                                 phr->ssl_flag,
                                  phr->user_id, 0, 0, 0, 0,
                                  phr->locale_id, 0, 0, 1,
                                  utf8_mode, NULL, subj3)) < 0) {

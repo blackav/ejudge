@@ -65,14 +65,14 @@ struct clar_entry_v1
   int to;                       /* 4 */
   int j_from;                   /* 4 */
   unsigned int flags;           /* 4 */
-  unsigned char ip6_flag;       /* 1 */
+  unsigned char ipv6_flag;      /* 1 */
   unsigned char hide_flag;      /* 1 */
   unsigned char ssl_flag;       /* 1 */
   unsigned char appeal_flag;    /* 1 */
   union
   {
     ej_ip4_t ip;
-    unsigned char ip6[16];
+    unsigned char ipv6[16];
   } a;                          /* 16 */
   unsigned short locale_id;     /* 2 */
   unsigned char _pad2[2];       /* 2 */
@@ -101,7 +101,7 @@ int clar_add_record(
         time_t          time,
         int             nsec,
         size_t          size,
-        ej_ip4_t        ip,
+        const ej_ip_t   *pip,
         int             ssl_flag,
         int             from,
         int             to,
@@ -172,5 +172,10 @@ clar_modify_record(
         int clar_id,
         int mask,
         const struct clar_entry_v1 *pclar);
+
+void
+clar_entry_to_ipv6(const struct clar_entry_v1 *pe, ej_ip_t *pip);
+void
+ipv6_to_clar_entry(const ej_ip_t *pip, struct clar_entry_v1 *pe);
 
 #endif /* __CLARLOG_H__ */
