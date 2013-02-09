@@ -77,7 +77,7 @@ struct filter_tree
     size_t z;
     int r;
     ruint32_t h[5];
-    ej_ip4_t p;
+    ej_ip_t p;
   } v;
 };
 struct filter_tree_mem;
@@ -114,7 +114,7 @@ struct filter_tree *filter_tree_new_result(struct filter_tree_mem *,
 struct filter_tree *filter_tree_new_hash(struct filter_tree_mem *,
                                          ruint32_t *);
 struct filter_tree *filter_tree_new_ip(struct filter_tree_mem *,
-                                       ej_ip4_t);
+                                       const ej_ip_t *);
 struct filter_tree *filter_tree_dup(struct filter_tree_mem *,
                                     struct filter_tree*);
 
@@ -142,7 +142,7 @@ int filter_tree_dur_str(unsigned char *, size_t, time_t);
 int filter_tree_size_str(unsigned char *, size_t, size_t);
 int filter_tree_result_str(unsigned char *, size_t, int);
 int filter_tree_hash_str(unsigned char *, size_t, ruint32_t *);
-int filter_tree_ip_str(unsigned char *, size_t, ej_ip4_t);
+int filter_tree_ip_str(unsigned char *, size_t, const ej_ip_t *);
 
 int filter_tree_is_value_node(struct filter_tree *p);
 

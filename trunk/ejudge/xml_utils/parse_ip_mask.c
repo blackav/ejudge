@@ -85,6 +85,9 @@ xml_parse_ip_mask(
   return -1;
 }
 
+const ej_ip_t *
+xml_make_ipv6(ej_ip4_t addr, ej_ip_t *p_addr);
+
 int
 xml_parse_ipv6_mask(
         FILE *log_f,

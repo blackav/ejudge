@@ -1014,7 +1014,7 @@ update_contest_xml(
     snprintf(audit_rec, sizeof(audit_rec),
              "<!-- audit: edited %s %d (%s) %s -->\n",
              xml_unparse_date(time(NULL)), ss->user_id, ss->user_login,
-             xml_unparse_ip(ss->remote_addr));
+             xml_unparse_ipv6(&ss->remote_addr));
 
     if (!xml_header) {
         unsigned char hbuf[PATH_MAX];
@@ -1864,7 +1864,8 @@ do_import_contest(
     }
     unsigned char serve_audit_rec[PATH_MAX];
     snprintf(serve_audit_rec, sizeof(serve_audit_rec), "# audit: edited %s %d (%s) %s\n",
-             xml_unparse_date(ct), ss->user_id, ss->user_login, xml_unparse_ip(ss->remote_addr));
+             xml_unparse_date(ct), ss->user_id, ss->user_login,
+             xml_unparse_ipv6(&ss->remote_addr));
     unsigned char serve_cfg_tmp_path[PATH_MAX];
     snprintf(serve_cfg_tmp_path, sizeof(serve_cfg_tmp_path), "%s.tmp", serve_cfg_path);
     int save_status = super_html_serve_unparse_and_save(serve_cfg_path, serve_cfg_tmp_path, ss,
@@ -1991,7 +1992,7 @@ cleanup:;
 static struct sid_state*
 sid_state_create(
         ej_cookie_t sid,
-        ej_ip4_t remote_addr,
+        const ej_ip_t *remote_addr,
         int user_id,
         const unsigned char *user_login,
         const unsigned char *user_name)
@@ -2000,7 +2001,7 @@ sid_state_create(
 
   XCALLOC(n, 1);
   n->sid = sid;
-  n->remote_addr = remote_addr;
+  n->remote_addr = *remote_addr;
   n->init_time = time(0);
   n->flags |= SID_STATE_SHOW_CLOSED;
   n->user_id = user_id;
@@ -2068,8 +2069,8 @@ main(int argc, char **argv)
     }
 
     if (!pkt->remote_addr) pkt->remote_addr = xstrdup("127.0.0.1");
-    ej_ip4_t ip;
-    if (xml_parse_ip(NULL, NULL, 0, 0, pkt->remote_addr, &ip) < 0) {
+    ej_ip_t ip;
+    if (xml_parse_ipv6(NULL, NULL, 0, 0, pkt->remote_addr, &ip) < 0) {
         fatal2("invalid IP-address '%s'", pkt->remote_addr);
     }
     if (pkt->user_id <= 0) {
@@ -2107,7 +2108,7 @@ main(int argc, char **argv)
     if (pkt->require_master_solution < 0) pkt->require_master_solution = 0;
     if (pkt->require_test_checker < 0) pkt->require_test_checker = 0;
 
-    struct sid_state *ss = sid_state_create(0ULL, ip, pkt->user_id, pkt->user_login, pkt->user_name);
+    struct sid_state *ss = sid_state_create(0ULL, &ip, pkt->user_id, pkt->user_login, pkt->user_name);
 
     if (!exit_code) {
         do_import_contest(pkt->contest_id, ss, pkt->archive_file, pkt->content_type,

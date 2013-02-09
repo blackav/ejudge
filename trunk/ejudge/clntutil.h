@@ -72,7 +72,8 @@ void  client_put_header(FILE *out, unsigned char const *template,
                         char const *format, ...)
   __attribute__((format(printf, 7, 8)));
 void  client_put_footer(FILE *out, unsigned char const *template);
-ej_ip4_t parse_client_ip(void);
+
+void parse_client_ip(ej_ip_t *p_ip);
 
 #endif /* __CLNTUTIL_H__ */
 /*

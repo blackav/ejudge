@@ -2425,7 +2425,7 @@ ns_priv_edit_clar_action(
   int new_hide_flag = 0, new_appeal_flag = 0, new_ssl_flag = 0;
   int new_locale_id = 0, new_in_reply_to = -1, new_run_id = -1;
   int new_size = 0;
-  ej_ip4_t new_ip = 0;
+  ej_ip_t new_ip;
   unsigned char *new_charset = NULL;
   unsigned char *new_subject = NULL;
   unsigned char *new_text = NULL;
@@ -2476,7 +2476,7 @@ ns_priv_edit_clar_action(
     FAIL(NEW_SRV_ERR_INV_PARAM);
   }
   if (!r || !s || !*s) s = "127.0.0.1";
-  if (xml_parse_ip(NULL, 0, 0, 0, s, &new_ip) < 0) {
+  if (xml_parse_ipv6(NULL, 0, 0, 0, s, &new_ip) < 0) {
     fprintf(log_f, "invalid 'ip' field value\n");
     FAIL(NEW_SRV_ERR_INV_PARAM);
   }
@@ -2572,9 +2572,10 @@ ns_priv_edit_clar_action(
     mask |= 1 << CLAR_FIELD_APPEAL_FLAG;
   }
   // FIXME: do better
-  if (clar.a.ip != new_ip) {
-    new_clar.a.ip = new_ip;
-    new_clar.ipv6_flag = 0;
+  ej_ip_t ipv6;
+  clar_entry_to_ipv6(&clar, &ipv6);
+  if (ipv6cmp(&ipv6, &new_ip) != 0) {
+    ipv6_to_clar_entry(&new_ip, &new_clar);
     mask |= 1 << CLAR_FIELD_IP;
   }
   if (clar.ssl_flag != new_ssl_flag) {
@@ -2907,7 +2908,7 @@ ns_priv_edit_run_action(
   const unsigned char *s = NULL;
   int mask = 0;
   int new_is_readonly = 0, value = 0;
-  ej_ip4_t new_ip = 0;
+  ej_ip_t new_ip;
   ruint32_t new_sha1[5];
   time_t start_time = 0;
   int need_rejudge = 0;
@@ -3353,13 +3354,14 @@ ns_priv_edit_run_action(
     FAIL(NEW_SRV_ERR_INV_PARAM);
   }
   if (!r || !s || !*s) s = "127.0.0.1";
-  if (xml_parse_ip(NULL, 0, 0, 0, s, &new_ip) < 0) {
+  if (xml_parse_ipv6(NULL, 0, 0, 0, s, &new_ip) < 0) {
     fprintf(log_f, "invalid 'ip' field value\n");
     FAIL(NEW_SRV_ERR_INV_PARAM);
   }
-  if (new_ip != info.a.ip) {
-    new_info.a.ip = new_ip;
-    new_info.ipv6_flag = 0;
+  ej_ip_t ipv6;
+  run_entry_to_ipv6(&info, &ipv6);
+  if (!ipv6cmp(&new_ip, &ipv6) != 0) {
+    ipv6_to_run_entry(&new_ip, &new_info);
     mask |= RE_IP;
   }
   value = 0;
@@ -3496,12 +3498,12 @@ ns_priv_edit_run_action(
   if (run_set_entry(cs->runlog_state, run_id, mask, &new_info) < 0)
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
 
-  serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+  serve_audit_log(cs, run_id, phr->user_id, &phr->ip, phr->ssl_flag,
                   "edit-run", "ok", -1,
                   "  mask: 0x%08x", mask);
 
   if (need_rejudge > 0) {
-    serve_rejudge_run(ejudge_config, cnts, cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+    serve_rejudge_run(ejudge_config, cnts, cs, run_id, phr->user_id, &phr->ip, phr->ssl_flag,
                       (need_rejudge == RUN_FULL_REJUDGE),
                       DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT);
   }
@@ -3872,7 +3874,7 @@ ns_write_online_users(
       fprintf(fout, "<td%s><i>%s</i></td>", cl, _("Not set"));
     }
     fprintf(fout, "<td%s><tt>%s%s</tt></td>",
-            cl, xml_unparse_ip(ai->ip), ai->ssl?"/ssl":"");
+            cl, xml_unparse_ipv6(&ai->ip), ai->ssl?"/ssl":"");
     fprintf(fout, "</tr>\n");
   }
   fprintf(fout, "</table>\n");
@@ -3886,7 +3888,7 @@ struct user_ip_item
 
   int ip_u;
   int ip_a;
-  ej_ip4_t *ips;
+  ej_ip_t *ips;
 };
 
 int
@@ -3948,16 +3950,19 @@ ns_write_user_ips(
       XCALLOC(uu[re.user_id], 1);
     }
     ui = uu[re.user_id];
-    for (i = 0; i < ui->ip_u; ++i)
-      if (ui->ips[i] == re.a.ip)
+    for (i = 0; i < ui->ip_u; ++i) {
+      ej_ip_t ipv6;
+      run_entry_to_ipv6(&re, &ipv6);
+      if (!ipv6cmp(&ui->ips[i], &ipv6))
         break;
+    }
     if (i < ui->ip_u) continue;
     if (ui->ip_u >= ui->ip_a) {
       if (!ui->ip_a) ui->ip_a = 8;
       ui->ip_a *= 2;
       XREALLOC(ui->ips, ui->ip_a);
     }
-    ui->ips[ui->ip_u++] = re.a.ip;
+    run_entry_to_ipv6(&re, &ui->ips[ui->ip_u++]);
   }
 
   if (cs->global->disable_user_database > 0) {
@@ -3980,7 +3985,7 @@ ns_write_user_ips(
     fprintf(fout, "<td%s>", cl);
     for (j = 0; j < ui->ip_u; ++j) {
       if (j > 0) fprintf(fout, " ");
-      fprintf(fout, "%s", xml_unparse_ip(ui->ips[j]));
+      fprintf(fout, "%s", xml_unparse_ipv6(&ui->ips[j]));
     }
     fprintf(fout, "</td></tr>\n");
   }
@@ -3997,7 +4002,7 @@ ns_write_user_ips(
 
 struct ip_user_item
 {
-  ej_ip4_t ip;
+  ej_ip_t ip;
   int uid_u, uid_a;
   int *uids;
 };
@@ -4027,7 +4032,9 @@ ns_write_ip_users(
     if (re.user_id <= 0 || re.user_id > EJ_MAX_USER_ID) continue;
     if (!re.a.ip) continue;
     for (i = 0; i < ip_u; ++i) {
-      if (ips[i].ip == re.a.ip)
+      ej_ip_t ipv6;
+      run_entry_to_ipv6(&re, &ipv6);
+      if (!ipv6cmp(&ips[i].ip, &ipv6))
         break;
     }
     if (i == ip_u) {
@@ -4037,7 +4044,7 @@ ns_write_ip_users(
         XREALLOC(ips, ip_a);
       }
       memset(&ips[i], 0, sizeof(ips[i]));
-      ips[i].ip = re.a.ip;
+      run_entry_to_ipv6(&re, &ips[i].ip);
       ip_u++;
     }
     for (j = 0; j < ips[i].uid_u; ++j)
@@ -4068,7 +4075,7 @@ ns_write_ip_users(
           cl, _("Users"));
   for (i = 0; i < ip_u; ++i) {
     fprintf(fout, "<tr><td%s>%d</td><td%s>%s</td><td%s>",
-            cl, serial++, cl, xml_unparse_ip(ips[i].ip), cl);
+            cl, serial++, cl, xml_unparse_ipv6(&ips[i].ip), cl);
     for (j = 0; j < ips[i].uid_u; ++j) {
       if (!teamdb_lookup(cs->teamdb_state, ips[i].uids[j]))
         continue;
@@ -4491,7 +4498,8 @@ ns_user_info_page(FILE *fout, FILE *log_f,
     fprintf(fout, "<h2>%s</h2>\n", _("Warnings"));
     for (i = 0; i < u_extra->warn_u; i++) {
       if (!(cur_warn = u_extra->warns[i])) continue;
-      fprintf(fout, _("<h3>Warning %d: issued: %s, issued by: %s (%d), issued from: %s</h3>"), i + 1, xml_unparse_date(cur_warn->date), teamdb_get_login(cs->teamdb_state, cur_warn->issuer_id), cur_warn->issuer_id, xml_unparse_ip(cur_warn->issuer_ip));
+      fprintf(fout, _("<h3>Warning %d: issued: %s, issued by: %s (%d), issued from: %s</h3>"), i + 1, xml_unparse_date(cur_warn->date), teamdb_get_login(cs->teamdb_state, cur_warn->issuer_id), cur_warn->issuer_id,
+              xml_unparse_ipv6(&cur_warn->issuer_ip));
       fprintf(fout, "<p>%s:\n<pre>%s</pre>\n", _("Warning text for the user"),
               ARMOR(cur_warn->text));
       fprintf(fout, "<p>%s:\n<pre>%s</pre>\n", _("Judge's comment"),
@@ -5247,12 +5255,10 @@ do_add_row(
   path_t run_path;
 
   gettimeofday(&precise_time, 0);
-  ej_ip_t ipv6;
-  xml_make_ipv6(phr->ip, &ipv6);
   run_id = run_add_record(cs->runlog_state, 
                           precise_time.tv_sec, precise_time.tv_usec * 1000,
                           run_size, re->sha1, NULL,
-                          &ipv6, phr->ssl_flag, phr->locale_id,
+                          &phr->ip, phr->ssl_flag, phr->locale_id,
                           re->user_id, re->prob_id, re->lang_id, re->eoln_type,
                           re->variant, re->is_hidden, re->mime_type);
   if (run_id < 0) {
@@ -5280,7 +5286,7 @@ do_add_row(
   }
   run_set_entry(cs->runlog_state, run_id, RE_STATUS | RE_TEST | RE_SCORE, re);
 
-  serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+  serve_audit_log(cs, run_id, phr->user_id, &phr->ip, phr->ssl_flag,
                   "priv-new-run", "ok", re->status, NULL);
   return run_id;
 }
@@ -5726,7 +5732,7 @@ ns_upload_csv_results(
           pe->run_id = -1;
           pe->size = run_size;
           memcpy(pe->sha1, sha1, sizeof(pe->sha1));
-          pe->a.ip = phr->ip;
+          ipv6_to_run_entry(&phr->ip, pe);
           pe->ssl_flag = phr->ssl_flag;
           pe->locale_id = phr->locale_id;
           pe->lang_id = 0;
@@ -5762,7 +5768,7 @@ ns_upload_csv_results(
           pe->run_id = -1;
           pe->size = run_size;
           memcpy(pe->sha1, sha1, sizeof(pe->sha1));
-          pe->a.ip = phr->ip;
+          ipv6_to_run_entry(&phr->ip, pe);
           pe->ssl_flag = phr->ssl_flag;
           pe->locale_id = phr->locale_id;
           pe->lang_id = 0;
@@ -5797,7 +5803,7 @@ ns_upload_csv_results(
           pe->run_id = -1;
           pe->size = run_size;
           memcpy(pe->sha1, sha1, sizeof(pe->sha1));
-          pe->a.ip = phr->ip;
+          ipv6_to_run_entry(&phr->ip, pe);
           pe->ssl_flag = phr->ssl_flag;
           pe->locale_id = phr->locale_id;
           pe->lang_id = 0;
@@ -5834,7 +5840,7 @@ ns_upload_csv_results(
           pe->run_id = -1;
           pe->size = run_size;
           memcpy(pe->sha1, sha1, sizeof(pe->sha1));
-          pe->a.ip = phr->ip;
+          ipv6_to_run_entry(&phr->ip, pe);
           pe->ssl_flag = phr->ssl_flag;
           pe->locale_id = phr->locale_id;
           pe->lang_id = 0;

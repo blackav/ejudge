@@ -264,19 +264,20 @@ logged_contest_get(struct ejudge_cfg *config, int contest_id)
 }
 
 int
-super_html_main_page(FILE *f,
-                     int priv_level,
-                     int user_id,
-                     const unsigned char *login,
-                     ej_cookie_t session_id,
-                     ej_ip4_t ip_address,
-                     int ssl,
-                     unsigned int flags,
-                     struct ejudge_cfg *config,
-                     struct sid_state *sstate,
-                     const unsigned char *self_url,
-                     const unsigned char *hidden_vars,
-                     const unsigned char *extra_args)
+super_html_main_page(
+        FILE *f,
+        int priv_level,
+        int user_id,
+        const unsigned char *login,
+        ej_cookie_t session_id,
+        const ej_ip_t *ip_address,
+        int ssl,
+        unsigned int flags,
+        struct ejudge_cfg *config,
+        struct sid_state *sstate,
+        const unsigned char *self_url,
+        const unsigned char *hidden_vars,
+        const unsigned char *extra_args)
 {
   const unsigned char *contests_map = 0;
   int contest_max_id, contest_id, errcode;
@@ -575,11 +576,9 @@ super_html_main_page(FILE *f,
       fprintf(f, "<td>&nbsp;</td>\n");
     }
 
-    ej_ip_t ipv6;
-    xml_make_ipv6(ip_address, &ipv6);
     if (priv_level >= PRIV_LEVEL_JUDGE
         && opcaps_check(caps, OPCAP_LIST_USERS) >= 0
-        && contests_check_serve_control_ip_2(cnts, &ipv6, ssl)) {
+        && contests_check_serve_control_ip_2(cnts, ip_address, ssl)) {
       fprintf(f, "<td>%sEdit users</a></td>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d&op=%d&contest_id=%d", SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE, contest_id));
     } else {
       fprintf(f, "<td>&nbsp;</td>\n");
@@ -587,7 +586,7 @@ super_html_main_page(FILE *f,
 
     if (priv_level >= PRIV_LEVEL_ADMIN
         && opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0
-        && contests_check_serve_control_ip_2(cnts, &ipv6, ssl)) {
+        && contests_check_serve_control_ip_2(cnts, ip_address, ssl)) {
       fprintf(f, "<td>%sEdit settings</a></td>",
               html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
                             "contest_id=%d&action=%d", contest_id,
@@ -608,7 +607,7 @@ super_html_main_page(FILE *f,
 
     // report judge URL
     if (opcaps_check(caps, OPCAP_JUDGE_LOGIN) >= 0 && judge_url[0]
-        && contests_check_judge_ip_2(cnts, &ipv6, ssl)) {
+        && contests_check_judge_ip_2(cnts, ip_address, ssl)) {
       if (cnts->managed) {
         fprintf(f, "<td><a href=\"%s?SID=%016llx&contest_id=%d&action=3\" target=\"_blank\">Judge</a></td>\n",
                 new_judge_url, session_id, contest_id);
@@ -621,7 +620,7 @@ super_html_main_page(FILE *f,
     }
     // report master URL
     if (opcaps_check(caps, OPCAP_MASTER_LOGIN) >= 0 && master_url[0]
-        && contests_check_master_ip_2(cnts, &ipv6, ssl)) {
+        && contests_check_master_ip_2(cnts, ip_address, ssl)) {
       if (cnts->managed) {
         fprintf(f, "<td><a href=\"%s?SID=%016llx&contest_id=%d&action=3\" target=\"_blank\">Master</a></td>\n",
                 new_master_url, session_id, contest_id);
@@ -633,7 +632,7 @@ super_html_main_page(FILE *f,
       fprintf(f, "<td>&nbsp;</td>\n");
     }
     // report user URL
-    if (client_url[0] && contests_check_team_ip_2(cnts, &ipv6, ssl)) {
+    if (client_url[0] && contests_check_team_ip_2(cnts, ip_address, ssl)) {
       if (cnts->managed) {
         fprintf(f, "<td><a href=\"%s?contest_id=%d\" target=\"_blank\">User</a></td>\n",
                 new_client_url, contest_id);
@@ -667,18 +666,19 @@ static const unsigned char * const mng_status_table[] =
 };
 
 int
-super_html_contest_page(FILE *f,
-                        int priv_level,
-                        int user_id,
-                        int contest_id,
-                        const unsigned char *login,
-                        ej_cookie_t session_id,
-                        ej_ip4_t ip_address,
-                        int ssl,
-                        struct ejudge_cfg *config,
-                        const unsigned char *self_url,
-                        const unsigned char *hidden_vars,
-                        const unsigned char *extra_args)
+super_html_contest_page(
+        FILE *f,
+        int priv_level,
+        int user_id,
+        int contest_id,
+        const unsigned char *login,
+        ej_cookie_t session_id,
+        const ej_ip_t *ip_address,
+        int ssl,
+        struct ejudge_cfg *config,
+        const unsigned char *self_url,
+        const unsigned char *hidden_vars,
+        const unsigned char *extra_args)
 {
   unsigned char judge_url[1024] = { 0 };
   unsigned char master_url[1024] = { 0 };
@@ -767,9 +767,7 @@ super_html_contest_page(FILE *f,
     return -SSERV_ERR_PERMISSION_DENIED;
   }
 
-  ej_ip_t ipv6;
-  xml_make_ipv6(ip_address, &ipv6);
-  if (!contests_check_serve_control_ip_2(cnts, &ipv6, ssl)) {
+  if (!contests_check_serve_control_ip_2(cnts, ip_address, ssl)) {
     err("super_html_contest_page: invalid IP address");
     return -SSERV_ERR_BANNED_IP;
   }
@@ -799,7 +797,7 @@ super_html_contest_page(FILE *f,
 
   // report judge URL
   if (opcaps_check(caps, OPCAP_JUDGE_LOGIN) >= 0 && judge_url[0]
-      && contests_check_judge_ip_2(cnts, &ipv6, ssl)) {
+      && contests_check_judge_ip_2(cnts, ip_address, ssl)) {
     if (cnts->managed) {
       fprintf(f, "<tr><td>Judge CGI program</td><td><a href=\"%s?SID=%016llx&contest_id=%d&action=3\" target=\"_blank\">Judge</a></td></tr>\n",
               new_judge_url, session_id, contest_id);
@@ -811,7 +809,7 @@ super_html_contest_page(FILE *f,
 
   // report master URL
   if (opcaps_check(caps, OPCAP_MASTER_LOGIN) >= 0 && master_url[0]
-      && contests_check_master_ip_2(cnts, &ipv6, ssl)) {
+      && contests_check_master_ip_2(cnts, ip_address, ssl)) {
     if (cnts->managed) {
       fprintf(f, "<tr><td>Master CGI program</td><td><a href=\"%s?SID=%016llx&contest_id=%d&action=3\" target=\"_blank\">Master</a></td></tr>\n",
               new_master_url, session_id, contest_id);
@@ -822,7 +820,7 @@ super_html_contest_page(FILE *f,
   }
 
   // report user URL
-  if (client_url[0] && contests_check_team_ip_2(cnts, &ipv6, ssl)) {
+  if (client_url[0] && contests_check_team_ip_2(cnts, ip_address, ssl)) {
     if (cnts->managed) {
       fprintf(f, "<tr><td>Client CGI program</td><td><a href=\"%s?contest_id=%d\" target=\"_blank\">Client</a></td></tr>\n",
               new_client_url, contest_id);
@@ -1125,19 +1123,20 @@ super_html_contest_page(FILE *f,
 }
 
 int
-super_html_log_page(FILE *f,
-                    int cmd,
-                    int priv_level,
-                    int user_id,
-                    int contest_id,
-                    const unsigned char *login,
-                    ej_cookie_t session_id,
-                    ej_ip4_t ip_address,
-                    int ssl,
-                    struct ejudge_cfg *config,
-                    const unsigned char *self_url,
-                    const unsigned char *hidden_vars,
-                    const unsigned char *extra_args)
+super_html_log_page(
+        FILE *f,
+        int cmd,
+        int priv_level,
+        int user_id,
+        int contest_id,
+        const unsigned char *login,
+        ej_cookie_t session_id,
+        const ej_ip_t *ip_address,
+        int ssl,
+        struct ejudge_cfg *config,
+        const unsigned char *self_url,
+        const unsigned char *hidden_vars,
+        const unsigned char *extra_args)
 {
   int errcode, refresh_action;
   const struct contest_desc *cnts;
@@ -1166,9 +1165,7 @@ super_html_log_page(FILE *f,
     err("super_html_log_page: not enough privileges");
     return -SSERV_ERR_PERMISSION_DENIED;
   }
-  ej_ip_t ipv6;
-  xml_make_ipv6(ip_address, &ipv6);
-  if (!contests_check_serve_control_ip_2(cnts, &ipv6, ssl)) {
+  if (!contests_check_serve_control_ip_2(cnts, ip_address, ssl)) {
     err("super_html_log_page: invalid IP address");
     return -SSERV_ERR_BANNED_IP;
   }
@@ -1337,8 +1334,11 @@ commit_contest_xml(int id)
 
 // assume, that the permissions are checked
 int
-super_html_open_contest(struct contest_desc *cnts, int user_id,
-                        const unsigned char *user_login, ej_ip4_t ip)
+super_html_open_contest(
+        struct contest_desc *cnts,
+        int user_id,
+        const unsigned char *user_login,
+        const ej_ip_t *ip_address)
 {
   int errcode;
   unsigned char *txt1, *txt2;
@@ -1351,7 +1351,8 @@ super_html_open_contest(struct contest_desc *cnts, int user_id,
   cnts->closed = 0;
   snprintf(audit_str, sizeof(audit_str),
            "<!-- audit: closed->open %s %d (%s) %s -->\n",
-           xml_unparse_date(time(0)), user_id, user_login, xml_unparse_ip(ip));
+           xml_unparse_date(time(0)), user_id, user_login,
+           xml_unparse_ipv6(ip_address));
 
   if ((errcode = contests_save_xml(cnts, txt1, txt2, audit_str)) < 0) {
     xfree(txt1);
@@ -1366,8 +1367,11 @@ super_html_open_contest(struct contest_desc *cnts, int user_id,
 }
 
 int
-super_html_close_contest(struct contest_desc *cnts, int user_id,
-                         const unsigned char *user_login, ej_ip4_t ip)
+super_html_close_contest(
+        struct contest_desc *cnts,
+        int user_id,
+        const unsigned char *user_login,
+        const ej_ip_t *ip_address)
 {
   int errcode = 0;
   unsigned char *txt1 = 0, *txt2 = 0;
@@ -1380,7 +1384,8 @@ super_html_close_contest(struct contest_desc *cnts, int user_id,
   cnts->closed = 1;
   snprintf(audit_str, sizeof(audit_str),
            "<!-- audit: open->closed %s %d (%s) %s -->\n",
-           xml_unparse_date(time(0)), user_id, user_login, xml_unparse_ip(ip));
+           xml_unparse_date(time(0)), user_id, user_login,
+           xml_unparse_ipv6(ip_address));
 
   if ((errcode = contests_save_xml(cnts, txt1, txt2, audit_str)) < 0) {
     xfree(txt1);
@@ -1395,9 +1400,11 @@ super_html_close_contest(struct contest_desc *cnts, int user_id,
 }
 
 int
-super_html_make_invisible_contest(struct contest_desc *cnts, int user_id,
-                                  const unsigned char *user_login,
-                                  ej_ip4_t ip)
+super_html_make_invisible_contest(
+        struct contest_desc *cnts,
+        int user_id,
+        const unsigned char *user_login,
+        const ej_ip_t *ip_address)
 {
   int errcode;
   unsigned char *txt1, *txt2;
@@ -1410,7 +1417,8 @@ super_html_make_invisible_contest(struct contest_desc *cnts, int user_id,
   cnts->invisible = 1;
   snprintf(audit_str, sizeof(audit_str),
            "<!-- audit: visible->invisible %s %d (%s) %s -->\n",
-           xml_unparse_date(time(0)), user_id, user_login, xml_unparse_ip(ip));
+           xml_unparse_date(time(0)), user_id, user_login,
+           xml_unparse_ipv6(ip_address));
 
   if ((errcode = contests_save_xml(cnts, txt1, txt2, audit_str)) < 0) {
     xfree(txt1);
@@ -1425,9 +1433,11 @@ super_html_make_invisible_contest(struct contest_desc *cnts, int user_id,
 }
 
 int
-super_html_make_visible_contest(struct contest_desc *cnts, int user_id,
-                                const unsigned char *user_login,
-                                ej_ip4_t ip)
+super_html_make_visible_contest(
+        struct contest_desc *cnts,
+        int user_id,
+        const unsigned char *user_login,
+        const ej_ip_t *ip_address)
 {
   int errcode;
   unsigned char *txt1, *txt2;
@@ -1440,7 +1450,8 @@ super_html_make_visible_contest(struct contest_desc *cnts, int user_id,
   cnts->invisible = 0;
   snprintf(audit_str, sizeof(audit_str),
            "<!-- audit: invisible->visible %s %d (%s) %s -->\n",
-           xml_unparse_date(time(0)), user_id, user_login, xml_unparse_ip(ip));
+           xml_unparse_date(time(0)), user_id, user_login,
+           xml_unparse_ipv6(ip_address));
 
   if ((errcode = contests_save_xml(cnts, txt1, txt2, audit_str)) < 0) {
     xfree(txt1);
@@ -1455,9 +1466,11 @@ super_html_make_visible_contest(struct contest_desc *cnts, int user_id,
 }
 
 int
-super_html_serve_managed_contest(struct contest_desc *cnts, int user_id,
-                                 const unsigned char *user_login,
-                                 ej_ip4_t ip)
+super_html_serve_managed_contest(
+        struct contest_desc *cnts,
+        int user_id,
+        const unsigned char *user_login,
+        const ej_ip_t *ip_address)
 {
   int errcode;
   unsigned char *txt1, *txt2;
@@ -1470,7 +1483,8 @@ super_html_serve_managed_contest(struct contest_desc *cnts, int user_id,
   cnts->managed = 1;
   snprintf(audit_str, sizeof(audit_str),
            "<!-- audit: unmanaged->managed %s %d (%s) %s -->\n",
-           xml_unparse_date(time(0)), user_id, user_login, xml_unparse_ip(ip));
+           xml_unparse_date(time(0)), user_id, user_login,
+           xml_unparse_ipv6(ip_address));
 
   if ((errcode = contests_save_xml(cnts, txt1, txt2, audit_str)) < 0) {
     xfree(txt1);
@@ -1485,9 +1499,11 @@ super_html_serve_managed_contest(struct contest_desc *cnts, int user_id,
 }
 
 int
-super_html_serve_unmanaged_contest(struct contest_desc *cnts, int user_id,
-                                   const unsigned char *user_login,
-                                   ej_ip4_t ip)
+super_html_serve_unmanaged_contest(
+        struct contest_desc *cnts,
+        int user_id,
+        const unsigned char *user_login,
+        const ej_ip_t *ip_address)
 {
   int errcode;
   unsigned char *txt1, *txt2;
@@ -1500,7 +1516,8 @@ super_html_serve_unmanaged_contest(struct contest_desc *cnts, int user_id,
   cnts->managed = 0;
   snprintf(audit_str, sizeof(audit_str),
            "<!-- audit: managed->unmanaged %s %d (%s) %s -->\n",
-           xml_unparse_date(time(0)), user_id, user_login, xml_unparse_ip(ip));
+           xml_unparse_date(time(0)), user_id, user_login,
+           xml_unparse_ipv6(ip_address));
 
   if ((errcode = contests_save_xml(cnts, txt1, txt2, audit_str)) < 0) {
     xfree(txt1);
@@ -1515,9 +1532,11 @@ super_html_serve_unmanaged_contest(struct contest_desc *cnts, int user_id,
 }
 
 int
-super_html_run_managed_contest(struct contest_desc *cnts, int user_id,
-                               const unsigned char *user_login,
-                               ej_ip4_t ip)
+super_html_run_managed_contest(
+        struct contest_desc *cnts,
+        int user_id,
+        const unsigned char *user_login,
+        const ej_ip_t *ip_address)
 {
   int errcode;
   unsigned char *txt1, *txt2;
@@ -1531,7 +1550,8 @@ super_html_run_managed_contest(struct contest_desc *cnts, int user_id,
   cnts->run_managed = 0;
   snprintf(audit_str, sizeof(audit_str),
            "<!-- audit: run_unmanaged->old_run_managed %s %d (%s) %s -->\n",
-           xml_unparse_date(time(0)), user_id, user_login, xml_unparse_ip(ip));
+           xml_unparse_date(time(0)), user_id, user_login,
+           xml_unparse_ipv6(ip_address));
 
   if ((errcode = contests_save_xml(cnts, txt1, txt2, audit_str)) < 0) {
     xfree(txt1);
@@ -1546,9 +1566,11 @@ super_html_run_managed_contest(struct contest_desc *cnts, int user_id,
 }
 
 int
-super_html_run_unmanaged_contest(struct contest_desc *cnts, int user_id,
-                                 const unsigned char *user_login,
-                                 ej_ip4_t ip)
+super_html_run_unmanaged_contest(
+        struct contest_desc *cnts,
+        int user_id,
+        const unsigned char *user_login,
+        const ej_ip_t *ip_address)
 {
   int errcode;
   unsigned char *txt1, *txt2;
@@ -1561,7 +1583,8 @@ super_html_run_unmanaged_contest(struct contest_desc *cnts, int user_id,
   cnts->old_run_managed = 0;
   snprintf(audit_str, sizeof(audit_str),
            "<!-- audit: old_run_managed->run_unmanaged %s %d (%s) %s -->\n",
-           xml_unparse_date(time(0)), user_id, user_login, xml_unparse_ip(ip));
+           xml_unparse_date(time(0)), user_id, user_login,
+           xml_unparse_ipv6(ip_address));
 
   if ((errcode = contests_save_xml(cnts, txt1, txt2, audit_str)) < 0) {
     xfree(txt1);
@@ -1694,7 +1717,7 @@ super_html_locked_cnts_dialog(
         int user_id,
         const unsigned char *login,
         ej_cookie_t session_id,
-        ej_ip4_t ip_address,
+        const ej_ip_t *ip_address,
         const struct ejudge_cfg *config,
         struct sid_state *sstate,
         const unsigned char *self_url,
@@ -1769,7 +1792,7 @@ super_html_edited_cnts_dialog(
         int user_id,
         const unsigned char *login,
         ej_cookie_t session_id,
-        ej_ip4_t ip_address,
+        const ej_ip_t *ip_address,
         const struct ejudge_cfg *config,
         struct sid_state *sstate,
         const unsigned char *self_url,
@@ -1845,7 +1868,7 @@ super_html_create_contest(
         int user_id,
         const unsigned char *login,
         ej_cookie_t session_id,
-        ej_ip4_t ip_address,
+        const ej_ip_t *ip_address,
         struct ejudge_cfg *config,
         struct sid_state *sstate,
         const unsigned char *self_url,
@@ -2142,17 +2165,18 @@ static const unsigned char * const form_row_attrs[]=
 };
 
 int
-super_html_edit_contest_page(FILE *f,
-                             int priv_level,
-                             int user_id,
-                             const unsigned char *login,
-                             ej_cookie_t session_id,
-                             ej_ip4_t ip_address,
-                             struct ejudge_cfg *config,
-                             struct sid_state *sstate,
-                             const unsigned char *self_url,
-                             const unsigned char *hidden_vars,
-                             const unsigned char *extra_args)
+super_html_edit_contest_page(
+        FILE *f,
+        int priv_level,
+        int user_id,
+        const unsigned char *login,
+        ej_cookie_t session_id,
+        const ej_ip_t *ip_address,
+        struct ejudge_cfg *config,
+        struct sid_state *sstate,
+        const unsigned char *self_url,
+        const unsigned char *hidden_vars,
+        const unsigned char *extra_args)
 {
   struct contest_desc *cnts = sstate->edited_cnts;
   unsigned char hbuf[1024];
@@ -3180,18 +3204,19 @@ html_ssl_select(FILE *f, int value)
 }
 
 int
-super_html_edit_access_rules(FILE *f,
-                             int priv_level,
-                             int user_id,
-                             const unsigned char *login,
-                             ej_cookie_t session_id,
-                             ej_ip4_t ip_address,
-                             struct ejudge_cfg *config,
-                             struct sid_state *sstate,
-                             int cmd,
-                             const unsigned char *self_url,
-                             const unsigned char *hidden_vars,
-                             const unsigned char *extra_args)
+super_html_edit_access_rules(
+        FILE *f,
+        int priv_level,
+        int user_id,
+        const unsigned char *login,
+        ej_cookie_t session_id,
+        const ej_ip_t *ip_address,
+        struct ejudge_cfg *config,
+        struct sid_state *sstate,
+        int cmd,
+        const unsigned char *self_url,
+        const unsigned char *hidden_vars,
+        const unsigned char *extra_args)
 {
   struct contest_desc *cnts = sstate->edited_cnts;
   struct contest_access *acc;
@@ -3406,18 +3431,19 @@ super_html_print_caps_table(
 }
 
 int
-super_html_edit_permission(FILE *f,
-                           int priv_level,
-                           int user_id,
-                           const unsigned char *login,
-                           ej_cookie_t session_id,
-                           ej_ip4_t ip_address,
-                           struct ejudge_cfg *config,
-                           struct sid_state *sstate,
-                           int num,
-                           const unsigned char *self_url,
-                           const unsigned char *hidden_vars,
-                           const unsigned char *extra_args)
+super_html_edit_permission(
+        FILE *f,
+        int priv_level,
+        int user_id,
+        const unsigned char *login,
+        ej_cookie_t session_id,
+        const ej_ip_t *ip_address,
+        struct ejudge_cfg *config,
+        struct sid_state *sstate,
+        int num,
+        const unsigned char *self_url,
+        const unsigned char *hidden_vars,
+        const unsigned char *extra_args)
 {
   struct contest_desc *cnts = sstate->edited_cnts;
   int i;
@@ -3489,18 +3515,19 @@ print_field_row_select(FILE *f, int num, const unsigned char *comment, int value
 }
 
 int
-super_html_edit_form_fields(FILE *f,
-                            int priv_level,
-                            int user_id,
-                            const unsigned char *login,
-                            ej_cookie_t session_id,
-                            ej_ip4_t ip_address,
-                            struct ejudge_cfg *config,
-                            struct sid_state *sstate,
-                            int cmd,
-                            const unsigned char *self_url,
-                            const unsigned char *hidden_vars,
-                            const unsigned char *extra_args)
+super_html_edit_form_fields(
+        FILE *f,
+        int priv_level,
+        int user_id,
+        const unsigned char *login,
+        ej_cookie_t session_id,
+        const ej_ip_t *ip_address,
+        struct ejudge_cfg *config,
+        struct sid_state *sstate,
+        int cmd,
+        const unsigned char *self_url,
+        const unsigned char *hidden_vars,
+        const unsigned char *extra_args)
 {
   struct contest_desc *cnts = sstate->edited_cnts;
   unsigned char hbuf[1024];
@@ -3648,18 +3675,19 @@ const unsigned char super_html_template_help_2[] =
 const unsigned char super_html_template_help_3[] = "";
 
 int
-super_html_edit_template_file(FILE *f,
-                              int priv_level,
-                              int user_id,
-                              const unsigned char *login,
-                              ej_cookie_t session_id,
-                              ej_ip4_t ip_address,
-                              struct ejudge_cfg *config,
-                              struct sid_state *sstate,
-                              int cmd,
-                              const unsigned char *self_url,
-                              const unsigned char *hidden_vars,
-                              const unsigned char *extra_args)
+super_html_edit_template_file(
+        FILE *f,
+        int priv_level,
+        int user_id,
+        const unsigned char *login,
+        ej_cookie_t session_id,
+        const ej_ip_t *ip_address,
+        struct ejudge_cfg *config,
+        struct sid_state *sstate,
+        int cmd,
+        const unsigned char *self_url,
+        const unsigned char *hidden_vars,
+        const unsigned char *extra_args)
 {
   struct contest_desc *cnts = sstate->edited_cnts;
   struct section_global_data *global = sstate->global;
@@ -4140,23 +4168,24 @@ super_html_load_serve_cfg(const struct contest_desc *cnts,
 }
 
 int
-super_html_create_contest_2(FILE *f,
-                            int priv_level,
-                            int user_id,
-                            const unsigned char *login,
-                            const unsigned char *ss_login,
-                            ej_cookie_t session_id,
-                            ej_ip4_t ip_address,
-                            int ssl_flag,
-                            struct ejudge_cfg *config,
-                            struct sid_state *sstate,
-                            int num_mode,
-                            int templ_mode,
-                            int contest_id,
-                            int templ_id,
-                            const unsigned char *self_url,
-                            const unsigned char *hidden_vars,
-                            const unsigned char *extra_args)
+super_html_create_contest_2(
+        FILE *f,
+        int priv_level,
+        int user_id,
+        const unsigned char *login,
+        const unsigned char *ss_login,
+        ej_cookie_t session_id,
+        const ej_ip_t *ip_address,
+        int ssl_flag,
+        struct ejudge_cfg *config,
+        struct sid_state *sstate,
+        int num_mode,
+        int templ_mode,
+        int contest_id,
+        int templ_id,
+        const unsigned char *self_url,
+        const unsigned char *hidden_vars,
+        const unsigned char *extra_args)
 {
   const int *contests = 0;
   int contest_num, i;
@@ -4206,16 +4235,13 @@ super_html_create_contest_2(FILE *f,
     goto cleanup;
   }
 
-  ej_ip_t ipv6;
-  xml_make_ipv6(ip_address, &ipv6);
-
   // FIXME: touch the contest file
   if (!templ_mode) {
     sstate->edited_cnts = contest_tmpl_new(contest_id,
                                            login,
                                            self_url,
                                            ss_login,
-                                           &ipv6,
+                                           ip_address,
                                            ssl_flag,
                                            config);
     sstate->global = prepare_new_global_section(contest_id,

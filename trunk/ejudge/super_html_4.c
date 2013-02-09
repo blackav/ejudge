@@ -2570,7 +2570,7 @@ cmd_edit_contest_page(
              phr->session_id);
     super_html_edited_cnts_dialog(out_f,
                                   phr->priv_level, phr->user_id, phr->login,
-                                  phr->session_id, phr->ip, phr->config,
+                                  phr->session_id, &phr->ip, phr->config,
                                   phr->ss, phr->self_url, buf,
                                   "", cnts, 1);
 
@@ -2590,7 +2590,7 @@ cmd_edit_contest_page(
              phr->session_id);
     super_html_locked_cnts_dialog(out_f,
                                   phr->priv_level, phr->user_id, phr->login,
-                                  phr->session_id, phr->ip, phr->config,
+                                  phr->session_id, &phr->ip, phr->config,
                                   phr->ss, phr->self_url, buf,
                                   "", contest_id, other_ss, 1);
 
@@ -4193,13 +4193,13 @@ cmd_op_check_ip_mask(
 {
   int retval = 0;
   const unsigned char *value = 0;
-  ej_ip4_t addr, mask;
+  ej_ip_t addr, mask;
 
   phr->json_reply = 1;
 
   if (ss_cgi_param(phr, "value", &value) <= 0 || !value)
     FAIL(S_ERR_INV_VALUE);
-  if (xml_parse_ip_mask(NULL, 0, 0, 0, value, &addr, &mask) < 0)
+  if (xml_parse_ipv6_mask(NULL, 0, 0, 0, value, &addr, &mask) < 0)
     FAIL(S_ERR_INV_VALUE);
   retval = 0;
 
@@ -4569,7 +4569,7 @@ cmd_op_create_new_contest_page(
              phr->session_id);
     super_html_edited_cnts_dialog(out_f,
                                   phr->priv_level, phr->user_id, phr->login,
-                                  phr->session_id, phr->ip, phr->config,
+                                  phr->session_id, &phr->ip, phr->config,
                                   phr->ss, phr->self_url, buf,
                                   "", NULL, 1);
 
@@ -4673,10 +4673,7 @@ cmd_op_create_new_contest(
   }
 
   if (!templ_cnts) {
-    ej_ip_t ipv6;
-    xml_make_ipv6(phr->ip, &ipv6);
-
-    phr->ss->edited_cnts = contest_tmpl_new(contest_id, phr->login, phr->self_url, phr->system_login, &ipv6, phr->ssl_flag, phr->config);
+    phr->ss->edited_cnts = contest_tmpl_new(contest_id, phr->login, phr->self_url, phr->system_login, &phr->ip, phr->ssl_flag, phr->config);
     phr->ss->global = prepare_new_global_section(contest_id, phr->ss->edited_cnts->root_dir, phr->config);
   } else {
     super_html_load_serve_cfg(templ_cnts, phr->config, phr->ss);

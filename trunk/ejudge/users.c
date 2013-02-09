@@ -89,8 +89,8 @@ struct ip_node
 {
   struct xml_tree b;
   int allow;
-  unsigned int addr;
-  unsigned int mask;
+  ej_ip_t addr;
+  ej_ip_t mask;
 };
 struct access_node
 {
@@ -266,7 +266,7 @@ parse_config(char const *path, const unsigned char *default_config)
         }
         if (ip->allow == -1) ip->allow = 0;
 
-        if (xml_parse_ip_mask(NULL, path, ip->b.line, ip->b.column, ip->b.text,
+        if (xml_parse_ipv6_mask(NULL, path, ip->b.line, ip->b.column, ip->b.text,
                               &ip->addr, &ip->mask) < 0)
           goto failed;
       }
@@ -317,7 +317,7 @@ parse_config(char const *path, const unsigned char *default_config)
 
 static struct config_node *config;
 static struct userlist_clnt *server_conn;
-static ej_ip4_t user_ip;
+static ej_ip_t user_ip;
 static int user_contest_id = 0;
 static int client_locale_id;
 static unsigned char *self_url;
@@ -330,14 +330,12 @@ check_source_ip(void)
   struct ip_node *p;
 
   if (!config->access) return 0;
-  if (!user_ip) goto invalid_ip;
   for (p = (struct ip_node*) config->access->b.first_down;
        p; p = (struct ip_node*) p->b.right) {
-    if ((user_ip & p->mask) == p->addr) return p->allow;
+    if (ipv6_match_mask(&p->addr, &p->mask, &user_ip)) return p->allow;
   }
   return config->access->default_is_allow;
 
- invalid_ip:
   if (config->access->default_is_allow) return 1;
   return 0;
 }
@@ -529,7 +527,7 @@ initialize(int argc, char const *argv[])
     client_not_configured(0, "contests database not parsed");
   }
   */
-  user_ip = parse_client_ip();
+  parse_client_ip(&user_ip);
 
   // construct self-reference URL
   {
@@ -636,10 +634,7 @@ main(int argc, char const *argv[])
   name_str = alloca(name_len + 16);
   html_armor_string(in_name_str, name_str);
 
-  ej_ip_t ipv6;
-  xml_make_ipv6(user_ip, &ipv6);
-
-  if (!contests_check_users_ip(user_contest_id, &ipv6, ssl_flag)) {
+  if (!contests_check_users_ip(user_contest_id, &user_ip, ssl_flag)) {
     client_put_header(stdout, header_txt, 0, config->charset, 1,
                       client_locale_id, _("Permission denied"));
     printf("<h2>%s</h2>\n",_("You have no permissions to view this contest."));
@@ -665,9 +660,7 @@ main(int argc, char const *argv[])
     printf("<p>%s</p>\n", _("Information is not available"));
   } else {
     fflush(stdout);
-    ej_ip_t ipv6;
-    xml_make_ipv6(user_ip, &ipv6);
-    r = userlist_clnt_list_users(server_conn, &ipv6, ssl_flag,
+    r = userlist_clnt_list_users(server_conn, &user_ip, ssl_flag,
                                  user_contest_id,
                                  client_locale_id, user_id, 
                                  0, self_url, "");

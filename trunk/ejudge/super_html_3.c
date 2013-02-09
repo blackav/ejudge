@@ -912,17 +912,18 @@ Not settable (atleast for now):
 */
 
 int
-super_html_edit_global_parameters(FILE *f,
-                                  int priv_level,
-                                  int user_id,
-                                  const unsigned char *login,
-                                  ej_cookie_t session_id,
-                                  ej_ip4_t ip_address,
-                                  struct ejudge_cfg *config,
-                                  struct sid_state *sstate,
-                                  const unsigned char *self_url,
-                                  const unsigned char *hidden_vars,
-                                  const unsigned char *extra_args)
+super_html_edit_global_parameters(
+        FILE *f,
+        int priv_level,
+        int user_id,
+        const unsigned char *login,
+        ej_cookie_t session_id,
+        const ej_ip_t *ip_address,
+        struct ejudge_cfg *config,
+        struct sid_state *sstate,
+        const unsigned char *self_url,
+        const unsigned char *hidden_vars,
+        const unsigned char *extra_args)
 {
   struct section_global_data *global = sstate->global;
   unsigned char hbuf[1024];
@@ -3842,7 +3843,7 @@ super_html_edit_languages(
         int user_id,
         const unsigned char *login,
         ej_cookie_t session_id,
-        ej_ip4_t ip_address,
+        const ej_ip_t *ip_address,
         const struct ejudge_cfg *config,
         struct sid_state *sstate,
         const unsigned char *self_url,
@@ -7453,17 +7454,18 @@ cleanup:
 }
 
 int
-super_html_edit_problems(FILE *f,
-                         int priv_level,
-                         int user_id,
-                         const unsigned char *login,
-                         ej_cookie_t session_id,
-                         ej_ip4_t ip_address,
-                         const struct ejudge_cfg *config,
-                         struct sid_state *sstate,
-                         const unsigned char *self_url,
-                         const unsigned char *hidden_vars,
-                         const unsigned char *extra_args)
+super_html_edit_problems(
+        FILE *f,
+        int priv_level,
+        int user_id,
+        const unsigned char *login,
+        ej_cookie_t session_id,
+        const ej_ip_t *ip_address,
+        const struct ejudge_cfg *config,
+        struct sid_state *sstate,
+        const unsigned char *self_url,
+        const unsigned char *hidden_vars,
+        const unsigned char *extra_args)
 {
   int i;
 
@@ -8660,17 +8662,18 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
 }
 
 int
-super_html_view_new_serve_cfg(FILE *f,
-                              int priv_level,
-                              int user_id,
-                              const unsigned char *login,
-                              ej_cookie_t session_id,
-                              ej_ip4_t ip_address,
-                              const struct ejudge_cfg *config,
-                              struct sid_state *sstate,
-                              const unsigned char *self_url,
-                              const unsigned char *hidden_vars,
-                              const unsigned char *extra_args)
+super_html_view_new_serve_cfg(
+        FILE *f,
+        int priv_level,
+        int user_id,
+        const unsigned char *login,
+        ej_cookie_t session_id,
+        const ej_ip_t *ip_address,
+        const struct ejudge_cfg *config,
+        struct sid_state *sstate,
+        const unsigned char *self_url,
+        const unsigned char *hidden_vars,
+        const unsigned char *extra_args)
 {
   char *out_text = 0;
   size_t out_size = 0;
@@ -9358,17 +9361,18 @@ check_test_score(FILE *flog, int ntests, int test_score, int full_score,
 }
 
 int
-super_html_check_tests(FILE *f,
-                       int priv_level,
-                       int user_id,
-                       const unsigned char *login,
-                       ej_cookie_t session_id,
-                       ej_ip4_t ip_address,
-                       struct ejudge_cfg *config,
-                       struct sid_state *sstate,
-                       const unsigned char *self_url,
-                       const unsigned char *hidden_vars,
-                       const unsigned char *extra_args)
+super_html_check_tests(
+        FILE *f,
+        int priv_level,
+        int user_id,
+        const unsigned char *login,
+        ej_cookie_t session_id,
+        const ej_ip_t *ip_address,
+        struct ejudge_cfg *config,
+        struct sid_state *sstate,
+        const unsigned char *self_url,
+        const unsigned char *hidden_vars,
+        const unsigned char *extra_args)
 {
   path_t conf_path;
   path_t g_test_path;
@@ -10110,17 +10114,21 @@ super_html_update_variant_map(FILE *flog, int contest_id,
 }
 
 int
-super_html_edit_variants(FILE *f, int cmd, int priv_level, int user_id,
-                         const unsigned char *login,
-                         ej_cookie_t session_id,
-                         ej_ip4_t ip_address,
-                         int ssl_flag,
-                         struct userlist_clnt *userlist_conn,
-                         const struct ejudge_cfg *config,
-                         struct sid_state *sstate,
-                         const unsigned char *self_url,
-                         const unsigned char *hidden_vars,
-                         const unsigned char *extra_args)
+super_html_edit_variants(
+        FILE *f,
+        int cmd,
+        int priv_level,
+        int user_id,
+        const unsigned char *login,
+        ej_cookie_t session_id,
+        const ej_ip_t *ip_address,
+        int ssl_flag,
+        struct userlist_clnt *userlist_conn,
+        const struct ejudge_cfg *config,
+        struct sid_state *sstate,
+        const unsigned char *self_url,
+        const unsigned char *hidden_vars,
+        const unsigned char *extra_args)
 {
   const unsigned char *s = 0;
   struct section_global_data *global = 0;

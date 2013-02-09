@@ -1270,21 +1270,6 @@ contests_new_node(int tag)
 }
 
 static int
-ipv6_match_mask(const ej_ip_t *net, const ej_ip_t *mask, const ej_ip_t *addr)
-{
-  if (net->ipv6_flag != mask->ipv6_flag || net->ipv6_flag != addr->ipv6_flag)
-    return 0;
-  if (!addr->ipv6_flag) {
-    return (addr->u.v4.addr & mask->u.v4.addr) == net->u.v4.addr;
-  }
-  ej_ip_t tmp = *addr;
-  for (int i = 0; i < 16; ++i) {
-    tmp.u.v6.addr[i] &= mask->u.v6.addr[i];
-  }
-  return memcmp(tmp.u.v6.addr, net->u.v6.addr, 16) == 0;
-}
-
-static int
 do_check_ip(struct contest_access *acc, const ej_ip_t *pip, int ssl)
 {
   struct contest_ip *p;

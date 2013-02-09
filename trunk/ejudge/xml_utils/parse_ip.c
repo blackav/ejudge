@@ -306,6 +306,35 @@ ipv6cmp(const ej_ip_t *pip1, const ej_ip_t *pip2)
   return memcmp(pip1->u.v6.addr, pip2->u.v6.addr, sizeof(pip1->u.v6.addr));
 }
 
+int
+ipv6_match_mask(const ej_ip_t *net, const ej_ip_t *mask, const ej_ip_t *addr)
+{
+  if (net->ipv6_flag != mask->ipv6_flag || net->ipv6_flag != addr->ipv6_flag)
+    return 0;
+  if (!addr->ipv6_flag) {
+    return (addr->u.v4.addr & mask->u.v4.addr) == net->u.v4.addr;
+  }
+  ej_ip_t tmp = *addr;
+  for (int i = 0; i < 16; ++i) {
+    tmp.u.v6.addr[i] &= mask->u.v6.addr[i];
+  }
+  return memcmp(tmp.u.v6.addr, net->u.v6.addr, 16) == 0;
+}
+
+int
+ipv6_is_empty(const ej_ip_t *p_ip)
+{
+  if (!p_ip) return 1;
+  if (p_ip->ipv6_flag) {
+    for (int i = 0; i < 16; ++i) {
+      if (p_ip->u.v6.addr[i])
+        return 0;
+    }
+    return 1;
+  }
+  return !p_ip->u.v4.addr;
+}
+
 /*
  * Local variables:
  *  compile-command: "make -C .."
