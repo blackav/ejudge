@@ -21,7 +21,7 @@
 
 int
 userlist_clnt_list_users(struct userlist_clnt *clnt,
-                         ej_ip4_t origin_ip,
+                         const ej_ip_t *origin_ip,
                          int ssl,
                          int contest_id,
                          int locale_id,
@@ -60,7 +60,7 @@ userlist_clnt_list_users(struct userlist_clnt *clnt,
   url_ptr = out->data;
   srch_ptr = url_ptr + url_len + 1;
   out->request_id = ULS_LIST_USERS;
-  out->origin_ip = origin_ip;
+  out->origin_ip = *origin_ip;
   out->ssl = ssl;
   out->contest_id = contest_id;
   out->locale_id = locale_id;
