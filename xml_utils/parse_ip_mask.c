@@ -43,23 +43,24 @@ xml_parse_ip_mask(
     *p_mask = 0;
   } else if (sscanf(s, "%u.%u.%u.%u/%u %n", &b1, &b2, &b3, &b4, &b5, &n) == 5
       && !s[n] && b1 <= 255 && b2 <= 255 && b3 <= 255 && b4 <= 255 && b5 <= 32) {
-    *p_addr = b1 << 24 | b2 << 16 | b3 << 8 | b4;
-    *p_mask = ((unsigned int) -1) << (32 - b5);
+    *p_addr = b1 | b2 << 8 | b3 << 16 | b4 << 24;
+    //*p_mask = ((unsigned int) -1) << (32 - b5);
+    *p_mask = ((unsigned int) -1) >> (32 - b5); 
   } else if (sscanf(s, "%u.%u.%u.%u %n", &b1, &b2, &b3, &b4, &n) == 4
              && !s[n] && b1 <= 255 && b2 <= 255 && b3 <= 255 && b4 <= 255) {
-    *p_addr = b1 << 24 | b2 << 16 | b3 << 8 | b4;
+    *p_addr = b1 | b2 << 8 | b3 << 16 | b4 << 24;
     *p_mask = 0xFFFFFFFF;
   } else if (sscanf(s, "%u.%u.%u. %n", &b1, &b2, &b3, &n) == 3
              && !s[n] && b1 <= 255 && b2 <= 255 && b3 <= 255) {
-    *p_addr = b1 << 24 | b2 << 16 | b3 << 8;
-    *p_mask = 0xFFFFFF00;
+    *p_addr = b1 | b2 << 8 | b3 << 16;
+    *p_mask = 0x00FFFFFF;
   } else if (sscanf(s, "%u.%u. %n", &b1, &b2, &n) == 2
              && !s[n] && b1 <= 255 && b2 <= 255) {
-    *p_addr = b1 << 24 | b2 << 16;
-    *p_mask = 0xFFFF0000;
+    *p_addr = b1 | b2 << 8;
+    *p_mask = 0x0000FFFF;
   } else if (sscanf(s, "%u. %n", &b1, &n) == 1 && !s[n] && b1 <= 255) {
-    *p_addr = b1 << 24;
-    *p_mask = 0xFF000000;
+    *p_addr = b1;
+    *p_mask = 0x000000FF;
   } else {
     goto failed;
   }

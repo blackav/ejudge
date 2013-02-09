@@ -75,7 +75,8 @@ xml_parse_ip(
 #endif
     return -1;
   }
-  ip = b1 << 24 | b2 << 16 | b3 << 8 | b4;
+  //ip = b1 << 24 | b2 << 16 | b3 << 8 | b4;
+  ip = b4 << 24 | b3 << 16 | b2 << 8 | b1;
   *pip = ip;
   return 0;
 }
@@ -156,7 +157,9 @@ xml_do_parse_ipv6(
       ptr = last_col + 1;
     }
 
+    // A.B.C.D -> net(A.B.C.D) -> host(D.C.B.A)
     unsigned int value = 0;
+    int shift = 0;
     for (int i = 0; i < 4; ++i) {
       if (ptr >= eptr) fail();
       if (!isdigit(*ptr)) fail();
@@ -166,14 +169,15 @@ xml_do_parse_ipv6(
         ++ptr;
       }
       if (b >= 256) fail();
-      value = (value << 8) | b;
+      value |= b << shift;
+      shift += 8;
       if (i < 3) {
         if (ptr >= eptr || *ptr != '.') fail();
         ++ptr;
       }
     }
-    addr[6] = value >> 16;
-    addr[7] = value & 0xffff;
+    addr[6] = value & 0xffff;
+    addr[7] = value >> 16;
     if (!last_col) {
       p_addr->ipv6_flag = 0;
       return 0;
