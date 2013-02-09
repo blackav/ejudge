@@ -26,7 +26,7 @@ userlist_clnt_get_uid_by_pid(struct userlist_clnt *clnt,
                              int *p_uid,
                              int *p_priv_level,
                              ej_cookie_t *p_cookie,
-                             ej_ip4_t *p_ip,
+                             ej_ip_t *p_ip,
                              int *p_ssl)
 {
   struct userlist_pk_get_uid_by_pid *out = 0;
