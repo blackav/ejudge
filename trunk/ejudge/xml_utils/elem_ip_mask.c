@@ -21,7 +21,7 @@
 #include <string.h>
 
 int
-xml_elem_ip_mask(struct xml_tree *tree,
+_xml_elem_ip_mask(struct xml_tree *tree,
                  unsigned int *addr_ptr, unsigned int *mask_ptr)
 {
   unsigned int b1, b2, b3, b4;

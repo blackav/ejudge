@@ -50,7 +50,9 @@ userlist_clnt_priv_login(
   login_ptr = out->data;
   passwd_ptr = login_ptr + login_len + 1;
   out->request_id = cmd;
-  out->origin_ip = *origin_ip;
+  if (origin_ip) {
+    out->origin_ip = *origin_ip;
+  }
   out->ssl = ssl;
   out->contest_id = contest_id;
   out->locale_id = locale_id;

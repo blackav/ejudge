@@ -47,7 +47,9 @@ userlist_clnt_priv_cookie(
   out = alloca(out_size);
   memset(out, 0, out_size);
   out->request_id = ULS_PRIV_CHECK_COOKIE;
-  out->origin_ip = *origin_ip;
+  if (origin_ip) {
+    out->origin_ip = *origin_ip;
+  }
   out->ssl = ssl;
   out->contest_id = contest_id;
   out->cookie = cookie;

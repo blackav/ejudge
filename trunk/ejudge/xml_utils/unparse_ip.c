@@ -28,7 +28,7 @@ xml_unparse_ip(ej_ip4_t ip)
            (ip >> 8) & 0xff, ip & 0xff);
   */
   snprintf(buf, sizeof(buf), "%u.%u.%u.%u",
-           ip, (ip >> 8) & 0xff, (ip >> 16) & 0xff, (ip >> 24) & 0xff);
+           ip & 0xff, (ip >> 8) & 0xff, (ip >> 16) & 0xff, (ip >> 24) & 0xff);
   return buf;
 }
 
@@ -40,7 +40,8 @@ xml_unparse_ipv6(const ej_ip_t *p_addr)
   if (!p_addr->ipv6_flag) {
     ej_ip4_t ip = p_addr->u.v4.addr;
     snprintf(buf, sizeof(buf), "%u.%u.%u.%u",
-             ip, (ip >> 8) & 0xff, (ip >> 16) & 0xff, (ip >> 24) & 0xff);
+             ip & 0xff, (ip >> 8) & 0xff,
+             (ip >> 16) & 0xff, (ip >> 24) & 0xff);
     /*
     snprintf(buf, sizeof(buf), "%u.%u.%u.%u",
              p_addr->u.v4.addr >> 24, (p_addr->u.v4.addr >> 16) & 0xff,
