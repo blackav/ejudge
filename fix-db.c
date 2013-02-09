@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2010-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -817,6 +817,6 @@ static void *forced_link_table[] =
   xml_attr_bool_byte,
   xml_attr_int,
   xml_attr_date,
-  xml_elem_ip_mask,
+  //xml_elem_ip_mask,
   close_memstream,
 };

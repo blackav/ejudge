@@ -32,7 +32,9 @@ userlist_clnt_logout(struct userlist_clnt *clnt,
 
   memset(&out, 0, sizeof(out));
   out.request_id = cmd;
-  out.origin_ip = *origin_ip;
+  if (origin_ip) {
+    out.origin_ip = *origin_ip;
+  }
   out.ssl = ssl;
   out.cookie = cookie;
   if ((r = userlist_clnt_send_packet(clnt, sizeof(out), &out)) < 0) return r;

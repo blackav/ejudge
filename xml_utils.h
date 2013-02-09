@@ -86,7 +86,7 @@ int xml_attr_bool_byte(struct xml_attr *attr, unsigned char *value_ptr);
 int xml_attr_int(struct xml_attr *attr, int *value_ptr);
 int xml_attr_ulong(struct xml_attr *attr, unsigned long *value_ptr);
 int xml_attr_date(struct xml_attr *attr, time_t *value_ptr);
-int xml_elem_ip_mask(struct xml_tree *tree,
+int _xml_elem_ip_mask(struct xml_tree *tree,
                      unsigned int *addr_ptr, unsigned int *mask_ptr);
 
 int

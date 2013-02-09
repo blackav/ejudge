@@ -43,7 +43,9 @@ userlist_clnt_recover_passwd_2(
   out = alloca(out_size);
   memset(out, 0, out_size);
   out->request_id = cmd;
-  out->origin_ip = *ip;
+  if (ip) {
+    out->origin_ip = *ip;
+  }
   out->ssl = ssl_flag;
   out->contest_id = contest_id;
   out->cookie = cookie;

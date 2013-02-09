@@ -48,7 +48,9 @@ userlist_clnt_get_cookie(struct userlist_clnt *clnt,
   out = alloca(out_size);
   memset(out, 0, out_size);
   out->request_id = cmd;
-  out->origin_ip = *origin_ip;
+  if (origin_ip) {
+    out->origin_ip = *origin_ip;
+  }
   out->ssl = ssl;
   out->contest_id = 0;
   out->cookie = cookie;

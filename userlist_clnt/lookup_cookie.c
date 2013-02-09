@@ -40,7 +40,9 @@ userlist_clnt_lookup_cookie(struct userlist_clnt *clnt,
   data = alloca(len);
   memset(data, 0, len);
   data->request_id = ULS_CHECK_COOKIE;
-  data->origin_ip = *origin_ip;
+  if (origin_ip) {
+    data->origin_ip = *origin_ip;
+  }
   data->ssl = ssl;
   //  data->contest_id = contest_id;
   data->cookie = cookie;
