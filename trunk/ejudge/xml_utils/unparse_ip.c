@@ -22,9 +22,13 @@ xml_unparse_ip(ej_ip4_t ip)
 {
   static char buf[64];
 
+  /*
   snprintf(buf, sizeof(buf), "%u.%u.%u.%u",
            ip >> 24, (ip >> 16) & 0xff,
            (ip >> 8) & 0xff, ip & 0xff);
+  */
+  snprintf(buf, sizeof(buf), "%u.%u.%u.%u",
+           ip, (ip >> 8) & 0xff, (ip >> 16) & 0xff, (ip >> 24) & 0xff);
   return buf;
 }
 
@@ -34,9 +38,14 @@ xml_unparse_ipv6(const ej_ip_t *p_addr)
   static char buf[64];
 
   if (!p_addr->ipv6_flag) {
+    ej_ip4_t ip = p_addr->u.v4.addr;
+    snprintf(buf, sizeof(buf), "%u.%u.%u.%u",
+             ip, (ip >> 8) & 0xff, (ip >> 16) & 0xff, (ip >> 24) & 0xff);
+    /*
     snprintf(buf, sizeof(buf), "%u.%u.%u.%u",
              p_addr->u.v4.addr >> 24, (p_addr->u.v4.addr >> 16) & 0xff,
              (p_addr->u.v4.addr >> 8) & 0xff, p_addr->u.v4.addr & 0xff);
+    */
     return buf;
   }
 
@@ -61,8 +70,12 @@ xml_unparse_ipv6(const ej_ip_t *p_addr)
     if (data[5]) {
       out += sprintf(out, "ffff:");
     }
+    /*
     sprintf(out, "%d.%d.%d.%d",
             data[6] >> 8, data[6] & 0xff, data[7] >> 8, data[7] & 0xff);
+    */
+    sprintf(out, "%d.%d.%d.%d",
+            data[6] & 0xff, data[6] >> 8, data[7] & 0xff, data[7] >> 8);
     return buf;
   }
 

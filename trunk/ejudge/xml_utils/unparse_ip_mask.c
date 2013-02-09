@@ -26,32 +26,32 @@ xml_unparse_ip_mask(ej_ip4_t addr, ej_ip4_t mask)
 
   if (mask == 0xffffffff) {
     snprintf(buf, sizeof(buf), "%u.%u.%u.%u",
-             (addr >> 24) & 0xff,
-             (addr >> 16) & 0xff,
+             (addr) & 0xff,
              (addr >> 8) & 0xff,
-             addr & 0xff);
+             (addr >> 16) & 0xff,
+             (addr >> 24) & 0xff);
   } else if (mask == 0xffffff00) {
     snprintf(buf, sizeof(buf), "%u.%u.%u.",
-             (addr >> 24) & 0xff,
-             (addr >> 16) & 0xff,
-             (addr >> 8) & 0xff);
+             (addr) & 0xff,
+             (addr >> 8) & 0xff,
+             (addr >> 16) & 0xff);
   } else if (mask == 0xffff0000) {
     snprintf(buf, sizeof(buf), "%u.%u.",
-             (addr >> 24) & 0xff,
-             (addr >> 16) & 0xff);
+             (addr) & 0xff,
+             (addr >> 8) & 0xff);
   } else if (mask == 0xff000000) {
     snprintf(buf, sizeof(buf), "%u.",
-             (addr >> 24) & 0xff);
+             (addr) & 0xff);
   } else if (mask == 0 && addr == 0) {
     snprintf(buf, sizeof(buf), "0");
   } else {
-    for (k = (unsigned) -1, n = 0; n <= 32 && k != mask; n++, k <<= 1);
+    for (k = (unsigned) -1, n = 0; n <= 32 && k != mask; n++, k >>= 1);
     if (n <= 32) 
       snprintf(buf, sizeof(buf), "%u.%u.%u.%u/%d",
-               (addr >> 24) & 0xff,
-               (addr >> 16) & 0xff,
+               (addr) & 0xff,
                (addr >> 8) & 0xff,
-               addr & 0xff, 32 - n);
+               (addr >> 16) & 0xff,
+               (addr >> 24) & 0xff, 32 - n);
     else
       snprintf(buf, sizeof(buf), "0x%08x/0x%08x", addr, mask);
   }
