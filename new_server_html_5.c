@@ -714,8 +714,11 @@ create_account(
 
   next_action = NEW_SRV_ACTION_REG_ACCOUNT_CREATED_PAGE;
 
+  ej_ip_t ipv6;
+  xml_make_ipv6(phr->ip, &ipv6);
+
   if (cnts->simple_registration) {
-    ul_error = userlist_clnt_register_new_2(ul_conn, phr->ip, phr->ssl_flag,
+    ul_error = userlist_clnt_register_new_2(ul_conn, &ipv6, phr->ssl_flag,
                                             phr->contest_id, phr->locale_id,
                                             next_action,
                                             login, email, phr->self_url,
@@ -724,7 +727,7 @@ create_account(
 
   } else {
     ul_error = userlist_clnt_register_new(ul_conn, ULS_REGISTER_NEW,
-                                          phr->ip, phr->ssl_flag,
+                                          &ipv6, phr->ssl_flag,
                                           phr->contest_id, phr->locale_id,
                                           next_action,
                                           login, email, phr->self_url);
@@ -797,8 +800,11 @@ cmd_login(
   if (ns_open_ul_connection(phr->fw_state) < 0)
     return ns_html_err_ul_server_down(fout, phr, 0, 0);
 
+  ej_ip_t ipv6;
+  xml_make_ipv6(phr->ip, &ipv6);
+
   if ((r = userlist_clnt_login(ul_conn, ULS_CHECK_USER,
-                               phr->ip, phr->ssl_flag, phr->contest_id,
+                               &ipv6, phr->ssl_flag, phr->contest_id,
                                phr->locale_id, phr->login, password,
                                &phr->user_id, &phr->session_id,
                                &phr->name)) < 0) {
@@ -836,7 +842,7 @@ cmd_login(
   if (cnts->force_registration && cnts->autoregister && !need_regform) {
     r = userlist_clnt_register_contest(ul_conn, ULS_REGISTER_CONTEST_2,
                                        phr->user_id, phr->contest_id,
-                                       phr->ip, phr->ssl_flag);
+                                       &ipv6, phr->ssl_flag);
     if (r < 0)
       return ns_html_err_no_perm(fout, phr, 0, "user_login failed: %s",
                                  userlist_strerror(-r));
@@ -853,7 +859,7 @@ cmd_login(
     // is complete, we may relax registration procedure
     r = userlist_clnt_register_contest(ul_conn, ULS_REGISTER_CONTEST_2,
                                        phr->user_id, phr->contest_id,
-                                       phr->ip, phr->ssl_flag);
+                                       &ipv6, phr->ssl_flag);
     if (r < 0)
       return ns_html_err_no_perm(fout, phr, 0, "user_login failed: %s",
                                  userlist_strerror(-r));
@@ -3229,9 +3235,11 @@ register_for_contest(
     fprintf(log_f, "%s.\n", _("User database server is down"));
     goto done;
   }
+  ej_ip_t ipv6;
+  xml_make_ipv6(phr->ip, &ipv6);
   r = userlist_clnt_register_contest(ul_conn, ULS_REGISTER_CONTEST_2,
                                      phr->user_id, phr->contest_id,
-                                     phr->ip, phr->ssl_flag);
+                                     &ipv6, phr->ssl_flag);
   if (r < 0) {
     fprintf(log_f, "%s: %s.\n", _("Registration for contest failed"),
             userlist_strerror(-r));
@@ -3283,8 +3291,10 @@ ns_register_pages(FILE *fout, struct http_request_info *phr)
 
   if (ns_open_ul_connection(phr->fw_state) < 0)
     return ns_html_err_ul_server_down(fout, phr, 0, 0);
+  ej_ip_t ipv6;
+  xml_make_ipv6(phr->ip, &ipv6);
   if ((r = userlist_clnt_get_cookie(ul_conn, ULS_GET_COOKIE,
-                                    phr->ip, phr->ssl_flag,
+                                    &ipv6, phr->ssl_flag,
                                     phr->session_id,
                                     &phr->user_id, &phr->contest_id,
                                     &phr->locale_id, 0, &phr->role, &is_team,
@@ -3317,8 +3327,6 @@ ns_register_pages(FILE *fout, struct http_request_info *phr)
   }
 
   // check permissions
-  ej_ip_t ipv6;
-  xml_make_ipv6(phr->ip, &ipv6);
   if (cnts->closed ||
       !contests_check_register_ip_2(cnts, &ipv6, phr->ssl_flag)) {
     return ns_html_err_no_perm(fout, phr, 0, "registration is not available");

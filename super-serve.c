@@ -39,6 +39,7 @@
 #include "ej_process.h"
 #include "ej_byteorder.h"
 #include "pollfds.h"
+#include "xml_utils.h"
 
 #include "reuse_xalloc.h"
 #include "reuse_logger.h"
@@ -1010,10 +1011,12 @@ get_peer_local_user(struct client_state *p)
 
   if (open_connection() < 0) return -SSERV_ERR_USERLIST_DOWN;
 
+  ej_ip_t ipv6;
   r = userlist_clnt_get_uid_by_pid_2(userlist_clnt, p->peer_uid,
                                      p->peer_gid, p->peer_pid, 0,
-                                     &uid, &priv_level, &cookie, &ip, &ssl,
+                                     &uid, &priv_level, &cookie, &ipv6, &ssl,
                                      &login, &name);
+  ip = xml_make_ipv4(&ipv6);
   if (r < 0) {
     err("get_peer_local_user: %s", userlist_strerror(-r));
     switch (-r) {

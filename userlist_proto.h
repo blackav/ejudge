@@ -209,7 +209,7 @@ struct userlist_packet
 struct userlist_pk_register_new
 {
   short         request_id;
-  ej_ip4_t      origin_ip;
+  ej_ip_t       origin_ip;
   int           ssl;
   int           contest_id;
   signed char   locale_id;
@@ -223,7 +223,7 @@ struct userlist_pk_register_new
 struct userlist_pk_do_login
 {
   short         request_id;
-  ej_ip4_t      origin_ip;
+  ej_ip_t       origin_ip;
   int           ssl;
   int           contest_id;
   signed char   locale_id;
@@ -237,7 +237,7 @@ struct userlist_pk_do_login
 struct userlist_pk_check_cookie
 {
   short              request_id;
-  ej_ip4_t           origin_ip;
+  ej_ip_t            origin_ip;
   int                ssl;
   int                contest_id;
   ej_cookie_t        cookie;
@@ -248,7 +248,7 @@ struct userlist_pk_check_cookie
 struct userlist_pk_cookie_login
 {
   short              request_id;
-  ej_ip4_t           origin_ip;
+  ej_ip_t            origin_ip;
   int                ssl;
   int                contest_id;
   int                locale_id;
@@ -259,7 +259,7 @@ struct userlist_pk_cookie_login
 struct userlist_pk_do_logout
 {
   short              request_id;
-  ej_ip4_t           origin_ip;
+  ej_ip_t            origin_ip;
   int                ssl;
   ej_cookie_t        cookie;
 };
@@ -295,7 +295,7 @@ struct userlist_pk_register_contest
   short   request_id;
   int     user_id;
   int     contest_id;
-  ej_ip4_t ip;
+  ej_ip_t ip;
   int     ssl_flag;
 };
 
@@ -319,7 +319,7 @@ struct userlist_pk_move_info
 struct userlist_pk_list_users
 {
   short         request_id;
-  ej_ip4_t      origin_ip;
+  ej_ip_t       origin_ip;
   int           ssl;
   int           contest_id;
   int           user_id;
@@ -475,7 +475,7 @@ struct userlist_pk_uid
   int   uid;
   int   priv_level;
   ej_cookie_t cookie;
-  ej_ip4_t ip;
+  ej_ip_t ip;
   int ssl;
 };
 
@@ -484,7 +484,7 @@ struct userlist_pk_uid_2
   short reply_id;
   int uid;
   int priv_level;
-  ej_ip4_t ip;
+  ej_ip_t ip;
   int ssl;
   int login_len;
   int name_len;
