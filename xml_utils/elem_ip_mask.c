@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -61,9 +61,18 @@ xml_elem_ip_mask(struct xml_tree *tree,
   return -1;
 }
 
-/**
+int
+xml_elem_ipv6_mask(
+        struct xml_tree *tree,
+        ej_ip_t *addr_ptr,
+        ej_ip_t *mask_ptr)
+{
+  return xml_parse_ipv6_mask(NULL, NULL, tree->line, tree->column,
+                             tree->text, addr_ptr, mask_ptr);
+}
+
+/*
  * Local variables:
  *  compile-command: "make -C .."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  * End:
  */

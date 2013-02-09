@@ -291,7 +291,7 @@ filter_tree_new_hash(struct filter_tree_mem *mem, ruint32_t *val)
 }
 
 struct filter_tree *
-filter_tree_new_ip(struct filter_tree_mem *mem, ej_ip4_t val)
+filter_tree_new_ip(struct filter_tree_mem *mem, const ej_ip_t *val)
 {
   struct filter_tree *p;
 
@@ -299,7 +299,7 @@ filter_tree_new_ip(struct filter_tree_mem *mem, ej_ip4_t val)
   p = getnode(mem);
   p->kind = TOK_IP_L;
   p->type = FILTER_TYPE_IP;
-  p->v.p = val;
+  p->v.p = *val;
   return p;
 }
 
@@ -609,7 +609,7 @@ filter_tree_print(struct filter_tree *p, FILE *out, unsigned char const *ind)
     fprintf(out, " %s\n", buf);
     break;
   case TOK_IP_L:
-    filter_tree_ip_str(buf, sizeof(buf), p->v.p);
+    filter_tree_ip_str(buf, sizeof(buf), &p->v.p);
     fprintf(out, " %s\n", buf);
     break;
 
@@ -680,11 +680,9 @@ filter_tree_hash_str(unsigned char *buf, size_t size, ruint32_t *val)
 }
 
 int
-filter_tree_ip_str(unsigned char *buf, size_t size, ej_ip4_t val)
+filter_tree_ip_str(unsigned char *buf, size_t size, const ej_ip_t *val)
 {
-  return snprintf(buf, size, "%u.%u.%u.%u",
-                  val >> 24, (val >> 16) & 0xff,
-                  (val >> 8) & 0xff, val & 0xff);
+  return snprintf(buf, size, "%s", xml_unparse_ipv6(val));
 }
 
 static int
@@ -1004,7 +1002,7 @@ filter_tree_eval_node(struct filter_tree_mem *mem,
     case TOK_SIZE_L:   res->v.b = (p1->v.z == p2->v.z); break;
     case TOK_RESULT_L: res->v.b = (p1->v.r == p2->v.r); break;
     case TOK_HASH_L:   res->v.b = !memcmp(p1->v.h, p2->v.h, 20); break;
-    case TOK_IP_L:     res->v.b = (p1->v.p == p2->v.p); break;
+    case TOK_IP_L:     res->v.b = ipv6cmp(&p1->v.p, &p2->v.p) == 0; break;
     default:
       SWERR(("unhandled node %d", p1->kind));
     }
@@ -1023,7 +1021,7 @@ filter_tree_eval_node(struct filter_tree_mem *mem,
     case TOK_SIZE_L:   res->v.b = (p1->v.z != p2->v.z); break;
     case TOK_RESULT_L: res->v.b = (p1->v.r != p2->v.r); break;
     case TOK_HASH_L:   res->v.b = (memcmp(p1->v.h, p2->v.h, 20) != 0); break;
-    case TOK_IP_L:     res->v.b = (p1->v.p != p2->v.p); break;
+    case TOK_IP_L:     res->v.b = ipv6cmp(&p1->v.p, &p2->v.p) != 0; break;
     default:
       SWERR(("unhandled node %d", p1->kind));
     }
@@ -1286,7 +1284,8 @@ filter_tree_eval_node(struct filter_tree_mem *mem,
       res->v.i = p1->v.h[0];
       break;
     case TOK_IP_L:
-      res->v.i = p1->v.p;
+      //res->v.i = p1->v.p;
+      res->v.i = 0;
       break;
     default:
       SWERR(("unhandled node %d", kind));
@@ -1327,7 +1326,7 @@ filter_tree_eval_node(struct filter_tree_mem *mem,
         filter_tree_hash_str(val, sizeof(val), p1->v.h);
         break;
       case TOK_IP_L:
-        filter_tree_ip_str(val, sizeof(val), p1->v.p);
+        filter_tree_ip_str(val, sizeof(val), &p1->v.p);
       default:
         SWERR(("unhandled node %d", kind));
       }
@@ -1374,7 +1373,8 @@ filter_tree_eval_node(struct filter_tree_mem *mem,
       res->v.b = p1->v.h[0]||p1->v.h[1]||p1->v.h[2]||p1->v.h[3]||p1->v.h[4];
       break;
     case TOK_IP_L:
-      res->v.b = !!p1->v.p;
+      //res->v.b = !!p1->v.p;
+      res->v.b = 0;
       break;
     default:
       SWERR(("unhandled node %d", kind));
@@ -1571,21 +1571,12 @@ filter_tree_eval_node(struct filter_tree_mem *mem,
     res->type = FILTER_TYPE_IP;
     switch (p1->kind) {
     case TOK_INT_L:
-      res->v.p = p1->v.i;
+      memset(&res->v.p, 0, sizeof(res->v.p));
+      res->v.p.u.v4.addr = p1->v.i;
       break;
     case TOK_STRING_L:
-      {
-        unsigned int b1, b2, b3, b4;
-        int n = 0;
-        unsigned long tmp;
-
-        if (sscanf(p1->v.s, "%d.%d.%d.%d%n", &b1, &b2, &b3, &b4, &n) != 4
-            || p1->v.s[n] || b1 > 255 || b2 > 255 || b3 > 255 || b4 > 255) {
-          return -FILTER_ERR_IP_CVT;
-        }
-        tmp = b1 << 24 | b2 << 16 | b3 << 8 | b4;
-        res->v.p = tmp;
-      }
+      if (xml_parse_ipv6_2(p1->v.s, &res->v.p) < 0)
+        return -FILTER_ERR_IP_CVT;
       break;
     case TOK_IP_L:
       res->v.p = p1->v.p;

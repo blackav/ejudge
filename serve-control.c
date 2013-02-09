@@ -94,8 +94,8 @@ struct ip_node
   struct xml_tree b;
   int allow;
   int ssl;
-  unsigned int addr;
-  unsigned int mask;
+  ej_ip_t addr;
+  ej_ip_t mask;
 };
 struct access_node
 {
@@ -250,7 +250,7 @@ parse_config(const unsigned char *path, const unsigned char *default_config)
             if (xml_attr_bool(attr, &pip->allow) < 0) goto failed;
           }
         }
-        if (xml_elem_ip_mask(t2, &pip->addr, &pip->mask) < 0) goto failed;
+        if (xml_elem_ipv6_mask(t2, &pip->addr, &pip->mask) < 0) goto failed;
       }
       break;
       
@@ -313,7 +313,7 @@ static const unsigned char default_config[] =
 "</serve_control_config>\n";
 
 static struct config_node *config;
-static ej_ip4_t user_ip;
+static ej_ip_t user_ip;
 static userlist_clnt_t userlist_conn;
 static ej_cookie_t session_id;
 static unsigned int user_id;
@@ -399,7 +399,7 @@ initialize(int argc, char *argv[])
   logger_set_level(-1, LOG_WARNING);
 
   cgi_read(0);
-  user_ip = parse_client_ip();
+  parse_client_ip(&user_ip);
 
   make_self_url();
   client_make_form_headers(self_url);
@@ -412,11 +412,11 @@ check_source_ip(void)
 
   if (!config) return 0;
   if (!config->access) return 0;
-  if (!user_ip) return config->access->default_is_allow;
+  //if (!user_ip) return config->access->default_is_allow;
 
   for (p = (struct ip_node*) config->access->b.first_down;
        p; p = (struct ip_node*) p->b.right) {
-    if ((user_ip & p->mask) == p->addr
+    if (ipv6_match_mask(&p->addr, &p->mask, &user_ip)
         && (p->ssl == -1 || p->ssl == ssl_flag)) return p->allow;
   }
   return config->access->default_is_allow;
@@ -710,9 +710,7 @@ authentificate(void)
 
   if (get_session_id("SID", &session_id)) {
     open_userlist_server();
-    ej_ip_t ipv6;
-    xml_make_ipv6(user_ip, &ipv6);
-    r = userlist_clnt_priv_cookie(userlist_conn, &ipv6, ssl_flag,
+    r = userlist_clnt_priv_cookie(userlist_conn, &user_ip, ssl_flag,
                                   0, /* contest_id */
                                   session_id,
                                   -1,
@@ -738,9 +736,7 @@ authentificate(void)
   if (!user_login || !user_password) display_login_page();
 
   open_userlist_server();
-  ej_ip_t ipv6;
-  xml_make_ipv6(user_ip, &ipv6);
-  r = userlist_clnt_priv_login(userlist_conn, ULS_PRIV_LOGIN, &ipv6, ssl_flag,
+  r = userlist_clnt_priv_login(userlist_conn, ULS_PRIV_LOGIN, &user_ip, ssl_flag,
                                0, /* contest_id */
                                0, /* locale_id */
                                USER_ROLE_ADMIN,

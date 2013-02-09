@@ -28,6 +28,7 @@
 #include "protocol.h"
 #include "client_actions.h"
 #include "copyright.h"
+#include "xml_utils.h"
 
 #include "reuse_xalloc.h"
 #include "reuse_logger.h"
@@ -566,26 +567,16 @@ client_make_form_headers(unsigned char const *self_url)
           self_url);  
 }
 
-ej_ip4_t
-parse_client_ip(void)
+void
+parse_client_ip(ej_ip_t *p_ip)
 {
-  unsigned int b1, b2, b3, b4;
-  int n = 0;
+  memset(p_ip, 0, sizeof(*p_ip));
   unsigned char *s = getenv("REMOTE_ADDR");
-  ej_ip4_t client_ip = 0;
-
-  if (!s) return client_ip;
-
-  // ugly hack
-  if (!strcmp(s, "::1")) s = "127.0.0.1";
-
-  if (sscanf(s, "%d.%d.%d.%d%n", &b1, &b2, &b3, &b4, &n) != 4
-      || s[n] || b1 > 255 || b2 > 255 || b3 > 255 || b4 > 255) {
-    client_ip = 0xffffffff;
-  } else {
-    client_ip = b1 << 24 | b2 << 16 | b3 << 8 | b4;
+  if (!s) {
+    return;
   }
-  return client_ip;
+
+  xml_parse_ipv6_2(s, p_ip);
 }
 
 /*

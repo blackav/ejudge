@@ -857,7 +857,7 @@ serve_audit_log(
         serve_state_t state,
         int run_id,
         int user_id,
-        ej_ip4_t ip,
+        const ej_ip_t *ip,
         int ssl_flag,
         const unsigned char *command,
         const unsigned char *status,
@@ -906,7 +906,7 @@ serve_audit_log(
     fprintf(f, "From: %s (uid %d)\n", login, user_id);
   }
   if (ip) {
-    fprintf(f, "Ip: %s%s\n", xml_unparse_ip(ip), ssl_flag?"/SSL":"");
+    fprintf(f, "Ip: %s%s\n", xml_unparse_ipv6(ip), ssl_flag?"/SSL":"");
   }
   if (command && *command) {
     fprintf(f, "Command: %s\n", command);
@@ -2704,7 +2704,7 @@ serve_judge_built_in_problem(
         const struct section_problem_data *prob,
         problem_xml_t px,
         int user_id,
-        ej_ip4_t ip,
+        const ej_ip_t *ip,
         int ssl_flag)
 {
   const struct section_global_data *global = state->global;
@@ -2922,7 +2922,7 @@ serve_rejudge_run(
         serve_state_t state,
         int run_id,
         int user_id,
-        ej_ip4_t ip,
+        const ej_ip_t *ip,
         int ssl_flag,
         int force_full_rejudge,
         int priority_adjustment)
@@ -3201,7 +3201,7 @@ struct rejudge_by_mask_job
   const struct contest_desc *cnts;
   serve_state_t state;
   int user_id;
-  ej_ip4_t ip;
+  ej_ip_t ip;
   int ssl_flag;
   int mask_size;
   unsigned long *mask;
@@ -3239,7 +3239,7 @@ rejudge_by_mask_run_func(
         && is_generally_rejudgable(job->state, &re, INT_MAX)
         && (job->mask[job->cur_id / BITS_PER_LONG] & (1L << (job->cur_id % BITS_PER_LONG)))) {
       serve_rejudge_run(job->config, job->cnts, job->state, job->cur_id,
-                        job->user_id, job->ip, job->ssl_flag,
+                        job->user_id, &job->ip, job->ssl_flag,
                         job->force_flag, job->priority_adjustment);
     }
   }
@@ -3276,7 +3276,7 @@ create_rejudge_by_mask_job(
         const struct contest_desc *cnts,
         serve_state_t state,
         int user_id,
-        ej_ip4_t ip,
+        const ej_ip_t *ip,
         int ssl_flag,
         int mask_size,
         unsigned long *mask,
@@ -3290,7 +3290,7 @@ create_rejudge_by_mask_job(
   job->cnts = cnts;
   job->state = state;
   job->user_id = user_id;
-  job->ip = ip;
+  job->ip = *ip;
   job->ssl_flag = ssl_flag;
   job->mask_size = mask_size;
   if (mask_size > 0) {
@@ -3313,7 +3313,7 @@ serve_rejudge_by_mask(
         const struct contest_desc *cnts,
         serve_state_t state,
         int user_id,
-        ej_ip4_t ip,
+        const ej_ip_t *ip,
         int ssl_flag,
         int mask_size,
         unsigned long *mask,
@@ -3397,7 +3397,7 @@ struct rejudge_problem_job
   const struct contest_desc *cnts;
   serve_state_t state;
   int user_id;
-  ej_ip4_t ip;
+  ej_ip_t ip;
   int ssl_flag;
   int prob_id;
   int priority_adjustment;
@@ -3431,7 +3431,7 @@ rejudge_problem_run_func(
         && re.status != RUN_IGNORED && re.status != RUN_DISQUALIFIED
         && re.prob_id == job->prob_id) {
       serve_rejudge_run(job->config, job->cnts, job->state, job->cur_id,
-                        job->user_id, job->ip, job->ssl_flag, 0,
+                        job->user_id, &job->ip, job->ssl_flag, 0,
                         job->priority_adjustment);
     }
   }
@@ -3468,7 +3468,7 @@ create_rejudge_problem_job(
         const struct contest_desc *cnts,
         serve_state_t state,
         int user_id,
-        ej_ip4_t ip,
+        const ej_ip_t *ip,
         int ssl_flag,
         int prob_id,
         int priority_adjustment)
@@ -3480,7 +3480,7 @@ create_rejudge_problem_job(
   job->cnts = cnts;
   job->state = state;
   job->user_id = user_id;
-  job->ip = ip;
+  job->ip = *ip;
   job->ssl_flag = ssl_flag;
   job->prob_id = prob_id;
   job->priority_adjustment = priority_adjustment;
@@ -3494,7 +3494,7 @@ serve_rejudge_problem(
         const struct contest_desc *cnts,
         serve_state_t state,
         int user_id,
-        ej_ip4_t ip,
+        const ej_ip_t *ip,
         int ssl_flag,
         int prob_id,
         int priority_adjustment,
@@ -3568,7 +3568,7 @@ struct judge_suspended_job
   const struct contest_desc *cnts;
   serve_state_t state;
   int user_id;
-  ej_ip4_t ip;
+  ej_ip_t ip;
   int ssl_flag;
   int priority_adjustment;
 };
@@ -3608,7 +3608,7 @@ create_judge_suspended_job(
         const struct contest_desc *cnts,
         serve_state_t state,
         int user_id,
-        ej_ip4_t ip,
+        const ej_ip_t *ip,
         int ssl_flag,
         int priority_adjustment)
 {
@@ -3621,7 +3621,7 @@ serve_judge_suspended(
         const struct contest_desc *cnts,
         serve_state_t state,
         int user_id,
-        ej_ip4_t ip,
+        const ej_ip_t *ip,
         int ssl_flag,
         int priority_adjustment,
         int create_job_flag)
@@ -3662,7 +3662,7 @@ struct rejudge_all_job
   const struct contest_desc *cnts;
   serve_state_t state;
   int user_id;
-  ej_ip4_t ip;
+  ej_ip_t ip;
   int ssl_flag;
   int priority_adjustment;
 
@@ -3693,7 +3693,7 @@ rejudge_all_run_func(
         && is_generally_rejudgable(rj->state, &re, INT_MAX)
         && re.status != RUN_IGNORED && re.status != RUN_DISQUALIFIED) {
       serve_rejudge_run(rj->config, rj->cnts, rj->state,
-                        rj->cur_run, rj->user_id, rj->ip, rj->ssl_flag, 0,
+                        rj->cur_run, rj->user_id, &rj->ip, rj->ssl_flag, 0,
                         rj->priority_adjustment);
     }
   }
@@ -3730,7 +3730,7 @@ create_rejudge_all_job(
         const struct contest_desc *cnts,
         serve_state_t state,
         int user_id,
-        ej_ip4_t ip,
+        const ej_ip_t *ip,
         int ssl_flag,
         int priority_adjustment)
 {
@@ -3749,7 +3749,7 @@ create_rejudge_all_job(
   rj->cnts = cnts;
   rj->state = state;
   rj->user_id = user_id;
-  rj->ip = ip;
+  rj->ip = *ip;
   rj->ssl_flag = ssl_flag;
   rj->priority_adjustment = priority_adjustment;
   rj->total_runs = run_get_total(state->runlog_state);
@@ -3763,7 +3763,7 @@ serve_rejudge_all(
         const struct contest_desc *cnts,
         serve_state_t state,
         int user_id,
-        ej_ip4_t ip,
+        const ej_ip_t *ip,
         int ssl_flag,
         int priority_adjustment,
         int create_job_flag)
@@ -4228,7 +4228,7 @@ serve_judge_virtual_olympiad(
 
 void
 serve_clear_by_mask(serve_state_t state,
-                    int user_id, ej_ip4_t ip, int ssl_flag,
+                    int user_id, const ej_ip_t *ip, int ssl_flag,
                     int mask_size, unsigned long *mask)
 {
   int total_runs, r;
@@ -4261,7 +4261,7 @@ serve_clear_by_mask(serve_state_t state,
 
 void
 serve_ignore_by_mask(serve_state_t state,
-                     int user_id, ej_ip4_t ip, int ssl_flag,
+                     int user_id, const ej_ip_t *ip, int ssl_flag,
                      int mask_size, unsigned long *mask,
                      int new_status)
 {
@@ -4315,7 +4315,7 @@ void
 serve_mark_by_mask(
         serve_state_t state,
         int user_id,
-        ej_ip4_t ip,
+        const ej_ip_t *ip,
         int ssl_flag,
         int mask_size,
         unsigned long *mask,

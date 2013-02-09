@@ -93,7 +93,7 @@ struct sid_state
   struct sid_state *next;
   struct sid_state *prev;
   ej_cookie_t sid;
-  ej_ip4_t remote_addr;
+  ej_ip_t remote_addr;
   time_t init_time;
   unsigned long flags;
   struct contest_desc *edited_cnts;
@@ -264,7 +264,7 @@ struct super_http_request_info
   int opcode;
 
   // the URL
-  ej_ip4_t ip;
+  ej_ip_t ip;
   int ssl_flag;
   unsigned char self_url[4096];
   const unsigned char *script_name;

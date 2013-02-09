@@ -128,7 +128,7 @@ invoke_serve_cmd(int argc, char *argv[])
 struct ejudge_cfg *config;
 static int contest_id;
 static const struct contest_desc *cnts;
-static ej_ip4_t ip_address;
+static ej_ip_t ip_address;
 static int ssl_flag;
 static int session_mode;
 static const unsigned char *script_name = 0;
@@ -268,10 +268,10 @@ create_cgi_environ(void)
 
   if (!http_host || !*http_host) http_host = "localhost";
   put_cgi_environ("HTTP_HOST", http_host);
-  if (!ip_address)
+  if (ipv6_is_empty(&ip_address))
     put_cgi_environ("REMOTE_ADDR", "127.0.0.1");
   else
-    put_cgi_environ("REMOTE_ADDR", xml_unparse_ip(ip_address));
+    put_cgi_environ("REMOTE_ADDR", xml_unparse_ipv6(&ip_address));
   put_cgi_environ("SCRIPT_FILENAME", program_path);
   if (!script_name) script_name = program_path;
   put_cgi_environ("SCRIPT_NAME", script_name);
@@ -882,11 +882,11 @@ main(int argc, char *argv[])
   while (i < argc) {
     if (!strcmp(argv[i], "--ip")) {
       if (i + 1 >= argc) startup_error("argument expected for --ip");
-      if (xml_parse_ip(NULL, NULL, 0, 0, argv[i + 1], &ip_address) < 0)
+      if (xml_parse_ipv6(NULL, NULL, 0, 0, argv[i + 1], &ip_address) < 0)
         return 1;
       shift_args(&argc, argv, i, 2);
     } else if (!strncmp(argv[i], "--ip=", 5)) {
-      if (xml_parse_ip(NULL, NULL, 0, 0, argv[i] + 5, &ip_address) < 0)
+      if (xml_parse_ipv6(NULL, NULL, 0, 0, argv[i] + 5, &ip_address) < 0)
         return 1;
       shift_args(&argc, argv, i, 1);
     } else if (!strcmp(argv[i], "--ssl")) {

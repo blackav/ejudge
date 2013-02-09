@@ -27,7 +27,7 @@ struct team_warning
 {
   time_t date;                  /* the date of issue */
   int issuer_id;                /* the issuer id */
-  ej_ip4_t issuer_ip;           /* the ip of the issuer */
+  ej_ip_t issuer_ip;            /* the ip of the issuer */
   unsigned char *text;          /* the text of the warning (reported to user)*/
   unsigned char *comment;       /* the comment for other judges */
 };
@@ -75,7 +75,7 @@ const struct team_extra* team_extra_get_entry(team_extra_state_t state,
 int team_extra_append_warning(team_extra_state_t state,
                               int user_id,
                               int issuer_id,
-                              ej_ip4_t issuer_ip,
+                              const ej_ip_t *issuer_ip,
                               time_t issue_date,
                               const unsigned char *txt,
                               const unsigned char *cmt);

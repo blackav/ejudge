@@ -946,19 +946,20 @@ super_html_serve_probe_run(FILE *f,
 */
 
 int
-super_html_commit_contest(FILE *f,
-                          int priv_level,
-                          int user_id,
-                          const unsigned char *login,
-                          ej_cookie_t session_id,
-                          ej_ip4_t ip_address,
-                          struct ejudge_cfg *config,
-                          struct userlist_clnt *us_conn,
-                          struct sid_state *sstate,
-                          int cmd,
-                          const unsigned char *self_url,
-                          const unsigned char *hidden_vars,
-                          const unsigned char *extra_args)
+super_html_commit_contest(
+        FILE *f,
+        int priv_level,
+        int user_id,
+        const unsigned char *login,
+        ej_cookie_t session_id,
+        const ej_ip_t *ip_address,
+        struct ejudge_cfg *config,
+        struct userlist_clnt *us_conn,
+        struct sid_state *sstate,
+        int cmd,
+        const unsigned char *self_url,
+        const unsigned char *hidden_vars,
+        const unsigned char *extra_args)
 {
   struct contest_desc *cnts = sstate->edited_cnts;
   struct section_global_data *global = sstate->global;
@@ -1366,7 +1367,7 @@ super_html_commit_contest(FILE *f,
     snprintf(audit_rec, sizeof(audit_rec),
              "<!-- audit: created %s %d (%s) %s -->\n",
              xml_unparse_date(time(0)), user_id, login,
-             xml_unparse_ip(ip_address));
+             xml_unparse_ipv6(ip_address));
     vcs_add_flag = 1;
   } else if (errcode < 0) {
     fprintf(flog, "Failed to read XML file `%s': %s\n",
@@ -1376,7 +1377,7 @@ super_html_commit_contest(FILE *f,
     snprintf(audit_rec, sizeof(audit_rec),
              "<!-- audit: edited %s %d (%s) %s -->\n",
              xml_unparse_date(time(0)), user_id, login,
-             xml_unparse_ip(ip_address));
+             xml_unparse_ipv6(ip_address));
   }
   if (!xml_header) {
     snprintf(hbuf, sizeof(hbuf),
@@ -1401,7 +1402,7 @@ super_html_commit_contest(FILE *f,
       snprintf(serve_audit_rec, sizeof(serve_audit_rec),
                "# audit: created %s %d (%s) %s\n",
                xml_unparse_date(time(0)), user_id, login,
-               xml_unparse_ip(ip_address));
+               xml_unparse_ipv6(ip_address));
       serve_vcs_add_flag = 1;
     } else if (errcode < 0) {
       fprintf(flog, "failed to read serve configuration file `%s': %s\n",
@@ -1411,7 +1412,7 @@ super_html_commit_contest(FILE *f,
       snprintf(serve_audit_rec, sizeof(audit_rec),
                "# audit: edited %s %d (%s) %s\n",
                xml_unparse_date(time(0)), user_id, login,
-               xml_unparse_ip(ip_address));
+               xml_unparse_ipv6(ip_address));
     }
 
     if ((sf = super_html_serve_unparse_and_save(serve_cfg_path, serve_cfg_path_2,

@@ -109,11 +109,15 @@ xml_parse_ipv6(
 const unsigned char *
 xml_unparse_ipv6(const ej_ip_t *p_addr);
 
+/*
 const ej_ip_t *
 xml_make_ipv6(ej_ip4_t addr, ej_ip_t *p_addr);
 ej_ip4_t xml_make_ipv4(const ej_ip_t *p_addr);
+*/
 
 int ipv6cmp(const ej_ip_t *pip1, const ej_ip_t *pip2);
+int
+ipv6_match_mask(const ej_ip_t *net, const ej_ip_t *mask, const ej_ip_t *addr);
 
 void
 xml_msg(FILE *log_f,
@@ -135,6 +139,15 @@ xml_parse_ipv6_mask(
         const unsigned char *s,
         ej_ip_t *p_addr,
         ej_ip_t *p_mask);
+
+int
+xml_elem_ipv6_mask(
+        struct xml_tree *tree,
+        ej_ip_t *addr_ptr,
+        ej_ip_t *mask_ptr);
+
+int
+ipv6_is_empty(const ej_ip_t *p_ip);
 
 #endif /* __XML_UTILS_H__ */
 

@@ -76,7 +76,7 @@ static struct generic_section_config *config;
 static struct client_section_global_data    *global;
 static unsigned char *client_charset = 0;
 static int ssl_flag = 0;
-static ej_ip4_t client_ip;
+static ej_ip_t client_ip;
 
 static void
 global_init_func(struct generic_section_config *gp)
@@ -99,8 +99,10 @@ check_config_exist(unsigned char const *path)
 }
 
 static int
-check_access_rules(char **rules, ej_ip4_t ip, int ssl_flag)
+check_access_rules(char **rules, const ej_ip_t *ip, int ssl_flag)
 {
+  return 1;
+  /*
   int i, r, n, mode, ssl_mode;
   unsigned char *s;
   unsigned char b1[1024];
@@ -137,6 +139,7 @@ check_access_rules(char **rules, ej_ip4_t ip, int ssl_flag)
  failed:
   client_not_configured(client_charset, "invalid access rules", 0, 0);
   return -1;
+  */
 }
 
 static void
@@ -153,7 +156,8 @@ initialize(int argc, char *argv[])
   if (getenv("SSL_PROTOCOL") || getenv("HTTPS")) {
     ssl_flag = 1;
   }
-  client_ip = parse_client_ip();
+
+  parse_client_ip(&client_ip);
 
   s = getenv("SCRIPT_FILENAME");
   if (!s) s = argv[0];
@@ -209,7 +213,7 @@ initialize(int argc, char *argv[])
     global->connect_attempts = MAX_ATTEMPT;
 
   if (global->access) {
-    if (check_access_rules(global->access, client_ip, ssl_flag) < 0)
+    if (check_access_rules(global->access, &client_ip, ssl_flag) < 0)
       client_access_denied(client_charset, 0);
   }
 

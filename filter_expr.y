@@ -1,7 +1,7 @@
 /* -*- mode: fundamental -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -40,6 +40,8 @@ typedef struct filter_tree *tree_t;
 #define MKHASH(h) filter_tree_new_hash(filter_expr_tree_mem, h)
 #define MKIP(p) filter_tree_new_ip(filter_expr_tree_mem, p)
 #define MKCOPY(c) filter_tree_dup(filter_expr_tree_mem, c)
+
+static ej_ip_t empty_ipv6;
 
 static tree_t check_int(tree_t p);
 static tree_t check_bool(tree_t p);
@@ -1073,14 +1075,14 @@ do_ip_cast(tree_t q, tree_t p)
 
     if ((r = filter_tree_eval_node(filter_expr_tree_mem, TOK_IP_T, &res, p, 0)) < 0) {
       (*filter_expr_parse_err)(filter_expr_user_data, "%s", filter_strerror(-r));
-      return MKIP(0);
+      return MKIP(&empty_ipv6);
     }
-    return MKIP(res.v.p);
+    return MKIP(&res.v.p);
   }
   if (p->type != FILTER_TYPE_STRING && p->type != FILTER_TYPE_INT) {
     (*filter_expr_parse_err)(filter_expr_user_data, "expression of type %s cannot be converted to ip_t",
              filter_tree_type_to_str(p->type));
-    return MKIP(0);
+    return MKIP(&empty_ipv6);
   }
   q->v.t[0] = p;
   q->kind = TOK_IP_T;

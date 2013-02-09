@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -195,8 +195,8 @@ parse_warnings(struct xml_tree *t, struct team_extra *te, int *pw_flag)
         cur_warn->issuer_id = x;
         break;
       case TE_A_ISSUER_IP:
-        if (xml_parse_ip(NULL, 0, a->line, a->column, a->text,
-                         &cur_warn->issuer_ip) < 0) return -1;
+        if (xml_parse_ipv6(NULL, 0, a->line, a->column, a->text,
+                           &cur_warn->issuer_ip) < 0) return -1;
         break;
       case TE_A_DATE:
         if (xml_parse_date(NULL, 0, a->line, a->column, a->text,
@@ -209,8 +209,10 @@ parse_warnings(struct xml_tree *t, struct team_extra *te, int *pw_flag)
 
     if (!cur_warn->issuer_id)
       return xml_err_attr_undefined(wt, TE_A_ISSUER_ID);
+    /*
     if (!cur_warn->issuer_ip)
       return xml_err_attr_undefined(wt, TE_A_ISSUER_IP);
+    */
     if (!cur_warn->date)
       return xml_err_attr_undefined(wt, TE_A_DATE);
 
@@ -383,7 +385,8 @@ team_extra_unparse_xml(FILE *f, struct team_extra *te)
       fprintf(f, "    <%s %s=\"%d\" %s=\"%s\" %s=\"%s\">\n",
               elem_map[TE_T_WARNING],
               attr_map[TE_A_ISSUER_ID], te->warns[i]->issuer_id,
-              attr_map[TE_A_ISSUER_IP],xml_unparse_ip(te->warns[i]->issuer_ip),
+              attr_map[TE_A_ISSUER_IP],
+              xml_unparse_ipv6(&te->warns[i]->issuer_ip),
               attr_map[TE_A_DATE], xml_unparse_date(te->warns[i]->date));
       xml_unparse_text(f, elem_map[TE_T_TEXT], te->warns[i]->text, "      ");
       xml_unparse_text(f, elem_map[TE_T_COMMENT],

@@ -339,12 +339,12 @@ ns_html_err_no_perm(FILE *fout,
     }
     fprintf(fout, _("<li>Your registration was not confirmed.</li>\n"));
     fprintf(fout, _("<li>You were banned by the administrator.</li>\n"));
-    fprintf(fout, _("<li>Your IP-address (<tt>%s</tt>) or protocol (<tt>%s</tt>) is banned for participation.</li>"), xml_unparse_ip(phr->ip),
+    fprintf(fout, _("<li>Your IP-address (<tt>%s</tt>) or protocol (<tt>%s</tt>) is banned for participation.</li>"), xml_unparse_ipv6(&phr->ip),
             ns_ssl_flag_str[phr->ssl_flag]);
     fprintf(fout, _("<li>The contest is closed for participation.</li>\n"));
     //fprintf(fout, _("<li>The server might be overloaded.</li>\n"));
   } else {
-    fprintf(fout, _("<li>Your IP-address (<tt>%s</tt>) or protocol (<tt>%s</tt>) is banned for participation.</li>"), xml_unparse_ip(phr->ip), ns_ssl_flag_str[phr->ssl_flag]);
+    fprintf(fout, _("<li>Your IP-address (<tt>%s</tt>) or protocol (<tt>%s</tt>) is banned for participation.</li>"), xml_unparse_ipv6(&phr->ip), ns_ssl_flag_str[phr->ssl_flag]);
     fprintf(fout, _("<li>You do not have permissions to login using the specified role.</li>"));
   }
   fprintf(fout, "</ul>\n");
@@ -839,7 +839,7 @@ ns_html_err_inv_session(FILE *fout,
   fprintf(fout, "<ul>\n");
   fprintf(fout, _("<li>The specified session does not exist.</li>\n"));
   fprintf(fout, _("<li>The specified session has expired.</li>\n"));
-  fprintf(fout, _("<li>The session was created from a different IP-address or protocol, that yours (%s,%s).</li>\n"), xml_unparse_ip(phr->ip), ns_ssl_flag_str[phr->ssl_flag]);
+  fprintf(fout, _("<li>The session was created from a different IP-address or protocol, that yours (%s,%s).</li>\n"), xml_unparse_ipv6(&phr->ip), ns_ssl_flag_str[phr->ssl_flag]);
   fprintf(fout, _("<li>The session was removed by an administrator.</li>"));
   fprintf(fout, "</ul>\n");
   fprintf(fout, _("<p>Note, that the exact reason is not reported due to security reasons.</p>"));
@@ -912,10 +912,8 @@ ns_html_err_registration_incomplete(
     ns_separator(fout, separator, cnts);
   }
 
-  ej_ip_t ipv6;
-  xml_make_ipv6(phr->ip, &ipv6);
   if (cnts && cnts->allow_reg_data_edit
-      && contests_check_register_ip_2(cnts, &ipv6, phr->ssl_flag) > 0
+      && contests_check_register_ip_2(cnts, &phr->ip, phr->ssl_flag) > 0
       && (cnts->reg_deadline <= 0 || cur_time < cnts->reg_deadline)) {
     get_register_url(reg_url, sizeof(reg_url), cnts, phr->self_url);
     if (phr->session_id) {

@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -302,7 +302,7 @@ do_eval(struct filter_env *env,
     case TOK_IP:
       res->kind = TOK_IP_L;
       res->type = FILTER_TYPE_IP;
-      res->v.p = env->rentries[r1.v.i].a.ip;
+      run_entry_to_ipv6(&env->rentries[r1.v.i], &res->v.p);
       break;
     case TOK_PROB:
       res->kind = TOK_STRING_L;
@@ -589,7 +589,7 @@ do_eval(struct filter_env *env,
   case TOK_CURIP:
     res->kind = TOK_IP_L;
     res->type = FILTER_TYPE_IP;
-    res->v.p = env->cur->a.ip;
+    run_entry_to_ipv6(env->cur, &res->v.p);
     break;
   case TOK_CURPROB:
     res->kind = TOK_STRING_L;

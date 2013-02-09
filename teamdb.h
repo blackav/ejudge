@@ -96,7 +96,7 @@ int teamdb_get_uid_by_pid(teamdb_state_t,
                           int *p_uid,
                           int *p_priv_level,
                           ej_cookie_t *p_cookie,
-                          ej_ip4_t *p_ip,
+                          ej_ip_t *p_ip,
                           int *p_ssl);
 
 void teamdb_register_update_hook(teamdb_state_t, void (*)(void *), void *);

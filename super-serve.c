@@ -110,7 +110,7 @@ struct client_state
   int user_id;
   int priv_level;
   ej_cookie_t cookie;
-  ej_ip4_t ip;
+  ej_ip_t ip;
   int ssl;
   unsigned char *login;
   unsigned char *name;
@@ -1004,19 +1004,17 @@ get_peer_local_user(struct client_state *p)
   int r;
   int uid, priv_level, ssl;
   ej_cookie_t cookie;
-  ej_ip4_t ip;
+  ej_ip_t ip;
   unsigned char *login, *name;
 
   if (p->user_id > 0) return p->user_id;
 
   if (open_connection() < 0) return -SSERV_ERR_USERLIST_DOWN;
 
-  ej_ip_t ipv6;
   r = userlist_clnt_get_uid_by_pid_2(userlist_clnt, p->peer_uid,
                                      p->peer_gid, p->peer_pid, 0,
-                                     &uid, &priv_level, &cookie, &ipv6, &ssl,
+                                     &uid, &priv_level, &cookie, &ip, &ssl,
                                      &login, &name);
-  ip = xml_make_ipv4(&ipv6);
   if (r < 0) {
     err("get_peer_local_user: %s", userlist_strerror(-r));
     switch (-r) {
@@ -1092,7 +1090,7 @@ sid_state_find(ej_cookie_t sid)
 static struct sid_state*
 sid_state_add(
         ej_cookie_t sid,
-        ej_ip4_t remote_addr,
+        const ej_ip_t *remote_addr,
         int user_id,
         const unsigned char *user_login,
         const unsigned char *user_name)
@@ -1102,7 +1100,7 @@ sid_state_add(
   ASSERT(sid);
   XCALLOC(n, 1);
   n->sid = sid;
-  n->remote_addr = remote_addr;
+  n->remote_addr = *remote_addr;
   n->init_time = time(0);
   n->flags |= SID_STATE_SHOW_CLOSED;
   n->user_id = user_id;
@@ -1123,7 +1121,7 @@ sid_state_add(
 static struct sid_state*
 sid_state_get(
         ej_cookie_t sid,
-        ej_ip4_t remote_addr,
+        const ej_ip_t *remote_addr,
         int user_id,
         const unsigned char *user_login,
         const unsigned char *user_name)
@@ -1475,7 +1473,7 @@ cmd_main_page(struct client_state *p, int len,
     return send_reply(p, -SSERV_ERR_PROTOCOL_ERROR);
   }
 
-  sstate = sid_state_get(p->cookie, p->ip, p->user_id, p->login, p->name);
+  sstate = sid_state_get(p->cookie, &p->ip, p->user_id, p->login, p->name);
 
   // extra incoming packet checks
   switch (pkt->b.id) {
@@ -1632,30 +1630,30 @@ cmd_main_page(struct client_state *p, int len,
   switch (pkt->b.id) {
   case SSERV_CMD_MAIN_PAGE:
     r = super_html_main_page(f, p->priv_level, p->user_id, p->login,
-                             p->cookie, p->ip, p->ssl, pkt->flags, config, sstate,
+                             p->cookie, &p->ip, p->ssl, pkt->flags, config, sstate,
                              self_url_ptr, hidden_vars_ptr, extra_args_ptr);
     break;
   case SSERV_CMD_CONTEST_PAGE:
     r = super_html_contest_page(f, p->priv_level, p->user_id, pkt->contest_id,
-                                p->login, p->cookie, p->ip, p->ssl, config,
+                                p->login, p->cookie, &p->ip, p->ssl, config,
                                 self_url_ptr, hidden_vars_ptr, extra_args_ptr);
     break;
   case SSERV_CMD_VIEW_RUN_LOG:
   case SSERV_CMD_VIEW_CONTEST_XML:
   case SSERV_CMD_VIEW_SERVE_CFG:
     r = super_html_log_page(f, pkt->b.id, p->priv_level, p->user_id,
-                            pkt->contest_id, p->login, p->cookie, p->ip, p->ssl,
+                            pkt->contest_id, p->login, p->cookie, &p->ip, p->ssl,
                             config,
                             self_url_ptr, hidden_vars_ptr, extra_args_ptr);
     break;
   case SSERV_CMD_CREATE_CONTEST:
     r = super_html_create_contest(f, p->priv_level, p->user_id, p->login,
-                                  p->cookie, p->ip, config, sstate,
+                                  p->cookie, &p->ip, config, sstate,
                                   self_url_ptr, hidden_vars_ptr, extra_args_ptr);
     break;
   case SSERV_CMD_EDIT_CURRENT_CONTEST:
     r = super_html_edit_contest_page(f, p->priv_level, p->user_id, p->login,
-                                     p->cookie, p->ip, config, sstate,
+                                     p->cookie, &p->ip, config, sstate,
                                      self_url_ptr, hidden_vars_ptr, extra_args_ptr);
     break;
   case SSERV_CMD_EDIT_REGISTER_ACCESS:
@@ -1665,28 +1663,28 @@ cmd_main_page(struct client_state *p, int len,
   case SSERV_CMD_EDIT_TEAM_ACCESS:
   case SSERV_CMD_EDIT_SERVE_CONTROL_ACCESS:
     r = super_html_edit_access_rules(f, p->priv_level, p->user_id, p->login,
-                                     p->cookie, p->ip, config, sstate, pkt->b.id,
+                                     p->cookie, &p->ip, config, sstate, pkt->b.id,
                                      self_url_ptr, hidden_vars_ptr, extra_args_ptr);
     break;
   case SSERV_CMD_EDIT_CONTEST_XML:
   case SSERV_CMD_EDIT_SERVE_CFG_PROB:
     if (sstate->edited_cnts && sstate->edited_cnts->id == cnts->id) {
       r = super_html_edit_contest_page(f, p->priv_level, p->user_id, p->login,
-                                       p->cookie, p->ip, config, sstate,
+                                       p->cookie, &p->ip, config, sstate,
                                        self_url_ptr, hidden_vars_ptr,
                                        extra_args_ptr);
       break;
     }
     if (sstate->edited_cnts) {
       r = super_html_edited_cnts_dialog(f, p->priv_level, p->user_id, p->login,
-                                        p->cookie, p->ip, config, sstate,
+                                        p->cookie, &p->ip, config, sstate,
                                         self_url_ptr, hidden_vars_ptr,
                                         extra_args_ptr, cnts, 0);
       break;
     }
     if ((other_ss = super_serve_sid_state_get_cnts_editor(cnts->id))) {
       r = super_html_locked_cnts_dialog(f, p->priv_level, p->user_id, p->login,
-                                        p->cookie, p->ip, config, sstate,
+                                        p->cookie, &p->ip, config, sstate,
                                         self_url_ptr, hidden_vars_ptr,
                                         extra_args_ptr, cnts->id,
                                         other_ss, 0);
@@ -1701,12 +1699,12 @@ cmd_main_page(struct client_state *p, int len,
     if (pkt->b.id == SSERV_CMD_EDIT_SERVE_CFG_PROB) {
       activate_problem(sstate, pkt->flags);
       r = super_html_edit_problems(f, p->priv_level, p->user_id, p->login,
-                                   p->cookie, p->ip, config, sstate,
+                                   p->cookie, &p->ip, config, sstate,
                                    self_url_ptr, hidden_vars_ptr,
                                    extra_args_ptr);
     } else {
       r = super_html_edit_contest_page(f, p->priv_level, p->user_id, p->login,
-                                       p->cookie, p->ip, config, sstate,
+                                       p->cookie, &p->ip, config, sstate,
                                        self_url_ptr, hidden_vars_ptr, extra_args_ptr);
     }
     break;
@@ -1717,13 +1715,13 @@ cmd_main_page(struct client_state *p, int len,
     sstate->edited_cnts = rw_cnts;
     super_html_load_serve_cfg(rw_cnts, config, sstate);
     r = super_html_check_tests(f, p->priv_level, p->user_id, p->login,
-                               p->cookie, p->ip, config, sstate,
+                               p->cookie, &p->ip, config, sstate,
                                self_url_ptr, hidden_vars_ptr, extra_args_ptr);
     super_serve_clear_edited_contest(sstate);
     break;
   case SSERV_CMD_CNTS_EDIT_PERMISSION:
     r = super_html_edit_permission(f, p->priv_level, p->user_id, p->login,
-                                   p->cookie, p->ip, config, sstate, pkt->flags,
+                                   p->cookie, &p->ip, config, sstate, pkt->flags,
                                    self_url_ptr, hidden_vars_ptr, extra_args_ptr);
     break;
   case SSERV_CMD_CNTS_EDIT_FORM_FIELDS:
@@ -1733,7 +1731,7 @@ cmd_main_page(struct client_state *p, int len,
   case SSERV_CMD_CNTS_EDIT_ADVISOR_FIELDS:
   case SSERV_CMD_CNTS_EDIT_GUEST_FIELDS:
     r = super_html_edit_form_fields(f, p->priv_level, p->user_id, p->login,
-                                    p->cookie, p->ip, config, sstate, pkt->b.id,
+                                    p->cookie, &p->ip, config, sstate, pkt->b.id,
                                     self_url_ptr, hidden_vars_ptr, extra_args_ptr);
     break;
 
@@ -1762,40 +1760,40 @@ cmd_main_page(struct client_state *p, int len,
   case SSERV_CMD_GLOB_EDIT_PLOG_HEADER_FILE:
   case SSERV_CMD_GLOB_EDIT_PLOG_FOOTER_FILE:
     r = super_html_edit_template_file(f, p->priv_level, p->user_id, p->login,
-                                      p->cookie, p->ip, config, sstate, pkt->b.id,
+                                      p->cookie, &p->ip, config, sstate, pkt->b.id,
                                       self_url_ptr, hidden_vars_ptr, extra_args_ptr);
     break;
   case SSERV_CMD_CNTS_COMMIT:
     r = super_html_commit_contest(f, p->priv_level, p->user_id, p->login,
-                                  p->cookie, p->ip, config, userlist_clnt,
+                                  p->cookie, &p->ip, config, userlist_clnt,
                                   sstate, pkt->b.id,
                                   self_url_ptr, hidden_vars_ptr,
                                   extra_args_ptr);
     break;
   case SSERV_CMD_EDIT_CURRENT_GLOBAL:
     r = super_html_edit_global_parameters(f, p->priv_level, p->user_id, p->login,
-                                          p->cookie, p->ip, config, sstate,
+                                          p->cookie, &p->ip, config, sstate,
                                           self_url_ptr, hidden_vars_ptr,
                                           extra_args_ptr);
     break;
 
   case SSERV_CMD_EDIT_CURRENT_LANG:
     r = super_html_edit_languages(f, p->priv_level, p->user_id, p->login,
-                                  p->cookie, p->ip, config, sstate,
+                                  p->cookie, &p->ip, config, sstate,
                                   self_url_ptr, hidden_vars_ptr,
                                   extra_args_ptr);
     break;
 
   case SSERV_CMD_EDIT_CURRENT_PROB:
     r = super_html_edit_problems(f, p->priv_level, p->user_id, p->login,
-                                 p->cookie, p->ip, config, sstate,
+                                 p->cookie, &p->ip, config, sstate,
                                  self_url_ptr, hidden_vars_ptr,
                                  extra_args_ptr);
     break;
 
   case SSERV_CMD_VIEW_NEW_SERVE_CFG:
     r = super_html_view_new_serve_cfg(f, p->priv_level, p->user_id, p->login,
-                                      p->cookie, p->ip, config, sstate,
+                                      p->cookie, &p->ip, config, sstate,
                                       self_url_ptr, hidden_vars_ptr,
                                       extra_args_ptr);
     break;
@@ -1803,7 +1801,7 @@ cmd_main_page(struct client_state *p, int len,
   case SSERV_CMD_PROB_EDIT_VARIANTS:
   case SSERV_CMD_PROB_EDIT_VARIANTS_2:
     r = super_html_edit_variants(f, pkt->b.id, p->priv_level, p->user_id, p->login,
-                                 p->cookie, p->ip, p->ssl, userlist_clnt,
+                                 p->cookie, &p->ip, p->ssl, userlist_clnt,
                                  config, sstate, self_url_ptr, hidden_vars_ptr,
                                  extra_args_ptr);
     break;
@@ -1874,8 +1872,7 @@ cmd_create_contest(struct client_state *p, int len,
   }
 
   // FIXME: check permissions
-
-  sstate = sid_state_get(p->cookie, p->ip, p->user_id, p->login, p->name);
+  sstate = sid_state_get(p->cookie, &p->ip, p->user_id, p->login, p->name);
   if (!(f = open_memstream(&html_ptr, &html_len))) {
     err("%d: open_memstream failed", p->id);
     return send_reply(p, -SSERV_ERR_SYSTEM_ERROR);
@@ -1885,7 +1882,7 @@ cmd_create_contest(struct client_state *p, int len,
   case SSERV_CMD_CREATE_CONTEST_2:
     r = super_html_create_contest_2(f, p->priv_level, p->user_id, p->login,
                                     userlist_login,
-                                    p->cookie, p->ip, p->ssl, config, sstate,
+                                    p->cookie, &p->ip, p->ssl, config, sstate,
                                     pkt->num_mode, pkt->templ_mode,
                                     pkt->contest_id, pkt->templ_id,
                                     self_url_ptr, hidden_vars_ptr, extra_args_ptr);
@@ -1958,16 +1955,16 @@ cmd_simple_command(struct client_state *p, int len,
 
   switch (pkt->b.id) {
   case SSERV_CMD_OPEN_CONTEST:
-    r = super_html_open_contest(rw_cnts, p->user_id, p->login, p->ip);
+    r = super_html_open_contest(rw_cnts, p->user_id, p->login, &p->ip);
     break;
   case SSERV_CMD_CLOSE_CONTEST:
-    r = super_html_close_contest(rw_cnts, p->user_id, p->login, p->ip);
+    r = super_html_close_contest(rw_cnts, p->user_id, p->login, &p->ip);
     break;
   case SSERV_CMD_INVISIBLE_CONTEST:
-    r = super_html_make_invisible_contest(rw_cnts, p->user_id, p->login, p->ip);
+    r = super_html_make_invisible_contest(rw_cnts, p->user_id, p->login, &p->ip);
     break;
   case SSERV_CMD_VISIBLE_CONTEST:
-    r = super_html_make_visible_contest(rw_cnts, p->user_id, p->login, p->ip);
+    r = super_html_make_visible_contest(rw_cnts, p->user_id, p->login, &p->ip);
     break;
   case SSERV_CMD_RUN_LOG_TRUNC:
   case SSERV_CMD_RUN_LOG_DEV_NULL:
@@ -2002,7 +1999,7 @@ cmd_simple_top_command(struct client_state *p, int len,
   if ((r = get_peer_local_user(p)) < 0) {
     return send_reply(p, r);
   }
-  sstate = sid_state_get(p->cookie, p->ip, p->user_id, p->login, p->name);
+  sstate = sid_state_get(p->cookie, &p->ip, p->user_id, p->login, p->name);
 
   switch (pkt->b.id) {
   case SSERV_CMD_SHOW_HIDDEN:
@@ -2235,7 +2232,7 @@ cmd_set_value(struct client_state *p, int len,
   if ((r = get_peer_local_user(p)) < 0) {
     return send_reply(p, r);
   }
-  sstate = sid_state_get(p->cookie, p->ip, p->user_id, p->login, p->name);
+  sstate = sid_state_get(p->cookie, &p->ip, p->user_id, p->login, p->name);
 
   switch (pkt->b.id) {
   case SSERV_CMD_CNTS_CHANGE_NAME:
@@ -3096,7 +3093,7 @@ cmd_http_request(
   phr->system_login = userlist_login;
   phr->userlist_clnt = userlist_clnt;
 
-  phr->ss = sid_state_get(p->cookie, p->ip, p->user_id, p->login, p->name);
+  phr->ss = sid_state_get(p->cookie, &p->ip, p->user_id, p->login, p->name);
   phr->config = config;
 
   super_html_http_request(&out_t, &out_z, phr);
