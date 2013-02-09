@@ -710,7 +710,9 @@ authentificate(void)
 
   if (get_session_id("SID", &session_id)) {
     open_userlist_server();
-    r = userlist_clnt_priv_cookie(userlist_conn, user_ip, ssl_flag,
+    ej_ip_t ipv6;
+    xml_make_ipv6(user_ip, &ipv6);
+    r = userlist_clnt_priv_cookie(userlist_conn, &ipv6, ssl_flag,
                                   0, /* contest_id */
                                   session_id,
                                   -1,
@@ -736,7 +738,9 @@ authentificate(void)
   if (!user_login || !user_password) display_login_page();
 
   open_userlist_server();
-  r = userlist_clnt_priv_login(userlist_conn, ULS_PRIV_LOGIN, user_ip, ssl_flag,
+  ej_ip_t ipv6;
+  xml_make_ipv6(user_ip, &ipv6);
+  r = userlist_clnt_priv_login(userlist_conn, ULS_PRIV_LOGIN, &ipv6, ssl_flag,
                                0, /* contest_id */
                                0, /* locale_id */
                                USER_ROLE_ADMIN,

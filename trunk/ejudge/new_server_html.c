@@ -1242,16 +1242,14 @@ privileged_page_cookie_login(FILE *fout,
       return ns_html_err_no_perm(fout, phr, 1, "SID is undefined");    
 
   // analyze IP limitations
+  ej_ip_t ipv6;
+  xml_make_ipv6(phr->ip, &ipv6);
   if (phr->role == USER_ROLE_ADMIN) {
     // as for the master program
-    ej_ip_t ipv6;
-    xml_make_ipv6(phr->ip, &ipv6);
     if (!contests_check_master_ip(phr->contest_id, &ipv6, phr->ssl_flag))
       return ns_html_err_no_perm(fout, phr, 1, "%s://%s is not allowed for MASTER for contest %d", ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
   } else {
     // as for judge program
-    ej_ip_t ipv6;
-    xml_make_ipv6(phr->ip, &ipv6);
     if (!contests_check_judge_ip(phr->contest_id, &ipv6, phr->ssl_flag))
       return ns_html_err_no_perm(fout, phr, 1, "%s://%s is not allowed for JUDGE for contest %d", ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
   }
@@ -1262,7 +1260,7 @@ privileged_page_cookie_login(FILE *fout,
   xfree(phr->login); phr->login = 0;
   xfree(phr->name); phr->name = 0;
   if ((r = userlist_clnt_priv_cookie_login(ul_conn, ULS_PRIV_COOKIE_LOGIN,
-                                           phr->ip, phr->ssl_flag,
+                                           &ipv6, phr->ssl_flag,
                                            phr->contest_id, phr->session_id,
                                            phr->locale_id,
                                            phr->role, &phr->user_id,
@@ -1341,16 +1339,14 @@ privileged_page_login(FILE *fout,
     return unprivileged_page_login(fout, phr, phr->locale_id);
 
   // analyze IP limitations
+  ej_ip_t ipv6;
+  xml_make_ipv6(phr->ip, &ipv6);
   if (phr->role == USER_ROLE_ADMIN) {
     // as for the master program
-    ej_ip_t ipv6;
-    xml_make_ipv6(phr->ip, &ipv6);
     if (!contests_check_master_ip(phr->contest_id, &ipv6, phr->ssl_flag))
       return ns_html_err_no_perm(fout, phr, 1, "%s://%s is not allowed for MASTER for contest %d", ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
   } else {
     // as for judge program
-    ej_ip_t ipv6;
-    xml_make_ipv6(phr->ip, &ipv6);
     if (!contests_check_judge_ip(phr->contest_id, &ipv6, phr->ssl_flag))
       return ns_html_err_no_perm(fout, phr, 1, "%s://%s is not allowed for JUDGE for contest %d", ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
   }
@@ -1358,7 +1354,7 @@ privileged_page_login(FILE *fout,
   if (ns_open_ul_connection(phr->fw_state) < 0)
     return ns_html_err_ul_server_down(fout, phr, 1, 0);
   if ((r = userlist_clnt_priv_login(ul_conn, ULS_PRIV_CHECK_USER,
-                                    phr->ip, phr->ssl_flag, phr->contest_id,
+                                    &ipv6, phr->ssl_flag, phr->contest_id,
                                     phr->locale_id, phr->role, login,
                                     password, &phr->user_id, &phr->session_id,
                                     0, &phr->name)) < 0) {
@@ -1616,9 +1612,11 @@ priv_add_user_by_user_id(FILE *fout,
     retval = -1;
     goto cleanup;
   }
-  
+
+  ej_ip_t ipv6;
+  xml_make_ipv6(phr->ip, &ipv6);
   r = userlist_clnt_register_contest(ul_conn, ULS_PRIV_REGISTER_CONTEST,
-                                     x, phr->contest_id, phr->ip,
+                                     x, phr->contest_id, &ipv6,
                                      phr->ssl_flag);
   if (r < 0) {
     ns_error(log_f, NEW_SRV_ERR_REGISTRATION_FAILED, userlist_strerror(-r));
@@ -1654,9 +1652,11 @@ priv_add_user_by_login(FILE *fout,
     ns_error(log_f, NEW_SRV_ERR_USER_LOGIN_NONEXISTANT, ARMOR(s));
     goto cleanup;
   }
+  ej_ip_t ipv6;
+  xml_make_ipv6(phr->ip, &ipv6);
   if ((r = userlist_clnt_register_contest(ul_conn, ULS_PRIV_REGISTER_CONTEST,
                                           user_id, phr->contest_id,
-                                          phr->ip, phr->ssl_flag)) < 0) {
+                                          &ipv6, phr->ssl_flag)) < 0) {
     ns_error(log_f, NEW_SRV_ERR_REGISTRATION_FAILED, userlist_strerror(-r));
     goto cleanup;
   }
@@ -9381,8 +9381,10 @@ privileged_entry_point(
   // validate cookie
   if (ns_open_ul_connection(phr->fw_state) < 0)
     return ns_html_err_ul_server_down(fout, phr, 1, 0);
+  ej_ip_t ipv6;
+  xml_make_ipv6(phr->ip, &ipv6);
   if ((r = userlist_clnt_get_cookie(ul_conn, ULS_PRIV_GET_COOKIE,
-                                    phr->ip, phr->ssl_flag,
+                                    &ipv6, phr->ssl_flag,
                                     phr->session_id,
                                     &phr->user_id, &phr->contest_id,
                                     &phr->locale_id, 0, &phr->role, 0, 0, 0,
@@ -9772,7 +9774,7 @@ unpriv_page_forgot_password_2(FILE *fout, struct http_request_info *phr,
     goto cleanup;
   }
   r = userlist_clnt_register_new(ul_conn, ULS_RECOVER_PASSWORD_1,
-                                 phr->ip, phr->ssl_flag,
+                                 &ipv6, phr->ssl_flag,
                                  phr->contest_id,
                                  phr->locale_id,
                                  NEW_SRV_ACTION_FORGOT_PASSWORD_3,
@@ -9873,7 +9875,7 @@ unpriv_page_forgot_password_3(FILE *fout, struct http_request_info *phr,
     goto cleanup;
   }
   r = userlist_clnt_recover_passwd_2(ul_conn, ULS_RECOVER_PASSWORD_2,
-                                     phr->ip, phr->ssl_flag,
+                                     &ipv6, phr->ssl_flag,
                                      phr->contest_id, phr->session_id,
                                      &user_id, &regstatus, 
                                      &login, &name, &passwd);
@@ -10149,7 +10151,7 @@ unprivileged_page_login(FILE *fout, struct http_request_info *phr,
     return ns_html_err_ul_server_down(fout, phr, 0, 0);
 
   if ((r = userlist_clnt_login(ul_conn, ULS_TEAM_CHECK_USER,
-                               phr->ip, phr->ssl_flag, phr->contest_id,
+                               &ipv6, phr->ssl_flag, phr->contest_id,
                                phr->locale_id, login, password,
                                &phr->user_id, &phr->session_id,
                                &phr->name)) < 0) {
@@ -15155,11 +15157,14 @@ unprivileged_entry_point(
   if (!phr->session_id || phr->action == NEW_SRV_ACTION_LOGIN_PAGE)
     return unprivileged_page_login(fout, phr, orig_locale_id);
 
+  ej_ip_t ipv6;
+  xml_make_ipv6(phr->ip, &ipv6);
+
   // validate cookie
   if (ns_open_ul_connection(phr->fw_state) < 0)
     return ns_html_err_ul_server_down(fout, phr, 0, 0);
   if ((r = userlist_clnt_get_cookie(ul_conn, ULS_TEAM_GET_COOKIE,
-                                    phr->ip, phr->ssl_flag,
+                                    &ipv6, phr->ssl_flag,
                                     phr->session_id,
                                     &phr->user_id, &phr->contest_id,
                                     &phr->locale_id, 0, &phr->role, 0, 0, 0,
@@ -15192,8 +15197,6 @@ unprivileged_entry_point(
   extra = ns_get_contest_extra(phr->contest_id);
   ASSERT(extra);
 
-  ej_ip_t ipv6;
-  xml_make_ipv6(phr->ip, &ipv6);
   if (!contests_check_team_ip(phr->contest_id, &ipv6, phr->ssl_flag))
     return ns_html_err_no_perm(fout, phr, 0, "%s://%s is not allowed for USER for contest %d", ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
   if (cnts->closed)

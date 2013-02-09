@@ -24,6 +24,7 @@
 #include "userlist_clnt.h"
 #include "userlist_proto.h"
 #include "userlist.h"
+#include "xml_utils.h"
 
 #include "reuse_xalloc.h"
 #include "reuse_logger.h"
@@ -673,10 +674,12 @@ teamdb_get_uid_by_pid(teamdb_state_t state, int system_uid, int system_gid,
     abort();
   }
   if (open_connection(&state->old, state->contest_id) < 0) return -1;
+  ej_ip_t ipv6;
   r = userlist_clnt_get_uid_by_pid(state->old.server_conn, system_uid,
                                    system_gid, system_pid, state->contest_id,
-                                   p_uid, p_priv_level, p_cookie, p_ip, p_ssl);
+                                   p_uid, p_priv_level, p_cookie, &ipv6, p_ssl);
   if (r < 0) return -1;
+  *p_ip = xml_make_ipv4(&ipv6);
   return r;
 }
 

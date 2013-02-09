@@ -129,13 +129,13 @@ cmd_login(
 
   if (phr->role == USER_ROLE_CONTESTANT) {
     r = userlist_clnt_login(ul_conn, ULS_TEAM_CHECK_USER,
-                            phr->ip, phr->ssl_flag, phr->contest_id,
+                            &ipv6, phr->ssl_flag, phr->contest_id,
                             phr->locale_id, login, password,
                             &phr->user_id, &phr->session_id,
                             &phr->name);
   } else {
     r = userlist_clnt_priv_login(ul_conn, ULS_PRIV_CHECK_USER,
-                                 phr->ip, phr->ssl_flag, phr->contest_id,
+                                 &ipv6, phr->ssl_flag, phr->contest_id,
                                  phr->locale_id, phr->role, login,
                                  password, &phr->user_id, &phr->session_id,
                                  0, &phr->name);
@@ -1905,8 +1905,11 @@ cmd_reload_server_2(
     if (ns_open_ul_connection(phr->fw_state) < 0)
       FAIL(NEW_SRV_ERR_USERLIST_SERVER_DOWN);
 
+    ej_ip_t ipv6;
+    xml_make_ipv6(phr->ip, &ipv6);
+
     r = userlist_clnt_priv_login(ul_conn, ULS_PRIV_CHECK_PASSWORD,
-                                 phr->ip, phr->ssl_flag, 0,
+                                 &ipv6, phr->ssl_flag, 0,
                                  0, 0, login,
                                  password, &phr->user_id, &phr->session_id,
                                  0, &phr->name);
@@ -2026,8 +2029,11 @@ new_server_cmd_handler(FILE *fout, struct http_request_info *phr)
   if (ns_open_ul_connection(phr->fw_state) < 0)
     return -NEW_SRV_ERR_USERLIST_SERVER_DOWN;
 
+  ej_ip_t ipv6;
+  xml_make_ipv6(phr->ip, &ipv6);
+
   if ((r = userlist_clnt_get_cookie(ul_conn, ULS_FETCH_COOKIE,
-                                    phr->ip, phr->ssl_flag,
+                                    &ipv6, phr->ssl_flag,
                                     phr->session_id,
                                     &phr->user_id, &phr->contest_id,
                                     &phr->locale_id, 0, &phr->role, 0, 0, 0,
@@ -2053,8 +2059,6 @@ new_server_cmd_handler(FILE *fout, struct http_request_info *phr)
     return -NEW_SRV_ERR_INV_ROLE;
 
   // analyze IP limitations
-  ej_ip_t ipv6;
-  xml_make_ipv6(phr->ip, &ipv6);
   if (phr->role == USER_ROLE_ADMIN) {
     if (!contests_check_master_ip(phr->contest_id, &ipv6, phr->ssl_flag))
       return -NEW_SRV_ERR_PERMISSION_DENIED;

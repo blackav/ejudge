@@ -42,7 +42,7 @@ int userlist_clnt_read_and_notify(struct userlist_clnt *clnt,
 int
 userlist_clnt_register_new(struct userlist_clnt *clnt,
                            int cmd,
-                           ej_ip4_t origin_ip,
+                           const ej_ip_t *origin_ip,
                            int ssl,
                            int contest_id,
                            int locale_id,
@@ -53,7 +53,7 @@ userlist_clnt_register_new(struct userlist_clnt *clnt,
 
 int
 userlist_clnt_register_new_2(struct userlist_clnt *clnt,
-                             ej_ip4_t origin_ip,
+                             const ej_ip_t *origin_ip,
                              int ssl,
                              int contest_id,
                              int locale_id,
@@ -68,7 +68,7 @@ userlist_clnt_register_new_2(struct userlist_clnt *clnt,
 int
 userlist_clnt_login(struct userlist_clnt *clnt,
                     int cmd,
-                    ej_ip4_t origin_ip,
+                    const ej_ip_t *origin_ip,
                     int ssl,
                     int contest_id,
                     int locale_id,
@@ -94,7 +94,7 @@ userlist_clnt_lookup_user_id(struct userlist_clnt *clnt,
 int
 userlist_clnt_get_cookie(struct userlist_clnt *clnt,
                          int cmd,
-                         ej_ip4_t origin_ip,
+                         const ej_ip_t *origin_ip,
                          int ssl,
                          ej_cookie_t cookie,
                          int *p_user_id,
@@ -116,7 +116,7 @@ userlist_clnt_set_cookie(struct userlist_clnt *clnt,
 
 int
 userlist_clnt_lookup_cookie(struct userlist_clnt *clnt,
-                            ej_ip4_t origin_ip,
+                            const ej_ip_t *origin_ip,
                             int ssl,
                             ej_cookie_t cookie,
                             int *p_user_id,
@@ -127,7 +127,7 @@ userlist_clnt_lookup_cookie(struct userlist_clnt *clnt,
 
 int
 userlist_clnt_team_cookie(struct userlist_clnt *clnt,
-                          ej_ip4_t origin_ip,
+                          const ej_ip_t *origin_ip,
                           int ssl,
                           int contest_id,
                           ej_cookie_t cookie,
@@ -164,7 +164,7 @@ userlist_clnt_register_contest(struct userlist_clnt *clnt,
                                int cmd,
                                int user_id,
                                int contest_id,
-                               ej_ip4_t ip,
+                               const ej_ip_t *ip,
                                int ssl_flag);
 int
 userlist_clnt_delete_info(struct userlist_clnt *clnt, int cmd,
@@ -186,7 +186,7 @@ userlist_clnt_pass_fd(struct userlist_clnt *clnt,
 
 int
 userlist_clnt_list_users(struct userlist_clnt *clnt,
-                         ej_ip4_t origin_ip,
+                         const ej_ip_t *origin_ip,
                          int ssl,
                          int contest_id,
                          int locale_id,
@@ -282,7 +282,7 @@ int userlist_clnt_get_uid_by_pid(struct userlist_clnt *clnt,
                                  int *p_uid,
                                  int *p_priv_level,
                                  ej_cookie_t *p_cookie,
-                                 ej_ip4_t *p_ip,
+                                 ej_ip_t *p_ip,
                                  int *p_ssl);
 
 int userlist_clnt_get_uid_by_pid_2(struct userlist_clnt *clnt,
@@ -293,14 +293,14 @@ int userlist_clnt_get_uid_by_pid_2(struct userlist_clnt *clnt,
                                    int *p_uid,
                                    int *p_priv_level,
                                    ej_cookie_t *p_cookie,
-                                   ej_ip4_t *p_ip,
+                                   ej_ip_t *p_ip,
                                    int *p_ssl,
                                    unsigned char **p_login,
                                    unsigned char **p_name);
 
 int userlist_clnt_priv_login(struct userlist_clnt *clnt,
                              int cmd,
-                             ej_ip4_t origin_ip,
+                             const ej_ip_t *origin_ip,
                              int ssl,
                              int contest_id,
                              int locale_id,
@@ -314,7 +314,7 @@ int userlist_clnt_priv_login(struct userlist_clnt *clnt,
                              unsigned char **p_name);
 
 int userlist_clnt_priv_cookie(struct userlist_clnt *clnt,
-                              ej_ip4_t origin_ip,
+                              const ej_ip_t *origin_ip,
                               int ssl,
                               int contest_id,
                               ej_cookie_t cookie,
@@ -328,7 +328,7 @@ int userlist_clnt_priv_cookie(struct userlist_clnt *clnt,
 
 int userlist_clnt_logout(struct userlist_clnt *clnt,
                          int cmd,
-                         ej_ip4_t origin_ip,
+                         const ej_ip_t *origin_ip,
                          int ssl,
                          ej_cookie_t cookie);
 
@@ -351,7 +351,7 @@ int
 userlist_clnt_recover_passwd_2(
         struct userlist_clnt *clnt,
         int cmd,
-        ej_ip4_t ip,
+        const ej_ip_t *ip,
         int ssl_flag,
         int contest_id,
         ej_cookie_t cookie,
@@ -366,7 +366,7 @@ int userlist_clnt_control(struct userlist_clnt *clnt, int cmd);
 int userlist_clnt_priv_cookie_login(
         struct userlist_clnt *clnt,
         int cmd,
-        ej_ip4_t origin_ip,
+        const ej_ip_t *origin_ip,
         int ssl,
         int contest_id,
         ej_cookie_t cookie,

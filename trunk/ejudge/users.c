@@ -665,7 +665,9 @@ main(int argc, char const *argv[])
     printf("<p>%s</p>\n", _("Information is not available"));
   } else {
     fflush(stdout);
-    r = userlist_clnt_list_users(server_conn, user_ip, ssl_flag,
+    ej_ip_t ipv6;
+    xml_make_ipv6(user_ip, &ipv6);
+    r = userlist_clnt_list_users(server_conn, &ipv6, ssl_flag,
                                  user_contest_id,
                                  client_locale_id, user_id, 
                                  0, self_url, "");
