@@ -1244,11 +1244,15 @@ privileged_page_cookie_login(FILE *fout,
   // analyze IP limitations
   if (phr->role == USER_ROLE_ADMIN) {
     // as for the master program
-    if (!contests_check_master_ip(phr->contest_id, phr->ip, phr->ssl_flag))
+    ej_ip_t ipv6;
+    xml_make_ipv6(phr->ip, &ipv6);
+    if (!contests_check_master_ip(phr->contest_id, &ipv6, phr->ssl_flag))
       return ns_html_err_no_perm(fout, phr, 1, "%s://%s is not allowed for MASTER for contest %d", ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
   } else {
     // as for judge program
-    if (!contests_check_judge_ip(phr->contest_id, phr->ip, phr->ssl_flag))
+    ej_ip_t ipv6;
+    xml_make_ipv6(phr->ip, &ipv6);
+    if (!contests_check_judge_ip(phr->contest_id, &ipv6, phr->ssl_flag))
       return ns_html_err_no_perm(fout, phr, 1, "%s://%s is not allowed for JUDGE for contest %d", ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
   }
 
@@ -1339,11 +1343,15 @@ privileged_page_login(FILE *fout,
   // analyze IP limitations
   if (phr->role == USER_ROLE_ADMIN) {
     // as for the master program
-    if (!contests_check_master_ip(phr->contest_id, phr->ip, phr->ssl_flag))
+    ej_ip_t ipv6;
+    xml_make_ipv6(phr->ip, &ipv6);
+    if (!contests_check_master_ip(phr->contest_id, &ipv6, phr->ssl_flag))
       return ns_html_err_no_perm(fout, phr, 1, "%s://%s is not allowed for MASTER for contest %d", ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
   } else {
     // as for judge program
-    if (!contests_check_judge_ip(phr->contest_id, phr->ip, phr->ssl_flag))
+    ej_ip_t ipv6;
+    xml_make_ipv6(phr->ip, &ipv6);
+    if (!contests_check_judge_ip(phr->contest_id, &ipv6, phr->ssl_flag))
       return ns_html_err_no_perm(fout, phr, 1, "%s://%s is not allowed for JUDGE for contest %d", ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
   }
 
@@ -9403,11 +9411,15 @@ privileged_entry_point(
   // analyze IP limitations
   if (phr->role == USER_ROLE_ADMIN) {
     // as for the master program
-    if (!contests_check_master_ip(phr->contest_id, phr->ip, phr->ssl_flag))
+    ej_ip_t ipv6;
+    xml_make_ipv6(phr->ip, &ipv6);
+    if (!contests_check_master_ip(phr->contest_id, &ipv6, phr->ssl_flag))
       return ns_html_err_no_perm(fout, phr, 1, "%s://%s is not allowed for MASTER for contest %d", ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
   } else {
     // as for judge program
-    if (!contests_check_judge_ip(phr->contest_id, phr->ip, phr->ssl_flag))
+    ej_ip_t ipv6;
+    xml_make_ipv6(phr->ip, &ipv6);
+    if (!contests_check_judge_ip(phr->contest_id, &ipv6, phr->ssl_flag))
       return ns_html_err_no_perm(fout, phr, 1, "%s://%s is not allowed for MASTER for contest %d", ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
   }
 
@@ -9643,7 +9655,9 @@ unpriv_page_forgot_password_1(FILE *fout, struct http_request_info *phr,
                                              "contest_id is invalid");
   if (orig_locale_id < 0 && cnts->default_locale_num >= 0)
     phr->locale_id = cnts->default_locale_num;
-  if (!contests_check_team_ip(phr->contest_id, phr->ip, phr->ssl_flag))
+  ej_ip_t ipv6;
+  xml_make_ipv6(phr->ip, &ipv6);
+  if (!contests_check_team_ip(phr->contest_id, &ipv6, phr->ssl_flag))
     return ns_html_err_service_not_available(fout, phr, 0, "%s://%s is not allowed for USER for contest %d", ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
   if (cnts->closed)
     return ns_html_err_service_not_available(fout, phr, 0,
@@ -9727,7 +9741,9 @@ unpriv_page_forgot_password_2(FILE *fout, struct http_request_info *phr,
     return ns_html_err_service_not_available(fout, phr, 0, "contest_id is invalid");
   if (orig_locale_id < 0 && cnts->default_locale_num >= 0)
     phr->locale_id = cnts->default_locale_num;
-  if (!contests_check_team_ip(phr->contest_id, phr->ip, phr->ssl_flag))
+  ej_ip_t ipv6;
+  xml_make_ipv6(phr->ip, &ipv6);
+  if (!contests_check_team_ip(phr->contest_id, &ipv6, phr->ssl_flag))
     return ns_html_err_service_not_available(fout, phr, 0, "%s://%s is not allowed for USER for contest %d", ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
   if (cnts->closed)
     return ns_html_err_service_not_available(fout, phr, 0,
@@ -9833,7 +9849,9 @@ unpriv_page_forgot_password_3(FILE *fout, struct http_request_info *phr,
     return ns_html_err_service_not_available(fout, phr, 0, "contest_id is invalid");
   if (orig_locale_id < 0 || cnts->default_locale_num >= 0)
     phr->locale_id = cnts->default_locale_num;
-  if (!contests_check_team_ip(phr->contest_id, phr->ip, phr->ssl_flag))
+  ej_ip_t ipv6;
+  xml_make_ipv6(phr->ip, &ipv6);
+  if (!contests_check_team_ip(phr->contest_id, &ipv6, phr->ssl_flag))
     return ns_html_err_service_not_available(fout, phr, 0, "%s://%s is not allowed for USER for contest %d", ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
   if (cnts->closed)
     return ns_html_err_service_not_available(fout, phr, 0,
@@ -9958,7 +9976,9 @@ unprivileged_page_login_page(FILE *fout, struct http_request_info *phr,
     return ns_html_err_service_not_available(fout, phr, 0, "contest_id is invalid");
   if (orig_locale_id < 0 && cnts->default_locale_num >= 0)
     phr->locale_id = cnts->default_locale_num;
-  if (!contests_check_team_ip(phr->contest_id, phr->ip, phr->ssl_flag))
+  ej_ip_t ipv6;
+  xml_make_ipv6(phr->ip, &ipv6);
+  if (!contests_check_team_ip(phr->contest_id, &ipv6, phr->ssl_flag))
     return ns_html_err_service_not_available(fout, phr, 0, "%s://%s is not allowed for USER for contest %d", ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
   if (cnts->closed)
     return ns_html_err_service_not_available(fout, phr, 0,
@@ -10113,7 +10133,9 @@ unprivileged_page_login(FILE *fout, struct http_request_info *phr,
   phr->login = xstrdup(login);
   if ((r = ns_cgi_param(phr, "password", &password)) <= 0)
     return ns_html_err_inv_param(fout, phr, 0, "cannot parse password");
-  if (!contests_check_team_ip(phr->contest_id, phr->ip, phr->ssl_flag))
+  ej_ip_t ipv6;
+  xml_make_ipv6(phr->ip, &ipv6);
+  if (!contests_check_team_ip(phr->contest_id, &ipv6, phr->ssl_flag))
     return ns_html_err_no_perm(fout, phr, 0, "%s://%s is not allowed for USER for contest %d", ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
   if (cnts->closed)
     return ns_html_err_service_not_available(fout, phr, 0,
@@ -12991,7 +13013,9 @@ unpriv_page_header(FILE *fout,
           shown_items++;
         } else if (top_action_list[i] == NEW_SRV_ACTION_REG_DATA_EDIT) {
           if (!cnts->allow_reg_data_edit) continue;
-          if (!contests_check_register_ip_2(cnts, phr->ip, phr->ssl_flag))
+          ej_ip_t ipv6;
+          xml_make_ipv6(phr->ip, &ipv6);
+          if (!contests_check_register_ip_2(cnts, &ipv6, phr->ssl_flag))
             continue;
           if (cnts->reg_deadline > 0 && cs->current_time >= cnts->reg_deadline)
             continue;
@@ -15045,7 +15069,9 @@ anon_select_contest_page(FILE *fout, struct http_request_info *phr)
     cnts = 0;
     if (contests_get(i, &cnts) < 0 || !cnts) continue;
     if (cnts->closed) continue;
-    if (!contests_check_register_ip_2(cnts, phr->ip, phr->ssl_flag)) continue;
+    ej_ip_t ipv6;
+    xml_make_ipv6(phr->ip, &ipv6);
+    if (!contests_check_register_ip_2(cnts, &ipv6, phr->ssl_flag)) continue;
     if (cnts->reg_deadline > 0 && curtime >= cnts->reg_deadline) continue;
 
     fprintf(fout, "<tr%s><td%s>%d</td>", form_row_attrs[(row++) & 1], cl, i);
@@ -15166,7 +15192,9 @@ unprivileged_entry_point(
   extra = ns_get_contest_extra(phr->contest_id);
   ASSERT(extra);
 
-  if (!contests_check_team_ip(phr->contest_id, phr->ip, phr->ssl_flag))
+  ej_ip_t ipv6;
+  xml_make_ipv6(phr->ip, &ipv6);
+  if (!contests_check_team_ip(phr->contest_id, &ipv6, phr->ssl_flag))
     return ns_html_err_no_perm(fout, phr, 0, "%s://%s is not allowed for USER for contest %d", ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
   if (cnts->closed)
     return ns_html_err_service_not_available(fout, phr, 0,

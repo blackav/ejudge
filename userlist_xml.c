@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -506,6 +506,7 @@ parse_cookies(char const *path, struct xml_tree *cookies,
   struct xml_tree *t;
   struct xml_attr *a;
   struct userlist_cookie *c;
+  int has_ip = 0;
 
   if (cookies->first) return xml_err_attrs(cookies);
   if (xml_empty_text(cookies) < 0) return -1;
@@ -520,8 +521,9 @@ parse_cookies(char const *path, struct xml_tree *cookies,
     for (a = t->first; a; a = a->next) {
       switch (a->tag) {
       case USERLIST_A_IP:
-        if (xml_parse_ip(NULL, path, a->line, a->column, a->text, &c->ip) < 0)
+        if (xml_parse_ipv6(NULL, path, a->line, a->column, a->text, &c->ip) < 0)
           return -1;
+        has_ip = 1;
         break;
       case USERLIST_A_VALUE:
         {
@@ -573,7 +575,7 @@ parse_cookies(char const *path, struct xml_tree *cookies,
       }
     }
     userlist_free_attrs(t);
-    if (!c->ip) return xml_err_attr_undefined(t, USERLIST_A_IP);
+    if (!has_ip) return xml_err_attr_undefined(t, USERLIST_A_IP);
     if (!c->cookie) return xml_err_attr_undefined(t, USERLIST_A_VALUE);
     if (!c->expire) return xml_err_attr_undefined(t, USERLIST_A_EXPIRE);
     if (c->contest_id < 0 && (c->priv_level > 0 || c->role > 0))
@@ -1743,7 +1745,7 @@ unparse_cookies(const struct xml_tree *p, FILE *f)
     c = (struct userlist_cookie*) p;
     fprintf(f, "      <%s %s=\"%s\" %s=\"%" EJ_PRINTF_LLSPEC "x\" %s=\"%s\" %s=\"%s\"",
             elem_map[USERLIST_T_COOKIE],
-            attr_map[USERLIST_A_IP], xml_unparse_ip(c->ip),
+            attr_map[USERLIST_A_IP], xml_unparse_ipv6(&c->ip),
             attr_map[USERLIST_A_VALUE], c->cookie,
             attr_map[USERLIST_A_EXPIRE], xml_unparse_date(c->expire),
             attr_map[USERLIST_A_PRIV_LEVEL],

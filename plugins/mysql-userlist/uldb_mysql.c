@@ -1207,7 +1207,7 @@ static int
 new_cookie_func(
         void *data,
         int user_id,
-        ej_ip4_t ip,
+        const ej_ip_t *pip,
         int ssl_flag,
         ej_cookie_t cookie,
         time_t expire,
@@ -1240,7 +1240,7 @@ new_cookie_func(
   ASSERT(cookie != 0);
   memset(&newc, 0, sizeof(newc));
   newc.user_id = user_id;
-  newc.ip = ip;
+  newc.ip = *pip;
   newc.ssl = ssl_flag;
   newc.cookie = cookie;
   newc.expire = expire;

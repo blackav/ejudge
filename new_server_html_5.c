@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2007-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -155,7 +155,9 @@ anon_select_contest_page(FILE *fout, struct http_request_info *phr)
     cnts = 0;
     if (contests_get(i, &cnts) < 0 || !cnts) continue;
     if (cnts->closed) continue;
-    if (!contests_check_register_ip_2(cnts, phr->ip, phr->ssl_flag)) continue;
+    ej_ip_t ipv6;
+    xml_make_ipv6(phr->ip, &ipv6);
+    if (!contests_check_register_ip_2(cnts, &ipv6, phr->ssl_flag)) continue;
     if (cnts->reg_deadline > 0 && curtime >= cnts->reg_deadline) continue;
 
     fprintf(fout, "<tr%s><td%s>%d</td>", form_row_attrs[(row++) & 1], cl, i);
@@ -895,8 +897,10 @@ anon_register_pages(FILE *fout, struct http_request_info *phr)
   if (phr->locale_id < 0) phr->locale_id = 0;
 
   // check permissions
+  ej_ip_t ipv6;
+  xml_make_ipv6(phr->ip, &ipv6);
   if (cnts->closed ||
-      !contests_check_register_ip_2(cnts, phr->ip, phr->ssl_flag)) {
+      !contests_check_register_ip_2(cnts, &ipv6, phr->ssl_flag)) {
     return ns_html_err_no_perm(fout, phr, 0, "registration is not available");
   }
 
@@ -1713,9 +1717,11 @@ main_page(
   menu_item(fout, phr, i, _("User info"),
             ns_url(ub, sizeof(ub), phr, NEW_SRV_ACTION_REG_VIEW_GENERAL, 0));
   shown_items++;
+  ej_ip_t ipv6;
+  xml_make_ipv6(phr->ip, &ipv6);
   if (phr->reg_status == USERLIST_REG_OK
       && !(phr->reg_flags &~USERLIST_UC_INVISIBLE)
-      && contests_check_team_ip_2(cnts, phr->ip, phr->ssl_flag)
+      && contests_check_team_ip_2(cnts, &ipv6, phr->ssl_flag)
       && !cnts->closed) {
     // "participate" link
     get_client_url(bb, sizeof(bb), cnts, phr->self_url);
@@ -3311,8 +3317,10 @@ ns_register_pages(FILE *fout, struct http_request_info *phr)
   }
 
   // check permissions
+  ej_ip_t ipv6;
+  xml_make_ipv6(phr->ip, &ipv6);
   if (cnts->closed ||
-      !contests_check_register_ip_2(cnts, phr->ip, phr->ssl_flag)) {
+      !contests_check_register_ip_2(cnts, &ipv6, phr->ssl_flag)) {
     return ns_html_err_no_perm(fout, phr, 0, "registration is not available");
   }
 

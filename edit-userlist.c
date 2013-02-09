@@ -1266,23 +1266,12 @@ static const struct user_field_desc member_descs[] =
   [USERLIST_NM_LAST_CHANGE_TIME] { "Change time", 1, 1 },
 };
 
-static unsigned char *
-unparse_ip(ej_ip4_t ip)
-{
-  static char buf[64];
-
-  snprintf(buf, sizeof(buf), "%u.%u.%u.%u",
-           ip >> 24, (ip >> 16) & 0xff,
-           (ip >> 8) & 0xff, ip & 0xff);
-  return buf;
-}
-
 static int
 get_cookie_str(unsigned char *buf, size_t len,
                const struct userlist_cookie *cookie)
 {
   return snprintf(buf, len, "%016llx %16s %s %4d %4d",
-                  cookie->cookie, unparse_ip(cookie->ip),
+                  cookie->cookie, xml_unparse_ipv6(&cookie->ip),
                   userlist_unparse_date(cookie->expire, 1),
                   cookie->locale_id,
                   cookie->contest_id);

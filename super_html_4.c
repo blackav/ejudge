@@ -3399,7 +3399,7 @@ cmd_contest_xml_access_edit_page(
               SSERV_OP_SET_RULE_IP, f_id, i,
               SSERV_OP_CONTEST_XML_FIELD_EDIT_PAGE,
               "IP address");
-      fprintf(out_f, "%s", xml_unparse_ip_mask(p->addr, p->mask));
+      fprintf(out_f, "%s", xml_unparse_ipv6_mask(&p->addr, &p->mask));
       fprintf(out_f, "</div></td>");
 
       fprintf(out_f, "<td class=\"cnts_edit_legend\" width=\"100px\">");
@@ -4220,7 +4220,7 @@ cmd_op_add_ip(
   int default_allow = -1;
   struct contest_access **p_acc;
   int f_id;
-  ej_ip4_t addr, mask;
+  ej_ip_t addr, mask;
 
   phr->json_reply = 1;
 
@@ -4233,7 +4233,7 @@ cmd_op_add_ip(
   p_acc = (struct contest_access**) contest_desc_get_ptr(ecnts, f_id);
   if (ss_cgi_param(phr, "ip_mask", &mask_str) <= 0)
     FAIL(S_ERR_INV_VALUE);
-  if (xml_parse_ip_mask(NULL, 0, 0, 0, mask_str, &addr, &mask) < 0)
+  if (xml_parse_ipv6_mask(NULL, 0, 0, 0, mask_str, &addr, &mask) < 0)
     FAIL(S_ERR_INV_VALUE);
   if (ss_cgi_param_int(phr, "ssl_flag", &ssl_flag) < 0
       || ssl_flag < -1 || ssl_flag > 1)
@@ -4242,7 +4242,7 @@ cmd_op_add_ip(
       || default_allow < 0 || default_allow > 1)
     FAIL(S_ERR_INV_VALUE);
   contests_add_ip(ecnts, p_acc, access_field_tag[f_id],
-                  addr, mask, ssl_flag, default_allow);
+                  &addr, &mask, ssl_flag, default_allow);
   retval = 1;
 
  cleanup:
@@ -4331,7 +4331,7 @@ cmd_op_set_rule_ip(
   struct contest_ip *p;
   int f_id, subf_id;
   const unsigned char *mask_str = 0;
-  ej_ip4_t addr = 0, mask = 0;
+  ej_ip_t addr, mask;
 
   phr->json_reply = 1;
 
@@ -4346,7 +4346,7 @@ cmd_op_set_rule_ip(
     FAIL(S_ERR_INV_FIELD_ID);
   if (ss_cgi_param(phr, "value", &mask_str) <= 0)
     FAIL(S_ERR_INV_VALUE);
-  if (xml_parse_ip_mask(NULL, 0, 0, 0, mask_str, &addr, &mask) < 0)
+  if (xml_parse_ipv6_mask(NULL, 0, 0, 0, mask_str, &addr, &mask) < 0)
     FAIL(S_ERR_INV_VALUE);
   if (!(p = contests_get_ip_rule_nc(acc, subf_id)))
     FAIL(S_ERR_INV_FIELD_ID);
@@ -4673,7 +4673,10 @@ cmd_op_create_new_contest(
   }
 
   if (!templ_cnts) {
-    phr->ss->edited_cnts = contest_tmpl_new(contest_id, phr->login, phr->self_url, phr->system_login, phr->ip, phr->ssl_flag, phr->config);
+    ej_ip_t ipv6;
+    xml_make_ipv6(phr->ip, &ipv6);
+
+    phr->ss->edited_cnts = contest_tmpl_new(contest_id, phr->login, phr->self_url, phr->system_login, &ipv6, phr->ssl_flag, phr->config);
     phr->ss->global = prepare_new_global_section(contest_id, phr->ss->edited_cnts->root_dir, phr->config);
   } else {
     super_html_load_serve_cfg(templ_cnts, phr->config, phr->ss);

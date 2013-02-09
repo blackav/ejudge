@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2008-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -40,7 +40,7 @@ static struct common_mysql_parse_spec cookie_spec[COOKIE_WIDTH] =
   //[8]       team_login TINYINT NOT NULL DEFAULT 0,
   { 0, 'b', "team_login", COOKIE_OFFSET(team_login), 0 },
   //[9]       ip VARCHAR(64) NOT NULL,
-  { 0, 'i', "ip", COOKIE_OFFSET(ip), 0 },
+  { 0, 'I', "ip", COOKIE_OFFSET(ip), 0 },
   //[10]      ssl_flag TINYINT NOT NULL DEFAULT 0,
   { 0, 'b', "ssl_flag", COOKIE_OFFSET(ssl), 0 },
   //[11]      expire DATETIME NOT NULL)
@@ -324,6 +324,5 @@ static struct common_mysql_parse_spec usergroupmember_spec[] =
 /*
  * Local variables:
  *  compile-command: "make -C ../.."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "MYSQL")
  * End:
  */

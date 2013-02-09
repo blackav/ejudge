@@ -575,9 +575,11 @@ super_html_main_page(FILE *f,
       fprintf(f, "<td>&nbsp;</td>\n");
     }
 
+    ej_ip_t ipv6;
+    xml_make_ipv6(ip_address, &ipv6);
     if (priv_level >= PRIV_LEVEL_JUDGE
         && opcaps_check(caps, OPCAP_LIST_USERS) >= 0
-        && contests_check_serve_control_ip_2(cnts, ip_address, ssl)) {
+        && contests_check_serve_control_ip_2(cnts, &ipv6, ssl)) {
       fprintf(f, "<td>%sEdit users</a></td>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d&op=%d&contest_id=%d", SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE, contest_id));
     } else {
       fprintf(f, "<td>&nbsp;</td>\n");
@@ -585,7 +587,7 @@ super_html_main_page(FILE *f,
 
     if (priv_level >= PRIV_LEVEL_ADMIN
         && opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0
-        && contests_check_serve_control_ip_2(cnts, ip_address, ssl)) {
+        && contests_check_serve_control_ip_2(cnts, &ipv6, ssl)) {
       fprintf(f, "<td>%sEdit settings</a></td>",
               html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
                             "contest_id=%d&action=%d", contest_id,
@@ -606,7 +608,7 @@ super_html_main_page(FILE *f,
 
     // report judge URL
     if (opcaps_check(caps, OPCAP_JUDGE_LOGIN) >= 0 && judge_url[0]
-        && contests_check_judge_ip_2(cnts, ip_address, ssl)) {
+        && contests_check_judge_ip_2(cnts, &ipv6, ssl)) {
       if (cnts->managed) {
         fprintf(f, "<td><a href=\"%s?SID=%016llx&contest_id=%d&action=3\" target=\"_blank\">Judge</a></td>\n",
                 new_judge_url, session_id, contest_id);
@@ -619,7 +621,7 @@ super_html_main_page(FILE *f,
     }
     // report master URL
     if (opcaps_check(caps, OPCAP_MASTER_LOGIN) >= 0 && master_url[0]
-        && contests_check_master_ip_2(cnts, ip_address, ssl)) {
+        && contests_check_master_ip_2(cnts, &ipv6, ssl)) {
       if (cnts->managed) {
         fprintf(f, "<td><a href=\"%s?SID=%016llx&contest_id=%d&action=3\" target=\"_blank\">Master</a></td>\n",
                 new_master_url, session_id, contest_id);
@@ -631,7 +633,7 @@ super_html_main_page(FILE *f,
       fprintf(f, "<td>&nbsp;</td>\n");
     }
     // report user URL
-    if (client_url[0] && contests_check_team_ip_2(cnts, ip_address, ssl)) {
+    if (client_url[0] && contests_check_team_ip_2(cnts, &ipv6, ssl)) {
       if (cnts->managed) {
         fprintf(f, "<td><a href=\"%s?contest_id=%d\" target=\"_blank\">User</a></td>\n",
                 new_client_url, contest_id);
@@ -765,7 +767,9 @@ super_html_contest_page(FILE *f,
     return -SSERV_ERR_PERMISSION_DENIED;
   }
 
-  if (!contests_check_serve_control_ip_2(cnts, ip_address, ssl)) {
+  ej_ip_t ipv6;
+  xml_make_ipv6(ip_address, &ipv6);
+  if (!contests_check_serve_control_ip_2(cnts, &ipv6, ssl)) {
     err("super_html_contest_page: invalid IP address");
     return -SSERV_ERR_BANNED_IP;
   }
@@ -795,7 +799,7 @@ super_html_contest_page(FILE *f,
 
   // report judge URL
   if (opcaps_check(caps, OPCAP_JUDGE_LOGIN) >= 0 && judge_url[0]
-      && contests_check_judge_ip_2(cnts, ip_address, ssl)) {
+      && contests_check_judge_ip_2(cnts, &ipv6, ssl)) {
     if (cnts->managed) {
       fprintf(f, "<tr><td>Judge CGI program</td><td><a href=\"%s?SID=%016llx&contest_id=%d&action=3\" target=\"_blank\">Judge</a></td></tr>\n",
               new_judge_url, session_id, contest_id);
@@ -807,7 +811,7 @@ super_html_contest_page(FILE *f,
 
   // report master URL
   if (opcaps_check(caps, OPCAP_MASTER_LOGIN) >= 0 && master_url[0]
-      && contests_check_master_ip_2(cnts, ip_address, ssl)) {
+      && contests_check_master_ip_2(cnts, &ipv6, ssl)) {
     if (cnts->managed) {
       fprintf(f, "<tr><td>Master CGI program</td><td><a href=\"%s?SID=%016llx&contest_id=%d&action=3\" target=\"_blank\">Master</a></td></tr>\n",
               new_master_url, session_id, contest_id);
@@ -818,7 +822,7 @@ super_html_contest_page(FILE *f,
   }
 
   // report user URL
-  if (client_url[0] && contests_check_team_ip_2(cnts, ip_address, ssl)) {
+  if (client_url[0] && contests_check_team_ip_2(cnts, &ipv6, ssl)) {
     if (cnts->managed) {
       fprintf(f, "<tr><td>Client CGI program</td><td><a href=\"%s?contest_id=%d\" target=\"_blank\">Client</a></td></tr>\n",
               new_client_url, contest_id);
@@ -1162,7 +1166,9 @@ super_html_log_page(FILE *f,
     err("super_html_log_page: not enough privileges");
     return -SSERV_ERR_PERMISSION_DENIED;
   }
-  if (!contests_check_serve_control_ip_2(cnts, ip_address, ssl)) {
+  ej_ip_t ipv6;
+  xml_make_ipv6(ip_address, &ipv6);
+  if (!contests_check_serve_control_ip_2(cnts, &ipv6, ssl)) {
     err("super_html_log_page: invalid IP address");
     return -SSERV_ERR_BANNED_IP;
   }
@@ -1939,7 +1945,7 @@ super_html_unparse_access(const struct contest_access *acc)
       if (p->ssl >= 0)
         snprintf(ssl_str, sizeof(ssl_str), " %s", p->ssl?"(SSL)":"(No SSL)");
       fprintf(af, "%s%s %s\n",
-              xml_unparse_ip_mask(p->addr, p->mask), ssl_str,
+              xml_unparse_ipv6_mask(&p->addr, &p->mask), ssl_str,
               p->allow?"allow":"deny");
     }
     fprintf(af, "default %s\n", acc->default_is_allow?"allow":"deny");
@@ -3257,7 +3263,7 @@ super_html_edit_access_rules(FILE *f,
       html_hidden_var(f, "rule_num", num_str);
       fprintf(f, "<tr%s><td>%d</td><td><tt>%s</tt></td><td>",
               form_row_attrs[row ^= 1], i,
-              xml_unparse_ip_mask(p->addr, p->mask));
+              xml_unparse_ipv6_mask(&p->addr, &p->mask));
       html_boolean_select(f, p->allow, "access", "deny", "allow");
       fprintf(f, "</td><td>");
       html_ssl_select(f, p->ssl);
@@ -4200,13 +4206,16 @@ super_html_create_contest_2(FILE *f,
     goto cleanup;
   }
 
+  ej_ip_t ipv6;
+  xml_make_ipv6(ip_address, &ipv6);
+
   // FIXME: touch the contest file
   if (!templ_mode) {
     sstate->edited_cnts = contest_tmpl_new(contest_id,
                                            login,
                                            self_url,
                                            ss_login,
-                                           ip_address,
+                                           &ipv6,
                                            ssl_flag,
                                            config);
     sstate->global = prepare_new_global_section(contest_id,

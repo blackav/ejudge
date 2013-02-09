@@ -72,7 +72,8 @@ static int new_user_func(void *, const unsigned char *login,
 static int remove_user_func(void *, int);
 static int get_cookie_func(void *, ej_cookie_t,
                            const struct userlist_cookie **);
-static int new_cookie_func(void *, int, ej_ip4_t, int, ej_cookie_t, time_t,
+static int new_cookie_func(void *, int, const ej_ip_t *,
+                           int, ej_cookie_t, time_t,
                            int, int, int, int, int, int,
                            const struct userlist_cookie **);
 static int remove_cookie_func(void *data, const struct userlist_cookie *c);
@@ -877,7 +878,8 @@ get_cookie_func(void *data,
 static int
 new_cookie_func(void *data,
                 int user_id,
-                ej_ip4_t ip, int ssl_flag,
+                const ej_ip_t *pip,
+                int ssl_flag,
                 ej_cookie_t value, time_t expire,
                 int contest_id,
                 int locale_id,
@@ -917,7 +919,7 @@ new_cookie_func(void *data,
 
   c = (struct userlist_cookie*) userlist_node_alloc(USERLIST_T_COOKIE);
   c->user_id = user_id;
-  c->ip = ip;
+  c->ip = *pip;
   c->ssl = ssl_flag;
   c->cookie = value;
   c->expire = expire;

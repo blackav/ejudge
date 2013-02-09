@@ -80,7 +80,7 @@ static int
 new_cookie_func(
         void *,
         int user_id,
-        ej_ip4_t ip,
+        const ej_ip_t *pip,
         int ssl_flag,
         ej_cookie_t cookie,
         time_t,
