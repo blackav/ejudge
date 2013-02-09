@@ -400,7 +400,7 @@ struct userlist_cookie
   struct xml_tree b;
 
   int user_id;
-  ej_ip4_t ip;
+  ej_ip_t ip;
   int ssl;
   ej_cookie_t cookie;
   time_t expire;

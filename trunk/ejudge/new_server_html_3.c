@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -912,8 +912,10 @@ ns_html_err_registration_incomplete(
     ns_separator(fout, separator, cnts);
   }
 
+  ej_ip_t ipv6;
+  xml_make_ipv6(phr->ip, &ipv6);
   if (cnts && cnts->allow_reg_data_edit
-      && contests_check_register_ip_2(cnts, phr->ip, phr->ssl_flag) > 0
+      && contests_check_register_ip_2(cnts, &ipv6, phr->ssl_flag) > 0
       && (cnts->reg_deadline <= 0 || cur_time < cnts->reg_deadline)) {
     get_register_url(reg_url, sizeof(reg_url), cnts, phr->self_url);
     if (phr->session_id) {

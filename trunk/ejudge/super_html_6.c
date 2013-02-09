@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2011-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2011-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -3250,7 +3250,7 @@ super_serve_op_USER_DETAIL_PAGE(
 
     for (cookie=FIRST_COOKIE(u);cookie;cookie=NEXT_COOKIE(cookie)) {
       fprintf(out_f, "<tr>");
-      fprintf(out_f, "<td%s>%s</td>", cl, xml_unparse_ip(cookie->ip));
+      fprintf(out_f, "<td%s>%s</td>", cl, xml_unparse_ipv6(&cookie->ip));
       fprintf(out_f, "<td%s>%d</td>", cl, cookie->ssl);
       fprintf(out_f, "<td%s>%016llx</td>", cl, cookie->cookie);
       fprintf(out_f, "<td%s>%s</td>", cl, xml_unparse_date(cookie->expire));

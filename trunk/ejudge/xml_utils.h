@@ -113,6 +113,29 @@ const ej_ip_t *
 xml_make_ipv6(ej_ip4_t addr, ej_ip_t *p_addr);
 ej_ip4_t xml_make_ipv4(const ej_ip_t *p_addr);
 
+int ipv6cmp(const ej_ip_t *pip1, const ej_ip_t *pip2);
+
+void
+xml_msg(FILE *log_f,
+        unsigned char const *path,
+        int line,
+        int column,
+        const char *format,
+        ...)
+  __attribute__((format(printf, 5, 6)));
+
+const unsigned char *
+xml_unparse_ipv6_mask(const ej_ip_t *p_addr, const ej_ip_t *p_mask);
+int
+xml_parse_ipv6_mask(
+        FILE *log_f,
+        const unsigned char *path,
+        int line,
+        int column,
+        const unsigned char *s,
+        ej_ip_t *p_addr,
+        ej_ip_t *p_mask);
+
 #endif /* __XML_UTILS_H__ */
 
 /*

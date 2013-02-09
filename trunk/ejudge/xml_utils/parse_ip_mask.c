@@ -19,6 +19,9 @@
 #include "errlog.h"
 
 #include <string.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <ctype.h>
 
 int
 xml_parse_ip_mask(
@@ -80,6 +83,69 @@ xml_parse_ip_mask(
     }
   }
   return -1;
+}
+
+int
+xml_parse_ipv6_mask(
+        FILE *log_f,
+        const unsigned char *path,
+        int line,
+        int column,
+        const unsigned char *s,
+        ej_ip_t *p_addr,
+        ej_ip_t *p_mask)
+{
+  if (!strchr(s, ':')) {
+    ej_ip4_t addr4, mask4;
+    int r = xml_parse_ip_mask(log_f, path, line, column, s, &addr4, &mask4);
+    if (r < 0) return r;
+    xml_make_ipv6(addr4, p_addr);
+    xml_make_ipv6(mask4, p_mask);
+    return 0;
+  }
+
+  const unsigned char *slash = strchr(s, '/');
+  if (!slash) {
+    int r = xml_parse_ipv6(log_f, path, line, column, s, p_addr);
+    if (r < 0) return r;
+    if (!p_addr->ipv6_flag) {
+      xml_msg(log_f, path, line, column, "IPv6 expected");
+      return -1;
+    }
+    memset(p_mask, 0, sizeof(*p_mask));
+    p_mask->ipv6_flag = 1;
+    memset(p_mask->u.v6.addr, 0xff, sizeof(p_mask->u.v6.addr));
+    return 0;
+  }
+
+  int r = xml_do_parse_ipv6(s, slash - 1, p_addr);
+  if (r < 0) {
+    xml_msg(log_f, path, line, column, "Invalid IPv6 address");
+    return -1;
+  }
+  char *eptr = NULL;
+  errno = 0;
+  int m = strtol(slash + 1, &eptr, 10);
+  if (errno || m < 0 || m > 64) {
+    xml_msg(log_f, path, line, column, "Invalid mask");
+    return -1;
+  }
+  while (isspace(*eptr)) ++eptr;
+  if (*eptr) {
+    xml_msg(log_f, path, line, column, "Invalid mask");
+    return -1;
+  }
+  memset(p_mask, 0, sizeof(*p_mask));
+  p_mask->ipv6_flag = 1;
+  unsigned char *pb = p_mask->u.v6.addr;
+  while (m >= 8) {
+    *pb++ = 0xff;
+    m -= 8;
+  }
+  if (m > 0) {
+    *pb++ = 0xffffff00 >> m;
+  }
+  return 0;
 }
 
 /*

@@ -319,7 +319,7 @@ struct contest_desc *contest_tmpl_new(int contest_id,
                                       const unsigned char *login,
                                       const unsigned char *self_url,
                                       const unsigned char *ss_login,
-                                      ej_ip4_t ip,
+                                      const ej_ip_t *pip,
                                       int ssl_flag,
                                       const struct ejudge_cfg *ejudge_config);
 struct contest_desc *contest_tmpl_clone(struct sid_state *sstate,

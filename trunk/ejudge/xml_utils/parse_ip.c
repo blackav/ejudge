@@ -23,10 +23,21 @@
 #include <stdlib.h>
 #include <errno.h>
 
-static void
-msg(FILE *log_f, unsigned char const *path, int line, int column,
-    unsigned const char *msg)
+void
+xml_msg(FILE *log_f,
+        unsigned char const *path,
+        int line,
+        int column,
+        const char *format,
+        ...)
 {
+  char msg[1024];
+  va_list args;
+
+  va_start(args, format);
+  vsnprintf(msg, sizeof(msg), format, args);
+  va_end(args);
+
   if (line > 0) {
     if (log_f) {
       if (path) {
@@ -60,7 +71,7 @@ xml_parse_ip(
   if (!s || sscanf(s, "%d.%d.%d.%d%n", &b1, &b2, &b3, &b4, &n) != 4
       || s[n] || b1 > 255 || b2 > 255 || b3 > 255 || b4 > 255) {
 #if !defined PYTHON
-    msg(log_f, path, line, column, "invalid IP-address");
+    xml_msg(log_f, path, line, column, "invalid IP-address");
 #endif
     return -1;
   }
@@ -255,7 +266,7 @@ xml_parse_ipv6(
 {
   int r = xml_do_parse_ipv6(s, s + strlen(s), p_addr);
   if (r < 0) {
-    msg(log_f, path, line, column, "invalid IP-address");
+    xml_msg(log_f, path, line, column, "invalid IP-address");
     return r;
   }
   return 0;
@@ -277,6 +288,22 @@ xml_make_ipv4(const ej_ip_t *p_addr)
   } else {
     return p_addr->u.v4.addr;
   }
+}
+
+int
+ipv6cmp(const ej_ip_t *pip1, const ej_ip_t *pip2)
+{
+  if (!pip1 && !pip2) return 0;
+  if (!pip1) return -1;
+  if (!pip2) return 1;
+  if (!pip1->ipv6_flag && !pip2->ipv6_flag) {
+    if (pip1->u.v4.addr < pip2->u.v4.addr) return -1;
+    if (pip1->u.v4.addr > pip2->u.v4.addr) return 1;
+    return 0;
+  }
+  if (!pip1->ipv6_flag) return -1;
+  if (!pip2->ipv6_flag) return 1;
+  return memcmp(pip1->u.v6.addr, pip2->u.v6.addr, sizeof(pip1->u.v6.addr));
 }
 
 /*

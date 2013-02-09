@@ -98,11 +98,14 @@ cmd_login(
     FAIL(NEW_SRV_ERR_INV_ROLE);
   phr->login = xstrdup(login);
 
+  ej_ip_t ipv6;
+  xml_make_ipv6(phr->ip, &ipv6);
+
   switch (phr->role) {
   case USER_ROLE_CONTESTANT:
     if (cnts->closed) 
       FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
-    if (!contests_check_team_ip(phr->contest_id, phr->ip, phr->ssl_flag))
+    if (!contests_check_team_ip(phr->contest_id, &ipv6, phr->ssl_flag))
       FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
     break;
   case USER_ROLE_OBSERVER:
@@ -110,11 +113,11 @@ cmd_login(
   case USER_ROLE_CHIEF_EXAMINER:
   case USER_ROLE_COORDINATOR:
   case USER_ROLE_JUDGE:
-    if (!contests_check_judge_ip(phr->contest_id, phr->ip, phr->ssl_flag))
+    if (!contests_check_judge_ip(phr->contest_id, &ipv6, phr->ssl_flag))
       FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
     break;
   case USER_ROLE_ADMIN:
-    if (!contests_check_master_ip(phr->contest_id, phr->ip, phr->ssl_flag))
+    if (!contests_check_master_ip(phr->contest_id, &ipv6, phr->ssl_flag))
       FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
     break;
   default:
@@ -2050,14 +2053,16 @@ new_server_cmd_handler(FILE *fout, struct http_request_info *phr)
     return -NEW_SRV_ERR_INV_ROLE;
 
   // analyze IP limitations
+  ej_ip_t ipv6;
+  xml_make_ipv6(phr->ip, &ipv6);
   if (phr->role == USER_ROLE_ADMIN) {
-    if (!contests_check_master_ip(phr->contest_id, phr->ip, phr->ssl_flag))
+    if (!contests_check_master_ip(phr->contest_id, &ipv6, phr->ssl_flag))
       return -NEW_SRV_ERR_PERMISSION_DENIED;
   } else if (phr->role == USER_ROLE_CONTESTANT) {
-    if (!contests_check_team_ip(phr->contest_id, phr->ip, phr->ssl_flag))
+    if (!contests_check_team_ip(phr->contest_id, &ipv6, phr->ssl_flag))
       return -NEW_SRV_ERR_PERMISSION_DENIED;
   } else {
-    if (!contests_check_judge_ip(phr->contest_id, phr->ip, phr->ssl_flag))
+    if (!contests_check_judge_ip(phr->contest_id, &ipv6, phr->ssl_flag))
       return -NEW_SRV_ERR_PERMISSION_DENIED;
   }
 

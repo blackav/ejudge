@@ -111,7 +111,7 @@ unparse_access(FILE *f, const struct contest_access *acc, int tag)
     fprintf(f, "    <%s %s=\"%s\"%s>%s</%s>\n",
             contests_elem_map[CONTEST_IP], contests_attr_map[CONTEST_A_ALLOW],
             ip->allow?"yes":"no", ssl_str,
-            xml_unparse_ip_mask(ip->addr, ip->mask),
+            xml_unparse_ipv6_mask(&ip->addr, &ip->mask),
             contests_elem_map[CONTEST_IP]);
   }
   fprintf(f, "  </%s>\n", contests_elem_map[tag]);
@@ -682,8 +682,8 @@ contests_add_ip(
         struct contest_desc *cnts,
         struct contest_access **p_acc,
         int tag,
-        ej_ip4_t addr,
-        ej_ip4_t mask,
+        const ej_ip_t *p_addr,
+        const ej_ip_t *p_mask,
         int ssl_flag,
         int default_allow)
 {
@@ -696,8 +696,8 @@ contests_add_ip(
     *p_acc = new_acc;
   }
   new_ip = (struct contest_ip*) contests_new_node(CONTEST_IP);
-  new_ip->addr = addr;
-  new_ip->mask = mask;
+  new_ip->addr = *p_addr;
+  new_ip->mask = *p_mask;
   new_ip->allow = default_allow;
   new_ip->ssl = ssl_flag;
   xml_link_node_last(&(*p_acc)->b, &new_ip->b);

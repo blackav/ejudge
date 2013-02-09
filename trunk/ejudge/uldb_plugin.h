@@ -94,7 +94,7 @@ struct uldb_plugin_iface
   int (*get_cookie)(void *, ej_cookie_t, const struct userlist_cookie **);
   // create a new cookie
   int (*new_cookie)(void *, int user_id,
-                    ej_ip4_t ip, int ssl_flag,
+                    const ej_ip_t *pip, int ssl_flag,
                     ej_cookie_t cookie, time_t,
                     int contest_id,
                     int locale_id,

@@ -636,7 +636,10 @@ main(int argc, char const *argv[])
   name_str = alloca(name_len + 16);
   html_armor_string(in_name_str, name_str);
 
-  if (!contests_check_users_ip(user_contest_id, user_ip, ssl_flag)) {
+  ej_ip_t ipv6;
+  xml_make_ipv6(user_ip, &ipv6);
+
+  if (!contests_check_users_ip(user_contest_id, &ipv6, ssl_flag)) {
     client_put_header(stdout, header_txt, 0, config->charset, 1,
                       client_locale_id, _("Permission denied"));
     printf("<h2>%s</h2>\n",_("You have no permissions to view this contest."));
