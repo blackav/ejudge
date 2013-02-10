@@ -2,7 +2,7 @@
 # $Id$
 # @configure_input@
 
-# Copyright (C) 2007-2009 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2007-2013 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -37,10 +37,10 @@ MSGMERGE=@MSGMERGE@
 MSGFMT=@MSGFMT@
 CHARSET=@CHARSET_UPPERCASE@
 
-REUSE_DIR=@ac_cv_reuse_root@
-REUSE_CONF=@ac_cv_reuse_config@
-REUSE_INCL_OPT=@ac_cv_reuse_include_opt@
-REUSE_LIB_OPT=@ac_cv_reuse_lib_opt@
+REUSE_DIR= #@ac_cv_reuse_root@
+REUSE_CONF= #@ac_cv_reuse_config@
+REUSE_INCL_OPT= #@ac_cv_reuse_include_opt@
+REUSE_LIB_OPT= #@ac_cv_reuse_lib_opt@
 
 WPTRSIGN=@ac_cv_gcc_wno_pointer_sign@
 WERROR=@ac_cv_werror_flag@
@@ -49,7 +49,7 @@ CC = gcc
 CFLAGS = -g -Wall -Werror $(WPTRSIGN) $(WERROR)
 
 PYTHONFLAGS = $(shell /usr/bin/python-config --includes)
-CBUILDFLAGS = -fPIC -DPIC -I .. -DPYTHON -D_GNU_SOURCE
+CBUILDFLAGS = -fPIC -DPIC -I .. -DPYTHON -D_GNU_SOURCE -std=gnu99
 
 include files.make
 

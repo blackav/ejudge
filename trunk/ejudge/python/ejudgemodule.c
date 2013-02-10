@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2007-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -345,7 +345,7 @@ Ul_do_login(int cmd, UlObject *self, PyObject *args)
   int ssl_flag, contest_id, locale_id, r, uid;
   const char *ip_str, *login, *password;
   unsigned char *name = 0;
-  ej_ip_t ip_val;
+  ej_ip_t ip_val = {};
   ej_cookie_t sid;
   PyObject *val = 0;
 
@@ -353,12 +353,12 @@ Ul_do_login(int cmd, UlObject *self, PyObject *args)
                         &contest_id, &locale_id, &login, &password))
     return 0;
 
-  if (xml_parse_ip(0, -1, 0, ip_str, &ip_val) < 0) {
+  if (xml_parse_ipv6(NULL, 0, -1, 0, ip_str, &ip_val) < 0) {
     PyErr_SetString(PyExc_ValueError, "invalid IP");
     return 0;
   }
 
-  if ((r = userlist_clnt_login(self->clnt, cmd, ip_val, ssl_flag, contest_id,
+  if ((r = userlist_clnt_login(self->clnt, cmd, &ip_val, ssl_flag, contest_id,
                                locale_id, login, password,
                                &uid, &sid, &name)) < 0) {
     if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
@@ -398,7 +398,7 @@ Ul_registerNew2(UlObject *self, PyObject *args)
 {
   const char *ip_str = 0, *login = 0, *email = 0, *self_url = 0;
   int ssl_flag = 0, contest_id = 0, locale_id = 0, action = 0, r, user_id = 0;
-  ej_ip_t ip_val = 0;
+  ej_ip_t ip_val = {};
   unsigned char *password = 0, *login_out = 0;
   PyObject *val = 0;
 
@@ -407,12 +407,12 @@ Ul_registerNew2(UlObject *self, PyObject *args)
                         &login, &email, &self_url))
     return 0;
 
-  if (xml_parse_ip(0, -1, 0, ip_str, &ip_val) < 0) {
+  if (xml_parse_ipv6(NULL, 0, -1, 0, ip_str, &ip_val) < 0) {
     PyErr_SetString(PyExc_ValueError, "invalid IP");
     return 0;
   }
 
-  if ((r = userlist_clnt_register_new_2(self->clnt, ip_val, ssl_flag,
+  if ((r = userlist_clnt_register_new_2(self->clnt, &ip_val, ssl_flag,
                                         contest_id, locale_id, action,
                                         login, email, self_url,
                                         &user_id, &login_out, &password)) < 0) {
@@ -552,18 +552,18 @@ static PyObject *
 Ul_registerContest(UlObject *self, PyObject *args)
 {
   int contest_id = 0, r, ssl_flag = 0;
-  ej_ip_t ip_val = 0;
+  ej_ip_t ip_val = {};
   const char *ip_str = 0;
 
   if (!PyArg_ParseTuple(args, "izi", &contest_id, &ip_str, &ssl_flag))
     return 0;
-  if (ip_str && xml_parse_ip(0, -1, 0, ip_str, &ip_val) < 0) {
+  if (ip_str && xml_parse_ipv6(NULL, 0, -1, 0, ip_str, &ip_val) < 0) {
     PyErr_SetString(PyExc_ValueError, "invalid IP");
     return 0;
   }
   if ((r = userlist_clnt_register_contest(self->clnt, ULS_REGISTER_CONTEST,
                                           0, contest_id,
-                                          ip_val, ssl_flag)) < 0) {
+                                          &ip_val, ssl_flag)) < 0) {
     if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
     return 0;
   }
@@ -589,18 +589,18 @@ static PyObject *
 Ul_privRegisterContest(UlObject *self, PyObject *args)
 {
   int user_id = 0, contest_id = 0, r, ssl_flag = 0;
-  ej_ip_t ip_val = 0;
+  ej_ip_t ip_val = {};
   const char *ip_str = 0;
 
   if (!PyArg_ParseTuple(args,"iizi",&user_id,&contest_id,&ip_str,&ssl_flag))
     return 0;
-  if (ip_str && xml_parse_ip(0, -1, 0, ip_str, &ip_val) < 0) {
+  if (ip_str && xml_parse_ipv6(NULL, 0, -1, 0, ip_str, &ip_val) < 0) {
     PyErr_SetString(PyExc_ValueError, "invalid IP");
     return 0;
   }
   if ((r = userlist_clnt_register_contest(self->clnt, ULS_REGISTER_CONTEST_2,
                                           user_id, contest_id,
-                                          ip_val, ssl_flag)) < 0) {
+                                          &ip_val, ssl_flag)) < 0) {
     if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
     return 0;
   }
@@ -695,7 +695,7 @@ Ul_do_get_cookie(int cmd, UlObject *self, PyObject *args)
   const char *ip_str = 0;
   unsigned char *login = 0, *name = 0;
   ej_cookie_t sid = 0;
-  ej_ip_t ip_val = 0;
+  ej_ip_t ip_val = {};
   int ssl_flag = 0, user_id = 0, contest_id = 0, locale_id = 0,
     priv_level = 0, role = 0, is_contest = 0, reg_status = 0,
     reg_flags = 0, r;
@@ -703,12 +703,12 @@ Ul_do_get_cookie(int cmd, UlObject *self, PyObject *args)
 
   if (!PyArg_ParseTuple(args, "siK", &ip_str, &ssl_flag, &sid))
     return 0;
-  if (xml_parse_ip(0, -1, 0, ip_str, &ip_val) < 0) {
+  if (xml_parse_ipv6(NULL, 0, -1, 0, ip_str, &ip_val) < 0) {
     PyErr_SetString(PyExc_ValueError, "invalid IP");
     return 0;
   }
   if ((r = userlist_clnt_get_cookie
-       (self->clnt, cmd, ip_val, ssl_flag, sid,
+       (self->clnt, cmd, &ip_val, ssl_flag, sid,
         &user_id, &contest_id, &locale_id, &priv_level,
         &role, &is_contest, &reg_status, &reg_flags, &login, &name)) < 0) {
     if (r == -ULS_ERR_NO_COOKIE) {
@@ -753,17 +753,17 @@ static PyObject *
 Ul_logout(UlObject *self, PyObject *args)
 {
   int ssl_flag = 0, r;
-  ej_ip_t ip_val = 0;
+  ej_ip_t ip_val = {};
   ej_cookie_t sid = 0;
   const char *ip_str = 0;
 
   if (!PyArg_ParseTuple(args, "siK", &ip_str, &ssl_flag, &sid))
     return 0;
-  if (xml_parse_ip(0, -1, 0, ip_str, &ip_val) < 0) {
+  if (xml_parse_ipv6(NULL, 0, -1, 0, ip_str, &ip_val) < 0) {
     PyErr_SetString(PyExc_ValueError, "invalid IP");
     return 0;
   }
-  if ((r = userlist_clnt_logout(self->clnt, ULS_DO_LOGOUT, ip_val, ssl_flag, sid)) < 0) {
+  if ((r = userlist_clnt_logout(self->clnt, ULS_DO_LOGOUT, &ip_val, ssl_flag, sid)) < 0) {
     if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
     return 0;
   }
@@ -775,18 +775,18 @@ Ul_do_priv_login(int cmd, UlObject *self, PyObject *args)
 {
   PyObject *val;
   const char *ip_str = 0, *login = 0, *password = 0;
-  ej_ip_t ip_val = 0;
+  ej_ip_t ip_val = {};
   ej_cookie_t sid = 0;
   unsigned char *name = 0;
   int ssl_flag = 0, contest_id = 0, locale_id = 0, role = 0, user_id = 0, priv_level_out = 0, r;
 
   if (!PyArg_ParseTuple(args, "siiiiss", &ip_str, &ssl_flag, &contest_id, &locale_id, &role, &login, &password))
     return 0;
-  if (xml_parse_ip(0, -1, 0, ip_str, &ip_val) < 0) {
+  if (xml_parse_ipv6(NULL, 0, -1, 0, ip_str, &ip_val) < 0) {
     PyErr_SetString(PyExc_ValueError, "invalid IP");
     return 0;
   }
-  if ((r = userlist_clnt_priv_login(self->clnt, cmd, ip_val, ssl_flag, contest_id, locale_id, role, login, password, &user_id, &sid, &priv_level_out, &name)) < 0) {
+  if ((r = userlist_clnt_priv_login(self->clnt, cmd, &ip_val, ssl_flag, contest_id, locale_id, role, login, password, &user_id, &sid, &priv_level_out, &name)) < 0) {
     if (r < -1) PyErr_SetString(PyExc_IOError, userlist_strerror(-r));
     return 0;
   }
@@ -1116,19 +1116,19 @@ Ul_loginBySID(UlObject *self, PyObject *args)
 {
   const char *ip_str = 0;
   ej_cookie_t sid = 0;
-  ej_ip_t ip_val = 0;
+  ej_ip_t ip_val = {};
   int ssl_flag = 0, user_id = 0, locale_id = 0, contest_id = 0, r;
   unsigned char *login = 0, *name = 0;
   PyObject *val;
 
   if (!PyArg_ParseTuple(args, "siK", &ip_str, &ssl_flag, &sid))
     return 0;
-  if (xml_parse_ip(0, -1, 0, ip_str, &ip_val) < 0) {
+  if (xml_parse_ipv6(NULL, 0, -1, 0, ip_str, &ip_val) < 0) {
     PyErr_SetString(PyExc_ValueError, "invalid IP");
     return 0;
   }
   if ((r = userlist_clnt_lookup_cookie
-       (self->clnt, ip_val, ssl_flag, sid,
+       (self->clnt, &ip_val, ssl_flag, sid,
         &user_id, &login, &name, &locale_id, &contest_id)) < 0) {
     if (r == -ULS_ERR_NO_COOKIE) {
       Py_RETURN_NONE;
@@ -1152,7 +1152,7 @@ Ul_contestLoginBySID(UlObject *self, PyObject *args)
 {
   const char *ip_str = 0;
   ej_cookie_t sid = 0;
-  ej_ip_t ip_val = 0;
+  ej_ip_t ip_val = {};
   int ssl_flag = 0, user_id = 0, locale_id = 0, contest_id = 0, r;
   int out_contest_id = 0;
   unsigned char *login = 0, *name = 0;
@@ -1160,12 +1160,12 @@ Ul_contestLoginBySID(UlObject *self, PyObject *args)
 
   if (!PyArg_ParseTuple(args, "siiK", &ip_str, &ssl_flag, &contest_id, &sid))
     return 0;
-  if (xml_parse_ip(0, -1, 0, ip_str, &ip_val) < 0) {
+  if (xml_parse_ipv6(NULL, 0, -1, 0, ip_str, &ip_val) < 0) {
     PyErr_SetString(PyExc_ValueError, "invalid IP");
     return 0;
   }
   if ((r = userlist_clnt_team_cookie
-       (self->clnt, ip_val, ssl_flag, contest_id, sid,
+       (self->clnt, &ip_val, ssl_flag, contest_id, sid,
         &user_id, &out_contest_id, &locale_id, &login, &name)) < 0) {
     if (r == -ULS_ERR_NO_COOKIE) {
       Py_RETURN_NONE;
@@ -1189,7 +1189,7 @@ Ul_privLoginBySID(UlObject *self, PyObject *args)
 {
   const char *ip_str = 0;
   ej_cookie_t sid = 0;
-  ej_ip_t ip_val = 0;
+  ej_ip_t ip_val = {};
   int ssl_flag = 0, user_id = 0, locale_id = 0, contest_id = 0, r;
   int out_contest_id = 0, priv_level = 0, out_priv_level = 0;
   unsigned char *login = 0, *name = 0;
@@ -1197,12 +1197,12 @@ Ul_privLoginBySID(UlObject *self, PyObject *args)
 
   if (!PyArg_ParseTuple(args, "siiKi", &ip_str, &ssl_flag, &contest_id, &sid, &priv_level))
     return 0;
-  if (xml_parse_ip(0, -1, 0, ip_str, &ip_val) < 0) {
+  if (xml_parse_ipv6(NULL, 0, -1, 0, ip_str, &ip_val) < 0) {
     PyErr_SetString(PyExc_ValueError, "invalid IP");
     return 0;
   }
   if ((r = userlist_clnt_priv_cookie
-       (self->clnt, ip_val, ssl_flag, contest_id, sid, priv_level,
+       (self->clnt, &ip_val, ssl_flag, contest_id, sid, priv_level,
         &user_id, &out_contest_id, &locale_id, &out_priv_level,
         &login, &name)) < 0) {
     if (r == -ULS_ERR_NO_COOKIE) {
