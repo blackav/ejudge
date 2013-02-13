@@ -1,3 +1,15 @@
+2013-02-09 (r7359) Alexander Chernov  <cher@ejudge.ru>
+
+	* team_cookie.c, priv_cookie_login.c, lookup_cookie.c, register_contest.c, get_uid_by_pid.c, get_uid_by_pid_2.c, recover_passwd_2.c, get_cookie.c, login.c, priv_login.c, logout.c, priv_cookie.c, list_users.c, register_new.c, register_new_2.c:
+	IPv6 support implementation is in progress...
+
+2013-02-05 (r7338) Alexander Chernov  <cher@ejudge.ru>
+
+	* team_cookie.c, priv_cookie_login.c, lookup_cookie.c, register_contest.c, get_uid_by_pid.c, get_uid_by_pid_2.c, recover_passwd_2.c, get_cookie.c, login.c, priv_login.c, logout.c, priv_cookie.c, list_users.c, register_new.c, register_new_2.c:
+	copyright notice is updated;
+	ej_ip_t -> ej_ip4_t;
+	transition to IPv6 support is started.
+
 2011-05-08 (r6315) Alexander Chernov  <cher@ejudge.ru>
 
 	* get_prev_user_id.c:

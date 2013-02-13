@@ -1,3 +1,316 @@
+2013-02-09 (r7361) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_html_7.c, filter_expr.y, super-serve.c, super_html.c, ej-import-contest.c, new_server_html_2.c, new_server_html_3.c, super-serve.h, new_server_html_4.c, super_html.h, new_server_html_5.c, teamdb.c, clntutil.c, new-server-cmd.c, users.c, teamdb.h, serve-control.c, new_server_html.c, clntutil.h, filter_tree.c, new-client.c, protocol.h, filter_tree.h, team_extra_xml.c, xml_utils.h, serve_state.h, team_extra.c, filter_eval.c, team_extra.h, new-server.h, contests.c, super_html_2.c, super_html_3.c, super_html_4.c, serve_2.c:
+	IPv6 suport is implemented.
+
+2013-02-09 (r7358) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html.c, new_server_html_4.c, new_server_html_5.c, teamdb.c, userlist-server.c, userlist_clnt.h, super-serve.c, users.c, serve-control.c, userlist_proto.h:
+	IPv6 support implementation is in progress...
+
+2013-02-09 (r7356) Alexander Chernov  <cher@ejudge.ru>
+
+	* contests_2.c, uldb_plugin_xml.c, xml_utils.h, new_server_html_3.c, new_server_html_4.c, new_server_html_5.c, super_html.h, userlist_xml.c, edit-userlist.c, users.c, contests.c, new_server_html.c, super_html_2.c, super_html_4.c, super_html_6.c, contests.h, uldb_plugin.h, contest_tmpl.c, userlist-server.c, userlist.h, super_html.c:
+	support for IPv6 is in progress...
+
+2013-02-08 (r7355) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html.c, new_server_html_2.c, new_server_html_4.c, runlog.c, runlog.h:
+	support for IPv6 is implemented (partially).
+
+2013-02-08 (r7352) Alexander Chernov  <cher@ejudge.ru>
+
+	* xml_utils.h:
+	(xml_parse_ipv6_2) new function prototype;
+	(xml_make_ipv6) new function prototype;
+	(xml_make_ipv4) new function prototype.
+
+	* clarlog.h:
+	IPv6 support is implemented for clars.
+
+	* clarlog.c, new_server_html.c, new_server_html_2.c:
+	IPv6 support is implemented for clars.
+
+2013-02-06 (r7343) Alexander Chernov  <cher@ejudge.ru>
+
+	* serve_2.c:
+	(serve_check_user_quota) off by one bug is fixed;
+	(serve_check_clar_quota) off by one bug is fixed.
+
+2013-02-05 (r7339) Alexander Chernov  <cher@ejudge.ru>
+
+	* teamdb.c, new-server-cmd.c, clntutil.c, rldb_plugin_file.c, users.c, teamdb.h, serve-control.c, userlist_proto.h, clntutil.h, filter_tree.c, new-client.c, protocol.h, uldb_plugin.h, filter_tree.h, contest_tmpl.c, userlist.h, cldb_plugin_file.c, contests_2.c, xml_utils.h, ej_types.h, team_extra.c, serve_state.h, edit-userlist.c, team_extra.h, userlist_clnt.h, contests.c, new-server.h, super_html_2.c, super_html_3.c, super_html_4.c, serve_2.c, runlog.c, contests.h, contests_meta.c, runlog.h, contests_meta.h, userlist-server.c, super-serve.c, super_html.c, ej-import-contest.c, clarlog.c, new_server_html_2.c, uldb_plugin_xml.c, super-serve.h, super-serve_meta.c, super_html.h, clarlog.h, super-serve_meta.h:
+	copyright notice is updated;
+	ej_ip_t -> ej_ip4_t;
+	transition to IPv6 support is started.
+
+2013-02-02 (r7334) Alexander Chernov  <cher@ejudge.ru>
+
+	* serve_2.c:
+	more rejudging tasks are implemented as background jobs.
+
+2013-01-29 (r7325) Alexander Chernov  <cher@ejudge.ru>
+
+	* serve_2.c:
+	background jobs are being implemented.
+
+2013-01-27 (r7321) Alexander Chernov  <cher@ejudge.ru>
+
+	* serve_state.h:
+	(serve_rejudge_by_mask) return type is changed;
+	'create_job_flag' parameter is added;
+	(serve_rejudge_problem) return type is changed;
+	'create_job_flag' parameter is added;
+	(serve_judge_suspended) return type is changed;
+	'create_job_flag' parameter is added.
+
+	* new_server_html.c:
+	calls of 'serve_judge_suspended', 'serve_rejudge_by_mask',
+	'serve_rejudge_problem' are updated.
+
+	* new_server_html_4.c:
+	calls of 'serve_judge_suspended' are updated.
+
+	* serve_2.c:
+	(serve_rejudge_by_mask) return type is changed;
+	'create_job_flag' parameter is added;
+	(serve_rejudge_problem) return type is changed;
+	'create_job_flag' parameter is added;
+	(serve_judge_suspended) return type is changed;
+	'create_job_flag' parameter is added.
+
+	* serve_state.c:
+	call of 'serve_judge_suspended' is updated.
+
+2013-01-27 (r7319) Alexander Chernov  <cher@ejudge.ru>
+
+	* server_framework.h:
+	(struct server_framework_job_funcs) 'get_status' method is added.
+
+	* new_server_html.c:
+	job status is printed.
+
+	* serve_2.c:
+	(rejudge_all_get_status) new function.
+
+2013-01-27 (r7317) Alexander Chernov  <cher@ejudge.ru>
+
+	* curtime.h: copyright notice is updated;
+	(get_current_time_ms) new function prototype.
+
+	* run_common.c:
+	(invoke_nwrun) better support for nwrun timeouts.
+
+2013-01-26 (r7313) Alexander Chernov  <cher@ejudge.ru>
+
+	* server_framework.h:
+	<time.h> is included;
+	(struct server_framework_job) fields 'start_time', 'title' are added.
+
+	* new_server_html.c:
+	(priv_main_page) the list of background jobs is printed.
+
+	* serve_2.c:
+	rejudge_all background functions are updated.
+
+2013-01-26 (r7308) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server.h:
+	(ns_add_job) new function prototype;
+	(ns_remove_job) new function prototype.
+
+	* serve_state.h:
+	(serve_rejudge_all) return type is changed;
+	  'create_job_flag' parameter is added.
+
+	* server_framework.h:
+	support for background jobs is added.
+
+	* new_server_html.c:
+	support for background jobs is added;
+	(ns_add_job) new function;
+	(ns_remove_job) new function;
+	(ns_loop_callback) background jobs are supported;
+	(priv_rejudge_all) background rejudge mode is supported;
+	(priv_confirmation_page) background rejudge mode is supported.
+
+	* new_server_html_4.c:
+	background rejudge mode is supported.
+
+	* serve_2.c:
+	"server_framework.h" is included;
+	support for background rejudge jobs is partially added.
+
+2013-01-26 (r7306) Alexander Chernov  <cher@ejudge.ru>
+
+	* new_server_html.c:
+	(unpriv_main_page) EOLN type selection dialog fixed.
+
+2013-01-26 (r7304) Alexander Chernov  <cher@ejudge.ru>
+
+	* run_common:
+	(run_one_test) added check for strange running time value.
+
+2013-01-25 (r7301) Alexander Chernov  <cher@ejudge.ru>
+
+	* new-server.h: copyright notice is updated;
+	(ns_loop_callback) return type changed to int.
+
+	* server_framework.h: copyright notice is updated;
+	(struct server_framework_params) 'loop_start' returns int.
+
+	* new_server_html.c:
+	(ns_loop_callback) only 100 packets are processed at a time.
+
+	* server_framework.c: copyright notice is updated;
+	(nsf_main_loop) responsiveness under high load is improved.
+
+2013-01-25 (r7296) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.c:
+	NULL pointer check is improved.
+
+2013-01-23 (r7293) Alexander Chernov  <cher@ejudge.ru>
+
+	* lang_config_vis.c: copyright notice is updated;
+	'is_dos' configuration option is added.
+
+2013-01-23 (r7290) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_proto.h:
+	editing of 'is_dos' language configuration variable is supported.
+
+	* serve-control.c, super_html_3.c, super-serve.c, super_proto.c:
+	editing of 'is_dos' language configuration variable is supported.
+
+2013-01-23 (r7288) Alexander Chernov  <cher@ejudge.ru>
+
+	* runlog.h:
+	(run_add_record) 'eoln_type' parameter is added.
+
+	* new_server_html.c, new_server_html_2.c, new_server_html_4.c:
+	selection of desired EOLN type is supported;
+	calls of run_add_record are updated.
+
+	* runlog.c:
+	(run_add_record) 'eoln_type' parameter is added.
+
+2013-01-23 (r7286) Alexander Chernov  <cher@ejudge.ru>
+
+	* super_proto.h:
+	editing of 'enable_eoln_select' global configuration variable
+	is supported.
+
+	* prepare.h:
+	(struct section_global_data) 'enable_eoln_select' field is added.
+
+	* prepare.c, prepare_out.c:
+	global configuration variable 'enable_eoln_select' is added.
+
+	* serve-control.c, super-serve.c, super_html_3.c, super_html_4.c, super_proto.c:
+	editing of 'enable_eoln_select' global configuration variable
+	is supported.
+
+2013-01-23 (r7284) Alexander Chernov  <cher@ejudge.ru>
+
+	* ej_types.h:
+	(eoln_type_unparse_html) new function prototype.
+
+	* html.h: copyright notice is updated;
+	'RUN_VIEW_EOLN_TYPE' is added.
+
+	* serve_state.h:
+	(serve_run_request) 'eoln_type' parameter is added.
+
+	* ej-batch.c: copyright notice is updated;
+	call of 'process_compile_packet' is updated.
+
+	* new_server_html.c: copyright notice is updated;
+	calls of 'serve_run_request' are updated.
+
+	* new_server_html_2.c: copyright notice is updated;
+	(ns_write_priv_all_runs) display of 'eoln_type' column is supported;
+	(ns_write_priv_source) display of 'eoln_type' is supported;
+	(ns_priv_edit_run_page) display of 'eoln_type' is supported;
+	(ns_priv_edit_run_action) editing of 'eoln_type' is supported.
+
+	* new_server_html_4.c: copyright notice is updated;
+	calls of 'serve_run_request' are updated.
+
+	* problem_common.c: copyright notice is updated;
+	(eoln_type_unparse_html) new function.
+
+	* serve_2.c:
+	(serve_run_request) 'eoln_type' parameter is added.
+
+2013-01-23 (r7281) Alexander Chernov  <cher@ejudge.ru>
+
+	* runlog.h: copyright notice is updated;
+	'eoln_type' field is added.
+
+	* ej_types.h: copyright notice is updated;
+	valid EOLN type enumeration is added.
+
+	* rldb_plugin_file.c: copyright notice is updated;
+	'eoln_type' field is added.
+
+	* runlog.c: copyright notice is updated;
+	'eoln_type' field is added.
+
+2013-01-22 (r7278) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h:
+	(struct section_language_data) 'is_dos' field is added.
+
+	* serve_state.h: copyright notice is updated;
+	(struct compile_run_extra) 'is_dos' field is added.
+
+	* super_run_packet.h: copyright notice is updated;
+	(struct super_run_in_global_packet) field 'is_dos' is added.
+
+	* prepare.c, prepare_out.c:
+	'is_dos' language configuration variable is added.
+
+	* run_common.c: copyright notice is updated;
+	(run_one_test) 'is_dos' global field is handled.
+
+	* serve_2.c: copyright notice is updated;
+	language 'is_dos' parameter is passed to run.
+
+	* super_run_packet.c: copyright notice is updated;
+	'is_dos' field is handled.
+
+2013-01-20 (r7274) Alexander Chernov  <cher@ejudge.ru>
+
+	* prepare.h: copyright notice is updated;
+	(struct section_problem_data) 'score_latest_marked' field is added.
+
+	* problem_config.h: copyright notice is updated;
+	(struct problem_config_section) 'score_latest_marked' field is added.
+
+	* super_proto.h: copyright notice is updated;
+	editing of 'score_latest_marked' problem configuration variable
+	is supported.
+
+	* ej-import-contest.c: copyright notice is updated;
+	'score_latest_marked' problem parameter is handled.
+
+	* prepare.c, prepare_out.c: copyright notice is updated;
+	'score_latest_marked' problem configuration variable is supported.
+
+	* serve-control.c, super-serve.c, super_html_3.c, super_html_4.c, super_proto.c: copyright notice is updated;
+	editing of 'score_latest_marked' problem configuration variable
+	is supported.
+
+2013-01-18 (r7270) Alexander Chernov  <cher@ejudge.ru>
+
+	* copyright.c: copyright notice is updated.
+
+2013-01-08 (r7268) Alexander Chernov  <cher@ejudge.ru>
+
+	* master_html.c, html.c:
+	skipped tests are excluded from verbose reporting
+
 2012-12-20 (r7259) Alexander Chernov  <cher@ejudge.ru>
 
 	* serve_state.h:

@@ -1,3 +1,19 @@
+2013-01-31 (r7329) Alexander Chernov  <cher@ejudge.ru>
+
+	* fileutl.c: copyright notice is updated;
+	(gzip_copy_file) a bug is fixed.
+
+2013-01-27 (r7315) Alexander Chernov  <cher@ejudge.ru>
+
+	* curtime.c: copyright notice is updated;
+	<stdlib.h> is included;
+	(get_current_time_ms) new function.
+
+2013-01-26 (r7303) Alexander Chernov  <cher@ejudge.ru>
+
+	* reuse_exec.c: copyright notice is updated;
+	a fix around strange value of ru_stime field of wait4 is added.
+
 2012-12-09 (r7223) Alexander Chernov  <cher@ejudge.ru>
 
 	* ej_process.c:

@@ -1,3 +1,23 @@
+2013-02-08 (r7354) Alexander Chernov  <cher@ejudge.ru>
+
+	* rldb_mysql.c, tables.inc.c:
+	support for IPv6 is implemented.
+
+2013-02-05 (r7339) Alexander Chernov  <cher@ejudge.ru>
+
+	* tables.inc.c:
+	copyright notice is updated;
+	ej_ip_t -> ej_ip4_t;
+	transition to IPv6 support is started.
+
+2013-01-23 (r7280) Alexander Chernov  <cher@ejudge.ru>
+
+	* rldb_mysql.c: copyright notice is updated;
+	'eoln_type' column is added;
+
+	* tables.inc.c: copyright notice is updated;
+	'eoln_type' column is added.
+
 2012-11-03 (r7124) Alexander Chernov  <cher@ejudge.ru>
 
 	* rldb_mysql.c:
