@@ -1,3 +1,15 @@
+2013-02-09 (r7356) Alexander Chernov  <cher@ejudge.ru>
+
+	* uldb_mysql.c, methods.inc.c, tables.inc.c:
+	support for IPv6 is in progress...
+
+2013-02-05 (r7339) Alexander Chernov  <cher@ejudge.ru>
+
+	* uldb_mysql.c, methods.inc.c:
+	copyright notice is updated;
+	ej_ip_t -> ej_ip4_t;
+	transition to IPv6 support is started.
+
 2012-05-04 (r6795) Alexander Chernov  <cher@ejudge.ru>
 
 	* uldb_mysql.c: copyright notice is updated;

@@ -1,3 +1,15 @@
+2013-02-08 (r7350) Alexander Chernov  <cher@ejudge.ru>
+
+	* cldb_mysql.c:
+	IPv6 support is added.
+
+2013-02-05 (r7339) Alexander Chernov  <cher@ejudge.ru>
+
+	* cldb_mysql.c:
+	copyright notice is updated;
+	ej_ip_t -> ej_ip4_t;
+	transition to IPv6 support is started.
+
 2012-11-17 (r7174) Alexander Chernov  <cher@ejudge.ru>
 
 	* cldb_mysql.c:

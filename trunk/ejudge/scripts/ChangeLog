@@ -1,3 +1,8 @@
+2013-01-23 (r7292) Alexander Chernov  <cher@ejudge.ru>
+
+	* Makefile.in, pasabc-linux.in, lang_ids.cfg, pasabc-linux-version.in:
+	support for Pascal ABC.NET under Mono is added.
+
 2012-11-20 (r7182) Alexander Chernov  <cher@ejudge.ru>
 
 	* make-vg-version.in, Makefile.in, make-version.in, make-vg.in, lang_ids.cfg:

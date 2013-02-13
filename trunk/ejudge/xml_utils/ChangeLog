@@ -1,3 +1,26 @@
+2013-02-09 (r7361) Alexander Chernov  <cher@ejudge.ru>
+
+	* parse_ip_mask.c, elem_ip_mask.c, parse_ip.c:
+	IPv6 suport is implemented.
+
+2013-02-09 (r7356) Alexander Chernov  <cher@ejudge.ru>
+
+	* parse_ip.c, parse_ip_mask.c, unparse_ip_mask.c:
+	support for IPv6 is in progress...
+
+2013-02-08 (r7351) Alexander Chernov  <cher@ejudge.ru>
+
+	* parse_ip.c:
+	(xml_parse_ipv6_2) new function;
+	(xml_make_ipv6) new function;
+	(xml_make_ipv4) new function.
+
+2013-02-05 (r7337) Alexander Chernov  <cher@ejudge.ru>
+
+	* parse_ip_mask.c, parse_ip.c, unparse_ip_mask.c, unparse_ip.c:
+	copyright notice is updated;
+	transition to IPv6 support started.
+
 2012-12-09 (r7228) Alexander Chernov  <cher@ejudge.ru>
 
 	* unparse_run_status.c:

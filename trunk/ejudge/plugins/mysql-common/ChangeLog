@@ -1,3 +1,15 @@
+2013-02-08 (r7349) Alexander Chernov  <cher@ejudge.ru>
+
+	* common_mysql.c:
+	IPv6 is supported.
+
+2013-02-05 (r7339) Alexander Chernov  <cher@ejudge.ru>
+
+	* common_mysql.c:
+	copyright notice is updated;
+	ej_ip_t -> ej_ip4_t;
+	transition to IPv6 support is started.
+
 2012-05-05 (r6799) Alexander Chernov  <cher@ejudge.ru>
 
 	* common_mysql.c: copyright notice is updated;

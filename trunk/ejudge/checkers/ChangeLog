@@ -1,3 +1,13 @@
+2013-01-20 (r7277) Alexander Chernov  <cher@ejudge.ru>
+
+	* gvaluer.cpp:
+	'skip' flag support is added.
+
+2013-01-20 (r7272) Alexander Chernov  <cher@ejudge.ru>
+
+	* gvaluer.cpp: copyright notice is updated;
+	'sets_marked' option is added.
+
 2012-12-11 (r7240) Alexander Chernov  <cher@ejudge.ru>
 
 	* gvaluer.cpp:
