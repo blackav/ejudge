@@ -274,7 +274,7 @@ write_html_run_status(
     test = pe->test;
   }
 
-  if (pe->prob_id > 0 && pe->prob_id <= state->max_prob)
+  if (pe->prob_id > 0 && pe->prob_id <= state->max_prob && state->probs)
     pr = state->probs[pe->prob_id];
   run_status_str(status, status_str, sizeof(status_str),
                  pr?pr->type:0, pr?pr->scoring_checker:0);
@@ -472,7 +472,7 @@ write_text_run_status(
     test = pe->test;
   }
 
-  if (pe->prob_id > 0 && pe->prob_id <= state->max_prob)
+  if (pe->prob_id > 0 && pe->prob_id <= state->max_prob && state->probs)
     pr = state->probs[pe->prob_id];
   run_status_to_str_short(status_str, sizeof(status_str), status);
   fprintf(f, "%s;", status_str);
@@ -593,7 +593,8 @@ new_write_user_runs(
     sprintf(cl, " class=\"%s\"", table_class);
   }
 
-  if (prob_id < 0 || prob_id > state->max_prob || !state->probs[prob_id])
+  if (prob_id < 0 || prob_id > state->max_prob 
+      || !state->probs || !state->probs[prob_id])
     prob_id = 0;
 
   if (global->is_virtual) {
@@ -647,7 +648,7 @@ new_write_user_runs(
     if (prob_id > 0 && re.prob_id != prob_id) continue;
 
     cur_prob = 0;
-    if (re.prob_id > 0 && re.prob_id <= state->max_prob)
+    if (re.prob_id > 0 && re.prob_id <= state->max_prob && state->probs)
       cur_prob = state->probs[re.prob_id];
     if (!cur_prob) continue;
 
@@ -1309,6 +1310,7 @@ get_problem_map(
   }
 
   for (i = 1, p_tot = 0; i < p_max; i++) {
+    if (!state->probs) continue;
     if (!(prob = state->probs[i])) continue;
     if (prob->hidden > 0) continue;
     if (prob->stand_column[0]) continue;
@@ -1542,6 +1544,7 @@ do_write_kirov_standings(
   get_problem_map(state, cur_time, p_rev, p_max, p_ind, &p_tot, &last_col_ind,
                   user_filter);
   for (i = 1; i < p_max; i++) {
+    if (!state->probs) continue;
     if (!(prob = state->probs[i]) || !prob->stand_column[0]) continue;
     if (prob->start_date > 0 && cur_time < prob->start_date) continue;
     for (j = 1; j < p_max; j++) {
