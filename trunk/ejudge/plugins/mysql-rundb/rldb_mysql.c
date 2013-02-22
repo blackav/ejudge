@@ -525,9 +525,9 @@ static struct rldb_plugin_cnts *
 close_func(struct rldb_plugin_cnts *cdata)
 {
   struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts*) cdata;
+  if (!cs) return 0;
   struct runlog_state *rls = cs->rl_state;
 
-  if (!cs) return 0;
   rls = cs->rl_state;
   if (rls) {
     xfree(rls->runs); rls->runs = 0;
