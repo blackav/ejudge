@@ -1,6 +1,6 @@
 #!/bin/sh
 # $Id$
-# Copyright (c) 2010 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2010-2013 Alexander Chernov <cher@ejudge.ru>
 
 # This is a `compilation' script for the Kumir language.
 # Usage: kumir <input> <output>
@@ -40,7 +40,8 @@ fi
 echo '#! /bin/sh' > "$2"
 echo 'cat <<__END__ > "${0}__"' >> "$2"
 cat "$1" >> "$2"
+echo >> "$2"
 echo '__END__' >> "$2"
 echo 'exec "'${KUMIRPATH}'" --run --program-encoding=UTF-8 --messages-encoding=UTF-8 "${0}__"' >> "$2"
-chmod +x $2
+chmod +x "$2"
 exit 0
