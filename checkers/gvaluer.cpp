@@ -81,6 +81,7 @@ class Group
     bool skip = false;
     int score = 0;
     int test_score = -1;
+    int pass_if_count = -1;
 
     int passed_count = 0;
     int total_score = 0;
@@ -115,9 +116,16 @@ public:
     void set_score(int score) { this->score = score; }
     int get_score() const { return score; }
 
+    void set_pass_if_count(int count) { this->pass_if_count = count; }
+    int get_pass_if_count() const { return pass_if_count; }
+
     void inc_passed_count() { ++passed_count; }
     int get_passed_count() const { return passed_count; }
-    bool is_passed() const { return passed_count == (last - first + 1); }
+    bool is_passed() const
+    {
+        if (pass_if_count > 0) return passed_count >= pass_if_count;
+        return passed_count == (last - first + 1);
+    }
 
     void set_comment(const string &comment_) { comment = comment_; }
     const string &get_comment() const { return comment; }
@@ -134,9 +142,6 @@ public:
     }
     int get_total_score() const { return total_score; }
 
-    void format_comment(const char *format, ...) __attribute__((format(printf, 2, 3)));
-    //void set_comment(const string &cmt) { comment = cmt; }
-
     int calc_score() const
     {
         if (test_score < 0 && passed_count == (last - first + 1)) {
@@ -147,18 +152,6 @@ public:
         return 0;
     }
 };
-
-void
-Group::format_comment(const char *format, ...)
-{
-    va_list args;
-    char buf[1024];
-
-    va_start(args, format);
-    snprintf(buf, sizeof(buf), format, args);
-    va_end(args);
-    comment = buf;
-}
 
 class ConfigParser
 {
@@ -248,10 +241,8 @@ public:
         scan_error("invalid character");
     }
 
-    void scan_error(const char *format, ...) const
-        __attribute__((noreturn, format(printf, 2, 3)));
-    void parse_error(const char *format, ...) const
-        __attribute__((noreturn, format(printf, 2, 3)));
+    void scan_error(const string &msg) const;
+    void parse_error(const string &msg) const;
 
     void parse_group()
     {
@@ -260,7 +251,8 @@ public:
         if (token != "group") parse_error("'group' expected");
         next_token();
         if (t_type != T_IDENT) parse_error("IDENT expected");
-        if (find_group(token) != NULL) parse_error("group %s already defined", token.c_str());
+        if (find_group(token) != NULL)
+            parse_error(string("group ") + token + " already defined");
         g.set_group_id(token);
         next_token();
         if (t_type != '{') parse_error("'{' expected");
@@ -348,6 +340,20 @@ public:
                 if (t_type != ';') parse_error("';' expected");
                 next_token();
                 g.set_test_score(test_score);
+            } else if (token == "pass_if_count") {
+                next_token();
+                if (t_type != T_IDENT) parse_error("NUM expected");
+                int count = -1;
+                try {
+                    count = stoi(token);
+                } catch (...) {
+                    parse_error("NUM expected");
+                }
+                if (count <= 0) parse_error("invalid pass_if_count");
+                next_token();
+                if (t_type != ';') parse_error("';' expected");
+                next_token();
+                g.set_pass_if_count(count);
             } else {
                 break;
             }
@@ -366,10 +372,10 @@ public:
         sort(groups.begin(), groups.end(), [](const Group &g1, const Group &g2) -> bool { return g1.get_first() < g2.get_first(); });
         for (int i = 1; i < int(groups.size()); ++i) {
             if (groups[i].get_first() <= groups[i - 1].get_last()) {
-                parse_error("groups %s and %s overlap", groups[i - 1].get_group_id().c_str(), groups[i].get_group_id().c_str());
+                parse_error(string("groups ") + groups[i - 1].get_group_id() + " and " + groups[i].get_group_id() + " overlap");
             }
             if (groups[i].get_first() != groups[i - 1].get_last() + 1) {
-                parse_error("hole between groups %s and %s", groups[i - 1].get_group_id().c_str(), groups[i].get_group_id().c_str());
+                parse_error(string("hole between groups ") + groups[i - 1].get_group_id() + " and " + groups[i].get_group_id());
             }
         }
         for (int i = 0; i < int(groups.size()); ++i) {
@@ -381,7 +387,7 @@ public:
                         break;
                 }
                 if (k >= i) {
-                    parse_error("no group %s before group %s", r[j].c_str(), groups[i].get_group_id().c_str());
+                    parse_error(string("no group ") + r[j] + " before group " + groups[i].get_group_id());
                 }
             }
         }
@@ -436,30 +442,22 @@ public:
 };
 
 void
-ConfigParser::parse_error(const char *format, ...) const
+ConfigParser::parse_error(const string &msg) const
 {
     va_list args;
     char buf[1024];
 
-    va_start(args, format);
-    snprintf(buf, sizeof(buf), format, args);
-    va_end(args);
-
-    fprintf(stderr, "%s: %d: %d: parse error: %s\n", path.c_str(), t_line, t_pos, buf);
+    fprintf(stderr, "%s: %d: %d: parse error: %s\n", path.c_str(), t_line, t_pos, msg.c_str());
     exit(RUN_CHECK_FAILED);
 }
 
 void
-ConfigParser::scan_error(const char *format, ...) const
+ConfigParser::scan_error(const string &msg) const
 {
     va_list args;
     char buf[1024];
 
-    va_start(args, format);
-    snprintf(buf, sizeof(buf), format, args);
-    va_end(args);
-
-    fprintf(stderr, "%s: %d: %d: scan error: %s\n", path.c_str(), c_line, c_pos, buf);
+    fprintf(stderr, "%s: %d: %d: scan error: %s\n", path.c_str(), c_line, c_pos, msg.c_str());
     exit(RUN_CHECK_FAILED);
 }
 
