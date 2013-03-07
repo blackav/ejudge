@@ -130,7 +130,7 @@ xml_parse_ipv6_mask(
   char *eptr = NULL;
   errno = 0;
   int m = strtol(slash + 1, &eptr, 10);
-  if (errno || m < 0 || m > 64) {
+  if (errno || m < 0 || m > 128) {
     xml_msg(log_f, path, line, column, "Invalid mask");
     return -1;
   }
