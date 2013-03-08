@@ -76,6 +76,7 @@ class Group
     int first = 0;
     int last = 0;
     vector<string> requires;
+    vector<string> sets_marked_if_passed;
     bool offline = false;
     bool sets_marked = false;
     bool skip = false;
@@ -103,6 +104,9 @@ public:
 
     void add_requires(const string &s) { requires.push_back(s); }
     const vector<string> &get_requires() const { return requires; }
+
+    void add_sets_marked_if_passed(const string &s) { sets_marked_if_passed.push_back(s); }
+    const vector<string> &get_sets_marked_if_passed() const { return sets_marked_if_passed; }
 
     void set_offline(bool offline) { this->offline = offline; }
     bool get_offline() const { return offline; }
@@ -297,6 +301,19 @@ public:
                 }
                 if (t_type != ';') parse_error("';' expected");
                 next_token();
+            } else if (token == "sets_marked_if_passed") {
+                next_token();
+                if (t_type != T_IDENT) parse_error("IDENT expected");
+                g.add_sets_marked_if_passed(token);
+                next_token();
+                while (t_type == ',') {
+                    next_token();
+                    if (t_type != T_IDENT) parse_error("IDENT expected");
+                    g.add_sets_marked_if_passed(token);
+                    next_token();
+                }
+                if (t_type != ';') parse_error("';' expected");
+                next_token();
             } else if (token == "offline") {
                 next_token();
                 if (t_type != ';') parse_error("';' expected");
@@ -391,6 +408,19 @@ public:
                 }
             }
         }
+        for (int i = 0; i < int(groups.size()); ++i) {
+            const vector<string> &r = groups[i].get_sets_marked_if_passed();
+            for (int j = 0; j < int(r.size()); ++j) {
+                int k;
+                for (k = 0; k <= i; ++k) {
+                    if (groups[k].get_group_id() == r[j])
+                        break;
+                }
+                if (k > i) {
+                    parse_error(string("no group ") + r[j] + " before group " + groups[i].get_group_id());
+                }
+            }
+        }
         int i;
         for (i = 0; i < int(groups.size()); ++i) {
             if (groups[i].get_offline())
@@ -444,9 +474,6 @@ public:
 void
 ConfigParser::parse_error(const string &msg) const
 {
-    va_list args;
-    char buf[1024];
-
     fprintf(stderr, "%s: %d: %d: parse error: %s\n", path.c_str(), t_line, t_pos, msg.c_str());
     exit(RUN_CHECK_FAILED);
 }
@@ -454,9 +481,6 @@ ConfigParser::parse_error(const string &msg) const
 void
 ConfigParser::scan_error(const string &msg) const
 {
-    va_list args;
-    char buf[1024];
-
     fprintf(stderr, "%s: %d: %d: scan error: %s\n", path.c_str(), c_line, c_pos, msg.c_str());
     exit(RUN_CHECK_FAILED);
 }
@@ -587,6 +611,17 @@ main(int argc, char *argv[])
         }
         if (g.get_sets_marked() && g.is_passed()) {
             valuer_marked = 1;
+        }
+        const vector<string> &smv = g.get_sets_marked_if_passed();
+        if (smv.size() > 0) {
+            bool failed = false;
+            for (const string &gn : smv) {
+                const Group *pg2 = parser.find_group(gn);
+                if (!pg2 || !pg2->is_passed()) {
+                    failed = true;
+                }
+            }
+            if (!failed) valuer_marked = 1;
         }
         if (g.get_offline()) {
             score += g.calc_score();
