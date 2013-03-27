@@ -801,7 +801,7 @@ check_str_2(
 
   if (!utf8_flag) {
     invset = (unsigned char*) alloca(256);
-    memset(invset, 0, sizeof(invset));
+    memset(invset, 0, 256);
 
     for (; *str; str++)
       if (!map[*str]) {

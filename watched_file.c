@@ -78,7 +78,7 @@ watched_file_clear(struct watched_file *pw)
 
   xfree(pw->text);
   xfree(pw->path);
-  memset(pw, 0, sizeof(pw));
+  memset(pw, 0, sizeof(*pw));
 }
 
 /*
