@@ -56,5 +56,5 @@ run_status_to_str_short(unsigned char *buf, size_t size, int val)
   if (val >= 0 && val <= RUN_LAST && tree_result_strs[val]) {
     return snprintf(buf, size, "%s", tree_result_strs[val]);
   }
-  return snprintf(buf, sizeof(buf), "result_%d", val);
+  return snprintf(buf, size, "result_%d", val);
 }

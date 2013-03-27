@@ -3358,7 +3358,7 @@ super_html_edit_access_rules(
 
   return 0;
 }
-static const char * contest_cap_descs[] =
+static const char * contest_cap_descs[OPCAP_LAST] =
 {
   [OPCAP_MASTER_LOGIN] = "Use the `master' CGI-program",
   [OPCAP_JUDGE_LOGIN] = "Use the `judge' CGI-program",
