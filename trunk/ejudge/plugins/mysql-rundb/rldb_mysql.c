@@ -381,10 +381,10 @@ load_runs(struct rldb_mysql_cnts *cs)
     return 0;
   }
   for (i = 0; i < md->row_count; i++) {
-    if (mi->next_row(md) < 0) goto fail;
     memset(&ri, 0, sizeof(ri));
     memset(sha1, 0, sizeof(sha1));
     memset(run_uuid, 0, sizeof(run_uuid));
+    if (mi->next_row(md) < 0) goto fail;
     mime_type = 0;
     if (mi->parse_spec(md, md->field_count, md->row, md->lengths,
                        RUNS_ROW_WIDTH, runs_spec, &ri) < 0)
