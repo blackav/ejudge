@@ -434,6 +434,7 @@ ipv6_to_run_entry(const ej_ip_t *p_ip, struct run_entry *p_re)
 {
   p_re->ipv6_flag = 0;
   memset(&p_re->a, 0, sizeof(p_re->a));
+  if (!p_ip) return;
   if (p_ip->ipv6_flag) {
     p_re->ipv6_flag = 1;
     memcpy(p_re->a.ipv6, p_ip->u.v6.addr, sizeof(p_re->a.ipv6));
