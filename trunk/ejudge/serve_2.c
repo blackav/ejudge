@@ -1089,7 +1089,7 @@ serve_compile_request(
       snprintf(tmp_path_2, sizeof(tmp_path_2), "%s", tmp_path);
     } else if (global->advanced_layout > 0) {
       get_advanced_layout_path(tmp_path_2, sizeof(tmp_path_2),
-                               global, prob, tmp_path, -1);
+                               global, prob, tmp_path, variant);
     } else {
       snprintf(tmp_path_2, sizeof(tmp_path_2), "%s/%s",
                global->statement_dir, tmp_path);
