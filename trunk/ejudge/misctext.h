@@ -3,7 +3,7 @@
 #ifndef __MISCTEXT_H__
 #define __MISCTEXT_H__
 
-/* Copyright (C) 2000-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -155,6 +155,9 @@ size_t ucs4_to_utf8_size(const int *in);
 
 const unsigned char *
 ucs4_to_utf8_str(unsigned char *buf, size_t size, const int *in);
+
+unsigned char *
+ucs4_to_utf8_char(unsigned char *buf, int value);
 
 unsigned char *get_nth_alternative(const unsigned char *txt, int n);
 

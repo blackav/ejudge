@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1341,6 +1341,30 @@ ucs4_to_utf8_size(const int *in)
   }
 
   return out_size;
+}
+
+unsigned char *
+ucs4_to_utf8_char(unsigned char *buf, int value)
+{
+  unsigned char *pout = buf;
+  if (value < 0 || value >= 0x10000) {
+    *pout++ = '?';
+  } else if (value <= 0x7f) {
+    *pout++ = value;
+  } else if (value <= 0x7ff) {
+    *pout++ = (value >> 6) | 0xc0;
+    *pout++ = (value & 0x3f) | 0x80;
+  } else if (value <= 0xffff) {
+    *pout++ = (value >> 12) | 0xe0;
+    *pout++ = ((value >> 6) & 0x3f) | 0x80;
+    *pout++ = (value & 0x3f) | 0x80;
+  } else {
+    *pout++ = ((value >> 18) & 0x07) | 0xf0;
+    *pout++ = ((value >> 12) & 0x3f) | 0x80;
+    *pout++ = ((value >> 6) & 0x3f) | 0x80;
+    *pout++ = (value & 0x3f) | 0x80;
+  }
+  return pout;
 }
 
 const unsigned char *
