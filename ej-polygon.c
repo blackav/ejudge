@@ -141,6 +141,7 @@ struct RevisionInfo
 struct PolygonState
 {
     unsigned char *ccid; // may be NULL for older versions of Polygon
+    unsigned char *ccid_amp; // "&ccid=CCID" or ""
 };
 
 enum
@@ -234,10 +235,10 @@ struct DownloadInterface
     int (*login_page)(struct DownloadData *data);
     int (*login_action)(struct DownloadData *data, struct PolygonState *ps);
     int (*problems_page)(struct DownloadData *data, struct PolygonState *ps);
-    int (*problem_info_page)(struct DownloadData *data, struct ProblemInfo *info);
-    int (*package_page)(struct DownloadData *data, const unsigned char *edit_session);
-    int (*create_full_package)(struct DownloadData *data, const unsigned char *edit_session);
-    int (*download_zip)(struct DownloadData *data, const unsigned char *zip_url, const unsigned char *edit_session);
+    int (*problem_info_page)(struct DownloadData *data, struct PolygonState *ps, struct ProblemInfo *info);
+    int (*package_page)(struct DownloadData *data, struct PolygonState *ps, const unsigned char *edit_session);
+    int (*create_full_package)(struct DownloadData *data, struct PolygonState *ps, const unsigned char *edit_session);
+    int (*download_zip)(struct DownloadData *data, struct PolygonState *ps, const unsigned char *zip_url, const unsigned char *edit_session);
 };
 
 #if CONF_HAS_LIBCURL - 0 == 1
@@ -252,6 +253,7 @@ struct DownloadData
     char *page_text;
     size_t page_size;
     char *effective_url;
+    char *clean_url;
 };
 
 static struct DownloadData *
@@ -321,6 +323,12 @@ curl_iface_get_func(struct DownloadData *data, const unsigned char *url)
         return res;
     }
     curl_easy_getinfo(data->curl, CURLINFO_EFFECTIVE_URL, &data->effective_url);
+    xfree(data->clean_url); data->clean_url = NULL;
+    if (data->effective_url) {
+        data->clean_url = xstrdup(data->effective_url);
+        char *p = strchr(data->clean_url, '?');
+        if (p) *p = 0;
+    }
     if (data->effective_url && strcmp(url, data->effective_url)) {
         fprintf(data->log_f, "Redirect: %s\n", data->effective_url);
     }
@@ -377,7 +385,7 @@ curl_iface_login_action_func(struct DownloadData *data, struct PolygonState *ps)
         goto cleanup;
     }
     password_esc = curl_easy_escape(data->curl, data->pkt->password, 0);
-    snprintf(param_buf, sizeof(param_buf), "submitted=true&login=%s&password=%s", login_esc, password_esc);
+    snprintf(param_buf, sizeof(param_buf), "submitted=true&login=%s&password=%s&submit=Login%s", login_esc, password_esc, ps->ccid_amp);
 
     curl_easy_setopt(data->curl, CURLOPT_AUTOREFERER, 1);
     curl_easy_setopt(data->curl, CURLOPT_FOLLOWLOCATION, 1);
@@ -396,7 +404,13 @@ curl_iface_login_action_func(struct DownloadData *data, struct PolygonState *ps)
         retval = 1;
         goto cleanup;
     }
-    if (!effective_url || !ends_with(effective_url, "/problems")) {
+    xfree(data->clean_url); data->clean_url = NULL;
+    if (effective_url) {
+        data->clean_url = xstrdup(effective_url);
+        char *p = strchr(data->clean_url, '?');
+        if (p) *p = 0;
+    }
+    if (!data->clean_url || !ends_with(data->clean_url, "/problems")) {
         fprintf(data->log_f, "polygon login action failed: invalid login or password?\n");
         retval = 1;
         goto cleanup;
@@ -416,9 +430,9 @@ curl_iface_problems_page_func(struct DownloadData *data, struct PolygonState *ps
 {
     unsigned char url_buf[1024];
 
-    snprintf(url_buf, sizeof(url_buf), "%s/problems", data->pkt->polygon_url);
+    snprintf(url_buf, sizeof(url_buf), "%s/problems?dummy=1%s", data->pkt->polygon_url, ps->ccid_amp);
     if (curl_iface_get_func(data, url_buf) != CURLE_OK) return 1;
-    if (!data->effective_url || !ends_with(data->effective_url, "/problems")) {
+    if (!data->clean_url || !ends_with(data->clean_url, "/problems")) {
         fprintf(data->log_f, "failed to retrieve problems page: redirected to %s\n", data->effective_url);
         return 1;
     }
@@ -427,21 +441,21 @@ curl_iface_problems_page_func(struct DownloadData *data, struct PolygonState *ps
 }
 
 static int
-curl_iface_problem_info_page_func(struct DownloadData *data, struct ProblemInfo *info)
+curl_iface_problem_info_page_func(struct DownloadData *data, struct PolygonState *ps, struct ProblemInfo *info)
 {
     unsigned char url_buf[1024];
 
     if (info->has_start) {
-        snprintf(url_buf, sizeof(url_buf), "%s/edit-start?problemId=%d&session=",
-                 data->pkt->polygon_url, info->problem_id);
+        snprintf(url_buf, sizeof(url_buf), "%s/edit-start?problemId=%d&session=%s",
+                 data->pkt->polygon_url, info->problem_id, ps->ccid_amp);
     } else if (info->continue_id) {
-        snprintf(url_buf, sizeof(url_buf), "%s/edit-continue?id=%d&session=",
-                 data->pkt->polygon_url, info->continue_id);
+        snprintf(url_buf, sizeof(url_buf), "%s/edit-continue?id=%d&session=%s",
+                 data->pkt->polygon_url, info->continue_id, ps->ccid_amp);
     } else {
         abort();
     }
     if (curl_iface_get_func(data, url_buf) != CURLE_OK) return 1;
-    if (!data->effective_url || !strstr(data->effective_url, "/generalInfo?")) {
+    if (!data->clean_url || !strstr(data->clean_url, "/generalInfo")) {
         fprintf(data->log_f, "failed to retrieve problems page: redirected to %s\n", data->effective_url);
         return 1;
     }
@@ -464,13 +478,13 @@ curl_iface_problem_info_page_func(struct DownloadData *data, struct ProblemInfo 
 }
 
 static int
-curl_iface_package_page_func(struct DownloadData *data, const unsigned char *edit_session)
+curl_iface_package_page_func(struct DownloadData *data, struct PolygonState *ps, const unsigned char *edit_session)
 {
     unsigned char url_buf[1024];
 
-    snprintf(url_buf, sizeof(url_buf), "%s/package?session=%s", data->pkt->polygon_url, edit_session);
+    snprintf(url_buf, sizeof(url_buf), "%s/package?session=%s%s", data->pkt->polygon_url, edit_session, ps->ccid_amp);
     if (curl_iface_get_func(data, url_buf) != CURLE_OK) return 1;
-    if (!data->effective_url || !strstr(data->effective_url, "/package?")) {
+    if (!data->clean_url || !strstr(data->clean_url, "/package")) {
         fprintf(data->log_f, "failed to retrieve problems page: redirected to %s\n", data->effective_url);
         return 1;
     }
@@ -478,22 +492,25 @@ curl_iface_package_page_func(struct DownloadData *data, const unsigned char *edi
 }
 
 static int
-curl_iface_create_full_package_func(struct DownloadData *data, const unsigned char *edit_session)
+curl_iface_create_full_package_func(struct DownloadData *data, struct PolygonState *ps, const unsigned char *edit_session)
 {
     unsigned char url_buf[1024];
 
-    snprintf(url_buf, sizeof(url_buf), "%s/package?action=create&createFull=true&session=%s", data->pkt->polygon_url, edit_session);
+    snprintf(url_buf, sizeof(url_buf), "%s/package?action=create&createFull=true&session=%s%s", data->pkt->polygon_url, edit_session,
+             ps->ccid_amp);
     if (curl_iface_get_func(data, url_buf) != CURLE_OK) return 1;
     // FIXME: check redirect URL
     return 0;
 }
 
 static int
-curl_iface_download_zip_func(struct DownloadData *data, const unsigned char *zip_url, const unsigned char *edit_session)
+curl_iface_download_zip_func(struct DownloadData *data, struct PolygonState *ps, const unsigned char *zip_url, const unsigned char *edit_session)
 {
     unsigned char url_buf[1024];
+    int sep_char = '?';
 
-    snprintf(url_buf, sizeof(url_buf), "%s/%s?session=%s", data->pkt->polygon_url, zip_url, edit_session);
+    if (strchr(zip_url, '?')) sep_char = '&';
+    snprintf(url_buf, sizeof(url_buf), "%s/%s%csession=%s", data->pkt->polygon_url, zip_url, sep_char, edit_session);
     if (curl_iface_get_func(data, url_buf) != CURLE_OK) return 1;
     return 0;
 }
@@ -680,6 +697,7 @@ polygon_state_free(struct PolygonState *ps)
 {
     if (!ps) return NULL;
     xfree(ps->ccid);
+    xfree(ps->ccid_amp);
     xfree(ps);
     return NULL;
 }
@@ -763,7 +781,7 @@ html_attribute_create(
 {
     struct HtmlAttribute *attr = NULL;
     XCALLOC(attr, 1);
-    if (len <= 0) {
+    if (len > 0) {
         attr->name = xmemdup(ptr, len);
     } else {
         attr->name = xstrdup(ptr);
@@ -825,6 +843,22 @@ html_element_free(struct HtmlElement *elem)
     }
     xfree(elem);
     return NULL;
+}
+
+static void
+html_element_print(struct HtmlElement *elem, FILE *out)
+    __attribute__((unused));
+static void
+html_element_print(struct HtmlElement *elem, FILE *out)
+{
+    if (!elem) return;
+    fprintf(out, "<%s", elem->name);
+    for (struct HtmlAttribute *p = elem->first_attr; p; p = p->next) {
+        // FIXME: do escaping
+        fprintf(out, " %s=\"%s\"", p->name, p->value);
+    }
+    if (elem->no_body) putc('/', out);
+    putc('>', out);
 }
 
 static int
@@ -967,7 +1001,7 @@ html_element_parse_start(
     if (!isspace(*p)) goto fail;
     elem = html_element_create(q, (int) (p - q));
     while (1) {
-        while (isspace(p)) ++p;
+        while (isspace(*p)) ++p;
         if (*p == '>') {
             ++p;
             break;
@@ -985,7 +1019,7 @@ html_element_parse_start(
         if (*p != '=') {
             // create an empty value attribute
             // FIXME: check attribute uniqueness
-            attr = html_attribute_create(r, (int) (q - r), NULL);
+            attr = html_attribute_create(q, (int) (r - q), NULL);
             LINK_LAST(attr, elem->first_attr, elem->last_attr, prev, next);
             attr = NULL;
             continue;
@@ -1014,7 +1048,7 @@ html_element_parse_start(
         } else {
             // create an empty value attribute
             // FIXME: check attribute uniqueness
-            attr = html_attribute_create(r, (int) (q - r), NULL);
+            attr = html_attribute_create(q, (int) (r - q), NULL);
             LINK_LAST(attr, elem->first_attr, elem->last_attr, prev, next);
             attr = NULL;
             continue;
@@ -1024,7 +1058,7 @@ html_element_parse_start(
         value_buf = malloc(((int) (value_end - value_start) + 1) * sizeof(*value_buf));
         if (!value_buf) goto fail;
         parse_html_decode(value_buf, value_start, value_end);
-        attr = html_attribute_create(r, (int) (q - r), value_buf);
+        attr = html_attribute_create(q, (int) (r - q), value_buf);
         LINK_LAST(attr, elem->first_attr, elem->last_attr, prev, next);
         attr = NULL; value_buf = NULL;
     }
@@ -1242,18 +1276,27 @@ process_login_page(
     struct HtmlAttribute *attr;
 
     while ((cur = strstr(text + pos, "<input"))) {
-        pos = (int)(cur - (text + pos));
+        pos = (int)(cur - text);
         elem = html_element_parse_start(text, pos, &pos);
         if (elem) {
             if ((attr = html_element_find_attribute(elem, "type")) && attr->value && !strcasecmp(attr->value, "hidden")
                 && (attr = html_element_find_attribute(elem, "name")) && attr->value && !strcasecmp(attr->value, "ccid")
                 && (attr = html_element_find_attribute(elem, "value")) && attr->value) {
                 ps->ccid = xstrdup(attr->value);
+                fprintf(stderr, "ccid: %s\n", ps->ccid);
                 elem = html_element_free(elem);
                 break;
             }
             elem = html_element_free(elem);
         }
+    }
+
+    if (ps->ccid) {
+        char buf[1024];
+        snprintf(buf, sizeof(buf), "&ccid=%s", ps->ccid);
+        ps->ccid_amp = xstrdup(buf);
+    } else {
+        ps->ccid_amp = xstrdup("");
     }
 
     return 0;
@@ -2376,6 +2419,7 @@ check_problem_status(
         const struct polygon_packet *pkt,
         const struct DownloadInterface *dif,
         struct DownloadData *ddata,
+        struct PolygonState *ps,
         const struct ZipInterface *zif,
         struct ProblemInfo *pi)
 {
@@ -2410,7 +2454,7 @@ check_problem_status(
         }
     }
 
-    if (dif->problem_info_page(ddata, pi)) {
+    if (dif->problem_info_page(ddata, ps, pi)) {
         fprintf(log_f, "failed to access problemInfo page\n");
         pi->state = STATE_FAILED;
         goto cleanup;
@@ -2420,7 +2464,7 @@ check_problem_status(
         pi->state = STATE_FAILED;
         goto cleanup;
     }
-    if (dif->package_page(ddata, pi->edit_session)) {
+    if (dif->package_page(ddata, ps, pi->edit_session)) {
         fprintf(log_f, "failed to access packages page\n");
         pi->state = STATE_FAILED;
         goto cleanup;
@@ -2432,7 +2476,7 @@ check_problem_status(
         goto cleanup;
     }
     if (!r) {
-        if (dif->create_full_package(ddata, pi->edit_session)) {
+        if (dif->create_full_package(ddata, ps, pi->edit_session)) {
             fprintf(log_f, "failed to start full package creation\n");
             pi->state = STATE_FAILED;
             goto cleanup;
@@ -2468,7 +2512,7 @@ check_problem_status(
     }
     if (strcasecmp(rinfo.state, "READY")) {
         fprintf(log_f, "unknown state '%s', restarting package creation\n", rinfo.state);
-        if (dif->create_full_package(ddata, pi->edit_session)) {
+        if (dif->create_full_package(ddata, ps, pi->edit_session)) {
             fprintf(log_f, "failed to start full package creation\n");
             pi->state = STATE_FAILED;
             goto cleanup;
@@ -2478,7 +2522,7 @@ check_problem_status(
     }
     if (!rinfo.linux_url) {
         fprintf(log_f, "Linux download link is missing, restarting package creation\n");
-        if (dif->create_full_package(ddata, pi->edit_session)) {
+        if (dif->create_full_package(ddata, ps, pi->edit_session)) {
             fprintf(log_f, "failed to start full package creation\n");
             pi->state = STATE_FAILED;
             goto cleanup;
@@ -2487,7 +2531,7 @@ check_problem_status(
         goto cleanup;
     }
 
-    if (dif->download_zip(ddata, rinfo.linux_url, pi->edit_session)) {
+    if (dif->download_zip(ddata, ps, rinfo.linux_url, pi->edit_session)) {
         fprintf(log_f, "download failed\n");
         pi->state = STATE_FAILED;
         goto cleanup;
@@ -2527,7 +2571,7 @@ check_problem_statuses(
 {
     int running_count = 0;
     for (int num = 0; num < info_count; ++num) {
-        running_count += check_problem_status(log_f, pkt, dif, ddata, zif, &infos[num]);
+        running_count += check_problem_status(log_f, pkt, dif, ddata, ps, zif, &infos[num]);
     }
     return running_count;
 }
