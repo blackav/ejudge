@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/10/23 08:27:16
+// Generated 2013/10/01 10:18:05
 
 #include "polygon_packet_meta.h"
 #include "polygon_packet.h"
@@ -34,6 +34,7 @@ static struct meta_info_item meta_info_polygon_packet_data[] =
   [META_POLYGON_PACKET_problem_xml_name] = { META_POLYGON_PACKET_problem_xml_name, 's', XSIZE(struct polygon_packet, problem_xml_name), "problem_xml_name", XOFFSET(struct polygon_packet, problem_xml_name) },
   [META_POLYGON_PACKET_testset] = { META_POLYGON_PACKET_testset, 's', XSIZE(struct polygon_packet, testset), "testset", XOFFSET(struct polygon_packet, testset) },
   [META_POLYGON_PACKET_language_priority] = { META_POLYGON_PACKET_language_priority, 's', XSIZE(struct polygon_packet, language_priority), "language_priority", XOFFSET(struct polygon_packet, language_priority) },
+  [META_POLYGON_PACKET_polygon_contest_id] = { META_POLYGON_PACKET_polygon_contest_id, 's', XSIZE(struct polygon_packet, polygon_contest_id), "polygon_contest_id", XOFFSET(struct polygon_packet, polygon_contest_id) },
   [META_POLYGON_PACKET_id] = { META_POLYGON_PACKET_id, 'x', XSIZE(struct polygon_packet, id), "id", XOFFSET(struct polygon_packet, id) },
   [META_POLYGON_PACKET_ejudge_id] = { META_POLYGON_PACKET_ejudge_id, 'x', XSIZE(struct polygon_packet, ejudge_id), "ejudge_id", XOFFSET(struct polygon_packet, ejudge_id) },
   [META_POLYGON_PACKET_ejudge_short_name] = { META_POLYGON_PACKET_ejudge_short_name, 'x', XSIZE(struct polygon_packet, ejudge_short_name), "ejudge_short_name", XOFFSET(struct polygon_packet, ejudge_short_name) },
