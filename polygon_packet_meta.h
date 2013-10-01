@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2012/10/23 08:27:16
+// Generated 2013/10/01 10:18:05
 
 #ifndef __POLYGON_PACKET_META_H__
 #define __POLYGON_PACKET_META_H__
@@ -29,6 +29,7 @@ enum
   META_POLYGON_PACKET_problem_xml_name,
   META_POLYGON_PACKET_testset,
   META_POLYGON_PACKET_language_priority,
+  META_POLYGON_PACKET_polygon_contest_id,
   META_POLYGON_PACKET_id,
   META_POLYGON_PACKET_ejudge_id,
   META_POLYGON_PACKET_ejudge_short_name,
