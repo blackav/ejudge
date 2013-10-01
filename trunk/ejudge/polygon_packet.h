@@ -3,7 +3,7 @@
 #ifndef __POLYGON_PACKET_H__
 #define __POLYGON_PACKET_H__
 
-/* Copyright (C) 2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -57,6 +57,7 @@ struct polygon_packet
     unsigned char *problem_xml_name;
     unsigned char *testset;
     unsigned char *language_priority;
+    unsigned char *polygon_contest_id;
 
     char **id;
     char **ejudge_id;
