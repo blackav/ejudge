@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2013/10/01 10:18:05
+// Generated 2013/10/02 11:57:41
 
 #ifndef __POLYGON_PACKET_META_H__
 #define __POLYGON_PACKET_META_H__
@@ -11,6 +11,7 @@ enum
   META_POLYGON_PACKET_sleep_interval = 1,
   META_POLYGON_PACKET_enable_max_stack_size,
   META_POLYGON_PACKET_create_mode,
+  META_POLYGON_PACKET_retry_count,
   META_POLYGON_PACKET_polygon_url,
   META_POLYGON_PACKET_login,
   META_POLYGON_PACKET_password,
