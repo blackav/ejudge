@@ -2,7 +2,7 @@
 # $Id$
 # @configure_input@
 
-# Copyright (C) 2000-2012 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2000-2013 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -409,14 +409,14 @@ pristine : distclean
 	rm -f configure
 
 version.c: revinfo $(HFILES) $(CFILES) $(OTHERFILES)
-	REVINFO_NO_COMMIT=1 ./revinfo -S -C -p -d db/versions -r db/revisions $(HFILES) $(CFILES) $(OTHERFILES)
+	@REVINFO_NO_COMMIT=1 ./revinfo -S -C -p -d db/versions -r db/revisions $(HFILES) $(CFILES) $(OTHERFILES)
 version.o: version.c
 
 new_revision: revinfo $(HFILES) $(CFILES) $(OTHERFILES)
-	./revinfo -S -C -d db/versions -r db/revisions $(HFILES) $(CFILES) $(OTHERFILES)
+	@./revinfo -S -C -d db/versions -r db/revisions $(HFILES) $(CFILES) $(OTHERFILES)
 
 new_version: revinfo force
-	./revinfo -S -C -n -d db/versions -r db/revisions $(HFILES) $(CFILES) $(OTHERFILES)
+	@./revinfo -S -C -n -d db/versions -r db/revisions $(HFILES) $(CFILES) $(OTHERFILES)
 force:
 
 revinfo: prjutils/revinfo.o
@@ -496,10 +496,10 @@ libnew_server_clnt.a: $(NEW_SERVER_CLNT_CFILES:.c=.o)
 	ar rcv $@ $^
 
 deps.make: cdeps ${CFILES} ${HFILES} filter_expr.c filter_expr.h filter_scan.c $(META_C_FILES) $(META_H_FILES)
-	./cdeps ${CFILES} filter_expr.c filter_scan.c > deps.make
+	@./cdeps ${CFILES} filter_expr.c filter_scan.c > deps.make
 
 tags : ${CFILES} ${HFILES} filter_expr.c filter_expr.h filter_scan.c 
-	ctags -e $^
+	@ctags -e $^
 
 filter_expr.c filter_expr.h : filter_expr.y
 	bison -l -o filter_expr.c -d -p filter_expr_ $<
