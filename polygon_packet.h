@@ -38,6 +38,7 @@ struct polygon_packet
     int sleep_interval;
     ejintbool_t enable_max_stack_size;
     ejintbool_t create_mode;
+    int retry_count;
 
     unsigned char *polygon_url;
     unsigned char *login;
