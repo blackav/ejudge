@@ -57,6 +57,7 @@
 #define DEFAULT_SLEEP_INTERVAL 10
 #define DEFAULT_PROBLEM_XML_NAME "problem.xml"
 #define DEFAULT_TESTSET     "tests"
+#define DEFAULT_RETRY_COUNT 10
 
 enum UpdateState
 {
@@ -69,6 +70,8 @@ enum UpdateState
     STATE_DOWNLOADED,
     STATE_UPDATED,
     STATE_ACTUAL,
+    STATE_UNCOMMITTED,
+    STATE_TIMEOUT,
 
     STATE_LAST,
 };
@@ -752,6 +755,8 @@ const unsigned char * update_statuses[] =
     [STATE_DOWNLOADED] = "DOWNLOADED",
     [STATE_UPDATED] = "UPDATED",
     [STATE_ACTUAL] = "ACTUAL",
+    [STATE_UNCOMMITTED] = "UNCOMMITTED",
+    [STATE_TIMEOUT] = "TIMEOUT",
 
     [STATE_LAST] = NULL,
 };
@@ -2552,6 +2557,28 @@ zip_error:
 }
 
 static int
+has_uncommitted_changes(const unsigned char *text)
+{
+    const unsigned char *cur = text;
+    int pos = 0;
+    struct HtmlElement *elem = NULL;
+    int result = 0;
+
+    while ((cur = strstr(text + pos, "<a"))) {
+        pos = (int)(cur - text);
+        elem = html_element_parse_start(text, pos, &pos);
+        if (elem) {
+            struct HtmlAttribute *attr = html_element_find_attribute(elem, "href");
+            if (attr && attr->value && !strncmp(attr->value, "/changes/", 9)) {
+                result = 1;
+            }
+        }
+        elem = html_element_free(elem);
+    }
+    return result;
+}
+
+static int
 check_problem_status(
         FILE *log_f,
         const struct polygon_packet *pkt,
@@ -2605,6 +2632,11 @@ check_problem_status(
     if (dif->package_page(ddata, ps, pi->edit_session)) {
         fprintf(log_f, "failed to access packages page\n");
         pi->state = STATE_FAILED;
+        goto cleanup;
+    }
+    if (has_uncommitted_changes(dif->get_page_text(ddata))) {
+        fprintf(log_f, "problem has uncommitted changes\n");
+        pi->state = STATE_UNCOMMITTED;
         goto cleanup;
     }
     int r = find_revision(log_f, dif->get_page_text(ddata), pi->latest_rev, &rinfo);
@@ -2724,6 +2756,7 @@ do_work(
     struct DownloadData *ddata = NULL;
     int retval = 0;
     struct PolygonState *ps = NULL;
+    int retry_count = 0;
 
     if ((retval = check_directories(log_f, pkt))) goto done;
 
@@ -2809,7 +2842,19 @@ do_work(
             break;
         }
 
+        if (retry_count > pkt->retry_count) {
+            fprintf(log_f, "number of retries exceeded the limit %d\n",
+                    pkt->retry_count);
+            for (int i = 0; i < probset->count; ++i) {
+                if (probset->infos[i].state == STATE_RUNNING) {
+                    probset->infos[i].state = STATE_TIMEOUT;
+                }
+            }
+            break;
+        }
+
         fprintf(log_f, "sleeping for %d seconds\n", pkt->sleep_interval);
+        ++retry_count;
         sleep(pkt->sleep_interval);
         if (sigint_caught) {
             fprintf(log_f, "exiting due to signal caught\n");
@@ -2903,6 +2948,9 @@ main(int argc, char **argv)
         fflush(f);
         if (ferror(f)) fatal("'pid_file' path '%s' write error", pkt->pid_file);
         fclose(f); f = NULL;
+    }
+    if (pkt->retry_count <= 0) {
+        pkt->retry_count = DEFAULT_RETRY_COUNT;
     }
 
     struct ProblemSet problem_set;
