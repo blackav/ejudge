@@ -7518,6 +7518,8 @@ super_html_edit_problems(
   } else {
     fprintf(f, " [<a href=\"%s?SID=%16llx&amp;action=%d&amp;op=%d\">Import from Polygon</a>]",
             self_url, session_id, SSERV_CMD_HTTP_REQUEST, SSERV_OP_IMPORT_FROM_POLYGON_PAGE);
+    fprintf(f, " [<a href=\"%s?SID=%16llx&amp;action=%d&amp;op=%d\">Import contest from Polygon</a>]",
+            self_url, session_id, SSERV_CMD_HTTP_REQUEST, SSERV_OP_IMPORT_CONTEST_FROM_POLYGON_PAGE);
   }
   fprintf(f, "</td></tr>\n");
   html_start_form(f, 1, self_url, hidden_vars);
