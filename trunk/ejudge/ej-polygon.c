@@ -52,7 +52,7 @@
 #include <zip.h>
 #endif
 
-#define DEFAULT_POLYGON_URL "http://codecenter.sgu.ru/polygon"
+#define DEFAULT_POLYGON_URL "https://polygon.codeforces.com"
 #define DEFAULT_ARCH        "$linux"
 #define DEFAULT_SLEEP_INTERVAL 10
 #define DEFAULT_PROBLEM_XML_NAME "problem.xml"
@@ -237,7 +237,7 @@ report_version(void)
 struct DownloadData;
 struct DownloadInterface
 {
-    struct DownloadData *(*create)(FILE *log_f, const struct DownloadInterface *iface, const struct polygon_packet *);
+    struct DownloadData *(*create)(FILE *log_f, const struct DownloadInterface *iface, struct polygon_packet *);
     struct DownloadData *(*cleanup)(struct DownloadData *data);
     unsigned char *(*get_page_text)(struct DownloadData *data);
     ssize_t (*get_page_size)(struct DownloadData *data);
@@ -258,7 +258,7 @@ struct DownloadData
     size_t size;
     FILE *log_f;
     const struct DownloadInterface *iface;
-    const struct polygon_packet *pkt;
+    struct polygon_packet *pkt;
     CURL *curl;
 
     char *page_text;
@@ -268,7 +268,7 @@ struct DownloadData
 };
 
 static struct DownloadData *
-curl_iface_create_func(FILE *log_f, const struct DownloadInterface *iface, const struct polygon_packet *pkt)
+curl_iface_create_func(FILE *log_f, const struct DownloadInterface *iface, struct polygon_packet *pkt)
 {
     struct DownloadData *data = NULL;
     XCALLOC(data, 1);
@@ -457,10 +457,10 @@ curl_iface_problem_info_page_func(struct DownloadData *data, struct PolygonState
     unsigned char url_buf[1024];
 
     if (info->has_start) {
-        snprintf(url_buf, sizeof(url_buf), "%s/edit-start?problemId=%d&session=%s",
+        snprintf(url_buf, sizeof(url_buf), "%s/edit-start?problemId=%d%s",
                  data->pkt->polygon_url, info->problem_id, ps->ccid_amp);
     } else if (info->continue_id) {
-        snprintf(url_buf, sizeof(url_buf), "%s/edit-continue?id=%d&session=%s",
+        snprintf(url_buf, sizeof(url_buf), "%s/edit-continue?id=%d%s",
                  data->pkt->polygon_url, info->continue_id, ps->ccid_amp);
     } else {
         abort();
@@ -2748,7 +2748,7 @@ check_problem_statuses(
 static int
 do_work(
         FILE *log_f,
-        const struct polygon_packet *pkt,
+        struct polygon_packet *pkt,
         struct ProblemSet *probset)
 {
     const struct DownloadInterface *dif = NULL;
@@ -2799,6 +2799,14 @@ do_work(
 
     if ((retval = dif->login_page(ddata)))
         goto done;
+
+    if (!ends_with(ddata->clean_url, "/login")) {
+        // fix polygon url
+        xfree(ddata->pkt->polygon_url);
+        ddata->pkt->polygon_url = xstrdup(ddata->clean_url);
+        if ((retval = dif->login_page(ddata)))
+            goto done;
+    }
 
     if ((retval = process_login_page(log_f, ps, ddata)))
         goto done;
