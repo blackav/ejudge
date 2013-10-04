@@ -11292,7 +11292,7 @@ super_serve_op_IMPORT_CONTEST_FROM_POLYGON_PAGE(
 
   fprintf(out_f, "<tr><td%s>%s:</td><td%s><input type=\"checkbox\" name=\"%s\" value=\"1\" checked=\"checked\" /></td></tr>\n",
           cl, "Save auth info", cl, "save_auth");
-  fprintf(out_f, "<tr><td%s><b>%s</b> *:</td><td%s><input type=\"text\" size=\"60\" name=\"contest_polygon_id\" /></td></tr>\n",
+  fprintf(out_f, "<tr><td%s><b>%s</b> *:</td><td%s><input type=\"text\" size=\"60\" name=\"polygon_contest_id\" /></td></tr>\n",
           cl, "Contest id/name", cl);
   fprintf(out_f, "<tr><td%s>%s:</td><td%s><input type=\"text\" size=\"60\" name=\"polygon_url\" value=\"%s\" /></td></tr>\n",
           cl, "Polygon URL", cl, ARMOR(saved_url));
