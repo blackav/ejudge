@@ -10271,7 +10271,7 @@ super_serve_op_DOWNLOAD_PROGRESS_PAGE(
             cl, "Key", cl, "Status", cl, "Polygon Id", cl, "Polygon Name");
     for (int i = 0; i < count; ++i) {
       if (statuses[i].status &&
-          (!strcmp(statuses[i].status, "ACTUAL") || !strcmp(statuses[i].status, "UPDATED"))) {
+          (!strcmp(statuses[i].status, "ACTUAL") || !strcmp(statuses[i].status, "UPDATED") || !strcmp(statuses[i].status, "ALREADY_EXISTS"))) {
         s = " bgcolor=\"#ddffdd\"";
         ++successes;
       } else {
@@ -10669,7 +10669,7 @@ super_serve_op_DOWNLOAD_CLEANUP_AND_IMPORT_ACTION(
   }
   for (int i = 0; i < count; ++i) {
     if (statuses[i].status &&
-        (!strcmp(statuses[i].status, "ACTUAL") || !strcmp(statuses[i].status, "UPDATED"))) {
+        (!strcmp(statuses[i].status, "ACTUAL") || !strcmp(statuses[i].status, "UPDATED") || !strcmp(statuses[i].status, "ALREADY_EXISTS"))) {
       ++successes;
     } else {
       ++failures;
