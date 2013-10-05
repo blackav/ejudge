@@ -3,7 +3,7 @@
 #ifndef __RUN_H__
 #define __RUN_H__
 
-/* Copyright (C) 2010-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -97,6 +97,7 @@ run_tests(
         char *full_report_path,           /* path to the full output dir */
         const unsigned char *user_spelling,
         const unsigned char *problem_spelling,
+        const unsigned char *mirror_dir,
         int utf8_mode);
 
 #endif /* __RUN_H__ */

@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -73,6 +73,7 @@ static unsigned char **ignored_archs = NULL;
 static struct ignored_problem_info *ignored_problems = NULL;
 
 static unsigned char **host_names = NULL;
+static unsigned char *mirror_dir = NULL;
 
 static void
 fatal(const char *format, ...)
@@ -284,7 +285,7 @@ handle_packet(
               exe_name, run_base,
               report_path, full_report_path,
               srgp->user_spelling,
-              srpp->spelling, utf8_mode);
+              srpp->spelling, mirror_dir, utf8_mode);
     //if (cr_serialize_unlock(state) < 0) return -1;
   }
 
@@ -434,7 +435,7 @@ write_help(void)
   printf("%s: ejudge testing super server\n"
          "Usage: %s [OPTIONS]\n"
          "  OPTIONS:\n"
-         "    --help       write message and exit\n"
+         "    --help       write this message and exit\n"
          "    --version    report version and exit\n"
          "    -u USER      specify the user to run under\n"
          "    -g GROUP     specify the group to run under\n"
@@ -443,7 +444,8 @@ write_help(void)
          "    -s ARCH      ignore specified architecture\n"
          "    -i CNTS:PROB ignore specified problem\n"
          "    -p DIR       specify alternate name for super-run directory\n"
-         "    -a           write log file to alternate location\n",
+         "    -a           write log file to an alternate location\n"
+         "    -m DIR       specify a directory for file mirroring",
          program_name, program_name);
   exit(0);
 }
@@ -901,6 +903,13 @@ main(int argc, char *argv[])
       if (cur_arg + 1 >= argc) fatal("argument expected for -p");
       xfree(super_run_dir); super_run_dir = NULL;
       super_run_dir = xstrdup(argv[cur_arg + 1]);
+      argv_restart[argc_restart++] = argv[cur_arg];
+      argv_restart[argc_restart++] = argv[cur_arg + 1];
+      cur_arg += 2;
+    } else if (!strcmp(argv[cur_arg], "-m")) {
+      if (cur_arg + 1 >= argc) fatal("argument expected for -m");
+      xfree(mirror_dir); mirror_dir = NULL;
+      mirror_dir = xstrdup(argv[cur_arg + 1]);
       argv_restart[argc_restart++] = argv[cur_arg];
       argv_restart[argc_restart++] = argv[cur_arg + 1];
       cur_arg += 2;
