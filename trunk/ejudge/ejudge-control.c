@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -253,9 +253,8 @@ command_start(
         task_AddArg(tsk, group);
       }
       if (workdir) {
-        snprintf(path, sizeof(path), "%s/compile", workdir);
         task_AddArg(tsk, "-C");
-        task_AddArg(tsk, path);
+        task_AddArg(tsk, workdir);
       }
       task_SetPathAsArg0(tsk);
       task_Start(tsk);

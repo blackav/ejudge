@@ -1121,7 +1121,7 @@ mirror_file(unsigned char *buf, int size, const unsigned char *mirror_dir)
 
   unsigned char mirror_path[PATH_MAX];
   const unsigned char *sep = "/";
-  if (mirror_dir[strlen(mirror_dir) - 1] == '/') sep = "";
+  if (mirror_dir[strlen(mirror_dir) - 1] == '/' || buf[0] == '/') sep = "";
   snprintf(mirror_path, sizeof(mirror_path), "%s%s%s", mirror_dir, sep, buf);
 
   struct stat dst_stbuf;
