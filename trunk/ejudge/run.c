@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -353,7 +353,7 @@ do_loop(void)
                 exe_name, run_base,
                 report_path, full_report_path,
                 srgp->user_spelling,
-                srpp->spelling, utf8_mode);
+                srpp->spelling, NULL /* mirror_dir */, utf8_mode);
       //if (cr_serialize_unlock(&serve_state) < 0) return -1;
 
       if (tst == &tn) {

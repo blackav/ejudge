@@ -54,6 +54,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <utime.h>
 #ifndef __MINGW32__
 #include <sys/vfs.h>
 #endif
@@ -1066,6 +1067,72 @@ get_num_prefix(int num)
   return '6';
 }
 
+static int
+copy_mirrored_file(unsigned char *buf, int size, const unsigned char *mirror_path, const struct stat *psrcstat)
+{
+  unsigned char dirname[PATH_MAX];
+  os_rDirName(mirror_path, dirname, sizeof(dirname));
+
+  struct stat dbuf;
+  if (stat(dirname, &dbuf) < 0) {
+    // create directory
+    if (os_MakeDirPath(dirname, 0700) < 0) {
+      err("cannot create mirror directory '%s'", dirname);
+      return -1;
+    }
+  }
+  if (stat(dirname, &dbuf) < 0) {
+    err("mirror directory '%s' does not exist", dirname);
+    return -1;
+  }
+  if (!S_ISDIR(dbuf.st_mode)) {
+    err("mirror directory '%s' is not a directory", dirname);
+    return -1;
+  }
+  if (generic_copy_file(0, NULL, buf, NULL, 0, NULL, mirror_path, NULL) < 0) {
+    return -1;
+  }
+  // update mtime
+  struct utimbuf ub = {};
+  ub.actime = psrcstat->st_atime;
+  ub.modtime = psrcstat->st_mtime;
+  if (utime(mirror_path, &ub) < 0) {
+    err("failed to change modification time of '%s': %s", mirror_path, os_ErrorMsg());
+    // ignore this error
+  }
+  if (chmod(mirror_path, psrcstat->st_mode & 0777) < 0) {
+    err("failed to change permissions of '%s': %s", mirror_path, os_ErrorMsg());
+    // ignore this error
+  }
+
+  snprintf(buf, size, "%s", mirror_path);
+  return 0;
+}
+
+static void
+mirror_file(unsigned char *buf, int size, const unsigned char *mirror_dir)
+{
+  if (!mirror_dir || !*mirror_dir) return;
+
+  // handle only existing regular files
+  struct stat src_stbuf;
+  if (stat(buf, &src_stbuf) < 0) return;
+  if (!S_ISREG(src_stbuf.st_mode)) return;
+
+  unsigned char mirror_path[PATH_MAX];
+  const unsigned char *sep = "/";
+  if (mirror_dir[strlen(mirror_dir) - 1] == '/') sep = "";
+  snprintf(mirror_path, sizeof(mirror_path), "%s%s%s", mirror_dir, sep, buf);
+
+  struct stat dst_stbuf;
+  if (stat(mirror_path, &dst_stbuf) < 0 || dst_stbuf.st_size != src_stbuf.st_size || dst_stbuf.st_mtime < src_stbuf.st_mtime) {
+    copy_mirrored_file(buf, size, mirror_path, &src_stbuf);
+    return;
+  }
+  info("using mirrored copy of '%s' in '%s'", buf, mirror_path);
+  snprintf(buf, size, "%s", mirror_path);
+}
+
 static const unsigned char b32_digits[]=
 "0123456789ABCDEFGHIJKLMNOPQRSTUV";
 
@@ -1880,7 +1947,8 @@ run_one_test(
         int *p_has_real_time,
         int *p_has_max_memory_used,
         long *p_report_time_limit_ms,
-        long *p_report_real_time_limit_ms)
+        long *p_report_real_time_limit_ms,
+        const unsigned char *mirror_dir)
 {
   const struct section_global_data *global = state->global;
 
@@ -2113,6 +2181,7 @@ run_one_test(
   if (is_dos > 0 && srpp->binary_input <= 0) copy_flag = CONVERT;
 
   /* copy the test */
+  mirror_file(test_src, sizeof(test_src), mirror_dir);
   if (generic_copy_file(0, NULL, test_src, "", copy_flag, check_dir, srpp->input_file, "") < 0) {
     append_msg_to_log(check_out_path, "failed to copy test file %s -> %s/%s",
                       test_src, check_dir, srpp->input_file);
@@ -2616,6 +2685,9 @@ run_checker:;
 
   file_size = -1;
   if (srpp->use_corr > 0) {
+    if (corr_src[0]) {
+      mirror_file(corr_src, sizeof(corr_src), mirror_dir);
+    }
     if (srgp->enable_full_archive > 0) {
       filehash_get(corr_src, cur_info->correct_digest);
       cur_info->has_correct_digest = 1;
@@ -3139,6 +3211,7 @@ run_tests(
         char *full_report_path,           /* path to the full output dir */
         const unsigned char *user_spelling,
         const unsigned char *problem_spelling,
+        const unsigned char *mirror_dir,
         int utf8_mode)
 {
   const struct section_global_data *global = state->global;
@@ -3363,7 +3436,8 @@ run_tests(
                           test_score_count, test_score_val,
                           expected_free_space,
                           &has_real_time, &has_max_memory_used,
-                          &report_time_limit_ms, &report_real_time_limit_ms);
+                          &report_time_limit_ms, &report_real_time_limit_ms,
+                          mirror_dir);
     if (status < 0) {
       status = RUN_OK;
       break;
