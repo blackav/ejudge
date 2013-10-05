@@ -1105,6 +1105,7 @@ copy_mirrored_file(unsigned char *buf, int size, const unsigned char *mirror_pat
     // ignore this error
   }
 
+  info("using mirrored file '%s'", mirror_path);
   snprintf(buf, size, "%s", mirror_path);
   return 0;
 }
