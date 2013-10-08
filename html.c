@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -5645,7 +5645,7 @@ write_xml_team_accepting_report(FILE *f, const unsigned char *txt,
       fprintf(f, "%s", s);
       xfree(s);
     }
-    if (t->correct) {
+    if (t->error) {
       fprintf(f, "<a name=\"%dE\"></a>", t->num);
       fprintf(f, _("<u>--- Stderr ---</u>\n"));
       s = html_armor_string_dup(t->error);
