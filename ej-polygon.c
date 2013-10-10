@@ -92,6 +92,16 @@ struct HtmlElement
     int no_body; // 1, if <elem /> case
 };
 
+static struct HtmlElement *
+html_element_parse_start(
+        const unsigned char *text,
+        int start_pos,
+        int *p_end_pos);
+static struct HtmlAttribute *
+html_element_find_attribute(struct HtmlElement *elem, const unsigned char *name);
+static struct HtmlElement *
+html_element_free(struct HtmlElement *elem);
+
 struct ProblemInfo
 {
     int key_id;
@@ -243,13 +253,14 @@ struct DownloadInterface
     ssize_t (*get_page_size)(struct DownloadData *data);
     int (*login_page)(struct DownloadData *data);
     int (*login_action)(struct DownloadData *data, struct PolygonState *ps);
-    int (*problems_page)(struct DownloadData *data, struct PolygonState *ps);
+    int (*problems_page)(struct DownloadData *data, struct PolygonState *ps, int page);
     int (*problem_info_page)(struct DownloadData *data, struct PolygonState *ps, struct ProblemInfo *info);
     int (*package_page)(struct DownloadData *data, struct PolygonState *ps, const unsigned char *edit_session);
     int (*create_full_package)(struct DownloadData *data, struct PolygonState *ps, const unsigned char *edit_session);
     int (*download_zip)(struct DownloadData *data, struct PolygonState *ps, const unsigned char *zip_url, const unsigned char *edit_session);
     int (*contests_page)(struct DownloadData *data, struct PolygonState *ps);
     int (*contest_page)(struct DownloadData *data, struct PolygonState *ps, int contest_id);
+    int (*problems_multi_page)(FILE *log_f, struct DownloadData *data, struct PolygonState *ps);
 };
 
 #if CONF_HAS_LIBCURL - 0 == 1
@@ -437,11 +448,16 @@ cleanup:
 }
 
 static int
-curl_iface_problems_page_func(struct DownloadData *data, struct PolygonState *ps)
+curl_iface_problems_page_func(struct DownloadData *data, struct PolygonState *ps, int page)
 {
     unsigned char url_buf[1024];
+    unsigned char page_buf[64];
 
-    snprintf(url_buf, sizeof(url_buf), "%s/problems?dummy=1%s", data->pkt->polygon_url, ps->ccid_amp);
+    page_buf[0] = 0;
+    if (page > 0) {
+        snprintf(page_buf, sizeof(page_buf), "&page=%d", page);
+    }
+    snprintf(url_buf, sizeof(url_buf), "%s/problems?dummy=1%s%s", data->pkt->polygon_url, ps->ccid_amp, page_buf);
     if (curl_iface_get_func(data, url_buf) != CURLE_OK) return 1;
     if (!data->clean_url || !ends_with(data->clean_url, "/problems")) {
         fprintf(data->log_f, "failed to retrieve problems page: redirected to %s\n", data->effective_url);
@@ -449,6 +465,87 @@ curl_iface_problems_page_func(struct DownloadData *data, struct PolygonState *ps
     }
 
     return 0;
+}
+
+static int
+count_problem_pages(const unsigned char *text)
+{
+    const unsigned char *cur;
+    int pos = 0;
+    struct HtmlElement *elem = NULL;
+    struct HtmlElement *elem2 = NULL;
+    struct HtmlAttribute *attr;
+    int max_page_num = -1;
+
+    while ((cur = strstr(text + pos, "<div "))) {
+        pos = (int)(cur - text);
+        elem = html_element_parse_start(text, pos, &pos);
+        if (elem && (attr = html_element_find_attribute(elem, "class")) && attr->value && !strcasecmp(attr->value, "pagination")) {
+            if (!(cur = strstr(text + pos, "</div>"))) goto fail;
+            int endpos = (int)(cur - text);
+
+            while ((cur = strstr(text + pos, "<a "))) {
+                pos = (int)(cur - text);
+                if (pos > endpos) break;
+
+                elem2 = html_element_parse_start(text, pos, &pos);
+                if (elem2 && (attr = html_element_find_attribute(elem2, "href")) && attr->value) {
+                    const unsigned char *p = strstr(attr->value, "?page=");
+                    if (p) {
+                        int n, x;
+                        if (sscanf(p + 6, "%d%n", &x, &n) == 1 && (p[n + 6] == '&' || p[n + 6] == 0)) {
+                            if (x >= 1 && x < 100000 && x > max_page_num) {
+                                max_page_num = x;
+                            }
+                        }
+                    }
+                }
+                elem2 = html_element_free(elem2);
+            }
+
+            pos = endpos;
+        }
+        elem = html_element_free(elem);
+    }
+    return max_page_num;
+
+fail:
+    elem = html_element_free(elem);
+    elem2 = html_element_free(elem2);
+    return 0;
+}
+
+static int
+curl_iface_problems_multi_page_func(FILE *log_f, struct DownloadData *data, struct PolygonState *ps)
+{
+    int retval = 0;
+    unsigned char *merged_pages = NULL;
+
+    if ((retval = curl_iface_problems_page_func(data, ps, 0))) {
+        goto done;
+    }
+
+    int page_count = count_problem_pages(data->iface->get_page_text(data));
+    if (page_count <= 1) return 0;
+
+    fprintf(log_f, "Problems listing has %d pages\n", page_count);
+
+    // just concatenate pages
+    merged_pages = data->page_text; data->page_text = NULL;
+    for (int page = 2; page <= page_count; ++page) {
+        if ((retval = curl_iface_problems_page_func(data, ps, page))) {
+            goto done;
+        }
+        merged_pages = xstrmerge1(merged_pages, data->page_text);
+    }
+
+    xfree(data->page_text);
+    data->page_text = merged_pages;
+    merged_pages = NULL;
+
+done:
+    xfree(merged_pages);
+    return retval;
 }
 
 static int
@@ -571,6 +668,7 @@ static const struct DownloadInterface curl_download_interface =
     curl_iface_download_zip_func,
     curl_iface_contests_page_func,
     curl_iface_contest_page_func,
+    curl_iface_problems_multi_page_func,
 };
 
 static const struct DownloadInterface *
@@ -2827,10 +2925,10 @@ do_work(
 
         if ((retval = process_contest_page(log_f, ps, ddata, probset)))
             goto done;
-
-        if ((retval = dif->problems_page(ddata, ps)))
-            goto done;
     }
+
+    if ((retval = dif->problems_multi_page(log_f, ddata, ps)))
+        goto done;
 
     if (probset->count <= 0) {
         fprintf(log_f, "no problems to update\n");
@@ -2869,7 +2967,7 @@ do_work(
             break;
         }
 
-        if ((retval = dif->problems_page(ddata, ps)))
+        if ((retval = dif->problems_multi_page(log_f, ddata, ps)))
             goto done;
     }
 
