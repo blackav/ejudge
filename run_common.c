@@ -3342,6 +3342,7 @@ run_tests(
   } else {
     snprintf(check_cmd, sizeof(check_cmd), "%s", srpp->check_cmd);
   }
+  mirror_file(check_cmd, sizeof(check_cmd), mirror_dir);
 
   if ((!srpp->standard_checker || !srpp->standard_checker[0])
       && (!srpp->check_cmd || !srpp->check_cmd[0])) {
