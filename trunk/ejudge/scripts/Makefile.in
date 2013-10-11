@@ -68,6 +68,8 @@ SCRIPTS_IN = \
  g++-version.in\
  g++-vg.in\
  g++-vg-version.in\
+ g++-32.in\
+ g++-32-version.in\
  g77.in\
  g77-version.in\
  gfortran.in\
@@ -76,6 +78,8 @@ SCRIPTS_IN = \
  gcc-version.in\
  gcc-vg.in\
  gcc-vg-version.in\
+ gcc-32.in\
+ gcc-32-version.in\
  gcj.in\
  gcj-version.in\
  gpc.in\
