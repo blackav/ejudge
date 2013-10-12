@@ -1598,6 +1598,11 @@ process_problem_row(
                 if (p) {
                     sscanf(p + 3, "%d", &pi->continue_id);
                 }
+            } else if (strstr(a_tags[i].text, "Continue ")) {
+                unsigned char *p = strstr(a_tags[i].url, "id=");
+                if (p) {
+                    sscanf(p + 3, "%d", &pi->continue_id);
+                }
             } else if (!strcmp(a_tags[i].text, "Discard")) {
                 unsigned char *p = strstr(a_tags[i].url, "id=");
                 if (p) {
