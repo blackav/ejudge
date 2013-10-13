@@ -137,6 +137,7 @@ struct ProblemInfo
     unsigned char *check_cmd;
     unsigned char *test_checker_cmd;
     unsigned char *solution_cmd;
+    unsigned char *interactor_cmd;
 };
 
 struct RevisionInfo
@@ -880,24 +881,26 @@ free_problem_infos(struct ProblemSet *probset)
 {
     if (!probset->infos || probset->count <= 0) return;
     for (int i = 0; i < probset->count; ++i) {
-        xfree(probset->infos[i].key_name);
-        xfree(probset->infos[i].ejudge_short_name);
-        xfree(probset->infos[i].problem_name);
-        xfree(probset->infos[i].author);
-        xfree(probset->infos[i].edit_session);
-        xfree(probset->infos[i].long_name_en);
-        xfree(probset->infos[i].long_name_ru);
-        xfree(probset->infos[i].input_file);
-        xfree(probset->infos[i].output_file);
-        xfree(probset->infos[i].input_path_pattern);
-        xfree(probset->infos[i].answer_path_pattern);
-        xfree(probset->infos[i].test_pat);
-        xfree(probset->infos[i].corr_pat);
-        xfree(probset->infos[i].standard_checker);
-        xfree(probset->infos[i].checker_env);
-        xfree(probset->infos[i].check_cmd);
-        xfree(probset->infos[i].test_checker_cmd);
-        xfree(probset->infos[i].solution_cmd);
+        struct ProblemInfo *pi = &probset->infos[i];
+        xfree(pi->key_name);
+        xfree(pi->ejudge_short_name);
+        xfree(pi->problem_name);
+        xfree(pi->author);
+        xfree(pi->edit_session);
+        xfree(pi->long_name_en);
+        xfree(pi->long_name_ru);
+        xfree(pi->input_file);
+        xfree(pi->output_file);
+        xfree(pi->input_path_pattern);
+        xfree(pi->answer_path_pattern);
+        xfree(pi->test_pat);
+        xfree(pi->corr_pat);
+        xfree(pi->standard_checker);
+        xfree(pi->checker_env);
+        xfree(pi->check_cmd);
+        xfree(pi->test_checker_cmd);
+        xfree(pi->solution_cmd);
+        xfree(pi->interactor_cmd);
     }
     xfree(probset->infos);
     probset->count = 0;
@@ -2502,6 +2505,36 @@ process_polygon_zip(
                             *q = 0;
                         }
                     }
+                } else if (!strcmp(t2->name[0], "interactor")) {
+
+                    const unsigned char *src_path = NULL;
+                    for (struct xml_tree *t3 = t2->first_down; t3; t3 = t3->right) {
+                        if (!strcmp(t3->name[0], "source")) {
+                            for (a = t3->first; a; a = a->next) {
+                                if (!strcmp(a->name[0], "path")) {
+                                    src_path = a->text;
+                                }
+                            }
+                        }
+                    }
+                    if (!src_path) {
+                        fprintf(log_f, "source path is undefined for the checker\n");
+                        goto zip_error;
+                    }
+
+                    if (!(s = strrchr(src_path, '/'))) {
+                        s = src_path;
+                    } else {
+                        ++s;
+                    }
+                    unsigned char dst_path[PATH_MAX];
+                    snprintf(dst_path, sizeof(dst_path), "%s/%s", problem_path, s);
+                    if (copy_from_zip(log_f, pkt, zif, zid, zip_path, src_path, dst_path)) goto zip_error;
+                    pi->interactor_cmd = xstrdup(s);
+                    unsigned char *q;
+                    if ((q = strrchr(pi->check_cmd, '.'))) {
+                        *q = 0;
+                    }
                 } else if (!strcmp(t2->name[0], "validator")) {
                     struct xml_tree *t3 = get_elem_by_name(t2, "source");
                     if (t3) {
@@ -2561,6 +2594,7 @@ process_polygon_zip(
     fprintf(log_f, "    check_cmd: %s\n", pi->check_cmd);
     fprintf(log_f, "    test_checker_cmd: %s\n", pi->test_checker_cmd);
     fprintf(log_f, "    solution_cmd: %s\n", pi->solution_cmd);
+    fprintf(log_f, "    interactor_cmd: %s\n", pi->interactor_cmd);
 
     unsigned char buf[1024];
 
@@ -2631,6 +2665,9 @@ process_polygon_zip(
     }
     if (pi->test_checker_cmd) {
         prob_cfg->test_checker_cmd = xstrdup(pi->test_checker_cmd);
+    }
+    if (pi->interactor_cmd) {
+        prob_cfg->interactor_cmd = xstrdup(pi->interactor_cmd);
     }
     if (pi->solution_cmd) {
         prob_cfg->solution_cmd = xstrdup(pi->solution_cmd);
