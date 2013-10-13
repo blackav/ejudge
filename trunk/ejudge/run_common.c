@@ -1939,6 +1939,7 @@ run_one_test(
         const unsigned char *exe_name,
         const unsigned char *report_path,
         const unsigned char *check_cmd,
+        const unsigned char *interactor_cmd,
         char **start_env,
         int open_tests_count,
         const int *open_tests_val,
@@ -2199,7 +2200,7 @@ run_one_test(
   snprintf(output_path, sizeof(output_path), "%s/%s", check_dir, srpp->output_file);
   snprintf(error_path, sizeof(error_path), "%s/%s", check_dir, error_file);
 
-  if (srpp->interactor_cmd && srpp->interactor_cmd[0]) {
+  if (interactor_cmd) {
     snprintf(output_path, sizeof(output_path), "%s/%s", global->run_work_dir, srpp->output_file);
   }
 
@@ -2216,7 +2217,7 @@ run_one_test(
   }
 
 #ifndef __WIN32__
-  if (srpp->interactor_cmd && srpp->interactor_cmd[0]) {
+  if (interactor_cmd) {
     if (pipe(pfd1) < 0) {
       append_msg_to_log(check_out_path, "pipe() failed: %s", os_ErrorMsg());
       goto check_failed;
@@ -2230,7 +2231,7 @@ run_one_test(
     fcntl(pfd2[0], F_SETFD, FD_CLOEXEC);
     fcntl(pfd2[1], F_SETFD, FD_CLOEXEC);
 
-    tsk_int = invoke_interactor(srpp->interactor_cmd, test_src, output_path, corr_src,
+    tsk_int = invoke_interactor(interactor_cmd, test_src, output_path, corr_src,
                                 working_dir, check_out_path, srpp->interactor_env,
                                 pfd1[0], pfd2[1], srpp->interactor_time_limit_ms);
     if (!tsk_int) {
@@ -2262,7 +2263,7 @@ run_one_test(
   task_SetWorkingDir(tsk, working_dir);
   if (srpp->enable_process_group > 0) task_EnableProcessGroup(tsk);
 
-  if (srpp->interactor_cmd && srpp->interactor_cmd[0]) {
+  if (interactor_cmd) {
     task_SetRedir(tsk, 0, TSR_DUP, pfd2[0]);
     task_SetRedir(tsk, 1, TSR_DUP, pfd1[1]);
     if (tst->ignore_stderr > 0) {
@@ -2707,7 +2708,7 @@ run_checker:;
 
   if (!output_path_to_check) {
     output_path_to_check = srpp->output_file;
-    if (srpp->interactor_cmd && srpp->interactor_cmd[0]) {
+    if (interactor_cmd) {
       output_path_to_check = output_path;
     }
   }
@@ -3242,6 +3243,8 @@ run_tests(
   unsigned char messages_path[PATH_MAX];
   unsigned char check_dir[PATH_MAX];
   unsigned char check_cmd[PATH_MAX];
+  unsigned char b_interactor_cmd[PATH_MAX];
+  const unsigned char *interactor_cmd = NULL;
 
   int *open_tests_val = NULL;
   int open_tests_count = 0;
@@ -3350,6 +3353,13 @@ run_tests(
     goto check_failed;
   }
 
+  if (srpp->interactor_cmd && srpp->interactor_cmd[0]) {
+    snprintf(b_interactor_cmd, sizeof(b_interactor_cmd), "%s",
+             srpp->interactor_cmd);
+    interactor_cmd = b_interactor_cmd;
+    mirror_file(b_interactor_cmd, sizeof(b_interactor_cmd), mirror_dir);
+  }
+
   if (srpp->type_val) {
     status = check_output_only(global, srgp, srpp, reply_pkt, far, exe_name, &tests, check_cmd);
     goto done;
@@ -3433,7 +3443,8 @@ run_tests(
         && cur_test > srpp->tests_to_accept) break;
 
     status = run_one_test(config, state, srp, tst, cur_test, &tests,
-                          far, exe_name, report_path, check_cmd, start_env,
+                          far, exe_name, report_path, check_cmd,
+                          interactor_cmd, start_env,
                           open_tests_count, open_tests_val,
                           test_score_count, test_score_val,
                           expected_free_space,
