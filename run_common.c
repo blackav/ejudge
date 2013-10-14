@@ -3444,7 +3444,7 @@ run_tests(
 
     int tl_retry = 0;
 
-    while (tl_retry < 2) {
+    while (1) {
       status = run_one_test(config, state, srp, tst, cur_test, &tests,
                             far, exe_name, report_path, check_cmd,
                             interactor_cmd, start_env,
@@ -3456,8 +3456,8 @@ run_tests(
                             mirror_dir);
       if (status != RUN_TIME_LIMIT_ERR && status != RUN_WALL_TIME_LIMIT_ERR)
         break;
+      if (++tl_retry >= 2) break;
       info("test failed due to TL, do it again");
-      ++tl_retry;
       --tests.size;
     }
 
