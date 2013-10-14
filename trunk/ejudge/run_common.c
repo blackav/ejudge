@@ -3458,6 +3458,7 @@ run_tests(
         break;
       info("test failed due to TL, do it again");
       ++tl_retry;
+      --tests.size;
     }
 
     if (status < 0) {
