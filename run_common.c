@@ -3442,15 +3442,24 @@ run_tests(
         && accept_testing
         && cur_test > srpp->tests_to_accept) break;
 
-    status = run_one_test(config, state, srp, tst, cur_test, &tests,
-                          far, exe_name, report_path, check_cmd,
-                          interactor_cmd, start_env,
-                          open_tests_count, open_tests_val,
-                          test_score_count, test_score_val,
-                          expected_free_space,
-                          &has_real_time, &has_max_memory_used,
-                          &report_time_limit_ms, &report_real_time_limit_ms,
-                          mirror_dir);
+    int tl_retry = 0;
+
+    while (tl_retry < 2) {
+      status = run_one_test(config, state, srp, tst, cur_test, &tests,
+                            far, exe_name, report_path, check_cmd,
+                            interactor_cmd, start_env,
+                            open_tests_count, open_tests_val,
+                            test_score_count, test_score_val,
+                            expected_free_space,
+                            &has_real_time, &has_max_memory_used,
+                            &report_time_limit_ms, &report_real_time_limit_ms,
+                            mirror_dir);
+      if (status != RUN_TIME_LIMIT_ERR && status != RUN_WALL_TIME_LIMIT_ERR)
+        break;
+      info("test failed due to TL, do it again");
+      ++tl_retry;
+    }
+
     if (status < 0) {
       status = RUN_OK;
       break;

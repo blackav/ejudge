@@ -7588,9 +7588,11 @@ super_serve_op_USER_IMPORT_CSV_ACTION(
     int fid = -1;
     if (!txt || !*txt) {
       fprintf(log_f, "empty column %d is ignored\n", col + 1);
+      fprintf(stderr, "empty column %d is ignored\n", col + 1);
       // nothing
     } else if ((fid = userlist_lookup_csv_field_name(txt)) <= 0) {
       fprintf(log_f, "unknown column '%s' (%d) is ignored\n", txt, col + 1);
+      fprintf(stderr, "unknown column '%s' (%d) is ignored\n", txt, col + 1);
     } else if (field_idx[fid] >= 0) {
       fprintf(log_f, "duplicated column '%s' (%d)\n", userlist_get_csv_field_name(fid), col + 1);
       failed = 1;
