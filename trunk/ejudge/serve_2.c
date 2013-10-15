@@ -1575,6 +1575,7 @@ serve_run_request(
   srgp->secure_run = secure_run;
   srgp->enable_memory_limit_error = global->enable_memory_limit_error;
   srgp->detect_violations = global->detect_violations;
+  srgp->time_limit_retry_count = global->time_limit_retry_count;
   srgp->priority = prio;
   srgp->arch = xstrdup(arch);
   if (comp_pkt) {

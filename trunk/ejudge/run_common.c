@@ -3443,6 +3443,8 @@ run_tests(
         && cur_test > srpp->tests_to_accept) break;
 
     int tl_retry = 0;
+    int tl_retry_count = srgp->time_limit_retry_count;
+    if (tl_retry_count <= 0) tl_retry_count = 1;
 
     while (1) {
       status = run_one_test(config, state, srp, tst, cur_test, &tests,
@@ -3456,7 +3458,7 @@ run_tests(
                             mirror_dir);
       if (status != RUN_TIME_LIMIT_ERR && status != RUN_WALL_TIME_LIMIT_ERR)
         break;
-      if (++tl_retry >= 2) break;
+      if (++tl_retry >= tl_retry_count) break;
       info("test failed due to TL, do it again");
       --tests.size;
     }

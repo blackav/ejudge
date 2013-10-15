@@ -116,7 +116,7 @@ struct user_adjustment_info
 };
 struct user_adjustment_map;
 
-/* sizeof(struct section_global_data) == 350112/350264 */
+/* sizeof(struct section_global_data) == 350120/350264 */
 struct section_global_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -170,6 +170,8 @@ struct section_global_data
   ejintbool_t disable_user_database;
   /** enable stack limit equal to memory limit */
   ejintbool_t enable_max_stack_size;
+  /** number of retries in case of time limit errors */
+  int time_limit_retry_count;
 
   /** do not show submits after this time in the standings */
   time_t stand_ignore_after;
