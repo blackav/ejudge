@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2013/01/23 13:11:00
+// Generated 2013/10/15 15:51:34
 
 #ifndef __PREPARE_META_H__
 #define __PREPARE_META_H__
@@ -32,6 +32,7 @@ enum
   CNTSGLOB_ignore_bom,
   CNTSGLOB_disable_user_database,
   CNTSGLOB_enable_max_stack_size,
+  CNTSGLOB_time_limit_retry_count,
   CNTSGLOB_stand_ignore_after,
   CNTSGLOB_contest_finish_time,
   CNTSGLOB_appeal_deadline,
