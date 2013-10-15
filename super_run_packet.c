@@ -49,6 +49,7 @@ super_run_in_global_packet_init(struct generic_section_config *gp)
   p->advanced_layout = -1;
   p->disable_sound = -1;
   p->is_dos = -1;
+  p->time_limit_retry_count = -1;
 
   p->scoring_system_val = -1;
 }

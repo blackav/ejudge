@@ -77,6 +77,7 @@ struct super_run_in_global_packet
   ejintbool_t restart;
   ejintbool_t disable_sound;
   ejintbool_t is_dos;
+  int time_limit_retry_count;
 
   int scoring_system_val META_ATTRIB((meta_hidden));
 };
