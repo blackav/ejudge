@@ -465,6 +465,8 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(start_env, "x"),
   PROBLEM_PARAM(lang_time_adj, "x"),
   PROBLEM_PARAM(lang_time_adj_millis, "x"),
+  PROBLEM_PARAM(lang_max_vm_size, "x"),
+  PROBLEM_PARAM(lang_max_stack_size, "x"),
   PROBLEM_PARAM(check_cmd, "s"),
   PROBLEM_PARAM(valuer_cmd, "s"),
   PROBLEM_PARAM(interactor_cmd, "s"),
@@ -1005,6 +1007,8 @@ prepare_problem_free_func(struct generic_section_config *gp)
   sarray_free(p->start_env);
   sarray_free(p->lang_time_adj);
   sarray_free(p->lang_time_adj_millis);
+  sarray_free(p->lang_max_vm_size);
+  sarray_free(p->lang_max_stack_size);
   sarray_free(p->personal_deadline);
   sarray_free(p->alternative);
   xfree(p->score_bonus_val);
@@ -5591,6 +5595,8 @@ prepare_copy_problem(const struct section_problem_data *in)
   }
   out->lang_time_adj = 0;
   out->lang_time_adj_millis = 0;
+  out->lang_max_vm_size = 0;
+  out->lang_max_stack_size = 0;
   out->alternative = 0;
   out->personal_deadline = 0;
   out->pd_total = 0;
@@ -6531,7 +6537,7 @@ static const int prob_settable_list[] =
   CNTSPROB_alternative, CNTSPROB_stand_attr, CNTSPROB_source_header,
   CNTSPROB_source_footer, CNTSPROB_score_view,
   CNTSPROB_open_tests, CNTSPROB_final_open_tests,
-  CNTSPROB_normalization, CNTSPROB_super_run_dir,
+  CNTSPROB_normalization, CNTSPROB_super_run_dir, CNTSPROB_lang_max_vm_size, CNTSPROB_lang_max_stack_size,
 
   0
 };
@@ -6657,6 +6663,8 @@ static const unsigned char prob_settable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_start_env] = 1,
   [CNTSPROB_lang_time_adj] = 1,
   [CNTSPROB_lang_time_adj_millis] = 1,
+  [CNTSPROB_lang_max_vm_size] = 1,
+  [CNTSPROB_lang_max_stack_size] = 1,
   [CNTSPROB_check_cmd] = 1,
   [CNTSPROB_valuer_cmd] = 1,
   [CNTSPROB_interactor_cmd] = 1,
@@ -6746,7 +6754,7 @@ static const int prob_inheritable_list[] =
   CNTSPROB_plugin_file, CNTSPROB_xml_file, CNTSPROB_type,
   CNTSPROB_alternative, CNTSPROB_stand_attr, CNTSPROB_source_header,
   CNTSPROB_source_footer, CNTSPROB_score_view,
-  CNTSPROB_normalization, CNTSPROB_super_run_dir,
+  CNTSPROB_normalization, CNTSPROB_super_run_dir, CNTSPROB_lang_max_vm_size, CNTSPROB_lang_max_stack_size,
 
   0,
 };
@@ -6862,6 +6870,8 @@ static const unsigned char prob_inheritable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_start_env] = 1,
   [CNTSPROB_lang_time_adj] = 1,
   [CNTSPROB_lang_time_adj_millis] = 1,
+  [CNTSPROB_lang_max_vm_size] = 1,
+  [CNTSPROB_lang_max_stack_size] = 1,
   [CNTSPROB_check_cmd] = 1,
   [CNTSPROB_valuer_cmd] = 1,
   [CNTSPROB_interactor_cmd] = 1,
@@ -7029,6 +7039,8 @@ static const struct section_problem_data prob_undef_values =
   .solution_cmd = 0,
   .lang_time_adj = 0,
   .lang_time_adj_millis = 0,
+  .lang_max_vm_size = 0,
+  .lang_max_stack_size = 0,
   .alternative = 0,
   .personal_deadline = 0,
   .score_bonus = { 1, 0 },

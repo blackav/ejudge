@@ -1417,6 +1417,8 @@ static const struct cnts_edit_info cnts_problem_info[] =
   { NS_PROBLEM, CNTSPROB_stand_last_column, 'Y', 1, 0, 0, 0, 0, "Show as the last column", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_lang_time_adj, 'x', 1, 1, 1, 1, SSERV_OP_EDIT_SERVE_PROB_FIELD_DETAIL_PAGE, "Language time-limit adjustments (s)", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_lang_time_adj_millis, 'x', 1, 1, 1, 1, SSERV_OP_EDIT_SERVE_PROB_FIELD_DETAIL_PAGE, "Language time-limit adjustments (ms)", 0, "SidState.prob_show_adv" },
+  { NS_PROBLEM, CNTSPROB_lang_max_vm_size, 'x', 1, 1, 1, 1, SSERV_OP_EDIT_SERVE_PROB_FIELD_DETAIL_PAGE, "Language-specific memory limit", 0, "SidState.prob_show_adv" },
+  { NS_PROBLEM, CNTSPROB_lang_max_stack_size, 'x', 1, 1, 1, 1, SSERV_OP_EDIT_SERVE_PROB_FIELD_DETAIL_PAGE, "Language-specific stack limit", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_disable_language, 'x', 1, 1, 1, 1, SSERV_OP_EDIT_SERVE_PROB_FIELD_DETAIL_PAGE, "Disabled languages", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_enable_language, 'x', 1, 1, 1, 1, SSERV_OP_EDIT_SERVE_PROB_FIELD_DETAIL_PAGE, "Enabled languages", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_require, 'x', 1, 1, 1, 1, SSERV_OP_EDIT_SERVE_PROB_FIELD_DETAIL_PAGE, "Required problems", 0, "SidState.prob_show_adv" },
@@ -6075,6 +6077,8 @@ static const unsigned char prob_reloadable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_start_env] = 0,
   [CNTSPROB_lang_time_adj] = 0,
   [CNTSPROB_lang_time_adj_millis] = 0,
+  [CNTSPROB_lang_max_vm_size] = 0,
+  [CNTSPROB_lang_max_stack_size] = 0,
   [CNTSPROB_check_cmd] = 0,
   [CNTSPROB_valuer_cmd] = 0,
   [CNTSPROB_interactor_cmd] = 0,
@@ -6350,6 +6354,8 @@ const unsigned char prob_editable_details[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_score_view] = 1,
   [CNTSPROB_lang_time_adj] = 1,
   [CNTSPROB_lang_time_adj_millis] = 1,
+  [CNTSPROB_lang_max_vm_size] = 1,
+  [CNTSPROB_lang_max_stack_size] = 1,
   [CNTSPROB_disable_language] = 1,
   [CNTSPROB_enable_language] = 1,
   [CNTSPROB_require] = 1,
@@ -6505,6 +6511,8 @@ cmd_op_edit_serve_prob_field_detail(
   case CNTSPROB_score_view:
   case CNTSPROB_lang_time_adj:
   case CNTSPROB_lang_time_adj_millis:
+  case CNTSPROB_lang_max_vm_size:
+  case CNTSPROB_lang_max_stack_size:
   case CNTSPROB_disable_language:
   case CNTSPROB_enable_language:
   case CNTSPROB_require:

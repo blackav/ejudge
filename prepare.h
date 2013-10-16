@@ -1031,6 +1031,9 @@ struct section_problem_data
   char **lang_time_adj_millis;
   /** tester specially for this problem */
   unsigned char *super_run_dir;
+  /** language-specific memory limit */
+  char **lang_max_vm_size;
+  char **lang_max_stack_size;
 
   /** alternatives for test-like problems */
   char **alternative;
