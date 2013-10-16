@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2013/10/15 15:51:34
+// Generated 2013/10/17 02:11:14
 
 #ifndef __PREPARE_META_H__
 #define __PREPARE_META_H__
@@ -442,6 +442,8 @@ enum
   CNTSPROB_lang_time_adj,
   CNTSPROB_lang_time_adj_millis,
   CNTSPROB_super_run_dir,
+  CNTSPROB_lang_max_vm_size,
+  CNTSPROB_lang_max_stack_size,
   CNTSPROB_alternative,
   CNTSPROB_personal_deadline,
   CNTSPROB_pd_total,
