@@ -551,6 +551,8 @@ static const unsigned char * const action_to_help_url_map[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_CHANGE_SOLUTION_CMD] = "Serve.cfg:problem:solution_cmd",
   [SSERV_CMD_PROB_CHANGE_LANG_TIME_ADJ] = "Serve.cfg:problem:lang_time_adj",
   [SSERV_CMD_PROB_CHANGE_LANG_TIME_ADJ_MILLIS] = "Serve.cfg:problem:lang_time_adj_millis",
+  [SSERV_CMD_PROB_CHANGE_LANG_MAX_VM_SIZE] = "Serve.cfg:problem:lang_max_vm_size",
+  [SSERV_CMD_PROB_CHANGE_LANG_MAX_STACK_SIZE] = "Serve.cfg:problem:lang_max_stack_size",
   [SSERV_CMD_PROB_CHANGE_DISABLE_LANGUAGE] = "Serve.cfg:problem:disable_language",
   [SSERV_CMD_PROB_CHANGE_ENABLE_LANGUAGE] = "Serve.cfg:problem:enable_language",
   [SSERV_CMD_PROB_CHANGE_REQUIRE] = "Serve.cfg:problem:require",
@@ -7307,6 +7309,42 @@ super_html_print_problem(FILE *f,
     xfree(checker_env);
   }
 
+  //PROBLEM_PARAM(lang_max_vm_size, "x"),
+  if (!prob->abstract && !problem_type_flag && show_adv) {
+    if (!prob->lang_max_vm_size || !prob->lang_max_vm_size[0]) {
+      extra_msg = "(not set)";
+      checker_env = xstrdup("");
+    } else {
+      extra_msg = "";
+      checker_env = sarray_unparse_2(prob->lang_max_vm_size);
+    }
+    print_string_editing_row_3(f, "Language-based memory limit:", checker_env,
+                               SSERV_CMD_PROB_CHANGE_LANG_MAX_VM_SIZE,
+                               SSERV_CMD_PROB_CLEAR_LANG_MAX_VM_SIZE,
+                               extra_msg,
+                               session_id, form_row_attrs[row ^= 1],
+                               self_url, extra_args, prob_hidden_vars);
+    xfree(checker_env);
+  }
+
+  //PROBLEM_PARAM(lang_max_stack_size, "x"),
+  if (!prob->abstract && !problem_type_flag && show_adv) {
+    if (!prob->lang_max_stack_size || !prob->lang_max_stack_size[0]) {
+      extra_msg = "(not set)";
+      checker_env = xstrdup("");
+    } else {
+      extra_msg = "";
+      checker_env = sarray_unparse_2(prob->lang_max_stack_size);
+    }
+    print_string_editing_row_3(f, "Language-based stack limit:", checker_env,
+                               SSERV_CMD_PROB_CHANGE_LANG_MAX_STACK_SIZE,
+                               SSERV_CMD_PROB_CLEAR_LANG_MAX_STACK_SIZE,
+                               extra_msg,
+                               session_id, form_row_attrs[row ^= 1],
+                               self_url, extra_args, prob_hidden_vars);
+    xfree(checker_env);
+  }
+
   //PROBLEM_PARAM(disable_language, "x"),
   if (!prob->abstract && show_adv) {
     if (!prob->disable_language || !prob->disable_language[0]) {
@@ -8517,6 +8555,30 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
   case SSERV_CMD_PROB_CLEAR_LANG_TIME_ADJ_MILLIS:
     sarray_free(prob->lang_time_adj_millis);
     prob->lang_time_adj_millis = 0;
+    return 0;
+
+  case SSERV_CMD_PROB_CHANGE_LANG_MAX_VM_SIZE:
+    if (sarray_parse_2(param2, &tmp_env) < 0)
+      return -SSERV_ERR_INVALID_PARAMETER;
+    sarray_free(prob->lang_max_vm_size);
+    prob->lang_max_vm_size = tmp_env;
+    return 0;
+
+  case SSERV_CMD_PROB_CLEAR_LANG_MAX_VM_SIZE:
+    sarray_free(prob->lang_max_vm_size);
+    prob->lang_max_vm_size = 0;
+    return 0;
+
+  case SSERV_CMD_PROB_CHANGE_LANG_MAX_STACK_SIZE:
+    if (sarray_parse_2(param2, &tmp_env) < 0)
+      return -SSERV_ERR_INVALID_PARAMETER;
+    sarray_free(prob->lang_max_stack_size);
+    prob->lang_max_stack_size = tmp_env;
+    return 0;
+
+  case SSERV_CMD_PROB_CLEAR_LANG_MAX_STACK_SIZE:
+    sarray_free(prob->lang_max_stack_size);
+    prob->lang_max_stack_size = 0;
     return 0;
 
   case SSERV_CMD_PROB_CHANGE_DISABLE_LANGUAGE:

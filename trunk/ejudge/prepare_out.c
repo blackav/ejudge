@@ -1290,6 +1290,8 @@ prepare_unparse_prob(
   do_xstr(f, &ab, "start_env", prob->start_env);
   do_xstr(f, &ab, "lang_time_adj", prob->lang_time_adj);
   do_xstr(f, &ab, "lang_time_adj_millis", prob->lang_time_adj_millis);
+  do_xstr(f, &ab, "lang_max_vm_size", prob->lang_max_vm_size);
+  do_xstr(f, &ab, "lang_max_stack_size", prob->lang_max_stack_size);
   do_xstr(f, &ab, "test_sets", prob->test_sets);
   do_xstr(f, &ab, "disable_language", prob->disable_language);
   do_xstr(f, &ab, "enable_language", prob->enable_language);
@@ -1622,6 +1624,8 @@ prepare_unparse_actual_prob(
   do_xstr(f, &ab, "start_env", prob->start_env);
   do_xstr(f, &ab, "lang_time_adj", prob->lang_time_adj);
   do_xstr(f, &ab, "lang_time_adj_millis", prob->lang_time_adj_millis);
+  do_xstr(f, &ab, "lang_max_vm_size", prob->lang_max_vm_size);
+  do_xstr(f, &ab, "lang_max_stack_size", prob->lang_max_stack_size);
   do_xstr(f, &ab, "test_sets", prob->test_sets);
   do_xstr(f, &ab, "disable_language", prob->disable_language);
   do_xstr(f, &ab, "enable_language", prob->enable_language);

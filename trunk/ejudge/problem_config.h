@@ -168,6 +168,8 @@ struct problem_config_section
   char **require;
   char **lang_time_adj;
   char **lang_time_adj_millis;
+  char **lang_max_vm_size;
+  char **lang_max_stack_size;
   char **personal_deadline;
   char **score_view;
   char **score_view_text;
