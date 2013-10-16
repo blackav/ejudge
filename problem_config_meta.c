@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2013/01/20 09:12:00
+// Generated 2013/10/17 02:11:14
 
 #include "problem_config_meta.h"
 #include "problem_config.h"
@@ -140,6 +140,8 @@ static struct meta_info_item meta_info_problem_config_section_data[] =
   [META_PROBLEM_CONFIG_SECTION_require] = { META_PROBLEM_CONFIG_SECTION_require, 'x', XSIZE(struct problem_config_section, require), "require", XOFFSET(struct problem_config_section, require) },
   [META_PROBLEM_CONFIG_SECTION_lang_time_adj] = { META_PROBLEM_CONFIG_SECTION_lang_time_adj, 'x', XSIZE(struct problem_config_section, lang_time_adj), "lang_time_adj", XOFFSET(struct problem_config_section, lang_time_adj) },
   [META_PROBLEM_CONFIG_SECTION_lang_time_adj_millis] = { META_PROBLEM_CONFIG_SECTION_lang_time_adj_millis, 'x', XSIZE(struct problem_config_section, lang_time_adj_millis), "lang_time_adj_millis", XOFFSET(struct problem_config_section, lang_time_adj_millis) },
+  [META_PROBLEM_CONFIG_SECTION_lang_max_vm_size] = { META_PROBLEM_CONFIG_SECTION_lang_max_vm_size, 'x', XSIZE(struct problem_config_section, lang_max_vm_size), "lang_max_vm_size", XOFFSET(struct problem_config_section, lang_max_vm_size) },
+  [META_PROBLEM_CONFIG_SECTION_lang_max_stack_size] = { META_PROBLEM_CONFIG_SECTION_lang_max_stack_size, 'x', XSIZE(struct problem_config_section, lang_max_stack_size), "lang_max_stack_size", XOFFSET(struct problem_config_section, lang_max_stack_size) },
   [META_PROBLEM_CONFIG_SECTION_personal_deadline] = { META_PROBLEM_CONFIG_SECTION_personal_deadline, 'x', XSIZE(struct problem_config_section, personal_deadline), "personal_deadline", XOFFSET(struct problem_config_section, personal_deadline) },
   [META_PROBLEM_CONFIG_SECTION_score_view] = { META_PROBLEM_CONFIG_SECTION_score_view, 'x', XSIZE(struct problem_config_section, score_view), "score_view", XOFFSET(struct problem_config_section, score_view) },
   [META_PROBLEM_CONFIG_SECTION_score_view_text] = { META_PROBLEM_CONFIG_SECTION_score_view_text, 'x', XSIZE(struct problem_config_section, score_view_text), "score_view_text", XOFFSET(struct problem_config_section, score_view_text) },
