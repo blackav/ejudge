@@ -2643,7 +2643,7 @@ run_one_test(
   }
 
   if (tst && tst->memory_limit_type_val == MEMLIMIT_TYPE_JAVA && srgp->enable_memory_limit_error > 0
-      && is_java_memory_limit(cur_info->error, cur_info->error_size)) {
+      && task_IsAbnormal(tsk) && is_java_memory_limit(cur_info->error, cur_info->error_size)) {
     status = RUN_MEM_LIMIT_ERR;
     goto cleanup;
   }
