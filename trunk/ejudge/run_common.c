@@ -1930,7 +1930,7 @@ cleanup:
 static int
 is_java_memory_limit(const unsigned char *text, ssize_t size)
 {
-  static const char AT_STR[] = "\tat ";
+  static const char AT_STR[] = "at ";
   static const char EX_STR_1[] = "Exception in thread \"";
   static const char EX_STR_2[] = "\" java.lang.OutOfMemoryError: Java heap space";
   static const char EX_STR_3[] = "\" java.lang.StackOverflowError";
@@ -2642,7 +2642,7 @@ run_one_test(
     goto cleanup;
   }
 
-  if (tst && tst->memory_limit_type_val == MEMLIMIT_TYPE_DEFAULT && srgp->enable_memory_limit_error > 0
+  if (tst && tst->memory_limit_type_val == MEMLIMIT_TYPE_JAVA && srgp->enable_memory_limit_error > 0
       && is_java_memory_limit(cur_info->error, cur_info->error_size)) {
     status = RUN_MEM_LIMIT_ERR;
     goto cleanup;
