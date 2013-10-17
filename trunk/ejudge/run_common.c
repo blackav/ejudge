@@ -1928,6 +1928,32 @@ cleanup:
 }
 
 static int
+is_java_memory_limit(const unsigned char *text, ssize_t size)
+{
+  static const char AT_STR[] = "\tat ";
+  static const char EX_STR_1[] = "Exception in thread \"";
+  static const char EX_STR_2[] = "\" java.lang.OutOfMemoryError: Java heap space";
+  static const char EX_STR_3[] = "\" java.lang.StackOverflowError";
+
+  if (size <= 0 || !text || strlen(text) != size) return 0;
+
+  char **lines = NULL;
+  split_to_lines(text, &lines, 2);
+  int i = 0;
+  for (; lines[i]; ++i) {}
+  --i;
+  for (; i >= 0 && !strncmp(AT_STR, lines[i], sizeof(AT_STR) - 1); --i) {}
+  if (i < 0) return 0;
+  int len = strlen(lines[i]);
+  if (len <= sizeof(EX_STR_1) - 1) return 0;
+  if (strncmp(lines[i], EX_STR_1, sizeof(EX_STR_1) - 1)) return 0;
+  if (len > sizeof(EX_STR_2) && !strcmp(lines[i] + len - sizeof(EX_STR_2) + 1, EX_STR_2)) return 1;
+  if (len > sizeof(EX_STR_3) && !strcmp(lines[i] + len - sizeof(EX_STR_3) + 1, EX_STR_3)) return 1;
+
+  return 0;
+}
+
+static int
 run_one_test(
         const struct ejudge_cfg *config,
         serve_state_t state,
@@ -2612,6 +2638,12 @@ run_one_test(
 
   if (tst && tst->enable_memory_limit_error > 0 && srgp->enable_memory_limit_error > 0
       && srgp->secure_run > 0 && task_IsMemoryLimit(tsk)) {
+    status = RUN_MEM_LIMIT_ERR;
+    goto cleanup;
+  }
+
+  if (tst && tst->memory_limit_type_val == MEMLIMIT_TYPE_DEFAULT && srgp->enable_memory_limit_error > 0
+      && is_java_memory_limit(cur_info->error, cur_info->error_size)) {
     status = RUN_MEM_LIMIT_ERR;
     goto cleanup;
   }
