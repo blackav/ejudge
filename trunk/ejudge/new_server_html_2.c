@@ -7396,6 +7396,28 @@ ns_write_user_problems_summary(
 
   fprintf(fout, "</table>\n");
 
+  if (global->score_n_best_problems > 0 && cs->max_prob > 0) {
+    total_score = 0;
+    unsigned char *used_flag = NULL;
+    XALLOCAZ(used_flag, cs->max_prob + 1);
+    for (int i = 0; i < global->score_n_best_problems; ++i) {
+      int max_ind = -1;
+      int max_score = -1;
+      for (prob_id = 1; prob_id <= cs->max_prob; prob_id++) {
+        if (!(cur_prob = cs->probs[prob_id])) continue;
+        if (used_flag[prob_id]) continue;
+        if (best_score[prob_id] <= 0) continue;
+        if (max_ind < 0 || best_score[prob_id] > max_score) {
+          max_ind = prob_id;
+          max_score = best_score[prob_id];
+        }
+      }
+      if (max_ind < 0) break;
+      total_score += max_score;
+      used_flag[max_ind] = 1;
+    }
+  }
+
   if ((global->score_system == SCORE_OLYMPIAD && !accepting_mode)
       || global->score_system == SCORE_KIROV
       || global->score_system == SCORE_MOSCOW) {
