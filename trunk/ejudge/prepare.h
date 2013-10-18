@@ -172,6 +172,8 @@ struct section_global_data
   ejintbool_t enable_max_stack_size;
   /** number of retries in case of time limit errors */
   int time_limit_retry_count;
+  /** score n best problems */
+  int score_n_best_problems;
 
   /** do not show submits after this time in the standings */
   time_t stand_ignore_after;

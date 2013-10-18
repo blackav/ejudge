@@ -120,6 +120,7 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(enable_max_stack_size, "d"),
   GLOBAL_PARAM(enable_eoln_select, "d"),
   GLOBAL_PARAM(time_limit_retry_count, "d"),
+  GLOBAL_PARAM(score_n_best_problems, "d"),
 
   GLOBAL_PARAM(stand_ignore_after, "t"),
   GLOBAL_PARAM(appeal_deadline, "t"),
