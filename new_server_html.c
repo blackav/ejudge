@@ -2614,6 +2614,11 @@ priv_submit_run(FILE *fout,
   int utf8_len = 0;
   int eoln_type = 0;
 
+  if (opcaps_check(phr->caps, OPCAP_SUBMIT_RUN) < 0) {
+    ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
+    goto cleanup;
+  }
+
   if (ns_cgi_param_int(phr, "problem", &prob_id) < 0) {
     errmsg = "problem is not set or binary";
     goto invalid_param;
@@ -3076,6 +3081,11 @@ priv_submit_clar(
   int msg_dest_id_empty = 0, msg_dest_login_empty = 0;
 
   html_armor_init(&ab);
+
+  if (opcaps_check(phr->caps, OPCAP_NEW_MESSAGE) < 0) {
+    ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
+    goto cleanup;
+  }
 
   // msg_dest_id, msg_dest_login, msg_subj, msg_hide_flag, msg_text
   if ((n = ns_cgi_param(phr, "msg_dest_id", &s)) < 0) {
