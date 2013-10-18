@@ -498,6 +498,8 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
     unparse_bool(f, "disable_user_database", global->disable_user_database);
   if (global->enable_max_stack_size > 0)
     unparse_bool(f, "enable_max_stack_size", global->enable_max_stack_size);
+  if (global->time_limit_retry_count > 1)
+    fprintf(f, "time_limit_retry_count = %d\n", global->time_limit_retry_count);
 
   //???
   unparse_bool(f, "enable_l10n", global->enable_l10n);
