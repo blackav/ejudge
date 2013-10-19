@@ -264,6 +264,9 @@ struct DownloadInterface
     int (*problems_multi_page)(FILE *log_f, struct DownloadData *data, struct PolygonState *ps);
 };
 
+static int
+ends_with(const unsigned char *str, const unsigned char *suffix);
+
 #if CONF_HAS_LIBCURL - 0 == 1
 struct DownloadData
 {
@@ -366,17 +369,6 @@ curl_iface_login_page_func(struct DownloadData *data)
 
     snprintf(url_buf, sizeof(url_buf), "%s/login", data->pkt->polygon_url);
     return curl_iface_get_func(data, url_buf);
-}
-
-static int
-ends_with(const unsigned char *str, const unsigned char *suffix)
-{
-    if (!str) str = "";
-    if (!suffix) suffix = "";
-
-    int slen = strlen(str);
-    int flen = strlen(suffix);
-    return slen >= flen && !strcmp(str + slen - flen, suffix);
 }
 
 static int
@@ -679,6 +671,21 @@ get_curl_download_interface(FILE *log_f, const struct polygon_packet *pkt)
 }
 #else
 /* no curl library was available during compilation */
+struct DownloadData
+{
+    size_t size;
+    FILE *log_f;
+    const struct DownloadInterface *iface;
+    struct polygon_packet *pkt;
+
+    char *page_text;
+    size_t page_size;
+    char *effective_url;
+    char *clean_url;
+};
+static const struct DownloadInterface *
+get_curl_download_interface(FILE *log_f, const struct polygon_packet *pkt)
+    __attribute__((unused));
 static const struct DownloadInterface *
 get_curl_download_interface(FILE *log_f, const struct polygon_packet *pkt)
 {
@@ -686,6 +693,17 @@ get_curl_download_interface(FILE *log_f, const struct polygon_packet *pkt)
     return NULL;
 }
 #endif
+
+static int
+ends_with(const unsigned char *str, const unsigned char *suffix)
+{
+    if (!str) str = "";
+    if (!suffix) suffix = "";
+
+    int slen = strlen(str);
+    int flen = strlen(suffix);
+    return slen >= flen && !strcmp(str + slen - flen, suffix);
+}
 
 struct ZipData;
 struct ZipInterface
@@ -817,6 +835,9 @@ get_zip_interface(FILE *log_f, const struct polygon_packet *pkt)
     return &zip_interface;
 }
 #else
+static const struct ZipInterface *
+get_zip_interface(FILE *log_f, const struct polygon_packet *pkt)
+    __attribute__((unused));
 static const struct ZipInterface *
 get_zip_interface(FILE *log_f, const struct polygon_packet *pkt)
 {
@@ -2532,7 +2553,7 @@ process_polygon_zip(
                     if (copy_from_zip(log_f, pkt, zif, zid, zip_path, src_path, dst_path)) goto zip_error;
                     pi->interactor_cmd = xstrdup(s);
                     unsigned char *q;
-                    if ((q = strrchr(pi->check_cmd, '.'))) {
+                    if ((q = strrchr(pi->interactor_cmd, '.'))) {
                         *q = 0;
                     }
                 } else if (!strcmp(t2->name[0], "validator")) {
