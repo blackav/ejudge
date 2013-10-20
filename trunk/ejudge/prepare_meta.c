@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2013/10/18 17:01:26
+// Generated 2013/10/20 23:14:36
 
 #include "prepare_meta.h"
 #include "prepare.h"
@@ -368,6 +368,7 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_team_enable_rep_view] = { CNTSPROB_team_enable_rep_view, 'B', XSIZE(struct section_problem_data, team_enable_rep_view), "team_enable_rep_view", XOFFSET(struct section_problem_data, team_enable_rep_view) },
   [CNTSPROB_team_enable_ce_view] = { CNTSPROB_team_enable_ce_view, 'B', XSIZE(struct section_problem_data, team_enable_ce_view), "team_enable_ce_view", XOFFSET(struct section_problem_data, team_enable_ce_view) },
   [CNTSPROB_team_show_judge_report] = { CNTSPROB_team_show_judge_report, 'B', XSIZE(struct section_problem_data, team_show_judge_report), "team_show_judge_report", XOFFSET(struct section_problem_data, team_show_judge_report) },
+  [CNTSPROB_show_checker_comment] = { CNTSPROB_show_checker_comment, 'B', XSIZE(struct section_problem_data, show_checker_comment), "show_checker_comment", XOFFSET(struct section_problem_data, show_checker_comment) },
   [CNTSPROB_ignore_compile_errors] = { CNTSPROB_ignore_compile_errors, 'B', XSIZE(struct section_problem_data, ignore_compile_errors), "ignore_compile_errors", XOFFSET(struct section_problem_data, ignore_compile_errors) },
   [CNTSPROB_full_score] = { CNTSPROB_full_score, 'i', XSIZE(struct section_problem_data, full_score), "full_score", XOFFSET(struct section_problem_data, full_score) },
   [CNTSPROB_full_user_score] = { CNTSPROB_full_user_score, 'i', XSIZE(struct section_problem_data, full_user_score), "full_user_score", XOFFSET(struct section_problem_data, full_user_score) },

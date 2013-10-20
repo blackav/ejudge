@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2013/10/17 02:11:14
+// Generated 2013/10/20 23:14:36
 
 #include "problem_config_meta.h"
 #include "problem_config.h"
@@ -35,6 +35,7 @@ static struct meta_info_item meta_info_problem_config_section_data[] =
   [META_PROBLEM_CONFIG_SECTION_team_enable_rep_view] = { META_PROBLEM_CONFIG_SECTION_team_enable_rep_view, 'B', XSIZE(struct problem_config_section, team_enable_rep_view), "team_enable_rep_view", XOFFSET(struct problem_config_section, team_enable_rep_view) },
   [META_PROBLEM_CONFIG_SECTION_team_enable_ce_view] = { META_PROBLEM_CONFIG_SECTION_team_enable_ce_view, 'B', XSIZE(struct problem_config_section, team_enable_ce_view), "team_enable_ce_view", XOFFSET(struct problem_config_section, team_enable_ce_view) },
   [META_PROBLEM_CONFIG_SECTION_team_show_judge_report] = { META_PROBLEM_CONFIG_SECTION_team_show_judge_report, 'B', XSIZE(struct problem_config_section, team_show_judge_report), "team_show_judge_report", XOFFSET(struct problem_config_section, team_show_judge_report) },
+  [META_PROBLEM_CONFIG_SECTION_show_checker_comment] = { META_PROBLEM_CONFIG_SECTION_show_checker_comment, 'B', XSIZE(struct problem_config_section, show_checker_comment), "show_checker_comment", XOFFSET(struct problem_config_section, show_checker_comment) },
   [META_PROBLEM_CONFIG_SECTION_ignore_compile_errors] = { META_PROBLEM_CONFIG_SECTION_ignore_compile_errors, 'B', XSIZE(struct problem_config_section, ignore_compile_errors), "ignore_compile_errors", XOFFSET(struct problem_config_section, ignore_compile_errors) },
   [META_PROBLEM_CONFIG_SECTION_variable_full_score] = { META_PROBLEM_CONFIG_SECTION_variable_full_score, 'B', XSIZE(struct problem_config_section, variable_full_score), "variable_full_score", XOFFSET(struct problem_config_section, variable_full_score) },
   [META_PROBLEM_CONFIG_SECTION_ignore_penalty] = { META_PROBLEM_CONFIG_SECTION_ignore_penalty, 'B', XSIZE(struct problem_config_section, ignore_penalty), "ignore_penalty", XOFFSET(struct problem_config_section, ignore_penalty) },
