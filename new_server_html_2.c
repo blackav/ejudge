@@ -6474,6 +6474,7 @@ ns_write_olympiads_user_runs(
       case RUN_OK:
         if (prob && prob->type != PROB_TYPE_STANDARD) {
           snprintf(tests_buf, sizeof(tests_buf), "&nbsp;");
+          report_allowed = 1;
         } else {
           if (re.passed_mode > 0) {
             snprintf(tests_buf, sizeof(tests_buf), "%d", re.test);
