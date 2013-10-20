@@ -650,6 +650,7 @@ merge_problem_section(
         { CNTSPROB_team_enable_rep_view, META_PROBLEM_CONFIG_SECTION_team_enable_rep_view },
         { CNTSPROB_team_enable_ce_view, META_PROBLEM_CONFIG_SECTION_team_enable_ce_view },
         { CNTSPROB_team_show_judge_report, META_PROBLEM_CONFIG_SECTION_team_show_judge_report },
+        { CNTSPROB_show_checker_comment, META_PROBLEM_CONFIG_SECTION_show_checker_comment },
         { CNTSPROB_ignore_compile_errors, META_PROBLEM_CONFIG_SECTION_ignore_compile_errors },
         { CNTSPROB_variable_full_score, META_PROBLEM_CONFIG_SECTION_variable_full_score },
         { CNTSPROB_ignore_penalty, META_PROBLEM_CONFIG_SECTION_ignore_penalty },

@@ -58,6 +58,7 @@ struct problem_config_section
   ejintbool_t team_enable_rep_view;
   ejintbool_t team_enable_ce_view;
   ejintbool_t team_show_judge_report;
+  ejintbool_t show_checker_comment;
   ejintbool_t ignore_compile_errors;
   ejintbool_t variable_full_score;
   ejintbool_t ignore_penalty;
