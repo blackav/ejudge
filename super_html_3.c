@@ -471,6 +471,7 @@ static const unsigned char * const action_to_help_url_map[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_CHANGE_TEAM_ENABLE_REP_VIEW] = "Serve.cfg:problem:team_enable_rep_view",
   [SSERV_CMD_PROB_CHANGE_TEAM_ENABLE_CE_VIEW] = "Serve.cfg:problem:team_enable_ce_view",
   [SSERV_CMD_PROB_CHANGE_TEAM_SHOW_JUDGE_REPORT] = "Serve.cfg:problem:team_show_judge_report",
+  [SSERV_CMD_PROB_CHANGE_SHOW_CHECKER_COMMENT] = "Serve.cfg:problem:show_checker_comment",
   [SSERV_CMD_PROB_CHANGE_IGNORE_COMPILE_ERRORS] = "Serve.cfg:problem:ignore_compile_errors",
   [SSERV_CMD_PROB_CHANGE_DISABLE_USER_SUBMIT] = "Serve.cfg:problem:disable_user_submit",
   [SSERV_CMD_PROB_CHANGE_DISABLE_TAB] = "Serve.cfg:problem:disable_tab",
@@ -6060,6 +6061,22 @@ super_html_print_problem(FILE *f,
                                  extra_msg,
                                  session_id, form_row_attrs[row ^= 1],
                                  self_url, extra_args, prob_hidden_vars);
+
+      //PROBLEM_PARAM(show_checker_comment, "d"),
+      extra_msg = "Undefined";
+      if (!prob->abstract) {
+        prepare_set_prob_value(CNTSPROB_show_checker_comment,
+                               tmp_prob, sup_prob, sstate->global);
+        snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
+                 tmp_prob->show_checker_comment?"Yes":"No");
+        extra_msg = msg_buf;
+      }
+      print_boolean_3_select_row(f,"Contestant may view checker comment:",
+                                 prob->show_checker_comment,
+                                 SSERV_CMD_PROB_CHANGE_SHOW_CHECKER_COMMENT,
+                                 extra_msg,
+                                 session_id, form_row_attrs[row ^= 1],
+                                 self_url, extra_args, prob_hidden_vars);
     }
 
     //PROBLEM_PARAM(ignore_compile_errors, "d"),
@@ -8003,6 +8020,10 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_PROB_CHANGE_TEAM_SHOW_JUDGE_REPORT:
     p_int = &prob->team_show_judge_report;
+    goto handle_boolean_2;
+
+  case SSERV_CMD_PROB_CHANGE_SHOW_CHECKER_COMMENT:
+    p_int = &prob->show_checker_comment;
     goto handle_boolean_2;
 
   case SSERV_CMD_PROB_CHANGE_IGNORE_COMPILE_ERRORS:

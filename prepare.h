@@ -804,6 +804,8 @@ struct section_problem_data
   ejintbool_t team_enable_ce_view;
   /** show the full testing report to contestants */
   ejintbool_t team_show_judge_report;
+  /** always show checker comments */
+  ejintbool_t show_checker_comment;
   /** do not count compilation errors as failed runs */
   ejintbool_t ignore_compile_errors;
   /** score for successful solution */

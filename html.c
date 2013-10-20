@@ -4893,7 +4893,7 @@ write_xml_team_testing_report(
             cl, cl, cl, _("Result"));
     if (t->score >= 0 && t->nominal_score >= 0)
       fprintf(f, "<th%s>%s</th>", cl, _("Score"));
-    if (t->status == RUN_PRESENTATION_ERR) {
+    if (t->status == RUN_PRESENTATION_ERR || prob->show_checker_comment > 0) {
       fprintf(f, "<th%s>%s</th>", cl, _("Extra info"));
     }
     fprintf(f, "</tr>\n");
@@ -4909,7 +4909,7 @@ write_xml_team_testing_report(
             cl, font_color, run_status_str(t->status, 0, 0, output_only, 0));
     if (t->score >= 0 && t->nominal_score >= 0)
       fprintf(f, "<td%s>%d (%d)</td>", cl, t->score, t->nominal_score);
-    if (t->status == RUN_PRESENTATION_ERR) {
+    if (t->status == RUN_PRESENTATION_ERR || prob->show_checker_comment > 0) {
       s = html_armor_string_dup(t->checker_comment);
       fprintf(f, "<td%s>%s</td>", cl, s);
       xfree(s); s = 0;

@@ -1319,6 +1319,8 @@ prepare_unparse_prob(
     unparse_bool(f, "team_enable_ce_view", prob->team_enable_ce_view);
   if (prob->team_show_judge_report >= 0)
     unparse_bool(f, "team_show_judge_report", prob->team_show_judge_report);
+  if (prob->show_checker_comment >= 0)
+    unparse_bool(f, "show_checker_comment", prob->show_checker_comment);
   if (prob->ignore_compile_errors >= 0)
     unparse_bool(f, "ignore_compile_errors", prob->ignore_compile_errors);
   if (prob->disable_auto_testing >= 0)
@@ -1655,6 +1657,8 @@ prepare_unparse_actual_prob(
     unparse_bool(f, "team_enable_ce_view", prob->team_enable_ce_view);
   if (prob->team_show_judge_report > 0)
     unparse_bool(f, "team_show_judge_report", prob->team_show_judge_report);
+  if (prob->show_checker_comment > 0)
+    unparse_bool(f, "show_checker_comment", prob->show_checker_comment);
   if (prob->ignore_compile_errors > 0)
     unparse_bool(f, "ignore_compile_errors", prob->ignore_compile_errors);
   if (prob->disable_auto_testing > 0)

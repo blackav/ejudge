@@ -373,6 +373,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(team_enable_rep_view, "d"),
   PROBLEM_PARAM(team_enable_ce_view, "d"),
   PROBLEM_PARAM(team_show_judge_report, "d"),
+  PROBLEM_PARAM(show_checker_comment, "d"),
   PROBLEM_PARAM(ignore_compile_errors, "d"),
   PROBLEM_PARAM(full_score, "d"),
   PROBLEM_PARAM(full_user_score, "d"),
@@ -913,6 +914,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->team_enable_rep_view = -1;
   p->team_enable_ce_view = -1;
   p->team_show_judge_report = -1;
+  p->show_checker_comment = -1;
   p->ignore_compile_errors = -1;
   p->use_corr = -1;
   p->use_info = -1;
@@ -3397,6 +3399,7 @@ set_defaults(
     prepare_set_prob_value(CNTSPROB_team_enable_rep_view, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_team_enable_ce_view, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_team_show_judge_report, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_show_checker_comment, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_ignore_compile_errors, prob, aprob, g);
 
     prepare_set_prob_value(CNTSPROB_tests_to_accept, prob, aprob, g);
@@ -5796,6 +5799,13 @@ prepare_set_prob_value(
       out->team_show_judge_report = 0;
     break;
 
+  case CNTSPROB_show_checker_comment:
+    if (out->show_checker_comment == -1 && abstr)
+      out->show_checker_comment = abstr->show_checker_comment;
+    if (out->show_checker_comment == -1)
+      out->show_checker_comment = 0;
+    break;
+
   case CNTSPROB_ignore_compile_errors:
     if (out->ignore_compile_errors == -1 && abstr)
       out->ignore_compile_errors = abstr->ignore_compile_errors;
@@ -6494,7 +6504,7 @@ static const int prob_settable_list[] =
   CNTSPROB_score_latest, CNTSPROB_score_latest_or_unmarked, CNTSPROB_score_latest_marked, CNTSPROB_time_limit, CNTSPROB_time_limit_millis,
   CNTSPROB_real_time_limit, CNTSPROB_interactor_time_limit, CNTSPROB_use_ac_not_ok, CNTSPROB_ignore_prev_ac,
   CNTSPROB_team_enable_rep_view, CNTSPROB_team_enable_ce_view,
-  CNTSPROB_team_show_judge_report, CNTSPROB_ignore_compile_errors,
+  CNTSPROB_team_show_judge_report, CNTSPROB_show_checker_comment, CNTSPROB_ignore_compile_errors,
   CNTSPROB_full_score, CNTSPROB_full_user_score, CNTSPROB_test_score, CNTSPROB_run_penalty,
   CNTSPROB_acm_run_penalty, CNTSPROB_disqualified_penalty,
   CNTSPROB_ignore_penalty, CNTSPROB_use_corr, CNTSPROB_use_info,
@@ -6575,6 +6585,7 @@ static const unsigned char prob_settable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_team_enable_rep_view] = 1,
   [CNTSPROB_team_enable_ce_view] = 1,
   [CNTSPROB_team_show_judge_report] = 1,
+  [CNTSPROB_show_checker_comment] = 1,
   [CNTSPROB_ignore_compile_errors] = 1,
   [CNTSPROB_full_score] = 1,
   [CNTSPROB_full_user_score] = 1,
@@ -6710,7 +6721,7 @@ static const int prob_inheritable_list[] =
   CNTSPROB_time_limit, CNTSPROB_time_limit_millis, CNTSPROB_real_time_limit,
   CNTSPROB_interactor_time_limit,
   CNTSPROB_use_ac_not_ok, CNTSPROB_ignore_prev_ac, CNTSPROB_team_enable_rep_view,
-  CNTSPROB_team_enable_ce_view, CNTSPROB_team_show_judge_report,
+  CNTSPROB_team_enable_ce_view, CNTSPROB_team_show_judge_report, CNTSPROB_show_checker_comment,
   CNTSPROB_ignore_compile_errors, CNTSPROB_full_score, CNTSPROB_full_user_score, CNTSPROB_test_score,
   CNTSPROB_run_penalty, CNTSPROB_acm_run_penalty, 
   CNTSPROB_disqualified_penalty, CNTSPROB_ignore_penalty,
@@ -6789,6 +6800,7 @@ static const unsigned char prob_inheritable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_team_enable_rep_view] = 1,
   [CNTSPROB_team_enable_ce_view] = 1,
   [CNTSPROB_team_show_judge_report] = 1,
+  [CNTSPROB_show_checker_comment] = 1,
   [CNTSPROB_ignore_compile_errors] = 1,
   [CNTSPROB_full_score] = 1,
   [CNTSPROB_full_user_score] = 1,
@@ -6937,6 +6949,7 @@ static const struct section_problem_data prob_undef_values =
   .team_enable_rep_view = -1,
   .team_enable_ce_view = -1,
   .team_show_judge_report = -1,
+  .show_checker_comment = -1,
   .ignore_compile_errors = -1,
   .full_score = -1,
   .full_user_score = -1,
@@ -7089,6 +7102,7 @@ static const struct section_problem_data prob_default_values =
   .team_enable_rep_view = 0,
   .team_enable_ce_view = 0,
   .team_show_judge_report = 0,
+  .show_checker_comment = 0,
   .ignore_compile_errors = 0,
   .full_score = 50,
   .full_user_score = -1,
