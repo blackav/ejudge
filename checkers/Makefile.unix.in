@@ -218,3 +218,12 @@ style_% : style_%.c
 
 pic/%.o : %.c
 	${CC} ${CFLAGS} -fPIC -DPIC -c $< -o $@
+
+ejudgecheckers.ru_RU.UTF-8.po: $(CFILES) $(CHKCFILES) $(STYLECFILES) ejudge.po
+	${MSGMERGE} -U $@ ejudge.po
+
+ejudgecheckers.po: $(CFILES) $(CHKCFILES) $(STYLECFILES)
+	${XGETTEXT} -d ejudgecheckers --no-location --foreign-user  -k_ -k__ -s -o $@ *.c
+
+locale/ru_RU.UTF-8/LC_MESSAGES/ejudge.mo : ejudge.ru_RU.UTF-8.po ru_all
+	${MSGFMT} -o $@ -c $<
