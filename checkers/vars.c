@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -21,6 +21,8 @@
 #include <dirent.h>
 #endif
 
+#include "l10n_impl.h"
+
 FILE *f_in;
 FILE *f_out;
 FILE *f_corr;
@@ -39,9 +41,9 @@ char *dir_out_path;
 
 const char * const f_arr_names[3] =
 {
-  "test input data",
-  "user program output",
-  "test correct output"
+  __("test input data"),
+  __("user program output"),
+  __("test correct output")
 };
 
 struct testinfo_struct;

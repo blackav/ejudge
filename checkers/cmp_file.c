@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -20,49 +20,46 @@
 #define NEED_TGZ  0
 #include "checker.h"
 
+#include "l10n_impl.h"
+
 int checker_main(int argc, char **argv)
 {
   char **out_lines, **corr_lines;
   size_t out_lines_num, corr_lines_num, i;
   int nocase = 0;
 
+  checker_l10n_prepare();
+
   if (getenv("EJ_REQUIRE_NL")) {
     if (fseek(f_out, -1L, SEEK_END) >= 0) {
-      if (getc(f_out) != '\n') fatal_PE("no final \\n in the output file");
+      if (getc(f_out) != '\n') fatal_PE(_("No final \\n in the output file"));
       fseek(f_out, 0L, SEEK_SET);
     }
   }
 
-  // считываем файл результата работы программы
+  // я│я┤п╦я┌я▀п╡п╟п╣п╪ я└п╟п╧п╩ я─п╣п╥я┐п╩я▄я┌п╟я┌п╟ я─п╟п╠п╬я┌я▀ п©я─п╬пЁя─п╟п╪п╪я▀
   checker_read_file_by_line(1, &out_lines, &out_lines_num);
-  // считываем эталонный файл
+  // я│я┤п╦я┌я▀п╡п╟п╣п╪ я█я┌п╟п╩п╬п╫п╫я▀п╧ я└п╟п╧п╩
   checker_read_file_by_line(2, &corr_lines, &corr_lines_num);
-  // отбрасываем пробелы в результате работы программы
+  // п╬я┌п╠я─п╟я│я▀п╡п╟п╣п╪ п©я─п╬п╠п╣п╩я▀ п╡ я─п╣п╥я┐п╩я▄я┌п╟я┌п╣ я─п╟п╠п╬я┌я▀ п©я─п╬пЁя─п╟п╪п╪я▀
   checker_normalize_file(out_lines, &out_lines_num);
-  // отбрасываем пробелы в эталонном файле
+  // п╬я┌п╠я─п╟я│я▀п╡п╟п╣п╪ п©я─п╬п╠п╣п╩я▀ п╡ я█я┌п╟п╩п╬п╫п╫п╬п╪ я└п╟п╧п╩п╣
   checker_normalize_file(corr_lines, &corr_lines_num);
   if (getenv("EJUDGE_NOCASE")) nocase = 1;
 
   if (out_lines_num != corr_lines_num)
-    fatal_WA("Different number of lines: out = %zu, corr = %zu",
+    fatal_WA(_("Different number of lines: output: %zu, correct: %zu"),
              out_lines_num, corr_lines_num);
   for (i = 0; i < out_lines_num; i++)
     if (nocase) {
       if (strcasecmp(out_lines[i], corr_lines[i]) != 0)
-        fatal_WA("Line %zu differs: out:\n>%s<\ncorr:\n>%s<",
+        fatal_WA(_("Line %zu differs: output:\n>%s<\ncorrect:\n>%s<"),
                  i + 1, out_lines[i], corr_lines[i]);
     } else {
       if (strcmp(out_lines[i], corr_lines[i]) != 0)
-        fatal_WA("Line %zu differs: out:\n>%s<\ncorr:\n>%s<",
+        fatal_WA(_("Line %zu differs: output:\n>%s<\ncorrect:\n>%s<"),
                  i + 1, out_lines[i], corr_lines[i]);
     }
   
   checker_OK();
 }
-
-/*
- * Local variables:
- *  compile-command: "gcc -Wall -O2 -s -I. -L. cmp_file.c -ocmp_file -lchecker"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- * End:
- */

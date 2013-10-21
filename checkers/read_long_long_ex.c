@@ -19,13 +19,7 @@
 
 #include <errno.h>
 
-#if CONF_HAS_LIBINTL - 0 == 1
-#include <libintl.h>
-#define _(x) gettext(x)
-#else
-#define _(x) x
-#endif
-#define __(x) x
+#include "l10n_impl.h"
 
 int
 checker_read_long_long_ex(

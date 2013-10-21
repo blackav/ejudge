@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,6 +17,8 @@
 
 #define NEED_CORR 1
 #include "checker.h"
+
+#include "l10n_impl.h"
 
 enum { BUFSIZE = 1024 };
 
@@ -64,25 +66,27 @@ checker_main(int argc, char *argv[])
   size_t outdsz = 0, corrdsz = 0;
   char *outval, *corrval;
 
+  checker_l10n_prepare();
+
   if (getenv("EJ_REQUIRE_NL")) {
     if (fseek(f_out, -1L, SEEK_END) >= 0) {
-      if (getc(f_out) != '\n') fatal_PE("no final \\n in the output file");
+      if (getc(f_out) != '\n') fatal_PE(_("No final \\n in the output file"));
       fseek(f_out, 0L, SEEK_SET);
     }
   }
 
-  corrval = checker_read_buf_2(2,"corr",1,corrsbuf,BUFSIZE,&corrdbuf,&corrdsz);
+  corrval = checker_read_buf_2(2,_("correct"),1,corrsbuf,BUFSIZE,&corrdbuf,&corrdsz);
   checker_corr_eof();
-  if (!is_number(corrval)) fatal_CF("corr: not a number");
+  if (!is_number(corrval)) fatal_CF(_("correct: not a number"));
   normalize_number(corrval);
 
-  outval = checker_read_buf_2(1, "out", 1, outsbuf, BUFSIZE, &outdbuf, &outdsz);
+  outval = checker_read_buf_2(1, _("output"), 1, outsbuf, BUFSIZE, &outdbuf, &outdsz);
   checker_out_eof();
-  if (!is_number(outval)) fatal_PE("out: not a number");
+  if (!is_number(outval)) fatal_PE(_("output: not a number"));
   normalize_number(outval);
 
   if (strcmp(outval, corrval) != 0)
-    fatal_WA("wrong answer: out: %s, corr: %s", outval, corrval);
+    fatal_WA(_("Wrong answer: output: %s, correct: %s"), outval, corrval);
 
   checker_OK();
 }

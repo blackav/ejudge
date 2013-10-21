@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,8 @@
  */
 
 #include "checker_internal.h"
+
+#include "l10n_impl.h"
 
 #if defined __MINGW32__
 #include <malloc.h>
@@ -36,29 +38,29 @@ checker_read_buf(int ind,
   int r;
 
   if (!buf_size || buf_size > BUFSIZE)
-    fatal_CF("checker_read_buf: invalid buf_size %zu", buf_size);
+    fatal_CF(_("checker_read_buf: invalid buf_size %zu"), buf_size);
 
   local_buf = (unsigned char*) alloca(buf_size + 1);
-  if (!local_buf) fatal_CF("checker_read_buf: alloca(%zu) failed", buf_size+1);
+  if (!local_buf) fatal_CF(_("checker_read_buf: alloca(%zu) failed"), buf_size+1);
   memset(local_buf, 0, buf_size + 1);
   format_len = snprintf(format_str, sizeof(format_str), "%%%zus", buf_size);
   if (format_len >= sizeof(format_str))
-    fatal_CF("checker_read_buf: format string is too long: %zu", format_len);
+    fatal_CF(_("checker_read_buf: format string is too long: %zu"), format_len);
 
   r = fscanf(f_arr[ind], format_str, local_buf);
   if (r == 1) {
     read_len = strlen(local_buf);
     if (read_len > buf_size - 1)
-      fatal_read(ind, "string `%s' is too long (>= %zu) in %s file",
-                 name, read_len, f_arr_names[ind]);
+      fatal_read(ind, "String `%s' is too long (>= %zu) in %s file",
+                 name, read_len, gettext(f_arr_names[ind]));
     strcpy(buf, local_buf);
     return read_len;
   }
-  if (r == 0) fatal_CF("fscanf returned 0!!!");
+  if (r == 0) fatal_CF(_("fscanf returned 0!!!"));
   if (ferror(f_arr[ind]))
-    fatal_CF("input error from %s file", f_arr_names[ind]);
+    fatal_CF(_("Input error from %s file"), gettext(f_arr_names[ind]));
   if (!eof_error_flag) return -1;
-  fatal_read(ind, "unexpected EOF while reading `%s'", name);
+  fatal_read(ind, _("unexpected EOF while reading '%s'"), name);
 }
 
 /*

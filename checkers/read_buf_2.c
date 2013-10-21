@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,8 @@
  */
 
 #include "checker_internal.h"
+
+#include "l10n_impl.h"
 
 /**
    read a string (i.e. sequence of chars except whitespace)
@@ -44,24 +46,24 @@ checker_read_buf_2(
   c = getc(f_arr[ind]);
   while (isspace(c)) c = getc(f_arr[ind]);
   if (ferror(f_arr[ind])) {
-    fatal_CF("%s: input error", f_arr_names[ind]);
+    fatal_CF(_("%s: input error"), gettext(f_arr_names[ind]));
   }
   if (feof(f_arr[ind])) {
-    if (eof_error_flag) fatal_read(ind, "unexpected EOF");
+    if (eof_error_flag) fatal_read(ind, _("Unexpected EOF"));
     else return 0;
   }
 
-  if (c < ' ') fatal_read(ind, "invalid control character %d", c);
+  if (c < ' ') fatal_read(ind, _("Invalid control character %d"), c);
 
   if (sbuf && ssz > 1) {
     while (c != EOF && !isspace(c) && i + 1 < ssz) {
-      if (c < ' ') fatal_read(ind, "invalid control character %d", c);
+      if (c < ' ') fatal_read(ind, _("Invalid control character %d"), c);
       sbuf[i++] = c;
       c = getc(f_arr[ind]);
     }
     if (c == EOF) {
       if (ferror(f_arr[ind])) {
-        fatal_CF("%s: input error", f_arr_names[ind]);
+        fatal_CF(_("%s: input error"), gettext(f_arr_names[ind]));
       }
       sbuf[i] = 0;
       return sbuf;
@@ -71,9 +73,9 @@ checker_read_buf_2(
       sbuf[i] = 0;
       return sbuf;
     }
-    if (!pdbuf || !pdsz) fatal_read(ind, "input element is too long");
+    if (!pdbuf || !pdsz) fatal_read(ind, _("Input element is too long"));
   } else {
-    if (!pdbuf || !pdsz) fatal_CF("invalid arguments");
+    if (!pdbuf || !pdsz) fatal_CF(_("Invalid arguments"));
   }
 
   dbuf = *pdbuf;
@@ -89,7 +91,7 @@ checker_read_buf_2(
   if (i > 0) memcpy(dbuf, sbuf, i + 1);
 
   while (c != EOF && !isspace(c)) {
-    if (c < ' ') fatal_read(ind, "invalid control character %d", c);
+    if (c < ' ') fatal_read(ind, _("Invalid control character %d"), c);
     if (i + 1 >= dsz) {
       dsz *= 2;
       dbuf = (char*) xrealloc(dbuf, dsz);
@@ -99,7 +101,7 @@ checker_read_buf_2(
   }
   if (c == EOF) {
     if (ferror(f_arr[ind])) {
-      fatal_CF("%s: input error", f_arr_names[ind]);
+      fatal_CF(_("%s: input error"), gettext(f_arr_names[ind]));
     }
   } else {
     ungetc(c, f_arr[ind]);

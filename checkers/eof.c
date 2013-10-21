@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,6 +17,8 @@
 
 #include "checker_internal.h"
 
+#include "l10n_impl.h"
+
 void
 checker_eof(
         FILE *f,
@@ -28,12 +30,12 @@ checker_eof(
   while ((c = getc(f)) != EOF && isspace(c));
   if (c != EOF) {
     if (c < ' ') {
-      error_func("%s: invalid control character with code %d", name, c);
+      error_func(_("%s: invalid control character with code %d"), name, c);
     } else {
-      error_func("%s: garbage where EOF expected", name);
+      error_func(_("%s: garbage where EOF expected"), name);
     }
   }
   if (ferror(f)) {
-    fatal_CF("%s: input error", name);
+    fatal_CF(_("%s: input error"), name);
   }
 }

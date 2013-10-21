@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,6 +17,8 @@
 
 #include "checker_internal.h"
 
+#include "l10n_impl.h"
+
 void
 checker_corr_open(const char *path)
 {
@@ -29,7 +31,7 @@ checker_corr_open(const char *path)
   f_arr[2] = 0;
 
   if (!(f_corr = fopen(path, "r"))) {
-    fatal_CF("%s: cannot open %s for reading", f_arr_names[2], path);
+    fatal_CF(_("%s: cannot open %s for reading"), gettext(f_arr_names[2]), path);
   }
   f_arr[2] = f_corr;
 }

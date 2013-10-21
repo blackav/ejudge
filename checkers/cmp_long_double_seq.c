@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,8 @@
 #define NEED_TGZ  0
 #include "checker.h"
 
+#include "l10n_impl.h"
+
 int checker_main(int argc, char **argv)
 {
   long double out_ans, corr_ans, eps;
@@ -27,17 +29,19 @@ int checker_main(int argc, char **argv)
   int n, i = 0;
   unsigned char buf[32];
 
+  checker_l10n_prepare();
+
   if (getenv("EJ_REQUIRE_NL")) {
     if (fseek(f_out, -1L, SEEK_END) >= 0) {
-      if (getc(f_out) != '\n') fatal_PE("no final \\n in the output file");
+      if (getc(f_out) != '\n') fatal_PE(_("No final \\n in the output file"));
       fseek(f_out, 0L, SEEK_SET);
     }
   }
 
   if (!(s = getenv("EPS")))
-    fatal_CF("environment variable EPS is not set");
+    fatal_CF(_("Environment variable EPS is not set"));
   if (sscanf(s, "%Lf%n", &eps, &n) != 1 || s[n])
-    fatal_CF("cannot parse EPS value");
+    fatal_CF(_("Cannot parse EPS value"));
   if (eps <= 0.0)
     fatal_CF("EPS <= 0");
   if (eps >= 1)
@@ -49,22 +53,15 @@ int checker_main(int argc, char **argv)
     snprintf(buf, sizeof(buf), "[%d]", i);
     if (checker_read_corr_long_double(buf, 0, &corr_ans) < 0) break;
     if (checker_read_out_long_double(buf, 0, &out_ans) < 0) {
-      fatal_WA("Too few numbers in the out output");
+      fatal_WA(_("Too few numbers in the output"));
     }
     if (!(abs_flag?checker_eq_long_double_abs:checker_eq_long_double)(corr_ans, out_ans, eps))
-      fatal_WA("Answers differ: %s: out: %.15Lg, corr: %.15Lg", buf, out_ans, corr_ans);
+      fatal_WA(_("Answers differ: %s: output: %.15Lg, correct: %.15Lg"), buf, out_ans, corr_ans);
   }
   if (checker_read_out_long_double("x", 0, &out_ans) >= 0) {
-    fatal_WA("Too many numbers in the out output");
+    fatal_WA(_("Too many numbers in the output"));
   }
   checker_out_eof();
 
   checker_OK();
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- * End:
- */
