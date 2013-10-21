@@ -84,7 +84,7 @@ TARGETSHAREDLIBS =
 endif
 TARGETLIBS = libchecker.a
 
-all : ${TARGETS}
+all : ${TARGETS} mo
 
 clean :
 	-rm -fr *.o *.a *.so *~ *.bak testinfo.h testinfo.c pic ${CHKXFILES} ${STYLEXFILES}
@@ -109,6 +109,8 @@ install : all
 	for i in ${CHKXFILES} ${STYLEXFILES}; do install -m 755 $$i "${DESTDIR}${libexecdir}/ejudge/checkers"; done
 	-cd "${DESTDIR}${datadir}/ejudge/testlib/fpc"; FPC=`"${DESTDIR}${libexecdir}/ejudge"/fpc-version -p`; [ x"$$FPC" != x ] && "$$FPC" testlib.pas
 	-cd "${DESTDIR}${datadir}/ejudge/testlib/delphi"; DCC=`"${DESTDIR}${libexecdir}/ejudge"/dcc-version -p`; [ x"$$DCC" != x ] && "$$DCC" testlib.pas
+	if [ x"${ENABLE_NLS}" = x1 ]; then install -d "${DESTDIR}${datadir}/locale/ru_RU.UTF-8/LC_MESSAGES"; fi
+	if [ x"${ENABLE_NLS}" = x1 ]; then install -m 0644 locale/ru_RU.UTF-8/LC_MESSAGES/ejudgecheckers.mo "${DESTDIR}${datadir}/locale/ru_RU.UTF-8/LC_MESSAGES"; fi
 
 libchecker.a : ${OFILES}
 	${AR} rcv $@ $^
@@ -219,11 +221,20 @@ style_% : style_%.c
 pic/%.o : %.c
 	${CC} ${CFLAGS} -fPIC -DPIC -c $< -o $@
 
-ejudgecheckers.ru_RU.UTF-8.po: $(CFILES) $(CHKCFILES) $(STYLECFILES) ejudge.po
-	${MSGMERGE} -U $@ ejudge.po
+ifdef ENABLE_NLS
+mo : locale/ru_RU.UTF-8/LC_MESSAGES/ejudgecheckers.mo
+else
+mo :
+endif
+
+ejudgecheckers.ru_RU.UTF-8.po: $(CFILES) $(CHKCFILES) $(STYLECFILES) ejudgecheckers.po
+	${MSGMERGE} -U $@ ejudgecheckers.po
 
 ejudgecheckers.po: $(CFILES) $(CHKCFILES) $(STYLECFILES)
 	${XGETTEXT} -d ejudgecheckers --no-location --foreign-user  -k_ -k__ -s -o $@ *.c
 
-locale/ru_RU.UTF-8/LC_MESSAGES/ejudge.mo : ejudge.ru_RU.UTF-8.po ru_all
+locale/ru_RU.UTF-8/LC_MESSAGES/ejudgecheckers.mo : ejudgecheckers.ru_RU.UTF-8.po locale/ru_RU.UTF-8/LC_MESSAGES 
 	${MSGFMT} -o $@ -c $<
+
+locale/ru_RU.UTF-8/LC_MESSAGES :
+	mkdir -p $@
