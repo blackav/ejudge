@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,6 +17,8 @@
 
 #include "checker_internal.h"
 
+#include "l10n_impl.h"
+
 void
 checker_out_open(const char *path)
 {
@@ -29,6 +31,6 @@ checker_out_open(const char *path)
   f_arr[1] = 0;
 
   if (!(f_out = fopen(path, "r")))
-    fatal_PE("%s: cannot open %s for reading", f_arr_names[1], path);
+    fatal_PE(_("%s: cannot open %s for reading"), gettext(f_arr_names[1]), path);
   f_arr[1] = f_out;
 }

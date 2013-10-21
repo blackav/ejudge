@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,8 @@
  */
 
 #include "checker_internal.h"
+
+#include "l10n_impl.h"
 
 void
 checker_normalize_file(char **lines, size_t *lines_num)
@@ -38,10 +40,3 @@ checker_normalize_file(char **lines, size_t *lines_num)
   }
   *lines_num = i;
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- * End:
- */

@@ -41,10 +41,13 @@ checker_l10n_prepare(void)
     putenv(xstrdup(envbuf));
     snprintf(envbuf, sizeof(envbuf), "LC_MESSAGES=%s", ej_locale);
     putenv(xstrdup(envbuf));
+    snprintf(envbuf, sizeof(envbuf), "LC_CTYPE=%s", ej_locale);
+    putenv(xstrdup(envbuf));
 
     bindtextdomain("ejudgecheckers", EJUDGE_LOCALE_DIR);
     textdomain("ejudgecheckers");
     setlocale(LC_MESSAGES, "");
+    setlocale(LC_CTYPE, "");
 #endif
 }
 

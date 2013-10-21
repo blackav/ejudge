@@ -3,7 +3,7 @@
 
 /* $Id$ */
 
-/* Copyright (C) 2003-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -382,6 +382,8 @@ void
 valuer_parse_input(
         int *p_test_count,
         struct valuer_test_info **p_infos);
+
+void checker_l10n_prepare(void);
 
 #ifdef __cplusplus
 }

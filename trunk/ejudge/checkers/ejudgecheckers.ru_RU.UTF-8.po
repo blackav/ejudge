@@ -1,4 +1,4 @@
-# -*- mode: po; coding: UTF-8 -*-
+# -*- mode: po; coding: utf-8 -*-
 # ejudgecheckers messages catalog
 # $Id$
 # Copyright (C) 2013 Alexander Chernov <cher@ejudge.ru>
@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-10-21 18:46+0400\n"
-"PO-Revision-Date: 2013-10-21 22:18+0400\n"
+"POT-Creation-Date: 2013-10-22 01:31+0400\n"
+"PO-Revision-Date: 2013-10-22 01:32+0400\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: Russian\n"
@@ -17,13 +17,213 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 
 #, c-format
+msgid "%s: %d: end-of-line expected"
+msgstr "%s: %d: ожидался конец строки"
+
+#, c-format
+msgid "%s: %d: invalid control character with code %d"
+msgstr "%s: %d: недопустимый управляющий символ с кодом %d"
+
+#, c-format
+msgid "%s: cannot open %s for reading"
+msgstr "%s: ошибка открытия %s для чтения"
+
+#, c-format
 msgid "%s: cannot parse int64 value"
 msgstr "%s: ошибка конвертации в 64-битное целое значение"
+
+#, c-format
+msgid "%s: end-of-line expected"
+msgstr "%s: ожидался конец строки"
+
+#, c-format
+msgid "%s: garbage where EOF expected"
+msgstr "%s: мусорный вывод там, где ожидался конец файла"
+
+#, c-format
+msgid "%s: input error"
+msgstr "%s: ошибка ввода"
 
 #, c-format
 msgid "%s: int64 value is out of range"
 msgstr "%s: число не попадает в диапазон 64-битных целых значений"
 
 #, c-format
+msgid "%s: invalid control character with code %d"
+msgstr "%s: недопустимый управляющий символ с кодом %d"
+
+#, c-format
 msgid "%s: no int64 value"
 msgstr "%s: ожидалось 64-битное целое значение"
+
+#, c-format
+msgid "Answers differ: %s: output: %.10g, correct: %.10g"
+msgstr "Несовпадение ответов: %s: вывод: %.10g, эталон: %.10g"
+
+#, c-format
+msgid "Answers differ: %s: output: %.15Lg, correct: %.15Lg"
+msgstr "Несовпадение ответов: %s: вывод: %.15Lg, эталон: %.15Lg"
+
+#, c-format
+msgid "Answers differ: %s: output: %d, correct: %d"
+msgstr "Несовпадение ответов: %s: вывод: %d, эталон: %d"
+
+#, c-format
+msgid "Answers differ: %s: output: %lld, correct: %lld"
+msgstr "Несовпадение ответов: %s: вывод: %lld, эталон: %lld"
+
+#, c-format
+msgid "Answers differ: %s: output: %llu, correct: %llu"
+msgstr "Несовпадение ответов: %s: вывод: %llu, эталон: %llu"
+
+#, c-format
+msgid "Answers differ: %s: output: %u, correct: %u"
+msgstr "Несовпадение ответов: %s: вывод: %u, эталон: %u"
+
+msgid "Answers do not match"
+msgstr "Несовпадение ответов"
+
+#, c-format
+msgid "Answers do not match: output: %.10Lg, correct: %.10Lg"
+msgstr "Несовпадение ответов: вывод: %.10Lg, эталон: %.10Lg"
+
+#, c-format
+msgid "Answers do not match: output: %.10g, correct: %.10g"
+msgstr "Несовпадение ответов: вывод: %.10g, эталон: %.10g"
+
+#, c-format
+msgid "Answers do not match: output: %d, correct: %d"
+msgstr "Несовпадение ответов: вывод: %d, эталон: %d"
+
+#, c-format
+msgid "Answers do not match: output: %lld, correct: %lld"
+msgstr "Несовпадение ответов: вывод: %lld, эталон: %lld"
+
+#, c-format
+msgid "Answers do not match: output: %llu, correct: %llu"
+msgstr "Несовпадение ответов: вывод: %llu, эталон: %llu"
+
+#, c-format
+msgid "Answers do not match: output: %u, correct: %u"
+msgstr "Несовпадение ответов: вывод: %u, эталон: %u"
+
+#, c-format
+msgid "Cannot open correct output file '%s'"
+msgstr "Ошибка открытия эталонного файла '%s'"
+
+#, c-format
+msgid "Cannot open input directory '%s'"
+msgstr "Ошибка открытия каталога входных данных '%s'"
+
+#, c-format
+msgid "Cannot open input file '%s'"
+msgstr "Ошибка открытия входного файла '%s'"
+
+#, c-format
+msgid "Cannot open output directory '%s'"
+msgstr "Ошибка открытия каталога с результатом работы '%s'"
+
+#, c-format
+msgid "Cannot open output file '%s'"
+msgstr "Ошибка открытия выходного файла '%s'"
+
+msgid "Cannot parse EPS value"
+msgstr "Ошибка в записи значения переменной окружения EPS"
+
+msgid "Correct answer is neither `yes' nor `no' (case insensitive)"
+msgstr ""
+"Эталонный ответ не является ни строкой 'yes', ни строкой 'no' (без учета "
+"регистра букв)"
+
+#, c-format
+msgid "Difference at byte %zu: output: %d, correct: %d"
+msgstr "Различие в байте %zu: вывод: %d, эталон: %d"
+
+#, c-format
+msgid "Different number of lines: output: %zu, correct: %zu"
+msgstr "Различие количестве строк: вывод: %zu, эталон: %zu"
+
+#, c-format
+msgid "Different size: output: %zu, correct: %zu"
+msgstr "Различие в размере: вывод: %zu, эталон: %zu"
+
+msgid "Environment variable EPS is not set"
+msgstr "Переменная окружения EPS не установлена"
+
+msgid "Input element is too long"
+msgstr "Элемент ввода имеет слишком большую длину"
+
+msgid "Invalid arguments"
+msgstr "Недопустимый аргумент"
+
+#, fuzzy, c-format
+msgid "Invalid control character %d"
+msgstr "Недопустимый управляющий символ с кодом %d"
+
+#, c-format
+msgid "Invalid number of arguments: %d instead of %d"
+msgstr "Недопустимое число аргументов: %d вместо %d"
+
+msgid "Letter case mismatch"
+msgstr "Несовпадение регистра букв"
+
+#, c-format
+msgid ""
+"Line %zu differs: output:\n"
+">%s<\n"
+"correct:\n"
+">%s<"
+msgstr ""
+"Различие в строке %zu: вывод:\n"
+">%s<\n"
+"эталон:\n"
+">%s<"
+
+msgid "No final \\n in the output file"
+msgstr "В выходном файле отсутствует заключительный \\n"
+
+msgid "Test info is requested, but no code compiled in"
+msgstr "Запрошена информация о тесте, но данный режим не поддерживается"
+
+#, c-format
+msgid "Test info parsing failed: %s"
+msgstr "Ошибка разбора файла информации о тесте: %s"
+
+msgid "Too few numbers in the output"
+msgstr "В выводе слишком мало чисел"
+
+msgid "Too many numbers in the output"
+msgstr "В выводе слишком много чисел"
+
+msgid "Unexpected EOF"
+msgstr "Неожиданный конец файла"
+
+msgid "User answer is neither `yes' nor `no' (case insensitive)"
+msgstr ""
+"Вывод на проверку не является ни строкой 'yes', ни строкой 'no' (без учета "
+"регистра букв)"
+
+#, c-format
+msgid "Wrong answer: output: %s, correct: %s"
+msgstr "Неправильный ответ: вывод: %s, эталон: %s"
+
+msgid "correct"
+msgstr "эталон"
+
+msgid "correct: not a number"
+msgstr "эталон: нарушен формат записи чисел"
+
+msgid "output"
+msgstr "вывод"
+
+msgid "output: not a number"
+msgstr "вывод: нарушен формат записи чисел"
+
+msgid "test correct output"
+msgstr "эталонный вывод"
+
+msgid "test input data"
+msgstr "входные данные"
+
+msgid "user program output"
+msgstr "вывод программы"

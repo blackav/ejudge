@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -20,29 +20,24 @@
 #define NEED_TGZ  0
 #include "checker.h"
 
+#include "l10n_impl.h"
+
 int checker_main(int argc, char **argv)
 {
   unsigned int out_ans, corr_ans;
 
   if (getenv("EJ_REQUIRE_NL")) {
     if (fseek(f_out, -1L, SEEK_END) >= 0) {
-      if (getc(f_out) != '\n') fatal_PE("no final \\n in the output file");
+      if (getc(f_out) != '\n') fatal_PE(_("No final \\n in the output file"));
       fseek(f_out, 0L, SEEK_SET);
     }
   }
 
-  checker_read_corr_unsigned_int("corr_ans", 1, &corr_ans);
+  checker_read_corr_unsigned_int(_("correct"), 1, &corr_ans);
   checker_corr_eof();
-  checker_read_out_unsigned_int("out_ans", 1, &out_ans);
+  checker_read_out_unsigned_int(_("output"), 1, &out_ans);
   checker_out_eof();
   if (out_ans != corr_ans)
-    fatal_WA("Answers do not match: out = %d, corr = %d", out_ans, corr_ans);
+    fatal_WA(_("Answers do not match: output: %u, correct: %u"), out_ans, corr_ans);
   checker_OK();
 }
-
-/*
- * Local variables:
- *  compile-command: "gcc -Wall -O2 -s -I. -L. cmp_unsigned_int.c -o cmp_unsigned_int -lchecker"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- * End:
- */
