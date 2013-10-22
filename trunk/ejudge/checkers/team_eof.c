@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,6 +17,8 @@
 
 #include "checker_internal.h"
 
+#include "l10n_impl.h"
+
 void
 checker_out_eof(void)
 {
@@ -25,14 +27,14 @@ checker_out_eof(void)
   while ((c = getc(f_out)) != EOF && isspace(c));
   if (c != EOF) {
     if (c < ' ') {
-      fatal_PE("%s: invalid control character with code %d",
-               f_arr_names[1], c);
+      fatal_PE(_("%s: invalid control character with code %d"),
+               gettext(f_arr_names[1]), c);
     } else {
-      fatal_PE("%s: garbage where EOF expected", f_arr_names[1]);
+      fatal_PE(_("%s: garbage where EOF expected"), gettext(f_arr_names[1]));
     }
   }
   if (ferror(f_out)) {
-    fatal_CF("%s: input error", f_arr_names[1]);
+    fatal_CF(_("%s: input error"), gettext(f_arr_names[1]));
   }
 }
 

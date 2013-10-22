@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,8 @@
  */
 
 #include "checker_internal.h"
+
+#include "l10n_impl.h"
 
 void
 checker_read_file_by_line_f(FILE *f,
@@ -59,7 +61,7 @@ checker_read_file_by_line_f(FILE *f,
     }
   }
   if (ferror(f)) {
-    fatal_CF("Input error from %s file", path);
+    fatal_CF(_("Input error from %s file"), path);
   }
 
   if (out_lines_num) *out_lines_num = lb_u;
@@ -68,9 +70,3 @@ checker_read_file_by_line_f(FILE *f,
   free(b_v);
 }
 
-/*
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- * End:
- */

@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,6 +17,8 @@
 
 #include "checker_internal.h"
 #include <errno.h>
+
+#include "l10n_impl.h"
 
 void
 checker_read_file_f(FILE *f, char **out, size_t *out_len)
@@ -40,7 +42,7 @@ checker_read_file_f(FILE *f, char **out, size_t *out_len)
     }
   }
   if (ferror(f)) {
-    fatal_CF("Input error: %s", strerror(errno));
+    fatal_CF(_("Input error: %s"), strerror(errno));
   }
   if (!buf_len) {
     buf = (unsigned char*) xmalloc(1);
@@ -51,9 +53,3 @@ checker_read_file_f(FILE *f, char **out, size_t *out_len)
   if (out_len) *out_len = buf_len;
 }
 
-/*
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- * End:
- */

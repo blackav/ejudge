@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,6 +18,8 @@
 #include "checker_internal.h"
 
 #include <errno.h>
+
+#include "l10n_impl.h"
 
 int
 checker_read_unsigned_int_ex(
@@ -39,12 +41,12 @@ checker_read_unsigned_int_ex(
   vbuf = checker_read_buf_ex(f, error_func, name, eof_error_flag,
                              sbuf, sizeof(sbuf), &dbuf, &dsize);
   if (!vbuf) return -1;
-  if (!*vbuf) error_func("%s: no uint32 value", name);
-  if (vbuf[0] == '-') error_func("%s: `-' before uint32 value", name);
+  if (!*vbuf) error_func(_("%s: no uint32 value"), name);
+  if (vbuf[0] == '-') error_func(_("%s: `-' before uint32 value"), name);
   errno = 0;
   val = strtoul(vbuf, &eptr, 10);
-  if (*eptr) error_func("%s: cannot parse uint32 value", name);
-  if (errno) error_func("%s: uint32 value is out of range", name);
+  if (*eptr) error_func(_("%s: cannot parse uint32 value"), name);
+  if (errno) error_func(_("%s: uint32 value is out of range"), name);
   free(dbuf); dbuf = 0;
   *p_val = val;
   return 1;

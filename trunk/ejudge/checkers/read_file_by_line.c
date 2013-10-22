@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,8 @@
  */
 
 #include "checker_internal.h"
+
+#include "l10n_impl.h"
 
 void
 checker_read_file_by_line(int ind,
@@ -37,7 +39,7 @@ checker_read_file_by_line(int ind,
   b_v[0] = 0;
 
   while ((c = getc(f_arr[ind])) != EOF) {
-    if (!c) fatal_read(ind, "\\0 byte in file");
+    if (!c) fatal_read(ind, _("\\0 byte in file"));
     if (b_u + 1 >= b_a) {
       b_v = (unsigned char*) xrealloc(b_v, (b_a *= 2) * sizeof(b_v[0]));
     }
@@ -55,7 +57,7 @@ checker_read_file_by_line(int ind,
     b_v[b_u] = 0;
   }
   if (ferror(f_arr[ind])) {
-    fatal_CF("Input error from %s file", f_arr_names[ind]);
+    fatal_CF(_("Input error from %s file"), gettext(f_arr_names[ind]));
   }
   if (b_u > 0) {
     if (lb_u + 1 >= lb_a) {
@@ -70,10 +72,3 @@ checker_read_file_by_line(int ind,
 
   free(b_v);
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- * End:
- */

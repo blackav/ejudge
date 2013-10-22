@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,6 +17,8 @@
 
 #include "checker_internal.h"
 
+#include "l10n_impl.h"
+
 int
 checker_skip_eoln_ex(
         FILE *f,
@@ -29,16 +31,16 @@ checker_skip_eoln_ex(
   c = getc(f);
   while (c != EOF && c != '\n') {
     if (!isspace(c) && c < ' ') {
-      error_func("%s: invalid control character with code %d", name, c);
+      error_func(_("%s: invalid control character with code %d"), name, c);
     }
     c = getc(f);
   }
   if (c == EOF && ferror(f)) {
-    fatal_CF("%s: input error while seeking EOLN", name);
+    fatal_CF(_("%s: input error while seeking EOLN"), name);
   }
   if (c == EOF) {
     if (!eof_error_flag) return -1;
-    error_func("%s: unexpected EOF while seeking EOLN", name);
+    error_func(_("%s: unexpected EOF while seeking EOLN"), name);
   }
   return 0;
 }

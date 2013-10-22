@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,11 +17,13 @@
 
 #include "checker_internal.h"
 
+#include "l10n_impl.h"
+
 char *
 xstrdup(const char *str)
 {
   char *outstr = (char*) strdup(str);
-  if (!outstr) fatal_CF("Out of heap memory: strdup(`%s') failed", str);
+  if (!outstr) fatal_CF(_("Out of heap memory: strdup(`%s') failed"), str);
   return outstr;
 }
 
