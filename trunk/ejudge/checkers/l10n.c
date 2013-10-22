@@ -28,7 +28,7 @@ void
 checker_l10n_prepare(void)
 {
 #if CONF_HAS_LIBINTL - 0 == 1
-    const char *ej_locale = getenv("EJ_LOCALE");
+    const char *ej_locale = getenv("EJUDGE_LOCALE");
     if (!ej_locale || !*ej_locale) return;
 
     // shortcuts
