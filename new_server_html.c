@@ -9032,36 +9032,40 @@ priv_main_page(FILE *fout,
     }
   }
 
-  ns_write_all_clars(fout, phr, cnts, extra, filter_mode_clar,
-                     filter_first_clar_str, filter_last_clar_str);
-
-  fprintf(fout, "<hr><h2>%s</h2>", _("Compose a message to all participants"));
-  html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
-  fprintf(fout, "<table>\n"
-          "<tr>"
-          "<td>%s:</td>"
-          "<td><input type=\"text\" size=\"16\" name=\"msg_dest_id\"/></td>"
-          "</tr>\n"
-          "<tr>"
-          "<td>%s:</td>"
-          "<td><input type=\"text\" size=\"32\" name=\"msg_dest_login\"/></td>"
-          "</tr>\n"
-          "<tr>"
-          "<td>%s:</td>"
-          "<td><input type=\"text\" size=\"64\" name=\"msg_subj\"/></td>"
-          "</tr>\n",
-          _("To user id"),
-          _("To user login"),
-          _("Subject"));
-  if (start_time <= 0) {
-    fprintf(fout, "<tr><td>%s</td><td><select name=\"msg_hide_flag\"><option value=\"0\">NO</option><option value=\"1\">YES</option></select></td></tr>\n",
-            _("Do not show before the contest starts?"));
+  if (opcaps_check(phr->caps, OPCAP_VIEW_CLAR) >= 0) {
+    ns_write_all_clars(fout, phr, cnts, extra, filter_mode_clar,
+                       filter_first_clar_str, filter_last_clar_str);
   }
-  fprintf(fout, "</table>\n"
-          "<p><textarea name=\"msg_text\" rows=\"20\" cols=\"60\">"
-          "</textarea></p>"
-          "<p>%s\n</form>\n",
-          BUTTON(NEW_SRV_ACTION_PRIV_SUBMIT_CLAR));
+
+  if (opcaps_check(phr->caps, OPCAP_NEW_MESSAGE) >= 0) {
+    fprintf(fout, "<hr><h2>%s</h2>", _("Compose a message to all participants"));
+    html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
+    fprintf(fout, "<table>\n"
+            "<tr>"
+            "<td>%s:</td>"
+            "<td><input type=\"text\" size=\"16\" name=\"msg_dest_id\"/></td>"
+            "</tr>\n"
+            "<tr>"
+            "<td>%s:</td>"
+            "<td><input type=\"text\" size=\"32\" name=\"msg_dest_login\"/></td>"
+            "</tr>\n"
+            "<tr>"
+            "<td>%s:</td>"
+            "<td><input type=\"text\" size=\"64\" name=\"msg_subj\"/></td>"
+            "</tr>\n",
+            _("To user id"),
+            _("To user login"),
+            _("Subject"));
+    if (start_time <= 0) {
+      fprintf(fout, "<tr><td>%s</td><td><select name=\"msg_hide_flag\"><option value=\"0\">NO</option><option value=\"1\">YES</option></select></td></tr>\n",
+              _("Do not show before the contest starts?"));
+    }
+    fprintf(fout, "</table>\n"
+            "<p><textarea name=\"msg_text\" rows=\"20\" cols=\"60\">"
+            "</textarea></p>"
+            "<p>%s\n</form>\n",
+            BUTTON(NEW_SRV_ACTION_PRIV_SUBMIT_CLAR));
+  }
 
   /* change the password */
   fprintf(fout, "<hr><a name=\"chgpasswd\"></a>\n<%s>%s</%s>\n",
