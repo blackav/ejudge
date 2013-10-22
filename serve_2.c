@@ -1393,6 +1393,7 @@ serve_run_request(
         int notify_flag,
         int mime_type,
         int eoln_type,
+        int locale_id,
         const unsigned char *compile_report_dir,
         const struct compile_reply_packet *comp_pkt,
         int no_db_flag)
@@ -1665,6 +1666,15 @@ serve_run_request(
     if (srgp->enable_full_archive > 0) {
       snprintf(pathbuf, sizeof(pathbuf), "%s/%06d/output", global->run_dir, contest_id);
       srgp->reply_full_archive_dir = xstrdup(pathbuf);
+    }
+  }
+  if (global->checker_locale && global->checker_locale[0]) {
+    if (!strcasecmp(global->checker_locale, "user") && locale_id > 0) {
+      char buf[64];
+      snprintf(buf, sizeof(buf), "%d", locale_id);
+      srgp->checker_locale = xstrdup(buf);
+    } else {
+      srgp->checker_locale = xstrdup(global->checker_locale);
     }
   }
 
@@ -2325,7 +2335,7 @@ serve_read_compile_packet(
                         comp_extra->priority_adjustment,
                         comp_pkt->judge_id, comp_extra->accepting_mode,
                         comp_extra->notify_flag, re.mime_type, re.eoln_type,
-                        compile_report_dir, comp_pkt, 0) < 0) {
+                        re.locale_id, compile_report_dir, comp_pkt, 0) < 0) {
     snprintf(errmsg, sizeof(errmsg), "failed to write run packet\n");
     goto report_check_failed;
   }
@@ -3045,7 +3055,7 @@ serve_rejudge_run(
                       re.user_id, re.prob_id, re.lang_id,
                       re.variant, priority_adjustment,
                       -1, accepting_mode, 1, re.mime_type, re.eoln_type,
-                      0, 0, 0);
+                      re.locale_id, 0, 0, 0);
     xfree(run_text);
     return;
   }
