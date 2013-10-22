@@ -128,6 +128,7 @@ run_destroy(runlog_state_t state)
   }
   xfree(state->ut_table);
   xfree(state->user_flags.flags);
+  xfree(state->run_extras);
 
   if (state->iface) state->iface->close(state->cnts);
 
@@ -872,6 +873,10 @@ run_reset(
   state->ut_size = 0;
   state->max_user_id = -1;
   state->user_count = -1;
+  xfree(state->run_extras);
+  state->run_extras = NULL;
+  state->run_extra_u = 0;
+  state->run_extra_a = 0;
 
   return state->iface->reset(state->cnts, init_duration, init_sched_time,
                              init_finish_time);
@@ -1267,6 +1272,61 @@ run_set_entry(
   return state->iface->set_entry(state->cnts, run_id, &te, mask);
 }
 
+static void
+extend_run_extras(runlog_state_t state)
+{
+  if (state->run_extra_u == state->run_u) return;
+  if (state->run_extra_u > state->run_u) {
+    state->run_extra_u = state->run_u;
+    return;
+  }
+  int new_a = state->run_extra_a * 2;
+  if (!new_a) new_a = 32;
+  while (new_a < state->run_u) new_a *= 2;
+  struct run_entry_extra *new_x = calloc(new_a, sizeof(new_x[0]));
+  if (state->run_extra_u > 0) {
+    memcpy(new_x, state->run_extras, state->run_extra_u * sizeof(new_x[0]));
+  }
+  xfree(state->run_extras); state->run_extras = new_x;
+  state->run_extra_a = state->run_a;
+  state->run_extra_u = state->run_u;
+}
+
+static const unsigned char valid_user_run_statuses[256] =
+{
+  [RUN_OK]                  = 1,
+  [RUN_COMPILE_ERR]         = 1,
+  [RUN_RUN_TIME_ERR]        = 1,
+  [RUN_TIME_LIMIT_ERR]      = 1,
+  [RUN_PRESENTATION_ERR]    = 1,
+  [RUN_WRONG_ANSWER_ERR]    = 1,
+  [RUN_CHECK_FAILED]        = 1,
+  [RUN_PARTIAL]             = 1,
+  [RUN_ACCEPTED]            = 1,
+  [RUN_IGNORED]             = 1,
+  [RUN_DISQUALIFIED]        = 1,
+  [RUN_PENDING]             = 1,
+  [RUN_MEM_LIMIT_ERR]       = 1,
+  [RUN_SECURITY_ERR]        = 1,
+  [RUN_STYLE_ERR]           = 1,
+  [RUN_WALL_TIME_LIMIT_ERR] = 1,
+  [RUN_PENDING_REVIEW]      = 1,
+  [RUN_REJECTED]            = 1,
+  [RUN_SKIPPED]             = 0,
+
+  [RUN_VIRTUAL_START]       = 1,
+  [RUN_VIRTUAL_STOP]        = 1,
+  [RUN_EMPTY]               = 0,
+
+  [RUN_FULL_REJUDGE]        = 0,
+  [RUN_RUNNING]             = 1,
+  [RUN_COMPILED]            = 1,
+  [RUN_COMPILING]           = 1,
+  [RUN_AVAILABLE]           = 1,
+  [RUN_REJUDGE]             = 1,
+  [RUN_TRANSIENT_LAST]      = 1,
+};
+
 static struct user_entry *
 get_user_entry(runlog_state_t state, int user_id)
 {
@@ -1292,7 +1352,39 @@ get_user_entry(runlog_state_t state, int user_id)
   if (!state->ut_table[user_id]) {
     state->ut_table[user_id] = xcalloc(1, sizeof(state->ut_table[user_id][0]));
   }
-  return state->ut_table[user_id];
+
+  // check user indices and rebuild them, if necessary
+  struct user_entry *ut = state->ut_table[user_id];
+  if (ut->run_id_valid <= 0) {
+    info("runlog: rebuilding indices for user_id %d", user_id);
+    ut->run_id_first = -1;
+    ut->run_id_last = -1;
+
+    if (state->run_extra_u != state->run_u) {
+      extend_run_extras(state);
+    }
+
+    for (int run_id = 0; run_id < state->run_u; ++run_id) {
+      const struct run_entry *re = &state->runs[run_id];
+      if (valid_user_run_statuses[re->status] && re->user_id == user_id) {
+        // append to the double-linked list
+        state->run_extras[run_id].prev_user_id = ut->run_id_last;
+        state->run_extras[run_id].next_user_id = -1;
+        if (ut->run_id_first < 0) {
+          ut->run_id_first = run_id;
+        }
+        if (ut->run_id_last < 0) {
+          ut->run_id_last = run_id;
+        } else {
+          state->run_extras[ut->run_id_last].next_user_id = run_id;
+        }
+      }
+    }
+
+    ut->run_id_valid = 1;
+  }
+
+  return ut;
 }
 
 time_t
@@ -1881,7 +1973,7 @@ runlog_check(
           v_stop_time = v->start_time + phead->duration;
         if (e->time < v->start_time) {
           check_msg(1, ferr,
-                    "Run %d timestamp %" EJ_PRINTF_LLSPEC "d is less that virtual start %d",
+                    "Run %d timestamp %" EJ_PRINTF_LLSPEC "d is less that virtual start %ld",
                     i, e->time, v->start_time);
           nerr++;
           continue;
