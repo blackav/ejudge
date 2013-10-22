@@ -2600,6 +2600,8 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_GLOB_CHANGE_UNFOG_TIME:
   case SSERV_CMD_GLOB_DISABLE_FOG:
   case SSERV_CMD_GLOB_CHANGE_STAND_LOCALE:
+  case SSERV_CMD_GLOB_CHANGE_CHECKER_LOCALE:
+  case SSERV_CMD_GLOB_CLEAR_CHECKER_LOCALE:
   case SSERV_CMD_GLOB_CHANGE_SRC_VIEW:
   case SSERV_CMD_GLOB_CHANGE_REP_VIEW:
   case SSERV_CMD_GLOB_CHANGE_CE_VIEW:
@@ -3662,6 +3664,8 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_GLOB_CHANGE_UNFOG_TIME] = { cmd_set_value },
   [SSERV_CMD_GLOB_DISABLE_FOG] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_STAND_LOCALE] = { cmd_set_value },
+  [SSERV_CMD_GLOB_CHANGE_CHECKER_LOCALE] = { cmd_set_value },
+  [SSERV_CMD_GLOB_CLEAR_CHECKER_LOCALE] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_SRC_VIEW] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_REP_VIEW] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_CE_VIEW] = { cmd_set_value },

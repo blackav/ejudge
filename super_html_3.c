@@ -275,7 +275,8 @@ static const unsigned char * const action_to_help_url_map[SSERV_CMD_LAST] =
   [SSERV_CMD_GLOB_CHANGE_TYPE] = "Serve.cfg:global:score_system",
   [SSERV_CMD_GLOB_CHANGE_FOG_TIME] = "Serve.cfg:global:board_fog_time",
   [SSERV_CMD_GLOB_CHANGE_UNFOG_TIME] = "Serve.cfg:global:board_unfog_time",
-  [SSERV_CMD_GLOB_CHANGE_STAND_LOCALE] = "Serve.cfg:global:stand_locale",
+  [SSERV_CMD_GLOB_CHANGE_STAND_LOCALE] = "Serve.cfg:global:standings_locale",
+  [SSERV_CMD_GLOB_CHANGE_CHECKER_LOCALE] = "Serve.cfg:global:checker_locale",
   [SSERV_CMD_GLOB_CHANGE_SRC_VIEW] = "Serve.cfg:global:team_enable_src_view",
   [SSERV_CMD_GLOB_CHANGE_REP_VIEW] = "Serve.cfg:global:team_enable_rep_view",
   [SSERV_CMD_GLOB_CHANGE_CE_VIEW] = "Serve.cfg:global:team_enable_ce_view",
@@ -1130,6 +1131,13 @@ super_html_edit_global_parameters(
   fprintf(f, "</td>");
   print_help_url(f, SSERV_CMD_GLOB_CHANGE_STAND_LOCALE);
   fprintf(f, "</tr></form>\n");
+
+  print_string_editing_row(f, "Checker locale:", global->checker_locale,
+                           SSERV_CMD_GLOB_CHANGE_CHECKER_LOCALE,
+                           SSERV_CMD_GLOB_CLEAR_CHECKER_LOCALE,
+                           0,
+                           session_id, form_row_attrs[row ^= 1],
+                           self_url, extra_args, hidden_vars);
 
   html_start_form(f, 1, self_url, hidden_vars);
   fprintf(f, "<tr%s><td colspan=\"4\" align=\"center\"><b>Contestant's capabilities</b>", head_row_attr);
@@ -2944,6 +2952,15 @@ super_html_global_param(struct sid_state *sstate, int cmd,
       abort();
     }
     snprintf(global->standings_locale, sizeof(global->standings_locale), "%s", s);
+    return 0;
+
+  case SSERV_CMD_GLOB_CHANGE_CHECKER_LOCALE:
+    xfree(global->checker_locale);
+    global->checker_locale = xstrdup(param2);
+    return 0;
+
+  case SSERV_CMD_GLOB_CLEAR_CHECKER_LOCALE:
+    xfree(global->checker_locale); global->checker_locale = 0;
     return 0;
 
   case SSERV_CMD_GLOB_CHANGE_SRC_VIEW:

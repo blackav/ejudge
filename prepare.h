@@ -261,6 +261,7 @@ struct section_global_data
   unsigned char standings_locale[128];
   /** parsed `standings_locale' */
   int standings_locale_id META_ATTRIB((meta_private));
+  unsigned char *checker_locale;
 
   /** the contest number (mandatory) */
   int contest_id;
