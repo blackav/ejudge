@@ -905,6 +905,9 @@ invoke_valuer(
     task_SetEnv(tsk, "EJUDGE_INTERACTIVE", "1");
   }
   task_SetEnv(tsk, "EJUDGE", "1");
+  if (srgp->checker_locale && srgp->checker_locale[0]) {
+    task_SetEnv(tsk, "EJUDGE_LOCALE", srgp->checker_locale);
+  }
   task_EnableAllSignals(tsk);
 
   task_PrintArgs(tsk);
@@ -1003,6 +1006,9 @@ start_interactive_valuer(
     task_SetEnv(tsk, "EJUDGE_INTERACTIVE", "1");
   }
   task_SetEnv(tsk, "EJUDGE", "1");
+  if (srgp->checker_locale && srgp->checker_locale[0]) {
+    task_SetEnv(tsk, "EJUDGE_LOCALE", srgp->checker_locale);
+  }
   task_EnableAllSignals(tsk);
 
   task_PrintArgs(tsk);
@@ -1679,6 +1685,7 @@ invoke_interactor(
         const unsigned char *working_dir,
         const unsigned char *check_out_path,
         char **interactor_env,
+        const unsigned char *checker_locale,
         int stdin_fd,
         int stdout_fd,
         long time_limit_ms)
@@ -1699,6 +1706,9 @@ invoke_interactor(
   task_SetRedir(tsk_int, 0, TSR_DUP, stdin_fd);
   task_SetRedir(tsk_int, 1, TSR_DUP, stdout_fd);
   task_SetRedir(tsk_int, 2, TSR_FILE, check_out_path, TSK_APPEND, TSK_FULL_RW);
+  if (checker_locale && checker_locale[0]) {
+    task_SetEnv(tsk_int, "EJUDGE_LOCALE", checker_locale);
+  }
   task_EnableAllSignals(tsk_int);
   task_IgnoreSIGPIPE(tsk_int);
   if (time_limit_ms > 0) {
@@ -1843,6 +1853,9 @@ invoke_checker(
     task_SetEnv(tsk, "EJUDGE_SCORING_CHECKER", "1");
   }
   task_SetEnv(tsk, "EJUDGE", "1");
+  if (srgp->checker_locale && srgp->checker_locale[0]) {
+    task_SetEnv(tsk, "EJUDGE_LOCALE", srgp->checker_locale);
+  }
   task_EnableAllSignals(tsk);
 
   task_PrintArgs(tsk);
@@ -2258,7 +2271,7 @@ run_one_test(
     fcntl(pfd2[1], F_SETFD, FD_CLOEXEC);
 
     tsk_int = invoke_interactor(interactor_cmd, test_src, output_path, corr_src,
-                                working_dir, check_out_path, srpp->interactor_env,
+                                working_dir, check_out_path, srpp->interactor_env, srgp->checker_locale,
                                 pfd1[0], pfd2[1], srpp->interactor_time_limit_ms);
     if (!tsk_int) {
       append_msg_to_log(check_out_path, "interactor failed to start");

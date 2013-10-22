@@ -685,6 +685,7 @@ process_compile_packet(
                         0 /* notify_flag */,
                         0 /* mime_type */,
                         0, /* eoln_type */
+                        0, /* locale_id */
                         0 /* compile_report_dir */,
                         0 /* comp_pkt */,
                         1 /* no_db_flag */);

@@ -182,6 +182,9 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
     fprintf(f, "board_unfog_time = %d\n", global->board_unfog_time);
   if (global->standings_locale[0])
     fprintf(f, "standings_locale = \"%s\"\n", CARMOR(global->standings_locale));
+  if (global->checker_locale && global->checker_locale[0]) {
+    do_str(f, &ab, "checker_locale", global->checker_locale);
+  }
   fprintf(f, "\n");
 
   // if the `compile_dir' and the `var_dir' has the common prefix,

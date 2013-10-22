@@ -1110,6 +1110,7 @@ static const struct cnts_edit_info cnts_global_info[] =
   { NS_GLOBAL, CNTSGLOB_detect_violations, 'Y', 1, 0, 0, 0, 0, "Detect security violations", "Detect security violations (needs kernel patch)", 0 },
   { NS_GLOBAL, CNTSGLOB_enable_max_stack_size, 'Y', 1, 0, 0, 0, 0, "Assume max_stack_size == max_vm_size", 0, 0 },
   { NS_GLOBAL, CNTSGLOB_standings_locale, 134, 1, 1, 0, 1, 0, "Standings locale", 0, 0 },
+  { NS_GLOBAL, CNTSGLOB_checker_locale, 's', 1, 1, 1, 1, 0, "Checker locale", 0, 0 },
 
   { NS_SID_STATE, SSSS_show_global_1, '-', 1, 0, 0, 0, 0, "Contestant's capabilities", 0, 0 },
   { NS_GLOBAL, CNTSGLOB_team_enable_src_view, 'Y', 1, 0, 0, 0, 0, "Contestants may view their source code", 0, "SidState.show_global_1" },

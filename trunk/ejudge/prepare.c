@@ -275,6 +275,7 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(enable_l10n, "d"),
   GLOBAL_PARAM(l10n_dir, "s"),
   GLOBAL_PARAM(standings_locale, "s"),
+  GLOBAL_PARAM(checker_locale, "S"),
 
   GLOBAL_PARAM(team_download_time, "d"),
 
