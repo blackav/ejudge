@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -19,6 +19,8 @@
 
 #include <errno.h>
 
+#include "l10n_impl.h"
+
 int
 checker_read_long_double(
         int ind,
@@ -34,15 +36,15 @@ checker_read_long_double(
   vb = checker_read_buf_2(ind, name, eof_error_flag, sb, sizeof(sb), &db, &ds);
   if (!vb) return -1;
   if (!*vb) {
-    fatal_read(ind, "%s: no long double value", name);
+    fatal_read(ind, _("%s: no long double value"), name);
   }
   errno = 0;
   x = strtold(vb, &ep);
   if (*ep) {
-    fatal_read(ind, "%s: cannot parse long double value", name);
+    fatal_read(ind, _("%s: cannot parse long double value"), name);
   }
   if (errno) {
-    fatal_read(ind, "%s: long double value is out of range", name);
+    fatal_read(ind, _("%s: long double value is out of range"), name);
   }
   *p_val = x;
   return 1;

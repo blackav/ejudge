@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2010-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,6 +17,8 @@
 
 #include "checker_internal.h"
 
+#include "l10n_impl.h"
+
 void
 valuer_parse_input(
         int *p_test_count,
@@ -26,22 +28,22 @@ valuer_parse_input(
   struct valuer_test_info *infos = 0;
 
   if (scanf("%d", &test_count) != 1) {
-    fatal_CF("Cannot read test count");
+    fatal_CF(_("Cannot read test count"));
   }
   if (test_count <= 0 || test_count > 1000) {
-    fatal_CF("Test count (%d) is invalid", test_count);
+    fatal_CF(_("Test count (%d) is invalid"), test_count);
   }
   XCALLOC(infos, test_count);
 
   for (i = 0; i < test_count; ++i) {
     if (scanf("%d%d%d", &v1, &v2, &v3) != 3)
-      fatal_CF("Cannot read test description %d", i + 1);
+      fatal_CF(_("Cannot read test description %d"), i + 1);
     if (v1 < 0 || v1 >= RUN_MAX_STATUS)
-      fatal_CF("Invalid result %d in description %d", v1, i + 1);
+      fatal_CF(_("Invalid result %d in description %d"), v1, i + 1);
     if (v2 < 0 || v2 > 999999)
-      fatal_CF("Invalid score %d in description %d", v2, i + 1);
+      fatal_CF(_("Invalid score %d in description %d"), v2, i + 1);
     if (v3 < 0)
-      fatal_CF("Invalid time %d in description %d", v3, i + 1);
+      fatal_CF(_("Invalid time %d in description %d"), v3, i + 1);
     infos[i].result = v1;
     infos[i].score = v2;
     infos[i].time_ms = v3;

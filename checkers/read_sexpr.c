@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,6 +17,8 @@
 
 #include "checker_internal.h"
 
+#include "l10n_impl.h"
+
 static unsigned char *
 read_atom(int ind)
 {
@@ -27,10 +29,10 @@ read_atom(int ind)
   c = getc_unlocked(f_arr[ind]);
   while (c != EOF && isspace(c)) c = getc_unlocked(f_arr[ind]);
   if (c != EOF && c < ' ') {
-    fatal_read(ind, "invalid control character with code %d", c);
+    fatal_read(ind, _("Invalid control character with code %d"), c);
   }
   if (c == EOF && ferror(f_arr[ind])) {
-    fatal_CF("%s: input error", f_arr_names[ind]);
+    fatal_CF(_("%s: input error"), gettext(f_arr_names[ind]));
   }
 
   buf_a = 128;
@@ -47,12 +49,12 @@ read_atom(int ind)
     c = getc_unlocked(f_arr[ind]);
   }
   if (c != EOF && c < ' ' && !isspace(c)) {
-    fatal_read(ind, "invalid control character with code %d", c);
+    fatal_read(ind, _("Invalid control character with code %d"), c);
   }
   buf[buf_u] = 0;
   if (c != EOF) ungetc(c, f_arr[ind]);
   if (c == EOF && ferror(f_arr[ind])) {
-    fatal_CF("%s: input error", f_arr_names[ind]);
+    fatal_CF(_("%s: input error"), gettext(f_arr_names[ind]));
   }
   return xstrdup(buf);
 }
@@ -66,10 +68,10 @@ checker_read_sexpr(int ind)
   c = getc_unlocked(f_arr[ind]);
   while (c != EOF && isspace(c)) c = getc_unlocked(f_arr[ind]);
   if (c == EOF && ferror(f_arr[ind])) {
-    fatal_CF("%s: input error", f_arr_names[ind]);
+    fatal_CF(_("%s: input error"), gettext(f_arr_names[ind]));
   }
   if (c != EOF && c < ' ') {
-    fatal_read(ind, "invalid control character with code %d", c);
+    fatal_read(ind, _("Invalid control character with code %d"), c);
   }
 
   if (c == '(') {
@@ -77,13 +79,13 @@ checker_read_sexpr(int ind)
       c = getc_unlocked(f_arr[ind]);
       while (c != EOF && isspace(c)) c = getc_unlocked(f_arr[ind]);
       if (c == EOF && ferror(f_arr[ind])) {
-        fatal_CF("%s: input error", f_arr_names[ind]);
+        fatal_CF("%s: input error", gettext(f_arr_names[ind]));
       }
       if (c != EOF && c < ' ') {
-        fatal_read(ind, "invalid control character with code %d", c);
+        fatal_read(ind, _("Invalid control character with code %d"), c);
       }
       if (c == EOF) {
-        fatal_read(ind, "unexpected EOF");
+        fatal_read(ind, _("Unexpected EOF"));
       }
       if (c == ')') break;
       ungetc(c, f_arr[ind]);
@@ -98,10 +100,10 @@ checker_read_sexpr(int ind)
   }
 
   if (c == EOF && ferror(f_arr[ind])) {
-    fatal_CF("%s: input error", f_arr_names[ind]);
+    fatal_CF(_("%s: input error"), gettext(f_arr_names[ind]));
   }
   if (c == EOF) {
-    fatal_read(ind, "unexpected EOF");
+    fatal_read(ind, _("Unexpected EOF"));
   }
   ungetc(c, f_arr[ind]);
   p = xcalloc(1, sizeof(*p));

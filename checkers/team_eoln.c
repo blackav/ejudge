@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,6 +17,8 @@
 
 #include "checker_internal.h"
 
+#include "l10n_impl.h"
+
 void
 checker_out_eoln(int lineno)
 {
@@ -27,21 +29,21 @@ checker_out_eoln(int lineno)
   if (c != EOF && c != '\n') {
     if (c < ' ') {
       if (lineno > 0) {
-        fatal_PE("%s: %d: invalid control character with code %d",
-                 f_arr_names[1], lineno, c);
+        fatal_PE(_("%s: %d: invalid control character with code %d"),
+                 gettext(f_arr_names[1]), lineno, c);
       } else {
-        fatal_PE("%s: invalid control character with code %d",
-                 f_arr_names[1], c);
+        fatal_PE(_("%s: invalid control character with code %d"),
+                 gettext(f_arr_names[1]), c);
       }
     }
     if (lineno > 0) {
-      fatal_PE("%s: %d: end-of-line expected", f_arr_names[1], lineno);
+      fatal_PE(_("%s: %d: end-of-line expected"), gettext(f_arr_names[1]), lineno);
     } else {
-      fatal_PE("%s: end-of-line expected", f_arr_names[1]);
+      fatal_PE(_("%s: end-of-line expected"), gettext(f_arr_names[1]));
     }
   }
   if (ferror(f_in)) {
-    fatal_CF("%s: input error", f_arr_names[1]);
+    fatal_CF(_("%s: input error"), gettext(f_arr_names[1]));
   }
 }
 

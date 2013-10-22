@@ -38,14 +38,14 @@ checker_read_buf(int ind,
   int r;
 
   if (!buf_size || buf_size > BUFSIZE)
-    fatal_CF(_("checker_read_buf: invalid buf_size %zu"), buf_size);
+    fatal_CF(_("Invalid buf_size %zu"), buf_size);
 
   local_buf = (unsigned char*) alloca(buf_size + 1);
-  if (!local_buf) fatal_CF(_("checker_read_buf: alloca(%zu) failed"), buf_size+1);
+  if (!local_buf) fatal_CF(_("alloca(%zu) failed"), buf_size+1);
   memset(local_buf, 0, buf_size + 1);
   format_len = snprintf(format_str, sizeof(format_str), "%%%zus", buf_size);
   if (format_len >= sizeof(format_str))
-    fatal_CF(_("checker_read_buf: format string is too long: %zu"), format_len);
+    fatal_CF(_("Format string is too long: %zu"), format_len);
 
   r = fscanf(f_arr[ind], format_str, local_buf);
   if (r == 1) {
@@ -60,12 +60,5 @@ checker_read_buf(int ind,
   if (ferror(f_arr[ind]))
     fatal_CF(_("Input error from %s file"), gettext(f_arr_names[ind]));
   if (!eof_error_flag) return -1;
-  fatal_read(ind, _("unexpected EOF while reading '%s'"), name);
+  fatal_read(ind, _("Unexpected EOF while reading '%s'"), name);
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- * End:
- */

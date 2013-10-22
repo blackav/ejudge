@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,8 @@
  */
 
 #include "checker_internal.h"
+
+#include "l10n_impl.h"
 
 void
 checker_read_file_by_line_ex(
@@ -37,7 +39,7 @@ checker_read_file_by_line_ex(
 
   while ((c = getc_unlocked(f)) != EOF) {
     if (!isspace(c) && c < ' ') {
-      error_func("%s: invalid control character with code %d", name, c);
+      error_func(_("%s: invalid control character with code %d"), name, c);
     }
     if (buf_u == buf_a) {
       if (!buf_a) buf_a = 16;
@@ -66,7 +68,7 @@ checker_read_file_by_line_ex(
   }
 
   if (ferror_unlocked(f)) {
-    fatal_CF("%s: input error", name);
+    fatal_CF(_("%s: input error"), name);
   }
   if (buf_u > 0) {
     if (buf_u == buf_a) {

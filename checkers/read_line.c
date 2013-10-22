@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,8 @@
  */
 
 #include "checker_internal.h"
+
+#include "l10n_impl.h"
 
 int
 checker_read_line(
@@ -32,14 +34,14 @@ checker_read_line(
   c = getc_unlocked(f_arr[ind]);
   if (c == EOF) {
     if (ferror_unlocked(f_arr[ind])) {
-      fatal_CF("%s: %s: input error", f_arr_names[ind], name);
+      fatal_CF(_("%s: %s: input error"), gettext(f_arr_names[ind]), name);
     }
     if (!eof_error_flag) return -1;
-    fatal_read(ind, "%s: unexpected EOF", name);
+    fatal_read(ind, _("%s: unexpected EOF"), name);
   }
   while (c != EOF) {
     if (!isspace(c) && c < ' ') {
-      fatal_read(ind, "%s: invalid control character with code %d", name, c);
+      fatal_read(ind, _("%s: invalid control character with code %d"), name, c);
     }
     if (buf_u == buf_a) {
       if (!buf_a) buf_a = 128;
@@ -51,7 +53,7 @@ checker_read_line(
     c = getc_unlocked(f_arr[ind]);
   }
   if (c == EOF && ferror_unlocked(f_arr[ind])) {
-    fatal_CF("%s: %s: input error", f_arr_names[ind], name);
+    fatal_CF(_("%s: %s: input error"), gettext(f_arr_names[ind]), name);
   }
 
   if (buf_u == buf_a) {

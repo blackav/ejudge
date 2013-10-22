@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,6 +18,8 @@
 #include "checker_internal.h"
 
 #include <errno.h>
+
+#include "l10n_impl.h"
 
 int
 checker_read_long_double_ex(
@@ -39,11 +41,11 @@ checker_read_long_double_ex(
   vbuf = checker_read_buf_ex(f, error_func, name, eof_error_flag,
                              sbuf, sizeof(sbuf), &dbuf, &dsize);
   if (!vbuf) return -1;
-  if (!*vbuf) error_func("%s: no long double value", name);
+  if (!*vbuf) error_func(_("%s: no long double value"), name);
   errno = 0;
   val = strtold(vbuf, &eptr);
-  if (*eptr) error_func("%s: cannot parse long double value", name);
-  if (errno) error_func("%s: long double value is out of range", name);
+  if (*eptr) error_func(_("%s: cannot parse long double value"), name);
+  if (errno) error_func(_("%s: long double value is out of range"), name);
   free(dbuf); dbuf = 0;
   *p_val = val;
   return 1;

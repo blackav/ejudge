@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,8 @@
  */
 
 #include "checker_internal.h"
+
+#include "l10n_impl.h"
 
 int
 checker_read_line_ex(
@@ -32,13 +34,13 @@ checker_read_line_ex(
   if (!name) name = "";
   c = getc_unlocked(f);
   if (c == EOF) {
-    if (ferror_unlocked(f)) fatal_CF("%s: input error", name);
+    if (ferror_unlocked(f)) fatal_CF(_("%s: input error"), name);
     if (!eof_error_flag) return -1;
-    error_func("%s: unexpected EOF", name);
+    error_func(_("%s: unexpected EOF"), name);
   }
   while (c != EOF) {
     if (!isspace(c) && c < ' ') {
-      error_func("%s: invalid control character with code %d", name, c);
+      error_func(_("%s: invalid control character with code %d"), name, c);
     }
     if (buf_u == buf_a) {
       if (!buf_a) buf_a = 128;
@@ -50,7 +52,7 @@ checker_read_line_ex(
     c = getc_unlocked(f);
   }
   if (c == EOF && ferror_unlocked(f)) {
-    fatal_CF("%s: input error", name);
+    fatal_CF(_("%s: input error"), name);
   }
 
   if (buf_u == buf_a) {

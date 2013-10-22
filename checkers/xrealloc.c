@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,11 +17,13 @@
 
 #include "checker_internal.h"
 
+#include "l10n_impl.h"
+
 void *
 xrealloc(void *ptr, size_t size)
 {
   void *newptr = realloc(ptr, size);
-  if (!newptr) fatal_CF("Out of heap memory: realloc(...,%zu) failed", size);
+  if (!newptr) fatal_CF(_("Out of heap memory: realloc(...,%zu) failed"), size);
   return newptr;
 }
 

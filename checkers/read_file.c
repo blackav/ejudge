@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,8 @@
  */
 
 #include "checker_internal.h"
+
+#include "l10n_impl.h"
 
 void
 checker_read_file(int ind, char **out, size_t *out_len)
@@ -42,7 +44,7 @@ checker_read_file(int ind, char **out, size_t *out_len)
     }
   }
   if (ferror(f_arr[ind])) {
-    fatal_CF("Input error from %s file", f_arr_names[ind]);
+    fatal_CF(_("Input error from %s file"), gettext(f_arr_names[ind]));
   }
   if (!buf_len) {
     buf = (unsigned char*) xmalloc(1);
@@ -52,10 +54,3 @@ checker_read_file(int ind, char **out, size_t *out_len)
   if (out) *out = buf;
   if (out_len) *out_len = buf_len;
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- * End:
- */

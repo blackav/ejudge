@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,8 @@
  */
 
 #include "checker_internal.h"
+
+#include "l10n_impl.h"
 
 /**
    read a string (i.e. sequence of chars except whitespace)
@@ -45,22 +47,22 @@ checker_read_buf_ex(
 
   c = getc(f);
   while (isspace(c)) c = getc(f);
-  if (ferror(f)) fatal_CF("%s: input error", name);
+  if (ferror(f)) fatal_CF(_("%s: input error"), name);
   if (feof(f)) {
-    if (eof_error_flag) error_func("%s: unexpected EOF", name);
+    if (eof_error_flag) error_func(_("%s: unexpected EOF"), name);
     else return 0;
   }
 
-  if (c < ' ') error_func("%s: invalid control character %d", name, c);
+  if (c < ' ') error_func(_("%s: invalid control character %d"), name, c);
 
   if (sbuf && ssz > 1) {
     while (c != EOF && !isspace(c) && i + 1 < ssz) {
-      if (c < ' ') error_func("%s: invalid control character %d", name, c);
+      if (c < ' ') error_func(_("%s: invalid control character %d"), name, c);
       sbuf[i++] = c;
       c = getc(f);
     }
     if (c == EOF) {
-      if (ferror(f)) fatal_CF("%s: input error", name);
+      if (ferror(f)) fatal_CF(_("%s: input error"), name);
       sbuf[i] = 0;
       return sbuf;
     }
@@ -69,9 +71,9 @@ checker_read_buf_ex(
       sbuf[i] = 0;
       return sbuf;
     }
-    if (!pdbuf || !pdsz) error_func("%s: input element is too long", name);
+    if (!pdbuf || !pdsz) error_func(_("%s: input element is too long"), name);
   } else {
-    if (!pdbuf || !pdsz) error_func("%s: invalid arguments", name);
+    if (!pdbuf || !pdsz) error_func(_("%s: invalid arguments"), name);
   }
 
   dbuf = *pdbuf;
@@ -87,7 +89,7 @@ checker_read_buf_ex(
   if (i > 0) memcpy(dbuf, sbuf, i + 1);
 
   while (c != EOF && !isspace(c)) {
-    if (c < ' ') error_func("%s: invalid control character %d", name, c);
+    if (c < ' ') error_func(_("%s: invalid control character %d"), name, c);
     if (i + 1 >= dsz) {
       dsz *= 2;
       dbuf = (char*) xrealloc(dbuf, dsz);
@@ -96,7 +98,7 @@ checker_read_buf_ex(
     c = getc(f);
   }
   if (c == EOF) {
-    if (ferror(f)) fatal_CF("%s: input error", name);
+    if (ferror(f)) fatal_CF(_("%s: input error"), name);
   } else {
     ungetc(c, f);
   }

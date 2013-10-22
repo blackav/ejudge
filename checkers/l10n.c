@@ -31,6 +31,11 @@ checker_l10n_prepare(void)
     const char *ej_locale = getenv("EJ_LOCALE");
     if (!ej_locale || !*ej_locale) return;
 
+    // shortcuts
+    if (!strcasecmp(ej_locale, "russian") || !strcasecmp(ej_locale, "ru") || !strcasecmp(ej_locale, "1")) {
+        ej_locale = "ru_RU.UTF-8";
+    }
+
     // some memory is definitely leaked here
     char envbuf[1024];
     snprintf(envbuf, sizeof(envbuf), "LANG");

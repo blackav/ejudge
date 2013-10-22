@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,17 +17,12 @@
 
 #include "checker_internal.h"
 
+#include "l10n_impl.h"
+
 void *
 xcalloc(size_t nmemb, size_t size)
 {
   void *ptr = calloc(nmemb, size);
-  if (!ptr) fatal_CF("Out of heap memory: calloc(%zu,%zu) failed",nmemb, size);
+  if (!ptr) fatal_CF(_("Out of heap memory: calloc(%zu,%zu) failed"),nmemb, size);
   return ptr;
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- * End:
- */
