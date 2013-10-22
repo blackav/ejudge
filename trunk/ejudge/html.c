@@ -1957,13 +1957,37 @@ do_write_kirov_standings(
   }
 
   /* compute the total for each team */
-  for (i = 0; i < t_tot; i++) {
-    for (j = 0; j < p_tot; j++) {
-      up_ind = (i << row_sh) + j;
-      if (state->probs[p_ind[j]]->stand_ignore_score <= 0) {
+  if (global->score_n_best_problems > 0 && p_tot > 0) {
+    unsigned char *used_flag = alloca(p_tot);
+    for (i = 0; i < t_tot; ++i) {
+      memset(used_flag, 0, p_tot);
+      for (int k = 0; k < global->score_n_best_problems; ++k) {
+        int max_ind = -1;
+        int max_score = -1;
+        for (j = 0; j < p_tot; ++j) {
+          up_ind = (i << row_sh) + j;
+          if (!used_flag[j] && prob_score[up_ind] > 0 && (max_ind < 0 || prob_score[up_ind] > max_score)) {
+            max_ind = j;
+            max_score = prob_score[up_ind];
+          }
+        }
+        if (max_ind < 0) break;
+        up_ind = (i << row_sh) + max_ind;
         tot_score[i] += prob_score[up_ind];
         tot_full[i] += full_sol[up_ind];
         tot_penalty[i] += penalty[up_ind];
+        used_flag[max_ind] = 1;
+      }
+    }
+  } else {
+    for (i = 0; i < t_tot; i++) {
+      for (j = 0; j < p_tot; j++) {
+        up_ind = (i << row_sh) + j;
+        if (state->probs[p_ind[j]]->stand_ignore_score <= 0) {
+          tot_score[i] += prob_score[up_ind];
+          tot_full[i] += full_sol[up_ind];
+          tot_penalty[i] += penalty[up_ind];
+        }
       }
     }
   }
