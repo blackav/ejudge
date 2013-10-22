@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2013/10/15 15:51:34
+// Generated 2013/10/22 10:17:11
 
 #include "super_run_packet_meta.h"
 #include "super_run_packet.h"
@@ -58,6 +58,7 @@ static struct meta_info_item meta_info_super_run_in_global_packet_data[] =
   [META_SUPER_RUN_IN_GLOBAL_PACKET_disable_sound] = { META_SUPER_RUN_IN_GLOBAL_PACKET_disable_sound, 'B', XSIZE(struct super_run_in_global_packet, disable_sound), "disable_sound", XOFFSET(struct super_run_in_global_packet, disable_sound) },
   [META_SUPER_RUN_IN_GLOBAL_PACKET_is_dos] = { META_SUPER_RUN_IN_GLOBAL_PACKET_is_dos, 'B', XSIZE(struct super_run_in_global_packet, is_dos), "is_dos", XOFFSET(struct super_run_in_global_packet, is_dos) },
   [META_SUPER_RUN_IN_GLOBAL_PACKET_time_limit_retry_count] = { META_SUPER_RUN_IN_GLOBAL_PACKET_time_limit_retry_count, 'i', XSIZE(struct super_run_in_global_packet, time_limit_retry_count), "time_limit_retry_count", XOFFSET(struct super_run_in_global_packet, time_limit_retry_count) },
+  [META_SUPER_RUN_IN_GLOBAL_PACKET_checker_locale] = { META_SUPER_RUN_IN_GLOBAL_PACKET_checker_locale, 's', XSIZE(struct super_run_in_global_packet, checker_locale), "checker_locale", XOFFSET(struct super_run_in_global_packet, checker_locale) },
 };
 
 int meta_super_run_in_global_packet_get_type(int tag)

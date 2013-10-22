@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2013/10/20 23:14:36
+// Generated 2013/10/22 10:17:11
 
 #ifndef __PREPARE_META_H__
 #define __PREPARE_META_H__
@@ -74,6 +74,7 @@ enum
   CNTSGLOB_l10n_dir,
   CNTSGLOB_standings_locale,
   CNTSGLOB_standings_locale_id,
+  CNTSGLOB_checker_locale,
   CNTSGLOB_contest_id,
   CNTSGLOB_socket_path,
   CNTSGLOB_contests_dir,

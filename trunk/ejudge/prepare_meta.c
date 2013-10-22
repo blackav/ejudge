@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2013/10/20 23:14:36
+// Generated 2013/10/22 10:17:11
 
 #include "prepare_meta.h"
 #include "prepare.h"
@@ -79,6 +79,7 @@ static struct meta_info_item meta_info_section_global_data_data[] =
   [CNTSGLOB_l10n_dir] = { CNTSGLOB_l10n_dir, 'S', XSIZE(struct section_global_data, l10n_dir), "l10n_dir", XOFFSET(struct section_global_data, l10n_dir) },
   [CNTSGLOB_standings_locale] = { CNTSGLOB_standings_locale, 'S', XSIZE(struct section_global_data, standings_locale), "standings_locale", XOFFSET(struct section_global_data, standings_locale) },
   [CNTSGLOB_standings_locale_id] = { CNTSGLOB_standings_locale_id, 'i', XSIZE(struct section_global_data, standings_locale_id), NULL, XOFFSET(struct section_global_data, standings_locale_id) },
+  [CNTSGLOB_checker_locale] = { CNTSGLOB_checker_locale, 's', XSIZE(struct section_global_data, checker_locale), "checker_locale", XOFFSET(struct section_global_data, checker_locale) },
   [CNTSGLOB_contest_id] = { CNTSGLOB_contest_id, 'i', XSIZE(struct section_global_data, contest_id), "contest_id", XOFFSET(struct section_global_data, contest_id) },
   [CNTSGLOB_socket_path] = { CNTSGLOB_socket_path, 'S', XSIZE(struct section_global_data, socket_path), "socket_path", XOFFSET(struct section_global_data, socket_path) },
   [CNTSGLOB_contests_dir] = { CNTSGLOB_contests_dir, 'S', XSIZE(struct section_global_data, contests_dir), "contests_dir", XOFFSET(struct section_global_data, contests_dir) },
