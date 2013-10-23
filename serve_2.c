@@ -4135,6 +4135,13 @@ handle_virtual_stop_event(
     }
   }
 
+  if (p->time + 15 * 60 < cs->current_time) {
+    // too old virtual stop, skip it
+    info("virtual stop event is too old, skip it for now...");
+    serve_event_remove(cs, p);
+    return;
+  }
+
   run_id = run_virtual_stop(cs->runlog_state, p->user_id, p->time,
                             0 /* IP */, 0, nsec);
   if (run_id < 0) {
