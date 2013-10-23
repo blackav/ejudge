@@ -1460,11 +1460,10 @@ get_user_entry(runlog_state_t state, int user_id)
         if (ut->run_id_first < 0) {
           ut->run_id_first = run_id;
         }
-        if (ut->run_id_last < 0) {
-          ut->run_id_last = run_id;
-        } else {
+        if (ut->run_id_last >= 0) {
           state->run_extras[ut->run_id_last].next_user_id = run_id;
         }
+        ut->run_id_last = run_id;
       }
     }
 
