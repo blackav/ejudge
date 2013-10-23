@@ -2447,6 +2447,68 @@ run_get_total_users(runlog_state_t state)
   return state->user_count;
 }
 
+int
+run_get_insert_position(runlog_state_t state, time_t t, int uid, int nsec)
+{
+  if (state->run_u <= 0) return 0;
+
+  int j = state->run_u - 1;
+  while (j >= 0 && state->runs[j].status == RUN_EMPTY) j--;
+  if (j < 0) return state->run_u;
+  if (t > state->runs[j].time) return state->run_u;
+  if (t == state->runs[j].time) {
+    if (nsec < 0 && state->runs[j].nsec < NSEC_MAX) {
+      nsec = state->runs[j].nsec + 1;
+      return state->run_u;
+    }
+    if (nsec > state->runs[j].nsec) return state->run_u;
+    if (nsec == state->runs[j].nsec && uid >= state->runs[j].user_id)
+      return state->run_u;
+  }
+
+  int i = 0;
+
+  if (nsec < 0) {
+    for (i = 0; i < state->run_u; i++) {
+      if (state->runs[i].status == RUN_EMPTY) continue;
+      if (state->runs[i].time > t) break;
+      if (state->runs[i].time < t) continue;
+      // runs[i].time == t
+      while (state->runs[i].status == RUN_EMPTY || state->runs[i].time == t) i++;
+      j = i - 1;
+      while (state->runs[j].status == RUN_EMPTY) j--;
+      if (state->runs[j].nsec < NSEC_MAX) {
+        nsec = state->runs[j].nsec + 1;
+        break;
+      }
+      // DUMB :(
+      nsec = random_u32() % (NSEC_MAX + 1);
+      goto try_with_nsec;
+    }
+    ASSERT(i < state->run_u);
+  } else {
+  try_with_nsec:
+    for (i = 0; i < state->run_u; i++) {
+      if (state->runs[i].status == RUN_EMPTY) continue;
+      if (state->runs[i].time > t) break;
+      if (state->runs[i].time < t) continue;
+      if (state->runs[i].nsec > nsec) break;
+      if (state->runs[i].nsec < nsec) continue;
+      if (state->runs[i].user_id > uid) break;
+    }
+  }
+
+  for (j = i; j < state->run_u; j++)
+    if (state->runs[j].status >= RUN_TRANSIENT_FIRST
+        && state->runs[j].status <= RUN_TRANSIENT_LAST)
+      break;
+  if (j < state->run_u) {
+    return -1;
+  }
+
+  return i;
+}
+
 /*
  * Local variables:
  *  compile-command: "make"

@@ -4142,6 +4142,13 @@ handle_virtual_stop_event(
     return;
   }
 
+  run_id = run_get_insert_position(cs->runlog_state, p->user_id, p->time, nsec);
+  if (run_id + 500 < run_get_total(cs->runlog_state)) {
+    info("virtual stop event would be inserted at position %d, that is too far away", run_id);
+    serve_event_remove(cs, p);
+    return;
+  }
+
   run_id = run_virtual_stop(cs->runlog_state, p->user_id, p->time,
                             0 /* IP */, 0, nsec);
   if (run_id < 0) {
