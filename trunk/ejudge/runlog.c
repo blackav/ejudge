@@ -1561,10 +1561,10 @@ run_virtual_start(
   }
   state->user_count = -1;
 
-  if (state->iface->add_entry(state->cnts, i, &re, RE_USER_ID | RE_IP | RE_SSL_FLAG | RE_STATUS) < 0) return -1;
+  if ((i = state->iface->add_entry(state->cnts, i, &re, RE_USER_ID | RE_IP | RE_SSL_FLAG | RE_STATUS)) < 0) return -1;
   struct user_entry *ue = try_user_entry(state, user_id);
   if (ue) ue->run_id_valid = 0;
-  return 0;
+  return i;
 }
 
 int
@@ -1619,10 +1619,10 @@ run_virtual_stop(
   }
   state->user_count = -1;
 
-  if (state->iface->add_entry(state->cnts, i, &re, RE_USER_ID | RE_IP | RE_SSL_FLAG | RE_STATUS) < 0) return -1;
+  if ((i = state->iface->add_entry(state->cnts, i, &re, RE_USER_ID | RE_IP | RE_SSL_FLAG | RE_STATUS) < 0)) return -1;
   struct user_entry *ue = try_user_entry(state, user_id);
   if (ue) ue->run_id_valid = 0;
-  return 0;
+  return i;
 }
 
 int
@@ -2507,6 +2507,18 @@ run_get_insert_position(runlog_state_t state, time_t t, int uid, int nsec)
   }
 
   return i;
+}
+
+int
+run_clear_index(runlog_state_t state, int run_id)
+{
+  if (run_id < 0 || run_id >= state->run_u) return 0;
+  if (state->runs[run_id].status == RUN_EMPTY) return 0;
+  struct user_entry *ue = try_user_entry(state, state->runs[run_id].user_id);
+  if (ue) {
+    ue->run_id_valid = 0;
+  }
+  return 0;
 }
 
 /*
