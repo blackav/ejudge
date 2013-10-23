@@ -398,4 +398,7 @@ run_entry_to_ipv6(const struct run_entry *p_re, ej_ip_t *p_ip);
 void
 ipv6_to_run_entry(const ej_ip_t *p_ip, struct run_entry *p_re);
 
+int
+run_get_insert_position(runlog_state_t state, time_t t, int uid, int nsec);
+
 #endif /* __RUNLOG_H__ */
