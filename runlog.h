@@ -400,5 +400,6 @@ ipv6_to_run_entry(const ej_ip_t *p_ip, struct run_entry *p_re);
 
 int
 run_get_insert_position(runlog_state_t state, time_t t, int uid, int nsec);
+int run_clear_index(runlog_state_t state, int run_id);
 
 #endif /* __RUNLOG_H__ */

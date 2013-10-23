@@ -841,6 +841,7 @@ serve_move_files_to_insert_run(serve_state_t state, int run_id)
                     "To-run-id: %d\n", i, i + 1);
 
     s = run_get_status(state->runlog_state, i + 1);
+    run_clear_index(state->runlog_state, i + 1);
     archive_rename(state, global->run_archive_dir, 0, i, 0, i + 1, 0, 0);
     if (s >= RUN_PSEUDO_FIRST && s <= RUN_PSEUDO_LAST) continue;
     if (s == RUN_IGNORED || s == RUN_DISQUALIFIED || s ==RUN_PENDING) continue;
@@ -4135,6 +4136,7 @@ handle_virtual_stop_event(
     }
   }
 
+  /*
   if (p->time + 15 * 60 < cs->current_time) {
     // too old virtual stop, skip it
     info("virtual stop event is too old, skip it for now...");
@@ -4148,6 +4150,7 @@ handle_virtual_stop_event(
     serve_event_remove(cs, p);
     return;
   }
+  */
 
   run_id = run_virtual_stop(cs->runlog_state, p->user_id, p->time,
                             0 /* IP */, 0, nsec);
