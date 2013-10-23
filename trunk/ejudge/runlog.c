@@ -1619,7 +1619,7 @@ run_virtual_stop(
   }
   state->user_count = -1;
 
-  if ((i = state->iface->add_entry(state->cnts, i, &re, RE_USER_ID | RE_IP | RE_SSL_FLAG | RE_STATUS) < 0)) return -1;
+  if ((i = state->iface->add_entry(state->cnts, i, &re, RE_USER_ID | RE_IP | RE_SSL_FLAG | RE_STATUS)) < 0) return -1;
   struct user_entry *ue = try_user_entry(state, user_id);
   if (ue) ue->run_id_valid = 0;
   return i;
