@@ -2117,13 +2117,13 @@ ucs2_to_utf8(
     for (i = 0; i < u16len; i += 2) {
       if (u16str[i] >= ' ') ++count0;
       if (u16str[i + 1] >= ' ') ++count1;
-      if (count0 <= 0) {
-        is_be = 1;
-      }
-      if (count0 > 0 && count1 > 0) {
-        // do not risk it
-        return -1;
-      }
+    }
+    if (count0 <= 0) {
+      is_be = 1;
+    }
+    if (count0 > 0 && count1 > 0) {
+      // do not risk it
+      return -1;
     }
   }
 
