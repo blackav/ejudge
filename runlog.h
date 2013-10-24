@@ -402,4 +402,9 @@ int
 run_get_insert_position(runlog_state_t state, time_t t, int uid, int nsec);
 int run_clear_index(runlog_state_t state, int run_id);
 
+int run_get_user_last_run_id(runlog_state_t state, int user_id);
+int run_get_user_first_run_id(runlog_state_t state, int user_id);
+int run_get_user_next_run_id(runlog_state_t state, int run_id);
+int run_get_user_prev_run_id(runlog_state_t state, int run_id);
+
 #endif /* __RUNLOG_H__ */
