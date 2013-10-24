@@ -1338,6 +1338,7 @@ ucs4_to_utf8_size(const int *in)
     } else {
       out_size += 4;
     }
+    ++in;
   }
 
   return out_size;
