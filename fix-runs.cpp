@@ -122,6 +122,22 @@ make_path(int contest_id, const char *dir, int run_id)
     return string(buf3);
 }
 
+string
+make_backup_path(int contest_id, const char *dir, int run_id, int gz_flag)
+{
+    const char *suffix = "";
+    if (gz_flag > 0) suffix = ".gz";
+    char buf1[PATH_MAX];
+    snprintf(buf1, sizeof(buf1), "/home/judges/backup/%06d/var/archive/%s",
+             contest_id, dir);
+    char buf2[PATH_MAX];
+    make_hier_path((unsigned char*) buf2, sizeof(buf2),
+                   (const unsigned char*) buf1, run_id);
+    char buf3[PATH_MAX];
+    snprintf(buf3, sizeof(buf3), "%s/%06d%s", buf2, run_id, suffix);
+    return string(buf3);
+}
+
 ssize_t
 file_size(const string &str)
 {
@@ -202,9 +218,10 @@ main(int argc, char *argv[])
     // collect sha1 of source code
     map<string, set<int> > flmap;
     vector<string> flshas(total_runs);
-    vector<string> flsfx(total_runs);
+    vector<int> files_gz_flag(total_runs);
 
     for (int run_id = 0; run_id < total_runs; ++run_id) {
+        files_gz_flag[run_id] = -1;
         string sp = make_path(contest_id, "runs", run_id);
         ssize_t sz = file_size(sp);
         if (sz >= 0) {
@@ -212,6 +229,7 @@ main(int argc, char *argv[])
             set<int> &s = flmap[ss];
             s.insert(run_id);
             flshas[run_id] = ss;
+            files_gz_flag[run_id] = 0;
         } else {
             sp += ".gz";
             sz = file_size(sp);
@@ -220,7 +238,7 @@ main(int argc, char *argv[])
                 set<int> &s = flmap[ss];
                 s.insert(run_id);
                 flshas[run_id] = ss;
-                flsfx[run_id] = ".gz";
+                files_gz_flag[run_id] = 1;
             }
         }
     }
@@ -237,7 +255,9 @@ main(int argc, char *argv[])
     printf("=== runs map ===\n");
     int missing_count = 0;
 
+    vector<int> restore_run_id(total_runs);
     for (int run_id = 0; run_id < total_runs; ++run_id) {
+        restore_run_id[run_id] = -1;
         struct run_entry re = {};
         if (run_get_entry(runlog, run_id, &re) < 0) {
             die("cannot get run entry %d", run_id);
@@ -253,13 +273,26 @@ main(int argc, char *argv[])
             auto &rs = it->second;
             printf("%06d", run_id);
             for (auto r  : rs) {
-                printf(" %d%s", r, flsfx[r].c_str());
+                printf(" %d", r);
+                if (restore_run_id[run_id] < 0) restore_run_id[run_id] = r;
             }
             printf("\n");
         }
     }
 
     printf("Total: %d, missing: %d\n", total_runs, missing_count);
+
+    printf("=== check against backup files\n");
+    int mismatch_count = 0;
+    for (int run_id = 0; run_id < total_runs; ++run_id) {
+        if (restore_run_id[run_id] < 0) continue;
+        string backup_path = make_backup_path(contest_id, "runs", restore_run_id[run_id], files_gz_flag[run_id]);
+        if (file_sha1(backup_path, (files_gz_flag[restore_run_id[run_id]] > 0)?GZIP:0) != dbshas[run_id]) {
+            printf("%d: sha mismatch\n", run_id);
+            ++mismatch_count;
+        }
+    }
+    printf("Total mismatches: %d\n", mismatch_count);
 
     return 0;
 }
