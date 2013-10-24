@@ -222,14 +222,14 @@ main(int argc, char *argv[])
 
         int *wtext = new int[size + 1];
         int *wtext2 = new int[size + 1];
-        utf8_to_ucs4_str(wtext, (const unsigned char*) text);
+        int wlen = utf8_to_ucs4_str(wtext, (const unsigned char*) text);
         wtext[size] = 0;
-        wtext2[size] = 0;
+        wtext2[wlen] = 0;
         int nl_count_1 = 0;
         int nl_count_2 = 0;
-        for (int i = 0; i < int(size); ++i) {
+        for (int i = 0; i < wlen; ++i) {
             if (wtext[i] <= 0 || wtext[i] >= 0x10000) {
-                die("invalid character in run %d", run_id);
+                die("invalid character in run %d (%x)", run_id, wtext[i]);
             }
             if (wtext[i] == '\n') ++nl_count_1;
             wtext2[i] = ((wtext[i] >> 8) & 0xff) | ((wtext[i] & 0xff) << 8);
@@ -242,6 +242,24 @@ main(int argc, char *argv[])
             printf(" OK");
         } else if (nl_count_2 > 0) {
             printf(" BROKEN");
+            size_t outlen = ucs4_to_utf8_size(wtext2);
+            if ((int) outlen < 0) die("invalid size");
+            char *outstr = new char[outlen + 1];
+            ucs4_to_utf8_str((unsigned char*) outstr, outlen + 1, wtext2);
+            if (strlen(outstr) + 1 != outlen) die("invalid length");
+            string saved_path = arch_path + ".saved";
+            unsigned int shabuf[5] = {};
+            sha_buffer(outstr, outlen - 1, shabuf);
+            string sha1((char*) unparse_sha1(shabuf));
+            printf(" %s", sha1.c_str());
+
+            rename(arch_path.c_str(), saved_path.c_str());
+            if (generic_write_file(outstr, outlen - 1, arch_flag,
+                                   nullptr, arch_path.c_str(), nullptr) < 0)
+                die("write error");
+            memcpy(re.sha1, shabuf, sizeof(re.sha1));
+            run_set_entry(runlog, run_id, RE_SHA1, &re);
+
         } else {
             printf(" UNKNOWN");
         }
