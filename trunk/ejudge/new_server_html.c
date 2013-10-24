@@ -13896,8 +13896,7 @@ unpriv_main_page(FILE *fout,
                                        accepting_mode, "b1",
                                        solved_flag, accepted_flag, pending_flag,
                                        trans_flag, best_run, attempts,
-                                       disqualified, best_score,
-                                       prev_successes);
+                                       disqualified, best_score);
       }
     }
   }

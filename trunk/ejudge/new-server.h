@@ -876,8 +876,7 @@ ns_write_user_problems_summary(
         int *best_run,                /* the number of the best run */
         int *attempts,                /* the number of previous attempts */
         int *disqualified,            /* the number of prev. disq. attempts */
-        int *best_score,              /* the best score for the problem */
-        int *prev_successes);         /* the number of prev. successes */
+        int *best_score);             /* the best score for the problem */
 
 int ns_insert_variant_num(unsigned char *buf, size_t size,
                           const unsigned char *file, int variant);

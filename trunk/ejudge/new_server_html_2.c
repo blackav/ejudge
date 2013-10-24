@@ -6654,6 +6654,15 @@ ns_get_user_problems_summary(
   int status, score;
   int separate_user_score = 0;
   time_t start_time;
+  int need_prev_succ = 0; // 1, if we need to compute 'prev_successes' array
+
+  /* if 'score_bonus' is set for atleast one problem, we have to scan all runs */
+  for (int prob_id = 0; prob_id <= cs->max_prob; ++prob_id) {
+    struct section_problem_data *prob = cs->probs[prob_id];
+    if (prob && prob->score_bonus_total > 0) {
+      need_prev_succ = 1;
+    }
+  }
 
   total_runs = run_get_total(cs->runlog_state);
   if (global->disable_user_database > 0) {
@@ -6677,7 +6686,9 @@ ns_get_user_problems_summary(
   XCALLOC(user_flag, (cs->max_prob + 1) * total_teams);
   XALLOCAZ(marked_flag, cs->max_prob + 1);
 
-  for (run_id = 0; run_id < total_runs; run_id++) {
+  for (run_id = need_prev_succ?0:run_get_user_first_run_id(cs->runlog_state, user_id);
+       run_id >= 0 && run_id < total_runs;
+       run_id = need_prev_succ?(run_id + 1):run_get_user_next_run_id(cs->runlog_state, run_id)) {
     if (run_get_entry(cs->runlog_state, run_id, &re) < 0) continue;
 
     if (separate_user_score > 0 && re.is_saved) {
@@ -7149,8 +7160,7 @@ ns_write_user_problems_summary(
         int *best_run,                /* the number of the best run */
         int *attempts,                /* the number of previous attempts */
         int *disqualified,            /* the number of prev. disq. attempts */
-        int *best_score,              /* the best score for the problem */
-        int *prev_successes)          /* the number of prev. successes */
+        int *best_score)              /* the best score for the problem */
 {
   const struct section_global_data *global = cs->global;
   int prob_id, total_score = 0;
