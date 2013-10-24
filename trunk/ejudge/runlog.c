@@ -779,6 +779,7 @@ run_get_attempts(
     ASSERT(i < state->run_u);
     const struct run_entry *re = &state->runs[i];
     ASSERT(re->user_id == sample_re->user_id);
+    if (i >= runid) break;
 
     if (re->status == RUN_VIRTUAL_START || re->status == RUN_VIRTUAL_STOP) continue;
     if (re->prob_id != sample_re->prob_id) continue;
@@ -791,9 +792,7 @@ run_get_attempts(
     } else {
       n++;
     }
-
   }
-  ASSERT(i == -1);
 
   if (pattempts) *pattempts = n;
   if (pdisqattempts) *pdisqattempts = m;
