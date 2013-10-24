@@ -637,9 +637,9 @@ new_write_user_runs(
 
   fprintf(f, "</tr>\n");
 
-  for (showed = 0, i = run_get_total(state->runlog_state) - 1;
+  for (showed = 0, i = run_get_user_last_run_id(state->runlog_state, uid);
        i >= 0 && showed < runs_to_show;
-       i--) {
+       i = run_get_user_prev_run_id(state->runlog_state, i)) {
     if (run_get_entry(state->runlog_state, i, &re) < 0) continue;
     if (re.status == RUN_VIRTUAL_START || re.status == RUN_VIRTUAL_STOP
         || re.status == RUN_EMPTY)

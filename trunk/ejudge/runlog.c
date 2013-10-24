@@ -2519,6 +2519,38 @@ run_clear_index(runlog_state_t state, int run_id)
   return 0;
 }
 
+int
+run_get_user_last_run_id(runlog_state_t state, int user_id)
+{
+  struct user_entry *ue = get_user_entry(state, user_id);
+  ASSERT(ue);
+  ASSERT(ue->run_id_valid > 0);
+  return ue->run_id_last;
+}
+
+int
+run_get_user_first_run_id(runlog_state_t state, int user_id)
+{
+  struct user_entry *ue = get_user_entry(state, user_id);
+  ASSERT(ue);
+  ASSERT(ue->run_id_valid > 0);
+  return ue->run_id_first;
+}
+
+int
+run_get_user_next_run_id(runlog_state_t state, int run_id)
+{
+  if (run_id < 0 || run_id >= state->run_extra_u) return -1;
+  return state->run_extras[run_id].next_user_id;
+}
+
+int
+run_get_user_prev_run_id(runlog_state_t state, int run_id)
+{
+  if (run_id < 0 || run_id >= state->run_extra_u) return -1;
+  return state->run_extras[run_id].prev_user_id;
+}
+
 /*
  * Local variables:
  *  compile-command: "make"

@@ -6342,9 +6342,9 @@ ns_write_olympiads_user_runs(
     fprintf(fout, "<th%s>%s</th>", cl, _("Print sources"));
   fprintf(fout, "</tr>\n");
 
-  for (shown = 0, i = run_get_total(cs->runlog_state) - 1;
+  for (shown = 0, i = run_get_user_last_run_id(cs->runlog_state, phr->user_id);
        i >= 0 && shown < runs_to_show;
-       i--) {
+       i = run_get_user_prev_run_id(cs->runlog_state, i)) {
     if (run_get_entry(cs->runlog_state, i, &re) < 0) continue;
     if (re.status > RUN_LAST) continue;
     if (re.status > RUN_MAX_STATUS && re.status <= RUN_TRANSIENT_FIRST)
