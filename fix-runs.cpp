@@ -23,6 +23,7 @@ extern "C" {
 #include <string.h>
 #include <stdarg.h>
 #include <limits.h>
+#include <unistd.h>
 
 #include <string>
 #include <set>
@@ -285,14 +286,37 @@ main(int argc, char *argv[])
     printf("=== check against backup files\n");
     int mismatch_count = 0;
     for (int run_id = 0; run_id < total_runs; ++run_id) {
-        if (restore_run_id[run_id] < 0) continue;
-        string backup_path = make_backup_path(contest_id, "runs", restore_run_id[run_id], files_gz_flag[run_id]);
-        if (file_sha1(backup_path, (files_gz_flag[restore_run_id[run_id]] > 0)?GZIP:0) != dbshas[run_id]) {
+        int rrun_id = restore_run_id[run_id];
+        if (rrun_id < 0) continue;
+        string backup_path = make_backup_path(contest_id, "runs", rrun_id, files_gz_flag[rrun_id]);
+        if (file_sha1(backup_path, (files_gz_flag[rrun_id] > 0)?GZIP:0) != dbshas[run_id]) {
             printf("%d: sha mismatch\n", run_id);
             ++mismatch_count;
         }
     }
     printf("Total mismatches: %d\n", mismatch_count);
+    if (mismatch_count > 0) return 1;
+
+    printf("=== copying runs ===\n");
+    for (int run_id = 0; run_id < total_runs; ++run_id) {
+        int rrun_id = restore_run_id[run_id];
+        if (rrun_id < 0) continue;
+        string base = make_path(contest_id, "runs", run_id);
+        unlink(base.c_str());
+        unlink((base + ".gz").c_str());
+        unlink((base + ".zip").c_str());
+        string target = base;
+        if (files_gz_flag[rrun_id] > 0) target += ".gz";
+        string source = make_backup_path(contest_id, "runs", rrun_id, files_gz_flag[rrun_id]);
+
+        if (generic_copy_file(0, nullptr, source.c_str(), nullptr,
+                              0, nullptr, target.c_str(), nullptr) < 0) {
+            return 1;
+        }
+        printf("%d -> %d\n", rrun_id, run_id);
+    }
+
+    printf("=== done ===\n");
 
     return 0;
 }
