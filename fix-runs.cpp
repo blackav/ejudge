@@ -190,6 +190,7 @@ main(int argc, char *argv[])
         dbshas[run_id] = sha1s;
     }
 
+    printf("=== runs by DB ===\n");
     for (auto p : shamap) {
         printf("%s", p.first.c_str());
         for (auto i : p.second) {
@@ -201,13 +202,14 @@ main(int argc, char *argv[])
     // collect sha1 of source code
     map<string, set<int> > flmap;
     vector<string> flshas(total_runs);
+    vector<string> flsfx(total_runs);
 
     for (int run_id = 0; run_id < total_runs; ++run_id) {
         string sp = make_path(contest_id, "runs", run_id);
         ssize_t sz = file_size(sp);
         if (sz >= 0) {
             string ss = file_sha1(sp, 0);
-            set<int> &s = shamap[ss];
+            set<int> &s = flmap[ss];
             s.insert(run_id);
             flshas[run_id] = ss;
         } else {
@@ -215,30 +217,49 @@ main(int argc, char *argv[])
             sz = file_size(sp);
             if (sz >= 0) {
                 string ss = file_sha1(sp, GZIP);
-                set<int> &s = shamap[ss];
+                set<int> &s = flmap[ss];
                 s.insert(run_id);
                 flshas[run_id] = ss;
+                flsfx[run_id] = ".gz";
             }
         }
     }
 
+    printf("=== runs by files ===\n");
+    for (auto p : flmap) {
+        printf("%s", p.first.c_str());
+        for (auto i : p.second) {
+            printf(" %d", i);
+        }
+        printf("\n");
+    }
+
+    printf("=== runs map ===\n");
+    int missing_count = 0;
+
     for (int run_id = 0; run_id < total_runs; ++run_id) {
         struct run_entry re = {};
+        if (run_get_entry(runlog, run_id, &re) < 0) {
+            die("cannot get run entry %d", run_id);
+        }
         if (re.status == RUN_EMPTY || re.status == RUN_VIRTUAL_START
             || re.status == RUN_VIRTUAL_STOP) continue;
         if (dbshas[run_id] == flshas[run_id]) continue;
         auto it = flmap.find(dbshas[run_id]);
         if (it == flmap.end()) {
             printf("%06d MISSING\n", run_id);
+            ++missing_count;
         } else {
             auto &rs = it->second;
             printf("%06d", run_id);
             for (auto r  : rs) {
-                printf(" %d", r);
+                printf(" %d%s", r, flsfx[r].c_str());
             }
             printf("\n");
         }
     }
+
+    printf("Total: %d, missing: %d\n", total_runs, missing_count);
 
     return 0;
 }
