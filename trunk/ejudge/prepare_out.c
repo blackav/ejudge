@@ -848,6 +848,9 @@ prepare_unparse_lang(
   if (lang->extid && lang->extid[0]) {
     fprintf(f, "extid = \"%s\"\n", CARMOR(lang->extid));
   }
+  if (lang->super_run_dir && lang->super_run_dir[0]) {
+    fprintf(f, "super_run_dir = \"%s\"\n", CARMOR(lang->super_run_dir));
+  }
   if (lang->arch[0])
     fprintf(f, "arch = \"%s\"\n", CARMOR(lang->arch));
   fprintf(f, "src_sfx = \"%s\"\n", CARMOR(lang->src_sfx));

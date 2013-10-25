@@ -1144,6 +1144,9 @@ struct section_language_data
   /** external id (for external application binding) */
   unsigned char *extid;
 
+  /** directory for non-default super-run directory */
+  unsigned char *super_run_dir;
+
   /** do not test this language automatically */
   ejintbool_t disable_auto_testing;
   /** do not test this language at all */

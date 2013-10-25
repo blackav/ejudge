@@ -538,6 +538,7 @@ static const struct config_parse_info section_language_params[] =
   LANGUAGE_PARAM(compile_real_time_limit, "d"),
   LANGUAGE_PARAM(compiler_env, "x"),
   LANGUAGE_PARAM(extid, "S"),
+  LANGUAGE_PARAM(super_run_dir, "S"),
 
   { 0, 0, 0, 0 }
 };
@@ -880,6 +881,8 @@ prepare_language_free_func(struct generic_section_config *gp)
   p->compiler_env = sarray_free(p->compiler_env);
   p->style_checker_env = sarray_free(p->style_checker_env);
   xfree(p->unhandled_vars);
+  xfree(p->extid);
+  xfree(p->super_run_dir);
   memset(p, 0xab, sizeof(*p));
   xfree(p);
 }
