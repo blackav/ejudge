@@ -2419,7 +2419,7 @@ prepare_parse_memory_limit_type(const unsigned char *str)
 const unsigned char *
 prepare_unparse_memory_limit_type(int value)
 {
-  if (value < 0 || value >= MEMLIMIT_TYPE_JAVA) value = 0;
+  if (value < 0 || value >= MEMLIMIT_TYPE_LAST) value = 0;
   return memory_limit_type_str[value];
 }
 
