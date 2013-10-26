@@ -11279,6 +11279,17 @@ unpriv_submit_run(FILE *fout,
     ns_error(log_f, NEW_SRV_ERR_PROB_DEADLINE_EXPIRED);
     goto done;
   }
+
+  if (prob->max_user_run_count > 0) {
+    int ignored_set = 0;
+    if (prob->ignore_compile_errors > 0) ignored_set |= 1 << RUN_COMPILE_ERR;
+    ignored_set |= 1 << RUN_IGNORED;
+    if (run_count_all_attempts_2(cs->runlog_state, phr->user_id, prob_id, ignored_set) >= prob->max_user_run_count) {
+      ns_error(log_f, NEW_SRV_ERR_PROB_TOO_MANY_ATTEMPTS);
+      goto done;
+    }
+  }
+
   /* check for disabled languages */
   if (lang_id > 0) {
     if (lang->disabled || (lang->insecure > 0 && global->secure_run)) {
@@ -14046,6 +14057,16 @@ unpriv_main_page(FILE *fout,
             }
           }
         }
+      }
+
+      if (prob->max_user_run_count > 0) {
+        int ignored_set = 0;
+        if (prob->ignore_compile_errors > 0) ignored_set |= 1 << RUN_COMPILE_ERR;
+        ignored_set |= 1 << RUN_IGNORED;
+        int remain_count = prob->max_user_run_count - run_count_all_attempts_2(cs->runlog_state, phr->user_id, prob_id, ignored_set);
+        if (remain_count < 0) remain_count = 0;
+        fprintf(fout, "<h3>%s: %d</h3>\n", _("Remaining attempts"), remain_count);
+        if (remain_count <= 0) prob_status[prob_id] &= ~PROB_STATUS_SUBMITTABLE;
       }
 
       px = 0;
