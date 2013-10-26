@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2009 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -178,6 +178,7 @@ static const unsigned char * const ns_error_messages[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_INV_CHAR] = __("Invalid character"),
   [NEW_SRV_ERR_DATABASE_FAILED] = __("Database error"),
   [NEW_SRV_ERR_PROB_CONFIG] = __("Problem configuration error"),
+  [NEW_SRV_ERR_PROB_TOO_MANY_ATTEMPTS] = __("Max problem submit count is exceeded"),
 };
 
 const unsigned char *
