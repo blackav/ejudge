@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-01-23 14:15+0400\n"
-"PO-Revision-Date: 2013-01-23 14:39+0400\n"
+"POT-Creation-Date: 2013-10-26 23:42+0400\n"
+"PO-Revision-Date: 2013-10-26 23:44+0400\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -2043,6 +2043,9 @@ msgstr "Макс. использованная память"
 msgid "Max number of users was"
 msgstr "Максимальное число пользователей было"
 
+msgid "Max problem submit count is exceeded"
+msgstr "Превышено максимальное число посылок по задаче"
+
 #, c-format
 msgid ""
 "Max. CPU time: %d.%03d\n"
@@ -2785,6 +2788,9 @@ msgstr "Перезагрузить конфигурационные файлы"
 
 msgid "Remaining"
 msgstr "Остаётся"
+
+msgid "Remaining attempts"
+msgstr "Оставшиеся посылки"
 
 msgid "Remaining time"
 msgstr "Оставшееся время"
