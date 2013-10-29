@@ -2183,26 +2183,41 @@ build_indices(runlog_state_t state)
   while (state->ut_size <= max_team_id)
     state->ut_size *= 2;
 
+  extend_run_extras(state);
   XCALLOC(state->ut_table, state->ut_size);
   for (i = 0; i < state->run_u; i++) {
+    if (state->runs[i].status == RUN_EMPTY) continue;
+    ASSERT(state->runs[i].user_id > 0);
+    if (!(ue = state->ut_table[state->runs[i].user_id])) {
+      ue = state->ut_table[state->runs[i].user_id] = xcalloc(1, sizeof(state->ut_table[0][0]));
+      ue->run_id_first = -1;
+      ue->run_id_last = -1;
+    }
+
+    // append to the double-linked list
+    state->run_extras[i].prev_user_id = ue->run_id_last;
+    state->run_extras[i].next_user_id = -1;
+    if (ue->run_id_first < 0) {
+      ue->run_id_first = i;
+    }
+    if (ue->run_id_last >= 0) {
+      state->run_extras[ue->run_id_last].next_user_id = i;
+    }
+    ue->run_id_last = i;
+
     if (state->runs[i].is_hidden) continue;
     switch (state->runs[i].status) {
-    case RUN_EMPTY:
-      break;
     case RUN_VIRTUAL_START:
-      ue = get_user_entry(state, state->runs[i].user_id);
       ASSERT(!ue->status);
       ue->status = V_VIRTUAL_USER;
       ue->start_time = state->runs[i].time;
       break;
     case RUN_VIRTUAL_STOP:
-      ue = get_user_entry(state, state->runs[i].user_id);
       ASSERT(ue->status == V_VIRTUAL_USER);
       ASSERT(ue->start_time > 0);
       ue->stop_time = state->runs[i].time;
       break;
     default:
-      ue = get_user_entry(state, state->runs[i].user_id);
       if (!ue->status) ue->status = V_REAL_USER;
       break;
     }
