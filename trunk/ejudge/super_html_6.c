@@ -5878,7 +5878,7 @@ super_serve_op_USER_CREATE_FROM_CSV_ACTION(
   if (params.charset && *params.charset) {
     int charset_id = charset_get_id(params.charset);
     if (charset_id < 0) FAIL(S_ERR_INV_CHARSET);
-    if (charset_id > 0) {
+    if (charset_id >= 0) {
       recoded_csv_text = charset_decode_to_heap(charset_id, csv_text);
       if (!recoded_csv_text) FAIL(S_ERR_INV_CHARSET);
       csv_text = recoded_csv_text;
