@@ -62,8 +62,12 @@ SCRIPTS_IN = \
  dcc-version.in\
  fbc.in\
  fbc-version.in\
+ fbc-32.in\
+ fbc-32-version.in\
  fpc.in\
  fpc-version.in\
+ fpc-32.in\
+ fpc-32-version.in\
  g++.in\
  g++-version.in\
  g++-vg.in\
@@ -122,8 +126,12 @@ SCRIPTS_IN = \
  ghc-version.in\
  clang.in\
  clang-version.in\
+ clang-32.in\
+ clang-32-version.in\
  clang++.in\
  clang++-version.in\
+ clang++-32.in\
+ clang++-32-version.in\
  gccgo.in\
  gccgo-version.in\
  pasabc-linux.in\
