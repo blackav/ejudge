@@ -5989,14 +5989,15 @@ super_serve_op_USER_CREATE_FROM_CSV_ACTION(
     unsigned char *txt = fix_string(csv_parsed->v[row].v[login_idx]);
     int user_id = 0, r = 0;
     r = userlist_clnt_lookup_user(phr->userlist_clnt, txt, 0, &user_id, NULL);
-    xfree(txt); txt = 0;
     if (r < 0 && r != -ULS_ERR_INVALID_LOGIN) {
+      xfree(txt); txt = 0;
       FAIL(S_ERR_DB_ERROR);
     }
     if (r >= 0 && user_id > 0) {
       fprintf(log_f, "row %d: login '%s' already exists\n", row + 1, txt);
       failed = 1;
     }
+    xfree(txt); txt = 0;
     if (email_idx >= 0) {
       txt = fix_string(csv_parsed->v[row].v[email_idx]);
       if (txt && *txt && !is_valid_email_address(txt)) {
