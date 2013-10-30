@@ -312,8 +312,11 @@ charset_decode_to_heap(
   struct html_armor_buffer rb = HTML_ARMOR_INITIALIZER;
   const unsigned char *str2;
 
+  fprintf(stderr, "Here: %d, <%s>\n", id, str);
+
   if (id <= 0) {
     if (!strcasecmp(INTERNAL_CHARSET, "utf-8")) {
+      fprintf(stderr, "Here: <%s>\n", str);
       if (str && str[0] == 0xEF && str[1] == 0xBB && str[2] == 0xBF) {
         // skip UTF-8 BOM
         str += 3;
