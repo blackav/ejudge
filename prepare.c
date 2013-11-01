@@ -114,6 +114,7 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(notify_status_change, "d"),
   GLOBAL_PARAM(memoize_user_results, "d"),
   GLOBAL_PARAM(advanced_layout, "d"),
+  GLOBAL_PARAM(uuid_run_store, "d"),
   GLOBAL_PARAM(ignore_bom, "d"),
   GLOBAL_PARAM(disable_auto_refresh, "d"),
   GLOBAL_PARAM(disable_user_database, "d"),
@@ -814,6 +815,7 @@ global_init_func(struct generic_section_config *gp)
   p->html_report = -1;
   p->xml_report = -1;
   p->advanced_layout = -1;
+  p->uuid_run_store = -1;
   p->ignore_bom = -1;
   p->disable_auto_refresh = -1;
   p->disable_user_database = -1;
@@ -2654,6 +2656,8 @@ set_defaults(
     g->enable_memory_limit_error = DFLT_G_ENABLE_MEMORY_LIMIT_ERROR;
   if (g->advanced_layout < 0)
     g->advanced_layout = 0;
+  if (g->uuid_run_store < 0)
+    g->uuid_run_store = 0;
   if (g->ignore_bom < 0)
     g->ignore_bom = 0;
   if (g->disable_auto_refresh < 0)
@@ -5120,6 +5124,8 @@ prepare_set_global_defaults(struct section_global_data *g)
     g->stand_use_login = DFLT_G_STAND_USE_LOGIN;
   if (g->advanced_layout < 0)
     g->advanced_layout = 0;
+  if (g->uuid_run_store < 0)
+    g->uuid_run_store = 0;
   if (g->ignore_bom < 0)
     g->ignore_bom = 0;
   if (g->disable_auto_refresh < 0)

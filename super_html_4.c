@@ -1145,6 +1145,7 @@ static const struct cnts_edit_info cnts_global_info[] =
 
   { NS_SID_STATE, SSSS_show_global_2, '-', 1, 0, 0, 0, 0, "Files and directories", 0, 0 },
   { NS_GLOBAL, CNTSGLOB_advanced_layout, 'Y', 1, 0, 0, 0, 0, "Advanced layout of problem files", 0, "SidState.show_global_2" },
+  { NS_GLOBAL, CNTSGLOB_uuid_run_store, 'Y', 1, 0, 0, 0, 0, "Use UUID instead of runid to store runs", 0, "SidState.show_global_2" },
   { NS_GLOBAL, CNTSGLOB_test_dir, 'S', 1, 1, 1, 1, 0, "Directory for tests", "Directory for tests (relative to the contest configuration directory)", "SidState.show_global_2" },
   { NS_GLOBAL, CNTSGLOB_corr_dir, 'S', 1, 1, 1, 1, 0, "Directory for correct answers", "Directory for correct answers (relative to the contest configuration directory)", "SidState.show_global_2" },
   { NS_GLOBAL, CNTSGLOB_info_dir, 'S', 1, 1, 1, 1, 0, "Directory for test information files", "Directory for test information files (relative to the contest configuration directory)", "SidState.show_global_2" },

@@ -116,7 +116,7 @@ struct user_adjustment_info
 };
 struct user_adjustment_map;
 
-/* sizeof(struct section_global_data) == 350132/350264 */
+/* sizeof(struct section_global_data) == 350132/350296 */
 struct section_global_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -743,7 +743,7 @@ struct section_global_data
   +unsigned char *solution_cmd;
  */
 
-/* sizeof(struct section_problem_data) == 65136/? */
+/* sizeof(struct section_problem_data) == 65136/65384 */
 struct section_problem_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -1100,7 +1100,7 @@ struct section_problem_data
   } xml META_ATTRIB((meta_hidden));
 };
 
-/* sizeof(struct section_language_data) == 33688/33720 */
+/* sizeof(struct section_language_data) == 33688/33736 */
 struct section_language_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
