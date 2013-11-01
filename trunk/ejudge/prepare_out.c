@@ -493,6 +493,8 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
     unparse_bool(f, "enable_memory_limit_error", global->enable_memory_limit_error);
   if (global->advanced_layout > 0)
     unparse_bool(f, "advanced_layout", global->advanced_layout);
+  if (global->uuid_run_store > 0)
+    unparse_bool(f, "uuid_run_store", global->uuid_run_store);
   if (global->ignore_bom > 0)
     unparse_bool(f, "ignore_bom", global->ignore_bom);
   if (global->disable_auto_refresh > 0)

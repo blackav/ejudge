@@ -296,6 +296,7 @@ static const unsigned char * const action_to_help_url_map[SSERV_CMD_LAST] =
   [SSERV_CMD_GLOB_CHANGE_PRUNE_EMPTY_USERS] = "Serve.cfg:global:prune_empty_users",
   [SSERV_CMD_GLOB_CHANGE_ENABLE_FULL_ARCHIVE] = "Serve.cfg:global:enable_full_archive",
   [SSERV_CMD_GLOB_CHANGE_ADVANCED_LAYOUT] = "Serve.cfg:global:advanced_layout",
+  [SSERV_CMD_GLOB_CHANGE_UUID_RUN_STORE] = "Serve.cfg:global:uuid_run_store",
   [SSERV_CMD_GLOB_CHANGE_IGNORE_BOM] = "Serve.cfg:global:ignore_bom",
   [SSERV_CMD_GLOB_CHANGE_DISABLE_USER_DATABASE] = "Serve.cfg:global:disable_user_database",
   [SSERV_CMD_GLOB_CHANGE_ENABLE_MAX_STACK_SIZE] = "Serve.cfg:global:enable_max_stack_size",
@@ -1502,6 +1503,18 @@ super_html_edit_global_parameters(
     html_submit_button(f, SSERV_CMD_GLOB_CHANGE_ADVANCED_LAYOUT, "Change");
     fprintf(f, "</td>");
     print_help_url(f, SSERV_CMD_GLOB_CHANGE_ADVANCED_LAYOUT);
+    fprintf(f, "</tr></form>\n");
+  }
+
+  if (sstate->show_global_2) {
+    //GLOBAL_PARAM(uuid_run_store, "d"),
+    html_start_form(f, 1, self_url, hidden_vars);
+    fprintf(f, "<tr%s><td>Use UUID instead of run_id to store runs:</td><td>", form_row_attrs[row ^= 1]);
+    html_boolean_select(f, global->uuid_run_store, "param", 0, 0);
+    fprintf(f, "</td><td>");
+    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_UUID_RUN_STORE, "Change");
+    fprintf(f, "</td>");
+    print_help_url(f, SSERV_CMD_GLOB_CHANGE_UUID_RUN_STORE);
     fprintf(f, "</tr></form>\n");
   }
 
@@ -3042,6 +3055,10 @@ super_html_global_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_GLOB_CHANGE_ADVANCED_LAYOUT:
     p_int = &global->advanced_layout;
+    goto handle_boolean;
+
+  case SSERV_CMD_GLOB_CHANGE_UUID_RUN_STORE:
+    p_int = &global->uuid_run_store;
     goto handle_boolean;
 
   case SSERV_CMD_GLOB_CHANGE_IGNORE_BOM:
