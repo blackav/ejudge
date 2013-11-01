@@ -116,7 +116,7 @@ struct user_adjustment_info
 };
 struct user_adjustment_map;
 
-/* sizeof(struct section_global_data) == 350120/350264 */
+/* sizeof(struct section_global_data) == 350132/350264 */
 struct section_global_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -164,6 +164,8 @@ struct section_global_data
   ejintbool_t enable_memory_limit_error;
   /** enable advanced problem layout */
   ejintbool_t advanced_layout;
+  /** use UUID instead of run_id for runs */
+  ejintbool_t uuid_run_store;
   /** ignore BOM in submitted text files */
   ejintbool_t ignore_bom;
   /** disable loading of the user database */
@@ -741,7 +743,7 @@ struct section_global_data
   +unsigned char *solution_cmd;
  */
 
-/* sizeof(struct section_problem_data) == ?/? */
+/* sizeof(struct section_problem_data) == 65136/? */
 struct section_problem_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -1098,7 +1100,7 @@ struct section_problem_data
   } xml META_ATTRIB((meta_hidden));
 };
 
-/* sizeof(struct section_language_data) == 33680/33720 */
+/* sizeof(struct section_language_data) == 33688/33720 */
 struct section_language_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
