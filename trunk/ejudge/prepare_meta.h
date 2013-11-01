@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2013/10/25 13:52:05
+// Generated 2013/11/01 12:42:24
 
 #ifndef __PREPARE_META_H__
 #define __PREPARE_META_H__
@@ -29,6 +29,7 @@ enum
   CNTSGLOB_detect_violations,
   CNTSGLOB_enable_memory_limit_error,
   CNTSGLOB_advanced_layout,
+  CNTSGLOB_uuid_run_store,
   CNTSGLOB_ignore_bom,
   CNTSGLOB_disable_user_database,
   CNTSGLOB_enable_max_stack_size,
