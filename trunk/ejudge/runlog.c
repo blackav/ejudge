@@ -1818,7 +1818,7 @@ runlog_check(
 {
   int i, j;
   int max_team_id;
-  struct user_entry *ventries, *v;
+  struct user_entry *ventries = NULL, *v;
   const struct run_entry *e;
   int nerr = 0;
   struct run_entry te;
@@ -2037,8 +2037,7 @@ runlog_check(
     check_msg(0,ferr, "The runlog contains only EMPTY records");
     return 0;
   }
-  ventries = alloca((max_team_id + 1) * sizeof(ventries[0]));
-  memset(ventries, 0, (max_team_id + 1) * sizeof(ventries[0]));
+  XCALLOC(ventries, max_team_id + 1);
 
   stop_time = phead->stop_time;
   if (!stop_time && phead->start_time && phead->duration) {
@@ -2146,6 +2145,8 @@ runlog_check(
       break;
     }
   }
+
+  xfree(ventries); ventries = NULL;
 
   if (nerr > 0) return -1;
 
