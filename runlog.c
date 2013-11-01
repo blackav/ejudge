@@ -95,7 +95,7 @@ struct run_entry_v1
 };
 
 static int update_user_flags(runlog_state_t state);
-static void build_indices(runlog_state_t state);
+static void build_indices(runlog_state_t state, int flags);
 static struct user_entry *get_user_entry(runlog_state_t state, int user_id);
 static struct user_entry *try_user_entry(runlog_state_t state, int user_id);
 static void extend_run_extras(runlog_state_t state);
@@ -112,6 +112,8 @@ run_init(teamdb_state_t ts)
 
   p->max_user_id = -1;
   p->user_count = -1;
+
+  p->uuid_hash_state = -1;
 
   return p;
 }
@@ -131,6 +133,7 @@ run_destroy(runlog_state_t state)
   xfree(state->ut_table);
   xfree(state->user_flags.flags);
   xfree(state->run_extras);
+  xfree(state->uuid_hash);
 
   if (state->iface) state->iface->close(state->cnts);
 
@@ -151,7 +154,7 @@ run_set_runlog(
   if (state->iface->set_runlog(state->cnts, total_entries, entries) < 0)
     return -1;
 
-  build_indices(state);
+  build_indices(state, 0);
   return 0;
 }
 
@@ -189,6 +192,10 @@ run_open(
   }
   if (!plugin_name) plugin_name = "";
 
+  if (global && global->uuid_run_store > 0) {
+    flags |= RUN_LOG_UUID_INDEX;
+  }
+
   if (!plugin_name[0] || !strcmp(plugin_name, "file")) {
     if (!(loaded_plugin = plugin_get("rldb", "file"))) {
       err("cannot load default plugin");
@@ -208,7 +215,7 @@ run_open(
         return -1;
       if (runlog_check(0, &state->head, state->run_u, state->runs) < 0)
         return -1;
-      build_indices(state);
+      build_indices(state, flags);
     }
     return 0;
   }
@@ -229,7 +236,7 @@ run_open(
         return -1;
       if (runlog_check(0, &state->head, state->run_u, state->runs) < 0)
         return -1;
-      build_indices(state);
+      build_indices(state, flags);
     }
     return 0;
   }
@@ -271,7 +278,7 @@ run_open(
       return -1;
     if (runlog_check(0, &state->head, state->run_u, state->runs) < 0)
       return -1;
-    build_indices(state);
+    build_indices(state, flags);
   }
   return 0;
 }
@@ -2153,8 +2160,83 @@ runlog_check(
   return retcode;
 }
 
+static const int primes[] =
+{
+  4099,
+  8209,
+  16411,
+  32771,
+  65537,
+  131101,
+  262147,
+  524309,
+  1048583,
+  2097169,
+  4194319,
+  8388617,
+  16777259,
+  0,
+};
+
 static void
-build_indices(runlog_state_t state)
+build_uuid_hash(runlog_state_t state)
+{
+  state->uuid_hash_state = -1;
+  state->uuid_hash_size = 0;
+  state->uuid_hash_used = 0;
+  xfree(state->uuid_hash); state->uuid_hash = NULL;
+
+  int run_count = 0;
+  for (int run_id = 0; run_id < state->run_u; ++run_id) {
+    const struct run_entry *re = &state->runs[run_id];
+    if (re->status < 0 || (re->status > RUN_MAX_STATUS && re->status < RUN_TRANSIENT_FIRST) || re->status > RUN_LAST) continue;
+    if (!re->run_uuid[0] && !re->run_uuid[1] && !re->run_uuid[2] && !re->run_uuid[3]) {
+      err("run_id %d has NULL UUID, uuid indexing is not possible", run_id);
+      return;
+    }
+    ++run_count;
+  }
+
+  int primes_ind = 0;
+  while (primes[primes_ind] > 0 && 2 * run_count >= primes[primes_ind]) ++primes_ind;
+  if (primes[primes_ind] <= 0) {
+    err("build_uuid_hash: run table is too big");
+    return;
+  }
+  int hash_size = primes[primes_ind];
+  struct uuid_hash_entry *hash = xcalloc(hash_size, sizeof(hash[0]));
+  for (int i = 0; i < hash_size; ++i) {
+    hash[i].run_id = -1;
+  }
+  int hash_count = 0;
+  int conflicts = 0;
+  for (int run_id = 0; run_id < state->run_u; ++run_id) {
+    const struct run_entry *re = &state->runs[run_id];
+    if (re->status < 0 || (re->status > RUN_MAX_STATUS && re->status < RUN_TRANSIENT_FIRST) || re->status > RUN_LAST) continue;
+    int index = re->run_uuid[0] % hash_size;
+    while (hash[index].run_id >= 0) {
+      if (!memcmp(re->run_uuid, hash[index].uuid, sizeof(re->run_uuid))) {
+        err("build_uuid_hash: UUID collision for run_ids %d and %d", run_id, hash[index].run_id);
+        return;
+      }
+      ++conflicts;
+      index = (index + 1) % hash_size;
+    }
+    hash[index].run_id = run_id;
+    memcpy(hash[index].uuid, re->run_uuid, sizeof(hash[index].uuid));
+    ++hash_count;
+  }
+  ASSERT(hash_count == run_count);
+
+  state->uuid_hash_state = 1;
+  state->uuid_hash_size = hash_size;
+  state->uuid_hash_used = hash_count;
+  state->uuid_hash = hash;
+  info("build_uuid_hash: success, size = %d, used = %d, conflicts = %d", hash_size, hash_count, conflicts);
+}
+
+static void
+build_indices(runlog_state_t state, int flags)
 {
   int i;
   int max_team_id = -1;
@@ -2177,7 +2259,12 @@ build_indices(runlog_state_t state)
     ASSERT(state->runs[i].user_id > 0);
     if (state->runs[i].user_id > max_team_id) max_team_id = state->runs[i].user_id;
   }
-  if (max_team_id <= 0) return;
+  if (max_team_id <= 0) {
+    if ((flags & RUN_LOG_UUID_INDEX)) {
+      build_uuid_hash(state);
+    }
+    return;
+  }
 
   state->max_user_id = max_team_id;
 
@@ -2223,6 +2310,10 @@ build_indices(runlog_state_t state)
       if (!ue->status) ue->status = V_REAL_USER;
       break;
     }
+  }
+
+  if ((flags & RUN_LOG_UUID_INDEX)) {
+    build_uuid_hash(state);
   }
 }
 
@@ -2590,6 +2681,12 @@ run_get_user_prev_run_id(runlog_state_t state, int run_id)
 {
   if (run_id < 0 || run_id >= state->run_extra_u) return -1;
   return state->run_extras[run_id].prev_user_id;
+}
+
+int
+run_get_uuid_hash_state(runlog_state_t state)
+{
+  return state->uuid_hash_state >= 0;
 }
 
 /*
