@@ -2030,6 +2030,7 @@ runlog_check(
   max_team_id = -1;
   for (i = 0; i < nentries; i++) {
     if (pentries[i].status == RUN_EMPTY) continue;
+    ASSERT(pentries[i].user_id >= 0);
     if (pentries[i].user_id > max_team_id) max_team_id = pentries[i].user_id;
   }
   if (max_team_id == -1) {
