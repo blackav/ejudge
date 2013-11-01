@@ -50,6 +50,12 @@ struct run_entry_extra
   int next_user_id;            /* next run with the same user_id, -1, if none */
 };
 
+struct uuid_hash_entry
+{
+  int       run_id;            /* < 0, if the entry is empty */
+  unsigned  uuid[4];
+};
+
 struct rldb_plugin_iface;
 struct rldb_plugin_data;
 struct rldb_plugin_cnts;
@@ -75,6 +81,12 @@ struct runlog_state
 
   int run_extra_u, run_extra_a;
   struct run_entry_extra *run_extras; /* run indices */
+
+  // UUID hash information
+  int uuid_hash_state; // -1 - disabled, 0 - not built, 1 - ok
+  int uuid_hash_size;  // the size of the hash table
+  int uuid_hash_used;  // the number of entries in the table
+  struct uuid_hash_entry *uuid_hash;
 
   // the managing plugin information
   struct rldb_plugin_iface *iface;
