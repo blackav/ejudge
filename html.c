@@ -1896,6 +1896,44 @@ do_write_kirov_standings(
             full_sol[up_ind] = 1;
             last_submit_run = k;
             last_success_run = k;
+            if (prob->provide_ok) {
+              for (int dst_i = 0; prob->provide_ok[dst_i]; ++dst_i) {
+                // find a matching problem
+                int dst_pind = 0;
+                for (dst_pind = 0; dst_pind < p_tot; ++dst_pind) {
+                  if (!strcmp(prob->provide_ok[dst_i], state->probs[p_ind[dst_pind]]->short_name))
+                    break;
+                }
+                if (dst_pind >= p_tot) continue;
+
+                int dst_up_ind = (tind << row_sh) + dst_pind;
+                const struct section_problem_data *dst_prob = state->probs[p_ind[dst_pind]];
+                marked_flag[dst_up_ind] = pe->is_marked;
+                if (!full_sol[dst_up_ind]) ++sol_att[dst_up_ind];
+                score = dst_prob->full_score;
+                /*
+            score = calc_kirov_score(0, 0, start_time,
+                                     separate_user_score, user_mode,
+                                     pe, prob, att_num[up_ind],
+                                     disq_num[up_ind],
+                                     full_sol[up_ind]?RUN_TOO_MANY:succ_att[pind],
+                                     0, 0);
+                */
+                if (dst_prob->score_latest > 0 || score > prob_score[dst_up_ind]) {
+                  prob_score[dst_up_ind] = score;
+                  if (!dst_prob->stand_hide_time) sol_time[dst_up_ind] = pe->time;
+                }
+                if (!sol_time[dst_up_ind] && !dst_prob->stand_hide_time) {
+                  sol_time[dst_up_ind] = pe->time;
+                }
+                if (!full_sol[dst_up_ind]) {
+                  ++succ_att[dst_pind];
+                  ++tot_att[dst_pind];
+                }
+                ++att_num[dst_up_ind];
+                full_sol[dst_up_ind] = 1;
+              }
+            }
           }
         } else if (run_status == RUN_PARTIAL) {
           if (!marked_flag[up_ind] || prob->ignore_unmarked <= 0

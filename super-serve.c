@@ -2561,6 +2561,8 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_PROB_CLEAR_ENABLE_LANGUAGE:
   case SSERV_CMD_PROB_CHANGE_REQUIRE:
   case SSERV_CMD_PROB_CLEAR_REQUIRE:
+  case SSERV_CMD_PROB_CHANGE_PROVIDE_OK:
+  case SSERV_CMD_PROB_CLEAR_PROVIDE_OK:
   case SSERV_CMD_PROB_CHANGE_TEST_SETS:
   case SSERV_CMD_PROB_CLEAR_TEST_SETS:
   case SSERV_CMD_PROB_CHANGE_SCORE_VIEW:
@@ -3630,6 +3632,8 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_CLEAR_ENABLE_LANGUAGE] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_REQUIRE] = { cmd_set_value },
   [SSERV_CMD_PROB_CLEAR_REQUIRE] = { cmd_set_value },
+  [SSERV_CMD_PROB_CHANGE_PROVIDE_OK] = { cmd_set_value },
+  [SSERV_CMD_PROB_CLEAR_PROVIDE_OK] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_TEST_SETS] = { cmd_set_value },
   [SSERV_CMD_PROB_CLEAR_TEST_SETS] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_SCORE_VIEW] = { cmd_set_value },

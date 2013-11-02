@@ -1308,6 +1308,7 @@ prepare_unparse_prob(
   do_xstr(f, &ab, "disable_language", prob->disable_language);
   do_xstr(f, &ab, "enable_language", prob->enable_language);
   do_xstr(f, &ab, "require", prob->require);
+  do_xstr(f, &ab, "provide_ok", prob->provide_ok);
   do_xstr(f, &ab, "score_view", prob->score_view);
 
   if (!prob->abstract && prob->variant_num > 0) {
@@ -1644,6 +1645,7 @@ prepare_unparse_actual_prob(
   do_xstr(f, &ab, "disable_language", prob->disable_language);
   do_xstr(f, &ab, "enable_language", prob->enable_language);
   do_xstr(f, &ab, "require", prob->require);
+  do_xstr(f, &ab, "provide_ok", prob->provide_ok);
   do_xstr(f, &ab, "score_view", prob->score_view);
   do_xstr(f, &ab, "date_penalty", prob->date_penalty);
   do_xstr(f, &ab, "group_start_date", prob->group_start_date);

@@ -167,6 +167,7 @@ struct problem_config_section
   char **disable_language;
   char **enable_language;
   char **require;
+  char **provide_ok;
   char **lang_time_adj;
   char **lang_time_adj_millis;
   char **lang_max_vm_size;

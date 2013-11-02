@@ -1425,6 +1425,7 @@ static const struct cnts_edit_info cnts_problem_info[] =
   { NS_PROBLEM, CNTSPROB_disable_language, 'x', 1, 1, 1, 1, SSERV_OP_EDIT_SERVE_PROB_FIELD_DETAIL_PAGE, "Disabled languages", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_enable_language, 'x', 1, 1, 1, 1, SSERV_OP_EDIT_SERVE_PROB_FIELD_DETAIL_PAGE, "Enabled languages", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_require, 'x', 1, 1, 1, 1, SSERV_OP_EDIT_SERVE_PROB_FIELD_DETAIL_PAGE, "Required problems", 0, "SidState.prob_show_adv" },
+  { NS_PROBLEM, CNTSPROB_provide_ok, 'x', 1, 1, 1, 1, SSERV_OP_EDIT_SERVE_PROB_FIELD_DETAIL_PAGE, "Provide OK to problems", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_variant_num, 'd', 1, 1, 1, 1, 0, "Number of variants", 0, 0 },
   { NS_PROBLEM, CNTSPROB_start_date, 't', 1, 1, 0, 0, 0, "Accept start date", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_deadline, 't', 1, 1, 0, 0, 0, "Accept deadline", 0, "SidState.prob_show_adv" },
@@ -6070,6 +6071,7 @@ static const unsigned char prob_reloadable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_disable_language] = 0,
   [CNTSPROB_enable_language] = 0,
   [CNTSPROB_require] = 0,
+  [CNTSPROB_provide_ok] = 0,
   [CNTSPROB_standard_checker] = 1,
   [CNTSPROB_lang_compiler_env] = 0,
   [CNTSPROB_checker_env] = 0,
@@ -6363,6 +6365,7 @@ const unsigned char prob_editable_details[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_disable_language] = 1,
   [CNTSPROB_enable_language] = 1,
   [CNTSPROB_require] = 1,
+  [CNTSPROB_provide_ok] = 1,
   [CNTSPROB_unhandled_vars] = 1,
 };
 
@@ -6520,6 +6523,7 @@ cmd_op_edit_serve_prob_field_detail(
   case CNTSPROB_disable_language:
   case CNTSPROB_enable_language:
   case CNTSPROB_require:
+  case CNTSPROB_provide_ok:
     split_to_lines(filt_txt, &lns, 2);
     sarray_free(*(char***) f_ptr);
     *(char***) f_ptr = lns;
