@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2013/10/20 23:14:36
+// Generated 2013/11/02 20:35:09
 
 #include "problem_config_meta.h"
 #include "problem_config.h"
@@ -139,6 +139,7 @@ static struct meta_info_item meta_info_problem_config_section_data[] =
   [META_PROBLEM_CONFIG_SECTION_disable_language] = { META_PROBLEM_CONFIG_SECTION_disable_language, 'x', XSIZE(struct problem_config_section, disable_language), "disable_language", XOFFSET(struct problem_config_section, disable_language) },
   [META_PROBLEM_CONFIG_SECTION_enable_language] = { META_PROBLEM_CONFIG_SECTION_enable_language, 'x', XSIZE(struct problem_config_section, enable_language), "enable_language", XOFFSET(struct problem_config_section, enable_language) },
   [META_PROBLEM_CONFIG_SECTION_require] = { META_PROBLEM_CONFIG_SECTION_require, 'x', XSIZE(struct problem_config_section, require), "require", XOFFSET(struct problem_config_section, require) },
+  [META_PROBLEM_CONFIG_SECTION_provide_ok] = { META_PROBLEM_CONFIG_SECTION_provide_ok, 'x', XSIZE(struct problem_config_section, provide_ok), "provide_ok", XOFFSET(struct problem_config_section, provide_ok) },
   [META_PROBLEM_CONFIG_SECTION_lang_time_adj] = { META_PROBLEM_CONFIG_SECTION_lang_time_adj, 'x', XSIZE(struct problem_config_section, lang_time_adj), "lang_time_adj", XOFFSET(struct problem_config_section, lang_time_adj) },
   [META_PROBLEM_CONFIG_SECTION_lang_time_adj_millis] = { META_PROBLEM_CONFIG_SECTION_lang_time_adj_millis, 'x', XSIZE(struct problem_config_section, lang_time_adj_millis), "lang_time_adj_millis", XOFFSET(struct problem_config_section, lang_time_adj_millis) },
   [META_PROBLEM_CONFIG_SECTION_lang_max_vm_size] = { META_PROBLEM_CONFIG_SECTION_lang_max_vm_size, 'x', XSIZE(struct problem_config_section, lang_max_vm_size), "lang_max_vm_size", XOFFSET(struct problem_config_section, lang_max_vm_size) },
