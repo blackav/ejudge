@@ -559,6 +559,7 @@ static const unsigned char * const action_to_help_url_map[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_CHANGE_DISABLE_LANGUAGE] = "Serve.cfg:problem:disable_language",
   [SSERV_CMD_PROB_CHANGE_ENABLE_LANGUAGE] = "Serve.cfg:problem:enable_language",
   [SSERV_CMD_PROB_CHANGE_REQUIRE] = "Serve.cfg:problem:require",
+  [SSERV_CMD_PROB_CHANGE_PROVIDE_OK] = "Serve.cfg:problem:provide_ok",
   [SSERV_CMD_PROB_CHANGE_TEST_SETS] = "Serve.cfg:problem:test_sets",
   [SSERV_CMD_PROB_CHANGE_SCORE_VIEW] = "Serve.cfg:problem:score_view",
   [SSERV_CMD_PROB_CHANGE_START_DATE] = "Serve.cfg:problem:start_date",
@@ -7450,6 +7451,24 @@ super_html_print_problem(FILE *f,
     xfree(checker_env);
   }
 
+  //PROBLEM_PARAM(provide_ok, "x"),
+  if (!prob->abstract && show_adv) {
+    if (!prob->provide_ok || !prob->provide_ok[0]) {
+      extra_msg = "(not set)";
+      checker_env = xstrdup("");
+    } else {
+      extra_msg = "";
+      checker_env = sarray_unparse_2(prob->provide_ok);
+    }
+    print_string_editing_row_3(f, "Provide OK to problems:", checker_env,
+                               SSERV_CMD_PROB_CHANGE_PROVIDE_OK,
+                               SSERV_CMD_PROB_CLEAR_PROVIDE_OK,
+                               extra_msg,
+                               session_id, form_row_attrs[row ^= 1],
+                               self_url, extra_args, prob_hidden_vars);
+    xfree(checker_env);
+  }
+
   //PROBLEM_PARAM(variant_num, "d"),
   if (!prob->abstract && show_adv) {
     extra_msg = "";
@@ -8670,6 +8689,18 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
   case SSERV_CMD_PROB_CLEAR_REQUIRE:
     sarray_free(prob->require);
     prob->require = 0;
+    return 0;
+
+  case SSERV_CMD_PROB_CHANGE_PROVIDE_OK:
+    if (sarray_parse_2(param2, &tmp_env) < 0)
+      return -SSERV_ERR_INVALID_PARAMETER;
+    sarray_free(prob->provide_ok);
+    prob->provide_ok = tmp_env;
+    return 0;
+
+  case SSERV_CMD_PROB_CLEAR_PROVIDE_OK:
+    sarray_free(prob->provide_ok);
+    prob->provide_ok = 0;
     return 0;
 
   case SSERV_CMD_PROB_CHANGE_TEST_SETS:
