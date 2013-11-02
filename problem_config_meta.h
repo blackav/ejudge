@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2013/10/20 23:14:36
+// Generated 2013/11/02 20:35:09
 
 #ifndef __PROBLEM_CONFIG_META_H__
 #define __PROBLEM_CONFIG_META_H__
@@ -134,6 +134,7 @@ enum
   META_PROBLEM_CONFIG_SECTION_disable_language,
   META_PROBLEM_CONFIG_SECTION_enable_language,
   META_PROBLEM_CONFIG_SECTION_require,
+  META_PROBLEM_CONFIG_SECTION_provide_ok,
   META_PROBLEM_CONFIG_SECTION_lang_time_adj,
   META_PROBLEM_CONFIG_SECTION_lang_time_adj_millis,
   META_PROBLEM_CONFIG_SECTION_lang_max_vm_size,
