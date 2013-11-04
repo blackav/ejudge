@@ -87,6 +87,8 @@ struct runlog_state
   int uuid_hash_size;  // the size of the hash table
   int uuid_hash_used;  // the number of entries in the table
   struct uuid_hash_entry *uuid_hash;
+  int uuid_hash_last_added_run_id;
+  int uuid_hash_last_added_index;
 
   // the managing plugin information
   struct rldb_plugin_iface *iface;
