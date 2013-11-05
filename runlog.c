@@ -1456,7 +1456,7 @@ extend_run_extras(runlog_state_t state)
     memcpy(new_x, state->run_extras, state->run_extra_u * sizeof(new_x[0]));
   }
   xfree(state->run_extras); state->run_extras = new_x;
-  state->run_extra_a = state->run_a;
+  state->run_extra_a = new_a;
   state->run_extra_u = state->run_u;
 }
 
