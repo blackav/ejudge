@@ -367,8 +367,8 @@ do_loop(void)
       snprintf(msgbuf, sizeof(msgbuf), "invalid lang_id %d\n", req->lang_id);
       goto report_internal_error;
     }
-    pathmake(src_name, run_name, lang->src_sfx, NULL);
-    pathmake(exe_name, run_name, lang->exe_sfx, NULL);
+    pathmake(src_name, work_run_name, lang->src_sfx, NULL);
+    pathmake(exe_name, work_run_name, lang->exe_sfx, NULL);
 
     pathmake(src_path, global->compile_work_dir, "/", src_name, NULL);
     pathmake(exe_path, global->compile_work_dir, "/", exe_name, NULL);
