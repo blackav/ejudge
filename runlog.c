@@ -2247,7 +2247,7 @@ run_find_run_id_by_uuid(runlog_state_t state, ruint32_t *uuid)
   int index = uuid[0] % state->uuid_hash_size;
   while (state->uuid_hash[index].run_id >= 0) {
     if (!memcmp(uuid, state->uuid_hash[index].uuid, sizeof(ej_uuid_t))) {
-      return index;
+      return state->uuid_hash[index].run_id;
     }
     index = (index + 1) % state->uuid_hash_size;
   }
