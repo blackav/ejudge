@@ -46,6 +46,7 @@
 #include "prepare_dflt.h"
 #include "testing_report_xml.h"
 #include "server_framework.h"
+#include "ej_uuid.h"
 
 #include "reuse_xalloc.h"
 #include "reuse_logger.h"
@@ -1564,7 +1565,14 @@ serve_run_request(
   snprintf(exe_out_name, sizeof(exe_out_name), "%s%s", pkt_base, exe_sfx);
 
   if (!run_text) {
-    snprintf(exe_in_name, sizeof(exe_in_name), "%06d%s", run_id, exe_sfx);
+    if (comp_pkt && comp_pkt->use_uuid > 0
+        && comp_pkt->uuid[0] && comp_pkt->uuid[1]
+        && comp_pkt->uuid[2] && comp_pkt->uuid[3]) {
+      snprintf(exe_in_name, sizeof(exe_in_name), "%s%s",
+               ej_uuid_unparse(comp_pkt->uuid, NULL), exe_sfx);
+    } else {
+      snprintf(exe_in_name, sizeof(exe_in_name), "%06d%s", run_id, exe_sfx);
+    }
     if (generic_copy_file(REMOVE, compile_report_dir, exe_in_name, "",
                           0, run_exe_dir,exe_out_name, "") < 0) {
       fprintf(errf, "copying failed");
@@ -2225,7 +2233,7 @@ serve_read_compile_packet(
       || (lang && lang->style_checker_cmd && lang->style_checker_cmd[0])) {
     min_txt_size = 0;
   }
-  snprintf(txt_packet_path, sizeof(txt_packet_path), "%s/%s.txt", compile_report_dir, pkt_name);
+  snprintf(txt_packet_path, sizeof(txt_packet_path), "%s/%s.txt", compile_report_dir, pname);
   if (generic_read_file(&txt_text, 0, &txt_size, REMOVE, NULL, txt_packet_path, NULL) >= 0
       && txt_size >= min_txt_size
       && (arch_flags = archive_make_write_path(state,
