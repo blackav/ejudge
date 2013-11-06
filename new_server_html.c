@@ -2916,13 +2916,14 @@ priv_submit_run(FILE *fout,
   sha_buffer(run_text, run_size, shaval);
   gettimeofday(&precise_time, 0);
 
+  ruint32_t run_uuid[4];
   run_id = run_add_record(cs->runlog_state, 
                           precise_time.tv_sec, precise_time.tv_usec * 1000,
                           run_size, shaval, NULL,
                           &phr->ip, phr->ssl_flag,
                           phr->locale_id, phr->user_id,
                           prob_id, lang_id, eoln_type,
-                          variant, 1, mime_type);
+                          variant, 1, mime_type, run_uuid);
   if (run_id < 0) {
     ns_error(log_f, NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
     goto cleanup;
@@ -2968,7 +2969,7 @@ priv_submit_run(FILE *fout,
                                      lang->compiler_env,
                                      0, prob->style_checker_cmd,
                                      prob->style_checker_env,
-                                     -1, 0, 0, prob, lang, 0)) < 0) {
+                                     -1, 0, 0, prob, lang, 0, run_uuid)) < 0) {
         serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
       }
     }
@@ -2995,7 +2996,8 @@ priv_submit_run(FILE *fout,
                                   0 /* priority_adjustment */,
                                   0 /* notify flag */,
                                   prob, NULL /* lang */,
-                                  0 /* no_db_flag */);
+                                  0 /* no_db_flag */,
+                                  run_uuid);
         if (r < 0) {
           serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
         }
@@ -3034,7 +3036,8 @@ priv_submit_run(FILE *fout,
                                   0 /* priority_adjustment */,
                                   0 /* notify flag */,
                                   prob, NULL /* lang */,
-                                  0 /* no_db_flag */);
+                                  0 /* no_db_flag */,
+                                  run_uuid);
         if (r < 0) {
           serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
         }
@@ -4640,12 +4643,13 @@ priv_new_run(FILE *fout,
   if (!lang) lang_id = 0;
   gettimeofday(&precise_time, 0);
 
+  ruint32_t run_uuid[4];
   run_id = run_add_record(cs->runlog_state, 
                           precise_time.tv_sec, precise_time.tv_usec * 1000,
                           run_size, shaval, NULL,
                           &phr->ip, phr->ssl_flag, phr->locale_id,
                           user_id, prob_id, lang_id, 0, variant,
-                          is_hidden, mime_type);
+                          is_hidden, mime_type, run_uuid);
   if (run_id < 0) FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   serve_move_files_to_insert_run(cs, run_id);
   arch_flags = archive_make_write_path(cs, run_path, sizeof(run_path),
@@ -10799,13 +10803,14 @@ ns_submit_run(
     db_variant = 0;
   }
 
+  ruint32_t run_uuid[4];
   run_id = run_add_record(cs->runlog_state, 
                           precise_time.tv_sec, precise_time.tv_usec * 1000,
                           run_size, shaval, uuid_ptr,
                           &phr->ip, phr->ssl_flag,
                           phr->locale_id, user_id,
                           prob_id, lang_id, eoln_type,
-                          db_variant, is_hidden, mime_type);
+                          db_variant, is_hidden, mime_type, run_uuid);
   if (run_id < 0) {
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   }
@@ -10869,7 +10874,8 @@ ns_submit_run(
                               prob->style_checker_cmd,
                               prob->style_checker_env,
                               -1 /* accepting_mode */, 0 /* priority_adjustment */,
-                              1 /* notify_flag */, prob, lang, 0 /* no_db_flag */);
+                              1 /* notify_flag */, prob, lang,
+                              0 /* no_db_flag */, run_uuid);
     if (r < 0) {
       serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
       goto cleanup;
@@ -10902,7 +10908,7 @@ ns_submit_run(
                                 0 /* priority_adjustment */,
                                 0 /* notify flag */,
                                 prob, NULL /* lang */,
-                                0 /* no_db_flag */);
+                                0 /* no_db_flag */, run_uuid);
       if (r < 0) {
         serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
         goto cleanup;
@@ -10955,7 +10961,7 @@ ns_submit_run(
                               0 /* priority_adjustment */,
                               0 /* notify flag */,
                               prob, NULL /* lang */,
-                              0 /* no_db_flag */);
+                              0 /* no_db_flag */, run_uuid);
     if (r < 0) {
       serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
       goto cleanup;
@@ -11417,12 +11423,14 @@ unpriv_submit_run(FILE *fout,
   // OK, so all checks are done, now we add this submit to the database
   gettimeofday(&precise_time, 0);
 
+  ruint32_t run_uuid[4];
   run_id = run_add_record(cs->runlog_state, 
                           precise_time.tv_sec, precise_time.tv_usec * 1000,
                           run_size, shaval, NULL,
                           &phr->ip, phr->ssl_flag,
                           phr->locale_id, phr->user_id,
-                          prob_id, lang_id, eoln_type, 0, 0, mime_type);
+                          prob_id, lang_id, eoln_type, 0, 0, mime_type,
+                          run_uuid);
   if (run_id < 0) {
     ns_error(log_f, NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
     goto done;
@@ -11468,7 +11476,7 @@ unpriv_submit_run(FILE *fout,
                                      lang->compiler_env,
                                      0, prob->style_checker_cmd,
                                      prob->style_checker_env,
-                                     -1, 0, 1, prob, lang, 0)) < 0) {
+                                     -1, 0, 1, prob, lang, 0, run_uuid)) < 0) {
         serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
       }
     }
@@ -11495,7 +11503,7 @@ unpriv_submit_run(FILE *fout,
                                   0 /* priority_adjustment */,
                                   0 /* notify flag */,
                                   prob, NULL /* lang */,
-                                  0 /* no_db_flag */);
+                                  0 /* no_db_flag */, run_uuid);
         if (r < 0) {
           serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
         }
@@ -11553,7 +11561,7 @@ unpriv_submit_run(FILE *fout,
                                   0 /* priority_adjustment */,
                                   0 /* notify flag */,
                                   prob, NULL /* lang */,
-                                  0 /* no_db_flag */);
+                                  0 /* no_db_flag */, run_uuid);
         if (r < 0) {
           serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
         }
@@ -14842,6 +14850,7 @@ unpriv_xml_update_answer(
     if (prob->require[i]) FAIL(NEW_SRV_ERR_NOT_ALL_REQ_SOLVED);
   }
 
+  ruint32_t run_uuid[4];
   run_id = run_find(cs->runlog_state, -1, 0, phr->user_id, prob->id, 0);
   if (run_id < 0) {
     gettimeofday(&precise_time, 0);
@@ -14850,7 +14859,7 @@ unpriv_xml_update_answer(
                             run_size, shaval, NULL,
                             &phr->ip, phr->ssl_flag,
                             phr->locale_id, phr->user_id,
-                            prob_id, 0, 0, 0, 0, 0);
+                            prob_id, 0, 0, 0, 0, 0, run_uuid);
     if (run_id < 0) FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
     serve_move_files_to_insert_run(cs, run_id);
     new_flag = 1;

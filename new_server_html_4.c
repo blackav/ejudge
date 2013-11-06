@@ -1053,13 +1053,14 @@ cmd_submit_run(
   }
 
   gettimeofday(&precise_time, 0);
+  ruint32_t run_uuid[4];
   run_id = run_add_record(cs->runlog_state, 
                           precise_time.tv_sec, precise_time.tv_usec * 1000,
                           run_size, shaval, NULL,
                           &phr->ip, phr->ssl_flag,
                           phr->locale_id, phr->user_id,
                           prob->id, lang_id, eoln_type,
-                          variant, hidden_flag, mime_type);
+                          variant, hidden_flag, mime_type, run_uuid);
   if (run_id < 0)
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   serve_move_files_to_insert_run(cs, run_id);
@@ -1099,7 +1100,7 @@ cmd_submit_run(
                                      lang->compiler_env,
                                      0, prob->style_checker_cmd,
                                      prob->style_checker_env,
-                                     -1, 0, 0, prob, lang, 0)) < 0) {
+                                     -1, 0, 0, prob, lang, 0, run_uuid)) < 0) {
         serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
       }
     }
@@ -1126,7 +1127,7 @@ cmd_submit_run(
                                        0 /* priority_adjustment */,
                                        0 /* notify flag */,
                                        prob, NULL /* lang */,
-                                       0 /* no_db_flag */)) < 0) {
+                                       0 /* no_db_flag */, run_uuid)) < 0) {
           serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
         }
       } else {
@@ -1175,7 +1176,7 @@ cmd_submit_run(
                                        0 /* priority_adjustment */,
                                        0 /* notify flag */,
                                        prob, NULL /* lang */,
-                                       0 /* no_db_flag */)) < 0) {
+                                       0 /* no_db_flag */, run_uuid)) < 0) {
           serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
         }
       } else {

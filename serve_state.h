@@ -424,7 +424,8 @@ serve_compile_request(
         int notify_flag,
         const struct section_problem_data *prob,
         const struct section_language_data *lang,
-        int no_db_flag)
+        int no_db_flag,
+        const ruint32_t uuid[4])
 #if defined __GNUC__
   __attribute__((warn_unused_result))
 #endif
