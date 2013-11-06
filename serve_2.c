@@ -2184,9 +2184,28 @@ serve_read_compile_packet(
     err("read_compile_packet: mismatched contest_id %d", comp_pkt->contest_id);
     goto non_fatal_error;
   }
+  int new_run_id = -1;
+  if (run_get_uuid_hash_state(state->runlog_state) >= 0 && comp_pkt->use_uuid > 0) {
+    new_run_id = run_find_run_id_by_uuid(state->runlog_state, comp_pkt->uuid);
+    if (new_run_id < 0) {
+      err("read_compile_packet: non-existing UUID %s (packet run_id %d)", ej_uuid_unparse(comp_pkt->uuid, NULL), comp_pkt->run_id);
+      goto non_fatal_error;
+    }
+    if (new_run_id != comp_pkt->run_id) {
+      info("read_compile_packet: run_id changed: old: %d, current: %d", comp_pkt->run_id, new_run_id);
+      comp_pkt->run_id = new_run_id;
+    }
+  }
+
   if (run_get_entry(state->runlog_state, comp_pkt->run_id, &re) < 0) {
     err("read_compile_packet: invalid run_id %d", comp_pkt->run_id);
     goto non_fatal_error;
+  }
+  if (new_run_id >= 0) {
+    if (memcmp(re.run_uuid, comp_pkt->uuid, sizeof(re.run_uuid)) != 0) {
+      err("read_compile_packet: UUID mismatch for run_id %d", comp_pkt->run_id);
+      goto non_fatal_error;
+    }
   }
   if (comp_pkt->judge_id != re.judge_id) {
     err("read_compile_packet: judge_id mismatch: %d, %d", comp_pkt->judge_id,
