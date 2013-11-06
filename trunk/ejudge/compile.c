@@ -73,6 +73,7 @@ check_style_only(
         struct compile_reply_packet *rpl,
         const unsigned char *pkt_name,
         const unsigned char *run_name,
+        const unsigned char *work_run_name,
         const unsigned char *report_dir,
         const unsigned char *status_dir)
 {
@@ -96,12 +97,12 @@ check_style_only(
   snprintf(txt_path, sizeof(txt_path), "%s/%s.txt", report_dir, run_name);
   if (req->src_sfx) src_sfx = req->src_sfx;
   snprintf(work_src_path, sizeof(work_src_path), "%s/%s%s",
-           global->compile_work_dir, run_name, src_sfx);
+           global->compile_work_dir, work_run_name, src_sfx);
   snprintf(work_log_path, sizeof(work_log_path), "%s/%s.log",
-           global->compile_work_dir, run_name);
+           global->compile_work_dir, work_run_name);
 
   r = generic_copy_file(REMOVE, global->compile_src_dir, pkt_name, src_sfx,
-                        0, global->compile_work_dir, run_name, src_sfx);
+                        0, global->compile_work_dir, work_run_name, src_sfx);
   if (!r) {
     snprintf(msgbuf, sizeof(msgbuf), "The source file %s/%s%s is missing.\n",
              global->compile_src_dir, pkt_name, src_sfx);
@@ -224,7 +225,7 @@ do_loop(void)
   path_t txt_out;
   path_t report_dir, status_dir;
 
-  path_t  pkt_name, run_name;
+  path_t  pkt_name, run_name, work_run_name;
   char   *pkt_ptr;
   size_t  pkt_len;
   int    r, i;
@@ -337,6 +338,7 @@ do_loop(void)
     } else {
       snprintf(run_name, sizeof(run_name), "%06d", rpl.run_id);
     }
+    snprintf(work_run_name, sizeof(work_run_name), "%06d", rpl.run_id);
     pathmake(log_out, report_dir, "/", run_name, NULL);
     snprintf(txt_out, sizeof(txt_out), "%s/%s.txt", report_dir, run_name);
 
@@ -354,8 +356,8 @@ do_loop(void)
     }
 
     if (req->style_check_only && req->style_checker && req->style_checker[0]) {
-      check_style_only(global, req, &rpl, pkt_name, run_name, report_dir,
-                       status_dir);
+      check_style_only(global, req, &rpl, pkt_name, run_name, work_run_name,
+                       report_dir, status_dir);
       req = 0;
       continue;
     }
