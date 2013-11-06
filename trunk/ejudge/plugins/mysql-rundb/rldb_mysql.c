@@ -399,6 +399,7 @@ load_runs(struct rldb_mysql_cnts *cs)
     if (ri.status == RUN_EMPTY) {
       xfree(ri.hash); ri.hash = 0;
       xfree(ri.mime_type); ri.mime_type = 0;
+      xfree(ri.run_uuid); ri.run_uuid = 0;
 
       expand_runs(rls, ri.run_id);
       re = &rls->runs[ri.run_id];
@@ -425,6 +426,7 @@ load_runs(struct rldb_mysql_cnts *cs)
       db_error_inv_value_fail(md, "mime_type");
     xfree(ri.hash); ri.hash = 0;
     xfree(ri.mime_type); ri.mime_type = 0;
+    xfree(ri.run_uuid); ri.run_uuid = 0;
 
     expand_runs(rls, ri.run_id);
     re = &rls->runs[ri.run_id];
@@ -474,6 +476,7 @@ load_runs(struct rldb_mysql_cnts *cs)
  fail:
   xfree(ri.hash);
   xfree(ri.mime_type);
+  xfree(ri.run_uuid);
   mi->free_res(md);
   return -1;
 }
