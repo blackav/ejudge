@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,6 +18,10 @@
 #include "config.h"
 
 #include "ej_uuid.h"
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 
 #if CONF_HAS_LIBUUID - 0 != 0
 #include <uuid/uuid.h>
@@ -44,12 +48,37 @@ ej_uuid_unparse(const ruint32_t uuid[4], const unsigned char *default_value)
   if (uuid[0] || uuid[1] || uuid[2] || uuid[3]) {
     static char uuid_buf[40];
     uuid_unparse((void*) uuid, uuid_buf);
+
+    static char uuid_buf2[40];
+    const unsigned char *u = (const unsigned char *) uuid;
+    snprintf(uuid_buf2, sizeof(uuid_buf2),
+             "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+             u[0], u[1], u[2], u[3], u[4], u[4], u[6], u[7],
+             u[8], u[9], u[10], u[11], u[12], u[13], u[14], u[15]);
+    if (strcmp(uuid_buf, uuid_buf2) != 0) {
+      fprintf(stderr, "unparse mismatch: <%s> and <%s>\n",
+              uuid_buf, uuid_buf2);
+      abort();
+    }
+
     return uuid_buf;
   } else {
     return default_value;
   }
 #else
-  return default_value;
+  if (uuid[0] || uuid[1] || uuid[2] || uuid[3]) {
+    // must support unparse in any case
+    // "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x"; 
+    static char uuid_buf[40];
+    const unsigned char *u = (const unsigned char *) uuid;
+    snprintf(uuid_buf, sizeof(uuid_buf),
+             "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+             u[0], u[1], u[2], u[3], u[4], u[4], u[6], u[7],
+             u[8], u[9], u[10], u[11], u[12], u[13], u[14], u[15]);
+    return uuid_buf;
+  } else {
+    return default_value;
+  }
 #endif
 }
 
@@ -63,5 +92,15 @@ ej_uuid_generate(ruint32_t uuid[4])
   uuid[1] = 0;
   uuid[2] = 0;
   uuid[3] = 0;
+#endif
+}
+
+int
+ej_uuid_supported(void)
+{
+#if CONF_HAS_LIBUUID - 0 != 0
+  return 1;
+#else
+  return 0;
 #endif
 }

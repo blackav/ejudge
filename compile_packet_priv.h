@@ -3,7 +3,7 @@
 #ifndef __COMPILE_PACKET_PRIV_H__
 #define __COMPILE_PACKET_PRIV_H__
 
-/* Copyright (C) 2005-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -19,7 +19,7 @@
 
 #include "reuse_integral.h"
 
-#define EJ_COMPILE_PACKET_VERSION 4
+#define EJ_COMPILE_PACKET_VERSION 5
 
 /* various private data structures and constants for compile packets */
 
@@ -28,7 +28,7 @@
 struct compile_request_bin_packet
 {
   rint32_t packet_len;          /* the overall packet length */
-  rint32_t version;             /* the packet version (2) */
+  rint32_t version;             /* the packet version */
   rint32_t judge_id;            /* judgement serial number, 16 bits used */
   rint32_t contest_id;          /* the contest id [1..999999] */
   rint32_t run_id;              /* the run id [0..999999] */
@@ -46,7 +46,9 @@ struct compile_request_bin_packet
   rint32_t run_block_len;       /* the length of the run block */
   rint32_t env_num;             /* the number of env. variables */
   rint32_t sc_env_num;          /* the number of style checker env. vars */
-  unsigned char pad[8];         /* padding to 16-byte boundary */
+  rint32_t use_uuid;            /* use UUID instead of run_id */
+  ruint32_t uuid[4];            /* UUID */
+  unsigned char pad[4];         /* padding to 16-byte boundary */
   /* style checker command (aligned to 16 byte boundary) */
   /* run_block (aligned to 16 byte boundary) */
   /* env variable length array (aligned to 16-byte address boundary) */
@@ -75,7 +77,9 @@ struct compile_reply_bin_packet
   rint32_t ts3;
   rint32_t ts3_us;
   rint32_t run_block_len;       /* the length of the run block */
-  unsigned char pad[12];        /* padding to 64-byte boundary */
+  rint32_t use_uuid;
+  ruint32_t uuid[4];            /* UUID */
+  unsigned char pad[8];        /* padding to 64-byte boundary */
   /* run block (aligned to 16 byte boundary) */
 };
 
