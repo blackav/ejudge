@@ -410,6 +410,7 @@ int run_get_user_first_run_id(runlog_state_t state, int user_id);
 int run_get_user_next_run_id(runlog_state_t state, int run_id);
 int run_get_user_prev_run_id(runlog_state_t state, int run_id);
 
+int run_get_uuid_hash_state(runlog_state_t state);
 int run_find_run_id_by_uuid(runlog_state_t state, ruint32_t *uuid);
 
 #endif /* __RUNLOG_H__ */
