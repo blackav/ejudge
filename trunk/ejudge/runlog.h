@@ -87,22 +87,24 @@ run_open(
         time_t init_duration,
         time_t init_sched_time,
         time_t init_finish_time);
-int run_add_record(runlog_state_t state,
-                   time_t         timestamp,
-                   int            nsec,
-                   size_t         size,
-                   const ruint32_t sha1[5],
-                   const ruint32_t uuid[4],
-                   const ej_ip_t *pip,
-                   int            ssl_flag,
-                   int            locale_id,
-                   int            team,
-                   int            problem,
-                   int            language,
-                   int            eoln_type,
-                   int            variant,
-                   int            is_hidden,
-                   int            mime_type);
+int run_add_record(
+        runlog_state_t state,
+        time_t         timestamp,
+        int            nsec,
+        size_t         size,
+        const ruint32_t sha1[5],
+        const ruint32_t uuid[4],
+        const ej_ip_t *pip,
+        int            ssl_flag,
+        int            locale_id,
+        int            team,
+        int            problem,
+        int            language,
+        int            eoln_type,
+        int            variant,
+        int            is_hidden,
+        int            mime_type,
+        ruint32_t      out_uuid[4]);
 int run_start_contest(runlog_state_t, time_t);
 time_t run_get_start_time(runlog_state_t);
 int

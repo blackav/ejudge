@@ -317,7 +317,8 @@ run_add_record(
         int            eoln_type,
         int            variant,
         int            is_hidden,
-        int            mime_type)
+        int            mime_type,
+        ruint32_t      out_uuid[4])
 {
   int i;
   struct user_entry *ue;
@@ -446,6 +447,13 @@ run_add_record(
     flags |= RE_RUN_UUID;
   }
 #endif
+
+  if (out_uuid) {
+    out_uuid[0] = re.run_uuid[0];
+    out_uuid[1] = re.run_uuid[1];
+    out_uuid[2] = re.run_uuid[2];
+    out_uuid[3] = re.run_uuid[3];
+  }
 
   int uuid_hash_index = -1;
   if (state->uuid_hash_state >= 0) {

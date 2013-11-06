@@ -1050,7 +1050,8 @@ serve_compile_request(
         int notify_flag,
         const struct section_problem_data *prob,
         const struct section_language_data *lang,
-        int no_db_flag)
+        int no_db_flag,
+        const ruint32_t uuid[4])
 {
   struct compile_run_extra rx;
   struct compile_request_packet cp;
@@ -1180,6 +1181,13 @@ serve_compile_request(
   cp.max_vm_size = -1L;
   cp.max_stack_size = -1L;
   cp.max_file_size = -1L;
+  if (uuid && (uuid[0] || uuid[1] || uuid[2] || uuid[3])) {
+    cp.use_uuid = 1;
+    cp.uuid[0] = uuid[0];
+    cp.uuid[1] = uuid[1];
+    cp.uuid[2] = uuid[2];
+    cp.uuid[3] = uuid[3];
+  }
   if (lang) {
     if (((ssize_t) lang->max_vm_size) > 0) {
       cp.max_vm_size = lang->max_vm_size;
@@ -3037,7 +3045,7 @@ serve_rejudge_run(
                                 priority_adjustment,
                                 1 /* notify flag */,
                                 prob, NULL /* lang */,
-                                0 /* no_db_flag */);
+                                0 /* no_db_flag */, re.run_uuid);
       if (r < 0) {
         serve_report_check_failed(config, cnts, state, run_id, serve_err_str(r));
         err("rejudge_run: serve_compile_request failed: %s", serve_err_str(r));
@@ -3082,7 +3090,7 @@ serve_rejudge_run(
                             lang->compiler_env,
                             0, prob->style_checker_cmd,
                             prob->style_checker_env,
-                            accepting_mode, priority_adjustment, 1, prob, lang, 0);
+                            accepting_mode, priority_adjustment, 1, prob, lang, 0, re.run_uuid);
   if (r < 0) {
     serve_report_check_failed(config, cnts, state, run_id, serve_err_str(r));
     err("rejudge_run: serve_compile_request failed: %s", serve_err_str(r));
