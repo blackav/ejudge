@@ -937,7 +937,7 @@ main(int argc, char *argv[])
   printf("  -D     - start in daemon mode\n");
   printf("  -i     - initialize mode: create all dirs and exit\n");
   printf("  -k KEY - specify a language filter key\n");
-  printf("  -u U   - start as used U (only as root)\n");
+  printf("  -u U   - start as user U (only as root)\n");
   printf("  -g G   - start as group G (only as root)\n");
   printf("  -C D   - change directory to D\n");
   printf("  -x X   - specify a path to ejudge.xml file\n");
@@ -946,9 +946,3 @@ main(int argc, char *argv[])
   return code;
 }
 
-/*
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "tpTask")
- * End:
- */
