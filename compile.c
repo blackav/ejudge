@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -38,6 +38,7 @@
 #include "startstop.h"
 #include "ejudge_cfg.h"
 #include "compat.h"
+#include "ej_uuid.h"
 
 #include "reuse_xalloc.h"
 #include "reuse_logger.h"
@@ -316,6 +317,11 @@ do_loop(void)
     rpl.run_id = req->run_id;
     rpl.ts1 = req->ts1;
     rpl.ts1_us = req->ts1_us;
+    rpl.use_uuid = req->use_uuid;
+    rpl.uuid[0] = req->uuid[0];
+    rpl.uuid[1] = req->uuid[1];
+    rpl.uuid[2] = req->uuid[2];
+    rpl.uuid[3] = req->uuid[3];
     get_current_time(&rpl.ts2, &rpl.ts2_us);
     rpl.run_block_len = req->run_block_len;
     rpl.run_block = req->run_block; /* !!! shares memory with req */
@@ -326,7 +332,11 @@ do_loop(void)
              "%s/%06d/report", global->compile_dir, rpl.contest_id);
     snprintf(status_dir, sizeof(status_dir),
              "%s/%06d/status", global->compile_dir, rpl.contest_id);
-    snprintf(run_name, sizeof(run_name), "%06d", rpl.run_id);
+    if (req->use_uuid > 0) {
+      snprintf(run_name, sizeof(run_name), "%s", ej_uuid_unparse(req->uuid, NULL));
+    } else {
+      snprintf(run_name, sizeof(run_name), "%06d", rpl.run_id);
+    }
     pathmake(log_out, report_dir, "/", run_name, NULL);
     snprintf(txt_out, sizeof(txt_out), "%s/%s.txt", report_dir, run_name);
 
