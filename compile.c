@@ -374,7 +374,7 @@ do_loop(void)
     pathmake(exe_path, global->compile_work_dir, "/", exe_name, NULL);
     pathmake(log_path, global->compile_work_dir, "/", "log", NULL);
     /* the resulting executable file */
-    pathmake(exe_out, report_dir, "/", exe_name, NULL);
+    snprintf(exe_out, sizeof(exe_out), "%s/%s%s", report_dir, run_name, lang->exe_sfx);
 
     /* move the source file into the working dir */
     r = generic_copy_file(REMOVE, global->compile_src_dir, pkt_name,
