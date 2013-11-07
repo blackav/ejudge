@@ -16,6 +16,12 @@
 /* the installation libexec directory */
 #undef EJUDGE_LIBEXEC_DIR
 
+/* the installation lib directory (native libs) */
+#undef EJUDGE_LIB_DIR
+
+/* the installation lib32 directory (32-bit compatibility libs) */
+#undef EJUDGE_LIB32_DIR
+
 /* the default path to the l10n_dir */
 #undef EJUDGE_LOCALE_DIR
 
@@ -150,6 +156,9 @@
 
 /* path separator */
 #undef CONF_PATHSEP
+
+/* 64-bit native platform */
+#undef CONF_64_BIT
 
 /* if double == long double */
 #undef R_LONG_DOUBLE_IS_DOUBLE
