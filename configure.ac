@@ -136,15 +136,16 @@ fi
 
 machine=`uname -m`
 
-#case "${machine}" in
-#  x86_64)
-#    if [ x"${libdir}" = x ]
-#    then
-#      libdir='${exec_prefix}/lib64'
-#    fi
-#    lib32dir='${exec_prefix}/lib'
-#    ;;
-#esac
+case "${machine}" in
+  x86_64)
+    if [[ x"${libdir}" = x'${exec_prefix}/lib' ]]
+    then
+      libdir='${exec_prefix}/lib64'
+    fi
+    lib32dir='${exec_prefix}/lib'
+    ac_cv_conf_64_bit=1
+    ;;
+esac
 
 dnl choose an arch type
 AC_MSG_CHECKING([for arch type])
@@ -890,6 +891,12 @@ else
   actual_libexecdir="${libexecdir}"
 fi
 
+actual_libdir=`echo ${libdir} | sed 's|${exec_prefix}|'${actual_exec_prefix}'|'`
+if [[ x"${lib32dir}" != x ]]
+then
+  actual_lib32dir=`echo ${lib32dir} | sed 's|${exec_prefix}|'${actual_exec_prefix}'|'`
+fi
+
 ac_cv_expanded_prefix="${actual_prefix}"
 ac_cv_expanded_locale_dir="${actual_prefix}/share/locale"
 if [[ x"${ac_cv_hidden_bins}" != x ]]
@@ -1146,6 +1153,11 @@ then
 fi
 AC_DEFINE_UNQUOTED(EJUDGE_PREFIX_DIR,"${ac_cv_expanded_prefix}")
 AC_DEFINE_UNQUOTED(EJUDGE_LIBEXEC_DIR,"${actual_libexecdir}")
+AC_DEFINE_UNQUOTED(EJUDGE_LIB_DIR,"${actual_libdir}")
+if [[ x"${lib32dir}" != x ]]
+then
+  AC_DEFINE_UNQUOTED(EJUDGE_LIB32_DIR,"${actual_lib32dir}")
+fi
 AC_DEFINE_UNQUOTED(EJUDGE_LOCALE_DIR,"$ac_cv_expanded_locale_dir")
 AC_DEFINE_UNQUOTED(EJUDGE_SERVER_BIN_PATH,"${ac_cv_ejudge_server_bin_path}")
 AC_DEFINE_UNQUOTED(EJUDGE_SERVE_PATH,"${ac_cv_ejudge_serve_path}")
@@ -1191,6 +1203,11 @@ fi
 AC_DEFINE_UNQUOTED(CONF_EXE_SUFFIX,"${ac_cv_exe_suffix}")
 AC_DEFINE_UNQUOTED(CONF_DIRSEP,"${ac_cv_dir_separator}")
 AC_DEFINE_UNQUOTED(CONF_PATHSEP,"${ac_cv_path_separator}")
+
+if [[ x"${ac_cv_conf_64_bit}" != xyes ]]
+then
+  AC_DEFINE(CONF_64_BIT, 1)
+fi
 
 if [[ x"${ac_cv_c_long_double}" != xyes ]]
 then
