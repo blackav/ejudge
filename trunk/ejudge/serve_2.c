@@ -1406,7 +1406,8 @@ serve_run_request(
         int locale_id,
         const unsigned char *compile_report_dir,
         const struct compile_reply_packet *comp_pkt,
-        int no_db_flag)
+        int no_db_flag,
+        ruint32_t uuid[4])
 {
   int cn;
   struct section_global_data *global = state->global;
@@ -1622,6 +1623,9 @@ serve_run_request(
   srgp->time_limit_retry_count = global->time_limit_retry_count;
   srgp->priority = prio;
   srgp->arch = xstrdup(arch);
+  if (uuid && (uuid[0] || uuid[1] || uuid[2] || uuid[3])) {
+    srgp->run_uuid = xstrdup(ej_uuid_unparse(uuid, NULL));
+  }
   if (comp_pkt) {
     srgp->ts1 = comp_pkt->ts1;
     srgp->ts1_us = comp_pkt->ts1_us;
@@ -1667,8 +1671,12 @@ serve_run_request(
   if (exe_sfx) {
     srgp->exe_sfx = xstrdup(exe_sfx);
   }
-  snprintf(buf, sizeof(buf), "%06d", run_id);
-  srgp->reply_packet_name = xstrdup(buf);
+  if (srgp->run_uuid) {
+    srgp->reply_packet_name = xstrdup(srgp->run_uuid);
+  } else {
+    snprintf(buf, sizeof(buf), "%06d", run_id);
+    srgp->reply_packet_name = xstrdup(buf);
+  }
 
   if (global->super_run_dir && global->super_run_dir[0]) {
     snprintf(pathbuf, sizeof(pathbuf), "var/%06d/report", contest_id);
@@ -2375,7 +2383,7 @@ serve_read_compile_packet(
                         comp_extra->priority_adjustment,
                         comp_pkt->judge_id, comp_extra->accepting_mode,
                         comp_extra->notify_flag, re.mime_type, re.eoln_type,
-                        re.locale_id, compile_report_dir, comp_pkt, 0) < 0) {
+                        re.locale_id, compile_report_dir, comp_pkt, 0, re.run_uuid) < 0) {
     snprintf(errmsg, sizeof(errmsg), "failed to write run packet\n");
     goto report_check_failed;
   }
@@ -3095,7 +3103,7 @@ serve_rejudge_run(
                       re.user_id, re.prob_id, re.lang_id,
                       re.variant, priority_adjustment,
                       -1, accepting_mode, 1, re.mime_type, re.eoln_type,
-                      re.locale_id, 0, 0, 0);
+                      re.locale_id, 0, 0, 0, re.run_uuid);
     xfree(run_text);
     return;
   }
