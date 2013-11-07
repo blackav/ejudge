@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2013/10/22 10:17:11
+// Generated 2013/11/07 22:02:04
 
 #ifndef __SUPER_RUN_PACKET_META_H__
 #define __SUPER_RUN_PACKET_META_H__
@@ -54,6 +54,7 @@ enum
   META_SUPER_RUN_IN_GLOBAL_PACKET_is_dos,
   META_SUPER_RUN_IN_GLOBAL_PACKET_time_limit_retry_count,
   META_SUPER_RUN_IN_GLOBAL_PACKET_checker_locale,
+  META_SUPER_RUN_IN_GLOBAL_PACKET_run_uuid,
 
   META_SUPER_RUN_IN_GLOBAL_PACKET_LAST_FIELD,
 };
