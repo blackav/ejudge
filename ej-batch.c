@@ -689,7 +689,8 @@ process_compile_packet(
                         0, /* locale_id */
                         0 /* compile_report_dir */,
                         0 /* comp_pkt */,
-                        1 /* no_db_flag */);
+                        1 /* no_db_flag */,
+                        NULL /* uuid */);
   if (r < 0) abort();
 
   return 0;

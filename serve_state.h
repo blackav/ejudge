@@ -454,7 +454,8 @@ serve_run_request(
         int locale_id,
         const unsigned char *compile_report_dir,
         const struct compile_reply_packet *comp_pkt,
-        int no_db_flag);
+        int no_db_flag,
+        ruint32_t uuid[4]);
 
 int serve_is_valid_status(serve_state_t state, int status, int mode);
 
