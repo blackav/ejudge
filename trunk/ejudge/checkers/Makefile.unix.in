@@ -1,7 +1,7 @@
 # -*- Makefile -*-
 # $Id$
 
-# Copyright (C) 2003-2010 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2003-2013 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -22,6 +22,7 @@ includedir=@includedir@
 libdir=@libdir@
 libexecdir=@libexecdir@
 cgibindir=@cgibindir@
+lib32dir=@lib32dir@
 
 CGI_PROG_SUFFIX=@ac_cv_cgi_suffix@
 STATIC=@ac_cv_static@
@@ -43,6 +44,14 @@ LIBCAP_INCL_OPT=@ac_cv_libcap_include_opt@
 LIBCAP_LIB_OPT=@ac_cv_libcap_lib_opt@
 
 WERROR=@ac_cv_werror_flag@
+NEED32=@ac_cv_need_32@
+NEED64=@ac_cv_need_64@
+
+ifdef NEED32
+ifdef NEED64
+NEED_COMPAT=1
+endif
+endif
 
 ifdef RELEASE
 CDEBUGFLAGS=-O2 -s -Wall -DNDEBUG -DRELEASE ${WERROR}
@@ -72,24 +81,36 @@ include files.make
 
 OFILES=$(CFILES:.c=.o) testinfo.o
 PICOFILES = $(CFILES:%.c=pic/%.o) pic/testinfo.o
+PIC32OFILES = $(CFILES:%.c=pic32/%.o) pic32/testinfo.o
+O32FILES=$(CFILES:%.c=m32/%.o) m32/testinfo.o
 CHKXFILES = $(CHKCFILES:.c=)
 STYLEXFILES = $(STYLECFILES:.c=)
 
 ifndef STATIC
 TARGETS = pic libchecker.a libchecker.so ${CHKXFILES} ${STYLEXFILES}
-TARGETSHAREDLIBS = libchecker.so
+ifdef NEED_COMPAT
+TARGETS += pic32 pic32/libchecker.so m32 m32/libchecker.a
+endif
 else
 TARGETS = libchecker.a ${CHKXFILES} ${STYLEXFILES}
-TARGETSHAREDLIBS =
+ifdef NEED_COMPAT
+TARGETS += m32 m32/libchecker.a
+endif
 endif
 TARGETLIBS = libchecker.a
 
 all : ${TARGETS} mo
 
 clean :
-	-rm -fr *.o *.a *.so *~ *.bak testinfo.h testinfo.c pic ${CHKXFILES} ${STYLEXFILES}
+	-rm -fr *.o *.a *.so *~ *.bak testinfo.h testinfo.c pic pic32 m32 ${CHKXFILES} ${STYLEXFILES}
 pic :
 	mkdir pic
+
+pic32 :
+	mkdir pic32
+
+m32 :
+	mkdir m32
 
 distclean : clean
 	rm -f Makefile Makefile.in
@@ -116,6 +137,10 @@ libchecker.a : ${OFILES}
 	${AR} rcv $@ $^
 libchecker.so : ${PICOFILES}
 	${CC} -shared $^ -o $@ -lm
+m32/libchecker.a : ${O32FILES}
+	${AR} rcv $@ $^
+pic32/libchecker.so : ${PIC32OFILES}
+	${CC} -m32 -shared $^ -o $@ -lm
 
 corr_close.o: corr_close.c checker_internal.h
 pic/corr_close.o: corr_close.c checker_internal.h
@@ -220,6 +245,12 @@ style_% : style_%.c
 
 pic/%.o : %.c
 	${CC} ${CFLAGS} -fPIC -DPIC -c $< -o $@
+
+pic32/%.o : %.c
+	${CC} ${CFLAGS} -m32 -fPIC -DPIC -c $< -o $@
+
+m32/%.o : %.c
+	${CC} ${CFLAGS} -m32 -c $< -o $@
 
 ifdef ENABLE_NLS
 mo : locale/ru_RU.UTF-8/LC_MESSAGES/ejudgecheckers.mo

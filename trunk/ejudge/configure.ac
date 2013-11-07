@@ -1,5 +1,5 @@
 dnl $Id$
-dnl Copyright (C) 2004-2012 Alexander Chernov <cher@ejudge.ru>
+dnl Copyright (C) 2004-2013 Alexander Chernov <cher@ejudge.ru>
 
 AC_INIT(ejudge,2.3)
 AC_PREREQ(2.59)
@@ -134,11 +134,17 @@ fi
 [[ x"${ac_cv_style_prefix}" = x -o x"${ac_cv_style_prefix}" = xyes ]] && ac_cv_style_prefix="/ejudge/"
 [[ x"${ac_cv_lang_config_dir}" = x -o x"${ac_cv_lang_config_dir}" = xyes ]] && ac_cv_lang_config_dir="${ac_cv_contests_home_dir}/compile/conf/lang.d"
 
-case "${host}" in
-  x86_64-*linux*)
-    libdir='${exec_prefix}/lib64'
-    ;;
-esac
+machine=`uname -m`
+
+#case "${machine}" in
+#  x86_64)
+#    if [ x"${libdir}" = x ]
+#    then
+#      libdir='${exec_prefix}/lib64'
+#    fi
+#    lib32dir='${exec_prefix}/lib'
+#    ;;
+#esac
 
 dnl choose an arch type
 AC_MSG_CHECKING([for arch type])
@@ -1028,6 +1034,7 @@ AC_SUBST(ac_cv_has_lib_libuuid)
 AC_SUBST(ac_cv_meta_cc)
 AC_SUBST(ac_cv_need_32)
 AC_SUBST(ac_cv_need_64)
+AC_SUBST(lib32dir)
 
 AC_SUBST(ac_cv_festival_home)
 AC_SUBST(ac_cv_libcap_link)
