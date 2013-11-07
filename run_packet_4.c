@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -96,6 +96,11 @@ run_reply_packet_read(
   pout->ts7 = cvt_bin_to_host_32(pin->ts7);
   pout->ts7_us = cvt_bin_to_host_32(pin->ts7_us);
 
+  pout->uuid[0] = cvt_bin_to_host_32(pin->uuid[0]);
+  pout->uuid[1] = cvt_bin_to_host_32(pin->uuid[1]);
+  pout->uuid[2] = cvt_bin_to_host_32(pin->uuid[2]);
+  pout->uuid[3] = cvt_bin_to_host_32(pin->uuid[3]);
+
   *p_out_data = pout;
   return 0;
 
@@ -104,8 +109,3 @@ run_reply_packet_read(
   run_reply_packet_free(pout);
   return -1;
 }
-
-/*
- * Local variables:
- * End:
- */
