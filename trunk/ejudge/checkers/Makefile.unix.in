@@ -123,7 +123,7 @@ install : all
 	install -m 644 libchecker.a "${DESTDIR}${libdir}"
 	if [ x"${STATIC}" = x ]; then install -m 755 libchecker.so "${DESTDIR}${libdir}"; else rm -f "${DESTDIR}${libdir}/libchecker.so"; fi
 	if [ -f "m32/libchecker.a" -a x"${lib32dir}" != x ]; then install -m 644 "m32/libchecker.a" "${DESTDIR}/${lib32dir}"; fi
-	if [ -f "pic32/libchecker.so" -a x"${lib32dir}" != x ]; then install -m 644 "pic32/libchecker.so" "${DESTDIR}/${lib32dir}"; fi
+	if [ -f "pic32/libchecker.so" -a x"${lib32dir}" != x ]; then install -m 755 "pic32/libchecker.so" "${DESTDIR}/${lib32dir}"; fi
 	mkdir -p "${DESTDIR}${datadir}/ejudge/testlib"
 	mkdir -p "${DESTDIR}${datadir}/ejudge/testlib/fpc"
 	mkdir -p "${DESTDIR}${datadir}/ejudge/testlib/delphi"
