@@ -79,6 +79,7 @@ struct super_run_in_global_packet
   ejintbool_t is_dos;
   int time_limit_retry_count;
   unsigned char *checker_locale;
+  unsigned char *run_uuid;
 
   int scoring_system_val META_ATTRIB((meta_hidden));
 };

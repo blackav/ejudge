@@ -37,6 +37,31 @@ ej_uuid_parse(const unsigned char *str, ruint32_t uuid[4])
   uuid[1] = 0;
   uuid[2] = 0;
   uuid[3] = 0;
+  if (!str || !*str) return 0;
+  unsigned char *dst = (unsigned char *) uuid;
+  for (int i = 0; i < 16; ++i) {
+    if (!*str) return -1;
+    if (*str == '-') ++str;
+    if (!*str) return -1;
+    int val = 0;
+    if (*str >= '0' && *str <= '9') {
+      val |= *str - '0';
+    } else if (*str >= 'a' && *str <= 'f') {
+      val |= *str - 'a' + 0xa;
+    } else if (*str >= 'A' && *str <= 'F') {
+      val |= *str - 'A' + 0xA;
+    }
+    val <<= 4;
+    if (!*str) return -1;
+    if (*str >= '0' && *str <= '9') {
+      val |= *str - '0';
+    } else if (*str >= 'a' && *str <= 'f') {
+      val |= *str - 'a' + 0xa;
+    } else if (*str >= 'A' && *str <= 'F') {
+      val |= *str - 'A' + 0xA;
+    }
+    *dst++ = val;
+  }
   return 0;
 #endif
 }

@@ -3,7 +3,7 @@
 #ifndef __RUN_PACKET_H__
 #define __RUN_PACKET_H__
 
-/* Copyright (C) 2005-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -55,6 +55,8 @@ struct run_reply_packet
   /* time when the report was generated */
   int ts7;
   int ts7_us;
+  /* UUID of the run */
+  unsigned uuid[4];
 };
 
 int

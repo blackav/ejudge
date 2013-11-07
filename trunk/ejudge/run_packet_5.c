@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -89,6 +89,11 @@ run_reply_packet_write(
   out_data->ts7 = cvt_host_to_bin_32(in_data->ts7);
   out_data->ts7_us = cvt_host_to_bin_32(in_data->ts7_us);
 
+  out_data->uuid[0] = cvt_host_to_bin_32(in_data->uuid[0]);
+  out_data->uuid[1] = cvt_host_to_bin_32(in_data->uuid[1]);
+  out_data->uuid[2] = cvt_host_to_bin_32(in_data->uuid[2]);
+  out_data->uuid[3] = cvt_host_to_bin_32(in_data->uuid[3]);
+
   *p_out_size = out_size;
   *p_out_data = out_data;
   return 0;
@@ -100,6 +105,7 @@ run_reply_packet_write(
 }
 
 #include "xml_utils.h"
+#include "ej_uuid.h"
 
 void
 run_reply_packet_dump(
@@ -125,9 +131,5 @@ run_reply_packet_dump(
   fprintf(stderr, "ts5 = \"%s.%06d\"\n", xml_unparse_date(in_data->ts5), in_data->ts5_us);
   fprintf(stderr, "ts6 = \"%s.%06d\"\n", xml_unparse_date(in_data->ts6), in_data->ts6_us);
   fprintf(stderr, "ts7 = \"%s.%06d\"\n", xml_unparse_date(in_data->ts7), in_data->ts7_us);
+  fprintf(stderr, "uuid = \"%s\"\n", ej_uuid_unparse(in_data->uuid, "NULL"));
 }
-
-/*
- * Local variables:
- * End:
- */
