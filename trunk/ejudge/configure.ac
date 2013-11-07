@@ -47,6 +47,8 @@ AC_C_LONG_DOUBLE
 AC_C_STRINGIZE
 AC_C_PROTOTYPES
 
+AC_ARG_WITH([lib32dir], AC_HELP_STRING([--with-lib32dir=DIR],[specify directory for 32-bit libraries]),[lib32dir=$withval])
+
 AC_ARG_WITH([libcap], AC_HELP_STRING([--with-libcap=LIBCAP-DIR],[use the linux capability library]),[ac_cv_libcap_root=$withval])
 AC_ARG_WITH([libcap-include-dir], AC_HELP_STRING([--with-libcap-include-dir],[specify non-standard location of <sys/capability.h> [[LIBCAP-DIR/include]]]),[ac_cv_libcap_include_dir=$withval])
 AC_ARG_WITH([libcap-lib-dir], AC_HELP_STRING([--with-libcap-lib-dir],[specify non-standard location for -lcap [[LIBCAP-DIR/lib]]]), [ac_cv_libcap_lib_dir=$withval])
@@ -142,7 +144,10 @@ case "${machine}" in
     then
       libdir='${exec_prefix}/lib64'
     fi
-    lib32dir='${exec_prefix}/lib'
+    if [[ x"${lib32dir}" = x ]]
+    then
+      lib32dir='${exec_prefix}/lib'
+    fi
     ac_cv_conf_64_bit=1
     ;;
 esac
