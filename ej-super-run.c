@@ -31,6 +31,7 @@
 #include "curtime.h"
 #include "ej_process.h"
 #include "xml_utils.h"
+#include "ej_uuid.h"
 
 #include "reuse_xalloc.h"
 #include "reuse_osdeps.h"
@@ -167,6 +168,7 @@ handle_packet(
 
   unsigned char exe_pkt_name[PATH_MAX];
   unsigned char exe_name[PATH_MAX];
+  unsigned char reply_packet_name[PATH_MAX];
 
   struct section_global_data *global = state->global;
 
@@ -277,6 +279,9 @@ handle_packet(
     reply_pkt.ts4 = srgp->ts4;
     reply_pkt.ts4_us = srgp->ts4_us;
     get_current_time(&reply_pkt.ts5, &reply_pkt.ts5_us);
+    if (srgp->run_uuid && srgp->run_uuid[0]) {
+      ej_uuid_parse(srgp->run_uuid, reply_pkt.uuid);
+    }
 
     //if (cr_serialize_lock(state) < 0) return -1;
     run_tests(ejudge_config, state, tst, srp, &reply_pkt,
@@ -335,17 +340,23 @@ handle_packet(
     make_all_dir(full_status_dir, 0777);
   }
 
+  if (srgp->reply_packet_name && srgp->reply_packet_name[0]) {
+    snprintf(reply_packet_name, sizeof(reply_packet_name), "%s", srgp->reply_packet_name);
+  } else {
+    snprintf(reply_packet_name, sizeof(reply_packet_name), "%s", run_base);
+  }
+
   // copy full report from temporary location
-  if (generic_copy_file(0, NULL, report_path, "", 0, full_report_dir, run_base, "") < 0) {
+  if (generic_copy_file(0, NULL, report_path, "", 0, full_report_dir, reply_packet_name, "") < 0) {
     goto cleanup;
   }
 
 #if defined CONF_HAS_LIBZIP
-  if (full_report_path[0] && generic_copy_file(0, NULL, full_report_path, "", 0, full_full_dir, run_base, ".zip") < 0) {
+  if (full_report_path[0] && generic_copy_file(0, NULL, full_report_path, "", 0, full_full_dir, reply_packet_name, ".zip") < 0) {
     goto cleanup;
   }
 #else
-  if (full_report_path[0] && generic_copy_file(0, NULL, full_report_path, "", 0, full_full_dir, run_base, "") < 0) {
+  if (full_report_path[0] && generic_copy_file(0, NULL, full_report_path, "", 0, full_full_dir, reply_packet_name, "") < 0) {
     goto cleanup;
   }
 #endif
@@ -356,7 +367,7 @@ handle_packet(
     goto cleanup;
   }
 
-  if (generic_write_file(reply_pkt_buf, reply_pkt_buf_size, SAFE, full_status_dir, run_base, "") < 0) {
+  if (generic_write_file(reply_pkt_buf, reply_pkt_buf_size, SAFE, full_status_dir, reply_packet_name, "") < 0) {
     goto cleanup;
   }
 
