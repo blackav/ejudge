@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -876,6 +876,10 @@ do_generate_makefile(
   unsigned char **good_exe_names = NULL;
   unsigned char **fail_exe_names = NULL;
   unsigned char **solutions_exe_names = NULL;
+  unsigned char ejudge_lib_dir[PATH_MAX];
+  unsigned char ejudge_lib32_dir[PATH_MAX];
+  const unsigned char *m32_opt = "";
+  const unsigned char *libdir = NULL;
 
   test_dir[0] = 0;
   test_pat[0] = 0;
@@ -884,6 +888,35 @@ do_generate_makefile(
   tgz_pat[0] = 0;
   tgzdir_pat[0] = 0;
   test_pr_pat[0] = 0;
+
+  ejudge_lib_dir[0] = 0;
+#if defined EJUDGE_LIB_DIR
+  if (!strncmp(EJUDGE_LIB_DIR, EJUDGE_PREFIX_DIR, strlen(EJUDGE_PREFIX_DIR))) {
+    snprintf(ejudge_lib_dir, sizeof(ejudge_lib_dir), "${EJUDGE_PREFIX_DIR}%s", EJUDGE_LIB_DIR + strlen(EJUDGE_PREFIX_DIR));
+  } else {
+    snprintf(ejudge_lib_dir, sizeof(ejudge_lib_dir), "%s", EJUDGE_LIB_DIR);
+  }
+#endif
+  if (!ejudge_lib_dir[0]) {
+    snprintf(ejudge_lib_dir, sizeof(ejudge_lib_dir), "${EJUDGE_PREFIX_DIR}/lib");
+  }
+  ejudge_lib32_dir[0] = 0;
+#if defined EJUDGE_LIB32_DIR
+  if (!strncmp(EJUDGE_LIB32_DIR, EJUDGE_PREFIX_DIR, strlen(EJUDGE_PREFIX_DIR))) {
+    snprintf(ejudge_lib32_dir, sizeof(ejudge_lib32_dir), "${EJUDGE_PREFIX_DIR}%s", EJUDGE_LIB32_DIR + strlen(EJUDGE_PREFIX_DIR));
+  } else {
+    snprintf(ejudge_lib32_dir, sizeof(ejudge_lib32_dir), "%s", EJUDGE_LIB32_DIR);
+  }
+#endif
+  if (!ejudge_lib32_dir[0]) {
+    snprintf(ejudge_lib32_dir, sizeof(ejudge_lib32_dir), "${EJUDGE_PREFIX_DIR}/lib");
+  }
+
+  libdir = ejudge_lib_dir;
+  if (global->enable_32bit_checkers > 0) {
+    libdir = ejudge_lib32_dir;
+    m32_opt = " -m32";
+  }
 
   retval = build_prepare_test_file_names(log_f, cnts, global, prob, variant, NULL,
                                          sizeof(test_dir), test_dir, test_pat, corr_pat, info_pat,
@@ -979,7 +1012,7 @@ do_generate_makefile(
     compiler_flags = NULL;
     fprintf(mk_f, "CLIBS = -lm\n");
     if (need_c_libchecker) {
-      fprintf(mk_f, "CLIBCHECKERFLAGS = -Wall -Wno-pointer-sign -g -std=gnu99 -O2 -I${EJUDGE_PREFIX_DIR}/include/ejudge -L${EJUDGE_PREFIX_DIR}/lib -Wl,--rpath,${EJUDGE_PREFIX_DIR}/lib\n");
+      fprintf(mk_f, "CLIBCHECKERFLAGS =%s -Wall -Wno-pointer-sign -g -std=gnu99 -O2 -I${EJUDGE_PREFIX_DIR}/include/ejudge -L%s -Wl,--rpath,%s\n", m32_opt, libdir, libdir);
       fprintf(mk_f, "CLIBCHECKERLIBS = -lchecker -lm\n");
     }
     fprintf(mk_f, "\n");
@@ -1002,7 +1035,8 @@ do_generate_makefile(
     }
     compiler_flags = NULL;
     if (need_cpp_libchecker) {
-      fprintf(mk_f, "CXXLIBCHECKERFLAGS = -Wall -g -O2 -I${EJUDGE_PREFIX_DIR}/include/ejudge -L${EJUDGE_PREFIX_DIR}/lib -Wl,--rpath,${EJUDGE_PREFIX_DIR}/lib\n");
+      fprintf(mk_f, "CXXLIBCHECKERFLAGS =%s -Wall -g -O2 -I${EJUDGE_PREFIX_DIR}/include/ejudge -L%s -Wl,--rpath,%s\n",
+              m32_opt, libdir, libdir);
       fprintf(mk_f, "CXXLIBCHECKERLIBS = -lchecker -lm\n");
     }
     fprintf(mk_f, "\n");
