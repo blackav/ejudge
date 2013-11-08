@@ -166,6 +166,8 @@ struct section_global_data
   ejintbool_t advanced_layout;
   /** use UUID instead of run_id for runs */
   ejintbool_t uuid_run_store;
+  /** compile all checkers, interactors, etc in 32-bit mode on 64-bit platforms */
+  ejintbool_t enable_32bit_checkers;
   /** ignore BOM in submitted text files */
   ejintbool_t ignore_bom;
   /** disable loading of the user database */
