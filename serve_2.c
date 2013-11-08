@@ -2579,10 +2579,32 @@ serve_read_run_packet(
         reply_pkt->contest_id);
     goto failed;
   }
+
+  int new_run_id = -1;
+  if (run_get_uuid_hash_state(state->runlog_state) >= 0
+      && (reply_pkt->uuid[0] || reply_pkt->uuid[1] || reply_pkt->uuid[2] || reply_pkt->uuid[3])) {
+    new_run_id = run_find_run_id_by_uuid(state->runlog_state, reply_pkt->uuid);
+    if (new_run_id < 0) {
+      err("read_run_packet: non-existing UUID %s (packet run_id %d)", ej_uuid_unparse(reply_pkt->uuid, NULL), reply_pkt->run_id);
+      goto failed;
+    }
+    if (new_run_id != reply_pkt->run_id) {
+      info("read_run_packet: run_id changed: old: %d, current: %d", reply_pkt->run_id, new_run_id);
+      reply_pkt->run_id = new_run_id;
+    }
+  }
+
   if (run_get_entry(state->runlog_state, reply_pkt->run_id, &re) < 0) {
     err("read_run_packet: invalid run_id: %d", reply_pkt->run_id);
     goto failed;
   }
+  if (new_run_id >= 0) {
+    if (memcmp(re.run_uuid, reply_pkt->uuid, sizeof(re.run_uuid)) != 0) {
+      err("read_run_packet: UUID mismatch for run_id %d", reply_pkt->run_id);
+      goto failed;
+    }
+  }
+
   if (re.status != RUN_RUNNING) {
     err("read_run_packet: run %d status is not RUNNING", reply_pkt->run_id);
     goto failed;
