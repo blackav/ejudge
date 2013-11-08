@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2013/11/02 20:35:09
+// Generated 2013/11/08 12:52:05
 
 #include "prepare_meta.h"
 #include "prepare.h"
@@ -35,6 +35,7 @@ static struct meta_info_item meta_info_section_global_data_data[] =
   [CNTSGLOB_enable_memory_limit_error] = { CNTSGLOB_enable_memory_limit_error, 'B', XSIZE(struct section_global_data, enable_memory_limit_error), "enable_memory_limit_error", XOFFSET(struct section_global_data, enable_memory_limit_error) },
   [CNTSGLOB_advanced_layout] = { CNTSGLOB_advanced_layout, 'B', XSIZE(struct section_global_data, advanced_layout), "advanced_layout", XOFFSET(struct section_global_data, advanced_layout) },
   [CNTSGLOB_uuid_run_store] = { CNTSGLOB_uuid_run_store, 'B', XSIZE(struct section_global_data, uuid_run_store), "uuid_run_store", XOFFSET(struct section_global_data, uuid_run_store) },
+  [CNTSGLOB_enable_32bit_checkers] = { CNTSGLOB_enable_32bit_checkers, 'B', XSIZE(struct section_global_data, enable_32bit_checkers), "enable_32bit_checkers", XOFFSET(struct section_global_data, enable_32bit_checkers) },
   [CNTSGLOB_ignore_bom] = { CNTSGLOB_ignore_bom, 'B', XSIZE(struct section_global_data, ignore_bom), "ignore_bom", XOFFSET(struct section_global_data, ignore_bom) },
   [CNTSGLOB_disable_user_database] = { CNTSGLOB_disable_user_database, 'B', XSIZE(struct section_global_data, disable_user_database), "disable_user_database", XOFFSET(struct section_global_data, disable_user_database) },
   [CNTSGLOB_enable_max_stack_size] = { CNTSGLOB_enable_max_stack_size, 'B', XSIZE(struct section_global_data, enable_max_stack_size), "enable_max_stack_size", XOFFSET(struct section_global_data, enable_max_stack_size) },
