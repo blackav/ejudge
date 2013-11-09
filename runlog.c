@@ -1333,6 +1333,10 @@ run_set_entry(
     te.eoln_type = in->eoln_type;
     f = 1;
   }
+  if ((mask & RE_STORE_FLAGS) && te.store_flags != in->store_flags) {
+    te.store_flags = in->store_flags;
+    f = 1;
+  }
 
   /* check consistency of a new record */
   if (te.status == RUN_VIRTUAL_START || te.status == RUN_VIRTUAL_STOP
