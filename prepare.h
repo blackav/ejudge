@@ -374,6 +374,8 @@ struct section_global_data
   path_t full_archive_dir;
   /** directory for audit logs */
   path_t audit_log_dir;
+  /** directory for new UUID-based archives */
+  path_t uuid_archive_dir;
   /** team extra information directory */
   path_t team_extra_dir;
 
