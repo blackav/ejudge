@@ -2822,6 +2822,7 @@ set_defaults(
     GLOBAL_INIT_FIELD(full_archive_dir, DFLT_G_FULL_ARCHIVE_DIR, archive_dir);
     GLOBAL_INIT_FIELD(audit_log_dir, DFLT_G_AUDIT_LOG_DIR, archive_dir);
     GLOBAL_INIT_FIELD(team_report_archive_dir,DFLT_G_TEAM_REPORT_ARCHIVE_DIR,archive_dir);
+    GLOBAL_INIT_FIELD(uuid_archive_dir, "uuid", archive_dir);
     GLOBAL_INIT_FIELD(team_extra_dir, DFLT_G_TEAM_EXTRA_DIR, var_dir);
 
     GLOBAL_INIT_FIELD(status_dir, DFLT_G_STATUS_DIR, var_dir);
@@ -4457,6 +4458,7 @@ create_dirs(serve_state_t state, int mode)
     if (make_dir(g->xml_report_archive_dir, 0) < 0) return -1;
     if (make_dir(g->report_archive_dir, 0) < 0) return -1;
     if (make_dir(g->audit_log_dir, 0777) < 0) return -1;
+    if (make_dir(g->uuid_archive_dir, 0750) < 0) return -1;
     if (g->team_enable_rep_view) {
       if (make_dir(g->team_report_archive_dir, 0) < 0) return -1;
     }
