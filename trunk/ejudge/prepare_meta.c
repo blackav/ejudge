@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2013/11/08 12:52:05
+// Generated 2013/11/09 23:52:19
 
 #include "prepare_meta.h"
 #include "prepare.h"
@@ -130,6 +130,7 @@ static struct meta_info_item meta_info_section_global_data_data[] =
   [CNTSGLOB_xml_report_archive_dir] = { CNTSGLOB_xml_report_archive_dir, 'S', XSIZE(struct section_global_data, xml_report_archive_dir), "xml_report_archive_dir", XOFFSET(struct section_global_data, xml_report_archive_dir) },
   [CNTSGLOB_full_archive_dir] = { CNTSGLOB_full_archive_dir, 'S', XSIZE(struct section_global_data, full_archive_dir), "full_archive_dir", XOFFSET(struct section_global_data, full_archive_dir) },
   [CNTSGLOB_audit_log_dir] = { CNTSGLOB_audit_log_dir, 'S', XSIZE(struct section_global_data, audit_log_dir), "audit_log_dir", XOFFSET(struct section_global_data, audit_log_dir) },
+  [CNTSGLOB_uuid_archive_dir] = { CNTSGLOB_uuid_archive_dir, 'S', XSIZE(struct section_global_data, uuid_archive_dir), "uuid_archive_dir", XOFFSET(struct section_global_data, uuid_archive_dir) },
   [CNTSGLOB_team_extra_dir] = { CNTSGLOB_team_extra_dir, 'S', XSIZE(struct section_global_data, team_extra_dir), "team_extra_dir", XOFFSET(struct section_global_data, team_extra_dir) },
   [CNTSGLOB_status_dir] = { CNTSGLOB_status_dir, 'S', XSIZE(struct section_global_data, status_dir), "status_dir", XOFFSET(struct section_global_data, status_dir) },
   [CNTSGLOB_work_dir] = { CNTSGLOB_work_dir, 'S', XSIZE(struct section_global_data, work_dir), "work_dir", XOFFSET(struct section_global_data, work_dir) },

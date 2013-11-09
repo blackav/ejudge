@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2013/11/08 12:52:05
+// Generated 2013/11/09 23:52:19
 
 #ifndef __PREPARE_META_H__
 #define __PREPARE_META_H__
@@ -125,6 +125,7 @@ enum
   CNTSGLOB_xml_report_archive_dir,
   CNTSGLOB_full_archive_dir,
   CNTSGLOB_audit_log_dir,
+  CNTSGLOB_uuid_archive_dir,
   CNTSGLOB_team_extra_dir,
   CNTSGLOB_status_dir,
   CNTSGLOB_work_dir,
