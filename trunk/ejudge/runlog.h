@@ -235,7 +235,8 @@ enum
     RE_RUN_UUID      = 0x08000000,
     RE_PASSED_MODE   = 0x10000000,
     RE_EOLN_TYPE     = 0x20000000,
-    RE_ALL           = 0x3FFFFFFF,
+    RE_STORE_FLAGS   = 0x40000000,
+    RE_ALL           = 0x7FFFFFFF,
   };
 
 /* structure size is 128 bytes */
@@ -257,7 +258,7 @@ struct run_entry
   rint32_t       score;         /* 4 */
   rint16_t       test;          /* 2 */
   signed char    passed_mode;   /* 1 */
-  unsigned char  unused3;       /* 1 */
+  unsigned char  store_flags;   /* 1 */
   rint32_t       score_adj;     /* 4 */
   rint16_t       locale_id;     /* 2 */
   ruint16_t      judge_id;      /* 2 */
