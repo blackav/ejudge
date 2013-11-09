@@ -58,6 +58,7 @@ static const char create_runs_query[] =
 "        saved_test INT NOT NULL DEFAULT 0, "
 "        passed_mode TINYINT NOT NULL DEFAULT 0, "
 "        eoln_type TINYINT NOT NULL DEFAULT 0, "
+"        store_flags INT NOT NULL DEFAULT 0, "
 "        PRIMARY KEY (run_id, contest_id)"
 "        );";
 
@@ -104,9 +105,10 @@ struct run_entry_internal
   int saved_test;
   int passed_mode;
   int eoln_type;                /* 40 */
+  int store_flags;
 };
 
-enum { RUNS_ROW_WIDTH = 41 };
+enum { RUNS_ROW_WIDTH = 42 };
 
 #define RUNS_OFFSET(f) XOFFSET(struct run_entry_internal, f)
 static const struct common_mysql_parse_spec runs_spec[RUNS_ROW_WIDTH] =
@@ -152,6 +154,7 @@ static const struct common_mysql_parse_spec runs_spec[RUNS_ROW_WIDTH] =
   { 0, 'd', "saved_test", RUNS_OFFSET(saved_test), 0 },
   { 0, 'd', "passed_mode", RUNS_OFFSET(passed_mode), 0 },
   { 0, 'd', "eoln_type", RUNS_OFFSET(eoln_type), 0 },
+  { 0, 'd', "store_flags", RUNS_OFFSET(store_flags), 0 },
 };
 
 enum
