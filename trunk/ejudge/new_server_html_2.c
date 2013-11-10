@@ -1937,9 +1937,7 @@ ns_write_priv_report(const serve_state_t cs,
     goto done;
   }
 
-  rep_flag = archive_make_read_path(cs, rep_path, sizeof(rep_path),
-                                    global->xml_report_archive_dir,
-                                    run_id, 0, 1);
+  rep_flag = serve_make_xml_report_read_path(cs, rep_path, sizeof(rep_path), &re);
   if (rep_flag >= 0) {
     if (generic_read_file(&rep_text, 0, &rep_len, rep_flag, 0, rep_path, 0)<0){
       ns_error(log_f, NEW_SRV_ERR_DISK_READ_ERROR);
@@ -3669,9 +3667,7 @@ ns_write_tests(const serve_state_t cs, FILE *fout, FILE *log_f,
     goto done;
   }
 
-  if ((rep_flag = archive_make_read_path(cs, rep_path, sizeof(rep_path),
-                                         cs->global->xml_report_archive_dir,
-                                         run_id, 0, 1)) < 0
+  if ((rep_flag = serve_make_xml_report_read_path(cs, rep_path, sizeof(rep_path), &re)) < 0
       && (rep_flag = archive_make_read_path(cs, rep_path, sizeof(rep_path),
                                             cs->global->report_archive_dir,
                                             run_id, 0, 1)) < 0) {
@@ -5283,7 +5279,6 @@ do_add_row(
 
   if (store_flags == 1) {
     arch_flags = uuid_archive_prepare_write_path(cs, run_path, sizeof(run_path),
-                                                 cs->global->uuid_archive_dir,
                                                  run_uuid, run_size,
                                                  DFLT_R_UUID_SOURCE, 0, 0);
   } else {
@@ -6146,7 +6141,6 @@ ns_get_checker_comment(
         int run_id,
         int need_html_armor)
 {
-  const struct section_global_data *global = cs->global;
   int rep_flag;
   path_t rep_path;
   unsigned char *str = 0;
@@ -6155,10 +6149,12 @@ ns_get_checker_comment(
   testing_report_xml_t rep_xml = 0;
   struct testing_report_test *rep_tst;
   const unsigned char *start_ptr = 0;
+  struct run_entry re;
 
-  if ((rep_flag = archive_make_read_path(cs, rep_path, sizeof(rep_path),
-                                         global->xml_report_archive_dir,
-                                         run_id, 0, 1)) < 0)
+  if (run_get_entry(cs->runlog_state, run_id, &re) < 0)
+    goto cleanup;
+
+  if ((rep_flag = serve_make_xml_report_read_path(cs, rep_path, sizeof(rep_path), &re)) < 0)
     goto cleanup;
   if (generic_read_file(&rep_txt, 0, &rep_len, rep_flag, 0, rep_path, 0) < 0)
     goto cleanup;
@@ -6193,7 +6189,6 @@ static int get_accepting_passed_tests(
         int run_id,
         const struct run_entry *re)
 {
-  const struct section_global_data *global = cs->global;
   int rep_flag;
   path_t rep_path;
   char *rep_txt = 0;
@@ -6235,9 +6230,7 @@ static int get_accepting_passed_tests(
   }
 
   r = 0;
-  if ((rep_flag = archive_make_read_path(cs, rep_path, sizeof(rep_path),
-                                         global->xml_report_archive_dir,
-                                         run_id, 0, 1)) < 0)
+  if ((rep_flag = serve_make_xml_report_read_path(cs, rep_path, sizeof(rep_path), re)) < 0)
     goto cleanup;
   if (generic_read_file(&rep_txt, 0, &rep_len, rep_flag, 0, rep_path, 0) < 0)
     goto cleanup;

@@ -646,9 +646,7 @@ cmd_run_operation(
   case NEW_SRV_ACTION_DUMP_REPORT:
     if (!run_is_report_available(re.status))
       FAIL(NEW_SRV_ERR_REPORT_UNAVAILABLE);
-    src_flags = archive_make_read_path(cs, src_path, sizeof(src_path),
-                                       global->xml_report_archive_dir,
-                                       run_id, 0, 1);
+    src_flags = serve_make_xml_report_read_path(cs, src_path, sizeof(src_path), &re);
     if (src_flags < 0) {
       src_flags = archive_make_read_path(cs, src_path, sizeof(src_path),
                                          global->report_archive_dir,
@@ -1071,8 +1069,7 @@ cmd_submit_run(
 
   if (store_flags == 1) {
     arch_flags = uuid_archive_prepare_write_path(cs, run_path, sizeof(run_path),
-                                                 global->uuid_archive_dir, run_uuid,
-                                                 run_size, DFLT_R_UUID_SOURCE, 0, 0);
+                                                 run_uuid, run_size, DFLT_R_UUID_SOURCE, 0, 0);
   } else {
     arch_flags = archive_prepare_write_path(cs, run_path, sizeof(run_path),
                                             global->run_archive_dir, run_id,

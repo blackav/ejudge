@@ -53,7 +53,6 @@ uuid_archive_make_write_path(
         const serve_state_t state,
         unsigned char *path,
         size_t size,
-        const unsigned char *base_dir,
         const ruint32_t run_uuid[4],
         long long file_size,
         const unsigned char *name,
@@ -63,14 +62,12 @@ uuid_archive_make_read_path(
         const serve_state_t state,
         unsigned char *path,
         size_t size,
-        const unsigned char *base_dir,
         const ruint32_t run_uuid[4],
         const unsigned char *name,
         int gzip_preferred);
 int
 uuid_archive_dir_prepare(
         const serve_state_t state,
-        const unsigned char *base_dir,
         const ruint32_t run_uuid[4],
         const unsigned char *name,
         int no_unlink_flag);
@@ -79,7 +76,6 @@ uuid_archive_prepare_write_path(
         const serve_state_t state,
         unsigned char *path,
         size_t size,
-        const unsigned char *base_dir,
         const ruint32_t run_uuid[4],
         long long file_size,
         const unsigned char *name,

@@ -391,7 +391,6 @@ uuid_archive_make_write_path(
         const serve_state_t state,
         unsigned char *path,
         size_t size,
-        const unsigned char *base_dir,
         const ruint32_t run_uuid[4],
         long long file_size,
         const unsigned char *name,
@@ -410,7 +409,7 @@ uuid_archive_make_write_path(
   }
 
   snprintf(path, size, "%s/%02x/%02x/%s/%s%s",
-           base_dir, ((const unsigned char *) run_uuid)[0],
+           state->global->uuid_archive_dir, ((const unsigned char *) run_uuid)[0],
            ((const unsigned char *) run_uuid)[1],
            ej_uuid_unparse(run_uuid, NULL), name, suffix);
   return zip_mode;
@@ -421,7 +420,6 @@ uuid_archive_make_read_path(
         const serve_state_t state,
         unsigned char *path,
         size_t size,
-        const unsigned char *base_dir,
         const ruint32_t run_uuid[4],
         const unsigned char *name,
         int gzip_preferred)
@@ -432,7 +430,7 @@ uuid_archive_make_read_path(
   ASSERT(ej_uuid_is_nonempty(run_uuid));
 
   int len = snprintf(path, size - 4, "%s/%02x/%02x/%s/%s",
-                     base_dir, ((const unsigned char *) run_uuid)[0],
+                     state->global->uuid_archive_dir, ((const unsigned char *) run_uuid)[0],
                      ((const unsigned char *) run_uuid)[1],
                      ej_uuid_unparse(run_uuid, NULL), name);
   if (len >= size - 4) {
@@ -467,7 +465,6 @@ uuid_archive_make_read_path(
 int
 uuid_archive_dir_prepare(
         const serve_state_t state,
-        const unsigned char *base_dir,
         const ruint32_t run_uuid[4],
         const unsigned char *name,
         int no_unlink_flag)
@@ -479,7 +476,7 @@ uuid_archive_dir_prepare(
   ASSERT(ej_uuid_is_nonempty(run_uuid));
 
   snprintf(path, sizeof(path), "%s/%02x/%02x/%s",
-           base_dir, ((const unsigned char *) run_uuid)[0],
+           state->global->uuid_archive_dir, ((const unsigned char *) run_uuid)[0],
            ((const unsigned char *) run_uuid)[1],
            ej_uuid_unparse(run_uuid, NULL));
   if (os_MakeDirPath(path, 0750) < 0) {
@@ -504,16 +501,15 @@ uuid_archive_prepare_write_path(
         const serve_state_t state,
         unsigned char *path,
         size_t size,
-        const unsigned char *base_dir,
         const ruint32_t run_uuid[4],
         long long file_size,
         const unsigned char *name,
         int zip_mode,
         int no_unlink_flag)
 {
-  int flags = uuid_archive_make_write_path(state, path, size, base_dir, run_uuid, file_size, name, zip_mode);
+  int flags = uuid_archive_make_write_path(state, path, size, run_uuid, file_size, name, zip_mode);
   if (flags < 0) return flags;
-  if (uuid_archive_dir_prepare(state, base_dir, run_uuid, name, no_unlink_flag) < 0) return -1;
+  if (uuid_archive_dir_prepare(state, run_uuid, name, no_unlink_flag) < 0) return -1;
   return flags;
 }
 

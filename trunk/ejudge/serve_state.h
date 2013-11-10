@@ -715,5 +715,11 @@ serve_make_source_read_path(
         unsigned char *path,
         size_t size,
         const struct run_entry *re);
+int
+serve_make_xml_report_read_path(
+        const serve_state_t state,
+        unsigned char *path,
+        size_t size,
+        const struct run_entry *re);
 
 #endif /* __SERVE_STATE_H__ */

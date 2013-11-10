@@ -2937,8 +2937,7 @@ priv_submit_run(FILE *fout,
 
   if (store_flags == 1) {
     arch_flags = uuid_archive_prepare_write_path(cs, run_path, sizeof(run_path),
-                                                 global->uuid_archive_dir, run_uuid,
-                                                 run_size, DFLT_R_UUID_SOURCE, 0, 0);
+                                                 run_uuid, run_size, DFLT_R_UUID_SOURCE, 0, 0);
   } else {
     arch_flags = archive_prepare_write_path(cs, run_path, sizeof(run_path),
                                             global->run_archive_dir, run_id,
@@ -3309,9 +3308,14 @@ priv_set_run_style_error_status(
   text2 = text_area_process_string(text, 0, 0);
   text2_len = strlen(text2);
 
-  rep_flags = archive_make_write_path(cs, rep_path, sizeof(rep_path),
-                                      global->xml_report_archive_dir,
-                                      run_id, text2_len, 0, 0);
+  if (re.store_flags == 1) {
+    rep_flags = uuid_archive_prepare_write_path(cs, rep_path, sizeof(rep_path),
+                                                re.run_uuid, text2_len, DFLT_R_UUID_XML_REPORT, 0, 0);
+  } else {
+    rep_flags = archive_prepare_write_path(cs, rep_path, sizeof(rep_path),
+                                           global->xml_report_archive_dir, run_id,
+                                           text2_len, NULL, 0, 0);
+  }
   if (rep_flags < 0) {
     snprintf(errmsg, sizeof(errmsg),
              "archive_make_write_path: %s, %d, %zu failed\n",
@@ -3319,12 +3323,7 @@ priv_set_run_style_error_status(
              text2_len);
     goto invalid_param;
   }
-  if (archive_dir_prepare(cs, global->xml_report_archive_dir,
-                          run_id, 0, 0) < 0) {
-    snprintf(errmsg, sizeof(errmsg), "archive_dir_prepare: %s, %d failed\n",
-             global->xml_report_archive_dir, run_id);
-    goto invalid_param;
-  }
+
   if (generic_write_file(text2, text2_len, rep_flags, 0, rep_path, "") < 0) {
     snprintf(errmsg, sizeof(errmsg), "generic_write_file: %s, %d, %zu failed\n",
              global->xml_report_archive_dir, run_id, text2_len);
@@ -4676,8 +4675,7 @@ priv_new_run(FILE *fout,
 
   if (store_flags == 1) {
     arch_flags = uuid_archive_prepare_write_path(cs, run_path, sizeof(run_path),
-                                                 global->uuid_archive_dir, run_uuid,
-                                                 run_size, DFLT_R_UUID_SOURCE, 0, 0);
+                                                 run_uuid, run_size, DFLT_R_UUID_SOURCE, 0, 0);
   } else {
     arch_flags = archive_prepare_write_path(cs, run_path, sizeof(run_path),
                                             global->run_archive_dir, run_id,
@@ -10851,8 +10849,7 @@ ns_submit_run(
   int arch_flags = 0;
   if (store_flags == 1) {
     arch_flags = uuid_archive_prepare_write_path(cs, run_path, sizeof(run_path),
-                                                 global->uuid_archive_dir, uuid_ptr,
-                                                 run_size, DFLT_R_UUID_SOURCE,
+                                                 uuid_ptr, run_size, DFLT_R_UUID_SOURCE,
                                                  0, 0);
   } else {
     arch_flags = archive_prepare_write_path(cs, run_path, sizeof(run_path),
@@ -11478,8 +11475,7 @@ unpriv_submit_run(FILE *fout,
 
   if (store_flags == 1) {
     arch_flags = uuid_archive_prepare_write_path(cs, run_path, sizeof(run_path),
-                                                 global->uuid_archive_dir, run_uuid,
-                                                 run_size, DFLT_R_UUID_SOURCE,
+                                                 run_uuid, run_size, DFLT_R_UUID_SOURCE,
                                                  0, 0);
   } else {
     arch_flags = archive_prepare_write_path(cs, run_path, sizeof(run_path),
@@ -12422,8 +12418,7 @@ unpriv_view_report(FILE *fout,
     goto done;
   }
 
-  flags = archive_make_read_path(cs, rep_path, sizeof(rep_path),
-                                 global->xml_report_archive_dir, run_id, 0, 1);
+  flags = serve_make_xml_report_read_path(cs, rep_path, sizeof(rep_path), &re);
   if (flags >= 0) {
     if (generic_read_file(&rep_text, 0, &rep_size, flags, 0, rep_path, 0) < 0) {
       ns_error(log_f, NEW_SRV_ERR_DISK_READ_ERROR);
@@ -14910,8 +14905,7 @@ unpriv_xml_update_answer(
 
   if (arch_flags == 1) {
     arch_flags = uuid_archive_prepare_write_path(cs, run_path, sizeof(run_path),
-                                                 global->uuid_archive_dir, run_uuid,
-                                                 run_size, DFLT_R_UUID_SOURCE, 0, 0);
+                                                 run_uuid, run_size, DFLT_R_UUID_SOURCE, 0, 0);
   } else {
     arch_flags = archive_prepare_write_path(cs, run_path, sizeof(run_path),
                                             global->run_archive_dir, run_id,

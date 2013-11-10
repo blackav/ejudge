@@ -1252,8 +1252,7 @@ serve_compile_request(
     if (len < 0) {
       if (store_flags == 1) {
         arch_flags = uuid_archive_make_read_path(state, run_arch, sizeof(run_arch),
-                                                 global->uuid_archive_dir, uuid,
-                                                 DFLT_R_UUID_SOURCE, 0);
+                                                 uuid, DFLT_R_UUID_SOURCE, 0);
       } else {
         arch_flags = archive_make_read_path(state, run_arch, sizeof(run_arch),
                                             global->run_archive_dir, run_id,0,0);
@@ -1288,8 +1287,7 @@ serve_compile_request(
     // copy from archive
     if (store_flags == 1) {
       arch_flags = uuid_archive_make_read_path(state, run_arch, sizeof(run_arch),
-                                               global->uuid_archive_dir, uuid,
-                                               DFLT_R_UUID_SOURCE, 0);
+                                               uuid, DFLT_R_UUID_SOURCE, 0);
     } else {
       arch_flags = archive_make_read_path(state, run_arch, sizeof(run_arch),
                                           global->run_archive_dir, run_id, 0,0);
@@ -2257,9 +2255,14 @@ serve_read_compile_packet(
       goto report_check_failed;
     }
 
-    rep_flags = archive_make_write_path(state, rep_path, sizeof(rep_path),
-                                        global->xml_report_archive_dir,
-                                        comp_pkt->run_id, report_size, 0, 0);
+    if (re.store_flags == 1) {
+      rep_flags = uuid_archive_make_write_path(state, rep_path, sizeof(rep_path),
+                                               re.run_uuid, report_size, DFLT_R_UUID_XML_REPORT, 0);
+    } else {
+      rep_flags = archive_make_write_path(state, rep_path, sizeof(rep_path),
+                                          global->xml_report_archive_dir,
+                                          comp_pkt->run_id, report_size, 0, 0);
+    }
     if (rep_flags < 0) {
       snprintf(errmsg, sizeof(errmsg),
                "archive_make_write_path: %s, %d, %ld failed\n",
@@ -2293,9 +2296,14 @@ serve_read_compile_packet(
     if (run_change_status_4(state->runlog_state, comp_pkt->run_id,
                             RUN_CHECK_FAILED) < 0)
       goto non_fatal_error;
-    if (archive_dir_prepare(state, global->xml_report_archive_dir,
-                            comp_pkt->run_id, 0, 0) < 0)
-      goto non_fatal_error;
+    if (re.store_flags == 1) {
+      if (uuid_archive_dir_prepare(state, re.run_uuid, DFLT_R_UUID_XML_REPORT, 0) < 0)
+        goto non_fatal_error;
+    } else {
+      if (archive_dir_prepare(state, global->xml_report_archive_dir,
+                              comp_pkt->run_id, 0, 0) < 0)
+        goto non_fatal_error;
+    }
     if (generic_copy_file(REMOVE, compile_report_dir, pname, "",
                           rep_flags, 0, rep_path, "") < 0) {
       snprintf(errmsg, sizeof(errmsg),
@@ -2314,11 +2322,19 @@ serve_read_compile_packet(
                             comp_pkt->status) < 0)
       goto non_fatal_error;
 
-    if (archive_dir_prepare(state, global->xml_report_archive_dir,
-                            comp_pkt->run_id, 0, 0) < 0) {
-      snprintf(errmsg, sizeof(errmsg), "archive_dir_prepare: %s, %d failed\n",
-               global->xml_report_archive_dir, comp_pkt->run_id);
-      goto report_check_failed;
+    if (re.store_flags == 1) {
+      if (uuid_archive_dir_prepare(state, re.run_uuid, DFLT_R_UUID_XML_REPORT, 0) < 0) {
+        snprintf(errmsg, sizeof(errmsg), "archive_dir_prepare: %s, %d failed\n",
+                 global->uuid_archive_dir, comp_pkt->run_id);
+        goto report_check_failed;
+      }
+    } else {
+      if (archive_dir_prepare(state, global->xml_report_archive_dir,
+                              comp_pkt->run_id, 0, 0) < 0) {
+        snprintf(errmsg, sizeof(errmsg), "archive_dir_prepare: %s, %d failed\n",
+                 global->xml_report_archive_dir, comp_pkt->run_id);
+        goto report_check_failed;
+      }
     }
     if (generic_copy_file(REMOVE, compile_report_dir, pname, "",
                           rep_flags, 0, rep_path, "") < 0) {
@@ -2414,12 +2430,17 @@ serve_read_compile_packet(
                           RUN_CHECK_FAILED) < 0)
     goto non_fatal_error;
   report_size = strlen(errmsg);
-  rep_flags = archive_make_write_path(state, rep_path, sizeof(rep_path),
-                                      global->xml_report_archive_dir,
-                                      comp_pkt->run_id, report_size, 0, 0);
-  if (archive_dir_prepare(state, global->xml_report_archive_dir,
-                          comp_pkt->run_id, 0, 0) < 0)
+  if (re.store_flags == 1) {
+    rep_flags = uuid_archive_prepare_write_path(state, rep_path, sizeof(rep_path),
+                                                re.run_uuid, report_size, DFLT_R_UUID_XML_REPORT, 0, 0);
+  } else {
+    rep_flags = archive_prepare_write_path(state, rep_path, sizeof(rep_path),
+                                           global->xml_report_archive_dir, comp_pkt->run_id,
+                                           report_size, NULL, 0, 0);
+  }
+  if (rep_flags < 0)
     goto non_fatal_error;
+
   /* error code is ignored */
   generic_write_file(errmsg, report_size, rep_flags, 0, rep_path, 0);
   /* goto non_fatal_error; */
@@ -2702,12 +2723,18 @@ serve_read_run_packet(
   }
   rep_size = generic_file_size(run_report_dir, pname, "");
   if (rep_size < 0) goto failed;
-  rep_flags = archive_make_write_path(state, rep_path, sizeof(rep_path),
-                                      global->xml_report_archive_dir,
-                                      reply_pkt->run_id, rep_size, 0, 0);
-  if (archive_dir_prepare(state, global->xml_report_archive_dir,
-                          reply_pkt->run_id, 0, 0) < 0)
+
+  if (re.store_flags == 1) {
+    rep_flags = uuid_archive_prepare_write_path(state, rep_path, sizeof(rep_path),
+                                                re.run_uuid, rep_size, DFLT_R_UUID_XML_REPORT, 0, 0);
+  } else {
+    rep_flags = archive_prepare_write_path(state, rep_path, sizeof(rep_path),
+                                           global->xml_report_archive_dir, reply_pkt->run_id,
+                                           rep_size, NULL, 0, 0);
+  }
+  if (rep_flags < 0)
     goto failed;
+
   if (generic_copy_file(REMOVE, run_report_dir, pname, "",
                         rep_flags, 0, rep_path, "") < 0)
     goto failed;
@@ -2973,10 +3000,17 @@ serve_judge_built_in_problem(
                                         run_id, glob_status);
   }
   */
-  rep_flags = archive_make_write_path(state, rep_path, sizeof(rep_path),
-                                      global->xml_report_archive_dir,
-                                      run_id, xml_len, 0, 0);
-  archive_dir_prepare(state, global->xml_report_archive_dir, run_id, 0, 0);
+
+  // FIXME: handle errors
+  run_get_entry(state->runlog_state, run_id, re);
+  if (re->store_flags == 1) {
+    rep_flags = uuid_archive_prepare_write_path(state, rep_path, sizeof(rep_path),
+                                                re->run_uuid, xml_len, DFLT_R_UUID_XML_REPORT, 0, 0);
+  } else {
+    rep_flags = archive_prepare_write_path(state, rep_path, sizeof(rep_path),
+                                           global->xml_report_archive_dir, run_id,
+                                           xml_len, NULL, 0, 0);
+  }
   generic_write_file(xml_buf, xml_len, rep_flags, 0, rep_path, "");
 
   xfree(xml_buf); xml_buf = 0;
@@ -2998,6 +3032,9 @@ serve_report_check_failed(
   char *tr_t = NULL;
   unsigned char tr_p[PATH_MAX];
   int flags = 0;
+  struct run_entry re;
+
+  run_get_entry(state->runlog_state, run_id, &re);
 
   tr->status = RUN_CHECK_FAILED;
   tr->scoring_system = global->score_system;
@@ -3016,16 +3053,17 @@ serve_report_check_failed(
                   NULL, "check failed", -1,
                   "  %s\n\n", error_text);
 
-  flags = archive_make_write_path(state, tr_p, sizeof(tr_p), global->xml_report_archive_dir,
-                                  run_id, tr_z, 0, 0);
+  if (re.store_flags) {
+    flags = uuid_archive_prepare_write_path(state, tr_p, sizeof(tr_p),
+                                            re.run_uuid, tr_z, DFLT_R_UUID_XML_REPORT, 0, 0);
+  } else {
+    flags = archive_prepare_write_path(state, tr_p, sizeof(tr_p), global->xml_report_archive_dir, run_id,
+                                       tr_z, NULL, 0, 0);
+  }
   if (flags < 0) {
     err("archive_make_write_path: %s, %d, %ld failed\n", global->xml_report_archive_dir, run_id, (long) tr_z);
   } else {
-    if (archive_dir_prepare(state, global->xml_report_archive_dir, run_id, NULL, 0) < 0) {
-      err("archive_dir_prepare: %s, %d failed\n", global->xml_report_archive_dir, run_id);
-    } else {
-      generic_write_file(tr_t, tr_z, flags, NULL, tr_p, NULL);
-    }
+    generic_write_file(tr_t, tr_z, flags, NULL, tr_p, NULL);
   }
   xfree(tr_t); tr_t = NULL;
 
@@ -4985,7 +5023,7 @@ serve_make_source_read_path(
 {
   int ret;
   if (re->store_flags == 1) {
-    ret = uuid_archive_make_read_path(state, path, size, state->global->uuid_archive_dir,
+    ret = uuid_archive_make_read_path(state, path, size,
                                       re->run_uuid, DFLT_R_UUID_SOURCE, 1);
   } else {
     ret = archive_make_read_path(state, path, size, state->global->run_archive_dir,
@@ -4994,8 +5032,20 @@ serve_make_source_read_path(
   return ret;
 }
 
-/*
- * Local variables:
- *  compile-command: "make"
- * End:
- */
+int
+serve_make_xml_report_read_path(
+        const serve_state_t state,
+        unsigned char *path,
+        size_t size,
+        const struct run_entry *re)
+{
+  int ret;
+  if (re->store_flags == 1) {
+    ret = uuid_archive_make_read_path(state, path, size,
+                                      re->run_uuid, DFLT_R_UUID_XML_REPORT, 1);
+  } else {
+    ret = archive_make_read_path(state, path, size, state->global->xml_report_archive_dir,
+                                 re->run_id, NULL, 1);
+  }
+  return ret;
+}
