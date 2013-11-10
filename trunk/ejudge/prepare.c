@@ -2822,7 +2822,7 @@ set_defaults(
     GLOBAL_INIT_FIELD(full_archive_dir, DFLT_G_FULL_ARCHIVE_DIR, archive_dir);
     GLOBAL_INIT_FIELD(audit_log_dir, DFLT_G_AUDIT_LOG_DIR, archive_dir);
     GLOBAL_INIT_FIELD(team_report_archive_dir,DFLT_G_TEAM_REPORT_ARCHIVE_DIR,archive_dir);
-    GLOBAL_INIT_FIELD(uuid_archive_dir, "uuid", archive_dir);
+    GLOBAL_INIT_FIELD(uuid_archive_dir, DFLT_G_RUN_UUID_ARCHIVE_DIR, archive_dir);
     GLOBAL_INIT_FIELD(team_extra_dir, DFLT_G_TEAM_EXTRA_DIR, var_dir);
 
     GLOBAL_INIT_FIELD(status_dir, DFLT_G_STATUS_DIR, var_dir);

@@ -371,6 +371,9 @@ ns_write_priv_all_runs(
     if (run_fields & (1 << RUN_VIEW_RUN_UUID)) {
       fprintf(f, "<th%s>%s</th>", cl, "UUID");
     }
+    if (run_fields & (1 << RUN_VIEW_STORE_FLAGS)) {
+      fprintf(f, "<th%s>%s</th>", cl, "Storage Flags");
+    }
     if (run_fields & (1 << RUN_VIEW_TIME)) {
       fprintf(f, "<th%s>%s</th>", cl, _("Time"));
     }
@@ -499,6 +502,9 @@ ns_write_priv_all_runs(
         if (run_fields & (1 << RUN_VIEW_RUN_UUID)) {
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
+        if (run_fields & (1 << RUN_VIEW_STORE_FLAGS)) {
+          fprintf(f, "<td%s>&nbsp;</td>", cl);
+        }
         if (run_fields & (1 << RUN_VIEW_TIME)) {
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
@@ -595,6 +601,9 @@ ns_write_priv_all_runs(
           fprintf(f, "<td%s>%d%s</td>", cl, rid, examinable_str);
         }
         if (run_fields & (1 << RUN_VIEW_RUN_UUID)) {
+          fprintf(f, "<td%s>&nbsp;</td>", cl);
+        }
+        if (run_fields & (1 << RUN_VIEW_STORE_FLAGS)) {
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
         if (run_fields & (1 << RUN_VIEW_TIME)) {
@@ -747,6 +756,9 @@ ns_write_priv_all_runs(
       }
       if (run_fields & (1 << RUN_VIEW_RUN_UUID)) {
         fprintf(f, "<td%s>%s</td>", cl, ej_uuid_unparse(pe->run_uuid, "&nbsp;"));
+      }
+      if (run_fields & (1 << RUN_VIEW_STORE_FLAGS)) {
+        fprintf(f, "<td%s>%d</td>", cl, pe->store_flags);
       }
       if (run_fields & (1 << RUN_VIEW_TIME)) {
         fprintf(f, "<td%s>%s</td>", cl, durstr);
@@ -1415,9 +1427,7 @@ ns_write_priv_source(const serve_state_t state,
     return;
   }
 
-  src_flags = archive_make_read_path(state, src_path, sizeof(src_path),
-                                     global->run_archive_dir, run_id,
-                                     0, 1);
+  src_flags = serve_make_source_read_path(state, src_path, sizeof(src_path), &info);
   if (src_flags < 0) {
     ns_error(log_f, NEW_SRV_ERR_SOURCE_NONEXISTANT);
     return;
@@ -1734,7 +1744,7 @@ ns_write_priv_source(const serve_state_t state,
   filtbuf1[0] = 0;
   if (run_id > 0) {
     run_id2 = run_find(state->runlog_state, run_id - 1, 0, info.user_id,
-                       info.prob_id, info.lang_id);
+                       info.prob_id, info.lang_id, NULL, NULL);
     if (run_id2 >= 0) {
       snprintf(filtbuf1, sizeof(filtbuf1), "%d", run_id2);
     }
@@ -5180,9 +5190,7 @@ ns_download_runs(
     }
     snprintf(dstpath, sizeof(dstpath), "%s/%s", dir5, file_name_str);
 
-    srcflags = archive_make_read_path(cs, srcpath, sizeof(srcpath),
-                                      cs->global->run_archive_dir, run_id,
-                                      0, 0);
+    srcflags = serve_make_source_read_path(cs, srcpath, sizeof(srcpath), &info);
     if (srcflags < 0) {
       ns_error(log_f, NEW_SRV_ERR_SOURCE_NONEXISTANT);
       goto cleanup;
@@ -5255,31 +5263,40 @@ do_add_row(
   path_t run_path;
 
   ruint32_t run_uuid[4];
+  int store_flags = 0;
   gettimeofday(&precise_time, 0);
+  ej_uuid_generate(run_uuid);
+  if (cs->global->uuid_run_store > 0 && run_get_uuid_hash_state(cs->runlog_state) >= 0 && ej_uuid_is_nonempty(run_uuid)) {
+    store_flags = 1;
+  }
   run_id = run_add_record(cs->runlog_state, 
                           precise_time.tv_sec, precise_time.tv_usec * 1000,
-                          run_size, re->sha1, NULL,
+                          run_size, re->sha1, run_uuid,
                           &phr->ip, phr->ssl_flag, phr->locale_id,
                           re->user_id, re->prob_id, re->lang_id, re->eoln_type,
-                          re->variant, re->is_hidden, re->mime_type, run_uuid);
+                          re->variant, re->is_hidden, re->mime_type, store_flags);
   if (run_id < 0) {
     fprintf(log_f, _("Failed to add row %d to runlog\n"), row);
     return -1;
   }
   serve_move_files_to_insert_run(cs, run_id);
-  arch_flags = archive_make_write_path(cs, run_path, sizeof(run_path),
-                                       cs->global->run_archive_dir, run_id,
-                                       run_size, 0, 0);
+
+  if (store_flags == 1) {
+    arch_flags = uuid_archive_prepare_write_path(cs, run_path, sizeof(run_path),
+                                                 cs->global->uuid_archive_dir,
+                                                 run_uuid, run_size,
+                                                 DFLT_R_UUID_SOURCE, 0, 0);
+  } else {
+    arch_flags = archive_prepare_write_path(cs, run_path, sizeof(run_path),
+                                            cs->global->run_archive_dir, run_id,
+                                            run_size, NULL, 0, 0);
+  }
   if (arch_flags < 0) {
     run_undo_add_record(cs->runlog_state, run_id);
     fprintf(log_f, _("Cannot allocate space to store run row %d\n"), row);
     return -1;
   }
-  if (archive_dir_prepare(cs, cs->global->run_archive_dir, run_id, 0, 0) < 0) {
-    run_undo_add_record(cs->runlog_state, run_id);
-    fprintf(log_f, _("Cannot allocate space to store run row %d\n"), row);
-    return -1;
-  }
+
   if (generic_write_file(run_text, run_size, arch_flags, 0, run_path, "") < 0) {
     run_undo_add_record(cs->runlog_state, run_id);
     fprintf(log_f, _("Cannot write run row %d\n"), row);
@@ -6030,10 +6047,10 @@ static unsigned char *
 get_source(
         const serve_state_t cs,
         int run_id,
+        const struct run_entry *re,
         const struct section_problem_data *prob,
         int variant)
 {
-  const struct section_global_data *global = cs->global;
   int src_flag = 0, i, n;
   char *eptr = 0;
   path_t src_path = { 0 };
@@ -6064,9 +6081,7 @@ get_source(
     break;
   }
 
-  if ((src_flag = archive_make_read_path(cs, src_path, sizeof(src_path),
-                                         global->run_archive_dir,
-                                         run_id, 0, 1)) < 0)
+  if ((src_flag = serve_make_source_read_path(cs, src_path, sizeof(src_path), re)) < 0)
     goto cleanup;
   if (generic_read_file(&src_txt, 0, &src_len, src_flag, 0, src_path, 0) < 0)
     goto cleanup;
@@ -6595,7 +6610,7 @@ ns_write_olympiads_user_runs(
       fprintf(fout, "<td%s>%s</td>", cl, score_buf);
 
     if (enable_src_view) {
-      if (cnts->exam_mode && (src_txt = get_source(cs, i, prob, variant))) {
+      if (cnts->exam_mode && (src_txt = get_source(cs, i, &re, prob, variant))) {
         fprintf(fout, "<td%s>%s</td>", cl, src_txt);
         xfree(src_txt); src_txt = 0;
       } else {

@@ -1052,7 +1052,8 @@ serve_compile_request(
         const struct section_problem_data *prob,
         const struct section_language_data *lang,
         int no_db_flag,
-        const ruint32_t uuid[4])
+        const ruint32_t uuid[4],
+        int store_flags)
 {
   struct compile_run_extra rx;
   struct compile_request_packet cp;
@@ -1249,8 +1250,14 @@ serve_compile_request(
 
   if (src_header_size > 0 || src_footer_size > 0) {
     if (len < 0) {
-      arch_flags = archive_make_read_path(state, run_arch, sizeof(run_arch),
-                                          global->run_archive_dir, run_id,0,0);
+      if (store_flags == 1) {
+        arch_flags = uuid_archive_make_read_path(state, run_arch, sizeof(run_arch),
+                                                 global->uuid_archive_dir, uuid,
+                                                 DFLT_R_UUID_SOURCE, 0);
+      } else {
+        arch_flags = archive_make_read_path(state, run_arch, sizeof(run_arch),
+                                            global->run_archive_dir, run_id,0,0);
+      }
       if (arch_flags < 0) {
         errcode = -SERVE_ERR_SOURCE_READ;
         goto failed;
@@ -1279,8 +1286,14 @@ serve_compile_request(
     }
   } else if (len < 0) {
     // copy from archive
-    arch_flags = archive_make_read_path(state, run_arch, sizeof(run_arch),
-                                        global->run_archive_dir, run_id, 0,0);
+    if (store_flags == 1) {
+      arch_flags = uuid_archive_make_read_path(state, run_arch, sizeof(run_arch),
+                                               global->uuid_archive_dir, uuid,
+                                               DFLT_R_UUID_SOURCE, 0);
+    } else {
+      arch_flags = archive_make_read_path(state, run_arch, sizeof(run_arch),
+                                          global->run_archive_dir, run_id, 0,0);
+    }
     if (arch_flags < 0) {
       errcode = -SERVE_ERR_SOURCE_READ;
       goto failed;
@@ -2367,10 +2380,7 @@ serve_read_compile_packet(
    */
 
   if (prob && prob->type > 0 && prob->style_checker_cmd && prob->style_checker_cmd[0]) {
-    arch_flags = archive_make_read_path(state, run_arch_path,
-                                        sizeof(run_arch_path),
-                                        global->run_archive_dir,
-                                        comp_pkt->run_id, 0, 0);
+    arch_flags = serve_make_source_read_path(state, run_arch_path, sizeof(run_arch_path), &re);
     if (arch_flags < 0) goto report_check_failed;
     if (generic_read_file(&run_text, 0, &run_size, arch_flags,
                           0, run_arch_path, 0) < 0)
@@ -2831,10 +2841,7 @@ serve_judge_built_in_problem(
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   int passed_tests = 0, score = 0, failed_test = 1;
 
-  arch_flags = archive_make_read_path(state, run_arch_path,
-                                      sizeof(run_arch_path),
-                                      global->run_archive_dir, run_id,
-                                      0, 0);
+  arch_flags = serve_make_source_read_path(state, run_arch_path, sizeof(run_arch_path), re);
   if (arch_flags < 0) {
     snprintf(msgbuf, sizeof(msgbuf), "User answer file does not exist.");
     status = RUN_CHECK_FAILED;
@@ -3102,7 +3109,7 @@ serve_rejudge_run(
                                 priority_adjustment,
                                 1 /* notify flag */,
                                 prob, NULL /* lang */,
-                                0 /* no_db_flag */, re.run_uuid);
+                                0 /* no_db_flag */, re.run_uuid, re.store_flags);
       if (r < 0) {
         serve_report_check_failed(config, cnts, state, run_id, serve_err_str(r));
         err("rejudge_run: serve_compile_request failed: %s", serve_err_str(r));
@@ -3111,10 +3118,7 @@ serve_rejudge_run(
       return;
     }
 
-    arch_flags = archive_make_read_path(state, run_arch_path,
-                                        sizeof(run_arch_path),
-                                        global->run_archive_dir, run_id,
-                                        0, 0);
+    arch_flags = serve_make_source_read_path(state, run_arch_path, sizeof(run_arch_path), &re);
     if (arch_flags < 0) return;
     if (generic_read_file(&run_text, 0, &run_size, arch_flags,
                           0, run_arch_path, 0) < 0)
@@ -3147,7 +3151,8 @@ serve_rejudge_run(
                             lang->compiler_env,
                             0, prob->style_checker_cmd,
                             prob->style_checker_env,
-                            accepting_mode, priority_adjustment, 1, prob, lang, 0, re.run_uuid);
+                            accepting_mode, priority_adjustment, 1, prob, lang, 0,
+                            re.run_uuid, re.store_flags);
   if (r < 0) {
     serve_report_check_failed(config, cnts, state, run_id, serve_err_str(r));
     err("rejudge_run: serve_compile_request failed: %s", serve_err_str(r));
@@ -3970,6 +3975,8 @@ serve_reset_contest(const struct contest_desc *cnts, serve_state_t state)
     clear_directory(global->audit_log_dir);
   if (global->team_extra_dir[0])
     clear_directory(global->team_extra_dir);
+  if (global->uuid_archive_dir[0])
+    clear_directory(global->uuid_archive_dir);
 
   unsigned char path[PATH_MAX];
   snprintf(path, sizeof(path), "%s/dir", global->status_dir);
@@ -4361,6 +4368,7 @@ serve_clear_by_mask(serve_state_t state,
 {
   int total_runs, r;
   const struct section_global_data *global = state->global;
+  struct run_entry re;
 
   ASSERT(mask_size > 0);
 
@@ -4372,12 +4380,16 @@ serve_clear_by_mask(serve_state_t state,
   for (r = total_runs - 1; r >= 0; r--) {
     if ((mask[r / BITS_PER_LONG] & (1L << (r % BITS_PER_LONG)))
         && !run_is_readonly(state->runlog_state, r)) {
-      if (run_clear_entry(state->runlog_state, r) >= 0) {
-        archive_remove(state, global->run_archive_dir, r, 0);
-        archive_remove(state, global->xml_report_archive_dir, r, 0);
-        archive_remove(state, global->report_archive_dir, r, 0);
-        archive_remove(state, global->team_report_archive_dir, r, 0);
-        archive_remove(state, global->full_archive_dir, r, 0);
+      if (run_get_entry(state->runlog_state, r, &re) >= 0 && run_clear_entry(state->runlog_state, r) >= 0) {
+        if (re.store_flags == 1) {
+          uuid_archive_remove(state, re.run_uuid);
+        } else {
+          archive_remove(state, global->run_archive_dir, r, 0);
+          archive_remove(state, global->xml_report_archive_dir, r, 0);
+          archive_remove(state, global->report_archive_dir, r, 0);
+          archive_remove(state, global->team_report_archive_dir, r, 0);
+          archive_remove(state, global->full_archive_dir, r, 0);
+        }
         //archive_remove(state, global->audit_log_dir, r, 0);
 
         serve_audit_log(state, r, user_id, ip, ssl_flag,
@@ -4429,10 +4441,14 @@ serve_ignore_by_mask(serve_state_t state,
 
     re.status = new_status;
     if (run_set_entry(state->runlog_state, r, RE_STATUS, &re) >= 0) {
-      archive_remove(state, global->xml_report_archive_dir, r, 0);
-      archive_remove(state, global->report_archive_dir, r, 0);
-      archive_remove(state, global->team_report_archive_dir, r, 0);
-      archive_remove(state, global->full_archive_dir, r, 0);
+      if (re.store_flags == 1) {
+        uuid_archive_remove(state, re.run_uuid);
+      } else {
+        archive_remove(state, global->xml_report_archive_dir, r, 0);
+        archive_remove(state, global->report_archive_dir, r, 0);
+        archive_remove(state, global->team_report_archive_dir, r, 0);
+        archive_remove(state, global->full_archive_dir, r, 0);
+      }
       serve_audit_log(state, r, user_id, ip, ssl_flag,
                       cmd, "ok", new_status, NULL);
     }
@@ -4958,6 +4974,24 @@ serve_err_str(int serve_err)
   str = serve_err_str_map[serve_err];
   if (!str) str = "unknown error!";
   return str;
+}
+
+int
+serve_make_source_read_path(
+        const serve_state_t state,
+        unsigned char *path,
+        size_t size,
+        const struct run_entry *re)
+{
+  int ret;
+  if (re->store_flags == 1) {
+    ret = uuid_archive_make_read_path(state, path, size, state->global->uuid_archive_dir,
+                                      re->run_uuid, DFLT_R_UUID_SOURCE, 1);
+  } else {
+    ret = archive_make_read_path(state, path, size, state->global->run_archive_dir,
+                                 re->run_id, NULL, 1);
+  }
+  return ret;
 }
 
 /*

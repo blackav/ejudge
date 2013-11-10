@@ -318,7 +318,7 @@ run_add_record(
         int            variant,
         int            is_hidden,
         int            mime_type,
-        ruint32_t      out_uuid[4])
+        int            store_flags)
 {
   int i;
   struct user_entry *ue;
@@ -431,7 +431,8 @@ run_add_record(
   re.variant = variant;
   re.is_hidden = is_hidden;
   re.mime_type = mime_type;
-  flags = RE_SIZE | RE_LOCALE_ID | RE_USER_ID | RE_LANG_ID | RE_PROB_ID | RE_STATUS | RE_TEST | RE_SCORE | RE_IP | RE_SSL_FLAG | RE_VARIANT | RE_IS_HIDDEN | RE_MIME_TYPE | RE_EOLN_TYPE;
+  re.store_flags = store_flags;
+  flags = RE_SIZE | RE_LOCALE_ID | RE_USER_ID | RE_LANG_ID | RE_PROB_ID | RE_STATUS | RE_TEST | RE_SCORE | RE_IP | RE_SSL_FLAG | RE_VARIANT | RE_IS_HIDDEN | RE_MIME_TYPE | RE_EOLN_TYPE | RE_STORE_FLAGS;
   if (sha1) {
     memcpy(re.sha1, sha1, sizeof(state->runs[i].sha1));
     flags |= RE_SHA1;
@@ -447,13 +448,6 @@ run_add_record(
     flags |= RE_RUN_UUID;
   }
 #endif
-
-  if (out_uuid) {
-    out_uuid[0] = re.run_uuid[0];
-    out_uuid[1] = re.run_uuid[1];
-    out_uuid[2] = re.run_uuid[2];
-    out_uuid[3] = re.run_uuid[3];
-  }
 
   int uuid_hash_index = -1;
   if (state->uuid_hash_state >= 0) {
@@ -2456,7 +2450,9 @@ run_find(
         int last_run,
         int team_id,
         int prob_id,
-        int lang_id)
+        int lang_id,
+        ruint32_t *p_run_uuid,
+        int *p_store_flags)
 {
   int i;
 
@@ -2481,6 +2477,9 @@ run_find(
         if (i < first_run) continue;
         if (prob_id && prob_id != state->runs[i].prob_id) continue;
         if (lang_id && lang_id != state->runs[i].lang_id) continue;
+
+        if (p_run_uuid) memcpy(p_run_uuid, state->runs[i].run_uuid, sizeof(state->runs[i].run_uuid));
+        if (p_store_flags) *p_store_flags = state->runs[i].store_flags;
         return i;
       }
     } else {
@@ -2489,6 +2488,9 @@ run_find(
         if (i > first_run) continue;
         if (prob_id && prob_id != state->runs[i].prob_id) continue;
         if (lang_id && lang_id != state->runs[i].lang_id) continue;
+
+        if (p_run_uuid) memcpy(p_run_uuid, state->runs[i].run_uuid, sizeof(state->runs[i].run_uuid));
+        if (p_store_flags) *p_store_flags = state->runs[i].store_flags;
         return i;
       }
     }
@@ -2499,6 +2501,9 @@ run_find(
       for (i = first_run; i <= last_run; i++) {
         if (prob_id && prob_id != state->runs[i].prob_id) continue;
         if (lang_id && lang_id != state->runs[i].lang_id) continue;
+
+        if (p_run_uuid) memcpy(p_run_uuid, state->runs[i].run_uuid, sizeof(state->runs[i].run_uuid));
+        if (p_store_flags) *p_store_flags = state->runs[i].store_flags;
         return i;
       }
     } else {
@@ -2506,6 +2511,9 @@ run_find(
       for (i = first_run; i >= last_run; i--) {
         if (prob_id && prob_id != state->runs[i].prob_id) continue;
         if (lang_id && lang_id != state->runs[i].lang_id) continue;
+
+        if (p_run_uuid) memcpy(p_run_uuid, state->runs[i].run_uuid, sizeof(state->runs[i].run_uuid));
+        if (p_store_flags) *p_store_flags = state->runs[i].store_flags;
         return i;
       }
     }

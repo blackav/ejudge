@@ -425,7 +425,8 @@ serve_compile_request(
         const struct section_problem_data *prob,
         const struct section_language_data *lang,
         int no_db_flag,
-        const ruint32_t uuid[4])
+        const ruint32_t uuid[4],
+        int store_flags)
 #if defined __GNUC__
   __attribute__((warn_unused_result))
 #endif
@@ -707,5 +708,12 @@ serve_report_check_failed(
         serve_state_t state,
         int run_id,
         const unsigned char *error_text);
+
+int
+serve_make_source_read_path(
+        const serve_state_t state,
+        unsigned char *path,
+        size_t size,
+        const struct run_entry *re);
 
 #endif /* __SERVE_STATE_H__ */

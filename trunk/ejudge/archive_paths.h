@@ -3,7 +3,7 @@
 #ifndef __ARCHIVE_PATHS_H__
 #define __ARCHIVE_PATHS_H__
 
-/* Copyright (C) 2003-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -35,5 +35,59 @@ int archive_rename(const serve_state_t, const unsigned char *, FILE *,
                    int, const unsigned char *, int);
 int archive_remove(const serve_state_t,
                    const unsigned char *, int, const unsigned char *);
+
+int
+archive_prepare_write_path(
+        const serve_state_t state,
+        unsigned char *path,
+        size_t size,
+        const unsigned char *base_dir,
+        int run_id,
+        long long file_size,
+        const unsigned char *prefix,
+        int zip_mode,
+        int no_unlink_flag);
+
+int
+uuid_archive_make_write_path(
+        const serve_state_t state,
+        unsigned char *path,
+        size_t size,
+        const unsigned char *base_dir,
+        const ruint32_t run_uuid[4],
+        long long file_size,
+        const unsigned char *name,
+        int zip_mode);
+int
+uuid_archive_make_read_path(
+        const serve_state_t state,
+        unsigned char *path,
+        size_t size,
+        const unsigned char *base_dir,
+        const ruint32_t run_uuid[4],
+        const unsigned char *name,
+        int gzip_preferred);
+int
+uuid_archive_dir_prepare(
+        const serve_state_t state,
+        const unsigned char *base_dir,
+        const ruint32_t run_uuid[4],
+        const unsigned char *name,
+        int no_unlink_flag);
+int
+uuid_archive_prepare_write_path(
+        const serve_state_t state,
+        unsigned char *path,
+        size_t size,
+        const unsigned char *base_dir,
+        const ruint32_t run_uuid[4],
+        long long file_size,
+        const unsigned char *name,
+        int zip_mode,
+        int no_unlink_flag);
+int
+uuid_archive_remove(
+        const serve_state_t state,
+        const ruint32_t run_uuid[4]);
 
 #endif /* __ARCHIVE_PATHS_H__ */

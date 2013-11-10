@@ -43,6 +43,7 @@
 #include "ejudge_cfg.h"
 #include "errlog.h"
 #include "prepare_dflt.h"
+#include "ej_uuid.h"
 
 #include "reuse_xalloc.h"
 #include "reuse_logger.h"
@@ -635,9 +636,7 @@ cmd_run_operation(
     retval = ns_write_user_run_status(cs, fout, run_id);
     break;
   case NEW_SRV_ACTION_DUMP_SOURCE:
-    src_flags = archive_make_read_path(cs, src_path, sizeof(src_path),
-                                       global->run_archive_dir, run_id,
-                                       0, 1);
+    src_flags = serve_make_source_read_path(cs, src_path, sizeof(src_path), &re);
     if (src_flags < 0) FAIL(NEW_SRV_ERR_SOURCE_NONEXISTANT);
     if (generic_read_file(&src_text, 0, &src_len, src_flags,0,src_path, "") < 0)
       FAIL(NEW_SRV_ERR_DISK_READ_ERROR);
@@ -1054,28 +1053,36 @@ cmd_submit_run(
 
   gettimeofday(&precise_time, 0);
   ruint32_t run_uuid[4];
+  int store_flags = 0;
+  ej_uuid_generate(run_uuid);
+  if (global->uuid_run_store > 0 && run_get_uuid_hash_state(cs->runlog_state) >= 0 && ej_uuid_is_nonempty(run_uuid)) {
+    store_flags = 1;
+  }
   run_id = run_add_record(cs->runlog_state, 
                           precise_time.tv_sec, precise_time.tv_usec * 1000,
-                          run_size, shaval, NULL,
+                          run_size, shaval, run_uuid,
                           &phr->ip, phr->ssl_flag,
                           phr->locale_id, phr->user_id,
                           prob->id, lang_id, eoln_type,
-                          variant, hidden_flag, mime_type, run_uuid);
+                          variant, hidden_flag, mime_type, store_flags);
   if (run_id < 0)
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   serve_move_files_to_insert_run(cs, run_id);
-                          
-  arch_flags = archive_make_write_path(cs, run_path, sizeof(run_path),
-                                       global->run_archive_dir, run_id,
-                                       run_size, 0, 0);
+
+  if (store_flags == 1) {
+    arch_flags = uuid_archive_prepare_write_path(cs, run_path, sizeof(run_path),
+                                                 global->uuid_archive_dir, run_uuid,
+                                                 run_size, DFLT_R_UUID_SOURCE, 0, 0);
+  } else {
+    arch_flags = archive_prepare_write_path(cs, run_path, sizeof(run_path),
+                                            global->run_archive_dir, run_id,
+                                            run_size, NULL, 0, 0);
+  }
   if (arch_flags < 0) {
     run_undo_add_record(cs->runlog_state, run_id);
     FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
   }
-  if (archive_dir_prepare(cs, global->run_archive_dir, run_id, 0, 0) < 0) {
-    run_undo_add_record(cs->runlog_state, run_id);
-    FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
-  }
+
   if (generic_write_file(run_text, run_size, arch_flags, 0, run_path, "") < 0) {
     run_undo_add_record(cs->runlog_state, run_id);
     FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
@@ -1100,7 +1107,7 @@ cmd_submit_run(
                                      lang->compiler_env,
                                      0, prob->style_checker_cmd,
                                      prob->style_checker_env,
-                                     -1, 0, 0, prob, lang, 0, run_uuid)) < 0) {
+                                     -1, 0, 0, prob, lang, 0, run_uuid, store_flags)) < 0) {
         serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
       }
     }
@@ -1127,7 +1134,7 @@ cmd_submit_run(
                                        0 /* priority_adjustment */,
                                        0 /* notify flag */,
                                        prob, NULL /* lang */,
-                                       0 /* no_db_flag */, run_uuid)) < 0) {
+                                       0 /* no_db_flag */, run_uuid, store_flags)) < 0) {
           serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
         }
       } else {
@@ -1176,7 +1183,7 @@ cmd_submit_run(
                                        0 /* priority_adjustment */,
                                        0 /* notify flag */,
                                        prob, NULL /* lang */,
-                                       0 /* no_db_flag */, run_uuid)) < 0) {
+                                       0 /* no_db_flag */, run_uuid, store_flags)) < 0) {
           serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
         }
       } else {

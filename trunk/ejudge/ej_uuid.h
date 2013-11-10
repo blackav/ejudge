@@ -24,4 +24,6 @@ const unsigned char *ej_uuid_unparse(const ruint32_t uuid[4], const unsigned cha
 void ej_uuid_generate(ruint32_t uuid[4]);
 int ej_uuid_supported(void);
 
+#define ej_uuid_is_nonempty(uuid) ((uuid)[0] || (uuid)[1] || (uuid)[2] || (uuid)[3])
+
 #endif /* __EJ_UUID_H__ */

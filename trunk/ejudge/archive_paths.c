@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -24,6 +24,8 @@
 #include "pathutl.h"
 #include "errlog.h"
 #include "serve_state.h"
+#include "ej_uuid.h"
+#include "prepare_dflt.h"
 
 #include "reuse_logger.h"
 #include "reuse_osdeps.h"
@@ -256,6 +258,24 @@ archive_make_write_path(
   }
 }
 
+int
+archive_prepare_write_path(
+        const serve_state_t state,
+        unsigned char *path,
+        size_t size,
+        const unsigned char *base_dir,
+        int run_id,
+        long long file_size,
+        const unsigned char *prefix,
+        int zip_mode,
+        int no_unlink_flag)
+{
+  int flags = archive_make_write_path(state, path, size, base_dir, run_id, file_size, prefix, zip_mode);
+  if (flags < 0) return flags;
+  if (archive_dir_prepare(state, base_dir, run_id, prefix, no_unlink_flag) < 0) return -1;
+  return flags;
+}
+
 static int
 archive_make_move_path(const serve_state_t state,
                        unsigned char *path, size_t size,
@@ -366,9 +386,160 @@ archive_remove(
   return 0;
 }
 
-/*
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- * End:
- */
+int
+uuid_archive_make_write_path(
+        const serve_state_t state,
+        unsigned char *path,
+        size_t size,
+        const unsigned char *base_dir,
+        const ruint32_t run_uuid[4],
+        long long file_size,
+        const unsigned char *name,
+        int zip_mode)
+{
+  ASSERT(run_uuid);
+  ASSERT(ej_uuid_is_nonempty(run_uuid));
+
+  const unsigned char *suffix = "";
+  if ((zip_mode & ZIP)) {
+    suffix = ".zip";
+    zip_mode = ZIP;
+  } else if (zip_mode >= 0 && state->global->use_gzip > 0 && file_size > state->global->min_gzip_size) {
+    suffix = ".gz";
+    zip_mode = GZIP;
+  }
+
+  snprintf(path, size, "%s/%02x/%02x/%s/%s%s",
+           base_dir, ((const unsigned char *) run_uuid)[0],
+           ((const unsigned char *) run_uuid)[1],
+           ej_uuid_unparse(run_uuid, NULL), name, suffix);
+  return zip_mode;
+}
+
+int
+uuid_archive_make_read_path(
+        const serve_state_t state,
+        unsigned char *path,
+        size_t size,
+        const unsigned char *base_dir,
+        const ruint32_t run_uuid[4],
+        const unsigned char *name,
+        int gzip_preferred)
+{
+  struct stat sb;
+
+  ASSERT(run_uuid);
+  ASSERT(ej_uuid_is_nonempty(run_uuid));
+
+  int len = snprintf(path, size - 4, "%s/%02x/%02x/%s/%s",
+                     base_dir, ((const unsigned char *) run_uuid)[0],
+                     ((const unsigned char *) run_uuid)[1],
+                     ej_uuid_unparse(run_uuid, NULL), name);
+  if (len >= size - 4) {
+    err("uuid_archive_make_read_path: archive path is too long");
+    return -1;
+  }
+  if ((gzip_preferred & ZIP)) {
+    path[len] = '.'; path[len + 1] = 'z'; path[len + 2] = 'i'; path[len + 3] = 'p'; path[len + 4] = 0;
+    if (stat(path, &sb) >= 0 && S_ISREG(sb.st_mode)) return ZIP;
+    path[len] = 0;
+    if (stat(path, &sb) >= 0 && S_ISREG(sb.st_mode)) return 0;
+  } else if (gzip_preferred) {
+    if (state->global->use_gzip) {
+      path[len] = '.'; path[len + 1] = 'g'; path[len + 2] = 'z'; path[len + 3] = 0;
+      if (stat(path, &sb) >= 0 && S_ISREG(sb.st_mode)) return GZIP;
+    }
+    path[len] = 0;
+    if (stat(path, &sb) >= 0 && S_ISREG(sb.st_mode)) return 0;
+  } else {
+    if (stat(path, &sb) >= 0 && S_ISREG(sb.st_mode)) return 0;
+    if (state->global->use_gzip) {
+      path[len] = '.'; path[len + 1] = 'g'; path[len + 2] = 'z'; path[len + 3] = 0;
+      if (stat(path, &sb) >= 0 && S_ISREG(sb.st_mode)) return GZIP;
+    }
+  }
+
+  path[len] = 0;
+  err("uuid_archive_make_read_path: no entry %s", path);
+  return -1;
+}
+
+int
+uuid_archive_dir_prepare(
+        const serve_state_t state,
+        const unsigned char *base_dir,
+        const ruint32_t run_uuid[4],
+        const unsigned char *name,
+        int no_unlink_flag)
+{
+  unsigned char path[PATH_MAX];
+  unsigned char path2[PATH_MAX];
+
+  ASSERT(run_uuid);
+  ASSERT(ej_uuid_is_nonempty(run_uuid));
+
+  snprintf(path, sizeof(path), "%s/%02x/%02x/%s",
+           base_dir, ((const unsigned char *) run_uuid)[0],
+           ((const unsigned char *) run_uuid)[1],
+           ej_uuid_unparse(run_uuid, NULL));
+  if (os_MakeDirPath(path, 0750) < 0) {
+    err("uuid_archive_dir_prepare: mkdir '%s' failed: %s", path, os_ErrorMsg());
+    return -1;
+  }
+
+  if (!no_unlink_flag) {
+    snprintf(path2, sizeof(path2), "%s/%s", path, name);
+    unlink(path2);
+    snprintf(path2, sizeof(path2), "%s/%s.gz", path, name);
+    unlink(path2);
+    snprintf(path2, sizeof(path2), "%s/%s.zip", path, name);
+    unlink(path2);
+  }
+
+  return 0;
+}
+
+int
+uuid_archive_prepare_write_path(
+        const serve_state_t state,
+        unsigned char *path,
+        size_t size,
+        const unsigned char *base_dir,
+        const ruint32_t run_uuid[4],
+        long long file_size,
+        const unsigned char *name,
+        int zip_mode,
+        int no_unlink_flag)
+{
+  int flags = uuid_archive_make_write_path(state, path, size, base_dir, run_uuid, file_size, name, zip_mode);
+  if (flags < 0) return flags;
+  if (uuid_archive_dir_prepare(state, base_dir, run_uuid, name, no_unlink_flag) < 0) return -1;
+  return flags;
+}
+
+int
+uuid_archive_remove(
+        const serve_state_t state,
+        const ruint32_t run_uuid[4])
+{
+  unsigned char base[PATH_MAX];
+  unsigned char path[PATH_MAX];
+
+  ASSERT(run_uuid);
+  ASSERT(ej_uuid_is_nonempty(run_uuid));
+
+  snprintf(base, sizeof(base), "%s/%02x/%02x/%s",
+           state->global->uuid_archive_dir,
+           ((const unsigned char *) run_uuid)[0],
+           ((const unsigned char *) run_uuid)[1],
+           ej_uuid_unparse(run_uuid, NULL));
+  snprintf(path, sizeof(path), "%s/%s", base, DFLT_R_UUID_SOURCE);
+  unlink(path);
+  snprintf(path, sizeof(path), "%s/%s.gz", base, DFLT_R_UUID_SOURCE);
+  unlink(path);
+  snprintf(path, sizeof(path), "%s/%s.zip", base, DFLT_R_UUID_SOURCE);
+  unlink(path);
+
+  return 0;
+}
+
