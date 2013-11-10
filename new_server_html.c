@@ -2917,32 +2917,39 @@ priv_submit_run(FILE *fout,
   gettimeofday(&precise_time, 0);
 
   ruint32_t run_uuid[4];
+  int store_flags = 0;
+  ej_uuid_generate(run_uuid);
+  if (global->uuid_run_store > 0 && run_get_uuid_hash_state(cs->runlog_state) >= 0 && ej_uuid_is_nonempty(run_uuid)) {
+    store_flags = 1;
+  }
   run_id = run_add_record(cs->runlog_state, 
                           precise_time.tv_sec, precise_time.tv_usec * 1000,
-                          run_size, shaval, NULL,
+                          run_size, shaval, run_uuid,
                           &phr->ip, phr->ssl_flag,
                           phr->locale_id, phr->user_id,
                           prob_id, lang_id, eoln_type,
-                          variant, 1, mime_type, run_uuid);
+                          variant, 1, mime_type, store_flags);
   if (run_id < 0) {
     ns_error(log_f, NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
     goto cleanup;
   }
   serve_move_files_to_insert_run(cs, run_id);
-                          
-  arch_flags = archive_make_write_path(cs, run_path, sizeof(run_path),
-                                       global->run_archive_dir, run_id,
-                                       run_size, 0, 0);
+
+  if (store_flags == 1) {
+    arch_flags = uuid_archive_prepare_write_path(cs, run_path, sizeof(run_path),
+                                                 global->uuid_archive_dir, run_uuid,
+                                                 run_size, DFLT_R_UUID_SOURCE, 0, 0);
+  } else {
+    arch_flags = archive_prepare_write_path(cs, run_path, sizeof(run_path),
+                                            global->run_archive_dir, run_id,
+                                            run_size, NULL, 0, 0);
+  }
   if (arch_flags < 0) {
     run_undo_add_record(cs->runlog_state, run_id);
     ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
     goto cleanup;
   }
-  if (archive_dir_prepare(cs, global->run_archive_dir, run_id, 0, 0) < 0) {
-    run_undo_add_record(cs->runlog_state, run_id);
-    ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
-    goto cleanup;
-  }
+
   if (generic_write_file(run_text, run_size, arch_flags, 0, run_path, "") < 0) {
     run_undo_add_record(cs->runlog_state, run_id);
     ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
@@ -2969,7 +2976,7 @@ priv_submit_run(FILE *fout,
                                      lang->compiler_env,
                                      0, prob->style_checker_cmd,
                                      prob->style_checker_env,
-                                     -1, 0, 0, prob, lang, 0, run_uuid)) < 0) {
+                                     -1, 0, 0, prob, lang, 0, run_uuid, store_flags)) < 0) {
         serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
       }
     }
@@ -2997,7 +3004,8 @@ priv_submit_run(FILE *fout,
                                   0 /* notify flag */,
                                   prob, NULL /* lang */,
                                   0 /* no_db_flag */,
-                                  run_uuid);
+                                  run_uuid,
+                                  store_flags);
         if (r < 0) {
           serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
         }
@@ -3037,7 +3045,8 @@ priv_submit_run(FILE *fout,
                                   0 /* notify flag */,
                                   prob, NULL /* lang */,
                                   0 /* no_db_flag */,
-                                  run_uuid);
+                                  run_uuid,
+                                  store_flags);
         if (r < 0) {
           serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
         }
@@ -3745,6 +3754,7 @@ priv_clear_run(FILE *fout, FILE *log_f,
   serve_state_t cs = extra->serve_state;
   const struct section_global_data *global = cs->global;
   int retval = 0, run_id = -1;
+  struct run_entry re;
 
   if (parse_run_id(fout, phr, cnts, extra, &run_id, 0) < 0) {
     retval = -1;
@@ -3754,15 +3764,21 @@ priv_clear_run(FILE *fout, FILE *log_f,
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   if (run_is_readonly(cs->runlog_state, run_id))
     FAIL(NEW_SRV_ERR_RUN_READ_ONLY);
+  if (run_get_entry(cs->runlog_state, run_id, &re) < 0)
+    FAIL(NEW_SRV_ERR_INV_RUN_ID);
   if (run_clear_entry(cs->runlog_state, run_id) < 0)
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
 
-  archive_remove(cs, global->run_archive_dir, run_id, 0);
-  archive_remove(cs, global->xml_report_archive_dir, run_id, 0);
-  archive_remove(cs, global->report_archive_dir, run_id, 0);
-  archive_remove(cs, global->team_report_archive_dir, run_id, 0);
-  archive_remove(cs, global->full_archive_dir, run_id, 0);
-  //archive_remove(cs, global->audit_log_dir, run_id, 0);
+  if (re.store_flags == 1) {
+    uuid_archive_remove(cs, re.run_uuid);
+  } else {
+    archive_remove(cs, global->run_archive_dir, run_id, 0);
+    archive_remove(cs, global->xml_report_archive_dir, run_id, 0);
+    archive_remove(cs, global->report_archive_dir, run_id, 0);
+    archive_remove(cs, global->team_report_archive_dir, run_id, 0);
+    archive_remove(cs, global->full_archive_dir, run_id, 0);
+    //archive_remove(cs, global->audit_log_dir, run_id, 0);
+  }
 
   serve_audit_log(cs, run_id, phr->user_id, &phr->ip, phr->ssl_flag,
                   "clear-run", "ok", -1, NULL);
@@ -4644,27 +4660,35 @@ priv_new_run(FILE *fout,
   gettimeofday(&precise_time, 0);
 
   ruint32_t run_uuid[4];
+  int store_flags = 0;
+  ej_uuid_generate(run_uuid);
+  if (global->uuid_run_store > 0 && run_get_uuid_hash_state(cs->runlog_state) >= 0 && ej_uuid_is_nonempty(run_uuid)) {
+    store_flags = 1;
+  }
   run_id = run_add_record(cs->runlog_state, 
                           precise_time.tv_sec, precise_time.tv_usec * 1000,
-                          run_size, shaval, NULL,
+                          run_size, shaval, run_uuid,
                           &phr->ip, phr->ssl_flag, phr->locale_id,
                           user_id, prob_id, lang_id, 0, variant,
-                          is_hidden, mime_type, run_uuid);
+                          is_hidden, mime_type, store_flags);
   if (run_id < 0) FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   serve_move_files_to_insert_run(cs, run_id);
-  arch_flags = archive_make_write_path(cs, run_path, sizeof(run_path),
-                                       global->run_archive_dir, run_id,
-                                       run_size, 0, 0);
+
+  if (store_flags == 1) {
+    arch_flags = uuid_archive_prepare_write_path(cs, run_path, sizeof(run_path),
+                                                 global->uuid_archive_dir, run_uuid,
+                                                 run_size, DFLT_R_UUID_SOURCE, 0, 0);
+  } else {
+    arch_flags = archive_prepare_write_path(cs, run_path, sizeof(run_path),
+                                            global->run_archive_dir, run_id,
+                                            run_size, NULL, 0, 0);
+  }
   if (arch_flags < 0) {
     run_undo_add_record(cs->runlog_state, run_id);
     ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
     goto cleanup;
   }
-  if (archive_dir_prepare(cs, global->run_archive_dir, run_id, 0, 0) < 0) {
-    run_undo_add_record(cs->runlog_state, run_id);
-    ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
-    goto cleanup;
-  }
+
   if (generic_write_file(run_text, run_size, arch_flags, 0, run_path, "") < 0) {
     run_undo_add_record(cs->runlog_state, run_id);
     ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
@@ -5750,10 +5774,9 @@ priv_download_source(
       || (re.status > RUN_MAX_STATUS && re.status < RUN_TRANSIENT_FIRST))
     FAIL(NEW_SRV_ERR_SOURCE_UNAVAILABLE);
 
-  if ((src_flags = archive_make_read_path(cs, src_path, sizeof(src_path),
-                                          global->run_archive_dir,
-                                          run_id, 0, 1)) < 0)
+  if ((src_flags = serve_make_source_read_path(cs, src_path, sizeof(src_path), &re)) < 0) {
     FAIL(NEW_SRV_ERR_SOURCE_NONEXISTANT);
+  }
   if (generic_read_file(&run_text, 0, &run_size, src_flags, 0, src_path, 0)<0)
     FAIL(NEW_SRV_ERR_DISK_READ_ERROR);
 
@@ -10381,7 +10404,7 @@ ns_submit_run(
   char *ans_text = NULL;
   int skip_mime_type_test = 0;
   char *run_file = NULL;
-  ruint32_t uuid[4] = { 0, 0, 0, 0 };
+  ruint32_t run_uuid[4] = { 0, 0, 0, 0 };
   ruint32_t *uuid_ptr = NULL;
   int eoln_type = 0;
 
@@ -10736,10 +10759,10 @@ ns_submit_run(
   if (enable_uuid) {
     const unsigned char *uuid_str = NULL;
     if (ns_cgi_param(phr, "uuid", &uuid_str) > 0 && uuid_str && *uuid_str) {
-      if (ej_uuid_parse(uuid_str, uuid) < 0) {
+      if (ej_uuid_parse(uuid_str, run_uuid) < 0) {
         FAIL(NEW_SRV_ERR_INV_PARAM);
       }
-      uuid_ptr = uuid;
+      uuid_ptr = run_uuid;
     }
   }
 
@@ -10803,14 +10826,21 @@ ns_submit_run(
     db_variant = 0;
   }
 
-  ruint32_t run_uuid[4];
+  int store_flags = 0;
+  if (uuid_ptr == NULL) {
+    ej_uuid_generate(run_uuid);
+    uuid_ptr = run_uuid;
+  }
+  if (global->uuid_run_store > 0 && run_get_uuid_hash_state(cs->runlog_state) >= 0 && ej_uuid_is_nonempty(run_uuid)) {
+    store_flags = 1;
+  }
   run_id = run_add_record(cs->runlog_state, 
                           precise_time.tv_sec, precise_time.tv_usec * 1000,
                           run_size, shaval, uuid_ptr,
                           &phr->ip, phr->ssl_flag,
                           phr->locale_id, user_id,
                           prob_id, lang_id, eoln_type,
-                          db_variant, is_hidden, mime_type, run_uuid);
+                          db_variant, is_hidden, mime_type, store_flags);
   if (run_id < 0) {
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   }
@@ -10818,17 +10848,22 @@ ns_submit_run(
 
   unsigned char run_path[PATH_MAX];
   run_path[0] = 0;
-  int arch_flags = archive_make_write_path(cs, run_path, sizeof(run_path),
-                                           global->run_archive_dir, run_id,
-                                           run_size, 0, 0);
+  int arch_flags = 0;
+  if (store_flags == 1) {
+    arch_flags = uuid_archive_prepare_write_path(cs, run_path, sizeof(run_path),
+                                                 global->uuid_archive_dir, uuid_ptr,
+                                                 run_size, DFLT_R_UUID_SOURCE,
+                                                 0, 0);
+  } else {
+    arch_flags = archive_prepare_write_path(cs, run_path, sizeof(run_path),
+                                            global->run_archive_dir, run_id,
+                                            run_size, NULL, 0, 0);
+  }
   if (arch_flags < 0) {
     run_undo_add_record(cs->runlog_state, run_id);
     FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
   }
-  if (archive_dir_prepare(cs, global->run_archive_dir, run_id, 0, 0) < 0) {
-    run_undo_add_record(cs->runlog_state, run_id);
-    FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
-  }
+
   if (generic_write_file(run_text, run_size, arch_flags, 0, run_path, "") < 0) {
     run_undo_add_record(cs->runlog_state, run_id);
     FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
@@ -10875,7 +10910,7 @@ ns_submit_run(
                               prob->style_checker_env,
                               -1 /* accepting_mode */, 0 /* priority_adjustment */,
                               1 /* notify_flag */, prob, lang,
-                              0 /* no_db_flag */, run_uuid);
+                              0 /* no_db_flag */, run_uuid, store_flags);
     if (r < 0) {
       serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
       goto cleanup;
@@ -10908,7 +10943,7 @@ ns_submit_run(
                                 0 /* priority_adjustment */,
                                 0 /* notify flag */,
                                 prob, NULL /* lang */,
-                                0 /* no_db_flag */, run_uuid);
+                                0 /* no_db_flag */, run_uuid, store_flags);
       if (r < 0) {
         serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
         goto cleanup;
@@ -10961,7 +10996,7 @@ ns_submit_run(
                               0 /* priority_adjustment */,
                               0 /* notify flag */,
                               prob, NULL /* lang */,
-                              0 /* no_db_flag */, run_uuid);
+                              0 /* no_db_flag */, run_uuid, store_flags);
     if (r < 0) {
       serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
       goto cleanup;
@@ -11424,32 +11459,40 @@ unpriv_submit_run(FILE *fout,
   gettimeofday(&precise_time, 0);
 
   ruint32_t run_uuid[4];
+  int store_flags = 0;
+  ej_uuid_generate(run_uuid);
+  if (global->uuid_run_store > 0 && run_get_uuid_hash_state(cs->runlog_state) >= 0 && ej_uuid_is_nonempty(run_uuid)) {
+    store_flags = 1;
+  }
   run_id = run_add_record(cs->runlog_state, 
                           precise_time.tv_sec, precise_time.tv_usec * 1000,
-                          run_size, shaval, NULL,
+                          run_size, shaval, run_uuid,
                           &phr->ip, phr->ssl_flag,
                           phr->locale_id, phr->user_id,
-                          prob_id, lang_id, eoln_type, 0, 0, mime_type,
-                          run_uuid);
+                          prob_id, lang_id, eoln_type, 0, 0, mime_type, store_flags);
   if (run_id < 0) {
     ns_error(log_f, NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
     goto done;
   }
   serve_move_files_to_insert_run(cs, run_id);
-                          
-  arch_flags = archive_make_write_path(cs, run_path, sizeof(run_path),
-                                       global->run_archive_dir, run_id,
-                                       run_size, 0, 0);
+
+  if (store_flags == 1) {
+    arch_flags = uuid_archive_prepare_write_path(cs, run_path, sizeof(run_path),
+                                                 global->uuid_archive_dir, run_uuid,
+                                                 run_size, DFLT_R_UUID_SOURCE,
+                                                 0, 0);
+  } else {
+    arch_flags = archive_prepare_write_path(cs, run_path, sizeof(run_path),
+                                            global->run_archive_dir, run_id,
+                                            run_size, NULL, 0, 0);
+
+  }
   if (arch_flags < 0) {
     run_undo_add_record(cs->runlog_state, run_id);
     ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
     goto done;
   }
-  if (archive_dir_prepare(cs, global->run_archive_dir, run_id, 0, 0) < 0) {
-    run_undo_add_record(cs->runlog_state, run_id);
-    ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
-    goto done;
-  }
+
   if (generic_write_file(run_text, run_size, arch_flags, 0, run_path, "") < 0) {
     run_undo_add_record(cs->runlog_state, run_id);
     ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
@@ -11476,7 +11519,7 @@ unpriv_submit_run(FILE *fout,
                                      lang->compiler_env,
                                      0, prob->style_checker_cmd,
                                      prob->style_checker_env,
-                                     -1, 0, 1, prob, lang, 0, run_uuid)) < 0) {
+                                     -1, 0, 1, prob, lang, 0, run_uuid, store_flags)) < 0) {
         serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
       }
     }
@@ -11503,7 +11546,7 @@ unpriv_submit_run(FILE *fout,
                                   0 /* priority_adjustment */,
                                   0 /* notify flag */,
                                   prob, NULL /* lang */,
-                                  0 /* no_db_flag */, run_uuid);
+                                  0 /* no_db_flag */, run_uuid, store_flags);
         if (r < 0) {
           serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
         }
@@ -11561,7 +11604,7 @@ unpriv_submit_run(FILE *fout,
                                   0 /* priority_adjustment */,
                                   0 /* notify flag */,
                                   prob, NULL /* lang */,
-                                  0 /* no_db_flag */, run_uuid);
+                                  0 /* no_db_flag */, run_uuid, store_flags);
         if (r < 0) {
           serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
         }
@@ -12128,9 +12171,7 @@ unpriv_view_source(FILE *fout,
     goto done;
   }
 
-  if ((src_flags = archive_make_read_path(cs, src_path, sizeof(src_path),
-                                          global->run_archive_dir,
-                                          run_id, 0, 1)) < 0) {
+  if ((src_flags = serve_make_source_read_path(cs, src_path, sizeof(src_path), &re)) < 0) {
     ns_error(log_f, NEW_SRV_ERR_SOURCE_NONEXISTANT);
     goto done;
   }
@@ -13269,7 +13310,6 @@ get_last_language(serve_state_t cs, int user_id, int *p_last_eoln_type)
 static unsigned char *
 get_last_source(serve_state_t cs, int user_id, int prob_id)
 {
-  const struct section_global_data *global = cs->global;
   int total_runs = run_get_total(cs->runlog_state), run_id;
   struct run_entry re;
   int src_flag = 0;
@@ -13286,9 +13326,7 @@ get_last_source(serve_state_t cs, int user_id, int prob_id)
   }
   if (run_id < 0) return 0;
 
-  if ((src_flag = archive_make_read_path(cs, src_path, sizeof(src_path),
-                                         global->run_archive_dir,
-                                         run_id, 0, 1)) < 0)
+  if ((src_flag = serve_make_source_read_path(cs, src_path, sizeof(src_path), &re)) < 0)
     return 0;
   if (generic_read_file(&src_txt, 0, &src_len, src_flag, 0, src_path, 0) < 0)
     return 0;
@@ -14851,31 +14889,39 @@ unpriv_xml_update_answer(
   }
 
   ruint32_t run_uuid[4];
-  run_id = run_find(cs->runlog_state, -1, 0, phr->user_id, prob->id, 0);
+  int store_flags = 0;
+  run_id = run_find(cs->runlog_state, -1, 0, phr->user_id, prob->id, 0, run_uuid, &store_flags);
   if (run_id < 0) {
     gettimeofday(&precise_time, 0);
+    ej_uuid_generate(run_uuid);
+    if (global->uuid_run_store > 0 && run_get_uuid_hash_state(cs->runlog_state) >= 0 && ej_uuid_is_nonempty(run_uuid)) {
+      store_flags = 1;
+    }
     run_id = run_add_record(cs->runlog_state, 
                             precise_time.tv_sec, precise_time.tv_usec * 1000,
-                            run_size, shaval, NULL,
+                            run_size, shaval, run_uuid,
                             &phr->ip, phr->ssl_flag,
                             phr->locale_id, phr->user_id,
-                            prob_id, 0, 0, 0, 0, 0, run_uuid);
+                            prob_id, 0, 0, 0, 0, 0, store_flags);
     if (run_id < 0) FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
     serve_move_files_to_insert_run(cs, run_id);
     new_flag = 1;
   }
 
-  arch_flags = archive_make_write_path(cs, run_path, sizeof(run_path),
-                                       global->run_archive_dir, run_id,
-                                       run_size, 0, 0);
+  if (arch_flags == 1) {
+    arch_flags = uuid_archive_prepare_write_path(cs, run_path, sizeof(run_path),
+                                                 global->uuid_archive_dir, run_uuid,
+                                                 run_size, DFLT_R_UUID_SOURCE, 0, 0);
+  } else {
+    arch_flags = archive_prepare_write_path(cs, run_path, sizeof(run_path),
+                                            global->run_archive_dir, run_id,
+                                            run_size, NULL, 0, 0);
+  }
   if (arch_flags < 0) {
     if (new_flag) run_undo_add_record(cs->runlog_state, run_id);
     FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
   }
-  if (archive_dir_prepare(cs, global->run_archive_dir, run_id, 0, 0) < 0) {
-    if (new_flag) run_undo_add_record(cs->runlog_state, run_id);
-    FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
-  }
+
   if (generic_write_file(run_text, run_size, arch_flags, 0, run_path, "") < 0) {
     if (new_flag) run_undo_add_record(cs->runlog_state, run_id);
     FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);

@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -27,6 +27,7 @@
 #include "userlist.h"
 #include "serve_state.h"
 #include "xml_utils.h"
+#include "prepare_dflt.h"
 
 #include "reuse_exec.h"
 
@@ -212,9 +213,7 @@ do_print_run(const serve_state_t state, int run_id,
              "%s/%06d%s", global->print_work_dir, run_id, sfx);
   }
 
-  arch_flags = archive_make_read_path(state, run_arch, sizeof(run_arch),
-                                      global->run_archive_dir,
-                                      run_id, 0,0);
+  arch_flags = serve_make_source_read_path(state, run_arch, sizeof(run_arch), &info);
   if (arch_flags < 0) {
     goto cleanup;
   }

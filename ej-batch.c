@@ -590,7 +590,8 @@ process_submit(
                             0 /* notify_flag */,
                             prob, lang,
                             1 /* no_db_flag */,
-                            NULL /* uuid */);
+                            NULL /* uuid */,
+                            0 /* store_flags */);
   if (r < 0) {
     // FIXME: handle error
     abort();

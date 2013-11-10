@@ -1235,6 +1235,9 @@ add_entry_func(
   if ((flags & RE_EOLN_TYPE)) {
     de->eoln_type = re->eoln_type;
   }
+  if ((flags & RE_STORE_FLAGS)) {
+    de->store_flags = re->store_flags;
+  }
 
   return do_flush_entry(cs, run_id);
 }

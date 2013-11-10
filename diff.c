@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -25,6 +25,7 @@
 #include "serve_state.h"
 #include "misctext.h"
 #include "mime_type.h"
+#include "prepare_dflt.h"
 
 #include "reuse_xalloc.h"
 #include "reuse_exec.h"
@@ -126,9 +127,7 @@ compare_runs(const serve_state_t state, FILE *fout, int run_id1, int run_id2)
   sprintf(tmpfile3, "%s/diff", state->global->diff_work_dir);
 
   // copy files to temporary location
-  if ((flags1=archive_make_read_path(state, arch_path1, sizeof(arch_path1),
-                                     state->global->run_archive_dir, run_id1,
-                                     0, 0))<0) {
+  if ((flags1 = serve_make_source_read_path(state, arch_path1, sizeof(arch_path1), &info1)) < 0) {
     goto cleanup;
   }
 
@@ -139,9 +138,7 @@ compare_runs(const serve_state_t state, FILE *fout, int run_id1, int run_id2)
     goto cleanup;
   xfree(file_txt); file_txt = 0; file_len = 0;
 
-  if ((flags2=archive_make_read_path(state, arch_path2, sizeof(arch_path2),
-                                     state->global->run_archive_dir,run_id2,
-                                     0, 0))<0) {
+  if ((flags2 = serve_make_source_read_path(state, arch_path2, sizeof(arch_path2), &info2)) < 0) {
     goto cleanup;
   }
   if (generic_read_file(&file_txt, 0, &file_len, flags2, 0, arch_path2, "") < 0)
@@ -191,10 +188,3 @@ compare_runs(const serve_state_t state, FILE *fout, int run_id1, int run_id2)
   xfree(file_txt);
   return errcode;
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "tpTask")
- * End:
- */

@@ -87,7 +87,8 @@ run_open(
         time_t init_duration,
         time_t init_sched_time,
         time_t init_finish_time);
-int run_add_record(
+int
+run_add_record(
         runlog_state_t state,
         time_t         timestamp,
         int            nsec,
@@ -104,7 +105,7 @@ int run_add_record(
         int            variant,
         int            is_hidden,
         int            mime_type,
-        ruint32_t      out_uuid[4]);
+        int            store_flags);
 int run_start_contest(runlog_state_t, time_t);
 time_t run_get_start_time(runlog_state_t);
 int
@@ -358,8 +359,15 @@ int run_get_pages(runlog_state_t, int run_id);
 int run_set_pages(runlog_state_t, int run_id, int pages);
 int run_get_total_pages(runlog_state_t, int run_id);
 
-int run_find(runlog_state_t, int first_run, int last_run,
-             int team_id, int prob_id, int lang_id);
+int run_find(
+        runlog_state_t,
+        int first_run,
+        int last_run,
+        int team_id,
+        int prob_id,
+        int lang_id,
+        ruint32_t *p_run_uuid,
+        int *p_store_flags);
 int run_undo_add_record(runlog_state_t, int run_id);
 int run_is_failed_attempt(int status);
 int run_is_valid_test_status(int status);

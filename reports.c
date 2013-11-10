@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2007-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -612,9 +612,7 @@ user_report_generate(
               run_status_str(re.status, 0, 0, 0, 0));
       fprintf(fout, "\\hline\n\\end{tabular}\n\n");
 
-      if ((src_flags = archive_make_read_path(cs, src_path, sizeof(src_path),
-                                              global->run_archive_dir, run_id,
-                                              0, 0)) < 0) {
+      if ((src_flags = serve_make_source_read_path(cs, src_path, sizeof(src_path), &re)) < 0) {
         fprintf(log_f, "Source for run %d is not available\n", run_id);
         goto cleanup;
       }
@@ -669,9 +667,7 @@ user_report_generate(
         goto cleanup;
       }
 
-      if ((src_flags = archive_make_read_path(cs, src_path, sizeof(src_path),
-                                              global->run_archive_dir, run_id,
-                                              0, 0)) < 0) {
+      if ((src_flags = serve_make_source_read_path(cs, src_path, sizeof(src_path), &re)) < 0) {
         fprintf(log_f, "Source for run %d is not available\n", run_id);
         goto cleanup;
       }
@@ -735,9 +731,7 @@ user_report_generate(
           goto cleanup;
         }
 
-        if ((src_flags = archive_make_read_path(cs, src_path, sizeof(src_path),
-                                                global->run_archive_dir, run_id,
-                                                0, 0)) < 0) {
+        if ((src_flags = serve_make_source_read_path(cs, src_path, sizeof(src_path), &re)) < 0) {
           fprintf(log_f, "Source for run %d is not available\n", run_id);
           goto cleanup;
         }
@@ -811,9 +805,7 @@ user_report_generate(
           goto cleanup;
         }
 
-        if ((src_flags = archive_make_read_path(cs, src_path, sizeof(src_path),
-                                                global->run_archive_dir, run_id,
-                                                0, 0)) < 0) {
+        if ((src_flags = serve_make_source_read_path(cs, src_path, sizeof(src_path), &re)) < 0) {
           fprintf(log_f, "Source for run %d is not available\n", run_id);
           goto cleanup;
         }
@@ -1288,9 +1280,7 @@ full_user_report_generate(
       fprintf(fout, "\\hline\n");
       fprintf(fout, "\\end{tabular}\n\n");
 
-      if ((src_flags = archive_make_read_path(cs, src_path, sizeof(src_path),
-                                              global->run_archive_dir, run_id,
-                                              0, 0)) < 0) {
+      if ((src_flags = serve_make_source_read_path(cs, src_path, sizeof(src_path), &re)) < 0) {
         fprintf(log_f, "Source for run %d is not available\n", run_id);
         goto cleanup;
       }
@@ -1361,9 +1351,7 @@ full_user_report_generate(
       fprintf(fout, "\\hline\n");
       fprintf(fout, "\\end{tabular}\n\n");
 
-      if ((src_flags = archive_make_read_path(cs, src_path, sizeof(src_path),
-                                              global->run_archive_dir, run_id,
-                                              0, 0)) < 0) {
+      if ((src_flags = serve_make_source_read_path(cs, src_path, sizeof(src_path), &re)) < 0) {
         fprintf(log_f, "Source for run %d is not available\n", run_id);
         goto cleanup;
       }
@@ -1427,9 +1415,7 @@ full_user_report_generate(
         if (run_get_entry(cs->runlog_state, run_ids[i], &re) < 0) abort();
         if (re.status == RUN_PARTIAL) re.status = RUN_WRONG_ANSWER_ERR;
 
-        if ((src_flags = archive_make_read_path(cs, src_path, sizeof(src_path),
-                                                global->run_archive_dir, run_id,
-                                                0, 0)) < 0) {
+        if ((src_flags = serve_make_source_read_path(cs, src_path, sizeof(src_path), &re)) < 0) {
           fprintf(log_f, "Source for run %d is not available\n", run_id);
           goto cleanup;
         }
@@ -1510,9 +1496,7 @@ full_user_report_generate(
         if (re.status == RUN_OK && !prob->variable_full_score)
           cur_score = prob->full_score;
 
-        if ((src_flags = archive_make_read_path(cs, src_path, sizeof(src_path),
-                                                global->run_archive_dir, run_id,
-                                                0, 0)) < 0) {
+        if ((src_flags = serve_make_source_read_path(cs, src_path, sizeof(src_path), &re)) < 0) {
           fprintf(log_f, "Source for run %d is not available\n", run_id);
           goto cleanup;
         }
@@ -2449,9 +2433,7 @@ ns_olympiad_final_user_report(
       fprintf(fout, "%s<i>%s</i></td></tr></table>\n", td1,
               run_status_str(re.status, 0, 0, 0, 0));
 
-      if ((src_flags = archive_make_read_path(cs, src_path, sizeof(src_path),
-                                              global->run_archive_dir, run_id,
-                                              0, 0)) < 0) {
+      if ((src_flags = serve_make_source_read_path(cs, src_path, sizeof(src_path), &re)) < 0) {
         fprintf(log_f, "Source for run %d is not available\n", run_id);
         goto cleanup;
       }
@@ -2507,9 +2489,7 @@ ns_olympiad_final_user_report(
         goto cleanup;
       }
 
-      if ((src_flags = archive_make_read_path(cs, src_path, sizeof(src_path),
-                                              global->run_archive_dir, run_id,
-                                              0, 0)) < 0) {
+      if ((src_flags = serve_make_source_read_path(cs, src_path, sizeof(src_path), &re)) < 0) {
         fprintf(log_f, "Source for run %d is not available\n", run_id);
         goto cleanup;
       }
@@ -2579,9 +2559,7 @@ ns_olympiad_final_user_report(
           goto cleanup;
         }
 
-        if ((src_flags = archive_make_read_path(cs, src_path, sizeof(src_path),
-                                                global->run_archive_dir, run_id,
-                                                0, 0)) < 0) {
+        if ((src_flags = serve_make_source_read_path(cs, src_path, sizeof(src_path), &re)) < 0) {
           fprintf(log_f, "Source for run %d is not available\n", run_id);
           goto cleanup;
         }
@@ -2660,9 +2638,7 @@ ns_olympiad_final_user_report(
           goto cleanup;
         }
 
-        if ((src_flags = archive_make_read_path(cs, src_path, sizeof(src_path),
-                                                global->run_archive_dir, run_id,
-                                                0, 0)) < 0) {
+        if ((src_flags = serve_make_source_read_path(cs, src_path, sizeof(src_path), &re)) < 0) {
           fprintf(log_f, "Source for run %d is not available\n", run_id);
           goto cleanup;
         }
@@ -3285,9 +3261,7 @@ problem_report_generate(
       fprintf(fout, "\\hline\n");
       fprintf(fout, "\\end{tabular}\n\n");
 
-      if ((src_flags = archive_make_read_path(cs, src_path, sizeof(src_path),
-                                              global->run_archive_dir, run_id,
-                                              0, 0)) < 0) {
+      if ((src_flags = serve_make_source_read_path(cs, src_path, sizeof(src_path), &re)) < 0) {
         fprintf(log_f, "Source for run %d is not available\n", run_id);
         goto cleanup;
       }
@@ -3360,9 +3334,7 @@ problem_report_generate(
       fprintf(fout, "\\hline\n");
       fprintf(fout, "\\end{tabular}\n\n");
 
-      if ((src_flags = archive_make_read_path(cs, src_path, sizeof(src_path),
-                                              global->run_archive_dir, run_id,
-                                              0, 0)) < 0) {
+      if ((src_flags = serve_make_source_read_path(cs, src_path, sizeof(src_path), &re)) < 0) {
         fprintf(log_f, "Source for run %d is not available\n", run_id);
         goto cleanup;
       }
@@ -3433,9 +3405,7 @@ problem_report_generate(
       fprintf(fout, "\\hline\n");
       fprintf(fout, "\\end{tabular}\n\n");
 
-      if ((src_flags = archive_make_read_path(cs, src_path, sizeof(src_path),
-                                              global->run_archive_dir, run_id,
-                                              0, 0)) < 0) {
+      if ((src_flags = serve_make_source_read_path(cs, src_path, sizeof(src_path), &re)) < 0) {
         fprintf(log_f, "Source for run %d is not available\n", run_id);
         goto cleanup;
       }
@@ -3494,9 +3464,7 @@ problem_report_generate(
         }
       }
 
-      if ((src_flags = archive_make_read_path(cs, src_path, sizeof(src_path),
-                                              global->run_archive_dir, run_id,
-                                              0, 0)) < 0) {
+      if ((src_flags = serve_make_source_read_path(cs, src_path, sizeof(src_path), &re)) < 0) {
         fprintf(log_f, "Source for run %d is not available\n", run_id);
         goto cleanup;
       }

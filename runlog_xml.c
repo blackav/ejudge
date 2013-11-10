@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -981,9 +981,7 @@ unparse_runlog_xml(
     fprintf(f, ">\n");
 
     // read source
-    if ((flags = archive_make_read_path(state, fpath, sizeof(fpath),
-                                        global->run_archive_dir,
-                                        i, 0, 1)) >= 0) {
+    if ((flags = serve_make_source_read_path(state, fpath, sizeof(fpath), pp)) >= 0) {
       if (generic_read_file(&ftext, 0, &fsize, flags, 0, fpath, 0) >= 0) {
         fprintf(f, "      <%s %s=\"%zu\">%s</%s>\n",
                 elem_map[RUNLOG_T_SOURCE], attr_map[RUNLOG_A_SIZE], fsize,
@@ -1045,9 +1043,3 @@ unparse_runlog_xml(
   html_armor_free(&b2);
   return 0;
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- * End:
- */
