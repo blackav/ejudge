@@ -993,9 +993,7 @@ unparse_runlog_xml(
 
 #if 0
     // read XML report
-    if ((flags = archive_make_read_path(state, fpath, sizeof(fpath),
-                                        global->xml_report_archive_dir,
-                                        i, 0, 1)) >= 0) {
+    if ((flags = serve_make_xml_report_read_path(state, fpath, sizeof(fpath), pp)) >= 0) {
       if (generic_read_file(&ftext, 0, &fsize, flags, 0, fpath, 0) >= 0) {
         fprintf(f, "      <%s>%s</%s>\n",
                 elem_map[RUNLOG_T_XML_REPORT],

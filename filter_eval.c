@@ -129,8 +129,7 @@ is_missing_source(
 
   if (re->store_flags == 1) {
     if ((src_flags = uuid_archive_make_read_path(cs, src_path, sizeof(src_path),
-                                                 g->uuid_archive_dir, re->run_uuid,
-                                                 DFLT_R_UUID_SOURCE, 0)) < 0)
+                                                 re->run_uuid, DFLT_R_UUID_SOURCE, 0)) < 0)
       return 1;
   } else {
     if ((src_flags = archive_make_read_path(cs, src_path, sizeof(src_path),

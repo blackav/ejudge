@@ -2747,7 +2747,6 @@ write_xml_tex_testing_report(
         const serve_state_t cs,
         int run_id)
 {
-  const struct section_global_data *global = cs->global;
   path_t rep_path;
   int rep_flag, i;
   char *rep_text = 0;
@@ -2757,10 +2756,12 @@ write_xml_tex_testing_report(
   struct testing_report_test *t;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   int max_cpu_time = -1, max_cpu_time_tl = -1, need_comment = 0;
+  struct run_entry re;
 
-  rep_flag = archive_make_read_path(cs, rep_path, sizeof(rep_path),
-                                    global->xml_report_archive_dir,
-                                    run_id, 0, 1);
+  if (run_get_entry(cs->runlog_state, run_id, &re) < 0)
+    goto cleanup;
+
+  rep_flag = serve_make_xml_report_read_path(cs, rep_path, sizeof(rep_path), &re);
   if (rep_flag < 0) {
     fprintf(fout, "\n\nReport for run %d is not available.\n\n", run_id);
     goto cleanup;
