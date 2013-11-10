@@ -170,6 +170,9 @@
 #define DFLT_T_ERROR_FILE         "error"
 
 #define DFLT_R_UUID_SOURCE        "source"
-#define DFLT_R_UUID_XML_REPORT    "report2"
+#define DFLT_R_UUID_XML_REPORT    "report"
+#define DFLT_R_UUID_REPORT        "warnings"
+#define DFLT_R_UUID_AUDIT         "audit"
+#define DFLT_R_UUID_FULL_ARCHIVE  "outputs"
 
 #endif /* __PREPARE_DFLT_H__ */
