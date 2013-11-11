@@ -275,6 +275,9 @@ do_eval(struct filter_env *env,
   case TOK_CYPHER:
   case TOK_MISSINGSOURCE:
   case TOK_JUDGE_ID:
+  case TOK_PASSED_MODE:
+  case TOK_EOLN_TYPE:
+  case TOK_STORE_FLAGS:
     if ((c = do_eval(env, t->v.t[0], &r1)) < 0) return c;
     ASSERT(r1.kind == TOK_INT_L);
     if (r1.v.i < 0) r1.v.i = env->rtotal + r1.v.i;
@@ -544,6 +547,21 @@ do_eval(struct filter_env *env,
       res->kind = TOK_INT_L;
       res->type = FILTER_TYPE_INT;
       res->v.i = env->rentries[r1.v.i].judge_id;
+      break;
+    case TOK_PASSED_MODE:
+      res->kind = TOK_BOOL_L;
+      res->type = FILTER_TYPE_BOOL;
+      res->v.i = !!env->rentries[r1.v.i].passed_mode;
+      break;
+    case TOK_EOLN_TYPE:
+      res->kind = TOK_INT_L;
+      res->type = FILTER_TYPE_INT;
+      res->v.i = !!env->rentries[r1.v.i].eoln_type;
+      break;
+    case TOK_STORE_FLAGS:
+      res->kind = TOK_INT_L;
+      res->type = FILTER_TYPE_INT;
+      res->v.i = !!env->rentries[r1.v.i].store_flags;
       break;
     default:
       abort();
@@ -825,6 +843,21 @@ do_eval(struct filter_env *env,
     res->type = FILTER_TYPE_INT;
     res->v.i = env->cur->judge_id;
     break;
+  case TOK_CURPASSED_MODE:
+    res->kind = TOK_BOOL_L;
+    res->type = FILTER_TYPE_BOOL;
+    res->v.i = !!env->cur->passed_mode;
+    break;
+  case TOK_CUREOLN_TYPE:
+    res->kind = TOK_INT_L;
+    res->type = FILTER_TYPE_INT;
+    res->v.i = env->cur->eoln_type;
+    break;
+  case TOK_CURSTORE_FLAGS:
+    res->kind = TOK_INT_L;
+    res->type = FILTER_TYPE_INT;
+    res->v.i = env->cur->store_flags;
+    break;
   case TOK_CURTOTAL_SCORE:
     res->kind = TOK_INT_L;
     res->type = FILTER_TYPE_INT;
@@ -943,9 +976,3 @@ filter_tree_bool_eval(struct filter_env *env,
   ASSERT(res->kind == TOK_BOOL_L);
   return res->v.b;
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- * End:
- */

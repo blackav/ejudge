@@ -386,10 +386,12 @@ user_filter_info_allocate(serve_state_t state, int user_id,
 
 void serve_move_files_to_insert_run(serve_state_t state, int run_id);
 
+struct run_entry;
 void
 serve_audit_log(
         serve_state_t state,
         int run_id,
+        const struct run_entry *re,
         int user_id,
         const ej_ip_t *ip,
         int ssl_flag,
@@ -398,7 +400,7 @@ serve_audit_log(
         int run_status,
         const char *format,
         ...)
-  __attribute__((format(printf, 9, 10)));
+  __attribute__((format(printf, 10, 11)));
 
 void serve_packet_name(int run_id, int prio, unsigned char buf[]);
 
@@ -717,6 +719,30 @@ serve_make_source_read_path(
         const struct run_entry *re);
 int
 serve_make_xml_report_read_path(
+        const serve_state_t state,
+        unsigned char *path,
+        size_t size,
+        const struct run_entry *re);
+int
+serve_make_report_read_path(
+        const serve_state_t state,
+        unsigned char *path,
+        size_t size,
+        const struct run_entry *re);
+int
+serve_make_team_report_read_path(
+        const serve_state_t state,
+        unsigned char *path,
+        size_t size,
+        const struct run_entry *re);
+int
+serve_make_full_report_read_path(
+        const serve_state_t state,
+        unsigned char *path,
+        size_t size,
+        const struct run_entry *re);
+int
+serve_make_audit_read_path(
         const serve_state_t state,
         unsigned char *path,
         size_t size,

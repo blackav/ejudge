@@ -822,11 +822,15 @@ serve_move_files_to_insert_run(serve_state_t state, int run_id)
   int total = run_get_total(state->runlog_state);
   int i, s;
   const struct section_global_data *global = state->global;
+  struct run_entry re;
 
   ASSERT(run_id >= 0 && run_id < total);
   // the last run
   if (run_id == total - 1) return;
   for (i = total - 2; i >= run_id; i--) {
+    if (run_get_entry(state->runlog_state, i, &re) < 0) continue;
+    if (re.store_flags == 1) continue;
+
     info("rename: %d -> %d", i, i + 1);
     archive_remove(state, global->run_archive_dir, i + 1, 0);
     archive_remove(state, global->xml_report_archive_dir, i + 1, 0);
@@ -836,7 +840,7 @@ serve_move_files_to_insert_run(serve_state_t state, int run_id)
     archive_remove(state, global->audit_log_dir, i + 1, 0);
 
     archive_rename(state, global->audit_log_dir, 0, i, 0, i + 1, 0, 0);
-    serve_audit_log(state, i + 1, 0, 0, 0,
+    serve_audit_log(state, i + 1, &re, 0, 0, 0,
                     "rename", "ok", -1,
                     "From-run-id: %d\n"
                     "To-run-id: %d\n", i, i + 1);
@@ -858,6 +862,7 @@ void
 serve_audit_log(
         serve_state_t state,
         int run_id,
+        const struct run_entry *re,
         int user_id,
         const ej_ip_t *ip,
         int ssl_flag,
@@ -876,6 +881,8 @@ serve_audit_log(
   unsigned char *login;
   size_t buf_len;
   unsigned char status_buf[64];
+  int flags;
+  struct run_entry local_re;
 
   buf[0] = 0;
   if (format && *format) {
@@ -886,15 +893,25 @@ serve_audit_log(
   buf_len = strlen(buf);
   while (buf_len > 0 && isspace(buf[buf_len - 1])) buf[--buf_len] = 0;
 
+  if (re == NULL) {
+    if (run_get_entry(state->runlog_state, run_id, &local_re) >= 0)
+      re = &local_re;
+  }
+
   ltm = localtime(&state->current_time);
   snprintf(tbuf, sizeof(tbuf), "%04d/%02d/%02d %02d:%02d:%02d",
            ltm->tm_year + 1900, ltm->tm_mon + 1, ltm->tm_mday,
            ltm->tm_hour, ltm->tm_min, ltm->tm_sec);
 
-  archive_make_write_path(state, audit_path, sizeof(audit_path),
-                          state->global->audit_log_dir, run_id, 0, 0, 0);
-  if (archive_dir_prepare(state, state->global->audit_log_dir,
-                          run_id, 0, 1) < 0) return;
+  if (re && re->store_flags == 1) {
+    flags = uuid_archive_prepare_write_path(state, audit_path, sizeof(audit_path),
+                                            re->run_uuid, 0, DFLT_R_UUID_AUDIT, 0, 1);
+  } else {
+    flags = archive_prepare_write_path(state, audit_path, sizeof(audit_path),
+                                       state->global->audit_log_dir, run_id, 0,
+                                       NULL, 0, 1);
+  }
+  if (flags < 0) return;
   if (!(f = fopen(audit_path, "a"))) return;
 
   fprintf(f, "Date: %s\n", tbuf);
@@ -2278,17 +2295,17 @@ serve_read_compile_packet(
   }
   snprintf(txt_packet_path, sizeof(txt_packet_path), "%s/%s.txt", compile_report_dir, pname);
   if (generic_read_file(&txt_text, 0, &txt_size, REMOVE, NULL, txt_packet_path, NULL) >= 0
-      && txt_size >= min_txt_size
-      && (arch_flags = archive_make_write_path(state,
-                                               txt_report_path,
-                                               sizeof(txt_report_path),
-                                               global->report_archive_dir,
-                                               comp_pkt->run_id, txt_size,
-                                               0, 0)) >= 0
-      && archive_dir_prepare(state, global->report_archive_dir,
-                             comp_pkt->run_id, 0, 1) >= 0) {
-    generic_write_file(txt_text, txt_size, arch_flags,
-                       0, txt_report_path, 0);
+      && txt_size >= min_txt_size) {
+    if (re.store_flags == 1) {
+      arch_flags = uuid_archive_make_write_path(state, txt_report_path, sizeof(txt_report_path),
+                                                re.run_uuid, txt_size, DFLT_R_UUID_REPORT, 0);
+    } else {
+      arch_flags = archive_make_write_path(state, txt_report_path, sizeof(txt_report_path),
+                                           global->report_archive_dir, comp_pkt->run_id, txt_size, 0, 0);
+    }
+    if (arch_flags >= 0) {
+      generic_write_file(txt_text, txt_size, arch_flags, 0, txt_report_path, 0);
+    }
   }
 
   if (comp_pkt->status == RUN_CHECK_FAILED) {
@@ -2744,11 +2761,15 @@ serve_read_run_packet(
       full_flags = ZIP;
       full_suffix = ".zip";
     }
-    full_flags = archive_make_write_path(state, full_path, sizeof(full_path),
-                                         global->full_archive_dir,
-                                         reply_pkt->run_id, 0, 0, full_flags);
-    if (archive_dir_prepare(state, global->full_archive_dir,
-                            reply_pkt->run_id, 0, 0) < 0)
+    if (re.store_flags == 1) {
+      full_flags = uuid_archive_prepare_write_path(state, full_path, sizeof(full_path),
+                                                   re.run_uuid, 0, DFLT_R_UUID_FULL_ARCHIVE, full_flags, 0);
+    } else {
+      full_flags = archive_prepare_write_path(state, full_path, sizeof(full_path),
+                                              global->full_archive_dir,
+                                              reply_pkt->run_id, 0, NULL, full_flags, 0);
+    }
+    if (full_flags < 0)
       goto failed;
     if (generic_copy_file(REMOVE, run_full_archive_dir, pname, full_suffix,
                           full_flags, 0, full_path, "") < 0)
@@ -2798,7 +2819,7 @@ serve_read_run_packet(
                      ts8, ts8_us));
   fprintf(f, "\n");
   close_memstream(f); f = 0;
-  serve_audit_log(state, reply_pkt->run_id, 0, 0, 0,
+  serve_audit_log(state, reply_pkt->run_id, &re, 0, 0, 0,
                   NULL, "testing completed", reply_pkt->status, "%s", audit_text);
   xfree(audit_text); audit_text = 0;
 
@@ -2982,7 +3003,7 @@ serve_judge_built_in_problem(
   fprintf(f, "</testing-report>\n");
   close_memstream(f); f = 0;
 
-  serve_audit_log(state, run_id, user_id, ip, ssl_flag,
+  serve_audit_log(state, run_id, NULL, user_id, ip, ssl_flag,
                   "submit", "ok", status, NULL);
 
   if (status == RUN_CHECK_FAILED)
@@ -3049,7 +3070,7 @@ serve_report_check_failed(
   fclose(tr_f); tr_f = NULL;
   tr = testing_report_free(tr);
 
-  serve_audit_log(state, run_id, 0, 0, 0,
+  serve_audit_log(state, run_id, &re, 0, 0, 0,
                   NULL, "check failed", -1,
                   "  %s\n\n", error_text);
 
@@ -3099,7 +3120,7 @@ serve_rejudge_run(
   if (re.is_imported) return;
   if (re.is_readonly) return;
 
-  serve_audit_log(state, run_id, user_id, ip, ssl_flag,
+  serve_audit_log(state, run_id, &re, user_id, ip, ssl_flag,
                   "rejudge", "ok", RUN_COMPILING, NULL);
  
   if (re.prob_id <= 0 || re.prob_id > state->max_prob
@@ -4430,7 +4451,7 @@ serve_clear_by_mask(serve_state_t state,
         }
         //archive_remove(state, global->audit_log_dir, r, 0);
 
-        serve_audit_log(state, r, user_id, ip, ssl_flag,
+        serve_audit_log(state, r, &re, user_id, ip, ssl_flag,
                         "clear-run", "ok", -1, NULL);
       }
     }
@@ -4487,7 +4508,7 @@ serve_ignore_by_mask(serve_state_t state,
         archive_remove(state, global->team_report_archive_dir, r, 0);
         archive_remove(state, global->full_archive_dir, r, 0);
       }
-      serve_audit_log(state, r, user_id, ip, ssl_flag,
+      serve_audit_log(state, r, &re, user_id, ip, ssl_flag,
                       cmd, "ok", new_status, NULL);
     }
   }
@@ -4533,7 +4554,7 @@ serve_mark_by_mask(
     re.is_marked = mark_value;
     run_set_entry(state->runlog_state, r, RE_IS_MARKED, &re);
 
-    serve_audit_log(state, r, user_id, ip, ssl_flag,
+    serve_audit_log(state, r, &re, user_id, ip, ssl_flag,
                     audit_cmd, "ok", -1, NULL);
   }
 }
@@ -5046,6 +5067,70 @@ serve_make_xml_report_read_path(
   } else {
     ret = archive_make_read_path(state, path, size, state->global->xml_report_archive_dir,
                                  re->run_id, NULL, 1);
+  }
+  return ret;
+}
+
+int
+serve_make_report_read_path(
+        const serve_state_t state,
+        unsigned char *path,
+        size_t size,
+        const struct run_entry *re)
+{
+  int ret;
+  if (re->store_flags == 1) {
+    ret = uuid_archive_make_read_path(state, path, size,
+                                      re->run_uuid, DFLT_R_UUID_REPORT, 1);
+  } else {
+    ret = archive_make_read_path(state, path, size, state->global->report_archive_dir,
+                                 re->run_id, NULL, 1);
+  }
+  return ret;
+}
+
+int
+serve_make_team_report_read_path(
+        const serve_state_t state,
+        unsigned char *path,
+        size_t size,
+        const struct run_entry *re)
+{
+  return archive_make_read_path(state, path, size, state->global->team_report_archive_dir, re->run_id, NULL, 1);
+}
+
+int
+serve_make_full_report_read_path(
+        const serve_state_t state,
+        unsigned char *path,
+        size_t size,
+        const struct run_entry *re)
+{
+  int ret;
+  if (re->store_flags == 1) {
+    ret = uuid_archive_make_read_path(state, path, size,
+                                      re->run_uuid, DFLT_R_UUID_FULL_ARCHIVE, ZIP);
+  } else {
+    ret = archive_make_read_path(state, path, size, state->global->full_archive_dir,
+                                 re->run_id, NULL, ZIP);
+  }
+  return ret;
+}
+
+int
+serve_make_audit_read_path(
+        const serve_state_t state,
+        unsigned char *path,
+        size_t size,
+        const struct run_entry *re)
+{
+  int ret;
+  if (re->store_flags == 1) {
+    ret = uuid_archive_make_read_path(state, path, size,
+                                      re->run_uuid, DFLT_R_UUID_AUDIT, 0);
+  } else {
+    ret = archive_make_read_path(state, path, size, state->global->audit_log_dir,
+                                 re->run_id, NULL, 0);
   }
   return ret;
 }

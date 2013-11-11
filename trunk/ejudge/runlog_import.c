@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -785,7 +785,7 @@ runlog_import_xml(
       }
     }
 
-    serve_audit_log(state, j, 0, 0, 0, "import", "ok", -1, NULL);
+    serve_audit_log(state, j, NULL, 0, 0, 0, "import", "ok", -1, NULL);
   }
   fprintf(flog, "Merge complete\n");
 

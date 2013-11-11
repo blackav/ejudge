@@ -2960,12 +2960,12 @@ priv_submit_run(FILE *fout,
     if (prob->disable_auto_testing > 0
         || (prob->disable_testing > 0 && prob->enable_compilation <= 0)
         || lang->disable_auto_testing || lang->disable_testing) {
-      serve_audit_log(cs, run_id, phr->user_id, &phr->ip, phr->ssl_flag,
+      serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                       "priv-submit", "ok", RUN_PENDING,
                       "  Testing disabled for this problem or language");
       run_change_status_4(cs->runlog_state, run_id, RUN_PENDING);
     } else {
-      serve_audit_log(cs, run_id, phr->user_id, &phr->ip, phr->ssl_flag,
+      serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                       "priv-submit", "ok", RUN_COMPILING, NULL);
       if ((r = serve_compile_request(cs, run_text, run_size, global->contest_id,
                                      run_id, phr->user_id,
@@ -2982,12 +2982,12 @@ priv_submit_run(FILE *fout,
   } else if (prob->manual_checking > 0) {
     // manually tested outputs
     if (prob->check_presentation <= 0) {
-      serve_audit_log(cs, run_id, phr->user_id, &phr->ip, phr->ssl_flag,
+      serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                       "priv-submit", "ok", RUN_ACCEPTED, 
                       "  This problem is checked manually");
       run_change_status_4(cs->runlog_state, run_id, RUN_ACCEPTED);
     } else {
-      serve_audit_log(cs, run_id, phr->user_id, &phr->ip, phr->ssl_flag,
+      serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                       "priv-submit", "ok", RUN_COMPILING, NULL);
       if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
         r = serve_compile_request(cs, run_text, run_size, global->contest_id, 
@@ -3022,12 +3022,12 @@ priv_submit_run(FILE *fout,
     // automatically tested outputs
     if (prob->disable_auto_testing > 0
         || (prob->disable_testing > 0 && prob->enable_compilation <= 0)) {
-      serve_audit_log(cs, run_id, phr->user_id, &phr->ip, phr->ssl_flag,
+      serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                       "priv-submit", "ok", RUN_PENDING,
                       "  Testing disabled for this problem");
       run_change_status_4(cs->runlog_state, run_id, RUN_PENDING);
     } else {
-      serve_audit_log(cs, run_id, phr->user_id, &phr->ip, phr->ssl_flag,
+      serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                       "priv-submit", "ok", RUN_COMPILING, NULL);
       /* FIXME: check for XML problem */
       if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
@@ -3332,7 +3332,7 @@ priv_set_run_style_error_status(
   if (run_change_status_4(cs->runlog_state, run_id, RUN_REJECTED) < 0)
     goto invalid_param;
 
-  serve_audit_log(cs, run_id, phr->user_id, &phr->ip, phr->ssl_flag,
+  serve_audit_log(cs, run_id, &re, phr->user_id, &phr->ip, phr->ssl_flag,
                   "set-rejected", "ok", RUN_REJECTED, NULL);
 
   if (global->notify_status_change > 0 && !re.is_hidden) {
@@ -3453,7 +3453,7 @@ priv_submit_run_comment(
     abort();
   }
 
-  serve_audit_log(cs, run_id, phr->user_id, &phr->ip, phr->ssl_flag,
+  serve_audit_log(cs, run_id, &re, phr->user_id, &phr->ip, phr->ssl_flag,
                   audit_cmd, "ok", status, NULL);
 
   if (global->notify_clar_reply) {
@@ -3779,7 +3779,7 @@ priv_clear_run(FILE *fout, FILE *log_f,
     //archive_remove(cs, global->audit_log_dir, run_id, 0);
   }
 
-  serve_audit_log(cs, run_id, phr->user_id, &phr->ip, phr->ssl_flag,
+  serve_audit_log(cs, run_id, &re, phr->user_id, &phr->ip, phr->ssl_flag,
                   "clear-run", "ok", -1, NULL);
 
  cleanup:
@@ -4030,7 +4030,7 @@ priv_edit_run(FILE *fout, FILE *log_f,
   if (run_set_entry(cs->runlog_state, run_id, ne_mask, &ne) < 0)
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
 
-  serve_audit_log(cs, run_id, phr->user_id, &phr->ip, phr->ssl_flag,
+  serve_audit_log(cs, run_id, &re, phr->user_id, &phr->ip, phr->ssl_flag,
                   audit_cmd, "ok", -1,
                   "  Old value: %s\n"
                   "  New value: %s\n",
@@ -4122,7 +4122,7 @@ priv_change_status(
     goto cleanup;
   }
 
-  serve_audit_log(cs, run_id, phr->user_id, &phr->ip, phr->ssl_flag,
+  serve_audit_log(cs, run_id, &re, phr->user_id, &phr->ip, phr->ssl_flag,
                   "change-status", "ok", status, NULL);
 
   if (cs->global->notify_status_change > 0) {
@@ -4199,7 +4199,7 @@ priv_simple_change_status(
     goto cleanup;
   }
 
-  serve_audit_log(cs, run_id, phr->user_id, &phr->ip, phr->ssl_flag,
+  serve_audit_log(cs, run_id, &re, phr->user_id, &phr->ip, phr->ssl_flag,
                   audit_cmd, "ok", status, NULL);
 
   if (cs->global->notify_status_change > 0) {
@@ -4694,7 +4694,7 @@ priv_new_run(FILE *fout,
   }
   run_set_entry(cs->runlog_state, run_id, re_flags, &re);
 
-  serve_audit_log(cs, run_id, phr->user_id, &phr->ip, phr->ssl_flag,
+  serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                   "priv-new-run", "ok", RUN_PENDING, NULL);
 
  cleanup:
@@ -10351,7 +10351,7 @@ unpriv_print_run(FILE *fout,
     }
   }
 
-  serve_audit_log(cs, run_id, phr->user_id, &phr->ip, phr->ssl_flag,
+  serve_audit_log(cs, run_id, &re, phr->user_id, &phr->ip, phr->ssl_flag,
                   "print", "ok", -1, "  %d pages printed\n", n);
 
  done:
@@ -10868,7 +10868,7 @@ ns_submit_run(
   if (p_run_id) *p_run_id = run_id;
 
   if (accept_immediately) {
-    serve_audit_log(cs, run_id, user_id, &phr->ip, phr->ssl_flag,
+    serve_audit_log(cs, run_id, NULL, user_id, &phr->ip, phr->ssl_flag,
                     "submit", "ok", RUN_ACCEPTED, NULL);
     run_change_status_4(cs->runlog_state, run_id, RUN_ACCEPTED);
     goto done;
@@ -10878,7 +10878,7 @@ ns_submit_run(
       || prob->disable_auto_testing > 0
       || (prob->disable_testing > 0 && prob->enable_compilation <= 0)
       || cs->testing_suspended) {
-    serve_audit_log(cs, run_id, user_id, &phr->ip, phr->ssl_flag,
+    serve_audit_log(cs, run_id, NULL, user_id, &phr->ip, phr->ssl_flag,
                     "submit", "ok", RUN_PENDING,
                     "  Testing disabled for this problem");
     run_change_status_4(cs->runlog_state, run_id, RUN_PENDING);
@@ -10887,14 +10887,14 @@ ns_submit_run(
 
   if (prob->type == PROB_TYPE_STANDARD) {
     if (lang->disable_auto_testing > 0 || lang->disable_testing > 0) {
-      serve_audit_log(cs, run_id, user_id, &phr->ip, phr->ssl_flag,
+      serve_audit_log(cs, run_id, NULL, user_id, &phr->ip, phr->ssl_flag,
                       "submit", "ok", RUN_PENDING,
                       "  Testing disabled for this language");
       run_change_status_4(cs->runlog_state, run_id, RUN_PENDING);
       goto done;
     }
 
-    serve_audit_log(cs, run_id, user_id, &phr->ip, phr->ssl_flag,
+    serve_audit_log(cs, run_id, NULL, user_id, &phr->ip, phr->ssl_flag,
                     "submit", "ok", RUN_COMPILING, NULL);
     r = serve_compile_request(cs, run_text, run_size, global->contest_id,
                               run_id, user_id,
@@ -10918,7 +10918,7 @@ ns_submit_run(
   /* manually checked problems */
   if (prob->manual_checking > 0) {
     if (prob->check_presentation <= 0) {
-      serve_audit_log(cs, run_id, user_id, &phr->ip, phr->ssl_flag,
+      serve_audit_log(cs, run_id, NULL, user_id, &phr->ip, phr->ssl_flag,
                       "submit", "ok", RUN_ACCEPTED,
                       "  This problem is checked manually");
       run_change_status_4(cs->runlog_state, run_id, RUN_ACCEPTED);
@@ -10926,7 +10926,7 @@ ns_submit_run(
     }
 
     if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
-      serve_audit_log(cs, run_id, user_id, &phr->ip, phr->ssl_flag,
+      serve_audit_log(cs, run_id, NULL, user_id, &phr->ip, phr->ssl_flag,
                       "submit", "ok", RUN_COMPILING, NULL);
       r = serve_compile_request(cs, run_text, run_size, global->contest_id,
                                 run_id, user_id, 0 /* lang_id */, variant,
@@ -10948,7 +10948,7 @@ ns_submit_run(
       goto done;
     }
 
-    serve_audit_log(cs, run_id, user_id, &phr->ip, phr->ssl_flag,
+    serve_audit_log(cs, run_id, NULL, user_id, &phr->ip, phr->ssl_flag,
                     "submit", "ok", RUN_RUNNING, NULL);
     r = serve_run_request(cs, cnts, log_f, run_text, run_size,
                           global->contest_id, run_id,
@@ -10971,7 +10971,7 @@ ns_submit_run(
   if (px && px->ans_num > 0) {
     struct run_entry re;
     run_get_entry(cs->runlog_state, run_id, &re);
-    serve_audit_log(cs, run_id, user_id, &phr->ip, phr->ssl_flag,
+    serve_audit_log(cs, run_id, &re, user_id, &phr->ip, phr->ssl_flag,
                     "submit", "ok", RUN_RUNNING, NULL);
     serve_judge_built_in_problem(ejudge_config, cs, cnts, run_id, 1 /* judge_id */,
                                  variant, cs->accepting_mode, &re,
@@ -11500,12 +11500,12 @@ unpriv_submit_run(FILE *fout,
         || (prob->disable_testing > 0 && prob->enable_compilation <= 0)
         || lang->disable_auto_testing || lang->disable_testing
         || cs->testing_suspended) {
-      serve_audit_log(cs, run_id, phr->user_id, &phr->ip, phr->ssl_flag,
+      serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                       "submit", "ok", RUN_PENDING,
                       "  Testing disabled for this problem or language");
       run_change_status_4(cs->runlog_state, run_id, RUN_PENDING);
     } else {
-      serve_audit_log(cs, run_id, phr->user_id, &phr->ip, phr->ssl_flag,
+      serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                       "submit", "ok", RUN_COMPILING, NULL);
       if ((r = serve_compile_request(cs, run_text, run_size, global->contest_id,
                                      run_id, phr->user_id,
@@ -11522,12 +11522,12 @@ unpriv_submit_run(FILE *fout,
   } else if (prob->manual_checking > 0 && !accept_immediately) {
     // manually tested outputs
     if (prob->check_presentation <= 0) {
-      serve_audit_log(cs, run_id, phr->user_id, &phr->ip, phr->ssl_flag,
+      serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                       "submit", "ok", RUN_ACCEPTED,
                       "  This problem is checked manually");
       run_change_status_4(cs->runlog_state, run_id, RUN_ACCEPTED);
     } else {
-      serve_audit_log(cs, run_id, phr->user_id, &phr->ip, phr->ssl_flag,
+      serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                       "submit", "ok", RUN_COMPILING, NULL);
       if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
         r = serve_compile_request(cs, run_text, run_size, global->contest_id,
@@ -11558,12 +11558,12 @@ unpriv_submit_run(FILE *fout,
     }
   } else {
     if (accept_immediately) {
-      serve_audit_log(cs, run_id, phr->user_id, &phr->ip, phr->ssl_flag,
+      serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                       "submit", "ok", RUN_ACCEPTED, NULL);
       run_change_status_4(cs->runlog_state, run_id, RUN_ACCEPTED);
     } else if (prob->disable_auto_testing > 0
         || (prob->disable_testing > 0 && prob->enable_compilation <= 0)) {
-      serve_audit_log(cs, run_id, phr->user_id, &phr->ip, phr->ssl_flag,
+      serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                       "submit", "ok", RUN_PENDING,
                       "  Testing disabled for this problem");
       run_change_status_4(cs->runlog_state, run_id, RUN_PENDING);
@@ -11575,7 +11575,7 @@ unpriv_submit_run(FILE *fout,
       }
       if (px && px->ans_num > 0) {
         run_get_entry(cs->runlog_state, run_id, &re);
-        serve_audit_log(cs, run_id, phr->user_id, &phr->ip, phr->ssl_flag,
+        serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                         "submit", "ok", RUN_RUNNING, NULL);
         serve_judge_built_in_problem(ejudge_config, cs, cnts, run_id, 1 /* judge_id */,
                                      variant, cs->accepting_mode, &re,
@@ -11585,7 +11585,7 @@ unpriv_submit_run(FILE *fout,
       }
 
       if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
-        serve_audit_log(cs, run_id, phr->user_id, &phr->ip, phr->ssl_flag,
+        serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                         "submit", "ok", RUN_COMPILING, NULL);
 
         r = serve_compile_request(cs, run_text, run_size, global->contest_id,
@@ -11605,7 +11605,7 @@ unpriv_submit_run(FILE *fout,
           serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
         }
       } else {
-        serve_audit_log(cs, run_id, phr->user_id, &phr->ip, phr->ssl_flag,
+        serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                         "submit", "ok", RUN_RUNNING, NULL);
 
         if (serve_run_request(cs, cnts, log_f, run_text, run_size,
@@ -12321,7 +12321,7 @@ unpriv_view_report(FILE *fout,
   const struct section_global_data *global = cs->global;
   const struct section_problem_data *prob;
   int run_id, flags, content_type;
-  const unsigned char *rep_start = 0, *arch_dir;
+  const unsigned char *rep_start = 0;
   FILE *log_f = 0;
   char *log_txt = 0, *rep_text = 0;
   size_t log_len = 0, rep_size = 0, html_len;
@@ -12433,21 +12433,28 @@ unpriv_view_report(FILE *fout,
       goto done;
     }
   } else {
+    int user_mode = 0;
     if (prob->team_enable_ce_view
         && (re.status == RUN_COMPILE_ERR
             || re.status == RUN_STYLE_ERR
-            || re.status == RUN_REJECTED))
-      arch_dir = global->report_archive_dir;
-    else if (prob->team_show_judge_report)
-      arch_dir = global->report_archive_dir;
-    else
-      arch_dir = global->team_report_archive_dir;
+            || re.status == RUN_REJECTED)) {
+    } else if (prob->team_show_judge_report) {
+    } else {
+      user_mode = 1;
+    }
 
-    if ((flags = archive_make_read_path(cs, rep_path, sizeof(rep_path),
-                                        arch_dir, run_id, 0, 1)) < 0) {
+    if (user_mode) {
+      flags = archive_make_read_path(cs, rep_path, sizeof(rep_path),
+                                     global->team_report_archive_dir, run_id, 0, 1);
+    } else {
+      flags = serve_make_report_read_path(cs, rep_path, sizeof(rep_path), &re);
+      
+    }
+    if (flags < 0) {
       ns_error(log_f, NEW_SRV_ERR_REPORT_NONEXISTANT);
       goto done;
     }
+
     if (generic_read_file(&rep_text,0,&rep_size,flags,0,rep_path, 0) < 0) {
       ns_error(log_f, NEW_SRV_ERR_DISK_READ_ERROR);
       goto done;
@@ -14930,7 +14937,7 @@ unpriv_xml_update_answer(
   run_set_entry(cs->runlog_state, run_id,
                 RE_SIZE | RE_SHA1 | RE_STATUS | RE_TEST | RE_SCORE, &nv);
 
-  serve_audit_log(cs, run_id, phr->user_id, &phr->ip, phr->ssl_flag,
+  serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                   "update-answer", "ok", RUN_ACCEPTED, NULL);
 
  cleanup:

@@ -1089,12 +1089,12 @@ cmd_submit_run(
     if (prob->disable_auto_testing > 0
         || (prob->disable_testing > 0 && prob->enable_compilation <= 0)
         || lang->disable_auto_testing || lang->disable_testing) {
-      serve_audit_log(cs, run_id, phr->user_id, &phr->ip, phr->ssl_flag,
+      serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                         "submit", "ok", RUN_PENDING,
                         "  Testing disabled for this problem or language");
       run_change_status_4(cs->runlog_state, run_id, RUN_PENDING);
     } else {
-      serve_audit_log(cs, run_id, phr->user_id, &phr->ip, phr->ssl_flag,
+      serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                         "submit", "ok", RUN_COMPILING, NULL);
       if ((r = serve_compile_request(cs, run_text, run_size, global->contest_id,
                                      run_id, phr->user_id,
@@ -1111,12 +1111,12 @@ cmd_submit_run(
   } else if (prob->manual_checking > 0) {
     // manually tested outputs
     if (prob->check_presentation <= 0) {
-      serve_audit_log(cs, run_id, phr->user_id, &phr->ip, phr->ssl_flag,
+      serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                         "submit", "ok", RUN_ACCEPTED,
                         "  This problem is checked manually");
       run_change_status_4(cs->runlog_state, run_id, RUN_ACCEPTED);
     } else {
-      serve_audit_log(cs, run_id, phr->user_id, &phr->ip, phr->ssl_flag,
+      serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                         "submit", "ok", RUN_COMPILING, NULL);
       if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
         if ((r = serve_compile_request(cs, run_text, run_size, global->contest_id,
@@ -1145,7 +1145,7 @@ cmd_submit_run(
   } else {
     if (prob->disable_auto_testing > 0
         || (prob->disable_testing > 0 && prob->enable_compilation <= 0)) {
-      serve_audit_log(cs, run_id, phr->user_id, &phr->ip, phr->ssl_flag,
+      serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                         "submit", "ok", RUN_PENDING,
                         "  Testing disabled for this problem");
       run_change_status_4(cs->runlog_state, run_id, RUN_PENDING);
@@ -1159,14 +1159,14 @@ cmd_submit_run(
       if (px && px->ans_num > 0) {
         struct run_entry re;
         run_get_entry(cs->runlog_state, run_id, &re);
-        serve_audit_log(cs, run_id, phr->user_id, &phr->ip, phr->ssl_flag,
+        serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                         "submit", "ok", RUN_RUNNING, NULL);
         serve_judge_built_in_problem(ejudge_config, cs, cnts, run_id, 1 /* judge_id */,
                                      variant, cs->accepting_mode, &re,
                                      prob, px, phr->user_id, &phr->ip,
                                      phr->ssl_flag);
       } else if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
-        serve_audit_log(cs, run_id, phr->user_id, &phr->ip, phr->ssl_flag,
+        serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                         "submit", "ok", RUN_COMPILING, NULL);
         if ((r = serve_compile_request(cs, run_text, run_size, global->contest_id,
                                        run_id, phr->user_id, 0 /* lang_id */, variant,
@@ -1184,7 +1184,7 @@ cmd_submit_run(
           serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
         }
       } else {
-        serve_audit_log(cs, run_id, phr->user_id, &phr->ip, phr->ssl_flag,
+        serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                         "submit", "ok", RUN_RUNNING, NULL);
         if (serve_run_request(cs, cnts, stderr, run_text, run_size,
                               global->contest_id, run_id,
