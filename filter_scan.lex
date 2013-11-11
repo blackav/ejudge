@@ -1,7 +1,7 @@
 /* -*- mode: fundamental -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -177,6 +177,12 @@ lett    [A-Za-z_]
 "curjudge_id" { TT(TOK_CURJUDGE_ID, FILTER_TYPE_INT); }
 "total_score" { TT(TOK_TOTAL_SCORE, FILTER_TYPE_INT); }
 "inusergroup" { TT(TOK_INUSERGROUP, FILTER_TYPE_BOOL); }
+"passed_mode" { TT(TOK_PASSED_MODE, FILTER_TYPE_BOOL); }
+"curpassed_mode" { TT(TOK_CURPASSED_MODE, FILTER_TYPE_BOOL); }
+"eoln_type" { TT(TOK_EOLN_TYPE, FILTER_TYPE_INT); }
+"cureoln_type" { TT(TOK_CUREOLN_TYPE, FILTER_TYPE_INT); }
+"store_flags" { TT(TOK_STORE_FLAGS, FILTER_TYPE_INT); }
+"curstore_flags" { TT(TOK_CURSTORE_FLAGS, FILTER_TYPE_INT); }
 
 "int" { TT(TOK_INT, FILTER_TYPE_INT); }
 "string" { TT(TOK_STRING, FILTER_TYPE_STRING); }
@@ -213,7 +219,6 @@ lett    [A-Za-z_]
 [Cc][Dd] { TR(RUN_COMPILED); }
 [Cc][Gg] { TR(RUN_COMPILING); }
 [Aa][Vv] { TR(RUN_AVAILABLE); }
-[Rr][Jj] { TR(RUN_REJUDGE); }
 [Ee][Mm] { TR(RUN_EMPTY); }
 [Vv][Ss] { TR(RUN_VIRTUAL_START); }
 [Vv][Tt] { TR(RUN_VIRTUAL_STOP); }
@@ -283,9 +288,3 @@ filter_expr_set_string(unsigned char const *str,
     filter_scan_err = local_err_func;
   }
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- * End:
- */

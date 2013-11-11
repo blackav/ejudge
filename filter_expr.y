@@ -176,6 +176,12 @@ static void *filter_expr_user_data;
 %token TOK_TOTAL_SCORE "total_score"
 %token TOK_CURTOTAL_SCORE "curtotal_score"
 %token TOK_INUSERGROUP "inusergroup"
+%token TOK_PASSED_MODE "passed_mode"
+%token TOK_CURPASSED_MODE "curpassed_mode"
+%token TOK_EOLN_TYPE "eoln_type"
+%token TOK_CUREOLN_TYPE "cureoln_type"
+%token TOK_STORE_FLAGS "store_flags"
+%token TOK_CURSTORE_FLAGS "curstore_flags"
 %token TOK_INUSERGROUPINT
 %token TOK_INT       "int"
 %token TOK_STRING    "string"
@@ -382,6 +388,15 @@ exprA :
 | "judge_id" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
 | "judge_id" { $1->kind = TOK_CURJUDGE_ID; $$ = $1; }
 | "curjudge_id" { $$ = $1; }
+| "passed_mode" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
+| "passed_mode" { $1->kind = TOK_CURPASSED_MODE; $$ = $1; }
+| "curpassed_mode" { $$ = $1; }
+| "eoln_type" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
+| "eoln_type" { $1->kind = TOK_CUREOLN_TYPE; $$ = $1; }
+| "cureoln_type" { $$ = $1; }
+| "store_flags" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
+| "store_flags" { $1->kind = TOK_STORE_FLAGS; $$ = $1; }
+| "curstore_flags" { $$ = $1; }
 | "total_score" { $1->kind = TOK_CURTOTAL_SCORE; $$ = $1; }
 | "cypher" { $1->kind = TOK_CURCYPHER; $$ = $1; }
 | "cypher" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
@@ -1107,9 +1122,3 @@ filter_expr_init_parser(struct filter_tree_mem *mem,
   if (!filter_expr_parse_err) filter_expr_parse_err = do_error;
   //yydebug = 1;
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- * End:
- */

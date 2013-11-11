@@ -119,6 +119,8 @@ enum
   RUNLOG_A_LOGIN,
   RUNLOG_A_RUN_UUID,
   RUNLOG_A_PASSED_MODE,
+  RUNLOG_A_EOLN_TYPE,
+  RUNLOG_A_STORE_FLAGS,
 
   RUNLOG_LAST_ATTR,
 };
@@ -185,6 +187,8 @@ static const char * const attr_map[] =
   [RUNLOG_A_LOGIN]            = "login",
   [RUNLOG_A_RUN_UUID]         = "run_uuid",
   [RUNLOG_A_PASSED_MODE]      = "passed_mode",
+  [RUNLOG_A_EOLN_TYPE]        = "eoln_type",
+  [RUNLOG_A_STORE_FLAGS]      = "store_flags",
 
   [RUNLOG_LAST_ATTR] 0,
 };
@@ -502,6 +506,22 @@ process_run_elements(struct xml_tree *xt, struct run_xml_helpers *helper)
         break;
       case RUNLOG_A_PASSED_MODE:
         if (xml_attr_bool_byte(xa, &xr->r.passed_mode) < 0) return -1;
+        break;
+      case RUNLOG_A_EOLN_TYPE:
+        if (!xa->text) goto empty_attr_value;
+        n = 0;
+        if (sscanf(xa->text, "%d %n", &iv, &n) != 1 || xa->text[n])
+          goto invalid_attr_value;
+        if (iv < -1) goto invalid_attr_value;
+        xr->r.eoln_type = iv;
+        break;
+      case RUNLOG_A_STORE_FLAGS:
+        if (!xa->text) goto empty_attr_value;
+        n = 0;
+        if (sscanf(xa->text, "%d %n", &iv, &n) != 1 || xa->text[n])
+          goto invalid_attr_value;
+        if (iv < -1) goto invalid_attr_value;
+        xr->r.store_flags = iv;
         break;
       default:
         return xml_err_attr_not_allowed(xt, xa);
@@ -974,6 +994,12 @@ unparse_runlog_xml(
       fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_PASSED_MODE],
               (pp->passed_mode > 0)?"yes":"no");
     }
+    if (pp->eoln_type > 0) {
+      fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_EOLN_TYPE], pp->eoln_type);
+    }
+    if (pp->store_flags > 0) {
+      fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_STORE_FLAGS], pp->store_flags);
+    }
     if (!source_mode || pp->status >= RUN_MAX_STATUS) {
       fprintf(f, "/>\n");
       continue;
@@ -1005,9 +1031,7 @@ unparse_runlog_xml(
 
     if (global->enable_full_archive) {
       // read full archive
-      if ((flags = archive_make_read_path(state, fpath, sizeof(fpath),
-                                          global->full_archive_dir,
-                                          i, 0, 1)) >= 0) {
+      if ((flags = serve_make_full_report_read_path(state, fpath, sizeof(fpath), pp)) >= 0) {
         if (generic_read_file(&ftext, 0, &fsize, flags, 0, fpath, 0) >= 0) {
           fprintf(f, "      <%s>%s</%s>\n",
                   elem_map[RUNLOG_T_FULL_ARCHIVE],
@@ -1020,9 +1044,7 @@ unparse_runlog_xml(
 #endif
 
     // read audit
-    if ((flags = archive_make_read_path(state, fpath, sizeof(fpath),
-                                        global->audit_log_dir,
-                                        i, 0, 1)) >= 0) {
+    if ((flags = serve_make_audit_read_path(state, fpath, sizeof(fpath), pp)) >= 0) {
       if (generic_read_file(&ftext, 0, &fsize, flags, 0, fpath, 0) >= 0) {
         fprintf(f, "      <%s %s=\"%zu\">%s</%s>\n",
                 elem_map[RUNLOG_T_AUDIT], attr_map[RUNLOG_A_SIZE], fsize,

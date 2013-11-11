@@ -1840,9 +1840,7 @@ ns_write_priv_source(const serve_state_t state,
   }
 
     /* try to load text description of the archive */
-  txt_flags = archive_make_read_path(state, txt_path, sizeof(txt_path),
-                                     global->report_archive_dir,
-                                     run_id, 0, 0);
+  txt_flags = serve_make_report_read_path(state, txt_path, sizeof(txt_path), &info);
   if (txt_flags >= 0) {
     if (generic_read_file(&txt_text, 0, &txt_size, txt_flags, 0,
                           txt_path, 0) >= 0) {
@@ -1898,7 +1896,6 @@ ns_write_priv_report(const serve_state_t cs,
   const unsigned char *start_ptr = 0;
   struct run_entry re;
   const struct section_global_data *global = cs->global;
-  const unsigned char *report_dir = global->report_archive_dir;
   const struct section_problem_data *prob = 0;
 
   static const int new_actions_vector[] =
@@ -1910,13 +1907,6 @@ ns_write_priv_report(const serve_state_t cs,
     NEW_SRV_ACTION_VIEW_TEST_CHECKER,
     NEW_SRV_ACTION_VIEW_TEST_INFO,
   };
-
-  if (team_report_flag && global->team_enable_rep_view) {
-    report_dir = global->team_report_archive_dir;
-    if (global->team_show_judge_report) {
-      report_dir = global->report_archive_dir;
-    }
-  }
 
   if (run_id < 0 || run_id >= run_get_total(cs->runlog_state)
       || run_get_entry(cs->runlog_state, run_id, &re) < 0) {
@@ -1937,6 +1927,14 @@ ns_write_priv_report(const serve_state_t cs,
     goto done;
   }
 
+  int user_mode = 0;
+  if (team_report_flag && global->team_enable_rep_view) {
+    user_mode = 1;
+    if (global->team_show_judge_report) {
+      user_mode = 0;
+    }
+  }
+
   rep_flag = serve_make_xml_report_read_path(cs, rep_path, sizeof(rep_path), &re);
   if (rep_flag >= 0) {
     if (generic_read_file(&rep_text, 0, &rep_len, rep_flag, 0, rep_path, 0)<0){
@@ -1945,8 +1943,12 @@ ns_write_priv_report(const serve_state_t cs,
     }
     content_type = get_content_type(rep_text, &start_ptr);
   } else {
-    rep_flag = archive_make_read_path(cs, rep_path, sizeof(rep_path),
-                                      report_dir, run_id, 0, 1);
+    if (user_mode) {
+      rep_flag = archive_make_read_path(cs, rep_path, sizeof(rep_path),
+                                        global->team_report_archive_dir, run_id, 0, 1);
+    } else {
+      rep_flag = serve_make_report_read_path(cs, rep_path, sizeof(rep_path), &re);
+    }
     if (rep_flag < 0) {
       ns_error(log_f, NEW_SRV_ERR_REPORT_NONEXISTANT);
       goto done;
@@ -2041,10 +2043,7 @@ ns_write_audit_log(const serve_state_t cs,
     goto done;
   }
 
-  if ((rep_flag = archive_make_read_path(cs, audit_log_path,
-                                         sizeof(audit_log_path),
-                                         cs->global->audit_log_dir,
-                                         run_id, 0, 0)) < 0) {
+  if ((rep_flag = serve_make_audit_read_path(cs, audit_log_path, sizeof(audit_log_path), &re)) < 0) {
     ns_error(log_f, NEW_SRV_ERR_AUDIT_LOG_NONEXISTANT);
     goto done;
   }
@@ -3506,7 +3505,7 @@ ns_priv_edit_run_action(
   if (run_set_entry(cs->runlog_state, run_id, mask, &new_info) < 0)
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
 
-  serve_audit_log(cs, run_id, phr->user_id, &phr->ip, phr->ssl_flag,
+  serve_audit_log(cs, run_id, &info, phr->user_id, &phr->ip, phr->ssl_flag,
                   "edit-run", "ok", -1,
                   "  mask: 0x%08x", mask);
 
@@ -3600,11 +3599,14 @@ write_from_contest_dir(
 }
 
 static void
-write_from_archive(const serve_state_t cs,
-                   FILE *log_f, FILE *fout,
-                   int flag, int run_id, int test_num,
-                   const unsigned char *dir,
-                   const unsigned char *suffix)
+write_from_archive(
+        const serve_state_t cs,
+        FILE *log_f,
+        FILE *fout,
+        int flag,
+        int test_num,
+        const struct run_entry *re,
+        const unsigned char *suffix)
 {
   full_archive_t far = 0;
   unsigned char fnbuf[64];
@@ -3620,8 +3622,7 @@ write_from_archive(const serve_state_t cs,
 
   snprintf(fnbuf, sizeof(fnbuf), "%06d%s", test_num, suffix);
 
-  rep_flag = archive_make_read_path(cs, arch_path, sizeof(arch_path),
-                                    dir, run_id, 0, ZIP);
+  rep_flag = serve_make_full_report_read_path(cs, arch_path, sizeof(arch_path), re);
   if (rep_flag < 0 || !(far = full_archive_open_read(arch_path))) {
     ns_error(log_f, NEW_SRV_ERR_TEST_NONEXISTANT);
     goto done;
@@ -3668,9 +3669,7 @@ ns_write_tests(const serve_state_t cs, FILE *fout, FILE *log_f,
   }
 
   if ((rep_flag = serve_make_xml_report_read_path(cs, rep_path, sizeof(rep_path), &re)) < 0
-      && (rep_flag = archive_make_read_path(cs, rep_path, sizeof(rep_path),
-                                            cs->global->report_archive_dir,
-                                            run_id, 0, 1)) < 0) {
+      && (rep_flag = serve_make_report_read_path(cs, rep_path, sizeof(rep_path), &re)) < 0) {
     ns_error(log_f, NEW_SRV_ERR_REPORT_NONEXISTANT);
     goto done;
   }
@@ -3745,19 +3744,15 @@ ns_write_tests(const serve_state_t cs, FILE *fout, FILE *log_f,
     goto done;
 
   case NEW_SRV_ACTION_VIEW_TEST_OUTPUT:
-    write_from_archive(cs, log_f, fout, t->output_available, run_id, test_num,
-                       cs->global->full_archive_dir, ".o");
+    write_from_archive(cs, log_f, fout, t->output_available, test_num, &re, ".o");
     goto done;
 
   case NEW_SRV_ACTION_VIEW_TEST_ERROR:
-    write_from_archive(cs, log_f, fout, t->stderr_available, run_id, test_num,
-                       cs->global->full_archive_dir, ".e");
+    write_from_archive(cs, log_f, fout, t->stderr_available, test_num, &re, ".e");
     goto done;
 
   case NEW_SRV_ACTION_VIEW_TEST_CHECKER:
-    write_from_archive(cs, log_f, fout, t->checker_output_available,
-                       run_id, test_num,
-                       cs->global->full_archive_dir, ".c");
+    write_from_archive(cs, log_f, fout, t->checker_output_available, test_num, &re, ".c");
     goto done;
   }
 
@@ -5299,7 +5294,7 @@ do_add_row(
   }
   run_set_entry(cs->runlog_state, run_id, RE_STATUS | RE_TEST | RE_SCORE, re);
 
-  serve_audit_log(cs, run_id, phr->user_id, &phr->ip, phr->ssl_flag,
+  serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                   "priv-new-run", "ok", re->status, NULL);
   return run_id;
 }
