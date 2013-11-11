@@ -8229,3 +8229,13 @@ reports.c 7583 0 8918998
 runlog_xml.c 7583 0 2371926
 serve_2.c 7583 0 13253581
 prepare_dflt.h 7585 0 497957
+serve_state.h 7587 0 1727985
+filter_eval.c 7587 0 2006948
+new_server_html.c 7587 0 43633810
+new_server_html_2.c 7587 0 20663829
+new_server_html_4.c 7587 0 5562375
+runlog_import.c 7587 0 2213374
+runlog_xml.c 7587 0 2431499
+serve_2.c 7587 0 13448425
+filter_expr.y 7587 0 2613038
+filter_scan.lex 7587 0 839890
