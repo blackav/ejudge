@@ -548,7 +548,7 @@ check_func(void *data)
   }
   if (version == 2) {
     // extend cookie size to VARCHAR(64)
-    if (state->mi->simple_fquery(state->md, "ALTER TABLE %scookies MODIFY cookie VARCHAR(64) NOT NULL PRIMARY KEY ;", state->md->table_prefix) < 0)
+    if (state->mi->simple_fquery(state->md, "ALTER TABLE %scookies MODIFY cookie VARCHAR(64) NOT NULL;", state->md->table_prefix) < 0)
       return -1;
     if (state->mi->simple_fquery(state->md, "UPDATE %sconfig SET config_val = '3' WHERE config_key = 'version' ;", state->md->table_prefix) < 0)
       return -1;
