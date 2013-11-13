@@ -8239,3 +8239,10 @@ runlog_xml.c 7587 0 2431499
 serve_2.c 7587 0 13448425
 filter_expr.y 7587 0 2613038
 filter_scan.lex 7587 0 839890
+userlist.h 7592 0 1774313
+xml_utils.h 7592 0 479437
+struct-sizes.c 7592 0 157619
+userlist.c 7592 0 5224735
+userlist_xml.c 7592 0 5356958
+xml_utils/full_cookie.c 7591 0 124243
+plugins/mysql-userlist/uldb_mysql.c 7590 0 12910341
