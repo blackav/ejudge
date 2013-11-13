@@ -801,7 +801,11 @@ parse_spec_func(
         xml_parse_ipv6_2(DEFAULT_IP, p_ipv6);
       }
       break;
-
+    case 'u': // 128-bit
+      p_uq = XPDEREF(ej_cookie_t, data, specs[i].offset);
+      if (xml_parse_full_cookie(row[i], p_uq, p_uq + 1) < 0)
+        goto invalid_format;
+      break;
     default:
       err("unhandled format %d", specs[i].format);
       abort();
@@ -836,6 +840,7 @@ unparse_spec_func(
   unsigned long long uq;
   ej_ip4_t *p_ip;
   ej_ip_t *p_ipv6;
+  unsigned char u_buf[64];
 
   va_start(args, data);
   for (i = 0; i < spec_num; ++i) {
@@ -909,6 +914,12 @@ unparse_spec_func(
     case 'I':
       p_ipv6 = XPDEREF(ej_ip_t, data, specs[i].offset);
       fprintf(fout, "%s'%s'", sep, xml_unparse_ipv6(p_ipv6));
+      break;
+
+    case 'u': // 128-bit
+      p_uq = XPDEREF(ej_cookie_t, data, specs[i].offset);
+      fprintf(fout, "%s'%s'", sep,
+              xml_unparse_full_cookie(u_buf, sizeof(u_buf), p_uq, p_uq + 1));
       break;
 
     default:
