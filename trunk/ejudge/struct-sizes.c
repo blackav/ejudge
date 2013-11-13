@@ -25,6 +25,7 @@
 #include "super-serve.h"
 #include "compile_packet_priv.h"
 #include "problem_config.h"
+#include "userlist.h"
 
 #include <stdio.h>
 
@@ -41,5 +42,6 @@ int main(void)
   printf("sid_state:             %zu\n", sizeof(struct sid_state));
   printf("compile_packet:        %zu\n", sizeof(struct compile_request_bin_packet));
   printf("problem_config_section:%zu\n", sizeof(struct problem_config_section));
+  printf("userlist_cookie:       %zu\n", sizeof(struct userlist_cookie));
   return 0;
 }

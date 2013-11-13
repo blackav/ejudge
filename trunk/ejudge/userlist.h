@@ -203,6 +203,7 @@ enum
     USERLIST_A_GROUP_NAME,
     USERLIST_A_DESCRIPTION,
     USERLIST_A_USER_ID,
+    USERLIST_A_CLIENT_KEY,
 
     USERLIST_LAST_ATTN,
   };
@@ -399,11 +400,12 @@ struct userlist_cookie
 {
   struct xml_tree b;
 
-  int user_id;
   ej_ip_t ip;
-  int ssl;
-  ej_cookie_t cookie;
+  ej_cookie_t cookie;           /* cookie + client_key are 128-bit */
+  ej_cookie_t client_key;
   time_t expire;
+  int user_id;
+  int ssl;
   int contest_id;
   int locale_id;
   int priv_level;
