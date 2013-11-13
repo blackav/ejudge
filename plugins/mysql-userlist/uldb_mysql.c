@@ -536,7 +536,7 @@ check_func(void *data)
     err("invalid 'version' key value");
     return -1;
   }
-  // current version is 2, so cannot handle future version
+  // current version is 3, so cannot handle future version
   if (version == 1) {
     if (state->mi->simple_fquery(state->md, "CREATE TABLE %sgroups(group_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, group_name VARCHAR(128) NOT NULL UNIQUE KEY, description VARCHAR(512) DEFAULT NULL, created_by INT NOT NULL, create_time DATETIME NOT NULL, last_change_time DATETIME DEFAULT NULL, FOREIGN KEY (created_by) REFERENCES %slogins(user_id));", state->md->table_prefix, state->md->table_prefix) < 0)
       return -1;
@@ -544,7 +544,17 @@ check_func(void *data)
       return -1;
     if (state->mi->simple_fquery(state->md, "UPDATE %sconfig SET config_val = '2' WHERE config_key = 'version' ;", state->md->table_prefix) < 0)
       return -1;
-  } else if (version != 2) {
+    version = 2;
+  }
+  if (version == 2) {
+    // extend cookie size to VARCHAR(64)
+    if (state->mi->simple_fquery(state->md, "ALTER TABLE %scookies MODIFY cookie VARCHAR(64) NOT NULL PRIMARY KEY ;", state->md->table_prefix) < 0)
+      return -1;
+    if (state->mi->simple_fquery(state->md, "UPDATE %sconfig SET config_val = '3' WHERE config_key = 'version' ;", state->md->table_prefix) < 0)
+      return -1;
+    version = 3;
+  }
+  if (version != 3) {
     err("cannot handle database version %d", version);
     return -1;
   }
