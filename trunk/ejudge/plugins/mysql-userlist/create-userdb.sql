@@ -23,7 +23,7 @@ CREATE TABLE %slogins
        );
 
 CREATE TABLE %scookies
-       (cookie VARCHAR(32) NOT NULL PRIMARY KEY,
+       (cookie VARCHAR(64) NOT NULL PRIMARY KEY,
        user_id INT UNSIGNED NOT NULL,
        contest_id INT UNSIGNED NOT NULL,
        priv_level TINYINT NOT NULL DEFAULT 0,
@@ -163,4 +163,4 @@ CREATE TABLE %sgroupmembers
     FOREIGN KEY u(user_id) REFERENCES logins(user_id)
 );
 
-INSERT INTO %sconfig VALUES ('version', '2');
+INSERT INTO %sconfig VALUES ('version', '3');
