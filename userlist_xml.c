@@ -173,6 +173,7 @@ static char const * const attr_map[] =
   "group_name",
   "description",
   "user_id",
+  "client_key",
 
   0
 };
@@ -500,8 +501,10 @@ parse_passwd(struct xml_tree *t, unsigned char **p_pwd, int *p_method)
 }
 
 static int
-parse_cookies(char const *path, struct xml_tree *cookies,
-              struct userlist_user *usr)
+parse_cookies(
+        char const *path,
+        struct xml_tree *cookies,
+        struct userlist_user *usr)
 {
   struct xml_tree *t;
   struct xml_attr *a;
@@ -526,16 +529,9 @@ parse_cookies(char const *path, struct xml_tree *cookies,
         has_ip = 1;
         break;
       case USERLIST_A_VALUE:
-        {
-          ej_cookie_t val;
-          int n;
-
-          if (!a->text || sscanf(a->text, "%" EJ_PRINTF_LLSPEC "x %n", &val, &n) != 1
-              || !val) {
-            xml_err_attr_invalid(a);
-            return -1;
-          }
-          c->cookie = val;
+        if (xml_parse_full_cookie(a->text, &c->cookie, &c->client_key) < 0) {
+          xml_err_attr_invalid(a);
+          return -1;
         }
         break;
       case USERLIST_A_SSL:
@@ -1736,6 +1732,7 @@ static void
 unparse_cookies(const struct xml_tree *p, FILE *f)
 {
   struct userlist_cookie *c;
+  unsigned char buf[64];
 
   if (!p) return;
   ASSERT(p->tag == USERLIST_T_COOKIES);
@@ -1743,10 +1740,10 @@ unparse_cookies(const struct xml_tree *p, FILE *f)
   for (p = p->first_down; p; p = p->right) {
     ASSERT(p->tag == USERLIST_T_COOKIE);
     c = (struct userlist_cookie*) p;
-    fprintf(f, "      <%s %s=\"%s\" %s=\"%" EJ_PRINTF_LLSPEC "x\" %s=\"%s\" %s=\"%s\"",
+    fprintf(f, "      <%s %s=\"%s\" %s=\"%s\" %s=\"%s\" %s=\"%s\"",
             elem_map[USERLIST_T_COOKIE],
             attr_map[USERLIST_A_IP], xml_unparse_ipv6(&c->ip),
-            attr_map[USERLIST_A_VALUE], c->cookie,
+            attr_map[USERLIST_A_VALUE], xml_unparse_full_cookie(buf, sizeof(buf), &c->cookie, &c->client_key),
             attr_map[USERLIST_A_EXPIRE], xml_unparse_date(c->expire),
             attr_map[USERLIST_A_PRIV_LEVEL],
             protocol_priv_level_str(c->priv_level));

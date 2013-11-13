@@ -149,10 +149,17 @@ xml_elem_ipv6_mask(
 int
 ipv6_is_empty(const ej_ip_t *p_ip);
 
+const unsigned char *
+xml_unparse_full_cookie(
+        unsigned char *buf,
+        int size,
+        const ej_cookie_t *p_cookie,
+        const ej_cookie_t *p_client_key);
+int
+xml_parse_full_cookie(
+        const unsigned char *str,
+        ej_cookie_t *p_cookie,
+        ej_cookie_t *p_client_key);
+
 #endif /* __XML_UTILS_H__ */
 
-/*
- * Local variables:
- *  compile-command: "make"
- * End:
- */

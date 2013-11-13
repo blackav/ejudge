@@ -274,6 +274,7 @@ COMMON_CFILES=\
  xml_utils/err_top_level.c\
  xml_utils/err_top_level_s.c\
  xml_utils/err_variables.c\
+ xml_utils/full_cookie.c\
  xml_utils/leaf_elem.c\
  xml_utils/parse_bool.c\
  xml_utils/parse_date.c\
