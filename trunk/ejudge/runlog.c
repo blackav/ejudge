@@ -2796,7 +2796,7 @@ run_get_user_prev_run_id(runlog_state_t state, int run_id)
 int
 run_get_uuid_hash_state(runlog_state_t state)
 {
-  return state->uuid_hash_state >= 0;
+  return state->uuid_hash_state;
 }
 
 static void
