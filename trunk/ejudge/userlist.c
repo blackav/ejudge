@@ -1367,6 +1367,13 @@ userlist_build_cookie_hash(struct userlist_list *p)
   xfree(p->cookie_hash_table);
   p->cookie_hash_table = 0;
 
+  p->client_key_hash_size = 0;
+  p->client_key_hash_step = 0;
+  p->client_key_thresh = 0;
+  p->client_key_cur_fill = 0;
+  xfree(p->client_key_hash_table);
+  p->client_key_hash_table = NULL;
+
   /* count the number of cookies */
   for (i = 1; i < p->user_map_size; i++) {
     if (!(u = p->user_map[i])) continue;
@@ -1438,6 +1445,14 @@ userlist_build_cookie_hash(struct userlist_list *p)
   p->cookie_cur_fill = 0;
   xfree(p->cookie_hash_table);
   p->cookie_hash_table = 0;
+
+  p->client_key_hash_size = 0;
+  p->client_key_hash_step = 0;
+  p->client_key_thresh = 0;
+  p->client_key_cur_fill = 0;
+  xfree(p->client_key_hash_table);
+  p->client_key_hash_table = 0;
+
   return -1;
 }
 
