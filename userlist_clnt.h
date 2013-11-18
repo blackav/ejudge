@@ -313,18 +313,21 @@ int userlist_clnt_priv_login(struct userlist_clnt *clnt,
                              int *p_priv_level,
                              unsigned char **p_name);
 
-int userlist_clnt_priv_cookie(struct userlist_clnt *clnt,
-                              const ej_ip_t *origin_ip,
-                              int ssl,
-                              int contest_id,
-                              ej_cookie_t cookie,
-                              int priv_level,
-                              int *p_user_id,
-                              int *p_contest_id,
-                              int *p_locale_id,
-                              int *p_priv_level,
-                              unsigned char **p_login,
-                              unsigned char **p_name);
+int
+userlist_clnt_priv_cookie(
+        struct userlist_clnt *clnt,
+        const ej_ip_t *origin_ip,
+        int ssl,
+        int contest_id,
+        ej_cookie_t cookie,
+        ej_cookie_t client_key,
+        int priv_level,
+        int *p_user_id,
+        int *p_contest_id,
+        int *p_locale_id,
+        int *p_priv_level,
+        unsigned char **p_login,
+        unsigned char **p_name);
 
 int userlist_clnt_logout(struct userlist_clnt *clnt,
                          int cmd,

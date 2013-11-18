@@ -327,6 +327,7 @@ static int super_serve_fd = -1;
 static int priv_level;
 static int client_action;
 static unsigned char hidden_vars[1024];
+static ej_cookie_t client_key;
 
 static void
 make_self_url(void)
@@ -344,6 +345,34 @@ make_self_url(void)
   if (!script_name) script_name = "/cgi-bin/serve-control";
   snprintf(fullname, sizeof(fullname), "%s://%s%s", protocol, http_host, script_name);
   self_url = xstrdup(fullname);
+}
+
+static void
+parse_cookie(void)
+{
+  const unsigned char *cookies = getenv("HTTP_COOKIE");
+  if (!cookies) return;
+  const unsigned char *s = cookies;
+  while (1) {
+    while (isspace(*s)) ++s;
+    if (strncmp(s, "EJSID=", 6) != 0) {
+      while (*s && *s != ';') ++s;
+      if (!*s) return;
+      ++s;
+      continue;
+    }
+    int n = 0;
+    if (sscanf(s + 6, "%llx%n", &client_key, &n) == 1) {
+      s += 6 + n;
+      if (!*s || isspace(*s) || *s == ';') {
+        // debug
+        fprintf(stderr, "client_key = %016llx\n", client_key);
+        return;
+      }
+    }
+    client_key = 0;
+    return;
+  }
 }
 
 static void
@@ -400,6 +429,7 @@ initialize(int argc, char *argv[])
 
   cgi_read(0);
   parse_client_ip(&user_ip);
+  parse_cookie();
 
   make_self_url();
   client_make_form_headers(self_url);
@@ -713,6 +743,7 @@ authentificate(void)
     r = userlist_clnt_priv_cookie(userlist_conn, &user_ip, ssl_flag,
                                   0, /* contest_id */
                                   session_id,
+                                  client_key,
                                   -1,
                                   &user_id,
                                   0, /* p_contest_id */

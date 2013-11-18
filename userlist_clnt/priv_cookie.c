@@ -24,6 +24,7 @@ userlist_clnt_priv_cookie(
         int ssl,
         int contest_id,
         ej_cookie_t cookie,
+        ej_cookie_t client_key,
         int priv_level,
         int *p_user_id,
         int *p_contest_id,
@@ -53,6 +54,7 @@ userlist_clnt_priv_cookie(
   out->ssl = ssl;
   out->contest_id = contest_id;
   out->cookie = cookie;
+  out->client_key = client_key;
   out->priv_level = priv_level;
   if ((r = userlist_clnt_send_packet(clnt, out_size, out)) < 0) return r;
   if ((r = userlist_clnt_read_and_notify(clnt, &in_size, &void_in)) < 0)

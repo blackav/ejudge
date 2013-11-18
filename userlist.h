@@ -597,6 +597,13 @@ struct userlist_list
   size_t cookie_cur_fill;
   struct userlist_cookie **cookie_hash_table;
 
+  /* client_key information */
+  size_t client_key_hash_size;
+  size_t client_key_hash_step;
+  size_t client_key_thresh;
+  size_t client_key_cur_fill;
+  struct userlist_cookie **client_key_hash_table;
+
   /* user group information */
   struct xml_tree *groups_node;
   int group_map_size;

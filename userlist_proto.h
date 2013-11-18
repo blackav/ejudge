@@ -241,6 +241,7 @@ struct userlist_pk_check_cookie
   int                ssl;
   int                contest_id;
   ej_cookie_t        cookie;
+  ej_cookie_t        client_key;
   int                priv_level;
   int                role;
 };
