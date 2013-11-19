@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -55,6 +55,34 @@ do_remove_cookie_from_pool(
       h = (h + 1) & (COOKIES_POOL_SIZE - 1);
     cache->hash[h] = v[i];
   }
+
+  struct userlist_cookie *cookie = cntr->cookie;
+  if (cookie->client_key != 0) {
+    h = cookie->client_key & (COOKIES_POOL_SIZE - 1);
+    i = 0;
+    while (cache->client_key_hash[h]) {
+      h = (h + 1) & (COOKIES_POOL_SIZE - 1);
+      ++i;
+    }
+    XALLOCAZ(v, i + 1);
+    j = 0;
+    h = cookie->client_key & (COOKIES_POOL_SIZE - 1);
+    while (cache->client_key_hash[h]) {
+      if (cache->client_key_hash[h] != cntr) {
+        v[j++] = cache->client_key_hash[h];
+      }
+      cache->client_key_hash[h] = NULL;
+      h = (h + 1) & (COOKIES_POOL_SIZE - 1);
+    }
+    for (i = 0; i < j; ++i) {
+      h = v[i]->cookie->client_key & (COOKIES_POOL_SIZE - 1);
+      while (cache->client_key_hash[h])
+        h = (h + 1) & (COOKIES_POOL_SIZE - 1);
+      cache->client_key_hash[h] = v[i];
+    }
+  }
+
+
   // remove c from the tail of the list
   UNLINK_FROM_LIST(cntr, cache->first, cache->last, prev, next);
   userlist_free(&cntr->cookie->b); cntr->cookie = 0;
