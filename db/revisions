@@ -8254,3 +8254,6 @@ serve-control.c 7598 0 9982074
 userlist.c 7598 0 5257110
 userlist_clnt/priv_cookie.c 7598 0 229861
 userlist.c 7600 0 5372066
+userlist.c 7602 0 5494456
+userlist_xml.c 7602 0 5348841
+plugins/mysql-userlist/uldb_mysql.c 7603 0 12915345
