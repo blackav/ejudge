@@ -243,8 +243,8 @@ struct uldb_plugin_iface plugin_uldb_mysql =
 };
 
 // the size of the cookies pool, must be power of 2
-enum { COOKIES_POOL_SIZE = 1024 };
-enum { COOKIES_MAX_HASH_SIZE = 600 };
+enum { COOKIES_POOL_SIZE = 4096 };
+enum { COOKIES_MAX_HASH_SIZE = 2500 };
 
 // the size of the cntsregs pool
 enum { CNTSREGS_POOL_SIZE = 1024 };
@@ -269,6 +269,7 @@ struct cookies_container;
 struct cookies_cache
 {
   struct cookies_container *hash[COOKIES_POOL_SIZE];
+  struct cookies_container *client_key_hash[COOKIES_POOL_SIZE];
   struct cookies_container *first, *last;
   int count;
 };
