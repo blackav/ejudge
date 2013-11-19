@@ -209,6 +209,7 @@ elem_free(struct xml_tree *t)
       xfree(p->name);
       xfree(p->login_hash_table);
       xfree(p->cookie_hash_table);
+      xfree(p->client_key_hash_table);
       xfree(p->group_map);
       xfree(p->group_hash_table);
     }
@@ -2397,10 +2398,3 @@ userlist_tag_to_str(int t)
   ASSERT(t > 0 && t < USERLIST_LAST_TAG);
   return elem_map[t];
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "XML_Parser" "XML_Char" "XML_Encoding")
- * End:
- */

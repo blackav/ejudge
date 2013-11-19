@@ -1529,25 +1529,16 @@ userlist_cookie_hash_add(
   return 0;
 }
 
-int
-userlist_cookie_hash_del(
+static void
+delete_cookie(
         struct userlist_list *p,
         const struct userlist_cookie *ck)
 {
-  int i;
+  int i = ck->cookie % p->cookie_hash_size;
+  int j = -1;
+  struct userlist_cookie **saves = NULL;
   int rehash_count = 0;
-  int j;
-  struct userlist_cookie **saves;
 
-  ASSERT(p);
-  if (!p->cookie_hash_table) return 0;
-  ASSERT(ck);
-  ASSERT(ck->b.tag == USERLIST_T_COOKIE);
-  ASSERT(ck->cookie);
-  ASSERT(ck->user_id > 0);
-
-  i = ck->cookie % p->cookie_hash_size;
-  j = -1;
   while (p->cookie_hash_table[i]) {
     if (p->cookie_hash_table[i] == ck) {
       ASSERT(j == -1);
@@ -1557,13 +1548,13 @@ userlist_cookie_hash_del(
     }
     i = (i + p->cookie_hash_step) % p->cookie_hash_size;
   }
-  if (j == -1) return 0;
+  if (j == -1) return;
   if (!rehash_count) {
     i = ck->cookie % p->cookie_hash_size;
     ASSERT(p->cookie_hash_table[i] == ck);
     p->cookie_hash_table[i] = 0;
     p->cookie_cur_fill--;
-    return 0;
+    return;
   }
 
   saves = alloca(rehash_count * sizeof(saves[0]));
@@ -1586,6 +1577,70 @@ userlist_cookie_hash_del(
   }
 
   p->cookie_cur_fill--;
+}
+
+static void
+delete_client_key(
+        struct userlist_list *p,
+        const struct userlist_cookie *ck)
+{
+  if (!ck->client_key) return;
+
+  int rehash_count = 0;
+  int i = ck->client_key % p->client_key_hash_size;
+  int j = -1;
+
+  while (p->client_key_hash_table[i]) {
+    if (p->client_key_hash_table[i] == ck) {
+      j = i;
+    } else {
+      ++rehash_count;
+    }
+    i = (i + p->client_key_hash_step) % p->client_key_hash_size;
+  }
+  if (j == -1) return;
+  if (!rehash_count) {
+    i = ck->client_key % p->client_key_hash_size;
+    p->client_key_hash_table[i] = NULL;
+    --p->client_key_cur_fill;
+    return;
+  }
+
+  struct userlist_cookie **saves = alloca(rehash_count * sizeof(saves[0]));
+  memset(saves, 0, rehash_count * sizeof(saves[0]));
+  i = ck->client_key % p->client_key_hash_size;
+  j = 0;
+  while (p->client_key_hash_table[i]) {
+    if (p->client_key_hash_table[i] != ck)
+      saves[j++] = p->client_key_hash_table[i];
+    p->client_key_hash_table[i] = 0;
+    i = (i + p->client_key_hash_step) % p->client_key_hash_size;
+  }
+
+  for (j = 0; j < rehash_count; ++j) {
+    i = saves[j]->client_key % p->client_key_hash_size;
+    while (p->client_key_hash_table[i])
+      i = (i + p->client_key_hash_step) % p->client_key_hash_size;
+    p->client_key_hash_table[i] = saves[j];
+  }
+  --p->client_key_cur_fill;
+}
+
+int
+userlist_cookie_hash_del(
+        struct userlist_list *p,
+        const struct userlist_cookie *ck)
+{
+  ASSERT(p);
+  if (!p->cookie_hash_table) return 0;
+  ASSERT(ck);
+  ASSERT(ck->b.tag == USERLIST_T_COOKIE);
+  ASSERT(ck->cookie);
+  ASSERT(ck->user_id > 0);
+
+  delete_cookie(p, ck);
+  delete_client_key(p, ck);
+
   return 0;
 }
 
