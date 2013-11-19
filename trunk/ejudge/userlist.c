@@ -1354,7 +1354,7 @@ userlist_build_cookie_hash(struct userlist_list *p)
 {
   struct userlist_user *u;
   int i, j;
-  size_t cookie_count = 0, collision_count = 0;
+  size_t cookie_count = 0, collision_count = 0, key_collision_count = 0;
   struct userlist_cookie *ck;
   ej_tsc_t tsc1, tsc2;
 
@@ -1402,6 +1402,12 @@ userlist_build_cookie_hash(struct userlist_list *p)
   p->cookie_cur_fill = cookie_count;
   XCALLOC(p->cookie_hash_table, p->cookie_hash_size);
 
+  p->client_key_hash_size = primes[i];
+  p->client_key_hash_step = 37;
+  p->client_key_thresh = p->client_key_hash_size * 2 / 3;
+  p->client_key_cur_fill = 0;
+  XCALLOC(p->client_key_hash_table, p->client_key_hash_size);
+
   /* insert cookies to hashtable */
   for (i = 1; i < p->user_map_size; i++) {
     if (!(u = p->user_map[i])) continue;
@@ -1423,6 +1429,23 @@ userlist_build_cookie_hash(struct userlist_list *p)
     }
   }
 
+  /* insert client_key to hashtable */
+  for (i = 1; i < p->user_map_size; ++i) {
+    if (!(u = p->user_map[i])) continue;
+    if (!u->cookies) continue;
+    for (ck = (struct userlist_cookie*) u->cookies->first_down; ck; ck = (struct userlist_cookie*) ck->b.right) {
+      if (ck->client_key != 0) {
+        j = ck->client_key % p->client_key_hash_size;
+        while (p->client_key_hash_table[j]) {
+          j = (j + p->client_key_hash_step) % p->client_key_hash_size;
+          ++key_collision_count;
+        }
+        p->client_key_hash_table[j] = ck;
+        ++p->client_key_cur_fill;
+      }
+    }
+  }
+
   rdtscll(tsc2);
   if (cpu_frequency > 0) {
     tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
@@ -1434,6 +1457,11 @@ userlist_build_cookie_hash(struct userlist_list *p)
        EJ_PRINTF_ZCAST(p->cookie_hash_size), EJ_PRINTF_ZCAST(p->cookie_hash_step),
        EJ_PRINTF_ZCAST(p->cookie_thresh), EJ_PRINTF_ZCAST(p->cookie_cur_fill));
   info("cookie hashtable: collisions = %" EJ_PRINTF_ZSPEC "u", EJ_PRINTF_ZCAST(collision_count));
+
+  info("client_key_hashtable: size = %d, step = %d, thresh = %d, current = %d, collisions = %d",
+       (int) p->client_key_hash_size, (int) p->client_key_hash_step, (int) p->client_key_thresh, (int) p->client_key_cur_fill,
+       (int) key_collision_count);
+
   info("cookie hashtable: time = %" EJ_PRINTF_LLSPEC "u (us)", tsc2);
 
   return 0;
@@ -1457,8 +1485,9 @@ userlist_build_cookie_hash(struct userlist_list *p)
 }
 
 int
-userlist_cookie_hash_add(struct userlist_list *p,
-                         const struct userlist_cookie *ck)
+userlist_cookie_hash_add(
+        struct userlist_list *p,
+        const struct userlist_cookie *ck)
 {
   int i;
 
@@ -1487,12 +1516,23 @@ userlist_cookie_hash_add(struct userlist_list *p,
   }
   p->cookie_hash_table[i] = (struct userlist_cookie*) ck;
   p->cookie_cur_fill++;
+
+  if (ck->client_key != 0) {
+    i = ck->client_key % p->client_key_hash_size;
+    while (p->client_key_hash_table[i]) {
+      i = (i + p->client_key_hash_step) % p->client_key_hash_size;
+    }
+    p->client_key_hash_table[i] = (struct userlist_cookie *) ck;
+    ++p->client_key_cur_fill;
+  }
+
   return 0;
 }
 
 int
-userlist_cookie_hash_del(struct userlist_list *p,
-                         const struct userlist_cookie *ck)
+userlist_cookie_hash_del(
+        struct userlist_list *p,
+        const struct userlist_cookie *ck)
 {
   int i;
   int rehash_count = 0;
