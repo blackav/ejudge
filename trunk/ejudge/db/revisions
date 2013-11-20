@@ -8257,3 +8257,7 @@ userlist.c 7600 0 5372066
 userlist.c 7602 0 5494456
 userlist_xml.c 7602 0 5348841
 plugins/mysql-userlist/uldb_mysql.c 7603 0 12915345
+uldb_plugin.h 7606 0 994637
+userlist-server.c 7606 0 27119928
+uldb_plugin_xml.c 7606 0 9813284
+plugins/mysql-userlist/uldb_mysql.c 7605 0 13068523
