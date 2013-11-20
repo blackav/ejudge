@@ -75,6 +75,7 @@ static int
 get_cookie_func(
         void *data,
         ej_cookie_t value,
+        ej_cookie_t client_key,
         const struct userlist_cookie **p_cookie);
 static int
 new_cookie_func(
@@ -487,6 +488,22 @@ get_next_user_id_func(
         int user_id,
         const unsigned char *filter,
         int *p_user_id);
+static int
+new_cookie_2_func(
+        void *,
+        int user_id,
+        const ej_ip_t *pip,
+        int ssl_flag,
+        ej_cookie_t cookie,
+        ej_cookie_t client_key,
+        time_t,
+        int contest_id,
+        int locale_id,
+        int priv_level,
+        int role,
+        int recovery,
+        int team_login,
+        const struct userlist_cookie **);
 
 /*
  * Local variables:

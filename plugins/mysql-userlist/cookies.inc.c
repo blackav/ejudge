@@ -83,7 +83,7 @@ do_remove_cookie_from_pool(
   }
 
 
-  // remove c from the tail of the list
+  // remove c from the list
   UNLINK_FROM_LIST(cntr, cache->first, cache->last, prev, next);
   userlist_free(&cntr->cookie->b); cntr->cookie = 0;
   xfree(cntr);
@@ -148,6 +148,12 @@ allocate_cookie_on_pool(
   while (cache->hash[h])
     h = (h + 1) & (COOKIES_POOL_SIZE - 1);
   cache->hash[h] = cntr;
+  if (c->client_key) {
+    h = c->client_key & (COOKIES_POOL_SIZE - 1);
+    while (cache->client_key_hash[h])
+      h = (h + 1) & (COOKIES_POOL_SIZE - 1);
+    cache->client_key_hash[h] = cntr;
+  }
   return c;
 }
 
@@ -227,8 +233,10 @@ static int
 fetch_cookie(
         struct uldb_mysql_state *state,
         ej_cookie_t val,
+        ej_cookie_t client_key,
         struct userlist_cookie **p_c)
 {
+  unsigned char cookie_buf[64];
   unsigned char cmdbuf[1024];
   int cmdlen;
   struct userlist_cookie *c = 0;
@@ -237,8 +245,10 @@ fetch_cookie(
 
   if (p_c) *p_c = 0;
   snprintf(cmdbuf, sizeof(cmdbuf),
-           "SELECT * FROM %scookies WHERE cookie = '%016llx' ;",
-           md->table_prefix, val);
+           "SELECT * FROM %scookies WHERE cookie = '%s' ;",
+           md->table_prefix,
+           xml_unparse_full_cookie(cookie_buf, sizeof(cookie_buf),
+                                   &val, &client_key));
   cmdlen = strlen(cmdbuf);
   if (mi->simple_query(md, cmdbuf, cmdlen) < 0) goto fail;
   md->field_count = mysql_field_count(md->conn);
@@ -291,6 +301,5 @@ drop_cookie_cache(struct uldb_mysql_state *state)
 /*
  * Local variables:
  *  compile-command: "make -C ../.."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "MYSQL")
  * End:
  */
