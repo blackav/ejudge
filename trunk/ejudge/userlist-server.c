@@ -559,7 +559,7 @@ link_client_state(struct client_state *p)
 #define default_get_login(a) dflt_iface->get_login(uldb_default->data, a)
 #define default_new_user(a,b,c,d,e,f,g,h,i,j,k,l,m) dflt_iface->new_user(uldb_default->data, a, b, c, d, e, f, g, h, i, j, k, l, m)
 #define default_remove_user(a) dflt_iface->remove_user(uldb_default->data, a)
-#define default_get_cookie(a, b) dflt_iface->get_cookie(uldb_default->data, a, b)
+#define default_get_cookie(a, b, c) dflt_iface->get_cookie(uldb_default->data, a, b, c)
 #define default_new_cookie(a, b, c, d, e, f, g, h, i, j, k, l) dflt_iface->new_cookie(uldb_default->data, a, b, c, d, e, f, g, h, i, j, k, l)
 #define default_remove_cookie(a) dflt_iface->remove_cookie(uldb_default->data, a)
 #define default_remove_user_cookies(a) dflt_iface->remove_user_cookies(uldb_default->data, a)
@@ -611,6 +611,7 @@ link_client_state(struct client_state *p)
 #define default_get_user_count(a, b, c, d) dflt_iface->get_user_count(uldb_default->data, a, b, c, d)
 #define default_get_group_iterator_2(a, b, c) dflt_iface->get_group_iterator_2(uldb_default->data, a, b, c)
 #define default_get_group_count(a, b) dflt_iface->get_group_count(uldb_default->data, a, b)
+#define default_new_cookie_2(a, b, c, d, e, f, g, h, i, j, k, l, m) dflt_iface->new_cookie(uldb_default->data, a, b, c, d, e, f, g, h, i, j, k, l, m)
 
 static void
 update_all_user_contests(int user_id)
@@ -2445,7 +2446,7 @@ cmd_recover_password_2(struct client_state *p,
     return;
   }
 
-  if (default_get_cookie(data->cookie, &cookie) < 0 || !cookie) {
+  if (default_get_cookie(data->cookie, 0, &cookie) < 0 || !cookie) {
     err("%s -> no such cookie", logbuf);
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
@@ -3762,7 +3763,7 @@ cmd_check_cookie(struct client_state *p,
   }
 
   rdtscll(tsc1);
-  if (default_get_cookie(data->cookie, &cookie) < 0 || !cookie) {
+  if (default_get_cookie(data->cookie, data->client_key, &cookie) < 0 || !cookie) {
     err("%s -> no such cookie", logbuf);
     send_reply(p, -ULS_ERR_NO_COOKIE);
     return;
@@ -3907,7 +3908,7 @@ cmd_team_check_cookie(
   }
 
   rdtscll(tsc1);
-  if (default_get_cookie(data->cookie, &cookie) < 0 || !cookie) {
+  if (default_get_cookie(data->cookie, data->client_key, &cookie) < 0 || !cookie) {
     err("%s -> no such cookie", logbuf);
     send_reply(p, -ULS_ERR_NO_COOKIE);
     return;
@@ -4076,7 +4077,7 @@ cmd_priv_check_cookie(struct client_state *p,
   */
 
   rdtscll(tsc1);
-  if (default_get_cookie(data->cookie, &cookie) < 0 || !cookie) {
+  if (default_get_cookie(data->cookie, data->client_key, &cookie) < 0 || !cookie) {
     err("%s -> no such cookie", logbuf);
     send_reply(p, -ULS_ERR_NO_COOKIE);
     return;
@@ -4266,7 +4267,7 @@ cmd_priv_cookie_login(struct client_state *p,
   else priv_level = PRIV_LEVEL_JUDGE;
 
   rdtscll(tsc1);
-  if (default_get_cookie(data->cookie, &cookie) < 0 || !cookie) {
+  if (default_get_cookie(data->cookie, 0 /*data->client_key*/, &cookie) < 0 || !cookie) {
     err("%s -> no such cookie", logbuf);
     send_reply(p, -ULS_ERR_NO_COOKIE);
     return;
@@ -4446,7 +4447,7 @@ cmd_do_logout(struct client_state *p,
   }
   */
 
-  if (default_get_cookie(data->cookie, &cookie) < 0 || !cookie) {
+  if (default_get_cookie(data->cookie, 0 /* data->client_key */, &cookie) < 0 || !cookie) {
     err("%s -> cookie not found", logbuf);
     send_reply(p, ULS_OK);
     return;
@@ -6964,7 +6965,7 @@ cmd_delete_cookie(
   if (!data->cookie) {
     default_remove_user_cookies(data->user_id);
   } else {
-    if (default_get_cookie(data->cookie, &c) < 0) {
+    if (default_get_cookie(data->cookie, 0 /* data->client_key */, &c) < 0) {
       err("%s -> no such cookie", logbuf);
       send_reply(p, -ULS_ERR_NO_COOKIE);
       return;
@@ -7482,7 +7483,7 @@ cmd_is_valid_cookie(struct client_state *p,
   if (is_admin(p, "IS_VALID_COOKIE") < 0) return;
   if (is_db_capable(p, OPCAP_MAP_CONTEST, "IS_VALID_COOKIE") < 0) return;
 
-  if (default_get_cookie(data->cookie, &c) < 0 || !c) {
+  if (default_get_cookie(data->cookie, 0, /* data->client_key */ &c) < 0 || !c) {
     send_reply(p, -ULS_ERR_NO_COOKIE);
     return;
   }
@@ -7858,7 +7859,7 @@ cmd_get_cookie(struct client_state *p,
   */
 
   rdtscll(tsc1);
-  if (default_get_cookie(data->cookie, &cookie) < 0 || !cookie)
+  if (default_get_cookie(data->cookie, data->client_key, &cookie) < 0 || !cookie)
     FAIL(ULS_ERR_NO_COOKIE, "no such cookie");
   rdtscll(tsc2);
   if (cpu_frequency > 0) {
@@ -7997,7 +7998,7 @@ cmd_set_cookie(
 
   if (is_judge(p, logbuf) < 0) return;
 
-  if (default_get_cookie(data->cookie, &cookie) < 0 || !cookie) {
+  if (default_get_cookie(data->cookie, 0 /* data->client_key */, &cookie) < 0 || !cookie) {
     err("%s -> no such cookie", logbuf);
     send_reply(p, -ULS_ERR_NO_COOKIE);
     return;
