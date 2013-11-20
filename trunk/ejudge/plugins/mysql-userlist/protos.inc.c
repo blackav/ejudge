@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -24,6 +24,7 @@ static int
 fetch_cookie(
         struct uldb_mysql_state *state,
         ej_cookie_t val,
+        ej_cookie_t client_key,
         struct userlist_cookie **p_c);
 static void
 unparse_cookie(
@@ -161,6 +162,5 @@ remove_member_from_pool_by_uid(
 /*
  * Local variables:
  *  compile-command: "make -C ../.."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "MYSQL")
  * End:
  */

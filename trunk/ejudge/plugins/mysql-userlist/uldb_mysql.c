@@ -240,6 +240,8 @@ struct uldb_plugin_iface plugin_uldb_mysql =
   get_prev_user_id_func,
   // get the next user
   get_next_user_id_func,
+  // find a cookie (128 bit)
+  new_cookie_2_func,
 };
 
 // the size of the cookies pool, must be power of 2
@@ -1177,17 +1179,19 @@ static int
 get_cookie_func(
         void *data,
         ej_cookie_t value,
+        ej_cookie_t client_key,
         const struct userlist_cookie **p_cookie)
 {
   struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
   struct userlist_cookie *c;
 
   if (state->cache_queries && (c = get_cookie_from_pool(state, value))) {
+    if (c->client_key != client_key) return -1;
     *p_cookie = c;
     return 0;
   }
 
-  if (fetch_cookie(state, value, &c) <= 0) return -1;
+  if (fetch_cookie(state, value, client_key, &c) <= 0) return -1;
   if (p_cookie) *p_cookie = c;
   return 0;
 }
@@ -1269,7 +1273,77 @@ new_cookie_func(
   close_memstream(cmd_f); cmd_f = 0;
   if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0;
-  if (fetch_cookie(state, cookie, &c) < 0) goto fail;
+  if (fetch_cookie(state, cookie, 0, &c) < 0) goto fail;
+  if (p_cookie) *p_cookie = c;
+  return 0;
+
+ fail:
+  if (cmd_f) fclose(cmd_f);
+  xfree(cmd_t);
+  return -1;
+}
+
+static int
+new_cookie_2_func(
+        void *data,
+        int user_id,
+        const ej_ip_t *pip,
+        int ssl_flag,
+        ej_cookie_t cookie,
+        ej_cookie_t client_key,
+        time_t expire,
+        int contest_id,
+        int locale_id,
+        int priv_level,
+        int role,
+        int recovery,
+        int team_login,
+        const struct userlist_cookie **p_cookie)
+{
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+  FILE *cmd_f = 0;
+  char *cmd_t = 0;
+  size_t cmd_z = 0;
+  struct userlist_cookie *c;
+  struct userlist_cookie newc;
+  int r;
+
+  if (cookie) {
+    if (is_unique_cookie(state, cookie) <= 0) return -1;
+  } else {
+    do {
+      cookie = random_u64();
+    } while (!(r = is_unique_cookie(state, cookie)));
+    if (r < 0) return -1;
+  }
+  if (!client_key) {
+    client_key = random_u64();
+  }
+  if (!expire) expire = time(0) + 24 * 60 * 60;
+
+  ASSERT(cookie != 0);
+  memset(&newc, 0, sizeof(newc));
+  newc.user_id = user_id;
+  newc.ip = *pip;
+  newc.ssl = ssl_flag;
+  newc.cookie = cookie;
+  newc.client_key = client_key;
+  newc.expire = expire;
+  newc.contest_id = contest_id;
+  newc.locale_id = locale_id;
+  newc.priv_level = priv_level;
+  newc.role = role;
+  newc.recovery = recovery;
+  newc.team_login = team_login;
+
+  cmd_f = open_memstream(&cmd_t, &cmd_z);
+  fprintf(cmd_f, "INSERT INTO %scookies VALUES ( ", state->md->table_prefix);
+  unparse_cookie(state, cmd_f, &newc);
+  fprintf(cmd_f, " ) ;");
+  close_memstream(cmd_f); cmd_f = 0;
+  if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
+  xfree(cmd_t); cmd_t = 0;
+  if (fetch_cookie(state, cookie, 0, &c) < 0) goto fail;
   if (p_cookie) *p_cookie = c;
   return 0;
 
@@ -1740,7 +1814,8 @@ get_user_info_5_func(
     u->cookies->first_down = u->cookies->last_down = 0;
   }
   for (i = 0; i < cookie_count; i++) {
-    if (fetch_cookie(state, cookies[i], &cc) < 0) goto fail;
+    // FIXME: this is wrong...
+    if (fetch_cookie(state, cookies[i], 0LL, &cc) < 0) goto fail;
     userlist_attach_cookie(u, cc);
   }
 
