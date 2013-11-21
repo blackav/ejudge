@@ -504,6 +504,11 @@ new_cookie_2_func(
         int recovery,
         int team_login,
         const struct userlist_cookie **);
+static int
+get_client_key_func(
+        void *data,
+        ej_cookie_t client_key,
+        const struct userlist_cookie **p_cookie);
 
 /*
  * Local variables:
