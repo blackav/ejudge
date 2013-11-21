@@ -263,6 +263,10 @@ struct uldb_plugin_iface
                       int priv_level,
                       int role, int recovery, int team_login,
                       const struct userlist_cookie **);
+  // find a client key, returns any cookie which matches the given client_key
+  int (*get_client_key)(void *,
+                        ej_cookie_t,
+                        const struct userlist_cookie **);
 };
 
 /* default plugin: compiled into userlist-server */
