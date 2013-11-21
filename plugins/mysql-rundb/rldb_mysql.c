@@ -799,7 +799,7 @@ get_insert_run_id(
   re->run_id = run_id;
   re->time = create_time;
   re->nsec = create_nsec;
-  re->user_id = user_id;
+  //re->user_id = user_id;
   re->status = RUN_EMPTY;
 
   memset(&ri, 0, sizeof(ri));
@@ -809,7 +809,7 @@ get_insert_run_id(
   ri.create_time = create_time;
   ri.create_nsec = create_nsec;
   ri.status = RUN_EMPTY;
-  ri.user_id = user_id;
+  //ri.user_id = user_id;
   ri.last_change_time = curtime.tv_sec;
   ri.last_change_nsec = curtime.tv_usec * 1000;
 
