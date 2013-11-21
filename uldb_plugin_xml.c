@@ -243,6 +243,11 @@ new_cookie_2_func(
         int,
         int,
         const struct userlist_cookie **);
+static int
+get_client_key_func(
+        void *data,
+        ej_cookie_t client_key,
+        const struct userlist_cookie **p_c);
 
 struct uldb_plugin_iface uldb_plugin_xml =
 {
@@ -351,6 +356,7 @@ struct uldb_plugin_iface uldb_plugin_xml =
   get_prev_user_id_func,
   get_next_user_id_func,
   new_cookie_2_func,
+  get_client_key_func,
 };
 
 struct uldb_xml_state
@@ -4282,6 +4288,31 @@ get_next_user_id_func(
 
   if (p_user_id) *p_user_id = user_id;
   return 0;
+}
+
+static int
+get_client_key_func(
+        void *data,
+        ej_cookie_t client_key,
+        const struct userlist_cookie **p_cookie)
+{
+  struct uldb_xml_state *state = (struct uldb_xml_state*) data;
+  struct userlist_list *ul = state->userlist;
+  const struct userlist_cookie *c = 0;
+
+  if (!ul->client_key_hash_table) return -1;
+  int i = client_key % ul->client_key_hash_size;
+  while ((c = ul->client_key_hash_table[i]) && c->client_key != client_key) {
+    i = (i + ul->client_key_hash_step) % ul->client_key_hash_size;
+  }
+
+  if (c) {
+    if (p_cookie) *p_cookie = c;
+    return 0;
+  } else {
+    if (p_cookie) *p_cookie = 0;
+    return -1;
+  }
 }
 
 /*
