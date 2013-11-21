@@ -19,7 +19,6 @@ struct cookies_container
 {
   struct cookies_container *prev, *next;
   struct userlist_cookie *cookie;
-  unsigned long long value;
 };
 
 static void
@@ -31,8 +30,9 @@ do_remove_cookie_from_pool(
   int i, j, h;
 
   if (!cache || !cntr) return;
+  struct userlist_cookie *cookie = cntr->cookie;
 
-  h = cntr->value & (COOKIES_POOL_SIZE - 1);
+  h = cookie->cookie & (COOKIES_POOL_SIZE - 1);
   i = 0;
   while (cache->hash[h]) {
     h = (h + 1) & (COOKIES_POOL_SIZE - 1);
@@ -40,7 +40,7 @@ do_remove_cookie_from_pool(
   }
   XALLOCAZ(v, i + 1);
   j = 0;
-  h = cntr->value & (COOKIES_POOL_SIZE - 1);
+  h = cookie->cookie & (COOKIES_POOL_SIZE - 1);
   while (cache->hash[h]) {
     if (cache->hash[h] != cntr) {
       v[j++] = cache->hash[h];
@@ -50,13 +50,12 @@ do_remove_cookie_from_pool(
   }
   // rehash the collected pointers
   for (i = 0; i < j; i++) {
-    h = v[i]->value & (COOKIES_POOL_SIZE - 1);
+    h = v[i]->cookie->cookie & (COOKIES_POOL_SIZE - 1);
     while (cache->hash[h])
       h = (h + 1) & (COOKIES_POOL_SIZE - 1);
     cache->hash[h] = v[i];
   }
 
-  struct userlist_cookie *cookie = cntr->cookie;
   if (cookie->client_key != 0) {
     h = cookie->client_key & (COOKIES_POOL_SIZE - 1);
     i = 0;
@@ -100,9 +99,28 @@ get_cookie_from_pool(
   struct cookies_cache *cache = &state->cookies;
 
   h = val & (COOKIES_POOL_SIZE - 1);
-  while ((cntr = cache->hash[h]) && cntr->value != val)
+  while ((cntr = cache->hash[h]) && cntr->cookie->cookie != val)
     h = (h + 1) & (COOKIES_POOL_SIZE - 1);
-  if ((cntr = cache->hash[h]) && cntr->value == val) {
+  if ((cntr = cache->hash[h]) && cntr->cookie->cookie == val) {
+    MOVE_TO_FRONT(cntr, cache->first, cache->last, prev, next);
+    return cntr->cookie;
+  }
+  return 0;
+}
+
+static struct userlist_cookie *
+get_client_key_from_pool(
+        struct uldb_mysql_state *state,
+        unsigned long long client_key)
+{
+  int h;
+  struct cookies_container *cntr;
+  struct cookies_cache *cache = &state->cookies;
+
+  h = client_key & (COOKIES_POOL_SIZE - 1);
+  while ((cntr = cache->client_key_hash[h]) && cntr->cookie->client_key != client_key)
+    h = (h + 1) & (COOKIES_POOL_SIZE - 1);
+  if ((cntr = cache->client_key_hash[h]) && cntr->cookie->client_key == client_key) {
     MOVE_TO_FRONT(cntr, cache->first, cache->last, prev, next);
     return cntr->cookie;
   }
@@ -112,21 +130,20 @@ get_cookie_from_pool(
 static struct userlist_cookie *
 allocate_cookie_on_pool(
         struct uldb_mysql_state *state,
-        unsigned long long val)
+        const struct userlist_cookie *in_c)
 {
   int h;
   struct cookies_container *cntr;
   struct userlist_cookie *c;
   struct cookies_cache *cache = &state->cookies;
 
-  h = val & (COOKIES_POOL_SIZE - 1);
-  while ((cntr = cache->hash[h]) && cntr->value != val)
+  h = in_c->cookie & (COOKIES_POOL_SIZE - 1);
+  while ((cntr = cache->hash[h]) && cntr->cookie->cookie != in_c->cookie)
     h = (h + 1) & (COOKIES_POOL_SIZE - 1);
-  if ((cntr = cache->hash[h]) && cntr->value == val) {
+  if ((cntr = cache->hash[h]) && cntr->cookie->cookie == in_c->cookie) {
     c = cntr->cookie;
     ASSERT(c);
     userlist_elem_free_data(&c->b);
-    c->cookie = val;
 
     MOVE_TO_FRONT(cntr, cache->first, cache->last, prev, next);
     return c;
@@ -139,12 +156,23 @@ allocate_cookie_on_pool(
   // allocate new entry
   XCALLOC(cntr, 1);
   c = (struct userlist_cookie*)userlist_node_alloc(USERLIST_T_COOKIE);
+  memcpy(&c->ip, &in_c->ip, sizeof(c->ip));
+  c->cookie = in_c->cookie;
+  c->client_key = in_c->client_key;
+  c->expire = in_c->expire;
+  c->user_id = in_c->user_id;
+  c->ssl = in_c->ssl;
+  c->contest_id = in_c->contest_id;
+  c->locale_id = in_c->locale_id;
+  c->priv_level = in_c->priv_level;
+  c->role = in_c->role;
+  c->recovery = in_c->recovery;
+  c->team_login = in_c->team_login;
+
   cntr->cookie = c;
-  c->cookie = val;
-  cntr->value = val;
   cache->count++;
   LINK_FIRST(cntr, cache->first, cache->last, prev, next);
-  h = val & (COOKIES_POOL_SIZE - 1);
+  h = in_c->cookie & (COOKIES_POOL_SIZE - 1);
   while (cache->hash[h])
     h = (h + 1) & (COOKIES_POOL_SIZE - 1);
   cache->hash[h] = cntr;
@@ -169,10 +197,10 @@ remove_cookie_from_pool(
   if (!state || !val) return;
 
   h = val & (COOKIES_POOL_SIZE - 1);
-  while ((cntr = cache->hash[h]) && cntr->value != val)
+  while ((cntr = cache->hash[h]) && cntr->cookie->cookie != val)
     h = (h + 1) & (COOKIES_POOL_SIZE - 1);
   if (!(cntr = cache->hash[h])) return;
-  if (cntr->value != val) return;
+  if (cntr->cookie->cookie != val) return;
   do_remove_cookie_from_pool(cache, cntr);
 }
 
@@ -242,7 +270,9 @@ fetch_cookie(
   struct userlist_cookie *c = 0;
   struct common_mysql_iface *mi = state->mi;
   struct common_mysql_state *md = state->md;
+  struct userlist_cookie tmp_c;
 
+  memset(&tmp_c, 0, sizeof(tmp_c));
   if (p_c) *p_c = 0;
   snprintf(cmdbuf, sizeof(cmdbuf),
            "SELECT * FROM %scookies WHERE cookie = '%s' ;",
@@ -266,15 +296,14 @@ fetch_cookie(
   if (!(md->row = mysql_fetch_row(md->res)))
     db_error_no_data_fail(md);
   md->lengths = mysql_fetch_lengths(md->res);
-  if (!(c = allocate_cookie_on_pool(state, val))) goto fail;
-  if (parse_cookie(state, c) < 0) goto fail;
+  if (parse_cookie(state, &tmp_c) < 0) goto fail;
+  if (!(c = allocate_cookie_on_pool(state, &tmp_c))) goto fail;
   mi->free_res(md);
   if (p_c) *p_c = c;
   return 1;
 
  fail:
   mi->free_res(md);
-  remove_cookie_from_pool(state, val);
   return -1;
 }
 
@@ -296,6 +325,53 @@ drop_cookie_cache(struct uldb_mysql_state *state)
     q = p->next;
     do_remove_cookie_from_pool(&state->cookies, p);
   }
+}
+
+static int
+fetch_client_key(
+        struct uldb_mysql_state *state,
+        ej_cookie_t client_key,
+        struct userlist_cookie **p_c)
+{
+  unsigned char cmdbuf[1024];
+  int cmdlen;
+  struct userlist_cookie *c = 0;
+  struct common_mysql_iface *mi = state->mi;
+  struct common_mysql_state *md = state->md;
+  struct userlist_cookie tmp_c;
+
+  memset(&tmp_c, 0, sizeof(tmp_c));
+  if (p_c) *p_c = 0;
+  snprintf(cmdbuf, sizeof(cmdbuf),
+           "SELECT * FROM %scookies WHERE cookie LIKE('%%-%016llx') ;",
+           md->table_prefix,
+           client_key);
+  cmdlen = strlen(cmdbuf);
+  if (mi->simple_query(md, cmdbuf, cmdlen) < 0) goto fail;
+  md->field_count = mysql_field_count(md->conn);
+  if (md->field_count != COOKIE_WIDTH)
+    db_error_field_count_fail(md, COOKIE_WIDTH);
+  if (!(md->res = mysql_store_result(md->conn)))
+    db_error_fail(md);
+  md->row_count = mysql_num_rows(md->res);
+  if (md->row_count < 0) db_error_fail(md);
+  if (!md->row_count) {
+    mi->free_res(md);
+    return 0;
+  }
+  if (md->row_count > 1) goto fail;
+  if (!(md->row = mysql_fetch_row(md->res)))
+    db_error_no_data_fail(md);
+  md->lengths = mysql_fetch_lengths(md->res);
+  if (parse_cookie(state, &tmp_c) < 0) goto fail;
+  if (!(c = allocate_cookie_on_pool(state, &tmp_c))) goto fail;
+  mi->free_res(md);
+  if (p_c) *p_c = c;
+  return 1;
+
+ fail:
+  mi->free_res(md);
+  return -1;
 }
 
 /*
