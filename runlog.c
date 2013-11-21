@@ -501,6 +501,7 @@ run_add_record(
     memcpy(state->uuid_hash[uuid_hash_index].uuid, re.run_uuid, sizeof(re.run_uuid));
     state->uuid_hash_last_added_index = uuid_hash_index;
     state->uuid_hash_last_added_run_id = i;
+    ++state->uuid_hash_used;
   }
 
   return i;
@@ -527,6 +528,7 @@ run_undo_add_record(runlog_state_t state, int run_id)
     }
     state->uuid_hash_last_added_run_id = -1;
     state->uuid_hash_last_added_index = -1;
+    --state->uuid_hash_used;
   }
   return state->iface->undo_add_entry(state->cnts, run_id);
 }
@@ -1954,6 +1956,8 @@ runlog_check(
       memcpy(&te, e, sizeof(te));
       te.run_id = 0;
       te.status = 0;
+      te.time = 0;
+      te.nsec = 0;
       pp = (unsigned char *) &te;
       for (j = 0; j < sizeof(te) && !pp[j]; j++);
       if (j < sizeof(te)) {
