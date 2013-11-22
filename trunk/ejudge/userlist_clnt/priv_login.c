@@ -22,6 +22,7 @@ userlist_clnt_priv_login(
         struct userlist_clnt *clnt,
         int cmd,
         const ej_ip_t *origin_ip,
+        ej_cookie_t client_key,
         int ssl,
         int contest_id,
         int locale_id,
@@ -30,6 +31,7 @@ userlist_clnt_priv_login(
         unsigned char const *passwd,
         int *p_user_id,
         ej_cookie_t *p_cookie,
+        ej_cookie_t *p_client_key,
         int *p_priv_level,
         unsigned char **p_name)
 {
@@ -53,6 +55,7 @@ userlist_clnt_priv_login(
   if (origin_ip) {
     out->origin_ip = *origin_ip;
   }
+  out->client_key = client_key;
   out->ssl = ssl;
   out->contest_id = contest_id;
   out->locale_id = locale_id;
@@ -93,6 +96,7 @@ userlist_clnt_priv_login(
   }
   if (p_user_id) *p_user_id = in->user_id;
   if (p_cookie) *p_cookie = in->cookie;
+  if (p_client_key) *p_client_key = in->client_key;
   if (p_priv_level) *p_priv_level = in->priv_level;
   if (p_name) *p_name = xstrdup(name_ptr);
 

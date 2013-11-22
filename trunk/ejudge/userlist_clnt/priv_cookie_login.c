@@ -25,11 +25,13 @@ userlist_clnt_priv_cookie_login(
         int ssl,
         int contest_id,
         ej_cookie_t cookie,
+        ej_cookie_t client_key,
         int locale_id,
         int role,
         // output parameters
         int *p_user_id,
         ej_cookie_t *p_cookie,
+        ej_cookie_t *p_client_key,
         unsigned char **p_login,
         unsigned char **p_name)
 {
@@ -54,6 +56,7 @@ userlist_clnt_priv_cookie_login(
   out->ssl = ssl;
   out->contest_id = contest_id;
   out->cookie = cookie;
+  out->client_key = client_key;
   out->locale_id = locale_id;
   out->role = role;
   if ((r = userlist_clnt_send_packet(clnt, out_size, out)) < 0) return r;
@@ -88,6 +91,7 @@ userlist_clnt_priv_cookie_login(
   }
   if (p_user_id) *p_user_id = in->user_id;
   if (p_cookie) *p_cookie = in->cookie;
+  if (p_client_key) *p_client_key = in->client_key;
   if (p_login) *p_login = xstrdup(login_ptr);
   if (p_name) *p_name = xstrdup(name_ptr);
 

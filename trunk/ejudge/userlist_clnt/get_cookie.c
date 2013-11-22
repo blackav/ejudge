@@ -18,21 +18,23 @@
 #include "userlist_clnt/private.h"
 
 int
-userlist_clnt_get_cookie(struct userlist_clnt *clnt,
-                         int cmd,
-                         const ej_ip_t *origin_ip,
-                         int ssl,
-                         ej_cookie_t cookie,
-                         int *p_user_id,
-                         int *p_contest_id,
-                         int *p_locale_id,
-                         int *p_priv_level,
-                         int *p_role,
-                         int *p_team_login,
-                         int *p_reg_status,
-                         int *p_reg_flags,
-                         unsigned char **p_login,
-                         unsigned char **p_name)
+userlist_clnt_get_cookie(
+        struct userlist_clnt *clnt,
+        int cmd,
+        const ej_ip_t *origin_ip,
+        int ssl,
+        ej_cookie_t cookie,
+        ej_cookie_t client_key,
+        int *p_user_id,
+        int *p_contest_id,
+        int *p_locale_id,
+        int *p_priv_level,
+        int *p_role,
+        int *p_team_login,
+        int *p_reg_status,
+        int *p_reg_flags,
+        unsigned char **p_login,
+        unsigned char **p_name)
 {
   struct userlist_pk_check_cookie *out = 0;
   struct userlist_pk_login_ok *in = 0;
@@ -54,6 +56,7 @@ userlist_clnt_get_cookie(struct userlist_clnt *clnt,
   out->ssl = ssl;
   out->contest_id = 0;
   out->cookie = cookie;
+  out->client_key = client_key;
   out->priv_level = 0;
   if ((r = userlist_clnt_send_packet(clnt, out_size, out)) < 0) return r;
   if ((r = userlist_clnt_read_and_notify(clnt, &in_size, &void_in)) < 0)

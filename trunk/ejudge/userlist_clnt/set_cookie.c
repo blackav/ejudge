@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,10 +18,12 @@
 #include "userlist_clnt/private.h"
 
 int
-userlist_clnt_set_cookie(struct userlist_clnt *clnt,
-                         int cmd,
-                         ej_cookie_t cookie,
-                         int value)
+userlist_clnt_set_cookie(
+        struct userlist_clnt *clnt,
+        int cmd,
+        ej_cookie_t cookie,
+        ej_cookie_t client_key,
+        int value)
 {
   struct userlist_pk_edit_field *out = 0;
   struct userlist_packet *in = 0;
@@ -34,6 +36,7 @@ userlist_clnt_set_cookie(struct userlist_clnt *clnt,
   memset(out, 0, out_size);
   out->request_id = cmd;
   out->cookie = cookie;
+  out->client_key = client_key;
   out->serial = value;
   if ((r = userlist_clnt_send_packet(clnt, out_size, out)) < 0) return r;
   if ((r = userlist_clnt_read_and_notify(clnt, &in_size, &void_in)) < 0)
@@ -51,6 +54,5 @@ userlist_clnt_set_cookie(struct userlist_clnt *clnt,
 /*
  * Local variables:
  *  compile-command: "make -C .."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  * End:
  */

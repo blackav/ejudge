@@ -18,16 +18,18 @@
 #include "userlist_clnt/private.h"
 
 int
-userlist_clnt_get_uid_by_pid(struct userlist_clnt *clnt,
-                             int system_uid,
-                             int system_gid,
-                             int system_pid,
-                             int contest_id,
-                             int *p_uid,
-                             int *p_priv_level,
-                             ej_cookie_t *p_cookie,
-                             ej_ip_t *p_ip,
-                             int *p_ssl)
+userlist_clnt_get_uid_by_pid(
+        struct userlist_clnt *clnt,
+        int system_uid,
+        int system_gid,
+        int system_pid,
+        int contest_id,
+        int *p_uid,
+        int *p_priv_level,
+        ej_cookie_t *p_cookie,
+        ej_cookie_t *p_client_key,
+        ej_ip_t *p_ip,
+        int *p_ssl)
 {
   struct userlist_pk_get_uid_by_pid *out = 0;
   struct userlist_pk_uid *in = 0;
@@ -60,6 +62,7 @@ userlist_clnt_get_uid_by_pid(struct userlist_clnt *clnt,
   }
   if (p_uid) *p_uid = in->uid;
   if (p_cookie) *p_cookie = in->cookie;
+  if (p_client_key) *p_client_key = in->client_key;
   if (p_priv_level) *p_priv_level = in->priv_level;
   if (p_ip) *p_ip = in->ip;
   if (p_ssl) *p_ssl = in->ssl;
