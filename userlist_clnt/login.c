@@ -18,17 +18,20 @@
 #include "userlist_clnt/private.h"
 
 int
-userlist_clnt_login(struct userlist_clnt *clnt,
-                    int cmd,
-                    const ej_ip_t *origin_ip,
-                    int ssl,
-                    int contest_id,
-                    int locale_id,
-                    unsigned char const *login,
-                    unsigned char const *passwd,
-                    int *p_user_id,
-                    ej_cookie_t *p_cookie,
-                    unsigned char **p_name)
+userlist_clnt_login(
+        struct userlist_clnt *clnt,
+        int cmd,
+        const ej_ip_t *origin_ip,
+        ej_cookie_t client_key,
+        int ssl,
+        int contest_id,
+        int locale_id,
+        unsigned char const *login,
+        unsigned char const *passwd,
+        int *p_user_id,
+        ej_cookie_t *p_cookie,
+        ej_cookie_t *p_client_key,
+        unsigned char **p_name)
 {
   struct userlist_pk_do_login *out = 0;
   struct userlist_pk_login_ok *in = 0;
@@ -50,6 +53,7 @@ userlist_clnt_login(struct userlist_clnt *clnt,
   if (origin_ip) {
     out->origin_ip = *origin_ip;
   }
+  out->client_key = client_key;
   out->ssl = ssl;
   out->contest_id = contest_id;
   out->locale_id = locale_id;
@@ -97,6 +101,7 @@ userlist_clnt_login(struct userlist_clnt *clnt,
   }
   if (p_user_id) *p_user_id = in->user_id;
   if (p_cookie) *p_cookie = in->cookie;
+  if (p_client_key) *p_client_key = in->client_key;
   if (p_name) *p_name = xstrdup(name_ptr);
 
   r = in->reply_id;
