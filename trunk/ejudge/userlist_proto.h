@@ -224,6 +224,7 @@ struct userlist_pk_do_login
 {
   short         request_id;
   ej_ip_t       origin_ip;
+  ej_cookie_t   client_key;
   int           ssl;
   int           contest_id;
   signed char   locale_id;
@@ -254,6 +255,7 @@ struct userlist_pk_cookie_login
   int                contest_id;
   int                locale_id;
   ej_cookie_t        cookie;
+  ej_cookie_t        client_key;
   int                role;
 };
 
@@ -263,6 +265,7 @@ struct userlist_pk_do_logout
   ej_ip_t            origin_ip;
   int                ssl;
   ej_cookie_t        cookie;
+  ej_cookie_t        client_key;
 };
 
 struct userlist_pk_get_user_info
@@ -355,6 +358,7 @@ struct userlist_pk_edit_field
   int   serial;
   int   field;
   ej_cookie_t cookie;
+  ej_cookie_t client_key;
   int   value_len;
   unsigned char data[1];
 };
@@ -444,6 +448,7 @@ struct userlist_pk_login_ok
   short              reply_id;
   int                user_id;
   ej_cookie_t        cookie;
+  ej_cookie_t        client_key;
   int                contest_id;
   signed char        locale_id;
   unsigned char      priv_level;
@@ -476,6 +481,7 @@ struct userlist_pk_uid
   int   uid;
   int   priv_level;
   ej_cookie_t cookie;
+  ej_cookie_t client_key;
   ej_ip_t ip;
   int ssl;
 };
@@ -490,6 +496,7 @@ struct userlist_pk_uid_2
   int login_len;
   int name_len;
   ej_cookie_t cookie;
+  ej_cookie_t client_key;
   unsigned char data[2];
 };
 
