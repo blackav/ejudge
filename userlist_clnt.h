@@ -66,17 +66,20 @@ userlist_clnt_register_new_2(struct userlist_clnt *clnt,
                              unsigned char **p_passwd);
 
 int
-userlist_clnt_login(struct userlist_clnt *clnt,
-                    int cmd,
-                    const ej_ip_t *origin_ip,
-                    int ssl,
-                    int contest_id,
-                    int locale_id,
-                    unsigned char const *login,
-                    unsigned char const *passwd,
-                    int *p_user_id,
-                    ej_cookie_t *p_cookie,
-                    unsigned char **p_name);
+userlist_clnt_login(
+        struct userlist_clnt *clnt,
+        int cmd,
+        const ej_ip_t *origin_ip,
+        ej_cookie_t client_key,
+        int ssl,
+        int contest_id,
+        int locale_id,
+        unsigned char const *login,
+        unsigned char const *passwd,
+        int *p_user_id,
+        ej_cookie_t *p_cookie,
+        ej_cookie_t *p_client_key,
+        unsigned char **p_name);
 
 int
 userlist_clnt_lookup_user(struct userlist_clnt *clnt,
@@ -92,50 +95,58 @@ userlist_clnt_lookup_user_id(struct userlist_clnt *clnt,
                              unsigned char **p_name);
 
 int
-userlist_clnt_get_cookie(struct userlist_clnt *clnt,
-                         int cmd,
-                         const ej_ip_t *origin_ip,
-                         int ssl,
-                         ej_cookie_t cookie,
-                         int *p_user_id,
-                         int *p_contest_id,
-                         int *p_locale_id,
-                         int *p_priv_level,
-                         int *p_role,
-                         int *p_team_login,
-                         int *p_reg_status,
-                         int *p_reg_flags,
-                         unsigned char **p_login,
-                         unsigned char **p_name);
+userlist_clnt_get_cookie(
+        struct userlist_clnt *clnt,
+        int cmd,
+        const ej_ip_t *origin_ip,
+        int ssl,
+        ej_cookie_t cookie,
+        ej_cookie_t client_key,
+        int *p_user_id,
+        int *p_contest_id,
+        int *p_locale_id,
+        int *p_priv_level,
+        int *p_role,
+        int *p_team_login,
+        int *p_reg_status,
+        int *p_reg_flags,
+        unsigned char **p_login,
+        unsigned char **p_name);
 
 int
-userlist_clnt_set_cookie(struct userlist_clnt *clnt,
-                         int cmd,
-                         ej_cookie_t cookie,
-                         int value);
+userlist_clnt_set_cookie(
+        struct userlist_clnt *clnt,
+        int cmd,
+        ej_cookie_t cookie,
+        ej_cookie_t client_key,
+        int value);
 
 int
-userlist_clnt_lookup_cookie(struct userlist_clnt *clnt,
-                            const ej_ip_t *origin_ip,
-                            int ssl,
-                            ej_cookie_t cookie,
-                            int *p_user_id,
-                            unsigned char **p_login,
-                            unsigned char **p_name,
-                            int *p_locale_id,
-                            int *p_contest_id);
+userlist_clnt_lookup_cookie(
+        struct userlist_clnt *clnt,
+        const ej_ip_t *origin_ip,
+        int ssl,
+        ej_cookie_t cookie,
+        ej_cookie_t client_key,
+        int *p_user_id,
+        unsigned char **p_login,
+        unsigned char **p_name,
+        int *p_locale_id,
+        int *p_contest_id);
 
 int
-userlist_clnt_team_cookie(struct userlist_clnt *clnt,
-                          const ej_ip_t *origin_ip,
-                          int ssl,
-                          int contest_id,
-                          ej_cookie_t cookie,
-                          int *p_user_id,
-                          int *p_contest_id,
-                          int *p_locale_id,
-                          unsigned char **p_login,
-                          unsigned char **p_name);
+userlist_clnt_team_cookie(
+        struct userlist_clnt *clnt,
+        const ej_ip_t *origin_ip,
+        int ssl,
+        int contest_id,
+        ej_cookie_t cookie,
+        ej_cookie_t client_key,
+        int *p_user_id,
+        int *p_contest_id,
+        int *p_locale_id,
+        unsigned char **p_login,
+        unsigned char **p_name);
 
 int
 userlist_clnt_get_info(struct userlist_clnt *clnt, int cmd,
@@ -259,59 +270,73 @@ userlist_clnt_delete_field(
         int serial,
         int field);
 int
-userlist_clnt_delete_cookie(struct userlist_clnt *clnt,
-                            int user_id,
-                            int contest_id,
-                            ej_cookie_t cookie);
+userlist_clnt_delete_cookie(
+        struct userlist_clnt *clnt,
+        int user_id,
+        int contest_id,
+        ej_cookie_t cookie,
+        ej_cookie_t client_key);
 
-int userlist_clnt_create_user(
+int
+userlist_clnt_create_user(
         struct userlist_clnt *clnt,
         int cmd,
         const unsigned char *login,
         int *p_user_id);
+
 int userlist_clnt_create_member(struct userlist_clnt *clnt, int user_id,
                                 int contest_id, int role);
 int userlist_clnt_copy_user_info(struct userlist_clnt *clnt, int user_id,
                                  int cnts_from, int cnts_to);
 
-int userlist_clnt_get_uid_by_pid(struct userlist_clnt *clnt,
-                                 int system_uid,
-                                 int system_gid,
-                                 int system_pid,
-                                 int contest_id,
-                                 int *p_uid,
-                                 int *p_priv_level,
-                                 ej_cookie_t *p_cookie,
-                                 ej_ip_t *p_ip,
-                                 int *p_ssl);
+int
+userlist_clnt_get_uid_by_pid(
+        struct userlist_clnt *clnt,
+        int system_uid,
+        int system_gid,
+        int system_pid,
+        int contest_id,
+        int *p_uid,
+        int *p_priv_level,
+        ej_cookie_t *p_cookie,
+        ej_cookie_t *p_client_key,
+        ej_ip_t *p_ip,
+        int *p_ssl);
 
-int userlist_clnt_get_uid_by_pid_2(struct userlist_clnt *clnt,
-                                   int system_uid,
-                                   int system_gid,
-                                   int system_pid,
-                                   int contest_id,
-                                   int *p_uid,
-                                   int *p_priv_level,
-                                   ej_cookie_t *p_cookie,
-                                   ej_ip_t *p_ip,
-                                   int *p_ssl,
-                                   unsigned char **p_login,
-                                   unsigned char **p_name);
+int
+userlist_clnt_get_uid_by_pid_2(
+        struct userlist_clnt *clnt,
+        int system_uid,
+        int system_gid,
+        int system_pid,
+        int contest_id,
+        int *p_uid,
+        int *p_priv_level,
+        ej_cookie_t *p_cookie,
+        ej_cookie_t *p_client_key,
+        ej_ip_t *p_ip,
+        int *p_ssl,
+        unsigned char **p_login,
+        unsigned char **p_name);
 
-int userlist_clnt_priv_login(struct userlist_clnt *clnt,
-                             int cmd,
-                             const ej_ip_t *origin_ip,
-                             int ssl,
-                             int contest_id,
-                             int locale_id,
-                             //int priv_level,
-                             int role,
-                             unsigned char const *login,
-                             unsigned char const *passwd,
-                             int *p_user_id,
-                             ej_cookie_t *p_cookie,
-                             int *p_priv_level,
-                             unsigned char **p_name);
+int
+userlist_clnt_priv_login(
+        struct userlist_clnt *clnt,
+        int cmd,
+        const ej_ip_t *origin_ip,
+        ej_cookie_t client_key,
+        int ssl,
+        int contest_id,
+        int locale_id,
+        //int priv_level,
+        int role,
+        unsigned char const *login,
+        unsigned char const *passwd,
+        int *p_user_id,
+        ej_cookie_t *p_cookie,
+        ej_cookie_t *p_client_key,
+        int *p_priv_level,
+        unsigned char **p_name);
 
 int
 userlist_clnt_priv_cookie(
@@ -329,11 +354,14 @@ userlist_clnt_priv_cookie(
         unsigned char **p_login,
         unsigned char **p_name);
 
-int userlist_clnt_logout(struct userlist_clnt *clnt,
-                         int cmd,
-                         const ej_ip_t *origin_ip,
-                         int ssl,
-                         ej_cookie_t cookie);
+int
+userlist_clnt_logout(
+        struct userlist_clnt *clnt,
+        int cmd,
+        const ej_ip_t *origin_ip,
+        int ssl,
+        ej_cookie_t cookie,
+        ej_cookie_t client_key);
 
 int userlist_clnt_dump_database(struct userlist_clnt *clnt, int cmd,
                                 int contest_id, int out_fd, int html_flag);
@@ -366,18 +394,21 @@ userlist_clnt_recover_passwd_2(
 
 int userlist_clnt_control(struct userlist_clnt *clnt, int cmd);
 
-int userlist_clnt_priv_cookie_login(
+int
+userlist_clnt_priv_cookie_login(
         struct userlist_clnt *clnt,
         int cmd,
         const ej_ip_t *origin_ip,
         int ssl,
         int contest_id,
         ej_cookie_t cookie,
+        ej_cookie_t client_key,
         int locale_id,
         int role,
         // output parameters
         int *p_user_id,
         ej_cookie_t *p_cookie,
+        ej_cookie_t *p_client_key,
         unsigned char **p_login,
         unsigned char **p_name);
 
