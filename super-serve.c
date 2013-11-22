@@ -1013,7 +1013,10 @@ get_peer_local_user(struct client_state *p)
 
   r = userlist_clnt_get_uid_by_pid_2(userlist_clnt, p->peer_uid,
                                      p->peer_gid, p->peer_pid, 0,
-                                     &uid, &priv_level, &cookie, &ip, &ssl,
+                                     &uid, &priv_level,
+                                     &cookie,
+                                     NULL /* FIXME: p_client_key */,
+                                     &ip, &ssl,
                                      &login, &name);
   if (r < 0) {
     err("get_peer_local_user: %s", userlist_strerror(-r));

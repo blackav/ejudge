@@ -4211,9 +4211,10 @@ cmd_priv_check_cookie(struct client_state *p,
 }
 
 static void
-cmd_priv_cookie_login(struct client_state *p,
-                      int pkt_len,
-                      struct userlist_pk_cookie_login *data)
+cmd_priv_cookie_login(
+        struct client_state *p,
+        int pkt_len,
+        struct userlist_pk_cookie_login *data)
 {
   const struct contest_desc *cnts = 0;
   const struct userlist_user *u = 0;
@@ -4227,7 +4228,7 @@ cmd_priv_cookie_login(struct client_state *p,
   opcap_t caps;
   time_t current_time = time(0);
   ej_tsc_t tsc1, tsc2;
-  unsigned char logbuf[1024];
+  unsigned char logbuf[1024], cbuf[64];
   const unsigned char *name = 0;
 
   if (pkt_len != sizeof(*data)) {
@@ -4236,9 +4237,9 @@ cmd_priv_cookie_login(struct client_state *p,
   }
 
   snprintf(logbuf, sizeof(logbuf),
-           "PRIV_COOKIE_LOGIN: %s, %d, %d, %llx",
+           "PRIV_COOKIE_LOGIN: %s, %d, %d, %s",
            xml_unparse_ipv6(&data->origin_ip), data->ssl, data->contest_id,
-           data->cookie);
+           xml_unparse_full_cookie(cbuf, sizeof(cbuf), &data->cookie, &data->client_key));
 
   if (is_judge(p, logbuf) < 0) return;
 
@@ -4267,7 +4268,7 @@ cmd_priv_cookie_login(struct client_state *p,
   else priv_level = PRIV_LEVEL_JUDGE;
 
   rdtscll(tsc1);
-  if (default_get_cookie(data->cookie, 0 /*data->client_key*/, &cookie) < 0 || !cookie) {
+  if (default_get_cookie(data->cookie, data->client_key, &cookie) < 0 || !cookie) {
     err("%s -> no such cookie", logbuf);
     send_reply(p, -ULS_ERR_NO_COOKIE);
     return;
