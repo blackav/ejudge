@@ -796,9 +796,12 @@ cmd_login(
     return ns_html_err_ul_server_down(fout, phr, 0, 0);
 
   if ((r = userlist_clnt_login(ul_conn, ULS_CHECK_USER,
-                               &phr->ip, phr->ssl_flag, phr->contest_id,
+                               &phr->ip, 0 /* FIXME: client_key */,
+                               phr->ssl_flag, phr->contest_id,
                                phr->locale_id, phr->login, password,
-                               &phr->user_id, &phr->session_id,
+                               &phr->user_id,
+                               &phr->session_id,
+                               NULL /* FIXME: client_key */,
                                &phr->name)) < 0) {
     switch (-r) {
     case ULS_ERR_INVALID_LOGIN:
@@ -957,7 +960,9 @@ change_locale(FILE *fout, struct http_request_info *phr)
     // FIXME: report errors?
     if (ns_open_ul_connection(phr->fw_state) >= 0) {
       userlist_clnt_set_cookie(ul_conn, ULS_SET_COOKIE_LOCALE,
-                               phr->session_id, phr->locale_id);
+                               phr->session_id,
+                               0 /* FIXME: client_key */,
+                               phr->locale_id);
     }
 
     //fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\nLocation: %s?SID=%016llx", EJUDGE_CHARSET, phr->self_url,
@@ -3124,7 +3129,8 @@ logout(
   if (ns_open_ul_connection(phr->fw_state) < 0)
     return ns_html_err_ul_server_down(fout, phr, 0, 0);
   userlist_clnt_delete_cookie(ul_conn, phr->user_id, phr->contest_id,
-                              phr->session_id);
+                              phr->session_id,
+                              0 /* FIXME: client_key */);
   ns_remove_session(phr->session_id);
   snprintf(urlbuf, sizeof(urlbuf),
            "%s?contest_id=%d&locale_id=%d",
@@ -3280,6 +3286,7 @@ ns_register_pages(FILE *fout, struct http_request_info *phr)
   if ((r = userlist_clnt_get_cookie(ul_conn, ULS_GET_COOKIE,
                                     &phr->ip, phr->ssl_flag,
                                     phr->session_id,
+                                    0 /* FIXME: client_key */,
                                     &phr->user_id, &phr->contest_id,
                                     &phr->locale_id, 0, &phr->role, &is_team,
                                     &phr->reg_status, &phr->reg_flags,
@@ -3369,6 +3376,5 @@ ns_register_pages(FILE *fout, struct http_request_info *phr)
 /*
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")
  * End:
  */

@@ -1261,10 +1261,11 @@ privileged_page_cookie_login(FILE *fout,
   xfree(phr->name); phr->name = 0;
   if ((r = userlist_clnt_priv_cookie_login(ul_conn, ULS_PRIV_COOKIE_LOGIN,
                                            &phr->ip, phr->ssl_flag,
-                                           phr->contest_id, phr->session_id,
+                                           phr->contest_id, phr->session_id, 0 /* FIXME: client_key */,
                                            phr->locale_id,
                                            phr->role, &phr->user_id,
-                                           &phr->session_id, &phr->login,
+                                           &phr->session_id, NULL /* FIXME: client_key */,
+                                           &phr->login,
                                            &phr->name)) < 0) {
     switch (-r) {
     case ULS_ERR_BAD_CONTEST_ID:
@@ -1354,9 +1355,11 @@ privileged_page_login(FILE *fout,
   if (ns_open_ul_connection(phr->fw_state) < 0)
     return ns_html_err_ul_server_down(fout, phr, 1, 0);
   if ((r = userlist_clnt_priv_login(ul_conn, ULS_PRIV_CHECK_USER,
-                                    &phr->ip, phr->ssl_flag, phr->contest_id,
+                                    &phr->ip, 0 /* FIXME: client_key */,
+                                    phr->ssl_flag, phr->contest_id,
                                     phr->locale_id, phr->role, login,
-                                    password, &phr->user_id, &phr->session_id,
+                                    password, &phr->user_id,
+                                    &phr->session_id, NULL /* FIXME: client_key */,
                                     0, &phr->name)) < 0) {
     switch (-r) {
     case ULS_ERR_INVALID_LOGIN:
@@ -2483,6 +2486,7 @@ priv_change_language(FILE *fout,
   }
   if ((r = userlist_clnt_set_cookie(ul_conn, ULS_SET_COOKIE_LOCALE,
                                     phr->session_id,
+                                    0 /* FIXME: client_key */,
                                     new_locale_id)) < 0) {
     ns_error(log_f, NEW_SRV_ERR_SESSION_UPDATE_FAILED, userlist_strerror(-r));
   }
@@ -7941,7 +7945,9 @@ priv_logout(FILE *fout,
 
   if (ns_open_ul_connection(phr->fw_state) < 0)
     return ns_html_err_ul_server_down(fout, phr, 0, 0);
-  userlist_clnt_delete_cookie(ul_conn, phr->user_id, phr->contest_id,
+  userlist_clnt_delete_cookie(ul_conn, phr->user_id,
+                              phr->contest_id,
+                              0 /* FIXME: client_key */,
                               phr->session_id);
   ns_remove_session(phr->session_id);
   snprintf(urlbuf, sizeof(urlbuf),
@@ -9410,6 +9416,7 @@ privileged_entry_point(
   if ((r = userlist_clnt_get_cookie(ul_conn, ULS_PRIV_GET_COOKIE,
                                     &phr->ip, phr->ssl_flag,
                                     phr->session_id,
+                                    0 /* FIXME: client_key */,
                                     &phr->user_id, &phr->contest_id,
                                     &phr->locale_id, 0, &phr->role, 0, 0, 0,
                                     &phr->login, &phr->name)) < 0) {
@@ -10162,9 +10169,11 @@ unprivileged_page_login(FILE *fout, struct http_request_info *phr,
     return ns_html_err_ul_server_down(fout, phr, 0, 0);
 
   if ((r = userlist_clnt_login(ul_conn, ULS_TEAM_CHECK_USER,
-                               &phr->ip, phr->ssl_flag, phr->contest_id,
+                               &phr->ip, 0 /* FIXME: client_key */,
+                               phr->ssl_flag, phr->contest_id,
                                phr->locale_id, login, password,
-                               &phr->user_id, &phr->session_id,
+                               &phr->user_id,
+                               &phr->session_id, NULL /* FIXME: client_key */,
                                &phr->name)) < 0) {
     switch (-r) {
     case ULS_ERR_INVALID_LOGIN:
@@ -10218,6 +10227,7 @@ unpriv_change_language(FILE *fout,
   }
   if ((r = userlist_clnt_set_cookie(ul_conn, ULS_SET_COOKIE_LOCALE,
                                     phr->session_id,
+                                    0 /* FIXME: client_key */,
                                     new_locale_id)) < 0) {
     fprintf(log_f, "set_cookie failed: %s", userlist_strerror(-r));
   }
@@ -14712,7 +14722,8 @@ unpriv_logout(FILE *fout,
   if (ns_open_ul_connection(phr->fw_state) < 0)
     return ns_html_err_ul_server_down(fout, phr, 0, 0);
   userlist_clnt_delete_cookie(ul_conn, phr->user_id, phr->contest_id,
-                              phr->session_id);
+                              phr->session_id,
+                              0 /* FIXME: client_key */);
   ns_remove_session(phr->session_id);
   snprintf(urlbuf, sizeof(urlbuf),
            "%s?contest_id=%d&locale_id=%d",
@@ -15208,6 +15219,7 @@ unprivileged_entry_point(
   if ((r = userlist_clnt_get_cookie(ul_conn, ULS_TEAM_GET_COOKIE,
                                     &phr->ip, phr->ssl_flag,
                                     phr->session_id,
+                                    0 /* FIXME: client_key */,
                                     &phr->user_id, &phr->contest_id,
                                     &phr->locale_id, 0, &phr->role, 0, 0, 0,
                                     &phr->login, &phr->name)) < 0) {

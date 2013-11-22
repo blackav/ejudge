@@ -681,7 +681,10 @@ teamdb_get_uid_by_pid(
   if (open_connection(&state->old, state->contest_id) < 0) return -1;
   r = userlist_clnt_get_uid_by_pid(state->old.server_conn, system_uid,
                                    system_gid, system_pid, state->contest_id,
-                                   p_uid, p_priv_level, p_cookie, p_ip, p_ssl);
+                                   p_uid, p_priv_level,
+                                   p_cookie,
+                                   NULL /* FIXME: client_key */,
+                                   p_ip, p_ssl);
   if (r < 0) return -1;
   return r;
 }

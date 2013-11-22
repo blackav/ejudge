@@ -767,7 +767,9 @@ authentificate(void)
   if (!user_login || !user_password) display_login_page();
 
   open_userlist_server();
-  r = userlist_clnt_priv_login(userlist_conn, ULS_PRIV_LOGIN, &user_ip, ssl_flag,
+  r = userlist_clnt_priv_login(userlist_conn, ULS_PRIV_LOGIN, &user_ip,
+                               0 /* FIXME: client_key */,
+                               ssl_flag,
                                0, /* contest_id */
                                0, /* locale_id */
                                USER_ROLE_ADMIN,
@@ -775,6 +777,7 @@ authentificate(void)
                                user_password,
                                &user_id,
                                &session_id,
+                               NULL /* FIXME: client_key */,
                                &priv_level,
                                &user_name);
   if (r < 0) {
