@@ -27,6 +27,8 @@ typedef ruint32_t ej_ip4_t;      /* IP address as stored in files */
 typedef unsigned long long ej_cookie_t;   /* cookie */
 typedef unsigned long long ej_tsc_t; /* timestamp counter type */
 
+#define NULL_CLIENT_KEY (0ULL)
+
 /** IPv6-ready IP address structure */
 typedef struct ej_ip_t
 {

@@ -474,6 +474,7 @@ open_userlist_server(void)
   if (userlist_conn) return;
   if (!(userlist_conn = userlist_clnt_open(config->socket_path))) {
     client_put_header(stdout, 0, 0, config->charset, 1, 0,
+                      NULL_CLIENT_KEY,
                       _("Server is down"));
     printf("<p>%s</p>",
            _("The server is down. Try again later."));
@@ -487,6 +488,7 @@ open_super_server(void)
   if (super_serve_fd >= 0) return;
   if ((super_serve_fd = super_clnt_open(config->super_serve_socket)) < 0) {
     client_put_header(stdout, 0, 0, config->charset, 1, 0,
+                      NULL_CLIENT_KEY,
                       _("Server is down"));
     printf("<p>%s</p>",
            _("The server is down. Try again later."));
@@ -499,7 +501,8 @@ static void fatal_server_error(int r) __attribute__((noreturn));
 static void
 fatal_server_error(int r)
 {
-  client_put_header(stdout, 0, 0, config->charset, 1, 0, _("Server error"));
+  client_put_header(stdout, 0, 0, config->charset, 1, 0,
+                    NULL_CLIENT_KEY, _("Server error"));
   printf("<p>Server error: %s</p>", userlist_strerror(-r));
   client_put_footer(stdout, 0);
   exit(0);
@@ -509,7 +512,8 @@ static void permission_denied(void) __attribute__((noreturn));
 static void
 permission_denied(void)
 {
-  client_put_header(stdout,0,0,config->charset,1,0,_("Permission denied"));
+  client_put_header(stdout,0,0,config->charset,1,0,
+                    NULL_CLIENT_KEY, _("Permission denied"));
   printf("<p>%s</p>", _("You do not have permissions to use this service"));
   client_put_footer(stdout, 0);
   exit(0);
@@ -520,6 +524,7 @@ static void
 invalid_login(void)
 {
   client_put_header(stdout, 0, 0, config->charset, 1, 0,
+                    NULL_CLIENT_KEY,
                     _("Invalid login"));
   printf("<p>%s</p>",
          "Invalid login. You have typed invalid login, invalid password,"
@@ -532,7 +537,8 @@ static void display_login_page(void) __attribute__((noreturn));
 static void
 display_login_page(void)
 {
-  client_put_header(stdout, 0, 0, config->charset, 1, 0, "serve-control: %s", http_host);
+  client_put_header(stdout, 0, 0, config->charset, 1, 0,
+                    NULL_CLIENT_KEY, "serve-control: %s", http_host);
 
   puts(form_header_simple);
   printf("<table>"
@@ -646,10 +652,11 @@ read_state_params(void)
 }
 
 static void
-client_put_refresh_header(unsigned char const *coding,
-                          unsigned char const *url,
-                          int interval,
-                          unsigned char const *format, ...)
+client_put_refresh_header(
+        unsigned char const *coding,
+        unsigned char const *url,
+        int interval,
+        unsigned char const *format, ...)
 {
   /*
   va_list args;
@@ -664,6 +671,9 @@ client_put_refresh_header(unsigned char const *coding,
   fputs("\n</h1>\n", stdout);
   */
   //printf("Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\nLocation: %s\n\n", EJUDGE_CHARSET, url);
+  if (client_key) {
+    printf("Set-Cookie: %016llx\n", client_key);
+  }
   printf("Location: %s\n\n", url);
 }
 
@@ -693,7 +703,7 @@ operation_status_page(int userlist_code,
   va_list args;
 
   if (userlist_code == -1 && super_code == -1) {
-    client_put_header(stdout, 0, 0, config->charset, 1, 0, "Operation failed");
+    client_put_header(stdout, 0, 0, config->charset, 1, 0, NULL_CLIENT_KEY, "Operation failed");
     va_start(args, format);
     vsnprintf(msg, sizeof(msg), format, args);
     va_end(args);
@@ -702,21 +712,21 @@ operation_status_page(int userlist_code,
     exit(0);
   }
   if (userlist_code == -1 && super_code < -1) {
-    client_put_header(stdout, 0, 0, config->charset, 1, 0, "Operation failed");
+    client_put_header(stdout, 0, 0, config->charset, 1, 0, NULL_CLIENT_KEY, "Operation failed");
     printf("<h2><font color=\"red\">super-serve error: %s</font></h2>\n",
            super_proto_strerror(-super_code));
     client_put_footer(stdout, 0);
     exit(0);
   }
   if (userlist_code < -1 && super_code == -1) {
-    client_put_header(stdout, 0, 0, config->charset, 1, 0, "Operation failed");
+    client_put_header(stdout, 0, 0, config->charset, 1, 0, NULL_CLIENT_KEY, "Operation failed");
     printf("<h2><font color=\"red\">userlist-server error: %s</font></h2>\n",
            userlist_strerror(-userlist_code));
     client_put_footer(stdout, 0);
     exit(0);
   }
   if (userlist_code < -1 && super_code < -1) {
-    client_put_header(stdout, 0, 0, config->charset, 1, 0, "Operation failed");
+    client_put_header(stdout, 0, 0, config->charset, 1, 0, NULL_CLIENT_KEY, "Operation failed");
     printf("<h2><font color=\"red\">Unknown error: %d, %d</font></h2>\n",
            userlist_code, super_code);
     client_put_footer(stdout, 0);
@@ -738,7 +748,7 @@ authentificate(void)
   int r;
   unsigned char buf[512];
 
-  if (get_session_id("SID", &session_id)) {
+  if (get_session_id("SID", &session_id) && client_key) {
     open_userlist_server();
     r = userlist_clnt_priv_cookie(userlist_conn, &user_ip, ssl_flag,
                                   0, /* contest_id */
@@ -768,7 +778,7 @@ authentificate(void)
 
   open_userlist_server();
   r = userlist_clnt_priv_login(userlist_conn, ULS_PRIV_LOGIN, &user_ip,
-                               0 /* FIXME: client_key */,
+                               client_key,
                                ssl_flag,
                                0, /* contest_id */
                                0, /* locale_id */
@@ -777,7 +787,7 @@ authentificate(void)
                                user_password,
                                &user_id,
                                &session_id,
-                               NULL /* FIXME: client_key */,
+                               &client_key,
                                &priv_level,
                                &user_name);
   if (r < 0) {
@@ -844,7 +854,7 @@ action_view_contest(int cmd)
   }
 
   open_super_server();
-  client_put_header(stdout, 0, 0, config->charset, 1, 0,
+  client_put_header(stdout, 0, 0, config->charset, 1, 0, client_key,
                     "%s: %s@%s, %d%s", "serve-control", user_login, http_host, contest_id,
                     extra_str);
   fflush(stdout);
@@ -887,7 +897,7 @@ action_create_contest(void)
   int r;
 
   open_super_server();
-  client_put_header(stdout, 0, 0, config->charset, 1, 0,
+  client_put_header(stdout, 0, 0, config->charset, 1, 0, client_key,
                     "%s: %s@%s, creating new contest", "serve-control", user_login, http_host);
   fflush(stdout);
 
@@ -908,7 +918,7 @@ action_edit_current_contest(int cmd)
   int r;
 
   open_super_server();
-  client_put_header(stdout, 0, 0, config->charset, 1, 0,
+  client_put_header(stdout, 0, 0, config->charset, 1, 0, client_key,
                     "%s: %s@%s, editing contest", "serve-control", user_login, http_host);
   fflush(stdout);
 
@@ -936,7 +946,7 @@ action_edit_permissions(void)
     goto invalid_parameter;
 
   open_super_server();
-  client_put_header(stdout, 0, 0, config->charset, 1, 0,
+  client_put_header(stdout, 0, 0, config->charset, 1, 0, client_key,
                     "%s: %s@%s, editing permissions for contest", "serve-control",
                     user_login, http_host);
   fflush(stdout);
@@ -988,7 +998,7 @@ action_create_contest_2(void)
   }
 
   open_super_server();
-  client_put_header(stdout, 0, 0, config->charset, 1, 0,
+  client_put_header(stdout, 0, 0, config->charset, 1, 0, client_key,
                     "%s: %s@%s, editing new contest", "serve-control", user_login, http_host);
   fflush(stdout);
 
@@ -3081,7 +3091,7 @@ main(int argc, char *argv[])
 
   /* default (main) screen */
   open_super_server();
-  client_put_header(stdout, 0, 0, config->charset, 1, 0,
+  client_put_header(stdout, 0, 0, config->charset, 1, 0, client_key,
                     "%s: %s@%s", "serve-control", user_login, http_host);
   fflush(stdout);
   r = super_clnt_main_page(super_serve_fd, 1, SSERV_CMD_MAIN_PAGE, 0,

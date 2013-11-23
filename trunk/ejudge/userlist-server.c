@@ -612,7 +612,7 @@ link_client_state(struct client_state *p)
 #define default_get_user_count(a, b, c, d) dflt_iface->get_user_count(uldb_default->data, a, b, c, d)
 #define default_get_group_iterator_2(a, b, c) dflt_iface->get_group_iterator_2(uldb_default->data, a, b, c)
 #define default_get_group_count(a, b) dflt_iface->get_group_count(uldb_default->data, a, b)
-#define default_new_cookie_2(a, b, c, d, e, f, g, h, i, j, k, l, m) dflt_iface->new_cookie(uldb_default->data, a, b, c, d, e, f, g, h, i, j, k, l, m)
+#define default_new_cookie_2(a, b, c, d, e, f, g, h, i, j, k, l, m) dflt_iface->new_cookie_2(uldb_default->data, a, b, c, d, e, f, g, h, i, j, k, l, m)
 
 static void
 update_all_user_contests(int user_id)
@@ -3437,10 +3437,10 @@ cmd_priv_login(
     data->locale_id = 0;
   }
 
-  /* FIXME: client_key */
-  if (default_new_cookie(u->id, &data->origin_ip, data->ssl, 0, 0,
-                         orig_contest_id, data->locale_id,
-                         priv_level, data->role, 0, 0, &cookie) < 0) {
+  if (default_new_cookie_2(u->id, &data->origin_ip, data->ssl, 0,
+                           data->client_key, 0,
+                           orig_contest_id, data->locale_id,
+                           priv_level, data->role, 0, 0, &cookie) < 0) {
     err("%s -> cookie creation failed", logbuf);
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
