@@ -127,21 +127,21 @@ cmd_login(
 
   if (phr->role == USER_ROLE_CONTESTANT) {
     r = userlist_clnt_login(ul_conn, ULS_TEAM_CHECK_USER,
-                            &phr->ip, 0 /* FIXME: client_key */,
+                            &phr->ip, phr->client_key,
                             phr->ssl_flag, phr->contest_id,
                             phr->locale_id, login, password,
                             &phr->user_id,
                             &phr->session_id,
-                            NULL /* FIXME: client_key */,
+                            &phr->client_key,
                             &phr->name);
   } else {
     r = userlist_clnt_priv_login(ul_conn, ULS_PRIV_CHECK_USER,
-                                 &phr->ip, 0 /* FIXME: client_key */,
+                                 &phr->ip, phr->client_key,
                                  phr->ssl_flag, phr->contest_id,
                                  phr->locale_id, phr->role, login,
                                  password, &phr->user_id,
                                  &phr->session_id,
-                                 NULL /* FIXME: client_key */,
+                                 &phr->client_key,
                                  0, &phr->name);
   }
 
@@ -179,7 +179,7 @@ cmd_login(
       FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   }
 
-  ns_get_session(phr->session_id, 0);
+  ns_get_session(phr->session_id, phr->client_key, 0);
   fprintf(fout, "%016llx\n", phr->session_id);
 
  cleanup:
@@ -197,7 +197,7 @@ cmd_logout(
     return -NEW_SRV_ERR_USERLIST_SERVER_DOWN;
   userlist_clnt_delete_cookie(ul_conn, phr->user_id, phr->contest_id,
                               phr->session_id,
-                              0 /* FIXME: client_key */);
+                              phr->client_key);
   ns_remove_session(phr->session_id);
   return 0;
 }
@@ -1913,12 +1913,12 @@ cmd_reload_server_2(
       FAIL(NEW_SRV_ERR_USERLIST_SERVER_DOWN);
 
     r = userlist_clnt_priv_login(ul_conn, ULS_PRIV_CHECK_PASSWORD,
-                                 &phr->ip, 0 /* FIXME: client_key */,
+                                 &phr->ip, phr->client_key,
                                  phr->ssl_flag, 0,
                                  0, 0, login,
                                  password, &phr->user_id,
                                  &phr->session_id,
-                                 NULL /* FIXME: client_key */,
+                                 &phr->client_key,
                                  0, &phr->name);
     if (r < 0) {
       switch (-r) {
@@ -2039,7 +2039,7 @@ new_server_cmd_handler(FILE *fout, struct http_request_info *phr)
   if ((r = userlist_clnt_get_cookie(ul_conn, ULS_FETCH_COOKIE,
                                     &phr->ip, phr->ssl_flag,
                                     phr->session_id,
-                                    0 /* FIXME: client_key */,
+                                    phr->client_key,
                                     &phr->user_id, &phr->contest_id,
                                     &phr->locale_id, 0, &phr->role, 0, 0, 0,
                                     &phr->login, &phr->name)) < 0) {

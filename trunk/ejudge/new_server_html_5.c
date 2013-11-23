@@ -122,6 +122,7 @@ anon_select_contest_page(FILE *fout, struct http_request_info *phr)
   // even don't know about the contest specific settings
   l10n_setlocale(phr->locale_id);
   ns_header(fout, ns_fancy_header, 0, 0, 0, 0, phr->locale_id, NULL,
+            NULL_CLIENT_KEY,
             _("Contest selection"));
 
   html_start_form(fout, 1, phr->self_url, "");
@@ -232,6 +233,7 @@ login_page(
     break;
   }
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+            phr->client_key,
             "%s [%s]", s, extra->contest_arm);
 
   html_start_form(fout, 1, phr->self_url, "");
@@ -398,6 +400,7 @@ create_autoassigned_account_page(
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+            NULL_CLIENT_KEY,
             "%s [%s]", _("Create user account"),
             extra->contest_arm);
 
@@ -546,6 +549,7 @@ create_account_page(
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+            NULL_CLIENT_KEY,
             "%s [%s]", _("Create user account"),
             extra->contest_arm);
 
@@ -796,12 +800,12 @@ cmd_login(
     return ns_html_err_ul_server_down(fout, phr, 0, 0);
 
   if ((r = userlist_clnt_login(ul_conn, ULS_CHECK_USER,
-                               &phr->ip, 0 /* FIXME: client_key */,
+                               &phr->ip, phr->client_key,
                                phr->ssl_flag, phr->contest_id,
                                phr->locale_id, phr->login, password,
                                &phr->user_id,
                                &phr->session_id,
-                               NULL /* FIXME: client_key */,
+                               &phr->client_key,
                                &phr->name)) < 0) {
     switch (-r) {
     case ULS_ERR_INVALID_LOGIN:
@@ -846,7 +850,7 @@ cmd_login(
              get_client_url(bb, sizeof(bb), cnts, phr->self_url),
              phr->session_id);
 
-    ns_get_session(phr->session_id, 0);
+    ns_get_session(phr->session_id, phr->client_key, 0);
     ns_refresh_page_2(fout, urlbuf);
   } else if (cnts->force_registration) {
     // register for the contest anyway, but do not redirect to new-client
@@ -961,7 +965,7 @@ change_locale(FILE *fout, struct http_request_info *phr)
     if (ns_open_ul_connection(phr->fw_state) >= 0) {
       userlist_clnt_set_cookie(ul_conn, ULS_SET_COOKIE_LOCALE,
                                phr->session_id,
-                               0 /* FIXME: client_key */,
+                               phr->client_key,
                                phr->locale_id);
     }
 
@@ -1690,6 +1694,7 @@ main_page(
   if (!n || !*n) n = phr->login;
 
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+            phr->client_key,
             "%s [%s, %s]", title, ARMOR(n), extra->contest_arm);
 
   shown_items = 0;
@@ -2322,6 +2327,7 @@ edit_page(
   if (!n || !*n) n = phr->login;
 
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+            phr->client_key,
             "%s [%s, %s]", s, ARMOR(n), extra->contest_arm);
 
   fprintf(fout, "<div class=\"user_actions\"><table class=\"menu\"><tr>");
@@ -2421,6 +2427,7 @@ action_error_page(
   n = phr->name;
   if (!n || !*n) n = phr->login;
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+            NULL_CLIENT_KEY,
             "%s [%s, %s]", s, ARMOR(n), extra->contest_arm);
 
   fprintf(fout, "<div class=\"user_actions\"><table class=\"menu\"><tr>");
@@ -3130,7 +3137,7 @@ logout(
     return ns_html_err_ul_server_down(fout, phr, 0, 0);
   userlist_clnt_delete_cookie(ul_conn, phr->user_id, phr->contest_id,
                               phr->session_id,
-                              0 /* FIXME: client_key */);
+                              phr->client_key);
   ns_remove_session(phr->session_id);
   snprintf(urlbuf, sizeof(urlbuf),
            "%s?contest_id=%d&locale_id=%d",
@@ -3286,7 +3293,7 @@ ns_register_pages(FILE *fout, struct http_request_info *phr)
   if ((r = userlist_clnt_get_cookie(ul_conn, ULS_GET_COOKIE,
                                     &phr->ip, phr->ssl_flag,
                                     phr->session_id,
-                                    0 /* FIXME: client_key */,
+                                    phr->client_key,
                                     &phr->user_id, &phr->contest_id,
                                     &phr->locale_id, 0, &phr->role, &is_team,
                                     &phr->reg_status, &phr->reg_flags,
@@ -3325,7 +3332,7 @@ ns_register_pages(FILE *fout, struct http_request_info *phr)
 
   // check for local userlist_user structure and fetch it from the
   // server
-  phr->session_extra = ns_get_session(phr->session_id, cur_time);
+  phr->session_extra = ns_get_session(phr->session_id, phr->client_key, cur_time);
 
   if (!phr->session_extra->user_info) {
     if (userlist_clnt_get_info(ul_conn, ULS_PRIV_GET_USER_INFO,

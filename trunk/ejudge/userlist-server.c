@@ -2725,10 +2725,10 @@ cmd_login(
   answer = alloca(ans_len);
   memset(answer, 0, ans_len);
 
-  /* FIXME: client_key */
-  if (default_new_cookie(u->id, &data->origin_ip, data->ssl, 0, 0,
-                         orig_contest_id, data->locale_id, PRIV_LEVEL_USER,
-                         0, 0, 0, &cookie) < 0) {
+  if (default_new_cookie_2(u->id, &data->origin_ip, data->ssl, 0,
+                           data->client_key,
+                           0, orig_contest_id, data->locale_id, PRIV_LEVEL_USER,
+                           0, 0, 0, &cookie) < 0) {
     err("%s -> cookie creation failed", logbuf);
     send_reply(p, -ULS_ERR_OUT_OF_MEM);
     return;
@@ -2867,10 +2867,9 @@ cmd_check_user(
   answer = alloca(ans_len);
   memset(answer, 0, ans_len);
 
-  /* FIXME: client_key */
-  if (default_new_cookie(u->id, &data->origin_ip, data->ssl, 0, 0,
-                         orig_contest_id, data->locale_id, PRIV_LEVEL_USER, 0,
-                         0, 0, &cookie) < 0) {
+  if (default_new_cookie_2(u->id, &data->origin_ip, data->ssl, 0, data->client_key, 0,
+                           orig_contest_id, data->locale_id, PRIV_LEVEL_USER, 0,
+                           0, 0, &cookie) < 0) {
     err("%s -> cookie creation failed", logbuf);
     send_reply(p, -ULS_ERR_OUT_OF_MEM);
     return;
@@ -3035,10 +3034,9 @@ cmd_team_login(
     data->locale_id = 0;
   }
 
-  /* FIXME: client_key */
-  if (default_new_cookie(u->id, &data->origin_ip, data->ssl, 0, 0,
-                         orig_contest_id, data->locale_id,
-                         PRIV_LEVEL_USER, 0, 0, 1, &cookie) < 0) {
+  if (default_new_cookie_2(u->id, &data->origin_ip, data->ssl, 0, data->client_key, 0,
+                           orig_contest_id, data->locale_id,
+                           PRIV_LEVEL_USER, 0, 0, 1, &cookie) < 0) {
     err("%s -> cookie creation failed", logbuf);
     send_reply(p, -ULS_ERR_OUT_OF_MEM);
     return;
@@ -3216,10 +3214,9 @@ cmd_team_check_user(
     data->locale_id = 0;
   }
 
-  /* FIXME: client_key */
-  if (default_new_cookie(u->id, &data->origin_ip, data->ssl, 0, 0,
-                         orig_contest_id, data->locale_id,
-                         PRIV_LEVEL_USER, 0, 0, 1, &cookie) < 0) {
+  if (default_new_cookie_2(u->id, &data->origin_ip, data->ssl, 0, data->client_key, 0,
+                           orig_contest_id, data->locale_id,
+                           PRIV_LEVEL_USER, 0, 0, 1, &cookie) < 0) {
     err("%s -> cookie creation failed", logbuf);
     send_reply(p, -ULS_ERR_OUT_OF_MEM);
     return;
@@ -3627,10 +3624,9 @@ cmd_priv_check_user(
     data->locale_id = 0;
   }
 
-  /* FIXME: client_key */
-  if (default_new_cookie(u->id, &data->origin_ip, data->ssl, 0, 0,
-                         orig_contest_id, data->locale_id,
-                         priv_level, data->role, 0, 0, &cookie) < 0) {
+  if (default_new_cookie_2(u->id, &data->origin_ip, data->ssl, 0, data->client_key, 0,
+                           orig_contest_id, data->locale_id,
+                           priv_level, data->role, 0, 0, &cookie) < 0) {
     err("%s -> cookie creation failed", logbuf);
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
@@ -4434,10 +4430,9 @@ cmd_priv_cookie_login(
   login_ptr = out->data;
   name_ptr = login_ptr + login_len + 1;
 
-  /* FIXME: client_key */
-  if (default_new_cookie(u->id, &data->origin_ip, data->ssl, 0, 0,
-                         orig_contest_id, data->locale_id,
-                         priv_level, data->role, 0, 0, &new_cookie) < 0) {
+  if (default_new_cookie_2(u->id, &data->origin_ip, data->ssl, 0, data->client_key,
+                           0, orig_contest_id, data->locale_id,
+                           priv_level, data->role, 0, 0, &new_cookie) < 0) {
     err("%s -> cookie creation failed", logbuf);
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;

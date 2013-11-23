@@ -35,7 +35,8 @@ struct session_info
 {
   struct session_info *next;
   struct session_info *prev;
-  ej_cookie_t session_id;
+  ej_cookie_t _session_id;
+  ej_cookie_t _client_key;
   time_t expire_time;
 
   int user_view_all_runs;
@@ -71,6 +72,7 @@ struct http_request_info
   int ssl_flag;
   ej_ip_t ip;
   ej_cookie_t session_id;
+  ej_cookie_t client_key;
   int contest_id;
   int locale_id;
   int role;
@@ -530,7 +532,10 @@ ns_html_err_disqualified(
         struct contest_extra *extra);
 
 struct session_info *
-ns_get_session(ej_cookie_t session_id, time_t cur_time);
+ns_get_session(
+        ej_cookie_t session_id,
+        ej_cookie_t client_key,
+        time_t cur_time);
 
 void ns_remove_session(ej_cookie_t session_id);
 
@@ -671,9 +676,10 @@ ns_header(
         const unsigned char *body_attr,
         int locale_id,
         const struct contest_desc *cnts,
+        ej_cookie_t client_key,
         char const *format,
         ...)
-  __attribute__((format(printf, 9, 10)));
+  __attribute__((format(printf, 10, 11)));
 void
 ns_separator(
         FILE *out,
