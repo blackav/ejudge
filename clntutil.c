@@ -135,12 +135,15 @@ process_template(FILE *out,
 }
 
 void
-client_put_header(FILE *out, unsigned char const *template,
-                  unsigned char const *content_type,
-                  unsigned char const *charset,
-                  int http_flag,
-                  int locale_id,
-                  char const *format, ...)
+client_put_header(
+        FILE *out,
+        unsigned char const *template,
+        unsigned char const *content_type,
+        unsigned char const *charset,
+        int http_flag,
+        int locale_id,
+        ej_cookie_t client_key,
+        char const *format, ...)
 {
   va_list args;
   unsigned char title[1024];
@@ -159,8 +162,11 @@ client_put_header(FILE *out, unsigned char const *template,
   if (http_flag) {
     fprintf(out, "Content-Type: %s; charset=%s\n"
             "Cache-Control: no-cache\n"
-            "Pragma: no-cache\n\n", content_type, charset);
-
+            "Pragma: no-cache\n", content_type, charset);
+    if (client_key) {
+      fprintf(out, "Set-Cookie: EJSID=%016llx\n", client_key);
+    }
+    putc('\n', out);
   }
 
   process_template(out, template, content_type, charset, title, 0, locale_id);
@@ -244,7 +250,7 @@ client_time_to_str(char *buf, time_t time)
 void
 client_access_denied(char const *charset, int locale_id)
 {
-  client_put_header(stdout, 0, 0, charset, 1, locale_id, _("Access denied"));
+  client_put_header(stdout, 0, 0, charset, 1, locale_id, NULL_CLIENT_KEY, _("Access denied"));
   printf("<p>%s</p>", _("You do not have permissions to use this service."));
   client_put_footer(stdout, 0);
   exit(0);
@@ -258,7 +264,7 @@ client_not_configured(
         const char *messages)
 {
   write_log(0, LOG_ERR, (char*) str);
-  client_put_header(stdout, 0, 0, charset, 1, locale_id, _("Service is not available"));
+  client_put_header(stdout, 0, 0, charset, 1, locale_id, NULL_CLIENT_KEY, _("Service is not available"));
   printf("<p>%s</p>", _("Service is not available. Please, come later."));
   if (messages) {
     printf("<pre>%s</pre>\n", messages);
@@ -370,13 +376,13 @@ client_check_server_status(char const *charset, char const *path, int lag,
   return 1;
 
  bad_server:
-  client_put_header(stdout, 0, 0, charset, 1, locale_id, _("Incompatible server"));
+  client_put_header(stdout, 0, 0, charset, 1, locale_id, NULL_CLIENT_KEY, _("Incompatible server"));
   printf("<p>%s</p>", _("Server configuration error."));
   client_put_footer(stdout, 0);
   exit(0);
 
  server_down:
-  client_put_header(stdout, 0, 0, charset, 1, locale_id, _("Server is down"));
+  client_put_header(stdout, 0, 0, charset, 1, locale_id, NULL_CLIENT_KEY, _("Server is down"));
   printf("<p>%s</p>", _("Server is down. Please, come later."));
   client_put_footer(stdout, 0);
   exit(0);
