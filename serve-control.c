@@ -672,7 +672,7 @@ client_put_refresh_header(
   */
   //printf("Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\nLocation: %s\n\n", EJUDGE_CHARSET, url);
   if (client_key) {
-    printf("Set-Cookie: %016llx\n", client_key);
+    printf("Set-Cookie: EJSID=%016llx\n", client_key);
   }
   printf("Location: %s\n\n", url);
 }
