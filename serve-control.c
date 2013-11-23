@@ -366,7 +366,7 @@ parse_cookie(void)
       s += 6 + n;
       if (!*s || isspace(*s) || *s == ';') {
         // debug
-        fprintf(stderr, "client_key = %016llx\n", client_key);
+        //fprintf(stderr, "client_key = %016llx\n", client_key);
         return;
       }
     }

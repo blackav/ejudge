@@ -1127,7 +1127,7 @@ privileged_page_login_page(FILE *fout, struct http_request_info *phr)
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
 
   l10n_setlocale(phr->locale_id);
-  ns_header(fout, ns_fancy_priv_header, 0, 0, 0, 0, phr->locale_id, NULL, "Login page");
+  ns_header(fout, ns_fancy_priv_header, 0, 0, 0, 0, phr->locale_id, NULL, NULL_CLIENT_KEY, "Login page");
   html_start_form(fout, 1, phr->self_url, "");
   fprintf(fout, "<table>\n");
   fprintf(fout, "<tr><td>%s:</td><td><input type=\"text\" size=\"32\" name=\"login\"", _("Login"));
@@ -1201,6 +1201,7 @@ html_error_status_page(FILE *fout,
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, NULL,
+            NULL_CLIENT_KEY,
             _("Operation completed with errors"));
   if (extra->separator_txt && *extra->separator_txt) {
     fprintf(fout, "%s", ns_fancy_empty_status);
@@ -1261,10 +1262,10 @@ privileged_page_cookie_login(FILE *fout,
   xfree(phr->name); phr->name = 0;
   if ((r = userlist_clnt_priv_cookie_login(ul_conn, ULS_PRIV_COOKIE_LOGIN,
                                            &phr->ip, phr->ssl_flag,
-                                           phr->contest_id, phr->session_id, 0 /* FIXME: client_key */,
+                                           phr->contest_id, phr->session_id, phr->client_key,
                                            phr->locale_id,
                                            phr->role, &phr->user_id,
-                                           &phr->session_id, NULL /* FIXME: client_key */,
+                                           &phr->session_id, &phr->client_key,
                                            &phr->login,
                                            &phr->name)) < 0) {
     switch (-r) {
@@ -1302,7 +1303,7 @@ privileged_page_cookie_login(FILE *fout,
       return ns_html_err_no_perm(fout, phr, 1, "user %s has no permission to login as role %d for contest %d", phr->login, phr->role, phr->contest_id);
   }
 
-  ns_get_session(phr->session_id, 0);
+  ns_get_session(phr->session_id, phr->client_key, 0);
   ns_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, 0);
 }
 
@@ -1355,11 +1356,11 @@ privileged_page_login(FILE *fout,
   if (ns_open_ul_connection(phr->fw_state) < 0)
     return ns_html_err_ul_server_down(fout, phr, 1, 0);
   if ((r = userlist_clnt_priv_login(ul_conn, ULS_PRIV_CHECK_USER,
-                                    &phr->ip, 0 /* FIXME: client_key */,
+                                    &phr->ip, phr->client_key,
                                     phr->ssl_flag, phr->contest_id,
                                     phr->locale_id, phr->role, login,
                                     password, &phr->user_id,
-                                    &phr->session_id, NULL /* FIXME: client_key */,
+                                    &phr->session_id, &phr->client_key,
                                     0, &phr->name)) < 0) {
     switch (-r) {
     case ULS_ERR_INVALID_LOGIN:
@@ -1398,7 +1399,7 @@ privileged_page_login(FILE *fout,
       return ns_html_err_no_perm(fout, phr, 1, "user %s has no permission to login as role %d for contest %d", phr->login, phr->role, phr->contest_id);
   }
 
-  ns_get_session(phr->session_id, 0);
+  ns_get_session(phr->session_id, phr->client_key, 0);
   ns_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, 0);
 }
 
@@ -2486,7 +2487,7 @@ priv_change_language(FILE *fout,
   }
   if ((r = userlist_clnt_set_cookie(ul_conn, ULS_SET_COOKIE_LOCALE,
                                     phr->session_id,
-                                    0 /* FIXME: client_key */,
+                                    phr->client_key,
                                     new_locale_id)) < 0) {
     ns_error(log_f, NEW_SRV_ERR_SESSION_UPDATE_FAILED, userlist_strerror(-r));
   }
@@ -4799,6 +4800,7 @@ priv_confirmation_page(FILE *fout,
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+            phr->client_key,
             "%s [%s, %d, %s]: %s &quot;%s&quot;",
             ns_unparse_role(phr->role), phr->name_arm, phr->contest_id,
             extra->contest_arm, _("Confirm action"),
@@ -5060,6 +5062,7 @@ priv_user_detail_page(FILE *fout,
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+            phr->client_key,
             "%s [%s, %d, %s]: %s %d", ns_unparse_role(phr->role),
             phr->name_arm, phr->contest_id, extra->contest_arm,
             _("Details for user "), user_id);
@@ -5086,6 +5089,7 @@ priv_new_run_form_page(FILE *fout,
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+            phr->client_key,
             "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role), phr->name_arm,
             phr->contest_id, extra->contest_arm, _("Add new run"));
   ns_new_run_form(fout, log_f, phr, cnts, extra);
@@ -5114,6 +5118,7 @@ priv_examiners_page(
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+            phr->client_key,
             "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role), phr->name_arm,
             phr->contest_id, extra->contest_arm, _("Add new run"));
   ns_examiners_page(fout, log_f, phr, cnts, extra);
@@ -5287,6 +5292,7 @@ priv_view_users_page(
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+            phr->client_key,
             "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role), phr->name_arm,
             phr->contest_id, extra->contest_arm, _("Users page"));
 
@@ -5591,6 +5597,7 @@ priv_view_priv_users_page(FILE *fout,
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+            phr->client_key,
             "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role), phr->name_arm,
             phr->contest_id, extra->contest_arm, _("Privileged users page"));
 
@@ -5870,6 +5877,7 @@ priv_view_clar(FILE *fout,
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+            phr->client_key,
             "%s [%s, %d, %s]: %s %d", ns_unparse_role(phr->role),
             phr->name_arm, phr->contest_id, extra->contest_arm,
             _("Viewing clar"), clar_id);
@@ -5909,6 +5917,7 @@ priv_edit_clar_page(
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+            phr->client_key,
             "%s [%s, %d, %s]: %s %d", ns_unparse_role(phr->role),
             phr->name_arm, phr->contest_id, extra->contest_arm,
             _("Editing clar"), clar_id);
@@ -5948,6 +5957,7 @@ priv_edit_run_page(
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+            phr->client_key,
             "%s [%s, %d, %s]: %s %d", ns_unparse_role(phr->role),
             phr->name_arm, phr->contest_id, extra->contest_arm,
             _("Editing run"), run_id);
@@ -5981,6 +5991,7 @@ priv_standings(FILE *fout,
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+            phr->client_key,
             "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role), phr->name_arm,
             phr->contest_id, extra->contest_arm, _("Current standings"));
   ns_write_priv_standings(cs, phr, cnts, fout, cs->accepting_mode);
@@ -6040,6 +6051,7 @@ priv_upload_runlog_csv_1(
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+            phr->client_key,
             "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role), phr->name_arm,
             phr->contest_id, extra->contest_arm, "Add new runs in CSV format");
   html_start_form(fout, 2, phr->self_url, phr->hidden_vars);
@@ -6122,6 +6134,7 @@ priv_upload_runlog_csv_2(
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+            phr->client_key,
             "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role), phr->name_arm,
             phr->contest_id, extra->contest_arm, _("Adding new runs"));
 
@@ -6168,6 +6181,7 @@ priv_upload_runlog_xml_1(
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+            phr->client_key,
             "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role), phr->name_arm,
             phr->contest_id, extra->contest_arm, "Merge XML runlog");
   html_start_form(fout, 2, phr->self_url, phr->hidden_vars);
@@ -6221,6 +6235,7 @@ priv_upload_runlog_xml_2(
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+            phr->client_key,
             "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role), phr->name_arm,
             phr->contest_id, extra->contest_arm, _("Merging runs"));
 
@@ -6280,6 +6295,7 @@ priv_download_runs_confirmation(
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+            phr->client_key,
             "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role), phr->name_arm,
             phr->contest_id, extra->contest_arm, "Download runs configuration");
 
@@ -6453,6 +6469,7 @@ priv_upsolving_configuration_1(
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+            phr->client_key,
             "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role), phr->name_arm,
             phr->contest_id, extra->contest_arm, "Upsolving configuration");
 
@@ -6588,6 +6605,7 @@ priv_assign_cyphers_1(
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+            phr->client_key,
             "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role), phr->name_arm,
             phr->contest_id, extra->contest_arm, "Assign cyphers");
   html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
@@ -6720,6 +6738,7 @@ priv_assign_cyphers_2(
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+            phr->client_key,
             "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role),
             phr->name_arm, phr->contest_id, extra->contest_arm,
             _("Assigned cyphers"));
@@ -6819,6 +6838,7 @@ priv_view_passwords(FILE *fout,
     s = _("Registration passwords");
   }
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+            phr->client_key,
             "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role),
             phr->name_arm, phr->contest_id, extra->contest_arm, s);
 
@@ -6845,6 +6865,7 @@ priv_view_online_users(
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+            phr->client_key,
             "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role),
             phr->name_arm, phr->contest_id, extra->contest_arm,
             _("Online users"));
@@ -6870,6 +6891,7 @@ priv_view_user_ips(
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+            phr->client_key,
             "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role),
             phr->name_arm, phr->contest_id, extra->contest_arm,
             _("IP addresses for users"));
@@ -6895,6 +6917,7 @@ priv_view_ip_users(
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+            phr->client_key,
             "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role),
             phr->name_arm, phr->contest_id, extra->contest_arm,
             _("Users for IP addresses"));
@@ -6920,6 +6943,7 @@ priv_view_exam_info(
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+            phr->client_key,
             "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role),
             phr->name_arm, phr->contest_id, extra->contest_arm,
             _("Examination information"));
@@ -6945,6 +6969,7 @@ priv_priority_form(
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+            phr->client_key,
             "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role),
             phr->name_arm, phr->contest_id, extra->contest_arm,
             _("Judging priorities"));
@@ -6970,6 +6995,7 @@ priv_view_testing_queue(
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+            phr->client_key,
             "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role),
             phr->name_arm, phr->contest_id, extra->contest_arm,
             _("Testing queue"));
@@ -7142,6 +7168,7 @@ priv_admin_contest_settings(
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+            phr->client_key,
             "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role),
             phr->name_arm, phr->contest_id, extra->contest_arm,
             _("Contest settings"));
@@ -7199,6 +7226,7 @@ priv_print_user_exam_protocol(
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+            phr->client_key,
             "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role), phr->name_arm,
             phr->contest_id, extra->contest_arm, _("Printing user protocol"));
 
@@ -7301,6 +7329,7 @@ priv_print_users_exam_protocol(
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+            phr->client_key,
             "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role), phr->name_arm,
             phr->contest_id, extra->contest_arm, _("Printing user protocol"));
 
@@ -7366,6 +7395,7 @@ priv_print_problem_exam_protocol(
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+            phr->client_key,
             "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role), phr->name_arm,
             phr->contest_id, extra->contest_arm,_("Printing problem protocol"));
 
@@ -7947,7 +7977,7 @@ priv_logout(FILE *fout,
     return ns_html_err_ul_server_down(fout, phr, 0, 0);
   userlist_clnt_delete_cookie(ul_conn, phr->user_id,
                               phr->contest_id,
-                              0 /* FIXME: client_key */,
+                              phr->client_key,
                               phr->session_id);
   ns_remove_session(phr->session_id);
   snprintf(urlbuf, sizeof(urlbuf),
@@ -8120,6 +8150,7 @@ priv_submit_page(
     snprintf(bb, sizeof(bb), "%s", _("Submit a solution"));
   }
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+            phr->client_key,
             "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role),
             phr->name_arm, phr->contest_id, extra->contest_arm, bb);
 
@@ -8451,6 +8482,7 @@ priv_main_page(FILE *fout,
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+            phr->client_key,
             "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role),
             phr->name_arm, phr->contest_id, extra->contest_arm, _("Main page"));
 
@@ -9416,7 +9448,7 @@ privileged_entry_point(
   if ((r = userlist_clnt_get_cookie(ul_conn, ULS_PRIV_GET_COOKIE,
                                     &phr->ip, phr->ssl_flag,
                                     phr->session_id,
-                                    0 /* FIXME: client_key */,
+                                    phr->client_key,
                                     &phr->user_id, &phr->contest_id,
                                     &phr->locale_id, 0, &phr->role, 0, 0, 0,
                                     &phr->login, &phr->name)) < 0) {
@@ -9502,7 +9534,7 @@ privileged_entry_point(
            "<input type=\"hidden\" name=\"SID\" value=\"%016llx\"/>",
            phr->session_id);
   phr->hidden_vars = hid_buf;
-  phr->session_extra = ns_get_session(phr->session_id, cur_time);
+  phr->session_extra = ns_get_session(phr->session_id, phr->client_key, cur_time);
   phr->caps = 0;
   if (opcaps_find(&cnts->capabilities, phr->login, &caps) >= 0) {
     phr->caps = caps;
@@ -9704,6 +9736,7 @@ unpriv_page_forgot_password_1(FILE *fout, struct http_request_info *phr,
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+            phr->client_key,
             _("Lost password recovery [%s]"), extra->contest_arm);
 
   // change language button
@@ -9821,6 +9854,7 @@ unpriv_page_forgot_password_2(FILE *fout, struct http_request_info *phr,
 
     l10n_setlocale(phr->locale_id);
     ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+              phr->client_key,
               _("Password recovery error"));
     fprintf(fout, "%s", ns_fancy_empty_status);
     if (extra->separator_txt && *extra->separator_txt)
@@ -9835,6 +9869,7 @@ unpriv_page_forgot_password_2(FILE *fout, struct http_request_info *phr,
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+            phr->client_key,
             _("Password recovery, stage 1 [%s, %s]"),
             ARMOR(login), extra->contest_arm);
   fprintf(fout, "%s", ns_fancy_empty_status);
@@ -9919,6 +9954,7 @@ unpriv_page_forgot_password_3(FILE *fout, struct http_request_info *phr,
 
     l10n_setlocale(phr->locale_id);
     ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+              phr->client_key,
               _("Password recovery error"));
     fprintf(fout, "%s", ns_fancy_empty_status);
     if (extra->separator_txt && *extra->separator_txt)
@@ -9936,6 +9972,7 @@ unpriv_page_forgot_password_3(FILE *fout, struct http_request_info *phr,
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+            phr->client_key,
             _("Password recovery completed [%s, %s]"),
             ARMOR(s), extra->contest_arm);
   fprintf(fout, "%s", ns_fancy_empty_status);
@@ -10042,6 +10079,7 @@ unprivileged_page_login_page(FILE *fout, struct http_request_info *phr,
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+            phr->client_key,
             _("User login [%s]"), extra->contest_arm);
 
 
@@ -10169,11 +10207,11 @@ unprivileged_page_login(FILE *fout, struct http_request_info *phr,
     return ns_html_err_ul_server_down(fout, phr, 0, 0);
 
   if ((r = userlist_clnt_login(ul_conn, ULS_TEAM_CHECK_USER,
-                               &phr->ip, 0 /* FIXME: client_key */,
+                               &phr->ip, phr->client_key,
                                phr->ssl_flag, phr->contest_id,
                                phr->locale_id, login, password,
                                &phr->user_id,
-                               &phr->session_id, NULL /* FIXME: client_key */,
+                               &phr->session_id, &phr->client_key,
                                &phr->name)) < 0) {
     switch (-r) {
     case ULS_ERR_INVALID_LOGIN:
@@ -10195,7 +10233,7 @@ unprivileged_page_login(FILE *fout, struct http_request_info *phr,
     }
   }
 
-  ns_get_session(phr->session_id, 0);
+  ns_get_session(phr->session_id, phr->client_key, 0);
   ns_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, "lt=1");
 }
 
@@ -10227,7 +10265,7 @@ unpriv_change_language(FILE *fout,
   }
   if ((r = userlist_clnt_set_cookie(ul_conn, ULS_SET_COOKIE_LOCALE,
                                     phr->session_id,
-                                    0 /* FIXME: client_key */,
+                                    phr->client_key,
                                     new_locale_id)) < 0) {
     fprintf(log_f, "set_cookie failed: %s", userlist_strerror(-r));
   }
@@ -12476,6 +12514,7 @@ unpriv_view_report(FILE *fout,
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, phr->script_part, phr->body_attr,
             phr->locale_id, cnts,
+            phr->client_key,
             "%s [%s]: %s %d",
             phr->name_arm, extra->contest_arm, _("Report for run"),
             run_id);
@@ -12632,6 +12671,7 @@ unpriv_view_clar(FILE *fout,
   unpriv_load_html_style(phr, cnts, 0, 0);
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, phr->script_part, phr->body_attr, phr->locale_id, cnts,
+            phr->client_key,
             "%s [%s]: %s %d",
             phr->name_arm, extra->contest_arm, _("Clarification"),
             clar_id);
@@ -12719,6 +12759,7 @@ unpriv_view_standings(FILE *fout,
   l10n_setlocale(phr->locale_id);
   if (start_time <= 0) {
     ns_header(fout, extra->header_txt, 0, 0, phr->script_part, phr->body_attr, phr->locale_id, cnts,
+              phr->client_key,
               "%s [%s]: %s",
               phr->name_arm, extra->contest_arm, _("Standings [not started]"));
     unpriv_page_header(fout, phr, cnts, extra, start_time, stop_time);
@@ -12759,6 +12800,7 @@ unpriv_view_standings(FILE *fout,
   }
 
   ns_header(fout, extra->header_txt, 0, 0, phr->script_part, phr->body_attr, phr->locale_id, cnts,
+            phr->client_key,
             "%s [%s]: %s%s",
             phr->name_arm, extra->contest_arm, _("Standings"), comment);
 
@@ -13777,6 +13819,7 @@ unpriv_main_page(FILE *fout,
   if (!header) header = _("Main page");
   unpriv_load_html_style(phr, cnts, 0, 0);
   ns_header(fout, extra->header_txt, 0, 0, phr->script_part, phr->body_attr, phr->locale_id, cnts,
+            phr->client_key,
             "%s [%s]: %s",
             phr->name_arm, extra->contest_arm, header);
 
@@ -14723,7 +14766,7 @@ unpriv_logout(FILE *fout,
     return ns_html_err_ul_server_down(fout, phr, 0, 0);
   userlist_clnt_delete_cookie(ul_conn, phr->user_id, phr->contest_id,
                               phr->session_id,
-                              0 /* FIXME: client_key */);
+                              phr->client_key);
   ns_remove_session(phr->session_id);
   snprintf(urlbuf, sizeof(urlbuf),
            "%s?contest_id=%d&locale_id=%d",
@@ -15097,6 +15140,7 @@ anon_select_contest_page(FILE *fout, struct http_request_info *phr)
   // even don't know about the contest specific settings
   l10n_setlocale(phr->locale_id);
   ns_header(fout, ns_fancy_header, 0, 0, 0, 0, phr->locale_id, NULL,
+            NULL_CLIENT_KEY,
             _("Contest selection"));
 
   html_start_form(fout, 1, phr->self_url, "");
@@ -15219,7 +15263,7 @@ unprivileged_entry_point(
   if ((r = userlist_clnt_get_cookie(ul_conn, ULS_TEAM_GET_COOKIE,
                                     &phr->ip, phr->ssl_flag,
                                     phr->session_id,
-                                    0 /* FIXME: client_key */,
+                                    phr->client_key,
                                     &phr->user_id, &phr->contest_id,
                                     &phr->locale_id, 0, &phr->role, 0, 0, 0,
                                     &phr->login, &phr->name)) < 0) {
@@ -15292,7 +15336,7 @@ unprivileged_entry_point(
            "<input type=\"hidden\" name=\"SID\" value=\"%016llx\"/>",
            phr->session_id);
   phr->hidden_vars = hid_buf;
-  phr->session_extra = ns_get_session(phr->session_id, cur_time);
+  phr->session_extra = ns_get_session(phr->session_id, phr->client_key, cur_time);
 
   memset(&callbacks, 0, sizeof(callbacks));
   callbacks.user_data = (void*) phr->fw_state;
@@ -15664,6 +15708,35 @@ static const unsigned char * const symbolic_action_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_SUBMIT_RUN_BATCH] = "SUBMIT_RUN_BATCH",
 };
 
+static void
+parse_cookie(struct http_request_info *phr)
+{
+  const unsigned char *cookies = ns_getenv(phr, "HTTP_COOKIE");
+  if (!cookies) return;
+  const unsigned char *s = cookies;
+  ej_cookie_t client_key = 0;
+  while (1) {
+    while (isspace(*s)) ++s;
+    if (strncmp(s, "EJSID=", 6) != 0) {
+      while (*s && *s != ';') ++s;
+      if (!*s) return;
+      ++s;
+      continue;
+    }
+    int n = 0;
+    if (sscanf(s + 6, "%llx%n", &client_key, &n) == 1) {
+      s += 6 + n;
+      if (!*s || isspace(*s) || *s == ';') {
+        phr->client_key = client_key;
+        return;
+      }
+    }
+    phr->client_key = 0;
+    return;
+  }
+}
+
+
 void
 ns_handle_http_request(struct server_framework_state *state,
                        struct client_state *p,
@@ -15703,6 +15776,8 @@ ns_handle_http_request(struct server_framework_state *state,
   if (!strcmp(remote_addr, "::1")) remote_addr = "127.0.0.1";
   if (xml_parse_ipv6(NULL, 0, 0, 0, remote_addr, &phr->ip) < 0)
     return ns_html_err_inv_param(fout, phr, 0, "cannot parse REMOTE_ADDR");
+
+  parse_cookie(phr);
 
   // parse the contest_id
   if ((r = ns_cgi_param(phr, "contest_id", &s)) < 0)

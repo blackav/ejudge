@@ -186,6 +186,7 @@ ns_header(
         const unsigned char *body_attr,
         int locale_id,
         const struct contest_desc *cnts,
+        ej_cookie_t client_key,
         char const *format,
         ...)
 {
@@ -228,7 +229,11 @@ ns_header(
 
   fprintf(out, "Content-Type: %s; charset=%s\n"
           "Cache-Control: no-cache\n"
-          "Pragma: no-cache\n\n", content_type, charset);
+          "Pragma: no-cache\n", content_type, charset);
+  if (client_key) {
+    fprintf(out, "Set-Cookie: EJSID=%016llx\n", client_key);
+  }
+  putc('\n', out);
 
   process_template(out, templ, content_type, charset, title, 0,
                    script_part, body_attr, locale_id, logo_url, css_url);
@@ -318,7 +323,7 @@ ns_html_err_no_perm(FILE *fout,
     }    
   }
   l10n_setlocale(phr->locale_id);
-  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, cnts, _("Permission denied"));
+  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, cnts, NULL_CLIENT_KEY, _("Permission denied"));
   if (separator && *separator) {
     fprintf(fout, "%s", ns_fancy_empty_status);
     ns_separator(fout, separator, cnts);
@@ -413,7 +418,7 @@ ns_html_err_simple_registered(
     }    
   }
   l10n_setlocale(phr->locale_id);
-  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, cnts, _("Cannot participate"));
+  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, cnts, NULL_CLIENT_KEY, _("Cannot participate"));
   if (separator && *separator) {
     fprintf(fout, "%s", ns_fancy_empty_status);
     ns_separator(fout, separator, cnts);
@@ -500,7 +505,7 @@ ns_html_err_inv_param(FILE *fout,
     }    
   }
   l10n_setlocale(phr->locale_id);
-  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, cnts, _("Invalid parameter"));
+  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, cnts, NULL_CLIENT_KEY, _("Invalid parameter"));
   if (separator && *separator) {
     fprintf(fout, "%s", ns_fancy_empty_status);
     ns_separator(fout, separator, cnts);
@@ -561,7 +566,7 @@ ns_html_err_service_not_available(FILE *fout,
     }    
   }
   l10n_setlocale(phr->locale_id);
-  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, cnts, _("Service not available"));
+  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, cnts, NULL_CLIENT_KEY, _("Service not available"));
   if (separator && *separator) {
     fprintf(fout, "%s", ns_fancy_empty_status);
     ns_separator(fout, separator, cnts);
@@ -623,7 +628,7 @@ ns_html_err_cnts_unavailable(FILE *fout,
     }    
   }
   l10n_setlocale(phr->locale_id);
-  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, cnts, _("Contest not available"));
+  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, cnts, NULL_CLIENT_KEY, _("Contest not available"));
   if (separator && *separator) {
     fprintf(fout, "%s", ns_fancy_empty_status);
     ns_separator(fout, separator, cnts);
@@ -697,6 +702,7 @@ ns_html_err_ul_server_down(FILE *fout,
   }
   l10n_setlocale(phr->locale_id);
   ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, cnts,
+            NULL_CLIENT_KEY, 
             _("User database server is down"));
   if (separator && *separator) {
     fprintf(fout, "%s", ns_fancy_empty_status);
@@ -763,7 +769,7 @@ ns_html_err_internal_error(FILE *fout,
     }    
   }
   l10n_setlocale(phr->locale_id);
-  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, cnts, _("Internal error"));
+  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, cnts, NULL_CLIENT_KEY,  _("Internal error"));
   if (separator && *separator) {
     fprintf(fout, "%s", ns_fancy_empty_status);
     ns_separator(fout, separator, cnts);
@@ -829,7 +835,7 @@ ns_html_err_inv_session(FILE *fout,
     }    
   }
   l10n_setlocale(phr->locale_id);
-  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, cnts, _("Invalid session"));
+  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, cnts, NULL_CLIENT_KEY, _("Invalid session"));
   if (separator && *separator) {
     fprintf(fout, "%s", ns_fancy_empty_status);
     ns_separator(fout, separator, cnts);
@@ -906,7 +912,7 @@ ns_html_err_registration_incomplete(
     else footer = ns_fancy_footer;
   }
   l10n_setlocale(phr->locale_id);
-  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, cnts, _("Registration incomplete"));
+  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, cnts, NULL_CLIENT_KEY, _("Registration incomplete"));
   if (separator && *separator) {
     fprintf(fout, "%s", ns_fancy_empty_status);
     ns_separator(fout, separator, cnts);
@@ -966,7 +972,7 @@ ns_html_err_disqualified(
     else footer = ns_fancy_footer;
   }
   l10n_setlocale(phr->locale_id);
-  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, cnts, _("You are disqualified"));
+  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, cnts, NULL_CLIENT_KEY, _("You are disqualified"));
   if (separator && *separator) {
     fprintf(fout, "%s", ns_fancy_empty_status);
     ns_separator(fout, separator, cnts);
@@ -986,6 +992,5 @@ ns_html_err_disqualified(
 /*
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")
  * End:
  */
