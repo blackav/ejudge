@@ -1351,7 +1351,7 @@ new_cookie_2_func(
   close_memstream(cmd_f); cmd_f = 0;
   if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0;
-  if (fetch_cookie(state, cookie, 0, &c) < 0) goto fail;
+  if (fetch_cookie(state, cookie, client_key, &c) < 0) goto fail;
   if (p_cookie) *p_cookie = c;
   return 0;
 
