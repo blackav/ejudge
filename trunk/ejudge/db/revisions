@@ -8295,3 +8295,12 @@ users.c 7619 0 1454306
 clntutil.c 7619 0 1407668
 serve-control.c 7621 0 10016482
 plugins/mysql-userlist/uldb_mysql.c 7621 0 13163955
+new-server.h 7623 0 2483880
+new-server.c 7623 0 1830013
+serve-control.c 7623 0 10016581
+userlist-server.c 7623 0 27350897
+new_server_html.c 7623 0 43806928
+new_server_html_2.c 7623 0 20669636
+new_server_html_3.c 7623 0 2820639
+new_server_html_4.c 7623 0 5587560
+new_server_html_5.c 7623 0 9351291
