@@ -702,7 +702,7 @@ create_account(
     snprintf(urlbuf, sizeof(urlbuf), "%s?contest_id=%d&locale_id=%d&action=%d",
              phr->self_url, phr->contest_id, phr->locale_id,
              NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE);
-    ns_refresh_page_2(fout, urlbuf);
+    ns_refresh_page_2(fout, phr->client_key, urlbuf);
     return;
   }
 
@@ -791,7 +791,7 @@ cmd_login(
     snprintf(urlbuf, sizeof(urlbuf), "%s?contest_id=%d&locale_id=%d&action=%d",
              phr->self_url, phr->contest_id, phr->locale_id,
              NEW_SRV_ACTION_REG_LOGIN_PAGE);
-    ns_refresh_page_2(fout, urlbuf);
+    ns_refresh_page_2(fout, phr->client_key, urlbuf);
     return;
   }
 
@@ -851,7 +851,7 @@ cmd_login(
              phr->session_id);
 
     ns_get_session(phr->session_id, phr->client_key, 0);
-    ns_refresh_page_2(fout, urlbuf);
+    ns_refresh_page_2(fout, phr->client_key, urlbuf);
   } else if (cnts->force_registration) {
     // register for the contest anyway, but do not redirect to new-client
     // since we're not allowed to login unless the registration form
@@ -866,7 +866,7 @@ cmd_login(
 
   snprintf(urlbuf, sizeof(urlbuf), "%s?SID=%llx", phr->self_url,
            phr->session_id);
-  ns_refresh_page_2(fout, urlbuf);
+  ns_refresh_page_2(fout, phr->client_key, urlbuf);
 }
 
 typedef void (*reg_action_handler_func_t)(FILE *fout,
@@ -3142,7 +3142,7 @@ logout(
   snprintf(urlbuf, sizeof(urlbuf),
            "%s?contest_id=%d&locale_id=%d",
            phr->self_url, phr->contest_id, phr->locale_id);
-  ns_refresh_page_2(fout, urlbuf);
+  ns_refresh_page_2(fout, phr->client_key, urlbuf);
 }
 
 static void
@@ -3210,7 +3210,7 @@ change_password(
              "%s?contest_id=%d&login=%s&locale_id=%d&action=%d",
              phr->self_url, phr->contest_id, URLARMOR(phr->login),
              phr->locale_id, NEW_SRV_ACTION_REG_LOGIN_PAGE);
-    ns_refresh_page_2(fout, url);
+    ns_refresh_page_2(fout, phr->client_key, url);
   }
 
   xfree(log_t);

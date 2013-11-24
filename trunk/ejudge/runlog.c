@@ -523,12 +523,12 @@ run_undo_add_record(runlog_state_t state, int run_id)
     if (state->uuid_hash_last_added_run_id == run_id) {
       state->uuid_hash[state->uuid_hash_last_added_index].run_id = -1;
       memset(state->uuid_hash[state->uuid_hash_last_added_index].uuid, 0, sizeof(ej_uuid_t));
+      --state->uuid_hash_used;
     } else {
       run_drop_uuid_hash(state);
     }
     state->uuid_hash_last_added_run_id = -1;
     state->uuid_hash_last_added_index = -1;
-    --state->uuid_hash_used;
   }
   return state->iface->undo_add_entry(state->cnts, run_id);
 }

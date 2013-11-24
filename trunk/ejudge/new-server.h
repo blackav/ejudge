@@ -576,7 +576,10 @@ void
 ns_refresh_page(FILE *fout, struct http_request_info *phr, int new_action,
                 const unsigned char *extra);
 void
-ns_refresh_page_2(FILE *fout, const unsigned char *url);
+ns_refresh_page_2(
+        FILE *fout,
+        ej_cookie_t client_key,
+        const unsigned char *url);
 
 void
 ns_write_priv_all_runs(FILE *f,
