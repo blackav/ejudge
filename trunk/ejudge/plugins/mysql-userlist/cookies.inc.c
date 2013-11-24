@@ -99,9 +99,9 @@ get_cookie_from_pool(
   struct cookies_cache *cache = &state->cookies;
 
   h = val & (COOKIES_POOL_SIZE - 1);
-  while ((cntr = cache->hash[h]) && cntr->cookie->cookie != val)
+  while ((cntr = cache->hash[h]) && cntr->cookie && cntr->cookie->cookie != val)
     h = (h + 1) & (COOKIES_POOL_SIZE - 1);
-  if ((cntr = cache->hash[h]) && cntr->cookie->cookie == val) {
+  if ((cntr = cache->hash[h]) && cntr->cookie && cntr->cookie->cookie == val) {
     MOVE_TO_FRONT(cntr, cache->first, cache->last, prev, next);
     return cntr->cookie;
   }
@@ -118,9 +118,9 @@ get_client_key_from_pool(
   struct cookies_cache *cache = &state->cookies;
 
   h = client_key & (COOKIES_POOL_SIZE - 1);
-  while ((cntr = cache->client_key_hash[h]) && cntr->cookie->client_key != client_key)
+  while ((cntr = cache->client_key_hash[h]) && cntr->cookie && cntr->cookie->client_key != client_key)
     h = (h + 1) & (COOKIES_POOL_SIZE - 1);
-  if ((cntr = cache->client_key_hash[h]) && cntr->cookie->client_key == client_key) {
+  if ((cntr = cache->client_key_hash[h]) && cntr->cookie && cntr->cookie->client_key == client_key) {
     MOVE_TO_FRONT(cntr, cache->first, cache->last, prev, next);
     return cntr->cookie;
   }
@@ -138,9 +138,9 @@ allocate_cookie_on_pool(
   struct cookies_cache *cache = &state->cookies;
 
   h = in_c->cookie & (COOKIES_POOL_SIZE - 1);
-  while ((cntr = cache->hash[h]) && cntr->cookie->cookie != in_c->cookie)
+  while ((cntr = cache->hash[h]) && cntr->cookie && cntr->cookie->cookie != in_c->cookie)
     h = (h + 1) & (COOKIES_POOL_SIZE - 1);
-  if ((cntr = cache->hash[h]) && cntr->cookie->cookie == in_c->cookie) {
+  if ((cntr = cache->hash[h]) && cntr->cookie && cntr->cookie->cookie == in_c->cookie) {
     c = cntr->cookie;
     ASSERT(c);
     userlist_elem_free_data(&c->b);
@@ -197,9 +197,10 @@ remove_cookie_from_pool(
   if (!state || !val) return;
 
   h = val & (COOKIES_POOL_SIZE - 1);
-  while ((cntr = cache->hash[h]) && cntr->cookie->cookie != val)
+  while ((cntr = cache->hash[h]) && cntr->cookie && cntr->cookie->cookie != val)
     h = (h + 1) & (COOKIES_POOL_SIZE - 1);
   if (!(cntr = cache->hash[h])) return;
+  if (!cntr->cookie) return;
   if (cntr->cookie->cookie != val) return;
   do_remove_cookie_from_pool(cache, cntr);
 }
