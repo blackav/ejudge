@@ -1779,9 +1779,9 @@ get_user_info_5_func(
   struct userlist_cookie *cc = 0;
   int cookie_count = 0, reg_count = 0;
   unsigned long long *cookies = 0;
+  ej_cookie_t *client_keys = NULL;
   int *cntsregs = 0;
   int i;
-  char *eptr;
 
   ASSERT(user_id > 0);
   ASSERT(contest_id >= 0);
@@ -1804,12 +1804,12 @@ get_user_info_5_func(
   if (state->md->row_count > 0) {
     cookie_count = state->md->row_count;
     XALLOCAZ(cookies, cookie_count);
+    XALLOCAZ(client_keys, cookie_count);
     for (i = 0; i < cookie_count; i++) {
       if (state->mi->next_row(state->md) < 0) goto fail;
       if (!state->md->row[0]) goto fail;
-      errno = 0; eptr = 0;
-      cookies[i] = strtoull(state->md->row[0], &eptr, 16);
-      if (errno || *eptr) goto fail;
+      if (xml_parse_full_cookie(state->md->row[0], &cookies[i], &client_keys[i]) < 0)
+        goto fail;
     }
   }
   state->mi->free_res(state->md);
@@ -1832,7 +1832,7 @@ get_user_info_5_func(
   }
   for (i = 0; i < cookie_count; i++) {
     // FIXME: this is wrong...
-    if (fetch_cookie(state, cookies[i], 0LL, &cc) < 0) goto fail;
+    if (fetch_cookie(state, cookies[i], client_keys[i], &cc) < 0) goto fail;
     userlist_attach_cookie(u, cc);
   }
 
