@@ -48,6 +48,7 @@ do_remove_cookie_from_pool(
     cache->hash[h] = 0;
     h = (h + 1) & (COOKIES_POOL_SIZE - 1);
   }
+  ASSERT(j + 1 == i);
   // rehash the collected pointers
   for (i = 0; i < j; i++) {
     h = v[i]->cookie->cookie & (COOKIES_POOL_SIZE - 1);
