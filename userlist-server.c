@@ -2421,7 +2421,7 @@ cmd_recover_password_2(struct client_state *p,
   unsigned char *mail_args[7];
   int login_len, name_len, passwd_len, packet_len;
   unsigned char *s;
-  const unsigned char *name = 0;
+  unsigned char *name = 0;
   int user_id = 0, regstatus = -1;
   unsigned char *login = 0;
   unsigned char *email = 0;
@@ -2469,9 +2469,9 @@ cmd_recover_password_2(struct client_state *p,
     send_reply(p, -ULS_ERR_DB_ERROR);
     return;
   }
-  if (ui) name = ui->name;
-  if (!name || !*name) name = u->login;
-  if (!name) name = "";
+  if (ui && ui->name) name = xstrdup(ui->name);
+  if (!name || !*name) name = xstrdup(u->login);
+  if (!name) name = xstrdup("");
 
   if (u->simple_registration && !c && cnts->disable_team_password
       && cnts->autoregister) {
@@ -2544,6 +2544,7 @@ cmd_recover_password_2(struct client_state *p,
     send_reply(p, -ULS_ERR_EMAIL_FAILED);
     info("%s -> failed (e-mail)", logbuf);
     xfree(msg_text);
+    // FIXME: free all allocated strings
     return;
   }
   xfree(msg_text); msg_text = 0; msg_size = 0;
@@ -2594,6 +2595,7 @@ cmd_recover_password_2(struct client_state *p,
   info("%s -> OK", logbuf);
   xfree(login);
   xfree(email);
+  xfree(name);
 }
 
 static void
