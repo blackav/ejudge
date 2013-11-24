@@ -1068,13 +1068,19 @@ ns_refresh_page(FILE *fout, struct http_request_info *phr, int new_action,
   }
 
   //fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\nLocation: %s\n\n", EJUDGE_CHARSET, url);
+  if (phr->client_key) {
+    fprintf(fout, "Set-Cookie: EJSID=%016llx\n", phr->client_key);
+  }
   fprintf(fout, "Location: %s\n\n", url);
 }
 
 void
-ns_refresh_page_2(FILE *fout, const unsigned char *url)
+ns_refresh_page_2(FILE *fout, ej_cookie_t client_key, const unsigned char *url)
 {
   //fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\nLocation: %s\n\n", EJUDGE_CHARSET, url);
+  if (client_key) {
+    fprintf(fout, "Set-Cookie: EJSID=%016llx\n", client_key);
+  }
   fprintf(fout, "Location: %s\n\n", url);
 }
 
@@ -2556,7 +2562,7 @@ priv_change_password(FILE *fout,
              phr->self_url, phr->contest_id, phr->role,
              login_buf, phr->locale_id,
              NEW_SRV_ACTION_LOGIN_PAGE);
-    ns_refresh_page_2(fout, url);
+    ns_refresh_page_2(fout, phr->client_key, url);
   } else {
     html_error_status_page(fout, phr, cnts, extra, log_txt,
                            NEW_SRV_ACTION_MAIN_PAGE, 0);
@@ -7983,7 +7989,7 @@ priv_logout(FILE *fout,
   snprintf(urlbuf, sizeof(urlbuf),
            "%s?contest_id=%d&locale_id=%d&role=%d",
            phr->self_url, phr->contest_id, phr->locale_id, phr->role);
-  ns_refresh_page_2(fout, urlbuf);
+  ns_refresh_page_2(fout, phr->client_key, urlbuf);
 }
 
 
@@ -10342,7 +10348,7 @@ unpriv_change_password(FILE *fout,
              "%s?contest_id=%d&login=%s&locale_id=%d&action=%d",
              phr->self_url, phr->contest_id, login_buf, phr->locale_id,
              NEW_SRV_ACTION_LOGIN_PAGE);
-    ns_refresh_page_2(fout, url);
+    ns_refresh_page_2(fout, phr->client_key, url);
   } else {
     html_error_status_page(fout, phr, cnts, extra, log_txt,
                            NEW_SRV_ACTION_MAIN_PAGE, 0);
@@ -14771,7 +14777,7 @@ unpriv_logout(FILE *fout,
   snprintf(urlbuf, sizeof(urlbuf),
            "%s?contest_id=%d&locale_id=%d",
            phr->self_url, phr->contest_id, phr->locale_id);
-  ns_refresh_page_2(fout, urlbuf);
+  ns_refresh_page_2(fout, phr->client_key, urlbuf);
 }
 
 static void
