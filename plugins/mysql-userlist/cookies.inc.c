@@ -146,6 +146,19 @@ allocate_cookie_on_pool(
     ASSERT(c);
     userlist_elem_free_data(&c->b);
 
+    memcpy(&c->ip, &in_c->ip, sizeof(c->ip));
+    c->cookie = in_c->cookie;
+    c->client_key = in_c->client_key;
+    c->expire = in_c->expire;
+    c->user_id = in_c->user_id;
+    c->ssl = in_c->ssl;
+    c->contest_id = in_c->contest_id;
+    c->locale_id = in_c->locale_id;
+    c->priv_level = in_c->priv_level;
+    c->role = in_c->role;
+    c->recovery = in_c->recovery;
+    c->team_login = in_c->team_login;
+
     MOVE_TO_FRONT(cntr, cache->first, cache->last, prev, next);
     return c;
   }
