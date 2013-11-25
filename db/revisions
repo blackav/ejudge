@@ -8317,3 +8317,12 @@ new_server_html_5.c 7633 0 9303519
 super_html_4.c 7633 0 19616041
 super_html_6.c 7633 0 33323328
 super_html_7.c 7633 0 19062266
+serve-control.c 7636 0 10005689
+userlist-server.c 7635 0 27358396
+clntutil.c 7636 0 1408262
+new_server_html.c 7636 0 43808133
+new_server_html_3.c 7636 0 2821236
+new_server_html_5.c 7636 0 9304119
+super_html_4.c 7636 0 19616641
+super_html_6.c 7636 0 33325716
+super_html_7.c 7636 0 19062867
