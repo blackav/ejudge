@@ -515,8 +515,11 @@ refresh_page(
              phr->session_id, buf);
   }
 
-  //fprintf(out_f, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\nLocation: %s\n\n", EJUDGE_CHARSET, url);
-  fprintf(out_f, "Location: %s\n\n", url);
+  fprintf(out_f, "Location: %s\n", url);
+  if (phr->client_key) {
+    fprintf(out_f, "Set-Cookie: EJSID=%016llx\n", phr->client_key);
+  }
+  putc('\n', out_f);
 }
 
 typedef int (*handler_func_t)(FILE *log_f, FILE *out_f, struct super_http_request_info *phr);
@@ -6722,6 +6725,34 @@ do_http_request(FILE *log_f, FILE *out_f, struct super_http_request_info *phr)
   return retval;
 }
 
+static void
+parse_cookie(struct super_http_request_info *phr)
+{
+  const unsigned char *cookies = ss_getenv(phr, "HTTP_COOKIE");
+  if (!cookies) return;
+  const unsigned char *s = cookies;
+  ej_cookie_t client_key = 0;
+  while (1) {
+    while (isspace(*s)) ++s;
+    if (strncmp(s, "EJSID=", 6) != 0) {
+      while (*s && *s != ';') ++s;
+      if (!*s) return;
+      ++s;
+      continue;
+    }
+    int n = 0;
+    if (sscanf(s + 6, "%llx%n", &client_key, &n) == 1) {
+      s += 6 + n;
+      if (!*s || isspace(*s) || *s == ';') {
+        phr->client_key = client_key;
+        return;
+      }
+    }
+    phr->client_key = 0;
+    return;
+  }
+}
+
 void
 super_html_http_request(
         char **p_out_t,
@@ -6744,6 +6775,8 @@ super_html_http_request(
     script_name = "/cgi-bin/serve-control";
   snprintf(phr->self_url, sizeof(phr->self_url), "%s://%s%s", protocol, http_host, script_name);
   phr->script_name = script_name;
+
+  parse_cookie(phr);
 
   if ((r = ss_cgi_param(phr, "SID", &s)) < 0) {
     r = -S_ERR_INV_SID;

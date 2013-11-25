@@ -670,7 +670,6 @@ client_put_refresh_header(
   vfprintf(stdout, format, args);
   fputs("\n</h1>\n", stdout);
   */
-  //printf("Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\nLocation: %s\n\n", EJUDGE_CHARSET, url);
   if (client_key) {
     printf("Set-Cookie: EJSID=%016llx\n", client_key);
   }

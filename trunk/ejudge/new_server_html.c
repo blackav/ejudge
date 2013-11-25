@@ -1056,8 +1056,11 @@ ns_submit_button(unsigned char *buf, size_t size,
 }
 
 void
-ns_refresh_page(FILE *fout, struct http_request_info *phr, int new_action,
-                const unsigned char *extra)
+ns_refresh_page(
+        FILE *fout,
+        struct http_request_info *phr,
+        int new_action,
+        const unsigned char *extra)
 {
   unsigned char url[1024];
 
@@ -1067,7 +1070,6 @@ ns_refresh_page(FILE *fout, struct http_request_info *phr, int new_action,
     ns_url_unescaped(url, sizeof(url), phr, new_action, 0);
   }
 
-  //fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\nLocation: %s\n\n", EJUDGE_CHARSET, url);
   if (phr->client_key) {
     fprintf(fout, "Set-Cookie: EJSID=%016llx\n", phr->client_key);
   }
@@ -1075,9 +1077,11 @@ ns_refresh_page(FILE *fout, struct http_request_info *phr, int new_action,
 }
 
 void
-ns_refresh_page_2(FILE *fout, ej_cookie_t client_key, const unsigned char *url)
+ns_refresh_page_2(
+        FILE *fout,
+        ej_cookie_t client_key,
+        const unsigned char *url)
 {
-  //fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\nLocation: %s\n\n", EJUDGE_CHARSET, url);
   if (client_key) {
     fprintf(fout, "Set-Cookie: EJSID=%016llx\n", client_key);
   }
@@ -15741,7 +15745,6 @@ parse_cookie(struct http_request_info *phr)
     return;
   }
 }
-
 
 void
 ns_handle_http_request(struct server_framework_state *state,

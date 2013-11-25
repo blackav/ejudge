@@ -137,8 +137,11 @@ ss_redirect_2(
 
   xfree(o_str); o_str = 0; o_len = 0;
 
-  //fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\nLocation: %s\n\n", EJUDGE_CHARSET, url);
-  fprintf(fout, "Location: %s\n\n", url);
+  fprintf(fout, "Location: %s\n", url);
+  if (phr->client_key) {
+    fprintf(fout, "Set-Cookie: EJSID=%016llx\n", phr->client_key);
+  }
+  putc('\n', fout);
 }
 
 void
