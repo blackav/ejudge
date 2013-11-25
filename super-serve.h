@@ -272,6 +272,7 @@ struct super_http_request_info
   const unsigned char *system_login;
 
   unsigned long long session_id;
+  ej_cookie_t client_key;
 
   // authentification info
   int user_id;
