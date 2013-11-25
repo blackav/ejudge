@@ -164,7 +164,7 @@ client_put_header(
             "Cache-Control: no-cache\n"
             "Pragma: no-cache\n", content_type, charset);
     if (client_key) {
-      fprintf(out, "Set-Cookie: EJSID=%016llx\n", client_key);
+      fprintf(out, "Set-Cookie: EJSID=%016llx; Path=/\n", client_key);
     }
     putc('\n', out);
   }
