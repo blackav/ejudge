@@ -119,7 +119,7 @@ ss_redirect(
   }
 
   if (phr->client_key) {
-    fprintf(fout, "Set-Cookie: EJSID=%016llx\n", phr->client_key);
+    fprintf(fout, "Set-Cookie: EJSID=%016llx; Path=/\n", phr->client_key);
   }
   fprintf(fout, "Location: %s\n", url);
   putc('\n', fout);
@@ -164,7 +164,7 @@ ss_redirect_2(
   xfree(o_str); o_str = 0; o_len = 0;
 
   if (phr->client_key) {
-    fprintf(fout, "Set-Cookie: EJSID=%016llx\n", phr->client_key);
+    fprintf(fout, "Set-Cookie: EJSID=%016llx; Path=/\n", phr->client_key);
   }
   fprintf(fout, "Location: %s\n", url);
   putc('\n', fout);
@@ -199,7 +199,7 @@ ss_redirect_3(
   }
   fprintf(fout, "\n");
   if (phr->client_key) {
-    fprintf(fout, "Set-Cookie: EJSID=%016llx\n", phr->client_key);
+    fprintf(fout, "Set-Cookie: EJSID=%016llx; Path=/\n", phr->client_key);
   }
   putc('\n', fout);
 }
@@ -8926,7 +8926,7 @@ super_serve_op_EJUDGE_XML_CANCEL_ACTION(
 {
   fprintf(out_f, "Location: %s?SID=%016llx\n", phr->self_url, phr->session_id);
   if (phr->client_key) {
-    fprintf(out_f, "Set-Cookie: EJSID=%016llx\n", phr->client_key);
+    fprintf(out_f, "Set-Cookie: EJSID=%016llx; Path=/\n", phr->client_key);
   }
   putc('\n', out_f);
   return 0;

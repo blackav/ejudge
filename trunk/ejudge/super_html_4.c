@@ -517,7 +517,7 @@ refresh_page(
 
   fprintf(out_f, "Location: %s\n", url);
   if (phr->client_key) {
-    fprintf(out_f, "Set-Cookie: EJSID=%016llx\n", phr->client_key);
+    fprintf(out_f, "Set-Cookie: EJSID=%016llx; Path=/\n", phr->client_key);
   }
   putc('\n', out_f);
 }

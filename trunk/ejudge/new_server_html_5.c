@@ -968,7 +968,7 @@ change_locale(FILE *fout, struct http_request_info *phr)
     if (next_action > 0) fprintf(fout, "&action=%d", next_action);
     fprintf(fout, "\n");
     if (phr->client_key) {
-      fprintf(fout, "Set-Cookie: EJSID=%016llx\n", phr->client_key);
+      fprintf(fout, "Set-Cookie: EJSID=%016llx; Path=/\n", phr->client_key);
     }
     fprintf(fout, "\n");
     return;
