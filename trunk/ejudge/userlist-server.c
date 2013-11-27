@@ -3827,7 +3827,7 @@ cmd_check_cookie(
   orig_contest_id = data->contest_id;
   if (full_get_contest(p, logbuf, &data->contest_id, &cnts) < 0) return;
 
-  if (config->disable_cookie_ip_check <= 0) {
+  if (config->enable_cookie_ip_check > 0) {
     if (ipv6cmp(&cookie->ip, &data->origin_ip) != 0 || cookie->ssl != data->ssl) {
       err("%s -> IP address mismatch", logbuf);
       send_reply(p, -ULS_ERR_NO_COOKIE);
@@ -3987,7 +3987,7 @@ cmd_team_check_cookie(
   if (!name || !*name) name = u->login;
   if (!name) name = "";
 
-  if (config->disable_cookie_ip_check <= 0) {
+  if (config->enable_cookie_ip_check > 0) {
     if (ipv6cmp(&cookie->ip, &data->origin_ip) != 0 || cookie->ssl != data->ssl) {
       err("%s -> IP address mismatch", logbuf);
       send_reply(p, -ULS_ERR_NO_COOKIE);
@@ -4176,7 +4176,7 @@ cmd_priv_check_cookie(
     return;
   }
 
-  if (config->disable_cookie_ip_check <= 0) {
+  if (config->enable_cookie_ip_check > 0) {
     if (ipv6cmp(&cookie->ip, &data->origin_ip) != 0 || cookie->ssl != data->ssl) {
       err("%s -> IP address mismatch", logbuf);
       send_reply(p, -ULS_ERR_NO_COOKIE);
@@ -4344,7 +4344,7 @@ cmd_priv_cookie_login(
     return;
   }
 
-  if (config->disable_cookie_ip_check <= 0) {
+  if (config->enable_cookie_ip_check > 0) {
     if (ipv6cmp(&cookie->ip, &data->origin_ip) != 0 || cookie->ssl != data->ssl) {
       err("%s -> IP address or SSL flag mismatch", logbuf);
       send_reply(p, -ULS_ERR_NO_COOKIE);
@@ -4522,7 +4522,7 @@ cmd_do_logout(
     send_reply(p, ULS_OK);
     return;
   }
-  if (config->disable_cookie_ip_check <= 0) {
+  if (config->enable_cookie_ip_check > 0) {
     if (ipv6cmp(&cookie->ip, &data->origin_ip) != 0 || cookie->ssl != data->ssl) {
       err("%s -> IP address does not match", logbuf);
       send_reply(p, -ULS_ERR_NO_COOKIE);
@@ -7961,7 +7961,7 @@ cmd_get_cookie(
   user_login = u->login;
   user_id = cookie->user_id;
 
-  if (config->disable_cookie_ip_check <= 0) {
+  if (config->enable_cookie_ip_check > 0) {
     if (ipv6cmp(&cookie->ip, &data->origin_ip) != 0 || cookie->ssl != data->ssl)
       FAIL(ULS_ERR_NO_COOKIE, "IP address mismatch");
   }

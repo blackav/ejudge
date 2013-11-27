@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2013 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -117,6 +117,7 @@ enum
     AT_LOAD,
     AT_DEFAULT,
     AT_DISABLE_COOKIE_IP_CHECK,
+    AT_ENABLE_COOKIE_IP_CHECK,
     AT_ENABLE_CONTEST_SELECT,
 
     AT__BARRIER,
@@ -198,6 +199,7 @@ static char const * const attr_map[] =
   "load",
   "default",
   "disable_cookie_ip_check",
+  "enable_cookie_ip_check",
   "enable_contest_select",
   0,
   "_default",
@@ -565,6 +567,9 @@ ejudge_cfg_do_parse(char const *path)
       break;
     case AT_DISABLE_COOKIE_IP_CHECK:
       if (xml_attr_bool(a, &cfg->disable_cookie_ip_check) < 0) goto failed;
+      break;
+    case AT_ENABLE_COOKIE_IP_CHECK:
+      if (xml_attr_bool(a, &cfg->enable_cookie_ip_check) < 0) goto failed;
       break;
     case AT_ENABLE_CONTEST_SELECT:
       if (xml_attr_bool(a, &cfg->enable_contest_select) < 0) goto failed;
