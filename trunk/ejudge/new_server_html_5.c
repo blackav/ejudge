@@ -267,8 +267,10 @@ login_page(
     s = _("Create another account");
   else
     s = _("Create account");
-  fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d\">%s</a></div></td>", phr->self_url, phr->contest_id, phr->locale_id, NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE, s);
-  item_cnt++;
+  if (ejudge_config->disable_new_users <= 0) {
+    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d\">%s</a></div></td>", phr->self_url, phr->contest_id, phr->locale_id, NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE, s);
+    item_cnt++;
+  }
 
   if (cnts->enable_password_recovery && cnts->disable_team_password
       && !cnts->simple_registration && !created_mode) {
@@ -420,7 +422,9 @@ create_autoassigned_account_page(
   fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">e-mail: %s</div></td>",
           html_input_text(bb, sizeof(bb), "email", 20, 0, "%s", ARMOR(email)));
 
-  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s</div></td>", ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_REG_CREATE_ACCOUNT, _("Create account")));
+  if (ejudge_config->disable_new_users <= 0) {
+    fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s</div></td>", ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_REG_CREATE_ACCOUNT, _("Create account")));
+  }
 
   if (!cnts->disable_locale_change) {
     fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: ",
@@ -581,7 +585,9 @@ create_account_page(
     l10n_html_locale_select(fout, phr->locale_id);
     fprintf(fout, "</div></td>\n");
   }
-  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s</div></td>", ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_REG_CREATE_ACCOUNT, _("Create account")));
+  if (ejudge_config->disable_new_users <= 0) {
+    fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s</div></td>", ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_REG_CREATE_ACCOUNT, _("Create account")));
+  }
 
   fprintf(fout, "</tr></table></div></form>\n");
 
