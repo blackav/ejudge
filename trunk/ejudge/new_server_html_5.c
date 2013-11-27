@@ -30,6 +30,7 @@
 #include "xml_utils.h"
 #include "l10n.h"
 #include "compat.h"
+#include "ejudge_cfg.h"
 
 #include "reuse_xalloc.h"
 #include "reuse_logger.h"
@@ -368,6 +369,10 @@ create_autoassigned_account_page(
   int i, j;
   int reg_error = 0, reg_ul_error = 0, regular_flag = 0;
 
+  if (ejudge_config->disable_new_users > 0) {
+    return ns_html_err_no_perm(fout, phr, 0, "registration is not available");
+  }
+
   if (!cnts->assign_logins)
     return create_account_page(fout, phr, cnts, extra, cur_time);
 
@@ -527,6 +532,10 @@ create_account_page(
   unsigned char bb[1024];
   int item_cnt = 0, regular_flag = 0;
 
+  if (ejudge_config->disable_new_users > 0) {
+    return ns_html_err_no_perm(fout, phr, 0, "registration is not available");
+  }
+
   if (cnts->assign_logins)
     return create_autoassigned_account_page(fout, phr, cnts, extra, cur_time);
 
@@ -678,6 +687,10 @@ create_account(
   unsigned char urlbuf[1024];
   unsigned char *new_login = 0;
   unsigned char *new_password = 0;
+
+  if (ejudge_config->disable_new_users > 0) {
+    return ns_html_err_no_perm(fout, phr, 0, "registration is not available");
+  }
 
   if (!cnts->assign_logins) {
     r = ns_cgi_param(phr, "login", &login);
