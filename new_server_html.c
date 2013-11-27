@@ -10130,27 +10130,31 @@ unprivileged_page_login_page(FILE *fout, struct http_request_info *phr,
       && cnts->register_url
       && (cnts->reg_deadline <= 0 || cur_time < cnts->reg_deadline)) {
     fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">");
-    if (cnts->assign_logins) {
-      fprintf(fout,
-              "<a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d\">%s</a>",
-              cnts->register_url, phr->contest_id, phr->locale_id,
-              NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE,
-              _("Registration"));
-    } else {
-      fprintf(fout,
-              "<a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=2\">%s</a>",
-              cnts->register_url, phr->contest_id, phr->locale_id,
-              _("Registration"));
+    if (ejudge_config->disable_new_users <= 0) {
+      if (cnts->assign_logins) {
+        fprintf(fout,
+                "<a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d\">%s</a>",
+                cnts->register_url, phr->contest_id, phr->locale_id,
+                NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE,
+                _("Registration"));
+      } else {
+        fprintf(fout,
+                "<a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=2\">%s</a>",
+                cnts->register_url, phr->contest_id, phr->locale_id,
+                _("Registration"));
+      }
     }
     fprintf(fout, "</div></td>\n");
     vis_flag++;
   } else if (cnts && cnts->register_url
              && (cnts->reg_deadline <= 0 || cur_time < cnts->reg_deadline)) {
     fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">");
-    fprintf(fout,
-            "<a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d\">%s</a>",
-            cnts->register_url, phr->contest_id, phr->locale_id,
-            _("Registration"));
+    if (ejudge_config->disable_new_users <= 0) {
+      fprintf(fout,
+              "<a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d\">%s</a>",
+              cnts->register_url, phr->contest_id, phr->locale_id,
+              _("Registration"));
+    }
     fprintf(fout, "</div></td>\n");
     vis_flag++;
   }

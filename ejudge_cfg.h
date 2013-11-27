@@ -65,6 +65,7 @@ struct ejudge_cfg
   int disable_cookie_ip_check; // ignored since 2.3.29
   int enable_cookie_ip_check;  // supported since 2.3.29
   int enable_contest_select;
+  int disable_new_users;
 
   // these strings actually point into other strings in XML tree
   unsigned char *socket_path;
