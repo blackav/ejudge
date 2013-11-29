@@ -6664,7 +6664,7 @@ ns_get_user_problems_summary(
   int need_prev_succ = 0; // 1, if we need to compute 'prev_successes' array
 
   /* if 'score_bonus' is set for atleast one problem, we have to scan all runs */
-  for (int prob_id = 0; prob_id <= cs->max_prob; ++prob_id) {
+  for (int prob_id = 1; prob_id <= cs->max_prob; ++prob_id) {
     struct section_problem_data *prob = cs->probs[prob_id];
     if (prob && prob->score_bonus_total > 0) {
       need_prev_succ = 1;
