@@ -479,7 +479,7 @@ uuid_archive_dir_prepare(
            state->global->uuid_archive_dir, ((const unsigned char *) run_uuid)[0],
            ((const unsigned char *) run_uuid)[1],
            ej_uuid_unparse(run_uuid, NULL));
-  if (os_MakeDirPath(path, 0750) < 0) {
+  if (os_MakeDirPath(path, 0755) < 0) {
     err("uuid_archive_dir_prepare: mkdir '%s' failed: %s", path, os_ErrorMsg());
     return -1;
   }
