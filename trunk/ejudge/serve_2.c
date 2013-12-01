@@ -3747,12 +3747,17 @@ struct judge_suspended_job
   ej_ip_t ip;
   int ssl_flag;
   int priority_adjustment;
+
+  int total_runs;
+  int cur_run;
 };
 
 static void
 judge_suspended_destroy_func(
         struct server_framework_job *job)
 {
+  xfree(job->title);
+  xfree(job);
 }
 
 static int
@@ -3761,14 +3766,35 @@ judge_suspended_run_func(
         int *p_count,
         int max_count)
 {
-  return 1;
+  struct judge_suspended_job *sj = (struct judge_suspended_job *) job;
+  struct run_entry re;
+
+  sj->total_runs = run_get_total(sj->state->runlog_state);
+  for (; sj->cur_run < sj->total_runs && *p_count < max_count; ++sj->cur_run, ++(*p_count)) {
+    if (run_get_entry(sj->state->runlog_state, sj->cur_run, &re) >= 0 && re.status != RUN_PENDING) {
+      serve_rejudge_run(sj->config, sj->cnts, sj->state,
+                        sj->cur_run, sj->user_id, &sj->ip, sj->ssl_flag, 0,
+                        sj->priority_adjustment);
+    }
+  }
+
+  return (sj->cur_run >= sj->total_runs);
 }
 
 static unsigned char *
 judge_suspended_get_status_func(
         struct server_framework_job *job)
 {
-  return NULL;
+  struct judge_suspended_job *sj = (struct judge_suspended_job*) job;
+
+  sj->total_runs = run_get_total(sj->state->runlog_state);
+  if (sj->total_runs <= 0 || sj->cur_run < 0) {
+    return xstrdup("done");
+  }
+
+  unsigned char buf[1024];
+  snprintf(buf, sizeof(buf), "%lld%% done", sj->cur_run * 100LL / sj->total_runs);
+  return xstrdup(buf);
 }
 
 static const struct server_framework_job_funcs judge_suspended_funcs =
@@ -3788,7 +3814,23 @@ create_judge_suspended_job(
         int ssl_flag,
         int priority_adjustment)
 {
-  return NULL;
+  struct judge_suspended_job *sj = NULL;
+
+  XCALLOC(sj, 1);
+
+  sj->b.vt = &judge_suspended_funcs;
+  sj->b.contest_id = cnts->id;
+  sj->b.title = xstrdup("Judge PENDING initialization");
+  sj->config = config;
+  sj->cnts = cnts;
+  sj->state = state;
+  sj->user_id = user_id;
+  sj->ip = *ip;
+  sj->ssl_flag = ssl_flag;
+  sj->priority_adjustment = priority_adjustment;
+  sj->total_runs = run_get_total(state->runlog_state);
+
+  return (struct server_framework_job *) sj;
 }
 
 struct server_framework_job *
