@@ -3771,7 +3771,7 @@ judge_suspended_run_func(
 
   sj->total_runs = run_get_total(sj->state->runlog_state);
   for (; sj->cur_run < sj->total_runs && *p_count < max_count; ++sj->cur_run, ++(*p_count)) {
-    if (run_get_entry(sj->state->runlog_state, sj->cur_run, &re) >= 0 && re.status != RUN_PENDING) {
+    if (run_get_entry(sj->state->runlog_state, sj->cur_run, &re) >= 0 && re.status == RUN_PENDING) {
       serve_rejudge_run(sj->config, sj->cnts, sj->state,
                         sj->cur_run, sj->user_id, &sj->ip, sj->ssl_flag, 0,
                         sj->priority_adjustment);
