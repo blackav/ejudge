@@ -1440,49 +1440,37 @@ do_mysql_menu(int *p_cur_item)
 #endif
 
   /*
-  int ret_val = 0;
-  int cur_item = *p_cur_item;
-  int nitem, i, c, cmd, first_row, j, val, n;
-  char **descs = 0;
-  ITEM **items = 0;
-  MENU *menu = 0;
-  WINDOW *in_win = 0, *out_win = 0;
-  PANEL *in_pan = 0, *out_pan = 0;
+  int i, c, cmd, j, val, n;
   const struct path_edit_item *cur_id_item;
   unsigned char buf1[PATH_MAX], buf2[PATH_MAX];
+  */
 
-  nitem = ID_LINE_LAST;
-  XCALLOC(descs, nitem);
-  asprintf(&descs[ID_LINE_RETURN], "Return to upper-level menu");
-  asprintf(&descs[ID_LINE_SETTINGS], "*** Ejudge administrator identity ***");
+  int ret_val = 0;
+  int item_count = MYSQL_LINE_LAST;
+  char **descs = calloc(item_count, sizeof(*descs));
+  asprintf(&descs[MYSQL_LINE_RETURN], "Return to upper-level menu");
+  asprintf(&descs[MYSQL_LINE_SETTINGS], "*** MySQL settings ***");
 
-  for (i = 0; i < ID_LINE_LAST; i++) {
+  for (int i = 0; i < item_count; ++i) {
     switch (i) {
-    case ID_LINE_RETURN:
-    case ID_LINE_SETTINGS:
-      break;
-    case ID_LINE_USER_ID:
-    case ID_LINE_LOGIN:
-    case ID_LINE_EMAIL:
-    case ID_LINE_NAME:
-    case ID_LINE_PASSWORD:
-      asprintf(&descs[i], "%-20.20s %s: %-53.53s",
-               id_edit_items[i].descr,
-               valid_id_str(i), id_edit_items[i].buf);
+    case MYSQL_LINE_RETURN:
+    case MYSQL_LINE_SETTINGS:
       break;
     default:
-      SWERR(("do_identity_menu: unhandled index i == %d", i));
+      SWERR(("do_mysql_menu: unhandled index i == %d", i));
     }
   }
 
-  XCALLOC(items, nitem + 1);
-  for (i = 0; i < nitem; i++)
+  ITEM **items = calloc(item_count + 1, sizeof(*items));
+  for (int i = 0; i < item_count; ++i) {
     items[i] = new_item(descs[i], 0);
-  menu = new_menu(items);
+  }
+
+  MENU *menu = new_menu(items);
   set_menu_back(menu, COLOR_PAIR(1));
   set_menu_fore(menu, COLOR_PAIR(3));
-  out_win = newwin(LINES - 2, COLS, 1, 0);
-  in_win = newwin(LINES - 4, COLS - 2, 2, 1);
+  WINDOW *out_win = newwin(LINES - 2, COLS, 1, 0);
+  WINDOW *in_win = newwin(LINES - 4, COLS - 2, 2, 1);
   wattrset(out_win, COLOR_PAIR(1));
   wbkgdset(out_win, COLOR_PAIR(1));
   wattrset(in_win, COLOR_PAIR(1));
@@ -1490,39 +1478,43 @@ do_mysql_menu(int *p_cur_item)
   wclear(in_win);
   wclear(out_win);
   box(out_win, 0, 0);
-  out_pan = new_panel(out_win);
-  in_pan = new_panel(in_win);
+  PANEL *out_pan = new_panel(out_win);
+  PANEL *in_pan = new_panel(in_win);
   set_menu_win(menu, in_win);
   set_menu_format(menu, LINES - 4, 0);
 
+  int cur_item = *p_cur_item;
   if (cur_item < 0) cur_item = 0;
-  if (cur_item >= nitem) cur_item = nitem - 1;
-  first_row = cur_item - (LINES - 4)/2;
-  if (first_row + LINES - 4 > nitem) first_row = nitem - (LINES - 4);
+  if (cur_item >= item_count) cur_item = item_count - 1;
+  int first_row = cur_item - (LINES - 4)/2;
+  if (first_row + LINES - 4 > item_count) first_row = item_count - (LINES - 4);
   if (first_row < 0) first_row = 0;
   set_top_row(menu, first_row);
   set_current_item(menu, items[cur_item]);
 
   while (1) {
-    mvwprintw(stdscr, 0, 0, "Ejudge %s configurator > Administrator identity",
+    mvwprintw(stdscr, 0, 0, "Ejudge %s configurator > MySQL settings",
               compile_version);
     wclrtoeol(stdscr);
-    ncurses_print_help("Q - quit, D - reset, Enter - edit | Legend: ! - invalid");
+    ncurses_print_help("Q - quit, Enter - edit");
     show_panel(out_pan);
     show_panel(in_pan);
     post_menu(menu);
     update_panels();
     doupdate();
 
+    int c = 0;
     while (1) {
       c = getch();
-      cmd = -1;
+      int cmd = -1;
       switch (c) {
+        /*
       case KEY_BACKSPACE: case KEY_DC: case 127: case 8:
       case 'd': case 'D': case '÷' & 255: case '×' & 255:
         c = 'd';
         goto menu_done;
-      case 'q': case 'Q': case 'Ê' & 255: case 'ê' & 255: case 'G' & 31:
+        */
+      case 'q': case 'Q': case 'G' & 31:
         c = 'q';
         goto menu_done;
       case '\n': case '\r':
@@ -1541,16 +1533,19 @@ do_mysql_menu(int *p_cur_item)
         cmd = REQ_LAST_ITEM;
         break;
       case KEY_NPAGE:
-        i = item_index(current_item(menu));
-        if (i + LINES - 4 >= nitem) cmd = REQ_LAST_ITEM;
-        else cmd = REQ_SCR_DPAGE;
-        break;
+        {
+          int i = item_index(current_item(menu));
+          if (i + LINES - 4 >= item_count) cmd = REQ_LAST_ITEM;
+          else cmd = REQ_SCR_DPAGE;
+          break;
+        }
       case KEY_PPAGE:
-        i = item_index(current_item(menu));
-        if (i - (LINES - 4) < 0) cmd = REQ_FIRST_ITEM;
-        else cmd = REQ_SCR_UPAGE;
-        break;
-
+        {
+          int i = item_index(current_item(menu));
+          if (i - (LINES - 4) < 0) cmd = REQ_FIRST_ITEM;
+          else cmd = REQ_SCR_UPAGE;
+          break;
+        }
       }
       if (cmd != -1) {
         menu_driver(menu, cmd);
@@ -1559,20 +1554,19 @@ do_mysql_menu(int *p_cur_item)
       }
     }
 
-    // handle menu command
-  menu_done:
-    ;
-    i = item_index(current_item(menu));
+  menu_done: ;
+    int index = item_index(current_item(menu));
     if (c == 'q') {
-      cur_item = i;
+      cur_item = index;
       break;
     }
     if (c == '\n') {
-      if (i == ID_LINE_RETURN) {
-        cur_item = i;
+      if (index == MYSQL_LINE_RETURN) {
+        cur_item = index;
         break;
       }
-      if (i == ID_LINE_SETTINGS) continue;
+      if (index == MYSQL_LINE_SETTINGS) continue;
+    /*
       cur_id_item = &id_edit_items[i];
       if (!cur_id_item->buf) continue;
 
@@ -1673,48 +1667,32 @@ do_mysql_menu(int *p_cur_item)
       cur_item = i;
       ret_val = 1;
       break;
-    }
-    if (c == 'd') {
-      if (i == ID_LINE_RETURN || i == ID_LINE_SETTINGS) continue;
-
-      j = ncurses_yesno(0, "\\begin{center}\nReset the variable to the initial value?\n\\end{center}\n");
-      if (j <= 0) continue;
-
-      cur_id_item = &id_edit_items[i];
-      cur_id_item->buf[0] = 0;
-      cur_item = i;
-      ret_val = 1;
-      break;
+  */
     }
   }
 
-  // clear screen
   wmove(stdscr, 0, 0);
   wclrtoeol(stdscr);
 
-  // free resources
   if (in_pan) del_panel(in_pan);
   if (out_pan) del_panel(out_pan);
-  if (menu) free_menu(menu);
   if (out_win) delwin(out_win);
   if (in_win) delwin(in_win);
+  if (menu) free_menu(menu);
   if (items) {
-    for (i = 0; i < nitem; i++)
+    for (int i = 0; i < item_count; ++i)
       if (items[i])
         free_item(items[i]);
     xfree(items);
   }
   if (descs) {
-    for (i = 0; i < nitem; i++)
+    for (int i = 0; i < item_count; ++i)
       xfree(descs[i]);
     xfree(descs);
   }
 
   *p_cur_item = cur_item;
   return ret_val;
-
-   */
-  return 0;
 }
 
 static const struct path_edit_item set_edit_items[] =
