@@ -1398,6 +1398,325 @@ do_identity_menu(int *p_cur_item)
   return ret_val;
 }
 
+enum
+{
+  MYSQL_LINE_RETURN,
+  MYSQL_LINE_SETTINGS,
+
+  MYSQL_LINE_LAST,
+};
+/*
+
+static const struct path_edit_item id_edit_items[] =
+{
+  [ID_LINE_USER_ID] =
+  {
+    "Admin ID", 0, config_user_id, sizeof(config_user_id),
+  },
+  [ID_LINE_LOGIN] =
+  {
+    "Admin login", 0, config_login, sizeof(config_login),
+  },
+  [ID_LINE_EMAIL] =
+  {
+    "Admin e-mail", 0, config_email, sizeof(config_email),
+  },
+  [ID_LINE_NAME] =
+  {
+    "Admin name", 0, config_name, sizeof(config_name),
+  },
+  [ID_LINE_PASSWORD] =
+  {
+    "Admin password", 0, config_password_txt, sizeof(config_password_txt),
+  },
+};
+ */
+
+static int
+do_mysql_menu(int *p_cur_item)
+{
+#if CONF_HAS_MYSQL - 0 == 0
+  return 0;
+#endif
+
+  /*
+  int ret_val = 0;
+  int cur_item = *p_cur_item;
+  int nitem, i, c, cmd, first_row, j, val, n;
+  char **descs = 0;
+  ITEM **items = 0;
+  MENU *menu = 0;
+  WINDOW *in_win = 0, *out_win = 0;
+  PANEL *in_pan = 0, *out_pan = 0;
+  const struct path_edit_item *cur_id_item;
+  unsigned char buf1[PATH_MAX], buf2[PATH_MAX];
+
+  nitem = ID_LINE_LAST;
+  XCALLOC(descs, nitem);
+  asprintf(&descs[ID_LINE_RETURN], "Return to upper-level menu");
+  asprintf(&descs[ID_LINE_SETTINGS], "*** Ejudge administrator identity ***");
+
+  for (i = 0; i < ID_LINE_LAST; i++) {
+    switch (i) {
+    case ID_LINE_RETURN:
+    case ID_LINE_SETTINGS:
+      break;
+    case ID_LINE_USER_ID:
+    case ID_LINE_LOGIN:
+    case ID_LINE_EMAIL:
+    case ID_LINE_NAME:
+    case ID_LINE_PASSWORD:
+      asprintf(&descs[i], "%-20.20s %s: %-53.53s",
+               id_edit_items[i].descr,
+               valid_id_str(i), id_edit_items[i].buf);
+      break;
+    default:
+      SWERR(("do_identity_menu: unhandled index i == %d", i));
+    }
+  }
+
+  XCALLOC(items, nitem + 1);
+  for (i = 0; i < nitem; i++)
+    items[i] = new_item(descs[i], 0);
+  menu = new_menu(items);
+  set_menu_back(menu, COLOR_PAIR(1));
+  set_menu_fore(menu, COLOR_PAIR(3));
+  out_win = newwin(LINES - 2, COLS, 1, 0);
+  in_win = newwin(LINES - 4, COLS - 2, 2, 1);
+  wattrset(out_win, COLOR_PAIR(1));
+  wbkgdset(out_win, COLOR_PAIR(1));
+  wattrset(in_win, COLOR_PAIR(1));
+  wbkgdset(in_win, COLOR_PAIR(1));
+  wclear(in_win);
+  wclear(out_win);
+  box(out_win, 0, 0);
+  out_pan = new_panel(out_win);
+  in_pan = new_panel(in_win);
+  set_menu_win(menu, in_win);
+  set_menu_format(menu, LINES - 4, 0);
+
+  if (cur_item < 0) cur_item = 0;
+  if (cur_item >= nitem) cur_item = nitem - 1;
+  first_row = cur_item - (LINES - 4)/2;
+  if (first_row + LINES - 4 > nitem) first_row = nitem - (LINES - 4);
+  if (first_row < 0) first_row = 0;
+  set_top_row(menu, first_row);
+  set_current_item(menu, items[cur_item]);
+
+  while (1) {
+    mvwprintw(stdscr, 0, 0, "Ejudge %s configurator > Administrator identity",
+              compile_version);
+    wclrtoeol(stdscr);
+    ncurses_print_help("Q - quit, D - reset, Enter - edit | Legend: ! - invalid");
+    show_panel(out_pan);
+    show_panel(in_pan);
+    post_menu(menu);
+    update_panels();
+    doupdate();
+
+    while (1) {
+      c = getch();
+      cmd = -1;
+      switch (c) {
+      case KEY_BACKSPACE: case KEY_DC: case 127: case 8:
+      case 'd': case 'D': case '÷' & 255: case '×' & 255:
+        c = 'd';
+        goto menu_done;
+      case 'q': case 'Q': case 'Ê' & 255: case 'ê' & 255: case 'G' & 31:
+        c = 'q';
+        goto menu_done;
+      case '\n': case '\r':
+        c = '\n';
+        goto menu_done;
+      case KEY_UP: case KEY_LEFT:
+        cmd = REQ_UP_ITEM;
+        break;
+      case KEY_DOWN: case KEY_RIGHT:
+        cmd = REQ_DOWN_ITEM;
+        break;
+      case KEY_HOME:
+        cmd = REQ_FIRST_ITEM;
+        break;
+      case KEY_END:
+        cmd = REQ_LAST_ITEM;
+        break;
+      case KEY_NPAGE:
+        i = item_index(current_item(menu));
+        if (i + LINES - 4 >= nitem) cmd = REQ_LAST_ITEM;
+        else cmd = REQ_SCR_DPAGE;
+        break;
+      case KEY_PPAGE:
+        i = item_index(current_item(menu));
+        if (i - (LINES - 4) < 0) cmd = REQ_FIRST_ITEM;
+        else cmd = REQ_SCR_UPAGE;
+        break;
+
+      }
+      if (cmd != -1) {
+        menu_driver(menu, cmd);
+        update_panels();
+        doupdate();
+      }
+    }
+
+    // handle menu command
+  menu_done:
+    ;
+    i = item_index(current_item(menu));
+    if (c == 'q') {
+      cur_item = i;
+      break;
+    }
+    if (c == '\n') {
+      if (i == ID_LINE_RETURN) {
+        cur_item = i;
+        break;
+      }
+      if (i == ID_LINE_SETTINGS) continue;
+      cur_id_item = &id_edit_items[i];
+      if (!cur_id_item->buf) continue;
+
+      if (i == ID_LINE_PASSWORD) {
+        buf1[0] = 0;
+        j = ncurses_edit_password(LINES / 2, COLS, "Password",
+                                  buf1, sizeof(buf1));
+        if (j < 0) continue;
+        if (!buf1[0]) continue;
+
+        buf2[0] = 0;
+        j = ncurses_edit_password(LINES / 2, COLS, "Password (retype)",
+                                  buf2, sizeof(buf2));
+        if (j < 0) continue;
+        if (!buf2[0]) continue;
+
+        if (strcmp(buf1, buf2) != 0) {
+          ncurses_errbox("\\begin{center}\nERROR!\n\nPasswords do not match!\n\\end{center}\n");
+          continue;
+        }
+
+        j = strlen(buf1);
+        if (j > 64) {
+          ncurses_errbox("\\begin{center}\nERROR!\n\nPasswords is too long!\n\\end{center}\n");
+          continue;
+        }
+
+        if (strspn(buf1, password_accept_chars) != j) {
+          ncurses_errbox("\\begin{center}\nERROR!\n\nThe password contains invalid characters!\n\\end{center}\n");
+          continue;
+        }
+
+        memset(config_password_txt, '*', j);
+        config_password_txt[j] = 0;
+        make_sha1_passwd(config_password_sha1, buf1);
+        ncurses_msgbox("\\begin{center}\nNOTICE!\n\nThe password sha1 hash is %s!\n\\end{center}\n", config_password_sha1);
+
+        cur_item = i;
+        ret_val = 1;
+        break;
+      }
+
+      snprintf(buf1, sizeof(buf1), "%s", cur_id_item->buf);
+      j = ncurses_edit_string(LINES / 2, COLS, cur_id_item->descr,
+                              buf1, sizeof(buf1), utf8_mode);
+      if (j < 0) continue;
+      if (!buf1[0]) {
+        cur_id_item->buf[0] = 0;
+        cur_item = i;
+        ret_val = 1;
+        break;
+      }
+
+      switch (i) {
+      case ID_LINE_USER_ID:
+        val = n = 0;
+        if (sscanf(buf1, "%d%n", &val, &n) != 1 || buf1[n]
+            || val <= 0 || val >= 1000000) {
+          ncurses_errbox("\\begin{center}\nERROR!\n\nThe administrator user identifier must be an integer number in range [1,999999]!\n\\end{center}\n");
+          continue;
+        }
+        snprintf(config_user_id, sizeof(config_user_id), "%d", val);
+        break;
+      case ID_LINE_LOGIN:
+        j = strlen(buf1);
+        if (j > 32) {
+          ncurses_errbox("\\begin{center}\nERROR!\n\nThe administrator login is too long!\n\\end{center}\n");
+          continue;
+        }
+        if (strspn(buf1, login_accept_chars) != j) {
+          ncurses_errbox("\\begin{center}\nERROR!\n\nThe administrator login contains invalid characters!\n\\end{center}\n");
+          continue;
+        }
+        snprintf(config_login, sizeof(config_login), "%s", buf1);
+        break;
+      case ID_LINE_EMAIL:
+        if (strspn(buf1, email_accept_chars) != strlen(buf1)) {
+          ncurses_errbox("\\begin{center}\nERROR!\n\nThe administrator e-mail contains invalid characters!\n\\end{center}\n");
+          continue;
+        }
+        if (!is_valid_email_address(buf1)) {
+          ncurses_errbox("\\begin{center}\nERROR!\n\nThe administrator e-mail is invalid!\n\\end{center}\n");
+          continue;
+        }
+        snprintf(config_email, sizeof(config_email), "%s", buf1);
+        break;
+      case ID_LINE_NAME:
+        if (strspn(buf1, name_accept_chars) != strlen(buf1)) {
+          ncurses_errbox("\\begin{center}\nERROR!\n\nThe administrator name contains invalid characters!\n\\end{center}\n");
+          continue;
+        }
+        snprintf(config_name, sizeof(config_name), "%s", buf1);
+        break;
+      default:
+        abort();
+      }
+
+      cur_item = i;
+      ret_val = 1;
+      break;
+    }
+    if (c == 'd') {
+      if (i == ID_LINE_RETURN || i == ID_LINE_SETTINGS) continue;
+
+      j = ncurses_yesno(0, "\\begin{center}\nReset the variable to the initial value?\n\\end{center}\n");
+      if (j <= 0) continue;
+
+      cur_id_item = &id_edit_items[i];
+      cur_id_item->buf[0] = 0;
+      cur_item = i;
+      ret_val = 1;
+      break;
+    }
+  }
+
+  // clear screen
+  wmove(stdscr, 0, 0);
+  wclrtoeol(stdscr);
+
+  // free resources
+  if (in_pan) del_panel(in_pan);
+  if (out_pan) del_panel(out_pan);
+  if (menu) free_menu(menu);
+  if (out_win) delwin(out_win);
+  if (in_win) delwin(in_win);
+  if (items) {
+    for (i = 0; i < nitem; i++)
+      if (items[i])
+        free_item(items[i]);
+    xfree(items);
+  }
+  if (descs) {
+    for (i = 0; i < nitem; i++)
+      xfree(descs[i]);
+    xfree(descs);
+  }
+
+  *p_cur_item = cur_item;
+  return ret_val;
+
+   */
+  return 0;
+}
+
 static const struct path_edit_item set_edit_items[] =
 {
   [SET_LINE_CHARSET] =
@@ -3987,6 +4306,7 @@ static const unsigned char * const main_menu_items[] =
   "Edit paths",
   "Edit global settings",
   "Edit administrator identity",
+  "Edit MySQL settings",
   "Setup compilers",
   "Preview files",
   "Preview setup script",
@@ -3995,21 +4315,22 @@ static const unsigned char * const main_menu_items[] =
 };
 static const unsigned char * const main_menu_hotkeys[] =
 {
-  "PpúÚ",
-  "SsùÙ",
-  "AaæÆ",
-  "CcóÓ",
-  "VvíÍ",
-  "IiûÛ",
-  "TtåÅ",
-  "QqêÊ",
+  "Pp",
+  "Ss",
+  "Aa",
+  "Mm",
+  "Cc",
+  "Vv",
+  "Ii",
+  "Tt",
+  "Qq",
 };
 static const unsigned char main_menu_help_string[] =
-"P-paths,S-settings,A-admin,C-compilers,I-install,V-preview,Q-quit";
+"P-paths,S-settings,A-admin,M-MySQL,C-compilers,I-install,V-preview,Q-quit";
 static void
 do_main_menu(void)
 {
-  int answer = 7;
+  int answer = 8;
   int cur_paths_item = 0;
   int cur_id_item = 0;
   int cur_settings_item = 0;
@@ -4027,10 +4348,10 @@ do_main_menu(void)
               "The ejudge %s initial setup configuration utility",
               compile_version);
     wclrtoeol(stdscr);
-    answer = ncurses_generic_menu(-1, -1, -1, -1, answer, 8, -1, -1,
+    answer = ncurses_generic_menu(-1, -1, -1, -1, answer, 9, -1, -1,
                                   main_menu_items, main_menu_hotkeys,
                                   main_menu_help_string, "Choose action");
-    if (answer == 7) break;
+    if (answer == 8) break;
     switch (answer) {
     case 0:
       while (do_paths_menu(&cur_paths_item));
@@ -4042,6 +4363,9 @@ do_main_menu(void)
       while (do_identity_menu(&cur_id_item));
       break;
     case 3:
+      while (do_mysql_menu(&cur_id_item));
+      break;
+    case 4:
 
       snprintf(script_in_dir0, sizeof(script_in_dir0), "%s/lang/in",
                config_ejudge_script_dir);
@@ -4051,13 +4375,13 @@ do_main_menu(void)
       while (lang_config_menu(script_dir, script_in_dirs, tmp_work_dir, NULL,
                               header, utf8_mode, &cur_lang_item));
       break;
-    case 4:
+    case 5:
       do_preview_menu();
       break;
-    case 5:
+    case 6:
       preview_install_script();
       break;
-    case 6:
+    case 7:
       save_install_script(0, NULL);
       break;
     }
