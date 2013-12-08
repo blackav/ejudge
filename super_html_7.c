@@ -161,6 +161,33 @@ get_full_caps(const struct super_http_request_info *phr, const struct contest_de
 }
 
 static int
+create_problem_directory(
+        FILE *log_f,
+        const unsigned char *path,
+        const struct contest_desc *cnts)
+{
+  unsigned char dirname[PATH_MAX];
+  struct stat stbuf;
+
+  dirname[0] = 0;
+  os_rDirName(path, dirname, sizeof(dirname));
+
+  if (stat(dirname, &stbuf) >= 0) {
+    if (!S_ISDIR(stbuf.st_mode)) {
+      fprintf(log_f, "problem directory '%s' is not a directory\n", dirname);
+      return -1;
+    }
+    return 0;
+  }
+
+  if (os_MakeDirPath2(dirname, cnts->dir_mode, cnts->dir_group) < 0) {
+    fprintf(log_f, "failed to created problem directory '%s'\n", dirname);
+    return -1;
+  }
+  return 0;
+}
+
+static int
 check_other_editors(
         FILE *log_f,
         FILE *out_f,
@@ -3722,6 +3749,8 @@ super_serve_op_TESTS_MAKEFILE_EDIT_ACTION(
   get_advanced_layout_path(tmp_makefile_path, sizeof(tmp_makefile_path), global, prob, "tmp_Makefile", variant);
   get_advanced_layout_path(makefile_path, sizeof(makefile_path), global, prob, DFLT_P_MAKEFILE, variant);
 
+  if (create_problem_directory(log_f, tmp_makefile_path, cnts) < 0) FAIL(S_ERR_FS_ERROR);
+
   text2 = normalize_text(TEST_NORM_NL, text);
   if (write_file(tmp_makefile_path, text2) < 0) FAIL(S_ERR_FS_ERROR);
   if (file_group > 0 || file_mode > 0) {
@@ -3831,6 +3860,7 @@ super_serve_op_TESTS_MAKEFILE_GENERATE_ACTION(
   serve_state_t cs = NULL;
   const struct section_global_data *global = NULL;
   const struct section_problem_data *prob = NULL;
+  unsigned char tmp_makefile_path[PATH_MAX];
 
   ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
@@ -3857,6 +3887,9 @@ super_serve_op_TESTS_MAKEFILE_GENERATE_ACTION(
     ss_cgi_param_int_opt(phr, "variant", &variant, 0);
     if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
   }
+
+  get_advanced_layout_path(tmp_makefile_path, sizeof(tmp_makefile_path), global, prob, "tmp_Makefile", variant);
+  if (create_problem_directory(log_f, tmp_makefile_path, cnts) < 0) FAIL(S_ERR_FS_ERROR);
 
   retval = build_generate_makefile(log_f, phr->config, cnts, cs, NULL, global, prob, variant);
   if (!retval) {
@@ -4433,6 +4466,9 @@ super_serve_op_TESTS_STATEMENT_EDIT_ACTION(
     next_action = SSERV_OP_TESTS_STATEMENT_EDIT_PAGE;
   }
 
+  if (create_problem_directory(log_f, xml_path_tmp, cnts) < 0)
+    FAIL(S_ERR_FS_ERROR);
+
   xml_f = fopen(xml_path_tmp, "w");
   if (!xml_f) FAIL(S_ERR_FS_ERROR);
   problem_xml_unparse(xml_f, prob_xml);
@@ -4546,6 +4582,9 @@ super_serve_op_TESTS_STATEMENT_EDIT_2_ACTION(
     // save and view
     next_action = SSERV_OP_TESTS_STATEMENT_EDIT_PAGE;
   }
+
+  if (create_problem_directory(log_f, xml_path_tmp, cnts) < 0)
+    FAIL(S_ERR_FS_ERROR);
 
   write_file(xml_path_tmp, text);
   if (!need_file_update(xml_path, xml_path_tmp)) goto done;
@@ -4892,6 +4931,9 @@ super_serve_op_TESTS_SOURCE_HEADER_EDIT_ACTION(
 
   ss_cgi_param(phr, "text", &s);
   text = normalize_textarea(s);
+
+  if (create_problem_directory(log_f, file_path_tmp, cnts) < 0)
+    FAIL(S_ERR_FS_ERROR);
 
   write_file(file_path_tmp, text);
   if (!need_file_update(file_path, file_path_tmp)) goto done;
@@ -5428,6 +5470,9 @@ super_serve_op_TESTS_CHECKER_CREATE_ACTION(
     snprintf(file_path, sizeof(file_path), "%s/%s", global->checker_dir, tmp_path);
   }
 
+  if (create_problem_directory(log_f, file_path, cnts) < 0)
+    FAIL(S_ERR_FS_ERROR);
+
   retval = create_program(log_f, phr->config, cnts, file_path, language,
                           use_testlib, use_libchecker,
                           use_python3, prob->use_corr,
@@ -5777,6 +5822,9 @@ super_serve_op_TESTS_CHECKER_EDIT_ACTION(
 
   snprintf(file_path_tmp, sizeof(file_path_tmp), "%s.tmp", file_path);
   snprintf(file_path_bak, sizeof(file_path_bak), "%s.bak", file_path);
+
+  if (create_problem_directory(log_f, file_path_tmp, cnts) < 0)
+    FAIL(S_ERR_FS_ERROR);
 
   ss_cgi_param(phr, "text", &s);
   text = normalize_textarea(s);
