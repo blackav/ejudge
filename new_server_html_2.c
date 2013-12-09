@@ -6640,12 +6640,16 @@ ns_write_olympiads_user_runs(
 
 void
 ns_get_user_problems_summary(
-        const serve_state_t cs, int user_id, int accepting_mode,
+        const serve_state_t cs,
+        int user_id,
+        int accepting_mode,
         unsigned char *solved_flag,   /* whether the problem was OK */
         unsigned char *accepted_flag, /* whether the problem was accepted */
         unsigned char *pending_flag,  /* whether there are pending runs */
         unsigned char *trans_flag,    /* whether there are transient runs */
+        unsigned char *pr_flag,       /* whether there are pending review runs */
         int *best_run,                /* the number of the best run */
+        unsigned char *best_status,   /* the best status for the problem */
         int *attempts,                /* the number of previous attempts */
         int *disqualified,            /* the number of prev. disq. attempts */
         int *best_score,              /* the best score for the problem */
@@ -6903,6 +6907,7 @@ ns_get_user_problems_summary(
             best_score[re.prob_id] = cur_score;
             best_run[re.prob_id] = run_id;
           }
+          best_status[re.prob_id] = status;
           break;
 
         case RUN_COMPILE_ERR:
@@ -6969,6 +6974,7 @@ ns_get_user_problems_summary(
         switch (status) {
         case RUN_OK:
           solved_flag[re.prob_id] = 1;
+          best_status[re.prob_id] = status;
           cur_score = calc_kirov_score(0, 0, start_time, separate_user_score,
                                        1 /* user_mode */, &re, cur_prob,
                                        attempts[re.prob_id],
@@ -6981,9 +6987,13 @@ ns_get_user_problems_summary(
           }
           break;
 
+        case RUN_PENDING_REVIEW:
+          ++attempts[re.prob_id];
+          break;
+
         case RUN_COMPILE_ERR:
         case RUN_STYLE_ERR:
-        case RUN_REJECTED:
+          //case RUN_REJECTED:
           if (!cur_prob->ignore_compile_errors) {
             solved_flag[re.prob_id] = 0;
             attempts[re.prob_id]++;
@@ -7007,6 +7017,7 @@ ns_get_user_problems_summary(
           break;
 
         case RUN_PARTIAL:
+        case RUN_ACCEPTED:
           solved_flag[re.prob_id] = 0;
           cur_score = calc_kirov_score(0, 0, start_time, separate_user_score,
                                        1 /* user_mode */, &re, cur_prob,
@@ -7021,6 +7032,8 @@ ns_get_user_problems_summary(
           }
           break;
 
+        case RUN_REJECTED:
+
         case RUN_IGNORED:
           break;
 
@@ -7028,8 +7041,6 @@ ns_get_user_problems_summary(
           disqualified[re.prob_id]++;
           break;
 
-        case RUN_ACCEPTED:
-        case RUN_PENDING_REVIEW:
         case RUN_PENDING:
           pending_flag[re.prob_id] = 1;
           attempts[re.prob_id]++;

@@ -858,12 +858,16 @@ void ns_new_autoclose(struct client_state *p, void *, size_t);
 
 void
 ns_get_user_problems_summary(
-        const serve_state_t cs, int user_id, int accepting_mode,
+        const serve_state_t cs,
+        int user_id,
+        int accepting_mode,
         unsigned char *solved_flag,   /* whether the problem was OK */
         unsigned char *accepted_flag, /* whether the problem was accepted */
         unsigned char *pending_flag,  /* whether there are pending runs */
         unsigned char *trans_flag,    /* whether there are transient runs */
+        unsigned char *pr_flag,       /* whether there are pending review runs */
         int *best_run,                /* the number of the best run */
+        unsigned char *best_status,
         int *attempts,                /* the number of previous attempts */
         int *disqualified,            /* the number of prev. disq. attempts */
         int *best_score,              /* the best score for the problem */
