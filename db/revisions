@@ -8345,3 +8345,6 @@ ejudge-setup.c 7656 0 11082673
 ejudge-setup.c 7658 0 11224014
 super_html_7.c 7660 0 19179699
 html.c 7662 0 15071749
+new-server.h 7664 0 2496811
+new_server_html.c 7664 0 43836429
+new_server_html_2.c 7664 0 20695295
