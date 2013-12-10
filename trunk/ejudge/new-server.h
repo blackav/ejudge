@@ -867,7 +867,6 @@ ns_get_user_problems_summary(
         unsigned char *trans_flag,    /* whether there are transient runs */
         unsigned char *pr_flag,       /* whether there are pending review runs */
         int *best_run,                /* the number of the best run */
-        unsigned char *best_status,
         int *attempts,                /* the number of previous attempts */
         int *disqualified,            /* the number of prev. disq. attempts */
         int *best_score,              /* the best score for the problem */

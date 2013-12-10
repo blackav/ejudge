@@ -13754,7 +13754,6 @@ unpriv_main_page(FILE *fout,
   unsigned char *prob_status = 0;
   time_t *prob_deadline = 0;
   int *best_run = 0;
-  unsigned char *best_status = NULL;
   int *attempts = 0;
   int *disqualified = 0;
   int *best_score = 0;
@@ -13804,8 +13803,6 @@ unpriv_main_page(FILE *fout,
   XALLOCAZ(pr_flag, cs->max_prob + 1);
   XALLOCA(best_run, cs->max_prob + 1);
   memset(best_run, -1, (cs->max_prob + 1) * sizeof(best_run[0]));
-  XALLOCA(best_status, cs->max_prob + 1);
-  memset(best_status, RUN_EMPTY, cs->max_prob + 1);
   XALLOCAZ(attempts, cs->max_prob + 1);
   XALLOCAZ(disqualified, cs->max_prob + 1);
   XALLOCAZ(best_score, cs->max_prob + 1);
@@ -13847,7 +13844,7 @@ unpriv_main_page(FILE *fout,
   ns_get_user_problems_summary(cs, phr->user_id, accepting_mode,
                                solved_flag, accepted_flag, pending_flag,
                                trans_flag, pr_flag,
-                               best_run, best_status, attempts, disqualified,
+                               best_run, attempts, disqualified,
                                best_score, prev_successes, all_attempts);
   get_problem_status(cs, phr->user_id, phr->login, accepting_mode,
                      start_time, stop_time,

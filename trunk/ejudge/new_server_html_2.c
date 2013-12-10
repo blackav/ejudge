@@ -6649,7 +6649,6 @@ ns_get_user_problems_summary(
         unsigned char *trans_flag,    /* whether there are transient runs */
         unsigned char *pr_flag,       /* whether there are pending review runs */
         int *best_run,                /* the number of the best run */
-        unsigned char *best_status,   /* the best status for the problem */
         int *attempts,                /* the number of previous attempts */
         int *disqualified,            /* the number of prev. disq. attempts */
         int *best_score,              /* the best score for the problem */
@@ -6813,12 +6812,12 @@ ns_get_user_problems_summary(
         case RUN_MEM_LIMIT_ERR:
         case RUN_SECURITY_ERR:
         case RUN_STYLE_ERR:
-        case RUN_REJECTED:
           if (!accepted_flag[re.prob_id]) {
             best_run[re.prob_id] = run_id;
           }
           break;
 
+        case RUN_REJECTED:
         case RUN_IGNORED:
         case RUN_DISQUALIFIED:
           break;
@@ -6892,32 +6891,50 @@ ns_get_user_problems_summary(
     } else if (global->score_system == SCORE_KIROV) {
       // KIROV contest
       if (cur_prob->score_latest_or_unmarked > 0) {
-        if (marked_flag[re.prob_id] && !re.is_marked) continue;
+        /*
+         * if there exists a "marked" run, the last "marked" score is taken
+         * if there is no "marked" run, the max score is taken
+         */
+        if (marked_flag[re.prob_id] && !re.is_marked) {
+          // already have a "marked" run, so ignore "unmarked" runs
+          continue;
+        }
         marked_flag[re.prob_id] = re.is_marked;
 
         switch (status) {
         case RUN_OK:
+          solved_flag[re.prob_id] = 1;
           cur_score = calc_kirov_score(0, 0, start_time, separate_user_score,
                                        1 /* user_mode */, &re, cur_prob,
                                        attempts[re.prob_id],
                                        disqualified[re.prob_id],
                                        prev_successes[re.prob_id], 0, 0);
-          solved_flag[re.prob_id] = 1;
           if (re.is_marked || cur_score > best_score[re.prob_id]) {
             best_score[re.prob_id] = cur_score;
             best_run[re.prob_id] = run_id;
           }
-          best_status[re.prob_id] = status;
+          break;
+
+        case RUN_PENDING_REVIEW:
+          // this is OK solution without manual confirmation
+          pr_flag[re.prob_id] = 1;
+          cur_score = calc_kirov_score(0, 0, start_time, separate_user_score,
+                                       1 /* user_mode */, &re, cur_prob,
+                                       attempts[re.prob_id],
+                                       disqualified[re.prob_id],
+                                       prev_successes[re.prob_id], 0, 0);
+          if (re.is_marked || cur_score > best_score[re.prob_id]) {
+            best_score[re.prob_id] = cur_score;
+            best_run[re.prob_id] = run_id;
+          }
           break;
 
         case RUN_COMPILE_ERR:
         case RUN_STYLE_ERR:
-        case RUN_REJECTED:
           if (cur_prob->ignore_compile_errors > 0) continue;
-          solved_flag[re.prob_id] = 0;
           attempts[re.prob_id]++;
-          cur_score = 0;
           if (re.is_marked || cur_score > best_score[re.prob_id]) {
+            cur_score = 0;
             best_score[re.prob_id] = cur_score;
             best_run[re.prob_id] = run_id;
           }
@@ -6939,7 +6956,6 @@ ns_get_user_problems_summary(
                                        attempts[re.prob_id],
                                        disqualified[re.prob_id],
                                        prev_successes[re.prob_id], 0, 0);
-          solved_flag[re.prob_id] = 0;
           attempts[re.prob_id]++;
           if (re.is_marked || cur_score > best_score[re.prob_id]) {
             best_score[re.prob_id] = cur_score;
@@ -6947,6 +6963,7 @@ ns_get_user_problems_summary(
           }
           break;
 
+        case RUN_REJECTED:
         case RUN_IGNORED:
           break;
 
@@ -6955,7 +6972,6 @@ ns_get_user_problems_summary(
           break;
 
         case RUN_ACCEPTED:
-        case RUN_PENDING_REVIEW:
         case RUN_PENDING:
           pending_flag[re.prob_id] = 1;
           attempts[re.prob_id]++;
@@ -6974,7 +6990,6 @@ ns_get_user_problems_summary(
         switch (status) {
         case RUN_OK:
           solved_flag[re.prob_id] = 1;
-          best_status[re.prob_id] = status;
           cur_score = calc_kirov_score(0, 0, start_time, separate_user_score,
                                        1 /* user_mode */, &re, cur_prob,
                                        attempts[re.prob_id],
@@ -6988,7 +7003,17 @@ ns_get_user_problems_summary(
           break;
 
         case RUN_PENDING_REVIEW:
-          ++attempts[re.prob_id];
+          pr_flag[re.prob_id] = 1;
+          cur_score = calc_kirov_score(0, 0, start_time, separate_user_score,
+                                       1 /* user_mode */, &re, cur_prob,
+                                       attempts[re.prob_id],
+                                       disqualified[re.prob_id],
+                                       prev_successes[re.prob_id], 0, 0);
+
+          if (cur_score >= best_score[re.prob_id] || cur_prob->score_latest > 0) {
+            best_score[re.prob_id] = cur_score;
+            best_run[re.prob_id] = run_id;
+          }
           break;
 
         case RUN_COMPILE_ERR:
