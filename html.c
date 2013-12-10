@@ -102,6 +102,7 @@ calc_kirov_score(
 
   if (separate_user_score > 0 && user_mode > 0 && pe->is_saved) {
     status = pe->saved_status;
+    if (status == RUN_PENDING_REVIEW) status = RUN_OK;
     init_score = pe->saved_score;
     if (status == RUN_OK && !pr->variable_full_score) {
       if (pr->full_user_score >= 0) init_score = pr->full_user_score;
@@ -109,6 +110,7 @@ calc_kirov_score(
     }
   } else {
     status = pe->status;
+    if (status == RUN_PENDING_REVIEW) status = RUN_OK;
     init_score = pe->score;
     if (status == RUN_OK && !pr->variable_full_score)
       init_score = pr->full_score;
