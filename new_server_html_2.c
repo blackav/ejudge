@@ -6981,22 +6981,139 @@ ns_get_user_problems_summary(
         default:
           abort();
         }
+      } else if (cur_prob->score_latest > 0) {
+        if (cur_prob->ignore_unmarked > 0 && !re.is_marked) {
+          // ignore submits which are not "marked"
+          continue;
+        }
+
+        cur_score = calc_kirov_score(0, 0, start_time, separate_user_score,
+                                     1 /* user_mode */, &re, cur_prob,
+                                     attempts[re.prob_id],
+                                     disqualified[re.prob_id],
+                                     prev_successes[re.prob_id], 0, 0);
+        switch (status) {
+        case RUN_OK:
+          marked_flag[re.prob_id] = re.is_marked;
+          solved_flag[re.prob_id] = 1;
+          accepted_flag[re.prob_id] = 0;
+          pr_flag[re.prob_id] = 0;
+          pending_flag[re.prob_id] = 0;
+          best_score[re.prob_id] = cur_score;
+          best_run[re.prob_id] = run_id;
+          break;
+
+        case RUN_PENDING_REVIEW:
+          marked_flag[re.prob_id] = re.is_marked;
+          solved_flag[re.prob_id] = 0;
+          accepted_flag[re.prob_id] = 0;
+          pr_flag[re.prob_id] = 1;
+          pending_flag[re.prob_id] = 0;
+          best_score[re.prob_id] = cur_score;
+          best_run[re.prob_id] = run_id;
+          ++attempts[re.prob_id];
+          break;
+
+        case RUN_ACCEPTED:
+          marked_flag[re.prob_id] = re.is_marked;
+          solved_flag[re.prob_id] = 0;
+          accepted_flag[re.prob_id] = 1;
+          pr_flag[re.prob_id] = 0;
+          pending_flag[re.prob_id] = 0;
+          best_score[re.prob_id] = cur_score;
+          best_run[re.prob_id] = run_id;
+          ++attempts[re.prob_id];
+          break;
+
+        case RUN_COMPILE_ERR:
+        case RUN_STYLE_ERR:
+          if (cur_prob->ignore_compile_errors > 0) break;
+          marked_flag[re.prob_id] = re.is_marked;
+          solved_flag[re.prob_id] = 0;
+          accepted_flag[re.prob_id] = 0;
+          pr_flag[re.prob_id] = 0;
+          pending_flag[re.prob_id] = 0;
+          best_score[re.prob_id] = 0;
+          best_run[re.prob_id] = run_id;
+          ++attempts[re.prob_id];
+          break;
+
+        case RUN_CHECK_FAILED:
+        case RUN_IGNORED:
+          break;
+
+        case RUN_REJECTED:
+          marked_flag[re.prob_id] = re.is_marked;
+          solved_flag[re.prob_id] = 0;
+          accepted_flag[re.prob_id] = 0;
+          pr_flag[re.prob_id] = 0;
+          pending_flag[re.prob_id] = 0;
+          best_score[re.prob_id] = 0;
+          best_run[re.prob_id] = run_id;
+          break;
+
+        case RUN_DISQUALIFIED:
+          marked_flag[re.prob_id] = re.is_marked;
+          solved_flag[re.prob_id] = 0;
+          accepted_flag[re.prob_id] = 0;
+          pr_flag[re.prob_id] = 0;
+          pending_flag[re.prob_id] = 0;
+          best_score[re.prob_id] = 0;
+          best_run[re.prob_id] = run_id;
+          ++disqualified[re.prob_id];
+          break;
+
+        case RUN_PENDING:
+          marked_flag[re.prob_id] = re.is_marked;
+          solved_flag[re.prob_id] = 0;
+          accepted_flag[re.prob_id] = 0;
+          pr_flag[re.prob_id] = 0;
+          pending_flag[re.prob_id] = 1;
+          best_score[re.prob_id] = 0;
+          best_run[re.prob_id] = run_id;
+          break;
+
+        case RUN_RUN_TIME_ERR:
+        case RUN_TIME_LIMIT_ERR:
+        case RUN_PRESENTATION_ERR:
+        case RUN_WRONG_ANSWER_ERR:
+        case RUN_PARTIAL:
+        case RUN_MEM_LIMIT_ERR:
+        case RUN_SECURITY_ERR:
+        case RUN_WALL_TIME_LIMIT_ERR:
+          marked_flag[re.prob_id] = re.is_marked;
+          solved_flag[re.prob_id] = 0;
+          accepted_flag[re.prob_id] = 0;
+          pr_flag[re.prob_id] = 0;
+          pending_flag[re.prob_id] = 0;
+          best_score[re.prob_id] = cur_score;
+          best_run[re.prob_id] = run_id;
+          ++attempts[re.prob_id];
+          break;
+
+        default:
+          abort();
+        }
       } else {
-        if (solved_flag[re.prob_id] && cur_prob->score_latest <= 0) continue;
-        if (marked_flag[re.prob_id] && cur_prob->ignore_unmarked > 0
-            && !re.is_marked) continue;
-        if (!marked_flag[re.prob_id]) marked_flag[re.prob_id] = re.is_marked;
+        if (solved_flag[re.prob_id]) {
+          // if the problem is already solved, no need to process this run
+          continue;
+        }
+        if (cur_prob->ignore_unmarked > 0 && !re.is_marked) {
+          // ignore "unmarked" runs, if the option is set
+          continue;
+        }
+
+        cur_score = calc_kirov_score(0, 0, start_time, separate_user_score,
+                                     1 /* user_mode */, &re, cur_prob,
+                                     attempts[re.prob_id],
+                                     disqualified[re.prob_id],
+                                     prev_successes[re.prob_id], 0, 0);
 
         switch (status) {
         case RUN_OK:
           solved_flag[re.prob_id] = 1;
-          cur_score = calc_kirov_score(0, 0, start_time, separate_user_score,
-                                       1 /* user_mode */, &re, cur_prob,
-                                       attempts[re.prob_id],
-                                       disqualified[re.prob_id],
-                                       prev_successes[re.prob_id], 0, 0);
-
-          if (cur_score >= best_score[re.prob_id] || cur_prob->score_latest > 0) {
+          if (cur_score >= best_score[re.prob_id]) {
             best_score[re.prob_id] = cur_score;
             best_run[re.prob_id] = run_id;
           }
@@ -7004,13 +7121,7 @@ ns_get_user_problems_summary(
 
         case RUN_PENDING_REVIEW:
           pr_flag[re.prob_id] = 1;
-          cur_score = calc_kirov_score(0, 0, start_time, separate_user_score,
-                                       1 /* user_mode */, &re, cur_prob,
-                                       attempts[re.prob_id],
-                                       disqualified[re.prob_id],
-                                       prev_successes[re.prob_id], 0, 0);
-
-          if (cur_score >= best_score[re.prob_id] || cur_prob->score_latest > 0) {
+          if (cur_score >= best_score[re.prob_id]) {
             best_score[re.prob_id] = cur_score;
             best_run[re.prob_id] = run_id;
           }
@@ -7018,16 +7129,13 @@ ns_get_user_problems_summary(
 
         case RUN_COMPILE_ERR:
         case RUN_STYLE_ERR:
-          //case RUN_REJECTED:
-          if (!cur_prob->ignore_compile_errors) {
-            solved_flag[re.prob_id] = 0;
-            attempts[re.prob_id]++;
-            cur_score = 0;
-            if (cur_score >= best_score[re.prob_id]
-                || cur_prob->score_latest > 0) {
-              best_score[re.prob_id] = cur_score;
-              best_run[re.prob_id] = run_id;
-            }
+          if (cur_prob->ignore_compile_errors > 0) break;
+
+          ++attempts[re.prob_id];
+          cur_score = 0;
+          if (cur_score >= best_score[re.prob_id]) {
+            best_score[re.prob_id] = cur_score;
+            best_run[re.prob_id] = run_id;
           }
           break;
 
@@ -7036,40 +7144,46 @@ ns_get_user_problems_summary(
         case RUN_WALL_TIME_LIMIT_ERR:
         case RUN_PRESENTATION_ERR:
         case RUN_WRONG_ANSWER_ERR:
-        case RUN_CHECK_FAILED:
         case RUN_MEM_LIMIT_ERR:
         case RUN_SECURITY_ERR:
-          break;
-
         case RUN_PARTIAL:
         case RUN_ACCEPTED:
-          solved_flag[re.prob_id] = 0;
-          cur_score = calc_kirov_score(0, 0, start_time, separate_user_score,
-                                       1 /* user_mode */, &re, cur_prob,
-                                       attempts[re.prob_id],
-                                       disqualified[re.prob_id],
-                                       prev_successes[re.prob_id], 0, 0);
-
-          attempts[re.prob_id]++;
-          if (cur_score >= best_score[re.prob_id] || cur_prob->score_latest > 0){
+          ++attempts[re.prob_id];
+          if (cur_score >= best_score[re.prob_id]) {
             best_score[re.prob_id] = cur_score;
             best_run[re.prob_id] = run_id;
           }
           break;
 
         case RUN_REJECTED:
+          cur_score = 0;
+          if (cur_score >= best_score[re.prob_id]) {
+            best_score[re.prob_id] = cur_score;
+            best_run[re.prob_id] = run_id;
+          }
+          break;
 
+        case RUN_CHECK_FAILED:
         case RUN_IGNORED:
           break;
 
         case RUN_DISQUALIFIED:
-          disqualified[re.prob_id]++;
+          ++disqualified[re.prob_id];
+          cur_score = 0;
+          if (cur_score >= best_score[re.prob_id]) {
+            best_score[re.prob_id] = cur_score;
+            best_run[re.prob_id] = run_id;
+          }
           break;
 
         case RUN_PENDING:
           pending_flag[re.prob_id] = 1;
-          attempts[re.prob_id]++;
-          if (best_run[re.prob_id] < 0) best_run[re.prob_id] = run_id;
+          ++attempts[re.prob_id];
+          cur_score = 0;
+          if (cur_score >= best_score[re.prob_id]) {
+            best_score[re.prob_id] = cur_score;
+            best_run[re.prob_id] = run_id;
+          }
           break;
 
         default:
