@@ -7312,6 +7312,7 @@ ns_write_user_problems_summary(
         const unsigned char *table_class,
         unsigned char *solved_flag,   /* whether the problem was OK */
         unsigned char *accepted_flag, /* whether the problem was accepted */
+        unsigned char *pr_flag,       /* whether the problem is pending review */
         unsigned char *pending_flag,  /* whether there are pending runs */
         unsigned char *trans_flag,    /* whether there are transient runs */
         int *best_run,                /* the number of the best run */
@@ -7374,7 +7375,7 @@ ns_write_user_problems_summary(
       continue;
     if (cur_prob->hidden > 0) continue;
     s = "";
-    if (accepted_flag[prob_id] || solved_flag[prob_id])
+    if (accepted_flag[prob_id] || solved_flag[prob_id] || pr_flag[prob_id])
       s = " bgcolor=\"#ddffdd\"";
     else if (!pending_flag[prob_id] && attempts[prob_id])
       s = " bgcolor=\"#ffdddd\"";
