@@ -883,6 +883,7 @@ ns_write_user_problems_summary(
         const unsigned char *table_class,
         unsigned char *solved_flag,   /* whether the problem was OK */
         unsigned char *accepted_flag, /* whether the problem was accepted */
+        unsigned char *pr_flag,       /* whether there are pending review runs */
         unsigned char *pending_flag,  /* whether there are pending runs */
         unsigned char *trans_flag,    /* whether there are transient runs */
         int *best_run,                /* the number of the best run */

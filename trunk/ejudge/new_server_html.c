@@ -13877,7 +13877,7 @@ unpriv_main_page(FILE *fout,
           div_class = "nProbEmpty";
         } else if (pending_flag[i] || trans_flag[i]) {
           div_class = "nProbTrans";
-        } else if (accepted_flag[i] || solved_flag[i]) {
+        } else if (accepted_flag[i] || solved_flag[i] || pr_flag[i]) {
           div_class = "nProbOk";
         } else if (prob->disable_user_submit > 0) {
           div_class = "nProbDisabled";
@@ -14022,7 +14022,7 @@ unpriv_main_page(FILE *fout,
       } else {
         ns_write_user_problems_summary(cnts, cs, fout, phr->user_id,
                                        accepting_mode, "b1",
-                                       solved_flag, accepted_flag, pending_flag,
+                                       solved_flag, accepted_flag, pr_flag, pending_flag,
                                        trans_flag, best_run, attempts,
                                        disqualified, best_score);
       }
@@ -14673,7 +14673,7 @@ unpriv_main_page(FILE *fout,
         cc = "probEmpty";
       } else if (pending_flag[i] || trans_flag[i]) {
         cc = "probTrans";
-      } else if (accepted_flag[i] || solved_flag[i]) {
+      } else if (accepted_flag[i] || solved_flag[i] || pr_flag[i]) {
         cc = "probOk";
       } else if (prob->disable_user_submit > 0) {
         cc = "probDisabled";
@@ -14717,7 +14717,7 @@ unpriv_main_page(FILE *fout,
         div_class = "nProbEmpty";
       } else if (pending_flag[i] || trans_flag[i]) {
         div_class = "nProbTrans";
-      } else if (accepted_flag[i] || solved_flag[i]) {
+      } else if (accepted_flag[i] || solved_flag[i] || pr_flag[i]) {
         div_class = "nProbOk";
       } else if (prob->disable_user_submit > 0) {
         div_class = "nProbDisabled";
