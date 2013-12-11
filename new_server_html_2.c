@@ -7147,8 +7147,15 @@ ns_get_user_problems_summary(
         case RUN_MEM_LIMIT_ERR:
         case RUN_SECURITY_ERR:
         case RUN_PARTIAL:
-        case RUN_ACCEPTED:
           ++attempts[re.prob_id];
+          if (cur_score >= best_score[re.prob_id]) {
+            best_score[re.prob_id] = cur_score;
+            best_run[re.prob_id] = run_id;
+          }
+          break;
+
+        case RUN_ACCEPTED:
+          accepted_flag[re.prob_id] = 1;
           if (cur_score >= best_score[re.prob_id]) {
             best_score[re.prob_id] = cur_score;
             best_run[re.prob_id] = run_id;
@@ -7377,6 +7384,8 @@ ns_write_user_problems_summary(
     s = "";
     if (accepted_flag[prob_id] || solved_flag[prob_id] || pr_flag[prob_id])
       s = " bgcolor=\"#ddffdd\"";
+    else if (pending_flag[prob_id])
+      s = " bgcolor=\"#ffffdd\"";
     else if (!pending_flag[prob_id] && attempts[prob_id])
       s = " bgcolor=\"#ffdddd\"";
     fprintf(fout, "<tr%s>", s);
