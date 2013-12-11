@@ -1424,11 +1424,17 @@ build_generate_makefile(
 
   if (cnts->file_group) {
     file_group = file_perms_parse_group(cnts->file_group);
-    if (file_group <= 0) FAIL(S_ERR_INV_SYS_GROUP);
+    if (file_group <= 0) {
+      fprintf(log_f, "invalid file group '%s'\n", cnts->file_group);
+      FAIL(S_ERR_INV_SYS_GROUP);
+    }
   }
   if (cnts->file_mode) {
     file_mode = file_perms_parse_mode(cnts->file_mode);
-    if (file_mode <= 0) FAIL(S_ERR_INV_SYS_MODE);
+    if (file_mode <= 0) {
+      fprintf(log_f, "invalid file mode '%s'\n", cnts->file_mode);
+      FAIL(S_ERR_INV_SYS_MODE);
+    }
   }
 
   if (global->advanced_layout <= 0) FAIL(S_ERR_INV_CONTEST);
@@ -1441,7 +1447,10 @@ build_generate_makefile(
   }
 
   mk_f = fopen(tmp_makefile_path, "w");
-  if (!mk_f) FAIL(S_ERR_FS_ERROR);
+  if (!mk_f) {
+    fprintf(log_f, "cannot create file '%s'\n", tmp_makefile_path);
+    FAIL(S_ERR_FS_ERROR);
+  }
   if (header) fprintf(mk_f, "%s", header);
   do_generate_makefile(log_f, mk_f, ejudge_config, cnts, cs, sstate, global, prob, variant);
   if (footer) fprintf(mk_f, "%s", footer);
@@ -1452,12 +1461,16 @@ build_generate_makefile(
   }
 
   r = need_file_update(makefile_path, tmp_makefile_path);
-  if (r < 0) FAIL(S_ERR_FS_ERROR);
+  if (r < 0) {
+    fprintf(log_f, "failed to update Makefile\n");
+    FAIL(S_ERR_FS_ERROR);
+  }
   if (!r) {
     unlink(tmp_makefile_path);
     goto cleanup;
   }
   if (logged_rename(log_f, tmp_makefile_path, makefile_path) < 0) {
+    fprintf(log_f, "failed to update Makefile\n");
     FAIL(S_ERR_FS_ERROR);
   }
 
