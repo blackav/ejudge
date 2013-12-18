@@ -1688,7 +1688,8 @@ invoke_interactor(
         const unsigned char *checker_locale,
         int stdin_fd,
         int stdout_fd,
-        long time_limit_ms)
+        long time_limit_ms,
+        int program_pid)
 {
   tpTask tsk_int = NULL;
 
@@ -1696,6 +1697,11 @@ invoke_interactor(
   task_AddArg(tsk_int, interactor_cmd);
   task_AddArg(tsk_int, test_src_path);
   task_AddArg(tsk_int, output_path);
+  if (program_pid > 0) {
+    char buf[64];
+    snprintf(buf, sizeof(buf), "%d", program_pid);
+    task_AddArg(tsk_int, buf);
+  }
   if (corr_src_path && corr_src_path[0]) {
     task_AddArg(tsk_int, corr_src_path);
   }
@@ -2255,31 +2261,6 @@ run_one_test(
     init_cmd_started = 1;
   }
 
-#ifndef __WIN32__
-  if (interactor_cmd) {
-    if (pipe(pfd1) < 0) {
-      append_msg_to_log(check_out_path, "pipe() failed: %s", os_ErrorMsg());
-      goto check_failed;
-    }
-    fcntl(pfd1[0], F_SETFD, FD_CLOEXEC);
-    fcntl(pfd1[1], F_SETFD, FD_CLOEXEC);
-    if (pipe(pfd2) < 0) {
-      append_msg_to_log(check_out_path, "pipe() failed: %s", os_ErrorMsg());
-      goto check_failed;
-    }
-    fcntl(pfd2[0], F_SETFD, FD_CLOEXEC);
-    fcntl(pfd2[1], F_SETFD, FD_CLOEXEC);
-
-    tsk_int = invoke_interactor(interactor_cmd, test_src, output_path, corr_src,
-                                working_dir, check_out_path, srpp->interactor_env, srgp->checker_locale,
-                                pfd1[0], pfd2[1], srpp->interactor_time_limit_ms);
-    if (!tsk_int) {
-      append_msg_to_log(check_out_path, "interactor failed to start");
-      goto check_failed;
-    }
-  }
-#endif
-
   tsk = task_New();
   if (tst && tst->start_cmd && tst->start_cmd[0]) {
     info("starting: %s %s", tst->start_cmd, arg0_path);
@@ -2488,6 +2469,31 @@ run_one_test(
     append_msg_to_log(check_out_path, "failed to start %s", exe_path);
     goto check_failed;
   }
+
+#ifndef __WIN32__
+  if (interactor_cmd) {
+    if (pipe(pfd1) < 0) {
+      append_msg_to_log(check_out_path, "pipe() failed: %s", os_ErrorMsg());
+      goto check_failed;
+    }
+    fcntl(pfd1[0], F_SETFD, FD_CLOEXEC);
+    fcntl(pfd1[1], F_SETFD, FD_CLOEXEC);
+    if (pipe(pfd2) < 0) {
+      append_msg_to_log(check_out_path, "pipe() failed: %s", os_ErrorMsg());
+      goto check_failed;
+    }
+    fcntl(pfd2[0], F_SETFD, FD_CLOEXEC);
+    fcntl(pfd2[1], F_SETFD, FD_CLOEXEC);
+
+    tsk_int = invoke_interactor(interactor_cmd, test_src, output_path, corr_src,
+                                working_dir, check_out_path, srpp->interactor_env, srgp->checker_locale,
+                                pfd1[0], pfd2[1], srpp->interactor_time_limit_ms, task_GetPid(tsk));
+    if (!tsk_int) {
+      append_msg_to_log(check_out_path, "interactor failed to start");
+      goto check_failed;
+    }
+  }
+#endif
 
   if (pfd1[0] >= 0) close(pfd1[0]);
   if (pfd1[1] >= 0) close(pfd1[1]);
