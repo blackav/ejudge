@@ -1697,13 +1697,13 @@ invoke_interactor(
   task_AddArg(tsk_int, interactor_cmd);
   task_AddArg(tsk_int, test_src_path);
   task_AddArg(tsk_int, output_path);
+  if (corr_src_path && corr_src_path[0]) {
+    task_AddArg(tsk_int, corr_src_path);
+  }
   if (program_pid > 0) {
     char buf[64];
     snprintf(buf, sizeof(buf), "%d", program_pid);
     task_AddArg(tsk_int, buf);
-  }
-  if (corr_src_path && corr_src_path[0]) {
-    task_AddArg(tsk_int, corr_src_path);
   }
   task_SetPathAsArg0(tsk_int);
   task_SetWorkingDir(tsk_int, working_dir);
