@@ -81,6 +81,8 @@ AC_ARG_ENABLE([werror],AC_HELP_STRING([--enable-werror],[enable -Werror compilat
 AC_ARG_ENABLE([preserve-scripts],AC_HELP_STRING([--enable-preserve-scripts],[do not overwrite the existing language scripts]), [ac_cv_preserve_scripts=1],[ac_cv_preserve_scripts=])
 AC_ARG_ENABLE([lang-config-dir],AC_HELP_STRING([--enable-lang-config-dir],[install language config scripts into specified directory]),[ac_cv_lang_config_dir="${enableval}"],[ac_cv_lang_config_dir=])
 
+AC_ARG_WITH([rest],AC_HELP_STRING([--with-rest],[enable RESTful API]),[ac_cv_rest="$withval"])
+
 AC_ARG_WITH([httpd-cgi-bin-dir],AC_HELP_STRING([--with-httpd-cgi-bin-dir],[specify the path to the web serve CGI directory]),[ac_cv_httpd_cgi_bin_dir="${withval}"])
 AC_ARG_WITH([httpd-htdocs-dir],AC_HELP_STRING([--with-httpd-htdocs-dir],[specify the path to the web server HTML directory]),[ac_cv_httpd_htdocs_dir="${withval}"])
 
@@ -1006,6 +1008,11 @@ else
   ac_cv_meta_cc=./scripts/rcc
 fi
 
+if [[ x"${ac_cv_rest}" = x ]]
+then
+  ac_cv_rest="/ej/"
+fi
+
 AC_SUBST(ac_cv_ejudge_arch)
 AC_SUBST(ac_cv_exe_suffix)
 AC_SUBST(ac_cv_expat_root)
@@ -1208,6 +1215,13 @@ fi
 AC_DEFINE_UNQUOTED(CONF_EXE_SUFFIX,"${ac_cv_exe_suffix}")
 AC_DEFINE_UNQUOTED(CONF_DIRSEP,"${ac_cv_dir_separator}")
 AC_DEFINE_UNQUOTED(CONF_PATHSEP,"${ac_cv_path_separator}")
+
+if [[ x"${ac_cv_rest}" != xno ]]
+then
+  ac_cv_rest_len=${#ac_cv_rest}
+  AC_DEFINE_UNQUOTED(EJUDGE_REST_PREFIX,"${ac_cv_rest}")
+  AC_DEFINE_UNQUOTED(EJUDGE_REST_PREFIX_LEN,${ac_cv_rest_len})
+fi
 
 if [[ x"${ac_cv_conf_64_bit}" != xyes ]]
 then
