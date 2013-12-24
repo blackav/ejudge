@@ -1,7 +1,7 @@
 # -*- Makefile -*-
 # $Id$
 
-# Copyright (C) 2011-2012 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2011-2013 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -13,7 +13,7 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Lesser General Public License for more details.
 
-META_C_FILES = contests_meta.c super-serve_meta.c prepare_meta.c super_html_6_meta.c super_run_packet_meta.c problem_config_meta.c polygon_packet_meta.c ej_import_packet_meta.c
+META_C_FILES = contests_meta.c super-serve_meta.c prepare_meta.c super_html_6_meta.c super_run_packet_meta.c problem_config_meta.c polygon_packet_meta.c ej_import_packet_meta.c new_server_match.c
 META_H_FILES = $(META_C_FILES:.c=.h)
 META_O_FILES = $(META_C_FILES:.c=.o)
 
@@ -40,3 +40,9 @@ polygon_packet_meta.c polygon_packet_meta.h : polygon_packet.h
 
 ej_import_packet_meta.c ej_import_packet_meta.h : ej_import_packet.h
 	$(META_CC) ej_import_packet.h -o ej_import_packet.out --force-h --meta --meta-struct ej_import_packet --meta-timestamp 
+
+new_server_match.c : genmatcher new_server_at.c
+	./genmatcher > new_server_match.c
+
+genmatcher : genmatcher.c new-server.h new_server_at.c
+	$(CC) $(CFLAGS) $< -o $@
