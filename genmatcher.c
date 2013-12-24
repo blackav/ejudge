@@ -1,5 +1,19 @@
 /* $Id$ */
 
+/* Copyright (C) 2013 Alexander Chernov <cher@ejudge.ru> */
+
+/*
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
 #include "new-server.h"
 
 #include <stdio.h>
@@ -57,7 +71,7 @@ generate2(
   snprintf(new_indent, sizeof(new_indent), "%s  ", indent);
   unsigned char new_prefix[256];
   snprintf(new_prefix, sizeof(new_prefix), "%s%c", prefix, buf[mid]);
-  fprintf(stderr, "prefix: %s\n", new_prefix);
+  //fprintf(stderr, "prefix: %s\n", new_prefix);
   int new_act_set[NEW_SRV_ACTION_LAST];
   int new_act_count = 0;
   for (int i = 0; i < act_count; ++i) {
@@ -65,7 +79,7 @@ generate2(
       new_act_set[new_act_count++] = act_set[i];
     }
   }
-  fprintf(stderr, "act_count: %d\n", new_act_count);
+  //fprintf(stderr, "act_count: %d\n", new_act_count);
   generate(out, new_indent, new_prefix, new_act_set, new_act_count, pos + 1);
 
   if (low + 1 == high) {
@@ -81,6 +95,23 @@ generate2(
   }
 }
 
+const unsigned char *
+toout(unsigned char *buf, const unsigned char *action)
+{
+  const unsigned char *p = action;
+  unsigned char *q = buf;
+  while (*p) {
+    if (*p == '-') {
+      *q++ = '_';
+    } else {
+      *q++ = toupper(*p);
+    }
+    ++p;
+  }
+  *q = 0;
+  return buf;
+}
+
 void
 generate(
         FILE *out,
@@ -92,10 +123,12 @@ generate(
 {
   int has_term = 0;
   unsigned char out_buf[257];
+  unsigned char tmp[256];
   collect_chars(act_set, act_count, pos, out_buf, &has_term);
-  fprintf(stderr, "chars (%d): <%s>, %d\n", pos, out_buf, has_term);
+  //fprintf(stderr, "chars (%d): <%s>, %d\n", pos, out_buf, has_term);
 
-  fprintf(out, "%sc = tolower(str[%d]);\n", indent, pos);
+  //fprintf(out, "%sc = tolower(str[%d]);\n", indent, pos);
+  fprintf(out, "%sc = str[%d];\n", indent, pos);
   if (has_term) {
     int value = 0;
     for (int i = 0; i < NEW_SRV_ACTION_LAST; ++i)
@@ -103,7 +136,7 @@ generate(
         value = i;
       }
     if (value <= 0) abort();
-    fprintf(out, "%sif (!c) return NEW_SRV_ACTION_%s;\n", indent, symbolic_action_table[value]);
+    fprintf(out, "%sif (!c) return NEW_SRV_ACTION_%s;\n", indent, toout(tmp, symbolic_action_table[value]));
     //fprintf(out, "%sif (!c) return %d;\n", indent, value);
   }
   int low = 0, high = strlen(out_buf);
@@ -113,14 +146,15 @@ generate(
 
 int main(void)
 {
-  printf("#include <ctype.h>\n"
+  printf("/* This is auto-generated file */\n"
+         "#include <ctype.h>\n"
          "#include \"new-server.h\"\n"
          "int ns_match_action(const unsigned char *str)\n"
          "{\n"
          "  int c;\n"
          "  if (!str) return 0;\n");
 
-  fprintf(stderr, "action table size: %d\n", NEW_SRV_ACTION_LAST);
+  //fprintf(stderr, "action table size: %d\n", NEW_SRV_ACTION_LAST);
   int act0_set[NEW_SRV_ACTION_LAST + 1];
   int act0_count = 0;
   for (int i = 0; i < NEW_SRV_ACTION_LAST; ++i) {
@@ -128,7 +162,7 @@ int main(void)
       act0_set[act0_count++] = i;
     }
   }
-  fprintf(stderr, "non-null actions: %d\n", act0_count);
+  //fprintf(stderr, "non-null actions: %d\n", act0_count);
 
   generate(stdout, "  ", "", act0_set, act0_count, 0);
 
