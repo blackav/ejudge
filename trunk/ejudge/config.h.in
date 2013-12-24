@@ -167,5 +167,8 @@
 
 #undef R_HAS___INT64
 
+#undef EJUDGE_REST_PREFIX
+#undef EJUDGE_REST_PREFIX_LEN
+
 #endif /* __CONFIG_H__ */
 
