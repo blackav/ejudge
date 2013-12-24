@@ -55,6 +55,7 @@
 #include "compat.h"
 #include "ej_uuid.h"
 #include "prepare_dflt.h"
+#include "new_server_match.h"
 
 #include "reuse_xalloc.h"
 #include "reuse_logger.h"
@@ -15518,33 +15519,34 @@ ns_handle_http_request(struct server_framework_state *state,
   if (!(script_name = ns_getenv(phr, "SCRIPT_NAME")))
     script_name = "/cgi-bin/new-client";
 
-  /* FIXME: make it configurable */
-  if (!strncmp(script_name, "/ej/", 4)) {
+#if defined EJUDGE_REST_PREFIX
+  if (!strncmp(script_name, EJUDGE_REST_PREFIX, EJUDGE_REST_PREFIX_LEN)) {
     // extract second part
-    s = script_name + 4;
-    while (*s && *s != '/' && *s != '?') ++s;
-    n = (int)(s - script_name - 4);
+    s = script_name + EJUDGE_REST_PREFIX_LEN;
+    while (*s && *s != '/') ++s;
+    n = (int)(s - script_name - EJUDGE_REST_PREFIX_LEN);
     role_name = alloca(n + 1);
-    memcpy(role_name, script_name + 4, n);
+    memcpy(role_name, script_name + EJUDGE_REST_PREFIX_LEN, n);
     role_name[n] = 0;
 
     int nlen = strlen(script_name);
     rest_args = alloca(nlen + 1);
     rest_args[0] = 0;
-    if (*s == '/' || *s == '?') {
-      memcpy(rest_args, s + 1, nlen - (n + 4));
+    if (*s == '/') {
+      memcpy(rest_args, s + 1, nlen - (n + EJUDGE_REST_PREFIX_LEN));
     }
 
     // update script_name
     unsigned char *tmp = alloca(nlen + 1);
     memcpy(tmp, script_name, nlen);
-    tmp[n + 4] = 0;
+    tmp[n + EJUDGE_REST_PREFIX_LEN] = 0;
     script_name = tmp;
 
     fprintf(stderr, "role_name: %s\n", role_name);
     fprintf(stderr, "rest_args: %s\n", rest_args);
     fprintf(stderr, "script_name: %s\n", script_name);
   }
+#endif
 
   phr->script_name = script_name;
   snprintf(self_url, sizeof(self_url), "%s://%s%s", protocol,
