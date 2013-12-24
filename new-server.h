@@ -82,6 +82,7 @@ struct http_request_info
   int json_reply;
   int reg_status;
   int reg_flags;
+  int rest_mode;
   unsigned char *login;
   unsigned char *name;
   unsigned char *name_arm;
