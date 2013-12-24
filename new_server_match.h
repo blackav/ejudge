@@ -1,8 +1,8 @@
 /* -*- c -*- */
 /* $Id$ */
 
-#ifndef __NEW_SERVER_H__
-#define __NEW_SERVER_H__
+#ifndef __NEW_SERVER_MATCH_H__
+#define __NEW_SERVER_MATCH_H__
 
 /* Copyright (C) 2013 Alexander Chernov <cher@ejudge.ru> */
 
@@ -20,4 +20,4 @@
 
 extern int ns_match_action(const unsigned char *str);
 
-#endif /* __NEW_SERVER_H__ */
+#endif /* __NEW_SERVER_MATCH_H__ */

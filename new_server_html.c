@@ -94,6 +94,8 @@ static size_t extra_a = 0, extra_u = 0;
 static struct server_framework_job *job_first, *job_last;
 static int job_count, job_serial;
 
+static const unsigned char * const symbolic_action_table[];
+
 static void unprivileged_page_login(FILE *fout,
                                     struct http_request_info *phr,
                                     int orig_locale_id);
@@ -916,9 +918,13 @@ html_role_select(FILE *fout, int role, int allow_admin,
 }
 
 unsigned char *
-ns_url(unsigned char *buf, size_t size,
-       const struct http_request_info *phr,
-       int action, const char *format, ...)
+ns_url(
+        unsigned char *buf,
+        size_t size,
+        const struct http_request_info *phr,
+        int action,
+        const char *format,
+        ...)
 {
   unsigned char fbuf[1024];
   unsigned char abuf[64];
@@ -934,10 +940,17 @@ ns_url(unsigned char *buf, size_t size,
   if (fbuf[0]) sep = "&amp;";
 
   abuf[0] = 0;
-  if (action > 0) snprintf(abuf, sizeof(abuf), "&amp;action=%d", action);
+  if (phr->rest_mode > 0) {
+    if (action > 0 && action < NEW_SRV_ACTION_LAST && symbolic_action_table[action])
+      snprintf(abuf, sizeof(abuf), "/%s", symbolic_action_table[action]);
+    snprintf(buf, size, "%s%s?SID=%016llx%s%s", phr->self_url, abuf,
+             phr->session_id, sep, fbuf);
+  } else {
+    if (action > 0) snprintf(abuf, sizeof(abuf), "&amp;action=%d", action);
 
-  snprintf(buf, size, "%s?SID=%016llx%s%s%s", phr->self_url,
-           phr->session_id, abuf, sep, fbuf);
+    snprintf(buf, size, "%s?SID=%016llx%s%s%s", phr->self_url,
+             phr->session_id, abuf, sep, fbuf);
+  }
   return buf;
 }
 
@@ -964,10 +977,17 @@ ns_url_unescaped(
   if (fbuf[0]) sep = "&";
 
   abuf[0] = 0;
-  if (action > 0) snprintf(abuf, sizeof(abuf), "&action=%d", action);
+  if (phr->rest_mode > 0) {
+    if (action > 0 && action < NEW_SRV_ACTION_LAST && symbolic_action_table[action])
+      snprintf(abuf, sizeof(abuf), "/%s", symbolic_action_table[action]);
+    snprintf(buf, size, "%s%s?SID=%016llx%s%s", phr->self_url, abuf,
+             phr->session_id, sep, fbuf);
+  } else {
+    if (action > 0) snprintf(abuf, sizeof(abuf), "&action=%d", action);
 
-  snprintf(buf, size, "%s?SID=%016llx%s%s%s", phr->self_url,
-           phr->session_id, abuf, sep, fbuf);
+    snprintf(buf, size, "%s?SID=%016llx%s%s%s", phr->self_url,
+             phr->session_id, abuf, sep, fbuf);
+  }
   return buf;
 }
 
@@ -990,10 +1010,17 @@ ns_aref(unsigned char *buf, size_t size,
   if (fbuf[0]) sep = "&amp;";
 
   abuf[0] = 0;
-  if (action > 0) snprintf(abuf, sizeof(abuf), "&amp;action=%d", action);
+  if (phr->rest_mode > 0) {
+    if (action > 0 && action < NEW_SRV_ACTION_LAST && symbolic_action_table[action])
+      snprintf(abuf, sizeof(abuf), "/%s", symbolic_action_table[action]);
+    snprintf(buf, size, "<a href=\"%s%s?SID=%016llx%s%s\">", phr->self_url, abuf,
+             phr->session_id, sep, fbuf);
+  } else {
+    if (action > 0) snprintf(abuf, sizeof(abuf), "&amp;action=%d", action);
 
-  snprintf(buf, size, "<a href=\"%s?SID=%016llx%s%s%s\">", phr->self_url,
-           phr->session_id, abuf, sep, fbuf);
+    snprintf(buf, size, "<a href=\"%s?SID=%016llx%s%s%s\">", phr->self_url,
+             phr->session_id, abuf, sep, fbuf);
+  }
   return buf;
 }
 
@@ -1017,16 +1044,23 @@ ns_aref_2(unsigned char *buf, size_t size,
   }
   if (fbuf[0]) sep = "&amp;";
 
-  abuf[0] = 0;
-  if (action > 0) snprintf(abuf, sizeof(abuf), "&amp;action=%d", action);
-
   stbuf[0] = 0;
   if (style && *style) {
     snprintf(stbuf, sizeof(stbuf), " class=\"%s\"", style);
   }
 
-  snprintf(buf, size, "<a href=\"%s?SID=%016llx%s%s%s\"%s>", phr->self_url,
-           phr->session_id, abuf, sep, fbuf, stbuf);
+  abuf[0] = 0;
+  if (phr->rest_mode > 0) {
+    if (action > 0 && action < NEW_SRV_ACTION_LAST && symbolic_action_table[action])
+      snprintf(abuf, sizeof(abuf), "/%s", symbolic_action_table[action]);
+    snprintf(buf, size, "<a href=\"%s%s?SID=%016llx%s%s\"%s>", phr->self_url, abuf,
+             phr->session_id, sep, fbuf, stbuf);
+  } else {
+    if (action > 0) snprintf(abuf, sizeof(abuf), "&amp;action=%d", action);
+
+    snprintf(buf, size, "<a href=\"%s?SID=%016llx%s%s%s\"%s>", phr->self_url,
+             phr->session_id, abuf, sep, fbuf, stbuf);
+  }
   return buf;
 }
 
@@ -13133,9 +13167,15 @@ unpriv_page_header(FILE *fout,
           forced_text = 0;
           if (cnts->exam_mode) forced_text = _("Finish session");
           if (!forced_text) forced_text = gettext(top_action_names[i]);
-          fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?SID=%016llx&amp;action=%d\">%s [%s]</a></div></td>",
-                  phr->self_url, phr->session_id, top_action_list[i],
-                  forced_text, phr->login);
+          if (phr->rest_mode > 0) {
+            fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s/%s?SID=%016llx\">%s [%s]</a></div></td>",
+                    phr->self_url, symbolic_action_table[top_action_list[i]], phr->session_id,
+                    forced_text, phr->login);
+          } else {
+            fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?SID=%016llx&amp;action=%d\">%s [%s]</a></div></td>",
+                    phr->self_url, phr->session_id, top_action_list[i],
+                    forced_text, phr->login);
+          }
           shown_items++;
         } else {
           fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?SID=%016llx&amp;action=%d\">%s</a></div></td>",
@@ -13236,6 +13276,9 @@ unpriv_page_header(FILE *fout,
         } else if (forced_url) {
           fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s\"%s>%s</a></div></td>",
                   forced_url, target, forced_text);
+        } else if (phr->rest_mode > 0) {
+          fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s/%s?SID=%016llx\">%s</a></div></td>",
+                  phr->self_url, symbolic_action_table[action_list[i]], phr->session_id, forced_text);
         } else {
           fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?SID=%016llx&amp;action=%d\">%s</a></div></td>",
                   phr->self_url, phr->session_id, action_list[i], forced_text);
@@ -15509,6 +15552,7 @@ ns_handle_http_request(struct server_framework_state *state,
   int r, n, orig_locale_id = -1;
   unsigned char *role_name = NULL;
   unsigned char *rest_args = NULL;
+  unsigned char *rest_action = NULL;
 
   // make a self-referencing URL
   if (ns_getenv(phr, "SSL_PROTOCOL") || ns_getenv(phr, "HTTPS")) {
@@ -15535,6 +15579,18 @@ ns_handle_http_request(struct server_framework_state *state,
     if (*s == '/') {
       memcpy(rest_args, s + 1, nlen - (n + EJUDGE_REST_PREFIX_LEN));
     }
+    if (rest_args[0]) {
+      unsigned char *ss = strchr(rest_args, '/');
+      if (ss) {
+        rest_action = rest_args;
+        rest_args = alloca(nlen + 1);
+        strcpy(rest_args, ss + 1);
+        *ss = 0;
+      } else {
+        rest_action = rest_args;
+        rest_args = NULL;
+      }
+    }
 
     // update script_name
     unsigned char *tmp = alloca(nlen + 1);
@@ -15542,7 +15598,10 @@ ns_handle_http_request(struct server_framework_state *state,
     tmp[n + EJUDGE_REST_PREFIX_LEN] = 0;
     script_name = tmp;
 
+    phr->rest_mode = 1;
+
     fprintf(stderr, "role_name: %s\n", role_name);
+    fprintf(stderr, "rest_action: %s\n", rest_action);
     fprintf(stderr, "rest_args: %s\n", rest_args);
     fprintf(stderr, "script_name: %s\n", script_name);
   }
@@ -15599,7 +15658,10 @@ ns_handle_http_request(struct server_framework_state *state,
   }
 
   // parse the action
-  if ((s = ns_cgi_nname(phr, "action_", 7))) {
+  if (rest_action && *rest_action) {
+    phr->action = ns_match_action(rest_action);
+    if (phr->action <= 0) return ns_html_err_inv_param(fout, phr, 0, "invalid action");
+  } else if ((s = ns_cgi_nname(phr, "action_", 7))) {
     if (sscanf(s, "action_%d%n", &phr->action, &n) != 1 || s[n]
         || phr->action <= 0)
       return ns_html_err_inv_param(fout, phr, 0, "cannot parse action");
@@ -15614,6 +15676,32 @@ ns_handle_http_request(struct server_framework_state *state,
       if (r == NEW_SRV_ACTION_LAST)
         return ns_html_err_inv_param(fout, phr, 0, "cannot parse action");
       phr->action = r;
+    }
+  }
+
+  if (role_name && *role_name) {
+    if (!strcmp(role_name, "master")) {
+      phr->role = USER_ROLE_ADMIN;
+      privileged_entry_point(fout, phr);
+      return;
+    } else if (!strcmp(role_name, "judge")) {
+      phr->role = USER_ROLE_JUDGE;
+      privileged_entry_point(fout, phr);
+      return;
+    } else if (!strcmp(role_name, "observer")) {
+      phr->role = USER_ROLE_OBSERVER;
+      privileged_entry_point(fout, phr);
+      return;
+    } else if (!strcmp(role_name, "user")) {
+      unprivileged_entry_point(fout, phr, orig_locale_id);
+      return;
+    } else if (!strcmp(role_name, "register")) {
+      phr->locale_id = orig_locale_id;
+      ns_register_pages(fout, phr);
+      return;
+    } else if (!strcmp(role_name, "rest")) {
+      phr->protocol_reply = new_server_cmd_handler(fout, phr);
+      return;
     }
   }
 
