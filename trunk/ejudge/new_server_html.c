@@ -13178,9 +13178,15 @@ unpriv_page_header(FILE *fout,
           }
           shown_items++;
         } else {
-          fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?SID=%016llx&amp;action=%d\">%s</a></div></td>",
-                  phr->self_url, phr->session_id, top_action_list[i],
-                  gettext(top_action_names[i]));
+          if (phr->rest_mode > 0) {
+            fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s/%s?SID=%016llx\">%s</a></div></td>",
+                    phr->self_url, symbolic_action_table[top_action_list[i]], phr->session_id,
+                    gettext(top_action_names[i]));
+          } else {
+            fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?SID=%016llx&amp;action=%d\">%s</a></div></td>",
+                    phr->self_url, phr->session_id, top_action_list[i],
+                    gettext(top_action_names[i]));
+          }
           shown_items++;
         }
       }
@@ -14601,7 +14607,12 @@ unpriv_main_page(FILE *fout,
     }
     if (all_runs) s = _("View last 15");
     else s = _("View all");
-    fprintf(fout, "<p><a href=\"%s?SID=%016llx&amp;all_runs=%d&amp;action=%d\">%s</a></p>\n", phr->self_url, phr->session_id, !all_runs, NEW_SRV_ACTION_VIEW_SUBMISSIONS, s);
+    if (phr->rest_mode > 0) {
+      fprintf(fout, "<p><a href=\"%s/%s?SID=%016llx&amp;all_runs=%d\">%s</a></p>\n", phr->self_url,
+              symbolic_action_table[NEW_SRV_ACTION_VIEW_SUBMISSIONS], phr->session_id, !all_runs, s);
+    } else {
+      fprintf(fout, "<p><a href=\"%s?SID=%016llx&amp;all_runs=%d&amp;action=%d\">%s</a></p>\n", phr->self_url, phr->session_id, !all_runs, NEW_SRV_ACTION_VIEW_SUBMISSIONS, s);
+    }
   }
 
 
@@ -14655,7 +14666,12 @@ unpriv_main_page(FILE *fout,
 
     if (all_clars) s = _("View last 15");
     else s = _("View all");
-    fprintf(fout, "<p><a href=\"%s?SID=%016llx&amp;all_clars=%d&amp;action=%d\">%s</a></p>\n", phr->self_url, phr->session_id, !all_clars, NEW_SRV_ACTION_VIEW_CLARS, s);
+    if (phr->rest_mode > 0) {
+      fprintf(fout, "<p><a href=\"%s/%s?SID=%016llx&amp;all_clars=%d\">%s</a></p>\n",
+              phr->self_url, symbolic_action_table[NEW_SRV_ACTION_VIEW_CLARS], phr->session_id, !all_clars, s);
+    } else {
+      fprintf(fout, "<p><a href=\"%s?SID=%016llx&amp;all_clars=%d&amp;action=%d\">%s</a></p>\n", phr->self_url, phr->session_id, !all_clars, NEW_SRV_ACTION_VIEW_CLARS, s);
+    }
   }
 
   if (phr->action == NEW_SRV_ACTION_VIEW_SETTINGS) {
