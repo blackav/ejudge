@@ -1017,4 +1017,19 @@ struct server_framework_job;
 void ns_add_job(struct server_framework_job *job);
 void ns_remove_job(struct server_framework_job *job);
 
+void
+new_write_user_runs(
+        const serve_state_t,
+        FILE *f,
+        struct http_request_info *phr,
+        int uid,
+        unsigned int show_flags,
+        int prob_id,
+        ej_cookie_t sid,
+        unsigned char const *self_url,
+        unsigned char const *hidden_vars,
+        unsigned char const *extra_args,
+        const unsigned char *table_class);
+
+
 #endif /* __NEW_SERVER_H__ */
