@@ -48,18 +48,6 @@ write_public_log(
         int,
         int user_mode);
 
-void new_write_user_runs(const serve_state_t, FILE *f, int uid,
-                         unsigned int show_flags,
-                         int prob_id,
-                         int action_view_source,
-                         int action_view_report,
-                         int action_print_run,
-                         ej_cookie_t sid,
-                         unsigned char const *self_url,
-                         unsigned char const *hidden_vars,
-                         unsigned char const *extra_args,
-                         const unsigned char *table_class);
-
 void new_write_user_clars(const serve_state_t,
                           FILE *f, int uid, unsigned int show_flags,
                           int action, ej_cookie_t sid,

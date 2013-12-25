@@ -14535,10 +14535,7 @@ unpriv_main_page(FILE *fout,
           ns_write_olympiads_user_runs(phr, fout, cnts, extra, all_runs,
                                        prob_id, "b1");
         } else {
-          new_write_user_runs(cs, fout, phr->user_id, all_runs, prob->id,
-                              NEW_SRV_ACTION_VIEW_SOURCE,
-                              NEW_SRV_ACTION_VIEW_REPORT,
-                              NEW_SRV_ACTION_PRINT_RUN,
+          new_write_user_runs(cs, fout, phr, phr->user_id, all_runs, prob->id,
                               phr->session_id, phr->self_url,
                               phr->hidden_vars, "", "b1");
         }
@@ -14621,10 +14618,7 @@ unpriv_main_page(FILE *fout,
       ns_write_olympiads_user_runs(phr, fout, cnts, extra, all_runs,
                                    0, "b1");
     } else {
-      new_write_user_runs(cs, fout, phr->user_id, all_runs, 0,
-                          NEW_SRV_ACTION_VIEW_SOURCE,
-                          NEW_SRV_ACTION_VIEW_REPORT,
-                          NEW_SRV_ACTION_PRINT_RUN,
+      new_write_user_runs(cs, fout, phr, phr->user_id, all_runs, 0,
                           phr->session_id, phr->self_url,
                           phr->hidden_vars, "", "b1");
     }
