@@ -135,8 +135,12 @@ generate(
       if (symbolic_action_table[i] && !strcasecmp(prefix, symbolic_action_table[i])) {
         value = i;
       }
-    if (value <= 0) abort();
-    fprintf(out, "%sif (!c) return NEW_SRV_ACTION_%s;\n", indent, toout(tmp, symbolic_action_table[value]));
+    if (value < 0) abort();
+    if (!value) {
+      fprintf(out, "%sif (!c) return 0;\n", indent);
+    } else {
+      fprintf(out, "%sif (!c) return NEW_SRV_ACTION_%s;\n", indent, toout(tmp, symbolic_action_table[value]));
+    }
     //fprintf(out, "%sif (!c) return %d;\n", indent, value);
   }
   int low = 0, high = strlen(out_buf);
@@ -154,7 +158,9 @@ int main(void)
          "  int c;\n"
          "  if (!str) return 0;\n");
 
-  //fprintf(stderr, "action table size: %d\n", NEW_SRV_ACTION_LAST);
+  //printf("  if (str[0] == '0' && !str[1]) return 0;\n");
+
+  fprintf(stderr, "action table size: %d\n", NEW_SRV_ACTION_LAST);
   int act0_set[NEW_SRV_ACTION_LAST + 1];
   int act0_count = 0;
   for (int i = 0; i < NEW_SRV_ACTION_LAST; ++i) {
@@ -162,7 +168,8 @@ int main(void)
       act0_set[act0_count++] = i;
     }
   }
-  //fprintf(stderr, "non-null actions: %d\n", act0_count);
+  fprintf(stderr, "non-null actions: %d\n", act0_count);
+  if (act0_count != NEW_SRV_ACTION_LAST) abort();
 
   generate(stdout, "  ", "", act0_set, act0_count, 0);
 

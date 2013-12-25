@@ -1,5 +1,6 @@
 static const unsigned char * const symbolic_action_table[NEW_SRV_ACTION_LAST] =
 {
+  [0] = "0",
   [NEW_SRV_ACTION_LOGIN_PAGE] = "login-page",
   [NEW_SRV_ACTION_MAIN_PAGE] = "main-page",
   [NEW_SRV_ACTION_COOKIE_LOGIN] = "cookie-login",
