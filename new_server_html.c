@@ -937,15 +937,16 @@ ns_url(
     vsnprintf(fbuf, sizeof(fbuf), format, args);
     va_end(args);
   }
-  if (fbuf[0]) sep = "&amp;";
 
-  abuf[0] = 0;
   if (phr->rest_mode > 0) {
-    if (action > 0 && action < NEW_SRV_ACTION_LAST && symbolic_action_table[action])
-      snprintf(abuf, sizeof(abuf), "/%s", symbolic_action_table[action]);
-    snprintf(buf, size, "%s%s?SID=%016llx%s%s", phr->self_url, abuf,
+    if (fbuf[0]) sep = "?";
+    if (action < 0 || action >= NEW_SRV_ACTION_LAST) action = 0;
+    snprintf(buf, size, "%s/%s/S%016llx%s%s", phr->self_url,
+             symbolic_action_table[action],
              phr->session_id, sep, fbuf);
   } else {
+    abuf[0] = 0;
+    if (fbuf[0]) sep = "&amp;";
     if (action > 0) snprintf(abuf, sizeof(abuf), "&amp;action=%d", action);
 
     snprintf(buf, size, "%s?SID=%016llx%s%s%s", phr->self_url,
@@ -974,15 +975,16 @@ ns_url_unescaped(
     vsnprintf(fbuf, sizeof(fbuf), format, args);
     va_end(args);
   }
-  if (fbuf[0]) sep = "&";
 
-  abuf[0] = 0;
   if (phr->rest_mode > 0) {
-    if (action > 0 && action < NEW_SRV_ACTION_LAST && symbolic_action_table[action])
-      snprintf(abuf, sizeof(abuf), "/%s", symbolic_action_table[action]);
-    snprintf(buf, size, "%s%s?SID=%016llx%s%s", phr->self_url, abuf,
+    if (action < 0 || action >= NEW_SRV_ACTION_LAST) action = 0;
+    if (fbuf[0]) sep = "?";
+    snprintf(buf, size, "%s/%s/S%016llx%s%s", phr->self_url,
+             symbolic_action_table[action],
              phr->session_id, sep, fbuf);
   } else {
+    abuf[0] = 0;
+    if (fbuf[0]) sep = "&";
     if (action > 0) snprintf(abuf, sizeof(abuf), "&action=%d", action);
 
     snprintf(buf, size, "%s?SID=%016llx%s%s%s", phr->self_url,
@@ -1007,15 +1009,16 @@ ns_aref(unsigned char *buf, size_t size,
     vsnprintf(fbuf, sizeof(fbuf), format, args);
     va_end(args);
   }
-  if (fbuf[0]) sep = "&amp;";
 
-  abuf[0] = 0;
   if (phr->rest_mode > 0) {
-    if (action > 0 && action < NEW_SRV_ACTION_LAST && symbolic_action_table[action])
-      snprintf(abuf, sizeof(abuf), "/%s", symbolic_action_table[action]);
-    snprintf(buf, size, "<a href=\"%s%s?SID=%016llx%s%s\">", phr->self_url, abuf,
+    if (action < 0 || action >= NEW_SRV_ACTION_LAST) action = 0;
+    if (fbuf[0]) sep = "?";
+    snprintf(buf, size, "<a href=\"%s/%s/S%016llx%s%s\">", phr->self_url,
+             symbolic_action_table[action],
              phr->session_id, sep, fbuf);
   } else {
+    abuf[0] = 0;
+    if (fbuf[0]) sep = "&amp;";
     if (action > 0) snprintf(abuf, sizeof(abuf), "&amp;action=%d", action);
 
     snprintf(buf, size, "<a href=\"%s?SID=%016llx%s%s%s\">", phr->self_url,
@@ -1042,20 +1045,21 @@ ns_aref_2(unsigned char *buf, size_t size,
     vsnprintf(fbuf, sizeof(fbuf), format, args);
     va_end(args);
   }
-  if (fbuf[0]) sep = "&amp;";
 
   stbuf[0] = 0;
   if (style && *style) {
     snprintf(stbuf, sizeof(stbuf), " class=\"%s\"", style);
   }
 
-  abuf[0] = 0;
   if (phr->rest_mode > 0) {
-    if (action > 0 && action < NEW_SRV_ACTION_LAST && symbolic_action_table[action])
-      snprintf(abuf, sizeof(abuf), "/%s", symbolic_action_table[action]);
-    snprintf(buf, size, "<a href=\"%s%s?SID=%016llx%s%s\"%s>", phr->self_url, abuf,
+    if (action < 0 || action >= NEW_SRV_ACTION_LAST) action = 0;
+    if (fbuf[0]) sep = "?";
+    snprintf(buf, size, "<a href=\"%s/%s/S%016llx%s%s\"%s>", phr->self_url,
+             symbolic_action_table[action],
              phr->session_id, sep, fbuf, stbuf);
   } else {
+    abuf[0] = 0;
+    if (fbuf[0]) sep = "&amp;";
     if (action > 0) snprintf(abuf, sizeof(abuf), "&amp;action=%d", action);
 
     snprintf(buf, size, "<a href=\"%s?SID=%016llx%s%s%s\"%s>", phr->self_url,
@@ -2596,11 +2600,19 @@ priv_change_password(FILE *fout,
   close_memstream(log_f); log_f = 0;
   if (!log_txt || !*log_txt) {
     url_armor_string(login_buf, sizeof(login_buf), phr->login);
-    snprintf(url, sizeof(url),
-             "%s?contest_id=%d&role=%d&login=%s&locale_id=%d&action=%d",
-             phr->self_url, phr->contest_id, phr->role,
-             login_buf, phr->locale_id,
-             NEW_SRV_ACTION_LOGIN_PAGE);
+    if (phr->rest_mode > 0) {
+      snprintf(url, sizeof(url),
+               "%s/%s?contest_id=%d&role=%d&login=%s&locale_id=%d",
+               phr->self_url, symbolic_action_table[NEW_SRV_ACTION_LOGIN_PAGE],
+               phr->contest_id, phr->role,
+               login_buf, phr->locale_id);
+    } else {
+      snprintf(url, sizeof(url),
+               "%s?contest_id=%d&role=%d&login=%s&locale_id=%d&action=%d",
+               phr->self_url, phr->contest_id, phr->role,
+               login_buf, phr->locale_id,
+               NEW_SRV_ACTION_LOGIN_PAGE);
+    }
     ns_refresh_page_2(fout, phr->client_key, url);
   } else {
     html_error_status_page(fout, phr, cnts, extra, log_txt,
@@ -10195,7 +10207,11 @@ unprivileged_page_login_page(FILE *fout, struct http_request_info *phr,
   }
 
   if (cnts && cnts->enable_password_recovery && cnts->disable_team_password) {
-    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d\">%s</a></div></td>", phr->self_url, phr->contest_id, phr->locale_id, NEW_SRV_ACTION_FORGOT_PASSWORD_1, _("Forgot password?"));
+    if (phr->rest_mode > 0) {
+      fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s/%s?contest_id=%d&amp;locale_id=%d\">%s</a></div></td>", phr->self_url, symbolic_action_table[NEW_SRV_ACTION_FORGOT_PASSWORD_1], phr->contest_id, phr->locale_id, _("Forgot password?"));
+    } else {
+      fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d\">%s</a></div></td>", phr->self_url, phr->contest_id, phr->locale_id, NEW_SRV_ACTION_FORGOT_PASSWORD_1, _("Forgot password?"));
+    }
     vis_flag++;
   }
 
@@ -10387,10 +10403,17 @@ unpriv_change_password(FILE *fout,
   close_memstream(log_f); log_f = 0;
   if (!log_txt || !*log_txt) {
     url_armor_string(login_buf, sizeof(login_buf), phr->login);
-    snprintf(url, sizeof(url),
-             "%s?contest_id=%d&login=%s&locale_id=%d&action=%d",
-             phr->self_url, phr->contest_id, login_buf, phr->locale_id,
-             NEW_SRV_ACTION_LOGIN_PAGE);
+    if (phr->rest_mode > 0) {
+      snprintf(url, sizeof(url),
+               "%s/%s?contest_id=%d&login=%s&locale_id=%d",
+               phr->self_url, symbolic_action_table[NEW_SRV_ACTION_LOGIN_PAGE],
+               phr->contest_id, login_buf, phr->locale_id);
+    } else {
+      snprintf(url, sizeof(url),
+               "%s?contest_id=%d&login=%s&locale_id=%d&action=%d",
+               phr->self_url, phr->contest_id, login_buf, phr->locale_id,
+               NEW_SRV_ACTION_LOGIN_PAGE);
+    }
     ns_refresh_page_2(fout, phr->client_key, url);
   } else {
     html_error_status_page(fout, phr, cnts, extra, log_txt,
@@ -13168,7 +13191,7 @@ unpriv_page_header(FILE *fout,
           if (cnts->exam_mode) forced_text = _("Finish session");
           if (!forced_text) forced_text = gettext(top_action_names[i]);
           if (phr->rest_mode > 0) {
-            fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s/%s?SID=%016llx\">%s [%s]</a></div></td>",
+            fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s/%s/S%016llx\">%s [%s]</a></div></td>",
                     phr->self_url, symbolic_action_table[top_action_list[i]], phr->session_id,
                     forced_text, phr->login);
           } else {
@@ -13179,7 +13202,7 @@ unpriv_page_header(FILE *fout,
           shown_items++;
         } else {
           if (phr->rest_mode > 0) {
-            fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s/%s?SID=%016llx\">%s</a></div></td>",
+            fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s/%s/S%016llx\">%s</a></div></td>",
                     phr->self_url, symbolic_action_table[top_action_list[i]], phr->session_id,
                     gettext(top_action_names[i]));
           } else {
@@ -13283,7 +13306,7 @@ unpriv_page_header(FILE *fout,
           fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s\"%s>%s</a></div></td>",
                   forced_url, target, forced_text);
         } else if (phr->rest_mode > 0) {
-          fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s/%s?SID=%016llx\">%s</a></div></td>",
+          fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s/%s/S%016llx\">%s</a></div></td>",
                   phr->self_url, symbolic_action_table[action_list[i]], phr->session_id, forced_text);
         } else {
           fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?SID=%016llx&amp;action=%d\">%s</a></div></td>",
@@ -14608,7 +14631,7 @@ unpriv_main_page(FILE *fout,
     if (all_runs) s = _("View last 15");
     else s = _("View all");
     if (phr->rest_mode > 0) {
-      fprintf(fout, "<p><a href=\"%s/%s?SID=%016llx&amp;all_runs=%d\">%s</a></p>\n", phr->self_url,
+      fprintf(fout, "<p><a href=\"%s/%s/S%016llx?all_runs=%d\">%s</a></p>\n", phr->self_url,
               symbolic_action_table[NEW_SRV_ACTION_VIEW_SUBMISSIONS], phr->session_id, !all_runs, s);
     } else {
       fprintf(fout, "<p><a href=\"%s?SID=%016llx&amp;all_runs=%d&amp;action=%d\">%s</a></p>\n", phr->self_url, phr->session_id, !all_runs, NEW_SRV_ACTION_VIEW_SUBMISSIONS, s);
@@ -14667,7 +14690,7 @@ unpriv_main_page(FILE *fout,
     if (all_clars) s = _("View last 15");
     else s = _("View all");
     if (phr->rest_mode > 0) {
-      fprintf(fout, "<p><a href=\"%s/%s?SID=%016llx&amp;all_clars=%d\">%s</a></p>\n",
+      fprintf(fout, "<p><a href=\"%s/%s/S%016llx?all_clars=%d\">%s</a></p>\n",
               phr->self_url, symbolic_action_table[NEW_SRV_ACTION_VIEW_CLARS], phr->session_id, !all_clars, s);
     } else {
       fprintf(fout, "<p><a href=\"%s?SID=%016llx&amp;all_clars=%d&amp;action=%d\">%s</a></p>\n", phr->self_url, phr->session_id, !all_clars, NEW_SRV_ACTION_VIEW_CLARS, s);
@@ -15614,6 +15637,19 @@ ns_handle_http_request(struct server_framework_state *state,
     tmp[n + EJUDGE_REST_PREFIX_LEN] = 0;
     script_name = tmp;
 
+    if (rest_args && rest_args[0] == 'S') {
+      // SID
+      unsigned char *ss = strchr(rest_args, '/');
+      if (ss) *ss = 0;
+      unsigned long long v1 = 0, v2 = 0;
+      if (xml_parse_full_cookie(rest_args + 1, &v1, &v2) >= 0) {
+        phr->session_id = v1;
+        phr->client_key = v2;
+      }
+      if (ss) rest_args = ss + 1;
+      else rest_args = NULL;
+    }
+
     phr->rest_mode = 1;
 
     fprintf(stderr, "role_name: %s\n", role_name);
@@ -15639,7 +15675,9 @@ ns_handle_http_request(struct server_framework_state *state,
   if (xml_parse_ipv6(NULL, 0, 0, 0, remote_addr, &phr->ip) < 0)
     return ns_html_err_inv_param(fout, phr, 0, "cannot parse REMOTE_ADDR");
 
-  parse_cookie(phr);
+  if (!phr->client_key) {
+    parse_cookie(phr);
+  }
 
   // parse the contest_id
   if ((r = ns_cgi_param(phr, "contest_id", &s)) < 0)
@@ -15655,12 +15693,14 @@ ns_handle_http_request(struct server_framework_state *state,
   }
 
   // parse the session_id
-  if ((r = ns_cgi_param(phr, "SID", &s)) < 0)
-    return ns_html_err_inv_param(fout, phr, 0, "cannot parse SID");
-  if (r > 0) {
-    if (sscanf(s, "%llx%n", &phr->session_id, &n) != 1
-        || s[n] || !phr->session_id)
+  if (!phr->session_id) {
+    if ((r = ns_cgi_param(phr, "SID", &s)) < 0)
       return ns_html_err_inv_param(fout, phr, 0, "cannot parse SID");
+    if (r > 0) {
+      if (sscanf(s, "%llx%n", &phr->session_id, &n) != 1
+          || s[n] || !phr->session_id)
+        return ns_html_err_inv_param(fout, phr, 0, "cannot parse SID");
+    }
   }
 
   // parse the locale_id
@@ -15676,7 +15716,7 @@ ns_handle_http_request(struct server_framework_state *state,
   // parse the action
   if (rest_action && *rest_action) {
     phr->action = ns_match_action(rest_action);
-    if (phr->action <= 0) return ns_html_err_inv_param(fout, phr, 0, "invalid action");
+    if (phr->action < 0) return ns_html_err_inv_param(fout, phr, 0, "invalid action");
   } else if ((s = ns_cgi_nname(phr, "action_", 7))) {
     if (sscanf(s, "action_%d%n", &phr->action, &n) != 1 || s[n]
         || phr->action <= 0)
