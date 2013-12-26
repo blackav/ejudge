@@ -31,7 +31,6 @@
 #include "base64.h"
 #include "sformat.h"
 #include "protocol.h"
-#include "client_actions.h"
 #include "copyright.h"
 #include "archive_paths.h"
 #include "team_extra.h"
