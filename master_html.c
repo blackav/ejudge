@@ -29,7 +29,6 @@
 #include "base64.h"
 #include "html.h"
 #include "fileutl.h"
-#include "client_actions.h"
 #include "sformat.h"
 #include "archive_paths.h"
 #include "team_extra.h"
