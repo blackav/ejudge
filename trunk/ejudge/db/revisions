@@ -8380,3 +8380,8 @@ master_html.c 7708 0 2447947
 new_server_html.c 7708 0 43103371
 new_server_html_2.c 7708 0 25141987
 serve_2.c 7708 0 13619426
+client_actions.h 7710 0 63960
+clntutil.h 7710 0 135894
+clntutil.c 7710 0 403020
+html.c 7710 0 11727653
+master_html.c 7710 0 2445425
