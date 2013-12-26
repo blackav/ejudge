@@ -12452,16 +12452,6 @@ unpriv_view_report(FILE *fout,
   int accepting_mode = 0;
   int enable_rep_view = 0;
 
-  static const int new_actions_vector[] =
-  {
-    NEW_SRV_ACTION_VIEW_TEST_INPUT,
-    NEW_SRV_ACTION_VIEW_TEST_OUTPUT,
-    NEW_SRV_ACTION_VIEW_TEST_ANSWER,
-    NEW_SRV_ACTION_VIEW_TEST_ERROR,
-    NEW_SRV_ACTION_VIEW_TEST_CHECKER,
-    NEW_SRV_ACTION_VIEW_TEST_INFO,
-  };
-
   start_time = run_get_start_time(cs->runlog_state);
   stop_time = run_get_stop_time(cs->runlog_state);
   if (global->is_virtual) {
@@ -12621,19 +12611,15 @@ unpriv_view_report(FILE *fout,
       }
     } else {
       if (global->score_system == SCORE_OLYMPIAD && accepting_mode) {
-        write_xml_team_accepting_report(fout, rep_start, run_id, &re, prob,
-                                        new_actions_vector,
-                                        phr->session_id, cnts->exam_mode,
-                                        phr->self_url, "", "b1");
+        write_xml_team_accepting_report(fout, phr, rep_start, run_id, &re, prob,
+                                        cnts->exam_mode, "b1");
       } else if (prob->team_show_judge_report) {
-        write_xml_testing_report(fout, 1, rep_start, phr->session_id,
-                                 phr->self_url, "", new_actions_vector, "b1",
-                                 "b0");
+        write_xml_testing_report(fout, phr, 1, rep_start, "b1", "b0");
       } else {
-        write_xml_team_testing_report(cs, prob, fout,
+        write_xml_team_testing_report(cs, prob, fout, phr,
                                       prob->type != PROB_TYPE_STANDARD,
                                       re.is_marked,
-                                      rep_start, "b1", phr->session_id, phr->self_url, "", new_actions_vector);
+                                      rep_start, "b1");
       }
     }
     break;
@@ -14535,9 +14521,7 @@ unpriv_main_page(FILE *fout,
           ns_write_olympiads_user_runs(phr, fout, cnts, extra, all_runs,
                                        prob_id, "b1");
         } else {
-          new_write_user_runs(cs, fout, phr, phr->user_id, all_runs, prob->id,
-                              phr->session_id, phr->self_url,
-                              phr->hidden_vars, "", "b1");
+          new_write_user_runs(cs, fout, phr, all_runs, prob->id, "b1");
         }
       }
 
@@ -14618,9 +14602,7 @@ unpriv_main_page(FILE *fout,
       ns_write_olympiads_user_runs(phr, fout, cnts, extra, all_runs,
                                    0, "b1");
     } else {
-      new_write_user_runs(cs, fout, phr, phr->user_id, all_runs, 0,
-                          phr->session_id, phr->self_url,
-                          phr->hidden_vars, "", "b1");
+      new_write_user_runs(cs, fout, phr, all_runs, 0, "b1");
     }
     if (all_runs) s = _("View last 15");
     else s = _("View all");
@@ -14676,10 +14658,7 @@ unpriv_main_page(FILE *fout,
             cnts->team_head_style, _("Messages"),
             all_clars?_("all"):_("last 15"), cnts->team_head_style);
 
-    new_write_user_clars(cs, fout, phr->user_id, all_clars,
-                         NEW_SRV_ACTION_VIEW_CLAR,
-                         phr->session_id,
-                         phr->self_url, phr->hidden_vars, "", "b1");
+    new_write_user_clars(cs, fout, phr, all_clars, "b1");
 
     if (all_clars) s = _("View last 15");
     else s = _("View all");

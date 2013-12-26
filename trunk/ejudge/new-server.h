@@ -1022,14 +1022,55 @@ new_write_user_runs(
         const serve_state_t,
         FILE *f,
         struct http_request_info *phr,
-        int uid,
         unsigned int show_flags,
         int prob_id,
-        ej_cookie_t sid,
-        unsigned char const *self_url,
-        unsigned char const *hidden_vars,
-        unsigned char const *extra_args,
         const unsigned char *table_class);
 
+void
+new_write_user_clars(
+        const serve_state_t,
+        FILE *f,
+        struct http_request_info *phr,
+        unsigned int show_flags,
+        const unsigned char *table_class);
+
+int
+write_xml_team_testing_report(
+        serve_state_t state,
+        const struct section_problem_data *prob,
+        FILE *f,
+        struct http_request_info *phr,
+        int output_only,
+        int is_marked,
+        const unsigned char *txt,
+        const unsigned char *table_class);
+
+int
+write_xml_team_accepting_report(
+        FILE *f,
+        struct http_request_info *phr,        
+        const unsigned char *txt,
+        int rid,
+        const struct run_entry *re,
+        const struct section_problem_data *prob,
+        int exam_mode,
+        const unsigned char *table_class);
+
+int
+write_xml_team_tests_report(
+        const serve_state_t state,
+        const struct section_problem_data *prob,
+        FILE *f,
+        const unsigned char *txt,
+        const unsigned char *table_class);
+
+int
+write_xml_testing_report(
+        FILE *f,
+        struct http_request_info *phr,        
+        int user_mode,
+        unsigned char const *txt,
+        const unsigned char *class1,
+        const unsigned char *class2);
 
 #endif /* __NEW_SERVER_H__ */

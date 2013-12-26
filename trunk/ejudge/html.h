@@ -48,14 +48,6 @@ write_public_log(
         int,
         int user_mode);
 
-void new_write_user_clars(const serve_state_t,
-                          FILE *f, int uid, unsigned int show_flags,
-                          int action, ej_cookie_t sid,
-                          unsigned char const *self_url,
-                          unsigned char const *hidden_vars,
-                          unsigned char const *extra_args,
-                          const unsigned char *table_class);
-
 void write_standings_header(const serve_state_t state,
                             const struct contest_desc * cnts,
                             FILE *f,
@@ -157,13 +149,6 @@ write_html_run_status(
         int enable_js_status_menu,
         int run_fields);
 
-int write_xml_testing_report(FILE *f, int user_mode, unsigned char const *txt,
-                             ej_cookie_t sid,
-                             unsigned char const *self_url,
-                             unsigned char const *extra_args,
-                             const int *actions_vector,
-                             const unsigned char *class1,
-                             const unsigned char *class2);
 int
 write_xml_tests_report(
         FILE *f,
@@ -175,29 +160,6 @@ write_xml_tests_report(
         const unsigned char *class1,
         const unsigned char *class2);
 
-int
-write_xml_team_testing_report(
-        serve_state_t state,
-        const struct section_problem_data *prob,
-        FILE *f,
-        int output_only,
-        int is_marked,
-        const unsigned char *txt,
-        const unsigned char *table_class,
-        ej_cookie_t sid,
-        const unsigned char *self_url,
-        const unsigned char *extra_args,
-        const int *action_vec);
-
-int
-write_xml_team_tests_report(
-        const serve_state_t state,
-        const struct section_problem_data *prob,
-        FILE *f,
-        const unsigned char *txt,
-        const unsigned char *table_class);
-
-
 void generate_daily_statistics(const serve_state_t, FILE *f,
                                time_t from_time, time_t to_time, int utf8_mode);
 
@@ -207,17 +169,6 @@ write_change_status_dialog(const serve_state_t state,
                            int disable_rejudge_flag,
                            const unsigned char *td_class,
                            int cur_value, int is_readonly);
-
-int
-write_xml_team_accepting_report(FILE *f, const unsigned char *txt,
-                                int rid, const struct run_entry *re,
-                                const struct section_problem_data *prob,
-                                const int *action_vec,
-                                ej_cookie_t sid,
-                                int exam_mode,
-                                const unsigned char *self_url,
-                                const unsigned char *extra_args,
-                                const unsigned char *table_class);
 
 void
 write_text_run_status(
