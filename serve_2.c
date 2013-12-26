@@ -47,6 +47,7 @@
 #include "testing_report_xml.h"
 #include "server_framework.h"
 #include "ej_uuid.h"
+#include "team_extra.h"
 
 #include "reuse_xalloc.h"
 #include "reuse_logger.h"
@@ -5175,4 +5176,27 @@ serve_make_audit_read_path(
                                  re->run_id, NULL, 0);
   }
   return ret;
+}
+
+int
+serve_count_unread_clars(
+        const serve_state_t state,
+        int user_id,
+        time_t start_time)
+{
+  int i, total = 0;
+  struct clar_entry_v1 clar;
+
+  for (i = clar_get_total(state->clarlog_state) - 1; i >= 0; i--) {
+    if (clar_get_record(state->clarlog_state, i, &clar) < 0)
+      continue;
+    if (clar.id < 0) continue;
+    if (clar.to > 0 && clar.to != user_id) continue;
+    if (!clar.to && clar.from > 0) continue;
+    if (start_time <= 0 && clar.hide_flag) continue;
+    if (clar.from != user_id
+        && !team_extra_get_clar_status(state->team_extra_state, user_id, i))
+      total++;
+  }
+  return total;
 }
