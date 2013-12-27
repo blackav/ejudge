@@ -30,7 +30,7 @@ void collect_chars(const int *act_set, int act_count, int pos, unsigned char *ou
   out[0] = 0;
 
   for (int i = 0; i < act_count; ++i) {
-    const unsigned char *ss = symbolic_action_table[act_set[i]];
+    const unsigned char *ss = ns_symbolic_action_table[act_set[i]];
     cs[tolower(ss[pos])] = 1;
   }
 
@@ -75,7 +75,7 @@ generate2(
   int new_act_set[NEW_SRV_ACTION_LAST];
   int new_act_count = 0;
   for (int i = 0; i < act_count; ++i) {
-    if (!strncasecmp(symbolic_action_table[act_set[i]], new_prefix, pos + 1)) {
+    if (!strncasecmp(ns_symbolic_action_table[act_set[i]], new_prefix, pos + 1)) {
       new_act_set[new_act_count++] = act_set[i];
     }
   }
@@ -132,14 +132,14 @@ generate(
   if (has_term) {
     int value = 0;
     for (int i = 0; i < NEW_SRV_ACTION_LAST; ++i)
-      if (symbolic_action_table[i] && !strcasecmp(prefix, symbolic_action_table[i])) {
+      if (ns_symbolic_action_table[i] && !strcasecmp(prefix, ns_symbolic_action_table[i])) {
         value = i;
       }
     if (value < 0) abort();
     if (!value) {
       fprintf(out, "%sif (!c) return 0;\n", indent);
     } else {
-      fprintf(out, "%sif (!c) return NEW_SRV_ACTION_%s;\n", indent, toout(tmp, symbolic_action_table[value]));
+      fprintf(out, "%sif (!c) return NEW_SRV_ACTION_%s;\n", indent, toout(tmp, ns_symbolic_action_table[value]));
     }
     //fprintf(out, "%sif (!c) return %d;\n", indent, value);
   }
@@ -164,7 +164,7 @@ int main(void)
   int act0_set[NEW_SRV_ACTION_LAST + 1];
   int act0_count = 0;
   for (int i = 0; i < NEW_SRV_ACTION_LAST; ++i) {
-    if (symbolic_action_table[i]) {
+    if (ns_symbolic_action_table[i]) {
       act0_set[act0_count++] = i;
     }
   }
