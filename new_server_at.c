@@ -1,4 +1,4 @@
-static const unsigned char * const symbolic_action_table[NEW_SRV_ACTION_LAST] =
+const unsigned char * const ns_symbolic_action_table[NEW_SRV_ACTION_LAST] =
 {
   [0] = "0",
   [NEW_SRV_ACTION_LOGIN_PAGE] = "login-page",

@@ -68,6 +68,7 @@ struct http_request_info
   const unsigned char **params;
 
   const unsigned char *self_url;
+  const unsigned char *context_url;
   const unsigned char *script_name;
   int ssl_flag;
   ej_ip_t ip;
