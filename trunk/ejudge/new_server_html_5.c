@@ -174,6 +174,87 @@ raref(
 }
 
 static unsigned char *
+caref(
+        unsigned char *buf,
+        size_t size,
+        const struct contest_desc *cnts,
+        const struct http_request_info *phr,
+        int need_sid,
+        const unsigned char *cl,
+        int action,
+        const char *format,
+        ...)
+  __attribute__((format(printf, 8, 9)));
+static unsigned char *
+caref(
+        unsigned char *buf,
+        size_t size,
+        const struct contest_desc *cnts,
+        const struct http_request_info *phr,
+        int need_sid,
+        const unsigned char *cl,
+        int action,
+        const char *format,
+        ...)
+{
+  unsigned char tbuf[1024];
+  unsigned char cbuf[256];
+  unsigned char fbuf[1024];
+  unsigned char lbuf[64];
+  unsigned char abuf[64];
+  unsigned char nbuf[64];
+  unsigned char sbuf[64];
+  const unsigned char *fsep = "";
+  va_list args;
+
+  fbuf[0] = 0;
+  if (format) {
+    va_start(args, format);
+    vsnprintf(fbuf, sizeof(fbuf), format, args);
+    va_end(args);
+  }
+  if (fbuf[0]) fsep = "&amp;";
+
+  cbuf[0] = 0;
+  if (cl && *cl) {
+    snprintf(cbuf, sizeof(cbuf), " class=\"%s\"", cl);
+  }
+  lbuf[0] = 0;
+  if (phr->locale_id > 0) {
+    snprintf(lbuf, sizeof(lbuf), "&amp;locale_id=%d", phr->locale_id);
+  }
+  nbuf[0] = 0;
+  if (phr->contest_id > 0) {
+    snprintf(nbuf, sizeof(nbuf), "&amp;contest_id=%d", phr->contest_id);
+  }
+
+  if (phr->rest_mode > 0) {
+    if (action < 0 || action >= NEW_SRV_ACTION_LAST) action = 0;
+    sbuf[0] = 0;
+    if (need_sid > 0 && phr->session_id) {
+      snprintf(sbuf, sizeof(sbuf), "/S%016llx", phr->session_id);
+    }
+    snprintf(buf, size, "<a href=\"%s/%s%s?%s%s%s%s\"%s>",
+             get_client_url(tbuf, sizeof(tbuf), cnts, phr),
+             ns_symbolic_action_table[action], sbuf, nbuf, lbuf, fsep, fbuf, cbuf);
+  } else {
+    abuf[0] = 0;
+    if (action > 0) {
+      snprintf(abuf, sizeof(abuf), "&amp;action=%d", action);
+    }
+    sbuf[0] = 0;
+    if (need_sid > 0 && phr->session_id) {
+      snprintf(sbuf, sizeof(sbuf), "&amp;SID=%016llx", phr->session_id);
+    }
+    snprintf(buf, size, "<a href=\"%s?%s%s%s%s%s%s\"%s>",
+             get_client_url(tbuf, sizeof(tbuf), cnts, phr),
+             sbuf, abuf, nbuf, lbuf, fsep, fbuf, cbuf);
+  }
+
+  return buf;
+}
+
+static unsigned char *
 curl(
         unsigned char *buf,
         size_t size,
@@ -425,7 +506,7 @@ login_page(
   if (cnts->enable_password_recovery && cnts->disable_team_password
       && !cnts->simple_registration && !created_mode) {
     fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">%s%s</a></div></td>",
-            raref(hbuf, sizeof(hbuf), phr, 0, "menu", NEW_SRV_ACTION_FORGOT_PASSWORD_1, NULL),
+            caref(hbuf, sizeof(hbuf), cnts, phr, 0, "menu", NEW_SRV_ACTION_FORGOT_PASSWORD_1, NULL),
             _("Recover forgot password"));
     item_cnt++;
   }
