@@ -94,7 +94,7 @@ static size_t extra_a = 0, extra_u = 0;
 static struct server_framework_job *job_first, *job_last;
 static int job_count, job_serial;
 
-static const unsigned char * const symbolic_action_table[];
+extern const unsigned char * const ns_symbolic_action_table[];
 
 static void unprivileged_page_login(FILE *fout,
                                     struct http_request_info *phr,
@@ -108,12 +108,12 @@ unpriv_page_header(FILE *fout,
 static void
 do_json_user_state(FILE *fout, const serve_state_t cs, int user_id,
                    int need_reload_check);
-static int
+static const unsigned char *
 get_register_url(
         unsigned char *buf,
         size_t size,
         const struct contest_desc *cnts,
-        const unsigned char *self_url);
+        const struct http_request_info *phr);
 
 struct contest_extra *
 ns_get_contest_extra(int contest_id)
@@ -942,7 +942,7 @@ ns_url(
     if (fbuf[0]) sep = "?";
     if (action < 0 || action >= NEW_SRV_ACTION_LAST) action = 0;
     snprintf(buf, size, "%s/%s/S%016llx%s%s", phr->self_url,
-             symbolic_action_table[action],
+             ns_symbolic_action_table[action],
              phr->session_id, sep, fbuf);
   } else {
     abuf[0] = 0;
@@ -980,7 +980,7 @@ ns_url_unescaped(
     if (action < 0 || action >= NEW_SRV_ACTION_LAST) action = 0;
     if (fbuf[0]) sep = "?";
     snprintf(buf, size, "%s/%s/S%016llx%s%s", phr->self_url,
-             symbolic_action_table[action],
+             ns_symbolic_action_table[action],
              phr->session_id, sep, fbuf);
   } else {
     abuf[0] = 0;
@@ -1014,7 +1014,7 @@ ns_aref(unsigned char *buf, size_t size,
     if (action < 0 || action >= NEW_SRV_ACTION_LAST) action = 0;
     if (fbuf[0]) sep = "?";
     snprintf(buf, size, "<a href=\"%s/%s/S%016llx%s%s\">", phr->self_url,
-             symbolic_action_table[action],
+             ns_symbolic_action_table[action],
              phr->session_id, sep, fbuf);
   } else {
     abuf[0] = 0;
@@ -1055,7 +1055,7 @@ ns_aref_2(unsigned char *buf, size_t size,
     if (action < 0 || action >= NEW_SRV_ACTION_LAST) action = 0;
     if (fbuf[0]) sep = "?";
     snprintf(buf, size, "<a href=\"%s/%s/S%016llx%s%s\"%s>", phr->self_url,
-             symbolic_action_table[action],
+             ns_symbolic_action_table[action],
              phr->session_id, sep, fbuf, stbuf);
   } else {
     abuf[0] = 0;
@@ -2603,7 +2603,7 @@ priv_change_password(FILE *fout,
     if (phr->rest_mode > 0) {
       snprintf(url, sizeof(url),
                "%s/%s?contest_id=%d&role=%d&login=%s&locale_id=%d",
-               phr->self_url, symbolic_action_table[NEW_SRV_ACTION_LOGIN_PAGE],
+               phr->self_url, ns_symbolic_action_table[NEW_SRV_ACTION_LOGIN_PAGE],
                phr->contest_id, phr->role,
                login_buf, phr->locale_id);
     } else {
@@ -9955,7 +9955,7 @@ unpriv_page_forgot_password_3(FILE *fout, struct http_request_info *phr,
   int user_id = 0;
   unsigned char *login = 0, *name = 0, *passwd = 0;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
-  int r, regstatus = -1, blen;
+  int r, regstatus = -1;
   FILE *log_f = 0;
   char *log_txt = 0;
   size_t log_len = 0;
@@ -10045,12 +10045,10 @@ unpriv_page_forgot_password_3(FILE *fout, struct http_request_info *phr,
     snprintf(urlbuf, sizeof(urlbuf), "%s", phr->self_url);
   } else if (cnts->register_url) {
     snprintf(urlbuf, sizeof(urlbuf), "%s", cnts->register_url);
+  } else if (phr->rest_mode > 0) {
+    snprintf(urlbuf, sizeof(urlbuf), "%s/register", phr->context_url);
   } else {
-    snprintf(bb, sizeof(bb), "%s", phr->self_url);
-    blen = strlen(bb);
-    while (blen > 0 && bb[blen - 1] != '/') blen--;
-    bb[blen] = 0;
-    snprintf(urlbuf, sizeof(urlbuf), "%snew-register", bb);
+    snprintf(urlbuf, sizeof(urlbuf), "%s/new-register", phr->context_url);
   }
 
   html_start_form(fout, 1, urlbuf, "");
@@ -10179,16 +10177,31 @@ unprivileged_page_login_page(FILE *fout, struct http_request_info *phr,
     fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">");
     if (ejudge_config->disable_new_users <= 0) {
       if (cnts->assign_logins) {
-        fprintf(fout,
-                "<a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d\">%s</a>",
-                cnts->register_url, phr->contest_id, phr->locale_id,
-                NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE,
-                _("Registration"));
+        if (phr->rest_mode > 0) {
+          fprintf(fout,
+                  "<a class=\"menu\" href=\"%s/register/%s?contest_id=%d&amp;locale_id=%d\">%s</a>",
+                  phr->context_url, ns_symbolic_action_table[NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE],
+                  phr->contest_id, phr->locale_id,
+                  _("Registration"));
+        } else {
+          fprintf(fout,
+                  "<a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d\">%s</a>",
+                  cnts->register_url, phr->contest_id, phr->locale_id,
+                  NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE,
+                  _("Registration"));
+        }
       } else {
-        fprintf(fout,
-                "<a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=2\">%s</a>",
-                cnts->register_url, phr->contest_id, phr->locale_id,
-                _("Registration"));
+        if (phr->rest_mode > 0) {
+          fprintf(fout,
+                  "<a class=\"menu\" href=\"%s/register/%s?contest_id=%d&amp;locale_id=%d\">%s</a>",
+                  phr->context_url, ns_symbolic_action_table[2], phr->contest_id, phr->locale_id,
+                  _("Registration"));
+        } else {
+          fprintf(fout,
+                  "<a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=2\">%s</a>",
+                  cnts->register_url, phr->contest_id, phr->locale_id,
+                  _("Registration"));
+        }
       }
     }
     fprintf(fout, "</div></td>\n");
@@ -10197,10 +10210,17 @@ unprivileged_page_login_page(FILE *fout, struct http_request_info *phr,
              && (cnts->reg_deadline <= 0 || cur_time < cnts->reg_deadline)) {
     fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">");
     if (ejudge_config->disable_new_users <= 0) {
-      fprintf(fout,
-              "<a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d\">%s</a>",
-              cnts->register_url, phr->contest_id, phr->locale_id,
-              _("Registration"));
+      if (phr->rest_mode > 0) {
+        fprintf(fout,
+                "<a class=\"menu\" href=\"%s/register?contest_id=%d&amp;locale_id=%d\">%s</a>",
+                phr->context_url, phr->contest_id, phr->locale_id,
+                _("Registration"));
+      } else {
+        fprintf(fout,
+                "<a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d\">%s</a>",
+                cnts->register_url, phr->contest_id, phr->locale_id,
+                _("Registration"));
+      }
     }
     fprintf(fout, "</div></td>\n");
     vis_flag++;
@@ -10208,7 +10228,7 @@ unprivileged_page_login_page(FILE *fout, struct http_request_info *phr,
 
   if (cnts && cnts->enable_password_recovery && cnts->disable_team_password) {
     if (phr->rest_mode > 0) {
-      fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s/%s?contest_id=%d&amp;locale_id=%d\">%s</a></div></td>", phr->self_url, symbolic_action_table[NEW_SRV_ACTION_FORGOT_PASSWORD_1], phr->contest_id, phr->locale_id, _("Forgot password?"));
+      fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s/%s?contest_id=%d&amp;locale_id=%d\">%s</a></div></td>", phr->self_url, ns_symbolic_action_table[NEW_SRV_ACTION_FORGOT_PASSWORD_1], phr->contest_id, phr->locale_id, _("Forgot password?"));
     } else {
       fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d\">%s</a></div></td>", phr->self_url, phr->contest_id, phr->locale_id, NEW_SRV_ACTION_FORGOT_PASSWORD_1, _("Forgot password?"));
     }
@@ -10406,7 +10426,7 @@ unpriv_change_password(FILE *fout,
     if (phr->rest_mode > 0) {
       snprintf(url, sizeof(url),
                "%s/%s?contest_id=%d&login=%s&locale_id=%d",
-               phr->self_url, symbolic_action_table[NEW_SRV_ACTION_LOGIN_PAGE],
+               phr->self_url, ns_symbolic_action_table[NEW_SRV_ACTION_LOGIN_PAGE],
                phr->contest_id, login_buf, phr->locale_id);
     } else {
       snprintf(url, sizeof(url),
@@ -13166,8 +13186,7 @@ unpriv_page_header(FILE *fout,
             continue;
           if (cnts->reg_deadline > 0 && cs->current_time >= cnts->reg_deadline)
             continue;
-          get_register_url(stand_url_buf, sizeof(stand_url_buf), cnts,
-                           phr->self_url);
+          get_register_url(stand_url_buf, sizeof(stand_url_buf), cnts, phr);
           fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?SID=%016llx\">%s</a></div></td>",
                   stand_url_buf, phr->session_id,
                   gettext(top_action_names[i]));
@@ -13178,7 +13197,7 @@ unpriv_page_header(FILE *fout,
           if (!forced_text) forced_text = gettext(top_action_names[i]);
           if (phr->rest_mode > 0) {
             fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s/%s/S%016llx\">%s [%s]</a></div></td>",
-                    phr->self_url, symbolic_action_table[top_action_list[i]], phr->session_id,
+                    phr->self_url, ns_symbolic_action_table[top_action_list[i]], phr->session_id,
                     forced_text, phr->login);
           } else {
             fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?SID=%016llx&amp;action=%d\">%s [%s]</a></div></td>",
@@ -13189,7 +13208,7 @@ unpriv_page_header(FILE *fout,
         } else {
           if (phr->rest_mode > 0) {
             fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s/%s/S%016llx\">%s</a></div></td>",
-                    phr->self_url, symbolic_action_table[top_action_list[i]], phr->session_id,
+                    phr->self_url, ns_symbolic_action_table[top_action_list[i]], phr->session_id,
                     gettext(top_action_names[i]));
           } else {
             fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?SID=%016llx&amp;action=%d\">%s</a></div></td>",
@@ -13293,7 +13312,7 @@ unpriv_page_header(FILE *fout,
                   forced_url, target, forced_text);
         } else if (phr->rest_mode > 0) {
           fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s/%s/S%016llx\">%s</a></div></td>",
-                  phr->self_url, symbolic_action_table[action_list[i]], phr->session_id, forced_text);
+                  phr->self_url, ns_symbolic_action_table[action_list[i]], phr->session_id, forced_text);
         } else {
           fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?SID=%016llx&amp;action=%d\">%s</a></div></td>",
                   phr->self_url, phr->session_id, action_list[i], forced_text);
@@ -14608,7 +14627,7 @@ unpriv_main_page(FILE *fout,
     else s = _("View all");
     if (phr->rest_mode > 0) {
       fprintf(fout, "<p><a href=\"%s/%s/S%016llx?all_runs=%d\">%s</a></p>\n", phr->self_url,
-              symbolic_action_table[NEW_SRV_ACTION_VIEW_SUBMISSIONS], phr->session_id, !all_runs, s);
+              ns_symbolic_action_table[NEW_SRV_ACTION_VIEW_SUBMISSIONS], phr->session_id, !all_runs, s);
     } else {
       fprintf(fout, "<p><a href=\"%s?SID=%016llx&amp;all_runs=%d&amp;action=%d\">%s</a></p>\n", phr->self_url, phr->session_id, !all_runs, NEW_SRV_ACTION_VIEW_SUBMISSIONS, s);
     }
@@ -14664,7 +14683,7 @@ unpriv_main_page(FILE *fout,
     else s = _("View all");
     if (phr->rest_mode > 0) {
       fprintf(fout, "<p><a href=\"%s/%s/S%016llx?all_clars=%d\">%s</a></p>\n",
-              phr->self_url, symbolic_action_table[NEW_SRV_ACTION_VIEW_CLARS], phr->session_id, !all_clars, s);
+              phr->self_url, ns_symbolic_action_table[NEW_SRV_ACTION_VIEW_CLARS], phr->session_id, !all_clars, s);
     } else {
       fprintf(fout, "<p><a href=\"%s?SID=%016llx&amp;all_clars=%d&amp;action=%d\">%s</a></p>\n", phr->self_url, phr->session_id, !all_clars, NEW_SRV_ACTION_VIEW_CLARS, s);
     }
@@ -15493,28 +15512,25 @@ unprivileged_entry_point(
   }
 }
 
-static int
+static const unsigned char *
 get_register_url(
         unsigned char *buf,
         size_t size,
         const struct contest_desc *cnts,
-        const unsigned char *self_url)
+        const struct http_request_info *phr)
 {
-  int i, len;
-
-  if (cnts->register_url)
-    return snprintf(buf, size, "%s", cnts->register_url);
-
-  if (!self_url) return snprintf(buf, size, "%s", "/new-register");
-  len = strlen(self_url);
-  for (i = len - 1; i >= 0 && self_url[i] != '/'; i--);
-  if (i < 0) return snprintf(buf, size, "%s", "/new-register");
+  if (phr->rest_mode > 0) {
+    snprintf(buf, size, "%s/register", phr->context_url);
+  } else if (cnts->register_url) {
+    snprintf(buf, size, "%s", cnts->register_url);
+  } else {
 #if defined CGI_PROG_SUFFIX
-  return snprintf(buf, size, "%.*s/new-register%s", i, self_url,
-                  CGI_PROG_SUFFIX);
+    snprintf(buf, size, "%s/new-register%s", phr->context_url, CGI_PROG_SUFFIX);
 #else
-  return snprintf(buf, size, "%.*s/new-register", i, self_url);
+    snprintf(buf, size, "%s/new-register", phr->contest_url);
 #endif
+  }
+  return buf;
 }
 
 #include "new_server_at.c"
@@ -15561,6 +15577,7 @@ ns_handle_http_request(struct server_framework_state *state,
   const unsigned char *remote_addr;
   const unsigned char *s;
   path_t self_url;
+  path_t context_url;
   int r, n, orig_locale_id = -1;
   unsigned char *role_name = NULL;
   unsigned char *rest_args = NULL;
@@ -15636,6 +15653,10 @@ ns_handle_http_request(struct server_framework_state *state,
   snprintf(self_url, sizeof(self_url), "%s://%s%s", protocol,
            http_host, script_name);
   phr->self_url = self_url;
+  snprintf(context_url, sizeof(context_url), "%s", self_url);
+  unsigned char *rs = strrchr(context_url, '/');
+  if (rs) *rs = 0;
+  phr->context_url = context_url;
 
   if (ns_cgi_param(phr, "json", &s) > 0) {
     phr->json_reply = 1;
@@ -15699,8 +15720,8 @@ ns_handle_http_request(struct server_framework_state *state,
   } else if (r > 0) {
     if (sscanf(s, "%d%n", &phr->action, &n) != 1 || s[n] || phr->action <= 0) {
       for (r = 0; r < NEW_SRV_ACTION_LAST; ++r)
-        if (symbolic_action_table[r]
-            && !strcasecmp(symbolic_action_table[r], s))
+        if (ns_symbolic_action_table[r]
+            && !strcasecmp(ns_symbolic_action_table[r], s))
           break;
       if (r == NEW_SRV_ACTION_LAST)
         return ns_html_err_inv_param(fout, phr, 0, "cannot parse action");
