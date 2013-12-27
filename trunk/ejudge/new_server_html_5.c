@@ -68,29 +68,24 @@ ns_snprintf(unsigned char *buf, size_t size, const char *format, ...)
   return buf;
 }
 
-static unsigned char *
+static const unsigned char *
 get_client_url(
         unsigned char *buf,
         size_t size,
         const struct contest_desc *cnts,
-        const unsigned char *str)
+        const struct http_request_info *phr)
 {
-  int i, len;
-
-  if (cnts->team_url) {
+  if (phr->rest_mode > 0) {
+    snprintf(buf, size, "%s/user", phr->context_url);
+  } else if (cnts->team_url) {
     snprintf(buf, size, "%s", cnts->team_url);
-    return buf;
-  }
-
-  if (!str) return "/new-client";
-  len = strlen(str);
-  for (i = len - 1; i >= 0 && str[i] != '/'; i--);
-  if (i < 0) return "/new-client";
+  } else {
 #if defined CGI_PROG_SUFFIX
-  snprintf(buf, size, "%.*s/new-client%s", i, str, CGI_PROG_SUFFIX);
+    snprintf(buf, size, "%s/new-client%s", phr->context_url, CGI_PROG_SUFFIX);
 #else
-  snprintf(buf, size, "%.*s/new-client", i, str);
+    snprintf(buf, size, "%s/new-client", phr->contest_url);
 #endif
+  }
   return buf;
 }
 
@@ -99,6 +94,161 @@ static const unsigned char * const form_row_attrs[]=
   " bgcolor=\"#d0d0d0\"",
   " bgcolor=\"#e0e0e0\"",
 };
+
+extern const unsigned char * const ns_symbolic_action_table[];
+
+static unsigned char *
+raref(
+        unsigned char *buf,
+        size_t size,
+        const struct http_request_info *phr,
+        int need_sid,
+        const unsigned char *cl,
+        int action,
+        const char *format,
+        ...)
+  __attribute__((format(printf, 7, 8)));
+static unsigned char *
+raref(
+        unsigned char *buf,
+        size_t size,
+        const struct http_request_info *phr,
+        int need_sid,
+        const unsigned char *cl,
+        int action,
+        const char *format,
+        ...)
+{
+  unsigned char cbuf[256];
+  unsigned char fbuf[1024];
+  unsigned char lbuf[64];
+  unsigned char abuf[64];
+  unsigned char nbuf[64];
+  unsigned char sbuf[64];
+  const unsigned char *fsep = "";
+  va_list args;
+
+  fbuf[0] = 0;
+  if (format) {
+    va_start(args, format);
+    vsnprintf(fbuf, sizeof(fbuf), format, args);
+    va_end(args);
+  }
+  if (fbuf[0]) fsep = "&amp;";
+
+  cbuf[0] = 0;
+  if (cl && *cl) {
+    snprintf(cbuf, sizeof(cbuf), " class=\"%s\"", cl);
+  }
+  lbuf[0] = 0;
+  if (phr->locale_id > 0) {
+    snprintf(lbuf, sizeof(lbuf), "&amp;locale_id=%d", phr->locale_id);
+  }
+  nbuf[0] = 0;
+  if (phr->contest_id > 0) {
+    snprintf(nbuf, sizeof(nbuf), "&amp;contest_id=%d", phr->contest_id);
+  }
+
+  if (phr->rest_mode > 0) {
+    if (action < 0 || action >= NEW_SRV_ACTION_LAST) action = 0;
+    sbuf[0] = 0;
+    if (need_sid > 0 && phr->session_id) {
+      snprintf(sbuf, sizeof(sbuf), "/S%016llx", phr->session_id);
+    }
+    snprintf(buf, size, "<a href=\"%s/%s%s?%s%s%s%s\"%s>",
+             phr->self_url, ns_symbolic_action_table[action], sbuf, nbuf, lbuf, fsep, fbuf, cbuf);
+  } else {
+    abuf[0] = 0;
+    if (action > 0) {
+      snprintf(abuf, sizeof(abuf), "&amp;action=%d", action);
+    }
+    sbuf[0] = 0;
+    if (need_sid > 0 && phr->session_id) {
+      snprintf(sbuf, sizeof(sbuf), "&amp;SID=%016llx", phr->session_id);
+    }
+    snprintf(buf, size, "<a href=\"%s?%s%s%s%s%s%s\"%s>",
+             phr->self_url, sbuf, abuf, nbuf, lbuf, fsep, fbuf, cbuf);
+  }
+
+  return buf;
+}
+
+static unsigned char *
+curl(
+        unsigned char *buf,
+        size_t size,
+        const struct contest_desc *cnts,
+        const struct http_request_info *phr,
+        int need_sid,
+        const unsigned char *sep,
+        int action,
+        const char *format,
+        ...)
+  __attribute__((format(printf, 8, 9)));
+static unsigned char *
+curl(
+        unsigned char *buf,
+        size_t size,
+        const struct contest_desc *cnts,
+        const struct http_request_info *phr,
+        int need_sid,
+        const unsigned char *sep,
+        int action,
+        const char *format,
+        ...)
+{
+  unsigned char tbuf[1024];
+  unsigned char fbuf[1024];
+  unsigned char lbuf[64];
+  unsigned char abuf[64];
+  unsigned char nbuf[64];
+  unsigned char sbuf[64];
+  const unsigned char *fsep = "";
+  va_list args;
+
+  if (sep == NULL) sep = "&";
+  fbuf[0] = 0;
+  if (format) {
+    va_start(args, format);
+    vsnprintf(fbuf, sizeof(fbuf), format, args);
+    va_end(args);
+  }
+  if (fbuf[0]) fsep = sep;
+
+  lbuf[0] = 0;
+  if (phr->locale_id > 0) {
+    snprintf(lbuf, sizeof(lbuf), "%slocale_id=%d", sep, phr->locale_id);
+  }
+  nbuf[0] = 0;
+  if (phr->contest_id > 0) {
+    snprintf(nbuf, sizeof(nbuf), "%scontest_id=%d", sep, phr->contest_id);
+  }
+
+  if (phr->rest_mode > 0) {
+    if (action < 0 || action >= NEW_SRV_ACTION_LAST) action = 0;
+    sbuf[0] = 0;
+    if (need_sid > 0 && phr->session_id) {
+      snprintf(sbuf, sizeof(sbuf), "/S%016llx", phr->session_id);
+    }
+    snprintf(buf, size, "%s/%s%s?%s%s%s%s",
+             get_client_url(tbuf, sizeof(tbuf), cnts, phr),
+             ns_symbolic_action_table[action], sbuf, nbuf, lbuf, fsep, fbuf);
+  } else {
+    abuf[0] = 0;
+    if (action > 0) {
+      snprintf(abuf, sizeof(abuf), "%saction=%d", sep, action);
+    }
+    sbuf[0] = 0;
+    if (need_sid > 0 && phr->session_id) {
+      snprintf(sbuf, sizeof(sbuf), "%sSID=%016llx", sep, phr->session_id);
+    }
+    snprintf(buf, size, "%s?%s%s%s%s%s%s",
+             get_client_url(tbuf, sizeof(tbuf), cnts, phr),
+             sbuf, abuf, nbuf, lbuf, fsep, fbuf);
+  }
+
+  return buf;
+}
 
 static void
 anon_select_contest_page(FILE *fout, struct http_request_info *phr)
@@ -205,7 +355,7 @@ login_page(
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   unsigned char bb[1024];
   int item_cnt = 0, created_mode = 0;
-  unsigned char client_url[1024];
+  unsigned char hbuf[1024];
 
   if (cnts->register_head_style && *cnts->register_head_style)
     head_style = cnts->register_head_style;
@@ -213,7 +363,6 @@ login_page(
   if (cnts->register_par_style && *cnts->register_par_style)
     par_style = cnts->register_par_style;
   if (!par_style) par_style = "";
-  get_client_url(client_url, sizeof(client_url), cnts, phr->self_url);
 
   ns_cgi_param(phr, "login", &login);
   if (!login) login = "";
@@ -268,13 +417,16 @@ login_page(
   else
     s = _("Create account");
   if (ejudge_config->disable_new_users <= 0) {
-    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d\">%s</a></div></td>", phr->self_url, phr->contest_id, phr->locale_id, NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE, s);
+    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">%s%s</a></div></td>",
+            raref(hbuf, sizeof(hbuf), phr, 0, "menu", NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE, NULL), s);
     item_cnt++;
   }
 
   if (cnts->enable_password_recovery && cnts->disable_team_password
       && !cnts->simple_registration && !created_mode) {
-    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d\">%s</a></div></td>", client_url, phr->contest_id, phr->locale_id, NEW_SRV_ACTION_FORGOT_PASSWORD_1, _("Recover forgot password"));
+    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">%s%s</a></div></td>",
+            raref(hbuf, sizeof(hbuf), phr, 0, "menu", NEW_SRV_ACTION_FORGOT_PASSWORD_1, NULL),
+            _("Recover forgot password"));
     item_cnt++;
   }
 
@@ -367,7 +519,7 @@ create_autoassigned_account_page(
   unsigned char bb[1024];
   const unsigned char *head_style = 0, *par_style = 0;
   int item_cnt = 0, allowed_info_edit = 0;
-  unsigned char client_url[1024] = { 0 };
+  unsigned char hbuf[1024];
   int i, j;
   int reg_error = 0, reg_ul_error = 0, regular_flag = 0;
 
@@ -400,7 +552,6 @@ create_autoassigned_account_page(
       allowed_info_edit = 1;
 
   (void) allowed_info_edit;
-  get_client_url(client_url, sizeof(client_url), cnts, phr->self_url);
 
   if (ns_cgi_param(phr, "email", &email) <= 0) email = 0;
   if (!email) email = "";
@@ -439,8 +590,9 @@ create_autoassigned_account_page(
   fprintf(fout,
           "<div class=\"white_empty_block\">&nbsp;</div>\n"
           "<div class=\"contest_actions\"><table class=\"menu\"><tr>\n");
-
-  fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d\">%s</a></div></td>", phr->self_url, phr->contest_id, phr->locale_id, NEW_SRV_ACTION_REG_LOGIN_PAGE, _("Use an existing account"));
+  fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">%s%s</a></div></td>",
+          raref(hbuf, sizeof(hbuf), phr, 0, "menu", NEW_SRV_ACTION_REG_LOGIN_PAGE, NULL),
+          _("Use an existing account"));
   item_cnt++;
   if (!item_cnt)
     fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">&nbsp;</div></td>");
@@ -478,10 +630,9 @@ create_autoassigned_account_page(
   if (cnts->simple_registration && !regular_flag) {
     fprintf(fout, _("<p%s>This contest operates in \"simplified registration\" mode. You will get your login and password immediately after account is created. %s</p>"),
             par_style, cnts->send_passwd_email?_("An email message will be sent to you just for your convenience."):("No email message at all will be sent to you."));
-    fprintf(fout, _("<p%s>Accounts created using simplified registration procedure cannot be used for participation in contests, which do not allow simplified registration. If you want a regular account, you may create an account using the <a href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d&amp;regular=1\">regular registration</a>.</p>\n"),
+    fprintf(fout, _("<p%s>Accounts created using simplified registration procedure cannot be used for participation in contests, which do not allow simplified registration. If you want a regular account, you may create an account using the %sregular registration</a>.</p>\n"),
             par_style,
-            phr->self_url, phr->contest_id, phr->locale_id,
-            NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE);
+            raref(hbuf, sizeof(hbuf), phr, 0, NULL, NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE, "regular=1"));
   } else {
     if (!cnts->simple_registration || cnts->send_passwd_email) {
       fprintf(fout, "<p%s>%s</p>", par_style,
@@ -494,9 +645,8 @@ create_autoassigned_account_page(
     }
 
     if (cnts->simple_registration) {
-      fprintf(fout, _("<p%s><a href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d\">Simplified registration</a> is available for this contest. Note, however, that simplified registration imposes certain restrictions on further use of the account!</p>\n"), par_style, phr->self_url, phr->contest_id,
-              phr->locale_id,
-              NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE);
+      fprintf(fout, _("<p%s>%sSimplified registration</a> is available for this contest. Note, however, that simplified registration imposes certain restrictions on further use of the account!</p>\n"), par_style,
+              raref(hbuf, sizeof(hbuf), phr, 0, NULL, NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE, NULL));
     }
   }
 
@@ -506,8 +656,9 @@ create_autoassigned_account_page(
             "24 hours after the form is filled and submitted, or "
             "your registration will be cancelled!"));
 
-  fprintf(fout, _("<p%s>If you already have an ejudge account on this server, you may use it. If so, follow the <a href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d\">\"Use an existing account\"</a> link.</p>"),
-          par_style, phr->self_url, phr->contest_id, phr->locale_id, NEW_SRV_ACTION_REG_LOGIN_PAGE);
+  fprintf(fout, _("<p%s>If you already have an ejudge account on this server, you may use it. If so, follow the %s\"Use an existing account\"</a> link.</p>"),
+          par_style,
+          raref(hbuf, sizeof(hbuf), phr, 0, NULL, NEW_SRV_ACTION_REG_LOGIN_PAGE, NULL));
 
   fprintf(fout, "<p%s>&nbsp;</p>\n", par_style);
 
@@ -531,7 +682,7 @@ create_account_page(
   const unsigned char *login = 0, *email = 0;
   int reg_error = 0, reg_ul_error = 0;
   const unsigned char *head_style = 0, *par_style = 0;
-  unsigned char client_url[1024] = { 0 };
+  unsigned char hbuf[1024];
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   unsigned char bb[1024];
   int item_cnt = 0, regular_flag = 0;
@@ -553,7 +704,6 @@ create_account_page(
   if (cnts->register_par_style && *cnts->register_par_style)
     par_style = cnts->register_par_style;
   if (!par_style) par_style = "";
-  get_client_url(client_url, sizeof(client_url), cnts, phr->self_url);
 
   if (ns_cgi_param(phr, "login", &login) <= 0) login = 0;
   if (!login) login = "";
@@ -595,7 +745,9 @@ create_account_page(
           "<div class=\"white_empty_block\">&nbsp;</div>\n"
           "<div class=\"contest_actions\"><table class=\"menu\"><tr>\n");
 
-  fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d\">%s</a></div></td>", phr->self_url, phr->contest_id, phr->locale_id, NEW_SRV_ACTION_REG_LOGIN_PAGE, _("Use an existing account"));
+  fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">%s%s</a></div></td>",
+          raref(hbuf, sizeof(hbuf), phr, 0, "menu", NEW_SRV_ACTION_REG_LOGIN_PAGE, NULL),
+          _("Use an existing account"));
     item_cnt++;
 
   if (!item_cnt)
@@ -637,10 +789,9 @@ create_account_page(
   if (cnts->simple_registration && !regular_flag) {
     fprintf(fout, _("<p%s>This contest operates in \"simplified registration\" mode. You will get your login and password immediately after account is created. %s</p>"),
             par_style, cnts->send_passwd_email?_("An email message will be sent to you just for your convenience."):("No email message at all will be sent to you."));
-    fprintf(fout, _("<p%s>Accounts created using simplified registration procedure cannot be used for participation in contests, which do not allow simplified registration. If you want a regular account, you may create an account using the <a href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d&amp;regular=1\">regular registration</a>.</p>\n"),
+    fprintf(fout, _("<p%s>Accounts created using simplified registration procedure cannot be used for participation in contests, which do not allow simplified registration. If you want a regular account, you may create an account using the %sregular registration</a>.</p>\n"),
             par_style,
-            phr->self_url, phr->contest_id, phr->locale_id,
-            NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE);
+            raref(hbuf, sizeof(hbuf), phr, 0, NULL, NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE, "regular=1"));
   } else {
     if (!cnts->simple_registration || cnts->send_passwd_email) {
       fprintf(fout, "<p%s>%s</p>", par_style,
@@ -653,8 +804,8 @@ create_account_page(
     }
 
     if (cnts->simple_registration) {
-      fprintf(fout, _("<p%s><a href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d\">Simplified registration</a> is available for this contest. Note, however, that simplified registration imposes certain restrictions on further use of the account!</p>\n"), par_style, phr->self_url, phr->contest_id,
-              phr->locale_id, NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE);
+      fprintf(fout, _("<p%s>%sSimplified registration</a> is available for this contest. Note, however, that simplified registration imposes certain restrictions on further use of the account!</p>\n"), par_style,
+              raref(hbuf, sizeof(hbuf), phr, 0, NULL, NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE, NULL));
     }
   }
 
@@ -664,8 +815,9 @@ create_account_page(
             "24 hours after the form is filled and submitted, or "
             "your registration will be cancelled!"));
 
-  fprintf(fout, _("<p%s>If you already have an ejudge account on this server, you may use it. If so, follow the <a href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d\">\"Use an existing account\"</a> link.</p>"),
-          par_style, phr->self_url, phr->contest_id, phr->locale_id, NEW_SRV_ACTION_REG_LOGIN_PAGE);
+  fprintf(fout, _("<p%s>If you already have an ejudge account on this server, you may use it. If so, follow the %s\"Use an existing account\"</a> link.</p>"),
+          par_style,
+          raref(hbuf, sizeof(hbuf), phr, 0, NULL, NEW_SRV_ACTION_REG_LOGIN_PAGE, NULL));
 
   fprintf(fout, "<p%s>&nbsp;</p>\n", par_style);
 
@@ -791,7 +943,7 @@ cmd_login(
   const unsigned char *login = 0;
   const unsigned char *password = 0;
   int r, i;
-  unsigned char urlbuf[1024], bb[1024];
+  unsigned char urlbuf[1024];
   int need_regform = 0;
 
   if (ns_cgi_param(phr, "login", &login) <= 0)
@@ -860,10 +1012,7 @@ cmd_login(
       return ns_html_err_no_perm(fout, phr, 0, "user_login failed: %s",
                                  userlist_strerror(-r));
 
-    snprintf(urlbuf, sizeof(urlbuf), "%s?SID=%llx",
-             get_client_url(bb, sizeof(bb), cnts, phr->self_url),
-             phr->session_id);
-
+    curl(urlbuf, sizeof(urlbuf), cnts, phr, 1, "&", 0, NULL);
     ns_get_session(phr->session_id, phr->client_key, 0);
     ns_refresh_page_2(fout, phr->client_key, urlbuf);
   } else if (cnts->force_registration) {
@@ -1743,12 +1892,10 @@ main_page(
       && contests_check_team_ip_2(cnts, &phr->ip, phr->ssl_flag)
       && !cnts->closed) {
     // "participate" link
-    get_client_url(bb, sizeof(bb), cnts, phr->self_url);
     if (cnts->disable_team_password) {
-      snprintf(ub, sizeof(ub), "%s?SID=%llx", bb, phr->session_id);
+      curl(ub, sizeof(ub), cnts, phr, 1, "&amp;", 0, NULL);
     } else {
-      snprintf(ub, sizeof(ub),"%s?contest_id=%d&amp;login=%s&amp;locale_id=%d",
-               bb, phr->contest_id, URLARMOR(phr->login), phr->locale_id);
+      curl(ub, sizeof(ub), cnts, phr, 0, "&amp;", 0, "login=%s", URLARMOR(phr->login));
     }
     menu_item(fout, phr, -1, _("Participate"), ub);
     shown_items++;
