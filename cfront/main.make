@@ -80,6 +80,14 @@ BINARIES = ej-cpp${EXESFX} ej-cfront${EXESFX} ej-ccmain${EXESFX}
 
 all : ${BINARIES}
 
+install: ${BINARIES}
+	install -d "${DESTDIR}${serverbindir}/../cfront"
+	for i in ${BINARIES}; do install -m 0755 $$i "${DESTDIR}${serverbindir}/../cfront"; done
+	tar cf - include | tar xf - -C "${DESTDIR}${prefix}"
+
+install-bin: ${BINARIES}
+	for i in ${BINARIES}; do install -m 0755 $$i "${DESTDIR}${serverbindir}/../cfront"; done
+
 clean :
 	-rm -f ${BINARIES} cdeps *.o *.a reuse/*.o unix/*.o
 

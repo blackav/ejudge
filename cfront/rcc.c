@@ -164,9 +164,9 @@ static optrec_t options[] =
     "Undefine all predefined macros", 0 },
   { 1, 0, "-Wp,", "*4a", &add_cpp_option,
     "Specify a preprocessor option", 0 },
-  { 1, 0, "-isystem", "*8V-", &user_sys_incl_dirs,
+  { 1, 0, "-isystem", "*8a", &user_sys_incl_dirs,
     "Add a system include directory", 0 },
-  { 1, 0, "-isysbefore", "*11V-", &user_sys_bef_incl_dirs,
+  { 1, 0, "-isysbefore", "*11a", &user_sys_bef_incl_dirs,
     "Add a system include directory before the rcc's ones", 0 },
   { 1, 0, "-include", "V2", &cpp_options,
     "Include the file before the main source file", 0 },
@@ -339,7 +339,7 @@ run_cpp(char const *in, char const *out)
 {
   tpTask cpp_task = 0;
 
-  if (!cpp_path) cpp_path = find_program("rcc_cpp");
+  if (!cpp_path) cpp_path = find_program("ej-cpp");
   if (!cpp_path) return 1;
 
   init_sys_incl_dir();
@@ -404,7 +404,7 @@ run_cc(char const *in, char const *out)
 {
   tpTask cc_task = 0;
 
-  if (!cc_path) cc_path = find_program("rcc_ccmain");
+  if (!cc_path) cc_path = find_program("ej-ccmain");
   if (!cc_path) return 1;
 
   init_sys_incl_dir();
