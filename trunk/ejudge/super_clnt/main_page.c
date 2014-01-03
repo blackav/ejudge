@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -19,21 +19,22 @@
 #include "super_proto.h"
 #include "errlog.h"
 
-#include "reuse_osdeps.h"
+#include "reuse/osdeps.h"
 
 #include <stdlib.h>
 #include <unistd.h>
 
 int
-super_clnt_main_page(int sock_fd,
-                     int out_fd,
-                     int cmd,
-                     int contest_id,
-                     int locale_id,
-                     unsigned int flags,
-                     const unsigned char *self_url,
-                     const unsigned char *hidden_vars,
-                     const unsigned char *extra_args)
+super_clnt_main_page(
+        int sock_fd,
+        int out_fd,
+        int cmd,
+        int contest_id,
+        int locale_id,
+        unsigned int flags,
+        const unsigned char *self_url,
+        const unsigned char *hidden_vars,
+        const unsigned char *extra_args)
 {
   struct prot_super_pkt_main_page *out = 0;
   struct prot_super_packet *in = 0;
@@ -118,9 +119,8 @@ super_clnt_main_page(int sock_fd,
   return SSERV_RPL_OK;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make -C .."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  * End:
  */

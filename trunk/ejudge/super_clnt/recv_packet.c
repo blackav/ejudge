@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -19,15 +19,17 @@
 #include "super_proto.h"
 #include "errlog.h"
 
-#include "reuse_xalloc.h"
-#include "reuse_osdeps.h"
+#include "reuse/xalloc.h"
+#include "reuse/osdeps.h"
 
 #include <unistd.h>
 
 int
-super_clnt_recv_packet(int sock_fd,
-                       struct prot_super_packet *p_res,
-                       size_t *p_size, void **p_data)
+super_clnt_recv_packet(
+        int sock_fd,
+        struct prot_super_packet *p_res,
+        size_t *p_size,
+        void **p_data)
 {
   unsigned char *b, *alloc_mem = 0, *bb;
   int in_size, r, n, code = -SSERV_UNKNOWN_ERROR;
@@ -111,9 +113,8 @@ super_clnt_recv_packet(int sock_fd,
   return code;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make -C .."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  * End:
  */

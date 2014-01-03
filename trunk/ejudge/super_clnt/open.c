@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -20,7 +20,7 @@
 #include "errlog.h"
 #include "sock_op.h"
 
-#include "reuse_osdeps.h"
+#include "reuse/osdeps.h"
 
 #include <stdio.h>
 #include <signal.h>
@@ -75,6 +75,5 @@ super_clnt_open(const unsigned char *socket_path)
 /*
  * Local variables:
  *  compile-command: "make -C .."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  * End:
  */
