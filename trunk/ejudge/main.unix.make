@@ -28,7 +28,7 @@ endif
 CEXTRAFLAGS=
 LDEXTRAFLAGS=
 EXTRALIBS=
-CCOMPFLAGS=-D_GNU_SOURCE -std=gnu99
+CCOMPFLAGS=-D_GNU_SOURCE -std=gnu99 -Ireuse/include
 LDCOMPFLAGS=
 EXESFX=
 else
@@ -154,11 +154,15 @@ CGITARGETS = users${CGI_PROG_SUFFIX} serve-control${CGI_PROG_SUFFIX} new-client$
 TARGETS = ${SERVERBINTARGETS} ${BINTARGETS} ${CGITARGETS}
 STYLEFILES = style/logo.gif style/priv.css style/unpriv.css style/priv.js style/unpriv.js style/filter_expr.html style/sprintf.js
 
-all: local_all subdirs_all mo
+all: prereq_all local_all subdirs_all mo
 local_all: $(TARGETS) ejudge-config
 
 release:
 	rm -fr CVS db unix userlist_clnt win32 checkers/CVS checkers/.cvsignore checkers/Makefile checkers/ChangeLog checkers/*.c checkers/*.o checkers/testinfo.h extra/CVS extra/.cvsignore extra/Makefile extra/*.c extra/*.o scripts/CVS .build .cvsignore ChangeLog OLDNEWS TODO *.c *.h *.o *.a *.make *.po makefile *.lex *.y
+
+prereq_all: version.o
+	$(MAKE) -C reuse DESTDIR="${DESTDIR}" all
+	$(MAKE) -C cfront DESTDIR="${DESTDIR}" all
 
 subdirs_all:
 	$(MAKE) -C extra DESTDIR="${DESTDIR}" all
@@ -210,6 +214,8 @@ local_install: ${TARGETS} ejudge-config po mo
 	for i in problem_plugin_impl.h problem_plugin.h ejudge_plugin.h ej_types.h iterators.h contest_plugin.h; do install -m 644 $$i "${DESTDIR}${includedir}/ejudge"; done
 
 install: local_install
+	$(MAKE) -C reuse DESTDIR="${DESTDIR}" install
+	$(MAKE) -C cfront DESTDIR="${DESTDIR}" install
 	$(MAKE) -C scripts DESTDIR="${DESTDIR}" install
 	$(MAKE) -C checkers DESTDIR="${DESTDIR}" install
 	$(MAKE) -C extra DESTDIR="${DESTDIR}" install
@@ -346,6 +352,9 @@ subdir_clean:
 	$(MAKE) -C plugins/mysql-userlist DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C plugins/mysql-clardb DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C plugins/mysql-rundb DESTDIR="${DESTDIR}" clean
+	$(MAKE) -C cfront clean
+	$(MAKE) -C reuse clean
+
 
 local_distclean :
 	rm -rf autom4te.cache config.log config.status Makefile config.h ejudge-config.v TAGS Makefile.in ejudge.ru_RU.UTF-8.po
@@ -360,6 +369,8 @@ subdir_distclean :
 	$(MAKE) -C plugins/mysql-userlist DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C plugins/mysql-clardb DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C plugins/mysql-rundb DESTDIR="${DESTDIR}" distclean
+	$(MAKE) -C cfront distclean
+	$(MAKE) -C reuse distclean
 
 pristine : distclean
 	rm -f configure

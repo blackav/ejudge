@@ -18,7 +18,7 @@ META_H_FILES = $(META_C_FILES:.c=.h)
 META_O_FILES = $(META_C_FILES:.c=.o)
 
 META_CC = ./cfront/ej-cfront
-META_CC_FLAGS = -B cfront -isystemcfront/include/stdlib
+META_CC_FLAGS = -B cfront -I cfront/include/stdlib -I reuse/include -I .
 
 contests_meta.c contests_meta.h : contests.h
 	$(META_CC) $(META_CC_FLAGS) contests.h -o contests.out --force-h --meta --meta-struct contest_desc --meta-enum-prefix CNTS --meta-func-prefix contest_desc --meta-timestamp
