@@ -1,6 +1,6 @@
 /* $Id$ */
 
-/* Copyright (C) 1997-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1997-2014 Alexander Chernov <cher@ejudge.ru> */
 /* Created: Thu Feb 13 11:50:21 1997 by cher (Alexander Chernov) */
 
 /*
@@ -80,17 +80,7 @@
 #include <string.h>
 #include <assert.h>
 #include <ctype.h>
-
-#ifndef __MINGW32__
 #include <time.h>
-#else
-typedef long time_t;
-struct tm;
-
-extern time_t     time(time_t *);
-extern struct tm *localtime(const time_t *);
-extern char      *asctime(const struct tm *);
-#endif /* __MINGW32__ */
 
 typedef struct fqueue_t
 {
