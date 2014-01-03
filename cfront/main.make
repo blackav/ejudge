@@ -125,7 +125,7 @@ parser.c parser.h parser.output : parser.y
 scanner.c : scanner.lex
 	${FLEX} ${FLEXFLAGS} -oscanner.c scanner.lex
 
-cdeps.c : ../prjutils/cdeps.c
+cdeps.c : ../prjutils2/cdeps.c
 	$(LN) $< $@
 
 include deps.make
