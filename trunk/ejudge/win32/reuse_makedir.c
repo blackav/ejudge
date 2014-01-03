@@ -1,7 +1,7 @@
 /* -*- mode:c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This library is free software; you can redistribute it and/or
@@ -15,8 +15,8 @@
  * Lesser General Public License for more details.
  */
 
-#include "reuse_logger.h"
-#include "reuse_osdeps.h"
+#include "reuse/logger.h"
+#include "reuse/osdeps.h"
 
 #include <windows.h>
 
@@ -37,6 +37,6 @@ os_MakeDir(char const *path, int mode)
 
 /*
  * Local variables:
- *  compile-command: "make -C ../.."
+ *  compile-command: "make -C .."
  * End:
  */

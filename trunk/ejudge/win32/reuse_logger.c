@@ -1,6 +1,6 @@
 /* $Id$ */
 
-/* Copyright (C) 1999-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1999-2014 Alexander Chernov <cher@ejudge.ru> */
 /* Created: <1999-07-20 23:50:19 cher> */
 
 /*
@@ -17,7 +17,7 @@
 
 #define __REUSE__ 1
 
-#include "reuse_logger.h"
+#include "reuse/logger.h"
 
 #include <windows.h>
 
@@ -25,18 +25,7 @@
 #include <string.h>
 #include <setjmp.h>
 #include <stdarg.h>
-
-#ifndef __MINGW32__
 #include <time.h>
-#else
-/* <time.h> is broken under mingw32 */
-typedef long time_t;
-struct tm;
-
-extern time_t     time(time_t *);
-extern struct tm *localtime(const time_t *);
-extern char      *asctime(const struct tm *);
-#endif /* __MINGW32__ */
 
 /*  CreateFile GetSystemTime CloseHandle ReadFile WriteFile */
 
