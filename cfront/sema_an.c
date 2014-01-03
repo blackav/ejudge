@@ -25,9 +25,9 @@
 #include "attribute_names.h"
 #include "builtin_idents.h"
 
-#include "reuse_xalloc.h"
-#include "reuse_logger.h"
-#include "reuse_hash.h"
+#include "reuse/xalloc.h"
+#include "reuse/logger.h"
+#include "reuse/hash.h"
 
 #include <ctype.h>
 #include <string.h>

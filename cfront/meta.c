@@ -20,8 +20,8 @@
 #include "meta_gen.h"
 
 #include "reuse/getopt.h"
-#include "reuse_osdeps.h"
-#include "reuse_xalloc.h"
+#include "reuse/osdeps.h"
+#include "reuse/xalloc.h"
 
 #include <string.h>
 #include <time.h>

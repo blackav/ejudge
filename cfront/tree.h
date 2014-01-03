@@ -20,7 +20,7 @@
 
 #include "pos.h"
 
-#include "reuse_hash.h"
+#include "reuse/hash.h"
 #include "reuse/c_value.h"
 
 #include <stdlib.h>

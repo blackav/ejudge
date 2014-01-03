@@ -21,7 +21,7 @@
 #include "scanner.h"
 #include "c_errors.h"
 
-#include "reuse_logger.h"
+#include "reuse/logger.h"
 
 static void yyerror(const unsigned char *msg);
 

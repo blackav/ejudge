@@ -17,13 +17,13 @@
 
 #include "version.h"
 
-#include "reuse_logger.h"
-#include "reuse_xalloc.h"
+#include "reuse/logger.h"
+#include "reuse/xalloc.h"
 #include "reuse/c_value.h"
-#include "reuse_hash.h"
+#include "reuse/hash.h"
 #include "reuse/number_io.h"
 #include "reuse/getopt.h"
-#include "reuse_osdeps.h"
+#include "reuse/osdeps.h"
 
 #include <stdio.h>
 #include <stdlib.h>

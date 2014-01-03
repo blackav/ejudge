@@ -28,8 +28,8 @@
 
 #include "reuse/tempfile.h"
 #include "reuse/getopt.h"
-#include "reuse_osdeps.h"
-#include "reuse_xalloc.h"
+#include "reuse/osdeps.h"
+#include "reuse/xalloc.h"
 
 #include <stdio.h>
 #include <string.h>

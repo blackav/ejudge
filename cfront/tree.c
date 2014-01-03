@@ -17,8 +17,8 @@
 
 #include "tree.h"
 
-#include "reuse_mempage.h"
-#include "reuse_logger.h"
+#include "reuse/mempage.h"
+#include "reuse/logger.h"
 
 #include <string.h>
 #include <stdarg.h>
