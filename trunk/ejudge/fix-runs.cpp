@@ -14,7 +14,7 @@ extern "C" {
 #include "fileutl.h"
 #include "sha.h"
 
-#include "reuse_xalloc.h"
+#include "reuse/xalloc.h"
 #include "compat.h"
 }
 

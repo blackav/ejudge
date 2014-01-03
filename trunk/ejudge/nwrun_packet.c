@@ -147,11 +147,19 @@ nwrun_in_packet_print(FILE *fout, const struct nwrun_in_packet *p)
   fprintf(fout, "combined_stdout = %d\n", p->combined_stdout);
   fprintf(fout, "time_limit_millis = %d\n", p->time_limit_millis);
   fprintf(fout, "real_time_limit_millis = %d\n", p->real_time_limit_millis);
+#ifdef __MINGW32__
+  fprintf(fout, "max_stack_size = %I64d\n", (long long) p->max_stack_size);
+  fprintf(fout, "max_data_size = %I64d\n", (long long) p->max_data_size);
+  fprintf(fout, "max_vm_size = %I64d\n", (long long) p->max_vm_size);
+  fprintf(fout, "max_output_file_size = %I64d\n", (long long) p->max_output_file_size);
+  fprintf(fout, "max_error_file_size = %I64d\n", (long long) p->max_error_file_size);
+#else
   fprintf(fout, "max_stack_size = %lld\n", (long long) p->max_stack_size);
   fprintf(fout, "max_data_size = %lld\n", (long long) p->max_data_size);
   fprintf(fout, "max_vm_size = %lld\n", (long long) p->max_vm_size);
   fprintf(fout, "max_output_file_size = %lld\n", (long long) p->max_output_file_size);
   fprintf(fout, "max_error_file_size = %lld\n", (long long) p->max_error_file_size);
+#endif
   fprintf(fout, "enable_memory_limit_error = %d\n", p->enable_memory_limit_error);
   fprintf(fout, "enable_security_violation_error = %d\n", p->enable_security_violation_error);
   fprintf(fout, "enable_secure_run = %d\n", p->enable_secure_run);
