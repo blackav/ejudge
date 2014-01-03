@@ -115,8 +115,8 @@ generate_c_header(
   fprintf(out_c, "#include \"%s\"\n", h_name);
   fprintf(out_c, "#include \"%s.h\"\n", b_name);
   fprintf(out_c, "#include \"meta_generic.h\"\n\n");
-  fprintf(out_c, "#include \"reuse_xalloc.h\"\n\n");
-  fprintf(out_c, "#include \"reuse_logger.h\"\n");
+  fprintf(out_c, "#include \"reuse/xalloc.h\"\n\n");
+  fprintf(out_c, "#include \"reuse/logger.h\"\n");
   fprintf(out_c, "#include <string.h>\n");
   fprintf(out_c, "#include <stdlib.h>\n\n");
 }
