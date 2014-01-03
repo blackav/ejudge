@@ -17,8 +17,8 @@
 
 #include "typedef.h"
 
-#include "reuse_xalloc.h"
-#include "reuse_logger.h"
+#include "reuse/xalloc.h"
+#include "reuse/logger.h"
 
 #include <stdlib.h>
 #include <string.h>

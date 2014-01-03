@@ -21,7 +21,7 @@
 #include "sema_func.h"
 #include "builtin_idents.h"
 
-#include "reuse_logger.h"
+#include "reuse/logger.h"
 
 #include <string.h>
 

@@ -18,8 +18,8 @@
 #include "meta_gen.h"
 #include "c_errors.h"
 
-#include "reuse_osdeps.h"
-#include "reuse_logger.h"
+#include "reuse/osdeps.h"
+#include "reuse/logger.h"
 
 #include <string.h>
 #include <ctype.h>

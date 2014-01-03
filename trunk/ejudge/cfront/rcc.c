@@ -15,17 +15,17 @@
  * GNU General Public License for more details.
  */
 
-#include "reuse_integral.h"
+#include "reuse/integral.h"
 #include "lconfig.h"
 #include "version.h"
 
 #include "cfrontenv.h"
-#include "reuse_xalloc.h"
+#include "reuse/xalloc.h"
 #include "reuse/getopt.h"
-#include "reuse_osdeps.h"
+#include "reuse/osdeps.h"
 #include "reuse/errors.h"
 #include "reuse/tempfile.h"
-#include "reuse_exec.h"
+#include "reuse/exec.h"
 
 #include <string.h>
 #include <stdarg.h>

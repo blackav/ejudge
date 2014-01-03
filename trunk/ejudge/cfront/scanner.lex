@@ -22,9 +22,9 @@
 #include "typedef.h"
 #include "scanner.h"
 
-#include "reuse_xalloc.h"
+#include "reuse/xalloc.h"
 #include "reuse/number_io.h"
-#include "reuse_logger.h"
+#include "reuse/logger.h"
 
 #include <string.h>
 #include <errno.h>

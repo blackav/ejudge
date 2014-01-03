@@ -17,7 +17,7 @@
 
 #include "pos.h"
 
-#include "reuse_xalloc.h"
+#include "reuse/xalloc.h"
 
 #include <string.h>
 

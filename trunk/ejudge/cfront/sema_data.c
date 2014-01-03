@@ -17,9 +17,9 @@
 
 #include "sema_data.h"
 
-#include "reuse_xalloc.h"
-#include "reuse_logger.h"
-#include "reuse_hash.h"
+#include "reuse/xalloc.h"
+#include "reuse/logger.h"
+#include "reuse/hash.h"
 
 struct sema_scope *
 sema_scope_create(struct sema_scope *up)
