@@ -1,0 +1,28 @@
+2002-03-09  Alexander Chernov  <cher@ispras.ru>
+
+	* socket.h:
+	enumerated definitions are provided for all socket constants.
+
+2002-03-06  Alexander Chernov  <cher@ispras.ru>
+
+	* socket.h: many definitions and functions added.
+
+2002-03-04  Alexander Chernov  <cher@ispras.ru>
+
+	* time.h: `gettimeofday', `settimeofday' added.
+
+	* types.h: Added definition of `__ptr_t' type.
+
+	* param.h, timeb.h: initial revision
+
+2002-02-25  Alexander Chernov  <cher@ispras.ru>
+
+	* wait.h, utsname.h, stat.h, resource.h:
+	copyright notice is slightly updated;
+	all enumerated type definitions are marked with `int' type.
+
+2002-02-21  Alexander Chernov  <cher@ispras.ru>
+
+	* times.h, types.h, utsname.h, wait.h, resource.h, socket.h, stat.h, time.h:
+	initial revision
+

@@ -1,0 +1,278 @@
+/* -*- c -*- */
+/* $Id$ */
+
+#ifndef __RCC_ERRNO_H__
+#define __RCC_ERRNO_H__
+
+/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
+
+/*
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ */
+
+#include <features.h>
+
+extern int errno;
+
+/* this is non-standard extension: enum type is forced to be `int' */
+int enum
+  {
+    EPERM = 1,
+#define EPERM EPERM
+    ENOENT = 2,
+#define ENOENT ENOENT
+    ESRCH = 3,
+#define ESRCH ESRCH
+    EINTR = 4,
+#define EINTR EINTR
+    EIO = 5,
+#define EIO EIO
+    ENXIO = 6,
+#define ENXIO ENXIO
+    E2BIG = 7,
+#define E2BIG E2BIG
+    ENOEXEC = 8,
+#define ENOEXEC ENOEXEC
+    EBADF = 9,
+#define EBADF EBADF
+    ECHILD = 10,
+#define ECHILD ECHILD
+    EAGAIN = 11,
+#define EAGAIN EAGAIN
+    ENOMEM = 12,
+#define ENOMEM ENOMEM
+    EACCES = 13,
+#define EACCES EACCES
+    EFAULT = 14,
+#define EFAULT EFAULT
+    ENOTBLK = 15,
+#define ENOTBLK ENOTBLK
+    EBUSY = 16,
+#define EBUSY EBUSY
+    EEXIST = 17,
+#define EEXIST EEXIST
+    EXDEV = 18,
+#define EXDEV EXDEV
+    ENODEV = 19,
+#define ENODEV ENODEV
+    ENOTDIR = 20,
+#define ENOTDIR ENOTDIR
+    EISDIR = 21,
+#define EISDIR EISDIR
+    EINVAL = 22,
+#define EINVAL EINVAL
+    ENFILE = 23,
+#define ENFILE ENFILE
+    EMFILE = 24,
+#define EMFILE EMFILE
+    ENOTTY = 25,
+#define ENOTTY ENOTTY
+    ETXTBSY = 26,
+#define ETXTBSY ETXTBSY
+    EFBIG = 27,
+#define EFBIG EFBIG
+    ENOSPC = 28,
+#define ENOSPC ENOSPC
+    ESPIPE = 29,
+#define ESPIPE ESPIPE
+    EROFS = 30,
+#define EROFS EROFS
+    EMLINK = 31,
+#define EMLINK EMLINK
+    EPIPE = 32,
+#define EPIPE EPIPE
+    EDOM = 33,
+#define EDOM EDOM
+    ERANGE = 34,
+#define ERANGE ERANGE
+    EDEADLK = 35,
+#define EDEADLK EDEADLK
+    ENAMETOOLONG = 36,
+#define ENAMETOOLONG ENAMETOOLONG
+    ENOLCK = 37,
+#define ENOLCK ENOLCK
+    ENOSYS = 38,
+#define ENOSYS ENOSYS
+    ENOTEMPTY = 39,
+#define ENOTEMPTY ENOTEMPTY
+    ELOOP = 40,
+#define ELOOP ELOOP
+    EWOULDBLOCK = EAGAIN,
+#define EWOULDBLOCK EWOULDBLOCK
+    ENOMSG = 42,
+#define ENOMSG ENOMSG
+    EIDRM = 43,
+#define EIDRM EIDRM
+    ECHRNG = 44,
+#define ECHRNG ECHRNG
+    EL2NSYNC = 45,
+#define EL2NSYNC EL2NSYNC
+    EL3HLT = 46,
+#define EL3HLT EL3HLT
+    EL3RST = 47,
+#define EL3RST EL3RST
+    ELNRNG = 48,
+#define ELNRNG ELNRNG
+    EUNATCH = 49,
+#define EUNATCH EUNATCH
+    ENOCSI = 50,
+#define ENOCSI ENOCSI
+    EL2HLT = 51,
+#define EL2HLT EL2HLT
+    EBADE = 52,
+#define EBADE EBADE
+    EBADR = 53,
+#define EBADR EBADR
+    EXFULL = 54,
+#define EXFULL EXFULL
+    ENOANO = 55,
+#define ENOANO ENOANO
+    EBADRQC = 56,
+#define EBADRQC EBADRQC
+    EBADSLT = 57,
+#define EBADSLT EBADSLT
+    EDEADLOCK = EDEADLK,
+#define EDEADLOCK EDEADLOCK
+    EBFONT = 59,
+#define EBFONT EBFONT
+    ENOSTR = 60,
+#define ENOSTR ENOSTR
+    ENODATA = 61,
+#define ENODATA ENODATA
+    ETIME = 62,
+#define ETIME ETIME
+    ENOSR = 63,
+#define ENOSR ENOSR
+    ENONET = 64,
+#define ENONET ENONET
+    ENOPKG = 65,
+#define ENOPKG ENOPKG
+    EREMOTE = 66,
+#define EREMOTE EREMOTE
+    ENOLINK = 67,
+#define ENOLINK ENOLINK
+    EADV = 68,
+#define EADV EADV
+    ESRMNT = 69,
+#define ESRMNT ESRMNT
+    ECOMM = 70,
+#define ECOMM ECOMM
+    EPROTO = 71,
+#define EPROTO EPROTO
+    EMULTIHOP = 72,
+#define EMULTIHOP EMULTIHOP
+    EDOTDOT = 73,
+#define EDOTDOT EDOTDOT
+    EBADMSG = 74,
+#define EBADMSG EBADMSG
+    EOVERFLOW = 75,
+#define EOVERFLOW EOVERFLOW
+    ENOTUNIQ = 76,
+#define ENOTUNIQ ENOTUNIQ
+    EBADFD = 77,
+#define EBADFD EBADFD
+    EREMCHG = 78,
+#define EREMCHG EREMCHG
+    ELIBACC = 79,
+#define ELIBACC ELIBACC
+    ELIBBAD = 80,
+#define ELIBBAD ELIBBAD
+    ELIBSCN = 81,
+#define ELIBSCN ELIBSCN
+    ELIBMAX = 82,
+#define ELIBMAX ELIBMAX
+    ELIBEXEC = 83,
+#define ELIBEXEC ELIBEXEC
+    EILSEQ = 84,
+#define EILSEQ EILSEQ
+    ERESTART = 85,
+#define ERESTART ERESTART
+    ESTRPIPE = 86,
+#define ESTRPIPE ESTRPIPE
+    EUSERS = 87,
+#define EUSERS EUSERS
+    ENOTSOCK = 88,
+#define ENOTSOCK ENOTSOCK
+    EDESTADDRREQ = 89,
+#define EDESTADDRREQ EDESTADDRREQ
+    EMSGSIZE = 90,
+#define EMSGSIZE EMSGSIZE
+    EPROTOTYPE = 91,
+#define EPROTOTYPE EPROTOTYPE
+    ENOPROTOOPT = 92,
+#define ENOPROTOOPT ENOPROTOOPT
+    EPROTONOSUPPORT = 93,
+#define EPROTONOSUPPORT EPROTONOSUPPORT
+    ESOCKTNOSUPPORT = 94,
+#define ESOCKTNOSUPPORT ESOCKTNOSUPPORT
+    EOPNOTSUPP = 95,
+#define EOPNOTSUPP EOPNOTSUPP
+    EPFNOSUPPORT = 96,
+#define EPFNOSUPPORT EPFNOSUPPORT
+    EAFNOSUPPORT = 97,
+#define EAFNOSUPPORT EAFNOSUPPORT
+    EADDRINUSE = 98,
+#define EADDRINUSE EADDRINUSE
+    EADDRNOTAVAIL = 99,
+#define EADDRNOTAVAIL EADDRNOTAVAIL
+    ENETDOWN = 100,
+#define ENETDOWN ENETDOWN
+    ENETUNREACH = 101,
+#define ENETUNREACH ENETUNREACH
+    ENETRESET = 102,
+#define ENETRESET ENETRESET
+    ECONNABORTED = 103,
+#define ECONNABORTED ECONNABORTED
+    ECONNRESET = 104,
+#define ECONNRESET ECONNRESET
+    ENOBUFS = 105,
+#define ENOBUFS ENOBUFS
+    EISCONN = 106,
+#define EISCONN EISCONN
+    ENOTCONN = 107,
+#define ENOTCONN ENOTCONN
+    ESHUTDOWN = 108,
+#define ESHUTDOWN ESHUTDOWN
+    ETOOMANYREFS = 109,
+#define ETOOMANYREFS ETOOMANYREFS
+    ETIMEDOUT = 110,
+#define ETIMEDOUT ETIMEDOUT
+    ECONNREFUSED = 111,
+#define ECONNREFUSED ECONNREFUSED
+    EHOSTDOWN = 112,
+#define EHOSTDOWN EHOSTDOWN
+    EHOSTUNREACH = 113,
+#define EHOSTUNREACH EHOSTUNREACH
+    EALREADY = 114,
+#define EALREADY EALREADY
+    EINPROGRESS = 115,
+#define EINPROGRESS EINPROGRESS
+    ESTALE = 116,
+#define ESTALE ESTALE
+    EUCLEAN = 117,
+#define EUCLEAN EUCLEAN
+    ENOTNAM = 118,
+#define ENOTNAM ENOTNAM
+    ENAVAIL = 119,
+#define ENAVAIL ENAVAIL
+    EISNAM = 120,
+#define EISNAM EISNAM
+    EREMOTEIO = 121,
+#define EREMOTEIO EREMOTEIO
+    EDQUOT = 122,
+#define EDQUOT EDQUOT
+    ENOMEDIUM = 123,
+#define ENOMEDIUM ENOMEDIUM
+    EMEDIUMTYPE = 124
+#define EMEDIUMTYPE EMEDIUMTYPE
+  };
+
+#endif /* __RCC_ERRNO_H__ */
