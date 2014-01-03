@@ -27,7 +27,7 @@
  * information is preserved.
  */
 
-#include "reuse_integral.h"
+#include "reuse/integral.h"
 #include "reuse/stringset.h"
 
 #include <stdio.h>

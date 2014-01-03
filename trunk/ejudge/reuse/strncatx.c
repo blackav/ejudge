@@ -18,7 +18,7 @@
 #define __REUSE__ 1
 
 /* reuse include directives */
-#include "reuse_integral.h"
+#include "reuse/integral.h"
 #include "reuse/str_utils.h"
 
 #include <string.h>

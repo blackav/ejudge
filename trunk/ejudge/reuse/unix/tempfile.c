@@ -24,9 +24,9 @@
 
 /* reuse include directives */
 #include "reuse/tempfile.h"
-#include "reuse_xalloc.h"
-#include "reuse_logger.h"
-#include "reuse_osdeps.h"
+#include "reuse/xalloc.h"
+#include "reuse/logger.h"
+#include "reuse/osdeps.h"
 
 #include <stdio.h>
 #include <errno.h>

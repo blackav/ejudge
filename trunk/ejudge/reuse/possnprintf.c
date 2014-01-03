@@ -19,7 +19,7 @@
 
 /* reuse include directives */
 #include "reuse/positionsp.h"
-#include "reuse_logger.h"
+#include "reuse/logger.h"
 
 extern posstate_t positions_state;
 #define S positions_state

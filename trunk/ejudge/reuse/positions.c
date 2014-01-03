@@ -26,9 +26,9 @@
 #define __REUSE__ 1
 
 /* reuse include directives */
-#include "reuse_integral.h"
+#include "reuse/integral.h"
 #include "reuse/positionsp.h"
-#include "reuse_logger.h"
+#include "reuse/logger.h"
 #include "reuse/number_io.h"
 
 #include <assert.h>

@@ -20,9 +20,9 @@
 /* reuse include directives */
 #include "reuse/c_value.h"
 #include "reuse/c_value_ops.h"
-#include "reuse_logger.h"
+#include "reuse/logger.h"
 #include "reuse/positions.h"
-#include "reuse_xalloc.h"
+#include "reuse/xalloc.h"
 #include "reuse/errors.h"
 
 #include <string.h>

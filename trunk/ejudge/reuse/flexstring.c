@@ -18,8 +18,8 @@
 #define __REUSE__ 1
 
 /* reuse include directives */
-#include "reuse_integral.h"
-#include "reuse_xalloc.h"
+#include "reuse/integral.h"
+#include "reuse/xalloc.h"
 #include "reuse/flexstring.h"
 
 #include <stdio.h>

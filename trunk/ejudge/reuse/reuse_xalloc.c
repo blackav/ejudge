@@ -1,6 +1,6 @@
 /* $Id$ */
 
-/* Copyright (C) 1996-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1996-2014 Alexander Chernov <cher@ejudge.ru> */
 /* Created: Fri Nov  1 19:01:06 1996 by cher (Alexander Chernov) */
 
 /*
@@ -20,7 +20,7 @@
  * PURPOSE: safe memory allocation routines
  */
 
-#include "reuse_xalloc.h"
+#include "reuse/xalloc.h"
 
 #include <stdlib.h>
 #include <stdio.h>
