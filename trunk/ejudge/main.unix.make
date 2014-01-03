@@ -341,7 +341,7 @@ ejudge-install.sh : ejudge-setup
 	./ejudge-setup -b
 
 local_clean:
-	-rm -f *.o *~ *.a $(TARGETS) revinfo version.c $(ARCH)/*.o ejudge.po mkChangeLog2 userlist_clnt/*.o xml_utils/*.o super_clnt/*.o cdeps deps.make filter_expr.[ch] filter_scan.c users users${CGI_PROG_SUFFIX} ejudge-config serve-control serve-control${CGI_PROG_SUFFIX} prjutils/*.o make-js-actions new_server_clnt/*.o mktable struct-sizes
+	-rm -f *.o *~ *.a $(TARGETS) revinfo version.c $(ARCH)/*.o ejudge.po mkChangeLog2 userlist_clnt/*.o xml_utils/*.o super_clnt/*.o cdeps deps.make filter_expr.[ch] filter_scan.c users users${CGI_PROG_SUFFIX} ejudge-config serve-control serve-control${CGI_PROG_SUFFIX} prjutils2/*.o make-js-actions new_server_clnt/*.o mktable struct-sizes
 	-rm -rf locale
 clean: subdir_clean local_clean
 
@@ -386,26 +386,26 @@ new_version: revinfo force
 	@./revinfo -S -C -n -d db/versions -r db/revisions $(HFILES) $(CFILES) $(OTHERFILES)
 force:
 
-revinfo: prjutils/revinfo.o
+revinfo: prjutils2/revinfo.o
 	$(LD) $(LDFLAGS) $^ -o $@
-prjutils/revinfo.o: prjutils/revinfo.c
+prjutils2/revinfo.o: prjutils2/revinfo.c
 
-mkChangeLog2: prjutils/mkChangeLog2.o prjutils/changelog.o prjutils/expat_iface.o prjutils/svn_xmllog.o prjutils/usermap.o prjutils/xalloc.o
+mkChangeLog2: prjutils2/mkChangeLog2.o prjutils2/changelog.o prjutils2/expat_iface.o prjutils2/svn_xmllog.o prjutils2/usermap.o prjutils2/xalloc.o
 	${LD} ${LDFLAGS} $^ -o $@ -lexpat -lm
-prjutils/mkChangeLog2.o: prjutils/mkChangeLog2.c
-prjutils/changelog.o: prjutils/changelog.c
-prjutils/expat_iface.o: prjutils/expat_iface.c
-prjutils/svn_xmllog.o: prjutils/svn_xmllog.c
-prjutils/usermap.o: prjutils/usermap.c
-prjutils/xalloc.o: prjutils/xalloc.c
+prjutils2/mkChangeLog2.o: prjutils2/mkChangeLog2.c
+prjutils2/changelog.o: prjutils2/changelog.c
+prjutils2/expat_iface.o: prjutils2/expat_iface.c
+prjutils2/svn_xmllog.o: prjutils2/svn_xmllog.c
+prjutils2/usermap.o: prjutils2/usermap.c
+prjutils2/xalloc.o: prjutils2/xalloc.c
 
 uudecode.o : uudecode.c
 uudecode : uudecode.o
 	${LD} ${LDFLAGS} $^ -o $@
 
-cdeps: prjutils/cdeps.o
+cdeps: prjutils2/cdeps.o
 	${LD} ${LDFLAGS} $^ -o $@
-prjutils/cdeps.o: prjutils/cdeps.c
+prjutils2/cdeps.o: prjutils2/cdeps.c
 
 log: mkChangeLog2
 	L=`./mkChangeLog2 --input=ChangeLog --latest-revision`; echo "Latest revision: $$L"; svn log -v --xml -r "$$L:HEAD" | ./mkChangeLog2 --user-map=AUTHORS --input=ChangeLog --output=ChangeLog --prefix=/trunk/ejudge/ --strip-prefix=/trunk/ejudge/ --ignore-subdirs

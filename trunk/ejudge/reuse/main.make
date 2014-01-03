@@ -160,7 +160,7 @@ objs/cdeps.o : cdeps.c
 objs/cdeps : objs/cdeps.o
 	${LD} ${ALLLDFLAGS} $^ -o $@
 
-cdeps.c : ../prjutils/cdeps.c
+cdeps.c : ../prjutils2/cdeps.c
 	$(LN) $< $@
 
 # temporary hacks
