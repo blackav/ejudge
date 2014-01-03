@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2014 Alexander Chernov <cher@ejudge.ru> */
 
 #include "config.h"
 
@@ -9,7 +9,7 @@
 #include "ejudge_cfg.h"
 #include "userlist.h"
 
-#include "reuse_xalloc.h"
+#include "reuse/xalloc.h"
 
 #include <stdio.h>
 #include <stdlib.h>

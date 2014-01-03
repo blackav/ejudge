@@ -1690,6 +1690,21 @@ invoke_interactor(
         int stdout_fd,
         long time_limit_ms,
         int program_pid)
+	__attribute__((unused)); // on Windows
+static tpTask
+invoke_interactor(
+        const unsigned char *interactor_cmd,
+        const unsigned char *test_src_path,
+        const unsigned char *output_path,
+        const unsigned char *corr_src_path,
+        const unsigned char *working_dir,
+        const unsigned char *check_out_path,
+        char **interactor_env,
+        const unsigned char *checker_locale,
+        int stdin_fd,
+        int stdout_fd,
+        long time_limit_ms,
+        int program_pid)
 {
   tpTask tsk_int = NULL;
 
