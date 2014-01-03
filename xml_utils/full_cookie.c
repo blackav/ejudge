@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2013-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -29,11 +29,19 @@ xml_unparse_full_cookie(
     snprintf(buf, size, "INVALID_BUFFER");
     return buf;
   }
+#ifdef __MINGW32__
+  if (*p_client_key) {
+    snprintf(buf, size, "%016I64x-%016I64x", *p_cookie, *p_client_key);
+  } else {
+    snprintf(buf, size, "%016I64x", *p_cookie);
+  }
+#else
   if (*p_client_key) {
     snprintf(buf, size, "%016llx-%016llx", *p_cookie, *p_client_key);
   } else {
     snprintf(buf, size, "%016llx", *p_cookie);
   }
+#endif
   return buf;
 }
 
@@ -49,9 +57,15 @@ xml_parse_full_cookie(
   if (!s) {
     return -1;
   }
+#ifdef __MINGW32__
+  if (sscanf(s, "%I64x%n", p_cookie, &n) != 1) {
+    return -1;
+  }
+#else
   if (sscanf(s, "%llx%n", p_cookie, &n) != 1) {
     return -1;
   }
+#endif
   s += n;
   if (!*s) {
     *p_client_key = 0;
@@ -61,9 +75,15 @@ xml_parse_full_cookie(
     return -1;
   }
   ++s;
+#ifdef __MINGW32__
+  if (sscanf(s, "%I64x%n", p_client_key, &n) != 1) {
+    return -1;
+  }
+#else
   if (sscanf(s, "%llx%n", p_client_key, &n) != 1) {
     return -1;
   }
+#endif
   s += n;
   if (*s) {
     return -1;
