@@ -42,7 +42,7 @@ distclean : clean
 	-rm -f Makefile
 
 deps.make : $(CFILES) $(HFILES)
-	../../cdeps -v CLDB_MYSQL_OFILES -I ../.. -g -c '$$(CC) $$(CFLAGS) -DPIC -fPIC' $(CLDB_MYSQL_CFILES) > deps.make
+	../../cdeps -v CLDB_MYSQL_OFILES -I ../.. -I ../../reuse/include -g -c '$$(CC) $$(CFLAGS) -DPIC -fPIC' $(CLDB_MYSQL_CFILES) > deps.make
 
 include deps.make
 
