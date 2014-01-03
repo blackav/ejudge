@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -19,19 +19,20 @@
 #include "super_proto.h"
 #include "errlog.h"
 
-#include "reuse_osdeps.h"
+#include "reuse/osdeps.h"
 
 #include <stdlib.h>
 #include <unistd.h>
 
 int
-super_clnt_set_param(int sock_fd,
-                     int cmd,
-                     int param1,
-                     const unsigned char *param2,
-                     int param3,
-                     int param4,
-                     int param5)
+super_clnt_set_param(
+        int sock_fd,
+        int cmd,
+        int param1,
+        const unsigned char *param2,
+        int param3,
+        int param4,
+        int param5)
 {
   size_t param2_len, out_size;
   struct prot_super_pkt_set_param *out = 0;
@@ -70,9 +71,8 @@ super_clnt_set_param(int sock_fd,
   return in->id;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make -C .."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  * End:
  */

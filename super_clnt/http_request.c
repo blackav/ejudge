@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2008-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -21,8 +21,8 @@
 #include "super_proto.h"
 #include "errlog.h"
 
-#include "reuse_xalloc.h"
-#include "reuse_osdeps.h"
+#include "reuse/xalloc.h"
+#include "reuse/osdeps.h"
 
 #include <unistd.h>
 
@@ -249,6 +249,5 @@ super_clnt_http_request(
 /*
  * Local variables:
  *  compile-command: "make -C .."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  * End:
  */
