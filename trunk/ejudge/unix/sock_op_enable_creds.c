@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2008-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
 #if defined PYTHON
 #include <Python.h>
 #else
-#include "reuse_osdeps.h"
+#include "reuse/osdeps.h"
 #endif
 
 #include <string.h>
@@ -53,6 +53,5 @@ sock_op_enable_creds(int sock_fd)
 /*
  * Local variables:
  *  compile-command: "make -C .."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  * End:
  */

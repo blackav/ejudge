@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -23,8 +23,8 @@
 #include "pathutl.h"
 #include "errlog.h"
 
-#include "reuse_xalloc.h"
-#include "reuse_osdeps.h"
+#include "reuse/xalloc.h"
+#include "reuse/osdeps.h"
 
 #include <stdio.h>
 #include <unistd.h>
@@ -274,6 +274,5 @@ start_open_log(const unsigned char *log_path)
 /*
  * Local variables:
  *  compile-command: "make -C .."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list" "fd_set" "DIR")
  * End:
  */
