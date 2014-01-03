@@ -1,7 +1,7 @@
 dnl $Id$
-dnl Copyright (C) 2004-2013 Alexander Chernov <cher@ejudge.ru>
+dnl Copyright (C) 2004-2014 Alexander Chernov <cher@ejudge.ru>
 
-AC_INIT(ejudge,2.3)
+AC_INIT(ejudge,3)
 AC_PREREQ(2.59)
 AC_REVISION($Revision$)
 
@@ -1244,7 +1244,7 @@ then
 fi
 
 AC_CONFIG_HEADERS([config.h])
-AC_OUTPUT(Makefile extra/Makefile extra/captest/Makefile checkers/Makefile scripts/Makefile ejudge-config.v scripts/festival plugins/mysql-common/Makefile plugins/mysql-userlist/Makefile plugins/mysql-clardb/Makefile plugins/mysql-rundb/Makefile python/Makefile python/streamio/Makefile style/ejudge-upgrade-web)
+AC_OUTPUT(Makefile extra/Makefile extra/captest/Makefile checkers/Makefile scripts/Makefile ejudge-config.v scripts/festival plugins/mysql-common/Makefile plugins/mysql-userlist/Makefile plugins/mysql-clardb/Makefile plugins/mysql-rundb/Makefile style/ejudge-upgrade-web cfront/Makefile reuse/Makefile)
 
 chmod +x ejudge-config.v scripts/festival style/ejudge-upgrade-web
 
