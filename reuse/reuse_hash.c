@@ -1,6 +1,6 @@
 /* $Id$ */
 
-/* Copyright (C) 1996-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1996-2014 Alexander Chernov <cher@ejudge.ru> */
 /* Created: Fri Nov  1 18:46:25 1996 by cher (Alexander Chernov) */
 
 /*
@@ -20,8 +20,8 @@
  * PURPOSE: identifier hash table support
  */
 
-#include "reuse_xalloc.h"
-#include "reuse_hash_priv.h"
+#include "reuse/xalloc.h"
+#include "reuse/hash_priv.h"
 
 #include <assert.h>
 #include <string.h>

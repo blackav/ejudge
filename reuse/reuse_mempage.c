@@ -1,6 +1,6 @@
 /* $Id$ */
 
-/* Copyright (C) 1995-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1995-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This library is free software; you can redistribute it and/or
@@ -14,8 +14,8 @@
  * Lesser General Public License for more details.
  */
 
-#include "reuse_xalloc.h"
-#include "reuse_mempage.h"
+#include "reuse/xalloc.h"
+#include "reuse/mempage.h"
 
 #include <stdio.h>
 #include <assert.h>

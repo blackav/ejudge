@@ -1,7 +1,7 @@
 /* -*- mode:c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This library is free software; you can redistribute it and/or
@@ -15,7 +15,7 @@
  * Lesser General Public License for more details.
  */
 
-#include "reuse_xalloc.h"
+#include "reuse/xalloc.h"
 
 #include <string.h>
 

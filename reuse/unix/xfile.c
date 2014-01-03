@@ -24,9 +24,9 @@
 
 /* reuse include directives */
 #include "reuse/xfile.h"
-#include "reuse_logger.h"
+#include "reuse/logger.h"
 #include "reuse/errors.h"
-#include "reuse_osdeps.h"
+#include "reuse/osdeps.h"
 #include "reuse/getopt.h"
 
 #include <errno.h>

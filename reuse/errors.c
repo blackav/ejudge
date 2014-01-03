@@ -23,11 +23,11 @@
 #define __REUSE__ 1
 
 /* reuse include directives */
-#include "reuse_logger.h"
+#include "reuse/logger.h"
 #include "reuse/getopt.h"
 #include "reuse/errors.h"
 #include "reuse/positions.h"
-#include "reuse_xalloc.h"
+#include "reuse/xalloc.h"
 
 #include <string.h>
 #include <stdarg.h>

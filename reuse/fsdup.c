@@ -19,7 +19,7 @@
 
 /* reuse include directives */
 #include "reuse/flexstring.h"
-#include "reuse_xalloc.h"
+#include "reuse/xalloc.h"
 
 #include <assert.h>
 

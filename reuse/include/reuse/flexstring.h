@@ -30,7 +30,7 @@
  * 
  */
 
-#include "reuse_integral.h"
+#include "reuse/integral.h"
 
 #include <stdio.h>
 #include <stdlib.h>
