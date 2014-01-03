@@ -1,6 +1,6 @@
 /*$Id$*/
 
-/* Copyright (C) 1997-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1997-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This library is free software; you can redistribute it and/or
@@ -19,8 +19,8 @@
  * PURPOSE: logging facilities, fatal error handling
  */
 
-#include "reuse_xalloc.h"
-#include "reuse_logger.h"
+#include "reuse/xalloc.h"
+#include "reuse/logger.h"
 
 #include <stdio.h>
 #include <sys/types.h>

@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2009-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2009-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,7 +18,7 @@
 #include "file_perms.h"
 #include "misctext.h"
 
-#include "reuse_osdeps.h"
+#include "reuse/osdeps.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -96,6 +96,5 @@ file_perms_get(
 /*
  * Local variables:
  *  compile-command: "make -C .."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  * End:
  */

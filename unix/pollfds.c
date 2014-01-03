@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,7 +17,7 @@
 
 #include "pollfds.h"
 
-#include "reuse_xalloc.h"
+#include "reuse/xalloc.h"
 
 #include <poll.h>
 #include <string.h>
@@ -127,3 +127,9 @@ pollfds_call_handlers(
     }
   }
 }
+
+/*
+ * Local variables:
+ *  compile-command: "make -C .."
+ * End:
+ */

@@ -1,6 +1,6 @@
 /* $Id$ */
 
-/* Copyright (C) 1998-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1998-2014 Alexander Chernov <cher@ejudge.ru> */
 /* Created: <1998-01-21 14:33:28 cher> */
 
 /*
@@ -20,10 +20,10 @@
  * PURPOSE: process abstraction layer
  */
 
-#include "reuse_xalloc.h"
-#include "reuse_logger.h"
-#include "reuse_osdeps.h"
-#include "reuse_exec.h"
+#include "reuse/xalloc.h"
+#include "reuse/logger.h"
+#include "reuse/osdeps.h"
+#include "reuse/exec.h"
 
 #include <sys/types.h>
 #include <sys/wait.h>
