@@ -1,7 +1,7 @@
 # -*- Makefile -*-
 # $Id$
 
-# Copyright (C) 2009-2012 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2009-2014 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -24,6 +24,7 @@ WIN32_COMMON_CFILES=\
  digest_3.c\
  digest_4.c\
  ejudge_cfg.c\
+ ej_uuid.c\
  errlog.c\
  expat_iface.c\
  filehash.c\
@@ -53,8 +54,6 @@ WIN32_COMMON_CFILES=\
  sformat.c\
  sha.c\
  shellcfg_parse.c\
- super_run_packet.c\
- super_run_packet_meta.c\
  team_extra.c\
  testinfo.c\
  testing_report_xml.c\
@@ -89,6 +88,7 @@ WIN32_COMMON_CFILES=\
  xml_utils/err_top_level.c\
  xml_utils/err_top_level_s.c\
  xml_utils/err_variables.c\
+ xml_utils/full_cookie.c\
  xml_utils/leaf_elem.c\
  xml_utils/parse_bool.c\
  xml_utils/parse_date.c\
