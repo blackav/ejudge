@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -22,7 +22,7 @@
 #include "errlog.h"
 #include "fileutl.h"
 
-#include "reuse_osdeps.h"
+#include "reuse/osdeps.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -247,10 +247,3 @@ mime_type_parse_suffix(const unsigned char *str)
       return i;
   return -1;
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")
- * End:
- */

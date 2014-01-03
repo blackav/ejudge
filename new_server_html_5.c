@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2007-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -32,8 +32,8 @@
 #include "compat.h"
 #include "ejudge_cfg.h"
 
-#include "reuse_xalloc.h"
-#include "reuse_logger.h"
+#include "reuse/xalloc.h"
+#include "reuse/logger.h"
 
 #include <stdio.h>
 #include <errno.h>
@@ -3622,9 +3622,3 @@ ns_register_pages(FILE *fout, struct http_request_info *phr)
     return (*reg_handlers[phr->action])(fout, phr, cnts, extra, cur_time);
   return main_page(fout, phr, cnts, extra, cur_time);
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- * End:
- */

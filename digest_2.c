@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,7 +17,7 @@
 
 #include "digest_io.h"
 
-#include "reuse_logger.h"
+#include "reuse/logger.h"
 
 int
 digest_get_size(int kind)
@@ -28,10 +28,3 @@ digest_get_size(int kind)
     SWERR(("unhandled digest type %d", kind));
   }
 }
-
-/**
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- * End:
- */

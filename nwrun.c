@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2010-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -25,9 +25,9 @@
 #include "runlog.h"
 #include "nwrun_packet.h"
 
-#include "reuse_xalloc.h"
-#include "reuse_osdeps.h"
-#include "reuse_exec.h"
+#include "reuse/xalloc.h"
+#include "reuse/osdeps.h"
+#include "reuse/exec.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -793,10 +793,3 @@ main(int argc, char *argv[])
 
   return 0;
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "tTask")
- * End:
- */

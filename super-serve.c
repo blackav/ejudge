@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -41,9 +41,9 @@
 #include "pollfds.h"
 #include "xml_utils.h"
 
-#include "reuse_xalloc.h"
-#include "reuse_logger.h"
-#include "reuse_osdeps.h"
+#include "reuse/xalloc.h"
+#include "reuse/logger.h"
+#include "reuse/osdeps.h"
 
 #include <stdio.h>
 #include <sys/types.h>
@@ -4803,9 +4803,3 @@ main(int argc, char **argv)
   if (hup_flag) start_restart();
   return retcode;
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- * End:
- */

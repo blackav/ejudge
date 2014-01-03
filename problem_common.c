@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2007-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,7 +18,7 @@
 #include "problem_common.h"
 #include "ej_types.h"
 
-#include "reuse_logger.h"
+#include "reuse/logger.h"
 
 #include <string.h>
 
@@ -139,9 +139,3 @@ eoln_type_unparse_html(int value)
   if (value == 2) return "CRLF";
   return "???";
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- * End:
- */

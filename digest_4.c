@@ -17,7 +17,7 @@
 
 #include "digest_io.h"
 
-#include "reuse_logger.h"
+#include "reuse/logger.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -50,10 +50,3 @@ digest_from_ascii(int kind, const unsigned char *asc, void *raw)
   }
   return dlen;
 }
-
-/**
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- * End:
- */

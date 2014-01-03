@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2001-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2001-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -21,7 +21,7 @@
 #include "userlist.h"
 #include "misctext.h"
 
-#include "reuse_xalloc.h"
+#include "reuse/xalloc.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1105,10 +1105,3 @@ sformat_message(
   html_armor_free(&ab);
   return used;
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- * End:
- */

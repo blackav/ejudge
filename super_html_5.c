@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2008-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -25,8 +25,8 @@
 #include "pathutl.h"
 #include "errlog.h"
 
-#include "reuse_xalloc.h"
-#include "reuse_osdeps.h"
+#include "reuse/xalloc.h"
+#include "reuse/osdeps.h"
 
 #include <string.h>
 #include <ctype.h>
@@ -326,10 +326,3 @@ super_serve_op_edit_problem(
   phr->json_reply = 1;
   return 1;
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list" "fd_set" "DIR")
- * End:
- */

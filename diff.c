@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -27,8 +27,8 @@
 #include "mime_type.h"
 #include "prepare_dflt.h"
 
-#include "reuse_xalloc.h"
-#include "reuse_exec.h"
+#include "reuse/xalloc.h"
+#include "reuse/exec.h"
 
 #include <unistd.h>
 #include <fcntl.h>

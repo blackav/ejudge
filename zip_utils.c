@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2010-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -20,7 +20,7 @@
 
 #include "zip_utils.h"
 
-#include "reuse_xalloc.h"
+#include "reuse/xalloc.h"
 
 #include <zlib.h>
 #include <string.h>
@@ -106,9 +106,3 @@ gzip_uncompress_to_memory(
   xfree(wb);
   return retval;
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- * End:
- */

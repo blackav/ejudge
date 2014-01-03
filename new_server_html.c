@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -57,9 +57,9 @@
 #include "prepare_dflt.h"
 #include "new_server_match.h"
 
-#include "reuse_xalloc.h"
-#include "reuse_logger.h"
-#include "reuse_osdeps.h"
+#include "reuse/xalloc.h"
+#include "reuse/logger.h"
+#include "reuse/osdeps.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -15795,9 +15795,3 @@ ns_handle_http_request(struct server_framework_state *state,
   } else
     unprivileged_entry_point(fout, phr, orig_locale_id);
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- * End:
- */

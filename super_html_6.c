@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2011-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2011-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -42,8 +42,8 @@
 #include "ej_process.h"
 #include "problem_config.h"
 
-#include "reuse_xalloc.h"
-#include "reuse_osdeps.h"
+#include "reuse/xalloc.h"
+#include "reuse/osdeps.h"
 
 #include <stdarg.h>
 #include <printf.h>

@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2007-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,7 +18,7 @@
 #include "problem_xml.h"
 #include "xml_utils.h"
 
-#include "reuse_xalloc.h"
+#include "reuse/xalloc.h"
 
 #include <string.h>
 #include <errno.h>
@@ -836,9 +836,3 @@ problem_xml_add_example(problem_xml_t prob_xml, struct xml_tree *input_node, str
   xml_link_node_last(example, input_node);
   xml_link_node_last(example, output_node);
 }
-
-/*
- * Local variables:
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")
- * End:
- */

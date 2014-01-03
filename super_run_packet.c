@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2012-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,7 +17,7 @@
 
 #include "super_run_packet.h"
 
-#include "reuse_xalloc.h"
+#include "reuse/xalloc.h"
 #include "meta_generic.h"
 #include "super_run_packet_meta.h"
 #include "prepare.h"

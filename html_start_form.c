@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,7 +17,7 @@
 
 #include "mischtml.h"
 
-#include "reuse_logger.h"
+#include "reuse/logger.h"
 
 #include <stdio.h>
 
@@ -48,10 +48,3 @@ html_start_form(FILE *f, int mode,
   ASSERT(mode >= 0 && mode <= 2);
   fprintf(f, "<%s\"%s\">%s", form_methods[mode], self_url, hidden_vars);
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list" "fd_set" "DIR")
- * End:
- */

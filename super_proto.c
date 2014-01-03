@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,7 +17,7 @@
 
 #include "super_proto.h"
 
-#include "reuse_xalloc.h"
+#include "reuse/xalloc.h"
 
 #include <stdio.h>
 
@@ -1283,9 +1283,3 @@ const unsigned char * const super_proto_cmd_names[SSERV_CMD_LAST] =
   [SSERV_CMD_LOGOUT] = "LOGOUT",
   [SSERV_CMD_HTTP_REQUEST] = "HTTP_REQUEST",
 };
-
-/*
- * Local variables:
- *  compile-command: "make"
- * End:
- */

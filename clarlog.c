@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -32,9 +32,9 @@
 #include "charsets.h"
 #include "prepare.h"
 
-#include "reuse_xalloc.h"
-#include "reuse_logger.h"
-#include "reuse_osdeps.h"
+#include "reuse/xalloc.h"
+#include "reuse/logger.h"
+#include "reuse/osdeps.h"
 
 #include <unistd.h>
 #include <errno.h>
@@ -624,9 +624,3 @@ ipv6_to_clar_entry(const ej_ip_t *p_ip, struct clar_entry_v1 *pe)
     pe->a.ip = p_ip->u.v4.addr;
   }
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- * End:
- */

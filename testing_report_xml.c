@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -26,8 +26,8 @@
 #include "digest_io.h"
 #include "misctext.h"
 
-#include "reuse_xalloc.h"
-#include "reuse_logger.h"
+#include "reuse/xalloc.h"
+#include "reuse/logger.h"
 
 #include <string.h>
 
@@ -1515,9 +1515,3 @@ testing_report_unparse_xml(
   fprintf(out, "</%s>\n", elem_map[TR_T_TESTING_REPORT]);
   html_armor_free(&ab);
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- * End:
- */

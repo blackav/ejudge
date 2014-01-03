@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2012-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -33,8 +33,8 @@
 #include "xml_utils.h"
 #include "ej_uuid.h"
 
-#include "reuse_xalloc.h"
-#include "reuse_osdeps.h"
+#include "reuse/xalloc.h"
+#include "reuse/osdeps.h"
 
 #include <stdio.h>
 #include <stdlib.h>
