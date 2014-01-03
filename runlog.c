@@ -329,7 +329,7 @@ run_add_record(
   state->uuid_hash_last_added_index = -1;
   state->uuid_hash_last_added_run_id = -1;
   if (timestamp <= 0) {
-    err("run_add_record: invalid timestamp %ld", timestamp);
+    err("run_add_record: invalid timestamp %ld", (long) timestamp);
     return -1;
   }
   if (!is_hidden) {
@@ -1993,7 +1993,7 @@ runlog_check(
     }
     if (e->time < prev_time) {
       check_msg(1, ferr, "Run %d timestamp %" EJ_PRINTF_LLSPEC "d is less than previous %ld",
-                i, e->time, prev_time);
+                i, e->time, (long) prev_time);
       nerr++;
       continue;
     }
@@ -2179,14 +2179,14 @@ runlog_check(
         if (e->time < v->start_time) {
           check_msg(1, ferr,
                     "Run %d timestamp %" EJ_PRINTF_LLSPEC "d is less that virtual start %ld",
-                    i, e->time, v->start_time);
+                    i, e->time, (long) v->start_time);
           nerr++;
           continue;
         }
         if (v_stop_time && e->time > v_stop_time) {
           check_msg(1, ferr,
                     "Run %d timestamp %" EJ_PRINTF_LLSPEC "d is greater than virtual stop %ld",
-                    i, e->time, v_stop_time);
+                    i, e->time, (long) v_stop_time);
           nerr++;
           continue;
         }
@@ -2204,7 +2204,7 @@ runlog_check(
         if (stop_time && e->time > stop_time) {
           check_msg(1, ferr,
                     "Run %d timestamp %" EJ_PRINTF_LLSPEC "d is greater than contest stop %ld",
-                    i, e->time, stop_time);
+                    i, e->time, (long) stop_time);
           nerr++;
           continue;
         }

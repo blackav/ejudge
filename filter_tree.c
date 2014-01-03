@@ -656,7 +656,7 @@ filter_tree_dur_str(unsigned char *buf, size_t size, time_t val)
   min = val / 60;
   hour = min / 60;
   min = min % 60;
-  return snprintf(buf, size, "%s%ld:%02ld:%02ld", sgn, hour, min, sec);
+  return snprintf(buf, size, "%s%ld:%02ld:%02ld", sgn, (long) hour, (long) min, (long) sec);
 }
 
 int

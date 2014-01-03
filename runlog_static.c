@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2008-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -361,9 +361,9 @@ run_fix_runlog_time(
 
     if (prev_time >= cur_time + 3600) {
       fprintf(log_f, "Error: timestamp for run %d: %ld (%s); ",
-              run_id - 1, prev_time, xml_unparse_date(prev_time));
+              run_id - 1, (long) prev_time, xml_unparse_date(prev_time));
       fprintf(log_f, "timestamp for run %d: %ld (%s); ",
-              run_id, cur_time, xml_unparse_date(cur_time));
+              run_id, (long) cur_time, xml_unparse_date(cur_time));
       fprintf(log_f, "no DST change detected\n");
       return -1;
     }
@@ -390,9 +390,9 @@ run_fix_runlog_time(
 */
 
     fprintf(log_f, "Warning: timestamp for run %d: %ld (%s); ",
-            run_id - 1, prev_time, xml_unparse_date(prev_time));
+            run_id - 1, (long) prev_time, xml_unparse_date(prev_time));
     fprintf(log_f, "timestamp for run %d: %ld (%s); ",
-            run_id, cur_time, xml_unparse_date(cur_time));
+            run_id, (long) cur_time, xml_unparse_date(cur_time));
     fprintf(log_f, "DST change detected, fixing\n");
 
     // find how many runs need fixing
