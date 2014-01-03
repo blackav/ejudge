@@ -46,7 +46,7 @@ distclean : clean
 	-rm -f Makefile
 
 deps.make : $(CFILES) $(HFILES)
-	../../cdeps -v ULDB_MYSQL_OFILES -I ../.. -g -c '$$(CC) $$(CFLAGS) -DPIC -fPIC' $(ULDB_MYSQL_CFILES) > deps.make
+	../../cdeps -v ULDB_MYSQL_OFILES -I ../.. -I ../../reuse/include -g -c '$$(CC) $$(CFLAGS) -DPIC -fPIC' $(ULDB_MYSQL_CFILES) > deps.make
 
 include deps.make
 

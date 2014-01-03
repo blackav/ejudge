@@ -42,7 +42,7 @@ distclean : clean
 	-rm -f Makefile
 
 deps.make : $(CFILES) $(HFILES)
-	../../cdeps -v COMMON_MYSQL_OFILES -I ../.. -g -c '$$(CC) $$(CFLAGS) -DPIC -fPIC' $(COMMON_MYSQL_CFILES) > deps.make
+	../../cdeps -v COMMON_MYSQL_OFILES -I ../.. -I ../../reuse/include -g -c '$$(CC) $$(CFLAGS) -DPIC -fPIC' $(COMMON_MYSQL_CFILES) > deps.make
 
 include deps.make
 

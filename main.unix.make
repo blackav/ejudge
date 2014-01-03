@@ -463,7 +463,7 @@ libnew_server_clnt.a: $(NEW_SERVER_CLNT_CFILES:.c=.o)
 	ar rcv $@ $^
 
 deps.make: cdeps ${CFILES} ${HFILES} filter_expr.c filter_expr.h filter_scan.c $(META_C_FILES) $(META_H_FILES)
-	@./cdeps ${CFILES} filter_expr.c filter_scan.c > deps.make
+	@./cdeps -I reuse/include ${CFILES} filter_expr.c filter_scan.c > deps.make
 
 tags : ${CFILES} ${HFILES} filter_expr.c filter_expr.h filter_scan.c 
 	@ctags -e $^
