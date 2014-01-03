@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -19,8 +19,8 @@
 #include "new_server_proto.h"
 #include "errlog.h"
 
-#include "reuse_osdeps.h"
-#include "reuse_integral.h"
+#include "reuse/osdeps.h"
+#include "reuse/integral.h"
 
 #include <unistd.h>
 #include <sys/uio.h>
@@ -81,6 +81,5 @@ new_server_clnt_send_packet(new_server_conn_t conn, size_t size, void const *buf
 /*
  * Local variables:
  *  compile-command: "make -C .."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  * End:
  */
