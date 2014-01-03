@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -19,8 +19,8 @@
 #include "base64.h"
 #include "compat.h"
 
-#include "reuse_xalloc.h"
-#include "reuse_logger.h"
+#include "reuse/xalloc.h"
+#include "reuse/logger.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -2366,10 +2366,3 @@ csv_armor_buf(struct html_armor_buffer *pb, const unsigned char *s)
   csv_armor_string(s, pb->buf);
   return pb->buf;
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- * End:
- */

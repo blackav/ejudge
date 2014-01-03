@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$*/
 
-/* Copyright (C) 2005-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,8 +17,8 @@
 
 #include "misctext.h"
 
-#include "reuse_xalloc.h"
-#include "reuse_logger.h"
+#include "reuse/xalloc.h"
+#include "reuse/logger.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -50,10 +50,3 @@ dos2unix_buf(unsigned char *s, size_t size)
   *q = 0;
   return (size_t) (q - s);
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list" "fd_set" "DIR")
- * End:
- */

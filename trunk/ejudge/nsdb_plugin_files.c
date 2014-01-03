@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -22,9 +22,9 @@
 #include "pathutl.h"
 #include "new-server.h"
 
-#include "reuse_xalloc.h"
-#include "reuse_logger.h"
-#include "reuse_osdeps.h"
+#include "reuse/xalloc.h"
+#include "reuse/logger.h"
+#include "reuse/osdeps.h"
 
 #include <string.h>
 #include <sys/types.h>
@@ -995,10 +995,3 @@ get_examiner_count_func(
       count++;
   return count;
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- * End:
- */

@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -26,9 +26,9 @@
 #include "errlog.h"
 #include "xml_utils.h"
 
-#include "reuse_xalloc.h"
-#include "reuse_logger.h"
-#include "reuse_osdeps.h"
+#include "reuse/xalloc.h"
+#include "reuse/logger.h"
+#include "reuse/osdeps.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -1190,10 +1190,3 @@ ejudge_cfg_caps_add(
   cap_node->caps = caps;
   xml_link_node_last(cfg->caps_node, &cap_node->b);
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "XML_Parser" "XML_Char" "XML_Encoding")
- * End:
- */

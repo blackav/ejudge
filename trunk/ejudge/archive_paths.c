@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -27,8 +27,8 @@
 #include "ej_uuid.h"
 #include "prepare_dflt.h"
 
-#include "reuse_logger.h"
-#include "reuse_osdeps.h"
+#include "reuse/logger.h"
+#include "reuse/osdeps.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>

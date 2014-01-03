@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2010-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
 #include "misctext.h"
 #include "prepare.h"
 
-#include "reuse_xalloc.h"
+#include "reuse/xalloc.h"
 
 #if CONF_HAS_LIBZIP - 0 == 1
 #include <zip.h>
@@ -657,9 +657,3 @@ zip_packet_class_create(void)
   return 0;
 #endif /* CONF_HAS_LIBZIP */
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- * End:
- */

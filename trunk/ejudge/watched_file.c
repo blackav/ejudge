@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,7 +18,7 @@
 #include "watched_file.h"
 #include "fileutl.h"
 
-#include "reuse_xalloc.h"
+#include "reuse/xalloc.h"
 
 #include <string.h>
 #include <sys/types.h>
@@ -80,10 +80,3 @@ watched_file_clear(struct watched_file *pw)
   xfree(pw->path);
   memset(pw, 0, sizeof(*pw));
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")
- * End:
- */

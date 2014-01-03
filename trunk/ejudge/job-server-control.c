@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -23,8 +23,8 @@
 #include "job_packet.h"
 #include "startstop.h"
 
-#include "reuse_logger.h"
-#include "reuse_osdeps.h"
+#include "reuse/logger.h"
+#include "reuse/osdeps.h"
 
 #include <stdio.h>
 #include <stdlib.h>

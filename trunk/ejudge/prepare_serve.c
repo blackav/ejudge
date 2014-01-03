@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -26,7 +26,7 @@
 #include "serve_state.h"
 #include "runlog.h"
 
-#include "reuse_xalloc.h"
+#include "reuse/xalloc.h"
 
 int
 find_variant(
@@ -211,9 +211,3 @@ prepare_serve_defaults(serve_state_t state, const struct contest_desc **p_cnts)
   }
   return 0;
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- * End:
- */

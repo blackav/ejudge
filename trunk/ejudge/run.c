@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -39,11 +39,11 @@
 #include "run.h"
 #include "super_run_packet.h"
 
-#include "reuse_xalloc.h"
-#include "reuse_logger.h"
-#include "reuse_osdeps.h"
-#include "reuse_integral.h"
-#include "reuse_exec.h"
+#include "reuse/xalloc.h"
+#include "reuse/logger.h"
+#include "reuse/osdeps.h"
+#include "reuse/integral.h"
+#include "reuse/exec.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -1161,10 +1161,3 @@ main(int argc, char *argv[])
   printf("  -s arch - specify architecture to skip testing\n");
   return code;
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "tTask")
- * End:
- */

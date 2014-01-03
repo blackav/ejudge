@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2008-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -28,9 +28,9 @@
 #include "base64.h"
 #include "fileutl.h"
 
-#include "reuse_xalloc.h"
-#include "reuse_logger.h"
-#include "reuse_osdeps.h"
+#include "reuse/xalloc.h"
+#include "reuse/logger.h"
+#include "reuse/osdeps.h"
 
 #include <unistd.h>
 #include <string.h>
@@ -648,10 +648,3 @@ modify_record_func(
   struct cldb_file_cnts *cs = (struct cldb_file_cnts*) cdata;
   return do_flush_entry(cs, clar_id);
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- * End:
- */

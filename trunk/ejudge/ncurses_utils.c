@@ -1,7 +1,7 @@
 /* -*- mode:c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -19,9 +19,9 @@
 #include "tex_dom.h"
 #include "misctext.h"
 
-#include "reuse_xalloc.h"
-#include "reuse_logger.h"
-#include "reuse_osdeps.h"
+#include "reuse/xalloc.h"
+#include "reuse/logger.h"
+#include "reuse/osdeps.h"
 
 #include <limits.h>
 #include <menu.h>
@@ -1975,10 +1975,3 @@ ncurses_getkey(int utf8_mode, int *p_code)
   if (koi8_kdb_map[k]) return koi8_kdb_map[k];
   return k;
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list" "WINDOW" "ITEM" "PANEL" "MENU" "DIR")
- * End:
- */

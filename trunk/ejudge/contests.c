@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -30,9 +30,9 @@
 #include "ejudge_cfg.h"
 #include "contests_meta.h"
 
-#include "reuse_xalloc.h"
-#include "reuse_logger.h"
-#include "reuse_osdeps.h"
+#include "reuse/xalloc.h"
+#include "reuse/logger.h"
+#include "reuse/osdeps.h"
 
 #include <string.h>
 #include <time.h>
@@ -1886,9 +1886,3 @@ contests_get_member_name(int ff)
   ASSERT(ff >= 0 && ff < CONTEST_LAST_MEMBER);
   return member_names[ff];
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- * End:
- */

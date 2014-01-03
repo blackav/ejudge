@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -29,7 +29,7 @@
 #include "xml_utils.h"
 #include "prepare_dflt.h"
 
-#include "reuse_exec.h"
+#include "reuse/exec.h"
 
 #include <stdio.h>
 #include <unistd.h>
@@ -319,9 +319,3 @@ team_print_run(const serve_state_t state, int run_id, int user_id)
 {
   return do_print_run(state, run_id, 0, user_id);
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- * End:
- */

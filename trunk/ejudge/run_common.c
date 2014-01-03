@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2012-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -38,10 +38,10 @@
 #include "cpu.h"
 #include "ej_process.h"
 
-#include "reuse_xalloc.h"
-#include "reuse_osdeps.h"
-#include "reuse_exec.h"
-#include "reuse_logger.h"
+#include "reuse/xalloc.h"
+#include "reuse/osdeps.h"
+#include "reuse/exec.h"
+#include "reuse/logger.h"
 
 #include <stdlib.h>
 #include <stdio.h>

@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2008-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -28,9 +28,9 @@
 #include "fileutl.h"
 #include "compat.h"
 
-#include "reuse_xalloc.h"
-#include "reuse_logger.h"
-#include "reuse_osdeps.h"
+#include "reuse/xalloc.h"
+#include "reuse/logger.h"
+#include "reuse/osdeps.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -944,9 +944,3 @@ contests_set_member_field(
     if (legend) p->legend = xstrdup(legend);
   }
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- * End:
- */

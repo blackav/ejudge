@@ -28,7 +28,7 @@
       Robert Klep <robert@ilse.nl>  -- Expansion function fix
 */
 
-#include "reuse_integral.h"
+#include "reuse/integral.h"
 #include "sha.h"
 
 #include <stdio.h>
@@ -403,9 +403,3 @@ sha_process_block (const void *buffer, size_t len, struct sha_ctx *ctx)
       e = ctx->E += e;
     }
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- * End:
- */

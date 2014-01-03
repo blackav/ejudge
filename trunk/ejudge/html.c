@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -41,9 +41,9 @@
 #include "compat.h"
 #include "filter_eval.h"
 
-#include "reuse_xalloc.h"
-#include "reuse_logger.h"
-#include "reuse_osdeps.h"
+#include "reuse/xalloc.h"
+#include "reuse/logger.h"
+#include "reuse/osdeps.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -4423,10 +4423,3 @@ write_public_log(
                     SAFE, stat_dir, name, "");
   return;
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- * End:
- */

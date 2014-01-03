@@ -28,7 +28,7 @@
    Copyright (C) 1999, Scott G. Miller
 */
 
-#include "reuse_integral.h"
+#include "reuse/integral.h"
 
 #include <stdio.h>
 

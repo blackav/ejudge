@@ -1,7 +1,7 @@
 /* -*- mode:c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -31,9 +31,9 @@
 #include "fileutl.h"
 #include "compat.h"
 
-#include "reuse_xalloc.h"
-#include "reuse_logger.h"
-#include "reuse_osdeps.h"
+#include "reuse/xalloc.h"
+#include "reuse/logger.h"
+#include "reuse/osdeps.h"
 
 #include <limits.h>
 #include <string.h>
@@ -4618,9 +4618,3 @@ main(int argc, char **argv)
   if (tmp_work_dir[0]) remove_directory_recursively(tmp_work_dir, 0);
   return 0;
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- * End:
- */

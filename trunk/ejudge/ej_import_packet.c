@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -20,7 +20,7 @@
 
 #include "meta_generic.h"
 
-#include "reuse_xalloc.h"
+#include "reuse/xalloc.h"
 
 void
 ej_import_packet_init(struct generic_section_config *gp)

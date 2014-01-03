@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -21,7 +21,7 @@
 #include "errlog.h"
 #include "pathutl.h"
 
-#include "reuse_xalloc.h"
+#include "reuse/xalloc.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -171,10 +171,3 @@ plugin_unload(struct ejudge_plugin_iface *plugin)
   plugins.v[i - 1] = 0;
   plugins.u--;
 }
-
-/*
- * Local variables:
- *  compile-command: "make -C ../.."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- * End:
- */

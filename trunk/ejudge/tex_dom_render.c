@@ -1,7 +1,7 @@
 /* -*- mode:c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,8 +17,8 @@
 
 #include "tex_dom.h"
 
-#include "reuse_xalloc.h"
-#include "reuse_logger.h"
+#include "reuse/xalloc.h"
+#include "reuse/logger.h"
 
 #include <string.h>
 
@@ -388,9 +388,3 @@ tex_dom_free_buffer(tex_buffer_t pbuf)
   xfree(pbuf);
   return 0;
 }
-
-/*
- * Local variables:
- *  compile-command: "gcc -Wall -g -I/home/cher/reuse/include -I/home/cher/reuse/include/ix86-linux -L/home/cher/reuse/lib/ix86-linux tex_dom.c tex_dom_parse.c tex_dom_render.c tex_dom_doc.c tex_dom_test.c -o tex_dom -lreuse -lm"
- * End:
- */

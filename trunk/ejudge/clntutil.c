@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -29,9 +29,9 @@
 #include "copyright.h"
 #include "xml_utils.h"
 
-#include "reuse_xalloc.h"
-#include "reuse_logger.h"
-#include "reuse_osdeps.h"
+#include "reuse/xalloc.h"
+#include "reuse/logger.h"
+#include "reuse/osdeps.h"
 
 #include <stdio.h>
 #include <time.h>
@@ -204,9 +204,3 @@ parse_client_ip(ej_ip_t *p_ip)
 
   xml_parse_ipv6_2(s, p_ip);
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- * End:
- */

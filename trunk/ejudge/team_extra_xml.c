@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -24,8 +24,8 @@
 #include "errlog.h"
 #include "xml_utils.h"
 
-#include "reuse_xalloc.h"
-#include "reuse_logger.h"
+#include "reuse/xalloc.h"
+#include "reuse/logger.h"
 
 #include <ctype.h>
 #include <errno.h>
@@ -404,9 +404,3 @@ team_extra_unparse_xml(FILE *f, struct team_extra *te)
   fprintf(f, "</%s>\n", elem_map[TE_T_TEAM_EXTRA]);
   return 0;
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- * End:
- */

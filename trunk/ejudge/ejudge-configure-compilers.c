@@ -1,7 +1,7 @@
 /* -*- mode:c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2008-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -25,7 +25,7 @@
 #include "fileutl.h"
 #include "compat.h"
 
-#include "reuse_xalloc.h"
+#include "reuse/xalloc.h"
 
 #include <stdlib.h>
 #include <stdarg.h>
@@ -752,10 +752,3 @@ main(int argc, char **argv)
 
   return 0;
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list" "WINDOW" "ITEM" "PANEL" "MENU")
- * End:
- */

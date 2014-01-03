@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2007-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,7 +17,7 @@
 
 #include "misctext.h"
 
-#include "reuse_xalloc.h"
+#include "reuse/xalloc.h"
 
 #include <stdlib.h>
 #include <ctype.h>
@@ -118,10 +118,3 @@ allowed_list_map(
 
   allowed_list_free(langs, langs_u);
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")
- * End:
- */

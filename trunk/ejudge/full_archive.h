@@ -3,7 +3,7 @@
 #ifndef __FULL_ARCHIVE_H__
 #define __FULL_ARCHIVE_H__
 
-/* Copyright (C) 2005-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  */
 
-#include "reuse_integral.h"
+#include "reuse/integral.h"
 #include "config.h"
 
 #if defined CONF_HAS_LIBZIP
