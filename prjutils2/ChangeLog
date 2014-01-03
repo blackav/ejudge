@@ -1,0 +1,208 @@
+2010-01-07 (r42) Alexander Chernov  <cher@ispras.ru>
+
+	* expat_iface.c, svn_xmllog.c:
+	compilation warnings are fixed.
+
+2010-01-03 (r40) Alexander Chernov  <cher@ispras.ru>
+
+	* svn_xmllog.h: copyright notice is updated;
+	A_KIND attribute is added.
+
+	* svn_xmllog.c: copyright notice is updated;
+	support for "kind" attribute is added.
+
+2007-06-13 (r38) Alexander Chernov  <cher@ispras.ru>
+
+	* cdeps.c:
+	copyright notice is updated.
+
+2007-06-01 (r37) Alexander Chernov  <cher@ispras.ru>
+
+	* cdeps.c:
+	gcc 4.2 warnings are fixed.
+
+2007-04-04 (r36) Alexander Chernov  <cher@ispras.ru>
+
+	* revinfo.c: copyright notice is updated;
+	(read_revdb) the revision database revision is parsed;
+	(main) the revision database revision is also considered when
+	  the max revision is counted.
+
+2006-06-30 (r34) Alexander Chernov  <cher@ispras.ru>
+
+	* revinfo.c:
+	(main) SVN snapshot support is improved.
+
+2006-06-30 (r32) Alexander Chernov  <cher@ispras.ru>
+
+	* revinfo.c:
+	(main) added support for SVN snapshots.
+
+2006-06-25 (r30) Alexander Chernov  <cher@ispras.ru>
+
+	* revinfo.c:
+	(main) incorrect handling of `do_not_commit_revdb' flag is fixed.
+
+2006-06-25 (r28) Alexander Chernov  <cher@ispras.ru>
+
+	* Makefile: rules for compilation of `revinfo', `cdeps' are added.
+
+	* revinfo.c:
+	(main) "-x" option is added, if this option is specified,
+	  the revision database is not committed to version control;
+	  if the REVINFO_NO_COMMIT environtment variable is set, the
+	  revision database is also not committed to version control.
+
+2006-06-10 (r26) Alexander Chernov  <cher@ispras.ru>
+
+	* revinfo.c:
+	(main) stock version handling is improved.
+
+2006-06-10 (r24) Alexander Chernov  <cher@ispras.ru>
+
+	* mkChangeLog2.c:
+	(revision_sort_func) new function to sort the revisions in the XML
+	  log in the decreasing order;
+	(main) sorting of XML log revisions is performed after reading.
+
+2006-06-08 (r21) Alexander Chernov  <cher@ispras.ru>
+
+	* mkChangeLog2.c:
+	(split_to_lines) bug is fixed;
+	(output_tabbed_text) bug is fixed.
+
+2006-06-08 (r20) Alexander Chernov  <cher@ispras.ru>
+
+	* mkChangeLog2.c:
+	(strip_trailing_spaces) function is removed;
+	(split_to_lines) new function, which splits the text into lines;
+	(mark_correct_entries) `split_to_lines' is used instead of
+	  `strip_trailing_spaces';
+	(output_tabbed_text) function accepts `strarray_t' instead of
+	  `char *' and is completely rewritten;
+	(output_new_log) updated for new `output_tabbed_text';
+
+	* svn_xmllog.h:
+	"xalloc.h" is included;
+	(struct xmllog_entry) field `msgl' is added.
+
+2006-06-08 (r18) Alexander Chernov  <cher@ispras.ru>
+
+	* Makefile:
+	log rule is added
+
+2006-06-08 (r17) Alexander Chernov  <cher@ispras.ru>
+
+	* mkChangeLog2.c:
+	(output_new_log) revisions with empty messages are ignored;
+	(main) support for `--latest-revision' is added.
+
+2006-06-08 (r15) Alexander Chernov  <cher@ispras.ru>
+
+	* mkChangeLog2.c:
+	(filter_file_prefix) new function;
+	(main) option parsing is changed from --opt VALUE to --opt=VALUE;
+	  support for --prefix=PREFIX is added;
+	  call of `filter_file_prefix' is added.
+
+2006-06-07 (r14) Alexander Chernov  <cher@ispras.ru>
+
+	* mkChangeLog2.c:
+	(skip_ignored_entries) `ignore_subdirs' parameter is added;
+	  if this parameter is 1, entries containing '/' are ignored;
+	(main) support for `--ignore-subdirs' is added.
+
+2006-06-07 (r12) Alexander Chernov  <cher@ispras.ru>
+
+	* mkChangeLog2.c:
+	(skip_ignored_entries) new function to remove ignored file
+	  names;
+	(main) `skip_ignored_entries' is called.
+
+	* revinfo.c:
+	support for "-p" option is added: never increase patchlevel.
+
+2006-06-07 (r10) Alexander Chernov  <cher@ispras.ru>
+
+	* mkChangeLog2.c: "svn_xmllog.h", "usermap.h", "changelog.h"
+	are included;
+	xml parsing stuff is moved to a separate file;
+	user map parsing stuff is moved to a separate file;
+	the functionality is basically implemented.
+
+	* AUTHORS: initial revision.
+
+	* usermap.c:
+	(usermap_lookup) new function is added.
+
+	* usermap.h:
+	(usermap_lookup) new function prototype is added.
+
+	* changelog.c:
+	(changelog_read) new name for `read_ChangeLog';
+	  revision in form (r%d) is parsed;
+	  maxrevision for the ChangeLog is calculated.
+
+	* changelog.h:
+	(struct changelog_entry) `revision' field is added;
+	(struct changelog) `maxrevision' field is added;
+	(changelog_read) new name for `read_ChangeLog';
+
+	* Makefile:
+	svn_xmllog, usermap modules are added;
+	dependencies are added.
+
+	* svn_xmllog.h:
+	(struct xmllog_entry) `good_msg' field is added.
+
+2006-06-07 (r9) Alexander Chernov  <cher@ispras.ru>
+
+	* usermap.c, usermap.h, svn_xmllog.c, svn_xmllog.h:
+	initial revision.
+
+2006-06-06 (r8) Alexander Chernov  <cher@ispras.ru>
+
+	* mkChangeLog2.c: support for "copyfrom-path", "copyfrom-rev"
+	  attributes of the <path> element is added;
+	(parse_paths) function is implemented;
+
+	* changelog.c:
+	(checked_fgets) new parameter `errlog' is added to use as the
+	  error stream;
+	  -1 returned in case of error, 0 - in case of EOF;
+	(read_ChangeLog) new parameter `errlog' is added;
+	  use of `checked_fgets' is updated;
+	  the data structures are cleaned up on error;
+
+	* expat_iface.c:
+	(xml_build_tree_file) fixed a bug: the parameter should be named `f'
+	  instead of `fin';
+
+	* changelog.h: <stdio.h> is included;
+	(read_ChangeLog) `errlog' parameter is added;
+
+	* Makefile: changelog.o is added to mkChangeLog2 dependencies.
+
+2006-06-06 (r7) Alexander Chernov  <cher@ispras.ru>
+
+	* changelog.c, changelog.h: initial revision
+
+2006-05-30 (r6) Alexander Chernov  <cher@ispras.ru>
+
+	* mkChangeLog2.c:
+	progress...
+
+2006-05-17 (r5) Alexander Chernov  <cher@ispras.ru>
+
+	* mkChangeLog2.c: (parse_usermap) new function is added.
+
+2006-05-15 (r4) Alexander Chernov  <cher@ispras.ru>
+
+	* mkChangeLog2.c, xalloc.c, xalloc.h, expat_iface.c, Makefile, expat_iface.h:
+	in progress...
+
+2006-05-15 (r2) Alexander Chernov  <cher@ispras.ru>
+
+	* mkChangeLog2.c, revinfo.c, cdeps.c, mkChangeLog.c:
+	initial revision
+
