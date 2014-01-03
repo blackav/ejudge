@@ -1,0 +1,784 @@
+2005-04-13 (r687) Alexander Chernov  <cher@ispras.ru>
+
+	* time.h:
+	copyright notice is updated;
+	timezone stuff added.
+
+2005-04-13 (r686) Alexander Chernov  <cher@ispras.ru>
+
+	* stdio.h:
+	copyright notice is updated;
+	definition of P_tmpdir added.
+
+2005-04-13 (r685) Alexander Chernov  <cher@ispras.ru>
+
+	* stddef.h:
+	copyright notice is updated;
+	added definition of wchar_t.
+
+2005-04-13 (r684) Alexander Chernov  <cher@ispras.ru>
+
+	* signal.h:
+	copyright notice is updated;
+	BSD stuff is added.
+
+2005-04-13 (r683) Alexander Chernov  <cher@ispras.ru>
+
+	* pthread.h:
+	fix
+
+2005-04-13 (r682) Alexander Chernov  <cher@ispras.ru>
+
+	* net/route.h:
+	copyright notice is updated;
+	RTMSG_ACK, RTMSG_OVERRUN are just macros.
+
+2005-04-13 (r681) Alexander Chernov  <cher@ispras.ru>
+
+	* netinet/in.h:
+	copyright notice is updated;
+	many additions.
+
+2005-04-13 (r680) Alexander Chernov  <cher@ispras.ru>
+
+	* sys/time.h, sys/mman.h:
+	copyright notice is updated.
+
+2005-04-13 (r679) Alexander Chernov  <cher@ispras.ru>
+
+	* sys/wait.h:
+	copyright notice is updated;
+	<signal.h> is included;
+	<sys/resource.h> is included.
+
+2005-04-13 (r678) Alexander Chernov  <cher@ispras.ru>
+
+	* sys/time.h:
+	many additions.
+
+2005-04-13 (r677) Alexander Chernov  <cher@ispras.ru>
+
+	* sys/mman.h:
+	fixed definition of MAP_NORESERVE.
+
+2004-08-31 (r671) Alexander Chernov  <cher@ispras.ru>
+
+	* limits.h:
+	<linux/limits.h> is included;
+	RE_DUP_MAX is checked for redefinition.
+
+2004-08-31 (r670) Alexander Chernov  <cher@ispras.ru>
+
+	* sys/select.h:
+	FD_* macros are fixed to allow weird cases like
+	  if FD_ISSET(...) {
+	  }
+
+2004-06-30 (r667) Alexander Chernov  <cher@ispras.ru>
+
+	* stdio.h, fcntl.h, unistd.h:
+	SEEK_SET, SEEK_CUR, SEEK_END macros are implemented using #defconst.
+
+2004-06-30 (r666) Alexander Chernov  <cher@ispras.ru>
+
+	* strings.h:
+	<sys/types.h> is included.
+
+2004-06-30 (r665) Alexander Chernov  <cher@ispras.ru>
+
+	* stdio.h:
+	prototypes of asprintf, vasprintf are fixed;
+	wchar_t is now long int.
+
+2004-06-30 (r664) Alexander Chernov  <cher@ispras.ru>
+
+	* stdlib.h, stdint.h:
+	wchar_t is now long int.
+
+2004-06-30 (r663) Alexander Chernov  <cher@ispras.ru>
+
+	* stddef.h:
+	<unistd.h> is included;
+	<sys/types.h> is included.
+
+2004-06-23 (r662) Alexander Chernov  <cher@ispras.ru>
+
+	* signal.h:
+	definition of _sys_siglist added.
+
+2004-06-23 (r661) Alexander Chernov  <cher@ispras.ru>
+
+	* stddef.h:
+	defintion of `offsetof' is added.
+
+2004-06-23 (r660) Alexander Chernov  <cher@ispras.ru>
+
+	* stdio.h:
+	definition of EOF is refined.
+
+2004-06-23 (r659) Alexander Chernov  <cher@ispras.ru>
+
+	* stdlib.h:
+	definition of __WCOREFLAG added.
+
+2004-06-23 (r658) Alexander Chernov  <cher@ispras.ru>
+
+	* termios.h:
+	<sys/ttydefaults.h> are included.
+
+2004-06-23 (r657) Alexander Chernov  <cher@ispras.ru>
+
+	* linux/stddef.h:
+	initial revision
+
+2004-06-23 (r656) Alexander Chernov  <cher@ispras.ru>
+
+	* netinet/in.h:
+	definition of in_addr_t added.
+
+2004-06-23 (r655) Alexander Chernov  <cher@ispras.ru>
+
+	* sys/times.h:
+	added `struct tms' and `times' function.
+
+2004-06-23 (r654) Alexander Chernov  <cher@ispras.ru>
+
+	* sys/wait.h:
+	added definition of __WCOREFLAG.
+
+2004-04-24 (r653) Alexander Chernov  <cher@ispras.ru>
+
+	* assert.h:
+	__assert_fail is marked as a "noreturn" function.
+
+2004-04-24 (r652) Alexander Chernov  <cher@ispras.ru>
+
+	* pthread.h:
+	pthread_exit is marked as a "noreturn" function.
+
+2004-04-24 (r651) Alexander Chernov  <cher@ispras.ru>
+
+	* setjmp.h:
+	longjmp, siglongjmp are marked as noreturn functions.
+
+2004-04-24 (r650) Alexander Chernov  <cher@ispras.ru>
+
+	* stdlib.h:
+	abort, exit, _Exit are marked as "noreturn" functions.
+
+2004-04-24 (r649) Alexander Chernov  <cher@ispras.ru>
+
+	* unistd.h:
+	
+	(_exit) marked as "noreturn" function.
+
+2004-04-23 (r648) Alexander Chernov  <cher@ispras.ru>
+
+	* asm/byteorder.h, linux/capability.h, linux/unistd.h, linux/ioctl.h:
+	initial revision
+
+2004-04-23 (r647) Alexander Chernov  <cher@ispras.ru>
+
+	* sys/ustat.h, sys/capability.h:
+	initial revision
+
+2004-04-23 (r646) Alexander Chernov  <cher@ispras.ru>
+
+	* sys/resource.h:
+	RLIM_INFINITY, RLIM64_INFINITY, RLIM_SAVED_MAX, RLIM_SAVED_CUR
+	are added.
+
+2004-04-23 (r645) Alexander Chernov  <cher@ispras.ru>
+
+	* sys/cdefs.h:
+	__signed__, __const__ are added.
+
+2004-04-23 (r644) Alexander Chernov  <cher@ispras.ru>
+
+	* sys/types.h:
+	__dev_t, __ino_t are added.
+
+2004-04-23 (r643) Alexander Chernov  <cher@ispras.ru>
+
+	* string.h:
+	prototypes for `memmem', `mempcpy' are added.
+
+2004-04-23 (r642) Alexander Chernov  <cher@ispras.ru>
+
+	* stdlib.h, stdio.h:
+	EXIT_SUCCESS, EXIT_FAILURE protected from redefinition.
+
+2004-04-17 (r636) Alexander Chernov  <cher@ispras.ru>
+
+	* stdlib.h:
+	completely rewritten.
+
+2004-04-17 (r635) Alexander Chernov  <cher@ispras.ru>
+
+	* stdio.h:
+	getdelim, getline are included only if __USE_GNU is set.
+
+2004-04-17 (r634) Alexander Chernov  <cher@ispras.ru>
+
+	* math.h:
+	prototypes for trigonometric functions added.
+
+2004-04-17 (r633) Alexander Chernov  <cher@ispras.ru>
+
+	* sys/wait.h:
+	WNOHANG, etc flags and WEXITSTATUS, etc macros are now shared between
+	<sys/wait.h> and <stdlib.h>.
+
+2004-04-17 (r632) Alexander Chernov  <cher@ispras.ru>
+
+	* sys/select.h:
+	definition of NFDBITS added.
+
+2004-04-17 (r631) Alexander Chernov  <cher@ispras.ru>
+
+	* sys/cdefs.h:
+	__BEGIN_DECLS, __END_DECLS, __BEGIN_NAMESPACE_STD, __END_NAMESPACE_STD,
+	__BEGIN_NAMESPACE_C99, __END_NAMESPACE_C99 are added.
+
+2004-04-09 (r627) Alexander Chernov  <cher@ispras.ru>
+
+	* sys/cdefs.h:
+	__restrict and __restrict_arr are defined to restrict.
+
+2004-04-09 (r626) Alexander Chernov  <cher@ispras.ru>
+
+	* sys/types.h:
+	__ptr_t is defined as a macro rather than typedef.
+
+2004-04-06 (r625) Alexander Chernov  <cher@ispras.ru>
+
+	* sysexits.h, netdb.h, nl_types.h, time.h, locale.h, assert.h, setjmp.h, float.h, search.h, fcntl.h, unistd.h, pcap-namedb.h, complex.h, utmpx.h, signal.h, stropts.h, iconv.h, pthread.h, xlocale.h, strings.h, langinfo.h, limits.h, stdio_ext.h, wchar.h, mntent.h, stdint.h, string.h, stdbool.h, sgtty.h, resolv.h, regex.h, wctype.h, stdlib.h, termios.h, pcap.h, ctype.h, utmp.h, dlfcn.h, math.h:
+	<features.h> is included.
+
+2004-04-06 (r624) Alexander Chernov  <cher@ispras.ru>
+
+	* stdio.h:
+	<features.h> is included;
+	definition of FILENAME_MAX is fixed.
+
+2004-04-06 (r623) Alexander Chernov  <cher@ispras.ru>
+
+	* features.h:
+	<sys/cdefs.h> is included.
+
+2004-04-06 (r622) Alexander Chernov  <cher@ispras.ru>
+
+	* pwd.h, mcheck.h, libintl.h, crypt.h, ar.h, getopt.h, malloc.h, stddef.h, paths.h, inttypes.h, fnmatch.h, utime.h, glob.h, stdarg.h, dirent.h, errno.h, shadow.h, sched.h, grp.h, error.h:
+	copyright notice is updated;
+	<features.h> is included.
+
+2004-04-06 (r621) Alexander Chernov  <cher@ispras.ru>
+
+	* netinet/if_fddi.h, netinet/if_ether.h, net/bpf.h, netinet/udp.h, sys/syslog.h, rpc/svc_auth.h, arpa/tftp.h, netinet/igmp.h, rpc/rpc_des.h, rpc/pmap_rmt.h, netinet/ip6.h, net/ethernet.h, sys/resource.h, netinet/if_tr.h, netinet/in.h, arpa/nameser.h, netinet/ip.h, rpc/rpc_msg.h, rpc/key_prot.h, rpc/netdb.h, net/if.h, net/route.h, rpc/clnt.h, rpc/auth.h, netpacket/packet.h, net/if_arp.h, net/if_shaper.h, netinet/ip_icmp.h, rpc/auth_unix.h, sys/ioctl.h, rpc/types.h, netinet/tcp.h, sys/file.h, rpc/pmap_clnt.h, net/if_ppp.h, sys/socket.h, rpc/rpc.h, netinet/in_systm.h, net/if_slip.h, net/if_packet.h, netinet/ether.h, sys/param.h, arpa/telnet.h, rpc/svc.h, rpc/des_crypt.h, sys/mount.h, rpc/auth_des.h, arpa/nameser_compat.h, rpc/xdr.h, arpa/inet.h, netinet/icmp6.h, rpc/pmap_prot.h, sys/mtio.h, sys/ttydefaults.h, net/ppp_defs.h, sys/fsuid.h, sys/stat.h:
+	<features.h> is included.
+
+2004-04-06 (r620) Alexander Chernov  <cher@ispras.ru>
+
+	* asm/socket.h:
+	copyright notice is updated;
+	<features.h> is included.
+
+2004-04-06 (r619) Alexander Chernov  <cher@ispras.ru>
+
+	* sys/cdefs.h:
+	initial revision
+
+2004-04-06 (r618) Alexander Chernov  <cher@ispras.ru>
+
+	* sys/types.h:
+	<features.h> is included;
+	definitions of __attribute__ and __restrict macros are removed.
+
+2004-04-06 (r617) Alexander Chernov  <cher@ispras.ru>
+
+	* sys/utsname.h, sys/select.h, sys/times.h, sys/sysctl.h, sys/un.h, sys/sem.h, sys/shm.h, sys/mman.h, sys/sendfile.h, sys/statvfs.h, sys/uio.h, sys/time.h, sys/timeb.h, sys/wait.h, sys/statfs.h, sys/poll.h, sys/ipc.h:
+	copyright notice is updated;
+	<features.h> is included.
+
+2004-04-02 (r616) Alexander Chernov  <cher@ispras.ru>
+
+	* net/if.h:
+	harmonized with linux/if.h
+
+2004-04-02 (r615) Alexander Chernov  <cher@ispras.ru>
+
+	* linux/if.h:
+	initial revision
+
+2004-04-02 (r614) Alexander Chernov  <cher@ispras.ru>
+
+	* netinet/in.h:
+	new IP-level option constants are added.
+
+2004-04-02 (r613) Alexander Chernov  <cher@ispras.ru>
+
+	* sys/socket.h:
+	SIOCATMARK definition is added.
+
+2004-04-02 (r612) Alexander Chernov  <cher@ispras.ru>
+
+	* sys/ioctl.h, linux/sockios.h:
+	SIO* constants are protected from redefinition.
+
+2004-04-02 (r611) Alexander Chernov  <cher@ispras.ru>
+
+	* arpa/inet.h:
+	copyright notice is updated;
+	(inet_ntop) the last parameter is unsigned int instead of size_t.
+
+2004-04-02 (r610) Alexander Chernov  <cher@ispras.ru>
+
+	* unistd.h:
+	copyright notice is updated;
+	STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO are defined.
+
+2004-04-02 (r609) Alexander Chernov  <cher@ispras.ru>
+
+	* stdlib.h:
+	RAND_MAX is defined.
+
+2004-04-02 (r608) Alexander Chernov  <cher@ispras.ru>
+
+	* limits.h, stdio.h:
+	FILENAME_MAX is checked for redefinition
+
+2004-04-02 (r607) Alexander Chernov  <cher@ispras.ru>
+
+	* features.h:
+	initial revision
+
+2004-03-09 (r590) Alexander Chernov  <cher@ispras.ru>
+
+	* complex.h:
+	initial revision
+
+2004-02-27  Alexander Chernov  <cher@ispras.ru>
+
+	* iconv.h, mntent.h: initial revision
+
+2004-02-26  Alexander Chernov  <cher@ispras.ru>
+
+	* xlocale.h: added declaration of `struct locale_data'.
+
+	* wchar.h: fixed a type in the prototype of wcstol_l.
+
+	* utmpx.h:
+	added protection from redefinition of entry types (EMPTY, RUN_LVL, etc).
+
+	* utmp.h: copyright notice is updated;
+	added protection from redefinition of entry types (EMPTY, RUN_LVL, etc).
+
+	* time.h: added definition of CLOCK_REALTIME, etc;
+	added prototypes for the following functions: nanosleep,
+	  clock_getres, clock_gettime, clock_settime, clock_nanosleep,
+	  clock_getcpuclockid,
+	  timer_create, timer_delete, timer_settime, timer_gettime,
+	  timer_getoverrun,
+	  getdate, getdate_r.
+
+	* stdio.h: copyright notice is updated;
+	added protected definitions of `ssize_t', `off_t', `loff_t' types;
+	stdin, stdout, stderr are defined as macros as well;
+	added prototypes for the following functions: fopen64, freopen64,
+	  fcloseall, dprintf, vdprintf, fmemopen, getdelim, getline,
+	  tmpfile, tmpfile64, tmpnam, tmpnam_r, fflush_unlocked,
+	  getc_unlocked, getchar_unlocked, fgetc_unlocked,
+	  putc_unlocked, putchar_unlocked, fputc_unlocked,
+	  fgets_unlocked, fputs_unlocked,
+	  fread_unlocked, fwrite_unlocked,
+	  fseeko, ftello, fseeko64, ftello64,
+	  fgetpos, fsetpos, fgetpos64, fsetpos64,
+	  clearerr_unlocked, feof_unlocked, ferror_unlocked, fileno_unlocked,
+	  popen, pclose, ctermid, cuserid,
+	  flockfile, ftrylockfile, funlockfile.
+
+	* signal.h: prototype for `killpg' and `raise' are added.
+
+	* regex.h:
+	RE_SYNTAX_* are defined as macros as because they depends on each
+	  other in a strange order.
+
+	* locale.h: completely reimplemented using the system locale.h.
+
+	* assert.h: copyright notice is updated;
+	added definitions of FILE and size_t types.
+
+	* sys/types.h:
+	off_t, loff_t, off64_t are protected from multiple definition
+	  (in stdio.h and in sys/types.h);
+	definition of __restrict as empty macro is added.
+
+	* sys/ttydefaults.h: a proper copyright notice is added;
+	TTYDEF_* constants are defined as macros since they depend on terminal
+	  control constants (BRKINT, etc), which may even not be defined at all.
+
+	* sys/resource.h:
+	macros for RLIMIT_* constants are provided as well (atleast one
+	  application checks, that the RLIMIT_DATA macro is defined).
+
+	* linux/limits.h: added check for redefinition of NGROUPS_MAX.
+
+	* float.h, langinfo.h, nl_types.h, stdbool.h, bits/locale.h:
+	initial revision
+
+2004-02-25  Alexander Chernov  <cher@ispras.ru>
+
+	* linux/limits.h, linux/param.h: initial revision
+
+	* sys/param.h: Changed to match the system version of sys/param.h
+
+	* limits.h: Reimplemented.
+
+2004-02-24  Alexander Chernov  <cher@ispras.ru>
+
+	* math.h: proper definitions of math constants are added.
+
+2004-02-23  Alexander Chernov  <cher@ispras.ru>
+
+	* time.h: copyright notice is updated;
+	tzset is declared.
+
+	* termios.h: copyright notice is updated;
+	<sys/types.h> is included.
+
+	* string.h: copyright notice is updated;
+	index, rindex are added.
+
+	* stdlib.h: copyright notice is updated;
+	rand, rand_r, srand functions are added;
+	MB_CUR_MAX added.
+
+	* stdint.h: copyright notice is updated;
+	intX_t and uintX_t are defined conditionally.
+
+	* signal.h: copyright notice is updated;
+	(sigset) added;
+	(sys_siglist) added.
+
+	* setjmp.h: copyright notice is updated;
+	(sigsetjmp) prototype is fixed.
+
+	* netdb.h: copyright notice is updated;
+	<rpc/netdb.h> is added.
+
+	* math.h: copyright notice is updated;
+	constant definitions are added (preliminary).
+
+	* limits.h: copyright notice is updated;
+	MB_LEN_MAX is added.
+
+	* fcntl.h: copyright notice is updated;
+	FNDELAY constant is added.
+
+	* ctype.h: copyright notice is updated;
+	(toascii) added.
+
+	* sys/types.h: copyright notice is updated;
+	many new types are added.
+
+	* sys/syslog.h: copyright notice is updated;
+	added priority names.
+
+	* sys/stat.h: copyright notice is updated;
+	`struct timespec' fields are added to `struct stat'.
+
+	* sys/socket.h: copyright notice is updated;
+	<sys/types.h> is included;
+	definition for SOL_IP is added.
+
+	* sys/param.h: many new constants added.
+
+	* sys/ioctl.h: implemented.
+
+	* bits/sockaddr.h: sa_family_t is protected from multiple definition.
+
+	* rpc/svc_auth.h, rpc/rpc_msg.h, rpc/rpc.h, rpc/types.h, rpc/rpc_des.h, rpc/pmap_rmt.h, rpc/pmap_prot.h, rpc/pmap_clnt.h, rpc/netdb.h, rpc/des_crypt.h, rpc/key_prot.h, rpc/svc.h, rpc/xdr.h, rpc/clnt.h, rpc/auth_unix.h, rpc/auth.h, rpc/auth_des.h, pthread.h, wchar.h, pcap-namedb.h, pcap.h, regex.h, resolv.h, search.h, stdio_ext.h, stropts.h, sysexits.h, sgtty.h, strings.h, poll.h, lastlog.h, dlfcn.h, utmpx.h, wctype.h, xlocale.h, net/bpf.h, net/ethernet.h, net/if_arp.h, net/if.h, net/if_packet.h, net/if_ppp.h, net/if_shaper.h, net/if_slip.h, net/ppp-comp.h, net/ppp_defs.h, net/route.h, netpacket/packet.h, arpa/nameser_compat.h, arpa/nameser.h, arpa/telnet.h, arpa/tftp.h, linux/fd.h, linux/if_ether.h, linux/if_fddi.h, linux/if_slip.h, linux/if_tr.h, linux/igmp.h, linux/ppp-comp.h, linux/ppp_defs.h, linux/sockios.h:
+	initial revision
+
+	* netinet/in.h: copyright notice is updated;
+	definition of IP_TOS added.
+
+	* netinet/ether.h, netinet/icmp6.h, netinet/if_ether.h, netinet/if_fddi.h, netinet/if_tr.h, netinet/igmp.h, netinet/in_systm.h, netinet/ip.h, netinet/ip6.h, netinet/ip_icmp.h, netinet/tcp.h, netinet/udp.h, sys/file.h, sys/fsuid.h, sys/mount.h, sys/mtio.h:
+	initial revision
+
+2004-02-22  Alexander Chernov  <cher@ispras.ru>
+
+	* sys/poll.h, sys/sockaddr.h, sys/statfs.h, sys/statvfs.h, sys/sysctl.h, sys/ttydefaults.h, sys/vfs.h:
+	initial revision
+
+2003-12-17  Alexander Chernov  <cher@ispras.ru>
+
+	* asm/socket.h, crypt.h, paths.h, sched.h, shadow.h, utmp.h, wait.h:
+	initial revision
+
+2003-12-16  Alexander Chernov  <cher@ispras.ru>
+
+	* sys/time.h: (timeclear) function is added.
+
+	* sys/sendfile.h: initial revision
+
+2003-12-07  Alexander Chernov  <cher@ispras.ru>
+
+	* unistd.h:
+	rewritten almost from scratch using the standard system header
+	  /usr/include/unistd.h.
+
+	* stdlib.h: prototype of `mkstemp' is added.
+
+	* stdint.h: intptr_t is defined only if not defined before.
+
+	* signal.h: struct sigevent and the associated constants are added.
+
+	* fcntl.h: F_ULOCK, etc are defined only if not previously defined.
+
+	* getopt.h, malloc.h, mcheck.h, netdb.h: Initial revision
+
+	* netinet/in.h: IPv6 stuff added.
+
+	* sys/socket.h: definition of sa_family_t added;
+	definition of struct sockaddr_storage added.
+
+	* sys/ioctl.h: Initial revision
+
+2003-11-23  Alexander Chernov  <cher@ispras.ru>
+
+	* unistd.h: copyright notice is updated;
+	many POSIX functions are added.
+
+	* stdint.h: copyright notice is updated;
+	wchar_t is added.
+
+	* signal.h: copyright notice is updated;
+	<bits/sigset.h> is included;
+	other changes.
+
+	* fcntl.h: copyright notice is updated;
+	many flags are added;
+	struct flock is added;
+	locking functions prototypes are added.
+
+	* time.h: copyright notice is updated;
+	many other minor (?) changes.
+
+	* stdlib.h: copyright notice is updated;
+	NULL is defined.
+
+	* stdio.h: copyright notice is updated;
+	SEEK_SET, SEEK_CUR, SEEK_END are defined both as enums and macros;
+	wchar_t is defined;
+	_IOLBF, _IOFBF, _IONBF are defined;
+	EOF defined both as enum and as macros;
+	open_memstream is defined;
+	fseek, ftell, rewind are defined.
+
+2003-11-19  Alexander Chernov  <cher@ispras.ru>
+
+	* string.h: copyright notice updated;
+	strnlen function added.
+
+	* stddef.h, stdarg.h, setjmp.h, memory.h, pwd.h, math.h, locale.h, limits.h, libintl.h, inttypes.h, glob.h, fnmatch.h, errno.h, dirent.h, ctype.h, assert.h, ar.h, alloca.h:
+	copyright notice updated
+
+	* error.h, expat.h, grp.h, syslog.h, termios.h, utime.h, linux/autoconf.h, linux/config.h, bits/sigset.h, bits/sockaddr.h, bits/uio.h:
+	initial revision
+
+	* arpa/inet.h: copyright notice updated
+
+	* netinet/in.h: copyright notice updated;
+	<sys/socket.h> is included.
+
+	* sys/param.h, sys/resource.h: copyright notice updated
+
+	* sys/socket.h: copyright notice updated;
+	MSG_* constants added;
+	CMSG_* functions added;
+	SCM_* constants added;
+	struct ucred added;
+	struct linger added.
+	<sys/uio.h> is included.
+
+	* sys/stat.h: copyright notice updated;
+	new functions added: mkfifo, stat, lstat, fstat.
+
+	* sys/time.h: copyright notice updated;
+	minor formatting changes;
+	timercmp macro is added.
+
+	* sys/timeb.h, sys/times.h: copyright notice updated
+
+	* sys/types.h: copyright notice updated;
+	<sys/select.h> is included;
+	definition of size_t added.
+
+	* sys/utsname.h, sys/wait.h: copyright notice updated
+
+	* sys/ipc.h, sys/mman.h, sys/select.h, sys/sem.h, sys/shm.h, sys/signal.h, sys/syslog.h, sys/uio.h, sys/un.h:
+	initial revision
+
+2002-05-08  Alexander Chernov  <cher@ispras.ru>
+
+	* arpa/ChangeLog, netinet/ChangeLog: initial revision
+
+2002-03-09  Alexander Chernov  <cher@ispras.ru>
+
+	* sys/ChangeLog: *** empty log message ***
+
+	* sys/socket.h:
+	enumerated definitions are provided for all socket constants.
+
+2002-03-09  Alexander Chernov  <cher@ispras.ru>
+
+	* pwd.h, stdio.h:
+	`FILE' declared as typedef'ed anonymous structure, so it will be
+	  generated back to C exactly as `FILE'.
+
+	* ctype.h: prototype of `isascii' added.
+
+2002-03-06  Alexander Chernov  <cher@ispras.ru>
+
+	* signal.h:
+	`#define' directives added for various signal-related constants.
+
+	* limits.h: added many POSIX limit constants.
+
+	* fcntl.h: a `#define' directive added for each fcntl constant.
+
+	* errno.h: a define directive added for each errno code.
+
+	* dirent.h: added definitions for _DIRENT_HAVE_* macros.
+
+2002-03-04  Alexander Chernov  <cher@ispras.ru>
+
+	* alloca.h, ar.h, dirent.h, fnmatch.h, glob.h, inttypes.h, pwd.h, stdint.h:
+	initial revision
+
+	* unistd.h: POSIX feature test macros are added;
+	`lseek', `vfork' functions are declared;
+	`environ' is commented out;
+	POSIX system configuration constants are declared;
+	`pathconf' ... `confstr' functions are declared.
+
+	* string.h: `strsignal' function is declared.
+
+	* stdlib.h: `atoi', `atol', ..., `atof' functions are declared.
+
+	* stdio.h: `FILE' type is checked to be defined prior to definition;
+	`setbuf', ..., `setvbuf' functions are added.
+
+	* stdarg.h:
+	added structure __force_include_stdarg in order to preserve the fact,
+	  that the file was included.
+
+	* signal.h: macrodefinitions for each signal name are added;
+	`sig_atomic_t', `sigset_t', `sigval_t', `siginfo_t',
+	   `struct sigaction' types are added;
+	many functions for POSIX signal handling are added.
+
+2002-02-28  Alexander Chernov  <cher@ispras.ru>
+
+	* assert.h: assert macro now uses __FUNCTION__ built-in variable.
+
+2002-02-28  Alexander Chernov  <cher@ispras.ru>
+
+	* setjmp.h: jmp_buf is declared exactly as in Glibc-2.1.
+
+	* stdio.h: FILE is declared exactly as in Glibc-2.1.
+
+2002-02-25  Alexander Chernov  <cher@ispras.ru>
+
+	* unistd.h, time.h, stdio.h: copyright notice is slightly updated;
+	all enumerated type definitions are marked with `int' type.
+
+	* signal.h: excessive commas removed.
+
+	* signal.h, locale.h, fcntl.h, errno.h:
+	copyright notice is slightly updated;
+	all enumerated type definitions are marked with `int' type.
+
+2002-02-22  Alexander Chernov  <cher@ispras.ru>
+
+	* string.h:
+	prototypes added: strerror_r, strndup, strdupa, strndupa, stpcpy.
+
+	* libintl.h, locale.h, stddef.h: initial revision
+
+2002-02-21  Alexander Chernov  <cher@ispras.ru>
+
+	* errno.h, fcntl.h, limits.h, memory.h, setjmp.h, signal.h, time.h, unistd.h, assert.h:
+	initial revision
+
+	* stdlib.h: added:
+	  definition of `ssize_t' type;
+	  definition of `ptrdiff_t' type;
+	  `alloca', defined as macros expanding to `__builtin_alloca';
+	  proto for `abort';
+	  protos for `strtol', `strtoul', `strtoll', `strtoull';
+	  protos for `strtod', `strtof', `strtold';
+	  protos for `qsort', `system', `atexit';
+	  protos for `clearenv', `putenv', `getenv';
+	  protos for `random', `srandom', `initstate', `setstate'.
+
+	* string.h: copyright notice is updated;
+	minor indentation changes in copying conditions statement;
+	prototypes for `strcasecmp', `strncasecmp' added.
+
+	* stdio.h: added definition of `va_list' type;
+	added definition of `SEEK_*' constants;
+	`FILE' type is declared as opaque structure;
+	added prototypes for `fdopen', `freopen', `popen', `pclose';
+	added prototypes for `asprintf', `snprintf', `vprintf', `vfprintf',
+	  `vsprintf', `vsnprintf', `vasprintf';
+	added prototypes for `fread', `fwrite';
+	added prototypes for `clearerr', `feof', `ferror', `fileno';
+	`EOF' is defined as constant with value -1;
+	`NULL' is defined as just `0';
+	added prototypes for `tempnam', `rename', `remove', `perror'.
+
+	* stdarg.h:
+	definition of `va_list' type is put under conditional compilation.
+
+2002-02-07  Alexander Chernov  <cher@ispras.ru>
+
+	* stdio.h: copyright notice is updated;
+	added definition of `size_t' type.
+
+2002-01-25  Alexander Chernov  <cher@ispras.ru>
+
+	* stdarg.h:
+	implementations for all va_* macros added, using the builtin
+	types and operations.
+
+2001-12-15  Alexander Chernov  <cher@ispras.ru>
+
+	* math.h: Prototypes of many mathematical functions added.
+
+	* stdio.h: Added prototype of `fflush'.
+
+2001-09-24  Alexander Chernov  <cher@ispras.ru>
+
+	* string.h: all the ANSI/ISO C90 functions prototyped.
+
+	* ctype.h: initial revision
+
+2001-09-16  Alexander Chernov  <cher@ispras.ru>
+
+	* math.h, stdio.h, stdlib.h, string.h:
+	Many new function prototypes added.
+
+2001-09-14  Alexander Chernov  <cher@ispras.ru>
+
+	* math.h: initial revision
+
+2001-06-23  Alexander Chernov  <cher@ispras.ru>
+
+	* stdarg.h, stdio.h, stdlib.h, string.h:
+	Copyright notice updated. Reference to GNU LGPL added.
+
+END
+
+	$Id: ChangeLog 753 2006-06-08 07:47:53Z cher $

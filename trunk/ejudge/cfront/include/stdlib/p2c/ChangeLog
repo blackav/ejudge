@@ -1,0 +1,8 @@
+2001-09-21  Alexander Chernov  <cher@ispras.ru>
+
+	* p2c.h: definitions of LONGINT, P_argv, P_argc added.
+
+2001-09-14  Alexander Chernov  <cher@ispras.ru>
+
+	* p2c.h: initial revision
+
