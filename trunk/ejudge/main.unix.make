@@ -1,0 +1,474 @@
+# -*- Makefile -*-
+# $Id$
+# @configure_input@
+
+# Copyright (C) 2014 Alexander Chernov <cher@ejudge.ru> */
+
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2 of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+
+include files.make
+
+ifeq (${ARCH}, unix)
+ifdef RELEASE
+CDEBUGFLAGS=-O2 -Wall -DNDEBUG -DRELEASE ${WERROR}
+else
+CDEBUGFLAGS=-g -Wall ${WERROR}
+endif
+ifdef STATIC
+CDEBUGFLAGS += -static
+endif
+CEXTRAFLAGS=
+LDEXTRAFLAGS=
+EXTRALIBS=
+CCOMPFLAGS=-D_GNU_SOURCE -std=gnu99
+LDCOMPFLAGS=
+EXESFX=
+else
+$(error "unsupported configuration")
+endif
+
+LDLIBS=${EXTRALIBS} -lz $(LIBINTL) $(LIBICONV) $(LIBLIBICONV) -lm
+CFLAGS=-I. ${EXPAT_INCL_OPT} ${CDEBUGFLAGS} ${CCOMPFLAGS} ${CEXTRAFLAGS} ${WPTRSIGN}
+LDFLAGS=${EXPAT_LIB_OPT} ${CDEBUGFLAGS} ${LDCOMPFLAGS} ${LDEXTRAFLAGS}
+CC=gcc
+LD=gcc
+EXPAT_LIB=-lexpat
+
+C_CFILES=compile.c version.c
+C_OBJECTS=$(C_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
+
+CC_CFILES=compile-control.c version.c
+CC_OBJECTS=$(CC_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
+
+SERVE_CFILES=serve.c version.c
+SERVE_OBJECTS=$(SERVE_CFILES:.c=.o) libcommon.a libuserlist_clnt.a libplatform.a
+
+RUN_CFILES=run.c version.c
+RUN_OBJECTS=$(RUN_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
+
+NWRUN_CFILES=nwrun.c version.c
+NWRUN_OBJECTS=$(NWRUN_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
+
+NCHECK_CFILES=ej-ncheck.c version.c
+NCHECK_OBJECTS=$(NCHECK_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
+
+T3M_CFILES=ej-batch.c version.c
+T3M_OBJECTS=$(T3M_CFILES:.c=.o) libcommon.a libuserlist_clnt.a libplatform.a libcommon.a
+
+SC_CFILES = serve-control.c version.c
+SC_OBJECTS = $(SC_CFILES:.c=.o) libuserlist_clnt.a libsuper_clnt.a libcommon.a libplatform.a libcommon.a
+
+UL_CFILES = userlist-server.c version.c
+UL_OBJECTS = ${UL_CFILES:.c=.o} libcommon.a libuserlist_clnt.a libplatform.a libcommon.a
+
+ULC_CFILES = userlist-server-control.c version.c
+ULC_OBJECTS = ${ULC_CFILES:.c=.o} libcommon.a libuserlist_clnt.a libplatform.a libcommon.a
+
+JS_CFILES = job-server.c version.c
+JS_OBJECTS = ${JS_CFILES:.c=.o} libcommon.a libplatform.a libcommon.a
+
+JSC_CFILES = job-server-control.c version.c
+JSC_OBJECTS = ${JSC_CFILES:.c=.o} libcommon.a libplatform.a libcommon.a
+
+JP_CFILES = job-server-cmd.c version.c
+JP_OBJECTS = ${JP_CFILES:.c=.o} libcommon.a libplatform.a libcommon.a
+
+US_CFILES = users.c version.c
+US_OBJECTS = ${US_CFILES:.c=.o} libuserlist_clnt.a libcommon.a libplatform.a libcommon.a
+
+ED_CFILES = edit-userlist.c version.c
+ED_OBJECTS = ${ED_CFILES:.c=.o} libcommon.a libuserlist_clnt.a libplatform.a libcommon.a
+
+SS_CFILES = super-serve.c version.c
+SS_OBJECTS = ${SS_CFILES:.c=.o} libcommon.a libuserlist_clnt.a libplatform.a libcommon.a
+
+SR_CFILES = ej-super-run.c version.c
+SR_OBJECTS = ${SR_CFILES:.c=.o} libcommon.a libplatform.a libcommon.a
+
+SSC_CFILES = super-serve-control.c version.c
+SSC_OBJECTS = ${SSC_CFILES:.c=.o} libcommon.a libsuper_clnt.a libplatform.a libcommon.a
+
+SRC_CFILES = ej-super-run-control.c version.c
+SRC_OBJECTS = ${SRC_CFILES:.c=.o} libcommon.a libsuper_clnt.a libplatform.a libcommon.a
+
+CU_CFILES = convert-clars.c version.c
+CU_OBJECTS = ${CU_CFILES:.c=.o} libcommon.a libuserlist_clnt.a libplatform.a libcommon.a
+
+CR_CFILES = convert-runs.c version.c
+CR_OBJECTS = ${CR_CFILES:.c=.o} libcommon.a libuserlist_clnt.a libplatform.a libcommon.a
+
+FIX_DB_CFILES = fix-db.c version.c
+FIX_DB_OBJECTS = ${FIX_DB_CFILES:.c=.o} libcommon.a libuserlist_clnt.a libplatform.a libcommon.a
+
+SU_CFILES = slice-userlist.c version.c
+SU_OBJECTS = ${SU_CFILES:.c=.o} libcommon.a libuserlist_clnt.a
+
+CE_CFILES = collect-emails.c version.c
+CE_OBJECTS = ${CE_CFILES:.c=.o} libcommon.a libuserlist_clnt.a
+
+ST_CFILES = ejudge-setup.c version.c
+ST_OBJECTS = ${ST_CFILES:.c=.o} libcommon.a libplatform.a libcommon.a
+
+ECC_CFILES = ejudge-configure-compilers.c version.c
+ECC_OBJECTS = ${ECC_CFILES:.c=.o} libcommon.a libplatform.a libcommon.a
+
+EC_CFILES = ejudge-control.c version.c
+EC_OBJECTS = ${EC_CFILES:.c=.o} libcommon.a libplatform.a libcommon.a
+
+EX_CFILES = execute.c version.c
+EX_OBJECTS = ${EX_CFILES:.c=.o} libcommon.a libplatform.a libcommon.a
+
+NC_CFILES=new-client.c version.c
+NC_OBJECTS=$(NC_CFILES:.c=.o) libnew_server_clnt.a libcommon.a libplatform.a libcommon.a
+
+NS_CFILES=new-server.c version.c
+NS_OBJECTS=$(NS_CFILES:.c=.o) libcommon.a libuserlist_clnt.a libplatform.a libcommon.a
+
+NSM_CFILES = new-server-cmd.c version.c
+NSM_OBJECTS = $(NSM_CFILES:.c=.o) libcommon.a libnew_server_clnt.a libuserlist_clnt.a libplatform.a libcommon.a
+
+NSC_CFILES=new-server-control.c version.c
+NSC_OBJECTS=$(NSC_CFILES:.c=.o) libcommon.a libnew_server_clnt.a libplatform.a libcommon.a
+
+NRM_CFILES=ej-normalize.c version.c
+NRM_OBJECTS=$(NRM_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
+
+P_CFILES = ej-polygon.c version.c
+P_OBJECTS = $(P_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
+
+IC_CFILES = ej-import-contest.c version.c
+IC_OBJECTS = $(IC_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
+
+INSTALLSCRIPT = ejudge-install.sh
+BINTARGETS = ejudge-jobs-cmd ejudge-edit-users ejudge-setup ejudge-configure-compilers ejudge-control ejudge-execute ejudge-contests-cmd
+SERVERBINTARGETS = ej-compile ej-compile-control ej-run ej-nwrun ej-ncheck ej-batch ej-serve ej-users ej-users-control ej-jobs ej-jobs-control ej-super-server ej-super-server-control ej-contests ej-contests-control uudecode ej-convert-clars ej-convert-runs ej-fix-db ej-super-run ej-super-run-control ej-normalize ej-polygon ej-import-contest
+CGITARGETS = users${CGI_PROG_SUFFIX} serve-control${CGI_PROG_SUFFIX} new-client${CGI_PROG_SUFFIX}
+TARGETS = ${SERVERBINTARGETS} ${BINTARGETS} ${CGITARGETS}
+STYLEFILES = style/logo.gif style/priv.css style/unpriv.css style/priv.js style/unpriv.js style/filter_expr.html style/sprintf.js
+
+all: local_all subdirs_all mo
+local_all: $(TARGETS) ejudge-config
+
+release:
+	rm -fr CVS db unix userlist_clnt win32 checkers/CVS checkers/.cvsignore checkers/Makefile checkers/ChangeLog checkers/*.c checkers/*.o checkers/testinfo.h extra/CVS extra/.cvsignore extra/Makefile extra/*.c extra/*.o scripts/CVS .build .cvsignore ChangeLog OLDNEWS TODO *.c *.h *.o *.a *.make *.po makefile *.lex *.y
+
+subdirs_all:
+	$(MAKE) -C extra DESTDIR="${DESTDIR}" all
+	$(MAKE) -C checkers DESTDIR="${DESTDIR}" all
+	$(MAKE) -C scripts DESTDIR="${DESTDIR}" all
+	$(MAKE) -C plugins/mysql-common DESTDIR="${DESTDIR}" all
+	$(MAKE) -C plugins/mysql-userlist DESTDIR="${DESTDIR}" all
+	$(MAKE) -C plugins/mysql-clardb DESTDIR="${DESTDIR}" all
+	$(MAKE) -C plugins/mysql-rundb DESTDIR="${DESTDIR}" all
+
+extra_progs:
+	$(MAKE) -C extra DESTDIR="${DESTDIR}" all
+checker_lib:
+	$(MAKE) -C checkers DESTDIR="${DESTDIR}" all
+
+install_ej_users: ej-users
+	install -m 0755 ej-users "${DESTDIR}${serverbindir}"
+install_ej_contests: ej-contests
+	install -m 0755 ej-contests "${DESTDIR}${serverbindir}"
+install_ej_super_server: ej-super-server
+	install -m 0755 ej-super-server "${DESTDIR}${serverbindir}"
+install_ej_super_run: ej-super-run
+	install -m 0755 ej-super-run "${DESTDIR}${serverbindir}"
+
+local_install: ${TARGETS} ejudge-config po mo
+	install -d "${DESTDIR}${bindir}"
+	for i in ${BINTARGETS}; do install -m 0755 $$i "${DESTDIR}${bindir}"; done
+	install -d "${DESTDIR}${serverbindir}"
+	for i in ${SERVERBINTARGETS}; do install -m 0755 $$i "${DESTDIR}${serverbindir}"; done
+	install -m 0755 ejudge-config "${DESTDIR}${bindir}"
+	install -d "${DESTDIR}${cgibindir}"
+	for i in ${CGITARGETS}; do install -m 0755 $$i "${DESTDIR}${cgibindir}"; done
+	cd "${DESTDIR}${cgibindir}"; rm -f new-master${CGI_PROG_SUFFIX}; ln new-client${CGI_PROG_SUFFIX} new-master${CGI_PROG_SUFFIX}
+	cd "${DESTDIR}${cgibindir}"; rm -f new-judge${CGI_PROG_SUFFIX}; ln new-client${CGI_PROG_SUFFIX} new-judge${CGI_PROG_SUFFIX}
+	cd "${DESTDIR}${cgibindir}"; rm -f new-register${CGI_PROG_SUFFIX}; ln new-client${CGI_PROG_SUFFIX} new-register${CGI_PROG_SUFFIX}
+	cd "${DESTDIR}${cgibindir}"; rm -f register${CGI_PROG_SUFFIX}; ln new-client${CGI_PROG_SUFFIX} register${CGI_PROG_SUFFIX}
+	cd "${DESTDIR}${cgibindir}"; rm -f team${CGI_PROG_SUFFIX}; ln new-client${CGI_PROG_SUFFIX} team${CGI_PROG_SUFFIX}
+	cd "${DESTDIR}${cgibindir}"; rm -f judge${CGI_PROG_SUFFIX}; ln new-client${CGI_PROG_SUFFIX} judge${CGI_PROG_SUFFIX}
+	cd "${DESTDIR}${cgibindir}"; rm -f master${CGI_PROG_SUFFIX}; ln new-client${CGI_PROG_SUFFIX} master${CGI_PROG_SUFFIX}
+	if [ x"${ENABLE_NLS}" = x1 ]; then install -d "${DESTDIR}${datadir}/locale/ru_RU.${CHARSET}/LC_MESSAGES"; fi
+	if [ x"${ENABLE_NLS}" = x1 ]; then install -m 0644 locale/ru_RU.${CHARSET}/LC_MESSAGES/ejudge.mo "${DESTDIR}${datadir}/locale/ru_RU.${CHARSET}/LC_MESSAGES"; fi
+	install -d "${DESTDIR}${datadir}/ejudge"
+	install -d "${DESTDIR}${datadir}/ejudge/style"
+	for i in ${STYLEFILES}; do install -m 0644 $$i "${DESTDIR}${datadir}/ejudge/style"; done
+	install -d "${DESTDIR}${datadir}/ejudge/style/icons"
+	for i in style/icons/*.png; do install -m 0644 $$i "${DESTDIR}${datadir}/ejudge/style/icons"; done
+	install -m 0755 style/ejudge-upgrade-web "${DESTDIR}${bindir}"
+	mkdir -p "${DESTDIR}${includedir}/ejudge"
+	for i in problem_plugin_impl.h problem_plugin.h ejudge_plugin.h ej_types.h iterators.h contest_plugin.h; do install -m 644 $$i "${DESTDIR}${includedir}/ejudge"; done
+
+install: local_install
+	$(MAKE) -C scripts DESTDIR="${DESTDIR}" install
+	$(MAKE) -C checkers DESTDIR="${DESTDIR}" install
+	$(MAKE) -C extra DESTDIR="${DESTDIR}" install
+	$(MAKE) -C plugins/mysql-common DESTDIR="${DESTDIR}" install
+	$(MAKE) -C plugins/mysql-userlist DESTDIR="${DESTDIR}" install
+	$(MAKE) -C plugins/mysql-clardb DESTDIR="${DESTDIR}" install
+	$(MAKE) -C plugins/mysql-rundb DESTDIR="${DESTDIR}" install
+	if [ ! -f "${INSTALLSCRIPT}" ]; then ./ejudge-setup -b; fi
+	if [ -f "${INSTALLSCRIPT}" ]; then install -m 0755 "${INSTALLSCRIPT}" "${DESTDIR}${bindir}"; fi
+
+ej-compile$(EXESFX) : $(C_OBJECTS)
+	$(LD) $(LDFLAGS) $(C_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB} ${LIBUUID}
+
+ej-compile-control : $(CC_OBJECTS)
+	$(LD) $(LDFLAGS) $(CC_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB}
+
+ej-run${EXESFX} : $(RUN_OBJECTS)
+	$(LD) $(LDFLAGS) $(RUN_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB} ${LIBZIP} ${LIBUUID}
+
+ej-nwrun${EXESFX} : $(NWRUN_OBJECTS)
+	$(LD) $(LDFLAGS) $(NWRUN_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB} ${LIBZIP}
+
+ej-ncheck${EXESFX} : $(NCHECK_OBJECTS)
+	$(LD) $(LDFLAGS) $(NCHECK_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB}
+
+ej-batch : $(T3M_OBJECTS)
+	$(LD) $(LDFLAGS) $(T3M_OBJECTS) -o $@ $(LDLIBS) -ldl ${EXPAT_LIB} ${LIBZIP} ${LIBUUID}
+
+ej-serve : $(SERVE_OBJECTS)
+	$(LD) $(LDFLAGS) $(SERVE_OBJECTS) -o $@ $(LDLIBS) -ldl ${EXPAT_LIB} ${LIBUUID}
+
+serve-control${CGI_PROG_SUFFIX}: ${SC_OBJECTS}
+	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
+
+ej-users: ${UL_OBJECTS}
+	${LD} ${LDFLAGS} $^  libcommon.a -rdynamic -o $@ ${LDLIBS} -ldl ${EXPAT_LIB}
+
+ej-users-control: ${ULC_OBJECTS}
+	${LD} ${LDFLAGS} $^  libcommon.a -rdynamic -o $@ ${LDLIBS} ${EXPAT_LIB}
+
+ej-jobs: ${JS_OBJECTS}
+	${LD} ${LDFLAGS} $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB}
+
+ej-jobs-control: ${JSC_OBJECTS}
+	${LD} ${LDFLAGS} $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB}
+
+ejudge-jobs-cmd: ${JP_OBJECTS}
+	${LD} ${LDFLAGS} $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB}
+
+ej-super-server: ${SS_OBJECTS}
+	${LD} ${LDFLAGS} -rdynamic $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl ${LIBUUID}
+
+ej-super-server-control: ${SSC_OBJECTS}
+	${LD} ${LDFLAGS} $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB}
+
+ej-super-run: ${SR_OBJECTS}
+	${LD} ${LDFLAGS} -rdynamic $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl ${LIBZIP} ${LIBUUID}
+
+ej-super-run-control: ${SRC_OBJECTS}
+	${LD} ${LDFLAGS} -rdynamic $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl
+
+ej-normalize: ${NRM_OBJECTS}
+	${LD} ${LDFLAGS} -rdynamic $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl
+
+ej-polygon: ${P_OBJECTS}
+	${LD} ${LDFLAGS} $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} ${LIBCURL} ${LIBZIP} -ldl
+
+ej-import-contest: ${IC_OBJECTS}
+	${LD} ${LDFLAGS} $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} ${LIBCURL} ${LIBZIP} -ldl
+
+ej-convert-clars: ${CU_OBJECTS}
+	${LD} ${LDFLAGS} -rdynamic $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl
+
+ej-convert-runs: ${CR_OBJECTS}
+	${LD} ${LDFLAGS} -rdynamic $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl ${LIBUUID}
+
+ej-fix-db: ${FIX_DB_OBJECTS}
+	${LD} ${LDFLAGS} -rdynamic $^ -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl ${LIBUUID}
+
+collect-emails: ${CE_OBJECTS}
+	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
+
+slice-userlist: ${SU_OBJECTS}
+	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
+
+users${CGI_PROG_SUFFIX}: ${US_OBJECTS}
+	${LD} ${LDFLAGS} $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB}
+
+ejudge-edit-users: $(ED_OBJECTS)
+	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB} -lmenu${NCURSES_SUFFIX} -lpanel${NCURSES_SUFFIX} -lncurses${NCURSES_SUFFIX}
+
+ejudge-setup: ${ST_OBJECTS}
+	${LD} ${LDFLAGS} $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} -lmenu${NCURSES_SUFFIX} -lpanel${NCURSES_SUFFIX} -lncurses${NCURSES_SUFFIX}
+
+ejudge-configure-compilers: ${ECC_OBJECTS}
+	${LD} ${LDFLAGS} $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} -lmenu${NCURSES_SUFFIX} -lpanel${NCURSES_SUFFIX} -lncurses${NCURSES_SUFFIX}
+
+ejudge-control: ${EC_OBJECTS}
+	${LD} ${LDFLAGS} $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB}
+
+ejudge-execute : ${EX_OBJECTS}
+	${LD} ${LDFLAGS} $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB}
+
+new-client${CGI_PROG_SUFFIX} : $(NC_OBJECTS)
+	$(LD) $(LDFLAGS) $^ -o $@ $(LDLIBS) ${EXPAT_LIB}
+
+ej-contests : $(NS_OBJECTS)
+	$(LD) $(LDFLAGS) -rdynamic $(NS_OBJECTS) -o $@ $(LDLIBS) -ldl ${EXPAT_LIB} ${LIBZIP} ${LIBUUID}
+
+ejudge-contests-cmd : $(NSM_OBJECTS)
+	$(LD) $(LDFLAGS) $(NSM_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB}
+
+ej-contests-control : $(NSC_OBJECTS)
+	$(LD) $(LDFLAGS) $(NSC_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB}
+
+make-js-actions : make-js-actions.o
+	$(LD) $(LDFLAGS) make-js-actions.o -o $@ $(LDLIBS)
+
+struct-sizes : struct-sizes.o
+	$(LD) $(LDFLAGS) $^ -o $@ $(LDLIBS) ${EXPAT_LIB}
+
+ejudge-install.sh : ejudge-setup
+	./ejudge-setup -b
+
+local_clean:
+	-rm -f *.o *~ *.a $(TARGETS) revinfo version.c $(ARCH)/*.o ejudge.po mkChangeLog2 userlist_clnt/*.o xml_utils/*.o super_clnt/*.o cdeps deps.make filter_expr.[ch] filter_scan.c users users${CGI_PROG_SUFFIX} ejudge-config serve-control serve-control${CGI_PROG_SUFFIX} prjutils/*.o make-js-actions new_server_clnt/*.o mktable struct-sizes
+	-rm -rf locale
+clean: subdir_clean local_clean
+
+subdir_clean:
+	$(MAKE) -C extra clean
+	$(MAKE) -C checkers clean
+	$(MAKE) -C plugins/mysql-common DESTDIR="${DESTDIR}" clean
+	$(MAKE) -C plugins/mysql-userlist DESTDIR="${DESTDIR}" clean
+	$(MAKE) -C plugins/mysql-clardb DESTDIR="${DESTDIR}" clean
+	$(MAKE) -C plugins/mysql-rundb DESTDIR="${DESTDIR}" clean
+
+local_distclean :
+	rm -rf autom4te.cache config.log config.status Makefile config.h ejudge-config.v TAGS Makefile.in ejudge.ru_RU.UTF-8.po
+distclean : subdir_distclean local_clean local_distclean
+
+subdir_distclean :
+	$(MAKE) -C extra distclean
+	$(MAKE) -C extra/captest distclean
+	$(MAKE) -C checkers distclean
+	$(MAKE) -C scripts distclean
+	$(MAKE) -C plugins/mysql-common DESTDIR="${DESTDIR}" distclean
+	$(MAKE) -C plugins/mysql-userlist DESTDIR="${DESTDIR}" distclean
+	$(MAKE) -C plugins/mysql-clardb DESTDIR="${DESTDIR}" distclean
+	$(MAKE) -C plugins/mysql-rundb DESTDIR="${DESTDIR}" distclean
+
+pristine : distclean
+	rm -f configure
+
+version.c: revinfo $(HFILES) $(CFILES) $(OTHERFILES)
+	@REVINFO_NO_COMMIT=1 ./revinfo -S -C -p -d db/versions -r db/revisions $(HFILES) $(CFILES) $(OTHERFILES)
+version.o: version.c
+
+new_revision: revinfo $(HFILES) $(CFILES) $(OTHERFILES)
+	@./revinfo -S -C -d db/versions -r db/revisions $(HFILES) $(CFILES) $(OTHERFILES)
+
+new_version: revinfo force
+	@./revinfo -S -C -n -d db/versions -r db/revisions $(HFILES) $(CFILES) $(OTHERFILES)
+force:
+
+revinfo: prjutils/revinfo.o
+	$(LD) $(LDFLAGS) $^ -o $@
+prjutils/revinfo.o: prjutils/revinfo.c
+
+mkChangeLog2: prjutils/mkChangeLog2.o prjutils/changelog.o prjutils/expat_iface.o prjutils/svn_xmllog.o prjutils/usermap.o prjutils/xalloc.o
+	${LD} ${LDFLAGS} $^ -o $@ -lexpat -lm
+prjutils/mkChangeLog2.o: prjutils/mkChangeLog2.c
+prjutils/changelog.o: prjutils/changelog.c
+prjutils/expat_iface.o: prjutils/expat_iface.c
+prjutils/svn_xmllog.o: prjutils/svn_xmllog.c
+prjutils/usermap.o: prjutils/usermap.c
+prjutils/xalloc.o: prjutils/xalloc.c
+
+uudecode.o : uudecode.c
+uudecode : uudecode.o
+	${LD} ${LDFLAGS} $^ -o $@
+
+cdeps: prjutils/cdeps.o
+	${LD} ${LDFLAGS} $^ -o $@
+prjutils/cdeps.o: prjutils/cdeps.c
+
+log: mkChangeLog2
+	L=`./mkChangeLog2 --input=ChangeLog --latest-revision`; echo "Latest revision: $$L"; svn log -v --xml -r "$$L:HEAD" | ./mkChangeLog2 --user-map=AUTHORS --input=ChangeLog --output=ChangeLog --prefix=/trunk/ejudge/ --strip-prefix=/trunk/ejudge/ --ignore-subdirs
+	for i in win32 unix userlist_clnt checkers extra scripts super_clnt xml_utils new_server_clnt; do cd $$i; L=`../mkChangeLog2 --input=ChangeLog --latest-revision`; echo "Latest revision: $$L"; svn log -v --xml -r "$$L:HEAD" | ../mkChangeLog2 --user-map=../AUTHORS --input=ChangeLog --output=ChangeLog --prefix=/trunk/ejudge/$$i/ --strip-prefix=/trunk/ejudge/$$i/; cd ..; done
+	for i in plugins/mysql-common plugins/mysql-userlist plugins/mysql-clardb plugins/mysql-rundb; do cd $$i; L=`../../mkChangeLog2 --input=ChangeLog --latest-revision`; echo "Latest revision: $$L"; svn log -v --xml -r "$$L:HEAD" | ../../mkChangeLog2 --user-map=../../AUTHORS --input=ChangeLog --output=ChangeLog --prefix=/trunk/ejudge/$$i/ --strip-prefix=/trunk/ejudge/$$i/; cd ../..; done
+
+# localization stuff
+ifdef ENABLE_NLS
+po : ejudge.ru_RU.KOI8-R.po ejudge.ru_RU.${CHARSET}.po
+else
+po :
+endif
+
+ifneq (${CHARSET}, KOI8-R)
+ejudge.ru_RU.${CHARSET}.po : ejudge.ru_RU.KOI8-R.po
+	sed "s/koi8-r/${CHARSET}/g" < ejudge.ru_RU.KOI8-R.po | ${ICONV} -f KOI8-R -t ${CHARSET} > ejudge.ru_RU.${CHARSET}.po
+endif
+
+ejudge.ru_RU.KOI8-R.po: $(CFILES) ejudge.po
+	${MSGMERGE} -U $@ ejudge.po
+
+ejudge.po: $(CFILES)
+	${XGETTEXT} -d ejudge --no-location --foreign-user  -k_ -k__ -s -o $@ *.c
+
+ru_all:
+	-mkdir -p locale/ru_RU.${CHARSET}/LC_MESSAGES
+
+ejudge-config : ejudge-config.v version.c
+	vvv=`grep compile_version version.c | sed 's/^[^"]*["]\([^"]*\)["].*$$/\1/'` && sed "s/@BUILD_VERSION@/$$vvv/" < ejudge-config.v > ejudge-config && chmod +x ejudge-config
+
+ifdef ENABLE_NLS
+mo : locale/ru_RU.${CHARSET}/LC_MESSAGES/ejudge.mo
+else
+mo :
+endif
+
+locale/ru_RU.${CHARSET}/LC_MESSAGES/ejudge.mo : ejudge.ru_RU.${CHARSET}.po ru_all
+	${MSGFMT} -o $@ -c $<
+
+include meta.make
+
+libcommon.a : $(COMMON_CFILES:.c=.o) filter_scan.o filter_expr.o $(META_O_FILES)
+	ar rcv $@ $^
+
+libplatform.a : $(PLATFORM_CFILES:.c=.o)
+	ar rcv $@ $^
+
+libsuper_clnt.a : $(SUPER_CLNT_CFILES:.c=.o)
+	ar rcv $@ $^
+
+libuserlist_clnt.a: $(USERLIST_CLNT_CFILES:.c=.o)
+	ar rcv $@ $^
+
+libnew_server_clnt.a: $(NEW_SERVER_CLNT_CFILES:.c=.o)
+	ar rcv $@ $^
+
+deps.make: cdeps ${CFILES} ${HFILES} filter_expr.c filter_expr.h filter_scan.c $(META_C_FILES) $(META_H_FILES)
+	@./cdeps ${CFILES} filter_expr.c filter_scan.c > deps.make
+
+tags : ${CFILES} ${HFILES} filter_expr.c filter_expr.h filter_scan.c 
+	@ctags -e $^
+
+filter_expr.c filter_expr.h : filter_expr.y
+	bison -l -o filter_expr.c -d -p filter_expr_ $<
+
+filter_scan.c : filter_scan.lex
+	flex -p -s -L -8 -B -o$@ -Pfilter_expr_ $<
+
+style/actions.js : make-js-actions
+	./make-js-actions > style/actions.js
+
+contest-1/contest-1.c : contest-1/contest-1.tar.gz
+	contest-1/make-c.sh contest-1.tar.gz contest-1/contest-1.tar.gz contest-1/contest-1.c
+contest-1/contest-1.tar.gz :
+	tar cvz --exclude-vcs -C contest-1 -f contest-1/contest-1.tar.gz problems
+
+include deps.make
