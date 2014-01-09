@@ -241,6 +241,7 @@ COMMON_CFILES=\
  tex_dom_doc.c\
  tex_dom_render.c\
  tsc.c\
+ type_info.c\
  uldb_plugin_xml.c\
  userlist.c\
  userlist_check.c\
@@ -354,6 +355,7 @@ CFILES=\
  ej-batch.c\
  ej-import-contest.c\
  ej-normalize.c\
+ ej-page-gen.c\
  ej-polygon.c\
  ej-super-run.c\
  ejudge-configure-compilers.c\
@@ -580,6 +582,7 @@ HFILES=\
  tex_dom.h\
  timestamp.h\
  tsc.h\
+ type_info.h\
  uldb_plugin.h\
  userlist.h\
  userlist_clnt.h\
