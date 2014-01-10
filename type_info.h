@@ -21,9 +21,21 @@
 
 enum
 {
-    NODE_INT_VALUE = 1,
-    NODE_FLOAT_VALUE = 2,
-    NODE_STRING = 3,
+    // literals
+    NODE_I1 = 1,
+    NODE_I8,
+    NODE_U8,
+    NODE_I16,
+    NODE_U16,
+    NODE_I32,
+    NODE_U32,
+    NODE_I64,
+    NODE_U64,
+    NODE_F32,
+    NODE_F64,
+    NODE_F80,
+    NODE_IDENT,
+    NODE_STRING,
 };
 
 struct TypeInfoOps;
