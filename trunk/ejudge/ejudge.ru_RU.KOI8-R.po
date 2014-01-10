@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: ejudge 2.3\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-12-27 06:26+0400\n"
-"PO-Revision-Date: 2013-12-27 06:56+0400\n"
+"PO-Revision-Date: 2013-12-27 13:57+0400\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -266,7 +266,7 @@ msgid ""
 "registration</a>.</p>\n"
 msgstr "<p%s>Учётные записи, созданные по упрощённой процедуре, не могут быть использованы для участия в турнирах, в которых не поддерживается упрощённая регистрация. Если же Вы хотите создать учётную запись без ограничений на последующее использование, воспользуйтесь %sстандартной процедурой регистрации</a>.</p>\n"
 
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "<p%s>If you already have an ejudge account on this server, you may use it. "
 "If so, follow the %s\"Use an existing account\"</a> link.</p>"
