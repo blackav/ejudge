@@ -5634,7 +5634,6 @@ new_server_html_2.c 6116 0 16573481
 new_server_tables.c 6116 0 1287614
 serve_2.c 6116 0 9527414
 new_server_html_2.c 6119 0 16573383
-reuse_xalloc.h 6123 0 237713
 reuse/reuse_xalloc.c 6122 0 105160
 reuse/reuse_xcalloc.c 6122 0 91673
 reuse/reuse_xexpand.c 6122 0 96725
@@ -5783,7 +5782,6 @@ new_server_clnt/http_request.c 6131 0 679633
 new_server_clnt/open.c 6131 0 197133
 new_server_clnt/recv_packet.c 6131 0 220995
 plugins/mysql-userlist/uldb_mysql.c 6127 0 11419225
-reuse_logger.h 6148 0 238014
 userlist_clnt/private.h 6138 0 111835
 compile.c 6146 0 2274287
 compile-control.c 6146 0 650540
@@ -6034,11 +6032,9 @@ unix/reuse_substsuffix.c 6166 0 110140
 win32/reuse_substsuffix.c 6165 0 108361
 unix/reuse_tempnam.c 6166 0 247232
 win32/reuse_tempnam.c 6165 0 98249
-reuse_osdeps.h 6168 0 174864
 compile_packet_priv.h 6173 0 261148
 ej_types.h 6172 0 217121
 full_archive.h 6173 0 183458
-reuse_integral.h 6175 0 161532
 run_packet_priv.h 6172 0 241324
 sha.h 6172 0 279955
 run.c 6172 0 10118196
@@ -6066,10 +6062,6 @@ printing.c 6180 0 758498
 reports.c 6178 0 8911669
 run_inverse.c 6178 0 3533392
 serve_2.c 6178 0 9527393
-reuse_exec.h 6184 0 300461
-reuse_hash.h 6184 0 145986
-reuse_hash_priv.h 6184 0 155411
-reuse_mempage.h 6184 0 105552
 run.c 6185 0 10112268
 serve.c 6185 0 489159
 userlist-server-control.c 6185 0 348786
@@ -6087,7 +6079,6 @@ run.c 6187 0 10008800
 compile_packet.h 6194 0 198632
 compile_packet_priv.h 6194 0 270871
 prepare.h 6194 0 4061757
-reuse_exec.h 6194 0 304134
 super_proto.h 6194 0 2355257
 compile.c 6194 0 2306742
 serve-control.c 6194 0 9317633
@@ -6107,7 +6098,6 @@ serve_state.c 6200 0 2414730
 super_html_3.c 6200 0 27153453
 run.c 6202 0 10010883
 serve_2.c 6204 0 9567439
-reuse_exec.h 6207 0 348667
 nwrun.c 6207 0 1944640
 unix/reuse_exec.c 6206 0 4422296
 prepare.h 6209 0 4067395
@@ -6456,7 +6446,6 @@ serve_state.c 6414 0 2562460
 super_html_3.c 6414 0 30719257
 super_html_7.c 6414 0 1371597
 super_proto.c 6414 0 1368162
-reuse_osdeps.h 6419 0 185205
 ejudge-setup.c 6419 0 10299736
 unix/reuse_makedirpath.c 6418 0 667623
 super_proto.h 6420 0 2826919
@@ -6783,7 +6772,6 @@ super_html_3.c 6607 0 31661400
 copyright.c 6609 0 202325
 meta_generic.h 6612 0 157949
 parsecfg.h 6612 0 261077
-reuse_xalloc.h 6612 0 240616
 super_run_packet.h 6612 0 439688
 meta_generic.c 6612 0 820798
 parsecfg.c 6612 0 3609671
@@ -6803,7 +6791,6 @@ super_run_packet.c 6614 0 887402
 run.c 6616 0 10251042
 meta_generic.c 6616 0 822169
 prepare.h 6619 0 4237479
-reuse_exec.h 6619 0 352919
 run.h 6619 0 101795
 super_run_packet.h 6619 0 476451
 run.c 6619 0 9947933
@@ -6890,7 +6877,6 @@ ej-super-run.c 6654 0 378545
 ej-super-run.c 6656 0 948599
 run.c 6656 0 9855264
 prepare.h 6659 0 4235311
-reuse_exec.h 6659 0 365538
 run.h 6659 0 268711
 ej-super-run.c 6659 0 1089955
 run.c 6659 0 2862859
@@ -7031,7 +7017,6 @@ super_html_7.c 6741 0 22331694
 run_common.c 6743 0 7634628
 run.h 6745 0 272879
 run_common.c 6745 0 7688611
-reuse_exec.h 6749 0 368513
 unix/reuse_exec.c 6747 0 4491869
 win32/reuse_exec.c 6748 0 2881787
 run_common.c 6749 0 7668630
@@ -7264,7 +7249,6 @@ new-server.h 6889 0 2450808
 new_server_html.c 6889 0 42554328
 new_server_html_4.c 6889 0 5454793
 run_common.c 6889 0 8175427
-reuse_exec.h 6895 0 371251
 run.h 6895 0 273569
 testing_report_xml.h 6895 0 292716
 xml_utils.h 6895 0 354531
@@ -7458,7 +7442,6 @@ prepare.h 7061 0 4295429
 prepare.c 7065 0 19701491
 prepare_out.c 7065 0 9043287
 serve_2.c 7067 0 11701640
-reuse_exec.h 7070 0 374384
 unix/reuse_exec.c 7069 0 4973170
 run_common.c 7070 0 8246520
 printing.c 7072 0 793929
@@ -7600,7 +7583,6 @@ run_common.c 7172 0 8445357
 ej-import-contest.c 7176 0 5999380
 build_support.c 7176 0 3970078
 super_html_3.c 7176 0 29658117
-reuse_exec.h 7180 0 381302
 unix/reuse_exec.c 7178 0 4989812
 win32/reuse_exec.c 7179 0 2912945
 run_common.c 7180 0 8444458
@@ -8667,3 +8649,9 @@ type_info.h 7765 0 114320
 ej-page-gen.c 7765 0 2336512
 type_info.c 7765 0 290211
 type_info.c 7767 0 570641
+type_info.h 7769 0 122181
+type_info.c 7769 0 799038
+dwarf_parse.h 7771 0 73035
+type_info.h 7772 0 335183
+dwarf_parse.c 7771 0 118153
+type_info.c 7772 0 1765548
