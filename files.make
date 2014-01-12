@@ -146,6 +146,7 @@ COMMON_CFILES=\
  digest_4.c\
  digest_5.c\
  dos2unix_str.c\
+ dwarf_parse.c\
  ej_import_packet.c\
  ejudge_cfg.c\
  ej_uuid.c\
@@ -506,6 +507,7 @@ HFILES=\
  curtime.h\
  diff.h\
  digest_io.h\
+ dwarf_parse.h\
  ejudge_cfg.h\
  ejudge_plugin.h\
  ej_import_packet.h\

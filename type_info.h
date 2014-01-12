@@ -36,10 +36,28 @@ enum
     NODE_F80,
     NODE_IDENT,
     NODE_STRING,
+
+    // composite nodes
+
+    // u32 size, i1 float, i1 unsigned, str name
+    NODE_BASE_TYPE,
+    // u32 size, node base_type, str name
+    NODE_TYPEDEF_TYPE,
+    // u32 size, node base_type
+    NODE_POINTER_TYPE,
+    // u32 size, node base_type, u32 count
+    NODE_ARRAY_TYPE,
+    // u32 size, node ret_type, node args...
+    NODE_FUNCTION_TYPE,
+
+
+    // u32 size, i32 frame_offset, node type, str name
+    NODE_PARAM,
 };
 
 struct TypeInfoOps;
 typedef struct TypeInfoOps TypeInfoOps;
+union TypeInfo;
 
 struct TypeInfoGenericNode
 {
@@ -60,16 +78,67 @@ struct TypeInfoStringNode
     unsigned char *str;
 };
 
+struct TypeInfoTreeNode
+{
+    struct TypeInfoGenericNode b;
+    int count;
+    union TypeInfo **info;
+};
+
 typedef union TypeInfo TypeInfo;
 union TypeInfo
 {
     int kind;
     struct TypeInfoGenericNode g;
     struct TypeInfoValueNode v;
+    struct TypeInfoStringNode s;
+    struct TypeInfoTreeNode n;
 };
 
 struct TypeContext;
 typedef struct TypeContext TypeContext;
+
+/* TypeContext operations */
+TypeContext *tc_create(void);
+TypeContext *tc_free(TypeContext *cntx);
+
+/* value operations */
+TypeInfo *tc_get_i1(TypeContext *cntx, int value);
+TypeInfo *tc_get_i8(TypeContext *cntx, int value);
+TypeInfo *tc_get_u8(TypeContext *cntx, int value);
+TypeInfo *tc_get_i16(TypeContext *cntx, int value);
+TypeInfo *tc_get_u16(TypeContext *cntx, int value);
+TypeInfo *tc_get_i32(TypeContext *cntx, int value);
+TypeInfo *tc_get_u32(TypeContext *cntx, unsigned value);
+TypeInfo *tc_get_i64(TypeContext *cntx, long long value);
+TypeInfo *tc_get_u64(TypeContext *cntx, unsigned long long value);
+TypeInfo *tc_get_f32(TypeContext *cntx, float value);
+TypeInfo *tc_get_f64(TypeContext *cntx, double value);
+TypeInfo *tc_get_f80(TypeContext *cntx, long double value);
+
+TypeInfo *tc_get_ident(TypeContext *cntx, const unsigned char *str);
+
+/* basic types */
+TypeInfo *tc_get_i0_type(TypeContext *cntx); // "void" type
+TypeInfo *tc_get_i1_type(TypeContext *cntx);
+TypeInfo *tc_get_i8_type(TypeContext *cntx);
+TypeInfo *tc_get_u8_type(TypeContext *cntx);
+TypeInfo *tc_get_i16_type(TypeContext *cntx);
+TypeInfo *tc_get_u16_type(TypeContext *cntx);
+TypeInfo *tc_get_i32_type(TypeContext *cntx);
+TypeInfo *tc_get_u32_type(TypeContext *cntx);
+TypeInfo *tc_get_i64_type(TypeContext *cntx);
+TypeInfo *tc_get_u64_type(TypeContext *cntx);
+TypeInfo *tc_get_f32_type(TypeContext *cntx);
+TypeInfo *tc_get_f64_type(TypeContext *cntx);
+TypeInfo *tc_get_f80_type(TypeContext *cntx);
+
+/* composite types */
+TypeInfo *tc_get_typedef_type(TypeContext *cntx, TypeInfo *ntype, TypeInfo *name);
+TypeInfo *tc_get_ptr_type(TypeContext *cntx, TypeInfo *valtype);
+TypeInfo *tc_get_array_type(TypeContext *cntx, TypeInfo *eltype, TypeInfo *count);
+
+TypeInfo *tc_get_param(TypeContext *cntx, TypeInfo *offset, TypeInfo *param_type, TypeInfo *param_name);
 
 #endif /* __TYPE_INFO_H__ */
 
