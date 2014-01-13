@@ -774,6 +774,7 @@ generic_cmp_1(const TypeInfo *ti, const void *p2)
         if (!ti->n.info[i] && !v2[i]) return 0;
         if ((ptrdiff_t) ti->n.info[i] < (ptrdiff_t) v2[i]) return -1;
         if ((ptrdiff_t) ti->n.info[i] > (ptrdiff_t) v2[i]) return 1;
+        ++i;
     }
 }
 

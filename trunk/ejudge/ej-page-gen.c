@@ -19,6 +19,9 @@
 #include "ej_limits.h"
 #include "version.h"
 
+#include "type_info.h"
+#include "dwarf_parse.h"
+
 #include "reuse/osdeps.h"
 #include "reuse/xalloc.h"
 #include "reuse/c_value.h"
@@ -1164,6 +1167,11 @@ main(int argc, char *argv[])
     if (argi < argc) {
         fatal("too many command line arguments");
     }
+
+    TypeContext *cntx = tc_create();
+    if (dwarf_parse(stderr, argv[0], cntx) < 0)
+        fatal("dwarf parsing failed");
+
     int result = 0;
     result = process_file(source_path) || result;
 

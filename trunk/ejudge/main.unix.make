@@ -290,7 +290,7 @@ ej-import-contest: ${IC_OBJECTS}
 	${LD} ${LDFLAGS} $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} ${LIBCURL} ${LIBZIP} -ldl
 
 ej-page-gen: ${G_OBJECTS}
-	${LD} ${LDFLAGS} $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} ${LIBZIP} -ldl
+	${LD} ${LDFLAGS} $^ libcommon.a -o $@ ${LDLIBS} -ldwarf -lelf ${EXPAT_LIB} ${LIBZIP} -ldl
 
 ej-convert-clars: ${CU_OBJECTS}
 	${LD} ${LDFLAGS} -rdynamic $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl
