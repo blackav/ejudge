@@ -8659,3 +8659,6 @@ dwarf_parse.c 7774 0 368150
 ej-page-gen.c 7775 0 2350516
 dwarf_parse.c 7775 0 1243067
 type_info.c 7775 0 1766066
+type_info.h 7777 0 359956
+dwarf_parse.c 7777 0 1696974
+type_info.c 7777 0 1942608
