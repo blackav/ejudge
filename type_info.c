@@ -114,6 +114,7 @@ struct TypeContext
     ValueTree typedefs;
     ValueTree pointers;
     ValueTree arrays;
+    ValueTree openarrays;
     ValueTree functions;
 
     ValueTree params;
@@ -632,7 +633,7 @@ type_info_alloc_node_2(int kind, TypeInfo **info)
     }
     TypeInfo *ti = type_info_alloc(kind);
     ti->n.count = count;
-    ti->n.info = info;
+    ti->n.info = ninfo;
     return ti;
 }
 
@@ -803,7 +804,15 @@ tc_get_array_type(TypeContext *cntx, TypeInfo *eltype, TypeInfo *count)
 {
     TypeInfo *arrsize = tc_get_u32(cntx, eltype->n.info[0]->v.value.v.ct_uint * count->v.value.v.ct_uint);
     TypeInfo *info[4] = { arrsize, eltype, count, NULL };
-    return vt_insert_gen(cntx, &cntx->typedefs, info, NODE_ARRAY_TYPE, generic_cmp_1, generic_create)->value;
+    return vt_insert_gen(cntx, &cntx->arrays, info, NODE_ARRAY_TYPE, generic_cmp_1, generic_create)->value;
+}
+
+TypeInfo *
+tc_get_open_array_type(TypeContext *cntx, TypeInfo *eltype)
+{
+    TypeInfo *arrsize = tc_get_u32(cntx, 0);
+    TypeInfo *info[4] = { arrsize, eltype, NULL };
+    return vt_insert_gen(cntx, &cntx->openarrays, info, NODE_ARRAY_TYPE, generic_cmp_1, generic_create)->value;
 }
 
 TypeInfo *
@@ -864,6 +873,102 @@ vt_find_gen(ValueTree *pt, const void *pv, tree_compare_func_t cmp)
         }
     }
     return node;
+}
+
+void
+tc_print(FILE *out_f, TypeInfo *ti)
+{
+    if (ti == NULL) {
+        fprintf(out_f, "nil");
+        return;
+    }
+    switch (ti->kind) {
+    case NODE_I1:
+        fprintf(out_f, "%d", ti->v.value.v.ct_bool);
+        break;
+    case NODE_I8:
+        fprintf(out_f, "%d", ti->v.value.v.ct_schar);
+        break;
+    case NODE_U8:
+        fprintf(out_f, "%d", ti->v.value.v.ct_uchar);
+        break;
+    case NODE_I16:
+        fprintf(out_f, "%d", ti->v.value.v.ct_short);
+        break;
+    case NODE_U16:
+        fprintf(out_f, "%d", ti->v.value.v.ct_ushort);
+        break;
+    case NODE_I32:
+        fprintf(out_f, "%d", ti->v.value.v.ct_int);
+        break;
+    case NODE_U32:
+        fprintf(out_f, "%u", ti->v.value.v.ct_uint);
+        break;
+    case NODE_I64:
+        fprintf(out_f, "%lld", ti->v.value.v.ct_llint);
+        break;
+    case NODE_U64:
+        fprintf(out_f, "%llu", ti->v.value.v.ct_ullint);
+        break;
+    case NODE_F32:
+        fprintf(out_f, "%a", ti->v.value.v.ct_float);
+        break;
+    case NODE_F64:
+        fprintf(out_f, "%a", ti->v.value.v.ct_float);
+        break;
+    case NODE_F80:
+        fprintf(out_f, "%La", ti->v.value.v.ct_ldouble);
+        break;
+    case NODE_IDENT:
+        fprintf(out_f, "'%s'", ti->s.str);
+        break;
+    case NODE_STRING:
+        fprintf(out_f, "'%s'", ti->s.str);
+        break;
+    default:
+        fprintf(out_f, "(");
+        fprintf(out_f, "%s", tc_get_kind_str(ti->kind));
+        for (int i = 0; i < ti->n.count; ++i) {
+            fprintf(out_f, " ");
+            tc_print(out_f, ti->n.info[i]);
+        }
+        fprintf(out_f, ")");
+        break;
+    }
+}
+
+static const unsigned char * const node_names[] =
+{
+    NULL,
+    "NODE_I1",
+    "NODE_I8",
+    "NODE_U8",
+    "NODE_I16",
+    "NODE_U16",
+    "NODE_I32",
+    "NODE_U32",
+    "NODE_I64",
+    "NODE_U64",
+    "NODE_F32",
+    "NODE_F64",
+    "NODE_F80",
+    "NODE_IDENT",
+    "NODE_STRING",
+
+    "NODE_BASE_TYPE",
+    "NODE_TYPEDEF_TYPE",
+    "NODE_POINTER_TYPE",
+    "NODE_ARRAY_TYPE",
+    "NODE_OPEN_ARRAY_TYPE",
+    "NODE_FUNCTION_TYPE",
+
+    "NODE_PARAM",
+};
+
+const unsigned char *
+tc_get_kind_str(int kind)
+{
+    return node_names[kind];
 }
 
 /*

@@ -19,6 +19,8 @@
 
 #include "reuse/c_value.h"
 
+#include <stdio.h>
+
 enum
 {
     // literals
@@ -47,6 +49,7 @@ enum
     NODE_POINTER_TYPE,
     // u32 size, node base_type, u32 count
     NODE_ARRAY_TYPE,
+    NODE_OPEN_ARRAY_TYPE,
     // u32 size, node ret_type, node args...
     NODE_FUNCTION_TYPE,
 
@@ -137,8 +140,14 @@ TypeInfo *tc_get_f80_type(TypeContext *cntx);
 TypeInfo *tc_get_typedef_type(TypeContext *cntx, TypeInfo *ntype, TypeInfo *name);
 TypeInfo *tc_get_ptr_type(TypeContext *cntx, TypeInfo *valtype);
 TypeInfo *tc_get_array_type(TypeContext *cntx, TypeInfo *eltype, TypeInfo *count);
+TypeInfo *tc_get_open_array_type(TypeContext *cntx, TypeInfo *eltype);
+TypeInfo *tc_get_openarray_type(TypeContext *cntx, TypeInfo *eltype);
 
 TypeInfo *tc_get_param(TypeContext *cntx, TypeInfo *offset, TypeInfo *param_type, TypeInfo *param_name);
+
+const unsigned char *tc_get_kind_str(int kind);
+
+void tc_print(FILE *out_f, TypeInfo *ti);
 
 #endif /* __TYPE_INFO_H__ */
 

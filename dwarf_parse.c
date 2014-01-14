@@ -29,6 +29,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
+#include <limits.h>
 
 #include <libdwarf/dwarf.h>
 #include <libdwarf/libdwarf.h>
@@ -307,7 +308,7 @@ s_dwarf_formudata(
                 path, dwarf_errmsg(dwe));
         return -1;
     }
-    if (form_num != DW_FORM_data1) {
+    if (form_num != DW_FORM_data1 && form_num != DW_FORM_data2 && form_num != DW_FORM_data4 && form_num != DW_FORM_data8) {
         const char *s = NULL;
         dwarf_get_FORM_name(form_num, &s);
         fprintf(log_f, "%s: DW_FORM_data1 expected, but %s obtained\n",
@@ -350,6 +351,76 @@ s_dwarf_global_formref(
         return -1;
     }
     return 0;
+}
+
+static void
+dump_die(FILE *out, Dwarf_Debug dbg, Dwarf_Die die)
+{
+    Dwarf_Error dwe = NULL;
+    Dwarf_Off cu_offset = 0;
+    Dwarf_Off offset = 0;
+
+    if (dwarf_die_CU_offset(die, &cu_offset, &dwe) != DW_DLV_OK) goto fail;
+    if (dwarf_dieoffset(die, &offset, &dwe) != DW_DLV_OK) goto fail;
+    fprintf(out, "DIE information: CU_offset = %llu, offset = %llu\n", cu_offset, offset);
+
+    Dwarf_Half tag = 0;
+    const char *tag_name = NULL;
+
+    if (dwarf_tag(die, &tag, &dwe) != DW_DLV_OK) goto fail;
+    dwarf_get_TAG_name(tag, &tag_name);
+    fprintf(out, "        %d (%s)\n", tag, tag_name);
+
+    Dwarf_Attribute *attrs = NULL;
+    Dwarf_Signed attr_count = 0;
+    int r = dwarf_attrlist(die, &attrs, &attr_count, &dwe);
+    if (r == DW_DLV_NO_ENTRY) return;
+    if (r != DW_DLV_OK) goto fail;
+    for (int i = 0; i < attr_count; ++i) {
+        Dwarf_Half attr_num = 0;
+        const char *attr_name = NULL;
+        if (dwarf_whatattr(attrs[i], &attr_num, &dwe) != DW_DLV_OK) goto fail;
+        dwarf_get_AT_name(attr_num, &attr_name);
+
+        Dwarf_Half form_num = 0;
+        const char *form_name = NULL;
+        if (dwarf_whatform(attrs[i], &form_num, &dwe) != DW_DLV_OK) goto fail;
+        dwarf_get_FORM_name(form_num, &form_name);
+
+        if (form_num == DW_FORM_strp || form_num == DW_FORM_string) {
+            char *value = NULL;
+            if (dwarf_formstring(attrs[i], &value, &dwe) != DW_DLV_OK) goto fail;
+            fprintf(out, "        %s,%s=<%s>\n", attr_name, form_name, value);
+        } else if (form_num == DW_FORM_data1 || form_num == DW_FORM_data2 || form_num == DW_FORM_data4) {
+            Dwarf_Unsigned value = 0;
+            if (dwarf_formudata(attrs[i], &value, &dwe) != DW_DLV_OK) goto fail;
+            fprintf(out, "        %s,%s=<%llu>\n", attr_name, form_name, value);
+        } else if (form_num == DW_FORM_ref4) {
+            Dwarf_Off ref_cu_offset = 0;
+            Dwarf_Off ref_offset = 0;
+            if (dwarf_formref(attrs[i], &ref_cu_offset, &dwe) != DW_DLV_OK) goto fail;
+            if (dwarf_global_formref(attrs[i], &ref_offset, &dwe) != DW_DLV_OK) goto fail;
+            fprintf(out, "        %s,%s=%llu, global %llu\n", attr_name, form_name, ref_cu_offset, ref_offset);
+        } else if (form_num == DW_FORM_flag_present) {
+            Dwarf_Bool value = 0;
+            if (dwarf_formflag(attrs[i], &value, &dwe) != DW_DLV_OK) goto fail;
+            fprintf(out, "        %s,%s=%d\n", attr_name, form_name, value);
+        } else if (form_num == DW_FORM_addr) {
+            Dwarf_Addr value = 0;
+            if (dwarf_formaddr(attrs[i], &value, &dwe) != DW_DLV_OK) goto fail;
+            fprintf(out, "        %s,%s=%016llx\n", attr_name, form_name, value);
+        } else {
+            fprintf(out, "        %s,%s=VALUE UNHANDLED\n", attr_name, form_name);
+        }
+    }
+
+    for (int i = 0; i < attr_count; ++i)
+        dwarf_dealloc(dbg, attrs[i], DW_DLA_ATTR);
+    dwarf_dealloc(dbg, attrs, DW_DLA_LIST);
+    return;
+
+fail:
+    fprintf(stderr, "dump_die failed: %s\n", dwarf_errmsg(dwe));
 }
 
 static int
@@ -441,6 +512,7 @@ parse_base_type_dia(
     // unhandled base type
     fprintf(log_f, "Note: unhandled base type (%llu,%s,%s)\n",
             bs, ate_name, name);
+    dump_die(log_f, dbg, die);
 
     retval = 0;
 
@@ -506,6 +578,83 @@ done:
 }
 
 static int
+parse_array_type_dia(
+        FILE *log_f,
+        const unsigned char *path,
+        Dwarf_Debug dbg,
+        Dwarf_Die die,
+        TypeContext *cntx,
+        DieMap *dm)
+{
+    int retval = -1;
+    TypeInfo *ti = NULL;
+    Dwarf_Off die_offset = 0;
+
+    if (die_map_get_2(log_f, path, dm, die, &ti, &die_offset) < 0) goto done;
+    if (ti) {
+        fprintf(log_f, "Note: array type at %llu already registered as %016llx\n",
+                (long long) die_offset, (long long) (size_t) ti);
+        retval = 0;
+        goto done;
+    }
+
+    Dwarf_Attribute type_attr = NULL;
+    if (s_dwarf_attr(log_f, path, die, DW_AT_type, &type_attr) < 0)
+        goto done;
+    Dwarf_Off to = 0;
+    if (s_dwarf_global_formref(log_f, path, type_attr, &to) < 0) goto done;
+    Dwarf_Die die2 = NULL;
+    if (s_dwarf_offdie(log_f, path, dbg, to, &die2) < 0) goto done;
+    if (parse_die(log_f, path, dbg, die2, cntx, dm) < 0) goto done;
+    if (die_map_get_2(log_f, path, dm, die2, &ti, NULL) < 0) goto done;
+    // temp fix
+    if (!ti) ti = tc_get_i0_type(cntx);
+
+    die2 = NULL;
+    if (s_dwarf_child(log_f, path, die, &die2) < 0) goto done;
+    Dwarf_Half tag = 0;
+    if (s_dwarf_tag(log_f, path, die2, &tag) < 0) goto done;
+    if (tag != DW_TAG_subrange_type) {
+        fprintf(log_f, "%s: DW_TAG_subrange_type expected\n", path);
+        goto done;
+    }
+    // FIXME: handle type
+    Dwarf_Attribute ub_attr = NULL;
+    if (s_dwarf_attr(log_f, path, die2, DW_AT_upper_bound, &ub_attr) < 0) goto done;
+    if (ub_attr == NULL) {
+        fprintf(stderr, ">>");
+        tc_print(stderr, ti);
+        fprintf(stderr, "\n");
+        ti = tc_get_open_array_type(cntx, ti);
+    } else {
+        Dwarf_Unsigned ub = 0;
+        if (s_dwarf_formudata(log_f, path, ub_attr, &ub) < 0) goto done;
+        if (ub >= INT_MAX) {
+            fprintf(log_f, "%s: invalid upper bound: %llu\n", path, ub);
+            goto done;
+        }
+        int r = 0;
+        if ((r = s_dwarf_sibling(log_f, path, dbg, die2, &die2)) < 0) goto done;
+        if (r > 0) {
+            fprintf(log_f, "%s: array range has sibling\n", path);
+            goto done;
+        }
+        fprintf(stderr, ">>");
+        tc_print(stderr, ti);
+        fprintf(stderr, "\n");
+        ti = tc_get_array_type(cntx, ti, tc_get_u32(cntx, ub + 1));
+    }
+
+    fprintf(log_f, "Note: array type %llu mapped to %016llx\n",
+            die_offset, (unsigned long long) (size_t) ti);
+    die_map_put(dm, die_offset, ti);
+    retval = 0;
+
+done:
+    return retval;
+}
+
+static int
 parse_die(
         FILE *log_f,
         const unsigned char *path,
@@ -522,9 +671,17 @@ parse_die(
         return parse_base_type_dia(log_f, path, dbg, die, cntx, dm);
     } else if (dtag == DW_TAG_pointer_type) {
         return parse_pointer_type_dia(log_f, path, dbg, die, cntx, dm);
+    } else if (dtag == DW_TAG_array_type) {
+        return parse_array_type_dia(log_f, path, dbg, die, cntx, dm);
+    } else if (dtag == DW_TAG_variable) {
+        // don't handle
+        return 0;
+    } else if (dtag == DW_TAG_subprogram) {
+        // don't handle
+        return 0;
     }
 
-
+    dump_die(log_f, dbg, die);
     retval = 0;
 
 done:
