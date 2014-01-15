@@ -49,13 +49,19 @@ enum
     NODE_POINTER_TYPE,
     // u32 size, node base_type, u32 count
     NODE_ARRAY_TYPE,
+    // u32 size, node base_type
     NODE_OPEN_ARRAY_TYPE,
     // u32 size, node ret_type, node args...
     NODE_FUNCTION_TYPE,
-
+    // u32 size,
+    NODE_CONST_TYPE,
+    // u32 size, str name, node base_type, node consts...
+    NODE_ENUM_TYPE,
 
     // u32 size, i32 frame_offset, node type, str name
     NODE_PARAM,
+    // u32 size, str name, value value
+    NODE_ENUM_CONST,
 };
 
 struct TypeInfoOps;
@@ -119,6 +125,8 @@ TypeInfo *tc_get_f32(TypeContext *cntx, float value);
 TypeInfo *tc_get_f64(TypeContext *cntx, double value);
 TypeInfo *tc_get_f80(TypeContext *cntx, long double value);
 
+TypeInfo *tc_get_it(TypeContext *cntx, TypeInfo *type, long long value);
+
 TypeInfo *tc_get_ident(TypeContext *cntx, const unsigned char *str);
 
 /* basic types */
@@ -142,8 +150,10 @@ TypeInfo *tc_get_ptr_type(TypeContext *cntx, TypeInfo *valtype);
 TypeInfo *tc_get_array_type(TypeContext *cntx, TypeInfo *eltype, TypeInfo *count);
 TypeInfo *tc_get_open_array_type(TypeContext *cntx, TypeInfo *eltype);
 TypeInfo *tc_get_openarray_type(TypeContext *cntx, TypeInfo *eltype);
+TypeInfo *tc_get_const_type(TypeContext *cntx, TypeInfo *eltype);
 
 TypeInfo *tc_get_param(TypeContext *cntx, TypeInfo *offset, TypeInfo *param_type, TypeInfo *param_name);
+TypeInfo *tc_get_enum_const(TypeContext *cntx, TypeInfo *size, TypeInfo *name, TypeInfo *value);
 
 const unsigned char *tc_get_kind_str(int kind);
 
