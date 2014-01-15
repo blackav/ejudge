@@ -148,6 +148,7 @@ TypeInfo *tc_get_param(TypeContext *cntx, TypeInfo *offset, TypeInfo *param_type
 const unsigned char *tc_get_kind_str(int kind);
 
 void tc_print(FILE *out_f, TypeInfo *ti);
+void tc_dump_context(FILE *out_f, TypeContext *cntx);
 
 #endif /* __TYPE_INFO_H__ */
 

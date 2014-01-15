@@ -622,9 +622,6 @@ parse_array_type_dia(
     Dwarf_Attribute ub_attr = NULL;
     if (s_dwarf_attr(log_f, path, die2, DW_AT_upper_bound, &ub_attr) < 0) goto done;
     if (ub_attr == NULL) {
-        fprintf(stderr, ">>");
-        tc_print(stderr, ti);
-        fprintf(stderr, "\n");
         ti = tc_get_open_array_type(cntx, ti);
     } else {
         Dwarf_Unsigned ub = 0;
@@ -639,9 +636,6 @@ parse_array_type_dia(
             fprintf(log_f, "%s: array range has sibling\n", path);
             goto done;
         }
-        fprintf(stderr, ">>");
-        tc_print(stderr, ti);
-        fprintf(stderr, "\n");
         ti = tc_get_array_type(cntx, ti, tc_get_u32(cntx, ub + 1));
     }
 
