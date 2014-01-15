@@ -116,8 +116,10 @@ struct TypeContext
     ValueTree arrays;
     ValueTree openarrays;
     ValueTree functions;
+    ValueTree consts;
 
     ValueTree params;
+    ValueTree enumconsts;
 };
 
 TypeContext *
@@ -769,6 +771,22 @@ tc_get_f80_type(TypeContext *cntx)
     return cntx->f80_type;
 }
 
+TypeInfo *
+tc_get_it(TypeContext *cntx, TypeInfo *type, long long value)
+{
+    if (type == cntx->i1_type) return tc_get_i1(cntx, !!value);
+    if (type == cntx->i8_type) return tc_get_i8(cntx, (signed char) value);
+    if (type == cntx->u8_type) return tc_get_u8(cntx, (unsigned char) value);
+    if (type == cntx->i16_type) return tc_get_i16(cntx, (short) value);
+    if (type == cntx->u16_type) return tc_get_u16(cntx, (unsigned short) value);
+    if (type == cntx->i32_type) return tc_get_i32(cntx, (int) value);
+    if (type == cntx->u32_type) return tc_get_u32(cntx, (unsigned) value);
+    if (type == cntx->i64_type) return tc_get_i64(cntx, value);
+    if (type == cntx->u64_type) return tc_get_u64(cntx, (unsigned long long) value);
+    abort();
+}
+
+
 static int
 generic_cmp_1(const TypeInfo *ti, const void *p2)
 {
@@ -823,8 +841,15 @@ TypeInfo *
 tc_get_open_array_type(TypeContext *cntx, TypeInfo *eltype)
 {
     TypeInfo *arrsize = tc_get_u32(cntx, 0);
-    TypeInfo *info[4] = { arrsize, eltype, NULL };
-    return vt_insert_gen(cntx, &cntx->openarrays, info, NODE_ARRAY_TYPE, generic_cmp_1, generic_create);
+    TypeInfo *info[3] = { arrsize, eltype, NULL };
+    return vt_insert_gen(cntx, &cntx->openarrays, info, NODE_OPEN_ARRAY_TYPE, generic_cmp_1, generic_create);
+}
+
+TypeInfo *
+tc_get_const_type(TypeContext *cntx, TypeInfo *eltype)
+{
+    TypeInfo *info[3] = { eltype->n.info[0], eltype, NULL };
+    return vt_insert_gen(cntx, &cntx->consts, info, NODE_CONST_TYPE, generic_cmp_1, generic_create);
 }
 
 TypeInfo *
@@ -832,6 +857,13 @@ tc_get_param(TypeContext *cntx, TypeInfo *offset, TypeInfo *param_type, TypeInfo
 {
     TypeInfo *info[5] = { param_type->n.info[0], offset, param_type, param_name, NULL };
     return vt_insert_gen(cntx, &cntx->params, info, NODE_PARAM, generic_cmp_1, generic_create);
+}
+
+TypeInfo *
+tc_get_enum_const(TypeContext *cntx, TypeInfo *size, TypeInfo *name, TypeInfo *value)
+{
+    TypeInfo *info[4] = { size, name, value, NULL };
+    return vt_insert_gen(cntx, &cntx->enumconsts, info, NODE_ENUM_CONST, generic_cmp_1, generic_create);
 }
 
 static ValueTreeNode *
@@ -978,6 +1010,7 @@ static const unsigned char * const node_names[] =
     "NODE_ARRAY_TYPE",
     "NODE_OPEN_ARRAY_TYPE",
     "NODE_FUNCTION_TYPE",
+    "NODE_CONST_TYPE",
 
     "NODE_PARAM",
 };
@@ -1102,8 +1135,12 @@ tc_dump_context(FILE *out_f, TypeContext *cntx)
     tc_dump_value_tree(out_f, &cntx->openarrays);
     fprintf(out_f, "    functions\n");
     tc_dump_value_tree(out_f, &cntx->functions);
+    fprintf(out_f, "    consts\n");
+    tc_dump_value_tree(out_f, &cntx->consts);
     fprintf(out_f, "    params\n");
     tc_dump_value_tree(out_f, &cntx->params);
+    fprintf(out_f, "    enumconsts\n");
+    tc_dump_value_tree(out_f, &cntx->enumconsts);
 }
 
 /*
