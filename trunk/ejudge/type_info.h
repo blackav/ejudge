@@ -151,6 +151,7 @@ TypeInfo *tc_get_array_type(TypeContext *cntx, TypeInfo *eltype, TypeInfo *count
 TypeInfo *tc_get_open_array_type(TypeContext *cntx, TypeInfo *eltype);
 TypeInfo *tc_get_openarray_type(TypeContext *cntx, TypeInfo *eltype);
 TypeInfo *tc_get_const_type(TypeContext *cntx, TypeInfo *eltype);
+TypeInfo *tc_get_enum_type(TypeContext *cntx, TypeInfo **info);
 
 TypeInfo *tc_get_param(TypeContext *cntx, TypeInfo *offset, TypeInfo *param_type, TypeInfo *param_name);
 TypeInfo *tc_get_enum_const(TypeContext *cntx, TypeInfo *size, TypeInfo *name, TypeInfo *value);

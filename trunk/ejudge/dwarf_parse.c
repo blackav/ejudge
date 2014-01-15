@@ -345,7 +345,7 @@ s_dwarf_formsdata(
                 path, s);
         return -1;
     }
-    if (dwarf_formudata(attr, pvalue, &dwe) != DW_DLV_OK) {
+    if (dwarf_formsdata(attr, pvalue, &dwe) != DW_DLV_OK) {
         fprintf(log_f, "%s: dwarf_formsdata failed: %s\n",
                 path, dwarf_errmsg(dwe));
         return -1;
@@ -793,7 +793,6 @@ parse_enum_type_die(
         TypeInfo **p_info)
 {
     int retval = -1;
-    //TypeInfo *ti = NULL;
 
     Dwarf_Attribute name_attr = NULL;
     TypeInfo *name_info = NULL;
@@ -840,7 +839,7 @@ parse_enum_type_die(
         goto done;
     }
 
-    TypeInfo **info = alloca(sizeof(info[0]) * (count + 4));
+    TypeInfo **info = malloc(sizeof(info[0]) * (count + 4));
     memset(info, 0, sizeof(info[0]) * (count + 4));
     int idx = 0;
     info[idx++] = size_info;
@@ -855,43 +854,48 @@ parse_enum_type_die(
         if (s_dwarf_formstring(log_f, path, const_name_attr, &const_name_str) < 0) goto done;
         const_name_info = tc_get_ident(cntx, const_name_str);
 
-        fprintf(stderr, ">>%s\n", const_name_str);
-        dump_die(stderr, dbg, die2);
-
         Dwarf_Attribute const_value_attr = NULL;
         Dwarf_Signed const_value_value = 0;
         TypeInfo *const_value_info = NULL;
         if (s_dwarf_attr_2(log_f, path, die2, DW_AT_const_value, &const_value_attr) <= 0) goto done;
-        if (s_dwarf_formsdata(log_f, path, const_value_attr, &const_value_value) <= 0) goto done;
+        if (s_dwarf_formsdata(log_f, path, const_value_attr, &const_value_value) < 0) goto done;
         const_value_info = tc_get_it(cntx, base_type, const_value_value);
 
         info[idx++] = tc_get_enum_const(cntx, size_info, const_name_info, const_value_info);
 
         if ((r = s_dwarf_sibling(log_f, path, dbg, die2, &die2)) < 0) goto done;
     }
-    
 
+    *p_info = tc_get_enum_type(cntx, info);
+    retval = 0;
 
-    /*
-    if (!r) {
-        fprintf(log_f, "No child\n");
-        *p_info = tc_get_i0_type(cntx);
-        retval = 0;
-        goto done;
-    }
-    int serial = 0;
-    while (1) {
-        fprintf(log_f, "Child: %d\n", serial++);
+done:
+    return retval;
+}
+
+static int
+parse_struct_type_die(
+        FILE *log_f,
+        const unsigned char *path,
+        Dwarf_Debug dbg,
+        Dwarf_Die die,
+        TypeContext *cntx,
+        DieMap *dm,
+        TypeInfo **p_info)
+{
+    int retval = -1;
+    int r;
+    Dwarf_Die die2 = NULL;
+
+    fprintf(log_f, "Structure DIE\n");
+    dump_die(log_f, dbg, die);
+
+    if ((r = s_dwarf_child(log_f, path, die, &die2)) < 0) goto done;
+    while (r > 0) {
+        fprintf(log_f, "Structure child DIE\n");
         dump_die(log_f, dbg, die2);
         if ((r = s_dwarf_sibling(log_f, path, dbg, die2, &die2)) < 0) goto done;
-        if (!r) {
-            fprintf(log_f, "No more children\n");
-            *p_info = tc_get_i0_type(cntx);
-            retval = 0;
-            goto done;
-        }
     }
-    */
 
     *p_info = tc_get_i0_type(cntx);
     retval = 0;
@@ -958,7 +962,9 @@ parse_die(
     } else if (dtag == DW_TAG_typedef) {
         return parse_die_type(log_f, path, dbg, die, cntx, dm, "typedef", parse_typedef_type_die);
     } else if (dtag == DW_TAG_enumeration_type) {
-        return parse_die_type(log_f, path, dbg, die, cntx, dm, "typedef", parse_enum_type_die);
+        return parse_die_type(log_f, path, dbg, die, cntx, dm, "enum", parse_enum_type_die);
+    } else if (dtag == DW_TAG_structure_type) {
+        return parse_die_type(log_f, path, dbg, die, cntx, dm, "struct", parse_struct_type_die);
     } else if (dtag == DW_TAG_variable) {
         // don't handle
         return 0;
