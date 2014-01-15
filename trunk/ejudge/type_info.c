@@ -253,8 +253,8 @@ tc_get_i32(TypeContext *cntx, int value)
 static void
 c_value_u32(c_value_t *cv, unsigned value)
 {
-    cv->tag = C_ULLONG;
-    cv->v.ct_ullint = value;
+    cv->tag = C_UINT;
+    cv->v.ct_uint = value;
 }
 
 TypeInfo *
@@ -456,6 +456,7 @@ vt_compare(const c_value_t *pv1, const c_value_t *pv2)
         if (pv1->v.ct_int > pv2->v.ct_int) return 1;
         return 0;
     case C_UINT:
+        fprintf(stderr, ">>values: %u, %u\n", pv1->v.ct_uint, pv2->v.ct_uint);
         if (pv1->v.ct_uint < pv2->v.ct_uint) return -1;
         if (pv1->v.ct_uint > pv2->v.ct_uint) return 1;
         return 0;
@@ -498,6 +499,7 @@ vt_insert_node(ValueTreeNode *root, const c_value_t *pv, int kind, int *p_count)
         ++(*p_count);
     } else {
         int c = vt_compare(&root->value->v.value, pv);
+        if (!c) fprintf(stderr, "Node exists!\n");
         if (c < 0) {
             root->right = vt_insert_node(root->right, pv, kind, p_count);
         } else if (c > 0) {
@@ -770,6 +772,13 @@ static int
 generic_cmp_1(const TypeInfo *ti, const void *p2)
 {
     const TypeInfo **v2 = (const TypeInfo**) p2;
+
+    fprintf(stderr, "Cmp: (");
+    for (int i = 1; ti->n.info[i]; ++i) fprintf(stderr, " %p", ti->n.info[i]);
+    fprintf(stderr, ") (");
+    for (int i = 1; v2[i]; ++i) fprintf(stderr, " %p", v2[i]);
+    fprintf(stderr, ")\n");
+
     int i = 1;
     while (1) {
         if (!ti->n.info[i] && !v2[i]) return 0;
