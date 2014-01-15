@@ -43,14 +43,14 @@ struct TypeContext;
 
 typedef int (*tree_compare_func_t)(const TypeInfo *p1, const void *p2);
 typedef TypeInfo *(*tree_create_func_t)(struct TypeContext *cntx, int kind, const void *pv);
-ValueTreeNode *
+TypeInfo *
 vt_insert_gen(TypeContext *cntx, ValueTree *pt, void *pv, int kind, tree_compare_func_t cmp, tree_create_func_t create);
 ValueTreeNode *
 vt_find_gen(ValueTree *pt, const void *pv, tree_compare_func_t cmp);
 
-ValueTreeNode *
+TypeInfo *
 vt_insert(ValueTree *pt, const c_value_t *pv, int kind);
-ValueTreeNode *
+TypeInfo *
 vt_insert_ident(ValueTree *pt, const unsigned char *str, int kind);
 
 enum { IN_DIRECT_LOW = -2, IN_DIRECT_HIGH = 30 };
@@ -193,8 +193,7 @@ tc_get_i16(TypeContext *cntx, int value)
     } else {
         c_value_t cv = {};
         c_value_i16(&cv, value);
-        ValueTreeNode *vtn = vt_insert(&cntx->i16_values.tree, &cv, NODE_I16);
-        return vtn->value;
+        return vt_insert(&cntx->i16_values.tree, &cv, NODE_I16);
     }
 }
 
@@ -220,8 +219,7 @@ tc_get_u16(TypeContext *cntx, int value)
     } else {
         c_value_t cv = {};
         c_value_u16(&cv, value);
-        ValueTreeNode *vtn = vt_insert(&cntx->u16_values.tree, &cv, NODE_U16);
-        return vtn->value;
+        return vt_insert(&cntx->u16_values.tree, &cv, NODE_U16);
     }
 }
 
@@ -245,8 +243,7 @@ tc_get_i32(TypeContext *cntx, int value)
     } else {
         c_value_t cv = {};
         c_value_i32(&cv, value);
-        ValueTreeNode *vtn = vt_insert(&cntx->i32_values.tree, &cv, NODE_I32);
-        return vtn->value;
+        return vt_insert(&cntx->i32_values.tree, &cv, NODE_I32);
     }
 }
 
@@ -270,8 +267,7 @@ tc_get_u32(TypeContext *cntx, unsigned value)
     } else {
         c_value_t cv = {};
         c_value_u32(&cv, value);
-        ValueTreeNode *vtn = vt_insert(&cntx->u32_values.tree, &cv, NODE_U32);
-        return vtn->value;
+        return vt_insert(&cntx->u32_values.tree, &cv, NODE_U32);
     }
 }
 
@@ -295,8 +291,7 @@ tc_get_i64(TypeContext *cntx, long long value)
     } else {
         c_value_t cv = {};
         c_value_i64(&cv, value);
-        ValueTreeNode *vtn = vt_insert(&cntx->i64_values.tree, &cv, NODE_I64);
-        return vtn->value;
+        return vt_insert(&cntx->i64_values.tree, &cv, NODE_I64);
     }
 }
 
@@ -320,8 +315,7 @@ tc_get_u64(TypeContext *cntx, unsigned long long value)
     } else {
         c_value_t cv = {};
         c_value_u64(&cv, value);
-        ValueTreeNode *vtn = vt_insert(&cntx->u64_values.tree, &cv, NODE_U64);
-        return vtn->value;
+        return vt_insert(&cntx->u64_values.tree, &cv, NODE_U64);
     }
 }
 
@@ -337,8 +331,7 @@ tc_get_f32(TypeContext *cntx, float value)
 {
     c_value_t cv = {};
     c_value_f32(&cv, value);
-    ValueTreeNode *vtn = vt_insert(&cntx->f32_values.tree, &cv, NODE_F32);
-    return vtn->value;
+    return vt_insert(&cntx->f32_values.tree, &cv, NODE_F32);
 }
 
 static void
@@ -353,8 +346,7 @@ tc_get_f64(TypeContext *cntx, double value)
 {
     c_value_t cv = {};
     c_value_f64(&cv, value);
-    ValueTreeNode *vtn = vt_insert(&cntx->f64_values.tree, &cv, NODE_F64);
-    return vtn->value;
+    return vt_insert(&cntx->f64_values.tree, &cv, NODE_F64);
 }
 
 static void
@@ -369,15 +361,13 @@ tc_get_f80(TypeContext *cntx, long double value)
 {
     c_value_t cv = {};
     c_value_f80(&cv, value);
-    ValueTreeNode *vtn = vt_insert(&cntx->f80_values.tree, &cv, NODE_F80);
-    return vtn->value;
+    return vt_insert(&cntx->f80_values.tree, &cv, NODE_F80);
 }
 
 TypeInfo *
 tc_get_ident(TypeContext *cntx, const unsigned char *str)
 {
-    ValueTreeNode *vtn = vt_insert_ident(&cntx->id_values.tree, str, NODE_IDENT);
-    return vtn->value;
+    return vt_insert_ident(&cntx->id_values.tree, str, NODE_IDENT);
 }
 
 static int
@@ -456,7 +446,6 @@ vt_compare(const c_value_t *pv1, const c_value_t *pv2)
         if (pv1->v.ct_int > pv2->v.ct_int) return 1;
         return 0;
     case C_UINT:
-        fprintf(stderr, ">>values: %u, %u\n", pv1->v.ct_uint, pv2->v.ct_uint);
         if (pv1->v.ct_uint < pv2->v.ct_uint) return -1;
         if (pv1->v.ct_uint > pv2->v.ct_uint) return 1;
         return 0;
@@ -489,7 +478,12 @@ vt_compare(const c_value_t *pv1, const c_value_t *pv2)
 }
 
 static ValueTreeNode *
-vt_insert_node(ValueTreeNode *root, const c_value_t *pv, int kind, int *p_count)
+vt_insert_node(
+        ValueTreeNode *root,
+        const c_value_t *pv,
+        int kind,
+        int *p_count,
+        TypeInfo **p_info)
 {
     if (!root) {
         TypeInfo *ti = type_info_alloc(kind);
@@ -497,13 +491,15 @@ vt_insert_node(ValueTreeNode *root, const c_value_t *pv, int kind, int *p_count)
         XCALLOC(root, 1);
         root->value = ti;
         ++(*p_count);
+        if (p_info) *p_info = ti;
     } else {
         int c = vt_compare(&root->value->v.value, pv);
-        if (!c) fprintf(stderr, "Node exists!\n");
-        if (c < 0) {
-            root->right = vt_insert_node(root->right, pv, kind, p_count);
+        if (!c) {
+            if (p_info) *p_info = root->value;;
+        } else if (c < 0) {
+            root->right = vt_insert_node(root->right, pv, kind, p_count, p_info);
         } else if (c > 0) {
-            root->left = vt_insert_node(root->left, pv, kind, p_count);
+            root->left = vt_insert_node(root->left, pv, kind, p_count, p_info);
         }
     }
     return root;
@@ -526,18 +522,19 @@ vt_find(ValueTree *pt, const c_value_t *pv)
     return node;
 }
 
-ValueTreeNode *
+TypeInfo *
 vt_insert(ValueTree *pt, const c_value_t *pv, int kind)
 {
-    pt->root = vt_insert_node(pt->root, pv, kind, &pt->count);
+    TypeInfo *info = NULL;
+    pt->root = vt_insert_node(pt->root, pv, kind, &pt->count, &info);
     if (pt->count >= 31 && !((pt->count + 1) & pt->count)) {
         pt->root = vt_build_balanced(pt->root);
     }
-    return pt->root;
+    return info;
 }
 
 static ValueTreeNode *
-vt_insert_ident_node(ValueTreeNode *root, const unsigned char *str, int kind, int *p_count)
+vt_insert_ident_node(ValueTreeNode *root, const unsigned char *str, int kind, int *p_count, TypeInfo **p_info)
 {
     if (!root) {
         TypeInfo *ti = type_info_alloc(kind);
@@ -546,25 +543,29 @@ vt_insert_ident_node(ValueTreeNode *root, const unsigned char *str, int kind, in
         XCALLOC(root, 1);
         root->value = ti;
         ++(*p_count);
+        if (p_info) *p_info = ti;
     } else {
         int c = strcmp(root->value->s.str, str);
-        if (c < 0) {
-            root->right = vt_insert_ident_node(root->right, str, kind, p_count);
+        if (!c) {
+            if (p_info) *p_info = root->value;
+        } else if (c < 0) {
+            root->right = vt_insert_ident_node(root->right, str, kind, p_count, p_info);
         } else if (c > 0) {
-            root->left = vt_insert_ident_node(root->left, str, kind, p_count);
+            root->left = vt_insert_ident_node(root->left, str, kind, p_count, p_info);
         }
     }
     return root;
 }
 
-ValueTreeNode *
+TypeInfo *
 vt_insert_ident(ValueTree *pt, const unsigned char *str, int kind)
 {
-    pt->root = vt_insert_ident_node(pt->root, str, kind, &pt->count);
+    TypeInfo *info = NULL;
+    pt->root = vt_insert_ident_node(pt->root, str, kind, &pt->count, &info);
     if (pt->count >= 31 && !((pt->count + 1) & pt->count)) {
         pt->root = vt_build_balanced(pt->root);
     }
-    return pt->root;
+    return info;
 }
 
 ValueTreeNode *
@@ -773,11 +774,13 @@ generic_cmp_1(const TypeInfo *ti, const void *p2)
 {
     const TypeInfo **v2 = (const TypeInfo**) p2;
 
+    /*
     fprintf(stderr, "Cmp: (");
     for (int i = 1; ti->n.info[i]; ++i) fprintf(stderr, " %p", ti->n.info[i]);
     fprintf(stderr, ") (");
     for (int i = 1; v2[i]; ++i) fprintf(stderr, " %p", v2[i]);
     fprintf(stderr, ")\n");
+    */
 
     int i = 1;
     while (1) {
@@ -798,14 +801,14 @@ TypeInfo *
 tc_get_typedef_type(TypeContext *cntx, TypeInfo *ntype, TypeInfo *name)
 {
     TypeInfo *info[4] = { ntype->n.info[0], ntype, name, NULL };
-    return vt_insert_gen(cntx, &cntx->typedefs, info, NODE_TYPEDEF_TYPE, generic_cmp_1, generic_create)->value;
+    return vt_insert_gen(cntx, &cntx->typedefs, info, NODE_TYPEDEF_TYPE, generic_cmp_1, generic_create);
 }
 
 TypeInfo *
 tc_get_ptr_type(TypeContext *cntx, TypeInfo *valtype)
 {
     TypeInfo *info[3] = { tc_get_u32(cntx, sizeof(void*)), valtype, NULL };
-    return vt_insert_gen(cntx, &cntx->pointers, info, NODE_POINTER_TYPE, generic_cmp_1, generic_create)->value;
+    return vt_insert_gen(cntx, &cntx->pointers, info, NODE_POINTER_TYPE, generic_cmp_1, generic_create);
 }
 
 TypeInfo *
@@ -813,7 +816,7 @@ tc_get_array_type(TypeContext *cntx, TypeInfo *eltype, TypeInfo *count)
 {
     TypeInfo *arrsize = tc_get_u32(cntx, eltype->n.info[0]->v.value.v.ct_uint * count->v.value.v.ct_uint);
     TypeInfo *info[4] = { arrsize, eltype, count, NULL };
-    return vt_insert_gen(cntx, &cntx->arrays, info, NODE_ARRAY_TYPE, generic_cmp_1, generic_create)->value;
+    return vt_insert_gen(cntx, &cntx->arrays, info, NODE_ARRAY_TYPE, generic_cmp_1, generic_create);
 }
 
 TypeInfo *
@@ -821,14 +824,14 @@ tc_get_open_array_type(TypeContext *cntx, TypeInfo *eltype)
 {
     TypeInfo *arrsize = tc_get_u32(cntx, 0);
     TypeInfo *info[4] = { arrsize, eltype, NULL };
-    return vt_insert_gen(cntx, &cntx->openarrays, info, NODE_ARRAY_TYPE, generic_cmp_1, generic_create)->value;
+    return vt_insert_gen(cntx, &cntx->openarrays, info, NODE_ARRAY_TYPE, generic_cmp_1, generic_create);
 }
 
 TypeInfo *
 tc_get_param(TypeContext *cntx, TypeInfo *offset, TypeInfo *param_type, TypeInfo *param_name)
 {
     TypeInfo *info[5] = { param_type->n.info[0], offset, param_type, param_name, NULL };
-    return vt_insert_gen(cntx, &cntx->params, info, NODE_PARAM, generic_cmp_1, generic_create)->value;
+    return vt_insert_gen(cntx, &cntx->params, info, NODE_PARAM, generic_cmp_1, generic_create);
 }
 
 static ValueTreeNode *
@@ -838,6 +841,7 @@ vt_insert_node_gen(
         const void *pv,
         int kind,
         int *p_count,
+        TypeInfo **p_info,
         tree_compare_func_t cmp,
         tree_create_func_t create)
 {
@@ -846,25 +850,29 @@ vt_insert_node_gen(
         XCALLOC(root, 1);
         root->value = ti;
         ++(*p_count);
+        if (p_info) *p_info = ti;
     } else {
         int c = cmp(root->value, pv);
-        if (c < 0) {
-            root->right = vt_insert_node_gen(cntx, root->right, pv, kind, p_count, cmp, create);
+        if (!c) {
+            if (p_info) *p_info = root->value;
+        } else if (c < 0) {
+            root->right = vt_insert_node_gen(cntx, root->right, pv, kind, p_count, p_info, cmp, create);
         } else if (c > 0) {
-            root->left = vt_insert_node_gen(cntx, root->left, pv, kind, p_count, cmp, create);
+            root->left = vt_insert_node_gen(cntx, root->left, pv, kind, p_count, p_info, cmp, create);
         }
     }
     return root;
 }
 
-ValueTreeNode *
+TypeInfo *
 vt_insert_gen(TypeContext *cntx, ValueTree *pt, void *pv, int kind, tree_compare_func_t cmp, tree_create_func_t create)
 {
-    pt->root = vt_insert_node_gen(cntx, pt->root, pv, kind, &pt->count, cmp, create);
+    TypeInfo *info = NULL;
+    pt->root = vt_insert_node_gen(cntx, pt->root, pv, kind, &pt->count, &info, cmp, create);
     if (pt->count >= 31 && !((pt->count + 1) & pt->count)) {
         pt->root = vt_build_balanced(pt->root);
     }
-    return pt->root;
+    return info;
 }
 
 ValueTreeNode *
@@ -978,6 +986,124 @@ const unsigned char *
 tc_get_kind_str(int kind)
 {
     return node_names[kind];
+}
+
+static void
+tc_dump_single_info(FILE *out_f, TypeInfo *info)
+{
+    if (!info) return;
+    fprintf(out_f, "        %016llx ", (unsigned long long)(size_t) info);
+    tc_print(out_f, info);
+    fprintf(out_f, "\n");
+}
+
+static void
+tc_dump_type_info_array(FILE *out_f, TypeInfo **info, int count)
+{
+    for (int i = 0; i < count; ++i) {
+        tc_dump_single_info(out_f, info[i]);
+    }
+}
+
+static void
+tc_dump_value_tree_node(FILE *out_f, ValueTreeNode *root)
+{
+    if (!root) return;
+    tc_dump_value_tree_node(out_f, root->left);
+    tc_dump_single_info(out_f, root->value);
+    tc_dump_value_tree_node(out_f, root->right);
+}
+
+static void
+tc_dump_value_tree(FILE *out_f, ValueTree *pt)
+{
+    tc_dump_value_tree_node(out_f, pt->root);
+}
+
+static void
+tc_dump_signed_int_storage(FILE *out_f, SignedIntStorage *store)
+{
+    tc_dump_type_info_array(out_f, store->direct, UN_DIRECT_HIGH);
+    tc_dump_value_tree(out_f, &store->tree);
+}
+
+static void
+tc_dump_unsigned_int_storage(FILE *out_f, UnsignedIntStorage *store)
+{
+    tc_dump_type_info_array(out_f, store->direct, UN_DIRECT_HIGH);
+    tc_dump_value_tree(out_f, &store->tree);
+}
+
+static void
+tc_dump_float_storage(FILE *out_f, FloatStorage *store)
+{
+    tc_dump_value_tree(out_f, &store->tree);
+}
+
+static void
+tc_dump_string_storage(FILE *out_f, StringStorage *store)
+{
+    tc_dump_value_tree(out_f, &store->tree);
+}
+
+void
+tc_dump_context(FILE *out_f, TypeContext *cntx)
+{
+    fprintf(out_f, "TypeContext dump\n");
+    fprintf(out_f, "    i1 values\n");
+    tc_dump_type_info_array(out_f, cntx->i1_values, 2);
+    fprintf(out_f, "    i8 values\n");
+    tc_dump_type_info_array(out_f, cntx->i8_values, 256);
+    fprintf(out_f, "    u8 values\n");
+    tc_dump_type_info_array(out_f, cntx->u8_values, 256);
+    fprintf(out_f, "    i16 values\n");
+    tc_dump_signed_int_storage(out_f, &cntx->i16_values);
+    fprintf(out_f, "    i32 values\n");
+    tc_dump_signed_int_storage(out_f, &cntx->i32_values);
+    fprintf(out_f, "    i64 values\n");
+    tc_dump_signed_int_storage(out_f, &cntx->i64_values);
+    fprintf(out_f, "    u16 values\n");
+    tc_dump_unsigned_int_storage(out_f, &cntx->u16_values);
+    fprintf(out_f, "    u32 values\n");
+    tc_dump_unsigned_int_storage(out_f, &cntx->u32_values);
+    fprintf(out_f, "    u64 values\n");
+    tc_dump_unsigned_int_storage(out_f, &cntx->u64_values);
+    fprintf(out_f, "    f32 values\n");
+    tc_dump_float_storage(out_f, &cntx->f32_values);
+    fprintf(out_f, "    f64 values\n");
+    tc_dump_float_storage(out_f, &cntx->f64_values);
+    fprintf(out_f, "    f80 values\n");
+    tc_dump_float_storage(out_f, &cntx->f80_values);
+    fprintf(out_f, "    string values\n");
+    tc_dump_string_storage(out_f, &cntx->str_values);
+    fprintf(out_f, "    id values\n");
+    tc_dump_string_storage(out_f, &cntx->id_values);
+    fprintf(out_f, "    base types\n");
+    tc_dump_single_info(out_f, cntx->i0_type);
+    tc_dump_single_info(out_f, cntx->i1_type);
+    tc_dump_single_info(out_f, cntx->i8_type);
+    tc_dump_single_info(out_f, cntx->u8_type);
+    tc_dump_single_info(out_f, cntx->i16_type);
+    tc_dump_single_info(out_f, cntx->u16_type);
+    tc_dump_single_info(out_f, cntx->i32_type);
+    tc_dump_single_info(out_f, cntx->u32_type);
+    tc_dump_single_info(out_f, cntx->i64_type);
+    tc_dump_single_info(out_f, cntx->u64_type);
+    tc_dump_single_info(out_f, cntx->f32_type);
+    tc_dump_single_info(out_f, cntx->f64_type);
+    tc_dump_single_info(out_f, cntx->f80_type);
+    fprintf(out_f, "    typedefs\n");
+    tc_dump_value_tree(out_f, &cntx->typedefs);
+    fprintf(out_f, "    pointers\n");
+    tc_dump_value_tree(out_f, &cntx->pointers);
+    fprintf(out_f, "    arrays\n");
+    tc_dump_value_tree(out_f, &cntx->arrays);
+    fprintf(out_f, "    openarrays\n");
+    tc_dump_value_tree(out_f, &cntx->openarrays);
+    fprintf(out_f, "    functions\n");
+    tc_dump_value_tree(out_f, &cntx->functions);
+    fprintf(out_f, "    params\n");
+    tc_dump_value_tree(out_f, &cntx->params);
 }
 
 /*

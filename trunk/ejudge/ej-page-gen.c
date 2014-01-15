@@ -1169,8 +1169,11 @@ main(int argc, char *argv[])
     }
 
     TypeContext *cntx = tc_create();
-    if (dwarf_parse(stderr, argv[0], cntx) < 0)
+    if (dwarf_parse(stderr, argv[0], cntx) < 0) {
+        tc_dump_context(stderr, cntx);
         fatal("dwarf parsing failed");
+    }
+    tc_dump_context(stderr, cntx);
 
     int result = 0;
     result = process_file(source_path) || result;
