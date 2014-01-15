@@ -117,6 +117,7 @@ struct TypeContext
     ValueTree openarrays;
     ValueTree functions;
     ValueTree consts;
+    ValueTree enums;
 
     ValueTree params;
     ValueTree enumconsts;
@@ -185,12 +186,15 @@ tc_get_i16(TypeContext *cntx, int value)
 {
     if (value < SHRT_MIN) value = SHRT_MIN;
     if (value > SHRT_MAX) value = SHRT_MAX;
+
+    fprintf(stderr, "!!!%d\n", value);
+
     if (value >= IN_DIRECT_LOW && value < IN_DIRECT_HIGH) {
-        if (cntx->i16_values.direct[value + IN_DIRECT_LOW])
-            return cntx->i16_values.direct[value + IN_DIRECT_LOW];
+        if (cntx->i16_values.direct[value - IN_DIRECT_LOW])
+            return cntx->i16_values.direct[value - IN_DIRECT_LOW];
         TypeInfo *ti = type_info_alloc(NODE_I16);
         c_value_i16(&ti->v.value, value);
-        cntx->i16_values.direct[value + IN_DIRECT_LOW] = ti;
+        cntx->i16_values.direct[value - IN_DIRECT_LOW] = ti;
         return ti;
     } else {
         c_value_t cv = {};
@@ -236,11 +240,11 @@ TypeInfo *
 tc_get_i32(TypeContext *cntx, int value)
 {
     if (value >= IN_DIRECT_LOW && value < IN_DIRECT_HIGH) {
-        if (cntx->i32_values.direct[value + IN_DIRECT_LOW])
-            return cntx->i32_values.direct[value + IN_DIRECT_LOW];
+        if (cntx->i32_values.direct[value - IN_DIRECT_LOW])
+            return cntx->i32_values.direct[value - IN_DIRECT_LOW];
         TypeInfo *ti = type_info_alloc(NODE_I32);
         c_value_i32(&ti->v.value, value);
-        cntx->i32_values.direct[value + IN_DIRECT_LOW] = ti;
+        cntx->i32_values.direct[value - IN_DIRECT_LOW] = ti;
         return ti;
     } else {
         c_value_t cv = {};
@@ -284,11 +288,11 @@ TypeInfo *
 tc_get_i64(TypeContext *cntx, long long value)
 {
     if (value >= IN_DIRECT_LOW && value < IN_DIRECT_HIGH) {
-        if (cntx->i64_values.direct[value + IN_DIRECT_LOW])
-            return cntx->i64_values.direct[value + IN_DIRECT_LOW];
+        if (cntx->i64_values.direct[value - IN_DIRECT_LOW])
+            return cntx->i64_values.direct[value - IN_DIRECT_LOW];
         TypeInfo *ti = type_info_alloc(NODE_I64);
         c_value_i64(&ti->v.value, value);
-        cntx->i64_values.direct[value + IN_DIRECT_LOW] = ti;
+        cntx->i64_values.direct[value - IN_DIRECT_LOW] = ti;
         return ti;
     } else {
         c_value_t cv = {};
@@ -853,6 +857,12 @@ tc_get_const_type(TypeContext *cntx, TypeInfo *eltype)
 }
 
 TypeInfo *
+tc_get_enum_type(TypeContext *cntx, TypeInfo **info)
+{
+    return vt_insert_gen(cntx, &cntx->enums, info, NODE_ENUM_TYPE, generic_cmp_1, generic_create);
+}
+
+TypeInfo *
 tc_get_param(TypeContext *cntx, TypeInfo *offset, TypeInfo *param_type, TypeInfo *param_name)
 {
     TypeInfo *info[5] = { param_type->n.info[0], offset, param_type, param_name, NULL };
@@ -1011,8 +1021,10 @@ static const unsigned char * const node_names[] =
     "NODE_OPEN_ARRAY_TYPE",
     "NODE_FUNCTION_TYPE",
     "NODE_CONST_TYPE",
+    "NODE_ENUM_TYPE",
 
     "NODE_PARAM",
+    "NODE_ENUM_CONST",
 };
 
 const unsigned char *
@@ -1137,6 +1149,8 @@ tc_dump_context(FILE *out_f, TypeContext *cntx)
     tc_dump_value_tree(out_f, &cntx->functions);
     fprintf(out_f, "    consts\n");
     tc_dump_value_tree(out_f, &cntx->consts);
+    fprintf(out_f, "    enums\n");
+    tc_dump_value_tree(out_f, &cntx->enums);
     fprintf(out_f, "    params\n");
     tc_dump_value_tree(out_f, &cntx->params);
     fprintf(out_f, "    enumconsts\n");
