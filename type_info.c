@@ -122,6 +122,7 @@ struct TypeContext
 
     ValueTree params;
     ValueTree enumconsts;
+    ValueTree fields;
 };
 
 TypeContext *
@@ -187,8 +188,6 @@ tc_get_i16(TypeContext *cntx, int value)
 {
     if (value < SHRT_MIN) value = SHRT_MIN;
     if (value > SHRT_MAX) value = SHRT_MAX;
-
-    fprintf(stderr, "!!!%d\n", value);
 
     if (value >= IN_DIRECT_LOW && value < IN_DIRECT_HIGH) {
         if (cntx->i16_values.direct[value - IN_DIRECT_LOW])
@@ -647,6 +646,22 @@ type_info_alloc_node_2(int kind, TypeInfo **info)
     return ti;
 }
 
+void
+type_info_set_info(TypeInfo *ti, TypeInfo **info)
+{
+    int count = 0;
+    while (info[count]) ++count;
+
+    TypeInfo **ninfo = NULL;
+    XCALLOC(ninfo, count + 1);
+    for (count = 0; info[count]; ++count) {
+        ninfo[count] = info[count];
+    }
+    xfree(ti->n.info);
+    ti->n.count = count;
+    ti->n.info = ninfo;
+}
+
 TypeInfo *
 type_info_alloc_basic_type(
         TypeContext *cntx,
@@ -877,12 +892,19 @@ tc_get_enum_const(TypeContext *cntx, TypeInfo *size, TypeInfo *name, TypeInfo *v
     return vt_insert_gen(cntx, &cntx->enumconsts, info, NODE_ENUM_CONST, generic_cmp_1, generic_create);
 }
 
+TypeInfo *
+tc_get_field(TypeContext *cntx, TypeInfo *field_type, TypeInfo *field_name, TypeInfo *field_offset)
+{
+    TypeInfo *info[5] = { field_type->n.info[0], field_type, field_name, field_offset, NULL };
+    return vt_insert_gen(cntx, &cntx->fields, info, NODE_FIELD, generic_cmp_1, generic_create);
+}
+
 static int
 struct_cmp(const TypeInfo *ti, const void *p2)
 {
     const TypeInfo **v2 = (const TypeInfo**) p2;
-    if (ti->n.count < 4) return -1;
-    for (int i = 0; i < 4; ++i) {
+    if (ti->n.count < 5) return -1;
+    for (int i = 0; i < 5; ++i) {
         if ((ptrdiff_t) ti->n.info[i] < (ptrdiff_t) v2[i]) return -1;
         if ((ptrdiff_t) ti->n.info[i] > (ptrdiff_t) v2[i]) return 1;
     }
@@ -890,19 +912,19 @@ struct_cmp(const TypeInfo *ti, const void *p2)
 }
 
 TypeInfo *
-tc_find_struct(TypeContext *cntx, TypeInfo *size, TypeInfo *name, TypeInfo *file, TypeInfo *line)
+tc_find_struct(TypeContext *cntx, TypeInfo *size, TypeInfo *name, TypeInfo *flag, TypeInfo *file, TypeInfo *line)
 {
-    TypeInfo *info[5] = { size, name, file, line, NULL };
+    TypeInfo *info[6] = { size, name, flag, file, line, NULL };
     ValueTreeNode *node = vt_find_gen(&cntx->structs, info, struct_cmp);
     if (!node) return NULL;
     return node->value;
 }
 
 TypeInfo *
-tc_create_struct(TypeContext *cntx, TypeInfo *size, TypeInfo *name, TypeInfo *file, TypeInfo *line)
+tc_create_struct(TypeContext *cntx, int tag, TypeInfo *size, TypeInfo *name, TypeInfo *flag, TypeInfo *file, TypeInfo *line)
 {
-    TypeInfo *info[5] = { size, name, file, line, NULL };
-    return vt_insert_gen(cntx, &cntx->structs, info, NODE_STRUCT_TYPE, struct_cmp, generic_create);
+    TypeInfo *info[6] = { size, name, flag, file, line, NULL };
+    return vt_insert_gen(cntx, &cntx->structs, info, tag, struct_cmp, generic_create);
 }
 
 static ValueTreeNode *
@@ -1055,6 +1077,7 @@ static const unsigned char * const node_names[] =
 
     "NODE_PARAM",
     "NODE_ENUM_CONST",
+    "NODE_FIELD",
 };
 
 const unsigned char *
@@ -1187,6 +1210,8 @@ tc_dump_context(FILE *out_f, TypeContext *cntx)
     tc_dump_value_tree(out_f, &cntx->params);
     fprintf(out_f, "    enumconsts\n");
     tc_dump_value_tree(out_f, &cntx->enumconsts);
+    fprintf(out_f, "    fields\n");
+    tc_dump_value_tree(out_f, &cntx->fields);
 }
 
 /*

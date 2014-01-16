@@ -104,6 +104,7 @@ die_map_put(DieMap *dm, Dwarf_Off addr, TypeInfo *ti)
                 break;
             }
             mid = (low + high) / 2;
+            if (dm->e[mid].addr == addr && dm->e[mid].ti == ti) return;
             ASSERT(dm->e[mid].addr != addr);
             if (dm->e[mid].addr < addr) {
                 low = mid + 1;
@@ -112,6 +113,7 @@ die_map_put(DieMap *dm, Dwarf_Off addr, TypeInfo *ti)
             }
         }
         ASSERT(low < high);
+        if (dm->e[pos].addr == addr && dm->e[pos].ti == ti) return;
         ASSERT(dm->e[pos].addr != addr);
     }
 
@@ -354,6 +356,36 @@ s_dwarf_formsdata(
 }
 
 static int
+s_dwarf_formflag(
+        FILE *log_f,
+        const unsigned char *path,
+        Dwarf_Attribute attr,
+        Dwarf_Bool *pvalue)
+{
+    Dwarf_Error dwe = NULL;
+    Dwarf_Half form_num = 0;
+
+    if (dwarf_whatform(attr, &form_num, &dwe) != DW_DLV_OK) {
+        fprintf(log_f, "%s: dwarf_whatform failed: %s\n",
+                path, dwarf_errmsg(dwe));
+        return -1;
+    }
+    if (form_num != DW_FORM_flag_present) {
+        const char *s = NULL;
+        dwarf_get_FORM_name(form_num, &s);
+        fprintf(log_f, "%s: DW_FORM_flag expected, but %s obtained\n",
+                path, s);
+        return -1;
+    }
+    if (dwarf_formflag(attr, pvalue, &dwe) != DW_DLV_OK) {
+        fprintf(log_f, "%s: dwarf_formflag failed: %s\n",
+                path, dwarf_errmsg(dwe));
+        return -1;
+    }
+    return 0;
+}
+
+static int
 s_dwarf_global_formref(
         FILE *log_f,
         const unsigned char *path,
@@ -464,6 +496,7 @@ typedef int (*parse_kind_func_t)(
         Dwarf_Die die,
         TypeContext *cntx,
         DieMap *dm,
+        int tag,
         TypeInfo **p_info);
 
 static int
@@ -748,6 +781,7 @@ parse_typedef_type_die(
         Dwarf_Die die,
         TypeContext *cntx,
         DieMap *dm,
+        int tag,
         TypeInfo **p_info)
 {
     int retval = -1;
@@ -790,6 +824,7 @@ parse_enum_type_die(
         Dwarf_Die die,
         TypeContext *cntx,
         DieMap *dm,
+        int tag,
         TypeInfo **p_info)
 {
     int retval = -1;
@@ -881,12 +916,14 @@ parse_struct_type_die(
         Dwarf_Die die,
         TypeContext *cntx,
         DieMap *dm,
+        int tag,
         TypeInfo **p_info)
 {
     int retval = -1;
     int r;
     Dwarf_Die die2 = NULL;
 
+    /*
     fprintf(log_f, "Structure DIE\n");
     dump_die(log_f, dbg, die);
 
@@ -896,6 +933,7 @@ parse_struct_type_die(
         dump_die(log_f, dbg, die2);
         if ((r = s_dwarf_sibling(log_f, path, dbg, die2, &die2)) < 0) goto done;
     }
+    */
 
     // DW_AT_name,DW_FORM_strp
     // DW_AT_byte_size,DW_FORM_data1
@@ -910,6 +948,19 @@ parse_struct_type_die(
         char *name_str = NULL;
         if (s_dwarf_formstring(log_f, path, name_attr, &name_str) < 0) goto done;
         name_info = tc_get_ident(cntx, name_str);
+    }
+
+    Dwarf_Attribute declaration_attr = NULL;
+    Dwarf_Bool declaration_value = 0;
+    if ((r = s_dwarf_attr(log_f, path, die, DW_AT_declaration, &declaration_attr)) < 0) goto done;
+    if (declaration_attr) {
+        if (s_dwarf_formflag(log_f, path, declaration_attr, &declaration_value) < 0) goto done;
+        if (declaration_value) {
+            // ???
+            *p_info = tc_get_i0_type(cntx);
+            retval = 0;
+            goto done;
+        }
     }
 
     Dwarf_Attribute size_attr = NULL;
@@ -930,14 +981,14 @@ parse_struct_type_die(
     if (s_dwarf_formudata(log_f, path, decl_line_attr, &decl_line_value) < 0) goto done;
     TypeInfo *decl_line_info = tc_get_u32(cntx, (unsigned) decl_line_value);
 
-    TypeInfo *ti = tc_find_struct(cntx, size_info, name_info, decl_file_info, decl_line_info);
+    TypeInfo *ti = tc_find_struct(cntx, size_info, tc_get_i1(cntx, 1), name_info, decl_file_info, decl_line_info);
     if (ti != NULL) {
         *p_info = ti;
         retval = 0;
         goto done;
     }
 
-    ti = tc_create_struct(cntx, size_info, name_info, decl_file_info, decl_line_info);
+    ti = tc_create_struct(cntx, tag, size_info, name_info, tc_get_i1(cntx, 1), decl_file_info, decl_line_info);
 
     int count = 0;
     die2 = NULL;
@@ -959,21 +1010,48 @@ parse_struct_type_die(
         goto done;
     }
 
-    TypeInfo **info = malloc(sizeof(info[0]) * (count + 5));
-    memset(info, 0, sizeof(info[0]) * (count + 5));
+    TypeInfo **info = alloca(sizeof(info[0]) * (count + 6));
+    memset(info, 0, sizeof(info[0]) * (count + 6));
     int idx = 0;
     info[idx++] = size_info;
     info[idx++] = name_info;
+    info[idx++] = tc_get_i1(cntx, 1);
     info[idx++] = decl_file_info;
     info[idx++] = decl_line_info;
 
     if ((r = s_dwarf_child(log_f, path, die, &die2)) < 0) goto done;
     while (r > 0) {
+        Dwarf_Attribute field_name_attr = NULL;
+        char *field_name_str = NULL;
+        if (s_dwarf_attr_2(log_f, path, die2, DW_AT_name, &field_name_attr) <= 0) goto done;
+        if (s_dwarf_formstring(log_f, path, field_name_attr, &field_name_str) < 0) goto done;
+        TypeInfo *field_name_info = tc_get_ident(cntx, field_name_str);
+
+        Dwarf_Attribute field_type_attr = NULL;
+        Dwarf_Off field_type_off = 0;
+        Dwarf_Die field_type_die = NULL;
+        TypeInfo *field_type_info = NULL;
+        if (s_dwarf_attr_2(log_f, path, die2, DW_AT_type, &field_type_attr) <= 0) goto done;
+        if (s_dwarf_global_formref(log_f, path, field_type_attr, &field_type_off) < 0) goto done;
+        if (s_dwarf_offdie(log_f, path, dbg, field_type_off, &field_type_die) < 0) goto done;
+        if (parse_die(log_f, path, dbg, field_type_die, cntx, dm) < 0) goto done;
+        if (die_map_get_2(log_f, path, dm, field_type_die, &field_type_info, NULL) < 0) goto done;
+        if (!field_type_info) field_type_info = tc_get_i0_type(cntx);
+
+        Dwarf_Attribute location_attr = NULL;
+        Dwarf_Unsigned location_value = 0;
+        if (s_dwarf_attr_2(log_f, path, die2, DW_AT_data_member_location, &location_attr) <= 0) goto done;
+        if (s_dwarf_formudata(log_f, path, location_attr, &location_value) < 0) goto done;
+        TypeInfo *location_info = tc_get_u32(cntx, (unsigned) location_value);
+
+        info[idx++] = tc_get_field(cntx, field_type_info, field_name_info, location_info);
 
         if ((r = s_dwarf_sibling(log_f, path, dbg, die2, &die2)) < 0) goto done;
     }
 
-    *p_info = tc_get_i0_type(cntx);
+    //type_info_set_info(ti, info);
+
+    *p_info = ti;
     retval = 0;
 
 done:
@@ -988,6 +1066,7 @@ parse_die_type(
         Dwarf_Die die,
         TypeContext *cntx,
         DieMap *dm,
+        int tag,
         const unsigned char *type_str,
         parse_kind_func_t parse_func)
 {
@@ -1003,7 +1082,7 @@ parse_die_type(
         goto done;
     }
 
-    if (parse_func(log_f, path, dbg, die, cntx, dm, &ti) < 0) goto done;
+    if (parse_func(log_f, path, dbg, die, cntx, dm, tag, &ti) < 0) goto done;
 
     fprintf(log_f, "Note: %s type %llu mapped to %016llx\n",
             type_str, die_offset, (unsigned long long) (size_t) ti);
@@ -1036,11 +1115,11 @@ parse_die(
     } else if (dtag == DW_TAG_const_type) {
         return parse_const_type_die(log_f, path, dbg, die, cntx, dm);
     } else if (dtag == DW_TAG_typedef) {
-        return parse_die_type(log_f, path, dbg, die, cntx, dm, "typedef", parse_typedef_type_die);
+        return parse_die_type(log_f, path, dbg, die, cntx, dm, NODE_TYPEDEF_TYPE, "typedef", parse_typedef_type_die);
     } else if (dtag == DW_TAG_enumeration_type) {
-        return parse_die_type(log_f, path, dbg, die, cntx, dm, "enum", parse_enum_type_die);
+        return parse_die_type(log_f, path, dbg, die, cntx, dm, NODE_ENUM_TYPE, "enum", parse_enum_type_die);
     } else if (dtag == DW_TAG_structure_type) {
-        return parse_die_type(log_f, path, dbg, die, cntx, dm, "struct", parse_struct_type_die);
+        return parse_die_type(log_f, path, dbg, die, cntx, dm, NODE_STRUCT_TYPE, "struct", parse_struct_type_die);
     } else if (dtag == DW_TAG_variable) {
         // don't handle
         return 0;
