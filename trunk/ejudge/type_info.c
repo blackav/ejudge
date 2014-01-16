@@ -118,6 +118,7 @@ struct TypeContext
     ValueTree functions;
     ValueTree consts;
     ValueTree enums;
+    ValueTree structs;
 
     ValueTree params;
     ValueTree enumconsts;
@@ -876,6 +877,34 @@ tc_get_enum_const(TypeContext *cntx, TypeInfo *size, TypeInfo *name, TypeInfo *v
     return vt_insert_gen(cntx, &cntx->enumconsts, info, NODE_ENUM_CONST, generic_cmp_1, generic_create);
 }
 
+static int
+struct_cmp(const TypeInfo *ti, const void *p2)
+{
+    const TypeInfo **v2 = (const TypeInfo**) p2;
+    if (ti->n.count < 4) return -1;
+    for (int i = 0; i < 4; ++i) {
+        if ((ptrdiff_t) ti->n.info[i] < (ptrdiff_t) v2[i]) return -1;
+        if ((ptrdiff_t) ti->n.info[i] > (ptrdiff_t) v2[i]) return 1;
+    }
+    return 0;
+}
+
+TypeInfo *
+tc_find_struct(TypeContext *cntx, TypeInfo *size, TypeInfo *name, TypeInfo *file, TypeInfo *line)
+{
+    TypeInfo *info[5] = { size, name, file, line, NULL };
+    ValueTreeNode *node = vt_find_gen(&cntx->structs, info, struct_cmp);
+    if (!node) return NULL;
+    return node->value;
+}
+
+TypeInfo *
+tc_create_struct(TypeContext *cntx, TypeInfo *size, TypeInfo *name, TypeInfo *file, TypeInfo *line)
+{
+    TypeInfo *info[5] = { size, name, file, line, NULL };
+    return vt_insert_gen(cntx, &cntx->structs, info, NODE_STRUCT_TYPE, struct_cmp, generic_create);
+}
+
 static ValueTreeNode *
 vt_insert_node_gen(
         TypeContext *cntx,
@@ -1022,6 +1051,7 @@ static const unsigned char * const node_names[] =
     "NODE_FUNCTION_TYPE",
     "NODE_CONST_TYPE",
     "NODE_ENUM_TYPE",
+    "NODE_STRUCT_TYPE",
 
     "NODE_PARAM",
     "NODE_ENUM_CONST",
@@ -1151,6 +1181,8 @@ tc_dump_context(FILE *out_f, TypeContext *cntx)
     tc_dump_value_tree(out_f, &cntx->consts);
     fprintf(out_f, "    enums\n");
     tc_dump_value_tree(out_f, &cntx->enums);
+    fprintf(out_f, "    structs\n");
+    tc_dump_value_tree(out_f, &cntx->structs);
     fprintf(out_f, "    params\n");
     tc_dump_value_tree(out_f, &cntx->params);
     fprintf(out_f, "    enumconsts\n");
