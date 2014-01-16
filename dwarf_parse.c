@@ -897,6 +897,82 @@ parse_struct_type_die(
         if ((r = s_dwarf_sibling(log_f, path, dbg, die2, &die2)) < 0) goto done;
     }
 
+    // DW_AT_name,DW_FORM_strp
+    // DW_AT_byte_size,DW_FORM_data1
+
+    Dwarf_Attribute name_attr = NULL;
+    TypeInfo *name_info = NULL;
+    r = s_dwarf_attr(log_f, path, die, DW_AT_name, &name_attr);
+    if (r < 0) goto done;
+    if (!r) {
+        name_info = tc_get_ident(cntx, "");
+    } else {
+        char *name_str = NULL;
+        if (s_dwarf_formstring(log_f, path, name_attr, &name_str) < 0) goto done;
+        name_info = tc_get_ident(cntx, name_str);
+    }
+
+    Dwarf_Attribute size_attr = NULL;
+    Dwarf_Unsigned size_value = 0;
+    if (s_dwarf_attr_2(log_f, path, die, DW_AT_byte_size, &size_attr) <= 0) goto done;
+    if (s_dwarf_formudata(log_f, path, size_attr, &size_value) < 0) goto done;
+    TypeInfo *size_info = tc_get_u32(cntx, (unsigned) size_value);
+
+    Dwarf_Attribute decl_file_attr = NULL;
+    Dwarf_Unsigned decl_file_value = 0;
+    if (s_dwarf_attr_2(log_f, path, die, DW_AT_decl_file, &decl_file_attr) <= 0) goto done;
+    if (s_dwarf_formudata(log_f, path, decl_file_attr, &decl_file_value) < 0) goto done;
+    TypeInfo *decl_file_info = tc_get_u32(cntx, (unsigned) decl_file_value);
+
+    Dwarf_Attribute decl_line_attr = NULL;
+    Dwarf_Unsigned decl_line_value = 0;
+    if (s_dwarf_attr_2(log_f, path, die, DW_AT_decl_line, &decl_line_attr) <= 0) goto done;
+    if (s_dwarf_formudata(log_f, path, decl_line_attr, &decl_line_value) < 0) goto done;
+    TypeInfo *decl_line_info = tc_get_u32(cntx, (unsigned) decl_line_value);
+
+    TypeInfo *ti = tc_find_struct(cntx, size_info, name_info, decl_file_info, decl_line_info);
+    if (ti != NULL) {
+        *p_info = ti;
+        retval = 0;
+        goto done;
+    }
+
+    ti = tc_create_struct(cntx, size_info, name_info, decl_file_info, decl_line_info);
+
+    int count = 0;
+    die2 = NULL;
+    if ((r = s_dwarf_child(log_f, path, die, &die2)) < 0) goto done;
+    while (r > 0) {
+        ++count;
+        Dwarf_Half tag2 = 0;
+        if (s_dwarf_tag(log_f, path, die2, &tag2) < 0) goto done;
+        if (tag2 != DW_TAG_member) {
+            fprintf(log_f, "%s: DW_TAG_member expected\n", path);
+            goto done;
+        }
+        if ((r = s_dwarf_sibling(log_f, path, dbg, die2, &die2)) < 0) goto done;
+    }
+    if (count <= 0) {
+        // empty structure
+        *p_info = ti;
+        retval = 0;
+        goto done;
+    }
+
+    TypeInfo **info = malloc(sizeof(info[0]) * (count + 5));
+    memset(info, 0, sizeof(info[0]) * (count + 5));
+    int idx = 0;
+    info[idx++] = size_info;
+    info[idx++] = name_info;
+    info[idx++] = decl_file_info;
+    info[idx++] = decl_line_info;
+
+    if ((r = s_dwarf_child(log_f, path, die, &die2)) < 0) goto done;
+    while (r > 0) {
+
+        if ((r = s_dwarf_sibling(log_f, path, dbg, die2, &die2)) < 0) goto done;
+    }
+
     *p_info = tc_get_i0_type(cntx);
     retval = 0;
 

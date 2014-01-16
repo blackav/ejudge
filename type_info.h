@@ -57,6 +57,7 @@ enum
     NODE_CONST_TYPE,
     // u32 size, str name, node base_type, node consts...
     NODE_ENUM_TYPE,
+    NODE_STRUCT_TYPE,
 
     // u32 size, i32 frame_offset, node type, str name
     NODE_PARAM,
@@ -152,6 +153,9 @@ TypeInfo *tc_get_open_array_type(TypeContext *cntx, TypeInfo *eltype);
 TypeInfo *tc_get_openarray_type(TypeContext *cntx, TypeInfo *eltype);
 TypeInfo *tc_get_const_type(TypeContext *cntx, TypeInfo *eltype);
 TypeInfo *tc_get_enum_type(TypeContext *cntx, TypeInfo **info);
+
+TypeInfo *tc_find_struct(TypeContext *cntx, TypeInfo *size, TypeInfo *name, TypeInfo *file, TypeInfo *line);
+TypeInfo *tc_create_struct(TypeContext *cntx, TypeInfo *size, TypeInfo *name, TypeInfo *file, TypeInfo *line);
 
 TypeInfo *tc_get_param(TypeContext *cntx, TypeInfo *offset, TypeInfo *param_type, TypeInfo *param_name);
 TypeInfo *tc_get_enum_const(TypeContext *cntx, TypeInfo *size, TypeInfo *name, TypeInfo *value);
