@@ -130,10 +130,141 @@ tc_create(void)
     return cntx;
 }
 
+static TypeInfo *
+tc_type_info_free(TypeInfo *ti)
+{
+    if (ti == NULL) return NULL;
+
+    switch (ti->kind) {
+    case NODE_I1:
+    case NODE_I8:
+    case NODE_U8:
+    case NODE_I16:
+    case NODE_U16:
+    case NODE_I32:
+    case NODE_U32:
+    case NODE_I64:
+    case NODE_U64:
+    case NODE_F32:
+    case NODE_F64:
+    case NODE_F80:
+        break;
+    case NODE_IDENT:
+    case NODE_STRING:
+        xfree(ti->s.str);
+        break;
+    default:
+        xfree(ti->n.info);
+        break;
+    }
+
+    memset(ti, 0, sizeof(*ti));
+    xfree(ti);
+    return NULL;
+}
+
+static void
+tc_value_tree_free_node(ValueTreeNode *t)
+{
+    if (!t) return;
+    tc_value_tree_free_node(t->left);
+    tc_value_tree_free_node(t->right);
+    tc_type_info_free(t->value);
+    memset(t, 0, sizeof(*t));
+    xfree(t);
+}
+
+static void
+tc_value_tree_free(ValueTree *t)
+{
+    tc_value_tree_free_node(t->root);
+}
+
+static void
+tc_signed_storage_free(SignedIntStorage *s)
+{
+    for (int i = 0; i < UN_DIRECT_HIGH; ++i)
+        tc_type_info_free(s->direct[i]);
+    tc_value_tree_free(&s->tree);
+}
+
+static void
+tc_unsigned_storage_free(UnsignedIntStorage *s)
+{
+    for (int i = 0; i < UN_DIRECT_HIGH; ++i)
+        tc_type_info_free(s->direct[i]);
+    tc_value_tree_free(&s->tree);
+}
+
+static void
+tc_float_storage_free(FloatStorage *s)
+{
+    tc_value_tree_free(&s->tree);
+}
+
+static void
+tc_string_storage_free(StringStorage *s)
+{
+    tc_value_tree_free(&s->tree);
+}
+
 TypeContext *
 tc_free(TypeContext *cntx)
 {
-    // FIXME: complete
+    if (!cntx) return NULL;
+
+    for (int i = 0; i < 2; ++i)
+        tc_type_info_free(cntx->i1_values[i]);
+    for (int i = 0; i < 256; ++i)
+        tc_type_info_free(cntx->i8_values[i]);
+    for (int i = 0; i < 256; ++i)
+        tc_type_info_free(cntx->u8_values[i]);
+
+    tc_signed_storage_free(&cntx->i16_values);
+    tc_signed_storage_free(&cntx->i32_values);
+    tc_signed_storage_free(&cntx->i64_values);
+    tc_unsigned_storage_free(&cntx->u16_values);
+    tc_unsigned_storage_free(&cntx->u32_values);
+    tc_unsigned_storage_free(&cntx->u64_values);
+
+    tc_float_storage_free(&cntx->f32_values);
+    tc_float_storage_free(&cntx->f64_values);
+    tc_float_storage_free(&cntx->f80_values);
+
+    tc_string_storage_free(&cntx->str_values);
+    tc_string_storage_free(&cntx->id_values);
+
+    tc_type_info_free(cntx->i0_type);
+    tc_type_info_free(cntx->i1_type);
+    tc_type_info_free(cntx->i8_type);
+    tc_type_info_free(cntx->u8_type);
+    tc_type_info_free(cntx->i16_type);
+    tc_type_info_free(cntx->u16_type);
+    tc_type_info_free(cntx->i32_type);
+    tc_type_info_free(cntx->u32_type);
+    tc_type_info_free(cntx->i64_type);
+    tc_type_info_free(cntx->u64_type);
+    tc_type_info_free(cntx->f32_type);
+    tc_type_info_free(cntx->f64_type);
+    tc_type_info_free(cntx->f80_type);
+
+    tc_value_tree_free(&cntx->typedefs);
+    tc_value_tree_free(&cntx->pointers);
+    tc_value_tree_free(&cntx->arrays);
+    tc_value_tree_free(&cntx->openarrays);
+    tc_value_tree_free(&cntx->functiontypes);
+    tc_value_tree_free(&cntx->consts);
+    tc_value_tree_free(&cntx->enums);
+    tc_value_tree_free(&cntx->structs);
+    tc_value_tree_free(&cntx->anonstructs);
+
+    tc_value_tree_free(&cntx->params);
+    tc_value_tree_free(&cntx->enumconsts);
+    tc_value_tree_free(&cntx->fields);
+    tc_value_tree_free(&cntx->formalparams);
+
+    memset(cntx, 0, sizeof(*cntx));
+    xfree(cntx);
     return NULL;
 }
 
