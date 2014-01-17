@@ -509,6 +509,37 @@ parse_die(
         DieMap *dm);
 
 static int
+parse_type(
+        FILE *log_f,
+        const unsigned char *path,
+        Dwarf_Debug dbg,
+        Dwarf_Die die,
+        TypeContext *cntx,
+        DieMap *dm,
+        TypeInfo **p_info)
+{
+    *p_info = NULL;
+
+    Dwarf_Attribute type_attr = NULL;
+    int r = s_dwarf_attr(log_f, path, die, DW_AT_type, &type_attr);
+    if (r < 0) return r;
+    if (!r || !type_attr) return 0;
+
+    Dwarf_Off type_off = 0;
+    if (s_dwarf_global_formref(log_f, path, type_attr, &type_off) < 0) return -1;
+    Dwarf_Die type_die = NULL;
+    if (s_dwarf_offdie(log_f, path, dbg, type_off, &type_die) < 0) return -1;
+    if (parse_die(log_f, path, dbg, type_die, cntx, dm) < 0) return -1;
+    TypeInfo *type_info = NULL;
+    if (die_map_get_2(log_f, path, dm, type_die, &type_info, NULL) < 0) return -1;
+    if (!type_info) return 0;
+
+    *p_info = type_info;
+    return 1;
+}
+
+
+static int
 parse_base_type_die(
         FILE *log_f,
         const unsigned char *path,
@@ -831,7 +862,7 @@ parse_enum_type_die(
         goto done;
     }
 
-    TypeInfo **info = malloc(sizeof(info[0]) * (count + 4));
+    TypeInfo **info = alloca(sizeof(info[0]) * (count + 4));
     memset(info, 0, sizeof(info[0]) * (count + 4));
     int idx = 0;
     info[idx++] = size_info;
@@ -1050,6 +1081,7 @@ parse_function_type_die(
     int r = 0;
     Dwarf_Die die2 = NULL;
 
+    /*
     fprintf(log_f, "Function DIE\n");
     dump_die(log_f, dbg, die);
 
@@ -1059,9 +1091,43 @@ parse_function_type_die(
         dump_die(log_f, dbg, die2);
         if ((r = s_dwarf_sibling(log_f, path, dbg, die2, &die2)) < 0) goto done;
     }
+    */
 
+    TypeInfo *ret_type = NULL;
+    if ((r = parse_type(log_f, path, dbg, die, cntx, dm, &ret_type)) < 0) goto done;
+    if (!r || !ret_type) ret_type = tc_get_i0_type(cntx);
+    
+    int count = 0;
+    die2 = NULL;
+    if ((r = s_dwarf_child(log_f, path, die, &die2)) < 0) goto done;
+    while (r > 0) {
+        ++count;
+        Dwarf_Half tag2 = 0;
+        if (s_dwarf_tag(log_f, path, die2, &tag2) < 0) goto done;
+        if (tag2 != DW_TAG_formal_parameter) {
+            fprintf(log_f, "%s: DW_TAG_formal_parameter expected\n", path);
+            goto done;
+        }
+        if ((r = s_dwarf_sibling(log_f, path, dbg, die2, &die2)) < 0) goto done;
+    }
 
-    *p_info = tc_get_i0_type(cntx);
+    TypeInfo **info = alloca(sizeof(info[0]) * (count + 3));
+    memset(info, 0, sizeof(info[0]) * (count + 3));
+    int idx = 0;
+    info[idx++] = tc_get_u32(cntx, 0);
+    info[idx++] = ret_type;
+
+    if ((r = s_dwarf_child(log_f, path, die, &die2)) < 0) goto done;
+    while (r > 0) {
+        TypeInfo *par_type_info = NULL;
+        if ((r = parse_type(log_f, path, dbg, die2, cntx, dm, &par_type_info)) < 0) goto done;
+        if (!r || !par_type_info) par_type_info = tc_get_i0_type(cntx);
+        info[idx++] = par_type_info;
+
+        if ((r = s_dwarf_sibling(log_f, path, dbg, die2, &die2)) < 0) goto done;
+    }
+
+    *p_info = tc_get_function_type(cntx, info);
     retval = 0;
 
 done:
