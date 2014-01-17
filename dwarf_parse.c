@@ -515,19 +515,12 @@ parse_base_type_die(
         Dwarf_Debug dbg,
         Dwarf_Die die,
         TypeContext *cntx,
-        DieMap *dm)
+        DieMap *dm,
+        int tag,
+        TypeInfo **p_info)
 {
     int retval = -1;
-
-    Dwarf_Off die_offset = 0;
-    if (s_dwarf_die_CU_offset(log_f, path, die, &die_offset) < 0) goto done;
-    TypeInfo *ti = die_map_get(dm, die_offset);
-    if (ti) {
-        fprintf(log_f, "Note: base type at %llu already registered as %016llx\n",
-                (long long) die_offset, (long long) (size_t) ti);
-        retval = 0;
-        goto done;
-    }
+    TypeInfo *ti = NULL;
 
     // DW_AT_byte_size, DW_FORM_data1
     // DW_AT_encoding, DW_FORM_data1
@@ -577,19 +570,14 @@ parse_base_type_die(
     const char *ate_name = NULL;
     dwarf_get_ATE_name(enc, &ate_name);
 
-    if (ti) {
-        fprintf(log_f, "Note: base type %llu(%llu,%s,%s) mapped to %016llx\n",
-                die_offset, bs, ate_name, name, (unsigned long long) (size_t) ti);
-        die_map_put(dm, die_offset, ti);
-        retval = 0;
-        goto done;
+    if (!ti) {
+        // unhandled base type
+        fprintf(log_f, "Note: unhandled base type (%llu,%s,%s)\n",
+                bs, ate_name, name);
+        dump_die(log_f, dbg, die);
     }
 
-    // unhandled base type
-    fprintf(log_f, "Note: unhandled base type (%llu,%s,%s)\n",
-            bs, ate_name, name);
-    dump_die(log_f, dbg, die);
-
+    *p_info = ti;
     retval = 0;
 
 done:
@@ -603,19 +591,12 @@ parse_pointer_type_die(
         Dwarf_Debug dbg,
         Dwarf_Die die,
         TypeContext *cntx,
-        DieMap *dm)
+        DieMap *dm,
+        int tag,
+        TypeInfo **p_info)
 {
     int retval = -1;
-
-    Dwarf_Off die_offset = 0;
-    if (s_dwarf_die_CU_offset(log_f, path, die, &die_offset) < 0) goto done;
-    TypeInfo *ti = die_map_get(dm, die_offset);
-    if (ti) {
-        fprintf(log_f, "Note: pointer type at %llu already registered as %016llx\n",
-                (long long) die_offset, (long long) (size_t) ti);
-        retval = 0;
-        goto done;
-    }
+    TypeInfo *ti = NULL;
 
     // DW_AT_byte_size,DW_FORM_data1
     // DW_AT_type,DW_FORM_ref4
@@ -643,10 +624,7 @@ parse_pointer_type_die(
         if (!ti) ti = tc_get_i0_type(cntx);
     }
 
-    ti = tc_get_ptr_type(cntx, ti);
-    fprintf(log_f, "Note: pointer type %llu mapped to %016llx\n",
-            die_offset, (unsigned long long) (size_t) ti);
-    die_map_put(dm, die_offset, ti);
+    *p_info = ti;
     retval = 0;
 
 done:
@@ -660,19 +638,12 @@ parse_array_type_die(
         Dwarf_Debug dbg,
         Dwarf_Die die,
         TypeContext *cntx,
-        DieMap *dm)
+        DieMap *dm,
+        int tag,
+        TypeInfo **p_info)
 {
     int retval = -1;
     TypeInfo *ti = NULL;
-    Dwarf_Off die_offset = 0;
-
-    if (die_map_get_2(log_f, path, dm, die, &ti, &die_offset) < 0) goto done;
-    if (ti) {
-        fprintf(log_f, "Note: array type at %llu already registered as %016llx\n",
-                (long long) die_offset, (long long) (size_t) ti);
-        retval = 0;
-        goto done;
-    }
 
     Dwarf_Attribute type_attr = NULL;
     if (s_dwarf_attr(log_f, path, die, DW_AT_type, &type_attr) < 0)
@@ -688,9 +659,9 @@ parse_array_type_die(
 
     die2 = NULL;
     if (s_dwarf_child(log_f, path, die, &die2) < 0) goto done;
-    Dwarf_Half tag = 0;
-    if (s_dwarf_tag(log_f, path, die2, &tag) < 0) goto done;
-    if (tag != DW_TAG_subrange_type) {
+    Dwarf_Half tag2 = 0;
+    if (s_dwarf_tag(log_f, path, die2, &tag2) < 0) goto done;
+    if (tag2 != DW_TAG_subrange_type) {
         fprintf(log_f, "%s: DW_TAG_subrange_type expected\n", path);
         goto done;
     }
@@ -715,9 +686,7 @@ parse_array_type_die(
         ti = tc_get_array_type(cntx, ti, tc_get_u32(cntx, ub + 1));
     }
 
-    fprintf(log_f, "Note: array type %llu mapped to %016llx\n",
-            die_offset, (unsigned long long) (size_t) ti);
-    die_map_put(dm, die_offset, ti);
+    *p_info = ti;
     retval = 0;
 
 done:
@@ -731,26 +700,18 @@ parse_const_type_die(
         Dwarf_Debug dbg,
         Dwarf_Die die,
         TypeContext *cntx,
-        DieMap *dm)
+        DieMap *dm,
+        int tag,
+        TypeInfo **p_info)
 {
     int retval = -1;
     TypeInfo *ti = NULL;
-    Dwarf_Off die_offset = 0;
-
-    if (die_map_get_2(log_f, path, dm, die, &ti, &die_offset) < 0) goto done;
-    if (ti) {
-        fprintf(log_f, "Note: const type at %llu already registered as %016llx\n",
-                (long long) die_offset, (long long) (size_t) ti);
-        retval = 0;
-        goto done;
-    }
-
     Dwarf_Attribute type_attr = NULL;
     if (s_dwarf_attr(log_f, path, die, DW_AT_type, &type_attr) < 0)
         goto done;
     if (type_attr == NULL) {
         fprintf(log_f, "DW_TAG_const_type: DW_AT_type missing\n");
-        dump_die(log_f, dbg, die);
+        //dump_die(log_f, dbg, die);
     } else {
         Dwarf_Off to = 0;
         if (s_dwarf_global_formref(log_f, path, type_attr, &to) < 0) goto done;
@@ -762,11 +723,7 @@ parse_const_type_die(
     }
     if (!ti) ti = tc_get_i0_type(cntx);
 
-    ti = tc_get_const_type(cntx, ti);
-
-    fprintf(log_f, "Note: const type %llu mapped to %016llx\n",
-            die_offset, (unsigned long long) (size_t) ti);
-    die_map_put(dm, die_offset, ti);
+    *p_info = tc_get_const_type(cntx, ti);
     retval = 0;
 
 done:
@@ -797,7 +754,7 @@ parse_typedef_type_die(
         goto done;
     if (type_attr == NULL) {
         fprintf(log_f, "DW_TAG_typedef_type: DW_AT_type missing\n");
-        dump_die(log_f, dbg, die);
+        //dump_die(log_f, dbg, die);
     } else {
         Dwarf_Off to = 0;
         if (s_dwarf_global_formref(log_f, path, type_attr, &to) < 0) goto done;
@@ -922,6 +879,7 @@ parse_struct_type_die(
     int retval = -1;
     int r;
     Dwarf_Die die2 = NULL;
+    TypeInfo *ti = NULL;
 
     /*
     fprintf(log_f, "Structure DIE\n");
@@ -956,8 +914,14 @@ parse_struct_type_die(
     if (declaration_attr) {
         if (s_dwarf_formflag(log_f, path, declaration_attr, &declaration_value) < 0) goto done;
         if (declaration_value) {
-            // ???
-            *p_info = tc_get_i0_type(cntx);
+            ASSERT(name_info->s.len > 0);
+            ti = tc_find_struct_type(cntx, tag, name_info);
+            if (ti != NULL) {
+                *p_info = ti;
+                retval = 0;
+                goto done;
+            }
+            *p_info = tc_create_struct_type(cntx, tag, tc_get_u32(cntx, 0), name_info, tc_get_i1(cntx, 0));
             retval = 0;
             goto done;
         }
@@ -969,6 +933,7 @@ parse_struct_type_die(
     if (s_dwarf_formudata(log_f, path, size_attr, &size_value) < 0) goto done;
     TypeInfo *size_info = tc_get_u32(cntx, (unsigned) size_value);
 
+    /*
     Dwarf_Attribute decl_file_attr = NULL;
     Dwarf_Unsigned decl_file_value = 0;
     if (s_dwarf_attr_2(log_f, path, die, DW_AT_decl_file, &decl_file_attr) <= 0) goto done;
@@ -980,15 +945,18 @@ parse_struct_type_die(
     if (s_dwarf_attr_2(log_f, path, die, DW_AT_decl_line, &decl_line_attr) <= 0) goto done;
     if (s_dwarf_formudata(log_f, path, decl_line_attr, &decl_line_value) < 0) goto done;
     TypeInfo *decl_line_info = tc_get_u32(cntx, (unsigned) decl_line_value);
+    */
 
-    TypeInfo *ti = tc_find_struct(cntx, size_info, tc_get_i1(cntx, 1), name_info, decl_file_info, decl_line_info);
-    if (ti != NULL) {
-        *p_info = ti;
-        retval = 0;
-        goto done;
+    if (name_info->s.len > 0) {
+        // named structure
+        ti = tc_find_struct_type(cntx, tag, name_info);
+        if (ti != NULL) {
+            *p_info = ti;
+            retval = 0;
+            goto done;
+        }
+        ti = tc_create_struct_type(cntx, tag, size_info, name_info, tc_get_i1(cntx, 1));
     }
-
-    ti = tc_create_struct(cntx, tag, size_info, name_info, tc_get_i1(cntx, 1), decl_file_info, decl_line_info);
 
     int count = 0;
     die2 = NULL;
@@ -1010,14 +978,12 @@ parse_struct_type_die(
         goto done;
     }
 
-    TypeInfo **info = alloca(sizeof(info[0]) * (count + 6));
-    memset(info, 0, sizeof(info[0]) * (count + 6));
+    TypeInfo **info = alloca(sizeof(info[0]) * (count + 4));
+    memset(info, 0, sizeof(info[0]) * (count + 4));
     int idx = 0;
     info[idx++] = size_info;
     info[idx++] = name_info;
     info[idx++] = tc_get_i1(cntx, 1);
-    info[idx++] = decl_file_info;
-    info[idx++] = decl_line_info;
 
     if ((r = s_dwarf_child(log_f, path, die, &die2)) < 0) goto done;
     while (r > 0) {
@@ -1040,18 +1006,62 @@ parse_struct_type_die(
 
         Dwarf_Attribute location_attr = NULL;
         Dwarf_Unsigned location_value = 0;
-        if (s_dwarf_attr_2(log_f, path, die2, DW_AT_data_member_location, &location_attr) <= 0) goto done;
-        if (s_dwarf_formudata(log_f, path, location_attr, &location_value) < 0) goto done;
-        TypeInfo *location_info = tc_get_u32(cntx, (unsigned) location_value);
+        TypeInfo *location_info = NULL;
+        if ((r = s_dwarf_attr(log_f, path, die2, DW_AT_data_member_location, &location_attr)) < 0) goto done;
+        if (location_attr != NULL) {
+            if (s_dwarf_attr_2(log_f, path, die2, DW_AT_data_member_location, &location_attr) <= 0) goto done;
+            if (s_dwarf_formudata(log_f, path, location_attr, &location_value) < 0) goto done;
+            location_info = tc_get_u32(cntx, (unsigned) location_value);
+        } else {
+            location_info = tc_get_u32(cntx, 0);
+        }
 
         info[idx++] = tc_get_field(cntx, field_type_info, field_name_info, location_info);
 
         if ((r = s_dwarf_sibling(log_f, path, dbg, die2, &die2)) < 0) goto done;
     }
 
-    //type_info_set_info(ti, info);
+    if (ti) {
+        ASSERT(ti->s.len > 0);
+        type_info_set_info(ti, info);
+    } else {
+        ti = tc_get_anon_struct_type(cntx, tag, info);
+    }
 
     *p_info = ti;
+    retval = 0;
+
+done:
+    return retval;
+}
+
+static int
+parse_function_type_die(
+        FILE *log_f,
+        const unsigned char *path,
+        Dwarf_Debug dbg,
+        Dwarf_Die die,
+        TypeContext *cntx,
+        DieMap *dm,
+        int tag,
+        TypeInfo **p_info)
+{
+    int retval = -1;
+    int r = 0;
+    Dwarf_Die die2 = NULL;
+
+    fprintf(log_f, "Function DIE\n");
+    dump_die(log_f, dbg, die);
+
+    if ((r = s_dwarf_child(log_f, path, die, &die2)) < 0) goto done;
+    while (r > 0) {
+        fprintf(log_f, "Structure child DIE\n");
+        dump_die(log_f, dbg, die2);
+        if ((r = s_dwarf_sibling(log_f, path, dbg, die2, &die2)) < 0) goto done;
+    }
+
+
+    *p_info = tc_get_i0_type(cntx);
     retval = 0;
 
 done:
@@ -1093,6 +1103,30 @@ done:
     return retval;
 }
 
+struct TopDieParseTable
+{
+    Dwarf_Half tag;
+    int kind;
+    const char *comment;
+    parse_kind_func_t handler;    
+};
+static const struct TopDieParseTable top_die_table[] =
+{
+    { DW_TAG_base_type, NODE_BASE_TYPE, "base", parse_base_type_die },
+    { DW_TAG_pointer_type, NODE_POINTER_TYPE, "pointer", parse_pointer_type_die },
+    { DW_TAG_array_type, NODE_ARRAY_TYPE, "array", parse_array_type_die },
+    { DW_TAG_const_type, NODE_CONST_TYPE, "const", parse_const_type_die },
+    { DW_TAG_typedef, NODE_TYPEDEF_TYPE, "typedef", parse_typedef_type_die },
+    { DW_TAG_enumeration_type, NODE_ENUM_TYPE, "enum", parse_enum_type_die },
+    { DW_TAG_structure_type, NODE_STRUCT_TYPE, "struct", parse_struct_type_die },
+    { DW_TAG_union_type, NODE_UNION_TYPE, "union", parse_struct_type_die },
+    { DW_TAG_subroutine_type, NODE_FUNCTION_TYPE, "function", parse_function_type_die },
+    { DW_TAG_variable, 0, NULL, NULL },
+    { DW_TAG_subprogram, 0, NULL, NULL },
+
+    { 0 },
+};
+
 static int
 parse_die(
         FILE *log_f,
@@ -1106,26 +1140,12 @@ parse_die(
 
     Dwarf_Half dtag = 0;
     if (s_dwarf_tag(log_f, path, die, &dtag) < 0) goto done;
-    if (dtag == DW_TAG_base_type) {
-        return parse_base_type_die(log_f, path, dbg, die, cntx, dm);
-    } else if (dtag == DW_TAG_pointer_type) {
-        return parse_pointer_type_die(log_f, path, dbg, die, cntx, dm);
-    } else if (dtag == DW_TAG_array_type) {
-        return parse_array_type_die(log_f, path, dbg, die, cntx, dm);
-    } else if (dtag == DW_TAG_const_type) {
-        return parse_const_type_die(log_f, path, dbg, die, cntx, dm);
-    } else if (dtag == DW_TAG_typedef) {
-        return parse_die_type(log_f, path, dbg, die, cntx, dm, NODE_TYPEDEF_TYPE, "typedef", parse_typedef_type_die);
-    } else if (dtag == DW_TAG_enumeration_type) {
-        return parse_die_type(log_f, path, dbg, die, cntx, dm, NODE_ENUM_TYPE, "enum", parse_enum_type_die);
-    } else if (dtag == DW_TAG_structure_type) {
-        return parse_die_type(log_f, path, dbg, die, cntx, dm, NODE_STRUCT_TYPE, "struct", parse_struct_type_die);
-    } else if (dtag == DW_TAG_variable) {
-        // don't handle
-        return 0;
-    } else if (dtag == DW_TAG_subprogram) {
-        // don't handle
-        return 0;
+    for (int i = 0; top_die_table[i].tag; ++i) {
+        if (dtag != top_die_table[i].tag) continue;
+        if (!top_die_table[i].kind) return 0;
+        return parse_die_type(log_f, path, dbg, die, cntx, dm,
+                              top_die_table[i].kind, top_die_table[i].comment,
+                              top_die_table[i].handler);
     }
 
     dump_die(log_f, dbg, die);

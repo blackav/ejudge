@@ -43,15 +43,10 @@ struct TypeContext;
 
 typedef int (*tree_compare_func_t)(const TypeInfo *p1, const void *p2);
 typedef TypeInfo *(*tree_create_func_t)(struct TypeContext *cntx, int kind, const void *pv);
-TypeInfo *
-vt_insert_gen(TypeContext *cntx, ValueTree *pt, void *pv, int kind, tree_compare_func_t cmp, tree_create_func_t create);
-ValueTreeNode *
-vt_find_gen(ValueTree *pt, const void *pv, tree_compare_func_t cmp);
-
-TypeInfo *
-vt_insert(ValueTree *pt, const c_value_t *pv, int kind);
-TypeInfo *
-vt_insert_ident(ValueTree *pt, const unsigned char *str, int kind);
+static TypeInfo *
+vt_insert(TypeContext *cntx, ValueTree *pt, const void *pv, int kind, tree_compare_func_t cmp, tree_create_func_t create);
+static ValueTreeNode *
+vt_find(ValueTree *pt, const void *pv, tree_compare_func_t cmp);
 
 enum { IN_DIRECT_LOW = -2, IN_DIRECT_HIGH = 30 };
 enum { UN_DIRECT_HIGH = 32 };
@@ -115,14 +110,16 @@ struct TypeContext
     ValueTree pointers;
     ValueTree arrays;
     ValueTree openarrays;
-    ValueTree functions;
+    ValueTree functiontypes;
     ValueTree consts;
     ValueTree enums;
     ValueTree structs;
+    ValueTree anonstructs;
 
     ValueTree params;
     ValueTree enumconsts;
     ValueTree fields;
+    ValueTree formalparams;
 };
 
 TypeContext *
@@ -138,6 +135,24 @@ tc_free(TypeContext *cntx)
 {
     // FIXME: complete
     return NULL;
+}
+
+static int
+vt_compare(const c_value_t *pv1, const c_value_t *pv2);
+
+static int
+number_cmp(const TypeInfo *ti, const void *p2)
+{
+    return vt_compare(&ti->v.value, (const c_value_t *) p2);
+}
+
+static TypeInfo *
+number_create(TypeContext *cntx, int kind, const void *p2)
+{
+    const c_value_t *pv = (const c_value_t*) p2;
+    TypeInfo *ti = type_info_alloc(kind);
+    ti->v.value = *pv;
+    return ti;
 }
 
 TypeInfo *
@@ -176,11 +191,12 @@ tc_get_u8(TypeContext *cntx, int value)
     return ti;
 }
 
-static void
+static const c_value_t *
 c_value_i16(c_value_t *cv, int value)
 {
     cv->tag = C_SHORT;
     cv->v.ct_short = value;
+    return cv;
 }
 
 TypeInfo *
@@ -198,16 +214,16 @@ tc_get_i16(TypeContext *cntx, int value)
         return ti;
     } else {
         c_value_t cv = {};
-        c_value_i16(&cv, value);
-        return vt_insert(&cntx->i16_values.tree, &cv, NODE_I16);
+        return vt_insert(cntx, &cntx->i16_values.tree, c_value_i16(&cv, value), NODE_I16, number_cmp, number_create);
     }
 }
 
-static void
+static const c_value_t *
 c_value_u16(c_value_t *cv, int value)
 {
     cv->tag = C_USHORT;
     cv->v.ct_ushort = value;
+    return cv;
 }
 
 TypeInfo *
@@ -224,16 +240,16 @@ tc_get_u16(TypeContext *cntx, int value)
         return ti;
     } else {
         c_value_t cv = {};
-        c_value_u16(&cv, value);
-        return vt_insert(&cntx->u16_values.tree, &cv, NODE_U16);
+        return vt_insert(cntx, &cntx->u16_values.tree, c_value_u16(&cv, value), NODE_U16, number_cmp, number_create);
     }
 }
 
-static void
+static const c_value_t *
 c_value_i32(c_value_t *cv, int value)
 {
     cv->tag = C_INT;
     cv->v.ct_int = value;
+    return cv;
 }
 
 TypeInfo *
@@ -248,16 +264,16 @@ tc_get_i32(TypeContext *cntx, int value)
         return ti;
     } else {
         c_value_t cv = {};
-        c_value_i32(&cv, value);
-        return vt_insert(&cntx->i32_values.tree, &cv, NODE_I32);
+        return vt_insert(cntx, &cntx->i32_values.tree, c_value_i32(&cv, value), NODE_I32, number_cmp, number_create);
     }
 }
 
-static void
+static const c_value_t *
 c_value_u32(c_value_t *cv, unsigned value)
 {
     cv->tag = C_UINT;
     cv->v.ct_uint = value;
+    return cv;
 }
 
 TypeInfo *
@@ -272,16 +288,16 @@ tc_get_u32(TypeContext *cntx, unsigned value)
         return ti;
     } else {
         c_value_t cv = {};
-        c_value_u32(&cv, value);
-        return vt_insert(&cntx->u32_values.tree, &cv, NODE_U32);
+        return vt_insert(cntx, &cntx->u32_values.tree, c_value_u32(&cv, value), NODE_U32, number_cmp, number_create);
     }
 }
 
-static void
+static const c_value_t *
 c_value_i64(c_value_t *cv, long long value)
 {
     cv->tag = C_LLONG;
     cv->v.ct_llint = value;
+    return cv;
 }
 
 TypeInfo *
@@ -296,16 +312,16 @@ tc_get_i64(TypeContext *cntx, long long value)
         return ti;
     } else {
         c_value_t cv = {};
-        c_value_i64(&cv, value);
-        return vt_insert(&cntx->i64_values.tree, &cv, NODE_I64);
+        return vt_insert(cntx, &cntx->i64_values.tree, c_value_i64(&cv, value), NODE_I64, number_cmp, number_create);
     }
 }
 
-static void
+static const c_value_t *
 c_value_u64(c_value_t *cv, unsigned long long value)
 {
     cv->tag = C_UINT;
     cv->v.ct_uint = value;
+    return cv;
 }
 
 TypeInfo *
@@ -320,60 +336,76 @@ tc_get_u64(TypeContext *cntx, unsigned long long value)
         return ti;
     } else {
         c_value_t cv = {};
-        c_value_u64(&cv, value);
-        return vt_insert(&cntx->u64_values.tree, &cv, NODE_U64);
+        return vt_insert(cntx, &cntx->u64_values.tree, c_value_u64(&cv, value), NODE_U64, number_cmp, number_create);
     }
 }
 
-static void
+static const c_value_t *
 c_value_f32(c_value_t *cv, float value)
 {
     cv->tag = C_FLOAT;
     cv->v.ct_float = value;
+    return cv;
 }
 
 TypeInfo *
 tc_get_f32(TypeContext *cntx, float value)
 {
     c_value_t cv = {};
-    c_value_f32(&cv, value);
-    return vt_insert(&cntx->f32_values.tree, &cv, NODE_F32);
+    return vt_insert(cntx, &cntx->f32_values.tree, c_value_f32(&cv, value), NODE_F32, number_cmp, number_create);
 }
 
-static void
+static const c_value_t *
 c_value_f64(c_value_t *cv, double value)
 {
     cv->tag = C_DOUBLE;
     cv->v.ct_double = value;
+    return cv;
 }
 
 TypeInfo *
 tc_get_f64(TypeContext *cntx, double value)
 {
     c_value_t cv = {};
-    c_value_f64(&cv, value);
-    return vt_insert(&cntx->f64_values.tree, &cv, NODE_F64);
+    return vt_insert(cntx, &cntx->f64_values.tree, c_value_f64(&cv, value), NODE_F64, number_cmp, number_create);
 }
 
-static void
+static const c_value_t *
 c_value_f80(c_value_t *cv, long double value)
 {
     cv->tag = C_LDOUBLE;
     cv->v.ct_ldouble = value;
+    return cv;
 }
 
 TypeInfo *
 tc_get_f80(TypeContext *cntx, long double value)
 {
     c_value_t cv = {};
-    c_value_f80(&cv, value);
-    return vt_insert(&cntx->f80_values.tree, &cv, NODE_F80);
+    return vt_insert(cntx, &cntx->f80_values.tree, c_value_f80(&cv, value), NODE_F80, number_cmp, number_create);
+}
+
+static int
+ident_cmp(const TypeInfo *ti, const void *p2)
+{
+    const unsigned char *str = (const unsigned char *) p2;
+    return strcmp(ti->s.str, str);
+}
+
+static TypeInfo *
+ident_create(TypeContext *cntx, int kind, const void *pv)
+{
+    const unsigned char *str = (const unsigned char *) pv;
+    TypeInfo *ti = type_info_alloc(kind);
+    ti->s.str = xstrdup(str);
+    ti->s.len = strlen(str);
+    return ti;
 }
 
 TypeInfo *
 tc_get_ident(TypeContext *cntx, const unsigned char *str)
 {
-    return vt_insert_ident(&cntx->id_values.tree, str, NODE_IDENT);
+    return vt_insert(cntx, &cntx->id_values.tree, str, NODE_IDENT, ident_cmp, ident_create);
 }
 
 static int
@@ -481,114 +513,6 @@ vt_compare(const c_value_t *pv1, const c_value_t *pv2)
         abort();
     }
     return 0;
-}
-
-static ValueTreeNode *
-vt_insert_node(
-        ValueTreeNode *root,
-        const c_value_t *pv,
-        int kind,
-        int *p_count,
-        TypeInfo **p_info)
-{
-    if (!root) {
-        TypeInfo *ti = type_info_alloc(kind);
-        ti->v.value = *pv;
-        XCALLOC(root, 1);
-        root->value = ti;
-        ++(*p_count);
-        if (p_info) *p_info = ti;
-    } else {
-        int c = vt_compare(&root->value->v.value, pv);
-        if (!c) {
-            if (p_info) *p_info = root->value;;
-        } else if (c < 0) {
-            root->right = vt_insert_node(root->right, pv, kind, p_count, p_info);
-        } else if (c > 0) {
-            root->left = vt_insert_node(root->left, pv, kind, p_count, p_info);
-        }
-    }
-    return root;
-}
-
-ValueTreeNode *
-vt_find(ValueTree *pt, const c_value_t *pv)
-{
-    ValueTreeNode *node = pt->root;
-    while (node) {
-        int c = vt_compare(&node->value->v.value, pv);
-        if (!c) {
-            break;
-        } else if (c < 0) {
-            node = node->right;
-        } else if (c > 0) {
-            node = node->left;
-        }
-    }
-    return node;
-}
-
-TypeInfo *
-vt_insert(ValueTree *pt, const c_value_t *pv, int kind)
-{
-    TypeInfo *info = NULL;
-    pt->root = vt_insert_node(pt->root, pv, kind, &pt->count, &info);
-    if (pt->count >= 31 && !((pt->count + 1) & pt->count)) {
-        pt->root = vt_build_balanced(pt->root);
-    }
-    return info;
-}
-
-static ValueTreeNode *
-vt_insert_ident_node(ValueTreeNode *root, const unsigned char *str, int kind, int *p_count, TypeInfo **p_info)
-{
-    if (!root) {
-        TypeInfo *ti = type_info_alloc(kind);
-        ti->s.str = xstrdup(str);
-        ti->s.len = strlen(str);
-        XCALLOC(root, 1);
-        root->value = ti;
-        ++(*p_count);
-        if (p_info) *p_info = ti;
-    } else {
-        int c = strcmp(root->value->s.str, str);
-        if (!c) {
-            if (p_info) *p_info = root->value;
-        } else if (c < 0) {
-            root->right = vt_insert_ident_node(root->right, str, kind, p_count, p_info);
-        } else if (c > 0) {
-            root->left = vt_insert_ident_node(root->left, str, kind, p_count, p_info);
-        }
-    }
-    return root;
-}
-
-TypeInfo *
-vt_insert_ident(ValueTree *pt, const unsigned char *str, int kind)
-{
-    TypeInfo *info = NULL;
-    pt->root = vt_insert_ident_node(pt->root, str, kind, &pt->count, &info);
-    if (pt->count >= 31 && !((pt->count + 1) & pt->count)) {
-        pt->root = vt_build_balanced(pt->root);
-    }
-    return info;
-}
-
-ValueTreeNode *
-vt_find_ident(ValueTree *pt, const unsigned char *str)
-{
-    ValueTreeNode *node = pt->root;
-    while (node) {
-        int c = strcmp(node->value->s.str, str);
-        if (!c) {
-            break;
-        } else if (c < 0) {
-            node = node->right;
-        } else if (c > 0) {
-            node = node->left;
-        }
-    }
-    return node;
 }
 
 TypeInfo *
@@ -839,14 +763,14 @@ TypeInfo *
 tc_get_typedef_type(TypeContext *cntx, TypeInfo *ntype, TypeInfo *name)
 {
     TypeInfo *info[4] = { ntype->n.info[0], ntype, name, NULL };
-    return vt_insert_gen(cntx, &cntx->typedefs, info, NODE_TYPEDEF_TYPE, generic_cmp_1, generic_create);
+    return vt_insert(cntx, &cntx->typedefs, info, NODE_TYPEDEF_TYPE, generic_cmp_1, generic_create);
 }
 
 TypeInfo *
 tc_get_ptr_type(TypeContext *cntx, TypeInfo *valtype)
 {
     TypeInfo *info[3] = { tc_get_u32(cntx, sizeof(void*)), valtype, NULL };
-    return vt_insert_gen(cntx, &cntx->pointers, info, NODE_POINTER_TYPE, generic_cmp_1, generic_create);
+    return vt_insert(cntx, &cntx->pointers, info, NODE_POINTER_TYPE, generic_cmp_1, generic_create);
 }
 
 TypeInfo *
@@ -854,7 +778,7 @@ tc_get_array_type(TypeContext *cntx, TypeInfo *eltype, TypeInfo *count)
 {
     TypeInfo *arrsize = tc_get_u32(cntx, eltype->n.info[0]->v.value.v.ct_uint * count->v.value.v.ct_uint);
     TypeInfo *info[4] = { arrsize, eltype, count, NULL };
-    return vt_insert_gen(cntx, &cntx->arrays, info, NODE_ARRAY_TYPE, generic_cmp_1, generic_create);
+    return vt_insert(cntx, &cntx->arrays, info, NODE_ARRAY_TYPE, generic_cmp_1, generic_create);
 }
 
 TypeInfo *
@@ -862,73 +786,122 @@ tc_get_open_array_type(TypeContext *cntx, TypeInfo *eltype)
 {
     TypeInfo *arrsize = tc_get_u32(cntx, 0);
     TypeInfo *info[3] = { arrsize, eltype, NULL };
-    return vt_insert_gen(cntx, &cntx->openarrays, info, NODE_OPEN_ARRAY_TYPE, generic_cmp_1, generic_create);
+    return vt_insert(cntx, &cntx->openarrays, info, NODE_OPEN_ARRAY_TYPE, generic_cmp_1, generic_create);
 }
 
 TypeInfo *
 tc_get_const_type(TypeContext *cntx, TypeInfo *eltype)
 {
     TypeInfo *info[3] = { eltype->n.info[0], eltype, NULL };
-    return vt_insert_gen(cntx, &cntx->consts, info, NODE_CONST_TYPE, generic_cmp_1, generic_create);
+    return vt_insert(cntx, &cntx->consts, info, NODE_CONST_TYPE, generic_cmp_1, generic_create);
 }
 
 TypeInfo *
 tc_get_enum_type(TypeContext *cntx, TypeInfo **info)
 {
-    return vt_insert_gen(cntx, &cntx->enums, info, NODE_ENUM_TYPE, generic_cmp_1, generic_create);
+    return vt_insert(cntx, &cntx->enums, info, NODE_ENUM_TYPE, generic_cmp_1, generic_create);
+}
+
+TypeInfo *
+tc_get_function_type(TypeContext *cntx, TypeInfo **info)
+{
+    return vt_insert(cntx, &cntx->functiontypes, info, NODE_FUNCTION_TYPE, generic_cmp_1, generic_create);
 }
 
 TypeInfo *
 tc_get_param(TypeContext *cntx, TypeInfo *offset, TypeInfo *param_type, TypeInfo *param_name)
 {
     TypeInfo *info[5] = { param_type->n.info[0], offset, param_type, param_name, NULL };
-    return vt_insert_gen(cntx, &cntx->params, info, NODE_PARAM, generic_cmp_1, generic_create);
+    return vt_insert(cntx, &cntx->params, info, NODE_PARAM, generic_cmp_1, generic_create);
 }
 
 TypeInfo *
 tc_get_enum_const(TypeContext *cntx, TypeInfo *size, TypeInfo *name, TypeInfo *value)
 {
     TypeInfo *info[4] = { size, name, value, NULL };
-    return vt_insert_gen(cntx, &cntx->enumconsts, info, NODE_ENUM_CONST, generic_cmp_1, generic_create);
+    return vt_insert(cntx, &cntx->enumconsts, info, NODE_ENUM_CONST, generic_cmp_1, generic_create);
 }
 
 TypeInfo *
 tc_get_field(TypeContext *cntx, TypeInfo *field_type, TypeInfo *field_name, TypeInfo *field_offset)
 {
     TypeInfo *info[5] = { field_type->n.info[0], field_type, field_name, field_offset, NULL };
-    return vt_insert_gen(cntx, &cntx->fields, info, NODE_FIELD, generic_cmp_1, generic_create);
+    return vt_insert(cntx, &cntx->fields, info, NODE_FIELD, generic_cmp_1, generic_create);
+}
+
+TypeInfo *
+tc_get_formal_param(TypeContext *cntx, TypeInfo *param_type)
+{
+    TypeInfo *info[3] = { param_type->n.info[0], param_type, NULL };
+    return vt_insert(cntx, &cntx->formalparams, info, NODE_FORMAL_PARAM, generic_cmp_1, generic_create);
 }
 
 static int
 struct_cmp(const TypeInfo *ti, const void *p2)
 {
     const TypeInfo **v2 = (const TypeInfo**) p2;
-    if (ti->n.count < 5) return -1;
-    for (int i = 0; i < 5; ++i) {
-        if ((ptrdiff_t) ti->n.info[i] < (ptrdiff_t) v2[i]) return -1;
-        if ((ptrdiff_t) ti->n.info[i] > (ptrdiff_t) v2[i]) return 1;
-    }
+
+    if (ti->kind < v2[0]->v.value.v.ct_uint) return -1;
+    if (ti->kind > v2[0]->v.value.v.ct_uint) return 1;
+    if ((ptrdiff_t) ti->n.info[1] < (ptrdiff_t) v2[2]) return -1;
+    if ((ptrdiff_t) ti->n.info[1] > (ptrdiff_t) v2[2]) return 1;
     return 0;
 }
 
-TypeInfo *
-tc_find_struct(TypeContext *cntx, TypeInfo *size, TypeInfo *name, TypeInfo *flag, TypeInfo *file, TypeInfo *line)
+static TypeInfo *
+struct_create(TypeContext *cntx, int kind, const void *p2)
 {
-    TypeInfo *info[6] = { size, name, flag, file, line, NULL };
-    ValueTreeNode *node = vt_find_gen(&cntx->structs, info, struct_cmp);
+    return type_info_alloc_node_2(kind, (TypeInfo **) p2 + 1);
+}
+
+TypeInfo *
+tc_find_struct_type(TypeContext *cntx, int tag, TypeInfo *name)
+{
+    TypeInfo *info[4] = { tc_get_u32(cntx, tag), NULL, name, NULL };
+    ValueTreeNode *node = vt_find(&cntx->structs, info, struct_cmp);
     if (!node) return NULL;
     return node->value;
 }
 
 TypeInfo *
-tc_create_struct(TypeContext *cntx, int tag, TypeInfo *size, TypeInfo *name, TypeInfo *flag, TypeInfo *file, TypeInfo *line)
+tc_create_struct_type(TypeContext *cntx, int tag, TypeInfo *size, TypeInfo *name, TypeInfo *flag)
 {
-    TypeInfo *info[6] = { size, name, flag, file, line, NULL };
-    return vt_insert_gen(cntx, &cntx->structs, info, tag, struct_cmp, generic_create);
+    TypeInfo *info[5] = { tc_get_u32(cntx, tag), size, name, flag, NULL };
+    return vt_insert(cntx, &cntx->structs, info, tag, struct_cmp, struct_create);
+}
+
+struct AnonStructHelper
+{
+    int kind;
+    TypeInfo **info;
+};
+
+static int
+struct_cmp_2(const TypeInfo *ti, const void *p2)
+{
+    const struct AnonStructHelper *ph = (const struct AnonStructHelper *) p2;
+
+    if (ti->kind < ph->kind) return -1;
+    if (ti->kind > ph->kind) return 1;
+    return generic_cmp_1(ti, ph->info);
+}
+
+static TypeInfo *
+struct_create_2(TypeContext *cntx, int kind, const void *p2)
+{
+    const struct AnonStructHelper *ph = (const struct AnonStructHelper *) p2;
+    return type_info_alloc_node_2(kind, ph->info);
+}
+
+TypeInfo *
+tc_get_anon_struct_type(TypeContext *cntx, int kind, TypeInfo **info)
+{
+    struct AnonStructHelper hlp = { kind, info };
+    return vt_insert(cntx, &cntx->anonstructs, &hlp, kind, struct_cmp_2, struct_create_2);
 }
 
 static ValueTreeNode *
-vt_insert_node_gen(
+vt_insert_node(
         TypeContext *cntx,
         ValueTreeNode *root,
         const void *pv,
@@ -949,27 +922,33 @@ vt_insert_node_gen(
         if (!c) {
             if (p_info) *p_info = root->value;
         } else if (c < 0) {
-            root->right = vt_insert_node_gen(cntx, root->right, pv, kind, p_count, p_info, cmp, create);
+            root->right = vt_insert_node(cntx, root->right, pv, kind, p_count, p_info, cmp, create);
         } else if (c > 0) {
-            root->left = vt_insert_node_gen(cntx, root->left, pv, kind, p_count, p_info, cmp, create);
+            root->left = vt_insert_node(cntx, root->left, pv, kind, p_count, p_info, cmp, create);
         }
     }
     return root;
 }
 
-TypeInfo *
-vt_insert_gen(TypeContext *cntx, ValueTree *pt, void *pv, int kind, tree_compare_func_t cmp, tree_create_func_t create)
+static TypeInfo *
+vt_insert(
+        TypeContext *cntx,
+        ValueTree *pt,
+        const void *pv,
+        int kind,
+        tree_compare_func_t cmp,
+        tree_create_func_t create)
 {
     TypeInfo *info = NULL;
-    pt->root = vt_insert_node_gen(cntx, pt->root, pv, kind, &pt->count, &info, cmp, create);
+    pt->root = vt_insert_node(cntx, pt->root, pv, kind, &pt->count, &info, cmp, create);
     if (pt->count >= 31 && !((pt->count + 1) & pt->count)) {
         pt->root = vt_build_balanced(pt->root);
     }
     return info;
 }
 
-ValueTreeNode *
-vt_find_gen(ValueTree *pt, const void *pv, tree_compare_func_t cmp)
+static ValueTreeNode *
+vt_find(ValueTree *pt, const void *pv, tree_compare_func_t cmp)
 {
     ValueTreeNode *node = pt->root;
     while (node) {
@@ -985,13 +964,29 @@ vt_find_gen(ValueTree *pt, const void *pv, tree_compare_func_t cmp)
     return node;
 }
 
+struct PrintStack
+{
+    struct PrintStack *up;
+    TypeInfo *info;
+};
+
 void
-tc_print(FILE *out_f, TypeInfo *ti)
+tc_print_rec(FILE *out_f, TypeInfo *ti, struct PrintStack *up)
 {
     if (ti == NULL) {
         fprintf(out_f, "nil");
         return;
     }
+
+    for (struct PrintStack *p = up; p; p = p->up) {
+        if (p->info == ti) {
+            fprintf(out_f, "*");
+            return;
+        }
+    }
+
+    struct PrintStack cur = { up, ti };
+
     switch (ti->kind) {
     case NODE_I1:
         fprintf(out_f, "%d", ti->v.value.v.ct_bool);
@@ -1040,11 +1035,17 @@ tc_print(FILE *out_f, TypeInfo *ti)
         fprintf(out_f, "%s", tc_get_kind_str(ti->kind));
         for (int i = 0; i < ti->n.count; ++i) {
             fprintf(out_f, " ");
-            tc_print(out_f, ti->n.info[i]);
+            tc_print_rec(out_f, ti->n.info[i], &cur);
         }
         fprintf(out_f, ")");
         break;
     }
+}
+
+void
+tc_print(FILE *out_f, TypeInfo *ti)
+{
+    tc_print_rec(out_f, ti, NULL);
 }
 
 static const unsigned char * const node_names[] =
@@ -1074,10 +1075,12 @@ static const unsigned char * const node_names[] =
     "NODE_CONST_TYPE",
     "NODE_ENUM_TYPE",
     "NODE_STRUCT_TYPE",
+    "NODE_UNION_TYPE",
 
     "NODE_PARAM",
     "NODE_ENUM_CONST",
     "NODE_FIELD",
+    "NODE_FORMAL_PARAM",
 };
 
 const unsigned char *
@@ -1198,20 +1201,24 @@ tc_dump_context(FILE *out_f, TypeContext *cntx)
     tc_dump_value_tree(out_f, &cntx->arrays);
     fprintf(out_f, "    openarrays\n");
     tc_dump_value_tree(out_f, &cntx->openarrays);
-    fprintf(out_f, "    functions\n");
-    tc_dump_value_tree(out_f, &cntx->functions);
+    fprintf(out_f, "    functiontypes\n");
+    tc_dump_value_tree(out_f, &cntx->functiontypes);
     fprintf(out_f, "    consts\n");
     tc_dump_value_tree(out_f, &cntx->consts);
     fprintf(out_f, "    enums\n");
     tc_dump_value_tree(out_f, &cntx->enums);
     fprintf(out_f, "    structs\n");
     tc_dump_value_tree(out_f, &cntx->structs);
+    fprintf(out_f, "    anonstructs\n");
+    tc_dump_value_tree(out_f, &cntx->anonstructs);
     fprintf(out_f, "    params\n");
     tc_dump_value_tree(out_f, &cntx->params);
     fprintf(out_f, "    enumconsts\n");
     tc_dump_value_tree(out_f, &cntx->enumconsts);
     fprintf(out_f, "    fields\n");
     tc_dump_value_tree(out_f, &cntx->fields);
+    fprintf(out_f, "    formalparams\n");
+    tc_dump_value_tree(out_f, &cntx->formalparams);
 }
 
 /*
