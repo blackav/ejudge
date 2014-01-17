@@ -58,6 +58,7 @@ enum
     // u32 size, str name, node base_type, node consts...
     NODE_ENUM_TYPE,
     NODE_STRUCT_TYPE,
+    NODE_UNION_TYPE,
 
     // u32 size, i32 frame_offset, node type, str name
     NODE_PARAM,
@@ -65,6 +66,8 @@ enum
     NODE_ENUM_CONST,
     // u32 size, node type, str name, u32 offset
     NODE_FIELD,
+    // u32 size, node type
+    NODE_FORMAL_PARAM,
 };
 
 struct TypeInfoOps;
@@ -155,13 +158,16 @@ TypeInfo *tc_get_open_array_type(TypeContext *cntx, TypeInfo *eltype);
 TypeInfo *tc_get_openarray_type(TypeContext *cntx, TypeInfo *eltype);
 TypeInfo *tc_get_const_type(TypeContext *cntx, TypeInfo *eltype);
 TypeInfo *tc_get_enum_type(TypeContext *cntx, TypeInfo **info);
+TypeInfo *tc_get_function_type(TypeContext *cntx, TypeInfo **info);
 
-TypeInfo *tc_find_struct(TypeContext *cntx, TypeInfo *size, TypeInfo *name, TypeInfo *flag, TypeInfo *file, TypeInfo *line);
-TypeInfo *tc_create_struct(TypeContext *cntx, int tag, TypeInfo *size, TypeInfo *name, TypeInfo *flag, TypeInfo *file, TypeInfo *line);
+TypeInfo *tc_find_struct_type(TypeContext *cntx, int tag, TypeInfo *name);
+TypeInfo *tc_create_struct_type(TypeContext *cntx, int tag, TypeInfo *size, TypeInfo *name, TypeInfo *flag);
+TypeInfo *tc_get_anon_struct_type(TypeContext *cntx, int tag, TypeInfo **info);
 
 TypeInfo *tc_get_param(TypeContext *cntx, TypeInfo *offset, TypeInfo *param_type, TypeInfo *param_name);
 TypeInfo *tc_get_enum_const(TypeContext *cntx, TypeInfo *size, TypeInfo *name, TypeInfo *value);
 TypeInfo *tc_get_field(TypeContext *cntx, TypeInfo *field_type, TypeInfo *field_name, TypeInfo *field_offset);
+TypeInfo *tc_get_formal_param(TypeContext *cntx, TypeInfo *param_type);
 
 const unsigned char *tc_get_kind_str(int kind);
 
