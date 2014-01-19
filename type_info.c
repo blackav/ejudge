@@ -1031,6 +1031,34 @@ tc_get_anon_struct_type(TypeContext *cntx, int kind, TypeInfo **info)
     return vt_insert(cntx, &cntx->anonstructs, &hlp, kind, struct_cmp_2, struct_create_2);
 }
 
+TypeInfo *
+tc_find_by_index_rec(ValueTreeNode *node, TypeInfo *name, int index)
+{
+    if (!node) return NULL;
+    if (node->value->n.info[index] == name) return node->value;
+    TypeInfo *v = tc_find_by_index_rec(node->left, name, index);
+    if (v) return v;
+    return tc_find_by_index_rec(node->right, name, index);
+}
+
+TypeInfo *
+tc_find_by_index(ValueTree *tree, TypeInfo *name, int index)
+{
+    return tc_find_by_index_rec(tree->root, name, index);
+}
+
+TypeInfo *
+tc_find_enum_type(TypeContext *cntx, TypeInfo *name)
+{
+    return tc_find_by_index(&cntx->enums, name, 1);
+}
+
+TypeInfo *
+tc_find_typedef_type(TypeContext *cntx, TypeInfo *name)
+{
+    return tc_find_by_index(&cntx->typedefs, name, 2);
+}
+
 static ValueTreeNode *
 vt_insert_node(
         TypeContext *cntx,

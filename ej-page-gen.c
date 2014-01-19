@@ -928,6 +928,262 @@ dump_token(ScannerState *ss)
 
 #define IS_OPER(ss, c) ((ss)->token == TOK_OPER && (ss)->raw_len == 1 && ss->raw[0] == (c))
 
+/*static*/ int
+parse_declspec(ScannerState *ss, TypeContext *cntx, TypeInfo **p_info)
+{
+    int retval = -1;
+
+    int auto_count = 0;
+    int const_count = 0;
+    int extern_count = 0;
+    int register_count = 0;
+    int restrict_count = 0;
+    int static_count = 0;
+    int typedef_count = 0;
+    int volatile_count = 0;
+
+    int signed_count = 0;
+    int unsigned_count = 0;
+    int short_count = 0;
+    int long_count = 0;
+    int bool_count = 0;
+    int char_count = 0;
+    int int_count = 0;
+    int float_count = 0;
+    int double_count = 0;
+
+    int has_base_type = 0;
+    TypeInfo *type_info = NULL;
+
+    if (ss->token != TOK_IDENT) {
+        parser_error(ss, "type expected");
+        goto cleanup;
+    }
+    while (1) {
+        if (ss->token != TOK_IDENT) break;
+        if (!strcmp(ss->raw, "auto")) {
+            ++auto_count;
+            next_token(ss);
+        } else if (!strcmp(ss->raw, "const")) {
+            ++const_count;
+            next_token(ss);
+        } else if (!strcmp(ss->raw, "extern")) {
+            ++extern_count;
+            next_token(ss);
+        } else if (!strcmp(ss->raw, "register")) {
+            ++register_count;
+            next_token(ss);
+        } else if (!strcmp(ss->raw, "restrict")) {
+            ++restrict_count;
+            next_token(ss);
+        } else if (!strcmp(ss->raw, "static")) {
+            ++static_count;
+            next_token(ss);
+        } else if (!strcmp(ss->raw, "typedef")) {
+            ++typedef_count;
+            next_token(ss);
+        } else if (!strcmp(ss->raw, "volatile")) {
+            ++volatile_count;
+            next_token(ss);
+        } else if (!strcmp(ss->raw, "enum")) {
+            if (type_info || has_base_type) goto invalid_declspec;
+            next_token(ss);
+            if (ss->token != TOK_IDENT) {
+                parser_error(ss, "identifier expected after 'enum'");
+                goto cleanup;
+            }
+            type_info = tc_find_enum_type(cntx, tc_get_ident(cntx, ss->raw));
+            if (!type_info) {
+                parser_error(ss, "enum type '%s' undefined", ss->raw);
+                goto cleanup;
+            }
+        } else if (!strcmp(ss->raw, "struct")) {
+            if (type_info || has_base_type) goto invalid_declspec;
+            next_token(ss);
+            if (ss->token != TOK_IDENT) {
+                parser_error(ss, "identifier expected after 'struct'");
+                goto cleanup;
+            }
+            type_info = tc_find_struct_type(cntx, NODE_STRUCT_TYPE, tc_get_ident(cntx, ss->raw));
+            if (!type_info) {
+                parser_error(ss, "struct type '%s' undefined", ss->raw);
+                goto cleanup;
+            }
+        } else if (!strcmp(ss->raw, "union")) {
+            if (type_info || has_base_type) goto invalid_declspec;
+            next_token(ss);
+            if (ss->token != TOK_IDENT) {
+                parser_error(ss, "identifier expected after 'union'");
+                goto cleanup;
+            }
+            type_info = tc_find_struct_type(cntx, NODE_UNION_TYPE, tc_get_ident(cntx, ss->raw));
+            if (!type_info) {
+                parser_error(ss, "union type '%s' undefined", ss->raw);
+                goto cleanup;
+            }
+        } else if (!strcmp(ss->raw, "signed")) {
+            if (type_info) goto invalid_declspec;
+            ++signed_count;
+            has_base_type = 1;
+            next_token(ss);
+        } else if (!strcmp(ss->raw, "unsigned")) {
+            if (type_info) goto invalid_declspec;
+            ++unsigned_count;
+            has_base_type = 1;
+            next_token(ss);
+        } else if (!strcmp(ss->raw, "short")) {
+            if (type_info) goto invalid_declspec;
+            ++short_count;
+            has_base_type = 1;
+            next_token(ss);
+        } else if (!strcmp(ss->raw, "long")) {
+            if (type_info) goto invalid_declspec;
+            ++long_count;
+            has_base_type = 1;
+            next_token(ss);
+        } else if (!strcmp(ss->raw, "_Bool")) {
+            if (type_info) goto invalid_declspec;
+            ++bool_count;
+            has_base_type = 1;
+            next_token(ss);
+        } else if (!strcmp(ss->raw, "char")) {
+            if (type_info) goto invalid_declspec;
+            ++char_count;
+            has_base_type = 1;
+            next_token(ss);
+        } else if (!strcmp(ss->raw, "int")) {
+            if (type_info) goto invalid_declspec;
+            ++int_count;
+            has_base_type = 1;
+            next_token(ss);
+        } else if (!strcmp(ss->raw, "float")) {
+            if (type_info) goto invalid_declspec;
+            ++float_count;
+            has_base_type = 1;
+            next_token(ss);
+        } else if (!strcmp(ss->raw, "double")) {
+            if (type_info) goto invalid_declspec;
+            ++double_count;
+            has_base_type = 1;
+            next_token(ss);
+        } else {
+            if (has_base_type || type_info) break;
+            type_info = tc_find_typedef_type(cntx, tc_get_ident(cntx, ss->raw));
+            if (!type_info) {
+                parser_error(ss, "typedef type '%s' undefined", ss->raw);
+                goto cleanup;
+            }
+            next_token(ss);
+        }
+    }
+
+    if (type_info && has_base_type) goto invalid_declspec;
+    if (type_info) {
+        *p_info = type_info;
+        retval = 0;
+        goto cleanup;
+    }
+    if (!has_base_type) goto invalid_declspec;
+
+    if (signed_count == 0 && unsigned_count == 0 && short_count == 0 && long_count == 1
+        && bool_count == 0 && char_count == 0 && int_count == 0 && float_count == 0
+        && double_count == 1) {
+        *p_info = tc_get_f80_type(cntx);
+        retval = 0;
+        goto cleanup;
+    }
+    if (signed_count == 0 && unsigned_count == 0 && short_count == 0 && long_count == 0
+        && bool_count == 0 && char_count == 0 && int_count == 0 && float_count == 0
+        && double_count == 1) {
+        *p_info = tc_get_f64_type(cntx);
+        retval = 0;
+        goto cleanup;
+    }
+    if (double_count) goto invalid_declspec;
+    if (signed_count == 0 && unsigned_count == 0 && short_count == 0 && long_count == 0
+        && bool_count == 0 && char_count == 0 && int_count == 0 && float_count == 1) {
+        *p_info = tc_get_f32_type(cntx);
+        retval = 0;
+        goto cleanup;
+    }
+    if (float_count) goto invalid_declspec;
+    if (signed_count == 0 && unsigned_count == 0 && short_count == 0 && long_count == 0
+        && bool_count == 1 && char_count == 0 && int_count == 0) {
+        *p_info = tc_get_i1_type(cntx);
+        retval = 0;
+        goto cleanup;
+    }
+    if (bool_count) goto invalid_declspec;
+    if (signed_count == 0 && unsigned_count == 0 && short_count == 0 && long_count == 0
+        && char_count == 1 && int_count == 0) {
+        *p_info = tc_get_i8_type(cntx);
+        retval = 0;
+        goto cleanup;
+    }
+    if (signed_count == 1 && unsigned_count == 0 && short_count == 0 && long_count == 0
+        && char_count == 1 && int_count == 0) {
+        *p_info = tc_get_i8_type(cntx);
+        retval = 0;
+        goto cleanup;
+    }
+    if (signed_count == 0 && unsigned_count == 1 && short_count == 0 && long_count == 0
+        && char_count == 1 && int_count == 0) {
+        *p_info = tc_get_u8_type(cntx);
+        retval = 0;
+        goto cleanup;
+    }
+    if (char_count) goto invalid_declspec;
+    if (int_count > 1 || signed_count > 1 || unsigned_count > 1 || short_count > 1 || long_count > 2)
+        goto invalid_declspec;
+    if (signed_count > 0 && unsigned_count > 0) goto invalid_declspec;
+    if (short_count > 0 && long_count > 0) goto invalid_declspec;
+    if (long_count == 2 && unsigned_count > 0) {
+        *p_info = tc_get_u64_type(cntx);
+        retval = 0;
+        goto cleanup;
+    }
+    if (long_count == 2) {
+        *p_info = tc_get_i64_type(cntx);
+        retval = 0;
+        goto cleanup;
+    }
+    if (long_count > 0 && unsigned_count > 0) {
+        *p_info = tc_get_u32_type(cntx);
+        retval = 0;
+        goto cleanup;
+    }
+    if (long_count > 0) {
+        *p_info = tc_get_i32_type(cntx);
+        retval = 0;
+        goto cleanup;
+    }
+    if (short_count > 0 && unsigned_count > 0) {
+        *p_info = tc_get_u16_type(cntx);
+        retval = 0;
+        goto cleanup;
+    }
+    if (short_count > 0) {
+        *p_info = tc_get_i16_type(cntx);
+        retval = 0;
+        goto cleanup;
+    }
+    if (unsigned_count > 0) {
+        *p_info = tc_get_u32_type(cntx);
+        retval = 0;
+        goto cleanup;
+    }
+
+    *p_info = tc_get_i32_type(cntx);
+    retval = 0;
+
+cleanup:
+    return retval;
+
+invalid_declspec:
+    parser_error(ss, "invalid declaration specifier");
+    goto cleanup;
+}
+
 static int
 handle_directive_page(ScannerState *ss, FILE *out_f)
 {
@@ -1029,7 +1285,8 @@ handle_html_text(FILE *out_f, FILE *log_f, const unsigned char *str, int len)
 
 static int
 process_file(
-        const unsigned char *path)
+        const unsigned char *path,
+        TypeContext *cntx)
 {
     FILE *in_f = NULL;
     int result = 0;
@@ -1174,11 +1431,12 @@ main(int argc, char *argv[])
         tc_free(cntx);
         fatal("dwarf parsing failed");
     }
-    tc_dump_context(stdout, cntx);
-    tc_free(cntx);
+    //tc_dump_context(stdout, cntx);
 
     int result = 0;
-    result = process_file(source_path) || result;
+    result = process_file(source_path, cntx) || result;
+
+    tc_free(cntx);
 
     return result;
 }

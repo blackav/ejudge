@@ -741,7 +741,7 @@ parse_const_type_die(
     if (s_dwarf_attr(log_f, path, die, DW_AT_type, &type_attr) < 0)
         goto done;
     if (type_attr == NULL) {
-        fprintf(log_f, "DW_TAG_const_type: DW_AT_type missing\n");
+        //fprintf(log_f, "DW_TAG_const_type: DW_AT_type missing\n");
         //dump_die(log_f, dbg, die);
     } else {
         Dwarf_Off to = 0;
@@ -784,7 +784,7 @@ parse_typedef_type_die(
     if (s_dwarf_attr(log_f, path, die, DW_AT_type, &type_attr) < 0)
         goto done;
     if (type_attr == NULL) {
-        fprintf(log_f, "DW_TAG_typedef_type: DW_AT_type missing\n");
+        //fprintf(log_f, "DW_TAG_typedef_type: DW_AT_type missing\n");
         //dump_die(log_f, dbg, die);
     } else {
         Dwarf_Off to = 0;
@@ -1152,16 +1152,20 @@ parse_die_type(
 
     if (die_map_get_2(log_f, path, dm, die, &ti, &die_offset) < 0) goto done;
     if (ti) {
+        /*
         fprintf(log_f, "Note: %s type at %llu already registered as %016llx\n",
                 type_str, (long long) die_offset, (long long) (size_t) ti);
+        */
         retval = 0;
         goto done;
     }
 
     if (parse_func(log_f, path, dbg, die, cntx, dm, tag, &ti) < 0) goto done;
 
+    /*
     fprintf(log_f, "Note: %s type %llu mapped to %016llx\n",
             type_str, die_offset, (unsigned long long) (size_t) ti);
+    */
     die_map_put(dm, die_offset, ti);
     retval = 0;
 
