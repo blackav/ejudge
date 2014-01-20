@@ -1184,6 +1184,16 @@ invalid_declspec:
     goto cleanup;
 }
 
+int
+parse_declr()
+{
+}
+
+int
+parse_param()
+{
+}
+
 static int
 handle_directive_page(ScannerState *ss, FILE *out_f)
 {
