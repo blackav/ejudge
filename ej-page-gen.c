@@ -186,9 +186,10 @@ typedef struct ScannerState
 
     const unsigned char *buf;
     int len;
-    Position pos;
 
+    Position pos;
     int idx;
+
     int error_count;
     int token;
     Position token_pos;
@@ -200,6 +201,23 @@ typedef struct ScannerState
     int raw_len;
     unsigned char *raw;
 } ScannerState;
+
+typedef struct SavedScannerState
+{
+    Position pos;
+    int idx;
+
+    int error_count;
+    int token;
+    Position token_pos;
+
+    int value_len;
+    unsigned char *value;
+    c_value_t cv;
+
+    int raw_len;
+    unsigned char *raw;
+} SavedScannerState;
 
 static const unsigned char *
 pos_str(unsigned char *buf, size_t size, const ScannerState *ss)
@@ -239,6 +257,54 @@ destroy_scanner(ScannerState *ss)
         xfree(ss->raw);
         xfree(ss);
     }
+    return NULL;
+}
+
+static SavedScannerState *
+save_scanner_state(const ScannerState *ss)
+{
+    SavedScannerState *sss = NULL;
+    XCALLOC(sss, 1);
+
+    sss->pos = ss->pos;
+    sss->idx = ss->idx;
+    sss->error_count = ss->error_count;
+    sss->token = ss->token;
+    sss->token_pos = ss->token_pos;
+    sss->value_len = ss->value_len;
+    if (ss->value) sss->value = xmemdup(ss->value, ss->value_len);
+    sss->cv = ss->cv;
+    sss->raw_len = ss->raw_len;
+    if (ss->raw) sss->raw = xmemdup(ss->raw, ss->raw_len);
+    return sss;
+}
+
+static void
+restore_scanner_state(ScannerState *ss, const SavedScannerState *sss)
+{
+    ss->pos = sss->pos;
+    ss->idx = sss->idx;
+    ss->error_count = sss->error_count;
+    ss->token = sss->token;
+    ss->token_pos = sss->token_pos;
+    ss->value_len = sss->value_len;
+    xfree(ss->value); ss->value = NULL;
+    if (sss->value) ss->value = xmemdup(sss->value, sss->value_len);
+    ss->cv = sss->cv;
+    ss->raw_len = sss->raw_len;
+    xfree(ss->raw); ss->raw = NULL;
+    if (sss->raw) ss->raw = xmemdup(sss->raw, sss->raw_len);
+}
+
+static SavedScannerState *
+destroy_saved_state(SavedScannerState *sss)
+{
+    if (!sss) return NULL;
+
+    xfree(sss->value);
+    xfree(sss->raw);
+    memset(sss, 0, sizeof(*sss));
+    xfree(sss);
     return NULL;
 }
 
@@ -1185,8 +1251,42 @@ invalid_declspec:
 }
 
 int
-parse_declr()
+parse_declr(ScannerState *ss, TypeContext *cntx, int anon_allowed, int quiet_mode)
 {
+    int star_count = 0;
+
+    while (IS_OPER(ss, '*')) {
+        ++star_count;
+        next_token(ss);
+        while (ss->token == TOK_IDENT
+               && (!strcmp(ss->raw, "const") || !strcmp(ss->raw, "volatile") || !strcmp(ss->raw, "restrict"))) {
+            next_token(ss);
+        }
+    }
+
+    if (IS_OPER(ss, '(') && anon_allowed) {
+    } else if (IS_OPER(ss, '(')) {
+        next_token(ss);
+        parse_declr(ss);
+        if (!IS_OPER(ss, ')')) {
+            parser_error(ss, "')' expected");
+        }
+        next_token(ss);
+    }
+
+    if (ss->token != TOK_IDENT) {
+        parser_error(ss, "identifier expected");
+    }
+    // check no keyword
+    next_token();
+
+    while (IS_OPER(ss, '(') || IS_OPER(ss, '[')) {
+        if (IS_OPER(ss, '(')) {
+        } else if (IS_OPER(ss, '[')) {
+        } else {
+            abort();
+        }
+    }
 }
 
 int
