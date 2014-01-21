@@ -120,6 +120,8 @@ struct TypeContext
     ValueTree enumconsts;
     ValueTree fields;
     ValueTree formalparams;
+
+    ValueTree keywords;
 };
 
 TypeContext *
@@ -181,6 +183,22 @@ tc_value_tree_free(ValueTree *t)
 }
 
 static void
+tc_value_tree_free_2_node(ValueTreeNode *t)
+{
+    if (!t) return;
+    tc_value_tree_free_node(t->left);
+    tc_value_tree_free_node(t->right);
+    memset(t, 0, sizeof(*t));
+    xfree(t);
+}
+
+static void
+tc_value_tree_free_2(ValueTree *t)
+{
+    tc_value_tree_free_2_node(t->root);
+}
+
+static void
 tc_signed_storage_free(SignedIntStorage *s)
 {
     for (int i = 0; i < UN_DIRECT_HIGH; ++i)
@@ -212,6 +230,8 @@ TypeContext *
 tc_free(TypeContext *cntx)
 {
     if (!cntx) return NULL;
+
+    tc_value_tree_free_2(&cntx->keywords);
 
     for (int i = 0; i < 2; ++i)
         tc_type_info_free(cntx->i1_values[i]);
@@ -1057,6 +1077,74 @@ TypeInfo *
 tc_find_typedef_type(TypeContext *cntx, TypeInfo *name)
 {
     return tc_find_by_index(&cntx->typedefs, name, 2);
+}
+
+static int
+pointer_cmp(const TypeInfo *ti, const void *p2)
+{
+    const TypeInfo *t2 = (const TypeInfo*) p2;
+    if (ti < t2) return -1;
+    if (ti > t2) return 1;
+    return 0;
+}
+
+static TypeInfo *
+pointer_create(TypeContext *cntx, int kind, const void *p2)
+{
+    return (TypeInfo*) p2;
+}
+
+int
+tc_is_c_keyword(TypeContext *cntx, TypeInfo *ident)
+{
+    static const unsigned char * keywords[] =
+    {
+        "auto",
+        "break",
+        "case",
+        "char",
+        "const",
+        "continue",
+        "default",
+        "do",
+        "double",
+        "else",
+        "enum",
+        "extern",
+        "float",
+        "for",
+        "goto",
+        "if",
+        "inline",
+        "int",
+        "long",
+        "register",
+        "restrict",
+        "return",
+        "short",
+        "signed",
+        "sizeof",
+        "static",
+        "struct",
+        "switch",
+        "typedef",
+        "union",
+        "unsigned",
+        "void",
+        "volatile",
+        "while",
+        "_Bool",
+        "_Complex",
+        "_Imaginary",
+        NULL,
+    };
+    if (!cntx->keywords.root) {
+        for (int i = 0; keywords[i]; ++i) {
+            vt_insert(cntx, &cntx->keywords, ident, NODE_IDENT, pointer_cmp, pointer_create);
+        }
+    }
+    ValueTreeNode *res = vt_find(&cntx->keywords, ident, pointer_cmp);
+    return (res && res->value);
 }
 
 static ValueTreeNode *
