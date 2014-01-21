@@ -994,7 +994,7 @@ dump_token(ScannerState *ss)
 
 #define IS_OPER(ss, c) ((ss)->token == TOK_OPER && (ss)->raw_len == 1 && ss->raw[0] == (c))
 
-/*static*/ int
+static int
 parse_declspec(ScannerState *ss, TypeContext *cntx, TypeInfo **p_info)
 {
     int retval = -1;
@@ -1250,10 +1250,129 @@ invalid_declspec:
     goto cleanup;
 }
 
-int
-parse_declr(ScannerState *ss, TypeContext *cntx, int anon_allowed, int quiet_mode)
+// int *a : a - pointer - int
+// int a[] : a - array of - int
+// int *a[] : a - array of - pointer - int
+// int (*a)[] : a - pointer - array of - int
+// int (*a)[]() : a - pointer - array of - function - int
+
+typedef struct DeclrHelper
+{
+    struct DeclrHelper *next;
+    int tag;
+    int count;
+    TypeInfo **info;
+} DeclrHelper;
+
+static DeclrHelper *
+free_declr_helper(DeclrHelper *p)
+{
+    DeclrHelper *q;
+    while (p) {
+        q = p->next;
+        xfree(p->info);
+        xfree(p);
+    }
+    return NULL;
+}
+
+static int
+parse_param(
+        ScannerState *ss,
+        TypeContext *cntx,
+        int anon_allowed,
+        int quiet_mode,
+        int param_mode,
+        TypeInfo **p_info);
+static int
+parse_declr(
+        ScannerState *ss,
+        TypeContext *cntx,
+        int anon_allowed,
+        int quiet_mode,
+        TypeInfo *declspec,
+        TypeInfo **p_info);
+
+static int
+try_declr(
+        ScannerState *ss,
+        TypeContext *cntx,
+        int anon_allowed,
+        int quiet_mode,
+        int param_mode,
+        TypeInfo **p_info)
+{
+    SavedScannerState *sss = save_scanner_state(ss);
+    next_token(ss);
+    int ret = parse_declr(ss, cntx, anon_allowed, 1, param_mode, p_info);
+    if (ret < 0 || !IS_OPER(ss, ')')) {
+        restore_scanner_state(ss, sss);
+        destroy_saved_state(sss);
+        return -1;
+    }
+    next_token(ss);
+    destroy_saved_state(sss);
+    return 0;
+}
+
+static int
+parse_function_type_params(
+        ScannerState *ss,
+        TypeContext *cntx,
+        int quiet_mode,
+        DeclrHelper **p_head)
+{
+    TypeInfo *ti = NULL;
+    enum { MAX_PARAM_COUNT = 128 };
+    int idx = 0;
+    TypeInfo *info[MAX_PARAM_COUNT];
+    DeclrHelper *cur = NULL;
+
+    // '(' is the current token
+    next_token(ss);
+    if (IS_OPER(ss, ')')) {
+        next_token(ss);
+        if (p_head) {
+            XCALLOC(cur, 1);
+            cur->tag = NODE_FUNCTION_TYPE;
+            cur->count = 2;
+            XCALLOC(cur->info, 3);
+            cur->info[idx++] = tc_get_u32(cntx, 0);
+            cur->next = *p_head;
+            *p_head = cur;
+        }
+        return 0;
+    }
+    info[idx++] = tc_get_u32(cntx, 0);
+    info[idx++] = ret_type;
+    int r = parse_param(ss, cntx, 1, quiet_mode, 0, &ti);
+    if (r < 0) return r;
+    info[idx++] = ti;
+    while (IS_OPER(ss, ',')) {
+        next_token(ss);
+        if ((r = parse_param(ss, cntx, 1, quiet_mode, 0, &ti)) < 0) return r;
+        info[idx++] = ti;
+    }
+    info[idx] = NULL;
+    if (!IS_OPER(ss, ')')) {
+        if (!quiet_mode) parser_error(ss, "')' expected");
+        return -1;
+    }
+    next_token(ss);
+    *p_func_type = tc_get_function_type(cntx, info);
+    return 0;
+}
+
+static int
+parse_declr(
+        ScannerState *ss,
+        TypeContext *cntx,
+        int anon_allowed,
+        int quiet_mode,
+        DeclrHelper **p_head)
 {
     int star_count = 0;
+    TypeInfo *ti = NULL;
 
     while (IS_OPER(ss, '*')) {
         ++star_count;
@@ -1264,7 +1383,13 @@ parse_declr(ScannerState *ss, TypeContext *cntx, int anon_allowed, int quiet_mod
         }
     }
 
+    /*
     if (IS_OPER(ss, '(') && anon_allowed) {
+        int r = try_declr(ss, cntx, anon_allowed, quiet_mode, param_mode);
+        if (r < 0) {
+            // reparse as function type
+            //r = parse_function_type_params(ss, cntx, quiet_mode, 
+        }
     } else if (IS_OPER(ss, '(')) {
         next_token(ss);
         parse_declr(ss);
@@ -1279,19 +1404,99 @@ parse_declr(ScannerState *ss, TypeContext *cntx, int anon_allowed, int quiet_mod
     }
     // check no keyword
     next_token();
+    */
 
     while (IS_OPER(ss, '(') || IS_OPER(ss, '[')) {
         if (IS_OPER(ss, '(')) {
         } else if (IS_OPER(ss, '[')) {
+            next_token(ss);
+            int depth = 1;
+            while (1) {
+                if (IS_OPER(ss, '[')) {
+                    ++depth;
+                    next_token();
+                } else if (IS_OPER(ss, '{')) {
+                    ++depth;
+                    next_token();
+                } else if (IS_OPER(ss, '(')) {
+                    ++depth;
+                    next_token();
+                } else if (IS_OPER(ss, ')')) {
+                    --depth;
+                    next_token();
+                } else if (IS_OPER(ss, '}')) {
+                    --depth;
+                    next_token();
+                } else if (IS_OPER(ss, ']')) {
+                    --depth;
+                    next_token();
+                    if (!depth) break;
+                } else {
+                    next_token();
+                }
+            }
+            if (p_head) {
+                DeclrHelper *cur = NULL;
+                XCALLOC(cur, 1);
+                cur->tag = NODE_ARRAY_TYPE;
+                cur->next = *p_head;
+                *p_head = cur;
+            }
         } else {
             abort();
         }
     }
+
+    if (p_head && star_count > 0) {
+        for (; star_count > 0; --star_count) {
+            DeclrHelper *cur = NULL;
+            XCALLOC(cur, 1);
+            cur->tag = NODE_POINTER_TYPE;
+            cur->next = *p_head;
+            *p_head = cur;
+        }
+    }
+
+    return 0;
 }
 
+// if anon_allowed flag is set, param is parsed as type, param name is ignored
 int
-parse_param()
+parse_param(
+        ScannerState *ss,
+        TypeContext *cntx,
+        int anon_allowed,
+        int quiet_mode,
+        TypeInfo **p_info)
 {
+    TypeInfo *ds = NULL;
+    int r = parse_declspec(ss, cntx, &ds);
+    if (r < 0) return -1;
+
+    DeclrHelper *head = NULL;
+    XCALLOC(head, 1);
+
+    r = parse_declr(ss, cntx, anon_allowed, quiet_mode, &head);
+    if (r < 0) {
+        free_declr_helper(head);
+        return -1;
+    }
+
+    for (DeclrHelper *cur = head; cur; cur = cur->next) {
+        if (cur->tag == NODE_POINTER_TYPE) {
+            ds = tc_get_ptr_type(cntx, ds);
+        } else if (cur->tag == NODE_ARRAY_TYPE) {
+            ds = tc_get_open_array_type(cntx, ds);
+        } else if (cur->tag == NODE_FUNCTION_TYPE) {
+            cur->info[0] = tc_get_u32(cntx, 0);
+            cur->info[1] = ds;
+            ds = tc_get_function_type(cntx, cur->info);
+        }
+    }
+
+    *p_info = ds;
+    free_declr_helper(head);
+    return 0;
 }
 
 static int
