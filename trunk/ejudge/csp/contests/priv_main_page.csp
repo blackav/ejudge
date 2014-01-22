@@ -1,0 +1,647 @@
+<%
+/* $Id$ */
+%><%@page priv_main_page(FILE *out_f, struct http_request_info *phr, const struct contest_desc *cnts, struct contest_extra *extra)
+%><%
+  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+            phr->client_key,
+            "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role),
+            phr->name_arm, phr->contest_id, extra->contest_arm, _("Main page"));
+%>
+<script language="javascript">
+    var self_url='<%= phr.self_url %>';
+    var SID='<%= $fmt("%016llx", phr.session_id) %>';
+</script>
+<ul>
+    <li><%= ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_USERS, 0) %><%= _("View regular users") %></a></li>
+    <li><%= ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_PRIV_USERS_VIEW, 0) %><%= _("View privileged users") %></a></li>
+    <li><%= ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_ONLINE_USERS, 0) %><%= _("View who is currently online") %></a></li>
+    <li><%= ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_EXAM_INFO, 0) %><%= _("View examination information") %></a></li>
+    <% if (need_examiners) { %>
+        <li><%= ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_EXAMINERS_PAGE, 0) %><%= _("Examiners assignments") %></a></li>
+    <% } %>
+    <li><%= ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_STANDINGS, 0) %><%= _("View standings") %></a></li>
+    <% if (phr->role >= USER_ROLE_JUDGE && opcaps_check(phr->caps, OPCAP_EDIT_PASSWD) >= 0) { %>
+        <li><%= ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_REG_PWDS, 0) %><%= _("View registration passwords") %></a></li>\n",
+        <% if (!cnts->disable_team_password) { %>
+            <li><%= ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_CNTS_PWDS,0) %><%= _("View contest passwords") %></a></li>\n",
+        <% } %>
+    <% } %>
+    <% if (phr->role >= USER_ROLE_JUDGE && opcaps_check(phr->caps, OPCAP_DUMP_USERS) >= 0) { %>
+        <li><%= ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_USER_DUMP, 0) %><%= _("Dump users in CSV format") %></a></li>
+    <% } %>
+    <% if (phr->role >= USER_ROLE_JUDGE && opcaps_check(phr->caps, OPCAP_DUMP_RUNS) >= 0) { %>
+        <li><%= ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_RUNS_DUMP, 0) %><%= _("Dump runs in CSV format") %></a></li>
+        <li><%= ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_EXPORT_XML_RUNS, 0) %><%= _("Export runs in XML external format") %></a></li>
+        <li><%= ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_WRITE_XML_RUNS, 0) %><%= _("Write runs in XML internal format") %></a></li>
+        <li><%= ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_WRITE_XML_RUNS_WITH_SRC, 0) %><%= _("Write runs in XML internal format with source") %></a></li>
+    <% } %>
+    <li><%= ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_ASSIGN_CYPHERS_1, 0) %><%= _("Assign random cyphers") %></a></li>
+    <li><%= ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_IP_USERS, 0) %><%= _("View users for IP addresses") %></a></li>
+    <li><%= ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_USER_IPS, 0) %><%= _("View IP addresses for users") %></a></li>
+    <li><%= ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_TESTING_QUEUE,0) %><%= _("View testing queue") %></a></li>
+    <% if (phr->role >= USER_ROLE_ADMIN) { %>
+        <li><%= ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_ADMIN_CONTEST_SETTINGS, 0) %><%= _("Contest settings") %></a></li>
+    <% } %>
+    <% if (cnts->problems_url) { %>
+        <li><a href="<%= cnts->problems_url %>" target="_blank"><%= _("Problems") %></a>
+    <% } %>
+    <li><%= ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_PRIV_SUBMIT_PAGE, 0) %><%= _("Submit a solution") %></a></li>
+    <li><%= ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_LOGOUT, 0) %><%= _("Logout") %></a></li>
+</ul>
+
+<hr /><a name="status" /><h2><%= _("Server status") %></h2>
+  if (stop_time > 0 && !global->is_virtual) {
+    if (duration > 0 && global->board_fog_time > 0
+        && global->board_unfog_time > 0
+        && cs->current_time < stop_time + global->board_unfog_time
+        && !cs->standings_updated) {
+      s = _("The contest is over (standings are frozen)");
+    } else {
+      s = _("The contest is over");
+    }
+  } else if (start_time > 0) {
+    if (fog_start_time > 0 && cs->current_time >= fog_start_time)
+      s = _("The contest is in progress (standings are frozen)");
+    else
+      s = _("The contest is in progress");
+  } else {
+    s = _("The contest is not started");
+  }
+  fprintf(fout, "<p><big><b>%s</b></big></p>\n", s);
+
+  if (global->score_system == SCORE_OLYMPIAD && !global->is_virtual) {
+    if (cs->accepting_mode)
+      s = _("Participants' solutions are being accepted");
+    else if (!cs->testing_finished)
+      s = _("Participants' solutions are being judged");
+    else
+      s = _("Participants' solutions are judged");
+    fprintf(fout, "<p><big><b>%s</b></big></p>\n", s);
+  }
+
+  if (cs->upsolving_mode) {
+    fprintf(fout, "<p><big><b>%s</b></big></p>\n", _("Upsolving mode"));
+  }
+
+  if (cs->clients_suspended) {
+    fprintf(fout, "<p><big><b>%s</b></big></p>\n",
+            _("Participants' requests are suspended"));
+  }
+
+  if (cs->testing_suspended) {
+    fprintf(fout, "<p><big><b>%s</b></big></p>\n",
+            _("Testing of participants' submits is suspended"));
+  }
+  if (cs->printing_suspended) {
+    fprintf(fout, "<p><big><b>%s</b></big></p>\n",
+            _("Print requests are suspended"));
+  }
+  if (cs->online_view_source < 0) {
+    fprintf(fout, "<p><big><b>%s</b></big></p>\n",
+            _("Source code is closed"));
+  } else if (cs->online_view_source > 0) {
+    fprintf(fout, "<p><big><b>%s</b></big></p>\n",
+            _("Source code is open"));
+  }
+  if (cs->online_view_report < 0) {
+    fprintf(fout, "<p><big><b>%s</b></big></p>\n",
+            _("Testing reports are closed"));
+  } else if (cs->online_view_report > 0) {
+    fprintf(fout, "<p><big><b>%s</b></big></p>\n",
+            _("Testing reports are open"));
+  }
+  if (cs->online_view_judge_score > 0) {
+    fprintf(fout, "<p><big><b>%s</b></big></p>\n",
+            _("Judge scores are opened"));
+  }
+  if (cs->online_final_visibility > 0) {
+    fprintf(fout, "<p><big><b>%s</b></big></p>\n",
+            _("Final visibility rules are active"));
+  }
+
+  // count online users
+  online_users = 0;
+  for (i = 0; i < extra->user_access[USER_ROLE_CONTESTANT].u; i++) {
+    pa = &extra->user_access[USER_ROLE_CONTESTANT].v[i];
+    if (pa->time + 65 >= cs->current_time) online_users++;
+  }
+  fprintf(fout, "<p><big><b>%s: %d</b></big></p>\n",
+          _("On-line users in this contest"), online_users);
+  if (cs->max_online_count > 0) {
+    fprintf(fout, "<p><big><b>%s: %d, %s</b></big></p>\n",
+            _("Max number of users was"), cs->max_online_count,
+            xml_unparse_date(cs->max_online_time));
+  }
+
+  if (job_count > 0) {
+    fprintf(fout, "<p><b>%s: %d</b></p>\n", "Background jobs", job_count);
+    fprintf(fout, "<table class=\"b1\">");
+    for (struct server_framework_job *job = job_first; job; job = job->next) {
+      fprintf(fout, "<tr><td%s>%d</td><td%s>%s</td><td%s>%s</td><td%s>",
+              " class=\"b1\"", job->id,
+              " class=\"b1\"", xml_unparse_date(job->start_time),
+              " class=\"b1\"", job->title,
+              " class=\"b1\"");
+      if (job->vt->get_status) {
+        unsigned char *str = job->vt->get_status(job);
+        if (str && *str) {
+          fprintf(fout, "%s", str);
+        } else {
+          fprintf(fout, "&nbsp;");
+        }
+        xfree(str);
+      } else {
+        fprintf(fout, "&nbsp;");
+      }
+      fprintf(fout, "</td></tr>\n");
+    }
+    fprintf(fout, "</table>\n");
+  }
+
+  if (phr->role == USER_ROLE_ADMIN
+      && opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST) >= 0) {
+    html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
+    fprintf(fout, "<table border=\"0\">");
+
+    fprintf(fout,
+            "<tr><td>%s:</td><td>%s</td><td>&nbsp;</td><td>&nbsp;</td></tr>\n",
+            _("Server time"), ctime(&cs->current_time));
+
+    if (start_time <= 0) {
+      fprintf(fout, "<tr><td colspan=\"2\"><b>%s</b></td><td>&nbsp;</td><td>%s</td></tr>\n",
+              _("Contest is not started"),
+              BUTTON(NEW_SRV_ACTION_START_CONTEST));
+    } else {
+      fprintf(fout, "<tr><td>%s:</td><td>%s</td><td>&nbsp;</td>",
+              _("Contest start time"), ctime(&start_time));
+      if (stop_time <= 0) {
+        fprintf(fout, "<td>%s</td></tr>\n",
+                BUTTON(NEW_SRV_ACTION_STOP_CONTEST));
+      } else if (global->enable_continue
+                 && (!duration || stop_time < start_time + duration)) {
+        fprintf(fout, "<td>%s</td></tr>\n",
+                BUTTON(NEW_SRV_ACTION_CONTINUE_CONTEST));
+      }
+    }
+
+    if (!global->is_virtual && start_time <= 0) {
+      fprintf(fout, "<tr><td>%s:</td><td>%s</td>"
+              "<td><input type=\"text\" name=\"sched_time\" size=\"16\"/></td>"
+              "<td>%s</td></tr>\n",
+              _("Planned start time"),
+              sched_time <= 0?_("Not set"):ctime(&sched_time),
+              BUTTON(NEW_SRV_ACTION_SCHEDULE));
+    }
+
+    if (finish_time <= 0) {
+      if (duration > 0) {
+        duration_str(0, duration, 0, duration_buf, 0);
+      } else {
+        snprintf(duration_buf, sizeof(duration_buf), "%s", _("Unlimited"));
+      }
+
+      fprintf(fout, "<tr><td>%s:</td><td>%s</td>",_("Duration"), duration_buf);
+      if ((stop_time <= 0 || global->enable_continue) && !global->is_virtual) {
+        fprintf(fout, "<td><input type=\"text\" name=\"dur\" size=\"16\"/></td>"
+                "<td>%s</td></tr>\n",
+                BUTTON(NEW_SRV_ACTION_CHANGE_DURATION));
+      } else {
+        fprintf(fout, "<td>&nbsp;</td><td>&nbsp;</td></tr>\n");
+      }
+
+      if (duration <= 0 && (stop_time <= 0 || global->enable_continue)
+          && !global->is_virtual) {
+        fprintf(fout,
+                "<tr><td>%s:</td><td>&nbsp;</td>"
+                "<td><input type=\"text\" name=\"finish_time\" size=\"16\" /></td>"
+                "<td>%s</td></tr>\n",
+                _("Finish time"),
+                BUTTON(NEW_SRV_ACTION_CHANGE_FINISH_TIME));
+      }
+    }
+
+    if (!global->is_virtual) {
+      if (start_time > 0 && stop_time <= 0 && duration > 0) {
+        tmpt = start_time + duration;
+        fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+                _("Scheduled end time"), ctime(&tmpt));
+      } else if (start_time > 0 && stop_time <= 0 && duration <= 0
+                 && finish_time > 0) {
+        fprintf(fout, "<tr><td>%s:</td><td>%s</td>\n",
+                _("Scheduled end time"), ctime(&finish_time));
+        fprintf(fout,
+                "<td><input type=\"text\" name=\"finish_time\" size=\"16\" /></td>"
+                "<td>%s</td></tr>\n",
+                BUTTON(NEW_SRV_ACTION_CHANGE_FINISH_TIME));
+        fprintf(fout, "</tr>\n");
+      } else if (stop_time) {
+        fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+                _("End time"), ctime(&stop_time));
+      }
+
+      if (start_time > 0 && stop_time <= 0 && fog_start_time > 0) {
+        fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+                _("Standings freeze time"), ctime(&fog_start_time));
+      } else if (stop_time > 0 && duration > 0 && global->board_fog_time > 0
+                 && global->board_unfog_time > 0 && !cs->standings_updated
+                 && cs->current_time < stop_time + global->board_unfog_time) {
+        tmpt = stop_time + global->board_unfog_time;
+        fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+                _("Standings unfreeze time"), ctime(&tmpt));
+      }
+
+      if (start_time > 0 && stop_time <= 0 && duration > 0) {
+        duration_str(0, cs->current_time, start_time, duration_buf, 0);
+        fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+                _("Elapsed time"), duration_buf);
+        duration_str(0, start_time + duration - cs->current_time, 0,
+                     duration_buf, 0);
+        fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+                _("Remaining time"), duration_buf);
+      }
+    }
+    fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
+            "Contest load time", ctime(&cs->load_time));
+    fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
+            "Server start time", ctime(&server_start_time));
+
+    fprintf(fout, "</table></form>\n");
+
+    fprintf(fout, "<hr>\n");
+
+    html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
+    fprintf(fout, "%s\n",  BUTTON(NEW_SRV_ACTION_UPDATE_STANDINGS_1));
+    fprintf(fout, "%s\n", BUTTON(NEW_SRV_ACTION_RESET_1));
+    action = NEW_SRV_ACTION_SUSPEND;
+    if (cs->clients_suspended) action = NEW_SRV_ACTION_RESUME;
+    fprintf(fout, "%s\n", BUTTON(action));
+    action = NEW_SRV_ACTION_TEST_SUSPEND;
+    if (cs->testing_suspended) action = NEW_SRV_ACTION_TEST_RESUME;
+    fprintf(fout, "%s\n", BUTTON(action));
+    if (global->enable_printing) {
+      action = NEW_SRV_ACTION_PRINT_SUSPEND;
+      if (cs->printing_suspended) action = NEW_SRV_ACTION_PRINT_RESUME;
+      fprintf(fout, "%s\n", BUTTON(action));
+    }
+    if (global->score_system == SCORE_OLYMPIAD && !global->is_virtual) {
+      action = NEW_SRV_ACTION_SET_JUDGING_MODE;
+      if (!cs->accepting_mode) action = NEW_SRV_ACTION_SET_ACCEPTING_MODE;
+      fprintf(fout, "%s\n", BUTTON(action));
+    }
+    if (global->score_system == SCORE_OLYMPIAD
+        && ((!global->is_virtual && !cs->accepting_mode)
+            || (global->is_virtual && global->disable_virtual_auto_judge >0))) {
+      action = NEW_SRV_ACTION_SET_TESTING_FINISHED_FLAG;
+      if (cs->testing_finished)
+        action = NEW_SRV_ACTION_CLEAR_TESTING_FINISHED_FLAG;
+      fprintf(fout, "%s\n", BUTTON(action));
+    }
+    if (!cnts->disable_team_password) {
+      fprintf(fout, "%s\n", BUTTON(NEW_SRV_ACTION_GENERATE_PASSWORDS_1));
+      fprintf(fout, "%s\n", BUTTON(NEW_SRV_ACTION_CLEAR_PASSWORDS_1));
+    }
+    fprintf(fout, "%s\n", BUTTON(NEW_SRV_ACTION_GENERATE_REG_PASSWORDS_1));
+    fprintf(fout, "%s\n", BUTTON(NEW_SRV_ACTION_UPSOLVING_CONFIG_1));
+    fprintf(fout, "%s\n", BUTTON(NEW_SRV_ACTION_RELOAD_SERVER));
+    fprintf(fout, "</form>\n");
+  } else {
+    // judge mode
+    fprintf(fout, "<table border=\"0\">");
+
+    fprintf(fout,
+            "<tr><td>%s:</td><td>%s</td><td>&nbsp;</td><td>&nbsp;</td></tr>\n",
+            _("Server time"), ctime(&cs->current_time));
+
+    if (start_time <= 0) {
+      fprintf(fout, "<tr><td colspan=\"2\"><b>%s</b></td></tr>\n",
+              _("Contest is not started"));
+    } else {
+      fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+              _("Contest start time"), ctime(&start_time));
+    }
+
+    if (!global->is_virtual && start_time <= 0) {
+      fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+              _("Planned start time"),
+              sched_time <= 0?_("Not set"):ctime(&sched_time));
+    }
+
+    if (finish_time <= 0) {
+      if (duration > 0) {
+        duration_str(0, duration, 0, duration_buf, 0);
+      } else {
+        snprintf(duration_buf, sizeof(duration_buf), "%s", _("Unlimited"));
+      }
+
+      fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+              _("Duration"), duration_buf);
+    }
+
+    if (!global->is_virtual) {
+      if (start_time > 0 && stop_time <= 0 && duration > 0) {
+        tmpt = start_time + duration;
+        fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+                _("Scheduled end time"), ctime(&tmpt));
+      } else if (start_time > 0 && stop_time <= 0 && duration <= 0
+                 && finish_time > 0) {
+        fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+                _("Scheduled end time"), ctime(&finish_time));
+      } else if (stop_time) {
+        fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+                _("End time"), ctime(&stop_time));
+      }
+
+      if (start_time > 0 && stop_time <= 0 && fog_start_time > 0) {
+        fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+                _("Standings freeze time"), ctime(&fog_start_time));
+      } else if (stop_time > 0 && duration > 0 && global->board_fog_time > 0
+                 && global->board_unfog_time > 0 && !cs->standings_updated
+                 && cs->current_time < stop_time + global->board_unfog_time) {
+        tmpt = stop_time + global->board_unfog_time;
+        fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+                _("Standings unfreeze time"), ctime(&tmpt));
+      }
+
+      if (start_time > 0 && stop_time <= 0 && duration > 0) {
+        duration_str(0, cs->current_time, start_time, duration_buf, 0);
+        fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+                _("Elapsed time"), duration_buf);
+        duration_str(0, start_time + duration - cs->current_time, 0,
+                     duration_buf, 0);
+        fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+                _("Remaining time"), duration_buf);
+      }
+    }
+    fprintf(fout, "</table>\n");
+  }
+
+  ns_write_priv_all_runs(fout, phr, cnts, extra,
+                         filter_first_run_set, filter_first_run,
+                         filter_last_run_set, filter_last_run,
+                         filter_expr);
+
+  if (opcaps_check(phr->caps, OPCAP_SUBMIT_RUN) >= 0) {
+    if (!prob) {
+      // no problem is selected yet
+      fprintf(fout, "<hr><a name=\"submit\"></a><h2>%s</h2>\n",
+              /*cnts->priv_head_style*/ "h2",
+              _("View the problem statement and send a submission"),
+              /*cnts->priv_head_style*/ "h2");
+      html_start_form(fout, 0, phr->self_url, phr->hidden_vars);
+      fprintf(fout, "<table>\n");
+      fprintf(fout, "<tr><td>%s:</td><td><select name=\"problem\">",
+              _("Problem"));
+      for (x = 1; x <= cs->max_prob; x++) {
+        if (!(prob = cs->probs[x])) continue;
+        fprintf(fout, "<option value=\"%d\">%s - %s</option>",
+                x, prob->short_name, ARMOR(prob->long_name));
+        /*
+        if (prob->variant_num <= 0) {
+        } else {
+          for (y = 1; y <= prob->variant_num; y++) {
+            fprintf(fout, "<option value=\"%d_%d\">%s - %s, %s %d</option>",
+                    x, y, prob->short_name,  ARMOR(prob->long_name),
+                    _("Variant"), y);
+          }
+        }
+        */
+      }
+      fprintf(fout, "</select></td><td>%s</td></tr></table></form>\n",
+              ns_submit_button(bb, sizeof(bb), 0,
+                               NEW_SRV_ACTION_PRIV_SUBMIT_PAGE,
+                               _("Select problem")));
+      prob = 0;
+    } else {
+      // a problem is already selected
+      // prob and variant have correct values
+      if (variant > 0) {
+        fprintf(fout, "<hr><a name=\"submit\"></a><h2>%s %s-%s (%s %d)</h2>\n",
+                /*cnts->team_head_style*/ "h2", _("Submit a solution for"),
+                prob->short_name, ARMOR(prob->long_name), _("Variant"), variant,
+                /*cnts->team_head_style*/ "h2");
+      } else {
+        fprintf(fout, "<hr><a name=\"submit\"></a><h2>%s %s-%s</h2>\n",
+                /*cnts->team_head_style*/ "h2", _("Submit a solution for"),
+                prob->short_name,  ARMOR(prob->long_name),
+                /*cnts->team_head_style*/ "h2");
+      }
+
+      /* FIXME: handle problem XML */
+
+      /* put problem statement */
+      if (prob->statement_file[0]) {
+        if (variant > 0) {
+          prepare_insert_variant_num(variant_stmt_file,
+                                     sizeof(variant_stmt_file),
+                                     prob->statement_file, variant);
+          pw = &cs->prob_extras[prob->id].v_stmts[variant];
+          pw_path = variant_stmt_file;
+        } else {
+          pw = &cs->prob_extras[prob->id].stmt;
+          pw_path = prob->statement_file;
+        }
+        watched_file_update(pw, pw_path, cs->current_time);
+        if (!pw->text) {
+          fprintf(fout, "<big><font color=\"red\"><p>%s</p></font></big>\n",
+                  _("The problem statement is not available"));
+        } else {
+          if (prob->type == PROB_TYPE_CUSTOM) {
+            html_start_form(fout, 2, phr->self_url, phr->hidden_vars);
+            skip_start_form = 1;
+          }
+          fprintf(fout, "%s", pw->text);
+        }
+      }
+      alternatives = 0;
+      if ((prob->type == PROB_TYPE_SELECT_ONE
+           || prob->type == PROB_TYPE_SELECT_MANY)
+          && prob->alternatives_file[0]) {
+        if (variant > 0) {
+          prepare_insert_variant_num(variant_stmt_file,
+                                     sizeof(variant_stmt_file),
+                                     prob->alternatives_file, variant);
+          pw = &cs->prob_extras[prob->id].v_alts[variant];
+          pw_path = variant_stmt_file;
+        } else {
+          pw = &cs->prob_extras[prob->id].alt;
+          pw_path = prob->alternatives_file;
+        }
+        watched_file_update(pw, pw_path, cs->current_time);
+        alternatives = pw->text;
+      }
+
+      if (!skip_start_form) {
+        html_start_form(fout, 2, phr->self_url, phr->hidden_vars);
+      }
+      if (variant <= 0) {
+        html_hidden(fout, "problem", "%d", prob->id);
+      } else {
+        html_hidden(fout, "problem", "%d_%d", prob->id, variant);
+      }
+      fprintf(fout, "<table>\n");
+      if (!prob->type) {
+        fprintf(fout, "<tr><td>%s:</td><td>", _("Language"));
+        fprintf(fout, "<select name=\"lang_id\"><option value=\"\">\n");
+        for (i = 1; i <= cs->max_lang; i++) {
+          if (!cs->langs[i]) continue;
+          fprintf(fout, "<option value=\"%d\">%s - %s</option>\n",
+                  i, cs->langs[i]->short_name, ARMOR(cs->langs[i]->long_name));
+        }
+        fprintf(fout, "</select></td></tr>\n");
+
+        if (global->enable_eoln_select > 0) {
+          fprintf(fout, "<tr><td%s>%s:</td><td%s><select name=\"eoln_type\"%s>",
+                  "", "EOLN Type", "", "");
+          fprintf(fout, "<option value=\"0\"></option>");
+          fprintf(fout, "<option value=\"1\"%s>LF (Unix/MacOS)</option>", "");
+          fprintf(fout, "<option value=\"2\"%s>CRLF (Windows/DOS)</option>", "");
+          fprintf(fout, "</select></td></tr>\n");
+        }
+      }
+
+      switch (prob->type) {
+      case PROB_TYPE_STANDARD:
+      case PROB_TYPE_OUTPUT_ONLY:
+      case PROB_TYPE_TESTS:
+        fprintf(fout, "<tr><td>%s</td><td><input type=\"file\" name=\"file\"/></td></tr>\n", _("File"));
+        break;
+      case PROB_TYPE_SHORT_ANSWER:
+        fprintf(fout, "<tr><td>%s</td><td><input type=\"text\" name=\"file\"/></td></tr>\n", _("Answer"));
+        break;
+      case PROB_TYPE_TEXT_ANSWER:
+        fprintf(fout, "<tr><td colspan=\"2\"><textarea name=\"file\" rows=\"20\" cols=\"60\"></textarea></td></tr>\n");
+        break;
+      case PROB_TYPE_SELECT_ONE:
+        /* FIXME: handle problem XML */
+        if (alternatives) {
+          write_alternatives_file(fout, 1, alternatives, -1, 0, 0, 0, "b0");
+        } else if (prob->alternative) {
+          for (i = 0; prob->alternative[i]; i++) {
+            fprintf(fout, "<tr><td>%d</td><td><input type=\"radio\" name=\"file\" value=\"%d\"/></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
+          }
+        }
+        break;
+      case PROB_TYPE_SELECT_MANY:
+        if (alternatives) {
+          write_alternatives_file(fout, 0, alternatives, -1, 0, 0, 0, "b0");
+        } else if (prob->alternative) {
+          for (i = 0; prob->alternative[i]; i++) {
+            fprintf(fout, "<tr><td>%d</td><td><input type=\"checkbox\" name=\"ans_%d\"/></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
+          }
+        }
+        break;
+      case PROB_TYPE_CUSTOM:    /* form is a part of problem statement */
+        break;
+      }
+      fprintf(fout, "<tr><td>%s</td><td>%s</td></tr></table></form>\n",
+              _("Send!"), BUTTON(NEW_SRV_ACTION_SUBMIT_RUN));
+     
+      fprintf(fout, "<hr><a name=\"submit\"></a><h2>%s</h2>\n",
+              /*cnts->team_head_style*/ "h2", _("Select another problem"),
+              /*cnts->team_head_style*/ "h2");
+
+      html_start_form(fout, 0, phr->self_url, phr->hidden_vars);
+      fprintf(fout, "<table>\n");
+      fprintf(fout, "<tr><td>%s:</td><td><select name=\"problem\">",
+              _("Problem"));
+      for (x = 1; x <= cs->max_prob; x++) {
+        if (!(prob = cs->probs[x])) continue;
+        if (prob->variant_num <= 0) {
+          fprintf(fout, "<option value=\"%d\">%s - %s</option>",
+                  x, prob->short_name, ARMOR(prob->long_name));
+        } else {
+          for (y = 1; y <= prob->variant_num; y++) {
+            fprintf(fout, "<option value=\"%d_%d\">%s - %s, %s %d</option>",
+                    x, y, prob->short_name, ARMOR(prob->long_name),
+                    _("Variant"), y);
+          }
+        }
+      }
+      fprintf(fout, "</select></td><td>%s</td></tr></table></form>\n",
+              ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_MAIN_PAGE,
+                               _("Select problem")));
+      prob = 0;
+    }
+  }
+
+  if (opcaps_check(phr->caps, OPCAP_VIEW_CLAR) >= 0) {
+    ns_write_all_clars(fout, phr, cnts, extra, filter_mode_clar,
+                       filter_first_clar_str, filter_last_clar_str);
+  }
+
+  if (opcaps_check(phr->caps, OPCAP_NEW_MESSAGE) >= 0) {
+    fprintf(fout, "<hr><h2>%s</h2>", _("Compose a message to all participants"));
+    html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
+    fprintf(fout, "<table>\n"
+            "<tr>"
+            "<td>%s:</td>"
+            "<td><input type=\"text\" size=\"16\" name=\"msg_dest_id\"/></td>"
+            "</tr>\n"
+            "<tr>"
+            "<td>%s:</td>"
+            "<td><input type=\"text\" size=\"32\" name=\"msg_dest_login\"/></td>"
+            "</tr>\n"
+            "<tr>"
+            "<td>%s:</td>"
+            "<td><input type=\"text\" size=\"64\" name=\"msg_subj\"/></td>"
+            "</tr>\n",
+            _("To user id"),
+            _("To user login"),
+            _("Subject"));
+    if (start_time <= 0) {
+      fprintf(fout, "<tr><td>%s</td><td><select name=\"msg_hide_flag\"><option value=\"0\">NO</option><option value=\"1\">YES</option></select></td></tr>\n",
+              _("Do not show before the contest starts?"));
+    }
+    fprintf(fout, "</table>\n"
+            "<p><textarea name=\"msg_text\" rows=\"20\" cols=\"60\">"
+            "</textarea></p>"
+            "<p>%s\n</form>\n",
+            BUTTON(NEW_SRV_ACTION_PRIV_SUBMIT_CLAR));
+  }
+
+  /* change the password */
+  fprintf(fout, "<hr><a name=\"chgpasswd\"></a>\n<h2>%s</h2>\n",
+          /*cnts->priv_head_style*/ "h2",
+          _("Change password"),
+          /*cnts->team_head_style*/ "h2");
+  html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
+
+  fprintf(fout, "<table>\n"
+          "<tr><td>%s:</td><td><input type=\"password\" name=\"oldpasswd\" size=\"16\"/></td></tr>\n"
+          "<tr><td>%s:</td><td><input type=\"password\" name=\"newpasswd1\" size=\"16\"/></td></tr>\n"
+          "<tr><td>%s:</td><td><input type=\"password\" name=\"newpasswd2\" size=\"16\"/></td></tr>\n"
+          "<tr><td colspan=\"2\">%s</td></tr>\n"
+          "</table></form>",
+          _("Old password"),
+          _("New password"), _("Retype new password"),
+          BUTTON(NEW_SRV_ACTION_CHANGE_PASSWORD));
+
+#if CONF_HAS_LIBINTL - 0 == 1
+  if (cs->global->enable_l10n) {
+    fprintf(fout, "<hr><a name=\"chglanguage\"></a>< %s>%s</%s>\n",
+            cnts->team_head_style, _("Change language"),
+            cnts->team_head_style);
+    html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
+    fprintf(fout, "<table><tr><td>%s</td><td>", _("Change language"));
+    l10n_html_locale_select(fout, phr->locale_id);
+    fprintf(fout, "</td><td>%s</td></tr></table></form>\n",
+            BUTTON(NEW_SRV_ACTION_CHANGE_LANGUAGE));
+  }
+#endif /* CONF_HAS_LIBINTL */
+
+  if (1 /*cs->global->show_generation_time*/) {
+  gettimeofday(&phr->timestamp2, 0);
+  tdiff = ((long long) phr->timestamp2.tv_sec) * 1000000;
+  tdiff += phr->timestamp2.tv_usec;
+  tdiff -= ((long long) phr->timestamp1.tv_sec) * 1000000;
+  tdiff -= phr->timestamp1.tv_usec;
+  fprintf(fout, "<div class=\"dotted\"><p%s>%s: %lld %s</p></div>",
+          cnts->team_par_style,
+          _("Page generation time"), tdiff / 1000,
+          _("msec"));
+  }
+
+  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
+  l10n_setlocale(0);
+  html_armor_free(&ab);
+}
