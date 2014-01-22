@@ -68,6 +68,8 @@ enum
     NODE_FIELD,
     // u32 size, node type
     NODE_FORMAL_PARAM,
+    // u32 size, str name, node ret_type, node params
+    NODE_FUNCTION,
 };
 
 struct TypeInfoOps;
@@ -159,6 +161,7 @@ TypeInfo *tc_get_openarray_type(TypeContext *cntx, TypeInfo *eltype);
 TypeInfo *tc_get_const_type(TypeContext *cntx, TypeInfo *eltype);
 TypeInfo *tc_get_enum_type(TypeContext *cntx, TypeInfo **info);
 TypeInfo *tc_get_function_type(TypeContext *cntx, TypeInfo **info);
+TypeInfo *tc_get_function(TypeContext *cntx, TypeInfo **info);
 
 TypeInfo *tc_find_struct_type(TypeContext *cntx, int tag, TypeInfo *name);
 TypeInfo *tc_create_struct_type(TypeContext *cntx, int tag, TypeInfo *size, TypeInfo *name, TypeInfo *flag);
@@ -178,6 +181,8 @@ void tc_print(FILE *out_f, TypeInfo *ti);
 void tc_dump_context(FILE *out_f, TypeContext *cntx);
 
 void type_info_set_info(TypeInfo *ti, TypeInfo **info);
+
+int tc_is_c_keyword(TypeContext *cntx, TypeInfo *ident);
 
 #endif /* __TYPE_INFO_H__ */
 

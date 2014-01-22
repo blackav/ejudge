@@ -115,6 +115,7 @@ struct TypeContext
     ValueTree enums;
     ValueTree structs;
     ValueTree anonstructs;
+    ValueTree functions;
 
     ValueTree params;
     ValueTree enumconsts;
@@ -277,6 +278,7 @@ tc_free(TypeContext *cntx)
     tc_value_tree_free(&cntx->enums);
     tc_value_tree_free(&cntx->structs);
     tc_value_tree_free(&cntx->anonstructs);
+    tc_value_tree_free(&cntx->functions);
 
     tc_value_tree_free(&cntx->params);
     tc_value_tree_free(&cntx->enumconsts);
@@ -960,6 +962,12 @@ tc_get_function_type(TypeContext *cntx, TypeInfo **info)
 }
 
 TypeInfo *
+tc_get_function(TypeContext *cntx, TypeInfo **info)
+{
+    return vt_insert(cntx, &cntx->functions, info, NODE_FUNCTION, generic_cmp_1, generic_create);
+}
+
+TypeInfo *
 tc_get_param(TypeContext *cntx, TypeInfo *offset, TypeInfo *param_type, TypeInfo *param_name)
 {
     TypeInfo *info[5] = { param_type->n.info[0], offset, param_type, param_name, NULL };
@@ -1328,6 +1336,7 @@ static const unsigned char * const node_names[] =
     "NODE_ENUM_CONST",
     "NODE_FIELD",
     "NODE_FORMAL_PARAM",
+    "NODE_FUNCTION",
 };
 
 const unsigned char *
@@ -1466,6 +1475,8 @@ tc_dump_context(FILE *out_f, TypeContext *cntx)
     tc_dump_value_tree(out_f, &cntx->fields);
     fprintf(out_f, "    formalparams\n");
     tc_dump_value_tree(out_f, &cntx->formalparams);
+    fprintf(out_f, "    functions\n");
+    tc_dump_value_tree(out_f, &cntx->functions);
 }
 
 /*

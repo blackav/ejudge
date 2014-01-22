@@ -995,7 +995,11 @@ dump_token(ScannerState *ss)
 #define IS_OPER(ss, c) ((ss)->token == TOK_OPER && (ss)->raw_len == 1 && ss->raw[0] == (c))
 
 static int
-parse_declspec(ScannerState *ss, TypeContext *cntx, TypeInfo **p_info)
+parse_declspec(
+        ScannerState *ss,
+        TypeContext *cntx,
+        int quiet_mode, // if 1, be quiet on errors
+        TypeInfo **p_info)
 {
     int retval = -1;
 
@@ -1022,7 +1026,7 @@ parse_declspec(ScannerState *ss, TypeContext *cntx, TypeInfo **p_info)
     TypeInfo *type_info = NULL;
 
     if (ss->token != TOK_IDENT) {
-        parser_error(ss, "type expected");
+        if (!quiet_mode) parser_error(ss, "type expected");
         goto cleanup;
     }
     while (1) {
@@ -1055,36 +1059,36 @@ parse_declspec(ScannerState *ss, TypeContext *cntx, TypeInfo **p_info)
             if (type_info || has_base_type) goto invalid_declspec;
             next_token(ss);
             if (ss->token != TOK_IDENT) {
-                parser_error(ss, "identifier expected after 'enum'");
+                if (!quiet_mode) parser_error(ss, "identifier expected after 'enum'");
                 goto cleanup;
             }
             type_info = tc_find_enum_type(cntx, tc_get_ident(cntx, ss->raw));
             if (!type_info) {
-                parser_error(ss, "enum type '%s' undefined", ss->raw);
+                if (!quiet_mode) parser_error(ss, "enum type '%s' undefined", ss->raw);
                 goto cleanup;
             }
         } else if (!strcmp(ss->raw, "struct")) {
             if (type_info || has_base_type) goto invalid_declspec;
             next_token(ss);
             if (ss->token != TOK_IDENT) {
-                parser_error(ss, "identifier expected after 'struct'");
+                if (!quiet_mode) parser_error(ss, "identifier expected after 'struct'");
                 goto cleanup;
             }
             type_info = tc_find_struct_type(cntx, NODE_STRUCT_TYPE, tc_get_ident(cntx, ss->raw));
             if (!type_info) {
-                parser_error(ss, "struct type '%s' undefined", ss->raw);
+                if (!quiet_mode) parser_error(ss, "struct type '%s' undefined", ss->raw);
                 goto cleanup;
             }
         } else if (!strcmp(ss->raw, "union")) {
             if (type_info || has_base_type) goto invalid_declspec;
             next_token(ss);
             if (ss->token != TOK_IDENT) {
-                parser_error(ss, "identifier expected after 'union'");
+                if (!quiet_mode) parser_error(ss, "identifier expected after 'union'");
                 goto cleanup;
             }
             type_info = tc_find_struct_type(cntx, NODE_UNION_TYPE, tc_get_ident(cntx, ss->raw));
             if (!type_info) {
-                parser_error(ss, "union type '%s' undefined", ss->raw);
+                if (!quiet_mode) parser_error(ss, "union type '%s' undefined", ss->raw);
                 goto cleanup;
             }
         } else if (!strcmp(ss->raw, "signed")) {
@@ -1136,7 +1140,7 @@ parse_declspec(ScannerState *ss, TypeContext *cntx, TypeInfo **p_info)
             if (has_base_type || type_info) break;
             type_info = tc_find_typedef_type(cntx, tc_get_ident(cntx, ss->raw));
             if (!type_info) {
-                parser_error(ss, "typedef type '%s' undefined", ss->raw);
+                if (!quiet_mode) parser_error(ss, "typedef type '%s' undefined", ss->raw);
                 goto cleanup;
             }
             next_token(ss);
@@ -1246,7 +1250,7 @@ cleanup:
     return retval;
 
 invalid_declspec:
-    parser_error(ss, "invalid declaration specifier");
+    if (!quiet_mode) parser_error(ss, "invalid declaration specifier");
     goto cleanup;
 }
 
@@ -1272,6 +1276,7 @@ free_declr_helper(DeclrHelper *p)
         q = p->next;
         xfree(p->info);
         xfree(p);
+        p = q;
     }
     return NULL;
 }
@@ -1282,37 +1287,29 @@ parse_param(
         TypeContext *cntx,
         int anon_allowed,
         int quiet_mode,
-        int param_mode,
         TypeInfo **p_info);
 static int
 parse_declr(
         ScannerState *ss,
         TypeContext *cntx,
-        int anon_allowed,
         int quiet_mode,
-        TypeInfo *declspec,
-        TypeInfo **p_info);
+        int anon_allowed,
+        DeclrHelper **p_head,
+        TypeInfo **p_ident);
 
 static int
 try_declr(
         ScannerState *ss,
-        TypeContext *cntx,
-        int anon_allowed,
-        int quiet_mode,
-        int param_mode,
-        TypeInfo **p_info)
+        TypeContext *cntx)
 {
     SavedScannerState *sss = save_scanner_state(ss);
     next_token(ss);
-    int ret = parse_declr(ss, cntx, anon_allowed, 1, param_mode, p_info);
-    if (ret < 0 || !IS_OPER(ss, ')')) {
-        restore_scanner_state(ss, sss);
-        destroy_saved_state(sss);
-        return -1;
-    }
-    next_token(ss);
+    TypeInfo *p_ident = NULL;
+    int ret = parse_declr(ss, cntx, 1, 1, NULL, &p_ident);
+    if (ret >= 0 && !IS_OPER(ss, ')')) ret = -1;
+    restore_scanner_state(ss, sss);
     destroy_saved_state(sss);
-    return 0;
+    return ret;
 }
 
 static int
@@ -1344,13 +1341,17 @@ parse_function_type_params(
         return 0;
     }
     info[idx++] = tc_get_u32(cntx, 0);
-    info[idx++] = ret_type;
-    int r = parse_param(ss, cntx, 1, quiet_mode, 0, &ti);
+    info[idx++] = NULL;
+    int r = parse_param(ss, cntx, quiet_mode, 0, &ti);
     if (r < 0) return r;
     info[idx++] = ti;
     while (IS_OPER(ss, ',')) {
+        if (idx == MAX_PARAM_COUNT - 2) {
+            if (!quiet_mode) parser_error(ss, "too many parameters");
+            return -1;
+        }
         next_token(ss);
-        if ((r = parse_param(ss, cntx, 1, quiet_mode, 0, &ti)) < 0) return r;
+        if ((r = parse_param(ss, cntx, quiet_mode, 0, &ti)) < 0) return r;
         info[idx++] = ti;
     }
     info[idx] = NULL;
@@ -1359,7 +1360,41 @@ parse_function_type_params(
         return -1;
     }
     next_token(ss);
-    *p_func_type = tc_get_function_type(cntx, info);
+
+    if (p_head) {
+        XCALLOC(cur, 1);
+        cur->tag = NODE_FUNCTION_TYPE;
+        cur->count = idx;
+        XCALLOC(cur->info, idx + 1);
+        memcpy(cur->info, info, sizeof(info[0]) * idx);
+        cur->next = *p_head;
+        *p_head = cur;
+    }
+    return 0;
+}
+
+// parse '(' DECLR ')' construct
+static int
+parse_declr_2(
+        ScannerState *ss,
+        TypeContext *cntx,
+        int quiet_mode, 
+        int anon_allowed,
+        DeclrHelper **p_head,
+        TypeInfo **p_ident)
+{
+    if (!IS_OPER(ss, '(')) {
+        if (!quiet_mode) parser_error(ss, "'(' expected");
+        return -1;
+    }
+    next_token(ss);
+    int r = parse_declr(ss, cntx, quiet_mode, anon_allowed, p_head, p_ident);
+    if (r < 0) return r;
+    if (!IS_OPER(ss, ')')) {
+        if (!quiet_mode) parser_error(ss, "')' expected");
+        return -1;
+    }
+    next_token(ss);
     return 0;
 }
 
@@ -1367,12 +1402,14 @@ static int
 parse_declr(
         ScannerState *ss,
         TypeContext *cntx,
-        int anon_allowed,
-        int quiet_mode,
-        DeclrHelper **p_head)
+        int quiet_mode, // if 1, be quiet on errors
+        int anon_allowed, // if 1, anonymous declarator is allowed, but ident is OK
+        DeclrHelper **p_head,
+        TypeInfo **p_ident) // if NULL, identifier is not allowed, this implies anon_allowed == 1
 {
     int star_count = 0;
     TypeInfo *ti = NULL;
+    int r;
 
     while (IS_OPER(ss, '*')) {
         ++star_count;
@@ -1383,62 +1420,71 @@ parse_declr(
         }
     }
 
-    /*
-    if (IS_OPER(ss, '(') && anon_allowed) {
-        int r = try_declr(ss, cntx, anon_allowed, quiet_mode, param_mode);
-        if (r < 0) {
-            // reparse as function type
-            //r = parse_function_type_params(ss, cntx, quiet_mode, 
+    if (!p_ident) {
+        // only anonymous declarator is allowed
+        if (IS_OPER(ss, '(')) {
+            if ((r = try_declr(ss, cntx)) >= 0) {
+                // yes, this looks like '(' DECLR ')' part
+                if ((r = parse_declr_2(ss, cntx, quiet_mode, 1, p_head, NULL)) < 0) return r;
+            }
         }
-    } else if (IS_OPER(ss, '(')) {
-        next_token(ss);
-        parse_declr(ss);
-        if (!IS_OPER(ss, ')')) {
-            parser_error(ss, "')' expected");
+    } else {
+        if (IS_OPER(ss, '(') && anon_allowed) {
+            if ((r = try_declr(ss, cntx)) >= 0) {
+                if ((r = parse_declr_2(ss, cntx, quiet_mode, 1, p_head, p_ident)) < 0) return r;
+            }
+        } else if (IS_OPER(ss, '(')) {
+            if ((r = parse_declr_2(ss, cntx, quiet_mode, 0, p_head, p_ident)) < 0) return r;
+        } else {
+            if (ss->token != TOK_IDENT) {
+                if (p_head) parser_error(ss, "identifier expected");
+                return -1;
+            }
+            ti = tc_get_ident(cntx, ss->raw);
+            if (tc_is_c_keyword(cntx, ti)) {
+                if (p_head) parser_error(ss, "identifier expected");
+                return -1;
+            }
+            if (p_ident) *p_ident = ti;
+            next_token(ss);
         }
-        next_token(ss);
     }
-
-    if (ss->token != TOK_IDENT) {
-        parser_error(ss, "identifier expected");
-    }
-    // check no keyword
-    next_token();
-    */
 
     while (IS_OPER(ss, '(') || IS_OPER(ss, '[')) {
         if (IS_OPER(ss, '(')) {
+            r = parse_function_type_params(ss, cntx, quiet_mode, p_head);
+            if (r < 0) return -1;
         } else if (IS_OPER(ss, '[')) {
             next_token(ss);
             int depth = 1;
             while (1) {
                 if (IS_OPER(ss, '[')) {
                     ++depth;
-                    next_token();
+                    next_token(ss);
                 } else if (IS_OPER(ss, '{')) {
                     ++depth;
-                    next_token();
+                    next_token(ss);
                 } else if (IS_OPER(ss, '(')) {
                     ++depth;
-                    next_token();
+                    next_token(ss);
                 } else if (IS_OPER(ss, ')')) {
                     --depth;
-                    next_token();
+                    next_token(ss);
                 } else if (IS_OPER(ss, '}')) {
                     --depth;
-                    next_token();
+                    next_token(ss);
                 } else if (IS_OPER(ss, ']')) {
                     --depth;
-                    next_token();
+                    next_token(ss);
                     if (!depth) break;
                 } else {
-                    next_token();
+                    next_token(ss);
                 }
             }
             if (p_head) {
                 DeclrHelper *cur = NULL;
                 XCALLOC(cur, 1);
-                cur->tag = NODE_ARRAY_TYPE;
+                cur->tag = NODE_OPEN_ARRAY_TYPE;
                 cur->next = *p_head;
                 *p_head = cur;
             }
@@ -1461,22 +1507,23 @@ parse_declr(
 }
 
 // if anon_allowed flag is set, param is parsed as type, param name is ignored
-int
+static int
 parse_param(
         ScannerState *ss,
         TypeContext *cntx,
-        int anon_allowed,
-        int quiet_mode,
+        int quiet_mode, // if 1, be quiet on errors
+        int param_mode, // if 1, NODE_PARAM is created, if 0, NODE_FORMAL_PARAM is created
         TypeInfo **p_info)
 {
     TypeInfo *ds = NULL;
-    int r = parse_declspec(ss, cntx, &ds);
+    TypeInfo *id = NULL;
+    int r = parse_declspec(ss, cntx, quiet_mode, &ds);
     if (r < 0) return -1;
 
     DeclrHelper *head = NULL;
     XCALLOC(head, 1);
 
-    r = parse_declr(ss, cntx, anon_allowed, quiet_mode, &head);
+    r = parse_declr(ss, cntx, quiet_mode, 1, &head, &id);
     if (r < 0) {
         free_declr_helper(head);
         return -1;
@@ -1485,7 +1532,7 @@ parse_param(
     for (DeclrHelper *cur = head; cur; cur = cur->next) {
         if (cur->tag == NODE_POINTER_TYPE) {
             ds = tc_get_ptr_type(cntx, ds);
-        } else if (cur->tag == NODE_ARRAY_TYPE) {
+        } else if (cur->tag == NODE_OPEN_ARRAY_TYPE) {
             ds = tc_get_open_array_type(cntx, ds);
         } else if (cur->tag == NODE_FUNCTION_TYPE) {
             cur->info[0] = tc_get_u32(cntx, 0);
@@ -1494,16 +1541,54 @@ parse_param(
         }
     }
 
+    if (param_mode) {
+        if (!id) id = tc_get_ident(cntx, "");
+        ds = tc_get_param(cntx, tc_get_i32(cntx, 0), ds, id);
+    } else {
+        ds = tc_get_formal_param(cntx, ds);
+    }
+
     *p_info = ds;
     free_declr_helper(head);
     return 0;
 }
 
 static int
-handle_directive_page(ScannerState *ss, FILE *out_f)
+parse_params(ScannerState *ss, TypeContext *cntx, TypeInfo **info, int size, int idx, int quiet_mode)
+{
+    int r;
+
+    if (!IS_OPER(ss, '(')) {
+        if (!quiet_mode) parser_error(ss, "'(' expected");
+        return -1;
+    }
+    next_token(ss);
+    if ((r = parse_param(ss, cntx, quiet_mode, 1, &info[idx++])) < 0) return r;
+    while (IS_OPER(ss, ',')) {
+        if (idx == size - 1) {
+            if (!quiet_mode) parser_error(ss, "too many parameters");
+            return -1;
+        }
+        next_token(ss);
+        if ((r = parse_param(ss, cntx, quiet_mode, 1, &info[idx++])) < 0) return r;
+    }
+    if (!IS_OPER(ss, ')')) {
+        if (!quiet_mode) parser_error(ss, "')' expected");
+        return -1;
+    }
+    next_token(ss);
+    info[idx] = NULL;
+    return 0;
+}
+
+static int
+handle_directive_page(ScannerState *ss, TypeContext *cntx, FILE *out_f)
 {
     int retval = -1;
     unsigned char *page_name = NULL;
+    enum { MAX_PARAM_COUNT = 1024 };
+    TypeInfo *info[MAX_PARAM_COUNT];
+    int idx = 0;
 
     next_token(ss); dump_token(ss);
     if (ss->token != TOK_IDENT) {
@@ -1512,45 +1597,17 @@ handle_directive_page(ScannerState *ss, FILE *out_f)
     }
     page_name = ss->value; ss->value = NULL;
 
-    next_token(ss); dump_token(ss);
-    if (!IS_OPER(ss, '(')) {
-        parser_error(ss, "'(' expected");
+    info[idx++] = tc_get_u32(cntx, 0);
+    info[idx++] = tc_get_ident(cntx, page_name);
+    info[idx++] = tc_get_i32_type(cntx);
+    if (parse_params(ss, cntx, info, MAX_PARAM_COUNT, idx, 0) < 0) {
         goto cleanup;
     }
-    next_token(ss); dump_token(ss);
-    if (IS_OPER(ss, ')')) {
-        // empty argument list
-        next_token(ss); dump_token(ss);
-    } else {
-        if (ss->token != TOK_IDENT) {
-            parser_error(ss, "argument type expected");
-            goto cleanup;
-        }
-        next_token(ss); dump_token(ss);
-        if (ss->token != TOK_IDENT) {
-            parser_error(ss, "argument name expected");
-            goto cleanup;
-        }
-        next_token(ss); dump_token(ss);
-        while (IS_OPER(ss, ',')) {
-            next_token(ss); dump_token(ss);
-            if (ss->token != TOK_IDENT) {
-                parser_error(ss, "argument type expected");
-                goto cleanup;
-            }
-            next_token(ss); dump_token(ss);
-            if (ss->token != TOK_IDENT) {
-                parser_error(ss, "argument name expected");
-                goto cleanup;
-            }
-            next_token(ss); dump_token(ss);
-        }
-        if (!IS_OPER(ss, ')')) {
-            parser_error(ss, "')' expected");
-            goto cleanup;
-        }
-        next_token(ss); dump_token(ss);
-    }
+
+    TypeInfo *f = tc_get_function(cntx, info);
+    fprintf(stderr, "Function: ");
+    tc_print(stderr, f);
+    fprintf(stderr, "\n");
 
     if (ss->token != TOK_EOF) {
         parser_error(ss, "garbage after directive");
@@ -1564,7 +1621,7 @@ cleanup:
 }
 
 static int
-handle_directive(ProcessorState *ps, FILE *out_f, FILE *log_f, const unsigned char *str, int len, Position pos)
+handle_directive(TypeContext *cntx, ProcessorState *ps, FILE *out_f, FILE *log_f, const unsigned char *str, int len, Position pos)
 {
     ScannerState *ss = init_scanner(ps, log_f, str, len, pos);
     int retval = -1;
@@ -1574,7 +1631,7 @@ handle_directive(ProcessorState *ps, FILE *out_f, FILE *log_f, const unsigned ch
     if (ss->token != TOK_IDENT) {
         parser_error(ss, "directive expected");
     } else if (!strcmp(ss->value, "page")) {
-        handle_directive_page(ss, out_f);
+        handle_directive_page(ss, cntx, out_f);
     } else {
         parser_error(ss, "invalid directive '%s'", ss->value);
     }
@@ -1584,12 +1641,12 @@ handle_directive(ProcessorState *ps, FILE *out_f, FILE *log_f, const unsigned ch
 }
 
 static int
-handle_html_text(FILE *out_f, FILE *log_f, const unsigned char *str, int len)
+handle_html_text(FILE *out_f, FILE *txt_f, FILE *log_f, const unsigned char *str, int len)
 {
     if (len > 0) {
-        fprintf(out_f, "static const unsigned char str%d[%d] = ", str_serial++, len + 1);
-        emit_str_literal(out_f, str, len);
-        fprintf(out_f, ";\n");
+        fprintf(txt_f, "static const unsigned char str%d[%d] = ", str_serial++, len + 1);
+        emit_str_literal(txt_f, str, len);
+        fprintf(txt_f, ";\n");
 
         fprintf(out_f, "fwrite(str%d, 1, %d, out_f);\n", str_serial - 1, len);
     }
@@ -1612,6 +1669,14 @@ process_file(
     FILE *out_f = stdout;
     ProcessorState *ps = processor_state_init();
 
+    char *txt_t = NULL;
+    size_t txt_z = 0;
+    FILE *txt_f = open_memstream(&txt_t, &txt_z);
+
+    char *prg_t = NULL;
+    size_t prg_z = 0;
+    FILE *prg_f = open_memstream(&prg_t, &prg_z);
+
     if (!strcmp(path, "-")) {
         in_f = stdin;
     } else {
@@ -1633,7 +1698,7 @@ process_file(
             if (c == '%') {
                 // <%
                 buf[buf_u] = 0;
-                handle_html_text(out_f, stderr, buf, buf_u);
+                handle_html_text(prg_f, txt_f, stderr, buf, buf_u);
                 buf_u = 0;
                 pos_next(&ps->pos, '<');
                 pos_next(&ps->pos, '%');
@@ -1677,10 +1742,10 @@ process_file(
                     }
 
                     if (t == '@') {
-                        handle_directive(ps, out_f, stderr, buf + start, buf_u - start, start_pos);
+                        handle_directive(cntx, ps, prg_f, stderr, buf + start, buf_u - start, start_pos);
                     } else if (t == '=') {
                     } else {
-                        fprintf(out_f, "%s", buf + start);
+                        fprintf(prg_f, "%s", buf + start);
                     }
                 }
                 buf_u = 0;
@@ -1696,8 +1761,16 @@ process_file(
     }
 
     buf[buf_u] = 0;
-    handle_html_text(out_f, stderr, buf, buf_u);
+    handle_html_text(prg_f, txt_f, stderr, buf, buf_u);
     buf_u = 0;
+
+    fclose(txt_f); txt_f = NULL;
+    fwrite(txt_t, 1, txt_z, out_f);
+    free(txt_t); txt_t = NULL; txt_z = 0;
+
+    fclose(prg_f); prg_f = NULL;
+    fwrite(prg_t, 1, prg_z, out_f);
+    free(prg_t); prg_t = NULL; prg_z = 0;
 
 cleanup:
     if (in_f && in_f != stdin) fclose(in_f);
