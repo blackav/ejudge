@@ -8669,3 +8669,16 @@ type_info.c 7781 0 2426590
 type_info.h 7782 0 407442
 dwarf_parse.c 7782 0 2407551
 type_info.c 7782 0 2455281
+type_info.h 7784 0 428696
+dwarf_parse.c 7784 0 2621601
+type_info.c 7784 0 2540116
+type_info.h 7786 0 470929
+dwarf_parse.c 7786 0 2838958
+type_info.c 7786 0 2657191
+ej-page-gen.c 7787 0 2360305
+dwarf_parse.c 7787 0 3002786
+type_info.c 7787 0 2928680
+type_info.h 7788 0 483049
+ej-page-gen.c 7790 0 3187034
+dwarf_parse.c 7788 0 3004127
+type_info.c 7788 0 3026568
