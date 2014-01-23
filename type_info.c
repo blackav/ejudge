@@ -1148,7 +1148,7 @@ tc_is_c_keyword(TypeContext *cntx, TypeInfo *ident)
     };
     if (!cntx->keywords.root) {
         for (int i = 0; keywords[i]; ++i) {
-            vt_insert(cntx, &cntx->keywords, ident, NODE_IDENT, pointer_cmp, pointer_create);
+            vt_insert(cntx, &cntx->keywords, tc_get_ident(cntx, keywords[i]), NODE_IDENT, pointer_cmp, pointer_create);
         }
     }
     ValueTreeNode *res = vt_find(&cntx->keywords, ident, pointer_cmp);
