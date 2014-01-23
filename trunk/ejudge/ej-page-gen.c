@@ -1596,6 +1596,7 @@ handle_directive_page(ScannerState *ss, TypeContext *cntx, FILE *out_f)
         goto cleanup;
     }
     page_name = ss->value; ss->value = NULL;
+    next_token(ss);
 
     info[idx++] = tc_get_u32(cntx, 0);
     info[idx++] = tc_get_ident(cntx, page_name);

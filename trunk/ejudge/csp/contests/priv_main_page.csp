@@ -50,7 +50,8 @@
 </ul>
 
 <hr /><a name="status" /><h2><%= _("Server status") %></h2>
-  if (stop_time > 0 && !global->is_virtual) {
+
+<%  if (stop_time > 0 && !global->is_virtual) {
     if (duration > 0 && global->board_fog_time > 0
         && global->board_unfog_time > 0
         && cs->current_time < stop_time + global->board_unfog_time
@@ -67,319 +68,257 @@
   } else {
     s = _("The contest is not started");
   }
-  fprintf(fout, "<p><big><b>%s</b></big></p>\n", s);
+%>
 
-  if (global->score_system == SCORE_OLYMPIAD && !global->is_virtual) {
+<p><big><b><%= s %></b></big></p>
+
+<%  if (global->score_system == SCORE_OLYMPIAD && !global->is_virtual) {
     if (cs->accepting_mode)
       s = _("Participants' solutions are being accepted");
     else if (!cs->testing_finished)
       s = _("Participants' solutions are being judged");
     else
       s = _("Participants' solutions are judged");
-    fprintf(fout, "<p><big><b>%s</b></big></p>\n", s);
-  }
+%>
+<p><big><b><%= s %></b></big></p>
+<%  } %>
 
-  if (cs->upsolving_mode) {
-    fprintf(fout, "<p><big><b>%s</b></big></p>\n", _("Upsolving mode"));
-  }
+<%  if (cs->upsolving_mode) { %>
+<p><big><b><%= _("Upsolving mode") %></b></big></p>
+<%  } %>
 
-  if (cs->clients_suspended) {
-    fprintf(fout, "<p><big><b>%s</b></big></p>\n",
-            _("Participants' requests are suspended"));
-  }
+<%  if (cs->clients_suspended) { %>
+<p><big><b><%= _("Participants' requests are suspended") %></b></big></p>
+<%  } %>
 
-  if (cs->testing_suspended) {
-    fprintf(fout, "<p><big><b>%s</b></big></p>\n",
-            _("Testing of participants' submits is suspended"));
-  }
-  if (cs->printing_suspended) {
-    fprintf(fout, "<p><big><b>%s</b></big></p>\n",
-            _("Print requests are suspended"));
-  }
-  if (cs->online_view_source < 0) {
-    fprintf(fout, "<p><big><b>%s</b></big></p>\n",
-            _("Source code is closed"));
-  } else if (cs->online_view_source > 0) {
-    fprintf(fout, "<p><big><b>%s</b></big></p>\n",
-            _("Source code is open"));
-  }
-  if (cs->online_view_report < 0) {
-    fprintf(fout, "<p><big><b>%s</b></big></p>\n",
-            _("Testing reports are closed"));
-  } else if (cs->online_view_report > 0) {
-    fprintf(fout, "<p><big><b>%s</b></big></p>\n",
-            _("Testing reports are open"));
-  }
-  if (cs->online_view_judge_score > 0) {
-    fprintf(fout, "<p><big><b>%s</b></big></p>\n",
-            _("Judge scores are opened"));
-  }
-  if (cs->online_final_visibility > 0) {
-    fprintf(fout, "<p><big><b>%s</b></big></p>\n",
-            _("Final visibility rules are active"));
-  }
+<%  if (cs->testing_suspended) { %>
+<p><big><b><%= _("Testing of participants' submits is suspended") %></b></big></p>
+<%  } %>
+<%  if (cs->printing_suspended) { %>
+<p><big><b><%= _("Print requests are suspended") %></b></big></p>
+<%  } %>
+<%  if (cs->online_view_source < 0) { %>
+<p><big><b><%= _("Source code is closed") %></b></big></p>
+<%  } else if (cs->online_view_source > 0) { %>
+<p><big><b><%= _("Source code is open") %></b></big></p>
+<%  } %>
+<%  if (cs->online_view_report < 0) { %>
+<p><big><b><%= _("Testing reports are closed") %></b></big></p>
+<%  } else if (cs->online_view_report > 0) { %>
+<p><big><b><%= _("Testing reports are open") %></b></big></p>
+<%  } %>
+<%  if (cs->online_view_judge_score > 0) { %>
+<p><big><b><%= _("Judge scores are opened") %></b></big></p>
+<%  } %>
+<%  if (cs->online_final_visibility > 0) { %>
+<p><big><b><%= _("Final visibility rules are active") %></b></big></p>
+<%  } %>
 
+<%
   // count online users
   online_users = 0;
   for (i = 0; i < extra->user_access[USER_ROLE_CONTESTANT].u; i++) {
     pa = &extra->user_access[USER_ROLE_CONTESTANT].v[i];
     if (pa->time + 65 >= cs->current_time) online_users++;
   }
-  fprintf(fout, "<p><big><b>%s: %d</b></big></p>\n",
-          _("On-line users in this contest"), online_users);
-  if (cs->max_online_count > 0) {
-    fprintf(fout, "<p><big><b>%s: %d, %s</b></big></p>\n",
-            _("Max number of users was"), cs->max_online_count,
-            xml_unparse_date(cs->max_online_time));
-  }
+%>
+<p><big><b><%= _("On-line users in this contest") %>: <%= online_users %></b></big></p>
+<%  if (cs->max_online_count > 0) { %>
+<p><big><b><%= _("Max number of users was") %>: <%= cs->max_online_count %>, <%= xml_unparse_date(cs->max_online_time) %></b></big></p>
+<%  } %>
 
-  if (job_count > 0) {
-    fprintf(fout, "<p><b>%s: %d</b></p>\n", "Background jobs", job_count);
-    fprintf(fout, "<table class=\"b1\">");
-    for (struct server_framework_job *job = job_first; job; job = job->next) {
-      fprintf(fout, "<tr><td%s>%d</td><td%s>%s</td><td%s>%s</td><td%s>",
-              " class=\"b1\"", job->id,
-              " class=\"b1\"", xml_unparse_date(job->start_time),
-              " class=\"b1\"", job->title,
-              " class=\"b1\"");
-      if (job->vt->get_status) {
+<%  if (job_count > 0) { %>
+<p><b><%= "Background jobs" %>: <%= job_count %></b></p>
+<table class="b1">
+<%    for (struct server_framework_job *job = job_first; job; job = job->next) { %>
+<tr><td class="b1"><%= job->id %></td><td class="b1"><%= xml_unparse_date(job->start_time) %></td><td  class="b1"><%= job->title %></td><td class="b1">
+<%      if (job->vt->get_status) {
         unsigned char *str = job->vt->get_status(job);
-        if (str && *str) {
-          fprintf(fout, "%s", str);
-        } else {
-          fprintf(fout, "&nbsp;");
-        }
+        if (str && *str) { %>
+<%= str %>
+<%        } else { %>
+&nbsp;
+<%        }
         xfree(str);
-      } else {
-        fprintf(fout, "&nbsp;");
-      }
-      fprintf(fout, "</td></tr>\n");
-    }
-    fprintf(fout, "</table>\n");
-  }
+      } else { %>
+&nbsp;
+<%      } %>
+</td></tr>
+<%    } %>
+</table>
+<%  } %>
 
-  if (phr->role == USER_ROLE_ADMIN
-      && opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST) >= 0) {
-    html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
-    fprintf(fout, "<table border=\"0\">");
+<%  if (phr->role == USER_ROLE_ADMIN && opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST) >= 0) { %>
+<%    html_start_form(fout, 1, phr->self_url, phr->hidden_vars); %>
+<table border="0">
+<tr><td><%= _("Server time") %>:</td><td><%= ctime(&cs->current_time) %></td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<%    if (start_time <= 0) { >%
+<tr><td colspan="2"><b><%= _("Contest is not started") %></b></td><td>&nbsp;</td><td><%= BUTTON(NEW_SRV_ACTION_START_CONTEST) %></td></tr>
+<%    } else { >%
+<tr><td><%= _("Contest start time") %>:</td><td><%= ctime(&start_time) %></td><td>&nbsp;</td>
+<%      if (stop_time <= 0) { %>
+<td><%= BUTTON(NEW_SRV_ACTION_STOP_CONTEST) %></td></tr>
+<%      } else if (global->enable_continue
+                 && (!duration || stop_time < start_time + duration)) { %>
+<td><%= BUTTON(NEW_SRV_ACTION_CONTINUE_CONTEST) %></td></tr>
+<%      } %>
+<%    } %>
 
-    fprintf(fout,
-            "<tr><td>%s:</td><td>%s</td><td>&nbsp;</td><td>&nbsp;</td></tr>\n",
-            _("Server time"), ctime(&cs->current_time));
+<%    if (!global->is_virtual && start_time <= 0) { >%
+<tr><td><%= _("Planned start time") %>:</td><td><%= sched_time <= 0?_("Not set"):ctime(&sched_time) %></td><td><input type="text" name="sched_time" size="16"/></td><td><%= BUTTON(NEW_SRV_ACTION_SCHEDULE) %></td></tr>
+<%    } %>
 
-    if (start_time <= 0) {
-      fprintf(fout, "<tr><td colspan=\"2\"><b>%s</b></td><td>&nbsp;</td><td>%s</td></tr>\n",
-              _("Contest is not started"),
-              BUTTON(NEW_SRV_ACTION_START_CONTEST));
-    } else {
-      fprintf(fout, "<tr><td>%s:</td><td>%s</td><td>&nbsp;</td>",
-              _("Contest start time"), ctime(&start_time));
-      if (stop_time <= 0) {
-        fprintf(fout, "<td>%s</td></tr>\n",
-                BUTTON(NEW_SRV_ACTION_STOP_CONTEST));
-      } else if (global->enable_continue
-                 && (!duration || stop_time < start_time + duration)) {
-        fprintf(fout, "<td>%s</td></tr>\n",
-                BUTTON(NEW_SRV_ACTION_CONTINUE_CONTEST));
-      }
-    }
-
-    if (!global->is_virtual && start_time <= 0) {
-      fprintf(fout, "<tr><td>%s:</td><td>%s</td>"
-              "<td><input type=\"text\" name=\"sched_time\" size=\"16\"/></td>"
-              "<td>%s</td></tr>\n",
-              _("Planned start time"),
-              sched_time <= 0?_("Not set"):ctime(&sched_time),
-              BUTTON(NEW_SRV_ACTION_SCHEDULE));
-    }
-
+<%
     if (finish_time <= 0) {
       if (duration > 0) {
         duration_str(0, duration, 0, duration_buf, 0);
       } else {
         snprintf(duration_buf, sizeof(duration_buf), "%s", _("Unlimited"));
       }
+%>
+<tr><td><%= _("Duration") %>:</td><td><%= duration_buf %></td>
+<%      if ((stop_time <= 0 || global->enable_continue) && !global->is_virtual) { %>
+<td><input type="text" name="dur" size="16"/></td><td><%= BUTTON(NEW_SRV_ACTION_CHANGE_DURATION) %></td></tr>
+<%      } else { %>
+<td>&nbsp;</td><td>&nbsp;</td></tr>
+<%      } %>
 
-      fprintf(fout, "<tr><td>%s:</td><td>%s</td>",_("Duration"), duration_buf);
-      if ((stop_time <= 0 || global->enable_continue) && !global->is_virtual) {
-        fprintf(fout, "<td><input type=\"text\" name=\"dur\" size=\"16\"/></td>"
-                "<td>%s</td></tr>\n",
-                BUTTON(NEW_SRV_ACTION_CHANGE_DURATION));
-      } else {
-        fprintf(fout, "<td>&nbsp;</td><td>&nbsp;</td></tr>\n");
-      }
-
-      if (duration <= 0 && (stop_time <= 0 || global->enable_continue)
-          && !global->is_virtual) {
-        fprintf(fout,
-                "<tr><td>%s:</td><td>&nbsp;</td>"
-                "<td><input type=\"text\" name=\"finish_time\" size=\"16\" /></td>"
-                "<td>%s</td></tr>\n",
-                _("Finish time"),
-                BUTTON(NEW_SRV_ACTION_CHANGE_FINISH_TIME));
-      }
+<%      if (duration <= 0 && (stop_time <= 0 || global->enable_continue)
+          && !global->is_virtual) { %>
+<tr><td><%= _("Finish time") %>:</td><td>&nbsp;</td><td><input type="text" name="finish_time" size="16" /></td><td><%= BUTTON(NEW_SRV_ACTION_CHANGE_FINISH_TIME) %></td></tr>
+<%      }
     }
+%>
 
-    if (!global->is_virtual) {
+<%    if (!global->is_virtual) {
       if (start_time > 0 && stop_time <= 0 && duration > 0) {
-        tmpt = start_time + duration;
-        fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
-                _("Scheduled end time"), ctime(&tmpt));
-      } else if (start_time > 0 && stop_time <= 0 && duration <= 0
-                 && finish_time > 0) {
-        fprintf(fout, "<tr><td>%s:</td><td>%s</td>\n",
-                _("Scheduled end time"), ctime(&finish_time));
-        fprintf(fout,
-                "<td><input type=\"text\" name=\"finish_time\" size=\"16\" /></td>"
-                "<td>%s</td></tr>\n",
-                BUTTON(NEW_SRV_ACTION_CHANGE_FINISH_TIME));
-        fprintf(fout, "</tr>\n");
-      } else if (stop_time) {
-        fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
-                _("End time"), ctime(&stop_time));
-      }
+        tmpt = start_time + duration; %>
+<tr><td><%= _("Scheduled end time") %>:</td><td><%= ctime(&tmpt) %></td></tr>
+<%      } else if (start_time > 0 && stop_time <= 0 && duration <= 0
+                 && finish_time > 0) { %>
+<tr><td><%= _("Scheduled end time") %>:</td><td><%= ctime(&finish_time) %></td><td><input type="text" name="finish_time" size="16" /></td><td><%= BUTTON(NEW_SRV_ACTION_CHANGE_FINISH_TIME) %></td></tr>
+<%      } else if (stop_time) { %>
+<tr><td><%= _("End time") %>:</td><td><%= ctime(&stop_time) %></td></tr>
 
-      if (start_time > 0 && stop_time <= 0 && fog_start_time > 0) {
-        fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
-                _("Standings freeze time"), ctime(&fog_start_time));
-      } else if (stop_time > 0 && duration > 0 && global->board_fog_time > 0
+<%      if (start_time > 0 && stop_time <= 0 && fog_start_time > 0) { %>
+<tr><td><%= _("Standings freeze time") %>:</td><td><%= ctime(&fog_start_time) %></td></tr>
+<%      } else if (stop_time > 0 && duration > 0 && global->board_fog_time > 0
                  && global->board_unfog_time > 0 && !cs->standings_updated
                  && cs->current_time < stop_time + global->board_unfog_time) {
-        tmpt = stop_time + global->board_unfog_time;
-        fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
-                _("Standings unfreeze time"), ctime(&tmpt));
+        tmpt = stop_time + global->board_unfog_time; %>
+<tr><td><%= _("Standings unfreeze time") %>:</td><td><%= ctime(&tmpt) %></td></tr>
+
+<%      if (start_time > 0 && stop_time <= 0 && duration > 0) {
+        duration_str(0, cs->current_time, start_time, duration_buf, 0); %>
+<tr><td><%= _("Elapsed time") %>:</td><td><%= duration_buf %></td></tr>
+<%        duration_str(0, start_time + duration - cs->current_time, 0,
+                     duration_buf, 0); %>
+<tr><td><%= _("Remaining time") %>:</td><td><%= duration_buf %></td></tr>
+<%
       }
+    } %>
+<tr><td><%= "Contest load time" %></td><td><%= ctime(&cs->load_time) %></td></tr>
+<tr><td><%= "Server start time" %></td><td><%= ctime(&server_start_time) %></td></tr>
+</table></form>
 
-      if (start_time > 0 && stop_time <= 0 && duration > 0) {
-        duration_str(0, cs->current_time, start_time, duration_buf, 0);
-        fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
-                _("Elapsed time"), duration_buf);
-        duration_str(0, start_time + duration - cs->current_time, 0,
-                     duration_buf, 0);
-        fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
-                _("Remaining time"), duration_buf);
-      }
-    }
-    fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
-            "Contest load time", ctime(&cs->load_time));
-    fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
-            "Server start time", ctime(&server_start_time));
+<hr />
 
-    fprintf(fout, "</table></form>\n");
-
-    fprintf(fout, "<hr>\n");
-
-    html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
-    fprintf(fout, "%s\n",  BUTTON(NEW_SRV_ACTION_UPDATE_STANDINGS_1));
-    fprintf(fout, "%s\n", BUTTON(NEW_SRV_ACTION_RESET_1));
-    action = NEW_SRV_ACTION_SUSPEND;
-    if (cs->clients_suspended) action = NEW_SRV_ACTION_RESUME;
-    fprintf(fout, "%s\n", BUTTON(action));
-    action = NEW_SRV_ACTION_TEST_SUSPEND;
-    if (cs->testing_suspended) action = NEW_SRV_ACTION_TEST_RESUME;
-    fprintf(fout, "%s\n", BUTTON(action));
+<%    html_start_form(fout, 1, phr->self_url, phr->hidden_vars); %>
+<%= BUTTON(NEW_SRV_ACTION_UPDATE_STANDINGS_1) %>
+<%= BUTTON(NEW_SRV_ACTION_RESET_1) %>
+<%    action = NEW_SRV_ACTION_SUSPEND;
+    if (cs->clients_suspended) action = NEW_SRV_ACTION_RESUME; %>
+<%= BUTTON(action) %>
+<%    action = NEW_SRV_ACTION_TEST_SUSPEND;
+    if (cs->testing_suspended) action = NEW_SRV_ACTION_TEST_RESUME; %>
+<%= BUTTON(action) %>
+<%
     if (global->enable_printing) {
       action = NEW_SRV_ACTION_PRINT_SUSPEND;
-      if (cs->printing_suspended) action = NEW_SRV_ACTION_PRINT_RESUME;
-      fprintf(fout, "%s\n", BUTTON(action));
-    }
-    if (global->score_system == SCORE_OLYMPIAD && !global->is_virtual) {
+      if (cs->printing_suspended) action = NEW_SRV_ACTION_PRINT_RESUME; %>
+<%= BUTTON(action) %>
+<%    } %>
+<%    if (global->score_system == SCORE_OLYMPIAD && !global->is_virtual) {
       action = NEW_SRV_ACTION_SET_JUDGING_MODE;
-      if (!cs->accepting_mode) action = NEW_SRV_ACTION_SET_ACCEPTING_MODE;
-      fprintf(fout, "%s\n", BUTTON(action));
-    }
-    if (global->score_system == SCORE_OLYMPIAD
+      if (!cs->accepting_mode) action = NEW_SRV_ACTION_SET_ACCEPTING_MODE; %>
+<%= BUTTON(action) %>
+<%    } %>
+<%    if (global->score_system == SCORE_OLYMPIAD
         && ((!global->is_virtual && !cs->accepting_mode)
             || (global->is_virtual && global->disable_virtual_auto_judge >0))) {
       action = NEW_SRV_ACTION_SET_TESTING_FINISHED_FLAG;
       if (cs->testing_finished)
-        action = NEW_SRV_ACTION_CLEAR_TESTING_FINISHED_FLAG;
-      fprintf(fout, "%s\n", BUTTON(action));
-    }
-    if (!cnts->disable_team_password) {
-      fprintf(fout, "%s\n", BUTTON(NEW_SRV_ACTION_GENERATE_PASSWORDS_1));
-      fprintf(fout, "%s\n", BUTTON(NEW_SRV_ACTION_CLEAR_PASSWORDS_1));
-    }
-    fprintf(fout, "%s\n", BUTTON(NEW_SRV_ACTION_GENERATE_REG_PASSWORDS_1));
-    fprintf(fout, "%s\n", BUTTON(NEW_SRV_ACTION_UPSOLVING_CONFIG_1));
-    fprintf(fout, "%s\n", BUTTON(NEW_SRV_ACTION_RELOAD_SERVER));
-    fprintf(fout, "</form>\n");
-  } else {
-    // judge mode
-    fprintf(fout, "<table border=\"0\">");
+        action = NEW_SRV_ACTION_CLEAR_TESTING_FINISHED_FLAG; %>
+<%= BUTTON(action) %>
+<%    } %>
+<%    if (!cnts->disable_team_password) { %>
+<%= BUTTON(NEW_SRV_ACTION_GENERATE_PASSWORDS_1) %>
+<%= BUTTON(NEW_SRV_ACTION_CLEAR_PASSWORDS_1) %>
+<%    } %>
+<%= BUTTON(NEW_SRV_ACTION_GENERATE_REG_PASSWORDS_1) %>
+<%= BUTTON(NEW_SRV_ACTION_UPSOLVING_CONFIG_1) %>
+<%= BUTTON(NEW_SRV_ACTION_RELOAD_SERVER) %>
+</form>
+<%  } else { %>
+<table border="0">
+<tr><td><%= _("Server time") %>:</td><td><%= ctime(&cs->current_time) %></td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<%    if (start_time <= 0) { %>
+<tr><td colspan=\"2\"><b><%= _("Contest is not started") %></b></td></tr>
+<%    } else { %>
+<tr><td><%= _("Contest start time") %>:</td><td><%= ctime(&start_time) %></td></tr>
+<%    } %>
 
-    fprintf(fout,
-            "<tr><td>%s:</td><td>%s</td><td>&nbsp;</td><td>&nbsp;</td></tr>\n",
-            _("Server time"), ctime(&cs->current_time));
-
-    if (start_time <= 0) {
-      fprintf(fout, "<tr><td colspan=\"2\"><b>%s</b></td></tr>\n",
-              _("Contest is not started"));
-    } else {
-      fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
-              _("Contest start time"), ctime(&start_time));
-    }
-
-    if (!global->is_virtual && start_time <= 0) {
-      fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
-              _("Planned start time"),
-              sched_time <= 0?_("Not set"):ctime(&sched_time));
-    }
-
+<%    if (!global->is_virtual && start_time <= 0) { %>
+<tr><td><%= _("Planned start time") %>:</td><td><%= sched_time <= 0?_("Not set"):ctime(&sched_time) %></td></tr>
+<%    } %>
+<%
     if (finish_time <= 0) {
       if (duration > 0) {
         duration_str(0, duration, 0, duration_buf, 0);
       } else {
         snprintf(duration_buf, sizeof(duration_buf), "%s", _("Unlimited"));
       }
+%>
+<tr><td><%= _("Duration") %>:</td><td><%= duration_buf %></td></tr>
+<%    } %>
 
-      fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
-              _("Duration"), duration_buf);
-    }
-
-    if (!global->is_virtual) {
+<%    if (!global->is_virtual) {
       if (start_time > 0 && stop_time <= 0 && duration > 0) {
-        tmpt = start_time + duration;
-        fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
-                _("Scheduled end time"), ctime(&tmpt));
-      } else if (start_time > 0 && stop_time <= 0 && duration <= 0
-                 && finish_time > 0) {
-        fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
-                _("Scheduled end time"), ctime(&finish_time));
-      } else if (stop_time) {
-        fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
-                _("End time"), ctime(&stop_time));
-      }
+        tmpt = start_time + duration; %>
+<tr><td><%= _("Scheduled end time") %>:</td><td><%= ctime(&tmpt) %></td></tr>
+<%      } else if (start_time > 0 && stop_time <= 0 && duration <= 0
+                 && finish_time > 0) { %>
+<tr><td><%= _("Scheduled end time") %>:</td><td><%= ctime(&finish_time) %></td></tr>
+<%      } else if (stop_time) { %>
+<tr><td><%= _("End time") %>:</td><td><%= ctime(&stop_time) %></td></tr>
+<%      } %>
 
-      if (start_time > 0 && stop_time <= 0 && fog_start_time > 0) {
-        fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
-                _("Standings freeze time"), ctime(&fog_start_time));
-      } else if (stop_time > 0 && duration > 0 && global->board_fog_time > 0
+<%      if (start_time > 0 && stop_time <= 0 && fog_start_time > 0) { %>
+<tr><td><%= _("Standings freeze time") %>:</td><td><%= ctime(&fog_start_time) %></td></tr>
+<%      } else if (stop_time > 0 && duration > 0 && global->board_fog_time > 0
                  && global->board_unfog_time > 0 && !cs->standings_updated
                  && cs->current_time < stop_time + global->board_unfog_time) {
-        tmpt = stop_time + global->board_unfog_time;
-        fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
-                _("Standings unfreeze time"), ctime(&tmpt));
-      }
+        tmpt = stop_time + global->board_unfog_time; %>
+<tr><td><%= _("Standings unfreeze time") %>:</td><td><%= ctime(&tmpt) %></td></tr>
+<%      } %>
 
-      if (start_time > 0 && stop_time <= 0 && duration > 0) {
-        duration_str(0, cs->current_time, start_time, duration_buf, 0);
-        fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
-                _("Elapsed time"), duration_buf);
-        duration_str(0, start_time + duration - cs->current_time, 0,
-                     duration_buf, 0);
-        fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
-                _("Remaining time"), duration_buf);
-      }
-    }
-    fprintf(fout, "</table>\n");
-  }
+<%      if (start_time > 0 && stop_time <= 0 && duration > 0) {
+        duration_str(0, cs->current_time, start_time, duration_buf, 0); %>
+<tr><td><%= _("Elapsed time") %>:</td><td><%= duration_buf %></td></tr>
+<%        duration_str(0, start_time + duration - cs->current_time, 0,
+                     duration_buf, 0); %>
+<tr><td><%= _("Remaining time") %></td><td><%= duration_buf %></td></tr>
+<%      }
+    } %>
+</table>
+<%  } %>
 
-  ns_write_priv_all_runs(fout, phr, cnts, extra,
+<%  ns_write_priv_all_runs(fout, phr, cnts, extra,
                          filter_first_run_set, filter_first_run,
                          filter_last_run_set, filter_last_run,
-                         filter_expr);
+                         filter_expr); %>
 
+<%
   if (opcaps_check(phr->caps, OPCAP_SUBMIT_RUN) >= 0) {
     if (!prob) {
       // no problem is selected yet
@@ -568,54 +507,35 @@
     ns_write_all_clars(fout, phr, cnts, extra, filter_mode_clar,
                        filter_first_clar_str, filter_last_clar_str);
   }
+%>
 
-  if (opcaps_check(phr->caps, OPCAP_NEW_MESSAGE) >= 0) {
-    fprintf(fout, "<hr><h2>%s</h2>", _("Compose a message to all participants"));
-    html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
-    fprintf(fout, "<table>\n"
-            "<tr>"
-            "<td>%s:</td>"
-            "<td><input type=\"text\" size=\"16\" name=\"msg_dest_id\"/></td>"
-            "</tr>\n"
-            "<tr>"
-            "<td>%s:</td>"
-            "<td><input type=\"text\" size=\"32\" name=\"msg_dest_login\"/></td>"
-            "</tr>\n"
-            "<tr>"
-            "<td>%s:</td>"
-            "<td><input type=\"text\" size=\"64\" name=\"msg_subj\"/></td>"
-            "</tr>\n",
-            _("To user id"),
-            _("To user login"),
-            _("Subject"));
-    if (start_time <= 0) {
-      fprintf(fout, "<tr><td>%s</td><td><select name=\"msg_hide_flag\"><option value=\"0\">NO</option><option value=\"1\">YES</option></select></td></tr>\n",
-              _("Do not show before the contest starts?"));
-    }
-    fprintf(fout, "</table>\n"
-            "<p><textarea name=\"msg_text\" rows=\"20\" cols=\"60\">"
-            "</textarea></p>"
-            "<p>%s\n</form>\n",
-            BUTTON(NEW_SRV_ACTION_PRIV_SUBMIT_CLAR));
-  }
+<%  if (opcaps_check(phr->caps, OPCAP_NEW_MESSAGE) >= 0) { %>
+<hr /><h2><%= _("Compose a message to all participants") %></h2>
+<%    html_start_form(fout, 1, phr->self_url, phr->hidden_vars); %>
+<table>
+<tr><td><%= _("To user id") %>:</td><td><input type="text" size="16" name="msg_dest_id"/></td></tr>
+<tr><td><%= _("To user login") %>:</td><td><input type="text" size="32" name="msg_dest_login"/></td></tr>
+<tr><td><%= _("Subject") %>:</td><td><input type="text" size="64" name="msg_subj"/></td></tr>
+<%    if (start_time <= 0) { %>
+<tr><td><%= _("Do not show before the contest starts?") %></td><td><select name="msg_hide_flag"><option value="0">NO</option><option value="1">YES</option></select></td></tr>
+<%    } %>
+</table>
+<p><textarea name="msg_text" rows="20" cols="60"></textarea></p>
+<p><%= BUTTON(NEW_SRV_ACTION_PRIV_SUBMIT_CLAR) %></p></form>
+<%  } %>
 
-  /* change the password */
-  fprintf(fout, "<hr><a name=\"chgpasswd\"></a>\n<h2>%s</h2>\n",
-          /*cnts->priv_head_style*/ "h2",
-          _("Change password"),
-          /*cnts->team_head_style*/ "h2");
-  html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
+<hr/><a name="chgpasswd"></a>
+<h2><%= _("Change password") %></h2>
+<%  html_start_form(fout, 1, phr->self_url, phr->hidden_vars); %>
 
-  fprintf(fout, "<table>\n"
-          "<tr><td>%s:</td><td><input type=\"password\" name=\"oldpasswd\" size=\"16\"/></td></tr>\n"
-          "<tr><td>%s:</td><td><input type=\"password\" name=\"newpasswd1\" size=\"16\"/></td></tr>\n"
-          "<tr><td>%s:</td><td><input type=\"password\" name=\"newpasswd2\" size=\"16\"/></td></tr>\n"
-          "<tr><td colspan=\"2\">%s</td></tr>\n"
-          "</table></form>",
-          _("Old password"),
-          _("New password"), _("Retype new password"),
-          BUTTON(NEW_SRV_ACTION_CHANGE_PASSWORD));
+<table>
+<tr><td><%= _("Old password") %>:</td><td><input type="password" name="oldpasswd" size="16"/></td></tr>
+<tr><td><%= _("New password") %>:</td><td><input type="password" name="newpasswd1" size="16"/></td></tr>
+<tr><td><%= _("Retype new password") %>:</td><td><input type="password" name="newpasswd2" size="16"/></td></tr>
+<tr><td colspan="2"><%= BUTTON(NEW_SRV_ACTION_CHANGE_PASSWORD) %></td></tr>
+</table></form>
 
+<%
 #if CONF_HAS_LIBINTL - 0 == 1
   if (cs->global->enable_l10n) {
     fprintf(fout, "<hr><a name=\"chglanguage\"></a>< %s>%s</%s>\n",
@@ -628,7 +548,9 @@
             BUTTON(NEW_SRV_ACTION_CHANGE_LANGUAGE));
   }
 #endif /* CONF_HAS_LIBINTL */
+%>
 
+<%
   if (1 /*cs->global->show_generation_time*/) {
   gettimeofday(&phr->timestamp2, 0);
   tdiff = ((long long) phr->timestamp2.tv_sec) * 1000000;
@@ -640,8 +562,4 @@
           _("Page generation time"), tdiff / 1000,
           _("msec"));
   }
-
-  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
-  l10n_setlocale(0);
-  html_armor_free(&ab);
-}
+%>
