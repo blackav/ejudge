@@ -998,6 +998,9 @@ next_token(ScannerState *ss)
 
 static void
 dump_token(ScannerState *ss)
+    __attribute__((unused));
+static void
+dump_token(ScannerState *ss)
 {
     unsigned char buf[1024];
     fprintf(stderr, "%s: %d: <<%s>>\n", pos_str_2(buf, sizeof(buf), ss->ps, &ss->token_pos), ss->token, ss->raw);
@@ -1603,13 +1606,15 @@ handle_directive_page(ScannerState *ss, TypeContext *cntx, FILE *out_f)
     enum { MAX_PARAM_COUNT = 1024 };
     TypeInfo *info[MAX_PARAM_COUNT];
     int idx = 0;
+    int start_param_pos = 0;
 
-    next_token(ss); dump_token(ss);
+    next_token(ss); //dump_token(ss);
     if (ss->token != TOK_IDENT) {
         parser_error(ss, "page name (identifier) expected");
         goto cleanup;
     }
     page_name = ss->value; ss->value = NULL;
+    start_param_pos = ss->idx;
     next_token(ss);
 
     info[idx++] = tc_get_u32(cntx, 0);
@@ -1620,14 +1625,20 @@ handle_directive_page(ScannerState *ss, TypeContext *cntx, FILE *out_f)
     }
 
     TypeInfo *f = tc_get_function(cntx, info);
+    /*
     fprintf(stderr, "Function: ");
     tc_print(stderr, f);
     fprintf(stderr, "\n");
+    */
+    (void) f;
 
     if (ss->token != TOK_EOF) {
         parser_error(ss, "garbage after directive");
         goto cleanup;
     }
+
+    fprintf(out_f, "int %s%s\n{\n", page_name, ss->buf + start_param_pos);
+
     retval = 0;
 
 cleanup:
@@ -1641,7 +1652,7 @@ handle_directive(TypeContext *cntx, ProcessorState *ps, FILE *out_f, FILE *log_f
     ScannerState *ss = init_scanner(ps, log_f, str, len, pos);
     int retval = -1;
 
-    next_token(ss); dump_token(ss);
+    next_token(ss); //dump_token(ss);
 
     if (ss->token != TOK_IDENT) {
         parser_error(ss, "directive expected");
@@ -1775,7 +1786,9 @@ process_file(
                         handle_directive(cntx, ps, prg_f, stderr, buf + start, buf_u - start, start_pos);
                     } else if (t == '=') {
                     } else {
-                        fprintf(prg_f, "%s", buf + start);
+                        // plain <% %>
+                        //fprintf(prg_f, "\n#line %d \"%s\"\n", start_pos.line, ps->filenames[start_pos.filename_idx]);
+                        fprintf(prg_f, "%s\n", buf + start);
                     }
                 }
                 buf_u = 0;
@@ -1803,6 +1816,8 @@ process_file(
     fclose(prg_f); prg_f = NULL;
     fwrite(prg_t, 1, prg_z, out_f);
     free(prg_t); prg_t = NULL; prg_z = 0;
+
+    fprintf(out_f, "}\n");
 
 cleanup:
     if (in_f && in_f != stdin) fclose(in_f);
@@ -1846,7 +1861,7 @@ main(int argc, char *argv[])
     }
 
     TypeContext *cntx = tc_create();
-    if (dwarf_parse(stdout, argv[0], cntx) < 0) {
+    if (dwarf_parse(stderr, argv[0], cntx) < 0) {
         tc_dump_context(stdout, cntx);
         tc_free(cntx);
         fatal("dwarf parsing failed");
