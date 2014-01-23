@@ -263,7 +263,7 @@
 <table border="0">
 <tr><td><%= _("Server time") %>:</td><td><%= ctime(&cs->current_time) %></td><td>&nbsp;</td><td>&nbsp;</td></tr>
 <%    if (start_time <= 0) { %>
-<tr><td colspan=\"2\"><b><%= _("Contest is not started") %></b></td></tr>
+<tr><td colspan="2"><b><%= _("Contest is not started") %></b></td></tr>
 <%    } else { %>
 <tr><td><%= _("Contest start time") %>:</td><td><%= ctime(&start_time) %></td></tr>
 <%    } %>

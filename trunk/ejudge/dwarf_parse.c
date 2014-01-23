@@ -574,7 +574,9 @@ parse_base_type_die(
     if (s_dwarf_formudata(log_f, path, enc_attr, &enc) < 0) goto done;
     if (s_dwarf_formstring(log_f, path, name_attr, &name) < 0) goto done;
 
-    if (bs == 1 && enc == DW_ATE_signed_char) {
+    if (bs == 1 && enc == DW_ATE_boolean) {
+        ti = tc_get_i1_type(cntx);
+    } else if (bs == 1 && enc == DW_ATE_signed_char) {
         ti = tc_get_i8_type(cntx);
     } else if (bs == 1 && enc == DW_ATE_unsigned_char) {
         ti = tc_get_u8_type(cntx);
@@ -663,6 +665,54 @@ done:
 }
 
 static int
+parse_index_range_die(
+        FILE *log_f,
+        const unsigned char *path,
+        Dwarf_Debug dbg,
+        Dwarf_Die die,
+        TypeContext *cntx,
+        TypeInfo *base_info,
+        TypeInfo **p_info)
+{
+    int retval = -1;
+    Dwarf_Half tag = 0;
+    int r;
+
+    if (s_dwarf_tag(log_f, path, die, &tag) < 0) goto done;
+    if (tag != DW_TAG_subrange_type) {
+        fprintf(log_f, "%s: DW_TAG_subrange_type expected\n", path);
+        dump_die(log_f, dbg, die);
+        goto done;
+    }
+
+    Dwarf_Die die2 = NULL;
+    if ((r = s_dwarf_sibling(log_f, path, dbg, die, &die2)) < 0) goto done;
+    if (r > 0) {
+        if (parse_index_range_die(log_f, path, dbg, die2, cntx, base_info, &base_info) < 0) goto done;
+    }
+
+    // FIXME: handle type
+    Dwarf_Attribute ub_attr = NULL;
+    if (s_dwarf_attr(log_f, path, die, DW_AT_upper_bound, &ub_attr) < 0) goto done;
+    if (ub_attr == NULL) {
+        *p_info = tc_get_open_array_type(cntx, base_info);
+    } else {
+        Dwarf_Unsigned ub = 0;
+        if (s_dwarf_formudata(log_f, path, ub_attr, &ub) < 0) goto done;
+        if (ub >= INT_MAX) {
+            fprintf(log_f, "%s: invalid upper bound: %llu\n", path, ub);
+            dump_die(log_f, dbg, die);
+            ub = 0;
+        }
+        *p_info = tc_get_array_type(cntx, base_info, tc_get_u32(cntx, ub + 1));
+    }
+    retval = 0;
+
+done:
+    return retval;
+}
+
+static int
 parse_array_type_die(
         FILE *log_f,
         const unsigned char *path,
@@ -690,32 +740,8 @@ parse_array_type_die(
 
     die2 = NULL;
     if (s_dwarf_child(log_f, path, die, &die2) < 0) goto done;
-    Dwarf_Half tag2 = 0;
-    if (s_dwarf_tag(log_f, path, die2, &tag2) < 0) goto done;
-    if (tag2 != DW_TAG_subrange_type) {
-        fprintf(log_f, "%s: DW_TAG_subrange_type expected\n", path);
-        goto done;
-    }
-    // FIXME: handle type
-    Dwarf_Attribute ub_attr = NULL;
-    if (s_dwarf_attr(log_f, path, die2, DW_AT_upper_bound, &ub_attr) < 0) goto done;
-    if (ub_attr == NULL) {
-        ti = tc_get_open_array_type(cntx, ti);
-    } else {
-        Dwarf_Unsigned ub = 0;
-        if (s_dwarf_formudata(log_f, path, ub_attr, &ub) < 0) goto done;
-        if (ub >= INT_MAX) {
-            fprintf(log_f, "%s: invalid upper bound: %llu\n", path, ub);
-            goto done;
-        }
-        int r = 0;
-        if ((r = s_dwarf_sibling(log_f, path, dbg, die2, &die2)) < 0) goto done;
-        if (r > 0) {
-            fprintf(log_f, "%s: array range has sibling\n", path);
-            goto done;
-        }
-        ti = tc_get_array_type(cntx, ti, tc_get_u32(cntx, ub + 1));
-    }
+
+    if (parse_index_range_die(log_f, path, dbg, die2, cntx, ti, &ti) < 0) goto done;
 
     *p_info = ti;
     retval = 0;
@@ -755,6 +781,43 @@ parse_const_type_die(
     if (!ti) ti = tc_get_i0_type(cntx);
 
     *p_info = tc_get_const_type(cntx, ti);
+    retval = 0;
+
+done:
+    return retval;
+}
+
+static int
+parse_volatile_type_die(
+        FILE *log_f,
+        const unsigned char *path,
+        Dwarf_Debug dbg,
+        Dwarf_Die die,
+        TypeContext *cntx,
+        DieMap *dm,
+        int tag,
+        TypeInfo **p_info)
+{
+    int retval = -1;
+    TypeInfo *ti = NULL;
+    Dwarf_Attribute type_attr = NULL;
+    if (s_dwarf_attr(log_f, path, die, DW_AT_type, &type_attr) < 0)
+        goto done;
+    if (type_attr == NULL) {
+        //fprintf(log_f, "DW_TAG_const_type: DW_AT_type missing\n");
+        //dump_die(log_f, dbg, die);
+    } else {
+        Dwarf_Off to = 0;
+        if (s_dwarf_global_formref(log_f, path, type_attr, &to) < 0) goto done;
+        Dwarf_Die die2 = NULL;
+        if (s_dwarf_offdie(log_f, path, dbg, to, &die2) < 0) goto done;
+        if (parse_die(log_f, path, dbg, die2, cntx, dm) < 0) goto done;
+        if (die_map_get_2(log_f, path, dm, die2, &ti, NULL) < 0) goto done;
+        // temp fix
+    }
+    if (!ti) ti = tc_get_i0_type(cntx);
+
+    *p_info = tc_get_volatile_type(cntx, ti);
     retval = 0;
 
 done:
@@ -1020,8 +1083,12 @@ parse_struct_type_die(
     while (r > 0) {
         Dwarf_Attribute field_name_attr = NULL;
         char *field_name_str = NULL;
-        if (s_dwarf_attr_2(log_f, path, die2, DW_AT_name, &field_name_attr) <= 0) goto done;
-        if (s_dwarf_formstring(log_f, path, field_name_attr, &field_name_str) < 0) goto done;
+        if ((r = s_dwarf_attr(log_f, path, die2, DW_AT_name, &field_name_attr)) < 0) goto done;
+        if (r > 0) {
+            if (s_dwarf_formstring(log_f, path, field_name_attr, &field_name_str) < 0) goto done;
+        } else {
+            field_name_str = "";
+        }
         TypeInfo *field_name_info = tc_get_ident(cntx, field_name_str);
 
         Dwarf_Attribute field_type_attr = NULL;
@@ -1104,8 +1171,9 @@ parse_function_type_die(
         ++count;
         Dwarf_Half tag2 = 0;
         if (s_dwarf_tag(log_f, path, die2, &tag2) < 0) goto done;
-        if (tag2 != DW_TAG_formal_parameter) {
-            fprintf(log_f, "%s: DW_TAG_formal_parameter expected\n", path);
+        if (tag2 != DW_TAG_formal_parameter && tag2 != DW_TAG_unspecified_parameters) {
+            fprintf(log_f, "%s: DW_TAG_formal_parameter or DW_TAG_unspecified_parameters expected\n", path);
+            dump_die(log_f, dbg, die2);
             goto done;
         }
         if ((r = s_dwarf_sibling(log_f, path, dbg, die2, &die2)) < 0) goto done;
@@ -1119,10 +1187,16 @@ parse_function_type_die(
 
     if ((r = s_dwarf_child(log_f, path, die, &die2)) < 0) goto done;
     while (r > 0) {
+        Dwarf_Half tag2 = 0;
         TypeInfo *par_type_info = NULL;
-        if ((r = parse_type(log_f, path, dbg, die2, cntx, dm, &par_type_info)) < 0) goto done;
-        if (!r || !par_type_info) par_type_info = tc_get_i0_type(cntx);
-        info[idx++] = par_type_info;
+        if (s_dwarf_tag(log_f, path, die2, &tag2) < 0) goto done;
+        if (tag2 == DW_TAG_unspecified_parameters) {
+            info[idx++] = tc_get_anyseq_type(cntx);
+        } else {
+            if ((r = parse_type(log_f, path, dbg, die2, cntx, dm, &par_type_info)) < 0) goto done;
+            if (!r || !par_type_info) par_type_info = tc_get_i0_type(cntx);
+            info[idx++] = par_type_info;
+        }
 
         if ((r = s_dwarf_sibling(log_f, path, dbg, die2, &die2)) < 0) goto done;
     }
@@ -1186,6 +1260,7 @@ static const struct TopDieParseTable top_die_table[] =
     { DW_TAG_pointer_type, NODE_POINTER_TYPE, "pointer", parse_pointer_type_die },
     { DW_TAG_array_type, NODE_ARRAY_TYPE, "array", parse_array_type_die },
     { DW_TAG_const_type, NODE_CONST_TYPE, "const", parse_const_type_die },
+    { DW_TAG_volatile_type, NODE_VOLATILE_TYPE, "volatile", parse_volatile_type_die },
     { DW_TAG_typedef, NODE_TYPEDEF_TYPE, "typedef", parse_typedef_type_die },
     { DW_TAG_enumeration_type, NODE_ENUM_TYPE, "enum", parse_enum_type_die },
     { DW_TAG_structure_type, NODE_STRUCT_TYPE, "struct", parse_struct_type_die },

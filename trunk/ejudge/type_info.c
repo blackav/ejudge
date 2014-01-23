@@ -105,6 +105,7 @@ struct TypeContext
     TypeInfo *f32_type;
     TypeInfo *f64_type;
     TypeInfo *f80_type;
+    TypeInfo *anyseq_type;
 
     ValueTree typedefs;
     ValueTree pointers;
@@ -112,6 +113,7 @@ struct TypeContext
     ValueTree openarrays;
     ValueTree functiontypes;
     ValueTree consts;
+    ValueTree volatiles;
     ValueTree enums;
     ValueTree structs;
     ValueTree anonstructs;
@@ -268,6 +270,7 @@ tc_free(TypeContext *cntx)
     tc_type_info_free(cntx->f32_type);
     tc_type_info_free(cntx->f64_type);
     tc_type_info_free(cntx->f80_type);
+    tc_type_info_free(cntx->anyseq_type);
 
     tc_value_tree_free(&cntx->typedefs);
     tc_value_tree_free(&cntx->pointers);
@@ -275,6 +278,7 @@ tc_free(TypeContext *cntx)
     tc_value_tree_free(&cntx->openarrays);
     tc_value_tree_free(&cntx->functiontypes);
     tc_value_tree_free(&cntx->consts);
+    tc_value_tree_free(&cntx->volatiles);
     tc_value_tree_free(&cntx->enums);
     tc_value_tree_free(&cntx->structs);
     tc_value_tree_free(&cntx->anonstructs);
@@ -869,6 +873,15 @@ tc_get_f80_type(TypeContext *cntx)
 }
 
 TypeInfo *
+tc_get_anyseq_type(TypeContext *cntx)
+{
+    if (!cntx->anyseq_type) {
+        cntx->anyseq_type = type_info_alloc_node(NODE_ANYSEQ_TYPE, tc_get_u32(cntx, 0), NULL);
+    }
+    return cntx->anyseq_type;
+}
+
+TypeInfo *
 tc_get_it(TypeContext *cntx, TypeInfo *type, long long value)
 {
     if (type == cntx->i1_type) return tc_get_i1(cntx, !!value);
@@ -947,6 +960,13 @@ tc_get_const_type(TypeContext *cntx, TypeInfo *eltype)
 {
     TypeInfo *info[3] = { eltype->n.info[0], eltype, NULL };
     return vt_insert(cntx, &cntx->consts, info, NODE_CONST_TYPE, generic_cmp_1, generic_create);
+}
+
+TypeInfo *
+tc_get_volatile_type(TypeContext *cntx, TypeInfo *eltype)
+{
+    TypeInfo *info[3] = { eltype->n.info[0], eltype, NULL };
+    return vt_insert(cntx, &cntx->volatiles, info, NODE_VOLATILE_TYPE, generic_cmp_1, generic_create);
 }
 
 TypeInfo *
@@ -1331,6 +1351,7 @@ static const unsigned char * const node_names[] =
     "NODE_ENUM_TYPE",
     "NODE_STRUCT_TYPE",
     "NODE_UNION_TYPE",
+    "NODE_ANYSEQ_TYPE",
 
     "NODE_PARAM",
     "NODE_ENUM_CONST",
@@ -1449,6 +1470,7 @@ tc_dump_context(FILE *out_f, TypeContext *cntx)
     tc_dump_single_info(out_f, cntx->f32_type);
     tc_dump_single_info(out_f, cntx->f64_type);
     tc_dump_single_info(out_f, cntx->f80_type);
+    tc_dump_single_info(out_f, cntx->anyseq_type);
     fprintf(out_f, "    typedefs\n");
     tc_dump_value_tree(out_f, &cntx->typedefs);
     fprintf(out_f, "    pointers\n");
@@ -1461,6 +1483,8 @@ tc_dump_context(FILE *out_f, TypeContext *cntx)
     tc_dump_value_tree(out_f, &cntx->functiontypes);
     fprintf(out_f, "    consts\n");
     tc_dump_value_tree(out_f, &cntx->consts);
+    fprintf(out_f, "    volatiles\n");
+    tc_dump_value_tree(out_f, &cntx->volatiles);
     fprintf(out_f, "    enums\n");
     tc_dump_value_tree(out_f, &cntx->enums);
     fprintf(out_f, "    structs\n");
