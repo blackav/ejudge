@@ -18,6 +18,7 @@
 #include "config.h"
 #include "ej_limits.h"
 #include "version.h"
+#include "ej_types.h"
 
 #include "type_info.h"
 #include "dwarf_parse.h"
@@ -64,7 +65,17 @@ report_help(void)
     exit(0);
 }
 
-static int str_serial;
+struct MemoryBuffer
+{
+    unsigned char *str;
+    int len;
+};
+struct MemoryBufferArray
+{
+    int a, u;
+    struct MemoryBuffer *v;
+};
+static struct MemoryBufferArray strs;
 
 static unsigned char const * const armored_c_translate_table[256] =
 {
@@ -1067,6 +1078,7 @@ parse_declspec(
                 if (!quiet_mode) parser_error(ss, "enum type '%s' undefined", ss->raw);
                 goto cleanup;
             }
+            next_token(ss);
         } else if (!strcmp(ss->raw, "struct")) {
             if (type_info || has_base_type) goto invalid_declspec;
             next_token(ss);
@@ -1079,6 +1091,7 @@ parse_declspec(
                 if (!quiet_mode) parser_error(ss, "struct type '%s' undefined", ss->raw);
                 goto cleanup;
             }
+            next_token(ss);
         } else if (!strcmp(ss->raw, "union")) {
             if (type_info || has_base_type) goto invalid_declspec;
             next_token(ss);
@@ -1091,6 +1104,7 @@ parse_declspec(
                 if (!quiet_mode) parser_error(ss, "union type '%s' undefined", ss->raw);
                 goto cleanup;
             }
+            next_token(ss);
         } else if (!strcmp(ss->raw, "signed")) {
             if (type_info) goto invalid_declspec;
             ++signed_count;
@@ -1645,11 +1659,26 @@ static int
 handle_html_text(FILE *out_f, FILE *txt_f, FILE *log_f, const unsigned char *str, int len)
 {
     if (len > 0) {
-        fprintf(txt_f, "static const unsigned char str%d[%d] = ", str_serial++, len + 1);
-        emit_str_literal(txt_f, str, len);
-        fprintf(txt_f, ";\n");
+        int i;
+        for (i = 0; i < strs.u; ++i) {
+            if (strs.v[i].len == len && !memcmp(strs.v[i].str, str, len))
+                break;
+        }
+        if (i >= strs.u) {
+            if (strs.u >= strs.a) {
+                if (!(strs.a *= 2)) strs.a = 32;
+                XREALLOC(strs.v, strs.a);
+            }
+            strs.v[i].len = len;
+            strs.v[i].str = xmemdup(str, len);
+            ++strs.u;
 
-        fprintf(out_f, "fwrite(str%d, 1, %d, out_f);\n", str_serial - 1, len);
+            fprintf(txt_f, "static const unsigned char csp_str%d[%d] = ", i, len + 1);
+            emit_str_literal(txt_f, str, len);
+            fprintf(txt_f, ";\n");
+        }
+
+        fprintf(out_f, "fwrite(csp_str%d, 1, %d, out_f);\n", i, len);
     }
     return 0;
 }
@@ -1765,9 +1794,11 @@ process_file(
     handle_html_text(prg_f, txt_f, stderr, buf, buf_u);
     buf_u = 0;
 
+    fprintf(out_f, "/* === string pool === */\n\n");
     fclose(txt_f); txt_f = NULL;
     fwrite(txt_t, 1, txt_z, out_f);
     free(txt_t); txt_t = NULL; txt_z = 0;
+    fprintf(out_f, "\n");
 
     fclose(prg_f); prg_f = NULL;
     fwrite(prg_t, 1, prg_z, out_f);
@@ -1829,6 +1860,156 @@ main(int argc, char *argv[])
 
     return result;
 }
+
+/* these are required to correctly link all object files */
+
+int utf8_mode;
+void *ul_conn;
+
+time_t server_start_time;
+unsigned char *ul_login;
+int ul_uid;
+
+void * /*struct contest_extra * */
+get_existing_contest_extra(int num)
+{
+    return NULL;
+}
+void
+super_serve_register_process(/*struct background_process *prc*/)
+{
+}
+void * /*struct background_process * */
+super_serve_find_process(const unsigned char *name)
+{
+    return NULL;
+}
+const void * /*const struct sid_state* */
+super_serve_sid_state_get_test_editor(int contest_id)
+{
+    return NULL;
+}
+const void * /*struct sid_state* */
+super_serve_sid_state_get_cnts_editor(int contest_id)
+{
+    return NULL;
+}
+void * /*struct sid_state**/
+super_serve_sid_state_get_cnts_editor_nc(int contest_id)
+{
+    return NULL;
+}
+void
+super_serve_clear_edited_contest(/*struct sid_state *p*/ void *p)
+{
+}
+int
+super_serve_sid_state_get_max_edited_cnts(void)
+{
+    return 0;
+}
+void
+super_serve_move_edited_contest(void *dst, void * src /*struct sid_state *dst, struct sid_state *src*/)
+{
+}
+void */*struct update_state * */
+update_state_free(/*struct update_state *us*/ void *us)
+{
+    return NULL;
+}
+void * /*struct update_state * */
+update_state_create(void)
+{
+    return NULL;
+}
+
+void * /*struct session_info * */
+ns_get_session(
+        ej_cookie_t session_id,
+        ej_cookie_t client_key,
+        time_t cur_time)
+{
+    return NULL;
+}
+void
+ns_remove_session(ej_cookie_t session_id)
+{
+}
+int
+nsdb_check_role(int user_id, int contest_id, int role)
+{
+    return 0;
+}
+void * /*int_iterator_t*/
+nsdb_get_examiner_user_id_iterator(int contest_id, int prob_id)
+{
+    return NULL;
+}
+int
+nsdb_get_examiner_count(int contest_id, int prob_id)
+{
+    return 0;
+}
+int
+nsdb_find_chief_examiner(int contest_id, int prob_id)
+{
+    return 0;
+}
+int
+nsdb_get_priv_role_mask_by_iter(void * /*int_iterator_t*/ iter, unsigned int *p_mask)
+{
+    return 0;
+}
+void * /*int_iterator_t*/
+nsdb_get_contest_user_id_iterator(int contest_id)
+{
+    return NULL;
+}
+int
+nsdb_remove_examiner(int user_id, int contest_id, int prob_id)
+{
+    return 0;
+}
+int
+nsdb_assign_chief_examiner(int user_id, int contest_id, int prob_id)
+{
+    return 0;
+}
+int
+nsdb_assign_examiner(int user_id, int contest_id, int prob_id)
+{
+    return 0;
+}
+int
+nsdb_add_role(int user_id, int contest_id, int role)
+{
+    return 0;
+}
+int
+nsdb_del_role(int user_id, int contest_id, int role)
+{
+    return 0;
+}
+int
+nsdb_priv_remove_user(int user_id, int contest_id)
+{
+    return 0;
+}
+void
+ns_send_reply(void * /*struct client_state * */ p, int answer)
+{
+}
+void
+ns_new_autoclose(void * /*struct client_state * */ p, void *write_buf, size_t write_len)
+{
+}
+void * /*struct client_state * */
+ns_get_client_by_id(int client_id)
+{
+    return NULL;
+}
+
+char tst_arr[279][1811];
 
 /*
  * Local variables:

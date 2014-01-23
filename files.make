@@ -294,7 +294,6 @@ COMMON_CFILES=\
  ${REUSE_CFILES}
 
 PLATFORM_CFILES =\
- pathutl.c\
  $(ARCH)/fileutl.c\
  $(ARCH)/cr_serialize.c\
  $(ARCH)/interrupt.c\

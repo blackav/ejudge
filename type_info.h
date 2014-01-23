@@ -55,10 +55,13 @@ enum
     NODE_FUNCTION_TYPE,
     // u32 size,
     NODE_CONST_TYPE,
+    NODE_VOLATILE_TYPE,
     // u32 size, str name, node base_type, node consts...
     NODE_ENUM_TYPE,
     NODE_STRUCT_TYPE,
     NODE_UNION_TYPE,
+    // u32 size == 0 --- sequence of any types, for ellipsis parameters
+    NODE_ANYSEQ_TYPE, 
 
     // u32 size, i32 frame_offset, node type, str name
     NODE_PARAM,
@@ -152,6 +155,8 @@ TypeInfo *tc_get_f32_type(TypeContext *cntx);
 TypeInfo *tc_get_f64_type(TypeContext *cntx);
 TypeInfo *tc_get_f80_type(TypeContext *cntx);
 
+TypeInfo *tc_get_anyseq_type(TypeContext *cntx);
+
 /* composite types */
 TypeInfo *tc_get_typedef_type(TypeContext *cntx, TypeInfo *ntype, TypeInfo *name);
 TypeInfo *tc_get_ptr_type(TypeContext *cntx, TypeInfo *valtype);
@@ -159,6 +164,7 @@ TypeInfo *tc_get_array_type(TypeContext *cntx, TypeInfo *eltype, TypeInfo *count
 TypeInfo *tc_get_open_array_type(TypeContext *cntx, TypeInfo *eltype);
 TypeInfo *tc_get_openarray_type(TypeContext *cntx, TypeInfo *eltype);
 TypeInfo *tc_get_const_type(TypeContext *cntx, TypeInfo *eltype);
+TypeInfo *tc_get_volatile_type(TypeContext *cntx, TypeInfo *eltype);
 TypeInfo *tc_get_enum_type(TypeContext *cntx, TypeInfo **info);
 TypeInfo *tc_get_function_type(TypeContext *cntx, TypeInfo **info);
 TypeInfo *tc_get_function(TypeContext *cntx, TypeInfo **info);
