@@ -1348,6 +1348,7 @@ static const unsigned char * const node_names[] =
     "NODE_OPEN_ARRAY_TYPE",
     "NODE_FUNCTION_TYPE",
     "NODE_CONST_TYPE",
+    "NODE_VOLATILE_TYPE",
     "NODE_ENUM_TYPE",
     "NODE_STRUCT_TYPE",
     "NODE_UNION_TYPE",
