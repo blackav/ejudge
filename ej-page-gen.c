@@ -1787,11 +1787,41 @@ process_file(
                     } else if (t == '=') {
                     } else {
                         // plain <% %>
-                        //fprintf(prg_f, "\n#line %d \"%s\"\n", start_pos.line, ps->filenames[start_pos.filename_idx]);
+                        fprintf(prg_f, "\n#line %d \"%s\"\n", start_pos.line, ps->filenames[start_pos.filename_idx]);
                         fprintf(prg_f, "%s\n", buf + start);
                     }
                 }
                 buf_u = 0;
+            } else if (c == 's') {
+                c = getc(in_f);
+                if (c == ':') {
+                    // <s: prefix
+                } else {
+                    APPEND_CHAR('<');
+                    pos_next(&ps->pos, '<');
+                    APPEND_CHAR('s');
+                    pos_next(&ps->pos, 's');
+                }
+            } else if (c == '/') {
+                c = getc(in_f);
+                if (c == 's') {
+                    c = getc(in_f);
+                    if (c == ':') {
+                        // </s: prefix
+                    } else {
+                        APPEND_CHAR('<');
+                        pos_next(&ps->pos, '<');
+                        APPEND_CHAR('/');
+                        pos_next(&ps->pos, '/');
+                        APPEND_CHAR('s');
+                        pos_next(&ps->pos, 's');
+                    }
+                } else {
+                    APPEND_CHAR('<');
+                    pos_next(&ps->pos, '<');
+                    APPEND_CHAR('/');
+                    pos_next(&ps->pos, '/');
+                }
             } else {
                 APPEND_CHAR('<');
                 pos_next(&ps->pos, '<');
