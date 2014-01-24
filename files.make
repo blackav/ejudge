@@ -162,6 +162,7 @@ COMMON_CFILES=\
  html_input_text.c\
  html_hidden.c\
  html_hyperref.c\
+ html_parse.c\
  html_start_form.c\
  l10n.c\
  lang_config.c\
@@ -523,6 +524,7 @@ HFILES=\
  filter_tree.h\
  full_archive.h\
  html.h\
+ html_parse.h\
  interrupt.h\
  iterators.h\
  job_packet.h\

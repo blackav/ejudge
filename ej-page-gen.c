@@ -22,6 +22,7 @@
 
 #include "type_info.h"
 #include "dwarf_parse.h"
+#include "html_parse.h"
 
 #include "reuse/osdeps.h"
 #include "reuse/xalloc.h"
@@ -150,6 +151,12 @@ pos_next_n(Position *p, int n)
     p->column += n;
 }
 
+typedef struct HtmlElementStack
+{
+    struct HtmlElementStack *up;
+    HtmlElement *el;
+} HtmlElementStack;
+
 typedef struct ProcessorState
 {
     unsigned char **filenames;
@@ -157,16 +164,20 @@ typedef struct ProcessorState
 
     Position pos;
     int error_count;
+
+    FILE *log_f;
+    HtmlElementStack *el_stack;
 } ProcessorState;
 
 static ProcessorState *
-processor_state_init(void)
+processor_state_init(FILE *log_f)
 {
     ProcessorState *ps = NULL;
     XCALLOC(ps, 1);
     ps->filename_a = 16;
     XCALLOC(ps->filenames, ps->filename_a);
     ps->filename_u = 1;
+    ps->log_f = log_f;
     return ps;
 }
 
@@ -353,6 +364,24 @@ parser_error(ScannerState *ss, const char *format, ...)
 
     fprintf(ss->log_f, "%s: %s\n", pos_str_2(pb, sizeof(pb), ss->ps, &ss->token_pos), buf);
     ++ss->error_count;
+}
+
+static void
+parser_error_2(ProcessorState *ps, const char *format, ...)
+    __attribute__((format(printf, 2, 3)));
+static void
+parser_error_2(ProcessorState *ps, const char *format, ...)
+{
+    va_list args;
+    char buf[1024];
+    unsigned char pb[1024];
+
+    va_start(args, format);
+    vsnprintf(buf, sizeof(buf), format, args);
+    va_end(args);
+
+    fprintf(ps->log_f, "%s: %s\n", pos_str_2(pb, sizeof(pb), ps, &ps->pos), buf);
+    ++ps->error_count;
 }
 
 static void
@@ -1667,12 +1696,13 @@ handle_directive(TypeContext *cntx, ProcessorState *ps, FILE *out_f, FILE *log_f
 }
 
 static int
-handle_html_text(FILE *out_f, FILE *txt_f, FILE *log_f, const unsigned char *str, int len)
+handle_html_text(FILE *out_f, FILE *txt_f, FILE *log_f, const unsigned char *mem, int start_idx, int end_idx)
 {
+    int len = end_idx - start_idx;
     if (len > 0) {
         int i;
         for (i = 0; i < strs.u; ++i) {
-            if (strs.v[i].len == len && !memcmp(strs.v[i].str, str, len))
+            if (strs.v[i].len == len && !memcmp(strs.v[i].str, mem + start_idx, len))
                 break;
         }
         if (i >= strs.u) {
@@ -1681,11 +1711,11 @@ handle_html_text(FILE *out_f, FILE *txt_f, FILE *log_f, const unsigned char *str
                 XREALLOC(strs.v, strs.a);
             }
             strs.v[i].len = len;
-            strs.v[i].str = xmemdup(str, len);
+            strs.v[i].str = xmemdup(mem + start_idx, len);
             ++strs.u;
 
             fprintf(txt_f, "static const unsigned char csp_str%d[%d] = ", i, len + 1);
-            emit_str_literal(txt_f, str, len);
+            emit_str_literal(txt_f, mem + start_idx, len);
             fprintf(txt_f, ";\n");
         }
 
@@ -1694,21 +1724,54 @@ handle_html_text(FILE *out_f, FILE *txt_f, FILE *log_f, const unsigned char *str
     return 0;
 }
 
-#define APPEND_CHAR(c) do { if (buf_u + 1 >= buf_a) { buf = xrealloc(buf, buf_a *= 2); } buf[buf_u++] = (c); } while (0)
+static int
+handle_html_element_open(
+        FILE *log_f,
+        TypeContext *cntx,
+        ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f)
+{
+    if (!strcmp(ps->el_stack->el->name, "s:tr")) {
+        fprintf(prg_f, "fputs(_(");
+    } else {
+        parser_error_2(ps, "unhandled element");
+    }
+    return 0;
+}
+
+static int
+handle_html_element_close(
+        FILE *log_f,
+        TypeContext *cntx,
+        ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f,
+        unsigned char *mem,
+        int beg_i,
+        int end_i)
+{
+    if (!strcmp(ps->el_stack->el->name, "s:tr")) {
+        emit_str_literal(prg_f, mem + beg_i, end_i - beg_i);
+        fprintf(prg_f, "), out_f);\n");
+    } else {
+        parser_error_2(ps, "unhandled element");
+    }
+    return 0;
+}
 
 static int
 process_file(
+        FILE *log_f,
+        FILE *out_f,
         const unsigned char *path,
         TypeContext *cntx)
 {
     FILE *in_f = NULL;
     int result = 0;
-    unsigned char *buf = NULL;
-    int buf_a = 0, buf_u = 0;
-    int c;
+    int cc;
 
-    FILE *out_f = stdout;
-    ProcessorState *ps = processor_state_init();
+    ProcessorState *ps = processor_state_init(log_f);
 
     char *txt_t = NULL;
     size_t txt_z = 0;
@@ -1718,124 +1781,140 @@ process_file(
     size_t prg_z = 0;
     FILE *prg_f = open_memstream(&prg_t, &prg_z);
 
+    unsigned char *mem = NULL;
+    int mem_a = 0, mem_u = 0, mem_i = 0, html_i = 0;
+
     if (!strcmp(path, "-")) {
         in_f = stdin;
     } else {
         in_f = fopen(path, "r");
         if (!in_f) {
-            fprintf(stderr, "%s: cannot open file '%s': %s\n", progname, path, os_ErrorMsg());
+            fprintf(log_f, "%s: cannot open file '%s': %s\n", progname, path, os_ErrorMsg());
             goto fail;
         }
     }
     processor_state_init_file(ps, path);
 
-    buf_a = 512;
-    buf = xmalloc(buf_a);
+    // read the whole file to memory
+    mem_a = 1024;
+    mem = xmalloc(mem_a * sizeof(mem[0]));
+    while ((cc = getc(in_f)) != EOF) {
+        if (mem_u + 1 >= mem_a) {
+            mem = xrealloc(mem, (mem_a *= 2) * sizeof(mem[0]));
+        }
+        mem[mem_u++] = cc;
+    }
+    mem[mem_u] = 0;
+    if (in_f != stdin) fclose(in_f);
+    in_f = NULL;
 
-    c = getc(in_f);
-    while (c != EOF) {
-        if (c == '<') {
-            c = getc(in_f);
-            if (c == '%') {
-                // <%
-                buf[buf_u] = 0;
-                handle_html_text(prg_f, txt_f, stderr, buf, buf_u);
-                buf_u = 0;
-                pos_next(&ps->pos, '<');
+    mem_i = 0;
+    html_i = 0;
+    while (mem_i < mem_u) {
+        if (mem[mem_i] == '<' && mem[mem_i + 1] == '%') {
+            handle_html_text(prg_f, txt_f, log_f, mem, html_i, mem_i);
+            pos_next(&ps->pos, '<');
+            pos_next(&ps->pos, '%');
+            Position start_pos = ps->pos;
+            mem_i += 2;
+            html_i = mem_i;
+            while (mem_i < mem_u && (mem[mem_i] != '%' || mem[mem_i + 1] != '>')) {
+                pos_next(&ps->pos, mem[mem_i]);
+                ++mem_i;
+            }
+            int end_i = mem_i;
+            if (mem_i < mem_u) {
                 pos_next(&ps->pos, '%');
-                Position start_pos = ps->pos;
+                pos_next(&ps->pos, '>');
+                mem_i += 2;
+            }
+            mem[end_i] = 0;
 
-                c = getc(in_f);
-                while (c != EOF) {
-                    if (c == '%') {
-                        c = getc(in_f);
-                        if (c == EOF) break;
-                        if (c == '>') {
-                            pos_next(&ps->pos, '>');
-                            c = getc(in_f);
-                            break;
-                        }
-                        APPEND_CHAR('%');
-                        pos_next(&ps->pos, '%');
-                    } else {
-                        APPEND_CHAR(c);
-                        pos_next(&ps->pos, c);
-                        c = getc(in_f);
-                    }
-                }
-                buf[buf_u] = 0;
-
-                // handle <% ... %>
-                while (buf_u > 0 && isspace(buf[buf_u - 1])) --buf_u;
-                buf[buf_u] = 0;
-                if (buf_u > 0) {
-                    int t = buf[0];
-                    int start = 0;
-                    if (t == '@' || t == '=') {
-                        pos_next(&start_pos, t);
-                        ++start;
-                    } else {
-                        t = '*';
-                    }
-                    while (isspace(buf[start])) {
-                        pos_next(&start_pos, buf[start]);
-                        ++start;
-                    }
-
-                    if (t == '@') {
-                        handle_directive(cntx, ps, prg_f, stderr, buf + start, buf_u - start, start_pos);
-                    } else if (t == '=') {
-                    } else {
-                        // plain <% %>
-                        fprintf(prg_f, "\n#line %d \"%s\"\n", start_pos.line, ps->filenames[start_pos.filename_idx]);
-                        fprintf(prg_f, "%s\n", buf + start);
-                    }
-                }
-                buf_u = 0;
-            } else if (c == 's') {
-                c = getc(in_f);
-                if (c == ':') {
-                    // <s: prefix
+            while (end_i > html_i && isspace(mem[end_i - 1])) --end_i;
+            mem[end_i] = 0;
+            if (end_i > html_i) {
+                int t = mem[html_i];
+                if (t == '@' || t == '=') {
+                    pos_next(&start_pos, t);
+                    ++html_i;
                 } else {
-                    APPEND_CHAR('<');
-                    pos_next(&ps->pos, '<');
-                    APPEND_CHAR('s');
-                    pos_next(&ps->pos, 's');
+                    t = '*';
                 }
-            } else if (c == '/') {
-                c = getc(in_f);
-                if (c == 's') {
-                    c = getc(in_f);
-                    if (c == ':') {
-                        // </s: prefix
-                    } else {
-                        APPEND_CHAR('<');
-                        pos_next(&ps->pos, '<');
-                        APPEND_CHAR('/');
-                        pos_next(&ps->pos, '/');
-                        APPEND_CHAR('s');
-                        pos_next(&ps->pos, 's');
-                    }
+                while (isspace(mem[html_i])) {
+                    pos_next(&start_pos, mem[html_i]);
+                    ++html_i;
+                }
+                if (t == '@') {
+                    handle_directive(cntx, ps, prg_f, log_f, mem + html_i, end_i - html_i, start_pos);
+                } else if (t == '=') {
                 } else {
-                    APPEND_CHAR('<');
-                    pos_next(&ps->pos, '<');
-                    APPEND_CHAR('/');
-                    pos_next(&ps->pos, '/');
+                    // plain <% %>
+                    fprintf(prg_f, "\n#line %d \"%s\"\n", start_pos.line, ps->filenames[start_pos.filename_idx]);
+                    fprintf(prg_f, "%s\n", mem + html_i);
                 }
+            }
+            html_i = mem_i;
+        } else if (mem[mem_i] == '<' && mem[mem_i + 1] == 's' && mem[mem_i + 2] == ':') {
+            handle_html_text(prg_f, txt_f, log_f, mem, html_i, mem_i);
+            html_i = mem_i;
+
+            int end_i = 0;
+            HtmlElement *el = html_element_parse_start(mem, mem_i, &end_i);
+            if (!el) {
+                char pb[1024];
+                fprintf(log_f, "%s: invalid element\n", pos_str_2(pb, sizeof(pb), ps, &ps->pos));
+                pos_next(&ps->pos, mem[mem_i]);
+                ++mem_i;
             } else {
-                APPEND_CHAR('<');
-                pos_next(&ps->pos, '<');
+                HtmlElementStack *cur = NULL;
+                XCALLOC(cur, 1);
+                cur->up = ps->el_stack;
+                cur->el = el;
+                ps->el_stack = cur;
+
+                handle_html_element_open(log_f, cntx, ps, txt_f, prg_f);
+
+                while (mem_i < end_i) {
+                    pos_next(&ps->pos, mem[mem_i]);
+                    ++mem_i;
+                }
+                html_i = mem_i;
+            }
+        } else if (mem[mem_i] == '<' && mem[mem_i + 1] == '/' && mem[mem_i + 2] == 's' && mem[mem_i + 3] == ':') {
+            int end_i = 0;
+            HtmlElement *el = html_element_parse_end(mem, mem_i, &end_i);
+            if (!el) {
+                parser_error_2(ps, "invalid element");
+                pos_next(&ps->pos, mem[mem_i]);
+                ++mem_i;
+            } else {
+                HtmlElementStack *cur = ps->el_stack;
+                if (!cur) {
+                    parser_error_2(ps, "element stack is empty");
+                } else {
+                    if (strcmp(el->name, cur->el->name) != 0) {
+                        parser_error_2(ps, "element mismatch");
+                    } else {
+                        handle_html_element_close(log_f, cntx, ps, txt_f, prg_f, mem, html_i, mem_i);
+                    }
+                    ps->el_stack = cur->up;
+                    html_element_free(cur->el);
+                    xfree(cur);
+                }
+
+                el = html_element_free(el);
+                while (mem_i < end_i) {
+                    pos_next(&ps->pos, mem[mem_i]);
+                    ++mem_i;
+                }
+                html_i = mem_i;
             }
         } else {
-            APPEND_CHAR(c);
-            pos_next(&ps->pos, c);
-            c = getc(in_f);
+            pos_next(&ps->pos, mem[mem_i]);
+            ++mem_i;
         }
     }
-
-    buf[buf_u] = 0;
-    handle_html_text(prg_f, txt_f, stderr, buf, buf_u);
-    buf_u = 0;
+    handle_html_text(prg_f, txt_f, log_f, mem, html_i, mem_i);
 
     fprintf(out_f, "/* === string pool === */\n\n");
     fclose(txt_f); txt_f = NULL;
@@ -1899,7 +1978,7 @@ main(int argc, char *argv[])
     //tc_dump_context(stdout, cntx);
 
     int result = 0;
-    result = process_file(source_path, cntx) || result;
+    result = process_file(stderr, stdout, source_path, cntx) || result;
 
     tc_free(cntx);
 

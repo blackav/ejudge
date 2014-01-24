@@ -16,7 +16,7 @@
 #define ARMOR(s)  html_armor_buf(&ab, (s))
 #define BUTTON(a) ns_submit_button(bb, sizeof(bb), 0, a, 0)
 
-static void
+void
 write_alternatives_file(FILE *fout, int is_radio, const unsigned char *txt,
                         int last_answer, int prob_id, int next_prob_id,
                         int enable_js, const unsigned char *class_name);
@@ -70,7 +70,6 @@ static struct server_framework_job *job_first, *job_last;
 </script>
 <ul>
     <li><s:a ac="view-users"><s:tr>View regular users</s:tr></s:a></li>
-    <li><%= ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_USERS, 0) %><s:tr>View regular users</s:tr></a></li>
     <li><%= ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_PRIV_USERS_VIEW, 0) %><%= _("View privileged users") %></a></li>
     <li><%= ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_ONLINE_USERS, 0) %><%= _("View who is currently online") %></a></li>
     <li><%= ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_EXAM_INFO, 0) %><%= _("View examination information") %></a></li>
