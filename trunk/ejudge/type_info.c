@@ -565,6 +565,42 @@ tc_get_ident(TypeContext *cntx, const unsigned char *str)
     return vt_insert(cntx, &cntx->id_values.tree, str, NODE_IDENT, ident_cmp, ident_create);
 }
 
+typedef struct StringHelper
+{
+    int len;
+    const unsigned char *str;
+} StringHelper;
+
+static int
+string_cmp(const TypeInfo *ti, const void *p2)
+{
+    const StringHelper *v2 = (const StringHelper *) p2;
+    int len = ti->s.len;
+    if (v2->len < len) len = v2->len;
+    int r = memcmp(ti->s.str, v2->str, len);
+    if (r) return r;
+    if (ti->s.len < v2->len) return -1;
+    if (ti->s.len > v2->len) return 1;
+    return 0;
+}
+
+static TypeInfo *
+string_create(TypeContext *cntx, int kind, const void *p2)
+{
+    const StringHelper *v2 = (const StringHelper *) p2;
+    TypeInfo *ti = type_info_alloc(kind);
+    ti->s.str = xmemdup(v2->str, v2->len);
+    ti->s.len = v2->len;
+    return ti;
+}
+
+TypeInfo *
+tc_get_string(TypeContext *cntx, const unsigned char *str, int len)
+{
+    StringHelper helper = { len, str };
+    return vt_insert(cntx, &cntx->str_values.tree, &helper, NODE_STRING, string_cmp, string_create);
+}
+
 static int
 vt_count_nodes(ValueTreeNode *root)
 {

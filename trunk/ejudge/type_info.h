@@ -138,6 +138,7 @@ TypeInfo *tc_get_f80(TypeContext *cntx, long double value);
 
 TypeInfo *tc_get_it(TypeContext *cntx, TypeInfo *type, long long value);
 
+TypeInfo *tc_get_string(TypeContext *cntx, const unsigned char *str, int len);
 TypeInfo *tc_get_ident(TypeContext *cntx, const unsigned char *str);
 
 /* basic types */
