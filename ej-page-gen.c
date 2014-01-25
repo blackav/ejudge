@@ -151,6 +151,17 @@ pos_next_n(Position *p, int n)
     p->column += n;
 }
 
+typedef struct GlobalSetting
+{
+    TypeInfo *name;
+    TypeInfo *value;
+} GlobalSetting;
+typedef struct GlobalSettingArray
+{
+    int a, u;
+    GlobalSetting *v;
+} GlobalSettingArray;
+
 typedef struct HtmlElementStack
 {
     struct HtmlElementStack *up;
@@ -167,6 +178,7 @@ typedef struct ProcessorState
 
     FILE *log_f;
     HtmlElementStack *el_stack;
+    GlobalSettingArray settings;
 } ProcessorState;
 
 static ProcessorState *
@@ -199,6 +211,17 @@ processor_state_init_file(ProcessorState *ps, const unsigned char *filename)
     ps->pos.filename_idx = i;
     ps->pos.line = 1;
     ps->pos.column = 0;
+}
+
+static
+TypeInfo *
+processor_state_find_setting(ProcessorState *ps, TypeInfo *name)
+{
+    for (int i = 0; i < ps->settings.u; ++i) {
+        if (ps->settings.v[i].name == name)
+            return ps->settings.v[i].value;
+    }
+    return NULL;
 }
 
 typedef struct ScannerState
@@ -382,6 +405,63 @@ parser_error_2(ProcessorState *ps, const char *format, ...)
 
     fprintf(ps->log_f, "%s: %s\n", pos_str_2(pb, sizeof(pb), ps, &ps->pos), buf);
     ++ps->error_count;
+}
+
+static TypeInfo *
+make_value_info(ScannerState *ss, TypeContext *cntx)
+{
+    switch (ss->token) {
+    case TOK_STRING:
+        return tc_get_string(cntx, ss->value, ss->value_len);
+    case TOK_CHAR:
+        return tc_get_i8(cntx, ss->cv.v.ct_char);
+    case TOK_NUMBER:
+        switch (ss->cv.tag) {
+        case C_BOOL:
+            return tc_get_i1(cntx, ss->cv.v.ct_bool);
+        case C_CHAR:
+            return tc_get_i8(cntx, ss->cv.v.ct_char);
+        case C_SCHAR:
+            return tc_get_i8(cntx, ss->cv.v.ct_schar);
+        case C_UCHAR:
+            return tc_get_u8(cntx, ss->cv.v.ct_uchar);
+        case C_SHORT:
+            return tc_get_i16(cntx, ss->cv.v.ct_short);
+        case C_USHORT:
+            return tc_get_u16(cntx, ss->cv.v.ct_ushort);
+        case C_INT:
+            return tc_get_i32(cntx, ss->cv.v.ct_int);
+        case C_UINT:
+            return tc_get_u32(cntx, ss->cv.v.ct_uint);
+        case C_LONG:
+            return tc_get_i32(cntx, ss->cv.v.ct_lint);
+        case C_ULONG:
+            return tc_get_u32(cntx, ss->cv.v.ct_ulint);
+        case C_LLONG:
+            return tc_get_i64(cntx, ss->cv.v.ct_llint);
+        case C_ULLONG:
+            return tc_get_u64(cntx, ss->cv.v.ct_ullint);
+        default:
+            parser_error(ss, "value expected");
+            return NULL;
+        }
+    case TOK_FPNUMBER:
+        switch (ss->cv.tag) {
+        case C_FLOAT:
+            return tc_get_f32(cntx, ss->cv.v.ct_float);
+        case C_DOUBLE:
+            return tc_get_f64(cntx, ss->cv.v.ct_double);
+        case C_LDOUBLE:
+            return tc_get_f80(cntx, ss->cv.v.ct_ldouble);
+        default:
+            parser_error(ss, "value expected");
+            return NULL;
+        }
+    default:
+        parser_error(ss, "value expected");
+        return NULL;
+    }
+    return NULL;
 }
 
 static void
@@ -1676,17 +1756,67 @@ cleanup:
 }
 
 static int
+handle_directive_set(ScannerState *ss, TypeContext *cntx, FILE *out_f)
+{
+    int retval = -1;
+    TypeInfo *name = NULL;
+    TypeInfo *value = NULL;
+
+    next_token(ss);
+    if (ss->token != TOK_IDENT) {
+        parser_error(ss, "identifier expected");
+        goto cleanup;
+    }
+    if (!(name = tc_get_ident(cntx, ss->raw))) {
+        parser_error(ss, "identifier expected");
+        goto cleanup;
+    }
+    next_token(ss);
+    if (!IS_OPER(ss, '=')) {
+        parser_error(ss, "'=' expected");
+        goto cleanup;
+    }
+    next_token(ss);
+    if (!(value = make_value_info(ss, cntx))) {
+        parser_error(ss, "value expected");
+        goto cleanup;
+    }
+
+    int i;
+    for (i = 0; i < ss->ps->settings.u; ++i) {
+        if (ss->ps->settings.v[i].name == name)
+            break;
+    }
+    if (i >= ss->ps->settings.u) {
+        if (ss->ps->settings.u >= ss->ps->settings.a) {
+            if (!(ss->ps->settings.a *= 2)) ss->ps->settings.a = 32;
+            XREALLOC(ss->ps->settings.v, ss->ps->settings.a);
+        }
+        ss->ps->settings.v[i].name = name;
+        ++ss->ps->settings.u;
+    }
+    ss->ps->settings.v[i].value = value;
+
+    retval = 0;
+
+cleanup:
+    return retval;
+}
+
+static int
 handle_directive(TypeContext *cntx, ProcessorState *ps, FILE *out_f, FILE *log_f, const unsigned char *str, int len, Position pos)
 {
     ScannerState *ss = init_scanner(ps, log_f, str, len, pos);
     int retval = -1;
 
-    next_token(ss); //dump_token(ss);
+    next_token(ss); dump_token(ss);
 
     if (ss->token != TOK_IDENT) {
         parser_error(ss, "directive expected");
     } else if (!strcmp(ss->value, "page")) {
         handle_directive_page(ss, cntx, out_f);
+    } else if (!strcmp(ss->value, "set")) {
+        handle_directive_set(ss, cntx, out_f);
     } else {
         parser_error(ss, "invalid directive '%s'", ss->value);
     }
@@ -1725,6 +1855,92 @@ handle_html_text(FILE *out_f, FILE *txt_f, FILE *log_f, const unsigned char *mem
 }
 
 static int
+handle_a_open(
+        FILE *log_f,
+        TypeContext *cntx,
+        ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f)
+{
+    HtmlElement *elem = ps->el_stack->el;
+    unsigned char buf[1024];
+
+    HtmlAttribute *at = html_element_find_attribute(elem, "ac"); // action code
+    if (at != NULL) {
+        TypeInfo *ac_prefix = processor_state_find_setting(ps, tc_get_ident(cntx, "ac_prefix"));
+        if (!ac_prefix) {
+            parser_error_2(ps, "'ac_prefix' global parameter is undefined");
+            return -1;
+        }
+        if (ac_prefix->kind != NODE_STRING) {
+            parser_error_2(ps, "'ac_prefix' global parameter must be of type 'STRING'");
+            return -1;
+        }
+        snprintf(buf, sizeof(buf), "%s%s", ac_prefix->s.str, at->value);
+        int len = strlen(buf);
+        for (int i = 0; i < len; ++i) {
+            if (buf[i] == '-') buf[i] = '_';
+            buf[i] = toupper(buf[i]);
+        }
+        fprintf(prg_f, "fputs(ns_aref(hbuf, sizeof(hbuf), phr, %s, 0), out_f);\n", buf);
+    }
+    return 0;
+}
+
+static int
+handle_a_close(
+        FILE *log_f,
+        TypeContext *cntx,
+        ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f,
+        unsigned char *mem,
+        int beg_i,
+        int end_i)
+{
+    fprintf(prg_f, "fputs(\"</a>\", out_f);\n");
+    return 0;
+}
+
+static int
+handle_submit_open(
+        FILE *log_f,
+        TypeContext *cntx,
+        ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f)
+{
+    HtmlElement *elem = ps->el_stack->el;
+    unsigned char buf[1024];
+
+    if (!elem->no_body) {
+        parser_error_2(ps, "<s:submit> element must not have a body");
+        return -1;
+    }
+
+    HtmlAttribute *at = html_element_find_attribute(elem, "ac"); // action code
+    if (at != NULL) {
+        TypeInfo *ac_prefix = processor_state_find_setting(ps, tc_get_ident(cntx, "ac_prefix"));
+        if (!ac_prefix) {
+            parser_error_2(ps, "'ac_prefix' global parameter is undefined");
+            return -1;
+        }
+        if (ac_prefix->kind != NODE_STRING) {
+            parser_error_2(ps, "'ac_prefix' global parameter must be of type 'STRING'");
+            return -1;
+        }
+        snprintf(buf, sizeof(buf), "%s%s", ac_prefix->s.str, at->value);
+        int len = strlen(buf);
+        for (int i = 0; i < len; ++i) {
+            if (buf[i] == '-') buf[i] = '_';
+            buf[i] = toupper(buf[i]);
+        }
+        fprintf(prg_f, "fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, %s, 0), out_f);\n", buf);
+    }
+    return 0;
+}
+
+static int
 handle_html_element_open(
         FILE *log_f,
         TypeContext *cntx,
@@ -1734,6 +1950,10 @@ handle_html_element_open(
 {
     if (!strcmp(ps->el_stack->el->name, "s:tr")) {
         fprintf(prg_f, "fputs(_(");
+    } else if (!strcmp(ps->el_stack->el->name, "s:a")) {
+        handle_a_open(log_f, cntx, ps, txt_f, prg_f);
+    } else if (!strcmp(ps->el_stack->el->name, "s:submit")) {
+        handle_submit_open(log_f, cntx, ps, txt_f, prg_f);
     } else {
         parser_error_2(ps, "unhandled element");
     }
@@ -1754,6 +1974,8 @@ handle_html_element_close(
     if (!strcmp(ps->el_stack->el->name, "s:tr")) {
         emit_str_literal(prg_f, mem + beg_i, end_i - beg_i);
         fprintf(prg_f, "), out_f);\n");
+    } else if (!strcmp(ps->el_stack->el->name, "s:a")) {
+        handle_a_close(log_f, cntx, ps, txt_f, prg_f, mem, beg_i, end_i);
     } else {
         parser_error_2(ps, "unhandled element");
     }
@@ -1879,6 +2101,12 @@ process_file(
                     ++mem_i;
                 }
                 html_i = mem_i;
+
+                if (el->no_body) {
+                    ps->el_stack = cur->up;
+                    html_element_free(cur->el);
+                    xfree(cur);
+                }
             }
         } else if (mem[mem_i] == '<' && mem[mem_i + 1] == '/' && mem[mem_i + 2] == 's' && mem[mem_i + 3] == ':') {
             int end_i = 0;
