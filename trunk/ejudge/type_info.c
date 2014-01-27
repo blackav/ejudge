@@ -1021,7 +1021,7 @@ tc_get_enum_const(TypeContext *cntx, TypeInfo *size, TypeInfo *name, TypeInfo *v
 }
 
 TypeInfo *
-_tc_get_field(TypeContext *cntx, TypeInfo *field_offset, TypeInfo *field_type, TypeInfo *field_name)
+tc_get_field(TypeContext *cntx, TypeInfo *field_offset, TypeInfo *field_type, TypeInfo *field_name)
 {
     TypeInfo *info[5] = { field_type->n.info[0], field_offset, field_type, field_name, NULL };
     return vt_insert(cntx, &cntx->fields, info, NODE_FIELD, generic_cmp_1, generic_create);

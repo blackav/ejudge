@@ -1114,7 +1114,7 @@ parse_struct_type_die(
             location_info = tc_get_u32(cntx, 0);
         }
 
-        info[idx++] = tc_get_field(cntx, field_type_info, field_name_info, location_info);
+        info[idx++] = tc_get_field(cntx, location_info, field_type_info, field_name_info);
 
         if ((r = s_dwarf_sibling(log_f, path, dbg, die2, &die2)) < 0) goto done;
     }

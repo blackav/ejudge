@@ -263,7 +263,7 @@ id_scope_cmp_1(const TypeInfo *p1, const void *p2)
     return 0;
 }
 
-static TypeInfo *
+/*static*/ TypeInfo *
 processor_state_find_in_top_scope(ProcessorState *ps, TypeInfo *id)
 {
     if (!ps->scope_stack) return NULL;
@@ -272,7 +272,7 @@ processor_state_find_in_top_scope(ProcessorState *ps, TypeInfo *id)
     return NULL;
 }
 
-static TypeInfo *
+/*static*/ TypeInfo *
 processor_state_find_in_scopes(ProcessorState *ps, TypeInfo *id)
 {
     IdScope *cur = ps->scope_stack;
@@ -304,6 +304,9 @@ id_scope_create(struct TypeContext *cntx, int kind, const void *pv)
 static void
 processor_state_add_to_scope(ProcessorState *ps, TypeInfo *def)
 {
+    fprintf(stderr, "add_to_scope: ");
+    tc_print(stderr, def);
+    fprintf(stderr, "\n");
     vt_insert(NULL, &ps->scope_stack->ids, def, 0, id_scope_cmp_2, id_scope_create);
 }
 
@@ -363,8 +366,47 @@ pos_str_2(unsigned char *buf, size_t size, const ProcessorState *ps, const Posit
 
 }
 
+// pre-defined C keywords
+static TypeInfo *kwd_auto = NULL;
+static TypeInfo *kwd_break = NULL;
+static TypeInfo *kwd_case = NULL;
+static TypeInfo *kwd_char = NULL;
+static TypeInfo *kwd_const = NULL;
+static TypeInfo *kwd_continue = NULL;
+static TypeInfo *kwd_default = NULL;
+static TypeInfo *kwd_do = NULL;
+static TypeInfo *kwd_double = NULL;
+static TypeInfo *kwd_else = NULL;
+static TypeInfo *kwd_enum = NULL;
+static TypeInfo *kwd_extern = NULL;
+static TypeInfo *kwd_float = NULL;
+static TypeInfo *kwd_for = NULL;
+static TypeInfo *kwd_goto = NULL;
+static TypeInfo *kwd_if = NULL;
+static TypeInfo *kwd_inline = NULL;
+static TypeInfo *kwd_int = NULL;
+static TypeInfo *kwd_long = NULL;
+static TypeInfo *kwd_register = NULL;
+static TypeInfo *kwd_restrict = NULL;
+static TypeInfo *kwd_return = NULL;
+static TypeInfo *kwd_short = NULL;
+static TypeInfo *kwd_signed = NULL;
+static TypeInfo *kwd_sizeof = NULL;
+static TypeInfo *kwd_static = NULL;
+static TypeInfo *kwd_struct = NULL;
+static TypeInfo *kwd_switch = NULL;
+static TypeInfo *kwd_typedef = NULL;
+static TypeInfo *kwd_union = NULL;
+static TypeInfo *kwd_unsigned = NULL;
+static TypeInfo *kwd_void = NULL;
+static TypeInfo *kwd_volatile = NULL;
+static TypeInfo *kwd_while = NULL;
+static TypeInfo *kwd__Bool = NULL;
+static TypeInfo *kwd__Complex = NULL;
+static TypeInfo *kwd__Imaginary = NULL;
+
 static ScannerState *
-init_scanner(ProcessorState *ps, FILE *log_f, const unsigned char *buf, int len, Position pos)
+init_scanner(ProcessorState *ps, FILE *log_f, const unsigned char *buf, int len, Position pos, TypeContext *cntx)
 {
     ScannerState *ss = NULL;
     XCALLOC(ss, 1);
@@ -373,6 +415,46 @@ init_scanner(ProcessorState *ps, FILE *log_f, const unsigned char *buf, int len,
     ss->buf = buf;
     ss->len = len;
     ss->pos = pos;
+
+    if (!kwd_auto) {
+        kwd_auto = tc_get_ident(cntx, "auto");
+        kwd_break = tc_get_ident(cntx, "break");
+        kwd_case = tc_get_ident(cntx, "case");
+        kwd_char = tc_get_ident(cntx, "char");
+        kwd_const = tc_get_ident(cntx, "const");
+        kwd_continue = tc_get_ident(cntx, "continue");
+        kwd_default = tc_get_ident(cntx, "default");
+        kwd_do = tc_get_ident(cntx, "do");
+        kwd_double = tc_get_ident(cntx, "double");
+        kwd_else = tc_get_ident(cntx, "else");
+        kwd_enum = tc_get_ident(cntx, "enum");
+        kwd_extern = tc_get_ident(cntx, "extern");
+        kwd_float = tc_get_ident(cntx, "float");
+        kwd_for = tc_get_ident(cntx, "for");
+        kwd_goto = tc_get_ident(cntx, "goto");
+        kwd_if = tc_get_ident(cntx, "if");
+        kwd_inline = tc_get_ident(cntx, "inline");
+        kwd_int = tc_get_ident(cntx, "int");
+        kwd_long = tc_get_ident(cntx, "long");
+        kwd_register = tc_get_ident(cntx, "register");
+        kwd_restrict = tc_get_ident(cntx, "restrict");
+        kwd_return = tc_get_ident(cntx, "return");
+        kwd_short = tc_get_ident(cntx, "short");
+        kwd_signed = tc_get_ident(cntx, "signed");
+        kwd_sizeof = tc_get_ident(cntx, "sizeof");
+        kwd_static = tc_get_ident(cntx, "static");
+        kwd_struct = tc_get_ident(cntx, "struct");
+        kwd_switch = tc_get_ident(cntx, "switch");
+        kwd_typedef = tc_get_ident(cntx, "typedef");
+        kwd_union = tc_get_ident(cntx, "union");
+        kwd_unsigned = tc_get_ident(cntx, "unsigned");
+        kwd_void = tc_get_ident(cntx, "void");
+        kwd_volatile = tc_get_ident(cntx, "volatile");
+        kwd_while = tc_get_ident(cntx, "while");
+        kwd__Bool = tc_get_ident(cntx, "_Bool");
+        kwd__Complex = tc_get_ident(cntx, "_Complex");
+        kwd__Imaginary = tc_get_ident(cntx, "_Imaginary");
+    }
     return ss;
 }
 
@@ -1237,31 +1319,32 @@ parse_declspec(
     }
     while (1) {
         if (ss->token != TOK_IDENT) break;
-        if (!strcmp(ss->raw, "auto")) {
+        TypeInfo *kwd = tc_get_ident(cntx, ss->raw);
+        if (kwd == kwd_auto) {
             ++auto_count;
             next_token(ss);
-        } else if (!strcmp(ss->raw, "const")) {
+        } else if (kwd == kwd_const) {
             ++const_count;
             next_token(ss);
-        } else if (!strcmp(ss->raw, "extern")) {
+        } else if (kwd == kwd_extern) {
             ++extern_count;
             next_token(ss);
-        } else if (!strcmp(ss->raw, "register")) {
+        } else if (kwd == kwd_register) {
             ++register_count;
             next_token(ss);
-        } else if (!strcmp(ss->raw, "restrict")) {
+        } else if (kwd == kwd_restrict) {
             ++restrict_count;
             next_token(ss);
-        } else if (!strcmp(ss->raw, "static")) {
+        } else if (kwd == kwd_static) {
             ++static_count;
             next_token(ss);
-        } else if (!strcmp(ss->raw, "typedef")) {
+        } else if (kwd == kwd_typedef) {
             ++typedef_count;
             next_token(ss);
-        } else if (!strcmp(ss->raw, "volatile")) {
+        } else if (kwd == kwd_volatile) {
             ++volatile_count;
             next_token(ss);
-        } else if (!strcmp(ss->raw, "enum")) {
+        } else if (kwd == kwd_enum) {
             if (type_info || has_base_type) goto invalid_declspec;
             next_token(ss);
             if (ss->token != TOK_IDENT) {
@@ -1274,7 +1357,7 @@ parse_declspec(
                 goto cleanup;
             }
             next_token(ss);
-        } else if (!strcmp(ss->raw, "struct")) {
+        } else if (kwd == kwd_struct) {
             if (type_info || has_base_type) goto invalid_declspec;
             next_token(ss);
             if (ss->token != TOK_IDENT) {
@@ -1287,7 +1370,7 @@ parse_declspec(
                 goto cleanup;
             }
             next_token(ss);
-        } else if (!strcmp(ss->raw, "union")) {
+        } else if (kwd == kwd_union) {
             if (type_info || has_base_type) goto invalid_declspec;
             next_token(ss);
             if (ss->token != TOK_IDENT) {
@@ -1300,47 +1383,47 @@ parse_declspec(
                 goto cleanup;
             }
             next_token(ss);
-        } else if (!strcmp(ss->raw, "signed")) {
+        } else if (kwd == kwd_signed) {
             if (type_info) goto invalid_declspec;
             ++signed_count;
             has_base_type = 1;
             next_token(ss);
-        } else if (!strcmp(ss->raw, "unsigned")) {
+        } else if (kwd == kwd_unsigned) {
             if (type_info) goto invalid_declspec;
             ++unsigned_count;
             has_base_type = 1;
             next_token(ss);
-        } else if (!strcmp(ss->raw, "short")) {
+        } else if (kwd == kwd_short) {
             if (type_info) goto invalid_declspec;
             ++short_count;
             has_base_type = 1;
             next_token(ss);
-        } else if (!strcmp(ss->raw, "long")) {
+        } else if (kwd == kwd_long) {
             if (type_info) goto invalid_declspec;
             ++long_count;
             has_base_type = 1;
             next_token(ss);
-        } else if (!strcmp(ss->raw, "_Bool")) {
+        } else if (kwd == kwd__Bool) {
             if (type_info) goto invalid_declspec;
             ++bool_count;
             has_base_type = 1;
             next_token(ss);
-        } else if (!strcmp(ss->raw, "char")) {
+        } else if (kwd == kwd_char) {
             if (type_info) goto invalid_declspec;
             ++char_count;
             has_base_type = 1;
             next_token(ss);
-        } else if (!strcmp(ss->raw, "int")) {
+        } else if (kwd == kwd_int) {
             if (type_info) goto invalid_declspec;
             ++int_count;
             has_base_type = 1;
             next_token(ss);
-        } else if (!strcmp(ss->raw, "float")) {
+        } else if (kwd == kwd_float) {
             if (type_info) goto invalid_declspec;
             ++float_count;
             has_base_type = 1;
             next_token(ss);
-        } else if (!strcmp(ss->raw, "double")) {
+        } else if (kwd == kwd_double) {
             if (type_info) goto invalid_declspec;
             ++double_count;
             has_base_type = 1;
@@ -1715,24 +1798,21 @@ parse_declr(
     return 0;
 }
 
-// if anon_allowed flag is set, param is parsed as type, param name is ignored
 static int
-parse_param(
+parse_full_declr(
         ScannerState *ss,
         TypeContext *cntx,
-        int quiet_mode, // if 1, be quiet on errors
-        int param_mode, // if 1, NODE_PARAM is created, if 0, NODE_FORMAL_PARAM is created
-        TypeInfo **p_info)
-{
-    TypeInfo *ds = NULL;
-    TypeInfo *id = NULL;
-    int r = parse_declspec(ss, cntx, quiet_mode, &ds);
-    if (r < 0) return -1;
+        int quiet_mode,
+        int anon_allowed,
+        TypeInfo *ds,
+        TypeInfo **p_type,
+        TypeInfo **p_id)
 
+{
     DeclrHelper *head = NULL;
     XCALLOC(head, 1);
 
-    r = parse_declr(ss, cntx, quiet_mode, 1, &head, &id);
+    int r = parse_declr(ss, cntx, quiet_mode, anon_allowed, &head, p_id);
     if (r < 0) {
         free_declr_helper(head);
         return -1;
@@ -1750,6 +1830,27 @@ parse_param(
         }
     }
 
+    *p_type = ds;
+    free_declr_helper(head);
+    return 0;
+}
+
+// if anon_allowed flag is set, param is parsed as type, param name is ignored
+static int
+parse_param(
+        ScannerState *ss,
+        TypeContext *cntx,
+        int quiet_mode, // if 1, be quiet on errors
+        int param_mode, // if 1, NODE_PARAM is created, if 0, NODE_FORMAL_PARAM is created
+        TypeInfo **p_info)
+{
+    TypeInfo *ds = NULL;
+    TypeInfo *id = NULL;
+    int r = parse_declspec(ss, cntx, quiet_mode, &ds);
+    if (r < 0) return -1;
+
+    if (parse_full_declr(ss, cntx, quiet_mode, 1, ds, &ds, &id) < 0) return -1;
+
     if (param_mode) {
         if (!id) id = tc_get_ident(cntx, "");
         ds = tc_get_param(cntx, tc_get_i32(cntx, 0), ds, id);
@@ -1758,7 +1859,6 @@ parse_param(
     }
 
     *p_info = ds;
-    free_declr_helper(head);
     return 0;
 }
 
@@ -1791,6 +1891,117 @@ parse_params(ScannerState *ss, TypeContext *cntx, TypeInfo **info, int size, int
 }
 
 static int
+parse_init_declr(
+        ScannerState *ss,
+        TypeContext *cntx,
+        int quiet_mode,
+        int anon_allowed,
+        TypeInfo *ds,
+        TypeInfo **p_type,
+        TypeInfo **p_id)
+{
+    int r = parse_full_declr(ss, cntx, quiet_mode, anon_allowed, ds, p_type, p_id);
+    if (r < 0) return -1;
+    if (IS_OPER(ss, '=')) {
+        // ignore initializer
+        next_token(ss);
+        int depth = 0;
+        while (1) {
+            if (ss->token == TOK_EOF) {
+                parser_error(ss, "unexpected end of text");
+                break;
+            }
+            if ((IS_OPER(ss, ',') || IS_OPER(ss, ';')) && !depth) break;
+            if (IS_OPER(ss, '[')) {
+                ++depth;
+                next_token(ss);
+            } else if (IS_OPER(ss, '{')) {
+                ++depth;
+                next_token(ss);
+            } else if (IS_OPER(ss, '(')) {
+                ++depth;
+                next_token(ss);
+            } else if (IS_OPER(ss, ')')) {
+                --depth;
+                next_token(ss);
+            } else if (IS_OPER(ss, '}')) {
+                --depth;
+                next_token(ss);
+            } else if (IS_OPER(ss, ']')) {
+                --depth;
+                next_token(ss);
+                if (!depth) break;
+            } else {
+                next_token(ss);
+            }
+        }
+    }
+    return 0;
+}
+
+/*static*/ int
+is_vardecl_start(ScannerState *ss, TypeContext *cntx)
+{
+    if (ss->token != TOK_IDENT) return 0;
+    TypeInfo *id = tc_get_ident(cntx, ss->raw);
+    // typedef id?
+    if (tc_find_typedef_type(cntx, id)) return 1;
+
+    return id == kwd_auto
+        || id == kwd_const
+        || id == kwd_extern
+        || id == kwd_register
+        || id == kwd_restrict
+        || id == kwd_static
+        || id == kwd_typedef
+        || id == kwd_volatile
+        || id == kwd_enum
+        || id == kwd_struct
+        || id == kwd_union
+        || id == kwd_signed
+        || id == kwd_unsigned
+        || id == kwd_short
+        || id == kwd_long
+        || id == kwd__Bool
+        || id == kwd_char
+        || id == kwd_int
+        || id == kwd_float
+        || id == kwd_double;
+}
+
+/*static*/ int
+parse_vardecl(
+        ScannerState *ss,
+        TypeContext *cntx,
+        int quiet_mode)
+{
+    TypeInfo *ds = NULL;
+    TypeInfo *id = NULL;
+    TypeInfo *vartype = NULL;
+    int r = parse_declspec(ss, cntx, quiet_mode, &ds);
+    if (r < 0) return -1;
+
+    r = parse_init_declr(ss, cntx, quiet_mode, 0, ds, &vartype, &id);
+    if (r < 0) return -1;
+    processor_state_add_to_scope(ss->ps, tc_get_local_var(cntx, tc_get_i32(cntx, 0), vartype, id, tc_get_i32(cntx, 0)));
+    while (IS_OPER(ss, ',')) {
+        next_token(ss);
+        vartype = NULL;
+        id = NULL;
+        r = parse_init_declr(ss, cntx, quiet_mode, 0, ds, &vartype, &id);
+        if (r < 0) return -1;
+        processor_state_add_to_scope(ss->ps, tc_get_local_var(cntx, tc_get_i32(cntx, 0), vartype, id, tc_get_i32(cntx, 0)));
+    }
+    if (!IS_OPER(ss, ';')) {
+        parser_error(ss, "';' expected");
+        return -1;
+    }
+
+    next_token(ss);
+    return 0;
+}
+
+static int
 handle_directive_page(ScannerState *ss, TypeContext *cntx, FILE *out_f)
 {
     int retval = -1;
@@ -1817,12 +2028,15 @@ handle_directive_page(ScannerState *ss, TypeContext *cntx, FILE *out_f)
     }
 
     TypeInfo *f = tc_get_function(cntx, info);
-    /*
-    fprintf(stderr, "Function: ");
-    tc_print(stderr, f);
-    fprintf(stderr, "\n");
-    */
-    (void) f;
+    TypeInfo *empty_id = tc_get_ident(cntx, "");
+    processor_state_push_scope(ss->ps);
+    for (int i = 3; i < f->n.count; ++i) {
+        TypeInfo *param = f->n.info[i];
+        if (param->kind == NODE_PARAM && param->n.info[3] != empty_id) {
+            processor_state_add_to_scope(ss->ps, param);
+        }
+    }
+    processor_state_push_scope(ss->ps);
 
     if (ss->token != TOK_EOF) {
         parser_error(ss, "garbage after directive");
@@ -1889,7 +2103,7 @@ cleanup:
 static int
 handle_directive(TypeContext *cntx, ProcessorState *ps, FILE *out_f, FILE *log_f, const unsigned char *str, int len, Position pos)
 {
-    ScannerState *ss = init_scanner(ps, log_f, str, len, pos);
+    ScannerState *ss = init_scanner(ps, log_f, str, len, pos, cntx);
     int retval = -1;
 
     next_token(ss); dump_token(ss);
@@ -1902,6 +2116,47 @@ handle_directive(TypeContext *cntx, ProcessorState *ps, FILE *out_f, FILE *log_f
         handle_directive_set(ss, cntx, out_f);
     } else {
         parser_error(ss, "invalid directive '%s'", ss->value);
+    }
+
+    ss = destroy_scanner(ss);
+    return retval;
+}
+
+static int
+handle_c_code(
+        TypeContext *cntx,
+        ProcessorState *ps,
+        FILE *out_f,
+        FILE *log_f,
+        const unsigned char *str,
+        int len,
+        Position pos)
+{
+    ScannerState *ss = init_scanner(ps, log_f, str, len, pos, cntx);
+    int retval = -1;
+    next_token(ss);
+
+    while (ss->token != TOK_EOF) {
+        if (is_vardecl_start(ss, cntx)) {
+            parse_vardecl(ss, cntx, 0);
+            continue;
+        }
+        if (IS_OPER(ss, '{')) {
+            processor_state_push_scope(ps);
+            next_token(ss);
+            continue;
+        }
+        if (IS_OPER(ss, '}')) {
+            processor_state_pop_scope(ps);
+            next_token(ss);
+            continue;
+        }
+        if (IS_OPER(ss, ';')) {
+            next_token(ss);
+            continue;
+        }
+        while (ss->token != TOK_EOF && !IS_OPER(ss, ';') && !IS_OPER(ss, '{') && !IS_OPER(ss, '}'))
+            next_token(ss);
     }
 
     ss = destroy_scanner(ss);
@@ -2156,6 +2411,7 @@ process_file(
                     // plain <% %>
                     fprintf(prg_f, "\n#line %d \"%s\"\n", start_pos.line, ps->filenames[start_pos.filename_idx]);
                     fprintf(prg_f, "%s\n", mem + html_i);
+                    handle_c_code(cntx, ps, prg_f, log_f, mem + html_i, end_i - html_i, start_pos);
                 }
             }
             html_i = mem_i;
@@ -2237,7 +2493,11 @@ process_file(
     fwrite(prg_t, 1, prg_z, out_f);
     free(prg_t); prg_t = NULL; prg_z = 0;
 
+    // FIXME: put error handling here...
+    fprintf(out_f, "  return 0;\n");
     fprintf(out_f, "}\n");
+    processor_state_pop_scope(ps); // local variables scope
+    processor_state_pop_scope(ps); // parameter scope
 
 cleanup:
     if (in_f && in_f != stdin) fclose(in_f);
