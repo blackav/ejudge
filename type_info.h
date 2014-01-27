@@ -203,6 +203,7 @@ TypeInfo *tc_find_enum_type(TypeContext *cntx, TypeInfo *name);
 const unsigned char *tc_get_kind_str(int kind);
 
 void tc_print(FILE *out_f, TypeInfo *ti);
+void tc_print_2(FILE *out_f, TypeInfo *ti, int depth);
 void tc_dump_context(FILE *out_f, TypeContext *cntx);
 
 void type_info_set_info(TypeInfo *ti, TypeInfo **info);

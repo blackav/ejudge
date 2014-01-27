@@ -1275,7 +1275,7 @@ struct PrintStack
 };
 
 void
-tc_print_rec(FILE *out_f, TypeInfo *ti, struct PrintStack *up)
+tc_print_rec(FILE *out_f, TypeInfo *ti, struct PrintStack *up, int depth)
 {
     if (ti == NULL) {
         fprintf(out_f, "nil");
@@ -1339,7 +1339,11 @@ tc_print_rec(FILE *out_f, TypeInfo *ti, struct PrintStack *up)
         fprintf(out_f, "%s", tc_get_kind_str(ti->kind));
         for (int i = 0; i < ti->n.count; ++i) {
             fprintf(out_f, " ");
-            tc_print_rec(out_f, ti->n.info[i], &cur);
+            if (depth > 0) {
+                tc_print_rec(out_f, ti->n.info[i], &cur, depth - 1);
+            } else {
+                fprintf(out_f, "%016llx", (unsigned long long) (size_t) ti->n.info[i]);
+            }
         }
         fprintf(out_f, ")");
         break;
@@ -1349,7 +1353,13 @@ tc_print_rec(FILE *out_f, TypeInfo *ti, struct PrintStack *up)
 void
 tc_print(FILE *out_f, TypeInfo *ti)
 {
-    tc_print_rec(out_f, ti, NULL);
+    tc_print_rec(out_f, ti, NULL, INT_MAX);
+}
+
+void
+tc_print_2(FILE *out_f, TypeInfo *ti, int depth)
+{
+    tc_print_rec(out_f, ti, NULL, depth);
 }
 
 static const unsigned char * const node_names[] =
