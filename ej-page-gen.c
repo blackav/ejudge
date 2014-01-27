@@ -35,6 +35,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
+#include <stddef.h>
 
 static unsigned char *progname = NULL;
 static void
@@ -168,6 +169,12 @@ typedef struct HtmlElementStack
     HtmlElement *el;
 } HtmlElementStack;
 
+typedef struct IdScope
+{
+    struct IdScope *up;
+    ValueTree ids;
+} IdScope;
+
 typedef struct ProcessorState
 {
     unsigned char **filenames;
@@ -179,6 +186,7 @@ typedef struct ProcessorState
     FILE *log_f;
     HtmlElementStack *el_stack;
     GlobalSettingArray settings;
+    IdScope *scope_stack;
 } ProcessorState;
 
 static ProcessorState *
@@ -213,8 +221,7 @@ processor_state_init_file(ProcessorState *ps, const unsigned char *filename)
     ps->pos.column = 0;
 }
 
-static
-TypeInfo *
+static TypeInfo *
 processor_state_find_setting(ProcessorState *ps, TypeInfo *name)
 {
     for (int i = 0; i < ps->settings.u; ++i) {
@@ -222,6 +229,82 @@ processor_state_find_setting(ProcessorState *ps, TypeInfo *name)
             return ps->settings.v[i].value;
     }
     return NULL;
+}
+
+static IdScope *
+processor_state_push_scope(ProcessorState *ps)
+{
+    IdScope *cur = NULL;
+    XCALLOC(cur, 1);
+    cur->up = ps->scope_stack;
+    ps->scope_stack = cur;
+    return cur;
+}
+
+static void
+processor_state_pop_scope(ProcessorState *ps)
+{
+    IdScope *cur = ps->scope_stack;
+    if (cur) {
+        ps->scope_stack = cur->up;
+        vt_free_2(&cur->ids);
+        memset(cur, 0, sizeof(*cur));
+        xfree(cur);
+    }
+}
+
+static int
+id_scope_cmp_1(const TypeInfo *p1, const void *p2)
+{
+    const TypeInfo *id1 = tc_get_name_node(p1);
+    const TypeInfo *id2 = (const TypeInfo*) p2;
+    if ((ptrdiff_t) id1 < (ptrdiff_t) id2) return -1;
+    if ((ptrdiff_t) id1 > (ptrdiff_t) id2) return 1;
+    return 0;
+}
+
+static TypeInfo *
+processor_state_find_in_top_scope(ProcessorState *ps, TypeInfo *id)
+{
+    if (!ps->scope_stack) return NULL;
+    ValueTreeNode *node = vt_find(&ps->scope_stack->ids, id, id_scope_cmp_1);
+    if (node) return node->value;
+    return NULL;
+}
+
+static TypeInfo *
+processor_state_find_in_scopes(ProcessorState *ps, TypeInfo *id)
+{
+    IdScope *cur = ps->scope_stack;
+    while (cur) {
+        ValueTreeNode *node = vt_find(&cur->ids, id, id_scope_cmp_1);
+        if (node) return node->value;
+        cur = cur->up;
+    }
+    return NULL;
+}
+
+static int
+id_scope_cmp_2(const TypeInfo *p1, const void *p2)
+{
+    const TypeInfo *id1 = tc_get_name_node(p1);
+    const TypeInfo *id2 = tc_get_name_node((const TypeInfo*) p2);
+    if ((ptrdiff_t) id1 < (ptrdiff_t) id2) return -1;
+    if ((ptrdiff_t) id1 > (ptrdiff_t) id2) return 1;
+    abort();
+    return 0;
+}
+
+static TypeInfo *
+id_scope_create(struct TypeContext *cntx, int kind, const void *pv)
+{
+    return (TypeInfo *) pv;
+}
+
+static void
+processor_state_add_to_scope(ProcessorState *ps, TypeInfo *def)
+{
+    vt_insert(NULL, &ps->scope_stack->ids, def, 0, id_scope_cmp_2, id_scope_create);
 }
 
 typedef struct ScannerState
