@@ -305,7 +305,7 @@ static void
 processor_state_add_to_scope(ProcessorState *ps, TypeInfo *def)
 {
     fprintf(stderr, "add_to_scope: ");
-    tc_print(stderr, def);
+    tc_print_2(stderr, def, 2);
     fprintf(stderr, "\n");
     vt_insert(NULL, &ps->scope_stack->ids, def, 0, id_scope_cmp_2, id_scope_create);
 }
@@ -687,7 +687,10 @@ next_string(ScannerState *ss)
     while (1) {
         if (cur >= ss->len) break;
         c = ss->buf[cur];
-        if (c == t) break;
+        if (c == t) {
+            ++cur;
+            break;
+        }
         if (c < ' ' || c == 0x7f) {
             *p++ = ' '; // do not pass through control characters?
             pos_next(&ss->pos, c);
@@ -824,6 +827,7 @@ next_int_number(ScannerState *ss, int endpos)
     ss->raw = xmemdup(ss->buf + ss->idx, ss->raw_len);
     memset(&ss->cv, 0, sizeof(ss->cv));
     pos_next_n(&ss->pos, ss->raw_len);
+    ss->idx = endpos;
 
     int u_count = 0, l_count = 0;
     const unsigned char *p = ss->raw + ss->raw_len - 1;
@@ -895,6 +899,7 @@ next_float_number(ScannerState *ss, int endpos)
     ss->raw = xmemdup(ss->buf + ss->idx, ss->raw_len);
     memset(&ss->cv, 0, sizeof(ss->cv));
     pos_next_n(&ss->pos, ss->raw_len);
+    ss->idx = endpos;
 
     errno = 0;
     char *eptr = NULL;
@@ -1280,7 +1285,9 @@ dump_token(ScannerState *ss)
     fprintf(stderr, "%s: %d: <<%s>>\n", pos_str_2(buf, sizeof(buf), ss->ps, &ss->token_pos), ss->token, ss->raw);
 }
 
-#define IS_OPER(ss, c) ((ss)->token == TOK_OPER && (ss)->raw_len == 1 && ss->raw[0] == (c))
+#define IS_OPER(ss, c) ((ss)->token == TOK_OPER && (ss)->raw_len == 1 && (ss)->raw[0] == (c))
+#define IS_OPER_2(ss, c1, c2) ((ss)->token == TOK_OPER && (ss)->raw_len == 2 && (ss)->raw[0] == (c1) && (ss)->raw[1] == (c2))
+#define IS_OPER_3(ss, c1, c2, c3) ((ss)->token == TOK_OPER && (ss)->raw_len == 3 && (ss)->raw[0] == (c1) && (ss)->raw[1] == (c2) && (ss)->raw[2] == (c3))
 
 static int
 parse_declspec(
@@ -2001,6 +2008,280 @@ parse_vardecl(
     return 0;
 }
 
+static int parse_expression(ScannerState *ss, TypeContext *cntx, TypeInfo **p_info);
+
+// & * + - ~ ! ++ -- sizeof
+
+// (TYPE) expr
+static int
+parse_expression_13(ScannerState *ss, TypeContext *cntx, TypeInfo **p_info)
+{
+    if (IS_OPER(ss, '(') && try_declr(ss, cntx) >= 0) {
+        // cast expression
+    }
+    // FIXME: complete
+    return 0;
+}
+
+// mul
+static int
+parse_expression_12(ScannerState *ss, TypeContext *cntx, TypeInfo **p_info)
+{
+    TypeInfo *info0 = NULL, *info1 = NULL;
+    int r = parse_expression_13(ss, cntx, &info0);
+    if (r < 0) return r;
+    while (IS_OPER(ss, '*') || IS_OPER(ss, '/') || IS_OPER(ss, '%')) {
+        next_token(ss);
+        r = parse_expression_13(ss, cntx, &info1);
+        if (r < 0) return r;
+        // FIXME: balance
+    }
+    if (p_info) *p_info = info0;
+    return 0;
+}
+
+// add
+static int
+parse_expression_11(ScannerState *ss, TypeContext *cntx, TypeInfo **p_info)
+{
+    TypeInfo *info0 = NULL, *info1 = NULL;
+    int r = parse_expression_12(ss, cntx, &info0);
+    if (r < 0) return r;
+    while (IS_OPER(ss, '+') || IS_OPER(ss, '-')) {
+        next_token(ss);
+        r = parse_expression_12(ss, cntx, &info1);
+        if (r < 0) return r;
+        // FIXME: balance
+    }
+    if (p_info) *p_info = info0;
+    return 0;
+}
+
+// shift
+static int
+parse_expression_10(ScannerState *ss, TypeContext *cntx, TypeInfo **p_info)
+{
+    TypeInfo *info0 = NULL, *info1 = NULL;
+    int r = parse_expression_11(ss, cntx, &info0);
+    if (r < 0) return r;
+    while (IS_OPER_2(ss, '<', '<')
+           || IS_OPER_2(ss, '>', '>')) {
+        next_token(ss);
+        r = parse_expression_11(ss, cntx, &info1);
+        if (r < 0) return r;
+        // FIXME: balance
+    }
+    if (p_info) *p_info = info0;
+    return 0;
+}
+
+// relation
+static int
+parse_expression_9(ScannerState *ss, TypeContext *cntx, TypeInfo **p_info)
+{
+    TypeInfo *info0 = NULL, *info1 = NULL;
+    int r = parse_expression_10(ss, cntx, &info0);
+    if (r < 0) return r;
+    while (IS_OPER_2(ss, '<', '=')
+           || IS_OPER_2(ss, '>', '=')
+           || IS_OPER(ss, '<')
+           || IS_OPER(ss, '>')) {
+        next_token(ss);
+        r = parse_expression_10(ss, cntx, &info1);
+        if (r < 0) return r;
+        // FIXME: balance
+    }
+    if (p_info) *p_info = info0;
+    return 0;
+}
+
+// equality
+static int
+parse_expression_8(ScannerState *ss, TypeContext *cntx, TypeInfo **p_info)
+{
+    TypeInfo *info0 = NULL, *info1 = NULL;
+    int r = parse_expression_9(ss, cntx, &info0);
+    if (r < 0) return r;
+    while (IS_OPER_2(ss, '=', '=') || IS_OPER_2(ss, '!', '=')) {
+        next_token(ss);
+        r = parse_expression_9(ss, cntx, &info1);
+        if (r < 0) return r;
+        // FIXME: balance
+    }
+    if (p_info) *p_info = info0;
+    return 0;
+}
+
+// and
+static int
+parse_expression_7(ScannerState *ss, TypeContext *cntx, TypeInfo **p_info)
+{
+    TypeInfo *info0 = NULL, *info1 = NULL;
+    int r = parse_expression_8(ss, cntx, &info0);
+    if (r < 0) return r;
+    while (IS_OPER(ss, '&')) {
+        next_token(ss);
+        r = parse_expression_8(ss, cntx, &info1);
+        if (r < 0) return r;
+        // FIXME: balance
+    }
+    if (p_info) *p_info = info0;
+    return 0;
+}
+
+// xor
+static int
+parse_expression_6(ScannerState *ss, TypeContext *cntx, TypeInfo **p_info)
+{
+    TypeInfo *info0 = NULL, *info1 = NULL;
+    int r = parse_expression_7(ss, cntx, &info0);
+    if (r < 0) return r;
+    while (IS_OPER(ss, '^')) {
+        next_token(ss);
+        r = parse_expression_7(ss, cntx, &info1);
+        if (r < 0) return r;
+        // FIXME: balance
+    }
+    if (p_info) *p_info = info0;
+    return 0;
+}
+
+// or
+static int
+parse_expression_5(ScannerState *ss, TypeContext *cntx, TypeInfo **p_info)
+{
+    TypeInfo *info0 = NULL, *info1 = NULL;
+    int r = parse_expression_6(ss, cntx, &info0);
+    if (r < 0) return r;
+    while (IS_OPER(ss, '|')) {
+        next_token(ss);
+        r = parse_expression_6(ss, cntx, &info1);
+        if (r < 0) return r;
+        // FIXME: balance
+    }
+    if (p_info) *p_info = info0;
+    return 0;
+}
+
+// logical and
+static int
+parse_expression_4(ScannerState *ss, TypeContext *cntx, TypeInfo **p_info)
+{
+    TypeInfo *info0 = NULL;
+    int r = parse_expression_5(ss, cntx, &info0);
+    if (r < 0) return r;
+    while (IS_OPER_2(ss, '&', '&')) {
+        next_token(ss);
+        info0 = tc_get_i1_type(cntx);
+        r = parse_expression_5(ss, cntx, NULL);
+        if (r < 0) return r;
+    }
+    if (p_info) *p_info = info0;
+    return 0;
+}
+
+// logical or
+static int
+parse_expression_3(ScannerState *ss, TypeContext *cntx, TypeInfo **p_info)
+{
+    TypeInfo *info0 = NULL;
+    int r = parse_expression_4(ss, cntx, &info0);
+    if (r < 0) return r;
+    while (IS_OPER_2(ss, '|', '|')) {
+        next_token(ss);
+        info0 = tc_get_i1_type(cntx);
+        r = parse_expression_4(ss, cntx, NULL);
+        if (r < 0) return r;
+    }
+    if (p_info) *p_info = info0;
+    return 0;
+}
+
+// conditional expression
+static int
+parse_expression_2(ScannerState *ss, TypeContext *cntx, TypeInfo **p_info)
+{
+    TypeInfo *info0 = NULL;
+    int r = parse_expression_3(ss, cntx, &info0);
+    if (r < 0) return r;
+    if (IS_OPER(ss, '?')) {
+        next_token(ss);
+        info0 = NULL;
+        r = parse_expression(ss, cntx, &info0);
+        if (r < 0) return r;
+        if (!IS_OPER(ss, ':')) {
+            parser_error(ss, "':' expected");
+            return -1;
+        }
+        next_token(ss);
+        r = parse_expression_2(ss, cntx, NULL);
+        if (r < 0) return r;
+    }
+    if (p_info) *p_info = info0;
+    return 0;
+}
+
+// assignment expression
+static int
+parse_expression_1(ScannerState *ss, TypeContext *cntx, TypeInfo **p_info)
+{
+    TypeInfo *lhs_info = NULL;
+    int r = parse_expression_2(ss, cntx, &lhs_info);
+    if (r < 0) return r;
+    if (IS_OPER(ss, '=') 
+        || IS_OPER_2(ss, '*', '=')
+        || IS_OPER_2(ss, '/', '=')
+        || IS_OPER_2(ss, '%', '=')
+        || IS_OPER_2(ss, '+', '=')
+        || IS_OPER_2(ss, '-', '=')
+        || IS_OPER_2(ss, '&', '=')
+        || IS_OPER_2(ss, '^', '=')
+        || IS_OPER_2(ss, '|', '=')
+        || IS_OPER_3(ss, '>', '>', '=')
+        || IS_OPER_3(ss, '<', '<', '=')) {
+        next_token(ss);
+        r = parse_expression_2(ss, cntx, NULL);
+        if (r < 0) return r;
+    }
+    if (p_info) *p_info = lhs_info;
+    return 0;
+}
+
+// comma expression
+static int
+parse_expression(ScannerState *ss, TypeContext *cntx, TypeInfo **p_info)
+{
+    int r = parse_expression_1(ss, cntx, p_info);
+    if (r < 0) return r;
+    while (IS_OPER(ss, ',')) {
+        next_token(ss);
+        r = parse_expression_1(ss, cntx, p_info);
+        if (r < 0) return r;
+    }
+    return 0;
+}
+
+/*static*/ int
+parse_c_expression(ProcessorState *ps, TypeContext *cntx, FILE *log_f, const unsigned char *str, TypeInfo **p_info, Position pos)
+{
+    int retval = -1;
+    int len = strlen(str);
+    ScannerState *ss = init_scanner(ps, log_f, str, len, pos, cntx);
+    next_token(ss);
+    if (parse_expression(ss, cntx, p_info) < 0) {
+        goto cleanup;
+    }
+    if (ss->token != TOK_EOF) {
+        parser_error(ss, "end of expression expected");
+        goto cleanup;
+    }
+    retval = 0;
+
+cleanup:
+    destroy_scanner(ss);
+    return retval;
+}
+
 static int
 handle_directive_page(ScannerState *ss, TypeContext *cntx, FILE *out_f)
 {
@@ -2106,7 +2387,7 @@ handle_directive(TypeContext *cntx, ProcessorState *ps, FILE *out_f, FILE *log_f
     ScannerState *ss = init_scanner(ps, log_f, str, len, pos, cntx);
     int retval = -1;
 
-    next_token(ss); dump_token(ss);
+    next_token(ss); //dump_token(ss);
 
     if (ss->token != TOK_IDENT) {
         parser_error(ss, "directive expected");
@@ -2134,7 +2415,7 @@ handle_c_code(
 {
     ScannerState *ss = init_scanner(ps, log_f, str, len, pos, cntx);
     int retval = -1;
-    next_token(ss);
+    next_token(ss); //dump_token(ss);
 
     while (ss->token != TOK_EOF) {
         if (is_vardecl_start(ss, cntx)) {
@@ -2143,20 +2424,21 @@ handle_c_code(
         }
         if (IS_OPER(ss, '{')) {
             processor_state_push_scope(ps);
-            next_token(ss);
+            next_token(ss); //dump_token(ss);
             continue;
         }
         if (IS_OPER(ss, '}')) {
             processor_state_pop_scope(ps);
-            next_token(ss);
+            next_token(ss); //dump_token(ss);
             continue;
         }
         if (IS_OPER(ss, ';')) {
-            next_token(ss);
+            next_token(ss); //dump_token(ss);
             continue;
         }
-        while (ss->token != TOK_EOF && !IS_OPER(ss, ';') && !IS_OPER(ss, '{') && !IS_OPER(ss, '}'))
-            next_token(ss);
+        while (ss->token != TOK_EOF && !IS_OPER(ss, ';') && !IS_OPER(ss, '{') && !IS_OPER(ss, '}')) {
+            next_token(ss); //dump_token(ss);
+        }
     }
 
     ss = destroy_scanner(ss);
@@ -2279,6 +2561,30 @@ handle_submit_open(
 }
 
 static int
+handle_v_open(
+        FILE *log_f,
+        TypeContext *cntx,
+        ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f)
+{
+    HtmlElement *elem = ps->el_stack->el;
+
+    if (!elem->no_body) {
+        parser_error_2(ps, "<s:v> element must not have a body");
+        return -1;
+    }
+
+    HtmlAttribute *at = html_element_find_attribute(elem, "value"); // action code
+    if (!at) {
+        parser_error_2(ps, "<s:v> element requires value attribute");
+        return -1;
+    }
+
+    return 0;
+}
+
+static int
 handle_html_element_open(
         FILE *log_f,
         TypeContext *cntx,
@@ -2292,6 +2598,8 @@ handle_html_element_open(
         handle_a_open(log_f, cntx, ps, txt_f, prg_f);
     } else if (!strcmp(ps->el_stack->el->name, "s:submit")) {
         handle_submit_open(log_f, cntx, ps, txt_f, prg_f);
+    } else if (!strcmp(ps->el_stack->el->name, "s:v")) {
+        handle_v_open(log_f, cntx, ps, txt_f, prg_f);
     } else {
         parser_error_2(ps, "unhandled element");
     }
@@ -2354,6 +2662,7 @@ process_file(
         }
     }
     processor_state_init_file(ps, path);
+    processor_state_push_scope(ps);
 
     // read the whole file to memory
     mem_a = 1024;
