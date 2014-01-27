@@ -67,12 +67,14 @@ enum
     NODE_PARAM,
     // u32 size, str name, value value
     NODE_ENUM_CONST,
-    // u32 size, node type, str name, u32 offset
+    // u32 size, i32 offset, node type, str name
     NODE_FIELD,
     // u32 size, node type
     NODE_FORMAL_PARAM,
     // u32 size, str name, node ret_type, node params
     NODE_FUNCTION,
+    // u32 size, i32 frame_offset, node type, str name, node value
+    NODE_LOCAL_VAR,
 };
 
 struct TypeInfoOps;
@@ -117,6 +119,21 @@ union TypeInfo
 
 struct TypeContext;
 typedef struct TypeContext TypeContext;
+
+typedef struct ValueTreeNode
+{
+    struct ValueTreeNode *left, *right;
+    TypeInfo *value;
+} ValueTreeNode;
+
+typedef struct ValueTree
+{
+    ValueTreeNode *root;
+    int count;
+} ValueTree;
+
+typedef int (*ValueTreeCompareFunc)(const TypeInfo *p1, const void *p2);
+typedef TypeInfo *(*ValueTreeCreateFunc)(struct TypeContext *cntx, int kind, const void *pv);
 
 /* TypeContext operations */
 TypeContext *tc_create(void);
@@ -169,6 +186,7 @@ TypeInfo *tc_get_volatile_type(TypeContext *cntx, TypeInfo *eltype);
 TypeInfo *tc_get_enum_type(TypeContext *cntx, TypeInfo **info);
 TypeInfo *tc_get_function_type(TypeContext *cntx, TypeInfo **info);
 TypeInfo *tc_get_function(TypeContext *cntx, TypeInfo **info);
+TypeInfo *tc_get_local_var(TypeContext *cntx, TypeInfo *offset, TypeInfo *type, TypeInfo *name, TypeInfo *value);
 
 TypeInfo *tc_find_struct_type(TypeContext *cntx, int tag, TypeInfo *name);
 TypeInfo *tc_create_struct_type(TypeContext *cntx, int tag, TypeInfo *size, TypeInfo *name, TypeInfo *flag);
@@ -190,6 +208,26 @@ void tc_dump_context(FILE *out_f, TypeContext *cntx);
 void type_info_set_info(TypeInfo *ti, TypeInfo **info);
 
 int tc_is_c_keyword(TypeContext *cntx, TypeInfo *ident);
+
+/* ValueTree functions */
+TypeInfo *
+vt_insert(
+        TypeContext *cntx,
+        ValueTree *pt,
+        const void *pv,
+        int kind,
+        ValueTreeCompareFunc cmp,
+        ValueTreeCreateFunc create);
+ValueTreeNode *
+vt_find(
+        ValueTree *pt,
+        const void *pv,
+        ValueTreeCompareFunc cmp);
+void
+vt_free_2(ValueTree *t);
+
+TypeInfo *
+tc_get_name_node(const TypeInfo *ti);
 
 #endif /* __TYPE_INFO_H__ */
 

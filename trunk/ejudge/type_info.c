@@ -27,26 +27,7 @@
 TypeInfo *
 type_info_alloc(int kind);
 
-typedef struct ValueTreeNode
-{
-    struct ValueTreeNode *left, *right;
-    TypeInfo *value;
-} ValueTreeNode;
-
-typedef struct ValueTree
-{
-    ValueTreeNode *root;
-    int count;
-} ValueTree;
-
 struct TypeContext;
-
-typedef int (*tree_compare_func_t)(const TypeInfo *p1, const void *p2);
-typedef TypeInfo *(*tree_create_func_t)(struct TypeContext *cntx, int kind, const void *pv);
-static TypeInfo *
-vt_insert(TypeContext *cntx, ValueTree *pt, const void *pv, int kind, tree_compare_func_t cmp, tree_create_func_t create);
-static ValueTreeNode *
-vt_find(ValueTree *pt, const void *pv, tree_compare_func_t cmp);
 
 enum { IN_DIRECT_LOW = -2, IN_DIRECT_HIGH = 30 };
 enum { UN_DIRECT_HIGH = 32 };
@@ -123,6 +104,7 @@ struct TypeContext
     ValueTree enumconsts;
     ValueTree fields;
     ValueTree formalparams;
+    ValueTree localvars;
 
     ValueTree keywords;
 };
@@ -186,7 +168,7 @@ tc_value_tree_free(ValueTree *t)
 }
 
 static void
-tc_value_tree_free_2_node(ValueTreeNode *t)
+vt_free_2_node(ValueTreeNode *t)
 {
     if (!t) return;
     tc_value_tree_free_node(t->left);
@@ -195,10 +177,10 @@ tc_value_tree_free_2_node(ValueTreeNode *t)
     xfree(t);
 }
 
-static void
-tc_value_tree_free_2(ValueTree *t)
+void
+vt_free_2(ValueTree *t)
 {
-    tc_value_tree_free_2_node(t->root);
+    vt_free_2_node(t->root);
 }
 
 static void
@@ -234,7 +216,7 @@ tc_free(TypeContext *cntx)
 {
     if (!cntx) return NULL;
 
-    tc_value_tree_free_2(&cntx->keywords);
+    vt_free_2(&cntx->keywords);
 
     for (int i = 0; i < 2; ++i)
         tc_type_info_free(cntx->i1_values[i]);
@@ -288,6 +270,7 @@ tc_free(TypeContext *cntx)
     tc_value_tree_free(&cntx->enumconsts);
     tc_value_tree_free(&cntx->fields);
     tc_value_tree_free(&cntx->formalparams);
+    tc_value_tree_free(&cntx->localvars);
 
     memset(cntx, 0, sizeof(*cntx));
     xfree(cntx);
@@ -1038,9 +1021,9 @@ tc_get_enum_const(TypeContext *cntx, TypeInfo *size, TypeInfo *name, TypeInfo *v
 }
 
 TypeInfo *
-tc_get_field(TypeContext *cntx, TypeInfo *field_type, TypeInfo *field_name, TypeInfo *field_offset)
+_tc_get_field(TypeContext *cntx, TypeInfo *field_offset, TypeInfo *field_type, TypeInfo *field_name)
 {
-    TypeInfo *info[5] = { field_type->n.info[0], field_type, field_name, field_offset, NULL };
+    TypeInfo *info[5] = { field_type->n.info[0], field_offset, field_type, field_name, NULL };
     return vt_insert(cntx, &cntx->fields, info, NODE_FIELD, generic_cmp_1, generic_create);
 }
 
@@ -1049,6 +1032,13 @@ tc_get_formal_param(TypeContext *cntx, TypeInfo *param_type)
 {
     TypeInfo *info[3] = { param_type->n.info[0], param_type, NULL };
     return vt_insert(cntx, &cntx->formalparams, info, NODE_FORMAL_PARAM, generic_cmp_1, generic_create);
+}
+
+TypeInfo *
+tc_get_local_var(TypeContext *cntx, TypeInfo *offset, TypeInfo *var_type, TypeInfo *name, TypeInfo *value)
+{
+    TypeInfo *info[] = { var_type->n.info[0], offset, var_type, name, value, NULL };
+    return vt_insert(cntx, &cntx->localvars, info, NODE_LOCAL_VAR, generic_cmp_1, generic_create);
 }
 
 static int
@@ -1219,8 +1209,8 @@ vt_insert_node(
         int kind,
         int *p_count,
         TypeInfo **p_info,
-        tree_compare_func_t cmp,
-        tree_create_func_t create)
+        ValueTreeCompareFunc cmp,
+        ValueTreeCreateFunc create)
 {
     if (!root) {
         TypeInfo *ti = create(cntx, kind, pv);
@@ -1241,14 +1231,14 @@ vt_insert_node(
     return root;
 }
 
-static TypeInfo *
+TypeInfo *
 vt_insert(
         TypeContext *cntx,
         ValueTree *pt,
         const void *pv,
         int kind,
-        tree_compare_func_t cmp,
-        tree_create_func_t create)
+        ValueTreeCompareFunc cmp,
+        ValueTreeCreateFunc create)
 {
     TypeInfo *info = NULL;
     pt->root = vt_insert_node(cntx, pt->root, pv, kind, &pt->count, &info, cmp, create);
@@ -1258,8 +1248,11 @@ vt_insert(
     return info;
 }
 
-static ValueTreeNode *
-vt_find(ValueTree *pt, const void *pv, tree_compare_func_t cmp)
+ValueTreeNode *
+vt_find(
+        ValueTree *pt,
+        const void *pv,
+        ValueTreeCompareFunc cmp)
 {
     ValueTreeNode *node = pt->root;
     while (node) {
@@ -1395,6 +1388,7 @@ static const unsigned char * const node_names[] =
     "NODE_FIELD",
     "NODE_FORMAL_PARAM",
     "NODE_FUNCTION",
+    "NODE_LOCAL_VAR",
 };
 
 const unsigned char *
@@ -1538,6 +1532,27 @@ tc_dump_context(FILE *out_f, TypeContext *cntx)
     tc_dump_value_tree(out_f, &cntx->formalparams);
     fprintf(out_f, "    functions\n");
     tc_dump_value_tree(out_f, &cntx->functions);
+    fprintf(out_f, "    localvars\n");
+    tc_dump_value_tree(out_f, &cntx->localvars);
+}
+
+TypeInfo *
+tc_get_name_node(const TypeInfo *ti)
+{
+    if (!ti) return NULL;
+    switch (ti->kind) {
+    case NODE_PARAM:
+        return ti->n.info[3];
+    case NODE_ENUM_CONST:
+        return ti->n.info[1];
+    case NODE_FIELD:
+        return ti->n.info[3];
+    case NODE_FUNCTION:
+        return ti->n.info[1];
+    case NODE_LOCAL_VAR:
+        return ti->n.info[3];
+    }
+    return NULL;
 }
 
 /*
