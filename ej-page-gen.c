@@ -272,7 +272,7 @@ processor_state_find_in_top_scope(ProcessorState *ps, TypeInfo *id)
     return NULL;
 }
 
-/*static*/ TypeInfo *
+static TypeInfo *
 processor_state_find_in_scopes(ProcessorState *ps, TypeInfo *id)
 {
     IdScope *cur = ps->scope_stack;
@@ -618,6 +618,63 @@ make_value_info(ScannerState *ss, TypeContext *cntx)
             return tc_get_f64(cntx, ss->cv.v.ct_double);
         case C_LDOUBLE:
             return tc_get_f80(cntx, ss->cv.v.ct_ldouble);
+        default:
+            parser_error(ss, "value expected");
+            return NULL;
+        }
+    default:
+        parser_error(ss, "value expected");
+        return NULL;
+    }
+    return NULL;
+}
+
+static TypeInfo *
+make_value_type(ScannerState *ss, TypeContext *cntx)
+{
+    switch (ss->token) {
+    case TOK_STRING:
+        return tc_get_ptr_type(cntx, tc_get_const_type(cntx, tc_get_u8_type(cntx)));
+    case TOK_CHAR:
+        return tc_get_u8_type(cntx);
+    case TOK_NUMBER:
+        switch (ss->cv.tag) {
+        case C_BOOL:
+            return tc_get_i1_type(cntx);
+        case C_CHAR:
+            return tc_get_i8_type(cntx);
+        case C_SCHAR:
+            return tc_get_i8_type(cntx);
+        case C_UCHAR:
+            return tc_get_u8_type(cntx);
+        case C_SHORT:
+            return tc_get_i16_type(cntx);
+        case C_USHORT:
+            return tc_get_u16_type(cntx);
+        case C_INT:
+            return tc_get_i32_type(cntx);
+        case C_UINT:
+            return tc_get_u32_type(cntx);
+        case C_LONG:
+            return tc_get_i32_type(cntx);
+        case C_ULONG:
+            return tc_get_u32_type(cntx);
+        case C_LLONG:
+            return tc_get_i64_type(cntx);
+        case C_ULLONG:
+            return tc_get_u64_type(cntx);
+        default:
+            parser_error(ss, "value expected");
+            return NULL;
+        }
+    case TOK_FPNUMBER:
+        switch (ss->cv.tag) {
+        case C_FLOAT:
+            return tc_get_f32_type(cntx);
+        case C_DOUBLE:
+            return tc_get_f64_type(cntx);
+        case C_LDOUBLE:
+            return tc_get_f80_type(cntx);
         default:
             parser_error(ss, "value expected");
             return NULL;
@@ -1946,6 +2003,27 @@ parse_init_declr(
     return 0;
 }
 
+static int
+parse_cast(ScannerState *ss, TypeContext *cntx, int quiet_mode, TypeInfo **p_info)
+{
+    if (!IS_OPER(ss, '(')) {
+        parser_error(ss, "'(' expected");
+        return -1;
+    }
+    next_token(ss);
+    TypeInfo *ds = NULL;
+    int r = parse_declspec(ss, cntx, quiet_mode, &ds);
+    if (r < 0) return -1;
+    if ((r = parse_full_declr(ss, cntx, quiet_mode, 1, ds, &ds, NULL)) < 0) return r;
+    if (!IS_OPER(ss, ')')) {
+        parser_error(ss, "')' expected");
+        return -1;
+    }
+    next_token(ss);
+    if (p_info) *p_info = ds;
+    return 0;
+}
+
 /*static*/ int
 is_vardecl_start(ScannerState *ss, TypeContext *cntx)
 {
@@ -2010,17 +2088,210 @@ parse_vardecl(
 
 static int parse_expression(ScannerState *ss, TypeContext *cntx, TypeInfo **p_info);
 
+// "str", num, (e), ({...}), (t){...}
+static int
+parse_expression_16(ScannerState *ss, TypeContext *cntx, TypeInfo **p_info)
+{
+    if (ss->token == TOK_STRING) {
+        if (p_info) *p_info = make_value_type(ss, cntx);
+        next_token(ss);
+        while (ss->token == TOK_STRING)
+            next_token(ss);
+        return 0;
+    } else if (ss->token == TOK_CHAR || ss->token == TOK_NUMBER || ss->token == TOK_FPNUMBER) {
+        next_token(ss);
+        if (p_info) *p_info = make_value_type(ss, cntx);
+        return 0;
+    } else if (ss->token == TOK_IDENT) {
+        TypeInfo *t = processor_state_find_in_scopes(ss->ps, tc_get_ident(cntx, ss->raw));
+        if (!t) {
+            parser_error(ss, "identifier '%s' is undefined", ss->raw);
+            return -1;
+        }
+        if (t->kind != NODE_PARAM && t->kind != NODE_LOCAL_VAR) {
+            parser_error(ss, "invalid symbol type");
+            return -1;
+        }
+        if (p_info) *p_info = t->n.info[2];
+        next_token(ss);
+        return 0;
+    } else if (IS_OPER(ss, '(')) {
+        next_token(ss);
+        int r = parse_expression(ss, cntx, p_info);
+        if (r < 0) return r;
+        if (!IS_OPER(ss, ')')) {
+            parser_error(ss, "')' expected");
+            return -1;
+        }
+        next_token(ss);
+        return 0;
+    } else {
+        parser_error(ss, "primary expression expected");
+        return -1;
+    }
+}
+
+// e[], e(), e->f, e.f, e++, e--
+static int
+parse_expression_15(ScannerState *ss, TypeContext *cntx, TypeInfo **p_info)
+{
+    TypeInfo *t = NULL;
+    int r = parse_expression_16(ss, cntx, &t);
+    if (r < 0) return r;
+    while (1) {
+        if (IS_OPER(ss, '[')) {
+            next_token(ss);
+            TypeInfo *t2 = NULL;
+            if ((r = parse_expression(ss, cntx, &t2)) < 0) return r;
+            if (!IS_OPER(ss, ']')) {
+                parser_error(ss, "']' expected");
+                return -1;
+            }
+            next_token(ss);
+            t = tc_promote(cntx, t);
+            if (t->kind != NODE_POINTER_TYPE) {
+                parser_error(ss, "invalid argument for [] operation");
+                return -1;
+            }
+            t = t->n.info[1];
+        } else if (IS_OPER(ss, '(')) {
+            abort();
+        } else if (IS_OPER_2(ss, '-', '>')) {
+            next_token(ss);
+            t = tc_skip_tcv(t);
+            if (t->kind != NODE_POINTER_TYPE) {
+                parser_error(ss, "invalid argument for -> operation");
+                return -1;
+            }
+            t = tc_skip_tcv(t->n.info[1]);
+            if (t->kind != NODE_STRUCT_TYPE && t->kind != NODE_UNION_TYPE) {
+                parser_error(ss, "structure or union type expected");
+                return -1;
+            }
+            if (ss->token != TOK_IDENT) {
+                parser_error(ss, "field name expected");
+                return -1;
+            }
+            fprintf(stderr, "Struct type: "); tc_print_2(stderr, t, 2); fprintf(stderr, "\n");
+            TypeInfo *f = tc_find_field(t, tc_get_ident(cntx, ss->raw));
+            if (!f) {
+                parser_error(ss, "field '%s' is not declared", ss->raw);
+                return -1;
+            }
+            t = f->n.info[2];
+        } else if (IS_OPER(ss, '.')) {
+            next_token(ss);
+            t = tc_skip_tcv(t);
+            if (t->kind == NODE_POINTER_TYPE) {
+                t = tc_skip_tcv(t->n.info[1]);
+            }
+            if (t->kind != NODE_STRUCT_TYPE && t->kind != NODE_UNION_TYPE) {
+                parser_error(ss, "structure or union type expected");
+                return -1;
+            }
+            if (ss->token != TOK_IDENT) {
+                parser_error(ss, "field name expected");
+                return -1;
+            }
+            TypeInfo *f = tc_find_field(t, tc_get_ident(cntx, ss->raw));
+            if (!f) {
+                parser_error(ss, "field '%s' is not declared", ss->raw);
+                return -1;
+            }
+            t = f->n.info[2];
+        } else if (IS_OPER_2(ss, '+', '+')) {
+            next_token(ss);
+        } else if (IS_OPER_2(ss, '-', '-')) {
+            next_token(ss);
+        } else {
+            break;
+        }
+    }
+    if (p_info) *p_info = t;
+    return 0;
+}
+
 // & * + - ~ ! ++ -- sizeof
+static int
+parse_expression_14(ScannerState *ss, TypeContext *cntx, TypeInfo **p_info)
+{
+    int r;
+    TypeInfo *t = NULL;
+    if (IS_OPER(ss, '&')) {
+        next_token(ss);
+        if ((r = parse_expression_14(ss, cntx, &t)) < 0) return r;
+        if (p_info) *p_info = tc_get_ptr_type(cntx, t);
+        return 0;
+    } else if (IS_OPER(ss, '*')) {
+        next_token(ss);
+        if ((r = parse_expression_14(ss, cntx, &t)) < 0) return r;
+        if (t->kind != NODE_POINTER_TYPE) {
+            parser_error(ss, "pointer type expected");
+            return -1;
+        }
+        if (p_info) *p_info = t->n.info[1];
+        return 0;
+    } else if (IS_OPER(ss, '+')) {
+        next_token(ss);
+        if ((r = parse_expression_14(ss, cntx, &t)) < 0) return r;
+        if (p_info) *p_info = tc_promote(cntx, t);
+        return 0;
+    } else if (IS_OPER(ss, '-')) {
+        next_token(ss);
+        if ((r = parse_expression_14(ss, cntx, &t)) < 0) return r;
+        if (p_info) *p_info = tc_promote(cntx, t);
+        return 0;
+    } else if (IS_OPER(ss, '~')) {
+        next_token(ss);
+        if ((r = parse_expression_14(ss, cntx, &t)) < 0) return r;
+        if (p_info) *p_info = tc_promote(cntx, t);
+        return 0;
+    } else if (IS_OPER(ss, '!')) {
+        next_token(ss);
+        if ((r = parse_expression_14(ss, cntx, &t)) < 0) return r;
+        if (p_info) *p_info = tc_get_i1_type(cntx);
+        return 0;
+    } else if (IS_OPER_2(ss, '+', '+')) {
+        next_token(ss);
+        if ((r = parse_expression_14(ss, cntx, &t)) < 0) return r;
+        if (p_info) *p_info = t;
+        return 0;
+    } else if (IS_OPER_2(ss, '-', '-')) {
+        next_token(ss);
+        if ((r = parse_expression_14(ss, cntx, &t)) < 0) return r;
+        if (p_info) *p_info = t;
+        return 0;
+    } else if (ss->token == TOK_IDENT && tc_get_ident(cntx, ss->raw) == kwd_sizeof) {
+        next_token(ss);
+        if (IS_OPER(ss, '(') && try_declr(ss, cntx) >= 0) {
+            if ((r = parse_cast(ss, cntx, 0, &t)) < 0) return r;
+        } else {
+            if ((r = parse_expression(ss, cntx, &t)) < 0) return r;
+        }
+        t = tc_find_typedef_type(cntx, tc_get_ident(cntx, "size_t"));
+        if (!t) t = tc_get_u32_type(cntx);
+        if (p_info) *p_info = t;
+        return 0;
+    } else {
+        if ((r = parse_expression_15(ss, cntx, &t)) < 0) return r;
+        if (p_info) *p_info = t;
+        return 0;
+    }
+}
 
 // (TYPE) expr
 static int
 parse_expression_13(ScannerState *ss, TypeContext *cntx, TypeInfo **p_info)
 {
+    int r = 0;
+    TypeInfo *t = NULL;
     if (IS_OPER(ss, '(') && try_declr(ss, cntx) >= 0) {
-        // cast expression
+        if ((r = parse_cast(ss, cntx, 0, &t)) < 0) return r;
+        if ((r = parse_expression_13(ss, cntx, NULL)) < 0) return r;
+        if (p_info) *p_info = t;
+        return 0;
     }
-    // FIXME: complete
-    return 0;
+    return parse_expression_14(ss, cntx, p_info);
 }
 
 // mul
@@ -2034,7 +2305,7 @@ parse_expression_12(ScannerState *ss, TypeContext *cntx, TypeInfo **p_info)
         next_token(ss);
         r = parse_expression_13(ss, cntx, &info1);
         if (r < 0) return r;
-        // FIXME: balance
+        info0 = tc_balance(cntx, info0, info1);
     }
     if (p_info) *p_info = info0;
     return 0;
@@ -2051,7 +2322,7 @@ parse_expression_11(ScannerState *ss, TypeContext *cntx, TypeInfo **p_info)
         next_token(ss);
         r = parse_expression_12(ss, cntx, &info1);
         if (r < 0) return r;
-        // FIXME: balance
+        info0 = tc_balance(cntx, info0, info1);
     }
     if (p_info) *p_info = info0;
     return 0;
@@ -2069,7 +2340,7 @@ parse_expression_10(ScannerState *ss, TypeContext *cntx, TypeInfo **p_info)
         next_token(ss);
         r = parse_expression_11(ss, cntx, &info1);
         if (r < 0) return r;
-        // FIXME: balance
+        info0 = tc_balance(cntx, info0, info1);
     }
     if (p_info) *p_info = info0;
     return 0;
@@ -2089,9 +2360,8 @@ parse_expression_9(ScannerState *ss, TypeContext *cntx, TypeInfo **p_info)
         next_token(ss);
         r = parse_expression_10(ss, cntx, &info1);
         if (r < 0) return r;
-        // FIXME: balance
     }
-    if (p_info) *p_info = info0;
+    if (p_info) *p_info = tc_get_i1_type(cntx);
     return 0;
 }
 
@@ -2106,9 +2376,8 @@ parse_expression_8(ScannerState *ss, TypeContext *cntx, TypeInfo **p_info)
         next_token(ss);
         r = parse_expression_9(ss, cntx, &info1);
         if (r < 0) return r;
-        // FIXME: balance
     }
-    if (p_info) *p_info = info0;
+    if (p_info) *p_info = tc_get_i1_type(cntx);
     return 0;
 }
 
@@ -2123,7 +2392,7 @@ parse_expression_7(ScannerState *ss, TypeContext *cntx, TypeInfo **p_info)
         next_token(ss);
         r = parse_expression_8(ss, cntx, &info1);
         if (r < 0) return r;
-        // FIXME: balance
+        info0 = tc_balance(cntx, info0, info1);
     }
     if (p_info) *p_info = info0;
     return 0;
@@ -2140,7 +2409,7 @@ parse_expression_6(ScannerState *ss, TypeContext *cntx, TypeInfo **p_info)
         next_token(ss);
         r = parse_expression_7(ss, cntx, &info1);
         if (r < 0) return r;
-        // FIXME: balance
+        info0 = tc_balance(cntx, info0, info1);
     }
     if (p_info) *p_info = info0;
     return 0;
@@ -2157,7 +2426,7 @@ parse_expression_5(ScannerState *ss, TypeContext *cntx, TypeInfo **p_info)
         next_token(ss);
         r = parse_expression_6(ss, cntx, &info1);
         if (r < 0) return r;
-        // FIXME: balance
+        info0 = tc_balance(cntx, info0, info1);
     }
     if (p_info) *p_info = info0;
     return 0;
@@ -2580,6 +2849,14 @@ handle_v_open(
         parser_error_2(ps, "<s:v> element requires value attribute");
         return -1;
     }
+
+    TypeInfo *t = NULL;
+    int r = parse_c_expression(ps, cntx, log_f, at->value, &t, ps->pos);
+    if (r < 0) return r;
+
+    fprintf(log_f, "Expression type: ");
+    tc_print_2(log_f, t, 2);
+    fprintf(log_f, "\n");
 
     return 0;
 }
