@@ -1002,6 +1002,11 @@ parse_struct_type_die(
         name_info = tc_get_ident(cntx, name_str);
     }
 
+    fprintf(stderr, "In structure %s\n", name_info->s.str);
+    if (!strcmp(name_info->s.str, "http_request_info")) {
+        dump_die(log_f, dbg, die);
+    }
+
     Dwarf_Attribute declaration_attr = NULL;
     Dwarf_Bool declaration_value = 0;
     if ((r = s_dwarf_attr(log_f, path, die, DW_AT_declaration, &declaration_attr)) < 0) goto done;
@@ -1026,6 +1031,7 @@ parse_struct_type_die(
     if (s_dwarf_attr_2(log_f, path, die, DW_AT_byte_size, &size_attr) <= 0) goto done;
     if (s_dwarf_formudata(log_f, path, size_attr, &size_value) < 0) goto done;
     TypeInfo *size_info = tc_get_u32(cntx, (unsigned) size_value);
+    fprintf(stderr, ">>%u\n", (unsigned) size_value);
 
     /*
     Dwarf_Attribute decl_file_attr = NULL;
@@ -1045,11 +1051,14 @@ parse_struct_type_die(
         // named structure
         ti = tc_find_struct_type(cntx, tag, name_info);
         if (ti != NULL) {
-            *p_info = ti;
-            retval = 0;
-            goto done;
+            if (ti->n.info[2] == tc_get_i1(cntx, 1)) {
+                *p_info = ti;
+                retval = 0;
+                goto done;
+            }
+        } else {
+            ti = tc_create_struct_type(cntx, tag, size_info, name_info, tc_get_i1(cntx, 1));
         }
-        ti = tc_create_struct_type(cntx, tag, size_info, name_info, tc_get_i1(cntx, 1));
     }
 
     int count = 0;
@@ -1071,6 +1080,8 @@ parse_struct_type_die(
         retval = 0;
         goto done;
     }
+
+    fprintf(stderr, "Processing structure: %s\n", name_info->s.str);
 
     TypeInfo **info = alloca(sizeof(info[0]) * (count + 4));
     memset(info, 0, sizeof(info[0]) * (count + 4));
@@ -1122,6 +1133,7 @@ parse_struct_type_die(
     if (ti) {
         ASSERT(ti->s.len > 0);
         type_info_set_info(ti, info);
+        fprintf(stderr, "Update type info for struct %s\n", ti->n.info[1]->s.str);
     } else {
         ti = tc_get_anon_struct_type(cntx, tag, info);
     }

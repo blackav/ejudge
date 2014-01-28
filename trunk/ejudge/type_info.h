@@ -53,11 +53,12 @@ enum
     NODE_OPEN_ARRAY_TYPE,
     // u32 size, node ret_type, node args...
     NODE_FUNCTION_TYPE,
-    // u32 size,
+    // u32 size, node type
     NODE_CONST_TYPE,
     NODE_VOLATILE_TYPE,
     // u32 size, str name, node base_type, node consts...
     NODE_ENUM_TYPE,
+    // u32 size, str name, bool complete, node fields...
     NODE_STRUCT_TYPE,
     NODE_UNION_TYPE,
     // u32 size == 0 --- sequence of any types, for ellipsis parameters
@@ -229,6 +230,14 @@ vt_free_2(ValueTree *t);
 
 TypeInfo *
 tc_get_name_node(const TypeInfo *ti);
+TypeInfo *
+tc_skip_tcv(TypeInfo *ti);
+TypeInfo *
+tc_promote(TypeContext *cntx, TypeInfo *t);
+TypeInfo *
+tc_balance(TypeContext *cntx, TypeInfo *t1, TypeInfo *t2);
+TypeInfo *
+tc_find_field(TypeInfo *t, TypeInfo *id);
 
 #endif /* __TYPE_INFO_H__ */
 

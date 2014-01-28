@@ -67,7 +67,7 @@ static struct server_framework_job *job_first, *job_last;
             phr->name_arm, phr->contest_id, extra->contest_arm, _("Main page"));
 %>
 <script language="javascript">
-    var self_url='<%= phr.self_url %>';
+    var self_url='<s:v value="phr->self_url" />';
     var SID='<%= $fmt("%016llx", phr.session_id) %>';
 </script>
 <ul>

@@ -1565,6 +1565,86 @@ tc_get_name_node(const TypeInfo *ti)
     return NULL;
 }
 
+TypeInfo *
+tc_skip_tcv(TypeInfo *ti)
+{
+    while (1) {
+        if (!ti) return ti;
+        switch(ti->kind) {
+        case NODE_TYPEDEF_TYPE:
+        case NODE_CONST_TYPE:
+        case NODE_VOLATILE_TYPE:
+            ti = ti->n.info[1];
+            break;
+        default:
+            return ti;
+        }
+    }
+}
+
+TypeInfo *
+tc_promote(TypeContext *cntx, TypeInfo *t)
+{
+    t = tc_skip_tcv(t);
+    if (!t) return t;
+    if (t == tc_get_i1_type(cntx)) return tc_get_i32_type(cntx);
+    if (t == tc_get_i8_type(cntx)) return tc_get_i32_type(cntx);
+    if (t == tc_get_u8_type(cntx)) return tc_get_i32_type(cntx);
+    if (t == tc_get_i16_type(cntx)) return tc_get_i32_type(cntx);
+    if (t == tc_get_u16_type(cntx)) return tc_get_i32_type(cntx);
+    if (t->kind == NODE_ENUM_TYPE) return tc_get_i32_type(cntx);
+    if (t->kind == NODE_ARRAY_TYPE) return tc_get_ptr_type(cntx, t->n.info[1]);
+    if (t->kind == NODE_OPEN_ARRAY_TYPE) return tc_get_ptr_type(cntx, t->n.info[1]);
+    return t;
+}
+
+TypeInfo *
+tc_balance(TypeContext *cntx, TypeInfo *t1, TypeInfo *t2)
+{
+    t1 = tc_promote(cntx, t1);
+    t2 = tc_promote(cntx, t2);
+    if (t1->kind == NODE_BASE_TYPE && t1->kind == NODE_BASE_TYPE) {
+        if (t1 == tc_get_f80_type(cntx) || t2 == cntx->f80_type) return cntx->f80_type;
+        if (t1 == tc_get_f64_type(cntx) || t2 == cntx->f64_type) return cntx->f64_type;
+        if (t1 == tc_get_f32_type(cntx) || t2 == cntx->f32_type) return cntx->f32_type;
+        if (t1 == tc_get_u64_type(cntx) || t2 == cntx->u64_type) return cntx->u64_type;
+        if (t1 == tc_get_i64_type(cntx) || t2 == cntx->i64_type) return cntx->i64_type;
+        if (t1 == tc_get_u32_type(cntx) || t2 == cntx->u32_type) return cntx->u32_type;
+        return tc_get_i32_type(cntx);
+    }
+    if (t1->kind == NODE_POINTER_TYPE && t2->kind == NODE_BASE_TYPE) return t1;
+    if (t1->kind == NODE_BASE_TYPE && t2->kind == NODE_POINTER_TYPE) return t2;
+    // what else?
+    abort();
+}
+
+/*
+    NODE_BASE_TYPE,
+    // u32 size, node base_type
+    NODE_POINTER_TYPE,
+    // u32 size, node ret_type, node args...
+    NODE_FUNCTION_TYPE,
+    // u32 size, node type
+    // u32 size, str name, node base_type, node consts...
+    NODE_STRUCT_TYPE,
+    NODE_UNION_TYPE,
+    // u32 size == 0 --- sequence of any types, for ellipsis parameters
+    NODE_ANYSEQ_TYPE, 
+ */
+
+TypeInfo *
+tc_find_field(TypeInfo *t, TypeInfo *id)
+{
+    if (!t) return NULL;
+    if (t->kind != NODE_STRUCT_TYPE && t->kind != NODE_UNION_TYPE) return NULL;
+    for (int i = 3; i < t->n.count; ++i) {
+        if (t->n.info[i] && t->n.info[i]->kind == NODE_FIELD && t->n.info[i]->n.info[3] == id) {
+            return t->n.info[i];
+        }
+    }
+    return NULL;
+}
+
 /*
  * Local variables:
  *  c-basic-offset: 4
