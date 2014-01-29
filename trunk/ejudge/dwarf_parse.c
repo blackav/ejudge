@@ -415,6 +415,18 @@ s_dwarf_global_formref(
     return 0;
 }
 
+static Dwarf_Off
+s_dwarf_dieoffset(Dwarf_Die die)
+{
+    Dwarf_Error dwe = NULL;
+    Dwarf_Off offset = 0;
+    if (dwarf_dieoffset(die, &offset, &dwe) != DW_DLV_OK) {
+        fprintf(stderr, "s_dwarf_dieoffset failed: %s\n", dwarf_errmsg(dwe));
+        return 0;
+    }
+    return offset;
+}
+
 static void
 dump_die(FILE *out, Dwarf_Debug dbg, Dwarf_Die die)
 {
@@ -489,6 +501,22 @@ fail:
     fprintf(stderr, "dump_die failed: %s\n", dwarf_errmsg(dwe));
 }
 
+typedef struct ParseDieStack
+{
+    struct ParseDieStack *up;
+    Dwarf_Off offset;
+} ParseDieStack;
+
+static int
+die_stack_lookup(ParseDieStack *elem, Dwarf_Off offset)
+{
+    for (; elem; elem = elem->up) {
+        if (elem->offset == offset)
+            return 1;
+    }
+    return 0;
+}
+
 typedef int (*parse_kind_func_t)(
         FILE *log_f,
         const unsigned char *path,
@@ -497,7 +525,8 @@ typedef int (*parse_kind_func_t)(
         TypeContext *cntx,
         DieMap *dm,
         int tag,
-        TypeInfo **p_info);
+        TypeInfo **p_info,
+        ParseDieStack *cur);
 
 static int
 parse_die(
@@ -506,7 +535,8 @@ parse_die(
         Dwarf_Debug dbg,
         Dwarf_Die die,
         TypeContext *cntx,
-        DieMap *dm);
+        DieMap *dm,
+        ParseDieStack *up);
 
 static int
 parse_type(
@@ -516,7 +546,8 @@ parse_type(
         Dwarf_Die die,
         TypeContext *cntx,
         DieMap *dm,
-        TypeInfo **p_info)
+        TypeInfo **p_info,
+        ParseDieStack *cur)
 {
     *p_info = NULL;
 
@@ -529,7 +560,7 @@ parse_type(
     if (s_dwarf_global_formref(log_f, path, type_attr, &type_off) < 0) return -1;
     Dwarf_Die type_die = NULL;
     if (s_dwarf_offdie(log_f, path, dbg, type_off, &type_die) < 0) return -1;
-    if (parse_die(log_f, path, dbg, type_die, cntx, dm) < 0) return -1;
+    if (parse_die(log_f, path, dbg, type_die, cntx, dm, cur) < 0) return -1;
     TypeInfo *type_info = NULL;
     if (die_map_get_2(log_f, path, dm, type_die, &type_info, NULL) < 0) return -1;
     if (!type_info) return 0;
@@ -537,7 +568,6 @@ parse_type(
     *p_info = type_info;
     return 1;
 }
-
 
 static int
 parse_base_type_die(
@@ -548,7 +578,8 @@ parse_base_type_die(
         TypeContext *cntx,
         DieMap *dm,
         int tag,
-        TypeInfo **p_info)
+        TypeInfo **p_info,
+        ParseDieStack *cur)
 {
     int retval = -1;
     TypeInfo *ti = NULL;
@@ -626,7 +657,8 @@ parse_pointer_type_die(
         TypeContext *cntx,
         DieMap *dm,
         int tag,
-        TypeInfo **p_info)
+        TypeInfo **p_info,
+        ParseDieStack *cur)
 {
     int retval = -1;
     TypeInfo *ti = NULL;
@@ -651,7 +683,7 @@ parse_pointer_type_die(
         if (s_dwarf_global_formref(log_f, path, type_attr, &to) < 0) goto done;
         Dwarf_Die die2 = NULL;
         if (s_dwarf_offdie(log_f, path, dbg, to, &die2) < 0) goto done;
-        if (parse_die(log_f, path, dbg, die2, cntx, dm) < 0) goto done;
+        if (parse_die(log_f, path, dbg, die2, cntx, dm, cur) < 0) goto done;
         if (die_map_get_2(log_f, path, dm, die2, &ti, NULL) < 0) goto done;
         // temp fix
         if (!ti) ti = tc_get_i0_type(cntx);
@@ -721,7 +753,8 @@ parse_array_type_die(
         TypeContext *cntx,
         DieMap *dm,
         int tag,
-        TypeInfo **p_info)
+        TypeInfo **p_info,
+        ParseDieStack *cur)
 {
     int retval = -1;
     TypeInfo *ti = NULL;
@@ -733,7 +766,7 @@ parse_array_type_die(
     if (s_dwarf_global_formref(log_f, path, type_attr, &to) < 0) goto done;
     Dwarf_Die die2 = NULL;
     if (s_dwarf_offdie(log_f, path, dbg, to, &die2) < 0) goto done;
-    if (parse_die(log_f, path, dbg, die2, cntx, dm) < 0) goto done;
+    if (parse_die(log_f, path, dbg, die2, cntx, dm, cur) < 0) goto done;
     if (die_map_get_2(log_f, path, dm, die2, &ti, NULL) < 0) goto done;
     // temp fix
     if (!ti) ti = tc_get_i0_type(cntx);
@@ -759,7 +792,8 @@ parse_const_type_die(
         TypeContext *cntx,
         DieMap *dm,
         int tag,
-        TypeInfo **p_info)
+        TypeInfo **p_info,
+        ParseDieStack *cur)
 {
     int retval = -1;
     TypeInfo *ti = NULL;
@@ -774,7 +808,7 @@ parse_const_type_die(
         if (s_dwarf_global_formref(log_f, path, type_attr, &to) < 0) goto done;
         Dwarf_Die die2 = NULL;
         if (s_dwarf_offdie(log_f, path, dbg, to, &die2) < 0) goto done;
-        if (parse_die(log_f, path, dbg, die2, cntx, dm) < 0) goto done;
+        if (parse_die(log_f, path, dbg, die2, cntx, dm, cur) < 0) goto done;
         if (die_map_get_2(log_f, path, dm, die2, &ti, NULL) < 0) goto done;
         // temp fix
     }
@@ -796,7 +830,8 @@ parse_volatile_type_die(
         TypeContext *cntx,
         DieMap *dm,
         int tag,
-        TypeInfo **p_info)
+        TypeInfo **p_info,
+        ParseDieStack *cur)
 {
     int retval = -1;
     TypeInfo *ti = NULL;
@@ -811,7 +846,7 @@ parse_volatile_type_die(
         if (s_dwarf_global_formref(log_f, path, type_attr, &to) < 0) goto done;
         Dwarf_Die die2 = NULL;
         if (s_dwarf_offdie(log_f, path, dbg, to, &die2) < 0) goto done;
-        if (parse_die(log_f, path, dbg, die2, cntx, dm) < 0) goto done;
+        if (parse_die(log_f, path, dbg, die2, cntx, dm, cur) < 0) goto done;
         if (die_map_get_2(log_f, path, dm, die2, &ti, NULL) < 0) goto done;
         // temp fix
     }
@@ -833,7 +868,8 @@ parse_typedef_type_die(
         TypeContext *cntx,
         DieMap *dm,
         int tag,
-        TypeInfo **p_info)
+        TypeInfo **p_info,
+        ParseDieStack *cur)
 {
     int retval = -1;
     TypeInfo *ti = NULL;
@@ -854,7 +890,7 @@ parse_typedef_type_die(
         if (s_dwarf_global_formref(log_f, path, type_attr, &to) < 0) goto done;
         Dwarf_Die die2 = NULL;
         if (s_dwarf_offdie(log_f, path, dbg, to, &die2) < 0) goto done;
-        if (parse_die(log_f, path, dbg, die2, cntx, dm) < 0) goto done;
+        if (parse_die(log_f, path, dbg, die2, cntx, dm, cur) < 0) goto done;
         if (die_map_get_2(log_f, path, dm, die2, &ti, NULL) < 0) goto done;
         // temp fix
     }
@@ -876,7 +912,8 @@ parse_enum_type_die(
         TypeContext *cntx,
         DieMap *dm,
         int tag,
-        TypeInfo **p_info)
+        TypeInfo **p_info,
+        ParseDieStack *cur)
 {
     int retval = -1;
 
@@ -968,12 +1005,21 @@ parse_struct_type_die(
         TypeContext *cntx,
         DieMap *dm,
         int tag,
-        TypeInfo **p_info)
+        TypeInfo **p_info,
+        ParseDieStack *cur)
 {
     int retval = -1;
     int r;
     Dwarf_Die die2 = NULL;
     TypeInfo *ti = NULL;
+    Dwarf_Off my_offset = s_dwarf_dieoffset(die);
+    int is_recursive = die_stack_lookup(cur->up, my_offset);
+
+    fprintf(stderr, "is_recursive: %d\n", is_recursive);
+    fprintf(stderr, "struct die offset: %lld\n", (unsigned long long) my_offset);
+    if (is_recursive) {
+        dump_die(stderr, dbg, die);
+    }
 
     /*
     fprintf(log_f, "Structure DIE\n");
@@ -996,6 +1042,7 @@ parse_struct_type_die(
     if (r < 0) goto done;
     if (!r) {
         name_info = tc_get_ident(cntx, "");
+        ASSERT(!is_recursive);
     } else {
         char *name_str = NULL;
         if (s_dwarf_formstring(log_f, path, name_attr, &name_str) < 0) goto done;
@@ -1011,6 +1058,7 @@ parse_struct_type_die(
     Dwarf_Bool declaration_value = 0;
     if ((r = s_dwarf_attr(log_f, path, die, DW_AT_declaration, &declaration_attr)) < 0) goto done;
     if (declaration_attr) {
+        ASSERT(!is_recursive);
         if (s_dwarf_formflag(log_f, path, declaration_attr, &declaration_value) < 0) goto done;
         if (declaration_value) {
             ASSERT(name_info->s.len > 0);
@@ -1051,7 +1099,7 @@ parse_struct_type_die(
         // named structure
         ti = tc_find_struct_type(cntx, tag, name_info);
         if (ti != NULL) {
-            if (ti->n.info[2] == tc_get_i1(cntx, 1)) {
+            if (ti->n.info[2] == tc_get_i1(cntx, 1) || is_recursive) {
                 *p_info = ti;
                 retval = 0;
                 goto done;
@@ -1109,7 +1157,7 @@ parse_struct_type_die(
         if (s_dwarf_attr_2(log_f, path, die2, DW_AT_type, &field_type_attr) <= 0) goto done;
         if (s_dwarf_global_formref(log_f, path, field_type_attr, &field_type_off) < 0) goto done;
         if (s_dwarf_offdie(log_f, path, dbg, field_type_off, &field_type_die) < 0) goto done;
-        if (parse_die(log_f, path, dbg, field_type_die, cntx, dm) < 0) goto done;
+        if (parse_die(log_f, path, dbg, field_type_die, cntx, dm, cur) < 0) goto done;
         if (die_map_get_2(log_f, path, dm, field_type_die, &field_type_info, NULL) < 0) goto done;
         if (!field_type_info) field_type_info = tc_get_i0_type(cntx);
 
@@ -1154,7 +1202,8 @@ parse_function_type_die(
         TypeContext *cntx,
         DieMap *dm,
         int tag,
-        TypeInfo **p_info)
+        TypeInfo **p_info,
+        ParseDieStack *cur)
 {
     int retval = -1;
     int r = 0;
@@ -1173,7 +1222,7 @@ parse_function_type_die(
     */
 
     TypeInfo *ret_type = NULL;
-    if ((r = parse_type(log_f, path, dbg, die, cntx, dm, &ret_type)) < 0) goto done;
+    if ((r = parse_type(log_f, path, dbg, die, cntx, dm, &ret_type, cur)) < 0) goto done;
     if (!r || !ret_type) ret_type = tc_get_i0_type(cntx);
     
     int count = 0;
@@ -1205,7 +1254,7 @@ parse_function_type_die(
         if (tag2 == DW_TAG_unspecified_parameters) {
             info[idx++] = tc_get_anyseq_type(cntx);
         } else {
-            if ((r = parse_type(log_f, path, dbg, die2, cntx, dm, &par_type_info)) < 0) goto done;
+            if ((r = parse_type(log_f, path, dbg, die2, cntx, dm, &par_type_info, cur)) < 0) goto done;
             if (!r || !par_type_info) par_type_info = tc_get_i0_type(cntx);
             info[idx++] = par_type_info;
         }
@@ -1230,7 +1279,8 @@ parse_die_type(
         DieMap *dm,
         int tag,
         const unsigned char *type_str,
-        parse_kind_func_t parse_func)
+        parse_kind_func_t parse_func,
+        ParseDieStack *cur)
 {
     int retval = -1;
     TypeInfo *ti = NULL;
@@ -1246,7 +1296,7 @@ parse_die_type(
         goto done;
     }
 
-    if (parse_func(log_f, path, dbg, die, cntx, dm, tag, &ti) < 0) goto done;
+    if (parse_func(log_f, path, dbg, die, cntx, dm, tag, &ti, cur) < 0) goto done;
 
     /*
     fprintf(log_f, "Note: %s type %llu mapped to %016llx\n",
@@ -1291,9 +1341,12 @@ parse_die(
         Dwarf_Debug dbg,
         Dwarf_Die die,
         TypeContext *cntx,
-        DieMap *dm)
+        DieMap *dm,
+        ParseDieStack *up)
 {
     int retval = -1;
+    Dwarf_Off my_offset = s_dwarf_dieoffset(die);
+    ParseDieStack cur = { up, my_offset };
 
     Dwarf_Half dtag = 0;
     if (s_dwarf_tag(log_f, path, die, &dtag) < 0) goto done;
@@ -1302,7 +1355,7 @@ parse_die(
         if (!top_die_table[i].kind) return 0;
         return parse_die_type(log_f, path, dbg, die, cntx, dm,
                               top_die_table[i].kind, top_die_table[i].comment,
-                              top_die_table[i].handler);
+                              top_die_table[i].handler, &cur);
     }
 
     dump_die(log_f, dbg, die);
@@ -1330,9 +1383,9 @@ parse_cu(FILE *log_f, const unsigned char *path, Dwarf_Debug dbg, TypeContext *c
         goto done;
     }
     if (s_dwarf_child(log_f, path, die, &die) <= 0) goto done;
-    if (parse_die(log_f, path, dbg, die, cntx, dm) < 0) goto done;
+    if (parse_die(log_f, path, dbg, die, cntx, dm, NULL) < 0) goto done;
     while (s_dwarf_sibling(log_f, path, dbg, die, &die) > 0) {
-        if (parse_die(log_f, path, dbg, die, cntx, dm) < 0) goto done;
+        if (parse_die(log_f, path, dbg, die, cntx, dm, NULL) < 0) goto done;
     }
     retval = 0;
 
