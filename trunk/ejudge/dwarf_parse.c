@@ -505,16 +505,17 @@ typedef struct ParseDieStack
 {
     struct ParseDieStack *up;
     Dwarf_Off offset;
+    TypeInfo *type_info;
 } ParseDieStack;
 
-static int
+static ParseDieStack *
 die_stack_lookup(ParseDieStack *elem, Dwarf_Off offset)
 {
     for (; elem; elem = elem->up) {
         if (elem->offset == offset)
-            return 1;
+            return elem;
     }
-    return 0;
+    return NULL;
 }
 
 typedef int (*parse_kind_func_t)(
@@ -1013,13 +1014,14 @@ parse_struct_type_die(
     Dwarf_Die die2 = NULL;
     TypeInfo *ti = NULL;
     Dwarf_Off my_offset = s_dwarf_dieoffset(die);
-    int is_recursive = die_stack_lookup(cur->up, my_offset);
+    ParseDieStack *stk = die_stack_lookup(cur->up, my_offset);
 
-    fprintf(stderr, "is_recursive: %d\n", is_recursive);
-    fprintf(stderr, "struct die offset: %lld\n", (unsigned long long) my_offset);
-    if (is_recursive) {
-        dump_die(stderr, dbg, die);
+    if (stk && stk->type_info) {
+        if (p_info) *p_info = stk->type_info;
+        retval = 0;
+        goto done;
     }
+    ASSERT(!stk);
 
     /*
     fprintf(log_f, "Structure DIE\n");
@@ -1042,7 +1044,6 @@ parse_struct_type_die(
     if (r < 0) goto done;
     if (!r) {
         name_info = tc_get_ident(cntx, "");
-        ASSERT(!is_recursive);
     } else {
         char *name_str = NULL;
         if (s_dwarf_formstring(log_f, path, name_attr, &name_str) < 0) goto done;
@@ -1058,7 +1059,6 @@ parse_struct_type_die(
     Dwarf_Bool declaration_value = 0;
     if ((r = s_dwarf_attr(log_f, path, die, DW_AT_declaration, &declaration_attr)) < 0) goto done;
     if (declaration_attr) {
-        ASSERT(!is_recursive);
         if (s_dwarf_formflag(log_f, path, declaration_attr, &declaration_value) < 0) goto done;
         if (declaration_value) {
             ASSERT(name_info->s.len > 0);
@@ -1098,15 +1098,10 @@ parse_struct_type_die(
     if (name_info->s.len > 0) {
         // named structure
         ti = tc_find_struct_type(cntx, tag, name_info);
-        if (ti != NULL) {
-            if (ti->n.info[2] == tc_get_i1(cntx, 1) || is_recursive) {
-                *p_info = ti;
-                retval = 0;
-                goto done;
-            }
-        } else {
-            ti = tc_create_struct_type(cntx, tag, size_info, name_info, tc_get_i1(cntx, 1));
-        }
+        ASSERT(ti);
+        *p_info = ti;
+        retval = 0;
+        goto done;
     }
 
     int count = 0;
@@ -1346,7 +1341,7 @@ parse_die(
 {
     int retval = -1;
     Dwarf_Off my_offset = s_dwarf_dieoffset(die);
-    ParseDieStack cur = { up, my_offset };
+    ParseDieStack cur = { up, my_offset, NULL };
 
     Dwarf_Half dtag = 0;
     if (s_dwarf_tag(log_f, path, die, &dtag) < 0) goto done;
@@ -1366,15 +1361,222 @@ done:
 }
 
 static int
+parse_die_pass_0(
+        FILE *log_f,
+        const unsigned char *path,
+        Dwarf_Debug dbg,
+        Dwarf_Die die,
+        TypeContext *cntx,
+        DieMap *dm)
+{
+    int retval = -1;
+    Dwarf_Half tag = 0;
+    int kind;
+    int r;
+
+    if (s_dwarf_tag(log_f, path, die, &tag) < 0) goto done;
+    if (tag == DW_TAG_structure_type) {
+        kind = NODE_STRUCT_TYPE;
+    } else if (tag == DW_TAG_union_type) {
+        kind = NODE_UNION_TYPE;
+    } else {
+        retval = 0;
+        goto done;
+    }
+
+    Dwarf_Attribute name_attr = NULL;
+    TypeInfo *name_info = NULL;
+    if ((r = s_dwarf_attr(log_f, path, die, DW_AT_name, &name_attr)) < 0) goto done;
+    if (!r) {
+        // anonymous structure/union
+        retval = 0;
+        goto done;
+    }
+    char *name_str = NULL;
+    if (s_dwarf_formstring(log_f, path, name_attr, &name_str) < 0) goto done;
+    name_info = tc_get_ident(cntx, name_str);
+
+    Dwarf_Attribute size_attr = NULL;
+    Dwarf_Unsigned size_value = 0;
+    TypeInfo *size_info = NULL;
+    if ((r = s_dwarf_attr(log_f, path, die, DW_AT_byte_size, &size_attr)) < 0) goto done;
+    if (r > 0 && size_attr) {
+        if (s_dwarf_formudata(log_f, path, size_attr, &size_value) < 0) goto done;
+        size_info = tc_get_u32(cntx, (unsigned) size_value);
+    } else {
+        size_info = tc_get_u32(cntx, 0);
+    }
+
+    TypeInfo *ti = tc_find_struct_type(cntx, kind, name_info);
+    if (ti != NULL) {
+        // already registered
+        if (!ti->n.info[0]->v.value.v.ct_uint && size_info->v.value.v.ct_uint > 0) {
+            ti->n.info[0] = size_info;
+        }
+        retval = 0;
+        goto done;
+    }
+
+    fprintf(stderr, "Create structure: %s\n", name_str);
+    ti = tc_create_struct_type(cntx, kind, size_info, name_info, tc_get_i1(cntx, 0));
+    fprintf(stderr, "%p\n", ti);
+    tc_print(stderr, ti);
+    fprintf(stderr, "\n");
+    retval = 0;
+
+done:
+    return retval;
+}
+
+static int
+parse_die_pass_2(
+        FILE *log_f,
+        const unsigned char *path,
+        Dwarf_Debug dbg,
+        Dwarf_Die die,
+        TypeContext *cntx,
+        DieMap *dm)
+{
+    int retval = -1;
+    int kind;
+    Dwarf_Half tag = 0;
+    int r;
+
+    if (s_dwarf_tag(log_f, path, die, &tag) < 0) goto done;
+    if (tag == DW_TAG_structure_type) {
+        kind = NODE_STRUCT_TYPE;
+    } else if (tag == DW_TAG_union_type) {
+        kind = NODE_UNION_TYPE;
+    } else {
+        retval = 0;
+        goto done;
+    }
+
+    Dwarf_Attribute name_attr = NULL;
+    TypeInfo *name_info = NULL;
+    if ((r = s_dwarf_attr(log_f, path, die, DW_AT_name, &name_attr)) < 0) goto done;
+    if (!r) {
+        // anonymous structure/union
+        retval = 0;
+        goto done;
+    }
+    char *name_str = NULL;
+    if (s_dwarf_formstring(log_f, path, name_attr, &name_str) < 0) goto done;
+    name_info = tc_get_ident(cntx, name_str);
+
+    TypeInfo *ti = tc_find_struct_type(cntx, kind, name_info);
+    ASSERT(ti);
+    if (ti->n.info[2] == tc_get_i1(cntx, 1)) {
+        // structure already completed
+        retval = 0;
+        goto done;
+    }
+
+    Dwarf_Attribute declaration_attr = NULL;
+    Dwarf_Bool declaration_value = 0;
+    if ((r = s_dwarf_attr(log_f, path, die, DW_AT_declaration, &declaration_attr)) < 0) goto done;
+    if (declaration_attr) {
+        if (s_dwarf_formflag(log_f, path, declaration_attr, &declaration_value) < 0) goto done;
+        if (declaration_value) {
+            retval = 0;
+            goto done;
+        }
+    }
+
+    Dwarf_Attribute size_attr = NULL;
+    Dwarf_Unsigned size_value = 0;
+    if (s_dwarf_attr_2(log_f, path, die, DW_AT_byte_size, &size_attr) <= 0) goto done;
+    if (s_dwarf_formudata(log_f, path, size_attr, &size_value) < 0) goto done;
+    TypeInfo *size_info = tc_get_u32(cntx, (unsigned) size_value);
+
+    // set "complete" flag
+    ti->n.info[2] = tc_get_i1(cntx, 1);
+
+    int count = 0;
+    Dwarf_Die die2 = NULL;
+    if ((r = s_dwarf_child(log_f, path, die, &die2)) < 0) goto done;
+    while (r > 0) {
+        ++count;
+        Dwarf_Half tag2 = 0;
+        if (s_dwarf_tag(log_f, path, die2, &tag2) < 0) goto done;
+        if (tag2 != DW_TAG_member) {
+            fprintf(log_f, "%s: DW_TAG_member expected\n", path);
+            goto done;
+        }
+        if ((r = s_dwarf_sibling(log_f, path, dbg, die2, &die2)) < 0) goto done;
+    }
+    if (count <= 0) {
+        // empty structure
+        retval = 0;
+        goto done;
+    }
+
+    fprintf(stderr, "Processing structure: %s\n", name_info->s.str);
+
+    TypeInfo **info = alloca(sizeof(info[0]) * (count + 4));
+    memset(info, 0, sizeof(info[0]) * (count + 4));
+    int idx = 0;
+    info[idx++] = size_info;
+    info[idx++] = name_info;
+    info[idx++] = tc_get_i1(cntx, 1);
+
+    if ((r = s_dwarf_child(log_f, path, die, &die2)) < 0) goto done;
+    while (r > 0) {
+        Dwarf_Attribute field_name_attr = NULL;
+        char *field_name_str = NULL;
+        if ((r = s_dwarf_attr(log_f, path, die2, DW_AT_name, &field_name_attr)) < 0) goto done;
+        if (r > 0) {
+            if (s_dwarf_formstring(log_f, path, field_name_attr, &field_name_str) < 0) goto done;
+        } else {
+            field_name_str = "";
+        }
+        TypeInfo *field_name_info = tc_get_ident(cntx, field_name_str);
+
+        Dwarf_Attribute field_type_attr = NULL;
+        Dwarf_Off field_type_off = 0;
+        Dwarf_Die field_type_die = NULL;
+        TypeInfo *field_type_info = NULL;
+        if (s_dwarf_attr_2(log_f, path, die2, DW_AT_type, &field_type_attr) <= 0) goto done;
+        if (s_dwarf_global_formref(log_f, path, field_type_attr, &field_type_off) < 0) goto done;
+        if (s_dwarf_offdie(log_f, path, dbg, field_type_off, &field_type_die) < 0) goto done;
+        if (parse_die(log_f, path, dbg, field_type_die, cntx, dm, NULL) < 0) goto done;
+        if (die_map_get_2(log_f, path, dm, field_type_die, &field_type_info, NULL) < 0) goto done;
+        if (!field_type_info) field_type_info = tc_get_i0_type(cntx);
+
+        Dwarf_Attribute location_attr = NULL;
+        Dwarf_Unsigned location_value = 0;
+        TypeInfo *location_info = NULL;
+        if ((r = s_dwarf_attr(log_f, path, die2, DW_AT_data_member_location, &location_attr)) < 0) goto done;
+        if (location_attr != NULL) {
+            if (s_dwarf_attr_2(log_f, path, die2, DW_AT_data_member_location, &location_attr) <= 0) goto done;
+            if (s_dwarf_formudata(log_f, path, location_attr, &location_value) < 0) goto done;
+            location_info = tc_get_u32(cntx, (unsigned) location_value);
+        } else {
+            location_info = tc_get_u32(cntx, 0);
+        }
+
+        info[idx++] = tc_get_field(cntx, location_info, field_type_info, field_name_info);
+
+        if ((r = s_dwarf_sibling(log_f, path, dbg, die2, &die2)) < 0) goto done;
+    }
+
+    type_info_set_info(ti, info);
+    retval = 0;
+
+done:
+    return retval;
+}
+
+static int
 parse_cu(FILE *log_f, const unsigned char *path, Dwarf_Debug dbg, TypeContext *cntx)
 {
-    Dwarf_Die die = NULL;
+    Dwarf_Die cu_die = NULL;
     int retval = -1;
     DieMap *dm = die_map_init();
 
-    if (s_dwarf_sibling(log_f, path, dbg, NULL, &die) <= 0) goto done;
+    if (s_dwarf_sibling(log_f, path, dbg, NULL, &cu_die) <= 0) goto done;
     Dwarf_Half dtag = 0;
-    if (s_dwarf_tag(log_f, path, die, &dtag) < 0) goto done;
+    if (s_dwarf_tag(log_f, path, cu_die, &dtag) < 0) goto done;
     if (dtag != DW_TAG_compile_unit) {
         const char *s = NULL;
         dwarf_get_TAG_name(dtag, &s);
@@ -1382,11 +1584,28 @@ parse_cu(FILE *log_f, const unsigned char *path, Dwarf_Debug dbg, TypeContext *c
                 path, s);
         goto done;
     }
-    if (s_dwarf_child(log_f, path, die, &die) <= 0) goto done;
+
+    // first pass: create named structure/union typeinfo without fields
+    Dwarf_Die die = NULL;
+    if (s_dwarf_child(log_f, path, cu_die, &die) <= 0) goto done;
+    if (parse_die_pass_0(log_f, path, dbg, die, cntx, dm) < 0) goto done;
+    while (s_dwarf_sibling(log_f, path, dbg, die, &die) > 0) {
+        if (parse_die_pass_0(log_f, path, dbg, die, cntx, dm) < 0) goto done;
+    }
+
+    if (s_dwarf_child(log_f, path, cu_die, &die) <= 0) goto done;
     if (parse_die(log_f, path, dbg, die, cntx, dm, NULL) < 0) goto done;
     while (s_dwarf_sibling(log_f, path, dbg, die, &die) > 0) {
         if (parse_die(log_f, path, dbg, die, cntx, dm, NULL) < 0) goto done;
     }
+
+    // third pass: finalize named structure/union typeinfo
+    if (s_dwarf_child(log_f, path, cu_die, &die) <= 0) goto done;
+    if (parse_die_pass_2(log_f, path, dbg, die, cntx, dm) < 0) goto done;
+    while (s_dwarf_sibling(log_f, path, dbg, die, &die) > 0) {
+        if (parse_die_pass_2(log_f, path, dbg, die, cntx, dm) < 0) goto done;
+    }
+
     retval = 0;
 
 done:
