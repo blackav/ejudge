@@ -6,6 +6,7 @@
 #include "mischtml.h"
 #include "misctext.h"
 #include "l10n.h"
+#include "xml_utils.h"
 
 #include "reuse/xalloc.h"
 
@@ -46,7 +47,7 @@ static struct server_framework_job *job_first, *job_last;
   const unsigned char *filter_expr = 0;
   const struct section_problem_data *prob = 0;
   int x;
-  struct html_armor_buffer ab;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   unsigned char bb[1024];
   int variant;
   path_t variant_stmt_file;
@@ -67,8 +68,8 @@ static struct server_framework_job *job_first, *job_last;
             phr->name_arm, phr->contest_id, extra->contest_arm, _("Main page"));
 %>
 <script language="javascript">
-    var self_url='<s:v value="phr->self_url" />';
-    var SID='<%= $fmt("%016llx", phr.session_id) %>';
+    var self_url='<s:v escape="false" value="phr->self_url" />';
+    var SID='<s:v value="phr->session_id" />';
 </script>
 <ul>
     <li><s:a ac="view-users"><s:tr>View regular users</s:tr></s:a></li>
@@ -102,7 +103,7 @@ static struct server_framework_job *job_first, *job_last;
         <li><s:a ac="admin-contest-settings"><s:tr>Contest settings</s:tr></s:a></li>
     <% } %>
     <% if (cnts->problems_url) { %>
-        <li><a href="<%= cnts->problems_url %>" target="_blank"><s:tr>Problems</s:tr></a>
+        <li><a href='<s:v escape="false" value="cnts->problems_url" />' target="_blank"><s:tr>Problems</s:tr></a>
     <% } %>
     <li><s:a ac="priv-submit-page"><s:tr>Submit a solution</s:tr></s:a></li>
     <li><s:a ac="logout"><s:tr>Logout</s:tr></s:a></li>
@@ -129,7 +130,7 @@ static struct server_framework_job *job_first, *job_last;
   }
 %>
 
-<p><big><b><%= s %></b></big></p>
+<p><big><b><s:v escape="false" value="s" /></b></big></p>
 
 <%  if (global->score_system == SCORE_OLYMPIAD && !global->is_virtual) {
     if (cs->accepting_mode)
@@ -139,7 +140,7 @@ static struct server_framework_job *job_first, *job_last;
     else
       s = _("Participants' solutions are judged");
 %>
-<p><big><b><%= s %></b></big></p>
+<p><big><b><s:v escape="false" value="s" /></b></big></p>
 <%  } %>
 
 <%  if (cs->upsolving_mode) { %>
@@ -181,13 +182,13 @@ static struct server_framework_job *job_first, *job_last;
     if (pa->time + 65 >= cs->current_time) online_users++;
   }
 %>
-<p><big><b><s:tr>On-line users in this contest</s:tr>: <%= online_users %></b></big></p>
+<p><big><b><s:tr>On-line users in this contest</s:tr>: <s:v value="online_users" /></b></big></p>
 <%  if (cs->max_online_count > 0) { %>
-<p><big><b><s:tr>Max number of users was</s:tr>: <%= cs->max_online_count %>, <%= xml_unparse_date(cs->max_online_time) %></b></big></p>
+<p><big><b><s:tr>Max number of users was</s:tr>: <s:v value="cs->max_online_count"/>, <s:v value="cs->max_online_time" /></b></big></p>
 <%  } %>
 
 <%  if (job_count > 0) { %>
-<p><b><%= "Background jobs" %>: <%= job_count %></b></p>
+<p><b><s:tr>Background jobs</s:tr>: <s:v value="job_count"/></b></p>
 <table class="b1">
 <%    for (struct server_framework_job *job = job_first; job; job = job->next) { %>
 <tr><td class="b1"><%= job->id %></td><td class="b1"><%= xml_unparse_date(job->start_time) %></td><td  class="b1"><%= job->title %></td><td class="b1">
@@ -614,3 +615,7 @@ static struct server_framework_job *job_first, *job_last;
 %>
 
 <div class="dotted"><p<%= cnts->team_par_style %>><s:tr>Page generation time</s:tr>: <%= $fmt("%lld",tdiff / 1000) %> <s:tr>msec</s:tr></p></div>
+
+<%
+  html_armor_free(&ab);
+%>
