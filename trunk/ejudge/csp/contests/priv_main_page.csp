@@ -7,6 +7,7 @@
 #include "misctext.h"
 #include "l10n.h"
 #include "xml_utils.h"
+#include "runlog.h"
 
 #include "reuse/xalloc.h"
 
@@ -29,6 +30,7 @@ static struct server_framework_job *job_first, *job_last;
   int need_examiners = 0;
   time_t start_time = 0;
   time_t stop_time = 0;
+  time_t sched_time = 0;
   time_t fog_start_time = 0;
   time_t finish_time = 0;
   serve_state_t cs = extra->serve_state;
@@ -49,19 +51,57 @@ static struct server_framework_job *job_first, *job_last;
   int x;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   unsigned char bb[1024];
-  int variant;
+  int variant = 0;
   path_t variant_stmt_file;
   struct watched_file *pw = 0;
   const unsigned char *pw_path = 0;
   int skip_start_form = 0;
   const unsigned char *alternatives = 0;
-  int y;
+  int y, n;
   const unsigned char *filter_first_clar_str = 0;
   const unsigned char *filter_last_clar_str = 0;
   long long tdiff = 0;
   unsigned char hbuf[1024];
+  struct server_framework_job *job;
+  time_t local_server_start_time = server_start_time; // until support for globals is in place
 %>
 <%
+  if (ns_cgi_param(phr, "filter_expr", &s) > 0) filter_expr = s;
+
+  ns_cgi_param_int_opt_2(phr, "filter_first_run", &filter_first_run, &filter_first_run_set);
+  ns_cgi_param_int_opt_2(phr, "filter_last_run", &filter_last_run, &filter_last_run_set);
+
+  if (ns_cgi_param(phr, "filter_first_clar", &s) > 0 && s)
+    filter_first_clar_str = s;
+  if (ns_cgi_param(phr, "filter_last_clar", &s) > 0 && s)
+    filter_last_clar_str = s;
+  if (ns_cgi_param(phr, "filter_mode_clar", &s) > 0
+      && sscanf(s, "%d%n", &x, &n) == 1 && !s[n] && x >= 1 && x <= 2)
+    filter_mode_clar = x;
+  if (ns_cgi_param(phr, "problem", &s) > 0) {
+    if (sscanf(s, "%d_%d%n", &x, &y, &n) == 2 && !s[n]
+        && x > 0 && x <= cs->max_prob && cs->probs[x]
+        && cs->probs[x]->variant_num > 0 && y > 0
+        && y <= cs->probs[x]->variant_num) {
+      prob = cs->probs[x];
+      variant = y;
+    } else if (sscanf(s, "%d%n", &x, &n) == 1 && !s[n]
+               && x > 0 && x <= cs->max_prob && cs->probs[x]
+               && cs->probs[x]->variant_num <= 0) {
+      prob = cs->probs[x];
+    }
+  }
+
+  run_get_times(cs->runlog_state, &start_time, &sched_time, &duration,
+                &stop_time, &finish_time);
+  if (duration > 0 && start_time && !stop_time && global->board_fog_time > 0)
+    fog_start_time = start_time + duration - global->board_fog_time;
+  if (fog_start_time < 0) fog_start_time = 0;
+
+  for (i = 1; i <= cs->max_prob; i++)
+    if (cs->probs[i] && cs->probs[i]->manual_checking)
+      need_examiners = 1;
+
   ns_header(out_f, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
             phr->client_key,
             "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role),
@@ -76,9 +116,11 @@ static struct server_framework_job *job_first, *job_last;
     <li><s:a ac="priv-users-view"><s:tr>View privileged users</s:tr></s:a></li>
     <li><s:a ac="view-online-users"><s:tr>View who is currently online</s:tr></s:a></li>
     <li><s:a ac="view-exam-info"><s:tr>View examination information</s:tr></s:a></li>
+    <% if (need_examiners) { %>
     <s:if vt="need_examiners">
         <li><s:a ac="examiners-page"><s:tr>Examiners assignments</s:tr></s:a></li>
     </s:if>
+    <% } %>
     <li><s:a ac="standings"><s:tr>View standings</s:tr></s:a></li>
     <% if (phr->role >= USER_ROLE_JUDGE && opcaps_check(phr->caps, OPCAP_EDIT_PASSWD) >= 0) { %>
         <li><s:a ac="view-reg-pwds"><s:tr>View registration passwords</s:tr></s:a></li>
@@ -190,12 +232,12 @@ static struct server_framework_job *job_first, *job_last;
 <%  if (job_count > 0) { %>
 <p><b><s:tr>Background jobs</s:tr>: <s:v value="job_count"/></b></p>
 <table class="b1">
-<%    for (struct server_framework_job *job = job_first; job; job = job->next) { %>
-<tr><td class="b1"><%= job->id %></td><td class="b1"><%= xml_unparse_date(job->start_time) %></td><td  class="b1"><%= job->title %></td><td class="b1">
+<%    for (job = job_first; job; job = job->next) { %>
+<tr><td class="b1"><s:v value="job->id" /></td><td class="b1"><s:v value="job->start_time" /></td><td  class="b1"><s:v escape="false" value="job->title" /></td><td class="b1">
 <%      if (job->vt->get_status) {
         unsigned char *str = job->vt->get_status(job);
         if (str && *str) { %>
-<%= str %>
+<s:v escape="false" value="s" />
 <%        } else { %>
 &nbsp;
 <%        }
@@ -211,11 +253,11 @@ static struct server_framework_job *job_first, *job_last;
 <%  if (phr->role == USER_ROLE_ADMIN && opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST) >= 0) { %>
 <%    html_start_form(out_f, 1, phr->self_url, phr->hidden_vars); %>
 <table border="0">
-<tr><td><s:tr>Server time</s:tr>:</td><td><%= ctime(&cs->current_time) %></td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td><s:tr>Server time</s:tr>:</td><td><s:v value="cs->current_time" /></td><td>&nbsp;</td><td>&nbsp;</td></tr>
 <%    if (start_time <= 0) { %>
 <tr><td colspan="2"><b><s:tr>Contest is not started</s:tr></b></td><td>&nbsp;</td><td><s:submit ac="start-contest" /></td></tr>
 <%    } else { %>
-<tr><td><s:tr>Contest start time</s:tr>:</td><td><%= ctime(&start_time) %></td><td>&nbsp;</td>
+<tr><td><s:tr>Contest start time</s:tr>:</td><td><s:v value="start_time" /></td><td>&nbsp;</td>
 <%      if (stop_time <= 0) { %>
 <td><s:submit ac="stop-contest" /></td></tr>
 <%      } else if (global->enable_continue
@@ -225,7 +267,9 @@ static struct server_framework_job *job_first, *job_last;
 <%    } %>
 
 <%    if (!global->is_virtual && start_time <= 0) { %>
-<tr><td><s:tr>Planned start time</s:tr>:</td><td><%= sched_time <= 0?_("Not set"):ctime(&sched_time) %></td><td><input type="text" name="sched_time" size="16"/></td><td><s:submit ac="schedule" /></td></tr>
+<tr><td><s:tr>Planned start time</s:tr>:</td><td>
+<% if (sched_time <= 0) { %><s:tr>Not set</s:tr><% } else { %><s:v value="sched_time" /><% } %>
+</td><td><input type="text" name="sched_time" size="16"/></td><td><s:submit ac="schedule" /></td></tr>
 <%    } %>
 
 <%
@@ -253,33 +297,33 @@ static struct server_framework_job *job_first, *job_last;
 <%    if (!global->is_virtual) {
       if (start_time > 0 && stop_time <= 0 && duration > 0) {
         tmpt = start_time + duration; %>
-<tr><td><s:tr>Scheduled end time</s:tr>:</td><td><%= ctime(&tmpt) %></td></tr>
+<tr><td><s:tr>Scheduled end time</s:tr>:</td><td><s:v value="tmpt" /></td></tr>
 <%      } else if (start_time > 0 && stop_time <= 0 && duration <= 0
                  && finish_time > 0) { %>
-<tr><td><s:tr>Scheduled end time</s:tr>:</td><td><%= ctime(&finish_time) %></td><td><input type="text" name="finish_time" size="16" /></td><td><s:submit ac="change-finish-time" /></td></tr>
+<tr><td><s:tr>Scheduled end time</s:tr>:</td><td><s:v value="finish_time" /></td><td><input type="text" name="finish_time" size="16" /></td><td><s:submit ac="change-finish-time" /></td></tr>
 <%      } else if (stop_time) { %>
-<tr><td><s:tr>End time</s:tr>:</td><td><%= ctime(&stop_time) %></td></tr>
+<tr><td><s:tr>End time</s:tr>:</td><td><s:v value="stop_time" /></td></tr>
 <% } %>
 <%      if (start_time > 0 && stop_time <= 0 && fog_start_time > 0) { %>
-<tr><td><s:tr>Standings freeze time</s:tr>:</td><td><%= ctime(&fog_start_time) %></td></tr>
+<tr><td><s:tr>Standings freeze time</s:tr>:</td><td><s:v value="fog_start_time" /></td></tr>
 <%      } else if (stop_time > 0 && duration > 0 && global->board_fog_time > 0
                  && global->board_unfog_time > 0 && !cs->standings_updated
                  && cs->current_time < stop_time + global->board_unfog_time) {
         tmpt = stop_time + global->board_unfog_time; %>
-<tr><td><s:tr>Standings unfreeze time</s:tr>:</td><td><%= ctime(&tmpt) %></td></tr>
+<tr><td><s:tr>Standings unfreeze time</s:tr>:</td><td><s:v value="tmpt" /></td></tr>
 <%    } %>
 
 <%      if (start_time > 0 && stop_time <= 0 && duration > 0) {
         duration_str(0, cs->current_time, start_time, duration_buf, 0); %>
-<tr><td><s:tr>Elapsed time</s:tr>:</td><td><%= duration_buf %></td></tr>
+<tr><td><s:tr>Elapsed time</s:tr>:</td><td><s:v escape="false" value="duration_buf" /></td></tr>
 <%        duration_str(0, start_time + duration - cs->current_time, 0,
                      duration_buf, 0); %>
-<tr><td><s:tr>Remaining time</s:tr>:</td><td><%= duration_buf %></td></tr>
+<tr><td><s:tr>Remaining time</s:tr>:</td><td><s:v escape="false" value="duration_buf" /></td></tr>
 <%
       }
     } %>
-<tr><td><s:tr>Contest load time</s:tr></td><td><%= ctime(&cs->load_time) %></td></tr>
-<tr><td><s:tr>Server start time</s:tr></td><td><%= ctime(&server_start_time) %></td></tr>
+<tr><td><s:tr>Contest load time</s:tr></td><td><s:v value="cs->load_time" /></td></tr>
+<tr><td><s:tr>Server start time</s:tr></td><td><s:v value="local_server_start_time" /></td></tr>
 </table></form>
 
 <hr />
@@ -289,20 +333,20 @@ static struct server_framework_job *job_first, *job_last;
 <s:submit ac="reset-1" />
 <%    action = NEW_SRV_ACTION_SUSPEND;
     if (cs->clients_suspended) action = NEW_SRV_ACTION_RESUME; %>
-<%= BUTTON(action) %>
+<s:submit action="action" />
 <%    action = NEW_SRV_ACTION_TEST_SUSPEND;
     if (cs->testing_suspended) action = NEW_SRV_ACTION_TEST_RESUME; %>
-<%= BUTTON(action) %>
+<s:submit action="action" />
 <%
     if (global->enable_printing) {
       action = NEW_SRV_ACTION_PRINT_SUSPEND;
       if (cs->printing_suspended) action = NEW_SRV_ACTION_PRINT_RESUME; %>
-<%= BUTTON(action) %>
+<s:submit action="action" />
 <%    } %>
 <%    if (global->score_system == SCORE_OLYMPIAD && !global->is_virtual) {
       action = NEW_SRV_ACTION_SET_JUDGING_MODE;
       if (!cs->accepting_mode) action = NEW_SRV_ACTION_SET_ACCEPTING_MODE; %>
-<%= BUTTON(action) %>
+<s:submit action="action" />
 <%    } %>
 <%    if (global->score_system == SCORE_OLYMPIAD
         && ((!global->is_virtual && !cs->accepting_mode)
@@ -310,7 +354,7 @@ static struct server_framework_job *job_first, *job_last;
       action = NEW_SRV_ACTION_SET_TESTING_FINISHED_FLAG;
       if (cs->testing_finished)
         action = NEW_SRV_ACTION_CLEAR_TESTING_FINISHED_FLAG; %>
-<%= BUTTON(action) %>
+<s:submit action="action" />
 <%    } %>
 <%    if (!cnts->disable_team_password) { %>
 <s:submit ac="generate-passwords-1" />
@@ -322,15 +366,17 @@ static struct server_framework_job *job_first, *job_last;
 </form>
 <%  } else { %>
 <table border="0">
-<tr><td><s:tr>Server time</s:tr>:</td><td><%= ctime(&cs->current_time) %></td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td><s:tr>Server time</s:tr>:</td><td><s:v value="cs->current_time" /></td><td>&nbsp;</td><td>&nbsp;</td></tr>
 <%    if (start_time <= 0) { %>
 <tr><td colspan="2"><b><s:tr>Contest is not started</s:tr></b></td></tr>
 <%    } else { %>
-<tr><td><s:tr>Contest start time</s:tr>:</td><td><%= ctime(&start_time) %></td></tr>
+<tr><td><s:tr>Contest start time</s:tr>:</td><td><s:v value="start_time" /></td></tr>
 <%    } %>
 
 <%    if (!global->is_virtual && start_time <= 0) { %>
-<tr><td><s:tr>Planned start time</s:tr>:</td><td><%= sched_time <= 0?_("Not set"):ctime(&sched_time) %></td></tr>
+<tr><td><s:tr>Planned start time</s:tr>:</td><td>
+<% if (sched_time <= 0) { %><s:tr>Not set</s:tr><% } else { %><s:v value="sched_time" /><% } %>
+</td></tr>
 <%    } %>
 <%
     if (finish_time <= 0) {
@@ -340,35 +386,35 @@ static struct server_framework_job *job_first, *job_last;
         snprintf(duration_buf, sizeof(duration_buf), "%s", _("Unlimited"));
       }
 %>
-<tr><td><s:tr>Duration</s:tr>:</td><td><%= duration_buf %></td></tr>
+<tr><td><s:tr>Duration</s:tr>:</td><td><s:v escape="false" value="duration_buf" /></td></tr>
 <%    } %>
 
 <%    if (!global->is_virtual) {
       if (start_time > 0 && stop_time <= 0 && duration > 0) {
         tmpt = start_time + duration; %>
-<tr><td><s:tr>Scheduled end time</s:tr>:</td><td><%= ctime(&tmpt) %></td></tr>
+<tr><td><s:tr>Scheduled end time</s:tr>:</td><td><s:v value="tmpt" /></td></tr>
 <%      } else if (start_time > 0 && stop_time <= 0 && duration <= 0
                  && finish_time > 0) { %>
-<tr><td><s:tr>Scheduled end time</s:tr>:</td><td><%= ctime(&finish_time) %></td></tr>
+<tr><td><s:tr>Scheduled end time</s:tr>:</td><td><s:v value="finish_time" /></td></tr>
 <%      } else if (stop_time) { %>
-<tr><td><s:tr>End time</s:tr>:</td><td><%= ctime(&stop_time) %></td></tr>
+<tr><td><s:tr>End time</s:tr>:</td><td><s:v value="stop_time" /></td></tr>
 <%      } %>
 
 <%      if (start_time > 0 && stop_time <= 0 && fog_start_time > 0) { %>
-<tr><td><s:tr>Standings freeze time</s:tr>:</td><td><%= ctime(&fog_start_time) %></td></tr>
+<tr><td><s:tr>Standings freeze time</s:tr>:</td><td><s:v value="fog_start_time" /></td></tr>
 <%      } else if (stop_time > 0 && duration > 0 && global->board_fog_time > 0
                  && global->board_unfog_time > 0 && !cs->standings_updated
                  && cs->current_time < stop_time + global->board_unfog_time) {
         tmpt = stop_time + global->board_unfog_time; %>
-<tr><td><s:tr>Standings unfreeze time</s:tr>:</td><td><%= ctime(&tmpt) %></td></tr>
+<tr><td><s:tr>Standings unfreeze time</s:tr>:</td><td><s:v value="tmpt" /></td></tr>
 <%      } %>
 
 <%      if (start_time > 0 && stop_time <= 0 && duration > 0) {
         duration_str(0, cs->current_time, start_time, duration_buf, 0); %>
-<tr><td><s:tr>Elapsed time</s:tr>:</td><td><%= duration_buf %></td></tr>
+<tr><td><s:tr>Elapsed time</s:tr>:</td><td><s:v escape="false" value="duration_buf" /></td></tr>
 <%        duration_str(0, start_time + duration - cs->current_time, 0,
                      duration_buf, 0); %>
-<tr><td><s:tr>Remaining time</s:tr></td><td><%= duration_buf %></td></tr>
+<tr><td><s:tr>Remaining time</s:tr></td><td><s:v escape="false" value="duration_buf" /></td></tr>
 <%      }
     } %>
 </table>
@@ -615,7 +661,7 @@ static struct server_framework_job *job_first, *job_last;
   tdiff -= phr->timestamp1.tv_usec;
 %>
 
-<div class="dotted"><p<s:v escape="false" value="cnts->team_par_style" />><s:tr>Page generation time</s:tr>: <s:v value="tdiff / 1000" /><%= $fmt("%lld",tdiff / 1000) %> <s:tr>msec</s:tr></p></div>
+<div class="dotted"><p<s:v escape="false" value="cnts->team_par_style" />><s:tr>Page generation time</s:tr>: <s:v value="tdiff / 1000" /> <s:tr>msec</s:tr></p></div>
 
 <%
   html_armor_free(&ab);

@@ -2876,6 +2876,49 @@ handle_a_close(
 }
 
 static int
+handle_form_open(
+        FILE *log_f,
+        TypeContext *cntx,
+        ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f)
+{
+    HtmlElement *elem = ps->el_stack->el;
+    const unsigned char *method = "post";
+    const unsigned char *enctype = NULL;
+
+    HtmlAttribute *at = html_element_find_attribute(elem, "method");
+    if (at && !strcmp(at->value, "get")) {
+        method = "get";
+    }
+    if (!strcmp(method, "post")) {
+        at = html_element_find_attribute(elem, "enctype");
+        if (at && !strcmp(at->value, "multipart/form-data")) {
+            enctype = at->value;
+        } else {
+            enctype = "application/x-www-form-urlencoded";
+        }
+    }
+
+    return 0;
+}
+
+static int
+handle_form_close(
+        FILE *log_f,
+        TypeContext *cntx,
+        ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f,
+        unsigned char *mem,
+        int beg_i,
+        int end_i)
+{
+    fprintf(prg_f, "fputs(\"</form>\", out_f);\n");
+    return 0;
+}
+
+static int
 handle_submit_open(
         FILE *log_f,
         TypeContext *cntx,
@@ -2909,7 +2952,10 @@ handle_submit_open(
             buf[i] = toupper(buf[i]);
         }
         fprintf(prg_f, "fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, %s, 0), out_f);\n", buf);
+    } else if ((at = html_element_find_attribute(elem, "action"))) {
+        fprintf(prg_f, "fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, (%s), 0), out_f);\n", at->value);
     }
+
     return 0;
 }
 
