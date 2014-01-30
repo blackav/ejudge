@@ -39,9 +39,14 @@
 #include <stddef.h>
 
 struct ProcessorState;
+struct ScannerState;
+
 static void
 parser_error_2(struct ProcessorState *ps, const char *format, ...)
     __attribute__((format(printf, 2, 3)));
+static void
+dump_token(struct ScannerState *ss)
+    __attribute__((unused));
 
 static unsigned char *progname = NULL;
 static void
@@ -679,6 +684,7 @@ make_value_info(ScannerState *ss, TypeContext *cntx)
         case C_ULLONG:
             return tc_get_u64(cntx, ss->cv.v.ct_ullint);
         default:
+            dump_token(ss);
             parser_error(ss, "value expected");
             return NULL;
         }
@@ -691,10 +697,12 @@ make_value_info(ScannerState *ss, TypeContext *cntx)
         case C_LDOUBLE:
             return tc_get_f80(cntx, ss->cv.v.ct_ldouble);
         default:
+            dump_token(ss);
             parser_error(ss, "value expected");
             return NULL;
         }
     default:
+        dump_token(ss);
         parser_error(ss, "value expected");
         return NULL;
     }
@@ -736,6 +744,7 @@ make_value_type(ScannerState *ss, TypeContext *cntx)
         case C_ULLONG:
             return tc_get_u64_type(cntx);
         default:
+            dump_token(ss);
             parser_error(ss, "value expected");
             return NULL;
         }
@@ -748,10 +757,12 @@ make_value_type(ScannerState *ss, TypeContext *cntx)
         case C_LDOUBLE:
             return tc_get_f80_type(cntx);
         default:
+            dump_token(ss);
             parser_error(ss, "value expected");
             return NULL;
         }
     default:
+        dump_token(ss);
         parser_error(ss, "value expected");
         return NULL;
     }
@@ -1406,12 +1417,10 @@ next_token(ScannerState *ss)
 
 static void
 dump_token(ScannerState *ss)
-    __attribute__((unused));
-static void
-dump_token(ScannerState *ss)
 {
     unsigned char buf[1024];
     fprintf(stderr, "%s: %d: <<%s>>\n", pos_str_2(buf, sizeof(buf), ss->ps, &ss->token_pos), ss->token, ss->raw);
+    abort();
 }
 
 #define IS_OPER(ss, c) ((ss)->token == TOK_OPER && (ss)->raw_len == 1 && (ss)->raw[0] == (c))
@@ -2171,8 +2180,8 @@ parse_expression_16(ScannerState *ss, TypeContext *cntx, TypeInfo **p_info)
             next_token(ss);
         return 0;
     } else if (ss->token == TOK_CHAR || ss->token == TOK_NUMBER || ss->token == TOK_FPNUMBER) {
-        next_token(ss);
         if (p_info) *p_info = make_value_type(ss, cntx);
+        next_token(ss);
         return 0;
     } else if (ss->token == TOK_IDENT) {
         TypeInfo *t = processor_state_find_in_scopes(ss->ps, tc_get_ident(cntx, ss->raw));
@@ -3039,6 +3048,21 @@ int_type_handler(
 }
 
 static void
+long_long_type_handler(
+        FILE *log_f,
+        TypeContext *cntx,
+        struct ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f,
+        const unsigned char *text,
+        const HtmlElement *elem,
+        TypeInfo *type_info)
+{
+    // handle "format"?
+    fprintf(prg_f, "fprintf(out_f, \"%%lld\", (long long)(%s));\n", text);
+}
+
+static void
 time_t_type_handler(
         FILE *log_f,
         TypeContext *cntx,
@@ -3073,9 +3097,14 @@ process_file(
                                      string_type_handler);
     processor_state_set_type_handler(ps, tc_get_ptr_type(cntx, tc_get_i8_type(cntx)),
                                      string_type_handler);
+    processor_state_set_type_handler(ps, tc_get_open_array_type(cntx, tc_get_u8_type(cntx)),
+                                     string_type_handler);
+    processor_state_set_type_handler(ps, tc_get_open_array_type(cntx, tc_get_i8_type(cntx)),
+                                     string_type_handler);
     processor_state_set_type_handler(ps, tc_find_typedef_type(cntx, tc_get_ident(cntx, "ej_cookie_t")),
                                      cookie_type_handler);
     processor_state_set_type_handler(ps, tc_get_i32_type(cntx), int_type_handler);
+    processor_state_set_type_handler(ps, tc_get_i64_type(cntx), long_long_type_handler);
     processor_state_set_type_handler(ps, tc_find_typedef_type(cntx, tc_get_ident(cntx, "time_t")),
                                      time_t_type_handler);
 

@@ -236,7 +236,7 @@ static struct server_framework_job *job_first, *job_last;
         snprintf(duration_buf, sizeof(duration_buf), "%s", _("Unlimited"));
       }
 %>
-<tr><td><s:tr>Duration</s:tr>:</td><td><%= duration_buf %></td>
+<tr><td><s:tr>Duration</s:tr>:</td><td><s:v escape="false" value="duration_buf" /></td>
 <%      if ((stop_time <= 0 || global->enable_continue) && !global->is_virtual) { %>
 <td><input type="text" name="dur" size="16"/></td><td><s:submit ac="change-duration" /></td></tr>
 <%      } else { %>
@@ -594,14 +594,15 @@ static struct server_framework_job *job_first, *job_last;
 <%
 #if CONF_HAS_LIBINTL - 0 == 1
   if (cs->global->enable_l10n) {
-    fprintf(out_f, "<hr><a name=\"chglanguage\"></a>< %s>%s</%s>\n",
-            cnts->team_head_style, _("Change language"),
-            cnts->team_head_style);
-    html_start_form(out_f, 1, phr->self_url, phr->hidden_vars);
-    fprintf(out_f, "<table><tr><td>%s</td><td>", _("Change language"));
-    l10n_html_locale_select(out_f, phr->locale_id);
-    fprintf(out_f, "</td><td>%s</td></tr></table></form>\n",
-            BUTTON(NEW_SRV_ACTION_CHANGE_LANGUAGE));
+%>
+
+<hr /><a name="chglanguage" /><<s:v escape="false" value="cnts->team_head_style" />><s:tr>Change language</s:tr></<s:v escape="false" value="cnts->team_head_style" />>
+
+<%    html_start_form(out_f, 1, phr->self_url, phr->hidden_vars); %>
+<table><tr><td><s:tr>Change language</s:tr></td><td>
+<%    l10n_html_locale_select(out_f, phr->locale_id); %>
+</td><td><s:submit ac="change-language" /></td></tr></table></form>
+<%
   }
 #endif /* CONF_HAS_LIBINTL */
 %>
@@ -614,7 +615,7 @@ static struct server_framework_job *job_first, *job_last;
   tdiff -= phr->timestamp1.tv_usec;
 %>
 
-<div class="dotted"><p<%= cnts->team_par_style %>><s:tr>Page generation time</s:tr>: <%= $fmt("%lld",tdiff / 1000) %> <s:tr>msec</s:tr></p></div>
+<div class="dotted"><p<s:v escape="false" value="cnts->team_par_style" />><s:tr>Page generation time</s:tr>: <s:v value="tdiff / 1000" /><%= $fmt("%lld",tdiff / 1000) %> <s:tr>msec</s:tr></p></div>
 
 <%
   html_armor_free(&ab);
