@@ -3,4 +3,5 @@
 // the testing directory.
 grant {
   permission java.io.FilePermission "./*", "read,write";
+  permission java.util.PropertyPermission "user.language", "read,write";
 };

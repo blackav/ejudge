@@ -1,6 +1,6 @@
 #!/bin/bash
 # $Id$
-# Copyright (c) 2005-2008 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2005-2014 Alexander Chernov <cher@ejudge.ru>
 
 # A helper script to start C# programs using the mono runtime.
 # Usage: runmono file
@@ -22,6 +22,9 @@ else
 fi
 
 [ x"${MONODIR}" != x ] && PATH="${MONODIR}/bin:$PATH"
+
+MONO_DEBUG=no-gdb-backtrace
+export MONO_DEBUG
 
 exec "${MONORUN}" ${EJUDGE_MONO_FLAGS} "${runfile}"
 
