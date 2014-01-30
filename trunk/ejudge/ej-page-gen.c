@@ -23,6 +23,7 @@
 #include "type_info.h"
 #include "dwarf_parse.h"
 #include "html_parse.h"
+#include "xml_utils.h"
 
 #include "reuse/osdeps.h"
 #include "reuse/xalloc.h"
@@ -36,6 +37,11 @@
 #include <errno.h>
 #include <limits.h>
 #include <stddef.h>
+
+struct ProcessorState;
+static void
+parser_error_2(struct ProcessorState *ps, const char *format, ...)
+    __attribute__((format(printf, 2, 3)));
 
 static unsigned char *progname = NULL;
 static void
@@ -175,6 +181,30 @@ typedef struct IdScope
     ValueTree ids;
 } IdScope;
 
+struct ProcessorState;
+
+typedef void (*TypeHandler)(
+        FILE *log_f,
+        TypeContext *cntx,
+        struct ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f,
+        const unsigned char *text,
+        const HtmlElement *elem,
+        TypeInfo *type_info);
+
+typedef struct TypeHandlerInfo
+{
+    TypeInfo *type_info;
+    TypeHandler handler;
+} TypeHandlerInfo;
+
+typedef struct TypeHandlerArray
+{
+    int a, u;
+    TypeHandlerInfo *v;
+} TypeHandlerArray;
+
 typedef struct ProcessorState
 {
     unsigned char **filenames;
@@ -187,6 +217,8 @@ typedef struct ProcessorState
     HtmlElementStack *el_stack;
     GlobalSettingArray settings;
     IdScope *scope_stack;
+    TypeHandlerArray type_handlers;
+    TypeHandler default_type_handler;
 } ProcessorState;
 
 static ProcessorState *
@@ -284,6 +316,31 @@ processor_state_find_in_scopes(ProcessorState *ps, TypeInfo *id)
     return NULL;
 }
 
+static void
+processor_state_invoke_type_handler(
+        FILE *log_f,
+        TypeContext *cntx,
+        ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f,
+        const unsigned char *text,
+        const HtmlElement *elem,
+        TypeInfo *type_info)
+{
+    for (int i = 0; i < ps->type_handlers.u; ++i) {
+        if (ps->type_handlers.v[i].type_info == type_info) {
+            return ps->type_handlers.v[i].handler(log_f, cntx, ps, txt_f, prg_f, text, elem, type_info);
+        }
+    }
+    parser_error_2(ps, "no type handler installed");
+    tc_print_2(log_f, type_info, 3);
+    fprintf(log_f, "\n");
+    if (!ps->default_type_handler) {
+        return;
+    }
+    return ps->default_type_handler(log_f, cntx, ps, txt_f, prg_f, text, elem, type_info);
+}
+
 static int
 id_scope_cmp_2(const TypeInfo *p1, const void *p2)
 {
@@ -304,10 +361,28 @@ id_scope_create(struct TypeContext *cntx, int kind, const void *pv)
 static void
 processor_state_add_to_scope(ProcessorState *ps, TypeInfo *def)
 {
-    fprintf(stderr, "add_to_scope: ");
-    tc_print_2(stderr, def, 2);
-    fprintf(stderr, "\n");
     vt_insert(NULL, &ps->scope_stack->ids, def, 0, id_scope_cmp_2, id_scope_create);
+}
+
+static void
+processor_state_set_type_handler(
+        ProcessorState *ps,
+        TypeInfo *type_info,
+        TypeHandler handler)
+{
+    if (!type_info) return;
+
+    int i;
+    for (i = 0; i < ps->type_handlers.u && ps->type_handlers.v[i].type_info != type_info; ++i) {}
+    if (i >= ps->type_handlers.u) {
+        if (ps->type_handlers.u >= ps->type_handlers.a) {
+            if (!(ps->type_handlers.a *= 2)) ps->type_handlers.a = 32;
+            XREALLOC(ps->type_handlers.v, ps->type_handlers.a);
+        }
+        ps->type_handlers.v[i].type_info = type_info;
+        ++ps->type_handlers.u;
+    }
+    ps->type_handlers.v[i].handler = handler;
 }
 
 typedef struct ScannerState
@@ -554,9 +629,6 @@ parser_error(ScannerState *ss, const char *format, ...)
     ++ss->error_count;
 }
 
-static void
-parser_error_2(ProcessorState *ps, const char *format, ...)
-    __attribute__((format(printf, 2, 3)));
 static void
 parser_error_2(ProcessorState *ps, const char *format, ...)
 {
@@ -2172,13 +2244,13 @@ parse_expression_15(ScannerState *ss, TypeContext *cntx, TypeInfo **p_info)
                 parser_error(ss, "field name expected");
                 return -1;
             }
-            fprintf(stderr, "Struct type: "); tc_print_2(stderr, t, 2); fprintf(stderr, "\n");
             TypeInfo *f = tc_find_field(t, tc_get_ident(cntx, ss->raw));
             if (!f) {
                 parser_error(ss, "field '%s' is not declared", ss->raw);
                 return -1;
             }
             t = f->n.info[2];
+            next_token(ss);
         } else if (IS_OPER(ss, '.')) {
             next_token(ss);
             t = tc_skip_tcv(t);
@@ -2199,6 +2271,7 @@ parse_expression_15(ScannerState *ss, TypeContext *cntx, TypeInfo **p_info)
                 return -1;
             }
             t = f->n.info[2];
+            next_token(ss);
         } else if (IS_OPER_2(ss, '+', '+')) {
             next_token(ss);
         } else if (IS_OPER_2(ss, '-', '-')) {
@@ -2360,8 +2433,9 @@ parse_expression_9(ScannerState *ss, TypeContext *cntx, TypeInfo **p_info)
         next_token(ss);
         r = parse_expression_10(ss, cntx, &info1);
         if (r < 0) return r;
+        info0 = tc_get_i1_type(cntx);
     }
-    if (p_info) *p_info = tc_get_i1_type(cntx);
+    if (p_info) *p_info = info0;
     return 0;
 }
 
@@ -2376,8 +2450,9 @@ parse_expression_8(ScannerState *ss, TypeContext *cntx, TypeInfo **p_info)
         next_token(ss);
         r = parse_expression_9(ss, cntx, &info1);
         if (r < 0) return r;
+        info0 = tc_get_i1_type(cntx);
     }
-    if (p_info) *p_info = tc_get_i1_type(cntx);
+    if (p_info) *p_info = info0;
     return 0;
 }
 
@@ -2530,7 +2605,7 @@ parse_expression(ScannerState *ss, TypeContext *cntx, TypeInfo **p_info)
     return 0;
 }
 
-/*static*/ int
+static int
 parse_c_expression(ProcessorState *ps, TypeContext *cntx, FILE *log_f, const unsigned char *str, TypeInfo **p_info, Position pos)
 {
     int retval = -1;
@@ -2858,6 +2933,8 @@ handle_v_open(
     tc_print_2(log_f, t, 2);
     fprintf(log_f, "\n");
 
+    processor_state_invoke_type_handler(log_f, cntx, ps, txt_f, prg_f, at->value, elem, t);
+
     return 0;
 }
 
@@ -2905,6 +2982,76 @@ handle_html_element_close(
     return 0;
 }
 
+static void
+string_type_handler(
+        FILE *log_f,
+        TypeContext *cntx,
+        struct ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f,
+        const unsigned char *text,
+        const HtmlElement *elem,
+        TypeInfo *type_info)
+{
+    int need_escape = 1;
+    HtmlAttribute *at = NULL;
+    if (elem) {
+        at = html_element_find_attribute(elem, "escape");
+    }
+    if (at) {
+        int v;
+        if (xml_parse_bool(NULL, NULL, 0, 0, at->value, &v) >= 0) need_escape = v;
+    }
+    if (need_escape) {
+        fprintf(prg_f, "fputs(html_armor_buf(&ab, (%s)), out_f);\n", text);
+    } else {
+        fprintf(prg_f, "fputs((%s), out_f);\n", text);
+    }
+}
+
+static void
+cookie_type_handler(
+        FILE *log_f,
+        TypeContext *cntx,
+        struct ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f,
+        const unsigned char *text,
+        const HtmlElement *elem,
+        TypeInfo *type_info)
+{
+    fprintf(prg_f, "fprintf(out_f, \"%%016llx\", (%s));\n", text);
+}
+
+static void
+int_type_handler(
+        FILE *log_f,
+        TypeContext *cntx,
+        struct ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f,
+        const unsigned char *text,
+        const HtmlElement *elem,
+        TypeInfo *type_info)
+{
+    // handle "format"?
+    fprintf(prg_f, "fprintf(out_f, \"%%d\", (int)(%s));\n", text);
+}
+
+static void
+time_t_type_handler(
+        FILE *log_f,
+        TypeContext *cntx,
+        struct ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f,
+        const unsigned char *text,
+        const HtmlElement *elem,
+        TypeInfo *type_info)
+{
+    fprintf(prg_f, "fputs(xml_unparse_date((%s)), out_f);\n", text);
+}
+
 static int
 process_file(
         FILE *log_f,
@@ -2917,6 +3064,20 @@ process_file(
     int cc;
 
     ProcessorState *ps = processor_state_init(log_f);
+
+    processor_state_set_type_handler(ps, tc_get_ptr_type(cntx, tc_get_const_type(cntx, tc_get_u8_type(cntx))),
+                                     string_type_handler);
+    processor_state_set_type_handler(ps, tc_get_ptr_type(cntx, tc_get_u8_type(cntx)),
+                                     string_type_handler);
+    processor_state_set_type_handler(ps, tc_get_ptr_type(cntx, tc_get_const_type(cntx, tc_get_i8_type(cntx))),
+                                     string_type_handler);
+    processor_state_set_type_handler(ps, tc_get_ptr_type(cntx, tc_get_i8_type(cntx)),
+                                     string_type_handler);
+    processor_state_set_type_handler(ps, tc_find_typedef_type(cntx, tc_get_ident(cntx, "ej_cookie_t")),
+                                     cookie_type_handler);
+    processor_state_set_type_handler(ps, tc_get_i32_type(cntx), int_type_handler);
+    processor_state_set_type_handler(ps, tc_find_typedef_type(cntx, tc_get_ident(cntx, "time_t")),
+                                     time_t_type_handler);
 
     char *txt_t = NULL;
     size_t txt_z = 0;
