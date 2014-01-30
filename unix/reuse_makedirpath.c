@@ -50,6 +50,12 @@ strip_trailing_slashes (char *path)
     path[last--] = '\0';
 }
 
+struct ptr_list
+{
+  char *dirname_end;
+  struct ptr_list *next;
+};
+
 /**
  * NAME:    make_path
  * PURPOSE: make directory hierarchy
@@ -90,11 +96,6 @@ make_path (const char *argpath,
     char *slash;
     int tmp_mode;             /* Initial perms for leading dirs.  */
     int re_protect;           /* Should leading dirs be unwritable? */
-    struct ptr_list
-    {
-      char *dirname_end;
-      struct ptr_list *next;
-    };
     struct ptr_list *p, *leading_dirs = NULL;
 
     /* If leading directories shouldn't be writable or executable,
