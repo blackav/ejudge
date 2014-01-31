@@ -4,7 +4,7 @@
 #ifndef __SERVER_FRAMEWORK_H__
 #define __SERVER_FRAMEWORK_H__
 
-/* Copyright (C) 2006-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -152,7 +152,19 @@ struct server_framework_job
   unsigned char *title;
 };
 
-void ns_add_job(struct server_framework_job *job);
-void ns_remove_job(struct server_framework_job *job);
+void
+nsf_add_job(
+        struct server_framework_state *state,
+        struct server_framework_job *job);
+void
+nsf_remove_job(
+        struct server_framework_state *state,
+        struct server_framework_job *job);
+struct server_framework_job *
+nsf_get_first_job(
+        struct server_framework_state *state);
+int
+nsf_get_job_count(
+        struct server_framework_state *state);
 
 #endif /* __SERVER_FRAMEWORK_H__ */

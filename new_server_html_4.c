@@ -414,7 +414,7 @@ cmd_operation(
     serve_update_status_file(cs, 1);
     break;
   case NEW_SRV_ACTION_REJUDGE_ALL_2:
-    ns_add_job(serve_rejudge_all(ejudge_config, cnts, cs, phr->user_id, &phr->ip, phr->ssl_flag, DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT, 1));
+    nsf_add_job(phr->fw_state, serve_rejudge_all(ejudge_config, cnts, cs, phr->user_id, &phr->ip, phr->ssl_flag, DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT, 1));
     break;
   case NEW_SRV_ACTION_SCHEDULE:
     return do_schedule(phr, cs, cnts);
