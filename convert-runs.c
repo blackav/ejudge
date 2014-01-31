@@ -125,8 +125,22 @@ void *forced_link_table[] =
   xml_attr_bool,
   xml_attr_bool_byte,
   xml_attr_int,
+  xml_attr_ulong,
   xml_attr_date,
-  //xml_elem_ip_mask,
+  xml_do_parse_ipv6,
+  xml_parse_ipv6_2,
+  xml_parse_ipv6,
+  xml_unparse_ipv6,
+  ipv6cmp,
+  ipv6_match_mask,
+  xml_msg,
+  xml_unparse_ipv6_mask,
+  xml_parse_ipv6_mask,
+  xml_elem_ipv6_mask,
+  ipv6_is_empty,
+  xml_unparse_full_cookie,
+  xml_parse_full_cookie,
+
   close_memstream,
 };
 
