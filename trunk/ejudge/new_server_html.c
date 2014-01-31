@@ -91,9 +91,6 @@ enum { CONTEST_EXPIRE_TIME = 300 };
 static struct contest_extra **extras = 0;
 static size_t extra_a = 0, extra_u = 0;
 
-static struct server_framework_job *job_first, *job_last;
-static int job_count, job_serial;
-
 extern const unsigned char * const ns_symbolic_action_table[];
 
 static void unprivileged_page_login(FILE *fout,
@@ -359,42 +356,6 @@ ns_unload_expired_contests(time_t cur_time)
   extra_u = j;
 }
 
-void
-ns_add_job(struct server_framework_job *job)
-{
-  if (!job) return;
-  job->id = ++job_serial;
-  job->start_time = time(NULL);
-  ++job_count;
-  job->prev = job_last;
-  job->next = NULL;
-  if (job_last) {
-    job_last->next = job;
-  } else {
-    job_first = job;
-  }
-  job_last = job;
-}
-
-void
-ns_remove_job(struct server_framework_job *job)
-{
-  if (job->next) {
-    job->next->prev = job->prev;
-  } else {
-    job_last = job->prev;
-  }
-  if (job->prev) {
-    job->prev->next = job->next;
-  } else {
-    job_first = job->next;
-  }
-  job->next = NULL;
-  job->prev = NULL;
-  job->vt->destroy(job);
-  --job_count;
-}
-
 static void
 handle_pending_xml_import(const struct contest_desc *cnts, serve_state_t cs)
 {
@@ -453,16 +414,17 @@ ns_loop_callback(struct server_framework_state *state)
   int contest_id, i, eind;
   strarray_t files;
   int count = 0;
+  struct server_framework_job *job = nsf_get_first_job(state);
 
   memset(&files, 0, sizeof(files));
 
-  if (job_first) {
-    if (job_first->contest_id > 0) {
-      e = ns_try_contest_extra(job_first->contest_id);
+  if (job) {
+    if (job->contest_id > 0) {
+      e = ns_try_contest_extra(job->contest_id);
       e->last_access_time = cur_time;
     }
-    if (job_first->vt->run(job_first, &count, MAX_WORK_BATCH)) {
-      ns_remove_job(job_first);
+    if (job->vt->run(job, &count, MAX_WORK_BATCH)) {
+      nsf_remove_job(state, job);
     }
   }
 
@@ -4434,10 +4396,10 @@ priv_rejudge_displayed(FILE *fout,
     prio_adj = 10;
   }
 
-  ns_add_job(serve_rejudge_by_mask(ejudge_config, cnts, cs, phr->user_id,
-                                   &phr->ip, phr->ssl_flag,
-                                   mask_size, mask, force_full, prio_adj,
-                                   background_mode));
+  nsf_add_job(phr->fw_state, serve_rejudge_by_mask(ejudge_config, cnts, cs, phr->user_id,
+                                                   &phr->ip, phr->ssl_flag,
+                                                   mask_size, mask, force_full, prio_adj,
+                                                   background_mode));
 
  cleanup:
   xfree(mask);
@@ -4476,10 +4438,10 @@ priv_rejudge_problem(FILE *fout,
     goto cleanup;
   }
 
-  ns_add_job(serve_rejudge_problem(ejudge_config, cnts, cs, phr->user_id,
-                                   &phr->ip, phr->ssl_flag, prob_id,
-                                   DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT,
-                                   background_mode));
+  nsf_add_job(phr->fw_state, serve_rejudge_problem(ejudge_config, cnts, cs, phr->user_id,
+                                                   &phr->ip, phr->ssl_flag, prob_id,
+                                                   DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT,
+                                                   background_mode));
 
  cleanup:
   return 0;
@@ -4509,10 +4471,10 @@ priv_rejudge_all(FILE *fout,
 
   switch (phr->action) {
   case NEW_SRV_ACTION_REJUDGE_SUSPENDED_2:
-    ns_add_job(serve_judge_suspended(ejudge_config, cnts, cs, phr->user_id, &phr->ip, phr->ssl_flag, DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT, background_mode));
+    nsf_add_job(phr->fw_state, serve_judge_suspended(ejudge_config, cnts, cs, phr->user_id, &phr->ip, phr->ssl_flag, DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT, background_mode));
     break;
   case NEW_SRV_ACTION_REJUDGE_ALL_2:
-    ns_add_job(serve_rejudge_all(ejudge_config, cnts, cs, phr->user_id, &phr->ip, phr->ssl_flag, DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT, background_mode));
+    nsf_add_job(phr->fw_state, serve_rejudge_all(ejudge_config, cnts, cs, phr->user_id, &phr->ip, phr->ssl_flag, DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT, background_mode));
     
     break;
   default:
@@ -8721,10 +8683,10 @@ priv_main_page(FILE *fout,
             xml_unparse_date(cs->max_online_time));
   }
 
-  if (job_count > 0) {
-    fprintf(fout, "<p><b>%s: %d</b></p>\n", "Background jobs", job_count);
+  if (nsf_get_job_count(phr->fw_state) > 0) {
+    fprintf(fout, "<p><b>%s: %d</b></p>\n", "Background jobs", nsf_get_job_count(phr->fw_state));
     fprintf(fout, "<table class=\"b1\">");
-    for (struct server_framework_job *job = job_first; job; job = job->next) {
+    for (struct server_framework_job *job = nsf_get_first_job(phr->fw_state); job; job = job->next) {
       fprintf(fout, "<tr><td%s>%d</td><td%s>%s</td><td%s>%s</td><td%s>",
               " class=\"b1\"", job->id,
               " class=\"b1\"", xml_unparse_date(job->start_time),

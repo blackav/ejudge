@@ -84,6 +84,9 @@ struct server_framework_state
 
   struct watchlist *w_first, *w_last;
 
+  struct server_framework_job *job_first, *job_last;
+  int job_count, job_serial;
+
   void *user_data;
 };
 
@@ -780,4 +783,58 @@ nsf_init(struct server_framework_params *params, void *data)
   state->user_data = data;
   state->client_id = 1;
   return state;
+}
+
+void
+nsf_add_job(
+        struct server_framework_state *state,
+        struct server_framework_job *job)
+{
+  if (!job) return;
+  job->id = ++state->job_serial;
+  job->start_time = time(NULL);
+  ++state->job_count;
+  job->prev = state->job_last;
+  job->next = NULL;
+  if (state->job_last) {
+    state->job_last->next = job;
+  } else {
+    state->job_first = job;
+  }
+  state->job_last = job;
+}
+
+void
+nsf_remove_job(
+        struct server_framework_state *state,
+        struct server_framework_job *job)
+{
+  if (job->next) {
+    job->next->prev = job->prev;
+  } else {
+    state->job_last = job->prev;
+  }
+  if (job->prev) {
+    job->prev->next = job->next;
+  } else {
+    state->job_first = job->next;
+  }
+  job->next = NULL;
+  job->prev = NULL;
+  job->vt->destroy(job);
+  --state->job_count;
+}
+
+struct server_framework_job *
+nsf_get_first_job(
+        struct server_framework_state *state)
+{
+  return state->job_first;
+}
+
+int
+nsf_get_job_count(
+        struct server_framework_state *state)
+{
+  return state->job_count;
 }

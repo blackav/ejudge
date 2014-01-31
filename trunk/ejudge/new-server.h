@@ -4,7 +4,7 @@
 #ifndef __NEW_SERVER_H__
 #define __NEW_SERVER_H__
 
-/* Copyright (C) 2006-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1013,10 +1013,6 @@ ns_submit_run(
 
 extern int utf8_mode;
 extern time_t server_start_time;
-
-struct server_framework_job;
-void ns_add_job(struct server_framework_job *job);
-void ns_remove_job(struct server_framework_job *job);
 
 void
 new_write_user_runs(
