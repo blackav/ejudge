@@ -18,12 +18,6 @@
 #define ARMOR(s)  html_armor_buf(&ab, (s))
 #define BUTTON(a) ns_submit_button(bb, sizeof(bb), 0, a, 0)
 
-void
-write_alternatives_file(FILE *fout, int is_radio, const unsigned char *txt,
-                        int last_answer, int prob_id, int next_prob_id,
-                        int enable_js, const unsigned char *class_name);
-static struct server_framework_job *job_first, *job_last;
-
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@page priv_main_page(FILE *out_f, struct http_request_info *phr, const struct contest_desc *cnts, struct contest_extra *extra)
 %><%
@@ -56,7 +50,6 @@ static struct server_framework_job *job_first, *job_last;
   struct watched_file *pw = 0;
   const unsigned char *pw_path = 0;
   int skip_start_form = 0;
-  const unsigned char *alternatives = 0;
   int y, n;
   const unsigned char *filter_first_clar_str = 0;
   const unsigned char *filter_last_clar_str = 0;
@@ -232,7 +225,7 @@ static struct server_framework_job *job_first, *job_last;
 <%  if (job_count > 0) { %>
 <p><b><s:tr>Background jobs</s:tr>: <s:v value="job_count"/></b></p>
 <table class="b1">
-<%    for (job = job_first; job; job = job->next) { %>
+<%    for (job = nsf_get_first_job(phr->fw_state); job; job = job->next) { %>
 <tr><td class="b1"><s:v value="job->id" /></td><td class="b1"><s:v value="job->start_time" /></td><td  class="b1"><s:v escape="false" value="job->title" /></td><td class="b1">
 <%      if (job->vt->get_status) {
         unsigned char *str = job->vt->get_status(job);
@@ -251,7 +244,7 @@ static struct server_framework_job *job_first, *job_last;
 <%  } %>
 
 <%  if (phr->role == USER_ROLE_ADMIN && opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST) >= 0) { %>
-<%    html_start_form(out_f, 1, phr->self_url, phr->hidden_vars); %>
+<s:form>
 <table border="0">
 <tr><td><s:tr>Server time</s:tr>:</td><td><s:v value="cs->current_time" /></td><td>&nbsp;</td><td>&nbsp;</td></tr>
 <%    if (start_time <= 0) { %>
@@ -324,11 +317,11 @@ static struct server_framework_job *job_first, *job_last;
     } %>
 <tr><td><s:tr>Contest load time</s:tr></td><td><s:v value="cs->load_time" /></td></tr>
 <tr><td><s:tr>Server start time</s:tr></td><td><s:v value="local_server_start_time" /></td></tr>
-</table></form>
+</table></s:form>
 
 <hr />
 
-<%    html_start_form(out_f, 1, phr->self_url, phr->hidden_vars); %>
+<s:form>
 <s:submit ac="update-standings-1" />
 <s:submit ac="reset-1" />
 <%    action = NEW_SRV_ACTION_SUSPEND;
@@ -363,7 +356,7 @@ static struct server_framework_job *job_first, *job_last;
 <s:submit ac="generate-reg-passwords-1" />
 <s:submit ac="upsolving-config-1" />
 <s:submit ac="reload-server" />
-</form>
+</s:form>
 <%  } else { %>
 <table border="0">
 <tr><td><s:tr>Server time</s:tr>:</td><td><s:v value="cs->current_time" /></td><td>&nbsp;</td><td>&nbsp;</td></tr>
@@ -429,92 +422,34 @@ static struct server_framework_job *job_first, *job_last;
   if (opcaps_check(phr->caps, OPCAP_SUBMIT_RUN) >= 0) {
     if (!prob) {
       // no problem is selected yet
-      fprintf(out_f, "<hr><a name=\"submit\"></a><h2>%s</h2>\n",
-              _("View the problem statement and send a submission"));
-      html_start_form(out_f, 0, phr->self_url, phr->hidden_vars);
-      fprintf(out_f, "<table>\n");
-      fprintf(out_f, "<tr><td>%s:</td><td><select name=\"problem\">",
-              _("Problem"));
-      for (x = 1; x <= cs->max_prob; x++) {
-        if (!(prob = cs->probs[x])) continue;
-        fprintf(out_f, "<option value=\"%d\">%s - %s</option>",
-                x, prob->short_name, ARMOR(prob->long_name));
-        /*
-        if (prob->variant_num <= 0) {
-        } else {
-          for (y = 1; y <= prob->variant_num; y++) {
-            fprintf(out_f, "<option value=\"%d_%d\">%s - %s, %s %d</option>",
-                    x, y, prob->short_name,  ARMOR(prob->long_name),
-                    _("Variant"), y);
-          }
-        }
-        */
-      }
-      fprintf(out_f, "</select></td><td>%s</td></tr></table></form>\n",
-              ns_submit_button(bb, sizeof(bb), 0,
-                               NEW_SRV_ACTION_PRIV_SUBMIT_PAGE,
-                               _("Select problem")));
+%>
+<hr/><a name="submit" /><h2><s:tr>View the problem statement and send a submission</s:tr></h2>
+<s:form method="get">
+<table>
+<tr><td><s:tr>Problem</s:tr>:</td><td><select name="problem">
+<%      for (x = 1; x <= cs->max_prob; x++) {
+        if (!(prob = cs->probs[x])) continue; %>
+<option value='<s:v value="x" />'><s:v escape="false" value="prob->short_name" /> - <s:v value="prob->long_name" /></option>
+<%      }%>
+</select></td><td><s:submit ac="priv-submit-page" value='_("Select problem")' /></td></tr></table></s:form>
+<%
       prob = 0;
     } else {
       // a problem is already selected
       // prob and variant have correct values
       if (variant > 0) {
-        fprintf(out_f, "<hr><a name=\"submit\"></a><h2>%s %s-%s (%s %d)</h2>\n",
-                _("Submit a solution for"),
-                prob->short_name, ARMOR(prob->long_name), _("Variant"), variant);
-      } else {
-        fprintf(out_f, "<hr><a name=\"submit\"></a><h2>%s %s-%s</h2>\n",
-                _("Submit a solution for"),
-                prob->short_name,  ARMOR(prob->long_name));
-      }
+%>
+<hr /><a name="submit"></a>
+<h2><s:tr>Submit a solution for</s:tr> <s:v escape="0" value="prob->short_name" />-<s:v value="prob->long_name" /> (<s:tr>Variant</s:tr> <s:v value="variant" />)</h2>
+<%      } else { %>
+<hr /><a name="submit"></a>
+<h2><s:tr>Submit a solution for</s:tr> <s:v escape="0" value="prob->short_name" />-<s:v value="prob->long_name" /></h2>
+<%      }%>
 
-      /* FIXME: handle problem XML */
-
-      /* put problem statement */
-      if (prob->statement_file[0]) {
-        if (variant > 0) {
-          prepare_insert_variant_num(variant_stmt_file,
-                                     sizeof(variant_stmt_file),
-                                     prob->statement_file, variant);
-          pw = &cs->prob_extras[prob->id].v_stmts[variant];
-          pw_path = variant_stmt_file;
-        } else {
-          pw = &cs->prob_extras[prob->id].stmt;
-          pw_path = prob->statement_file;
-        }
-        watched_file_update(pw, pw_path, cs->current_time);
-        if (!pw->text) {
-          fprintf(out_f, "<big><font color=\"red\"><p>%s</p></font></big>\n",
-                  _("The problem statement is not available"));
-        } else {
-          if (prob->type == PROB_TYPE_CUSTOM) {
-            html_start_form(out_f, 2, phr->self_url, phr->hidden_vars);
-            skip_start_form = 1;
-          }
-          fprintf(out_f, "%s", pw->text);
-        }
-      }
-      alternatives = 0;
-      if ((prob->type == PROB_TYPE_SELECT_ONE
-           || prob->type == PROB_TYPE_SELECT_MANY)
-          && prob->alternatives_file[0]) {
-        if (variant > 0) {
-          prepare_insert_variant_num(variant_stmt_file,
-                                     sizeof(variant_stmt_file),
-                                     prob->alternatives_file, variant);
-          pw = &cs->prob_extras[prob->id].v_alts[variant];
-          pw_path = variant_stmt_file;
-        } else {
-          pw = &cs->prob_extras[prob->id].alt;
-          pw_path = prob->alternatives_file;
-        }
-        watched_file_update(pw, pw_path, cs->current_time);
-        alternatives = pw->text;
-      }
-
-      if (!skip_start_form) {
-        html_start_form(out_f, 2, phr->self_url, phr->hidden_vars);
-      }
+<%      if (!skip_start_form) {%>
+<s:form method="post" enctype="multipart/form-data">
+<%      }%>
+<%
       if (variant <= 0) {
         html_hidden(out_f, "problem", "%d", prob->id);
       } else {
@@ -555,18 +490,14 @@ static struct server_framework_job *job_first, *job_last;
         break;
       case PROB_TYPE_SELECT_ONE:
         /* FIXME: handle problem XML */
-        if (alternatives) {
-          write_alternatives_file(out_f, 1, alternatives, -1, 0, 0, 0, "b0");
-        } else if (prob->alternative) {
+        if (prob->alternative) {
           for (i = 0; prob->alternative[i]; i++) {
             fprintf(out_f, "<tr><td>%d</td><td><input type=\"radio\" name=\"file\" value=\"%d\"/></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
           }
         }
         break;
       case PROB_TYPE_SELECT_MANY:
-        if (alternatives) {
-          write_alternatives_file(out_f, 0, alternatives, -1, 0, 0, 0, "b0");
-        } else if (prob->alternative) {
+        if (prob->alternative) {
           for (i = 0; prob->alternative[i]; i++) {
             fprintf(out_f, "<tr><td>%d</td><td><input type=\"checkbox\" name=\"ans_%d\"/></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
           }
@@ -575,7 +506,7 @@ static struct server_framework_job *job_first, *job_last;
       case PROB_TYPE_CUSTOM:    /* form is a part of problem statement */
         break;
       }
-      fprintf(out_f, "<tr><td>%s</td><td>%s</td></tr></table></form>\n",
+      fprintf(out_f, "<tr><td>%s</td><td>%s</td></tr></table></s:form>\n",
               _("Send!"), BUTTON(NEW_SRV_ACTION_SUBMIT_RUN));
      
       fprintf(out_f, "<hr><a name=\"submit\"></a><h2>%s</h2>\n",
@@ -604,7 +535,9 @@ static struct server_framework_job *job_first, *job_last;
       prob = 0;
     }
   }
+%>
 
+<%
   if (opcaps_check(phr->caps, OPCAP_VIEW_CLAR) >= 0) {
     ns_write_all_clars(out_f, phr, cnts, extra, filter_mode_clar,
                        filter_first_clar_str, filter_last_clar_str);
@@ -613,7 +546,7 @@ static struct server_framework_job *job_first, *job_last;
 
 <%  if (opcaps_check(phr->caps, OPCAP_NEW_MESSAGE) >= 0) { %>
 <hr /><h2><s:tr>Compose a message to all participants</s:tr></h2>
-<%    html_start_form(out_f, 1, phr->self_url, phr->hidden_vars); %>
+<s:form>
 <table>
 <tr><td><s:tr>To user id</s:tr>:</td><td><input type="text" size="16" name="msg_dest_id"/></td></tr>
 <tr><td><s:tr>To user login</s:tr>:</td><td><input type="text" size="32" name="msg_dest_login"/></td></tr>
@@ -623,19 +556,18 @@ static struct server_framework_job *job_first, *job_last;
 <%    } %>
 </table>
 <p><textarea name="msg_text" rows="20" cols="60"></textarea></p>
-<p><s:submit ac="priv-submit-clar" /></p></form>
+<p><s:submit ac="priv-submit-clar" /></p></s:form>
 <%  } %>
 
 <hr/><a name="chgpasswd"></a>
 <h2><s:tr>Change password</s:tr></h2>
-<%  html_start_form(out_f, 1, phr->self_url, phr->hidden_vars); %>
-
+<s:form>
 <table>
 <tr><td><s:tr>Old password</s:tr>:</td><td><input type="password" name="oldpasswd" size="16"/></td></tr>
 <tr><td><s:tr>New password</s:tr>:</td><td><input type="password" name="newpasswd1" size="16"/></td></tr>
 <tr><td><s:tr>Retype new password</s:tr>:</td><td><input type="password" name="newpasswd2" size="16"/></td></tr>
 <tr><td colspan="2"><s:submit ac="change-password" /></td></tr>
-</table></form>
+</table></s:form>
 
 <%
 #if CONF_HAS_LIBINTL - 0 == 1
@@ -644,10 +576,10 @@ static struct server_framework_job *job_first, *job_last;
 
 <hr /><a name="chglanguage" /><<s:v escape="false" value="cnts->team_head_style" />><s:tr>Change language</s:tr></<s:v escape="false" value="cnts->team_head_style" />>
 
-<%    html_start_form(out_f, 1, phr->self_url, phr->hidden_vars); %>
+<s:form>
 <table><tr><td><s:tr>Change language</s:tr></td><td>
 <%    l10n_html_locale_select(out_f, phr->locale_id); %>
-</td><td><s:submit ac="change-language" /></td></tr></table></form>
+</td><td><s:submit ac="change-language" /></td></tr></table></s:form>
 <%
   }
 #endif /* CONF_HAS_LIBINTL */
