@@ -2886,6 +2886,7 @@ handle_form_open(
     HtmlElement *elem = ps->el_stack->el;
     const unsigned char *method = "post";
     const unsigned char *enctype = NULL;
+    const unsigned char *id = NULL;
 
     HtmlAttribute *at = html_element_find_attribute(elem, "method");
     if (at && !strcmp(at->value, "get")) {
@@ -2899,6 +2900,22 @@ handle_form_open(
             enctype = "application/x-www-form-urlencoded";
         }
     }
+    if ((at = html_element_find_attribute(elem, "id"))) {
+        id = at->value;
+    }
+
+    // FIXME: handle action, or ac
+    fprintf(prg_f, "fputs(\"<form method=\\\"%s\\\"", method);
+    if (enctype && *enctype) {
+        fprintf(prg_f, " enctype=\\\"%s\\\"", enctype);
+    }
+    if (id && *id) {
+        fprintf(prg_f, " id=\\\"%s\\\"", id);
+    }
+    fprintf(prg_f, " action=\\\"\", out_f);\n");
+    fprintf(prg_f, "fputs(phr->self_url, out_f);\n");
+    fprintf(prg_f, "fputs(\"\\\">\", out_f);\n");
+    fprintf(prg_f, "fputs(phr->hidden_vars, out_f);\n");
 
     return 0;
 }
@@ -2928,13 +2945,21 @@ handle_submit_open(
 {
     HtmlElement *elem = ps->el_stack->el;
     unsigned char buf[1024];
+    const unsigned char *value = NULL;
 
     if (!elem->no_body) {
         parser_error_2(ps, "<s:submit> element must not have a body");
         return -1;
     }
 
-    HtmlAttribute *at = html_element_find_attribute(elem, "ac"); // action code
+    HtmlAttribute *at = html_element_find_attribute(elem, "value");
+    if (at) {
+        value = at->value;
+    } else {
+        value = "NULL";
+    }
+
+    at = html_element_find_attribute(elem, "ac"); // action code
     if (at != NULL) {
         TypeInfo *ac_prefix = processor_state_find_setting(ps, tc_get_ident(cntx, "ac_prefix"));
         if (!ac_prefix) {
@@ -2951,9 +2976,9 @@ handle_submit_open(
             if (buf[i] == '-') buf[i] = '_';
             buf[i] = toupper(buf[i]);
         }
-        fprintf(prg_f, "fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, %s, 0), out_f);\n", buf);
+        fprintf(prg_f, "fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, %s, %s), out_f);\n", buf, value);
     } else if ((at = html_element_find_attribute(elem, "action"))) {
-        fprintf(prg_f, "fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, (%s), 0), out_f);\n", at->value);
+        fprintf(prg_f, "fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, (%s), %s), out_f);\n", at->value, value);
     }
 
     return 0;
@@ -3009,6 +3034,8 @@ handle_html_element_open(
         handle_submit_open(log_f, cntx, ps, txt_f, prg_f);
     } else if (!strcmp(ps->el_stack->el->name, "s:v")) {
         handle_v_open(log_f, cntx, ps, txt_f, prg_f);
+    } else if (!strcmp(ps->el_stack->el->name, "s:form")) {
+        handle_form_open(log_f, cntx, ps, txt_f, prg_f);
     } else {
         parser_error_2(ps, "unhandled element");
     }
@@ -3031,6 +3058,8 @@ handle_html_element_close(
         fprintf(prg_f, "), out_f);\n");
     } else if (!strcmp(ps->el_stack->el->name, "s:a")) {
         handle_a_close(log_f, cntx, ps, txt_f, prg_f, mem, beg_i, end_i);
+    } else if (!strcmp(ps->el_stack->el->name, "s:form")) {
+        handle_form_close(log_f, cntx, ps, txt_f, prg_f, mem, beg_i, end_i);
     } else {
         parser_error_2(ps, "unhandled element");
     }
