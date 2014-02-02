@@ -223,6 +223,7 @@ typedef struct ProcessorState
     GlobalSettingArray settings;
     IdScope *scope_stack;
     TypeHandlerArray type_handlers;
+    TypeHandlerArray array_type_handlers;
     TypeHandler default_type_handler;
 } ProcessorState;
 
@@ -332,6 +333,14 @@ processor_state_invoke_type_handler(
         const HtmlElement *elem,
         TypeInfo *type_info)
 {
+    if (type_info && type_info->kind == NODE_ARRAY_TYPE) {
+        for (int i = 0; i < ps->array_type_handlers.u; ++i) {
+            if (ps->array_type_handlers.v[i].type_info == type_info->n.info[1]) {
+                return ps->array_type_handlers.v[i].handler(log_f, cntx, ps, txt_f, prg_f, text, elem, type_info);
+            }
+        }
+    }
+
     for (int i = 0; i < ps->type_handlers.u; ++i) {
         if (ps->type_handlers.v[i].type_info == type_info) {
             return ps->type_handlers.v[i].handler(log_f, cntx, ps, txt_f, prg_f, text, elem, type_info);
@@ -370,24 +379,42 @@ processor_state_add_to_scope(ProcessorState *ps, TypeInfo *def)
 }
 
 static void
-processor_state_set_type_handler(
-        ProcessorState *ps,
+add_type_handler(
+        TypeHandlerArray *pa,
         TypeInfo *type_info,
         TypeHandler handler)
 {
     if (!type_info) return;
 
     int i;
-    for (i = 0; i < ps->type_handlers.u && ps->type_handlers.v[i].type_info != type_info; ++i) {}
-    if (i >= ps->type_handlers.u) {
-        if (ps->type_handlers.u >= ps->type_handlers.a) {
-            if (!(ps->type_handlers.a *= 2)) ps->type_handlers.a = 32;
-            XREALLOC(ps->type_handlers.v, ps->type_handlers.a);
+    for (i = 0; i < pa->u && pa->v[i].type_info != type_info; ++i) {}
+    if (i >= pa->u) {
+        if (pa->u >= pa->a) {
+            if (!(pa->a *= 2)) pa->a = 32;
+            XREALLOC(pa->v, pa->a);
         }
-        ps->type_handlers.v[i].type_info = type_info;
-        ++ps->type_handlers.u;
+        pa->v[i].type_info = type_info;
+        ++pa->u;
     }
-    ps->type_handlers.v[i].handler = handler;
+    pa->v[i].handler = handler;
+}
+
+static void
+processor_state_set_type_handler(
+        ProcessorState *ps,
+        TypeInfo *type_info,
+        TypeHandler handler)
+{
+    add_type_handler(&ps->type_handlers, type_info, handler);
+}
+
+static void
+processor_state_set_array_type_handler(
+        ProcessorState *ps,
+        TypeInfo *type_info,
+        TypeHandler handler)
+{
+    add_type_handler(&ps->array_type_handlers, type_info, handler);
 }
 
 typedef struct ScannerState
@@ -3183,6 +3210,9 @@ process_file(
     processor_state_set_type_handler(ps, tc_find_typedef_type(cntx, tc_get_ident(cntx, "time_t")),
                                      time_t_type_handler);
 
+    processor_state_set_array_type_handler(ps, tc_get_u8_type(cntx), string_type_handler);
+    processor_state_set_array_type_handler(ps, tc_get_i8_type(cntx), string_type_handler);
+
     char *txt_t = NULL;
     size_t txt_z = 0;
     FILE *txt_f = open_memstream(&txt_t, &txt_z);
@@ -3555,7 +3585,18 @@ ns_get_client_by_id(int client_id)
     return NULL;
 }
 
-char tst_arr[279][1811];
+struct http_request_info;
+struct contest_desc;
+struct contest_extra;
+int
+new_priv_main_page(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+    return 0;
+}
 
 /*
  * Local variables:

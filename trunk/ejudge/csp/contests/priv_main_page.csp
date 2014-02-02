@@ -15,11 +15,8 @@
 
 #include <libintl.h>
 #define _(x) gettext(x)
-#define ARMOR(s)  html_armor_buf(&ab, (s))
-#define BUTTON(a) ns_submit_button(bb, sizeof(bb), 0, a, 0)
-
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
-%><%@page priv_main_page(FILE *out_f, struct http_request_info *phr, const struct contest_desc *cnts, struct contest_extra *extra)
+%><%@page new_priv_main_page(FILE *out_f, struct http_request_info *phr, const struct contest_desc *cnts, struct contest_extra *extra)
 %><%
   int need_examiners = 0;
   time_t start_time = 0;
@@ -44,11 +41,7 @@
   const struct section_problem_data *prob = 0;
   int x;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
-  unsigned char bb[1024];
   int variant = 0;
-  path_t variant_stmt_file;
-  struct watched_file *pw = 0;
-  const unsigned char *pw_path = 0;
   int skip_start_form = 0;
   int y, n;
   const unsigned char *filter_first_clar_str = 0;
@@ -110,9 +103,7 @@
     <li><s:a ac="view-online-users"><s:tr>View who is currently online</s:tr></s:a></li>
     <li><s:a ac="view-exam-info"><s:tr>View examination information</s:tr></s:a></li>
     <% if (need_examiners) { %>
-    <s:if vt="need_examiners">
         <li><s:a ac="examiners-page"><s:tr>Examiners assignments</s:tr></s:a></li>
-    </s:if>
     <% } %>
     <li><s:a ac="standings"><s:tr>View standings</s:tr></s:a></li>
     <% if (phr->role >= USER_ROLE_JUDGE && opcaps_check(phr->caps, OPCAP_EDIT_PASSWD) >= 0) { %>
@@ -449,89 +440,79 @@
 <%      if (!skip_start_form) {%>
 <s:form method="post" enctype="multipart/form-data">
 <%      }%>
-<%
-      if (variant <= 0) {
-        html_hidden(out_f, "problem", "%d", prob->id);
-      } else {
-        html_hidden(out_f, "problem", "%d_%d", prob->id, variant);
-      }
-      fprintf(out_f, "<table>\n");
-      if (!prob->type) {
-        fprintf(out_f, "<tr><td>%s:</td><td>", _("Language"));
-        fprintf(out_f, "<select name=\"lang_id\"><option value=\"\">\n");
-        for (i = 1; i <= cs->max_lang; i++) {
-          if (!cs->langs[i]) continue;
-          fprintf(out_f, "<option value=\"%d\">%s - %s</option>\n",
-                  i, cs->langs[i]->short_name, ARMOR(cs->langs[i]->long_name));
-        }
-        fprintf(out_f, "</select></td></tr>\n");
+<%      if (variant <= 0) { %>
+<input type="hidden" name="problem" value='<s:v value="prob->id" />' />
+<%      } else { %>
+<input type="hidden" name="problem" value='<s:v value="prob->id" />_<s:v value="variant" />' />
+<%      } %>
+<table>
+<%      if (!prob->type) { %>
+<tr><td><s:tr>Language</s:tr>:</td><td>
+<select name="lang_id"><option value="">
+<%        for (i = 1; i <= cs->max_lang; i++) {
+          if (!cs->langs[i]) continue; %>
+<option value='<s:v value="i"/>'><s:v escape="0" value="cs->langs[i]->short_name" /> - <s:v value="cs->langs[i]->long_name" /></option>
+<%        } %>
+</select></td></tr>
+<%        if (global->enable_eoln_select > 0) { %>
+<tr><td>EOLN Type:</td><td><select name="eoln_type">
+<option value="0"></option>
+<option value="1">LF (Unix/MacOS)</option>
+<option value="2">CRLF (Windows/DOS)</option>
+</select></td></tr>
 
-        if (global->enable_eoln_select > 0) {
-          fprintf(out_f, "<tr><td%s>%s:</td><td%s><select name=\"eoln_type\"%s>",
-                  "", "EOLN Type", "", "");
-          fprintf(out_f, "<option value=\"0\"></option>");
-          fprintf(out_f, "<option value=\"1\"%s>LF (Unix/MacOS)</option>", "");
-          fprintf(out_f, "<option value=\"2\"%s>CRLF (Windows/DOS)</option>", "");
-          fprintf(out_f, "</select></td></tr>\n");
-        }
+<%        }
       }
 
       switch (prob->type) {
       case PROB_TYPE_STANDARD:
       case PROB_TYPE_OUTPUT_ONLY:
-      case PROB_TYPE_TESTS:
-        fprintf(out_f, "<tr><td>%s</td><td><input type=\"file\" name=\"file\"/></td></tr>\n", _("File"));
-        break;
-      case PROB_TYPE_SHORT_ANSWER:
-        fprintf(out_f, "<tr><td>%s</td><td><input type=\"text\" name=\"file\"/></td></tr>\n", _("Answer"));
-        break;
-      case PROB_TYPE_TEXT_ANSWER:
-        fprintf(out_f, "<tr><td colspan=\"2\"><textarea name=\"file\" rows=\"20\" cols=\"60\"></textarea></td></tr>\n");
-        break;
+      case PROB_TYPE_TESTS: %>
+<tr><td><s:tr>File</s:tr></td><td><input type="file" name="file"/></td></tr>
+<%        break;
+      case PROB_TYPE_SHORT_ANSWER: %>
+<tr><td><s:tr>Answer</s:tr></td><td><input type="text" name="file"/></td></tr>
+<%        break;
+      case PROB_TYPE_TEXT_ANSWER: %>
+<tr><td colspan="2"><textarea name="file" rows="20" cols="60"></textarea></td></tr>
+<%        break;
       case PROB_TYPE_SELECT_ONE:
         /* FIXME: handle problem XML */
         if (prob->alternative) {
-          for (i = 0; prob->alternative[i]; i++) {
-            fprintf(out_f, "<tr><td>%d</td><td><input type=\"radio\" name=\"file\" value=\"%d\"/></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
-          }
+          for (i = 0; prob->alternative[i]; i++) { %>
+<tr><td><s:v value="i + 1" /></td><td><input type="radio" name="file" value='<s:v value="i + 1" />'/></td><td><s:v escape="false" value="prob->alternative[i]" /></td></tr>
+<%          }
         }
         break;
       case PROB_TYPE_SELECT_MANY:
         if (prob->alternative) {
-          for (i = 0; prob->alternative[i]; i++) {
-            fprintf(out_f, "<tr><td>%d</td><td><input type=\"checkbox\" name=\"ans_%d\"/></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
-          }
+          for (i = 0; prob->alternative[i]; i++) { %>
+<tr><td><s:v value="i + 1" /></td><td><input type="checkbox" name='ans_<s:v value="i + 1" />' /></td><td><s:v escape="false" value="prob->alternative[i]" />%s</td></tr>
+<%          }
         }
         break;
       case PROB_TYPE_CUSTOM:    /* form is a part of problem statement */
         break;
-      }
-      fprintf(out_f, "<tr><td>%s</td><td>%s</td></tr></table></s:form>\n",
-              _("Send!"), BUTTON(NEW_SRV_ACTION_SUBMIT_RUN));
+      } %>
+<tr><td><s:tr>Send!</s:tr></td><td><s:submit ac="submit-run" /></td></tr></table></s:form>
      
-      fprintf(out_f, "<hr><a name=\"submit\"></a><h2>%s</h2>\n",
-              _("Select another problem"));
-
-      html_start_form(out_f, 0, phr->self_url, phr->hidden_vars);
-      fprintf(out_f, "<table>\n");
-      fprintf(out_f, "<tr><td>%s:</td><td><select name=\"problem\">",
-              _("Problem"));
-      for (x = 1; x <= cs->max_prob; x++) {
+<hr/><a name="submit"></a>
+<h2><s:tr>Select another problem</s:tr></h2>
+<s:form method="get">
+<table>
+<tr><td><s:tr>Problem</s:tr></td><td><select name="problem">
+<%      for (x = 1; x <= cs->max_prob; x++) {
         if (!(prob = cs->probs[x])) continue;
-        if (prob->variant_num <= 0) {
-          fprintf(out_f, "<option value=\"%d\">%s - %s</option>",
-                  x, prob->short_name, ARMOR(prob->long_name));
-        } else {
-          for (y = 1; y <= prob->variant_num; y++) {
-            fprintf(out_f, "<option value=\"%d_%d\">%s - %s, %s %d</option>",
-                    x, y, prob->short_name, ARMOR(prob->long_name),
-                    _("Variant"), y);
-          }
+        if (prob->variant_num <= 0) { %>
+<option value='<s:v value="x" />'><s:v escape="false" value="prob->short_name" /> - <s:v value="prob->long_name" /></option>
+<%        } else {
+          for (y = 1; y <= prob->variant_num; y++) { %>
+<option value='<s:v value="x" />_<s:v value="y"/>'><s:v escape="false" value="prob->short_name" /> - <s:v value="prob->long_name" />, <s:tr>Variant</s:tr> <s:v value="y" /></option>
+<%          }
         }
-      }
-      fprintf(out_f, "</select></td><td>%s</td></tr></table></form>\n",
-              ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_MAIN_PAGE,
-                               _("Select problem")));
+      } %>
+</select></td><td><s:submit ac="main-page" value='_("Select problem")' /></td></tr></table></form>
+<%
       prob = 0;
     }
   }
