@@ -1,6 +1,5 @@
 # -*- Makefile -*-
 # $Id$
-# @configure_input@
 
 # Copyright (C) 2014 Alexander Chernov <cher@ejudge.ru> */
 
@@ -28,8 +27,8 @@ endif
 CEXTRAFLAGS=
 LDEXTRAFLAGS=
 EXTRALIBS=
-CCOMPFLAGS=-D_GNU_SOURCE -std=gnu99 -Ireuse/include
-LDCOMPFLAGS=
+CCOMPFLAGS=-D_GNU_SOURCE -std=gnu99 -Ireuse/include -g
+LDCOMPFLAGS= -g
 EXESFX=
 else
 $(error "unsupported configuration")
@@ -130,7 +129,7 @@ NC_CFILES=new-client.c version.c
 NC_OBJECTS=$(NC_CFILES:.c=.o) libnew_server_clnt.a libcommon.a libplatform.a libcommon.a
 
 NS_CFILES=new-server.c version.c
-NS_OBJECTS=$(NS_CFILES:.c=.o) libcommon.a libuserlist_clnt.a libplatform.a libcommon.a
+NS_OBJECTS=$(NS_CFILES:.c=.o) libcsp.a libcommon.a libcsp.a libuserlist_clnt.a libplatform.a libcommon.a
 
 NSM_CFILES = new-server-cmd.c version.c
 NSM_OBJECTS = $(NSM_CFILES:.c=.o) libcommon.a libnew_server_clnt.a libuserlist_clnt.a libplatform.a libcommon.a
@@ -289,8 +288,8 @@ ej-polygon: ${P_OBJECTS}
 ej-import-contest: ${IC_OBJECTS}
 	${LD} ${LDFLAGS} $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} ${LIBCURL} ${LIBZIP} -ldl
 
-ej-page-gen: ${G_OBJECTS}
-	${LD} ${LDFLAGS} -Wl,--whole-archive $^ libuserlist_clnt.a libnew_server_clnt.a -o $@ ${LDLIBS} -ldwarf -lelf ${EXPAT_LIB} ${LIBZIP} -ldl -lpanel${NCURSES_SUFFIX} -lmenu${NCURSES_SUFFIX} -lncurses${NCURSES_SUFFIX} ${LIBUUID} -Wl,--no-whole-archive
+ej-page-gen: ${G_OBJECTS} libuserlist_clnt.a libnew_server_clnt.a
+	${LD} ${LDFLAGS} -Wl,--whole-archive $^ -o $@ ${LDLIBS} -ldwarf -lelf ${EXPAT_LIB} ${LIBZIP} -ldl -lpanel${NCURSES_SUFFIX} -lmenu${NCURSES_SUFFIX} -lncurses${NCURSES_SUFFIX} ${LIBUUID} -Wl,--no-whole-archive
 
 ej-convert-clars: ${CU_OBJECTS}
 	${LD} ${LDFLAGS} -rdynamic $^ libcommon.a libplatform.a -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl
@@ -456,6 +455,9 @@ include meta.make
 libcommon.a : $(COMMON_CFILES:.c=.o) filter_scan.o filter_expr.o $(META_O_FILES)
 	ar rcv $@ $^
 
+libcsp.a : $(CSP_O_FILES)
+	ar rcv $@ $^
+
 libplatform.a : $(PLATFORM_CFILES:.c=.o)
 	ar rcv $@ $^
 
@@ -487,5 +489,11 @@ contest-1/contest-1.c : contest-1/contest-1.tar.gz
 	contest-1/make-c.sh contest-1.tar.gz contest-1/contest-1.tar.gz contest-1/contest-1.c
 contest-1/contest-1.tar.gz :
 	tar cvz --exclude-vcs -C contest-1 -f contest-1/contest-1.tar.gz problems
+
+reuse/objs/libreuse.a :
+	$(MAKE) -C reuse all
+
+cfront/ej-cfront : version.o reuse/objs/libreuse.a
+	$(MAKE) -C cfront ej-cfront
 
 include deps.make

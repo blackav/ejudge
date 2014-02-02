@@ -14,10 +14,10 @@
 # Lesser General Public License for more details.
 
 ifeq ($(ARCH), unix)
-CFLAGS = -Wall -g $(WERROR)
-CFLAGSINT = -D_GNU_SOURCE -Iinclude -I.. -std=gnu99 $(NO_POINTER_SIGN)
-LDFLAGS = -Wall -g
-LDFLAGSINT = -std=gnu99
+CFLAGS = -Wall $(WERROR)
+CFLAGSINT = -D_GNU_SOURCE -Iinclude -I.. -std=gnu99 $(NO_POINTER_SIGN) -g
+LDFLAGS = -Wall
+LDFLAGSINT = -std=gnu99 -g
 LDLIBSINT = -lm
 LDLIBS =
 else
@@ -128,6 +128,9 @@ REUSEHFILES =\
  include/reuse/xfile.h
 
 all : objs objs/$(ARCH) objs/libreuse.a
+
+# nothing yet
+install :
 
 clean :
 	-rm -fr objs/* cdeps *.o
