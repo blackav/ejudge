@@ -93,6 +93,13 @@ static size_t extra_a = 0, extra_u = 0;
 
 extern const unsigned char * const ns_symbolic_action_table[];
 
+int
+new_priv_main_page(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra);
+
 static void unprivileged_page_login(FILE *fout,
                                     struct http_request_info *phr,
                                     int orig_locale_id);
@@ -8437,6 +8444,12 @@ priv_main_page(FILE *fout,
                struct http_request_info *phr,
                const struct contest_desc *cnts,
                struct contest_extra *extra)
+  __attribute__((unused));
+static void
+priv_main_page(FILE *fout,
+               struct http_request_info *phr,
+               const struct contest_desc *cnts,
+               struct contest_extra *extra)
 {
   serve_state_t cs = extra->serve_state;
   const struct section_global_data *global = cs->global;
@@ -9592,7 +9605,8 @@ privileged_entry_point(
   } else {
     if (phr->action < 0 || phr->action >= NEW_SRV_ACTION_LAST)
       phr->action = 0;
-    priv_main_page(fout, phr, cnts, extra);
+    //priv_main_page(fout, phr, cnts, extra);
+    new_priv_main_page(fout, phr, cnts, extra);
   }
 }
 
