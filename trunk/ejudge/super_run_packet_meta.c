@@ -1,5 +1,4 @@
 // This is an auto-generated file, do not edit
-// Generated 2014/02/03 20:21:53
 
 #include "super_run_packet_meta.h"
 #include "super_run_packet.h"

@@ -1,5 +1,4 @@
 // This is an auto-generated file, do not edit
-// Generated 2014/01/03 21:17:53
 
 #include "super_html_6_meta.h"
 #include "super_html_6.h"

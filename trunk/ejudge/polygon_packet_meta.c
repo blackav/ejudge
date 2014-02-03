@@ -1,5 +1,4 @@
 // This is an auto-generated file, do not edit
-// Generated 2014/01/03 21:18:25
 
 #include "polygon_packet_meta.h"
 #include "polygon_packet.h"

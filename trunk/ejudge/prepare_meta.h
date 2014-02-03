@@ -1,5 +1,4 @@
 // This is an auto-generated file, do not edit
-// Generated 2014/01/03 21:17:43
 
 #ifndef __PREPARE_META_H__
 #define __PREPARE_META_H__

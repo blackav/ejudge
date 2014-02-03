@@ -1,5 +1,4 @@
 // This is an auto-generated file, do not edit
-// Generated 2014/01/03 21:18:14
 
 #include "problem_config_meta.h"
 #include "problem_config.h"
