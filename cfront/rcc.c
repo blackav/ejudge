@@ -17,7 +17,7 @@
 
 #include "reuse/integral.h"
 #include "lconfig.h"
-#include "version.h"
+//#include "version.h"
 
 #include "cfrontenv.h"
 #include "reuse/xalloc.h"
@@ -218,8 +218,11 @@ static char buildinfo[128];
 static void
 make_buildinfo(void)
 {
+  buildinfo[0] = 0;
+  /*
   sprintf(buildinfo, "revision %s, copyright (C) 2003-2005 Alexander Chernov",
           compile_version);
+  */
 }
 
 #ifdef __GNUC__
