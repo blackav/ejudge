@@ -3,7 +3,7 @@
 #ifndef __SUPER_RUN_PACKET_H__
 #define __SUPER_RUN_PACKET_H__
 
-/* Copyright (C) 2012-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -64,6 +64,7 @@ struct super_run_in_global_packet
   int mime_type;
   ejintbool_t notify_flag;
   ejintbool_t advanced_layout;
+  ejintbool_t rejudge_mode;
   int ts1;
   int ts1_us;
   int ts2;
