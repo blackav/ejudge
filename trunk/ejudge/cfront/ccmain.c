@@ -23,7 +23,7 @@
 //#include "mif_entry.h"
 #include "c_errors.h"
 //#include "backend/cvm_entry.h"
-#include "version.h"
+//#include "version.h"
 #include "meta.h"
 
 #include "reuse/tempfile.h"
@@ -43,7 +43,10 @@ static char buildinfo[128];
 static void
 make_buildinfo(void)
 {
+  buildinfo[0] = 0;
+  /*
   snprintf(buildinfo, sizeof(buildinfo), "revision %s, copyright (C) 2003-2005 Alexander Chernov", compile_version);
+  */
 }
 
 static void

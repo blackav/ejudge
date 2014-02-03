@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "version.h"
+//#include "version.h"
 
 #include "reuse/logger.h"
 #include "reuse/xalloc.h"
@@ -4395,8 +4395,11 @@ static char buildinfo[128];
 static void
 make_buildinfo(void)
 {
+  buildinfo[0] = 0;
+  /*
   sprintf(buildinfo, "revision %s, copyright (C) 2003-2005 Alexander Chernov",
           compile_version);
+  */
 }
 
 int

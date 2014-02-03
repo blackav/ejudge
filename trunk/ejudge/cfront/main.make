@@ -91,13 +91,13 @@ install-bin: ${BINARIES}
 clean :
 	-rm -f ${BINARIES} cdeps *.o *.a reuse/*.o unix/*.o
 
-ej-cpp${EXESFX} : cpp.o ../version.o libcfront.a
+ej-cpp${EXESFX} : cpp.o libcfront.a
 	${LD} ${ALLLDFLAGS} $^ -o $@ ${ALLLDLIBS}
 
-ej-cfront${EXESFX} : rcc.o ../version.o libcfront.a
+ej-cfront${EXESFX} : rcc.o libcfront.a
 	${LD} ${ALLLDFLAGS} $^ -o $@ ${ALLLDLIBS}
 
-ej-ccmain${EXESFX} : ccmain.o ../version.o libcfront.a
+ej-ccmain${EXESFX} : ccmain.o libcfront.a
 	${LD} ${ALLLDFLAGS} $^ -o $@ ${ALLLDLIBS}
 
 libcfront.a : $(CFRONTCFILES:.c=.o)
