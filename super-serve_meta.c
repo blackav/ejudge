@@ -1,5 +1,4 @@
 // This is an auto-generated file, do not edit
-// Generated 2014/01/03 21:17:33
 
 #include "super-serve_meta.h"
 #include "super-serve.h"

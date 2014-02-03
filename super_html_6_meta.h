@@ -1,5 +1,4 @@
 // This is an auto-generated file, do not edit
-// Generated 2014/01/03 21:17:53
 
 #ifndef __SUPER_HTML_6_META_H__
 #define __SUPER_HTML_6_META_H__
