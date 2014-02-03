@@ -47,7 +47,7 @@ super_run_in_global_packet_init(struct generic_section_config *gp)
   p->mime_type = -1;
   p->notify_flag = -1;
   p->advanced_layout = -1;
-  p->rejudge_mode = -1;
+  p->rejudge_flag = -1;
   p->disable_sound = -1;
   p->is_dos = -1;
   p->time_limit_retry_count = -1;
@@ -77,7 +77,7 @@ super_run_in_global_packet_set_default(struct generic_section_config *gp)
   if (p->mime_type < 0) p->mime_type = 0;
   if (p->notify_flag < 0) p->notify_flag = 0;
   if (p->advanced_layout < 0) p->advanced_layout = 0;
-  if (p->rejudge_mode < 0) p->rejudge_mode = 0;
+  if (p->rejudge_flag < 0) p->rejudge_flag = 0;
   if (p->disable_sound < 0) p->disable_sound = 0;
 
   if (p->scoring_system_val < 0) {

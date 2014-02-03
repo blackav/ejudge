@@ -64,7 +64,7 @@ struct super_run_in_global_packet
   int mime_type;
   ejintbool_t notify_flag;
   ejintbool_t advanced_layout;
-  ejintbool_t rejudge_mode;
+  ejintbool_t rejudge_flag;
   int ts1;
   int ts1_us;
   int ts2;
