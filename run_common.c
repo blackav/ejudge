@@ -908,7 +908,7 @@ invoke_valuer(
   if (srgp->checker_locale && srgp->checker_locale[0]) {
     task_SetEnv(tsk, "EJUDGE_LOCALE", srgp->checker_locale);
   }
-  if (srgp->rejudge_mode > 0) {
+  if (srgp->rejudge_flag > 0) {
     task_SetEnv(tsk, "EJUDGE_REJUDGE", "1");
   }
   task_EnableAllSignals(tsk);
@@ -1012,7 +1012,7 @@ start_interactive_valuer(
   if (srgp->checker_locale && srgp->checker_locale[0]) {
     task_SetEnv(tsk, "EJUDGE_LOCALE", srgp->checker_locale);
   }
-  if (srgp->rejudge_mode > 0) {
+  if (srgp->rejudge_flag > 0) {
     task_SetEnv(tsk, "EJUDGE_REJUDGE", "1");
   }
   task_EnableAllSignals(tsk);

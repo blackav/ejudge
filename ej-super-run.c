@@ -72,6 +72,7 @@ static int ignored_archs_count = 0;
 static int ignored_problems_count = 0;
 static unsigned char **ignored_archs = NULL;
 static struct ignored_problem_info *ignored_problems = NULL;
+static int ignore_rejudge = 0;
 
 static unsigned char **host_names = NULL;
 static unsigned char *mirror_dir = NULL;
@@ -97,10 +98,13 @@ static int
 is_packet_to_ignore(
         const unsigned char *pkt_name,
         int contest_id,
+        int rejudge_flag,
         const unsigned char *short_name,
         const unsigned char *arch)
 {
   int i;
+
+  if (ignore_rejudge > 0 && rejudge_flag > 0) return 1;
 
   if (ignored_archs_count > 0) {
     for (i = 0; i < ignored_archs_count; ++i) {
@@ -223,7 +227,7 @@ handle_packet(
   short_name = srpp->short_name;
   if (!short_name) short_name = "";
 
-  if (is_packet_to_ignore(pkt_name, srgp->contest_id, short_name, arch)) {
+  if (is_packet_to_ignore(pkt_name, srgp->contest_id, srgp->rejudge_flag, short_name, arch)) {
     retval = 0;
     generic_write_file(srp_b, srp_z, SAFE, super_run_spool_path, pkt_name, "");
     goto cleanup;
@@ -454,6 +458,7 @@ write_help(void)
          "    -D           daemon mode\n"
          "    -s ARCH      ignore specified architecture\n"
          "    -i CNTS:PROB ignore specified problem\n"
+         "    -r           ignore rejudging\n"
          "    -p DIR       specify alternate name for super-run directory\n"
          "    -a           write log file to an alternate location\n"
          "    -m DIR       specify a directory for file mirroring",
@@ -909,6 +914,10 @@ main(int argc, char *argv[])
     } else if (!strcmp(argv[cur_arg], "-a")) {
       argv_restart[argc_restart++] = argv[cur_arg];
       alternate_log_mode = 1;
+      ++cur_arg;
+    } else if (!strcmp(argv[cur_arg], "-r")) {
+      argv_restart[argc_restart++] = argv[cur_arg];
+      ignore_rejudge = 1;
       ++cur_arg;
     } else if (!strcmp(argv[cur_arg], "-p")) {
       if (cur_arg + 1 >= argc) fatal("argument expected for -p");
