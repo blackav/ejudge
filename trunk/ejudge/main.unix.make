@@ -493,7 +493,7 @@ contest-1/contest-1.tar.gz :
 reuse/objs/libreuse.a :
 	$(MAKE) -C reuse all
 
-cfront/ej-cfront : version.o reuse/objs/libreuse.a
+cfront/ej-cfront : reuse/objs/libreuse.a
 	$(MAKE) -C cfront all
 
 include deps.make
