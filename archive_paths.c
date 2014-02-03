@@ -513,10 +513,24 @@ uuid_archive_prepare_write_path(
   return flags;
 }
 
+static void
+remove_all_suffixes(const unsigned char *base)
+{
+  unsigned char path[PATH_MAX];
+
+  snprintf(path, sizeof(path), "%s", base);
+  unlink(path);
+  snprintf(path, sizeof(path), "%s.gz", base);
+  unlink(path);
+  snprintf(path, sizeof(path), "%s.zip", base);
+  unlink(path);
+}
+
 int
 uuid_archive_remove(
         const serve_state_t state,
-        const ruint32_t run_uuid[4])
+        const ruint32_t run_uuid[4],
+        int preserve_source)
 {
   unsigned char base[PATH_MAX];
   unsigned char path[PATH_MAX];
@@ -529,12 +543,19 @@ uuid_archive_remove(
            ((const unsigned char *) run_uuid)[0],
            ((const unsigned char *) run_uuid)[1],
            ej_uuid_unparse(run_uuid, NULL));
-  snprintf(path, sizeof(path), "%s/%s", base, DFLT_R_UUID_SOURCE);
-  unlink(path);
-  snprintf(path, sizeof(path), "%s/%s.gz", base, DFLT_R_UUID_SOURCE);
-  unlink(path);
-  snprintf(path, sizeof(path), "%s/%s.zip", base, DFLT_R_UUID_SOURCE);
-  unlink(path);
+  if (preserve_source <= 0) {
+    snprintf(path, sizeof(path), "%s/%s", base, DFLT_R_UUID_SOURCE);
+    remove_all_suffixes(path);
+  }
+
+  snprintf(path, sizeof(path), "%s/%s", base, DFLT_R_UUID_XML_REPORT);
+  remove_all_suffixes(path);
+
+  snprintf(path, sizeof(path), "%s/%s", base, DFLT_R_UUID_REPORT);
+  remove_all_suffixes(path);
+
+  snprintf(path, sizeof(path), "%s/%s", base, DFLT_R_UUID_FULL_ARCHIVE);
+  remove_all_suffixes(path);
 
   return 0;
 }

@@ -3805,7 +3805,7 @@ priv_clear_run(FILE *fout, FILE *log_f,
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
 
   if (re.store_flags == 1) {
-    uuid_archive_remove(cs, re.run_uuid);
+    uuid_archive_remove(cs, re.run_uuid, 0);
   } else {
     archive_remove(cs, global->run_archive_dir, run_id, 0);
     archive_remove(cs, global->xml_report_archive_dir, run_id, 0);
