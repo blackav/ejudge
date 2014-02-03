@@ -171,8 +171,8 @@ static void
 vt_free_2_node(ValueTreeNode *t)
 {
     if (!t) return;
-    tc_value_tree_free_node(t->left);
-    tc_value_tree_free_node(t->right);
+    vt_free_2_node(t->left);
+    vt_free_2_node(t->right);
     memset(t, 0, sizeof(*t));
     xfree(t);
 }
