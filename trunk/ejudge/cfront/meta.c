@@ -151,8 +151,8 @@ main_meta_generate(tree_t tree, const unsigned char *output_name)
   FILE *out_c = 0;
   FILE *out_h = 0;
   unsigned char ts_buf[1024];
-  time_t ts_time;
-  struct tm *ts_tm;
+  //time_t ts_time;
+  //struct tm *ts_tm;
 
   if (!output_name) output_name = "output.c";
   snprintf(bn_buf, sizeof(bn_buf), "%s", output_name);
@@ -196,11 +196,13 @@ main_meta_generate(tree_t tree, const unsigned char *output_name)
   }
 
   ts_buf[0] = 0;
+  /*
   if (meta_timestamp) {
     ts_time = time(0);
     ts_tm = localtime(&ts_time);
     snprintf(ts_buf, sizeof(ts_buf), "// Generated %04d/%02d/%02d %02d:%02d:%02d\n", ts_tm->tm_year + 1900, ts_tm->tm_mon + 1, ts_tm->tm_mday, ts_tm->tm_hour, ts_tm->tm_min, ts_tm->tm_sec);
   }
+  */
 
   if (meta_generate(tree, ts_buf, bn_buf, h_buf, out_c, out_h, &meta_structs, &meta_enum_prefixes, &meta_func_prefixes) < 0) {
     fclose(out_c);
