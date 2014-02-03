@@ -3,7 +3,7 @@
 #ifndef __ARCHIVE_PATHS_H__
 #define __ARCHIVE_PATHS_H__
 
-/* Copyright (C) 2003-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -84,6 +84,7 @@ uuid_archive_prepare_write_path(
 int
 uuid_archive_remove(
         const serve_state_t state,
-        const ruint32_t run_uuid[4]);
+        const ruint32_t run_uuid[4],
+        int preserve_source);
 
 #endif /* __ARCHIVE_PATHS_H__ */
