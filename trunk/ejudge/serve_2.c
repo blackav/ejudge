@@ -4522,7 +4522,7 @@ serve_clear_by_mask(serve_state_t state,
         && !run_is_readonly(state->runlog_state, r)) {
       if (run_get_entry(state->runlog_state, r, &re) >= 0 && run_clear_entry(state->runlog_state, r) >= 0) {
         if (re.store_flags == 1) {
-          uuid_archive_remove(state, re.run_uuid);
+          uuid_archive_remove(state, re.run_uuid, 0);
         } else {
           archive_remove(state, global->run_archive_dir, r, 0);
           archive_remove(state, global->xml_report_archive_dir, r, 0);
@@ -4582,7 +4582,7 @@ serve_ignore_by_mask(serve_state_t state,
     re.status = new_status;
     if (run_set_entry(state->runlog_state, r, RE_STATUS, &re) >= 0) {
       if (re.store_flags == 1) {
-        uuid_archive_remove(state, re.run_uuid);
+        uuid_archive_remove(state, re.run_uuid, 1);
       } else {
         archive_remove(state, global->xml_report_archive_dir, r, 0);
         archive_remove(state, global->report_archive_dir, r, 0);
