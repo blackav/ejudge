@@ -1101,7 +1101,8 @@ serve_compile_request(
         const struct section_language_data *lang,
         int no_db_flag,
         const ruint32_t uuid[4],
-        int store_flags)
+        int store_flags,
+        int rejudge_flag)
 {
   struct compile_run_extra rx;
   struct compile_request_packet cp;
@@ -1269,6 +1270,7 @@ serve_compile_request(
   if (lang) {
     rx.is_dos = lang->is_dos;
   }
+  rx.rejudge_flag = rejudge_flag;
 
   if (compile_request_packet_write(&cp, &pkt_len, &pkt_buf) < 0) {
     // FIXME: need reasonable recovery?
@@ -1466,7 +1468,8 @@ serve_run_request(
         const unsigned char *compile_report_dir,
         const struct compile_reply_packet *comp_pkt,
         int no_db_flag,
-        ruint32_t uuid[4])
+        ruint32_t uuid[4],
+        int rejudge_flag)
 {
   int cn;
   struct section_global_data *global = state->global;
@@ -1765,6 +1768,7 @@ serve_run_request(
       srgp->checker_locale = xstrdup(global->checker_locale);
     }
   }
+  srgp->rejudge_flag = rejudge_flag;
 
   struct super_run_in_problem_packet *srpp = srp->problem;
   srpp->type = xstrdup(problem_unparse_type(prob->type));
@@ -2457,7 +2461,8 @@ serve_read_compile_packet(
                         comp_extra->priority_adjustment,
                         comp_pkt->judge_id, comp_extra->accepting_mode,
                         comp_extra->notify_flag, re.mime_type, re.eoln_type,
-                        re.locale_id, compile_report_dir, comp_pkt, 0, re.run_uuid) < 0) {
+                        re.locale_id, compile_report_dir, comp_pkt, 0, re.run_uuid,
+                        comp_extra->rejudge_flag) < 0) {
     snprintf(errmsg, sizeof(errmsg), "failed to write run packet\n");
     goto report_check_failed;
   }
@@ -3199,7 +3204,8 @@ serve_rejudge_run(
                                 priority_adjustment,
                                 1 /* notify flag */,
                                 prob, NULL /* lang */,
-                                0 /* no_db_flag */, re.run_uuid, re.store_flags);
+                                0 /* no_db_flag */, re.run_uuid, re.store_flags,
+                                1 /* rejudge_flag */);
       if (r < 0) {
         serve_report_check_failed(config, cnts, state, run_id, serve_err_str(r));
         err("rejudge_run: serve_compile_request failed: %s", serve_err_str(r));
@@ -3219,7 +3225,8 @@ serve_rejudge_run(
                       re.user_id, re.prob_id, re.lang_id,
                       re.variant, priority_adjustment,
                       -1, accepting_mode, 1, re.mime_type, re.eoln_type,
-                      re.locale_id, 0, 0, 0, re.run_uuid);
+                      re.locale_id, 0, 0, 0, re.run_uuid,
+                      1 /* rejudge_flag */);
     xfree(run_text);
     return;
   }
@@ -3242,7 +3249,8 @@ serve_rejudge_run(
                             0, prob->style_checker_cmd,
                             prob->style_checker_env,
                             accepting_mode, priority_adjustment, 1, prob, lang, 0,
-                            re.run_uuid, re.store_flags);
+                            re.run_uuid, re.store_flags,
+                            1 /* rejudge_flag */);
   if (r < 0) {
     serve_report_check_failed(config, cnts, state, run_id, serve_err_str(r));
     err("rejudge_run: serve_compile_request failed: %s", serve_err_str(r));

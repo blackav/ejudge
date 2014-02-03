@@ -591,7 +591,8 @@ process_submit(
                             prob, lang,
                             1 /* no_db_flag */,
                             NULL /* uuid */,
-                            0 /* store_flags */);
+                            0 /* store_flags */,
+                            0 /* rejudge_flag */);
   if (r < 0) {
     // FIXME: handle error
     abort();
@@ -691,7 +692,8 @@ process_compile_packet(
                         0 /* compile_report_dir */,
                         0 /* comp_pkt */,
                         1 /* no_db_flag */,
-                        NULL /* uuid */);
+                        NULL /* uuid */,
+                        0 /* rejudge_flag */);
   if (r < 0) abort();
 
   return 0;

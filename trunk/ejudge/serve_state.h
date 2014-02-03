@@ -315,6 +315,7 @@ struct compile_run_extra
   int priority_adjustment;
   int notify_flag;
   int is_dos;
+  int rejudge_flag;
 };
 
 serve_state_t serve_state_init(int contest_id);
@@ -428,7 +429,8 @@ serve_compile_request(
         const struct section_language_data *lang,
         int no_db_flag,
         const ruint32_t uuid[4],
-        int store_flags)
+        int store_flags,
+        int rejudge_flag)
 #if defined __GNUC__
   __attribute__((warn_unused_result))
 #endif
@@ -458,7 +460,8 @@ serve_run_request(
         const unsigned char *compile_report_dir,
         const struct compile_reply_packet *comp_pkt,
         int no_db_flag,
-        ruint32_t uuid[4]);
+        ruint32_t uuid[4],
+        int rejudge_flag);
 
 int serve_is_valid_status(serve_state_t state, int status, int mode);
 

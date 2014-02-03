@@ -1111,7 +1111,8 @@ cmd_submit_run(
                                      lang->compiler_env,
                                      0, prob->style_checker_cmd,
                                      prob->style_checker_env,
-                                     -1, 0, 0, prob, lang, 0, run_uuid, store_flags)) < 0) {
+                                     -1, 0, 0, prob, lang, 0, run_uuid, store_flags,
+                                     0 /* rejudge_flag */)) < 0) {
         serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
       }
     }
@@ -1138,14 +1139,16 @@ cmd_submit_run(
                                        0 /* priority_adjustment */,
                                        0 /* notify flag */,
                                        prob, NULL /* lang */,
-                                       0 /* no_db_flag */, run_uuid, store_flags)) < 0) {
+                                       0 /* no_db_flag */, run_uuid, store_flags,
+                                       0 /* rejudge_flag */)) < 0) {
           serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
         }
       } else {
         if (serve_run_request(cs, cnts, stderr, run_text, run_size,
                               global->contest_id, run_id,
                               phr->user_id, prob->id, 0, variant, 0, -1, -1, 0,
-                              mime_type, 0, phr->locale_id, 0, 0, 0, run_uuid) < 0)
+                              mime_type, 0, phr->locale_id, 0, 0, 0, run_uuid,
+                              0 /* rejudge_flag */) < 0)
           FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
       }
     }
@@ -1187,7 +1190,8 @@ cmd_submit_run(
                                        0 /* priority_adjustment */,
                                        0 /* notify flag */,
                                        prob, NULL /* lang */,
-                                       0 /* no_db_flag */, run_uuid, store_flags)) < 0) {
+                                       0 /* no_db_flag */, run_uuid, store_flags,
+                                       0 /* rejudge_flag */)) < 0) {
           serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
         }
       } else {
@@ -1196,7 +1200,8 @@ cmd_submit_run(
         if (serve_run_request(cs, cnts, stderr, run_text, run_size,
                               global->contest_id, run_id,
                               phr->user_id, prob->id, 0, variant, 0, -1, -1, 0,
-                              mime_type, 0, phr->locale_id, 0, 0, 0, run_uuid) < 0)
+                              mime_type, 0, phr->locale_id, 0, 0, 0, run_uuid,
+                              0 /* rejudge_flag */) < 0)
           FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
       }
     }
