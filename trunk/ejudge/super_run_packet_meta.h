@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2014/02/03 12:10:56
+// Generated 2014/02/03 20:11:46
 
 #ifndef __SUPER_RUN_PACKET_META_H__
 #define __SUPER_RUN_PACKET_META_H__
@@ -39,7 +39,7 @@ enum
   META_SUPER_RUN_IN_GLOBAL_PACKET_mime_type,
   META_SUPER_RUN_IN_GLOBAL_PACKET_notify_flag,
   META_SUPER_RUN_IN_GLOBAL_PACKET_advanced_layout,
-  META_SUPER_RUN_IN_GLOBAL_PACKET_rejudge_mode,
+  META_SUPER_RUN_IN_GLOBAL_PACKET_rejudge_flag,
   META_SUPER_RUN_IN_GLOBAL_PACKET_ts1,
   META_SUPER_RUN_IN_GLOBAL_PACKET_ts1_us,
   META_SUPER_RUN_IN_GLOBAL_PACKET_ts2,

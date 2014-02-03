@@ -1,5 +1,5 @@
 // This is an auto-generated file, do not edit
-// Generated 2014/02/03 12:10:56
+// Generated 2014/02/03 20:11:46
 
 #include "super_run_packet_meta.h"
 #include "super_run_packet.h"
@@ -44,7 +44,7 @@ static struct meta_info_item meta_info_super_run_in_global_packet_data[] =
   [META_SUPER_RUN_IN_GLOBAL_PACKET_mime_type] = { META_SUPER_RUN_IN_GLOBAL_PACKET_mime_type, 'i', XSIZE(struct super_run_in_global_packet, mime_type), "mime_type", XOFFSET(struct super_run_in_global_packet, mime_type) },
   [META_SUPER_RUN_IN_GLOBAL_PACKET_notify_flag] = { META_SUPER_RUN_IN_GLOBAL_PACKET_notify_flag, 'B', XSIZE(struct super_run_in_global_packet, notify_flag), "notify_flag", XOFFSET(struct super_run_in_global_packet, notify_flag) },
   [META_SUPER_RUN_IN_GLOBAL_PACKET_advanced_layout] = { META_SUPER_RUN_IN_GLOBAL_PACKET_advanced_layout, 'B', XSIZE(struct super_run_in_global_packet, advanced_layout), "advanced_layout", XOFFSET(struct super_run_in_global_packet, advanced_layout) },
-  [META_SUPER_RUN_IN_GLOBAL_PACKET_rejudge_mode] = { META_SUPER_RUN_IN_GLOBAL_PACKET_rejudge_mode, 'B', XSIZE(struct super_run_in_global_packet, rejudge_mode), "rejudge_mode", XOFFSET(struct super_run_in_global_packet, rejudge_mode) },
+  [META_SUPER_RUN_IN_GLOBAL_PACKET_rejudge_flag] = { META_SUPER_RUN_IN_GLOBAL_PACKET_rejudge_flag, 'B', XSIZE(struct super_run_in_global_packet, rejudge_flag), "rejudge_flag", XOFFSET(struct super_run_in_global_packet, rejudge_flag) },
   [META_SUPER_RUN_IN_GLOBAL_PACKET_ts1] = { META_SUPER_RUN_IN_GLOBAL_PACKET_ts1, 'i', XSIZE(struct super_run_in_global_packet, ts1), "ts1", XOFFSET(struct super_run_in_global_packet, ts1) },
   [META_SUPER_RUN_IN_GLOBAL_PACKET_ts1_us] = { META_SUPER_RUN_IN_GLOBAL_PACKET_ts1_us, 'i', XSIZE(struct super_run_in_global_packet, ts1_us), "ts1_us", XOFFSET(struct super_run_in_global_packet, ts1_us) },
   [META_SUPER_RUN_IN_GLOBAL_PACKET_ts2] = { META_SUPER_RUN_IN_GLOBAL_PACKET_ts2, 'i', XSIZE(struct super_run_in_global_packet, ts2), "ts2", XOFFSET(struct super_run_in_global_packet, ts2) },
