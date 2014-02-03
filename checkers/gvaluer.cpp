@@ -1,5 +1,5 @@
 /* $Id$ */
-/* Copyright (C) 2012-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -68,6 +68,7 @@ die(const char *format, ...)
 static bool marked_flag;
 static bool user_score_flag;
 static bool interactive_flag;
+static bool rejudge_flag;
 
 class ConfigParser;
 class Group
@@ -80,6 +81,7 @@ class Group
     bool offline = false;
     bool sets_marked = false;
     bool skip = false;
+    bool skip_if_not_rejudge = false;
     int score = 0;
     int test_score = -1;
     int pass_if_count = -1;
@@ -116,6 +118,9 @@ public:
 
     void set_skip(bool skip) { this->skip = skip; }
     bool get_skip() const { return skip; }
+
+    void set_skip_if_not_rejudge(bool skip) { this->skip_if_not_rejudge = skip; }
+    bool get_skip_if_not_rejudge() const { return skip_if_not_rejudge; }
 
     void set_score(int score) { this->score = score; }
     int get_score() const { return score; }
@@ -329,6 +334,11 @@ public:
                 if (t_type != ';') parse_error("';' expected");
                 next_token();
                 g.set_skip(true);
+            } else if (token == "skip_if_not_rejudge") {
+                next_token();
+                if (t_type != ';') parse_error("';' expected");
+                next_token();
+                g.set_skip_if_not_rejudge(true);
             } else if (token == "score") {
                 next_token();
                 if (t_type != T_IDENT) parse_error("NUM expected");
@@ -540,6 +550,7 @@ main(int argc, char *argv[])
     if (getenv("EJUDGE_USER_SCORE")) user_score_flag = true;
     if (getenv("EJUDGE_MARKED")) marked_flag = true;
     if (getenv("EJUDGE_INTERACTIVE")) interactive_flag = true;
+    if (getenv("EJUDGE_REJUDGE")) rejudge_flag = true;
 
     string configpath = selfdir + "/valuer.cfg";
     ConfigParser parser;
@@ -594,7 +605,8 @@ main(int argc, char *argv[])
             }
             test_num = g->get_last() + 1;
         }
-        while ((g = parser.find_group(test_num)) && g->get_skip()) {
+        while ((g = parser.find_group(test_num))
+               && (g->get_skip() || (g->get_skip_if_not_rejudge() && !rejudge_flag))) {
             test_num = g->get_last() + 1;
         }
         printf("%d\n", -test_num);
