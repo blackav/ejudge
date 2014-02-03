@@ -494,6 +494,6 @@ reuse/objs/libreuse.a :
 	$(MAKE) -C reuse all
 
 cfront/ej-cfront : version.o reuse/objs/libreuse.a
-	$(MAKE) -C cfront ej-cfront
+	$(MAKE) -C cfront all
 
 include deps.make
