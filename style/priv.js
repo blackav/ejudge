@@ -1,7 +1,7 @@
 /* -*- mode: java; coding: utf-8 -*- */
 // $Id$
 
-// Copyright (C) 2008-2013 Alexander Chernov <cher@ejudge.ru>
+// Copyright (C) 2008-2014 Alexander Chernov <cher@ejudge.ru>
 
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -716,7 +716,7 @@ function ej_field_popup(field_mask)
   a.value = "action";
   h.setAttributeNode(a);
   a = document.createAttribute("value");
-  a.value = "CHANGE_RUN_FIELDS";
+  a.value = "change-run-fields";
   h.setAttributeNode(a);
   b.appendChild(h);
 
