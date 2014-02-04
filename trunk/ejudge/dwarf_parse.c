@@ -179,7 +179,7 @@ s_dwarf_sibling(
 {
     Dwarf_Error dwe = NULL;
     int res;
-    if ((res = dwarf_siblingof_b(dbg, die, 1, pdie, &dwe)) == DW_DLV_OK)
+    if ((res = dwarf_siblingof(dbg, die, pdie, &dwe)) == DW_DLV_OK)
         return 1;
     if (res == DW_DLV_NO_ENTRY) return 0;
     fprintf(log_f, "%s: dwarf_siblingof_b failed: %s\n", path, dwarf_errmsg(dwe));
@@ -260,7 +260,7 @@ s_dwarf_offdie(
         Dwarf_Die *pdie)
 {
     Dwarf_Error dwe = NULL;
-    if (dwarf_offdie_b(dbg, offset, 1, pdie, &dwe) == DW_DLV_OK) return 1;
+    if (dwarf_offdie(dbg, offset, pdie, &dwe) == DW_DLV_OK) return 1;
     fprintf(log_f, "%s: dwarf_offdie_b failed: %s\n", path, dwarf_errmsg(dwe));
     return -1;
 }
@@ -629,6 +629,9 @@ parse_base_type_die(
     } else if (bs == 8 && enc == DW_ATE_float) {
         ti = tc_get_f64_type(cntx);
     } else if (bs == 12 && enc == DW_ATE_float) {
+        ti = tc_get_f80_type(cntx);
+    } else if (bs == 16 && enc == DW_ATE_float) {
+        // FIXME: f128?
         ti = tc_get_f80_type(cntx);
     }
 
@@ -1624,13 +1627,11 @@ dwarf_parse(FILE *log_f, const unsigned char *path, TypeContext *cntx)
     Dwarf_Half address_size;
     Dwarf_Half length_size;
     Dwarf_Half extension_size;
-    Dwarf_Sig8 type_signature;
-    Dwarf_Unsigned typeoffset = 0;
     Dwarf_Unsigned next_cu_header_offset;
-    while ((res = dwarf_next_cu_header_c(dbg, 1, &cu_header_length, &version_stamp,
+    while ((res = dwarf_next_cu_header_b(dbg, &cu_header_length, &version_stamp,
                                          &abbrev_offset, &address_size, &length_size,
-                                         &extension_size, &type_signature,
-                                         &typeoffset, &next_cu_header_offset, &dwe)) == DW_DLV_OK) {
+                                         &extension_size,
+                                         &next_cu_header_offset, &dwe)) == DW_DLV_OK) {
         if ((res = parse_cu(log_f, path, dbg, cntx)) < 0) {
             goto done;
         }
