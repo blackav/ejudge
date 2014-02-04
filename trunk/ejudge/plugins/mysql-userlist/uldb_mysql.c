@@ -2536,8 +2536,12 @@ set_team_passwd_func(
   char *cmd_t = 0;
   size_t cmd_z = 0;
   FILE *cmd_f = 0;
+  struct userlist_user_info *ui = 0;
 
   if (cur_time <= 0) cur_time = time(0);
+
+  if (fetch_or_create_user_info(state, user_id, contest_id, &ui) < 0)
+    goto fail;
 
   cmd_f = open_memstream(&cmd_t, &cmd_z);
   fprintf(cmd_f, "UPDATE %susers SET pwdmethod = %d, password = ",
