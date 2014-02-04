@@ -9872,8 +9872,8 @@ cmd_create_user_2(
       return;
     }
   }
-  if (data->group_id != 0) {
-    ul_group = plugin_call(get_group, data->contest_id);
+  if (data->group_id > 0) {
+    ul_group = plugin_call(get_group, data->group_id);
     if (!ul_group) {
       err("%s -> invalid group %d", logbuf, data->group_id);
       send_reply(p, -ULS_ERR_BAD_GROUP_ID);
