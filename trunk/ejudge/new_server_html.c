@@ -12462,6 +12462,7 @@ unpriv_view_report(FILE *fout,
   time_t start_time, stop_time;
   int accepting_mode = 0;
   int enable_rep_view = 0;
+  int status = -1;
 
   start_time = run_get_start_time(cs->runlog_state);
   stop_time = run_get_stop_time(cs->runlog_state);
@@ -12501,8 +12502,14 @@ unpriv_view_report(FILE *fout,
     ns_error(log_f, NEW_SRV_ERR_INV_PROB_ID);
     goto done;
   }
+
+  status = re.status;
+  if (global->separate_user_score > 0 && re.is_saved) {
+    status = re.saved_status;
+  }
+  
   // check viewable statuses
-  switch (re.status) {
+  switch (status) {
   case RUN_OK:
   case RUN_COMPILE_ERR:
   case RUN_RUN_TIME_ERR:
@@ -12532,9 +12539,9 @@ unpriv_view_report(FILE *fout,
   if (enable_rep_view) enable_rep_view = prob->team_enable_rep_view;
   if (!enable_rep_view
       && (!prob->team_enable_ce_view
-          || (re.status != RUN_COMPILE_ERR
-              && re.status != RUN_STYLE_ERR
-              && re.status != RUN_REJECTED))) {
+          || (status != RUN_COMPILE_ERR
+              && status != RUN_STYLE_ERR
+              && status != RUN_REJECTED))) {
     ns_error(log_f, NEW_SRV_ERR_REPORT_VIEW_DISABLED);
     goto done;
   }
@@ -12547,18 +12554,18 @@ unpriv_view_report(FILE *fout,
     }
     content_type = get_content_type(rep_text, &rep_start);
     if (content_type != CONTENT_TYPE_XML
-        && re.status != RUN_COMPILE_ERR
-        && re.status != RUN_STYLE_ERR
-        && re.status != RUN_REJECTED) {
+        && status != RUN_COMPILE_ERR
+        && status != RUN_STYLE_ERR
+        && status != RUN_REJECTED) {
       ns_error(log_f, NEW_SRV_ERR_REPORT_UNAVAILABLE);
       goto done;
     }
   } else {
     int user_mode = 0;
     if (prob->team_enable_ce_view
-        && (re.status == RUN_COMPILE_ERR
-            || re.status == RUN_STYLE_ERR
-            || re.status == RUN_REJECTED)) {
+        && (status == RUN_COMPILE_ERR
+            || status == RUN_STYLE_ERR
+            || status == RUN_REJECTED)) {
     } else if (prob->team_show_judge_report) {
     } else {
       user_mode = 1;
