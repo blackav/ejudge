@@ -26,6 +26,9 @@
 #include <string.h>
 #include <time.h>
 
+#include <sys/types.h>
+#include <utime.h>
+
 static strarray_t meta_structs;
 static strarray_t meta_enum_prefixes;
 static strarray_t meta_func_prefixes;
@@ -121,6 +124,12 @@ update_if_needed(const unsigned char *dstname, const unsigned char *srcname)
 
   if (z_src == z_dst && !memcmp(t_src, t_dst, z_src)) {
     fprintf(stderr, "no update to %s is needed\n", dstname);
+    // update last_modified stamp of dstname
+
+    time_t cur_time = time(0);
+    struct utimbuf utb = { cur_time, cur_time };
+    utime(dstname, &utb);
+
     remove(srcname);
     return 0;
   }
