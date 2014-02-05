@@ -48,6 +48,8 @@ struct session_info
 
 struct server_framework_state;
 struct client_state;
+struct contest_desc;
+struct contest_extra;
 
 struct http_request_info
 {
@@ -103,6 +105,9 @@ struct http_request_info
 
   struct timeval timestamp1;
   struct timeval timestamp2;
+
+  const struct contest_desc *cnts;
+  struct contest_extra *extra;
 };
 
 void

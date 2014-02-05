@@ -88,7 +88,7 @@ struct server_framework_params
   void (*post_select)(struct server_framework_state *);
 };
 
-struct server_framework_state *nsf_init(struct server_framework_params *params, void *data);
+struct server_framework_state *nsf_init(struct server_framework_params *params, void *data, time_t server_start_time);
 int  nsf_prepare(struct server_framework_state *state);
 void nsf_cleanup(struct server_framework_state *state);
 
@@ -166,5 +166,10 @@ nsf_get_first_job(
 int
 nsf_get_job_count(
         struct server_framework_state *state);
+
+time_t
+nfs_get_server_start_time(
+        struct server_framework_state *state);
+
 
 #endif /* __SERVER_FRAMEWORK_H__ */
