@@ -56,6 +56,7 @@
 #include "ej_uuid.h"
 #include "prepare_dflt.h"
 #include "new_server_match.h"
+#include "external_action.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"
@@ -9430,6 +9431,13 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_SUBMIT_RUN_BATCH] = priv_generic_page,
 };
 
+static const unsigned char * const external_action_names[NEW_SRV_ACTION_LAST] =
+{
+  [NEW_SRV_ACTION_MAIN_PAGE] = "priv_main_page",
+};
+
+static ExternalActionState *external_action_states[NEW_SRV_ACTION_LAST];
+
 static unsigned char *
 read_file_range(
         const unsigned char *path,
@@ -9604,14 +9612,33 @@ privileged_entry_point(
   extra->serve_state->current_time = time(0);
   ns_check_contest_events(extra->serve_state, cnts);
   
+  if (phr->action <= 0 || phr->action >= NEW_SRV_ACTION_LAST) {
+    phr->action = NEW_SRV_ACTION_MAIN_PAGE;
+  }
+  if (!external_action_names[phr->action] && !actions_table[phr->action]) {
+    phr->action = NEW_SRV_ACTION_MAIN_PAGE;
+  }
+
+  if (external_action_names[phr->action]) {
+    external_action_states[phr->action] = external_action_load(external_action_states[phr->action],
+                                                               "csp/contest",
+                                                               external_action_names[phr->action],
+                                                               "csp_view");
+  }
+  if (external_action_states[phr->action] && external_action_states[phr->action]->action_handler) {
+    ((action_handler_t) external_action_states[phr->action]->action_handler)(fout, phr, cnts, extra);
+  }
+
+  // FIXME: do a fail page
+
   if (phr->action > 0 && phr->action < NEW_SRV_ACTION_LAST
       && actions_table[phr->action]) {
     actions_table[phr->action](fout, phr, cnts, extra);
   } else {
     if (phr->action < 0 || phr->action >= NEW_SRV_ACTION_LAST)
       phr->action = 0;
-    //priv_main_page(fout, phr, cnts, extra);
-    csp_view_priv_main_page(fout, phr, cnts, extra);
+    priv_main_page(fout, phr, cnts, extra);
+    //csp_view_priv_main_page(fout, phr, cnts, extra);
   }
 }
 
