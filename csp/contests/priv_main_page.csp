@@ -16,8 +16,10 @@
 #include <libintl.h>
 #define _(x) gettext(x)
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
-%><%@page csp_view_priv_main_page(FILE *out_f, struct http_request_info *phr, const struct contest_desc *cnts, struct contest_extra *extra)
+%><%@page csp_view_priv_main_page_(FILE *log_f, FILE *out_f, struct http_request_info *phr)
 %><%
+  const struct contest_desc *cnts = phr->cnts;
+  struct contest_extra *extra = phr->extra;
   int need_examiners = 0;
   time_t start_time = 0;
   time_t stop_time = 0;
@@ -49,7 +51,7 @@
   long long tdiff = 0;
   unsigned char hbuf[1024];
   struct server_framework_job *job;
-  time_t local_server_start_time = server_start_time; // until support for globals is in place
+  time_t server_start_time = nsf_get_server_start_time(phr->fw_state);
 %><%
   if (ns_cgi_param(phr, "filter_expr", &s) > 0) filter_expr = s;
 
@@ -306,7 +308,7 @@
       }
     } %>
 <tr><td><s:tr>Contest load time</s:tr></td><td><s:v value="cs->load_time" /></td></tr>
-<tr><td><s:tr>Server start time</s:tr></td><td><s:v value="local_server_start_time" /></td></tr>
+<tr><td><s:tr>Server start time</s:tr></td><td><s:v value="server_start_time" /></td></tr>
 </table></s:form>
 
 <hr />

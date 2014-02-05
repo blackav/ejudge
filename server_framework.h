@@ -168,7 +168,7 @@ nsf_get_job_count(
         struct server_framework_state *state);
 
 time_t
-nfs_get_server_start_time(
+nsf_get_server_start_time(
         struct server_framework_state *state);
 
 
