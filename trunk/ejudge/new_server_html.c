@@ -8481,7 +8481,7 @@ priv_main_page(FILE *fout,
   struct last_access_info *pa;
   const unsigned char *filter_first_clar_str = 0;
   const unsigned char *filter_last_clar_str = 0;
-  time_t server_start_time = nfs_get_server_start_time(phr->fw_state);
+  time_t server_start_time = nsf_get_server_start_time(phr->fw_state);
 
   if (ns_cgi_param(phr, "filter_expr", &s) > 0) filter_expr = s;
 
