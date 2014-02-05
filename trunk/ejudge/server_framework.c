@@ -79,6 +79,8 @@ struct server_framework_state
   int client_id;
   int restart_requested;
 
+  time_t server_start_time;
+
   struct client_state *clients_first;
   struct client_state *clients_last;
 
@@ -774,7 +776,10 @@ nsf_is_restart_requested(struct server_framework_state *state)
 }
 
 struct server_framework_state *
-nsf_init(struct server_framework_params *params, void *data)
+nsf_init(
+        struct server_framework_params *params,
+        void *data,
+        time_t server_start_time)
 {
   struct server_framework_state *state;
 
@@ -782,6 +787,7 @@ nsf_init(struct server_framework_params *params, void *data)
   state->params = params;
   state->user_data = data;
   state->client_id = 1;
+  state->server_start_time = server_start_time;
   return state;
 }
 
@@ -837,4 +843,11 @@ nsf_get_job_count(
         struct server_framework_state *state)
 {
   return state->job_count;
+}
+
+time_t
+nfs_get_server_start_time(
+        struct server_framework_state *state)
+{
+  return state->server_start_time;
 }

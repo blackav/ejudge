@@ -75,7 +75,7 @@ int ul_uid;
 unsigned char *ul_login;
 
 struct session_info *session_first, *session_last;
-time_t server_start_time;
+//time_t server_start_time;
 
 // plugin information
 struct nsdb_loaded_plugin
@@ -638,6 +638,7 @@ main(int argc, char *argv[])
   int restart_flag = 0;
   char **argv_restart = 0;
   int pid;
+  time_t server_start_time = 0;
 
   time(&server_start_time);
   start_set_self_args(argc, argv);
@@ -756,7 +757,7 @@ main(int argc, char *argv[])
     return 1;
   }
 
-  if (!(state = nsf_init(&params, 0))) return 1;
+  if (!(state = nsf_init(&params, 0, server_start_time))) return 1;
   if (nsf_prepare(state) < 0) return 1;
   nsf_main_loop(state);
   restart_flag = nsf_is_restart_requested(state);

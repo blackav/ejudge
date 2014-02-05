@@ -8481,6 +8481,7 @@ priv_main_page(FILE *fout,
   struct last_access_info *pa;
   const unsigned char *filter_first_clar_str = 0;
   const unsigned char *filter_last_clar_str = 0;
+  time_t server_start_time = nfs_get_server_start_time(phr->fw_state);
 
   if (ns_cgi_param(phr, "filter_expr", &s) > 0) filter_expr = s;
 
@@ -9224,6 +9225,11 @@ priv_reload_server_2(
 {
 }
 
+typedef int (*new_action_handler_t)(
+        FILE *log_f,
+        FILE *out_f,
+        struct http_request_info *phr);
+
 typedef void (*action_handler_t)(FILE *fout,
                                  struct http_request_info *phr,
                                  const struct contest_desc *cnts,
@@ -9518,6 +9524,9 @@ privileged_entry_point(
   extra = ns_get_contest_extra(phr->contest_id);
   ASSERT(extra);
 
+  phr->cnts = cnts;
+  phr->extra = extra;
+
   // analyze IP limitations
   if (phr->role == USER_ROLE_ADMIN) {
     // as for the master program
@@ -9625,20 +9634,45 @@ privileged_entry_point(
                                                                external_action_names[phr->action],
                                                                "csp_view_");
   }
-  if (external_action_states[phr->action] && external_action_states[phr->action]->action_handler) {
-    ((action_handler_t) external_action_states[phr->action]->action_handler)(fout, phr, cnts, extra);
-  }
 
-  // FIXME: do a fail page
+  if (external_action_states[phr->action] && external_action_states[phr->action]->action_handler) {
+    FILE *log_f = 0;
+    char *log_txt = 0;
+    size_t log_len = 0;
+
+    log_f = open_memstream(&log_txt, &log_len);
+    int r = ((new_action_handler_t) external_action_states[phr->action]->action_handler)(log_f, fout, phr);
+    if (r == -1) {
+      close_memstream(log_f); log_f = NULL;
+      xfree(log_txt); log_txt = NULL; log_len = 0;
+      return;
+    }
+
+    if (r < 0) {
+      ns_error(log_f, r);
+      r = 0;
+    }
+    if (!r) r = ns_priv_prev_state[phr->action];
+
+    close_memstream(log_f); log_f = 0;
+    if (log_txt && *log_txt) {
+      html_error_status_page(fout, phr, cnts, extra, log_txt, r, 0);
+    }
+    xfree(log_txt);
+    return;
+  }
 
   if (phr->action > 0 && phr->action < NEW_SRV_ACTION_LAST
       && actions_table[phr->action]) {
     actions_table[phr->action](fout, phr, cnts, extra);
   } else {
+    html_error_status_page(fout, phr, cnts, extra, "action is undefined", 0, 0);
+    /*
     if (phr->action < 0 || phr->action >= NEW_SRV_ACTION_LAST)
       phr->action = 0;
     priv_main_page(fout, phr, cnts, extra);
     //csp_view_priv_main_page(fout, phr, cnts, extra);
+    */
   }
 }
 
