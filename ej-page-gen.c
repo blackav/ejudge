@@ -3598,6 +3598,9 @@ csp_view_priv_main_page(
     return 0;
 }
 
+const char compile_version[] = "?";
+const char compile_date[] = "?";
+
 /*
  * Local variables:
  *  c-basic-offset: 4
