@@ -9621,9 +9621,9 @@ privileged_entry_point(
 
   if (external_action_names[phr->action]) {
     external_action_states[phr->action] = external_action_load(external_action_states[phr->action],
-                                                               "csp/contest",
+                                                               "csp/contests",
                                                                external_action_names[phr->action],
-                                                               "csp_view");
+                                                               "csp_view_");
   }
   if (external_action_states[phr->action] && external_action_states[phr->action]->action_handler) {
     ((action_handler_t) external_action_states[phr->action]->action_handler)(fout, phr, cnts, extra);
