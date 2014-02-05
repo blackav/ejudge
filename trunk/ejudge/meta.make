@@ -17,7 +17,7 @@ META_C_FILES = contests_meta.c super-serve_meta.c prepare_meta.c super_html_6_me
 META_H_FILES = $(META_C_FILES:.c=.h)
 META_O_FILES = $(META_C_FILES:.c=.o)
 
-CSP_C_FILES = csp/contests/new_priv_main_page.c
+CSP_C_FILES = csp/contests/priv_main_page.c
 CSP_O_FILES = $(CSP_C_FILES:.c=.o)
 
 META_CC = ./cfront/ej-cfront
@@ -53,5 +53,5 @@ new_server_match.c : genmatcher new_server_at.c
 genmatcher : genmatcher.c new-server.h new_server_at.c
 	$(CC) $(CFLAGS) $< -o $@
 
-csp/contests/new_priv_main_page.c : ej-page-gen csp/contests/priv_main_page.csp
-	./ej-page-gen csp/contests/priv_main_page.csp > csp/contests/new_priv_main_page.c
+csp/contests/priv_main_page.c : ej-page-gen csp/contests/priv_main_page.csp
+	./ej-page-gen csp/contests/priv_main_page.csp > csp/contests/priv_main_page.c
