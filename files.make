@@ -152,6 +152,7 @@ COMMON_CFILES=\
  ej_uuid.c\
  errlog.c\
  expat_iface.c\
+ external_action.c\
  filehash.c\
  filter_eval.c\
  filter_tree.c\
@@ -517,6 +518,7 @@ HFILES=\
  ej_uuid.h\
  errlog.h\
  expat_iface.h\
+ external_action.h\
  filehash.h\
  file_perms.h\
  fileutl.h\
