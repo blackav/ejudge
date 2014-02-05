@@ -17,7 +17,7 @@
 
 #include "config.h"
 #include "ej_limits.h"
-#include "version.h"
+//#include "version.h"
 #include "ej_types.h"
 
 #include "type_info.h"
@@ -68,13 +68,13 @@ fatal(const char *format, ...)
 static void
 report_version(void)
 {
-    printf("%s: ejudge version %s compiled %s\n", progname, compile_version, compile_date);
+    //printf("%s: ejudge version %s compiled %s\n", progname, compile_version, compile_date);
     exit(0);
 }
 static void
 report_help(void)
 {
-    printf("%s: ejudge version %s compiled %s\n", progname, compile_version, compile_date);
+    //printf("%s: ejudge version %s compiled %s\n", progname, compile_version, compile_date);
     exit(0);
 }
 
