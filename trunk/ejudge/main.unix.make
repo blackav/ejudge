@@ -146,7 +146,7 @@ P_OBJECTS = $(P_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
 IC_CFILES = ej-import-contest.c version.c
 IC_OBJECTS = $(IC_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
 
-G_CFILES = ej-page-gen.c version.c
+G_CFILES = ej-page-gen.c 
 G_OBJECTS = $(G_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
 
 INSTALLSCRIPT = ejudge-install.sh

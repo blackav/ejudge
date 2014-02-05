@@ -134,7 +134,7 @@
     <li><s:a ac="logout"><s:tr>Logout</s:tr></s:a></li>
 </ul>
 
-<hr /><a name="status" /><h2><s:tr>Server status</s:tr></h2>
+<hr /><a name="status"></a><h2><s:tr>Server status</s:tr></h2>
 
 <%  if (stop_time > 0 && !global->is_virtual) {
     if (duration > 0 && global->board_fog_time > 0
@@ -413,7 +413,7 @@
     if (!prob) {
       // no problem is selected yet
 %>
-<hr/><a name="submit" /><h2><s:tr>View the problem statement and send a submission</s:tr></h2>
+<hr/><a name="submit"></a><h2><s:tr>View the problem statement and send a submission</s:tr></h2>
 <s:form method="get">
 <table>
 <tr><td><s:tr>Problem</s:tr>:</td><td><select name="problem">
