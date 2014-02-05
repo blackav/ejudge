@@ -17,6 +17,7 @@
 
 #include "config.h"
 #include "external_action.h"
+#include "errlog.h"
 
 #include "reuse/xalloc.h"
 
@@ -83,7 +84,7 @@ try_load_action(
         goto fail_use_dlerror;
     }
     snprintf(full_name, sizeof(full_name), "%s%s", name_prefix, action);
-    state->action_handler = dlsym(state->dl_handle, action);
+    state->action_handler = dlsym(state->dl_handle, full_name);
     if (!state->action_handler) {
         retval = -ESRCH;
         goto fail_use_dlerror;
@@ -131,6 +132,8 @@ external_action_load(
     if (try_load_action(state, EJUDGE_LIBEXEC_DIR "/ejudge", dir, action, name_prefix) >= 0) {
         return state;
     }
+
+    err("page load error: %s", state->err_msg);
     return state;
 }
 
