@@ -2898,6 +2898,7 @@ handle_a_close(
         int beg_i,
         int end_i)
 {
+    handle_html_text(prg_f, txt_f, log_f, mem, beg_i, end_i);
     fprintf(prg_f, "fputs(\"</a>\", out_f);\n");
     return 0;
 }
@@ -2958,6 +2959,7 @@ handle_form_close(
         int beg_i,
         int end_i)
 {
+    handle_html_text(prg_f, txt_f, log_f, mem, beg_i, end_i);
     fprintf(prg_f, "fputs(\"</form>\", out_f);\n");
     return 0;
 }
