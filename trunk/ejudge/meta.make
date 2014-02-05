@@ -55,3 +55,6 @@ genmatcher : genmatcher.c new-server.h new_server_at.c
 
 csp/contests/priv_main_page.c : ej-page-gen csp/contests/priv_main_page.csp
 	./ej-page-gen csp/contests/priv_main_page.csp > csp/contests/priv_main_page.c
+
+csp/contests/%.o : csp/contests/%.c
+	$(CC) $(CFLAGS) -fPIC -DPIC -c $<
