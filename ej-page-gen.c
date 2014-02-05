@@ -3589,7 +3589,7 @@ struct http_request_info;
 struct contest_desc;
 struct contest_extra;
 int
-new_priv_main_page(
+csp_view_priv_main_page(
         FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
