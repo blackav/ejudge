@@ -50,8 +50,7 @@
   unsigned char hbuf[1024];
   struct server_framework_job *job;
   time_t local_server_start_time = server_start_time; // until support for globals is in place
-%>
-<%
+%><%
   if (ns_cgi_param(phr, "filter_expr", &s) > 0) filter_expr = s;
 
   ns_cgi_param_int_opt_2(phr, "filter_first_run", &filter_first_run, &filter_first_run_set);
