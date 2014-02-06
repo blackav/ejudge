@@ -94,13 +94,6 @@ static size_t extra_a = 0, extra_u = 0;
 
 extern const unsigned char * const ns_symbolic_action_table[];
 
-int
-csp_view_priv_main_page(
-        FILE *fout,
-        struct http_request_info *phr,
-        const struct contest_desc *cnts,
-        struct contest_extra *extra);
-
 static void unprivileged_page_login(FILE *fout,
                                     struct http_request_info *phr,
                                     int orig_locale_id);
@@ -9440,6 +9433,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
 static const unsigned char * const external_action_names[NEW_SRV_ACTION_LAST] =
 {
   [NEW_SRV_ACTION_MAIN_PAGE] = "priv_main_page",
+  [NEW_SRV_ACTION_VIEW_USERS] = "priv_view_users_page",
 };
 
 static ExternalActionState *external_action_states[NEW_SRV_ACTION_LAST];

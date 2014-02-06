@@ -3444,7 +3444,6 @@ main(int argc, char *argv[])
 int utf8_mode;
 void *ul_conn;
 
-time_t server_start_time;
 unsigned char *ul_login;
 int ul_uid;
 
@@ -3585,19 +3584,6 @@ void * /*struct client_state * */
 ns_get_client_by_id(int client_id)
 {
     return NULL;
-}
-
-struct http_request_info;
-struct contest_desc;
-struct contest_extra;
-int
-csp_view_priv_main_page(
-        FILE *fout,
-        struct http_request_info *phr,
-        const struct contest_desc *cnts,
-        struct contest_extra *extra)
-{
-    return 0;
 }
 
 const char compile_version[] = "?";
