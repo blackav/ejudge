@@ -1,0 +1,277 @@
+<%
+/* $Id$ */
+
+#include "new-server.h"
+#include "misctext.h"
+#include "contests.h"
+#include "userlist_proto.h"
+#include "userlist_clnt.h"
+#include "userlist.h"
+#include "runlog.h"
+#include "l10n.h"
+#include "mischtml.h"
+#include "prepare.h"
+#include "xml_utils.h"
+
+#include "reuse/xalloc.h"
+
+#include <stdio.h>
+
+#define ARMOR(s)  html_armor_buf(&ab, (s))
+#define URLARMOR(s)  url_armor_buf(&ab, s)
+#define BUTTON(a) ns_submit_button(bb, sizeof(bb), 0, a, 0)
+
+#include <libintl.h>
+#define _(x) gettext(x)
+
+static const unsigned char * const form_row_attrs[]=
+{
+  " bgcolor=\"#d0d0d0\"",
+  " bgcolor=\"#e0e0e0\"",
+};
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@page csp_view_priv_view_users_page(FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%
+  const struct contest_desc *cnts = phr->cnts;
+  struct contest_extra *extra = phr->extra;
+  int r;
+  unsigned char *xml_text = 0;
+  struct userlist_list *users = 0;
+  const struct userlist_user *u = 0;
+  const struct userlist_contest *uc = 0;
+  int uid;
+  int row = 1, serial = 1;
+  char url[1024];
+  unsigned char bb[1024];
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  int details_allowed = 0;
+  unsigned char cl[128];
+  unsigned char b1[1024], b2[1024];
+  int new_contest_id = cnts->id;
+  const struct section_global_data *global = extra->serve_state->global;
+  int *run_counts = 0;
+  size_t *run_sizes = 0;
+
+  if (cnts->user_contest_num > 0) new_contest_id = cnts->user_contest_num;
+  if (ns_open_ul_connection(phr->fw_state) < 0) {
+    ns_html_err_ul_server_down(out_f, phr, 1, 0);
+    return 0;
+  }
+  if ((r = userlist_clnt_list_all_users(ul_conn, ULS_LIST_ALL_USERS,
+                                        phr->contest_id, &xml_text)) < 0) {
+    ns_html_err_internal_error(out_f, phr, 1,
+                                      "list_all_users failed: %s",
+                                      userlist_strerror(-r));
+    return 0;
+  }
+  users = userlist_parse_str(xml_text);
+  xfree(xml_text); xml_text = 0;
+  if (!users) {
+    ns_html_err_internal_error(out_f, phr, 1, "XML parsing failed");
+    return 0;
+  }
+
+  if (users->user_map_size > 0) {
+    XCALLOC(run_counts, users->user_map_size);
+    XCALLOC(run_sizes, users->user_map_size);
+    run_get_all_statistics(extra->serve_state->runlog_state,
+                           users->user_map_size, run_counts, run_sizes);
+  }
+
+  if (opcaps_check(phr->caps, OPCAP_GET_USER) >= 0) details_allowed = 1;
+
+  l10n_setlocale(phr->locale_id);
+  ns_header(out_f, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+            phr->client_key,
+            "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role), phr->name_arm,
+            phr->contest_id, extra->contest_arm, _("Users page"));
+
+  fprintf(out_f, "<h2>Registered users</h2>");
+
+  snprintf(cl, sizeof(cl), " class=\"b1\"");
+
+  html_start_form(out_f, 1, phr->self_url, phr->hidden_vars);
+  fprintf(out_f, "<table%s><tr><th%s>NN</th><th%s>Id</th><th%s>Login</th><th%s>Name</th><th%s>Status</th><th%s>Flags</th><th%s>Reg. date</th><th%s>Login date</th><th%s>No. of submits</th><th%s>Size of submits</th>", cl, cl, cl, cl, cl, cl, cl, cl, cl, cl, cl);
+  if (global->memoize_user_results > 0) {
+    fprintf(out_f, "<th%s>Score</th>", cl);
+  }
+  fprintf(out_f, "<th%s>Select</th></tr>\n", cl);
+  for (uid = 1; uid < users->user_map_size; uid++) {
+    if (!(u = users->user_map[uid])) continue;
+    if (!(uc = userlist_get_user_contest(u, new_contest_id))) continue;
+
+    fprintf(out_f, "<tr%s>", form_row_attrs[row ^= 1]);
+    fprintf(out_f, "<td%s>%d</td>", cl, serial++);
+
+    snprintf(b1, sizeof(b1), "uid == %d", uid);
+    url_armor_string(b2, sizeof(b2), b1);
+    fprintf(out_f, "<td%s>%s%d</a></td>", cl,
+            ns_aref(bb, sizeof(bb), phr,
+                    NEW_SRV_ACTION_MAIN_PAGE, "filter_expr=%s", b2),
+            uid);
+
+    if (details_allowed) {
+      fprintf(out_f, "<td%s>%s%s</a></td>", cl,
+              ns_aref(bb, sizeof(bb), phr,
+                      NEW_SRV_ACTION_VIEW_USER_INFO, "user_id=%d", uid),
+              ARMOR(u->login));
+    } else {
+      fprintf(out_f, "<td%s>%s</td>", cl, ARMOR(u->login));
+    }
+    if (u->cnts0 && u->cnts0->name && *u->cnts0->name) {
+      fprintf(out_f, "<td%s>%s</td>", cl, ARMOR(u->cnts0->name));
+    } else {
+      fprintf(out_f, "<td%s>&nbsp;</td>", cl);
+    }
+    fprintf(out_f, "<td%s>%s</td>", cl, userlist_unparse_reg_status(uc->status));
+    if ((uc->flags & USERLIST_UC_ALL)) {
+      r = 0;
+      fprintf(out_f, "<td%s>", cl);
+      if ((uc->flags & USERLIST_UC_BANNED))
+        fprintf(out_f, "%s%s", r++?",":"", "banned");
+      if ((uc->flags & USERLIST_UC_INVISIBLE))
+        fprintf(out_f, "%s%s", r++?",":"", "invisible");
+      if ((uc->flags & USERLIST_UC_LOCKED))
+        fprintf(out_f, "%s%s", r++?",":"", "locked");
+      if ((uc->flags & USERLIST_UC_INCOMPLETE))
+        fprintf(out_f, "%s%s", r++?",":"", "incomplete");
+      if ((uc->flags & USERLIST_UC_DISQUALIFIED))
+        fprintf(out_f, "%s%s", r++?",":"", "disqualified");
+      fprintf(out_f, "</td>");
+    } else {
+      fprintf(out_f, "<td%s>&nbsp;</td>", cl);
+    }
+    if (uc->create_time > 0) {
+      fprintf(out_f, "<td%s>%s</td>", cl, xml_unparse_date(uc->create_time));
+    } else {
+      fprintf(out_f, "<td%s>&nbsp;</td>", cl);
+    }
+    if (u->cnts0 && u->cnts0->last_login_time > 0) {
+      fprintf(out_f, "<td%s>%s</td>", cl,
+              xml_unparse_date(u->cnts0->last_login_time));
+    } else {
+      fprintf(out_f, "<td%s>&nbsp;</td>", cl);
+    }
+    if (run_counts[uid] > 0) {
+      fprintf(out_f, "<td%s>%d</td><td%s>%zu</td>", cl, run_counts[uid],
+              cl, run_sizes[uid]);
+    } else {
+      fprintf(out_f, "<td%s>&nbsp;</td><td%s>&nbsp;</td>", cl, cl);
+    }
+    if (global->memoize_user_results > 0) {
+      fprintf(out_f, "<td%s>%d</td>", cl, 
+              serve_get_user_result_score(extra->serve_state, uid));
+    }
+    fprintf(out_f, "<td%s><input type=\"checkbox\" name=\"user_%d\"/></td>",
+            cl, uid);
+    fprintf(out_f, "</tr>\n");
+  }
+  fprintf(out_f, "</table>\n");
+
+  fprintf(out_f, "<h2>Users range</h2>\n");
+
+  fprintf(out_f, "<table>\n");
+  fprintf(out_f, "<tr><td>%s:</td><td>%s</td></tr>\n",
+          _("First User_Id"),
+          html_input_text(bb, sizeof(bb), "first_user_id", 16, 0, 0));
+  fprintf(out_f, "<tr><td>%s:</td><td>%s</td></tr>\n",
+          _("Last User_Id (incl.)"),
+          html_input_text(bb, sizeof(bb), "last_user_id", 16, 0, 0));
+  fprintf(out_f, "</table>\n");
+
+  fprintf(out_f, "<h2>Available actions</h2>\n");
+
+  fprintf(out_f, "<table>\n");
+  fprintf(out_f, "<tr><td>%s%s</a></td><td>%s</td></tr>\n",
+          ns_aref(url, sizeof(url), phr, 0, 0),
+          _("Back"), _("Return to the main page"));
+  fprintf(out_f, "<tr><td>%s</td><td>%s</td></tr>\n",
+          BUTTON(NEW_SRV_ACTION_USERS_REMOVE_REGISTRATIONS),
+          _("Remove the selected users from the list"));
+  fprintf(out_f, "<tr><td>%s</td><td>%s</td></tr>\n",
+          BUTTON(NEW_SRV_ACTION_USERS_SET_PENDING),
+          _("Set the registration status of the selected users to PENDING"));
+  fprintf(out_f, "<tr><td>%s</td><td>%s</td></tr>\n",
+          BUTTON(NEW_SRV_ACTION_USERS_SET_OK),
+          _("Set the registration status of the selected users to OK"));
+  fprintf(out_f, "<tr><td>%s</td><td>%s</td></tr>\n",
+          BUTTON(NEW_SRV_ACTION_USERS_SET_REJECTED), 
+          _("Set the registration status of the selected users to REJECTED"));
+  fprintf(out_f, "<tr><td>%s</td><td>%s</td></tr>\n",
+          BUTTON(NEW_SRV_ACTION_USERS_SET_INVISIBLE),
+          _("Set the INVISIBLE flag for the selected users"));
+  fprintf(out_f, "<tr><td>%s</td><td>%s</td></tr>\n",
+          BUTTON(NEW_SRV_ACTION_USERS_CLEAR_INVISIBLE),
+          _("Clear the INVISIBLE flag for the selected users"));
+  fprintf(out_f, "<tr><td>%s</td><td>%s</td></tr>\n",
+          BUTTON(NEW_SRV_ACTION_USERS_SET_BANNED),
+          _("Set the BANNED flag for the selected users"));
+  fprintf(out_f, "<tr><td>%s</td><td>%s</td></tr>\n",
+          BUTTON(NEW_SRV_ACTION_USERS_CLEAR_BANNED),
+          _("Clear the BANNED flag for the selected users"));
+  fprintf(out_f, "<tr><td>%s</td><td>%s</td></tr>\n",
+          BUTTON(NEW_SRV_ACTION_USERS_SET_LOCKED),
+          _("Set the LOCKED flag for the selected users"));
+  fprintf(out_f, "<tr><td>%s</td><td>%s</td></tr>\n",
+          BUTTON(NEW_SRV_ACTION_USERS_CLEAR_LOCKED),
+          _("Clear the LOCKED flag for the selected users"));
+  fprintf(out_f, "<tr><td>%s</td><td>%s</td></tr>\n",
+          BUTTON(NEW_SRV_ACTION_USERS_SET_INCOMPLETE),
+          _("Set the INCOMPLETE flag for the selected users"));
+  fprintf(out_f, "<tr><td>%s</td><td>%s</td></tr>\n",
+          BUTTON(NEW_SRV_ACTION_USERS_CLEAR_INCOMPLETE),
+          _("Clear the INCOMPLETE flag for the selected users"));
+  fprintf(out_f, "<tr><td>%s</td><td>%s</td></tr>\n",
+          BUTTON(NEW_SRV_ACTION_USERS_CLEAR_DISQUALIFIED),
+          _("Clear the DISQUALIFIED flag for the selected users"));
+  if (global->is_virtual) {
+    fprintf(out_f, "<tr><td>%s</td><td>%s</td></tr>\n",
+            BUTTON(NEW_SRV_ACTION_FORCE_START_VIRTUAL),
+            _("Force virtual contest start for the selected users"));
+  }
+
+  if (global->user_exam_protocol_header_txt)
+    fprintf(out_f, "<tr><td>%s</td><td>%s</td></tr>\n",
+            BUTTON(NEW_SRV_ACTION_PRINT_SELECTED_USER_PROTOCOL),
+            _("Print the user examination protocols for the selected users"));
+  if (global->full_exam_protocol_header_txt)
+    fprintf(out_f, "<tr><td>%s</td><td>%s</td></tr>\n",
+            BUTTON(NEW_SRV_ACTION_PRINT_SELECTED_USER_FULL_PROTOCOL),
+            _("Print the user full examination protocols for the selected users"));
+  if (global->full_exam_protocol_header_txt)
+    fprintf(out_f, "<tr><td>%s</td><td>%s</td></tr>\n",
+            BUTTON(NEW_SRV_ACTION_PRINT_SELECTED_UFC_PROTOCOL),
+            _("Print the user full cyphered examination protocols for the selected users"));
+  fprintf(out_f, "</table>\n");
+
+  fprintf(out_f, "<h2>%s</h3>\n", _("Disqualify selected users"));
+  fprintf(out_f, "<p>%s:<br>\n",
+          _("Disqualification explanation"));
+  fprintf(out_f, "<p><textarea name=\"disq_comment\" rows=\"5\" cols=\"60\">");
+  fprintf(out_f, "</textarea></p>\n");
+
+  fprintf(out_f, "<table class=\"b0\"><tr>");
+  fprintf(out_f, "<td class=\"b0\">%s</td>",
+          BUTTON(NEW_SRV_ACTION_USERS_SET_DISQUALIFIED));
+  fprintf(out_f, "</tr></table>\n");
+
+  fprintf(out_f, "<h2>%s</h2>\n", _("Add new user"));
+  fprintf(out_f, "<table>\n");
+  fprintf(out_f, "<tr><td><input type=\"text\" size=\"32\" name=\"add_login\"/></td><td>%s</td><td>%s</td></tr>\n",
+          BUTTON(NEW_SRV_ACTION_USERS_ADD_BY_LOGIN),
+          _("Add a new user specifying his/her login"));
+  fprintf(out_f, "<tr><td><input type=\"text\" size=\"32\" name=\"add_user_id\"/></td><td>%s</td><td>%s</td></tr>\n",
+          BUTTON(NEW_SRV_ACTION_USERS_ADD_BY_USER_ID),
+          _("Add a new user specifying his/her User Id"));
+  fprintf(out_f, "</table>\n");
+
+  fprintf(out_f, "</form>\n");
+
+  ns_footer(out_f, extra->footer_txt, extra->copyright_txt, phr->locale_id);
+  l10n_setlocale(0);
+
+  if (users) userlist_free(&users->b);
+  html_armor_free(&ab);
+  xfree(run_counts);
+  xfree(run_sizes);
+%>
