@@ -40,7 +40,7 @@
   unsigned char bb[1024];
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   int details_allowed = 0;
-  unsigned char cl[128];
+  //unsigned char cl[128];
   unsigned char b1[1024], b2[1024];
   int new_contest_id = cnts->id;
   const struct section_global_data *global = extra->serve_state->global;
@@ -89,8 +89,6 @@ static const unsigned char * const form_row_attrs[]=
             phr->contest_id, extra->contest_arm, _("Users page"));
 %>
 <h2>Registered users</h2>
-
-<%  snprintf(cl, sizeof(cl), " class=\"b1\""); %>
 
 <s:form>
 <table class="b1"><tr><th class="b1">NN</th><th class="b1">Id</th><th class="b1">Login</th><th class="b1">Name</th><th class="b1">Status</th><th class="b1">Flags</th><th class="b1">Reg. date</th><th class="b1">Login date</th><th class="b1">No. of submits</th><th class="b1">Size of submits</th>

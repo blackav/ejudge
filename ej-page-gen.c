@@ -3180,6 +3180,21 @@ time_t_type_handler(
     fprintf(prg_f, "fputs(xml_unparse_date((%s)), out_f);\n", text);
 }
 
+static void
+size_t_type_handler(
+        FILE *log_f,
+        TypeContext *cntx,
+        struct ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f,
+        const unsigned char *text,
+        const HtmlElement *elem,
+        TypeInfo *type_info)
+{
+    // handle "format"?
+    fprintf(prg_f, "fprintf(out_f, \"%%zu\", (size_t)(%s));\n", text);
+}
+
 static int
 process_file(
         FILE *log_f,
@@ -3211,6 +3226,8 @@ process_file(
     processor_state_set_type_handler(ps, tc_get_i64_type(cntx), long_long_type_handler);
     processor_state_set_type_handler(ps, tc_find_typedef_type(cntx, tc_get_ident(cntx, "time_t")),
                                      time_t_type_handler);
+    processor_state_set_type_handler(ps, tc_find_typedef_type(cntx, tc_get_ident(cntx, "size_t")),
+                                     size_t_type_handler);
 
     processor_state_set_array_type_handler(ps, tc_get_u8_type(cntx), string_type_handler);
     processor_state_set_array_type_handler(ps, tc_get_i8_type(cntx), string_type_handler);
