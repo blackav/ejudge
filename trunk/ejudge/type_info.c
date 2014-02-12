@@ -1003,7 +1003,7 @@ tc_get_function_type(TypeContext *cntx, TypeInfo **info)
 TypeInfo *
 tc_get_function(TypeContext *cntx, TypeInfo **info)
 {
-    return vt_insert(cntx, &cntx->functions, info, NODE_FUNCTION, generic_cmp_1, generic_create);
+    return vt_insert(cntx, &cntx->functions, info, NODE_SUBROUTINE, generic_cmp_1, generic_create);
 }
 
 TypeInfo *
@@ -1397,7 +1397,7 @@ static const unsigned char * const node_names[] =
     "NODE_ENUM_CONST",
     "NODE_FIELD",
     "NODE_FORMAL_PARAM",
-    "NODE_FUNCTION",
+    "NODE_SUBROUTINE",
     "NODE_LOCAL_VAR",
 };
 
@@ -1557,7 +1557,7 @@ tc_get_name_node(const TypeInfo *ti)
         return ti->n.info[1];
     case NODE_FIELD:
         return ti->n.info[3];
-    case NODE_FUNCTION:
+    case NODE_SUBROUTINE:
         return ti->n.info[1];
     case NODE_LOCAL_VAR:
         return ti->n.info[3];

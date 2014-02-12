@@ -174,13 +174,8 @@ fprintf(out_f, "%d", serve_get_user_result_score(extra->serve_state, uid));
 <h2>Users range</h2>
 
 <table>
-<tr><td><s:tr>First User_Id</s:tr>:</td><td><%
-fprintf(out_f, "%s", html_input_text(bb, sizeof(bb), "first_user_id", 16, 0, 0));
-%></td></tr>
-<tr><td><s:tr>Last User_Id (incl.)</s:tr></td><td><%
-  fprintf(out_f, "%s",
-          html_input_text(bb, sizeof(bb), "last_user_id", 16, 0, 0));
-%></td></tr>
+<tr><td><s:tr>First User_Id</s:tr>:</td><td><input type="text" name="first_user_id" size="16" /></td></tr>
+<tr><td><s:tr>Last User_Id (incl.)</s:tr></td><td><input type="text" name="last_user_id" size="16" /></td></tr>
 </table>
 
 <h2>Available actions</h2>
