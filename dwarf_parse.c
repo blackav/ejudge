@@ -1260,6 +1260,77 @@ done:
 }
 
 static int
+parse_subroutine_die(
+        FILE *log_f,
+        const unsigned char *path,
+        Dwarf_Debug dbg,
+        Dwarf_Die die,
+        TypeContext *cntx,
+        DieMap *dm,
+        int tag,
+        TypeInfo **p_info,
+        ParseDieStack *cur)
+{
+    int retval = -1;
+
+    fprintf(log_f, "Subroutine DIE\n");
+    dump_die(log_f, dbg, die);
+
+    // support only external and prototyped subroutines
+    Dwarf_Attribute external_attr = NULL;
+    Dwarf_Attribute prototyped_attr = NULL;
+    Dwarf_Bool external_flag = 0;
+    Dwarf_Bool prototyped_flag = 0;
+    if (s_dwarf_attr(log_f, path, die, DW_AT_external, &external_attr) < 0) goto done;
+    if (s_dwarf_attr(log_f, path, die, DW_AT_prototyped, &prototyped_attr) < 0) goto done;
+    if (!external_attr || !prototyped_attr) {
+        retval = 0;
+        goto done;
+    }
+
+    if (s_dwarf_formflag(log_f, path, external_attr, &external_flag) < 0) goto done;
+    if (s_dwarf_formflag(log_f, path, prototyped_attr, &prototyped_flag) < 0) goto done;
+    if (!external_flag || !prototyped_flag) {
+        retval = 0;
+        goto done;
+    }
+
+    Dwarf_Attribute name_attr = NULL;
+    char *name_str = NULL;
+    TypeInfo *name_info = NULL;
+    if (s_dwarf_attr(log_f, path, die, DW_AT_name, &name_attr) < 0) goto done;
+    if (!name_attr) {
+        retval = 0;
+        goto done;
+    }
+    if (s_dwarf_formstring(log_f, path, name_attr, &name_str) < 0) goto done;
+    if (!name_str || !*name_str) {
+        retval = 0;
+        goto done;
+    }
+    name_info = tc_get_ident(cntx, name_str);
+    (void) name_info;
+
+    TypeInfo *ret_type_info = NULL;
+    if (parse_type(log_f, path, dbg, die, cntx, dm, &ret_type_info, cur) < 0) goto done;
+    if (!ret_type_info) ret_type_info = tc_get_i0_type(cntx);
+
+    TypeInfo **info = alloca(sizeof(info[0]) * 4);
+    memset(info, 0, sizeof(info[0]) * 4);
+    
+    int idx = 0;
+    info[idx++] = tc_get_u32(cntx, 0);
+    info[idx++] = name_info;
+    info[idx++] = ret_type_info;
+
+    *p_info = tc_get_function(cntx, info);
+    retval = 0;
+
+done:
+    return retval;
+}
+
+static int
 parse_die_type(
         FILE *log_f,
         const unsigned char *path,
@@ -1319,7 +1390,7 @@ static const struct TopDieParseTable top_die_table[] =
     { DW_TAG_union_type, NODE_UNION_TYPE, "union", parse_struct_type_die },
     { DW_TAG_subroutine_type, NODE_FUNCTION_TYPE, "function", parse_function_type_die },
     { DW_TAG_variable, 0, NULL, NULL },
-    { DW_TAG_subprogram, 0, NULL, NULL },
+    { DW_TAG_subprogram, NODE_SUBROUTINE, "subprogram", parse_subroutine_die },
 
     { 0 },
 };
