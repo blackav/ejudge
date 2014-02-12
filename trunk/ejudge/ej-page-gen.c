@@ -17,7 +17,6 @@
 
 #include "config.h"
 #include "ej_limits.h"
-//#include "version.h"
 #include "ej_types.h"
 
 #include "type_info.h"
@@ -180,12 +179,6 @@ typedef struct HtmlElementStack
     HtmlElement *el;
 } HtmlElementStack;
 
-typedef struct IdScope
-{
-    struct IdScope *up;
-    ValueTree ids;
-} IdScope;
-
 struct ProcessorState;
 
 typedef void (*TypeHandler)(
@@ -270,10 +263,8 @@ processor_state_find_setting(ProcessorState *ps, TypeInfo *name)
 }
 
 static IdScope *
-processor_state_push_scope(ProcessorState *ps)
+processor_state_push_scope(ProcessorState *ps, IdScope *cur)
 {
-    IdScope *cur = NULL;
-    XCALLOC(cur, 1);
     cur->up = ps->scope_stack;
     ps->scope_stack = cur;
     return cur;
@@ -285,41 +276,20 @@ processor_state_pop_scope(ProcessorState *ps)
     IdScope *cur = ps->scope_stack;
     if (cur) {
         ps->scope_stack = cur->up;
-        vt_free_2(&cur->ids);
-        memset(cur, 0, sizeof(*cur));
-        xfree(cur);
+        tc_scope_destroy(cur);
     }
-}
-
-static int
-id_scope_cmp_1(const TypeInfo *p1, const void *p2)
-{
-    const TypeInfo *id1 = tc_get_name_node(p1);
-    const TypeInfo *id2 = (const TypeInfo*) p2;
-    if ((ptrdiff_t) id1 < (ptrdiff_t) id2) return -1;
-    if ((ptrdiff_t) id1 > (ptrdiff_t) id2) return 1;
-    return 0;
-}
-
-/*static*/ TypeInfo *
-processor_state_find_in_top_scope(ProcessorState *ps, TypeInfo *id)
-{
-    if (!ps->scope_stack) return NULL;
-    ValueTreeNode *node = vt_find(&ps->scope_stack->ids, id, id_scope_cmp_1);
-    if (node) return node->value;
-    return NULL;
 }
 
 static TypeInfo *
 processor_state_find_in_scopes(ProcessorState *ps, TypeInfo *id)
 {
-    IdScope *cur = ps->scope_stack;
-    while (cur) {
-        ValueTreeNode *node = vt_find(&cur->ids, id, id_scope_cmp_1);
-        if (node) return node->value;
-        cur = cur->up;
-    }
-    return NULL;
+    return tc_scope_find(ps->scope_stack, id);
+}
+
+static void
+processor_state_add_to_scope(ProcessorState *ps, TypeInfo *def)
+{
+    tc_scope_add(ps->scope_stack, def);
 }
 
 static void
@@ -353,29 +323,6 @@ processor_state_invoke_type_handler(
         return;
     }
     return ps->default_type_handler(log_f, cntx, ps, txt_f, prg_f, text, elem, type_info);
-}
-
-static int
-id_scope_cmp_2(const TypeInfo *p1, const void *p2)
-{
-    const TypeInfo *id1 = tc_get_name_node(p1);
-    const TypeInfo *id2 = tc_get_name_node((const TypeInfo*) p2);
-    if ((ptrdiff_t) id1 < (ptrdiff_t) id2) return -1;
-    if ((ptrdiff_t) id1 > (ptrdiff_t) id2) return 1;
-    abort();
-    return 0;
-}
-
-static TypeInfo *
-id_scope_create(struct TypeContext *cntx, int kind, const void *pv)
-{
-    return (TypeInfo *) pv;
-}
-
-static void
-processor_state_add_to_scope(ProcessorState *ps, TypeInfo *def)
-{
-    vt_insert(NULL, &ps->scope_stack->ids, def, 0, id_scope_cmp_2, id_scope_create);
 }
 
 static void
@@ -2690,14 +2637,14 @@ handle_directive_page(ScannerState *ss, TypeContext *cntx, FILE *out_f)
 
     TypeInfo *f = tc_get_function(cntx, info);
     TypeInfo *empty_id = tc_get_ident(cntx, "");
-    processor_state_push_scope(ss->ps);
+    processor_state_push_scope(ss->ps, tc_scope_create());
     for (int i = 3; i < f->n.count; ++i) {
         TypeInfo *param = f->n.info[i];
         if (param->kind == NODE_PARAM && param->n.info[3] != empty_id) {
             processor_state_add_to_scope(ss->ps, param);
         }
     }
-    processor_state_push_scope(ss->ps);
+    processor_state_push_scope(ss->ps, tc_scope_create());
 
     if (ss->token != TOK_EOF) {
         parser_error(ss, "garbage after directive");
@@ -2803,7 +2750,7 @@ handle_c_code(
             continue;
         }
         if (IS_OPER(ss, '{')) {
-            processor_state_push_scope(ps);
+            processor_state_push_scope(ps, tc_scope_create());
             next_token(ss); //dump_token(ss);
             continue;
         }
@@ -3200,7 +3147,8 @@ process_file(
         FILE *log_f,
         FILE *out_f,
         const unsigned char *path,
-        TypeContext *cntx)
+        TypeContext *cntx,
+        IdScope *global_scope)
 {
     FILE *in_f = NULL;
     int result = 0;
@@ -3253,7 +3201,7 @@ process_file(
         }
     }
     processor_state_init_file(ps, path);
-    processor_state_push_scope(ps);
+    processor_state_push_scope(ps, global_scope);
 
     // read the whole file to memory
     mem_a = 1024;
@@ -3441,7 +3389,8 @@ main(int argc, char *argv[])
     }
 
     TypeContext *cntx = tc_create();
-    if (dwarf_parse(stderr, argv[0], cntx) < 0) {
+    IdScope *global_scope = tc_scope_create();
+    if (dwarf_parse(stderr, argv[0], cntx, global_scope) < 0) {
         tc_dump_context(stdout, cntx);
         tc_free(cntx);
         fatal("dwarf parsing failed");
@@ -3449,7 +3398,7 @@ main(int argc, char *argv[])
     //tc_dump_context(stdout, cntx);
 
     int result = 0;
-    result = process_file(stderr, stdout, source_path, cntx) || result;
+    result = process_file(stderr, stdout, source_path, cntx, global_scope) || result;
 
     tc_free(cntx);
 

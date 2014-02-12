@@ -21,7 +21,7 @@
 
 #include <stdio.h>
 
-int dwarf_parse(FILE *log_f, const unsigned char *path, TypeContext *cntx);
+int dwarf_parse(FILE *log_f, const unsigned char *path, TypeContext *cntx, IdScope *scope);
 
 #endif /* __DWARF_PARSE_H__ */
 
