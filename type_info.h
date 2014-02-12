@@ -136,6 +136,12 @@ typedef struct ValueTree
 typedef int (*ValueTreeCompareFunc)(const TypeInfo *p1, const void *p2);
 typedef TypeInfo *(*ValueTreeCreateFunc)(struct TypeContext *cntx, int kind, const void *pv);
 
+typedef struct IdScope
+{
+    struct IdScope *up;
+    ValueTree ids;
+} IdScope;
+
 /* TypeContext operations */
 TypeContext *tc_create(void);
 TypeContext *tc_free(TypeContext *cntx);
@@ -238,6 +244,17 @@ TypeInfo *
 tc_balance(TypeContext *cntx, TypeInfo *t1, TypeInfo *t2);
 TypeInfo *
 tc_find_field(TypeInfo *t, TypeInfo *id);
+
+IdScope *
+tc_scope_create(void);
+IdScope *
+tc_scope_destroy(IdScope *cur);
+void
+tc_scope_add(IdScope *scope, TypeInfo *def);
+TypeInfo *
+tc_scope_find_local(IdScope *scope, TypeInfo *id);
+TypeInfo *
+tc_scope_find(IdScope *cur, TypeInfo *id);
 
 #endif /* __TYPE_INFO_H__ */
 

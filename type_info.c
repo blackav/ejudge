@@ -1645,6 +1645,78 @@ tc_find_field(TypeInfo *t, TypeInfo *id)
     return NULL;
 }
 
+IdScope *
+tc_scope_create(void)
+{
+    IdScope *scope = NULL;
+    XCALLOC(scope, 1);
+    return scope;
+}
+
+IdScope *
+tc_scope_destroy(IdScope *cur)
+{
+    if (cur) {
+        vt_free_2(&cur->ids);
+        memset(cur, 0, sizeof(*cur));
+        xfree(cur);
+    }
+    return NULL;
+}
+
+static int
+id_scope_cmp_2(const TypeInfo *p1, const void *p2)
+{
+    const TypeInfo *id1 = tc_get_name_node(p1);
+    const TypeInfo *id2 = tc_get_name_node((const TypeInfo*) p2);
+    if ((ptrdiff_t) id1 < (ptrdiff_t) id2) return -1;
+    if ((ptrdiff_t) id1 > (ptrdiff_t) id2) return 1;
+    abort();
+    return 0;
+}
+
+static TypeInfo *
+id_scope_create(struct TypeContext *cntx, int kind, const void *pv)
+{
+    return (TypeInfo *) pv;
+}
+
+void
+tc_scope_add(IdScope *scope, TypeInfo *def)
+{
+    vt_insert(NULL, &scope->ids, def, 0, id_scope_cmp_2, id_scope_create);
+}
+
+static int
+id_scope_cmp_1(const TypeInfo *p1, const void *p2)
+{
+    const TypeInfo *id1 = tc_get_name_node(p1);
+    const TypeInfo *id2 = (const TypeInfo*) p2;
+    if ((ptrdiff_t) id1 < (ptrdiff_t) id2) return -1;
+    if ((ptrdiff_t) id1 > (ptrdiff_t) id2) return 1;
+    return 0;
+}
+
+TypeInfo *
+tc_scope_find_local(IdScope *scope, TypeInfo *id)
+{
+    if (!scope) return NULL;
+    ValueTreeNode *node = vt_find(&scope->ids, id, id_scope_cmp_1);
+    if (node) return node->value;
+    return NULL;
+}
+
+TypeInfo *
+tc_scope_find(IdScope *cur, TypeInfo *id)
+{
+    while (cur) {
+        ValueTreeNode *node = vt_find(&cur->ids, id, id_scope_cmp_1);
+        if (node) return node->value;
+        cur = cur->up;
+    }
+    return NULL;
+}
+
 /*
  * Local variables:
  *  c-basic-offset: 4
