@@ -134,8 +134,9 @@ enum
   MNG_STAT_LAST = MNG_STAT_SUPER_RUN,
 };
 static int
-get_run_management_status(const struct contest_desc *cnts,
-                          struct contest_extra *extra)
+get_run_management_status(
+        const struct contest_desc *cnts,
+        struct ss_contest_extra *extra)
 {
   if (cnts->run_managed) {
     return MNG_STAT_SUPER_RUN;
@@ -283,7 +284,7 @@ super_html_main_page(
   int contest_max_id, contest_id, errcode;
   unsigned char *html_name;
   const struct contest_desc *cnts;
-  struct contest_extra *extra = 0;
+  struct ss_contest_extra *extra = 0;
   unsigned char hbuf[1024];
   opcap_t caps;
   unsigned char judge_url[1024] = { 0 };
@@ -694,7 +695,7 @@ super_html_contest_page(
   int prog_pat_len, self_url_len;
   int errcode, refcount;
   const struct contest_desc *cnts;
-  struct contest_extra *extra;
+  struct ss_contest_extra *extra;
   opcap_t caps;
   unsigned char *str;
   int mng_status, nodevnull = 0, logfilemode = 0;

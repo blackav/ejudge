@@ -72,7 +72,7 @@ enum
     NODE_FIELD,
     // u32 size, node type
     NODE_FORMAL_PARAM,
-    // u32 size, str name, node ret_type, node params
+    // u32 size, node type, str name, node params
     NODE_SUBROUTINE,
     // u32 size, i32 frame_offset, node type, str name, node value
     NODE_LOCAL_VAR,

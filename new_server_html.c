@@ -918,6 +918,27 @@ ns_url(
   return buf;
 }
 
+const unsigned char *
+ns_url_2(
+        FILE *out_f,
+        const struct http_request_info *phr,
+        int action)
+{
+  if (phr->rest_mode > 0) {
+    if (action < 0 || action >= NEW_SRV_ACTION_LAST) action = 0;
+    fprintf(out_f, "%s/%s/S%016llx", phr->self_url,
+            ns_symbolic_action_table[action],
+            phr->session_id);
+    return "?";
+  } else {
+    fprintf(out_f, "%s?SID=%016llx", phr->self_url, phr->session_id);
+    if (action > 0) {
+      fprintf(out_f, "&amp;action=%d", action);
+    }
+    return "&amp;";
+  }
+}
+
 unsigned char *
 ns_url_unescaped(
         unsigned char *buf,

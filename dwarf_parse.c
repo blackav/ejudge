@@ -1286,8 +1286,10 @@ parse_subroutine_die(
 {
     int retval = -1;
 
+    /*
     fprintf(log_f, "Subroutine DIE\n");
     dump_die(log_f, dbg, die);
+    */
 
     // support only external and prototyped subroutines
     Dwarf_Attribute external_attr = NULL;
@@ -1322,21 +1324,27 @@ parse_subroutine_die(
         goto done;
     }
     name_info = tc_get_ident(cntx, name_str);
-    (void) name_info;
 
     TypeInfo *ret_type_info = NULL;
     if (parse_type(log_f, path, dbg, die, cntx, dm, &ret_type_info, cur, global_scope) < 0) goto done;
     if (!ret_type_info) ret_type_info = tc_get_i0_type(cntx);
 
     TypeInfo **info = alloca(sizeof(info[0]) * 4);
-    memset(info, 0, sizeof(info[0]) * 4);
-    
     int idx = 0;
-    info[idx++] = tc_get_u32(cntx, 0);
-    info[idx++] = name_info;
-    info[idx++] = ret_type_info;
 
+    // create function type node
+    info[idx++] = tc_get_u32(cntx, 0);
+    info[idx++] = ret_type_info;
+    info[idx++] = NULL;
+    TypeInfo *func_type_info = tc_get_function_type(cntx, info);
+
+    idx = 0;
+    info[idx++] = tc_get_u32(cntx, 0);
+    info[idx++] = func_type_info;
+    info[idx++] = name_info;
+    info[idx++] = NULL;
     *p_info = tc_get_function(cntx, info);
+
     tc_scope_add(global_scope, *p_info);
     retval = 0;
 

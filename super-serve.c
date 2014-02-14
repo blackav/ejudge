@@ -137,7 +137,7 @@ static int self_group_max;
 static gid_t *self_groups;
 
 static int extra_a;
-static struct contest_extra **extras;
+static struct ss_contest_extra **extras;
 
 static int control_socket_fd = -1;
 static int run_inotify_fd = -1;
@@ -247,10 +247,10 @@ client_state_new_autoclose(struct client_state *p,
   return q;
 }
 
-struct contest_extra *
+struct ss_contest_extra *
 new_contest_extra(int contest_id)
 {
-  struct contest_extra *p;
+  struct ss_contest_extra *p;
 
   XCALLOC(p, 1);
   p->id = contest_id;
@@ -260,10 +260,10 @@ new_contest_extra(int contest_id)
   return p;
 }
 
-static struct contest_extra *
+static struct ss_contest_extra *
 delete_contest_extra(int contest_id)
 {
-  struct contest_extra *p;
+  struct ss_contest_extra *p;
 
   if (contest_id <= 0 || contest_id >= extra_a) return 0;
   if (!(p = extras[contest_id])) return 0;
@@ -281,7 +281,7 @@ delete_contest_extra(int contest_id)
   return 0;
 }
 
-struct contest_extra *
+struct ss_contest_extra *
 get_existing_contest_extra(int num)
 {
   ASSERT(num > 0 && num <= EJ_MAX_CONTEST_ID);
@@ -290,10 +290,10 @@ get_existing_contest_extra(int num)
 }
 
 /* note, that contest validity is not checked */
-struct contest_extra *
+struct ss_contest_extra *
 get_contest_extra(int num)
 {
-  struct contest_extra **new_extras;
+  struct ss_contest_extra **new_extras;
   int old_extra_a;
 
   ASSERT(num > 0 && num < 1000000);
@@ -377,9 +377,10 @@ startup_err(const char *format, ...)
 }
 
 static void
-prepare_run_serving(const struct contest_desc *cnts,
-                    struct contest_extra *extra,
-                    int do_run_manage)
+prepare_run_serving(
+        const struct contest_desc *cnts,
+        struct ss_contest_extra *extra,
+        int do_run_manage)
 {
   unsigned char run_queue_dir[1024];
   unsigned char run_log_path[1024];
@@ -490,7 +491,7 @@ acquire_contest_resources(const struct contest_desc *cnts,
   FILE *error_log = 0;
   char *error_log_txt = 0;
   size_t error_log_size = 0;
-  struct contest_extra *extra;
+  struct ss_contest_extra *extra;
   int i, old_run_managed = 0;
   struct stat stbuf;
   unsigned char config_path[1024];
@@ -629,7 +630,7 @@ acquire_resources(void)
 static void
 release_contest_resources(const struct contest_desc *cnts)
 {
-  struct contest_extra *extra;
+  struct ss_contest_extra *extra;
   int status = 0, out_pid;
 
   if (!cnts) return;
@@ -3964,7 +3965,7 @@ contest_mngmt_cmd(
 {
   path_t log_path;
   struct stat stbuf;
-  struct contest_extra *extra;
+  struct ss_contest_extra *extra;
 
   switch (cmd) {
   case SSERV_CMD_RUN_LOG_TRUNC:
@@ -4144,7 +4145,7 @@ handle_inotify_read(void *context, void *fds, void *user)
   unsigned char buf[8192];
   int r, cur_ind = 0, init_offset = 0, i;
   struct inotify_event *pev;
-  struct contest_extra *cur;
+  struct ss_contest_extra *cur;
 
   if ((pfd->revents & POLLNVAL)) {
     err("%s: ppoll invalid request fd=%d", __FUNCTION__, pfd->fd);
@@ -4212,7 +4213,7 @@ handle_inotify_read(void *context, void *fds, void *user)
 }
 
 static void
-start_run(struct contest_extra *cur, time_t current_time)
+start_run(struct ss_contest_extra *cur, time_t current_time)
 {
   int pid, j, null_fd = -1, log_fd = -1;
   unsigned char **args = NULL;
@@ -4313,7 +4314,7 @@ do_loop(void)
 {
   int i, n, status, pid;
   sigset_t block_mask, work_mask;
-  struct contest_extra *cur;
+  struct ss_contest_extra *cur;
   time_t current_time;
   struct client_state *cur_clnt;
   pollfds_t *pfds = pollfds_create();
