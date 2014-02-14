@@ -17,10 +17,6 @@
 
 #include <stdio.h>
 
-#define ARMOR(s)  html_armor_buf(&ab, (s))
-#define URLARMOR(s)  url_armor_buf(&ab, s)
-#define BUTTON(a) ns_submit_button(bb, sizeof(bb), 0, a, 0)
-
 #include <libintl.h>
 #define _(x) gettext(x)
 
@@ -37,16 +33,15 @@
   int uid;
   int row = 1, serial = 1;
   char url[1024];
-  unsigned char bb[1024];
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   int details_allowed = 0;
-  //unsigned char cl[128];
-  unsigned char b1[1024], b2[1024];
+  unsigned char b1[1024];
   int new_contest_id = cnts->id;
   const struct section_global_data *global = extra->serve_state->global;
   int *run_counts = 0;
   size_t *run_sizes = 0;
   unsigned char hbuf[1024];
+  const unsigned char *sep;
 
 static const unsigned char * const form_row_attrs[]=
 {
@@ -104,20 +99,14 @@ static const unsigned char * const form_row_attrs[]=
 <td class="b1"><s:v value="serial++" /></td>
 <%
     snprintf(b1, sizeof(b1), "uid == %d", uid);
-    url_armor_string(b2, sizeof(b2), b1);
 %>
-<td class="b1"><%
-    fprintf(out_f, "%s",
-            ns_aref(bb, sizeof(bb), phr,
-                    NEW_SRV_ACTION_MAIN_PAGE, "filter_expr=%s", b2));
-%><s:v value="uid" /></a></td>
+<s:url name="UserFilterUrl" ac="main-page">
+    <s:param name="filter_expr" value="b1" />
+</s:url>
+<td class="b1"><s:a url="UserFilterUrl" ><s:v value="uid" /></s:a></td>
 
 <%    if (details_allowed) { %>
-<td class="b1"><%
-      fprintf(out_f, "%s",
-              ns_aref(bb, sizeof(bb), phr,
-                      NEW_SRV_ACTION_VIEW_USER_INFO, "user_id=%d", uid));
-%><s:v value="u->login" /></a></td>
+<td class="b1"><s:url name="ViewUserInfoUrl" ac="view-user-info"><s:param name="user_id" value="uid" /></s:url><s:a url="ViewUserInfoUrl"><s:v value="u->login" /></s:a></td>
 <%    } else { %>
 <td class="b1"><s:v value="u->login" /></td>
 <%    } %>
@@ -126,9 +115,7 @@ static const unsigned char * const form_row_attrs[]=
 <%    } else { %>
 <td class="b1">&nbsp;</td>
 <%    }%>
-<td class="b1"><%
-    fprintf(out_f, "%s", userlist_unparse_reg_status(uc->status));
-%></td>
+<td class="b1"><s:v escape="false" value="userlist_unparse_reg_status(uc->status)" /></td>
 <%    if ((uc->flags & USERLIST_UC_ALL)) {
       r = 0; %>
 <td class="b1"><%
@@ -162,9 +149,7 @@ static const unsigned char * const form_row_attrs[]=
 <td class="b1">&nbsp;</td><td class="b1">&nbsp;</td>
 <%    }%>
 <%    if (global->memoize_user_results > 0) {%>
-<td class="b1"><%
-fprintf(out_f, "%d", serve_get_user_result_score(extra->serve_state, uid));
-%></td>
+<td class="b1"><s:v value="serve_get_user_result_score(extra->serve_state, uid)" /></td>
 <%    }%>
 <td class="b1"><input type="checkbox" name='user_%d<s:v value="uid" />'/></td>
 </tr>
