@@ -177,7 +177,19 @@ typedef struct HtmlElementStack
 {
     struct HtmlElementStack *up;
     HtmlElement *el;
+    void *extra;
 } HtmlElementStack;
+
+typedef struct NamedUrl
+{
+    TypeInfo *name;
+    HtmlElement *value;
+} NamedUrl;
+typedef struct NamedUrlArray
+{
+    int a, u;
+    NamedUrl *v;
+} NamedUrlArray;
 
 struct ProcessorState;
 
@@ -218,6 +230,7 @@ typedef struct ProcessorState
     TypeHandlerArray type_handlers;
     TypeHandlerArray array_type_handlers;
     TypeHandler default_type_handler;
+    NamedUrlArray urls;
 } ProcessorState;
 
 static ProcessorState *
@@ -362,6 +375,41 @@ processor_state_set_array_type_handler(
         TypeHandler handler)
 {
     add_type_handler(&ps->array_type_handlers, type_info, handler);
+}
+
+static void
+processor_state_add_named_url(
+        ProcessorState *ps,
+        TypeInfo *name,
+        HtmlElement *value)
+{
+    for (int i = 0; i < ps->urls.u; ++i) {
+        if (ps->urls.v[i].name == name) {
+            html_element_free(ps->urls.v[i].value);
+            ps->urls.v[i].value = value;
+            return;
+        }
+    }
+    if (ps->urls.u == ps->urls.a) {
+        if (!(ps->urls.a *= 2)) ps->urls.a = 32;
+        XREALLOC(ps->urls.v, ps->urls.a);
+    }
+    ps->urls.v[ps->urls.u].name = name;
+    ps->urls.v[ps->urls.u].value = value;
+    ++ps->urls.u;
+}
+
+static HtmlElement *
+processor_state_find_named_url(
+        ProcessorState *ps,
+        TypeInfo *name)
+{
+    for (int i = 0; i < ps->urls.u; ++i) {
+        if (ps->urls.v[i].name == name) {
+            return ps->urls.v[i].value;
+        }
+    }
+    return NULL;
 }
 
 typedef struct ScannerState
@@ -2142,6 +2190,7 @@ parse_vardecl(
 }
 
 static int parse_expression(ScannerState *ss, TypeContext *cntx, TypeInfo **p_info);
+static int parse_expression_1(ScannerState *ss, TypeContext *cntx, TypeInfo **p_info);
 
 // "str", num, (e), ({...}), (t){...}
 static int
@@ -2163,11 +2212,15 @@ parse_expression_16(ScannerState *ss, TypeContext *cntx, TypeInfo **p_info)
             parser_error(ss, "identifier '%s' is undefined", ss->raw);
             return -1;
         }
-        if (t->kind != NODE_PARAM && t->kind != NODE_LOCAL_VAR) {
+        if (t->kind != NODE_PARAM && t->kind != NODE_LOCAL_VAR && t->kind != NODE_SUBROUTINE) {
             parser_error(ss, "invalid symbol type");
             return -1;
         }
-        if (p_info) *p_info = t->n.info[2];
+        if (t->kind == NODE_PARAM || t->kind == NODE_LOCAL_VAR) {
+            if (p_info) *p_info = t->n.info[2];
+        } else if (t->kind == NODE_SUBROUTINE) {
+            if (p_info) *p_info = t->n.info[1];
+        }
         next_token(ss);
         return 0;
     } else if (IS_OPER(ss, '(')) {
@@ -2210,7 +2263,29 @@ parse_expression_15(ScannerState *ss, TypeContext *cntx, TypeInfo **p_info)
             }
             t = t->n.info[1];
         } else if (IS_OPER(ss, '(')) {
-            abort();
+            next_token(ss);
+            TypeInfo *et = NULL;
+            if ((r = parse_expression_1(ss, cntx, &et)) < 0) return r;
+            while (IS_OPER(ss, ',')) {
+                next_token(ss);
+                if ((r = parse_expression_1(ss, cntx, &et)) < 0) return r;
+            }
+            if (!IS_OPER(ss, ')')) {
+                parser_error(ss, "')' expected");
+                return -1;
+            }
+            next_token(ss);
+            fprintf(stderr, "type: ");
+            tc_print(stderr, t);
+            t = tc_skip_tcv(t);
+            if (t->kind == NODE_POINTER_TYPE) {
+                t = tc_skip_tcv(t->n.info[1]);
+            }
+            if (t->kind != NODE_FUNCTION_TYPE) {
+                parser_error(ss, "function or function pointer type expected");
+                return -1;
+            }
+            t = t->n.info[1];
         } else if (IS_OPER_2(ss, '-', '>')) {
             next_token(ss);
             t = tc_skip_tcv(t);
@@ -2227,6 +2302,9 @@ parse_expression_15(ScannerState *ss, TypeContext *cntx, TypeInfo **p_info)
                 parser_error(ss, "field name expected");
                 return -1;
             }
+
+            //tc_print_2(stderr, t, 3);
+
             TypeInfo *f = tc_find_field(t, tc_get_ident(cntx, ss->raw));
             if (!f) {
                 parser_error(ss, "field '%s' is not declared", ss->raw);
@@ -2802,6 +2880,36 @@ handle_html_text(FILE *out_f, FILE *txt_f, FILE *log_f, const unsigned char *mem
 }
 
 static int
+process_ac_attr(
+        FILE *log_f,
+        TypeContext *cntx,
+        ProcessorState *ps,
+        HtmlElement *elem,
+        unsigned char *buf,
+        int bufsize)
+{
+    HtmlAttribute *at = html_element_find_attribute(elem, "ac"); // action code
+    if (!at) return 0;
+
+    TypeInfo *ac_prefix = processor_state_find_setting(ps, tc_get_ident(cntx, "ac_prefix"));
+    if (!ac_prefix) {
+        parser_error_2(ps, "'ac_prefix' global parameter is undefined");
+        return -1;
+    }
+    if (ac_prefix->kind != NODE_STRING) {
+        parser_error_2(ps, "'ac_prefix' global parameter must be of type 'STRING'");
+        return -1;
+    }
+    snprintf(buf, bufsize, "%s%s", ac_prefix->s.str, at->value);
+    int len = strlen(buf);
+    for (int i = 0; i < len; ++i) {
+        if (buf[i] == '-') buf[i] = '_';
+        buf[i] = toupper(buf[i]);
+    }
+    return 1;
+}
+
+static int
 handle_a_open(
         FILE *log_f,
         TypeContext *cntx,
@@ -2811,24 +2919,50 @@ handle_a_open(
 {
     HtmlElement *elem = ps->el_stack->el;
     unsigned char buf[1024];
+    int r;
 
-    HtmlAttribute *at = html_element_find_attribute(elem, "ac"); // action code
-    if (at != NULL) {
-        TypeInfo *ac_prefix = processor_state_find_setting(ps, tc_get_ident(cntx, "ac_prefix"));
-        if (!ac_prefix) {
-            parser_error_2(ps, "'ac_prefix' global parameter is undefined");
+    HtmlAttribute *attr = html_element_find_attribute(elem, "url");
+    if (attr) {
+        HtmlElement *url_elem = processor_state_find_named_url(ps, tc_get_ident(cntx, attr->value));
+        if (!url_elem) {
+            parser_error_2(ps, "URL '%s' is undefined", attr->value);
             return -1;
         }
-        if (ac_prefix->kind != NODE_STRING) {
-            parser_error_2(ps, "'ac_prefix' global parameter must be of type 'STRING'");
+        r = process_ac_attr(log_f, cntx, ps, url_elem, buf, sizeof(buf));
+        if (r < 0) return r;
+        if (!r) {
+            parser_error_2(ps, "ac attribute is undefined");
             return -1;
         }
-        snprintf(buf, sizeof(buf), "%s%s", ac_prefix->s.str, at->value);
-        int len = strlen(buf);
-        for (int i = 0; i < len; ++i) {
-            if (buf[i] == '-') buf[i] = '_';
-            buf[i] = toupper(buf[i]);
+        fprintf(prg_f, "fputs(\"<a href=\\\"\", out_f);\n");
+        fprintf(prg_f, "sep = ns_url_2(out_f, phr, %s);\n", buf);
+        for (HtmlElement *child = url_elem->first_child; child; child = child->next_sibling) {
+            fprintf(prg_f, "fputs(sep, out_f); sep = \"&amp;\";\n");
+            attr = html_element_find_attribute(child, "name");
+            if (attr) {
+                fprintf(prg_f, "fputs(\"%s=\", out_f);\n", attr->value);
+                attr = html_element_find_attribute(child, "value");
+                if (attr) {
+                    TypeInfo *t = NULL;
+                    r = parse_c_expression(ps, cntx, log_f, attr->value, &t, ps->pos);
+                    if (r >= 0) {
+                        fprintf(log_f, "Expression type: ");
+                        tc_print_2(log_f, t, 2);
+                        fprintf(log_f, "\n");
+
+                        processor_state_invoke_type_handler(log_f, cntx, ps, txt_f, prg_f, attr->value, child, t);
+                    }
+                }
+            }
         }
+        fprintf(prg_f, "(void) sep;\n");
+        fprintf(prg_f, "fputs(\"\\\">\", out_f);\n");
+        return 0;
+    }
+
+    r = process_ac_attr(log_f, cntx, ps, elem, buf, sizeof(buf));
+    if (r < 0) return r;
+    if (r > 0) {
         fprintf(prg_f, "fputs(ns_aref(hbuf, sizeof(hbuf), phr, %s, 0), out_f);\n", buf);
     }
     return 0;
@@ -2935,23 +3069,9 @@ handle_submit_open(
         value = "NULL";
     }
 
-    at = html_element_find_attribute(elem, "ac"); // action code
-    if (at != NULL) {
-        TypeInfo *ac_prefix = processor_state_find_setting(ps, tc_get_ident(cntx, "ac_prefix"));
-        if (!ac_prefix) {
-            parser_error_2(ps, "'ac_prefix' global parameter is undefined");
-            return -1;
-        }
-        if (ac_prefix->kind != NODE_STRING) {
-            parser_error_2(ps, "'ac_prefix' global parameter must be of type 'STRING'");
-            return -1;
-        }
-        snprintf(buf, sizeof(buf), "%s%s", ac_prefix->s.str, at->value);
-        int len = strlen(buf);
-        for (int i = 0; i < len; ++i) {
-            if (buf[i] == '-') buf[i] = '_';
-            buf[i] = toupper(buf[i]);
-        }
+    int r = process_ac_attr(log_f, cntx, ps, elem, buf, sizeof(buf));
+    if (r < 0) return r;
+    if (r > 0) {
         fprintf(prg_f, "fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, %s, %s), out_f);\n", buf, value);
     } else if ((at = html_element_find_attribute(elem, "action"))) {
         fprintf(prg_f, "fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, (%s), %s), out_f);\n", at->value, value);
@@ -2975,7 +3095,7 @@ handle_v_open(
         return -1;
     }
 
-    HtmlAttribute *at = html_element_find_attribute(elem, "value"); // action code
+    HtmlAttribute *at = html_element_find_attribute(elem, "value");
     if (!at) {
         parser_error_2(ps, "<s:v> element requires value attribute");
         return -1;
@@ -2990,6 +3110,68 @@ handle_v_open(
     fprintf(log_f, "\n");
 
     processor_state_invoke_type_handler(log_f, cntx, ps, txt_f, prg_f, at->value, elem, t);
+
+    return 0;
+}
+
+static int
+handle_url_open(
+        FILE *log_f,
+        TypeContext *cntx,
+        ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f)
+{
+    HtmlElement *elem = ps->el_stack->el;
+
+    // save for future perusal
+    ps->el_stack->extra = html_element_clone(elem);
+
+    return 0;
+}
+
+static int
+handle_url_close(
+        FILE *log_f,
+        TypeContext *cntx,
+        ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f,
+        unsigned char *mem,
+        int beg_i,
+        int end_i)
+{
+    HtmlElement *elem = ps->el_stack->extra;
+    HtmlAttribute *at = html_element_find_attribute(elem, "name");
+    if (!at) {
+        parser_error_2(ps, "<s:url> element requires 'name' attribute");
+        return -1;
+    }
+    processor_state_add_named_url(ps, tc_get_ident(cntx, at->value), elem);
+    ps->el_stack->extra = NULL;
+    return 0;
+}
+
+static int
+handle_param_open(
+        FILE *log_f,
+        TypeContext *cntx,
+        ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f)
+{
+    HtmlElement *elem = ps->el_stack->el;
+    HtmlElement *url_elem = ps->el_stack->up->extra;
+
+    if (!url_elem || strcmp(url_elem->name, "s:url") != 0) {
+        parser_error_2(ps, "s:param must be nested to s:url");
+        return -1;
+    }
+    if (!elem->no_body) {
+        parser_error_2(ps, "<s:param> element must not have a body");
+        return -1;
+    }
+    html_element_add_child(url_elem, html_element_clone(elem));
 
     return 0;
 }
@@ -3012,6 +3194,10 @@ handle_html_element_open(
         handle_v_open(log_f, cntx, ps, txt_f, prg_f);
     } else if (!strcmp(ps->el_stack->el->name, "s:form")) {
         handle_form_open(log_f, cntx, ps, txt_f, prg_f);
+    } else if (!strcmp(ps->el_stack->el->name, "s:url")) {
+        handle_url_open(log_f, cntx, ps, txt_f, prg_f);
+    } else if (!strcmp(ps->el_stack->el->name, "s:param")) {
+        handle_param_open(log_f, cntx, ps, txt_f, prg_f);
     } else {
         parser_error_2(ps, "unhandled element");
     }
@@ -3036,6 +3222,8 @@ handle_html_element_close(
         handle_a_close(log_f, cntx, ps, txt_f, prg_f, mem, beg_i, end_i);
     } else if (!strcmp(ps->el_stack->el->name, "s:form")) {
         handle_form_close(log_f, cntx, ps, txt_f, prg_f, mem, beg_i, end_i);
+    } else if (!strcmp(ps->el_stack->el->name, "s:url")) {
+        handle_url_close(log_f, cntx, ps, txt_f, prg_f, mem, beg_i, end_i);
     } else {
         parser_error_2(ps, "unhandled element");
     }
@@ -3063,7 +3251,12 @@ string_type_handler(
         if (xml_parse_bool(NULL, NULL, 0, 0, at->value, &v) >= 0) need_escape = v;
     }
     if (need_escape) {
-        fprintf(prg_f, "fputs(html_armor_buf(&ab, (%s)), out_f);\n", text);
+        if (!strcmp(elem->name, "s:param")) {
+            fprintf(prg_f, "url_armor_string(hbuf, sizeof(hbuf), (%s));\n", text);
+            fprintf(prg_f, "fputs(hbuf, out_f);\n");
+        } else {
+            fprintf(prg_f, "fputs(html_armor_buf(&ab, (%s)), out_f);\n", text);
+        }
     } else {
         fprintf(prg_f, "fputs((%s), out_f);\n", text);
     }

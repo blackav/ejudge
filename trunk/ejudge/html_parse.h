@@ -29,9 +29,13 @@ typedef struct HtmlAttribute
 
 typedef struct HtmlElement
 {
+    struct HtmlElement *prev_sibling;
+    struct HtmlElement *next_sibling;
     unsigned char *name;
     struct HtmlAttribute *first_attr;
     struct HtmlAttribute *last_attr;
+    struct HtmlElement *first_child;
+    struct HtmlElement *last_child;
     int no_body; // 1, if <elem /> case
 } HtmlElement;
 
@@ -59,6 +63,13 @@ void
 html_element_print(
         FILE *out_f,
         const struct HtmlElement *elem);
+
+struct HtmlAttribute *
+html_attribute_clone(const struct HtmlAttribute *attr);
+struct HtmlElement *
+html_element_clone(const struct HtmlElement *elem);
+void
+html_element_add_child(HtmlElement *elem, HtmlElement *child);
 
 #endif /* __HTML_PARSE_H__ */
 

@@ -1558,7 +1558,7 @@ tc_get_name_node(const TypeInfo *ti)
     case NODE_FIELD:
         return ti->n.info[3];
     case NODE_SUBROUTINE:
-        return ti->n.info[1];
+        return ti->n.info[2];
     case NODE_LOCAL_VAR:
         return ti->n.info[3];
     }
@@ -1684,6 +1684,10 @@ id_scope_create(struct TypeContext *cntx, int kind, const void *pv)
 void
 tc_scope_add(IdScope *scope, TypeInfo *def)
 {
+    /*
+    fprintf(stderr, "adding to scope: ");
+    tc_print_2(stderr, def, 3);
+    */
     vt_insert(NULL, &scope->ids, def, 0, id_scope_cmp_2, id_scope_create);
 }
 

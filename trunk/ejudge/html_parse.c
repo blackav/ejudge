@@ -94,6 +94,11 @@ html_element_free(struct HtmlElement *elem)
         q = p->next;
         html_attribute_free(p);
     }
+    for (HtmlElement *child = elem->first_child; child; ) {
+        HtmlElement *tmp = child->next_sibling;
+        html_element_free(child);
+        child = tmp;
+    }
     xfree(elem);
     return NULL;
 }
@@ -363,6 +368,42 @@ html_element_print(
     }
     if (elem->no_body) putc('/', out);
     putc('>', out);
+}
+
+HtmlAttribute *
+html_attribute_clone(const HtmlAttribute *attr)
+{
+    HtmlAttribute *res = NULL;
+    if (attr) {
+        XCALLOC(res, 1);
+        if (attr->name) res->name = xstrdup(attr->name);
+        if (attr->value) res->value = xstrdup(attr->value);
+    }
+    return res;
+}
+
+HtmlElement *
+html_element_clone(const HtmlElement *elem)
+{
+    if (!elem) return NULL;
+
+    HtmlElement *res = NULL;
+    XCALLOC(res, 1);
+    if (elem->name) res->name = xstrdup(elem->name);
+    res->no_body = elem->no_body;
+
+    for (const HtmlAttribute *asrc = elem->first_attr; asrc; asrc = asrc->next) {
+        HtmlAttribute *adst = html_attribute_clone(asrc);
+        LINK_LAST(adst, res->first_attr, res->last_attr, prev, next);
+    }
+    return res;
+}
+
+void
+html_element_add_child(HtmlElement *elem, HtmlElement *child)
+{
+    if (!elem || !child) return;
+    LINK_LAST(child, elem->first_child, elem->last_child, prev_sibling, next_sibling);
 }
 
 /*

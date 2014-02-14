@@ -579,6 +579,12 @@ ns_aref_2(unsigned char *buf, size_t size,
           int action, const char *format, ...)
   __attribute__((format(printf, 6, 7)));
 
+const unsigned char *
+ns_url_2(
+        FILE *out_f,
+        const struct http_request_info *phr,
+        int action);
+
 void
 ns_refresh_page(FILE *fout, struct http_request_info *phr, int new_action,
                 const unsigned char *extra);

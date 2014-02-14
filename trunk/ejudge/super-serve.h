@@ -3,7 +3,7 @@
 #ifndef __SUPER_SERVE_H__
 #define __SUPER_SERVE_H__
 
-/* Copyright (C) 2004-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -33,7 +33,7 @@
 #endif /* __RCC__ */
 #endif /* META_ATTRIB */
 
-struct contest_extra
+struct ss_contest_extra
 {
   int id;
   unsigned char run_used;
@@ -58,8 +58,8 @@ struct contest_extra
   time_t last_forced_check;
 };
 
-struct contest_extra *get_contest_extra(int num);
-struct contest_extra *get_existing_contest_extra(int num);
+struct ss_contest_extra *get_contest_extra(int num);
+struct ss_contest_extra *get_existing_contest_extra(int num);
 
 enum
 {
