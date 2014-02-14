@@ -151,7 +151,7 @@ static const unsigned char * const form_row_attrs[]=
 <%    if (global->memoize_user_results > 0) {%>
 <td class="b1"><s:v value="serve_get_user_result_score(extra->serve_state, uid)" /></td>
 <%    }%>
-<td class="b1"><input type="checkbox" name='user_%d<s:v value="uid" />'/></td>
+<td class="b1"><input type="checkbox" name='user_<s:v value="uid" />'/></td>
 </tr>
 <%  } %>
 </table>
@@ -196,7 +196,7 @@ static const unsigned char * const form_row_attrs[]=
 <% } %>
 </table>
 
-<h2><s:tr>Disqualify selected users</s:tr></h3>
+<h2><s:tr>Disqualify selected users</s:tr></h2>
 <p><s:tr>Disqualification explanation</s:tr>:<br>
 <p><textarea name="disq_comment" rows="5" cols="60">
 </textarea></p>
