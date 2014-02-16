@@ -8,6 +8,7 @@
 #include "l10n.h"
 #include "xml_utils.h"
 #include "runlog.h"
+#include "external_action.h"
 
 #include "reuse/xalloc.h"
 
@@ -15,8 +16,29 @@
 
 #include <libintl.h>
 #define _(x) gettext(x)
+
+int csp_view_priv_main_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr);
+
+static PageInterfaceOps priv_main_page_ops =
+{
+    NULL, // destroy
+    NULL, // execute
+    csp_view_priv_main_page, // render
+};
+
+static PageInterface priv_main_page_iface =
+{
+    &priv_main_page_ops,
+};
+
+PageInterface *
+csp_get_priv_main_page(void)
+{
+    return &priv_main_page_iface;
+}
+
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
-%><%@page csp_view_priv_main_page(FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@page csp_view_priv_main_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 %><%
   const struct contest_desc *cnts = phr->cnts;
   struct contest_extra *extra = phr->extra;

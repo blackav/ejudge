@@ -12,6 +12,7 @@
 #include "mischtml.h"
 #include "prepare.h"
 #include "xml_utils.h"
+#include "external_action.h"
 
 #include "reuse/xalloc.h"
 
@@ -20,8 +21,28 @@
 #include <libintl.h>
 #define _(x) gettext(x)
 
+int csp_view_priv_view_users_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr);
+
+static PageInterfaceOps priv_view_users_page_ops =
+{
+    NULL, // destroy
+    NULL, // execute
+    csp_view_priv_view_users_page, // render
+};
+
+static PageInterface priv_view_users_page_iface =
+{
+    &priv_view_users_page_ops,
+};
+
+PageInterface *
+csp_get_priv_view_users_page(void)
+{
+    return &priv_view_users_page_iface;
+}
+
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
-%><%@page csp_view_priv_view_users_page(FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@page csp_view_priv_view_users_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 %><%
   const struct contest_desc *cnts = phr->cnts;
   struct contest_extra *extra = phr->extra;
@@ -32,7 +53,6 @@
   const struct userlist_contest *uc = 0;
   int uid;
   int row = 1, serial = 1;
-  char url[1024];
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   int details_allowed = 0;
   unsigned char b1[1024];
@@ -166,8 +186,7 @@ static const unsigned char * const form_row_attrs[]=
 <h2>Available actions</h2>
 
 <table>
-<tr><td><%  fprintf(out_f, "%s", ns_aref(url, sizeof(url), phr, 0, 0));
-%><s:tr>Back</s:tr></a></td><td><s:tr>Return to the main page</s:tr></td></tr>
+<tr><td><s:a ac="main-page"><s:tr>Back</s:tr></s:a></td><td><s:tr>Return to the main page</s:tr></td></tr>
 <tr><td><s:submit ac="users-remove-registrations" /></td><td><s:tr>Remove the selected users from the list</s:tr></td></tr>
 <tr><td><s:submit ac="users-set-pending" /></td><td><s:tr>Set the registration status of the selected users to PENDING</s:tr></td></tr>
 <tr><td><s:submit ac="users-set-ok" /></td><td><s:tr>Set the registration status of the selected users to OK</s:tr></td></tr>
