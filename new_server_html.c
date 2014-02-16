@@ -9239,7 +9239,10 @@ priv_reload_server_2(
 {
 }
 
+typedef PageInterface *(*external_action_handler_t)(void);
+
 typedef int (*new_action_handler_t)(
+        PageInterface *pg,
         FILE *log_f,
         FILE *out_f,
         struct http_request_info *phr);
@@ -9647,7 +9650,7 @@ privileged_entry_point(
     external_action_states[phr->action] = external_action_load(external_action_states[phr->action],
                                                                "csp/contests",
                                                                external_action_names[phr->action],
-                                                               "csp_view_");
+                                                               "csp_get_");
   }
 
   if (external_action_states[phr->action] && external_action_states[phr->action]->action_handler) {
@@ -9656,12 +9659,35 @@ privileged_entry_point(
     size_t log_len = 0;
 
     log_f = open_memstream(&log_txt, &log_len);
-    int r = ((new_action_handler_t) external_action_states[phr->action]->action_handler)(log_f, fout, phr);
+    PageInterface *pg = ((external_action_handler_t) external_action_states[phr->action]->action_handler)();
+
+    if (pg->ops->execute) {
+      int r = pg->ops->execute(pg, log_f, phr);
+      if (r < 0) {
+        // FIXME: handle error
+      }
+    }
+
+    if (pg->ops->render) {
+      int r = pg->ops->render(pg, log_f, fout, phr);
+      if (r < 0) {
+        // FIXME: handle error
+      }
+    }
+
+    if (pg->ops->destroy) {
+      pg->ops->destroy(pg);
+      pg = NULL;
+    }
+
+    /*
+    int r = ((new_action_handler_t) external_action_states[phr->action]->action_handler)(NULL, log_f, fout, phr);
     if (r == -1) {
       close_memstream(log_f); log_f = NULL;
       xfree(log_txt); log_txt = NULL; log_len = 0;
       return;
     }
+*/
 
     if (r < 0) {
       ns_error(log_f, r);
