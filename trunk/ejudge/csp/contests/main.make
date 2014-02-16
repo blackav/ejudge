@@ -33,7 +33,7 @@ LD=gcc
 EXPAT_LIB=-lexpat
 
 TARGETDIR = ${libexecdir}/ejudge/csp/contests
-SOFILES = priv_main_page.so priv_view_users_page.so
+SOFILES = priv_main_page.so priv_view_users_page.so priv_view_priv_users_page.so
 
 all : $(SOFILES)
 
@@ -43,6 +43,9 @@ install : all
 
 clean : 
 	-rm -f *.o *.so
+
+priv_view_priv_users_page.so : priv_view_priv_users_page.c priv_view_priv_users_page_impl.c
+	$(CC) $(CCOMPFLAGS) ${WPTRSIGN} $(LDFLAGS) $^ -o $@
 
 %.c : %.csp
 	../../ej-page-gen $< > $@
