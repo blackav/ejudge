@@ -17,6 +17,23 @@
  * GNU General Public License for more details.
  */
 
+#include <stdio.h>
+
+struct PageInterface;
+struct http_request_info;
+
+typedef struct PageInterfaceOps
+{
+    void (*destroy)(struct PageInterface *);
+    int (*execute)(struct PageInterface *, FILE *log_f, struct http_request_info *phr);
+    int (*render)(struct PageInterface *, FILE *log_f, FILE *out_f, struct http_request_info *phr);
+} PageInterfaceOps;
+
+typedef struct PageInterface
+{
+    PageInterfaceOps *ops;
+} PageInterface;
+
 typedef struct ExternalActionState
 {
     void *dl_handle;
