@@ -5289,6 +5289,7 @@ priv_unassign_examiner(
   return retval;
 }
 
+#if 0
 static void
 priv_view_users_page(
         FILE *fout,
@@ -5531,7 +5532,9 @@ priv_view_users_page(
   xfree(run_counts);
   xfree(run_sizes);
 }
+#endif
 
+#if 0
 struct priv_user_info
 {
   int user_id;
@@ -5737,6 +5740,7 @@ priv_view_priv_users_page(FILE *fout,
   if (iter) iter->destroy(iter);
   html_armor_free(&ab);
 }
+#endif
 
 static int
 priv_view_report(FILE *fout,
@@ -7731,10 +7735,6 @@ typedef int (*action_handler2_t)(FILE *fout,
 
 static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
 {
-#if 0
-  [NEW_SRV_ACTION_VIEW_USERS] = priv_view_users_page,
-  [NEW_SRV_ACTION_PRIV_USERS_VIEW] = priv_view_priv_users_page,
-#endif
   /* for priv_generic_operation */
   [NEW_SRV_ACTION_USERS_REMOVE_REGISTRATIONS] = priv_registration_operation,
   [NEW_SRV_ACTION_USERS_SET_PENDING] = priv_registration_operation,
@@ -8459,12 +8459,7 @@ priv_get_file(
   xfree(file_bytes);
 }
 
-static void
-priv_main_page(FILE *fout,
-               struct http_request_info *phr,
-               const struct contest_desc *cnts,
-               struct contest_extra *extra)
-  __attribute__((unused));
+#if 0
 static void
 priv_main_page(FILE *fout,
                struct http_request_info *phr,
@@ -9229,6 +9224,7 @@ priv_main_page(FILE *fout,
   l10n_setlocale(0);
   html_armor_free(&ab);
 }
+#endif
 
 static void
 priv_reload_server_2(
@@ -9254,7 +9250,6 @@ typedef void (*action_handler_t)(FILE *fout,
 
 static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
 {
-  [NEW_SRV_ACTION_VIEW_USERS] = priv_view_users_page,
   [NEW_SRV_ACTION_USERS_REMOVE_REGISTRATIONS] = priv_generic_operation,
   [NEW_SRV_ACTION_USERS_SET_PENDING] = priv_generic_operation,
   [NEW_SRV_ACTION_USERS_SET_OK] = priv_generic_operation,
@@ -9271,7 +9266,6 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_USERS_CLEAR_DISQUALIFIED] = priv_generic_operation,
   [NEW_SRV_ACTION_USERS_ADD_BY_LOGIN] = priv_generic_operation,
   [NEW_SRV_ACTION_USERS_ADD_BY_USER_ID] = priv_generic_operation,
-  [NEW_SRV_ACTION_PRIV_USERS_VIEW] = priv_view_priv_users_page,
   [NEW_SRV_ACTION_PRIV_USERS_REMOVE] = priv_generic_operation,
   [NEW_SRV_ACTION_PRIV_USERS_ADD_OBSERVER] = priv_generic_operation,
   [NEW_SRV_ACTION_PRIV_USERS_DEL_OBSERVER] = priv_generic_operation,
@@ -9709,12 +9703,6 @@ privileged_entry_point(
     actions_table[phr->action](fout, phr, cnts, extra);
   } else {
     html_error_status_page(fout, phr, cnts, extra, "action is undefined", 0, 0);
-    /*
-    if (phr->action < 0 || phr->action >= NEW_SRV_ACTION_LAST)
-      phr->action = 0;
-    priv_main_page(fout, phr, cnts, extra);
-    //csp_view_priv_main_page(fout, phr, cnts, extra);
-    */
   }
 }
 
