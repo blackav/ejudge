@@ -1,12 +1,43 @@
 <%
 /* $Id$ */
 
+#include "new-server.h"
+#include "misctext.h"
+#include "mischtml.h"
+#include "l10n.h"
+#include "external_action.h"
+#include "new_server_pi.h"
+
+#include <stdio.h>
+
+#include <libintl.h>
+#define _(x) gettext(x)
+
+void
+html_role_select(FILE *fout, int role, int allow_admin,
+                 const unsigned char *var_name);
 
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
-%><%@page csp_view_priv_view_priv_users_page(FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@page csp_view_priv_view_priv_users_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 %><%
+  PrivViewPrivUsersPage *pvp = (PrivViewPrivUsersPage*) ps;
+  PrivUserInfoArray *users = &pvp->users;
+  const struct contest_desc *cnts = phr->cnts;
+  struct contest_extra *extra = phr->extra;
+  int i;
+  unsigned int role_mask;
+  int row = 1, cnt, r;
+  unsigned char hbuf[1024];
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+
+static const unsigned char * const form_row_attrs[]=
+{
+  " bgcolor=\"#d0d0d0\"",
+  " bgcolor=\"#e0e0e0\"",
+};
+
   l10n_setlocale(phr->locale_id);
-  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+  ns_header(out_f, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
             phr->client_key,
             "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role), phr->name_arm,
             phr->contest_id, extra->contest_arm, _("Privileged users page"));
@@ -15,21 +46,21 @@
 <s:form>
 <table class="b1"><tr><th class="b1">NN</th><th class="b1">Id</th><th class="b1">Login</th><th class="b1">Name</th><th class="b1">Roles</th><th class="b1">Select</th></tr>
 <%
-  for (i = 0; i < users.u; i++) {
+  for (i = 0; i < users->u; i++) {
 %>
-<tr<s:v escape="false" value="form_row_attrs[row ^= 1]">>
+<tr<s:v escape="false" value="form_row_attrs[row ^= 1]" />>
     <td class="b1"><s:v value="i + 1" /></td>
-    <td class="b1"><s:v value="users.v[i]->user_id" /></td>
-    <td class="b1"><s:v value="users.v[i]->login" /></td>
-    <td class="b1"><s:v value="users.v[i]->name" /></td>
+    <td class="b1"><s:v value="users->v[i]->user_id" /></td>
+    <td class="b1"><s:v value="users->v[i]->login" /></td>
+    <td class="b1"><s:v value="users->v[i]->name" /></td>
 <%
-    if ((role_mask = users.v[i]->role_mask)) {
+    if ((role_mask = users->v[i]->role_mask)) {
 %>
 <td class="b1">
 <%
       for (cnt = 0, r = USER_ROLE_OBSERVER; r <= USER_ROLE_ADMIN; r++)
         if ((role_mask & (1 << r)))
-          fprintf(fout, "%s%s", cnt++?",":"", ns_unparse_role(r));
+          fprintf(out_f, "%s%s", cnt++?",":"", ns_unparse_role(r));
 %>
 </td>
 <%
@@ -39,7 +70,7 @@
 <%
     }
 %>
-<td class="b1"><input type="checkbox" name='user_<s:v value="users.v[i]->user_id">'/></td>
+<td class="b1"><input type="checkbox" name='user_<s:v value="users->v[i]->user_id" />'/></td>
 </tr>
 <%
   }
@@ -65,14 +96,15 @@
 
 <table>
 <tr><td><input type="text" size="32" name="add_login"/></td><td>
-<%  html_role_select(fout, USER_ROLE_OBSERVER, 0, "add_role_1"); %>
+<%  html_role_select(out_f, USER_ROLE_OBSERVER, 0, "add_role_1"); %>
 </td><td><s:submit ac="priv-users-add-by-login" /></td><td><s:tr>Add a new user specifying his/her login</s:tr></td></tr>
 <tr><td><input type="text" size="32" name="add_user_id"/></td><td>
-<%  html_role_select(fout, USER_ROLE_OBSERVER, 0, "add_role_2"); %>
+<%  html_role_select(out_f, USER_ROLE_OBSERVER, 0, "add_role_2"); %>
 </td><td><s:submit ac="priv-users-add-by-user-id" /></td><td><s:tr>Add a new user specifying his/her User Id</s:tr></td></tr>
 </table>
 
 <%
-  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
+  ns_footer(out_f, extra->footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_setlocale(0);
+  html_armor_free(&ab);
 %>
