@@ -859,7 +859,7 @@ ns_unparse_role(int role)
   return gettext(role_strs[role]);
 }
 
-static void
+void
 html_role_select(FILE *fout, int role, int allow_admin,
                  const unsigned char *var_name)
 {
@@ -9458,6 +9458,7 @@ static const unsigned char * const external_action_names[NEW_SRV_ACTION_LAST] =
 {
   [NEW_SRV_ACTION_MAIN_PAGE] = "priv_main_page",
   [NEW_SRV_ACTION_VIEW_USERS] = "priv_view_users_page",
+  [NEW_SRV_ACTION_PRIV_USERS_VIEW] = "priv_view_priv_users_page",
 };
 
 static ExternalActionState *external_action_states[NEW_SRV_ACTION_LAST];

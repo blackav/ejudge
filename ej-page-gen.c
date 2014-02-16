@@ -23,6 +23,7 @@
 #include "dwarf_parse.h"
 #include "html_parse.h"
 #include "xml_utils.h"
+#include "new_server_pi.h"
 
 #include "reuse/osdeps.h"
 #include "reuse/xalloc.h"
@@ -3747,6 +3748,8 @@ ns_get_client_by_id(int client_id)
 
 const char compile_version[] = "?";
 const char compile_date[] = "?";
+
+PrivViewPrivUsersPage dummy_pvpup;
 
 /*
  * Local variables:
