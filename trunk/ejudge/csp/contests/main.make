@@ -34,8 +34,9 @@ EXPAT_LIB=-lexpat
 
 TARGETDIR = ${libexecdir}/ejudge/csp/contests
 SOFILES = priv_main_page.so priv_view_users_page.so priv_view_priv_users_page.so
+CFILES = $(SOFILES:.so=.c) priv_view_priv_users_page_impl.c
 
-all : $(SOFILES)
+all : $(CFILES) $(SOFILES)
 
 install : all
 	install -d "${DESTDIR}${TARGETDIR}"
@@ -46,6 +47,10 @@ clean :
 
 priv_view_priv_users_page.so : priv_view_priv_users_page.c priv_view_priv_users_page_impl.c
 	$(CC) $(CCOMPFLAGS) ${WPTRSIGN} $(LDFLAGS) $^ -o $@
+
+po : contests.po
+contests.po : $(CFILES)
+	${XGETTEXT} -d ejudge --no-location --foreign-user  -k_ -k__ -s -o $@ *.c
 
 %.c : %.csp
 	../../ej-page-gen $< > $@
