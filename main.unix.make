@@ -365,7 +365,7 @@ subdir_clean:
 
 
 local_distclean :
-	rm -rf autom4te.cache config.log config.status Makefile config.h ejudge-config.v TAGS Makefile.in ejudge.ru_RU.UTF-8.po
+	rm -rf autom4te.cache config.log config.status Makefile config.h ejudge-config.v TAGS Makefile.in
 distclean : subdir_distclean local_clean local_distclean
 
 subdir_distclean :
@@ -423,21 +423,21 @@ log: mkChangeLog2
 
 # localization stuff
 ifdef ENABLE_NLS
-po : ejudge.ru_RU.KOI8-R.po ejudge.ru_RU.${CHARSET}.po
+po : ejudge.ru_RU.UTF-8.po ejudge.ru_RU.${CHARSET}.po
 else
 po :
 endif
 
-ifneq (${CHARSET}, KOI8-R)
-ejudge.ru_RU.${CHARSET}.po : ejudge.ru_RU.KOI8-R.po
-	sed "s/koi8-r/${CHARSET}/g" < ejudge.ru_RU.KOI8-R.po | ${ICONV} -f KOI8-R -t ${CHARSET} > ejudge.ru_RU.${CHARSET}.po
+ifneq (${CHARSET}, UTF-8)
+ejudge.ru_RU.${CHARSET}.po : ejudge.ru_RU.UTF-8.po
+	sed "s/UTF-8/${CHARSET}/g" < ejudge.ru_RU.UTF-8.po | ${ICONV} -f UTF-8 -t ${CHARSET} > ejudge.ru_RU.${CHARSET}.po
 endif
 
-ejudge.ru_RU.KOI8-R.po: $(CFILES) ejudge.po
+ejudge.ru_RU.UTF-8.po: $(CFILES) ejudge.po
 	${MSGMERGE} -U $@ ejudge.po
 
 ejudge.po: $(CFILES)
-	${XGETTEXT} -d ejudge --no-location --foreign-user  -k_ -k__ -s -o $@ *.c
+	${XGETTEXT} -d ejudge --no-location --foreign-user  -k_ -k__ -s -o $@ *.c csp/contests/*.c
 
 ru_all:
 	-mkdir -p locale/ru_RU.${CHARSET}/LC_MESSAGES
