@@ -410,6 +410,33 @@ AC_CHECK_LIB([uuid],[uuid_parse],[ac_cv_has_lib_libuuid=-luuid],[ac_cv_has_lib_l
 dnl check regex library
 AC_CHECK_HEADER([regex.h],[ac_cv_has_regex=1],[ac_cv_has_regex=0])
 
+dnl check libelf library
+AC_CHECK_HEADER([libelf.h],[ac_cv_has_libelf=1],[ac_cv_has_libelf=0])
+if [[ x"${ac_cv_has_libelf}" != x1 ]]
+then
+  AC_MSG_FAILURE([please install libelf development package])
+fi
+AC_CHECK_LIB([elf],[elf_begin],[ac_cv_has_libelf=1],[ac_cv_has_libelf=0])
+if [[ x"${ac_cv_has_libelf}" != x1 ]]
+then
+  AC_MSG_FAILURE([please install libelf development package])
+fi
+
+dnl checl libdwarf library
+saved_LIBS="${LIBS}"
+LIBS="-lelf"
+AC_CHECK_HEADER([libdwarf/libdwarf.h],[ac_cv_has_libdwarf=1],[ac_cv_has_libdwarf=0])
+if [[ x"${ac_cv_has_libdwarf}" != x1 ]]
+then
+  AC_MSG_FAILURE([please install libdwarf development package])
+fi
+AC_CHECK_LIB([dwarf],[dwarf_init],[ac_cv_has_libdwarf=1],[ac_cv_has_libdwarf=0])
+if [[ x"${ac_cv_has_libdwarf}" != x1 ]]
+then
+  AC_MSG_FAILURE([please install libdwarf development package])
+fi
+LIBS="${saved_LIBS}"
+
 dnl Libcap checking stuff
 ac_cv_has_libcap=1
 if [[ x"${ac_cv_libcap_root}" = xno ]]
