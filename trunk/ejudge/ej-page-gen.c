@@ -3178,6 +3178,24 @@ handle_param_open(
 }
 
 static int
+handle_copyright_open(
+        FILE *log_f,
+        TypeContext *cntx,
+        ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f)
+{
+    HtmlElement *elem = ps->el_stack->el;
+    if (!elem->no_body) {
+        parser_error_2(ps, "<s:copyright> element must not have a body");
+        return -1;
+    }
+    fprintf(prg_f, "write_copyright_short(out_f);\n");
+
+    return 0;
+}
+
+static int
 handle_html_element_open(
         FILE *log_f,
         TypeContext *cntx,
@@ -3199,6 +3217,8 @@ handle_html_element_open(
         handle_url_open(log_f, cntx, ps, txt_f, prg_f);
     } else if (!strcmp(ps->el_stack->el->name, "s:param")) {
         handle_param_open(log_f, cntx, ps, txt_f, prg_f);
+    } else if (!strcmp(ps->el_stack->el->name, "s:copyright")) {
+        handle_copyright_open(log_f, cntx, ps, txt_f, prg_f);
     } else {
         parser_error_2(ps, "unhandled element");
     }

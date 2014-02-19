@@ -103,6 +103,8 @@ struct http_request_info
   int allow_empty_output;
   int no_reply;
 
+  // content type
+
   struct timeval timestamp1;
   struct timeval timestamp2;
 

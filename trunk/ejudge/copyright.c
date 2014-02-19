@@ -62,3 +62,13 @@ get_copyright(int locale_id)
   }
   return copyright_str;
 }
+
+void
+write_copyright_short(FILE *out_f)
+{
+  fprintf(out_f, 
+          "<p class=\"ejudge_copyright\"><a href=\"%s\"><b> %s (%s).</p>\n"
+          "<p class=\"ejudge_copyright\">Copyright &copy; %s Alexander Chernov.</p>\n",
+          "http://www.ejudge.ru",
+          compile_version, compile_date, "2000-2014");
+}
