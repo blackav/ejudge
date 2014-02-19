@@ -63,12 +63,12 @@
 
 static const unsigned char*
 ss_getenv(
-        const struct super_http_request_info *phr,
+        const struct http_request_info *phr,
         const unsigned char *var)
   __attribute__((unused));
 static const unsigned char*
 ss_getenv(
-        const struct super_http_request_info *phr,
+        const struct http_request_info *phr,
         const unsigned char *var)
 {
   int i;
@@ -86,7 +86,7 @@ ss_getenv(
 
 int
 ss_cgi_param(
-        const struct super_http_request_info *phr,
+        const struct http_request_info *phr,
         const unsigned char *param,
         const unsigned char **p_value)
 {
@@ -104,7 +104,7 @@ ss_cgi_param(
 
 static int
 ss_cgi_param_utf8_str(
-        const struct super_http_request_info *phr,
+        const struct http_request_info *phr,
         const unsigned char *param,
         struct html_armor_buffer *pab,
         const unsigned char **p_value)
@@ -137,14 +137,14 @@ ss_cgi_param_utf8_str(
 
 static int
 ss_cgi_param_bin(
-        const struct super_http_request_info *phr,
+        const struct http_request_info *phr,
         const unsigned char *param,
         const unsigned char **p_value,
         size_t *p_size)
   __attribute__((unused));
 static int
 ss_cgi_param_bin(
-        const struct super_http_request_info *phr,
+        const struct http_request_info *phr,
         const unsigned char *param,
         const unsigned char **p_value,
         size_t *p_size)
@@ -163,13 +163,13 @@ ss_cgi_param_bin(
 
 static const unsigned char *
 ss_cgi_nname(
-        const struct super_http_request_info *phr,
+        const struct http_request_info *phr,
         const unsigned char *prefix,
         size_t pflen)
   __attribute__((unused));
 static const unsigned char *
 ss_cgi_nname(
-        const struct super_http_request_info *phr,
+        const struct http_request_info *phr,
         const unsigned char *prefix,
         size_t pflen)
 {
@@ -184,7 +184,7 @@ ss_cgi_nname(
 
 int
 ss_cgi_param_int(
-        struct super_http_request_info *phr,
+        struct http_request_info *phr,
         const unsigned char *name,
         int *p_val)
 {
@@ -202,7 +202,7 @@ ss_cgi_param_int(
 
 int
 ss_cgi_param_int_opt(
-        struct super_http_request_info *phr,
+        struct http_request_info *phr,
         const unsigned char *name,
         int *p_val,
         int default_value)
@@ -383,7 +383,7 @@ static const char fancy_priv_header[] =
 static void
 write_html_header(
         FILE *out_f,
-        struct super_http_request_info *phr,
+        struct http_request_info *phr,
         const unsigned char *title,
         int use_dojo,
         const unsigned char *body_class)
@@ -449,7 +449,7 @@ write_html_header(
 void
 ss_write_html_header(
         FILE *out_f,
-        struct super_http_request_info *phr,
+        struct http_request_info *phr,
         const unsigned char *title,
         int use_dojo,
         const unsigned char *body_class)
@@ -481,14 +481,14 @@ write_json_header(FILE *out_f)
 static void
 refresh_page(
         FILE *out_f,
-        struct super_http_request_info *phr,
+        struct http_request_info *phr,
         const char *format,
         ...)
   __attribute__((format(printf, 3, 4)));
 static void
 refresh_page(
         FILE *out_f,
-        struct super_http_request_info *phr,
+        struct http_request_info *phr,
         const char *format,
         ...)
 {
@@ -522,13 +522,13 @@ refresh_page(
   putc('\n', out_f);
 }
 
-typedef int (*handler_func_t)(FILE *log_f, FILE *out_f, struct super_http_request_info *phr);
+typedef int (*handler_func_t)(FILE *log_f, FILE *out_f, struct http_request_info *phr);
 
 static int
 cmd_cnts_details(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   struct sid_state *ss = phr->ss;
@@ -543,7 +543,7 @@ static int
 cmd_edited_cnts_back(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   refresh_page(out_f, phr, NULL);
   return 0;
@@ -553,7 +553,7 @@ static int
 cmd_edited_cnts_continue(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int new_edit = -1;
 
@@ -570,7 +570,7 @@ static int
 cmd_edited_cnts_start_new(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int contest_id = 0;
   int new_edit = -1;
@@ -607,7 +607,7 @@ static int
 cmd_locked_cnts_forget(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   struct sid_state *ss;
   int contest_id = -1;
@@ -633,7 +633,7 @@ static int
 cmd_locked_cnts_continue(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   struct sid_state *ss;
   int contest_id = 0;
@@ -722,7 +722,7 @@ enum
 
 static int
 eval_check_expr(
-        struct super_http_request_info *phr,
+        struct http_request_info *phr,
         const unsigned char *str)
 {
   enum { ST_SIZE = 32 };
@@ -1516,7 +1516,7 @@ static void
 print_registration_fields(
         FILE *out_f,
         const struct contest_desc *ecnts,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int row = 1;
   int i, m;
@@ -1574,7 +1574,7 @@ static void
 write_editing_rows(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr,
+        struct http_request_info *phr,
         const struct edit_page_desc *pg,
         const struct contest_desc *ecnts,
         const struct section_global_data *global,
@@ -2186,7 +2186,7 @@ static void
 write_languages_page(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   int i;
@@ -2307,7 +2307,7 @@ static void
 write_problem_page(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr,
+        struct http_request_info *phr,
         int ind,
         const struct section_problem_data *prob)
 {
@@ -2402,7 +2402,7 @@ static void
 write_problems_page(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   int i;
@@ -2461,7 +2461,7 @@ static int
 contest_xml_page(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   struct contest_desc *ecnts = phr->ss->edited_cnts;
   unsigned char buf[1024];
@@ -2543,7 +2543,7 @@ static int
 cmd_edit_contest_page(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int contest_id = 0;
@@ -2623,7 +2623,7 @@ static int
 cmd_edit_contest_page_2(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
 
@@ -2682,7 +2682,7 @@ static int
 cmd_clear_contest_xml_field(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int f_id = 0;
@@ -2797,7 +2797,7 @@ ends_with(const unsigned char *str, const unsigned char *suffix)
 
 static int
 handle_time_t_editing(
-	struct super_http_request_info *phr,
+	struct http_request_info *phr,
         const unsigned char *valstr,
         time_t *p_time)
 {
@@ -2905,7 +2905,7 @@ static int
 cmd_edit_contest_xml_field(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int f_id = 0, f_id2 = 0;
@@ -3113,7 +3113,7 @@ static int
 cmd_toggle_contest_xml_vis(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0, f_id;
   int *p_int;
@@ -3164,7 +3164,7 @@ static int
 cmd_edit_contest_xml_file(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   struct contest_desc *ecnts = 0;
@@ -3273,7 +3273,7 @@ static int
 cmd_clear_file_contest_xml(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0, f_id, f_id2;
   int *p_int;
@@ -3307,7 +3307,7 @@ static int
 cmd_save_file_contest_xml(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int f_id = 0, f_id2 = 0;
@@ -3360,7 +3360,7 @@ static int
 cmd_contest_xml_access_edit_page(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0, i, f_id;
   struct contest_desc *ecnts = 0;
@@ -3541,7 +3541,7 @@ static int
 cmd_contest_xml_field_edit_page(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int f_id, retval = 0;
 
@@ -3560,7 +3560,7 @@ static int
 cmd_copy_access_rules_page(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int f_id, i, cnts_num;
@@ -3626,7 +3626,7 @@ static int
 cmd_copy_all_access_rules_page(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int i, cnts_num;
@@ -3678,7 +3678,7 @@ static int
 cmd_copy_all_access_rules(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 1;
   int contest_id_2, i;
@@ -3718,7 +3718,7 @@ static int
 cmd_copy_all_priv_users_page(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int i, cnts_num;
@@ -3802,7 +3802,7 @@ static int
 cmd_edit_permissions_page(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int field_id, j;
@@ -3861,7 +3861,7 @@ static int
 cmd_edit_general_fields_page(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   struct contest_desc *ecnts;
@@ -3923,7 +3923,7 @@ static int
 cmd_edit_member_fields_page(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   struct contest_desc *ecnts;
@@ -4015,7 +4015,7 @@ static int
 cmd_op_delete_priv_user(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   struct contest_desc *ecnts;
@@ -4039,7 +4039,7 @@ static int
 cmd_op_add_priv_user(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   struct contest_desc *ecnts;
@@ -4071,7 +4071,7 @@ static int
 cmd_op_copy_all_priv_users(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   struct contest_desc *ecnts;
@@ -4101,7 +4101,7 @@ static int
 cmd_op_set_predef_priv(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   struct contest_desc *ecnts;
@@ -4134,7 +4134,7 @@ static int
 cmd_op_set_priv(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int user_num = -1;
@@ -4168,7 +4168,7 @@ static int
 cmd_op_set_default_access(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   struct contest_desc *ecnts;
@@ -4199,7 +4199,7 @@ static int
 cmd_op_check_ip_mask(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   const unsigned char *value = 0;
@@ -4221,7 +4221,7 @@ static int
 cmd_op_add_ip(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   struct contest_desc *ecnts;
@@ -4263,7 +4263,7 @@ static int
 cmd_op_set_rule_access(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   struct contest_desc *ecnts;
@@ -4298,7 +4298,7 @@ static int
 cmd_op_set_rule_ssl(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   struct contest_desc *ecnts;
@@ -4333,7 +4333,7 @@ static int
 cmd_op_set_rule_ip(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   struct contest_desc *ecnts;
@@ -4372,7 +4372,7 @@ static int
 cmd_op_rule_cmd(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int f_id = -1, subf_id = -1;
@@ -4415,7 +4415,7 @@ static int
 cmd_op_copy_access_rules(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   struct contest_desc *ecnts = 0;
@@ -4459,7 +4459,7 @@ static int
 cmd_op_edit_general_fields(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int ff, opt_val;
@@ -4494,7 +4494,7 @@ static int
 cmd_op_edit_member_fields(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int opt_vals[CONTEST_LAST_MEMBER_FIELD];
@@ -4559,7 +4559,7 @@ static int
 cmd_op_create_new_contest_page(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   unsigned char buf[1024];
@@ -4637,7 +4637,7 @@ static int
 cmd_op_create_new_contest(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int contest_id = -1;
@@ -4702,7 +4702,7 @@ static int
 cmd_op_forget_contest(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   phr->json_reply = 1;
   super_serve_clear_edited_contest(phr->ss);
@@ -4820,7 +4820,7 @@ static int
 cmd_op_edit_serve_global_field(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   struct section_global_data *global = 0;
@@ -5031,7 +5031,7 @@ static int
 cmd_op_clear_serve_global_field(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   struct section_global_data *global = 0;
@@ -5148,7 +5148,7 @@ static int
 cmd_op_edit_sid_state_field(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int f_id = 0;
@@ -5196,7 +5196,7 @@ static int
 cmd_op_edit_sid_state_field_neg(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int f_id = 0;
@@ -5242,7 +5242,7 @@ static int
 cmd_op_edit_serve_global_field_detail_page(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   struct section_global_data *global;
@@ -5322,7 +5322,7 @@ static int
 cmd_op_edit_serve_global_field_detail(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int f_id, f_type;
@@ -5396,7 +5396,7 @@ static int
 cmd_op_set_sid_state_lang_field(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int lang_id = 0, cs_lang_id = 0;
@@ -5465,7 +5465,7 @@ static int
 cmd_op_clear_sid_state_lang_field(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int lang_id = 0;
@@ -5513,7 +5513,7 @@ static int
 cmd_op_set_serve_lang_field(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int lang_id = 0, f_id = 0, f_type;
@@ -5597,7 +5597,7 @@ static int
 cmd_op_clear_serve_lang_field(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int lang_id = 0, f_id = 0, f_type;
@@ -5655,7 +5655,7 @@ static int
 cmd_op_edit_serve_lang_field_detail_page(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   const struct contest_desc *ecnts;
@@ -5739,7 +5739,7 @@ static int
 cmd_op_edit_serve_lang_field_detail(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int f_id, f_type, lang_id;
@@ -5803,7 +5803,7 @@ static int
 cmd_op_serve_lang_update_versions(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
 
@@ -5823,7 +5823,7 @@ static int
 cmd_op_create_abstr_prob(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   const unsigned char *prob_name = 0;
@@ -5844,7 +5844,7 @@ static int
 cmd_op_create_concrete_prob(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   const unsigned char *s = 0, *p = 0;
@@ -5878,7 +5878,7 @@ static int
 cmd_op_delete_prob(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int prob_id = 0, i;
@@ -5917,7 +5917,7 @@ static int
 cmd_op_set_sid_state_prob_field(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int f_id = -1, prob_id = 0, value = -1;
@@ -6159,7 +6159,7 @@ static int
 cmd_op_set_serve_prob_field(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int prob_id = 0, f_id = 0, is_inh, f_type, i, was_undef, is_undef;
@@ -6318,7 +6318,7 @@ static int
 cmd_op_clear_serve_prob_field(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int prob_id = 0, f_id = 0;
@@ -6377,7 +6377,7 @@ static int
 cmd_op_edit_serve_prob_field_detail_page(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   const struct contest_desc *ecnts;
@@ -6470,7 +6470,7 @@ static int
 cmd_op_edit_serve_prob_field_detail(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int f_id, f_type, prob_id;
@@ -6635,7 +6635,7 @@ extern void super_html_7_force_link(void);
 void *super_html_7_force_link_ptr = super_html_7_force_link;
 
 static int
-parse_opcode(struct super_http_request_info *phr, int *p_opcode)
+parse_opcode(struct http_request_info *phr, int *p_opcode)
 {
   const unsigned char *s = NULL;
   if (ss_cgi_param(phr, "op", &s) <= 0 || !s || !*s) return S_ERR_INV_OPER;
@@ -6662,7 +6662,7 @@ parse_opcode(struct super_http_request_info *phr, int *p_opcode)
 
 static void *self_dl_handle = 0;
 static int
-do_http_request(FILE *log_f, FILE *out_f, struct super_http_request_info *phr)
+do_http_request(FILE *log_f, FILE *out_f, struct http_request_info *phr)
 {
   int opcode = 0;
   int retval = 0;
@@ -6726,7 +6726,7 @@ do_http_request(FILE *log_f, FILE *out_f, struct super_http_request_info *phr)
 }
 
 static void
-parse_cookie(struct super_http_request_info *phr)
+parse_cookie(struct http_request_info *phr)
 {
   const unsigned char *cookies = ss_getenv(phr, "HTTP_COOKIE");
   if (!cookies) return;
@@ -6757,7 +6757,7 @@ void
 super_html_http_request(
         char **p_out_t,
         size_t *p_out_z,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int r = 0, n;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
@@ -6765,6 +6765,7 @@ super_html_http_request(
   const unsigned char *script_name = 0;
   const unsigned char *protocol = "http";
   const unsigned char *s = 0;
+  unsigned char self_url_buf[4096];
 
   if (ss_getenv(phr, "SSL_PROTOCOL") || ss_getenv(phr, "HTTPS")) {
     phr->ssl_flag = 1;
@@ -6773,7 +6774,8 @@ super_html_http_request(
   if (!(http_host = ss_getenv(phr, "HTTP_HOST"))) http_host = "localhost";
   if (!(script_name = ss_getenv(phr, "SCRIPT_NAME")))
     script_name = "/cgi-bin/serve-control";
-  snprintf(phr->self_url, sizeof(phr->self_url), "%s://%s%s", protocol, http_host, script_name);
+  snprintf(self_url_buf, sizeof(self_url_buf), "%s://%s%s", protocol, http_host, script_name);
+  phr->self_url = self_url_buf;
   phr->script_name = script_name;
 
   parse_cookie(phr);

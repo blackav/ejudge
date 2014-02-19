@@ -3,7 +3,7 @@
 #ifndef __SUPER_HTML_H__
 #define __SUPER_HTML_H__
 
-/* Copyright (C) 2004-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -424,12 +424,12 @@ super_html_update_variant_map(FILE *flog, int contest_id,
                               unsigned char **p_header_txt,
                               unsigned char **p_footer_txt);
 
-struct super_http_request_info;
+struct http_request_info;
 void
 super_html_http_request(
         char **p_out_t,
         size_t *p_out_z,
-        struct super_http_request_info *hr);
+        struct http_request_info *hr);
 
 struct contest_access;
 unsigned char *
@@ -472,17 +472,17 @@ struct std_checker_info
 
 int
 ss_cgi_param(
-        const struct super_http_request_info *phr,
+        const struct http_request_info *phr,
         const unsigned char *param,
         const unsigned char **p_value);
 int
 ss_cgi_param_int(
-        struct super_http_request_info *phr,
+        struct http_request_info *phr,
         const unsigned char *name,
         int *p_val);
 int
 ss_cgi_param_int_opt(
-        struct super_http_request_info *phr,
+        struct http_request_info *phr,
         const unsigned char *name,
         int *p_val,
         int default_value);
@@ -490,7 +490,7 @@ ss_cgi_param_int_opt(
 void
 ss_write_html_header(
         FILE *out_f,
-        struct super_http_request_info *phr,
+        struct http_request_info *phr,
         const unsigned char *title,
         int use_dojo,
         const unsigned char *body_class);
@@ -511,17 +511,17 @@ int
 super_serve_op_browse_problem_packages(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr);
+        struct http_request_info *phr);
 int
 super_serve_op_package_operation(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr);
+        struct http_request_info *phr);
 int
 super_serve_op_edit_problem(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr);
+        struct http_request_info *phr);
 
 int
 super_html_add_problem(

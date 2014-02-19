@@ -65,7 +65,7 @@ static unsigned char *
 ss_url_unescaped(
         unsigned char *buf,
         size_t size,
-        const struct super_http_request_info *phr,
+        const struct http_request_info *phr,
         int action,
         int op,
         const char *format,
@@ -98,7 +98,7 @@ ss_url_unescaped(
 static void
 ss_redirect_2(
         FILE *fout,
-        struct super_http_request_info *phr,
+        struct http_request_info *phr,
         int new_op,
         int contest_id,
         int prob_id,
@@ -150,7 +150,7 @@ super_html_7_force_link()
 }
 
 static int
-get_full_caps(const struct super_http_request_info *phr, const struct contest_desc *cnts, opcap_t *pcap)
+get_full_caps(const struct http_request_info *phr, const struct contest_desc *cnts, opcap_t *pcap)
 {
   opcap_t caps1 = 0, caps2 = 0;
 
@@ -191,7 +191,7 @@ static int
 check_other_editors(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr,
+        struct http_request_info *phr,
         int contest_id,
         const struct contest_desc *cnts)
 {
@@ -314,7 +314,7 @@ int
 super_serve_op_TESTS_MAIN_PAGE(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int contest_id = 0;
@@ -698,7 +698,7 @@ cleanup:
 static void
 write_problem_editing_links(
         FILE *out_f,
-        struct super_http_request_info *phr,
+        struct http_request_info *phr,
         int contest_id,
         int prob_id,
         int variant,
@@ -1528,7 +1528,7 @@ int
 super_serve_op_TESTS_TESTS_VIEW_PAGE(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int contest_id = 0;
@@ -2197,7 +2197,7 @@ int
 super_serve_op_TESTS_TEST_MOVE_UP_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int contest_id = 0;
@@ -2288,7 +2288,7 @@ int
 super_serve_op_TESTS_TEST_MOVE_TO_SAVED_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int contest_id = 0;
@@ -2544,7 +2544,7 @@ int
 super_serve_op_TESTS_TEST_EDIT_PAGE(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int contest_id = 0;
@@ -2806,7 +2806,7 @@ int
 super_serve_op_TESTS_CANCEL_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int contest_id = 0;
@@ -2960,7 +2960,7 @@ struct tests_make_one_test_context
   FILE *start_f;
   char *start_t;
   size_t start_z;
-  struct super_http_request_info *phr;
+  struct http_request_info *phr;
   int contest_id;
   int prob_id;
   int variant;
@@ -3041,7 +3041,7 @@ int
 super_serve_op_TESTS_TEST_EDIT_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int contest_id = 0;
@@ -3368,7 +3368,7 @@ int
 super_serve_op_TESTS_TEST_DELETE_PAGE(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int contest_id = 0;
@@ -3500,7 +3500,7 @@ int
 super_serve_op_TESTS_TEST_DELETE_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int contest_id = 0;
@@ -3575,7 +3575,7 @@ int
 super_serve_op_TESTS_MAKEFILE_EDIT_PAGE(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int contest_id = 0;
@@ -3691,7 +3691,7 @@ int
 super_serve_op_TESTS_MAKEFILE_EDIT_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int contest_id = 0;
@@ -3779,7 +3779,7 @@ int
 super_serve_op_TESTS_MAKEFILE_DELETE_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int contest_id = 0;
@@ -3849,7 +3849,7 @@ int
 super_serve_op_TESTS_MAKEFILE_GENERATE_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int contest_id = 0;
@@ -3978,7 +3978,7 @@ int
 super_serve_op_TESTS_STATEMENT_EDIT_PAGE(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int contest_id = 0;
@@ -4281,7 +4281,7 @@ int
 super_serve_op_TESTS_STATEMENT_EDIT_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int contest_id = 0;
@@ -4517,7 +4517,7 @@ int
 super_serve_op_TESTS_STATEMENT_EDIT_2_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int contest_id = 0;
@@ -4613,7 +4613,7 @@ int
 super_serve_op_TESTS_STATEMENT_DELETE_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int contest_id = 0;
@@ -4673,7 +4673,7 @@ int
 super_serve_op_TESTS_SOURCE_HEADER_EDIT_PAGE(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int contest_id = 0;
@@ -4834,7 +4834,7 @@ int
 super_serve_op_TESTS_SOURCE_HEADER_EDIT_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int contest_id = 0;
@@ -4957,7 +4957,7 @@ int
 super_serve_op_TESTS_SOURCE_HEADER_DELETE_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int contest_id = 0;
@@ -5028,7 +5028,7 @@ int
 super_serve_op_TESTS_CHECKER_CREATE_PAGE(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int contest_id = 0;
@@ -5361,7 +5361,7 @@ int
 super_serve_op_TESTS_CHECKER_CREATE_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int contest_id = 0;
@@ -5505,7 +5505,7 @@ int
 super_serve_op_TESTS_CHECKER_EDIT_PAGE(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int contest_id = 0;
@@ -5720,7 +5720,7 @@ int
 super_serve_op_TESTS_CHECKER_EDIT_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int contest_id = 0;
@@ -5897,7 +5897,7 @@ int
 super_serve_op_TESTS_CHECKER_DELETE_PAGE(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int contest_id = 0;
@@ -6073,7 +6073,7 @@ int
 super_serve_op_TESTS_CHECKER_DELETE_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int contest_id = 0;
@@ -6224,7 +6224,7 @@ struct tests_make_context
   FILE *start_f;
   char *start_t;
   size_t start_z;
-  struct super_http_request_info *phr;
+  struct http_request_info *phr;
 };
 
 static void
@@ -6234,7 +6234,7 @@ int
 super_serve_op_TESTS_MAKE(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int contest_id = 0;
@@ -6387,7 +6387,7 @@ super_serve_op_TESTS_MAKE_continuation(struct background_process *prc)
 
   struct tests_make_context *cntx = (typeof(cntx)) prc->user;
   int status_ok = -1;
-  struct super_http_request_info *phr = cntx->phr;
+  struct http_request_info *phr = cntx->phr;
   cntx->phr = NULL;
 
   if (prc->out.buf) {
@@ -6428,7 +6428,7 @@ int
 super_serve_op_TESTS_TEST_CHECK_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int contest_id = 0;
@@ -6584,7 +6584,7 @@ super_serve_op_TESTS_TEST_CHECK_ACTION_continuation(struct background_process *p
 
   struct tests_make_one_test_context *cntx = (typeof(cntx)) prc->user;
   int status_ok = -1;
-  struct super_http_request_info *phr = cntx->phr;
+  struct http_request_info *phr = cntx->phr;
   cntx->phr = NULL;
 
   if (prc->out.buf) {

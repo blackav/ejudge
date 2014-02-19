@@ -21,6 +21,7 @@
 
 #include "opcaps.h"
 #include "bitset.h"
+#include "http_request.h"
 
 #include <time.h>
 
@@ -244,66 +245,6 @@ struct sid_state
 
 struct sid_state;
 struct userlist_conn;
-struct super_http_request_info
-{
-  // program invocation arguments
-  int arg_num;
-  const unsigned char **args;
-  // environment variables
-  int env_num;
-  const unsigned char **envs;
-  // HTTP request parameters
-  int param_num;
-  const unsigned char **param_names;
-  const size_t *param_sizes;
-  const unsigned char **params;
-
-  const struct ejudge_cfg *config;
-  struct sid_state *ss;
-  struct userlist_clnt *userlist_clnt;
-
-  int opcode;
-
-  // the URL
-  ej_ip_t ip;
-  int ssl_flag;
-  unsigned char self_url[4096];
-  const unsigned char *script_name;
-  const unsigned char *system_login;
-
-  unsigned long long session_id;
-  ej_cookie_t client_key;
-
-  // authentification info
-  int user_id;
-  int priv_level;
-  opcap_t caps;
-  unsigned char *login;
-  unsigned char *name;
-  unsigned char *html_login;
-  unsigned char *html_name;
-
-  int contest_id;
-
-  // should we use json for reply?
-  int json_reply;
-  // should we suspend reply because of background process?
-  int suspend_reply;
-  // pointer to suspend data (client_state actually)
-  void *suspend_context;
-  void (*continuation)(struct super_http_request_info *);
-
-  // output streams
-  FILE *out_f;
-  char *out_t;
-  size_t out_z;
-
-  FILE *log_f;
-  char *log_t;
-  size_t log_z;
-
-  unsigned char data[0];
-};
 
 void super_serve_clear_edited_contest(struct sid_state *sstate);
 void super_serve_move_edited_contest(struct sid_state *dst,
