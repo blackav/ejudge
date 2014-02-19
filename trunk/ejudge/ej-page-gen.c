@@ -3221,7 +3221,7 @@ handle_config_open(
         value = CONF_STYLE_PREFIX;
     }
     if (value) {
-        fprintf(prg_f, "fwrite(\"%s\", 1, %d, out_f);\n", value, strlen(value));
+        fprintf(prg_f, "fwrite(\"%s\", 1, %zu, out_f);\n", value, strlen(value));
     }
 
     return 0;

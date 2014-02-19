@@ -121,12 +121,12 @@ csp_get_priv_main_page(void)
 %><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html><head>
 <meta http-equiv="Content-type" content='text/html; charset=<s:config name="charset" />' />
-<link rel="stylesheet" href='<s:config name="style-prefix" />priv.css' type="text/css">
+<link rel="stylesheet" href='<s:config name="style-prefix" />priv.css' type="text/css" />
 <script type="text/javascript" charset="UTF-8" src="<s:config name="style-prefix"/>priv.js"></script>
-<title>%H</title></head>
+<title><s:v escape="false" value="ns_unparse_role(phr->role)" /> [<s:v escape="false" value="phr->name_arm" />, <s:v value="phr->contest_id" />, <s:v escape="false" value="extra->contest_arm" />]: <s:tr>Main page</s:tr></title>
+</head>
 <body>
-<h1>%H</h1>
-
+<h1><s:v escape="false" value="ns_unparse_role(phr->role)" /> [<s:v escape="false" value="phr->name_arm" />, <s:v value="phr->contest_id" />, <s:v escape="false" value="extra->contest_arm" />]: <s:tr>Main page</s:tr></h1>
 <script language="javascript">
     var self_url='<s:v escape="false" value="phr->self_url" />';
     var SID='<s:v value="phr->session_id" />';
@@ -589,7 +589,7 @@ csp_get_priv_main_page(void)
   if (cs->global->enable_l10n) {
 %>
 
-<hr /><a name="chglanguage" /><<s:v escape="false" value="cnts->team_head_style" />><s:tr>Change language</s:tr></<s:v escape="false" value="cnts->team_head_style" />>
+<hr /><a name="chglanguage"></a><<s:v escape="false" value="cnts->team_head_style" />><s:tr>Change language</s:tr></<s:v escape="false" value="cnts->team_head_style" />>
 
 <s:form>
 <table><tr><td><s:tr>Change language</s:tr></td><td>
