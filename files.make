@@ -527,6 +527,7 @@ HFILES=\
  full_archive.h\
  html.h\
  html_parse.h\
+ http_request.h\
  interrupt.h\
  iterators.h\
  job_packet.h\
