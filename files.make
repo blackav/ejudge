@@ -165,6 +165,7 @@ COMMON_CFILES=\
  html_hyperref.c\
  html_parse.c\
  html_start_form.c\
+ http_request.c\
  l10n.c\
  lang_config.c\
  lang_config_vis.c\
