@@ -18,8 +18,9 @@ static const unsigned char csp_str14[26] = "</td></tr>\n</table>\n\n<h2>";
 static const unsigned char csp_str15[81] = "</h2>\n\n<table>\n<tr><td><input type=\"text\" size=\"32\" name=\"add_login\"/></td><td>\n";
 static const unsigned char csp_str16[11] = "\n</td><td>";
 static const unsigned char csp_str17[79] = "</td></tr>\n<tr><td><input type=\"text\" size=\"32\" name=\"add_user_id\"/></td><td>\n";
-static const unsigned char csp_str18[22] = "</td></tr>\n</table>\n\n";
-static const unsigned char csp_str19[2] = "\n";
+static const unsigned char csp_str18[28] = "</td></tr>\n</table>\n\n<hr/>\n";
+static const unsigned char csp_str19[18] = "\n</body>\n</html>\n";
+static const unsigned char csp_str20[2] = "\n";
 
 
 #line 2 "priv_view_priv_users_page.csp"
@@ -31,6 +32,7 @@ static const unsigned char csp_str19[2] = "\n";
 #include "l10n.h"
 #include "external_action.h"
 #include "new_server_pi.h"
+#include "copyright.h"
 
 #include <stdio.h>
 
@@ -43,7 +45,7 @@ html_role_select(FILE *fout, int role, int allow_admin,
 int csp_view_priv_view_priv_users_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 {
 
-#line 23 "priv_view_priv_users_page.csp"
+#line 24 "priv_view_priv_users_page.csp"
 PrivViewPrivUsersPage *pvp = (PrivViewPrivUsersPage*) ps;
   PrivUserInfoArray *users = &pvp->users;
   const struct contest_desc *cnts = phr->cnts;
@@ -72,7 +74,7 @@ fputs("\">", out_f);
 fputs(phr->hidden_vars, out_f);
 fwrite(csp_str1, 1, 173, out_f);
 
-#line 49 "priv_view_priv_users_page.csp"
+#line 50 "priv_view_priv_users_page.csp"
 for (i = 0; i < users->u; i++) {
 fwrite(csp_str2, 1, 4, out_f);
 fputs((form_row_attrs[row ^= 1]), out_f);
@@ -86,27 +88,27 @@ fwrite(csp_str4, 1, 25, out_f);
 fputs(html_armor_buf(&ab, (users->v[i]->name)), out_f);
 fwrite(csp_str5, 1, 6, out_f);
 
-#line 57 "priv_view_priv_users_page.csp"
+#line 58 "priv_view_priv_users_page.csp"
 if ((role_mask = users->v[i]->role_mask)) {
 fwrite(csp_str6, 1, 17, out_f);
 
-#line 61 "priv_view_priv_users_page.csp"
+#line 62 "priv_view_priv_users_page.csp"
 for (cnt = 0, r = USER_ROLE_OBSERVER; r <= USER_ROLE_ADMIN; r++)
         if ((role_mask & (1 << r)))
           fprintf(out_f, "%s%s", cnt++?",":"", ns_unparse_role(r));
 fwrite(csp_str7, 1, 7, out_f);
 
-#line 67 "priv_view_priv_users_page.csp"
+#line 68 "priv_view_priv_users_page.csp"
 } else {
 fwrite(csp_str8, 1, 28, out_f);
 
-#line 71 "priv_view_priv_users_page.csp"
+#line 72 "priv_view_priv_users_page.csp"
 }
 fwrite(csp_str9, 1, 50, out_f);
 fprintf(out_f, "%d", (int)(users->v[i]->user_id));
 fwrite(csp_str10, 1, 15, out_f);
 
-#line 76 "priv_view_priv_users_page.csp"
+#line 77 "priv_view_priv_users_page.csp"
 }
 fwrite(csp_str11, 1, 55, out_f);
 fputs(ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_MAIN_PAGE, 0), out_f);
@@ -154,7 +156,7 @@ fwrite(csp_str14, 1, 25, out_f);
 fputs(_("Add new user"), out_f);
 fwrite(csp_str15, 1, 80, out_f);
 
-#line 99 "priv_view_priv_users_page.csp"
+#line 100 "priv_view_priv_users_page.csp"
 html_role_select(out_f, USER_ROLE_OBSERVER, 0, "add_role_1");
 fwrite(csp_str16, 1, 10, out_f);
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_PRIV_USERS_ADD_BY_LOGIN, NULL), out_f);
@@ -162,18 +164,19 @@ fwrite(csp_str12, 1, 9, out_f);
 fputs(_("Add a new user specifying his/her login"), out_f);
 fwrite(csp_str17, 1, 78, out_f);
 
-#line 102 "priv_view_priv_users_page.csp"
+#line 103 "priv_view_priv_users_page.csp"
 html_role_select(out_f, USER_ROLE_OBSERVER, 0, "add_role_2");
 fwrite(csp_str16, 1, 10, out_f);
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_PRIV_USERS_ADD_BY_USER_ID, NULL), out_f);
 fwrite(csp_str12, 1, 9, out_f);
 fputs(_("Add a new user specifying his/her User Id"), out_f);
-fwrite(csp_str18, 1, 21, out_f);
+fwrite(csp_str18, 1, 27, out_f);
+write_copyright_short(out_f);
+fwrite(csp_str19, 1, 17, out_f);
 
-#line 107 "priv_view_priv_users_page.csp"
-ns_footer(out_f, extra->footer_txt, extra->copyright_txt, phr->locale_id);
-  l10n_setlocale(0);
+#line 112 "priv_view_priv_users_page.csp"
+l10n_setlocale(0);
   html_armor_free(&ab);
-fwrite(csp_str19, 1, 1, out_f);
+fwrite(csp_str20, 1, 1, out_f);
   return 0;
 }
