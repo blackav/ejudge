@@ -111,13 +111,6 @@ csp_get_priv_main_page(void)
   for (i = 1; i <= cs->max_prob; i++)
     if (cs->probs[i] && cs->probs[i]->manual_checking)
       need_examiners = 1;
-
-/*
-  ns_header(out_f, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
-            phr->client_key,
-            "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role),
-            phr->name_arm, phr->contest_id, extra->contest_arm, _("Main page"));
-*/
 %><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html><head>
 <meta http-equiv="Content-type" content='text/html; charset=<s:config name="charset" />' />
