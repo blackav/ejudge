@@ -3196,6 +3196,38 @@ handle_copyright_open(
 }
 
 static int
+handle_config_open(
+        FILE *log_f,
+        TypeContext *cntx,
+        ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f)
+{
+    HtmlElement *elem = ps->el_stack->el;
+    if (!elem->no_body) {
+        parser_error_2(ps, "<s:config> element must not have a body");
+        return -1;
+    }
+
+    HtmlAttribute *at = html_element_find_attribute(elem, "name");
+    if (!at) {
+        parser_error_2(ps, "<s:config> element requires 'name' attribute");
+        return -1;
+    }
+    const unsigned char *value = NULL;
+    if (!strcmp(at->value, "charset")) {
+        value = EJUDGE_CHARSET;
+    } else if (!strcmp(at->value, "style-prefix")) {
+        value = CONF_STYLE_PREFIX;
+    }
+    if (value) {
+        fprintf(prg_f, "fwrite(\"%s\", 1, %d, out_f);\n", value, strlen(value));
+    }
+
+    return 0;
+}
+
+static int
 handle_html_element_open(
         FILE *log_f,
         TypeContext *cntx,
@@ -3219,6 +3251,8 @@ handle_html_element_open(
         handle_param_open(log_f, cntx, ps, txt_f, prg_f);
     } else if (!strcmp(ps->el_stack->el->name, "s:copyright")) {
         handle_copyright_open(log_f, cntx, ps, txt_f, prg_f);
+    } else if (!strcmp(ps->el_stack->el->name, "s:config")) {
+        handle_config_open(log_f, cntx, ps, txt_f, prg_f);
     } else {
         parser_error_2(ps, "unhandled element");
     }
