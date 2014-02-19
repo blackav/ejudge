@@ -31,6 +31,8 @@ static const unsigned char csp_str27[26] = "</td>\n</tr></table>\n\n<h2>";
 static const unsigned char csp_str28[79] = "</h2>\n<table>\n<tr><td><input type=\"text\" size=\"32\" name=\"add_login\"/></td><td>";
 static const unsigned char csp_str29[78] = "</td></tr>\n<tr><td><input type=\"text\" size=\"32\" name=\"add_user_id\"/></td><td>";
 static const unsigned char csp_str30[21] = "</td></tr>\n</table>\n";
+static const unsigned char csp_str31[9] = "\n\n<hr/>\n";
+static const unsigned char csp_str32[18] = "\n</body>\n</html>\n";
 
 
 #line 2 "priv_view_users_page.csp"
@@ -48,6 +50,7 @@ static const unsigned char csp_str30[21] = "</td></tr>\n</table>\n";
 #include "prepare.h"
 #include "xml_utils.h"
 #include "external_action.h"
+#include "copyright.h"
 
 #include "reuse/xalloc.h"
 
@@ -78,7 +81,7 @@ csp_get_priv_view_users_page(void)
 int csp_view_priv_view_users_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 {
 
-#line 47 "priv_view_users_page.csp"
+#line 48 "priv_view_users_page.csp"
 const struct contest_desc *cnts = phr->cnts;
   struct contest_extra *extra = phr->extra;
   int r;
@@ -144,15 +147,15 @@ fputs("\">", out_f);
 fputs(phr->hidden_vars, out_f);
 fwrite(csp_str1, 1, 296, out_f);
 
-#line 110 "priv_view_users_page.csp"
+#line 111 "priv_view_users_page.csp"
 if (global->memoize_user_results > 0) {
 fwrite(csp_str2, 1, 27, out_f);
 
-#line 112 "priv_view_users_page.csp"
+#line 113 "priv_view_users_page.csp"
 }
 fwrite(csp_str3, 1, 33, out_f);
 
-#line 114 "priv_view_users_page.csp"
+#line 115 "priv_view_users_page.csp"
 for (uid = 1; uid < users->user_map_size; uid++) {
     if (!(u = users->user_map[uid])) continue;
     if (!(uc = userlist_get_user_contest(u, new_contest_id))) continue;
@@ -162,7 +165,7 @@ fwrite(csp_str5, 1, 17, out_f);
 fprintf(out_f, "%d", (int)(serial++));
 fwrite(csp_str6, 1, 6, out_f);
 
-#line 121 "priv_view_users_page.csp"
+#line 122 "priv_view_users_page.csp"
 snprintf(b1, sizeof(b1), "uid == %d", uid);
 fwrite(csp_str7, 1, 1, out_f);
 fwrite(csp_str8, 1, 5, out_f);
@@ -179,7 +182,7 @@ fprintf(out_f, "%d", (int)(uid));
 fputs("</a>", out_f);
 fwrite(csp_str10, 1, 7, out_f);
 
-#line 128 "priv_view_users_page.csp"
+#line 129 "priv_view_users_page.csp"
 if (details_allowed) {
 fwrite(csp_str9, 1, 16, out_f);
 fputs("<a href=\"", out_f);
@@ -193,38 +196,38 @@ fputs(html_armor_buf(&ab, (u->login)), out_f);
 fputs("</a>", out_f);
 fwrite(csp_str6, 1, 6, out_f);
 
-#line 130 "priv_view_users_page.csp"
+#line 131 "priv_view_users_page.csp"
 } else {
 fwrite(csp_str9, 1, 16, out_f);
 fputs(html_armor_buf(&ab, (u->login)), out_f);
 fwrite(csp_str6, 1, 6, out_f);
 
-#line 132 "priv_view_users_page.csp"
+#line 133 "priv_view_users_page.csp"
 }
 fwrite(csp_str7, 1, 1, out_f);
 
-#line 133 "priv_view_users_page.csp"
+#line 134 "priv_view_users_page.csp"
 if (u->cnts0 && u->cnts0->name && *u->cnts0->name) {
 fwrite(csp_str9, 1, 16, out_f);
 fputs(html_armor_buf(&ab, (u->cnts0->name)), out_f);
 fwrite(csp_str6, 1, 6, out_f);
 
-#line 135 "priv_view_users_page.csp"
+#line 136 "priv_view_users_page.csp"
 } else {
 fwrite(csp_str11, 1, 28, out_f);
 
-#line 137 "priv_view_users_page.csp"
+#line 138 "priv_view_users_page.csp"
 }
 fwrite(csp_str9, 1, 16, out_f);
 fputs((userlist_unparse_reg_status(uc->status)), out_f);
 fwrite(csp_str6, 1, 6, out_f);
 
-#line 139 "priv_view_users_page.csp"
+#line 140 "priv_view_users_page.csp"
 if ((uc->flags & USERLIST_UC_ALL)) {
       r = 0;
 fwrite(csp_str9, 1, 16, out_f);
 
-#line 142 "priv_view_users_page.csp"
+#line 143 "priv_view_users_page.csp"
 if ((uc->flags & USERLIST_UC_BANNED))
         fprintf(out_f, "%s%s", r++?",":"", "banned");
       if ((uc->flags & USERLIST_UC_INVISIBLE))
@@ -237,43 +240,43 @@ if ((uc->flags & USERLIST_UC_BANNED))
         fprintf(out_f, "%s%s", r++?",":"", "disqualified");
 fwrite(csp_str6, 1, 6, out_f);
 
-#line 153 "priv_view_users_page.csp"
+#line 154 "priv_view_users_page.csp"
 } else {
 fwrite(csp_str11, 1, 28, out_f);
 
-#line 155 "priv_view_users_page.csp"
+#line 156 "priv_view_users_page.csp"
 }
 fwrite(csp_str7, 1, 1, out_f);
 
-#line 156 "priv_view_users_page.csp"
+#line 157 "priv_view_users_page.csp"
 if (uc->create_time > 0) {
 fwrite(csp_str9, 1, 16, out_f);
 fputs(xml_unparse_date((uc->create_time)), out_f);
 fwrite(csp_str6, 1, 6, out_f);
 
-#line 158 "priv_view_users_page.csp"
+#line 159 "priv_view_users_page.csp"
 } else {
 fwrite(csp_str11, 1, 28, out_f);
 
-#line 160 "priv_view_users_page.csp"
+#line 161 "priv_view_users_page.csp"
 }
 fwrite(csp_str7, 1, 1, out_f);
 
-#line 161 "priv_view_users_page.csp"
+#line 162 "priv_view_users_page.csp"
 if (u->cnts0 && u->cnts0->last_login_time > 0) {
 fwrite(csp_str9, 1, 16, out_f);
 fputs(xml_unparse_date((u->cnts0->last_login_time)), out_f);
 fwrite(csp_str6, 1, 6, out_f);
 
-#line 163 "priv_view_users_page.csp"
+#line 164 "priv_view_users_page.csp"
 } else {
 fwrite(csp_str11, 1, 28, out_f);
 
-#line 165 "priv_view_users_page.csp"
+#line 166 "priv_view_users_page.csp"
 }
 fwrite(csp_str7, 1, 1, out_f);
 
-#line 166 "priv_view_users_page.csp"
+#line 167 "priv_view_users_page.csp"
 if (run_counts[uid] > 0) {
 fwrite(csp_str9, 1, 16, out_f);
 fprintf(out_f, "%d", (int)(run_counts[uid]));
@@ -281,27 +284,27 @@ fwrite(csp_str12, 1, 20, out_f);
 fprintf(out_f, "%zu", (size_t)(run_sizes[uid]));
 fwrite(csp_str6, 1, 6, out_f);
 
-#line 168 "priv_view_users_page.csp"
+#line 169 "priv_view_users_page.csp"
 } else {
 fwrite(csp_str13, 1, 54, out_f);
 
-#line 170 "priv_view_users_page.csp"
+#line 171 "priv_view_users_page.csp"
 }
 fwrite(csp_str7, 1, 1, out_f);
 
-#line 171 "priv_view_users_page.csp"
+#line 172 "priv_view_users_page.csp"
 if (global->memoize_user_results > 0) {
 fwrite(csp_str9, 1, 16, out_f);
 fprintf(out_f, "%d", (int)(serve_get_user_result_score(extra->serve_state, uid)));
 fwrite(csp_str6, 1, 6, out_f);
 
-#line 173 "priv_view_users_page.csp"
+#line 174 "priv_view_users_page.csp"
 }
 fwrite(csp_str14, 1, 50, out_f);
 fprintf(out_f, "%d", (int)(uid));
 fwrite(csp_str15, 1, 15, out_f);
 
-#line 176 "priv_view_users_page.csp"
+#line 177 "priv_view_users_page.csp"
 }
 fwrite(csp_str16, 1, 49, out_f);
 fputs(_("First User_Id"), out_f);
@@ -367,7 +370,7 @@ fwrite(csp_str19, 1, 9, out_f);
 fputs(_("Clear the DISQUALIFIED flag for the selected users"), out_f);
 fwrite(csp_str21, 1, 11, out_f);
 
-#line 203 "priv_view_users_page.csp"
+#line 204 "priv_view_users_page.csp"
 if (global->is_virtual) {
 fwrite(csp_str22, 1, 9, out_f);
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_FORCE_START_VIRTUAL, NULL), out_f);
@@ -375,11 +378,11 @@ fwrite(csp_str19, 1, 9, out_f);
 fputs(_("Force virtual contest start for the selected users"), out_f);
 fwrite(csp_str21, 1, 11, out_f);
 
-#line 205 "priv_view_users_page.csp"
+#line 206 "priv_view_users_page.csp"
 }
 fwrite(csp_str23, 1, 2, out_f);
 
-#line 207 "priv_view_users_page.csp"
+#line 208 "priv_view_users_page.csp"
 if (global->user_exam_protocol_header_txt) {
 fwrite(csp_str22, 1, 9, out_f);
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_PRINT_SELECTED_USER_PROTOCOL, NULL), out_f);
@@ -387,11 +390,11 @@ fwrite(csp_str19, 1, 9, out_f);
 fputs(_("Print the user examination protocols for the selected users"), out_f);
 fwrite(csp_str21, 1, 11, out_f);
 
-#line 209 "priv_view_users_page.csp"
+#line 210 "priv_view_users_page.csp"
 }
 fwrite(csp_str7, 1, 1, out_f);
 
-#line 210 "priv_view_users_page.csp"
+#line 211 "priv_view_users_page.csp"
 if (global->full_exam_protocol_header_txt) {
 fwrite(csp_str22, 1, 9, out_f);
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_PRINT_SELECTED_USER_FULL_PROTOCOL, NULL), out_f);
@@ -399,11 +402,11 @@ fwrite(csp_str19, 1, 9, out_f);
 fputs(_("Print the user full examination protocols for the selected users"), out_f);
 fwrite(csp_str21, 1, 11, out_f);
 
-#line 212 "priv_view_users_page.csp"
+#line 213 "priv_view_users_page.csp"
 }
 fwrite(csp_str7, 1, 1, out_f);
 
-#line 213 "priv_view_users_page.csp"
+#line 214 "priv_view_users_page.csp"
 if (global->full_exam_protocol_header_txt) {
 fwrite(csp_str22, 1, 9, out_f);
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_PRINT_SELECTED_UFC_PROTOCOL, NULL), out_f);
@@ -411,7 +414,7 @@ fwrite(csp_str19, 1, 9, out_f);
 fputs(_("Print the user full cyphered examination protocols for the selected users"), out_f);
 fwrite(csp_str21, 1, 11, out_f);
 
-#line 215 "priv_view_users_page.csp"
+#line 216 "priv_view_users_page.csp"
 }
 fwrite(csp_str24, 1, 15, out_f);
 fputs(_("Disqualify selected users"), out_f);
@@ -431,11 +434,12 @@ fwrite(csp_str19, 1, 9, out_f);
 fputs(_("Add a new user specifying his/her User Id"), out_f);
 fwrite(csp_str30, 1, 20, out_f);
 fputs("</form>", out_f);
-fwrite(csp_str7, 1, 1, out_f);
+fwrite(csp_str31, 1, 8, out_f);
+write_copyright_short(out_f);
+fwrite(csp_str32, 1, 17, out_f);
 
-#line 234 "priv_view_users_page.csp"
-ns_footer(out_f, extra->footer_txt, extra->copyright_txt, phr->locale_id);
-  l10n_setlocale(0);
+#line 240 "priv_view_users_page.csp"
+l10n_setlocale(0);
 
   if (users) userlist_free(&users->b);
   html_armor_free(&ab);
