@@ -99,11 +99,16 @@ static const unsigned char * const form_row_attrs[]=
   if (opcaps_check(phr->caps, OPCAP_GET_USER) >= 0) details_allowed = 1;
 
   l10n_setlocale(phr->locale_id);
-  ns_header(out_f, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
-            phr->client_key,
-            "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role), phr->name_arm,
-            phr->contest_id, extra->contest_arm, _("Users page"));
-%>
+%><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html><head>
+<meta http-equiv="Content-type" content='text/html; charset=<s:config name="charset" />' />
+<link rel="stylesheet" href='<s:config name="style-prefix" />priv.css' type="text/css" />
+<script type="text/javascript" charset="UTF-8" src="<s:config name="style-prefix"/>priv.js"></script>
+<title><s:v escape="false" value="ns_unparse_role(phr->role)" /> [<s:v escape="false" value="phr->name_arm" />, <s:v value="phr->contest_id" />, <s:v escape="false" value="extra->contest_arm" />]: <s:tr>Users page</s:tr></title>
+</head>
+<body>
+<h1><s:v escape="false" value="ns_unparse_role(phr->role)" /> [<s:v escape="false" value="phr->name_arm" />, <s:v value="phr->contest_id" />, <s:v escape="false" value="extra->contest_arm" />]: <s:tr>Users page</s:tr></h1>
+
 <h2>Registered users</h2>
 
 <s:form>
