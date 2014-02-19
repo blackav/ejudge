@@ -401,6 +401,29 @@ cmd_http_request(struct server_framework_state *state,
     goto cleanup;
   }
 
+  //
+  if (hr.content_type[0]) {
+    // generate header
+    char *hdr_t = NULL;
+    size_t hdr_z = NULL;
+    FILE *hdr_f = open_memstream(&hdr_t, &hdr_z);
+
+    fprintf(hdr_f, "Content-Type: %s\n", content_type);
+    fprintf(hdr_f, "Cache-Control: no-cache\n");
+    fprintf(hdr_f, "Pragma: no-cache\n");
+    if (hr.client_key) {
+      fprintf(hdr_f, "Set-Cookie: EJSID=%016llx; Path=/\n", hr.client_key);
+    }
+    putc('\n', hdr_f);
+    if (out_size > 0) {
+      fwrite(out_txt, 1, out_size, hdr_f);
+    }
+    fclose(hdr_f); hdr_f = NULL;
+    free(out_txt);
+    out_txt = hdr_t;
+    out_size = hdr_z;
+  }
+
   if (!out_txt || !*out_txt) {
     xfree(out_txt); out_txt = 0;
     if (hr.allow_empty_output) {
