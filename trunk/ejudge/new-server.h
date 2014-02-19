@@ -23,6 +23,7 @@
 #include "iterators.h"
 #include "watched_file.h"
 #include "serve_state.h"
+#include "http_request.h"
 
 #include <stdio.h>
 #include <time.h>
@@ -50,67 +51,6 @@ struct server_framework_state;
 struct client_state;
 struct contest_desc;
 struct contest_extra;
-
-struct http_request_info
-{
-  int id;
-  struct server_framework_state *fw_state;
-  struct client_state *client_state;
-
-  // program invocation arguments
-  int arg_num;
-  const unsigned char **args;
-  // environment variables
-  int env_num;
-  const unsigned char **envs;
-  // HTTP request parameters
-  int param_num;
-  const unsigned char **param_names;
-  const size_t *param_sizes;
-  const unsigned char **params;
-
-  const unsigned char *self_url;
-  const unsigned char *context_url;
-  const unsigned char *script_name;
-  int ssl_flag;
-  ej_ip_t ip;
-  ej_cookie_t session_id;
-  ej_cookie_t client_key;
-  int contest_id;
-  int locale_id;
-  int role;
-  int action;
-  int user_id;
-  int plain_text;
-  int json_reply;
-  int reg_status;
-  int reg_flags;
-  int rest_mode;
-  unsigned char *login;
-  unsigned char *name;
-  unsigned char *name_arm;
-  const unsigned char *hidden_vars;
-  struct session_info *session_extra;
-  opcap_t caps;
-  opcap_t dbcaps;
-  unsigned char *script_part;
-  unsigned char *body_attr;
-  int online_users;
-
-  // for the next state
-  unsigned char next_extra[128];
-  int protocol_reply;
-  int allow_empty_output;
-  int no_reply;
-
-  // content type
-
-  struct timeval timestamp1;
-  struct timeval timestamp2;
-
-  const struct contest_desc *cnts;
-  struct contest_extra *extra;
-};
 
 void
 ns_handle_http_request(struct server_framework_state *state,

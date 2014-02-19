@@ -8444,6 +8444,8 @@ privileged_entry_point(
     }
 
     if (pg->ops->render) {
+      // default value
+      snprintf(phr->content_type, sizeof(phr->content_type), "text/html; charset=%s", EJUDGE_CHARSET);
       int r = pg->ops->render(pg, log_f, fout, phr);
       if (r < 0) {
         // FIXME: handle error

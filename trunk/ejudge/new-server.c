@@ -402,13 +402,13 @@ cmd_http_request(struct server_framework_state *state,
   }
 
   //
-  if (hr.content_type[0]) {
+  if (hr.content_type && hr.content_type[0]) {
     // generate header
     char *hdr_t = NULL;
     size_t hdr_z = NULL;
     FILE *hdr_f = open_memstream(&hdr_t, &hdr_z);
 
-    fprintf(hdr_f, "Content-Type: %s\n", content_type);
+    fprintf(hdr_f, "Content-Type: %s\n", hr.content_type);
     fprintf(hdr_f, "Cache-Control: no-cache\n");
     fprintf(hdr_f, "Pragma: no-cache\n");
     if (hr.client_key) {
