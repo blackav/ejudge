@@ -116,7 +116,7 @@ int
 super_serve_op_browse_problem_packages(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   const unsigned char *package = 0;
@@ -274,7 +274,7 @@ int
 super_serve_op_package_operation(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   const unsigned char *package = 0;
@@ -321,7 +321,7 @@ int
 super_serve_op_edit_problem(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   phr->json_reply = 1;
   return 1;

@@ -2912,7 +2912,7 @@ cmd_control_server(struct client_state *p, int len,
 }
 
 static void
-cmd_http_request_continuation(struct super_http_request_info *phr);
+cmd_http_request_continuation(struct http_request_info *phr);
 
 static void
 cmd_http_request(
@@ -2926,7 +2926,7 @@ cmd_http_request(
     MAX_PARAM_SIZE = 128 * 1024 * 1024,
   };
 
-  struct super_http_request_info *phr = NULL;
+  struct http_request_info *phr = NULL;
   char *out_t = 0;
   size_t out_z = 0;
   int i, r;
@@ -3129,7 +3129,7 @@ cmd_http_request(
 }
 
 static void
-cmd_http_request_continuation(struct super_http_request_info *phr)
+cmd_http_request_continuation(struct http_request_info *phr)
 {
   struct client_state *p = (typeof(p)) phr->suspend_context;
   info("continuation: %d, %d, %d\n", p->fd, p->client_fds[0], p->client_fds[1]);

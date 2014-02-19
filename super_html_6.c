@@ -73,7 +73,7 @@ unsigned char *
 ss_url_unescaped(
         unsigned char *buf,
         size_t size,
-        const struct super_http_request_info *phr,
+        const struct http_request_info *phr,
         int action,
         int op,
         const char *format,
@@ -106,7 +106,7 @@ ss_url_unescaped(
 void
 ss_redirect(
         FILE *fout,
-        struct super_http_request_info *phr,
+        struct http_request_info *phr,
         int new_op,
         const unsigned char *extra)
 {
@@ -128,7 +128,7 @@ ss_redirect(
 void
 ss_redirect_2(
         FILE *fout,
-        struct super_http_request_info *phr,
+        struct http_request_info *phr,
         int new_op,
         int contest_id,
         int group_id,
@@ -173,14 +173,14 @@ ss_redirect_2(
 static void
 ss_redirect_3(
         FILE *fout,
-        struct super_http_request_info *phr,
+        struct http_request_info *phr,
         int action,
         const char *format, ...)
   __attribute__((format(printf, 4, 5)));
 static void
 ss_redirect_3(
         FILE *fout,
-        struct super_http_request_info *phr,
+        struct http_request_info *phr,
         int action,
         const char *format, ...)
 {
@@ -291,18 +291,18 @@ ss_select(
 }
 
 static int
-get_global_caps(const struct super_http_request_info *phr, opcap_t *pcap)
+get_global_caps(const struct http_request_info *phr, opcap_t *pcap)
 {
   return ejudge_cfg_opcaps_find(phr->config, phr->login, pcap);
 }
 static int
-get_contest_caps(const struct super_http_request_info *phr, const struct contest_desc *cnts, opcap_t *pcap)
+get_contest_caps(const struct http_request_info *phr, const struct contest_desc *cnts, opcap_t *pcap)
 {
   return opcaps_find(&cnts->capabilities, phr->login, pcap);
 }
 
 static int
-is_globally_privileged(const struct super_http_request_info *phr, const struct userlist_user *u)
+is_globally_privileged(const struct http_request_info *phr, const struct userlist_user *u)
 {
   opcap_t caps = 0;
   if (u->is_privileged) return 1;
@@ -321,7 +321,7 @@ is_contest_privileged(
 }
 static int
 is_privileged(
-        const struct super_http_request_info *phr,
+        const struct http_request_info *phr,
         const struct contest_desc *cnts,
         const struct userlist_user *u)
 {
@@ -335,7 +335,7 @@ is_privileged(
 
 static int
 ss_parse_params(
-        struct super_http_request_info *phr,
+        struct http_request_info *phr,
         const struct meta_methods *mth,
         void *params)
 {
@@ -422,7 +422,7 @@ userlist_user_count_cookies(struct userlist_user *u)
 
 static struct userlist_user *
 get_user_info(
-        struct super_http_request_info *phr,
+        struct http_request_info *phr,
         int user_id,
         int contest_id)
 {
@@ -442,7 +442,7 @@ static void
 print_top_navigation_links(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr,
+        struct http_request_info *phr,
         int contest_id,
         int group_id,
         int other_user_id,
@@ -529,7 +529,7 @@ int
 super_serve_op_USER_BROWSE_PAGE(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0, r;
   unsigned char buf[1024];
@@ -1128,7 +1128,7 @@ cleanup:
 
 static unsigned char *
 collect_marked_set(
-        struct super_http_request_info *phr,
+        struct http_request_info *phr,
         bitset_t *pms)
 {
   const unsigned char *s = 0;
@@ -1169,7 +1169,7 @@ int
 super_serve_op_USER_FILTER_CHANGE_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   long long total_count = 0;
@@ -1286,7 +1286,7 @@ int
 super_serve_op_USER_JUMP_CONTEST_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int contest_id = 0, group_id = 0, jump_contest_id = 0;
@@ -1314,7 +1314,7 @@ int
 super_serve_op_USER_JUMP_GROUP_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0, r;
   int contest_id = 0, group_id = 0, jump_group_id = 0, real_jump_group_id = 0;
@@ -1367,7 +1367,7 @@ int
 super_serve_op_USER_BROWSE_MARK_ALL_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0, r;
   int contest_id = 0, group_id = 0;
@@ -1463,7 +1463,7 @@ int
 super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int contest_id = 0, group_id = 0;
@@ -2094,7 +2094,7 @@ int
 super_serve_op_USER_SEL_RANDOM_PASSWD_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0, r;
   int contest_id = 0, group_id = 0;
@@ -2460,7 +2460,7 @@ int
 super_serve_op_USER_SEL_CANCEL_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int contest_id = 0, group_id = 0;
   bitset_t marked = BITSET_INITIALIZER;
@@ -2670,7 +2670,7 @@ int
 super_serve_op_USER_DETAIL_PAGE(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0, r, row, role, pers, reg_count, cookie_count;
   int other_user_id = 0, contest_id = 0, group_id = 0;
@@ -3302,7 +3302,7 @@ static void
 print_user_info(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr,
+        struct http_request_info *phr,
         const struct contest_desc *cnts,
         const struct userlist_user *u,
         const struct userlist_user_info *ui,
@@ -3466,7 +3466,7 @@ int
 super_serve_op_USER_PASSWORD_PAGE(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   unsigned char buf[1024];
@@ -3608,7 +3608,7 @@ int
 super_serve_op_USER_CNTS_PASSWORD_PAGE(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   unsigned char buf[1024];
@@ -3774,7 +3774,7 @@ int
 super_serve_op_USER_CREATE_REG_PAGE(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int other_user_id = 0, contest_id = 0, group_id = 0;
@@ -3904,7 +3904,7 @@ int
 super_serve_op_USER_EDIT_REG_PAGE(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0, r;
   int other_user_id = 0, other_contest_id = 0, contest_id = 0, group_id = 0, next_op = 0;
@@ -4080,7 +4080,7 @@ int
 super_serve_op_USER_DELETE_REG_PAGE(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0, r;
   int other_user_id = 0, other_contest_id = 0, contest_id = 0, group_id = 0, next_op = 0;
@@ -4252,7 +4252,7 @@ int
 super_serve_op_USER_CREATE_ONE_PAGE(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0, row, i;
   int contest_id = 0, group_id = 0, other_contest_id_2 = 0;
@@ -4609,7 +4609,7 @@ int
 super_serve_op_USER_CREATE_MANY_PAGE(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0, row, i;
   int contest_id = 0, group_id = 0, other_contest_id_2 = 0;
@@ -4993,7 +4993,7 @@ int
 super_serve_op_USER_CREATE_FROM_CSV_PAGE(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0, row, i;
   int contest_id = 0, group_id = 0, other_contest_id_2 = 0;
@@ -5336,7 +5336,7 @@ int
 super_serve_op_USER_CHANGE_PASSWORD_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0, r;
   int contest_id = 0, group_id = 0, other_user_id = 0, next_op = 0, usesha1 = 0;
@@ -5413,7 +5413,7 @@ int
 super_serve_op_USER_CHANGE_CNTS_PASSWORD_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0, r;
   int contest_id = 0, group_id = 0, other_user_id = 0;
@@ -5513,7 +5513,7 @@ int
 super_serve_op_USER_CREATE_ONE_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0, r;
   opcap_t caps = 0;
@@ -5626,7 +5626,7 @@ int
 super_serve_op_USER_CREATE_MANY_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0, r, i;
   opcap_t caps = 0;
@@ -5828,7 +5828,7 @@ int
 super_serve_op_USER_CREATE_FROM_CSV_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0, r;
   opcap_t caps = 0;
@@ -6116,7 +6116,7 @@ int
 super_serve_op_USER_SAVE_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int contest_id = 0, group_id = 0, other_user_id = 0;
@@ -6541,7 +6541,7 @@ int
 super_serve_op_USER_CANCEL_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int contest_id = 0, group_id = 0, other_user_id = 0;
@@ -6579,7 +6579,7 @@ int
 super_serve_op_USER_CREATE_MEMBER_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int contest_id = 0, group_id = 0, other_user_id = 0, role = 0;
@@ -6659,7 +6659,7 @@ int
 super_serve_op_USER_DELETE_MEMBER_PAGE(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int other_user_id = 0, contest_id = 0, group_id = 0, serial = 0;
@@ -6760,7 +6760,7 @@ int
 super_serve_op_USER_DELETE_MEMBER_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int contest_id = 0, group_id = 0, other_user_id = 0, serial = 0;
@@ -6821,7 +6821,7 @@ int
 super_serve_op_USER_CREATE_REG_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   struct userlist_user *u = 0;
@@ -6892,7 +6892,7 @@ int
 super_serve_op_USER_EDIT_REG_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   struct userlist_user *u = 0;
@@ -6965,7 +6965,7 @@ int
 super_serve_op_USER_DELETE_REG_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   struct userlist_user *u = 0;
@@ -7108,7 +7108,7 @@ int
 super_serve_op_USER_CLEAR_FIELD_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int contest_id = 0, group_id = 0, other_user_id = 0, field_id = 0, member_id = 0;
@@ -7176,7 +7176,7 @@ int
 super_serve_op_USER_SEL_VIEW_PASSWD_PAGE(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0, r = 0;
   int contest_id = 0, group_id = 0;
@@ -7393,7 +7393,7 @@ int
 super_serve_op_USER_SEL_VIEW_PASSWD_REDIRECT(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int contest_id = 0, group_id = 0, next_op = 0;
   bitset_t marked = BITSET_INITIALIZER;
@@ -7423,7 +7423,7 @@ int
 super_serve_op_USER_IMPORT_CSV_PAGE(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int contest_id = 0, group_id = 0;
@@ -7490,7 +7490,7 @@ int
 super_serve_op_USER_IMPORT_CSV_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   int contest_id = 0, group_id = 0;
@@ -7791,7 +7791,7 @@ int
 super_serve_op_GROUP_BROWSE_PAGE(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0, r;
   const struct userlist_group *g;
@@ -7968,7 +7968,7 @@ int
 super_serve_GROUP_FILTER_CHANGE_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int r, value, retval = 0;
   opcap_t gcaps = 0;
@@ -8039,7 +8039,7 @@ int
 super_serve_op_GROUP_CREATE_PAGE(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   unsigned char buf[1024];
@@ -8084,7 +8084,7 @@ int
 super_serve_op_GROUP_MODIFY_PAGE(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0, r;
   unsigned char *xml_text = 0;
@@ -8162,7 +8162,7 @@ int
 super_serve_op_GROUP_DELETE_PAGE(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0, r;
   unsigned char *xml_text = 0;
@@ -8240,7 +8240,7 @@ int
 super_serve_op_GROUP_DELETE_PAGE_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int group_id = 0;
 
@@ -8254,7 +8254,7 @@ int
 super_serve_op_GROUP_MODIFY_PAGE_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int group_id = 0;
 
@@ -8268,7 +8268,7 @@ int
 super_serve_op_GROUP_CREATE_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0, r, group_id = 0;
   opcap_t caps = 0;
@@ -8315,7 +8315,7 @@ int
 super_serve_op_GROUP_MODIFY_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0, r;
   int group_id = 0;
@@ -8386,7 +8386,7 @@ int
 super_serve_op_GROUP_DELETE_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0, r;
   int group_id = 0;
@@ -8528,7 +8528,7 @@ static int
 migration_page(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   struct ejudge_cfg *file_config = NULL;
@@ -8820,7 +8820,7 @@ int
 super_serve_op_USER_MAP_MAIN_PAGE(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   opcap_t caps = 0;
@@ -8903,7 +8903,7 @@ int
 super_serve_op_EJUDGE_XML_UPDATE_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   opcap_t caps = 0;
@@ -8922,7 +8922,7 @@ int
 super_serve_op_EJUDGE_XML_CANCEL_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   fprintf(out_f, "Location: %s?SID=%016llx\n", phr->self_url, phr->session_id);
   if (phr->client_key) {
@@ -8936,7 +8936,7 @@ int
 super_serve_op_EJUDGE_XML_MUST_RESTART(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   unsigned char buf[1024];
@@ -9060,7 +9060,7 @@ int
 super_serve_op_USER_MAP_DELETE_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   opcap_t caps = 0;
@@ -9101,7 +9101,7 @@ int
 super_serve_op_USER_MAP_ADD_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   opcap_t caps = 0;
@@ -9179,7 +9179,7 @@ int
 super_serve_op_CAPS_MAIN_PAGE(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   opcap_t caps = 0;
@@ -9267,7 +9267,7 @@ int
 super_serve_op_CAPS_DELETE_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   opcap_t caps = 0;
@@ -9317,7 +9317,7 @@ int
 super_serve_op_CAPS_ADD_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   opcap_t caps = 0;
@@ -9425,7 +9425,7 @@ int
 super_serve_op_CAPS_EDIT_PAGE(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   opcap_t caps = 0;
@@ -9522,7 +9522,7 @@ int
 super_serve_op_CAPS_EDIT_CANCEL_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   ss_redirect(out_f, phr, SSERV_OP_CAPS_MAIN_PAGE, NULL);
   return 0;
@@ -9532,7 +9532,7 @@ int
 super_serve_op_CAPS_EDIT_SAVE_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   opcap_t caps = 0;
@@ -9669,7 +9669,7 @@ int
 super_serve_op_IMPORT_FROM_POLYGON_PAGE(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   opcap_t caps = 0, lcaps = 0;
@@ -9805,7 +9805,7 @@ int
 super_serve_op_IMPORT_FROM_POLYGON_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   opcap_t caps = 0, lcaps = 0;
@@ -10194,7 +10194,7 @@ int
 super_serve_op_DOWNLOAD_PROGRESS_PAGE(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   struct sid_state *ss = phr->ss;
@@ -10399,7 +10399,7 @@ int
 super_serve_op_DOWNLOAD_CLEANUP_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   struct sid_state *ss = phr->ss;
@@ -10447,7 +10447,7 @@ int
 super_serve_op_DOWNLOAD_KILL_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   struct sid_state *ss = phr->ss;
@@ -10477,7 +10477,7 @@ cleanup:
 static int
 do_import_problem(
         FILE *log_f,
-        struct super_http_request_info *phr,
+        struct http_request_info *phr,
         const unsigned char *internal_name)
 {
   int retval = 0;
@@ -10652,7 +10652,7 @@ int
 super_serve_op_DOWNLOAD_CLEANUP_AND_IMPORT_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   struct sid_state *ss = phr->ss;
@@ -10730,7 +10730,7 @@ int
 super_serve_op_UPDATE_FROM_POLYGON_PAGE(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   opcap_t caps = 0, lcaps = 0;
@@ -10820,7 +10820,7 @@ int
 super_serve_op_UPDATE_FROM_POLYGON_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   opcap_t caps = 0, lcaps = 0;
@@ -11036,7 +11036,7 @@ int
 super_serve_op_IMPORT_PROBLEMS_BATCH_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   opcap_t caps = 0LL;
@@ -11086,7 +11086,7 @@ int
 super_serve_op_CREATE_CONTEST_BATCH_ACTION(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   opcap_t caps = 0LL;
@@ -11206,7 +11206,7 @@ int
 super_serve_op_IMPORT_CONTEST_FROM_POLYGON_PAGE(
         FILE *log_f,
         FILE *out_f,
-        struct super_http_request_info *phr)
+        struct http_request_info *phr)
 {
   int retval = 0;
   opcap_t caps = 0, lcaps = 0;
