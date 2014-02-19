@@ -13,6 +13,7 @@
 #include "prepare.h"
 #include "xml_utils.h"
 #include "external_action.h"
+#include "copyright.h"
 
 #include "reuse/xalloc.h"
 
@@ -230,8 +231,12 @@ static const unsigned char * const form_row_attrs[]=
 <tr><td><input type="text" size="32" name="add_user_id"/></td><td><s:submit ac="users-add-by-user-id" /></td><td><s:tr>Add a new user specifying his/her User Id</s:tr></td></tr>
 </table>
 </s:form>
+
+<hr/>
+<s:copyright />
+</body>
+</html>
 <%
-  ns_footer(out_f, extra->footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_setlocale(0);
 
   if (users) userlist_free(&users->b);
