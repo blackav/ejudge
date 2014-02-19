@@ -7,6 +7,7 @@
 #include "l10n.h"
 #include "external_action.h"
 #include "new_server_pi.h"
+#include "copyright.h"
 
 #include <stdio.h>
 
@@ -103,8 +104,11 @@ static const unsigned char * const form_row_attrs[]=
 </td><td><s:submit ac="priv-users-add-by-user-id" /></td><td><s:tr>Add a new user specifying his/her User Id</s:tr></td></tr>
 </table>
 
+<hr/>
+<s:copyright />
+</body>
+</html>
 <%
-  ns_footer(out_f, extra->footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_setlocale(0);
   html_armor_free(&ab);
 %>
