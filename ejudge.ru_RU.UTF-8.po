@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-02-18 15:34+0400\n"
-"PO-Revision-Date: 2013-12-27 13:57+0400\n"
+"POT-Creation-Date: 2014-02-21 17:56+0400\n"
+"PO-Revision-Date: 2014-02-21 18:57+0400\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -618,7 +618,7 @@ msgid "Back"
 msgstr "Назад"
 
 msgid "Background jobs"
-msgstr ""
+msgstr "Фоновые задания"
 
 msgid "Bad socket name"
 msgstr "Неверный путь к сокету"
@@ -901,9 +901,8 @@ msgstr "Турнир не начался"
 msgid "Contest is unloaded"
 msgstr "Обслуживание турнира прервано"
 
-#, fuzzy
 msgid "Contest load time"
-msgstr "Продолжительность турнира"
+msgstr "Время загрузки турнира"
 
 msgid "Contest name"
 msgstr "Название турнира"
@@ -1974,6 +1973,9 @@ msgstr ""
 "Имя учётной записи (login) может содержать только латинские буквы, цифры, "
 "знаки <tt>.</tt> (точка), <tt>-</tt> (минус), <tt>_</tt> (подчёркивание)."
 
+msgid "Login page"
+msgstr "Вход в систему"
+
 msgid "Login successfull. Now entering the main page."
 msgstr "Вход успешный. Теперь переходим к главной странице."
 
@@ -3042,9 +3044,8 @@ msgstr "Ошибка сервера"
 msgid "Server is down"
 msgstr "Сервер не работает"
 
-#, fuzzy
 msgid "Server start time"
-msgstr "Время на сервере"
+msgstr "Время запуска сервера"
 
 msgid "Server status"
 msgstr "Состояние сервера"
