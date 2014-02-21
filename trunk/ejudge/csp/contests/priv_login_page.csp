@@ -1,13 +1,45 @@
 <%
 /* $Id$ */
+#include "external_action.h"
+#include "misctext.h"
+#include "copyright.h"
+#include "mischtml.h"
+#include "new-server.h"
+#include "l10n.h"
+
+#include <libintl.h>
+#define _(x) gettext(x)
+
+void
+html_role_select(FILE *fout, int role, int allow_admin,
+                 const unsigned char *var_name);
+
+%><%@set getter_name = "csp_get_priv_login_page"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@page csp_view_priv_login_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 %><%
+  //const struct contest_desc *cnts = phr->cnts;
+  struct contest_extra *extra = phr->extra;
   const unsigned char *s;
   int r, n;
-  unsigned char bbuf[1024];
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  const unsigned char *login = NULL;
+  const unsigned char *password = NULL;
+  int contest_id = phr->contest_id;
+  unsigned char hbuf[1024];
 %><%
+  ns_cgi_param(phr, "login", &login);
+  ns_cgi_param(phr, "password", &password);
+
+  if (!phr->role) {
+    phr->role = USER_ROLE_OBSERVER;
+    if (ns_cgi_param(phr, "role", &s) > 0) {
+      if (sscanf(s, "%d%n", &r, &n) == 1 && !s[n]
+          && r >= USER_ROLE_CONTESTANT && r < USER_ROLE_LAST)
+        phr->role = r;
+    }
+  }
+
   l10n_setlocale(phr->locale_id);
   phr->client_key = 0;
 %><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
@@ -21,40 +53,12 @@
 <h1><s:v escape="false" value="ns_unparse_role(phr->role)" /> [<s:v escape="false" value="phr->name_arm" />, <s:v value="phr->contest_id" />, <s:v escape="false" value="extra->contest_arm" />]: <s:tr>Login page</s:tr></h1>
 <s:form>
 <table>
-<%
-  fprintf(fout, "<table>\n");
-  fprintf(fout, "<tr><td>%s:</td><td><input type=\"text\" size=\"32\" name=\"login\"", _("Login"));
-  if (ns_cgi_param(phr, "login", &s) > 0) {
-    fprintf(fout, " value=\"%s\"", ARMOR(s));
-  }
-  fprintf(fout, "/></td></tr>\n");
-  fprintf(fout, "<tr><td>%s:</td><td><input type=\"password\" size=\"32\" name=\"password\"", _("Password"));
-  if (ns_cgi_param(phr, "password", &s) > 0) {
-    fprintf(fout, " value=\"%s\"", ARMOR(s));
-  }
-  fprintf(fout, "/></td></tr>\n");
-  fprintf(fout, "<tr><td>%s:</td><td><input type=\"text\" size=\"32\" name=\"contest_id\"", _("Contest"));
-  if (phr->contest_id > 0) {
-    fprintf(fout, " value=\"%d\"", phr->contest_id);
-  }
-  fprintf(fout, "/></td></tr>\n");
-  if (!phr->role) {
-    phr->role = USER_ROLE_OBSERVER;
-    if (ns_cgi_param(phr, "role", &s) > 0) {
-      if (sscanf(s, "%d%n", &r, &n) == 1 && !s[n]
-          && r >= USER_ROLE_CONTESTANT && r < USER_ROLE_LAST)
-        phr->role = r;
-    }
-  }
-  fprintf(fout, "<tr><td>%s:</td><td>", _("Role"));
-  html_role_select(fout, phr->role, 1, 0);
-  fprintf(fout, "</td></tr>\n");
-  fprintf(fout, "<tr><td>%s:</td><td>", _("Language"));
-  l10n_html_locale_select(fout, phr->locale_id);
-  fprintf(fout, "</td></tr>\n");
-  fprintf(fout, "<tr><td>&nbsp;</td><td>%s</td></tr>\n",
-          ns_submit_button(bbuf, sizeof(bbuf), "submit", 0, _("Submit")));
-%>
+<tr><td><s:tr>Login</s:tr>:</td><td><s:textfield size="32" name="login" /></td></tr>
+<tr><td><s:tr>Password</s:tr>:</td><td><s:password size="32" name="password" /></td></tr>
+<tr><td><s:tr>Contest</s:tr>:</td><td><s:textfield size="32" name="contest_id" checkExpr="&gt; 0" /></td></tr>
+<tr><td><s:tr>Role</s:tr>:</td><td><%  html_role_select(out_f, phr->role, 1, 0); %></td></tr>
+<tr><td><s:tr>Language</s:tr>:</td><td><% l10n_html_locale_select(out_f, phr->locale_id); %></td></tr>
+<tr><td>&nbsp;</td><td><s:submit ac="main-page" label="Submit" /></td></tr>
 </table>
 </s:form>
 <hr/>

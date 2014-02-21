@@ -22,26 +22,7 @@
 #include <libintl.h>
 #define _(x) gettext(x)
 
-int csp_view_priv_view_users_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr);
-
-static PageInterfaceOps priv_view_users_page_ops =
-{
-    NULL, // destroy
-    NULL, // execute
-    csp_view_priv_view_users_page, // render
-};
-
-static PageInterface priv_view_users_page_iface =
-{
-    &priv_view_users_page_ops,
-};
-
-PageInterface *
-csp_get_priv_view_users_page(void)
-{
-    return &priv_view_users_page_iface;
-}
-
+%><%@set getter_name = "csp_get_priv_view_users_page"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@page csp_view_priv_view_users_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 %><%

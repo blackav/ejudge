@@ -33,8 +33,8 @@ LD=gcc
 EXPAT_LIB=-lexpat
 
 TARGETDIR = ${libexecdir}/ejudge/csp/contests
-SOFILES = priv_main_page.so priv_view_users_page.so priv_view_priv_users_page.so
-CFILES = $(SOFILES:.so=.c) priv_view_priv_users_page_impl.c
+SOFILES = priv_main_page.so priv_view_users_page.so priv_view_priv_users_page.so priv_login_page.so
+CFILES = $(SOFILES:.so=.c) I_priv_view_priv_users_page.c
 
 all : $(CFILES) $(SOFILES)
 
@@ -45,7 +45,7 @@ install : all
 clean : 
 	-rm -f *.o *.so
 
-priv_view_priv_users_page.so : priv_view_priv_users_page.c priv_view_priv_users_page_impl.c
+priv_view_priv_users_page.so : priv_view_priv_users_page.c I_priv_view_priv_users_page.c
 	$(CC) $(CCOMPFLAGS) ${WPTRSIGN} $(LDFLAGS) $^ -o $@
 
 po : contests.po

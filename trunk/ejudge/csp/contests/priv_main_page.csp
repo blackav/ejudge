@@ -18,26 +18,7 @@
 #include <libintl.h>
 #define _(x) gettext(x)
 
-int csp_view_priv_main_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr);
-
-static PageInterfaceOps priv_main_page_ops =
-{
-    NULL, // destroy
-    NULL, // execute
-    csp_view_priv_main_page, // render
-};
-
-static PageInterface priv_main_page_iface =
-{
-    &priv_main_page_ops,
-};
-
-PageInterface *
-csp_get_priv_main_page(void)
-{
-    return &priv_main_page_iface;
-}
-
+%><%@set getter_name = "csp_get_priv_main_page"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@page csp_view_priv_main_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 %><%
@@ -449,7 +430,7 @@ csp_get_priv_main_page(void)
         if (!(prob = cs->probs[x])) continue; %>
 <option value='<s:v value="x" />'><s:v escape="false" value="prob->short_name" /> - <s:v value="prob->long_name" /></option>
 <%      }%>
-</select></td><td><s:submit ac="priv-submit-page" value='_("Select problem")' /></td></tr></table></s:form>
+</select></td><td><s:submit ac="priv-submit-page" label="Select problem" /></td></tr></table></s:form>
 <%
       prob = 0;
     } else {
@@ -538,7 +519,7 @@ csp_get_priv_main_page(void)
 <%          }
         }
       } %>
-</select></td><td><s:submit ac="main-page" value='_("Select problem")' /></td></tr></table></form>
+</select></td><td><s:submit ac="main-page" label="Select problem" /></td></tr></table></form>
 <%
       prob = 0;
     }
