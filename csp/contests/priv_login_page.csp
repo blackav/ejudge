@@ -1,0 +1,67 @@
+<%
+/* $Id$ */
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@page csp_view_priv_login_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%
+  const unsigned char *s;
+  int r, n;
+  unsigned char bbuf[1024];
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+%><%
+  l10n_setlocale(phr->locale_id);
+  phr->client_key = 0;
+%><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html><head>
+<meta http-equiv="Content-type" content='text/html; charset=<s:config name="charset" />' />
+<link rel="stylesheet" href='<s:config name="style-prefix" />priv.css' type="text/css" />
+<script type="text/javascript" charset="UTF-8" src="<s:config name="style-prefix"/>priv.js"></script>
+<title><s:v escape="false" value="ns_unparse_role(phr->role)" /> [<s:v escape="false" value="phr->name_arm" />, <s:v value="phr->contest_id" />, <s:v escape="false" value="extra->contest_arm" />]: <s:tr>Login page</s:tr></title>
+</head>
+<body>
+<h1><s:v escape="false" value="ns_unparse_role(phr->role)" /> [<s:v escape="false" value="phr->name_arm" />, <s:v value="phr->contest_id" />, <s:v escape="false" value="extra->contest_arm" />]: <s:tr>Login page</s:tr></h1>
+<s:form>
+<table>
+<%
+  fprintf(fout, "<table>\n");
+  fprintf(fout, "<tr><td>%s:</td><td><input type=\"text\" size=\"32\" name=\"login\"", _("Login"));
+  if (ns_cgi_param(phr, "login", &s) > 0) {
+    fprintf(fout, " value=\"%s\"", ARMOR(s));
+  }
+  fprintf(fout, "/></td></tr>\n");
+  fprintf(fout, "<tr><td>%s:</td><td><input type=\"password\" size=\"32\" name=\"password\"", _("Password"));
+  if (ns_cgi_param(phr, "password", &s) > 0) {
+    fprintf(fout, " value=\"%s\"", ARMOR(s));
+  }
+  fprintf(fout, "/></td></tr>\n");
+  fprintf(fout, "<tr><td>%s:</td><td><input type=\"text\" size=\"32\" name=\"contest_id\"", _("Contest"));
+  if (phr->contest_id > 0) {
+    fprintf(fout, " value=\"%d\"", phr->contest_id);
+  }
+  fprintf(fout, "/></td></tr>\n");
+  if (!phr->role) {
+    phr->role = USER_ROLE_OBSERVER;
+    if (ns_cgi_param(phr, "role", &s) > 0) {
+      if (sscanf(s, "%d%n", &r, &n) == 1 && !s[n]
+          && r >= USER_ROLE_CONTESTANT && r < USER_ROLE_LAST)
+        phr->role = r;
+    }
+  }
+  fprintf(fout, "<tr><td>%s:</td><td>", _("Role"));
+  html_role_select(fout, phr->role, 1, 0);
+  fprintf(fout, "</td></tr>\n");
+  fprintf(fout, "<tr><td>%s:</td><td>", _("Language"));
+  l10n_html_locale_select(fout, phr->locale_id);
+  fprintf(fout, "</td></tr>\n");
+  fprintf(fout, "<tr><td>&nbsp;</td><td>%s</td></tr>\n",
+          ns_submit_button(bbuf, sizeof(bbuf), "submit", 0, _("Submit")));
+%>
+</table>
+</s:form>
+<hr/>
+<s:copyright />
+</body>
+</html>
+<%
+  l10n_setlocale(0);
+  html_armor_free(&ab);
+%>

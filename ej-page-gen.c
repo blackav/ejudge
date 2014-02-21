@@ -3228,6 +3228,66 @@ handle_config_open(
 }
 
 static int
+handle_textfield_open(
+        FILE *log_f,
+        TypeContext *cntx,
+        ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f)
+{
+    HtmlElement *elem = ps->el_stack->el;
+    if (!elem->no_body) {
+        parser_error_2(ps, "<s:textfield> element must not have a body");
+        return -1;
+    }
+
+    // supported attributes: name, value, size, escape (for string values), check, checkExpr
+    HtmlAttribute *name_attr = html_element_find_attribute(elem, "name");
+    if (!name_attr) {
+        parser_error_2(ps, "<s:textfield> element requires 'name' attribute");
+        return -1;
+    }
+    int skip_value = 0;
+    HtmlAttribute *value_attr = html_element_find_attribute(elem, "value");
+    if (value_attr && (!value_attr->value || !value_attr->value[0])) {
+        skip_value = 1;
+    }
+    TypeInfo *value_type = NULL;
+    if (!value_attr) {
+        parse_c_expression(ps, cntx, log_f, name_attr->value, &value_type, ps->pos); // return value is ignored!
+        if (!value_type) {
+            skip_value = 1;
+        }
+    } else {
+        parse_c_expression(ps, cntx, log_f, value_attr->value, &value_type, ps->pos); // return value is ignored!
+    }
+
+
+    fprintf(prg_f, "fputs(\"<input type=\\\"text\\\" name=\\\"%s\\\"", name_attr->value);
+    HtmlAttribute *size_attr = html_element_find_attribute(elem, "size");
+    if (size_attr) {
+        fprintf(prg_f, " size=\\\"%s\\\"", size_attr->value);
+    }
+    if (skip_value) {
+        fprintf(prg_f, " />\", out_f);\n");
+        return 0;
+    }
+
+    ///////!!!!
+
+    /*
+    if (at) {
+        int v;
+        if (xml_parse_bool(NULL, NULL, 0, 0, at->value, &v) >= 0) need_escape = v;
+    }
+     */
+
+    //processor_state_invoke_type_handler(log_f, cntx, ps, txt_f, prg_f, at->value, elem, t);
+
+
+}
+
+static int
 handle_html_element_open(
         FILE *log_f,
         TypeContext *cntx,
@@ -3253,6 +3313,8 @@ handle_html_element_open(
         handle_copyright_open(log_f, cntx, ps, txt_f, prg_f);
     } else if (!strcmp(ps->el_stack->el->name, "s:config")) {
         handle_config_open(log_f, cntx, ps, txt_f, prg_f);
+    } else if (!strcmp(ps->el_stack->el->name, "s:textfield")) {
+        handle_textfield_open(log_f, cntx, ps, txt_f, prg_f);
     } else {
         parser_error_2(ps, "unhandled element");
     }
