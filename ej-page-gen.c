@@ -2689,6 +2689,15 @@ cleanup:
 }
 
 static int
+html_attribute_get_bool(const HtmlAttribute *attr, int default_value)
+{
+    int v;
+    if (!attr) return default_value;
+    if (xml_parse_bool(NULL, NULL, 0, 0, attr->value, &v) >= 0) return v;
+    return default_value;
+}
+
+static int
 handle_directive_page(ScannerState *ss, TypeContext *cntx, FILE *out_f)
 {
     int retval = -1;
@@ -2728,6 +2737,33 @@ handle_directive_page(ScannerState *ss, TypeContext *cntx, FILE *out_f)
     if (ss->token != TOK_EOF) {
         parser_error(ss, "garbage after directive");
         goto cleanup;
+    }
+
+    TypeInfo *getter_name = processor_state_find_setting(ss->ps, tc_get_ident(cntx, "getter_name"));
+    if (getter_name) {
+        if (getter_name->kind != NODE_STRING) {
+            parser_error_2(ss->ps, "'getter_name' global parameter must be of type 'STRING'");
+            return -1;
+        }
+
+        fprintf(out_f, "int %s%s;\n", page_name, ss->buf + start_param_pos);
+        fprintf(out_f, 
+                "static PageInterfaceOps page_ops =\n"
+                "{\n"
+                "    NULL, // destroy\n"
+                "    NULL, // execute\n"
+                "    %s, // render\n"
+                "};\n"
+                "static PageInterface page_iface =\n"
+                "{\n"
+                "    &page_ops,\n"
+                "};\n"
+                "PageInterface *\n"
+                "%s(void)\n"
+                "{\n"
+                "    return &page_iface;\n"
+                "}\n\n",
+                page_name, getter_name->s.str);
     }
 
     fprintf(out_f, "int %s%s\n{\n", page_name, ss->buf + start_param_pos);
@@ -3056,6 +3092,7 @@ handle_submit_open(
 {
     HtmlElement *elem = ps->el_stack->el;
     unsigned char buf[1024];
+    unsigned char label_buf[1024];
     const unsigned char *value = NULL;
 
     if (!elem->no_body) {
@@ -3067,7 +3104,13 @@ handle_submit_open(
     if (at) {
         value = at->value;
     } else {
-        value = "NULL";
+        at = html_element_find_attribute(elem, "label");
+        if (at) {
+            snprintf(label_buf, sizeof(label_buf), "_(\"%s\")", at->value);
+            value = label_buf;
+        } else {
+            value = "NULL";
+        }
     }
 
     int r = process_ac_attr(log_f, cntx, ps, elem, buf, sizeof(buf));
@@ -3249,21 +3292,29 @@ handle_textfield_open(
     }
     int skip_value = 0;
     HtmlAttribute *value_attr = html_element_find_attribute(elem, "value");
-    if (value_attr && (!value_attr->value || !value_attr->value[0])) {
-        skip_value = 1;
-    }
     TypeInfo *value_type = NULL;
+    const unsigned char *expr = NULL;
     if (!value_attr) {
+        expr = name_attr->value;
         parse_c_expression(ps, cntx, log_f, name_attr->value, &value_type, ps->pos); // return value is ignored!
         if (!value_type) {
             skip_value = 1;
         }
     } else {
-        parse_c_expression(ps, cntx, log_f, value_attr->value, &value_type, ps->pos); // return value is ignored!
+        expr = value_attr->value;
+        if (!value_attr->value || !value_attr->value[0]) {
+            skip_value = 1;
+        } else {
+            parse_c_expression(ps, cntx, log_f, value_attr->value, &value_type, ps->pos); // return value is ignored!
+        }
     }
 
+    const unsigned char *input_type = "text";
+    if (!strcmp(elem->name, "s:password")) {
+        input_type = "password";
+    }
 
-    fprintf(prg_f, "fputs(\"<input type=\\\"text\\\" name=\\\"%s\\\"", name_attr->value);
+    fprintf(prg_f, "fputs(\"<input type=\\\"%s\\\" name=\\\"%s\\\"", input_type, name_attr->value);
     HtmlAttribute *size_attr = html_element_find_attribute(elem, "size");
     if (size_attr) {
         fprintf(prg_f, " size=\\\"%s\\\"", size_attr->value);
@@ -3272,19 +3323,25 @@ handle_textfield_open(
         fprintf(prg_f, " />\", out_f);\n");
         return 0;
     }
+    fprintf(prg_f, "\", out_f);\n");
 
-    ///////!!!!
-
-    /*
-    if (at) {
-        int v;
-        if (xml_parse_bool(NULL, NULL, 0, 0, at->value, &v) >= 0) need_escape = v;
+    int need_check = html_attribute_get_bool(html_element_find_attribute(elem, "check"), 1);
+    if (need_check) {
+        HtmlAttribute *check_expr_attr = html_element_find_attribute(elem, "checkexpr");
+        fprintf(prg_f, "if ((%s)", expr);
+        if (check_expr_attr) {
+            fprintf(prg_f, " %s", check_expr_attr->value);
+        }
+        fprintf(prg_f, ") {\n");
     }
-     */
-
-    //processor_state_invoke_type_handler(log_f, cntx, ps, txt_f, prg_f, at->value, elem, t);
-
-
+    fprintf(prg_f, "fputs(\" value=\\\"\", out_f);\n");
+    processor_state_invoke_type_handler(log_f, cntx, ps, txt_f, prg_f, expr, elem, value_type);
+    fprintf(prg_f, "fputs(\"\\\"\", out_f);\n");
+    if (need_check) {
+        fprintf(prg_f, "}\n");
+    }
+    fprintf(prg_f, "fputs(\" />\", out_f);\n");
+    return 0;
 }
 
 static int
@@ -3314,6 +3371,8 @@ handle_html_element_open(
     } else if (!strcmp(ps->el_stack->el->name, "s:config")) {
         handle_config_open(log_f, cntx, ps, txt_f, prg_f);
     } else if (!strcmp(ps->el_stack->el->name, "s:textfield")) {
+        handle_textfield_open(log_f, cntx, ps, txt_f, prg_f);
+    } else if (!strcmp(ps->el_stack->el->name, "s:password")) {
         handle_textfield_open(log_f, cntx, ps, txt_f, prg_f);
     } else {
         parser_error_2(ps, "unhandled element");
