@@ -1,0 +1,107 @@
+<%
+/* $Id$ */
+#include "new-server.h"
+#include "external_action.h"
+#include "copyright.h"
+#include "l10n.h"
+#include "new_server_proto.h"
+
+#include "reuse/xalloc.h"
+
+#define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
+#define BUTTON(a) ns_submit_button(bb, sizeof(bb), 0, a, 0)
+
+#include <libintl.h>
+#define _(x) gettext(x)
+
+int
+ns_parse_run_mask(
+        struct http_request_info *phr,
+        const unsigned char **p_size_str,
+        const unsigned char **p_mask_str,
+        size_t *p_size,
+        unsigned long **p_mask);
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@page csp_view_priv_download_runs_confirmation_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%
+  //const serve_state_t cs = extra->serve_state;
+  struct contest_extra *extra = phr->extra;
+  int retval = 0;
+  unsigned long *mask = 0, mval;
+  size_t mask_size = 0;
+  const unsigned char *mask_size_str = 0;
+  const unsigned char *mask_str = 0;
+  size_t mask_count = 0;
+  int i, j;
+  unsigned char hbuf[1024];
+  const unsigned char *title = _("Download runs configuration");
+
+  if (opcaps_check(phr->caps, OPCAP_DUMP_RUNS) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);  
+
+  if (ns_parse_run_mask(phr, &mask_size_str, &mask_str, &mask_size, &mask) < 0)
+    goto invalid_param;
+
+  for (i = 0; i < mask_size; i++) {
+    mval = mask[i];
+    for (j = 0; j < 8 * sizeof(mask[0]); j++, mval >>= 1)
+      if ((mval & 1)) mask_count++;
+  }
+
+  l10n_setlocale(phr->locale_id);
+
+%><%@include "priv_header.csp"
+%><s:form>
+<s:hidden name="run_mask_size" escape="false" value="mask_size_str" />
+<s:hidden name="run_mask" escape="false" value="mask_str" />
+<h2><s:tr>Run selection</s:tr></h2>
+<table>
+<tr><td><input type="radio" name="run_selection" value="0" checked="yes"/></td><td><s:tr>Download all runs</s:tr></td></tr>
+<tr><td><input type="radio" name="run_selection" value="1"/></td><td><s:tr>Download selected runs</s:tr> (<s:v value="mask_count" />)</td></tr>
+<tr><td><input type="radio" name="run_selection" value="2"/></td><td><s:tr>Download OK runs</s:tr></td></tr>
+</table>
+
+<h2><s:tr>File name pattern</s:tr></h2>
+<table>
+<tr><td><input type="checkbox" name="file_pattern_run" checked="yes"/></td><td><s:tr>Use run number</s:tr></td></tr>
+<tr><td><input type="checkbox" name="file_pattern_uid"/></td><td><s:tr>Use user Id</s:tr></td></tr>
+<tr><td><input type="checkbox" name="file_pattern_login"/></td><td><s:tr>Use user Login</s:tr></td></tr>
+<tr><td><input type="checkbox" name="file_pattern_name"/></td><td><s:tr>Use user Name</s:tr></td></tr>
+<tr><td><input type="checkbox" name="file_pattern_prob"/></td><td><s:tr>Use problem short name</s:tr></td></tr>
+<tr><td><input type="checkbox" name="file_pattern_lang"/></td><td><s:tr>Use programming language short name</s:tr></td></tr>
+<tr><td><input type="checkbox" name="file_pattern_suffix" checked="yes"/></td><td><s:tr>Use source language or content type suffix</s:tr></td></tr>
+</table>
+
+<h2><s:tr>Directory structure</s:tr></h2>
+<table>
+<tr><td><input type="radio" name="dir_struct" value="0" checked="yes"/></td><td><s:tr>No directory structure</s:tr></td></tr>
+<tr><td><input type="radio" name="dir_struct" value="1"/></td><td><s:tr>/&lt;Problem&gt;/&lt;File&gt;</s:tr></td></tr>
+<tr><td><input type="radio" name="dir_struct" value="2"/></td><td><s:tr>/&lt;User_Id&gt;/&lt;File&gt;</s:tr></td></tr>
+<tr><td><input type="radio" name="dir_struct" value="3"/></td><td><s:tr>/&lt;User_Login&gt;/&lt;File&gt;</s:tr></td></tr>
+<tr><td><input type="radio" name="dir_struct" value="8"/></td><td><s:tr>/&lt;User_Name&gt;/&lt;File&gt;</s:tr></td></tr>
+<tr><td><input type="radio" name="dir_struct" value="4"/></td><td><s:tr>/&lt;Problem&gt;/&lt;User_Id&gt;/&lt;File&gt;</s:tr></td></tr>
+<tr><td><input type="radio" name="dir_struct" value="5"/></td><td><s:tr>/&lt;Problem&gt;/&lt;User_Login&gt;/&lt;File&gt;</s:tr></td></tr>
+<tr><td><input type="radio" name="dir_struct" value="9"/></td><td><s:tr>/&lt;Problem&gt;/&lt;User_Name&gt;/&lt;File&gt;</s:tr></td></tr>
+<tr><td><input type="radio" name="dir_struct" value="6"/></td><td><s:tr>/&lt;User_Id&gt;/&lt;Problem&gt;/&lt;File&gt;</s:tr></td></tr>
+<tr><td><input type="radio" name="dir_struct" value="7"/></td><td><s:tr>/&lt;User_Login&gt;/&lt;Problem&gt;/&lt;File&gt;</s:tr></td></tr>
+<tr><td><input type="radio" name="dir_struct" value="10"/></td><td><s:tr>/&lt;User_Name&gt;/&lt;Problem&gt;/&lt;File&gt;</s:tr></td></tr>
+</table>
+
+<h2><s:tr>Download runs</s:tr></h2>
+<table>
+<tr><td><s:submit ac="download-archive-2" /></td></tr>
+<tr><td><s:a ac="main-page"><s:tr>Main page</s:tr></s:a></td></tr>
+</table>
+</s:form><%@include "priv_footer.csp"
+%><%
+  l10n_setlocale(0);
+
+ cleanup:
+  xfree(mask);
+  return retval;
+
+ invalid_param:
+  ns_html_err_inv_param(out_f, phr, 0, 0);
+  xfree(mask);
+  return -1;
+%>

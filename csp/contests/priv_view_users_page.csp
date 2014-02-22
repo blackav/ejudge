@@ -44,6 +44,7 @@
   size_t *run_sizes = 0;
   unsigned char hbuf[1024];
   const unsigned char *sep;
+  const unsigned char *title = _("Users page");
 
 static const unsigned char * const form_row_attrs[]=
 {
@@ -80,17 +81,8 @@ static const unsigned char * const form_row_attrs[]=
   if (opcaps_check(phr->caps, OPCAP_GET_USER) >= 0) details_allowed = 1;
 
   l10n_setlocale(phr->locale_id);
-%><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html><head>
-<meta http-equiv="Content-type" content='text/html; charset=<s:config name="charset" />' />
-<link rel="stylesheet" href='<s:config name="style-prefix" />priv.css' type="text/css" />
-<script type="text/javascript" charset="UTF-8" src="<s:config name="style-prefix"/>priv.js"></script>
-<title><s:v escape="false" value="ns_unparse_role(phr->role)" /> [<s:v escape="false" value="phr->name_arm" />, <s:v value="phr->contest_id" />, <s:v escape="false" value="extra->contest_arm" />]: <s:tr>Users page</s:tr></title>
-</head>
-<body>
-<h1><s:v escape="false" value="ns_unparse_role(phr->role)" /> [<s:v escape="false" value="phr->name_arm" />, <s:v value="phr->contest_id" />, <s:v escape="false" value="extra->contest_arm" />]: <s:tr>Users page</s:tr></h1>
-
-<h2>Registered users</h2>
+%><%@include "priv_header.csp"
+%><h2>Registered users</h2>
 
 <s:form>
 <table class="b1"><tr><th class="b1">NN</th><th class="b1">Id</th><th class="b1">Login</th><th class="b1">Name</th><th class="b1">Status</th><th class="b1">Flags</th><th class="b1">Reg. date</th><th class="b1">Login date</th><th class="b1">No. of submits</th><th class="b1">Size of submits</th>
@@ -216,13 +208,8 @@ static const unsigned char * const form_row_attrs[]=
 <tr><td><input type="text" size="32" name="add_login"/></td><td><s:submit ac="users-add-by-login" /></td><td><s:tr>Add a new user specifying his/her login</s:tr></td></tr>
 <tr><td><input type="text" size="32" name="add_user_id"/></td><td><s:submit ac="users-add-by-user-id" /></td><td><s:tr>Add a new user specifying his/her User Id</s:tr></td></tr>
 </table>
-</s:form>
-
-<hr/>
-<s:copyright />
-</body>
-</html>
-<%
+</s:form><%@include "priv_footer.csp"
+%><%
   l10n_setlocale(0);
 
   if (users) userlist_free(&users->b);
