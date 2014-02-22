@@ -64,10 +64,27 @@ ns_parse_run_mask(
         const unsigned char **p_mask_str,
         size_t *p_size,
         unsigned long **p_mask);
+int csp_view_priv_download_runs_confirmation_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr);
+static PageInterfaceOps page_ops =
+{
+    NULL, // destroy
+    NULL, // execute
+    csp_view_priv_download_runs_confirmation_page, // render
+};
+static PageInterface page_iface =
+{
+    &page_ops,
+};
+PageInterface *
+csp_get_priv_download_runs_confirmation_page(void)
+{
+    return &page_iface;
+}
+
 int csp_view_priv_download_runs_confirmation_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 {
 
-#line 27 "priv_download_runs_confirmation_page.csp"
+#line 28 "priv_download_runs_confirmation_page.csp"
 //const serve_state_t cs = extra->serve_state;
   struct contest_extra *extra = phr->extra;
   int retval = 0;
@@ -204,7 +221,7 @@ fwrite(csp_str37, 1, 6, out_f);
 write_copyright_short(out_f);
 fwrite(csp_str38, 1, 17, out_f);
 
-#line 97 "priv_download_runs_confirmation_page.csp"
+#line 98 "priv_download_runs_confirmation_page.csp"
 l10n_setlocale(0);
 
  cleanup:
