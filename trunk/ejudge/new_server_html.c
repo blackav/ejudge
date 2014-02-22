@@ -4268,12 +4268,13 @@ priv_simple_change_status(
   return -1;
 }
 
-static int
-parse_run_mask(struct http_request_info *phr,
-               const unsigned char **p_size_str,
-               const unsigned char **p_mask_str,
-               size_t *p_size,
-               unsigned long **p_mask)
+int
+ns_parse_run_mask(
+        struct http_request_info *phr,
+        const unsigned char **p_size_str,
+        const unsigned char **p_mask_str,
+        size_t *p_size,
+        unsigned long **p_mask)
 {
   const unsigned char *size_str = 0;
   const unsigned char *mask_str = 0;
@@ -4352,7 +4353,7 @@ priv_clear_displayed(FILE *fout,
   size_t mask_size;
   int retval = 0;
 
-  if (parse_run_mask(phr, 0, 0, &mask_size, &mask) < 0) goto invalid_param;
+  if (ns_parse_run_mask(phr, 0, 0, &mask_size, &mask) < 0) goto invalid_param;
   if (!mask_size) FAIL(NEW_SRV_ERR_NO_RUNS_TO_REJUDGE);
   if (opcaps_check(phr->caps, OPCAP_EDIT_RUN) < 0)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
@@ -4408,7 +4409,7 @@ priv_rejudge_displayed(FILE *fout,
   int retval = 0;
   int background_mode = 0;
 
-  if (parse_run_mask(phr, 0, 0, &mask_size, &mask) < 0) goto invalid_param;
+  if (ns_parse_run_mask(phr, 0, 0, &mask_size, &mask) < 0) goto invalid_param;
   if (!mask_size) FAIL(NEW_SRV_ERR_NO_RUNS_TO_REJUDGE);
   ns_cgi_param_int_opt(phr, "background_mode", &background_mode, 0);
   if (background_mode != 1) background_mode = 0;
@@ -4830,7 +4831,7 @@ priv_confirmation_page(FILE *fout,
   case NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_1:
     // run_mask_size, run_mask
     errmsg = "cannot parse run mask";
-    if (parse_run_mask(phr, &run_mask_size_str, &run_mask_str,
+    if (ns_parse_run_mask(phr, &run_mask_size_str, &run_mask_str,
                        &run_mask_size, &run_mask) < 0)
       goto invalid_param;
     break;
@@ -5881,7 +5882,7 @@ priv_download_runs_confirmation(
   if (opcaps_check(phr->caps, OPCAP_DUMP_RUNS) < 0)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);  
 
-  if (parse_run_mask(phr, &mask_size_str, &mask_str, &mask_size, &mask) < 0)
+  if (ns_parse_run_mask(phr, &mask_size_str, &mask_str, &mask_size, &mask) < 0)
     goto invalid_param;
 
   for (i = 0; i < mask_size; i++) {
@@ -6015,7 +6016,7 @@ priv_download_runs(
     file_name_mask |= NS_FILE_PATTERN_SUFFIX;
   if (!file_name_mask) file_name_mask = NS_FILE_PATTERN_RUN;
 
-  if (parse_run_mask(phr, 0, 0, &mask_size, &mask) < 0)
+  if (ns_parse_run_mask(phr, 0, 0, &mask_size, &mask) < 0)
     goto invalid_param;
 
   ns_download_runs(cs, fout, log_f, run_selection, dir_struct, file_name_mask,
@@ -8233,6 +8234,7 @@ static const unsigned char * const external_action_names[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_MAIN_PAGE] = "priv_main_page",
   [NEW_SRV_ACTION_VIEW_USERS] = "priv_view_users_page",
   [NEW_SRV_ACTION_PRIV_USERS_VIEW] = "priv_view_priv_users_page",
+  [NEW_SRV_ACTION_DOWNLOAD_ARCHIVE_1] = "priv_download_runs_confirmation_page",
 };
 
 static ExternalActionState *external_action_states[NEW_SRV_ACTION_LAST];

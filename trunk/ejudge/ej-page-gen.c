@@ -2824,7 +2824,59 @@ cleanup:
 }
 
 static int
-handle_directive(TypeContext *cntx, ProcessorState *ps, FILE *out_f, FILE *log_f, const unsigned char *str, int len, Position pos)
+process_file(
+        FILE *log_f,
+        FILE *prg_f,
+        FILE *txt_f,
+        ProcessorState *ps,
+        const unsigned char *path,
+        TypeContext *cntx,
+        IdScope *global_scope);
+
+static int
+handle_directive_include(
+        ScannerState *ss,
+        FILE *log_f,
+        FILE *prg_f,
+        FILE *txt_f,
+        TypeContext *cntx,
+        IdScope *global_scope)
+{
+    int retval = -1;
+    const unsigned char *path = NULL;
+    ProcessorState *ps = ss->ps;
+
+    next_token(ss);
+    if (ss->token != TOK_STRING) {
+        parser_error(ss, "file name expected");
+        goto cleanup;
+    }
+    if (strlen(ss->value) != ss->value_len) {
+        parser_error(ss, "invalid file name");
+        goto cleanup;
+    }
+    path = ss->value;
+
+    Position saved_pos = ps->pos;
+    process_file(log_f, prg_f, txt_f, ss->ps, path, cntx, global_scope);
+    ps->pos = saved_pos;
+
+cleanup:
+    retval = 0;
+    return retval;
+}
+
+static int
+handle_directive(
+        TypeContext *cntx,
+        ProcessorState *ps,
+        FILE *out_f,
+        FILE *txt_f,
+        FILE *log_f,
+        const unsigned char *str,
+        int len,
+        Position pos,
+        IdScope *global_scope)
 {
     ScannerState *ss = init_scanner(ps, log_f, str, len, pos, cntx);
     int retval = -1;
@@ -2837,6 +2889,8 @@ handle_directive(TypeContext *cntx, ProcessorState *ps, FILE *out_f, FILE *log_f
         handle_directive_page(ss, cntx, out_f);
     } else if (!strcmp(ss->value, "set")) {
         handle_directive_set(ss, cntx, out_f);
+    } else if (!strcmp(ss->value, "include")) {
+        handle_directive_include(ss, log_f, out_f, txt_f, cntx, global_scope);
     } else {
         parser_error(ss, "invalid directive '%s'", ss->value);
     }
@@ -3312,6 +3366,8 @@ handle_textfield_open(
     const unsigned char *input_type = "text";
     if (!strcmp(elem->name, "s:password")) {
         input_type = "password";
+    } else if (!strcmp(elem->name, "s:hidden")) {
+        input_type = "hidden";
     }
 
     fprintf(prg_f, "fputs(\"<input type=\\\"%s\\\" name=\\\"%s\\\"", input_type, name_attr->value);
@@ -3373,6 +3429,8 @@ handle_html_element_open(
     } else if (!strcmp(ps->el_stack->el->name, "s:textfield")) {
         handle_textfield_open(log_f, cntx, ps, txt_f, prg_f);
     } else if (!strcmp(ps->el_stack->el->name, "s:password")) {
+        handle_textfield_open(log_f, cntx, ps, txt_f, prg_f);
+    } else if (!strcmp(ps->el_stack->el->name, "s:hidden")) {
         handle_textfield_open(log_f, cntx, ps, txt_f, prg_f);
     } else {
         parser_error_2(ps, "unhandled element");
@@ -3512,9 +3570,26 @@ size_t_type_handler(
 }
 
 static int
+has_non_whitespace(
+        const unsigned char *txt,
+        int start_idx,
+        int end_idx)
+{
+    if (!txt || start_idx >= end_idx) return 0;
+    for (; start_idx < end_idx; ++start_idx) {
+        if (!isspace(txt[start_idx])) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static int
 process_file(
         FILE *log_f,
-        FILE *out_f,
+        FILE *prg_f,
+        FILE *txt_f,
+        ProcessorState *ps,
         const unsigned char *path,
         TypeContext *cntx,
         IdScope *global_scope)
@@ -3522,41 +3597,6 @@ process_file(
     FILE *in_f = NULL;
     int result = 0;
     int cc;
-
-    ProcessorState *ps = processor_state_init(log_f);
-
-    processor_state_set_type_handler(ps, tc_get_ptr_type(cntx, tc_get_const_type(cntx, tc_get_u8_type(cntx))),
-                                     string_type_handler);
-    processor_state_set_type_handler(ps, tc_get_ptr_type(cntx, tc_get_u8_type(cntx)),
-                                     string_type_handler);
-    processor_state_set_type_handler(ps, tc_get_ptr_type(cntx, tc_get_const_type(cntx, tc_get_i8_type(cntx))),
-                                     string_type_handler);
-    processor_state_set_type_handler(ps, tc_get_ptr_type(cntx, tc_get_i8_type(cntx)),
-                                     string_type_handler);
-    processor_state_set_type_handler(ps, tc_get_open_array_type(cntx, tc_get_u8_type(cntx)),
-                                     string_type_handler);
-    processor_state_set_type_handler(ps, tc_get_open_array_type(cntx, tc_get_i8_type(cntx)),
-                                     string_type_handler);
-    processor_state_set_type_handler(ps, tc_find_typedef_type(cntx, tc_get_ident(cntx, "ej_cookie_t")),
-                                     cookie_type_handler);
-    processor_state_set_type_handler(ps, tc_get_i32_type(cntx), int_type_handler);
-    processor_state_set_type_handler(ps, tc_get_i64_type(cntx), long_long_type_handler);
-    processor_state_set_type_handler(ps, tc_find_typedef_type(cntx, tc_get_ident(cntx, "time_t")),
-                                     time_t_type_handler);
-    processor_state_set_type_handler(ps, tc_find_typedef_type(cntx, tc_get_ident(cntx, "size_t")),
-                                     size_t_type_handler);
-
-    processor_state_set_array_type_handler(ps, tc_get_u8_type(cntx), string_type_handler);
-    processor_state_set_array_type_handler(ps, tc_get_i8_type(cntx), string_type_handler);
-
-    char *txt_t = NULL;
-    size_t txt_z = 0;
-    FILE *txt_f = open_memstream(&txt_t, &txt_z);
-
-    char *prg_t = NULL;
-    size_t prg_z = 0;
-    FILE *prg_f = open_memstream(&prg_t, &prg_z);
-
     unsigned char *mem = NULL;
     int mem_a = 0, mem_u = 0, mem_i = 0, html_i = 0;
 
@@ -3570,7 +3610,6 @@ process_file(
         }
     }
     processor_state_init_file(ps, path);
-    processor_state_push_scope(ps, global_scope);
 
     // read the whole file to memory
     mem_a = 1024;
@@ -3622,7 +3661,7 @@ process_file(
                     ++html_i;
                 }
                 if (t == '@') {
-                    handle_directive(cntx, ps, prg_f, log_f, mem + html_i, end_i - html_i, start_pos);
+                    handle_directive(cntx, ps, prg_f, txt_f, log_f, mem + html_i, end_i - html_i, start_pos, global_scope);
                 } else if (t == '=') {
                 } else {
                     // plain <% %>
@@ -3698,7 +3737,68 @@ process_file(
             ++mem_i;
         }
     }
-    handle_html_text(prg_f, txt_f, log_f, mem, html_i, mem_i);
+    if (has_non_whitespace(mem, html_i, mem_i)) {
+        handle_html_text(prg_f, txt_f, log_f, mem, html_i, mem_i);
+    }
+
+cleanup:
+    if (in_f && in_f != stdin) fclose(in_f);
+    xfree(mem);
+    return result;
+
+fail:
+    result = 1;
+    goto cleanup;
+}
+
+static int
+process_unit(
+        FILE *log_f,
+        FILE *out_f,
+        const unsigned char *path,
+        TypeContext *cntx,
+        IdScope *global_scope)
+{
+    FILE *in_f = NULL;
+    int result = 0;
+
+    ProcessorState *ps = processor_state_init(log_f);
+
+    processor_state_set_type_handler(ps, tc_get_ptr_type(cntx, tc_get_const_type(cntx, tc_get_u8_type(cntx))),
+                                     string_type_handler);
+    processor_state_set_type_handler(ps, tc_get_ptr_type(cntx, tc_get_u8_type(cntx)),
+                                     string_type_handler);
+    processor_state_set_type_handler(ps, tc_get_ptr_type(cntx, tc_get_const_type(cntx, tc_get_i8_type(cntx))),
+                                     string_type_handler);
+    processor_state_set_type_handler(ps, tc_get_ptr_type(cntx, tc_get_i8_type(cntx)),
+                                     string_type_handler);
+    processor_state_set_type_handler(ps, tc_get_open_array_type(cntx, tc_get_u8_type(cntx)),
+                                     string_type_handler);
+    processor_state_set_type_handler(ps, tc_get_open_array_type(cntx, tc_get_i8_type(cntx)),
+                                     string_type_handler);
+    processor_state_set_type_handler(ps, tc_find_typedef_type(cntx, tc_get_ident(cntx, "ej_cookie_t")),
+                                     cookie_type_handler);
+    processor_state_set_type_handler(ps, tc_get_i32_type(cntx), int_type_handler);
+    processor_state_set_type_handler(ps, tc_get_i64_type(cntx), long_long_type_handler);
+    processor_state_set_type_handler(ps, tc_find_typedef_type(cntx, tc_get_ident(cntx, "time_t")),
+                                     time_t_type_handler);
+    processor_state_set_type_handler(ps, tc_find_typedef_type(cntx, tc_get_ident(cntx, "size_t")),
+                                     size_t_type_handler);
+
+    processor_state_set_array_type_handler(ps, tc_get_u8_type(cntx), string_type_handler);
+    processor_state_set_array_type_handler(ps, tc_get_i8_type(cntx), string_type_handler);
+
+    char *txt_t = NULL;
+    size_t txt_z = 0;
+    FILE *txt_f = open_memstream(&txt_t, &txt_z);
+
+    char *prg_t = NULL;
+    size_t prg_z = 0;
+    FILE *prg_f = open_memstream(&prg_t, &prg_z);
+
+    processor_state_push_scope(ps, global_scope);
+
+    result = process_file(log_f, prg_f, txt_f, ps, path, cntx, global_scope);
 
     fprintf(out_f, "/* === string pool === */\n\n");
     fclose(txt_f); txt_f = NULL;
@@ -3716,13 +3816,8 @@ process_file(
     processor_state_pop_scope(ps); // local variables scope
     processor_state_pop_scope(ps); // parameter scope
 
-cleanup:
     if (in_f && in_f != stdin) fclose(in_f);
     return result;
-
-fail:
-    result = 1;
-    goto cleanup;
 }
 
 int
@@ -3767,7 +3862,7 @@ main(int argc, char *argv[])
     //tc_dump_context(stdout, cntx);
 
     int result = 0;
-    result = process_file(stderr, stdout, source_path, cntx, global_scope) || result;
+    result = process_unit(stderr, stdout, source_path, cntx, global_scope) || result;
 
     tc_free(cntx);
 
