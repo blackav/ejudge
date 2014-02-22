@@ -27,6 +27,7 @@ html_role_select(FILE *fout, int role, int allow_admin,
   const unsigned char *password = NULL;
   int contest_id = phr->contest_id;
   unsigned char hbuf[1024];
+  const unsigned char *title = _("Login page");
 %><%
   ns_cgi_param(phr, "login", &login);
   ns_cgi_param(phr, "password", &password);
@@ -42,16 +43,8 @@ html_role_select(FILE *fout, int role, int allow_admin,
 
   l10n_setlocale(phr->locale_id);
   phr->client_key = 0;
-%><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html><head>
-<meta http-equiv="Content-type" content='text/html; charset=<s:config name="charset" />' />
-<link rel="stylesheet" href='<s:config name="style-prefix" />priv.css' type="text/css" />
-<script type="text/javascript" charset="UTF-8" src="<s:config name="style-prefix"/>priv.js"></script>
-<title><s:v escape="false" value="ns_unparse_role(phr->role)" /> [<s:v escape="false" value="phr->name_arm" />, <s:v value="phr->contest_id" />, <s:v escape="false" value="extra->contest_arm" />]: <s:tr>Login page</s:tr></title>
-</head>
-<body>
-<h1><s:v escape="false" value="ns_unparse_role(phr->role)" /> [<s:v escape="false" value="phr->name_arm" />, <s:v value="phr->contest_id" />, <s:v escape="false" value="extra->contest_arm" />]: <s:tr>Login page</s:tr></h1>
-<s:form>
+%><%@include "priv_header.csp" 
+%><s:form>
 <table>
 <tr><td><s:tr>Login</s:tr>:</td><td><s:textfield size="32" name="login" /></td></tr>
 <tr><td><s:tr>Password</s:tr>:</td><td><s:password size="32" name="password" /></td></tr>
@@ -60,12 +53,8 @@ html_role_select(FILE *fout, int role, int allow_admin,
 <tr><td><s:tr>Language</s:tr>:</td><td><% l10n_html_locale_select(out_f, phr->locale_id); %></td></tr>
 <tr><td>&nbsp;</td><td><s:submit ac="main-page" label="Submit" /></td></tr>
 </table>
-</s:form>
-<hr/>
-<s:copyright />
-</body>
-</html>
-<%
+</s:form><%@include "priv_footer.csp"
+%><%
   l10n_setlocale(0);
   html_armor_free(&ab);
 %>

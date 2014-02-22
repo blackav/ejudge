@@ -1,0 +1,9 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html><head>
+<meta http-equiv="Content-type" content='text/html; charset=<s:config name="charset" />' />
+<link rel="stylesheet" href='<s:config name="style-prefix" />priv.css' type="text/css" />
+<script type="text/javascript" charset="UTF-8" src="<s:config name="style-prefix"/>priv.js"></script>
+<title><s:v escape="false" value="ns_unparse_role(phr->role)" /> [<s:v escape="false" value="phr->name_arm" />, <s:v value="phr->contest_id" />, <s:v escape="false" value="extra->contest_arm" />]: <s:v escape="false" value="title" /></title>
+</head>
+<body>
+<h1><s:v escape="false" value="ns_unparse_role(phr->role)" /> [<s:v escape="false" value="phr->name_arm" />, <s:v value="phr->contest_id" />, <s:v escape="false" value="extra->contest_arm" />]: <s:v escape="false" value="title" /></h1>
