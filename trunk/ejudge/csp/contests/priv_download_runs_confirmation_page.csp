@@ -22,6 +22,7 @@ ns_parse_run_mask(
         size_t *p_size,
         unsigned long **p_mask);
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@set getter_name = "csp_get_priv_download_runs_confirmation_page"
 %><%@page csp_view_priv_download_runs_confirmation_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 %><%
   //const serve_state_t cs = extra->serve_state;
