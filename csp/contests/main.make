@@ -33,7 +33,7 @@ LD=gcc
 EXPAT_LIB=-lexpat
 
 TARGETDIR = ${libexecdir}/ejudge/csp/contests
-SOFILES = priv_main_page.so priv_view_users_page.so priv_view_priv_users_page.so priv_login_page.so
+SOFILES = priv_main_page.so priv_view_users_page.so priv_view_priv_users_page.so priv_login_page.so priv_download_runs_confirmation_page.so
 CFILES = $(SOFILES:.so=.c) I_priv_view_priv_users_page.c
 
 all : $(CFILES) $(SOFILES)
@@ -51,6 +51,12 @@ priv_view_priv_users_page.so : priv_view_priv_users_page.c I_priv_view_priv_user
 po : contests.po
 contests.po : $(CFILES)
 	${XGETTEXT} -d ejudge --no-location --foreign-user  -k_ -k__ -s -o $@ *.c
+
+priv_login_page.c : priv_login_page.csp priv_header.csp priv_footer.csp
+priv_main_page.c : priv_main_page.csp priv_header.csp priv_footer.csp
+priv_view_users_page.c : priv_view_users_page.csp priv_header.csp priv_footer.csp
+priv_view_priv_users_page.c : priv_view_priv_users_page.csp priv_header.csp priv_footer.csp
+priv_download_runs_confirmation_page.c : priv_download_runs_confirmation_page.csp priv_header.csp priv_footer.csp
 
 %.c : %.csp
 	../../ej-page-gen $< > $@
