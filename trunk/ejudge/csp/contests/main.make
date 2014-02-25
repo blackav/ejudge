@@ -33,7 +33,14 @@ LD=gcc
 EXPAT_LIB=-lexpat
 
 TARGETDIR = ${libexecdir}/ejudge/csp/contests
-SOFILES = priv_main_page.so priv_view_users_page.so priv_view_priv_users_page.so priv_login_page.so priv_download_runs_confirmation_page.so
+SOFILES = \
+ priv_clar_page.so\
+ priv_download_runs_confirmation_page.so\
+ priv_login_page.so\
+ priv_main_page.so\
+ priv_view_users_page.so\
+ priv_view_priv_users_page.so
+
 CFILES = $(SOFILES:.so=.c) I_priv_view_priv_users_page.c
 
 all : $(CFILES) $(SOFILES)
