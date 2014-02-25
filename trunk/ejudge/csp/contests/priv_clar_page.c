@@ -41,9 +41,8 @@ static const unsigned char csp_str37[8] = "\n<hr/>\n";
 static const unsigned char csp_str38[5] = "\n<p>";
 static const unsigned char csp_str39[71] = "</p>\n<p><textarea name=\"reply\" rows=\"20\" cols=\"60\"></textarea></p>\n<p>";
 static const unsigned char csp_str40[6] = "</p>\n";
-static const unsigned char csp_str41[4] = "\n%>";
-static const unsigned char csp_str42[7] = "<hr/>\n";
-static const unsigned char csp_str43[18] = "\n</body>\n</html>\n";
+static const unsigned char csp_str41[7] = "<hr/>\n";
+static const unsigned char csp_str42[18] = "\n</body>\n</html>\n";
 
 
 #line 2 "priv_clar_page.csp"
@@ -168,6 +167,7 @@ fputs("<a href=\"", out_f);
 sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_PRIV_EDIT_CLAR_PAGE);
 fputs(sep, out_f); sep = "&amp;";
 fputs("clar_id=", out_f);
+fprintf(out_f, "%d", (int)(clar_id));
 (void) sep;
 fputs("\">", out_f);
 fputs(_("Edit"), out_f);
@@ -392,12 +392,11 @@ fwrite(csp_str11, 1, 1, out_f);
 
 #line 143 "priv_clar_page.csp"
 }
-fwrite(csp_str41, 1, 3, out_f);
-fwrite(csp_str42, 1, 6, out_f);
+fwrite(csp_str41, 1, 6, out_f);
 write_copyright_short(out_f);
-fwrite(csp_str43, 1, 17, out_f);
+fwrite(csp_str42, 1, 17, out_f);
 
-#line 147 "priv_clar_page.csp"
+#line 146 "priv_clar_page.csp"
 l10n_setlocale(0);
 
 
