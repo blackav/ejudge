@@ -123,7 +123,7 @@
 </table>
 <hr/>
 <%  if (clar_get_text(cs->clarlog_state, clar_id, &msg_txt, &msg_len) < 0) { %>
-<big><font color="red"><s:tr>Cannot read message text</s:tr></font></big>
+<big><font color="red"><s:tr>Cannot read message text!</s:tr></font></big>
 <%  } else { %>
 <pre><s:v value="msg_txt" /></pre>
 <%  } %>
