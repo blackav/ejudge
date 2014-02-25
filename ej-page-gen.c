@@ -3569,6 +3569,51 @@ size_t_type_handler(
     fprintf(prg_f, "fprintf(out_f, \"%%zu\", (size_t)(%s));\n", text);
 }
 
+static void
+ej_size_t_type_handler(
+        FILE *log_f,
+        TypeContext *cntx,
+        struct ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f,
+        const unsigned char *text,
+        const HtmlElement *elem,
+        TypeInfo *type_info)
+{
+    // handle "format"?
+    fprintf(prg_f, "fprintf(out_f, \"%%zu\", (size_t)(%s));\n", text);
+}
+
+static void
+ej_ip_t_type_handler(
+        FILE *log_f,
+        TypeContext *cntx,
+        struct ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f,
+        const unsigned char *text,
+        const HtmlElement *elem,
+        TypeInfo *type_info)
+{
+    // handle "format"?
+    fprintf(prg_f, "fprintf(out_f, \"%%s\", xml_unparse_ip(%s));\n", text);
+}
+
+static void
+ej_ipv4_t_type_handler(
+        FILE *log_f,
+        TypeContext *cntx,
+        struct ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f,
+        const unsigned char *text,
+        const HtmlElement *elem,
+        TypeInfo *type_info)
+{
+    // handle "format"?
+    fprintf(prg_f, "fprintf(out_f, \"%%s\", xml_unparse_ip(%s));\n", text);
+}
+
 static int
 has_non_whitespace(
         const unsigned char *txt,
@@ -3778,12 +3823,20 @@ process_unit(
                                      string_type_handler);
     processor_state_set_type_handler(ps, tc_find_typedef_type(cntx, tc_get_ident(cntx, "ej_cookie_t")),
                                      cookie_type_handler);
+    processor_state_set_type_handler(ps, tc_get_i16_type(cntx), int_type_handler);
+    processor_state_set_type_handler(ps, tc_get_u16_type(cntx), int_type_handler);
     processor_state_set_type_handler(ps, tc_get_i32_type(cntx), int_type_handler);
     processor_state_set_type_handler(ps, tc_get_i64_type(cntx), long_long_type_handler);
     processor_state_set_type_handler(ps, tc_find_typedef_type(cntx, tc_get_ident(cntx, "time_t")),
                                      time_t_type_handler);
     processor_state_set_type_handler(ps, tc_find_typedef_type(cntx, tc_get_ident(cntx, "size_t")),
                                      size_t_type_handler);
+    processor_state_set_type_handler(ps, tc_find_typedef_type(cntx, tc_get_ident(cntx, "ej_size_t")),
+                                     ej_size_t_type_handler);
+    processor_state_set_type_handler(ps, tc_find_typedef_type(cntx, tc_get_ident(cntx, "ej_ip_t")),
+                                     ej_ip_t_type_handler);
+    processor_state_set_type_handler(ps, tc_find_typedef_type(cntx, tc_get_ident(cntx, "ej_ip4_t")),
+                                     ej_ipv4_t_type_handler);
 
     processor_state_set_array_type_handler(ps, tc_get_u8_type(cntx), string_type_handler);
     processor_state_set_array_type_handler(ps, tc_get_i8_type(cntx), string_type_handler);
