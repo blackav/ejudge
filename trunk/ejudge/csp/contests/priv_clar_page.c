@@ -345,7 +345,7 @@ fwrite(csp_str32, 1, 26, out_f);
 #line 125 "priv_clar_page.csp"
 if (clar_get_text(cs->clarlog_state, clar_id, &msg_txt, &msg_len) < 0) {
 fwrite(csp_str33, 1, 24, out_f);
-fputs(_("Cannot read message text"), out_f);
+fputs(_("Cannot read message text!"), out_f);
 fwrite(csp_str34, 1, 14, out_f);
 
 #line 127 "priv_clar_page.csp"
