@@ -5451,45 +5451,6 @@ priv_download_source(
 }
 
 static int
-priv_view_clar(FILE *fout,
-               FILE *log_f,
-               struct http_request_info *phr,
-               const struct contest_desc *cnts,
-               struct contest_extra *extra)
-{
-  serve_state_t cs = extra->serve_state;
-  int clar_id, n;
-  const unsigned char *s;
-
-  if (ns_cgi_param(phr, "clar_id", &s) <= 0
-      || sscanf(s, "%d%n", &clar_id, &n) != 1 || s[n]
-      || clar_id < 0 || clar_id >= clar_get_total(cs->clarlog_state)) {
-    ns_html_err_inv_param(fout, phr, 1, "cannot parse clar_id");
-    return -1;
-  }
-
-  if (opcaps_check(phr->caps, OPCAP_VIEW_CLAR) < 0) {
-    ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
-    goto cleanup;
-  }
-
-  l10n_setlocale(phr->locale_id);
-  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
-            phr->client_key,
-            "%s [%s, %d, %s]: %s %d", ns_unparse_role(phr->role),
-            phr->name_arm, phr->contest_id, extra->contest_arm,
-            _("Viewing clar"), clar_id);
-
-  ns_write_priv_clar(cs, fout, log_f, phr, cnts, extra, clar_id);
-
-  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
-  l10n_setlocale(0);
-
- cleanup:
-  return 0;
-}
-
-static int
 priv_edit_clar_page(
         FILE *fout,
         FILE *log_f,
@@ -7322,7 +7283,6 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_SOURCE] = priv_view_source,
   [NEW_SRV_ACTION_PRIV_DOWNLOAD_RUN] = priv_download_source,
   [NEW_SRV_ACTION_STANDINGS] = priv_standings,
-  [NEW_SRV_ACTION_VIEW_CLAR] = priv_view_clar,
   [NEW_SRV_ACTION_REJUDGE_DISPLAYED_1] = priv_confirmation_page,
   [NEW_SRV_ACTION_FULL_REJUDGE_DISPLAYED_1] = priv_confirmation_page,
   [NEW_SRV_ACTION_REJUDGE_PROBLEM_1] = priv_confirmation_page,
