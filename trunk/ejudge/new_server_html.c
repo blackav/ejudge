@@ -5862,100 +5862,6 @@ priv_upload_runlog_xml_2(
 }
 
 static int
-priv_download_runs_confirmation(
-        FILE *fout,
-        FILE *log_f,
-        struct http_request_info *phr,
-        const struct contest_desc *cnts,
-        struct contest_extra *extra)
-{
-  //const serve_state_t cs = extra->serve_state;
-  int retval = 0;
-  unsigned char bb[1024];
-  unsigned long *mask = 0, mval;
-  size_t mask_size = 0;
-  const unsigned char *mask_size_str = 0;
-  const unsigned char *mask_str = 0;
-  size_t mask_count = 0;
-  int i, j;
-
-  if (opcaps_check(phr->caps, OPCAP_DUMP_RUNS) < 0)
-    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);  
-
-  if (ns_parse_run_mask(phr, &mask_size_str, &mask_str, &mask_size, &mask) < 0)
-    goto invalid_param;
-
-  for (i = 0; i < mask_size; i++) {
-    mval = mask[i];
-    for (j = 0; j < 8 * sizeof(mask[0]); j++, mval >>= 1)
-      if ((mval & 1)) mask_count++;
-  }
-
-  l10n_setlocale(phr->locale_id);
-  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
-            phr->client_key,
-            "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role), phr->name_arm,
-            phr->contest_id, extra->contest_arm, "Download runs configuration");
-
-  html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
-  html_hidden(fout, "run_mask_size", "%s", mask_size_str);
-  html_hidden(fout, "run_mask", "%s", mask_str);
-  fprintf(fout, "<h2>%s</h2>\n", _("Run selection"));
-  fprintf(fout, "<table>");
-  fprintf(fout, "<tr><td><input type=\"radio\" name=\"run_selection\" value=\"0\" checked=\"yes\"/></td><td>%s</td></tr>\n", _("Download all runs"));
-  fprintf(fout, "<tr><td><input type=\"radio\" name=\"run_selection\" value=\"1\"/></td><td>%s (%zu)</td></tr>\n", _("Download selected runs"), mask_count);
-  fprintf(fout, "<tr><td><input type=\"radio\" name=\"run_selection\" value=\"2\"/></td><td>%s</td></tr>\n", _("Download OK runs"));
-  fprintf(fout, "</table>\n");
-
-  fprintf(fout, "<h2>%s</h2>\n", _("File name pattern"));
-  fprintf(fout, "<table>");
-  fprintf(fout, "<tr><td><input type=\"checkbox\" name=\"file_pattern_run\" checked=\"yes\"/></td><td>%s</td></tr>\n", _("Use run number"));
-  fprintf(fout, "<tr><td><input type=\"checkbox\" name=\"file_pattern_uid\"/></td><td>%s</td></tr>\n", _("Use user Id"));
-  fprintf(fout, "<tr><td><input type=\"checkbox\" name=\"file_pattern_login\"/></td><td>%s</td></tr>\n", _("Use user Login"));
-  fprintf(fout, "<tr><td><input type=\"checkbox\" name=\"file_pattern_name\"/></td><td>%s</td></tr>\n", _("Use user Name"));
-  fprintf(fout, "<tr><td><input type=\"checkbox\" name=\"file_pattern_prob\"/></td><td>%s</td></tr>\n", _("Use problem short name"));
-  fprintf(fout, "<tr><td><input type=\"checkbox\" name=\"file_pattern_lang\"/></td><td>%s</td></tr>\n", _("Use programming language short name"));
-  fprintf(fout, "<tr><td><input type=\"checkbox\" name=\"file_pattern_suffix\" checked=\"yes\"/></td><td>%s</td></tr>\n", _("Use source language or content type suffix"));
-  fprintf(fout, "</table>\n");
-
-  fprintf(fout, "<h2>%s</h2>\n", _("Directory structure"));
-  fprintf(fout, "<table>");
-  fprintf(fout, "<tr><td><input type=\"radio\" name=\"dir_struct\" value=\"0\" checked=\"yes\"/></td><td>%s</td></tr>\n", _("No directory structure"));
-  fprintf(fout, "<tr><td><input type=\"radio\" name=\"dir_struct\" value=\"1\"/></td><td>%s</td></tr>\n", _("/&lt;Problem&gt;/&lt;File&gt;"));
-  fprintf(fout, "<tr><td><input type=\"radio\" name=\"dir_struct\" value=\"2\"/></td><td>%s</td></tr>\n", _("/&lt;User_Id&gt;/&lt;File&gt;"));
-  fprintf(fout, "<tr><td><input type=\"radio\" name=\"dir_struct\" value=\"3\"/></td><td>%s</td></tr>\n", _("/&lt;User_Login&gt;/&lt;File&gt;"));
-  fprintf(fout, "<tr><td><input type=\"radio\" name=\"dir_struct\" value=\"8\"/></td><td>%s</td></tr>\n", _("/&lt;User_Name&gt;/&lt;File&gt;"));
-  fprintf(fout, "<tr><td><input type=\"radio\" name=\"dir_struct\" value=\"4\"/></td><td>%s</td></tr>\n", _("/&lt;Problem&gt;/&lt;User_Id&gt;/&lt;File&gt;"));
-  fprintf(fout, "<tr><td><input type=\"radio\" name=\"dir_struct\" value=\"5\"/></td><td>%s</td></tr>\n", _("/&lt;Problem&gt;/&lt;User_Login&gt;/&lt;File&gt;"));
-  fprintf(fout, "<tr><td><input type=\"radio\" name=\"dir_struct\" value=\"9\"/></td><td>%s</td></tr>\n", _("/&lt;Problem&gt;/&lt;User_Name&gt;/&lt;File&gt;"));
-  fprintf(fout, "<tr><td><input type=\"radio\" name=\"dir_struct\" value=\"6\"/></td><td>%s</td></tr>\n", _("/&lt;User_Id&gt;/&lt;Problem&gt;/&lt;File&gt;"));
-  fprintf(fout, "<tr><td><input type=\"radio\" name=\"dir_struct\" value=\"7\"/></td><td>%s</td></tr>\n", _("/&lt;User_Login&gt;/&lt;Problem&gt;/&lt;File&gt;"));
-  fprintf(fout, "<tr><td><input type=\"radio\" name=\"dir_struct\" value=\"10\"/></td><td>%s</td></tr>\n", _("/&lt;User_Name&gt;/&lt;Problem&gt;/&lt;File&gt;"));
-  fprintf(fout, "</table>\n");
-
-  fprintf(fout, "<h2>%s</h2>\n", _("Download runs"));
-  fprintf(fout, "<table>");
-  fprintf(fout, "<tr><td>%s</td></tr>",
-          BUTTON(NEW_SRV_ACTION_DOWNLOAD_ARCHIVE_2));
-  fprintf(fout, "<tr><td>%s%s</a></td></tr></table>",
-          ns_aref(bb, sizeof(bb), phr, NEW_SRV_ACTION_MAIN_PAGE, 0),
-          _("Main page"));
-  fprintf(fout, "</form>\n");
-
-  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
-  l10n_setlocale(0);
-
- cleanup:
-  xfree(mask);
-  return retval;
-
- invalid_param:
-  ns_html_err_inv_param(fout, phr, 0, 0);
-  xfree(mask);
-  return -1;
-}
-
-static int
 priv_download_runs(
         FILE *fout,
         FILE *log_f,
@@ -7441,7 +7347,6 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_NEW_RUN_FORM] = priv_new_run_form_page,
   [NEW_SRV_ACTION_VIEW_USER_DUMP] = priv_view_user_dump,
   [NEW_SRV_ACTION_VIEW_USER_REPORT] = priv_view_report,
-  [NEW_SRV_ACTION_DOWNLOAD_ARCHIVE_1] = priv_download_runs_confirmation,
   [NEW_SRV_ACTION_DOWNLOAD_ARCHIVE_2] = priv_download_runs,
   [NEW_SRV_ACTION_UPLOAD_RUNLOG_CSV_1] = priv_upload_runlog_csv_1,
   [NEW_SRV_ACTION_UPLOAD_RUNLOG_CSV_2] = priv_upload_runlog_csv_2,

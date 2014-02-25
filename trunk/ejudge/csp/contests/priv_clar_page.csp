@@ -1,0 +1,137 @@
+<%
+/* $Id$ */
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@set getter_name = "csp_get_priv_clar_page"
+%><%@page csp_view_priv_clar_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%
+void
+ns_write_priv_clar(const serve_state_t cs,
+                   FILE *f,
+                   FILE *log_f,
+                   struct http_request_info *phr,
+                   const struct contest_desc *cnts,
+                   struct contest_extra *extra,
+                   int clar_id)
+{
+  //const struct section_global_data *global = cs->global;
+  struct clar_entry_v1 clar;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  struct html_armor_buffer rb = HTML_ARMOR_INITIALIZER;
+  time_t start_time;
+  unsigned char *msg_txt = 0;
+  size_t msg_len = 0;
+  unsigned char bb[1024];
+  unsigned char b1[1024], b2[1024];
+  const unsigned char *clar_subj = 0;
+  unsigned char hbuf[1024];
+
+  if (clar_id < 0 || clar_id >= clar_get_total(cs->clarlog_state)
+      || clar_get_record(cs->clarlog_state, clar_id, &clar) < 0
+      || clar.id < 0) {
+    ns_error(log_f, NEW_SRV_ERR_INV_CLAR_ID);
+    goto done;
+  }
+  start_time = run_get_start_time(cs->runlog_state);
+  clar_subj = clar_get_subject(cs->clarlog_state, clar_id);
+
+  fprintf(f, "<h2>%s %d", _("Message"), clar_id);
+  if (phr->role == USER_ROLE_ADMIN && opcaps_check(phr->caps, OPCAP_EDIT_RUN) >= 0) {
+    fprintf(f, " [<a href=\"%s\">%s</a>]",
+            ns_url(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_PRIV_EDIT_CLAR_PAGE,
+                   "clar_id=%d", clar_id),
+            "Edit");
+  }
+  fprintf(f, "</h2>\n");
+  fprintf(f, "<table border=\"0\">\n");
+  fprintf(f, "<tr><td>%s:</td><td>%d</td></tr>\n", _("Clar ID"), clar_id);
+  if (clar.hide_flag)
+    fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
+            _("Available only after contest start"),
+            clar.hide_flag?_("YES"):_("NO"));
+  fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n", _("Flags"),
+          clar_flags_html(cs->clarlog_state, clar.flags,
+                          clar.from, clar.to, 0, 0));
+  fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
+          _("Time"), duration_str(1, clar.time, 0, 0, 0));
+  if (!cs->global->is_virtual && start_time > 0) {
+    fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
+            _("Duration"), duration_str(0, clar.time, start_time, 0, 0));
+  }
+  fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n", _("IP address"),
+          xml_unparse_ip(clar.a.ip));
+  fprintf(f, "<tr><td>%s:</td><td>%u</td></tr>\n", _("Size"), clar.size);
+  fprintf(f, "<tr><td>%s:</td>", _("Sender"));
+  if (!clar.from) {
+    if (!clar.j_from)
+      fprintf(f, "<td><b>%s</b></td>", _("judges"));
+    else
+      fprintf(f, "<td><b>%s</b> (%s)</td>", _("judges"),
+              ARMOR(teamdb_get_name_2(cs->teamdb_state, clar.j_from)));
+  } else {
+    snprintf(b1, sizeof(b1), "uid == %d", clar.from);
+    url_armor_string(b2, sizeof(b2), b1);
+    fprintf(f, "<td>%s%s (%d)</a></td>",
+            ns_aref(bb, sizeof(bb), phr, NEW_SRV_ACTION_MAIN_PAGE,
+                    "filter_expr=%s", b2),
+            ARMOR(teamdb_get_name_2(cs->teamdb_state, clar.from)),
+            clar.from);
+  }
+  fprintf(f, "</tr>\n<tr><td>%s:</td>", _("To"));
+  if (!clar.to && !clar.from) {
+    fprintf(f, "<td><b>%s</b></td>", _("all"));
+  } else if (!clar.to) {
+    fprintf(f, "<td><b>%s</b></td>", _("judges"));
+  } else {
+    snprintf(b1, sizeof(b1), "uid == %d", clar.to);
+    url_armor_string(b2, sizeof(b2), b1);
+    fprintf(f, "<td>%s%s (%d)</a></td>",
+            ns_aref(bb, sizeof(bb), phr, NEW_SRV_ACTION_MAIN_PAGE,
+                    "filter_expr=%s", b2),
+            ARMOR(teamdb_get_name_2(cs->teamdb_state, clar.to)), clar.to);
+  }
+  fprintf(f, "</tr>\n");
+  if (clar.in_reply_to > 0) {
+    fprintf(f, "<tr><td>%s:</td><td>%s%d</td></a></tr>", _("In reply to"),
+            ns_aref(bb, sizeof(bb), phr, NEW_SRV_ACTION_VIEW_CLAR,
+                    "clar_id=%d", clar.in_reply_to - 1),
+            clar.in_reply_to - 1);
+  }
+  fprintf(f, "<tr><td>%s:</td><td>%d</td></tr>", _("Locale code"),
+          clar.locale_id);
+  fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>", _("Subject"),ARMOR(clar_subj));
+  fprintf(f, "</table>\n");
+  /*
+  print_nav_buttons(state, f, 0, sid, self_url, hidden_vars, extra_args,
+                    _("Main page"), 0, 0, 0, 0, 0, 0);
+  */
+  fprintf(f, "<hr>\n");
+
+  if (clar_get_text(cs->clarlog_state, clar_id, &msg_txt, &msg_len) < 0) {
+    fprintf(f, "<big><font color=\"red\">%s</font></big>\n",
+            _("Cannot read message text!"));
+  } else {
+    fprintf(f, "<pre>%s</pre>", ARMOR(msg_txt));
+    xfree(msg_txt); msg_txt = 0;
+  }
+
+  if (phr->role >= USER_ROLE_JUDGE && clar.from
+      && opcaps_check(phr->caps, OPCAP_REPLY_MESSAGE) >= 0) {
+    fprintf(f, "<hr/>\n");
+    html_start_form(f, 2, phr->self_url, phr->hidden_vars);
+    html_hidden(f, "in_reply_to", "%d", clar_id);
+    fprintf(f, "<p>%s\n", BUTTON(NEW_SRV_ACTION_CLAR_REPLY_READ_PROBLEM));
+    fprintf(f, "%s\n", BUTTON(NEW_SRV_ACTION_CLAR_REPLY_NO_COMMENTS));
+    fprintf(f, "%s\n", BUTTON(NEW_SRV_ACTION_CLAR_REPLY_YES));
+    fprintf(f, "%s\n", BUTTON(NEW_SRV_ACTION_CLAR_REPLY_NO));
+    fprintf(f, "<p><textarea name=\"reply\" rows=\"20\" cols=\"60\"></textarea></p>\n");
+    fprintf(f, "<p>%s\n", BUTTON(NEW_SRV_ACTION_CLAR_REPLY));
+    fprintf(f, "%s\n", BUTTON(NEW_SRV_ACTION_CLAR_REPLY_ALL));
+    fprintf(f, "</form>\n");
+  }
+
+ done:;
+  html_armor_free(&ab);
+  html_armor_free(&rb);
+  xfree(msg_txt);
+}
+%>
