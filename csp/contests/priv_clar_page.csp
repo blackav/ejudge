@@ -65,7 +65,7 @@
 %><h2><s:tr>Message</s:tr> <s:v value="clar_id" />
 <%  if (phr->role == USER_ROLE_ADMIN && opcaps_check(phr->caps, OPCAP_EDIT_RUN) >= 0) { %>
 <s:url name="EditClarUrl" ac="priv-edit-clar-page">
-  <s:param name="clar_id" />
+  <s:param name="clar_id" value="clar_id" />
 </s:url>
  [<s:a url="EditClarUrl"><s:tr>Edit</s:tr></s:a>]
 <%  } %>
@@ -140,8 +140,7 @@
 <p><s:submit ac="clar-reply" />
 <s:submit ac="clar-reply-all" /></p>
 </s:form>
-<%  } %>
-%><%@include "priv_footer.csp"
+<%  } %><%@include "priv_footer.csp"
 %><%
 
   l10n_setlocale(0);
