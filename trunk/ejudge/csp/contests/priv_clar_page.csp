@@ -24,7 +24,6 @@
   serve_state_t cs = extra->serve_state;
   struct clar_entry_v1 clar;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
-  struct html_armor_buffer rb = HTML_ARMOR_INITIALIZER;
   time_t start_time;
   unsigned char *msg_txt = 0;
   size_t msg_len = 0;
@@ -148,6 +147,5 @@
 
  done:;
   html_armor_free(&ab);
-  html_armor_free(&rb);
   xfree(msg_txt);
 %>
