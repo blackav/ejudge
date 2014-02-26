@@ -3370,16 +3370,31 @@ handle_textfield_open(
         input_type = "hidden";
     }
 
+    HtmlAttribute *disabled_attr = html_element_find_attribute(elem, "disabled");
+
     fprintf(prg_f, "fputs(\"<input type=\\\"%s\\\" name=\\\"%s\\\"", input_type, name_attr->value);
     HtmlAttribute *size_attr = html_element_find_attribute(elem, "size");
     if (size_attr) {
         fprintf(prg_f, " size=\\\"%s\\\"", size_attr->value);
     }
     if (skip_value) {
-        fprintf(prg_f, " />\", out_f);\n");
+        if (disabled_attr) {
+            fprintf(prg_f, "\", out_f);\n");
+            fprintf(prg_f, "if (%s) {\n", disabled_attr->value);
+            fprintf(prg_f, "fputs(\" disabled=\\\"disabled\\\"\", out_f);\n");
+            fprintf(prg_f, "}\n");
+            fprintf(prg_f, "fputs(\" />\", out_f);\n");
+        } else {
+            fprintf(prg_f, " />\", out_f);\n");
+        }
         return 0;
     }
     fprintf(prg_f, "\", out_f);\n");
+    if (disabled_attr) {
+        fprintf(prg_f, "if (%s) {\n", disabled_attr->value);
+        fprintf(prg_f, "fputs(\" disabled=\\\"disabled\\\"\", out_f);\n");
+        fprintf(prg_f, "}\n");
+    }
 
     int need_check = html_attribute_get_bool(html_element_find_attribute(elem, "check"), 1);
     if (need_check) {
@@ -3401,6 +3416,94 @@ handle_textfield_open(
 }
 
 static int
+handle_checkbox_open(
+        FILE *log_f,
+        TypeContext *cntx,
+        ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f)
+{
+    return 0;
+}
+
+static int
+handle_tr_open(
+        FILE *log_f,
+        TypeContext *cntx,
+        ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f)
+{
+    fprintf(prg_f, "fputs(_(");
+    return 0;
+}
+
+static int
+handle_tr_close(
+        FILE *log_f,
+        TypeContext *cntx,
+        ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f,
+        unsigned char *mem,
+        int beg_i,
+        int end_i)
+{
+    emit_str_literal(prg_f, mem + beg_i, end_i - beg_i);
+    fprintf(prg_f, "), out_f);\n");
+    return 0;
+}
+
+/*
+static int
+handle_textfield_open(
+        FILE *log_f,
+        TypeContext *cntx,
+        ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f)
+
+
+static int
+handle_form_close(
+        FILE *log_f,
+        TypeContext *cntx,
+        ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f,
+        unsigned char *mem,
+        int beg_i,
+        int end_i)
+
+ */
+
+struct ElementInfo
+{
+    const unsigned char *name;
+    int (*open_func)(FILE *log_f, TypeContext *cntx, ProcessorState *ps, FILE *txt_f, FILE *prg_f);
+    int (*close_func)(FILE *log_f, TypeContext *cntx, ProcessorState *ps, FILE *txt_f, FILE *prg_f, unsigned char *mem, int beg_i, int end_i);
+};
+
+static const struct ElementInfo element_handlers[] =
+{
+    { "s:tr", handle_tr_open, handle_tr_close },
+    { "s:a", handle_a_open, handle_a_close },
+    { "s:submit", handle_submit_open, NULL },
+    { "s:v", handle_v_open, NULL },
+    { "s:form", handle_form_open, handle_form_close },
+    { "s:url", handle_url_open, handle_url_close },
+    { "s:param", handle_param_open, NULL },
+    { "s:copyright", handle_copyright_open, NULL },
+    { "s:config", handle_config_open, NULL },
+    { "s:textfield", handle_textfield_open, NULL },
+    { "s:password", handle_textfield_open, NULL },
+    { "s:hidden", handle_textfield_open, NULL },
+    { "s:checkbox", handle_checkbox_open, NULL },
+
+    { NULL, NULL, NULL },
+};
+
+static int
 handle_html_element_open(
         FILE *log_f,
         TypeContext *cntx,
@@ -3408,34 +3511,17 @@ handle_html_element_open(
         FILE *txt_f,
         FILE *prg_f)
 {
-    if (!strcmp(ps->el_stack->el->name, "s:tr")) {
-        fprintf(prg_f, "fputs(_(");
-    } else if (!strcmp(ps->el_stack->el->name, "s:a")) {
-        handle_a_open(log_f, cntx, ps, txt_f, prg_f);
-    } else if (!strcmp(ps->el_stack->el->name, "s:submit")) {
-        handle_submit_open(log_f, cntx, ps, txt_f, prg_f);
-    } else if (!strcmp(ps->el_stack->el->name, "s:v")) {
-        handle_v_open(log_f, cntx, ps, txt_f, prg_f);
-    } else if (!strcmp(ps->el_stack->el->name, "s:form")) {
-        handle_form_open(log_f, cntx, ps, txt_f, prg_f);
-    } else if (!strcmp(ps->el_stack->el->name, "s:url")) {
-        handle_url_open(log_f, cntx, ps, txt_f, prg_f);
-    } else if (!strcmp(ps->el_stack->el->name, "s:param")) {
-        handle_param_open(log_f, cntx, ps, txt_f, prg_f);
-    } else if (!strcmp(ps->el_stack->el->name, "s:copyright")) {
-        handle_copyright_open(log_f, cntx, ps, txt_f, prg_f);
-    } else if (!strcmp(ps->el_stack->el->name, "s:config")) {
-        handle_config_open(log_f, cntx, ps, txt_f, prg_f);
-    } else if (!strcmp(ps->el_stack->el->name, "s:textfield")) {
-        handle_textfield_open(log_f, cntx, ps, txt_f, prg_f);
-    } else if (!strcmp(ps->el_stack->el->name, "s:password")) {
-        handle_textfield_open(log_f, cntx, ps, txt_f, prg_f);
-    } else if (!strcmp(ps->el_stack->el->name, "s:hidden")) {
-        handle_textfield_open(log_f, cntx, ps, txt_f, prg_f);
-    } else {
-        parser_error_2(ps, "unhandled element");
+    for (int i = 0; element_handlers[i].name; ++i) {
+        if (!strcmp(ps->el_stack->el->name, element_handlers[i].name)) {
+            if (!element_handlers[i].close_func && !ps->el_stack->el->no_body) {
+                parser_error_2(ps, "<%s> element must not have a body", element_handlers[i].name);
+                return -1;
+            }
+            return element_handlers[i].open_func(log_f, cntx, ps, txt_f, prg_f);
+        }
     }
-    return 0;
+    parser_error_2(ps, "unhandled element");
+    return -1;
 }
 
 static int
