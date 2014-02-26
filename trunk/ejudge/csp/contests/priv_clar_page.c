@@ -47,6 +47,8 @@ static const unsigned char csp_str42[18] = "\n</body>\n</html>\n";
 
 #line 2 "priv_clar_page.csp"
 /* $Id$ */
+
+#line 2 "priv_includes.csp"
 #include "new-server.h"
 #include "new_server_proto.h"
 #include "external_action.h"
@@ -83,7 +85,7 @@ csp_get_priv_clar_page(void)
 int csp_view_priv_clar_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 {
 
-#line 23 "priv_clar_page.csp"
+#line 8 "priv_clar_page.csp"
 struct contest_extra *extra = phr->extra;
   serve_state_t cs = extra->serve_state;
   struct clar_entry_v1 clar;
@@ -157,7 +159,7 @@ fwrite(csp_str10, 1, 1, out_f);
 fprintf(out_f, "%d", (int)(clar_id));
 fwrite(csp_str11, 1, 1, out_f);
 
-#line 65 "priv_clar_page.csp"
+#line 50 "priv_clar_page.csp"
 if (phr->role == USER_ROLE_ADMIN && opcaps_check(phr->caps, OPCAP_EDIT_RUN) >= 0) {
 fwrite(csp_str11, 1, 1, out_f);
 fwrite(csp_str12, 1, 3, out_f);
@@ -173,7 +175,7 @@ fputs(_("Edit"), out_f);
 fputs("</a>", out_f);
 fwrite(csp_str14, 1, 2, out_f);
 
-#line 70 "priv_clar_page.csp"
+#line 55 "priv_clar_page.csp"
 }
 fwrite(csp_str15, 1, 34, out_f);
 fputs(_("Clar ID"), out_f);
@@ -181,17 +183,17 @@ fwrite(csp_str16, 1, 10, out_f);
 fprintf(out_f, "%d", (int)(clar_id));
 fwrite(csp_str17, 1, 11, out_f);
 
-#line 74 "priv_clar_page.csp"
+#line 59 "priv_clar_page.csp"
 if (clar.hide_flag) {
 fwrite(csp_str18, 1, 9, out_f);
 fputs(_("Available only after contest start"), out_f);
 fwrite(csp_str16, 1, 10, out_f);
 
-#line 76 "priv_clar_page.csp"
+#line 61 "priv_clar_page.csp"
 fputs(clar.hide_flag?_("YES"):_("NO"), out_f);
 fwrite(csp_str17, 1, 11, out_f);
 
-#line 78 "priv_clar_page.csp"
+#line 63 "priv_clar_page.csp"
 }
 fwrite(csp_str18, 1, 9, out_f);
 fputs(_("Flags"), out_f);
@@ -203,7 +205,7 @@ fwrite(csp_str16, 1, 10, out_f);
 fputs((duration_str(1, clar.time, 0, 0, 0)), out_f);
 fwrite(csp_str17, 1, 11, out_f);
 
-#line 81 "priv_clar_page.csp"
+#line 66 "priv_clar_page.csp"
 if (!cs->global->is_virtual && start_time > 0) {
 fwrite(csp_str18, 1, 9, out_f);
 fputs(_("Duration"), out_f);
@@ -211,7 +213,7 @@ fwrite(csp_str16, 1, 10, out_f);
 fputs((duration_str(0, clar.time, start_time, 0, 0)), out_f);
 fwrite(csp_str17, 1, 11, out_f);
 
-#line 83 "priv_clar_page.csp"
+#line 68 "priv_clar_page.csp"
 }
 fwrite(csp_str18, 1, 9, out_f);
 fputs(_("IP address"), out_f);
@@ -225,14 +227,14 @@ fwrite(csp_str19, 1, 19, out_f);
 fputs(_("Sender"), out_f);
 fwrite(csp_str20, 1, 7, out_f);
 
-#line 87 "priv_clar_page.csp"
+#line 72 "priv_clar_page.csp"
 if (!clar.from) {
     if (!clar.j_from) {
 fwrite(csp_str21, 1, 8, out_f);
 fputs(_("judges"), out_f);
 fwrite(csp_str22, 1, 10, out_f);
 
-#line 90 "priv_clar_page.csp"
+#line 75 "priv_clar_page.csp"
 } else {
 fwrite(csp_str21, 1, 8, out_f);
 fputs(_("judges"), out_f);
@@ -240,12 +242,12 @@ fwrite(csp_str23, 1, 6, out_f);
 fputs(html_armor_buf(&ab, (teamdb_get_name_2(cs->teamdb_state, clar.j_from))), out_f);
 fwrite(csp_str24, 1, 7, out_f);
 
-#line 92 "priv_clar_page.csp"
+#line 77 "priv_clar_page.csp"
 }
   } else {
 fwrite(csp_str11, 1, 1, out_f);
 
-#line 94 "priv_clar_page.csp"
+#line 79 "priv_clar_page.csp"
 snprintf(b1, sizeof(b1), "uid == %d", clar.from);
 fwrite(csp_str11, 1, 1, out_f);
 fwrite(csp_str25, 1, 5, out_f);
@@ -265,29 +267,29 @@ fwrite(csp_str28, 1, 1, out_f);
 fputs("</a>", out_f);
 fwrite(csp_str29, 1, 6, out_f);
 
-#line 99 "priv_clar_page.csp"
+#line 84 "priv_clar_page.csp"
 }
 fwrite(csp_str30, 1, 15, out_f);
 fputs(_("To"), out_f);
 fwrite(csp_str20, 1, 7, out_f);
 
-#line 102 "priv_clar_page.csp"
+#line 87 "priv_clar_page.csp"
 if (!clar.to && !clar.from) {
 fwrite(csp_str21, 1, 8, out_f);
 fputs(_("all"), out_f);
 fwrite(csp_str22, 1, 10, out_f);
 
-#line 104 "priv_clar_page.csp"
+#line 89 "priv_clar_page.csp"
 } else if (!clar.to) {
 fwrite(csp_str21, 1, 8, out_f);
 fputs(_("judges"), out_f);
 fwrite(csp_str22, 1, 10, out_f);
 
-#line 106 "priv_clar_page.csp"
+#line 91 "priv_clar_page.csp"
 } else {
 fwrite(csp_str11, 1, 1, out_f);
 
-#line 107 "priv_clar_page.csp"
+#line 92 "priv_clar_page.csp"
 snprintf(b1, sizeof(b1), "uid == %d", clar.to);
 fwrite(csp_str11, 1, 1, out_f);
 fwrite(csp_str25, 1, 5, out_f);
@@ -307,11 +309,11 @@ fwrite(csp_str28, 1, 1, out_f);
 fputs("</a>", out_f);
 fwrite(csp_str29, 1, 6, out_f);
 
-#line 112 "priv_clar_page.csp"
+#line 97 "priv_clar_page.csp"
 }
 fwrite(csp_str31, 1, 7, out_f);
 
-#line 114 "priv_clar_page.csp"
+#line 99 "priv_clar_page.csp"
 if (clar.in_reply_to > 0) {
 fwrite(csp_str11, 1, 1, out_f);
 fwrite(csp_str12, 1, 3, out_f);
@@ -329,7 +331,7 @@ fprintf(out_f, "%d", (int)(clar.in_reply_to - 1));
 fputs("</a>", out_f);
 fwrite(csp_str17, 1, 11, out_f);
 
-#line 119 "priv_clar_page.csp"
+#line 104 "priv_clar_page.csp"
 }
 fwrite(csp_str18, 1, 9, out_f);
 fputs(_("Locale code"), out_f);
@@ -341,23 +343,23 @@ fwrite(csp_str16, 1, 10, out_f);
 fputs(html_armor_buf(&ab, (clar_subj)), out_f);
 fwrite(csp_str32, 1, 26, out_f);
 
-#line 124 "priv_clar_page.csp"
+#line 109 "priv_clar_page.csp"
 if (clar_get_text(cs->clarlog_state, clar_id, &msg_txt, &msg_len) < 0) {
 fwrite(csp_str33, 1, 24, out_f);
 fputs(_("Cannot read message text!"), out_f);
 fwrite(csp_str34, 1, 14, out_f);
 
-#line 126 "priv_clar_page.csp"
+#line 111 "priv_clar_page.csp"
 } else {
 fwrite(csp_str35, 1, 6, out_f);
 fputs(html_armor_buf(&ab, (msg_txt)), out_f);
 fwrite(csp_str36, 1, 7, out_f);
 
-#line 128 "priv_clar_page.csp"
+#line 113 "priv_clar_page.csp"
 }
 fwrite(csp_str11, 1, 1, out_f);
 
-#line 129 "priv_clar_page.csp"
+#line 114 "priv_clar_page.csp"
 if (phr->role >= USER_ROLE_JUDGE && clar.from
       && opcaps_check(phr->caps, OPCAP_REPLY_MESSAGE) >= 0) {
 fwrite(csp_str37, 1, 7, out_f);
@@ -389,13 +391,13 @@ fwrite(csp_str40, 1, 5, out_f);
 fputs("</form>", out_f);
 fwrite(csp_str11, 1, 1, out_f);
 
-#line 142 "priv_clar_page.csp"
+#line 127 "priv_clar_page.csp"
 }
 fwrite(csp_str41, 1, 6, out_f);
 write_copyright_short(out_f);
 fwrite(csp_str42, 1, 17, out_f);
 
-#line 145 "priv_clar_page.csp"
+#line 130 "priv_clar_page.csp"
 l10n_setlocale(0);
 
 
