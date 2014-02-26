@@ -1756,6 +1756,15 @@ parse_declr(
         int anon_allowed,
         DeclrHelper **p_head,
         TypeInfo **p_ident);
+static int
+parse_full_declr(
+        ScannerState *ss,
+        TypeContext *cntx,
+        int quiet_mode,
+        int anon_allowed,
+        TypeInfo *ds,
+        TypeInfo **p_type,
+        TypeInfo **p_id);
 
 static int
 try_declr(
@@ -1767,6 +1776,28 @@ try_declr(
     TypeInfo *p_ident = NULL;
     int ret = parse_declr(ss, cntx, 1, 1, NULL, &p_ident);
     if (ret >= 0 && !IS_OPER(ss, ')')) ret = -1;
+    restore_scanner_state(ss, sss);
+    destroy_saved_state(sss);
+    return ret;
+}
+
+static int
+try_type(
+        ScannerState *ss,
+        TypeContext *cntx)
+{
+    SavedScannerState *sss = save_scanner_state(ss);
+    next_token(ss);
+
+    TypeInfo *ds = NULL;
+    TypeInfo *id = NULL;
+    int ret = parse_declspec(ss, cntx, 1, &ds);
+    if (ret >= 0 && !IS_OPER(ss, ')')) {
+        ret = parse_full_declr(ss, cntx, 1, 1, ds, &ds, &id);
+        if (ret >= 0 && !IS_OPER(ss, ')')) {
+            ret = -1;
+        }
+    }
     restore_scanner_state(ss, sss);
     destroy_saved_state(sss);
     return ret;
@@ -1975,7 +2006,6 @@ parse_full_declr(
         TypeInfo *ds,
         TypeInfo **p_type,
         TypeInfo **p_id)
-
 {
     DeclrHelper *head = NULL;
     XCALLOC(head, 1);
@@ -2398,7 +2428,7 @@ parse_expression_14(ScannerState *ss, TypeContext *cntx, TypeInfo **p_info)
         return 0;
     } else if (ss->token == TOK_IDENT && tc_get_ident(cntx, ss->raw) == kwd_sizeof) {
         next_token(ss);
-        if (IS_OPER(ss, '(') && try_declr(ss, cntx) >= 0) {
+        if (IS_OPER(ss, '(') && try_type(ss, cntx) >= 0) {
             if ((r = parse_cast(ss, cntx, 0, &t)) < 0) return r;
         } else {
             if ((r = parse_expression(ss, cntx, &t)) < 0) return r;
@@ -2420,7 +2450,7 @@ parse_expression_13(ScannerState *ss, TypeContext *cntx, TypeInfo **p_info)
 {
     int r = 0;
     TypeInfo *t = NULL;
-    if (IS_OPER(ss, '(') && try_declr(ss, cntx) >= 0) {
+    if (IS_OPER(ss, '(') && try_type(ss, cntx) >= 0) {
         if ((r = parse_cast(ss, cntx, 0, &t)) < 0) return r;
         if ((r = parse_expression_13(ss, cntx, NULL)) < 0) return r;
         if (p_info) *p_info = t;
@@ -3370,7 +3400,12 @@ handle_textfield_open(
         input_type = "hidden";
     }
 
-    HtmlAttribute *disabled_attr = html_element_find_attribute(elem, "disabled");
+    if (html_element_find_attribute(elem, "disabled")) {
+        parser_error_2(ps, "use disabledExpr instead of disabled");
+        return -1;
+    }
+
+    HtmlAttribute *disabled_attr = html_element_find_attribute(elem, "disabledExpr");
 
     fprintf(prg_f, "fputs(\"<input type=\\\"%s\\\" name=\\\"%s\\\"", input_type, name_attr->value);
     HtmlAttribute *size_attr = html_element_find_attribute(elem, "size");
@@ -3423,6 +3458,37 @@ handle_checkbox_open(
         FILE *txt_f,
         FILE *prg_f)
 {
+    // <s:checkbox name="NAME" value="VALUE" checkedExpr="CHECKED-EXPR" disabledExpr="DISABLED-EXPR" />
+    HtmlElement *elem = ps->el_stack->el;
+
+    HtmlAttribute *name_attr = html_element_find_attribute(elem, "name");
+    if (!name_attr) {
+        parser_error_2(ps, "<s:checkbox> element requires 'name' attribute");
+        return -1;
+    }
+    HtmlAttribute *value_attr = html_element_find_attribute(elem, "value");
+    const unsigned char *value_str = "1";
+    if (value_attr) {
+        value_str = value_attr->value;
+    }
+
+    fprintf(prg_f, "fputs(\"<checkbox name=\\\"%s\\\" value=\\\"%s\\\"\", out_f);\n", name_attr->value, value_str);
+    HtmlAttribute *checked_attr = html_element_find_attribute(elem, "checkedExpr");
+    if (checked_attr) {
+        fprintf(prg_f,
+                "if (%s) {\n"
+                "fputs(\" checked=\\\"checked\\\"\", out_f);\n"
+                "}\n", checked_attr->value);
+    }
+    HtmlAttribute *disabled_attr = html_element_find_attribute(elem, "disabledExpr");
+    if (disabled_attr) {
+        fprintf(prg_f,
+                "if (%s) {\n"
+                "fputs(\" disabled=\\\"disabled\\\"\", out_f);\n"
+                "}\n", disabled_attr->value);
+    }
+    fprintf(prg_f, "fputs(\" />\", out_f);\n");
+
     return 0;
 }
 
@@ -3454,18 +3520,16 @@ handle_tr_close(
     return 0;
 }
 
-/*
-static int
-handle_textfield_open(
+struct ElementInfo
+{
+    const unsigned char *name;
+    int (*open_func)(
         FILE *log_f,
         TypeContext *cntx,
         ProcessorState *ps,
         FILE *txt_f,
-        FILE *prg_f)
-
-
-static int
-handle_form_close(
+        FILE *prg_f);
+    int (*close_func)(
         FILE *log_f,
         TypeContext *cntx,
         ProcessorState *ps,
@@ -3473,15 +3537,7 @@ handle_form_close(
         FILE *prg_f,
         unsigned char *mem,
         int beg_i,
-        int end_i)
-
- */
-
-struct ElementInfo
-{
-    const unsigned char *name;
-    int (*open_func)(FILE *log_f, TypeContext *cntx, ProcessorState *ps, FILE *txt_f, FILE *prg_f);
-    int (*close_func)(FILE *log_f, TypeContext *cntx, ProcessorState *ps, FILE *txt_f, FILE *prg_f, unsigned char *mem, int beg_i, int end_i);
+        int end_i);
 };
 
 static const struct ElementInfo element_handlers[] =
@@ -3535,19 +3591,17 @@ handle_html_element_close(
         int beg_i,
         int end_i)
 {
-    if (!strcmp(ps->el_stack->el->name, "s:tr")) {
-        emit_str_literal(prg_f, mem + beg_i, end_i - beg_i);
-        fprintf(prg_f, "), out_f);\n");
-    } else if (!strcmp(ps->el_stack->el->name, "s:a")) {
-        handle_a_close(log_f, cntx, ps, txt_f, prg_f, mem, beg_i, end_i);
-    } else if (!strcmp(ps->el_stack->el->name, "s:form")) {
-        handle_form_close(log_f, cntx, ps, txt_f, prg_f, mem, beg_i, end_i);
-    } else if (!strcmp(ps->el_stack->el->name, "s:url")) {
-        handle_url_close(log_f, cntx, ps, txt_f, prg_f, mem, beg_i, end_i);
-    } else {
-        parser_error_2(ps, "unhandled element");
+    for (int i = 0; element_handlers[i].name; ++i) {
+        if (!strcmp(ps->el_stack->el->name, element_handlers[i].name)) {
+            if (!element_handlers[i].close_func) {
+                parser_error_2(ps, "</%s> element is not allowed", element_handlers[i].name);
+                return -1;
+            }
+            return element_handlers[i].close_func(log_f, cntx, ps, txt_f, prg_f, mem, beg_i, end_i);
+        }
     }
-    return 0;
+    parser_error_2(ps, "unhandled element");
+    return -1;
 }
 
 static void
@@ -3609,6 +3663,21 @@ int_type_handler(
 {
     // handle "format"?
     fprintf(prg_f, "fprintf(out_f, \"%%d\", (int)(%s));\n", text);
+}
+
+static void
+unsigned_type_handler(
+        FILE *log_f,
+        TypeContext *cntx,
+        struct ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f,
+        const unsigned char *text,
+        const HtmlElement *elem,
+        TypeInfo *type_info)
+{
+    // handle "format"?
+    fprintf(prg_f, "fprintf(out_f, \"%%u\", (unsigned)(%s));\n", text);
 }
 
 static void
@@ -3912,8 +3981,13 @@ process_unit(
     processor_state_set_type_handler(ps, tc_get_i16_type(cntx), int_type_handler);
     processor_state_set_type_handler(ps, tc_get_u16_type(cntx), int_type_handler);
     processor_state_set_type_handler(ps, tc_get_i32_type(cntx), int_type_handler);
+    processor_state_set_type_handler(ps, tc_get_u32_type(cntx), unsigned_type_handler);
     processor_state_set_type_handler(ps, tc_get_i64_type(cntx), long_long_type_handler);
+    processor_state_set_type_handler(ps, tc_find_typedef_type(cntx, tc_get_ident(cntx, "rint16_t")),
+                                     int_type_handler);
     processor_state_set_type_handler(ps, tc_find_typedef_type(cntx, tc_get_ident(cntx, "time_t")),
+                                     time_t_type_handler);
+    processor_state_set_type_handler(ps, tc_find_typedef_type(cntx, tc_get_ident(cntx, "ej_time64_t")),
                                      time_t_type_handler);
     processor_state_set_type_handler(ps, tc_find_typedef_type(cntx, tc_get_ident(cntx, "size_t")),
                                      size_t_type_handler);
