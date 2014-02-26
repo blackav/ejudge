@@ -1,0 +1,18 @@
+<%
+#include "new-server.h"
+#include "new_server_proto.h"
+#include "external_action.h"
+#include "clarlog.h"
+#include "misctext.h"
+#include "runlog.h"
+#include "l10n.h"
+#include "prepare.h"
+#include "xml_utils.h"
+#include "teamdb.h"
+#include "copyright.h"
+
+#include "reuse/xalloc.h"
+
+#include <libintl.h>
+#define _(x) gettext(x)
+%>

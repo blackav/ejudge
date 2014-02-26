@@ -1,21 +1,6 @@
 <%
 /* $Id$ */
-#include "new-server.h"
-#include "new_server_proto.h"
-#include "external_action.h"
-#include "clarlog.h"
-#include "misctext.h"
-#include "runlog.h"
-#include "l10n.h"
-#include "prepare.h"
-#include "xml_utils.h"
-#include "teamdb.h"
-#include "copyright.h"
-
-#include "reuse/xalloc.h"
-
-#include <libintl.h>
-#define _(x) gettext(x)
+%><%@include "priv_includes.csp"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@set getter_name = "csp_get_priv_clar_page"
 %><%@page csp_view_priv_clar_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)

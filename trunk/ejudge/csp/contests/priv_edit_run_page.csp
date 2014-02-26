@@ -1,5 +1,6 @@
 <%
 /* $Id$ */
+%><%@include "priv_includes.csp"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@set getter_name = "csp_get_priv_edit_run_page"
 %><%@page csp_view_priv_edit_run_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
@@ -14,6 +15,7 @@
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   const unsigned char *s;
   const unsigned char *dis = "";
+  int run_id = 0;
 
   if (ns_cgi_param(phr, "run_id", &s) <= 0
       || sscanf(s, "%d%n", &run_id, &n) != 1 || s[n]
@@ -65,7 +67,7 @@
 </s:url>
 <h2><s:tr>Run</s:tr> <s:v value="run_id" /> [<s:a url="ViewSourceUrl"><s:tr>Source</s:tr></s:a>]</h2>
 <s:form>
-<s:hidden name="action" value="NEW_SRV_ACTION_PRIV_EDIT_RUN_ACTION" />
+<s:hidden name="action" value="0" zzvalue="(int) NEW_SRV_ACTION_PRIV_EDIT_RUN_ACTION" />
 <s:hidden name="run_id" />
 <%  unsigned char *cl = " class=\"b0\""; %>
 <table class="b0">
@@ -87,7 +89,7 @@
     snprintf(buf, sizeof(buf), "#%d", info.user_id);
     str = buf;
   } %>
-<tr><td class="b0"><s:tr>User login/ID</s:tr></td><td class="b0"><s:textfield name="user" size="20" value="str" disabled="info.is_readonly" /></td></tr>
+<tr><td class="b0"><s:tr>User login/ID</s:tr></td><td class="b0"><s:textfield name="user" size="20" value="str" disabledExpr="info.is_readonly" /></td></tr>
 <%  if ((str = teamdb_get_name(cs->teamdb_state, info.user_id))) { %>
 <tr><td class="b0"><s:tr>User name</s:tr></td><td class="b0"><s:v value="str" /></td></tr>
 <%  } %>
@@ -189,9 +191,8 @@
             cl, html_input_text(hbuf, sizeof(hbuf), "score_adj", 20, info.is_readonly, "%d", info.score_adj));
   }
 %>
-  fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n", cl, "Marked",
-          cl, html_checkbox(hbuf, sizeof(hbuf), "is_marked", "1", info.is_marked, info.is_readonly));
-
+<s:checkbox name="is_marked" checkedExpr="info.is_marked" disabledExpr="info.is_readonly" />
+<%
   if (global->separate_user_score > 0) {
     fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n", cl, "Has saved score",
             cl, html_checkbox(hbuf, sizeof(hbuf), "is_saved", "1", info.is_saved, info.is_readonly));
@@ -223,53 +224,34 @@
               cl, html_input_text(hbuf, sizeof(hbuf), "saved_score", 20, info.is_readonly, "%s", buf));
     }
   }
+%>
+<tr><td class="b0">IP:</td><td class="b0"><s:textfield name="ip" size="20" disabledExpr="info.is_readonly" value="info.a.ip" /></td></tr>
+<tr><td class="b0">SSL:</td><td class="b0"><s:checkbox name="ssl_flag" checkedExpr="info.ssl_flag" disabledExpr="info.is_readonly" /></td></tr>
+<tr><td class="b0">Size:</td><td class="b0"><s:textfield name="size" size="20" disabledExpr="info.is_readonly" value="info.size" /></td></tr>
+<tr><td class="b0">SHA1:</td><td class="b0"><s:textfield name="sha1" size="60" disabledExpr="info.is_readonly" escape="false" value="unparse_sha1(info.sha1)" /></td></tr>
+<% #if CONF_HAS_LIBUUID - 0 != 0 %>
+<tr><td class="b0">UUID:</td><td class="b0"><s:textfield name="sha1" size="60" disabledExpr="info.is_readonly" escape="false" value='ej_uuid_unparse(info.run_uuid, "")' /></td></tr>
+<% #endif %>
+<%  if (!info.lang_id) { %>
+<tr><td class="b0">Content type:</td><td class="b0"><s:textfield name="mime_type" size="60" disabledExpr="info.is_readonly" value="mime_type_get_type(info.mime_type)" /></td></tr>
+<%  } %>
+<tr><td class="b0">Hidden:</td><td class="b0"><s:checkbox name="is_hidden" checkedExpr="info.is_hidden" disabledExpr="info.is_readonly" /></td></tr>
+<tr><td class="b0">Imported:</td><td class="b0"><s:checkbox name="is_imported" checkedExpr="info.is_imported" disabledExpr="info.is_readonly" /></td></tr>
+<tr><td class="b0">Read-only:</td><td class="b0"><s:checkbox name="is_readonly" checkedExpr="info.is_readonly" /></td></tr>
 
-  fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n", cl, "IP",
-          cl, html_input_text(hbuf, sizeof(hbuf), "ip", 20, info.is_readonly,
-                              "%s", xml_unparse_ip(info.a.ip)));
-  fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n", cl, "SSL",
-          cl, html_checkbox(hbuf, sizeof(hbuf), "ssl_flag", "1", info.ssl_flag, info.is_readonly));
-  fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n", cl, "Size",
-          cl, html_input_text(hbuf, sizeof(hbuf), "size", 20, info.is_readonly,
-                              "%d", (int) info.size));
-  fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n", cl, "SHA1",
-          cl, html_input_text(hbuf, sizeof(hbuf), "sha1", 60, info.is_readonly,
-                              "%s", unparse_sha1(info.sha1)));
+<tr><td class="b0">Locale ID:</td><td class="b0"><s:textfield name="locale_id" size="20" disabledExpr="info.is_readonly" value="info.locale_id" /></td></tr>
+<%  if (global->enable_printing > 0) { %>
+<tr><td class="b0">Pages printed:</td><td class="b0"><s:textfield name="pages" size="20" disabledExpr="info.is_readonly" value="(int) info.pages" /></td></tr>
+<%  } %>
+<table>
 
-#if CONF_HAS_LIBUUID - 0 != 0
-  fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n", cl, "UUID",
-          cl, html_input_text(hbuf, sizeof(hbuf), "uuid", 60, info.is_readonly,
-                              "%s", ej_uuid_unparse(info.run_uuid, "")));
-#endif
-
-  if (!info.lang_id) {
-    fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n", cl, "Content type",
-            cl, html_input_text(hbuf, sizeof(hbuf), "mime_type", 60, info.is_readonly,
-                                "%s", ARMOR(mime_type_get_type(info.mime_type))));
-  }
-
-  fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n", cl, "Hidden",
-          cl, html_checkbox(hbuf, sizeof(hbuf), "is_hidden", "1", info.is_hidden, info.is_readonly));
-  fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n", cl, "Imported",
-          cl, html_checkbox(hbuf, sizeof(hbuf), "is_imported", "1", info.is_imported, info.is_readonly));
-  fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n", cl, "Read-only",
-          cl, html_checkbox(hbuf, sizeof(hbuf), "is_readonly", "1", info.is_readonly, 0));
-
-  fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n", cl, "Locale ID",
-          cl, html_input_text(hbuf, sizeof(hbuf), "locale_id", 20, info.is_readonly,
-                              "%d", info.locale_id));
-  if (global->enable_printing > 0) {
-    fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n", cl, "Pages printed",
-            cl, html_input_text(hbuf, sizeof(hbuf), "pages", 20, info.is_readonly,
-                                "%d", info.pages));
-  }
-  fprintf(f, "</table>\n");
-
-  fprintf(f, "<table%s><tr>\n", cl);
-  fprintf(f, "<td%s><input type=\"submit\" name=\"save\" value=\"Save\" /></td>", cl);
-  fprintf(f, "<td%s><input type=\"submit\" name=\"cancel\" value=\"Cancel\" /></td>", cl);
-  fprintf(f, "</tr></table>\n");  
-  fprintf(f, "</form>\n");
+<table class="b0">
+<tr>
+<td class="b0"><s:submit name="save" value='"Save"' /></td>
+<td class="b0"><s:submit name="cancel" value='"Cancel"' /></td>
+</tr>
+</table>
+</form>
 %><%@include "priv_footer.csp"
 %><%
   l10n_setlocale(0);

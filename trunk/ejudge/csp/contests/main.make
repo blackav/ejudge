@@ -36,6 +36,7 @@ TARGETDIR = ${libexecdir}/ejudge/csp/contests
 SOFILES = \
  priv_clar_page.so\
  priv_download_runs_confirmation_page.so\
+ priv_edit_run_page.so\
  priv_login_page.so\
  priv_main_page.so\
  priv_view_users_page.so\
