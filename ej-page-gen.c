@@ -3520,6 +3520,95 @@ handle_tr_close(
     return 0;
 }
 
+static int
+handle_option_open(
+        FILE *log_f,
+        TypeContext *cntx,
+        ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f)
+{
+    HtmlElement *elem = ps->el_stack->el;
+
+    fprintf(prg_f, "fputs(\"<option\", out_f);\n");
+    HtmlAttribute *selected_attr = html_element_find_attribute(elem, "selectedexpr");
+    if (selected_attr) {
+        fprintf(prg_f,
+                "if (%s) {\n"
+                "fputs(\" selected=\\\"selected\\\"\", out_f);\n"
+                "}\n", selected_attr->value);
+    }
+    HtmlAttribute *value_attr = html_element_find_attribute(elem, "value");
+    TypeInfo *value_type = NULL;
+    if (value_attr) {
+        fprintf(prg_f, "fputs(\" value=\\\"\", out_f);\n");
+        parse_c_expression(ps, cntx, log_f, value_attr->value, &value_type, ps->pos);
+        processor_state_invoke_type_handler(log_f, cntx, ps, txt_f, prg_f, value_attr->value, elem, value_type);
+        fprintf(prg_f, "fputs(\"\\\"\", out_f);\n");
+    }
+    fprintf(prg_f, "fputs(\">\", out_f);\n");
+    return 0;
+}
+
+static int
+handle_option_close(
+        FILE *log_f,
+        TypeContext *cntx,
+        ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f,
+        unsigned char *mem,
+        int beg_i,
+        int end_i)
+{
+    handle_html_text(prg_f, txt_f, log_f, mem, beg_i, end_i);
+    fprintf(prg_f, "fputs(\"</option>\", out_f);\n");
+    return 0;
+}
+
+static int
+handle_select_open(
+        FILE *log_f,
+        TypeContext *cntx,
+        ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f)
+{
+    HtmlElement *elem = ps->el_stack->el;
+
+    HtmlAttribute *name_attr = html_element_find_attribute(elem, "name");
+    if (!name_attr) {
+        parser_error_2(ps, "<s:select> element requires 'name' attribute");
+        return -1;
+    }
+    fprintf(prg_f, "fputs(\"<select name=\\\"%s\\\"\", out_f);\n", name_attr->value);
+    HtmlAttribute *disabled_attr = html_element_find_attribute(elem, "disabledexpr");
+    if (disabled_attr) {
+        fprintf(prg_f,
+                "if (%s) {\n"
+                "fputs(\" disabled=\\\"disabled\\\"\", out_f);\n"
+                "}\n", disabled_attr->value);
+    }
+    fprintf(prg_f, "fputs(\">\", out_f);\n");
+    return 0;
+}
+
+static int
+handle_select_close(
+        FILE *log_f,
+        TypeContext *cntx,
+        ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f,
+        unsigned char *mem,
+        int beg_i,
+        int end_i)
+{
+    handle_html_text(prg_f, txt_f, log_f, mem, beg_i, end_i);
+    fprintf(prg_f, "fputs(\"</select>\", out_f);\n");
+    return 0;
+}
+
 struct ElementInfo
 {
     const unsigned char *name;
@@ -3555,6 +3644,8 @@ static const struct ElementInfo element_handlers[] =
     { "s:password", handle_textfield_open, NULL },
     { "s:hidden", handle_textfield_open, NULL },
     { "s:checkbox", handle_checkbox_open, NULL },
+    { "s:select", handle_select_open, handle_select_close },
+    { "s:option", handle_option_open, handle_option_close },
 
     { NULL, NULL, NULL },
 };
@@ -3984,6 +4075,8 @@ process_unit(
     processor_state_set_type_handler(ps, tc_get_u32_type(cntx), unsigned_type_handler);
     processor_state_set_type_handler(ps, tc_get_i64_type(cntx), long_long_type_handler);
     processor_state_set_type_handler(ps, tc_find_typedef_type(cntx, tc_get_ident(cntx, "rint16_t")),
+                                     int_type_handler);
+    processor_state_set_type_handler(ps, tc_find_typedef_type(cntx, tc_get_ident(cntx, "rint32_t")),
                                      int_type_handler);
     processor_state_set_type_handler(ps, tc_find_typedef_type(cntx, tc_get_ident(cntx, "time_t")),
                                      time_t_type_handler);
