@@ -1,18 +1,8 @@
 <%
 /* $Id$ */
-#include "new-server.h"
-#include "external_action.h"
-#include "copyright.h"
-#include "l10n.h"
-#include "new_server_proto.h"
-
-#include "reuse/xalloc.h"
-
+%><%@include "priv_includes.csp"
+%><%
 #define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
-#define BUTTON(a) ns_submit_button(bb, sizeof(bb), 0, a, 0)
-
-#include <libintl.h>
-#define _(x) gettext(x)
 
 int
 ns_parse_run_mask(

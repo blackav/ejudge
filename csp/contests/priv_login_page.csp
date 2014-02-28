@@ -1,15 +1,7 @@
 <%
 /* $Id$ */
-#include "external_action.h"
-#include "misctext.h"
-#include "copyright.h"
-#include "mischtml.h"
-#include "new-server.h"
-#include "l10n.h"
-
-#include <libintl.h>
-#define _(x) gettext(x)
-
+%><%@include "priv_includes.csp"
+%><%
 void
 html_role_select(FILE *fout, int role, int allow_admin,
                  const unsigned char *var_name);
