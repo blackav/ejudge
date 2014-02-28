@@ -1,10 +1,24 @@
 <%
 /* $Id$ */
 %><%@include "priv_includes.csp"
+%><%
+#include "ej_uuid.h"
+#include "mime_type.h"
+
+#define ARMOR(s)  html_armor_buf(&ab, (s))
+void
+ns_write_run_view_menu(
+        FILE *f, struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        int run_id);
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@set getter_name = "csp_get_priv_edit_run_page"
 %><%@page csp_view_priv_edit_run_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 %><%
+  struct contest_extra *extra = phr->extra;
+  serve_state_t cs = extra->serve_state;
+  const struct contest_desc *cnts = phr->cnts;
   const struct section_global_data *global = cs->global;
   const struct section_problem_data *prob = NULL;
   const struct section_language_data *lang = NULL;
@@ -14,19 +28,20 @@
   const unsigned char *str = NULL;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   const unsigned char *s;
-  const unsigned char *dis = "";
-  int run_id = 0;
+  const unsigned char *sep;
+  int run_id = 0, prob_id, lang_id;
+  int n;
 
   if (ns_cgi_param(phr, "run_id", &s) <= 0
       || sscanf(s, "%d%n", &run_id, &n) != 1 || s[n]
       || run_id < 0 || run_id >= run_get_total(cs->runlog_state)) {
-    ns_html_err_inv_param(fout, phr, 1, "cannot parse run_id");
+    ns_html_err_inv_param(out_f, phr, 1, "cannot parse run_id");
     return -1;
   }
 
   if (opcaps_check(phr->caps, OPCAP_EDIT_RUN) < 0) {
     ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
-    goto cleanup;
+    goto done;
   }
 
   if (run_id < 0 || run_id >= run_get_total(cs->runlog_state)) {
@@ -48,7 +63,7 @@
   snprintf(title, sizeof(title), "%s %d", _("Editing run"), run_id);
 %><@include "priv_header.csp"
 %><%
-  ns_write_run_view_menu(f, phr, cnts, extra, run_id);
+  ns_write_run_view_menu(out_f, phr, cnts, extra, run_id);
 
   if (global->is_virtual) {
     start_time = run_get_virtual_start_time(cs->runlog_state, info.user_id);
@@ -59,8 +74,6 @@
   run_time = info.time;
   if (run_time < 0) run_time = 0;
   if (run_time < start_time) run_time = start_time;
-
-  if (info.is_readonly > 0) dis = " disabled=\"disabled\"";
 %>
 <s:url name="ViewSourceUrl" ac="view-source">
   <s:param name="run_id" value="run_id" />
@@ -93,65 +106,60 @@
 <%  if ((str = teamdb_get_name(cs->teamdb_state, info.user_id))) { %>
 <tr><td class="b0"><s:tr>User name</s:tr></td><td class="b0"><s:v value="str" /></td></tr>
 <%  } %>
+<tr><td class="b0">Prob name/ID</td><td class="b0"><s:select name="prob" disabledExpr="info.is_readonly">
 <%
-  fprintf(f, "<tr><td%s>%s:</td><td%s><select name=\"prob\"%s>", cl, "Prob name/ID", cl, dis);
   if (info.prob_id <= 0 || info.prob_id > cs->max_prob || !(prob = cs->probs[info.prob_id])) {
-    fprintf(f, "<option value=\"%d\" selected=\"selected\">#%d</option>",
-            info.prob_id, info.prob_id);
+%>
+<s:option value="info.prob_id" selectedExpr="1">#<s:v value="info.prob_id" /></s:option>
+<%
   }
-  for (int prob_id = 1; prob_id <= cs->max_prob; ++prob_id) {
+  for (prob_id = 1; prob_id <= cs->max_prob; ++prob_id) {
     if (cs->probs[prob_id]) {
-      s = "";
-      if (info.prob_id == prob_id) s = " selected=\"selected\"";
-      fprintf(f, "<option value=\"%d\"%s>%s - %s</option>",
-              prob_id, s, cs->probs[prob_id]->short_name,
-              ARMOR(cs->probs[prob_id]->long_name));
+%>
+<s:option value="prob_id" selectedExpr="info.prob_id == prob_id"><s:v value="cs->probs[prob_id]->short_name" escape="0" /> - <s:v value="cs->probs[prob_id]->long_name" /></s:option>
+<%
     }
   }
-  fprintf(f, "</select></td></tr>\n");
-
+%>
+</s:select></td><tr>
+<%
   if (prob && prob->variant_num > 0) {
     str = "";
     if (info.variant > 0) {
       snprintf(buf, sizeof(buf), "%d", info.variant);
       str = buf;
     }
-    fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n", cl, "Variant",
+    fprintf(out_f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n", cl, "Variant",
             cl, html_input_text(hbuf, sizeof(hbuf), "variant", 20, info.is_readonly, "%s", str));
   }
-
-  fprintf(f, "<tr><td%s>%s:</td><td%s><select name=\"lang\"%s>", cl, "Lang name/ID", cl, dis);
+%>
+<tr><td class="b0">Lang name/ID</td><td class="b0"><s:select name="lang" disabledExpr="info.is_readonly">
+<%
   if (info.lang_id == 0) {
-    fprintf(f, "<option value=\"0\" selected=\"selected\"></option>");
+%>
+<option value="0" selected="selected"></option>
+<%
     str = "";
   } else if (info.lang_id < 0 || info.lang_id > cs->max_lang || !(lang = cs->langs[info.lang_id])) {
-    fprintf(f, "<option value=\"%d\" selected=\"selected\">#%d</option>", info.lang_id, info.lang_id);
+%>
+<s:option value="info.lang_id" selectedExpr="1">#<s:v value="info.lang_id" /></s:option>
+<%
   }
-  for (int lang_id = 1; lang_id <= cs->max_lang; ++lang_id) {
+  for (lang_id = 1; lang_id <= cs->max_lang; ++lang_id) {
     if (cs->langs[lang_id]) {
-      s = "";
-      if (info.lang_id == lang_id) s = " selected=\"selected\"";
-      fprintf(f, "<option value=\"%d\"%s>%s - %s</option>",
-              lang_id, s, cs->langs[lang_id]->short_name,
-              ARMOR(cs->langs[lang_id]->long_name));
+%>
+<s:option value="lang_id" selectedExpr="info.lang_id == lang_id"><s:v escape="0" value="cs->langs[lang_id]->short_name" /> - <s:v value="cs->langs[lang_id]->long_name" /></s:option>
+<%
     }
   }
-  fprintf(f, "</select></td></tr>\n");
 %>
-
-<%
-  fprintf(f, "<tr><td%s>%s:</td><td%s><select name=\"eoln_type\"%s>",
-          cl, "EOLN Type", cl, dis);
-  fprintf(f, "<option value=\"0\"></option>");
-  s = "";
-  if (info.eoln_type == 1) s = " selected=\"selected\"";
-  fprintf(f, "<option value=\"1\"%s>LF (Unix/MacOS)</option>", s);
-  s = "";
-  if (info.eoln_type == 2) s = " selected=\"selected\"";
-  fprintf(f, "<option value=\"2\"%s>CRLF (Windows/DOS)</option>", s);
-  fprintf(f, "</select></td></tr>\n");
-%>
-<tr><td class="b0"><s:tr>Status</s:tr></td><% write_change_status_dialog(cs, f, NULL, info.is_imported, "b0", info.status, info.is_readonly); %></tr>
+</s:select></td></tr>
+<tr><td class="b0">EOLN Type</td><td class="b0"><s:select name="eoln_type" disabledExpr="info.is_readonly">
+<option value="0"></option>
+<s:option value="1" selectedExpr="info.eoln_type == 1">LF (Unix/MacOS)</s:option>
+<s:option value="2" selectedExpr="info.eoln_type == 2">CRLF (Windows/DOS)</s:option>
+</s:select></td></tr>
+<tr><td class="b0"><s:tr>Status</s:tr></td><% write_change_status_dialog(cs, out_f, NULL, info.is_imported, "b0", info.status, info.is_readonly); %></tr>
 <%
   buf[0] = 0;
   if (info.passed_mode > 0) {
@@ -174,7 +182,7 @@
       abort();
     }
   }
-  fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n", cl, s,
+  fprintf(out_f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n", cl, s,
           cl, html_input_text(hbuf, sizeof(hbuf), "test", 20, info.is_readonly, "%s", buf));
 %>
 <%
@@ -184,22 +192,22 @@
     if (info.score >= 0) {
       snprintf(buf, sizeof(buf), "%d", info.score);
     }
-    fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n", cl, "Score",
+    fprintf(out_f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n", cl, "Score",
             cl, html_input_text(hbuf, sizeof(hbuf), "score", 20, info.is_readonly, "%s", buf));
 
-    fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n", cl, "Score adjustment",
+    fprintf(out_f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n", cl, "Score adjustment",
             cl, html_input_text(hbuf, sizeof(hbuf), "score_adj", 20, info.is_readonly, "%d", info.score_adj));
   }
 %>
 <s:checkbox name="is_marked" checkedExpr="info.is_marked" disabledExpr="info.is_readonly" />
 <%
   if (global->separate_user_score > 0) {
-    fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n", cl, "Has saved score",
+    fprintf(out_f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n", cl, "Has saved score",
             cl, html_checkbox(hbuf, sizeof(hbuf), "is_saved", "1", info.is_saved, info.is_readonly));
-    fprintf(f, "<tr><td%s>%s:</td>", cl, "Saved status");
-    write_change_status_dialog(cs, f, "saved_status", info.is_imported, "b0", info.saved_status,
+    fprintf(out_f, "<tr><td%s>%s:</td>", cl, "Saved status");
+    write_change_status_dialog(cs, out_f, "saved_status", info.is_imported, "b0", info.saved_status,
                                info.is_readonly);
-    fprintf(f, "</tr>\n");
+    fprintf(out_f, "</tr>\n");
     buf[0] = 0;
     if (global->score_system == SCORE_KIROV || global->score_system == SCORE_OLYMPIAD) {
       snprintf(buf, sizeof(buf), "%d", info.saved_test);
@@ -212,7 +220,7 @@
     } else {
       abort();
     }
-    fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n", cl, s,
+    fprintf(out_f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n", cl, s,
             cl, html_input_text(hbuf, sizeof(hbuf), "saved_test", 20, info.is_readonly, "%s", buf));
     if (global->score_system == SCORE_KIROV || global->score_system == SCORE_OLYMPIAD
         || global->score_system == SCORE_MOSCOW) {
@@ -220,7 +228,7 @@
       if (info.saved_score >= 0) {
         snprintf(buf, sizeof(buf), "%d", info.saved_score);
       }
-      fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n", cl, "Saved score",
+      fprintf(out_f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n", cl, "Saved score",
               cl, html_input_text(hbuf, sizeof(hbuf), "saved_score", 20, info.is_readonly, "%s", buf));
     }
   }
@@ -257,5 +265,4 @@
   l10n_setlocale(0);
 done:;
   html_armor_free(&ab);
-}
 %>

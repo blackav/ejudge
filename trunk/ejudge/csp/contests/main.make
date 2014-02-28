@@ -60,11 +60,12 @@ po : contests.po
 contests.po : $(CFILES)
 	${XGETTEXT} -d ejudge --no-location --foreign-user  -k_ -k__ -s -o $@ *.c
 
-priv_login_page.c : priv_login_page.csp priv_header.csp priv_footer.csp
-priv_main_page.c : priv_main_page.csp priv_header.csp priv_footer.csp
-priv_view_users_page.c : priv_view_users_page.csp priv_header.csp priv_footer.csp
-priv_view_priv_users_page.c : priv_view_priv_users_page.csp priv_header.csp priv_footer.csp
-priv_download_runs_confirmation_page.c : priv_download_runs_confirmation_page.csp priv_header.csp priv_footer.csp
+priv_login_page.c : priv_login_page.csp priv_includes.csp priv_header.csp priv_footer.csp
+priv_main_page.c : priv_main_page.csp priv_includes.csp priv_header.csp priv_footer.csp
+priv_view_users_page.c : priv_view_users_page.csp priv_includes.csp priv_header.csp priv_footer.csp
+priv_view_priv_users_page.c : priv_view_priv_users_page.csp priv_includes.csp priv_header.csp priv_footer.csp
+priv_download_runs_confirmation_page.c : priv_download_runs_confirmation_page.csp priv_includes.csp priv_header.csp priv_footer.csp
+priv_edit_run_page.c: priv_edit_run_page.csp priv_includes.csp priv_header.csp priv_footer.csp
 
 %.c : %.csp
 	../../ej-page-gen $< > $@
