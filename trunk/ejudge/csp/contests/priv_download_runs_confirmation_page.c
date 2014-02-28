@@ -43,19 +43,29 @@ static const unsigned char csp_str38[18] = "\n</body>\n</html>\n";
 
 #line 2 "priv_download_runs_confirmation_page.csp"
 /* $Id$ */
+
+#line 2 "priv_includes.csp"
 #include "new-server.h"
-#include "external_action.h"
-#include "copyright.h"
-#include "l10n.h"
 #include "new_server_proto.h"
+#include "external_action.h"
+#include "clarlog.h"
+#include "misctext.h"
+#include "runlog.h"
+#include "l10n.h"
+#include "prepare.h"
+#include "xml_utils.h"
+#include "teamdb.h"
+#include "copyright.h"
+#include "mischtml.h"
+#include "html.h"
 
 #include "reuse/xalloc.h"
 
-#define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
-#define BUTTON(a) ns_submit_button(bb, sizeof(bb), 0, a, 0)
-
 #include <libintl.h>
 #define _(x) gettext(x)
+
+#line 5 "priv_download_runs_confirmation_page.csp"
+#define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
 
 int
 ns_parse_run_mask(
@@ -84,7 +94,7 @@ csp_get_priv_download_runs_confirmation_page(void)
 int csp_view_priv_download_runs_confirmation_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 {
 
-#line 28 "priv_download_runs_confirmation_page.csp"
+#line 18 "priv_download_runs_confirmation_page.csp"
 //const serve_state_t cs = extra->serve_state;
   struct contest_extra *extra = phr->extra;
   int retval = 0;
@@ -221,7 +231,7 @@ fwrite(csp_str37, 1, 6, out_f);
 write_copyright_short(out_f);
 fwrite(csp_str38, 1, 17, out_f);
 
-#line 98 "priv_download_runs_confirmation_page.csp"
+#line 88 "priv_download_runs_confirmation_page.csp"
 l10n_setlocale(0);
 
  cleanup:

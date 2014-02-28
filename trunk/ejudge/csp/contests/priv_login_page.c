@@ -20,16 +20,28 @@ static const unsigned char csp_str15[18] = "\n</body>\n</html>\n";
 
 #line 2 "priv_login_page.csp"
 /* $Id$ */
+
+#line 2 "priv_includes.csp"
+#include "new-server.h"
+#include "new_server_proto.h"
 #include "external_action.h"
+#include "clarlog.h"
 #include "misctext.h"
+#include "runlog.h"
+#include "l10n.h"
+#include "prepare.h"
+#include "xml_utils.h"
+#include "teamdb.h"
 #include "copyright.h"
 #include "mischtml.h"
-#include "new-server.h"
-#include "l10n.h"
+#include "html.h"
+
+#include "reuse/xalloc.h"
 
 #include <libintl.h>
 #define _(x) gettext(x)
 
+#line 5 "priv_login_page.csp"
 void
 html_role_select(FILE *fout, int role, int allow_admin,
                  const unsigned char *var_name);
@@ -53,7 +65,7 @@ csp_get_priv_login_page(void)
 int csp_view_priv_login_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 {
 
-#line 21 "priv_login_page.csp"
+#line 13 "priv_login_page.csp"
 //const struct contest_desc *cnts = phr->cnts;
   struct contest_extra *extra = phr->extra;
   const unsigned char *s;
@@ -65,7 +77,7 @@ int csp_view_priv_login_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct
   unsigned char hbuf[1024];
   const unsigned char *title = _("Login page");
 
-#line 32 "priv_login_page.csp"
+#line 24 "priv_login_page.csp"
 ns_cgi_param(phr, "login", &login);
   ns_cgi_param(phr, "password", &password);
 
@@ -145,13 +157,13 @@ fwrite(csp_str11, 1, 19, out_f);
 fputs(_("Role"), out_f);
 fwrite(csp_str10, 1, 10, out_f);
 
-#line 52 "priv_login_page.csp"
+#line 44 "priv_login_page.csp"
 html_role_select(out_f, phr->role, 1, 0);
 fwrite(csp_str11, 1, 19, out_f);
 fputs(_("Language"), out_f);
 fwrite(csp_str10, 1, 10, out_f);
 
-#line 53 "priv_login_page.csp"
+#line 45 "priv_login_page.csp"
 l10n_html_locale_select(out_f, phr->locale_id);
 fwrite(csp_str12, 1, 34, out_f);
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_MAIN_PAGE, _("Submit")), out_f);
@@ -161,7 +173,7 @@ fwrite(csp_str14, 1, 6, out_f);
 write_copyright_short(out_f);
 fwrite(csp_str15, 1, 17, out_f);
 
-#line 58 "priv_login_page.csp"
+#line 50 "priv_login_page.csp"
 l10n_setlocale(0);
   html_armor_free(&ab);
   return 0;

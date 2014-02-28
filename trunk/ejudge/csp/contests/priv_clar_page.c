@@ -60,6 +60,8 @@ static const unsigned char csp_str42[18] = "\n</body>\n</html>\n";
 #include "xml_utils.h"
 #include "teamdb.h"
 #include "copyright.h"
+#include "mischtml.h"
+#include "html.h"
 
 #include "reuse/xalloc.h"
 

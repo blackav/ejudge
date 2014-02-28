@@ -121,20 +121,23 @@ static const unsigned char csp_str116[18] = "\n</body>\n</html>\n";
 
 #line 2 "priv_main_page.csp"
 /* $Id$ */
+
+#line 2 "priv_includes.csp"
 #include "new-server.h"
-#include "contests.h"
-#include "prepare.h"
-#include "mischtml.h"
-#include "misctext.h"
-#include "l10n.h"
-#include "xml_utils.h"
-#include "runlog.h"
+#include "new_server_proto.h"
 #include "external_action.h"
+#include "clarlog.h"
+#include "misctext.h"
+#include "runlog.h"
+#include "l10n.h"
+#include "prepare.h"
+#include "xml_utils.h"
+#include "teamdb.h"
 #include "copyright.h"
+#include "mischtml.h"
+#include "html.h"
 
 #include "reuse/xalloc.h"
-
-#include <stdio.h>
 
 #include <libintl.h>
 #define _(x) gettext(x)
@@ -158,7 +161,7 @@ csp_get_priv_main_page(void)
 int csp_view_priv_main_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 {
 
-#line 25 "priv_main_page.csp"
+#line 8 "priv_main_page.csp"
 const struct contest_desc *cnts = phr->cnts;
   struct contest_extra *extra = phr->extra;
   int need_examiners = 0;
@@ -195,7 +198,7 @@ const struct contest_desc *cnts = phr->cnts;
   time_t server_start_time = nsf_get_server_start_time(phr->fw_state);
   const unsigned char *title = _("Main page");
 
-#line 61 "priv_main_page.csp"
+#line 44 "priv_main_page.csp"
 if (ns_cgi_param(phr, "filter_expr", &s) > 0) filter_expr = s;
 
   ns_cgi_param_int_opt_2(phr, "filter_first_run", &filter_first_run, &filter_first_run_set);
@@ -280,7 +283,7 @@ fputs(_("View examination information"), out_f);
 fputs("</a>", out_f);
 fwrite(csp_str13, 1, 10, out_f);
 
-#line 106 "priv_main_page.csp"
+#line 89 "priv_main_page.csp"
 if (need_examiners) {
 fwrite(csp_str14, 1, 13, out_f);
 fputs(ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_EXAMINERS_PAGE, 0), out_f);
@@ -288,7 +291,7 @@ fputs(_("Examiners assignments"), out_f);
 fputs("</a>", out_f);
 fwrite(csp_str13, 1, 10, out_f);
 
-#line 108 "priv_main_page.csp"
+#line 91 "priv_main_page.csp"
 }
 fwrite(csp_str15, 1, 9, out_f);
 fputs(ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_STANDINGS, 0), out_f);
@@ -296,7 +299,7 @@ fputs(_("View standings"), out_f);
 fputs("</a>", out_f);
 fwrite(csp_str13, 1, 10, out_f);
 
-#line 110 "priv_main_page.csp"
+#line 93 "priv_main_page.csp"
 if (phr->role >= USER_ROLE_JUDGE && opcaps_check(phr->caps, OPCAP_EDIT_PASSWD) >= 0) {
 fwrite(csp_str14, 1, 13, out_f);
 fputs(ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_REG_PWDS, 0), out_f);
@@ -304,7 +307,7 @@ fputs(_("View registration passwords"), out_f);
 fputs("</a>", out_f);
 fwrite(csp_str16, 1, 14, out_f);
 
-#line 112 "priv_main_page.csp"
+#line 95 "priv_main_page.csp"
 if (!cnts->disable_team_password) {
 fwrite(csp_str17, 1, 17, out_f);
 fputs(ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_CNTS_PWDS, 0), out_f);
@@ -312,15 +315,15 @@ fputs(_("View contest passwords"), out_f);
 fputs("</a>", out_f);
 fwrite(csp_str16, 1, 14, out_f);
 
-#line 114 "priv_main_page.csp"
+#line 97 "priv_main_page.csp"
 }
 fwrite(csp_str18, 1, 5, out_f);
 
-#line 115 "priv_main_page.csp"
+#line 98 "priv_main_page.csp"
 }
 fwrite(csp_str18, 1, 5, out_f);
 
-#line 116 "priv_main_page.csp"
+#line 99 "priv_main_page.csp"
 if (phr->role >= USER_ROLE_JUDGE && opcaps_check(phr->caps, OPCAP_DUMP_USERS) >= 0) {
 fwrite(csp_str14, 1, 13, out_f);
 fputs(ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_USER_DUMP, 0), out_f);
@@ -328,11 +331,11 @@ fputs(_("Dump users in CSV format"), out_f);
 fputs("</a>", out_f);
 fwrite(csp_str13, 1, 10, out_f);
 
-#line 118 "priv_main_page.csp"
+#line 101 "priv_main_page.csp"
 }
 fwrite(csp_str18, 1, 5, out_f);
 
-#line 119 "priv_main_page.csp"
+#line 102 "priv_main_page.csp"
 if (phr->role >= USER_ROLE_JUDGE && opcaps_check(phr->caps, OPCAP_DUMP_RUNS) >= 0) {
 fwrite(csp_str14, 1, 13, out_f);
 fputs(ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_RUNS_DUMP, 0), out_f);
@@ -352,7 +355,7 @@ fputs(_("Write runs in XML internal format with source"), out_f);
 fputs("</a>", out_f);
 fwrite(csp_str13, 1, 10, out_f);
 
-#line 124 "priv_main_page.csp"
+#line 107 "priv_main_page.csp"
 }
 fwrite(csp_str15, 1, 9, out_f);
 fputs(ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_ASSIGN_CYPHERS_1, 0), out_f);
@@ -372,7 +375,7 @@ fputs(_("View testing queue"), out_f);
 fputs("</a>", out_f);
 fwrite(csp_str13, 1, 10, out_f);
 
-#line 129 "priv_main_page.csp"
+#line 112 "priv_main_page.csp"
 if (phr->role >= USER_ROLE_ADMIN) {
 fwrite(csp_str14, 1, 13, out_f);
 fputs(ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_ADMIN_CONTEST_SETTINGS, 0), out_f);
@@ -380,11 +383,11 @@ fputs(_("Contest settings"), out_f);
 fputs("</a>", out_f);
 fwrite(csp_str13, 1, 10, out_f);
 
-#line 131 "priv_main_page.csp"
+#line 114 "priv_main_page.csp"
 }
 fwrite(csp_str18, 1, 5, out_f);
 
-#line 132 "priv_main_page.csp"
+#line 115 "priv_main_page.csp"
 if (cnts->problems_url) {
 fwrite(csp_str20, 1, 22, out_f);
 fputs((cnts->problems_url), out_f);
@@ -392,7 +395,7 @@ fwrite(csp_str21, 1, 18, out_f);
 fputs(_("Problems"), out_f);
 fwrite(csp_str22, 1, 9, out_f);
 
-#line 134 "priv_main_page.csp"
+#line 117 "priv_main_page.csp"
 }
 fwrite(csp_str15, 1, 9, out_f);
 fputs(ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_PRIV_SUBMIT_PAGE, 0), out_f);
@@ -406,7 +409,7 @@ fwrite(csp_str23, 1, 44, out_f);
 fputs(_("Server status"), out_f);
 fwrite(csp_str24, 1, 7, out_f);
 
-#line 141 "priv_main_page.csp"
+#line 124 "priv_main_page.csp"
 if (stop_time > 0 && !global->is_virtual) {
     if (duration > 0 && global->board_fog_time > 0
         && global->board_unfog_time > 0
@@ -428,7 +431,7 @@ fwrite(csp_str25, 1, 13, out_f);
 fputs((s), out_f);
 fwrite(csp_str26, 1, 16, out_f);
 
-#line 162 "priv_main_page.csp"
+#line 145 "priv_main_page.csp"
 if (global->score_system == SCORE_OLYMPIAD && !global->is_virtual) {
     if (cs->accepting_mode)
       s = _("Participants' solutions are being accepted");
@@ -440,103 +443,103 @@ fwrite(csp_str27, 1, 12, out_f);
 fputs((s), out_f);
 fwrite(csp_str28, 1, 15, out_f);
 
-#line 171 "priv_main_page.csp"
+#line 154 "priv_main_page.csp"
 }
 fwrite(csp_str29, 1, 2, out_f);
 
-#line 173 "priv_main_page.csp"
+#line 156 "priv_main_page.csp"
 if (cs->upsolving_mode) {
 fwrite(csp_str27, 1, 12, out_f);
 fputs(_("Upsolving mode"), out_f);
 fwrite(csp_str28, 1, 15, out_f);
 
-#line 175 "priv_main_page.csp"
+#line 158 "priv_main_page.csp"
 }
 fwrite(csp_str29, 1, 2, out_f);
 
-#line 177 "priv_main_page.csp"
+#line 160 "priv_main_page.csp"
 if (cs->clients_suspended) {
 fwrite(csp_str27, 1, 12, out_f);
 fputs(_("Participants\' requests are suspended"), out_f);
 fwrite(csp_str28, 1, 15, out_f);
 
-#line 179 "priv_main_page.csp"
+#line 162 "priv_main_page.csp"
 }
 fwrite(csp_str29, 1, 2, out_f);
 
-#line 181 "priv_main_page.csp"
+#line 164 "priv_main_page.csp"
 if (cs->testing_suspended) {
 fwrite(csp_str27, 1, 12, out_f);
 fputs(_("Testing of participants\' submits is suspended"), out_f);
 fwrite(csp_str28, 1, 15, out_f);
 
-#line 183 "priv_main_page.csp"
+#line 166 "priv_main_page.csp"
 }
 fwrite(csp_str30, 1, 1, out_f);
 
-#line 184 "priv_main_page.csp"
+#line 167 "priv_main_page.csp"
 if (cs->printing_suspended) {
 fwrite(csp_str27, 1, 12, out_f);
 fputs(_("Print requests are suspended"), out_f);
 fwrite(csp_str28, 1, 15, out_f);
 
-#line 186 "priv_main_page.csp"
+#line 169 "priv_main_page.csp"
 }
 fwrite(csp_str30, 1, 1, out_f);
 
-#line 187 "priv_main_page.csp"
+#line 170 "priv_main_page.csp"
 if (cs->online_view_source < 0) {
 fwrite(csp_str27, 1, 12, out_f);
 fputs(_("Source code is closed"), out_f);
 fwrite(csp_str28, 1, 15, out_f);
 
-#line 189 "priv_main_page.csp"
+#line 172 "priv_main_page.csp"
 } else if (cs->online_view_source > 0) {
 fwrite(csp_str27, 1, 12, out_f);
 fputs(_("Source code is open"), out_f);
 fwrite(csp_str28, 1, 15, out_f);
 
-#line 191 "priv_main_page.csp"
+#line 174 "priv_main_page.csp"
 }
 fwrite(csp_str30, 1, 1, out_f);
 
-#line 192 "priv_main_page.csp"
+#line 175 "priv_main_page.csp"
 if (cs->online_view_report < 0) {
 fwrite(csp_str27, 1, 12, out_f);
 fputs(_("Testing reports are closed"), out_f);
 fwrite(csp_str28, 1, 15, out_f);
 
-#line 194 "priv_main_page.csp"
+#line 177 "priv_main_page.csp"
 } else if (cs->online_view_report > 0) {
 fwrite(csp_str27, 1, 12, out_f);
 fputs(_("Testing reports are open"), out_f);
 fwrite(csp_str28, 1, 15, out_f);
 
-#line 196 "priv_main_page.csp"
+#line 179 "priv_main_page.csp"
 }
 fwrite(csp_str30, 1, 1, out_f);
 
-#line 197 "priv_main_page.csp"
+#line 180 "priv_main_page.csp"
 if (cs->online_view_judge_score > 0) {
 fwrite(csp_str27, 1, 12, out_f);
 fputs(_("Judge scores are opened"), out_f);
 fwrite(csp_str28, 1, 15, out_f);
 
-#line 199 "priv_main_page.csp"
+#line 182 "priv_main_page.csp"
 }
 fwrite(csp_str30, 1, 1, out_f);
 
-#line 200 "priv_main_page.csp"
+#line 183 "priv_main_page.csp"
 if (cs->online_final_visibility > 0) {
 fwrite(csp_str27, 1, 12, out_f);
 fputs(_("Final visibility rules are active"), out_f);
 fwrite(csp_str28, 1, 15, out_f);
 
-#line 202 "priv_main_page.csp"
+#line 185 "priv_main_page.csp"
 }
 fwrite(csp_str29, 1, 2, out_f);
 
-#line 205 "priv_main_page.csp"
+#line 188 "priv_main_page.csp"
 // count online users
   online_users = 0;
   for (i = 0; i < extra->user_access[USER_ROLE_CONTESTANT].u; i++) {
@@ -549,7 +552,7 @@ fwrite(csp_str31, 1, 2, out_f);
 fprintf(out_f, "%d", (int)(online_users));
 fwrite(csp_str28, 1, 15, out_f);
 
-#line 213 "priv_main_page.csp"
+#line 196 "priv_main_page.csp"
 if (cs->max_online_count > 0) {
 fwrite(csp_str27, 1, 12, out_f);
 fputs(_("Max number of users was"), out_f);
@@ -559,11 +562,11 @@ fwrite(csp_str5, 1, 2, out_f);
 fputs(xml_unparse_date((cs->max_online_time)), out_f);
 fwrite(csp_str28, 1, 15, out_f);
 
-#line 215 "priv_main_page.csp"
+#line 198 "priv_main_page.csp"
 }
 fwrite(csp_str29, 1, 2, out_f);
 
-#line 217 "priv_main_page.csp"
+#line 200 "priv_main_page.csp"
 if (job_count > 0) {
 fwrite(csp_str32, 1, 7, out_f);
 fputs(_("Background jobs"), out_f);
@@ -571,7 +574,7 @@ fwrite(csp_str31, 1, 2, out_f);
 fprintf(out_f, "%d", (int)(job_count));
 fwrite(csp_str33, 1, 28, out_f);
 
-#line 220 "priv_main_page.csp"
+#line 203 "priv_main_page.csp"
 for (job = nsf_get_first_job(phr->fw_state); job; job = job->next) {
 fwrite(csp_str34, 1, 20, out_f);
 fprintf(out_f, "%d", (int)(job->id));
@@ -581,7 +584,7 @@ fwrite(csp_str36, 1, 21, out_f);
 fputs((job->title), out_f);
 fwrite(csp_str37, 1, 21, out_f);
 
-#line 222 "priv_main_page.csp"
+#line 205 "priv_main_page.csp"
 if (job->vt->get_status) {
         unsigned char *str = job->vt->get_status(job);
         if (str && *str) {
@@ -589,29 +592,29 @@ fwrite(csp_str30, 1, 1, out_f);
 fputs((s), out_f);
 fwrite(csp_str30, 1, 1, out_f);
 
-#line 226 "priv_main_page.csp"
+#line 209 "priv_main_page.csp"
 } else {
 fwrite(csp_str38, 1, 8, out_f);
 
-#line 228 "priv_main_page.csp"
+#line 211 "priv_main_page.csp"
 }
         xfree(str);
       } else {
 fwrite(csp_str38, 1, 8, out_f);
 
-#line 232 "priv_main_page.csp"
+#line 215 "priv_main_page.csp"
 }
 fwrite(csp_str39, 1, 12, out_f);
 
-#line 234 "priv_main_page.csp"
+#line 217 "priv_main_page.csp"
 }
 fwrite(csp_str40, 1, 10, out_f);
 
-#line 236 "priv_main_page.csp"
+#line 219 "priv_main_page.csp"
 }
 fwrite(csp_str29, 1, 2, out_f);
 
-#line 238 "priv_main_page.csp"
+#line 221 "priv_main_page.csp"
 if (phr->role == USER_ROLE_ADMIN && opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST) >= 0) {
 fwrite(csp_str30, 1, 1, out_f);
 fputs("<form method=\"post\" enctype=\"application/x-www-form-urlencoded\" action=\"", out_f);
@@ -624,7 +627,7 @@ fwrite(csp_str42, 1, 10, out_f);
 fputs(xml_unparse_date((cs->current_time)), out_f);
 fwrite(csp_str43, 1, 41, out_f);
 
-#line 242 "priv_main_page.csp"
+#line 225 "priv_main_page.csp"
 if (start_time <= 0) {
 fwrite(csp_str44, 1, 24, out_f);
 fputs(_("Contest is not started"), out_f);
@@ -632,7 +635,7 @@ fwrite(csp_str45, 1, 28, out_f);
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_START_CONTEST, NULL), out_f);
 fwrite(csp_str46, 1, 11, out_f);
 
-#line 244 "priv_main_page.csp"
+#line 227 "priv_main_page.csp"
 } else {
 fwrite(csp_str47, 1, 9, out_f);
 fputs(_("Contest start time"), out_f);
@@ -640,52 +643,52 @@ fwrite(csp_str42, 1, 10, out_f);
 fputs(xml_unparse_date((start_time)), out_f);
 fwrite(csp_str48, 1, 21, out_f);
 
-#line 246 "priv_main_page.csp"
+#line 229 "priv_main_page.csp"
 if (stop_time <= 0) {
 fwrite(csp_str49, 1, 5, out_f);
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_STOP_CONTEST, NULL), out_f);
 fwrite(csp_str46, 1, 11, out_f);
 
-#line 248 "priv_main_page.csp"
+#line 231 "priv_main_page.csp"
 } else if (global->enable_continue
                  && (!duration || stop_time < start_time + duration)) {
 fwrite(csp_str49, 1, 5, out_f);
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_CONTINUE_CONTEST, NULL), out_f);
 fwrite(csp_str46, 1, 11, out_f);
 
-#line 251 "priv_main_page.csp"
+#line 234 "priv_main_page.csp"
 }
 fwrite(csp_str30, 1, 1, out_f);
 
-#line 252 "priv_main_page.csp"
+#line 235 "priv_main_page.csp"
 }
 fwrite(csp_str29, 1, 2, out_f);
 
-#line 254 "priv_main_page.csp"
+#line 237 "priv_main_page.csp"
 if (!global->is_virtual && start_time <= 0) {
 fwrite(csp_str47, 1, 9, out_f);
 fputs(_("Planned start time"), out_f);
 fwrite(csp_str50, 1, 11, out_f);
 
-#line 256 "priv_main_page.csp"
+#line 239 "priv_main_page.csp"
 if (sched_time <= 0) {
 fputs(_("Not set"), out_f);
 
-#line 256 "priv_main_page.csp"
+#line 239 "priv_main_page.csp"
 } else {
 fputs(xml_unparse_date((sched_time)), out_f);
 
-#line 256 "priv_main_page.csp"
+#line 239 "priv_main_page.csp"
 }
 fwrite(csp_str51, 1, 67, out_f);
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_SCHEDULE, NULL), out_f);
 fwrite(csp_str46, 1, 11, out_f);
 
-#line 258 "priv_main_page.csp"
+#line 241 "priv_main_page.csp"
 }
 fwrite(csp_str29, 1, 2, out_f);
 
-#line 261 "priv_main_page.csp"
+#line 244 "priv_main_page.csp"
 if (finish_time <= 0) {
       if (duration > 0) {
         duration_str(0, duration, 0, duration_buf, 0);
@@ -698,21 +701,21 @@ fwrite(csp_str42, 1, 10, out_f);
 fputs((duration_buf), out_f);
 fwrite(csp_str52, 1, 6, out_f);
 
-#line 269 "priv_main_page.csp"
+#line 252 "priv_main_page.csp"
 if ((stop_time <= 0 || global->enable_continue) && !global->is_virtual) {
 fwrite(csp_str53, 1, 55, out_f);
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_CHANGE_DURATION, NULL), out_f);
 fwrite(csp_str46, 1, 11, out_f);
 
-#line 271 "priv_main_page.csp"
+#line 254 "priv_main_page.csp"
 } else {
 fwrite(csp_str54, 1, 37, out_f);
 
-#line 273 "priv_main_page.csp"
+#line 256 "priv_main_page.csp"
 }
 fwrite(csp_str29, 1, 2, out_f);
 
-#line 275 "priv_main_page.csp"
+#line 258 "priv_main_page.csp"
 if (duration <= 0 && (stop_time <= 0 || global->enable_continue)
           && !global->is_virtual) {
 fwrite(csp_str47, 1, 9, out_f);
@@ -721,12 +724,12 @@ fwrite(csp_str55, 1, 84, out_f);
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_CHANGE_FINISH_TIME, NULL), out_f);
 fwrite(csp_str46, 1, 11, out_f);
 
-#line 278 "priv_main_page.csp"
+#line 261 "priv_main_page.csp"
 }
     }
 fwrite(csp_str29, 1, 2, out_f);
 
-#line 282 "priv_main_page.csp"
+#line 265 "priv_main_page.csp"
 if (!global->is_virtual) {
       if (start_time > 0 && stop_time <= 0 && duration > 0) {
         tmpt = start_time + duration;
@@ -736,7 +739,7 @@ fwrite(csp_str42, 1, 10, out_f);
 fputs(xml_unparse_date((tmpt)), out_f);
 fwrite(csp_str46, 1, 11, out_f);
 
-#line 286 "priv_main_page.csp"
+#line 269 "priv_main_page.csp"
 } else if (start_time > 0 && stop_time <= 0 && duration <= 0
                  && finish_time > 0) {
 fwrite(csp_str47, 1, 9, out_f);
@@ -747,7 +750,7 @@ fwrite(csp_str56, 1, 68, out_f);
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_CHANGE_FINISH_TIME, NULL), out_f);
 fwrite(csp_str46, 1, 11, out_f);
 
-#line 289 "priv_main_page.csp"
+#line 272 "priv_main_page.csp"
 } else if (stop_time) {
 fwrite(csp_str47, 1, 9, out_f);
 fputs(_("End time"), out_f);
@@ -755,11 +758,11 @@ fwrite(csp_str42, 1, 10, out_f);
 fputs(xml_unparse_date((stop_time)), out_f);
 fwrite(csp_str46, 1, 11, out_f);
 
-#line 291 "priv_main_page.csp"
+#line 274 "priv_main_page.csp"
 }
 fwrite(csp_str30, 1, 1, out_f);
 
-#line 292 "priv_main_page.csp"
+#line 275 "priv_main_page.csp"
 if (start_time > 0 && stop_time <= 0 && fog_start_time > 0) {
 fwrite(csp_str47, 1, 9, out_f);
 fputs(_("Standings freeze time"), out_f);
@@ -767,7 +770,7 @@ fwrite(csp_str42, 1, 10, out_f);
 fputs(xml_unparse_date((fog_start_time)), out_f);
 fwrite(csp_str46, 1, 11, out_f);
 
-#line 294 "priv_main_page.csp"
+#line 277 "priv_main_page.csp"
 } else if (stop_time > 0 && duration > 0 && global->board_fog_time > 0
                  && global->board_unfog_time > 0 && !cs->standings_updated
                  && cs->current_time < stop_time + global->board_unfog_time) {
@@ -778,11 +781,11 @@ fwrite(csp_str42, 1, 10, out_f);
 fputs(xml_unparse_date((tmpt)), out_f);
 fwrite(csp_str46, 1, 11, out_f);
 
-#line 299 "priv_main_page.csp"
+#line 282 "priv_main_page.csp"
 }
 fwrite(csp_str29, 1, 2, out_f);
 
-#line 301 "priv_main_page.csp"
+#line 284 "priv_main_page.csp"
 if (start_time > 0 && stop_time <= 0 && duration > 0) {
         duration_str(0, cs->current_time, start_time, duration_buf, 0);
 fwrite(csp_str47, 1, 9, out_f);
@@ -791,7 +794,7 @@ fwrite(csp_str42, 1, 10, out_f);
 fputs((duration_buf), out_f);
 fwrite(csp_str46, 1, 11, out_f);
 
-#line 304 "priv_main_page.csp"
+#line 287 "priv_main_page.csp"
 duration_str(0, start_time + duration - cs->current_time, 0,
                      duration_buf, 0);
 fwrite(csp_str47, 1, 9, out_f);
@@ -800,7 +803,7 @@ fwrite(csp_str42, 1, 10, out_f);
 fputs((duration_buf), out_f);
 fwrite(csp_str46, 1, 11, out_f);
 
-#line 308 "priv_main_page.csp"
+#line 291 "priv_main_page.csp"
 }
     }
 fwrite(csp_str47, 1, 9, out_f);
@@ -824,21 +827,21 @@ fwrite(csp_str30, 1, 1, out_f);
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_RESET_1, NULL), out_f);
 fwrite(csp_str30, 1, 1, out_f);
 
-#line 319 "priv_main_page.csp"
+#line 302 "priv_main_page.csp"
 action = NEW_SRV_ACTION_SUSPEND;
     if (cs->clients_suspended) action = NEW_SRV_ACTION_RESUME;
 fwrite(csp_str30, 1, 1, out_f);
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, (action), NULL), out_f);
 fwrite(csp_str30, 1, 1, out_f);
 
-#line 322 "priv_main_page.csp"
+#line 305 "priv_main_page.csp"
 action = NEW_SRV_ACTION_TEST_SUSPEND;
     if (cs->testing_suspended) action = NEW_SRV_ACTION_TEST_RESUME;
 fwrite(csp_str30, 1, 1, out_f);
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, (action), NULL), out_f);
 fwrite(csp_str30, 1, 1, out_f);
 
-#line 326 "priv_main_page.csp"
+#line 309 "priv_main_page.csp"
 if (global->enable_printing) {
       action = NEW_SRV_ACTION_PRINT_SUSPEND;
       if (cs->printing_suspended) action = NEW_SRV_ACTION_PRINT_RESUME;
@@ -846,11 +849,11 @@ fwrite(csp_str30, 1, 1, out_f);
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, (action), NULL), out_f);
 fwrite(csp_str30, 1, 1, out_f);
 
-#line 330 "priv_main_page.csp"
+#line 313 "priv_main_page.csp"
 }
 fwrite(csp_str30, 1, 1, out_f);
 
-#line 331 "priv_main_page.csp"
+#line 314 "priv_main_page.csp"
 if (global->score_system == SCORE_OLYMPIAD && !global->is_virtual) {
       action = NEW_SRV_ACTION_SET_JUDGING_MODE;
       if (!cs->accepting_mode) action = NEW_SRV_ACTION_SET_ACCEPTING_MODE;
@@ -858,11 +861,11 @@ fwrite(csp_str30, 1, 1, out_f);
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, (action), NULL), out_f);
 fwrite(csp_str30, 1, 1, out_f);
 
-#line 335 "priv_main_page.csp"
+#line 318 "priv_main_page.csp"
 }
 fwrite(csp_str30, 1, 1, out_f);
 
-#line 336 "priv_main_page.csp"
+#line 319 "priv_main_page.csp"
 if (global->score_system == SCORE_OLYMPIAD
         && ((!global->is_virtual && !cs->accepting_mode)
             || (global->is_virtual && global->disable_virtual_auto_judge >0))) {
@@ -873,11 +876,11 @@ fwrite(csp_str30, 1, 1, out_f);
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, (action), NULL), out_f);
 fwrite(csp_str30, 1, 1, out_f);
 
-#line 343 "priv_main_page.csp"
+#line 326 "priv_main_page.csp"
 }
 fwrite(csp_str30, 1, 1, out_f);
 
-#line 344 "priv_main_page.csp"
+#line 327 "priv_main_page.csp"
 if (!cnts->disable_team_password) {
 fwrite(csp_str30, 1, 1, out_f);
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_GENERATE_PASSWORDS_1, NULL), out_f);
@@ -885,7 +888,7 @@ fwrite(csp_str30, 1, 1, out_f);
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_CLEAR_PASSWORDS_1, NULL), out_f);
 fwrite(csp_str30, 1, 1, out_f);
 
-#line 347 "priv_main_page.csp"
+#line 330 "priv_main_page.csp"
 }
 fwrite(csp_str30, 1, 1, out_f);
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_GENERATE_REG_PASSWORDS_1, NULL), out_f);
@@ -897,7 +900,7 @@ fwrite(csp_str30, 1, 1, out_f);
 fputs("</form>", out_f);
 fwrite(csp_str30, 1, 1, out_f);
 
-#line 352 "priv_main_page.csp"
+#line 335 "priv_main_page.csp"
 } else {
 fwrite(csp_str41, 1, 28, out_f);
 fputs(_("Server time"), out_f);
@@ -905,13 +908,13 @@ fwrite(csp_str42, 1, 10, out_f);
 fputs(xml_unparse_date((cs->current_time)), out_f);
 fwrite(csp_str43, 1, 41, out_f);
 
-#line 355 "priv_main_page.csp"
+#line 338 "priv_main_page.csp"
 if (start_time <= 0) {
 fwrite(csp_str44, 1, 24, out_f);
 fputs(_("Contest is not started"), out_f);
 fwrite(csp_str61, 1, 15, out_f);
 
-#line 357 "priv_main_page.csp"
+#line 340 "priv_main_page.csp"
 } else {
 fwrite(csp_str47, 1, 9, out_f);
 fputs(_("Contest start time"), out_f);
@@ -919,33 +922,33 @@ fwrite(csp_str42, 1, 10, out_f);
 fputs(xml_unparse_date((start_time)), out_f);
 fwrite(csp_str46, 1, 11, out_f);
 
-#line 359 "priv_main_page.csp"
+#line 342 "priv_main_page.csp"
 }
 fwrite(csp_str29, 1, 2, out_f);
 
-#line 361 "priv_main_page.csp"
+#line 344 "priv_main_page.csp"
 if (!global->is_virtual && start_time <= 0) {
 fwrite(csp_str47, 1, 9, out_f);
 fputs(_("Planned start time"), out_f);
 fwrite(csp_str50, 1, 11, out_f);
 
-#line 363 "priv_main_page.csp"
+#line 346 "priv_main_page.csp"
 if (sched_time <= 0) {
 fputs(_("Not set"), out_f);
 
-#line 363 "priv_main_page.csp"
+#line 346 "priv_main_page.csp"
 } else {
 fputs(xml_unparse_date((sched_time)), out_f);
 
-#line 363 "priv_main_page.csp"
+#line 346 "priv_main_page.csp"
 }
 fwrite(csp_str39, 1, 12, out_f);
 
-#line 365 "priv_main_page.csp"
+#line 348 "priv_main_page.csp"
 }
 fwrite(csp_str30, 1, 1, out_f);
 
-#line 367 "priv_main_page.csp"
+#line 350 "priv_main_page.csp"
 if (finish_time <= 0) {
       if (duration > 0) {
         duration_str(0, duration, 0, duration_buf, 0);
@@ -958,11 +961,11 @@ fwrite(csp_str42, 1, 10, out_f);
 fputs((duration_buf), out_f);
 fwrite(csp_str46, 1, 11, out_f);
 
-#line 375 "priv_main_page.csp"
+#line 358 "priv_main_page.csp"
 }
 fwrite(csp_str29, 1, 2, out_f);
 
-#line 377 "priv_main_page.csp"
+#line 360 "priv_main_page.csp"
 if (!global->is_virtual) {
       if (start_time > 0 && stop_time <= 0 && duration > 0) {
         tmpt = start_time + duration;
@@ -972,7 +975,7 @@ fwrite(csp_str42, 1, 10, out_f);
 fputs(xml_unparse_date((tmpt)), out_f);
 fwrite(csp_str46, 1, 11, out_f);
 
-#line 381 "priv_main_page.csp"
+#line 364 "priv_main_page.csp"
 } else if (start_time > 0 && stop_time <= 0 && duration <= 0
                  && finish_time > 0) {
 fwrite(csp_str47, 1, 9, out_f);
@@ -981,7 +984,7 @@ fwrite(csp_str42, 1, 10, out_f);
 fputs(xml_unparse_date((finish_time)), out_f);
 fwrite(csp_str46, 1, 11, out_f);
 
-#line 384 "priv_main_page.csp"
+#line 367 "priv_main_page.csp"
 } else if (stop_time) {
 fwrite(csp_str47, 1, 9, out_f);
 fputs(_("End time"), out_f);
@@ -989,11 +992,11 @@ fwrite(csp_str42, 1, 10, out_f);
 fputs(xml_unparse_date((stop_time)), out_f);
 fwrite(csp_str46, 1, 11, out_f);
 
-#line 386 "priv_main_page.csp"
+#line 369 "priv_main_page.csp"
 }
 fwrite(csp_str29, 1, 2, out_f);
 
-#line 388 "priv_main_page.csp"
+#line 371 "priv_main_page.csp"
 if (start_time > 0 && stop_time <= 0 && fog_start_time > 0) {
 fwrite(csp_str47, 1, 9, out_f);
 fputs(_("Standings freeze time"), out_f);
@@ -1001,7 +1004,7 @@ fwrite(csp_str42, 1, 10, out_f);
 fputs(xml_unparse_date((fog_start_time)), out_f);
 fwrite(csp_str46, 1, 11, out_f);
 
-#line 390 "priv_main_page.csp"
+#line 373 "priv_main_page.csp"
 } else if (stop_time > 0 && duration > 0 && global->board_fog_time > 0
                  && global->board_unfog_time > 0 && !cs->standings_updated
                  && cs->current_time < stop_time + global->board_unfog_time) {
@@ -1012,11 +1015,11 @@ fwrite(csp_str42, 1, 10, out_f);
 fputs(xml_unparse_date((tmpt)), out_f);
 fwrite(csp_str46, 1, 11, out_f);
 
-#line 395 "priv_main_page.csp"
+#line 378 "priv_main_page.csp"
 }
 fwrite(csp_str29, 1, 2, out_f);
 
-#line 397 "priv_main_page.csp"
+#line 380 "priv_main_page.csp"
 if (start_time > 0 && stop_time <= 0 && duration > 0) {
         duration_str(0, cs->current_time, start_time, duration_buf, 0);
 fwrite(csp_str47, 1, 9, out_f);
@@ -1025,7 +1028,7 @@ fwrite(csp_str42, 1, 10, out_f);
 fputs((duration_buf), out_f);
 fwrite(csp_str46, 1, 11, out_f);
 
-#line 400 "priv_main_page.csp"
+#line 383 "priv_main_page.csp"
 duration_str(0, start_time + duration - cs->current_time, 0,
                      duration_buf, 0);
 fwrite(csp_str47, 1, 9, out_f);
@@ -1034,23 +1037,23 @@ fwrite(csp_str57, 1, 9, out_f);
 fputs((duration_buf), out_f);
 fwrite(csp_str46, 1, 11, out_f);
 
-#line 403 "priv_main_page.csp"
+#line 386 "priv_main_page.csp"
 }
     }
 fwrite(csp_str40, 1, 10, out_f);
 
-#line 406 "priv_main_page.csp"
+#line 389 "priv_main_page.csp"
 }
 fwrite(csp_str29, 1, 2, out_f);
 
-#line 408 "priv_main_page.csp"
+#line 391 "priv_main_page.csp"
 ns_write_priv_all_runs(out_f, phr, cnts, extra,
                          filter_first_run_set, filter_first_run,
                          filter_last_run_set, filter_last_run,
                          filter_expr);
 fwrite(csp_str29, 1, 2, out_f);
 
-#line 414 "priv_main_page.csp"
+#line 397 "priv_main_page.csp"
 if (opcaps_check(phr->caps, OPCAP_SUBMIT_RUN) >= 0) {
     if (!prob) {
       // no problem is selected yet
@@ -1065,7 +1068,7 @@ fwrite(csp_str64, 1, 17, out_f);
 fputs(_("Problem"), out_f);
 fwrite(csp_str65, 1, 34, out_f);
 
-#line 422 "priv_main_page.csp"
+#line 405 "priv_main_page.csp"
 for (x = 1; x <= cs->max_prob; x++) {
         if (!(prob = cs->probs[x])) continue;
 fwrite(csp_str66, 1, 16, out_f);
@@ -1076,7 +1079,7 @@ fwrite(csp_str68, 1, 3, out_f);
 fputs(html_armor_buf(&ab, (prob->long_name)), out_f);
 fwrite(csp_str69, 1, 10, out_f);
 
-#line 425 "priv_main_page.csp"
+#line 408 "priv_main_page.csp"
 }
 fwrite(csp_str70, 1, 19, out_f);
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_PRIV_SUBMIT_PAGE, _("Select problem")), out_f);
@@ -1084,7 +1087,7 @@ fwrite(csp_str71, 1, 18, out_f);
 fputs("</form>", out_f);
 fwrite(csp_str30, 1, 1, out_f);
 
-#line 428 "priv_main_page.csp"
+#line 411 "priv_main_page.csp"
 prob = 0;
     } else {
       // a problem is already selected
@@ -1102,7 +1105,7 @@ fwrite(csp_str73, 1, 1, out_f);
 fprintf(out_f, "%d", (int)(variant));
 fwrite(csp_str76, 1, 7, out_f);
 
-#line 436 "priv_main_page.csp"
+#line 419 "priv_main_page.csp"
 } else {
 fwrite(csp_str72, 1, 33, out_f);
 fputs(_("Submit a solution for"), out_f);
@@ -1112,11 +1115,11 @@ fwrite(csp_str74, 1, 1, out_f);
 fputs(html_armor_buf(&ab, (prob->long_name)), out_f);
 fwrite(csp_str63, 1, 6, out_f);
 
-#line 439 "priv_main_page.csp"
+#line 422 "priv_main_page.csp"
 }
 fwrite(csp_str29, 1, 2, out_f);
 
-#line 441 "priv_main_page.csp"
+#line 424 "priv_main_page.csp"
 if (!skip_start_form) {
 fwrite(csp_str30, 1, 1, out_f);
 fputs("<form method=\"post\" enctype=\"multipart/form-data\" action=\"", out_f);
@@ -1125,17 +1128,17 @@ fputs("\">", out_f);
 fputs(phr->hidden_vars, out_f);
 fwrite(csp_str30, 1, 1, out_f);
 
-#line 443 "priv_main_page.csp"
+#line 426 "priv_main_page.csp"
 }
 fwrite(csp_str30, 1, 1, out_f);
 
-#line 444 "priv_main_page.csp"
+#line 427 "priv_main_page.csp"
 if (variant <= 0) {
 fwrite(csp_str77, 1, 44, out_f);
 fprintf(out_f, "%d", (int)(prob->id));
 fwrite(csp_str78, 1, 5, out_f);
 
-#line 446 "priv_main_page.csp"
+#line 429 "priv_main_page.csp"
 } else {
 fwrite(csp_str77, 1, 44, out_f);
 fprintf(out_f, "%d", (int)(prob->id));
@@ -1143,17 +1146,17 @@ fwrite(csp_str79, 1, 1, out_f);
 fprintf(out_f, "%d", (int)(variant));
 fwrite(csp_str78, 1, 5, out_f);
 
-#line 448 "priv_main_page.csp"
+#line 431 "priv_main_page.csp"
 }
 fwrite(csp_str80, 1, 9, out_f);
 
-#line 450 "priv_main_page.csp"
+#line 433 "priv_main_page.csp"
 if (!prob->type) {
 fwrite(csp_str47, 1, 9, out_f);
 fputs(_("Language"), out_f);
 fwrite(csp_str81, 1, 52, out_f);
 
-#line 453 "priv_main_page.csp"
+#line 436 "priv_main_page.csp"
 for (i = 1; i <= cs->max_lang; i++) {
           if (!cs->langs[i]) continue;
 fwrite(csp_str66, 1, 16, out_f);
@@ -1164,15 +1167,15 @@ fwrite(csp_str68, 1, 3, out_f);
 fputs(html_armor_buf(&ab, (cs->langs[i]->long_name)), out_f);
 fwrite(csp_str69, 1, 10, out_f);
 
-#line 456 "priv_main_page.csp"
+#line 439 "priv_main_page.csp"
 }
 fwrite(csp_str82, 1, 21, out_f);
 
-#line 458 "priv_main_page.csp"
+#line 441 "priv_main_page.csp"
 if (global->enable_eoln_select > 0) {
 fwrite(csp_str83, 1, 192, out_f);
 
-#line 465 "priv_main_page.csp"
+#line 448 "priv_main_page.csp"
 }
       }
 
@@ -1184,19 +1187,19 @@ fwrite(csp_str47, 1, 9, out_f);
 fputs(_("File"), out_f);
 fwrite(csp_str84, 1, 52, out_f);
 
-#line 473 "priv_main_page.csp"
+#line 456 "priv_main_page.csp"
 break;
       case PROB_TYPE_SHORT_ANSWER:
 fwrite(csp_str47, 1, 9, out_f);
 fputs(_("Answer"), out_f);
 fwrite(csp_str85, 1, 52, out_f);
 
-#line 476 "priv_main_page.csp"
+#line 459 "priv_main_page.csp"
 break;
       case PROB_TYPE_TEXT_ANSWER:
 fwrite(csp_str86, 1, 85, out_f);
 
-#line 479 "priv_main_page.csp"
+#line 462 "priv_main_page.csp"
 break;
       case PROB_TYPE_SELECT_ONE:
         /* FIXME: handle problem XML */
@@ -1210,7 +1213,7 @@ fwrite(csp_str88, 1, 12, out_f);
 fputs((prob->alternative[i]), out_f);
 fwrite(csp_str46, 1, 11, out_f);
 
-#line 485 "priv_main_page.csp"
+#line 468 "priv_main_page.csp"
 }
         }
         break;
@@ -1225,7 +1228,7 @@ fwrite(csp_str90, 1, 13, out_f);
 fputs((prob->alternative[i]), out_f);
 fwrite(csp_str91, 1, 13, out_f);
 
-#line 492 "priv_main_page.csp"
+#line 475 "priv_main_page.csp"
 }
         }
         break;
@@ -1249,7 +1252,7 @@ fwrite(csp_str64, 1, 17, out_f);
 fputs(_("Problem"), out_f);
 fwrite(csp_str93, 1, 33, out_f);
 
-#line 505 "priv_main_page.csp"
+#line 488 "priv_main_page.csp"
 for (x = 1; x <= cs->max_prob; x++) {
         if (!(prob = cs->probs[x])) continue;
         if (prob->variant_num <= 0) {
@@ -1261,7 +1264,7 @@ fwrite(csp_str68, 1, 3, out_f);
 fputs(html_armor_buf(&ab, (prob->long_name)), out_f);
 fwrite(csp_str69, 1, 10, out_f);
 
-#line 509 "priv_main_page.csp"
+#line 492 "priv_main_page.csp"
 } else {
           for (y = 1; y <= prob->variant_num; y++) {
 fwrite(csp_str66, 1, 16, out_f);
@@ -1278,7 +1281,7 @@ fwrite(csp_str73, 1, 1, out_f);
 fprintf(out_f, "%d", (int)(y));
 fwrite(csp_str69, 1, 10, out_f);
 
-#line 512 "priv_main_page.csp"
+#line 495 "priv_main_page.csp"
 }
         }
       }
@@ -1286,20 +1289,20 @@ fwrite(csp_str70, 1, 19, out_f);
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_MAIN_PAGE, _("Select problem")), out_f);
 fwrite(csp_str94, 1, 26, out_f);
 
-#line 517 "priv_main_page.csp"
+#line 500 "priv_main_page.csp"
 prob = 0;
     }
   }
 fwrite(csp_str29, 1, 2, out_f);
 
-#line 523 "priv_main_page.csp"
+#line 506 "priv_main_page.csp"
 if (opcaps_check(phr->caps, OPCAP_VIEW_CLAR) >= 0) {
     ns_write_all_clars(out_f, phr, cnts, extra, filter_mode_clar,
                        filter_first_clar_str, filter_last_clar_str);
   }
 fwrite(csp_str29, 1, 2, out_f);
 
-#line 529 "priv_main_page.csp"
+#line 512 "priv_main_page.csp"
 if (opcaps_check(phr->caps, OPCAP_NEW_MESSAGE) >= 0) {
 fwrite(csp_str95, 1, 11, out_f);
 fputs(_("Compose a message to all participants"), out_f);
@@ -1316,13 +1319,13 @@ fwrite(csp_str97, 1, 81, out_f);
 fputs(_("Subject"), out_f);
 fwrite(csp_str98, 1, 67, out_f);
 
-#line 536 "priv_main_page.csp"
+#line 519 "priv_main_page.csp"
 if (start_time <= 0) {
 fwrite(csp_str47, 1, 9, out_f);
 fputs(_("Do not show before the contest starts?"), out_f);
 fwrite(csp_str99, 1, 117, out_f);
 
-#line 538 "priv_main_page.csp"
+#line 521 "priv_main_page.csp"
 }
 fwrite(csp_str100, 1, 78, out_f);
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_PRIV_SUBMIT_CLAR, NULL), out_f);
@@ -1330,7 +1333,7 @@ fwrite(csp_str101, 1, 4, out_f);
 fputs("</form>", out_f);
 fwrite(csp_str30, 1, 1, out_f);
 
-#line 542 "priv_main_page.csp"
+#line 525 "priv_main_page.csp"
 }
 fwrite(csp_str102, 1, 36, out_f);
 fputs(_("Change password"), out_f);
@@ -1351,7 +1354,7 @@ fwrite(csp_str59, 1, 19, out_f);
 fputs("</form>", out_f);
 fwrite(csp_str29, 1, 2, out_f);
 
-#line 555 "priv_main_page.csp"
+#line 538 "priv_main_page.csp"
 #if CONF_HAS_LIBINTL - 0 == 1
   if (cs->global->enable_l10n) {
 fwrite(csp_str106, 1, 35, out_f);
@@ -1369,7 +1372,7 @@ fwrite(csp_str110, 1, 16, out_f);
 fputs(_("Change language"), out_f);
 fwrite(csp_str111, 1, 10, out_f);
 
-#line 563 "priv_main_page.csp"
+#line 546 "priv_main_page.csp"
 l10n_html_locale_select(out_f, phr->locale_id);
 fwrite(csp_str112, 1, 10, out_f);
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_CHANGE_LANGUAGE, NULL), out_f);
@@ -1377,12 +1380,12 @@ fwrite(csp_str71, 1, 18, out_f);
 fputs("</form>", out_f);
 fwrite(csp_str30, 1, 1, out_f);
 
-#line 566 "priv_main_page.csp"
+#line 549 "priv_main_page.csp"
 }
 #endif /* CONF_HAS_LIBINTL */
 fwrite(csp_str29, 1, 2, out_f);
 
-#line 571 "priv_main_page.csp"
+#line 554 "priv_main_page.csp"
 gettimeofday(&phr->timestamp2, 0);
   tdiff = ((long long) phr->timestamp2.tv_sec) * 1000000;
   tdiff += phr->timestamp2.tv_usec;
@@ -1401,7 +1404,7 @@ fwrite(csp_str115, 1, 6, out_f);
 write_copyright_short(out_f);
 fwrite(csp_str116, 1, 17, out_f);
 
-#line 581 "priv_main_page.csp"
+#line 564 "priv_main_page.csp"
 html_armor_free(&ab);
   return 0;
 }

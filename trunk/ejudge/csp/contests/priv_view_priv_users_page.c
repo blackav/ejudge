@@ -35,18 +35,28 @@ static const unsigned char csp_str29[18] = "\n</body>\n</html>\n";
 #line 2 "priv_view_priv_users_page.csp"
 /* $Id$ */
 
+#line 2 "priv_includes.csp"
 #include "new-server.h"
-#include "misctext.h"
-#include "mischtml.h"
-#include "l10n.h"
+#include "new_server_proto.h"
 #include "external_action.h"
-#include "new_server_pi.h"
+#include "clarlog.h"
+#include "misctext.h"
+#include "runlog.h"
+#include "l10n.h"
+#include "prepare.h"
+#include "xml_utils.h"
+#include "teamdb.h"
 #include "copyright.h"
+#include "mischtml.h"
+#include "html.h"
 
-#include <stdio.h>
+#include "reuse/xalloc.h"
 
 #include <libintl.h>
 #define _(x) gettext(x)
+
+#line 5 "priv_view_priv_users_page.csp"
+#include "new_server_pi.h"
 
 void
 html_role_select(FILE *fout, int role, int allow_admin,
@@ -54,7 +64,7 @@ html_role_select(FILE *fout, int role, int allow_admin,
 int csp_view_priv_view_priv_users_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 {
 
-#line 24 "priv_view_priv_users_page.csp"
+#line 14 "priv_view_priv_users_page.csp"
 PrivViewPrivUsersPage *pvp = (PrivViewPrivUsersPage*) ps;
   PrivUserInfoArray *users = &pvp->users;
   struct contest_extra *extra = phr->extra;
@@ -106,7 +116,7 @@ fputs("\">", out_f);
 fputs(phr->hidden_vars, out_f);
 fwrite(csp_str10, 1, 173, out_f);
 
-#line 46 "priv_view_priv_users_page.csp"
+#line 36 "priv_view_priv_users_page.csp"
 for (i = 0; i < users->u; i++) {
 fwrite(csp_str11, 1, 4, out_f);
 fputs((form_row_attrs[row ^= 1]), out_f);
@@ -120,27 +130,27 @@ fwrite(csp_str13, 1, 25, out_f);
 fputs(html_armor_buf(&ab, (users->v[i]->name)), out_f);
 fwrite(csp_str14, 1, 6, out_f);
 
-#line 54 "priv_view_priv_users_page.csp"
+#line 44 "priv_view_priv_users_page.csp"
 if ((role_mask = users->v[i]->role_mask)) {
 fwrite(csp_str15, 1, 17, out_f);
 
-#line 58 "priv_view_priv_users_page.csp"
+#line 48 "priv_view_priv_users_page.csp"
 for (cnt = 0, r = USER_ROLE_OBSERVER; r <= USER_ROLE_ADMIN; r++)
         if ((role_mask & (1 << r)))
           fprintf(out_f, "%s%s", cnt++?",":"", ns_unparse_role(r));
 fwrite(csp_str16, 1, 7, out_f);
 
-#line 64 "priv_view_priv_users_page.csp"
+#line 54 "priv_view_priv_users_page.csp"
 } else {
 fwrite(csp_str17, 1, 28, out_f);
 
-#line 68 "priv_view_priv_users_page.csp"
+#line 58 "priv_view_priv_users_page.csp"
 }
 fwrite(csp_str18, 1, 50, out_f);
 fprintf(out_f, "%d", (int)(users->v[i]->user_id));
 fwrite(csp_str19, 1, 15, out_f);
 
-#line 73 "priv_view_priv_users_page.csp"
+#line 63 "priv_view_priv_users_page.csp"
 }
 fwrite(csp_str20, 1, 55, out_f);
 fputs(ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_MAIN_PAGE, 0), out_f);
@@ -188,7 +198,7 @@ fwrite(csp_str23, 1, 25, out_f);
 fputs(_("Add new user"), out_f);
 fwrite(csp_str24, 1, 80, out_f);
 
-#line 96 "priv_view_priv_users_page.csp"
+#line 86 "priv_view_priv_users_page.csp"
 html_role_select(out_f, USER_ROLE_OBSERVER, 0, "add_role_1");
 fwrite(csp_str25, 1, 10, out_f);
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_PRIV_USERS_ADD_BY_LOGIN, NULL), out_f);
@@ -196,7 +206,7 @@ fwrite(csp_str21, 1, 9, out_f);
 fputs(_("Add a new user specifying his/her login"), out_f);
 fwrite(csp_str26, 1, 78, out_f);
 
-#line 99 "priv_view_priv_users_page.csp"
+#line 89 "priv_view_priv_users_page.csp"
 html_role_select(out_f, USER_ROLE_OBSERVER, 0, "add_role_2");
 fwrite(csp_str25, 1, 10, out_f);
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_PRIV_USERS_ADD_BY_USER_ID, NULL), out_f);
@@ -207,7 +217,7 @@ fwrite(csp_str28, 1, 6, out_f);
 write_copyright_short(out_f);
 fwrite(csp_str29, 1, 17, out_f);
 
-#line 103 "priv_view_priv_users_page.csp"
+#line 93 "priv_view_priv_users_page.csp"
 l10n_setlocale(0);
   html_armor_free(&ab);
   return 0;
