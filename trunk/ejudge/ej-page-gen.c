@@ -3472,7 +3472,7 @@ handle_checkbox_open(
         value_str = value_attr->value;
     }
 
-    fprintf(prg_f, "fputs(\"<checkbox name=\\\"%s\\\" value=\\\"%s\\\"\", out_f);\n", name_attr->value, value_str);
+    fprintf(prg_f, "fputs(\"<input type=\\\"checkbox\\\" name=\\\"%s\\\" value=\\\"%s\\\"\", out_f);\n", name_attr->value, value_str);
     HtmlAttribute *checked_attr = html_element_find_attribute(elem, "checkedExpr");
     if (checked_attr) {
         fprintf(prg_f,

@@ -61,7 +61,7 @@ ns_write_run_view_menu(
 
   unsigned char title[1024];
   snprintf(title, sizeof(title), "%s %d", _("Editing run"), run_id);
-%><@include "priv_header.csp"
+%><%@include "priv_header.csp"
 %><%
   ns_write_run_view_menu(out_f, phr, cnts, extra, run_id);
 
