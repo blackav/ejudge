@@ -3368,6 +3368,17 @@ handle_textfield_open(
         return -1;
     }
 
+    /*
+static int
+process_ac_attr(
+        FILE *log_f,
+        TypeContext *cntx,
+        ProcessorState *ps,
+        HtmlElement *elem,
+        unsigned char *buf,
+        int bufsize)
+    */
+
     // supported attributes: name, value, size, escape (for string values), check, checkExpr
     HtmlAttribute *name_attr = html_element_find_attribute(elem, "name");
     if (!name_attr) {
@@ -3375,10 +3386,15 @@ handle_textfield_open(
         return -1;
     }
     int skip_value = 0;
+    unsigned char ac_buf[1024];
+    int has_ac = process_ac_attr(log_f, cntx, ps, elem, ac_buf, sizeof(ac_buf));
     HtmlAttribute *value_attr = html_element_find_attribute(elem, "value");
     TypeInfo *value_type = NULL;
     const unsigned char *expr = NULL;
-    if (!value_attr) {
+    if (has_ac > 0) {
+        expr = ac_buf;
+        value_type = tc_get_i32_type(cntx);
+    } else if (!value_attr) {
         expr = name_attr->value;
         parse_c_expression(ps, cntx, log_f, name_attr->value, &value_type, ps->pos); // return value is ignored!
         if (!value_type) {
@@ -3432,6 +3448,7 @@ handle_textfield_open(
     }
 
     int need_check = html_attribute_get_bool(html_element_find_attribute(elem, "check"), 1);
+    if (has_ac > 0) need_check = 0;
     if (need_check) {
         HtmlAttribute *check_expr_attr = html_element_find_attribute(elem, "checkexpr");
         fprintf(prg_f, "if ((%s)", expr);

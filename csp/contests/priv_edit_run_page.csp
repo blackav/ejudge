@@ -80,8 +80,8 @@ ns_write_run_view_menu(
 </s:url>
 <h2><s:tr>Run</s:tr> <s:v value="run_id" /> [<s:a url="ViewSourceUrl"><s:tr>Source</s:tr></s:a>]</h2>
 <s:form>
-<s:hidden name="action" value="0" zzvalue="(int) NEW_SRV_ACTION_PRIV_EDIT_RUN_ACTION" />
-<s:hidden name="run_id" />
+<s:hidden name="action" ac="priv-edit-run-action" />
+<s:hidden name="run_id" check="0" />
 <table class="b0">
 <tr><td class="b0"><s:tr>Run ID</s:tr>:</td><td class="b0"><s:v value="run_id" /></td></tr>
 <%  if (run_time != info.time) {
