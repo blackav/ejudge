@@ -188,7 +188,7 @@ ns_write_run_view_menu(
 <%
   }
 %>
-<s:checkbox name="is_marked" checkedExpr="info.is_marked" disabledExpr="info.is_readonly" />
+<tr><td class="b0">Marked:</td><td class="b0"><s:checkbox name="is_marked" checkedExpr="info.is_marked" disabledExpr="info.is_readonly" /></td></tr>
 <%
   if (global->separate_user_score > 0) {
 %>
@@ -236,7 +236,7 @@ ns_write_run_view_menu(
 <%  if (global->enable_printing > 0) { %>
 <tr><td class="b0">Pages printed:</td><td class="b0"><s:textfield name="pages" size="20" disabledExpr="info.is_readonly" value="(int) info.pages" /></td></tr>
 <%  } %>
-<table>
+</table>
 
 <table class="b0">
 <tr>
@@ -244,8 +244,8 @@ ns_write_run_view_menu(
 <td class="b0"><s:submit name="cancel" value='"Cancel"' /></td>
 </tr>
 </table>
-</form>
-%><%@include "priv_footer.csp"
+</s:form>
+<%@include "priv_footer.csp"
 %><%
   l10n_setlocale(0);
 done:;
