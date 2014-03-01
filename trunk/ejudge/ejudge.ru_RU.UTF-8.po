@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-02-25 16:23+0400\n"
-"PO-Revision-Date: 2014-02-25 16:25+0400\n"
+"POT-Creation-Date: 2014-02-28 15:23+0400\n"
+"PO-Revision-Date: 2014-03-01 22:21+0400\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -660,9 +660,6 @@ msgstr "Невозможно определить тип содержимого"
 msgid "Cannot participate"
 msgstr "Участие невозможно"
 
-msgid "Cannot read message text"
-msgstr "Ошибка чтения файла сообщения!"
-
 msgid "Cannot read message text!"
 msgstr "Ошибка чтения файла сообщения!"
 
@@ -995,6 +992,12 @@ msgstr "Шифр пуст в строке %d\n"
 
 msgid "Cypher prefix"
 msgstr "Префикс шифра"
+
+msgid "DB time"
+msgstr "Отметка времени БД"
+
+msgid "DB timestamp"
+msgstr "Отметка времени в БД"
 
 msgid "DISQUALIFY users"
 msgstr "ДИСКВАЛИФИЦИРОВАТЬ пользователей"
@@ -2902,6 +2905,9 @@ msgstr "Пароль ещё раз"
 msgid "Role"
 msgstr "Роль"
 
+msgid "Run"
+msgstr "Посылка"
+
 msgid "Run ID"
 msgstr "Номер решения"
 
@@ -3463,6 +3469,9 @@ msgstr "Ограничение времени"
 msgid "Time-limit exceeded"
 msgstr "Превышено максимальное время работы"
 
+msgid "Timestamp"
+msgstr "Отметка времени"
+
 msgid "To"
 msgstr "Кому"
 
@@ -3656,6 +3665,9 @@ msgstr "Рег. имя команды"
 #, c-format
 msgid "User login [%s]"
 msgstr "Вход пользователя [%s]"
+
+msgid "User login/ID"
+msgstr "Login/ID пользователя"
 
 msgid "User name"
 msgstr "Имя участника"
