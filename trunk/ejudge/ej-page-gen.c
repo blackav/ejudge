@@ -3405,7 +3405,7 @@ handle_textfield_open(
         return -1;
     }
 
-    HtmlAttribute *disabled_attr = html_element_find_attribute(elem, "disabledExpr");
+    HtmlAttribute *disabled_attr = html_element_find_attribute(elem, "disabledexpr");
 
     fprintf(prg_f, "fputs(\"<input type=\\\"%s\\\" name=\\\"%s\\\"", input_type, name_attr->value);
     HtmlAttribute *size_attr = html_element_find_attribute(elem, "size");
