@@ -36,25 +36,26 @@ static const unsigned char csp_str32[6] = "</td>";
 static const unsigned char csp_str33[7] = "</tr>\n";
 static const unsigned char csp_str34[47] = "\n<tr><td class=\"b0\">Score:</td><td class=\"b0\">";
 static const unsigned char csp_str35[68] = "</td></tr>\n<tr><td class=\"b0\">Score adjustment:</td><td class=\"b0\">";
-static const unsigned char csp_str36[57] = "\n<tr><td class=\"b0\">Has saved score:</td><td class=\"b0\">";
-static const unsigned char csp_str37[49] = "</td></tr>\n<tr><td class=\"b0\">Saved status:</td>";
-static const unsigned char csp_str38[53] = "\n<tr><td class=\"b0\">Saved score:</td><td class=\"b0\">";
-static const unsigned char csp_str39[44] = "\n<tr><td class=\"b0\">IP:</td><td class=\"b0\">";
-static const unsigned char csp_str40[55] = "</td></tr>\n<tr><td class=\"b0\">SSL:</td><td class=\"b0\">";
-static const unsigned char csp_str41[56] = "</td></tr>\n<tr><td class=\"b0\">Size:</td><td class=\"b0\">";
-static const unsigned char csp_str42[56] = "</td></tr>\n<tr><td class=\"b0\">SHA1:</td><td class=\"b0\">";
-static const unsigned char csp_str43[46] = "\n<tr><td class=\"b0\">UUID:</td><td class=\"b0\">";
-static const unsigned char csp_str44[54] = "\n<tr><td class=\"b0\">Content type:</td><td class=\"b0\">";
-static const unsigned char csp_str45[48] = "\n<tr><td class=\"b0\">Hidden:</td><td class=\"b0\">";
-static const unsigned char csp_str46[60] = "</td></tr>\n<tr><td class=\"b0\">Imported:</td><td class=\"b0\">";
-static const unsigned char csp_str47[61] = "</td></tr>\n<tr><td class=\"b0\">Read-only:</td><td class=\"b0\">";
-static const unsigned char csp_str48[62] = "</td></tr>\n\n<tr><td class=\"b0\">Locale ID:</td><td class=\"b0\">";
-static const unsigned char csp_str49[55] = "\n<tr><td class=\"b0\">Pages printed:</td><td class=\"b0\">";
-static const unsigned char csp_str50[50] = "\n<table>\n\n<table class=\"b0\">\n<tr>\n<td class=\"b0\">";
-static const unsigned char csp_str51[22] = "</td>\n<td class=\"b0\">";
-static const unsigned char csp_str52[32] = "</td>\n</tr>\n</table>\n</form>\n%>";
-static const unsigned char csp_str53[7] = "<hr/>\n";
-static const unsigned char csp_str54[18] = "\n</body>\n</html>\n";
+static const unsigned char csp_str36[48] = "\n<tr><td class=\"b0\">Marked:</td><td class=\"b0\">";
+static const unsigned char csp_str37[57] = "\n<tr><td class=\"b0\">Has saved score:</td><td class=\"b0\">";
+static const unsigned char csp_str38[49] = "</td></tr>\n<tr><td class=\"b0\">Saved status:</td>";
+static const unsigned char csp_str39[53] = "\n<tr><td class=\"b0\">Saved score:</td><td class=\"b0\">";
+static const unsigned char csp_str40[44] = "\n<tr><td class=\"b0\">IP:</td><td class=\"b0\">";
+static const unsigned char csp_str41[55] = "</td></tr>\n<tr><td class=\"b0\">SSL:</td><td class=\"b0\">";
+static const unsigned char csp_str42[56] = "</td></tr>\n<tr><td class=\"b0\">Size:</td><td class=\"b0\">";
+static const unsigned char csp_str43[56] = "</td></tr>\n<tr><td class=\"b0\">SHA1:</td><td class=\"b0\">";
+static const unsigned char csp_str44[46] = "\n<tr><td class=\"b0\">UUID:</td><td class=\"b0\">";
+static const unsigned char csp_str45[54] = "\n<tr><td class=\"b0\">Content type:</td><td class=\"b0\">";
+static const unsigned char csp_str46[48] = "\n<tr><td class=\"b0\">Hidden:</td><td class=\"b0\">";
+static const unsigned char csp_str47[60] = "</td></tr>\n<tr><td class=\"b0\">Imported:</td><td class=\"b0\">";
+static const unsigned char csp_str48[61] = "</td></tr>\n<tr><td class=\"b0\">Read-only:</td><td class=\"b0\">";
+static const unsigned char csp_str49[62] = "</td></tr>\n\n<tr><td class=\"b0\">Locale ID:</td><td class=\"b0\">";
+static const unsigned char csp_str50[55] = "\n<tr><td class=\"b0\">Pages printed:</td><td class=\"b0\">";
+static const unsigned char csp_str51[51] = "\n</table>\n\n<table class=\"b0\">\n<tr>\n<td class=\"b0\">";
+static const unsigned char csp_str52[22] = "</td>\n<td class=\"b0\">";
+static const unsigned char csp_str53[22] = "</td>\n</tr>\n</table>\n";
+static const unsigned char csp_str54[7] = "<hr/>\n";
+static const unsigned char csp_str55[18] = "\n</body>\n</html>\n";
 
 
 #line 2 "priv_edit_run_page.csp"
@@ -220,19 +221,15 @@ fputs("\">", out_f);
 fputs(phr->hidden_vars, out_f);
 fwrite(csp_str9, 1, 1, out_f);
 fputs("<input type=\"hidden\" name=\"action\"", out_f);
-if ((0)) {
 fputs(" value=\"", out_f);
-fprintf(out_f, "%u", (unsigned)(0));
+fprintf(out_f, "%d", (int)(NEW_SRV_ACTION_PRIV_EDIT_RUN_ACTION));
 fputs("\"", out_f);
-}
 fputs(" />", out_f);
 fwrite(csp_str9, 1, 1, out_f);
 fputs("<input type=\"hidden\" name=\"run_id\"", out_f);
-if ((run_id)) {
 fputs(" value=\"", out_f);
 fprintf(out_f, "%d", (int)(run_id));
 fputs("\"", out_f);
-}
 fputs(" />", out_f);
 fwrite(csp_str14, 1, 39, out_f);
 fputs(_("Run ID"), out_f);
@@ -544,17 +541,17 @@ fwrite(csp_str16, 1, 11, out_f);
 
 #line 189 "priv_edit_run_page.csp"
 }
-fwrite(csp_str9, 1, 1, out_f);
+fwrite(csp_str36, 1, 47, out_f);
 fputs("<input type=\"checkbox\" name=\"is_marked\" value=\"1\"", out_f);
 fputs(" />", out_f);
-fwrite(csp_str9, 1, 1, out_f);
+fwrite(csp_str16, 1, 11, out_f);
 
 #line 193 "priv_edit_run_page.csp"
 if (global->separate_user_score > 0) {
-fwrite(csp_str36, 1, 56, out_f);
+fwrite(csp_str37, 1, 56, out_f);
 fputs("<input type=\"checkbox\" name=\"is_saved\" value=\"1\"", out_f);
 fputs(" />", out_f);
-fwrite(csp_str37, 1, 48, out_f);
+fwrite(csp_str38, 1, 48, out_f);
 
 #line 196 "priv_edit_run_page.csp"
 write_change_status_dialog(cs, out_f, "saved_status", info.is_imported, "b0", info.saved_status, info.is_readonly);
@@ -589,7 +586,7 @@ fwrite(csp_str16, 1, 11, out_f);
 #line 213 "priv_edit_run_page.csp"
 if (global->score_system == SCORE_KIROV || global->score_system == SCORE_OLYMPIAD
         || global->score_system == SCORE_MOSCOW) {
-fwrite(csp_str38, 1, 52, out_f);
+fwrite(csp_str39, 1, 52, out_f);
 fputs("<input type=\"text\" name=\"saved_score\" size=\"20\"", out_f);
 if (info.is_readonly) {
 fputs(" disabled=\"disabled\"", out_f);
@@ -605,7 +602,7 @@ fwrite(csp_str16, 1, 11, out_f);
 #line 218 "priv_edit_run_page.csp"
 }
   }
-fwrite(csp_str39, 1, 43, out_f);
+fwrite(csp_str40, 1, 43, out_f);
 fputs("<input type=\"text\" name=\"ip\" size=\"20\"", out_f);
 if (info.is_readonly) {
 fputs(" disabled=\"disabled\"", out_f);
@@ -616,10 +613,10 @@ fprintf(out_f, "%s", xml_unparse_ip(info.a.ip));
 fputs("\"", out_f);
 }
 fputs(" />", out_f);
-fwrite(csp_str40, 1, 54, out_f);
+fwrite(csp_str41, 1, 54, out_f);
 fputs("<input type=\"checkbox\" name=\"ssl_flag\" value=\"1\"", out_f);
 fputs(" />", out_f);
-fwrite(csp_str41, 1, 55, out_f);
+fwrite(csp_str42, 1, 55, out_f);
 fputs("<input type=\"text\" name=\"size\" size=\"20\"", out_f);
 if (info.is_readonly) {
 fputs(" disabled=\"disabled\"", out_f);
@@ -630,7 +627,7 @@ fprintf(out_f, "%zu", (size_t)(info.size));
 fputs("\"", out_f);
 }
 fputs(" />", out_f);
-fwrite(csp_str42, 1, 55, out_f);
+fwrite(csp_str43, 1, 55, out_f);
 fputs("<input type=\"text\" name=\"sha1\" size=\"60\"", out_f);
 if (info.is_readonly) {
 fputs(" disabled=\"disabled\"", out_f);
@@ -645,7 +642,7 @@ fwrite(csp_str16, 1, 11, out_f);
 
 #line 225 "priv_edit_run_page.csp"
 #if CONF_HAS_LIBUUID - 0 != 0
-fwrite(csp_str43, 1, 45, out_f);
+fwrite(csp_str44, 1, 45, out_f);
 fputs("<input type=\"text\" name=\"sha1\" size=\"60\"", out_f);
 if (info.is_readonly) {
 fputs(" disabled=\"disabled\"", out_f);
@@ -664,7 +661,7 @@ fwrite(csp_str9, 1, 1, out_f);
 
 #line 228 "priv_edit_run_page.csp"
 if (!info.lang_id) {
-fwrite(csp_str44, 1, 53, out_f);
+fwrite(csp_str45, 1, 53, out_f);
 fputs("<input type=\"text\" name=\"mime_type\" size=\"60\"", out_f);
 if (info.is_readonly) {
 fputs(" disabled=\"disabled\"", out_f);
@@ -679,16 +676,16 @@ fwrite(csp_str16, 1, 11, out_f);
 
 #line 230 "priv_edit_run_page.csp"
 }
-fwrite(csp_str45, 1, 47, out_f);
+fwrite(csp_str46, 1, 47, out_f);
 fputs("<input type=\"checkbox\" name=\"is_hidden\" value=\"1\"", out_f);
 fputs(" />", out_f);
-fwrite(csp_str46, 1, 59, out_f);
+fwrite(csp_str47, 1, 59, out_f);
 fputs("<input type=\"checkbox\" name=\"is_imported\" value=\"1\"", out_f);
 fputs(" />", out_f);
-fwrite(csp_str47, 1, 60, out_f);
+fwrite(csp_str48, 1, 60, out_f);
 fputs("<input type=\"checkbox\" name=\"is_readonly\" value=\"1\"", out_f);
 fputs(" />", out_f);
-fwrite(csp_str48, 1, 61, out_f);
+fwrite(csp_str49, 1, 61, out_f);
 fputs("<input type=\"text\" name=\"locale_id\" size=\"20\"", out_f);
 if (info.is_readonly) {
 fputs(" disabled=\"disabled\"", out_f);
@@ -703,7 +700,7 @@ fwrite(csp_str16, 1, 11, out_f);
 
 #line 236 "priv_edit_run_page.csp"
 if (global->enable_printing > 0) {
-fwrite(csp_str49, 1, 54, out_f);
+fwrite(csp_str50, 1, 54, out_f);
 fputs("<input type=\"text\" name=\"pages\" size=\"20\"", out_f);
 if (info.is_readonly) {
 fputs(" disabled=\"disabled\"", out_f);
@@ -718,12 +715,14 @@ fwrite(csp_str16, 1, 11, out_f);
 
 #line 238 "priv_edit_run_page.csp"
 }
-fwrite(csp_str50, 1, 49, out_f);
-fwrite(csp_str51, 1, 21, out_f);
-fwrite(csp_str52, 1, 31, out_f);
-fwrite(csp_str53, 1, 6, out_f);
+fwrite(csp_str51, 1, 50, out_f);
+fwrite(csp_str52, 1, 21, out_f);
+fwrite(csp_str53, 1, 21, out_f);
+fputs("</form>", out_f);
+fwrite(csp_str9, 1, 1, out_f);
+fwrite(csp_str54, 1, 6, out_f);
 write_copyright_short(out_f);
-fwrite(csp_str54, 1, 17, out_f);
+fwrite(csp_str55, 1, 17, out_f);
 
 #line 250 "priv_edit_run_page.csp"
 l10n_setlocale(0);
