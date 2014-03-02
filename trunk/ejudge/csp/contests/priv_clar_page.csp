@@ -4,17 +4,14 @@
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@set getter_name = "csp_get_priv_clar_page"
 %><%@page csp_view_priv_clar_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "priv_stdvars.csp"
 %><%
-  struct contest_extra *extra = phr->extra;
-  serve_state_t cs = extra->serve_state;
   struct clar_entry_v1 clar;
-  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   time_t start_time;
   unsigned char *msg_txt = 0;
   size_t msg_len = 0;
   unsigned char b1[1024];
   const unsigned char *clar_subj = 0;
-  unsigned char hbuf[1024];
   int clar_id;
   const unsigned char *s = NULL, *sep = NULL;
   int n;

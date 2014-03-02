@@ -8,9 +8,8 @@
 %><%@set getter_name = "csp_get_priv_view_users_page"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@page csp_view_priv_view_users_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "priv_stdvars.csp"
 %><%
-  const struct contest_desc *cnts = phr->cnts;
-  struct contest_extra *extra = phr->extra;
   int r;
   unsigned char *xml_text = 0;
   struct userlist_list *users = 0;
@@ -18,14 +17,12 @@
   const struct userlist_contest *uc = 0;
   int uid;
   int row = 1, serial = 1;
-  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   int details_allowed = 0;
   unsigned char b1[1024];
   int new_contest_id = cnts->id;
   const struct section_global_data *global = extra->serve_state->global;
   int *run_counts = 0;
   size_t *run_sizes = 0;
-  unsigned char hbuf[1024];
   const unsigned char *sep;
   const unsigned char *title = _("Users page");
 

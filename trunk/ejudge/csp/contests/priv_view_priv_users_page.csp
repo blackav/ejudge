@@ -10,15 +10,13 @@ html_role_select(FILE *fout, int role, int allow_admin,
 
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@page csp_view_priv_view_priv_users_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "priv_stdvars.csp"
 %><%
   PrivViewPrivUsersPage *pvp = (PrivViewPrivUsersPage*) ps;
   PrivUserInfoArray *users = &pvp->users;
-  struct contest_extra *extra = phr->extra;
   int i;
   unsigned int role_mask;
   int row = 1, cnt, r;
-  unsigned char hbuf[1024];
-  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   const unsigned char *title = _("Privileged users page");
 
 static const unsigned char * const form_row_attrs[]=

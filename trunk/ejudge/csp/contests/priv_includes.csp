@@ -12,6 +12,7 @@
 #include "copyright.h"
 #include "mischtml.h"
 #include "html.h"
+#include "userlist.h"
 
 #include "reuse/xalloc.h"
 
