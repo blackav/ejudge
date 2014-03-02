@@ -507,6 +507,7 @@ static TypeInfo *kwd_while = NULL;
 static TypeInfo *kwd__Bool = NULL;
 static TypeInfo *kwd__Complex = NULL;
 static TypeInfo *kwd__Imaginary = NULL;
+static TypeInfo *kwd___attribute__ = NULL;
 
 static ScannerState *
 init_scanner(ProcessorState *ps, FILE *log_f, const unsigned char *buf, int len, Position pos, TypeContext *cntx)
@@ -557,6 +558,7 @@ init_scanner(ProcessorState *ps, FILE *log_f, const unsigned char *buf, int len,
         kwd__Bool = tc_get_ident(cntx, "_Bool");
         kwd__Complex = tc_get_ident(cntx, "_Complex");
         kwd__Imaginary = tc_get_ident(cntx, "_Imaginary");
+        kwd___attribute__ = tc_get_ident(cntx, "__attribute__");
     }
     return ss;
 }
@@ -2100,6 +2102,40 @@ parse_init_declr(
 {
     int r = parse_full_declr(ss, cntx, quiet_mode, anon_allowed, ds, p_type, p_id);
     if (r < 0) return -1;
+
+    if (ss->token == TOK_IDENT && tc_get_ident(cntx, ss->raw) == kwd___attribute__) {
+        // ignore __attribute__(...)
+        next_token(ss);
+        int depth = 0;
+        while (1) {
+            if (ss->token == TOK_EOF) {
+                parser_error(ss, "unexpected end of text");
+                break;
+            }
+            if (IS_OPER(ss, '[')) {
+                ++depth;
+                next_token(ss);
+            } else if (IS_OPER(ss, '{')) {
+                ++depth;
+                next_token(ss);
+            } else if (IS_OPER(ss, '(')) {
+                ++depth;
+                next_token(ss);
+            } else if (IS_OPER(ss, ')')) {
+                --depth;
+                next_token(ss);
+                if (!depth) break;
+            } else if (IS_OPER(ss, '}')) {
+                --depth;
+                next_token(ss);
+            } else if (IS_OPER(ss, ']')) {
+                --depth;
+                next_token(ss);
+            } else {
+                next_token(ss);
+            }
+        }
+    }
     if (IS_OPER(ss, '=')) {
         // ignore initializer
         next_token(ss);
