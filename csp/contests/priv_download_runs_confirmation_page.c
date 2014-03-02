@@ -58,6 +58,7 @@ static const unsigned char csp_str38[18] = "\n</body>\n</html>\n";
 #include "copyright.h"
 #include "mischtml.h"
 #include "html.h"
+#include "userlist.h"
 
 #include "reuse/xalloc.h"
 
@@ -94,17 +95,21 @@ csp_get_priv_download_runs_confirmation_page(void)
 int csp_view_priv_download_runs_confirmation_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 {
 
-#line 18 "priv_download_runs_confirmation_page.csp"
-//const serve_state_t cs = extra->serve_state;
-  struct contest_extra *extra = phr->extra;
-  int retval = 0;
-  unsigned long *mask = 0, mval;
+#line 2 "priv_stdvars.csp"
+int retval __attribute__((unused)) = 0;
+  struct contest_extra *extra __attribute__((unused)) = phr->extra;
+  serve_state_t cs __attribute__((unused)) = extra->serve_state;
+  const struct contest_desc *cnts __attribute__((unused)) = phr->cnts;
+  struct html_armor_buffer ab __attribute__((unused)) = HTML_ARMOR_INITIALIZER;
+  unsigned char hbuf[1024] __attribute__((unused));
+
+#line 19 "priv_download_runs_confirmation_page.csp"
+unsigned long *mask = 0, mval;
   size_t mask_size = 0;
   const unsigned char *mask_size_str = 0;
   const unsigned char *mask_str = 0;
   size_t mask_count = 0;
   int i, j;
-  unsigned char hbuf[1024];
   const unsigned char *title = _("Download runs configuration");
 
   if (opcaps_check(phr->caps, OPCAP_DUMP_RUNS) < 0)
@@ -231,7 +236,7 @@ fwrite(csp_str37, 1, 6, out_f);
 write_copyright_short(out_f);
 fwrite(csp_str38, 1, 17, out_f);
 
-#line 88 "priv_download_runs_confirmation_page.csp"
+#line 85 "priv_download_runs_confirmation_page.csp"
 l10n_setlocale(0);
 
  cleanup:

@@ -75,6 +75,7 @@ static const unsigned char csp_str55[18] = "\n</body>\n</html>\n";
 #include "copyright.h"
 #include "mischtml.h"
 #include "html.h"
+#include "userlist.h"
 
 #include "reuse/xalloc.h"
 
@@ -85,7 +86,6 @@ static const unsigned char csp_str55[18] = "\n</body>\n</html>\n";
 #include "ej_uuid.h"
 #include "mime_type.h"
 
-#define ARMOR(s)  html_armor_buf(&ab, (s))
 void
 ns_write_run_view_menu(
         FILE *f, struct http_request_info *phr,
@@ -112,18 +112,22 @@ csp_get_priv_edit_run_page(void)
 int csp_view_priv_edit_run_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 {
 
+#line 2 "priv_stdvars.csp"
+int retval __attribute__((unused)) = 0;
+  struct contest_extra *extra __attribute__((unused)) = phr->extra;
+  serve_state_t cs __attribute__((unused)) = extra->serve_state;
+  const struct contest_desc *cnts __attribute__((unused)) = phr->cnts;
+  struct html_armor_buffer ab __attribute__((unused)) = HTML_ARMOR_INITIALIZER;
+  unsigned char hbuf[1024] __attribute__((unused));
+
 #line 19 "priv_edit_run_page.csp"
-struct contest_extra *extra = phr->extra;
-  serve_state_t cs = extra->serve_state;
-  const struct contest_desc *cnts = phr->cnts;
-  const struct section_global_data *global = cs->global;
+const struct section_global_data *global = cs->global;
   const struct section_problem_data *prob = NULL;
   const struct section_language_data *lang = NULL;
   time_t start_time = 0, run_time = 0;
   struct run_entry info;
-  unsigned char hbuf[1024], buf[1024];
+  unsigned char buf[1024];
   const unsigned char *str = NULL;
-  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   const unsigned char *s;
   const unsigned char *sep;
   int run_id = 0, prob_id, lang_id;
@@ -186,7 +190,7 @@ fwrite(csp_str6, 1, 3, out_f);
 fputs((title), out_f);
 fwrite(csp_str8, 1, 6, out_f);
 
-#line 66 "priv_edit_run_page.csp"
+#line 62 "priv_edit_run_page.csp"
 ns_write_run_view_menu(out_f, phr, cnts, extra, run_id);
 
   if (global->is_virtual) {
@@ -237,7 +241,7 @@ fwrite(csp_str15, 1, 21, out_f);
 fprintf(out_f, "%d", (int)(run_id));
 fwrite(csp_str16, 1, 11, out_f);
 
-#line 87 "priv_edit_run_page.csp"
+#line 83 "priv_edit_run_page.csp"
 if (run_time != info.time) {
     if (info.time <= 0) {
 fwrite(csp_str17, 1, 20, out_f);
@@ -248,7 +252,7 @@ fwrite(csp_str18, 1, 1, out_f);
 fprintf(out_f, "%d", (int)(info.nsec / 1000));
 fwrite(csp_str16, 1, 11, out_f);
 
-#line 90 "priv_edit_run_page.csp"
+#line 86 "priv_edit_run_page.csp"
 } else {
 fwrite(csp_str17, 1, 20, out_f);
 fputs(_("DB time"), out_f);
@@ -258,12 +262,12 @@ fwrite(csp_str18, 1, 1, out_f);
 fprintf(out_f, "%d", (int)(info.nsec / 1000));
 fwrite(csp_str16, 1, 11, out_f);
 
-#line 92 "priv_edit_run_page.csp"
+#line 88 "priv_edit_run_page.csp"
 }
   }
 fwrite(csp_str9, 1, 1, out_f);
 
-#line 94 "priv_edit_run_page.csp"
+#line 90 "priv_edit_run_page.csp"
 if (run_time <= 0) {
 fwrite(csp_str17, 1, 20, out_f);
 fputs(_("Timestamp"), out_f);
@@ -273,7 +277,7 @@ fwrite(csp_str18, 1, 1, out_f);
 fprintf(out_f, "%d", (int)(info.nsec / 1000));
 fwrite(csp_str16, 1, 11, out_f);
 
-#line 96 "priv_edit_run_page.csp"
+#line 92 "priv_edit_run_page.csp"
 } else {
 fwrite(csp_str17, 1, 20, out_f);
 fputs(_("Time"), out_f);
@@ -283,7 +287,7 @@ fwrite(csp_str18, 1, 1, out_f);
 fprintf(out_f, "%d", (int)(info.nsec / 1000));
 fwrite(csp_str16, 1, 11, out_f);
 
-#line 98 "priv_edit_run_page.csp"
+#line 94 "priv_edit_run_page.csp"
 }
 fwrite(csp_str17, 1, 20, out_f);
 fputs(_("Contest time"), out_f);
@@ -291,7 +295,7 @@ fwrite(csp_str19, 1, 20, out_f);
 fputs(html_armor_buf(&ab, (duration_str_2(hbuf, sizeof(hbuf), run_time - start_time, info.nsec))), out_f);
 fwrite(csp_str16, 1, 11, out_f);
 
-#line 100 "priv_edit_run_page.csp"
+#line 96 "priv_edit_run_page.csp"
 if (info.user_id <= 0 || !(str = teamdb_get_login(cs->teamdb_state, info.user_id))) {
     snprintf(buf, sizeof(buf), "#%d", info.user_id);
     str = buf;
@@ -311,7 +315,7 @@ fputs("\"", out_f);
 fputs(" />", out_f);
 fwrite(csp_str16, 1, 11, out_f);
 
-#line 105 "priv_edit_run_page.csp"
+#line 101 "priv_edit_run_page.csp"
 if ((str = teamdb_get_name(cs->teamdb_state, info.user_id))) {
 fwrite(csp_str17, 1, 20, out_f);
 fputs(_("User name"), out_f);
@@ -319,7 +323,7 @@ fwrite(csp_str19, 1, 20, out_f);
 fputs(html_armor_buf(&ab, (str)), out_f);
 fwrite(csp_str16, 1, 11, out_f);
 
-#line 107 "priv_edit_run_page.csp"
+#line 103 "priv_edit_run_page.csp"
 }
 fwrite(csp_str20, 1, 52, out_f);
 fputs("<select name=\"prob\"", out_f);
@@ -329,7 +333,7 @@ fputs(" disabled=\"disabled\"", out_f);
 fputs(">", out_f);
 fwrite(csp_str9, 1, 1, out_f);
 
-#line 110 "priv_edit_run_page.csp"
+#line 106 "priv_edit_run_page.csp"
 if (info.prob_id <= 0 || info.prob_id > cs->max_prob || !(prob = cs->probs[info.prob_id])) {
 fwrite(csp_str9, 1, 1, out_f);
 fputs("<option", out_f);
@@ -345,7 +349,7 @@ fprintf(out_f, "%d", (int)(info.prob_id));
 fputs("</option>", out_f);
 fwrite(csp_str9, 1, 1, out_f);
 
-#line 114 "priv_edit_run_page.csp"
+#line 110 "priv_edit_run_page.csp"
 }
   for (prob_id = 1; prob_id <= cs->max_prob; ++prob_id) {
     if (cs->probs[prob_id]) {
@@ -364,14 +368,14 @@ fputs(html_armor_buf(&ab, (cs->probs[prob_id]->long_name)), out_f);
 fputs("</option>", out_f);
 fwrite(csp_str9, 1, 1, out_f);
 
-#line 120 "priv_edit_run_page.csp"
+#line 116 "priv_edit_run_page.csp"
 }
   }
 fwrite(csp_str9, 1, 1, out_f);
 fputs("</select>", out_f);
 fwrite(csp_str23, 1, 10, out_f);
 
-#line 125 "priv_edit_run_page.csp"
+#line 121 "priv_edit_run_page.csp"
 if (prob && prob->variant_num > 0) {
 fwrite(csp_str24, 1, 48, out_f);
 fputs("<input type=\"text\" name=\"variant\" size=\"20\"", out_f);
@@ -386,7 +390,7 @@ fputs("\"", out_f);
 fputs(" />", out_f);
 fwrite(csp_str16, 1, 11, out_f);
 
-#line 129 "priv_edit_run_page.csp"
+#line 125 "priv_edit_run_page.csp"
 }
 fwrite(csp_str25, 1, 52, out_f);
 fputs("<select name=\"lang\"", out_f);
@@ -396,11 +400,11 @@ fputs(" disabled=\"disabled\"", out_f);
 fputs(">", out_f);
 fwrite(csp_str9, 1, 1, out_f);
 
-#line 133 "priv_edit_run_page.csp"
+#line 129 "priv_edit_run_page.csp"
 if (info.lang_id == 0) {
 fwrite(csp_str26, 1, 49, out_f);
 
-#line 137 "priv_edit_run_page.csp"
+#line 133 "priv_edit_run_page.csp"
 str = "";
   } else if (info.lang_id < 0 || info.lang_id > cs->max_lang || !(lang = cs->langs[info.lang_id])) {
 fwrite(csp_str9, 1, 1, out_f);
@@ -417,7 +421,7 @@ fprintf(out_f, "%d", (int)(info.lang_id));
 fputs("</option>", out_f);
 fwrite(csp_str9, 1, 1, out_f);
 
-#line 142 "priv_edit_run_page.csp"
+#line 138 "priv_edit_run_page.csp"
 }
   for (lang_id = 1; lang_id <= cs->max_lang; ++lang_id) {
     if (cs->langs[lang_id]) {
@@ -436,7 +440,7 @@ fputs(html_armor_buf(&ab, (cs->langs[lang_id]->long_name)), out_f);
 fputs("</option>", out_f);
 fwrite(csp_str9, 1, 1, out_f);
 
-#line 148 "priv_edit_run_page.csp"
+#line 144 "priv_edit_run_page.csp"
 }
   }
 fwrite(csp_str9, 1, 1, out_f);
@@ -475,11 +479,11 @@ fwrite(csp_str31, 1, 30, out_f);
 fputs(_("Status"), out_f);
 fwrite(csp_str32, 1, 5, out_f);
 
-#line 157 "priv_edit_run_page.csp"
+#line 153 "priv_edit_run_page.csp"
 write_change_status_dialog(cs, out_f, NULL, info.is_imported, "b0", info.status, info.is_readonly);
 fwrite(csp_str33, 1, 6, out_f);
 
-#line 159 "priv_edit_run_page.csp"
+#line 155 "priv_edit_run_page.csp"
 buf[0] = 0;
   if (info.passed_mode > 0) {
     if (info.test >= 0) {
@@ -514,7 +518,7 @@ fputs("\"", out_f);
 fputs(" />", out_f);
 fwrite(csp_str16, 1, 11, out_f);
 
-#line 183 "priv_edit_run_page.csp"
+#line 179 "priv_edit_run_page.csp"
 if (global->score_system == SCORE_KIROV || global->score_system == SCORE_OLYMPIAD
       || global->score_system == SCORE_MOSCOW) {
 fwrite(csp_str34, 1, 46, out_f);
@@ -539,25 +543,25 @@ fputs("\"", out_f);
 fputs(" />", out_f);
 fwrite(csp_str16, 1, 11, out_f);
 
-#line 189 "priv_edit_run_page.csp"
+#line 185 "priv_edit_run_page.csp"
 }
 fwrite(csp_str36, 1, 47, out_f);
 fputs("<input type=\"checkbox\" name=\"is_marked\" value=\"1\"", out_f);
 fputs(" />", out_f);
 fwrite(csp_str16, 1, 11, out_f);
 
-#line 193 "priv_edit_run_page.csp"
+#line 189 "priv_edit_run_page.csp"
 if (global->separate_user_score > 0) {
 fwrite(csp_str37, 1, 56, out_f);
 fputs("<input type=\"checkbox\" name=\"is_saved\" value=\"1\"", out_f);
 fputs(" />", out_f);
 fwrite(csp_str38, 1, 48, out_f);
 
-#line 196 "priv_edit_run_page.csp"
+#line 192 "priv_edit_run_page.csp"
 write_change_status_dialog(cs, out_f, "saved_status", info.is_imported, "b0", info.saved_status, info.is_readonly);
 fwrite(csp_str33, 1, 6, out_f);
 
-#line 198 "priv_edit_run_page.csp"
+#line 194 "priv_edit_run_page.csp"
 buf[0] = 0;
     if (global->score_system == SCORE_KIROV || global->score_system == SCORE_OLYMPIAD) {
       snprintf(buf, sizeof(buf), "%d", info.saved_test);
@@ -583,7 +587,7 @@ fputs("\"", out_f);
 fputs(" />", out_f);
 fwrite(csp_str16, 1, 11, out_f);
 
-#line 213 "priv_edit_run_page.csp"
+#line 209 "priv_edit_run_page.csp"
 if (global->score_system == SCORE_KIROV || global->score_system == SCORE_OLYMPIAD
         || global->score_system == SCORE_MOSCOW) {
 fwrite(csp_str39, 1, 52, out_f);
@@ -599,7 +603,7 @@ fputs("\"", out_f);
 fputs(" />", out_f);
 fwrite(csp_str16, 1, 11, out_f);
 
-#line 218 "priv_edit_run_page.csp"
+#line 214 "priv_edit_run_page.csp"
 }
   }
 fwrite(csp_str40, 1, 43, out_f);
@@ -640,7 +644,7 @@ fputs("\"", out_f);
 fputs(" />", out_f);
 fwrite(csp_str16, 1, 11, out_f);
 
-#line 225 "priv_edit_run_page.csp"
+#line 221 "priv_edit_run_page.csp"
 #if CONF_HAS_LIBUUID - 0 != 0
 fwrite(csp_str44, 1, 45, out_f);
 fputs("<input type=\"text\" name=\"sha1\" size=\"60\"", out_f);
@@ -655,11 +659,11 @@ fputs("\"", out_f);
 fputs(" />", out_f);
 fwrite(csp_str16, 1, 11, out_f);
 
-#line 227 "priv_edit_run_page.csp"
+#line 223 "priv_edit_run_page.csp"
 #endif
 fwrite(csp_str9, 1, 1, out_f);
 
-#line 228 "priv_edit_run_page.csp"
+#line 224 "priv_edit_run_page.csp"
 if (!info.lang_id) {
 fwrite(csp_str45, 1, 53, out_f);
 fputs("<input type=\"text\" name=\"mime_type\" size=\"60\"", out_f);
@@ -674,7 +678,7 @@ fputs("\"", out_f);
 fputs(" />", out_f);
 fwrite(csp_str16, 1, 11, out_f);
 
-#line 230 "priv_edit_run_page.csp"
+#line 226 "priv_edit_run_page.csp"
 }
 fwrite(csp_str46, 1, 47, out_f);
 fputs("<input type=\"checkbox\" name=\"is_hidden\" value=\"1\"", out_f);
@@ -698,7 +702,7 @@ fputs("\"", out_f);
 fputs(" />", out_f);
 fwrite(csp_str16, 1, 11, out_f);
 
-#line 236 "priv_edit_run_page.csp"
+#line 232 "priv_edit_run_page.csp"
 if (global->enable_printing > 0) {
 fwrite(csp_str50, 1, 54, out_f);
 fputs("<input type=\"text\" name=\"pages\" size=\"20\"", out_f);
@@ -713,7 +717,7 @@ fputs("\"", out_f);
 fputs(" />", out_f);
 fwrite(csp_str16, 1, 11, out_f);
 
-#line 238 "priv_edit_run_page.csp"
+#line 234 "priv_edit_run_page.csp"
 }
 fwrite(csp_str51, 1, 50, out_f);
 fwrite(csp_str52, 1, 21, out_f);
@@ -724,7 +728,7 @@ fwrite(csp_str54, 1, 6, out_f);
 write_copyright_short(out_f);
 fwrite(csp_str55, 1, 17, out_f);
 
-#line 250 "priv_edit_run_page.csp"
+#line 246 "priv_edit_run_page.csp"
 l10n_setlocale(0);
 done:;
   html_armor_free(&ab);
