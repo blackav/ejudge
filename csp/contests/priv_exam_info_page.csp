@@ -1,0 +1,108 @@
+<%
+/* $Id$ */
+%><%@include "priv_includes.csp"
+%><%
+#define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@set getter_name = "csp_get_priv_exam_info_page"
+%><%@page csp_view_priv_exam_info_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "priv_stdvars.csp"
+%><%
+  int i, j, max_user_id, serial = 1;
+  struct teamdb_export td;
+  struct userlist_members *mm = 0;
+  struct userlist_member *m = 0;
+  struct userlist_user_info *ui = 0;
+  const unsigned char *title = NULL;
+
+  if (phr->role < USER_ROLE_JUDGE) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+  l10n_setlocale(phr->locale_id);
+  title = _("Examination information");
+%><%@include "priv_header.csp"
+%><table class="b1">
+    <tr>
+        <th class="b1">NN</th>
+        <th class="b1"><s:tr>User Id</s:tr></th>
+        <th class="b1"><s:tr>User login</s:tr></th>
+        <th class="b1"><s:tr>User name</s:tr></th>
+        <th class="b1"><s:tr>Flags</s:tr></th>
+        <th class="b1"><s:tr>First name</s:tr></th>
+        <th class="b1"><s:tr>Family name</s:tr></th>
+        <th class="b1"><s:tr>Location</s:tr></th>
+        <th class="b1"><s:tr>Exam Id</s:tr></th>
+        <th class="b1"><s:tr>Cypher</s:tr></th>
+    </tr>
+<%
+  max_user_id = teamdb_get_max_team_id(cs->teamdb_state);
+  for (i = 1; i <= max_user_id; i++) {
+    if (!teamdb_lookup(cs->teamdb_state, i)) continue;
+    if (teamdb_export_team(cs->teamdb_state, i, &td) < 0) continue;
+    //if (td.flags) continue;
+    if (!td.user) continue;
+
+    ui = td.user->cnts0;
+%>
+    <tr>
+        <td class="b1"><s:v value="serial++" /></td>
+        <td class="b1"><s:v value="i" /></td>
+        <td class="b1"><s:v value="td.login" /></td>
+<% if (td.name && *td.name) { %>
+        <td class="b1"><s:v value="td.name" /></td>
+<% } else { %>
+        <td class="b1"><i><s:tr>Not set</s:tr></i></td>
+<%    } %>
+        <td class="b1">&nbsp;</td>
+<%
+    m = 0;
+    if (ui && (mm = ui->members) && mm->u > 0) {
+      for (j = 0; j < mm->u; j++)
+        if ((m = mm->m[j]) && m->team_role == USERLIST_MB_CONTESTANT)
+          break;
+    }
+
+    if (m && m->firstname) {
+%>
+        <td class="b1"><s:v value="m->firstname" /></td>
+<%    } else { %>
+        <td class="b1">&nbsp;</td>
+<%
+    }
+    if (m && m->surname) {
+%>
+        <td class="b1"><s:v value="m->surname" /></td>
+<%    } else { %>
+        <td class="b1">&nbsp;</td>
+<%
+    }
+
+    if (ui && ui->location) {
+%>
+        <td class="b1"><s:v value="ui->location" /></td>
+<%    } else { %>
+        <td class="b1">&nbsp;</td>
+<%
+    }
+    if (ui && ui->exam_id) {
+%>
+        <td class="b1"><s:v value="ui->exam_id" /></td>
+<%    } else { %>
+        <td class="b1">&nbsp;</td>
+<%
+    }
+    if (ui && ui->exam_cypher) {
+%>
+        <td class="b1"><s:v value="ui->exam_cypher" /></td>
+<%    } else { %>
+        <td class="b1">&nbsp;</td>
+<%    } %>
+    </tr>
+<%  } %>
+</table>
+<%@include "priv_footer.csp"
+%><%
+  l10n_setlocale(0);
+cleanup:
+  html_armor_free(&ab);
+  return retval;
+%>

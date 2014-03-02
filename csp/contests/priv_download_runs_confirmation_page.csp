@@ -14,17 +14,14 @@ ns_parse_run_mask(
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@set getter_name = "csp_get_priv_download_runs_confirmation_page"
 %><%@page csp_view_priv_download_runs_confirmation_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "priv_stdvars.csp"
 %><%
-  //const serve_state_t cs = extra->serve_state;
-  struct contest_extra *extra = phr->extra;
-  int retval = 0;
   unsigned long *mask = 0, mval;
   size_t mask_size = 0;
   const unsigned char *mask_size_str = 0;
   const unsigned char *mask_str = 0;
   size_t mask_count = 0;
   int i, j;
-  unsigned char hbuf[1024];
   const unsigned char *title = _("Download runs configuration");
 
   if (opcaps_check(phr->caps, OPCAP_DUMP_RUNS) < 0)

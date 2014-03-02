@@ -9,16 +9,13 @@ html_role_select(FILE *fout, int role, int allow_admin,
 %><%@set getter_name = "csp_get_priv_login_page"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@page csp_view_priv_login_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "priv_stdvars.csp"
 %><%
-  //const struct contest_desc *cnts = phr->cnts;
-  struct contest_extra *extra = phr->extra;
   const unsigned char *s;
   int r, n;
-  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   const unsigned char *login = NULL;
   const unsigned char *password = NULL;
   int contest_id = phr->contest_id;
-  unsigned char hbuf[1024];
   const unsigned char *title = _("Login page");
 %><%
   ns_cgi_param(phr, "login", &login);
