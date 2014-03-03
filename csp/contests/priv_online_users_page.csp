@@ -1,0 +1,53 @@
+<%
+/* $Id$ */
+%><%@include "priv_includes.csp"
+%><%@set getter_name = "csp_get_priv_online_users_page"
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@page csp_view_priv_online_users_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "priv_stdvars.csp"
+%><%
+  int i, max_user_id, j, serial = 1;
+  struct last_access_info *ai;
+  struct teamdb_export td;
+  unsigned char cl[128];
+
+  snprintf(cl, sizeof(cl), " class=\"b1\"");
+%>
+<table class="b1">
+    <tr>
+        <th class="b1">NN</th>
+        <th class="b1"><s:tr>User Id</s:tr></th>
+        <th class="b1"><s:tr>User login</s:tr></th>
+        <th class="b1"><s:tr>User name</s:tr></th>
+        <th class="b1"><s:tr>IP address</s:tr></th>
+    </tr>
+<%
+  if (cs->global->disable_user_database > 0) {
+    max_user_id = run_get_max_user_id(cs->runlog_state);
+  } else {
+    max_user_id = teamdb_get_max_team_id(cs->teamdb_state);
+  }
+  for (i = 1; i <= max_user_id; i++) {
+    if (i >= extra->user_access_idx.a) continue;
+    if ((j = extra->user_access_idx.v[i]) < 0) continue;
+    ai = &extra->user_access[USER_ROLE_CONTESTANT].v[j];
+    if (ai->time + 65 < cs->current_time) continue;
+    if (!teamdb_lookup(cs->teamdb_state, i)) continue;
+    if (teamdb_export_team(cs->teamdb_state, i, &td) < 0) continue;
+%>
+    <tr>
+        <td class="b1"><s:v value="serial++" /></td>
+        <td class="b1"><s:v value="i" /></td>
+        <td class="b1"><s:v value="td.login" /></td>
+<%    if (td.name && *td.name) { %>
+        <td class="b1"><tt><s:v value="td.name" /></tt></td>
+<%    } else { %>
+        <td class="b1"><i><s:tr>Not set</s:tr></i></td>
+<%    } %>
+        <td class="b1"><tt><s:v value="ai->ip" /><% if (ai->ssl) { %>/ssl<% } %></tt></td>
+    </tr>
+<%  } %>
+</table>
+<%
+  html_armor_free(&ab);
+%>
