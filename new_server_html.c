@@ -7934,8 +7934,8 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
 static const unsigned char * const external_action_names[NEW_SRV_ACTION_LAST] =
 {
   [NEW_SRV_ACTION_MAIN_PAGE] = "priv_main_page",
-  [NEW_SRV_ACTION_VIEW_USERS] = "priv_view_users_page",
-  [NEW_SRV_ACTION_PRIV_USERS_VIEW] = "priv_view_priv_users_page",
+  [NEW_SRV_ACTION_VIEW_USERS] = "priv_users_page",
+  [NEW_SRV_ACTION_PRIV_USERS_VIEW] = "priv_priv_users_page",
   [NEW_SRV_ACTION_DOWNLOAD_ARCHIVE_1] = "priv_download_runs_confirmation_page",
   [NEW_SRV_ACTION_VIEW_CLAR] = "priv_clar_page",
   [NEW_SRV_ACTION_PRIV_EDIT_RUN_PAGE] = "priv_edit_run_page",
