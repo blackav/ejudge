@@ -3895,7 +3895,7 @@ ej_ip_t_type_handler(
         TypeInfo *type_info)
 {
     // handle "format"?
-    fprintf(prg_f, "fprintf(out_f, \"%%s\", xml_unparse_ip(%s));\n", text);
+    fprintf(prg_f, "fprintf(out_f, \"%%s\", xml_unparse_ipv6(&(%s)));\n", text);
 }
 
 static void
