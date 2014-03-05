@@ -73,24 +73,24 @@ static const unsigned char csp_str41[18] = "\n</body>\n</html>\n";
 #include "userlist_clnt.h"
 #include "userlist.h"
 #include "userlist_proto.h"
-int csp_view_priv_view_users_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr);
+int csp_view_priv_users_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr);
 static PageInterfaceOps page_ops =
 {
     NULL, // destroy
     NULL, // execute
-    csp_view_priv_view_users_page, // render
+    csp_view_priv_users_page, // render
 };
 static PageInterface page_iface =
 {
     &page_ops,
 };
 PageInterface *
-csp_get_priv_view_users_page(void)
+csp_get_priv_users_page(void)
 {
     return &page_iface;
 }
 
-int csp_view_priv_view_users_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+int csp_view_priv_users_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 {
 
 #line 2 "priv_stdvars.csp"
