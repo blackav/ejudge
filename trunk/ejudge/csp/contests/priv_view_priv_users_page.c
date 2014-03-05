@@ -37,6 +37,7 @@ static const unsigned char csp_str29[18] = "\n</body>\n</html>\n";
 
 #line 2 "priv_includes.csp"
 #include "new-server.h"
+#include "new_server_pi.h"
 #include "new_server_proto.h"
 #include "external_action.h"
 #include "clarlog.h"
