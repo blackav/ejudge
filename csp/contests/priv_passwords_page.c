@@ -14,18 +14,22 @@ static const unsigned char csp_str10[30] = "</th>\n        <th class=\"b1\">";
 static const unsigned char csp_str11[17] = "</th>\n    </tr>\n";
 static const unsigned char csp_str12[34] = "\n    <tr>\n        <td class=\"b1\">";
 static const unsigned char csp_str13[30] = "</td>\n        <td class=\"b1\">";
-static const unsigned char csp_str14[7] = "</td>\n";
-static const unsigned char csp_str15[25] = "\n        <td class=\"b1\">";
-static const unsigned char csp_str16[28] = "\n        <td class=\"b1\"><i>";
-static const unsigned char csp_str17[11] = "</i></td>\n";
-static const unsigned char csp_str18[37] = "\n        <td class=\"b1\">&nbsp;</td>\n";
-static const unsigned char csp_str19[12] = "\n    </tr>\n";
-static const unsigned char csp_str20[11] = "\n</table>\n";
-static const unsigned char csp_str21[7] = "<hr/>\n";
-static const unsigned char csp_str22[18] = "\n</body>\n</html>\n";
+static const unsigned char csp_str14[34] = "</td>\n        <td class=\"b1\"><tt>";
+static const unsigned char csp_str15[12] = "</tt></td>\n";
+static const unsigned char csp_str16[29] = "\n        <td class=\"b1\"><tt>";
+static const unsigned char csp_str17[28] = "\n        <td class=\"b1\"><i>";
+static const unsigned char csp_str18[11] = "</i></td>\n";
+static const unsigned char csp_str19[39] = "\n        <td class=\"b1\">&nbsp;%s</td>\n";
+static const unsigned char csp_str20[2] = "\n";
+static const unsigned char csp_str21[25] = "\n        <td class=\"b1\">";
+static const unsigned char csp_str22[7] = "</td>\n";
+static const unsigned char csp_str23[12] = "\n    </tr>\n";
+static const unsigned char csp_str24[11] = "\n</table>\n";
+static const unsigned char csp_str25[7] = "<hr/>\n";
+static const unsigned char csp_str26[18] = "\n</body>\n</html>\n";
 
 
-#line 2 "priv_exam_info_page.csp"
+#line 2 "priv_passwords_page.csp"
 /* $Id$ */
 
 #line 2 "priv_includes.csp"
@@ -50,26 +54,26 @@ static const unsigned char csp_str22[18] = "\n</body>\n</html>\n";
 #include <libintl.h>
 #define _(x) gettext(x)
 
-#line 5 "priv_exam_info_page.csp"
+#line 5 "priv_passwords_page.csp"
 #define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
-int csp_view_priv_exam_info_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr);
+int csp_view_priv_passwords_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr);
 static PageInterfaceOps page_ops =
 {
     NULL, // destroy
     NULL, // execute
-    csp_view_priv_exam_info_page, // render
+    csp_view_priv_passwords_page, // render
 };
 static PageInterface page_iface =
 {
     &page_ops,
 };
 PageInterface *
-csp_get_priv_exam_info_page(void)
+csp_get_priv_passwords_page(void)
 {
     return &page_iface;
 }
 
-int csp_view_priv_exam_info_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+int csp_view_priv_passwords_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 {
 
 #line 2 "priv_stdvars.csp"
@@ -80,18 +84,25 @@ int retval __attribute__((unused)) = 0;
   struct html_armor_buffer ab __attribute__((unused)) = HTML_ARMOR_INITIALIZER;
   unsigned char hbuf[1024] __attribute__((unused));
 
-#line 11 "priv_exam_info_page.csp"
-int i, j, max_user_id, serial = 1;
+#line 11 "priv_passwords_page.csp"
+const unsigned char *s = NULL;
+  int i, max_user_id, serial = 1;
   struct teamdb_export td;
-  struct userlist_members *mm = 0;
-  struct userlist_member *m = 0;
-  struct userlist_user_info *ui = 0;
   const unsigned char *title = NULL;
 
-  if (phr->role < USER_ROLE_JUDGE) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+  if (phr->role < USER_ROLE_JUDGE
+      || opcaps_check(phr->caps, OPCAP_EDIT_PASSWD) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+  if (phr->action == NEW_SRV_ACTION_VIEW_CNTS_PWDS
+      && cnts->disable_team_password)
+    FAIL(NEW_SRV_ERR_TEAM_PWD_DISABLED);
 
   l10n_setlocale(phr->locale_id);
-  title = _("Examination information");
+  if (phr->action == NEW_SRV_ACTION_VIEW_CNTS_PWDS) {
+    title = _("Contest passwords");
+  } else {
+    title = _("Registration passwords");
+  }
 fwrite(csp_str0, 1, 183, out_f);
 fwrite("utf-8", 1, 5, out_f);
 fwrite(csp_str1, 1, 34, out_f);
@@ -128,127 +139,93 @@ fputs(_("User name"), out_f);
 fwrite(csp_str10, 1, 29, out_f);
 fputs(_("Flags"), out_f);
 fwrite(csp_str10, 1, 29, out_f);
-fputs(_("First name"), out_f);
-fwrite(csp_str10, 1, 29, out_f);
-fputs(_("Family name"), out_f);
+fputs(_("Password"), out_f);
 fwrite(csp_str10, 1, 29, out_f);
 fputs(_("Location"), out_f);
-fwrite(csp_str10, 1, 29, out_f);
-fputs(_("Exam Id"), out_f);
-fwrite(csp_str10, 1, 29, out_f);
-fputs(_("Cypher"), out_f);
 fwrite(csp_str11, 1, 16, out_f);
 
-#line 37 "priv_exam_info_page.csp"
+#line 41 "priv_passwords_page.csp"
 max_user_id = teamdb_get_max_team_id(cs->teamdb_state);
   for (i = 1; i <= max_user_id; i++) {
     if (!teamdb_lookup(cs->teamdb_state, i)) continue;
     if (teamdb_export_team(cs->teamdb_state, i, &td) < 0) continue;
-    //if (td.flags) continue;
+    if (td.flags) continue;
     if (!td.user) continue;
-
-    ui = td.user->cnts0;
+    if (phr->action == NEW_SRV_ACTION_VIEW_CNTS_PWDS) {
+      if (!td.user->cnts0
+          || td.user->cnts0->team_passwd_method != USERLIST_PWD_PLAIN)
+        continue;
+      s = td.user->cnts0->team_passwd;
+    } else {
+      if (td.user->passwd_method != USERLIST_PWD_PLAIN) continue;
+      s = td.user->passwd;
+    }
 fwrite(csp_str12, 1, 33, out_f);
 fprintf(out_f, "%d", (int)(serial++));
 fwrite(csp_str13, 1, 29, out_f);
 fprintf(out_f, "%d", (int)(i));
-fwrite(csp_str13, 1, 29, out_f);
+fwrite(csp_str14, 1, 33, out_f);
 fputs(html_armor_buf(&ab, (td.login)), out_f);
-fwrite(csp_str14, 1, 6, out_f);
+fwrite(csp_str15, 1, 11, out_f);
 
-#line 50 "priv_exam_info_page.csp"
+#line 61 "priv_passwords_page.csp"
 if (td.name && *td.name) {
-fwrite(csp_str15, 1, 24, out_f);
+fwrite(csp_str16, 1, 28, out_f);
 fputs(html_armor_buf(&ab, (td.name)), out_f);
-fwrite(csp_str14, 1, 6, out_f);
+fwrite(csp_str15, 1, 11, out_f);
 
-#line 52 "priv_exam_info_page.csp"
+#line 63 "priv_passwords_page.csp"
 } else {
-fwrite(csp_str16, 1, 27, out_f);
+fwrite(csp_str17, 1, 27, out_f);
 fputs(_("Not set"), out_f);
-fwrite(csp_str17, 1, 10, out_f);
+fwrite(csp_str18, 1, 10, out_f);
 
-#line 54 "priv_exam_info_page.csp"
+#line 65 "priv_passwords_page.csp"
 }
-fwrite(csp_str18, 1, 36, out_f);
+fwrite(csp_str19, 1, 38, out_f);
 
-#line 57 "priv_exam_info_page.csp"
-m = 0;
-    if (ui && (mm = ui->members) && mm->u > 0) {
-      for (j = 0; j < mm->u; j++)
-        if ((m = mm->m[j]) && m->team_role == USERLIST_MB_CONTESTANT)
-          break;
-    }
+#line 67 "priv_passwords_page.csp"
+if (s && *s) {
+fwrite(csp_str16, 1, 28, out_f);
+fputs(html_armor_buf(&ab, (s)), out_f);
+fwrite(csp_str15, 1, 11, out_f);
 
-    if (m && m->firstname) {
-fwrite(csp_str15, 1, 24, out_f);
-fputs(html_armor_buf(&ab, (m->firstname)), out_f);
-fwrite(csp_str14, 1, 6, out_f);
-
-#line 67 "priv_exam_info_page.csp"
+#line 69 "priv_passwords_page.csp"
 } else {
-fwrite(csp_str18, 1, 36, out_f);
+fwrite(csp_str17, 1, 27, out_f);
+fputs(_("Not set"), out_f);
+fwrite(csp_str18, 1, 10, out_f);
 
-#line 70 "priv_exam_info_page.csp"
+#line 71 "priv_passwords_page.csp"
 }
-    if (m && m->surname) {
-fwrite(csp_str15, 1, 24, out_f);
-fputs(html_armor_buf(&ab, (m->surname)), out_f);
-fwrite(csp_str14, 1, 6, out_f);
+fwrite(csp_str20, 1, 1, out_f);
 
-#line 74 "priv_exam_info_page.csp"
+#line 72 "priv_passwords_page.csp"
+if (td.user->cnts0 && td.user->cnts0->location) {
+fwrite(csp_str21, 1, 24, out_f);
+fputs(html_armor_buf(&ab, (td.user->cnts0->location)), out_f);
+fwrite(csp_str22, 1, 6, out_f);
+
+#line 74 "priv_passwords_page.csp"
 } else {
-fwrite(csp_str18, 1, 36, out_f);
+fwrite(csp_str17, 1, 27, out_f);
+fputs(_("Not set"), out_f);
+fwrite(csp_str18, 1, 10, out_f);
 
-#line 77 "priv_exam_info_page.csp"
+#line 76 "priv_passwords_page.csp"
 }
+fwrite(csp_str23, 1, 11, out_f);
 
-    if (ui && ui->location) {
-fwrite(csp_str15, 1, 24, out_f);
-fputs(html_armor_buf(&ab, (ui->location)), out_f);
-fwrite(csp_str14, 1, 6, out_f);
-
-#line 82 "priv_exam_info_page.csp"
-} else {
-fwrite(csp_str18, 1, 36, out_f);
-
-#line 85 "priv_exam_info_page.csp"
+#line 78 "priv_passwords_page.csp"
 }
-    if (ui && ui->exam_id) {
-fwrite(csp_str15, 1, 24, out_f);
-fputs(html_armor_buf(&ab, (ui->exam_id)), out_f);
-fwrite(csp_str14, 1, 6, out_f);
-
-#line 89 "priv_exam_info_page.csp"
-} else {
-fwrite(csp_str18, 1, 36, out_f);
-
-#line 92 "priv_exam_info_page.csp"
-}
-    if (ui && ui->exam_cypher) {
-fwrite(csp_str15, 1, 24, out_f);
-fputs(html_armor_buf(&ab, (ui->exam_cypher)), out_f);
-fwrite(csp_str14, 1, 6, out_f);
-
-#line 96 "priv_exam_info_page.csp"
-} else {
-fwrite(csp_str18, 1, 36, out_f);
-
-#line 98 "priv_exam_info_page.csp"
-}
-fwrite(csp_str19, 1, 11, out_f);
-
-#line 100 "priv_exam_info_page.csp"
-}
-fwrite(csp_str20, 1, 10, out_f);
-fwrite(csp_str21, 1, 6, out_f);
+fwrite(csp_str24, 1, 10, out_f);
+fwrite(csp_str25, 1, 6, out_f);
 write_copyright_short(out_f);
-fwrite(csp_str22, 1, 17, out_f);
+fwrite(csp_str26, 1, 17, out_f);
 
-#line 104 "priv_exam_info_page.csp"
+#line 82 "priv_passwords_page.csp"
 l10n_setlocale(0);
 cleanup:
   html_armor_free(&ab);
-  return retval;
   return 0;
 }
