@@ -1,5 +1,6 @@
 <%
 #include "new-server.h"
+#include "new_server_pi.h"
 #include "new_server_proto.h"
 #include "external_action.h"
 #include "clarlog.h"

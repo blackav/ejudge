@@ -41,6 +41,8 @@ SOFILES = \
  priv_login_page.so\
  priv_main_page.so\
  priv_online_users_page.so\
+ priv_passwords_page.so\
+ priv_user_ips_page.so\
  priv_view_users_page.so\
  priv_view_priv_users_page.so
 
@@ -57,6 +59,8 @@ clean :
 
 priv_view_priv_users_page.so : priv_view_priv_users_page.c I_priv_view_priv_users_page.c
 	$(CC) $(CCOMPFLAGS) ${WPTRSIGN} $(LDFLAGS) $^ -o $@
+priv_user_ips_page.so : priv_user_ips_page.c I_priv_user_ips_page.c
+	$(CC) $(CCOMPFLAGS) ${WPTRSIGN} $(LDFLAGS) $^ -o $@
 
 po : contests.po
 contests.po : $(CFILES)
@@ -69,6 +73,8 @@ priv_exam_info_page.c: priv_exam_info_page.csp priv_includes.csp priv_stdvars.cs
 priv_login_page.c : priv_login_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 priv_main_page.c : priv_main_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 priv_online_users_page.c : priv_online_users_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
+priv_passwords_page.c : priv_passwords_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
+priv_user_ips_page.c : priv_user_ips_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 priv_view_priv_users_page.c : priv_view_priv_users_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 priv_view_users_page.c : priv_view_users_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 
