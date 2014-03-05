@@ -9,7 +9,7 @@ html_role_select(FILE *fout, int role, int allow_admin,
                  const unsigned char *var_name);
 
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
-%><%@page csp_view_priv_view_priv_users_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@page csp_view_priv_priv_users_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 %><%@include "priv_stdvars.csp"
 %><%
   PrivViewPrivUsersPage *pvp = (PrivViewPrivUsersPage*) ps;

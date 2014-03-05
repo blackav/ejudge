@@ -5,9 +5,9 @@
 #include "userlist_clnt.h"
 #include "userlist.h"
 #include "userlist_proto.h"
-%><%@set getter_name = "csp_get_priv_view_users_page"
+%><%@set getter_name = "csp_get_priv_users_page"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
-%><%@page csp_view_priv_view_users_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@page csp_view_priv_users_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 %><%@include "priv_stdvars.csp"
 %><%
   int r;
