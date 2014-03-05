@@ -4379,6 +4379,8 @@ const char compile_version[] = "?";
 const char compile_date[] = "?";
 
 PrivViewPrivUsersPage dummy_pvpup;
+PrivViewUserIPsPage dummy_pvuip;
+PrivViewIPUsersPage dummy_pviup;
 
 /*
  * Local variables:

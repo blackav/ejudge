@@ -17,6 +17,8 @@
  * GNU General Public License for more details.
  */
 
+#include "ej_types.h"
+
 #include "external_action.h"
 
 typedef struct PrivUserInfo
@@ -38,6 +40,49 @@ typedef struct PrivViewPrivUsersPage
     PageInterface b;
     PrivUserInfoArray users;
 } PrivViewPrivUsersPage;
+
+/* */
+
+typedef struct PrivUserIPItem
+{
+  int user_id;
+  int ip_u;
+  int ip_a;
+  ej_ip_t *ips;
+} PrivUserIPItem;
+
+typedef struct PrivUserIPArray
+{
+    int a, u;
+    PrivUserIPItem **v;
+} PrivUserIPArray;
+
+typedef struct PrivViewUserIPsPage
+{
+    PageInterface b;
+    PrivUserIPArray users;
+} PrivViewUserIPsPage;
+
+/* */
+
+typedef struct PrivIPUserItem
+{
+  ej_ip_t ip;
+  int uid_u, uid_a;
+  int *uids;
+} PrivIPUserItem;
+
+typedef struct PrivIPUserArray
+{
+    int a, u;
+    PrivIPUserItem *v;
+} PrivIPUserArray;
+
+typedef struct PrivViewIPUsersPage
+{
+    PageInterface b;
+    PrivIPUserArray ips;
+} PrivViewIPUsersPage;
 
 #endif /* __NEW_SERVER_PI_H__ */
 
