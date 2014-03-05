@@ -1,0 +1,61 @@
+<%
+/* $Id$ */
+%><%@include "priv_includes.csp"
+%><%
+#define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@page csp_view_priv_user_ips_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "priv_stdvars.csp"
+%><%
+    PrivViewUserIPsPage *pp = (PrivViewUserIPsPage*) pg;
+    int i, max_user_id, serial = 1, j;
+    PrivUserIPItem *ui;
+    struct teamdb_export td;
+    const unsigned char *title = NULL;
+
+    if (phr->role < USER_ROLE_JUDGE) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+    l10n_setlocale(phr->locale_id);
+    title = _("IP addresses for users");
+%><%@include "priv_header.csp"
+%>
+<table class="b1">
+    <tr>
+        <th class="b1">NN</th>
+        <th class="b1"><s:tr>User Id</s:tr></th>
+        <th class="b1"><s:tr>User login</s:tr></th>
+        <th class="b1"><s:tr>User name</s:tr></th>
+        <th class="b1"><s:tr>IP addresses</s:tr></th>
+    </tr>
+<%
+  if (cs->global->disable_user_database > 0) {
+    max_user_id = run_get_max_user_id(cs->runlog_state);
+  } else {
+    max_user_id = teamdb_get_max_team_id(cs->teamdb_state);
+  }
+  for (i = 1; i < pp->users.a && i <= max_user_id; ++i) {
+    ui = pp->users.v[i];
+    if (!ui) continue;
+    if (!teamdb_lookup(cs->teamdb_state, i)) continue;
+    if (teamdb_export_team(cs->teamdb_state, i, &td) < 0) continue;
+%>
+    <tr>
+        <td class="b1"><s:v value="serial++" /></td>
+        <td class="b1"><s:v value="i" /></td>
+        <td class="b1"><s:v value="td.login" /></td>
+<%    if (td.name && *td.name) { %>
+        <td class="b1"><tt><s:v value="td.name" /></tt></td>
+<%    } else { %>
+        <td class="b1"><i><s:tr>Not set</s:tr></i></td>
+<%    } %>
+        <td class="b1"><%    for (j = 0; j < ui->ip_u; ++j) {
+      if (j > 0) { %> <% } %><s:v value="ui->ips[j]" /><%    } %></td>
+    </tr>
+<%  } %>
+</table>
+<%@include "priv_footer.csp"
+%><%
+  l10n_setlocale(0);
+cleanup:
+  html_armor_free(&ab);
+%>
