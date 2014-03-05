@@ -1,6 +1,8 @@
 <%
 /* $Id$ */
 %><%@include "priv_includes.csp"
+%><%
+#define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
 %><%@set getter_name = "csp_get_priv_online_users_page"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@page csp_view_priv_online_users_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
@@ -9,11 +11,14 @@
   int i, max_user_id, j, serial = 1;
   struct last_access_info *ai;
   struct teamdb_export td;
-  unsigned char cl[128];
+  const unsigned char *title = NULL;
 
-  snprintf(cl, sizeof(cl), " class=\"b1\"");
-%>
-<table class="b1">
+  if (phr->role < USER_ROLE_JUDGE) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+  l10n_setlocale(phr->locale_id);
+  title = _("Online users");
+%><%@include "priv_header.csp"
+%><table class="b1">
     <tr>
         <th class="b1">NN</th>
         <th class="b1"><s:tr>User Id</s:tr></th>
@@ -47,7 +52,9 @@
         <td class="b1"><tt><s:v value="ai->ip" /><% if (ai->ssl) { %>/ssl<% } %></tt></td>
     </tr>
 <%  } %>
-</table>
-<%
+</table><%@include "priv_footer.csp"
+%><%
+  l10n_setlocale(0);
+cleanup:
   html_armor_free(&ab);
 %>
