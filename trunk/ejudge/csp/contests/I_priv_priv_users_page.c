@@ -24,29 +24,29 @@
 #include "reuse/logger.h"
 
 extern int
-csp_view_priv_view_priv_users_page(
+csp_view_priv_priv_users_page(
         PageInterface *ps,
         FILE *log_f,
         FILE *out_f,
         struct http_request_info *phr);
 static int
-csp_execute_priv_view_priv_users_page(
+csp_execute_priv_priv_users_page(
         PageInterface *ps,
         FILE *log_f,
         struct http_request_info *phr);
 static void
-csp_destroy_priv_view_priv_users_page(
+csp_destroy_priv_priv_users_page(
         PageInterface *ps);
 
 static struct PageInterfaceOps ops =
 {
-    csp_destroy_priv_view_priv_users_page,
-    csp_execute_priv_view_priv_users_page,
-    csp_view_priv_view_priv_users_page,
+    csp_destroy_priv_priv_users_page,
+    csp_execute_priv_priv_users_page,
+    csp_view_priv_priv_users_page,
 };
 
 PageInterface *
-csp_get_priv_view_priv_users_page(void)
+csp_get_priv_priv_users_page(void)
 {
     PrivViewPrivUsersPage *pg = NULL;
 
@@ -56,7 +56,7 @@ csp_get_priv_view_priv_users_page(void)
 }
 
 static void
-csp_destroy_priv_view_priv_users_page(
+csp_destroy_priv_priv_users_page(
         PageInterface *ps)
 {
     PrivViewPrivUsersPage *pg = (PrivViewPrivUsersPage*) ps;
@@ -85,7 +85,7 @@ priv_user_info_sort_func(const void *v1, const void *v2)
 }
 
 static int
-csp_execute_priv_view_priv_users_page(
+csp_execute_priv_priv_users_page(
         PageInterface *ps,
         FILE *log_f,
         struct http_request_info *phr)
