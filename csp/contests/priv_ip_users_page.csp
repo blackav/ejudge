@@ -1,0 +1,48 @@
+<%
+/* $Id$ */
+%><%@include "priv_includes.csp"
+%><%
+#define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@page csp_view_priv_ip_users_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "priv_stdvars.csp"
+%><%
+    PrivViewIPUsersPage *pp = (PrivViewIPUsersPage*) pg;
+    int i, j, serial = 0;
+    const unsigned char *title = NULL;
+    struct teamdb_export td;
+
+    if (phr->role < USER_ROLE_JUDGE) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+    l10n_setlocale(phr->locale_id);
+    title = _("Users for IP addresses");
+%><%@include "priv_header.csp"
+%><table class="b1">
+    <tr>
+        <th class="b1">NN</th>
+        <th class="b1">IP address</th>
+        <th class="b1">Users</th>
+    </tr>
+<%  for (i = 0; i < pp->ips.u; ++i) { %>
+    <tr>
+        <td class="b1"><s:v value="serial++" /></td>
+        <td class="b1"><s:v escape="0" value="pp->ips.v[i].ip_str" /></td>
+        <td class="b1"><%
+    for (j = 0; j < pp->ips.v[i].uid_u; ++j) {
+      if (!teamdb_lookup(cs->teamdb_state, pp->ips.v[i].uids[j]))
+        continue;
+      if (teamdb_export_team(cs->teamdb_state, pp->ips.v[i].uids[j], &td) < 0)
+        continue;
+      if (j > 0) { %> <% } %><s:v value="td.login" /><%
+      if (td.name && *td.name) { %><s:v value="td.name" /><%
+      }
+    } %></td>
+    </tr>
+<%  } %>
+</table>
+<%@include "priv_footer.csp"
+%><%
+  l10n_setlocale(0);
+cleanup:
+  html_armor_free(&ab);
+%>

@@ -38,6 +38,7 @@ SOFILES = \
  priv_download_runs_confirmation_page.so\
  priv_edit_run_page.so\
  priv_exam_info_page.so\
+ priv_ip_users_page.so\
  priv_login_page.so\
  priv_main_page.so\
  priv_online_users_page.so\
@@ -70,6 +71,7 @@ priv_clar_page.c : priv_clar_page.csp priv_includes.csp priv_stdvars.csp priv_he
 priv_download_runs_confirmation_page.c : priv_download_runs_confirmation_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 priv_edit_run_page.c: priv_edit_run_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 priv_exam_info_page.c: priv_exam_info_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
+priv_ip_users_page.c : priv_ip_users_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 priv_login_page.c : priv_login_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 priv_main_page.c : priv_main_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 priv_online_users_page.c : priv_online_users_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
