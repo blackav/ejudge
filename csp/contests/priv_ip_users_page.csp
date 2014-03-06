@@ -34,7 +34,7 @@
       if (teamdb_export_team(cs->teamdb_state, pp->ips.v[i].uids[j], &td) < 0)
         continue;
       if (j > 0) { %> <% } %><s:v value="td.login" /><%
-      if (td.name && *td.name) { %><s:v value="td.name" /><%
+      if (td.name && *td.name) { %> (<s:v value="td.name" />)<%
       }
     } %></td>
     </tr>
