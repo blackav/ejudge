@@ -120,6 +120,7 @@ if (cs->global->disable_user_database > 0) {
     max_user_id = teamdb_get_max_team_id(cs->teamdb_state);
   }
   for (i = 1; i < pp->users.a && i <= max_user_id; ++i) {
+    fprintf(stderr, ">>%d\n", i);
     ui = pp->users.v[i];
     if (!ui) continue;
     if (!teamdb_lookup(cs->teamdb_state, i)) continue;
@@ -132,43 +133,43 @@ fwrite(csp_str13, 1, 29, out_f);
 fputs(html_armor_buf(&ab, (td.login)), out_f);
 fwrite(csp_str14, 1, 6, out_f);
 
-#line 46 "priv_user_ips_page.csp"
+#line 47 "priv_user_ips_page.csp"
 if (td.name && *td.name) {
 fwrite(csp_str15, 1, 28, out_f);
 fputs(html_armor_buf(&ab, (td.name)), out_f);
 fwrite(csp_str16, 1, 11, out_f);
 
-#line 48 "priv_user_ips_page.csp"
+#line 49 "priv_user_ips_page.csp"
 } else {
 fwrite(csp_str17, 1, 27, out_f);
 fputs(_("Not set"), out_f);
 fwrite(csp_str18, 1, 10, out_f);
 
-#line 50 "priv_user_ips_page.csp"
+#line 51 "priv_user_ips_page.csp"
 }
 fwrite(csp_str19, 1, 24, out_f);
 
-#line 51 "priv_user_ips_page.csp"
+#line 52 "priv_user_ips_page.csp"
 for (j = 0; j < ui->ip_u; ++j) {
       if (j > 0) {
 fwrite(csp_str20, 1, 1, out_f);
 
-#line 52 "priv_user_ips_page.csp"
+#line 53 "priv_user_ips_page.csp"
 }
 fprintf(out_f, "%s", xml_unparse_ipv6(&(ui->ips[j])));
 
-#line 52 "priv_user_ips_page.csp"
+#line 53 "priv_user_ips_page.csp"
 }
 fwrite(csp_str21, 1, 16, out_f);
 
-#line 54 "priv_user_ips_page.csp"
+#line 55 "priv_user_ips_page.csp"
 }
 fwrite(csp_str22, 1, 10, out_f);
 fwrite(csp_str23, 1, 6, out_f);
 write_copyright_short(out_f);
 fwrite(csp_str24, 1, 17, out_f);
 
-#line 58 "priv_user_ips_page.csp"
+#line 59 "priv_user_ips_page.csp"
 l10n_setlocale(0);
 cleanup:
   html_armor_free(&ab);
