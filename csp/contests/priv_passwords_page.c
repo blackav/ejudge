@@ -19,7 +19,7 @@ static const unsigned char csp_str15[12] = "</tt></td>\n";
 static const unsigned char csp_str16[29] = "\n        <td class=\"b1\"><tt>";
 static const unsigned char csp_str17[28] = "\n        <td class=\"b1\"><i>";
 static const unsigned char csp_str18[11] = "</i></td>\n";
-static const unsigned char csp_str19[39] = "\n        <td class=\"b1\">&nbsp;%s</td>\n";
+static const unsigned char csp_str19[37] = "\n        <td class=\"b1\">&nbsp;</td>\n";
 static const unsigned char csp_str20[2] = "\n";
 static const unsigned char csp_str21[25] = "\n        <td class=\"b1\">";
 static const unsigned char csp_str22[7] = "</td>\n";
@@ -182,7 +182,7 @@ fwrite(csp_str18, 1, 10, out_f);
 
 #line 65 "priv_passwords_page.csp"
 }
-fwrite(csp_str19, 1, 38, out_f);
+fwrite(csp_str19, 1, 36, out_f);
 
 #line 67 "priv_passwords_page.csp"
 if (s && *s) {
