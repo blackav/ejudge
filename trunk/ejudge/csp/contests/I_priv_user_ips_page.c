@@ -40,8 +40,10 @@ destroy_func(
     PrivViewUserIPsPage *pp = (PrivViewUserIPsPage*) ps;
 
     for (int i = 0; i < pp->users.u; ++i) {
-        xfree(pp->users.v[i]->ips);
-        xfree(pp->users.v[i]);
+        if (pp->users.v[i]) {
+            xfree(pp->users.v[i]->ips);
+            xfree(pp->users.v[i]);
+        }
     }
     xfree(pp->users.v);
     xfree(pp);
