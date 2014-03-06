@@ -80,9 +80,9 @@ execute_func(
         }
         PrivUserIPItem *ui = pp->users.v[re.user_id];
         int i = 0;
+        ej_ip_t ipv6;
+        run_entry_to_ipv6(&re, &ipv6);
         for (i = 0; i < ui->ip_u; ++i) {
-            ej_ip_t ipv6;
-            run_entry_to_ipv6(&re, &ipv6);
             if (!ipv6cmp(&ui->ips[i], &ipv6))
                 break;
         }
@@ -92,7 +92,7 @@ execute_func(
             ui->ip_a *= 2;
             XREALLOC(ui->ips, ui->ip_a);
         }
-        run_entry_to_ipv6(&re, &ui->ips[ui->ip_u++]);
+        ui->ips[ui->ip_u++] = ipv6;
     }
 
     return 0;
