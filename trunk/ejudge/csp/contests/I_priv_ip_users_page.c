@@ -19,6 +19,8 @@
 #include "new-server.h"
 #include "contests.h"
 #include "userlist_clnt.h"
+#include "runlog.h"
+#include "xml_utils.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"
@@ -29,28 +31,6 @@ csp_view_priv_ip_users_page(
         FILE *log_f,
         FILE *out_f,
         struct http_request_info *phr);
-
-/*
-typedef struct PrivIPUserItem
-{
-    ej_ip_t ip;
-    unsigned char *ip_str;
-    int uid_u, uid_a;
-    int *uids;
-} PrivIPUserItem;
-
-typedef struct PrivIPUserArray
-{
-    int a, u;
-    PrivIPUserItem *v;
-} PrivIPUserArray;
-
-typedef struct PrivViewIPUsersPage
-{
-    PageInterface b;
-    PrivIPUserArray ips;
-} PrivViewIPUsersPage;
- */
 
 static void
 destroy_func(
@@ -72,7 +52,8 @@ execute_func(
         struct http_request_info *phr)
 {
     PrivViewIPUsersPage *pp = (PrivViewIPUsersPage *) ps;
-
+    struct contest_extra *extra = phr->extra;
+    serve_state_t cs = extra->serve_state;
     int total_runs = run_get_total(cs->runlog_state);
 
     for (int run_id = 0; run_id < total_runs; ++run_id) {
@@ -100,7 +81,8 @@ execute_func(
             pp->ips.v[i].ip_str = xstrdup(xml_unparse_ipv6(&ipv6));
             pp->ips.u++;
         }
-        for (int j = 0; j < pp->ips.v[i].uid_u; ++j)
+        int j;
+        for (j = 0; j < pp->ips.v[i].uid_u; ++j)
             if (pp->ips.v[i].uids[j] == re.user_id)
                 break;
         if (j == pp->ips.v[i].uid_u) {
