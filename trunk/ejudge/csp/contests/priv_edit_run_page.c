@@ -51,11 +51,9 @@ static const unsigned char csp_str47[60] = "</td></tr>\n<tr><td class=\"b0\">Imp
 static const unsigned char csp_str48[61] = "</td></tr>\n<tr><td class=\"b0\">Read-only:</td><td class=\"b0\">";
 static const unsigned char csp_str49[62] = "</td></tr>\n\n<tr><td class=\"b0\">Locale ID:</td><td class=\"b0\">";
 static const unsigned char csp_str50[55] = "\n<tr><td class=\"b0\">Pages printed:</td><td class=\"b0\">";
-static const unsigned char csp_str51[51] = "\n</table>\n\n<table class=\"b0\">\n<tr>\n<td class=\"b0\">";
-static const unsigned char csp_str52[22] = "</td>\n<td class=\"b0\">";
-static const unsigned char csp_str53[22] = "</td>\n</tr>\n</table>\n";
-static const unsigned char csp_str54[7] = "<hr/>\n";
-static const unsigned char csp_str55[18] = "\n</body>\n</html>\n";
+static const unsigned char csp_str51[193] = "\n</table>\n\n<table class=\"b0\">\n<tr>\n<td class=\"b0\"><input type=\"submit\" name=\"save\" value=\"Save\" /></td>\n<td class=\"b0\"><input type=\"submit\" name=\"cancel\" value=\"Cancel\" /></td>\n</tr>\n</table>\n";
+static const unsigned char csp_str52[7] = "<hr/>\n";
+static const unsigned char csp_str53[18] = "\n</body>\n</html>\n";
 
 
 #line 2 "priv_edit_run_page.csp"
@@ -720,14 +718,12 @@ fwrite(csp_str16, 1, 11, out_f);
 
 #line 234 "priv_edit_run_page.csp"
 }
-fwrite(csp_str51, 1, 50, out_f);
-fwrite(csp_str52, 1, 21, out_f);
-fwrite(csp_str53, 1, 21, out_f);
+fwrite(csp_str51, 1, 192, out_f);
 fputs("</form>", out_f);
 fwrite(csp_str9, 1, 1, out_f);
-fwrite(csp_str54, 1, 6, out_f);
+fwrite(csp_str52, 1, 6, out_f);
 write_copyright_short(out_f);
-fwrite(csp_str55, 1, 17, out_f);
+fwrite(csp_str53, 1, 17, out_f);
 
 #line 246 "priv_edit_run_page.csp"
 l10n_setlocale(0);
