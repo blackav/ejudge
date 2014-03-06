@@ -34,7 +34,6 @@
     max_user_id = teamdb_get_max_team_id(cs->teamdb_state);
   }
   for (i = 1; i < pp->users.a && i <= max_user_id; ++i) {
-    fprintf(stderr, ">>%d\n", i);
     ui = pp->users.v[i];
     if (!ui) continue;
     if (!teamdb_lookup(cs->teamdb_state, i)) continue;
