@@ -67,9 +67,10 @@ typedef struct PrivViewUserIPsPage
 
 typedef struct PrivIPUserItem
 {
-  ej_ip_t ip;
-  int uid_u, uid_a;
-  int *uids;
+    ej_ip_t ip;
+    unsigned char *ip_str;
+    int uid_u, uid_a;
+    int *uids;
 } PrivIPUserItem;
 
 typedef struct PrivIPUserArray
