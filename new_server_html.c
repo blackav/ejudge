@@ -7944,6 +7944,7 @@ static const unsigned char * const external_action_names[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_CNTS_PWDS] = "priv_passwords_page",
   [NEW_SRV_ACTION_VIEW_REG_PWDS] = "priv_passwords_page",
   [NEW_SRV_ACTION_VIEW_USER_IPS] = "priv_user_ips_page",
+  [NEW_SRV_ACTION_VIEW_IP_USERS] = "priv_ip_users_page",
 };
 
 static ExternalActionState *external_action_states[NEW_SRV_ACTION_LAST];
