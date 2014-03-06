@@ -62,6 +62,8 @@ priv_priv_users_page.so : priv_priv_users_page.c I_priv_priv_users_page.c
 	$(CC) $(CCOMPFLAGS) ${WPTRSIGN} $(LDFLAGS) $^ -o $@
 priv_user_ips_page.so : priv_user_ips_page.c I_priv_user_ips_page.c
 	$(CC) $(CCOMPFLAGS) ${WPTRSIGN} $(LDFLAGS) $^ -o $@
+priv_ip_users_page.so : priv_ip_users_page.c I_priv_ip_users_page.c
+	$(CC) $(CCOMPFLAGS) ${WPTRSIGN} $(LDFLAGS) $^ -o $@
 
 po : contests.po
 contests.po : $(CFILES)
