@@ -57,6 +57,10 @@ execute_func(
     struct contest_extra *extra = phr->extra;
     serve_state_t cs = extra->serve_state;
     int total_runs = run_get_total(cs->runlog_state);
+
+    pp->users.a = pp->users.u = 64;
+    XCALLOC(pp->users.v, pp->users.u);
+
     for (int run_id = 0; run_id < total_runs; ++run_id) {
         struct run_entry re;
 
