@@ -13,10 +13,12 @@ static const unsigned char csp_str9[143] = "<table class=\"b1\">\n    <tr>\n    
 static const unsigned char csp_str10[34] = "\n    <tr>\n        <td class=\"b1\">";
 static const unsigned char csp_str11[30] = "</td>\n        <td class=\"b1\">";
 static const unsigned char csp_str12[2] = " ";
-static const unsigned char csp_str13[17] = "</td>\n    </tr>\n";
-static const unsigned char csp_str14[11] = "\n</table>\n";
-static const unsigned char csp_str15[7] = "<hr/>\n";
-static const unsigned char csp_str16[18] = "\n</body>\n</html>\n";
+static const unsigned char csp_str13[3] = " (";
+static const unsigned char csp_str14[2] = ")";
+static const unsigned char csp_str15[17] = "</td>\n    </tr>\n";
+static const unsigned char csp_str16[11] = "\n</table>\n";
+static const unsigned char csp_str17[7] = "<hr/>\n";
+static const unsigned char csp_str18[18] = "\n</body>\n</html>\n";
 
 
 #line 2 "priv_ip_users_page.csp"
@@ -119,19 +121,21 @@ fputs(html_armor_buf(&ab, (td.login)), out_f);
 
 #line 37 "priv_ip_users_page.csp"
 if (td.name && *td.name) {
+fwrite(csp_str13, 1, 2, out_f);
 fputs(html_armor_buf(&ab, (td.name)), out_f);
+fwrite(csp_str14, 1, 1, out_f);
 
 #line 38 "priv_ip_users_page.csp"
 }
     }
-fwrite(csp_str13, 1, 16, out_f);
+fwrite(csp_str15, 1, 16, out_f);
 
 #line 41 "priv_ip_users_page.csp"
 }
-fwrite(csp_str14, 1, 10, out_f);
-fwrite(csp_str15, 1, 6, out_f);
+fwrite(csp_str16, 1, 10, out_f);
+fwrite(csp_str17, 1, 6, out_f);
 write_copyright_short(out_f);
-fwrite(csp_str16, 1, 17, out_f);
+fwrite(csp_str18, 1, 17, out_f);
 
 #line 45 "priv_ip_users_page.csp"
 l10n_setlocale(0);
