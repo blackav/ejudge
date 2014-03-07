@@ -52,9 +52,6 @@
 <s:form>
 <s:hidden name="action" ac="priv-edit-clar-action" />
 <s:hidden name="clar_id" />
-
-  unsigned char *cl = " class=\"b0\"";
-
 <table class="b0">
 <tr><td class="b0">Clar ID:</td><td class="b0"><s:v value="clar_id" /></td></tr>
 <tr><td class="b0">Time:</td><td class="b0"><s:v value="clar.time" />.<s:v format="06" value="clar.nsec / 1000" /></td></tr>
