@@ -1,0 +1,133 @@
+<%
+/* $Id$ */
+%><%@include "priv_includes.csp"
+%><%
+#define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
+%><%@set getter_name = "csp_get_priv_edit_clar_page"
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@page csp_view_priv_edit_clar_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "priv_stdvars.csp"
+%><%
+  struct clar_entry_v1 clar;
+  const unsigned char *from_str = NULL, *to_str = NULL;
+  unsigned char from_buf[128], to_buf[128];
+  const unsigned char *s;
+  unsigned char *msg_txt = NULL;
+  size_t msg_len = 0;
+  int clar_id = 0;
+  unsigned char title[1024];
+  int n;
+  const unsigned char *sep = NULL;
+
+  if (ns_cgi_param(phr, "clar_id", &s) <= 0
+      || sscanf(s, "%d%n", &clar_id, &n) != 1 || s[n]
+      || clar_id < 0 || clar_id >= clar_get_total(cs->clarlog_state)) {
+    ns_html_err_inv_param(out_f, phr, 1, "cannot parse clar_id");
+    goto cleanup;
+  }
+
+  if (opcaps_check(phr->caps, OPCAP_EDIT_RUN) < 0) {
+    ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
+    goto cleanup;
+  }
+
+  if (clar_id < 0 || clar_id >= clar_get_total(cs->clarlog_state)
+      || clar_get_record(cs->clarlog_state, clar_id, &clar) < 0
+      || clar.id < 0) {
+    ns_error(log_f, NEW_SRV_ERR_INV_CLAR_ID);
+    goto cleanup;
+  }
+
+  l10n_setlocale(phr->locale_id);
+  snprintf(title, sizeof(title), "%s %d", _("Editing clar"), clar_id);
+%><%@include "priv_header.csp"
+%>
+<s:url name="ViewClarUrl" ac="view-clar">
+  <s:param name="clar_id" value="clar_id" />
+</s:url>
+<h2><s:tr>Message</s:tr> <s:v value="clar_id" /><%
+  if (opcaps_check(phr->caps, OPCAP_VIEW_CLAR) >= 0) {
+%> [<s:a url="ViewClarUrl"><s:tr>View</s:tr></s:a>]<% } %></h2>
+
+<s:form>
+<s:hidden name="action" ac="priv-edit-clar-action" />
+<s:hidden name="clar_id" />
+
+  unsigned char *cl = " class=\"b0\"";
+
+<table class="b0">
+<tr><td class="b0">Clar ID:</td><td class="b0"><s:v value="clar_id" /></td></tr>
+<tr><td class="b0">Time:</td><td class="b0"><s:v value="clar.time" />.<s:v format="06" value="clar.nsec / 1000" /></td></tr>
+<tr><td class="b0">Size:</td><td class="b0"><s:v value="clar.size" /></td></tr>
+
+<%
+  if (clar.from <= 0 && clar.to <= 0) {
+    from_str = "judges";
+    to_str = "all";
+  } else if (clar.from <= 0) {
+    from_str = "judges";
+  } else if (clar.to <= 0) {
+    to_str = "judges";
+  }
+  if (clar.from > 0) {
+    if (!(from_str = teamdb_get_login(cs->teamdb_state, clar.from))) {
+      snprintf(from_buf, sizeof(from_buf), "#%d", clar.from);
+      from_str = from_buf;
+    }
+  }
+  if (clar.to > 0) {
+    if (!(to_str = teamdb_get_login(cs->teamdb_state, clar.to))) {
+      snprintf(to_buf, sizeof(to_buf), "#%d", clar.to);
+      to_str = to_buf;
+    }
+  }
+%>
+
+<tr><td class="b0">From (Login or #Id):</td><td class="b0"><s:textfield name="from" size="40" value="from_str" /></td></tr>
+<tr><td class="b0">To (Login or #Id):</td><td class="b0"><s:textfield name="to" size="40" value="to_str" /></td></tr>
+
+<%
+  from_buf[0] = 0; from_str = from_buf;
+  if (clar.j_from > 0) {
+    if (!(from_str = teamdb_get_login(cs->teamdb_state, clar.j_from))) {
+      snprintf(from_buf, sizeof(from_buf), "#%d", clar.j_from);
+      from_str = from_buf;
+    }
+  }
+%>
+
+<tr><td class="b0">Judge from (Login or #Id):</td><td class="b0"><s:textfield name="j_from" size="40" value="from_str" /></td></tr>
+<tr><td class="b0">Flags:</td><td class="b0"><s:select name="flags" value="clar.flags">
+<s:option value="0" selectedExpr="0 == clar.flags">New</s:option>
+<s:option value="1" selectedExpr="1 == clar.flags">Viewed</s:option>
+<s:option value="2" selectedExpr="2 == clar.flags">Answered</s:option>
+</s:select></td></tr>
+
+<tr><td class="b0">Hidden?</td><td class="b0"><s:checkbox name="hide_flag" checkedExpr="clar.hide_flag" /></td></tr>
+<tr><td class="b0">Apellation?</td><td class="b0"><s:checkbox name="appeal_flag" checkedExpr="clar.appeal_flag" /></td></tr>
+<tr><td class="b0">IP:</td><td class="b0"><s:textfield name="ip" size="40" value="clar.a.ip" /></td></tr>
+<tr><td class="b0">SSL?</td><td class="b0"><s:checkbox name="ssl_flag" checkedExpr="clar.ssl_flag" /></td></tr>
+<tr><td class="b0">Locale:</td><td class="b0"><s:textfield name="locale_id" size="40" value="clar.locale_id" checkExpr="&gt;= 0" /></td></tr>
+<tr><td class="b0">In reply to:</td><td class="b0"><s:textfield name="in_reply_to" size="40" value="clar.in_reply_to - 1" checkExpr="&gt; 0" /></td></tr>
+<tr><td class="b0">Run ID:</td><td class="b0"><s:textfield name="run_id" size="40" value="clar.run_id - 1" checkExpr="&gt; 0" /></td></tr>
+<tr><td class="b0">Charset:</td><td class="b0"><s:textfield name="charset" size="40" value="clar.charset" escape="0" /></td></tr>
+<tr><td class="b0">Subject:</td><td class="b0"><s:textfield name="subject" size="80" value="clar.subj" /></td></tr>
+</table>
+
+<%  clar_get_text(cs->clarlog_state, clar_id, &msg_txt, &msg_len); %>
+<p><textarea name="text" rows="20" cols="60"><s:v value="msg_txt" /></textarea></p>
+
+<table class="b0">
+<tr>
+    <td class="b0"><input type="submit" name="save" value="Save" /></td>
+    <td class="b0"><input type="submit" name="cancel" value="Cancel" /></td>
+</tr>
+</table>
+</s:form>
+<%@include "priv_footer.csp"
+%><%
+  l10n_setlocale(0);
+cleanup:
+  html_armor_free(&ab);
+  xfree(msg_txt);
+%>
