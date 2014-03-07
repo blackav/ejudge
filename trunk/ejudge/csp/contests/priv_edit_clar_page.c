@@ -15,7 +15,7 @@ static const unsigned char csp_str11[6] = "\n<h2>";
 static const unsigned char csp_str12[2] = " ";
 static const unsigned char csp_str13[2] = "]";
 static const unsigned char csp_str14[8] = "</h2>\n\n";
-static const unsigned char csp_str15[109] = "\n\n  unsigned char *cl = \" class=\\\"b0\\\"\";\n\n<table class=\"b0\">\n<tr><td class=\"b0\">Clar ID:</td><td class=\"b0\">";
+static const unsigned char csp_str15[68] = "\n<table class=\"b0\">\n<tr><td class=\"b0\">Clar ID:</td><td class=\"b0\">";
 static const unsigned char csp_str16[56] = "</td></tr>\n<tr><td class=\"b0\">Time:</td><td class=\"b0\">";
 static const unsigned char csp_str17[2] = ".";
 static const unsigned char csp_str18[56] = "</td></tr>\n<tr><td class=\"b0\">Size:</td><td class=\"b0\">";
@@ -200,7 +200,7 @@ fprintf(out_f, "%d", (int)(clar_id));
 fputs("\"", out_f);
 }
 fputs(" />", out_f);
-fwrite(csp_str15, 1, 108, out_f);
+fwrite(csp_str15, 1, 67, out_f);
 fprintf(out_f, "%d", (int)(clar_id));
 fwrite(csp_str16, 1, 55, out_f);
 fputs(xml_unparse_date((clar.time)), out_f);
@@ -210,7 +210,7 @@ fwrite(csp_str18, 1, 55, out_f);
 fprintf(out_f, "%zu", (size_t)(clar.size));
 fwrite(csp_str19, 1, 12, out_f);
 
-#line 64 "priv_edit_clar_page.csp"
+#line 61 "priv_edit_clar_page.csp"
 if (clar.from <= 0 && clar.to <= 0) {
     from_str = "judges";
     to_str = "all";
@@ -249,7 +249,7 @@ fputs("\"", out_f);
 fputs(" />", out_f);
 fwrite(csp_str19, 1, 12, out_f);
 
-#line 90 "priv_edit_clar_page.csp"
+#line 87 "priv_edit_clar_page.csp"
 from_buf[0] = 0; from_str = from_buf;
   if (clar.j_from > 0) {
     if (!(from_str = teamdb_get_login(cs->teamdb_state, clar.j_from))) {
@@ -362,7 +362,7 @@ fputs("\"", out_f);
 fputs(" />", out_f);
 fwrite(csp_str36, 1, 21, out_f);
 
-#line 117 "priv_edit_clar_page.csp"
+#line 114 "priv_edit_clar_page.csp"
 clar_get_text(cs->clarlog_state, clar_id, &msg_txt, &msg_len);
 fwrite(csp_str37, 1, 46, out_f);
 fputs(html_armor_buf(&ab, (msg_txt)), out_f);
@@ -373,7 +373,7 @@ fwrite(csp_str39, 1, 6, out_f);
 write_copyright_short(out_f);
 fwrite(csp_str40, 1, 17, out_f);
 
-#line 129 "priv_edit_clar_page.csp"
+#line 126 "priv_edit_clar_page.csp"
 l10n_setlocale(0);
 cleanup:
   html_armor_free(&ab);
