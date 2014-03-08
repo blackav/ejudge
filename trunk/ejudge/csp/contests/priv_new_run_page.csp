@@ -1,0 +1,63 @@
+<%
+/* $Id$ */
+%><%@include "priv_includes.csp"
+%><%
+#define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
+%><%@set getter_name = "csp_get_priv_edit_clar_page"
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@page csp_view_priv_new_run_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "priv_stdvars.csp"
+%><%
+    int i;
+    const unsigned char *title = NULL;
+    const struct section_global_data *global = cs->global;
+
+  if (opcaps_check(phr->caps, OPCAP_SUBMIT_RUN) < 0
+      || opcaps_check(phr->caps, OPCAP_EDIT_RUN)) {
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+  }
+
+  l10n_setlocale(phr->locale_id);
+  title = _("Add new run");
+%><%@include "priv_header.csp"
+%>
+<p><s:a ac="main-page"><s:tr>To main page</s:tr></s:a></p>
+
+<s:form>
+<table>
+<tr><td><s:tr>User ID</s:tr>:</td><td><s:textfield name="run_user_id" size = "10" value="" /></td></tr>
+<tr><td><s:tr>User login</s:tr>:</td><td><s:textfield name="run_user_login" size="10" value="" /></td></tr>
+<tr><td><s:tr>Problem</s:tr>:</td><td><s:select name="prob_id"><option value=""></option><%
+  for (i = 1; i <= cs->max_prob; i++)
+    if (cs->probs[i]) {
+%><s:option value="i"><s:v escape="false" value="cs->probs[i]->short_name" /> - <s:v value="cs->probs[i]->long_name" /></s:option><%
+    } %></s:select></td></tr>
+<tr><td><s:tr>Variant</s:tr>:</td><td><s:textfield name="variant" size="10" value="" /></td></tr>
+<tr><td><s:tr>Language</s:tr>:</td><td><s:select name="language"><option value=""></option><%
+  for (i = 1; i <= cs->max_lang; i++)
+    if (cs->langs[i]) { %><s:option value="i"><s:v escape="0" value="cs->langs[i]->short_name" /> - <s:v value="cs->langs[i]->long_name" /></s:option><% } %></s:select></td></tr>
+
+<tr><td><s:tr>Imported?</s:tr>:</td><td><s:yesno name="is_imported" /></td></tr>
+<tr><td><s:tr>Hidden?</s:tr>:</td><td><s:yesno name="is_hidden" /></td></tr>
+<tr><td><s:tr>Read-only?</s:tr>:</td><s:yesno name="is_readonly" /><td></td></tr>
+<tr><td><s:tr>Status</s:tr>:</td><% write_change_status_dialog(cs, out_f, 0, 0, 0, -1, 0); %></td></tr>
+<%  if (global->score_system == SCORE_KIROV
+      || global->score_system == SCORE_OLYMPIAD) { %>
+<tr><td><s:tr>Tests passed</s:tr>:</td><td><s:textfield name="tests" size="10" value="" /></td></tr>
+<tr><td><s:tr>Score gained</s:tr>:</td><td><s:textfield name="score" size="10" value="" /></td></tr>
+<%  } else if (global->score_system == SCORE_MOSCOW) { %>
+<tr><td><s:tr>Failed test</s:tr>:</td><td><s:textfield name="tests" size="10" value="" /></td></tr>
+<tr><td><s:tr>Score gained</s:tr>:</td><td><s:textfield name="score" size="10" value="" /></td></tr>
+<%  } else { %>
+<tr><td><s:tr>Failed test</s:tr>:</td><td><s:textfield name="tests" size="10" value="" /></td></tr>
+<%  } %>
+<tr><td><s:tr>File</s:tr>:</td><td><input type="file" name="file"/></td></tr>
+<tr><td><s:submit ac="new-run" /></td><td>&nbsp;</td></tr>
+</table>
+</s:form>
+<%@include "priv_footer.csp"
+%><%
+  l10n_setlocale(0);
+cleanup:
+  html_armor_free(&ab);
+%>
