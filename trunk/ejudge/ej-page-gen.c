@@ -3404,17 +3404,6 @@ handle_textfield_open(
         return -1;
     }
 
-    /*
-static int
-process_ac_attr(
-        FILE *log_f,
-        TypeContext *cntx,
-        ProcessorState *ps,
-        HtmlElement *elem,
-        unsigned char *buf,
-        int bufsize)
-    */
-
     // supported attributes: name, value, size, escape (for string values), check, checkExpr
     HtmlAttribute *name_attr = html_element_find_attribute(elem, "name");
     if (!name_attr) {
@@ -3662,6 +3651,46 @@ handle_select_close(
     return 0;
 }
 
+static int
+handle_yesno_open(
+        FILE *log_f,
+        TypeContext *cntx,
+        ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f)
+{
+    HtmlElement *elem = ps->el_stack->el;
+
+    HtmlAttribute *name_attr = html_element_find_attribute(elem, "name");
+    if (!name_attr) {
+        parser_error_2(ps, "<s:yesno> element requires 'name' attribute");
+        return -1;
+    }
+    HtmlAttribute *value_attr = html_element_find_attribute(elem, "value");
+    fprintf(prg_f,
+            "{\n"
+            "  unsigned char *s1 = \"\", *s2 = \"\";\n");
+    if (value_attr) {
+        fprintf(prg_f,
+                "if ((%s)) { s2 = \" selected=\\\"selected\\\"\"; } else { s2 = \" selected=\\\"selected\\\"\"; }\n",
+                value_attr->value);
+    }
+
+    fprintf(prg_f,
+            "fputs(\"<select name=\\\"%s\\\"><option value=\\\"0\\\"\", out_f);\n"
+            "fputs(s1, out_f);\n"
+            "fputs(\">\", out_f);\n"
+            "fputs(_(\"No\"), out_f);\n"
+            "fputs(\"<option><option value=\\\"1\\\"\", out_f);\n"
+            "fputs(s2, out_f);\n"
+            "fputs(\">\", out_f);\n"
+            "fputs(_(\"Yes\"), out_f);\n"
+            "fputs(\"></select>\", out_f);\n", name_attr->value);
+    fprintf(prg_f,
+            "}\n");
+    return 0;
+}
+
 struct ElementInfo
 {
     const unsigned char *name;
@@ -3699,6 +3728,7 @@ static const struct ElementInfo element_handlers[] =
     { "s:checkbox", handle_checkbox_open, NULL },
     { "s:select", handle_select_open, handle_select_close },
     { "s:option", handle_option_open, handle_option_close },
+    { "s:yesno", handle_yesno_open, NULL },
 
     { NULL, NULL, NULL },
 };
