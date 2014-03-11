@@ -5088,40 +5088,6 @@ priv_diff_page(FILE *fout,
 }
 
 static int
-priv_user_detail_page(FILE *fout,
-                      FILE *log_f,
-                      struct http_request_info *phr,
-                      const struct contest_desc *cnts,
-                      struct contest_extra *extra)
-{
-  serve_state_t cs = extra->serve_state;
-  int retval = 0;
-  int user_id, n;
-  const unsigned char *s = 0;
-
-  if (ns_cgi_param(phr, "user_id", &s) <= 0
-      || sscanf(s, "%d%n", &user_id, &n) != 1 || s[n]
-      || !teamdb_lookup(cs->teamdb_state, user_id))
-    FAIL(NEW_SRV_ERR_INV_USER_ID);
-
-  if (opcaps_check(phr->caps, OPCAP_GET_USER) < 0)
-    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
-
-  l10n_setlocale(phr->locale_id);
-  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
-            phr->client_key,
-            "%s [%s, %d, %s]: %s %d", ns_unparse_role(phr->role),
-            phr->name_arm, phr->contest_id, extra->contest_arm,
-            _("Details for user "), user_id);
-  ns_user_info_page(fout, log_f, phr, cnts, extra, user_id);
-  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
-  l10n_setlocale(0);
-
- cleanup:
-  return retval;
-}
-
-static int
 priv_examiners_page(
         FILE *fout,
         FILE *log_f,
@@ -7054,7 +7020,6 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_GENERATE_PASSWORDS_1] = priv_confirmation_page,
   [NEW_SRV_ACTION_GENERATE_REG_PASSWORDS_1] = priv_confirmation_page,
   [NEW_SRV_ACTION_CLEAR_PASSWORDS_1] = priv_confirmation_page,
-  [NEW_SRV_ACTION_VIEW_USER_INFO] = priv_user_detail_page,
   [NEW_SRV_ACTION_VIEW_USER_DUMP] = priv_view_user_dump,
   [NEW_SRV_ACTION_VIEW_USER_REPORT] = priv_view_report,
   [NEW_SRV_ACTION_DOWNLOAD_ARCHIVE_2] = priv_download_runs,
