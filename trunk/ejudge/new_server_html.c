@@ -7848,6 +7848,7 @@ static const unsigned char * const external_action_names[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_USER_IPS] = "priv_user_ips_page",
   [NEW_SRV_ACTION_VIEW_IP_USERS] = "priv_ip_users_page",
   [NEW_SRV_ACTION_PRIV_EDIT_CLAR_PAGE] = "priv_edit_clar_page",
+  [NEW_SRV_ACTION_NEW_RUN_FORM] = "priv_new_run_page",
 };
 
 static ExternalActionState *external_action_states[NEW_SRV_ACTION_LAST];
