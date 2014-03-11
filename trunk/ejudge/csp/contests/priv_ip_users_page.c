@@ -9,16 +9,18 @@ static const unsigned char csp_str5[3] = ", ";
 static const unsigned char csp_str6[4] = "]: ";
 static const unsigned char csp_str7[29] = "</title>\n</head>\n<body>\n<h1>";
 static const unsigned char csp_str8[7] = "</h1>\n";
-static const unsigned char csp_str9[143] = "<table class=\"b1\">\n    <tr>\n        <th class=\"b1\">NN</th>\n        <th class=\"b1\">IP address</th>\n        <th class=\"b1\">Users</th>\n    </tr>\n";
-static const unsigned char csp_str10[34] = "\n    <tr>\n        <td class=\"b1\">";
-static const unsigned char csp_str11[30] = "</td>\n        <td class=\"b1\">";
-static const unsigned char csp_str12[2] = " ";
-static const unsigned char csp_str13[3] = " (";
-static const unsigned char csp_str14[2] = ")";
-static const unsigned char csp_str15[17] = "</td>\n    </tr>\n";
-static const unsigned char csp_str16[11] = "\n</table>\n";
-static const unsigned char csp_str17[7] = "<hr/>\n";
-static const unsigned char csp_str18[18] = "\n</body>\n</html>\n";
+static const unsigned char csp_str9[83] = "<table class=\"b1\">\n    <tr>\n        <th class=\"b1\">NN</th>\n        <th class=\"b1\">";
+static const unsigned char csp_str10[30] = "</th>\n        <th class=\"b1\">";
+static const unsigned char csp_str11[17] = "</th>\n    </tr>\n";
+static const unsigned char csp_str12[34] = "\n    <tr>\n        <td class=\"b1\">";
+static const unsigned char csp_str13[30] = "</td>\n        <td class=\"b1\">";
+static const unsigned char csp_str14[2] = " ";
+static const unsigned char csp_str15[3] = " (";
+static const unsigned char csp_str16[2] = ")";
+static const unsigned char csp_str17[17] = "</td>\n    </tr>\n";
+static const unsigned char csp_str18[11] = "\n</table>\n";
+static const unsigned char csp_str19[7] = "<hr/>\n";
+static const unsigned char csp_str20[18] = "\n</body>\n</html>\n";
 
 
 #line 2 "priv_ip_users_page.csp"
@@ -96,15 +98,19 @@ fputs((extra->contest_arm), out_f);
 fwrite(csp_str6, 1, 3, out_f);
 fputs((title), out_f);
 fwrite(csp_str8, 1, 6, out_f);
-fwrite(csp_str9, 1, 142, out_f);
+fwrite(csp_str9, 1, 82, out_f);
+fputs(_("IP address"), out_f);
+fwrite(csp_str10, 1, 29, out_f);
+fputs(_("Users"), out_f);
+fwrite(csp_str11, 1, 16, out_f);
 
 #line 26 "priv_ip_users_page.csp"
 for (i = 0; i < pp->ips.u; ++i) {
-fwrite(csp_str10, 1, 33, out_f);
+fwrite(csp_str12, 1, 33, out_f);
 fprintf(out_f, "%d", (int)(serial++));
-fwrite(csp_str11, 1, 29, out_f);
+fwrite(csp_str13, 1, 29, out_f);
 fputs((pp->ips.v[i].ip_str), out_f);
-fwrite(csp_str11, 1, 29, out_f);
+fwrite(csp_str13, 1, 29, out_f);
 
 #line 31 "priv_ip_users_page.csp"
 for (j = 0; j < pp->ips.v[i].uid_u; ++j) {
@@ -113,7 +119,7 @@ for (j = 0; j < pp->ips.v[i].uid_u; ++j) {
       if (teamdb_export_team(cs->teamdb_state, pp->ips.v[i].uids[j], &td) < 0)
         continue;
       if (j > 0) {
-fwrite(csp_str12, 1, 1, out_f);
+fwrite(csp_str14, 1, 1, out_f);
 
 #line 36 "priv_ip_users_page.csp"
 }
@@ -121,21 +127,21 @@ fputs(html_armor_buf(&ab, (td.login)), out_f);
 
 #line 37 "priv_ip_users_page.csp"
 if (td.name && *td.name) {
-fwrite(csp_str13, 1, 2, out_f);
+fwrite(csp_str15, 1, 2, out_f);
 fputs(html_armor_buf(&ab, (td.name)), out_f);
-fwrite(csp_str14, 1, 1, out_f);
+fwrite(csp_str16, 1, 1, out_f);
 
 #line 38 "priv_ip_users_page.csp"
 }
     }
-fwrite(csp_str15, 1, 16, out_f);
+fwrite(csp_str17, 1, 16, out_f);
 
 #line 41 "priv_ip_users_page.csp"
 }
-fwrite(csp_str16, 1, 10, out_f);
-fwrite(csp_str17, 1, 6, out_f);
+fwrite(csp_str18, 1, 10, out_f);
+fwrite(csp_str19, 1, 6, out_f);
 write_copyright_short(out_f);
-fwrite(csp_str18, 1, 17, out_f);
+fwrite(csp_str20, 1, 17, out_f);
 
 #line 45 "priv_ip_users_page.csp"
 l10n_setlocale(0);
