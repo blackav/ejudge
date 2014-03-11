@@ -3279,6 +3279,28 @@ handle_v_open(
 }
 
 static int
+handle_vb_open(
+        FILE *log_f,
+        TypeContext *cntx,
+        ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f)
+{
+    HtmlElement *elem = ps->el_stack->el;
+
+    HtmlAttribute *at = html_element_find_attribute(elem, "value");
+    if (!at) {
+        parser_error_2(ps, "<s:vb> element requires value attribute");
+        return -1;
+    }
+
+    fprintf(prg_f, "if ((%s)) { fputs(_(\"Yes\"), out_f); } else { fputs(_(\"No\"), out_f); }\n",
+            at->value);
+
+    return 0;
+}
+
+static int
 handle_url_open(
         FILE *log_f,
         TypeContext *cntx,
@@ -3729,6 +3751,7 @@ static const struct ElementInfo element_handlers[] =
     { "s:select", handle_select_open, handle_select_close },
     { "s:option", handle_option_open, handle_option_close },
     { "s:yesno", handle_yesno_open, NULL },
+    { "s:vb", handle_vb_open, NULL },
 
     { NULL, NULL, NULL },
 };

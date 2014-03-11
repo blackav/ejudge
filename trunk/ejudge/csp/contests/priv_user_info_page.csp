@@ -2,8 +2,10 @@
 /* $Id$ */
 %><%@include "priv_includes.csp"
 %><%
+#include "team_extra.h"
+
 #define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
-%><%@set getter_name = "csp_get_priv_edit_clar_page"
+%><%@set getter_name = "csp_get_priv_user_info_page"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@page csp_view_priv_user_info_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 %><%@include "priv_stdvars.csp"
@@ -16,13 +18,22 @@
     int flags, pages_total;
     int runs_num = 0, clars_num = 0;
     size_t clars_total = 0, runs_total = 0;
-    const unsigned char *nbsp2 = "<td>&nbsp;</td><td>&nbsp;</td>";
     const unsigned char *s;
     const struct userlist_user *u = 0;
     const struct userlist_contest *uc = 0;
-    unsigned char bb[1024];
     int allowed_edit = 0, needed_cap = 0, init_value, i;
     struct userlist_user_info *ui = 0;
+    int view_user_id = 0, n;
+    const unsigned char *title = NULL;
+
+
+  if (ns_cgi_param(phr, "user_id", &s) <= 0
+      || sscanf(s, "%d%n", &view_user_id, &n) != 1 || s[n]
+      || !teamdb_lookup(cs->teamdb_state, view_user_id))
+    FAIL(NEW_SRV_ERR_INV_USER_ID);
+
+  if (opcaps_check(phr->caps, OPCAP_GET_USER) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
     // initialization
     teamdb_export_team(cs->teamdb_state, view_user_id, &u_info);
@@ -34,6 +45,9 @@
     u = u_info.user;
     if (u) uc = userlist_get_user_contest(u, phr->contest_id);
     if (u) ui = u->cnts0;
+
+    l10n_setlocale(phr->locale_id);
+    title = _("Details for user ");
 %><%@include "priv_header.csp"
 %>
 <ul>
@@ -45,104 +59,65 @@
 <%  } %>
 </ul>
 
-<%
-
-  // table has 4 columns
-  fprintf(fout, "<table>\n");
-
-  // user id
-  fprintf(fout, "<tr><td>%s:</td><td>%d</td>%s</tr>\n",
-          _("User Id"), view_user_id, nbsp2);
-
-  // user login
-  fprintf(fout, "<tr><td>%s:</td><td><tt>%s</tt></td>%s</tr>\n",
-          _("User Login"), ARMOR(u_info.login), nbsp2);
-
-  // user name
-  if (u_info.name && *u_info.name) {
-    s = ARMOR(u_info.name);
-  } else {
-    s = _("<i>Not set</i>");
-  }
-  fprintf(fout, "<tr><td>%s:</td><td>%s</td>%s</tr>\n",
-          _("User Name"), s, nbsp2);
-
-  // contest registration time
-  if (uc && uc->create_time > 0) {
-    s = xml_unparse_date(uc->create_time);
-  } else {
-    s = "&nbsp;";
-  }
-  fprintf(fout, "<tr><td>%s:</td><td>%s</td>%s</tr>\n",
-          _("Registration time"), s, nbsp2);
-  // last login time
-  if (ui && ui->last_login_time > 0) {
-    s = xml_unparse_date(ui->last_login_time);
-  } else {
-    s = "&nbsp;";
-  }
-  fprintf(fout, "<tr><td>%s:</td><td>%s</td>%s</tr>\n",
-          _("Last login time"), s, nbsp2);
-  if (/*opcaps_check(phr->caps, OPCAP_GENERATE_TEAM_PASSWORDS) >= 0*/ 1) {
-  // registration password (if available)
-    bb[0] = 0;
+<table>
+<tr><td><s:tr>User Id</s:tr>:</td><td><s:v value="view_user_id" /></td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td><s:tr>User Login</s:tr>:</td><td><tt><s:v value="u_info.login" /></tt></td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td><s:tr>User Name</s:tr>:</td><td><% if (u_info.name && *u_info.name) { %><s:v value="u_info.name" /><% } else { %><i><s:tr>Not set</s:tr></i><% } %></td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td><s:tr>Registration time</s:tr>:</td><td><% if (uc && uc->create_time > 0) { %><s:v value="uc->create_time" /><% } else { %>&nbsp;<% } %></td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td><s:tr>Last login time</s:tr>:</td><td><% if (ui && ui->last_login_time > 0) { %><s:v value="ui->last_login_time" /><% } else { %>&nbsp;<% } %></td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<% if (/*opcaps_check(phr->caps, OPCAP_GENERATE_TEAM_PASSWORDS) >= 0*/ 1) { %>
+<tr><td><s:tr>Registration password</s:tr>:</td><td><%
     if (u && !u->passwd) {
-      snprintf(bb, sizeof(bb), "<i>%s</i>", _("Not set"));
+%><i><s:tr>Not set</s:tr></i><%
     } else if (u && u->passwd_method != USERLIST_PWD_PLAIN) {
-      snprintf(bb, sizeof(bb), "<i>%s</i>", _("Changed by user"));
+%><i><s:tr>Changed by user</s:tr></i><%
     } else if (u) {
-      snprintf(bb, sizeof(bb), "<tt>%s</tt>", ARMOR(u->passwd));
+%><tt><s:v value="u->passwd" /></tt><%
     }
-    if (bb[0]) {
-      fprintf(fout, "<tr><td>%s:</td><td>%s</td>%s</tr>\n",
-              _("Registration password"), bb, nbsp2);
-    }
-  // contest password (if enabled and available)
-    if (!cnts->disable_team_password) {
-      bb[0] = 0;
+%><td>&nbsp;</td><td>&nbsp;</td></tr>
+<% if (!cnts->disable_team_password) { %>
+<tr><td><s:tr>Contest password</s:tr>:</td><td><%
       if (ui && !ui->team_passwd) {
-        snprintf(bb, sizeof(bb), "<i>%s</i>", _("Not set"));
+%><i><s:tr>Not set</s:tr></i><%
       } else if (ui && ui->team_passwd_method != USERLIST_PWD_PLAIN) {
-        snprintf(bb, sizeof(bb), "<i>%s</i>", _("Changed by user"));
+%><i><s:tr>Changed by user</s:tr></i> <%
       } else if (ui) {
-        snprintf(bb, sizeof(bb), "<tt>%s</tt>", ARMOR(ui->team_passwd));
+%><tt><s:v value="ui->team_passwd" /></tt><%
+      } else {
+%>&nbsp;<%
       }
-      if (bb[0]) {
-        fprintf(fout, "<tr><td>%s:</td><td>%s</td>%s</tr>\n",
-                _("Contest password"), bb, nbsp2);
-      }
-    }
-  }
-
-  fprintf(fout,"<tr><td>%s:</td><td>%s</td>%s</tr>\n",
-          _("Privileged?"),
-          (u && u->is_privileged)? _("Yes") : _("No"),
-          nbsp2);
-
+%>
+<% } %>
+<% } %>
+<tr><td><s:tr>Privileged?</s:tr>:</td><td><s:vb value="u &amp;&amp; u->is_privileged" /></td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<%
   // invisible, locked, banned status and change buttons
   // to make invisible EDIT_REG is enough for all users
   // to ban or lock DELETE_PRIV_REG required for privileged users
   allowed_edit = 0;
   if (opcaps_check(phr->caps, OPCAP_EDIT_REG) >= 0) allowed_edit = 1;
   if (allowed_edit) {
-    html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
-    html_hidden(fout, "user_id", "%d", view_user_id);
-  }
-  fprintf(fout, "<tr><td>%s:</td><td>%s</td><td>&nbsp;</td>",
-          _("Invisible?"), (flags & TEAM_INVISIBLE)?_("Yes"):_("No"));
-  if(allowed_edit) {
-    fprintf(fout, "<td>%s</td>",
-            ns_submit_button(bb, sizeof(bb), 0,
-                             NEW_SRV_ACTION_TOGGLE_VISIBILITY,
-                             (flags & TEAM_INVISIBLE)?_("Make visible"):_("Make invisible")));
-  } else {
-    fprintf(fout, "<td>&nbsp;</td>");
-  }
-  fprintf(fout, "</tr>\n");
-  if (allowed_edit) {
-    fprintf(fout, "</form>");
-  }
+%>
+<s:form>
+<s:hidden name="user_id" value="view_user_id" />
+<%  } %>
 
+<tr><td><s:tr>Invisible?</s:tr>:</td><td><s:vb value="flags &amp; TEAM_INVISIBLE" /></td><td>&nbsp;</td><td><%
+  if(allowed_edit) {
+    if (flags & TEAM_INVISIBLE) {
+%><s:submit ac="toggle-visibility" label="Make visible" /><%
+    } else {
+%><s:submit ac="toggle-visibility" label="Make invisible" /><%
+    }
+  } else {
+%>&nbsp;<%
+  }
+%></td></tr>
+<%  if (allowed_edit) { %>
+</s:form>
+<%  } %>
+
+<%
   allowed_edit = 0;
   if (u) {
     if (u->is_privileged) {
@@ -155,24 +130,26 @@
     if (opcaps_check(phr->caps, needed_cap) >= 0) allowed_edit = 1;
   }
   if (allowed_edit) {
-    html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
-    html_hidden(fout, "user_id", "%d", view_user_id);
-  }
-  fprintf(fout, "<tr><td>%s:</td><td>%s</td><td>&nbsp;</td>",
-          _("Banned?"), (flags & TEAM_BANNED)?_("Yes"):_("No"));
+%>
+<s:form>
+<s:hidden name="user_id" value="view_user_id" />
+<%  } %>
+<tr><td><s:tr>Banned?</s:tr>:</td><td><s:vb value="flags &amp; TEAM_BANNED" /></td><td>&nbsp;</td><td><%
   if(allowed_edit) {
-    fprintf(fout, "<td>%s</td>",
-            ns_submit_button(bb, sizeof(bb), 0,
-                             NEW_SRV_ACTION_TOGGLE_BAN,
-                             (flags & TEAM_BANNED)?_("Remove ban"):_("Ban")));
+    if ((flags & TEAM_BANNED)) {
+%><s:submit ac="toggle-ban" label="Remove ban" /><%
+    } else {
+%><s:submit ac="toggle-ban" label="Ban" /><%
+    }
   } else {
-    fprintf(fout, "<td>&nbsp;</td>");
+%>&nbsp;<%
   }
-  fprintf(fout, "</tr>\n");
-  if (allowed_edit) {
-    fprintf(fout, "</form>");
-  }
+%></td></tr>
+<%  if (allowed_edit) { %>
+</s:form>
+<%  } %>
 
+<%
   allowed_edit = 0;
   if (u) {
     if (u->is_privileged) {
@@ -185,24 +162,26 @@
     if (opcaps_check(phr->caps, needed_cap) >= 0) allowed_edit = 1;
   }
   if (allowed_edit) {
-    html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
-    html_hidden(fout, "user_id", "%d", view_user_id);
-  }
-  fprintf(fout, "<tr><td>%s:</td><td>%s</td><td>&nbsp;</td>",
-          _("Locked?"), (flags & TEAM_LOCKED)?_("Yes"):_("No"));
+%>
+<s:form>
+<s:hidden name="user_id" value="view_user_id" />
+<% } %>
+<tr><td><s:tr>Locked?</s:tr>:</td><td><s:vb value="flags &amp; TEAM_LOCKED" /></td><td>&nbsp;</td><td><%
   if(allowed_edit) {
-    fprintf(fout, "<td>%s</td>",
-            ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_TOGGLE_LOCK,
-                             (flags & TEAM_LOCKED)?_("Unlock"):_("Lock")));
+    if ((flags & TEAM_LOCKED)) {
+%><s:submit ac="toggle-lock" label="Unlock" /><%
+    } else {
+%><s:submit ac="toggle-lock" label="Lock" /><%
+    }
   } else {
-    fprintf(fout, "<td>&nbsp;</td>");
+%>&nbsp;<%
   }
-  fprintf(fout, "</tr>\n");
-  if (allowed_edit) {
-    fprintf(fout, "</form>");
-  }
+%></td></tr>
+<%  if (allowed_edit) { %>
+</s:form>
+<%  } %>
 
-  allowed_edit = 0;
+<%  allowed_edit = 0;
   if (u) {
     if (u->is_privileged) {
       if ((flags & TEAM_INCOMPLETE)) needed_cap = OPCAP_PRIV_CREATE_REG;
@@ -213,152 +192,139 @@
     }
     if (opcaps_check(phr->caps, needed_cap) >= 0) allowed_edit = 1;
   }
+%>
+<%
   if (allowed_edit) {
-    html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
-    html_hidden(fout, "user_id", "%d", view_user_id);
-  }
-  fprintf(fout, "<tr><td>%s:</td><td>%s</td><td>&nbsp;</td>",
-          _("Incomplete?"), (flags & TEAM_INCOMPLETE)?_("Yes"):_("No"));
+%>
+<s:form>
+<s:hidden name="user_id" value="view_user_id" />
+<%  } %>
+<tr><td><s:tr>Incomplete?</s:tr>:</td><td><s:vb value="flags &amp; TEAM_INCOMPLETE" /></td><td>&nbsp;</td><td><%
   if(allowed_edit) {
-    fprintf(fout, "<td>%s</td>",
-            ns_submit_button(bb, sizeof(bb), 0,
-                             NEW_SRV_ACTION_TOGGLE_INCOMPLETENESS,
-                             (flags & TEAM_INCOMPLETE)?_("Clear"):_("Set")));
+    if ((flags & TEAM_INCOMPLETE)) {
+%><s:submit ac="toggle-incompleteness" label="Clear" /><%
+    } else {
+%><s:submit ac="toggle-incompleteness" label="Clear" /><%
+    }
   } else {
-    fprintf(fout, "<td>&nbsp;</td>");
+%>&nbsp;<%
   }
-  fprintf(fout, "</tr>\n");
-  if (allowed_edit) {
-    fprintf(fout, "</form>");
-  }
-  fprintf(fout, "<tr><td>%s:</td><td>%s</td><td>&nbsp;</td><td>&nbsp;</td></tr>", _("Disqualified?"), (flags & TEAM_DISQUALIFIED)?_("Yes"):_("No"));
+%></td></tr>
+<%  if (allowed_edit) { %>
+</s:form>
+<% } %>
 
-  fprintf(fout,"<tr><td>%s:</td><td>%d</td>%s</tr>\n",
-          _("Number of Runs"), runs_num, nbsp2);
-  fprintf(fout,"<tr><td>%s:</td><td>%zu</td>%s</tr>\n",
-          _("Total size of Runs"), runs_total, nbsp2);
-  fprintf(fout,"<tr><td>%s:</td><td>%d</td>%s</tr>\n",
-          _("Number of Clars"), clars_num, nbsp2);
-  fprintf(fout,"<tr><td>%s:</td><td>%zu</td>%s</tr>\n",
-          _("Total size of Clars"), clars_total, nbsp2);
-  fprintf(fout,"<tr><td>%s:</td><td>%d</td>%s</tr>\n",
-          _("Number of printed pages"), pages_total, nbsp2);
+<tr><td><s:tr>Disqualified?</s:tr>:</td><td><s:vb value="flags &amp; TEAM_DISQUALIFIED" /></td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td><s:tr>Number of Runs</s:tr>:</td><td><s:v value="runs_num" /></td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td><s:tr>Total size of Runs</s:tr>:</td><td><s:v value="runs_total" /></td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td><s:tr>Number of Clars</s:tr>:</td><td><s:v value="clars_num" /></td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td><s:tr>Total size of Clars</s:tr>:</td><td><s:v value="clars_total" /></td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td><s:tr>Number of printed pages</s:tr>:</td><td><s:v value="pages_total" /></td><td>&nbsp;</td><td>&nbsp;</td></tr>
 
-  if (global->contestant_status_num > 0) {
+<%  if (global->contestant_status_num > 0) {
     // contestant status is editable when OPCAP_EDIT_REG is set
     allowed_edit = 0;
     if (opcaps_check(phr->caps, OPCAP_EDIT_REG) >= 0) allowed_edit = 1;
-    if (allowed_edit) {
-      html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
-      html_hidden(fout, "user_id", "%d", view_user_id);
-    }
-    fprintf(fout, "<tr><td>%s:</td><td>", _("Status"));
+%>
+<%    if (allowed_edit) { %>
+<s:form>
+<s:hidden name="user_id" value="view_user_id" />
+<%    } %>
+<tr><td><s:tr>Status</s:tr>:</td><td><%
     init_value = 0;
     if (!u_extra) {
-      fprintf(fout, "N/A");
+%>N/A<%
     } else if (u_extra->status < 0
                || u_extra->status >= global->contestant_status_num) {
-      fprintf(fout, "%d - ???", u_extra->status);
+%><s:v value="u_extra->status" /> - ???<%
     } else {
-      fprintf(fout, "%d - %s", u_extra->status,
-              global->contestant_status_legend[u_extra->status]);
+%><s:v value="u_extra->status" /> - <s:v value="global->contestant_status_legend[u_extra->status]" /><%
       init_value = u_extra->status;
     }
-    fprintf(fout, "</td>");
+%></td><%
     if (allowed_edit) {
-      fprintf(fout, "<td><select name=\"status\">\n");
+%><td><s:select name="status"><%
       for (i = 0; i < global->contestant_status_num; i++) {
-        s = "";
-        if (i == init_value) s = " selected=\"1\"";
-        fprintf(fout, "<option value=\"%d\"%s>%d - %s</option>\n",
-                i, s, i, global->contestant_status_legend[i]);
+%><s:option value="i" selectedExpr="i == init_value"><s:v value="i" /> - <s:v value="global->contestant_status_legend[i]" /></s:option><%
       }
-      fprintf(fout, "</select></td>\n");
-      fprintf(fout, "<td>%s</td>\n", BUTTON(NEW_SRV_ACTION_USER_CHANGE_STATUS));
+%></s:select></td><td><s:submit ac="user-change-status" /></td><%
     } else {
-      fprintf(fout, "%s", nbsp2);
+%><td>&nbsp;</td><td>&nbsp;</td><%
     }
-    fprintf(fout, "</tr>\n");
-    if (allowed_edit) {
-      fprintf(fout, "</form>");
-    }
-  }
+%></tr>
+<%    if (allowed_edit) { %>
+</s:form>
+<%    } %>
+<%  } %>
 
+<%
   i = 0;
   if (u_extra) i = u_extra->warn_u;
-  fprintf(fout,"<tr><td>%s:</td><td>%d</td>%s</tr>\n",
-          _("Number of warnings"), i, nbsp2);
+%><tr><td><s:tr>Number of warnings</s:tr>:</td><td><s:v value="i" /></td><td>&nbsp;</td><td>&nbsp;</td></tr>
+</table>
 
-  fprintf(fout, "</table>\n");
+<s:form>
+<s:hidden name="user_id" value="view_user_id" />
+<p><s:submit ac="print-user-protocol" />
+</s:form>
 
-  html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
-  html_hidden(fout, "user_id", "%d", view_user_id);
-  fprintf(fout, "<p>%s</p>\n", BUTTON(NEW_SRV_ACTION_PRINT_USER_PROTOCOL));
-  fprintf(fout, "</form>\n");
-  html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
-  html_hidden(fout, "user_id", "%d", view_user_id);
-  fprintf(fout, "<p>%s</p>\n", BUTTON(NEW_SRV_ACTION_PRINT_USER_FULL_PROTOCOL));
-  fprintf(fout, "</form>\n");
-  html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
-  html_hidden(fout, "user_id", "%d", view_user_id);
-  fprintf(fout, "<p>%s</p>\n", BUTTON(NEW_SRV_ACTION_PRINT_UFC_PROTOCOL));
-  fprintf(fout, "</form>\n");
+<s:form>
+<s:hidden name="user_id" value="view_user_id" />
+<p><s:submit ac="print-user-full-protocol" />
+</s:form>
 
+<s:form>
+<s:hidden name="user_id" value="view_user_id" />
+<p><s:submit ac="print-ufc-protocol" />
+</s:form>
+
+<%
   if (!u_extra || !u_extra->warn_u) {
-    fprintf(fout, "<h2>%s</h2>\n", _("No warnings"));
+%><h2><s:tr>No warnings</s:tr></h2><%
   } else {
-    fprintf(fout, "<h2>%s</h2>\n", _("Warnings"));
-    for (i = 0; i < u_extra->warn_u; i++) {
+%><h2><s:tr>Warnings</s:tr></h2>
+<%    for (i = 0; i < u_extra->warn_u; i++) {
       if (!(cur_warn = u_extra->warns[i])) continue;
-      fprintf(fout, _("<h3>Warning %d: issued: %s, issued by: %s (%d), issued from: %s</h3>"), i + 1, xml_unparse_date(cur_warn->date), teamdb_get_login(cs->teamdb_state, cur_warn->issuer_id), cur_warn->issuer_id,
-              xml_unparse_ipv6(&cur_warn->issuer_ip));
-      fprintf(fout, "<p>%s:\n<pre>%s</pre>\n", _("Warning text for the user"),
-              ARMOR(cur_warn->text));
-      fprintf(fout, "<p>%s:\n<pre>%s</pre>\n", _("Judge's comment"),
-              ARMOR(cur_warn->comment));
-    }
+%><h3>Warning <s:v value="i + 1" />: issued: <s:v value="cur_warn->date" />: issued by: <s:v value="teamdb_get_login(cs->teamdb_state, cur_warn->issuer_id)" /> (<s:v value="cur_warn->issuer_id" />), issued from: <s:v value="cur_warn->issuer_ip" /></h3>
+
+<p><s:tr>Warning text for the user</s:tr>:\n<pre><s:v value="cur_warn->text" /></pre>
+<p><s:tr>Judge's comment</s:tr>:\n<pre><s:v value="cur_warn->comment" /></pre>
+<%    } %>
+<%  } %>
+
+<%  if (opcaps_check(phr->caps, OPCAP_EDIT_REG) >= 0) { %>
+<h2><s:tr>Issue a warning</s:tr></h2>
+<s:form>
+<s:hidden name="user_id" value="view_user_id" />
+<p><s:tr>Warning explanation for the user (mandatory)</s:tr>:<br/>
+<p><textarea name="warn_text" rows="5" cols="60"></textarea></p>
+<p><s:tr>Comment for other judges (optional)</s:tr>:<br/>
+<p><textarea name="warn_comment" rows="5" cols="60"></textarea></p>
+<p><s:submit ac="issue-warning" /></p>
+</s:form>
+<%  } %>
+
+<%  if (opcaps_check(phr->caps, OPCAP_EDIT_REG) >= 0) { %>
+
+<h2><s:tr>Disqualify user</s:tr></h2>
+<s:form>
+<s:hidden name="user_id" value="view_user_id" />
+<p><s:tr>Disqualification explanation</s:tr>:<br/>
+<p><textarea name="disq_comment" rows="5" cols="60"><s:v value="u_extra->disq_comment" /></textarea></p>
+
+<table class="b0"><tr><td class="b0"><%
+  if ((flags & TEAM_DISQUALIFIED)) {
+%><s:submit ac="set-disqualification" label="Edit comment" /><%
+  } else {
+%><s:submit ac="set-disqualification" label="Disqualify" /><%
   }
-
-  if (opcaps_check(phr->caps, OPCAP_EDIT_REG) >= 0) {
-    fprintf(fout, "<h2>%s</h3>\n", _("Issue a warning"));
-    html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
-    html_hidden(fout, "user_id", "%d", view_user_id);
-    fprintf(fout, "<p>%s:<br>\n",
-            _("Warning explanation for the user (mandatory)"));
-    fprintf(fout, "<p><textarea name=\"warn_text\" rows=\"5\" cols=\"60\"></textarea></p>\n");
-    fprintf(fout, "<p>%s:<br>\n", _("Comment for other judges (optional)"));
-    fprintf(fout, "<p><textarea name=\"warn_comment\" rows=\"5\" cols=\"60\"></textarea></p>\n");
-    fprintf(fout, "<p>%s</p>\n", BUTTON(NEW_SRV_ACTION_ISSUE_WARNING));
-    fprintf(fout, "</form>\n");
+%></td><%
+  if ((flags & TEAM_DISQUALIFIED)) {
+%><td class="b0"><s:submit ac="clear-disqualification" /></td><%
   }
-
-  if (opcaps_check(phr->caps, OPCAP_EDIT_REG) >= 0) {
-    fprintf(fout, "<h2>%s</h3>\n", _("Disqualify user"));
-    html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
-    html_hidden(fout, "user_id", "%d", view_user_id);
-    fprintf(fout, "<p>%s:<br>\n",
-            _("Disqualification explanation"));
-    fprintf(fout, "<p><textarea name=\"disq_comment\" rows=\"5\" cols=\"60\">");
-    if (u_extra->disq_comment) {
-      fprintf(fout, "%s", ARMOR(u_extra->disq_comment));
-    }
-    fprintf(fout, "</textarea></p>\n");
-
-    fprintf(fout, "<table class=\"b0\"><tr>");
-    fprintf(fout, "<td class=\"b0\">%s</td>",
-            ns_submit_button(bb, sizeof(bb), 0,
-                             NEW_SRV_ACTION_SET_DISQUALIFICATION,
-                             (flags & TEAM_DISQUALIFIED)?_("Edit comment"):_("Disqualify")));
-    if ((flags & TEAM_DISQUALIFIED))
-      fprintf(fout, "<td class=\"b0\">%s</td>\n",
-              BUTTON(NEW_SRV_ACTION_CLEAR_DISQUALIFICATION));
-    fprintf(fout, "</tr></table>\n");
-    fprintf(fout, "</form>\n");
-  }
-
-%>
-
-
+%></tr></table>
+</s:form>
+<%  } %>
 
 <%@include "priv_footer.csp"
 %><%
