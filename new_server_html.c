@@ -6140,32 +6140,6 @@ priv_set_priorities(
 }
 
 static int
-priv_priority_form(
-        FILE *fout,
-        FILE *log_f,
-        struct http_request_info *phr,
-        const struct contest_desc *cnts,
-        struct contest_extra *extra)
-{
-  int retval = 0;
-
-  if (phr->role != USER_ROLE_ADMIN) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
-
-  l10n_setlocale(phr->locale_id);
-  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
-            phr->client_key,
-            "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role),
-            phr->name_arm, phr->contest_id, extra->contest_arm,
-            _("Judging priorities"));
-  ns_write_judging_priorities(fout, log_f, phr, cnts, extra);
-  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
-  l10n_setlocale(0);
-
- cleanup:
-  return retval;
-}
-
-static int
 priv_view_testing_queue(
         FILE *fout,
         FILE *log_f,
@@ -7018,7 +6992,6 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRINT_SELECTED_UFC_PROTOCOL] =priv_print_users_exam_protocol,
   [NEW_SRV_ACTION_PRINT_PROBLEM_PROTOCOL] = priv_print_problem_exam_protocol,
   [NEW_SRV_ACTION_ASSIGN_CYPHERS_1] = priv_assign_cyphers_1,
-  [NEW_SRV_ACTION_PRIO_FORM] = priv_priority_form,
   [NEW_SRV_ACTION_VIEW_TESTING_QUEUE] = priv_view_testing_queue,
   [NEW_SRV_ACTION_MARK_DISPLAYED_2] = priv_clear_displayed,
   [NEW_SRV_ACTION_UNMARK_DISPLAYED_2] = priv_clear_displayed,
@@ -7672,7 +7645,6 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CLEAR_PASSWORDS_2] = priv_generic_operation,
   [NEW_SRV_ACTION_VIEW_CNTS_PWDS] = priv_generic_page,
   [NEW_SRV_ACTION_VIEW_REG_PWDS] = priv_generic_page,
-  [NEW_SRV_ACTION_VIEW_USER_INFO] = priv_generic_page,
   [NEW_SRV_ACTION_VIEW_USER_DUMP] = priv_generic_page,
   [NEW_SRV_ACTION_USER_CHANGE_STATUS] = priv_generic_operation,
   [NEW_SRV_ACTION_NEW_RUN] = priv_generic_operation,
@@ -7740,7 +7712,6 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_EXAM_INFO] = priv_generic_page,
   [NEW_SRV_ACTION_PRIV_SUBMIT_PAGE] = priv_submit_page,
   [NEW_SRV_ACTION_GET_FILE] = priv_get_file,
-  [NEW_SRV_ACTION_PRIO_FORM] = priv_generic_page,
   [NEW_SRV_ACTION_SET_PRIORITIES] = priv_generic_operation,
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_IGNORE] = priv_generic_operation,
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_OK] = priv_generic_operation,
