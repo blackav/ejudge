@@ -1,0 +1,94 @@
+<%
+/* $Id$ */
+%><%@include "priv_includes.csp"
+%><%
+#define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
+%><%@set getter_name = "csp_get_priv_settings_page"
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@page csp_view_priv_settings_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "priv_stdvars.csp"
+%><%
+    const struct section_global_data *global = cs->global;
+    const unsigned char *title = NULL;
+
+    if (phr->role != USER_ROLE_ADMIN) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+    l10n_setlocale(phr->locale_id);
+    title = _("Contest settings");
+%><%@include "priv_header.csp"
+%>
+<table class="b0">
+    <tr>
+        <td class="b0"><s:a ac="main-page"><s:tr>Main page</s:tr></s:a></td>
+        <td class="b0"><s:a ac="admin-contest-settings">Refresh<s:tr></s:tr></s:a></td>
+    </tr>
+</table>
+<hr/>
+
+<table class="b0">
+    <tr>
+        <td class="b0"><s:tr>Participants can view their source code</s:tr></td>
+        <td class="b0"><%
+  if (!cs->online_view_source) {
+%>Default (<s:vb value="global-&gt;team_enable_src_view &gt; 0" />)<%
+  } else {
+%><s:vb value="cs->online_view_source &gt;= 0" /><%
+  } %></td>
+        <td class="b0"><s:form><s:select name="param">
+<s:option value="0" selectedExpr="!cs->online_view_source"><s:tr>Default</s:tr></s:option>
+<s:option value="-1" selectedExpr="cs->online_view_source < 0"><s:tr>No</s:tr></s:option>
+<s:option value="1" selectedExpr="cs->online_view_source > 0"><s:tr>Yes</s:tr></s:option>
+</s:select><s:submit ac="admin-change-online-view-source" /></s:form></td>
+    </tr>
+    <tr>
+        <td class="b0"><s:tr>Participants can view testing reports</s:tr></td>
+        <td class="b0"><%
+  if (!cs->online_view_report) {
+%>Default<%
+  } else if (cs->online_view_report < 0) {
+%>No<%
+  } else {
+%>Yes<%
+  } %></td>
+        <td class="b0"><s:form><s:select name="param">
+<s:option value="0" selectedExpr="!cs->online_view_report"><s:tr>Default</s:tr></s:option>
+<s:option value="-1" selectedExpr="cs->online_view_report < 0"><s:tr>No</s:tr></s:option>
+<s:option value="1" selectedExpr="cs->online_view_report > 0"><s:tr>Yes</s:tr></s:option>
+</s:select><s:submit ac="admin-change-online-view-report" /></s:form></td>
+    </tr>
+
+<%  if (global->separate_user_score > 0) { %>
+    <tr>
+        <td class="b0"><s:tr>Participants view judge score</s:tr></td>
+        <td class="b0"><s:vb value="cs->online_view_judge_score > 0" /></td>
+        <td class="b0"><s:form><s:select name="param">
+<s:option value="0" selectedExpr="cs->online_view_judge_score <= 0"><s:tr>No</s:tr></s:option>
+<s:option value="1" selectedExpr="cs->online_view_judge_score > 0"><s:tr>Yes</s:tr></s:option>
+</s:select><s:submit ac="admin-change-online-view-judge-score" /></s:form></td>
+    </tr>
+<%  } %>
+
+    <tr>
+        <td class="b0"><s:tr>Final test visibility rules</s:tr></td>
+        <td class="b0"><s:vb value="cs->online_final_visibility > 0" /></td>
+        <td class="b0"><s:form><s:select name="param">
+<s:option value="0" selectedExpr="cs->online_final_visibility <= 0"><s:tr>No</s:tr></s:option>
+<s:option value="1" selectedExpr="cs->online_final_visibility > 0"><s:tr>Yes</s:tr></s:option>
+</s:select><s:submit ac="admin-change-online-final-visibility" /></s:form></td>
+    </tr>
+</table>
+
+<hr />
+
+<table class="b0">
+    <tr>
+        <td class="b0"><s:a ac="main-page"><s:tr>Main page</s:tr></s:a></td>
+        <td class="b0"><s:a ac="admin-contest-settings">Refresh<s:tr></s:tr></s:a></td>
+    </tr>
+</table>
+<%@include "priv_footer.csp"
+%><%
+  l10n_setlocale(0);
+cleanup:
+  html_armor_free(&ab);
+%>
