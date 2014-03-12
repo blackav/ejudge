@@ -67,7 +67,7 @@ static PageInterface page_iface =
     &page_ops,
 };
 PageInterface *
-csp_get_priv_edit_clar_page(void)
+csp_get_priv_new_run_page(void)
 {
     return &page_iface;
 }
