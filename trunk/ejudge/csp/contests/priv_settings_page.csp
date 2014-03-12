@@ -20,7 +20,7 @@
 <table class="b0">
     <tr>
         <td class="b0"><s:a ac="main-page"><s:tr>Main page</s:tr></s:a></td>
-        <td class="b0"><s:a ac="admin-contest-settings">Refresh<s:tr></s:tr></s:a></td>
+        <td class="b0"><s:a ac="admin-contest-settings"><s:tr>Refresh</s:tr></s:a></td>
     </tr>
 </table>
 <hr/>
@@ -83,7 +83,7 @@
 <table class="b0">
     <tr>
         <td class="b0"><s:a ac="main-page"><s:tr>Main page</s:tr></s:a></td>
-        <td class="b0"><s:a ac="admin-contest-settings">Refresh<s:tr></s:tr></s:a></td>
+        <td class="b0"><s:a ac="admin-contest-settings"><s:tr>Refresh</s:tr></s:a></td>
     </tr>
 </table>
 <%@include "priv_footer.csp"
