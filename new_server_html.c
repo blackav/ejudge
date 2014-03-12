@@ -6339,32 +6339,6 @@ cleanup:
 }
 
 static int
-priv_admin_contest_settings(
-        FILE *fout,
-        FILE *log_f,
-        struct http_request_info *phr,
-        const struct contest_desc *cnts,
-        struct contest_extra *extra)
-{
-  int retval = 0;
-
-  if (phr->role != USER_ROLE_ADMIN) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
-
-  l10n_setlocale(phr->locale_id);
-  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
-            phr->client_key,
-            "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role),
-            phr->name_arm, phr->contest_id, extra->contest_arm,
-            _("Contest settings"));
-  ns_write_admin_contest_settings(fout, log_f, phr, cnts, extra);
-  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
-  l10n_setlocale(0);
-
- cleanup:
-  return retval;
-}
-
-static int
 priv_print_user_exam_protocol(
         FILE *fout,
         FILE *log_f,
@@ -7048,7 +7022,6 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_TESTING_QUEUE] = priv_view_testing_queue,
   [NEW_SRV_ACTION_MARK_DISPLAYED_2] = priv_clear_displayed,
   [NEW_SRV_ACTION_UNMARK_DISPLAYED_2] = priv_clear_displayed,
-  [NEW_SRV_ACTION_ADMIN_CONTEST_SETTINGS] = priv_admin_contest_settings,
   [NEW_SRV_ACTION_PING] = ping_page,
   [NEW_SRV_ACTION_SUBMIT_RUN_BATCH] = priv_submit_run_batch_page,
 };
@@ -7785,7 +7758,6 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_UNMARK_DISPLAYED_2] = priv_generic_operation,
   [NEW_SRV_ACTION_SET_STAND_FILTER] = priv_generic_operation,
   [NEW_SRV_ACTION_RESET_STAND_FILTER] = priv_generic_operation,
-  [NEW_SRV_ACTION_ADMIN_CONTEST_SETTINGS] = priv_generic_page,
   [NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_SOURCE] = priv_generic_operation,
   [NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_REPORT] = priv_generic_operation,
   [NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_JUDGE_SCORE] = priv_generic_operation,
@@ -7816,6 +7788,7 @@ static const unsigned char * const external_action_names[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_NEW_RUN_FORM] = "priv_new_run_page",
   [NEW_SRV_ACTION_VIEW_USER_INFO] = "priv_user_info_page",
   [NEW_SRV_ACTION_ADMIN_CONTEST_SETTINGS] = "priv_settings_page",
+  [NEW_SRV_ACTION_PRIO_FORM] = "priv_priorities_page",
 };
 
 static ExternalActionState *external_action_states[NEW_SRV_ACTION_LAST];
