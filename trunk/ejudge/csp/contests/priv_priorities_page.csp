@@ -1,0 +1,83 @@
+<%
+/* $Id$ */
+%><%@include "priv_includes.csp"
+%><%
+#define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
+
+static int
+fix_prio(int val)
+{
+  if (val < -16) val = -16;
+  if (val > 15) val = 15;
+  return val;
+}
+%><%@set getter_name = "csp_get_priv_priorities_page"
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@page csp_view_priv_priorities_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "priv_stdvars.csp"
+%><%
+    const struct section_global_data *global = cs->global;
+    const struct section_problem_data *prob;
+    int glob_prio, prob_prio, static_prio, local_prio, total_prio;
+    int prob_id;
+    const unsigned char *title = NULL;
+
+    glob_prio = fix_prio(global->priority_adjustment);
+
+    if (phr->role != USER_ROLE_ADMIN) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+    l10n_setlocale(phr->locale_id);
+    title = _("Judging priorities");
+%><%@include "priv_header.csp"
+%>
+<s:form>
+<table class="b1">
+    <tr>
+        <th class="b1">Id</th>
+        <th class="b1"><s:tr>Short name</s:tr></th>
+        <th class="b1"><s:tr>Long name</s:tr></th>
+        <th class="b1"><s:tr>Contest priority</s:tr></th>
+        <th class="b1"><s:tr>Problem priority</s:tr></th>
+        <th class="b1"><s:tr>Static priority</s:tr></th>
+        <th class="b1"><s:tr>Priority adjustment</s:tr></th>
+        <th class="b1"><s:tr>Total priority</s:tr></th>
+    </tr>
+<%
+  for (prob_id = 1;
+       prob_id <= cs->max_prob && prob_id < EJ_SERVE_STATE_TOTAL_PROBS;
+       ++prob_id) {
+    if (!(prob = cs->probs[prob_id])) continue;
+    prob_prio = fix_prio(prob->priority_adjustment);
+    static_prio = fix_prio(glob_prio + prob_prio);
+    local_prio = fix_prio(cs->prob_prio[prob_id]);
+    total_prio = fix_prio(static_prio + local_prio);
+%>
+    <tr>
+        <td class="b1"><s:v value="prob_id" /></td>
+        <td class="b1"><s:v value="prob->short_name" /></td>
+        <td class="b1"><s:v value="prob->long_name" /></td>
+        <td class="b1"><s:v value="glob_prio" /></td>
+        <td class="b1"><s:v value="prob_prio" /></td>
+        <td class="b1"><s:v value="static_prio" /></td>
+        <td class="b1"><input type="text" size="4" name="prio_<s:v value="prob_id" />" value="<s:v value="local_prio" />" /></td>
+        <td class="b1"><s:v value="total_prio" /></td>
+    </tr>
+<%  } %>
+</table>
+
+<table class="b0"><tr>
+    <td class="b0"><s:submit ac="main-page" label="Main page" /></td>
+    <td class="b0"><s:submit ac="set-priorities" /></td>
+</tr></table>
+</s:form>
+
+<br/>
+
+<p><s:tr>Priority value must be in range [-16, 15]. The less the priority value, the more the judging priority.</s:tr></p>
+
+<%@include "priv_footer.csp"
+%><%
+  l10n_setlocale(0);
+cleanup:
+  html_armor_free(&ab);
+%>
