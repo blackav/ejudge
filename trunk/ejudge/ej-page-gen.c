@@ -3703,11 +3703,11 @@ handle_yesno_open(
             "fputs(s1, out_f);\n"
             "fputs(\">\", out_f);\n"
             "fputs(_(\"No\"), out_f);\n"
-            "fputs(\"<option><option value=\\\"1\\\"\", out_f);\n"
+            "fputs(\"</option><option value=\\\"1\\\"\", out_f);\n"
             "fputs(s2, out_f);\n"
             "fputs(\">\", out_f);\n"
             "fputs(_(\"Yes\"), out_f);\n"
-            "fputs(\"</select>\", out_f);\n", name_attr->value);
+            "fputs(\"</option></select>\", out_f);\n", name_attr->value);
     fprintf(prg_f,
             "}\n");
     return 0;

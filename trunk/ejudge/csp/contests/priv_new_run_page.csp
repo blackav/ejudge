@@ -40,7 +40,7 @@
 <tr><td><s:tr>Imported?</s:tr>:</td><td><s:yesno name="is_imported" /></td></tr>
 <tr><td><s:tr>Hidden?</s:tr>:</td><td><s:yesno name="is_hidden" /></td></tr>
 <tr><td><s:tr>Read-only?</s:tr>:</td><td><s:yesno name="is_readonly" /></td></tr>
-<tr><td><s:tr>Status</s:tr>:</td><% write_change_status_dialog(cs, out_f, 0, 0, 0, -1, 0); %></td></tr>
+<tr><td><s:tr>Status</s:tr>:</td><% write_change_status_dialog(cs, out_f, 0, 0, 0, -1, 0); %></tr>
 <%  if (global->score_system == SCORE_KIROV
       || global->score_system == SCORE_OLYMPIAD) { %>
 <tr><td><s:tr>Tests passed</s:tr>:</td><td><s:textfield name="tests" size="10" value="" /></td></tr>
