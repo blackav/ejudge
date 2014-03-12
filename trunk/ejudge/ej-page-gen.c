@@ -3707,7 +3707,7 @@ handle_yesno_open(
             "fputs(s2, out_f);\n"
             "fputs(\">\", out_f);\n"
             "fputs(_(\"Yes\"), out_f);\n"
-            "fputs(\"></select>\", out_f);\n", name_attr->value);
+            "fputs(\"</select>\", out_f);\n", name_attr->value);
     fprintf(prg_f,
             "}\n");
     return 0;
