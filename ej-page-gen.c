@@ -3265,6 +3265,11 @@ handle_v_open(
         return -1;
     }
 
+    HtmlAttribute *check_attr = html_element_find_attribute(elem, "checkexpr");
+    if (check_attr) {
+        fprintf(prg_f, "if ((%s)) {\n", check_attr->value);
+    }
+
     TypeInfo *t = NULL;
     int r = parse_c_expression(ps, cntx, log_f, at->value, &t, ps->pos);
     if (r < 0) return r;
@@ -3274,6 +3279,21 @@ handle_v_open(
     fprintf(log_f, "\n");
 
     processor_state_invoke_type_handler(log_f, cntx, ps, txt_f, prg_f, at->value, elem, t);
+
+    if (check_attr) {
+        HtmlAttribute *def_attr = html_element_find_attribute(elem, "defstr");
+        if (def_attr) {
+            fprintf(prg_f, "} else {\n"
+                    "fputs(\"%s\", out_f);\n"
+                    "}\n", def_attr->value);
+        } else if ((def_attr = html_element_find_attribute(elem, "deflabel"))) {
+            fprintf(prg_f, "} else {\n"
+                    "fputs(_(\"%s\"), out_f);\n"
+                    "}\n", def_attr->value);
+        } else {
+            fprintf(prg_f, "}\n");
+        }
+    }
 
     return 0;
 }
