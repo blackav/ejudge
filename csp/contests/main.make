@@ -48,6 +48,7 @@ SOFILES = \
  priv_priv_users_page.so\
  priv_priorities_page.so\
  priv_settings_page.so\
+ priv_source_page.so\
  priv_user_ips_page.so\
  priv_user_info_page.so\
  priv_users_page.so
@@ -88,6 +89,7 @@ priv_passwords_page.c : priv_passwords_page.csp priv_includes.csp priv_stdvars.c
 priv_priorities_page.c : priv_priorities_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 priv_priv_users_page.c : priv_priv_users_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 priv_settings_page.c : priv_settings_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
+priv_source_page.c : priv_source_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 priv_user_ips_page.c : priv_user_ips_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 priv_user_info_page.c : priv_user_info_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 priv_users_page.c : priv_users_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
