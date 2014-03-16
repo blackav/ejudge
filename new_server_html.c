@@ -3773,6 +3773,18 @@ parse_run_id(FILE *fout, struct http_request_info *phr,
   return -1;
 }
 
+int
+ns_parse_run_id(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        int *p_run_id,
+        struct run_entry *pe)
+{
+  return parse_run_id(fout, phr, cnts, extra, p_run_id, pe);
+}
+
 static int
 priv_print_run_cmd(FILE *fout, FILE *log_f,
                    struct http_request_info *phr,
@@ -7760,6 +7772,7 @@ static const unsigned char * const external_action_names[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_USER_INFO] = "priv_user_info_page",
   [NEW_SRV_ACTION_ADMIN_CONTEST_SETTINGS] = "priv_settings_page",
   [NEW_SRV_ACTION_PRIO_FORM] = "priv_priorities_page",
+  [NEW_SRV_ACTION_VIEW_SOURCE] = "priv_source_page",
 };
 
 static ExternalActionState *external_action_states[NEW_SRV_ACTION_LAST];

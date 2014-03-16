@@ -3267,16 +3267,25 @@ handle_v_open(
 
     HtmlAttribute *check_attr = html_element_find_attribute(elem, "checkexpr");
     if (check_attr) {
-        fprintf(prg_f, "if ((%s)) {\n", check_attr->value);
+        fprintf(prg_f, "if ((%s) %s) {\n", at->value, check_attr->value);
     }
 
     TypeInfo *t = NULL;
-    int r = parse_c_expression(ps, cntx, log_f, at->value, &t, ps->pos);
-    if (r < 0) return r;
 
-    fprintf(log_f, "Expression type: ");
-    tc_print_2(log_f, t, 2);
-    fprintf(log_f, "\n");
+    HtmlAttribute *type_attr = html_element_find_attribute(elem, "type");
+    if (type_attr != NULL) {
+        // some pseudo-typedefs...
+        if (!strcmp(type_attr->value, "uuid")) {
+            t = tc_get_typedef_type(cntx, tc_get_i0_type(cntx), tc_get_ident(cntx, "__e_uuid_t"));
+        }
+    } else {
+        int r = parse_c_expression(ps, cntx, log_f, at->value, &t, ps->pos);
+        if (r < 0) return r;
+
+        fprintf(log_f, "Expression type: ");
+        tc_print_2(log_f, t, 2);
+        fprintf(log_f, "\n");
+    }
 
     processor_state_invoke_type_handler(log_f, cntx, ps, txt_f, prg_f, at->value, elem, t);
 
@@ -3733,6 +3742,95 @@ handle_yesno_open(
     return 0;
 }
 
+static int
+handle_button_open(
+        FILE *log_f,
+        TypeContext *cntx,
+        ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f)
+{
+    HtmlElement *elem = ps->el_stack->el;
+
+    fprintf(prg_f, "fputs(\"<input type=\\\"button\\\"\", out_f);\n");
+
+    HtmlAttribute *label_attr = html_element_find_attribute(elem, "label");
+    if (label_attr) {
+        fprintf(prg_f, "fputs(\" value=\\\"\", out_f);\n");
+        fprintf(prg_f, "fputs(_(\"%s\"), out_f);\n", label_attr->value);
+        fprintf(prg_f, "fputs(\"\\\"\", out_f);\n");
+    }
+    HtmlAttribute *onclick_attr = html_element_find_attribute(elem, "onclick");
+    if (onclick_attr) {
+        fprintf(prg_f, "fputs(\" onclick=\\\"%s\\\"\", out_f);\n", onclick_attr->value);
+    }
+    fprintf(prg_f, "fputs(\" />\", out_f);\n");
+
+    return 0;
+}
+
+static int
+handle_img_open(
+        FILE *log_f,
+        TypeContext *cntx,
+        ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f)
+{
+    HtmlElement *elem = ps->el_stack->el;
+    unsigned char buf[1024];
+
+    fprintf(prg_f, "fputs(\"<img src=\\\"\", out_f);\n");
+
+    // url, label
+    HtmlAttribute *attr = html_element_find_attribute(elem, "url");
+    if (attr) {
+        HtmlElement *url_elem = processor_state_find_named_url(ps, tc_get_ident(cntx, attr->value));
+        if (!url_elem) {
+            parser_error_2(ps, "URL '%s' is undefined", attr->value);
+            return -1;
+        }
+        int r = process_ac_attr(log_f, cntx, ps, url_elem, buf, sizeof(buf));
+        if (r < 0) return r;
+        if (!r) {
+            parser_error_2(ps, "ac attribute is undefined");
+            return -1;
+        }
+        fprintf(prg_f, "sep = ns_url_2(out_f, phr, %s);\n", buf);
+        for (HtmlElement *child = url_elem->first_child; child; child = child->next_sibling) {
+            fprintf(prg_f, "fputs(sep, out_f); sep = \"&amp;\";\n");
+            attr = html_element_find_attribute(child, "name");
+            if (attr) {
+                fprintf(prg_f, "fputs(\"%s=\", out_f);\n", attr->value);
+                attr = html_element_find_attribute(child, "value");
+                if (attr) {
+                    TypeInfo *t = NULL;
+                    r = parse_c_expression(ps, cntx, log_f, attr->value, &t, ps->pos);
+                    if (r >= 0) {
+                        fprintf(log_f, "Expression type: ");
+                        tc_print_2(log_f, t, 2);
+                        fprintf(log_f, "\n");
+
+                        processor_state_invoke_type_handler(log_f, cntx, ps, txt_f, prg_f, attr->value, child, t);
+                    }
+                }
+            }
+        }
+        fprintf(prg_f, "(void) sep;\n");
+    }
+    fprintf(prg_f, "fputs(\"\\\"\", out_f);\n");
+
+    attr = html_element_find_attribute(elem, "label");
+    if (attr) {
+        fprintf(prg_f, "fputs(\" alt=\\\"\", out_f);\n");
+        fprintf(prg_f, "fputs(_(\"%s\"), out_f);\n", attr->value);
+        fprintf(prg_f, "fputs(\"\\\"\", out_f);\n");
+    }
+
+    fprintf(prg_f, "fputs(\" />\", out_f);\n");
+    return 0;
+}
+
 struct ElementInfo
 {
     const unsigned char *name;
@@ -3772,6 +3870,8 @@ static const struct ElementInfo element_handlers[] =
     { "s:option", handle_option_open, handle_option_close },
     { "s:yesno", handle_yesno_open, NULL },
     { "s:vb", handle_vb_open, NULL },
+    { "s:button", handle_button_open, NULL },
+    { "s:img", handle_img_open, NULL },
 
     { NULL, NULL, NULL },
 };
@@ -3984,6 +4084,20 @@ ej_ipv4_t_type_handler(
 {
     // handle "format"?
     fprintf(prg_f, "fprintf(out_f, \"%%s\", xml_unparse_ip(%s));\n", text);
+}
+
+static void
+ej_uuid_type_handler(
+        FILE *log_f,
+        TypeContext *cntx,
+        struct ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f,
+        const unsigned char *text,
+        const HtmlElement *elem,
+        TypeInfo *type_info)
+{
+    fprintf(prg_f, "fputs(ej_uuid_unparse((%s), \"\"), out_f);\n", text);
 }
 
 static int
@@ -4204,6 +4318,8 @@ process_unit(
                                      int_type_handler);
     processor_state_set_type_handler(ps, tc_find_typedef_type(cntx, tc_get_ident(cntx, "rint32_t")),
                                      int_type_handler);
+    processor_state_set_type_handler(ps, tc_find_typedef_type(cntx, tc_get_ident(cntx, "ruint32_t")),
+                                     unsigned_type_handler);
     processor_state_set_type_handler(ps, tc_find_typedef_type(cntx, tc_get_ident(cntx, "time_t")),
                                      time_t_type_handler);
     processor_state_set_type_handler(ps, tc_find_typedef_type(cntx, tc_get_ident(cntx, "ej_time64_t")),
@@ -4216,6 +4332,9 @@ process_unit(
                                      ej_ip_t_type_handler);
     processor_state_set_type_handler(ps, tc_find_typedef_type(cntx, tc_get_ident(cntx, "ej_ip4_t")),
                                      ej_ipv4_t_type_handler);
+
+    processor_state_set_type_handler(ps, tc_get_typedef_type(cntx, tc_get_i0_type(cntx), tc_get_ident(cntx, "__e_uuid_t")),
+                                     ej_uuid_type_handler);
 
     processor_state_set_array_type_handler(ps, tc_get_u8_type(cntx), string_type_handler);
     processor_state_set_array_type_handler(ps, tc_get_i8_type(cntx), string_type_handler);
