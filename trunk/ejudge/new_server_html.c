@@ -5271,32 +5271,6 @@ priv_view_report(FILE *fout,
 }
 
 static int
-priv_view_source(FILE *fout,
-                 FILE *log_f,
-                 struct http_request_info *phr,
-                 const struct contest_desc *cnts,
-                 struct contest_extra *extra)
-{
-  serve_state_t cs = extra->serve_state;
-  int run_id;
-
-  if (parse_run_id(fout, phr, cnts, extra, &run_id, 0) < 0) goto failure;
-
-  if (opcaps_check(phr->caps, OPCAP_VIEW_SOURCE) < 0) {
-    ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
-    goto cleanup;
-  }
-
-  ns_write_priv_source(cs, fout, log_f, phr, cnts, extra, run_id);
-
- cleanup:
-  return 0;
-
- failure:
-  return -1;
-}
-
-static int
 priv_download_source(
         FILE *fout,
         FILE *log_f,
@@ -6959,7 +6933,6 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
 
   /* for priv_generic_page */
   [NEW_SRV_ACTION_VIEW_REPORT] = priv_view_report,
-  [NEW_SRV_ACTION_VIEW_SOURCE] = priv_view_source,
   [NEW_SRV_ACTION_PRIV_DOWNLOAD_RUN] = priv_download_source,
   [NEW_SRV_ACTION_STANDINGS] = priv_standings,
   [NEW_SRV_ACTION_REJUDGE_DISPLAYED_1] = priv_confirmation_page,
@@ -7609,7 +7582,6 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_SQUEEZE_RUNS] = priv_generic_operation,
   [NEW_SRV_ACTION_RESET_FILTER] = priv_generic_operation,
   [NEW_SRV_ACTION_RESET_CLAR_FILTER] = priv_generic_operation,
-  [NEW_SRV_ACTION_VIEW_SOURCE] = priv_generic_page,
   [NEW_SRV_ACTION_VIEW_REPORT] = priv_generic_page,
   [NEW_SRV_ACTION_PRIV_DOWNLOAD_RUN] = priv_generic_page,
   [NEW_SRV_ACTION_STANDINGS] = priv_generic_page,

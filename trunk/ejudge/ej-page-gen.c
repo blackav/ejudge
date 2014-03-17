@@ -3276,7 +3276,17 @@ handle_v_open(
     if (type_attr != NULL) {
         // some pseudo-typedefs...
         if (!strcmp(type_attr->value, "uuid")) {
-            t = tc_get_typedef_type(cntx, tc_get_i0_type(cntx), tc_get_ident(cntx, "__e_uuid_t"));
+            t = tc_get_typedef_type(cntx, tc_get_i0_type(cntx), tc_get_ident(cntx, "__ej_uuid_t"));
+        } else if (!strcmp(type_attr->value, "eoln_type")) {
+            t = tc_get_typedef_type(cntx, tc_get_i0_type(cntx), tc_get_ident(cntx, "__ej_eoln_type_t"));
+        } else if (!strcmp(type_attr->value, "run_status")) {
+            t = tc_get_typedef_type(cntx, tc_get_i0_type(cntx), tc_get_ident(cntx, "__ej_run_status_t"));
+        } else if (!strcmp(type_attr->value, "mime_type")) {
+            t = tc_get_typedef_type(cntx, tc_get_i0_type(cntx), tc_get_ident(cntx, "__ej_mime_type_t"));
+        } else if (!strcmp(type_attr->value, "sha1")) {
+            t = tc_get_typedef_type(cntx, tc_get_i0_type(cntx), tc_get_ident(cntx, "__ej_sha1_t"));
+        } else if (!strcmp(type_attr->value, "duration")) {
+            t = tc_get_typedef_type(cntx, tc_get_i0_type(cntx), tc_get_ident(cntx, "__ej_duration_t"));
         }
     } else {
         int r = parse_c_expression(ps, cntx, log_f, at->value, &t, ps->pos);
@@ -4100,6 +4110,76 @@ ej_uuid_type_handler(
     fprintf(prg_f, "fputs(ej_uuid_unparse((%s), \"\"), out_f);\n", text);
 }
 
+static void
+ej_eoln_type_type_handler(
+        FILE *log_f,
+        TypeContext *cntx,
+        struct ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f,
+        const unsigned char *text,
+        const HtmlElement *elem,
+        TypeInfo *type_info)
+{
+    fprintf(prg_f, "fputs(eoln_type_unparse_html((%s)), out_f);\n", text);
+}
+
+static void
+ej_run_status_type_handler(
+        FILE *log_f,
+        TypeContext *cntx,
+        struct ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f,
+        const unsigned char *text,
+        const HtmlElement *elem,
+        TypeInfo *type_info)
+{
+    fprintf(prg_f, "fputs(run_status_str((%s), 0, 0, 0, 0), out_f);\n", text);
+}
+
+static void
+ej_mime_type_type_handler(
+        FILE *log_f,
+        TypeContext *cntx,
+        struct ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f,
+        const unsigned char *text,
+        const HtmlElement *elem,
+        TypeInfo *type_info)
+{
+    fprintf(prg_f, "fputs(mime_type_get_type((%s)), out_f);\n", text);
+}
+
+static void
+ej_sha1_type_handler(
+        FILE *log_f,
+        TypeContext *cntx,
+        struct ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f,
+        const unsigned char *text,
+        const HtmlElement *elem,
+        TypeInfo *type_info)
+{
+    fprintf(prg_f, "fputs(unparse_sha1((%s)), out_f);\n", text);
+}
+
+static void
+ej_duration_type_handler(
+        FILE *log_f,
+        TypeContext *cntx,
+        struct ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f,
+        const unsigned char *text,
+        const HtmlElement *elem,
+        TypeInfo *type_info)
+{
+    fprintf(prg_f, "fputs(duration_str_2(hbuf, sizeof(hbuf), %s), out_f);\n", text);
+}
+
 static int
 has_non_whitespace(
         const unsigned char *txt,
@@ -4333,8 +4413,18 @@ process_unit(
     processor_state_set_type_handler(ps, tc_find_typedef_type(cntx, tc_get_ident(cntx, "ej_ip4_t")),
                                      ej_ipv4_t_type_handler);
 
-    processor_state_set_type_handler(ps, tc_get_typedef_type(cntx, tc_get_i0_type(cntx), tc_get_ident(cntx, "__e_uuid_t")),
+    processor_state_set_type_handler(ps, tc_get_typedef_type(cntx, tc_get_i0_type(cntx), tc_get_ident(cntx, "__ej_uuid_t")),
                                      ej_uuid_type_handler);
+    processor_state_set_type_handler(ps, tc_get_typedef_type(cntx, tc_get_i0_type(cntx), tc_get_ident(cntx, "__ej_eoln_type_t")),
+                                     ej_eoln_type_type_handler);
+    processor_state_set_type_handler(ps, tc_get_typedef_type(cntx, tc_get_i0_type(cntx), tc_get_ident(cntx, "__ej_run_status_t")),
+                                     ej_run_status_type_handler);
+    processor_state_set_type_handler(ps, tc_get_typedef_type(cntx, tc_get_i0_type(cntx), tc_get_ident(cntx, "__ej_mime_type_t")),
+                                     ej_mime_type_type_handler);
+    processor_state_set_type_handler(ps, tc_get_typedef_type(cntx, tc_get_i0_type(cntx), tc_get_ident(cntx, "__ej_sha1_t")),
+                                     ej_sha1_type_handler);
+    processor_state_set_type_handler(ps, tc_get_typedef_type(cntx, tc_get_i0_type(cntx), tc_get_ident(cntx, "__ej_duration_t")),
+                                     ej_duration_type_handler);
 
     processor_state_set_array_type_handler(ps, tc_get_u8_type(cntx), string_type_handler);
     processor_state_set_array_type_handler(ps, tc_get_i8_type(cntx), string_type_handler);

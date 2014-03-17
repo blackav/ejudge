@@ -121,8 +121,8 @@ ns_parse_run_id(
 
 <table>
 <tr><td style="width: 10em;"><s:tr>Run ID</s:tr>:</td><td><s:v value="info.run_id" /></td></tr>
-<tr><td><s:tr>Submission time</s:tr>:</td><td><s:v value="duration_str(1, info.time, 0, 0, 0)" escape="false" />:<s:v value="info.nsec" /></td></tr>
-<tr><td><s:tr>Contest time</s:tr>:</td><td><s:v value="duration_str_2(filtbuf1, sizeof(filtbuf1), run_time - start_time, info.nsec)" escape="false" /></td></tr>
+<tr><td><s:tr>Submission time</s:tr>:</td><td><s:v value="info.time" />:<s:v value="info.nsec" /></td></tr>
+<tr><td><s:tr>Contest time</s:tr>:</td><td><s:v type="duration" value="run_time - start_time, info.nsec" /></td></tr>
 <% #if CONF_HAS_LIBUUID - 0 != 0 %>
 <tr><td>UUID:</td><td><s:v type="uuid" value="info.run_uuid" /></td></tr>
 <% #endif %>
@@ -191,13 +191,13 @@ ns_parse_run_id(
 <tr><td><s:tr>Language</s:tr>:</td><td>#<s:v value="info.lang_id" /></td></tr>
 <%  } %>
 
-<tr><td><s:tr>EOLN Type</s:tr>:</td><td><s:v value="eoln_type_unparse_html(info.eoln_type)" escape="false" /></td></tr>
+<tr><td><s:tr>EOLN Type</s:tr>:</td><td><s:v type="eoln_type" value="info.eoln_type" /></td></tr>
 
 <%
   run_status_to_str_short(bb, sizeof(bb), info.status);
   snprintf(filtbuf1, sizeof(filtbuf1), "status == %s", bb);
 %>
-<tr><td><s:tr>Status</s:tr>:</td><td><s:a url="FilteredMainUrl"><s:v value="run_status_str(info.status, 0, 0, 0, 0)" escape="false" /></s:a></td></tr>
+<tr><td><s:tr>Status</s:tr>:</td><td><s:a url="FilteredMainUrl"><s:v type="run_status" value="info.status" /></s:a></td></tr>
 
 <% if (info.passed_mode > 0) { %>
 <tr><td><s:tr>Tests passed</s:tr>:</td><td><s:v value="info.test" checkExpr=">= 0" defstr="N/A" /></td></tr>
@@ -253,7 +253,7 @@ function setDivVisibility(oper, value)
 <table>
 
 <% if (!info.lang_id) { %>
-<tr><td><s:tr>Content type</s:tr></td><td><s:v value="mime_type_get_type(info.mime_type)" escape="false" /></td></tr>
+<tr><td><s:tr>Content type</s:tr></td><td><s:v type="mime_type" value="info.mime_type" /></td></tr>
 <% } %>
 
 <tr><td style="width: 10em;"><s:tr>Imported?</s:tr>:</td><td><s:vb value="info.is_imported" /></td></tr>
@@ -270,7 +270,7 @@ function setDivVisibility(oper, value)
 <tr><td><s:tr>Size</s:tr>:</td><td><s:a url="FilteredMainUrl"><s:v value="info.size" /></s:a></td></tr>
 
 <% snprintf(filtbuf1, sizeof(filtbuf1), "hash == hash(%d)", run_id); %>
-<tr><td><s:tr>Hash value</s:tr>:</td><td><s:a url="FilteredMainUrl"><s:v value="unparse_sha1(info.sha1)" /></s:a></td></tr>
+<tr><td><s:tr>Hash value</s:tr>:</td><td><s:a url="FilteredMainUrl"><s:v type="sha1" value="info.sha1" /></s:a></td></tr>
 
 <tr><td><s:tr>Pages printed</s:tr>:</td><td><s:v value="(int) info.pages" /></td></tr>
 </table>
@@ -380,7 +380,7 @@ function setDivVisibility(oper, value)
 <table class="b0"><tr>
 <td class="b0"><s:submit ac="priv-submit-run-just-ignore" /></td>
 <td class="b0"><s:submit ac="priv-submit-run-just-ok" /></td>
-</tr></table><br/>
+</tr></table>
 
 <table class="b0"><tr>
 <td><s:button onclick="formatViolation()" label="Formatting rules violation" /></td>
