@@ -8,26 +8,8 @@
 %><%@page csp_view_priv_submit_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 %><%@include "priv_stdvars.csp"
 %><%
-%><%@include "priv_header.csp"
-%>
-
-
-
-static void
-priv_submit_page(
-        FILE *fout,
-        struct http_request_info *phr, 
-        const struct contest_desc *cnts,
-        struct contest_extra *extra)
-{
-  serve_state_t cs = extra->serve_state;
-  //const struct section_global_data *global = cs->global;
   const struct section_problem_data *prob = 0;
   int prob_id = 0, variant = 0, i;
-  FILE *log_f = 0;
-  char *log_t = 0;
-  size_t log_z = 0;
-  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   unsigned char bb[1024];
   const unsigned char *sel_flag = 0;
   unsigned char optval[128];
@@ -37,8 +19,8 @@ priv_submit_page(
   path_t variant_stmt_file;
   const unsigned char *alternatives = 0;
   const unsigned char *cl = " class=\"b0\"";
+  unsigned char title[1024];
 
-  log_f = open_memstream(&log_t, &log_z);
   if (ns_cgi_param_int_opt(phr, "problem", &prob_id, 0) < 0) {
     fprintf(log_f, "Invalid problem.\n");
     goto cleanup;
@@ -70,64 +52,37 @@ priv_submit_page(
 
   l10n_setlocale(phr->locale_id);
   if (prob && variant > 0) {
-    snprintf(bb, sizeof(bb), "%s %s-%d", _("Submit a solution for"),
-             prob->short_name, variant);
+    snprintf(title, sizeof(title), "%s %s-%d", _("Submit a solution for"), prob->short_name, variant);
   } else if (prob) {
-    snprintf(bb, sizeof(bb), "%s %s", _("Submit a solution for"),
-             prob->short_name);
+    snprintf(title, sizeof(title), "%s %s", _("Submit a solution for"), prob->short_name);
   } else {
-    snprintf(bb, sizeof(bb), "%s", _("Submit a solution"));
+    snprintf(title, sizeof(title), "%s", _("Submit a solution"));
   }
-  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
-            phr->client_key,
-            "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role),
-            phr->name_arm, phr->contest_id, extra->contest_arm, bb);
+%><%@include "priv_header.csp"
+%>
+<% if (prob) { %>
+<h2><s:tr>Problem</s:tr> <s:v value="prob->short_name" escape="false"/>: <s:v value="prob->long_name" /></h2>
+<% } %>
 
-  if (prob) {
-    fprintf(fout, "<h2>%s %s: %s</h2>\n",
-            _("Problem"), prob->short_name, ARMOR(prob->long_name));
-  }
+<s:form enctype="multipart/form-data">
 
-  html_start_form(fout, 2, phr->self_url, phr->hidden_vars);
-
-  /* output the problem selection dialog */
-  fprintf(fout, "<table%s><tr>\n", cl);
-  fprintf(fout, "<tr><td%s>%s:</td><td%s><select name=\"problem\">",
-          cl, _("Problem"), cl);
+<table class="b0"><tr>
+<tr><td class="b0"><s:tr>Problem</s:tr>:</td><td class="b0"><s:select name="problem"><%
   for (i = 1; i <= cs->max_prob; i++) {
     if (!(cs->probs[i])) continue;
-    sel_flag = "";
-    if (prob_id > 0 && i == prob_id) sel_flag = " selected=\"selected\"";
-    fprintf(fout, "<option value=\"%d\"%s>%s - %s</option>",
-            i, sel_flag, cs->probs[i]->short_name,
-            ARMOR(cs->probs[i]->long_name));
+%><s:option value="i" selectedExpr="prob_id > 0 && i == prob_id"><s:v value="cs->probs[i]->short_name" escape="false" /> - <s:v value="cs->probs[i]->long_name" /></s:option><%
   }
-  fprintf(fout, "</select></td><td%s>%s</td>\n", cl,
-          ns_submit_button(bb, sizeof(bb), 0,
-                           NEW_SRV_ACTION_PRIV_SUBMIT_PAGE,
-                           _("Select problem")));
-  fprintf(fout, "</tr>\n");
-
-  if (prob && prob->variant_num > 0) {
-    fprintf(fout, "<tr>\n");
-    fprintf(fout, "<td%s>%s:</td><td%s>", cl, _("Variant"), cl);
-    fprintf(fout, "<select name=\"variant\">");
+%></s:select></td><td class="b0"><s:submit ac="priv-submit-page" /></td></tr>
+<% if (prob && prob->variant_num > 0) { %>
+<tr><td class="b0"><s:tr>Variant</s:tr>:</td><td class="b0"><s:select name="variant"><%
     for (i = 0; i <= prob->variant_num; i++) {
-      sel_flag = "";
-      if (i == variant) sel_flag = " selected=\"selected\"";
-      optval[0] = 0;
-      if (i > 0) snprintf(optval, sizeof(optval), "%d", i);
-      fprintf(fout, "<option value=\"%d\"%s>%s</option>",
-              i, sel_flag, optval);
+%><s:option value="i" selectedExpr="i == variant"><s:v value="i" checkExpr=" > 0" /></s:option><%
     }
-    fprintf(fout, "</select></td><td%s>%s</td>", cl,
-            ns_submit_button(bb, sizeof(bb), 0,
-                             NEW_SRV_ACTION_PRIV_SUBMIT_PAGE,
-                             _("Select variant")));
-    fprintf(fout, "</tr>\n");
-  }
-  fprintf(fout, "</table>\n");
-
+%></s:select></td><td class="b0"><s:submit ac="priv-submit-page" label="Select variant" /></td>
+</tr>
+<% } %>
+</table>
+<%
   /* output the problem statement */
   px = 0; pw = 0; pw_path = 0;
   if (prob && prob->variant_num > 0 && variant > 0 && prob->xml.a
@@ -153,8 +108,7 @@ priv_submit_page(
     }
     watched_file_update(pw, pw_path, cs->current_time);
     if (!pw->text) {
-      fprintf(fout, "<big><font color=\"red\"><p>%s</p></font></big>\n",
-              _("The problem statement is not available"));
+%><big><font color="red"><p><s:tr>The problem statement is not available</s:tr></p></font></big><%
      } else {
       fprintf(fout, "%s", pw->text);
     }
@@ -178,32 +132,28 @@ priv_submit_page(
     watched_file_update(pw, pw_path, cs->current_time);
     alternatives = pw->text;
   }
+%>
 
-  fprintf(fout, "<table%s>\n", cl);
+<table class="b0">
 
-  /* language selection */
-  if (!prob || !prob->type) {
-    fprintf(fout, "<tr>");
-    fprintf(fout, "<td%s>%s:</td>", cl, _("Language"));
-    fprintf(fout, "<td%s><select name=\"lang_id\"><option value=\"\"></option>",
-            cl);
+<%  if (!prob || !prob->type) { %>
+<tr>
+<td class="b0"><s:tr>Language</s:tr>:</td><td class="b0"><s:select name="lang_id"><option value=""></option><%
     for (i = 1; i <= cs->max_lang; i++) {
       if (cs->langs[i]) {
-        fprintf(fout, "<option value=\"%d\">%s - %s</option>",
-                i, cs->langs[i]->short_name, ARMOR(cs->langs[i]->long_name));
+%><s:option value="i"><s:v value="cs->langs[i]->short_name" escape="false" /> - <s:v value="cs->langs[i]->long_name" /></s:option><%
       }
     }
-    fprintf(fout, "</td></tr>\n");
+%></s:select></td></tr>
 
-    if (cs->global->enable_eoln_select > 0) {
-      fprintf(fout, "<tr><td%s>%s:</td><td%s><select name=\"eoln_type\"%s>",
-              "", "EOLN Type", "", "");
-      fprintf(fout, "<option value=\"0\"></option>");
-      fprintf(fout, "<option value=\"1\"%s>LF (Unix/MacOS)</option>", "");
-      fprintf(fout, "<option value=\"2\"%s>CRLF (Windows/DOS)</option>", "");
-      fprintf(fout, "</select></td></tr>\n");
-    }
-  }
+<% if (cs->global->enable_eoln_select > 0) { %>
+<tr><td class="b0"><s:tr>EOLN Type</s:tr>:</td><td class="b0"><s:select name="eoln_type">
+<option value="0"></option>
+<option value="1">LF (Unix/MacOS)</option>
+<option value="2">CRLF (Windows/DOS)</option>
+</s:select></td></tr>
+<% } %>
+<% } %>
 
   /* solution/answer form */
   if (!prob /*|| !prob->type*/) {
@@ -263,17 +213,6 @@ priv_submit_page(
   fprintf(fout, "</table>\n");
 
   fprintf(fout, "</form>\n");
-  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
-  l10n_setlocale(0);
-
-cleanup:
-  html_armor_free(&ab);
-  close_memstream(log_f); log_f = 0;
-  if (log_t && *log_t) {
-    html_error_status_page(fout, phr, cnts, extra, log_t, 0, 0);
-  }
-  xfree(log_t); log_t = 0;
-}
 
 
 
