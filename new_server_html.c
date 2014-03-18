@@ -5377,37 +5377,6 @@ priv_download_source(
 }
 
 static int
-priv_standings(FILE *fout,
-               FILE *log_f,
-               struct http_request_info *phr,
-               const struct contest_desc *cnts,
-               struct contest_extra *extra)
-{
-  serve_state_t cs = extra->serve_state;
-
-  if (phr->role < USER_ROLE_JUDGE) {
-    ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
-    goto cleanup;
-  }
-  if (opcaps_check(phr->caps, OPCAP_VIEW_STANDINGS) < 0) {
-    ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
-    goto cleanup;
-  }
-
-  l10n_setlocale(phr->locale_id);
-  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
-            phr->client_key,
-            "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role), phr->name_arm,
-            phr->contest_id, extra->contest_arm, _("Current standings"));
-  ns_write_priv_standings(cs, phr, cnts, fout, cs->accepting_mode);
-  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
-  l10n_setlocale(0);
-  
- cleanup:
-  return 0;
-}
-
-static int
 priv_view_test(FILE *fout,
                FILE *log_f,
                struct http_request_info *phr,
@@ -6934,7 +6903,6 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   /* for priv_generic_page */
   [NEW_SRV_ACTION_VIEW_REPORT] = priv_view_report,
   [NEW_SRV_ACTION_PRIV_DOWNLOAD_RUN] = priv_download_source,
-  [NEW_SRV_ACTION_STANDINGS] = priv_standings,
   [NEW_SRV_ACTION_REJUDGE_DISPLAYED_1] = priv_confirmation_page,
   [NEW_SRV_ACTION_FULL_REJUDGE_DISPLAYED_1] = priv_confirmation_page,
   [NEW_SRV_ACTION_REJUDGE_PROBLEM_1] = priv_confirmation_page,
@@ -7584,7 +7552,6 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_RESET_CLAR_FILTER] = priv_generic_operation,
   [NEW_SRV_ACTION_VIEW_REPORT] = priv_generic_page,
   [NEW_SRV_ACTION_PRIV_DOWNLOAD_RUN] = priv_generic_page,
-  [NEW_SRV_ACTION_STANDINGS] = priv_generic_page,
   [NEW_SRV_ACTION_CHANGE_LANGUAGE] = priv_generic_operation,
   [NEW_SRV_ACTION_SUBMIT_RUN] = priv_generic_operation,
   [NEW_SRV_ACTION_PRIV_SUBMIT_CLAR] = priv_generic_operation,
@@ -7745,6 +7712,7 @@ static const unsigned char * const external_action_names[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_ADMIN_CONTEST_SETTINGS] = "priv_settings_page",
   [NEW_SRV_ACTION_PRIO_FORM] = "priv_priorities_page",
   [NEW_SRV_ACTION_VIEW_SOURCE] = "priv_source_page",
+  [NEW_SRV_ACTION_STANDINGS] = "priv_standings_page",
 };
 
 static ExternalActionState *external_action_states[NEW_SRV_ACTION_LAST];

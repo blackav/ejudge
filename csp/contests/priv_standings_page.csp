@@ -8,10 +8,6 @@
 %><%@include "priv_stdvars.csp"
 %><%
   struct user_filter_info *u = 0;
-  unsigned char *stand_user_expr = 0;
-  unsigned char *stand_prob_expr = 0;
-  unsigned char *stand_run_expr = 0;
-  unsigned char bb[1024];
   const unsigned char *title = NULL;
 
   if (phr->role < USER_ROLE_JUDGE) {
@@ -23,14 +19,7 @@
     goto cleanup;
   }
 
-  u = user_filter_info_allocate(state, phr->user_id, phr->session_id);
-
-  stand_user_expr = u->stand_user_expr;
-  if (!stand_user_expr) stand_user_expr = "";
-  stand_prob_expr = u->stand_prob_expr;
-  if (!stand_prob_expr) stand_prob_expr = "";
-  stand_run_expr = u->stand_run_expr;
-  if (!stand_run_expr) stand_run_expr = "";
+  u = user_filter_info_allocate(cs, phr->user_id, phr->session_id);
 
   l10n_setlocale(phr->locale_id);
   title = _("Current standings");
@@ -42,39 +31,29 @@
 <tr><td><s:tr>Problem filter expression</s:tr>:</td><td><s:textfield name="stand_prob_expr" size="64" value="u->stand_prob_expr" /></td></tr>
 <tr><td><s:tr>Run filter expression</s:tr>:</td><td><s:textfield name="stand_run_expr" size="64" value="u->stand_run_expr" /></td></tr>
 <tr><td>&nbsp;</td><td><s:submit ac="set-stand-filter" /><s:submit ac="reset-stand-filter" /></td></tr>
-
-  fprintf(f, "<tr><td>&nbsp;</td><td><a href=\"%sfilter_expr.html\" target=\"_blank\">%s</a></td></tr>",
-          CONF_STYLE_PREFIX, _("Help"));
+<tr><td>&nbsp;</td><td><a href='<s:config name="style-prefix" />filter_expr.html' target="_blank"><s:tr>Help</s:tr></a></td></tr>
 
 </table>
 </s:form>
 <br/>
 
-  if (u->stand_error_msgs) {
-    fprintf(f, "<h2>Filter expression errors</h2>\n");
-    fprintf(f, "<p><pre><font color=\"red\">%s</font></pre></p>\n",
-            ARMOR(u->stand_error_msgs));
-  }
+<%  if (u->stand_error_msgs) { %>
+<h2><s:tr>Filter expression errors</s:tr></h2>
+<p><pre><font color="red"><s:v value="u->stand_error_msgs" /></font></pre></p>
+<%  } %>
 
-  const unsigned char *cl = " class=\"b0\"";
-  fprintf(f, "<table%s><tr>", cl);
-  fprintf(f, "<td%s>%s%s</a></td>",
-          cl, ns_aref(bb, sizeof(bb), phr, NEW_SRV_ACTION_MAIN_PAGE, 0),
-          _("Main page"));
-  fprintf(f, "<td%s>%s%s</a></td>",
-          cl, ns_aref(bb, sizeof(bb), phr, NEW_SRV_ACTION_STANDINGS, 0),
-          _("Refresh"));
-  fprintf(f, "</tr></table>\n");
+<table class="b0"><tr>
+<td class="b0"><s:a ac="main-page"><s:tr>Main page</s:tr></a></td>
+<td class="b0"><s:a ac="standings"><s:tr>Refresh</s:tr></a></td>
+</tr></table>
 
 <%
-  if (state->global->score_system == SCORE_KIROV
-      || state->global->score_system == SCORE_OLYMPIAD)
-    do_write_kirov_standings(state, cnts, f, 0, 1, 0, 0, 0, 0, 0, 0 /*accepting_mode*/, 1, 0, 0, u, 0 /* user_mode */);
-  else if (state->global->score_system == SCORE_MOSCOW)
-    do_write_moscow_standings(state, cnts, f, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0,
-                              u);
+  if (cs->global->score_system == SCORE_KIROV || cs->global->score_system == SCORE_OLYMPIAD)
+    do_write_kirov_standings(cs, cnts, out_f, 0, 1, 0, 0, 0, 0, 0, 0 /*accepting_mode*/, 1, 0, 0, u, 0 /* user_mode */);
+  else if (cs->global->score_system == SCORE_MOSCOW)
+    do_write_moscow_standings(cs, cnts, out_f, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, u);
   else
-    do_write_standings(state, cnts, f, 1, 0, 0, 0, 0, 0, 0, 1, 0, u);
+    do_write_standings(cs, cnts, out_f, 1, 0, 0, 0, 0, 0, 0, 1, 0, u);
 %>
 <%@include "priv_footer.csp"
 %><%
