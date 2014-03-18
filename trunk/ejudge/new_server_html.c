@@ -5870,59 +5870,6 @@ priv_upsolving_operation(
 }
 
 static int
-priv_assign_cyphers_1(
-        FILE *fout,
-        FILE *log_f,
-        struct http_request_info *phr,
-        const struct contest_desc *cnts,
-        struct contest_extra *extra)
-{
-  int retval = 0;
-  unsigned char bb[1024];
-
-  if (opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST) < 0)
-    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);  
-
-  l10n_setlocale(phr->locale_id);
-  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
-            phr->client_key,
-            "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role), phr->name_arm,
-            phr->contest_id, extra->contest_arm, "Assign cyphers");
-  html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
-  fprintf(fout, "<table>\n");
-
-  fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
-          html_input_text(bb, sizeof(bb), "prefix", 16, 0, 0),
-          _("Cypher prefix"));
-  fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
-          html_input_text(bb, sizeof(bb), "min_num", 16, 0, 0),
-          _("Minimal random number"));
-  fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
-          html_input_text(bb, sizeof(bb), "max_num", 16, 0, 0),
-          _("Maximal random number"));
-  fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
-          html_input_text(bb, sizeof(bb), "seed", 16, 0, 0),
-          _("Random seed"));
-  fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
-          html_input_text(bb, sizeof(bb), "mult", 16, 0, 0),
-          _("Mult parameter"));
-  fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
-          html_input_text(bb, sizeof(bb), "shift", 16, 0, 0),
-          _("Shift parameter"));
-  fprintf(fout, "<tr><td>%s</td><td>&nbsp;</td></tr>\n",
-          BUTTON(NEW_SRV_ACTION_ASSIGN_CYPHERS_2));
-
-  fprintf(fout, "</table>\n");
-  fprintf(fout, "</form>\n");
-  fprintf(fout, "<p>The following formula is applied: mult * X + shift.</p>\n");
-  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
-  l10n_setlocale(0);
-
- cleanup:
-  return retval;
-}
-
-static int
 priv_assign_cyphers_2(
         FILE *fout,
         FILE *log_f,
@@ -6944,7 +6891,6 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRINT_SELECTED_USER_FULL_PROTOCOL] =priv_print_users_exam_protocol,
   [NEW_SRV_ACTION_PRINT_SELECTED_UFC_PROTOCOL] =priv_print_users_exam_protocol,
   [NEW_SRV_ACTION_PRINT_PROBLEM_PROTOCOL] = priv_print_problem_exam_protocol,
-  [NEW_SRV_ACTION_ASSIGN_CYPHERS_1] = priv_assign_cyphers_1,
   [NEW_SRV_ACTION_VIEW_TESTING_QUEUE] = priv_view_testing_queue,
   [NEW_SRV_ACTION_MARK_DISPLAYED_2] = priv_clear_displayed,
   [NEW_SRV_ACTION_UNMARK_DISPLAYED_2] = priv_clear_displayed,
@@ -7658,7 +7604,6 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRINT_SELECTED_USER_FULL_PROTOCOL] = priv_generic_page,
   [NEW_SRV_ACTION_PRINT_SELECTED_UFC_PROTOCOL] = priv_generic_page,
   [NEW_SRV_ACTION_PRINT_PROBLEM_PROTOCOL] = priv_generic_page,
-  [NEW_SRV_ACTION_ASSIGN_CYPHERS_1] = priv_generic_page,
   [NEW_SRV_ACTION_ASSIGN_CYPHERS_2] = priv_generic_page,
   [NEW_SRV_ACTION_VIEW_EXAM_INFO] = priv_generic_page,
   [NEW_SRV_ACTION_PRIV_SUBMIT_PAGE] = priv_submit_page,
@@ -7713,6 +7658,7 @@ static const unsigned char * const external_action_names[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRIO_FORM] = "priv_priorities_page",
   [NEW_SRV_ACTION_VIEW_SOURCE] = "priv_source_page",
   [NEW_SRV_ACTION_STANDINGS] = "priv_standings_page",
+  [NEW_SRV_ACTION_ASSIGN_CYPHERS_1] = "priv_assign_cyphers_page",
 };
 
 static ExternalActionState *external_action_states[NEW_SRV_ACTION_LAST];
