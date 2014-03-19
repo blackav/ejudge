@@ -5045,30 +5045,6 @@ priv_view_runs_dump(FILE *fout,
   return retval;
 }
 
-///////////////////!!!!
-
-static int
-priv_view_audit_log(FILE *fout,
-                    FILE *log_f,
-                    struct http_request_info *phr,
-                    const struct contest_desc *cnts,
-                    struct contest_extra *extra)
-{
-  int run_id;
-  int retval = 0;
-
-  if (parse_run_id(fout, phr, cnts, extra, &run_id, 0) < 0) FAIL(1);
-
-  if (opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST) < 0)
-    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
-
-  ns_write_audit_log(extra->serve_state, fout, log_f, phr, cnts, extra,
-                     run_id);
-
- cleanup:
-  return retval;
-}
-
 static int
 priv_diff_page(FILE *fout,
                FILE *log_f,
@@ -6864,7 +6840,6 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_TEST_OUTPUT] = priv_view_test,
   [NEW_SRV_ACTION_VIEW_TEST_ERROR] = priv_view_test,
   [NEW_SRV_ACTION_VIEW_TEST_CHECKER] = priv_view_test,
-  [NEW_SRV_ACTION_VIEW_AUDIT_LOG] = priv_view_audit_log,
   [NEW_SRV_ACTION_UPDATE_STANDINGS_1] = priv_confirmation_page,
   [NEW_SRV_ACTION_RESET_1] = priv_confirmation_page,
   [NEW_SRV_ACTION_GENERATE_PASSWORDS_1] = priv_confirmation_page,
@@ -7269,7 +7244,6 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_TEST_OUTPUT] = priv_generic_page,
   [NEW_SRV_ACTION_VIEW_TEST_ERROR] = priv_generic_page,
   [NEW_SRV_ACTION_VIEW_TEST_CHECKER] = priv_generic_page,
-  [NEW_SRV_ACTION_VIEW_AUDIT_LOG] = priv_generic_page,
   [NEW_SRV_ACTION_UPDATE_STANDINGS_2] = priv_generic_operation,
   [NEW_SRV_ACTION_UPDATE_STANDINGS_1] = priv_generic_page,
   [NEW_SRV_ACTION_RESET_2] = priv_generic_operation,
