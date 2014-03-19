@@ -3,6 +3,35 @@
 %><%@include "priv_includes.csp"
 %><%
 #define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
+
+void
+ns_unparse_statement(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        const struct section_problem_data *prob,
+        int variant,
+        problem_xml_t px,
+        const unsigned char *bb,
+        int is_submittable);
+
+void
+ns_unparse_answers(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        const struct section_problem_data *prob,
+        int variant,
+        problem_xml_t px,
+        const unsigned char *lang,
+        int is_radio,
+        int last_answer,
+        int next_prob_id,
+        int enable_js,
+        const unsigned char *class_name);
+
 %><%@set getter_name = "csp_get_priv_submit_page"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@page csp_view_priv_submit_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
@@ -10,15 +39,10 @@
 %><%
   const struct section_problem_data *prob = 0;
   int prob_id = 0, variant = 0, i;
-  unsigned char bb[1024];
-  const unsigned char *sel_flag = 0;
-  unsigned char optval[128];
   problem_xml_t px = 0;
   struct watched_file *pw = 0;
   const unsigned char *pw_path = 0;
   path_t variant_stmt_file;
-  const unsigned char *alternatives = 0;
-  const unsigned char *cl = " class=\"b0\"";
   unsigned char title[1024];
 
   if (ns_cgi_param_int_opt(phr, "problem", &prob_id, 0) < 0) {
@@ -92,7 +116,7 @@
     px = prob->xml.p;
   }
   if (px && px->stmts) {
-    unparse_statement(fout, phr, cnts, extra, prob, variant, px, NULL, 1);
+    ns_unparse_statement(out_f, phr, cnts, extra, prob, variant, px, NULL, 1);
   }
 
   if (!px && prob && prob->statement_file[0]) {
@@ -110,27 +134,8 @@
     if (!pw->text) {
 %><big><font color="red"><p><s:tr>The problem statement is not available</s:tr></p></font></big><%
      } else {
-      fprintf(fout, "%s", pw->text);
+      fprintf(out_f, "%s", pw->text);
     }
-  }
-
-  /* update the alternatives */
-  alternatives = 0;
-  if (prob && (prob->type == PROB_TYPE_SELECT_ONE
-               || prob->type == PROB_TYPE_SELECT_MANY)
-      && prob->alternatives_file[0]) {
-    if (prob->variant_num > 0 && variant > 0) {
-      prepare_insert_variant_num(variant_stmt_file,
-                                 sizeof(variant_stmt_file),
-                                 prob->alternatives_file, variant);
-      pw = &cs->prob_extras[prob->id].v_alts[variant];
-      pw_path = variant_stmt_file;
-    } else if (prob->variant_num <= 0) {
-      pw = &cs->prob_extras[prob->id].alt;
-      pw_path = prob->alternatives_file;
-    }
-    watched_file_update(pw, pw_path, cs->current_time);
-    alternatives = pw->text;
   }
 %>
 
@@ -155,45 +160,39 @@
 <% } %>
 <% } %>
 
-  /* solution/answer form */
-  if (!prob /*|| !prob->type*/) {
-    fprintf(fout, "<tr><td%s>%s</td><td%s><input type=\"file\" name=\"file\"/></td></tr>\n", cl, _("File"), cl);
+<%  if (!prob /*|| !prob->type*/) {
+%><tr><td class="b0"><s:tr>File</s:tr></td><td class="b0"><input type="file" name="file" /></td></tr><%
    } else {
     switch (prob->type) {
     case PROB_TYPE_STANDARD:
     case PROB_TYPE_OUTPUT_ONLY:
     case PROB_TYPE_TESTS:
       if (prob->enable_text_form > 0) {
-        fprintf(fout, "<tr><td colspan=\"2\"%s><textarea name=\"text_form\" rows=\"20\" cols=\"60\"></textarea></td></tr>\n", cl);
+%><tr><td colspan="2" class="b0"><textarea name="text_form" rows="20" cols="60"></textarea></td></tr><%
       }
-      fprintf(fout, "<tr><td%s>%s</td><td%s><input type=\"file\" name=\"file\"/></td></tr>\n", cl, _("File"), cl);
+%><tr><td class="b0"><s:tr>File</s:tr></td><td class="b0"><input type="file" name="file"/></td></tr><%
       break;
     case PROB_TYPE_SHORT_ANSWER:
-      fprintf(fout, "<tr><td%s>%s</td><td%s><input type=\"text\" name=\"file\"/></td></tr>\n", cl, _("Answer"), cl);
+%><tr><td class="b0"><s:tr>Answer</s:tr></td><td class="b0"><input type="text" name="file" /></td></tr><%
       break;
     case PROB_TYPE_TEXT_ANSWER:
-      fprintf(fout, "<tr><td colspan=\"2\"%s><textarea name=\"file\" rows=\"20\" cols=\"60\"></textarea></td></tr>\n", cl);
+%><tr><td colspan="2" class="b0"><textarea name="file" rows="20" cols="60"></textarea></td></tr><%
       break;
     case PROB_TYPE_SELECT_ONE:
       if (px) {
-        unparse_answers(fout, phr, cnts, extra, prob, variant,
-                        px, 0 /* lang */, 1 /* is_radio */,
-                        -1, prob_id, 0 /* js_flag */, "b0");
-      } else if (alternatives) {
-        write_alternatives_file(fout, 1, alternatives, -1, 0, 0, 0, "b0");
+        ns_unparse_answers(out_f, phr, cnts, extra, prob, variant,
+                           px, 0 /* lang */, 1 /* is_radio */,
+                           -1, prob_id, 0 /* js_flag */, "b0");
       } else if (prob->alternative) {
         for (i = 0; prob->alternative[i]; i++) {
-          fprintf(fout, "<tr><td%s>%d</td><td%s><input type=\"radio\" name=\"file\" value=\"%d\"/></td><td%s>%s</td></tr>\n", cl, i + 1, cl, i + 1, cl, prob->alternative[i]);
+%><tr><td class="b0"><s:v value="i + 1" /></td><td class="b0"><s:radio name="file" value="i+1"/></td><td class="b0"><s:v value="prob->alternative[i]" escape="false" /></td></tr><%
         }
       }
       break;
     case PROB_TYPE_SELECT_MANY:
-      if (alternatives) {
-        write_alternatives_file(fout, 0, alternatives, -1, 0, 0, 0, "b0");
-      } else if (prob->alternative) {
+      if (prob->alternative) {
         for (i = 0; prob->alternative[i]; i++) {
-          fprintf(fout, "<tr><td%s>%d</td><td%s><input type=\"checkbox\" name=\"ans_%d\"/></td><td%s>%s</td></tr>\n", cl, i + 1, cl, i + 1,
-                  cl, prob->alternative[i]);
+%><tr><td class="b0"><s:v value="i + 1" /></td><td class="b0"><input type="checkbox" name="ans_<s:v value="i + 1" />" /></td><td class="b0"><s:v value="prob->alternative[i]" /></td></tr><%
         }
       }
       break;
@@ -204,18 +203,11 @@
       abort();
     }
   }
-
-  fprintf(fout, "<tr><td%s>&nbsp;</td><td%s>%s</td></tr>\n",
-          cl, cl, BUTTON(NEW_SRV_ACTION_SUBMIT_RUN));
-  fprintf(fout, "<tr><td%s>&nbsp;</td><td%s>%s%s</a></td></tr>",
-          cl, cl, ns_aref(bb, sizeof(bb), phr, NEW_SRV_ACTION_MAIN_PAGE, 0),
-          _("Main page"));
-  fprintf(fout, "</table>\n");
-
-  fprintf(fout, "</form>\n");
-
-
-
+%>
+<tr><td class="b0">&nbsp;</td><td class="b0"><s:submit ac="submit-run" /></td></tr>
+<tr><td class="b0">&nbsp;</td><td class="b0"><s:a ac="main-page"><s:tr>Main page</s:tr></s:a></td></tr>
+</table>
+</s:form>
 
 <%@include "priv_footer.csp"
 %><%
