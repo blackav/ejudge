@@ -3500,6 +3500,8 @@ handle_textfield_open(
         input_type = "password";
     } else if (!strcmp(elem->name, "s:hidden")) {
         input_type = "hidden";
+    } else if (!strcmp(elem->name, "s:radio")) {
+        input_type = "radio";
     }
 
     if (html_element_find_attribute(elem, "disabled")) {
@@ -3882,6 +3884,7 @@ static const struct ElementInfo element_handlers[] =
     { "s:vb", handle_vb_open, NULL },
     { "s:button", handle_button_open, NULL },
     { "s:img", handle_img_open, NULL },
+    { "s:radio", handle_textfield_open, NULL },
 
     { NULL, NULL, NULL },
 };

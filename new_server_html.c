@@ -5045,6 +5045,8 @@ priv_view_runs_dump(FILE *fout,
   return retval;
 }
 
+///////////////////!!!!
+
 static int
 priv_view_audit_log(FILE *fout,
                     FILE *log_f,
@@ -7070,8 +7072,8 @@ write_alternatives_file(FILE *fout, int is_radio, const unsigned char *txt,
   }
 }
 
-static void
-unparse_statement(
+void
+ns_unparse_statement(
         FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
@@ -7081,8 +7083,8 @@ unparse_statement(
         problem_xml_t px,
         const unsigned char *bb,
         int is_submittable);
-static void
-unparse_answers(
+void
+ns_unparse_answers(
         FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
@@ -7221,7 +7223,7 @@ priv_submit_page(
     px = prob->xml.p;
   }
   if (px && px->stmts) {
-    unparse_statement(fout, phr, cnts, extra, prob, variant, px, NULL, 1);
+    ns_unparse_statement(fout, phr, cnts, extra, prob, variant, px, NULL, 1);
   }
 
   if (!px && prob && prob->statement_file[0]) {
@@ -7310,9 +7312,9 @@ priv_submit_page(
       break;
     case PROB_TYPE_SELECT_ONE:
       if (px) {
-        unparse_answers(fout, phr, cnts, extra, prob, variant,
-                        px, 0 /* lang */, 1 /* is_radio */,
-                        -1, prob_id, 0 /* js_flag */, "b0");
+        ns_unparse_answers(fout, phr, cnts, extra, prob, variant,
+                           px, 0 /* lang */, 1 /* is_radio */,
+                           -1, prob_id, 0 /* js_flag */, "b0");
       } else if (alternatives) {
         write_alternatives_file(fout, 1, alternatives, -1, 0, 0, 0, "b0");
       } else if (prob->alternative) {
@@ -7659,6 +7661,7 @@ static const unsigned char * const external_action_names[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_SOURCE] = "priv_source_page",
   [NEW_SRV_ACTION_STANDINGS] = "priv_standings_page",
   [NEW_SRV_ACTION_ASSIGN_CYPHERS_1] = "priv_assign_cyphers_page",
+  [NEW_SRV_ACTION_PRIV_SUBMIT_PAGE] = "priv_submit_page",
 };
 
 static ExternalActionState *external_action_states[NEW_SRV_ACTION_LAST];
@@ -11902,8 +11905,8 @@ write_row(
           row_label, buf);
 }
 
-static void
-unparse_statement(
+void
+ns_unparse_statement(
         FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
@@ -12031,8 +12034,8 @@ unparse_statement(
   html_armor_free(&ab);
 }
 
-static void
-unparse_answers(
+void
+ns_unparse_answers(
         FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
@@ -12570,7 +12573,7 @@ unpriv_main_page(FILE *fout,
 
       /* put problem statement */
       if (px && px->stmts) {
-        unparse_statement(fout, phr, cnts, extra, prob, 0, px, bb,
+        ns_unparse_statement(fout, phr, cnts, extra, prob, 0, px, bb,
                           prob_status[prob_id] & PROB_STATUS_SUBMITTABLE);
       } else if (prob->statement_file[0]
           && (prob_status[prob_id] & PROB_STATUS_VIEWABLE)) {
@@ -12741,15 +12744,15 @@ unpriv_main_page(FILE *fout,
                 }
                 if (next_prob_id > cs->max_prob) next_prob_id = prob->id;
               }
-              unparse_answers(fout, phr, cnts, extra, prob, variant,
-                              px, 0 /* lang */, 1 /* is_radio */,
-                              last_answer, next_prob_id,
-                              1 /* js_flag */, "b0");
+              ns_unparse_answers(fout, phr, cnts, extra, prob, variant,
+                                 px, 0 /* lang */, 1 /* is_radio */,
+                                 last_answer, next_prob_id,
+                                 1 /* js_flag */, "b0");
             } else {
-              unparse_answers(fout, phr, cnts, extra, prob, variant,
-                              px, 0 /* lang */, 1 /* is_radio */,
-                              last_answer, next_prob_id,
-                              0 /* js_flag */, "b0");
+              ns_unparse_answers(fout, phr, cnts, extra, prob, variant,
+                                 px, 0 /* lang */, 1 /* is_radio */,
+                                 last_answer, next_prob_id,
+                                 0 /* js_flag */, "b0");
             }
           } else if (alternatives) {
             if (cnts->exam_mode) {
