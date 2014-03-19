@@ -1,0 +1,100 @@
+<%
+/* $Id: priv_assign_cyphers_page.csp 7996 2014-03-18 13:33:03Z cher $ */
+%><%@include "priv_includes.csp"
+%><%
+#include "fileutl.h"
+
+#include <sys/types.h>
+#include <sys/stat.h>
+
+#define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
+
+int
+ns_parse_run_id(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        int *p_run_id,
+        struct run_entry *pe);
+%><%@set getter_name = "csp_get_priv_audit_log_page"
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@page csp_view_priv_audit_log_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "priv_stdvars.csp"
+%><%
+  int run_id;
+  struct run_entry re;
+  int rep_flag;
+  path_t audit_log_path;
+  struct stat stb;
+  char *audit_text = 0;
+  size_t audit_text_size = 0;
+  unsigned char title[1024];
+  const unsigned char *sep = NULL;
+
+  if (ns_parse_run_id(out_f, phr, cnts, extra, &run_id, 0) < 0) FAIL(1);
+
+  if (opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+  if (run_id < 0 || run_id >= run_get_total(cs->runlog_state)
+      || run_get_entry(cs->runlog_state, run_id, &re) < 0) {
+    ns_error(log_f, NEW_SRV_ERR_INV_RUN_ID);
+    goto cleanup;
+  }
+
+  if ((rep_flag = serve_make_audit_read_path(cs, audit_log_path, sizeof(audit_log_path), &re)) < 0) {
+    ns_error(log_f, NEW_SRV_ERR_AUDIT_LOG_NONEXISTANT);
+    goto cleanup;
+  }
+  if (lstat(audit_log_path, &stb) < 0
+      || !S_ISREG(stb.st_mode)) {
+    ns_error(log_f, NEW_SRV_ERR_AUDIT_LOG_NONEXISTANT);
+    goto cleanup;
+  }
+
+  if (generic_read_file(&audit_text, 0, &audit_text_size, 0, 0, audit_log_path,
+                        0) < 0) {
+    ns_error(log_f, NEW_SRV_ERR_DISK_READ_ERROR);
+    goto cleanup;
+  }
+
+  l10n_setlocale(phr->locale_id);
+  snprintf(title, sizeof(title), "%s %d", _("Viewing audit log for"), run_id);
+%><%@include "priv_header.csp"
+%>
+<s:url name="ViewSourceUrl" ac="view-source">
+    <s:param name="run_id" value="run_id" />
+</s:url>
+<s:url name="ViewReportUrl" ac="view-report">
+    <s:param name="run_id" value="run_id" />
+</s:url>
+<s:url name="ViewUserReportUrl" ac="view-user-report">
+    <s:param name="run_id" value="run_id" />
+</s:url>
+<s:url name="ViewAuditLogUrl" ac="view-audit-log">
+    <s:param name="run_id" value="run_id" />
+</s:url>
+
+<table class="b0"><tr>
+    <td class="b0"><s:a ac="main-page"><s:tr>Main page</s:tr></s:a></td>
+    <td class="b0"><s:a url="ViewSourceUrl"><s:tr>Source</s:tr></s:a></td>
+    <td class="b0"><s:a url="ViewReportUrl"><s:tr>Report</s:tr></s:a></td>
+    <td class="b0"><s:a url="ViewUserReportUrl"><s:tr>User report</s:tr></s:a></td>
+    <td class="b0"><s:a url="ViewAuditLogUrl"><s:tr>Audit log</s:tr></s:a></td>
+</tr></table>
+
+<hr/>
+
+<% if (!audit_text || !*audit_text) { %>
+<p><i><s:tr>Audit log is empty</s:tr></i></p>
+<% } else { %>
+<pre><s:v value="audit_text" /></pre>
+<% } %>
+
+<%@include "priv_footer.csp"
+%><%
+  l10n_setlocale(0);
+cleanup:
+  html_armor_free(&ab);
+%>
