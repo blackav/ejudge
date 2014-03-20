@@ -23,7 +23,6 @@
   const struct section_global_data *global = extra->serve_state->global;
   int *run_counts = 0;
   size_t *run_sizes = 0;
-  const unsigned char *sep;
   const unsigned char *title = _("Users page");
 
 static const unsigned char * const form_row_attrs[]=

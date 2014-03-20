@@ -24,7 +24,6 @@ ns_write_run_view_menu(
   unsigned char buf[1024];
   const unsigned char *str = NULL;
   const unsigned char *s;
-  const unsigned char *sep;
   int run_id = 0, prob_id, lang_id;
   int n;
 

@@ -1,0 +1,170 @@
+<%
+/* $Id$ */
+%><%@include "priv_includes.csp"
+%><%
+#include "archive_paths.h"
+#include "fileutl.h"
+
+#define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
+
+int
+ns_parse_run_id(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        int *p_run_id,
+        struct run_entry *pe);
+%><%@set getter_name = "csp_get_priv_report_page"
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@page csp_view_priv_report_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "priv_stdvars.csp"
+%><%
+  path_t rep_path;
+  char *rep_text = 0, *html_text;
+  size_t rep_len = 0, html_len;
+  int rep_flag, content_type;
+  const unsigned char *start_ptr = 0;
+  struct run_entry re;
+  const struct section_global_data *global = cs->global;
+  const struct section_problem_data *prob = 0;
+  int run_id;
+  int user_mode = 0;
+  unsigned char title[1024];
+
+  if (ns_parse_run_id(out_f, phr, cnts, extra, &run_id, 0) < 0) goto cleanup;
+
+  if (opcaps_check(phr->caps, OPCAP_VIEW_REPORT) < 0) {
+    ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
+    goto cleanup;
+  }
+  if (phr->action == NEW_SRV_ACTION_VIEW_USER_REPORT) user_mode = 1;
+
+  if (run_id < 0 || run_id >= run_get_total(cs->runlog_state)
+      || run_get_entry(cs->runlog_state, run_id, &re) < 0) {
+    ns_error(log_f, NEW_SRV_ERR_INV_RUN_ID);
+    goto cleanup;
+  }
+  if (re.status > RUN_MAX_STATUS) {
+    ns_error(log_f, NEW_SRV_ERR_REPORT_UNAVAILABLE);
+    goto cleanup;
+  }
+  if (!run_is_report_available(re.status)) {
+    ns_error(log_f, NEW_SRV_ERR_REPORT_UNAVAILABLE);
+    goto cleanup;
+  }
+  if (re.prob_id <= 0 || re.prob_id > cs->max_prob
+      || !(prob = cs->probs[re.prob_id])) {
+    ns_error(log_f, NEW_SRV_ERR_INV_PROB_ID);
+    goto cleanup;
+  }
+
+  if (user_mode && global->team_enable_rep_view > 0) {
+    user_mode = 1;
+    if (global->team_show_judge_report > 0) {
+      user_mode = 0;
+    }
+  } else {
+    user_mode = 0;
+  }
+
+  rep_flag = serve_make_xml_report_read_path(cs, rep_path, sizeof(rep_path), &re);
+  if (rep_flag >= 0) {
+    if (generic_read_file(&rep_text, 0, &rep_len, rep_flag, 0, rep_path, 0)<0){
+      ns_error(log_f, NEW_SRV_ERR_DISK_READ_ERROR);
+      goto cleanup;
+    }
+    content_type = get_content_type(rep_text, &start_ptr);
+  } else {
+    if (user_mode) {
+      rep_flag = archive_make_read_path(cs, rep_path, sizeof(rep_path),
+                                        global->team_report_archive_dir, run_id, 0, 1);
+    } else {
+      rep_flag = serve_make_report_read_path(cs, rep_path, sizeof(rep_path), &re);
+    }
+    if (rep_flag < 0) {
+      ns_error(log_f, NEW_SRV_ERR_REPORT_NONEXISTANT);
+      goto cleanup;
+    }
+    if (generic_read_file(&rep_text, 0, &rep_len, rep_flag, 0, rep_path, 0)<0){
+      ns_error(log_f, NEW_SRV_ERR_DISK_READ_ERROR);
+      goto cleanup;
+    }
+    content_type = get_content_type(rep_text, &start_ptr);
+  }
+
+  if (user_mode) {
+    snprintf(title, sizeof(title), "%s %d", _("Viewing user report"), run_id);
+  } else {
+    snprintf(title, sizeof(title), "%s %d", _("Viewing report"), run_id);
+  }
+%><%@include "priv_header.csp"
+%>
+<s:url name="ViewSourceUrl" ac="view-source">
+    <s:param name="run_id" value="run_id" />
+</s:url>
+<s:url name="ViewReportUrl" ac="view-report">
+    <s:param name="run_id" value="run_id" />
+</s:url>
+<s:url name="ViewUserReportUrl" ac="view-user-report">
+    <s:param name="run_id" value="run_id" />
+</s:url>
+<s:url name="ViewAuditLogUrl" ac="view-audit-log">
+    <s:param name="run_id" value="run_id" />
+</s:url>
+
+<table class="b0"><tr>
+    <td class="b0"><s:a ac="main-page"><s:tr>Main page</s:tr></s:a></td>
+    <td class="b0"><s:a url="ViewSourceUrl"><s:tr>Source</s:tr></s:a></td>
+    <td class="b0"><s:a url="ViewReportUrl"><s:tr>Report</s:tr></s:a></td>
+    <td class="b0"><s:a url="ViewUserReportUrl"><s:tr>User report</s:tr></s:a></td>
+    <td class="b0"><s:a url="ViewAuditLogUrl"><s:tr>Audit log</s:tr></s:a></td>
+</tr></table>
+
+<%  switch (content_type) {
+  case CONTENT_TYPE_TEXT:
+    html_len = html_armored_memlen(start_ptr, rep_len);
+    if (html_len > 2 * 1024 * 1024) {
+      html_text = xmalloc(html_len + 16);
+      html_armor_text(rep_text, rep_len, html_text);
+      html_text[html_len] = 0;
+      fprintf(out_f, "<pre>%s</pre>", html_text);
+      xfree(html_text);
+    } else {
+      html_text = alloca(html_len + 16);
+      html_armor_text(rep_text, rep_len, html_text);
+      html_text[html_len] = 0;
+      fprintf(out_f, "<pre>%s</pre>", html_text);
+    }
+    break;
+  case CONTENT_TYPE_HTML:
+    fprintf(out_f, "%s", start_ptr);
+    break;
+  case CONTENT_TYPE_XML:
+    if (prob->type == PROB_TYPE_TESTS) {
+      if (user_mode) {
+        write_xml_team_tests_report(cs, prob, out_f, start_ptr, "b1");
+      } else {
+        write_xml_tests_report(out_f, 0, start_ptr, phr->session_id, phr->self_url,
+                               "", "b1", 0);
+      }
+    } else {
+      if (user_mode) {
+        write_xml_team_testing_report(cs, prob, out_f, phr, 0, re.is_marked, start_ptr, "b1");
+      } else {
+        write_xml_testing_report(out_f, phr, 0, start_ptr, "b1", 0);
+      }
+    }
+    break;
+  default:
+    abort();
+  }
+%>
+
+<%@include "priv_footer.csp"
+%><%
+  l10n_setlocale(0);
+cleanup:
+  xfree(rep_text);
+  html_armor_free(&ab);
+%>
