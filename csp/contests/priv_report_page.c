@@ -13,18 +13,14 @@ static const unsigned char csp_str9[2] = "\n";
 static const unsigned char csp_str10[6] = "\n    ";
 static const unsigned char csp_str11[45] = "\n\n<table class=\"b0\"><tr>\n    <td class=\"b0\">";
 static const unsigned char csp_str12[26] = "</td>\n    <td class=\"b0\">";
-static const unsigned char csp_str13[29] = "</td>\n</tr></table>\n\n<hr/>\n\n";
-static const unsigned char csp_str14[8] = "\n<p><i>";
-static const unsigned char csp_str15[10] = "</i></p>\n";
-static const unsigned char csp_str16[7] = "\n<pre>";
-static const unsigned char csp_str17[8] = "</pre>\n";
-static const unsigned char csp_str18[3] = "\n\n";
-static const unsigned char csp_str19[7] = "<hr/>\n";
-static const unsigned char csp_str20[18] = "\n</body>\n</html>\n";
+static const unsigned char csp_str13[22] = "</td>\n</tr></table>\n\n";
+static const unsigned char csp_str14[3] = "\n\n";
+static const unsigned char csp_str15[7] = "<hr/>\n";
+static const unsigned char csp_str16[18] = "\n</body>\n</html>\n";
 
 
-#line 2 "priv_audit_log_page.csp"
-/* $Id: priv_assign_cyphers_page.csp 7996 2014-03-18 13:33:03Z cher $ */
+#line 2 "priv_report_page.csp"
+/* $Id$ */
 
 #line 2 "priv_includes.csp"
 #include "new-server.h"
@@ -48,11 +44,9 @@ static const unsigned char csp_str20[18] = "\n</body>\n</html>\n";
 #include <libintl.h>
 #define _(x) gettext(x)
 
-#line 5 "priv_audit_log_page.csp"
+#line 5 "priv_report_page.csp"
+#include "archive_paths.h"
 #include "fileutl.h"
-
-#include <sys/types.h>
-#include <sys/stat.h>
 
 #define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
 
@@ -64,24 +58,24 @@ ns_parse_run_id(
         struct contest_extra *extra,
         int *p_run_id,
         struct run_entry *pe);
-int csp_view_priv_audit_log_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr);
+int csp_view_priv_report_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr);
 static PageInterfaceOps page_ops =
 {
     NULL, // destroy
     NULL, // execute
-    csp_view_priv_audit_log_page, // render
+    csp_view_priv_report_page, // render
 };
 static PageInterface page_iface =
 {
     &page_ops,
 };
 PageInterface *
-csp_get_priv_audit_log_page(void)
+csp_get_priv_report_page(void)
 {
     return &page_iface;
 }
 
-int csp_view_priv_audit_log_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+int csp_view_priv_report_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 {
 
 #line 2 "priv_stdvars.csp"
@@ -93,45 +87,85 @@ int retval __attribute__((unused)) = 0;
   unsigned char hbuf[1024] __attribute__((unused));
   const unsigned char *sep __attribute__((unused)) = NULL;
 
-#line 25 "priv_audit_log_page.csp"
-int run_id;
+#line 23 "priv_report_page.csp"
+path_t rep_path;
+  char *rep_text = 0, *html_text;
+  size_t rep_len = 0, html_len;
+  int rep_flag, content_type;
+  const unsigned char *start_ptr = 0;
   struct run_entry re;
-  int rep_flag;
-  path_t audit_log_path;
-  struct stat stb;
-  char *audit_text = 0;
-  size_t audit_text_size = 0;
+  const struct section_global_data *global = cs->global;
+  const struct section_problem_data *prob = 0;
+  int run_id;
+  int user_mode = 0;
   unsigned char title[1024];
 
-  if (ns_parse_run_id(out_f, phr, cnts, extra, &run_id, 0) < 0) FAIL(1);
+  if (ns_parse_run_id(out_f, phr, cnts, extra, &run_id, 0) < 0) goto cleanup;
 
-  if (opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST) < 0)
-    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+  if (opcaps_check(phr->caps, OPCAP_VIEW_REPORT) < 0) {
+    ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
+    goto cleanup;
+  }
+  if (phr->action == NEW_SRV_ACTION_VIEW_USER_REPORT) user_mode = 1;
 
   if (run_id < 0 || run_id >= run_get_total(cs->runlog_state)
       || run_get_entry(cs->runlog_state, run_id, &re) < 0) {
     ns_error(log_f, NEW_SRV_ERR_INV_RUN_ID);
     goto cleanup;
   }
-
-  if ((rep_flag = serve_make_audit_read_path(cs, audit_log_path, sizeof(audit_log_path), &re)) < 0) {
-    ns_error(log_f, NEW_SRV_ERR_AUDIT_LOG_NONEXISTANT);
+  if (re.status > RUN_MAX_STATUS) {
+    ns_error(log_f, NEW_SRV_ERR_REPORT_UNAVAILABLE);
     goto cleanup;
   }
-  if (lstat(audit_log_path, &stb) < 0
-      || !S_ISREG(stb.st_mode)) {
-    ns_error(log_f, NEW_SRV_ERR_AUDIT_LOG_NONEXISTANT);
+  if (!run_is_report_available(re.status)) {
+    ns_error(log_f, NEW_SRV_ERR_REPORT_UNAVAILABLE);
     goto cleanup;
   }
-
-  if (generic_read_file(&audit_text, 0, &audit_text_size, 0, 0, audit_log_path,
-                        0) < 0) {
-    ns_error(log_f, NEW_SRV_ERR_DISK_READ_ERROR);
+  if (re.prob_id <= 0 || re.prob_id > cs->max_prob
+      || !(prob = cs->probs[re.prob_id])) {
+    ns_error(log_f, NEW_SRV_ERR_INV_PROB_ID);
     goto cleanup;
   }
 
-  l10n_setlocale(phr->locale_id);
-  snprintf(title, sizeof(title), "%s %d", _("Viewing audit log for"), run_id);
+  if (user_mode && global->team_enable_rep_view > 0) {
+    user_mode = 1;
+    if (global->team_show_judge_report > 0) {
+      user_mode = 0;
+    }
+  } else {
+    user_mode = 0;
+  }
+
+  rep_flag = serve_make_xml_report_read_path(cs, rep_path, sizeof(rep_path), &re);
+  if (rep_flag >= 0) {
+    if (generic_read_file(&rep_text, 0, &rep_len, rep_flag, 0, rep_path, 0)<0){
+      ns_error(log_f, NEW_SRV_ERR_DISK_READ_ERROR);
+      goto cleanup;
+    }
+    content_type = get_content_type(rep_text, &start_ptr);
+  } else {
+    if (user_mode) {
+      rep_flag = archive_make_read_path(cs, rep_path, sizeof(rep_path),
+                                        global->team_report_archive_dir, run_id, 0, 1);
+    } else {
+      rep_flag = serve_make_report_read_path(cs, rep_path, sizeof(rep_path), &re);
+    }
+    if (rep_flag < 0) {
+      ns_error(log_f, NEW_SRV_ERR_REPORT_NONEXISTANT);
+      goto cleanup;
+    }
+    if (generic_read_file(&rep_text, 0, &rep_len, rep_flag, 0, rep_path, 0)<0){
+      ns_error(log_f, NEW_SRV_ERR_DISK_READ_ERROR);
+      goto cleanup;
+    }
+    content_type = get_content_type(rep_text, &start_ptr);
+  }
+
+  if (user_mode) {
+    snprintf(title, sizeof(title), "%s %d", _("Viewing user report"), run_id);
+  } else {
+    snprintf(title, sizeof(title), "%s %d", _("Viewing report"), run_id);
+  }
 fwrite(csp_str0, 1, 183, out_f);
 fwrite("utf-8", 1, 5, out_f);
 fwrite(csp_str1, 1, 34, out_f);
@@ -211,30 +245,56 @@ fprintf(out_f, "%d", (int)(run_id));
 fputs("\">", out_f);
 fputs(_("Audit log"), out_f);
 fputs("</a>", out_f);
-fwrite(csp_str13, 1, 28, out_f);
+fwrite(csp_str13, 1, 21, out_f);
 
-#line 88 "priv_audit_log_page.csp"
-if (!audit_text || !*audit_text) {
-fwrite(csp_str14, 1, 7, out_f);
-fputs(_("Audit log is empty"), out_f);
-fwrite(csp_str15, 1, 9, out_f);
-
-#line 90 "priv_audit_log_page.csp"
-} else {
-fwrite(csp_str16, 1, 6, out_f);
-fputs(html_armor_buf(&ab, (audit_text)), out_f);
-fwrite(csp_str17, 1, 7, out_f);
-
-#line 92 "priv_audit_log_page.csp"
-}
-fwrite(csp_str18, 1, 2, out_f);
-fwrite(csp_str19, 1, 6, out_f);
+#line 124 "priv_report_page.csp"
+switch (content_type) {
+  case CONTENT_TYPE_TEXT:
+    html_len = html_armored_memlen(start_ptr, rep_len);
+    if (html_len > 2 * 1024 * 1024) {
+      html_text = xmalloc(html_len + 16);
+      html_armor_text(rep_text, rep_len, html_text);
+      html_text[html_len] = 0;
+      fprintf(out_f, "<pre>%s</pre>", html_text);
+      xfree(html_text);
+    } else {
+      html_text = alloca(html_len + 16);
+      html_armor_text(rep_text, rep_len, html_text);
+      html_text[html_len] = 0;
+      fprintf(out_f, "<pre>%s</pre>", html_text);
+    }
+    break;
+  case CONTENT_TYPE_HTML:
+    fprintf(out_f, "%s", start_ptr);
+    break;
+  case CONTENT_TYPE_XML:
+    if (prob->type == PROB_TYPE_TESTS) {
+      if (user_mode) {
+        write_xml_team_tests_report(cs, prob, out_f, start_ptr, "b1");
+      } else {
+        write_xml_tests_report(out_f, 0, start_ptr, phr->session_id, phr->self_url,
+                               "", "b1", 0);
+      }
+    } else {
+      if (user_mode) {
+        write_xml_team_testing_report(cs, prob, out_f, phr, 0, re.is_marked, start_ptr, "b1");
+      } else {
+        write_xml_testing_report(out_f, phr, 0, start_ptr, "b1", 0);
+      }
+    }
+    break;
+  default:
+    abort();
+  }
+fwrite(csp_str14, 1, 2, out_f);
+fwrite(csp_str15, 1, 6, out_f);
 write_copyright_short(out_f);
-fwrite(csp_str20, 1, 17, out_f);
+fwrite(csp_str16, 1, 17, out_f);
 
-#line 96 "priv_audit_log_page.csp"
+#line 166 "priv_report_page.csp"
 l10n_setlocale(0);
 cleanup:
+  xfree(rep_text);
   html_armor_free(&ab);
   return 0;
 }

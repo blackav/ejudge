@@ -96,6 +96,7 @@ int retval __attribute__((unused)) = 0;
   const struct contest_desc *cnts __attribute__((unused)) = phr->cnts;
   struct html_armor_buffer ab __attribute__((unused)) = HTML_ARMOR_INITIALIZER;
   unsigned char hbuf[1024] __attribute__((unused));
+  const unsigned char *sep __attribute__((unused)) = NULL;
 
 #line 9 "priv_clar_page.csp"
 struct clar_entry_v1 clar;
@@ -105,7 +106,7 @@ struct clar_entry_v1 clar;
   unsigned char b1[1024];
   const unsigned char *clar_subj = 0;
   int clar_id;
-  const unsigned char *s = NULL, *sep = NULL;
+  const unsigned char *s = NULL;
   int n;
 
   if (ns_cgi_param(phr, "clar_id", &s) <= 0

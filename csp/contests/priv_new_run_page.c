@@ -18,9 +18,9 @@ static const unsigned char csp_str14[27] = "<option value=\"\"></option>";
 static const unsigned char csp_str15[4] = " - ";
 static const unsigned char csp_str16[21] = "</td></tr>\n\n<tr><td>";
 static const unsigned char csp_str17[7] = ":</td>";
-static const unsigned char csp_str18[24] = "<td></td></tr>\n<tr><td>";
-static const unsigned char csp_str19[12] = "</td></tr>\n";
-static const unsigned char csp_str20[10] = "\n<tr><td>";
+static const unsigned char csp_str18[7] = "</tr>\n";
+static const unsigned char csp_str19[10] = "\n<tr><td>";
+static const unsigned char csp_str20[12] = "</td></tr>\n";
 static const unsigned char csp_str21[62] = ":</td><td><input type=\"file\" name=\"file\"/></td></tr>\n<tr><td>";
 static const unsigned char csp_str22[36] = "</td><td>&nbsp;</td></tr>\n</table>\n";
 static const unsigned char csp_str23[2] = "\n";
@@ -82,6 +82,7 @@ int retval __attribute__((unused)) = 0;
   const struct contest_desc *cnts __attribute__((unused)) = phr->cnts;
   struct html_armor_buffer ab __attribute__((unused)) = HTML_ARMOR_INITIALIZER;
   unsigned char hbuf[1024] __attribute__((unused));
+  const unsigned char *sep __attribute__((unused)) = NULL;
 
 #line 11 "priv_new_run_page.csp"
 int i;
@@ -198,11 +199,11 @@ fputs("<select name=\"is_imported\"><option value=\"0\"", out_f);
 fputs(s1, out_f);
 fputs(">", out_f);
 fputs(_("No"), out_f);
-fputs("<option><option value=\"1\"", out_f);
+fputs("</option><option value=\"1\"", out_f);
 fputs(s2, out_f);
 fputs(">", out_f);
 fputs(_("Yes"), out_f);
-fputs("></select>", out_f);
+fputs("</option></select>", out_f);
 }
 fwrite(csp_str13, 1, 19, out_f);
 fputs(_("Hidden?"), out_f);
@@ -213,39 +214,39 @@ fputs("<select name=\"is_hidden\"><option value=\"0\"", out_f);
 fputs(s1, out_f);
 fputs(">", out_f);
 fputs(_("No"), out_f);
-fputs("<option><option value=\"1\"", out_f);
+fputs("</option><option value=\"1\"", out_f);
 fputs(s2, out_f);
 fputs(">", out_f);
 fputs(_("Yes"), out_f);
-fputs("></select>", out_f);
+fputs("</option></select>", out_f);
 }
 fwrite(csp_str13, 1, 19, out_f);
 fputs(_("Read-only?"), out_f);
-fwrite(csp_str17, 1, 6, out_f);
+fwrite(csp_str12, 1, 10, out_f);
 {
   unsigned char *s1 = "", *s2 = "";
 fputs("<select name=\"is_readonly\"><option value=\"0\"", out_f);
 fputs(s1, out_f);
 fputs(">", out_f);
 fputs(_("No"), out_f);
-fputs("<option><option value=\"1\"", out_f);
+fputs("</option><option value=\"1\"", out_f);
 fputs(s2, out_f);
 fputs(">", out_f);
 fputs(_("Yes"), out_f);
-fputs("></select>", out_f);
+fputs("</option></select>", out_f);
 }
-fwrite(csp_str18, 1, 23, out_f);
+fwrite(csp_str13, 1, 19, out_f);
 fputs(_("Status"), out_f);
 fwrite(csp_str17, 1, 6, out_f);
 
 #line 43 "priv_new_run_page.csp"
 write_change_status_dialog(cs, out_f, 0, 0, 0, -1, 0);
-fwrite(csp_str19, 1, 11, out_f);
+fwrite(csp_str18, 1, 6, out_f);
 
 #line 44 "priv_new_run_page.csp"
 if (global->score_system == SCORE_KIROV
       || global->score_system == SCORE_OLYMPIAD) {
-fwrite(csp_str20, 1, 9, out_f);
+fwrite(csp_str19, 1, 9, out_f);
 fputs(_("Tests passed"), out_f);
 fwrite(csp_str12, 1, 10, out_f);
 fputs("<input type=\"text\" name=\"tests\" size=\"10\" />", out_f);
@@ -253,11 +254,11 @@ fwrite(csp_str13, 1, 19, out_f);
 fputs(_("Score gained"), out_f);
 fwrite(csp_str12, 1, 10, out_f);
 fputs("<input type=\"text\" name=\"score\" size=\"10\" />", out_f);
-fwrite(csp_str19, 1, 11, out_f);
+fwrite(csp_str20, 1, 11, out_f);
 
 #line 48 "priv_new_run_page.csp"
 } else if (global->score_system == SCORE_MOSCOW) {
-fwrite(csp_str20, 1, 9, out_f);
+fwrite(csp_str19, 1, 9, out_f);
 fputs(_("Failed test"), out_f);
 fwrite(csp_str12, 1, 10, out_f);
 fputs("<input type=\"text\" name=\"tests\" size=\"10\" />", out_f);
@@ -265,19 +266,19 @@ fwrite(csp_str13, 1, 19, out_f);
 fputs(_("Score gained"), out_f);
 fwrite(csp_str12, 1, 10, out_f);
 fputs("<input type=\"text\" name=\"score\" size=\"10\" />", out_f);
-fwrite(csp_str19, 1, 11, out_f);
+fwrite(csp_str20, 1, 11, out_f);
 
 #line 51 "priv_new_run_page.csp"
 } else {
-fwrite(csp_str20, 1, 9, out_f);
+fwrite(csp_str19, 1, 9, out_f);
 fputs(_("Failed test"), out_f);
 fwrite(csp_str12, 1, 10, out_f);
 fputs("<input type=\"text\" name=\"tests\" size=\"10\" />", out_f);
-fwrite(csp_str19, 1, 11, out_f);
+fwrite(csp_str20, 1, 11, out_f);
 
 #line 53 "priv_new_run_page.csp"
 }
-fwrite(csp_str20, 1, 9, out_f);
+fwrite(csp_str19, 1, 9, out_f);
 fputs(_("File"), out_f);
 fwrite(csp_str21, 1, 61, out_f);
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_NEW_RUN, NULL), out_f);

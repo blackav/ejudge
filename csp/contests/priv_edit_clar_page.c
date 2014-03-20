@@ -97,6 +97,7 @@ int retval __attribute__((unused)) = 0;
   const struct contest_desc *cnts __attribute__((unused)) = phr->cnts;
   struct html_armor_buffer ab __attribute__((unused)) = HTML_ARMOR_INITIALIZER;
   unsigned char hbuf[1024] __attribute__((unused));
+  const unsigned char *sep __attribute__((unused)) = NULL;
 
 #line 11 "priv_edit_clar_page.csp"
 struct clar_entry_v1 clar;
@@ -108,7 +109,6 @@ struct clar_entry_v1 clar;
   int clar_id = 0;
   unsigned char title[1024];
   int n;
-  const unsigned char *sep = NULL;
 
   if (ns_cgi_param(phr, "clar_id", &s) <= 0
       || sscanf(s, "%d%n", &clar_id, &n) != 1 || s[n]
@@ -165,7 +165,7 @@ fputs(_("Message"), out_f);
 fwrite(csp_str12, 1, 1, out_f);
 fprintf(out_f, "%d", (int)(clar_id));
 
-#line 49 "priv_edit_clar_page.csp"
+#line 48 "priv_edit_clar_page.csp"
 if (opcaps_check(phr->caps, OPCAP_VIEW_CLAR) >= 0) {
 fwrite(csp_str4, 1, 2, out_f);
 fputs("<a href=\"", out_f);
@@ -179,7 +179,7 @@ fputs(_("View"), out_f);
 fputs("</a>", out_f);
 fwrite(csp_str13, 1, 1, out_f);
 
-#line 50 "priv_edit_clar_page.csp"
+#line 49 "priv_edit_clar_page.csp"
 }
 fwrite(csp_str14, 1, 7, out_f);
 fputs("<form method=\"post\" enctype=\"application/x-www-form-urlencoded\" action=\"", out_f);
@@ -210,7 +210,7 @@ fwrite(csp_str18, 1, 55, out_f);
 fprintf(out_f, "%zu", (size_t)(clar.size));
 fwrite(csp_str19, 1, 12, out_f);
 
-#line 61 "priv_edit_clar_page.csp"
+#line 60 "priv_edit_clar_page.csp"
 if (clar.from <= 0 && clar.to <= 0) {
     from_str = "judges";
     to_str = "all";
@@ -249,7 +249,7 @@ fputs("\"", out_f);
 fputs(" />", out_f);
 fwrite(csp_str19, 1, 12, out_f);
 
-#line 87 "priv_edit_clar_page.csp"
+#line 86 "priv_edit_clar_page.csp"
 from_buf[0] = 0; from_str = from_buf;
   if (clar.j_from > 0) {
     if (!(from_str = teamdb_get_login(cs->teamdb_state, clar.j_from))) {
@@ -362,7 +362,7 @@ fputs("\"", out_f);
 fputs(" />", out_f);
 fwrite(csp_str36, 1, 21, out_f);
 
-#line 114 "priv_edit_clar_page.csp"
+#line 113 "priv_edit_clar_page.csp"
 clar_get_text(cs->clarlog_state, clar_id, &msg_txt, &msg_len);
 fwrite(csp_str37, 1, 46, out_f);
 fputs(html_armor_buf(&ab, (msg_txt)), out_f);
@@ -373,7 +373,7 @@ fwrite(csp_str39, 1, 6, out_f);
 write_copyright_short(out_f);
 fwrite(csp_str40, 1, 17, out_f);
 
-#line 126 "priv_edit_clar_page.csp"
+#line 125 "priv_edit_clar_page.csp"
 l10n_setlocale(0);
 cleanup:
   html_armor_free(&ab);

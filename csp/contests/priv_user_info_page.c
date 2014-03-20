@@ -125,6 +125,7 @@ int retval __attribute__((unused)) = 0;
   const struct contest_desc *cnts __attribute__((unused)) = phr->cnts;
   struct html_armor_buffer ab __attribute__((unused)) = HTML_ARMOR_INITIALIZER;
   unsigned char hbuf[1024] __attribute__((unused));
+  const unsigned char *sep __attribute__((unused)) = NULL;
 
 #line 13 "priv_user_info_page.csp"
 // variables...
@@ -875,7 +876,13 @@ fputs(" />", out_f);
 fwrite(csp_str43, 1, 4, out_f);
 fputs(_("Disqualification explanation"), out_f);
 fwrite(csp_str61, 1, 59, out_f);
+
+#line 313 "priv_user_info_page.csp"
+if (u_extra->disq_comment) {
 fputs(html_armor_buf(&ab, (u_extra->disq_comment)), out_f);
+
+#line 313 "priv_user_info_page.csp"
+}
 fwrite(csp_str62, 1, 54, out_f);
 
 #line 316 "priv_user_info_page.csp"
