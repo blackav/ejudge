@@ -90,6 +90,7 @@ int retval __attribute__((unused)) = 0;
   const struct contest_desc *cnts __attribute__((unused)) = phr->cnts;
   struct html_armor_buffer ab __attribute__((unused)) = HTML_ARMOR_INITIALIZER;
   unsigned char hbuf[1024] __attribute__((unused));
+  const unsigned char *sep __attribute__((unused)) = NULL;
 
 #line 19 "priv_priorities_page.csp"
 const struct section_global_data *global = cs->global;

@@ -9,17 +9,18 @@ static const unsigned char csp_str5[3] = ", ";
 static const unsigned char csp_str6[4] = "]: ";
 static const unsigned char csp_str7[29] = "</title>\n</head>\n<body>\n<h1>";
 static const unsigned char csp_str8[7] = "</h1>\n";
-static const unsigned char csp_str9[2] = "\n";
+static const unsigned char csp_str9[3] = "\n\n";
 static const unsigned char csp_str10[18] = "\n<table>\n<tr><td>";
 static const unsigned char csp_str11[10] = "</td><td>";
 static const unsigned char csp_str12[20] = "</td></tr>\n<tr><td>";
-static const unsigned char csp_str13[36] = "</td><td>&nbsp;</td></tr>\n</table>\n";
-static const unsigned char csp_str14[63] = "\n\n<p>The following formula is applied: mult * X + shift.</p>\n\n";
-static const unsigned char csp_str15[7] = "<hr/>\n";
-static const unsigned char csp_str16[18] = "\n</body>\n</html>\n";
+static const unsigned char csp_str13[38] = "</td></tr>\n</table>\n\n<table><tr>\n<td>";
+static const unsigned char csp_str14[11] = "</td>\n<td>";
+static const unsigned char csp_str15[21] = "</td>\n</tr></table>\n";
+static const unsigned char csp_str16[7] = "<hr/>\n";
+static const unsigned char csp_str17[18] = "\n</body>\n</html>\n";
 
 
-#line 2 "priv_assign_cyphers_page.csp"
+#line 2 "priv_upsolving_page.csp"
 /* $Id$ */
 
 #line 2 "priv_includes.csp"
@@ -44,26 +45,26 @@ static const unsigned char csp_str16[18] = "\n</body>\n</html>\n";
 #include <libintl.h>
 #define _(x) gettext(x)
 
-#line 5 "priv_assign_cyphers_page.csp"
+#line 5 "priv_upsolving_page.csp"
 #define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
-int csp_view_priv_assign_cyphers_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr);
+int csp_view_priv_upsolving_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr);
 static PageInterfaceOps page_ops =
 {
     NULL, // destroy
     NULL, // execute
-    csp_view_priv_assign_cyphers_page, // render
+    csp_view_priv_upsolving_page, // render
 };
 static PageInterface page_iface =
 {
     &page_ops,
 };
 PageInterface *
-csp_get_priv_assign_cyphers_page(void)
+csp_get_priv_upsolving_page(void)
 {
     return &page_iface;
 }
 
-int csp_view_priv_assign_cyphers_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+int csp_view_priv_upsolving_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 {
 
 #line 2 "priv_stdvars.csp"
@@ -75,14 +76,33 @@ int retval __attribute__((unused)) = 0;
   unsigned char hbuf[1024] __attribute__((unused));
   const unsigned char *sep __attribute__((unused)) = NULL;
 
-#line 11 "priv_assign_cyphers_page.csp"
-const unsigned char *title = NULL;
+#line 11 "priv_upsolving_page.csp"
+const unsigned char *freeze_standings = 0;
+  const unsigned char *view_source = 0;
+  const unsigned char *view_protocol = 0;
+  const unsigned char *full_proto = 0;
+  const unsigned char *disable_clars = 0;
+  const unsigned char *title = NULL;
 
   if (opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST) < 0)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);  
 
+  if (cs->upsolving_mode) {
+    ns_cgi_param(phr, "freeze_standings", &freeze_standings);
+    ns_cgi_param(phr, "view_source", &view_source);
+    ns_cgi_param(phr, "view_protocol", &view_protocol);
+    ns_cgi_param(phr, "full_protocol", &full_proto);
+    ns_cgi_param(phr, "disable_clars", &disable_clars);
+  } else {
+    freeze_standings = "1";
+    view_source = "1";
+    view_protocol = "1";
+    full_proto = 0;
+    disable_clars = "1";
+  }
+
   l10n_setlocale(phr->locale_id);
-  title = _("Assign cyphers");
+  title = _("Upsolving configuration");
 fwrite(csp_str0, 1, 183, out_f);
 fwrite("utf-8", 1, 5, out_f);
 fwrite(csp_str1, 1, 34, out_f);
@@ -110,45 +130,50 @@ fputs((extra->contest_arm), out_f);
 fwrite(csp_str6, 1, 3, out_f);
 fputs((title), out_f);
 fwrite(csp_str8, 1, 6, out_f);
-fwrite(csp_str9, 1, 1, out_f);
+fwrite(csp_str9, 1, 2, out_f);
 fputs("<form method=\"post\" enctype=\"application/x-www-form-urlencoded\" action=\"", out_f);
 fputs(phr->self_url, out_f);
 fputs("\">", out_f);
 fputs(phr->hidden_vars, out_f);
 fwrite(csp_str10, 1, 17, out_f);
-fputs("<input type=\"text\" name=\"prefix\" size=\"16\" />", out_f);
+fputs("<input type=\"checkbox\" name=\"freeze_standings\" value=\"1\"", out_f);
+fputs(" />", out_f);
 fwrite(csp_str11, 1, 9, out_f);
-fputs(_("Cypher prefix"), out_f);
+fputs(_("Freeze contest standings"), out_f);
 fwrite(csp_str12, 1, 19, out_f);
-fputs("<input type=\"text\" name=\"min_num\" size=\"16\" />", out_f);
+fputs("<input type=\"checkbox\" name=\"view_source\" value=\"1\"", out_f);
+fputs(" />", out_f);
 fwrite(csp_str11, 1, 9, out_f);
-fputs(_("Minimal random number"), out_f);
+fputs(_("Allow viewing source code"), out_f);
 fwrite(csp_str12, 1, 19, out_f);
-fputs("<input type=\"text\" name=\"max_num\" size=\"16\" />", out_f);
+fputs("<input type=\"checkbox\" name=\"view_protocol\" value=\"1\"", out_f);
+fputs(" />", out_f);
 fwrite(csp_str11, 1, 9, out_f);
-fputs(_("Maximal random number"), out_f);
+fputs(_("Allow viewing run report"), out_f);
 fwrite(csp_str12, 1, 19, out_f);
-fputs("<input type=\"text\" name=\"seed\" size=\"16\" />", out_f);
+fputs("<input type=\"checkbox\" name=\"full_protocol\" value=\"1\"", out_f);
+fputs(" />", out_f);
 fwrite(csp_str11, 1, 9, out_f);
-fputs(_("Random seed"), out_f);
+fputs(_("Allow viewing full protocol"), out_f);
 fwrite(csp_str12, 1, 19, out_f);
-fputs("<input type=\"text\" name=\"mult\" size=\"16\" />", out_f);
+fputs("<input type=\"checkbox\" name=\"disable_clars\" value=\"1\"", out_f);
+fputs(" />", out_f);
 fwrite(csp_str11, 1, 9, out_f);
-fputs(_("Mult parameter"), out_f);
-fwrite(csp_str12, 1, 19, out_f);
-fputs("<input type=\"text\" name=\"shift\" size=\"16\" />", out_f);
-fwrite(csp_str11, 1, 9, out_f);
-fputs(_("Shift parameter"), out_f);
-fwrite(csp_str12, 1, 19, out_f);
-fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_ASSIGN_CYPHERS_2, NULL), out_f);
-fwrite(csp_str13, 1, 35, out_f);
+fputs(_("Disable clarifications"), out_f);
+fwrite(csp_str13, 1, 37, out_f);
+fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_UPSOLVING_CONFIG_2, NULL), out_f);
+fwrite(csp_str14, 1, 10, out_f);
+fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_UPSOLVING_CONFIG_3, NULL), out_f);
+fwrite(csp_str14, 1, 10, out_f);
+fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_UPSOLVING_CONFIG_4, NULL), out_f);
+fwrite(csp_str15, 1, 20, out_f);
 fputs("</form>", out_f);
-fwrite(csp_str14, 1, 62, out_f);
-fwrite(csp_str15, 1, 6, out_f);
+fwrite(csp_str9, 1, 2, out_f);
+fwrite(csp_str16, 1, 6, out_f);
 write_copyright_short(out_f);
-fwrite(csp_str16, 1, 17, out_f);
+fwrite(csp_str17, 1, 17, out_f);
 
-#line 36 "priv_assign_cyphers_page.csp"
+#line 58 "priv_upsolving_page.csp"
 l10n_setlocale(0);
 cleanup:
   html_armor_free(&ab);
