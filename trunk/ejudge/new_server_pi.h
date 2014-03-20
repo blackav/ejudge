@@ -21,6 +21,8 @@
 
 #include "external_action.h"
 
+#include <time.h>
+
 typedef struct PrivUserInfo
 {
   int user_id;
@@ -84,6 +86,25 @@ typedef struct PrivViewIPUsersPage
     PageInterface b;
     PrivIPUserArray ips;
 } PrivViewIPUsersPage;
+
+/* === Testing queue === */
+
+struct super_run_in_packet;
+typedef struct TestingQueueEntry
+{
+  unsigned char *entry_name;
+  int priority;
+  time_t mtime;
+  struct super_run_in_packet *packet;
+} TestingQueueEntry;
+
+typedef struct TestingQueueArray
+{
+  int a;
+  int u;
+  struct TestingQueueEntry *v;
+} TestingQueueArray;
+
 
 #endif /* __NEW_SERVER_PI_H__ */
 

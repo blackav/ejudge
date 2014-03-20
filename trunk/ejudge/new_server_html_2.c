@@ -50,6 +50,7 @@
 #include "prepare_dflt.h"
 #include "super_run_packet.h"
 #include "ej_uuid.h"
+#include "new_server_pi.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"
@@ -1298,186 +1299,6 @@ ns_write_all_clars(
                     0, 0, 0, 0, 0, 0, 0);
   */
   html_armor_free(&ab);
-}
-
-void
-ns_write_run_view_menu(
-        FILE *f, struct http_request_info *phr,
-        const struct contest_desc *cnts,
-        struct contest_extra *extra,
-        int run_id)
-{
-  unsigned char hbuf[1024];
-  int i;
-  static int action_list[] =
-  {
-    NEW_SRV_ACTION_VIEW_SOURCE,
-    NEW_SRV_ACTION_VIEW_REPORT,
-    NEW_SRV_ACTION_VIEW_USER_REPORT,
-    NEW_SRV_ACTION_VIEW_AUDIT_LOG,
-    0,
-  };
-  static const unsigned char * const action_name[] =
-  {
-    __("Source"),
-    __("Report"),
-    __("User report"),
-    __("Audit log"),
-  };
-
-  fprintf(f, "<table class=\"b0\"><tr>");
-  fprintf(f, "<td class=\"b0\">%s%s</a></td>",
-          ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_MAIN_PAGE, 0),
-          _("Main page"));
-  for (i = 0; action_list[i] > 0; i++) {
-    fprintf(f, "<td class=\"b0\">");
-    if (phr->action != action_list[i]) {
-      /*
-      fprintf(f, "%s",
-              ns_aref_2(hbuf, sizeof(hbuf), phr, "menu", action_list[i],
-                        "run_id=%d", run_id));
-      */
-      fprintf(f, "%s",
-              ns_aref(hbuf, sizeof(hbuf), phr, action_list[i],
-                      "run_id=%d", run_id));
-    }
-    fprintf(f, "%s", gettext(action_name[i]));
-    if (phr->action != action_list[i]) {
-      fprintf(f, "</a>");
-    }
-    fprintf(f, "</td>");
-  }
-  fprintf(f, "</tr></table>\n");
-}
-
-void
-ns_write_priv_report(const serve_state_t cs,
-                     FILE *f,
-                     FILE *log_f,
-                     struct http_request_info *phr,
-                     const struct contest_desc *cnts,
-                     struct contest_extra *extra,
-                     int team_report_flag,
-                     int run_id)
-{
-  path_t rep_path;
-  char *rep_text = 0, *html_text;
-  size_t rep_len = 0, html_len;
-  int rep_flag, content_type;
-  const unsigned char *start_ptr = 0;
-  struct run_entry re;
-  const struct section_global_data *global = cs->global;
-  const struct section_problem_data *prob = 0;
-
-  if (run_id < 0 || run_id >= run_get_total(cs->runlog_state)
-      || run_get_entry(cs->runlog_state, run_id, &re) < 0) {
-    ns_error(log_f, NEW_SRV_ERR_INV_RUN_ID);
-    goto done;
-  }
-  if (re.status > RUN_MAX_STATUS) {
-    ns_error(log_f, NEW_SRV_ERR_REPORT_UNAVAILABLE);
-    goto done;
-  }
-  if (!run_is_report_available(re.status)) {
-    ns_error(log_f, NEW_SRV_ERR_REPORT_UNAVAILABLE);
-    goto done;
-  }
-  if (re.prob_id <= 0 || re.prob_id > cs->max_prob
-      || !(prob = cs->probs[re.prob_id])) {
-    ns_error(log_f, NEW_SRV_ERR_INV_PROB_ID);
-    goto done;
-  }
-
-  int user_mode = 0;
-  if (team_report_flag && global->team_enable_rep_view) {
-    user_mode = 1;
-    if (global->team_show_judge_report) {
-      user_mode = 0;
-    }
-  }
-
-  rep_flag = serve_make_xml_report_read_path(cs, rep_path, sizeof(rep_path), &re);
-  if (rep_flag >= 0) {
-    if (generic_read_file(&rep_text, 0, &rep_len, rep_flag, 0, rep_path, 0)<0){
-      ns_error(log_f, NEW_SRV_ERR_DISK_READ_ERROR);
-      goto done;
-    }
-    content_type = get_content_type(rep_text, &start_ptr);
-  } else {
-    if (user_mode) {
-      rep_flag = archive_make_read_path(cs, rep_path, sizeof(rep_path),
-                                        global->team_report_archive_dir, run_id, 0, 1);
-    } else {
-      rep_flag = serve_make_report_read_path(cs, rep_path, sizeof(rep_path), &re);
-    }
-    if (rep_flag < 0) {
-      ns_error(log_f, NEW_SRV_ERR_REPORT_NONEXISTANT);
-      goto done;
-    }
-    if (generic_read_file(&rep_text, 0, &rep_len, rep_flag, 0, rep_path, 0)<0){
-      ns_error(log_f, NEW_SRV_ERR_DISK_READ_ERROR);
-      goto done;
-    }
-    content_type = get_content_type(rep_text, &start_ptr);
-  }
-
-  ns_header(f, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
-            phr->client_key,
-            "%s [%s, %s]: %s %d", ns_unparse_role(phr->role),
-            phr->name_arm, extra->contest_arm,
-            team_report_flag?_("Viewing user report"):_("Viewing report"),
-            run_id);
-
-  ns_write_run_view_menu(f, phr, cnts, extra, run_id);
-
-  switch (content_type) {
-  case CONTENT_TYPE_TEXT:
-    html_len = html_armored_memlen(start_ptr, rep_len);
-    if (html_len > 2 * 1024 * 1024) {
-      html_text = xmalloc(html_len + 16);
-      html_armor_text(rep_text, rep_len, html_text);
-      html_text[html_len] = 0;
-      fprintf(f, "<pre>%s</pre>", html_text);
-      xfree(html_text);
-    } else {
-      html_text = alloca(html_len + 16);
-      html_armor_text(rep_text, rep_len, html_text);
-      html_text[html_len] = 0;
-      fprintf(f, "<pre>%s</pre>", html_text);
-    }
-    break;
-  case CONTENT_TYPE_HTML:
-    fprintf(f, "%s", start_ptr);
-    break;
-  case CONTENT_TYPE_XML:
-    if (prob->type == PROB_TYPE_TESTS) {
-      if (team_report_flag) {
-        write_xml_team_tests_report(cs, prob, f, start_ptr, "b1");
-      } else {
-        write_xml_tests_report(f, 0, start_ptr, phr->session_id, phr->self_url,
-                               "", "b1", 0);
-      }
-    } else {
-      if (team_report_flag) {
-        write_xml_team_testing_report(cs, prob, f, phr, 0, re.is_marked, start_ptr, "b1");
-      } else {
-        write_xml_testing_report(f, phr, 0, start_ptr, "b1", 0);
-      }
-    }
-    break;
-  default:
-    abort();
-  }
-
-  /*
-  xfree(rep_text);
-  fprintf(f, "<hr>\n");
-  print_nav_buttons(state, f, run_id, sid, self_url, hidden_vars, extra_args,
-                    _("Main page"), 0, 0, 0, _("View source"), t6, t7);
-  */
-
- done:;
-  xfree(rep_text);
 }
 
 // 0 - undefined or empty, -1 - invalid, 1 - ok
@@ -5692,35 +5513,20 @@ ns_examiners_page(
   return 0;
 }
 
-struct testing_queue_entry
-{
-  unsigned char *entry_name;
-  int priority;
-  time_t mtime;
-  struct super_run_in_packet *packet;
-};
-
-struct testing_queue_vec
-{
-  int a;
-  int u;
-  struct testing_queue_entry *v;
-};
-
 static int
 scan_run_sort_func(const void *v1, const void *v2)
 {
-  const struct testing_queue_entry *p1 = (const struct testing_queue_entry*)v1;
-  const struct testing_queue_entry *p2 = (const struct testing_queue_entry*)v2;
+  const TestingQueueEntry *p1 = (const TestingQueueEntry*)v1;
+  const TestingQueueEntry *p2 = (const TestingQueueEntry*)v2;
 
   return strcmp(p1->entry_name, p2->entry_name);
 }
 
-static void
-scan_run_queue(
+void
+ns_scan_run_queue(
         const unsigned char *dpath,
         int contest_id,
-        struct testing_queue_vec *vec)
+        struct TestingQueueArray *vec)
 {
   DIR *d = 0;
   struct dirent *dd;
@@ -5782,7 +5588,7 @@ scan_run_queue(
         XCALLOC(vec->v, vec->a);
       } else {
         int new_sz = vec->a * 2;
-        struct testing_queue_entry *new_v = 0;
+        struct TestingQueueEntry *new_v = 0;
         XCALLOC(new_v, new_sz);
         memcpy(new_v, vec->v, vec->a * sizeof(new_v[0]));
         xfree(vec->v);
@@ -5801,160 +5607,6 @@ scan_run_queue(
   if (d) closedir(d);
 
   qsort(vec->v, vec->u, sizeof(vec->v[0]), scan_run_sort_func);
-}
-        
-int
-ns_write_testing_queue(
-        FILE *fout,
-        FILE *log_f,
-        struct http_request_info *phr,
-        const struct contest_desc *cnts,
-        struct contest_extra *extra)
-{
-  const serve_state_t cs = extra->serve_state;
-  const struct section_global_data *global = cs->global;
-  const unsigned char *table_class = "b1";
-  unsigned char cl[64] = { 0 };
-  struct testing_queue_vec vec;
-  int i, prob_id, user_id;
-  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
-  unsigned char hbuf[1024];
-  const unsigned char *arch;
-  unsigned char run_queue_dir[PATH_MAX];
-  const unsigned char *queue_dir = NULL;
-
-  memset(&vec, 0, sizeof(vec));
-  if(cnts && cnts->run_managed) {
-    if (global->super_run_dir && global->super_run_dir[0]) {
-      snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/var/queue", global->super_run_dir);
-    } else {
-      snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/super-run/var/queue", EJUDGE_CONTESTS_HOME_DIR);
-    }
-    queue_dir = run_queue_dir;
-  } else {
-    queue_dir = global->run_queue_dir;
-  }
-  scan_run_queue(queue_dir, cnts->id, &vec);
-
-  snprintf(cl, sizeof(cl), " class=\"%s\"", "b0");
-  fprintf(fout, "<table%s><tr>", cl);
-  fprintf(fout, "<td%s>%s%s</a></td>",
-          cl, ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_MAIN_PAGE, 0),
-          _("Main page"));
-  fprintf(fout, "<td%s>%s%s</a></td>", cl,
-          ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_TESTING_QUEUE,0),
-          _("Refresh"));
-  fprintf(fout, "</tr></table>\n");  
-
-  if (table_class) {
-    snprintf(cl, sizeof(cl), " class=\"%s\"", table_class);
-  }
-
-  html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
-  fprintf(fout, "<table%s>\n", cl);
-  fprintf(fout, 
-          "<tr>"
-          "<th%s>%s</th>"
-          "<th%s>%s</th>"
-          "<th%s>%s</th>"
-          "<th%s>%s</th>"
-          "<th%s>%s</th>"
-          "<th%s>%s</th>"
-          "<th%s>%s</th>"
-          "<th%s>%s</th>"
-          "<th%s>%s</th>"
-          "<th%s>%s</th>"
-          "<th%s>%s</th>"
-          "</tr>\n",
-          cl, "NN",
-          cl, "ContestId",
-          cl, _("Packet name"),
-          cl, _("Priority"),
-          cl, "RunId",
-          cl, _("Problem"),
-          cl, _("User"),
-          cl, _("Architecture"),
-          cl, "JudgeId",
-          cl, _("Create time"),
-          cl, _("Actions"));
-  for (i = 0; i < vec.u; ++i) {
-    const struct super_run_in_global_packet *srgp = vec.v[i].packet->global;
-    const struct super_run_in_problem_packet *srpp = vec.v[i].packet->problem;
-
-    arch = srgp->arch;
-    if (!arch) arch = "";
-
-    fprintf(fout, "<tr>");
-    fprintf(fout, "<td%s>%d</td>", cl, i + 1);
-    fprintf(fout, "<td%s>%d</td>", cl, srgp->contest_id);
-    fprintf(fout, "<td%s>%s</td>", cl, vec.v[i].entry_name);
-    fprintf(fout, "<td%s>%d</td>", cl, vec.v[i].priority);
-    fprintf(fout, "<td%s>%d</td>", cl, srgp->run_id);
-    if (srgp->contest_id == cnts->id) {
-      prob_id = srpp->id;
-      if (prob_id > 0 && prob_id <= cs->max_prob && cs->probs[prob_id]) {
-        fprintf(fout, "<td%s>%s</td>", cl, cs->probs[prob_id]->short_name);
-      } else {
-        fprintf(fout, "<td%s>Problem %d</td>", cl, prob_id);
-      }
-      user_id = srgp->user_id;
-      fprintf(fout, "<td%s>%s</td>", cl,
-              ARMOR(teamdb_get_name_2(cs->teamdb_state, user_id)));
-    } else {
-      // use packet-provided info
-      if (srpp->short_name && srpp->short_name[0]) {
-        fprintf(fout, "<td%s>%s</td>", cl, srpp->short_name);
-      } else {
-        fprintf(fout, "<td%s>Problem %d</td>", cl, srpp->id);
-      }
-      if (srgp->user_name && srgp->user_name[0]) {
-        fprintf(fout, "<td%s>%s</td>", cl, srgp->user_name);
-      } else if (srgp->user_login && srgp->user_login[0]) {
-        fprintf(fout, "<td%s>%s</td>", cl, srgp->user_login);
-      } else {
-        fprintf(fout, "<td%s>User %d</td>", cl, srgp->user_id);
-      }
-    }
-    fprintf(fout, "<td%s>%s</td>", cl, arch);
-    fprintf(fout, "<td%s>%d</td>", cl, srgp->judge_id);
-    fprintf(fout, "<td%s>%s</td>", cl, xml_unparse_date(vec.v[i].mtime));
-    fprintf(fout, "<td%s>", cl);
-    fprintf(fout, "&nbsp;&nbsp;<a href=\"%s\">X</a>",
-            ns_url(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_TESTING_DELETE,
-                   "packet=%s", vec.v[i].entry_name));
-    fprintf(fout, "&nbsp;&nbsp;<a href=\"%s\">Up</a>",
-            ns_url(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_TESTING_UP,
-                   "packet=%s", vec.v[i].entry_name));
-    fprintf(fout, "&nbsp;&nbsp;<a href=\"%s\">Down</a>",
-            ns_url(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_TESTING_DOWN,
-                   "packet=%s", vec.v[i].entry_name));
-    fprintf(fout, "</td>");
-    fprintf(fout, "</tr>\n");
-  }
-  fprintf(fout, "</table></form>\n");
-
-  snprintf(cl, sizeof(cl), " class=\"%s\"", "b0");
-  fprintf(fout, "<table%s><tr>", cl);
-  fprintf(fout, "<td%s>%s%s</a></td>",
-          cl, ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_MAIN_PAGE, 0),
-          _("Main page"));
-  fprintf(fout, "<td%s><a href=\"%s\">Delete all</a></td>", cl,
-          ns_url(hbuf,sizeof(hbuf), phr, NEW_SRV_ACTION_TESTING_DELETE_ALL,0));
-  fprintf(fout, "<td%s><a href=\"%s\">Up priority all</a></td>", cl,
-          ns_url(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_TESTING_UP_ALL, 0));
-  fprintf(fout, "<td%s><a href=\"%s\">Down priority all</a></td>", cl,
-          ns_url(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_TESTING_DOWN_ALL, 0));
-  fprintf(fout, "</tr></table>\n");
-
-  for (i = 0; i < vec.u; ++i) {
-    xfree(vec.v[i].entry_name);
-    super_run_in_packet_free(vec.v[i].packet);
-  }
-  xfree(vec.v); vec.v = 0;
-  vec.a = vec.u = 0;
-
-  html_armor_free(&ab);
-  return 0;
 }
 
 void

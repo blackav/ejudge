@@ -5221,34 +5221,6 @@ priv_unassign_examiner(
 }
 
 static int
-priv_view_report(FILE *fout,
-                 FILE *log_f,
-                 struct http_request_info *phr,
-                 const struct contest_desc *cnts,
-                 struct contest_extra *extra)
-{
-  serve_state_t cs = extra->serve_state;
-  int run_id;
-  int user_mode = 0;
-
-  if (parse_run_id(fout, phr, cnts, extra, &run_id, 0) < 0) goto failure;
-
-  if (opcaps_check(phr->caps, OPCAP_VIEW_REPORT) < 0) {
-    ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
-    goto cleanup;
-  }
-  if (phr->action == NEW_SRV_ACTION_VIEW_USER_REPORT) user_mode = 1;
-
-  ns_write_priv_report(cs, fout, log_f, phr, cnts, extra, user_mode, run_id);
-
- cleanup:
-  return 0;
-
- failure:
-  return -1;
-}
-
-static int
 priv_download_source(
         FILE *fout,
         FILE *log_f,
@@ -5692,88 +5664,6 @@ priv_download_runs(
 }
 
 static int
-priv_upsolving_configuration_1(
-        FILE *fout,
-        FILE *log_f,
-        struct http_request_info *phr,
-        const struct contest_desc *cnts,
-        struct contest_extra *extra)
-{
-  const serve_state_t cs = extra->serve_state;
-  int retval = 0;
-  unsigned char bb[1024];
-  const unsigned char *freeze_standings = 0;
-  const unsigned char *view_source = 0;
-  const unsigned char *view_protocol = 0;
-  const unsigned char *full_proto = 0;
-  const unsigned char *disable_clars = 0;
-
-  if (opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST) < 0)
-    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);  
-
-  if (cs->upsolving_mode) {
-    ns_cgi_param(phr, "freeze_standings", &freeze_standings);
-    ns_cgi_param(phr, "view_source", &view_source);
-    ns_cgi_param(phr, "view_protocol", &view_protocol);
-    ns_cgi_param(phr, "full_protocol", &full_proto);
-    ns_cgi_param(phr, "disable_clars", &disable_clars);
-  } else {
-    freeze_standings = "1";
-    view_source = "1";
-    view_protocol = "1";
-    full_proto = 0;
-    disable_clars = "1";
-  }
-
-  l10n_setlocale(phr->locale_id);
-  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
-            phr->client_key,
-            "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role), phr->name_arm,
-            phr->contest_id, extra->contest_arm, "Upsolving configuration");
-
-  html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
-  fprintf(fout, "<table>");
-  fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
-          html_checkbox(bb, sizeof(bb), "freeze_standings", NULL,
-                        freeze_standings?1:0, 0),
-          _("Freeze contest standings"));
-  fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
-          html_checkbox(bb, sizeof(bb), "view_source", NULL,
-                        view_source?1:0, 0),
-          _("Allow viewing source code"));
-  fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
-          html_checkbox(bb, sizeof(bb), "view_protocol", NULL,
-                        view_protocol?1:0, 0),
-          _("Allow viewing run report"));
-  fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
-          html_checkbox(bb, sizeof(bb), "full_protocol", NULL,
-                        full_proto?1:0, 0),
-          _("Allow viewing full protocol"));
-  fprintf(fout, "<tr><td>%s</td><td>%s</td></tr>\n",
-          html_checkbox(bb, sizeof(bb), "disable_clars", NULL,
-                        disable_clars?1:0, 0),
-          _("Disable clarifications"));
-  fprintf(fout, "</table>\n");
-
-  fprintf(fout, "<table><tr>");
-  fprintf(fout, "<td>%s</td>",
-          BUTTON(NEW_SRV_ACTION_UPSOLVING_CONFIG_2));
-  fprintf(fout, "<td>%s</td>",
-          BUTTON(NEW_SRV_ACTION_UPSOLVING_CONFIG_3));
-  fprintf(fout, "<td>%s</td>",
-          BUTTON(NEW_SRV_ACTION_UPSOLVING_CONFIG_4));
-  fprintf(fout, "</tr></table>\n");
-
-  fprintf(fout, "</form>\n");
-
-  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
-  l10n_setlocale(0);
-
- cleanup:
-  return retval;
-}
-
-static int
 priv_upsolving_operation(
         FILE *fout,
         FILE *log_f,
@@ -6014,32 +5904,6 @@ priv_set_priorities(
     if (prio > 15) prio = 15;
     cs->prob_prio[prob_id] = prio;
   }
-
- cleanup:
-  return retval;
-}
-
-static int
-priv_view_testing_queue(
-        FILE *fout,
-        FILE *log_f,
-        struct http_request_info *phr,
-        const struct contest_desc *cnts,
-        struct contest_extra *extra)
-{
-  int retval = 0;
-
-  if (phr->role != USER_ROLE_ADMIN) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
-
-  l10n_setlocale(phr->locale_id);
-  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
-            phr->client_key,
-            "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role),
-            phr->name_arm, phr->contest_id, extra->contest_arm,
-            _("Testing queue"));
-  ns_write_testing_queue(fout, log_f, phr, cnts, extra);
-  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
-  l10n_setlocale(0);
 
  cleanup:
   return retval;
@@ -6826,7 +6690,6 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRIV_EDIT_RUN_ACTION] = ns_priv_edit_run_action,
 
   /* for priv_generic_page */
-  [NEW_SRV_ACTION_VIEW_REPORT] = priv_view_report,
   [NEW_SRV_ACTION_PRIV_DOWNLOAD_RUN] = priv_download_source,
   [NEW_SRV_ACTION_REJUDGE_DISPLAYED_1] = priv_confirmation_page,
   [NEW_SRV_ACTION_FULL_REJUDGE_DISPLAYED_1] = priv_confirmation_page,
@@ -6846,7 +6709,6 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_GENERATE_REG_PASSWORDS_1] = priv_confirmation_page,
   [NEW_SRV_ACTION_CLEAR_PASSWORDS_1] = priv_confirmation_page,
   [NEW_SRV_ACTION_VIEW_USER_DUMP] = priv_view_user_dump,
-  [NEW_SRV_ACTION_VIEW_USER_REPORT] = priv_view_report,
   [NEW_SRV_ACTION_DOWNLOAD_ARCHIVE_2] = priv_download_runs,
   [NEW_SRV_ACTION_UPLOAD_RUNLOG_CSV_1] = priv_upload_runlog_csv_1,
   [NEW_SRV_ACTION_UPLOAD_RUNLOG_CSV_2] = priv_upload_runlog_csv_2,
@@ -6859,7 +6721,6 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CLEAR_DISPLAYED_1] = priv_confirmation_page,
   [NEW_SRV_ACTION_IGNORE_DISPLAYED_1] = priv_confirmation_page,
   [NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_1] = priv_confirmation_page,
-  [NEW_SRV_ACTION_UPSOLVING_CONFIG_1] = priv_upsolving_configuration_1,
   [NEW_SRV_ACTION_EXAMINERS_PAGE] = priv_examiners_page,
   [NEW_SRV_ACTION_PRINT_USER_PROTOCOL] = priv_print_user_exam_protocol,
   [NEW_SRV_ACTION_PRINT_USER_FULL_PROTOCOL] = priv_print_user_exam_protocol,
@@ -6868,7 +6729,6 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRINT_SELECTED_USER_FULL_PROTOCOL] =priv_print_users_exam_protocol,
   [NEW_SRV_ACTION_PRINT_SELECTED_UFC_PROTOCOL] =priv_print_users_exam_protocol,
   [NEW_SRV_ACTION_PRINT_PROBLEM_PROTOCOL] = priv_print_problem_exam_protocol,
-  [NEW_SRV_ACTION_VIEW_TESTING_QUEUE] = priv_view_testing_queue,
   [NEW_SRV_ACTION_MARK_DISPLAYED_2] = priv_clear_displayed,
   [NEW_SRV_ACTION_UNMARK_DISPLAYED_2] = priv_clear_displayed,
   [NEW_SRV_ACTION_PING] = ping_page,
@@ -7211,7 +7071,6 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_SQUEEZE_RUNS] = priv_generic_operation,
   [NEW_SRV_ACTION_RESET_FILTER] = priv_generic_operation,
   [NEW_SRV_ACTION_RESET_CLAR_FILTER] = priv_generic_operation,
-  [NEW_SRV_ACTION_VIEW_REPORT] = priv_generic_page,
   [NEW_SRV_ACTION_PRIV_DOWNLOAD_RUN] = priv_generic_page,
   [NEW_SRV_ACTION_CHANGE_LANGUAGE] = priv_generic_operation,
   [NEW_SRV_ACTION_SUBMIT_RUN] = priv_generic_operation,
@@ -7280,7 +7139,6 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_SET_DISQUALIFICATION] = priv_generic_operation,
   [NEW_SRV_ACTION_LOGOUT] = priv_logout,
   [NEW_SRV_ACTION_CHANGE_PASSWORD] = priv_change_password,
-  [NEW_SRV_ACTION_VIEW_USER_REPORT] = priv_generic_page,
   [NEW_SRV_ACTION_DOWNLOAD_ARCHIVE_1] = priv_generic_page,
   [NEW_SRV_ACTION_DOWNLOAD_ARCHIVE_2] = priv_generic_page,
   [NEW_SRV_ACTION_UPLOAD_RUNLOG_CSV_1] = priv_generic_page,
@@ -7297,7 +7155,6 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_IGNORE_DISPLAYED_2] = priv_generic_operation,
   [NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_1] = priv_generic_page,
   [NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_2] = priv_generic_operation,
-  [NEW_SRV_ACTION_UPSOLVING_CONFIG_1] = priv_generic_page,
   [NEW_SRV_ACTION_UPSOLVING_CONFIG_2] = priv_generic_operation,
   [NEW_SRV_ACTION_UPSOLVING_CONFIG_3] = priv_generic_operation,
   [NEW_SRV_ACTION_UPSOLVING_CONFIG_4] = priv_generic_operation,
@@ -7327,7 +7184,6 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_IGNORE] = priv_generic_operation,
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_OK] = priv_generic_operation,
   [NEW_SRV_ACTION_PRIV_SET_RUN_REJECTED] = priv_generic_operation,
-  [NEW_SRV_ACTION_VIEW_TESTING_QUEUE] = priv_generic_page,
   [NEW_SRV_ACTION_TESTING_DELETE] = priv_generic_operation,
   [NEW_SRV_ACTION_TESTING_UP] = priv_generic_operation,
   [NEW_SRV_ACTION_TESTING_DOWN] = priv_generic_operation,
@@ -7374,6 +7230,10 @@ static const unsigned char * const external_action_names[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_ASSIGN_CYPHERS_1] = "priv_assign_cyphers_page",
   [NEW_SRV_ACTION_PRIV_SUBMIT_PAGE] = "priv_submit_page",
   [NEW_SRV_ACTION_VIEW_AUDIT_LOG] = "priv_audit_log_page",
+  [NEW_SRV_ACTION_UPSOLVING_CONFIG_1] = "priv_upsolving_page",
+  [NEW_SRV_ACTION_VIEW_REPORT] = "priv_report_page",
+  [NEW_SRV_ACTION_VIEW_USER_REPORT] = "priv_report_page",
+  [NEW_SRV_ACTION_VIEW_TESTING_QUEUE] = "priv_testing_queue_page",
 };
 
 static ExternalActionState *external_action_states[NEW_SRV_ACTION_LAST];
