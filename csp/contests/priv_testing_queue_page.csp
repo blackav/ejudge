@@ -1,0 +1,143 @@
+<%
+/* $Id$ */
+%><%@include "priv_includes.csp"
+%><%
+#include "super_run_packet.h"
+
+#define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
+
+void
+ns_scan_run_queue(
+        const unsigned char *dpath,
+        int contest_id,
+        struct TestingQueueArray *vec);
+%><%@set getter_name = "csp_get_priv_testing_queue_page"
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@page csp_view_priv_testing_queue_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "priv_stdvars.csp"
+%><%
+  const unsigned char *title = NULL;
+  const struct section_global_data *global = cs->global;
+  struct TestingQueueArray vec;
+  int i, prob_id, user_id;
+  const unsigned char *arch;
+  unsigned char run_queue_dir[PATH_MAX];
+  const unsigned char *queue_dir = NULL;
+
+  memset(&vec, 0, sizeof(vec));
+
+  if (phr->role != USER_ROLE_ADMIN) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+  if(cnts && cnts->run_managed) {
+    if (global->super_run_dir && global->super_run_dir[0]) {
+      snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/var/queue", global->super_run_dir);
+    } else {
+      snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/super-run/var/queue", EJUDGE_CONTESTS_HOME_DIR);
+    }
+    queue_dir = run_queue_dir;
+  } else {
+    queue_dir = global->run_queue_dir;
+  }
+  ns_scan_run_queue(queue_dir, cnts->id, &vec);
+
+  l10n_setlocale(phr->locale_id);
+  title = _("Testing queue");
+%><%@include "priv_header.csp"
+%>
+<table class="b0"><tr>
+<td class="b0"><s:a ac="main-page"><s:tr>Main page</s:tr></s:a></td>
+<td class="b0"><s:a ac="view-testing-queue"><s:tr>Refresh</s:tr></s:a></td>
+</tr></table>
+
+<s:form>
+<table class="b1">
+    <tr>
+        <th class="b1">NN</th>
+        <th class="b1">ContestId</th>
+        <th class="b1"><s:tr>Packet name</s:tr></th>
+        <th class="b1"><s:tr>Priority</s:tr></th>
+        <th class="b1">RunId</th>
+        <th class="b1"><s:tr>Problem</s:tr></th>
+        <th class="b1"><s:tr>User</s:tr></th>
+        <th class="b1"><s:tr>Architecture</s:tr></th>
+        <th class="b1">JudgeId</th>
+        <th class="b1"><s:tr>Create time</s:tr></th>
+        <th class="b1"><s:tr>Actions</s:tr></th>
+    </tr>
+<%  for (i = 0; i < vec.u; ++i) {
+    const struct super_run_in_global_packet *srgp = vec.v[i].packet->global;
+    const struct super_run_in_problem_packet *srpp = vec.v[i].packet->problem;
+
+    arch = srgp->arch;
+    if (!arch) arch = "";
+%>
+    <tr>
+        <td class="b1"><s:v value="i + 1" /></td>
+        <td class="b1"><s:v value="srgp->contest_id" /></td>
+        <td class="b1"><s:v escape="false" value="vec.v[i].entry_name" /></td>
+        <td class="b1"><s:v value="vec.v[i].priority" /></td>
+        <td class="b1"><s:v value="srgp->run_id" /></td>
+<%    if (srgp->contest_id == cnts->id) { %>
+        <td class="b1"><%
+      prob_id = srpp->id;
+      if (prob_id > 0 && prob_id <= cs->max_prob && cs->probs[prob_id]) {
+%><s:v value="cs->probs[prob_id]->short_name" escape="false" /><%
+      } else {
+%>Problem <s:v value="prob_id" /><%
+      }
+%></td>
+<%      user_id = srgp->user_id; %>
+        <td class="b1"><s:v value="teamdb_get_name_2(cs->teamdb_state, user_id)" /></td>
+<%    } else { %>
+        <td class="b1"><%
+      if (srpp->short_name && srpp->short_name[0]) {
+%><s:v value="srpp->short_name" /><%
+      } else {
+%>Problem <s:v value="srpp->id" /><%
+      }
+%></td>
+        <td class="b1"><%
+      if (srgp->user_name && srgp->user_name[0]) {
+%><s:v value="srgp->user_name" /><%
+      } else if (srgp->user_login && srgp->user_login[0]) {
+%><s:v value="srgp->user_login" /><%
+      } else {
+%>User <s:v value="srgp->user_id" /><%
+      }
+%></td>
+<%    } %>
+        <td class="b1"><s:v value="arch" /></td>
+        <td class="b1"><s:v value="srgp->judge_id" /></td>
+        <td class="b1"><s:v value="vec.v[i].mtime" /></td>
+        <td class="b1"><%
+%><s:url name="DeleteUrl" ac="testing-delete"><s:param name="packet" value="vec.v[i].entry_name" /></s:url><%
+%><s:url name="UpUrl" ac="testing-up"><s:param name="packet" value="vec.v[i].entry_name" /></s:url><%
+%><s:url name="DownUrl" ac="testing-down"><s:param name="packet" value="vec.v[i].entry_name" /></s:url><%
+%><s:a url="DeleteUrl">X</s:a><%
+%>&nbsp;&nbsp;<s:a url="UpUrl">Up</s:a><%
+%>&nbsp;&nbsp;<s:a url="DownUrl">Down</s:a><%
+%></td>
+    </tr>
+<%  } %>
+</table>
+</s:form>
+
+<table class="b0"><tr>
+<td class="b0"><s:a ac="main-page"><s:tr>Main page</s:tr></s:a></td>
+<td class="b0"><s:a ac="testing-delete-all"><s:tr>Delete all</s:tr></s:a></td>
+<td class="b0"><s:a ac="testing-up-all"><s:tr>Up all</s:tr></s:a></td>
+<td class="b0"><s:a ac="testing-down-all"><s:tr>Down all</s:tr></s:a></td>
+</tr></table>
+
+<%@include "priv_footer.csp"
+%><%
+  l10n_setlocale(0);
+cleanup:
+  for (i = 0; i < vec.u; ++i) {
+    xfree(vec.v[i].entry_name);
+    super_run_in_packet_free(vec.v[i].packet);
+  }
+  xfree(vec.v); vec.v = 0;
+  vec.a = vec.u = 0;
+  html_armor_free(&ab);
+%>

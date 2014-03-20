@@ -47,12 +47,15 @@ SOFILES = \
  priv_new_run_page.so\
  priv_online_users_page.so\
  priv_passwords_page.so\
- priv_priv_users_page.so\
  priv_priorities_page.so\
+ priv_priv_users_page.so\
+ priv_report_page.so\
  priv_settings_page.so\
  priv_source_page.so\
  priv_standings_page.so\
  priv_submit_page.so\
+ priv_testing_queue_page.so\
+ priv_upsolving_page.so\
  priv_user_ips_page.so\
  priv_user_info_page.so\
  priv_users_page.so
@@ -94,10 +97,13 @@ priv_online_users_page.c : priv_online_users_page.csp priv_includes.csp priv_std
 priv_passwords_page.c : priv_passwords_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 priv_priorities_page.c : priv_priorities_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 priv_priv_users_page.c : priv_priv_users_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
+priv_report_page.c : priv_report_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 priv_settings_page.c : priv_settings_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 priv_source_page.c : priv_source_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 priv_standings_page.c : priv_standings_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 priv_submit_page.c : priv_submit_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
+priv_testing_queue_page.c : priv_testing_queue_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
+priv_upsolving_page.c : priv_upsolving_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 priv_user_ips_page.c : priv_user_ips_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 priv_user_info_page.c : priv_user_info_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 priv_users_page.c : priv_users_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp

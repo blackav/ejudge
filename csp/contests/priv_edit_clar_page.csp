@@ -17,7 +17,6 @@
   int clar_id = 0;
   unsigned char title[1024];
   int n;
-  const unsigned char *sep = NULL;
 
   if (ns_cgi_param(phr, "clar_id", &s) <= 0
       || sscanf(s, "%d%n", &clar_id, &n) != 1 || s[n]
