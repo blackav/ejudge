@@ -7206,7 +7206,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_SUBMIT_RUN_BATCH] = priv_generic_page,
 };
 
-static const unsigned char * const external_action_names[NEW_SRV_ACTION_LAST] =
+static const unsigned char * const external_priv_action_names[NEW_SRV_ACTION_LAST] =
 {
   [NEW_SRV_ACTION_MAIN_PAGE] = "priv_main_page",
   [NEW_SRV_ACTION_VIEW_USERS] = "priv_users_page",
@@ -7236,7 +7236,13 @@ static const unsigned char * const external_action_names[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_TESTING_QUEUE] = "priv_testing_queue_page",
 };
 
-static ExternalActionState *external_action_states[NEW_SRV_ACTION_LAST];
+static const unsigned char * const external_priv_error_names[NEW_SRV_ERR_LAST] =
+{
+  [NEW_SRV_ERR_UNKNOWN_ERROR] = "priv_error_unknown",
+};
+
+static ExternalActionState *external_priv_action_states[NEW_SRV_ACTION_LAST];
+static ExternalActionState *external_priv_error_states[NEW_SRV_ERR_LAST];
 
 static unsigned char *
 read_file_range(
@@ -7266,6 +7272,44 @@ read_file_range(
 }
 
 static void
+error_page(
+        FILE *out_f,
+        struct http_request_info *phr,
+        int priv_mode,
+        int error_code)
+{
+  if (phr->log_t && !*phr->log_t) {
+    xfree(phr->log_t); phr->log_t = NULL; phr->log_z = 0;
+  }
+
+  if (error_code < 0) error_code = -error_code;
+  if (error_code <= 0 || error_code >= NEW_SRV_ERR_LAST) error_code = NEW_SRV_ERR_UNKNOWN_ERROR;
+  phr->error_code = error_code;
+
+  // FIXME: consider priv_mode
+  const unsigned char *error_name = external_priv_error_names[error_code];
+  if (!error_name) error_name = external_priv_error_names[NEW_SRV_ERR_UNKNOWN_ERROR];
+  if (!error_name) {
+    return ns_html_error(out_f, phr, priv_mode, error_code);
+  }
+  external_priv_error_states[error_code] = external_action_load(external_priv_error_states[error_code],
+                                                                "csp/contests",
+                                                                error_name,
+                                                                "csp_get_");
+  if (!external_priv_error_states[error_code]) {
+    return ns_html_error(out_f, phr, priv_mode, error_code);
+  }
+  PageInterface *pg = ((external_action_handler_t) external_priv_error_states[error_code]->action_handler)();
+  if (!pg) {
+    return ns_html_error(out_f, phr, priv_mode, error_code);
+  }
+
+  pg->ops->render(pg, NULL, out_f, phr);
+  xfree(phr->log_t); phr->log_t = NULL;
+  phr->log_z = 0;
+}
+
+static void
 privileged_entry_point(
         FILE *fout,
         struct http_request_info *phr)
@@ -7287,9 +7331,14 @@ privileged_entry_point(
   if (!phr->session_id || phr->action == NEW_SRV_ACTION_LOGIN_PAGE)
     return privileged_page_login(fout, phr);
 
+  phr->log_f = open_memstream(&phr->log_t, &phr->log_z);
+
   // validate cookie
-  if (ns_open_ul_connection(phr->fw_state) < 0)
-    return ns_html_err_ul_server_down(fout, phr, 1, 0);
+  if (ns_open_ul_connection(phr->fw_state) < 0) {
+    error_page(fout, phr, 1, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
+    //ns_html_err_ul_server_down(fout, phr, 1, 0);
+    goto cleanup;
+  }
   if ((r = userlist_clnt_get_cookie(ul_conn, ULS_PRIV_GET_COOKIE,
                                     &phr->ip, phr->ssl_flag,
                                     phr->session_id,
@@ -7299,22 +7348,41 @@ privileged_entry_point(
                                     &phr->login, &phr->name)) < 0) {
     switch (-r) {
     case ULS_ERR_NO_COOKIE:
-      return ns_html_err_inv_session(fout, phr, 1,
-                                     "priv_login failed: %s",
-                                     userlist_strerror(-r));
+      fprintf(phr->log_f, "priv_get_cookie failed: %s\n", userlist_strerror(-r));
+      error_page(fout, phr, 1, NEW_SRV_ERR_INV_SESSION);
+      /*
+      ns_html_err_inv_session(fout, phr, 1,
+                              "priv_login failed: %s",
+                              userlist_strerror(-r));
+      */
+      goto cleanup;
     case ULS_ERR_DISCONNECT:
-      return ns_html_err_ul_server_down(fout, phr, 1, 0);
+      error_page(fout, phr, 1, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
+      //ns_html_err_ul_server_down(fout, phr, 1, 0);
+      goto cleanup;
     default:
-      return ns_html_err_internal_error(fout, phr, 1, "priv_login failed: %s",
-                                        userlist_strerror(-r));
+      fprintf(phr->log_f, "priv_get_cookie failed: %s\n", userlist_strerror(-r));
+      error_page(fout, phr, 1, NEW_SRV_ERR_INTERNAL);
+      /*
+      ns_html_err_internal_error(fout, phr, 1, "priv_login failed: %s",
+                                 userlist_strerror(-r));
+      */
+      goto cleanup;
     }
   }
 
-  if (phr->contest_id < 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts)
-    return ns_html_err_no_perm(fout, phr, 1, "invalid contest_id %d",
-                               phr->contest_id);
-  if (!cnts->managed)
-    return ns_html_err_inv_param(fout, phr, 1, "contest is not managed");
+  if (phr->contest_id < 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts) {
+    fprintf(phr->log_f, "invalid contest_id %d", phr->contest_id);
+    error_page(fout, phr, 1, NEW_SRV_ERR_INV_CONTEST_ID);
+    // ns_html_err_no_perm(fout, phr, 1, "invalid contest_id %d", phr->contest_id);
+    goto cleanup;
+  }
+  if (!cnts->managed) {
+    fprintf(phr->log_f, "contest is not managed");
+    error_page(fout, phr, 1, NEW_SRV_ERR_INV_CONTEST_ID);
+    //ns_html_err_inv_param(fout, phr, 1, "contest is not managed");
+    goto cleanup;
+  }
   extra = ns_get_contest_extra(phr->contest_id);
   ASSERT(extra);
 
@@ -7324,32 +7392,67 @@ privileged_entry_point(
   // analyze IP limitations
   if (phr->role == USER_ROLE_ADMIN) {
     // as for the master program
-    if (!contests_check_master_ip(phr->contest_id, &phr->ip, phr->ssl_flag))
-      return ns_html_err_no_perm(fout, phr, 1, "%s://%s is not allowed for MASTER for contest %d", ns_ssl_flag_str[phr->ssl_flag],
-                                 xml_unparse_ipv6(&phr->ip), phr->contest_id);
+    if (!contests_check_master_ip(phr->contest_id, &phr->ip, phr->ssl_flag)) {
+      fprintf(phr->log_f, "%s://%s is not allowed for MASTER for contest %d",
+              ns_ssl_flag_str[phr->ssl_flag],
+              xml_unparse_ipv6(&phr->ip), phr->contest_id);
+      error_page(fout, phr, 1, NEW_SRV_ERR_PERMISSION_DENIED);
+      /*
+      ns_html_err_no_perm(fout, phr, 1, "%s://%s is not allowed for MASTER for contest %d", ns_ssl_flag_str[phr->ssl_flag],
+                          xml_unparse_ipv6(&phr->ip), phr->contest_id);
+      */
+      goto cleanup;
+    }
   } else {
     // as for judge program
-    if (!contests_check_judge_ip(phr->contest_id, &phr->ip, phr->ssl_flag))
-      return ns_html_err_no_perm(fout, phr, 1, "%s://%s is not allowed for MASTER for contest %d", ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ipv6(&phr->ip), phr->contest_id);
+    if (!contests_check_judge_ip(phr->contest_id, &phr->ip, phr->ssl_flag)) {
+      fprintf(phr->log_f, "%s://%s is not allowed for JUDGE for contest %d",
+              ns_ssl_flag_str[phr->ssl_flag],
+              xml_unparse_ipv6(&phr->ip), phr->contest_id);
+      error_page(fout, phr, 1, NEW_SRV_ERR_PERMISSION_DENIED);
+      /*
+      ns_html_err_no_perm(fout, phr, 1, "%s://%s is not allowed for MASTER for contest %d", ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ipv6(&phr->ip), phr->contest_id);
+      */
+      goto cleanup;
+    }
   }
 
   // analyze permissions
-  if (phr->role <= 0 || phr->role >= USER_ROLE_LAST)
-    return ns_html_err_no_perm(fout, phr, 1, "invalid role %d", phr->role);
+  if (phr->role <= 0 || phr->role >= USER_ROLE_LAST) {
+    fprintf(phr->log_f, "invalid role %d", phr->role);
+    error_page(fout, phr, 1, NEW_SRV_ERR_PERMISSION_DENIED);
+    //ns_html_err_no_perm(fout, phr, 1, "invalid role %d", phr->role);
+    goto cleanup;
+  }
   if (phr->role == USER_ROLE_ADMIN) {
     // as for the master program
     if (opcaps_find(&cnts->capabilities, phr->login, &caps) < 0
-        || opcaps_check(caps, OPCAP_MASTER_LOGIN) < 0)
-      return ns_html_err_no_perm(fout, phr, 1, "user %s does not have MASTER_LOGIN bit for contest %d", phr->login, phr->contest_id);
+        || opcaps_check(caps, OPCAP_MASTER_LOGIN) < 0) {
+      fprintf(phr->log_f, "user %s does not have MASTER_LOGIN bit for contest %d",
+              phr->login, phr->contest_id);
+      error_page(fout, phr, 1, NEW_SRV_ERR_PERMISSION_DENIED);
+      //ns_html_err_no_perm(fout, phr, 1, "user %s does not have MASTER_LOGIN bit for contest %d", phr->login, phr->contest_id);
+      goto cleanup;
+    }
   } else if (phr->role == USER_ROLE_JUDGE) {
     // as for the judge program
     if (opcaps_find(&cnts->capabilities, phr->login, &caps) < 0
-        || opcaps_check(caps, OPCAP_JUDGE_LOGIN) < 0)
-      return ns_html_err_no_perm(fout, phr, 1, "user %s does not have JUDGE_LOGIN bit for contest %d", phr->login, phr->contest_id);
+        || opcaps_check(caps, OPCAP_JUDGE_LOGIN) < 0) {
+      fprintf(phr->log_f, "user %s does not have JUDGE_LOGIN bit for contest %d",
+              phr->login, phr->contest_id);
+      error_page(fout, phr, 1, NEW_SRV_ERR_PERMISSION_DENIED);
+      //ns_html_err_no_perm(fout, phr, 1, "user %s does not have JUDGE_LOGIN bit for contest %d", phr->login, phr->contest_id);
+      goto cleanup;
+    }
   } else {
     // user privileges checked locally
-    if (nsdb_check_role(phr->user_id, phr->contest_id, phr->role) < 0)
-      return ns_html_err_no_perm(fout, phr, 1, "user %s has no permission to login as role %d for contest %d", phr->login, phr->role, phr->contest_id);
+    if (nsdb_check_role(phr->user_id, phr->contest_id, phr->role) < 0) {
+      fprintf(phr->log_f, "user %s has no permission to login as role %d for contest %d",
+              phr->login, phr->role, phr->contest_id);
+      error_page(fout, phr, 1, NEW_SRV_ERR_PERMISSION_DENIED);
+      //ns_html_err_no_perm(fout, phr, 1, "user %s has no permission to login as role %d for contest %d", phr->login, phr->role, phr->contest_id);
+      goto cleanup;
+    }
   }
 
   if (ejudge_config->new_server_log && ejudge_config->new_server_log[0]) {
@@ -7409,7 +7512,7 @@ privileged_entry_point(
     }
     ns_html_err_cnts_unavailable(fout, phr, 0, msg, 0);
     xfree(msg);
-    return;
+    goto cleanup;
   }
 
   extra->serve_state->current_time = time(0);
@@ -7418,38 +7521,34 @@ privileged_entry_point(
   if (phr->action <= 0 || phr->action >= NEW_SRV_ACTION_LAST) {
     phr->action = NEW_SRV_ACTION_MAIN_PAGE;
   }
-  if (!external_action_names[phr->action] && !actions_table[phr->action]) {
+  if (!external_priv_action_names[phr->action] && !actions_table[phr->action]) {
     phr->action = NEW_SRV_ACTION_MAIN_PAGE;
   }
 
-  if (external_action_names[phr->action]) {
-    external_action_states[phr->action] = external_action_load(external_action_states[phr->action],
-                                                               "csp/contests",
-                                                               external_action_names[phr->action],
-                                                               "csp_get_");
+  if (external_priv_action_names[phr->action]) {
+    external_priv_action_states[phr->action] = external_action_load(external_priv_action_states[phr->action],
+                                                                    "csp/contests",
+                                                                    external_priv_action_names[phr->action],
+                                                                    "csp_get_");
   }
 
-  if (external_action_states[phr->action] && external_action_states[phr->action]->action_handler) {
-    FILE *log_f = 0;
-    char *log_txt = 0;
-    size_t log_len = 0;
-
-    log_f = open_memstream(&log_txt, &log_len);
-    PageInterface *pg = ((external_action_handler_t) external_action_states[phr->action]->action_handler)();
+  if (external_priv_action_states[phr->action] && external_priv_action_states[phr->action]->action_handler) {
+    PageInterface *pg = ((external_action_handler_t) external_priv_action_states[phr->action]->action_handler)();
 
     if (pg->ops->execute) {
-      int r = pg->ops->execute(pg, log_f, phr);
+      int r = pg->ops->execute(pg, phr->log_f, phr);
       if (r < 0) {
-        // FIXME: handle error
+        error_page(fout, phr, 1, -r);
+        goto cleanup;
       }
     }
 
     if (pg->ops->render) {
-      // default value
       snprintf(phr->content_type, sizeof(phr->content_type), "text/html; charset=%s", EJUDGE_CHARSET);
-      int r = pg->ops->render(pg, log_f, fout, phr);
+      int r = pg->ops->render(pg, phr->log_f, fout, phr);
       if (r < 0) {
-        // FIXME: handle error
+        error_page(fout, phr, 1, -r);
+        goto cleanup;
       }
     }
 
@@ -7458,26 +7557,15 @@ privileged_entry_point(
       pg = NULL;
     }
 
-    /*
-    int r = ((new_action_handler_t) external_action_states[phr->action]->action_handler)(NULL, log_f, fout, phr);
-    if (r == -1) {
-      close_memstream(log_f); log_f = NULL;
-      xfree(log_txt); log_txt = NULL; log_len = 0;
-      return;
-    }
-*/
-
-    if (r < 0) {
-      ns_error(log_f, r);
-      r = 0;
-    }
     if (!r) r = ns_priv_prev_state[phr->action];
 
-    close_memstream(log_f); log_f = 0;
-    if (log_txt && *log_txt) {
-      html_error_status_page(fout, phr, cnts, extra, log_txt, r, 0);
+    close_memstream(phr->log_f); phr->log_f = 0;
+    /*
+    if (phr->log_t && *phr->log_t) {
+      html_error_status_page(fout, phr, cnts, extra, phr->log_t, r, 0);
     }
-    xfree(log_txt);
+    */
+    xfree(phr->log_t); phr->log_t = NULL;
     return;
   }
 
@@ -7487,6 +7575,13 @@ privileged_entry_point(
   } else {
     html_error_status_page(fout, phr, cnts, extra, "action is undefined", 0, 0);
   }
+
+cleanup:
+  if (phr->log_f) fclose(phr->log_f);
+  free(phr->log_t);
+  phr->log_f = NULL;
+  phr->log_t = NULL;
+  phr->log_z = 0;
 }
 
 static void
