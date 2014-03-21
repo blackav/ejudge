@@ -43,10 +43,7 @@ static const unsigned char csp_str15[18] = "\n</body>\n</html>\n";
 #include <libintl.h>
 #define _(x) gettext(x)
 
-#line 5 "priv_login_page.csp"
-void
-html_role_select(FILE *fout, int role, int allow_admin,
-                 const unsigned char *var_name);
+#define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
 int csp_view_priv_login_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr);
 static PageInterfaceOps page_ops =
 {
@@ -76,7 +73,7 @@ int retval __attribute__((unused)) = 0;
   unsigned char hbuf[1024] __attribute__((unused));
   const unsigned char *sep __attribute__((unused)) = NULL;
 
-#line 14 "priv_login_page.csp"
+#line 10 "priv_login_page.csp"
 const unsigned char *s;
   int r, n;
   const unsigned char *login = NULL;
@@ -84,7 +81,7 @@ const unsigned char *s;
   int contest_id = phr->contest_id;
   const unsigned char *title = _("Login page");
 
-#line 21 "priv_login_page.csp"
+#line 17 "priv_login_page.csp"
 ns_cgi_param(phr, "login", &login);
   ns_cgi_param(phr, "password", &password);
 
@@ -164,13 +161,13 @@ fwrite(csp_str11, 1, 19, out_f);
 fputs(_("Role"), out_f);
 fwrite(csp_str10, 1, 10, out_f);
 
-#line 41 "priv_login_page.csp"
+#line 37 "priv_login_page.csp"
 html_role_select(out_f, phr->role, 1, 0);
 fwrite(csp_str11, 1, 19, out_f);
 fputs(_("Language"), out_f);
 fwrite(csp_str10, 1, 10, out_f);
 
-#line 42 "priv_login_page.csp"
+#line 38 "priv_login_page.csp"
 l10n_html_locale_select(out_f, phr->locale_id);
 fwrite(csp_str12, 1, 34, out_f);
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_MAIN_PAGE, _("Submit")), out_f);
@@ -180,7 +177,7 @@ fwrite(csp_str14, 1, 6, out_f);
 write_copyright_short(out_f);
 fwrite(csp_str15, 1, 17, out_f);
 
-#line 47 "priv_login_page.csp"
+#line 43 "priv_login_page.csp"
 l10n_setlocale(0);
   html_armor_free(&ab);
   return 0;

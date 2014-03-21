@@ -9,21 +9,15 @@ static const unsigned char csp_str5[3] = ", ";
 static const unsigned char csp_str6[4] = "]: ";
 static const unsigned char csp_str7[29] = "</title>\n</head>\n<body>\n<h1>";
 static const unsigned char csp_str8[7] = "</h1>\n";
-static const unsigned char csp_str9[83] = "<table class=\"b1\">\n    <tr>\n        <th class=\"b1\">NN</th>\n        <th class=\"b1\">";
-static const unsigned char csp_str10[30] = "</th>\n        <th class=\"b1\">";
-static const unsigned char csp_str11[17] = "</th>\n    </tr>\n";
-static const unsigned char csp_str12[34] = "\n    <tr>\n        <td class=\"b1\">";
-static const unsigned char csp_str13[30] = "</td>\n        <td class=\"b1\">";
-static const unsigned char csp_str14[2] = " ";
-static const unsigned char csp_str15[3] = " (";
-static const unsigned char csp_str16[2] = ")";
-static const unsigned char csp_str17[17] = "</td>\n    </tr>\n";
-static const unsigned char csp_str18[11] = "\n</table>\n";
-static const unsigned char csp_str19[7] = "<hr/>\n";
-static const unsigned char csp_str20[18] = "\n</body>\n</html>\n";
+static const unsigned char csp_str9[2] = "\n";
+static const unsigned char csp_str10[5] = "\n<p>";
+static const unsigned char csp_str11[29] = "</p>\n<font color=\"red\"><pre>";
+static const unsigned char csp_str12[15] = "</pre></font>\n";
+static const unsigned char csp_str13[7] = "<hr/>\n";
+static const unsigned char csp_str14[18] = "\n</body>\n</html>\n";
 
 
-#line 2 "priv_ip_users_page.csp"
+#line 2 "priv_error_unknown.csp"
 /* $Id$ */
 
 #line 2 "priv_includes.csp"
@@ -49,7 +43,24 @@ static const unsigned char csp_str20[18] = "\n</body>\n</html>\n";
 #define _(x) gettext(x)
 
 #define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
-int csp_view_priv_ip_users_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+int csp_view_priv_error_unknown(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr);
+static PageInterfaceOps page_ops =
+{
+    NULL, // destroy
+    NULL, // execute
+    csp_view_priv_error_unknown, // render
+};
+static PageInterface page_iface =
+{
+    &page_ops,
+};
+PageInterface *
+csp_get_priv_error_unknown(void)
+{
+    return &page_iface;
+}
+
+int csp_view_priv_error_unknown(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 {
 
 #line 2 "priv_stdvars.csp"
@@ -61,16 +72,13 @@ int retval __attribute__((unused)) = 0;
   unsigned char hbuf[1024] __attribute__((unused));
   const unsigned char *sep __attribute__((unused)) = NULL;
 
-#line 8 "priv_ip_users_page.csp"
-PrivViewIPUsersPage *pp = (PrivViewIPUsersPage*) pg;
-    int i, j, serial = 0;
-    const unsigned char *title = NULL;
-    struct teamdb_export td;
+#line 9 "priv_error_unknown.csp"
+unsigned char title[1024];
+  const unsigned char *error_title = NULL;
 
-    if (phr->role < USER_ROLE_JUDGE) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
-
-    l10n_setlocale(phr->locale_id);
-    title = _("Users for IP addresses");
+  l10n_setlocale(phr->locale_id);
+  error_title = ns_error_title(phr->error_code);
+  snprintf(title, sizeof(title), "%s: %s", _("Error"), error_title);
 fwrite(csp_str0, 1, 183, out_f);
 fwrite("utf-8", 1, 5, out_f);
 fwrite(csp_str1, 1, 34, out_f);
@@ -98,54 +106,25 @@ fputs((extra->contest_arm), out_f);
 fwrite(csp_str6, 1, 3, out_f);
 fputs((title), out_f);
 fwrite(csp_str8, 1, 6, out_f);
-fwrite(csp_str9, 1, 82, out_f);
-fputs(_("IP address"), out_f);
-fwrite(csp_str10, 1, 29, out_f);
-fputs(_("Users"), out_f);
-fwrite(csp_str11, 1, 16, out_f);
+fwrite(csp_str9, 1, 1, out_f);
 
-#line 24 "priv_ip_users_page.csp"
-for (i = 0; i < pp->ips.u; ++i) {
-fwrite(csp_str12, 1, 33, out_f);
-fprintf(out_f, "%d", (int)(serial++));
-fwrite(csp_str13, 1, 29, out_f);
-fputs((pp->ips.v[i].ip_str), out_f);
-fwrite(csp_str13, 1, 29, out_f);
+#line 17 "priv_error_unknown.csp"
+if (phr->log_t && *phr->log_t) {
+fwrite(csp_str10, 1, 4, out_f);
+fputs(_("Additional information about this error:"), out_f);
+fwrite(csp_str11, 1, 28, out_f);
+fputs(html_armor_buf(&ab, (phr->log_t)), out_f);
+fwrite(csp_str12, 1, 14, out_f);
 
-#line 29 "priv_ip_users_page.csp"
-for (j = 0; j < pp->ips.v[i].uid_u; ++j) {
-      if (!teamdb_lookup(cs->teamdb_state, pp->ips.v[i].uids[j]))
-        continue;
-      if (teamdb_export_team(cs->teamdb_state, pp->ips.v[i].uids[j], &td) < 0)
-        continue;
-      if (j > 0) {
-fwrite(csp_str14, 1, 1, out_f);
-
-#line 34 "priv_ip_users_page.csp"
+#line 20 "priv_error_unknown.csp"
 }
-fputs(html_armor_buf(&ab, (td.login)), out_f);
-
-#line 35 "priv_ip_users_page.csp"
-if (td.name && *td.name) {
-fwrite(csp_str15, 1, 2, out_f);
-fputs(html_armor_buf(&ab, (td.name)), out_f);
-fwrite(csp_str16, 1, 1, out_f);
-
-#line 36 "priv_ip_users_page.csp"
-}
-    }
-fwrite(csp_str17, 1, 16, out_f);
-
-#line 39 "priv_ip_users_page.csp"
-}
-fwrite(csp_str18, 1, 10, out_f);
-fwrite(csp_str19, 1, 6, out_f);
+fwrite(csp_str9, 1, 1, out_f);
+fwrite(csp_str13, 1, 6, out_f);
 write_copyright_short(out_f);
-fwrite(csp_str20, 1, 17, out_f);
+fwrite(csp_str14, 1, 17, out_f);
 
-#line 43 "priv_ip_users_page.csp"
+#line 23 "priv_error_unknown.csp"
 l10n_setlocale(0);
-cleanup:
   html_armor_free(&ab);
   return 0;
 }

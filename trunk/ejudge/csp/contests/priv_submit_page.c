@@ -71,9 +71,9 @@ static const unsigned char csp_str43[18] = "\n</body>\n</html>\n";
 #include <libintl.h>
 #define _(x) gettext(x)
 
-#line 5 "priv_submit_page.csp"
 #define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
 
+#line 5 "priv_submit_page.csp"
 void
 ns_unparse_statement(
         FILE *fout,
@@ -130,7 +130,7 @@ int retval __attribute__((unused)) = 0;
   unsigned char hbuf[1024] __attribute__((unused));
   const unsigned char *sep __attribute__((unused)) = NULL;
 
-#line 40 "priv_submit_page.csp"
+#line 37 "priv_submit_page.csp"
 const struct section_problem_data *prob = 0;
   int prob_id = 0, variant = 0, i;
   problem_xml_t px = 0;
@@ -140,32 +140,26 @@ const struct section_problem_data *prob = 0;
   unsigned char title[1024];
 
   if (ns_cgi_param_int_opt(phr, "problem", &prob_id, 0) < 0) {
-    fprintf(log_f, "Invalid problem.\n");
-    goto cleanup;
+    FAIL(NEW_SRV_ERR_INV_RUN_ID);
   }
   if (prob_id < 0 || prob_id > cs->max_prob) {
-    fprintf(log_f, "Invalid problem.\n");
-    goto cleanup;
+    FAIL(NEW_SRV_ERR_INV_PROB_ID);
   }
   if (prob_id > 0 && !(prob = cs->probs[prob_id])) {
-    fprintf(log_f, "Invalid problem.\n");
-    goto cleanup;
+    FAIL(NEW_SRV_ERR_INV_PROB_ID);
   }
   if (ns_cgi_param_int_opt(phr, "variant", &variant, 0) < 0) {
-    fprintf(log_f, "Invalid variant.\n");
-    goto cleanup;
+    FAIL(NEW_SRV_ERR_INV_VARIANT);
   }
   if (!prob) variant = 0;
   if (prob && prob->variant_num <= 0) variant = 0;
   if (variant < 0
       || (prob && prob->variant_num <= 0 && variant > 0)
       || (prob && prob->variant_num > 0 && variant > prob->variant_num)) {
-    fprintf(log_f, "Invalid variant.\n");
-    goto cleanup;
+    FAIL(NEW_SRV_ERR_INV_VARIANT);
   }
   if (opcaps_check(phr->caps, OPCAP_SUBMIT_RUN) < 0) {
-    fprintf(log_f, "Permission denied.\n");
-    goto cleanup;
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   }
 
   l10n_setlocale(phr->locale_id);
@@ -205,7 +199,7 @@ fputs((title), out_f);
 fwrite(csp_str8, 1, 6, out_f);
 fwrite(csp_str9, 1, 1, out_f);
 
-#line 87 "priv_submit_page.csp"
+#line 78 "priv_submit_page.csp"
 if (prob) {
 fwrite(csp_str10, 1, 5, out_f);
 fputs(_("Problem"), out_f);
@@ -215,7 +209,7 @@ fwrite(csp_str12, 1, 2, out_f);
 fputs(html_armor_buf(&ab, (prob->long_name)), out_f);
 fwrite(csp_str13, 1, 6, out_f);
 
-#line 89 "priv_submit_page.csp"
+#line 80 "priv_submit_page.csp"
 }
 fwrite(csp_str14, 1, 2, out_f);
 fputs("<form method=\"post\" enctype=\"multipart/form-data\" action=\"", out_f);
@@ -228,7 +222,7 @@ fwrite(csp_str16, 1, 21, out_f);
 fputs("<select name=\"problem\"", out_f);
 fputs(">", out_f);
 
-#line 95 "priv_submit_page.csp"
+#line 86 "priv_submit_page.csp"
 for (i = 1; i <= cs->max_prob; i++) {
     if (!(cs->probs[i])) continue;
 fputs("<option", out_f);
@@ -244,14 +238,14 @@ fwrite(csp_str17, 1, 3, out_f);
 fputs(html_armor_buf(&ab, (cs->probs[i]->long_name)), out_f);
 fputs("</option>", out_f);
 
-#line 98 "priv_submit_page.csp"
+#line 89 "priv_submit_page.csp"
 }
 fputs("</select>", out_f);
 fwrite(csp_str18, 1, 20, out_f);
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_PRIV_SUBMIT_PAGE, NULL), out_f);
 fwrite(csp_str19, 1, 11, out_f);
 
-#line 100 "priv_submit_page.csp"
+#line 91 "priv_submit_page.csp"
 if (prob && prob->variant_num > 0) {
 fwrite(csp_str20, 1, 20, out_f);
 fputs(_("Variant"), out_f);
@@ -259,7 +253,7 @@ fwrite(csp_str16, 1, 21, out_f);
 fputs("<select name=\"variant\"", out_f);
 fputs(">", out_f);
 
-#line 102 "priv_submit_page.csp"
+#line 93 "priv_submit_page.csp"
 for (i = 0; i <= prob->variant_num; i++) {
 fputs("<option", out_f);
 if (i == variant) {
@@ -274,18 +268,18 @@ fprintf(out_f, "%d", (int)(i));
 }
 fputs("</option>", out_f);
 
-#line 104 "priv_submit_page.csp"
+#line 95 "priv_submit_page.csp"
 }
 fputs("</select>", out_f);
 fwrite(csp_str18, 1, 20, out_f);
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_PRIV_SUBMIT_PAGE, _("Select variant")), out_f);
 fwrite(csp_str21, 1, 12, out_f);
 
-#line 107 "priv_submit_page.csp"
+#line 98 "priv_submit_page.csp"
 }
 fwrite(csp_str22, 1, 10, out_f);
 
-#line 110 "priv_submit_page.csp"
+#line 101 "priv_submit_page.csp"
 /* output the problem statement */
   px = 0; pw = 0; pw_path = 0;
   if (prob && prob->variant_num > 0 && variant > 0 && prob->xml.a
@@ -315,14 +309,14 @@ fwrite(csp_str23, 1, 26, out_f);
 fputs(_("The problem statement is not available"), out_f);
 fwrite(csp_str24, 1, 17, out_f);
 
-#line 136 "priv_submit_page.csp"
+#line 127 "priv_submit_page.csp"
 } else {
       fprintf(out_f, "%s", pw->text);
     }
   }
 fwrite(csp_str25, 1, 22, out_f);
 
-#line 144 "priv_submit_page.csp"
+#line 135 "priv_submit_page.csp"
 if (!prob || !prob->type) {
 fwrite(csp_str26, 1, 21, out_f);
 fputs(_("Language"), out_f);
@@ -331,7 +325,7 @@ fputs("<select name=\"lang_id\"", out_f);
 fputs(">", out_f);
 fwrite(csp_str27, 1, 26, out_f);
 
-#line 147 "priv_submit_page.csp"
+#line 138 "priv_submit_page.csp"
 for (i = 1; i <= cs->max_lang; i++) {
       if (cs->langs[i]) {
 fputs("<option", out_f);
@@ -344,13 +338,13 @@ fwrite(csp_str17, 1, 3, out_f);
 fputs(html_armor_buf(&ab, (cs->langs[i]->long_name)), out_f);
 fputs("</option>", out_f);
 
-#line 150 "priv_submit_page.csp"
+#line 141 "priv_submit_page.csp"
 }
     }
 fputs("</select>", out_f);
 fwrite(csp_str28, 1, 12, out_f);
 
-#line 154 "priv_submit_page.csp"
+#line 145 "priv_submit_page.csp"
 if (cs->global->enable_eoln_select > 0) {
 fwrite(csp_str20, 1, 20, out_f);
 fputs(_("EOLN Type"), out_f);
@@ -361,21 +355,21 @@ fwrite(csp_str29, 1, 118, out_f);
 fputs("</select>", out_f);
 fwrite(csp_str19, 1, 11, out_f);
 
-#line 160 "priv_submit_page.csp"
+#line 151 "priv_submit_page.csp"
 }
 fwrite(csp_str9, 1, 1, out_f);
 
-#line 161 "priv_submit_page.csp"
+#line 152 "priv_submit_page.csp"
 }
 fwrite(csp_str14, 1, 2, out_f);
 
-#line 163 "priv_submit_page.csp"
+#line 154 "priv_submit_page.csp"
 if (!prob /*|| !prob->type*/) {
 fwrite(csp_str30, 1, 19, out_f);
 fputs(_("File"), out_f);
 fwrite(csp_str31, 1, 63, out_f);
 
-#line 165 "priv_submit_page.csp"
+#line 156 "priv_submit_page.csp"
 } else {
     switch (prob->type) {
     case PROB_TYPE_STANDARD:
@@ -384,25 +378,25 @@ fwrite(csp_str31, 1, 63, out_f);
       if (prob->enable_text_form > 0) {
 fwrite(csp_str32, 1, 99, out_f);
 
-#line 172 "priv_submit_page.csp"
+#line 163 "priv_submit_page.csp"
 }
 fwrite(csp_str30, 1, 19, out_f);
 fputs(_("File"), out_f);
 fwrite(csp_str33, 1, 62, out_f);
 
-#line 174 "priv_submit_page.csp"
+#line 165 "priv_submit_page.csp"
 break;
     case PROB_TYPE_SHORT_ANSWER:
 fwrite(csp_str30, 1, 19, out_f);
 fputs(_("Answer"), out_f);
 fwrite(csp_str34, 1, 63, out_f);
 
-#line 177 "priv_submit_page.csp"
+#line 168 "priv_submit_page.csp"
 break;
     case PROB_TYPE_TEXT_ANSWER:
 fwrite(csp_str35, 1, 94, out_f);
 
-#line 180 "priv_submit_page.csp"
+#line 171 "priv_submit_page.csp"
 break;
     case PROB_TYPE_SELECT_ONE:
       if (px) {
@@ -425,7 +419,7 @@ fwrite(csp_str18, 1, 20, out_f);
 fputs((prob->alternative[i]), out_f);
 fwrite(csp_str36, 1, 10, out_f);
 
-#line 189 "priv_submit_page.csp"
+#line 180 "priv_submit_page.csp"
 }
       }
       break;
@@ -440,7 +434,7 @@ fwrite(csp_str38, 1, 24, out_f);
 fputs(html_armor_buf(&ab, (prob->alternative[i])), out_f);
 fwrite(csp_str36, 1, 10, out_f);
 
-#line 196 "priv_submit_page.csp"
+#line 187 "priv_submit_page.csp"
 }
       }
       break;
@@ -464,7 +458,7 @@ fwrite(csp_str42, 1, 6, out_f);
 write_copyright_short(out_f);
 fwrite(csp_str43, 1, 17, out_f);
 
-#line 214 "priv_submit_page.csp"
+#line 205 "priv_submit_page.csp"
 l10n_setlocale(0);
 cleanup:
   html_armor_free(&ab);

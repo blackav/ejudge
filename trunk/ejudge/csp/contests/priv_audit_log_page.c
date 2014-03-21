@@ -48,22 +48,13 @@ static const unsigned char csp_str20[18] = "\n</body>\n</html>\n";
 #include <libintl.h>
 #define _(x) gettext(x)
 
+#define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
+
 #line 5 "priv_audit_log_page.csp"
 #include "fileutl.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
-
-#define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
-
-int
-ns_parse_run_id(
-        FILE *fout,
-        struct http_request_info *phr,
-        const struct contest_desc *cnts,
-        struct contest_extra *extra,
-        int *p_run_id,
-        struct run_entry *pe);
 int csp_view_priv_audit_log_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr);
 static PageInterfaceOps page_ops =
 {
@@ -93,7 +84,7 @@ int retval __attribute__((unused)) = 0;
   unsigned char hbuf[1024] __attribute__((unused));
   const unsigned char *sep __attribute__((unused)) = NULL;
 
-#line 25 "priv_audit_log_page.csp"
+#line 15 "priv_audit_log_page.csp"
 int run_id;
   struct run_entry re;
   int rep_flag;
@@ -103,31 +94,28 @@ int run_id;
   size_t audit_text_size = 0;
   unsigned char title[1024];
 
-  if (ns_parse_run_id(out_f, phr, cnts, extra, &run_id, 0) < 0) FAIL(1);
+  if (ns_parse_run_id(out_f, phr, cnts, extra, &run_id, 0) < 0) {
+    FAIL(NEW_SRV_ERR_INV_RUN_ID);
+  }
 
-  if (opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST) < 0)
+  if (opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST) < 0) {
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+  }
 
   if (run_id < 0 || run_id >= run_get_total(cs->runlog_state)
       || run_get_entry(cs->runlog_state, run_id, &re) < 0) {
-    ns_error(log_f, NEW_SRV_ERR_INV_RUN_ID);
-    goto cleanup;
+    FAIL(NEW_SRV_ERR_INV_RUN_ID);
   }
 
   if ((rep_flag = serve_make_audit_read_path(cs, audit_log_path, sizeof(audit_log_path), &re)) < 0) {
-    ns_error(log_f, NEW_SRV_ERR_AUDIT_LOG_NONEXISTANT);
-    goto cleanup;
+    FAIL(NEW_SRV_ERR_AUDIT_LOG_NONEXISTANT);
   }
-  if (lstat(audit_log_path, &stb) < 0
-      || !S_ISREG(stb.st_mode)) {
-    ns_error(log_f, NEW_SRV_ERR_AUDIT_LOG_NONEXISTANT);
-    goto cleanup;
+  if (lstat(audit_log_path, &stb) < 0 || !S_ISREG(stb.st_mode)) {
+    FAIL(NEW_SRV_ERR_AUDIT_LOG_NONEXISTANT);
   }
 
-  if (generic_read_file(&audit_text, 0, &audit_text_size, 0, 0, audit_log_path,
-                        0) < 0) {
-    ns_error(log_f, NEW_SRV_ERR_DISK_READ_ERROR);
-    goto cleanup;
+  if (generic_read_file(&audit_text, 0, &audit_text_size, 0, 0, audit_log_path, 0) < 0) {
+    FAIL(NEW_SRV_ERR_DISK_READ_ERROR);
   }
 
   l10n_setlocale(phr->locale_id);
@@ -213,26 +201,26 @@ fputs(_("Audit log"), out_f);
 fputs("</a>", out_f);
 fwrite(csp_str13, 1, 28, out_f);
 
-#line 88 "priv_audit_log_page.csp"
+#line 75 "priv_audit_log_page.csp"
 if (!audit_text || !*audit_text) {
 fwrite(csp_str14, 1, 7, out_f);
 fputs(_("Audit log is empty"), out_f);
 fwrite(csp_str15, 1, 9, out_f);
 
-#line 90 "priv_audit_log_page.csp"
+#line 77 "priv_audit_log_page.csp"
 } else {
 fwrite(csp_str16, 1, 6, out_f);
 fputs(html_armor_buf(&ab, (audit_text)), out_f);
 fwrite(csp_str17, 1, 7, out_f);
 
-#line 92 "priv_audit_log_page.csp"
+#line 79 "priv_audit_log_page.csp"
 }
 fwrite(csp_str18, 1, 2, out_f);
 fwrite(csp_str19, 1, 6, out_f);
 write_copyright_short(out_f);
 fwrite(csp_str20, 1, 17, out_f);
 
-#line 96 "priv_audit_log_page.csp"
+#line 83 "priv_audit_log_page.csp"
 l10n_setlocale(0);
 cleanup:
   html_armor_free(&ab);

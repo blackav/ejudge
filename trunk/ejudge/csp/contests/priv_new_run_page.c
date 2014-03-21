@@ -53,7 +53,6 @@ static const unsigned char csp_str25[18] = "\n</body>\n</html>\n";
 #include <libintl.h>
 #define _(x) gettext(x)
 
-#line 5 "priv_new_run_page.csp"
 #define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
 int csp_view_priv_new_run_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr);
 static PageInterfaceOps page_ops =
@@ -84,7 +83,7 @@ int retval __attribute__((unused)) = 0;
   unsigned char hbuf[1024] __attribute__((unused));
   const unsigned char *sep __attribute__((unused)) = NULL;
 
-#line 11 "priv_new_run_page.csp"
+#line 9 "priv_new_run_page.csp"
 int i;
     const unsigned char *title = NULL;
     const struct section_global_data *global = cs->global;
@@ -147,7 +146,7 @@ fputs("<select name=\"prob_id\"", out_f);
 fputs(">", out_f);
 fwrite(csp_str14, 1, 26, out_f);
 
-#line 31 "priv_new_run_page.csp"
+#line 29 "priv_new_run_page.csp"
 for (i = 1; i <= cs->max_prob; i++)
     if (cs->probs[i]) {
 fputs("<option", out_f);
@@ -160,7 +159,7 @@ fwrite(csp_str15, 1, 3, out_f);
 fputs(html_armor_buf(&ab, (cs->probs[i]->long_name)), out_f);
 fputs("</option>", out_f);
 
-#line 34 "priv_new_run_page.csp"
+#line 32 "priv_new_run_page.csp"
 }
 fputs("</select>", out_f);
 fwrite(csp_str13, 1, 19, out_f);
@@ -174,7 +173,7 @@ fputs("<select name=\"language\"", out_f);
 fputs(">", out_f);
 fwrite(csp_str14, 1, 26, out_f);
 
-#line 37 "priv_new_run_page.csp"
+#line 35 "priv_new_run_page.csp"
 for (i = 1; i <= cs->max_lang; i++)
     if (cs->langs[i]) {
 fputs("<option", out_f);
@@ -187,7 +186,7 @@ fwrite(csp_str15, 1, 3, out_f);
 fputs(html_armor_buf(&ab, (cs->langs[i]->long_name)), out_f);
 fputs("</option>", out_f);
 
-#line 38 "priv_new_run_page.csp"
+#line 36 "priv_new_run_page.csp"
 }
 fputs("</select>", out_f);
 fwrite(csp_str16, 1, 20, out_f);
@@ -239,11 +238,11 @@ fwrite(csp_str13, 1, 19, out_f);
 fputs(_("Status"), out_f);
 fwrite(csp_str17, 1, 6, out_f);
 
-#line 43 "priv_new_run_page.csp"
+#line 41 "priv_new_run_page.csp"
 write_change_status_dialog(cs, out_f, 0, 0, 0, -1, 0);
 fwrite(csp_str18, 1, 6, out_f);
 
-#line 44 "priv_new_run_page.csp"
+#line 42 "priv_new_run_page.csp"
 if (global->score_system == SCORE_KIROV
       || global->score_system == SCORE_OLYMPIAD) {
 fwrite(csp_str19, 1, 9, out_f);
@@ -256,7 +255,7 @@ fwrite(csp_str12, 1, 10, out_f);
 fputs("<input type=\"text\" name=\"score\" size=\"10\" />", out_f);
 fwrite(csp_str20, 1, 11, out_f);
 
-#line 48 "priv_new_run_page.csp"
+#line 46 "priv_new_run_page.csp"
 } else if (global->score_system == SCORE_MOSCOW) {
 fwrite(csp_str19, 1, 9, out_f);
 fputs(_("Failed test"), out_f);
@@ -268,7 +267,7 @@ fwrite(csp_str12, 1, 10, out_f);
 fputs("<input type=\"text\" name=\"score\" size=\"10\" />", out_f);
 fwrite(csp_str20, 1, 11, out_f);
 
-#line 51 "priv_new_run_page.csp"
+#line 49 "priv_new_run_page.csp"
 } else {
 fwrite(csp_str19, 1, 9, out_f);
 fputs(_("Failed test"), out_f);
@@ -276,7 +275,7 @@ fwrite(csp_str12, 1, 10, out_f);
 fputs("<input type=\"text\" name=\"tests\" size=\"10\" />", out_f);
 fwrite(csp_str20, 1, 11, out_f);
 
-#line 53 "priv_new_run_page.csp"
+#line 51 "priv_new_run_page.csp"
 }
 fwrite(csp_str19, 1, 9, out_f);
 fputs(_("File"), out_f);
@@ -289,7 +288,7 @@ fwrite(csp_str24, 1, 6, out_f);
 write_copyright_short(out_f);
 fwrite(csp_str25, 1, 17, out_f);
 
-#line 60 "priv_new_run_page.csp"
+#line 58 "priv_new_run_page.csp"
 l10n_setlocale(0);
 cleanup:
   html_armor_free(&ab);

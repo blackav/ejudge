@@ -52,6 +52,8 @@ static const unsigned char csp_str25[18] = "\n</body>\n</html>\n";
 
 #include <libintl.h>
 #define _(x) gettext(x)
+
+#define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
 int csp_view_priv_standings_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr);
 static PageInterfaceOps page_ops =
 {
@@ -86,12 +88,10 @@ struct user_filter_info *u = 0;
   const unsigned char *title = NULL;
 
   if (phr->role < USER_ROLE_JUDGE) {
-    ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
-    goto cleanup;
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   }
   if (opcaps_check(phr->caps, OPCAP_VIEW_STANDINGS) < 0) {
-    ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
-    goto cleanup;
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   }
 
   u = user_filter_info_allocate(cs, phr->user_id, phr->session_id);
@@ -171,7 +171,7 @@ fwrite(csp_str16, 1, 25, out_f);
 fputs("</form>", out_f);
 fwrite(csp_str17, 1, 8, out_f);
 
-#line 40 "priv_standings_page.csp"
+#line 38 "priv_standings_page.csp"
 if (u->stand_error_msgs) {
 fwrite(csp_str18, 1, 5, out_f);
 fputs(_("Filter expression errors"), out_f);
@@ -179,7 +179,7 @@ fwrite(csp_str19, 1, 32, out_f);
 fputs(html_armor_buf(&ab, (u->stand_error_msgs)), out_f);
 fwrite(csp_str20, 1, 18, out_f);
 
-#line 43 "priv_standings_page.csp"
+#line 41 "priv_standings_page.csp"
 }
 fwrite(csp_str21, 1, 40, out_f);
 fputs(ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_MAIN_PAGE, 0), out_f);
@@ -189,7 +189,7 @@ fputs(ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_STANDINGS, 0), out_f);
 fputs(_("Refresh"), out_f);
 fwrite(csp_str23, 1, 25, out_f);
 
-#line 51 "priv_standings_page.csp"
+#line 49 "priv_standings_page.csp"
 if (cs->global->score_system == SCORE_KIROV || cs->global->score_system == SCORE_OLYMPIAD)
     do_write_kirov_standings(cs, cnts, out_f, 0, 1, 0, 0, 0, 0, 0, 0 /*accepting_mode*/, 1, 0, 0, u, 0 /* user_mode */);
   else if (cs->global->score_system == SCORE_MOSCOW)
@@ -201,7 +201,7 @@ fwrite(csp_str24, 1, 6, out_f);
 write_copyright_short(out_f);
 fwrite(csp_str25, 1, 17, out_f);
 
-#line 60 "priv_standings_page.csp"
+#line 58 "priv_standings_page.csp"
 l10n_setlocale(0);
 cleanup:
   html_armor_free(&ab);

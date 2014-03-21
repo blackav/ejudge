@@ -59,16 +59,10 @@ static const unsigned char csp_str31[18] = "\n</body>\n</html>\n";
 #include <libintl.h>
 #define _(x) gettext(x)
 
-#line 5 "priv_testing_queue_page.csp"
-#include "super_run_packet.h"
-
 #define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
 
-void
-ns_scan_run_queue(
-        const unsigned char *dpath,
-        int contest_id,
-        struct TestingQueueArray *vec);
+#line 5 "priv_testing_queue_page.csp"
+#include "super_run_packet.h"
 int csp_view_priv_testing_queue_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr);
 static PageInterfaceOps page_ops =
 {
@@ -98,7 +92,7 @@ int retval __attribute__((unused)) = 0;
   unsigned char hbuf[1024] __attribute__((unused));
   const unsigned char *sep __attribute__((unused)) = NULL;
 
-#line 19 "priv_testing_queue_page.csp"
+#line 11 "priv_testing_queue_page.csp"
 const unsigned char *title = NULL;
   const struct section_global_data *global = cs->global;
   struct TestingQueueArray vec;
@@ -181,7 +175,7 @@ fwrite(csp_str13, 1, 29, out_f);
 fputs(_("Actions"), out_f);
 fwrite(csp_str16, 1, 16, out_f);
 
-#line 67 "priv_testing_queue_page.csp"
+#line 59 "priv_testing_queue_page.csp"
 for (i = 0; i < vec.u; ++i) {
     const struct super_run_in_global_packet *srgp = vec.v[i].packet->global;
     const struct super_run_in_problem_packet *srpp = vec.v[i].packet->problem;
@@ -200,65 +194,65 @@ fwrite(csp_str18, 1, 29, out_f);
 fprintf(out_f, "%d", (int)(srgp->run_id));
 fwrite(csp_str19, 1, 6, out_f);
 
-#line 80 "priv_testing_queue_page.csp"
+#line 72 "priv_testing_queue_page.csp"
 if (srgp->contest_id == cnts->id) {
 fwrite(csp_str20, 1, 24, out_f);
 
-#line 82 "priv_testing_queue_page.csp"
+#line 74 "priv_testing_queue_page.csp"
 prob_id = srpp->id;
       if (prob_id > 0 && prob_id <= cs->max_prob && cs->probs[prob_id]) {
 fputs((cs->probs[prob_id]->short_name), out_f);
 
-#line 85 "priv_testing_queue_page.csp"
+#line 77 "priv_testing_queue_page.csp"
 } else {
 fwrite(csp_str21, 1, 8, out_f);
 fprintf(out_f, "%d", (int)(prob_id));
 
-#line 87 "priv_testing_queue_page.csp"
+#line 79 "priv_testing_queue_page.csp"
 }
 fwrite(csp_str19, 1, 6, out_f);
 
-#line 89 "priv_testing_queue_page.csp"
+#line 81 "priv_testing_queue_page.csp"
 user_id = srgp->user_id;
 fwrite(csp_str20, 1, 24, out_f);
 fputs(html_armor_buf(&ab, (teamdb_get_name_2(cs->teamdb_state, user_id))), out_f);
 fwrite(csp_str19, 1, 6, out_f);
 
-#line 91 "priv_testing_queue_page.csp"
+#line 83 "priv_testing_queue_page.csp"
 } else {
 fwrite(csp_str20, 1, 24, out_f);
 
-#line 93 "priv_testing_queue_page.csp"
+#line 85 "priv_testing_queue_page.csp"
 if (srpp->short_name && srpp->short_name[0]) {
 fputs(html_armor_buf(&ab, (srpp->short_name)), out_f);
 
-#line 95 "priv_testing_queue_page.csp"
+#line 87 "priv_testing_queue_page.csp"
 } else {
 fwrite(csp_str21, 1, 8, out_f);
 fprintf(out_f, "%d", (int)(srpp->id));
 
-#line 97 "priv_testing_queue_page.csp"
+#line 89 "priv_testing_queue_page.csp"
 }
 fwrite(csp_str18, 1, 29, out_f);
 
-#line 100 "priv_testing_queue_page.csp"
+#line 92 "priv_testing_queue_page.csp"
 if (srgp->user_name && srgp->user_name[0]) {
 fputs(html_armor_buf(&ab, (srgp->user_name)), out_f);
 
-#line 102 "priv_testing_queue_page.csp"
+#line 94 "priv_testing_queue_page.csp"
 } else if (srgp->user_login && srgp->user_login[0]) {
 fputs(html_armor_buf(&ab, (srgp->user_login)), out_f);
 
-#line 104 "priv_testing_queue_page.csp"
+#line 96 "priv_testing_queue_page.csp"
 } else {
 fwrite(csp_str22, 1, 5, out_f);
 fprintf(out_f, "%d", (int)(srgp->user_id));
 
-#line 106 "priv_testing_queue_page.csp"
+#line 98 "priv_testing_queue_page.csp"
 }
 fwrite(csp_str19, 1, 6, out_f);
 
-#line 108 "priv_testing_queue_page.csp"
+#line 100 "priv_testing_queue_page.csp"
 }
 fwrite(csp_str20, 1, 24, out_f);
 fputs(html_armor_buf(&ab, (arch)), out_f);
@@ -301,7 +295,7 @@ fwrite(csp_str26, 1, 4, out_f);
 fputs("</a>", out_f);
 fwrite(csp_str27, 1, 16, out_f);
 
-#line 121 "priv_testing_queue_page.csp"
+#line 113 "priv_testing_queue_page.csp"
 }
 fwrite(csp_str28, 1, 10, out_f);
 fputs("</form>", out_f);
@@ -326,7 +320,7 @@ fwrite(csp_str30, 1, 6, out_f);
 write_copyright_short(out_f);
 fwrite(csp_str31, 1, 17, out_f);
 
-#line 134 "priv_testing_queue_page.csp"
+#line 126 "priv_testing_queue_page.csp"
 l10n_setlocale(0);
 cleanup:
   for (i = 0; i < vec.u; ++i) {

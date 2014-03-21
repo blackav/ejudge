@@ -94,10 +94,10 @@ static const unsigned char csp_str66[18] = "\n</body>\n</html>\n";
 #include <libintl.h>
 #define _(x) gettext(x)
 
+#define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
+
 #line 5 "priv_user_info_page.csp"
 #include "team_extra.h"
-
-#define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
 int csp_view_priv_user_info_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr);
 static PageInterfaceOps page_ops =
 {
@@ -127,7 +127,7 @@ int retval __attribute__((unused)) = 0;
   unsigned char hbuf[1024] __attribute__((unused));
   const unsigned char *sep __attribute__((unused)) = NULL;
 
-#line 13 "priv_user_info_page.csp"
+#line 11 "priv_user_info_page.csp"
 // variables...
     const struct section_global_data *global = cs->global;
     struct teamdb_export u_info;
@@ -207,7 +207,7 @@ fputs(_("View registration passwords"), out_f);
 fputs("</a>", out_f);
 fwrite(csp_str11, 1, 6, out_f);
 
-#line 57 "priv_user_info_page.csp"
+#line 55 "priv_user_info_page.csp"
 if (!cnts->disable_team_password) {
 fwrite(csp_str12, 1, 9, out_f);
 fputs(ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_CNTS_PWDS, 0), out_f);
@@ -215,7 +215,7 @@ fputs(_("View contest passwords"), out_f);
 fputs("</a>", out_f);
 fwrite(csp_str11, 1, 6, out_f);
 
-#line 59 "priv_user_info_page.csp"
+#line 57 "priv_user_info_page.csp"
 }
 fwrite(csp_str13, 1, 24, out_f);
 fputs(_("User Id"), out_f);
@@ -229,113 +229,113 @@ fwrite(csp_str17, 1, 54, out_f);
 fputs(_("User Name"), out_f);
 fwrite(csp_str14, 1, 10, out_f);
 
-#line 65 "priv_user_info_page.csp"
+#line 63 "priv_user_info_page.csp"
 if (u_info.name && *u_info.name) {
 fputs(html_armor_buf(&ab, (u_info.name)), out_f);
 
-#line 65 "priv_user_info_page.csp"
+#line 63 "priv_user_info_page.csp"
 } else {
 fwrite(csp_str18, 1, 3, out_f);
 fputs(_("Not set"), out_f);
 fwrite(csp_str19, 1, 4, out_f);
 
-#line 65 "priv_user_info_page.csp"
+#line 63 "priv_user_info_page.csp"
 }
 fwrite(csp_str15, 1, 49, out_f);
 fputs(_("Registration time"), out_f);
 fwrite(csp_str14, 1, 10, out_f);
 
-#line 66 "priv_user_info_page.csp"
+#line 64 "priv_user_info_page.csp"
 if (uc && uc->create_time > 0) {
 fputs(xml_unparse_date((uc->create_time)), out_f);
 
-#line 66 "priv_user_info_page.csp"
+#line 64 "priv_user_info_page.csp"
 } else {
 fwrite(csp_str20, 1, 6, out_f);
 
-#line 66 "priv_user_info_page.csp"
+#line 64 "priv_user_info_page.csp"
 }
 fwrite(csp_str15, 1, 49, out_f);
 fputs(_("Last login time"), out_f);
 fwrite(csp_str14, 1, 10, out_f);
 
-#line 67 "priv_user_info_page.csp"
+#line 65 "priv_user_info_page.csp"
 if (ui && ui->last_login_time > 0) {
 fputs(xml_unparse_date((ui->last_login_time)), out_f);
 
-#line 67 "priv_user_info_page.csp"
+#line 65 "priv_user_info_page.csp"
 } else {
 fwrite(csp_str20, 1, 6, out_f);
 
-#line 67 "priv_user_info_page.csp"
+#line 65 "priv_user_info_page.csp"
 }
 fwrite(csp_str21, 1, 41, out_f);
 
-#line 68 "priv_user_info_page.csp"
+#line 66 "priv_user_info_page.csp"
 if (/*opcaps_check(phr->caps, OPCAP_GENERATE_TEAM_PASSWORDS) >= 0*/ 1) {
 fwrite(csp_str22, 1, 9, out_f);
 fputs(_("Registration password"), out_f);
 fwrite(csp_str14, 1, 10, out_f);
 
-#line 70 "priv_user_info_page.csp"
+#line 68 "priv_user_info_page.csp"
 if (u && !u->passwd) {
 fwrite(csp_str18, 1, 3, out_f);
 fputs(_("Not set"), out_f);
 fwrite(csp_str19, 1, 4, out_f);
 
-#line 72 "priv_user_info_page.csp"
+#line 70 "priv_user_info_page.csp"
 } else if (u && u->passwd_method != USERLIST_PWD_PLAIN) {
 fwrite(csp_str18, 1, 3, out_f);
 fputs(_("Changed by user"), out_f);
 fwrite(csp_str19, 1, 4, out_f);
 
-#line 74 "priv_user_info_page.csp"
+#line 72 "priv_user_info_page.csp"
 } else if (u) {
 fwrite(csp_str23, 1, 4, out_f);
 fputs(html_armor_buf(&ab, (u->passwd)), out_f);
 fwrite(csp_str24, 1, 5, out_f);
 
-#line 76 "priv_user_info_page.csp"
+#line 74 "priv_user_info_page.csp"
 }
 fwrite(csp_str25, 1, 36, out_f);
 
-#line 78 "priv_user_info_page.csp"
+#line 76 "priv_user_info_page.csp"
 if (!cnts->disable_team_password) {
 fwrite(csp_str22, 1, 9, out_f);
 fputs(_("Contest password"), out_f);
 fwrite(csp_str14, 1, 10, out_f);
 
-#line 80 "priv_user_info_page.csp"
+#line 78 "priv_user_info_page.csp"
 if (ui && !ui->team_passwd) {
 fwrite(csp_str18, 1, 3, out_f);
 fputs(_("Not set"), out_f);
 fwrite(csp_str19, 1, 4, out_f);
 
-#line 82 "priv_user_info_page.csp"
+#line 80 "priv_user_info_page.csp"
 } else if (ui && ui->team_passwd_method != USERLIST_PWD_PLAIN) {
 fwrite(csp_str18, 1, 3, out_f);
 fputs(_("Changed by user"), out_f);
 fwrite(csp_str26, 1, 5, out_f);
 
-#line 84 "priv_user_info_page.csp"
+#line 82 "priv_user_info_page.csp"
 } else if (ui) {
 fwrite(csp_str23, 1, 4, out_f);
 fputs(html_armor_buf(&ab, (ui->team_passwd)), out_f);
 fwrite(csp_str24, 1, 5, out_f);
 
-#line 86 "priv_user_info_page.csp"
+#line 84 "priv_user_info_page.csp"
 } else {
 fwrite(csp_str20, 1, 6, out_f);
+
+#line 86 "priv_user_info_page.csp"
+}
+fwrite(csp_str27, 1, 1, out_f);
 
 #line 88 "priv_user_info_page.csp"
 }
 fwrite(csp_str27, 1, 1, out_f);
 
-#line 90 "priv_user_info_page.csp"
-}
-fwrite(csp_str27, 1, 1, out_f);
-
-#line 91 "priv_user_info_page.csp"
+#line 89 "priv_user_info_page.csp"
 }
 fwrite(csp_str22, 1, 9, out_f);
 fputs(_("Privileged?"), out_f);
@@ -343,7 +343,7 @@ fwrite(csp_str14, 1, 10, out_f);
 if ((u && u->is_privileged)) { fputs(_("Yes"), out_f); } else { fputs(_("No"), out_f); }
 fwrite(csp_str21, 1, 41, out_f);
 
-#line 94 "priv_user_info_page.csp"
+#line 92 "priv_user_info_page.csp"
 // invisible, locked, banned status and change buttons
   // to make invisible EDIT_REG is enough for all users
   // to ban or lock DELETE_PRIV_REG required for privileged users
@@ -365,7 +365,7 @@ fputs("\"", out_f);
 fputs(" />", out_f);
 fwrite(csp_str27, 1, 1, out_f);
 
-#line 103 "priv_user_info_page.csp"
+#line 101 "priv_user_info_page.csp"
 }
 fwrite(csp_str28, 1, 10, out_f);
 fputs(_("Invisible?"), out_f);
@@ -373,35 +373,35 @@ fwrite(csp_str14, 1, 10, out_f);
 if ((flags & TEAM_INVISIBLE)) { fputs(_("Yes"), out_f); } else { fputs(_("No"), out_f); }
 fwrite(csp_str29, 1, 24, out_f);
 
-#line 106 "priv_user_info_page.csp"
+#line 104 "priv_user_info_page.csp"
 if(allowed_edit) {
     if (flags & TEAM_INVISIBLE) {
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_TOGGLE_VISIBILITY, _("Make visible")), out_f);
 
-#line 109 "priv_user_info_page.csp"
+#line 107 "priv_user_info_page.csp"
 } else {
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_TOGGLE_VISIBILITY, _("Make invisible")), out_f);
 
-#line 111 "priv_user_info_page.csp"
+#line 109 "priv_user_info_page.csp"
 }
   } else {
 fwrite(csp_str20, 1, 6, out_f);
 
-#line 114 "priv_user_info_page.csp"
+#line 112 "priv_user_info_page.csp"
 }
 fwrite(csp_str30, 1, 11, out_f);
 
-#line 116 "priv_user_info_page.csp"
+#line 114 "priv_user_info_page.csp"
 if (allowed_edit) {
 fwrite(csp_str27, 1, 1, out_f);
 fputs("</form>", out_f);
 fwrite(csp_str27, 1, 1, out_f);
 
-#line 118 "priv_user_info_page.csp"
+#line 116 "priv_user_info_page.csp"
 }
 fwrite(csp_str31, 1, 2, out_f);
 
-#line 121 "priv_user_info_page.csp"
+#line 119 "priv_user_info_page.csp"
 allowed_edit = 0;
   if (u) {
     if (u->is_privileged) {
@@ -429,7 +429,7 @@ fputs("\"", out_f);
 fputs(" />", out_f);
 fwrite(csp_str27, 1, 1, out_f);
 
-#line 136 "priv_user_info_page.csp"
+#line 134 "priv_user_info_page.csp"
 }
 fwrite(csp_str22, 1, 9, out_f);
 fputs(_("Banned?"), out_f);
@@ -437,35 +437,35 @@ fwrite(csp_str14, 1, 10, out_f);
 if ((flags & TEAM_BANNED)) { fputs(_("Yes"), out_f); } else { fputs(_("No"), out_f); }
 fwrite(csp_str29, 1, 24, out_f);
 
-#line 138 "priv_user_info_page.csp"
+#line 136 "priv_user_info_page.csp"
 if(allowed_edit) {
     if ((flags & TEAM_BANNED)) {
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_TOGGLE_BAN, _("Remove ban")), out_f);
 
-#line 141 "priv_user_info_page.csp"
+#line 139 "priv_user_info_page.csp"
 } else {
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_TOGGLE_BAN, _("Ban")), out_f);
 
-#line 143 "priv_user_info_page.csp"
+#line 141 "priv_user_info_page.csp"
 }
   } else {
 fwrite(csp_str20, 1, 6, out_f);
 
-#line 146 "priv_user_info_page.csp"
+#line 144 "priv_user_info_page.csp"
 }
 fwrite(csp_str30, 1, 11, out_f);
 
-#line 148 "priv_user_info_page.csp"
+#line 146 "priv_user_info_page.csp"
 if (allowed_edit) {
 fwrite(csp_str27, 1, 1, out_f);
 fputs("</form>", out_f);
 fwrite(csp_str27, 1, 1, out_f);
 
-#line 150 "priv_user_info_page.csp"
+#line 148 "priv_user_info_page.csp"
 }
 fwrite(csp_str31, 1, 2, out_f);
 
-#line 153 "priv_user_info_page.csp"
+#line 151 "priv_user_info_page.csp"
 allowed_edit = 0;
   if (u) {
     if (u->is_privileged) {
@@ -493,7 +493,7 @@ fputs("\"", out_f);
 fputs(" />", out_f);
 fwrite(csp_str27, 1, 1, out_f);
 
-#line 168 "priv_user_info_page.csp"
+#line 166 "priv_user_info_page.csp"
 }
 fwrite(csp_str22, 1, 9, out_f);
 fputs(_("Locked?"), out_f);
@@ -501,35 +501,35 @@ fwrite(csp_str14, 1, 10, out_f);
 if ((flags & TEAM_LOCKED)) { fputs(_("Yes"), out_f); } else { fputs(_("No"), out_f); }
 fwrite(csp_str29, 1, 24, out_f);
 
-#line 170 "priv_user_info_page.csp"
+#line 168 "priv_user_info_page.csp"
 if(allowed_edit) {
     if ((flags & TEAM_LOCKED)) {
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_TOGGLE_LOCK, _("Unlock")), out_f);
 
-#line 173 "priv_user_info_page.csp"
+#line 171 "priv_user_info_page.csp"
 } else {
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_TOGGLE_LOCK, _("Lock")), out_f);
 
-#line 175 "priv_user_info_page.csp"
+#line 173 "priv_user_info_page.csp"
 }
   } else {
 fwrite(csp_str20, 1, 6, out_f);
 
-#line 178 "priv_user_info_page.csp"
+#line 176 "priv_user_info_page.csp"
 }
 fwrite(csp_str30, 1, 11, out_f);
 
-#line 180 "priv_user_info_page.csp"
+#line 178 "priv_user_info_page.csp"
 if (allowed_edit) {
 fwrite(csp_str27, 1, 1, out_f);
 fputs("</form>", out_f);
 fwrite(csp_str27, 1, 1, out_f);
 
-#line 182 "priv_user_info_page.csp"
+#line 180 "priv_user_info_page.csp"
 }
 fwrite(csp_str31, 1, 2, out_f);
 
-#line 184 "priv_user_info_page.csp"
+#line 182 "priv_user_info_page.csp"
 allowed_edit = 0;
   if (u) {
     if (u->is_privileged) {
@@ -543,7 +543,7 @@ allowed_edit = 0;
   }
 fwrite(csp_str27, 1, 1, out_f);
 
-#line 197 "priv_user_info_page.csp"
+#line 195 "priv_user_info_page.csp"
 if (allowed_edit) {
 fwrite(csp_str27, 1, 1, out_f);
 fputs("<form method=\"post\" enctype=\"application/x-www-form-urlencoded\" action=\"", out_f);
@@ -560,7 +560,7 @@ fputs("\"", out_f);
 fputs(" />", out_f);
 fwrite(csp_str27, 1, 1, out_f);
 
-#line 201 "priv_user_info_page.csp"
+#line 199 "priv_user_info_page.csp"
 }
 fwrite(csp_str22, 1, 9, out_f);
 fputs(_("Incomplete?"), out_f);
@@ -568,31 +568,31 @@ fwrite(csp_str14, 1, 10, out_f);
 if ((flags & TEAM_INCOMPLETE)) { fputs(_("Yes"), out_f); } else { fputs(_("No"), out_f); }
 fwrite(csp_str29, 1, 24, out_f);
 
-#line 203 "priv_user_info_page.csp"
+#line 201 "priv_user_info_page.csp"
 if(allowed_edit) {
     if ((flags & TEAM_INCOMPLETE)) {
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_TOGGLE_INCOMPLETENESS, _("Clear")), out_f);
 
-#line 206 "priv_user_info_page.csp"
+#line 204 "priv_user_info_page.csp"
 } else {
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_TOGGLE_INCOMPLETENESS, _("Clear")), out_f);
 
-#line 208 "priv_user_info_page.csp"
+#line 206 "priv_user_info_page.csp"
 }
   } else {
 fwrite(csp_str20, 1, 6, out_f);
 
-#line 211 "priv_user_info_page.csp"
+#line 209 "priv_user_info_page.csp"
 }
 fwrite(csp_str30, 1, 11, out_f);
 
-#line 213 "priv_user_info_page.csp"
+#line 211 "priv_user_info_page.csp"
 if (allowed_edit) {
 fwrite(csp_str27, 1, 1, out_f);
 fputs("</form>", out_f);
 fwrite(csp_str27, 1, 1, out_f);
 
-#line 215 "priv_user_info_page.csp"
+#line 213 "priv_user_info_page.csp"
 }
 fwrite(csp_str28, 1, 10, out_f);
 fputs(_("Disqualified?"), out_f);
@@ -620,14 +620,14 @@ fwrite(csp_str14, 1, 10, out_f);
 fprintf(out_f, "%d", (int)(pages_total));
 fwrite(csp_str32, 1, 42, out_f);
 
-#line 224 "priv_user_info_page.csp"
+#line 222 "priv_user_info_page.csp"
 if (global->contestant_status_num > 0) {
     // contestant status is editable when OPCAP_EDIT_REG is set
     allowed_edit = 0;
     if (opcaps_check(phr->caps, OPCAP_EDIT_REG) >= 0) allowed_edit = 1;
 fwrite(csp_str27, 1, 1, out_f);
 
-#line 229 "priv_user_info_page.csp"
+#line 227 "priv_user_info_page.csp"
 if (allowed_edit) {
 fwrite(csp_str27, 1, 1, out_f);
 fputs("<form method=\"post\" enctype=\"application/x-www-form-urlencoded\" action=\"", out_f);
@@ -644,41 +644,41 @@ fputs("\"", out_f);
 fputs(" />", out_f);
 fwrite(csp_str27, 1, 1, out_f);
 
-#line 232 "priv_user_info_page.csp"
+#line 230 "priv_user_info_page.csp"
 }
 fwrite(csp_str22, 1, 9, out_f);
 fputs(_("Status"), out_f);
 fwrite(csp_str14, 1, 10, out_f);
 
-#line 234 "priv_user_info_page.csp"
+#line 232 "priv_user_info_page.csp"
 init_value = 0;
     if (!u_extra) {
 fwrite(csp_str33, 1, 3, out_f);
 
-#line 237 "priv_user_info_page.csp"
+#line 235 "priv_user_info_page.csp"
 } else if (u_extra->status < 0
                || u_extra->status >= global->contestant_status_num) {
 fprintf(out_f, "%d", (int)(u_extra->status));
 fwrite(csp_str34, 1, 6, out_f);
 
-#line 240 "priv_user_info_page.csp"
+#line 238 "priv_user_info_page.csp"
 } else {
 fprintf(out_f, "%d", (int)(u_extra->status));
 fwrite(csp_str35, 1, 3, out_f);
 fputs(html_armor_buf(&ab, (global->contestant_status_legend[u_extra->status])), out_f);
 
-#line 242 "priv_user_info_page.csp"
+#line 240 "priv_user_info_page.csp"
 init_value = u_extra->status;
     }
 fwrite(csp_str36, 1, 5, out_f);
 
-#line 245 "priv_user_info_page.csp"
+#line 243 "priv_user_info_page.csp"
 if (allowed_edit) {
 fwrite(csp_str37, 1, 4, out_f);
 fputs("<select name=\"status\"", out_f);
 fputs(">", out_f);
 
-#line 247 "priv_user_info_page.csp"
+#line 245 "priv_user_info_page.csp"
 for (i = 0; i < global->contestant_status_num; i++) {
 fputs("<option", out_f);
 if (i == init_value) {
@@ -693,36 +693,36 @@ fwrite(csp_str35, 1, 3, out_f);
 fputs(html_armor_buf(&ab, (global->contestant_status_legend[i])), out_f);
 fputs("</option>", out_f);
 
-#line 249 "priv_user_info_page.csp"
+#line 247 "priv_user_info_page.csp"
 }
 fputs("</select>", out_f);
 fwrite(csp_str38, 1, 9, out_f);
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_USER_CHANGE_STATUS, NULL), out_f);
 fwrite(csp_str36, 1, 5, out_f);
 
-#line 251 "priv_user_info_page.csp"
+#line 249 "priv_user_info_page.csp"
 } else {
 fwrite(csp_str39, 1, 30, out_f);
 
-#line 253 "priv_user_info_page.csp"
+#line 251 "priv_user_info_page.csp"
 }
 fwrite(csp_str40, 1, 6, out_f);
 
-#line 255 "priv_user_info_page.csp"
+#line 253 "priv_user_info_page.csp"
 if (allowed_edit) {
 fwrite(csp_str27, 1, 1, out_f);
 fputs("</form>", out_f);
 fwrite(csp_str27, 1, 1, out_f);
 
-#line 257 "priv_user_info_page.csp"
+#line 255 "priv_user_info_page.csp"
 }
 fwrite(csp_str27, 1, 1, out_f);
 
-#line 258 "priv_user_info_page.csp"
+#line 256 "priv_user_info_page.csp"
 }
 fwrite(csp_str31, 1, 2, out_f);
 
-#line 261 "priv_user_info_page.csp"
+#line 259 "priv_user_info_page.csp"
 i = 0;
   if (u_extra) i = u_extra->warn_u;
 fwrite(csp_str41, 1, 8, out_f);
@@ -782,19 +782,19 @@ fwrite(csp_str27, 1, 1, out_f);
 fputs("</form>", out_f);
 fwrite(csp_str31, 1, 2, out_f);
 
-#line 282 "priv_user_info_page.csp"
+#line 280 "priv_user_info_page.csp"
 if (!u_extra || !u_extra->warn_u) {
 fwrite(csp_str44, 1, 4, out_f);
 fputs(_("No warnings"), out_f);
 fwrite(csp_str45, 1, 5, out_f);
 
-#line 284 "priv_user_info_page.csp"
+#line 282 "priv_user_info_page.csp"
 } else {
 fwrite(csp_str44, 1, 4, out_f);
 fputs(_("Warnings"), out_f);
 fwrite(csp_str46, 1, 6, out_f);
 
-#line 286 "priv_user_info_page.csp"
+#line 284 "priv_user_info_page.csp"
 for (i = 0; i < u_extra->warn_u; i++) {
       if (!(cur_warn = u_extra->warns[i])) continue;
 fwrite(csp_str47, 1, 12, out_f);
@@ -817,15 +817,15 @@ fwrite(csp_str53, 1, 8, out_f);
 fputs(html_armor_buf(&ab, (cur_warn->comment)), out_f);
 fwrite(csp_str55, 1, 7, out_f);
 
-#line 292 "priv_user_info_page.csp"
+#line 290 "priv_user_info_page.csp"
 }
 fwrite(csp_str27, 1, 1, out_f);
 
-#line 293 "priv_user_info_page.csp"
+#line 291 "priv_user_info_page.csp"
 }
 fwrite(csp_str31, 1, 2, out_f);
 
-#line 295 "priv_user_info_page.csp"
+#line 293 "priv_user_info_page.csp"
 if (opcaps_check(phr->caps, OPCAP_EDIT_REG) >= 0) {
 fwrite(csp_str56, 1, 5, out_f);
 fputs(_("Issue a warning"), out_f);
@@ -852,11 +852,11 @@ fwrite(csp_str59, 1, 5, out_f);
 fputs("</form>", out_f);
 fwrite(csp_str27, 1, 1, out_f);
 
-#line 305 "priv_user_info_page.csp"
+#line 303 "priv_user_info_page.csp"
 }
 fwrite(csp_str31, 1, 2, out_f);
 
-#line 307 "priv_user_info_page.csp"
+#line 305 "priv_user_info_page.csp"
 if (opcaps_check(phr->caps, OPCAP_EDIT_REG) >= 0) {
 fwrite(csp_str60, 1, 6, out_f);
 fputs(_("Disqualify user"), out_f);
@@ -877,46 +877,46 @@ fwrite(csp_str43, 1, 4, out_f);
 fputs(_("Disqualification explanation"), out_f);
 fwrite(csp_str61, 1, 59, out_f);
 
-#line 313 "priv_user_info_page.csp"
+#line 311 "priv_user_info_page.csp"
 if (u_extra->disq_comment) {
 fputs(html_armor_buf(&ab, (u_extra->disq_comment)), out_f);
 
-#line 313 "priv_user_info_page.csp"
+#line 311 "priv_user_info_page.csp"
 }
 fwrite(csp_str62, 1, 54, out_f);
 
-#line 316 "priv_user_info_page.csp"
+#line 314 "priv_user_info_page.csp"
 if ((flags & TEAM_DISQUALIFIED)) {
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_SET_DISQUALIFICATION, _("Edit comment")), out_f);
 
-#line 318 "priv_user_info_page.csp"
+#line 316 "priv_user_info_page.csp"
 } else {
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_SET_DISQUALIFICATION, _("Disqualify")), out_f);
 
-#line 320 "priv_user_info_page.csp"
+#line 318 "priv_user_info_page.csp"
 }
 fwrite(csp_str36, 1, 5, out_f);
 
-#line 322 "priv_user_info_page.csp"
+#line 320 "priv_user_info_page.csp"
 if ((flags & TEAM_DISQUALIFIED)) {
 fwrite(csp_str63, 1, 15, out_f);
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_CLEAR_DISQUALIFICATION, NULL), out_f);
 fwrite(csp_str36, 1, 5, out_f);
 
-#line 324 "priv_user_info_page.csp"
+#line 322 "priv_user_info_page.csp"
 }
 fwrite(csp_str64, 1, 14, out_f);
 fputs("</form>", out_f);
 fwrite(csp_str27, 1, 1, out_f);
 
-#line 327 "priv_user_info_page.csp"
+#line 325 "priv_user_info_page.csp"
 }
 fwrite(csp_str31, 1, 2, out_f);
 fwrite(csp_str65, 1, 6, out_f);
 write_copyright_short(out_f);
 fwrite(csp_str66, 1, 17, out_f);
 
-#line 331 "priv_user_info_page.csp"
+#line 329 "priv_user_info_page.csp"
 l10n_setlocale(0);
 cleanup:
   html_armor_free(&ab);
