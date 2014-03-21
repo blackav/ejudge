@@ -443,6 +443,8 @@ cmd_http_request(struct server_framework_state *state,
   nsf_send_reply(state, p, NEW_SRV_RPL_OK);
 
  cleanup:
+  if (hr.log_f) fclose(hr.log_f);
+  xfree(hr.log_t);
   xfree(hr.login);
   xfree(hr.name);
   xfree(hr.name_arm);

@@ -50,8 +50,6 @@ struct http_request_info
   const unsigned char **params;
 
   const unsigned char *self_url;
-  // super-serve: FIX
-  //unsigned char self_url[4096];
   const unsigned char *context_url;
   const unsigned char *script_name;
   int ssl_flag;
@@ -90,6 +88,7 @@ struct http_request_info
   int protocol_reply;
   int allow_empty_output;
   int no_reply;
+  int error_code;
 
   // content type
   unsigned char content_type[128];

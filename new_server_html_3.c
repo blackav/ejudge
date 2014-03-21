@@ -988,3 +988,74 @@ ns_html_err_disqualified(
   l10n_setlocale(0);
   html_armor_free(&ab);
 }
+
+// very basic error messaging
+void
+ns_html_error(
+        FILE *fout,
+        struct http_request_info *phr,
+        int priv_mode,
+        int error_code)
+{
+  const struct contest_desc *cnts = 0;
+  struct contest_extra *extra = 0;
+  const unsigned char *header = 0, *footer = 0, *separator = 0;
+  const unsigned char *copyright = 0;
+  time_t cur_time = time(0);
+  const unsigned char *title = ns_error_title(error_code);
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+
+  err("%d: html error: %d, %d (%s)", phr->id, priv_mode, error_code, title);
+
+  if (phr->contest_id > 0) contests_get(phr->contest_id, &cnts);
+  if (cnts) extra = ns_get_contest_extra(phr->contest_id);
+  if (extra && !priv_mode) {
+    watched_file_update(&extra->header, cnts->team_header_file, cur_time);
+    watched_file_update(&extra->separator, cnts->team_separator_file, cur_time);
+    watched_file_update(&extra->footer, cnts->team_footer_file, cur_time);
+    watched_file_update(&extra->copyright, cnts->copyright_file, cur_time);
+    header = extra->header.text;
+    separator = extra->separator.text;
+    footer = extra->footer.text;
+    copyright = extra->copyright.text;
+  } else if (extra && priv_mode) {
+    watched_file_update(&extra->priv_header, cnts->priv_header_file, cur_time);
+    watched_file_update(&extra->priv_footer, cnts->priv_footer_file, cur_time);
+    header = extra->priv_header.text;
+    footer = extra->priv_footer.text;
+  }
+  if (!priv_mode) {
+    if (!header || !footer) {
+      header = ns_fancy_header;
+      separator = ns_fancy_separator;
+      if (copyright) footer = ns_fancy_footer_2;
+      else footer = ns_fancy_footer;
+    }
+  } else {
+    if (!header || !footer) {
+      header = ns_fancy_priv_header;
+      separator = ns_fancy_priv_separator;
+      footer = ns_fancy_priv_footer;
+    }    
+  }
+
+  if (phr->log_f) {
+    fclose(phr->log_f); phr->log_f = NULL;
+  }
+
+  l10n_setlocale(phr->locale_id);
+  title = ns_error_title(error_code);
+  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, cnts, NULL_CLIENT_KEY, title);
+  if (separator && *separator) {
+    fprintf(fout, "%s", ns_fancy_empty_status);
+    ns_separator(fout, separator, cnts);
+  }
+  if (phr->log_t && *phr->log_t) {
+    fprintf(fout, "<p>%s</p>\n", _("Error details follow"));
+    fprintf(fout, "<font color=\"red\"><pre>%s</pre></font>\n", ARMOR(phr->log_t));
+  }
+  xfree(phr->log_t); phr->log_t = NULL;
+  phr->log_z = 0;
+  ns_footer(fout, footer, copyright, phr->locale_id);
+  l10n_setlocale(0);
+}

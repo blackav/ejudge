@@ -420,6 +420,12 @@ struct contest_extra *ns_get_contest_extra(int contest_id);
 struct contest_extra *ns_try_contest_extra(int contest_id);
 
 void
+ns_html_error(
+        FILE *fout,
+        struct http_request_info *phr,
+        int priv_mode,
+        int error_code);
+void
 ns_html_err_internal_error(FILE *fout,
                            struct http_request_info *phr,
                            int priv_mode,
@@ -1022,5 +1028,36 @@ write_xml_testing_report(
         unsigned char const *txt,
         const unsigned char *class1,
         const unsigned char *class2);
+
+struct TestingQueueArray;
+void
+ns_scan_run_queue(
+        const unsigned char *dpath,
+        int contest_id,
+        struct TestingQueueArray *vec);
+
+int
+ns_parse_run_id(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        int *p_run_id,
+        struct run_entry *pe);
+
+int
+ns_parse_run_mask(
+        struct http_request_info *phr,
+        const unsigned char **p_size_str,
+        const unsigned char **p_mask_str,
+        size_t *p_size,
+        unsigned long **p_mask);
+
+void
+html_role_select(
+        FILE *fout,
+        int role,
+        int allow_admin,
+        const unsigned char *var_name);
 
 #endif /* __NEW_SERVER_H__ */

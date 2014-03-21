@@ -4,7 +4,7 @@
 #ifndef __NEW_SERVER_PROTO_H__
 #define __NEW_SERVER_PROTO_H__
 
-/* Copyright (C) 2006-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -200,6 +200,7 @@ enum
   NEW_SRV_ERR_DATABASE_FAILED,
   NEW_SRV_ERR_PROB_CONFIG,
   NEW_SRV_ERR_PROB_TOO_MANY_ATTEMPTS,
+  NEW_SRV_ERR_INV_SESSION,
 
   NEW_SRV_ERR_LAST,
 };
@@ -214,11 +215,11 @@ struct new_server_prot_http_request
   int param_num;
 };
 
-const unsigned char *ns_proto_strerror(int n);
 void ns_error(FILE *log_f, int code, ...);
 const unsigned char *ns_strerror(int code, ...);
 const unsigned char *ns_strerror_2(int code, ...);
 const unsigned char *ns_strerror_r(unsigned char *buf, size_t size,
                                    int code, ...);
+const unsigned char *ns_error_title(int error_code);
 
 #endif /* __NEW_SERVER_PROTO_H__ */
