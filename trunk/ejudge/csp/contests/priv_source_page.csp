@@ -6,17 +6,6 @@
 #include "mime_type.h"
 #include "charsets.h"
 #include "fileutl.h"
-
-#define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
-
-int
-ns_parse_run_id(
-        FILE *fout,
-        struct http_request_info *phr,
-        const struct contest_desc *cnts,
-        struct contest_extra *extra,
-        int *p_run_id,
-        struct run_entry *pe);
 %><%@set getter_name = "csp_get_priv_source_page"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@page csp_view_priv_source_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
@@ -46,31 +35,28 @@ ns_parse_run_id(
   unsigned char title[1024];
   int run_id;
 
-  if (ns_parse_run_id(out_f, phr, cnts, extra, &run_id, 0) < 0) goto cleanup;
+  if (ns_parse_run_id(out_f, phr, cnts, extra, &run_id, 0) < 0)
+    FAIL(NEW_SRV_ERR_INV_RUN_ID);
 
   if (opcaps_check(phr->caps, OPCAP_VIEW_SOURCE) < 0) {
-    ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
-    goto cleanup;
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   }
 
   if (ns_cgi_param(phr, "run_charset", &ss) > 0 && ss && *ss)
     run_charset = ss;
 
   if (run_id < 0 || run_id >= run_get_total(cs->runlog_state)) {
-    ns_error(log_f, NEW_SRV_ERR_INV_RUN_ID);
-    return 0;
+    FAIL(NEW_SRV_ERR_INV_RUN_ID);
   }
   run_get_entry(cs->runlog_state, run_id, &info);
   if (info.status > RUN_LAST
       || (info.status > RUN_MAX_STATUS && info.status < RUN_TRANSIENT_FIRST)) {
-    ns_error(log_f, NEW_SRV_ERR_SOURCE_UNAVAILABLE);
-    return 0;
+    FAIL(NEW_SRV_ERR_SOURCE_UNAVAILABLE);
   }
 
   src_flags = serve_make_source_read_path(cs, src_path, sizeof(src_path), &info);
   if (src_flags < 0) {
-    ns_error(log_f, NEW_SRV_ERR_SOURCE_NONEXISTANT);
-    return 0;
+    FAIL(NEW_SRV_ERR_SOURCE_NONEXISTANT);
   }
 
   if (info.prob_id > 0 && info.prob_id <= cs->max_prob)

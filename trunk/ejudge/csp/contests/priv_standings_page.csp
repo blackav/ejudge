@@ -11,12 +11,10 @@
   const unsigned char *title = NULL;
 
   if (phr->role < USER_ROLE_JUDGE) {
-    ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
-    goto cleanup;
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   }
   if (opcaps_check(phr->caps, OPCAP_VIEW_STANDINGS) < 0) {
-    ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
-    goto cleanup;
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   }
 
   u = user_filter_info_allocate(cs, phr->user_id, phr->session_id);

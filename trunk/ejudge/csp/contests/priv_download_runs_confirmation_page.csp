@@ -1,16 +1,6 @@
 <%
 /* $Id$ */
 %><%@include "priv_includes.csp"
-%><%
-#define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
-
-int
-ns_parse_run_mask(
-        struct http_request_info *phr,
-        const unsigned char **p_size_str,
-        const unsigned char **p_mask_str,
-        size_t *p_size,
-        unsigned long **p_mask);
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@set getter_name = "csp_get_priv_download_runs_confirmation_page"
 %><%@page csp_view_priv_download_runs_confirmation_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
@@ -28,7 +18,7 @@ ns_parse_run_mask(
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);  
 
   if (ns_parse_run_mask(phr, &mask_size_str, &mask_str, &mask_size, &mask) < 0)
-    goto invalid_param;
+    FAIL(NEW_SRV_ERR_INV_RUN_SELECTION);
 
   for (i = 0; i < mask_size; i++) {
     mval = mask[i];
@@ -37,7 +27,6 @@ ns_parse_run_mask(
   }
 
   l10n_setlocale(phr->locale_id);
-
 %><%@include "priv_header.csp"
 %><s:form>
 <s:hidden name="run_mask_size" escape="false" value="mask_size_str" />
@@ -87,9 +76,4 @@ ns_parse_run_mask(
  cleanup:
   xfree(mask);
   return retval;
-
- invalid_param:
-  ns_html_err_inv_param(out_f, phr, 0, 0);
-  xfree(mask);
-  return -1;
 %>

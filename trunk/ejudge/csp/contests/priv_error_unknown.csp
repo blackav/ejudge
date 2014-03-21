@@ -1,0 +1,25 @@
+<%
+/* $Id$ */
+%><%@include "priv_includes.csp"
+%><%@set getter_name = "csp_get_priv_error_unknown"
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@page csp_view_priv_error_unknown(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "priv_stdvars.csp"
+%><%
+  unsigned char title[1024];
+  const unsigned char *error_title = NULL;
+
+  l10n_setlocale(phr->locale_id);
+  error_title = ns_error_title(phr->error_code);
+  snprintf(title, sizeof(title), "%s: %s", _("Error"), error_title);
+%><%@include "priv_header.csp"
+%>
+<% if (phr->log_t && *phr->log_t) { %>
+<p><s:tr>Additional information about this error:</s:tr></p>
+<font color="red"><pre><s:v value="phr->log_t" /></pre></font>
+<% } %>
+<%@include "priv_footer.csp"
+%><%
+  l10n_setlocale(0);
+  html_armor_free(&ab);
+%>

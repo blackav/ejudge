@@ -2,8 +2,6 @@
 /* $Id$ */
 %><%@include "priv_includes.csp"
 %><%
-#define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
-
 static int
 fix_prio(int val)
 {
