@@ -2,8 +2,6 @@
 /* $Id$ */
 %><%@include "priv_includes.csp"
 %><%
-#define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
-
 void
 ns_unparse_statement(
         FILE *fout,
@@ -31,7 +29,6 @@ ns_unparse_answers(
         int next_prob_id,
         int enable_js,
         const unsigned char *class_name);
-
 %><%@set getter_name = "csp_get_priv_submit_page"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@page csp_view_priv_submit_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
@@ -46,32 +43,26 @@ ns_unparse_answers(
   unsigned char title[1024];
 
   if (ns_cgi_param_int_opt(phr, "problem", &prob_id, 0) < 0) {
-    fprintf(log_f, "Invalid problem.\n");
-    goto cleanup;
+    FAIL(NEW_SRV_ERR_INV_RUN_ID);
   }
   if (prob_id < 0 || prob_id > cs->max_prob) {
-    fprintf(log_f, "Invalid problem.\n");
-    goto cleanup;
+    FAIL(NEW_SRV_ERR_INV_PROB_ID);
   }
   if (prob_id > 0 && !(prob = cs->probs[prob_id])) {
-    fprintf(log_f, "Invalid problem.\n");
-    goto cleanup;
+    FAIL(NEW_SRV_ERR_INV_PROB_ID);
   }
   if (ns_cgi_param_int_opt(phr, "variant", &variant, 0) < 0) {
-    fprintf(log_f, "Invalid variant.\n");
-    goto cleanup;
+    FAIL(NEW_SRV_ERR_INV_VARIANT);
   }
   if (!prob) variant = 0;
   if (prob && prob->variant_num <= 0) variant = 0;
   if (variant < 0
       || (prob && prob->variant_num <= 0 && variant > 0)
       || (prob && prob->variant_num > 0 && variant > prob->variant_num)) {
-    fprintf(log_f, "Invalid variant.\n");
-    goto cleanup;
+    FAIL(NEW_SRV_ERR_INV_VARIANT);
   }
   if (opcaps_check(phr->caps, OPCAP_SUBMIT_RUN) < 0) {
-    fprintf(log_f, "Permission denied.\n");
-    goto cleanup;
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   }
 
   l10n_setlocale(phr->locale_id);

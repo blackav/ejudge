@@ -33,21 +33,16 @@ static const unsigned char * const form_row_attrs[]=
 
   if (cnts->user_contest_num > 0) new_contest_id = cnts->user_contest_num;
   if (ns_open_ul_connection(phr->fw_state) < 0) {
-    ns_html_err_ul_server_down(out_f, phr, 1, 0);
-    return 0;
+    FAIL(NEW_SRV_ERR_USERLIST_SERVER_DOWN);
   }
   if ((r = userlist_clnt_list_all_users(ul_conn, ULS_LIST_ALL_USERS,
                                         phr->contest_id, &xml_text)) < 0) {
-    ns_html_err_internal_error(out_f, phr, 1,
-                                      "list_all_users failed: %s",
-                                      userlist_strerror(-r));
-    return 0;
+    FAIL(NEW_SRV_ERR_USERLIST_SERVER_DOWN);
   }
   users = userlist_parse_str(xml_text);
   xfree(xml_text); xml_text = 0;
   if (!users) {
-    ns_html_err_internal_error(out_f, phr, 1, "XML parsing failed");
-    return 0;
+    FAIL(NEW_SRV_ERR_INTERNAL);
   }
 
   if (users->user_map_size > 0) {
@@ -191,6 +186,7 @@ static const unsigned char * const form_row_attrs[]=
 %><%
   l10n_setlocale(0);
 
+cleanup:
   if (users) userlist_free(&users->b);
   html_armor_free(&ab);
   xfree(run_counts);

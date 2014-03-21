@@ -4,13 +4,6 @@
 %><%
 #include "ej_uuid.h"
 #include "mime_type.h"
-
-void
-ns_write_run_view_menu(
-        FILE *f, struct http_request_info *phr,
-        const struct contest_desc *cnts,
-        struct contest_extra *extra,
-        int run_id);
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@set getter_name = "csp_get_priv_edit_run_page"
 %><%@page csp_view_priv_edit_run_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
@@ -30,26 +23,21 @@ ns_write_run_view_menu(
   if (ns_cgi_param(phr, "run_id", &s) <= 0
       || sscanf(s, "%d%n", &run_id, &n) != 1 || s[n]
       || run_id < 0 || run_id >= run_get_total(cs->runlog_state)) {
-    ns_html_err_inv_param(out_f, phr, 1, "cannot parse run_id");
-    return -1;
+    FAIL(NEW_SRV_ERR_INV_RUN_ID);
   }
 
   if (opcaps_check(phr->caps, OPCAP_EDIT_RUN) < 0) {
-    ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
-    goto done;
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   }
 
   if (run_id < 0 || run_id >= run_get_total(cs->runlog_state)) {
-    ns_error(log_f, NEW_SRV_ERR_INV_RUN_ID);
-    goto done;
+    FAIL(NEW_SRV_ERR_INV_RUN_ID);
   }
   if (run_get_entry(cs->runlog_state, run_id, &info) < 0) {
-    ns_error(log_f, NEW_SRV_ERR_INV_RUN_ID);
-    goto done;
+    FAIL(NEW_SRV_ERR_INV_RUN_ID);
   }
   if (info.status < 0 || info.status > RUN_MAX_STATUS) {
-    ns_error(log_f, NEW_SRV_ERR_INV_RUN_ID);
-    goto done;
+    FAIL(NEW_SRV_ERR_INV_RUN_ID);
   }
 
   l10n_setlocale(phr->locale_id);
@@ -57,9 +45,28 @@ ns_write_run_view_menu(
   unsigned char title[1024];
   snprintf(title, sizeof(title), "%s %d", _("Editing run"), run_id);
 %><%@include "priv_header.csp"
-%><%
-  ns_write_run_view_menu(out_f, phr, cnts, extra, run_id);
+%>
+<s:url name="ViewSourceUrl" ac="view-source">
+    <s:param name="run_id" value="run_id" />
+</s:url>
+<s:url name="ViewReportUrl" ac="view-report">
+    <s:param name="run_id" value="run_id" />
+</s:url>
+<s:url name="ViewUserReportUrl" ac="view-user-report">
+    <s:param name="run_id" value="run_id" />
+</s:url>
+<s:url name="ViewAuditLogUrl" ac="view-audit-log">
+    <s:param name="run_id" value="run_id" />
+</s:url>
 
+<table class="b0"><tr>
+    <td class="b0"><s:a ac="main-page"><s:tr>Main page</s:tr></s:a></td>
+    <td class="b0"><s:a url="ViewSourceUrl"><s:tr>Source</s:tr></s:a></td>
+    <td class="b0"><s:a url="ViewReportUrl"><s:tr>Report</s:tr></s:a></td>
+    <td class="b0"><s:a url="ViewUserReportUrl"><s:tr>User report</s:tr></s:a></td>
+    <td class="b0"><s:a url="ViewAuditLogUrl"><s:tr>Audit log</s:tr></s:a></td>
+</tr></table>
+<%
   if (global->is_virtual) {
     start_time = run_get_virtual_start_time(cs->runlog_state, info.user_id);
   } else {
@@ -243,6 +250,6 @@ ns_write_run_view_menu(
 <%@include "priv_footer.csp"
 %><%
   l10n_setlocale(0);
-done:;
+cleanup:;
   html_armor_free(&ab);
 %>

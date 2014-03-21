@@ -19,20 +19,17 @@
   if (ns_cgi_param(phr, "clar_id", &s) <= 0
       || sscanf(s, "%d%n", &clar_id, &n) != 1 || s[n]
       || clar_id < 0 || clar_id >= clar_get_total(cs->clarlog_state)) {
-    ns_html_err_inv_param(out_f, phr, 1, "cannot parse clar_id");
-    return -1;
+    FAIL(NEW_SRV_ERR_INV_CLAR_ID);
   }
 
   if (clar_id < 0 || clar_id >= clar_get_total(cs->clarlog_state)
       || clar_get_record(cs->clarlog_state, clar_id, &clar) < 0
       || clar.id < 0) {
-    ns_error(log_f, NEW_SRV_ERR_INV_CLAR_ID);
-    goto done;
+    FAIL(NEW_SRV_ERR_INV_CLAR_ID);
   }
 
   if (opcaps_check(phr->caps, OPCAP_VIEW_CLAR) < 0) {
-    ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
-    goto done;
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   }
 
   start_time = run_get_start_time(cs->runlog_state);
@@ -125,9 +122,7 @@
 %><%
 
   l10n_setlocale(0);
-
-
- done:;
+cleanup:;
   html_armor_free(&ab);
   xfree(msg_txt);
 %>
