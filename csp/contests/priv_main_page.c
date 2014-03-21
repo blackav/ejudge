@@ -143,6 +143,8 @@ static const unsigned char csp_str116[18] = "\n</body>\n</html>\n";
 
 #include <libintl.h>
 #define _(x) gettext(x)
+
+#define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
 int csp_view_priv_main_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr);
 static PageInterfaceOps page_ops =
 {

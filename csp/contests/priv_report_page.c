@@ -44,20 +44,11 @@ static const unsigned char csp_str16[18] = "\n</body>\n</html>\n";
 #include <libintl.h>
 #define _(x) gettext(x)
 
+#define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
+
 #line 5 "priv_report_page.csp"
 #include "archive_paths.h"
 #include "fileutl.h"
-
-#define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
-
-int
-ns_parse_run_id(
-        FILE *fout,
-        struct http_request_info *phr,
-        const struct contest_desc *cnts,
-        struct contest_extra *extra,
-        int *p_run_id,
-        struct run_entry *pe);
 int csp_view_priv_report_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr);
 static PageInterfaceOps page_ops =
 {
@@ -87,7 +78,7 @@ int retval __attribute__((unused)) = 0;
   unsigned char hbuf[1024] __attribute__((unused));
   const unsigned char *sep __attribute__((unused)) = NULL;
 
-#line 23 "priv_report_page.csp"
+#line 12 "priv_report_page.csp"
 path_t rep_path;
   char *rep_text = 0, *html_text;
   size_t rep_len = 0, html_len;
@@ -100,31 +91,27 @@ path_t rep_path;
   int user_mode = 0;
   unsigned char title[1024];
 
-  if (ns_parse_run_id(out_f, phr, cnts, extra, &run_id, 0) < 0) goto cleanup;
+  if (ns_parse_run_id(out_f, phr, cnts, extra, &run_id, 0) < 0)
+    FAIL(NEW_SRV_ERR_INV_RUN_ID);
 
   if (opcaps_check(phr->caps, OPCAP_VIEW_REPORT) < 0) {
-    ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
-    goto cleanup;
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   }
   if (phr->action == NEW_SRV_ACTION_VIEW_USER_REPORT) user_mode = 1;
 
   if (run_id < 0 || run_id >= run_get_total(cs->runlog_state)
       || run_get_entry(cs->runlog_state, run_id, &re) < 0) {
-    ns_error(log_f, NEW_SRV_ERR_INV_RUN_ID);
-    goto cleanup;
+    FAIL(NEW_SRV_ERR_INV_RUN_ID);
   }
   if (re.status > RUN_MAX_STATUS) {
-    ns_error(log_f, NEW_SRV_ERR_REPORT_UNAVAILABLE);
-    goto cleanup;
+    FAIL(NEW_SRV_ERR_REPORT_UNAVAILABLE);
   }
   if (!run_is_report_available(re.status)) {
-    ns_error(log_f, NEW_SRV_ERR_REPORT_UNAVAILABLE);
-    goto cleanup;
+    FAIL(NEW_SRV_ERR_REPORT_UNAVAILABLE);
   }
   if (re.prob_id <= 0 || re.prob_id > cs->max_prob
       || !(prob = cs->probs[re.prob_id])) {
-    ns_error(log_f, NEW_SRV_ERR_INV_PROB_ID);
-    goto cleanup;
+    FAIL(NEW_SRV_ERR_INV_PROB_ID);
   }
 
   if (user_mode && global->team_enable_rep_view > 0) {
@@ -139,8 +126,7 @@ path_t rep_path;
   rep_flag = serve_make_xml_report_read_path(cs, rep_path, sizeof(rep_path), &re);
   if (rep_flag >= 0) {
     if (generic_read_file(&rep_text, 0, &rep_len, rep_flag, 0, rep_path, 0)<0){
-      ns_error(log_f, NEW_SRV_ERR_DISK_READ_ERROR);
-      goto cleanup;
+      FAIL(NEW_SRV_ERR_DISK_READ_ERROR);
     }
     content_type = get_content_type(rep_text, &start_ptr);
   } else {
@@ -151,12 +137,10 @@ path_t rep_path;
       rep_flag = serve_make_report_read_path(cs, rep_path, sizeof(rep_path), &re);
     }
     if (rep_flag < 0) {
-      ns_error(log_f, NEW_SRV_ERR_REPORT_NONEXISTANT);
-      goto cleanup;
+      FAIL(NEW_SRV_ERR_REPORT_NONEXISTANT);
     }
     if (generic_read_file(&rep_text, 0, &rep_len, rep_flag, 0, rep_path, 0)<0){
-      ns_error(log_f, NEW_SRV_ERR_DISK_READ_ERROR);
-      goto cleanup;
+      FAIL(NEW_SRV_ERR_DISK_READ_ERROR);
     }
     content_type = get_content_type(rep_text, &start_ptr);
   }
@@ -247,7 +231,7 @@ fputs(_("Audit log"), out_f);
 fputs("</a>", out_f);
 fwrite(csp_str13, 1, 21, out_f);
 
-#line 124 "priv_report_page.csp"
+#line 106 "priv_report_page.csp"
 switch (content_type) {
   case CONTENT_TYPE_TEXT:
     html_len = html_armored_memlen(start_ptr, rep_len);
@@ -291,7 +275,7 @@ fwrite(csp_str15, 1, 6, out_f);
 write_copyright_short(out_f);
 fwrite(csp_str16, 1, 17, out_f);
 
-#line 166 "priv_report_page.csp"
+#line 148 "priv_report_page.csp"
 l10n_setlocale(0);
 cleanup:
   xfree(rep_text);

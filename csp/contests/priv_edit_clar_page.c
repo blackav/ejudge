@@ -68,7 +68,6 @@ static const unsigned char csp_str40[18] = "\n</body>\n</html>\n";
 #include <libintl.h>
 #define _(x) gettext(x)
 
-#line 5 "priv_edit_clar_page.csp"
 #define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
 int csp_view_priv_edit_clar_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr);
 static PageInterfaceOps page_ops =
@@ -99,7 +98,7 @@ int retval __attribute__((unused)) = 0;
   unsigned char hbuf[1024] __attribute__((unused));
   const unsigned char *sep __attribute__((unused)) = NULL;
 
-#line 11 "priv_edit_clar_page.csp"
+#line 9 "priv_edit_clar_page.csp"
 struct clar_entry_v1 clar;
   const unsigned char *from_str = NULL, *to_str = NULL;
   unsigned char from_buf[128], to_buf[128];
@@ -113,20 +112,17 @@ struct clar_entry_v1 clar;
   if (ns_cgi_param(phr, "clar_id", &s) <= 0
       || sscanf(s, "%d%n", &clar_id, &n) != 1 || s[n]
       || clar_id < 0 || clar_id >= clar_get_total(cs->clarlog_state)) {
-    ns_html_err_inv_param(out_f, phr, 1, "cannot parse clar_id");
-    goto cleanup;
+    FAIL(NEW_SRV_ERR_INV_CLAR_ID);
   }
 
   if (opcaps_check(phr->caps, OPCAP_EDIT_RUN) < 0) {
-    ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
-    goto cleanup;
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   }
 
   if (clar_id < 0 || clar_id >= clar_get_total(cs->clarlog_state)
       || clar_get_record(cs->clarlog_state, clar_id, &clar) < 0
       || clar.id < 0) {
-    ns_error(log_f, NEW_SRV_ERR_INV_CLAR_ID);
-    goto cleanup;
+    FAIL(NEW_SRV_ERR_INV_CLAR_ID);
   }
 
   l10n_setlocale(phr->locale_id);
@@ -165,7 +161,7 @@ fputs(_("Message"), out_f);
 fwrite(csp_str12, 1, 1, out_f);
 fprintf(out_f, "%d", (int)(clar_id));
 
-#line 48 "priv_edit_clar_page.csp"
+#line 43 "priv_edit_clar_page.csp"
 if (opcaps_check(phr->caps, OPCAP_VIEW_CLAR) >= 0) {
 fwrite(csp_str4, 1, 2, out_f);
 fputs("<a href=\"", out_f);
@@ -179,7 +175,7 @@ fputs(_("View"), out_f);
 fputs("</a>", out_f);
 fwrite(csp_str13, 1, 1, out_f);
 
-#line 49 "priv_edit_clar_page.csp"
+#line 44 "priv_edit_clar_page.csp"
 }
 fwrite(csp_str14, 1, 7, out_f);
 fputs("<form method=\"post\" enctype=\"application/x-www-form-urlencoded\" action=\"", out_f);
@@ -210,7 +206,7 @@ fwrite(csp_str18, 1, 55, out_f);
 fprintf(out_f, "%zu", (size_t)(clar.size));
 fwrite(csp_str19, 1, 12, out_f);
 
-#line 60 "priv_edit_clar_page.csp"
+#line 55 "priv_edit_clar_page.csp"
 if (clar.from <= 0 && clar.to <= 0) {
     from_str = "judges";
     to_str = "all";
@@ -249,7 +245,7 @@ fputs("\"", out_f);
 fputs(" />", out_f);
 fwrite(csp_str19, 1, 12, out_f);
 
-#line 86 "priv_edit_clar_page.csp"
+#line 81 "priv_edit_clar_page.csp"
 from_buf[0] = 0; from_str = from_buf;
   if (clar.j_from > 0) {
     if (!(from_str = teamdb_get_login(cs->teamdb_state, clar.j_from))) {
@@ -362,7 +358,7 @@ fputs("\"", out_f);
 fputs(" />", out_f);
 fwrite(csp_str36, 1, 21, out_f);
 
-#line 113 "priv_edit_clar_page.csp"
+#line 108 "priv_edit_clar_page.csp"
 clar_get_text(cs->clarlog_state, clar_id, &msg_txt, &msg_len);
 fwrite(csp_str37, 1, 46, out_f);
 fputs(html_armor_buf(&ab, (msg_txt)), out_f);
@@ -373,7 +369,7 @@ fwrite(csp_str39, 1, 6, out_f);
 write_copyright_short(out_f);
 fwrite(csp_str40, 1, 17, out_f);
 
-#line 125 "priv_edit_clar_page.csp"
+#line 120 "priv_edit_clar_page.csp"
 l10n_setlocale(0);
 cleanup:
   html_armor_free(&ab);

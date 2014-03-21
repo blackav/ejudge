@@ -53,9 +53,9 @@ static const unsigned char csp_str25[18] = "\n</body>\n</html>\n";
 #include <libintl.h>
 #define _(x) gettext(x)
 
-#line 5 "priv_priorities_page.csp"
 #define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
 
+#line 5 "priv_priorities_page.csp"
 static int
 fix_prio(int val)
 {
@@ -92,7 +92,7 @@ int retval __attribute__((unused)) = 0;
   unsigned char hbuf[1024] __attribute__((unused));
   const unsigned char *sep __attribute__((unused)) = NULL;
 
-#line 19 "priv_priorities_page.csp"
+#line 17 "priv_priorities_page.csp"
 const struct section_global_data *global = cs->global;
     const struct section_problem_data *prob;
     int glob_prio, prob_prio, static_prio, local_prio, total_prio;
@@ -153,7 +153,7 @@ fwrite(csp_str11, 1, 29, out_f);
 fputs(_("Total priority"), out_f);
 fwrite(csp_str12, 1, 16, out_f);
 
-#line 46 "priv_priorities_page.csp"
+#line 44 "priv_priorities_page.csp"
 for (prob_id = 1;
        prob_id <= cs->max_prob && prob_id < EJ_SERVE_STATE_TOTAL_PROBS;
        ++prob_id) {
@@ -182,7 +182,7 @@ fwrite(csp_str17, 1, 33, out_f);
 fprintf(out_f, "%d", (int)(total_prio));
 fwrite(csp_str18, 1, 16, out_f);
 
-#line 65 "priv_priorities_page.csp"
+#line 63 "priv_priorities_page.csp"
 }
 fwrite(csp_str19, 1, 53, out_f);
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_MAIN_PAGE, _("Main page")), out_f);
@@ -197,7 +197,7 @@ fwrite(csp_str24, 1, 6, out_f);
 write_copyright_short(out_f);
 fwrite(csp_str25, 1, 17, out_f);
 
-#line 80 "priv_priorities_page.csp"
+#line 78 "priv_priorities_page.csp"
 l10n_setlocale(0);
 cleanup:
   html_armor_free(&ab);

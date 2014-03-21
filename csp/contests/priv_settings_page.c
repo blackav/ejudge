@@ -54,7 +54,6 @@ static const unsigned char csp_str26[18] = "\n</body>\n</html>\n";
 #include <libintl.h>
 #define _(x) gettext(x)
 
-#line 5 "priv_settings_page.csp"
 #define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
 int csp_view_priv_settings_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr);
 static PageInterfaceOps page_ops =
@@ -85,7 +84,7 @@ int retval __attribute__((unused)) = 0;
   unsigned char hbuf[1024] __attribute__((unused));
   const unsigned char *sep __attribute__((unused)) = NULL;
 
-#line 11 "priv_settings_page.csp"
+#line 9 "priv_settings_page.csp"
 const struct section_global_data *global = cs->global;
     const unsigned char *title = NULL;
 
@@ -132,17 +131,17 @@ fwrite(csp_str11, 1, 83, out_f);
 fputs(_("Participants can view their source code"), out_f);
 fwrite(csp_str10, 1, 29, out_f);
 
-#line 32 "priv_settings_page.csp"
+#line 30 "priv_settings_page.csp"
 if (!cs->online_view_source) {
 fwrite(csp_str12, 1, 9, out_f);
 if ((global->team_enable_src_view > 0)) { fputs(_("Yes"), out_f); } else { fputs(_("No"), out_f); }
 fwrite(csp_str13, 1, 1, out_f);
 
-#line 34 "priv_settings_page.csp"
+#line 32 "priv_settings_page.csp"
 } else {
 if ((cs->online_view_source >= 0)) { fputs(_("Yes"), out_f); } else { fputs(_("No"), out_f); }
 
-#line 36 "priv_settings_page.csp"
+#line 34 "priv_settings_page.csp"
 }
 fwrite(csp_str10, 1, 29, out_f);
 fputs("<form method=\"post\" enctype=\"application/x-www-form-urlencoded\" action=\"", out_f);
@@ -192,19 +191,19 @@ fwrite(csp_str15, 1, 48, out_f);
 fputs(_("Participants can view testing reports"), out_f);
 fwrite(csp_str10, 1, 29, out_f);
 
-#line 46 "priv_settings_page.csp"
+#line 44 "priv_settings_page.csp"
 if (!cs->online_view_report) {
 fwrite(csp_str16, 1, 7, out_f);
 
-#line 48 "priv_settings_page.csp"
+#line 46 "priv_settings_page.csp"
 } else if (cs->online_view_report < 0) {
 fwrite(csp_str17, 1, 2, out_f);
 
-#line 50 "priv_settings_page.csp"
+#line 48 "priv_settings_page.csp"
 } else {
 fwrite(csp_str18, 1, 3, out_f);
 
-#line 52 "priv_settings_page.csp"
+#line 50 "priv_settings_page.csp"
 }
 fwrite(csp_str10, 1, 29, out_f);
 fputs("<form method=\"post\" enctype=\"application/x-www-form-urlencoded\" action=\"", out_f);
@@ -252,7 +251,7 @@ fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE
 fputs("</form>", out_f);
 fwrite(csp_str19, 1, 17, out_f);
 
-#line 60 "priv_settings_page.csp"
+#line 58 "priv_settings_page.csp"
 if (global->separate_user_score > 0) {
 fwrite(csp_str20, 1, 33, out_f);
 fputs(_("Participants view judge score"), out_f);
@@ -293,7 +292,7 @@ fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE
 fputs("</form>", out_f);
 fwrite(csp_str21, 1, 16, out_f);
 
-#line 69 "priv_settings_page.csp"
+#line 67 "priv_settings_page.csp"
 }
 fwrite(csp_str22, 1, 34, out_f);
 fputs(_("Final test visibility rules"), out_f);
@@ -345,7 +344,7 @@ fwrite(csp_str25, 1, 6, out_f);
 write_copyright_short(out_f);
 fwrite(csp_str26, 1, 17, out_f);
 
-#line 91 "priv_settings_page.csp"
+#line 89 "priv_settings_page.csp"
 l10n_setlocale(0);
 cleanup:
   html_armor_free(&ab);

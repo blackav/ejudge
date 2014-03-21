@@ -45,7 +45,6 @@ static const unsigned char csp_str17[18] = "\n</body>\n</html>\n";
 #include <libintl.h>
 #define _(x) gettext(x)
 
-#line 5 "priv_upsolving_page.csp"
 #define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
 int csp_view_priv_upsolving_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr);
 static PageInterfaceOps page_ops =
@@ -76,7 +75,7 @@ int retval __attribute__((unused)) = 0;
   unsigned char hbuf[1024] __attribute__((unused));
   const unsigned char *sep __attribute__((unused)) = NULL;
 
-#line 11 "priv_upsolving_page.csp"
+#line 9 "priv_upsolving_page.csp"
 const unsigned char *freeze_standings = 0;
   const unsigned char *view_source = 0;
   const unsigned char *view_protocol = 0;
@@ -173,7 +172,7 @@ fwrite(csp_str16, 1, 6, out_f);
 write_copyright_short(out_f);
 fwrite(csp_str17, 1, 17, out_f);
 
-#line 58 "priv_upsolving_page.csp"
+#line 56 "priv_upsolving_page.csp"
 l10n_setlocale(0);
 cleanup:
   html_armor_free(&ab);

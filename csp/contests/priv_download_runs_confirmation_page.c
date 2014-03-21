@@ -66,16 +66,7 @@ static const unsigned char csp_str38[18] = "\n</body>\n</html>\n";
 #include <libintl.h>
 #define _(x) gettext(x)
 
-#line 5 "priv_download_runs_confirmation_page.csp"
 #define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
-
-int
-ns_parse_run_mask(
-        struct http_request_info *phr,
-        const unsigned char **p_size_str,
-        const unsigned char **p_mask_str,
-        size_t *p_size,
-        unsigned long **p_mask);
 int csp_view_priv_download_runs_confirmation_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr);
 static PageInterfaceOps page_ops =
 {
@@ -105,7 +96,7 @@ int retval __attribute__((unused)) = 0;
   unsigned char hbuf[1024] __attribute__((unused));
   const unsigned char *sep __attribute__((unused)) = NULL;
 
-#line 19 "priv_download_runs_confirmation_page.csp"
+#line 9 "priv_download_runs_confirmation_page.csp"
 unsigned long *mask = 0, mval;
   size_t mask_size = 0;
   const unsigned char *mask_size_str = 0;
@@ -118,7 +109,7 @@ unsigned long *mask = 0, mval;
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);  
 
   if (ns_parse_run_mask(phr, &mask_size_str, &mask_str, &mask_size, &mask) < 0)
-    goto invalid_param;
+    FAIL(NEW_SRV_ERR_INV_RUN_SELECTION);
 
   for (i = 0; i < mask_size; i++) {
     mval = mask[i];
@@ -238,16 +229,11 @@ fwrite(csp_str37, 1, 6, out_f);
 write_copyright_short(out_f);
 fwrite(csp_str38, 1, 17, out_f);
 
-#line 85 "priv_download_runs_confirmation_page.csp"
+#line 74 "priv_download_runs_confirmation_page.csp"
 l10n_setlocale(0);
 
  cleanup:
   xfree(mask);
   return retval;
-
- invalid_param:
-  ns_html_err_inv_param(out_f, phr, 0, 0);
-  xfree(mask);
-  return -1;
   return 0;
 }
