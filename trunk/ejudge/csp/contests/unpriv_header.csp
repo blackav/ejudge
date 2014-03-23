@@ -25,5 +25,22 @@
 </script>
 <link rel="stylesheet" href="<s:config name="style-prefix" />unpriv.css" type="text/css"/>
 <title><s:v value="title" escape="false" /></title></head>
-<body onload="startClock()"><div id="container"><div id="l12">
+<body<%
+#if defined CONF_ENABLE_AJAX && CONF_ENABLE_AJAX
+%> onload="startClock()"<%
+#endif
+%>><div id="container"><div id="l12">
 <div class="main_phrase"><s:v value="title" escape="false" /></div>
+
+<div class="user_actions">
+<table class="menu"><tr><% unpriv_page_header_1(out_f, phr, cnts, extra, start_time, stop_time); %></tr></table>
+</div>
+<div class="white_empty_block">&nbsp;</div>
+<div class="contest_actions">
+<table class="menu"><tr><% unpriv_page_header_2(out_f, phr, cnts, extra, start_time, stop_time); %></tr></table>
+</div>
+</div>
+<div id="l11"><img src="<s:config name="style-prefix" />logo.gif" alt="logo"/></div>
+<div id="l13">
+<% unpriv_page_header_4(out_f, phr, cnts, extra, start_time, stop_time); %>
+
