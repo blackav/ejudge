@@ -13327,6 +13327,8 @@ unprivileged_entry_point(
     return anon_select_contest_page(fout, phr);
   }
 
+  phr->cnts = cnts;
+
   if (!phr->session_id || phr->action == NEW_SRV_ACTION_LOGIN_PAGE)
     return unprivileged_page_login(fout, phr, orig_locale_id);
 
@@ -13367,6 +13369,7 @@ unprivileged_entry_point(
   }
   extra = ns_get_contest_extra(phr->contest_id);
   ASSERT(extra);
+  phr->extra = extra;
 
   if (!contests_check_team_ip(phr->contest_id, &phr->ip, phr->ssl_flag))
     return ns_html_err_no_perm(fout, phr, 0, "%s://%s is not allowed for USER for contest %d", ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ipv6(&phr->ip), phr->contest_id);
