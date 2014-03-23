@@ -11057,11 +11057,13 @@ brief_time(unsigned char *buf, size_t size, time_t time)
 }
 
 void
-unpriv_page_header(FILE *fout,
-                   struct http_request_info *phr,
-                   const struct contest_desc *cnts,
-                   struct contest_extra *extra,
-                   time_t start_time, time_t stop_time)
+unpriv_page_header_1(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        time_t start_time,
+        time_t stop_time)
 {
   static int top_action_list[] =
   {
@@ -11079,6 +11081,68 @@ unpriv_page_header(FILE *fout,
     __("Logout"),
   };
 
+  int i, shown_items = 0;
+  serve_state_t cs = extra->serve_state;
+  unsigned char stand_url_buf[1024];
+  const unsigned char *forced_text = 0;
+
+  for (i = 0; top_action_list[i] != -1; i++) {
+    // phew ;)
+    if (cnts->exam_mode) continue;
+    if (phr->action == top_action_list[i]) {
+      fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">%s</div></td>", gettext(top_action_names[i]));
+      shown_items++;
+    } else if (top_action_list[i] == NEW_SRV_ACTION_REG_DATA_EDIT) {
+      if (!cnts->allow_reg_data_edit) continue;
+      if (!contests_check_register_ip_2(cnts, &phr->ip, phr->ssl_flag))
+        continue;
+      if (cnts->reg_deadline > 0 && cs->current_time >= cnts->reg_deadline)
+        continue;
+      get_register_url(stand_url_buf, sizeof(stand_url_buf), cnts, phr);
+      fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?SID=%016llx\">%s</a></div></td>",
+              stand_url_buf, phr->session_id,
+              gettext(top_action_names[i]));
+      shown_items++;
+    } else if (top_action_list[i] == NEW_SRV_ACTION_LOGOUT) {
+      forced_text = 0;
+      if (cnts->exam_mode) forced_text = _("Finish session");
+      if (!forced_text) forced_text = gettext(top_action_names[i]);
+      if (phr->rest_mode > 0) {
+        fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s/%s/S%016llx\">%s [%s]</a></div></td>",
+                phr->self_url, ns_symbolic_action_table[top_action_list[i]], phr->session_id,
+                forced_text, phr->login);
+      } else {
+        fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?SID=%016llx&amp;action=%d\">%s [%s]</a></div></td>",
+                phr->self_url, phr->session_id, top_action_list[i],
+                forced_text, phr->login);
+      }
+      shown_items++;
+    } else {
+      if (phr->rest_mode > 0) {
+        fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s/%s/S%016llx\">%s</a></div></td>",
+                phr->self_url, ns_symbolic_action_table[top_action_list[i]], phr->session_id,
+                gettext(top_action_names[i]));
+      } else {
+        fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?SID=%016llx&amp;action=%d\">%s</a></div></td>",
+                phr->self_url, phr->session_id, top_action_list[i],
+                gettext(top_action_names[i]));
+      }
+      shown_items++;
+    }
+  }
+  if (!shown_items)
+    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">&nbsp;</div></td>");
+}
+
+void
+unpriv_page_header_2(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        time_t start_time,
+        time_t stop_time)
+{
   static int action_list[] =
   {
     NEW_SRV_ACTION_MAIN_PAGE,
@@ -11115,16 +11179,234 @@ unpriv_page_header(FILE *fout,
   const unsigned char *target = 0;
   const unsigned char *forced_text = 0;
   const struct section_global_data *global = cs->global;
+  unsigned char stand_url_buf[1024];
+  struct teamdb_export tdb;
+  struct sformat_extra_data fe;
+
+  for (i = 0; action_list[i] != -1; i++) {
+    forced_url = 0;
+    forced_text = 0;
+    target = "";
+    // conditions when the corresponding menu item is shown
+    switch (action_list[i]) {
+    case NEW_SRV_ACTION_MAIN_PAGE:
+      if (cnts->exam_mode) forced_text = _("Instructions");
+      break;
+    case NEW_SRV_ACTION_VIEW_STARTSTOP:
+      if (!global->is_virtual) continue;
+      if (start_time <= 0) {
+        if (global->disable_virtual_start > 0) continue;
+        if (cnts->exam_mode) forced_text = _("Start exam");
+        else forced_text = _("Start virtual contest");
+      } else if (stop_time <= 0) {
+        if (cnts->exam_mode) forced_text = _("Stop exam");
+        else forced_text = _("Stop virtual contest");
+      } else {
+        continue;
+      }
+      break;
+    case NEW_SRV_ACTION_VIEW_PROBLEM_SUMMARY:
+      if (start_time <= 0) continue;
+      if (cnts->exam_mode && stop_time <= 0) continue;
+      break;      
+    case NEW_SRV_ACTION_VIEW_PROBLEM_STATEMENTS:
+      if (start_time <= 0) continue;
+      if (stop_time > 0 && !cnts->problems_url) continue;
+      for (prob_id = 1; prob_id <= cs->max_prob; prob_id++)
+        if (cs->probs[prob_id] && cs->probs[prob_id]->statement_file[0])
+          break;
+      if (prob_id <= cs->max_prob)
+        has_prob_stmt = 1;
+      if (!has_prob_stmt && !cnts->problems_url) continue;
+      if (cnts->problems_url && (stop_time > 0 || !has_prob_stmt)) {
+        forced_url = cnts->problems_url;
+        target = " target=\"_blank\"";
+      }
+      if (global->problem_navigation && !cnts->problems_url) continue;
+      break;
+    case NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT:
+      if (start_time <= 0 || stop_time > 0) continue;
+      if (global->problem_navigation > 0) continue;
+      break;
+    case NEW_SRV_ACTION_VIEW_SUBMISSIONS:
+      if (start_time <= 0) continue;
+      if (cnts->exam_mode && stop_time <= 0) continue;
+      break;
+    case NEW_SRV_ACTION_STANDINGS:
+      if (start_time <= 0) continue;
+      if (global->disable_user_standings > 0) continue;
+      //if (global->score_system == SCORE_OLYMPIAD) continue;
+      if (cnts->standings_url) {
+        memset(&tdb, 0, sizeof(tdb));
+        teamdb_export_team(cs->teamdb_state, phr->user_id, &tdb);
+        memset(&fe, 0, sizeof(fe));
+        fe.locale_id = phr->locale_id;
+        fe.sid = phr->session_id;
+        sformat_message(stand_url_buf, sizeof(stand_url_buf), 0,
+                        cnts->standings_url, global, 0, 0, 0, &tdb,
+                        tdb.user, cnts, &fe);
+        forced_url = stand_url_buf;
+        target = " target=\"_blank\"";
+      }
+      if (cnts->personal) forced_text = _("User standings");
+      break;
+    case NEW_SRV_ACTION_VIEW_CLAR_SUBMIT:
+      if (global->disable_team_clars) continue;
+      if (global->disable_clars) continue;
+      if (start_time <= 0) continue;
+      if (stop_time > 0
+          && (global->appeal_deadline <= 0
+              || cs->current_time >= global->appeal_deadline))
+        continue;
+      break;
+    case NEW_SRV_ACTION_VIEW_CLARS:
+      if (global->disable_clars) continue;
+      break;
+    case NEW_SRV_ACTION_VIEW_SETTINGS:
+      break;
+    }
+    if (!forced_text) forced_text = gettext(action_names[i]);
+    if (phr->action == action_list[i]) {
+      fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">%s</div></td>", forced_text);
+    } else if (forced_url) {
+      fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s\"%s>%s</a></div></td>",
+              forced_url, target, forced_text);
+    } else if (phr->rest_mode > 0) {
+      fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s/%s/S%016llx\">%s</a></div></td>",
+              phr->self_url, ns_symbolic_action_table[action_list[i]], phr->session_id, forced_text);
+    } else {
+      fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?SID=%016llx&amp;action=%d\">%s</a></div></td>",
+              phr->self_url, phr->session_id, action_list[i], forced_text);
+    }
+  }
+}
+
+void
+unpriv_page_header_4(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        time_t start_time,
+        time_t stop_time)
+{
+  serve_state_t cs = extra->serve_state;
+  const struct section_global_data *global = cs->global;
   int unread_clars = 0;
   const unsigned char *status_style = "", *s;
   unsigned char time_buf[64];
   time_t duration = 0, sched_time = 0, fog_start_time = 0;
-  int shown_items = 0;
-  const unsigned char *template_ptr;
-  unsigned char stand_url_buf[1024];
-  struct teamdb_export tdb;
-  struct sformat_extra_data fe;
   const unsigned char *visibility;
+
+  run_get_times(cs->runlog_state, 0, &sched_time, &duration, 0, 0);
+  if (duration > 0 && start_time && !stop_time
+      && global->board_fog_time > 0)
+    fog_start_time = start_time + duration - global->board_fog_time;
+  if (fog_start_time < 0) fog_start_time = 0;
+  if (!cs->global->disable_clars || !cs->global->disable_team_clars)
+    unread_clars = serve_count_unread_clars(cs, phr->user_id, start_time);
+  if (cs->clients_suspended) {
+    status_style = "server_status_off";
+  } else if (unread_clars > 0) {
+    status_style = "server_status_alarm";
+  } else {
+    status_style = "server_status_on";
+  }
+  fprintf(fout, "<div class=\"%s\" id=\"statusLine\">\n", status_style);
+  fprintf(fout, "<div id=\"currentTime\">%s</div>",
+          brief_time(time_buf, sizeof(time_buf), cs->current_time));
+  if (unread_clars > 0) {
+    fprintf(fout, _(" / <b>%d unread message(s)</b>"),
+            unread_clars);
+  }
+
+  if (stop_time > 0) {
+    if (duration > 0 && global->board_fog_time > 0
+        && global->board_unfog_time > 0
+        && cs->current_time < stop_time + global->board_unfog_time
+        && !cs->standings_updated) {
+      s = _("OVER (frozen)");
+    } else {
+      s = _("OVER");
+    }
+  } else if (start_time > 0) {
+    if (fog_start_time > 0 && cs->current_time >= fog_start_time) {
+      if (cnts->exam_mode)
+        s = _("EXAM IS RUNNING (frozen)");
+      else
+        s = _("RUNNING (frozen)");
+    } else {
+      if (cnts->exam_mode)
+        s = _("EXAM IS RUNNING");
+      else
+        s = _("RUNNING");
+    }
+  } else {
+    s = _("NOT STARTED");
+  }
+  fprintf(fout, " / <b>%s</b>", s);
+
+  if (start_time > 0) {
+    if (global->score_system == SCORE_OLYMPIAD && !global->is_virtual) {
+      if (cs->accepting_mode)
+        s = _("accepting");
+      else if (!cs->testing_finished)
+        s = _("judging");
+      else
+        s = _("judged");
+      fprintf(fout, " / <b>%s</b>", s);
+    }
+  }
+
+  if (cs->upsolving_mode) {
+    fprintf(fout, " / <b>%s</b>", _("UPSOLVING"));
+  }
+
+  if (cs->clients_suspended) {
+    fprintf(fout, " / <b><font color=\"red\">%s</font></b>",
+            _("clients suspended"));
+  }
+
+  if (start_time > 0) {
+    if (cs->testing_suspended) {
+      fprintf(fout, " / <b><font color=\"red\">%s</font></b>",
+              _("testing suspended"));
+    }
+    if (cs->printing_suspended) {
+      fprintf(fout, " / <b><font color=\"red\">%s</font></b>",
+              _("printing suspended"));
+    }
+  }
+
+  if (!global->is_virtual && start_time <= 0 && sched_time > 0) {
+    fprintf(fout, " / %s: %s",
+            _("Start at"),
+            brief_time(time_buf, sizeof(time_buf), sched_time));
+  }
+
+  if (start_time > 0 && stop_time <= 0 && duration > 0) {
+    duration_str(0, start_time + duration - cs->current_time, 0,
+                 time_buf, 0);
+    fprintf(fout, " / %s: <div id=\"remainingTime\">%s</div>",
+            _("Remaining"), time_buf);
+  }
+
+  visibility = "hidden";
+  if (global->disable_auto_refresh > 0) {
+    visibility = "visible";
+  }
+
+  fprintf(fout, "<div id=\"reloadButton\" style=\"visibility: %s\">/ <a class=\"menu\" onclick=\"reloadPage()\"><b>[ %s ]</b></a></div><div id=\"statusString\" style=\"visibility: hidden\"></div></div>\n", visibility, _("REFRESH"));
+}
+
+void
+unpriv_page_header(FILE *fout,
+                   struct http_request_info *phr,
+                   const struct contest_desc *cnts,
+                   struct contest_extra *extra,
+                   time_t start_time, time_t stop_time)
+{
+  const unsigned char *template_ptr;
 
   template_ptr = extra->menu_2_txt;
   if (!template_ptr || !*template_ptr)
@@ -11150,150 +11432,11 @@ unpriv_page_header(FILE *fout,
 
     switch (*template_ptr++) {
     case '1':
-      for (i = 0; top_action_list[i] != -1; i++) {
-        // phew ;)
-        if (cnts->exam_mode) continue;
-        if (phr->action == top_action_list[i]) {
-          fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">%s</div></td>", gettext(top_action_names[i]));
-          shown_items++;
-        } else if (top_action_list[i] == NEW_SRV_ACTION_REG_DATA_EDIT) {
-          if (!cnts->allow_reg_data_edit) continue;
-          if (!contests_check_register_ip_2(cnts, &phr->ip, phr->ssl_flag))
-            continue;
-          if (cnts->reg_deadline > 0 && cs->current_time >= cnts->reg_deadline)
-            continue;
-          get_register_url(stand_url_buf, sizeof(stand_url_buf), cnts, phr);
-          fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?SID=%016llx\">%s</a></div></td>",
-                  stand_url_buf, phr->session_id,
-                  gettext(top_action_names[i]));
-          shown_items++;
-        } else if (top_action_list[i] == NEW_SRV_ACTION_LOGOUT) {
-          forced_text = 0;
-          if (cnts->exam_mode) forced_text = _("Finish session");
-          if (!forced_text) forced_text = gettext(top_action_names[i]);
-          if (phr->rest_mode > 0) {
-            fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s/%s/S%016llx\">%s [%s]</a></div></td>",
-                    phr->self_url, ns_symbolic_action_table[top_action_list[i]], phr->session_id,
-                    forced_text, phr->login);
-          } else {
-            fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?SID=%016llx&amp;action=%d\">%s [%s]</a></div></td>",
-                    phr->self_url, phr->session_id, top_action_list[i],
-                    forced_text, phr->login);
-          }
-          shown_items++;
-        } else {
-          if (phr->rest_mode > 0) {
-            fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s/%s/S%016llx\">%s</a></div></td>",
-                    phr->self_url, ns_symbolic_action_table[top_action_list[i]], phr->session_id,
-                    gettext(top_action_names[i]));
-          } else {
-            fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?SID=%016llx&amp;action=%d\">%s</a></div></td>",
-                    phr->self_url, phr->session_id, top_action_list[i],
-                    gettext(top_action_names[i]));
-          }
-          shown_items++;
-        }
-      }
-      if (!shown_items)
-        fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">&nbsp;</div></td>");
+      unpriv_page_header_1(fout, phr, cnts, extra, start_time, stop_time);
       break;
+
     case '2':
-      for (i = 0; action_list[i] != -1; i++) {
-        forced_url = 0;
-        forced_text = 0;
-        target = "";
-        // conditions when the corresponding menu item is shown
-        switch (action_list[i]) {
-        case NEW_SRV_ACTION_MAIN_PAGE:
-          if (cnts->exam_mode) forced_text = _("Instructions");
-          break;
-        case NEW_SRV_ACTION_VIEW_STARTSTOP:
-          if (!global->is_virtual) continue;
-          if (start_time <= 0) {
-            if (global->disable_virtual_start > 0) continue;
-            if (cnts->exam_mode) forced_text = _("Start exam");
-            else forced_text = _("Start virtual contest");
-          } else if (stop_time <= 0) {
-            if (cnts->exam_mode) forced_text = _("Stop exam");
-            else forced_text = _("Stop virtual contest");
-          } else {
-            continue;
-          }
-          break;
-        case NEW_SRV_ACTION_VIEW_PROBLEM_SUMMARY:
-          if (start_time <= 0) continue;
-          if (cnts->exam_mode && stop_time <= 0) continue;
-          break;      
-        case NEW_SRV_ACTION_VIEW_PROBLEM_STATEMENTS:
-          if (start_time <= 0) continue;
-          if (stop_time > 0 && !cnts->problems_url) continue;
-          for (prob_id = 1; prob_id <= cs->max_prob; prob_id++)
-            if (cs->probs[prob_id] && cs->probs[prob_id]->statement_file[0])
-              break;
-          if (prob_id <= cs->max_prob)
-            has_prob_stmt = 1;
-          if (!has_prob_stmt && !cnts->problems_url) continue;
-          if (cnts->problems_url && (stop_time > 0 || !has_prob_stmt)) {
-            forced_url = cnts->problems_url;
-            target = " target=\"_blank\"";
-          }
-          if (global->problem_navigation && !cnts->problems_url) continue;
-          break;
-        case NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT:
-          if (start_time <= 0 || stop_time > 0) continue;
-          if (global->problem_navigation > 0) continue;
-          break;
-        case NEW_SRV_ACTION_VIEW_SUBMISSIONS:
-          if (start_time <= 0) continue;
-          if (cnts->exam_mode && stop_time <= 0) continue;
-          break;
-        case NEW_SRV_ACTION_STANDINGS:
-          if (start_time <= 0) continue;
-          if (global->disable_user_standings > 0) continue;
-          //if (global->score_system == SCORE_OLYMPIAD) continue;
-          if (cnts->standings_url) {
-            memset(&tdb, 0, sizeof(tdb));
-            teamdb_export_team(cs->teamdb_state, phr->user_id, &tdb);
-            memset(&fe, 0, sizeof(fe));
-            fe.locale_id = phr->locale_id;
-            fe.sid = phr->session_id;
-            sformat_message(stand_url_buf, sizeof(stand_url_buf), 0,
-                            cnts->standings_url, global, 0, 0, 0, &tdb,
-                            tdb.user, cnts, &fe);
-            forced_url = stand_url_buf;
-            target = " target=\"_blank\"";
-          }
-          if (cnts->personal) forced_text = _("User standings");
-          break;
-        case NEW_SRV_ACTION_VIEW_CLAR_SUBMIT:
-          if (global->disable_team_clars) continue;
-          if (global->disable_clars) continue;
-          if (start_time <= 0) continue;
-          if (stop_time > 0
-              && (global->appeal_deadline <= 0
-                  || cs->current_time >= global->appeal_deadline))
-            continue;
-          break;
-        case NEW_SRV_ACTION_VIEW_CLARS:
-          if (global->disable_clars) continue;
-          break;
-        case NEW_SRV_ACTION_VIEW_SETTINGS:
-          break;
-        }
-        if (!forced_text) forced_text = gettext(action_names[i]);
-        if (phr->action == action_list[i]) {
-          fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">%s</div></td>", forced_text);
-        } else if (forced_url) {
-          fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s\"%s>%s</a></div></td>",
-                  forced_url, target, forced_text);
-        } else if (phr->rest_mode > 0) {
-          fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s/%s/S%016llx\">%s</a></div></td>",
-                  phr->self_url, ns_symbolic_action_table[action_list[i]], phr->session_id, forced_text);
-        } else {
-          fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?SID=%016llx&amp;action=%d\">%s</a></div></td>",
-                  phr->self_url, phr->session_id, action_list[i], forced_text);
-        }
-      }
+      unpriv_page_header_2(fout, phr, cnts, extra, start_time, stop_time);
       break;
 
     case '3':
@@ -11303,105 +11446,7 @@ unpriv_page_header(FILE *fout,
       break;
 
     case '4':
-      run_get_times(cs->runlog_state, 0, &sched_time, &duration, 0, 0);
-      if (duration > 0 && start_time && !stop_time
-          && global->board_fog_time > 0)
-        fog_start_time = start_time + duration - global->board_fog_time;
-      if (fog_start_time < 0) fog_start_time = 0;
-      if (!cs->global->disable_clars || !cs->global->disable_team_clars)
-        unread_clars = serve_count_unread_clars(cs, phr->user_id, start_time);
-      if (cs->clients_suspended) {
-        status_style = "server_status_off";
-      } else if (unread_clars > 0) {
-        status_style = "server_status_alarm";
-      } else {
-        status_style = "server_status_on";
-      }
-      fprintf(fout, "<div class=\"%s\" id=\"statusLine\">\n", status_style);
-      fprintf(fout, "<div id=\"currentTime\">%s</div>",
-              brief_time(time_buf, sizeof(time_buf), cs->current_time));
-      if (unread_clars > 0) {
-        fprintf(fout, _(" / <b>%d unread message(s)</b>"),
-                unread_clars);
-      }
-
-      if (stop_time > 0) {
-        if (duration > 0 && global->board_fog_time > 0
-            && global->board_unfog_time > 0
-            && cs->current_time < stop_time + global->board_unfog_time
-            && !cs->standings_updated) {
-          s = _("OVER (frozen)");
-        } else {
-          s = _("OVER");
-        }
-      } else if (start_time > 0) {
-        if (fog_start_time > 0 && cs->current_time >= fog_start_time) {
-          if (cnts->exam_mode)
-            s = _("EXAM IS RUNNING (frozen)");
-          else
-            s = _("RUNNING (frozen)");
-        } else {
-          if (cnts->exam_mode)
-            s = _("EXAM IS RUNNING");
-          else
-            s = _("RUNNING");
-        }
-      } else {
-        s = _("NOT STARTED");
-      }
-      fprintf(fout, " / <b>%s</b>", s);
-
-      if (start_time > 0) {
-        if (global->score_system == SCORE_OLYMPIAD && !global->is_virtual) {
-          if (cs->accepting_mode)
-            s = _("accepting");
-          else if (!cs->testing_finished)
-            s = _("judging");
-          else
-            s = _("judged");
-          fprintf(fout, " / <b>%s</b>", s);
-        }
-      }
-
-      if (cs->upsolving_mode) {
-        fprintf(fout, " / <b>%s</b>", _("UPSOLVING"));
-      }
-
-      if (cs->clients_suspended) {
-        fprintf(fout, " / <b><font color=\"red\">%s</font></b>",
-                _("clients suspended"));
-      }
-
-      if (start_time > 0) {
-        if (cs->testing_suspended) {
-          fprintf(fout, " / <b><font color=\"red\">%s</font></b>",
-                  _("testing suspended"));
-        }
-        if (cs->printing_suspended) {
-          fprintf(fout, " / <b><font color=\"red\">%s</font></b>",
-                  _("printing suspended"));
-        }
-      }
-
-      if (!global->is_virtual && start_time <= 0 && sched_time > 0) {
-        fprintf(fout, " / %s: %s",
-                _("Start at"),
-                brief_time(time_buf, sizeof(time_buf), sched_time));
-      }
-
-      if (start_time > 0 && stop_time <= 0 && duration > 0) {
-        duration_str(0, start_time + duration - cs->current_time, 0,
-                     time_buf, 0);
-        fprintf(fout, " / %s: <div id=\"remainingTime\">%s</div>",
-                _("Remaining"), time_buf);
-      }
-
-      visibility = "hidden";
-      if (global->disable_auto_refresh > 0) {
-        visibility = "visible";
-      }
-
-      fprintf(fout, "<div id=\"reloadButton\" style=\"visibility: %s\">/ <a class=\"menu\" onclick=\"reloadPage()\"><b>[ %s ]</b></a></div><div id=\"statusString\" style=\"visibility: hidden\"></div></div>\n", visibility, _("REFRESH"));
+      unpriv_page_header_4(fout, phr, cnts, extra, start_time, stop_time);
       break;
 
     default:
