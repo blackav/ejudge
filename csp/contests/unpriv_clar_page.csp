@@ -120,8 +120,6 @@ unpriv_page_header_4(
   snprintf(title, sizeof(title), "%s %d", _("Clarification"), clar_id);
 %><%@include "unpriv_header.csp" 
 %>
-<% unpriv_page_header(out_f, phr, cnts, extra, start_time, stop_time); %>
-
 <h2><s:tr>Message</s:tr> #<s:v value="clar_id" /></h2>
 
 <table class="b0">
