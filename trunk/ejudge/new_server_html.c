@@ -13536,9 +13536,11 @@ unprivileged_entry_point(
   if (phr->action <= 0 || phr->action >= NEW_SRV_ACTION_LAST) {
     phr->action = NEW_SRV_ACTION_MAIN_PAGE;
   }
+  /*
   if (!external_unpriv_action_names[phr->action] && !user_actions_table[phr->action]) {
     phr->action = NEW_SRV_ACTION_MAIN_PAGE;
   }
+  */
 
   if (external_unpriv_action_names[phr->action]) {
     external_unpriv_action_states[phr->action] = external_action_load(external_unpriv_action_states[phr->action],
