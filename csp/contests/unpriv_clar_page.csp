@@ -1,0 +1,129 @@
+<%
+/* $Id$ */
+%><%@include "unpriv_includes.csp"
+%><%
+#include "team_extra.h"
+
+void
+unpriv_load_html_style(struct http_request_info *phr,
+                       const struct contest_desc *cnts,
+                       struct contest_extra **p_extra,
+                       time_t *p_cur_time);
+void
+unpriv_page_header(FILE *fout,
+                   struct http_request_info *phr,
+                   const struct contest_desc *cnts,
+                   struct contest_extra *extra,
+                   time_t start_time, time_t stop_time);
+
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@set getter_name = "csp_get_unpriv_clar_page"
+%><%@page csp_view_unpriv_clar_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "unpriv_stdvars.csp"
+%><%
+  const struct section_global_data *global = cs->global;
+  int n, clar_id, show_astr_time;
+  const unsigned char *s;
+  size_t clar_size = 0;
+  struct clar_entry_v1 ce;
+  time_t start_time, clar_time, stop_time;
+  unsigned char *clar_text = 0;
+  unsigned char dur_str[64];
+  const unsigned char *clar_subj = 0;
+  unsigned char title[1024];
+
+  if ((n = ns_cgi_param(phr, "clar_id", &s)) <= 0) {
+    fprintf(log_f, "'clar_id' parameter is missing or invalid");
+    FAIL(NEW_SRV_ERR_INV_CLAR_ID);
+  }
+  if (sscanf(s, "%d%n", &clar_id, &n) != 1 || s[n]) {
+    fprintf(log_f, "'clar_id' parameter is missing or invalid");
+    FAIL(NEW_SRV_ERR_INV_CLAR_ID);
+  }
+
+  if (cs->clients_suspended) {
+    FAIL(NEW_SRV_ERR_CLIENTS_SUSPENDED);
+  }
+  if (global->disable_clars) {
+    FAIL(NEW_SRV_ERR_CLARS_DISABLED);
+  }
+  if (clar_id < 0 || clar_id >= clar_get_total(cs->clarlog_state)
+      || clar_get_record(cs->clarlog_state, clar_id, &ce) < 0
+      || ce.id < 0) {
+    fprintf(log_f, "'clar_id' parameter is missing or invalid");
+    FAIL(NEW_SRV_ERR_INV_CLAR_ID);
+  }
+
+  show_astr_time = global->show_astr_time;
+  if (global->is_virtual) show_astr_time = 1;
+  start_time = run_get_start_time(cs->runlog_state);
+  stop_time = run_get_stop_time(cs->runlog_state);
+  if (global->is_virtual) {
+    start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
+    stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id,
+                                          cs->current_time);
+  }
+
+  if ((ce.from > 0 && ce.from != phr->user_id)
+      || (ce.to > 0 && ce.to != phr->user_id)
+      || (start_time <= 0 && ce.hide_flag)) {
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+  }
+
+  if (ce.from != phr->user_id) {
+    team_extra_set_clar_status(cs->team_extra_state, phr->user_id, clar_id);
+  }
+
+  if (clar_get_text(cs->clarlog_state, clar_id, &clar_text, &clar_size) < 0) {
+    FAIL(NEW_SRV_ERR_DISK_READ_ERROR);
+  }
+
+  clar_subj = clar_get_subject(cs->clarlog_state, clar_id);
+
+  clar_time = ce.time;
+  if (start_time < 0) start_time = 0;
+  if (!start_time) clar_time = start_time;
+  if (clar_time < start_time) clar_time = start_time;
+  duration_str(show_astr_time, clar_time, start_time, dur_str, 0);
+
+  unpriv_load_html_style(phr, cnts, 0, 0);
+  l10n_setlocale(phr->locale_id);
+  snprintf(title, sizeof(title), "%s %d", _("Clarification"), clar_id);
+%><%@include "unpriv_header.csp" 
+%>
+<% unpriv_page_header(out_f, phr, cnts, extra, start_time, stop_time); %>
+
+<h2><s:tr>Message</s:tr> #<s:v value="clar_id" /></h2>
+
+<table class="b0">
+<tr><td class="b0"><s:tr>Number</s:tr>:</td><td class="b0"><s:v value="clar_id" /></td></tr>
+<tr><td class="b0"><s:tr>Time</s:tr>:</td><td class="b0"><s:v value="dur_str" escape="false" /></td></tr>
+<tr><td class="b0"><s:tr>Size</s:tr>:</td><td class="b0"><s:v value="ce.size" /></td></tr>
+<tr><td class="b0"><s:tr>Sender</s:tr>:</td><td class="b0"><%
+  if (!ce.from) {
+%><b><s:tr>judges</s:tr></b><%
+  } else {
+%><s:v value="teamdb_get_name(cs->teamdb_state, ce.from)" /><%
+  }
+%></td></tr>
+<tr><td class="b0"><s:tr>To</s:tr>:</td><td class="b0"><%
+  if (!ce.to && !ce.from) {
+%><b><s:tr>all</s:tr></b><%
+  } else if (!ce.to) {
+%><b><s:tr>judges</s:tr></b><%
+  } else {
+%><s:v value="teamdb_get_name(cs->teamdb_state, ce.to)" /><%
+  }
+%></td></tr>
+<tr><td class="b0"><s:tr>Subject</s:tr>:</td><td class="b0"><s:v value="clar_subj" /></td></tr>
+</table>
+<hr/>
+<pre><s:v value="clar_text" /></pre>
+<hr/>
+
+<%@include "unpriv_footer.csp"
+%><%
+  l10n_setlocale(0);
+cleanup:;
+  html_armor_free(&ab);
+%>

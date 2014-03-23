@@ -1,0 +1,22 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html><head>
+<meta http-equiv="Content-type" content="text/html; charset=<s:config name="charset" />"/>
+<script type="text/javascript" src="<s:config name="style-prefix" />dojo/dojo.js" djConfig="isDebug: false, parseOnLoad: true, dojoIframeHistoryUrl:'<s:config name="style-prefix" />dojo/resources/iframe_history.html'"></script>
+<script type="text/javascript" src="<s:config name="style-prefix" />unpriv.js"></script>
+<script type="text/javascript">
+  var SID="<s:v value="phr->session_id" />";
+  var NEW_SRV_ACTION_JSON_USER_STATE=<s:ac ac="json-user-state" />;
+  var NEW_SRV_ACTION_VIEW_PROBLEM_SUMMARY=<s:ac ac="view-problem-summary" />;
+  var self_url="<s:v value="phr->self_url" escape="false" />";
+  var script_name="<s:v value="phr->script_name" escape="false" />";
+  dojo.require("dojo.parser");
+  var jsonState = <s:v value="state_json_txt" escape="false" />;
+  var updateFailedMessage = "<s:tr>STATUS UPDATE FAILED!</s:tr>";
+  var testingInProgressMessage = "<s:tr>TESTING IN PROGRESS...</s:tr>";
+  var testingCompleted = "<s:tr>TESTING COMPLETED</s:tr>";
+  var waitingTooLong = "<s:tr>REFRESH PAGE MANUALLY!</s:tr>";
+</script>
+<link rel="stylesheet" href="<s:config name="style-prefix" />unpriv.css" type="text/css"/>
+<title><s:v value="title" escape="false" /></title></head>
+<body onload="startClock()"><div id="container"><div id="l12">
+<div class="main_phrase"><s:v value="title" escape="false" /></div>

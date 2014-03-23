@@ -3843,6 +3843,23 @@ handle_img_open(
     return 0;
 }
 
+static int
+handle_ac_open(
+        FILE *log_f,
+        TypeContext *cntx,
+        ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f)
+{
+    HtmlElement *elem = ps->el_stack->el;
+    unsigned char buf[1024];
+
+    if (process_ac_attr(log_f, cntx, ps, elem, buf, sizeof(buf)) > 0) {
+        fprintf(prg_f, "fputs(\"%s\", out_f);\n", buf);
+    }
+    return 0;
+}
+
 struct ElementInfo
 {
     const unsigned char *name;
@@ -3885,6 +3902,7 @@ static const struct ElementInfo element_handlers[] =
     { "s:button", handle_button_open, NULL },
     { "s:img", handle_img_open, NULL },
     { "s:radio", handle_textfield_open, NULL },
+    { "s:ac", handle_ac_open, NULL },
 
     { NULL, NULL, NULL },
 };
