@@ -59,7 +59,8 @@ SOFILES = \
  priv_user_ips_page.so\
  priv_user_info_page.so\
  priv_users_page.so\
- priv_error_unknown.so
+ priv_error_unknown.so\
+ unpriv_clar_page.so
 
 CFILES = $(SOFILES:.so=.c) I_priv_priv_users_page.c
 
@@ -110,6 +111,8 @@ priv_user_info_page.c : priv_user_info_page.csp priv_includes.csp priv_stdvars.c
 priv_users_page.c : priv_users_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 
 priv_error_unknown.c : priv_error_unknown.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
+
+unpriv_clar_page.c : unpriv_clar_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 
 %.c : %.csp
 	../../ej-page-gen $< > $@

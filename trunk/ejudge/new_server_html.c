@@ -97,7 +97,7 @@ extern const unsigned char * const ns_symbolic_action_table[];
 static void unprivileged_page_login(FILE *fout,
                                     struct http_request_info *phr,
                                     int orig_locale_id);
-static void
+void
 unpriv_page_header(FILE *fout,
                    struct http_request_info *phr,
                    const struct contest_desc *cnts,
@@ -7244,6 +7244,13 @@ static const unsigned char * const external_priv_error_names[NEW_SRV_ERR_LAST] =
 static ExternalActionState *external_priv_action_states[NEW_SRV_ACTION_LAST];
 static ExternalActionState *external_priv_error_states[NEW_SRV_ERR_LAST];
 
+static const unsigned char * const external_unpriv_error_names[NEW_SRV_ERR_LAST] =
+{
+  [NEW_SRV_ERR_UNKNOWN_ERROR] = "unpriv_error_unknown",
+};
+static ExternalActionState *external_unpriv_action_states[NEW_SRV_ACTION_LAST];
+static ExternalActionState *external_unpriv_error_states[NEW_SRV_ERR_LAST];
+
 static unsigned char *
 read_file_range(
         const unsigned char *path,
@@ -7278,6 +7285,9 @@ error_page(
         int priv_mode,
         int error_code)
 {
+  const unsigned char * const * error_names = external_unpriv_error_names;
+  ExternalActionState **error_states = external_unpriv_error_states;
+
   if (phr->log_t && !*phr->log_t) {
     xfree(phr->log_t); phr->log_t = NULL; phr->log_z = 0;
   }
@@ -7286,20 +7296,24 @@ error_page(
   if (error_code <= 0 || error_code >= NEW_SRV_ERR_LAST) error_code = NEW_SRV_ERR_UNKNOWN_ERROR;
   phr->error_code = error_code;
 
-  // FIXME: consider priv_mode
-  const unsigned char *error_name = external_priv_error_names[error_code];
-  if (!error_name) error_name = external_priv_error_names[NEW_SRV_ERR_UNKNOWN_ERROR];
+  if (priv_mode) {
+    error_names = external_priv_error_names;
+    error_states = external_priv_error_states;
+  }
+
+  const unsigned char *error_name = error_names[error_code];
+  if (!error_name) error_name = error_names[NEW_SRV_ERR_UNKNOWN_ERROR];
   if (!error_name) {
     return ns_html_error(out_f, phr, priv_mode, error_code);
   }
-  external_priv_error_states[error_code] = external_action_load(external_priv_error_states[error_code],
-                                                                "csp/contests",
-                                                                error_name,
-                                                                "csp_get_");
-  if (!external_priv_error_states[error_code]) {
+  error_states[error_code] = external_action_load(error_states[error_code],
+                                                  "csp/contests",
+                                                  error_name,
+                                                  "csp_get_");
+  if (!error_states[error_code]) {
     return ns_html_error(out_f, phr, priv_mode, error_code);
   }
-  PageInterface *pg = ((external_action_handler_t) external_priv_error_states[error_code]->action_handler)();
+  PageInterface *pg = ((external_action_handler_t) error_states[error_code]->action_handler)();
   if (!pg) {
     return ns_html_error(out_f, phr, priv_mode, error_code);
   }
@@ -7560,12 +7574,7 @@ privileged_entry_point(
     if (!r) r = ns_priv_prev_state[phr->action];
 
     close_memstream(phr->log_f); phr->log_f = 0;
-    /*
-    if (phr->log_t && *phr->log_t) {
-      html_error_status_page(fout, phr, cnts, extra, phr->log_t, r, 0);
-    }
-    */
-    xfree(phr->log_t); phr->log_t = NULL;
+    xfree(phr->log_t); phr->log_t = NULL; phr->log_z = 0;
     return;
   }
 
@@ -7584,7 +7593,7 @@ cleanup:
   phr->log_z = 0;
 }
 
-static void
+void
 unpriv_load_html_style(struct http_request_info *phr,
                        const struct contest_desc *cnts,
                        struct contest_extra **p_extra,
@@ -11047,7 +11056,7 @@ brief_time(unsigned char *buf, size_t size, time_t time)
   return buf;
 }
 
-static void
+void
 unpriv_page_header(FILE *fout,
                    struct http_request_info *phr,
                    const struct contest_desc *cnts,
@@ -13259,6 +13268,7 @@ anon_select_contest_page(FILE *fout, struct http_request_info *phr)
 
 static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =
 {
+  [NEW_SRV_ACTION_MAIN_PAGE] = unpriv_main_page,
   [NEW_SRV_ACTION_CHANGE_LANGUAGE] = unpriv_change_language,
   [NEW_SRV_ACTION_CHANGE_PASSWORD] = unpriv_change_password,
   [NEW_SRV_ACTION_SUBMIT_RUN] = unpriv_submit_run,
@@ -13281,6 +13291,11 @@ static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_JSON_USER_STATE] = unpriv_json_user_state,
   [NEW_SRV_ACTION_UPDATE_ANSWER] = unpriv_xml_update_answer,
   [NEW_SRV_ACTION_GET_FILE] = unpriv_get_file,
+};
+
+static const unsigned char * const external_unpriv_action_names[NEW_SRV_ACTION_LAST] =
+{
+  [NEW_SRV_ACTION_VIEW_CLAR] = "unpriv_clar_page",
 };
 
 static void
@@ -13469,6 +13484,48 @@ unprivileged_entry_point(
     // contest finished, not olympiad, standings enabled -> standings
   }
 
+  if (phr->action <= 0 || phr->action >= NEW_SRV_ACTION_LAST) {
+    phr->action = NEW_SRV_ACTION_MAIN_PAGE;
+  }
+  if (!external_unpriv_action_names[phr->action] && !user_actions_table[phr->action]) {
+    phr->action = NEW_SRV_ACTION_MAIN_PAGE;
+  }
+
+  if (external_unpriv_action_names[phr->action]) {
+    external_unpriv_action_states[phr->action] = external_action_load(external_unpriv_action_states[phr->action],
+                                                                      "csp/contests",
+                                                                      external_unpriv_action_names[phr->action],
+                                                                      "csp_get_");
+  }
+
+  if (external_unpriv_action_states[phr->action] && external_unpriv_action_states[phr->action]->action_handler) {
+    PageInterface *pg = ((external_action_handler_t) external_unpriv_action_states[phr->action]->action_handler)();
+
+    if (pg->ops->execute) {
+      int r = pg->ops->execute(pg, phr->log_f, phr);
+      if (r < 0) {
+        error_page(fout, phr, 1, -r);
+        goto cleanup;
+      }
+    }
+
+    if (pg->ops->render) {
+      snprintf(phr->content_type, sizeof(phr->content_type), "text/html; charset=%s", EJUDGE_CHARSET);
+      int r = pg->ops->render(pg, phr->log_f, fout, phr);
+      if (r < 0) {
+        error_page(fout, phr, 1, -r);
+        goto cleanup;
+      }
+    }
+
+    if (pg->ops->destroy) {
+      pg->ops->destroy(pg);
+      pg = NULL;
+    }
+
+    goto cleanup;
+  }
+
   if (phr->action > 0 && phr->action < NEW_SRV_ACTION_LAST
       && user_actions_table[phr->action]) {
     user_actions_table[phr->action](fout, phr, cnts, extra);
@@ -13477,6 +13534,10 @@ unprivileged_entry_point(
       phr->action = 0;
     unpriv_main_page(fout, phr, cnts, extra);
   }
+
+cleanup:
+  close_memstream(phr->log_f); phr->log_f = 0;
+  xfree(phr->log_t); phr->log_t = NULL; phr->log_z = 0;
 }
 
 static const unsigned char *
