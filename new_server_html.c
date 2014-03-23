@@ -103,7 +103,7 @@ unpriv_page_header(FILE *fout,
                    const struct contest_desc *cnts,
                    struct contest_extra *extra,
                    time_t start_time, time_t stop_time);
-static void
+void
 do_json_user_state(FILE *fout, const serve_state_t cs, int user_id,
                    int need_reload_check);
 static const unsigned char *
@@ -12841,7 +12841,7 @@ unpriv_logout(FILE *fout,
   ns_refresh_page_2(fout, phr->client_key, urlbuf);
 }
 
-static void
+void
 do_json_user_state(
         FILE *fout,
         const serve_state_t cs,

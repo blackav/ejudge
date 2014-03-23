@@ -10,8 +10,15 @@
   var self_url="<s:v value="phr->self_url" escape="false" />";
   var script_name="<s:v value="phr->script_name" escape="false" />";
   dojo.require("dojo.parser");
-  var jsonState = <s:v value="state_json_txt" escape="false" />;
-  var updateFailedMessage = "<s:tr>STATUS UPDATE FAILED!</s:tr>";
+<%
+#if defined CONF_ENABLE_AJAX && CONF_ENABLE_AJAX
+  if (cs && phr->user_id > 0) {
+%>  var jsonState = <%
+    do_json_user_state(out_f, extra->serve_state, phr->user_id, 0);
+%>;
+<% }
+#endif
+%>  var updateFailedMessage = "<s:tr>STATUS UPDATE FAILED!</s:tr>";
   var testingInProgressMessage = "<s:tr>TESTING IN PROGRESS...</s:tr>";
   var testingCompleted = "<s:tr>TESTING COMPLETED</s:tr>";
   var waitingTooLong = "<s:tr>REFRESH PAGE MANUALLY!</s:tr>";
