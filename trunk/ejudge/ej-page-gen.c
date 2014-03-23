@@ -3855,7 +3855,7 @@ handle_ac_open(
     unsigned char buf[1024];
 
     if (process_ac_attr(log_f, cntx, ps, elem, buf, sizeof(buf)) > 0) {
-        fprintf(prg_f, "fputs(\"%s\", out_f);\n", buf);
+        fprintf(prg_f, "fprintf(out_f, \"%%d\", %s);\n", buf);
     }
     return 0;
 }
