@@ -13369,6 +13369,7 @@ unprivileged_entry_point(
   }
   extra = ns_get_contest_extra(phr->contest_id);
   ASSERT(extra);
+  phr->cnts = cnts;
   phr->extra = extra;
 
   if (!contests_check_team_ip(phr->contest_id, &phr->ip, phr->ssl_flag))
