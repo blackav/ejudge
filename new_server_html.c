@@ -13540,7 +13540,8 @@ unprivileged_entry_point(
   }
 
 cleanup:
-  close_memstream(phr->log_f); phr->log_f = 0;
+  if (phr->log_f) close_memstream(phr->log_f);
+  phr->log_f = 0;
   xfree(phr->log_t); phr->log_t = NULL; phr->log_z = 0;
 }
 
