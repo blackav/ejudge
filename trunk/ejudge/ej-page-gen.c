@@ -3078,6 +3078,8 @@ handle_a_open(
     unsigned char buf[1024];
     int r;
 
+    HtmlAttribute *class_attr = html_element_find_attribute(elem, "class");
+
     HtmlAttribute *attr = html_element_find_attribute(elem, "url");
     if (attr) {
         HtmlElement *url_elem = processor_state_find_named_url(ps, tc_get_ident(cntx, attr->value));
@@ -3091,7 +3093,11 @@ handle_a_open(
             parser_error_2(ps, "ac attribute is undefined");
             return -1;
         }
-        fprintf(prg_f, "fputs(\"<a href=\\\"\", out_f);\n");
+        fprintf(prg_f, "fputs(\"<a");
+        if (class_attr) {
+            fprintf(prg_f, " class=\\\"%s\\\"", class_attr->value);
+        }
+        fprintf(prg_f, " href=\\\"\", out_f);\n");
         fprintf(prg_f, "sep = ns_url_2(out_f, phr, %s);\n", buf);
         for (HtmlElement *child = url_elem->first_child; child; child = child->next_sibling) {
             fprintf(prg_f, "fputs(sep, out_f); sep = \"&amp;\";\n");
@@ -3120,7 +3126,14 @@ handle_a_open(
     r = process_ac_attr(log_f, cntx, ps, elem, buf, sizeof(buf));
     if (r < 0) return r;
     if (r > 0) {
-        fprintf(prg_f, "fputs(ns_aref(hbuf, sizeof(hbuf), phr, %s, 0), out_f);\n", buf);
+        fprintf(prg_f, "fputs(\"<a");
+        if (class_attr) {
+            fprintf(prg_f, " class=\\\"%s\\\"", class_attr->value);
+        }
+        fprintf(prg_f, " href=\\\"\", out_f);\n");
+        fprintf(prg_f, "ns_url_2(out_f, phr, %s);\n", buf);
+        fprintf(prg_f, "fputs(\"\\\">\", out_f);\n");
+        //fprintf(prg_f, "fputs(ns_aref(hbuf, sizeof(hbuf), phr, %s, 0), out_f);\n", buf);
     }
     return 0;
 }
