@@ -1,5 +1,43 @@
 <div class="user_actions">
-<table class="menu"><tr><% unpriv_page_header_1(out_f, phr, cnts, extra, start_time, stop_time); %></tr></table>
+<table class="menu"><tr><%
+  shown_items = 0;
+  if (cnts->exam_mode <= 0) {
+%><td class="menu"><div class="contest_actions_item"><%
+    if (phr->action != NEW_SRV_ACTION_VIEW_SETTINGS) {
+%><s:a ac="view-settings"><%
+    }
+%><s:tr>Settings</s:tr><%
+    if (phr->action != NEW_SRV_ACTION_VIEW_SETTINGS) {
+%></s:a><%
+    }
+%></div></td><%
+    shown_items++;
+
+    // reg data edit
+    if (cnts->allow_reg_data_edit > 0
+        && contests_check_register_ip_2(cnts, &phr->ip, phr->ssl_flag) > 0
+        && (cnts->reg_deadline <= 0 || cs->current_time < cnts->reg_deadline)) {
+      ns_get_register_url(hbuf, sizeof(hbuf), cnts, phr);
+      fprintf(out_f, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?SID=%016llx\">%s</a></div></td>",
+              hbuf, phr->session_id, _("Registration data"));
+      shown_items++;
+    }
+
+    // logout
+%><td class="menu"><div class="contest_actions_item"><s:a ac="logout"><%
+    if (cnts->exam_mode) {
+%><s:tr>Finish session</s:tr><%
+    } else {
+%><s:tr>Logout</s:tr><%
+    }
+%> [<s:v value="phr->login" escape="false" />]</a></div></td><%
+    shown_items++;
+  }
+
+  if (!shown_items) {
+%><td class="menu"><div class="contest_actions_item">&nbsp;</div></td><%
+  }
+%></tr></table>
 </div>
 <div class="white_empty_block">&nbsp;</div>
 <div class="contest_actions">
