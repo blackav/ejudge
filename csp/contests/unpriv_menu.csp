@@ -57,9 +57,10 @@
   } else {
 %>NOT STARTED<%
   }
-%></b> / <b><%
+%></b><%
   if (start_time > 0) {
     if (global->score_system == SCORE_OLYMPIAD && !global->is_virtual) {
+%>/ <b><%
       if (cs->accepting_mode) {
 %><s:tr>accepting</s:tr><%
       } else if (!cs->testing_finished) {
