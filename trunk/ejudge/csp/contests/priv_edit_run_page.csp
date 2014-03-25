@@ -234,7 +234,7 @@
 <tr><td class="b0">Imported:</td><td class="b0"><s:checkbox name="is_imported" checkedExpr="info.is_imported" disabledExpr="info.is_readonly" /></td></tr>
 <tr><td class="b0">Read-only:</td><td class="b0"><s:checkbox name="is_readonly" checkedExpr="info.is_readonly" /></td></tr>
 
-<tr><td class="b0">Locale ID:</td><td class="b0"><s:textfield name="locale_id" size="20" disabledExpr="info.is_readonly" value="info.locale_id" /></td></tr>
+<tr><td class="b0">Locale ID:</td><td class="b0"><s:textfield name="locale_id" size="20" disabledExpr="info.is_readonly" value="info.locale_id" checkExpr=">= 0" /></td></tr>
 <%  if (global->enable_printing > 0) { %>
 <tr><td class="b0">Pages printed:</td><td class="b0"><s:textfield name="pages" size="20" disabledExpr="info.is_readonly" value="(int) info.pages" /></td></tr>
 <%  } %>
