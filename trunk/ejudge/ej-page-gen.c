@@ -3287,6 +3287,8 @@ handle_v_open(
             t = tc_get_typedef_type(cntx, tc_get_i0_type(cntx), tc_get_ident(cntx, "__ej_sha1_t"));
         } else if (!strcmp(type_attr->value, "duration")) {
             t = tc_get_typedef_type(cntx, tc_get_i0_type(cntx), tc_get_ident(cntx, "__ej_duration_t"));
+        } else if (!strcmp(type_attr->value, "brief_time")) {
+            t = tc_get_typedef_type(cntx, tc_get_i0_type(cntx), tc_get_ident(cntx, "__ej_brief_time_t"));
         }
     } else {
         int r = parse_c_expression(ps, cntx, log_f, at->value, &t, ps->pos);
@@ -4201,6 +4203,24 @@ ej_duration_type_handler(
     fprintf(prg_f, "fputs(duration_str_2(hbuf, sizeof(hbuf), %s), out_f);\n", text);
 }
 
+static void
+ej_brief_time_type_handler(
+        FILE *log_f,
+        TypeContext *cntx,
+        struct ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f,
+        const unsigned char *text,
+        const HtmlElement *elem,
+        TypeInfo *type_info)
+{
+    fprintf(prg_f,
+            "{\n"
+            "  struct tm *ptm = localtime(&(%s));\n"
+            "  fprintf(out_f, \"%%02d:%%02d:%%02d\", ptm->tm_hour, ptm->tm_min, ptm->tm_sec);\n"
+            "}\n", text);
+}
+
 static int
 has_non_whitespace(
         const unsigned char *txt,
@@ -4446,6 +4466,8 @@ process_unit(
                                      ej_sha1_type_handler);
     processor_state_set_type_handler(ps, tc_get_typedef_type(cntx, tc_get_i0_type(cntx), tc_get_ident(cntx, "__ej_duration_t")),
                                      ej_duration_type_handler);
+    processor_state_set_type_handler(ps, tc_get_typedef_type(cntx, tc_get_i0_type(cntx), tc_get_ident(cntx, "__ej_brief_time_t")),
+                                     ej_brief_time_type_handler);
 
     processor_state_set_array_type_handler(ps, tc_get_u8_type(cntx), string_type_handler);
     processor_state_set_array_type_handler(ps, tc_get_i8_type(cntx), string_type_handler);
