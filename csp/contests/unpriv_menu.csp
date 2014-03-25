@@ -4,7 +4,7 @@
   if (cnts->exam_mode <= 0) {
 %><td class="menu"><div class="contest_actions_item"><%
     if (phr->action != NEW_SRV_ACTION_VIEW_SETTINGS) {
-%><s:a ac="view-settings"><%
+%><s:a class="menu" ac="view-settings"><%
     }
 %><s:tr>Settings</s:tr><%
     if (phr->action != NEW_SRV_ACTION_VIEW_SETTINGS) {
@@ -24,7 +24,7 @@
     }
 
     // logout
-%><td class="menu"><div class="contest_actions_item"><s:a ac="logout"><%
+%><td class="menu"><div class="contest_actions_item"><s:a class="menu" ac="logout"><%
     if (cnts->exam_mode) {
 %><s:tr>Finish session</s:tr><%
     } else {
