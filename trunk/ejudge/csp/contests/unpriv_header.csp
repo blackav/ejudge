@@ -30,4 +30,4 @@
 %> onload="startClock()"<%
 #endif
 %>><div id="container"><div id="l12">
-<div class="main_phrase"><s:v value="title" escape="false" /></div>
+<div class="main_phrase"><% if (phr) { %><s:v value="phr->name_arm" escape="false" /><% } %> [<% if (extra) { %><s:v value="extra->contest_arm" escape="false" /><% } %>]:<s:v value="title" escape="false" /></div>
