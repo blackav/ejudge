@@ -112,7 +112,7 @@ priv_users_page.c : priv_users_page.csp priv_includes.csp priv_stdvars.csp priv_
 
 priv_error_unknown.c : priv_error_unknown.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 
-unpriv_clar_page.c : unpriv_clar_page.csp unpriv_includes.csp unpriv_stdvars.csp unpriv_header.csp unpriv_footer.csp
+unpriv_clar_page.c : unpriv_clar_page.csp unpriv_includes.csp unpriv_stdvars.csp unpriv_header.csp unpriv_menu.csp unpriv_footer.csp
 
 %.c : %.csp
 	../../ej-page-gen $< > $@
