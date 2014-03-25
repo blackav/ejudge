@@ -11065,71 +11065,57 @@ unpriv_page_header_1(
         time_t start_time,
         time_t stop_time)
 {
-  static int top_action_list[] =
-  {
-    NEW_SRV_ACTION_VIEW_SETTINGS,
-    NEW_SRV_ACTION_REG_DATA_EDIT,
-    NEW_SRV_ACTION_LOGOUT,
-
-    -1,
-  };
-
-  static const unsigned char *top_action_names[] =
-  {
-    __("Settings"),
-    __("Registration data"),
-    __("Logout"),
-  };
-
-  int i, shown_items = 0;
+  int shown_items = 0;
   serve_state_t cs = extra->serve_state;
   unsigned char stand_url_buf[1024];
-  const unsigned char *forced_text = 0;
 
-  for (i = 0; top_action_list[i] != -1; i++) {
-    // phew ;)
-    if (cnts->exam_mode) continue;
-    if (phr->action == top_action_list[i]) {
-      fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">%s</div></td>", gettext(top_action_names[i]));
-      shown_items++;
-    } else if (top_action_list[i] == NEW_SRV_ACTION_REG_DATA_EDIT) {
-      if (!cnts->allow_reg_data_edit) continue;
-      if (!contests_check_register_ip_2(cnts, &phr->ip, phr->ssl_flag))
-        continue;
-      if (cnts->reg_deadline > 0 && cs->current_time >= cnts->reg_deadline)
-        continue;
+  if (cnts->exam_mode <= 0) {
+    // settings
+    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">");
+    if (phr->action != NEW_SRV_ACTION_VIEW_SETTINGS) {
+      if (phr->rest_mode > 0) {
+        fprintf(fout, "<a class=\"menu\" href=\"%s/%s/S%016llx\">",
+                phr->self_url, ns_symbolic_action_table[NEW_SRV_ACTION_VIEW_SETTINGS], phr->session_id);
+      } else {
+        fprintf(fout, "<a class=\"menu\" href=\"%s?SID=%016llx&amp;action=%d\">",
+                phr->self_url, phr->session_id, NEW_SRV_ACTION_VIEW_SETTINGS);
+      }
+    }
+    fprintf(fout, "%s", _("Settings"));
+    if (phr->action != NEW_SRV_ACTION_VIEW_SETTINGS) {
+      fprintf(fout, "</a>");
+    }
+    fprintf(fout, "</div></td>");
+    shown_items++;
+
+    // reg data edit
+    if (cnts->allow_reg_data_edit > 0
+        && contests_check_register_ip_2(cnts, &phr->ip, phr->ssl_flag) > 0
+        && (cnts->reg_deadline <= 0 || cs->current_time < cnts->reg_deadline)) {
       get_register_url(stand_url_buf, sizeof(stand_url_buf), cnts, phr);
       fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?SID=%016llx\">%s</a></div></td>",
-              stand_url_buf, phr->session_id,
-              gettext(top_action_names[i]));
-      shown_items++;
-    } else if (top_action_list[i] == NEW_SRV_ACTION_LOGOUT) {
-      forced_text = 0;
-      if (cnts->exam_mode) forced_text = _("Finish session");
-      if (!forced_text) forced_text = gettext(top_action_names[i]);
-      if (phr->rest_mode > 0) {
-        fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s/%s/S%016llx\">%s [%s]</a></div></td>",
-                phr->self_url, ns_symbolic_action_table[top_action_list[i]], phr->session_id,
-                forced_text, phr->login);
-      } else {
-        fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?SID=%016llx&amp;action=%d\">%s [%s]</a></div></td>",
-                phr->self_url, phr->session_id, top_action_list[i],
-                forced_text, phr->login);
-      }
-      shown_items++;
-    } else {
-      if (phr->rest_mode > 0) {
-        fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s/%s/S%016llx\">%s</a></div></td>",
-                phr->self_url, ns_symbolic_action_table[top_action_list[i]], phr->session_id,
-                gettext(top_action_names[i]));
-      } else {
-        fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?SID=%016llx&amp;action=%d\">%s</a></div></td>",
-                phr->self_url, phr->session_id, top_action_list[i],
-                gettext(top_action_names[i]));
-      }
+              stand_url_buf, phr->session_id, _("Registration data"));
       shown_items++;
     }
+
+    // logout
+    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">");
+    if (phr->rest_mode > 0) {
+      fprintf(fout, "<a class=\"menu\" href=\"%s/%s/S%016llx\">",
+              phr->self_url, ns_symbolic_action_table[NEW_SRV_ACTION_LOGOUT], phr->session_id);
+    } else {
+      fprintf(fout, "<a class=\"menu\" href=\"%s?SID=%016llx&amp;action=%d\">",
+              phr->self_url, phr->session_id, NEW_SRV_ACTION_LOGOUT);
+    }
+    if (cnts->exam_mode) {
+      fprintf(fout, "%s", _("Finish session"));
+    } else {
+      fprintf(fout, "%s", _("Logout"));
+    }
+    fprintf(fout, " [%s]</a></div></td>", phr->login);
+    shown_items++;
   }
+
   if (!shown_items)
     fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">&nbsp;</div></td>");
 }
