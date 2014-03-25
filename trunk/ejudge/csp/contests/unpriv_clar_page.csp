@@ -119,6 +119,7 @@ unpriv_page_header_4(
   l10n_setlocale(phr->locale_id);
   snprintf(title, sizeof(title), "%s %d", _("Clarification"), clar_id);
 %><%@include "unpriv_header.csp" 
+%><%@include "unpriv_menu.csp"
 %>
 <h2><s:tr>Message</s:tr> #<s:v value="clar_id" /></h2>
 
