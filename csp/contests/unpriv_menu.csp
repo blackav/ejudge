@@ -8,7 +8,6 @@
 </div>
 <div id="l11"><img src="<s:config name="style-prefix" />logo.gif" alt="logo"/></div>
 <div id="l13">
-<!-- unpriv_page_header_4(out_f, phr, cnts, extra, start_time, stop_time); -->
 <%
   run_get_times(cs->runlog_state, 0, &sched_time, &duration, 0, 0);
   if (duration > 0 && start_time && !stop_time && global->board_fog_time > 0)
