@@ -1060,4 +1060,11 @@ html_role_select(
         int allow_admin,
         const unsigned char *var_name);
 
+const unsigned char *
+ns_get_register_url(
+        unsigned char *buf,
+        size_t size,
+        const struct contest_desc *cnts,
+        const struct http_request_info *phr);
+
 #endif /* __NEW_SERVER_H__ */
