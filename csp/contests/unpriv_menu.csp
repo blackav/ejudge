@@ -25,7 +25,7 @@
 %>"server_status_on"<%
   }
 %> id="statusLine">
-<div id="currentTime"><s:v value="brief_time(time_buf, sizeof(time_buf), cs->current_time)" escape="false" /></div><%
+<div id="currentTime"><s:v type="brief_time" value="cs->current_time" /></div><%
   if (unread_clars > 0) {
     fprintf(out_f, _(" / <b>%d unread message(s)</b>"),
             unread_clars);
@@ -89,7 +89,7 @@
   }
 %><%
   if (!global->is_virtual && start_time <= 0 && sched_time > 0) {
-%> / <s:tr>Start at</s:tr>: <s:v value="brief_time(time_buf, sizeof(time_buf), sched_time)" escape="false" /><%
+%> / <s:tr>Start at</s:tr>: <s:v type="brief_time" value="sched_time" /><%
   }
 %><%
   if (start_time > 0 && stop_time <= 0 && duration > 0) {
