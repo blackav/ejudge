@@ -8,6 +8,7 @@
   const unsigned char *sep __attribute__((unused)) = NULL;
   unsigned char time_buf[256] __attribute__((unused));
   int unread_clars __attribute__((unused)) = 0;
+  int shown_items __attribute__((unused)) = 0;
   time_t sched_time __attribute__((unused)) = 0;
   time_t duration __attribute__((unused)) = 0;
   time_t fog_start_time __attribute__((unused)) = 0;

@@ -106,8 +106,8 @@ unpriv_page_header(FILE *fout,
 void
 do_json_user_state(FILE *fout, const serve_state_t cs, int user_id,
                    int need_reload_check);
-static const unsigned char *
-get_register_url(
+const unsigned char *
+ns_get_register_url(
         unsigned char *buf,
         size_t size,
         const struct contest_desc *cnts,
@@ -11092,7 +11092,7 @@ unpriv_page_header_1(
     if (cnts->allow_reg_data_edit > 0
         && contests_check_register_ip_2(cnts, &phr->ip, phr->ssl_flag) > 0
         && (cnts->reg_deadline <= 0 || cs->current_time < cnts->reg_deadline)) {
-      get_register_url(stand_url_buf, sizeof(stand_url_buf), cnts, phr);
+      ns_get_register_url(stand_url_buf, sizeof(stand_url_buf), cnts, phr);
       fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?SID=%016llx\">%s</a></div></td>",
               stand_url_buf, phr->session_id, _("Registration data"));
       shown_items++;
@@ -13578,8 +13578,8 @@ cleanup:
   xfree(phr->log_t); phr->log_t = NULL; phr->log_z = 0;
 }
 
-static const unsigned char *
-get_register_url(
+const unsigned char *
+ns_get_register_url(
         unsigned char *buf,
         size_t size,
         const struct contest_desc *cnts,
