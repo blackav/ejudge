@@ -11129,99 +11129,148 @@ unpriv_page_header_2(
         time_t start_time,
         time_t stop_time)
 {
-  static int action_list[] =
-  {
-    NEW_SRV_ACTION_MAIN_PAGE,
-    NEW_SRV_ACTION_VIEW_STARTSTOP,
-    NEW_SRV_ACTION_VIEW_PROBLEM_SUMMARY,
-    NEW_SRV_ACTION_VIEW_PROBLEM_STATEMENTS,
-    NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT,
-    NEW_SRV_ACTION_VIEW_SUBMISSIONS,
-    NEW_SRV_ACTION_STANDINGS,
-    NEW_SRV_ACTION_VIEW_CLAR_SUBMIT,
-    NEW_SRV_ACTION_VIEW_CLARS,
-
-    -1,
-  };
-
-  static const unsigned char *action_names[] =
-  {
-    __("Info"),
-    0,
-    __("Summary"),
-    __("Statements"),
-    __("Submit"),
-    __("Submissions"),
-    __("Standings"),
-    __("Submit clar"),
-    __("Clars"),
-    __("Settings"),
-    __("Logout"),
-  };
-
-  int i, prob_id, has_prob_stmt = 0;
   serve_state_t cs = extra->serve_state;
-  const unsigned char *forced_url = 0;
-  const unsigned char *target = 0;
-  const unsigned char *forced_text = 0;
   const struct section_global_data *global = cs->global;
   unsigned char stand_url_buf[1024];
   struct teamdb_export tdb;
   struct sformat_extra_data fe;
 
-  for (i = 0; action_list[i] != -1; i++) {
-    forced_url = 0;
-    forced_text = 0;
-    target = "";
-    // conditions when the corresponding menu item is shown
-    switch (action_list[i]) {
-    case NEW_SRV_ACTION_MAIN_PAGE:
-      if (cnts->exam_mode) forced_text = _("Instructions");
-      break;
-    case NEW_SRV_ACTION_VIEW_STARTSTOP:
-      if (!global->is_virtual) continue;
-      if (start_time <= 0) {
-        if (global->disable_virtual_start > 0) continue;
-        if (cnts->exam_mode) forced_text = _("Start exam");
-        else forced_text = _("Start virtual contest");
-      } else if (stop_time <= 0) {
-        if (cnts->exam_mode) forced_text = _("Stop exam");
-        else forced_text = _("Stop virtual contest");
+  //case NEW_SRV_ACTION_MAIN_PAGE:
+  fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">");
+  if (phr->action != NEW_SRV_ACTION_MAIN_PAGE) {
+    if (phr->rest_mode > 0) {
+      fprintf(fout, "<a class=\"menu\" href=\"%s/%s/S%016llx\">",
+              phr->self_url, ns_symbolic_action_table[NEW_SRV_ACTION_MAIN_PAGE], phr->session_id);
+    } else {
+      fprintf(fout, "<a class=\"menu\" href=\"%s?SID=%016llx&amp;action=%d\">",
+              phr->self_url, phr->session_id, NEW_SRV_ACTION_MAIN_PAGE);
+    }
+  }
+  if (cnts->exam_mode) {
+    fprintf(fout, "%s", _("Instructions"));
+  } else {
+    fprintf(fout, "%s", _("Info"));
+  }
+  if (phr->action != NEW_SRV_ACTION_MAIN_PAGE) {
+    fprintf(fout, "</a>");
+  }
+  fprintf(fout, "</div></td>");
+
+  //case NEW_SRV_ACTION_VIEW_STARTSTOP:
+  if (global->is_virtual > 0 && ((start_time <= 0 && global->disable_virtual_start <= 0) || stop_time <= 0)) {
+    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">");
+    if (phr->action != NEW_SRV_ACTION_VIEW_STARTSTOP) {
+      if (phr->rest_mode > 0) {
+        fprintf(fout, "<a class=\"menu\" href=\"%s/%s/S%016llx\">",
+                phr->self_url, ns_symbolic_action_table[NEW_SRV_ACTION_VIEW_STARTSTOP], phr->session_id);
       } else {
-        continue;
+        fprintf(fout, "<a class=\"menu\" href=\"%s?SID=%016llx&amp;action=%d\">",
+                phr->self_url, phr->session_id, NEW_SRV_ACTION_VIEW_STARTSTOP);
       }
-      break;
-    case NEW_SRV_ACTION_VIEW_PROBLEM_SUMMARY:
-      if (start_time <= 0) continue;
-      if (cnts->exam_mode && stop_time <= 0) continue;
-      break;      
-    case NEW_SRV_ACTION_VIEW_PROBLEM_STATEMENTS:
-      if (start_time <= 0) continue;
-      if (stop_time > 0 && !cnts->problems_url) continue;
-      for (prob_id = 1; prob_id <= cs->max_prob; prob_id++)
-        if (cs->probs[prob_id] && cs->probs[prob_id]->statement_file[0])
-          break;
-      if (prob_id <= cs->max_prob)
-        has_prob_stmt = 1;
-      if (!has_prob_stmt && !cnts->problems_url) continue;
-      if (cnts->problems_url && (stop_time > 0 || !has_prob_stmt)) {
-        forced_url = cnts->problems_url;
-        target = " target=\"_blank\"";
+    }
+    if (start_time <= 0) {
+      if (cnts->exam_mode) {
+        fprintf(fout, "%s", _("Start exam"));
+      } else {
+        fprintf(fout, "%s", _("Start virtual contest"));
       }
-      if (global->problem_navigation && !cnts->problems_url) continue;
-      break;
-    case NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT:
-      if (start_time <= 0 || stop_time > 0) continue;
-      if (global->problem_navigation > 0) continue;
-      break;
-    case NEW_SRV_ACTION_VIEW_SUBMISSIONS:
-      if (start_time <= 0) continue;
-      if (cnts->exam_mode && stop_time <= 0) continue;
-      break;
-    case NEW_SRV_ACTION_STANDINGS:
-      if (start_time <= 0) continue;
-      if (global->disable_user_standings > 0) continue;
-      //if (global->score_system == SCORE_OLYMPIAD) continue;
+    } else if (stop_time <= 0) {
+      if (cnts->exam_mode) {
+        fprintf(fout, "%s", _("Stop exam"));
+      } else {
+        fprintf(fout, "%s", _("Stop virtual contest"));
+      }
+    }
+    if (phr->action != NEW_SRV_ACTION_VIEW_STARTSTOP) {
+      fprintf(fout, "</a>");
+    }
+    fprintf(fout, "</div></td>");
+  }
+
+  //case NEW_SRV_ACTION_VIEW_PROBLEM_SUMMARY:
+  if (start_time > 0 && (cnts->exam_mode <= 0 || stop_time > 0)) {
+    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">");
+    if (phr->action != NEW_SRV_ACTION_VIEW_PROBLEM_SUMMARY) {
+      if (phr->rest_mode > 0) {
+        fprintf(fout, "<a class=\"menu\" href=\"%s/%s/S%016llx\">",
+                phr->self_url, ns_symbolic_action_table[NEW_SRV_ACTION_VIEW_PROBLEM_SUMMARY], phr->session_id);
+      } else {
+        fprintf(fout, "<a class=\"menu\" href=\"%s?SID=%016llx&amp;action=%d\">",
+                phr->self_url, phr->session_id, NEW_SRV_ACTION_VIEW_PROBLEM_SUMMARY);
+      }
+    }
+    fprintf(fout, "%s", _("Summary"));
+    if (phr->action != NEW_SRV_ACTION_VIEW_PROBLEM_SUMMARY) {
+      fprintf(fout, "</a>");
+    }
+    fprintf(fout, "</div></td>");
+  }
+
+  //case NEW_SRV_ACTION_VIEW_PROBLEM_STATEMENTS:
+  if (start_time > 0
+      && (stop_time <= 0 || cnts->problems_url)
+      && (global->problem_navigation <= 0 || cnts->problems_url)) {
+    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">");
+    if (phr->action != NEW_SRV_ACTION_VIEW_PROBLEM_STATEMENTS) {
+      if (cnts->problems_url) {
+        fprintf(fout, "<a class=\"menu\" href=\"%s\" target=\"_blank\">", cnts->problems_url);
+      } else if (phr->rest_mode > 0) {
+        fprintf(fout, "<a class=\"menu\" href=\"%s/%s/S%016llx\">",
+                phr->self_url, ns_symbolic_action_table[NEW_SRV_ACTION_VIEW_PROBLEM_STATEMENTS], phr->session_id);
+      } else {
+        fprintf(fout, "<a class=\"menu\" href=\"%s?SID=%016llx&amp;action=%d\">",
+                phr->self_url, phr->session_id, NEW_SRV_ACTION_VIEW_PROBLEM_STATEMENTS);
+      }
+    }
+    fprintf(fout, "%s", _("Statements"));
+    if (phr->action != NEW_SRV_ACTION_VIEW_PROBLEM_STATEMENTS) {
+      fprintf(fout, "</a>");
+    }
+    fprintf(fout, "</div></td>");
+  }
+  
+  //case NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT:
+  if (start_time > 0 && stop_time <= 0 && global->problem_navigation <= 0) {
+    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">");
+    if (phr->action != NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT) {
+      if (phr->rest_mode > 0) {
+        fprintf(fout, "<a class=\"menu\" href=\"%s/%s/S%016llx\">",
+                phr->self_url, ns_symbolic_action_table[NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT], phr->session_id);
+      } else {
+        fprintf(fout, "<a class=\"menu\" href=\"%s?SID=%016llx&amp;action=%d\">",
+                phr->self_url, phr->session_id, NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT);
+      }
+    }
+    fprintf(fout, "%s", _("Submit"));
+    if (phr->action != NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT) {
+      fprintf(fout, "</a>");
+    }
+    fprintf(fout, "</div></td>");
+  }
+  
+  //case NEW_SRV_ACTION_VIEW_SUBMISSIONS:
+  if (start_time > 0 && (cnts->exam_mode <= 0 || stop_time > 0)) {
+    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">");
+    if (phr->action != NEW_SRV_ACTION_VIEW_SUBMISSIONS) {
+      if (phr->rest_mode > 0) {
+        fprintf(fout, "<a class=\"menu\" href=\"%s/%s/S%016llx\">",
+                phr->self_url, ns_symbolic_action_table[NEW_SRV_ACTION_VIEW_SUBMISSIONS], phr->session_id);
+      } else {
+        fprintf(fout, "<a class=\"menu\" href=\"%s?SID=%016llx&amp;action=%d\">",
+                phr->self_url, phr->session_id, NEW_SRV_ACTION_VIEW_SUBMISSIONS);
+      }
+    }
+    fprintf(fout, "%s", _("Submissions"));
+    if (phr->action != NEW_SRV_ACTION_VIEW_SUBMISSIONS) {
+      fprintf(fout, "</a>");
+    }
+    fprintf(fout, "</div></td>");
+  }
+    
+  //case NEW_SRV_ACTION_STANDINGS:
+  if (start_time > 0 && global->disable_user_standings <= 0) {
+    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">");
+    if (phr->action != NEW_SRV_ACTION_STANDINGS) {
       if (cnts->standings_url) {
         memset(&tdb, 0, sizeof(tdb));
         teamdb_export_team(cs->teamdb_state, phr->user_id, &tdb);
@@ -11231,39 +11280,63 @@ unpriv_page_header_2(
         sformat_message(stand_url_buf, sizeof(stand_url_buf), 0,
                         cnts->standings_url, global, 0, 0, 0, &tdb,
                         tdb.user, cnts, &fe);
-        forced_url = stand_url_buf;
-        target = " target=\"_blank\"";
+        fprintf(fout, "<a class=\"menu\" href=\"%s\" target=\"_blank\">", stand_url_buf);
+      } else if (phr->rest_mode > 0) {
+        fprintf(fout, "<a class=\"menu\" href=\"%s/%s/S%016llx\">",
+                phr->self_url, ns_symbolic_action_table[NEW_SRV_ACTION_STANDINGS], phr->session_id);
+      } else {
+        fprintf(fout, "<a class=\"menu\" href=\"%s?SID=%016llx&amp;action=%d\">",
+                phr->self_url, phr->session_id, NEW_SRV_ACTION_STANDINGS);
       }
-      if (cnts->personal) forced_text = _("User standings");
-      break;
-    case NEW_SRV_ACTION_VIEW_CLAR_SUBMIT:
-      if (global->disable_team_clars) continue;
-      if (global->disable_clars) continue;
-      if (start_time <= 0) continue;
-      if (stop_time > 0
-          && (global->appeal_deadline <= 0
-              || cs->current_time >= global->appeal_deadline))
-        continue;
-      break;
-    case NEW_SRV_ACTION_VIEW_CLARS:
-      if (global->disable_clars) continue;
-      break;
-    case NEW_SRV_ACTION_VIEW_SETTINGS:
-      break;
     }
-    if (!forced_text) forced_text = gettext(action_names[i]);
-    if (phr->action == action_list[i]) {
-      fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">%s</div></td>", forced_text);
-    } else if (forced_url) {
-      fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s\"%s>%s</a></div></td>",
-              forced_url, target, forced_text);
-    } else if (phr->rest_mode > 0) {
-      fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s/%s/S%016llx\">%s</a></div></td>",
-              phr->self_url, ns_symbolic_action_table[action_list[i]], phr->session_id, forced_text);
+    if (cnts->personal) {
+      fprintf(fout, "%s", _("User standings"));
     } else {
-      fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?SID=%016llx&amp;action=%d\">%s</a></div></td>",
-              phr->self_url, phr->session_id, action_list[i], forced_text);
+      fprintf(fout, "%s", _("Standings"));
     }
+    if (phr->action != NEW_SRV_ACTION_STANDINGS) {
+      fprintf(fout, "</a>");
+    }
+    fprintf(fout, "</div></td>");
+  }
+    
+  //case NEW_SRV_ACTION_VIEW_CLAR_SUBMIT:
+  if (global->disable_team_clars <= 0 && global->disable_clars <= 0 && start_time > 0
+      && (stop_time <= 0 || (global->appeal_deadline > 0 && cs->current_time < global->appeal_deadline))) {
+    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">");
+    if (phr->action != NEW_SRV_ACTION_VIEW_CLAR_SUBMIT) {
+      if (phr->rest_mode > 0) {
+        fprintf(fout, "<a class=\"menu\" href=\"%s/%s/S%016llx\">",
+                phr->self_url, ns_symbolic_action_table[NEW_SRV_ACTION_VIEW_CLAR_SUBMIT], phr->session_id);
+      } else {
+        fprintf(fout, "<a class=\"menu\" href=\"%s?SID=%016llx&amp;action=%d\">",
+                phr->self_url, phr->session_id, NEW_SRV_ACTION_VIEW_CLAR_SUBMIT);
+      }
+    }
+    fprintf(fout, "%s", _("Submit clar"));
+    if (phr->action != NEW_SRV_ACTION_VIEW_CLAR_SUBMIT) {
+      fprintf(fout, "</a>");
+    }
+    fprintf(fout, "</div></td>");
+  }
+  
+  //case NEW_SRV_ACTION_VIEW_CLARS:
+  if (global->disable_clars <= 0) {
+    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">");
+    if (phr->action != NEW_SRV_ACTION_VIEW_CLARS) {
+      if (phr->rest_mode > 0) {
+        fprintf(fout, "<a class=\"menu\" href=\"%s/%s/S%016llx\">",
+                phr->self_url, ns_symbolic_action_table[NEW_SRV_ACTION_VIEW_CLARS], phr->session_id);
+      } else {
+        fprintf(fout, "<a class=\"menu\" href=\"%s?SID=%016llx&amp;action=%d\">",
+                phr->self_url, phr->session_id, NEW_SRV_ACTION_VIEW_CLARS);
+      }
+    }
+    fprintf(fout, "%s", _("Clars"));
+    if (phr->action != NEW_SRV_ACTION_VIEW_CLARS) {
+      fprintf(fout, "</a>");
+    }
+    fprintf(fout, "</div></td>");
   }
 }
 
