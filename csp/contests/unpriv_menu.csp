@@ -41,7 +41,163 @@
 </div>
 <div class="white_empty_block">&nbsp;</div>
 <div class="contest_actions">
-<table class="menu"><tr><% unpriv_page_header_2(out_f, phr, cnts, extra, start_time, stop_time); %></tr></table>
+<table class="menu"><tr><td class="menu"><div class="contest_actions_item"><%
+  if (phr->action != NEW_SRV_ACTION_MAIN_PAGE) {
+%><s:a class="menu" ac="main-page"><%
+  }
+%><%
+  if (cnts->exam_mode) {
+%><s:tr>Instructions</s:tr><%
+  } else {
+%><s:tr>Info</s:tr><%
+  }
+%><%
+  if (phr->action != NEW_SRV_ACTION_MAIN_PAGE) {
+%></s:a><%
+  }
+%></div></td><%
+  if (global->is_virtual > 0 && ((start_time <= 0 && global->disable_virtual_start <= 0) || stop_time <= 0)) {
+%><td class="menu"><div class="contest_actions_item"><%
+    if (phr->action != NEW_SRV_ACTION_VIEW_STARTSTOP) {
+%><a:a class="menu" ac="view-startstop"><%
+    }
+%><%
+    if (start_time <= 0) {
+      if (cnts->exam_mode) {
+%><s:tr>Start exam</s:tr><%
+      } else {
+%><s:tr>Start virtual contest</s:tr><%
+      }
+    } else if (stop_time <= 0) {
+      if (cnts->exam_mode) {
+%><s:tr>Stop exam</s:tr><%
+      } else {
+%><s:tr>Stop virtual contest</s:tr><%
+      }
+    }
+%><%
+    if (phr->action != NEW_SRV_ACTION_VIEW_STARTSTOP) {
+%></s:a><%
+    }
+%></div></td><%
+  }
+%><%
+  if (start_time > 0 && (cnts->exam_mode <= 0 || stop_time > 0)) {
+%><td class="menu"><div class="contest_actions_item"><%
+    if (phr->action != NEW_SRV_ACTION_VIEW_PROBLEM_SUMMARY) {
+%><s:a class="menu" ac="view-problem-summary"><%
+    }
+%><s:tr>Summary</s:tr><%
+    if (phr->action != NEW_SRV_ACTION_VIEW_PROBLEM_SUMMARY) {
+%></s:a><%
+    }
+%></div></td><%
+  }
+%><%
+  if (start_time > 0
+      && (stop_time <= 0 || cnts->problems_url)
+      && (global->problem_navigation <= 0 || cnts->problems_url)) {
+%><td class="menu"><div class="contest_actions_item"><%
+    if (phr->action != NEW_SRV_ACTION_VIEW_PROBLEM_STATEMENTS) {
+      if (cnts->problems_url) {
+%><a class="menu" href="<s:v value="cnts->problems_url" escape="false" />" target="_blank"><s:tr>Statements</s:tr></a><%
+      } else {
+%><s:a class="menu" ac="view-problem-statements"><s:tr>Statements</s:tr></s:a><%
+      }
+    } else {
+%><s:tr>Statements</s:tr><%
+    }
+%></div></td><%
+  }
+%><%
+  if (start_time > 0 && stop_time <= 0 && global->problem_navigation <= 0) {
+%><td class="menu"><div class="contest_actions_item"><%
+    if (phr->action != NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT) {
+%><s:a class="menu" ac="view-problem-submit"><%
+    }
+%><s:tr>Submit</s:tr><%
+    if (phr->action != NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT) {
+%></s:a><%
+    }
+%></div></td><%
+  }
+%><%
+  if (start_time > 0 && (cnts->exam_mode <= 0 || stop_time > 0)) {
+%><td class="menu"><div class="contest_actions_item"><%
+    if (phr->action != NEW_SRV_ACTION_VIEW_SUBMISSIONS) {
+%><s:a class="menu" ac="view-submissions"><%
+    }
+%><s:tr>Submissions</s:tr><%
+    if (phr->action != NEW_SRV_ACTION_VIEW_SUBMISSIONS) {
+%></s:a><%
+    }
+%></div></td><%
+  }
+%><%
+  if (start_time > 0 && global->disable_user_standings <= 0) {
+%><td class="menu"><div class="contest_actions_item"><%
+    if (phr->action == NEW_SRV_ACTION_STANDINGS) {
+%><%
+      if (cnts->personal) {
+%><s:tr>User standings</s:tr><%
+      } else {
+%><s:tr>Standings</s:tr><%
+      }
+    } else {
+      if (cnts->standings_url) {
+        memset(&tdb, 0, sizeof(tdb));
+        teamdb_export_team(cs->teamdb_state, phr->user_id, &tdb);
+        memset(&fe, 0, sizeof(fe));
+        fe.locale_id = phr->locale_id;
+        fe.sid = phr->session_id;
+        sformat_message(hbuf, sizeof(hbuf), 0,
+                        cnts->standings_url, global, 0, 0, 0, &tdb,
+                        tdb.user, cnts, &fe);
+%><a class="menu" href="<s:v value="hbuf" escape="false" />" target="_blank"><%
+        if (cnts->personal) {
+%><s:tr>User standings</s:tr><%
+        } else {
+%><s:tr>Standings</s:tr><%
+        }
+%></a><%
+      } else {
+%><s:a class="menu" ac="standings"><%
+        if (cnts->personal) {
+%><s:tr>User standings</s:tr><%
+        } else {
+%><s:tr>Standings</s:tr><%
+        }
+%></s:a><%
+      }
+    }
+%></div></td><%
+  }
+%><%
+  if (global->disable_team_clars <= 0 && global->disable_clars <= 0 && start_time > 0
+      && (stop_time <= 0 || (global->appeal_deadline > 0 && cs->current_time < global->appeal_deadline))) {
+%><td class="menu"><div class="contest_actions_item"><%
+    if (phr->action != NEW_SRV_ACTION_VIEW_CLAR_SUBMIT) {
+%><s:a class="menu" ac="view-clar-submit"><%
+    }
+%><s:tr>Submit clar</s:tr><%
+    if (phr->action != NEW_SRV_ACTION_VIEW_CLAR_SUBMIT) {
+%></s:a><%
+    }
+%></div></td><%
+  }
+%><%
+  if (global->disable_clars <= 0) {
+%><td class="menu"><div class="contest_actions_item"><%
+    if (phr->action != NEW_SRV_ACTION_VIEW_CLARS) {
+%><s:a class="menu" ac="view-clars"><%
+    }
+%><s:tr>Clars</s:tr><%
+    if (phr->action != NEW_SRV_ACTION_VIEW_CLARS) {
+%></s:a><%
+    }
+%></div></td><%
+  }
+%></tr></table>
 </div>
 </div>
 <div id="l11"><img src="<s:config name="style-prefix" />logo.gif" alt="logo"/></div>
