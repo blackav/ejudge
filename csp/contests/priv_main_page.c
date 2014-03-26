@@ -274,19 +274,27 @@ fputs((phr->self_url), out_f);
 fwrite(csp_str10, 1, 16, out_f);
 fprintf(out_f, "%016llx", (phr->session_id));
 fwrite(csp_str11, 1, 26, out_f);
-fputs(ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_USERS, 0), out_f);
+fputs("<a href=\"", out_f);
+ns_url_2(out_f, phr, NEW_SRV_ACTION_VIEW_USERS);
+fputs("\">", out_f);
 fputs(_("View regular users"), out_f);
 fputs("</a>", out_f);
 fwrite(csp_str12, 1, 14, out_f);
-fputs(ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_PRIV_USERS_VIEW, 0), out_f);
+fputs("<a href=\"", out_f);
+ns_url_2(out_f, phr, NEW_SRV_ACTION_PRIV_USERS_VIEW);
+fputs("\">", out_f);
 fputs(_("View privileged users"), out_f);
 fputs("</a>", out_f);
 fwrite(csp_str12, 1, 14, out_f);
-fputs(ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_ONLINE_USERS, 0), out_f);
+fputs("<a href=\"", out_f);
+ns_url_2(out_f, phr, NEW_SRV_ACTION_VIEW_ONLINE_USERS);
+fputs("\">", out_f);
 fputs(_("View who is currently online"), out_f);
 fputs("</a>", out_f);
 fwrite(csp_str12, 1, 14, out_f);
-fputs(ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_EXAM_INFO, 0), out_f);
+fputs("<a href=\"", out_f);
+ns_url_2(out_f, phr, NEW_SRV_ACTION_VIEW_EXAM_INFO);
+fputs("\">", out_f);
 fputs(_("View examination information"), out_f);
 fputs("</a>", out_f);
 fwrite(csp_str13, 1, 10, out_f);
@@ -294,7 +302,9 @@ fwrite(csp_str13, 1, 10, out_f);
 #line 85 "priv_main_page.csp"
 if (need_examiners) {
 fwrite(csp_str14, 1, 13, out_f);
-fputs(ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_EXAMINERS_PAGE, 0), out_f);
+fputs("<a href=\"", out_f);
+ns_url_2(out_f, phr, NEW_SRV_ACTION_EXAMINERS_PAGE);
+fputs("\">", out_f);
 fputs(_("Examiners assignments"), out_f);
 fputs("</a>", out_f);
 fwrite(csp_str13, 1, 10, out_f);
@@ -302,7 +312,9 @@ fwrite(csp_str13, 1, 10, out_f);
 #line 87 "priv_main_page.csp"
 }
 fwrite(csp_str15, 1, 9, out_f);
-fputs(ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_STANDINGS, 0), out_f);
+fputs("<a href=\"", out_f);
+ns_url_2(out_f, phr, NEW_SRV_ACTION_STANDINGS);
+fputs("\">", out_f);
 fputs(_("View standings"), out_f);
 fputs("</a>", out_f);
 fwrite(csp_str13, 1, 10, out_f);
@@ -310,7 +322,9 @@ fwrite(csp_str13, 1, 10, out_f);
 #line 89 "priv_main_page.csp"
 if (phr->role >= USER_ROLE_JUDGE && opcaps_check(phr->caps, OPCAP_EDIT_PASSWD) >= 0) {
 fwrite(csp_str14, 1, 13, out_f);
-fputs(ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_REG_PWDS, 0), out_f);
+fputs("<a href=\"", out_f);
+ns_url_2(out_f, phr, NEW_SRV_ACTION_VIEW_REG_PWDS);
+fputs("\">", out_f);
 fputs(_("View registration passwords"), out_f);
 fputs("</a>", out_f);
 fwrite(csp_str16, 1, 14, out_f);
@@ -318,7 +332,9 @@ fwrite(csp_str16, 1, 14, out_f);
 #line 91 "priv_main_page.csp"
 if (!cnts->disable_team_password) {
 fwrite(csp_str17, 1, 17, out_f);
-fputs(ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_CNTS_PWDS, 0), out_f);
+fputs("<a href=\"", out_f);
+ns_url_2(out_f, phr, NEW_SRV_ACTION_VIEW_CNTS_PWDS);
+fputs("\">", out_f);
 fputs(_("View contest passwords"), out_f);
 fputs("</a>", out_f);
 fwrite(csp_str16, 1, 14, out_f);
@@ -334,7 +350,9 @@ fwrite(csp_str18, 1, 5, out_f);
 #line 95 "priv_main_page.csp"
 if (phr->role >= USER_ROLE_JUDGE && opcaps_check(phr->caps, OPCAP_DUMP_USERS) >= 0) {
 fwrite(csp_str14, 1, 13, out_f);
-fputs(ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_USER_DUMP, 0), out_f);
+fputs("<a href=\"", out_f);
+ns_url_2(out_f, phr, NEW_SRV_ACTION_VIEW_USER_DUMP);
+fputs("\">", out_f);
 fputs(_("Dump users in CSV format"), out_f);
 fputs("</a>", out_f);
 fwrite(csp_str13, 1, 10, out_f);
@@ -346,19 +364,27 @@ fwrite(csp_str18, 1, 5, out_f);
 #line 98 "priv_main_page.csp"
 if (phr->role >= USER_ROLE_JUDGE && opcaps_check(phr->caps, OPCAP_DUMP_RUNS) >= 0) {
 fwrite(csp_str14, 1, 13, out_f);
-fputs(ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_RUNS_DUMP, 0), out_f);
+fputs("<a href=\"", out_f);
+ns_url_2(out_f, phr, NEW_SRV_ACTION_VIEW_RUNS_DUMP);
+fputs("\">", out_f);
 fputs(_("Dump runs in CSV format"), out_f);
 fputs("</a>", out_f);
 fwrite(csp_str19, 1, 18, out_f);
-fputs(ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_EXPORT_XML_RUNS, 0), out_f);
+fputs("<a href=\"", out_f);
+ns_url_2(out_f, phr, NEW_SRV_ACTION_EXPORT_XML_RUNS);
+fputs("\">", out_f);
 fputs(_("Export runs in XML external format"), out_f);
 fputs("</a>", out_f);
 fwrite(csp_str19, 1, 18, out_f);
-fputs(ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_WRITE_XML_RUNS, 0), out_f);
+fputs("<a href=\"", out_f);
+ns_url_2(out_f, phr, NEW_SRV_ACTION_WRITE_XML_RUNS);
+fputs("\">", out_f);
 fputs(_("Write runs in XML internal format"), out_f);
 fputs("</a>", out_f);
 fwrite(csp_str19, 1, 18, out_f);
-fputs(ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_WRITE_XML_RUNS_WITH_SRC, 0), out_f);
+fputs("<a href=\"", out_f);
+ns_url_2(out_f, phr, NEW_SRV_ACTION_WRITE_XML_RUNS_WITH_SRC);
+fputs("\">", out_f);
 fputs(_("Write runs in XML internal format with source"), out_f);
 fputs("</a>", out_f);
 fwrite(csp_str13, 1, 10, out_f);
@@ -366,19 +392,27 @@ fwrite(csp_str13, 1, 10, out_f);
 #line 103 "priv_main_page.csp"
 }
 fwrite(csp_str15, 1, 9, out_f);
-fputs(ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_ASSIGN_CYPHERS_1, 0), out_f);
+fputs("<a href=\"", out_f);
+ns_url_2(out_f, phr, NEW_SRV_ACTION_ASSIGN_CYPHERS_1);
+fputs("\">", out_f);
 fputs(_("Assign random cyphers"), out_f);
 fputs("</a>", out_f);
 fwrite(csp_str12, 1, 14, out_f);
-fputs(ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_IP_USERS, 0), out_f);
+fputs("<a href=\"", out_f);
+ns_url_2(out_f, phr, NEW_SRV_ACTION_VIEW_IP_USERS);
+fputs("\">", out_f);
 fputs(_("View users for IP addresses"), out_f);
 fputs("</a>", out_f);
 fwrite(csp_str12, 1, 14, out_f);
-fputs(ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_USER_IPS, 0), out_f);
+fputs("<a href=\"", out_f);
+ns_url_2(out_f, phr, NEW_SRV_ACTION_VIEW_USER_IPS);
+fputs("\">", out_f);
 fputs(_("View IP addresses for users"), out_f);
 fputs("</a>", out_f);
 fwrite(csp_str12, 1, 14, out_f);
-fputs(ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_TESTING_QUEUE, 0), out_f);
+fputs("<a href=\"", out_f);
+ns_url_2(out_f, phr, NEW_SRV_ACTION_VIEW_TESTING_QUEUE);
+fputs("\">", out_f);
 fputs(_("View testing queue"), out_f);
 fputs("</a>", out_f);
 fwrite(csp_str13, 1, 10, out_f);
@@ -386,7 +420,9 @@ fwrite(csp_str13, 1, 10, out_f);
 #line 108 "priv_main_page.csp"
 if (phr->role >= USER_ROLE_ADMIN) {
 fwrite(csp_str14, 1, 13, out_f);
-fputs(ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_ADMIN_CONTEST_SETTINGS, 0), out_f);
+fputs("<a href=\"", out_f);
+ns_url_2(out_f, phr, NEW_SRV_ACTION_ADMIN_CONTEST_SETTINGS);
+fputs("\">", out_f);
 fputs(_("Contest settings"), out_f);
 fputs("</a>", out_f);
 fwrite(csp_str13, 1, 10, out_f);
@@ -406,11 +442,15 @@ fwrite(csp_str22, 1, 9, out_f);
 #line 113 "priv_main_page.csp"
 }
 fwrite(csp_str15, 1, 9, out_f);
-fputs(ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_PRIV_SUBMIT_PAGE, 0), out_f);
+fputs("<a href=\"", out_f);
+ns_url_2(out_f, phr, NEW_SRV_ACTION_PRIV_SUBMIT_PAGE);
+fputs("\">", out_f);
 fputs(_("Submit a solution"), out_f);
 fputs("</a>", out_f);
 fwrite(csp_str12, 1, 14, out_f);
-fputs(ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_LOGOUT, 0), out_f);
+fputs("<a href=\"", out_f);
+ns_url_2(out_f, phr, NEW_SRV_ACTION_LOGOUT);
+fputs("\">", out_f);
 fputs(_("Logout"), out_f);
 fputs("</a>", out_f);
 fwrite(csp_str23, 1, 44, out_f);
