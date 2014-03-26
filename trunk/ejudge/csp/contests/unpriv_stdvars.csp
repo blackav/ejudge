@@ -12,4 +12,6 @@
   time_t sched_time __attribute__((unused)) = 0;
   time_t duration __attribute__((unused)) = 0;
   time_t fog_start_time __attribute__((unused)) = 0;
+  struct teamdb_export tdb __attribute__((unused));
+  struct sformat_extra_data fe __attribute__((unused));
 %>
