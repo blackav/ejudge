@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-02-28 15:23+0400\n"
-"PO-Revision-Date: 2014-03-01 22:21+0400\n"
+"POT-Creation-Date: 2014-03-24 17:55+0400\n"
+"PO-Revision-Date: 2014-03-26 14:04+0400\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -116,10 +116,6 @@ msgstr "<font color=\"magenta\">Ожидает подтверждения</font>
 
 msgid "<font color=\"red\">Rejected</font>"
 msgstr "<font color=\"red\">Отказано</font>"
-
-#, c-format
-msgid "<h3>Warning %d: issued: %s, issued by: %s (%d), issued from: %s</h3>"
-msgstr "<h3>Предупреждение %d: выдано: %s, пользователем: %s (%d), с: %s</h3>"
 
 #, c-format
 msgid "<i>Command line is too long</i>\n"
@@ -515,6 +511,12 @@ msgstr "Добавление новых посылок"
 msgid "Adding role %d to user %d in contest %d failed"
 msgstr "Добавление роли %d пользователю %d в турнире %d не удалось"
 
+msgid "Adding role to user in contest failed"
+msgstr "Добавление роли пользователю в турнире не удалось"
+
+msgid "Additional information about this error:"
+msgstr "Дополнительная информация об этой ошибке:"
+
 msgid "Additional test information"
 msgstr "Доп. инф. о тесте"
 
@@ -583,6 +585,9 @@ msgstr "Район"
 
 msgid "Assign chief examiner"
 msgstr "Назначить старшего экзаменатора"
+
+msgid "Assign cyphers"
+msgstr "Назначить шифры"
 
 msgid "Assign examiner"
 msgstr "Назначить экзаменатора"
@@ -663,6 +668,9 @@ msgstr "Участие невозможно"
 msgid "Cannot read message text!"
 msgstr "Ошибка чтения файла сообщения!"
 
+msgid "Cannot read source text!"
+msgstr "Ошибка чтения файла сообщения!"
+
 #, c-format
 msgid "Cannot write run row %d\n"
 msgstr "Ошибка записи строки %d\n"
@@ -698,9 +706,15 @@ msgstr "Сменён пользователем"
 msgid "Changing flags of user %d in contest %d failed: %s"
 msgstr "Изменение флагов пользователя %d в турнире %d не удалось: %s"
 
+msgid "Changing flags of user in contest failed"
+msgstr "Изменение флагов пользователя в турнире не удалось"
+
 #, c-format
 msgid "Changing status of user %d in contest %d failed: %s"
 msgstr "Изменение статуса пользователя %d в турнире %d не удалось: %s"
+
+msgid "Changing status of user in contest failed"
+msgstr "Изменение статуса пользователя в турнире не удалось"
 
 msgid "Charset"
 msgstr "Кодировка"
@@ -861,6 +875,9 @@ msgstr "Подтвердить регистрацию"
 msgid "Conflicting user_id (%d) and user_login (%s)"
 msgstr "Конфликтуют user_id (%d) и user_login (%s)"
 
+msgid "Conflicting user_id and user_login"
+msgstr "Конфликтуют user_id и user_login"
+
 msgid "Connection failed"
 msgstr "Подключение завершилось неудачно"
 
@@ -882,6 +899,12 @@ msgstr "Тип файла <tt>%s</tt> запрещен для этой зада�
 #, c-format
 msgid "Content type <tt>%s</tt> is not available for this problem"
 msgstr "Тип файла <tt>%s</tt> недоступен для этой задачи"
+
+msgid "Content type is disabled for this problem"
+msgstr "Этот тип файла запрещен для этой задачи"
+
+msgid "Content type is not available for this problem"
+msgstr "Этот файла недоступен для этой задачи"
 
 msgid "Contest"
 msgstr "Турнир"
@@ -1029,9 +1052,15 @@ msgstr "Удалить роль ЭКЗАМЕНАТОРА"
 msgid "Del OBSERVER"
 msgstr "Удалить роль НАБЛЮДАТЕЛЯ"
 
+msgid "Delete all"
+msgstr "Удалить все"
+
 #, c-format
 msgid "Deleting role %d of user %d from contest %d failed"
 msgstr "Удаление роли %d у пользователя %d в турнире %d не удалось"
+
+msgid "Deleting role of user from contest failed"
+msgstr "Удаление роли у пользователя в турнире не удалось"
 
 msgid "Desired EOLN Type"
 msgstr "Желаемый тип концов строк"
@@ -1089,6 +1118,9 @@ msgstr "Дисквалифицировать участника"
 
 msgid "Do not show before the contest starts?"
 msgstr "Не показывать до начала турнира?"
+
+msgid "Down all"
+msgstr "Вниз все"
 
 msgid "Download OK runs"
 msgstr "Загрузить только успешные посылки"
@@ -1177,6 +1209,9 @@ msgstr "Время окончания"
 msgid "Error"
 msgstr "Ошибка"
 
+msgid "Error details follow"
+msgstr "Детали ошибки приведены ниже"
+
 msgid "Error during run comparison"
 msgstr "Ошибка при сравнении программ"
 
@@ -1240,6 +1275,9 @@ msgstr "Ошибка на тесте"
 #, c-format
 msgid "Failed to add row %d to runlog\n"
 msgstr "Ошибка добавления строки %d в базу\n"
+
+msgid "Failed to fetch run log entry"
+msgstr "Ошибка чтения записи о посылке с диска"
 
 #, c-format
 msgid "Failed to fetch run log entry %d"
@@ -1308,6 +1346,9 @@ msgstr "Шаблон имени файла"
 
 msgid "Filter expression"
 msgstr "Условие отбора"
+
+msgid "Filter expression errors"
+msgstr "Ошибки в фильтре"
 
 msgid "Filtered"
 msgstr "Отобрано"
@@ -1591,6 +1632,9 @@ msgstr "Помощь"
 msgid "Hidden?"
 msgstr "Скрыт?"
 
+msgid "Hide extended info"
+msgstr "Скрыть расширенную информацию   "
+
 msgid "Homepage"
 msgstr "Личная страница WEB"
 
@@ -1740,6 +1784,9 @@ msgstr "Неверный тип структуры каталогов"
 
 msgid "Invalid duration specification"
 msgstr "Неверная спецификация продолжительности турнира"
+
+msgid "Invalid error code"
+msgstr "Неверный код ошибки"
 
 msgid "Invalid file name"
 msgstr "Неверное имя файла"
@@ -2092,6 +2139,9 @@ msgstr "Сообщение"
 msgid "Message is empty"
 msgstr "Сообщение пусто"
 
+msgid "Message length is too big"
+msgstr "Текст сообщения имеет слишком большую длину"
+
 #, c-format
 msgid "Message length is too big (%zu)"
 msgstr "Текст сообщения имеет слишком большую длину (%zu)"
@@ -2108,9 +2158,15 @@ msgstr "Отчество (Англ.)"
 msgid "Minimal random number"
 msgstr "Максимальное случайное число"
 
+msgid "Mkdir failed"
+msgstr "Mkdir не сработал"
+
 #, c-format
 msgid "Mkdir(%s) failed: %s"
 msgstr "Mkdir(%s) не сработал: %s"
+
+msgid "More info"
+msgstr "Дополнительная информация"
 
 msgid "Move to advisors"
 msgstr "Перевести в руководители"
@@ -2431,6 +2487,9 @@ msgstr "Пройдено тестов"
 msgid "Password"
 msgstr "Пароль"
 
+msgid "Password generation failed"
+msgstr "Генерация паролей не удалась"
+
 #, c-format
 msgid "Password generation failed: %s"
 msgstr "Генерация паролей не удалась: %s"
@@ -2451,6 +2510,9 @@ msgstr "Запрошена перегенерация пароля"
 
 msgid "Password regeneration successful"
 msgstr "Перегенерация пароля завершена"
+
+msgid "Password update failed"
+msgstr "Изменение пароля не удалось"
 
 #, c-format
 msgid "Password update failed: %s"
@@ -2563,6 +2625,9 @@ msgstr "Печать протокола по задаче"
 #, c-format
 msgid "Printing quota (%d pages) is exceeded"
 msgstr "Превышена квота печати (%d страниц)"
+
+msgid "Printing quota is exceeded"
+msgstr "Превышена квота печати"
 
 msgid "Printing user protocol"
 msgstr "Печать экзаменационного протокола участника"
@@ -2737,6 +2802,9 @@ msgstr "Срок регистрации"
 msgid "Registration errors"
 msgstr "Ошибки при регистрации"
 
+msgid "Registration failed"
+msgstr "Регистрация не удалась"
+
 #, c-format
 msgid "Registration failed: %s"
 msgstr "Регистрация не удалась: %s"
@@ -2805,9 +2873,15 @@ msgstr "Оставшееся время"
 msgid "Removal of privileged user %d from contest %d failed"
 msgstr "Удаление привилегированного пользователя %d из турнира %d не удалось"
 
+msgid "Removal of privileged user from contest failed"
+msgstr "Удаление привилегированного пользователя из турнира не удалось"
+
 #, c-format
 msgid "Removal of user %d from contest %d failed: %s"
 msgstr "Удаление пользователя %d из турнира %d не удалось: %s"
+
+msgid "Removal of user from contest failed"
+msgstr "Удаление пользователя из турнира не удалось"
 
 msgid "Remove"
 msgstr "Удалить"
@@ -3077,12 +3151,12 @@ msgstr "Сервис недоступен"
 msgid "Service that you requested is not available."
 msgstr "Запрошенный Вами сервис недоступен."
 
+msgid "Session update failed"
+msgstr "Изменение параметров сессии не удалось"
+
 #, c-format
 msgid "Session update failed: %s"
 msgstr "Изменение параметров сессии не удалось: %s"
-
-msgid "Set"
-msgstr "Установить"
 
 msgid "Set REJECTED run status"
 msgstr "Установить статус Отклонено (REJECTED)"
@@ -3198,6 +3272,9 @@ msgstr "Открыть дорешивание"
 msgid "Start virtual contest"
 msgstr "Начать виртуальный турнир"
 
+msgid "Statement"
+msgstr "Условие"
+
 msgid "Statements"
 msgstr "Условия"
 
@@ -3237,11 +3314,17 @@ msgstr "Улица, дом, квартира"
 msgid "Student"
 msgstr "Студент"
 
+msgid "Style checker output"
+msgstr "Вывод программы проверки стиля"
+
 msgid "Subject"
 msgstr "Тема"
 
 msgid "Subject is empty"
 msgstr "Тема сообщения не задана"
+
+msgid "Subject length is too big"
+msgstr "Поле \"Тема\" имеет слишком большую длину"
 
 #, c-format
 msgid "Subject length is too big (%zu)"
@@ -3270,6 +3353,9 @@ msgstr "Отправить апелляцию"
 
 msgid "Submit clar"
 msgstr "Отправить вопрос"
+
+msgid "Submit image"
+msgstr "Отправить изображение"
 
 msgid "Submit solution!"
 msgstr "Сдать решение!"
@@ -3398,6 +3484,9 @@ msgstr "Экзамен закончился (текущее положение �
 msgid "The language %s is disabled for this problem"
 msgstr "Язык %s запрещён для этой задачи"
 
+msgid "The language is disabled for this problem"
+msgstr "Язык запрещён для этой задачи"
+
 msgid "The problem statement is not available"
 msgstr "Условие задачи недоступно"
 
@@ -3414,6 +3503,9 @@ msgstr ""
 "по указанному адресу. Это, возможно, произошло из-за\n"
 "слишком высокой загрузки сервера, а не из-за неправильного\n"
 "адреса e-mail. Повторите попытку регистрации позже.\n"
+
+msgid "The submission is binary and thus is not shown."
+msgstr "Посылка не является текстовым файлом и поэтому не показана."
 
 msgid ""
 "The user database server is currently not available. Please, retry the "
@@ -3446,6 +3538,9 @@ msgstr ""
 
 msgid "This submit is already printed"
 msgstr "Эта программа уже напечатана"
+
+msgid "This submit is duplicate of another run"
+msgstr "Эта посылка является копией другой посылки"
 
 #, c-format
 msgid "This submit is duplicate of the run %d"
@@ -3554,6 +3649,9 @@ msgstr "Неопределен ни user_id, ни login"
 msgid "Unexpected EOF"
 msgstr "Неожиданный конец файла"
 
+msgid "Unhandled action"
+msgstr "Необработанная операция"
+
 #, c-format
 msgid "Unhandled action: %d"
 msgstr "Необработанная операция: %d"
@@ -3582,6 +3680,9 @@ msgstr "Открыть"
 msgid "Unmark displayed runs"
 msgstr "Разотметить отображённые посылки"
 
+msgid "Up all"
+msgstr "Все вверх"
+
 msgid "Update public standings"
 msgstr "Обновить публичную таблицу положения участников"
 
@@ -3599,6 +3700,9 @@ msgstr "Установить!"
 
 msgid "Upsolving"
 msgstr "Дорешивание"
+
+msgid "Upsolving configuration"
+msgstr "Конфигурация дорешивания"
 
 msgid "Upsolving mode"
 msgstr "Режим дорешивания"
@@ -3644,6 +3748,9 @@ msgstr "Id пользователя"
 msgid "User Id %d does not exist"
 msgstr "Пользователь с номером %d не существует"
 
+msgid "User Id does not exist"
+msgstr "Пользователь не существует"
+
 msgid "User Login"
 msgstr "Рег. имя"
 
@@ -3652,6 +3759,9 @@ msgstr "Имя участника"
 
 msgid "User database server is down"
 msgstr "Сервер базы пользователей недоступен"
+
+msgid "User does not exist"
+msgstr "Пользователь не существует"
 
 msgid "User filter expression"
 msgstr "Условие отбора участников"
@@ -3978,6 +4088,9 @@ msgstr "Значение параметра `run_id' %d за пределами 
 
 msgid "`run_id' parameter value is invalid."
 msgstr "Номер посылки %d недопустим"
+
+msgid "`run_id' parameter value is out of range"
+msgstr "Значение параметра `run_id' за пределами допустимых"
 
 msgid "accepting"
 msgstr "приём решений"
@@ -4332,3 +4445,4 @@ msgstr "ошибка записи"
 
 msgid "write error to server"
 msgstr "ошибка записи данных на сервер"
+
