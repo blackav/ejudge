@@ -182,10 +182,14 @@ fwrite(csp_str20, 1, 18, out_f);
 #line 41 "priv_standings_page.csp"
 }
 fwrite(csp_str21, 1, 40, out_f);
-fputs(ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_MAIN_PAGE, 0), out_f);
+fputs("<a href=\"", out_f);
+ns_url_2(out_f, phr, NEW_SRV_ACTION_MAIN_PAGE);
+fputs("\">", out_f);
 fputs(_("Main page"), out_f);
 fwrite(csp_str22, 1, 25, out_f);
-fputs(ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_STANDINGS, 0), out_f);
+fputs("<a href=\"", out_f);
+ns_url_2(out_f, phr, NEW_SRV_ACTION_STANDINGS);
+fputs("\">", out_f);
 fputs(_("Refresh"), out_f);
 fwrite(csp_str23, 1, 25, out_f);
 

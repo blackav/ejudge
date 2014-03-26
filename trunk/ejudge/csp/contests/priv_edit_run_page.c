@@ -191,7 +191,9 @@ fwrite(csp_str10, 1, 5, out_f);
 fwrite(csp_str9, 1, 1, out_f);
 fwrite(csp_str10, 1, 5, out_f);
 fwrite(csp_str11, 1, 44, out_f);
-fputs(ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_MAIN_PAGE, 0), out_f);
+fputs("<a href=\"", out_f);
+ns_url_2(out_f, phr, NEW_SRV_ACTION_MAIN_PAGE);
+fputs("\">", out_f);
 fputs(_("Main page"), out_f);
 fputs("</a>", out_f);
 fwrite(csp_str12, 1, 25, out_f);
@@ -738,7 +740,7 @@ fputs("<input type=\"text\" name=\"locale_id\" size=\"20\"", out_f);
 if (info.is_readonly) {
 fputs(" disabled=\"disabled\"", out_f);
 }
-if ((info.locale_id)) {
+if ((info.locale_id) >= 0) {
 fputs(" value=\"", out_f);
 fprintf(out_f, "%d", (int)(info.locale_id));
 fputs("\"", out_f);

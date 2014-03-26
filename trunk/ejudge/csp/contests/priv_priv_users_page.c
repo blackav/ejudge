@@ -159,7 +159,9 @@ fwrite(csp_str19, 1, 15, out_f);
 #line 56 "priv_priv_users_page.csp"
 }
 fwrite(csp_str20, 1, 55, out_f);
-fputs(ns_aref(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_MAIN_PAGE, 0), out_f);
+fputs("<a href=\"", out_f);
+ns_url_2(out_f, phr, NEW_SRV_ACTION_MAIN_PAGE);
+fputs("\">", out_f);
 fputs(_("Back"), out_f);
 fputs("</a>", out_f);
 fwrite(csp_str21, 1, 9, out_f);
