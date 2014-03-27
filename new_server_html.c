@@ -7082,7 +7082,6 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CLAR_REPLY_NO_COMMENTS] = priv_generic_operation,
   [NEW_SRV_ACTION_CLAR_REPLY_YES] = priv_generic_operation,
   [NEW_SRV_ACTION_CLAR_REPLY_NO] = priv_generic_operation,
-  [NEW_SRV_ACTION_VIEW_CLAR] = priv_generic_page,
   [NEW_SRV_ACTION_RELOAD_SERVER] = priv_generic_operation,
   [NEW_SRV_ACTION_CHANGE_STATUS] = priv_generic_operation,
   [NEW_SRV_ACTION_CHANGE_RUN_STATUS] = priv_generic_operation,
@@ -10640,141 +10639,6 @@ unpriv_view_report(FILE *fout,
 }
 
 static void
-unpriv_view_clar(FILE *fout,
-                 struct http_request_info *phr,
-                 const struct contest_desc *cnts,
-                 struct contest_extra *extra)
-{
-  serve_state_t cs = extra->serve_state;
-  const struct section_global_data *global = cs->global;
-  int n, clar_id, show_astr_time;
-  const unsigned char *s;
-  FILE *log_f = 0;
-  char *log_txt = 0;
-  size_t log_len = 0, clar_size = 0, html_subj_len, html_text_len;
-  struct clar_entry_v1 ce;
-  time_t start_time, clar_time, stop_time;
-  unsigned char *clar_text = 0;
-  unsigned char *html_subj, *html_text;
-  unsigned char dur_str[64];
-  const unsigned char *clar_subj = 0;
-  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
-
-  if ((n = ns_cgi_param(phr, "clar_id", &s)) <= 0)
-    return ns_html_err_inv_param(fout, phr, 0, "clar_id is binary or not set");
-  if (sscanf(s, "%d%n", &clar_id, &n) != 1 || s[n])
-    return ns_html_err_inv_param(fout, phr, 0, "cannot parse clar_id");
-
-  log_f = open_memstream(&log_txt, &log_len);
-
-  if (cs->clients_suspended) {
-    ns_error(log_f, NEW_SRV_ERR_CLIENTS_SUSPENDED);
-    goto done;
-  }
-  if (global->disable_clars) {
-    ns_error(log_f, NEW_SRV_ERR_CLARS_DISABLED);
-    goto done;
-  }
-  if (clar_id < 0 || clar_id >= clar_get_total(cs->clarlog_state)
-      || clar_get_record(cs->clarlog_state, clar_id, &ce) < 0
-      || ce.id < 0) {
-    ns_error(log_f, NEW_SRV_ERR_INV_CLAR_ID);
-    goto done;
-  }
-
-  show_astr_time = global->show_astr_time;
-  if (global->is_virtual) show_astr_time = 1;
-  start_time = run_get_start_time(cs->runlog_state);
-  stop_time = run_get_stop_time(cs->runlog_state);
-  if (global->is_virtual) {
-    start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
-    stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id,
-                                          cs->current_time);
-  }
-
-  if ((ce.from > 0 && ce.from != phr->user_id)
-      || (ce.to > 0 && ce.to != phr->user_id)
-      || (start_time <= 0 && ce.hide_flag)) {
-    ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
-    goto done;
-  }
-
-  if (ce.from != phr->user_id) {
-    team_extra_set_clar_status(cs->team_extra_state, phr->user_id, clar_id);
-  }
-
-  if (clar_get_text(cs->clarlog_state, clar_id, &clar_text, &clar_size) < 0) {
-    ns_error(log_f, NEW_SRV_ERR_DISK_READ_ERROR);
-    goto done;
-  }
-
-  clar_subj = clar_get_subject(cs->clarlog_state, clar_id);
-  html_subj_len = html_armored_strlen(clar_subj);
-  html_subj = alloca(html_subj_len + 1);
-  html_armor_string(clar_subj, html_subj);
-  html_text_len = html_armored_strlen(clar_text);
-  html_text = alloca(html_text_len + 1);
-  html_armor_string(clar_text, html_text);
-
-  clar_time = ce.time;
-  if (start_time < 0) start_time = 0;
-  if (!start_time) clar_time = start_time;
-  if (clar_time < start_time) clar_time = start_time;
-  duration_str(show_astr_time, clar_time, start_time, dur_str, 0);
-
-  unpriv_load_html_style(phr, cnts, 0, 0);
-  l10n_setlocale(phr->locale_id);
-  ns_header(fout, extra->header_txt, 0, 0, phr->script_part, phr->body_attr, phr->locale_id, cnts,
-            phr->client_key,
-            "%s [%s]: %s %d",
-            phr->name_arm, extra->contest_arm, _("Clarification"),
-            clar_id);
-  unpriv_page_header(fout, phr, cnts, extra, start_time, stop_time);
-
-  fprintf(fout, "<%s>%s #%d</%s>\n", cnts->team_head_style,
-          _("Message"), clar_id, cnts->team_head_style);
-  fprintf(fout, "<table class=\"b0\">\n");
-  fprintf(fout, "<tr><td class=\"b0\">%s:</td><td class=\"b0\">%d</td></tr>\n", _("Number"), clar_id);
-  fprintf(fout, "<tr><td class=\"b0\">%s:</td><td class=\"b0\">%s</td></tr>\n", _("Time"), dur_str);
-  fprintf(fout, "<tr><td class=\"b0\">%s:</td><td class=\"b0\">%u</td></tr>\n", _("Size"), ce.size);
-  fprintf(fout, "<tr><td class=\"b0\">%s:</td>", _("Sender"));
-  if (!ce.from) {
-    fprintf(fout, "<td class=\"b0\"><b>%s</b></td>", _("judges"));
-  } else {
-    fprintf(fout, "<td class=\"b0\">%s</td>", ARMOR(teamdb_get_name(cs->teamdb_state, ce.from)));
-  }
-  fprintf(fout, "</tr>\n<tr><td class=\"b0\">%s:</td>", _("To"));
-  if (!ce.to && !ce.from) {
-    fprintf(fout, "<td class=\"b0\"><b>%s</b></td>", _("all"));
-  } else if (!ce.to) {
-    fprintf(fout, "<td class=\"b0\"><b>%s</b></td>", _("judges"));
-  } else {
-    fprintf(fout, "<td class=\"b0\">%s</td>", ARMOR(teamdb_get_name(cs->teamdb_state, ce.to)));
-  }
-  fprintf(fout, "</tr>\n");
-  fprintf(fout, "<tr><td class=\"b0\">%s:</td><td class=\"b0\">%s</td></tr>", _("Subject"), html_subj);
-  fprintf(fout, "</table>\n");
-  fprintf(fout, "<hr><pre>");
-  fprintf(fout, "%s", html_text);
-  fprintf(fout, "</pre><hr>");
-
-  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
-  l10n_setlocale(0);
-
- done:;
-  close_memstream(log_f); log_f = 0;
-  if (log_txt && *log_txt) {
-    html_error_status_page(fout, phr, cnts, extra, log_txt,
-                           NEW_SRV_ACTION_MAIN_PAGE, 0);
-  }
-
-  if (log_f) close_memstream(log_f);
-  xfree(log_txt);
-  xfree(clar_text);
-  html_armor_free(&ab);
-}
-
-static void
 unpriv_view_standings(FILE *fout,
                       struct http_request_info *phr,
                       const struct contest_desc *cnts,
@@ -13380,7 +13244,6 @@ static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_LOGOUT] = unpriv_logout,
   [NEW_SRV_ACTION_VIEW_SOURCE] = unpriv_view_source,
   [NEW_SRV_ACTION_VIEW_REPORT] = unpriv_view_report,
-  [NEW_SRV_ACTION_VIEW_CLAR] = unpriv_view_clar,
   [NEW_SRV_ACTION_PRINT_RUN] = unpriv_print_run,
   [NEW_SRV_ACTION_VIEW_TEST_INPUT] = unpriv_view_test,
   [NEW_SRV_ACTION_VIEW_TEST_ANSWER] = unpriv_view_test,
