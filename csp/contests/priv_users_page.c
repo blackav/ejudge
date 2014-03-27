@@ -98,7 +98,7 @@ int csp_view_priv_users_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct
 #line 2 "priv_stdvars.csp"
 int retval __attribute__((unused)) = 0;
   struct contest_extra *extra __attribute__((unused)) = phr->extra;
-  serve_state_t cs __attribute__((unused)) = extra->serve_state;
+  serve_state_t cs __attribute__((unused)) = extra?extra->serve_state:NULL;
   const struct contest_desc *cnts __attribute__((unused)) = phr->cnts;
   struct html_armor_buffer ab __attribute__((unused)) = HTML_ARMOR_INITIALIZER;
   unsigned char hbuf[1024] __attribute__((unused));
