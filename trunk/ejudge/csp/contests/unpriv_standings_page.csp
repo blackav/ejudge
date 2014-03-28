@@ -1,0 +1,101 @@
+<%
+/* $Id$ */
+%><%@include "unpriv_includes.csp"
+%><%
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@set getter_name = "csp_get_unpriv_clar_page"
+%><%@page csp_view_unpriv_clar_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "unpriv_stdvars.csp"
+%><%
+  time_t cur_time, fog_stop_time = 0;
+  unsigned char dur_buf[128];
+  unsigned char title[1024];
+
+  if (global->is_virtual) {
+    start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
+    stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id,
+                                          cs->current_time);
+  } else {
+    start_time = run_get_start_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state);
+  }
+  run_get_times(cs->runlog_state, 0, &sched_time, &duration, 0, 0);
+  if (duration > 0 && start_time > 0 && global->board_fog_time > 0)
+    fog_start_time = start_time + duration - global->board_fog_time;
+  if (fog_start_time < 0) fog_start_time = 0;
+  if (fog_start_time > 0 && stop_time > 0) {
+    if (global->board_unfog_time > 0)
+      fog_stop_time = stop_time + global->board_unfog_time;
+    else
+      fog_stop_time = stop_time;
+  }
+  /* FIXME: if a virtual contest is over, display the final
+   * standings at the current time! */
+
+  l10n_setlocale(phr->locale_id);
+  if (start_time <= 0) {
+    snprintf(title, sizeof(title), _("Standings [not started]"));
+  } else {
+    cur_time = cs->current_time;
+    if (cur_time < start_time) cur_time = start_time;
+    if (duration <= 0) {
+      if (stop_time > 0 && cur_time >= stop_time)
+        snprintf(title, sizeof(title), _("Standings [over]"));
+      else if (global->stand_ignore_after > 0 && cur_time >= global->stand_ignore_after) {
+        cur_time = global->stand_ignore_after;
+        snprintf(title, sizeof(title), _("Standings [%s, frozen]"), xml_unparse_date(cur_time));
+      } else
+        snprintf(title, sizeof(title), "%s [%s]", _("Standings"), xml_unparse_date(cur_time));
+    } else {
+      if (stop_time > 0 && cur_time >= stop_time) {
+        if (fog_stop_time > 0 && cur_time < fog_stop_time) {
+          cur_time = fog_start_time;
+          snprintf(title, sizeof(title), _("Standings [over, frozen]"));
+        } else
+          snprintf(title, sizeof(title), _("Standings [over]"));
+      } else {
+        if (fog_start_time > 0 && cur_time >= fog_start_time) {
+          cur_time = fog_start_time;
+          snprintf(title, sizeof(title), _("Standings [%s, frozen]"),
+                   duration_str(global->show_astr_time, cur_time, start_time,
+                                dur_buf, sizeof(dur_buf)));
+        } else
+          snprintf(title, sizeof(title), "%s [%s]", _("Standings"),
+                   duration_str(global->show_astr_time, cur_time, start_time,
+                                dur_buf, sizeof(dur_buf)));
+      }
+    }
+  }
+%><%@include "unpriv_header.csp" 
+%><%@include "unpriv_menu.csp"
+%><%@include "unpriv_status.csp"
+%>
+<h2><s:v value="title" escape="false" /></h2>
+
+<%  if (global->disable_user_standings > 0) {
+%><p><s:tr>Information is not available.</s:tr></p><%
+  } else if (global->is_virtual) {
+    do_write_standings(cs, cnts, out_f, 1, 1, phr->user_id, 0, 0, 0, 0, 1,
+                       cur_time, NULL);
+  } else if (global->score_system == SCORE_ACM) {
+    do_write_standings(cs, cnts, out_f, 1, 1, phr->user_id, 0, 0, 0, 0, 1,
+                       cur_time, NULL);
+  } else if (global->score_system == SCORE_OLYMPIAD && cs->accepting_mode) {
+%><p><s:tr>Information is not available.</s:tr></p><%
+  } else if (global->score_system == SCORE_OLYMPIAD) {
+%><p><s:tr>Information is not available.</s:tr></p><%
+    do_write_kirov_standings(cs, cnts, out_f, 0, 1, 1, phr->user_id, 0, 0, 0, 0, 1, cur_time,
+                             0, NULL, 1 /* user_mode */);
+  } else if (global->score_system == SCORE_KIROV) {
+    do_write_kirov_standings(cs, cnts, out_f, 0, 1, 1, phr->user_id, 0, 0, 0, 0, 1, cur_time,
+                             0, NULL, 1 /* user_mode */);
+  } else if (global->score_system == SCORE_MOSCOW) {
+    do_write_moscow_standings(cs, cnts, out_f, 0, 1, 1, phr->user_id,
+                              0, 0, 0, 0, 1, cur_time, 0, NULL);
+  }
+%><%@include "unpriv_footer.csp"
+%><%
+  l10n_setlocale(0);
+//cleanup:;
+  html_armor_free(&ab);
+%>
