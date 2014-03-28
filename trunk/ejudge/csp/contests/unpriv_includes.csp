@@ -22,4 +22,13 @@
 #define _(x) gettext(x)
 
 #define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
+
+void
+unpriv_load_html_style(struct http_request_info *phr,
+                       const struct contest_desc *cnts,
+                       struct contest_extra **p_extra,
+                       time_t *p_cur_time);
+void
+do_json_user_state(FILE *fout, const serve_state_t cs, int user_id,
+                   int need_reload_check);
 %>
