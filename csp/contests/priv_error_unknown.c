@@ -126,5 +126,5 @@ fwrite(csp_str14, 1, 17, out_f);
 #line 23 "priv_error_unknown.csp"
 l10n_setlocale(0);
   html_armor_free(&ab);
-  return 0;
+  return retval;
 }

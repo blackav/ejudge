@@ -185,5 +185,5 @@ fwrite(csp_str23, 1, 17, out_f);
 l10n_setlocale(0);
 cleanup:
   html_armor_free(&ab);
-  return 0;
+  return retval;
 }

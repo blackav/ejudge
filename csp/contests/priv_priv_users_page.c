@@ -228,5 +228,5 @@ fwrite(csp_str29, 1, 17, out_f);
 #line 86 "priv_priv_users_page.csp"
 l10n_setlocale(0);
   html_armor_free(&ab);
-  return 0;
+  return retval;
 }

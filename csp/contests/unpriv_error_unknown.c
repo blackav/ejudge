@@ -219,5 +219,5 @@ fwrite(csp_str29, 1, 37, out_f);
 #line 23 "unpriv_error_unknown.csp"
 l10n_setlocale(0);
   html_armor_free(&ab);
-  return 0;
+  return retval;
 }

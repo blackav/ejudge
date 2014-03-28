@@ -180,5 +180,5 @@ fwrite(csp_str15, 1, 17, out_f);
 #line 43 "priv_login_page.csp"
 l10n_setlocale(0);
   html_armor_free(&ab);
-  return 0;
+  return retval;
 }

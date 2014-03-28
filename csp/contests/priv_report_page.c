@@ -282,5 +282,5 @@ l10n_setlocale(0);
 cleanup:
   xfree(rep_text);
   html_armor_free(&ab);
-  return 0;
+  return retval;
 }

@@ -342,5 +342,5 @@ cleanup:
   xfree(vec.v); vec.v = 0;
   vec.a = vec.u = 0;
   html_armor_free(&ab);
-  return 0;
+  return retval;
 }

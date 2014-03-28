@@ -250,5 +250,5 @@ l10n_setlocale(0);
 cleanup:
   html_armor_free(&ab);
   return retval;
-  return 0;
+  return retval;
 }

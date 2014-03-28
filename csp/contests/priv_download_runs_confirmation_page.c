@@ -237,5 +237,5 @@ l10n_setlocale(0);
  cleanup:
   xfree(mask);
   return retval;
-  return 0;
+  return retval;
 }
