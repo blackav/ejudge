@@ -4508,7 +4508,7 @@ process_unit(
     free(prg_t); prg_t = NULL; prg_z = 0;
 
     // FIXME: put error handling here...
-    fprintf(out_f, "  return 0;\n");
+    fprintf(out_f, "  return retval;\n");
     fprintf(out_f, "}\n");
     processor_state_pop_scope(ps); // local variables scope
     processor_state_pop_scope(ps); // parameter scope
