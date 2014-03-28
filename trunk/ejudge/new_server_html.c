@@ -13479,7 +13479,7 @@ unprivileged_entry_point(
     if (pg->ops->execute) {
       int r = pg->ops->execute(pg, phr->log_f, phr);
       if (r < 0) {
-        error_page(fout, phr, 1, -r);
+        error_page(fout, phr, 0, -r);
         goto cleanup;
       }
     }
@@ -13488,7 +13488,7 @@ unprivileged_entry_point(
       snprintf(phr->content_type, sizeof(phr->content_type), "text/html; charset=%s", EJUDGE_CHARSET);
       int r = pg->ops->render(pg, phr->log_f, fout, phr);
       if (r < 0) {
-        error_page(fout, phr, 1, -r);
+        error_page(fout, phr, 0, -r);
         goto cleanup;
       }
     }
