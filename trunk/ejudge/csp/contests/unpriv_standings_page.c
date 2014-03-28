@@ -36,17 +36,37 @@ static const unsigned char csp_str32[19] = "\" target=\"_blank\">";
 static const unsigned char csp_str33[5] = "</a>";
 static const unsigned char csp_str34[53] = "</tr></table>\n</div>\n</div>\n<div id=\"l11\"><img src=\"";
 static const unsigned char csp_str35[45] = "logo.gif\" alt=\"logo\"/></div>\n<div id=\"l13\">\n";
-static const unsigned char csp_str36[24] = "\n<h2><font color=\"red\">";
-static const unsigned char csp_str37[14] = "</font></h2>\n";
-static const unsigned char csp_str38[5] = "\n<p>";
-static const unsigned char csp_str39[29] = "</p>\n<font color=\"red\"><pre>";
-static const unsigned char csp_str40[15] = "</pre></font>\n";
-static const unsigned char csp_str41[2] = "\n";
-static const unsigned char csp_str42[18] = "<div id=\"footer\">";
-static const unsigned char csp_str43[38] = "</div>\n</div>\n</div>\n</body>\n</html>\n";
+static const unsigned char csp_str36[12] = "<div class=";
+static const unsigned char csp_str37[20] = "\"server_status_off\"";
+static const unsigned char csp_str38[22] = "\"server_status_alarm\"";
+static const unsigned char csp_str39[19] = "\"server_status_on\"";
+static const unsigned char csp_str40[41] = " id=\"statusLine\">\n<div id=\"currentTime\">";
+static const unsigned char csp_str41[7] = "</div>";
+static const unsigned char csp_str42[7] = " / <b>";
+static const unsigned char csp_str43[16] = "EXAM IS RUNNING";
+static const unsigned char csp_str44[8] = "RUNNING";
+static const unsigned char csp_str45[12] = "NOT STARTED";
+static const unsigned char csp_str46[5] = "</b>";
+static const unsigned char csp_str47[6] = "/ <b>";
+static const unsigned char csp_str48[25] = " / <b><font color=\"red\">";
+static const unsigned char csp_str49[12] = "</font></b>";
+static const unsigned char csp_str50[4] = " / ";
+static const unsigned char csp_str51[3] = ": ";
+static const unsigned char csp_str52[27] = ": <div id=\"remainingTime\">";
+static const unsigned char csp_str53[43] = "<div id=\"reloadButton\" style=\"visibility: ";
+static const unsigned char csp_str54[8] = "visible";
+static const unsigned char csp_str55[7] = "hidden";
+static const unsigned char csp_str56[49] = "\">/ <a class=\"menu\" onclick=\"reloadPage()\"><b>[ ";
+static const unsigned char csp_str57[80] = " ]</b></a></div><div id=\"statusString\" style=\"visibility: hidden\"></div></div>\n";
+static const unsigned char csp_str58[6] = "\n<h2>";
+static const unsigned char csp_str59[8] = "</h2>\n\n";
+static const unsigned char csp_str60[4] = "<p>";
+static const unsigned char csp_str61[5] = "</p>";
+static const unsigned char csp_str62[18] = "<div id=\"footer\">";
+static const unsigned char csp_str63[38] = "</div>\n</div>\n</div>\n</body>\n</html>\n";
 
 
-#line 2 "unpriv_error_unknown.csp"
+#line 2 "unpriv_standings_page.csp"
 /* $Id$ */
 
 #line 2 "unpriv_includes.csp"
@@ -82,24 +102,24 @@ unpriv_load_html_style(struct http_request_info *phr,
 void
 do_json_user_state(FILE *fout, const serve_state_t cs, int user_id,
                    int need_reload_check);
-int csp_view_unpriv_error_unknown(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr);
+int csp_view_unpriv_clar_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr);
 static PageInterfaceOps page_ops =
 {
     NULL, // destroy
     NULL, // execute
-    csp_view_unpriv_error_unknown, // render
+    csp_view_unpriv_clar_page, // render
 };
 static PageInterface page_iface =
 {
     &page_ops,
 };
 PageInterface *
-csp_get_unpriv_error_unknown(void)
+csp_get_unpriv_clar_page(void)
 {
     return &page_iface;
 }
 
-int csp_view_unpriv_error_unknown(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+int csp_view_unpriv_clar_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 {
 
 #line 2 "unpriv_stdvars.csp"
@@ -121,13 +141,66 @@ int retval __attribute__((unused)) = 0;
   const struct section_global_data *global __attribute__((unused)) = cs?cs->global:NULL;
   time_t start_time __attribute__((unused)) = 0, stop_time __attribute__((unused)) = 0;
 
-#line 9 "unpriv_error_unknown.csp"
-unsigned char title[1024];
-  const unsigned char *error_title = NULL;
+#line 10 "unpriv_standings_page.csp"
+time_t cur_time, fog_stop_time = 0;
+  unsigned char dur_buf[128];
+  unsigned char title[1024];
+
+  if (global->is_virtual) {
+    start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
+    stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id,
+                                          cs->current_time);
+  } else {
+    start_time = run_get_start_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state);
+  }
+  run_get_times(cs->runlog_state, 0, &sched_time, &duration, 0, 0);
+  if (duration > 0 && start_time > 0 && global->board_fog_time > 0)
+    fog_start_time = start_time + duration - global->board_fog_time;
+  if (fog_start_time < 0) fog_start_time = 0;
+  if (fog_start_time > 0 && stop_time > 0) {
+    if (global->board_unfog_time > 0)
+      fog_stop_time = stop_time + global->board_unfog_time;
+    else
+      fog_stop_time = stop_time;
+  }
+  /* FIXME: if a virtual contest is over, display the final
+   * standings at the current time! */
 
   l10n_setlocale(phr->locale_id);
-  error_title = ns_error_title(phr->error_code);
-  snprintf(title, sizeof(title), "%s: %s", _("Error"), error_title);
+  if (start_time <= 0) {
+    snprintf(title, sizeof(title), _("Standings [not started]"));
+  } else {
+    cur_time = cs->current_time;
+    if (cur_time < start_time) cur_time = start_time;
+    if (duration <= 0) {
+      if (stop_time > 0 && cur_time >= stop_time)
+        snprintf(title, sizeof(title), _("Standings [over]"));
+      else if (global->stand_ignore_after > 0 && cur_time >= global->stand_ignore_after) {
+        cur_time = global->stand_ignore_after;
+        snprintf(title, sizeof(title), _("Standings [%s, frozen]"), xml_unparse_date(cur_time));
+      } else
+        snprintf(title, sizeof(title), "%s [%s]", _("Standings"), xml_unparse_date(cur_time));
+    } else {
+      if (stop_time > 0 && cur_time >= stop_time) {
+        if (fog_stop_time > 0 && cur_time < fog_stop_time) {
+          cur_time = fog_start_time;
+          snprintf(title, sizeof(title), _("Standings [over, frozen]"));
+        } else
+          snprintf(title, sizeof(title), _("Standings [over]"));
+      } else {
+        if (fog_start_time > 0 && cur_time >= fog_start_time) {
+          cur_time = fog_start_time;
+          snprintf(title, sizeof(title), _("Standings [%s, frozen]"),
+                   duration_str(global->show_astr_time, cur_time, start_time,
+                                dur_buf, sizeof(dur_buf)));
+        } else
+          snprintf(title, sizeof(title), "%s [%s]", _("Standings"),
+                   duration_str(global->show_astr_time, cur_time, start_time,
+                                dur_buf, sizeof(dur_buf)));
+      }
+    }
+  }
 fwrite(csp_str0, 1, 183, out_f);
 fwrite("utf-8", 1, 5, out_f);
 fwrite(csp_str1, 1, 40, out_f);
@@ -589,27 +662,232 @@ fwrite(csp_str26, 1, 11, out_f);
 fwrite(csp_str34, 1, 52, out_f);
 fwrite("/ejudge/", 1, 8, out_f);
 fwrite(csp_str35, 1, 44, out_f);
-fwrite(csp_str36, 1, 23, out_f);
-fputs((title), out_f);
-fwrite(csp_str37, 1, 13, out_f);
 
-#line 19 "unpriv_error_unknown.csp"
-if (phr->log_t && *phr->log_t) {
-fwrite(csp_str38, 1, 4, out_f);
-fputs(_("Additional information about this error:"), out_f);
-fwrite(csp_str39, 1, 28, out_f);
-fputs(html_armor_buf(&ab, (phr->log_t)), out_f);
-fwrite(csp_str40, 1, 14, out_f);
+#line 2 "unpriv_status.csp"
+run_get_times(cs->runlog_state, 0, &sched_time, &duration, 0, 0);
+  if (duration > 0 && start_time && !stop_time && global->board_fog_time > 0)
+    fog_start_time = start_time + duration - global->board_fog_time;
+  if (fog_start_time < 0) fog_start_time = 0;
+  if (!cs->global->disable_clars || !cs->global->disable_team_clars)
+    unread_clars = serve_count_unread_clars(cs, phr->user_id, start_time);
+fwrite(csp_str36, 1, 11, out_f);
 
-#line 22 "unpriv_error_unknown.csp"
+#line 9 "unpriv_status.csp"
+if (cs->clients_suspended) {
+fwrite(csp_str37, 1, 19, out_f);
+
+#line 11 "unpriv_status.csp"
+} else if (unread_clars > 0) {
+fwrite(csp_str38, 1, 21, out_f);
+
+#line 13 "unpriv_status.csp"
+} else {
+fwrite(csp_str39, 1, 18, out_f);
+
+#line 15 "unpriv_status.csp"
 }
-fwrite(csp_str41, 1, 1, out_f);
-fwrite(csp_str42, 1, 17, out_f);
-write_copyright_short(out_f);
-fwrite(csp_str43, 1, 37, out_f);
+fwrite(csp_str40, 1, 40, out_f);
+{
+  struct tm *ptm = localtime(&(cs->current_time));
+  fprintf(out_f, "%02d:%02d:%02d", ptm->tm_hour, ptm->tm_min, ptm->tm_sec);
+}
+fwrite(csp_str41, 1, 6, out_f);
 
-#line 25 "unpriv_error_unknown.csp"
+#line 18 "unpriv_status.csp"
+if (unread_clars > 0) {
+    fprintf(out_f, _(" / <b>%d unread message(s)</b>"),
+            unread_clars);
+  }
+fwrite(csp_str42, 1, 6, out_f);
+
+#line 23 "unpriv_status.csp"
+if (stop_time > 0) {
+    if (duration > 0 && global->board_fog_time > 0
+        && global->board_unfog_time > 0
+        && cs->current_time < stop_time + global->board_unfog_time
+        && !cs->standings_updated) {
+fputs(_("OVER (frozen)"), out_f);
+
+#line 29 "unpriv_status.csp"
+} else {
+fputs(_("OVER"), out_f);
+
+#line 31 "unpriv_status.csp"
+}
+  } else if (start_time > 0) {
+    if (fog_start_time > 0 && cs->current_time >= fog_start_time) {
+      if (cnts->exam_mode) {
+fputs(_("EXAM IS RUNNING (frozen)"), out_f);
+
+#line 36 "unpriv_status.csp"
+} else {
+fputs(_("RUNNING (frozen)"), out_f);
+
+#line 38 "unpriv_status.csp"
+}
+    } else {
+      if (cnts->exam_mode) {
+fwrite(csp_str43, 1, 15, out_f);
+
+#line 42 "unpriv_status.csp"
+} else {
+fwrite(csp_str44, 1, 7, out_f);
+
+#line 44 "unpriv_status.csp"
+}
+    }
+  } else {
+fwrite(csp_str45, 1, 11, out_f);
+
+#line 48 "unpriv_status.csp"
+}
+fwrite(csp_str46, 1, 4, out_f);
+
+#line 50 "unpriv_status.csp"
+if (start_time > 0) {
+    if (global->score_system == SCORE_OLYMPIAD && !global->is_virtual) {
+fwrite(csp_str47, 1, 5, out_f);
+
+#line 53 "unpriv_status.csp"
+if (cs->accepting_mode) {
+fputs(_("accepting"), out_f);
+
+#line 55 "unpriv_status.csp"
+} else if (!cs->testing_finished) {
+fputs(_("judging"), out_f);
+
+#line 57 "unpriv_status.csp"
+} else {
+fputs(_("judged"), out_f);
+
+#line 59 "unpriv_status.csp"
+}
+fwrite(csp_str46, 1, 4, out_f);
+
+#line 61 "unpriv_status.csp"
+}
+  }
+
+#line 64 "unpriv_status.csp"
+if (cs->upsolving_mode) {
+fwrite(csp_str42, 1, 6, out_f);
+fputs(_("UPSOLVING"), out_f);
+fwrite(csp_str46, 1, 4, out_f);
+
+#line 66 "unpriv_status.csp"
+}
+
+#line 68 "unpriv_status.csp"
+if (cs->clients_suspended) {
+fwrite(csp_str48, 1, 24, out_f);
+fputs(_("clients suspended"), out_f);
+fwrite(csp_str49, 1, 11, out_f);
+
+#line 70 "unpriv_status.csp"
+}
+
+#line 72 "unpriv_status.csp"
+if (start_time > 0) {
+    if (cs->testing_suspended) {
+fwrite(csp_str48, 1, 24, out_f);
+fputs(_("testing suspended"), out_f);
+fwrite(csp_str49, 1, 11, out_f);
+
+#line 75 "unpriv_status.csp"
+}
+    if (cs->printing_suspended) {
+fwrite(csp_str48, 1, 24, out_f);
+fputs(_("printing suspended"), out_f);
+fwrite(csp_str49, 1, 11, out_f);
+
+#line 78 "unpriv_status.csp"
+}
+  }
+
+#line 81 "unpriv_status.csp"
+if (!global->is_virtual && start_time <= 0 && sched_time > 0) {
+fwrite(csp_str50, 1, 3, out_f);
+fputs(_("Start at"), out_f);
+fwrite(csp_str51, 1, 2, out_f);
+{
+  struct tm *ptm = localtime(&(sched_time));
+  fprintf(out_f, "%02d:%02d:%02d", ptm->tm_hour, ptm->tm_min, ptm->tm_sec);
+}
+
+#line 83 "unpriv_status.csp"
+}
+
+#line 85 "unpriv_status.csp"
+if (start_time > 0 && stop_time <= 0 && duration > 0) {
+    duration_str(0, start_time + duration - cs->current_time, 0, time_buf, 0);
+fwrite(csp_str50, 1, 3, out_f);
+fputs(_("Remaining"), out_f);
+fwrite(csp_str52, 1, 26, out_f);
+fputs((time_buf), out_f);
+fwrite(csp_str41, 1, 6, out_f);
+
+#line 88 "unpriv_status.csp"
+}
+fwrite(csp_str53, 1, 42, out_f);
+
+#line 90 "unpriv_status.csp"
+if (global->disable_auto_refresh > 0) {
+fwrite(csp_str54, 1, 7, out_f);
+
+#line 92 "unpriv_status.csp"
+} else {
+fwrite(csp_str55, 1, 6, out_f);
+
+#line 94 "unpriv_status.csp"
+}
+fwrite(csp_str56, 1, 48, out_f);
+fputs(_("REFRESH"), out_f);
+fwrite(csp_str57, 1, 79, out_f);
+fwrite(csp_str58, 1, 5, out_f);
+fputs((title), out_f);
+fwrite(csp_str59, 1, 7, out_f);
+
+#line 75 "unpriv_standings_page.csp"
+if (global->disable_user_standings > 0) {
+fwrite(csp_str60, 1, 3, out_f);
+fputs(_("Information is not available."), out_f);
+fwrite(csp_str61, 1, 4, out_f);
+
+#line 77 "unpriv_standings_page.csp"
+} else if (global->is_virtual) {
+    do_write_standings(cs, cnts, out_f, 1, 1, phr->user_id, 0, 0, 0, 0, 1,
+                       cur_time, NULL);
+  } else if (global->score_system == SCORE_ACM) {
+    do_write_standings(cs, cnts, out_f, 1, 1, phr->user_id, 0, 0, 0, 0, 1,
+                       cur_time, NULL);
+  } else if (global->score_system == SCORE_OLYMPIAD && cs->accepting_mode) {
+fwrite(csp_str60, 1, 3, out_f);
+fputs(_("Information is not available."), out_f);
+fwrite(csp_str61, 1, 4, out_f);
+
+#line 85 "unpriv_standings_page.csp"
+} else if (global->score_system == SCORE_OLYMPIAD) {
+fwrite(csp_str60, 1, 3, out_f);
+fputs(_("Information is not available."), out_f);
+fwrite(csp_str61, 1, 4, out_f);
+
+#line 87 "unpriv_standings_page.csp"
+do_write_kirov_standings(cs, cnts, out_f, 0, 1, 1, phr->user_id, 0, 0, 0, 0, 1, cur_time,
+                             0, NULL, 1 /* user_mode */);
+  } else if (global->score_system == SCORE_KIROV) {
+    do_write_kirov_standings(cs, cnts, out_f, 0, 1, 1, phr->user_id, 0, 0, 0, 0, 1, cur_time,
+                             0, NULL, 1 /* user_mode */);
+  } else if (global->score_system == SCORE_MOSCOW) {
+    do_write_moscow_standings(cs, cnts, out_f, 0, 1, 1, phr->user_id,
+                              0, 0, 0, 0, 1, cur_time, 0, NULL);
+  }
+fwrite(csp_str62, 1, 17, out_f);
+write_copyright_short(out_f);
+fwrite(csp_str63, 1, 37, out_f);
+
+#line 98 "unpriv_standings_page.csp"
 l10n_setlocale(0);
+//cleanup:;
   html_armor_free(&ab);
   return retval;
 }
