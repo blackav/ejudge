@@ -35,7 +35,7 @@ static const unsigned char csp_str31[23] = "<a class=\"menu\" href=\"";
 static const unsigned char csp_str32[19] = "\" target=\"_blank\">";
 static const unsigned char csp_str33[5] = "</a>";
 static const unsigned char csp_str34[53] = "</tr></table>\n</div>\n</div>\n<div id=\"l11\"><img src=\"";
-static const unsigned char csp_str35[30] = "logo.gif\" alt=\"logo\"/></div>\n";
+static const unsigned char csp_str35[45] = "logo.gif\" alt=\"logo\"/></div>\n<div id=\"l13\">\n";
 static const unsigned char csp_str36[2] = "\n";
 static const unsigned char csp_str37[5] = "\n<p>";
 static const unsigned char csp_str38[29] = "</p>\n<font color=\"red\"><pre>";
@@ -586,7 +586,7 @@ fwrite(csp_str26, 1, 11, out_f);
 }
 fwrite(csp_str34, 1, 52, out_f);
 fwrite("/ejudge/", 1, 8, out_f);
-fwrite(csp_str35, 1, 29, out_f);
+fwrite(csp_str35, 1, 44, out_f);
 fwrite(csp_str36, 1, 1, out_f);
 
 #line 18 "unpriv_error_unknown.csp"
