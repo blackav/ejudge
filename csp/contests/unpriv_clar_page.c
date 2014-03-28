@@ -98,9 +98,6 @@ static const unsigned char csp_str67[38] = "</div>\n</div>\n</div>\n</body>\n</h
 
 #define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
 
-#line 5 "unpriv_clar_page.csp"
-#include "team_extra.h"
-
 void
 unpriv_load_html_style(struct http_request_info *phr,
                        const struct contest_desc *cnts,
@@ -110,14 +107,8 @@ void
 do_json_user_state(FILE *fout, const serve_state_t cs, int user_id,
                    int need_reload_check);
 
-void
-unpriv_page_header_2(
-        FILE *fout,
-        struct http_request_info *phr,
-        const struct contest_desc *cnts,
-        struct contest_extra *extra,
-        time_t start_time,
-        time_t stop_time);
+#line 5 "unpriv_clar_page.csp"
+#include "team_extra.h"
 int csp_view_unpriv_clar_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr);
 static PageInterfaceOps page_ops =
 {
@@ -155,7 +146,7 @@ int retval __attribute__((unused)) = 0;
   struct teamdb_export tdb __attribute__((unused));
   struct sformat_extra_data fe __attribute__((unused));
 
-#line 29 "unpriv_clar_page.csp"
+#line 11 "unpriv_clar_page.csp"
 const struct section_global_data *global = cs->global;
   int n, clar_id, show_astr_time;
   const unsigned char *s;
@@ -246,11 +237,11 @@ fwrite(csp_str9, 1, 34, out_f);
 
 #line 14 "unpriv_header.csp"
 #if defined CONF_ENABLE_AJAX && CONF_ENABLE_AJAX
-  if (cs && phr->user_id > 0) {
+  if (cs && phr->user_id > 0 ) {
 fwrite(csp_str10, 1, 18, out_f);
 
 #line 17 "unpriv_header.csp"
-do_json_user_state(out_f, extra->serve_state, phr->user_id, 0);
+do_json_user_state(out_f, cs, phr->user_id, 0);
 fwrite(csp_str11, 1, 2, out_f);
 
 #line 19 "unpriv_header.csp"
@@ -886,39 +877,39 @@ fwrite(csp_str62, 1, 30, out_f);
 fputs(_("Sender"), out_f);
 fwrite(csp_str61, 1, 21, out_f);
 
-#line 107 "unpriv_clar_page.csp"
+#line 89 "unpriv_clar_page.csp"
 if (!ce.from) {
 fwrite(csp_str63, 1, 3, out_f);
 fputs(_("judges"), out_f);
 fwrite(csp_str46, 1, 4, out_f);
 
-#line 109 "unpriv_clar_page.csp"
+#line 91 "unpriv_clar_page.csp"
 } else {
 fputs(html_armor_buf(&ab, (teamdb_get_name(cs->teamdb_state, ce.from))), out_f);
 
-#line 111 "unpriv_clar_page.csp"
+#line 93 "unpriv_clar_page.csp"
 }
 fwrite(csp_str62, 1, 30, out_f);
 fputs(_("To"), out_f);
 fwrite(csp_str61, 1, 21, out_f);
 
-#line 114 "unpriv_clar_page.csp"
+#line 96 "unpriv_clar_page.csp"
 if (!ce.to && !ce.from) {
 fwrite(csp_str63, 1, 3, out_f);
 fputs(_("all"), out_f);
 fwrite(csp_str46, 1, 4, out_f);
 
-#line 116 "unpriv_clar_page.csp"
+#line 98 "unpriv_clar_page.csp"
 } else if (!ce.to) {
 fwrite(csp_str63, 1, 3, out_f);
 fputs(_("judges"), out_f);
 fwrite(csp_str46, 1, 4, out_f);
 
-#line 118 "unpriv_clar_page.csp"
+#line 100 "unpriv_clar_page.csp"
 } else {
 fputs(html_armor_buf(&ab, (teamdb_get_name(cs->teamdb_state, ce.to))), out_f);
 
-#line 120 "unpriv_clar_page.csp"
+#line 102 "unpriv_clar_page.csp"
 }
 fwrite(csp_str62, 1, 30, out_f);
 fputs(_("Subject"), out_f);
@@ -931,7 +922,7 @@ fwrite(csp_str66, 1, 17, out_f);
 write_copyright_short(out_f);
 fwrite(csp_str67, 1, 37, out_f);
 
-#line 130 "unpriv_clar_page.csp"
+#line 112 "unpriv_clar_page.csp"
 l10n_setlocale(0);
 cleanup:;
   html_armor_free(&ab);
