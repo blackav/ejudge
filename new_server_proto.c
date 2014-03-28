@@ -180,6 +180,8 @@ static const unsigned char * const ns_error_messages[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_PROB_CONFIG] = __("Problem configuration error"),
   [NEW_SRV_ERR_PROB_TOO_MANY_ATTEMPTS] = __("Max problem submit count is exceeded"),
   [NEW_SRV_ERR_INV_SESSION] = __("Invalid session"),
+  [NEW_SRV_ERR_REGISTRATION_INCOMPLETE] = __("Registration is incomplete"),
+  [NEW_SRV_ERR_SERVICE_NOT_AVAILABLE] = __("Service is not available"),
 };
 
 static const unsigned char * const ns_error_titles[NEW_SRV_ERR_LAST]=
@@ -330,6 +332,8 @@ static const unsigned char * const ns_error_titles[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_PROB_CONFIG] = __("Problem configuration error"),
   [NEW_SRV_ERR_PROB_TOO_MANY_ATTEMPTS] = __("Max problem submit count is exceeded"),
   [NEW_SRV_ERR_INV_SESSION] = __("Invalid session"),
+  [NEW_SRV_ERR_REGISTRATION_INCOMPLETE] = __("Registration is incomplete"),
+  [NEW_SRV_ERR_SERVICE_NOT_AVAILABLE] = __("Service is not available"),
 };
 
 const unsigned char *
@@ -417,10 +421,3 @@ ns_error(FILE *log_f, int code, ...)
   va_end(args);
   fprintf(log_f, ".\n");
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")
- * End:
- */

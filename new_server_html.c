@@ -13263,6 +13263,7 @@ static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =
 static const unsigned char * const external_unpriv_action_names[NEW_SRV_ACTION_LAST] =
 {
   [NEW_SRV_ACTION_VIEW_CLAR] = "unpriv_clar_page",
+  [NEW_SRV_ACTION_STANDINGS] = "unpriv_standings_page",
 };
 
 static void
@@ -13302,8 +13303,10 @@ unprivileged_entry_point(
     return unprivileged_page_login(fout, phr, orig_locale_id);
 
   // validate cookie
-  if (ns_open_ul_connection(phr->fw_state) < 0)
-    return ns_html_err_ul_server_down(fout, phr, 0, 0);
+  if (ns_open_ul_connection(phr->fw_state) < 0) {
+    error_page(fout, phr, 0, -NEW_SRV_ERR_USERLIST_SERVER_DOWN);
+    goto cleanup;
+  }
   if ((r = userlist_clnt_get_cookie(ul_conn, ULS_TEAM_GET_COOKIE,
                                     &phr->ip, phr->ssl_flag,
                                     phr->session_id,
@@ -13318,38 +13321,47 @@ unprivileged_entry_point(
     case ULS_ERR_NO_COOKIE:
     case ULS_ERR_CANNOT_PARTICIPATE:
     case ULS_ERR_NOT_REGISTERED:
-      return ns_html_err_inv_session(fout, phr, 0,
-                                     "get_cookie failed: %s",
-                                     userlist_strerror(-r));
+      error_page(fout, phr, 0, -NEW_SRV_ERR_INV_SESSION);
+      goto cleanup;
     case ULS_ERR_INCOMPLETE_REG:
-      return ns_html_err_registration_incomplete(fout, phr);
+      error_page(fout, phr, 0, -NEW_SRV_ERR_REGISTRATION_INCOMPLETE);
+      goto cleanup;
     case ULS_ERR_DISCONNECT:
-      return ns_html_err_ul_server_down(fout, phr, 0, 0);
+      error_page(fout, phr, 0, -NEW_SRV_ERR_USERLIST_SERVER_DOWN);
+      goto cleanup;
     default:
-      return ns_html_err_internal_error(fout, phr, 0, "get_cookie failed: %s",
-                                        userlist_strerror(-r));
+      fprintf(phr->log_f, "get_cookie failed: %s\n", userlist_strerror(-r));
+      error_page(fout, phr, 0, -NEW_SRV_ERR_INTERNAL);
+      goto cleanup;
     }
   }
 
   if (phr->contest_id < 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts){
-    //return anon_select_contest_page(fout, phr);
-    return ns_html_err_no_perm(fout, phr, 1, "invalid contest_id %d",
-                               phr->contest_id);
+    fprintf(phr->log_f, "invalid contest_id %d\n", phr->contest_id);
+    error_page(fout, phr, 0, -NEW_SRV_ERR_INV_CONTEST_ID);
+    goto cleanup;
   }
   extra = ns_get_contest_extra(phr->contest_id);
   ASSERT(extra);
   phr->cnts = cnts;
   phr->extra = extra;
 
-  if (!contests_check_team_ip(phr->contest_id, &phr->ip, phr->ssl_flag))
-    return ns_html_err_no_perm(fout, phr, 0, "%s://%s is not allowed for USER for contest %d", ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ipv6(&phr->ip), phr->contest_id);
-  if (cnts->closed)
-    return ns_html_err_service_not_available(fout, phr, 0,
-                                             "contest %d is closed", cnts->id);
-  if (!cnts->managed)
-    return ns_html_err_service_not_available(fout, phr, 0,
-                                             "contest %d is not managed",
-                                             cnts->id);
+  if (!contests_check_team_ip(phr->contest_id, &phr->ip, phr->ssl_flag)) {
+    fprintf(phr->log_f, "%s://%s is not allowed for USER for contest %d\n",
+            ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ipv6(&phr->ip), phr->contest_id);
+    error_page(fout, phr, 0, -NEW_SRV_ERR_PERMISSION_DENIED);
+    goto cleanup;
+  }
+  if (cnts->closed) {
+    fprintf(phr->log_f, "contest %d is closed\n", cnts->id);
+    error_page(fout, phr, 0, -NEW_SRV_ERR_SERVICE_NOT_AVAILABLE);
+    goto cleanup;
+  }
+  if (!cnts->managed) {
+    fprintf(phr->log_f, "contest %d is not managed", cnts->id);
+    error_page(fout, phr, 0, -NEW_SRV_ERR_SERVICE_NOT_AVAILABLE);
+    goto cleanup;
+  }
 
   watched_file_update(&extra->header, cnts->team_header_file, cur_time);
   watched_file_update(&extra->menu_1, cnts->team_menu_1_file, cur_time);
