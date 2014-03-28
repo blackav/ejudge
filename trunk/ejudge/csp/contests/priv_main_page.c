@@ -1454,5 +1454,5 @@ fwrite(csp_str116, 1, 17, out_f);
 
 #line 560 "priv_main_page.csp"
 html_armor_free(&ab);
-  return 0;
+  return retval;
 }

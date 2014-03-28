@@ -926,5 +926,5 @@ fwrite(csp_str67, 1, 37, out_f);
 l10n_setlocale(0);
 cleanup:;
   html_armor_free(&ab);
-  return 0;
+  return retval;
 }

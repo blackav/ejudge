@@ -374,5 +374,5 @@ l10n_setlocale(0);
 cleanup:
   html_armor_free(&ab);
   xfree(msg_txt);
-  return 0;
+  return retval;
 }

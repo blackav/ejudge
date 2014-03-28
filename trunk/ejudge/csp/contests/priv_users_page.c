@@ -485,5 +485,5 @@ cleanup:
   html_armor_free(&ab);
   xfree(run_counts);
   xfree(run_sizes);
-  return 0;
+  return retval;
 }
