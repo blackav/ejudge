@@ -13282,6 +13282,8 @@ unprivileged_entry_point(
   serve_state_t cs = 0;
   const unsigned char *s = 0;
 
+  phr->log_f = open_memstream(&phr->log_t, &phr->log_z);
+
   if (phr->action == NEW_SRV_ACTION_FORGOT_PASSWORD_1)
     return unpriv_page_forgot_password_1(fout, phr, orig_locale_id);
   if (phr->action == NEW_SRV_ACTION_FORGOT_PASSWORD_2)
