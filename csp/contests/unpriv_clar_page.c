@@ -35,40 +35,39 @@ static const unsigned char csp_str31[23] = "<a class=\"menu\" href=\"";
 static const unsigned char csp_str32[19] = "\" target=\"_blank\">";
 static const unsigned char csp_str33[5] = "</a>";
 static const unsigned char csp_str34[53] = "</tr></table>\n</div>\n</div>\n<div id=\"l11\"><img src=\"";
-static const unsigned char csp_str35[30] = "logo.gif\" alt=\"logo\"/></div>\n";
-static const unsigned char csp_str36[16] = "<div id=\"l13\">\n";
-static const unsigned char csp_str37[12] = "<div class=";
-static const unsigned char csp_str38[20] = "\"server_status_off\"";
-static const unsigned char csp_str39[22] = "\"server_status_alarm\"";
-static const unsigned char csp_str40[19] = "\"server_status_on\"";
-static const unsigned char csp_str41[41] = " id=\"statusLine\">\n<div id=\"currentTime\">";
-static const unsigned char csp_str42[7] = "</div>";
-static const unsigned char csp_str43[7] = " / <b>";
-static const unsigned char csp_str44[16] = "EXAM IS RUNNING";
-static const unsigned char csp_str45[8] = "RUNNING";
-static const unsigned char csp_str46[12] = "NOT STARTED";
-static const unsigned char csp_str47[5] = "</b>";
-static const unsigned char csp_str48[6] = "/ <b>";
-static const unsigned char csp_str49[25] = " / <b><font color=\"red\">";
-static const unsigned char csp_str50[12] = "</font></b>";
-static const unsigned char csp_str51[4] = " / ";
-static const unsigned char csp_str52[3] = ": ";
-static const unsigned char csp_str53[27] = ": <div id=\"remainingTime\">";
-static const unsigned char csp_str54[43] = "<div id=\"reloadButton\" style=\"visibility: ";
-static const unsigned char csp_str55[8] = "visible";
-static const unsigned char csp_str56[7] = "hidden";
-static const unsigned char csp_str57[49] = "\">/ <a class=\"menu\" onclick=\"reloadPage()\"><b>[ ";
-static const unsigned char csp_str58[80] = " ]</b></a></div><div id=\"statusString\" style=\"visibility: hidden\"></div></div>\n";
-static const unsigned char csp_str59[6] = "\n<h2>";
-static const unsigned char csp_str60[3] = " #";
-static const unsigned char csp_str61[46] = "</h2>\n\n<table class=\"b0\">\n<tr><td class=\"b0\">";
-static const unsigned char csp_str62[22] = ":</td><td class=\"b0\">";
-static const unsigned char csp_str63[31] = "</td></tr>\n<tr><td class=\"b0\">";
-static const unsigned char csp_str64[4] = "<b>";
-static const unsigned char csp_str65[32] = "</td></tr>\n</table>\n<hr/>\n<pre>";
-static const unsigned char csp_str66[15] = "</pre>\n<hr/>\n\n";
-static const unsigned char csp_str67[18] = "<div id=\"footer\">";
-static const unsigned char csp_str68[38] = "</div>\n</div>\n</div>\n</body>\n</html>\n";
+static const unsigned char csp_str35[45] = "logo.gif\" alt=\"logo\"/></div>\n<div id=\"l13\">\n";
+static const unsigned char csp_str36[12] = "<div class=";
+static const unsigned char csp_str37[20] = "\"server_status_off\"";
+static const unsigned char csp_str38[22] = "\"server_status_alarm\"";
+static const unsigned char csp_str39[19] = "\"server_status_on\"";
+static const unsigned char csp_str40[41] = " id=\"statusLine\">\n<div id=\"currentTime\">";
+static const unsigned char csp_str41[7] = "</div>";
+static const unsigned char csp_str42[7] = " / <b>";
+static const unsigned char csp_str43[16] = "EXAM IS RUNNING";
+static const unsigned char csp_str44[8] = "RUNNING";
+static const unsigned char csp_str45[12] = "NOT STARTED";
+static const unsigned char csp_str46[5] = "</b>";
+static const unsigned char csp_str47[6] = "/ <b>";
+static const unsigned char csp_str48[25] = " / <b><font color=\"red\">";
+static const unsigned char csp_str49[12] = "</font></b>";
+static const unsigned char csp_str50[4] = " / ";
+static const unsigned char csp_str51[3] = ": ";
+static const unsigned char csp_str52[27] = ": <div id=\"remainingTime\">";
+static const unsigned char csp_str53[43] = "<div id=\"reloadButton\" style=\"visibility: ";
+static const unsigned char csp_str54[8] = "visible";
+static const unsigned char csp_str55[7] = "hidden";
+static const unsigned char csp_str56[49] = "\">/ <a class=\"menu\" onclick=\"reloadPage()\"><b>[ ";
+static const unsigned char csp_str57[80] = " ]</b></a></div><div id=\"statusString\" style=\"visibility: hidden\"></div></div>\n";
+static const unsigned char csp_str58[6] = "\n<h2>";
+static const unsigned char csp_str59[3] = " #";
+static const unsigned char csp_str60[46] = "</h2>\n\n<table class=\"b0\">\n<tr><td class=\"b0\">";
+static const unsigned char csp_str61[22] = ":</td><td class=\"b0\">";
+static const unsigned char csp_str62[31] = "</td></tr>\n<tr><td class=\"b0\">";
+static const unsigned char csp_str63[4] = "<b>";
+static const unsigned char csp_str64[32] = "</td></tr>\n</table>\n<hr/>\n<pre>";
+static const unsigned char csp_str65[15] = "</pre>\n<hr/>\n\n";
+static const unsigned char csp_str66[18] = "<div id=\"footer\">";
+static const unsigned char csp_str67[38] = "</div>\n</div>\n</div>\n</body>\n</html>\n";
 
 
 #line 2 "unpriv_clar_page.csp"
@@ -677,47 +676,46 @@ fwrite(csp_str26, 1, 11, out_f);
 }
 fwrite(csp_str34, 1, 52, out_f);
 fwrite("/ejudge/", 1, 8, out_f);
-fwrite(csp_str35, 1, 29, out_f);
-fwrite(csp_str36, 1, 15, out_f);
+fwrite(csp_str35, 1, 44, out_f);
 
-#line 3 "unpriv_status.csp"
+#line 2 "unpriv_status.csp"
 run_get_times(cs->runlog_state, 0, &sched_time, &duration, 0, 0);
   if (duration > 0 && start_time && !stop_time && global->board_fog_time > 0)
     fog_start_time = start_time + duration - global->board_fog_time;
   if (fog_start_time < 0) fog_start_time = 0;
   if (!cs->global->disable_clars || !cs->global->disable_team_clars)
     unread_clars = serve_count_unread_clars(cs, phr->user_id, start_time);
-fwrite(csp_str37, 1, 11, out_f);
+fwrite(csp_str36, 1, 11, out_f);
 
-#line 10 "unpriv_status.csp"
+#line 9 "unpriv_status.csp"
 if (cs->clients_suspended) {
-fwrite(csp_str38, 1, 19, out_f);
+fwrite(csp_str37, 1, 19, out_f);
 
-#line 12 "unpriv_status.csp"
+#line 11 "unpriv_status.csp"
 } else if (unread_clars > 0) {
-fwrite(csp_str39, 1, 21, out_f);
+fwrite(csp_str38, 1, 21, out_f);
 
-#line 14 "unpriv_status.csp"
+#line 13 "unpriv_status.csp"
 } else {
-fwrite(csp_str40, 1, 18, out_f);
+fwrite(csp_str39, 1, 18, out_f);
 
-#line 16 "unpriv_status.csp"
+#line 15 "unpriv_status.csp"
 }
-fwrite(csp_str41, 1, 40, out_f);
+fwrite(csp_str40, 1, 40, out_f);
 {
   struct tm *ptm = localtime(&(cs->current_time));
   fprintf(out_f, "%02d:%02d:%02d", ptm->tm_hour, ptm->tm_min, ptm->tm_sec);
 }
-fwrite(csp_str42, 1, 6, out_f);
+fwrite(csp_str41, 1, 6, out_f);
 
-#line 19 "unpriv_status.csp"
+#line 18 "unpriv_status.csp"
 if (unread_clars > 0) {
     fprintf(out_f, _(" / <b>%d unread message(s)</b>"),
             unread_clars);
   }
-fwrite(csp_str43, 1, 6, out_f);
+fwrite(csp_str42, 1, 6, out_f);
 
-#line 24 "unpriv_status.csp"
+#line 23 "unpriv_status.csp"
 if (stop_time > 0) {
     if (duration > 0 && global->board_fog_time > 0
         && global->board_unfog_time > 0
@@ -725,166 +723,166 @@ if (stop_time > 0) {
         && !cs->standings_updated) {
 fputs(_("OVER (frozen)"), out_f);
 
-#line 30 "unpriv_status.csp"
+#line 29 "unpriv_status.csp"
 } else {
 fputs(_("OVER"), out_f);
 
-#line 32 "unpriv_status.csp"
+#line 31 "unpriv_status.csp"
 }
   } else if (start_time > 0) {
     if (fog_start_time > 0 && cs->current_time >= fog_start_time) {
       if (cnts->exam_mode) {
 fputs(_("EXAM IS RUNNING (frozen)"), out_f);
 
-#line 37 "unpriv_status.csp"
+#line 36 "unpriv_status.csp"
 } else {
 fputs(_("RUNNING (frozen)"), out_f);
 
-#line 39 "unpriv_status.csp"
+#line 38 "unpriv_status.csp"
 }
     } else {
       if (cnts->exam_mode) {
-fwrite(csp_str44, 1, 15, out_f);
+fwrite(csp_str43, 1, 15, out_f);
 
-#line 43 "unpriv_status.csp"
+#line 42 "unpriv_status.csp"
 } else {
-fwrite(csp_str45, 1, 7, out_f);
+fwrite(csp_str44, 1, 7, out_f);
 
-#line 45 "unpriv_status.csp"
+#line 44 "unpriv_status.csp"
 }
     }
   } else {
-fwrite(csp_str46, 1, 11, out_f);
+fwrite(csp_str45, 1, 11, out_f);
 
-#line 49 "unpriv_status.csp"
+#line 48 "unpriv_status.csp"
 }
-fwrite(csp_str47, 1, 4, out_f);
+fwrite(csp_str46, 1, 4, out_f);
 
-#line 51 "unpriv_status.csp"
+#line 50 "unpriv_status.csp"
 if (start_time > 0) {
     if (global->score_system == SCORE_OLYMPIAD && !global->is_virtual) {
-fwrite(csp_str48, 1, 5, out_f);
+fwrite(csp_str47, 1, 5, out_f);
 
-#line 54 "unpriv_status.csp"
+#line 53 "unpriv_status.csp"
 if (cs->accepting_mode) {
 fputs(_("accepting"), out_f);
 
-#line 56 "unpriv_status.csp"
+#line 55 "unpriv_status.csp"
 } else if (!cs->testing_finished) {
 fputs(_("judging"), out_f);
 
-#line 58 "unpriv_status.csp"
+#line 57 "unpriv_status.csp"
 } else {
 fputs(_("judged"), out_f);
 
-#line 60 "unpriv_status.csp"
+#line 59 "unpriv_status.csp"
 }
-fwrite(csp_str47, 1, 4, out_f);
+fwrite(csp_str46, 1, 4, out_f);
 
-#line 62 "unpriv_status.csp"
+#line 61 "unpriv_status.csp"
 }
   }
 
-#line 65 "unpriv_status.csp"
+#line 64 "unpriv_status.csp"
 if (cs->upsolving_mode) {
-fwrite(csp_str43, 1, 6, out_f);
+fwrite(csp_str42, 1, 6, out_f);
 fputs(_("UPSOLVING"), out_f);
-fwrite(csp_str47, 1, 4, out_f);
+fwrite(csp_str46, 1, 4, out_f);
 
-#line 67 "unpriv_status.csp"
+#line 66 "unpriv_status.csp"
 }
 
-#line 69 "unpriv_status.csp"
+#line 68 "unpriv_status.csp"
 if (cs->clients_suspended) {
-fwrite(csp_str49, 1, 24, out_f);
+fwrite(csp_str48, 1, 24, out_f);
 fputs(_("clients suspended"), out_f);
-fwrite(csp_str50, 1, 11, out_f);
+fwrite(csp_str49, 1, 11, out_f);
 
-#line 71 "unpriv_status.csp"
+#line 70 "unpriv_status.csp"
 }
 
-#line 73 "unpriv_status.csp"
+#line 72 "unpriv_status.csp"
 if (start_time > 0) {
     if (cs->testing_suspended) {
-fwrite(csp_str49, 1, 24, out_f);
+fwrite(csp_str48, 1, 24, out_f);
 fputs(_("testing suspended"), out_f);
-fwrite(csp_str50, 1, 11, out_f);
+fwrite(csp_str49, 1, 11, out_f);
 
-#line 76 "unpriv_status.csp"
+#line 75 "unpriv_status.csp"
 }
     if (cs->printing_suspended) {
-fwrite(csp_str49, 1, 24, out_f);
+fwrite(csp_str48, 1, 24, out_f);
 fputs(_("printing suspended"), out_f);
-fwrite(csp_str50, 1, 11, out_f);
+fwrite(csp_str49, 1, 11, out_f);
 
-#line 79 "unpriv_status.csp"
+#line 78 "unpriv_status.csp"
 }
   }
 
-#line 82 "unpriv_status.csp"
+#line 81 "unpriv_status.csp"
 if (!global->is_virtual && start_time <= 0 && sched_time > 0) {
-fwrite(csp_str51, 1, 3, out_f);
+fwrite(csp_str50, 1, 3, out_f);
 fputs(_("Start at"), out_f);
-fwrite(csp_str52, 1, 2, out_f);
+fwrite(csp_str51, 1, 2, out_f);
 {
   struct tm *ptm = localtime(&(sched_time));
   fprintf(out_f, "%02d:%02d:%02d", ptm->tm_hour, ptm->tm_min, ptm->tm_sec);
 }
 
-#line 84 "unpriv_status.csp"
+#line 83 "unpriv_status.csp"
 }
 
-#line 86 "unpriv_status.csp"
+#line 85 "unpriv_status.csp"
 if (start_time > 0 && stop_time <= 0 && duration > 0) {
     duration_str(0, start_time + duration - cs->current_time, 0, time_buf, 0);
-fwrite(csp_str51, 1, 3, out_f);
+fwrite(csp_str50, 1, 3, out_f);
 fputs(_("Remaining"), out_f);
-fwrite(csp_str53, 1, 26, out_f);
+fwrite(csp_str52, 1, 26, out_f);
 fputs((time_buf), out_f);
-fwrite(csp_str42, 1, 6, out_f);
+fwrite(csp_str41, 1, 6, out_f);
 
-#line 89 "unpriv_status.csp"
+#line 88 "unpriv_status.csp"
 }
-fwrite(csp_str54, 1, 42, out_f);
+fwrite(csp_str53, 1, 42, out_f);
 
-#line 91 "unpriv_status.csp"
+#line 90 "unpriv_status.csp"
 if (global->disable_auto_refresh > 0) {
-fwrite(csp_str55, 1, 7, out_f);
+fwrite(csp_str54, 1, 7, out_f);
 
-#line 93 "unpriv_status.csp"
+#line 92 "unpriv_status.csp"
 } else {
-fwrite(csp_str56, 1, 6, out_f);
+fwrite(csp_str55, 1, 6, out_f);
 
-#line 95 "unpriv_status.csp"
+#line 94 "unpriv_status.csp"
 }
-fwrite(csp_str57, 1, 48, out_f);
+fwrite(csp_str56, 1, 48, out_f);
 fputs(_("REFRESH"), out_f);
-fwrite(csp_str58, 1, 79, out_f);
-fwrite(csp_str59, 1, 5, out_f);
+fwrite(csp_str57, 1, 79, out_f);
+fwrite(csp_str58, 1, 5, out_f);
 fputs(_("Message"), out_f);
-fwrite(csp_str60, 1, 2, out_f);
+fwrite(csp_str59, 1, 2, out_f);
 fprintf(out_f, "%d", (int)(clar_id));
-fwrite(csp_str61, 1, 45, out_f);
+fwrite(csp_str60, 1, 45, out_f);
 fputs(_("Number"), out_f);
-fwrite(csp_str62, 1, 21, out_f);
+fwrite(csp_str61, 1, 21, out_f);
 fprintf(out_f, "%d", (int)(clar_id));
-fwrite(csp_str63, 1, 30, out_f);
+fwrite(csp_str62, 1, 30, out_f);
 fputs(_("Time"), out_f);
-fwrite(csp_str62, 1, 21, out_f);
+fwrite(csp_str61, 1, 21, out_f);
 fputs((dur_str), out_f);
-fwrite(csp_str63, 1, 30, out_f);
+fwrite(csp_str62, 1, 30, out_f);
 fputs(_("Size"), out_f);
-fwrite(csp_str62, 1, 21, out_f);
+fwrite(csp_str61, 1, 21, out_f);
 fprintf(out_f, "%zu", (size_t)(ce.size));
-fwrite(csp_str63, 1, 30, out_f);
+fwrite(csp_str62, 1, 30, out_f);
 fputs(_("Sender"), out_f);
-fwrite(csp_str62, 1, 21, out_f);
+fwrite(csp_str61, 1, 21, out_f);
 
 #line 89 "unpriv_clar_page.csp"
 if (!ce.from) {
-fwrite(csp_str64, 1, 3, out_f);
+fwrite(csp_str63, 1, 3, out_f);
 fputs(_("judges"), out_f);
-fwrite(csp_str47, 1, 4, out_f);
+fwrite(csp_str46, 1, 4, out_f);
 
 #line 91 "unpriv_clar_page.csp"
 } else {
@@ -892,21 +890,21 @@ fputs(html_armor_buf(&ab, (teamdb_get_name(cs->teamdb_state, ce.from))), out_f);
 
 #line 93 "unpriv_clar_page.csp"
 }
-fwrite(csp_str63, 1, 30, out_f);
+fwrite(csp_str62, 1, 30, out_f);
 fputs(_("To"), out_f);
-fwrite(csp_str62, 1, 21, out_f);
+fwrite(csp_str61, 1, 21, out_f);
 
 #line 96 "unpriv_clar_page.csp"
 if (!ce.to && !ce.from) {
-fwrite(csp_str64, 1, 3, out_f);
+fwrite(csp_str63, 1, 3, out_f);
 fputs(_("all"), out_f);
-fwrite(csp_str47, 1, 4, out_f);
+fwrite(csp_str46, 1, 4, out_f);
 
 #line 98 "unpriv_clar_page.csp"
 } else if (!ce.to) {
-fwrite(csp_str64, 1, 3, out_f);
+fwrite(csp_str63, 1, 3, out_f);
 fputs(_("judges"), out_f);
-fwrite(csp_str47, 1, 4, out_f);
+fwrite(csp_str46, 1, 4, out_f);
 
 #line 100 "unpriv_clar_page.csp"
 } else {
@@ -914,16 +912,16 @@ fputs(html_armor_buf(&ab, (teamdb_get_name(cs->teamdb_state, ce.to))), out_f);
 
 #line 102 "unpriv_clar_page.csp"
 }
-fwrite(csp_str63, 1, 30, out_f);
+fwrite(csp_str62, 1, 30, out_f);
 fputs(_("Subject"), out_f);
-fwrite(csp_str62, 1, 21, out_f);
+fwrite(csp_str61, 1, 21, out_f);
 fputs(html_armor_buf(&ab, (clar_subj)), out_f);
-fwrite(csp_str65, 1, 31, out_f);
+fwrite(csp_str64, 1, 31, out_f);
 fputs(html_armor_buf(&ab, (clar_text)), out_f);
-fwrite(csp_str66, 1, 14, out_f);
-fwrite(csp_str67, 1, 17, out_f);
+fwrite(csp_str65, 1, 14, out_f);
+fwrite(csp_str66, 1, 17, out_f);
 write_copyright_short(out_f);
-fwrite(csp_str68, 1, 37, out_f);
+fwrite(csp_str67, 1, 37, out_f);
 
 #line 112 "unpriv_clar_page.csp"
 l10n_setlocale(0);
