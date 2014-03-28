@@ -102,24 +102,24 @@ unpriv_load_html_style(struct http_request_info *phr,
 void
 do_json_user_state(FILE *fout, const serve_state_t cs, int user_id,
                    int need_reload_check);
-int csp_view_unpriv_clar_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr);
+int csp_view_unpriv_standings_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr);
 static PageInterfaceOps page_ops =
 {
     NULL, // destroy
     NULL, // execute
-    csp_view_unpriv_clar_page, // render
+    csp_view_unpriv_standings_page, // render
 };
 static PageInterface page_iface =
 {
     &page_ops,
 };
 PageInterface *
-csp_get_unpriv_clar_page(void)
+csp_get_unpriv_standings_page(void)
 {
     return &page_iface;
 }
 
-int csp_view_unpriv_clar_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+int csp_view_unpriv_standings_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 {
 
 #line 2 "unpriv_stdvars.csp"
