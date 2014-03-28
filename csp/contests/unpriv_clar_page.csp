@@ -3,24 +3,6 @@
 %><%@include "unpriv_includes.csp"
 %><%
 #include "team_extra.h"
-
-void
-unpriv_load_html_style(struct http_request_info *phr,
-                       const struct contest_desc *cnts,
-                       struct contest_extra **p_extra,
-                       time_t *p_cur_time);
-void
-do_json_user_state(FILE *fout, const serve_state_t cs, int user_id,
-                   int need_reload_check);
-
-void
-unpriv_page_header_2(
-        FILE *fout,
-        struct http_request_info *phr,
-        const struct contest_desc *cnts,
-        struct contest_extra *extra,
-        time_t start_time,
-        time_t stop_time);
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@set getter_name = "csp_get_unpriv_clar_page"
 %><%@page csp_view_unpriv_clar_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)

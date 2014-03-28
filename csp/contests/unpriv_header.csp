@@ -12,9 +12,9 @@
   dojo.require("dojo.parser");
 <%
 #if defined CONF_ENABLE_AJAX && CONF_ENABLE_AJAX
-  if (cs && phr->user_id > 0) {
+  if (cs && phr->user_id > 0 ) {
 %>  var jsonState = <%
-    do_json_user_state(out_f, extra->serve_state, phr->user_id, 0);
+    do_json_user_state(out_f, cs, phr->user_id, 0);
 %>;
 <% }
 #endif
