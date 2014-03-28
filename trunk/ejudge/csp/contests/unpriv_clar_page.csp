@@ -8,12 +8,11 @@
 %><%@page csp_view_unpriv_clar_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 %><%@include "unpriv_stdvars.csp"
 %><%
-  const struct section_global_data *global = cs->global;
   int n, clar_id, show_astr_time;
   const unsigned char *s;
   size_t clar_size = 0;
   struct clar_entry_v1 ce;
-  time_t start_time, clar_time, stop_time;
+  time_t clar_time;
   unsigned char *clar_text = 0;
   unsigned char dur_str[64];
   const unsigned char *clar_subj = 0;
@@ -78,6 +77,7 @@
   snprintf(title, sizeof(title), "%s %d", _("Clarification"), clar_id);
 %><%@include "unpriv_header.csp" 
 %><%@include "unpriv_menu.csp"
+%><%@include "unpriv_status.csp"
 %>
 <h2><s:tr>Message</s:tr> #<s:v value="clar_id" /></h2>
 
