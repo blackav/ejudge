@@ -384,6 +384,7 @@ cmd_http_request(struct server_framework_state *state,
   hr.param_names = param_names;
   hr.param_sizes = my_param_sizes;
   hr.params = params;
+  hr.config = ejudge_config;
 
   // ok, generate HTML
   out_f = open_memstream(&out_txt, &out_size);
