@@ -13155,6 +13155,7 @@ static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =
 
 static const unsigned char * const external_unpriv_action_names[NEW_SRV_ACTION_LAST] =
 {
+  [NEW_SRV_ACTION_LOGIN_PAGE] = "unpriv_login_page",
   [NEW_SRV_ACTION_VIEW_CLAR] = "unpriv_clar_page",
   [NEW_SRV_ACTION_STANDINGS] = "unpriv_standings_page",
 };
