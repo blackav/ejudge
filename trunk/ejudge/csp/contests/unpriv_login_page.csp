@@ -102,12 +102,12 @@
 %><s:url name="RegisterUrl" script="register" ac="reg-create-account-page">
     <s:param name="contest_id" value="phr->contest_id" />
     <s:param name="locale_id" value="phr->locale_id" />
-</s:url><s:a class="menu" url="RegisterUrl">1<s:tr>Registration</s:tr></s:a><%
+</s:url><s:a class="menu" url="RegisterUrl"><s:tr>Registration</s:tr></s:a><%
       } else {
 %><s:url name="RegisterUrl" script="register" ac="main-page">
     <s:param name="contest_id" value="phr->contest_id" />
     <s:param name="locale_id" value="phr->locale_id" />
-</s:url><s:a class="menu" url="RegisterUrl">2<s:tr>Registration</s:tr></s:a><%
+</s:url><s:a class="menu" url="RegisterUrl"><s:tr>Registration</s:tr></s:a><%
       }
     }
 %></div></td><%
@@ -115,11 +115,11 @@
   } else if (cnts && cnts->register_url
              && (cnts->reg_deadline <= 0 || cur_time < cnts->reg_deadline)) {
 %><td class="menu"><div class="contest_actions_item"><%
-    if (ejudge_config->disable_new_users <= 0) {
+    if (phr->config->disable_new_users <= 0) {
 %><s:url name="RegisterUrl" script="register" ac="main-page">
     <s:param name="contest_id" value="phr->contest_id" />
     <s:param name="locale_id" value="phr->locale_id" />
-</s:url><s:a class="menu" url="RegisterUrl">3<s:tr>Registration</s:tr></s:a><%
+</s:url><s:a class="menu" url="RegisterUrl"><s:tr>Registration</s:tr></s:a><%
     }
 %></div></td><%
     vis_flag++;
