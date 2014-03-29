@@ -24,10 +24,10 @@
   var waitingTooLong = "<s:tr>REFRESH PAGE MANUALLY!</s:tr>";
 </script>
 <link rel="stylesheet" href="<s:config name="style-prefix" />unpriv.css" type="text/css"/>
-<title><% if (phr) { %><s:v value="phr->name_arm" escape="false" /><% } %> [<% if (extra) { %><s:v value="extra->contest_arm" escape="false" /><% } %>]: <s:v value="title" escape="false" /></title></head>
+<title><% if (phr) { %><s:v checkExpr="" value="phr->name_arm" escape="false" /><% } %> [<% if (extra) { %><s:v checkExpr="" value="extra->contest_arm" escape="false" /><% } %>]: <s:v value="title" escape="false" /></title></head>
 <body<%
 #if defined CONF_ENABLE_AJAX && CONF_ENABLE_AJAX
 %> onload="startClock()"<%
 #endif
 %>><div id="container"><div id="l12">
-<div class="main_phrase"><% if (phr) { %><s:v value="phr->name_arm" escape="false" /><% } %> [<% if (extra) { %><s:v value="extra->contest_arm" escape="false" /><% } %>]: <s:v value="title" escape="false" /></div>
+<div class="main_phrase"><% if (phr) { %><s:v checkExpr="" value="phr->name_arm" escape="false" /><% } %> [<% if (extra) { %><s:v checkExpr="" value="extra->contest_arm" escape="false" /><% } %>]: <s:v value="title" escape="false" /></div>
