@@ -3088,7 +3088,7 @@ handle_a_open(
             parser_error_2(ps, "URL '%s' is undefined", attr->value);
             return -1;
         }
-        script_attr = html_element_find_attribute(elem, "script");
+        script_attr = html_element_find_attribute(url_elem, "script");
         r = process_ac_attr(log_f, cntx, ps, url_elem, buf, sizeof(buf));
         if (r < 0) return r;
         if (!r) {

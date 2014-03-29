@@ -148,7 +148,6 @@
   if (extra->welcome.text && extra->welcome.text[0]) {
     fprintf(out_f, "%s", extra->welcome.text);
   }
-%>
 %><%@include "unpriv_footer.csp"
 %><%
   l10n_setlocale(0);
