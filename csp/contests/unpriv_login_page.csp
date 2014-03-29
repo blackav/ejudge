@@ -66,6 +66,7 @@
   ns_cgi_param(phr, "login", &login_str);
   ns_cgi_param(phr, "password", &password_str);
 
+  phr->hidden_vars = "";
   l10n_setlocale(phr->locale_id);
 %><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html><head>
