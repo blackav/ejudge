@@ -925,16 +925,23 @@ ns_url_2(
 {
   if (phr->rest_mode > 0) {
     if (action < 0 || action >= NEW_SRV_ACTION_LAST) action = 0;
-    fprintf(out_f, "%s/%s/S%016llx", phr->self_url,
-            ns_symbolic_action_table[action],
-            phr->session_id);
+    fprintf(out_f, "%s/%s", phr->self_url, ns_symbolic_action_table[action]);
+    if (phr->session_id) {
+      fprintf(out_f, "/S%016llx", phr->session_id);
+    }
     return "?";
   } else {
-    fprintf(out_f, "%s?SID=%016llx", phr->self_url, phr->session_id);
-    if (action > 0) {
-      fprintf(out_f, "&amp;action=%d", action);
+    const unsigned char *sep = "?";
+    fprintf(out_f, "%s", phr->self_url);
+    if (phr->session_id) {
+      fprintf(out_f, "%sSID=%016llx", sep, phr->session_id);
+      sep = "&amp;";
     }
-    return "&amp;";
+    if (action > 0) {
+      fprintf(out_f, "%saction=%d", sep, action);
+      sep = "&amp;";
+    }
+    return sep;
   }
 }
 
@@ -947,16 +954,23 @@ ns_url_3(
 {
   if (phr->rest_mode > 0) {
     if (action < 0 || action >= NEW_SRV_ACTION_LAST) action = 0;
-    fprintf(out_f, "%s/%s/%s/S%016llx", phr->context_url, script,
-            ns_symbolic_action_table[action],
-            phr->session_id);
+    fprintf(out_f, "%s/%s/%s", phr->context_url, script, ns_symbolic_action_table[action]);
+    if (phr->session_id) {
+      fprintf(out_f, "/S%016llx", phr->session_id);
+    }
     return "?";
   } else {
-    fprintf(out_f, "%s/%s?SID=%016llx", phr->context_url, script, phr->session_id);
-    if (action > 0) {
-      fprintf(out_f, "&amp;action=%d", action);
+    const unsigned char *sep = "?";
+    fprintf(out_f, "%s/%s", phr->context_url, script);
+    if (phr->session_id) {
+      fprintf(out_f, "%sSID=%016llx", sep, phr->session_id);
+      sep = "&amp;";
     }
-    return "&amp;";
+    if (action > 0) {
+      fprintf(out_f, "%saction=%d", sep, action);
+      sep = "&amp;";
+    }
+    return sep;
   }
 }
 
