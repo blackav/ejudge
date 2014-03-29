@@ -95,8 +95,7 @@ static size_t extra_a = 0, extra_u = 0;
 extern const unsigned char * const ns_symbolic_action_table[];
 
 static void unprivileged_page_login(FILE *fout,
-                                    struct http_request_info *phr,
-                                    int orig_locale_id);
+                                    struct http_request_info *phr);
 void
 unpriv_page_header(FILE *fout,
                    struct http_request_info *phr,
@@ -939,6 +938,28 @@ ns_url_2(
   }
 }
 
+const unsigned char *
+ns_url_3(
+        FILE *out_f,
+        const struct http_request_info *phr,
+        const unsigned char *script,
+        int action)
+{
+  if (phr->rest_mode > 0) {
+    if (action < 0 || action >= NEW_SRV_ACTION_LAST) action = 0;
+    fprintf(out_f, "%s/%s/%s/S%016llx", phr->context_url, script,
+            ns_symbolic_action_table[action],
+            phr->session_id);
+    return "?";
+  } else {
+    fprintf(out_f, "%s/%s?SID=%016llx", phr->context_url, script, phr->session_id);
+    if (action > 0) {
+      fprintf(out_f, "&amp;action=%d", action);
+    }
+    return "&amp;";
+  }
+}
+
 unsigned char *
 ns_url_unescaped(
         unsigned char *buf,
@@ -1371,7 +1392,7 @@ privileged_page_login(FILE *fout,
     }
   }
   if (phr->role == USER_ROLE_CONTESTANT)
-    return unprivileged_page_login(fout, phr, phr->locale_id);
+    return unprivileged_page_login(fout, phr);
 
   // analyze IP limitations
   if (phr->role == USER_ROLE_ADMIN) {
@@ -8034,10 +8055,15 @@ unpriv_page_forgot_password_3(FILE *fout, struct http_request_info *phr,
   html_armor_free(&ab);
 }
 
+static int
+unpriv_external_action(FILE *out_f, struct http_request_info *phr);
+
 void
-unprivileged_page_login_page(FILE *fout, struct http_request_info *phr,
-                             int orig_locale_id)
+unprivileged_page_login_page(FILE *fout, struct http_request_info *phr)
 {
+  phr->action = NEW_SRV_ACTION_LOGIN_PAGE;
+  unpriv_external_action(fout, phr);
+  /*
   const struct contest_desc *cnts = 0;
   struct contest_extra *extra = 0;
   time_t cur_time;
@@ -8048,7 +8074,7 @@ unprivileged_page_login_page(FILE *fout, struct http_request_info *phr,
 
   if (phr->contest_id <= 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts)
     return ns_html_err_service_not_available(fout, phr, 0, "contest_id is invalid");
-  if (orig_locale_id < 0 && cnts->default_locale_num >= 0)
+  if (phr->locale_id < 0 && cnts->default_locale_num >= 0)
     phr->locale_id = cnts->default_locale_num;
   if (!contests_check_team_ip(phr->contest_id, &phr->ip, phr->ssl_flag))
     return ns_html_err_service_not_available(fout, phr, 0, "%s://%s is not allowed for USER for contest %d", ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ipv6(&phr->ip), phr->contest_id);
@@ -8197,10 +8223,6 @@ unprivileged_page_login_page(FILE *fout, struct http_request_info *phr,
     fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">&nbsp;</div></td>");
   }
 
-  /*
-  fprintf(fout, "<div class=\"search_actions\"><a href=\"\">%s</a>&nbsp;&nbsp;<a href=\"\">%s</a></div>", _("Registration"), _("Forgot the password?"));
-  */
-
   fprintf(fout, "</tr></table></div>\n");
   if (extra->separator_txt && *extra->separator_txt)
     ns_separator(fout, extra->separator_txt, cnts);
@@ -8212,11 +8234,11 @@ unprivileged_page_login_page(FILE *fout, struct http_request_info *phr,
   ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_setlocale(0);
   html_armor_free(&ab);
+  */
 }
 
 static void
-unprivileged_page_login(FILE *fout, struct http_request_info *phr,
-                        int orig_locale_id)
+unprivileged_page_login(FILE *fout, struct http_request_info *phr)
 {
   const unsigned char *login = 0;
   const unsigned char *password = 0;
@@ -8226,11 +8248,11 @@ unprivileged_page_login(FILE *fout, struct http_request_info *phr,
   if ((r = ns_cgi_param(phr, "login", &login)) < 0)
     return ns_html_err_inv_param(fout, phr, 0, "cannot parse login");
   if (!r || phr->action == NEW_SRV_ACTION_LOGIN_PAGE)
-    return unprivileged_page_login_page(fout, phr, orig_locale_id);
+    return unprivileged_page_login_page(fout, phr);
 
   if (phr->contest_id<=0 || contests_get(phr->contest_id, &cnts)<0 || !cnts)
     return ns_html_err_inv_param(fout, phr, 0, "invalid contest_id");
-  if (orig_locale_id < 0 && cnts->default_locale_num >= 0)
+  if (phr->locale_id < 0 && cnts->default_locale_num >= 0)
     phr->locale_id = cnts->default_locale_num;
 
   phr->login = xstrdup(login);
@@ -13137,11 +13159,54 @@ static const unsigned char * const external_unpriv_action_names[NEW_SRV_ACTION_L
   [NEW_SRV_ACTION_STANDINGS] = "unpriv_standings_page",
 };
 
+static int
+unpriv_external_action(FILE *out_f, struct http_request_info *phr)
+{
+  if (external_unpriv_action_names[phr->action]) {
+    external_unpriv_action_states[phr->action] = external_action_load(external_unpriv_action_states[phr->action],
+                                                                      "csp/contests",
+                                                                      external_unpriv_action_names[phr->action],
+                                                                      "csp_get_");
+  }
+
+  if (external_unpriv_action_states[phr->action] && external_unpriv_action_states[phr->action]->action_handler) {
+    PageInterface *pg = ((external_action_handler_t) external_unpriv_action_states[phr->action]->action_handler)();
+
+    if (pg->ops->execute) {
+      int r = pg->ops->execute(pg, phr->log_f, phr);
+      if (r < 0) {
+        error_page(out_f, phr, 0, -r);
+        goto cleanup;
+      }
+    }
+
+    if (pg->ops->render) {
+      snprintf(phr->content_type, sizeof(phr->content_type), "text/html; charset=%s", EJUDGE_CHARSET);
+      int r = pg->ops->render(pg, phr->log_f, out_f, phr);
+      if (r < 0) {
+        error_page(out_f, phr, 0, -r);
+        goto cleanup;
+      }
+    }
+
+    if (pg->ops->destroy) {
+      pg->ops->destroy(pg);
+      pg = NULL;
+    }
+
+    goto cleanup;
+  }
+
+  return 0;
+
+cleanup:
+  return 1;
+}
+
 static void
 unprivileged_entry_point(
         FILE *fout,
-        struct http_request_info *phr,
-        int orig_locale_id)
+        struct http_request_info *phr)
 {
   int r, i;
   const struct contest_desc *cnts = 0;
@@ -13157,11 +13222,11 @@ unprivileged_entry_point(
   phr->log_f = open_memstream(&phr->log_t, &phr->log_z);
 
   if (phr->action == NEW_SRV_ACTION_FORGOT_PASSWORD_1)
-    return unpriv_page_forgot_password_1(fout, phr, orig_locale_id);
+    return unpriv_page_forgot_password_1(fout, phr, phr->locale_id);
   if (phr->action == NEW_SRV_ACTION_FORGOT_PASSWORD_2)
-    return unpriv_page_forgot_password_2(fout, phr, orig_locale_id);
+    return unpriv_page_forgot_password_2(fout, phr, phr->locale_id);
   if (phr->action == NEW_SRV_ACTION_FORGOT_PASSWORD_3)
-    return unpriv_page_forgot_password_3(fout, phr, orig_locale_id);
+    return unpriv_page_forgot_password_3(fout, phr, phr->locale_id);
 
   if ((phr->contest_id < 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts)
       && !phr->session_id && ejudge_config->enable_contest_select){
@@ -13171,7 +13236,7 @@ unprivileged_entry_point(
   phr->cnts = cnts;
 
   if (!phr->session_id || phr->action == NEW_SRV_ACTION_LOGIN_PAGE)
-    return unprivileged_page_login(fout, phr, orig_locale_id);
+    return unprivileged_page_login(fout, phr);
 
   // validate cookie
   if (ns_open_ul_connection(phr->fw_state) < 0) {
@@ -13185,7 +13250,7 @@ unprivileged_entry_point(
                                     &phr->user_id, &phr->contest_id,
                                     &phr->locale_id, 0, &phr->role, 0, 0, 0,
                                     &phr->login, &phr->name)) < 0) {
-    if (r < 0 && orig_locale_id < 0 && cnts && cnts->default_locale_num >= 0) {
+    if (r < 0 && phr->locale_id < 0 && cnts && cnts->default_locale_num >= 0) {
       phr->locale_id = cnts->default_locale_num;
     }
     switch (-r) {
@@ -13349,40 +13414,7 @@ unprivileged_entry_point(
   }
   */
 
-  if (external_unpriv_action_names[phr->action]) {
-    external_unpriv_action_states[phr->action] = external_action_load(external_unpriv_action_states[phr->action],
-                                                                      "csp/contests",
-                                                                      external_unpriv_action_names[phr->action],
-                                                                      "csp_get_");
-  }
-
-  if (external_unpriv_action_states[phr->action] && external_unpriv_action_states[phr->action]->action_handler) {
-    PageInterface *pg = ((external_action_handler_t) external_unpriv_action_states[phr->action]->action_handler)();
-
-    if (pg->ops->execute) {
-      int r = pg->ops->execute(pg, phr->log_f, phr);
-      if (r < 0) {
-        error_page(fout, phr, 0, -r);
-        goto cleanup;
-      }
-    }
-
-    if (pg->ops->render) {
-      snprintf(phr->content_type, sizeof(phr->content_type), "text/html; charset=%s", EJUDGE_CHARSET);
-      int r = pg->ops->render(pg, phr->log_f, fout, phr);
-      if (r < 0) {
-        error_page(fout, phr, 0, -r);
-        goto cleanup;
-      }
-    }
-
-    if (pg->ops->destroy) {
-      pg->ops->destroy(pg);
-      pg = NULL;
-    }
-
-    goto cleanup;
-  }
+  if (unpriv_external_action(fout, phr)) goto cleanup;
 
   if (phr->action > 0 && phr->action < NEW_SRV_ACTION_LAST
       && user_actions_table[phr->action]) {
@@ -13630,7 +13662,7 @@ ns_handle_http_request(struct server_framework_state *state,
       privileged_entry_point(fout, phr);
       return;
     } else if (!strcmp(role_name, "user")) {
-      unprivileged_entry_point(fout, phr, orig_locale_id);
+      unprivileged_entry_point(fout, phr);
       return;
     } else if (!strcmp(role_name, "register")) {
       phr->locale_id = orig_locale_id;
@@ -13680,5 +13712,5 @@ ns_handle_http_request(struct server_framework_state *state,
   } else if (!strcmp(last_name, "ejudge-contests-cmd")) {
     phr->protocol_reply = new_server_cmd_handler(fout, phr);
   } else
-    unprivileged_entry_point(fout, phr, orig_locale_id);
+    unprivileged_entry_point(fout, phr);
 }

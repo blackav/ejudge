@@ -3078,6 +3078,7 @@ handle_a_open(
     unsigned char buf[1024];
     int r;
 
+    HtmlAttribute *script_attr = html_element_find_attribute(elem, "script");
     HtmlAttribute *class_attr = html_element_find_attribute(elem, "class");
 
     HtmlAttribute *attr = html_element_find_attribute(elem, "url");
@@ -3087,6 +3088,7 @@ handle_a_open(
             parser_error_2(ps, "URL '%s' is undefined", attr->value);
             return -1;
         }
+        script_attr = html_element_find_attribute(elem, "script");
         r = process_ac_attr(log_f, cntx, ps, url_elem, buf, sizeof(buf));
         if (r < 0) return r;
         if (!r) {
@@ -3098,7 +3100,11 @@ handle_a_open(
             fprintf(prg_f, " class=\\\"%s\\\"", class_attr->value);
         }
         fprintf(prg_f, " href=\\\"\", out_f);\n");
-        fprintf(prg_f, "sep = ns_url_2(out_f, phr, %s);\n", buf);
+        if (script_attr) {
+            fprintf(prg_f, "sep = ns_url_3(out_f, phr, \"%s\", %s);\n", script_attr->value, buf);
+        } else {
+            fprintf(prg_f, "sep = ns_url_2(out_f, phr, %s);\n", buf);
+        }
         for (HtmlElement *child = url_elem->first_child; child; child = child->next_sibling) {
             fprintf(prg_f, "fputs(sep, out_f); sep = \"&amp;\";\n");
             attr = html_element_find_attribute(child, "name");
@@ -3131,7 +3137,11 @@ handle_a_open(
             fprintf(prg_f, " class=\\\"%s\\\"", class_attr->value);
         }
         fprintf(prg_f, " href=\\\"\", out_f);\n");
-        fprintf(prg_f, "ns_url_2(out_f, phr, %s);\n", buf);
+        if (script_attr) {
+            fprintf(prg_f, "sep = ns_url_3(out_f, phr, \"%s\", %s);\n", script_attr->value, buf);
+        } else {
+            fprintf(prg_f, "sep = ns_url_2(out_f, phr, %s);\n", buf);
+        }
         fprintf(prg_f, "fputs(\"\\\">\", out_f);\n");
         //fprintf(prg_f, "fputs(ns_aref(hbuf, sizeof(hbuf), phr, %s, 0), out_f);\n", buf);
     }
