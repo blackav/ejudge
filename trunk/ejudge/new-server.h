@@ -532,6 +532,12 @@ ns_url_2(
         FILE *out_f,
         const struct http_request_info *phr,
         int action);
+const unsigned char *
+ns_url_3(
+        FILE *out_f,
+        const struct http_request_info *phr,
+        const unsigned char *script,
+        int action);
 
 void
 ns_refresh_page(FILE *fout, struct http_request_info *phr, int new_action,
