@@ -3,8 +3,8 @@
 %><%@include "unpriv_includes.csp"
 %><%
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
-%><%@set getter_name = "csp_get_unpriv_login_page"
-%><%@page csp_view_unpriv_login_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@set getter_name = "csp_get_unpriv_contests_page"
+%><%@page csp_view_unpriv_contests_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 %><%@include "unpriv_stdvars.csp"
 %><%
   const int *cntslist = 0;
