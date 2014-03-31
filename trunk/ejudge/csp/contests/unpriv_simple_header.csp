@@ -1,0 +1,7 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html><head>
+<meta http-equiv="Content-type" content="text/html; charset=<s:config name="charset" />"/>
+<link rel="stylesheet" href="<s:config name="style-prefix" />unpriv.css" type="text/css"/>
+<title><s:v value="title" escape="false" /></title></head>
+<body><div id="container"><div id="l12">
+<div class="main_phrase"><s:v value="title" escape="false" /></div>

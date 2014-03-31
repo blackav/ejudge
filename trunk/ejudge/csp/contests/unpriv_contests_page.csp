@@ -1,0 +1,82 @@
+<%
+/* $Id$ */
+%><%@include "unpriv_includes.csp"
+%><%
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@set getter_name = "csp_get_unpriv_login_page"
+%><%@page csp_view_unpriv_login_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "unpriv_stdvars.csp"
+%><%
+  const int *cntslist = 0;
+  int cntsnum = 0;
+  time_t curtime = time(0);
+  int row = 0, i, orig_locale_id, j;
+  const unsigned char *s;
+  const unsigned char *login = 0;
+  const unsigned char *title = NULL;
+  int need_locale_id = 0;
+
+  static const unsigned char * const form_row_attrs[]=
+  {
+    " bgcolor=\"#d0d0d0\"",
+    " bgcolor=\"#e0e0e0\"",
+  };
+
+  ns_cgi_param(phr, "login", &login);
+
+  // defaulting to English as we have no contest chosen
+  orig_locale_id = phr->locale_id;
+  if (phr->locale_id < 0) phr->locale_id = 0;
+
+  // even don't know about the contest specific settings
+  l10n_setlocale(phr->locale_id);
+  title = _("Contest selection");
+%><%@include "unpriv_simple_header.csp"
+%><s:form>
+<s:hidden ac="change-language" />
+<div class="user_actions"><table class="menu"><tr>
+<td class="menu"><div class="user_action_item"><s:tr>language</s:tr>: <% l10n_html_locale_select(out_f, phr->locale_id); %></div></td>
+<td class="menu"><div class="user_action_item"><s:submit name="submit" label="Change Language" /></div></td>
+</tr></table></div></form>
+
+<div class="white_empty_block">&nbsp;</div>
+<div class="contest_actions"><table class="menu"><tr><td class="menu"><div class="contest_actions_item">&nbsp;</div></td></tr></table></div>
+
+<%@include "unpriv_separator.csp"
+%>
+
+<h2><s:tr>Select one of available contests</s:tr></h2>
+
+<% cntsnum = contests_get_list(&cntslist); %>
+
+<table class="b1"><tr><td class="b1">N</td><td class="b1"><s:tr>Contest name</s:tr></td></tr>
+<%
+  for (j = 0; j < cntsnum; j++) {
+    i = cntslist[j];
+    cnts = 0;
+    if (contests_get(i, &cnts) < 0 || !cnts) continue;
+    if (cnts->closed) continue;
+    if (!contests_check_register_ip_2(cnts, &phr->ip, phr->ssl_flag)) continue;
+    if (cnts->reg_deadline > 0 && curtime >= cnts->reg_deadline) continue;
+    need_locale_id = orig_locale_id >= 0 && cnts->default_locale_num >= 0 && orig_locale_id != cnts->default_locale_num;
+    s = 0;
+    if (phr->locale_id == 0 && cnts->name_en) s = cnts->name_en;
+    if (!s) s = cnts->name;
+%>
+<tr<s:v value="form_row_attrs[(row++) & 1]" escape="false" />><td class="b1"><s:v value="i" /></td>
+<s:url name="ContestUrl" ac="main-page">
+  <s:param name="contest_id" value="i" />
+  <s:param fullCheckExpr="need_locale_id" name="locale_id" value="phr->locale_id" />
+  <s:param fullCheckExpr="login && *login" name="login" value="login" />
+</s:url>
+<td class="b1"><s:a url="ContestUrl"><s:v value="s" /></s:a></td></tr>
+<%
+  }
+%>
+</table>
+
+<%@include "unpriv_footer.csp"
+%><%
+  l10n_setlocale(0);
+  html_armor_free(&ab);
+%>

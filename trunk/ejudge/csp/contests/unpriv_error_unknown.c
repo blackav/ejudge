@@ -174,7 +174,9 @@ fwrite(csp_str17, 1, 37, out_f);
 
 #line 27 "unpriv_header.csp"
 if (phr) {
+if ((phr->name_arm) ) {
 fputs((phr->name_arm), out_f);
+}
 
 #line 27 "unpriv_header.csp"
 }
@@ -182,7 +184,9 @@ fwrite(csp_str18, 1, 2, out_f);
 
 #line 27 "unpriv_header.csp"
 if (extra) {
+if ((extra->contest_arm) ) {
 fputs((extra->contest_arm), out_f);
+}
 
 #line 27 "unpriv_header.csp"
 }
@@ -200,7 +204,9 @@ fwrite(csp_str22, 1, 61, out_f);
 
 #line 33 "unpriv_header.csp"
 if (phr) {
+if ((phr->name_arm) ) {
 fputs((phr->name_arm), out_f);
+}
 
 #line 33 "unpriv_header.csp"
 }
@@ -208,7 +214,9 @@ fwrite(csp_str18, 1, 2, out_f);
 
 #line 33 "unpriv_header.csp"
 if (extra) {
+if ((extra->contest_arm) ) {
 fputs((extra->contest_arm), out_f);
+}
 
 #line 33 "unpriv_header.csp"
 }
@@ -225,7 +233,7 @@ fwrite(csp_str25, 1, 51, out_f);
 #line 6 "unpriv_menu.csp"
 if (phr->action != NEW_SRV_ACTION_VIEW_SETTINGS) {
 fputs("<a class=\"menu\" href=\"", out_f);
-ns_url_2(out_f, phr, NEW_SRV_ACTION_VIEW_SETTINGS);
+sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_VIEW_SETTINGS);
 fputs("\">", out_f);
 
 #line 8 "unpriv_menu.csp"
@@ -256,7 +264,7 @@ shown_items++;
     // logout
 fwrite(csp_str25, 1, 51, out_f);
 fputs("<a class=\"menu\" href=\"", out_f);
-ns_url_2(out_f, phr, NEW_SRV_ACTION_LOGOUT);
+sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_LOGOUT);
 fputs("\">", out_f);
 
 #line 28 "unpriv_menu.csp"
@@ -287,7 +295,7 @@ fwrite(csp_str29, 1, 170, out_f);
 #line 45 "unpriv_menu.csp"
 if (phr->action != NEW_SRV_ACTION_MAIN_PAGE) {
 fputs("<a class=\"menu\" href=\"", out_f);
-ns_url_2(out_f, phr, NEW_SRV_ACTION_MAIN_PAGE);
+sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_MAIN_PAGE);
 fputs("\">", out_f);
 
 #line 47 "unpriv_menu.csp"
@@ -364,7 +372,7 @@ fwrite(csp_str25, 1, 51, out_f);
 #line 87 "unpriv_menu.csp"
 if (phr->action != NEW_SRV_ACTION_VIEW_PROBLEM_SUMMARY) {
 fputs("<a class=\"menu\" href=\"", out_f);
-ns_url_2(out_f, phr, NEW_SRV_ACTION_VIEW_PROBLEM_SUMMARY);
+sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_VIEW_PROBLEM_SUMMARY);
 fputs("\">", out_f);
 
 #line 89 "unpriv_menu.csp"
@@ -400,7 +408,7 @@ fwrite(csp_str33, 1, 4, out_f);
 #line 104 "unpriv_menu.csp"
 } else {
 fputs("<a class=\"menu\" href=\"", out_f);
-ns_url_2(out_f, phr, NEW_SRV_ACTION_VIEW_PROBLEM_STATEMENTS);
+sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_VIEW_PROBLEM_STATEMENTS);
 fputs("\">", out_f);
 fputs(_("Statements"), out_f);
 fputs("</a>", out_f);
@@ -424,7 +432,7 @@ fwrite(csp_str25, 1, 51, out_f);
 #line 115 "unpriv_menu.csp"
 if (phr->action != NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT) {
 fputs("<a class=\"menu\" href=\"", out_f);
-ns_url_2(out_f, phr, NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT);
+sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT);
 fputs("\">", out_f);
 
 #line 117 "unpriv_menu.csp"
@@ -449,7 +457,7 @@ fwrite(csp_str25, 1, 51, out_f);
 #line 127 "unpriv_menu.csp"
 if (phr->action != NEW_SRV_ACTION_VIEW_SUBMISSIONS) {
 fputs("<a class=\"menu\" href=\"", out_f);
-ns_url_2(out_f, phr, NEW_SRV_ACTION_VIEW_SUBMISSIONS);
+sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_VIEW_SUBMISSIONS);
 fputs("\">", out_f);
 
 #line 129 "unpriv_menu.csp"
@@ -513,7 +521,7 @@ fwrite(csp_str33, 1, 4, out_f);
 #line 163 "unpriv_menu.csp"
 } else {
 fputs("<a class=\"menu\" href=\"", out_f);
-ns_url_2(out_f, phr, NEW_SRV_ACTION_STANDINGS);
+sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_STANDINGS);
 fputs("\">", out_f);
 
 #line 165 "unpriv_menu.csp"
@@ -544,7 +552,7 @@ fwrite(csp_str25, 1, 51, out_f);
 #line 179 "unpriv_menu.csp"
 if (phr->action != NEW_SRV_ACTION_VIEW_CLAR_SUBMIT) {
 fputs("<a class=\"menu\" href=\"", out_f);
-ns_url_2(out_f, phr, NEW_SRV_ACTION_VIEW_CLAR_SUBMIT);
+sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_VIEW_CLAR_SUBMIT);
 fputs("\">", out_f);
 
 #line 181 "unpriv_menu.csp"
@@ -569,7 +577,7 @@ fwrite(csp_str25, 1, 51, out_f);
 #line 191 "unpriv_menu.csp"
 if (phr->action != NEW_SRV_ACTION_VIEW_CLARS) {
 fputs("<a class=\"menu\" href=\"", out_f);
-ns_url_2(out_f, phr, NEW_SRV_ACTION_VIEW_CLARS);
+sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_VIEW_CLARS);
 fputs("\">", out_f);
 
 #line 193 "unpriv_menu.csp"
