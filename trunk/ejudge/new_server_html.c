@@ -8077,178 +8077,6 @@ unprivileged_page_login_page(FILE *fout, struct http_request_info *phr)
 {
   phr->action = NEW_SRV_ACTION_LOGIN_PAGE;
   unpriv_external_action(fout, phr);
-  /*
-  const struct contest_desc *cnts = 0;
-  struct contest_extra *extra = 0;
-  time_t cur_time;
-  const unsigned char *s, *ss;
-  unsigned char bb[1024];
-  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
-  int vis_flag = 0;
-
-  if (phr->contest_id <= 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts)
-    return ns_html_err_service_not_available(fout, phr, 0, "contest_id is invalid");
-  if (phr->locale_id < 0 && cnts->default_locale_num >= 0)
-    phr->locale_id = cnts->default_locale_num;
-  if (!contests_check_team_ip(phr->contest_id, &phr->ip, phr->ssl_flag))
-    return ns_html_err_service_not_available(fout, phr, 0, "%s://%s is not allowed for USER for contest %d", ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ipv6(&phr->ip), phr->contest_id);
-  if (cnts->closed)
-    return ns_html_err_service_not_available(fout, phr, 0,
-                                             "contest %d is closed", cnts->id);
-  if (!cnts->managed)
-    return ns_html_err_service_not_available(fout, phr, 0,
-                                             "contest %d is not managed",
-                                             cnts->id);
-
-  extra = ns_get_contest_extra(phr->contest_id);
-  ASSERT(extra);
-
-  cur_time = time(0);
-  watched_file_update(&extra->header, cnts->team_header_file, cur_time);
-  watched_file_update(&extra->menu_1, cnts->team_menu_1_file, cur_time);
-  watched_file_update(&extra->menu_2, cnts->team_menu_2_file, cur_time);
-  watched_file_update(&extra->separator, cnts->team_separator_file, cur_time);
-  watched_file_update(&extra->footer, cnts->team_footer_file, cur_time);
-  watched_file_update(&extra->copyright, cnts->copyright_file, cur_time);
-  extra->header_txt = extra->header.text;
-  extra->menu_1_txt = extra->menu_1.text;
-  extra->menu_2_txt = extra->menu_2.text;
-  extra->footer_txt = extra->footer.text;
-  extra->separator_txt = extra->separator.text;
-  extra->copyright_txt = extra->copyright.text;
-  if (!extra->header_txt || !extra->footer_txt || !extra->separator_txt) {
-    extra->header_txt = ns_fancy_header;
-    if (extra->copyright_txt) extra->footer_txt = ns_fancy_footer_2;
-    else extra->footer_txt = ns_fancy_footer;
-    extra->separator_txt = ns_fancy_separator;
-  }
-
-  if (extra->contest_arm) xfree(extra->contest_arm);
-  if (phr->locale_id == 0 && cnts->name_en) {
-    extra->contest_arm = html_armor_string_dup(cnts->name_en);
-  } else {
-    extra->contest_arm = html_armor_string_dup(cnts->name);
-  }
-
-  l10n_setlocale(phr->locale_id);
-  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
-            phr->client_key,
-            _("User login [%s]"), extra->contest_arm);
-
-
-  html_start_form(fout, 1, phr->self_url, "");
-  fprintf(fout, "<div class=\"user_actions\">");
-  html_hidden(fout, "contest_id", "%d", phr->contest_id);
-  html_hidden(fout, "role", "%s", "0");
-  if (cnts->disable_locale_change)
-    html_hidden(fout, "locale_id", "%d", phr->locale_id);
-  fprintf(fout, "<table class=\"menu\"><tr>\n");
-
-  ss = 0;
-  if (ns_cgi_param(phr, "login", &s) > 0) ss = ARMOR(s);
-  if (!ss) ss = "";
-  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: %s</div></td>\n", _("login"),
-          html_input_text(bb, sizeof(bb), "login", 8, 0, "%s", ss));
-
-  ss = 0;
-  if (ns_cgi_param(phr, "password", &s) > 0) ss = ARMOR(s);
-  if (!ss) ss = "";
-  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: <input type=\"password\" size=\"8\" name=\"password\" value=\"%s\"/></div></td>\n", _("password"), ss);
-
-  if (!cnts->disable_locale_change) {
-    fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: ",
-            _("language"));
-    l10n_html_locale_select(fout, phr->locale_id);
-    fprintf(fout, "</div></td>\n");
-  }
-
-  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s</div></td>\n", ns_submit_button(bb, sizeof(bb), "submit", 0, _("Log in")));
-
-  fprintf(fout, "</tr></table>");
-  fprintf(fout, "</div></form>\n"
-          "<div class=\"white_empty_block\">&nbsp;</div>\n"
-          "<div class=\"contest_actions\"><table class=\"menu\"><tr>\n");
-
-  if (cnts && cnts->assign_logins && cnts->force_registration
-      && cnts->register_url
-      && (cnts->reg_deadline <= 0 || cur_time < cnts->reg_deadline)) {
-    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">");
-    if (ejudge_config->disable_new_users <= 0) {
-      if (cnts->assign_logins) {
-        if (phr->rest_mode > 0) {
-          fprintf(fout,
-                  "<a class=\"menu\" href=\"%s/register/%s?contest_id=%d&amp;locale_id=%d\">%s</a>",
-                  phr->context_url, ns_symbolic_action_table[NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE],
-                  phr->contest_id, phr->locale_id,
-                  _("Registration"));
-        } else {
-          fprintf(fout,
-                  "<a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d\">%s</a>",
-                  cnts->register_url, phr->contest_id, phr->locale_id,
-                  NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE,
-                  _("Registration"));
-        }
-      } else {
-        if (phr->rest_mode > 0) {
-          fprintf(fout,
-                  "<a class=\"menu\" href=\"%s/register/%s?contest_id=%d&amp;locale_id=%d\">%s</a>",
-                  phr->context_url, ns_symbolic_action_table[2], phr->contest_id, phr->locale_id,
-                  _("Registration"));
-        } else {
-          fprintf(fout,
-                  "<a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=2\">%s</a>",
-                  cnts->register_url, phr->contest_id, phr->locale_id,
-                  _("Registration"));
-        }
-      }
-    }
-    fprintf(fout, "</div></td>\n");
-    vis_flag++;
-  } else if (cnts && cnts->register_url
-             && (cnts->reg_deadline <= 0 || cur_time < cnts->reg_deadline)) {
-    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">");
-    if (ejudge_config->disable_new_users <= 0) {
-      if (phr->rest_mode > 0) {
-        fprintf(fout,
-                "<a class=\"menu\" href=\"%s/register?contest_id=%d&amp;locale_id=%d\">%s</a>",
-                phr->context_url, phr->contest_id, phr->locale_id,
-                _("Registration"));
-      } else {
-        fprintf(fout,
-                "<a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d\">%s</a>",
-                cnts->register_url, phr->contest_id, phr->locale_id,
-                _("Registration"));
-      }
-    }
-    fprintf(fout, "</div></td>\n");
-    vis_flag++;
-  }
-
-  if (cnts && cnts->enable_password_recovery && cnts->disable_team_password) {
-    if (phr->rest_mode > 0) {
-      fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s/%s?contest_id=%d&amp;locale_id=%d\">%s</a></div></td>", phr->self_url, ns_symbolic_action_table[NEW_SRV_ACTION_FORGOT_PASSWORD_1], phr->contest_id, phr->locale_id, _("Forgot password?"));
-    } else {
-      fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d&amp;action=%d\">%s</a></div></td>", phr->self_url, phr->contest_id, phr->locale_id, NEW_SRV_ACTION_FORGOT_PASSWORD_1, _("Forgot password?"));
-    }
-    vis_flag++;
-  }
-
-  if (!vis_flag) {
-    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">&nbsp;</div></td>");
-  }
-
-  fprintf(fout, "</tr></table></div>\n");
-  if (extra->separator_txt && *extra->separator_txt)
-    ns_separator(fout, extra->separator_txt, cnts);
-
-  watched_file_update(&extra->welcome, cnts->welcome_file, cur_time);
-  if (extra->welcome.text && extra->welcome.text[0])
-    fprintf(fout, "%s", extra->welcome.text);
-
-  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
-  l10n_setlocale(0);
-  html_armor_free(&ab);
-  */
 }
 
 static void
@@ -13172,6 +13000,7 @@ static const unsigned char * const external_unpriv_action_names[NEW_SRV_ACTION_L
   [NEW_SRV_ACTION_LOGIN_PAGE] = "unpriv_login_page",
   [NEW_SRV_ACTION_VIEW_CLAR] = "unpriv_clar_page",
   [NEW_SRV_ACTION_STANDINGS] = "unpriv_standings_page",
+  [NEW_SRV_ACTION_CONTESTS_PAGE] = "unpriv_contests_page",
 };
 
 static int
@@ -13245,7 +13074,11 @@ unprivileged_entry_point(
 
   if ((phr->contest_id < 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts)
       && !phr->session_id && ejudge_config->enable_contest_select){
-    return anon_select_contest_page(fout, phr);
+    //return anon_select_contest_page(fout, phr);
+
+    phr->action = NEW_SRV_ACTION_CONTESTS_PAGE;
+    unpriv_external_action(fout, phr);
+    return;
   }
 
   phr->cnts = cnts;

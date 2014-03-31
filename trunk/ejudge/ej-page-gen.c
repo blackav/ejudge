@@ -3106,6 +3106,10 @@ handle_a_open(
             fprintf(prg_f, "sep = ns_url_2(out_f, phr, %s);\n", buf);
         }
         for (HtmlElement *child = url_elem->first_child; child; child = child->next_sibling) {
+            HtmlAttribute *full_check_expr = html_element_find_attribute(child, "fullcheckexpr");
+            if (full_check_expr) {
+                fprintf(prg_f, "if (%s) {\n", full_check_expr->value);
+            }
             fprintf(prg_f, "fputs(sep, out_f); sep = \"&amp;\";\n");
             attr = html_element_find_attribute(child, "name");
             if (attr) {
@@ -3122,6 +3126,9 @@ handle_a_open(
                         processor_state_invoke_type_handler(log_f, cntx, ps, txt_f, prg_f, attr->value, child, t);
                     }
                 }
+            }
+            if (full_check_expr) {
+                fprintf(prg_f, "}\n");
             }
         }
         fprintf(prg_f, "(void) sep;\n");
@@ -4340,7 +4347,8 @@ process_file(
                 } else if (t == '=') {
                 } else {
                     // plain <% %>
-                    fprintf(prg_f, "\n#line %d \"%s\"\n", start_pos.line, ps->filenames[start_pos.filename_idx]);
+                    // FIXME: use option
+                    //fprintf(prg_f, "\n#line %d \"%s\"\n", start_pos.line, ps->filenames[start_pos.filename_idx]);
                     fprintf(prg_f, "%s\n", mem + html_i);
                     handle_c_code(cntx, ps, prg_f, log_f, mem + html_i, end_i - html_i, start_pos);
                 }
