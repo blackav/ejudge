@@ -3245,9 +3245,22 @@ handle_submit_open(
     unsigned char label_buf[1024];
     const unsigned char *value = NULL;
 
-    if (!elem->no_body) {
-        parser_error_2(ps, "<s:submit> element must not have a body");
-        return -1;
+    HtmlAttribute *name_attr = html_element_find_attribute(elem, "name");
+    if (name_attr != NULL) {
+        HtmlAttribute *value_attr = html_element_find_attribute(elem, "value");
+        if (value_attr) {
+            // interpret value?
+        } else {
+            value_attr = html_element_find_attribute(elem, "label");
+            if (value_attr) {
+                fprintf(prg_f, "fputs(\"<input type=\\\"submit\\\" name=\\\"%s\\\" value=\\\"\",out_f);\n", name_attr->value);
+                fprintf(prg_f, "fputs(_(\"%s\"), out_f);\n", value_attr->value);
+                fprintf(prg_f, "fputs(\"\\\" />\", out_f);\n");
+            } else {
+                fprintf(prg_f, "fputs(\"<input type=\\\"submit\\\" name=\\\"%s\\\" />\",out_f);\n", name_attr->value);
+            }
+        }
+        return 0;
     }
 
     HtmlAttribute *at = html_element_find_attribute(elem, "value");
