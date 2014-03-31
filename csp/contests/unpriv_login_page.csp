@@ -140,10 +140,8 @@
   }
 %>
 </tr></table></div>
-</div>
-<div id="l11"><img src="<s:config name="style-prefix" />logo.gif" alt="logo"/></div>
-<div id="l13">
-<%
+<%@include "unpriv_separator.csp"
+%><%
   watched_file_update(&extra->welcome, cnts->welcome_file, cur_time);
   if (extra->welcome.text && extra->welcome.text[0]) {
     fprintf(out_f, "%s", extra->welcome.text);

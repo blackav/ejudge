@@ -20,9 +20,9 @@ static const unsigned char csp_str16[52] = "<td class=\"menu\"><div class=\"cont
 static const unsigned char csp_str17[6] = "\n    ";
 static const unsigned char csp_str18[53] = "\n<td class=\"menu\"><div class=\"contest_actions_item\">";
 static const unsigned char csp_str19[69] = "<td class=\"menu\"><div class=\"contest_actions_item\">&nbsp;</div></td>";
-static const unsigned char csp_str20[53] = "\n</tr></table></div>\n</div>\n<div id=\"l11\"><img src=\"";
-static const unsigned char csp_str21[45] = "logo.gif\" alt=\"logo\"/></div>\n<div id=\"l13\">\n";
-static const unsigned char csp_str22[4] = "\n%>";
+static const unsigned char csp_str20[22] = "\n</tr></table></div>\n";
+static const unsigned char csp_str21[32] = "</div>\n<div id=\"l11\"><img src=\"";
+static const unsigned char csp_str22[45] = "logo.gif\" alt=\"logo\"/></div>\n<div id=\"l13\">\n";
 static const unsigned char csp_str23[18] = "<div id=\"footer\">";
 static const unsigned char csp_str24[38] = "</div>\n</div>\n</div>\n</body>\n</html>\n";
 
@@ -164,6 +164,7 @@ time_t cur_time;
   ns_cgi_param(phr, "login", &login_str);
   ns_cgi_param(phr, "password", &password_str);
 
+  phr->hidden_vars = "";
   l10n_setlocale(phr->locale_id);
 fwrite(csp_str0, 1, 183, out_f);
 fwrite("utf-8", 1, 5, out_f);
@@ -192,7 +193,7 @@ fputs("\"", out_f);
 fputs(" />", out_f);
 fwrite(csp_str6, 1, 1, out_f);
 fputs("<input type=\"hidden\" name=\"role\"", out_f);
-if ((0)) {
+if ((0) >= 0) {
 fputs(" value=\"", out_f);
 fprintf(out_f, "%u", (unsigned)(0));
 fputs("\"", out_f);
@@ -200,7 +201,7 @@ fputs("\"", out_f);
 fputs(" />", out_f);
 fwrite(csp_str6, 1, 1, out_f);
 
-#line 80 "unpriv_login_page.csp"
+#line 81 "unpriv_login_page.csp"
 if (cnts->disable_locale_change) {
 fputs("<input type=\"hidden\" name=\"locale_id\"", out_f);
 if ((phr->locale_id)) {
@@ -210,7 +211,7 @@ fputs("\"", out_f);
 }
 fputs(" />", out_f);
 
-#line 82 "unpriv_login_page.csp"
+#line 83 "unpriv_login_page.csp"
 }
 fwrite(csp_str7, 1, 99, out_f);
 fputs(_("login"), out_f);
@@ -234,17 +235,17 @@ fputs("\"", out_f);
 fputs(" />", out_f);
 fwrite(csp_str10, 1, 12, out_f);
 
-#line 86 "unpriv_login_page.csp"
+#line 87 "unpriv_login_page.csp"
 if (!cnts->disable_locale_change) {
 fwrite(csp_str11, 1, 47, out_f);
 fputs(_("language"), out_f);
 fwrite(csp_str8, 1, 2, out_f);
 
-#line 87 "unpriv_login_page.csp"
+#line 88 "unpriv_login_page.csp"
 l10n_html_locale_select(out_f, phr->locale_id);
 fwrite(csp_str12, 1, 11, out_f);
 
-#line 88 "unpriv_login_page.csp"
+#line 89 "unpriv_login_page.csp"
 }
 fwrite(csp_str13, 1, 48, out_f);
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_MAIN_PAGE, _("Log in")), out_f);
@@ -252,19 +253,19 @@ fwrite(csp_str14, 1, 32, out_f);
 fputs("</form>", out_f);
 fwrite(csp_str15, 1, 98, out_f);
 
-#line 95 "unpriv_login_page.csp"
+#line 96 "unpriv_login_page.csp"
 if (cnts && cnts->assign_logins && cnts->force_registration
       && cnts->register_url
       && (cnts->reg_deadline <= 0 || cur_time < cnts->reg_deadline)) {
 fwrite(csp_str16, 1, 51, out_f);
 
-#line 99 "unpriv_login_page.csp"
+#line 100 "unpriv_login_page.csp"
 if (phr->config->disable_new_users <= 0) {
       if (cnts->assign_logins) {
 fwrite(csp_str17, 1, 5, out_f);
 fwrite(csp_str17, 1, 5, out_f);
 fputs("<a class=\"menu\" href=\"", out_f);
-sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE);
+sep = ns_url_3(out_f, phr, "register", NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE);
 fputs(sep, out_f); sep = "&amp;";
 fputs("contest_id=", out_f);
 fprintf(out_f, "%d", (int)(phr->contest_id));
@@ -276,12 +277,12 @@ fputs("\">", out_f);
 fputs(_("Registration"), out_f);
 fputs("</a>", out_f);
 
-#line 105 "unpriv_login_page.csp"
+#line 106 "unpriv_login_page.csp"
 } else {
 fwrite(csp_str17, 1, 5, out_f);
 fwrite(csp_str17, 1, 5, out_f);
 fputs("<a class=\"menu\" href=\"", out_f);
-sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_MAIN_PAGE);
+sep = ns_url_3(out_f, phr, "register", NEW_SRV_ACTION_MAIN_PAGE);
 fputs(sep, out_f); sep = "&amp;";
 fputs("contest_id=", out_f);
 fprintf(out_f, "%d", (int)(phr->contest_id));
@@ -293,23 +294,23 @@ fputs("\">", out_f);
 fputs(_("Registration"), out_f);
 fputs("</a>", out_f);
 
-#line 110 "unpriv_login_page.csp"
+#line 111 "unpriv_login_page.csp"
 }
     }
 fwrite(csp_str12, 1, 11, out_f);
 
-#line 113 "unpriv_login_page.csp"
+#line 114 "unpriv_login_page.csp"
 vis_flag++;
   } else if (cnts && cnts->register_url
              && (cnts->reg_deadline <= 0 || cur_time < cnts->reg_deadline)) {
 fwrite(csp_str16, 1, 51, out_f);
 
-#line 117 "unpriv_login_page.csp"
-if (ejudge_config->disable_new_users <= 0) {
+#line 118 "unpriv_login_page.csp"
+if (phr->config->disable_new_users <= 0) {
 fwrite(csp_str17, 1, 5, out_f);
 fwrite(csp_str17, 1, 5, out_f);
 fputs("<a class=\"menu\" href=\"", out_f);
-sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_MAIN_PAGE);
+sep = ns_url_3(out_f, phr, "register", NEW_SRV_ACTION_MAIN_PAGE);
 fputs(sep, out_f); sep = "&amp;";
 fputs("contest_id=", out_f);
 fprintf(out_f, "%d", (int)(phr->contest_id));
@@ -321,16 +322,16 @@ fputs("\">", out_f);
 fputs(_("Registration"), out_f);
 fputs("</a>", out_f);
 
-#line 122 "unpriv_login_page.csp"
+#line 123 "unpriv_login_page.csp"
 }
 fwrite(csp_str12, 1, 11, out_f);
 
-#line 124 "unpriv_login_page.csp"
+#line 125 "unpriv_login_page.csp"
 vis_flag++;
   }
 fwrite(csp_str6, 1, 1, out_f);
 
-#line 127 "unpriv_login_page.csp"
+#line 128 "unpriv_login_page.csp"
 if (cnts && cnts->enable_password_recovery && cnts->disable_team_password) {
 fwrite(csp_str6, 1, 1, out_f);
 fwrite(csp_str17, 1, 5, out_f);
@@ -348,32 +349,32 @@ fputs(_("Forgot password?"), out_f);
 fputs("</a>", out_f);
 fwrite(csp_str10, 1, 12, out_f);
 
-#line 134 "unpriv_login_page.csp"
+#line 135 "unpriv_login_page.csp"
 vis_flag++;
   }
 fwrite(csp_str6, 1, 1, out_f);
 
-#line 137 "unpriv_login_page.csp"
+#line 138 "unpriv_login_page.csp"
 if (!vis_flag) {
 fwrite(csp_str19, 1, 68, out_f);
 
-#line 139 "unpriv_login_page.csp"
+#line 140 "unpriv_login_page.csp"
 }
-fwrite(csp_str20, 1, 52, out_f);
+fwrite(csp_str20, 1, 21, out_f);
+fwrite(csp_str21, 1, 31, out_f);
 fwrite("/ejudge/", 1, 8, out_f);
-fwrite(csp_str21, 1, 44, out_f);
+fwrite(csp_str22, 1, 44, out_f);
 
-#line 146 "unpriv_login_page.csp"
+#line 145 "unpriv_login_page.csp"
 watched_file_update(&extra->welcome, cnts->welcome_file, cur_time);
   if (extra->welcome.text && extra->welcome.text[0]) {
     fprintf(out_f, "%s", extra->welcome.text);
   }
-fwrite(csp_str22, 1, 3, out_f);
 fwrite(csp_str23, 1, 17, out_f);
 write_copyright_short(out_f);
 fwrite(csp_str24, 1, 37, out_f);
 
-#line 153 "unpriv_login_page.csp"
+#line 151 "unpriv_login_page.csp"
 l10n_setlocale(0);
 cleanup:;
   html_armor_free(&ab);
