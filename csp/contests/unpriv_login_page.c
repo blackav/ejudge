@@ -3,34 +3,29 @@
 static const unsigned char csp_str0[184] = "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n<html><head>\n<meta http-equiv=\"Content-type\" content=\"text/html; charset=";
 static const unsigned char csp_str1[34] = "\"/>\n<link rel=\"stylesheet\" href=\"";
 static const unsigned char csp_str2[38] = "unpriv.css\" type=\"text/css\"/>\n<title>";
-static const unsigned char csp_str3[3] = " [";
-static const unsigned char csp_str4[84] = "]</title></head>\n<body><div id=\"container\"><div id=\"l12\">\n<div class=\"main_phrase\">";
-static const unsigned char csp_str5[9] = "]</div>\n";
-static const unsigned char csp_str6[2] = "\n";
-static const unsigned char csp_str7[100] = "\n<div class=\"user_actions\"><table class=\"menu\"><tr>\n<td class=\"menu\"><div class=\"user_action_item\">";
-static const unsigned char csp_str8[3] = ": ";
-static const unsigned char csp_str9[60] = "</div></td>\n<td class=\"menu\"><div class=\"user_action_item\">";
-static const unsigned char csp_str10[13] = "</div></td>\n";
-static const unsigned char csp_str11[48] = "<td class=\"menu\"><div class=\"user_action_item\">";
-static const unsigned char csp_str12[12] = "</div></td>";
-static const unsigned char csp_str13[49] = "\n<td class=\"menu\"><div class=\"user_action_item\">";
-static const unsigned char csp_str14[33] = "</div></td>\n</tr></table></div>\n";
-static const unsigned char csp_str15[99] = "\n<div class=\"white_empty_block\">&nbsp;</div>\n<div class=\"contest_actions\"><table class=\"menu\"><tr>";
-static const unsigned char csp_str16[52] = "<td class=\"menu\"><div class=\"contest_actions_item\">";
-static const unsigned char csp_str17[6] = "\n    ";
-static const unsigned char csp_str18[53] = "\n<td class=\"menu\"><div class=\"contest_actions_item\">";
-static const unsigned char csp_str19[69] = "<td class=\"menu\"><div class=\"contest_actions_item\">&nbsp;</div></td>";
-static const unsigned char csp_str20[22] = "\n</tr></table></div>\n";
-static const unsigned char csp_str21[32] = "</div>\n<div id=\"l11\"><img src=\"";
-static const unsigned char csp_str22[45] = "logo.gif\" alt=\"logo\"/></div>\n<div id=\"l13\">\n";
-static const unsigned char csp_str23[18] = "<div id=\"footer\">";
-static const unsigned char csp_str24[38] = "</div>\n</div>\n</div>\n</body>\n</html>\n";
+static const unsigned char csp_str3[83] = "</title></head>\n<body><div id=\"container\"><div id=\"l12\">\n<div class=\"main_phrase\">";
+static const unsigned char csp_str4[8] = "</div>\n";
+static const unsigned char csp_str5[2] = "\n";
+static const unsigned char csp_str6[100] = "\n<div class=\"user_actions\"><table class=\"menu\"><tr>\n<td class=\"menu\"><div class=\"user_action_item\">";
+static const unsigned char csp_str7[3] = ": ";
+static const unsigned char csp_str8[60] = "</div></td>\n<td class=\"menu\"><div class=\"user_action_item\">";
+static const unsigned char csp_str9[13] = "</div></td>\n";
+static const unsigned char csp_str10[48] = "<td class=\"menu\"><div class=\"user_action_item\">";
+static const unsigned char csp_str11[12] = "</div></td>";
+static const unsigned char csp_str12[49] = "\n<td class=\"menu\"><div class=\"user_action_item\">";
+static const unsigned char csp_str13[33] = "</div></td>\n</tr></table></div>\n";
+static const unsigned char csp_str14[99] = "\n<div class=\"white_empty_block\">&nbsp;</div>\n<div class=\"contest_actions\"><table class=\"menu\"><tr>";
+static const unsigned char csp_str15[52] = "<td class=\"menu\"><div class=\"contest_actions_item\">";
+static const unsigned char csp_str16[6] = "\n    ";
+static const unsigned char csp_str17[53] = "\n<td class=\"menu\"><div class=\"contest_actions_item\">";
+static const unsigned char csp_str18[69] = "<td class=\"menu\"><div class=\"contest_actions_item\">&nbsp;</div></td>";
+static const unsigned char csp_str19[22] = "\n</tr></table></div>\n";
+static const unsigned char csp_str20[32] = "</div>\n<div id=\"l11\"><img src=\"";
+static const unsigned char csp_str21[45] = "logo.gif\" alt=\"logo\"/></div>\n<div id=\"l13\">\n";
+static const unsigned char csp_str22[18] = "<div id=\"footer\">";
+static const unsigned char csp_str23[38] = "</div>\n</div>\n</div>\n</body>\n</html>\n";
 
-
-#line 2 "unpriv_login_page.csp"
 /* $Id$ */
-
-#line 2 "unpriv_includes.csp"
 #include "new-server.h"
 #include "new_server_pi.h"
 #include "new_server_proto.h"
@@ -63,8 +58,6 @@ unpriv_load_html_style(struct http_request_info *phr,
 void
 do_json_user_state(FILE *fout, const serve_state_t cs, int user_id,
                    int need_reload_check);
-
-#line 5 "unpriv_login_page.csp"
 #include "ejudge_cfg.h"
 int csp_view_unpriv_login_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr);
 static PageInterfaceOps page_ops =
@@ -85,8 +78,6 @@ csp_get_unpriv_login_page(void)
 
 int csp_view_unpriv_login_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 {
-
-#line 2 "unpriv_stdvars.csp"
 int retval __attribute__((unused)) = 0;
   struct contest_extra *extra __attribute__((unused)) = phr?phr->extra:NULL;
   serve_state_t cs __attribute__((unused)) = extra?extra->serve_state:NULL;
@@ -104,14 +95,13 @@ int retval __attribute__((unused)) = 0;
   struct sformat_extra_data fe __attribute__((unused));
   const struct section_global_data *global __attribute__((unused)) = cs?cs->global:NULL;
   time_t start_time __attribute__((unused)) = 0, stop_time __attribute__((unused)) = 0;
-
-#line 11 "unpriv_login_page.csp"
 time_t cur_time;
   int vis_flag = 0;
   const unsigned char *cnts_name = NULL;
   const unsigned char *login_str = NULL;
   const unsigned char *password_str = NULL;
   int orig_locale_id = phr->locale_id;
+  unsigned char title[1024];
 
   if (phr->contest_id <= 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts) {
     FAIL(NEW_SRV_ERR_INV_CONTEST_ID);
@@ -166,24 +156,21 @@ time_t cur_time;
 
   phr->hidden_vars = "";
   l10n_setlocale(phr->locale_id);
+  snprintf(title, sizeof(title), "%s [%s]", _("User login"), cnts_name);
 fwrite(csp_str0, 1, 183, out_f);
 fwrite("utf-8", 1, 5, out_f);
 fwrite(csp_str1, 1, 33, out_f);
 fwrite("/ejudge/", 1, 8, out_f);
 fwrite(csp_str2, 1, 37, out_f);
-fputs(_("User login"), out_f);
-fwrite(csp_str3, 1, 2, out_f);
-fputs(html_armor_buf(&ab, (cnts_name)), out_f);
-fwrite(csp_str4, 1, 83, out_f);
-fputs(_("User login"), out_f);
-fwrite(csp_str3, 1, 2, out_f);
-fputs(html_armor_buf(&ab, (cnts_name)), out_f);
-fwrite(csp_str5, 1, 8, out_f);
+fputs((title), out_f);
+fwrite(csp_str3, 1, 82, out_f);
+fputs((title), out_f);
+fwrite(csp_str4, 1, 7, out_f);
 fputs("<form method=\"post\" enctype=\"application/x-www-form-urlencoded\" action=\"", out_f);
 fputs(phr->self_url, out_f);
 fputs("\">", out_f);
 fputs(phr->hidden_vars, out_f);
-fwrite(csp_str6, 1, 1, out_f);
+fwrite(csp_str5, 1, 1, out_f);
 fputs("<input type=\"hidden\" name=\"contest_id\"", out_f);
 if ((phr->contest_id)) {
 fputs(" value=\"", out_f);
@@ -191,7 +178,7 @@ fprintf(out_f, "%d", (int)(phr->contest_id));
 fputs("\"", out_f);
 }
 fputs(" />", out_f);
-fwrite(csp_str6, 1, 1, out_f);
+fwrite(csp_str5, 1, 1, out_f);
 fputs("<input type=\"hidden\" name=\"role\"", out_f);
 if ((0) >= 0) {
 fputs(" value=\"", out_f);
@@ -199,9 +186,7 @@ fprintf(out_f, "%u", (unsigned)(0));
 fputs("\"", out_f);
 }
 fputs(" />", out_f);
-fwrite(csp_str6, 1, 1, out_f);
-
-#line 81 "unpriv_login_page.csp"
+fwrite(csp_str5, 1, 1, out_f);
 if (cnts->disable_locale_change) {
 fputs("<input type=\"hidden\" name=\"locale_id\"", out_f);
 if ((phr->locale_id)) {
@@ -210,12 +195,10 @@ fprintf(out_f, "%d", (int)(phr->locale_id));
 fputs("\"", out_f);
 }
 fputs(" />", out_f);
-
-#line 83 "unpriv_login_page.csp"
 }
-fwrite(csp_str7, 1, 99, out_f);
+fwrite(csp_str6, 1, 99, out_f);
 fputs(_("login"), out_f);
-fwrite(csp_str8, 1, 2, out_f);
+fwrite(csp_str7, 1, 2, out_f);
 fputs("<input type=\"text\" name=\"login\" size=\"8\"", out_f);
 if ((login_str)) {
 fputs(" value=\"", out_f);
@@ -223,9 +206,9 @@ fputs(html_armor_buf(&ab, (login_str)), out_f);
 fputs("\"", out_f);
 }
 fputs(" />", out_f);
-fwrite(csp_str9, 1, 59, out_f);
+fwrite(csp_str8, 1, 59, out_f);
 fputs(_("password"), out_f);
-fwrite(csp_str8, 1, 2, out_f);
+fwrite(csp_str7, 1, 2, out_f);
 fputs("<input type=\"password\" name=\"password\" size=\"8\"", out_f);
 if ((password_str)) {
 fputs(" value=\"", out_f);
@@ -233,37 +216,27 @@ fputs(html_armor_buf(&ab, (password_str)), out_f);
 fputs("\"", out_f);
 }
 fputs(" />", out_f);
-fwrite(csp_str10, 1, 12, out_f);
-
-#line 87 "unpriv_login_page.csp"
+fwrite(csp_str9, 1, 12, out_f);
 if (!cnts->disable_locale_change) {
-fwrite(csp_str11, 1, 47, out_f);
+fwrite(csp_str10, 1, 47, out_f);
 fputs(_("language"), out_f);
-fwrite(csp_str8, 1, 2, out_f);
-
-#line 88 "unpriv_login_page.csp"
+fwrite(csp_str7, 1, 2, out_f);
 l10n_html_locale_select(out_f, phr->locale_id);
-fwrite(csp_str12, 1, 11, out_f);
-
-#line 89 "unpriv_login_page.csp"
+fwrite(csp_str11, 1, 11, out_f);
 }
-fwrite(csp_str13, 1, 48, out_f);
+fwrite(csp_str12, 1, 48, out_f);
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_MAIN_PAGE, _("Log in")), out_f);
-fwrite(csp_str14, 1, 32, out_f);
+fwrite(csp_str13, 1, 32, out_f);
 fputs("</form>", out_f);
-fwrite(csp_str15, 1, 98, out_f);
-
-#line 96 "unpriv_login_page.csp"
+fwrite(csp_str14, 1, 98, out_f);
 if (cnts && cnts->assign_logins && cnts->force_registration
-      && cnts->register_url
+      && cnts->register_url && contests_check_register_ip_2(cnts, &phr->ip, phr->ssl_flag) > 0
       && (cnts->reg_deadline <= 0 || cur_time < cnts->reg_deadline)) {
-fwrite(csp_str16, 1, 51, out_f);
-
-#line 100 "unpriv_login_page.csp"
+fwrite(csp_str15, 1, 51, out_f);
 if (phr->config->disable_new_users <= 0) {
       if (cnts->assign_logins) {
-fwrite(csp_str17, 1, 5, out_f);
-fwrite(csp_str17, 1, 5, out_f);
+fwrite(csp_str16, 1, 5, out_f);
+fwrite(csp_str16, 1, 5, out_f);
 fputs("<a class=\"menu\" href=\"", out_f);
 sep = ns_url_3(out_f, phr, "register", NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE);
 fputs(sep, out_f); sep = "&amp;";
@@ -276,11 +249,9 @@ fprintf(out_f, "%d", (int)(phr->locale_id));
 fputs("\">", out_f);
 fputs(_("Registration"), out_f);
 fputs("</a>", out_f);
-
-#line 106 "unpriv_login_page.csp"
 } else {
-fwrite(csp_str17, 1, 5, out_f);
-fwrite(csp_str17, 1, 5, out_f);
+fwrite(csp_str16, 1, 5, out_f);
+fwrite(csp_str16, 1, 5, out_f);
 fputs("<a class=\"menu\" href=\"", out_f);
 sep = ns_url_3(out_f, phr, "register", NEW_SRV_ACTION_MAIN_PAGE);
 fputs(sep, out_f); sep = "&amp;";
@@ -293,22 +264,16 @@ fprintf(out_f, "%d", (int)(phr->locale_id));
 fputs("\">", out_f);
 fputs(_("Registration"), out_f);
 fputs("</a>", out_f);
-
-#line 111 "unpriv_login_page.csp"
 }
     }
-fwrite(csp_str12, 1, 11, out_f);
-
-#line 114 "unpriv_login_page.csp"
+fwrite(csp_str11, 1, 11, out_f);
 vis_flag++;
-  } else if (cnts && cnts->register_url
+  } else if (cnts && cnts->register_url && contests_check_register_ip_2(cnts, &phr->ip, phr->ssl_flag) > 0
              && (cnts->reg_deadline <= 0 || cur_time < cnts->reg_deadline)) {
-fwrite(csp_str16, 1, 51, out_f);
-
-#line 118 "unpriv_login_page.csp"
+fwrite(csp_str15, 1, 51, out_f);
 if (phr->config->disable_new_users <= 0) {
-fwrite(csp_str17, 1, 5, out_f);
-fwrite(csp_str17, 1, 5, out_f);
+fwrite(csp_str16, 1, 5, out_f);
+fwrite(csp_str16, 1, 5, out_f);
 fputs("<a class=\"menu\" href=\"", out_f);
 sep = ns_url_3(out_f, phr, "register", NEW_SRV_ACTION_MAIN_PAGE);
 fputs(sep, out_f); sep = "&amp;";
@@ -321,22 +286,16 @@ fprintf(out_f, "%d", (int)(phr->locale_id));
 fputs("\">", out_f);
 fputs(_("Registration"), out_f);
 fputs("</a>", out_f);
-
-#line 123 "unpriv_login_page.csp"
 }
-fwrite(csp_str12, 1, 11, out_f);
-
-#line 125 "unpriv_login_page.csp"
+fwrite(csp_str11, 1, 11, out_f);
 vis_flag++;
   }
-fwrite(csp_str6, 1, 1, out_f);
-
-#line 128 "unpriv_login_page.csp"
+fwrite(csp_str5, 1, 1, out_f);
 if (cnts && cnts->enable_password_recovery && cnts->disable_team_password) {
-fwrite(csp_str6, 1, 1, out_f);
-fwrite(csp_str17, 1, 5, out_f);
-fwrite(csp_str17, 1, 5, out_f);
-fwrite(csp_str18, 1, 52, out_f);
+fwrite(csp_str5, 1, 1, out_f);
+fwrite(csp_str16, 1, 5, out_f);
+fwrite(csp_str16, 1, 5, out_f);
+fwrite(csp_str17, 1, 52, out_f);
 fputs("<a class=\"menu\" href=\"", out_f);
 sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_FORGOT_PASSWORD_1);
 fputs(sep, out_f); sep = "&amp;";
@@ -347,34 +306,24 @@ fputs("locale_id=", out_f);
 fputs("\">", out_f);
 fputs(_("Forgot password?"), out_f);
 fputs("</a>", out_f);
-fwrite(csp_str10, 1, 12, out_f);
-
-#line 135 "unpriv_login_page.csp"
+fwrite(csp_str9, 1, 12, out_f);
 vis_flag++;
   }
-fwrite(csp_str6, 1, 1, out_f);
-
-#line 138 "unpriv_login_page.csp"
+fwrite(csp_str5, 1, 1, out_f);
 if (!vis_flag) {
-fwrite(csp_str19, 1, 68, out_f);
-
-#line 140 "unpriv_login_page.csp"
+fwrite(csp_str18, 1, 68, out_f);
 }
-fwrite(csp_str20, 1, 21, out_f);
-fwrite(csp_str21, 1, 31, out_f);
+fwrite(csp_str19, 1, 21, out_f);
+fwrite(csp_str20, 1, 31, out_f);
 fwrite("/ejudge/", 1, 8, out_f);
-fwrite(csp_str22, 1, 44, out_f);
-
-#line 145 "unpriv_login_page.csp"
+fwrite(csp_str21, 1, 44, out_f);
 watched_file_update(&extra->welcome, cnts->welcome_file, cur_time);
   if (extra->welcome.text && extra->welcome.text[0]) {
     fprintf(out_f, "%s", extra->welcome.text);
   }
-fwrite(csp_str23, 1, 17, out_f);
+fwrite(csp_str22, 1, 17, out_f);
 write_copyright_short(out_f);
-fwrite(csp_str24, 1, 37, out_f);
-
-#line 151 "unpriv_login_page.csp"
+fwrite(csp_str23, 1, 37, out_f);
 l10n_setlocale(0);
 cleanup:;
   html_armor_free(&ab);

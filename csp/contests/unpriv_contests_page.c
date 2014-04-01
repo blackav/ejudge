@@ -58,24 +58,24 @@ unpriv_load_html_style(struct http_request_info *phr,
 void
 do_json_user_state(FILE *fout, const serve_state_t cs, int user_id,
                    int need_reload_check);
-int csp_view_unpriv_login_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr);
+int csp_view_unpriv_contests_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr);
 static PageInterfaceOps page_ops =
 {
     NULL, // destroy
     NULL, // execute
-    csp_view_unpriv_login_page, // render
+    csp_view_unpriv_contests_page, // render
 };
 static PageInterface page_iface =
 {
     &page_ops,
 };
 PageInterface *
-csp_get_unpriv_login_page(void)
+csp_get_unpriv_contests_page(void)
 {
     return &page_iface;
 }
 
-int csp_view_unpriv_login_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+int csp_view_unpriv_contests_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 {
 int retval __attribute__((unused)) = 0;
   struct contest_extra *extra __attribute__((unused)) = phr?phr->extra:NULL;
@@ -115,6 +115,8 @@ const int *cntslist = 0;
   orig_locale_id = phr->locale_id;
   if (phr->locale_id < 0) phr->locale_id = 0;
 
+  phr->hidden_vars = "";
+
   // even don't know about the contest specific settings
   l10n_setlocale(phr->locale_id);
   title = _("Contest selection");
@@ -137,6 +139,9 @@ fputs(_("language"), out_f);
 fwrite(csp_str7, 1, 2, out_f);
 l10n_html_locale_select(out_f, phr->locale_id);
 fwrite(csp_str8, 1, 59, out_f);
+fputs("<input type=\"submit\" name=\"submit\" value=\"",out_f);
+fputs(_("Change Language"), out_f);
+fputs("\" />", out_f);
 fwrite(csp_str9, 1, 226, out_f);
 fwrite(csp_str10, 1, 31, out_f);
 fwrite("/ejudge/", 1, 8, out_f);
