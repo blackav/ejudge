@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-03-24 17:55+0400\n"
-"PO-Revision-Date: 2014-03-26 14:04+0400\n"
+"POT-Creation-Date: 2014-03-29 13:27+0400\n"
+"PO-Revision-Date: 2014-04-01 09:38+0400\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -31,18 +31,6 @@ msgstr ""
 #, c-format
 msgid " / <b>%d unread message(s)</b>"
 msgstr " / <b>%d непрочитанных сообщений</b>"
-
-#, c-format
-msgid " [%s, frozen]"
-msgstr " [%s, заморожены]"
-
-#, c-format
-msgid " [over, frozen]"
-msgstr " [окончен, заморожены]"
-
-#, c-format
-msgid " [over]"
-msgstr " [окончен]"
 
 msgid "(no subject)"
 msgstr "(без темы)"
@@ -368,10 +356,6 @@ msgid ""
 msgstr ""
 "<p><font color=\"red\">Минимальное число членов команды в этом турнире %d, "
 "но определено только %d.</font></p>\n"
-
-#, c-format
-msgid "<p>Information is not available.</p>"
-msgstr "<p>Информация отсутствует.</p>"
 
 #, c-format
 msgid "<p>New password is generated.</p>"
@@ -1701,6 +1685,9 @@ msgstr "Информация по Вашему запросу отсутству
 msgid "Information is not available"
 msgstr "Информация отсутствует"
 
+msgid "Information is not available."
+msgstr "Информация недоступна."
+
 msgid "Input"
 msgstr "Входные данные"
 
@@ -2815,6 +2802,9 @@ msgstr "Регистрация на турнир завершилась с ош�
 msgid "Registration incomplete"
 msgstr "Регистрационные данные неполны"
 
+msgid "Registration is incomplete"
+msgstr "Регистрационные данные неполны"
+
 msgid "Registration mode"
 msgstr "Режим регистрации"
 
@@ -3248,8 +3238,21 @@ msgstr "Сжать журнал"
 msgid "Standings"
 msgstr "Положение участников"
 
+#, c-format
+msgid "Standings [%s, frozen]"
+msgstr "Положение участников [%s, заморожено]"
+
+#, c-format
 msgid "Standings [not started]"
 msgstr "Положение [не начат]"
+
+#, c-format
+msgid "Standings [over, frozen]"
+msgstr "Положение участников [окончено, заморожено]"
+
+#, c-format
+msgid "Standings [over]"
+msgstr "Положение участников [закончено]"
 
 msgid "Standings freeze time"
 msgstr "Время заморозки таблицы результатов"
@@ -3771,10 +3774,6 @@ msgstr "Информация о пользователе"
 
 msgid "User login"
 msgstr "Рег. имя команды"
-
-#, c-format
-msgid "User login [%s]"
-msgstr "Вход пользователя [%s]"
 
 msgid "User login/ID"
 msgstr "Login/ID пользователя"
@@ -4445,4 +4444,3 @@ msgstr "ошибка записи"
 
 msgid "write error to server"
 msgstr "ошибка записи данных на сервер"
-
