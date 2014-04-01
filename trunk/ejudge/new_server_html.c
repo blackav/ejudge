@@ -7751,6 +7751,19 @@ unpriv_parse_run_id(FILE *fout, struct http_request_info *phr,
   return -1;
 }
 
+int
+ns_unpriv_parse_run_id(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        int *p_run_id,
+        struct run_entry *pe)
+{
+  return unpriv_parse_run_id(fout, phr, cnts, extra, p_run_id, pe);
+}
+
+
 /* FIXME: this should be moved to `new-register' part */
 static void
 unpriv_page_forgot_password_1(FILE *fout, struct http_request_info *phr,
@@ -12916,6 +12929,7 @@ static const unsigned char * const external_unpriv_action_names[NEW_SRV_ACTION_L
   [NEW_SRV_ACTION_VIEW_CLAR] = "unpriv_clar_page",
   [NEW_SRV_ACTION_STANDINGS] = "unpriv_standings_page",
   [NEW_SRV_ACTION_CONTESTS_PAGE] = "unpriv_contests_page",
+  [NEW_SRV_ACTION_VIEW_REPORT] = "unpriv_report_page",
 };
 
 static int
