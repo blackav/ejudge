@@ -14,6 +14,7 @@
   const unsigned char *login_str = NULL;
   const unsigned char *password_str = NULL;
   int orig_locale_id = phr->locale_id;
+  unsigned char title[1024];
 
   if (phr->contest_id <= 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts) {
     FAIL(NEW_SRV_ERR_INV_CONTEST_ID);
@@ -68,14 +69,9 @@
 
   phr->hidden_vars = "";
   l10n_setlocale(phr->locale_id);
-%><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html><head>
-<meta http-equiv="Content-type" content="text/html; charset=<s:config name="charset" />"/>
-<link rel="stylesheet" href="<s:config name="style-prefix" />unpriv.css" type="text/css"/>
-<title><s:tr>User login</s:tr> [<s:v value="cnts_name" />]</title></head>
-<body><div id="container"><div id="l12">
-<div class="main_phrase"><s:tr>User login</s:tr> [<s:v value="cnts_name" />]</div>
-<s:form>
+  snprintf(title, sizeof(title), "%s [%s]", _("User login"), cnts_name);
+%><%@include "unpriv_simple_header.csp"
+%><s:form>
 <s:hidden name="contest_id" value="phr->contest_id" />
 <s:hidden name="role" value="0" checkExpr=">= 0" />
 <% if (cnts->disable_locale_change) {
@@ -94,7 +90,7 @@
 <div class="white_empty_block">&nbsp;</div>
 <div class="contest_actions"><table class="menu"><tr><%
   if (cnts && cnts->assign_logins && cnts->force_registration
-      && cnts->register_url
+      && cnts->register_url && contests_check_register_ip_2(cnts, &phr->ip, phr->ssl_flag) > 0
       && (cnts->reg_deadline <= 0 || cur_time < cnts->reg_deadline)) {
 %><td class="menu"><div class="contest_actions_item"><%
     if (phr->config->disable_new_users <= 0) {
@@ -112,7 +108,7 @@
     }
 %></div></td><%
     vis_flag++;
-  } else if (cnts && cnts->register_url
+  } else if (cnts && cnts->register_url && contests_check_register_ip_2(cnts, &phr->ip, phr->ssl_flag) > 0
              && (cnts->reg_deadline <= 0 || cur_time < cnts->reg_deadline)) {
 %><td class="menu"><div class="contest_actions_item"><%
     if (phr->config->disable_new_users <= 0) {
