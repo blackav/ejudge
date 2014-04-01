@@ -1,0 +1,193 @@
+<%
+/* $Id$ */
+%><%@include "unpriv_includes.csp"
+%><%
+#include "fileutl.h"
+#include "archive_paths.h"
+
+int
+ns_unpriv_parse_run_id(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        int *p_run_id,
+        struct run_entry *pe);
+
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@set getter_name = "csp_get_unpriv_report_page"
+%><%@page csp_view_unpriv_report_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "unpriv_stdvars.csp"
+%><%
+  const struct section_problem_data *prob;
+  int run_id, flags, content_type;
+  const unsigned char *rep_start = 0;
+  char *rep_text = 0;
+  size_t rep_size = 0;
+  struct run_entry re;
+  path_t rep_path;
+  int accepting_mode = 0;
+  int enable_rep_view = 0;
+  int status = -1;
+  unsigned char title[1024];
+
+  start_time = run_get_start_time(cs->runlog_state);
+  stop_time = run_get_stop_time(cs->runlog_state);
+  if (global->is_virtual) {
+    start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
+    stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id,
+                                          cs->current_time);
+    if (global->score_system == SCORE_OLYMPIAD) {
+      if (global->disable_virtual_auto_judge <= 0 && stop_time <= 0)
+        accepting_mode = 1;
+      else if (global->disable_virtual_auto_judge > 0
+               && cs->testing_finished <= 0)
+        accepting_mode = 1;
+    }
+  } else {
+    accepting_mode = cs->accepting_mode;
+  }
+
+  if (ns_unpriv_parse_run_id(out_f, phr, cnts, extra, &run_id, &re) < 0)
+    goto cleanup;
+
+  enable_rep_view = (cs->online_view_report > 0 || (!cs->online_view_report && global->team_enable_rep_view > 0));
+
+  if (cs->clients_suspended) {
+    FAIL(NEW_SRV_ERR_CLIENTS_SUSPENDED);
+  }
+
+  if (re.user_id != phr->user_id) {
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+  }
+  if (re.prob_id <= 0 || re.prob_id > cs->max_prob || !(prob = cs->probs[re.prob_id])) {
+    FAIL(NEW_SRV_ERR_INV_PROB_ID);
+  }
+
+  status = re.status;
+  if (global->separate_user_score > 0 && re.is_saved) {
+    status = re.saved_status;
+  }
+  
+  // check viewable statuses
+  switch (status) {
+  case RUN_OK:
+  case RUN_COMPILE_ERR:
+  case RUN_RUN_TIME_ERR:
+  case RUN_TIME_LIMIT_ERR:
+  case RUN_WALL_TIME_LIMIT_ERR:
+  case RUN_PRESENTATION_ERR:
+  case RUN_WRONG_ANSWER_ERR:
+  case RUN_PARTIAL:
+  case RUN_ACCEPTED:
+  case RUN_PENDING_REVIEW:
+  case RUN_MEM_LIMIT_ERR:
+  case RUN_SECURITY_ERR:
+  case RUN_STYLE_ERR:
+  case RUN_REJECTED:
+    // these statuses have viewable reports
+    break;
+  default:
+    FAIL(NEW_SRV_ERR_REPORT_UNAVAILABLE);
+  }
+
+  if (accepting_mode && prob->type != PROB_TYPE_STANDARD) {
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+  }
+
+  if (enable_rep_view) enable_rep_view = prob->team_enable_rep_view;
+  if (!enable_rep_view
+      && (!prob->team_enable_ce_view
+          || (status != RUN_COMPILE_ERR
+              && status != RUN_STYLE_ERR
+              && status != RUN_REJECTED))) {
+    FAIL(NEW_SRV_ERR_REPORT_VIEW_DISABLED);
+  }
+
+  flags = serve_make_xml_report_read_path(cs, rep_path, sizeof(rep_path), &re);
+  if (flags >= 0) {
+    if (generic_read_file(&rep_text, 0, &rep_size, flags, 0, rep_path, 0) < 0) {
+      FAIL(NEW_SRV_ERR_DISK_READ_ERROR);
+    }
+    content_type = get_content_type(rep_text, &rep_start);
+    if (content_type != CONTENT_TYPE_XML
+        && status != RUN_COMPILE_ERR
+        && status != RUN_STYLE_ERR
+        && status != RUN_REJECTED) {
+      FAIL(NEW_SRV_ERR_REPORT_UNAVAILABLE);
+    }
+  } else {
+    int user_mode = 0;
+    if (prob->team_enable_ce_view
+        && (status == RUN_COMPILE_ERR
+            || status == RUN_STYLE_ERR
+            || status == RUN_REJECTED)) {
+    } else if (prob->team_show_judge_report) {
+    } else {
+      user_mode = 1;
+    }
+
+    if (user_mode) {
+      flags = archive_make_read_path(cs, rep_path, sizeof(rep_path),
+                                     global->team_report_archive_dir, run_id, 0, 1);
+    } else {
+      flags = serve_make_report_read_path(cs, rep_path, sizeof(rep_path), &re);
+      
+    }
+    if (flags < 0) {
+      FAIL(NEW_SRV_ERR_REPORT_NONEXISTANT);
+    }
+
+    if (generic_read_file(&rep_text,0,&rep_size,flags,0,rep_path, 0) < 0) {
+      FAIL(NEW_SRV_ERR_DISK_READ_ERROR);
+    }
+    content_type = get_content_type(rep_text, &rep_start);
+  }
+
+  unpriv_load_html_style(phr, cnts, 0, 0);
+  l10n_setlocale(phr->locale_id);
+  snprintf(title, sizeof(title), "%s %d", _("Report for run"), run_id);
+%><%@include "unpriv_header.csp" 
+%><%@include "unpriv_menu.csp"
+%><%@include "unpriv_status.csp"
+%><%
+  switch (content_type) {
+  case CONTENT_TYPE_TEXT:
+%><pre><s:v value="rep_text" /></pre><%
+    break;
+  case CONTENT_TYPE_HTML:
+%><s:v value="rep_start" escape="false" /><%
+    break;
+  case CONTENT_TYPE_XML:
+    if (prob->type == PROB_TYPE_TESTS) {
+      if (prob->team_show_judge_report) {
+        write_xml_tests_report(out_f, 1, rep_start, phr->session_id,
+                                 phr->self_url, "", "b1", "b0"); 
+      } else {
+        write_xml_team_tests_report(cs, prob, out_f, rep_start, "b1");
+      }
+    } else {
+      if (global->score_system == SCORE_OLYMPIAD && accepting_mode) {
+        write_xml_team_accepting_report(out_f, phr, rep_start, run_id, &re, prob,
+                                        cnts->exam_mode, "b1");
+      } else if (prob->team_show_judge_report) {
+        write_xml_testing_report(out_f, phr, 1, rep_start, "b1", "b0");
+      } else {
+        write_xml_team_testing_report(cs, prob, out_f, phr,
+                                      prob->type != PROB_TYPE_STANDARD,
+                                      re.is_marked,
+                                      rep_start, "b1");
+      }
+    }
+    break;
+  default:
+    abort();
+  }
+%><%
+%><%@include "unpriv_footer.csp"
+%><%
+  l10n_setlocale(0);
+cleanup:;
+  html_armor_free(&ab);
+  xfree(rep_text);
+%>

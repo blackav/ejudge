@@ -301,9 +301,13 @@ processor_state_find_in_scopes(ProcessorState *ps, TypeInfo *id)
 }
 
 static void
-processor_state_add_to_scope(ProcessorState *ps, TypeInfo *def)
+processor_state_add_to_scope(ProcessorState *ps, TypeInfo *def, TypeInfo *id)
 {
-    tc_scope_add(ps->scope_stack, def);
+    if (tc_scope_find_local(ps->scope_stack, id)) {
+        parser_error_2(ps, "identifier '%s' already declared", id->s.str);
+    } else {
+        tc_scope_add(ps->scope_stack, def);
+    }
 }
 
 static void
@@ -2238,14 +2242,14 @@ parse_vardecl(
 
     r = parse_init_declr(ss, cntx, quiet_mode, 0, ds, &vartype, &id);
     if (r < 0) return -1;
-    processor_state_add_to_scope(ss->ps, tc_get_local_var(cntx, tc_get_i32(cntx, 0), vartype, id, tc_get_i32(cntx, 0)));
+    processor_state_add_to_scope(ss->ps, tc_get_local_var(cntx, tc_get_i32(cntx, 0), vartype, id, tc_get_i32(cntx, 0)), id);
     while (IS_OPER(ss, ',')) {
         next_token(ss);
         vartype = NULL;
         id = NULL;
         r = parse_init_declr(ss, cntx, quiet_mode, 0, ds, &vartype, &id);
         if (r < 0) return -1;
-        processor_state_add_to_scope(ss->ps, tc_get_local_var(cntx, tc_get_i32(cntx, 0), vartype, id, tc_get_i32(cntx, 0)));
+        processor_state_add_to_scope(ss->ps, tc_get_local_var(cntx, tc_get_i32(cntx, 0), vartype, id, tc_get_i32(cntx, 0)), id);
     }
     if (!IS_OPER(ss, ';')) {
         parser_error(ss, "';' expected");
@@ -2795,7 +2799,7 @@ handle_directive_page(ScannerState *ss, TypeContext *cntx, FILE *out_f)
     for (int i = 3; i < f->n.count; ++i) {
         TypeInfo *param = f->n.info[i];
         if (param->kind == NODE_PARAM && param->n.info[3] != empty_id) {
-            processor_state_add_to_scope(ss->ps, param);
+            processor_state_add_to_scope(ss->ps, param, param->n.info[3]);
         }
     }
     processor_state_push_scope(ss->ps, tc_scope_create());
