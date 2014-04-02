@@ -1,0 +1,46 @@
+<%    if (cnts->problems_url && *cnts->problems_url) {
+%><p><a href="<s:v value="cnts->problems_url" escape="false" />" target="_blank"><s:tr>Problem statements</s:tr></a></p>
+<%    }
+%><%
+    // if prob_id == -1, show all available problem statements
+    if (prob_id == -1) {
+      first_prob_id = 1;
+      last_prob_id = cs->max_prob;
+    } else {
+      first_prob_id = prob_id;
+      last_prob_id = prob_id;
+    }
+    for (prob_id = first_prob_id; prob_id <= last_prob_id; prob_id++) {
+      variant = 0;
+      if (prob_id <= 0 || prob_id > cs->max_prob) continue;
+      if (!(prob = cs->probs[prob_id])) continue;
+      if (!serve_is_problem_started(cs, phr->user_id, prob)) continue;
+      if (serve_is_problem_deadlined(cs, phr->user_id, phr->login,
+                                     prob, &prob_deadline[prob_id]))
+        continue;
+      if (prob->variant_num > 0
+          && (variant = find_variant(cs, phr->user_id, prob_id, 0)) <= 0)
+        continue;
+      if (!prob->statement_file[0]) continue;
+      if (variant > 0) {
+        prepare_insert_variant_num(variant_stmt_file, sizeof(variant_stmt_file),
+                                   prob->statement_file, variant);
+        pw = &cs->prob_extras[prob_id].v_stmts[variant];
+        pw_path = variant_stmt_file;
+      } else {
+        pw = &cs->prob_extras[prob_id].stmt;
+        pw_path = prob->statement_file;
+      }
+      watched_file_update(pw, pw_path, cs->current_time);
+      if (!pw->text) continue;
+
+      fprintf(out_f, "%s", pw->text);
+    }
+%>
+<h2><s:tr>Select another problem</s:tr></h2>
+<s:form>
+<table class="b0">
+<tr><td class="b0"><s:tr>Problem</s:tr>:</td><td class="b0"><%
+    html_problem_selection_2(cs, fout, phr, 0, start_time);
+%></td><td class="b0"><s:submit ac="view-problem-statements" label="Select problem" /></td></tr></table>
+</s:form>

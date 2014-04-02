@@ -1,0 +1,204 @@
+<%
+    unpriv_print_status(fout, phr, cnts, extra,
+                        start_time, stop_time, duration, sched_time,
+                        fog_start_time, finish_time);
+%>
+
+
+
+
+
+
+  if (!cnts->exam_mode) {
+    fprintf(fout, "<%s>%s</%s>\n",
+            cnts->team_head_style, _("Server status"),
+            cnts->team_head_style);
+    if (stop_time > 0) {
+      if (duration > 0 && global->board_fog_time > 0
+          && global->board_unfog_time > 0
+          && cs->current_time < stop_time + global->board_unfog_time
+          && !cs->standings_updated) {
+        if (cnts->exam_mode) {
+          s = _("The exam is over (standings are frozen)");
+        } else {
+          s = _("The contest is over (standings are frozen)");
+        }
+      } else if (cnts->exam_mode) {
+        s = _("The exam is over");
+      } else {
+        s = _("The contest is over");
+      }
+    } else if (start_time > 0) {
+      if (fog_start_time > 0 && cs->current_time >= fog_start_time) {
+        if (cnts->exam_mode) {
+          s = _("The exam is in progress (standings are frozen)");
+        } else {
+          s = _("The contest is in progress (standings are frozen)");
+        }
+      } else {
+        if (cnts->exam_mode) {
+          s = _("The exam is in progress");
+        } else {
+          s = _("The contest is in progress");
+        }
+      }
+    } else {
+      if (cnts->exam_mode) {
+        s = _("The exam is not started");
+      } else {
+        s = _("The contest is not started");
+      }
+    }
+    fprintf(fout, "<p><b>%s</b></p>\n", s);
+
+    if (cs->upsolving_mode) {
+      fprintf(fout, "<p><b>%s</b></p>\n", _("Upsolving mode"));
+    }
+
+    if (start_time > 0) {
+      if (global->score_system == SCORE_OLYMPIAD && !global->is_virtual) {
+        if (cs->accepting_mode)
+          s = _("Participants' solutions are being accepted");
+        else if (!cs->testing_finished)
+          s = _("Participants' solutions are being judged");
+        else
+          s = _("Participants' solutions are judged");
+        fprintf(fout, "<p><b>%s</b></p>\n", s);
+      }
+    }
+
+    if (cs->clients_suspended) {
+      fprintf(fout, "<p><b>%s</b></p>\n",
+              _("Participants' requests are suspended"));
+    }
+
+    if (start_time > 0) {
+      if (cs->testing_suspended) {
+        fprintf(fout, "<p><b>%s</b></p>\n",
+                _("Testing of participants' submits is suspended"));
+      }
+      if (cs->printing_suspended) {
+        fprintf(fout, "<p><b>%s</b></p>\n",
+                _("Print requests are suspended"));
+      }
+    }
+
+    fprintf(fout, "<table%s>", cl);
+    fprintf(fout, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+            cl, _("Server time"), cl, xml_unparse_date(cs->current_time));
+    if (start_time > 0) {
+      if (cnts->exam_mode) {
+        s = _("Exam start time");
+      } else {
+        s = _("Contest start time");
+      }
+      fprintf(fout, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+              cl, s, cl, xml_unparse_date(start_time));
+    }
+    if (!global->is_virtual && start_time <= 0 && sched_time > 0) {
+      fprintf(fout, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+              cl, _("Planned start time"), cl, xml_unparse_date(sched_time));
+    }
+    if (stop_time <= 0 && (duration > 0 || finish_time <= 0)) {
+      if (duration > 0) {
+        duration_str(0, duration, 0, duration_buf, 0);
+      } else {
+        snprintf(duration_buf, sizeof(duration_buf), "%s", _("Unlimited"));
+      }
+      fprintf(fout, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+              cl, _("Duration"), cl, duration_buf);
+    }
+    if (start_time > 0 && stop_time <= 0 && duration > 0) {
+      tmpt = start_time + duration;
+      fprintf(fout, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+              cl, _("Scheduled end time"), cl, xml_unparse_date(tmpt));
+    } else if (start_time > 0 && stop_time <= 0 && duration <= 0
+               && finish_time > 0) {
+      fprintf(fout, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+              cl, _("Scheduled end time"), cl, xml_unparse_date(finish_time));
+    } else if (stop_time) {
+      fprintf(fout, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+              cl, _("End time"), cl, xml_unparse_date(stop_time));
+    }
+
+    if (start_time > 0 && stop_time <= 0 && fog_start_time > 0) {
+      fprintf(fout, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+              cl, _("Standings freeze time"), cl, xml_unparse_date(fog_start_time));
+    } else if (stop_time > 0 && duration > 0 && global->board_fog_time > 0
+               && global->board_unfog_time > 0 && !cs->standings_updated
+               && cs->current_time < stop_time + global->board_unfog_time) {
+      tmpt = stop_time + global->board_unfog_time;
+      fprintf(fout, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+              cl, _("Standings unfreeze time"), cl, xml_unparse_date(tmpt));
+    }
+
+    if (start_time > 0 && stop_time <= 0 && duration > 0) {
+      duration_str(0, cs->current_time, start_time, duration_buf, 0);
+      fprintf(fout, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+              cl, _("Elapsed time"), cl, duration_buf);
+      duration_str(0, start_time + duration - cs->current_time, 0,
+                   duration_buf, 0);
+      fprintf(fout, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+              cl, _("Remaining time"), cl, duration_buf);
+    }
+    if (start_time <= 0 && global->is_virtual > 0 && cnts->open_time > 0 && cs->current_time < cnts->open_time) {
+      fprintf(fout, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+              cl, _("Virtual contest open time"), cl, xml_unparse_date(cnts->open_time));
+    }
+    if (start_time <= 0 && global->is_virtual > 0 && cnts->close_time > 0) {
+      fprintf(fout, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+              cl, _("Virtual contest close time"), cl, xml_unparse_date(cnts->close_time));
+    }
+    fprintf(fout, "</table>\n");
+  }
+
+  if (global->description_file[0]) {
+    watched_file_update(&cs->description, global->description_file,
+                        cs->current_time);
+    if (cs->description.text) {
+      fprintf(fout, "%s", cs->description.text);
+    }
+  }
+
+  if (!cnts->exam_mode) {
+    fprintf(fout, "<p><b>%s: %d</b></p>\n",
+            _("On-line users in this contest"), phr->online_users);
+    if (cs->max_online_count > 0) {
+      fprintf(fout, "<p><b>%s: %d, %s</b></p>\n",
+              _("Max number of users was"), cs->max_online_count,
+              xml_unparse_date(cs->max_online_time));
+    }
+  }
+
+  if (!cnts->exam_mode && global->is_virtual && start_time <= 0) {
+    enable_virtual_start = 1;
+    if (global->disable_virtual_start > 0) {
+      enable_virtual_start = 0;
+    } else if (cnts->open_time > 0 && cs->current_time < cnts->open_time) {
+      enable_virtual_start = 0;
+    } else if (cnts->close_time > 0 && cs->current_time >= cnts->close_time) {
+      enable_virtual_start = 0;
+    }
+    if (enable_virtual_start) {
+      html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
+      if (cnts->exam_mode) {
+        fprintf(fout, "<p>%s</p></form>",
+                ns_submit_button(bb, sizeof(bb), 0,
+                                 NEW_SRV_ACTION_VIRTUAL_START,
+                                 _("Start exam")));
+      } else {
+        fprintf(fout, "<p>%s</p></form>",
+                BUTTON(NEW_SRV_ACTION_VIRTUAL_START));
+      }
+    }
+  } else if (!cnts->exam_mode && global->is_virtual && stop_time <= 0) {
+    html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
+    if (cnts->exam_mode) {
+      fprintf(fout, "<p>%s</p></form>",
+              ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_VIRTUAL_STOP,
+                               _("Stop exam")));
+    } else {
+      fprintf(fout, "<p>%s</p></form>",
+              BUTTON(NEW_SRV_ACTION_VIRTUAL_STOP));
+    }
+  }

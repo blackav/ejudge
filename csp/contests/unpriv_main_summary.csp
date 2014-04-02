@@ -1,0 +1,56 @@
+<h2><s:tr>Problem status summary</s:tr></h2>
+<%
+    if (cnts->exam_mode && global->score_system == SCORE_OLYMPIAD
+        && global->is_virtual && stop_time > 0
+        && global->disable_virtual_auto_judge > 0
+        && !cs->testing_finished) {
+      char *ff_txt = 0, *fl_txt = 0;
+      size_t ff_len = 0, fl_len = 0;
+      FILE *ff = open_memstream(&ff_txt, &ff_len);
+      FILE *fl = open_memstream(&fl_txt, &fl_len);
+      int rr = ns_olympiad_final_user_report(ff, fl, cnts, cs,
+                                             phr->user_id, phr->locale_id);
+      if (rr < 0) {
+%><p><s:tr>Error</s:tr> <s:v value="-rr" /><%
+      } else {
+        close_memstream(fl); fl = 0;
+        if (fl_txt && *fl_txt) {
+%><pre><font color="red"><s:v value="fl_txt" /></font></pre><%
+          xfree(fl_txt); fl_txt = 0; fl_len = 0;
+          close_memstream(ff); ff = 0; xfree(ff_txt); ff_txt = 0; ff_len = 0;
+        } else {
+          close_memstream(ff); ff = 0;
+%><s:v value="ff_txt" escape="false" /><%
+          xfree(fl_txt); fl_txt = 0; fl_len = 0;
+          xfree(ff_txt); ff_txt = 0; ff_len = 0;
+        }
+      }
+    } else if (cnts->exam_mode && global->score_system == SCORE_OLYMPIAD
+               && global->is_virtual && stop_time > 0
+               && (run_has_transient_user_runs(cs->runlog_state, phr->user_id)
+                   || (global->disable_virtual_auto_judge <= 0
+                       && !is_judged_virtual_olympiad(cs, phr->user_id)))) {
+%><p><s:tr>Testing is in progress...</s:tr></p><%
+    } else {
+      if (global->score_system == SCORE_OLYMPIAD
+          && global->is_virtual
+          && cs->testing_finished)
+        accepting_mode = 0;
+      if (cs->contest_plugin
+          && cs->contest_plugin->generate_html_user_problems_summary) {
+        // FIXME: return code and logging stream is not used now
+        char *us_text = 0;
+        size_t us_size = 0;
+        FILE *us_file = open_memstream(&us_text, &us_size);
+        (*cs->contest_plugin->generate_html_user_problems_summary)(cs->contest_plugin_data, us_file, out_f, cnts, cs, phr->user_id, accepting_mode, "b1", solved_flag, accepted_flag, pending_flag, trans_flag, best_run, attempts, disqualified, best_score, prev_successes);
+        close_memstream(us_file); us_file = 0;
+        xfree(us_text); us_text = 0;
+      } else {
+        ns_write_user_problems_summary(cnts, cs, out_f, phr->user_id,
+                                       accepting_mode, "b1",
+                                       solved_flag, accepted_flag, pr_flag, pending_flag,
+                                       trans_flag, best_run, attempts,
+                                       disqualified, best_score);
+      }
+    }
+%>

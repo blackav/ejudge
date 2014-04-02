@@ -1,0 +1,24 @@
+<%    if (global->is_virtual && start_time <= 0) {
+      if (global->disable_virtual_start <= 0) {
+%><s:form><%
+        if (cnts->exam_mode) {
+%><p><s:submit ac="virtual-start" label="Start exam" /></p><%
+        } else {
+%><p><s:submit ac="virtual-start" /></p><%
+        }
+%></s:form><%
+      }
+    } else if (global->is_virtual && stop_time <= 0) {
+      if (cnts->exam_mode) {
+%><h2><s:tr>Finish the exam</s:tr></h2>
+<p><s:tr>Press "Stop exam" button to finish the exam. Your answers will be checked shortly after that.</s:tr></p><%
+      }
+%><s:form><%
+      if (cnts->exam_mode) {
+%><p><s:submit ac="virtual-stop" label="Stop exam" /></p><%
+      } else {
+%><p><s:submit ac="virtual-stop" /></p><%
+      }
+%></s:form><%
+    }
+%>
