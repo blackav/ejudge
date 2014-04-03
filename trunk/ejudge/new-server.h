@@ -1074,4 +1074,57 @@ ns_get_register_url(
         const struct contest_desc *cnts,
         const struct http_request_info *phr);
 
+void
+ns_get_problem_status(
+        serve_state_t cs,
+        int user_id,
+        const unsigned char *user_login,
+        int accepting_mode,
+        time_t start_time,
+        time_t stop_time,
+        const unsigned char *solved_flag,
+        const unsigned char *accepted_flag,
+        unsigned char *pstat);
+
+// problem status flags
+enum
+{
+  PROB_STATUS_VIEWABLE = 1,
+  PROB_STATUS_SUBMITTABLE = 2,
+  PROB_STATUS_TABABLE = 4,
+
+  PROB_STATUS_GOOD = PROB_STATUS_VIEWABLE | PROB_STATUS_SUBMITTABLE,
+};
+
+void
+html_problem_selection(
+        serve_state_t cs,
+        FILE *fout,
+        struct http_request_info *phr,
+        const unsigned char *solved_flag,
+        const unsigned char *accepted_flag,
+        const unsigned char *var_name,
+        int light_mode,
+        time_t start_time);
+
+void
+html_problem_selection_2(
+        serve_state_t cs,
+        FILE *fout,
+        struct http_request_info *phr,
+        const unsigned char *var_name,
+        time_t start_time);
+
+int
+is_judged_virtual_olympiad(serve_state_t cs, int user_id);
+
+int
+get_last_language(serve_state_t cs, int user_id, int *p_last_eoln_type);
+
+unsigned char *
+get_last_source(serve_state_t cs, int user_id, int prob_id);
+
+int
+get_last_answer_select_one(serve_state_t cs, int user_id, int prob_id);
+
 #endif /* __NEW_SERVER_H__ */
