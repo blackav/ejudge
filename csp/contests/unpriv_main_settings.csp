@@ -14,7 +14,7 @@
 %><h2><s:tr>Change language</s:tr></h2>
 <s:form>
 <table class="b0"><tr><td class="b0"><s:tr>Change language</s:tr></td>
-<td class="b0"><% l10n_html_locale_select(fout, phr->locale_id); %></td>
+<td class="b0"><% l10n_html_locale_select(out_f, phr->locale_id); %></td>
 <td class="b0"><s:submit ac="change-language" label="Change" /></td></tr></table>
 </s:form>
 <%

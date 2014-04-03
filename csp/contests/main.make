@@ -63,6 +63,7 @@ SOFILES = \
  unpriv_clar_page.so\
  unpriv_contests_page.so\
  unpriv_login_page.so\
+ unpriv_main_page.so\
  unpriv_report_page.so\
  unpriv_standings_page.so\
  unpriv_error_unknown.so
@@ -122,6 +123,7 @@ UPRIV_DEPS = unpriv_includes.csp unpriv_stdvars.csp unpriv_header.csp unpriv_sim
 unpriv_clar_page.c : unpriv_clar_page.csp $(UNPRIV_DEPS)
 unpriv_contests_page.c : unpriv_contests_page.csp $(UNPRIV_DEPS)
 unpriv_login_page.c : unpriv_login_page.csp $(UNPRIV_DEPS)
+unpriv_main_page.c : unpriv_main_page.csp unpriv_main_clars.csp unpriv_main_clar_submit.csp unpriv_main_info.csp unpriv_main_runs.csp unpriv_main_run_submit.csp unpriv_main_settings.csp unpriv_main_startstop.csp unpriv_main_statements.csp unpriv_main_summary.csp $(UNPRIV_DEPS)
 unpriv_report_page.c : unpriv_report_page.csp $(UNPRIV_DEPS)
 unpriv_standings_page.c : unpriv_standings_page.csp $(UNPRIV_DEPS)
 
