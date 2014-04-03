@@ -6953,6 +6953,7 @@ ns_unparse_statement(
         problem_xml_t px,
         const unsigned char *bb,
         int is_submittable);
+
 void
 ns_unparse_answers(
         FILE *fout,
@@ -10296,7 +10297,7 @@ unpriv_view_test(FILE *fout,
   xfree(log_txt);
 }
 
-static void
+void
 html_problem_selection(serve_state_t cs,
                        FILE *fout,
                        struct http_request_info *phr,
@@ -10386,7 +10387,7 @@ html_problem_selection(serve_state_t cs,
 }
 
 // for "Statements" section
-static void
+void
 html_problem_selection_2(serve_state_t cs,
                          FILE *fout,
                          struct http_request_info *phr,
@@ -10908,7 +10909,7 @@ unpriv_page_header(FILE *fout,
   }
 }
 
-static int
+int
 get_last_language(serve_state_t cs, int user_id, int *p_last_eoln_type)
 {
   int total_runs = run_get_total(cs->runlog_state), run_id;
@@ -10927,7 +10928,7 @@ get_last_language(serve_state_t cs, int user_id, int *p_last_eoln_type)
   return 0;
 }
 
-static unsigned char *
+unsigned char *
 get_last_source(serve_state_t cs, int user_id, int prob_id)
 {
   int total_runs = run_get_total(cs->runlog_state), run_id;
@@ -10958,7 +10959,7 @@ get_last_source(serve_state_t cs, int user_id, int prob_id)
   return s;
 }
 
-static int
+int
 get_last_answer_select_one(serve_state_t cs, int user_id, int prob_id)
 {
   unsigned char *s = get_last_source(cs, user_id, prob_id);
@@ -10973,7 +10974,7 @@ get_last_answer_select_one(serve_state_t cs, int user_id, int prob_id)
   return val;
 }
 
-static int
+int
 is_judged_virtual_olympiad(serve_state_t cs, int user_id)
 {
   struct run_entry vs, ve;
@@ -10981,16 +10982,6 @@ is_judged_virtual_olympiad(serve_state_t cs, int user_id)
   if (run_get_virtual_info(cs->runlog_state, user_id, &vs, &ve) < 0) return 0;
   return (vs.judge_id > 0);
 }
-
-// problem status flags
-enum
-{
-  PROB_STATUS_VIEWABLE = 1,
-  PROB_STATUS_SUBMITTABLE = 2,
-  PROB_STATUS_TABABLE = 4,
-
-  PROB_STATUS_GOOD = PROB_STATUS_VIEWABLE | PROB_STATUS_SUBMITTABLE,
-};
 
 /*
   *PROBLEM_PARAM(disable_user_submit, "d"),
@@ -11003,15 +10994,17 @@ enum
   *PROBLEM_PARAM(personal_deadline, "x"),
 */
 
-static void
-get_problem_status(serve_state_t cs, int user_id,
-                   const unsigned char *user_login,
-                   int accepting_mode,
-                   time_t start_time,
-                   time_t stop_time,
-                   const unsigned char *solved_flag,
-                   const unsigned char *accepted_flag,
-                   unsigned char *pstat)
+void
+ns_get_problem_status(
+        serve_state_t cs,
+        int user_id,
+        const unsigned char *user_login,
+        int accepting_mode,
+        time_t start_time,
+        time_t stop_time,
+        const unsigned char *solved_flag,
+        const unsigned char *accepted_flag,
+        unsigned char *pstat)
 {
   const struct section_problem_data *prob;
   int prob_id, is_deadlined, k, j;
@@ -11398,9 +11391,9 @@ unpriv_main_page(FILE *fout,
                                trans_flag, pr_flag,
                                best_run, attempts, disqualified,
                                best_score, prev_successes, all_attempts);
-  get_problem_status(cs, phr->user_id, phr->login, accepting_mode,
-                     start_time, stop_time,
-                     solved_flag, accepted_flag, prob_status);
+  ns_get_problem_status(cs, phr->user_id, phr->login, accepting_mode,
+                        start_time, stop_time,
+                        solved_flag, accepted_flag, prob_status);
 
   if (global->problem_navigation > 0 && start_time > 0 && stop_time <= 0) {
     if (prob_id > cs->max_prob) prob_id = 0;
