@@ -1,8 +1,4 @@
-
-
-
-
-
+<%
     if (prob_id > cs->max_prob) prob_id = 0;
     if (prob_id > 0 && !(prob = cs->probs[prob_id])) prob_id = 0;
     if (prob_id > 0 && !serve_is_problem_started(cs, phr->user_id, prob))
@@ -17,21 +13,15 @@
       prob_id = 0;
 
     if (start_time > 0 && stop_time <= 0 && !prob_id) {
-      fprintf(fout, "<%s>%s</%s>\n",
-              cnts->team_head_style,
-              _("View the problem statement and send a submission"),
-              cnts->team_head_style);
-      html_start_form(fout, 0, phr->self_url, phr->hidden_vars);
-      fprintf(fout, "<table class=\"b0\">");
-      fprintf(fout, "<tr><td class=\"b0\">%s:</td><td class=\"b0\">", _("Problem"));
-
-      html_problem_selection(cs, fout, phr, solved_flag, accepted_flag, 0, 0,
-                             start_time);
-
-      fprintf(fout, "</td><td class=\"b0\">%s</td></tr></table></form>",
-              ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT,
-                               _("Select problem")));
-    } else if (start_time > 0 && stop_time <= 0 && prob_id > 0) {
+%><h2><s:tr>View the problem statement and send a submission</s:tr></h2>
+<s:form>
+<table class="b0">
+<tr><td class="b0"><s:tr>Problem</s:tr>:</td><td class="b0"><%
+      html_problem_selection(cs, out_f, phr, solved_flag, accepted_flag, 0, 0, start_time);
+%></td><td class="b0"><s:submit ac="view-problem-submit" label="Select problem" /></td></tr></table>
+</s:form>
+<%
+    } /* 14 */ else if (start_time > 0 && stop_time <= 0 && prob_id > 0) {
       prob = cs->probs[prob_id];
 
       dbuf[0] = 0;
@@ -91,17 +81,18 @@
           }
         }
       }
-
+%><%
       if (prob->max_user_run_count > 0) {
         int ignored_set = 0;
         if (prob->ignore_compile_errors > 0) ignored_set |= 1 << RUN_COMPILE_ERR;
         ignored_set |= 1 << RUN_IGNORED;
         int remain_count = prob->max_user_run_count - run_count_all_attempts_2(cs->runlog_state, phr->user_id, prob_id, ignored_set);
         if (remain_count < 0) remain_count = 0;
-        fprintf(fout, "<h3>%s: %d</h3>\n", _("Remaining attempts"), remain_count);
+%><h3><s:tr>Remaining attempts</s:tr>: <s:v value="remain_count" /></h3>
+<%
         if (remain_count <= 0) prob_status[prob_id] &= ~PROB_STATUS_SUBMITTABLE;
       }
-
+%><%
       px = 0;
       if (variant > 0 && prob->xml.a && prob->xml.a[variant - 1]) {
         px = prob->xml.a[variant - 1];
@@ -111,7 +102,7 @@
 
       /* put problem statement */
       if (px && px->stmts) {
-        ns_unparse_statement(fout, phr, cnts, extra, prob, 0, px, bb,
+        ns_unparse_statement(out_f, phr, cnts, extra, prob, 0, px, bb,
                           prob_status[prob_id] & PROB_STATUS_SUBMITTABLE);
       } else if (prob->statement_file[0]
           && (prob_status[prob_id] & PROB_STATUS_VIEWABLE)) {
@@ -127,48 +118,29 @@
         }
         watched_file_update(pw, pw_path, cs->current_time);
         if (!pw->text) {
-          fprintf(fout, "%s<big><font color=\"red\"><p>%s</p></font></big>\n",
-                  bb, _("The problem statement is not available"));
+%><s:v value="bb" escape="false" /><big><font color="red"><p><s:tr>The problem statement is not available</s:tr></p></font></big>
+<%
         } else {
           if (cnts->exam_mode) bb[0] = 0;
-          fprintf(fout, "%s", bb);
+          fprintf(out_f, "%s", bb);
           if ((prob_status[prob_id] & PROB_STATUS_SUBMITTABLE)
               && prob->type == PROB_TYPE_CUSTOM) {
-            html_start_form(fout, 2, phr->self_url, phr->hidden_vars);
+            html_start_form(out_f, 2, phr->self_url, phr->hidden_vars);
             skip_start_form = 1;
           }
-          fprintf(fout, "%s", pw->text);
+          fprintf(out_f, "%s", pw->text);
         }
       } else {
-        fprintf(fout, "%s", bb);
+        fprintf(out_f, "%s", bb);
       }
 
       if ((prob_status[prob_id] & PROB_STATUS_SUBMITTABLE)) {
-        alternatives = 0;
-        if ((prob->type == PROB_TYPE_SELECT_ONE
-             || prob->type == PROB_TYPE_SELECT_MANY)
-            && prob->alternatives_file[0]) {
-          if (variant > 0) {
-            prepare_insert_variant_num(variant_stmt_file,
-                                       sizeof(variant_stmt_file),
-                                       prob->alternatives_file, variant);
-            pw = &cs->prob_extras[prob->id].v_alts[variant];
-            pw_path = variant_stmt_file;
-          } else {
-            pw = &cs->prob_extras[prob->id].alt;
-            pw_path = prob->alternatives_file;
-          }
-          watched_file_update(pw, pw_path, cs->current_time);
-          alternatives = pw->text;
-        }
-
         if (!skip_start_form) {
-          html_start_form(fout, 2, phr->self_url, phr->hidden_vars);
+%><s:form enctype="multipart/form-data"><%
         }
-        fprintf(fout, "<input type=\"hidden\" name=\"prob_id\" value=\"%d\"/>",
-                prob_id);
-        fprintf(fout, "<table class=\"b0\">");
-        if (!prob->type) {
+%><s:hidden name="prob_id" value="prob_id" />
+<table class="b0">
+<%        if (!prob->type) {
           int last_eoln_type = 0;
           for (i = 1; i <= cs->max_lang; i++) {
             if (!cs->langs[i] || cs->langs[i]->disabled
@@ -189,15 +161,12 @@
           }
 
           if (lang_count == 1) {
-            html_hidden(fout, "lang_id", "%d", lang_id);
-            fprintf(fout, "<tr><td class=\"b0\">%s:</td><td class=\"b0\">%s - %s</td></tr>",
-                    _("Language"),
-                    cs->langs[lang_id]->short_name,
-                    cs->langs[lang_id]->long_name);
+%><s:hidden name="lang_id" value="lang_id" />
+<tr><td class="b0"><s:tr>Language</s:tr>:</td><td class="b0"><s:v value="cs->langs[lang_id]->short_name" escape="false" /> - <s:v value="cs->langs[lang_id]->long_name" /></td></tr>
+<%
           } else {
             last_lang_id = get_last_language(cs, phr->user_id, &last_eoln_type);
-            fprintf(fout, "<tr><td class=\"b0\">%s:</td><td class=\"b0\">", _("Language"));
-            fprintf(fout, "<select name=\"lang_id\"><option value=\"\">");
+%><tr><td class="b0"><s:tr>Language</s:tr>:</td><td class="b0"><s:select name="lang_id"><option value=""></option><%
             for (i = 1; i <= cs->max_lang; i++) {
               if (!cs->langs[i] || cs->langs[i]->disabled
                   || (cs->langs[i]->insecure && global->secure_run)) continue;
@@ -212,40 +181,37 @@
                     break;
                 if (lang_list[j]) continue;
               }
-              cc = "";
-              if (last_lang_id == i) cc = " selected=\"selected\"";
-              fprintf(fout, "<option value=\"%d\"%s>%s - %s</option>",
-                      i, cc, cs->langs[i]->short_name, cs->langs[i]->long_name);
+%><s:option value="i" selectedExpr="last_lang_id == i"><s:v value="cs->langs[i]->short_name" escape="false" /> - <s:v value="cs->langs[i]->long_name" /></s:option><%
             }
-            fprintf(fout, "</select></td></tr>");
+%></s:select></td></tr>
+<%
           }
-
+%><%
           if (cs->global->enable_eoln_select > 0) {
-            fprintf(fout, "<tr><td%s>%s:</td><td%s><select name=\"eoln_type\"%s>",
-                    " class=\"b0\"", _("Desired EOLN Type"), " class=\"b0\"", "");
-            fprintf(fout, "<option value=\"0\"></option>");
-            cc = "";
-            if (last_eoln_type == 1) cc = " selected=\"selected=\"";
-            fprintf(fout, "<option value=\"1\"%s>LF (Unix/MacOS)</option>", cc);
-            cc = "";
-            if (last_eoln_type == 2) cc = " selected=\"selected=\"";
-            fprintf(fout, "<option value=\"2\"%s>CRLF (Windows/DOS)</option>", cc);
-            fprintf(fout, "</select></td></tr>\n");
+%><tr><td class="b0"><s:tr>Desired EOLN Type</s:tr>:</td><td class="b0"><s:select name="eoln_type">
+<option value="0"></option>
+<s:option value="1" selectedExpr="last_eoln_type == 1">LF (Unix/MacOS)</s:option>
+<s:option value="2" selectedExpr="last_eoln_type == 2">CRLF (Windows/DOS)</s:option>
+</s:select></td></tr>
+<%
           }
         }
+%><%
         switch (prob->type) {
           /*
         case PROB_TYPE_STANDARD:
-          fprintf(fout, "<tr><td class=\"b0\">%s</td><td class=\"b0\"><input type=\"file\" name=\"file\"/></td></tr>", _("File"));
+          fprintf(out_f, "<tr><td class=\"b0\">%s</td><td class=\"b0\"><input type=\"file\" name=\"file\"/></td></tr>", _("File"));
           break;
           */
         case PROB_TYPE_STANDARD:
         case PROB_TYPE_OUTPUT_ONLY:
         case PROB_TYPE_TESTS:
           if (prob->enable_text_form > 0) {
-            fprintf(fout, "<tr><td colspan=\"2\" class=\"b0\"><textarea name=\"text_form\" rows=\"20\" cols=\"60\"></textarea></td></tr>");
+%><tr><td colspan="2" class="b0"><textarea name="text_form" rows="20" cols="60"></textarea></td></tr>
+<%
           }
-          fprintf(fout, "<tr><td class=\"b0\">%s</td><td class=\"b0\"><input type=\"file\" name=\"file\"/></td></tr>", _("File"));
+%><tr><td class="b0"><s:tr>File</s:tr></td><td class="b0"><input type="file" name="file"/></td></tr>
+<%
           break;
         case PROB_TYPE_SHORT_ANSWER:
           last_source = 0;
@@ -253,14 +219,17 @@
             last_source = get_last_source(cs, phr->user_id, prob->id);
           }
           if (last_source) {
-            fprintf(fout, "<tr><td class=\"b0\">%s</td><td class=\"b0\"><input type=\"text\" name=\"file\" value=\"%s\"/></td></tr>", _("Answer"), ARMOR(last_source));
+%><tr><td class="b0"><s:tr>Answer</s:tr></td><td class="b0"><s:textfield name="file" value="last_source" /></td></tr>
+<%
           } else {
-            fprintf(fout, "<tr><td class=\"b0\">%s</td><td class=\"b0\"><input type=\"text\" name=\"file\"/></td></tr>", _("Answer"));
+%><tr><td class="b0"><s:tr>Answer</s:tr></td><td class="b0"><input type="text" name="file" /></td></tr>
+<%
           }
-        xfree(last_source); last_source = 0;
+          xfree(last_source); last_source = 0;
           break;
         case PROB_TYPE_TEXT_ANSWER:
-          fprintf(fout, "<tr><td colspan=\"2\" class=\"b0\"><textarea name=\"file\" rows=\"20\" cols=\"60\"></textarea></td></tr>");
+%><tr><td colspan="2" class="b0"><textarea name="file" rows="20" cols="60"></textarea></td></tr>
+<%
           break;
         case PROB_TYPE_SELECT_ONE:
           last_answer = -1;
@@ -282,49 +251,28 @@
                 }
                 if (next_prob_id > cs->max_prob) next_prob_id = prob->id;
               }
-              ns_unparse_answers(fout, phr, cnts, extra, prob, variant,
+              ns_unparse_answers(out_f, phr, cnts, extra, prob, variant,
                                  px, 0 /* lang */, 1 /* is_radio */,
                                  last_answer, next_prob_id,
                                  1 /* js_flag */, "b0");
             } else {
-              ns_unparse_answers(fout, phr, cnts, extra, prob, variant,
+              ns_unparse_answers(out_f, phr, cnts, extra, prob, variant,
                                  px, 0 /* lang */, 1 /* is_radio */,
                                  last_answer, next_prob_id,
                                  0 /* js_flag */, "b0");
-            }
-          } else if (alternatives) {
-            if (cnts->exam_mode) {
-              next_prob_id = prob->id;
-              if (prob->advance_to_next > 0) {
-                next_prob_id++;
-                for (; next_prob_id <= cs->max_prob; next_prob_id++) {
-                  if (!(prob2 = cs->probs[next_prob_id])) continue;
-                  if (!serve_is_problem_started(cs, phr->user_id, prob2))
-                    continue;
-                  break;
-                }
-                if (next_prob_id > cs->max_prob) next_prob_id = prob->id;
-              }
-              write_alternatives_file(fout, 1, alternatives, last_answer,
-                                      prob->id, next_prob_id, 1, "b0");
-            } else {
-              write_alternatives_file(fout, 1, alternatives, last_answer,
-                                      0, 0, 0, "b0");
             }
           } else if (prob->alternative) {
             for (i = 0; prob->alternative[i]; i++) {
               cc = "";
               if (i + 1 == last_answer) cc = " checked=\"1\"";
-              fprintf(fout, "<tr><td class=\"b0\">%d</td><td class=\"b0\"><input type=\"radio\" name=\"file\" value=\"%d\"%s/></td><td>%s</td></tr>", i + 1, i + 1, cc, prob->alternative[i]);
+              fprintf(out_f, "<tr><td class=\"b0\">%d</td><td class=\"b0\"><input type=\"radio\" name=\"file\" value=\"%d\"%s/></td><td>%s</td></tr>", i + 1, i + 1, cc, prob->alternative[i]);
             }
           }
           break;
         case PROB_TYPE_SELECT_MANY:
-          if (alternatives) {
-            write_alternatives_file(fout, 0, alternatives, -1, 0, 0, 0, "b0");
-          } else if (prob->alternative) {
+          if (prob->alternative) {
             for (i = 0; prob->alternative[i]; i++) {
-              fprintf(fout, "<tr><td class=\"b0\">%d</td><td class=\"b0\"><input type=\"checkbox\" name=\"ans_%d\"/></td><td>%s</td></tr>", i + 1, i + 1, prob->alternative[i]);
+              fprintf(out_f, "<tr><td class=\"b0\">%d</td><td class=\"b0\"><input type=\"checkbox\" name=\"ans_%d\"/></td><td>%s</td></tr>", i + 1, i + 1, prob->alternative[i]);
             }
           }
           break;
@@ -335,35 +283,29 @@
           if (prob->type != PROB_TYPE_SELECT_ONE) {
             cc = "";
             if (prob && (prob->type == PROB_TYPE_SELECT_MANY || prob->type == PROB_TYPE_SELECT_ONE)) cc = "<td class=\"b0\">&nbsp;</td>";
-            fprintf(fout, "<tr>%s<td class=\"b0\">&nbsp;</td><td class=\"b0\">%s</td></tr></table></form>", cc,
+            fprintf(out_f, "<tr>%s<td class=\"b0\">&nbsp;</td><td class=\"b0\">%s</td></tr></table></form>", cc,
                     ns_submit_button(bb, sizeof(bb), 0,
                                      NEW_SRV_ACTION_SUBMIT_RUN,
                                      _("Submit solution!")));
           } else {
-            fprintf(fout, "</tr></table></form>");
+            fprintf(out_f, "</tr></table></form>");
           }
         } else {
-          fprintf(fout, "<tr><td class=\"b0\">%s</td><td class=\"b0\">%s</td></tr></table></form>",
-                  _("Send!"),
-                  BUTTON(NEW_SRV_ACTION_SUBMIT_RUN));
+%><tr><td class="b0"><s:tr>Send!</s:tr></td><td class="b0"><s:submit ac="submit-run" /></td></tr></table></form>
+<%
         }
       } /* prob->disable_user_submit <= 0 */
-
+%><%
       if (global->problem_navigation
           //&& !prob->disable_user_submit
           && prob->type != PROB_TYPE_SELECT_ONE
           && all_attempts[prob->id]) {
         if (all_attempts[prob->id] <= 15) {
-          fprintf(fout, "<%s>%s</%s>\n",
-                  cnts->team_head_style,
-                  _("Previous submissions of this problem"),
-                  cnts->team_head_style);
+%><h2><s:tr>Previous submissions of this problem</s:tr></h2>
+<%
         } else {
-          fprintf(fout, "<%s>%s (%s)</%s>\n",
-                  cnts->team_head_style,
-                  _("Previous submissions of this problem"),
-                  /*all_runs?_("all"):*/_("last 15"),
-                  cnts->team_head_style);
+%><h2><s:tr>Previous submissions of this problem</s:tr> (<s:tr>last 15</s:tr>)</h2>
+<%
         }
         if (cs->contest_plugin && cs->contest_plugin->generate_html_user_runs){
           // FIXME: logged output is also ignored
@@ -371,54 +313,48 @@
           char *ur_text = 0;
           size_t ur_size = 0;
           FILE *ur_file = open_memstream(&ur_text, &ur_size);
-          (*cs->contest_plugin->generate_html_user_runs)(cs->contest_plugin_data, ur_file, fout, cnts, cs, phr, phr->user_id, prob_id, all_runs, "b1");
+          (*cs->contest_plugin->generate_html_user_runs)(cs->contest_plugin_data, ur_file, out_f, cnts, cs, phr, phr->user_id, prob_id, all_runs, "b1");
           close_memstream(ur_file); ur_file = 0;
           xfree(ur_text); ur_text = 0;
         } else if (global->score_system == SCORE_OLYMPIAD) {
-          ns_write_olympiads_user_runs(phr, fout, cnts, extra, all_runs,
+          ns_write_olympiads_user_runs(phr, out_f, cnts, extra, all_runs,
                                        prob_id, "b1");
         } else {
-          new_write_user_runs(cs, fout, phr, all_runs, prob->id, "b1");
+          new_write_user_runs(cs, out_f, phr, all_runs, prob->id, "b1");
         }
       }
-
+%><%
       if (!cnts->exam_mode) {
         if (global->problem_navigation <= 0) {
-          fprintf(fout, "<%s>%s</%s>\n",
-                  cnts->team_head_style, _("Select another problem"),
-                  cnts->team_head_style);
+%><h2><s:tr>Select another problem</s:tr></h2>
+<%
         } else {
           /*
-          fprintf(fout, "<%s>%s</%s>\n",
+          fprintf(out_f, "<%s>%s</%s>\n",
                   cnts->team_head_style, _("Problem navigation"),
                   cnts->team_head_style);
           */
         }
-        html_start_form(fout, 0, phr->self_url, phr->hidden_vars);
-        fprintf(fout, "<table class=\"b0\">");
-        fprintf(fout, "<tr>");
-
+%><s:form>
+<table class="b0">
+<tr>
+<%
         if (global->problem_navigation > 0) {
           for (i = prob_id - 1; i > 0; i--) {
             if (!(prob_status[i] & PROB_STATUS_GOOD)) continue;
             break;
           }
           if (i > 0) {
-            fprintf(fout, "<td class=\"b0\">%s%s</a></td>",
-                    ns_aref(bb, sizeof(bb), phr,
-                            NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT,
-                            "prob_id=%d", i), _("Previous problem"));
+%><s:url name="ProblemUrl" ac="view-problem-submit">
+<s:param name="prob_id" value="i" />
+</s:url><td class="b0"><s:a url="ProblemUrl"><s:tr>Previous problem</s:tr></s:a></td><%
           }
         }
 
         if (global->problem_navigation <= 0) {
-          fprintf(fout, "<td class=\"b0\">%s:</td><td class=\"b0\">", _("Problem"));
-          html_problem_selection(cs, fout, phr, solved_flag, accepted_flag, 0,
-                                 0, start_time);
-          fprintf(fout, "</td><td class=\"b0\">%s</td>",
-                  ns_submit_button(bb, sizeof(bb), 0,
-                                   NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT,
-                                   _("Select problem")));
+%><td class="b0"><s:tr>Problem</s:tr>:</td><td class="b0"><%
+          html_problem_selection(cs, out_f, phr, solved_flag, accepted_flag, 0, 0, start_time);
+%></td><td class="b0"><s:submit ac="view-problem-submit" /></td><%
         }
 
         if (global->problem_navigation > 0) {
@@ -427,13 +363,14 @@
             break;
           }
           if (i <= cs->max_prob) {
-            fprintf(fout, "<td class=\"b0\">%s%s</a></td>",
-                    ns_aref(bb, sizeof(bb), phr,
-                            NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT,
-                            "prob_id=%d", i), _("Next problem"));
+%><s:url name="ProblemUrl" ac="view-problem-submit">
+<s:param name="prob_id" value="i" />
+</s:url><td class="b0"><s:a url="ProblemUrl"><s:tr>Next problem</s:tr></s:a></td><%
           }
         }
-
-      fprintf(fout, "</tr></table></form>");
+%></tr></table>
+</s:form>
+<%
       }
     }
+%>

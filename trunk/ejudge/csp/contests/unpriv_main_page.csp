@@ -1,0 +1,335 @@
+<%
+/* $Id$ */
+%><%@include "unpriv_includes.csp"
+%><%
+#include "compat.h"
+
+void
+ns_unparse_statement(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        const struct section_problem_data *prob,
+        int variant,
+        problem_xml_t px,
+        const unsigned char *bb,
+        int is_submittable);
+
+void
+ns_unparse_answers(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        const struct section_problem_data *prob,
+        int variant,
+        problem_xml_t px,
+        const unsigned char *lang,
+        int is_radio,
+        int last_answer,
+        int next_prob_id,
+        int enable_js,
+        const unsigned char *class_name);
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@set getter_name = "csp_get_unpriv_main_page"
+%><%@page csp_view_unpriv_main_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "unpriv_stdvars.csp"
+%><%
+  time_t finish_time = 0;
+  const unsigned char *s;
+  int all_runs = 0, all_clars = 0;
+  unsigned char *solved_flag = 0;
+  unsigned char *accepted_flag = 0;
+  unsigned char *pending_flag = 0;
+  unsigned char *trans_flag = 0;
+  unsigned char *pr_flag = NULL;
+  unsigned char *prob_status = 0;
+  time_t *prob_deadline = 0;
+  int *best_run = 0;
+  int *attempts = 0;
+  int *disqualified = 0;
+  int *best_score = 0;
+  int *prev_successes = 0;
+  int *all_attempts = 0;
+  int n, v, prob_id = 0, i, j, variant = 0;
+  char **lang_list;
+  path_t variant_stmt_file;
+  struct watched_file *pw = 0;
+  const unsigned char *pw_path;
+  const struct section_problem_data *prob = 0, *prob2;
+  unsigned char bb[1024];
+  int lang_count = 0, lang_id = 0;
+  int first_prob_id, last_prob_id;
+  int accepting_mode = 0;
+  const unsigned char *cc = 0;
+  int last_answer = -1, last_lang_id, skip_start_form = 0;
+  unsigned char *last_source = 0;
+  unsigned char dbuf[1024];
+  int upper_tab_id = 0, next_prob_id;
+  problem_xml_t px;
+  unsigned char prev_group_name[256] = { 0 };
+  const unsigned char *title = NULL;
+  int enable_virtual_start = 0;
+
+  if (ns_cgi_param(phr, "all_runs", &s) > 0
+      && sscanf(s, "%d%n", &v, &n) == 1 && !s[n] && v >= 0 && v <= 1) {
+    phr->session_extra->user_view_all_runs = v;
+  }
+  all_runs = phr->session_extra->user_view_all_runs;
+  if (ns_cgi_param(phr, "all_clars", &s) > 0
+      && sscanf(s, "%d%n", &v, &n) == 1 && !s[n] && v >= 0 && v <= 1) {
+    phr->session_extra->user_view_all_clars = v;
+  }
+  all_clars = phr->session_extra->user_view_all_clars;
+  if (ns_cgi_param(phr, "prob_id", &s) > 0
+      && sscanf(s, "%d%n", &v, &n) == 1 && !s[n] && v >= -1)
+    prob_id = v;
+  
+  XALLOCAZ(solved_flag, cs->max_prob + 1);
+  XALLOCAZ(accepted_flag, cs->max_prob + 1);
+  XALLOCAZ(pending_flag, cs->max_prob + 1);
+  XALLOCAZ(trans_flag, cs->max_prob + 1);
+  XALLOCAZ(pr_flag, cs->max_prob + 1);
+  XALLOCA(best_run, cs->max_prob + 1);
+  memset(best_run, -1, (cs->max_prob + 1) * sizeof(best_run[0]));
+  XALLOCAZ(attempts, cs->max_prob + 1);
+  XALLOCAZ(disqualified, cs->max_prob + 1);
+  XALLOCAZ(best_score, cs->max_prob + 1);
+  XALLOCAZ(prev_successes, cs->max_prob + 1);
+  XALLOCAZ(all_attempts, cs->max_prob + 1);
+  XALLOCAZ(prob_status, cs->max_prob + 1);
+  XALLOCAZ(prob_deadline, cs->max_prob + 1);
+
+  if (global->is_virtual) {
+    start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
+    stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id,
+                                          cs->current_time);
+    if (stop_time <= 0) accepting_mode = 1;
+  } else {
+    start_time = run_get_start_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state);
+    accepting_mode = cs->accepting_mode;
+  }
+  run_get_times(cs->runlog_state, 0, &sched_time, &duration, 0, &finish_time);
+  if (duration > 0 && start_time && !stop_time && global->board_fog_time > 0)
+    fog_start_time = start_time + duration - global->board_fog_time;
+  if (fog_start_time < 0) fog_start_time = 0;
+
+  if (phr->action == NEW_SRV_ACTION_VIEW_PROBLEM_SUMMARY) {
+    title = _("Problem summary");
+  } else if (phr->action == NEW_SRV_ACTION_VIEW_PROBLEM_STATEMENTS) {
+    title = _("Statements");
+  } else if (phr->action == NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT) {
+    title = _("Submit a solution");
+  } else if (phr->action == NEW_SRV_ACTION_VIEW_SUBMISSIONS) {
+    title = _("Submissions");
+  } else if (phr->action == NEW_SRV_ACTION_VIEW_CLAR_SUBMIT) {
+    title = _("Send a message");
+  } else if (phr->action == NEW_SRV_ACTION_VIEW_CLARS) {
+    title = _("Messages");
+  } else if (phr->action == NEW_SRV_ACTION_VIEW_SETTINGS) {
+    title = _("Settings");
+  } else {
+    phr->action = NEW_SRV_ACTION_MAIN_PAGE;
+    if (cnts->exam_mode > 0) {
+      title = _("Exam status");
+    } else {
+      title = _("Contest status");
+    }
+  }
+
+  l10n_setlocale(phr->locale_id);
+  unpriv_load_html_style(phr, cnts, 0, 0);
+%><%@include "unpriv_header.csp" 
+%><%@include "unpriv_menu.csp"
+%><%@include "unpriv_status.csp"
+%><%
+  ns_get_user_problems_summary(cs, phr->user_id, accepting_mode,
+                               solved_flag, accepted_flag, pending_flag,
+                               trans_flag, pr_flag,
+                               best_run, attempts, disqualified,
+                               best_score, prev_successes, all_attempts);
+  ns_get_problem_status(cs, phr->user_id, phr->login, accepting_mode,
+                        start_time, stop_time,
+                        solved_flag, accepted_flag, prob_status);
+%><%
+  // top navigation
+  if (global->problem_navigation > 0 && start_time > 0 && stop_time <= 0) {
+    if (prob_id > cs->max_prob) prob_id = 0;
+    if (prob_id > 0 && !(prob = cs->probs[prob_id])) prob_id = 0;
+    if (prob_id > 0 && !(prob_status[prob_id] & PROB_STATUS_GOOD))
+      prob_id = 0;
+    if (prob_id > 0 && prob->variant_num > 0
+        && (variant = find_variant(cs, phr->user_id, prob_id, 0)) <= 0)
+      prob_id = 0;
+%><br/>
+<table class="probNav">
+<%
+    upper_tab_id = prob_id;
+    if (global->vertical_navigation <= 0) {
+%><tr id="probNavTopList"><td width="100%" class="nTopNavList"><ul class="nTopNavList"><%
+      for (i = 1; i <= cs->max_prob; i++) {
+        if (!(prob = cs->probs[i])) continue;
+        if (!(prob_status[i] & PROB_STATUS_TABABLE)) continue;
+%><%
+        if (i == prob_id) {
+%><li id="nTopNavSelected"><%
+        } else {
+%><li><%
+        }
+%><%
+        if (i == prob_id) {
+%><div class="nProbCurrent"><%
+        } else if (!all_attempts[i]) {
+%><div class="nProbEmpty"><%
+        } else if (pending_flag[i] || trans_flag[i]) {
+%><div class="nProbTrans"><%
+        } else if (accepted_flag[i] || solved_flag[i] || pr_flag[i]) {
+%><div class="nProbOk"><%
+        } else if (prob->disable_user_submit > 0) {
+%><div class="nProbDisabled"><%
+        } else {
+%><div class="nProbBad"><%
+        }
+%><s:url name="ProblemUrl" ac="view-problem-submit"><s:param name="prob_id" value="i" /></s:url><%
+%><s:a class="tab" url="ProblemUrl"><s:v value="prob->short_name" escape="false" /></s:a></div></li><%
+      }
+%></ul></td></tr>
+<tr><td id="probNavTaskArea" valign="top"><div id="probNavTaskArea"><%
+    } else {
+%><tr><td class="b0" id="probNavTaskArea" valign="top"><div id="probNavTaskArea"><%
+    }
+  }
+%>
+<%
+  if (phr->action == NEW_SRV_ACTION_MAIN_PAGE) {
+%><%@include "unpriv_main_info.csp"
+%><%
+  }
+%>
+<%
+  if (phr->action == NEW_SRV_ACTION_VIEW_STARTSTOP) {
+%><%@include "unpriv_main_startstop.csp"
+%><%
+  }
+%>
+<%
+  if (start_time && phr->action == NEW_SRV_ACTION_VIEW_PROBLEM_SUMMARY) {
+%><%@include "unpriv_main_summary.csp"
+%><%
+  }
+%>
+<%
+  if (phr->action == NEW_SRV_ACTION_VIEW_PROBLEM_STATEMENTS && start_time > 0) {
+%><%@include "unpriv_main_statements.csp"
+%><%
+  }
+%>
+<%
+  if (phr->action == NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT && !cs->clients_suspended) {
+%><%@include "unpriv_main_run_submit.csp"
+%><%
+  }
+%>
+<%
+  if (phr->action == NEW_SRV_ACTION_VIEW_SUBMISSIONS && start_time > 0) {
+%><%@include "unpriv_main_runs.csp"
+%><%
+  }
+%>
+<%
+  if (phr->action == NEW_SRV_ACTION_VIEW_CLAR_SUBMIT && !cs->clients_suspended) {
+%><%@include "unpriv_main_clar_submit.csp"
+%><%
+  }
+%>
+<%
+  if (phr->action == NEW_SRV_ACTION_VIEW_CLARS && !global->disable_clars) {
+%><%@include "unpriv_main_clars.csp"
+%><%
+  }
+%>
+<%
+  if (phr->action == NEW_SRV_ACTION_VIEW_SETTINGS) {
+%><%@include "unpriv_main_settings.csp"
+%><%
+  }
+%>
+<%
+  /* new problem navigation */
+  if (global->problem_navigation > 0 && global->vertical_navigation > 0 && start_time > 0 && stop_time <= 0) {
+%><%
+    // vertical navigation bar
+%></div></td><td class="b0" id="probNavRightList" valign="top"><%
+    prev_group_name[0] = 0;
+
+    for (i = 1, j = 0; i <= cs->max_prob; i++) {
+      if (!(prob = cs->probs[i])) continue;
+      if (!(prob_status[i] & PROB_STATUS_TABABLE)) continue;
+
+      if (prob->group_name[0] && strcmp(prob->group_name, prev_group_name)) {
+%><div class="probDisabled"><s:v value="prob->group_name" escape="false" /></div><%
+        snprintf(prev_group_name, sizeof(prev_group_name), "%s", prob->group_name);
+      }
+%><%
+      if (i == prob_id) {
+%><div class="probCurrent"><%
+      } else if (!all_attempts[i]) {
+%><div class="probEmpty"><%
+      } else if (pending_flag[i] || trans_flag[i]) {
+%><div class="probTrans"><%
+      } else if (accepted_flag[i] || solved_flag[i] || pr_flag[i]) {
+%><div class="probOk"><%
+      } else if (prob->disable_user_submit > 0) {
+%><div class="probDisabled"><%
+      } else {
+%><div class="probBad"><%
+      }
+%><s:url name="ProblemUrl" ac="view-problem-submit"><s:param name="prob_id" value="i" /></s:url><%
+%><s:a class="tab" url="ProblemUrl"><s:v value="prob->short_name" escape="false" /></s:a></div><%
+      j++;
+    }
+%></td></tr></table>
+<%
+  } else if (global->problem_navigation > 0 && start_time > 0 && stop_time <= 0) {
+%><%
+    // bottom navigation bar
+%></div></td></tr>
+<tr id="probNavBottomList"><td width="100%" class="nBottomNavList"><ul class="nBottomNavList"><%
+    for (i = 1; i <= cs->max_prob; i++) {
+      if (!(prob = cs->probs[i])) continue;
+      if (!(prob_status[i] & PROB_STATUS_TABABLE)) continue;
+%><%
+      if (i == upper_tab_id) {
+%><li id="nBottomNavSelected"><%
+      } else {
+%><li><%
+      }
+%><%
+      if (i == upper_tab_id) {
+%><div class="nProbCurrent"><%
+      } else if (!all_attempts[i]) {
+%><div class="nProbEmpty"><%
+      } else if (pending_flag[i] || trans_flag[i]) {
+%><div class="nProbTrans"><%
+      } else if (accepted_flag[i] || solved_flag[i] || pr_flag[i]) {
+%><div class="nProbOk"><%
+      } else if (prob->disable_user_submit > 0) {
+%><div class="nProbDisabled"><%
+      } else {
+%><div class="nProbBad"><%
+      }
+%><s:url name="ProblemUrl" ac="view-problem-submit"><s:param name="prob_id" value="i" /></s:url><%
+%><s:a class="tab" url="ProblemUrl"><s:v value="prob->short_name" escape="false" /></s:a><%
+%></div></li><%
+    }
+%></ul></td></tr></table>
+<%
+  }
+%><%@include "unpriv_footer.csp"
+%><%
+  l10n_setlocale(0);
+//cleanup:;
+  html_armor_free(&ab);
+%>
