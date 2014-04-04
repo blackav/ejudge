@@ -40,11 +40,7 @@ static const unsigned char csp_str36[21] = "</td></tr>\n</table>\n";
 static const unsigned char csp_str37[7] = "<hr/>\n";
 static const unsigned char csp_str38[18] = "\n</body>\n</html>\n";
 
-
-#line 2 "priv_download_runs_confirmation_page.csp"
 /* $Id$ */
-
-#line 2 "priv_includes.csp"
 #include "new-server.h"
 #include "new_server_pi.h"
 #include "new_server_proto.h"
@@ -86,8 +82,6 @@ csp_get_priv_download_runs_confirmation_page(void)
 
 int csp_view_priv_download_runs_confirmation_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 {
-
-#line 2 "priv_stdvars.csp"
 int retval __attribute__((unused)) = 0;
   struct contest_extra *extra __attribute__((unused)) = phr->extra;
   serve_state_t cs __attribute__((unused)) = extra?extra->serve_state:NULL;
@@ -95,8 +89,6 @@ int retval __attribute__((unused)) = 0;
   struct html_armor_buffer ab __attribute__((unused)) = HTML_ARMOR_INITIALIZER;
   unsigned char hbuf[1024] __attribute__((unused));
   const unsigned char *sep __attribute__((unused)) = NULL;
-
-#line 9 "priv_download_runs_confirmation_page.csp"
 unsigned long *mask = 0, mval;
   size_t mask_size = 0;
   const unsigned char *mask_size_str = 0;
@@ -221,7 +213,7 @@ fwrite(csp_str34, 1, 22, out_f);
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_DOWNLOAD_ARCHIVE_2, NULL), out_f);
 fwrite(csp_str35, 1, 19, out_f);
 fputs("<a href=\"", out_f);
-ns_url_2(out_f, phr, NEW_SRV_ACTION_MAIN_PAGE);
+sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_MAIN_PAGE);
 fputs("\">", out_f);
 fputs(_("Main page"), out_f);
 fputs("</a>", out_f);
@@ -230,8 +222,6 @@ fputs("</form>", out_f);
 fwrite(csp_str37, 1, 6, out_f);
 write_copyright_short(out_f);
 fwrite(csp_str38, 1, 17, out_f);
-
-#line 74 "priv_download_runs_confirmation_page.csp"
 l10n_setlocale(0);
 
  cleanup:

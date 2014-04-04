@@ -25,11 +25,7 @@ static const unsigned char csp_str21[10] = "\n</table>";
 static const unsigned char csp_str22[7] = "<hr/>\n";
 static const unsigned char csp_str23[18] = "\n</body>\n</html>\n";
 
-
-#line 2 "priv_online_users_page.csp"
 /* $Id$ */
-
-#line 2 "priv_includes.csp"
 #include "new-server.h"
 #include "new_server_pi.h"
 #include "new_server_proto.h"
@@ -71,8 +67,6 @@ csp_get_priv_online_users_page(void)
 
 int csp_view_priv_online_users_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 {
-
-#line 2 "priv_stdvars.csp"
 int retval __attribute__((unused)) = 0;
   struct contest_extra *extra __attribute__((unused)) = phr->extra;
   serve_state_t cs __attribute__((unused)) = extra?extra->serve_state:NULL;
@@ -80,8 +74,6 @@ int retval __attribute__((unused)) = 0;
   struct html_armor_buffer ab __attribute__((unused)) = HTML_ARMOR_INITIALIZER;
   unsigned char hbuf[1024] __attribute__((unused));
   const unsigned char *sep __attribute__((unused)) = NULL;
-
-#line 9 "priv_online_users_page.csp"
 int i, max_user_id, j, serial = 1;
   struct last_access_info *ai;
   struct teamdb_export td;
@@ -127,8 +119,6 @@ fputs(_("User name"), out_f);
 fwrite(csp_str10, 1, 29, out_f);
 fputs(_("IP address"), out_f);
 fwrite(csp_str11, 1, 16, out_f);
-
-#line 28 "priv_online_users_page.csp"
 if (cs->global->disable_user_database > 0) {
     max_user_id = run_get_max_user_id(cs->runlog_state);
   } else {
@@ -148,40 +138,26 @@ fprintf(out_f, "%d", (int)(i));
 fwrite(csp_str13, 1, 29, out_f);
 fputs(html_armor_buf(&ab, (td.login)), out_f);
 fwrite(csp_str14, 1, 6, out_f);
-
-#line 45 "priv_online_users_page.csp"
 if (td.name && *td.name) {
 fwrite(csp_str15, 1, 28, out_f);
 fputs(html_armor_buf(&ab, (td.name)), out_f);
 fwrite(csp_str16, 1, 11, out_f);
-
-#line 47 "priv_online_users_page.csp"
 } else {
 fwrite(csp_str17, 1, 27, out_f);
 fputs(_("Not set"), out_f);
 fwrite(csp_str18, 1, 10, out_f);
-
-#line 49 "priv_online_users_page.csp"
 }
 fwrite(csp_str15, 1, 28, out_f);
 fprintf(out_f, "%s", xml_unparse_ipv6(&(ai->ip)));
-
-#line 50 "priv_online_users_page.csp"
 if (ai->ssl) {
 fwrite(csp_str19, 1, 4, out_f);
-
-#line 50 "priv_online_users_page.csp"
 }
 fwrite(csp_str20, 1, 21, out_f);
-
-#line 52 "priv_online_users_page.csp"
 }
 fwrite(csp_str21, 1, 9, out_f);
 fwrite(csp_str22, 1, 6, out_f);
 write_copyright_short(out_f);
 fwrite(csp_str23, 1, 17, out_f);
-
-#line 55 "priv_online_users_page.csp"
 l10n_setlocale(0);
 cleanup:
   html_armor_free(&ab);

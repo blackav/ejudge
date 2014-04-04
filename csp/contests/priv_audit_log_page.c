@@ -22,11 +22,7 @@ static const unsigned char csp_str18[3] = "\n\n";
 static const unsigned char csp_str19[7] = "<hr/>\n";
 static const unsigned char csp_str20[18] = "\n</body>\n</html>\n";
 
-
-#line 2 "priv_audit_log_page.csp"
 /* $Id: priv_assign_cyphers_page.csp 7996 2014-03-18 13:33:03Z cher $ */
-
-#line 2 "priv_includes.csp"
 #include "new-server.h"
 #include "new_server_pi.h"
 #include "new_server_proto.h"
@@ -49,8 +45,6 @@ static const unsigned char csp_str20[18] = "\n</body>\n</html>\n";
 #define _(x) gettext(x)
 
 #define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
-
-#line 5 "priv_audit_log_page.csp"
 #include "fileutl.h"
 
 #include <sys/types.h>
@@ -74,8 +68,6 @@ csp_get_priv_audit_log_page(void)
 
 int csp_view_priv_audit_log_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 {
-
-#line 2 "priv_stdvars.csp"
 int retval __attribute__((unused)) = 0;
   struct contest_extra *extra __attribute__((unused)) = phr->extra;
   serve_state_t cs __attribute__((unused)) = extra?extra->serve_state:NULL;
@@ -83,8 +75,6 @@ int retval __attribute__((unused)) = 0;
   struct html_armor_buffer ab __attribute__((unused)) = HTML_ARMOR_INITIALIZER;
   unsigned char hbuf[1024] __attribute__((unused));
   const unsigned char *sep __attribute__((unused)) = NULL;
-
-#line 15 "priv_audit_log_page.csp"
 int run_id;
   struct run_entry re;
   int rep_flag;
@@ -157,7 +147,7 @@ fwrite(csp_str9, 1, 1, out_f);
 fwrite(csp_str10, 1, 5, out_f);
 fwrite(csp_str11, 1, 44, out_f);
 fputs("<a href=\"", out_f);
-ns_url_2(out_f, phr, NEW_SRV_ACTION_MAIN_PAGE);
+sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_MAIN_PAGE);
 fputs("\">", out_f);
 fputs(_("Main page"), out_f);
 fputs("</a>", out_f);
@@ -202,27 +192,19 @@ fputs("\">", out_f);
 fputs(_("Audit log"), out_f);
 fputs("</a>", out_f);
 fwrite(csp_str13, 1, 28, out_f);
-
-#line 75 "priv_audit_log_page.csp"
 if (!audit_text || !*audit_text) {
 fwrite(csp_str14, 1, 7, out_f);
 fputs(_("Audit log is empty"), out_f);
 fwrite(csp_str15, 1, 9, out_f);
-
-#line 77 "priv_audit_log_page.csp"
 } else {
 fwrite(csp_str16, 1, 6, out_f);
 fputs(html_armor_buf(&ab, (audit_text)), out_f);
 fwrite(csp_str17, 1, 7, out_f);
-
-#line 79 "priv_audit_log_page.csp"
 }
 fwrite(csp_str18, 1, 2, out_f);
 fwrite(csp_str19, 1, 6, out_f);
 write_copyright_short(out_f);
 fwrite(csp_str20, 1, 17, out_f);
-
-#line 83 "priv_audit_log_page.csp"
 l10n_setlocale(0);
 cleanup:
   html_armor_free(&ab);

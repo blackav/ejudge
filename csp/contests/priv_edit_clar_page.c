@@ -42,11 +42,7 @@ static const unsigned char csp_str38[207] = "</textarea></p>\n\n<table class=\"b
 static const unsigned char csp_str39[7] = "<hr/>\n";
 static const unsigned char csp_str40[18] = "\n</body>\n</html>\n";
 
-
-#line 2 "priv_edit_clar_page.csp"
 /* $Id$ */
-
-#line 2 "priv_includes.csp"
 #include "new-server.h"
 #include "new_server_pi.h"
 #include "new_server_proto.h"
@@ -88,8 +84,6 @@ csp_get_priv_edit_clar_page(void)
 
 int csp_view_priv_edit_clar_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 {
-
-#line 2 "priv_stdvars.csp"
 int retval __attribute__((unused)) = 0;
   struct contest_extra *extra __attribute__((unused)) = phr->extra;
   serve_state_t cs __attribute__((unused)) = extra?extra->serve_state:NULL;
@@ -97,8 +91,6 @@ int retval __attribute__((unused)) = 0;
   struct html_armor_buffer ab __attribute__((unused)) = HTML_ARMOR_INITIALIZER;
   unsigned char hbuf[1024] __attribute__((unused));
   const unsigned char *sep __attribute__((unused)) = NULL;
-
-#line 9 "priv_edit_clar_page.csp"
 struct clar_entry_v1 clar;
   const unsigned char *from_str = NULL, *to_str = NULL;
   unsigned char from_buf[128], to_buf[128];
@@ -160,8 +152,6 @@ fwrite(csp_str11, 1, 5, out_f);
 fputs(_("Message"), out_f);
 fwrite(csp_str12, 1, 1, out_f);
 fprintf(out_f, "%d", (int)(clar_id));
-
-#line 43 "priv_edit_clar_page.csp"
 if (opcaps_check(phr->caps, OPCAP_VIEW_CLAR) >= 0) {
 fwrite(csp_str4, 1, 2, out_f);
 fputs("<a href=\"", out_f);
@@ -174,8 +164,6 @@ fputs("\">", out_f);
 fputs(_("View"), out_f);
 fputs("</a>", out_f);
 fwrite(csp_str13, 1, 1, out_f);
-
-#line 44 "priv_edit_clar_page.csp"
 }
 fwrite(csp_str14, 1, 7, out_f);
 fputs("<form method=\"post\" enctype=\"application/x-www-form-urlencoded\" action=\"", out_f);
@@ -205,8 +193,6 @@ fprintf(out_f, "%d", (int)(clar.nsec / 1000));
 fwrite(csp_str18, 1, 55, out_f);
 fprintf(out_f, "%zu", (size_t)(clar.size));
 fwrite(csp_str19, 1, 12, out_f);
-
-#line 55 "priv_edit_clar_page.csp"
 if (clar.from <= 0 && clar.to <= 0) {
     from_str = "judges";
     to_str = "all";
@@ -244,8 +230,6 @@ fputs("\"", out_f);
 }
 fputs(" />", out_f);
 fwrite(csp_str19, 1, 12, out_f);
-
-#line 81 "priv_edit_clar_page.csp"
 from_buf[0] = 0; from_str = from_buf;
   if (clar.j_from > 0) {
     if (!(from_str = teamdb_get_login(cs->teamdb_state, clar.j_from))) {
@@ -357,8 +341,6 @@ fputs("\"", out_f);
 }
 fputs(" />", out_f);
 fwrite(csp_str36, 1, 21, out_f);
-
-#line 108 "priv_edit_clar_page.csp"
 clar_get_text(cs->clarlog_state, clar_id, &msg_txt, &msg_len);
 fwrite(csp_str37, 1, 46, out_f);
 fputs(html_armor_buf(&ab, (msg_txt)), out_f);
@@ -368,8 +350,6 @@ fwrite(csp_str9, 1, 1, out_f);
 fwrite(csp_str39, 1, 6, out_f);
 write_copyright_short(out_f);
 fwrite(csp_str40, 1, 17, out_f);
-
-#line 120 "priv_edit_clar_page.csp"
 l10n_setlocale(0);
 cleanup:
   html_armor_free(&ab);

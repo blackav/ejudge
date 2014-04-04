@@ -26,11 +26,7 @@ static const unsigned char csp_str22[11] = "\n</table>\n";
 static const unsigned char csp_str23[7] = "<hr/>\n";
 static const unsigned char csp_str24[18] = "\n</body>\n</html>\n";
 
-
-#line 2 "priv_user_ips_page.csp"
 /* $Id$ */
-
-#line 2 "priv_includes.csp"
 #include "new-server.h"
 #include "new_server_pi.h"
 #include "new_server_proto.h"
@@ -55,8 +51,6 @@ static const unsigned char csp_str24[18] = "\n</body>\n</html>\n";
 #define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
 int csp_view_priv_user_ips_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 {
-
-#line 2 "priv_stdvars.csp"
 int retval __attribute__((unused)) = 0;
   struct contest_extra *extra __attribute__((unused)) = phr->extra;
   serve_state_t cs __attribute__((unused)) = extra?extra->serve_state:NULL;
@@ -64,8 +58,6 @@ int retval __attribute__((unused)) = 0;
   struct html_armor_buffer ab __attribute__((unused)) = HTML_ARMOR_INITIALIZER;
   unsigned char hbuf[1024] __attribute__((unused));
   const unsigned char *sep __attribute__((unused)) = NULL;
-
-#line 8 "priv_user_ips_page.csp"
 PrivViewUserIPsPage *pp = (PrivViewUserIPsPage*) pg;
     int i, max_user_id, serial = 1, j;
     PrivUserIPItem *ui;
@@ -112,8 +104,6 @@ fputs(_("User name"), out_f);
 fwrite(csp_str10, 1, 29, out_f);
 fputs(_("IP addresses"), out_f);
 fwrite(csp_str11, 1, 16, out_f);
-
-#line 29 "priv_user_ips_page.csp"
 if (cs->global->disable_user_database > 0) {
     max_user_id = run_get_max_user_id(cs->runlog_state);
   } else {
@@ -131,44 +121,28 @@ fprintf(out_f, "%d", (int)(i));
 fwrite(csp_str13, 1, 29, out_f);
 fputs(html_armor_buf(&ab, (td.login)), out_f);
 fwrite(csp_str14, 1, 6, out_f);
-
-#line 44 "priv_user_ips_page.csp"
 if (td.name && *td.name) {
 fwrite(csp_str15, 1, 28, out_f);
 fputs(html_armor_buf(&ab, (td.name)), out_f);
 fwrite(csp_str16, 1, 11, out_f);
-
-#line 46 "priv_user_ips_page.csp"
 } else {
 fwrite(csp_str17, 1, 27, out_f);
 fputs(_("Not set"), out_f);
 fwrite(csp_str18, 1, 10, out_f);
-
-#line 48 "priv_user_ips_page.csp"
 }
 fwrite(csp_str19, 1, 24, out_f);
-
-#line 49 "priv_user_ips_page.csp"
 for (j = 0; j < ui->ip_u; ++j) {
       if (j > 0) {
 fwrite(csp_str20, 1, 1, out_f);
-
-#line 50 "priv_user_ips_page.csp"
 }
 fprintf(out_f, "%s", xml_unparse_ipv6(&(ui->ips[j])));
-
-#line 50 "priv_user_ips_page.csp"
 }
 fwrite(csp_str21, 1, 16, out_f);
-
-#line 52 "priv_user_ips_page.csp"
 }
 fwrite(csp_str22, 1, 10, out_f);
 fwrite(csp_str23, 1, 6, out_f);
 write_copyright_short(out_f);
 fwrite(csp_str24, 1, 17, out_f);
-
-#line 56 "priv_user_ips_page.csp"
 l10n_setlocale(0);
 cleanup:
   html_armor_free(&ab);

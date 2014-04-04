@@ -28,11 +28,7 @@ static const unsigned char csp_str24[11] = "\n</table>\n";
 static const unsigned char csp_str25[7] = "<hr/>\n";
 static const unsigned char csp_str26[18] = "\n</body>\n</html>\n";
 
-
-#line 2 "priv_passwords_page.csp"
 /* $Id$ */
-
-#line 2 "priv_includes.csp"
 #include "new-server.h"
 #include "new_server_pi.h"
 #include "new_server_proto.h"
@@ -74,8 +70,6 @@ csp_get_priv_passwords_page(void)
 
 int csp_view_priv_passwords_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 {
-
-#line 2 "priv_stdvars.csp"
 int retval __attribute__((unused)) = 0;
   struct contest_extra *extra __attribute__((unused)) = phr->extra;
   serve_state_t cs __attribute__((unused)) = extra?extra->serve_state:NULL;
@@ -83,8 +77,6 @@ int retval __attribute__((unused)) = 0;
   struct html_armor_buffer ab __attribute__((unused)) = HTML_ARMOR_INITIALIZER;
   unsigned char hbuf[1024] __attribute__((unused));
   const unsigned char *sep __attribute__((unused)) = NULL;
-
-#line 9 "priv_passwords_page.csp"
 const unsigned char *s = NULL;
   int i, max_user_id, serial = 1;
   struct teamdb_export td;
@@ -143,8 +135,6 @@ fputs(_("Password"), out_f);
 fwrite(csp_str10, 1, 29, out_f);
 fputs(_("Location"), out_f);
 fwrite(csp_str11, 1, 16, out_f);
-
-#line 39 "priv_passwords_page.csp"
 max_user_id = teamdb_get_max_team_id(cs->teamdb_state);
   for (i = 1; i <= max_user_id; i++) {
     if (!teamdb_lookup(cs->teamdb_state, i)) continue;
@@ -167,63 +157,41 @@ fprintf(out_f, "%d", (int)(i));
 fwrite(csp_str14, 1, 33, out_f);
 fputs(html_armor_buf(&ab, (td.login)), out_f);
 fwrite(csp_str15, 1, 11, out_f);
-
-#line 59 "priv_passwords_page.csp"
 if (td.name && *td.name) {
 fwrite(csp_str16, 1, 28, out_f);
 fputs(html_armor_buf(&ab, (td.name)), out_f);
 fwrite(csp_str15, 1, 11, out_f);
-
-#line 61 "priv_passwords_page.csp"
 } else {
 fwrite(csp_str17, 1, 27, out_f);
 fputs(_("Not set"), out_f);
 fwrite(csp_str18, 1, 10, out_f);
-
-#line 63 "priv_passwords_page.csp"
 }
 fwrite(csp_str19, 1, 36, out_f);
-
-#line 65 "priv_passwords_page.csp"
 if (s && *s) {
 fwrite(csp_str16, 1, 28, out_f);
 fputs(html_armor_buf(&ab, (s)), out_f);
 fwrite(csp_str15, 1, 11, out_f);
-
-#line 67 "priv_passwords_page.csp"
 } else {
 fwrite(csp_str17, 1, 27, out_f);
 fputs(_("Not set"), out_f);
 fwrite(csp_str18, 1, 10, out_f);
-
-#line 69 "priv_passwords_page.csp"
 }
 fwrite(csp_str20, 1, 1, out_f);
-
-#line 70 "priv_passwords_page.csp"
 if (td.user->cnts0 && td.user->cnts0->location) {
 fwrite(csp_str21, 1, 24, out_f);
 fputs(html_armor_buf(&ab, (td.user->cnts0->location)), out_f);
 fwrite(csp_str22, 1, 6, out_f);
-
-#line 72 "priv_passwords_page.csp"
 } else {
 fwrite(csp_str17, 1, 27, out_f);
 fputs(_("Not set"), out_f);
 fwrite(csp_str18, 1, 10, out_f);
-
-#line 74 "priv_passwords_page.csp"
 }
 fwrite(csp_str23, 1, 11, out_f);
-
-#line 76 "priv_passwords_page.csp"
 }
 fwrite(csp_str24, 1, 10, out_f);
 fwrite(csp_str25, 1, 6, out_f);
 write_copyright_short(out_f);
 fwrite(csp_str26, 1, 17, out_f);
-
-#line 80 "priv_passwords_page.csp"
 l10n_setlocale(0);
 cleanup:
   html_armor_free(&ab);

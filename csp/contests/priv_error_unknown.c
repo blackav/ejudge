@@ -16,11 +16,7 @@ static const unsigned char csp_str12[15] = "</pre></font>\n";
 static const unsigned char csp_str13[7] = "<hr/>\n";
 static const unsigned char csp_str14[18] = "\n</body>\n</html>\n";
 
-
-#line 2 "priv_error_unknown.csp"
 /* $Id$ */
-
-#line 2 "priv_includes.csp"
 #include "new-server.h"
 #include "new_server_pi.h"
 #include "new_server_proto.h"
@@ -62,8 +58,6 @@ csp_get_priv_error_unknown(void)
 
 int csp_view_priv_error_unknown(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 {
-
-#line 2 "priv_stdvars.csp"
 int retval __attribute__((unused)) = 0;
   struct contest_extra *extra __attribute__((unused)) = phr->extra;
   serve_state_t cs __attribute__((unused)) = extra?extra->serve_state:NULL;
@@ -71,8 +65,6 @@ int retval __attribute__((unused)) = 0;
   struct html_armor_buffer ab __attribute__((unused)) = HTML_ARMOR_INITIALIZER;
   unsigned char hbuf[1024] __attribute__((unused));
   const unsigned char *sep __attribute__((unused)) = NULL;
-
-#line 9 "priv_error_unknown.csp"
 unsigned char title[1024];
   const unsigned char *error_title = NULL;
 
@@ -107,23 +99,17 @@ fwrite(csp_str6, 1, 3, out_f);
 fputs((title), out_f);
 fwrite(csp_str8, 1, 6, out_f);
 fwrite(csp_str9, 1, 1, out_f);
-
-#line 17 "priv_error_unknown.csp"
 if (phr->log_t && *phr->log_t) {
 fwrite(csp_str10, 1, 4, out_f);
 fputs(_("Additional information about this error:"), out_f);
 fwrite(csp_str11, 1, 28, out_f);
 fputs(html_armor_buf(&ab, (phr->log_t)), out_f);
 fwrite(csp_str12, 1, 14, out_f);
-
-#line 20 "priv_error_unknown.csp"
 }
 fwrite(csp_str9, 1, 1, out_f);
 fwrite(csp_str13, 1, 6, out_f);
 write_copyright_short(out_f);
 fwrite(csp_str14, 1, 17, out_f);
-
-#line 23 "priv_error_unknown.csp"
 l10n_setlocale(0);
   html_armor_free(&ab);
   return retval;
