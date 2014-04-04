@@ -104,21 +104,29 @@ fwrite("/ejudge/", 1, 8, out_f);
 fwrite(csp_str3, 1, 26, out_f);
 fputs((ns_unparse_role(phr->role)), out_f);
 fwrite(csp_str4, 1, 2, out_f);
+if ((phr->name_arm) ) {
 fputs((phr->name_arm), out_f);
+}
 fwrite(csp_str5, 1, 2, out_f);
 fprintf(out_f, "%d", (int)(phr->contest_id));
 fwrite(csp_str5, 1, 2, out_f);
+if ((extra->contest_arm) ) {
 fputs((extra->contest_arm), out_f);
+}
 fwrite(csp_str6, 1, 3, out_f);
 fputs((title), out_f);
 fwrite(csp_str7, 1, 28, out_f);
 fputs((ns_unparse_role(phr->role)), out_f);
 fwrite(csp_str4, 1, 2, out_f);
+if ((phr->name_arm) ) {
 fputs((phr->name_arm), out_f);
+}
 fwrite(csp_str5, 1, 2, out_f);
 fprintf(out_f, "%d", (int)(phr->contest_id));
 fwrite(csp_str5, 1, 2, out_f);
+if ((extra->contest_arm) ) {
 fputs((extra->contest_arm), out_f);
+}
 fwrite(csp_str6, 1, 3, out_f);
 fputs((title), out_f);
 fwrite(csp_str8, 1, 6, out_f);
