@@ -12703,6 +12703,7 @@ static const unsigned char * const external_unpriv_action_names[NEW_SRV_ACTION_L
   [NEW_SRV_ACTION_STANDINGS] = "unpriv_standings_page",
   [NEW_SRV_ACTION_CONTESTS_PAGE] = "unpriv_contests_page",
   [NEW_SRV_ACTION_VIEW_REPORT] = "unpriv_report_page",
+  [NEW_SRV_ACTION_MAIN_PAGE] = "unpriv_main_page",
 };
 
 static int
