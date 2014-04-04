@@ -33,11 +33,7 @@ static const unsigned char csp_str29[41] = "\n\n<table class=\"b0\"><tr>\n<td cl
 static const unsigned char csp_str30[7] = "<hr/>\n";
 static const unsigned char csp_str31[18] = "\n</body>\n</html>\n";
 
-
-#line 2 "priv_testing_queue_page.csp"
 /* $Id$ */
-
-#line 2 "priv_includes.csp"
 #include "new-server.h"
 #include "new_server_pi.h"
 #include "new_server_proto.h"
@@ -60,8 +56,6 @@ static const unsigned char csp_str31[18] = "\n</body>\n</html>\n";
 #define _(x) gettext(x)
 
 #define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
-
-#line 5 "priv_testing_queue_page.csp"
 #include "super_run_packet.h"
 int csp_view_priv_testing_queue_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr);
 static PageInterfaceOps page_ops =
@@ -82,8 +76,6 @@ csp_get_priv_testing_queue_page(void)
 
 int csp_view_priv_testing_queue_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 {
-
-#line 2 "priv_stdvars.csp"
 int retval __attribute__((unused)) = 0;
   struct contest_extra *extra __attribute__((unused)) = phr->extra;
   serve_state_t cs __attribute__((unused)) = extra?extra->serve_state:NULL;
@@ -91,8 +83,6 @@ int retval __attribute__((unused)) = 0;
   struct html_armor_buffer ab __attribute__((unused)) = HTML_ARMOR_INITIALIZER;
   unsigned char hbuf[1024] __attribute__((unused));
   const unsigned char *sep __attribute__((unused)) = NULL;
-
-#line 11 "priv_testing_queue_page.csp"
 const unsigned char *title = NULL;
   const struct section_global_data *global = cs->global;
   struct TestingQueueArray vec;
@@ -148,13 +138,13 @@ fputs((title), out_f);
 fwrite(csp_str8, 1, 6, out_f);
 fwrite(csp_str9, 1, 39, out_f);
 fputs("<a href=\"", out_f);
-ns_url_2(out_f, phr, NEW_SRV_ACTION_MAIN_PAGE);
+sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_MAIN_PAGE);
 fputs("\">", out_f);
 fputs(_("Main page"), out_f);
 fputs("</a>", out_f);
 fwrite(csp_str10, 1, 21, out_f);
 fputs("<a href=\"", out_f);
-ns_url_2(out_f, phr, NEW_SRV_ACTION_VIEW_TESTING_QUEUE);
+sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_VIEW_TESTING_QUEUE);
 fputs("\">", out_f);
 fputs(_("Refresh"), out_f);
 fputs("</a>", out_f);
@@ -178,8 +168,6 @@ fputs(_("Create time"), out_f);
 fwrite(csp_str13, 1, 29, out_f);
 fputs(_("Actions"), out_f);
 fwrite(csp_str16, 1, 16, out_f);
-
-#line 59 "priv_testing_queue_page.csp"
 for (i = 0; i < vec.u; ++i) {
     const struct super_run_in_global_packet *srgp = vec.v[i].packet->global;
     const struct super_run_in_problem_packet *srpp = vec.v[i].packet->problem;
@@ -197,66 +185,38 @@ fprintf(out_f, "%d", (int)(vec.v[i].priority));
 fwrite(csp_str18, 1, 29, out_f);
 fprintf(out_f, "%d", (int)(srgp->run_id));
 fwrite(csp_str19, 1, 6, out_f);
-
-#line 72 "priv_testing_queue_page.csp"
 if (srgp->contest_id == cnts->id) {
 fwrite(csp_str20, 1, 24, out_f);
-
-#line 74 "priv_testing_queue_page.csp"
 prob_id = srpp->id;
       if (prob_id > 0 && prob_id <= cs->max_prob && cs->probs[prob_id]) {
 fputs((cs->probs[prob_id]->short_name), out_f);
-
-#line 77 "priv_testing_queue_page.csp"
 } else {
 fwrite(csp_str21, 1, 8, out_f);
 fprintf(out_f, "%d", (int)(prob_id));
-
-#line 79 "priv_testing_queue_page.csp"
 }
 fwrite(csp_str19, 1, 6, out_f);
-
-#line 81 "priv_testing_queue_page.csp"
 user_id = srgp->user_id;
 fwrite(csp_str20, 1, 24, out_f);
 fputs(html_armor_buf(&ab, (teamdb_get_name_2(cs->teamdb_state, user_id))), out_f);
 fwrite(csp_str19, 1, 6, out_f);
-
-#line 83 "priv_testing_queue_page.csp"
 } else {
 fwrite(csp_str20, 1, 24, out_f);
-
-#line 85 "priv_testing_queue_page.csp"
 if (srpp->short_name && srpp->short_name[0]) {
 fputs(html_armor_buf(&ab, (srpp->short_name)), out_f);
-
-#line 87 "priv_testing_queue_page.csp"
 } else {
 fwrite(csp_str21, 1, 8, out_f);
 fprintf(out_f, "%d", (int)(srpp->id));
-
-#line 89 "priv_testing_queue_page.csp"
 }
 fwrite(csp_str18, 1, 29, out_f);
-
-#line 92 "priv_testing_queue_page.csp"
 if (srgp->user_name && srgp->user_name[0]) {
 fputs(html_armor_buf(&ab, (srgp->user_name)), out_f);
-
-#line 94 "priv_testing_queue_page.csp"
 } else if (srgp->user_login && srgp->user_login[0]) {
 fputs(html_armor_buf(&ab, (srgp->user_login)), out_f);
-
-#line 96 "priv_testing_queue_page.csp"
 } else {
 fwrite(csp_str22, 1, 5, out_f);
 fprintf(out_f, "%d", (int)(srgp->user_id));
-
-#line 98 "priv_testing_queue_page.csp"
 }
 fwrite(csp_str19, 1, 6, out_f);
-
-#line 100 "priv_testing_queue_page.csp"
 }
 fwrite(csp_str20, 1, 24, out_f);
 fputs(html_armor_buf(&ab, (arch)), out_f);
@@ -298,32 +258,30 @@ fputs("\">", out_f);
 fwrite(csp_str26, 1, 4, out_f);
 fputs("</a>", out_f);
 fwrite(csp_str27, 1, 16, out_f);
-
-#line 113 "priv_testing_queue_page.csp"
 }
 fwrite(csp_str28, 1, 10, out_f);
 fputs("</form>", out_f);
 fwrite(csp_str29, 1, 40, out_f);
 fputs("<a href=\"", out_f);
-ns_url_2(out_f, phr, NEW_SRV_ACTION_MAIN_PAGE);
+sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_MAIN_PAGE);
 fputs("\">", out_f);
 fputs(_("Main page"), out_f);
 fputs("</a>", out_f);
 fwrite(csp_str10, 1, 21, out_f);
 fputs("<a href=\"", out_f);
-ns_url_2(out_f, phr, NEW_SRV_ACTION_TESTING_DELETE_ALL);
+sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_TESTING_DELETE_ALL);
 fputs("\">", out_f);
 fputs(_("Delete all"), out_f);
 fputs("</a>", out_f);
 fwrite(csp_str10, 1, 21, out_f);
 fputs("<a href=\"", out_f);
-ns_url_2(out_f, phr, NEW_SRV_ACTION_TESTING_UP_ALL);
+sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_TESTING_UP_ALL);
 fputs("\">", out_f);
 fputs(_("Up all"), out_f);
 fputs("</a>", out_f);
 fwrite(csp_str10, 1, 21, out_f);
 fputs("<a href=\"", out_f);
-ns_url_2(out_f, phr, NEW_SRV_ACTION_TESTING_DOWN_ALL);
+sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_TESTING_DOWN_ALL);
 fputs("\">", out_f);
 fputs(_("Down all"), out_f);
 fputs("</a>", out_f);
@@ -331,8 +289,6 @@ fwrite(csp_str11, 1, 21, out_f);
 fwrite(csp_str30, 1, 6, out_f);
 write_copyright_short(out_f);
 fwrite(csp_str31, 1, 17, out_f);
-
-#line 126 "priv_testing_queue_page.csp"
 l10n_setlocale(0);
 cleanup:
   for (i = 0; i < vec.u; ++i) {

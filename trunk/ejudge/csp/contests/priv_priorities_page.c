@@ -27,11 +27,7 @@ static const unsigned char csp_str23[7] = "</p>\n\n";
 static const unsigned char csp_str24[7] = "<hr/>\n";
 static const unsigned char csp_str25[18] = "\n</body>\n</html>\n";
 
-
-#line 2 "priv_priorities_page.csp"
 /* $Id$ */
-
-#line 2 "priv_includes.csp"
 #include "new-server.h"
 #include "new_server_pi.h"
 #include "new_server_proto.h"
@@ -54,8 +50,6 @@ static const unsigned char csp_str25[18] = "\n</body>\n</html>\n";
 #define _(x) gettext(x)
 
 #define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
-
-#line 5 "priv_priorities_page.csp"
 static int
 fix_prio(int val)
 {
@@ -82,8 +76,6 @@ csp_get_priv_priorities_page(void)
 
 int csp_view_priv_priorities_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 {
-
-#line 2 "priv_stdvars.csp"
 int retval __attribute__((unused)) = 0;
   struct contest_extra *extra __attribute__((unused)) = phr->extra;
   serve_state_t cs __attribute__((unused)) = extra?extra->serve_state:NULL;
@@ -91,8 +83,6 @@ int retval __attribute__((unused)) = 0;
   struct html_armor_buffer ab __attribute__((unused)) = HTML_ARMOR_INITIALIZER;
   unsigned char hbuf[1024] __attribute__((unused));
   const unsigned char *sep __attribute__((unused)) = NULL;
-
-#line 17 "priv_priorities_page.csp"
 const struct section_global_data *global = cs->global;
     const struct section_problem_data *prob;
     int glob_prio, prob_prio, static_prio, local_prio, total_prio;
@@ -152,8 +142,6 @@ fputs(_("Priority adjustment"), out_f);
 fwrite(csp_str11, 1, 29, out_f);
 fputs(_("Total priority"), out_f);
 fwrite(csp_str12, 1, 16, out_f);
-
-#line 44 "priv_priorities_page.csp"
 for (prob_id = 1;
        prob_id <= cs->max_prob && prob_id < EJ_SERVE_STATE_TOTAL_PROBS;
        ++prob_id) {
@@ -181,8 +169,6 @@ fprintf(out_f, "%d", (int)(local_prio));
 fwrite(csp_str17, 1, 33, out_f);
 fprintf(out_f, "%d", (int)(total_prio));
 fwrite(csp_str18, 1, 16, out_f);
-
-#line 63 "priv_priorities_page.csp"
 }
 fwrite(csp_str19, 1, 53, out_f);
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_MAIN_PAGE, _("Main page")), out_f);
@@ -196,8 +182,6 @@ fwrite(csp_str23, 1, 6, out_f);
 fwrite(csp_str24, 1, 6, out_f);
 write_copyright_short(out_f);
 fwrite(csp_str25, 1, 17, out_f);
-
-#line 78 "priv_priorities_page.csp"
 l10n_setlocale(0);
 cleanup:
   html_armor_free(&ab);

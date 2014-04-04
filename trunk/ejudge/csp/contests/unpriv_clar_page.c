@@ -69,11 +69,7 @@ static const unsigned char csp_str65[15] = "</pre>\n<hr/>\n\n";
 static const unsigned char csp_str66[18] = "<div id=\"footer\">";
 static const unsigned char csp_str67[38] = "</div>\n</div>\n</div>\n</body>\n</html>\n";
 
-
-#line 2 "unpriv_clar_page.csp"
 /* $Id$ */
-
-#line 2 "unpriv_includes.csp"
 #include "new-server.h"
 #include "new_server_pi.h"
 #include "new_server_proto.h"
@@ -106,8 +102,6 @@ unpriv_load_html_style(struct http_request_info *phr,
 void
 do_json_user_state(FILE *fout, const serve_state_t cs, int user_id,
                    int need_reload_check);
-
-#line 5 "unpriv_clar_page.csp"
 #include "team_extra.h"
 int csp_view_unpriv_clar_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr);
 static PageInterfaceOps page_ops =
@@ -128,8 +122,6 @@ csp_get_unpriv_clar_page(void)
 
 int csp_view_unpriv_clar_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 {
-
-#line 2 "unpriv_stdvars.csp"
 int retval __attribute__((unused)) = 0;
   struct contest_extra *extra __attribute__((unused)) = phr?phr->extra:NULL;
   serve_state_t cs __attribute__((unused)) = extra?extra->serve_state:NULL;
@@ -147,8 +139,6 @@ int retval __attribute__((unused)) = 0;
   struct sformat_extra_data fe __attribute__((unused));
   const struct section_global_data *global __attribute__((unused)) = cs?cs->global:NULL;
   time_t start_time __attribute__((unused)) = 0, stop_time __attribute__((unused)) = 0;
-
-#line 11 "unpriv_clar_page.csp"
 int n, clar_id, show_astr_time;
   const unsigned char *s;
   size_t clar_size = 0;
@@ -235,17 +225,11 @@ fputs((phr->self_url), out_f);
 fwrite(csp_str8, 1, 22, out_f);
 fputs((phr->script_name), out_f);
 fwrite(csp_str9, 1, 34, out_f);
-
-#line 14 "unpriv_header.csp"
 #if defined CONF_ENABLE_AJAX && CONF_ENABLE_AJAX
   if (cs && phr->user_id > 0 ) {
 fwrite(csp_str10, 1, 18, out_f);
-
-#line 17 "unpriv_header.csp"
 do_json_user_state(out_f, cs, phr->user_id, 0);
 fwrite(csp_str11, 1, 2, out_f);
-
-#line 19 "unpriv_header.csp"
 }
 #endif
 fwrite(csp_str12, 1, 29, out_f);
@@ -259,76 +243,52 @@ fputs(_("REFRESH PAGE MANUALLY!"), out_f);
 fwrite(csp_str16, 1, 42, out_f);
 fwrite("/ejudge/", 1, 8, out_f);
 fwrite(csp_str17, 1, 37, out_f);
-
-#line 27 "unpriv_header.csp"
 if (phr) {
+if ((phr->name_arm) ) {
 fputs((phr->name_arm), out_f);
-
-#line 27 "unpriv_header.csp"
+}
 }
 fwrite(csp_str18, 1, 2, out_f);
-
-#line 27 "unpriv_header.csp"
 if (extra) {
+if ((extra->contest_arm) ) {
 fputs((extra->contest_arm), out_f);
-
-#line 27 "unpriv_header.csp"
+}
 }
 fwrite(csp_str19, 1, 3, out_f);
 fputs((title), out_f);
 fwrite(csp_str20, 1, 21, out_f);
-
-#line 29 "unpriv_header.csp"
 #if defined CONF_ENABLE_AJAX && CONF_ENABLE_AJAX
 fwrite(csp_str21, 1, 22, out_f);
-
-#line 31 "unpriv_header.csp"
 #endif
 fwrite(csp_str22, 1, 61, out_f);
-
-#line 33 "unpriv_header.csp"
 if (phr) {
+if ((phr->name_arm) ) {
 fputs((phr->name_arm), out_f);
-
-#line 33 "unpriv_header.csp"
+}
 }
 fwrite(csp_str18, 1, 2, out_f);
-
-#line 33 "unpriv_header.csp"
 if (extra) {
+if ((extra->contest_arm) ) {
 fputs((extra->contest_arm), out_f);
-
-#line 33 "unpriv_header.csp"
+}
 }
 fwrite(csp_str19, 1, 3, out_f);
 fputs((title), out_f);
 fwrite(csp_str23, 1, 7, out_f);
 fwrite(csp_str24, 1, 51, out_f);
-
-#line 3 "unpriv_menu.csp"
 shown_items = 0;
   if (cnts && cs && cnts->exam_mode <= 0) {
 fwrite(csp_str25, 1, 51, out_f);
-
-#line 6 "unpriv_menu.csp"
 if (phr->action != NEW_SRV_ACTION_VIEW_SETTINGS) {
 fputs("<a class=\"menu\" href=\"", out_f);
-ns_url_2(out_f, phr, NEW_SRV_ACTION_VIEW_SETTINGS);
+sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_VIEW_SETTINGS);
 fputs("\">", out_f);
-
-#line 8 "unpriv_menu.csp"
 }
 fputs(_("Settings"), out_f);
-
-#line 10 "unpriv_menu.csp"
 if (phr->action != NEW_SRV_ACTION_VIEW_SETTINGS) {
 fputs("</a>", out_f);
-
-#line 12 "unpriv_menu.csp"
 }
 fwrite(csp_str26, 1, 11, out_f);
-
-#line 14 "unpriv_menu.csp"
 shown_items++;
 
     // reg data edit
@@ -344,139 +304,77 @@ shown_items++;
     // logout
 fwrite(csp_str25, 1, 51, out_f);
 fputs("<a class=\"menu\" href=\"", out_f);
-ns_url_2(out_f, phr, NEW_SRV_ACTION_LOGOUT);
+sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_LOGOUT);
 fputs("\">", out_f);
-
-#line 28 "unpriv_menu.csp"
 if (cnts->exam_mode) {
 fputs(_("Finish session"), out_f);
-
-#line 30 "unpriv_menu.csp"
 } else {
 fputs(_("Logout"), out_f);
-
-#line 32 "unpriv_menu.csp"
 }
 fwrite(csp_str18, 1, 2, out_f);
 fputs((phr->login), out_f);
 fwrite(csp_str27, 1, 16, out_f);
-
-#line 34 "unpriv_menu.csp"
 shown_items++;
   }
 
   if (!shown_items) {
 fwrite(csp_str28, 1, 68, out_f);
-
-#line 39 "unpriv_menu.csp"
 }
 fwrite(csp_str29, 1, 170, out_f);
-
-#line 45 "unpriv_menu.csp"
 if (phr->action != NEW_SRV_ACTION_MAIN_PAGE) {
 fputs("<a class=\"menu\" href=\"", out_f);
-ns_url_2(out_f, phr, NEW_SRV_ACTION_MAIN_PAGE);
+sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_MAIN_PAGE);
 fputs("\">", out_f);
-
-#line 47 "unpriv_menu.csp"
 }
-
-#line 49 "unpriv_menu.csp"
 if (cnts && cnts->exam_mode) {
 fputs(_("Instructions"), out_f);
-
-#line 51 "unpriv_menu.csp"
 } else {
 fputs(_("Info"), out_f);
-
-#line 53 "unpriv_menu.csp"
 }
-
-#line 55 "unpriv_menu.csp"
 if (phr->action != NEW_SRV_ACTION_MAIN_PAGE) {
 fputs("</a>", out_f);
-
-#line 57 "unpriv_menu.csp"
 }
 fwrite(csp_str26, 1, 11, out_f);
-
-#line 59 "unpriv_menu.csp"
 if (global && global->is_virtual > 0 && ((start_time <= 0 && global->disable_virtual_start <= 0) || stop_time <= 0)) {
 fwrite(csp_str25, 1, 51, out_f);
-
-#line 61 "unpriv_menu.csp"
 if (phr->action != NEW_SRV_ACTION_VIEW_STARTSTOP) {
 fwrite(csp_str30, 1, 38, out_f);
-
-#line 63 "unpriv_menu.csp"
 }
-
-#line 65 "unpriv_menu.csp"
 if (start_time <= 0) {
       if (cnts->exam_mode) {
 fputs(_("Start exam"), out_f);
-
-#line 68 "unpriv_menu.csp"
 } else {
 fputs(_("Start virtual contest"), out_f);
-
-#line 70 "unpriv_menu.csp"
 }
     } else if (stop_time <= 0) {
       if (cnts->exam_mode) {
 fputs(_("Stop exam"), out_f);
-
-#line 74 "unpriv_menu.csp"
 } else {
 fputs(_("Stop virtual contest"), out_f);
-
-#line 76 "unpriv_menu.csp"
 }
     }
-
-#line 79 "unpriv_menu.csp"
 if (phr->action != NEW_SRV_ACTION_VIEW_STARTSTOP) {
 fputs("</a>", out_f);
-
-#line 81 "unpriv_menu.csp"
 }
 fwrite(csp_str26, 1, 11, out_f);
-
-#line 83 "unpriv_menu.csp"
 }
-
-#line 85 "unpriv_menu.csp"
 if (cnts && start_time > 0 && (cnts->exam_mode <= 0 || stop_time > 0)) {
 fwrite(csp_str25, 1, 51, out_f);
-
-#line 87 "unpriv_menu.csp"
 if (phr->action != NEW_SRV_ACTION_VIEW_PROBLEM_SUMMARY) {
 fputs("<a class=\"menu\" href=\"", out_f);
-ns_url_2(out_f, phr, NEW_SRV_ACTION_VIEW_PROBLEM_SUMMARY);
+sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_VIEW_PROBLEM_SUMMARY);
 fputs("\">", out_f);
-
-#line 89 "unpriv_menu.csp"
 }
 fputs(_("Summary"), out_f);
-
-#line 91 "unpriv_menu.csp"
 if (phr->action != NEW_SRV_ACTION_VIEW_PROBLEM_SUMMARY) {
 fputs("</a>", out_f);
-
-#line 93 "unpriv_menu.csp"
 }
 fwrite(csp_str26, 1, 11, out_f);
-
-#line 95 "unpriv_menu.csp"
 }
-
-#line 97 "unpriv_menu.csp"
 if (global && start_time > 0
       && (stop_time <= 0 || cnts->problems_url)
       && (global->problem_navigation <= 0 || cnts->problems_url)) {
 fwrite(csp_str25, 1, 51, out_f);
-
-#line 101 "unpriv_menu.csp"
 if (phr->action != NEW_SRV_ACTION_VIEW_PROBLEM_STATEMENTS) {
       if (cnts->problems_url) {
 fwrite(csp_str31, 1, 22, out_f);
@@ -484,93 +382,51 @@ fputs((cnts->problems_url), out_f);
 fwrite(csp_str32, 1, 18, out_f);
 fputs(_("Statements"), out_f);
 fwrite(csp_str33, 1, 4, out_f);
-
-#line 104 "unpriv_menu.csp"
 } else {
 fputs("<a class=\"menu\" href=\"", out_f);
-ns_url_2(out_f, phr, NEW_SRV_ACTION_VIEW_PROBLEM_STATEMENTS);
+sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_VIEW_PROBLEM_STATEMENTS);
 fputs("\">", out_f);
 fputs(_("Statements"), out_f);
 fputs("</a>", out_f);
-
-#line 106 "unpriv_menu.csp"
 }
     } else {
 fputs(_("Statements"), out_f);
-
-#line 109 "unpriv_menu.csp"
 }
 fwrite(csp_str26, 1, 11, out_f);
-
-#line 111 "unpriv_menu.csp"
 }
-
-#line 113 "unpriv_menu.csp"
 if (global && start_time > 0 && stop_time <= 0 && global->problem_navigation <= 0) {
 fwrite(csp_str25, 1, 51, out_f);
-
-#line 115 "unpriv_menu.csp"
 if (phr->action != NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT) {
 fputs("<a class=\"menu\" href=\"", out_f);
-ns_url_2(out_f, phr, NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT);
+sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT);
 fputs("\">", out_f);
-
-#line 117 "unpriv_menu.csp"
 }
 fputs(_("Submit"), out_f);
-
-#line 119 "unpriv_menu.csp"
 if (phr->action != NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT) {
 fputs("</a>", out_f);
-
-#line 121 "unpriv_menu.csp"
 }
 fwrite(csp_str26, 1, 11, out_f);
-
-#line 123 "unpriv_menu.csp"
 }
-
-#line 125 "unpriv_menu.csp"
 if (cnts && start_time > 0 && (cnts->exam_mode <= 0 || stop_time > 0)) {
 fwrite(csp_str25, 1, 51, out_f);
-
-#line 127 "unpriv_menu.csp"
 if (phr->action != NEW_SRV_ACTION_VIEW_SUBMISSIONS) {
 fputs("<a class=\"menu\" href=\"", out_f);
-ns_url_2(out_f, phr, NEW_SRV_ACTION_VIEW_SUBMISSIONS);
+sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_VIEW_SUBMISSIONS);
 fputs("\">", out_f);
-
-#line 129 "unpriv_menu.csp"
 }
 fputs(_("Submissions"), out_f);
-
-#line 131 "unpriv_menu.csp"
 if (phr->action != NEW_SRV_ACTION_VIEW_SUBMISSIONS) {
 fputs("</a>", out_f);
-
-#line 133 "unpriv_menu.csp"
 }
 fwrite(csp_str26, 1, 11, out_f);
-
-#line 135 "unpriv_menu.csp"
 }
-
-#line 137 "unpriv_menu.csp"
 if (global && start_time > 0 && global->disable_user_standings <= 0) {
 fwrite(csp_str25, 1, 51, out_f);
-
-#line 139 "unpriv_menu.csp"
 if (phr->action == NEW_SRV_ACTION_STANDINGS) {
-
-#line 141 "unpriv_menu.csp"
 if (cnts->personal) {
 fputs(_("User standings"), out_f);
-
-#line 143 "unpriv_menu.csp"
 } else {
 fputs(_("Standings"), out_f);
-
-#line 145 "unpriv_menu.csp"
 }
     } else {
       if (cnts->standings_url) {
@@ -585,100 +441,56 @@ fputs(_("Standings"), out_f);
 fwrite(csp_str31, 1, 22, out_f);
 fputs((hbuf), out_f);
 fwrite(csp_str32, 1, 18, out_f);
-
-#line 157 "unpriv_menu.csp"
 if (cnts->personal) {
 fputs(_("User standings"), out_f);
-
-#line 159 "unpriv_menu.csp"
 } else {
 fputs(_("Standings"), out_f);
-
-#line 161 "unpriv_menu.csp"
 }
 fwrite(csp_str33, 1, 4, out_f);
-
-#line 163 "unpriv_menu.csp"
 } else {
 fputs("<a class=\"menu\" href=\"", out_f);
-ns_url_2(out_f, phr, NEW_SRV_ACTION_STANDINGS);
+sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_STANDINGS);
 fputs("\">", out_f);
-
-#line 165 "unpriv_menu.csp"
 if (cnts->personal) {
 fputs(_("User standings"), out_f);
-
-#line 167 "unpriv_menu.csp"
 } else {
 fputs(_("Standings"), out_f);
-
-#line 169 "unpriv_menu.csp"
 }
 fputs("</a>", out_f);
-
-#line 171 "unpriv_menu.csp"
 }
     }
 fwrite(csp_str26, 1, 11, out_f);
-
-#line 174 "unpriv_menu.csp"
 }
-
-#line 176 "unpriv_menu.csp"
 if (global && global->disable_team_clars <= 0 && global->disable_clars <= 0 && start_time > 0
       && (stop_time <= 0 || (global->appeal_deadline > 0 && cs->current_time < global->appeal_deadline))) {
 fwrite(csp_str25, 1, 51, out_f);
-
-#line 179 "unpriv_menu.csp"
 if (phr->action != NEW_SRV_ACTION_VIEW_CLAR_SUBMIT) {
 fputs("<a class=\"menu\" href=\"", out_f);
-ns_url_2(out_f, phr, NEW_SRV_ACTION_VIEW_CLAR_SUBMIT);
+sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_VIEW_CLAR_SUBMIT);
 fputs("\">", out_f);
-
-#line 181 "unpriv_menu.csp"
 }
 fputs(_("Submit clar"), out_f);
-
-#line 183 "unpriv_menu.csp"
 if (phr->action != NEW_SRV_ACTION_VIEW_CLAR_SUBMIT) {
 fputs("</a>", out_f);
-
-#line 185 "unpriv_menu.csp"
 }
 fwrite(csp_str26, 1, 11, out_f);
-
-#line 187 "unpriv_menu.csp"
 }
-
-#line 189 "unpriv_menu.csp"
 if (global && global->disable_clars <= 0) {
 fwrite(csp_str25, 1, 51, out_f);
-
-#line 191 "unpriv_menu.csp"
 if (phr->action != NEW_SRV_ACTION_VIEW_CLARS) {
 fputs("<a class=\"menu\" href=\"", out_f);
-ns_url_2(out_f, phr, NEW_SRV_ACTION_VIEW_CLARS);
+sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_VIEW_CLARS);
 fputs("\">", out_f);
-
-#line 193 "unpriv_menu.csp"
 }
 fputs(_("Clars"), out_f);
-
-#line 195 "unpriv_menu.csp"
 if (phr->action != NEW_SRV_ACTION_VIEW_CLARS) {
 fputs("</a>", out_f);
-
-#line 197 "unpriv_menu.csp"
 }
 fwrite(csp_str26, 1, 11, out_f);
-
-#line 199 "unpriv_menu.csp"
 }
 fwrite(csp_str34, 1, 52, out_f);
 fwrite("/ejudge/", 1, 8, out_f);
 fwrite(csp_str35, 1, 44, out_f);
-
-#line 2 "unpriv_status.csp"
 run_get_times(cs->runlog_state, 0, &sched_time, &duration, 0, 0);
   if (duration > 0 && start_time && !stop_time && global->board_fog_time > 0)
     fog_start_time = start_time + duration - global->board_fog_time;
@@ -686,20 +498,12 @@ run_get_times(cs->runlog_state, 0, &sched_time, &duration, 0, 0);
   if (!cs->global->disable_clars || !cs->global->disable_team_clars)
     unread_clars = serve_count_unread_clars(cs, phr->user_id, start_time);
 fwrite(csp_str36, 1, 11, out_f);
-
-#line 9 "unpriv_status.csp"
 if (cs->clients_suspended) {
 fwrite(csp_str37, 1, 19, out_f);
-
-#line 11 "unpriv_status.csp"
 } else if (unread_clars > 0) {
 fwrite(csp_str38, 1, 21, out_f);
-
-#line 13 "unpriv_status.csp"
 } else {
 fwrite(csp_str39, 1, 18, out_f);
-
-#line 15 "unpriv_status.csp"
 }
 fwrite(csp_str40, 1, 40, out_f);
 {
@@ -707,119 +511,73 @@ fwrite(csp_str40, 1, 40, out_f);
   fprintf(out_f, "%02d:%02d:%02d", ptm->tm_hour, ptm->tm_min, ptm->tm_sec);
 }
 fwrite(csp_str41, 1, 6, out_f);
-
-#line 18 "unpriv_status.csp"
 if (unread_clars > 0) {
     fprintf(out_f, _(" / <b>%d unread message(s)</b>"),
             unread_clars);
   }
 fwrite(csp_str42, 1, 6, out_f);
-
-#line 23 "unpriv_status.csp"
 if (stop_time > 0) {
     if (duration > 0 && global->board_fog_time > 0
         && global->board_unfog_time > 0
         && cs->current_time < stop_time + global->board_unfog_time
         && !cs->standings_updated) {
 fputs(_("OVER (frozen)"), out_f);
-
-#line 29 "unpriv_status.csp"
 } else {
 fputs(_("OVER"), out_f);
-
-#line 31 "unpriv_status.csp"
 }
   } else if (start_time > 0) {
     if (fog_start_time > 0 && cs->current_time >= fog_start_time) {
       if (cnts->exam_mode) {
 fputs(_("EXAM IS RUNNING (frozen)"), out_f);
-
-#line 36 "unpriv_status.csp"
 } else {
 fputs(_("RUNNING (frozen)"), out_f);
-
-#line 38 "unpriv_status.csp"
 }
     } else {
       if (cnts->exam_mode) {
 fwrite(csp_str43, 1, 15, out_f);
-
-#line 42 "unpriv_status.csp"
 } else {
 fwrite(csp_str44, 1, 7, out_f);
-
-#line 44 "unpriv_status.csp"
 }
     }
   } else {
 fwrite(csp_str45, 1, 11, out_f);
-
-#line 48 "unpriv_status.csp"
 }
 fwrite(csp_str46, 1, 4, out_f);
-
-#line 50 "unpriv_status.csp"
 if (start_time > 0) {
     if (global->score_system == SCORE_OLYMPIAD && !global->is_virtual) {
 fwrite(csp_str47, 1, 5, out_f);
-
-#line 53 "unpriv_status.csp"
 if (cs->accepting_mode) {
 fputs(_("accepting"), out_f);
-
-#line 55 "unpriv_status.csp"
 } else if (!cs->testing_finished) {
 fputs(_("judging"), out_f);
-
-#line 57 "unpriv_status.csp"
 } else {
 fputs(_("judged"), out_f);
-
-#line 59 "unpriv_status.csp"
 }
 fwrite(csp_str46, 1, 4, out_f);
-
-#line 61 "unpriv_status.csp"
 }
   }
-
-#line 64 "unpriv_status.csp"
 if (cs->upsolving_mode) {
 fwrite(csp_str42, 1, 6, out_f);
 fputs(_("UPSOLVING"), out_f);
 fwrite(csp_str46, 1, 4, out_f);
-
-#line 66 "unpriv_status.csp"
 }
-
-#line 68 "unpriv_status.csp"
 if (cs->clients_suspended) {
 fwrite(csp_str48, 1, 24, out_f);
 fputs(_("clients suspended"), out_f);
 fwrite(csp_str49, 1, 11, out_f);
-
-#line 70 "unpriv_status.csp"
 }
-
-#line 72 "unpriv_status.csp"
 if (start_time > 0) {
     if (cs->testing_suspended) {
 fwrite(csp_str48, 1, 24, out_f);
 fputs(_("testing suspended"), out_f);
 fwrite(csp_str49, 1, 11, out_f);
-
-#line 75 "unpriv_status.csp"
 }
     if (cs->printing_suspended) {
 fwrite(csp_str48, 1, 24, out_f);
 fputs(_("printing suspended"), out_f);
 fwrite(csp_str49, 1, 11, out_f);
-
-#line 78 "unpriv_status.csp"
 }
   }
-
-#line 81 "unpriv_status.csp"
 if (!global->is_virtual && start_time <= 0 && sched_time > 0) {
 fwrite(csp_str50, 1, 3, out_f);
 fputs(_("Start at"), out_f);
@@ -828,11 +586,7 @@ fwrite(csp_str51, 1, 2, out_f);
   struct tm *ptm = localtime(&(sched_time));
   fprintf(out_f, "%02d:%02d:%02d", ptm->tm_hour, ptm->tm_min, ptm->tm_sec);
 }
-
-#line 83 "unpriv_status.csp"
 }
-
-#line 85 "unpriv_status.csp"
 if (start_time > 0 && stop_time <= 0 && duration > 0) {
     duration_str(0, start_time + duration - cs->current_time, 0, time_buf, 0);
 fwrite(csp_str50, 1, 3, out_f);
@@ -840,20 +594,12 @@ fputs(_("Remaining"), out_f);
 fwrite(csp_str52, 1, 26, out_f);
 fputs((time_buf), out_f);
 fwrite(csp_str41, 1, 6, out_f);
-
-#line 88 "unpriv_status.csp"
 }
 fwrite(csp_str53, 1, 42, out_f);
-
-#line 90 "unpriv_status.csp"
 if (global->disable_auto_refresh > 0) {
 fwrite(csp_str54, 1, 7, out_f);
-
-#line 92 "unpriv_status.csp"
 } else {
 fwrite(csp_str55, 1, 6, out_f);
-
-#line 94 "unpriv_status.csp"
 }
 fwrite(csp_str56, 1, 48, out_f);
 fputs(_("REFRESH"), out_f);
@@ -877,40 +623,26 @@ fprintf(out_f, "%zu", (size_t)(ce.size));
 fwrite(csp_str62, 1, 30, out_f);
 fputs(_("Sender"), out_f);
 fwrite(csp_str61, 1, 21, out_f);
-
-#line 89 "unpriv_clar_page.csp"
 if (!ce.from) {
 fwrite(csp_str63, 1, 3, out_f);
 fputs(_("judges"), out_f);
 fwrite(csp_str46, 1, 4, out_f);
-
-#line 91 "unpriv_clar_page.csp"
 } else {
 fputs(html_armor_buf(&ab, (teamdb_get_name(cs->teamdb_state, ce.from))), out_f);
-
-#line 93 "unpriv_clar_page.csp"
 }
 fwrite(csp_str62, 1, 30, out_f);
 fputs(_("To"), out_f);
 fwrite(csp_str61, 1, 21, out_f);
-
-#line 96 "unpriv_clar_page.csp"
 if (!ce.to && !ce.from) {
 fwrite(csp_str63, 1, 3, out_f);
 fputs(_("all"), out_f);
 fwrite(csp_str46, 1, 4, out_f);
-
-#line 98 "unpriv_clar_page.csp"
 } else if (!ce.to) {
 fwrite(csp_str63, 1, 3, out_f);
 fputs(_("judges"), out_f);
 fwrite(csp_str46, 1, 4, out_f);
-
-#line 100 "unpriv_clar_page.csp"
 } else {
 fputs(html_armor_buf(&ab, (teamdb_get_name(cs->teamdb_state, ce.to))), out_f);
-
-#line 102 "unpriv_clar_page.csp"
 }
 fwrite(csp_str62, 1, 30, out_f);
 fputs(_("Subject"), out_f);
@@ -922,8 +654,6 @@ fwrite(csp_str65, 1, 14, out_f);
 fwrite(csp_str66, 1, 17, out_f);
 write_copyright_short(out_f);
 fwrite(csp_str67, 1, 37, out_f);
-
-#line 112 "unpriv_clar_page.csp"
 l10n_setlocale(0);
 cleanup:;
   html_armor_free(&ab);

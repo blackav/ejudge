@@ -17,11 +17,7 @@ static const unsigned char csp_str13[21] = "</td></tr>\n</table>\n";
 static const unsigned char csp_str14[7] = "<hr/>\n";
 static const unsigned char csp_str15[18] = "\n</body>\n</html>\n";
 
-
-#line 2 "priv_login_page.csp"
 /* $Id$ */
-
-#line 2 "priv_includes.csp"
 #include "new-server.h"
 #include "new_server_pi.h"
 #include "new_server_proto.h"
@@ -63,8 +59,6 @@ csp_get_priv_login_page(void)
 
 int csp_view_priv_login_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 {
-
-#line 2 "priv_stdvars.csp"
 int retval __attribute__((unused)) = 0;
   struct contest_extra *extra __attribute__((unused)) = phr->extra;
   serve_state_t cs __attribute__((unused)) = extra?extra->serve_state:NULL;
@@ -72,16 +66,12 @@ int retval __attribute__((unused)) = 0;
   struct html_armor_buffer ab __attribute__((unused)) = HTML_ARMOR_INITIALIZER;
   unsigned char hbuf[1024] __attribute__((unused));
   const unsigned char *sep __attribute__((unused)) = NULL;
-
-#line 10 "priv_login_page.csp"
 const unsigned char *s;
   int r, n;
   const unsigned char *login = NULL;
   const unsigned char *password = NULL;
   int contest_id = phr->contest_id;
   const unsigned char *title = _("Login page");
-
-#line 17 "priv_login_page.csp"
 ns_cgi_param(phr, "login", &login);
   ns_cgi_param(phr, "password", &password);
 
@@ -160,14 +150,10 @@ fputs(" />", out_f);
 fwrite(csp_str11, 1, 19, out_f);
 fputs(_("Role"), out_f);
 fwrite(csp_str10, 1, 10, out_f);
-
-#line 37 "priv_login_page.csp"
 html_role_select(out_f, phr->role, 1, 0);
 fwrite(csp_str11, 1, 19, out_f);
 fputs(_("Language"), out_f);
 fwrite(csp_str10, 1, 10, out_f);
-
-#line 38 "priv_login_page.csp"
 l10n_html_locale_select(out_f, phr->locale_id);
 fwrite(csp_str12, 1, 34, out_f);
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_MAIN_PAGE, _("Submit")), out_f);
@@ -176,8 +162,6 @@ fputs("</form>", out_f);
 fwrite(csp_str14, 1, 6, out_f);
 write_copyright_short(out_f);
 fwrite(csp_str15, 1, 17, out_f);
-
-#line 43 "priv_login_page.csp"
 l10n_setlocale(0);
   html_armor_free(&ab);
   return retval;

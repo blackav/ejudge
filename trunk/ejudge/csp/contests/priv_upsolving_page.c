@@ -19,11 +19,7 @@ static const unsigned char csp_str15[21] = "</td>\n</tr></table>\n";
 static const unsigned char csp_str16[7] = "<hr/>\n";
 static const unsigned char csp_str17[18] = "\n</body>\n</html>\n";
 
-
-#line 2 "priv_upsolving_page.csp"
 /* $Id$ */
-
-#line 2 "priv_includes.csp"
 #include "new-server.h"
 #include "new_server_pi.h"
 #include "new_server_proto.h"
@@ -65,8 +61,6 @@ csp_get_priv_upsolving_page(void)
 
 int csp_view_priv_upsolving_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 {
-
-#line 2 "priv_stdvars.csp"
 int retval __attribute__((unused)) = 0;
   struct contest_extra *extra __attribute__((unused)) = phr->extra;
   serve_state_t cs __attribute__((unused)) = extra?extra->serve_state:NULL;
@@ -74,8 +68,6 @@ int retval __attribute__((unused)) = 0;
   struct html_armor_buffer ab __attribute__((unused)) = HTML_ARMOR_INITIALIZER;
   unsigned char hbuf[1024] __attribute__((unused));
   const unsigned char *sep __attribute__((unused)) = NULL;
-
-#line 9 "priv_upsolving_page.csp"
 const unsigned char *freeze_standings = 0;
   const unsigned char *view_source = 0;
   const unsigned char *view_protocol = 0;
@@ -171,8 +163,6 @@ fwrite(csp_str9, 1, 2, out_f);
 fwrite(csp_str16, 1, 6, out_f);
 write_copyright_short(out_f);
 fwrite(csp_str17, 1, 17, out_f);
-
-#line 56 "priv_upsolving_page.csp"
 l10n_setlocale(0);
 cleanup:
   html_armor_free(&ab);

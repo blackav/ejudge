@@ -18,11 +18,7 @@ static const unsigned char csp_str14[3] = "\n\n";
 static const unsigned char csp_str15[7] = "<hr/>\n";
 static const unsigned char csp_str16[18] = "\n</body>\n</html>\n";
 
-
-#line 2 "priv_report_page.csp"
 /* $Id$ */
-
-#line 2 "priv_includes.csp"
 #include "new-server.h"
 #include "new_server_pi.h"
 #include "new_server_proto.h"
@@ -45,8 +41,6 @@ static const unsigned char csp_str16[18] = "\n</body>\n</html>\n";
 #define _(x) gettext(x)
 
 #define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
-
-#line 5 "priv_report_page.csp"
 #include "archive_paths.h"
 #include "fileutl.h"
 int csp_view_priv_report_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr);
@@ -68,8 +62,6 @@ csp_get_priv_report_page(void)
 
 int csp_view_priv_report_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 {
-
-#line 2 "priv_stdvars.csp"
 int retval __attribute__((unused)) = 0;
   struct contest_extra *extra __attribute__((unused)) = phr->extra;
   serve_state_t cs __attribute__((unused)) = extra?extra->serve_state:NULL;
@@ -77,8 +69,6 @@ int retval __attribute__((unused)) = 0;
   struct html_armor_buffer ab __attribute__((unused)) = HTML_ARMOR_INITIALIZER;
   unsigned char hbuf[1024] __attribute__((unused));
   const unsigned char *sep __attribute__((unused)) = NULL;
-
-#line 12 "priv_report_page.csp"
 path_t rep_path;
   char *rep_text = 0, *html_text;
   size_t rep_len = 0, html_len;
@@ -187,7 +177,7 @@ fwrite(csp_str9, 1, 1, out_f);
 fwrite(csp_str10, 1, 5, out_f);
 fwrite(csp_str11, 1, 44, out_f);
 fputs("<a href=\"", out_f);
-ns_url_2(out_f, phr, NEW_SRV_ACTION_MAIN_PAGE);
+sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_MAIN_PAGE);
 fputs("\">", out_f);
 fputs(_("Main page"), out_f);
 fputs("</a>", out_f);
@@ -232,8 +222,6 @@ fputs("\">", out_f);
 fputs(_("Audit log"), out_f);
 fputs("</a>", out_f);
 fwrite(csp_str13, 1, 21, out_f);
-
-#line 106 "priv_report_page.csp"
 switch (content_type) {
   case CONTENT_TYPE_TEXT:
     html_len = html_armored_memlen(start_ptr, rep_len);
@@ -276,8 +264,6 @@ fwrite(csp_str14, 1, 2, out_f);
 fwrite(csp_str15, 1, 6, out_f);
 write_copyright_short(out_f);
 fwrite(csp_str16, 1, 17, out_f);
-
-#line 148 "priv_report_page.csp"
 l10n_setlocale(0);
 cleanup:
   xfree(rep_text);

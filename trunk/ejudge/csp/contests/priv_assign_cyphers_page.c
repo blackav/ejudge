@@ -18,11 +18,7 @@ static const unsigned char csp_str14[63] = "\n\n<p>The following formula is appl
 static const unsigned char csp_str15[7] = "<hr/>\n";
 static const unsigned char csp_str16[18] = "\n</body>\n</html>\n";
 
-
-#line 2 "priv_assign_cyphers_page.csp"
 /* $Id$ */
-
-#line 2 "priv_includes.csp"
 #include "new-server.h"
 #include "new_server_pi.h"
 #include "new_server_proto.h"
@@ -64,8 +60,6 @@ csp_get_priv_assign_cyphers_page(void)
 
 int csp_view_priv_assign_cyphers_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 {
-
-#line 2 "priv_stdvars.csp"
 int retval __attribute__((unused)) = 0;
   struct contest_extra *extra __attribute__((unused)) = phr->extra;
   serve_state_t cs __attribute__((unused)) = extra?extra->serve_state:NULL;
@@ -73,8 +67,6 @@ int retval __attribute__((unused)) = 0;
   struct html_armor_buffer ab __attribute__((unused)) = HTML_ARMOR_INITIALIZER;
   unsigned char hbuf[1024] __attribute__((unused));
   const unsigned char *sep __attribute__((unused)) = NULL;
-
-#line 9 "priv_assign_cyphers_page.csp"
 const unsigned char *title = NULL;
 
   if (opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST) < 0)
@@ -146,8 +138,6 @@ fwrite(csp_str14, 1, 62, out_f);
 fwrite(csp_str15, 1, 6, out_f);
 write_copyright_short(out_f);
 fwrite(csp_str16, 1, 17, out_f);
-
-#line 34 "priv_assign_cyphers_page.csp"
 l10n_setlocale(0);
 cleanup:
   html_armor_free(&ab);

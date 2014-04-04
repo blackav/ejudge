@@ -27,11 +27,7 @@ static const unsigned char csp_str23[26] = "</a></td>\n</tr></table>\n\n";
 static const unsigned char csp_str24[7] = "<hr/>\n";
 static const unsigned char csp_str25[18] = "\n</body>\n</html>\n";
 
-
-#line 2 "priv_standings_page.csp"
 /* $Id$ */
-
-#line 2 "priv_includes.csp"
 #include "new-server.h"
 #include "new_server_pi.h"
 #include "new_server_proto.h"
@@ -73,8 +69,6 @@ csp_get_priv_standings_page(void)
 
 int csp_view_priv_standings_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 {
-
-#line 2 "priv_stdvars.csp"
 int retval __attribute__((unused)) = 0;
   struct contest_extra *extra __attribute__((unused)) = phr->extra;
   serve_state_t cs __attribute__((unused)) = extra?extra->serve_state:NULL;
@@ -82,8 +76,6 @@ int retval __attribute__((unused)) = 0;
   struct html_armor_buffer ab __attribute__((unused)) = HTML_ARMOR_INITIALIZER;
   unsigned char hbuf[1024] __attribute__((unused));
   const unsigned char *sep __attribute__((unused)) = NULL;
-
-#line 10 "priv_standings_page.csp"
 struct user_filter_info *u = 0;
   const unsigned char *title = NULL;
 
@@ -170,30 +162,24 @@ fputs(_("Help"), out_f);
 fwrite(csp_str16, 1, 25, out_f);
 fputs("</form>", out_f);
 fwrite(csp_str17, 1, 8, out_f);
-
-#line 38 "priv_standings_page.csp"
 if (u->stand_error_msgs) {
 fwrite(csp_str18, 1, 5, out_f);
 fputs(_("Filter expression errors"), out_f);
 fwrite(csp_str19, 1, 32, out_f);
 fputs(html_armor_buf(&ab, (u->stand_error_msgs)), out_f);
 fwrite(csp_str20, 1, 18, out_f);
-
-#line 41 "priv_standings_page.csp"
 }
 fwrite(csp_str21, 1, 40, out_f);
 fputs("<a href=\"", out_f);
-ns_url_2(out_f, phr, NEW_SRV_ACTION_MAIN_PAGE);
+sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_MAIN_PAGE);
 fputs("\">", out_f);
 fputs(_("Main page"), out_f);
 fwrite(csp_str22, 1, 25, out_f);
 fputs("<a href=\"", out_f);
-ns_url_2(out_f, phr, NEW_SRV_ACTION_STANDINGS);
+sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_STANDINGS);
 fputs("\">", out_f);
 fputs(_("Refresh"), out_f);
 fwrite(csp_str23, 1, 25, out_f);
-
-#line 49 "priv_standings_page.csp"
 if (cs->global->score_system == SCORE_KIROV || cs->global->score_system == SCORE_OLYMPIAD)
     do_write_kirov_standings(cs, cnts, out_f, 0, 1, 0, 0, 0, 0, 0, 0 /*accepting_mode*/, 1, 0, 0, u, 0 /* user_mode */);
   else if (cs->global->score_system == SCORE_MOSCOW)
@@ -204,8 +190,6 @@ fwrite(csp_str9, 1, 1, out_f);
 fwrite(csp_str24, 1, 6, out_f);
 write_copyright_short(out_f);
 fwrite(csp_str25, 1, 17, out_f);
-
-#line 58 "priv_standings_page.csp"
 l10n_setlocale(0);
 cleanup:
   html_armor_free(&ab);
