@@ -12706,18 +12706,33 @@ static const unsigned char * const external_unpriv_action_names[NEW_SRV_ACTION_L
   [NEW_SRV_ACTION_MAIN_PAGE] = "unpriv_main_page",
 };
 
+static int external_unpriv_action_aliases[NEW_SRV_ACTION_LAST] =
+{
+  [NEW_SRV_ACTION_VIEW_STARTSTOP] = NEW_SRV_ACTION_MAIN_PAGE,
+  [NEW_SRV_ACTION_VIEW_PROBLEM_SUMMARY] = NEW_SRV_ACTION_MAIN_PAGE,
+  [NEW_SRV_ACTION_VIEW_PROBLEM_STATEMENTS] = NEW_SRV_ACTION_MAIN_PAGE,
+  [NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT] = NEW_SRV_ACTION_MAIN_PAGE,
+  [NEW_SRV_ACTION_VIEW_SUBMISSIONS] = NEW_SRV_ACTION_MAIN_PAGE,
+  [NEW_SRV_ACTION_VIEW_CLAR_SUBMIT] = NEW_SRV_ACTION_MAIN_PAGE,
+  [NEW_SRV_ACTION_VIEW_CLARS] = NEW_SRV_ACTION_MAIN_PAGE,
+  [NEW_SRV_ACTION_VIEW_SETTINGS] = NEW_SRV_ACTION_MAIN_PAGE,
+};
+
 static int
 unpriv_external_action(FILE *out_f, struct http_request_info *phr)
 {
-  if (external_unpriv_action_names[phr->action]) {
-    external_unpriv_action_states[phr->action] = external_action_load(external_unpriv_action_states[phr->action],
-                                                                      "csp/contests",
-                                                                      external_unpriv_action_names[phr->action],
-                                                                      "csp_get_");
+  int action = phr->action;
+  if (external_unpriv_action_aliases[action] > 0) action = external_unpriv_action_aliases[action];
+
+  if (external_unpriv_action_names[action]) {
+    external_unpriv_action_states[action] = external_action_load(external_unpriv_action_states[action],
+                                                                 "csp/contests",
+                                                                 external_unpriv_action_names[action],
+                                                                 "csp_get_");
   }
 
-  if (external_unpriv_action_states[phr->action] && external_unpriv_action_states[phr->action]->action_handler) {
-    PageInterface *pg = ((external_action_handler_t) external_unpriv_action_states[phr->action]->action_handler)();
+  if (external_unpriv_action_states[action] && external_unpriv_action_states[action]->action_handler) {
+    PageInterface *pg = ((external_action_handler_t) external_unpriv_action_states[action]->action_handler)();
 
     if (pg->ops->execute) {
       int r = pg->ops->execute(pg, phr->log_f, phr);
