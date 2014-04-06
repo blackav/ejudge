@@ -7478,7 +7478,7 @@ ns_unpriv_parse_run_id(
 
 
 /* FIXME: this should be moved to `new-register' part */
-static void
+/*static*/ void
 unpriv_page_forgot_password_1(FILE *fout, struct http_request_info *phr,
                               int orig_locale_id)
 {
@@ -7560,7 +7560,7 @@ unpriv_page_forgot_password_1(FILE *fout, struct http_request_info *phr,
 }
 
 /* FIXME: this should be moved to `new-register' part */
-static void
+/*static*/ void
 unpriv_page_forgot_password_2(FILE *fout, struct http_request_info *phr,
                               int orig_locale_id)
 {
@@ -10903,6 +10903,8 @@ static const unsigned char * const external_unpriv_action_names[NEW_SRV_ACTION_L
   [NEW_SRV_ACTION_CONTESTS_PAGE] = "unpriv_contests_page",
   [NEW_SRV_ACTION_VIEW_REPORT] = "unpriv_report_page",
   [NEW_SRV_ACTION_MAIN_PAGE] = "unpriv_main_page",
+  [NEW_SRV_ACTION_FORGOT_PASSWORD_1] = "unpriv_recover_1_page",
+  [NEW_SRV_ACTION_FORGOT_PASSWORD_2] = "unpriv_recover_2_page",
 };
 
 static int external_unpriv_action_aliases[NEW_SRV_ACTION_LAST] =
@@ -10982,10 +10984,16 @@ unprivileged_entry_point(
 
   phr->log_f = open_memstream(&phr->log_t, &phr->log_z);
 
-  if (phr->action == NEW_SRV_ACTION_FORGOT_PASSWORD_1)
-    return unpriv_page_forgot_password_1(fout, phr, phr->locale_id);
-  if (phr->action == NEW_SRV_ACTION_FORGOT_PASSWORD_2)
-    return unpriv_page_forgot_password_2(fout, phr, phr->locale_id);
+  if (phr->action == NEW_SRV_ACTION_FORGOT_PASSWORD_1) {
+    unpriv_external_action(fout, phr);
+    return;
+    //return unpriv_page_forgot_password_1(fout, phr, phr->locale_id);
+  }
+  if (phr->action == NEW_SRV_ACTION_FORGOT_PASSWORD_2) {
+    unpriv_external_action(fout, phr);
+    return;
+    //return unpriv_page_forgot_password_2(fout, phr, phr->locale_id);
+  }
   if (phr->action == NEW_SRV_ACTION_FORGOT_PASSWORD_3)
     return unpriv_page_forgot_password_3(fout, phr, phr->locale_id);
 

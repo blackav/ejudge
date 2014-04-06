@@ -1,0 +1,76 @@
+<%
+/* $Id$ */
+%><%@include "unpriv_includes.csp"
+%><%
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@set getter_name = "csp_get_unpriv_recover_1_page"
+%><%@page csp_view_unpriv_recover_1_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "unpriv_stdvars.csp"
+%><%
+  time_t cur_time = 0;
+  unsigned char title[1024];
+
+  if (phr->contest_id <= 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts) {
+    FAIL(NEW_SRV_ERR_INV_CONTEST_ID);
+  }
+  if (phr->locale_id < 0 && cnts->default_locale_num >= 0)
+    phr->locale_id = cnts->default_locale_num;
+  if (!contests_check_team_ip(phr->contest_id, &phr->ip, phr->ssl_flag)) {
+    fprintf(log_f, "%s://%s is not allowed for USER for contest %d\n",
+            ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ipv6(&phr->ip), phr->contest_id);
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+  }
+  if (cnts->closed) {
+    fprintf(log_f, "contest %d is closed", cnts->id);
+    FAIL(NEW_SRV_ERR_SERVICE_NOT_AVAILABLE);
+  }
+  if (!cnts->managed) {
+    fprintf(log_f, "contest %d is not managed", cnts->id);
+    FAIL(NEW_SRV_ERR_SERVICE_NOT_AVAILABLE);
+  }
+  if (!cnts->enable_password_recovery || (cnts->simple_registration && !cnts->send_passwd_email)) {
+    fprintf(log_f, "contest %d password recovery disabled", cnts->id);
+    FAIL(NEW_SRV_ERR_SERVICE_NOT_AVAILABLE);
+  }
+
+  unpriv_load_html_style(phr, cnts, &extra, &cur_time);
+  l10n_setlocale(phr->locale_id);
+  snprintf(title, sizeof(title), _("Lost password recovery [%s]"), extra->contest_arm);
+%><%@include "unpriv_simple_header.csp"
+%>
+<div class="user_actions"><table class="menu"><tr>
+<s:form>
+<s:hidden name="contest_id" value="phr->contest_id" />
+<s:hidden name="action" ac="forgot-password-1" />
+<%  if (cnts->disable_locale_change) {
+%><s:hidden name="locale_id" value="phr->locale_id" /><%
+    }
+%><%
+  if (!cnts->disable_locale_change) {
+%><td class="menu"><div class="user_action_item"><s:tr>language</s:tr>: <%
+    l10n_html_locale_select(out_f, phr->locale_id);
+%></div></td><%
+  }
+%>
+<td class="menu"><div class="user_action_item"><s:submit label="Change Language" /></div></td></tr></table></div>
+<div class="white_empty_block">&nbsp;</div><div class="contest_actions"><table class="menu"><tr>
+<td class="menu"><div class="contest_actions_item">&nbsp;</div></td></tr></table></div>
+<%@include "unpriv_separator.csp"
+%>
+<s:tr><p class="fixed_width">Password recovery requires several steps. Now, please, specify the <b>login</b> and the <b>e-mail</b>, which was specified when the login was created.</p>
+<p class="fixed_width">Note, that automatic password recovery is not possible for invisible, banned, locked, or privileged users!</p></s:tr>
+
+<s:form>
+<s:hidden name="contest_id" value="phr->contest_id" />
+<table>
+<tr><td class="menu"><s:tr>Login</s:tr>:</td><td class="menu"><s:textfield name="login" size="16" value="" /></td></tr>
+<tr><td class="menu"><s:tr>E-mail</s:tr>:</td><td class="menu"><s:textfield name="email" size="16" value="" /></td></tr>
+<tr><td class="menu">&nbsp;</td><td class="menu"><s:submit ac="forgot-password-2" /></td></tr>
+</table>
+</s:form>
+<%@include "unpriv_footer.csp"
+%><%
+  l10n_setlocale(0);
+cleanup:;
+  html_armor_free(&ab);
+%>

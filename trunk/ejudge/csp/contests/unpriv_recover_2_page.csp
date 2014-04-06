@@ -1,0 +1,103 @@
+<%
+/* $Id$ */
+%><%@include "unpriv_includes.csp"
+%><%
+#include "userlist_clnt.h"
+#include "userlist_proto.h"
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@set getter_name = "csp_get_unpriv_recover_2_page"
+%><%@page csp_view_unpriv_recover_2_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "unpriv_stdvars.csp"
+%><%
+  time_t cur_time;
+  const unsigned char *login = 0, *email = 0;
+  int r;
+  unsigned char title[1024];
+
+  if (phr->contest_id <= 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts) {
+    FAIL(NEW_SRV_ERR_INV_CONTEST_ID);
+  }
+  if (phr->locale_id < 0 && cnts->default_locale_num >= 0)
+    phr->locale_id = cnts->default_locale_num;
+  if (!contests_check_team_ip(phr->contest_id, &phr->ip, phr->ssl_flag)) {
+    fprintf(log_f, "%s://%s is not allowed for USER for contest %d",
+            ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ipv6(&phr->ip), phr->contest_id);
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+  }
+  if (cnts->closed) {
+    fprintf(log_f, "contest %d is closed", cnts->id);
+    FAIL(NEW_SRV_ERR_SERVICE_NOT_AVAILABLE);
+  }
+  if (!cnts->managed) {
+    fprintf(log_f, "contest %d is not managed", cnts->id);
+    FAIL(NEW_SRV_ERR_SERVICE_NOT_AVAILABLE);
+  }
+  if (!cnts->enable_password_recovery || (cnts->simple_registration && !cnts->send_passwd_email)) {
+    fprintf(log_f, "contest %d password recovery disabled", cnts->id);
+    FAIL(NEW_SRV_ERR_SERVICE_NOT_AVAILABLE);
+  }
+
+  if (ns_cgi_param(phr, "login", &login) <= 0) {
+    fprintf(log_f, "login is not specified");
+    FAIL(NEW_SRV_ERR_INV_PARAM);
+  }
+  if (ns_cgi_param(phr, "email", &email) <= 0) {
+    fprintf(log_f, "email is not specified");
+    FAIL(NEW_SRV_ERR_INV_PARAM);
+  }
+
+  if (ns_open_ul_connection(phr->fw_state) < 0) {
+    FAIL(NEW_SRV_ERR_USERLIST_SERVER_DOWN);
+  }
+  r = userlist_clnt_register_new(ul_conn, ULS_RECOVER_PASSWORD_1,
+                                 &phr->ip, phr->ssl_flag,
+                                 phr->contest_id,
+                                 phr->locale_id,
+                                 NEW_SRV_ACTION_FORGOT_PASSWORD_3,
+                                 login, email, phr->self_url);
+
+  unpriv_load_html_style(phr, cnts, &extra, &cur_time);
+  l10n_setlocale(phr->locale_id);
+  if (r < 0) {
+    snprintf(title, sizeof(title), "%s", _("Password recovery error"));
+  } else {
+    snprintf(title, sizeof(title), _("Password recovery, stage 1 [%s, %s]"),
+             html_armor_buf(&ab, login), extra->contest_arm);
+  }
+%><%@include "unpriv_simple_header.csp"
+%>
+<div class="user_actions">
+    <table class="menu">
+        <tr><td class="menu"><div class="user_action_item">&nbsp;</div></td></tr>
+    </table>
+</div>
+<div class="white_empty_block">&nbsp;</div>
+<div class="contest_actions">
+    <table class="menu">
+        <tr><td class="menu"><div class="contest_actions_item">&nbsp;</div></td></tr>
+    </table>
+</div>
+<%@include "unpriv_separator.csp"
+%>
+<% if (r < 0) { %>
+<p><s:tr>Password recovery is not possible because of the following error.</s:tr></p>
+<font color="red"><pre><%
+    if (r == -ULS_ERR_EMAIL_FAILED) {
+%><s:tr>The server was unable to send a registration e-mail
+to the specified address. This is probably due
+to heavy server load rather than to an invalid
+e-mail address. You should try to register later.
+</s:tr><%
+    } else {
+      fprintf(log_f, gettext(userlist_strerror(-r)));
+    }
+%></pre></font>
+<% } else { %>
+<s:tr><p class="fixed_width">First stage of password recovery is successful. You should receive an e-mail message with further instructions. <b>Note,</b> that you should confirm password recovery in 24 hours, or operation will be cancelled.</p></s:tr>
+<% } %>
+<%@include "unpriv_footer.csp"
+%><%
+  l10n_setlocale(0);
+cleanup:;
+  html_armor_free(&ab);
+%>
