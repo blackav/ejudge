@@ -1026,7 +1026,7 @@ if (!cnts->exam_mode && global->is_virtual && start_time <= 0) {
 fputs("<form method=\"post\" enctype=\"application/x-www-form-urlencoded\" action=\"", out_f);
 fputs(phr->self_url, out_f);
 fputs("\">", out_f);
-fputs(phr->hidden_vars, out_f);
+if (phr->hidden_vars) { fputs(phr->hidden_vars, out_f); }
 if (cnts->exam_mode) {
 fwrite(csp_str87, 1, 3, out_f);
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_VIRTUAL_START, _("Start exam")), out_f);
@@ -1042,7 +1042,7 @@ fputs("</form>", out_f);
 fputs("<form method=\"post\" enctype=\"application/x-www-form-urlencoded\" action=\"", out_f);
 fputs(phr->self_url, out_f);
 fputs("\">", out_f);
-fputs(phr->hidden_vars, out_f);
+if (phr->hidden_vars) { fputs(phr->hidden_vars, out_f); }
 if (cnts->exam_mode) {
 fwrite(csp_str87, 1, 3, out_f);
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_VIRTUAL_STOP, _("Stop exam")), out_f);
@@ -1062,7 +1062,7 @@ if (global->is_virtual && start_time <= 0) {
 fputs("<form method=\"post\" enctype=\"application/x-www-form-urlencoded\" action=\"", out_f);
 fputs(phr->self_url, out_f);
 fputs("\">", out_f);
-fputs(phr->hidden_vars, out_f);
+if (phr->hidden_vars) { fputs(phr->hidden_vars, out_f); }
 if (cnts->exam_mode) {
 fwrite(csp_str87, 1, 3, out_f);
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_VIRTUAL_START, _("Start exam")), out_f);
@@ -1085,7 +1085,7 @@ fwrite(csp_str88, 1, 4, out_f);
 fputs("<form method=\"post\" enctype=\"application/x-www-form-urlencoded\" action=\"", out_f);
 fputs(phr->self_url, out_f);
 fputs("\">", out_f);
-fputs(phr->hidden_vars, out_f);
+if (phr->hidden_vars) { fputs(phr->hidden_vars, out_f); }
 if (cnts->exam_mode) {
 fwrite(csp_str87, 1, 3, out_f);
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_VIRTUAL_STOP, _("Stop exam")), out_f);
@@ -1213,7 +1213,7 @@ fwrite(csp_str90, 1, 6, out_f);
 fputs("<form method=\"post\" enctype=\"application/x-www-form-urlencoded\" action=\"", out_f);
 fputs(phr->self_url, out_f);
 fputs("\">", out_f);
-fputs(phr->hidden_vars, out_f);
+if (phr->hidden_vars) { fputs(phr->hidden_vars, out_f); }
 fwrite(csp_str97, 1, 39, out_f);
 fputs(_("Problem"), out_f);
 fwrite(csp_str79, 1, 21, out_f);
@@ -1245,7 +1245,7 @@ fwrite(csp_str90, 1, 6, out_f);
 fputs("<form method=\"post\" enctype=\"application/x-www-form-urlencoded\" action=\"", out_f);
 fputs(phr->self_url, out_f);
 fputs("\">", out_f);
-fputs(phr->hidden_vars, out_f);
+if (phr->hidden_vars) { fputs(phr->hidden_vars, out_f); }
 fwrite(csp_str97, 1, 39, out_f);
 fputs(_("Problem"), out_f);
 fwrite(csp_str79, 1, 21, out_f);
@@ -1376,7 +1376,7 @@ fwrite(csp_str103, 1, 18, out_f);
 fputs("<form method=\"post\" enctype=\"multipart/form-data\" action=\"", out_f);
 fputs(phr->self_url, out_f);
 fputs("\">", out_f);
-fputs(phr->hidden_vars, out_f);
+if (phr->hidden_vars) { fputs(phr->hidden_vars, out_f); }
 }
 fputs("<input type=\"hidden\" name=\"prob_id\"", out_f);
 if ((prob_id)) {
@@ -1648,7 +1648,7 @@ fwrite(csp_str90, 1, 6, out_f);
 fputs("<form method=\"post\" enctype=\"application/x-www-form-urlencoded\" action=\"", out_f);
 fputs(phr->self_url, out_f);
 fputs("\">", out_f);
-fputs(phr->hidden_vars, out_f);
+if (phr->hidden_vars) { fputs(phr->hidden_vars, out_f); }
 fwrite(csp_str118, 1, 25, out_f);
 if (global->problem_navigation > 0) {
           for (i = prob_id - 1; i > 0; i--) {
@@ -1758,7 +1758,7 @@ fwrite(csp_str90, 1, 6, out_f);
 fputs("<form method=\"post\" enctype=\"application/x-www-form-urlencoded\" action=\"", out_f);
 fputs(phr->self_url, out_f);
 fputs("\">", out_f);
-fputs(phr->hidden_vars, out_f);
+if (phr->hidden_vars) { fputs(phr->hidden_vars, out_f); }
 fwrite(csp_str124, 1, 38, out_f);
 fputs(_("Problem"), out_f);
 fwrite(csp_str79, 1, 21, out_f);
@@ -1783,7 +1783,7 @@ fwrite(csp_str90, 1, 6, out_f);
 fputs("<form method=\"post\" enctype=\"application/x-www-form-urlencoded\" action=\"", out_f);
 fputs(phr->self_url, out_f);
 fputs("\">", out_f);
-fputs(phr->hidden_vars, out_f);
+if (phr->hidden_vars) { fputs(phr->hidden_vars, out_f); }
 fwrite(csp_str124, 1, 38, out_f);
 fputs(_("Problem"), out_f);
 fwrite(csp_str79, 1, 21, out_f);
@@ -1837,7 +1837,7 @@ fwrite(csp_str90, 1, 6, out_f);
 fputs("<form method=\"post\" enctype=\"application/x-www-form-urlencoded\" action=\"", out_f);
 fputs(phr->self_url, out_f);
 fputs("\">", out_f);
-fputs(phr->hidden_vars, out_f);
+if (phr->hidden_vars) { fputs(phr->hidden_vars, out_f); }
 fwrite(csp_str97, 1, 39, out_f);
 fputs(_("Old password"), out_f);
 fwrite(csp_str79, 1, 21, out_f);
@@ -1864,7 +1864,7 @@ fwrite(csp_str90, 1, 6, out_f);
 fputs("<form method=\"post\" enctype=\"application/x-www-form-urlencoded\" action=\"", out_f);
 fputs(phr->self_url, out_f);
 fputs("\">", out_f);
-fputs(phr->hidden_vars, out_f);
+if (phr->hidden_vars) { fputs(phr->hidden_vars, out_f); }
 fwrite(csp_str124, 1, 38, out_f);
 fputs(_("Change language"), out_f);
 fwrite(csp_str130, 1, 21, out_f);

@@ -160,7 +160,7 @@ fwrite(csp_str11, 1, 21, out_f);
 fputs("<form method=\"post\" enctype=\"application/x-www-form-urlencoded\" action=\"", out_f);
 fputs(phr->self_url, out_f);
 fputs("\">", out_f);
-fputs(phr->hidden_vars, out_f);
+if (phr->hidden_vars) { fputs(phr->hidden_vars, out_f); }
 fwrite(csp_str12, 1, 121, out_f);
 fputs(_("Packet name"), out_f);
 fwrite(csp_str13, 1, 29, out_f);

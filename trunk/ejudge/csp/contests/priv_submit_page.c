@@ -209,7 +209,7 @@ fwrite(csp_str14, 1, 2, out_f);
 fputs("<form method=\"post\" enctype=\"multipart/form-data\" action=\"", out_f);
 fputs(phr->self_url, out_f);
 fputs("\">", out_f);
-fputs(phr->hidden_vars, out_f);
+if (phr->hidden_vars) { fputs(phr->hidden_vars, out_f); }
 fwrite(csp_str15, 1, 44, out_f);
 fputs(_("Problem"), out_f);
 fwrite(csp_str16, 1, 21, out_f);

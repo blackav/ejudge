@@ -134,7 +134,7 @@ fwrite(csp_str5, 1, 52, out_f);
 fputs("<form method=\"post\" enctype=\"application/x-www-form-urlencoded\" action=\"", out_f);
 fputs(phr->self_url, out_f);
 fputs("\">", out_f);
-fputs(phr->hidden_vars, out_f);
+if (phr->hidden_vars) { fputs(phr->hidden_vars, out_f); }
 fwrite(csp_str6, 1, 1, out_f);
 fputs("<input type=\"hidden\" name=\"contest_id\"", out_f);
 if ((phr->contest_id)) {
@@ -177,7 +177,7 @@ fwrite(csp_str14, 1, 2, out_f);
 fputs("<form method=\"post\" enctype=\"application/x-www-form-urlencoded\" action=\"", out_f);
 fputs(phr->self_url, out_f);
 fputs("\">", out_f);
-fputs(phr->hidden_vars, out_f);
+if (phr->hidden_vars) { fputs(phr->hidden_vars, out_f); }
 fwrite(csp_str6, 1, 1, out_f);
 fputs("<input type=\"hidden\" name=\"contest_id\"", out_f);
 if ((phr->contest_id)) {

@@ -124,7 +124,7 @@ fwrite(csp_str8, 1, 6, out_f);
 fputs("<form method=\"post\" enctype=\"application/x-www-form-urlencoded\" action=\"", out_f);
 fputs(phr->self_url, out_f);
 fputs("\">", out_f);
-fputs(phr->hidden_vars, out_f);
+if (phr->hidden_vars) { fputs(phr->hidden_vars, out_f); }
 fwrite(csp_str9, 1, 17, out_f);
 fputs(_("Login"), out_f);
 fwrite(csp_str10, 1, 10, out_f);
