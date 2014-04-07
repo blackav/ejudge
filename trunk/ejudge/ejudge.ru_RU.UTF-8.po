@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-03-29 13:27+0400\n"
-"PO-Revision-Date: 2014-04-01 09:38+0400\n"
+"POT-Creation-Date: 2014-04-07 14:50+0400\n"
+"PO-Revision-Date: 2014-04-07 14:53+0400\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -203,7 +203,6 @@ msgstr ""
 "<p class=\"ejudge_copyright\">Веб-дизайн и AJAX-интерфейс &copy; %s <a href="
 "\"%s\">Toto Lasvik</a>.</p>"
 
-#, c-format
 msgid ""
 "<p class=\"fixed_width\">First stage of password recovery is successful. You "
 "should receive an e-mail message with further instructions. <b>Note,</b> "
@@ -215,13 +214,12 @@ msgstr ""
 "b> что Вы должны завершить процедуру восстановления пароля в течение 24 "
 "часов от данного момента, а иначе операция будет отменена.</p>"
 
-#, c-format
 msgid ""
 "<p class=\"fixed_width\">Password recovery requires several steps. Now, "
 "please, specify the <b>login</b> and the <b>e-mail</b>, which was specified "
 "when the login was created.</p>\n"
 "<p class=\"fixed_width\">Note, that automatic password recovery is not "
-"possible for invisible, banned, locked, or privileged users!</p>\n"
+"possible for invisible, banned, locked, or privileged users!</p>"
 msgstr ""
 "<p class=\"fixed_width\">Восстановление пароля выполняется в несколько "
 "этапов. Сейчас, пожалуйста, укажите <b>регистрационное имя</b> и <b>адрес e-"
@@ -229,7 +227,7 @@ msgstr ""
 "</p>\n"
 "<p class=\"fixed_width\">Учтите, что автоматическое восстановление пароля "
 "невозможно для заблокированных, невидимых и привилегированных пользователей!"
-"</p>\n"
+"</p>"
 
 #, c-format
 msgid ""
@@ -356,10 +354,6 @@ msgid ""
 msgstr ""
 "<p><font color=\"red\">Минимальное число членов команды в этом турнире %d, "
 "но определено только %d.</font></p>\n"
-
-#, c-format
-msgid "<p>New password is generated.</p>"
-msgstr "<p>Новый пароль сгенерирован.</p>"
 
 #, c-format
 msgid ""
@@ -1150,9 +1144,6 @@ msgstr "ПУСТО"
 
 msgid "EOLN Type"
 msgstr "Тип концов строк"
-
-msgid "EXAM IS RUNNING"
-msgstr "ЭКЗАМЕН ИДЁТ"
 
 msgid "EXAM IS RUNNING (frozen)"
 msgstr "ЭКЗАМЕН ИДЁТ (заморозка)"
@@ -2179,9 +2170,6 @@ msgstr "НЕТ"
 msgid "NOT REGISTERED"
 msgstr "НЕ ЗАРЕГИСТРИРОВАН"
 
-msgid "NOT STARTED"
-msgstr "НЕ НАЧАЛСЯ"
-
 msgid "Name"
 msgstr "Имя"
 
@@ -2208,6 +2196,9 @@ msgstr "Новый пароль (1) некорректен"
 
 msgid "New password (2) is invalid"
 msgstr "Новый пароль (2) некорректен"
+
+msgid "New password is generated."
+msgstr "Новый пароль сгенерирован."
 
 msgid "New password is too long"
 msgstr "Новый пароль имеет слишком большую длину"
@@ -2485,8 +2476,12 @@ msgstr "Генерация паролей не удалась: %s"
 msgid "Password recovery completed [%s, %s]"
 msgstr "Восстановление пароля завершено [%s, %s]"
 
+#, c-format
 msgid "Password recovery error"
 msgstr "Ошибка восстановления пароля"
+
+msgid "Password recovery is not possible because of the following error."
+msgstr "Восставновление пароля невозможно из-за следующей ошибки."
 
 #, c-format
 msgid "Password recovery, stage 1 [%s, %s]"
@@ -2723,9 +2718,6 @@ msgstr "ЗАРЕГИСТРИРОВАН, ОЖИДАЕТ ПОДТВЕРЖДЕНИ�
 
 msgid "REGISTRATION REJECTED"
 msgstr "РЕГИСТРАЦИЯ ОТКЛОНЕНА"
-
-msgid "RUNNING"
-msgstr "ТУРНИР ИДЕТ"
 
 msgid "RUNNING (frozen)"
 msgstr "ТУРНИР ИДЕТ (заморозка)"
