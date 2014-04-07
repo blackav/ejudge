@@ -3215,7 +3215,7 @@ handle_form_open(
     fprintf(prg_f, " action=\\\"\", out_f);\n");
     fprintf(prg_f, "fputs(phr->self_url, out_f);\n");
     fprintf(prg_f, "fputs(\"\\\">\", out_f);\n");
-    fprintf(prg_f, "fputs(phr->hidden_vars, out_f);\n");
+    fprintf(prg_f, "if (phr->hidden_vars) { fputs(phr->hidden_vars, out_f); }\n");
 
     return 0;
 }
