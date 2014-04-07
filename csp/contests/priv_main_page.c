@@ -572,7 +572,7 @@ fwrite(csp_str30, 1, 1, out_f);
 fputs("<form method=\"post\" enctype=\"application/x-www-form-urlencoded\" action=\"", out_f);
 fputs(phr->self_url, out_f);
 fputs("\">", out_f);
-fputs(phr->hidden_vars, out_f);
+if (phr->hidden_vars) { fputs(phr->hidden_vars, out_f); }
 fwrite(csp_str41, 1, 28, out_f);
 fputs(_("Server time"), out_f);
 fwrite(csp_str42, 1, 10, out_f);
@@ -718,7 +718,7 @@ fwrite(csp_str60, 1, 10, out_f);
 fputs("<form method=\"post\" enctype=\"application/x-www-form-urlencoded\" action=\"", out_f);
 fputs(phr->self_url, out_f);
 fputs("\">", out_f);
-fputs(phr->hidden_vars, out_f);
+if (phr->hidden_vars) { fputs(phr->hidden_vars, out_f); }
 fwrite(csp_str30, 1, 1, out_f);
 fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, NEW_SRV_ACTION_UPDATE_STANDINGS_1, NULL), out_f);
 fwrite(csp_str30, 1, 1, out_f);
@@ -893,7 +893,7 @@ fwrite(csp_str63, 1, 6, out_f);
 fputs("<form method=\"get\" action=\"", out_f);
 fputs(phr->self_url, out_f);
 fputs("\">", out_f);
-fputs(phr->hidden_vars, out_f);
+if (phr->hidden_vars) { fputs(phr->hidden_vars, out_f); }
 fwrite(csp_str64, 1, 17, out_f);
 fputs(_("Problem"), out_f);
 fwrite(csp_str65, 1, 34, out_f);
@@ -943,7 +943,7 @@ fwrite(csp_str30, 1, 1, out_f);
 fputs("<form method=\"post\" enctype=\"multipart/form-data\" action=\"", out_f);
 fputs(phr->self_url, out_f);
 fputs("\">", out_f);
-fputs(phr->hidden_vars, out_f);
+if (phr->hidden_vars) { fputs(phr->hidden_vars, out_f); }
 fwrite(csp_str30, 1, 1, out_f);
 }
 fwrite(csp_str30, 1, 1, out_f);
@@ -1037,7 +1037,7 @@ fwrite(csp_str63, 1, 6, out_f);
 fputs("<form method=\"get\" action=\"", out_f);
 fputs(phr->self_url, out_f);
 fputs("\">", out_f);
-fputs(phr->hidden_vars, out_f);
+if (phr->hidden_vars) { fputs(phr->hidden_vars, out_f); }
 fwrite(csp_str64, 1, 17, out_f);
 fputs(_("Problem"), out_f);
 fwrite(csp_str93, 1, 33, out_f);
@@ -1088,7 +1088,7 @@ fwrite(csp_str63, 1, 6, out_f);
 fputs("<form method=\"post\" enctype=\"application/x-www-form-urlencoded\" action=\"", out_f);
 fputs(phr->self_url, out_f);
 fputs("\">", out_f);
-fputs(phr->hidden_vars, out_f);
+if (phr->hidden_vars) { fputs(phr->hidden_vars, out_f); }
 fwrite(csp_str64, 1, 17, out_f);
 fputs(_("To user id"), out_f);
 fwrite(csp_str96, 1, 78, out_f);
@@ -1113,7 +1113,7 @@ fwrite(csp_str63, 1, 6, out_f);
 fputs("<form method=\"post\" enctype=\"application/x-www-form-urlencoded\" action=\"", out_f);
 fputs(phr->self_url, out_f);
 fputs("\">", out_f);
-fputs(phr->hidden_vars, out_f);
+if (phr->hidden_vars) { fputs(phr->hidden_vars, out_f); }
 fwrite(csp_str64, 1, 17, out_f);
 fputs(_("Old password"), out_f);
 fwrite(csp_str103, 1, 80, out_f);
@@ -1137,7 +1137,7 @@ fwrite(csp_str109, 1, 3, out_f);
 fputs("<form method=\"post\" enctype=\"application/x-www-form-urlencoded\" action=\"", out_f);
 fputs(phr->self_url, out_f);
 fputs("\">", out_f);
-fputs(phr->hidden_vars, out_f);
+if (phr->hidden_vars) { fputs(phr->hidden_vars, out_f); }
 fwrite(csp_str110, 1, 16, out_f);
 fputs(_("Change language"), out_f);
 fwrite(csp_str111, 1, 10, out_f);

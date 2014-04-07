@@ -645,7 +645,7 @@ fwrite(csp_str9, 1, 1, out_f);
 fputs("<form method=\"post\" enctype=\"application/x-www-form-urlencoded\" action=\"", out_f);
 fputs(phr->self_url, out_f);
 fputs("\">", out_f);
-fputs(phr->hidden_vars, out_f);
+if (phr->hidden_vars) { fputs(phr->hidden_vars, out_f); }
 fwrite(csp_str9, 1, 1, out_f);
 fputs("<input type=\"hidden\" name=\"run_id\"", out_f);
 if ((run_id)) {
@@ -666,7 +666,7 @@ fwrite(csp_str9, 1, 1, out_f);
 fputs("<form method=\"post\" enctype=\"application/x-www-form-urlencoded\" action=\"", out_f);
 fputs(phr->self_url, out_f);
 fputs("\">", out_f);
-fputs(phr->hidden_vars, out_f);
+if (phr->hidden_vars) { fputs(phr->hidden_vars, out_f); }
 fwrite(csp_str9, 1, 1, out_f);
 fputs("<input type=\"hidden\" name=\"run_id\"", out_f);
 if ((run_id)) {
@@ -690,7 +690,7 @@ fwrite(csp_str23, 1, 2, out_f);
 fputs("<form method=\"post\" enctype=\"application/x-www-form-urlencoded\" action=\"", out_f);
 fputs(phr->self_url, out_f);
 fputs("\">", out_f);
-fputs(phr->hidden_vars, out_f);
+if (phr->hidden_vars) { fputs(phr->hidden_vars, out_f); }
 fwrite(csp_str9, 1, 1, out_f);
 fputs("<input type=\"hidden\" name=\"run_id\"", out_f);
 if ((run_id)) {
@@ -717,7 +717,7 @@ fwrite(csp_str23, 1, 2, out_f);
 fputs("<form method=\"post\" enctype=\"application/x-www-form-urlencoded\" action=\"", out_f);
 fputs(phr->self_url, out_f);
 fputs("\">", out_f);
-fputs(phr->hidden_vars, out_f);
+if (phr->hidden_vars) { fputs(phr->hidden_vars, out_f); }
 fwrite(csp_str9, 1, 1, out_f);
 fputs("<input type=\"hidden\" name=\"run_id\"", out_f);
 if ((run_id)) {
@@ -740,7 +740,7 @@ fwrite(csp_str9, 1, 1, out_f);
 fputs("<form method=\"post\" enctype=\"multipart/form-data\" action=\"", out_f);
 fputs(phr->self_url, out_f);
 fputs("\">", out_f);
-fputs(phr->hidden_vars, out_f);
+if (phr->hidden_vars) { fputs(phr->hidden_vars, out_f); }
 fwrite(csp_str9, 1, 1, out_f);
 fputs("<input type=\"hidden\" name=\"run_id\"", out_f);
 if ((run_id)) {
@@ -836,7 +836,7 @@ fwrite(csp_str55, 1, 7, out_f);
 fputs("<form method=\"post\" enctype=\"application/x-www-form-urlencoded\" id=\"run_comment\" action=\"", out_f);
 fputs(phr->self_url, out_f);
 fputs("\">", out_f);
-fputs(phr->hidden_vars, out_f);
+if (phr->hidden_vars) { fputs(phr->hidden_vars, out_f); }
 fwrite(csp_str9, 1, 1, out_f);
 fputs("<input type=\"hidden\" name=\"run_id\"", out_f);
 if ((run_id)) {

@@ -145,7 +145,7 @@ fwrite(csp_str10, 1, 29, out_f);
 fputs("<form method=\"post\" enctype=\"application/x-www-form-urlencoded\" action=\"", out_f);
 fputs(phr->self_url, out_f);
 fputs("\">", out_f);
-fputs(phr->hidden_vars, out_f);
+if (phr->hidden_vars) { fputs(phr->hidden_vars, out_f); }
 fputs("<select name=\"param\"", out_f);
 fputs(">", out_f);
 fwrite(csp_str14, 1, 1, out_f);
@@ -199,7 +199,7 @@ fwrite(csp_str10, 1, 29, out_f);
 fputs("<form method=\"post\" enctype=\"application/x-www-form-urlencoded\" action=\"", out_f);
 fputs(phr->self_url, out_f);
 fputs("\">", out_f);
-fputs(phr->hidden_vars, out_f);
+if (phr->hidden_vars) { fputs(phr->hidden_vars, out_f); }
 fputs("<select name=\"param\"", out_f);
 fputs(">", out_f);
 fwrite(csp_str14, 1, 1, out_f);
@@ -249,7 +249,7 @@ fwrite(csp_str10, 1, 29, out_f);
 fputs("<form method=\"post\" enctype=\"application/x-www-form-urlencoded\" action=\"", out_f);
 fputs(phr->self_url, out_f);
 fputs("\">", out_f);
-fputs(phr->hidden_vars, out_f);
+if (phr->hidden_vars) { fputs(phr->hidden_vars, out_f); }
 fputs("<select name=\"param\"", out_f);
 fputs(">", out_f);
 fwrite(csp_str14, 1, 1, out_f);
@@ -288,7 +288,7 @@ fwrite(csp_str10, 1, 29, out_f);
 fputs("<form method=\"post\" enctype=\"application/x-www-form-urlencoded\" action=\"", out_f);
 fputs(phr->self_url, out_f);
 fputs("\">", out_f);
-fputs(phr->hidden_vars, out_f);
+if (phr->hidden_vars) { fputs(phr->hidden_vars, out_f); }
 fputs("<select name=\"param\"", out_f);
 fputs(">", out_f);
 fwrite(csp_str14, 1, 1, out_f);
