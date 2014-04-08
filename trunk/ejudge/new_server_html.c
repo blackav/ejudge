@@ -94,6 +94,13 @@ static size_t extra_a = 0, extra_u = 0;
 
 extern const unsigned char * const ns_symbolic_action_table[];
 
+static void
+error_page(
+        FILE *out_f,
+        struct http_request_info *phr,
+        int priv_mode,
+        int error_code);
+
 static void unprivileged_page_login(FILE *fout,
                                     struct http_request_info *phr);
 void
@@ -2421,80 +2428,76 @@ priv_change_language(FILE *fout,
 }
 
 static void
-priv_change_password(FILE *fout,
-                     struct http_request_info *phr,
-                     const struct contest_desc *cnts,
-                     struct contest_extra *extra)
+priv_change_password(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
 {
   const unsigned char *p0 = 0, *p1 = 0, *p2 = 0;
-  char *log_txt = 0;
-  size_t log_len = 0;
-  FILE *log_f = 0;
   int cmd, r;
   unsigned char url[1024];
   unsigned char login_buf[256];
 
-  if (hr_cgi_param(phr, "oldpasswd", &p0) <= 0)
-    return ns_html_err_inv_param(fout, phr, 1, "cannot parse oldpasswd");
-  if (hr_cgi_param(phr, "newpasswd1", &p1) <= 0)
-    return ns_html_err_inv_param(fout, phr, 1, "cannot parse newpasswd1");
-  if (hr_cgi_param(phr, "newpasswd2", &p2) <= 0)
-    return ns_html_err_inv_param(fout, phr, 1, "cannot parse newpasswd2");
-
-  log_f = open_memstream(&log_txt, &log_len);
+  if (hr_cgi_param(phr, "oldpasswd", &p0) <= 0) {
+    fprintf(phr->log_f, "cannot parse oldpasswd\n");
+    error_page(fout, phr, 1, NEW_SRV_ERR_INV_PARAM);
+    goto cleanup;
+  }
+  if (hr_cgi_param(phr, "newpasswd1", &p1) <= 0) {
+    fprintf(phr->log_f, "cannot parse newpasswd1\n");
+    error_page(fout, phr, 1, NEW_SRV_ERR_INV_PARAM);
+    goto cleanup;
+  }
+  if (hr_cgi_param(phr, "newpasswd2", &p2) <= 0) {
+    fprintf(phr->log_f, "cannot parse newpasswd2\n");
+    error_page(fout, phr, 1, NEW_SRV_ERR_INV_PARAM);
+    goto cleanup;
+  }
 
   if (strlen(p0) >= 256) {
-    ns_error(log_f, NEW_SRV_ERR_OLD_PWD_TOO_LONG);
-    goto done;
+    error_page(fout, phr, 1, NEW_SRV_ERR_OLD_PWD_TOO_LONG);
+    goto cleanup;
   }
   if (strcmp(p1, p2)) {
-    ns_error(log_f, NEW_SRV_ERR_NEW_PWD_MISMATCH);
-    goto done;
+    error_page(fout, phr, 1, NEW_SRV_ERR_NEW_PWD_MISMATCH);
+    goto cleanup;
   }
   if (strlen(p1) >= 256) {
-    ns_error(log_f, NEW_SRV_ERR_NEW_PWD_TOO_LONG);
-    goto done;
+    error_page(fout, phr, 1, NEW_SRV_ERR_NEW_PWD_TOO_LONG);
+    goto cleanup;
   }
 
   cmd = ULS_PRIV_SET_REG_PASSWD;
 
   if (ns_open_ul_connection(phr->fw_state) < 0) {
-    ns_html_err_ul_server_down(fout, phr, 1, 0);
+    error_page(fout, phr, 1, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
     goto cleanup;
   }
-  r = userlist_clnt_set_passwd(ul_conn, cmd, phr->user_id, phr->contest_id,
-                               p0, p1);
+  r = userlist_clnt_set_passwd(ul_conn, cmd, phr->user_id, phr->contest_id, p0, p1);
   if (r < 0) {
-    ns_error(log_f, NEW_SRV_ERR_PWD_UPDATE_FAILED, userlist_strerror(-r));
-    goto done;
+    fprintf(phr->log_f, "%s\n", userlist_strerror(-r));
+    error_page(fout, phr, 1, NEW_SRV_ERR_PWD_UPDATE_FAILED);
+    goto cleanup;
   }
 
- done:;
-  close_memstream(log_f); log_f = 0;
-  if (!log_txt || !*log_txt) {
-    url_armor_string(login_buf, sizeof(login_buf), phr->login);
-    if (phr->rest_mode > 0) {
-      snprintf(url, sizeof(url),
-               "%s/%s?contest_id=%d&role=%d&login=%s&locale_id=%d",
-               phr->self_url, ns_symbolic_action_table[NEW_SRV_ACTION_LOGIN_PAGE],
-               phr->contest_id, phr->role,
-               login_buf, phr->locale_id);
-    } else {
-      snprintf(url, sizeof(url),
-               "%s?contest_id=%d&role=%d&login=%s&locale_id=%d&action=%d",
-               phr->self_url, phr->contest_id, phr->role,
-               login_buf, phr->locale_id,
-               NEW_SRV_ACTION_LOGIN_PAGE);
-    }
-    ns_refresh_page_2(fout, phr->client_key, url);
+  url_armor_string(login_buf, sizeof(login_buf), phr->login);
+  if (phr->rest_mode > 0) {
+    snprintf(url, sizeof(url),
+             "%s/%s?contest_id=%d&role=%d&login=%s&locale_id=%d",
+             phr->self_url, ns_symbolic_action_table[NEW_SRV_ACTION_LOGIN_PAGE],
+             phr->contest_id, phr->role,
+             login_buf, phr->locale_id);
   } else {
-    html_error_status_page(fout, phr, cnts, extra, log_txt,
-                           NEW_SRV_ACTION_MAIN_PAGE, 0);
+    snprintf(url, sizeof(url),
+             "%s?contest_id=%d&role=%d&login=%s&locale_id=%d&action=%d",
+             phr->self_url, phr->contest_id, phr->role,
+             login_buf, phr->locale_id,
+             NEW_SRV_ACTION_LOGIN_PAGE);
   }
+  ns_refresh_page_2(fout, phr->client_key, url);
 
  cleanup:;
-  if (log_f) fclose(log_f);
-  xfree(log_txt);
 }
 
 static int
@@ -6413,45 +6416,25 @@ priv_generic_operation(FILE *fout,
                        const struct contest_desc *cnts,
                        struct contest_extra *extra)
 {
-  FILE *log_f = 0;
-  char *log_txt = 0;
-  size_t log_len = 0;
   int r, rr;
 
-  log_f = open_memstream(&log_txt, &log_len);
-
-  r = priv_actions_table_2[phr->action](fout, log_f, phr, cnts, extra);
+  r = priv_actions_table_2[phr->action](fout, phr->log_f, phr, cnts, extra);
   if (r == -1) {
-    close_memstream(log_f);
-    xfree(log_txt);
     return;
   }
   if (r < 0) {
-    ns_error(log_f, r);
+    error_page(fout, phr, 1, r);
     r = 0;
   }
   rr = r;
   if (!r) r = ns_priv_next_state[phr->action];
   if (!rr) rr = ns_priv_prev_state[phr->action];
 
-  close_memstream(log_f); log_f = 0;
-  if (!log_txt || !*log_txt) {
-    /*
-    if (r == NEW_SRV_ACTION_VIEW_SOURCE) {
-      if (phr->next_run_id < 0) r = 0;
-      else snprintf(next_extra, sizeof(next_extra), "run_id=%d",
-                    phr->next_run_id);
-    }
-    */
-    if (phr->plain_text) {
-      fprintf(fout, "Content-type: text/plain\n\n%d\n", 0);
-    } else {
-      ns_refresh_page(fout, phr, r, phr->next_extra);
-    }
+  if (phr->plain_text) {
+    fprintf(fout, "Content-type: text/plain\n\n%d\n", 0);
   } else {
-    html_error_status_page(fout, phr, cnts, extra, log_txt, rr, 0);
+    ns_refresh_page(fout, phr, r, phr->next_extra);
   }
-  xfree(log_txt);
 }
 
 static void
@@ -6460,30 +6443,17 @@ priv_generic_page(FILE *fout,
                   const struct contest_desc *cnts,
                   struct contest_extra *extra)
 {
-  FILE *log_f = 0;
-  char *log_txt = 0;
-  size_t log_len = 0;
   int r;
 
-  log_f = open_memstream(&log_txt, &log_len);
-
-  r = priv_actions_table_2[phr->action](fout, log_f, phr, cnts, extra);
+  r = priv_actions_table_2[phr->action](fout, phr->log_f, phr, cnts, extra);
   if (r == -1) {
-    close_memstream(log_f);
-    xfree(log_txt);
     return;
   }
   if (r < 0) {
-    ns_error(log_f, r);
+    error_page(fout, phr, 1, r);
     r = 0;
   }
   if (!r) r = ns_priv_prev_state[phr->action];
-
-  close_memstream(log_f); log_f = 0;
-  if (log_txt && *log_txt) {
-    html_error_status_page(fout, phr, cnts, extra, log_txt, r, 0);
-  }
-  xfree(log_txt);
 }
 
 static void
@@ -7406,50 +7376,45 @@ unprivileged_page_login(FILE *fout, struct http_request_info *phr)
 }
 
 static void
-unpriv_change_language(FILE *fout,
-                       struct http_request_info *phr,
-                       const struct contest_desc *cnts,
-                       struct contest_extra *extra)
+unpriv_change_language(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
 {
   const unsigned char *s;
   int r, n;
-  char *log_txt = 0;
-  size_t log_len = 0;
-  FILE *log_f = 0;
   int new_locale_id;
 
-  if ((r = hr_cgi_param(phr, "locale_id", &s)) < 0)
-    return ns_html_err_inv_param(fout, phr, 0, "cannot parse locale_id");
+  if ((r = hr_cgi_param(phr, "locale_id", &s)) < 0) {
+    fprintf(phr->log_f, "cannot parse locale_id\n");
+    error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
+    goto cleanup;
+  }
   if (r > 0) {
-    if (sscanf(s, "%d%n", &new_locale_id, &n) != 1 || s[n] || new_locale_id < 0)
-      return ns_html_err_inv_param(fout, phr, 0, "cannot parse locale_id");
+    if (sscanf(s, "%d%n", &new_locale_id, &n) != 1 || s[n] || new_locale_id < 0) {
+      fprintf(phr->log_f, "cannot parse locale_id\n");
+      error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
+      goto cleanup;
+    }
   }
 
-  log_f = open_memstream(&log_txt, &log_len);
-
   if (ns_open_ul_connection(phr->fw_state) < 0) {
-    ns_html_err_ul_server_down(fout, phr, 0, 0);
+    error_page(fout, phr, 0, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
     goto cleanup;
   }
   if ((r = userlist_clnt_set_cookie(ul_conn, ULS_SET_COOKIE_LOCALE,
                                     phr->session_id,
                                     phr->client_key,
                                     new_locale_id)) < 0) {
-    fprintf(log_f, "set_cookie failed: %s", userlist_strerror(-r));
+    fprintf(phr->log_f, "set_cookie failed: %s\n", userlist_strerror(-r));
+    error_page(fout, phr, 0, NEW_SRV_ERR_INTERNAL);
+    goto cleanup;
   }
 
-  //done:
-  close_memstream(log_f); log_f = 0;
-  if (!log_txt || !*log_txt) {
-    ns_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, 0);
-  } else {
-    html_error_status_page(fout, phr, cnts, extra, log_txt,
-                           NEW_SRV_ACTION_MAIN_PAGE, 0);
-  }
+  ns_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, 0);
 
- cleanup:
-  if (log_f) close_memstream(log_f);
-  xfree(log_txt);
+ cleanup:;
 }
 
 static void
@@ -7459,73 +7424,68 @@ unpriv_change_password(FILE *fout,
                        struct contest_extra *extra)
 {
   const unsigned char *p0 = 0, *p1 = 0, *p2 = 0;
-  char *log_txt = 0;
-  size_t log_len = 0;
-  FILE *log_f = 0;
   int cmd, r;
   unsigned char url[1024];
   unsigned char login_buf[256];
 
-  if (hr_cgi_param(phr, "oldpasswd", &p0) <= 0)
-    return ns_html_err_inv_param(fout, phr, 0, "cannot parse oldpasswd");
-  if (hr_cgi_param(phr, "newpasswd1", &p1) <= 0)
-    return ns_html_err_inv_param(fout, phr, 0, "cannot parse newpasswd1");
-  if (hr_cgi_param(phr, "newpasswd2", &p2) <= 0)
-    return ns_html_err_inv_param(fout, phr, 0, "cannot parse newpasswd2");
-
-  log_f = open_memstream(&log_txt, &log_len);
+  if (hr_cgi_param(phr, "oldpasswd", &p0) <= 0) {
+    fprintf(phr->log_f, "cannot parse oldpasswd\n");
+    error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
+    goto cleanup;
+  }
+  if (hr_cgi_param(phr, "newpasswd1", &p1) <= 0) {
+    fprintf(phr->log_f, "cannot parse newpasswd1\n");
+    error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
+    goto cleanup;
+  }
+  if (hr_cgi_param(phr, "newpasswd2", &p2) <= 0) {
+    fprintf(phr->log_f, "cannot parse newpasswd2\n");
+    error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
+    goto cleanup;
+  }
 
   if (strlen(p0) >= 256) {
-    ns_error(log_f, NEW_SRV_ERR_OLD_PWD_TOO_LONG);
-    goto done;
+    error_page(fout, phr, 0, NEW_SRV_ERR_OLD_PWD_TOO_LONG);
+    goto cleanup;
   }
   if (strcmp(p1, p2)) {
-    ns_error(log_f, NEW_SRV_ERR_NEW_PWD_MISMATCH);
-    goto done;
+    error_page(fout, phr, 0, NEW_SRV_ERR_NEW_PWD_MISMATCH);
+    goto cleanup;
   }
   if (strlen(p1) >= 256) {
-    ns_error(log_f, NEW_SRV_ERR_NEW_PWD_TOO_LONG);
-    goto done;
+    error_page(fout, phr, 0, NEW_SRV_ERR_NEW_PWD_TOO_LONG);
+    goto cleanup;
   }
 
   cmd = ULS_PRIV_SET_TEAM_PASSWD;
   if (cnts->disable_team_password) cmd = ULS_PRIV_SET_REG_PASSWD;
 
   if (ns_open_ul_connection(phr->fw_state) < 0) {
-    ns_html_err_ul_server_down(fout, phr, 0, 0);
+    error_page(fout, phr, 0, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
     goto cleanup;
   }
-  r = userlist_clnt_set_passwd(ul_conn, cmd, phr->user_id, phr->contest_id,
-                               p0, p1);
+  r = userlist_clnt_set_passwd(ul_conn, cmd, phr->user_id, phr->contest_id, p0, p1);
   if (r < 0) {
-    ns_error(log_f, NEW_SRV_ERR_PWD_UPDATE_FAILED, userlist_strerror(-r));
-    goto done;
+    fprintf(phr->log_f, "%s\n", userlist_strerror(-r));
+    error_page(fout, phr, 0, NEW_SRV_ERR_PWD_UPDATE_FAILED);
+    goto cleanup;
   }
 
- done:;
-  close_memstream(log_f); log_f = 0;
-  if (!log_txt || !*log_txt) {
-    url_armor_string(login_buf, sizeof(login_buf), phr->login);
-    if (phr->rest_mode > 0) {
-      snprintf(url, sizeof(url),
-               "%s/%s?contest_id=%d&login=%s&locale_id=%d",
-               phr->self_url, ns_symbolic_action_table[NEW_SRV_ACTION_LOGIN_PAGE],
-               phr->contest_id, login_buf, phr->locale_id);
-    } else {
-      snprintf(url, sizeof(url),
-               "%s?contest_id=%d&login=%s&locale_id=%d&action=%d",
-               phr->self_url, phr->contest_id, login_buf, phr->locale_id,
-               NEW_SRV_ACTION_LOGIN_PAGE);
-    }
-    ns_refresh_page_2(fout, phr->client_key, url);
+  url_armor_string(login_buf, sizeof(login_buf), phr->login);
+  if (phr->rest_mode > 0) {
+    snprintf(url, sizeof(url),
+             "%s/%s?contest_id=%d&login=%s&locale_id=%d",
+             phr->self_url, ns_symbolic_action_table[NEW_SRV_ACTION_LOGIN_PAGE],
+             phr->contest_id, login_buf, phr->locale_id);
   } else {
-    html_error_status_page(fout, phr, cnts, extra, log_txt,
-                           NEW_SRV_ACTION_MAIN_PAGE, 0);
+    snprintf(url, sizeof(url),
+             "%s?contest_id=%d&login=%s&locale_id=%d&action=%d",
+             phr->self_url, phr->contest_id, login_buf, phr->locale_id,
+             NEW_SRV_ACTION_LOGIN_PAGE);
   }
+  ns_refresh_page_2(fout, phr->client_key, url);
 
  cleanup:;
-  if (log_f) close_memstream(log_f);
-  xfree(log_txt);
 }
 
 static void
@@ -7535,60 +7495,47 @@ unpriv_print_run(FILE *fout,
                  struct contest_extra *extra)
 {
   serve_state_t cs = extra->serve_state;
-  char *log_txt = 0;
-  size_t log_len = 0;
-  FILE *log_f = 0;
   int run_id, n;
   struct run_entry re;
 
   if (unpriv_parse_run_id(fout, phr, cnts, extra, &run_id, &re) < 0)
     goto cleanup;
 
-  log_f = open_memstream(&log_txt, &log_len);
-
   if (!cs->global->enable_printing || cs->printing_suspended) {
-    ns_error(log_f, NEW_SRV_ERR_PRINTING_DISABLED);
-    goto done;
+    error_page(fout, phr, 0, NEW_SRV_ERR_PRINTING_DISABLED);
+    goto cleanup;
   }
 
   if (re.status > RUN_LAST
       || (re.status > RUN_MAX_STATUS && re.status < RUN_TRANSIENT_FIRST)
       || re.user_id != phr->user_id) {
-    ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
-    goto done;
+    error_page(fout, phr, 0, NEW_SRV_ERR_PERMISSION_DENIED);
+    goto cleanup;
   }
 
   if (re.pages > 0) {
-    ns_error(log_f, NEW_SRV_ERR_ALREADY_PRINTED);
-    goto done;
+    error_page(fout, phr, 0, NEW_SRV_ERR_ALREADY_PRINTED);
+    goto cleanup;
   }
 
   if ((n = team_print_run(cs, run_id, phr->user_id)) < 0) {
     switch (-n) {
     case SRV_ERR_PAGES_QUOTA:
-      ns_error(log_f,NEW_SRV_ERR_ALREADY_PRINTED, cs->global->team_page_quota);
-      goto done;
+      fprintf(phr->log_f, "Quota: %d\n", cs->global->team_page_quota);
+      error_page(fout, phr, 0, NEW_SRV_ERR_ALREADY_PRINTED);
+      goto cleanup;
     default:
-      ns_error(log_f, NEW_SRV_ERR_PRINTING_FAILED, -n, protocol_strerror(-n));
-      goto done;
+      fprintf(phr->log_f, "%d (%s)", -n, protocol_strerror(-n));
+      error_page(fout, phr, 0, NEW_SRV_ERR_PRINTING_FAILED);
+      goto cleanup;
     }
   }
 
   serve_audit_log(cs, run_id, &re, phr->user_id, &phr->ip, phr->ssl_flag,
                   "print", "ok", -1, "  %d pages printed\n", n);
-
- done:
-  close_memstream(log_f); log_f = 0;
-  if (!log_txt || !*log_txt) {
-    ns_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, 0);
-  } else {
-    html_error_status_page(fout, phr, cnts, extra, log_txt,
-                           NEW_SRV_ACTION_MAIN_PAGE, 0);
-  }
+  ns_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, 0);
 
  cleanup:;
-  if (log_f) close_memstream(log_f);
-  xfree(log_txt);
 }
 
 int
@@ -8271,9 +8218,6 @@ unpriv_submit_run(FILE *fout,
   const struct section_global_data *global = cs->global;
   const struct section_problem_data *prob = 0, *prob2;
   const struct section_language_data *lang = 0;
-  char *log_txt = 0;
-  size_t log_len = 0;
-  FILE *log_f = 0;
   int prob_id, n, lang_id = 0, i, ans, max_ans, j, r;
   const unsigned char *s, *run_text = 0, *text_form_text = 0;
   size_t run_size = 0, ans_size, text_form_size = 0;
@@ -8298,6 +8242,11 @@ unpriv_submit_run(FILE *fout,
   unsigned char *utf8_str = 0;
   int utf8_len = 0;
   int eoln_type = 0;
+
+  // FIXME: remove log_f
+  FILE *log_f = NULL;
+  char *log_txt = NULL;
+  size_t log_len = 0;
 
   l10n_setlocale(phr->locale_id);
   log_f = open_memstream(&log_txt, &log_len);
@@ -8901,13 +8850,15 @@ unpriv_submit_clar(FILE *fout,
   const unsigned char *s, *subject = 0, *text = 0;
   int prob_id = 0, n;
   time_t start_time, stop_time;
-  FILE *log_f = 0;
-  char *log_txt = 0;
-  size_t log_len = 0;
   size_t subj_len, text_len, subj3_len, text3_len;
   unsigned char *subj2, *text2, *subj3, *text3;
   struct timeval precise_time;
   int clar_id;
+
+  // FIXME: remove log_f
+  FILE *log_f = NULL;
+  char *log_txt = NULL;
+  size_t log_len = 0;
 
   // parameters: prob_id, subject, text,  
 
@@ -9044,13 +8995,15 @@ unpriv_submit_appeal(FILE *fout,
   const unsigned char *s, *text = 0;
   int prob_id = 0, n;
   time_t start_time, stop_time;
-  FILE *log_f = 0;
-  char *log_txt = 0;
-  size_t log_len = 0;
   size_t text_len, subj3_len, text3_len;
   unsigned char *text2, *subj3, *text3;
   struct timeval precise_time;
   int clar_id, test;
+
+  // FIXME: remove log_f
+  FILE *log_f = NULL;
+  char *log_txt = NULL;
+  size_t log_len = 0;
 
   // parameters: prob_id, subject, text,  
 
@@ -9208,13 +9161,15 @@ unpriv_command(FILE *fout,
   serve_state_t cs = extra->serve_state;
   const struct section_global_data *global = cs->global;
   const struct section_problem_data *prob;
-  char *log_txt = 0;
-  size_t log_size = 0;
-  FILE *log_f = 0;
   time_t start_time, stop_time;
   struct timeval precise_time;
   int run_id, i;
   unsigned char bb[1024];
+
+  // FIXME: remove log_f
+  FILE *log_f = NULL;
+  char *log_txt = NULL;
+  size_t log_size = 0;
 
   l10n_setlocale(phr->locale_id);
   log_f = open_memstream(&log_txt, &log_size);
@@ -9362,15 +9317,17 @@ unpriv_view_source(FILE *fout,
   serve_state_t cs = extra->serve_state;
   const struct section_global_data *global = cs->global;
   int run_id, src_flags;
-  char *log_txt = 0;
-  size_t log_len = 0;
-  FILE *log_f = 0;
   struct run_entry re;
   const struct section_language_data *lang = 0;
   const struct section_problem_data *prob = 0;
   char *run_text = 0;
   size_t run_size = 0;
   path_t src_path;
+
+  // FIXME: remove log_f
+  FILE *log_f = NULL;
+  char *log_txt = NULL;
+  size_t log_len = 0;
 
   if (unpriv_parse_run_id(fout, phr, cnts, extra, &run_id, &re) < 0)
     goto cleanup;
@@ -9461,10 +9418,12 @@ unpriv_view_test(FILE *fout,
   int run_id, test_num, n;
   const unsigned char *s = 0;
   struct run_entry re;
-  FILE *log_f = 0;
-  char *log_txt = 0;
-  size_t log_len = 0;
   int enable_rep_view = -1;
+
+  // FIXME: remove log_f
+  FILE *log_f = NULL;
+  char *log_txt = NULL;
+  size_t log_len = 0;
 
   // run_id, test_num
   if (unpriv_parse_run_id(fout, phr, cnts, extra, &run_id, &re) < 0)
@@ -10712,8 +10671,11 @@ unprivileged_entry_point(
     // contest finished, not olympiad, standings enabled -> standings
   }
 
-  if (phr->action <= 0 || phr->action >= NEW_SRV_ACTION_LAST || !user_actions_table[phr->action]) {
+  if (phr->action <= 0 || phr->action >= NEW_SRV_ACTION_LAST) {
     phr->action = NEW_SRV_ACTION_MAIN_PAGE;
+  }
+  if (external_unpriv_action_aliases[phr->action] > 0 || external_unpriv_action_names[phr->action]) {
+    if (unpriv_external_action(fout, phr)) goto cleanup;
   }
   /*
   if (!external_unpriv_action_names[phr->action] && !user_actions_table[phr->action]) {
@@ -10721,7 +10683,7 @@ unprivileged_entry_point(
   }
   */
 
-  if (unpriv_external_action(fout, phr)) goto cleanup;
+  //if (unpriv_external_action(fout, phr)) goto cleanup;
   user_actions_table[phr->action](fout, phr, cnts, extra);
 
 cleanup:
