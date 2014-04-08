@@ -25,7 +25,7 @@
     const unsigned char *title = NULL;
 
 
-  if (ns_cgi_param(phr, "user_id", &s) <= 0
+  if (hr_cgi_param(phr, "user_id", &s) <= 0
       || sscanf(s, "%d%n", &view_user_id, &n) != 1 || s[n]
       || !teamdb_lookup(cs->teamdb_state, view_user_id))
     FAIL(NEW_SRV_ERR_INV_USER_ID);
