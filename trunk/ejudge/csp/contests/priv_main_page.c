@@ -247,8 +247,10 @@ fputs((phr->name_arm), out_f);
 fwrite(csp_str5, 1, 2, out_f);
 fprintf(out_f, "%d", (int)(phr->contest_id));
 fwrite(csp_str5, 1, 2, out_f);
+if (extra) {
 if ((extra->contest_arm) ) {
 fputs((extra->contest_arm), out_f);
+}
 }
 fwrite(csp_str6, 1, 3, out_f);
 fputs((title), out_f);
@@ -261,8 +263,10 @@ fputs((phr->name_arm), out_f);
 fwrite(csp_str5, 1, 2, out_f);
 fprintf(out_f, "%d", (int)(phr->contest_id));
 fwrite(csp_str5, 1, 2, out_f);
+if (extra) {
 if ((extra->contest_arm) ) {
 fputs((extra->contest_arm), out_f);
+}
 }
 fwrite(csp_str6, 1, 3, out_f);
 fputs((title), out_f);
