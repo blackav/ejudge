@@ -10931,6 +10931,12 @@ parse_cookie(struct http_request_info *phr)
   }
 }
 
+// forced linking
+static void *forced_linking[] =
+{
+  userlist_clnt_recover_passwd_2,
+};
+
 void
 ns_handle_http_request(struct server_framework_state *state,
                        struct client_state *p,
@@ -10950,6 +10956,8 @@ ns_handle_http_request(struct server_framework_state *state,
   unsigned char *role_name = NULL;
   unsigned char *rest_args = NULL;
   unsigned char *rest_action = NULL;
+
+  (void) forced_linking;
 
   // make a self-referencing URL
   if (ns_getenv(phr, "SSL_PROTOCOL") || ns_getenv(phr, "HTTPS")) {
