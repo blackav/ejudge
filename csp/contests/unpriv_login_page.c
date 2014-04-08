@@ -151,8 +151,8 @@ time_t cur_time;
     cnts_name = html_armor_string_dup(cnts->name);
   }
 
-  ns_cgi_param(phr, "login", &login_str);
-  ns_cgi_param(phr, "password", &password_str);
+  hr_cgi_param(phr, "login", &login_str);
+  hr_cgi_param(phr, "password", &password_str);
 
   phr->hidden_vars = "";
   l10n_setlocale(phr->locale_id);

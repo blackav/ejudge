@@ -129,7 +129,7 @@ const struct section_problem_data *prob = 0;
   path_t variant_stmt_file;
   unsigned char title[1024];
 
-  if (ns_cgi_param_int_opt(phr, "problem", &prob_id, 0) < 0) {
+  if (hr_cgi_param_int_opt(phr, "problem", &prob_id, 0) < 0) {
     FAIL(NEW_SRV_ERR_INV_RUN_ID);
   }
   if (prob_id < 0 || prob_id > cs->max_prob) {
@@ -138,7 +138,7 @@ const struct section_problem_data *prob = 0;
   if (prob_id > 0 && !(prob = cs->probs[prob_id])) {
     FAIL(NEW_SRV_ERR_INV_PROB_ID);
   }
-  if (ns_cgi_param_int_opt(phr, "variant", &variant, 0) < 0) {
+  if (hr_cgi_param_int_opt(phr, "variant", &variant, 0) < 0) {
     FAIL(NEW_SRV_ERR_INV_VARIANT);
   }
   if (!prob) variant = 0;

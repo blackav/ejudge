@@ -197,19 +197,19 @@ int need_examiners = 0;
   struct server_framework_job *job;
   time_t server_start_time = nsf_get_server_start_time(phr->fw_state);
   const unsigned char *title = _("Main page");
-if (ns_cgi_param(phr, "filter_expr", &s) > 0) filter_expr = s;
+if (hr_cgi_param(phr, "filter_expr", &s) > 0) filter_expr = s;
 
-  ns_cgi_param_int_opt_2(phr, "filter_first_run", &filter_first_run, &filter_first_run_set);
-  ns_cgi_param_int_opt_2(phr, "filter_last_run", &filter_last_run, &filter_last_run_set);
+  hr_cgi_param_int_opt_2(phr, "filter_first_run", &filter_first_run, &filter_first_run_set);
+  hr_cgi_param_int_opt_2(phr, "filter_last_run", &filter_last_run, &filter_last_run_set);
 
-  if (ns_cgi_param(phr, "filter_first_clar", &s) > 0 && s)
+  if (hr_cgi_param(phr, "filter_first_clar", &s) > 0 && s)
     filter_first_clar_str = s;
-  if (ns_cgi_param(phr, "filter_last_clar", &s) > 0 && s)
+  if (hr_cgi_param(phr, "filter_last_clar", &s) > 0 && s)
     filter_last_clar_str = s;
-  if (ns_cgi_param(phr, "filter_mode_clar", &s) > 0
+  if (hr_cgi_param(phr, "filter_mode_clar", &s) > 0
       && sscanf(s, "%d%n", &x, &n) == 1 && !s[n] && x >= 1 && x <= 2)
     filter_mode_clar = x;
-  if (ns_cgi_param(phr, "problem", &s) > 0) {
+  if (hr_cgi_param(phr, "problem", &s) > 0) {
     if (sscanf(s, "%d_%d%n", &x, &y, &n) == 2 && !s[n]
         && x > 0 && x <= cs->max_prob && cs->probs[x]
         && cs->probs[x]->variant_num > 0 && y > 0

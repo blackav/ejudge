@@ -148,7 +148,7 @@ path_t src_path;
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   }
 
-  if (ns_cgi_param(phr, "run_charset", &ss) > 0 && ss && *ss)
+  if (hr_cgi_param(phr, "run_charset", &ss) > 0 && ss && *ss)
     run_charset = ss;
 
   if (run_id < 0 || run_id >= run_get_total(cs->runlog_state)) {
