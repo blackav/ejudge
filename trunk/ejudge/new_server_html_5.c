@@ -345,7 +345,7 @@ anon_select_contest_page(FILE *fout, struct http_request_info *phr)
   const unsigned char *login = 0;
   unsigned char bb[1024];
 
-  ns_cgi_param(phr, "login", &login);
+  hr_cgi_param(phr, "login", &login);
 
   // defaulting to English as we have no contest chosen
   orig_locale_id = phr->locale_id;
@@ -445,11 +445,11 @@ login_page(
     par_style = cnts->register_par_style;
   if (!par_style) par_style = "";
 
-  ns_cgi_param(phr, "login", &login);
+  hr_cgi_param(phr, "login", &login);
   if (!login) login = "";
-  ns_cgi_param(phr, "password", &password);
+  hr_cgi_param(phr, "password", &password);
   if (!password) password = "";
-  ns_cgi_param(phr, "email", &email);
+  hr_cgi_param(phr, "email", &email);
   if (!email) email = "";
 
   l10n_setlocale(phr->locale_id);
@@ -611,9 +611,9 @@ create_autoassigned_account_page(
   if (!cnts->assign_logins)
     return create_account_page(fout, phr, cnts, extra, cur_time);
 
-  ns_cgi_param_int(phr, "retval", &reg_error);
-  ns_cgi_param_int(phr, "ul_error", &reg_ul_error);
-  ns_cgi_param_int(phr, "regular", &regular_flag);
+  hr_cgi_param_int(phr, "retval", &reg_error);
+  hr_cgi_param_int(phr, "ul_error", &reg_ul_error);
+  hr_cgi_param_int(phr, "regular", &regular_flag);
 
   if (cnts->register_head_style && *cnts->register_head_style)
     head_style = cnts->register_head_style;
@@ -634,7 +634,7 @@ create_autoassigned_account_page(
 
   (void) allowed_info_edit;
 
-  if (ns_cgi_param(phr, "email", &email) <= 0) email = 0;
+  if (hr_cgi_param(phr, "email", &email) <= 0) email = 0;
   if (!email) email = "";
 
   l10n_setlocale(phr->locale_id);
@@ -775,9 +775,9 @@ create_account_page(
   if (cnts->assign_logins)
     return create_autoassigned_account_page(fout, phr, cnts, extra, cur_time);
 
-  ns_cgi_param_int(phr, "retval", &reg_error);
-  ns_cgi_param_int(phr, "ul_error", &reg_ul_error);
-  ns_cgi_param_int(phr, "regular", &regular_flag);
+  hr_cgi_param_int(phr, "retval", &reg_error);
+  hr_cgi_param_int(phr, "ul_error", &reg_ul_error);
+  hr_cgi_param_int(phr, "regular", &regular_flag);
 
   if (cnts->register_head_style && *cnts->register_head_style)
     head_style = cnts->register_head_style;
@@ -786,9 +786,9 @@ create_account_page(
     par_style = cnts->register_par_style;
   if (!par_style) par_style = "";
 
-  if (ns_cgi_param(phr, "login", &login) <= 0) login = 0;
+  if (hr_cgi_param(phr, "login", &login) <= 0) login = 0;
   if (!login) login = "";
-  if (ns_cgi_param(phr, "email", &email) <= 0) email = 0;
+  if (hr_cgi_param(phr, "email", &email) <= 0) email = 0;
   if (!email) email = "";
 
   l10n_setlocale(phr->locale_id);
@@ -932,7 +932,7 @@ create_account(
   }
 
   if (!cnts->assign_logins) {
-    r = ns_cgi_param(phr, "login", &login);
+    r = hr_cgi_param(phr, "login", &login);
     if (r < 0) FAIL2(NEW_SRV_ERR_LOGIN_BINARY);
     if (!r || !login) FAIL2(NEW_SRV_ERR_LOGIN_UNSPECIFIED);
     if (check_str(login, login_accept_chars) < 0)
@@ -941,7 +941,7 @@ create_account(
     login = "";
   }
 
-  r = ns_cgi_param(phr, "email", &email);
+  r = hr_cgi_param(phr, "email", &email);
   if (r < 0) FAIL2(NEW_SRV_ERR_EMAIL_BINARY);
   if (!r || !email) FAIL2(NEW_SRV_ERR_EMAIL_UNSPECIFIED);
   if (check_str(email, email_accept_chars) < 0)
@@ -1027,10 +1027,10 @@ cmd_login(
   unsigned char urlbuf[1024];
   int need_regform = 0;
 
-  if (ns_cgi_param(phr, "login", &login) <= 0)
+  if (hr_cgi_param(phr, "login", &login) <= 0)
     return ns_html_err_inv_param(fout, phr, 0, "login is invalid");
   phr->login = xstrdup(login);
-  if (ns_cgi_param(phr, "password", &password) <= 0)
+  if (hr_cgi_param(phr, "password", &password) <= 0)
     return ns_html_err_inv_param(fout, phr, 0, "password is invalid");
 
   // if neither login, nor password is not specified, just change the locale
@@ -1135,7 +1135,7 @@ anon_register_pages(FILE *fout, struct http_request_info *phr)
   time_t cur_time = 0;
   int create_flag = 0;
 
-  ns_cgi_param_int(phr, "create_account", &create_flag);
+  hr_cgi_param_int(phr, "create_account", &create_flag);
 
   // contest_id is reqired
   if (phr->contest_id <= 0 || contests_get(phr->contest_id,&cnts) < 0 || !cnts){
@@ -1199,7 +1199,7 @@ change_locale(FILE *fout, struct http_request_info *phr)
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   const unsigned char *s = 0;
 
-  ns_cgi_param_int(phr, "next_action", &next_action);
+  hr_cgi_param_int(phr, "next_action", &next_action);
   if (next_action < 0 || next_action >= NEW_SRV_ACTION_LAST) next_action = 0;
 
   // SID, contest_id, login are passed "as is"
@@ -1229,12 +1229,12 @@ change_locale(FILE *fout, struct http_request_info *phr)
     sep = "&";
   }
   s = 0;
-  if (ns_cgi_param(phr, "login", &s) > 0 && s && *s) {
+  if (hr_cgi_param(phr, "login", &s) > 0 && s && *s) {
     fprintf(fout, "%slogin=%s", sep, URLARMOR(s));
     sep = "&";
   }
   s = 0;
-  if (ns_cgi_param(phr, "email", &s) > 0 && s && *s) {
+  if (hr_cgi_param(phr, "email", &s) > 0 && s && *s) {
     fprintf(fout, "%semail=%s", sep, URLARMOR(s));
     sep = "&";
   }
@@ -2546,8 +2546,8 @@ edit_page(
   ui = userlist_get_cnts0(u);
   if (ui && ui->cnts_read_only) goto redirect_back;
   if (phr->action == NEW_SRV_ACTION_REG_EDIT_MEMBER_PAGE) {
-    if (ns_cgi_param_int(phr, "role", &role) < 0) goto redirect_back;
-    if (ns_cgi_param_int(phr, "member", &member) < 0) goto redirect_back;
+    if (hr_cgi_param_int(phr, "role", &role) < 0) goto redirect_back;
+    if (hr_cgi_param_int(phr, "member", &member) < 0) goto redirect_back;
     if (role < 0 || role >= CONTEST_M_GUEST) goto redirect_back;
     if (!cnts->members[role]) goto redirect_back;
     if (!(m = userlist_members_get_nth(ui->members, role, member)))
@@ -2646,7 +2646,7 @@ cancel_editing(
   int role;
 
   if (phr->action == NEW_SRV_ACTION_REG_CANCEL_MEMBER_EDITING
-      && ns_cgi_param_int(phr, "role", &role) >= 0
+      && hr_cgi_param_int(phr, "role", &role) >= 0
       && role >= CONTEST_M_CONTESTANT && role < CONTEST_LAST_MEMBER)
     next_action = NEW_SRV_ACTION_REG_VIEW_CONTESTANTS + role;
 
@@ -2736,7 +2736,7 @@ assemble_programming_languages(
 
   for (i = 0; i < allowed_languages_u; i++) {
     snprintf(varname, sizeof(varname), "proglang_%zu", i);
-    if (ns_cgi_param(phr, varname, &s) > 0) {
+    if (hr_cgi_param(phr, varname, &s) > 0) {
       if (!is_first) fputs(", ", f);
       is_first = 0;
       fputs(allowed_languages[i], f);
@@ -2771,7 +2771,7 @@ get_member_field(
   switch (field) {
   case CONTEST_MF_STATUS:
     snprintf(varname, sizeof(varname), "%sparam_%d", var_prefix, field);
-    if ((r = ns_cgi_param(phr, varname, &v)) < 0)
+    if ((r = hr_cgi_param(phr, varname, &v)) < 0)
       goto non_printable;
     else if (!r || !v)
       v = "";
@@ -2788,7 +2788,7 @@ get_member_field(
 
   case CONTEST_MF_GENDER:
     snprintf(varname, sizeof(varname), "%sparam_%d", var_prefix, field);
-    if ((r = ns_cgi_param(phr, varname, &v)) < 0)
+    if ((r = hr_cgi_param(phr, varname, &v)) < 0)
       goto non_printable;
     else if (!r || !v)
       v = "";
@@ -2805,7 +2805,7 @@ get_member_field(
 
   case CONTEST_MF_GRADE:
     snprintf(varname, sizeof(varname), "%sparam_%d", var_prefix, field);
-    if ((r = ns_cgi_param(phr, varname, &v)) < 0)
+    if ((r = hr_cgi_param(phr, varname, &v)) < 0)
       goto non_printable;
     else if (!r || !v)
       v = "";
@@ -2825,7 +2825,7 @@ get_member_field(
     // <prefix>day_<field>, <prefix>month_<field>, <prefix>year_<field>
 
     snprintf(varname, sizeof(varname), "%sday_%d", var_prefix, field);
-    if ((r = ns_cgi_param(phr, varname, &v)) < 0)
+    if ((r = hr_cgi_param(phr, varname, &v)) < 0)
       goto non_printable;
     else if (!r || !v)
       v = "";
@@ -2836,7 +2836,7 @@ get_member_field(
     }
 
     snprintf(varname, sizeof(varname), "%smonth_%d", var_prefix, field);
-    if ((r = ns_cgi_param(phr, varname, &v)) < 0)
+    if ((r = hr_cgi_param(phr, varname, &v)) < 0)
       goto non_printable;
     else if (!r || !v)
       v = "";
@@ -2847,7 +2847,7 @@ get_member_field(
     }
 
     snprintf(varname, sizeof(varname), "%syear_%d", var_prefix, field);
-    if ((r = ns_cgi_param(phr, varname, &v)) < 0)
+    if ((r = hr_cgi_param(phr, varname, &v)) < 0)
       goto non_printable;
     else if (!r || !v)
       v = "";
@@ -2881,7 +2881,7 @@ get_member_field(
 
   default:
     snprintf(varname, sizeof(varname), "%sparam_%d", var_prefix, field);
-    if ((r = ns_cgi_param(phr, varname, &v)) < 0) {
+    if ((r = hr_cgi_param(phr, varname, &v)) < 0) {
       goto non_printable;
     } else if (!r || !v) {
       v = "";
@@ -2931,7 +2931,7 @@ submit_member_editing(
   }
 
   // role, member, param_%d
-  if (ns_cgi_param_int(phr, "role", &role) < 0
+  if (hr_cgi_param_int(phr, "role", &role) < 0
       || role < CONTEST_M_CONTESTANT || role >= CONTEST_LAST_MEMBER
       || !cnts->members[role] || cnts->members[role]->max_count <= 0) {
     // invalid role, or such role is not enabled on this contest...
@@ -2939,7 +2939,7 @@ submit_member_editing(
     return;
   }
 
-  if (ns_cgi_param_int(phr, "member", &member) < 0
+  if (hr_cgi_param_int(phr, "member", &member) < 0
       || !u || !u->cnts0 || u->read_only || u->cnts0->cnts_read_only
       || !(m = userlist_members_get_nth(u->cnts0->members, role, member)))
     goto done;
@@ -3031,7 +3031,7 @@ submit_general_editing(
   // for personal contests, also set the first member
 
   if (!cnts->disable_name) {
-    if ((r = ns_cgi_param(phr, "name", &v)) < 0) {
+    if ((r = hr_cgi_param(phr, "name", &v)) < 0) {
       fprintf(log_f, "%s.\n",
               _("Field \"Name\" contains non-printable characters"));
       goto done;
@@ -3061,7 +3061,7 @@ submit_general_editing(
                                      cnts->allowed_languages);
     } else {
       snprintf(varname, sizeof(varname), "param_%d", ff);
-      if ((r = ns_cgi_param(phr, varname, &v)) < 0) {
+      if ((r = hr_cgi_param(phr, varname, &v)) < 0) {
         fprintf(log_f, _("Field \"%s\" contains non-printable characters.\n"),
                 legend);
         goto done;
@@ -3161,7 +3161,7 @@ add_member(
   }
 
   // role
-  if (ns_cgi_param_int(phr, "role", &role) < 0
+  if (hr_cgi_param_int(phr, "role", &role) < 0
       || role < CONTEST_M_CONTESTANT || role >= CONTEST_LAST_MEMBER
       || !cnts->members[role] || cnts->members[role]->max_count <= 0) {
     // invalid role, or such role is not enabled on this contest...
@@ -3227,7 +3227,7 @@ remove_member(
   }
 
   // role
-  if (ns_cgi_param_int(phr, "role", &role) < 0
+  if (hr_cgi_param_int(phr, "role", &role) < 0
       || role < CONTEST_M_CONTESTANT || role >= CONTEST_LAST_MEMBER
       || !cnts->members[role] || cnts->members[role]->max_count <= 0) {
     // invalid role, or such role is not enabled on this contest...
@@ -3240,7 +3240,7 @@ remove_member(
     goto done;
 
   // member
-  if (ns_cgi_param_int(phr, "member", &member) < 0 || member < 0
+  if (hr_cgi_param_int(phr, "member", &member) < 0 || member < 0
       || !(m = userlist_members_get_nth(u->cnts0->members, role, member)))
     goto done;
 
@@ -3296,7 +3296,7 @@ move_member(
   }
 
   // role
-  if (ns_cgi_param_int(phr, "role", &role) < 0
+  if (hr_cgi_param_int(phr, "role", &role) < 0
       || role < CONTEST_M_CONTESTANT || role >= CONTEST_LAST_MEMBER
       || !cnts->members[role] || cnts->members[role]->max_count <= 0) {
     // invalid role, or such role is not enabled on this contest...
@@ -3307,7 +3307,7 @@ move_member(
   // member
   if (!u || !u->cnts0 || u->read_only || u->cnts0->cnts_read_only)
     goto done;
-  if (ns_cgi_param_int(phr, "member", &member) < 0)
+  if (hr_cgi_param_int(phr, "member", &member) < 0)
     goto done;
   if (!userlist_members_get_nth(u->cnts0->members, role, member))
     goto done;
@@ -3406,15 +3406,15 @@ change_password(
 
   log_f = open_memstream(&log_t, &log_z);
 
-  if (ns_cgi_param(phr, "oldpasswd", &p0) <= 0) {
+  if (hr_cgi_param(phr, "oldpasswd", &p0) <= 0) {
     fprintf(log_f, "%s.\n", _("Old password is invalid"));
     goto done;
   }
-  if (ns_cgi_param(phr, "newpasswd1", &p1) <= 0) {
+  if (hr_cgi_param(phr, "newpasswd1", &p1) <= 0) {
     fprintf(log_f, "%s.\n", _("New password (1) is invalid"));
     goto done;
   }
-  if (ns_cgi_param(phr, "newpasswd2", &p2) <= 0) {
+  if (hr_cgi_param(phr, "newpasswd2", &p2) <= 0) {
     fprintf(log_f, "%s.\n", _("New password (2) is invalid"));
     goto done;
   }

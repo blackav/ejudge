@@ -786,28 +786,6 @@ ns_write_olympiads_user_runs(
 int
 new_server_cmd_handler(FILE *fout, struct http_request_info *phr);
 
-int
-ns_cgi_param(const struct http_request_info *phr, const unsigned char *param,
-             const unsigned char **p_value);
-int ns_cgi_param_bin(const struct http_request_info *phr,
-                     const unsigned char *param,
-                     const unsigned char **p_value, size_t *p_size);
-int ns_cgi_param_int( struct http_request_info *phr,
-                      const unsigned char *name,
-                      int *p_val);
-int
-ns_cgi_param_int_opt(
-        struct http_request_info *phr,
-        const unsigned char *name,
-        int *p_val,
-        int default_value);
-int
-ns_cgi_param_int_opt_2(
-        struct http_request_info *phr,
-        const unsigned char *name,
-        int *p_val,
-        int *p_set_flag);
-
 struct server_framework_state;
 int ns_open_ul_connection(struct server_framework_state *state);
 
