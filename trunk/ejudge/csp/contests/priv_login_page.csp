@@ -14,12 +14,12 @@
   int contest_id = phr->contest_id;
   const unsigned char *title = _("Login page");
 %><%
-  ns_cgi_param(phr, "login", &login);
-  ns_cgi_param(phr, "password", &password);
+  hr_cgi_param(phr, "login", &login);
+  hr_cgi_param(phr, "password", &password);
 
   if (!phr->role) {
     phr->role = USER_ROLE_OBSERVER;
-    if (ns_cgi_param(phr, "role", &s) > 0) {
+    if (hr_cgi_param(phr, "role", &s) > 0) {
       if (sscanf(s, "%d%n", &r, &n) == 1 && !s[n]
           && r >= USER_ROLE_CONTESTANT && r < USER_ROLE_LAST)
         phr->role = r;

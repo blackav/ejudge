@@ -72,17 +72,17 @@ ns_unparse_answers(
   const unsigned char *title = NULL;
   int enable_virtual_start = 0;
 
-  if (ns_cgi_param(phr, "all_runs", &s) > 0
+  if (hr_cgi_param(phr, "all_runs", &s) > 0
       && sscanf(s, "%d%n", &v, &n) == 1 && !s[n] && v >= 0 && v <= 1) {
     phr->session_extra->user_view_all_runs = v;
   }
   all_runs = phr->session_extra->user_view_all_runs;
-  if (ns_cgi_param(phr, "all_clars", &s) > 0
+  if (hr_cgi_param(phr, "all_clars", &s) > 0
       && sscanf(s, "%d%n", &v, &n) == 1 && !s[n] && v >= 0 && v <= 1) {
     phr->session_extra->user_view_all_clars = v;
   }
   all_clars = phr->session_extra->user_view_all_clars;
-  if (ns_cgi_param(phr, "prob_id", &s) > 0
+  if (hr_cgi_param(phr, "prob_id", &s) > 0
       && sscanf(s, "%d%n", &v, &n) == 1 && !s[n] && v >= -1)
     prob_id = v;
   

@@ -22,7 +22,7 @@
     " bgcolor=\"#e0e0e0\"",
   };
 
-  ns_cgi_param(phr, "login", &login);
+  hr_cgi_param(phr, "login", &login);
 
   // defaulting to English as we have no contest chosen
   orig_locale_id = phr->locale_id;
