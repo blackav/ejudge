@@ -123,6 +123,50 @@ struct http_request_info
   unsigned char data[0];
 };
 
+const unsigned char*
+hr_getenv(
+        const struct http_request_info *phr,
+        const unsigned char *var);
+
+int
+hr_cgi_param(
+        const struct http_request_info *phr,
+        const unsigned char *param,
+        const unsigned char **p_value);
+
+int
+hr_cgi_param_bin(
+        const struct http_request_info *phr,
+        const unsigned char *param,
+        const unsigned char **p_value,
+        size_t *p_size);
+
+const unsigned char *
+hr_cgi_nname(
+        const struct http_request_info *phr,
+        const unsigned char *prefix,
+        size_t pflen);
+
+int
+hr_cgi_param_int(
+        const struct http_request_info *phr,
+        const unsigned char *name,
+        int *p_val);
+
+int
+hr_cgi_param_int_opt(
+        struct http_request_info *phr,
+        const unsigned char *name,
+        int *p_val,
+        int default_value);
+
+int
+hr_cgi_param_int_opt_2(
+        struct http_request_info *phr,
+        const unsigned char *name,
+        int *p_val,
+        int *p_set_flag);
+
 #endif /* __HTTP_REQUEST_H__ */
 
 /*

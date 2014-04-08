@@ -84,15 +84,15 @@ cmd_login(
   opcap_t caps;
 
   // login, password, role, contest_id
-  if (ns_cgi_param(phr, "login", &login) <= 0)
+  if (hr_cgi_param(phr, "login", &login) <= 0)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
-  if (ns_cgi_param(phr, "password", &password) <= 0)
+  if (hr_cgi_param(phr, "password", &password) <= 0)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   if (phr->contest_id <= 0 || contests_get(phr->contest_id, &cnts) || !cnts)
     FAIL(NEW_SRV_ERR_INV_CONTEST_ID);
   if (!cnts->managed)
     FAIL(NEW_SRV_ERR_INV_CONTEST_ID);
-  if (ns_cgi_param(phr, "role", &role_str) <= 0)
+  if (hr_cgi_param(phr, "role", &role_str) <= 0)
     FAIL(NEW_SRV_ERR_INV_ROLE);
   if (parse_int(role_str, &phr->role) < 0
       || phr->role < 0 || phr->role >= USER_ROLE_LAST)
@@ -289,7 +289,7 @@ do_schedule(
   const unsigned char *s = 0;
   time_t sloc = 0, start_time, stop_time;
 
-  if (ns_cgi_param(phr, "sched_time", &s) <= 0)
+  if (hr_cgi_param(phr, "sched_time", &s) <= 0)
     return -NEW_SRV_ERR_INV_TIME_SPEC;
   if (xml_parse_date(NULL, 0, 0, 0, s, &sloc) < 0 || sloc < 0)
     return -NEW_SRV_ERR_INV_TIME_SPEC;
@@ -575,7 +575,7 @@ cmd_run_operation(
   char *src_text = 0;
   size_t src_len = 0;
 
-  if (ns_cgi_param(phr, "run_id", &s) <= 0)
+  if (hr_cgi_param(phr, "run_id", &s) <= 0)
     FAIL(NEW_SRV_ERR_INV_RUN_ID);
   if (parse_int(s, &run_id) < 0 || run_id < 0)
     FAIL(NEW_SRV_ERR_INV_RUN_ID);
@@ -691,7 +691,7 @@ cmd_clar_operation(
   unsigned char *msg_txt = 0;
   size_t msg_len = 0;
 
-  if (ns_cgi_param(phr, "clar_id", &s) <= 0)
+  if (hr_cgi_param(phr, "clar_id", &s) <= 0)
     FAIL(NEW_SRV_ERR_INV_CLAR_ID);
   if (parse_int(s, &clar_id) < 0 || clar_id < 0)
     FAIL(NEW_SRV_ERR_INV_CLAR_ID);
@@ -801,7 +801,7 @@ cmd_submit_run(
       abort();
   }
 
-  if (ns_cgi_param(phr, "prob", &s) <= 0)
+  if (hr_cgi_param(phr, "prob", &s) <= 0)
     FAIL(NEW_SRV_ERR_INV_PROB_ID);
   if (s && *s == '#') {
     if (parse_int(s + 1, &i) < 0 || i <= 0 || i > cs->max_prob || !(prob = cs->probs[i]))
@@ -818,7 +818,7 @@ cmd_submit_run(
   /* check variant */
   switch (phr->role) {
   case USER_ROLE_CONTESTANT:
-    if (ns_cgi_param(phr, "variant", &s) != 0)
+    if (hr_cgi_param(phr, "variant", &s) != 0)
       FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
     if (prob->variant_num > 0) {
       if ((variant = find_variant(cs, phr->user_id, prob->id, 0)) <= 0)
@@ -830,11 +830,11 @@ cmd_submit_run(
   case USER_ROLE_JUDGE:
   case USER_ROLE_ADMIN:
     if (prob->variant_num <= 0) {
-      if (ns_cgi_param(phr, "variant", &s) != 0)
+      if (hr_cgi_param(phr, "variant", &s) != 0)
         FAIL(NEW_SRV_ERR_INV_VARIANT);
       variant = 0;
     } else {
-      if ((r = ns_cgi_param(phr, "variant", &s)) < 0)
+      if ((r = hr_cgi_param(phr, "variant", &s)) < 0)
         FAIL(NEW_SRV_ERR_INV_VARIANT);
       if (!r) {
         if ((variant = find_variant(cs, phr->user_id, prob->id, 0)) <= 0)
@@ -854,7 +854,7 @@ cmd_submit_run(
 
   /* parse language */
   if (prob->type == PROB_TYPE_STANDARD) {
-    if (ns_cgi_param(phr, "lang", &s) <= 0)
+    if (hr_cgi_param(phr, "lang", &s) <= 0)
       FAIL(NEW_SRV_ERR_INV_LANG_ID);
     for (i = 1; i <= cs->max_lang; i++)
       if (cs->langs[i] && !strcmp(s, cs->langs[i]->short_name))
@@ -865,13 +865,13 @@ cmd_submit_run(
     lang = cs->langs[i];
 
     if (cs->global->enable_eoln_select > 0) {
-      ns_cgi_param_int_opt(phr, "eoln_type", &eoln_type, 0);
+      hr_cgi_param_int_opt(phr, "eoln_type", &eoln_type, 0);
       if (eoln_type < 0 || eoln_type > EOLN_CRLF) eoln_type = 0;
     }
   }
 
   /* get the source */
-  if (!ns_cgi_param_bin(phr, "file", &run_text, &run_size))
+  if (!hr_cgi_param_bin(phr, "file", &run_text, &run_size))
     FAIL(NEW_SRV_ERR_SOURCE_NONEXISTANT);
   if (!run_size)
     FAIL(NEW_SRV_ERR_SUBMIT_EMPTY);
@@ -1236,7 +1236,7 @@ cmd_import_xml_runs(
   if (cs->global->enable_runlog_merge <= 0)
     FAIL(NEW_SRV_ERR_NOT_SUPPORTED);
 
-  if (!(r = ns_cgi_param(phr, "file", &s)))
+  if (!(r = hr_cgi_param(phr, "file", &s)))
     FAIL(NEW_SRV_ERR_FILE_UNSPECIFIED);
   else if (r < 0)
     FAIL(NEW_SRV_ERR_BINARY_FILE);
@@ -1807,14 +1807,14 @@ cmd_dump_master_runs(
   if (phr->role != USER_ROLE_ADMIN && phr->role != USER_ROLE_JUDGE)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
-  if (ns_cgi_param(phr, "filter_expr", &filter_expr) < 0)
+  if (hr_cgi_param(phr, "filter_expr", &filter_expr) < 0)
     FAIL(NEW_SRV_ERR_INV_PARAM);
   if (!filter_expr) filter_expr = "";
 
-  if (ns_cgi_param_int_opt_2(phr, "first_run", &first_run, &first_run_set) < 0)
+  if (hr_cgi_param_int_opt_2(phr, "first_run", &first_run, &first_run_set) < 0)
     FAIL(NEW_SRV_ERR_INV_PARAM);
 
-  if (ns_cgi_param_int_opt_2(phr, "last_run", &last_run, &last_run_set) < 0)
+  if (hr_cgi_param_int_opt_2(phr, "last_run", &last_run, &last_run_set) < 0)
     FAIL(NEW_SRV_ERR_INV_PARAM);
 
   retval = do_dump_master_runs(fout, phr, cnts, extra,
@@ -1843,7 +1843,7 @@ cmd_force_start_virtual(
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   if (!global->is_virtual)
     FAIL(NEW_SRV_ERR_NOT_VIRTUAL);
-  if (ns_cgi_param_int(phr, "user_id_2", &user_id_2) < 0)
+  if (hr_cgi_param_int(phr, "user_id_2", &user_id_2) < 0)
     FAIL(NEW_SRV_ERR_INV_USER_ID);
   if (!teamdb_lookup(cs->teamdb_state, user_id_2))
     FAIL(NEW_SRV_ERR_INV_USER_ID);
@@ -1884,9 +1884,9 @@ cmd_reload_server_2(
   if (!extra) return 0;
   if (!extra->serve_state) return 0;
 
-  if (ns_cgi_param(phr, "login", &login) <= 0)
+  if (hr_cgi_param(phr, "login", &login) <= 0)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
-  if (ns_cgi_param(phr, "password", &password) <= 0)
+  if (hr_cgi_param(phr, "password", &password) <= 0)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
   if (!strcmp(login, "__unix__") && !strcmp(password, "__unix__")) {

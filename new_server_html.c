@@ -503,152 +503,6 @@ ns_post_select_callback(struct server_framework_state *state)
   }
 }
 
-static const unsigned char*
-ns_getenv(const struct http_request_info *phr, const unsigned char *var)
-{
-  int i;
-  size_t var_len;
-
-  if (!var) return 0;
-  var_len = strlen(var);
-  for (i = 0; i < phr->env_num; i++)
-    if (!strncmp(phr->envs[i], var, var_len) && phr->envs[i][var_len] == '=')
-      break;
-  if (i < phr->env_num)
-    return phr->envs[i] + var_len + 1;
-  return 0;
-}
-
-int
-ns_cgi_param(const struct http_request_info *phr, const unsigned char *param,
-             const unsigned char **p_value)
-{
-  int i;
-
-  if (!param) return -1;
-  for (i = 0; i < phr->param_num; i++)
-    if (!strcmp(phr->param_names[i], param))
-      break;
-  if (i >= phr->param_num) return 0;
-  if (strlen(phr->params[i]) != phr->param_sizes[i]) return -1;
-  *p_value = phr->params[i];
-  return 1;
-}
-
-int
-ns_cgi_param_bin(const struct http_request_info *phr,
-                 const unsigned char *param,
-                 const unsigned char **p_value,
-                 size_t *p_size)
-{
-  int i;
-
-  if (!param) return -1;
-  for (i = 0; i < phr->param_num; i++)
-    if (!strcmp(phr->param_names[i], param))
-      break;
-  if (i >= phr->param_num) return 0;
-  *p_value = phr->params[i];
-  *p_size = phr->param_sizes[i];
-  return 1;
-}
-
-static const unsigned char *
-ns_cgi_nname(const struct http_request_info *phr,
-             const unsigned char *prefix, size_t pflen)
-{
-  int i;
-
-  if (!prefix || !pflen) return 0;
-  for (i = 0; i < phr->param_num; i++)
-    if (!strncmp(phr->param_names[i], prefix, pflen))
-      return phr->param_names[i];
-  return 0;
-}
-
-int
-ns_cgi_param_int(
-        struct http_request_info *phr,
-        const unsigned char *name,
-        int *p_val)
-{
-  const unsigned char *s = 0, *p = 0;
-  char *eptr = 0;
-  int x;
-
-  if (ns_cgi_param(phr, name, &s) <= 0) return -1;
-
-  p = s;
-  while (*p && isspace(*p)) p++;
-  if (!*p) return -1;
-
-  errno = 0;
-  x = strtol(s, &eptr, 10);
-  if (errno || *eptr) return -1;
-  if (p_val) *p_val = x;
-  return 0;
-}
-
-int
-ns_cgi_param_int_opt(
-        struct http_request_info *phr,
-        const unsigned char *name,
-        int *p_val,
-        int default_value)
-{
-  const unsigned char *s = 0, *p;
-  char *eptr = 0;
-  int x;
-
-  if (!(x = ns_cgi_param(phr, name, &s))) {
-    if (p_val) *p_val = default_value;
-    return 0;
-  } else if (x < 0) return -1;
-  p = s;
-  while (*p && isspace(*p)) p++;
-  if (!*p) {
-    if (p_val) *p_val = default_value;
-    return 0;
-  }
-  errno = 0;
-  x = strtol(s, &eptr, 10);
-  if (errno || *eptr) return -1;
-  if (p_val) *p_val = x;
-  return 0;
-}
-
-int
-ns_cgi_param_int_opt_2(
-        struct http_request_info *phr,
-        const unsigned char *name,
-        int *p_val,
-        int *p_set_flag)
-{
-  const unsigned char *s = 0, *p;
-  char *eptr = 0;
-  int x;
-
-  ASSERT(p_val);
-  ASSERT(p_set_flag);
-
-  *p_val = 0;
-  *p_set_flag = 0;
-
-  if (!(x = ns_cgi_param(phr, name, &s))) return 0;
-  else if (x < 0) return -1;
-
-  p = s;
-  while (*p && isspace(*p)) p++;
-  if (!*p) return 0;
-
-  errno = 0;
-  x = strtol(s, &eptr, 10);
-  if (errno || *eptr) return -1;
-  *p_val = x;
-  *p_set_flag = 1;
-  return 0;
-}
-
 static void
 close_ul_connection(struct server_framework_state *state)
 {
@@ -1199,12 +1053,12 @@ privileged_page_login_page(FILE *fout, struct http_request_info *phr)
   html_start_form(fout, 1, phr->self_url, "");
   fprintf(fout, "<table>\n");
   fprintf(fout, "<tr><td>%s:</td><td><input type=\"text\" size=\"32\" name=\"login\"", _("Login"));
-  if (ns_cgi_param(phr, "login", &s) > 0) {
+  if (hr_cgi_param(phr, "login", &s) > 0) {
     fprintf(fout, " value=\"%s\"", ARMOR(s));
   }
   fprintf(fout, "/></td></tr>\n");
   fprintf(fout, "<tr><td>%s:</td><td><input type=\"password\" size=\"32\" name=\"password\"", _("Password"));
-  if (ns_cgi_param(phr, "password", &s) > 0) {
+  if (hr_cgi_param(phr, "password", &s) > 0) {
     fprintf(fout, " value=\"%s\"", ARMOR(s));
   }
   fprintf(fout, "/></td></tr>\n");
@@ -1215,7 +1069,7 @@ privileged_page_login_page(FILE *fout, struct http_request_info *phr)
   fprintf(fout, "/></td></tr>\n");
   if (!phr->role) {
     phr->role = USER_ROLE_OBSERVER;
-    if (ns_cgi_param(phr, "role", &s) > 0) {
+    if (hr_cgi_param(phr, "role", &s) > 0) {
       if (sscanf(s, "%d%n", &r, &n) == 1 && !s[n]
           && r >= USER_ROLE_CONTESTANT && r < USER_ROLE_LAST)
         phr->role = r;
@@ -1299,7 +1153,7 @@ privileged_page_cookie_login(FILE *fout,
     return ns_html_err_inv_param(fout, phr, 1, "contest is not managed");
   if (!phr->role) {
     phr->role = USER_ROLE_OBSERVER;
-    if (ns_cgi_param(phr, "role", &s) > 0) {
+    if (hr_cgi_param(phr, "role", &s) > 0) {
       if (sscanf(s, "%d%n", &r, &n) == 1 && !s[n]
           && r >= USER_ROLE_CONTESTANT && r < USER_ROLE_LAST)
         phr->role = r;
@@ -1384,13 +1238,13 @@ privileged_page_login(FILE *fout,
   const struct contest_desc *cnts = 0;
   opcap_t caps;
 
-  if ((r = ns_cgi_param(phr, "login", &login)) < 0)
+  if ((r = hr_cgi_param(phr, "login", &login)) < 0)
     return ns_html_err_inv_param(fout, phr, 1, "cannot parse login");
   if (!r || phr->action == NEW_SRV_ACTION_LOGIN_PAGE)
     return privileged_page_login_page(fout, phr);
 
   phr->login = xstrdup(login);
-  if ((r = ns_cgi_param(phr, "password", &password)) <= 0)
+  if ((r = hr_cgi_param(phr, "password", &password)) <= 0)
     return ns_html_err_inv_param(fout, phr, 1, "cannot parse password");
   if (phr->contest_id<=0 || contests_get(phr->contest_id, &cnts)<0 || !cnts)
     return ns_html_err_inv_param(fout, phr, 1, "invalid contest_id");
@@ -1399,7 +1253,7 @@ privileged_page_login(FILE *fout,
 
   if (!phr->role) {
     phr->role = USER_ROLE_OBSERVER;
-    if (ns_cgi_param(phr, "role", &s) > 0) {
+    if (hr_cgi_param(phr, "role", &s) > 0) {
       if (sscanf(s, "%d%n", &r, &n) == 1 && !s[n]
           && r >= USER_ROLE_CONTESTANT && r < USER_ROLE_LAST)
         phr->role = r;
@@ -1479,8 +1333,8 @@ priv_parse_user_id_range(
 {
   int first = 0, last = -1, x, y;
 
-  if (ns_cgi_param_int_opt(phr, "first_user_id", &x, 0) < 0) goto done;
-  if (ns_cgi_param_int_opt(phr, "last_user_id", &y, -1) < 0) goto done;
+  if (hr_cgi_param_int_opt(phr, "first_user_id", &x, 0) < 0) goto done;
+  if (hr_cgi_param_int_opt(phr, "last_user_id", &y, -1) < 0) goto done;
   if (x <= 0 || y <= 0 || x > y || y - x > 100000) goto done;
 
   first = x;
@@ -1531,7 +1385,7 @@ priv_registration_operation(FILE *fout,
   }
 
   if (phr->action == NEW_SRV_ACTION_USERS_SET_DISQUALIFIED) {
-    if (ns_cgi_param(phr, "disq_comment", &s) < 0) {
+    if (hr_cgi_param(phr, "disq_comment", &s) < 0) {
       ns_html_err_inv_param(fout, phr, 1, "invalid parameter disq_comment");
       retcode = -1;
       goto cleanup;
@@ -1675,7 +1529,7 @@ priv_add_user_by_user_id(FILE *fout,
   int x, n, r;
   int retval = 0;
 
-  if ((r = ns_cgi_param(phr, "add_user_id", &s)) < 0 || !s
+  if ((r = hr_cgi_param(phr, "add_user_id", &s)) < 0 || !s
       || sscanf(s, "%d%n", &x, &n) != 1 || s[n] || x <= 0)
     FAIL(NEW_SRV_ERR_INV_USER_ID);
 
@@ -1709,7 +1563,7 @@ priv_add_user_by_login(FILE *fout,
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   int retval = 0;
 
-  if ((r = ns_cgi_param(phr, "add_login", &s)) < 0 || !s) {
+  if ((r = hr_cgi_param(phr, "add_login", &s)) < 0 || !s) {
     ns_error(log_f, NEW_SRV_ERR_INV_USER_LOGIN);
     goto cleanup;
   }
@@ -1844,12 +1698,12 @@ priv_add_priv_user_by_user_id(FILE *fout,
   const unsigned char *s;
   int user_id, n, r, add_role;
 
-  if ((r = ns_cgi_param(phr, "add_user_id", &s)) < 0 || !s
+  if ((r = hr_cgi_param(phr, "add_user_id", &s)) < 0 || !s
       || sscanf(s, "%d%n", &user_id, &n) != 1 || s[n] || user_id <= 0) {
     ns_error(log_f, NEW_SRV_ERR_INV_USER_ID);
     goto cleanup;
   }
-  if ((r = ns_cgi_param(phr, "add_role_2", &s)) < 0 || !s
+  if ((r = hr_cgi_param(phr, "add_role_2", &s)) < 0 || !s
       || sscanf(s, "%d%n", &add_role, &n) != 1 || s[n]
       || add_role < USER_ROLE_OBSERVER || add_role > USER_ROLE_COORDINATOR) {
     ns_error(log_f, NEW_SRV_ERR_INV_USER_ROLE);
@@ -1878,11 +1732,11 @@ priv_add_priv_user_by_login(FILE *fout,
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   int retval = 0;
 
-  if ((r = ns_cgi_param(phr, "add_login", &login)) < 0 || !s) {
+  if ((r = hr_cgi_param(phr, "add_login", &login)) < 0 || !s) {
     ns_error(log_f, NEW_SRV_ERR_INV_USER_LOGIN);
     goto cleanup;
   }
-  if ((r = ns_cgi_param(phr, "add_role_1", &s)) < 0 || !s
+  if ((r = hr_cgi_param(phr, "add_role_1", &s)) < 0 || !s
       || sscanf(s, "%d%n", &add_role, &n) != 1 || s[n]
       || add_role < USER_ROLE_OBSERVER || add_role > USER_ROLE_COORDINATOR) {
     ns_error(log_f, NEW_SRV_ERR_INV_USER_ROLE);
@@ -1920,14 +1774,14 @@ priv_user_operation(FILE *fout,
   int retval = 0, user_id, n, new_status;
   const struct team_extra *t_extra = 0;
 
-  if (ns_cgi_param(phr, "user_id", &s) <= 0
+  if (hr_cgi_param(phr, "user_id", &s) <= 0
       || sscanf(s, "%d%n", &user_id, &n) != 1 || s[n]
       || user_id <= 0 || !teamdb_lookup(cs->teamdb_state, user_id))
     FAIL(NEW_SRV_ERR_INV_USER_ID);
 
   switch (phr->action) {
   case NEW_SRV_ACTION_USER_CHANGE_STATUS:
-    if (ns_cgi_param(phr, "status", &s) <= 0
+    if (hr_cgi_param(phr, "status", &s) <= 0
         || sscanf(s, "%d%n", &new_status, &n) != 1 || s[n]
         || new_status < 0 || new_status >= cs->global->contestant_status_num)
       FAIL(NEW_SRV_ERR_INV_STATUS);
@@ -1964,18 +1818,18 @@ priv_user_issue_warning(
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
   /* user_id, warn_text, warn_comment */
-  if (ns_cgi_param(phr, "user_id", &s) <= 0
+  if (hr_cgi_param(phr, "user_id", &s) <= 0
       || sscanf(s, "%d%n", &user_id, &n) != 1 || s[n]
       || teamdb_lookup(cs->teamdb_state, user_id) <= 0)
     FAIL(NEW_SRV_ERR_INV_USER_ID);
-  if ((n = ns_cgi_param(phr, "warn_text", &s)) < 0)
+  if ((n = hr_cgi_param(phr, "warn_text", &s)) < 0)
     FAIL(NEW_SRV_ERR_INV_WARN_TEXT);
   if (!n) FAIL(NEW_SRV_ERR_WARN_TEXT_EMPTY);
   warn_len = strlen(warn_txt = dos2unix_str(s));
   while (warn_len > 0 && isspace(warn_txt[warn_len - 1])) warn_len--;
   warn_txt[warn_len] = 0;
   if (!warn_len) FAIL(NEW_SRV_ERR_WARN_TEXT_EMPTY);
-  if ((n = ns_cgi_param(phr, "warn_comment", &s)) < 0)
+  if ((n = hr_cgi_param(phr, "warn_comment", &s)) < 0)
     FAIL(NEW_SRV_ERR_INV_WARN_CMT);
   if (!n) {
     cmt_len = strlen(cmt_txt = xstrdup(""));
@@ -2009,7 +1863,7 @@ priv_user_toggle_flags(
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   if (opcaps_check(phr->caps, OPCAP_EDIT_REG) < 0)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
-  if (ns_cgi_param_int(phr, "user_id", &user_id) < 0)
+  if (hr_cgi_param_int(phr, "user_id", &user_id) < 0)
     FAIL(NEW_SRV_ERR_INV_USER_ID);
 
   switch (phr->action) {
@@ -2135,11 +1989,11 @@ priv_user_disqualify(
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
   /* user_id, disq_comment */
-  if (ns_cgi_param(phr, "user_id", &s) <= 0
+  if (hr_cgi_param(phr, "user_id", &s) <= 0
       || sscanf(s, "%d%n", &user_id, &n) != 1 || s[n]
       || teamdb_lookup(cs->teamdb_state, user_id) <= 0)
     FAIL(NEW_SRV_ERR_INV_USER_ID);
-  if ((n = ns_cgi_param(phr, "disq_comment", &s)) < 0)
+  if ((n = hr_cgi_param(phr, "disq_comment", &s)) < 0)
     FAIL(NEW_SRV_ERR_INV_WARN_TEXT);
   warn_txt = text_area_process_string(s, 0, 0);
 
@@ -2175,7 +2029,7 @@ do_schedule(FILE *log_f,
   const unsigned char *s = 0;
   time_t sloc = 0, start_time, stop_time;
 
-  if (ns_cgi_param(phr, "sched_time", &s) <= 0) {
+  if (hr_cgi_param(phr, "sched_time", &s) <= 0) {
     ns_error(log_f, NEW_SRV_ERR_INV_TIME_SPEC);
     return;
   }
@@ -2211,7 +2065,7 @@ do_change_duration(FILE *log_f,
   int dh = 0, dm = 0, n, d;
   time_t start_time, stop_time;
 
-  if (ns_cgi_param(phr, "dur", &s) <= 0) {
+  if (hr_cgi_param(phr, "dur", &s) <= 0) {
     ns_error(log_f, NEW_SRV_ERR_INV_DUR_SPEC);
     return;
   }
@@ -2256,7 +2110,7 @@ do_change_finish_time(
   const unsigned char *s = 0;
   time_t ft = 0, start_time = 0, stop_time = 0;
 
-  if (ns_cgi_param(phr, "finish_time", &s) <= 0) {
+  if (hr_cgi_param(phr, "finish_time", &s) <= 0) {
     ns_error(log_f, NEW_SRV_ERR_INV_TIME_SPEC);
     return;
   }
@@ -2448,7 +2302,7 @@ priv_contest_operation(FILE *fout,
   case NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_REPORT:
   case NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_JUDGE_SCORE:
   case NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_FINAL_VISIBILITY:
-    if (ns_cgi_param_int(phr, "param", &param) < 0) {
+    if (hr_cgi_param_int(phr, "param", &param) < 0) {
       ns_error(log_f, NEW_SRV_ERR_INV_PARAM);
       goto cleanup;
     }
@@ -2543,7 +2397,7 @@ priv_change_language(FILE *fout,
   int r, n;
   int new_locale_id;
 
-  if ((r = ns_cgi_param(phr, "locale_id", &s)) < 0) goto invalid_param;
+  if ((r = hr_cgi_param(phr, "locale_id", &s)) < 0) goto invalid_param;
   if (r > 0) {
     if (sscanf(s, "%d%n", &new_locale_id, &n) != 1 || s[n] || new_locale_id < 0)
       goto invalid_param;
@@ -2580,11 +2434,11 @@ priv_change_password(FILE *fout,
   unsigned char url[1024];
   unsigned char login_buf[256];
 
-  if (ns_cgi_param(phr, "oldpasswd", &p0) <= 0)
+  if (hr_cgi_param(phr, "oldpasswd", &p0) <= 0)
     return ns_html_err_inv_param(fout, phr, 1, "cannot parse oldpasswd");
-  if (ns_cgi_param(phr, "newpasswd1", &p1) <= 0)
+  if (hr_cgi_param(phr, "newpasswd1", &p1) <= 0)
     return ns_html_err_inv_param(fout, phr, 1, "cannot parse newpasswd1");
-  if (ns_cgi_param(phr, "newpasswd2", &p2) <= 0)
+  if (hr_cgi_param(phr, "newpasswd2", &p2) <= 0)
     return ns_html_err_inv_param(fout, phr, 1, "cannot parse newpasswd2");
 
   log_f = open_memstream(&log_txt, &log_len);
@@ -2700,7 +2554,7 @@ priv_submit_run(FILE *fout,
     goto cleanup;
   }
 
-  if (ns_cgi_param_int(phr, "problem", &prob_id) < 0) {
+  if (hr_cgi_param_int(phr, "problem", &prob_id) < 0) {
     errmsg = "problem is not set or binary";
     goto invalid_param;
   }
@@ -2709,7 +2563,7 @@ priv_submit_run(FILE *fout,
     errmsg = "invalid prob_id";
     goto invalid_param;
   }
-  if (ns_cgi_param_int_opt(phr, "variant", &variant, 0) < 0) {
+  if (hr_cgi_param_int_opt(phr, "variant", &variant, 0) < 0) {
     errmsg = "variant is invalid";
     goto invalid_param;
   }
@@ -2723,7 +2577,7 @@ priv_submit_run(FILE *fout,
   }
 
   /*
-  if (ns_cgi_param(phr, "problem", &s) <= 0) {
+  if (hr_cgi_param(phr, "problem", &s) <= 0) {
     errmsg = "problem is not set or binary";
     goto invalid_param;
   }
@@ -2754,7 +2608,7 @@ priv_submit_run(FILE *fout,
   */
 
   if (prob->type == PROB_TYPE_STANDARD) {
-    if (ns_cgi_param(phr, "lang_id", &s) <= 0) {
+    if (hr_cgi_param(phr, "lang_id", &s) <= 0) {
       errmsg = "lang_id is not set or binary";
       goto invalid_param;
     }
@@ -2767,7 +2621,7 @@ priv_submit_run(FILE *fout,
       goto invalid_param;
     }
     if (cs->global->enable_eoln_select > 0) {
-      ns_cgi_param_int_opt(phr, "eoln_type", &eoln_type, 0);
+      hr_cgi_param_int_opt(phr, "eoln_type", &eoln_type, 0);
       if (eoln_type < 0 || eoln_type > EOLN_CRLF) eoln_type = 0;
     }
   }
@@ -2786,15 +2640,15 @@ priv_submit_run(FILE *fout,
   case PROB_TYPE_OUTPUT_ONLY:
   case PROB_TYPE_TESTS:
     if (prob->enable_text_form > 0) {
-      int r1 = ns_cgi_param_bin(phr, "file", &run_text, &run_size);
-      int r2 = ns_cgi_param_bin(phr, "text_form", &text_form_text,
+      int r1 = hr_cgi_param_bin(phr, "file", &run_text, &run_size);
+      int r2 = hr_cgi_param_bin(phr, "text_form", &text_form_text,
                                 &text_form_size);
       if (!r1 && !r2) {
         errmsg = "neither \"file\" nor \"text\" parameters are set";
         goto invalid_param;
       }
     } else {
-      if (!ns_cgi_param_bin(phr, "file", &run_text, &run_size)) {
+      if (!hr_cgi_param_bin(phr, "file", &run_text, &run_size)) {
         errmsg = "\"file\" parameter is not set";
         goto invalid_param;
       }
@@ -2803,7 +2657,7 @@ priv_submit_run(FILE *fout,
   case PROB_TYPE_TEXT_ANSWER:
   case PROB_TYPE_SHORT_ANSWER:
   case PROB_TYPE_SELECT_ONE:
-    if (!ns_cgi_param_bin(phr, "file", &run_text, &run_size)) {
+    if (!hr_cgi_param_bin(phr, "file", &run_text, &run_size)) {
       errmsg = "\"file\" parameter is not set";
       goto invalid_param;
     }
@@ -3185,7 +3039,7 @@ priv_submit_clar(
   }
 
   // msg_dest_id, msg_dest_login, msg_subj, msg_hide_flag, msg_text
-  if ((n = ns_cgi_param(phr, "msg_dest_id", &s)) < 0) {
+  if ((n = hr_cgi_param(phr, "msg_dest_id", &s)) < 0) {
     errmsg = "msg_dest_id is binary";
     goto invalid_param;
   }
@@ -3201,7 +3055,7 @@ priv_submit_clar(
       goto cleanup;
     }
   }
-  if ((n = ns_cgi_param(phr, "msg_dest_login", &s)) < 0) {
+  if ((n = hr_cgi_param(phr, "msg_dest_login", &s)) < 0) {
     errmsg = "msg_dest_login is binary";
     goto invalid_param;
   }
@@ -3232,17 +3086,17 @@ priv_submit_clar(
     errmsg = "neither user_id nor login are not specified";
     goto invalid_param;
   }
-  if ((n = ns_cgi_param(phr, "msg_subj", &subject)) < 0) {
+  if ((n = hr_cgi_param(phr, "msg_subj", &subject)) < 0) {
     errmsg = "msg_subj is binary";
     goto invalid_param;
   }
   if (!subject) subject = "";
-  if ((n = ns_cgi_param(phr, "msg_text", &text)) < 0) {
+  if ((n = hr_cgi_param(phr, "msg_text", &text)) < 0) {
     errmsg = "msg_text is binary";
     goto invalid_param;
   }
   if (!text) text = "";
-  if ((n = ns_cgi_param(phr, "msg_hide_flag", &s)) < 0) {
+  if ((n = hr_cgi_param(phr, "msg_hide_flag", &s)) < 0) {
     errmsg = "msg_hide_flag is binary";
     goto invalid_param;
   }
@@ -3381,7 +3235,7 @@ priv_set_run_style_error_status(
     ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
     goto cleanup;    
   }
-  if (ns_cgi_param(phr, "msg_text", &text) < 0) {
+  if (hr_cgi_param(phr, "msg_text", &text) < 0) {
     snprintf(errmsg, sizeof(errmsg), "%s", "msg_text is binary");
     goto invalid_param;
   }
@@ -3461,7 +3315,7 @@ priv_submit_run_comment(
     ns_error(log_f, NEW_SRV_ERR_USER_ID_NONEXISTANT, re.user_id);
     goto cleanup;
   }
-  if (ns_cgi_param(phr, "msg_text", &text) < 0) {
+  if (hr_cgi_param(phr, "msg_text", &text) < 0) {
     errmsg = "msg_text is binary";
     goto invalid_param;
   }
@@ -3609,7 +3463,7 @@ priv_clar_reply(
   struct timeval precise_time;
 
   // reply, in_reply_to
-  if (ns_cgi_param(phr, "in_reply_to", &s) <= 0
+  if (hr_cgi_param(phr, "in_reply_to", &s) <= 0
       || sscanf(s, "%d%n", &in_reply_to, &n) != 1 || s[n]
       || in_reply_to < 0 || in_reply_to >= clar_get_total(cs->clarlog_state)) {
     errmsg = "in_reply_to parameter is invalid";
@@ -3619,7 +3473,7 @@ priv_clar_reply(
   switch (phr->action) {
   case NEW_SRV_ACTION_CLAR_REPLY:
   case NEW_SRV_ACTION_CLAR_REPLY_ALL:
-    if (ns_cgi_param(phr, "reply", &reply_txt) <= 0) {
+    if (hr_cgi_param(phr, "reply", &reply_txt) <= 0) {
       errmsg = "reply parameter is invalid";
       goto invalid_param;
     }
@@ -3765,7 +3619,7 @@ parse_run_id(FILE *fout, struct http_request_info *phr,
   const unsigned char *s = 0, *errmsg = 0;
   unsigned char msgbuf[1024];
   
-  if (!(n = ns_cgi_param(phr, "run_id", &s))) {
+  if (!(n = hr_cgi_param(phr, "run_id", &s))) {
     errmsg = ns_strerror_r(msgbuf, sizeof(msgbuf),
                            NEW_SRV_ERR_RUN_ID_UNDEFINED);
     goto failure;
@@ -3924,7 +3778,7 @@ priv_edit_run(FILE *fout, FILE *log_f,
   new_buf[0] = 0;
 
   if (parse_run_id(fout, phr, cnts, extra, &run_id, &re) < 0) return -1;
-  if (ns_cgi_param(phr, "param", &s) <= 0) {
+  if (hr_cgi_param(phr, "param", &s) <= 0) {
     ns_html_err_inv_param(fout, phr, 1, "param is not set");
     return -1;
   }
@@ -4158,7 +4012,7 @@ priv_change_status(
   // run_id, status
   if (parse_run_id(fout, phr, cnts, extra, &run_id, 0) < 0) goto failure;
   snprintf(phr->next_extra, sizeof(phr->next_extra), "run_id=%d", run_id);
-  if (ns_cgi_param(phr, "status", &s) <= 0
+  if (hr_cgi_param(phr, "status", &s) <= 0
       || sscanf(s, "%d%n", &status, &n) != 1 || s[n]
       || status < 0 || status > RUN_LAST) {
     errmsg = "invalid status";
@@ -4335,7 +4189,7 @@ ns_parse_run_mask(
   if (p_size) *p_size = 0;
   if (p_mask) *p_mask = 0;
 
-  if (ns_cgi_param(phr, "run_mask_size", &size_str) <= 0) {
+  if (hr_cgi_param(phr, "run_mask_size", &size_str) <= 0) {
     err("parse_run_mask: `run_mask_size' is not defined or binary");
     goto invalid_param;
   }
@@ -4350,7 +4204,7 @@ ns_parse_run_mask(
     return 0;
   }
 
-  if (ns_cgi_param(phr, "run_mask", &mask_str) <= 0) {
+  if (hr_cgi_param(phr, "run_mask", &mask_str) <= 0) {
     err("parse_run_mask: `run_mask' is not defined or binary");
     goto invalid_param;
   }
@@ -4458,7 +4312,7 @@ priv_rejudge_displayed(FILE *fout,
 
   if (ns_parse_run_mask(phr, 0, 0, &mask_size, &mask) < 0) goto invalid_param;
   if (!mask_size) FAIL(NEW_SRV_ERR_NO_RUNS_TO_REJUDGE);
-  ns_cgi_param_int_opt(phr, "background_mode", &background_mode, 0);
+  hr_cgi_param_int_opt(phr, "background_mode", &background_mode, 0);
   if (background_mode != 1) background_mode = 0;
 
   if (opcaps_check(phr->caps, OPCAP_REJUDGE_RUN) < 0)
@@ -4499,13 +4353,13 @@ priv_rejudge_problem(FILE *fout,
   int prob_id, n;
   int background_mode = 0;
 
-  if (ns_cgi_param(phr, "prob_id", &s) <= 0
+  if (hr_cgi_param(phr, "prob_id", &s) <= 0
       || sscanf(s, "%d%n", &prob_id, &n) != 1 || s[n]
       || prob_id <= 0 || prob_id > cs->max_prob
       || !(prob = cs->probs[prob_id])
       || prob->disable_testing)
     goto invalid_param;
-  ns_cgi_param_int_opt(phr, "background_mode", &background_mode, 0);
+  hr_cgi_param_int_opt(phr, "background_mode", &background_mode, 0);
   if (background_mode != 1) background_mode = 0;
 
   if (opcaps_check(phr->caps, OPCAP_REJUDGE_RUN) < 0) {
@@ -4536,7 +4390,7 @@ priv_rejudge_all(FILE *fout,
   serve_state_t cs = extra->serve_state;
   int background_mode = 0;
 
-  ns_cgi_param_int_opt(phr, "background_mode", &background_mode, 0);
+  hr_cgi_param_int_opt(phr, "background_mode", &background_mode, 0);
   if (background_mode != 1) background_mode = 0;
 
   if (opcaps_check(phr->caps, OPCAP_REJUDGE_RUN) < 0) {
@@ -4593,12 +4447,12 @@ priv_new_run(FILE *fout,
   // run_user_id, run_user_login, prob_id, variant, language,
   // is_imported, is_hidden, is_readonly, status,
   // tests, score, file
-  if (ns_cgi_param(phr, "run_user_id", &s) > 0
+  if (hr_cgi_param(phr, "run_user_id", &s) > 0
       && sscanf(s, "%d%n", &x, &n) == 1 && !s[n]
       && teamdb_lookup(cs->teamdb_state, x))
     user_id = x;
   x = 0;
-  if (ns_cgi_param(phr, "run_user_login", &s) > 0 && *s)
+  if (hr_cgi_param(phr, "run_user_login", &s) > 0 && *s)
     x = teamdb_lookup_login(cs->teamdb_state, s);
   if (user_id <= 0 && x <= 0)
     FAIL(NEW_SRV_ERR_UNDEFINED_USER_ID_LOGIN);
@@ -4606,12 +4460,12 @@ priv_new_run(FILE *fout,
     FAIL(NEW_SRV_ERR_CONFLICTING_USER_ID_LOGIN);
   if (user_id <= 0) user_id = x;
 
-  if (ns_cgi_param(phr, "prob_id", &s) <= 0
+  if (hr_cgi_param(phr, "prob_id", &s) <= 0
       || sscanf(s, "%d%n", &prob_id, &n) != 1 || s[n]
       || prob_id <= 0 || prob_id > cs->max_prob
       || !(prob = cs->probs[prob_id]))
     FAIL(NEW_SRV_ERR_INV_PROB_ID);
-  if (ns_cgi_param(phr, "variant", &s) > 0 && *s) {
+  if (hr_cgi_param(phr, "variant", &s) > 0 && *s) {
     if (sscanf(s, "%d%n", &variant, &n) != 1 || s[n]
         || prob->variant_num <= 0 || variant < 0
         || variant > prob->variant_num)
@@ -4620,7 +4474,7 @@ priv_new_run(FILE *fout,
 
   // check language, content-type, binariness and other stuff
   if (prob->type == PROB_TYPE_STANDARD) {
-    if (ns_cgi_param(phr, "language", &s) <= 0
+    if (hr_cgi_param(phr, "language", &s) <= 0
         || sscanf(s, "%d%n", &lang_id, &n) != 1 || s[n]
         || lang_id <= 0 || lang_id > cs->max_lang
         || !(lang = cs->langs[lang_id]))
@@ -4632,7 +4486,7 @@ priv_new_run(FILE *fout,
   case PROB_TYPE_OUTPUT_ONLY:
   case PROB_TYPE_TEXT_ANSWER:
   case PROB_TYPE_SHORT_ANSWER:
-    if (!ns_cgi_param_bin(phr, "file", &run_text, &run_size)) {
+    if (!hr_cgi_param_bin(phr, "file", &run_text, &run_size)) {
       run_text = "";
       run_size = 0;
     }
@@ -4711,26 +4565,26 @@ priv_new_run(FILE *fout,
   }
   sha_buffer(run_text, run_size, shaval);
 
-  if (ns_cgi_param(phr, "is_imported", &s) > 0 && *s) {
+  if (hr_cgi_param(phr, "is_imported", &s) > 0 && *s) {
     if (sscanf(s, "%d%n", &is_imported, &n) != 1 || s[n]
         || is_imported < 0 || is_imported > 1)
       FAIL(NEW_SRV_ERR_INV_PARAM);
     re.is_imported = is_imported;
     re_flags |= RE_IS_IMPORTED;
   }
-  if (ns_cgi_param(phr, "is_hidden", &s) > 0 && *s) {
+  if (hr_cgi_param(phr, "is_hidden", &s) > 0 && *s) {
     if (sscanf(s, "%d%n", &is_hidden, &n) != 1 || s[n]
         || is_hidden < 0 || is_hidden > 1)
       FAIL(NEW_SRV_ERR_INV_PARAM);
   }
-  if (ns_cgi_param(phr, "is_readonly", &s) > 0 && *s) {
+  if (hr_cgi_param(phr, "is_readonly", &s) > 0 && *s) {
     if (sscanf(s, "%d%n", &is_readonly, &n) != 1 || s[n]
         || is_readonly < 0 || is_readonly > 1)
       FAIL(NEW_SRV_ERR_INV_PARAM);
     re.is_readonly = is_readonly;
     re_flags |= RE_IS_READONLY;
   }
-  if (ns_cgi_param(phr, "status", &s) > 0 && *s) {
+  if (hr_cgi_param(phr, "status", &s) > 0 && *s) {
     if (sscanf(s, "%d%n", &status, &n) != 1 || s[n]
         || status < 0 || status > RUN_MAX_STATUS
         || !serve_is_valid_status(cs, status, 1))
@@ -4738,7 +4592,7 @@ priv_new_run(FILE *fout,
     re.status = status;
     re_flags |= RE_STATUS;
   }
-  if (ns_cgi_param(phr, "tests", &s) > 0 && *s) {
+  if (hr_cgi_param(phr, "tests", &s) > 0 && *s) {
     if (sscanf(s, "%d%n", &tests, &n) != 1 || s[n]
         || tests < -1 || tests > 100000)
       FAIL(NEW_SRV_ERR_INV_TEST);
@@ -4746,7 +4600,7 @@ priv_new_run(FILE *fout,
     re.passed_mode = 1;
     re_flags |= RE_TEST | RE_PASSED_MODE;
   }
-  if (ns_cgi_param(phr, "score", &s) > 0 && *s) {
+  if (hr_cgi_param(phr, "score", &s) > 0 && *s) {
     if (sscanf(s, "%d%n", &score, &n) != 1 || s[n]
         || score < 0 || score > 100000)
       FAIL(NEW_SRV_ERR_INV_PARAM);
@@ -4883,7 +4737,7 @@ priv_confirmation_page(FILE *fout,
       goto invalid_param;
     break;
   case NEW_SRV_ACTION_REJUDGE_PROBLEM_1:
-    if (ns_cgi_param(phr, "prob_id", &s) <= 0
+    if (hr_cgi_param(phr, "prob_id", &s) <= 0
         || sscanf(s, "%d%n", &prob_id, &n) != 1 || s[n]
         || prob_id <= 0 || prob_id > cs->max_prob
         || !(prob = cs->probs[prob_id])
@@ -5094,7 +4948,7 @@ priv_diff_page(FILE *fout,
 
   total_runs = run_get_total(cs->runlog_state);
   if (parse_run_id(fout, phr, cnts, extra, &run_id1, 0) < 0) goto failure;
-  if (!(n = ns_cgi_param(phr, "run_id2", &s)) || (n > 0 && !*s))
+  if (!(n = hr_cgi_param(phr, "run_id2", &s)) || (n > 0 && !*s))
     FAIL(NEW_SRV_ERR_RUN_TO_COMPARE_UNSPECIFIED);
   if (n < 0 || sscanf(s, "%d%n", &run_id2, &n) != 1 || s[n]
       || run_id2 < 0 || run_id2 >= total_runs)
@@ -5157,12 +5011,12 @@ priv_assign_chief_examiner(
   if (phr->role != USER_ROLE_ADMIN && phr->role != USER_ROLE_COORDINATOR)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
-  if (ns_cgi_param_int(phr, "prob_id", &prob_id) < 0
+  if (hr_cgi_param_int(phr, "prob_id", &prob_id) < 0
       || prob_id <= 0 || prob_id > cs->max_prob || !cs->probs[prob_id]
       || cs->probs[prob_id]->manual_checking <= 0)
     FAIL(NEW_SRV_ERR_INV_PROB_ID);
 
-  if (ns_cgi_param_int(phr, "chief_user_id", &user_id) < 0 || user_id < 0)
+  if (hr_cgi_param_int(phr, "chief_user_id", &user_id) < 0 || user_id < 0)
     FAIL(NEW_SRV_ERR_INV_USER_ID);
   if (!user_id) {
     user_id = nsdb_find_chief_examiner(phr->contest_id, prob_id);
@@ -5197,12 +5051,12 @@ priv_assign_examiner(
   if (phr->role != USER_ROLE_ADMIN && phr->role != USER_ROLE_COORDINATOR)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
-  if (ns_cgi_param_int(phr, "prob_id", &prob_id) < 0
+  if (hr_cgi_param_int(phr, "prob_id", &prob_id) < 0
       || prob_id <= 0 || prob_id > cs->max_prob || !cs->probs[prob_id]
       || cs->probs[prob_id]->manual_checking <= 0)
     FAIL(NEW_SRV_ERR_INV_PROB_ID);
 
-  if (ns_cgi_param_int(phr, "exam_add_user_id", &user_id) < 0 || user_id < 0)
+  if (hr_cgi_param_int(phr, "exam_add_user_id", &user_id) < 0 || user_id < 0)
     FAIL(NEW_SRV_ERR_INV_USER_ID);
   if (!user_id) {
     retval = NEW_SRV_ACTION_EXAMINERS_PAGE;
@@ -5233,12 +5087,12 @@ priv_unassign_examiner(
   if (phr->role != USER_ROLE_ADMIN && phr->role != USER_ROLE_COORDINATOR)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
-  if (ns_cgi_param_int(phr, "prob_id", &prob_id) < 0
+  if (hr_cgi_param_int(phr, "prob_id", &prob_id) < 0
       || prob_id <= 0 || prob_id > cs->max_prob || !cs->probs[prob_id]
       || cs->probs[prob_id]->manual_checking <= 0)
     FAIL(NEW_SRV_ERR_INV_PROB_ID);
 
-  if (ns_cgi_param_int(phr, "exam_del_user_id", &user_id) < 0 || user_id < 0)
+  if (hr_cgi_param_int(phr, "exam_del_user_id", &user_id) < 0 || user_id < 0)
     FAIL(NEW_SRV_ERR_INV_USER_ID);
   if (!user_id) {
     retval = NEW_SRV_ACTION_EXAMINERS_PAGE;
@@ -5278,7 +5132,7 @@ priv_download_source(
   const unsigned char *content_type = "text/plain";
 
   if (parse_run_id(fout, phr, cnts, extra, &run_id, &re) < 0) goto failure;
-  if (ns_cgi_param(phr, "no_disp", &s) > 0
+  if (hr_cgi_param(phr, "no_disp", &s) > 0
       && sscanf(s, "%d%n", &x, &n) == 1 && !s[n]
       && x >= 0 && x <= 1)
     no_disp = x;
@@ -5374,7 +5228,7 @@ priv_view_test(FILE *fout,
 
   // run_id, test_num
   if (parse_run_id(fout, phr, cnts, extra, &run_id, 0) < 0) goto failure;
-  if (ns_cgi_param(phr, "test_num", &s) <= 0
+  if (hr_cgi_param(phr, "test_num", &s) <= 0
       || sscanf(s, "%d%n", &test_num, &n) != 1 || s[n]) {
     ns_html_err_inv_param(fout, phr, 1, "cannot parse test_num");
     return -1;
@@ -5459,7 +5313,7 @@ priv_upload_runlog_csv_2(
   if (opcaps_check(phr->caps, OPCAP_IMPORT_XML_RUNS) < 0)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);  
 
-  if (!(r = ns_cgi_param(phr, "file", &s)))
+  if (!(r = hr_cgi_param(phr, "file", &s)))
     FAIL(NEW_SRV_ERR_FILE_UNSPECIFIED);
   else if (r < 0)
     FAIL(NEW_SRV_ERR_BINARY_FILE);
@@ -5471,7 +5325,7 @@ priv_upload_runlog_csv_2(
   //  0 - new submits
   //  1 - existing submits
   //  2 - both
-  if (ns_cgi_param_int(phr, "import_mode", &import_mode) < 0
+  if (hr_cgi_param_int(phr, "import_mode", &import_mode) < 0
       || import_mode < 0 || import_mode > 2)
     FAIL(NEW_SRV_ERR_INV_PARAM);
 
@@ -5580,7 +5434,7 @@ priv_upload_runlog_xml_2(
   if (cs->global->enable_runlog_merge <= 0)
     FAIL(NEW_SRV_ERR_NOT_SUPPORTED);
 
-  if (!(r = ns_cgi_param(phr, "file", &s)))
+  if (!(r = hr_cgi_param(phr, "file", &s)))
     FAIL(NEW_SRV_ERR_FILE_UNSPECIFIED);
   else if (r < 0)
     FAIL(NEW_SRV_ERR_BINARY_FILE);
@@ -5653,33 +5507,33 @@ priv_download_runs(
   // file_pattern_prob
   // file_pattern_lang
   // file_pattern_suffix
-  if (ns_cgi_param(phr, "run_selection", &s) <= 0)
+  if (hr_cgi_param(phr, "run_selection", &s) <= 0)
     FAIL(NEW_SRV_ERR_INV_RUN_SELECTION);
   errno = 0;
   x = strtol(s, &ss, 10);
   if (errno || *ss || x < 0 || x > 2) FAIL(NEW_SRV_ERR_INV_RUN_SELECTION);
   run_selection = x;
 
-  if (ns_cgi_param(phr, "dir_struct", &s) <= 0)
+  if (hr_cgi_param(phr, "dir_struct", &s) <= 0)
     FAIL(NEW_SRV_ERR_INV_DIR_STRUCT);
   errno = 0;
   x = strtol(s, &ss, 10);
   if (errno || *ss || x < 0 || x > 10) FAIL(NEW_SRV_ERR_INV_DIR_STRUCT);
   dir_struct = x;
 
-  if (ns_cgi_param(phr, "file_pattern_run", &s) > 0)
+  if (hr_cgi_param(phr, "file_pattern_run", &s) > 0)
     file_name_mask |= NS_FILE_PATTERN_RUN;
-  if (ns_cgi_param(phr, "file_pattern_uid", &s) > 0)
+  if (hr_cgi_param(phr, "file_pattern_uid", &s) > 0)
     file_name_mask |= NS_FILE_PATTERN_UID;
-  if (ns_cgi_param(phr, "file_pattern_login", &s) > 0)
+  if (hr_cgi_param(phr, "file_pattern_login", &s) > 0)
     file_name_mask |= NS_FILE_PATTERN_LOGIN;
-  if (ns_cgi_param(phr, "file_pattern_name", &s) > 0)
+  if (hr_cgi_param(phr, "file_pattern_name", &s) > 0)
     file_name_mask |= NS_FILE_PATTERN_NAME;
-  if (ns_cgi_param(phr, "file_pattern_prob", &s) > 0)
+  if (hr_cgi_param(phr, "file_pattern_prob", &s) > 0)
     file_name_mask |= NS_FILE_PATTERN_PROB;
-  if (ns_cgi_param(phr, "file_pattern_lang", &s) > 0)
+  if (hr_cgi_param(phr, "file_pattern_lang", &s) > 0)
     file_name_mask |= NS_FILE_PATTERN_LANG;
-  if (ns_cgi_param(phr, "file_pattern_suffix", &s) > 0)
+  if (hr_cgi_param(phr, "file_pattern_suffix", &s) > 0)
     file_name_mask |= NS_FILE_PATTERN_SUFFIX;
   if (!file_name_mask) file_name_mask = NS_FILE_PATTERN_RUN;
 
@@ -5723,11 +5577,11 @@ priv_upsolving_operation(
   stop_time = run_get_stop_time(cs->runlog_state);
   if (stop_time <= 0 && saved_stop_time <= 0) return 0;
 
-  ns_cgi_param(phr, "freeze_standings", &freeze_standings);
-  ns_cgi_param(phr, "view_source", &view_source);
-  ns_cgi_param(phr, "view_protocol", &view_protocol);
-  ns_cgi_param(phr, "full_protocol", &full_proto);
-  ns_cgi_param(phr, "disable_clars", &disable_clars);
+  hr_cgi_param(phr, "freeze_standings", &freeze_standings);
+  hr_cgi_param(phr, "view_source", &view_source);
+  hr_cgi_param(phr, "view_protocol", &view_protocol);
+  hr_cgi_param(phr, "full_protocol", &full_proto);
+  hr_cgi_param(phr, "disable_clars", &disable_clars);
 
   switch (phr->action) {
   case NEW_SRV_ACTION_UPSOLVING_CONFIG_2: // back to main page
@@ -5803,17 +5657,17 @@ priv_assign_cyphers_2(
   if (opcaps_check(phr->caps, OPCAP_EDIT_REG) < 0)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
-  if (ns_cgi_param(phr, "prefix", &prefix) <= 0)
+  if (hr_cgi_param(phr, "prefix", &prefix) <= 0)
     FAIL(NEW_SRV_ERR_INV_PARAM);
-  if (ns_cgi_param_int(phr, "min_num", &min_num) < 0)
+  if (hr_cgi_param_int(phr, "min_num", &min_num) < 0)
     FAIL(NEW_SRV_ERR_INV_PARAM);
-  if (ns_cgi_param_int(phr, "max_num", &max_num) < 0)
+  if (hr_cgi_param_int(phr, "max_num", &max_num) < 0)
     FAIL(NEW_SRV_ERR_INV_PARAM);
-  if (ns_cgi_param_int(phr, "seed", &seed) < 0)
+  if (hr_cgi_param_int(phr, "seed", &seed) < 0)
     FAIL(NEW_SRV_ERR_INV_PARAM);
-  if (ns_cgi_param_int_opt(phr, "mult", &mult, 1) < 0)
+  if (hr_cgi_param_int_opt(phr, "mult", &mult, 1) < 0)
     FAIL(NEW_SRV_ERR_INV_PARAM);
-  if (ns_cgi_param_int_opt(phr, "shift", &shift, 1) < 0)
+  if (hr_cgi_param_int_opt(phr, "shift", &shift, 1) < 0)
     FAIL(NEW_SRV_ERR_INV_PARAM);
   if (min_num < 0 || max_num < 0 || min_num > max_num || seed < 0)
     FAIL(NEW_SRV_ERR_INV_PARAM);
@@ -5934,7 +5788,7 @@ priv_set_priorities(
     if (!(prob = cs->probs[prob_id])) continue;
     snprintf(varname, sizeof(varname), "prio_%d", prob_id);
     prio = 0;
-    if (ns_cgi_param_int(phr, varname, &prio) < 0) continue;
+    if (hr_cgi_param_int(phr, varname, &prio) < 0) continue;
     if (prio < -16) prio = -16;
     if (prio > 15) prio = 15;
     cs->prob_prio[prob_id] = prio;
@@ -5958,7 +5812,7 @@ priv_testing_queue_operation(
 
   if (opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST) < 0)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
-  if (ns_cgi_param(phr, "packet", &packet_name) <= 0 || !packet_name)
+  if (hr_cgi_param(phr, "packet", &packet_name) <= 0 || !packet_name)
     FAIL(NEW_SRV_ERR_INV_PARAM);
   for (s = packet_name; *s; ++s) {
     if (!isalnum(*s)) {
@@ -6061,12 +5915,12 @@ priv_change_run_fields(
   if (phr->role <= 0) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
   const unsigned char *s = NULL;
-  if (ns_cgi_param(phr, "cancel", &s) > 0 && s) goto cleanup;
+  if (hr_cgi_param(phr, "cancel", &s) > 0 && s) goto cleanup;
 
   struct user_filter_info *u = user_filter_info_allocate(cs, phr->user_id, phr->session_id);
   if (!u) goto cleanup;
 
-  if (ns_cgi_param(phr, "reset", &s) > 0 && s) {
+  if (hr_cgi_param(phr, "reset", &s) > 0 && s) {
     if (u->run_fields <= 0) goto cleanup;
     u->run_fields = 0;
     team_extra_set_run_fields(cs->team_extra_state, phr->user_id, 0);
@@ -6078,7 +5932,7 @@ priv_change_run_fields(
   for (int i = 0; i < RUN_VIEW_LAST; ++i) {
     unsigned char nbuf[64];
     snprintf(nbuf, sizeof(nbuf), "field_%d", i);
-    if (ns_cgi_param(phr, nbuf, &s) > 0 && s) {
+    if (hr_cgi_param(phr, nbuf, &s) > 0 && s) {
       new_fields |= 1 << i;
     }
   }
@@ -6113,7 +5967,7 @@ priv_print_user_exam_protocol(
 
   if (opcaps_check(phr->caps, OPCAP_PRINT_RUN) < 0)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
-  if (ns_cgi_param_int(phr, "user_id", &user_id) < 0)
+  if (hr_cgi_param_int(phr, "user_id", &user_id) < 0)
     FAIL(NEW_SRV_ERR_INV_USER_ID);
   if (!teamdb_lookup(cs->teamdb_state, user_id))
     FAIL(NEW_SRV_ERR_INV_USER_ID);
@@ -6292,7 +6146,7 @@ priv_print_problem_exam_protocol(
 
   if (opcaps_check(phr->caps, OPCAP_PRINT_RUN) < 0)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
-  if (ns_cgi_param_int(phr, "prob_id", &prob_id) < 0)
+  if (hr_cgi_param_int(phr, "prob_id", &prob_id) < 0)
     FAIL(NEW_SRV_ERR_INV_PROB_ID);
   if (prob_id <= 0 || prob_id > cs->max_prob || !cs->probs[prob_id])
     FAIL(NEW_SRV_ERR_INV_PROB_ID);
@@ -6702,12 +6556,12 @@ priv_get_file(
   if (opcaps_check(phr->caps, OPCAP_SUBMIT_RUN) < 0)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
-  if (ns_cgi_param(phr, "prob_id", &s) <= 0
+  if (hr_cgi_param(phr, "prob_id", &s) <= 0
       || sscanf(s, "%d%n", &prob_id, &n) != 1 || s[n]
       || prob_id <= 0 || prob_id > cs->max_prob
       || !(prob = cs->probs[prob_id]))
     FAIL(NEW_SRV_ERR_INV_PROB_ID);
-  if (ns_cgi_param_int_opt(phr, "variant", &variant, 0) < 0)
+  if (hr_cgi_param_int_opt(phr, "variant", &variant, 0) < 0)
     FAIL(NEW_SRV_ERR_INV_VARIANT);
   if (prob->variant_num <= 0) {
     variant = 0;
@@ -6716,7 +6570,7 @@ priv_get_file(
       FAIL(NEW_SRV_ERR_INV_VARIANT);
   }
 
-  if (ns_cgi_param(phr, "file", &s) <= 0 || strchr(s, '/'))
+  if (hr_cgi_param(phr, "file", &s) <= 0 || strchr(s, '/'))
     FAIL(NEW_SRV_ERR_INV_FILE_NAME);
 
   os_rGetSuffix(s, sfx, sizeof(sfx));
@@ -7434,7 +7288,7 @@ unpriv_parse_run_id(FILE *fout, struct http_request_info *phr,
   const unsigned char *s = 0, *errmsg = 0;
   unsigned char msgbuf[1024];
   
-  if (!(n = ns_cgi_param(phr, "run_id", &s))) {
+  if (!(n = hr_cgi_param(phr, "run_id", &s))) {
     errmsg = ns_strerror_r(msgbuf, sizeof(msgbuf),
                            NEW_SRV_ERR_RUN_ID_UNDEFINED);
     goto failure;
@@ -7494,7 +7348,7 @@ unprivileged_page_login(FILE *fout, struct http_request_info *phr)
   int r;
   const struct contest_desc *cnts = 0;
 
-  if ((r = ns_cgi_param(phr, "login", &login)) < 0)
+  if ((r = hr_cgi_param(phr, "login", &login)) < 0)
     return ns_html_err_inv_param(fout, phr, 0, "cannot parse login");
   if (!r || phr->action == NEW_SRV_ACTION_LOGIN_PAGE)
     return unprivileged_page_login_page(fout, phr);
@@ -7505,7 +7359,7 @@ unprivileged_page_login(FILE *fout, struct http_request_info *phr)
     phr->locale_id = cnts->default_locale_num;
 
   phr->login = xstrdup(login);
-  if ((r = ns_cgi_param(phr, "password", &password)) <= 0)
+  if ((r = hr_cgi_param(phr, "password", &password)) <= 0)
     return ns_html_err_inv_param(fout, phr, 0, "cannot parse password");
   if (!contests_check_team_ip(phr->contest_id, &phr->ip, phr->ssl_flag))
     return ns_html_err_no_perm(fout, phr, 0, "%s://%s is not allowed for USER for contest %d", ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ipv6(&phr->ip), phr->contest_id);
@@ -7564,7 +7418,7 @@ unpriv_change_language(FILE *fout,
   FILE *log_f = 0;
   int new_locale_id;
 
-  if ((r = ns_cgi_param(phr, "locale_id", &s)) < 0)
+  if ((r = hr_cgi_param(phr, "locale_id", &s)) < 0)
     return ns_html_err_inv_param(fout, phr, 0, "cannot parse locale_id");
   if (r > 0) {
     if (sscanf(s, "%d%n", &new_locale_id, &n) != 1 || s[n] || new_locale_id < 0)
@@ -7612,11 +7466,11 @@ unpriv_change_password(FILE *fout,
   unsigned char url[1024];
   unsigned char login_buf[256];
 
-  if (ns_cgi_param(phr, "oldpasswd", &p0) <= 0)
+  if (hr_cgi_param(phr, "oldpasswd", &p0) <= 0)
     return ns_html_err_inv_param(fout, phr, 0, "cannot parse oldpasswd");
-  if (ns_cgi_param(phr, "newpasswd1", &p1) <= 0)
+  if (hr_cgi_param(phr, "newpasswd1", &p1) <= 0)
     return ns_html_err_inv_param(fout, phr, 0, "cannot parse newpasswd1");
-  if (ns_cgi_param(phr, "newpasswd2", &p2) <= 0)
+  if (hr_cgi_param(phr, "newpasswd2", &p2) <= 0)
     return ns_html_err_inv_param(fout, phr, 0, "cannot parse newpasswd2");
 
   log_f = open_memstream(&log_txt, &log_len);
@@ -7776,7 +7630,7 @@ ns_submit_run(
   int eoln_type = 0;
 
   if (!prob_param_name) prob_param_name = "prob_id";
-  if (ns_cgi_param(phr, prob_param_name, &s) <= 0 || !s) {
+  if (hr_cgi_param(phr, prob_param_name, &s) <= 0 || !s) {
     FAIL(NEW_SRV_ERR_INV_PROB_ID);
   }
   for (prob_id = 1; prob_id <= cs->max_prob; ++prob_id) {
@@ -7795,7 +7649,7 @@ ns_submit_run(
   if (prob->type == PROB_TYPE_STANDARD) {
     // "STANDARD" problems need programming language identifier
     if (!lang_param_name) lang_param_name = "lang_id";
-    if (ns_cgi_param(phr, lang_param_name, &s) <= 0 || !s) {
+    if (hr_cgi_param(phr, lang_param_name, &s) <= 0 || !s) {
       FAIL(NEW_SRV_ERR_INV_LANG_ID);
     }
     for (lang_id = 1; lang_id <= cs->max_lang; ++lang_id) {
@@ -7811,7 +7665,7 @@ ns_submit_run(
       }
     }
     if (cs->global->enable_eoln_select > 0) {
-      ns_cgi_param_int_opt(phr, "eoln_type", &eoln_type, 0);
+      hr_cgi_param_int_opt(phr, "eoln_type", &eoln_type, 0);
       if (eoln_type < 0 || eoln_type > EOLN_CRLF) eoln_type = 0;
     }
   }
@@ -7821,18 +7675,18 @@ ns_submit_run(
   case PROB_TYPE_OUTPUT_ONLY:
     if (enable_path > 0) {
       const unsigned char *path = NULL;
-      if (ns_cgi_param(phr, "path", &path) <= 0 || !path) FAIL(NEW_SRV_ERR_FILE_UNSPECIFIED);
+      if (hr_cgi_param(phr, "path", &path) <= 0 || !path) FAIL(NEW_SRV_ERR_FILE_UNSPECIFIED);
       if (generic_read_file(&run_file, 0, &tmpsz, 0, NULL, path, NULL) < 0)
         FAIL(NEW_SRV_ERR_FILE_UNSPECIFIED);
       run_text = run_file;
       run_size = tmpsz;
       r = 1;
     } else {
-      r = ns_cgi_param_bin(phr, "file", &run_text, &tmpsz); run_size = tmpsz;
+      r = hr_cgi_param_bin(phr, "file", &run_text, &tmpsz); run_size = tmpsz;
     }
     if (r <= 0 || !run_text || run_size <= 0) {
       if (prob->enable_text_form > 0) {
-        r = ns_cgi_param_bin(phr, "text_form", &run_text, &tmpsz); run_size = tmpsz;
+        r = hr_cgi_param_bin(phr, "text_form", &run_text, &tmpsz); run_size = tmpsz;
         if (r <= 0 || !run_text || run_size <= 0) {
           FAIL(NEW_SRV_ERR_FILE_EMPTY);
         }
@@ -7852,14 +7706,14 @@ ns_submit_run(
   case PROB_TYPE_SELECT_ONE:
     if (enable_path > 0) {
       const unsigned char *path = NULL;
-      if (ns_cgi_param(phr, "path", &path) <= 0 || !path) FAIL(NEW_SRV_ERR_FILE_UNSPECIFIED);
+      if (hr_cgi_param(phr, "path", &path) <= 0 || !path) FAIL(NEW_SRV_ERR_FILE_UNSPECIFIED);
       if (generic_read_file(&run_file, 0, &tmpsz, 0, NULL, path, NULL) < 0)
         FAIL(NEW_SRV_ERR_FILE_UNSPECIFIED);
       run_text = run_file;
       run_size = tmpsz;
       r = 1;
     } else {
-      r = ns_cgi_param_bin(phr, "file", &run_text, &tmpsz); run_size = tmpsz;
+      r = hr_cgi_param_bin(phr, "file", &run_text, &tmpsz); run_size = tmpsz;
     }
     if (r <= 0 || !run_text || run_size <= 0) {
       FAIL(NEW_SRV_ERR_FILE_UNSPECIFIED);
@@ -7913,14 +7767,14 @@ ns_submit_run(
     } else {
       if (enable_path > 0) {
         const unsigned char *path = NULL;
-        if (ns_cgi_param(phr, "path", &path) <= 0 || !path) FAIL(NEW_SRV_ERR_FILE_UNSPECIFIED);
+        if (hr_cgi_param(phr, "path", &path) <= 0 || !path) FAIL(NEW_SRV_ERR_FILE_UNSPECIFIED);
         if (generic_read_file(&run_file, 0, &tmpsz, 0, NULL, path, NULL) < 0)
           FAIL(NEW_SRV_ERR_FILE_UNSPECIFIED);
         run_text = run_file;
         run_size = tmpsz;
         r = 1;
       } else {
-        r = ns_cgi_param_bin(phr, "file", &run_text, &tmpsz); run_size = tmpsz;
+        r = hr_cgi_param_bin(phr, "file", &run_text, &tmpsz); run_size = tmpsz;
       }
       if (r <= 0 || !run_text || run_size <= 0) {
         run_text = ""; run_size = 0;
@@ -8004,13 +7858,13 @@ ns_submit_run(
   }
 
   if (enable_user_id > 0) {
-    if (ns_cgi_param_int(phr, "user_id", &user_id) < 0 || user_id <= 0)
+    if (hr_cgi_param_int(phr, "user_id", &user_id) < 0 || user_id <= 0)
       FAIL(NEW_SRV_ERR_INV_USER_ID);
   } else {
     user_id = phr->user_id;
   }
   if (enable_status > 0) {
-    if (ns_cgi_param_int(phr, "status", &status) < 0 || status < 0)
+    if (hr_cgi_param_int(phr, "status", &status) < 0 || status < 0)
       FAIL(NEW_SRV_ERR_INV_STATUS);
   }
 
@@ -8104,7 +7958,7 @@ ns_submit_run(
   int variant = 0;
   if (prob->variant_num > 0) {
     if (admin_mode) {
-      if (ns_cgi_param_int_opt(phr, "variant", &variant, 0) < 0) {
+      if (hr_cgi_param_int_opt(phr, "variant", &variant, 0) < 0) {
         FAIL(NEW_SRV_ERR_INV_VARIANT);
       }
       if (!variant && (variant = find_variant(cs, user_id, prob_id, 0)) <= 0) {
@@ -8125,7 +7979,7 @@ ns_submit_run(
 
   if (enable_uuid) {
     const unsigned char *uuid_str = NULL;
-    if (ns_cgi_param(phr, "uuid", &uuid_str) > 0 && uuid_str && *uuid_str) {
+    if (hr_cgi_param(phr, "uuid", &uuid_str) > 0 && uuid_str && *uuid_str) {
       if (ej_uuid_parse(uuid_str, run_uuid) < 0) {
         FAIL(NEW_SRV_ERR_INV_PARAM);
       }
@@ -8448,7 +8302,7 @@ unpriv_submit_run(FILE *fout,
   l10n_setlocale(phr->locale_id);
   log_f = open_memstream(&log_txt, &log_len);
 
-  if (ns_cgi_param(phr, "prob_id", &s) <= 0
+  if (hr_cgi_param(phr, "prob_id", &s) <= 0
       || sscanf(s, "%d%n", &prob_id, &n) != 1 || s[n]
       || prob_id <= 0 || prob_id > cs->max_prob
       || !(prob = cs->probs[prob_id])) {
@@ -8458,7 +8312,7 @@ unpriv_submit_run(FILE *fout,
 
   // "STANDARD" problems need programming language identifier
   if (prob->type == PROB_TYPE_STANDARD) {
-    if (ns_cgi_param(phr, "lang_id", &s) <= 0
+    if (hr_cgi_param(phr, "lang_id", &s) <= 0
         || sscanf(s, "%d%n", &lang_id, &n) != 1 || s[n]
         || lang_id <= 0 || lang_id > cs->max_lang
         || !(lang = cs->langs[lang_id])) {
@@ -8466,7 +8320,7 @@ unpriv_submit_run(FILE *fout,
       goto done;
     }
     if (global->enable_eoln_select > 0) {
-      ns_cgi_param_int_opt(phr, "eoln_type", &eoln_type, 0);
+      hr_cgi_param_int_opt(phr, "eoln_type", &eoln_type, 0);
       if (eoln_type < 0 || eoln_type > EOLN_CRLF) eoln_type = 0;
     }
   }
@@ -8484,14 +8338,14 @@ unpriv_submit_run(FILE *fout,
   case PROB_TYPE_OUTPUT_ONLY:
   case PROB_TYPE_TESTS:
     if (prob->enable_text_form > 0) {
-      int r1 = ns_cgi_param_bin(phr, "file", &run_text, &run_size);
-      int r2 =ns_cgi_param_bin(phr,"text_form",&text_form_text,&text_form_size);
+      int r1 = hr_cgi_param_bin(phr, "file", &run_text, &run_size);
+      int r2 =hr_cgi_param_bin(phr,"text_form",&text_form_text,&text_form_size);
       if (!r1 && !r2) {
         ns_error(log_f, NEW_SRV_ERR_FILE_UNSPECIFIED);
         goto done;
       }
     } else {
-      if (!ns_cgi_param_bin(phr, "file", &run_text, &run_size)) {
+      if (!hr_cgi_param_bin(phr, "file", &run_text, &run_size)) {
         ns_error(log_f, NEW_SRV_ERR_FILE_UNSPECIFIED);
         goto done;
       }
@@ -8500,7 +8354,7 @@ unpriv_submit_run(FILE *fout,
   case PROB_TYPE_TEXT_ANSWER:
   case PROB_TYPE_SHORT_ANSWER:
   case PROB_TYPE_SELECT_ONE:
-    if (!ns_cgi_param_bin(phr, "file", &run_text, &run_size)) {
+    if (!hr_cgi_param_bin(phr, "file", &run_text, &run_size)) {
       ns_error(log_f, NEW_SRV_ERR_ANSWER_UNSPECIFIED);
       goto done;
     }
@@ -9057,7 +8911,7 @@ unpriv_submit_clar(FILE *fout,
 
   // parameters: prob_id, subject, text,  
 
-  if ((n = ns_cgi_param(phr, "prob_id", &s)) < 0)
+  if ((n = hr_cgi_param(phr, "prob_id", &s)) < 0)
     return ns_html_err_inv_param(fout, phr, 0, "prob_id is binary");
   if (n > 0 && *s) {
     if (sscanf(s, "%d%n", &prob_id, &n) != 1 || s[n])
@@ -9065,9 +8919,9 @@ unpriv_submit_clar(FILE *fout,
     if (prob_id <= 0 || prob_id > cs->max_prob || !(prob = cs->probs[prob_id]))
       return ns_html_err_inv_param(fout, phr, 0, "prob_id is invalid");
   }
-  if (ns_cgi_param(phr, "subject", &subject) < 0)
+  if (hr_cgi_param(phr, "subject", &subject) < 0)
     return ns_html_err_inv_param(fout, phr, 0, "subject is binary");
-  if (ns_cgi_param(phr, "text", &text) <= 0)
+  if (hr_cgi_param(phr, "text", &text) <= 0)
     return ns_html_err_inv_param(fout, phr, 0,
                                  "text is not set or binary");
 
@@ -9200,7 +9054,7 @@ unpriv_submit_appeal(FILE *fout,
 
   // parameters: prob_id, subject, text,  
 
-  if ((n = ns_cgi_param(phr, "prob_id", &s)) < 0)
+  if ((n = hr_cgi_param(phr, "prob_id", &s)) < 0)
     return ns_html_err_inv_param(fout, phr, 0, "prob_id is binary");
   if (n > 0 && *s) {
     if (sscanf(s, "%d%n", &prob_id, &n) != 1 || s[n])
@@ -9208,9 +9062,9 @@ unpriv_submit_appeal(FILE *fout,
     if (prob_id <= 0 || prob_id > cs->max_prob || !(prob = cs->probs[prob_id]))
       return ns_html_err_inv_param(fout, phr, 0, "prob_id is invalid");
   }
-  if ((n = ns_cgi_param(phr, "test", &s)) < 0)
+  if ((n = hr_cgi_param(phr, "test", &s)) < 0)
     return ns_html_err_inv_param(fout, phr, 0, "test is binary");
-  if (ns_cgi_param(phr, "text", &text) <= 0)
+  if (hr_cgi_param(phr, "text", &text) <= 0)
     return ns_html_err_inv_param(fout, phr, 0,
                                  "text is not set or binary");
 
@@ -9249,7 +9103,7 @@ unpriv_submit_appeal(FILE *fout,
     ns_error(log_f, NEW_SRV_ERR_APPEALS_FINISHED);
     goto done;
   }
-  if (ns_cgi_param(phr, "test", &s) <= 0
+  if (hr_cgi_param(phr, "test", &s) <= 0
       || sscanf(s, "%d%n", &test, &n) != 1 || s[n]
       || test <= 0 || test > 100000) {
     ns_error(log_f, NEW_SRV_ERR_INV_TEST);
@@ -9615,7 +9469,7 @@ unpriv_view_test(FILE *fout,
   // run_id, test_num
   if (unpriv_parse_run_id(fout, phr, cnts, extra, &run_id, &re) < 0)
     goto cleanup;
-  if (ns_cgi_param(phr, "test_num", &s) <= 0
+  if (hr_cgi_param(phr, "test_num", &s) <= 0
       || sscanf(s, "%d%n", &test_num, &n) != 1 || s[n] || test_num <= 0) {
     ns_html_err_inv_param(fout, phr, 0, "cannot parse test_num");
     goto cleanup;
@@ -10277,7 +10131,7 @@ unpriv_json_user_state(
   const serve_state_t cs = extra->serve_state;
   int need_reload_check = 0;
 
-  ns_cgi_param_int_opt(phr, "x", &need_reload_check, 0);
+  hr_cgi_param_int_opt(phr, "x", &need_reload_check, 0);
 
   fprintf(fout, "Content-type: text/plain; charset=%s\n"
           "Cache-Control: no-cache\n\n", EJUDGE_CHARSET);
@@ -10313,14 +10167,14 @@ unpriv_xml_update_answer(
   if (global->score_system != SCORE_OLYMPIAD
       || !cs->accepting_mode) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
-  if (ns_cgi_param(phr, "prob_id", &s) <= 0
+  if (hr_cgi_param(phr, "prob_id", &s) <= 0
       || sscanf(s, "%d%n", &prob_id, &n) != 1 || s[n]
       || prob_id <= 0 || prob_id > cs->max_prob
       || !(prob = cs->probs[prob_id]))
     FAIL(NEW_SRV_ERR_INV_PROB_ID);
   if (prob->type != PROB_TYPE_SELECT_ONE)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
-  if (!ns_cgi_param_bin(phr, "file", &run_text, &run_size))
+  if (!hr_cgi_param_bin(phr, "file", &run_text, &run_size))
     FAIL(NEW_SRV_ERR_ANSWER_UNSPECIFIED);
   if (strlen(run_text) != run_size)
     FAIL(NEW_SRV_ERR_BINARY_FILE);
@@ -10466,7 +10320,7 @@ unpriv_get_file(
   size_t file_size = 0;
   const unsigned char *content_type = 0;
 
-  if (ns_cgi_param(phr, "prob_id", &s) <= 0
+  if (hr_cgi_param(phr, "prob_id", &s) <= 0
       || sscanf(s, "%d%n", &prob_id, &n) != 1 || s[n]
       || prob_id <= 0 || prob_id > cs->max_prob
       || !(prob = cs->probs[prob_id]))
@@ -10520,7 +10374,7 @@ unpriv_get_file(
       && (variant = find_variant(cs, phr->user_id, prob_id, 0)) <= 0)
       FAIL(NEW_SRV_ERR_VARIANT_UNASSIGNED);
 
-  if (ns_cgi_param(phr, "file", &s) <= 0 || strchr(s, '/'))
+  if (hr_cgi_param(phr, "file", &s) <= 0 || strchr(s, '/'))
     FAIL(NEW_SRV_ERR_INV_FILE_NAME);
 
   os_rGetSuffix(s, sfx, sizeof(sfx));
@@ -10669,22 +10523,18 @@ unprivileged_entry_point(
   if (phr->action == NEW_SRV_ACTION_FORGOT_PASSWORD_1) {
     unpriv_external_action(fout, phr);
     return;
-    //return unpriv_page_forgot_password_1(fout, phr, phr->locale_id);
   }
   if (phr->action == NEW_SRV_ACTION_FORGOT_PASSWORD_2) {
     unpriv_external_action(fout, phr);
     return;
-    //return unpriv_page_forgot_password_2(fout, phr, phr->locale_id);
   }
   if (phr->action == NEW_SRV_ACTION_FORGOT_PASSWORD_3) {
     unpriv_external_action(fout, phr);
     return;
-    //return unpriv_page_forgot_password_3(fout, phr, phr->locale_id);
   }
 
   if ((phr->contest_id < 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts)
       && !phr->session_id && ejudge_config->enable_contest_select){
-
     phr->action = NEW_SRV_ACTION_CONTESTS_PAGE;
     unpriv_external_action(fout, phr);
     return;
@@ -10857,7 +10707,7 @@ unprivileged_entry_point(
     return ns_html_err_disqualified(fout, phr, cnts, extra);
 
   /* FIXME: redirect just logged in user to an appropriate page */
-  if (ns_cgi_param(phr, "lt", &s) > 0) {
+  if (hr_cgi_param(phr, "lt", &s) > 0) {
     // contest is not started: no nothing
     // contest finished, not olympiad, standings enabled -> standings
   }
@@ -10906,7 +10756,7 @@ ns_get_register_url(
 static void
 parse_cookie(struct http_request_info *phr)
 {
-  const unsigned char *cookies = ns_getenv(phr, "HTTP_COOKIE");
+  const unsigned char *cookies = hr_getenv(phr, "HTTP_COOKIE");
   if (!cookies) return;
   const unsigned char *s = cookies;
   ej_cookie_t client_key = 0;
@@ -10960,12 +10810,12 @@ ns_handle_http_request(struct server_framework_state *state,
   (void) forced_linking;
 
   // make a self-referencing URL
-  if (ns_getenv(phr, "SSL_PROTOCOL") || ns_getenv(phr, "HTTPS")) {
+  if (hr_getenv(phr, "SSL_PROTOCOL") || hr_getenv(phr, "HTTPS")) {
     phr->ssl_flag = 1;
     protocol = "https";
   }
-  if (!(http_host = ns_getenv(phr, "HTTP_HOST"))) http_host = "localhost";
-  if (!(script_name = ns_getenv(phr, "SCRIPT_NAME")))
+  if (!(http_host = hr_getenv(phr, "HTTP_HOST"))) http_host = "localhost";
+  if (!(script_name = hr_getenv(phr, "SCRIPT_NAME")))
     script_name = "/cgi-bin/new-client";
 
 #if defined EJUDGE_REST_PREFIX
@@ -11034,12 +10884,12 @@ ns_handle_http_request(struct server_framework_state *state,
   if (rs) *rs = 0;
   phr->context_url = context_url;
 
-  if (ns_cgi_param(phr, "json", &s) > 0) {
+  if (hr_cgi_param(phr, "json", &s) > 0) {
     phr->json_reply = 1;
   }
 
   // parse the client IP address
-  if (!(remote_addr = ns_getenv(phr, "REMOTE_ADDR")))
+  if (!(remote_addr = hr_getenv(phr, "REMOTE_ADDR")))
     return ns_html_err_inv_param(fout, phr, 0, "REMOTE_ADDR does not exist");
   if (!strcmp(remote_addr, "::1")) remote_addr = "127.0.0.1";
   if (xml_parse_ipv6(NULL, 0, 0, 0, remote_addr, &phr->ip) < 0)
@@ -11050,7 +10900,7 @@ ns_handle_http_request(struct server_framework_state *state,
   }
 
   // parse the contest_id
-  if ((r = ns_cgi_param(phr, "contest_id", &s)) < 0)
+  if ((r = hr_cgi_param(phr, "contest_id", &s)) < 0)
     return ns_html_err_inv_param(fout, phr, 0, "cannot parse contest_id");
   if (r > 0) {
     if (sscanf(s, "%d%n", &phr->contest_id, &n) != 1
@@ -11058,13 +10908,13 @@ ns_handle_http_request(struct server_framework_state *state,
       return ns_html_err_inv_param(fout, phr, 0, "cannot parse contest_id");
   }
 
-  if (ns_cgi_param(phr, "plain_text", &s) > 0) {
+  if (hr_cgi_param(phr, "plain_text", &s) > 0) {
     phr->plain_text = 1;
   }
 
   // parse the session_id
   if (!phr->session_id) {
-    if ((r = ns_cgi_param(phr, "SID", &s)) < 0)
+    if ((r = hr_cgi_param(phr, "SID", &s)) < 0)
       return ns_html_err_inv_param(fout, phr, 0, "cannot parse SID");
     if (r > 0) {
       if (sscanf(s, "%llx%n", &phr->session_id, &n) != 1
@@ -11074,7 +10924,7 @@ ns_handle_http_request(struct server_framework_state *state,
   }
 
   // parse the locale_id
-  if ((r = ns_cgi_param(phr, "locale_id", &s)) < 0)
+  if ((r = hr_cgi_param(phr, "locale_id", &s)) < 0)
     return ns_html_err_inv_param(fout, phr, 0, "cannot parse locale_id");
   if (r > 0) {
     if (sscanf(s, "%d%n", &phr->locale_id, &n) != 1 || s[n]
@@ -11087,11 +10937,11 @@ ns_handle_http_request(struct server_framework_state *state,
   if (rest_action && *rest_action) {
     phr->action = ns_match_action(rest_action);
     if (phr->action < 0) return ns_html_err_inv_param(fout, phr, 0, "invalid action");
-  } else if ((s = ns_cgi_nname(phr, "action_", 7))) {
+  } else if ((s = hr_cgi_nname(phr, "action_", 7))) {
     if (sscanf(s, "action_%d%n", &phr->action, &n) != 1 || s[n]
         || phr->action <= 0)
       return ns_html_err_inv_param(fout, phr, 0, "cannot parse action");
-  } else if ((r = ns_cgi_param(phr, "action", &s)) < 0) {
+  } else if ((r = hr_cgi_param(phr, "action", &s)) < 0) {
     return ns_html_err_inv_param(fout, phr, 0, "cannot parse action");
   } else if (r > 0) {
     if (sscanf(s, "%d%n", &phr->action, &n) != 1 || s[n] || phr->action <= 0) {
@@ -11132,7 +10982,7 @@ ns_handle_http_request(struct server_framework_state *state,
   }
 
   // check how we've been called
-  script_filename = ns_getenv(phr, "SCRIPT_FILENAME");
+  script_filename = hr_getenv(phr, "SCRIPT_FILENAME");
   if (!script_filename && phr->arg_num > 0) script_filename = phr->args[0];
   if (!script_filename)
     return ns_html_err_inv_param(fout, phr, 0, "cannot get script filename");

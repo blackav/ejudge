@@ -15,6 +15,167 @@
  * GNU General Public License for more details.
  */
 
+#include "http_request.h"
+
+#include "reuse/logger.h"
+
+#include <string.h>
+#include <ctype.h>
+#include <errno.h>
+#include <stdlib.h>
+
+const unsigned char*
+hr_getenv(
+        const struct http_request_info *phr,
+        const unsigned char *var)
+{
+  int i;
+  size_t var_len;
+
+  if (!var) return 0;
+  var_len = strlen(var);
+  for (i = 0; i < phr->env_num; i++)
+    if (!strncmp(phr->envs[i], var, var_len) && phr->envs[i][var_len] == '=')
+      break;
+  if (i < phr->env_num)
+    return phr->envs[i] + var_len + 1;
+  return 0;
+}
+
+int
+hr_cgi_param(
+        const struct http_request_info *phr,
+        const unsigned char *param,
+        const unsigned char **p_value)
+{
+  int i;
+
+  if (!param) return -1;
+  for (i = 0; i < phr->param_num; i++)
+    if (!strcmp(phr->param_names[i], param))
+      break;
+  if (i >= phr->param_num) return 0;
+  if (strlen(phr->params[i]) != phr->param_sizes[i]) return -1;
+  *p_value = phr->params[i];
+  return 1;
+}
+
+int
+hr_cgi_param_bin(
+        const struct http_request_info *phr,
+        const unsigned char *param,
+        const unsigned char **p_value,
+        size_t *p_size)
+{
+  int i;
+
+  if (!param) return -1;
+  for (i = 0; i < phr->param_num; i++)
+    if (!strcmp(phr->param_names[i], param))
+      break;
+  if (i >= phr->param_num) return 0;
+  *p_value = phr->params[i];
+  *p_size = phr->param_sizes[i];
+  return 1;
+}
+
+const unsigned char *
+hr_cgi_nname(
+        const struct http_request_info *phr,
+        const unsigned char *prefix,
+        size_t pflen)
+{
+  int i;
+
+  if (!prefix || !pflen) return 0;
+  for (i = 0; i < phr->param_num; i++)
+    if (!strncmp(phr->param_names[i], prefix, pflen))
+      return phr->param_names[i];
+  return 0;
+}
+
+int
+hr_cgi_param_int(
+        const struct http_request_info *phr,
+        const unsigned char *name,
+        int *p_val)
+{
+  const unsigned char *s = 0, *p = 0;
+  char *eptr = 0;
+  int x;
+
+  if (hr_cgi_param(phr, name, &s) <= 0) return -1;
+
+  p = s;
+  while (*p && isspace(*p)) p++;
+  if (!*p) return -1;
+
+  errno = 0;
+  x = strtol(s, &eptr, 10);
+  if (errno || *eptr) return -1;
+  if (p_val) *p_val = x;
+  return 0;
+}
+
+int
+hr_cgi_param_int_opt(
+        struct http_request_info *phr,
+        const unsigned char *name,
+        int *p_val,
+        int default_value)
+{
+  const unsigned char *s = 0, *p;
+  char *eptr = 0;
+  int x;
+
+  if (!(x = hr_cgi_param(phr, name, &s))) {
+    if (p_val) *p_val = default_value;
+    return 0;
+  } else if (x < 0) return -1;
+  p = s;
+  while (*p && isspace(*p)) p++;
+  if (!*p) {
+    if (p_val) *p_val = default_value;
+    return 0;
+  }
+  errno = 0;
+  x = strtol(s, &eptr, 10);
+  if (errno || *eptr) return -1;
+  if (p_val) *p_val = x;
+  return 0;
+}
+
+int
+hr_cgi_param_int_opt_2(
+        struct http_request_info *phr,
+        const unsigned char *name,
+        int *p_val,
+        int *p_set_flag)
+{
+  const unsigned char *s = 0, *p;
+  char *eptr = 0;
+  int x;
+
+  ASSERT(p_val);
+  ASSERT(p_set_flag);
+
+  *p_val = 0;
+  *p_set_flag = 0;
+
+  if (!(x = hr_cgi_param(phr, name, &s))) return 0;
+  else if (x < 0) return -1;
+
+  p = s;
+  while (*p && isspace(*p)) p++;
+  if (!*p) return 0;
+
+  errno = 0;
+  x = strtol(s, &eptr, 10);
+  if (errno || *eptr) return -1;
+  *p_val = x;
+  *p_set_flag = 1;
+  return 0;
+}
 
 /*
  * Local variables:

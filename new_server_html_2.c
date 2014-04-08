@@ -1313,7 +1313,7 @@ parse_user_field(
 {
   const unsigned char *s = NULL;
   unsigned char *str = NULL;
-  int r = ns_cgi_param(phr, name, &s);
+  int r = hr_cgi_param(phr, name, &s);
   char *eptr = NULL;
   int user_id = 0;
 
@@ -1390,16 +1390,16 @@ ns_priv_edit_clar_action(
     FAIL(NEW_SRV_ERR_INV_CLAR_ID);
   }
 
-  if (ns_cgi_param_int(phr, "clar_id", &clar_id) < 0
+  if (hr_cgi_param_int(phr, "clar_id", &clar_id) < 0
       || clar_id < 0 || clar_id >= clar_get_total(cs->clarlog_state)
       || clar_get_record(cs->clarlog_state, clar_id, &clar) < 0
       || clar.id < 0) {
     FAIL(NEW_SRV_ERR_INV_CLAR_ID);
   }
 
-  if (ns_cgi_param(phr, "cancel", &s) > 0 && *s) goto cleanup;
+  if (hr_cgi_param(phr, "cancel", &s) > 0 && *s) goto cleanup;
   s = NULL;
-  if (ns_cgi_param(phr, "save", &s) <= 0 || !*s) goto cleanup;
+  if (hr_cgi_param(phr, "save", &s) <= 0 || !*s) goto cleanup;
 
   if (parse_user_field(cs, phr, "from", 0, 1, &new_from) <= 0) {
     fprintf(log_f, "invalid 'from' field value\n");
@@ -1417,14 +1417,14 @@ ns_priv_edit_clar_action(
     }
     if (!r || new_j_from <= 0) new_j_from = 0;
   }
-  if (ns_cgi_param_int(phr, "flags", &new_flags) < 0 || new_flags < 0 || new_flags > 2) {
+  if (hr_cgi_param_int(phr, "flags", &new_flags) < 0 || new_flags < 0 || new_flags > 2) {
     fprintf(log_f, "invalid 'flags' field value\n");
     FAIL(NEW_SRV_ERR_INV_PARAM);
   }
-  if (ns_cgi_param(phr, "hide_flag", &s) > 0) new_hide_flag = 1;
-  if (ns_cgi_param(phr, "appeal_flag", &s) > 0) new_appeal_flag = 1;
-  if (ns_cgi_param(phr, "ssl_flag", &s) > 0) new_ssl_flag = 1;
-  if ((r = ns_cgi_param(phr, "ip", &s)) < 0) {
+  if (hr_cgi_param(phr, "hide_flag", &s) > 0) new_hide_flag = 1;
+  if (hr_cgi_param(phr, "appeal_flag", &s) > 0) new_appeal_flag = 1;
+  if (hr_cgi_param(phr, "ssl_flag", &s) > 0) new_ssl_flag = 1;
+  if ((r = hr_cgi_param(phr, "ip", &s)) < 0) {
     fprintf(log_f, "invalid 'ip' field value\n");
     FAIL(NEW_SRV_ERR_INV_PARAM);
   }
@@ -1433,7 +1433,7 @@ ns_priv_edit_clar_action(
     fprintf(log_f, "invalid 'ip' field value\n");
     FAIL(NEW_SRV_ERR_INV_PARAM);
   }
-  if (ns_cgi_param_int_opt(phr, "locale_id", &new_locale_id, 0) < 0) {
+  if (hr_cgi_param_int_opt(phr, "locale_id", &new_locale_id, 0) < 0) {
     fprintf(log_f, "invalid 'locale_id' field value\n");
     FAIL(NEW_SRV_ERR_INV_PARAM);
   }
@@ -1442,7 +1442,7 @@ ns_priv_edit_clar_action(
     fprintf(log_f, "invalid 'locale_id' field value\n");
     FAIL(NEW_SRV_ERR_INV_PARAM);
   }
-  if (ns_cgi_param_int_opt(phr, "in_reply_to", &new_in_reply_to, -1) < 0) {
+  if (hr_cgi_param_int_opt(phr, "in_reply_to", &new_in_reply_to, -1) < 0) {
     fprintf(log_f, "invalid 'in_reply_to' field value\n");
     FAIL(NEW_SRV_ERR_INV_PARAM);    
   }
@@ -1451,7 +1451,7 @@ ns_priv_edit_clar_action(
     FAIL(NEW_SRV_ERR_INV_PARAM);    
   }
   ++new_in_reply_to;
-  if (ns_cgi_param_int_opt(phr, "run_id", &new_run_id, -1) < 0) {
+  if (hr_cgi_param_int_opt(phr, "run_id", &new_run_id, -1) < 0) {
     fprintf(log_f, "invalid 'run_id' field value\n");
     FAIL(NEW_SRV_ERR_INV_PARAM);    
   }
@@ -1462,7 +1462,7 @@ ns_priv_edit_clar_action(
   ++new_run_id;
 
   s = NULL;
-  if ((r = ns_cgi_param(phr, "charset", &s)) < 0) {
+  if ((r = hr_cgi_param(phr, "charset", &s)) < 0) {
     fprintf(log_f, "invalid 'charset' field value\n");
     FAIL(NEW_SRV_ERR_INV_PARAM);    
   }
@@ -1473,7 +1473,7 @@ ns_priv_edit_clar_action(
   new_charset = xstrdup(EJUDGE_CHARSET);
 
   s = NULL;
-  if ((r = ns_cgi_param(phr, "subject", &s)) < 0) {
+  if ((r = hr_cgi_param(phr, "subject", &s)) < 0) {
     fprintf(log_f, "invalid 'subject' field value\n");
     FAIL(NEW_SRV_ERR_INV_PARAM);    
   }
@@ -1481,7 +1481,7 @@ ns_priv_edit_clar_action(
   new_subject = text_input_process_string(s, 0, 0);
 
   s = NULL;
-  if ((r = ns_cgi_param(phr, "text", &s)) < 0) {
+  if ((r = hr_cgi_param(phr, "text", &s)) < 0) {
     fprintf(log_f, "invalid 'text' field value\n");
     FAIL(NEW_SRV_ERR_INV_PARAM);    
   }
@@ -1600,7 +1600,7 @@ ns_priv_edit_run_action(
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   }
 
-  if (ns_cgi_param_int(phr, "run_id", &run_id) < 0
+  if (hr_cgi_param_int(phr, "run_id", &run_id) < 0
       || run_id < 0 || run_id >= run_get_total(cs->runlog_state)) {
     FAIL(NEW_SRV_ERR_INV_RUN_ID);
   }
@@ -1611,9 +1611,9 @@ ns_priv_edit_run_action(
     FAIL(NEW_SRV_ERR_INV_RUN_ID);
   }
 
-  if (ns_cgi_param(phr, "cancel", &s) > 0 && *s) goto cleanup;
+  if (hr_cgi_param(phr, "cancel", &s) > 0 && *s) goto cleanup;
   s = NULL;
-  if (ns_cgi_param(phr, "save", &s) <= 0 || !*s) goto cleanup;
+  if (hr_cgi_param(phr, "save", &s) <= 0 || !*s) goto cleanup;
   s = NULL;
 
   if (global->is_virtual) {
@@ -1625,7 +1625,7 @@ ns_priv_edit_run_action(
 
   // FIXME: handle special "recheck file attributes" option
 
-  if (ns_cgi_param(phr, "is_readonly", &s) > 0) new_is_readonly = 1;
+  if (hr_cgi_param(phr, "is_readonly", &s) > 0) new_is_readonly = 1;
   if (info.is_readonly > 0 && new_is_readonly) goto cleanup;
   if (info.is_readonly > 0 && !new_is_readonly) {
     new_info.is_readonly = 0;
@@ -1649,7 +1649,7 @@ ns_priv_edit_run_action(
   }
 
   value = -1;
-  if (ns_cgi_param_int(phr, "prob", &value) < 0 || value <= 0) {
+  if (hr_cgi_param_int(phr, "prob", &value) < 0 || value <= 0) {
     fprintf(log_f, "invalid 'prob' field value\n");
     FAIL(NEW_SRV_ERR_INV_PARAM);    
   }
@@ -1670,7 +1670,7 @@ ns_priv_edit_run_action(
   }
   if (prob && prob->variant_num > 0) {
     value = -1;
-    if (ns_cgi_param_int(phr, "variant", &value) < 0 || value < 0) {
+    if (hr_cgi_param_int(phr, "variant", &value) < 0 || value < 0) {
       /*
       fprintf(log_f, "invalid 'variant' field value\n");
       FAIL(NEW_SRV_ERR_INV_PARAM);
@@ -1692,7 +1692,7 @@ ns_priv_edit_run_action(
   }
 
   value = -1;
-  if (ns_cgi_param_int(phr, "lang", &value) < 0 || value < 0) {
+  if (hr_cgi_param_int(phr, "lang", &value) < 0 || value < 0) {
     fprintf(log_f, "invalid 'lang' field value\n");
     FAIL(NEW_SRV_ERR_INV_PARAM);    
   }
@@ -1715,7 +1715,7 @@ ns_priv_edit_run_action(
   }
 
   value = -1;
-  if (ns_cgi_param_int(phr, "eoln_type", &value) < 0
+  if (hr_cgi_param_int(phr, "eoln_type", &value) < 0
       || value < 0 || value > EOLN_CRLF) {
     fprintf(log_f, "invalid 'eoln_type' field value\n");
     FAIL(NEW_SRV_ERR_INV_PARAM);    
@@ -1734,7 +1734,7 @@ ns_priv_edit_run_action(
   (void) lang;
 
   value = -1;
-  if (ns_cgi_param_int(phr, "status", &value) < 0 || value < 0) {
+  if (hr_cgi_param_int(phr, "status", &value) < 0 || value < 0) {
     fprintf(log_f, "invalid 'status' field value\n");
     FAIL(NEW_SRV_ERR_INV_PARAM);    
   }
@@ -1755,7 +1755,7 @@ ns_priv_edit_run_action(
   }
 
   value = -1;
-  if (ns_cgi_param_int_opt(phr, "test", &value, -1) < -1) {
+  if (hr_cgi_param_int_opt(phr, "test", &value, -1) < -1) {
     fprintf(log_f, "invalid 'test' field value\n");
     FAIL(NEW_SRV_ERR_INV_PARAM);
   }
@@ -1814,7 +1814,7 @@ ns_priv_edit_run_action(
   if (global->score_system == SCORE_KIROV || global->score_system == SCORE_OLYMPIAD
       || global->score_system == SCORE_MOSCOW) {
     value = -1;
-    if (ns_cgi_param_int_opt(phr, "score", &value, -1) < -1) {
+    if (hr_cgi_param_int_opt(phr, "score", &value, -1) < -1) {
       fprintf(log_f, "invalid 'score' field value\n");
       FAIL(NEW_SRV_ERR_INV_PARAM);
     }
@@ -1870,7 +1870,7 @@ ns_priv_edit_run_action(
     }
 
     value = -100000;
-    if (ns_cgi_param_int_opt(phr, "score_adj", &value, -100000) < -1) {
+    if (hr_cgi_param_int_opt(phr, "score_adj", &value, -100000) < -1) {
       fprintf(log_f, "invalid 'score_adj' field value\n");
       FAIL(NEW_SRV_ERR_INV_PARAM);
     }
@@ -1885,7 +1885,7 @@ ns_priv_edit_run_action(
   }
 
   value = 0;
-  if (ns_cgi_param(phr, "is_marked", &s) > 0) value = 1;
+  if (hr_cgi_param(phr, "is_marked", &s) > 0) value = 1;
   if (info.is_marked != value) {
     new_info.is_marked = value;
     mask |= RE_IS_MARKED;
@@ -1893,7 +1893,7 @@ ns_priv_edit_run_action(
 
   if (global->separate_user_score > 0) {
     value = 0;
-    if (ns_cgi_param(phr, "is_saved", &s) > 0) value = 1;
+    if (hr_cgi_param(phr, "is_saved", &s) > 0) value = 1;
     if (info.is_saved != value) {
       new_info.is_saved = value;
       mask |= RE_IS_SAVED;
@@ -1908,7 +1908,7 @@ ns_priv_edit_run_action(
     }
     if (new_info.is_saved) {
       value = -1;
-      if (ns_cgi_param_int(phr, "saved_status", &value) < 0 || value < 0) {
+      if (hr_cgi_param_int(phr, "saved_status", &value) < 0 || value < 0) {
         fprintf(log_f, "invalid 'saved_status' field value\n");
         FAIL(NEW_SRV_ERR_INV_PARAM);    
       }
@@ -1924,7 +1924,7 @@ ns_priv_edit_run_action(
       }
 
       value = -1;
-      if (ns_cgi_param_int_opt(phr, "saved_test", &value, -1) < -1) {
+      if (hr_cgi_param_int_opt(phr, "saved_test", &value, -1) < -1) {
         fprintf(log_f, "invalid 'saved_test' field value\n");
         FAIL(NEW_SRV_ERR_INV_PARAM);
       }
@@ -1971,7 +1971,7 @@ ns_priv_edit_run_action(
       if (global->score_system == SCORE_KIROV || global->score_system == SCORE_OLYMPIAD
           || global->score_system == SCORE_MOSCOW) {
         value = -1;
-        if (ns_cgi_param_int_opt(phr, "saved_score", &value, -1) < -1) {
+        if (hr_cgi_param_int_opt(phr, "saved_score", &value, -1) < -1) {
           fprintf(log_f, "invalid 'saved_score' field value\n");
           FAIL(NEW_SRV_ERR_INV_PARAM);
         }
@@ -2030,7 +2030,7 @@ ns_priv_edit_run_action(
   }
 
   s = NULL;
-  if ((r = ns_cgi_param(phr, "ip", &s)) < 0) {
+  if ((r = hr_cgi_param(phr, "ip", &s)) < 0) {
     fprintf(log_f, "invalid 'ip' field value\n");
     FAIL(NEW_SRV_ERR_INV_PARAM);
   }
@@ -2046,14 +2046,14 @@ ns_priv_edit_run_action(
     mask |= RE_IP;
   }
   value = 0;
-  if (ns_cgi_param(phr, "ssl_flag", &s) > 0) value = 1;
+  if (hr_cgi_param(phr, "ssl_flag", &s) > 0) value = 1;
   if (info.ssl_flag != value) {
     new_info.ssl_flag = value;
     mask |= RE_SSL_FLAG;
   }
 
   value = -1;
-  if (ns_cgi_param_int(phr, "size", &value) < 0 || value < 0) {
+  if (hr_cgi_param_int(phr, "size", &value) < 0 || value < 0) {
     fprintf(log_f, "invalid 'size' field value\n");
     FAIL(NEW_SRV_ERR_INV_PARAM);    
   }
@@ -2067,7 +2067,7 @@ ns_priv_edit_run_action(
   }
 
   s = NULL;
-  if ((r = ns_cgi_param(phr, "sha1", &s)) < 0) {
+  if ((r = hr_cgi_param(phr, "sha1", &s)) < 0) {
     fprintf(log_f, "invalid 'sha1' field value\n");
     FAIL(NEW_SRV_ERR_INV_PARAM);    
   }
@@ -2085,7 +2085,7 @@ ns_priv_edit_run_action(
 
 #if CONF_HAS_LIBUUID - 0 != 0
   s = NULL;
-  if ((r = ns_cgi_param(phr, "uuid", &s)) < 0) {
+  if ((r = hr_cgi_param(phr, "uuid", &s)) < 0) {
     fprintf(log_f, "invalid 'uuid' field value\n");
     FAIL(NEW_SRV_ERR_INV_PARAM);    
   }
@@ -2112,7 +2112,7 @@ ns_priv_edit_run_action(
 
   if (new_info.lang_id == 0) {
     s = NULL;
-    if ((r = ns_cgi_param(phr, "mime_type", &s)) < 0) {
+    if ((r = hr_cgi_param(phr, "mime_type", &s)) < 0) {
       fprintf(log_f, "invalid 'mime_type' field value\n");
       FAIL(NEW_SRV_ERR_INV_PARAM);    
     }
@@ -2129,7 +2129,7 @@ ns_priv_edit_run_action(
   }
 
   value = 0;
-  if (ns_cgi_param(phr, "is_hidden", &s) > 0) value = 1;
+  if (hr_cgi_param(phr, "is_hidden", &s) > 0) value = 1;
   if (info.is_hidden != value) {
     if (!value && info.time < start_time) {
       fprintf(log_f, "is_hidden flag cannot be cleared because time < start_time");
@@ -2140,7 +2140,7 @@ ns_priv_edit_run_action(
   }
 
   value = 0;
-  if (ns_cgi_param(phr, "is_imported", &s) > 0) value = 1;
+  if (hr_cgi_param(phr, "is_imported", &s) > 0) value = 1;
   if (info.is_imported != value) {
     // check availability of operation
     new_info.is_imported = value;
@@ -2148,7 +2148,7 @@ ns_priv_edit_run_action(
   }
 
   value = -1;
-  if (ns_cgi_param_int_opt(phr, "locale_id", &value, -1) < 0) {
+  if (hr_cgi_param_int_opt(phr, "locale_id", &value, -1) < 0) {
     fprintf(log_f, "invalid 'locale_id' field value\n");
     FAIL(NEW_SRV_ERR_INV_PARAM);
   }
@@ -2162,7 +2162,7 @@ ns_priv_edit_run_action(
   }
 
   value = -1;
-  if (ns_cgi_param_int_opt(phr, "pages", &value, -1) < 0) {
+  if (hr_cgi_param_int_opt(phr, "pages", &value, -1) < 0) {
     fprintf(log_f, "invalid 'pages' field value\n");
     FAIL(NEW_SRV_ERR_INV_PARAM);
   }
@@ -2452,7 +2452,7 @@ stand_parse_error_func(void *data, unsigned char const *format, ...)
 }
 
 #define READ_PARAM(name) do { \
-  if (ns_cgi_param(phr, #name, &s) <= 0 || !s) return; \
+  if (hr_cgi_param(phr, #name, &s) <= 0 || !s) return; \
   len = strlen(s); \
   if (len > 128 * 1024) return; \
   name = (unsigned char*) alloca(len + 1); \
