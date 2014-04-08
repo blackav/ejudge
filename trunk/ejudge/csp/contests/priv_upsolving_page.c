@@ -79,11 +79,11 @@ const unsigned char *freeze_standings = 0;
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);  
 
   if (cs->upsolving_mode) {
-    ns_cgi_param(phr, "freeze_standings", &freeze_standings);
-    ns_cgi_param(phr, "view_source", &view_source);
-    ns_cgi_param(phr, "view_protocol", &view_protocol);
-    ns_cgi_param(phr, "full_protocol", &full_proto);
-    ns_cgi_param(phr, "disable_clars", &disable_clars);
+    hr_cgi_param(phr, "freeze_standings", &freeze_standings);
+    hr_cgi_param(phr, "view_source", &view_source);
+    hr_cgi_param(phr, "view_protocol", &view_protocol);
+    hr_cgi_param(phr, "full_protocol", &full_proto);
+    hr_cgi_param(phr, "disable_clars", &disable_clars);
   } else {
     freeze_standings = "1";
     view_source = "1";

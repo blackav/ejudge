@@ -114,11 +114,11 @@ time_t cur_time;
     FAIL(NEW_SRV_ERR_SERVICE_NOT_AVAILABLE);
   }
 
-  if (ns_cgi_param(phr, "login", &login) <= 0) {
+  if (hr_cgi_param(phr, "login", &login) <= 0) {
     fprintf(log_f, "login is not specified");
     FAIL(NEW_SRV_ERR_INV_PARAM);
   }
-  if (ns_cgi_param(phr, "email", &email) <= 0) {
+  if (hr_cgi_param(phr, "email", &email) <= 0) {
     fprintf(log_f, "email is not specified");
     FAIL(NEW_SRV_ERR_INV_PARAM);
   }

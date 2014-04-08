@@ -149,7 +149,7 @@ int n, clar_id, show_astr_time;
   const unsigned char *clar_subj = 0;
   unsigned char title[1024];
 
-  if ((n = ns_cgi_param(phr, "clar_id", &s)) <= 0) {
+  if ((n = hr_cgi_param(phr, "clar_id", &s)) <= 0) {
     fprintf(log_f, "'clar_id' parameter is missing or invalid");
     FAIL(NEW_SRV_ERR_INV_CLAR_ID);
   }
