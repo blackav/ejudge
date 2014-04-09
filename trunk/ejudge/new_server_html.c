@@ -1047,9 +1047,15 @@ ns_check_contest_events(serve_state_t cs, const struct contest_desc *cnts)
   if (cs->event_first) serve_handle_events(ejudge_config, cnts, cs);
 }
 
+static int
+priv_external_action(FILE *out_f, struct http_request_info *phr);
+
 static void
 privileged_page_login_page(FILE *fout, struct http_request_info *phr)
 {
+  phr->action = NEW_SRV_ACTION_LOGIN_PAGE;
+  priv_external_action(fout, phr);
+  /*
   const unsigned char *s;
   int r, n;
   unsigned char bbuf[1024];
@@ -1094,6 +1100,7 @@ privileged_page_login_page(FILE *fout, struct http_request_info *phr)
   ns_footer(fout, 0, 0, phr->locale_id);
   l10n_setlocale(0);
   html_armor_free(&ab);
+  */
 }
 
 static void
@@ -6788,7 +6795,6 @@ static const unsigned char * const external_priv_action_names[NEW_SRV_ACTION_LAS
   [NEW_SRV_ACTION_VIEW_EXAM_INFO] = "priv_exam_info_page",
   [NEW_SRV_ACTION_VIEW_ONLINE_USERS] = "priv_online_users_page",
   [NEW_SRV_ACTION_VIEW_CNTS_PWDS] = "priv_passwords_page",
-  [NEW_SRV_ACTION_VIEW_REG_PWDS] = "priv_passwords_page",
   [NEW_SRV_ACTION_VIEW_USER_IPS] = "priv_user_ips_page",
   [NEW_SRV_ACTION_VIEW_IP_USERS] = "priv_ip_users_page",
   [NEW_SRV_ACTION_PRIV_EDIT_CLAR_PAGE] = "priv_edit_clar_page",
@@ -6803,8 +6809,14 @@ static const unsigned char * const external_priv_action_names[NEW_SRV_ACTION_LAS
   [NEW_SRV_ACTION_VIEW_AUDIT_LOG] = "priv_audit_log_page",
   [NEW_SRV_ACTION_UPSOLVING_CONFIG_1] = "priv_upsolving_page",
   [NEW_SRV_ACTION_VIEW_REPORT] = "priv_report_page",
-  [NEW_SRV_ACTION_VIEW_USER_REPORT] = "priv_report_page",
   [NEW_SRV_ACTION_VIEW_TESTING_QUEUE] = "priv_testing_queue_page",
+  [NEW_SRV_ACTION_LOGIN_PAGE] = "priv_login_page",
+};
+
+static const int external_priv_action_aliases[NEW_SRV_ACTION_LAST] =
+{
+  [NEW_SRV_ACTION_VIEW_REG_PWDS] = NEW_SRV_ACTION_VIEW_CNTS_PWDS,
+  [NEW_SRV_ACTION_VIEW_USER_REPORT] = NEW_SRV_ACTION_VIEW_REPORT,
 };
 
 static const unsigned char * const external_priv_error_names[NEW_SRV_ERR_LAST] =
@@ -6894,6 +6906,53 @@ error_page(
   phr->log_z = 0;
 }
 
+static int
+priv_external_action(FILE *out_f, struct http_request_info *phr)
+{
+  int action = phr->action;
+  if (external_priv_action_aliases[action] > 0) action = external_priv_action_aliases[action];
+
+  if (external_priv_action_names[action]) {
+    external_priv_action_states[action] = external_action_load(external_priv_action_states[action],
+                                                               "csp/contests",
+                                                               external_priv_action_names[action],
+                                                               "csp_get_");
+  }
+
+  if (external_priv_action_states[action] && external_priv_action_states[action]->action_handler) {
+    PageInterface *pg = ((external_action_handler_t) external_priv_action_states[action]->action_handler)();
+    
+    if (pg->ops->execute) {
+      int r = pg->ops->execute(pg, phr->log_f, phr);
+      if (r < 0) {
+        error_page(out_f, phr, 0, -r);
+        goto cleanup;
+      }
+    }
+
+    if (pg->ops->render) {
+      snprintf(phr->content_type, sizeof(phr->content_type), "text/html; charset=%s", EJUDGE_CHARSET);
+      int r = pg->ops->render(pg, phr->log_f, out_f, phr);
+      if (r < 0) {
+        error_page(out_f, phr, 0, -r);
+        goto cleanup;
+      }
+    }
+
+    if (pg->ops->destroy) {
+      pg->ops->destroy(pg);
+      pg = NULL;
+    }
+
+    goto cleanup;
+  }
+
+  return 0;
+
+cleanup:
+  return 1;
+}
+
 static void
 privileged_entry_point(
         FILE *fout,
@@ -6921,7 +6980,6 @@ privileged_entry_point(
   // validate cookie
   if (ns_open_ul_connection(phr->fw_state) < 0) {
     error_page(fout, phr, 1, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
-    //ns_html_err_ul_server_down(fout, phr, 1, 0);
     goto cleanup;
   }
   if ((r = userlist_clnt_get_cookie(ul_conn, ULS_PRIV_GET_COOKIE,
@@ -6935,23 +6993,13 @@ privileged_entry_point(
     case ULS_ERR_NO_COOKIE:
       fprintf(phr->log_f, "priv_get_cookie failed: %s\n", userlist_strerror(-r));
       error_page(fout, phr, 1, NEW_SRV_ERR_INV_SESSION);
-      /*
-      ns_html_err_inv_session(fout, phr, 1,
-                              "priv_login failed: %s",
-                              userlist_strerror(-r));
-      */
       goto cleanup;
     case ULS_ERR_DISCONNECT:
       error_page(fout, phr, 1, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
-      //ns_html_err_ul_server_down(fout, phr, 1, 0);
       goto cleanup;
     default:
       fprintf(phr->log_f, "priv_get_cookie failed: %s\n", userlist_strerror(-r));
       error_page(fout, phr, 1, NEW_SRV_ERR_INTERNAL);
-      /*
-      ns_html_err_internal_error(fout, phr, 1, "priv_login failed: %s",
-                                 userlist_strerror(-r));
-      */
       goto cleanup;
     }
   }
@@ -6959,13 +7007,11 @@ privileged_entry_point(
   if (phr->contest_id < 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts) {
     fprintf(phr->log_f, "invalid contest_id %d", phr->contest_id);
     error_page(fout, phr, 1, NEW_SRV_ERR_INV_CONTEST_ID);
-    // ns_html_err_no_perm(fout, phr, 1, "invalid contest_id %d", phr->contest_id);
     goto cleanup;
   }
   if (!cnts->managed) {
     fprintf(phr->log_f, "contest is not managed");
     error_page(fout, phr, 1, NEW_SRV_ERR_INV_CONTEST_ID);
-    //ns_html_err_inv_param(fout, phr, 1, "contest is not managed");
     goto cleanup;
   }
   extra = ns_get_contest_extra(phr->contest_id);
@@ -6982,10 +7028,6 @@ privileged_entry_point(
               ns_ssl_flag_str[phr->ssl_flag],
               xml_unparse_ipv6(&phr->ip), phr->contest_id);
       error_page(fout, phr, 1, NEW_SRV_ERR_PERMISSION_DENIED);
-      /*
-      ns_html_err_no_perm(fout, phr, 1, "%s://%s is not allowed for MASTER for contest %d", ns_ssl_flag_str[phr->ssl_flag],
-                          xml_unparse_ipv6(&phr->ip), phr->contest_id);
-      */
       goto cleanup;
     }
   } else {
@@ -6995,9 +7037,6 @@ privileged_entry_point(
               ns_ssl_flag_str[phr->ssl_flag],
               xml_unparse_ipv6(&phr->ip), phr->contest_id);
       error_page(fout, phr, 1, NEW_SRV_ERR_PERMISSION_DENIED);
-      /*
-      ns_html_err_no_perm(fout, phr, 1, "%s://%s is not allowed for MASTER for contest %d", ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ipv6(&phr->ip), phr->contest_id);
-      */
       goto cleanup;
     }
   }
@@ -7006,7 +7045,6 @@ privileged_entry_point(
   if (phr->role <= 0 || phr->role >= USER_ROLE_LAST) {
     fprintf(phr->log_f, "invalid role %d", phr->role);
     error_page(fout, phr, 1, NEW_SRV_ERR_PERMISSION_DENIED);
-    //ns_html_err_no_perm(fout, phr, 1, "invalid role %d", phr->role);
     goto cleanup;
   }
   if (phr->role == USER_ROLE_ADMIN) {
@@ -7016,7 +7054,6 @@ privileged_entry_point(
       fprintf(phr->log_f, "user %s does not have MASTER_LOGIN bit for contest %d",
               phr->login, phr->contest_id);
       error_page(fout, phr, 1, NEW_SRV_ERR_PERMISSION_DENIED);
-      //ns_html_err_no_perm(fout, phr, 1, "user %s does not have MASTER_LOGIN bit for contest %d", phr->login, phr->contest_id);
       goto cleanup;
     }
   } else if (phr->role == USER_ROLE_JUDGE) {
@@ -7026,7 +7063,6 @@ privileged_entry_point(
       fprintf(phr->log_f, "user %s does not have JUDGE_LOGIN bit for contest %d",
               phr->login, phr->contest_id);
       error_page(fout, phr, 1, NEW_SRV_ERR_PERMISSION_DENIED);
-      //ns_html_err_no_perm(fout, phr, 1, "user %s does not have JUDGE_LOGIN bit for contest %d", phr->login, phr->contest_id);
       goto cleanup;
     }
   } else {
@@ -7035,7 +7071,6 @@ privileged_entry_point(
       fprintf(phr->log_f, "user %s has no permission to login as role %d for contest %d",
               phr->login, phr->role, phr->contest_id);
       error_page(fout, phr, 1, NEW_SRV_ERR_PERMISSION_DENIED);
-      //ns_html_err_no_perm(fout, phr, 1, "user %s has no permission to login as role %d for contest %d", phr->login, phr->role, phr->contest_id);
       goto cleanup;
     }
   }
@@ -7110,44 +7145,7 @@ privileged_entry_point(
     phr->action = NEW_SRV_ACTION_MAIN_PAGE;
   }
 
-  if (external_priv_action_names[phr->action]) {
-    external_priv_action_states[phr->action] = external_action_load(external_priv_action_states[phr->action],
-                                                                    "csp/contests",
-                                                                    external_priv_action_names[phr->action],
-                                                                    "csp_get_");
-  }
-
-  if (external_priv_action_states[phr->action] && external_priv_action_states[phr->action]->action_handler) {
-    PageInterface *pg = ((external_action_handler_t) external_priv_action_states[phr->action]->action_handler)();
-
-    if (pg->ops->execute) {
-      int r = pg->ops->execute(pg, phr->log_f, phr);
-      if (r < 0) {
-        error_page(fout, phr, 1, -r);
-        goto cleanup;
-      }
-    }
-
-    if (pg->ops->render) {
-      snprintf(phr->content_type, sizeof(phr->content_type), "text/html; charset=%s", EJUDGE_CHARSET);
-      int r = pg->ops->render(pg, phr->log_f, fout, phr);
-      if (r < 0) {
-        error_page(fout, phr, 1, -r);
-        goto cleanup;
-      }
-    }
-
-    if (pg->ops->destroy) {
-      pg->ops->destroy(pg);
-      pg = NULL;
-    }
-
-    if (!r) r = ns_priv_prev_state[phr->action];
-
-    close_memstream(phr->log_f); phr->log_f = 0;
-    xfree(phr->log_t); phr->log_t = NULL; phr->log_z = 0;
-    return;
-  }
+  if (priv_external_action(fout, phr) > 0) goto cleanup;
 
   if (phr->action > 0 && phr->action < NEW_SRV_ACTION_LAST
       && actions_table[phr->action]) {
