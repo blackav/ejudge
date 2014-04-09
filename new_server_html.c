@@ -1055,52 +1055,6 @@ privileged_page_login_page(FILE *fout, struct http_request_info *phr)
 {
   phr->action = NEW_SRV_ACTION_LOGIN_PAGE;
   priv_external_action(fout, phr);
-  /*
-  const unsigned char *s;
-  int r, n;
-  unsigned char bbuf[1024];
-  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
-
-  l10n_setlocale(phr->locale_id);
-  ns_header(fout, ns_fancy_priv_header, 0, 0, 0, 0, phr->locale_id, NULL, NULL_CLIENT_KEY, "Login page");
-  html_start_form(fout, 1, phr->self_url, "");
-  fprintf(fout, "<table>\n");
-  fprintf(fout, "<tr><td>%s:</td><td><input type=\"text\" size=\"32\" name=\"login\"", _("Login"));
-  if (hr_cgi_param(phr, "login", &s) > 0) {
-    fprintf(fout, " value=\"%s\"", ARMOR(s));
-  }
-  fprintf(fout, "/></td></tr>\n");
-  fprintf(fout, "<tr><td>%s:</td><td><input type=\"password\" size=\"32\" name=\"password\"", _("Password"));
-  if (hr_cgi_param(phr, "password", &s) > 0) {
-    fprintf(fout, " value=\"%s\"", ARMOR(s));
-  }
-  fprintf(fout, "/></td></tr>\n");
-  fprintf(fout, "<tr><td>%s:</td><td><input type=\"text\" size=\"32\" name=\"contest_id\"", _("Contest"));
-  if (phr->contest_id > 0) {
-    fprintf(fout, " value=\"%d\"", phr->contest_id);
-  }
-  fprintf(fout, "/></td></tr>\n");
-  if (!phr->role) {
-    phr->role = USER_ROLE_OBSERVER;
-    if (hr_cgi_param(phr, "role", &s) > 0) {
-      if (sscanf(s, "%d%n", &r, &n) == 1 && !s[n]
-          && r >= USER_ROLE_CONTESTANT && r < USER_ROLE_LAST)
-        phr->role = r;
-    }
-  }
-  fprintf(fout, "<tr><td>%s:</td><td>", _("Role"));
-  html_role_select(fout, phr->role, 1, 0);
-  fprintf(fout, "</td></tr>\n");
-  fprintf(fout, "<tr><td>%s:</td><td>", _("Language"));
-  l10n_html_locale_select(fout, phr->locale_id);
-  fprintf(fout, "</td></tr>\n");
-  fprintf(fout, "<tr><td>&nbsp;</td><td>%s</td></tr>\n",
-          ns_submit_button(bbuf, sizeof(bbuf), "submit", 0, _("Submit")));
-  fprintf(fout, "</table></form>\n");
-  ns_footer(fout, 0, 0, phr->locale_id);
-  l10n_setlocale(0);
-  html_armor_free(&ab);
-  */
 }
 
 static void
