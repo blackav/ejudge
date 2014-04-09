@@ -31,6 +31,7 @@
 #include "l10n.h"
 #include "compat.h"
 #include "ejudge_cfg.h"
+#include "external_action.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"
@@ -3517,6 +3518,108 @@ static reg_action_handler_func_t reg_handlers[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_REG_MOVE_MEMBER] = move_member,
 };
 
+typedef PageInterface *(*external_action_handler_t)(void);
+
+static const unsigned char * const external_reg_action_names[NEW_SRV_ACTION_LAST] =
+{
+};
+static const int external_reg_action_aliases[NEW_SRV_ACTION_LAST] =
+{
+};
+static const unsigned char * const external_reg_error_names[NEW_SRV_ERR_LAST] =
+{
+  [NEW_SRV_ERR_UNKNOWN_ERROR] = "reg_error_unknown",
+};
+static ExternalActionState *external_reg_action_states[NEW_SRV_ACTION_LAST];
+static ExternalActionState *external_reg_error_states[NEW_SRV_ERR_LAST];
+
+static void
+error_page(
+        FILE *out_f,
+        struct http_request_info *phr,
+        int error_code)
+{
+  const unsigned char * const * error_names = external_reg_error_names;
+  ExternalActionState **error_states = external_reg_error_states;
+
+  if (phr->log_t && !*phr->log_t) {
+    xfree(phr->log_t); phr->log_t = NULL; phr->log_z = 0;
+  }
+
+  if (error_code < 0) error_code = -error_code;
+  if (error_code <= 0 || error_code >= NEW_SRV_ERR_LAST) error_code = NEW_SRV_ERR_UNKNOWN_ERROR;
+  phr->error_code = error_code;
+
+  const unsigned char *error_name = error_names[error_code];
+  if (!error_name) error_name = error_names[NEW_SRV_ERR_UNKNOWN_ERROR];
+  if (!error_name) {
+    return ns_html_error(out_f, phr, 0, error_code);
+  }
+  error_states[error_code] = external_action_load(error_states[error_code],
+                                                  "csp/contests",
+                                                  error_name,
+                                                  "csp_get_");
+  if (!error_states[error_code]) {
+    return ns_html_error(out_f, phr, 0, error_code);
+  }
+  PageInterface *pg = ((external_action_handler_t) error_states[error_code]->action_handler)();
+  if (!pg) {
+    return ns_html_error(out_f, phr, 0, error_code);
+  }
+
+  pg->ops->render(pg, NULL, out_f, phr);
+  xfree(phr->log_t); phr->log_t = NULL;
+  phr->log_z = 0;
+}
+
+static int
+reg_external_action(FILE *out_f, struct http_request_info *phr)
+{
+  int action = phr->action;
+  if (external_reg_action_aliases[action] > 0) action = external_reg_action_aliases[action];
+
+  if (external_reg_action_names[action]) {
+    external_reg_action_states[action] = external_action_load(external_reg_action_states[action],
+                                                              "csp/contests",
+                                                              external_reg_action_names[action],
+                                                              "csp_get_");
+  }
+
+  if (external_reg_action_states[action] && external_reg_action_states[action]->action_handler) {
+    PageInterface *pg = ((external_action_handler_t) external_reg_action_states[action]->action_handler)();
+    
+    if (pg->ops->execute) {
+      int r = pg->ops->execute(pg, phr->log_f, phr);
+      if (r < 0) {
+        error_page(out_f, phr, -r);
+        goto cleanup;
+      }
+    }
+
+    if (pg->ops->render) {
+      snprintf(phr->content_type, sizeof(phr->content_type), "text/html; charset=%s", EJUDGE_CHARSET);
+      int r = pg->ops->render(pg, phr->log_f, out_f, phr);
+      if (r < 0) {
+        error_page(out_f, phr, -r);
+        goto cleanup;
+      }
+    }
+
+    if (pg->ops->destroy) {
+      pg->ops->destroy(pg);
+      pg = NULL;
+    }
+
+    goto cleanup;
+  }
+
+  return 0;
+
+cleanup:
+  return 1;
+}
+
+
 void
 ns_register_pages(FILE *fout, struct http_request_info *phr)
 {
@@ -3617,8 +3720,13 @@ ns_register_pages(FILE *fout, struct http_request_info *phr)
     extra->contest_arm = html_armor_string_dup(cnts->name);
   }
 
-  if (phr->action < 0 || phr->action >= NEW_SRV_ACTION_LAST) phr->action = 0;
+  if (phr->action <= 0 || phr->action >= NEW_SRV_ACTION_LAST) phr->action = NEW_SRV_ACTION_MAIN_PAGE;
+  if (reg_external_action(fout, phr) > 0) return;
+
   if (reg_handlers[phr->action])
     return (*reg_handlers[phr->action])(fout, phr, cnts, extra, cur_time);
+
+  phr->action = NEW_SRV_ACTION_MAIN_PAGE;
+  if (reg_external_action(fout, phr) > 0) return;
   return main_page(fout, phr, cnts, extra, cur_time);
 }
