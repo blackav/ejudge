@@ -1,0 +1,230 @@
+<%
+/* $Id$ */
+%><%@include "reg_includes.csp"
+%><%
+// local includes go here
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@set getter_name = "csp_get_reg_main_page"
+%><%@page csp_view_reg_main_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "reg_stdvars.csp"
+%><%
+// local variables go here
+
+// initial code goes here
+  l10n_setlocale(phr->locale_id);
+
+  switch (phr->action) {
+  case NEW_SRV_ACTION_REG_VIEW_CONTESTANTS:
+    title2 = _("Viewing contestants");
+    break;
+
+  case NEW_SRV_ACTION_REG_VIEW_RESERVES:
+    title2 = _("Viewing reserves");
+    break;
+
+  case NEW_SRV_ACTION_REG_VIEW_COACHES:
+    title2 = _("Viewing coaches");
+    break;
+
+  case NEW_SRV_ACTION_REG_VIEW_ADVISORS:
+    title2 = _("Viewing advisors");
+    break;
+
+  case NEW_SRV_ACTION_REG_VIEW_GUESTS:
+    title2 = _("Viewing guests");
+    break;
+
+  case NEW_SRV_ACTION_VIEW_SETTINGS:
+    title2 = _("Viewing settings");
+    break;
+
+  case NEW_SRV_ACTION_REG_VIEW_GENERAL:
+  default:
+    title2 = _("Viewing general info");
+    break;
+  }
+
+  n = phr->name;
+  if (!n || !*n) n = phr->login;
+
+  snprintf(title, sizeof(title), "%s [%s, %s]", title2, html_armor_buf(&ab, n), extra->contest_arm);
+%><%@include "reg_header.csp"
+%>
+<div class="user_actions"><table class="menu"><tr>
+    <td class="menu"><div class="contest_actions_item"><%
+  if (phr->action != NEW_SRV_ACTION_VIEW_SETTINGS) {
+%><s:a class="menu" ac="view-settings"><%
+  }
+%><s:tr>Settings</s:tr><%
+  if (phr->action != NEW_SRV_ACTION_VIEW_SETTINGS) {
+%></s:a><%
+  }
+%></div></td>
+    <td class="menu"><div class="contest_actions_item"><s:a class="menu" ac="logout"><s:tr>Logout</s:tr> [<s:v value="phr->login" />]</s:a></div></td>
+</tr></table></div>
+
+<div class="white_empty_block">&nbsp;</div>
+
+<%  shown_items = 0;
+%><div class="contest_actions"><table class="menu"><tr>
+
+
+
+
+  // lower row
+  if (phr->action >= NEW_SRV_ACTION_REG_VIEW_GENERAL
+      && phr->action <= NEW_SRV_ACTION_REG_VIEW_GUESTS)
+    i = phr->action;
+  menu_item(fout, phr, i, _("User info"),
+            ns_url(ub, sizeof(ub), phr, NEW_SRV_ACTION_REG_VIEW_GENERAL, 0));
+  shown_items++;
+
+
+<%
+  if (phr->reg_status == USERLIST_REG_OK
+      && !(phr->reg_flags &~USERLIST_UC_INVISIBLE)
+      && contests_check_team_ip_2(cnts, &phr->ip, phr->ssl_flag)
+      && !cnts->closed) {
+%><td class="menu"><div class="contest_actions_item"><%
+
+    if (cnts->disable_team_password) {
+      curl(ub, sizeof(ub), cnts, phr, 1, "&amp;", 0, NULL);
+    } else {
+      curl(ub, sizeof(ub), cnts, phr, 0, "&amp;", 0, "login=%s", URLARMOR(phr->login));
+    }
+    menu_item(fout, phr, -1, _("Participate"), ub);
+    shown_items++;
+
+%></div></td><%
+  }
+%>
+<%
+  if (!shown_items) {
+%><td class="menu"><div class="contest_actions_item">&nbsp;</div></td><%
+  }
+%>
+</tr></table></div>
+
+<%@include "reg_separator.csp"
+%>
+
+
+<%@include "reg_footer.csp"
+%><%
+cleanup:;
+  l10n_setlocale(0);
+  html_armor_free(&ab);
+%>
+
+
+static void
+main_page(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        time_t cur_time)
+{
+  unsigned char ub[1024];
+  unsigned char bb[1024];
+  int shown_items = 0, i = 0;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  const unsigned char *status_style;
+  const unsigned char *status_info;
+  const unsigned char *status_info_2;
+  const unsigned char *title = "", *n = 0;
+  struct userlist_user *u = 0;
+  const struct userlist_user_info *ui = 0;
+
+
+
+
+
+
+
+
+
+
+  // status row
+  status_info_2 = "";
+  if (phr->reg_status < 0) {
+    status_style = "server_status_off";
+    status_info = __("NOT REGISTERED");
+  } else if (phr->reg_status == USERLIST_REG_PENDING) {
+    status_style = "server_status_alarm";
+    status_info= __("REGISTERED, PENDING APPROVAL");
+    if ((phr->reg_flags & USERLIST_UC_INCOMPLETE)) {
+      status_info_2 = __(", REGISTRATION DATA INCOMPLETE");
+      status_style = "server_status_error";
+    }
+  } else if (phr->reg_status == USERLIST_REG_REJECTED) {
+    status_style = "server_status_error";
+    status_info = __("REGISTRATION REJECTED");
+  } else if ((phr->reg_flags & USERLIST_UC_BANNED)) {
+    status_style = "server_status_error";
+    status_info = __("REGISTERED, BANNED");
+  } else if ((phr->reg_flags & USERLIST_UC_LOCKED)) {
+    status_style = "server_status_error";
+    status_info = __("REGISTERED, LOCKED");
+  } else if ((phr->reg_flags & USERLIST_UC_INVISIBLE)) {
+    status_style = "server_status_on";
+    status_info = __("REGISTERED (INVISIBLE)");
+    if ((phr->reg_flags & USERLIST_UC_INCOMPLETE)) {
+      status_info_2 = __(", REGISTRATION DATA INCOMPLETE");
+      status_style = "server_status_error";
+    }
+  } else {
+    status_style = "server_status_on";
+    status_info = __("REGISTERED");
+    if ((phr->reg_flags & USERLIST_UC_INCOMPLETE)) {
+      status_info_2 = __(", REGISTRATION DATA INCOMPLETE");
+      status_style = "server_status_error";
+    }
+  }
+  fprintf(fout, "<div class=\"%s\">\n", status_style);
+  if (status_info && *status_info) status_info = gettext(status_info);
+  if (status_info_2 && *status_info_2) status_info_2 = gettext(status_info_2);
+  fprintf(fout, "<b>%s%s</b>", status_info, status_info_2);
+  if (phr->reg_status < 0) {
+    fprintf(fout, " <b><a href=\"%s\" class=\"menu\">[%s]</a></b>",
+            ns_url(ub, sizeof(ub), phr, NEW_SRV_ACTION_REG_REGISTER, 0),
+            _("Confirm registration"));
+  }
+
+  u = phr->session_extra->user_info;
+  if (u) ui = userlist_get_cnts0(u);
+  if (u->read_only || (ui && ui->cnts_read_only)) {
+    fprintf(fout, "/ <b>%s</b>", _("READ-ONLY"));
+  }
+
+  fprintf(fout, "</div>\n");
+
+  if (main_page_action_handlers[phr->action])
+    (*main_page_action_handlers[phr->action])(fout, phr, cnts, extra, cur_time);
+  else {
+    main_page_view_info(fout, phr, cnts, extra, cur_time);
+  }
+
+  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
+  l10n_setlocale(0);
+  html_armor_free(&ab);
+}
+
+
+
+static void
+menu_item(FILE *fout, struct http_request_info *phr,
+          int action,
+          const unsigned char *text,
+          const unsigned char *url)
+{
+  fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">");
+  if (action != phr->action && url) {
+    fprintf(fout, "<a class=\"menu\" href=\"%s\">", url);
+  }
+  fprintf(fout, "%s", text);
+  if (action != phr->action && url) {
+    fprintf(fout, "</a>");
+  }
+  fprintf(fout, "</div></td>");
+}
