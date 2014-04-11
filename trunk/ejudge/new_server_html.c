@@ -10503,6 +10503,7 @@ unprivileged_entry_point(
   */
 
   //if (unpriv_external_action(fout, phr)) goto cleanup;
+  if (!user_actions_table[phr->action]) phr->action = NEW_SRV_ACTION_MAIN_PAGE;
   user_actions_table[phr->action](fout, phr, cnts, extra);
 
 cleanup:
