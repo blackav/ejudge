@@ -94,9 +94,9 @@
 %></div></td><%
   }
 %><%
-  if (global && start_time > 0
-      && (stop_time <= 0 || cnts->problems_url)
-      && (global->problem_navigation <= 0 || cnts->problems_url)) {
+  if (global && start_time > 0 && stop_time <= 0 && cnts->problems_url) {
+//      && (stop_time <= 0 || cnts->problems_url)
+//      && (global->problem_navigation <= 0 || cnts->problems_url)) {
 %><td class="menu"><div class="contest_actions_item"><%
     if (phr->action != NEW_SRV_ACTION_VIEW_PROBLEM_STATEMENTS) {
       if (cnts->problems_url) {
