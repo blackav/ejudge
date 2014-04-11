@@ -436,9 +436,9 @@ fputs("</a>", out_f);
 }
 fwrite(csp_str26, 1, 11, out_f);
 }
-if (global && start_time > 0
-      && (stop_time <= 0 || cnts->problems_url)
-      && (global->problem_navigation <= 0 || cnts->problems_url)) {
+if (global && start_time > 0 && stop_time <= 0 && cnts->problems_url) {
+//      && (stop_time <= 0 || cnts->problems_url)
+//      && (global->problem_navigation <= 0 || cnts->problems_url)) {
 fwrite(csp_str25, 1, 51, out_f);
 if (phr->action != NEW_SRV_ACTION_VIEW_PROBLEM_STATEMENTS) {
       if (cnts->problems_url) {
