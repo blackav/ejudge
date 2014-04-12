@@ -1557,8 +1557,8 @@ static const int role_move_dir_code[] =
   -1,
 };
 
-static void
-main_page_view_info(
+void
+ns_reg_main_page_view_info(
         FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
@@ -2046,7 +2046,7 @@ main_page(
   if (main_page_action_handlers[phr->action])
     (*main_page_action_handlers[phr->action])(fout, phr, cnts, extra, cur_time);
   else {
-    main_page_view_info(fout, phr, cnts, extra, cur_time);
+    ns_reg_main_page_view_info(fout, phr, cnts, extra, cur_time);
   }
 
   ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
@@ -3522,9 +3522,17 @@ typedef PageInterface *(*external_action_handler_t)(void);
 
 static const unsigned char * const external_reg_action_names[NEW_SRV_ACTION_LAST] =
 {
+  [NEW_SRV_ACTION_MAIN_PAGE] = "reg_main_page",
 };
 static const int external_reg_action_aliases[NEW_SRV_ACTION_LAST] =
 {
+  [NEW_SRV_ACTION_REG_VIEW_GENERAL] = NEW_SRV_ACTION_MAIN_PAGE,
+  [NEW_SRV_ACTION_REG_VIEW_CONTESTANTS] = NEW_SRV_ACTION_MAIN_PAGE,
+  [NEW_SRV_ACTION_REG_VIEW_RESERVES] = NEW_SRV_ACTION_MAIN_PAGE,
+  [NEW_SRV_ACTION_REG_VIEW_COACHES] = NEW_SRV_ACTION_MAIN_PAGE,
+  [NEW_SRV_ACTION_REG_VIEW_ADVISORS] = NEW_SRV_ACTION_MAIN_PAGE,
+  [NEW_SRV_ACTION_REG_VIEW_GUESTS] = NEW_SRV_ACTION_MAIN_PAGE,
+  [NEW_SRV_ACTION_VIEW_SETTINGS] = NEW_SRV_ACTION_MAIN_PAGE,
 };
 static const unsigned char * const external_reg_error_names[NEW_SRV_ERR_LAST] =
 {
