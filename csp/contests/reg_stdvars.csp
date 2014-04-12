@@ -1,0 +1,9 @@
+<%
+  int retval __attribute__((unused)) = 0;
+  struct contest_extra *extra __attribute__((unused)) = phr?phr->extra:NULL;
+  serve_state_t cs __attribute__((unused)) = extra?extra->serve_state:NULL;
+  const struct contest_desc *cnts __attribute__((unused)) = phr?phr->cnts:NULL;
+  struct html_armor_buffer ab __attribute__((unused)) = HTML_ARMOR_INITIALIZER;
+  unsigned char hbuf[1024] __attribute__((unused));
+  const unsigned char *sep __attribute__((unused)) = NULL;
+%>

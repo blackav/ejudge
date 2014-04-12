@@ -93,6 +93,7 @@ struct http_request_info
   // content type
   unsigned char content_type[128];
 
+  time_t current_time;
   struct timeval timestamp1;
   struct timeval timestamp2;
 
