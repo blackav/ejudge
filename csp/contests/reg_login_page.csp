@@ -1,0 +1,146 @@
+<%
+/* $Id$ */
+%><%@include "reg_includes.csp"
+%><%
+#include "ejudge_cfg.h"
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@set getter_name = "csp_get_reg_login_page"
+%><%@page csp_view_reg_login_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "reg_stdvars.csp"
+%><%
+  const unsigned char *login = 0, *password = 0, *email = 0;
+  int item_cnt = 0, created_mode = 0;
+  unsigned char title[1024];
+
+  hr_cgi_param(phr, "login", &login);
+  if (!login) login = "";
+  hr_cgi_param(phr, "password", &password);
+  if (!password) password = "";
+  hr_cgi_param(phr, "email", &email);
+  if (!email) email = "";
+
+  l10n_setlocale(phr->locale_id);
+  switch (phr->action) {
+  case NEW_SRV_ACTION_REG_ACCOUNT_CREATED_PAGE:
+    snprintf(title, sizeof(title), "%s [%s]", _("Activate new user account"), extra->contest_arm);
+    created_mode = 1;
+    break;
+  default:
+  case NEW_SRV_ACTION_REG_LOGIN_PAGE:
+    snprintf(title, sizeof(title), "%s [%s]", _("Log in to edit registration data"), extra->contest_arm);
+    break;
+  }
+%><%@include "reg_header.csp"
+%>
+<s:form>
+<s:hidden name="contest_id" value="phr->contest_id" />
+<s:hidden name="next_action" value="phr->action" />
+<%
+  if (cnts->disable_locale_change) {
+%><s:hidden name="locale_id" value="phr->locale_id" /><%
+  }
+%>
+<div class="user_actions"><table class="menu"><tr>
+    <td class="menu"><div class="user_action_item"><s:tr>login</s:tr>: <s:textfield name="login" size="20" value="login" /></div></td>
+    <td class="menu"><div class="user_action_item"><s:tr>password</s:tr>: <s:password name="password" size="20" value="password" /></div></td>
+<%
+  if (!cnts->disable_locale_change) {
+%><td class="menu"><div class="user_action_item"><s:tr>language</s:tr>: <%
+    l10n_html_locale_select(out_f, phr->locale_id);
+%></div></td><%
+  }
+%>
+    <td class="menu"><div class="user_action_item"><s:submit ac="reg-login" label="Log in" /></div></td>
+</tr></table></div></s:form>
+
+<div class="white_empty_block">&nbsp;</div>
+<div class="contest_actions"><table class="menu"><tr>
+<%
+  if (phr->config->disable_new_users <= 0) {
+    // "New account" "Forgot password?" "Enter contest"
+%><td class="menu"><div class="contest_actions_item"><%
+    if (created_mode) {
+%><s:a ac="reg-create-account-page"><s:tr>Create another account</s:tr></s:a><%
+    } else {
+%><s:a ac="reg-create-account-page"><s:tr>Create account</s:tr></s:a><%
+    }
+%></div></td><%
+    item_cnt++;
+  }
+%>
+<%
+  if (cnts->enable_password_recovery && cnts->disable_team_password
+      && !cnts->simple_registration && !created_mode) {
+%><td class="menu"><div class="contest_actions_item"><s:a class="menu" ac="forgot-password-1" script="client" noSID="yes"><s:tr>Recover forgot password</s:tr></s:a></div></tr><%
+    item_cnt++;
+  }
+%>
+<%
+  if (!item_cnt) {
+%><td class="menu"><div class="contest_actions_item">&nbsp;</div></td><%
+  }
+%>
+</tr></table></div>
+
+<%@include "reg_separator.csp"
+%>
+<%
+  if (phr->action == NEW_SRV_ACTION_REG_ACCOUNT_CREATED_PAGE) {
+%><h2><s:tr>New user account is created</s:tr></h2><%
+    switch (((cnts->simple_registration & 1) << 1) | (cnts->assign_logins&1)) {
+    case 0:                     /* !simple_registration && !assign_logins */
+%><p><%
+      fprintf(out_f, _("New account <tt>%s</tt> is successfully created."), html_armor_buf(&ab, login));
+%> <%
+      fprintf(out_f, _("An e-mail messages is sent to the address <tt>%s</tt>."), html_armor_buf(&ab, email));
+%> <s:tr>This message contains the password for the initial log in. You will be able to change the password later.</s:tr></p>
+<p><s:tr>Type the login and the password in to the form above and press the "Log in" button to activate the account.</s:tr></p>
+<p><s:tr><b>Note</b>, that you should log in to the system for the first time no later, than in 24 hours after this moment, or the new account is removed.</s:tr></p>
+<%
+      break;
+    case 1:                     /* !simple_registration &&  assign_logins */
+%><p><s:tr>New account is successfully created.</s:tr> <%
+      fprintf(out_f, _("An e-mail messages is sent to the address <tt>%s</tt>."), html_armor_buf(&ab, login));
+%> <s:tr>This message contains the login name, assigned to you, as well as your password for initial log in. You will be able to change the password later.</s:tr></p>
+<p><s:tr>Type the login and the password in to the form above and press the "Log in" button to activate the account.</s:tr></p>
+<p><s:tr><b>Note</b>, that you should log in to the system for the first time no later, than in 24 hours after this moment, or the new account is removed.</s:tr></p>
+<%
+      break;
+    case 2:                     /*  simple_registration && !assign_logins */
+    case 3:                     /*  simple_registration &&  assign_logins */
+%><%
+      fprintf(out_f,
+              _("<p%s>New account <tt>%s</tt> is successfully created. Initial password is generated automatically. You will be able to change your password later. "),
+              "", html_armor_buf(&ab, login));
+      if (cnts->send_passwd_email)
+        fprintf(out_f, _("An e-mail with your account parameters is sent to address <tt>%s</tt>. "), html_armor_buf(&ab, email));
+%></p>
+<p><s:tr>The account parameters are as follows:</s:tr></p>
+
+<table class="b1">
+    <tr><td><s:tr>Login</s:tr></td><td><tt><s:v checkExpr="" value="login" /></tt></td></tr>
+    <tr><td><s:tr>E-mail</s:tr></td><td><tt><s:v checkExpr="" value="email" /></tt></td></tr>
+    <tr><td><s:tr>Password</s:tr></td><td><tt><s:v checkExpr="" value="password" /></tt></td></tr>
+</table>
+
+<p><b><s:tr>Remember or write down the password!</s:tr></b></p>
+<%
+    }
+  }
+%>
+<%@include "reg_footer.csp"
+%><%
+//cleanup:;
+  l10n_setlocale(0);
+  html_armor_free(&ab);
+%>
+
+
+
+
+
+
+
+
+
+

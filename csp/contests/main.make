@@ -60,6 +60,7 @@ SOFILES = \
  priv_user_info_page.so\
  priv_users_page.so\
  priv_error_unknown.so\
+ reg_login_page.so\
  reg_main_page.so\
  unpriv_clar_page.so\
  unpriv_contests_page.so\
@@ -137,6 +138,7 @@ unpriv_standings_page.c : unpriv_standings_page.csp $(UNPRIV_DEPS)
 unpriv_error_unknown.c : unpriv_error_unknown.csp unpriv_includes.csp unpriv_stdvars.csp unpriv_header.csp unpriv_menu.csp unpriv_footer.csp
 
 reg_main_page.c : reg_main_page.csp reg_includes.csp reg_stdvars.csp reg_header.csp reg_separator.csp reg_main_settings.csp reg_footer.csp
+reg_login_page.c : reg_login_page.csp reg_includes.csp reg_stdvars.csp reg_header.csp reg_separator.csp reg_footer.csp
 
 %.c : %.csp
 	../../ej-page-gen $< > $@
