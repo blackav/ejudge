@@ -55,6 +55,17 @@
 #define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
 #define FAIL2(c) do { retval = -(c); goto failed; } while (0)
 
+static int
+reg_external_action(
+        FILE *out_f,
+        struct http_request_info *phr,
+        int action);
+static void
+error_page(
+        FILE *out_f,
+        struct http_request_info *phr,
+        int error_code);
+
 static char *
 ns_snprintf(unsigned char *buf, size_t size, const char *format, ...)
   __attribute__((format(printf, 3, 4)));
@@ -425,7 +436,7 @@ anon_select_contest_page(FILE *fout, struct http_request_info *phr)
 }
 
 static void
-login_page(
+_login_page(
         FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
@@ -1123,8 +1134,8 @@ static reg_action_handler_func_t action_handlers[NEW_SRV_ACTION_LAST] =
 {
   [NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE] = create_account_page,
   [NEW_SRV_ACTION_REG_CREATE_ACCOUNT] = create_account,
-  [NEW_SRV_ACTION_REG_ACCOUNT_CREATED_PAGE] = login_page,
-  [NEW_SRV_ACTION_REG_LOGIN_PAGE] = login_page,
+  [NEW_SRV_ACTION_REG_ACCOUNT_CREATED_PAGE] = _login_page,
+  [NEW_SRV_ACTION_REG_LOGIN_PAGE] = _login_page,
   [NEW_SRV_ACTION_REG_LOGIN] = cmd_login,
 };
 
@@ -1183,13 +1194,17 @@ anon_register_pages(FILE *fout, struct http_request_info *phr)
   }
 
   if (phr->action < 0 || phr->action >= NEW_SRV_ACTION_LAST) phr->action = 0;
+  if (reg_external_action(fout, phr, -1) > 0) return;
+
   if (action_handlers[phr->action])
     return (*action_handlers[phr->action])(fout, phr, cnts, extra, cur_time);
 
   if (cnts->assign_logins)
     return create_autoassigned_account_page(fout, phr, cnts, extra, cur_time);
-  else
-    return login_page(fout, phr, cnts, extra, cur_time);
+  else {
+    if (reg_external_action(fout, phr, NEW_SRV_ACTION_REG_LOGIN_PAGE) > 0) return;
+    error_page(fout, phr, NEW_SRV_ERR_INV_ACTION);
+  }
 }
 
 static void
@@ -1884,7 +1899,7 @@ static reg_action_handler_func_t main_page_action_handlers[NEW_SRV_ACTION_LAST]=
   [NEW_SRV_ACTION_VIEW_SETTINGS] = main_page_view_settings,
 };
 
-static void
+/*static*/ void
 main_page(
         FILE *fout,
         struct http_request_info *phr,
@@ -3581,9 +3596,9 @@ error_page(
 }
 
 static int
-reg_external_action(FILE *out_f, struct http_request_info *phr)
+reg_external_action(FILE *out_f, struct http_request_info *phr, int action)
 {
-  int action = phr->action;
+  if (action < 0) action = phr->action;
   if (external_reg_action_aliases[action] > 0) action = external_reg_action_aliases[action];
 
   if (external_reg_action_names[action]) {
@@ -3626,7 +3641,6 @@ reg_external_action(FILE *out_f, struct http_request_info *phr)
 cleanup:
   return 1;
 }
-
 
 void
 ns_register_pages(FILE *fout, struct http_request_info *phr)
@@ -3729,12 +3743,12 @@ ns_register_pages(FILE *fout, struct http_request_info *phr)
   }
 
   if (phr->action <= 0 || phr->action >= NEW_SRV_ACTION_LAST) phr->action = NEW_SRV_ACTION_MAIN_PAGE;
-  if (reg_external_action(fout, phr) > 0) return;
+  if (reg_external_action(fout, phr, -1) > 0) return;
 
   if (reg_handlers[phr->action])
     return (*reg_handlers[phr->action])(fout, phr, cnts, extra, cur_time);
 
-  phr->action = NEW_SRV_ACTION_MAIN_PAGE;
-  if (reg_external_action(fout, phr) > 0) return;
-  return main_page(fout, phr, cnts, extra, cur_time);
+  if (reg_external_action(fout, phr, NEW_SRV_ACTION_MAIN_PAGE) > 0) return;
+  error_page(fout, phr, NEW_SRV_ERR_INV_ACTION);
+  //return main_page(fout, phr, cnts, extra, cur_time);
 }
