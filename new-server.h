@@ -537,7 +537,11 @@ const unsigned char *
 ns_url_3(
         FILE *out_f,
         const struct http_request_info *phr,
-        const unsigned char *script,
+        int action);
+const unsigned char *
+ns_url_4(
+        FILE *out_f,
+        const struct http_request_info *phr,
         int action);
 
 void

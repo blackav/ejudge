@@ -3084,6 +3084,8 @@ handle_a_open(
 
     HtmlAttribute *script_attr = html_element_find_attribute(elem, "script");
     HtmlAttribute *class_attr = html_element_find_attribute(elem, "class");
+    int nosid_flag = html_attribute_get_bool(html_element_find_attribute(elem, "nosid"), 0);
+
 
     HtmlAttribute *attr = html_element_find_attribute(elem, "url");
     if (attr) {
@@ -3093,6 +3095,7 @@ handle_a_open(
             return -1;
         }
         script_attr = html_element_find_attribute(url_elem, "script");
+        nosid_flag = html_attribute_get_bool(html_element_find_attribute(url_elem, "nosid"), 0);
         r = process_ac_attr(log_f, cntx, ps, url_elem, buf, sizeof(buf));
         if (r < 0) return r;
         if (!r) {
@@ -3105,7 +3108,12 @@ handle_a_open(
         }
         fprintf(prg_f, " href=\\\"\", out_f);\n");
         if (script_attr) {
-            fprintf(prg_f, "sep = ns_url_3(out_f, phr, \"%s\", %s);\n", script_attr->value, buf);
+            fprintf(prg_f, "hr_%s_url(out_f, phr);\n", script_attr->value);
+            if (nosid_flag) {
+                fprintf(prg_f, "sep = ns_url_4(out_f, phr, %s);\n", buf);
+            } else {
+                fprintf(prg_f, "sep = ns_url_3(out_f, phr, %s);\n", buf);
+            }
         } else {
             fprintf(prg_f, "sep = ns_url_2(out_f, phr, %s);\n", buf);
         }
@@ -3149,7 +3157,12 @@ handle_a_open(
         }
         fprintf(prg_f, " href=\\\"\", out_f);\n");
         if (script_attr) {
-            fprintf(prg_f, "sep = ns_url_3(out_f, phr, \"%s\", %s);\n", script_attr->value, buf);
+            fprintf(prg_f, "hr_%s_url(out_f, phr);\n", script_attr->value);
+            if (nosid_flag) {
+                fprintf(prg_f, "sep = ns_url_4(out_f, phr, %s);\n", buf);
+            } else {
+                fprintf(prg_f, "sep = ns_url_3(out_f, phr, %s);\n", buf);
+            }
         } else {
             fprintf(prg_f, "sep = ns_url_2(out_f, phr, %s);\n", buf);
         }

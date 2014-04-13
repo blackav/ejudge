@@ -810,23 +810,41 @@ const unsigned char *
 ns_url_3(
         FILE *out_f,
         const struct http_request_info *phr,
-        const unsigned char *script,
         int action)
 {
   if (phr->rest_mode > 0) {
     if (action < 0 || action >= NEW_SRV_ACTION_LAST) action = 0;
-    fprintf(out_f, "%s/%s/%s", phr->context_url, script, ns_symbolic_action_table[action]);
+    fprintf(out_f, "/%s", ns_symbolic_action_table[action]);
     if (phr->session_id) {
       fprintf(out_f, "/S%016llx", phr->session_id);
     }
     return "?";
   } else {
     const unsigned char *sep = "?";
-    fprintf(out_f, "%s/%s", phr->context_url, script);
     if (phr->session_id) {
       fprintf(out_f, "%sSID=%016llx", sep, phr->session_id);
       sep = "&amp;";
     }
+    if (action > 0) {
+      fprintf(out_f, "%saction=%d", sep, action);
+      sep = "&amp;";
+    }
+    return sep;
+  }
+}
+
+const unsigned char *
+ns_url_4(
+        FILE *out_f,
+        const struct http_request_info *phr,
+        int action)
+{
+  if (phr->rest_mode > 0) {
+    if (action < 0 || action >= NEW_SRV_ACTION_LAST) action = 0;
+    fprintf(out_f, "/%s", ns_symbolic_action_table[action]);
+    return "?";
+  } else {
+    const unsigned char *sep = "?";
     if (action > 0) {
       fprintf(out_f, "%saction=%d", sep, action);
       sep = "&amp;";
