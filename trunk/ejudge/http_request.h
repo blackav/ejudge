@@ -20,6 +20,7 @@
 #include "ej_types.h"
 #include "opcaps.h"
 
+#include <stdio.h>
 #include <sys/time.h>
 
 struct server_framework_state;
@@ -167,6 +168,16 @@ hr_cgi_param_int_opt_2(
         const unsigned char *name,
         int *p_val,
         int *p_set_flag);
+
+void
+hr_register_url(
+        FILE *out_f,
+        const struct http_request_info *phr);
+void
+hr_client_url(
+        FILE *out_f,
+        const struct http_request_info *phr);
+
 
 #endif /* __HTTP_REQUEST_H__ */
 

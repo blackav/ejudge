@@ -16,6 +16,7 @@
  */
 
 #include "http_request.h"
+#include "contests.h"
 
 #include "reuse/logger.h"
 
@@ -175,6 +176,42 @@ hr_cgi_param_int_opt_2(
   *p_val = x;
   *p_set_flag = 1;
   return 0;
+}
+
+void
+hr_register_url(
+        FILE *out_f,
+        const struct http_request_info *phr)
+{
+  if (phr->rest_mode > 0) {
+    fprintf(out_f, "%s/register", phr->context_url);
+  } else if (phr->cnts && phr->cnts->register_url) {
+    fprintf(out_f, "%s", phr->cnts->register_url);
+  } else {
+#if defined CGI_PROG_SUFFIX
+    fprintf(out_f, "%s/new-register%s", phr->context_url, CGI_PROG_SUFFIX);
+#else
+    fprintf(out_f, "%s/new-register", phr->contest_url);
+#endif
+  }
+}
+
+void
+hr_client_url(
+        FILE *out_f,
+        const struct http_request_info *phr)
+{
+  if (phr->rest_mode > 0) {
+    fprintf(out_f, "%s/user", phr->context_url);
+  } else if (phr->cnts && phr->cnts->team_url) {
+    fprintf(out_f, "%s", phr->cnts->team_url);
+  } else {
+#if defined CGI_PROG_SUFFIX
+    fprintf(out_f, "%s/new-client%s", phr->context_url, CGI_PROG_SUFFIX);
+#else
+    fprintf(out_f, "%s/new-client", phr->contest_url);
+#endif
+  }
 }
 
 /*
