@@ -16,7 +16,6 @@ ns_reg_main_page_view_info(
 %><%@include "reg_stdvars.csp"
 %><%
 // local variables go here
-  unsigned char ub[1024];
   int shown_items = 0;
   const unsigned char *title2 = "", *n = 0;
   struct userlist_user *u = 0;
@@ -97,15 +96,13 @@ ns_reg_main_page_view_info(
       && !cnts->closed) {
 %><td class="menu"><div class="contest_actions_item"><%
     if (cnts->disable_team_password) {
-%>
-      curl(ub, sizeof(ub), cnts, phr, 1, "&amp;", 0, NULL);
-<%
+%><s:a class="menu" script="client" ac="main-page"><%
     } else {
-%>
-      curl(ub, sizeof(ub), cnts, phr, 0, "&amp;", 0, "login=%s", URLARMOR(phr->login));
-<%
+%><s:url name="ClientUrl" script="client" ac="main-page" noSID="yes">
+    <s:param name="login" value="phr->login" fullCheckExpr="phr->login" />
+</s:url><s:a class="menu" url="ClientUrl"><%
     }
-%><a class="menu" href="<s:v value="ub" escape="false" />"><s:tr>Participate</s:tr></a><%
+%><s:tr>Participate</s:tr></s:a><%
     shown_items++;
 %></div></td><%
   }
