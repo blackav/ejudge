@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-04-07 14:50+0400\n"
-"PO-Revision-Date: 2014-04-07 14:53+0400\n"
+"POT-Creation-Date: 2014-04-14 12:35+0400\n"
+"PO-Revision-Date: 2014-04-14 12:39+0400\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -79,6 +79,13 @@ msgstr ""
 "<b>Обратите внимание</b>, что Вы должны зайти в систему в течении 24 часов "
 "после заполнения и посылки анкеты, или в противном случае Ваша регистрация "
 "будет отменена!"
+
+msgid ""
+"<b>Note</b>, that you should log in to the system for the first time no "
+"later, than in 24 hours after this moment, or the new account is removed."
+msgstr ""
+"<b>Обратите внимание</b>, вы должны войти в систему в первый раз не позднее, чем через 24 часа от этого момента, иначе данная\n"
+"учетная запись будет уничтожена."
 
 #, c-format
 msgid "<big>%d total tests runs, %d passed, %d failed.<br/>\n"
@@ -518,6 +525,11 @@ msgstr "Разрешить просмотр краткого протокола"
 
 msgid "Allow viewing source code"
 msgstr "Разрешить просмотр исходного текста"
+
+#, c-format
+msgid "An e-mail messages is sent to the address <tt>%s</tt>."
+msgstr ""
+"Письмо с параметрами Вашей учётной записи выслано на адрес <tt>%s</tt>. "
 
 #, c-format
 msgid "An e-mail with your account parameters is sent to address <tt>%s</tt>. "
@@ -2185,6 +2197,13 @@ msgstr "Ни UId, ни Login, ни Name, ни Cypher не заданы\n"
 msgid "Neither user_id, login, nor name are specified\n"
 msgstr "Ни UId, ни Login, ни Name не заданы\n"
 
+#, c-format
+msgid "New account <tt>%s</tt> is successfully created."
+msgstr "Новая учетная запись <tt>%s</tt> успешно создана."
+
+msgid "New account is successfully created."
+msgstr "Новая учётная запись создана"
+
 msgid "New duration is too small"
 msgstr "Новый продолжительность турнира слишком мала"
 
@@ -2851,6 +2870,9 @@ msgstr "Оставшиеся посылки"
 msgid "Remaining time"
 msgstr "Оставшееся время"
 
+msgid "Remember or write down the password!"
+msgstr "Запомните или запишите пароль!"
+
 #, c-format
 msgid "Removal of privileged user %d from contest %d failed"
 msgstr "Удаление привилегированного пользователя %d из турнира %d не удалось"
@@ -3438,6 +3460,9 @@ msgstr "Пройдено тестов"
 msgid "Tests value `%s' is invalid in row %d\n"
 msgstr "Значение тестов `%s' недопустимо в строке %d\n"
 
+msgid "The account parameters are as follows:"
+msgstr "Ваша регистрационная запись имеет следующие параметры:"
+
 msgid "The contest is in progress"
 msgstr "Турнир идёт"
 
@@ -3517,6 +3542,23 @@ msgstr "Этот язык не может быть использован для
 
 msgid "This language is not available for this problem"
 msgstr "Язык не доступен для этой задачи"
+
+msgid ""
+"This message contains the login name, assigned to you, as well as your "
+"password for initial log in. You will be able to change the password later."
+msgstr ""
+"На Ваш электронный адрес будет направлено письмо, которое будет содержать "
+"регистрационное имя (login) и пароль для входа в систему. Этот пароль "
+"необходимо использовать для первого входа в систему, после чего его можно "
+"будет поменять."
+
+msgid ""
+"This message contains the password for the initial log in. You will be able "
+"to change the password later."
+msgstr ""
+"На Ваш электронный адрес будет направлено письмо, которое будет содержать "
+"пароль для входа в систему. Этот пароль необходимо использовать для первого "
+"входа в систему, после чего его можно будет поменять."
 
 msgid "This problem is already solved"
 msgstr "Эта задача уже решена"
@@ -3627,6 +3669,11 @@ msgstr "Попробовать еще раз"
 
 msgid "Try again this operation later"
 msgstr "Повторите операцию позже"
+
+msgid ""
+"Type the login and the password in to the form above and press the \"Log in"
+"\" button to activate the account."
+msgstr "Введите Ваш логин и пароль в форму сверху и нажмите кнопку \"Войти\" для активации учетной записи."
 
 #, c-format
 msgid "UId is empty in row %d\n"
