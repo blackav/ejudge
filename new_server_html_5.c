@@ -1153,6 +1153,7 @@ anon_register_pages(FILE *fout, struct http_request_info *phr)
   if (phr->contest_id <= 0 || contests_get(phr->contest_id,&cnts) < 0 || !cnts){
     return anon_select_contest_page(fout, phr);
   }
+  phr->cnts = cnts;
 
   if (phr->locale_id < 0) phr->locale_id = cnts->default_locale_num;
   if (phr->locale_id < 0) phr->locale_id = 0;
@@ -1165,6 +1166,7 @@ anon_register_pages(FILE *fout, struct http_request_info *phr)
 
   // load style stuff
   extra = ns_get_contest_extra(phr->contest_id);
+  phr->extra = extra;
   cur_time = time(0);
   watched_file_update(&extra->header, cnts->team_header_file, cur_time);
   watched_file_update(&extra->separator, cnts->team_separator_file, cur_time);
