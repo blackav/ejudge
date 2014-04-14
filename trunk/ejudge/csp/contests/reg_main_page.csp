@@ -22,6 +22,10 @@ ns_reg_main_page_view_info(
   const struct userlist_user_info *ui = 0;
   unsigned char title[1024];
 
+  if (phr->user_id <= 0) {
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+  }
+
 // initial code goes here
   l10n_setlocale(phr->locale_id);
 
@@ -166,7 +170,7 @@ ns_reg_main_page_view_info(
 %>
 <%@include "reg_footer.csp"
 %><%
-//cleanup:;
+cleanup:;
   l10n_setlocale(0);
   html_armor_free(&ab);
 %>
