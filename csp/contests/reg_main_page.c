@@ -40,7 +40,7 @@ static const unsigned char csp_str36[20] = "</td></tr></table>\n";
 static const unsigned char csp_str37[18] = "<div id=\"footer\">";
 static const unsigned char csp_str38[38] = "</div>\n</div>\n</div>\n</body>\n</html>\n";
 
-/* $Id: reg_main_page.csp 8106 2014-04-13 13:35:31Z cher $ */
+/* $Id: reg_main_page.csp 8115 2014-04-14 09:49:20Z cher $ */
 #include "new-server.h"
 #include "new_server_pi.h"
 #include "new_server_proto.h"
@@ -113,6 +113,10 @@ int retval __attribute__((unused)) = 0;
   struct userlist_user *u = 0;
   const struct userlist_user_info *ui = 0;
   unsigned char title[1024];
+
+  if (phr->user_id <= 0) {
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+  }
 
 // initial code goes here
   l10n_setlocale(phr->locale_id);
@@ -357,7 +361,7 @@ fwrite(csp_str14, 1, 1, out_f);
 fwrite(csp_str37, 1, 17, out_f);
 write_copyright_short(out_f);
 fwrite(csp_str38, 1, 37, out_f);
-//cleanup:;
+cleanup:;
   l10n_setlocale(0);
   html_armor_free(&ab);
   return retval;
