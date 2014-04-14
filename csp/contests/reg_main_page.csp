@@ -72,7 +72,7 @@ ns_reg_main_page_view_info(
 %></s:a><%
   }
 %></div></td>
-    <td class="menu"><div class="contest_actions_item"><s:a class="menu" ac="logout"><s:tr>Logout</s:tr> [<s:v value="phr->login" />]</s:a></div></td>
+    <td class="menu"><div class="contest_actions_item"><s:a class="menu" ac="logout"><s:tr>Logout</s:tr> [<s:v checkExpr="" value="phr->login" />]</s:a></div></td>
 </tr></table></div>
 
 <div class="white_empty_block">&nbsp;</div>

@@ -177,7 +177,9 @@ sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_LOGOUT);
 fputs("\">", out_f);
 fputs(_("Logout"), out_f);
 fwrite(csp_str7, 1, 2, out_f);
+if ((phr->login) ) {
 fputs(html_armor_buf(&ab, (phr->login)), out_f);
+}
 fwrite(csp_str8, 1, 1, out_f);
 fputs("</a>", out_f);
 fwrite(csp_str9, 1, 78, out_f);
