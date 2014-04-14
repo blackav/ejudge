@@ -14,7 +14,7 @@ static const unsigned char csp_str10[2] = "\n";
 static const unsigned char csp_str11[18] = "<div id=\"footer\">";
 static const unsigned char csp_str12[38] = "</div>\n</div>\n</div>\n</body>\n</html>\n";
 
-/* $Id: unpriv_error_unknown.csp 8049 2014-03-28 09:53:11Z cher $ */
+/* $Id: reg_error_unknown.csp 8111 2014-04-14 08:59:46Z cher $ */
 #include "new-server.h"
 #include "new_server_pi.h"
 #include "new_server_proto.h"
