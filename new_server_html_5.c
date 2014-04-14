@@ -3688,6 +3688,7 @@ ns_register_pages(FILE *fout, struct http_request_info *phr)
     return ns_html_err_no_perm(fout, phr, 0, "invalid contest_id %d",
                                phr->contest_id);
   }
+  phr->cnts = cnts;
   if (!cnts->disable_team_password && is_team) { 
     return ns_html_err_no_perm(fout, phr, 0, "participation cookie");
   }
@@ -3718,6 +3719,7 @@ ns_register_pages(FILE *fout, struct http_request_info *phr)
   }
 
   extra = ns_get_contest_extra(phr->contest_id);
+  phr->extra = extra;
   cur_time = time(0);
   watched_file_update(&extra->header, cnts->team_header_file, cur_time);
   watched_file_update(&extra->separator, cnts->team_separator_file, cur_time);
