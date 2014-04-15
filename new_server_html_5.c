@@ -1159,9 +1159,10 @@ anon_register_pages(FILE *fout, struct http_request_info *phr)
   if (phr->locale_id < 0) phr->locale_id = 0;
 
   // check permissions
-  if (cnts->closed ||
-      !contests_check_register_ip_2(cnts, &phr->ip, phr->ssl_flag)) {
-    return ns_html_err_no_perm(fout, phr, 0, "registration is not available");
+  if (cnts->closed || !contests_check_register_ip_2(cnts, &phr->ip, phr->ssl_flag)) {
+    fprintf(phr->log_f, "registration is not available for this IP or protocol\n");
+    error_page(fout, phr, NEW_SRV_ERR_PERMISSION_DENIED);
+    return;
   }
 
   // load style stuff
@@ -3540,6 +3541,7 @@ typedef PageInterface *(*external_action_handler_t)(void);
 static const unsigned char * const external_reg_action_names[NEW_SRV_ACTION_LAST] =
 {
   [NEW_SRV_ACTION_MAIN_PAGE] = "reg_main_page",
+  [NEW_SRV_ACTION_REG_LOGIN_PAGE] = "reg_login_page",
 };
 static const int external_reg_action_aliases[NEW_SRV_ACTION_LAST] =
 {
