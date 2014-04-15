@@ -343,7 +343,7 @@ curl(
   return buf;
 }
 
-static void
+/*static*/ void
 anon_select_contest_page(FILE *fout, struct http_request_info *phr)
 {
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
@@ -1151,7 +1151,9 @@ anon_register_pages(FILE *fout, struct http_request_info *phr)
 
   // contest_id is reqired
   if (phr->contest_id <= 0 || contests_get(phr->contest_id,&cnts) < 0 || !cnts){
-    return anon_select_contest_page(fout, phr);
+    if (reg_external_action(fout, phr, NEW_SRV_ACTION_CONTESTS_PAGE) > 0) return;
+    error_page(fout, phr, NEW_SRV_ERR_INV_ACTION);
+    return;
   }
   phr->cnts = cnts;
 
@@ -3542,6 +3544,7 @@ static const unsigned char * const external_reg_action_names[NEW_SRV_ACTION_LAST
 {
   [NEW_SRV_ACTION_MAIN_PAGE] = "reg_main_page",
   [NEW_SRV_ACTION_REG_LOGIN_PAGE] = "reg_login_page",
+  [NEW_SRV_ACTION_CONTESTS_PAGE] = "reg_contests_page",
 };
 static const int external_reg_action_aliases[NEW_SRV_ACTION_LAST] =
 {
