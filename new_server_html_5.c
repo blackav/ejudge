@@ -344,165 +344,6 @@ curl(
 }
 
 static void
-_login_page(
-        FILE *fout,
-        struct http_request_info *phr,
-        const struct contest_desc *cnts,
-        struct contest_extra *extra,
-        time_t cur_time)
-{
-  const unsigned char *head_style = 0, *par_style = 0, *s;
-  const unsigned char *login = 0, *password = 0, *email = 0;
-  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
-  unsigned char bb[1024];
-  int item_cnt = 0, created_mode = 0;
-  unsigned char hbuf[1024];
-
-  if (cnts->register_head_style && *cnts->register_head_style)
-    head_style = cnts->register_head_style;
-  if (!head_style) head_style = "h2";
-  if (cnts->register_par_style && *cnts->register_par_style)
-    par_style = cnts->register_par_style;
-  if (!par_style) par_style = "";
-
-  hr_cgi_param(phr, "login", &login);
-  if (!login) login = "";
-  hr_cgi_param(phr, "password", &password);
-  if (!password) password = "";
-  hr_cgi_param(phr, "email", &email);
-  if (!email) email = "";
-
-  l10n_setlocale(phr->locale_id);
-  switch (phr->action) {
-  case NEW_SRV_ACTION_REG_ACCOUNT_CREATED_PAGE:
-    s = _("Activate new user account");
-    created_mode = 1;
-    break;
-  default:
-  case NEW_SRV_ACTION_REG_LOGIN_PAGE:
-    s = _("Log in to edit registration data");
-    break;
-  }
-  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
-            phr->client_key,
-            "%s [%s]", s, extra->contest_arm);
-
-  html_start_form(fout, 1, phr->self_url, "");
-  html_hidden(fout, "contest_id", "%d", phr->contest_id);
-  html_hidden(fout, "next_action", "%d", phr->action);
-  if (cnts->disable_locale_change)
-    html_hidden(fout, "locale_id", "%d", phr->locale_id);
-  fprintf(fout, "<div class=\"user_actions\"><table class=\"menu\"><tr>\n");
-
-  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: %s</div></td>", _("login"),
-          html_input_text(bb, sizeof(bb), "login", 20, 0, "%s", ARMOR(login)));
-  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: %s</div></td>", _("password"),
-          html_input_password(bb, sizeof(bb), "password", 20, "%s", ARMOR(password)));
-  if (!cnts->disable_locale_change) {
-    fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: ",
-            _("language"));
-    l10n_html_locale_select(fout, phr->locale_id);
-    fprintf(fout, "</div></td>\n");
-  }
-  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s</div></td>", ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_REG_LOGIN, _("Log in")));
-
-  fprintf(fout, "</tr></table></div></form>\n");
-
-  fprintf(fout,
-          "<div class=\"white_empty_block\">&nbsp;</div>\n"
-          "<div class=\"contest_actions\"><table class=\"menu\"><tr>\n");
-
-  // "New account" "Forgot password?" "Enter contest"
-  if (created_mode)
-    s = _("Create another account");
-  else
-    s = _("Create account");
-  if (ejudge_config->disable_new_users <= 0) {
-    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">%s%s</a></div></td>",
-            raref(hbuf, sizeof(hbuf), phr, 0, "menu", NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE, NULL), s);
-    item_cnt++;
-  }
-
-  if (cnts->enable_password_recovery && cnts->disable_team_password
-      && !cnts->simple_registration && !created_mode) {
-    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">%s%s</a></div></td>",
-            caref(hbuf, sizeof(hbuf), cnts, phr, 0, "menu", NEW_SRV_ACTION_FORGOT_PASSWORD_1, NULL),
-            _("Recover forgot password"));
-    item_cnt++;
-  }
-
-  /*
-  if (client_url[0] && !created_mode) {
-    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\"><a class=\"menu\" href=\"%s?contest_id=%d&amp;locale_id=%d\">%s</a></div></td>", client_url, phr->contest_id, phr->locale_id, cnts->exam_mode?_("Take the exam"):_("Participate in the contest"));
-    item_cnt++;
-  }
-  */
-
-  if (!item_cnt)
-    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">&nbsp;</div></td>");
-  fprintf(fout, "</tr></table></div>\n");
-
-  ns_separator(fout, extra->separator_txt, cnts);
-
-  if (phr->action == NEW_SRV_ACTION_REG_ACCOUNT_CREATED_PAGE) {
-    fprintf(fout, "<%s>%s</%s>\n", head_style,
-            _("New user account is created"), head_style);
-
-    switch (((cnts->simple_registration & 1) << 1) | (cnts->assign_logins&1)) {
-    case 0:                     /* !simple_registration && !assign_logins */
-      fprintf(fout,
-              _("<p%s>New account <tt>%s</tt> is successfully created. "
-                "An e-mail messages is sent to the address <tt>%s</tt>. "
-                "This message contains the password for the initial log in. You will be able to change the password later.</p>\n"
-                "<p%s>Type the login and the password in to the form above and press the \"Log in\" button to activate the account.</p>\n"
-                "<p%s><b>Note</b>, that you should log in to the system for "
-                "the first time no later, than in 24 hours after this moment, "
-                "or the new account is removed.</p>"),
-              par_style, login, email, par_style, par_style);
-      break;
-    case 1:                     /* !simple_registration &&  assign_logins */
-      fprintf(fout,
-              _("<p%s>New account is successfully created. "
-                "An e-mail messages is sent to the address <tt>%s</tt>. "
-                "This message contains the login name, assigned to you, "
-                "as well as your password for initial log in. You will be able to change the password later.</p>\n"
-                "<p%s>Type the login and the password in to the form above and press the \"Log in\" button to activate the account.</p>\n"
-                "<p%s><b>Note</b>, that you should log in to the system for "
-                "the first time no later, than in 24 hours after this moment, "
-                "or the new account is removed.</p>"),
-              par_style, email, par_style, par_style);
-      break;
-    case 2:                     /*  simple_registration && !assign_logins */
-    case 3:                     /*  simple_registration &&  assign_logins */
-      fprintf(fout,
-              _("<p%s>New account <tt>%s</tt> is successfully created. Initial password is generated automatically. You will be able to change your password later. "),
-              par_style, ARMOR(login));
-      if (cnts->send_passwd_email)
-        fprintf(fout, _("An e-mail with your account parameters is sent to address <tt>%s</tt>. "), ARMOR(email));
-      fprintf(fout, "</p>\n");
-
-      fprintf(fout, _("<p%s>The account parameters are as follows:</p>\n"),
-              par_style);
-      fprintf(fout, "<table class=\"b1\">\n");
-      fprintf(fout, "<tr><td>%s</td><td><tt>%s</tt></td></tr>\n",
-              _("Login"), ARMOR(login));
-      fprintf(fout, "<tr><td>%s</td><td><tt>%s</tt></td></tr>\n",
-              _("E-mail"), ARMOR(email));
-      fprintf(fout, "<tr><td>%s</td><td><tt>%s</tt></td></tr>\n",
-              _("Password"), ARMOR(password));
-      fprintf(fout, "</table>\n");
-
-      fprintf(fout, _("<p%s><b>Remember or write down the password!</b></p>"),
-              par_style);
-    }
-  }
-
-  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
-  l10n_setlocale(0);
-  html_armor_free(&ab);
-}
-
-static void
 create_account_page( FILE *fout, struct http_request_info *phr,
                      const struct contest_desc *cnts,
                      struct contest_extra *extra, time_t cur_time);
@@ -1042,8 +883,6 @@ static reg_action_handler_func_t action_handlers[NEW_SRV_ACTION_LAST] =
 {
   [NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE] = create_account_page,
   [NEW_SRV_ACTION_REG_CREATE_ACCOUNT] = create_account,
-  [NEW_SRV_ACTION_REG_ACCOUNT_CREATED_PAGE] = _login_page,
-  [NEW_SRV_ACTION_REG_LOGIN_PAGE] = _login_page,
   [NEW_SRV_ACTION_REG_LOGIN] = cmd_login,
 };
 
@@ -1108,6 +947,12 @@ anon_register_pages(FILE *fout, struct http_request_info *phr)
 
   if (phr->action < 0 || phr->action >= NEW_SRV_ACTION_LAST) phr->action = 0;
   if (reg_external_action(fout, phr, -1) > 0) return;
+
+  if (phr->action == NEW_SRV_ACTION_REG_ACCOUNT_CREATED_PAGE ||
+      phr->action == NEW_SRV_ACTION_REG_LOGIN_PAGE) {
+    if (reg_external_action(fout, phr, NEW_SRV_ACTION_REG_LOGIN_PAGE) > 0) return;
+    error_page(fout, phr, NEW_SRV_ERR_INV_ACTION);
+  }
 
   if (action_handlers[phr->action])
     return (*action_handlers[phr->action])(fout, phr, cnts, extra, cur_time);
