@@ -35,7 +35,7 @@ static const unsigned char csp_str31[10] = "</b></p>\n";
 static const unsigned char csp_str32[18] = "<div id=\"footer\">";
 static const unsigned char csp_str33[38] = "</div>\n</div>\n</div>\n</body>\n</html>\n";
 
-/* $Id: reg_login_page.csp 8106 2014-04-13 13:35:31Z cher $ */
+/* $Id: reg_login_page.csp 8118 2014-04-15 06:47:02Z cher $ */
 #include "new-server.h"
 #include "new_server_pi.h"
 #include "new_server_proto.h"
@@ -98,6 +98,11 @@ int retval __attribute__((unused)) = 0;
 const unsigned char *login = 0, *password = 0, *email = 0;
   int item_cnt = 0, created_mode = 0;
   unsigned char title[1024];
+
+  if (!phr->cnts) {
+    fprintf(phr->log_f, "Undefined contest\n");
+    FAIL(NEW_SRV_ERR_INV_CONTEST_ID);
+  }
 
   hr_cgi_param(phr, "login", &login);
   if (!login) login = "";
@@ -193,15 +198,24 @@ fwrite(csp_str14, 1, 100, out_f);
 if (phr->config->disable_new_users <= 0) {
     // "New account" "Forgot password?" "Enter contest"
 fwrite(csp_str15, 1, 51, out_f);
+fwrite(csp_str5, 1, 1, out_f);
 if (created_mode) {
-fputs("<a href=\"", out_f);
+fputs("<a class=\"menu\" href=\"", out_f);
 sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE);
+fputs(sep, out_f); sep = "&amp;";
+fputs("contest_id=", out_f);
+fprintf(out_f, "%d", (int)(phr->contest_id));
+(void) sep;
 fputs("\">", out_f);
 fputs(_("Create another account"), out_f);
 fputs("</a>", out_f);
 } else {
-fputs("<a href=\"", out_f);
+fputs("<a class=\"menu\" href=\"", out_f);
 sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE);
+fputs(sep, out_f); sep = "&amp;";
+fputs("contest_id=", out_f);
+fprintf(out_f, "%d", (int)(phr->contest_id));
+(void) sep;
 fputs("\">", out_f);
 fputs(_("Create account"), out_f);
 fputs("</a>", out_f);
@@ -298,7 +312,7 @@ fwrite(csp_str5, 1, 1, out_f);
 fwrite(csp_str32, 1, 17, out_f);
 write_copyright_short(out_f);
 fwrite(csp_str33, 1, 37, out_f);
-//cleanup:;
+cleanup:;
   l10n_setlocale(0);
   html_armor_free(&ab);
   return retval;
