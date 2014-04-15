@@ -12,6 +12,11 @@
   int item_cnt = 0, created_mode = 0;
   unsigned char title[1024];
 
+  if (!phr->cnts) {
+    fprintf(phr->log_f, "Undefined contest\n");
+    FAIL(NEW_SRV_ERR_INV_CONTEST_ID);
+  }
+
   hr_cgi_param(phr, "login", &login);
   if (!login) login = "";
   hr_cgi_param(phr, "password", &password);
@@ -58,11 +63,13 @@
 <%
   if (phr->config->disable_new_users <= 0) {
     // "New account" "Forgot password?" "Enter contest"
-%><td class="menu"><div class="contest_actions_item"><%
+%><td class="menu"><div class="contest_actions_item"><s:url name="CreateUrl" ac="reg-create-account-page">
+<s:param name="contest_id" value="phr->contest_id" />
+</s:url><%
     if (created_mode) {
-%><s:a ac="reg-create-account-page"><s:tr>Create another account</s:tr></s:a><%
+%><s:a class="menu" url="CreateUrl"><s:tr>Create another account</s:tr></s:a><%
     } else {
-%><s:a ac="reg-create-account-page"><s:tr>Create account</s:tr></s:a><%
+%><s:a class="menu" url="CreateUrl"><s:tr>Create account</s:tr></s:a><%
     }
 %></div></td><%
     item_cnt++;
@@ -130,7 +137,7 @@
 %>
 <%@include "reg_footer.csp"
 %><%
-//cleanup:;
+cleanup:;
   l10n_setlocale(0);
   html_armor_free(&ab);
 %>
