@@ -185,6 +185,7 @@ raref(
   return buf;
 }
 
+/*
 static unsigned char *
 caref(
         unsigned char *buf,
@@ -265,6 +266,7 @@ caref(
 
   return buf;
 }
+*/
 
 static unsigned char *
 curl(
@@ -348,7 +350,7 @@ create_account_page( FILE *fout, struct http_request_info *phr,
                      const struct contest_desc *cnts,
                      struct contest_extra *extra, time_t cur_time);
 
-static void
+/*static*/ void
 create_autoassigned_account_page(
         FILE *fout,
         struct http_request_info *phr,
@@ -528,13 +530,12 @@ create_account_page(
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   unsigned char bb[1024];
   int item_cnt = 0, regular_flag = 0;
+  int allowed_info_edit = 0;
+  int i, j;
 
   if (ejudge_config->disable_new_users > 0) {
     return ns_html_err_no_perm(fout, phr, 0, "registration is not available");
   }
-
-  if (cnts->assign_logins)
-    return create_autoassigned_account_page(fout, phr, cnts, extra, cur_time);
 
   hr_cgi_param_int(phr, "retval", &reg_error);
   hr_cgi_param_int(phr, "ul_error", &reg_ul_error);
@@ -547,8 +548,22 @@ create_account_page(
     par_style = cnts->register_par_style;
   if (!par_style) par_style = "";
 
-  if (hr_cgi_param(phr, "login", &login) <= 0) login = 0;
-  if (!login) login = "";
+  if (cnts->assign_logins) {
+    if (!cnts->disable_name) allowed_info_edit = 1;
+    if (!cnts->force_registration) allowed_info_edit = 1;
+    if (!cnts->autoregister) allowed_info_edit = 1;
+    for (j = 0; j < CONTEST_LAST_FIELD; j++)
+      if (cnts->fields[j])
+        allowed_info_edit = 1;
+    for (i = 0; i < CONTEST_LAST_MEMBER; i++)
+      if (cnts->members[i] && cnts->members[i]->max_count > 0)
+        allowed_info_edit = 1;
+    
+    (void) allowed_info_edit;
+  } else {
+    if (hr_cgi_param(phr, "login", &login) <= 0) login = 0;
+    if (!login) login = "";
+  }
   if (hr_cgi_param(phr, "email", &email) <= 0) email = 0;
   if (!email) email = "";
 
@@ -566,19 +581,35 @@ create_account_page(
     html_hidden(fout, "locale_id", "%d", phr->locale_id);
   fprintf(fout, "<div class=\"user_actions\"><table class=\"menu\"><tr>\n");
 
-  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: %s</div></td>", _("login"),
-          html_input_text(bb, sizeof(bb), "login", 20, 0, "%s", ARMOR(login)));
+  if (!cnts->assign_logins) {
+    fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: %s</div></td>", _("login"),
+            html_input_text(bb, sizeof(bb), "login", 20, 0, "%s", ARMOR(login)));
+  }
   fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">e-mail: %s</div></td>",
           html_input_text(bb, sizeof(bb), "email", 20, 0, "%s", ARMOR(email)));
 
-  if (!cnts->disable_locale_change) {
-    fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: ",
-            _("language"));
-    l10n_html_locale_select(fout, phr->locale_id);
-    fprintf(fout, "</div></td>\n");
-  }
-  if (ejudge_config->disable_new_users <= 0) {
-    fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s</div></td>", ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_REG_CREATE_ACCOUNT, _("Create account")));
+  if (cnts->assign_logins) {
+    if (ejudge_config->disable_new_users <= 0) {
+      fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s</div></td>", ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_REG_CREATE_ACCOUNT, _("Create account")));
+    }
+
+    if (!cnts->disable_locale_change) {
+      fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: ",
+              _("language"));
+      l10n_html_locale_select(fout, phr->locale_id);
+      fprintf(fout, "</div></td>\n");
+      fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s</div></td>\n", ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_CHANGE_LANGUAGE, _("Change language")));
+    }
+  } else {
+    if (!cnts->disable_locale_change) {
+      fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: ",
+              _("language"));
+      l10n_html_locale_select(fout, phr->locale_id);
+      fprintf(fout, "</div></td>\n");
+    }
+    if (ejudge_config->disable_new_users <= 0) {
+      fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s</div></td>", ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_REG_CREATE_ACCOUNT, _("Create account")));
+    }
   }
 
   fprintf(fout, "</tr></table></div></form>\n");
@@ -623,31 +654,59 @@ create_account_page(
   fprintf(fout, "<%s>%s</%s>\n", head_style, _("Registration rules"),
           head_style);
 
-  fprintf(fout, "<p%s>%s</p>\n", par_style,
-          _("To create an account, please think out, a login and provide your valid e-mail address in the form above. Then press the \"Create account\" button."));
-  fprintf(fout, "<p%s>%s</p>\n", par_style,
-          _("Login may contain only latin letters, digits, <tt>.</tt> (dot), <tt>-</tt> (minus sign), <tt>_</tt> (undescore)."));
+  if (cnts->assign_logins) {
+    fprintf(fout, "<p%s>%s</p>\n", par_style,
+            _("Please, enter your valid e-mail address and press the \"Create account\" button."));
 
-  if (cnts->simple_registration && !regular_flag) {
-    fprintf(fout, _("<p%s>This contest operates in \"simplified registration\" mode. You will get your login and password immediately after account is created. %s</p>"),
-            par_style, cnts->send_passwd_email?_("An email message will be sent to you just for your convenience."):("No email message at all will be sent to you."));
-    fprintf(fout, _("<p%s>Accounts created using simplified registration procedure cannot be used for participation in contests, which do not allow simplified registration. If you want a regular account, you may create an account using the %sregular registration</a>.</p>\n"),
-            par_style,
-            raref(hbuf, sizeof(hbuf), phr, 0, NULL, NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE, "regular=1"));
-  } else {
-    if (!cnts->simple_registration || cnts->send_passwd_email) {
-      fprintf(fout, "<p%s>%s</p>", par_style,
-              _("You should receive an e-mail message "
-                "with a password to the system. Use this password for the first"
-                " log in. After the first login you will be able to change the password."));
+    if (cnts->simple_registration && !regular_flag) {
+      fprintf(fout, _("<p%s>This contest operates in \"simplified registration\" mode. You will get your login and password immediately after account is created. %s</p>"),
+              par_style, cnts->send_passwd_email?_("An email message will be sent to you just for your convenience."):("No email message at all will be sent to you."));
+      fprintf(fout, _("<p%s>Accounts created using simplified registration procedure cannot be used for participation in contests, which do not allow simplified registration. If you want a regular account, you may create an account using the %sregular registration</a>.</p>\n"),
+              par_style,
+              raref(hbuf, sizeof(hbuf), phr, 0, NULL, NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE, "regular=1"));
+    } else {
+      if (!cnts->simple_registration || cnts->send_passwd_email) {
+        fprintf(fout, "<p%s>%s</p>", par_style,
+                _("You should receive an e-mail message "
+                  "with a login and a password to the system. Use this password for the first"
+                  " log in. After the first login you will be able to change the password."));
 
-      fprintf(fout, "<p%s>%s</p>", par_style,
-              _("Be careful and type the e-mail address correctly. If you make a mistake, you will not receive a registration e-mail and be unable to complete the registration process."));
+        fprintf(fout, "<p%s>%s</p>", par_style,
+                _("Be careful and type the e-mail address correctly. If you make a mistake, you will not receive a registration e-mail and be unable to complete the registration process."));
+      }
+
+      if (cnts->simple_registration) {
+        fprintf(fout, _("<p%s>%sSimplified registration</a> is available for this contest. Note, however, that simplified registration imposes certain restrictions on further use of the account!</p>\n"), par_style,
+                raref(hbuf, sizeof(hbuf), phr, 0, NULL, NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE, NULL));
+      }
     }
+  } else {
+    fprintf(fout, "<p%s>%s</p>\n", par_style,
+            _("To create an account, please think out, a login and provide your valid e-mail address in the form above. Then press the \"Create account\" button."));
+    fprintf(fout, "<p%s>%s</p>\n", par_style,
+            _("Login may contain only latin letters, digits, <tt>.</tt> (dot), <tt>-</tt> (minus sign), <tt>_</tt> (undescore)."));
 
-    if (cnts->simple_registration) {
-      fprintf(fout, _("<p%s>%sSimplified registration</a> is available for this contest. Note, however, that simplified registration imposes certain restrictions on further use of the account!</p>\n"), par_style,
-              raref(hbuf, sizeof(hbuf), phr, 0, NULL, NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE, NULL));
+    if (cnts->simple_registration && !regular_flag) {
+      fprintf(fout, _("<p%s>This contest operates in \"simplified registration\" mode. You will get your login and password immediately after account is created. %s</p>"),
+              par_style, cnts->send_passwd_email?_("An email message will be sent to you just for your convenience."):("No email message at all will be sent to you."));
+      fprintf(fout, _("<p%s>Accounts created using simplified registration procedure cannot be used for participation in contests, which do not allow simplified registration. If you want a regular account, you may create an account using the %sregular registration</a>.</p>\n"),
+              par_style,
+              raref(hbuf, sizeof(hbuf), phr, 0, NULL, NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE, "regular=1"));
+    } else {
+      if (!cnts->simple_registration || cnts->send_passwd_email) {
+        fprintf(fout, "<p%s>%s</p>", par_style,
+                _("You should receive an e-mail message "
+                  "with a password to the system. Use this password for the first"
+                  " log in. After the first login you will be able to change the password."));
+
+        fprintf(fout, "<p%s>%s</p>", par_style,
+                _("Be careful and type the e-mail address correctly. If you make a mistake, you will not receive a registration e-mail and be unable to complete the registration process."));
+      }
+
+      if (cnts->simple_registration) {
+        fprintf(fout, _("<p%s>%sSimplified registration</a> is available for this contest. Note, however, that simplified registration imposes certain restrictions on further use of the account!</p>\n"), par_style,
+                raref(hbuf, sizeof(hbuf), phr, 0, NULL, NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE, NULL));
+      }
     }
   }
 
@@ -958,7 +1017,7 @@ anon_register_pages(FILE *fout, struct http_request_info *phr)
     return (*action_handlers[phr->action])(fout, phr, cnts, extra, cur_time);
 
   if (cnts->assign_logins)
-    return create_autoassigned_account_page(fout, phr, cnts, extra, cur_time);
+    return create_account_page(fout, phr, cnts, extra, cur_time);
   else {
     if (reg_external_action(fout, phr, NEW_SRV_ACTION_REG_LOGIN_PAGE) > 0) return;
     error_page(fout, phr, NEW_SRV_ERR_INV_ACTION);
