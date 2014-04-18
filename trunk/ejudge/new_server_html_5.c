@@ -3469,11 +3469,17 @@ ns_register_pages(FILE *fout, struct http_request_info *phr)
   struct contest_extra *extra = 0;
   time_t cur_time = 0;
   unsigned char *user_info_xml = 0;
+  unsigned char hid_buf[1024];
 
   if (phr->action == NEW_SRV_ACTION_CHANGE_LANGUAGE)
     return change_locale(fout, phr);
 
   if (!phr->session_id) return anon_register_pages(fout, phr);
+
+  snprintf(hid_buf, sizeof(hid_buf),
+           "<input type=\"hidden\" name=\"SID\" value=\"%016llx\"/>",
+           phr->session_id);
+  phr->hidden_vars = hid_buf;
 
   if (ns_open_ul_connection(phr->fw_state) < 0)
     return ns_html_err_ul_server_down(fout, phr, 0, 0);
