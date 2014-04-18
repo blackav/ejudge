@@ -8220,6 +8220,8 @@ unpriv_submit_run(
 
   l10n_setlocale(phr->locale_id);
 
+  FAIL2(NEW_SRV_ERR_INV_PROB_ID);
+
   if (hr_cgi_param(phr, "prob_id", &s) <= 0
       || sscanf(s, "%d%n", &prob_id, &n) != 1 || s[n]
       || prob_id <= 0 || prob_id > cs->max_prob
