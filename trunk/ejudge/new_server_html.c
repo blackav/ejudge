@@ -6942,13 +6942,13 @@ privileged_entry_point(
   long long log_file_pos_2 = -1LL;
   unsigned char *msg = NULL;
 
+  phr->log_f = open_memstream(&phr->log_t, &phr->log_z);
+
   if (phr->action == NEW_SRV_ACTION_COOKIE_LOGIN)
     return privileged_page_cookie_login(fout, phr);
 
   if (!phr->session_id || phr->action == NEW_SRV_ACTION_LOGIN_PAGE)
     return privileged_page_login(fout, phr);
-
-  phr->log_f = open_memstream(&phr->log_t, &phr->log_z);
 
   // validate cookie
   if (ns_open_ul_connection(phr->fw_state) < 0) {
