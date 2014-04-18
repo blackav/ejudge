@@ -3472,6 +3472,8 @@ ns_register_pages(FILE *fout, struct http_request_info *phr)
   unsigned char *user_info_xml = 0;
   unsigned char hid_buf[1024];
 
+  phr->log_f = open_memstream(&phr->log_t, &phr->log_z);
+
   if (phr->action == NEW_SRV_ACTION_CHANGE_LANGUAGE)
     return change_locale(fout, phr);
 
