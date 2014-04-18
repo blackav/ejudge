@@ -3409,6 +3409,7 @@ error_page(
     return ns_html_error(out_f, phr, 0, error_code);
   }
 
+  snprintf(phr->content_type, sizeof(phr->content_type), "text/html; charset=%s", EJUDGE_CHARSET);
   pg->ops->render(pg, NULL, out_f, phr);
   xfree(phr->log_t); phr->log_t = NULL;
   phr->log_z = 0;
