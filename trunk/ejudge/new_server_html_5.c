@@ -940,7 +940,7 @@ typedef void (*reg_action_handler_func_t)(FILE *fout,
         time_t cur_time);
 static reg_action_handler_func_t action_handlers[NEW_SRV_ACTION_LAST] =
 {
-  [NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE] = create_account_page,
+  //[NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE] = create_account_page,
   [NEW_SRV_ACTION_REG_CREATE_ACCOUNT] = create_account,
   [NEW_SRV_ACTION_REG_LOGIN] = cmd_login,
 };
@@ -3357,6 +3357,7 @@ static const unsigned char * const external_reg_action_names[NEW_SRV_ACTION_LAST
   [NEW_SRV_ACTION_MAIN_PAGE] = "reg_main_page",
   [NEW_SRV_ACTION_REG_LOGIN_PAGE] = "reg_login_page",
   [NEW_SRV_ACTION_CONTESTS_PAGE] = "reg_contests_page",
+  [NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE] = "reg_create_page",
 };
 static const int external_reg_action_aliases[NEW_SRV_ACTION_LAST] =
 {
