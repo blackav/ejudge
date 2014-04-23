@@ -35,7 +35,7 @@ static const unsigned char csp_str31[18] = ".\n\n<p>&nbsp;</p>\n";
 static const unsigned char csp_str32[18] = "<div id=\"footer\">";
 static const unsigned char csp_str33[38] = "</div>\n</div>\n</div>\n</body>\n</html>\n";
 
-/* $Id: reg_create_page.csp 8138 2014-04-23 22:34:19Z cher $ */
+/* $Id: reg_create_page.csp 8140 2014-04-23 22:43:10Z cher $ */
 #include "new-server.h"
 #include "new_server_pi.h"
 #include "new_server_proto.h"
@@ -230,6 +230,13 @@ fputs("</form>", out_f);
 fwrite(csp_str14, 1, 150, out_f);
 fputs("<a href=\"", out_f);
 sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_REG_LOGIN_PAGE);
+fputs(sep, out_f); sep = "&amp;";
+fputs("contest_id=", out_f);
+fprintf(out_f, "%d", (int)(phr->contest_id));
+fputs(sep, out_f); sep = "&amp;";
+fputs("locale_id=", out_f);
+fprintf(out_f, "%d", (int)(phr->locale_id));
+(void) sep;
 fputs("\">", out_f);
 fputs(_("Use an existing account"), out_f);
 fputs("</a>", out_f);
