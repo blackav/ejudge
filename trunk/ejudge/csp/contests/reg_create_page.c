@@ -28,14 +28,14 @@ static const unsigned char csp_str24[6] = "</p>\n";
 static const unsigned char csp_str25[2] = " ";
 static const unsigned char csp_str26[9] = "</p>\n<p>";
 static const unsigned char csp_str27[7] = ".</p>\n";
-static const unsigned char csp_str28[21] = "regular registration";
-static const unsigned char csp_str29[6] = "\n\n<p>";
-static const unsigned char csp_str30[105] = "</p>\n\n<p>If you already have an ejudge account on this server, you may use it. If so, follow the link: \n";
+static const unsigned char csp_str28[6] = "\n\n<p>";
+static const unsigned char csp_str29[10] = "</p>\n\n<p>";
+static const unsigned char csp_str30[4] = ": \n";
 static const unsigned char csp_str31[18] = ".\n\n<p>&nbsp;</p>\n";
 static const unsigned char csp_str32[18] = "<div id=\"footer\">";
 static const unsigned char csp_str33[38] = "</div>\n</div>\n</div>\n</body>\n</html>\n";
 
-/* $Id: reg_create_page.csp 8131 2014-04-20 10:03:40Z cher $ */
+/* $Id: reg_create_page.csp 8138 2014-04-23 22:34:19Z cher $ */
 #include "new-server.h"
 #include "new_server_pi.h"
 #include "new_server_proto.h"
@@ -329,9 +329,12 @@ sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE);
 fputs(sep, out_f); sep = "&amp;";
 fputs("regular=", out_f);
 fprintf(out_f, "%d", (int)(1));
+fputs(sep, out_f); sep = "&amp;";
+fputs("contest_id=", out_f);
+fprintf(out_f, "%d", (int)(phr->contest_id));
 (void) sep;
 fputs("\">", out_f);
-fwrite(csp_str28, 1, 20, out_f);
+fputs(_("regular registration"), out_f);
 fputs("</a>", out_f);
 fwrite(csp_str27, 1, 6, out_f);
 } else {
@@ -359,11 +362,18 @@ fwrite(csp_str5, 1, 1, out_f);
 }
 fwrite(csp_str5, 1, 1, out_f);
 }
-fwrite(csp_str29, 1, 5, out_f);
+fwrite(csp_str28, 1, 5, out_f);
 fputs(_("<b>Note</b>, that you must log in 24 hours after the form is filled and submitted, or your registration will be cancelled!"), out_f);
-fwrite(csp_str30, 1, 104, out_f);
+fwrite(csp_str29, 1, 9, out_f);
+fputs(_("If you already have an ejudge account on this server, you may use it. If so, follow the link"), out_f);
+fwrite(csp_str30, 1, 3, out_f);
+fwrite(csp_str5, 1, 1, out_f);
 fputs("<a href=\"", out_f);
 sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_REG_LOGIN_PAGE);
+fputs(sep, out_f); sep = "&amp;";
+fputs("contest_id=", out_f);
+fprintf(out_f, "%d", (int)(phr->contest_id));
+(void) sep;
 fputs("\">", out_f);
 fputs(_("Use an existing account"), out_f);
 fputs("</a>", out_f);
