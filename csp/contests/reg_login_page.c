@@ -35,7 +35,7 @@ static const unsigned char csp_str31[10] = "</b></p>\n";
 static const unsigned char csp_str32[18] = "<div id=\"footer\">";
 static const unsigned char csp_str33[38] = "</div>\n</div>\n</div>\n</body>\n</html>\n";
 
-/* $Id: reg_login_page.csp 8118 2014-04-15 06:47:02Z cher $ */
+/* $Id: reg_login_page.csp 8142 2014-04-23 22:55:03Z cher $ */
 #include "new-server.h"
 #include "new_server_pi.h"
 #include "new_server_proto.h"
@@ -199,12 +199,16 @@ if (phr->config->disable_new_users <= 0) {
     // "New account" "Forgot password?" "Enter contest"
 fwrite(csp_str15, 1, 51, out_f);
 fwrite(csp_str5, 1, 1, out_f);
+fwrite(csp_str5, 1, 1, out_f);
 if (created_mode) {
 fputs("<a class=\"menu\" href=\"", out_f);
 sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE);
 fputs(sep, out_f); sep = "&amp;";
 fputs("contest_id=", out_f);
 fprintf(out_f, "%d", (int)(phr->contest_id));
+fputs(sep, out_f); sep = "&amp;";
+fputs("locale_id=", out_f);
+fprintf(out_f, "%d", (int)(phr->locale_id));
 (void) sep;
 fputs("\">", out_f);
 fputs(_("Create another account"), out_f);
@@ -215,6 +219,9 @@ sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE);
 fputs(sep, out_f); sep = "&amp;";
 fputs("contest_id=", out_f);
 fprintf(out_f, "%d", (int)(phr->contest_id));
+fputs(sep, out_f); sep = "&amp;";
+fputs("locale_id=", out_f);
+fprintf(out_f, "%d", (int)(phr->locale_id));
 (void) sep;
 fputs("\">", out_f);
 fputs(_("Create account"), out_f);
@@ -227,9 +234,18 @@ fwrite(csp_str5, 1, 1, out_f);
 if (cnts->enable_password_recovery && cnts->disable_team_password
       && !cnts->simple_registration && !created_mode) {
 fwrite(csp_str15, 1, 51, out_f);
+fwrite(csp_str5, 1, 1, out_f);
+fwrite(csp_str5, 1, 1, out_f);
 fputs("<a class=\"menu\" href=\"", out_f);
 hr_client_url(out_f, phr);
-sep = ns_url_4(out_f, phr, NEW_SRV_ACTION_FORGOT_PASSWORD_1);
+sep = ns_url_3(out_f, phr, NEW_SRV_ACTION_FORGOT_PASSWORD_1);
+fputs(sep, out_f); sep = "&amp;";
+fputs("contest_id=", out_f);
+fprintf(out_f, "%d", (int)(phr->contest_id));
+fputs(sep, out_f); sep = "&amp;";
+fputs("locale_id=", out_f);
+fprintf(out_f, "%d", (int)(phr->locale_id));
+(void) sep;
 fputs("\">", out_f);
 fputs(_("Recover forgot password"), out_f);
 fputs("</a>", out_f);

@@ -35,7 +35,7 @@ static const unsigned char csp_str31[18] = ".\n\n<p>&nbsp;</p>\n";
 static const unsigned char csp_str32[18] = "<div id=\"footer\">";
 static const unsigned char csp_str33[38] = "</div>\n</div>\n</div>\n</body>\n</html>\n";
 
-/* $Id: reg_create_page.csp 8140 2014-04-23 22:43:10Z cher $ */
+/* $Id: reg_create_page.csp 8142 2014-04-23 22:55:03Z cher $ */
 #include "new-server.h"
 #include "new_server_pi.h"
 #include "new_server_proto.h"
@@ -284,6 +284,12 @@ sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE);
 fputs(sep, out_f); sep = "&amp;";
 fputs("regular=", out_f);
 fprintf(out_f, "%d", (int)(1));
+fputs(sep, out_f); sep = "&amp;";
+fputs("contest_id=", out_f);
+fprintf(out_f, "%d", (int)(phr->contest_id));
+fputs(sep, out_f); sep = "&amp;";
+fputs("locale_id=", out_f);
+fprintf(out_f, "%d", (int)(phr->locale_id));
 (void) sep;
 fputs("\">", out_f);
 fputs(_("regular registration"), out_f);
@@ -303,6 +309,13 @@ if (cnts->simple_registration) {
 fwrite(csp_str23, 1, 4, out_f);
 fputs("<a href=\"", out_f);
 sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE);
+fputs(sep, out_f); sep = "&amp;";
+fputs("contest_id=", out_f);
+fprintf(out_f, "%d", (int)(phr->contest_id));
+fputs(sep, out_f); sep = "&amp;";
+fputs("locale_id=", out_f);
+fprintf(out_f, "%d", (int)(phr->locale_id));
+(void) sep;
 fputs("\">", out_f);
 fputs(_("Simplified registration"), out_f);
 fputs("</a>", out_f);
@@ -339,6 +352,9 @@ fprintf(out_f, "%d", (int)(1));
 fputs(sep, out_f); sep = "&amp;";
 fputs("contest_id=", out_f);
 fprintf(out_f, "%d", (int)(phr->contest_id));
+fputs(sep, out_f); sep = "&amp;";
+fputs("locale_id=", out_f);
+fprintf(out_f, "%d", (int)(phr->locale_id));
 (void) sep;
 fputs("\">", out_f);
 fputs(_("regular registration"), out_f);
@@ -358,6 +374,13 @@ if (cnts->simple_registration) {
 fwrite(csp_str23, 1, 4, out_f);
 fputs("<a href=\"", out_f);
 sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE);
+fputs(sep, out_f); sep = "&amp;";
+fputs("contest_id=", out_f);
+fprintf(out_f, "%d", (int)(phr->contest_id));
+fputs(sep, out_f); sep = "&amp;";
+fputs("locale_id=", out_f);
+fprintf(out_f, "%d", (int)(phr->locale_id));
+(void) sep;
 fputs("\">", out_f);
 fputs(_("Simplified registration"), out_f);
 fputs("</a>", out_f);
@@ -380,6 +403,9 @@ sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_REG_LOGIN_PAGE);
 fputs(sep, out_f); sep = "&amp;";
 fputs("contest_id=", out_f);
 fprintf(out_f, "%d", (int)(phr->contest_id));
+fputs(sep, out_f); sep = "&amp;";
+fputs("locale_id=", out_f);
+fprintf(out_f, "%d", (int)(phr->locale_id));
 (void) sep;
 fputs("\">", out_f);
 fputs(_("Use an existing account"), out_f);
