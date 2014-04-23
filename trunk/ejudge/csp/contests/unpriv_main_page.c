@@ -926,7 +926,7 @@ if (start_time > 0 && stop_time <= 0 && duration > 0) {
 fwrite(csp_str81, 1, 19, out_f);
 fputs(_("Scheduled end time"), out_f);
 fwrite(csp_str79, 1, 21, out_f);
-fprintf(out_f, "%d", (int)(start_time + duration));
+fputs(xml_unparse_date(((time_t)(start_time + duration))), out_f);
 fwrite(csp_str83, 1, 10, out_f);
 } else if (start_time > 0 && stop_time <= 0 && duration <= 0 && finish_time > 0) {
 fwrite(csp_str81, 1, 19, out_f);
@@ -954,7 +954,7 @@ fwrite(csp_str83, 1, 10, out_f);
 fwrite(csp_str81, 1, 19, out_f);
 fputs(_("Standings unfreeze time"), out_f);
 fwrite(csp_str79, 1, 21, out_f);
-fprintf(out_f, "%d", (int)(stop_time + global->board_unfog_time));
+fputs(xml_unparse_date(((time_t)(stop_time + global->board_unfog_time))), out_f);
 fwrite(csp_str83, 1, 10, out_f);
 }
 fwrite(csp_str71, 1, 1, out_f);
@@ -1739,6 +1739,7 @@ fputs("<a href=\"", out_f);
 sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_VIEW_SUBMISSIONS);
 fputs(sep, out_f); sep = "&amp;";
 fputs("all_runs=", out_f);
+fprintf(out_f, "%d", (int)((int) !all_runs));
 (void) sep;
 fputs("\">", out_f);
 if (all_runs) {
@@ -1818,6 +1819,7 @@ fputs("<a href=\"", out_f);
 sep = ns_url_2(out_f, phr, NEW_SRV_ACTION_VIEW_CLARS);
 fputs(sep, out_f); sep = "&amp;";
 fputs("all_clars=", out_f);
+fprintf(out_f, "%d", (int)((int) !all_clars));
 (void) sep;
 fputs("\">", out_f);
 if (all_clars) {
