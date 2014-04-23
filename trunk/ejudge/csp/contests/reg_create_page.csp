@@ -87,7 +87,7 @@
 </tr></table></div></s:form>
 <div class="white_empty_block">&nbsp;</div>
 <div class="contest_actions"><table class="menu"><tr>
-<td class="menu"><div class="contest_actions_item"><s:a ac="reg-login-page"><s:tr>Use an existing account</s:tr></s:a></div></td>
+<td class="menu"><div class="contest_actions_item"><s:url name="LoginUrl" ac="reg-login-page"><s:param name="contest_id" value="phr->contest_id" /><s:param name="locale_id" value="phr->locale_id" /></s:url><s:a url="LoginUrl"><s:tr>Use an existing account</s:tr></s:a></div></td>
 </tr></table></div>
 <%@include "reg_separator.csp"
 %>
