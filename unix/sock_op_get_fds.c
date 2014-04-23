@@ -81,11 +81,11 @@ sock_op_get_fds(
 
   fds = (int*) CMSG_DATA(pmsg);
   if (pmsg->cmsg_len == CMSG_LEN(2 * sizeof(int))) {
-    info("%d: received 2 file descriptors: %d, %d", conn_id, fds[0], fds[1]);
+    //info("%d: received 2 file descriptors: %d, %d", conn_id, fds[0], fds[1]);
     client_fds[0] = fds[0];
     client_fds[1] = fds[1];
   } else if (pmsg->cmsg_len == CMSG_LEN(1 * sizeof(int))) {
-    info("%d: received 1 file descriptor: %d", conn_id, fds[0]);
+    //info("%d: received 1 file descriptor: %d", conn_id, fds[0]);
     client_fds[0] = fds[0];
     client_fds[1] = -1;
   } else {
