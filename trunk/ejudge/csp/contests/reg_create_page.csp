@@ -131,7 +131,7 @@ e-mail address. You should try to register later.
 %><s:tr>No email message at all will be sent to you.</s:tr><%
       }
 %></p>
-<p><s:tr>Accounts created using simplified registration procedure cannot be used for participation in contests, which do not allow simplified registration. If you want a regular account, you may create an account using the</s:tr> <s:url name="CreateUrl" ac="reg-create-account-page"><s:param name="regular" value="1" /></s:url><s:a url="CreateUrl"><s:tr>regular registration</s:tr></s:a>.</p>
+<p><s:tr>Accounts created using simplified registration procedure cannot be used for participation in contests, which do not allow simplified registration. If you want a regular account, you may create an account using the</s:tr> <s:url name="CreateUrl" ac="reg-create-account-page"><s:param name="regular" value="1" /><s:param name="contest_id" value="phr->contest_id" /><s:param name="locale_id" value="phr->locale_id" /></s:url><s:a url="CreateUrl"><s:tr>regular registration</s:tr></s:a>.</p>
 <%
     } else {
 %>
@@ -146,7 +146,7 @@ e-mail address. You should try to register later.
 <%
       if (cnts->simple_registration) {
 %>
-<p><s:a ac="reg-create-account-page"><s:tr>Simplified registration</s:tr></s:a> <s:tr>is available for this contest. Note, however, that simplified registration imposes certain restrictions on further use of the account!</s:tr></p>
+<p><s:url name="CreateUrl" ac="reg-create-account-page"><s:param name="contest_id" value="phr->contest_id" /><s:param name="locale_id" value="phr->locale_id" /></s:url><s:a url="CreateUrl"><s:tr>Simplified registration</s:tr></s:a> <s:tr>is available for this contest. Note, however, that simplified registration imposes certain restrictions on further use of the account!</s:tr></p>
 <%
       }
 %>
@@ -168,7 +168,7 @@ e-mail address. You should try to register later.
 %><s:tr>No email message at all will be sent to you.</s:tr><%
       }
 %></p>
-<p><s:tr>Accounts created using simplified registration procedure cannot be used for participation in contests, which do not allow simplified registration. If you want a regular account, you may create an account using the</s:tr> <s:url name="RegisterUrl" ac="reg-create-account-page"><s:param name="regular" value="1" /><s:param name="contest_id" value="phr->contest_id"/></s:url><s:a url="RegisterUrl"><s:tr>regular registration</s:tr></s:a>.</p>
+<p><s:tr>Accounts created using simplified registration procedure cannot be used for participation in contests, which do not allow simplified registration. If you want a regular account, you may create an account using the</s:tr> <s:url name="RegisterUrl" ac="reg-create-account-page"><s:param name="regular" value="1" /><s:param name="contest_id" value="phr->contest_id"/><s:param name="locale_id" value="phr->locale_id" /></s:url><s:a url="RegisterUrl"><s:tr>regular registration</s:tr></s:a>.</p>
 <%
     } else {
 %>
@@ -183,7 +183,7 @@ e-mail address. You should try to register later.
 <%
       if (cnts->simple_registration) {
 %>
-<p><s:a ac="reg-create-account-page"><s:tr>Simplified registration</s:tr></s:a> <s:tr>is available for this contest. Note, however, that simplified registration imposes certain restrictions on further use of the account!</s:tr></p>
+<p><s:url name="CreateUrl" ac="reg-create-account-page"><s:param name="contest_id" value="phr->contest_id" /><s:param name="locale_id" value="phr->locale_id" /></s:url><s:a url="CreateUrl"><s:tr>Simplified registration</s:tr></s:a> <s:tr>is available for this contest. Note, however, that simplified registration imposes certain restrictions on further use of the account!</s:tr></p>
 <%
       }
 %>
@@ -197,7 +197,7 @@ e-mail address. You should try to register later.
 <p><s:tr><b>Note</b>, that you must log in 24 hours after the form is filled and submitted, or your registration will be cancelled!</s:tr></p>
 
 <p><s:tr>If you already have an ejudge account on this server, you may use it. If so, follow the link</s:tr>: 
-<s:url name="LoginUrl" ac="reg-login-page"><s:param name="contest_id" value="phr->contest_id" /></s:url>
+<s:url name="LoginUrl" ac="reg-login-page"><s:param name="contest_id" value="phr->contest_id" /><s:param name="locale_id" value="phr->locale_id" /></s:url>
 <s:a url="LoginUrl"><s:tr>Use an existing account</s:tr></s:a>.
 
 <p>&nbsp;</p>

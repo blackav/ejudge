@@ -65,6 +65,7 @@
     // "New account" "Forgot password?" "Enter contest"
 %><td class="menu"><div class="contest_actions_item"><s:url name="CreateUrl" ac="reg-create-account-page">
 <s:param name="contest_id" value="phr->contest_id" />
+<s:param name="locale_id" value="phr->locale_id" />
 </s:url><%
     if (created_mode) {
 %><s:a class="menu" url="CreateUrl"><s:tr>Create another account</s:tr></s:a><%
@@ -78,7 +79,12 @@
 <%
   if (cnts->enable_password_recovery && cnts->disable_team_password
       && !cnts->simple_registration && !created_mode) {
-%><td class="menu"><div class="contest_actions_item"><s:a class="menu" ac="forgot-password-1" script="client" noSID="yes"><s:tr>Recover forgot password</s:tr></s:a></div></tr><%
+%><td class="menu"><div class="contest_actions_item"><%
+%><s:url name="RecoverUrl" ac="forgot-password-1" script="client">
+<s:param name="contest_id" value="phr->contest_id" />
+<s:param name="locale_id" value="phr->locale_id" />
+</s:url><%
+%><s:a class="menu" url="RecoverUrl" noSID="yes"><s:tr>Recover forgot password</s:tr></s:a></div></tr><%
     item_cnt++;
   }
 %>
