@@ -107,7 +107,7 @@
 %>
 <%
     if (start_time > 0 && stop_time <= 0 && duration > 0) {
-%><tr><td class="b0"><s:tr>Scheduled end time</s:tr>:</td><td class="b0"><s:v value="start_time + duration" /></td></tr><%
+%><tr><td class="b0"><s:tr>Scheduled end time</s:tr>:</td><td class="b0"><s:v value="(time_t)(start_time + duration)" /></td></tr><%
     } else if (start_time > 0 && stop_time <= 0 && duration <= 0 && finish_time > 0) {
 %><tr><td class="b0"><s:tr>Scheduled end time</s:tr>:</td><td class="b0"><s:v value="finish_time" /></td></tr><%
     } else if (stop_time) {
@@ -120,7 +120,7 @@
     } else if (stop_time > 0 && duration > 0 && global->board_fog_time > 0
                && global->board_unfog_time > 0 && !cs->standings_updated
                && cs->current_time < stop_time + global->board_unfog_time) {
-%><tr><td class="b0"><s:tr>Standings unfreeze time</s:tr>:</td><td class="b0"><s:v value="stop_time + global->board_unfog_time" /></td></tr><%
+%><tr><td class="b0"><s:tr>Standings unfreeze time</s:tr>:</td><td class="b0"><s:v value="(time_t)(stop_time + global->board_unfog_time)" /></td></tr><%
     }
 %>
 <%
