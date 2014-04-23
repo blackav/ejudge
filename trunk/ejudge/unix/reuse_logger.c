@@ -143,7 +143,7 @@ vwrite_log(int facility, int level, char const *format, va_list args)
   int        r;
   time_t     tt;
   struct tm *ptm;
-  char      *atm;
+  char       atm[32];
   char      *prio, bprio[32];
   char      *pfac, bfac[32];
   int        msglen = 1023;
@@ -167,9 +167,10 @@ vwrite_log(int facility, int level, char const *format, va_list args)
   if (level < logmodules[facility]->level) return 0;
 
   time(&tt);
-  ptm = localtime(&tt);
-  atm = asctime(ptm);
-  atm[strlen(atm) - 1] = 0;
+  ptm = gmtime(&tt);
+  snprintf(atm, sizeof(atm), "%d-%02d-%02dT%02d:%02d:%02dZ",
+           ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday,
+           ptm->tm_hour, ptm->tm_min, ptm->tm_sec);
 
   if (level < LOG_MIN_PRIO || level > LOG_MAX_PRIO) {
     sprintf(bprio, "%d", level);
