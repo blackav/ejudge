@@ -20,6 +20,6 @@
     }
 %>
 <s:url name="ViewRunsUrl" ac="view-submissions">
-    <s:param name="all_runs" value="!all_runs" />
+    <s:param name="all_runs" value="(int) !all_runs" />
 </s:url>
 <p><s:a url="ViewRunsUrl"><% if (all_runs) { %><s:tr>View last 15</s:tr><% } else { %><s:tr>View all</s:tr><% } %></s:a></p>
