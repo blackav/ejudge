@@ -52,6 +52,7 @@
 <s:form>
 <s:hidden name="contest_id" value="phr->contest_id" />
 <s:hidden name="next_action" ac="reg-create-account-page" />
+<s:hidden name="regular" value="regular_flag" />
 <%
   if (cnts->disable_locale_change) {
 %><s:hidden name="locale_id" value="phr->locale_id" /><%
