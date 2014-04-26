@@ -35,7 +35,7 @@ static const unsigned char csp_str31[18] = ".\n\n<p>&nbsp;</p>\n";
 static const unsigned char csp_str32[18] = "<div id=\"footer\">";
 static const unsigned char csp_str33[38] = "</div>\n</div>\n</div>\n</body>\n</html>\n";
 
-/* $Id: reg_create_page.csp 8142 2014-04-23 22:55:03Z cher $ */
+/* $Id: reg_create_page.csp 8147 2014-04-26 22:24:40Z cher $ */
 #include "new-server.h"
 #include "new_server_pi.h"
 #include "new_server_proto.h"
@@ -161,6 +161,14 @@ fputs("<input type=\"hidden\" name=\"next_action\"", out_f);
 fputs(" value=\"", out_f);
 fprintf(out_f, "%d", (int)(NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE));
 fputs("\"", out_f);
+fputs(" />", out_f);
+fwrite(csp_str5, 1, 1, out_f);
+fputs("<input type=\"hidden\" name=\"regular\"", out_f);
+if ((regular_flag)) {
+fputs(" value=\"", out_f);
+fprintf(out_f, "%d", (int)(regular_flag));
+fputs("\"", out_f);
+}
 fputs(" />", out_f);
 fwrite(csp_str5, 1, 1, out_f);
 if (cnts->disable_locale_change) {
