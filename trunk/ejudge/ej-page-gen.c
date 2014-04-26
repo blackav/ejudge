@@ -2898,6 +2898,7 @@ process_file(
         FILE *log_f,
         FILE *prg_f,
         FILE *txt_f,
+        FILE *dep_f,
         ProcessorState *ps,
         const unsigned char *path,
         TypeContext *cntx,
@@ -2909,6 +2910,7 @@ handle_directive_include(
         FILE *log_f,
         FILE *prg_f,
         FILE *txt_f,
+        FILE *dep_f,
         TypeContext *cntx,
         IdScope *global_scope)
 {
@@ -2927,8 +2929,12 @@ handle_directive_include(
     }
     path = ss->value;
 
+    if (dep_f) {
+        fprintf(dep_f, " %s", path);
+    }
+
     Position saved_pos = ps->pos;
-    process_file(log_f, prg_f, txt_f, ss->ps, path, cntx, global_scope);
+    process_file(log_f, prg_f, txt_f, dep_f, ss->ps, path, cntx, global_scope);
     ps->pos = saved_pos;
 
 cleanup:
@@ -2943,6 +2949,7 @@ handle_directive(
         FILE *out_f,
         FILE *txt_f,
         FILE *log_f,
+        FILE *dep_f,
         const unsigned char *str,
         int len,
         Position pos,
@@ -2960,7 +2967,7 @@ handle_directive(
     } else if (!strcmp(ss->value, "set")) {
         handle_directive_set(ss, cntx, out_f);
     } else if (!strcmp(ss->value, "include")) {
-        handle_directive_include(ss, log_f, out_f, txt_f, cntx, global_scope);
+        handle_directive_include(ss, log_f, out_f, txt_f, dep_f, cntx, global_scope);
     } else {
         parser_error(ss, "invalid directive '%s'", ss->value);
     }
@@ -4301,6 +4308,7 @@ process_file(
         FILE *log_f,
         FILE *prg_f,
         FILE *txt_f,
+        FILE *dep_f,
         ProcessorState *ps,
         const unsigned char *path,
         TypeContext *cntx,
@@ -4373,7 +4381,7 @@ process_file(
                     ++html_i;
                 }
                 if (t == '@') {
-                    handle_directive(cntx, ps, prg_f, txt_f, log_f, mem + html_i, end_i - html_i, start_pos, global_scope);
+                    handle_directive(cntx, ps, prg_f, txt_f, log_f, dep_f, mem + html_i, end_i - html_i, start_pos, global_scope);
                 } else if (t == '=') {
                 } else {
                     // plain <% %>
@@ -4468,6 +4476,7 @@ static int
 process_unit(
         FILE *log_f,
         FILE *out_f,
+        FILE *dep_f,
         const unsigned char *path,
         TypeContext *cntx,
         IdScope *global_scope)
@@ -4543,7 +4552,7 @@ process_unit(
 
     processor_state_push_scope(ps, global_scope);
 
-    result = process_file(log_f, prg_f, txt_f, ps, path, cntx, global_scope);
+    result = process_file(log_f, prg_f, txt_f, dep_f, ps, path, cntx, global_scope);
 
     fprintf(out_f, "/* === string pool === */\n\n");
     fclose(txt_f); txt_f = NULL;
@@ -4569,6 +4578,10 @@ int
 main(int argc, char *argv[])
 {
     int argi = 1;
+    unsigned char *output_name = NULL;
+    unsigned char *deps_name = NULL;
+    FILE *out_f = NULL;
+    FILE *dep_f = NULL;
 
     progname = os_GetLastname(argv[0]);
 
@@ -4577,6 +4590,12 @@ main(int argc, char *argv[])
             report_version();
         } else if (!strcmp(argv[argi], "--help")) {
             report_help();
+        } else if (!strcmp(argv[argi], "-o")) {
+            if (++argi >= argc) fatal("option -o requires an argument (output file name)");
+            output_name = argv[argi++];
+        } else if (!strcmp(argv[argi], "-d")) {
+            if (++argi >= argc) fatal("option -d requires an argument (deps file name)");
+            deps_name = argv[argi++];
         } else if (!strcmp(argv[argi], "--")) {
             ++argi;
             break;
@@ -4606,8 +4625,30 @@ main(int argc, char *argv[])
     }
     //tc_dump_context(stdout, cntx);
 
+    if (output_name) {
+        out_f = fopen(output_name, "w");
+        if (!out_f) fatal("cannot open output file '%s'", output_name);
+    } else {
+        out_f = stdout;
+    }
+    if (output_name && deps_name) {
+        dep_f = fopen(deps_name, "w");
+        if (!dep_f) fatal("cannot open output file '%s'", deps_name);
+        fprintf(dep_f, "%s : %s", output_name, source_path);
+    }
+
     int result = 0;
-    result = process_unit(stderr, stdout, source_path, cntx, global_scope) || result;
+    result = process_unit(stderr, out_f, dep_f, source_path, cntx, global_scope) || result;
+
+    if (output_name && out_f) {
+        fclose(out_f);
+    }
+    out_f = NULL;
+    if (dep_f) {
+        fprintf(dep_f, "\n");
+        fclose(dep_f);
+    }
+    dep_f = NULL;
 
     tc_free(cntx);
 

@@ -187,6 +187,7 @@ create_account(
   unsigned char urlbuf[1024];
   unsigned char *new_login = 0;
   unsigned char *new_password = 0;
+  int regular_flag = 0;
 
   if (ejudge_config->disable_new_users > 0) {
     return ns_html_err_no_perm(fout, phr, 0, "registration is not available");
@@ -210,6 +211,8 @@ create_account(
   if (!is_valid_email_address(email))
     FAIL2(NEW_SRV_ERR_EMAIL_INV_CHARS);
 
+  hr_cgi_param_int_opt(phr, "regular", &regular_flag, 0);
+
   // if neither login nor email are specified, just change the locale
   if (!*login && !*email) {
     snprintf(urlbuf, sizeof(urlbuf), "%s?contest_id=%d&locale_id=%d&action=%d",
@@ -229,7 +232,7 @@ create_account(
 
   next_action = NEW_SRV_ACTION_REG_ACCOUNT_CREATED_PAGE;
 
-  if (cnts->simple_registration) {
+  if (cnts->simple_registration && regular_flag <= 0) {
     ul_error = userlist_clnt_register_new_2(ul_conn, &phr->ip, phr->ssl_flag,
                                             phr->contest_id, phr->locale_id,
                                             next_action,
