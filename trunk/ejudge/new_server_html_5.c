@@ -66,20 +66,6 @@ error_page(
         struct http_request_info *phr,
         int error_code);
 
-static char *
-ns_snprintf(unsigned char *buf, size_t size, const char *format, ...)
-  __attribute__((format(printf, 3, 4)));
-static char *
-ns_snprintf(unsigned char *buf, size_t size, const char *format, ...)
-{
-  va_list args;
-
-  va_start(args, format);
-  vsnprintf(buf, size, format, args);
-  va_end(args);
-  return buf;
-}
-
 static const unsigned char *
 get_client_url(
         unsigned char *buf,
@@ -108,165 +94,6 @@ static const unsigned char * const form_row_attrs[]=
 };
 
 extern const unsigned char * const ns_symbolic_action_table[];
-
-static unsigned char *
-raref(
-        unsigned char *buf,
-        size_t size,
-        const struct http_request_info *phr,
-        int need_sid,
-        const unsigned char *cl,
-        int action,
-        const char *format,
-        ...)
-  __attribute__((format(printf, 7, 8)));
-static unsigned char *
-raref(
-        unsigned char *buf,
-        size_t size,
-        const struct http_request_info *phr,
-        int need_sid,
-        const unsigned char *cl,
-        int action,
-        const char *format,
-        ...)
-{
-  unsigned char cbuf[256];
-  unsigned char fbuf[1024];
-  unsigned char lbuf[64];
-  unsigned char abuf[64];
-  unsigned char nbuf[64];
-  unsigned char sbuf[64];
-  const unsigned char *fsep = "";
-  va_list args;
-
-  fbuf[0] = 0;
-  if (format) {
-    va_start(args, format);
-    vsnprintf(fbuf, sizeof(fbuf), format, args);
-    va_end(args);
-  }
-  if (fbuf[0]) fsep = "&amp;";
-
-  cbuf[0] = 0;
-  if (cl && *cl) {
-    snprintf(cbuf, sizeof(cbuf), " class=\"%s\"", cl);
-  }
-  lbuf[0] = 0;
-  if (phr->locale_id > 0) {
-    snprintf(lbuf, sizeof(lbuf), "&amp;locale_id=%d", phr->locale_id);
-  }
-  nbuf[0] = 0;
-  if (phr->contest_id > 0) {
-    snprintf(nbuf, sizeof(nbuf), "&amp;contest_id=%d", phr->contest_id);
-  }
-
-  if (phr->rest_mode > 0) {
-    if (action < 0 || action >= NEW_SRV_ACTION_LAST) action = 0;
-    sbuf[0] = 0;
-    if (need_sid > 0 && phr->session_id) {
-      snprintf(sbuf, sizeof(sbuf), "/S%016llx", phr->session_id);
-    }
-    snprintf(buf, size, "<a href=\"%s/%s%s?%s%s%s%s\"%s>",
-             phr->self_url, ns_symbolic_action_table[action], sbuf, nbuf, lbuf, fsep, fbuf, cbuf);
-  } else {
-    abuf[0] = 0;
-    if (action > 0) {
-      snprintf(abuf, sizeof(abuf), "&amp;action=%d", action);
-    }
-    sbuf[0] = 0;
-    if (need_sid > 0 && phr->session_id) {
-      snprintf(sbuf, sizeof(sbuf), "&amp;SID=%016llx", phr->session_id);
-    }
-    snprintf(buf, size, "<a href=\"%s?%s%s%s%s%s%s\"%s>",
-             phr->self_url, sbuf, abuf, nbuf, lbuf, fsep, fbuf, cbuf);
-  }
-
-  return buf;
-}
-
-/*
-static unsigned char *
-caref(
-        unsigned char *buf,
-        size_t size,
-        const struct contest_desc *cnts,
-        const struct http_request_info *phr,
-        int need_sid,
-        const unsigned char *cl,
-        int action,
-        const char *format,
-        ...)
-  __attribute__((format(printf, 8, 9)));
-static unsigned char *
-caref(
-        unsigned char *buf,
-        size_t size,
-        const struct contest_desc *cnts,
-        const struct http_request_info *phr,
-        int need_sid,
-        const unsigned char *cl,
-        int action,
-        const char *format,
-        ...)
-{
-  unsigned char tbuf[1024];
-  unsigned char cbuf[256];
-  unsigned char fbuf[1024];
-  unsigned char lbuf[64];
-  unsigned char abuf[64];
-  unsigned char nbuf[64];
-  unsigned char sbuf[64];
-  const unsigned char *fsep = "";
-  va_list args;
-
-  fbuf[0] = 0;
-  if (format) {
-    va_start(args, format);
-    vsnprintf(fbuf, sizeof(fbuf), format, args);
-    va_end(args);
-  }
-  if (fbuf[0]) fsep = "&amp;";
-
-  cbuf[0] = 0;
-  if (cl && *cl) {
-    snprintf(cbuf, sizeof(cbuf), " class=\"%s\"", cl);
-  }
-  lbuf[0] = 0;
-  if (phr->locale_id > 0) {
-    snprintf(lbuf, sizeof(lbuf), "&amp;locale_id=%d", phr->locale_id);
-  }
-  nbuf[0] = 0;
-  if (phr->contest_id > 0) {
-    snprintf(nbuf, sizeof(nbuf), "&amp;contest_id=%d", phr->contest_id);
-  }
-
-  if (phr->rest_mode > 0) {
-    if (action < 0 || action >= NEW_SRV_ACTION_LAST) action = 0;
-    sbuf[0] = 0;
-    if (need_sid > 0 && phr->session_id) {
-      snprintf(sbuf, sizeof(sbuf), "/S%016llx", phr->session_id);
-    }
-    snprintf(buf, size, "<a href=\"%s/%s%s?%s%s%s%s\"%s>",
-             get_client_url(tbuf, sizeof(tbuf), cnts, phr),
-             ns_symbolic_action_table[action], sbuf, nbuf, lbuf, fsep, fbuf, cbuf);
-  } else {
-    abuf[0] = 0;
-    if (action > 0) {
-      snprintf(abuf, sizeof(abuf), "&amp;action=%d", action);
-    }
-    sbuf[0] = 0;
-    if (need_sid > 0 && phr->session_id) {
-      snprintf(sbuf, sizeof(sbuf), "&amp;SID=%016llx", phr->session_id);
-    }
-    snprintf(buf, size, "<a href=\"%s?%s%s%s%s%s%s\"%s>",
-             get_client_url(tbuf, sizeof(tbuf), cnts, phr),
-             sbuf, abuf, nbuf, lbuf, fsep, fbuf, cbuf);
-  }
-
-  return buf;
-}
-*/
 
 static unsigned char *
 curl(
@@ -343,392 +170,6 @@ curl(
   }
 
   return buf;
-}
-
-static void
-create_account_page( FILE *fout, struct http_request_info *phr,
-                     const struct contest_desc *cnts,
-                     struct contest_extra *extra, time_t cur_time);
-
-/*static*/ void
-create_autoassigned_account_page(
-        FILE *fout,
-        struct http_request_info *phr,
-        const struct contest_desc *cnts,
-        struct contest_extra *extra,
-        time_t cur_time)
-{
-  const unsigned char *email = 0;
-  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
-  unsigned char bb[1024];
-  const unsigned char *head_style = 0, *par_style = 0;
-  int item_cnt = 0, allowed_info_edit = 0;
-  unsigned char hbuf[1024];
-  int i, j;
-  int reg_error = 0, reg_ul_error = 0, regular_flag = 0;
-
-  if (ejudge_config->disable_new_users > 0) {
-    return ns_html_err_no_perm(fout, phr, 0, "registration is not available");
-  }
-
-  if (!cnts->assign_logins)
-    return create_account_page(fout, phr, cnts, extra, cur_time);
-
-  hr_cgi_param_int(phr, "retval", &reg_error);
-  hr_cgi_param_int(phr, "ul_error", &reg_ul_error);
-  hr_cgi_param_int(phr, "regular", &regular_flag);
-
-  if (cnts->register_head_style && *cnts->register_head_style)
-    head_style = cnts->register_head_style;
-  if (!head_style) head_style = "h2";
-  if (cnts->register_par_style && *cnts->register_par_style)
-    par_style = cnts->register_par_style;
-  if (!par_style) par_style = "";
-
-  if (!cnts->disable_name) allowed_info_edit = 1;
-  if (!cnts->force_registration) allowed_info_edit = 1;
-  if (!cnts->autoregister) allowed_info_edit = 1;
-  for (j = 0; j < CONTEST_LAST_FIELD; j++)
-    if (cnts->fields[j])
-      allowed_info_edit = 1;
-  for (i = 0; i < CONTEST_LAST_MEMBER; i++)
-    if (cnts->members[i] && cnts->members[i]->max_count > 0)
-      allowed_info_edit = 1;
-
-  (void) allowed_info_edit;
-
-  if (hr_cgi_param(phr, "email", &email) <= 0) email = 0;
-  if (!email) email = "";
-
-  l10n_setlocale(phr->locale_id);
-  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
-            NULL_CLIENT_KEY,
-            "%s [%s]", _("Create user account"),
-            extra->contest_arm);
-
-  html_start_form(fout, 1, phr->self_url, "");
-  html_hidden(fout, "contest_id", "%d", phr->contest_id);
-  html_hidden(fout, "next_action", "%d",
-              NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE);
-  if (cnts->disable_locale_change)
-    html_hidden(fout, "locale_id", "%d", phr->locale_id);
-  fprintf(fout, "<div class=\"user_actions\"><table class=\"menu\"><tr>\n");
-
-  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">e-mail: %s</div></td>",
-          html_input_text(bb, sizeof(bb), "email", 20, 0, "%s", ARMOR(email)));
-
-  if (ejudge_config->disable_new_users <= 0) {
-    fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s</div></td>", ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_REG_CREATE_ACCOUNT, _("Create account")));
-  }
-
-  if (!cnts->disable_locale_change) {
-    fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: ",
-            _("language"));
-    l10n_html_locale_select(fout, phr->locale_id);
-    fprintf(fout, "</div></td>\n");
-    fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s</div></td>\n", ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_CHANGE_LANGUAGE, _("Change language")));
-  }
-
-  fprintf(fout, "</tr></table></div></form>\n");
-
-  fprintf(fout,
-          "<div class=\"white_empty_block\">&nbsp;</div>\n"
-          "<div class=\"contest_actions\"><table class=\"menu\"><tr>\n");
-  fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">%s%s</a></div></td>",
-          raref(hbuf, sizeof(hbuf), phr, 0, "menu", NEW_SRV_ACTION_REG_LOGIN_PAGE, NULL),
-          _("Use an existing account"));
-  item_cnt++;
-  if (!item_cnt)
-    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">&nbsp;</div></td>");
-  fprintf(fout, "</tr></table></div>\n");
-
-  ns_separator(fout, extra->separator_txt, cnts);
-
-  if (reg_error || reg_ul_error) {
-    if (reg_error < 0) reg_error = -reg_error;
-    if (reg_ul_error < 0) reg_ul_error = -reg_ul_error;
-
-    fprintf(fout, "<%s><font color=\"red\">%s</font></%s>\n", head_style, _("Registration errors"),
-            head_style);
-
-    fprintf(fout, "<p%s><font color=\"red\">", par_style);
-    if (reg_ul_error == ULS_ERR_EMAIL_FAILED) {
-      fprintf(fout, "%s",
-              _("The server was unable to send a registration e-mail\n"
-                "to the specified address. This is probably due\n"
-                "to heavy server load rather than to an invalid\n"
-                "e-mail address. You should try to register later.\n"));
-    } else if (reg_ul_error) {
-      fprintf(fout, "%s.", gettext(userlist_strerror(reg_ul_error)));
-    } else if (reg_error) {
-      fprintf(fout, "%s.", ns_strerror_2(reg_error));
-    }
-    fprintf(fout, "</font></p>\n");
-  }
-
-  fprintf(fout, "<%s>%s</%s>\n", head_style, _("Registration rules"),
-          head_style);
-  fprintf(fout, "<p%s>%s</p>\n", par_style,
-          _("Please, enter your valid e-mail address and press the \"Create account\" button."));
-
-  if (cnts->simple_registration && !regular_flag) {
-    fprintf(fout, _("<p%s>This contest operates in \"simplified registration\" mode. You will get your login and password immediately after account is created. %s</p>"),
-            par_style, cnts->send_passwd_email?_("An email message will be sent to you just for your convenience."):("No email message at all will be sent to you."));
-    fprintf(fout, _("<p%s>Accounts created using simplified registration procedure cannot be used for participation in contests, which do not allow simplified registration. If you want a regular account, you may create an account using the %sregular registration</a>.</p>\n"),
-            par_style,
-            raref(hbuf, sizeof(hbuf), phr, 0, NULL, NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE, "regular=1"));
-  } else {
-    if (!cnts->simple_registration || cnts->send_passwd_email) {
-      fprintf(fout, "<p%s>%s</p>", par_style,
-              _("You should receive an e-mail message "
-                "with a login and a password to the system. Use this password for the first"
-                " log in. After the first login you will be able to change the password."));
-
-      fprintf(fout, "<p%s>%s</p>", par_style,
-              _("Be careful and type the e-mail address correctly. If you make a mistake, you will not receive a registration e-mail and be unable to complete the registration process."));
-    }
-
-    if (cnts->simple_registration) {
-      fprintf(fout, _("<p%s>%sSimplified registration</a> is available for this contest. Note, however, that simplified registration imposes certain restrictions on further use of the account!</p>\n"), par_style,
-              raref(hbuf, sizeof(hbuf), phr, 0, NULL, NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE, NULL));
-    }
-  }
-
-  fprintf(fout, "<p%s>%s</p>",
-          par_style,
-          _("<b>Note</b>, that you must log in "
-            "24 hours after the form is filled and submitted, or "
-            "your registration will be cancelled!"));
-
-  fprintf(fout, _("<p%s>If you already have an ejudge account on this server, you may use it. If so, follow the %s\"Use an existing account\"</a> link.</p>"),
-          par_style,
-          raref(hbuf, sizeof(hbuf), phr, 0, NULL, NEW_SRV_ACTION_REG_LOGIN_PAGE, NULL));
-
-  fprintf(fout, "<p%s>&nbsp;</p>\n", par_style);
-
-  watched_file_update(&extra->reg_welcome, cnts->reg_welcome_file, cur_time);
-  if (extra->reg_welcome.text && extra->reg_welcome.text[0])
-    fprintf(fout, "%s", extra->reg_welcome.text);
-
-  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
-  l10n_setlocale(0);
-  html_armor_free(&ab);
-}
-
-static void
-create_account_page(
-        FILE *fout,
-        struct http_request_info *phr,
-        const struct contest_desc *cnts,
-        struct contest_extra *extra,
-        time_t cur_time)
-{
-  const unsigned char *login = 0, *email = 0;
-  int reg_error = 0, reg_ul_error = 0;
-  const unsigned char *head_style = 0, *par_style = 0;
-  unsigned char hbuf[1024];
-  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
-  unsigned char bb[1024];
-  int item_cnt = 0, regular_flag = 0;
-  int allowed_info_edit = 0;
-  int i, j;
-
-  if (ejudge_config->disable_new_users > 0) {
-    return ns_html_err_no_perm(fout, phr, 0, "registration is not available");
-  }
-
-  hr_cgi_param_int(phr, "retval", &reg_error);
-  hr_cgi_param_int(phr, "ul_error", &reg_ul_error);
-  hr_cgi_param_int(phr, "regular", &regular_flag);
-
-  if (cnts->register_head_style && *cnts->register_head_style)
-    head_style = cnts->register_head_style;
-  if (!head_style) head_style = "h2";
-  if (cnts->register_par_style && *cnts->register_par_style)
-    par_style = cnts->register_par_style;
-  if (!par_style) par_style = "";
-
-  if (cnts->assign_logins) {
-    if (!cnts->disable_name) allowed_info_edit = 1;
-    if (!cnts->force_registration) allowed_info_edit = 1;
-    if (!cnts->autoregister) allowed_info_edit = 1;
-    for (j = 0; j < CONTEST_LAST_FIELD; j++)
-      if (cnts->fields[j])
-        allowed_info_edit = 1;
-    for (i = 0; i < CONTEST_LAST_MEMBER; i++)
-      if (cnts->members[i] && cnts->members[i]->max_count > 0)
-        allowed_info_edit = 1;
-    
-    (void) allowed_info_edit;
-  } else {
-    if (hr_cgi_param(phr, "login", &login) <= 0) login = 0;
-    if (!login) login = "";
-  }
-  if (hr_cgi_param(phr, "email", &email) <= 0) email = 0;
-  if (!email) email = "";
-
-  l10n_setlocale(phr->locale_id);
-  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
-            NULL_CLIENT_KEY,
-            "%s [%s]", _("Create user account"),
-            extra->contest_arm);
-
-  html_start_form(fout, 1, phr->self_url, "");
-  html_hidden(fout, "contest_id", "%d", phr->contest_id);
-  html_hidden(fout, "next_action", "%d",
-              NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE);
-  if (cnts->disable_locale_change)
-    html_hidden(fout, "locale_id", "%d", phr->locale_id);
-  fprintf(fout, "<div class=\"user_actions\"><table class=\"menu\"><tr>\n");
-
-  if (!cnts->assign_logins) {
-    fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: %s</div></td>", _("login"),
-            html_input_text(bb, sizeof(bb), "login", 20, 0, "%s", ARMOR(login)));
-  }
-  fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">e-mail: %s</div></td>",
-          html_input_text(bb, sizeof(bb), "email", 20, 0, "%s", ARMOR(email)));
-
-  if (cnts->assign_logins) {
-    if (ejudge_config->disable_new_users <= 0) {
-      fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s</div></td>", ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_REG_CREATE_ACCOUNT, _("Create account")));
-    }
-
-    if (!cnts->disable_locale_change) {
-      fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: ",
-              _("language"));
-      l10n_html_locale_select(fout, phr->locale_id);
-      fprintf(fout, "</div></td>\n");
-      fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s</div></td>\n", ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_CHANGE_LANGUAGE, _("Change language")));
-    }
-  } else {
-    if (!cnts->disable_locale_change) {
-      fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s: ",
-              _("language"));
-      l10n_html_locale_select(fout, phr->locale_id);
-      fprintf(fout, "</div></td>\n");
-    }
-    if (ejudge_config->disable_new_users <= 0) {
-      fprintf(fout, "<td class=\"menu\"><div class=\"user_action_item\">%s</div></td>", ns_submit_button(bb, sizeof(bb), 0, NEW_SRV_ACTION_REG_CREATE_ACCOUNT, _("Create account")));
-    }
-  }
-
-  fprintf(fout, "</tr></table></div></form>\n");
-
-  fprintf(fout,
-          "<div class=\"white_empty_block\">&nbsp;</div>\n"
-          "<div class=\"contest_actions\"><table class=\"menu\"><tr>\n");
-
-  fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">%s%s</a></div></td>",
-          raref(hbuf, sizeof(hbuf), phr, 0, "menu", NEW_SRV_ACTION_REG_LOGIN_PAGE, NULL),
-          _("Use an existing account"));
-    item_cnt++;
-
-  if (!item_cnt)
-    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">&nbsp;</div></td>");
-  fprintf(fout, "</tr></table></div>\n");
-
-  ns_separator(fout, extra->separator_txt, cnts);
-
-  if (reg_error || reg_ul_error) {
-    if (reg_error < 0) reg_error = -reg_error;
-    if (reg_ul_error < 0) reg_ul_error = -reg_ul_error;
-
-    fprintf(fout, "<%s><font color=\"red\">%s</font></%s>\n", head_style, _("Registration errors"),
-            head_style);
-
-    fprintf(fout, "<p%s><font color=\"red\">", par_style);
-    if (reg_ul_error == ULS_ERR_EMAIL_FAILED) {
-      fprintf(fout, "%s",
-              _("The server was unable to send a registration e-mail\n"
-                "to the specified address. This is probably due\n"
-                "to heavy server load rather than to an invalid\n"
-                "e-mail address. You should try to register later.\n"));
-    } else if (reg_ul_error) {
-      fprintf(fout, "%s.", gettext(userlist_strerror(reg_ul_error)));
-    } else if (reg_error) {
-      fprintf(fout, "%s.", ns_strerror_2(reg_error));
-    }
-    fprintf(fout, "</font></p>\n");
-  }
-
-  fprintf(fout, "<%s>%s</%s>\n", head_style, _("Registration rules"),
-          head_style);
-
-  if (cnts->assign_logins) {
-    fprintf(fout, "<p%s>%s</p>\n", par_style,
-            _("Please, enter your valid e-mail address and press the \"Create account\" button."));
-
-    if (cnts->simple_registration && !regular_flag) {
-      fprintf(fout, _("<p%s>This contest operates in \"simplified registration\" mode. You will get your login and password immediately after account is created. %s</p>"),
-              par_style, cnts->send_passwd_email?_("An email message will be sent to you just for your convenience."):("No email message at all will be sent to you."));
-      fprintf(fout, _("<p%s>Accounts created using simplified registration procedure cannot be used for participation in contests, which do not allow simplified registration. If you want a regular account, you may create an account using the %sregular registration</a>.</p>\n"),
-              par_style,
-              raref(hbuf, sizeof(hbuf), phr, 0, NULL, NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE, "regular=1"));
-    } else {
-      if (!cnts->simple_registration || cnts->send_passwd_email) {
-        fprintf(fout, "<p%s>%s</p>", par_style,
-                _("You should receive an e-mail message "
-                  "with a login and a password to the system. Use this password for the first"
-                  " log in. After the first login you will be able to change the password."));
-
-        fprintf(fout, "<p%s>%s</p>", par_style,
-                _("Be careful and type the e-mail address correctly. If you make a mistake, you will not receive a registration e-mail and be unable to complete the registration process."));
-      }
-
-      if (cnts->simple_registration) {
-        fprintf(fout, _("<p%s>%sSimplified registration</a> is available for this contest. Note, however, that simplified registration imposes certain restrictions on further use of the account!</p>\n"), par_style,
-                raref(hbuf, sizeof(hbuf), phr, 0, NULL, NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE, NULL));
-      }
-    }
-  } else {
-    fprintf(fout, "<p%s>%s</p>\n", par_style,
-            _("To create an account, please think out, a login and provide your valid e-mail address in the form above. Then press the \"Create account\" button."));
-    fprintf(fout, "<p%s>%s</p>\n", par_style,
-            _("Login may contain only latin letters, digits, <tt>.</tt> (dot), <tt>-</tt> (minus sign), <tt>_</tt> (undescore)."));
-
-    if (cnts->simple_registration && !regular_flag) {
-      fprintf(fout, _("<p%s>This contest operates in \"simplified registration\" mode. You will get your login and password immediately after account is created. %s</p>"),
-              par_style, cnts->send_passwd_email?_("An email message will be sent to you just for your convenience."):("No email message at all will be sent to you."));
-      fprintf(fout, _("<p%s>Accounts created using simplified registration procedure cannot be used for participation in contests, which do not allow simplified registration. If you want a regular account, you may create an account using the %sregular registration</a>.</p>\n"),
-              par_style,
-              raref(hbuf, sizeof(hbuf), phr, 0, NULL, NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE, "regular=1"));
-    } else {
-      if (!cnts->simple_registration || cnts->send_passwd_email) {
-        fprintf(fout, "<p%s>%s</p>", par_style,
-                _("You should receive an e-mail message "
-                  "with a password to the system. Use this password for the first"
-                  " log in. After the first login you will be able to change the password."));
-
-        fprintf(fout, "<p%s>%s</p>", par_style,
-                _("Be careful and type the e-mail address correctly. If you make a mistake, you will not receive a registration e-mail and be unable to complete the registration process."));
-      }
-
-      if (cnts->simple_registration) {
-        fprintf(fout, _("<p%s>%sSimplified registration</a> is available for this contest. Note, however, that simplified registration imposes certain restrictions on further use of the account!</p>\n"), par_style,
-                raref(hbuf, sizeof(hbuf), phr, 0, NULL, NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE, NULL));
-      }
-    }
-  }
-
-  fprintf(fout, "<p%s>%s</p>",
-          par_style,
-          _("<b>Note</b>, that you must log in "
-            "24 hours after the form is filled and submitted, or "
-            "your registration will be cancelled!"));
-
-  fprintf(fout, _("<p%s>If you already have an ejudge account on this server, you may use it. If so, follow the %s\"Use an existing account\"</a> link.</p>"),
-          par_style,
-          raref(hbuf, sizeof(hbuf), phr, 0, NULL, NEW_SRV_ACTION_REG_LOGIN_PAGE, NULL));
-
-  fprintf(fout, "<p%s>&nbsp;</p>\n", par_style);
-
-  watched_file_update(&extra->reg_welcome, cnts->reg_welcome_file, cur_time);
-  if (extra->reg_welcome.text && extra->reg_welcome.text[0])
-    fprintf(fout, "%s", extra->reg_welcome.text);
-
-  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
-  l10n_setlocale(0);
-  html_armor_free(&ab);
 }
 
 static void
@@ -940,7 +381,6 @@ typedef void (*reg_action_handler_func_t)(FILE *fout,
         time_t cur_time);
 static reg_action_handler_func_t action_handlers[NEW_SRV_ACTION_LAST] =
 {
-  //[NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE] = create_account_page,
   [NEW_SRV_ACTION_REG_CREATE_ACCOUNT] = create_account,
   [NEW_SRV_ACTION_REG_LOGIN] = cmd_login,
 };
@@ -1016,9 +456,10 @@ anon_register_pages(FILE *fout, struct http_request_info *phr)
   if (action_handlers[phr->action])
     return (*action_handlers[phr->action])(fout, phr, cnts, extra, cur_time);
 
-  if (cnts->assign_logins)
-    return create_account_page(fout, phr, cnts, extra, cur_time);
-  else {
+  if (cnts->assign_logins) {
+    if (reg_external_action(fout, phr, NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE) > 0) return;
+    error_page(fout, phr, NEW_SRV_ERR_INV_ACTION);
+  } else {
     if (reg_external_action(fout, phr, NEW_SRV_ACTION_REG_LOGIN_PAGE) > 0) return;
     error_page(fout, phr, NEW_SRV_ERR_INV_ACTION);
   }
@@ -1082,23 +523,6 @@ change_locale(FILE *fout, struct http_request_info *phr)
   fprintf(fout, "\n\n");
 
   html_armor_free(&ab);
-}
-
-static void
-menu_item(FILE *fout, struct http_request_info *phr,
-          int action,
-          const unsigned char *text,
-          const unsigned char *url)
-{
-  fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">");
-  if (action != phr->action && url) {
-    fprintf(fout, "<a class=\"menu\" href=\"%s\">", url);
-  }
-  fprintf(fout, "%s", text);
-  if (action != phr->action && url) {
-    fprintf(fout, "</a>");
-  }
-  fprintf(fout, "</div></td>");
 }
 
 static void
@@ -1362,7 +786,7 @@ static const unsigned char *no_role_allowed_str[] =
   __("No guests are allowed in this contest"),
 };
 
-static const unsigned char *role_labels[] =
+const unsigned char *ns_role_labels[] =
 {
   __("Contestant"),
   __("Reserve"),
@@ -1620,7 +1044,7 @@ ns_reg_main_page_view_info(
         mmbound = cnts->members[rr]->max_count;
       */
       for (mm = 0; mm < mmbound; mm++) {
-        fprintf(fout, "<h3>%s %d", gettext(role_labels[rr]), mm + 1);
+        fprintf(fout, "<h3>%s %d", gettext(ns_role_labels[rr]), mm + 1);
         if (!u->read_only && !ui->cnts_read_only) {
           fprintf(fout, " [%s%s</a>]",
                   ns_aref(ub, sizeof(ub), phr, NEW_SRV_ACTION_REG_EDIT_MEMBER_PAGE, "role=%d&amp;member=%d", rr, mm), _("Edit"));
@@ -1670,224 +1094,8 @@ ns_reg_main_page_view_info(
   html_armor_free(&ab);
 }
 
-static void
-main_page_view_settings(
-        FILE *fout,
-        struct http_request_info *phr,
-        const struct contest_desc *cnts,
-        struct contest_extra *extra,
-        time_t cur_time)
-{
-  if (!cnts->disable_password_change) {
-    /* change the password */
-    fprintf(fout, "<%s>%s</%s>\n", cnts->register_head_style,
-            _("Change password"), cnts->register_head_style);
-    html_start_form(fout, 1, phr->self_url, "");
-    html_hidden(fout, "SID", "%016llx", phr->session_id);
-
-    fprintf(fout, "<table class=\"b0\">\n"
-            "<tr><td class=\"b0\">%s:</td><td class=\"b0\"><input type=\"password\" name=\"oldpasswd\" size=\"16\"/></td></tr>\n"
-            "<tr><td class=\"b0\">%s:</td><td class=\"b0\"><input type=\"password\" name=\"newpasswd1\" size=\"16\"/></td></tr>\n"
-            "<tr><td class=\"b0\">%s:</td><td class=\"b0\"><input type=\"password\" name=\"newpasswd2\" size=\"16\"/></td></tr>\n"
-            "<tr><td class=\"b0\" colspan=\"2\"><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td></tr>\n"
-            "</table></form>",
-            _("Old password"),
-            _("New password"), _("Retype new password"),
-            NEW_SRV_ACTION_CHANGE_PASSWORD, _("Change!"));
-  }
-
-#if CONF_HAS_LIBINTL - 0 == 1
-  if (!cnts->disable_locale_change) {
-    fprintf(fout, "<%s>%s</%s>\n", cnts->register_head_style,
-            _("Change language"), cnts->register_head_style);
-    html_start_form(fout, 1, phr->self_url, "");
-    html_hidden(fout, "SID", "%016llx", phr->session_id);
-    html_hidden(fout, "next_action", "%d", NEW_SRV_ACTION_VIEW_SETTINGS);
-    fprintf(fout, "<table class=\"b0\"><tr><td class=\"b0\">%s</td><td class=\"b0\">", _("Change language"));
-    l10n_html_locale_select(fout, phr->locale_id);
-    fprintf(fout, "</td><td class=\"b0\"><input type=\"submit\" name=\"action_%d\" value=\"%s\"/></td></tr></table></form>\n",
-            NEW_SRV_ACTION_CHANGE_LANGUAGE, _("Change"));
-    }
-#endif /* CONF_HAS_LIBINTL */
-}
-
-static reg_action_handler_func_t main_page_action_handlers[NEW_SRV_ACTION_LAST]=
-{
-  [NEW_SRV_ACTION_VIEW_SETTINGS] = main_page_view_settings,
-};
-
-/*static*/ void
-main_page(
-        FILE *fout,
-        struct http_request_info *phr,
-        const struct contest_desc *cnts,
-        struct contest_extra *extra,
-        time_t cur_time)
-{
-  unsigned char ub[1024];
-  unsigned char bb[1024];
-  int shown_items = 0, i = 0;
-  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
-  const unsigned char *status_style;
-  const unsigned char *status_info;
-  const unsigned char *status_info_2;
-  const unsigned char *title = "", *n = 0;
-  struct userlist_user *u = 0;
-  const struct userlist_user_info *ui = 0;
-
-  l10n_setlocale(phr->locale_id);
-
-  switch (phr->action) {
-  case NEW_SRV_ACTION_REG_VIEW_CONTESTANTS:
-    title = _("Viewing contestants");
-    break;
-
-  case NEW_SRV_ACTION_REG_VIEW_RESERVES:
-    title = _("Viewing reserves");
-    break;
-
-  case NEW_SRV_ACTION_REG_VIEW_COACHES:
-    title = _("Viewing coaches");
-    break;
-
-  case NEW_SRV_ACTION_REG_VIEW_ADVISORS:
-    title = _("Viewing advisors");
-    break;
-
-  case NEW_SRV_ACTION_REG_VIEW_GUESTS:
-    title = _("Viewing guests");
-    break;
-
-  case NEW_SRV_ACTION_VIEW_SETTINGS:
-    title = _("Viewing settings");
-    break;
-
-  case NEW_SRV_ACTION_REG_VIEW_GENERAL:
-  default:
-    title = _("Viewing general info");
-    break;
-  }
-
-  n = phr->name;
-  if (!n || !*n) n = phr->login;
-
-  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
-            phr->client_key,
-            "%s [%s, %s]", title, ARMOR(n), extra->contest_arm);
-
-  shown_items = 0;
-  fprintf(fout, "<div class=\"user_actions\"><table class=\"menu\"><tr>");
-  menu_item(fout, phr, NEW_SRV_ACTION_VIEW_SETTINGS, _("Settings"),
-            ns_url(ub, sizeof(ub), phr, NEW_SRV_ACTION_VIEW_SETTINGS, 0));
-  shown_items++;
-  menu_item(fout, phr, NEW_SRV_ACTION_LOGOUT,
-            ns_snprintf(bb, sizeof(bb), "%s [%s]", _("Logout"),
-                        ARMOR(phr->login)),
-            ns_url(ub, sizeof(ub), phr, NEW_SRV_ACTION_LOGOUT, 0));
-  shown_items++;
-  if (!shown_items)
-    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">&nbsp;</div></td>");
-  fprintf(fout, "</tr></table></div>\n");
-
-  fprintf(fout, "<div class=\"white_empty_block\">&nbsp;</div>\n");
-
-  shown_items = 0;
-  fprintf(fout, "<div class=\"contest_actions\"><table class=\"menu\"><tr>\n");
-
-  // lower row
-  if (phr->action >= NEW_SRV_ACTION_REG_VIEW_GENERAL
-      && phr->action <= NEW_SRV_ACTION_REG_VIEW_GUESTS)
-    i = phr->action;
-  menu_item(fout, phr, i, _("User info"),
-            ns_url(ub, sizeof(ub), phr, NEW_SRV_ACTION_REG_VIEW_GENERAL, 0));
-  shown_items++;
-  if (phr->reg_status == USERLIST_REG_OK
-      && !(phr->reg_flags &~USERLIST_UC_INVISIBLE)
-      && contests_check_team_ip_2(cnts, &phr->ip, phr->ssl_flag)
-      && !cnts->closed) {
-    // "participate" link
-    if (cnts->disable_team_password) {
-      curl(ub, sizeof(ub), cnts, phr, 1, "&amp;", 0, NULL);
-    } else {
-      curl(ub, sizeof(ub), cnts, phr, 0, "&amp;", 0, "login=%s", URLARMOR(phr->login));
-    }
-    menu_item(fout, phr, -1, _("Participate"), ub);
-    shown_items++;
-  }
-  if (!shown_items)
-    fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">&nbsp;</div></td>");
-  fprintf(fout, "</tr></table></div>\n");
-  if (extra->separator_txt && *extra->separator_txt) {
-    ns_separator(fout, extra->separator_txt, cnts);
-  }
-
-  // status row
-  status_info_2 = "";
-  if (phr->reg_status < 0) {
-    status_style = "server_status_off";
-    status_info = __("NOT REGISTERED");
-  } else if (phr->reg_status == USERLIST_REG_PENDING) {
-    status_style = "server_status_alarm";
-    status_info= __("REGISTERED, PENDING APPROVAL");
-    if ((phr->reg_flags & USERLIST_UC_INCOMPLETE)) {
-      status_info_2 = __(", REGISTRATION DATA INCOMPLETE");
-      status_style = "server_status_error";
-    }
-  } else if (phr->reg_status == USERLIST_REG_REJECTED) {
-    status_style = "server_status_error";
-    status_info = __("REGISTRATION REJECTED");
-  } else if ((phr->reg_flags & USERLIST_UC_BANNED)) {
-    status_style = "server_status_error";
-    status_info = __("REGISTERED, BANNED");
-  } else if ((phr->reg_flags & USERLIST_UC_LOCKED)) {
-    status_style = "server_status_error";
-    status_info = __("REGISTERED, LOCKED");
-  } else if ((phr->reg_flags & USERLIST_UC_INVISIBLE)) {
-    status_style = "server_status_on";
-    status_info = __("REGISTERED (INVISIBLE)");
-    if ((phr->reg_flags & USERLIST_UC_INCOMPLETE)) {
-      status_info_2 = __(", REGISTRATION DATA INCOMPLETE");
-      status_style = "server_status_error";
-    }
-  } else {
-    status_style = "server_status_on";
-    status_info = __("REGISTERED");
-    if ((phr->reg_flags & USERLIST_UC_INCOMPLETE)) {
-      status_info_2 = __(", REGISTRATION DATA INCOMPLETE");
-      status_style = "server_status_error";
-    }
-  }
-  fprintf(fout, "<div class=\"%s\">\n", status_style);
-  if (status_info && *status_info) status_info = gettext(status_info);
-  if (status_info_2 && *status_info_2) status_info_2 = gettext(status_info_2);
-  fprintf(fout, "<b>%s%s</b>", status_info, status_info_2);
-  if (phr->reg_status < 0) {
-    fprintf(fout, " <b><a href=\"%s\" class=\"menu\">[%s]</a></b>",
-            ns_url(ub, sizeof(ub), phr, NEW_SRV_ACTION_REG_REGISTER, 0),
-            _("Confirm registration"));
-  }
-
-  u = phr->session_extra->user_info;
-  if (u) ui = userlist_get_cnts0(u);
-  if (u->read_only || (ui && ui->cnts_read_only)) {
-    fprintf(fout, "/ <b>%s</b>", _("READ-ONLY"));
-  }
-
-  fprintf(fout, "</div>\n");
-
-  if (main_page_action_handlers[phr->action])
-    (*main_page_action_handlers[phr->action])(fout, phr, cnts, extra, cur_time);
-  else {
-    ns_reg_main_page_view_info(fout, phr, cnts, extra, cur_time);
-  }
-
-  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
-  l10n_setlocale(0);
-  html_armor_free(&ab);
-}
-
-static void
-edit_member_form(
+void
+ns_edit_member_form(
         FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
@@ -1898,8 +1106,8 @@ edit_member_form(
         const unsigned char *var_prefix,
         int fields_order[]);
 
-static void
-edit_general_form(
+void
+ns_edit_general_form(
         FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
@@ -1957,7 +1165,7 @@ edit_general_form(
   if (ui && cnts->personal && cnts->members[(rr = CONTEST_M_CONTESTANT)]
       && cnts->members[rr]->max_count > 0) {
     m = userlist_members_get_first(ui->members);
-    edit_member_form(fout, phr, cnts, m, rr, 0, 1, "m", member_fields_order_1);
+    ns_edit_member_form(fout, phr, cnts, m, rr, 0, 1, "m", member_fields_order_1);
   }
 
   for (i = 0; (ff = contest_fields_order[i]); i++) {
@@ -2046,7 +1254,7 @@ edit_general_form(
   if (ui && cnts->personal && cnts->members[(rr = CONTEST_M_CONTESTANT)]
       && cnts->members[rr]->max_count > 0) {
     m = userlist_members_get_first(ui->members);
-    edit_member_form(fout, phr, cnts, m, rr, 0, 1, "m", member_fields_order_2);
+    ns_edit_member_form(fout, phr, cnts, m, rr, 0, 1, "m", member_fields_order_2);
   }
 
   fprintf(fout, "</table>\n");
@@ -2242,8 +1450,8 @@ display_grade_changing_dialog(
   fprintf(fout, "</select>%s", end_str);
 }
 
-static void
-edit_member_form(
+void
+ns_edit_member_form(
         FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
@@ -2354,116 +1562,6 @@ edit_member_form(
     fprintf(fout, "</form>\n");
   }
 
-  html_armor_free(&ab);
-}
-
-static void
-edit_page(
-        FILE *fout,
-        struct http_request_info *phr,
-        const struct contest_desc *cnts,
-        struct contest_extra *extra,
-        time_t cur_time)
-{
-  const unsigned char *status_style;
-  const unsigned char *status_info;
-  struct userlist_user *u = phr->session_extra->user_info;
-  int role = 0, member = 0;
-  const struct userlist_member *m = 0;
-  const unsigned char *s = 0, *n = 0;
-  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
-  struct userlist_user_info *ui;
-
-  // check that we are allowed to edit something
-  if (!u || u->read_only) goto redirect_back;
-  ui = userlist_get_cnts0(u);
-  if (ui && ui->cnts_read_only) goto redirect_back;
-  if (phr->action == NEW_SRV_ACTION_REG_EDIT_MEMBER_PAGE) {
-    if (hr_cgi_param_int(phr, "role", &role) < 0) goto redirect_back;
-    if (hr_cgi_param_int(phr, "member", &member) < 0) goto redirect_back;
-    if (role < 0 || role >= CONTEST_M_GUEST) goto redirect_back;
-    if (!cnts->members[role]) goto redirect_back;
-    if (!(m = userlist_members_get_nth(ui->members, role, member)))
-      goto redirect_back;
-  } else if (phr->action == NEW_SRV_ACTION_REG_EDIT_GENERAL_PAGE) {
-  } else {
-    goto redirect_back;
-  }
- 
-  l10n_setlocale(phr->locale_id);
-
-  if (phr->action == NEW_SRV_ACTION_REG_EDIT_GENERAL_PAGE)
-    s = _("Editing general info");
-  else if (phr->action == NEW_SRV_ACTION_REG_EDIT_MEMBER_PAGE)
-    s = _("Editing member info");
-  else 
-    s = _("Good!");
-
-  n = phr->name;
-  if (!n || !*n) n = phr->login;
-
-  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
-            phr->client_key,
-            "%s [%s, %s]", s, ARMOR(n), extra->contest_arm);
-
-  fprintf(fout, "<div class=\"user_actions\"><table class=\"menu\"><tr>");
-  fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">&nbsp;</div></td>");
-  fprintf(fout, "</tr></table></div>\n");
-
-  fprintf(fout, "<div class=\"white_empty_block\">&nbsp;</div>\n");
-
-  fprintf(fout, "<div class=\"contest_actions\"><table class=\"menu\"><tr>\n");
-  fprintf(fout, "<td class=\"menu\"><div class=\"contest_actions_item\">&nbsp;</div></td>");
-  fprintf(fout, "</tr></table></div>\n");
-  if (extra->separator_txt && *extra->separator_txt) {
-    ns_separator(fout, extra->separator_txt, cnts);
-  }
-
-  // status row
-  if (phr->reg_status < 0) {
-    status_style = "server_status_off";
-    status_info = __("NOT REGISTERED");
-  } else if (phr->reg_status == USERLIST_REG_PENDING) {
-    status_style = "server_status_alarm";
-    status_info= __("REGISTERED, PENDING APPROVAL");
-  } else if (phr->reg_status == USERLIST_REG_REJECTED) {
-    status_style = "server_status_error";
-    status_info = __("REGISTRATION REJECTED");
-  } else if ((phr->reg_flags & USERLIST_UC_BANNED)) {
-    status_style = "server_status_error";
-    status_info = __("REGISTERED, BANNED");
-  } else if ((phr->reg_flags & USERLIST_UC_LOCKED)) {
-    status_style = "server_status_error";
-    status_info = __("REGISTERED, LOCKED");
-  } else if ((phr->reg_flags & USERLIST_UC_INVISIBLE)) {
-    status_style = "server_status_on";
-    status_info = __("REGISTERED (INVISIBLE)");
-  } else {
-    status_style = "server_status_on";
-    status_info = __("REGISTERED");
-  }
-  fprintf(fout, "<div class=\"%s\">\n", status_style);
-  fprintf(fout, "<b>%s</b>", gettext(status_info));
-  fprintf(fout, "</div>\n");
-
-
-  // main page goes here
-  if (phr->action == NEW_SRV_ACTION_REG_EDIT_MEMBER_PAGE) {
-    fprintf(fout, "<br/><h2>%s %d</h2>\n",
-            gettext(role_labels[role]), member + 1);
-    edit_member_form(fout, phr, cnts, m, role, member, 0, 0, 0);
-  } else {
-    fprintf(fout, "<br/><h2>%s</h2>\n", _("General information"));
-    edit_general_form(fout, phr, cnts, u);
-  }
-
-  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
-  l10n_setlocale(0);
-  html_armor_free(&ab);
-  return;
-
- redirect_back:
-  ns_refresh_page(fout, phr, NEW_SRV_ACTION_REG_VIEW_GENERAL, 0);
   html_armor_free(&ab);
 }
 
@@ -3338,8 +2436,6 @@ static reg_action_handler_func_t reg_handlers[NEW_SRV_ACTION_LAST] =
 {
   [NEW_SRV_ACTION_LOGOUT] = logout,
   [NEW_SRV_ACTION_CHANGE_PASSWORD] = change_password,
-  [NEW_SRV_ACTION_REG_EDIT_GENERAL_PAGE] = edit_page,
-  [NEW_SRV_ACTION_REG_EDIT_MEMBER_PAGE] = edit_page,
   [NEW_SRV_ACTION_REG_SUBMIT_GENERAL_EDITING] = submit_general_editing,
   [NEW_SRV_ACTION_REG_CANCEL_GENERAL_EDITING] = cancel_editing,
   [NEW_SRV_ACTION_REG_SUBMIT_MEMBER_EDITING] = submit_member_editing,
@@ -3358,6 +2454,7 @@ static const unsigned char * const external_reg_action_names[NEW_SRV_ACTION_LAST
   [NEW_SRV_ACTION_REG_LOGIN_PAGE] = "reg_login_page",
   [NEW_SRV_ACTION_CONTESTS_PAGE] = "reg_contests_page",
   [NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE] = "reg_create_page",
+  [NEW_SRV_ACTION_REG_EDIT_GENERAL_PAGE] = "reg_edit_page",
 };
 static const int external_reg_action_aliases[NEW_SRV_ACTION_LAST] =
 {
@@ -3368,6 +2465,7 @@ static const int external_reg_action_aliases[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_REG_VIEW_ADVISORS] = NEW_SRV_ACTION_MAIN_PAGE,
   [NEW_SRV_ACTION_REG_VIEW_GUESTS] = NEW_SRV_ACTION_MAIN_PAGE,
   [NEW_SRV_ACTION_VIEW_SETTINGS] = NEW_SRV_ACTION_MAIN_PAGE,
+  [NEW_SRV_ACTION_REG_EDIT_MEMBER_PAGE] = NEW_SRV_ACTION_REG_EDIT_GENERAL_PAGE,
 };
 static const unsigned char * const external_reg_error_names[NEW_SRV_ERR_LAST] =
 {
