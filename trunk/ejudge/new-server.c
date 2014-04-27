@@ -439,7 +439,7 @@ cmd_http_request(
 
   if (hr.protocol_reply) {
     xfree(out_txt); out_txt = 0;
-    info("HTTP: %s -> %d", info_buf, hr.protocol_reply);
+    info("%d:%s -> %d", p->id, info_buf, hr.protocol_reply);
     nsf_close_client_fds(p);
     nsf_send_reply(state, p, hr.protocol_reply);
     goto cleanup;
@@ -471,7 +471,7 @@ cmd_http_request(
   if (!out_txt || !*out_txt) {
     xfree(out_txt); out_txt = 0;
     if (hr.allow_empty_output) {
-      info("HTTP: %s -> OK", info_buf);
+      info("%d:%s -> OK", p->id, info_buf);
       nsf_close_client_fds(p);
       nsf_send_reply(state, p, NEW_SRV_RPL_OK);
       goto cleanup;
@@ -483,7 +483,7 @@ cmd_http_request(
   }
 
   nsf_new_autoclose(state, p, out_txt, out_size);
-  info("HTTP: %s -> OK, %zu", info_buf, out_size);
+  info("%d:%s -> OK, %zu", p->id, info_buf, out_size);
   nsf_send_reply(state, p, NEW_SRV_RPL_OK);
 
  cleanup:
