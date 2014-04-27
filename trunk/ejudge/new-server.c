@@ -267,11 +267,14 @@ ns_new_autoclose(struct client_state *p, void *write_buf, size_t write_len)
   return nsf_new_autoclose(state, p, write_buf, write_len);
 }
 
+extern const unsigned char * const ns_symbolic_action_table[NEW_SRV_ACTION_LAST];
+
 static void
-cmd_http_request(struct server_framework_state *state,
-                 struct client_state *p,
-                 size_t pkt_size,
-                 const struct new_server_prot_packet *pkt_gen)
+cmd_http_request(
+        struct server_framework_state *state,
+        struct client_state *p,
+        size_t pkt_size,
+        const struct new_server_prot_packet *pkt_gen)
 {
   enum
   {
@@ -293,6 +296,8 @@ cmd_http_request(struct server_framework_state *state,
   size_t out_size = 0;
   FILE *out_f = 0;
   struct http_request_info hr;
+  unsigned char info_buf[1024];
+  unsigned char *pbuf = info_buf;
 
   memset(&hr, 0, sizeof(hr));
   hr.id = p->id;
@@ -392,12 +397,41 @@ cmd_http_request(struct server_framework_state *state,
   ns_handle_http_request(state, p, out_f, &hr);
   close_memstream(out_f); out_f = 0;
 
+  *pbuf = 0;
+  // report IP?
+  if (hr.role_name) {
+    pbuf = stpcpy(pbuf, hr.role_name);
+  }
+  if (hr.action > 0 && hr.action < NEW_SRV_ACTION_LAST && ns_symbolic_action_table[hr.action]) {
+    *pbuf++ = '/';
+    pbuf = stpcpy(pbuf, ns_symbolic_action_table[hr.action]);
+  }
+  if (hr.session_id) {
+    *pbuf++ = '/';
+    *pbuf++ = 'S';
+    pbuf += sprintf(pbuf, "%016llx", hr.session_id);
+    if (hr.client_key) {
+      *pbuf++ = '-';
+      pbuf += sprintf(pbuf, "%016llx", hr.client_key);
+    }
+  }
+  if (hr.user_id > 0) {
+    *pbuf++ = '/';
+    *pbuf++ = 'U';
+    pbuf += sprintf(pbuf, "%d", hr.user_id);
+  }
+  if (hr.contest_id > 0) {
+    *pbuf++ = '/';
+    *pbuf++ = 'C';
+    pbuf += sprintf(pbuf, "%d", hr.contest_id);
+  }
+
   // no reply now
   if (hr.no_reply) goto cleanup;
 
   if (hr.protocol_reply) {
     xfree(out_txt); out_txt = 0;
-    info("HTTP_REQUEST -> %d", hr.protocol_reply);
+    info("HTTP: %s -> %d", info_buf, hr.protocol_reply);
     nsf_close_client_fds(p);
     nsf_send_reply(state, p, hr.protocol_reply);
     goto cleanup;
@@ -429,7 +463,7 @@ cmd_http_request(struct server_framework_state *state,
   if (!out_txt || !*out_txt) {
     xfree(out_txt); out_txt = 0;
     if (hr.allow_empty_output) {
-      info("HTTP_REQUEST -> OK");
+      info("HTTP: %s -> OK", info_buf);
       nsf_close_client_fds(p);
       nsf_send_reply(state, p, NEW_SRV_RPL_OK);
       goto cleanup;
@@ -441,7 +475,7 @@ cmd_http_request(struct server_framework_state *state,
   }
 
   nsf_new_autoclose(state, p, out_txt, out_size);
-  info("HTTP_REQUEST -> OK, %zu", out_size);
+  info("HTTP: %s -> OK, %zu", info_buf, out_size);
   nsf_send_reply(state, p, NEW_SRV_RPL_OK);
 
  cleanup:

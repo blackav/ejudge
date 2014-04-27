@@ -10593,10 +10593,11 @@ static void *forced_linking[] =
 };
 
 void
-ns_handle_http_request(struct server_framework_state *state,
-                       struct client_state *p,
-                       FILE *fout,
-                       struct http_request_info *phr)
+ns_handle_http_request(
+        struct server_framework_state *state,
+        struct client_state *p,
+        FILE *fout,
+        struct http_request_info *phr)
 {
   const unsigned char *script_filename = 0;
   path_t last_name;
@@ -10608,7 +10609,6 @@ ns_handle_http_request(struct server_framework_state *state,
   path_t self_url;
   path_t context_url;
   int r, n, orig_locale_id = -1;
-  unsigned char *role_name = NULL;
   unsigned char *rest_args = NULL;
   unsigned char *rest_action = NULL;
 
@@ -10629,9 +10629,8 @@ ns_handle_http_request(struct server_framework_state *state,
     s = script_name + EJUDGE_REST_PREFIX_LEN;
     while (*s && *s != '/') ++s;
     n = (int)(s - script_name - EJUDGE_REST_PREFIX_LEN);
-    role_name = alloca(n + 1);
-    memcpy(role_name, script_name + EJUDGE_REST_PREFIX_LEN, n);
-    role_name[n] = 0;
+    if (n > (int)sizeof(phr->role_name) - 1) n = (int)sizeof(phr->role_name) - 1;
+    *(char*) mempcpy(phr->role_name, script_name + EJUDGE_REST_PREFIX_LEN, n) = 0;
 
     int nlen = strlen(script_name);
     rest_args = alloca(nlen + 1);
@@ -10673,10 +10672,12 @@ ns_handle_http_request(struct server_framework_state *state,
 
     phr->rest_mode = 1;
 
+    /*
     fprintf(stderr, "role_name: %s\n", role_name);
     fprintf(stderr, "rest_action: %s\n", rest_action);
     fprintf(stderr, "rest_args: %s\n", rest_args);
     fprintf(stderr, "script_name: %s\n", script_name);
+    */
   }
 #endif
 
@@ -10760,27 +10761,27 @@ ns_handle_http_request(struct server_framework_state *state,
     }
   }
 
-  if (role_name && *role_name) {
-    if (!strcmp(role_name, "master")) {
+  if (*phr->role_name) {
+    if (!strcmp(phr->role_name, "master")) {
       phr->role = USER_ROLE_ADMIN;
       privileged_entry_point(fout, phr);
       return;
-    } else if (!strcmp(role_name, "judge")) {
+    } else if (!strcmp(phr->role_name, "judge")) {
       phr->role = USER_ROLE_JUDGE;
       privileged_entry_point(fout, phr);
       return;
-    } else if (!strcmp(role_name, "observer")) {
+    } else if (!strcmp(phr->role_name, "observer")) {
       phr->role = USER_ROLE_OBSERVER;
       privileged_entry_point(fout, phr);
       return;
-    } else if (!strcmp(role_name, "user")) {
+    } else if (!strcmp(phr->role_name, "user")) {
       unprivileged_entry_point(fout, phr);
       return;
-    } else if (!strcmp(role_name, "register")) {
+    } else if (!strcmp(phr->role_name, "register")) {
       phr->locale_id = orig_locale_id;
       ns_register_pages(fout, phr);
       return;
-    } else if (!strcmp(role_name, "rest")) {
+    } else if (!strcmp(phr->role_name, "rest")) {
       phr->protocol_reply = new_server_cmd_handler(fout, phr);
       return;
     }
@@ -10808,21 +10809,27 @@ ns_handle_http_request(struct server_framework_state *state,
   }
 #endif /* CGI_PROG_SUFFIX */
 
-  if (!strcmp(last_name, "priv-client"))
+  if (!strcmp(last_name, "priv-client")) {
+    strcpy(phr->role_name, "priv");
     privileged_entry_point(fout, phr);
-  else if (!strcmp(last_name, "new-master") || !strcmp(last_name, "master")) {
+  } else if (!strcmp(last_name, "new-master") || !strcmp(last_name, "master")) {
     phr->role = USER_ROLE_ADMIN;
+    strcpy(phr->role_name, "master");
     privileged_entry_point(fout, phr);
   } else if (!strcmp(last_name, "new-judge") || !strcmp(last_name, "judge")) {
     phr->role = USER_ROLE_JUDGE;
+    strcpy(phr->role_name, "judge");
     privileged_entry_point(fout, phr);
-  } else if (!strcmp(last_name, "new-register")
-             || !strcmp(last_name, "register")) {
+  } else if (!strcmp(last_name, "new-register") || !strcmp(last_name, "register")) {
     // FIXME: temporary hack
     phr->locale_id = orig_locale_id;
+    strcpy(phr->role_name, "register");
     ns_register_pages(fout, phr);
   } else if (!strcmp(last_name, "ejudge-contests-cmd")) {
+    strcpy(phr->role_name, "cmd");
     phr->protocol_reply = new_server_cmd_handler(fout, phr);
-  } else
+  } else {
+    strcpy(phr->role_name, "user");
     unprivileged_entry_point(fout, phr);
+  }
 }
