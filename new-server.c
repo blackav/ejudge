@@ -32,6 +32,7 @@
 #include "pathutl.h"
 #include "userlist.h"
 #include "compat.h"
+#include "xml_utils.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/osdeps.h"
@@ -399,6 +400,13 @@ cmd_http_request(
 
   *pbuf = 0;
   // report IP?
+  if (hr.ssl_flag) {
+    pbuf = stpcpy(pbuf, "HTTPS:");
+  } else {
+    pbuf = stpcpy(pbuf, "HTTPS:");
+  }
+  pbuf = stpcpy(pbuf, xml_unparse_ipv6(&hr.ip));
+  *pbuf++ = ':';
   if (hr.role_name) {
     pbuf = stpcpy(pbuf, hr.role_name);
   }
