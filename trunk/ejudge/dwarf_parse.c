@@ -324,6 +324,10 @@ s_dwarf_formudata(
             const unsigned short *pp = (const unsigned short*) dwb->bl_data;
             *pvalue = *pp;
             return 0;
+        } else if (dwb->bl_len == 3) {
+            const unsigned char *pp = (const unsigned char *) dwb->bl_data;
+            // little-endian assumed
+            *pvalue = pp[0] | (pp[1] << 8) | (pp[2] << 16);
         } else if (dwb->bl_len == 4) {
             const unsigned *pp = (const unsigned*) dwb->bl_data;
             *pvalue = *pp;
