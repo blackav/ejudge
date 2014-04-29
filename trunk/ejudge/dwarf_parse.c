@@ -393,7 +393,7 @@ s_dwarf_formflag(
                 path, dwarf_errmsg(dwe));
         return -1;
     }
-    if (form_num != DW_FORM_flag_present) {
+    if (form_num != DW_FORM_flag_present && form_num != DW_FORM_flag) {
         const char *s = NULL;
         dwarf_get_FORM_name(form_num, &s);
         fprintf(log_f, "%s: DW_FORM_flag expected, but %s obtained\n",
