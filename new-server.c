@@ -449,7 +449,7 @@ cmd_http_request(
   if (hr.content_type && hr.content_type[0]) {
     // generate header
     char *hdr_t = NULL;
-    size_t hdr_z = NULL;
+    size_t hdr_z = 0;
     FILE *hdr_f = open_memstream(&hdr_t, &hdr_z);
 
     fprintf(hdr_f, "Content-Type: %s\n", hr.content_type);
