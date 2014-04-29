@@ -319,12 +319,15 @@ s_dwarf_formudata(
         if (dwb->bl_len == 1) {
             const unsigned char *pp = (const unsigned char*) dwb->bl_data;
             *pvalue = *pp;
+            return 0;
         } else if (dwb->bl_len == 2) {
             const unsigned short *pp = (const unsigned short*) dwb->bl_data;
             *pvalue = *pp;
+            return 0;
         } else if (dwb->bl_len == 4) {
             const unsigned *pp = (const unsigned*) dwb->bl_data;
             *pvalue = *pp;
+            return 0;
         } else {
             fprintf(log_f, "%s: invalid block length %d\n", path, (int) dwb->bl_len);
             return -1;
