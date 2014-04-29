@@ -310,10 +310,30 @@ s_dwarf_formudata(
                 path, dwarf_errmsg(dwe));
         return -1;
     }
+    if (form_num == DW_FORM_block1 || form_num == DW_FORM_block2 || form_num == DW_FORM_block4) {
+        Dwarf_Block *dwb = NULL;
+        if (dwarf_formblock(attr, &dwb, &dwe) != DW_DLV_OK) {
+            fprintf(log_f, "%s: dwarf_formblock failed: %s\n", path, dwarf_errmsg(dwe));
+            return -1;
+        }
+        if (dwb->bl_len == 1) {
+            const unsigned char *pp = (const unsigned char*) dwb->bl_data;
+            *pvalue = *pp;
+        } else if (dwb->bl_len == 2) {
+            const unsigned short *pp = (const unsigned short*) dwb->bl_data;
+            *pvalue = *pp;
+        } else if (dwb->bl_len == 4) {
+            const unsigned *pp = (const unsigned*) dwb->bl_data;
+            *pvalue = *pp;
+        } else {
+            fprintf(log_f, "%s: invalid block length %d\n", path, (int) dwb->bl_len);
+            return -1;
+        }
+    }
     if (form_num != DW_FORM_data1 && form_num != DW_FORM_data2 && form_num != DW_FORM_data4 && form_num != DW_FORM_data8) {
         const char *s = NULL;
         dwarf_get_FORM_name(form_num, &s);
-        fprintf(log_f, "%s: DW_FORM_data1 expected, but %s obtained\n",
+        fprintf(log_f, "%s: DW_FORM_data* expected, but %s obtained\n",
                 path, s);
         return -1;
     }
