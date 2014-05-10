@@ -31,6 +31,7 @@ ns_unparse_answers(
         const unsigned char *class_name);
 %><%@set getter_name = "csp_get_priv_submit_page"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@set err_prefix = "NEW_SRV_ERR_"
 %><%@page csp_view_priv_submit_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 %><%@include "priv_stdvars.csp"
 %><%
@@ -42,18 +43,14 @@ ns_unparse_answers(
   path_t variant_stmt_file;
   unsigned char title[1024];
 
-  if (hr_cgi_param_int_opt(phr, "problem", &prob_id, 0) < 0) {
-    FAIL(NEW_SRV_ERR_INV_RUN_ID);
-  }
+%><s:read var="prob_id" name="problem" default="0" error="inv-run-id" /><%
   if (prob_id < 0 || prob_id > cs->max_prob) {
     FAIL(NEW_SRV_ERR_INV_PROB_ID);
   }
   if (prob_id > 0 && !(prob = cs->probs[prob_id])) {
     FAIL(NEW_SRV_ERR_INV_PROB_ID);
   }
-  if (hr_cgi_param_int_opt(phr, "variant", &variant, 0) < 0) {
-    FAIL(NEW_SRV_ERR_INV_VARIANT);
-  }
+%><s:read var="variant" error="inv-variant" /><%
   if (!prob) variant = 0;
   if (prob && prob->variant_num <= 0) variant = 0;
   if (variant < 0
