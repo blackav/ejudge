@@ -126,18 +126,16 @@ int retval __attribute__((unused)) = 0;
     int flags, pages_total;
     int runs_num = 0, clars_num = 0;
     size_t clars_total = 0, runs_total = 0;
-    const unsigned char *s;
     const struct userlist_user *u = 0;
     const struct userlist_contest *uc = 0;
     int allowed_edit = 0, needed_cap = 0, init_value, i;
     struct userlist_user_info *ui = 0;
-    int view_user_id = 0, n;
+    int view_user_id = 0;
     const unsigned char *title = NULL;
-
-
-  if (hr_cgi_param(phr, "user_id", &s) <= 0
-      || sscanf(s, "%d%n", &view_user_id, &n) != 1 || s[n]
-      || !teamdb_lookup(cs->teamdb_state, view_user_id))
+if (hr_cgi_param_int_2(phr, "user_id", &(view_user_id)) <= 0) {
+  FAIL(NEW_SRV_ERR_INV_USER_ID);
+}
+if (!teamdb_lookup(cs->teamdb_state, view_user_id))
     FAIL(NEW_SRV_ERR_INV_USER_ID);
 
   if (opcaps_check(phr->caps, OPCAP_GET_USER) < 0)

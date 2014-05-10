@@ -113,17 +113,15 @@ time_t cur_time;
     fprintf(log_f, "contest %d password recovery disabled", cnts->id);
     FAIL(NEW_SRV_ERR_SERVICE_NOT_AVAILABLE);
   }
-
-  if (hr_cgi_param(phr, "login", &login) <= 0) {
-    fprintf(log_f, "login is not specified");
-    FAIL(NEW_SRV_ERR_INV_PARAM);
-  }
-  if (hr_cgi_param(phr, "email", &email) <= 0) {
-    fprintf(log_f, "email is not specified");
-    FAIL(NEW_SRV_ERR_INV_PARAM);
-  }
-
-  if (ns_open_ul_connection(phr->fw_state) < 0) {
+if (hr_cgi_param(phr, "login", &(login)) <= 0) {
+  fputs("login is not specified", log_f);
+  FAIL(NEW_SRV_ERR_INV_PARAM);
+}
+if (hr_cgi_param(phr, "email", &(email)) <= 0) {
+  fputs("email is not specified", log_f);
+  FAIL(NEW_SRV_ERR_INV_PARAM);
+}
+if (ns_open_ul_connection(phr->fw_state) < 0) {
     FAIL(NEW_SRV_ERR_USERLIST_SERVER_DOWN);
   }
   r = userlist_clnt_register_new(ul_conn, ULS_RECOVER_PASSWORD_1,

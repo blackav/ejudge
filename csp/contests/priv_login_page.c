@@ -66,21 +66,18 @@ int retval __attribute__((unused)) = 0;
   struct html_armor_buffer ab __attribute__((unused)) = HTML_ARMOR_INITIALIZER;
   unsigned char hbuf[1024] __attribute__((unused));
   const unsigned char *sep __attribute__((unused)) = NULL;
-const unsigned char *s;
-  int r, n;
-  const unsigned char *login = NULL;
+const unsigned char *login = NULL;
   const unsigned char *password = NULL;
   int contest_id = phr->contest_id;
   const unsigned char *title = _("Login page");
-hr_cgi_param(phr, "login", &login);
-  hr_cgi_param(phr, "password", &password);
-
-  if (!phr->role) {
+  int role;
+hr_cgi_param(phr, "login", &(login));
+hr_cgi_param(phr, "password", &(password));
+if (!phr->role) {
     phr->role = USER_ROLE_OBSERVER;
-    if (hr_cgi_param(phr, "role", &s) > 0) {
-      if (sscanf(s, "%d%n", &r, &n) == 1 && !s[n]
-          && r >= USER_ROLE_CONTESTANT && r < USER_ROLE_LAST)
-        phr->role = r;
+hr_cgi_param_int_opt(phr, "role", &(role), 0);
+if (role >= USER_ROLE_CONTESTANT && role < USER_ROLE_LAST) {
+       phr->role = role;
     }
   }
 

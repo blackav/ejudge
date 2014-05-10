@@ -150,11 +150,9 @@ time_t cur_time;
   } else {
     cnts_name = html_armor_string_dup(cnts->name);
   }
-
-  hr_cgi_param(phr, "login", &login_str);
-  hr_cgi_param(phr, "password", &password_str);
-
-  phr->hidden_vars = "";
+hr_cgi_param(phr, "login", &(login_str));
+hr_cgi_param(phr, "password", &(password_str));
+phr->hidden_vars = "";
   l10n_setlocale(phr->locale_id);
   snprintf(title, sizeof(title), "%s [%s]", _("User login"), cnts_name);
 fwrite(csp_str0, 1, 183, out_f);

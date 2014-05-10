@@ -130,7 +130,6 @@ path_t src_path;
   unsigned char bb[1024];
   const struct section_problem_data *prob = 0;
   const struct section_language_data *lang = 0;
-  const unsigned char *ss;
   const struct section_global_data *global = cs->global;
   const unsigned char *run_charset = 0;
   int charset_id = 0;
@@ -147,9 +146,8 @@ path_t src_path;
   if (opcaps_check(phr->caps, OPCAP_VIEW_SOURCE) < 0) {
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   }
-
-  if (hr_cgi_param(phr, "run_charset", &ss) > 0 && ss && *ss)
-    run_charset = ss;
+hr_cgi_param(phr, "run_charset", &(run_charset));
+if (run_charset && !*run_charset) run_charset = NULL;
 
   if (run_id < 0 || run_id >= run_get_total(cs->runlog_state)) {
     FAIL(NEW_SRV_ERR_INV_RUN_ID);
