@@ -4087,6 +4087,9 @@ handle_read_open(
         parser_error_2(ps, "failed to parse C expression for var attribute");
         return -1;
     }
+    fprintf(log_f, "Read expression type: ");
+    tc_print_2(log_f, var_type, 2);
+    fprintf(log_f, "\n");
     r = processor_state_invoke_read_type_handler(log_f, cntx, ps, txt_f, prg_f, elem, var_attr->value, name_attr->value, var_type);
     if (r < 0) {
         return -1;
@@ -4583,6 +4586,124 @@ int_read_type_handler(
 }
 
 static int
+string_read_type_handler(
+        FILE *log_f,
+        TypeContext *cntx,
+        struct ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f,
+        const HtmlElement *elem,
+        const unsigned char *var_name,
+        const unsigned char *param_name,
+        TypeInfo *type_info)
+{
+    unsigned char errcode_buf[1024];
+    int required = html_attribute_get_bool(html_element_find_attribute(elem, "required"), 0);
+    if (required) {
+        // <s:read var="VAR" name="NAME" required="yes" [ignoreerrors="BOOL"] [gotoerrors="BOOL"] [error="CODE"] [missing="CODE"] [invalid="CODE"] />
+        const unsigned char *error_code = html_element_find_attribute_value(elem, "error");
+        const unsigned char *missing_code = html_element_find_attribute_value(elem, "missing");
+        const unsigned char *invalid_code = html_element_find_attribute_value(elem, "invalid");
+        const unsigned char *error_msg = html_element_find_attribute_value(elem, "errormsg");
+        const unsigned char *missing_msg = html_element_find_attribute_value(elem, "missingmsg");
+        const unsigned char *invalid_msg = html_element_find_attribute_value(elem, "invalidmsg");
+        int ignoreerrors = html_attribute_get_bool(html_element_find_attribute(elem, "ignoreerrors"), 0);
+        if (!missing_code) missing_code = error_code;
+        if (!invalid_code) invalid_code = error_code;
+        if (!missing_msg) missing_msg = error_msg;
+        if (!invalid_msg) invalid_msg = error_msg;
+        if (ignoreerrors) {
+            fprintf(prg_f, "hr_cgi_param(phr, \"%s\", &(%s));\n", param_name, var_name);
+        } else {
+            int gotoerrors = html_attribute_get_bool(html_element_find_attribute(elem, "gotoerrors"), 0);
+            if (!missing_code) missing_code = "inv-param";
+            if (!invalid_code) invalid_code = "inv-param";
+            if (!strcmp(missing_code, invalid_code)) {
+                if (gotoerrors) {
+                    fprintf(prg_f, "if (hr_cgi_param(phr, \"%s\", &(%s)) <= 0) {\n"
+                            "  goto %s;\n"
+                            "}\n",
+                            param_name, var_name, invalid_code);
+                } else {
+                    fprintf(prg_f, "if (hr_cgi_param(phr, \"%s\", &(%s)) <= 0) {\n", param_name, var_name);
+                    if (error_msg) {
+                        fprintf(prg_f, "  fputs(\"%s\", log_f);\n", error_msg);
+                    }
+                    fprintf(prg_f, "  FAIL(%s);\n"
+                            "}\n",
+                            process_err_attr(log_f, cntx, ps, errcode_buf, sizeof(errcode_buf), invalid_code));
+                }
+            } else {
+                fprintf(prg_f,
+                        "{\n"
+                        "  int tmp_err = hr_cgi_param(phr, \"%s\", &(%s));\n",
+                        param_name, var_name);
+                if (gotoerrors) {
+                    fprintf(prg_f,
+                            "  if (!tmp_err) {\n"
+                            "    goto %s;\n"
+                            "  } else if (tmp_err < 0) {\n"
+                            "    goto %s;\n"
+                            "  }\n"
+                            "}\n",
+                            missing_code, invalid_code);
+                } else {
+                    fprintf(prg_f, "  if (!tmp_err) {\n");
+                    if (missing_msg) {
+                        fprintf(prg_f, "  fputs(\"%s\", log_f);\n", missing_msg);
+                    }
+                    fprintf(prg_f,
+                            "    FAIL(%s);\n"
+                            "  } else if (tmp_err < 0) {\n",
+                            process_err_attr(log_f, cntx, ps, errcode_buf, sizeof(errcode_buf), missing_code));
+                    if (invalid_msg) {
+                        fprintf(prg_f, "  fputs(\"%s\", log_f);\n", invalid_msg);
+                    }
+                    fprintf(prg_f,
+                            "    FAIL(%s);\n"
+                            "  }\n"
+                            "}\n",
+                            process_err_attr(log_f, cntx, ps, errcode_buf, sizeof(errcode_buf), invalid_code));
+                }
+            }
+        }
+    } else {
+        // <s:read var="VAR" name="NAME" [ignoreerrors="BOOL"] [error="CODE"] [invalid="CODE"] />
+        int ignoreerrors = html_attribute_get_bool(html_element_find_attribute(elem, "ignoreerrors"), 0);
+        if (ignoreerrors) {
+            fprintf(prg_f, "hr_cgi_param(phr, \"%s\", &(%s));\n", param_name, var_name);
+        } else {
+            const unsigned char *error_code = html_element_find_attribute_value(elem, "error");
+            const unsigned char *invalid_code = html_element_find_attribute_value(elem, "invalid");
+            const unsigned char *error_msg = html_element_find_attribute_value(elem, "errormsg");
+            const unsigned char *invalid_msg = html_element_find_attribute_value(elem, "invalidmsg");
+            int gotoerrors = html_attribute_get_bool(html_element_find_attribute(elem, "gotoerrors"), 0);
+            if (!invalid_code) invalid_code = error_code;
+            if (!invalid_code) invalid_code = "inv-param";
+            if (!invalid_msg) invalid_msg = error_msg;
+            if (gotoerrors) {
+                fprintf(prg_f, "if (hr_cgi_param(phr, \"%s\", &(%s)) < 0) {\n"
+                        "  goto %s;\n"
+                        "}\n",
+                        param_name, var_name, invalid_code);
+            } else {
+                fprintf(prg_f, "if (hr_cgi_param(phr, \"%s\", &(%s)) < 0) {\n", param_name, var_name);
+                if (invalid_msg) {
+                    fprintf(prg_f, "  fputs(\"%s\", log_f);\n", invalid_msg);
+                }
+                fprintf(prg_f,
+                        "  FAIL(%s);\n"
+                        "}\n",
+                        
+                        process_err_attr(log_f, cntx, ps, errcode_buf, sizeof(errcode_buf), invalid_code));
+            }
+        }
+    }
+
+    return 0;
+}
+
+static int
 has_non_whitespace(
         const unsigned char *txt,
         int start_idx,
@@ -4837,6 +4958,12 @@ process_unit(
     processor_state_set_array_type_handler(ps, tc_get_i8_type(cntx), string_type_handler);
 
     processor_state_set_read_type_handler(ps, tc_get_i32_type(cntx), int_read_type_handler);
+    processor_state_set_read_type_handler(ps, tc_get_ptr_type(cntx, tc_get_const_type(cntx, tc_get_u8_type(cntx))),
+                                          string_read_type_handler);
+    processor_state_set_read_type_handler(ps, tc_get_ptr_type(cntx, tc_get_const_type(cntx, tc_get_i8_type(cntx))),
+                                          string_read_type_handler);
+    processor_state_set_read_type_handler(ps, tc_get_ptr_type(cntx, tc_get_u8_type(cntx)), string_read_type_handler);
+    processor_state_set_read_type_handler(ps, tc_get_ptr_type(cntx, tc_get_i8_type(cntx)), string_read_type_handler);
 
     char *txt_t = NULL;
     size_t txt_z = 0;
