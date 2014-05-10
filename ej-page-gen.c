@@ -216,6 +216,29 @@ typedef struct TypeHandlerArray
     TypeHandlerInfo *v;
 } TypeHandlerArray;
 
+typedef int (*ReadTypeHandler)(
+        FILE *log_f,
+        TypeContext *cntx,
+        struct ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f,
+        const HtmlElement *elem,
+        const unsigned char *var_name,
+        const unsigned char *param_name,
+        TypeInfo *type_info);
+
+typedef struct ReadTypeHandlerInfo
+{
+    TypeInfo *type_info;
+    ReadTypeHandler handler;
+} ReadTypeHandlerInfo;
+
+typedef struct ReadTypeHandlerArray
+{
+    int a, u;
+    ReadTypeHandlerInfo *v;
+} ReadTypeHandlerArray;
+
 typedef struct ProcessorState
 {
     unsigned char **filenames;
@@ -232,6 +255,8 @@ typedef struct ProcessorState
     TypeHandlerArray array_type_handlers;
     TypeHandler default_type_handler;
     NamedUrlArray urls;
+    ReadTypeHandlerArray read_type_handlers;
+    ReadTypeHandlerArray read_array_type_handlers;
 } ProcessorState;
 
 static ProcessorState *
@@ -343,6 +368,37 @@ processor_state_invoke_type_handler(
     return ps->default_type_handler(log_f, cntx, ps, txt_f, prg_f, text, elem, type_info);
 }
 
+static int
+processor_state_invoke_read_type_handler(
+        FILE *log_f,
+        TypeContext *cntx,
+        ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f,
+        const HtmlElement *elem,
+        const unsigned char *var_name,
+        const unsigned char *param_name,
+        TypeInfo *type_info)
+{
+    if (type_info && type_info->kind == NODE_ARRAY_TYPE) {
+        for (int i = 0; i < ps->read_array_type_handlers.u; ++i) {
+            if (ps->read_array_type_handlers.v[i].type_info == type_info->n.info[1]) {
+                return ps->read_array_type_handlers.v[i].handler(log_f, cntx, ps, txt_f, prg_f, elem, var_name, param_name, type_info);
+            }
+        }
+    }
+
+    for (int i = 0; i < ps->read_type_handlers.u; ++i) {
+        if (ps->read_type_handlers.v[i].type_info == type_info) {
+            return ps->read_type_handlers.v[i].handler(log_f, cntx, ps, txt_f, prg_f, elem, var_name, param_name, type_info);
+        }
+    }
+    parser_error_2(ps, "no read type handler installed");
+    tc_print_2(log_f, type_info, 3);
+    fprintf(log_f, "\n");
+    return -1;
+}
+
 static void
 add_type_handler(
         TypeHandlerArray *pa,
@@ -380,6 +436,57 @@ processor_state_set_array_type_handler(
         TypeHandler handler)
 {
     add_type_handler(&ps->array_type_handlers, type_info, handler);
+}
+
+static void
+add_read_type_handler(
+        ReadTypeHandlerArray *pa,
+        TypeInfo *type_info,
+        ReadTypeHandler handler)
+{
+    if (!type_info) return;
+
+    int i;
+    for (i = 0; i < pa->u && pa->v[i].type_info != type_info; ++i) {}
+    if (i >= pa->u) {
+        if (pa->u >= pa->a) {
+            if (!(pa->a *= 2)) pa->a = 32;
+            XREALLOC(pa->v, pa->a);
+        }
+        pa->v[i].type_info = type_info;
+        ++pa->u;
+    }
+    pa->v[i].handler = handler;
+}
+
+static void
+processor_state_set_read_type_handler(
+        ProcessorState *ps,
+        TypeInfo *type_info,
+        ReadTypeHandler handler)
+    __attribute__((unused));
+static void
+processor_state_set_read_type_handler(
+        ProcessorState *ps,
+        TypeInfo *type_info,
+        ReadTypeHandler handler)
+{
+    add_read_type_handler(&ps->read_type_handlers, type_info, handler);
+}
+
+static void
+processor_state_set_read_array_type_handler(
+        ProcessorState *ps,
+        TypeInfo *type_info,
+        ReadTypeHandler handler)
+    __attribute__((unused));
+static void
+processor_state_set_read_array_type_handler(
+        ProcessorState *ps,
+        TypeInfo *type_info,
+        ReadTypeHandler handler)
+{
+    add_read_type_handler(&ps->read_array_type_handlers, type_info, handler);
 }
 
 static void
@@ -3077,6 +3184,30 @@ process_ac_attr(
     return 1;
 }
 
+static const unsigned char *
+process_err_attr(
+        FILE *log_f,
+        TypeContext *cntx,
+        ProcessorState *ps,
+        unsigned char *buf,
+        int bufsize,
+        const unsigned char *err_name)
+{
+    if (!err_name) err_name = "inv-param";
+    const unsigned char *err_prefix = "";
+    TypeInfo *err_prefix_attr = processor_state_find_setting(ps, tc_get_ident(cntx, "err_prefix"));
+    if (err_prefix_attr && err_prefix_attr->kind == NODE_STRING) {
+        err_prefix = err_prefix_attr->s.str;
+    }
+    snprintf(buf, bufsize, "%s%s", err_prefix, err_name);
+    int len = strlen(buf);
+    for (int i = 0; i < len; ++i) {
+        if (buf[i] == '-') buf[i] = '_';
+        buf[i] = toupper(buf[i]);
+    }
+    return buf;
+}
+
 static int
 handle_a_open(
         FILE *log_f,
@@ -3929,6 +4060,41 @@ handle_ac_open(
     return 0;
 }
 
+/* <s:read var="VAR" name="NAME" /> */
+static int
+handle_read_open(
+        FILE *log_f,
+        TypeContext *cntx,
+        ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f)
+{
+    HtmlElement *elem = ps->el_stack->el;
+
+    HtmlAttribute *var_attr = html_element_find_attribute(elem, "var");
+    HtmlAttribute *name_attr = html_element_find_attribute(elem, "name");
+
+    if (!var_attr && !name_attr) {
+        parser_error_2(ps, "'var' or 'name' attributes are required for s:read");
+        return -1;
+    }
+    if (!var_attr) var_attr = name_attr;
+    if (!name_attr) name_attr = var_attr;
+
+    TypeInfo *var_type = NULL;
+    int r = parse_c_expression(ps, cntx, log_f, var_attr->value, &var_type, ps->pos);
+    if (r < 0) {
+        parser_error_2(ps, "failed to parse C expression for var attribute");
+        return -1;
+    }
+    r = processor_state_invoke_read_type_handler(log_f, cntx, ps, txt_f, prg_f, elem, var_attr->value, name_attr->value, var_type);
+    if (r < 0) {
+        return -1;
+    }
+
+    return 0;
+}
+
 struct ElementInfo
 {
     const unsigned char *name;
@@ -3972,6 +4138,7 @@ static const struct ElementInfo element_handlers[] =
     { "s:img", handle_img_open, NULL },
     { "s:radio", handle_textfield_open, NULL },
     { "s:ac", handle_ac_open, NULL },
+    { "s:read", handle_read_open, NULL },
 
     { NULL, NULL, NULL },
 };
@@ -4289,6 +4456,133 @@ ej_brief_time_type_handler(
 }
 
 static int
+int_read_type_handler(
+        FILE *log_f,
+        TypeContext *cntx,
+        struct ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f,
+        const HtmlElement *elem,
+        const unsigned char *var_name,
+        const unsigned char *param_name,
+        TypeInfo *type_info)
+{
+    unsigned char errcode_buf[1024];
+    int required = html_attribute_get_bool(html_element_find_attribute(elem, "required"), 0);
+    if (required) {
+        // <s:read var="VAR" name="NAME" required="yes" [ignoreerrors="BOOL"] [gotoerrors="BOOL"] [error="CODE"] [missing="CODE"] [invalid="CODE"] />
+        const unsigned char *error_code = html_element_find_attribute_value(elem, "error");
+        const unsigned char *missing_code = html_element_find_attribute_value(elem, "missing");
+        const unsigned char *invalid_code = html_element_find_attribute_value(elem, "invalid");
+        int ignoreerrors = html_attribute_get_bool(html_element_find_attribute(elem, "ignoreerrors"), 0);
+        if (!missing_code) missing_code = error_code;
+        if (!invalid_code) invalid_code = error_code;
+        if (ignoreerrors) {
+            fprintf(prg_f, "hr_cgi_param_int_2(phr, \"%s\", &(%s));\n", param_name, var_name);
+        } else {
+            int gotoerrors = html_attribute_get_bool(html_element_find_attribute(elem, "gotoerrors"), 0);
+            if (!missing_code) missing_code = "inv-param";
+            if (!invalid_code) invalid_code = "inv-param";
+            if (!strcmp(missing_code, invalid_code)) {
+                if (gotoerrors) {
+                    fprintf(prg_f, "if (hr_cgi_param_int_2(phr, \"%s\", &(%s)) <= 0) {\n"
+                            "  goto %s;\n"
+                            "}\n",
+                            param_name, var_name, invalid_code);
+                } else {
+                    fprintf(prg_f, "if (hr_cgi_param_int_2(phr, \"%s\", &(%s)) <= 0) {\n"
+                            "  FAIL(%s);\n"
+                            "}\n",
+                            param_name, var_name,
+                            process_err_attr(log_f, cntx, ps, errcode_buf, sizeof(errcode_buf), invalid_code));
+                }
+            } else {
+                fprintf(prg_f,
+                        "{\n"
+                        "  int tmp_err = hr_cgi_param_int_2(phr, \"%s\", &(%s));\n",
+                        param_name, var_name);
+                if (gotoerrors) {
+                    fprintf(prg_f,
+                            "  if (!tmp_err) {\n"
+                            "    goto %s;\n"
+                            "  } else if (tmp_err < 0) {\n"
+                            "    goto %s;\n"
+                            "  }\n"
+                            "}\n",
+                            missing_code, invalid_code);
+                } else {
+                    fprintf(prg_f,
+                            "  if (!tmp_err) {\n"
+                            "    FAIL(%s);\n"
+                            "  } else if (tmp_err < 0) {\n",
+                            process_err_attr(log_f, cntx, ps, errcode_buf, sizeof(errcode_buf), missing_code));
+                    fprintf(prg_f,
+                            "    FAIL(%s);\n"
+                            "  }\n"
+                            "}\n",
+                            process_err_attr(log_f, cntx, ps, errcode_buf, sizeof(errcode_buf), invalid_code));
+                }
+            }
+        }
+    } else {
+        const unsigned char *flagvar_name = html_element_find_attribute_value(elem, "flagvar");
+        if (flagvar_name) {
+            // <s:read var="VAR" name="NAME" flagvar="VAR" [ignoreerrors="BOOL"] [error="CODE"] [invalid="CODE"] />
+            int ignoreerrors = html_attribute_get_bool(html_element_find_attribute(elem, "ignoreerrors"), 0);
+            if (ignoreerrors) {
+                fprintf(prg_f, "hr_cgi_param_int_opt_2(phr, \"%s\", &(%s), &(%s));\n", param_name, var_name, flagvar_name);
+            } else {
+                const unsigned char *error_code = html_element_find_attribute_value(elem, "error");
+                const unsigned char *invalid_code = html_element_find_attribute_value(elem, "invalid");
+                int gotoerrors = html_attribute_get_bool(html_element_find_attribute(elem, "gotoerrors"), 0);
+                if (!invalid_code) invalid_code = error_code;
+                if (!invalid_code) invalid_code = "inv-param";
+                if(gotoerrors) {
+                    fprintf(prg_f, "if (hr_cgi_param_int_opt_2(phr, \"%s\", &(%s), &(%s)) < 0) {\n"
+                            "  goto %s;\n"
+                            "}\n",
+                            param_name, var_name, flagvar_name, invalid_code);
+                } else {
+                    fprintf(prg_f, "if (hr_cgi_param_int_opt_2(phr, \"%s\", &(%s), &(%s)) < 0) {\n"
+                            "  FAIL(%s);\n"
+                            "}\n",
+                            param_name, var_name, flagvar_name,
+                            process_err_attr(log_f, cntx, ps, errcode_buf, sizeof(errcode_buf), invalid_code));
+                }
+            }
+        } else {
+            // <s:read var="VAR" name="NAME" default="VALUE" [ignoreerrors="BOOL"] [error="CODE"] [invalid="CODE"] />
+            int ignoreerrors = html_attribute_get_bool(html_element_find_attribute(elem, "ignoreerrors"), 0);
+            const unsigned char *default_value = html_element_find_attribute_value(elem, "default");
+            if (!default_value) default_value = "0";
+            if (ignoreerrors) {
+                fprintf(prg_f, "hr_cgi_param_int_opt(phr, \"%s\", &(%s), %s);\n", param_name, var_name, default_value);
+            } else {
+                const unsigned char *error_code = html_element_find_attribute_value(elem, "error");
+                const unsigned char *invalid_code = html_element_find_attribute_value(elem, "invalid");
+                int gotoerrors = html_attribute_get_bool(html_element_find_attribute(elem, "gotoerrors"), 0);
+                if (!invalid_code) invalid_code = error_code;
+                if (!invalid_code) invalid_code = "inv-param";
+                if (gotoerrors) {
+                    fprintf(prg_f, "if (hr_cgi_param_int_opt(phr, \"%s\", &(%s), %s) < 0) {\n"
+                            "  goto %s;\n"
+                            "}\n",
+                            param_name, var_name, default_value, invalid_code);
+                } else {
+                    fprintf(prg_f, "if (hr_cgi_param_int_opt(phr, \"%s\", &(%s), %s) < 0) {\n"
+                            "  FAIL(%s);\n"
+                            "}\n",
+                            param_name, var_name, default_value,
+                            process_err_attr(log_f, cntx, ps, errcode_buf, sizeof(errcode_buf), invalid_code));
+                }
+            }
+        }
+    }
+
+    return 0;
+}
+
+static int
 has_non_whitespace(
         const unsigned char *txt,
         int start_idx,
@@ -4541,6 +4835,8 @@ process_unit(
 
     processor_state_set_array_type_handler(ps, tc_get_u8_type(cntx), string_type_handler);
     processor_state_set_array_type_handler(ps, tc_get_i8_type(cntx), string_type_handler);
+
+    processor_state_set_read_type_handler(ps, tc_get_i32_type(cntx), int_read_type_handler);
 
     char *txt_t = NULL;
     size_t txt_z = 0;

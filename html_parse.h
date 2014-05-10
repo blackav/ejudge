@@ -58,6 +58,10 @@ struct HtmlAttribute *
 html_element_find_attribute(
         const struct HtmlElement *elem,
         const unsigned char *name);
+const unsigned char *
+html_element_find_attribute_value(
+        const struct HtmlElement *elem,
+        const unsigned char *name);
 
 void
 html_element_print(

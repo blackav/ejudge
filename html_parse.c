@@ -406,6 +406,16 @@ html_element_add_child(HtmlElement *elem, HtmlElement *child)
     LINK_LAST(child, elem->first_child, elem->last_child, prev_sibling, next_sibling);
 }
 
+const unsigned char *
+html_element_find_attribute_value(
+        const struct HtmlElement *elem,
+        const unsigned char *name)
+{
+    HtmlAttribute *attr = html_element_find_attribute(elem, name);
+    if (!attr) return NULL;
+    return attr->value;
+}
+
 /*
  * Local variables:
  *  c-basic-offset: 4

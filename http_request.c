@@ -118,6 +118,30 @@ hr_cgi_param_int(
   return 0;
 }
 
+/* returns -1 if invalid param, 0 if no param, 1 if ok */
+int
+hr_cgi_param_int_2(
+        const struct http_request_info *phr,
+        const unsigned char *name,
+        int *p_val)
+{
+  const unsigned char *s = 0, *p = 0;
+  char *eptr = 0;
+  int x, r;
+
+  if ((r = hr_cgi_param(phr, name, &s)) <= 0) return r;
+
+  p = s;
+  while (*p && isspace(*p)) p++;
+  if (!*p) return 0;
+
+  errno = 0;
+  x = strtol(s, &eptr, 10);
+  if (errno || *eptr) return -1;
+  if (p_val) *p_val = x;
+  return 1;
+}
+
 int
 hr_cgi_param_int_opt(
         struct http_request_info *phr,
