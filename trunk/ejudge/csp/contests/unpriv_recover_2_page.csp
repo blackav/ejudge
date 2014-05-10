@@ -5,6 +5,7 @@
 #include "userlist_clnt.h"
 #include "userlist_proto.h"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@set err_prefix = "NEW_SRV_ERR_"
 %><%@set getter_name = "csp_get_unpriv_recover_2_page"
 %><%@page csp_view_unpriv_recover_2_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 %><%@include "unpriv_stdvars.csp"
@@ -37,14 +38,8 @@
     FAIL(NEW_SRV_ERR_SERVICE_NOT_AVAILABLE);
   }
 
-  if (hr_cgi_param(phr, "login", &login) <= 0) {
-    fprintf(log_f, "login is not specified");
-    FAIL(NEW_SRV_ERR_INV_PARAM);
-  }
-  if (hr_cgi_param(phr, "email", &email) <= 0) {
-    fprintf(log_f, "email is not specified");
-    FAIL(NEW_SRV_ERR_INV_PARAM);
-  }
+%><s:read var="login" required="yes" errormsg="login is not specified" /><%
+%><s:read var="email" required="yes" errormsg="email is not specified" /><%
 
   if (ns_open_ul_connection(phr->fw_state) < 0) {
     FAIL(NEW_SRV_ERR_USERLIST_SERVER_DOWN);

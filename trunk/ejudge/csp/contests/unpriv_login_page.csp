@@ -4,6 +4,7 @@
 %><%
 #include "ejudge_cfg.h"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@set err_prefix = "NEW_SRV_ERR_"
 %><%@set getter_name = "csp_get_unpriv_login_page"
 %><%@page csp_view_unpriv_login_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 %><%@include "unpriv_stdvars.csp"
@@ -64,8 +65,8 @@
     cnts_name = html_armor_string_dup(cnts->name);
   }
 
-  hr_cgi_param(phr, "login", &login_str);
-  hr_cgi_param(phr, "password", &password_str);
+%><s:read var="login_str" name="login" ignoreerrors="yes" /><%
+%><s:read var="password_str" name="password" ignoreerrors="yes" /><%
 
   phr->hidden_vars = "";
   l10n_setlocale(phr->locale_id);

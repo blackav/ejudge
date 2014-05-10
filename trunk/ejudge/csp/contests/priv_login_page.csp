@@ -4,25 +4,24 @@
 %><%
 %><%@set getter_name = "csp_get_priv_login_page"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@set err_prefix = "NEW_SRV_ERR_"
 %><%@page csp_view_priv_login_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 %><%@include "priv_stdvars.csp"
 %><%
-  const unsigned char *s;
-  int r, n;
   const unsigned char *login = NULL;
   const unsigned char *password = NULL;
   int contest_id = phr->contest_id;
   const unsigned char *title = _("Login page");
+  int role;
 %><%
-  hr_cgi_param(phr, "login", &login);
-  hr_cgi_param(phr, "password", &password);
+%><s:read var="login" ignoreerrors="yes" /><%
+%><s:read var="password" ignoreerrors="yes" /><%
 
   if (!phr->role) {
     phr->role = USER_ROLE_OBSERVER;
-    if (hr_cgi_param(phr, "role", &s) > 0) {
-      if (sscanf(s, "%d%n", &r, &n) == 1 && !s[n]
-          && r >= USER_ROLE_CONTESTANT && r < USER_ROLE_LAST)
-        phr->role = r;
+%><s:read var="role" default="0" ignoreerrors="yes" /><%
+    if (role >= USER_ROLE_CONTESTANT && role < USER_ROLE_LAST) {
+       phr->role = role;
     }
   }
 

@@ -3,6 +3,7 @@
 %><%@include "unpriv_includes.csp"
 %><%
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@set err_prefix = "NEW_SRV_ERR_"
 %><%@set getter_name = "csp_get_unpriv_contests_page"
 %><%@page csp_view_unpriv_contests_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 %><%@include "unpriv_stdvars.csp"
@@ -22,7 +23,7 @@
     " bgcolor=\"#e0e0e0\"",
   };
 
-  hr_cgi_param(phr, "login", &login);
+%><s:read var="login" ignoreerrors="yes" /><%
 
   // defaulting to English as we have no contest chosen
   orig_locale_id = phr->locale_id;
