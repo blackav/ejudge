@@ -155,6 +155,11 @@ hr_cgi_param_int(
         const struct http_request_info *phr,
         const unsigned char *name,
         int *p_val);
+int
+hr_cgi_param_int_2(
+        const struct http_request_info *phr,
+        const unsigned char *name,
+        int *p_val);
 
 int
 hr_cgi_param_int_opt(
