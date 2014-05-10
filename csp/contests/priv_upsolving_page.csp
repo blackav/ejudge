@@ -3,13 +3,14 @@
 %><%@include "priv_includes.csp"
 %><%@set getter_name = "csp_get_priv_upsolving_page"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@set err_prefix = "NEW_SRV_ERR_"
 %><%@page csp_view_priv_upsolving_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 %><%@include "priv_stdvars.csp"
 %><%
   const unsigned char *freeze_standings = 0;
   const unsigned char *view_source = 0;
   const unsigned char *view_protocol = 0;
-  const unsigned char *full_proto = 0;
+  const unsigned char *full_protocol = 0;
   const unsigned char *disable_clars = 0;
   const unsigned char *title = NULL;
 
@@ -17,16 +18,16 @@
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);  
 
   if (cs->upsolving_mode) {
-    hr_cgi_param(phr, "freeze_standings", &freeze_standings);
-    hr_cgi_param(phr, "view_source", &view_source);
-    hr_cgi_param(phr, "view_protocol", &view_protocol);
-    hr_cgi_param(phr, "full_protocol", &full_proto);
-    hr_cgi_param(phr, "disable_clars", &disable_clars);
+%><s:read var="freeze_standings" ignoreerrors="yes" /><%
+%><s:read var="view_source" ignoreerrors="yes" /><%
+%><s:read var="view_protocol" ignoreerrors="yes" /><%
+%><s:read var="full_protocol" ignoreerrors="yes" /><%
+%><s:read var="disable_clars" ignoreerrors="yes" /><%
   } else {
     freeze_standings = "1";
     view_source = "1";
     view_protocol = "1";
-    full_proto = 0;
+    full_protocol = 0;
     disable_clars = "1";
   }
 

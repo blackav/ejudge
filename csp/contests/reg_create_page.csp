@@ -38,10 +38,10 @@
     
     (void) allowed_info_edit;
   } else {
-    if (hr_cgi_param(phr, "login", &login) <= 0) login = 0;
+%><s:read var="login" ignoreerrors="yes" /><%
     if (!login) login = "";
   }
-  if (hr_cgi_param(phr, "email", &email) <= 0) email = 0;
+%><s:read var="email" ignoreerrors="yes" /><%
   if (!email) email = "";
 
   l10n_setlocale(phr->locale_id);

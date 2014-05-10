@@ -4,6 +4,7 @@
 %><%
 // local includes go here
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@set err_prefix = "NEW_SRV_ERR_"
 %><%@set getter_name = "csp_get_reg_contests_page"
 %><%@page csp_view_reg_contests_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 %><%@include "reg_stdvars.csp"
@@ -23,7 +24,7 @@ static const unsigned char * const form_row_attrs[]=
 };
 
 // initial code goes here
-  hr_cgi_param(phr, "login", &login);
+%><s:read var="login" ignoreerrors="yes" /><%
 
   // defaulting to English as we have no contest chosen
   if (phr->locale_id < 0) phr->locale_id = 0;

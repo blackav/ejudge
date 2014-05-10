@@ -4,6 +4,7 @@
 %><%
 #include "ejudge_cfg.h"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@set err_prefix = "NEW_SRV_ERR_"
 %><%@set getter_name = "csp_get_reg_login_page"
 %><%@page csp_view_reg_login_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 %><%@include "reg_stdvars.csp"
@@ -17,11 +18,11 @@
     FAIL(NEW_SRV_ERR_INV_CONTEST_ID);
   }
 
-  hr_cgi_param(phr, "login", &login);
+%><s:read var="login" ignoreerrors="yes" /><%
+%><s:read var="password" ignoreerrors="yes" /><%
+%><s:read var="email" ignoreerrors="yes" /><%
   if (!login) login = "";
-  hr_cgi_param(phr, "password", &password);
   if (!password) password = "";
-  hr_cgi_param(phr, "email", &email);
   if (!email) email = "";
 
   l10n_setlocale(phr->locale_id);
