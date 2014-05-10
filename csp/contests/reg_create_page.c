@@ -35,7 +35,7 @@ static const unsigned char csp_str31[18] = ".\n\n<p>&nbsp;</p>\n";
 static const unsigned char csp_str32[18] = "<div id=\"footer\">";
 static const unsigned char csp_str33[38] = "</div>\n</div>\n</div>\n</body>\n</html>\n";
 
-/* $Id: reg_create_page.csp 8147 2014-04-26 22:24:40Z cher $ */
+/* $Id: reg_create_page.csp 8158 2014-05-10 08:41:13Z cher $ */
 #include "new-server.h"
 #include "new_server_pi.h"
 #include "new_server_proto.h"
@@ -108,12 +108,16 @@ const unsigned char *login = 0, *email = 0;
     fprintf(phr->log_f, "registration is not available\n");
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   }
-
-  hr_cgi_param_int(phr, "retval", &reg_error);
-  hr_cgi_param_int(phr, "ul_error", &reg_ul_error);
-  hr_cgi_param_int(phr, "regular", &regular_flag);
-
-  if (cnts->assign_logins) {
+if (hr_cgi_param_int_2(phr, "retval", &(reg_error)) <= 0) {
+  FAIL(NEW_SRV_ERR_INV_PARAM);
+}
+if (hr_cgi_param_int_2(phr, "ul_error", &(reg_ul_error)) <= 0) {
+  FAIL(NEW_SRV_ERR_INV_PARAM);
+}
+if (hr_cgi_param_int_2(phr, "regular", &(regular_flag)) <= 0) {
+  FAIL(NEW_SRV_ERR_INV_PARAM);
+}
+if (cnts->assign_logins) {
     if (!cnts->disable_name) allowed_info_edit = 1;
     if (!cnts->force_registration) allowed_info_edit = 1;
     if (!cnts->autoregister) allowed_info_edit = 1;

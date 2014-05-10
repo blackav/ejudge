@@ -119,15 +119,10 @@ const struct section_global_data *global = cs->global;
   const unsigned char *str = NULL;
   const unsigned char *s;
   int run_id = 0, prob_id, lang_id;
-  int n;
-
-  if (hr_cgi_param(phr, "run_id", &s) <= 0
-      || sscanf(s, "%d%n", &run_id, &n) != 1 || s[n]
-      || run_id < 0 || run_id >= run_get_total(cs->runlog_state)) {
-    FAIL(NEW_SRV_ERR_INV_RUN_ID);
-  }
-
-  if (opcaps_check(phr->caps, OPCAP_EDIT_RUN) < 0) {
+if (hr_cgi_param_int_2(phr, "run_id", &(run_id)) <= 0) {
+  FAIL(NEW_SRV_ERR_INV_RUN_ID);
+}
+if (opcaps_check(phr->caps, OPCAP_EDIT_RUN) < 0) {
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   }
 

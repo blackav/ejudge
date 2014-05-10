@@ -94,20 +94,14 @@ int retval __attribute__((unused)) = 0;
 struct clar_entry_v1 clar;
   const unsigned char *from_str = NULL, *to_str = NULL;
   unsigned char from_buf[128], to_buf[128];
-  const unsigned char *s;
   unsigned char *msg_txt = NULL;
   size_t msg_len = 0;
   int clar_id = 0;
   unsigned char title[1024];
-  int n;
-
-  if (hr_cgi_param(phr, "clar_id", &s) <= 0
-      || sscanf(s, "%d%n", &clar_id, &n) != 1 || s[n]
-      || clar_id < 0 || clar_id >= clar_get_total(cs->clarlog_state)) {
-    FAIL(NEW_SRV_ERR_INV_CLAR_ID);
-  }
-
-  if (opcaps_check(phr->caps, OPCAP_EDIT_RUN) < 0) {
+if (hr_cgi_param_int_2(phr, "clar_id", &(clar_id)) <= 0) {
+  FAIL(NEW_SRV_ERR_INV_CLAR_ID);
+}
+if (opcaps_check(phr->caps, OPCAP_EDIT_RUN) < 0) {
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   }
 

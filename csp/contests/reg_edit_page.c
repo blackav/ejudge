@@ -20,7 +20,7 @@ static const unsigned char csp_str16[6] = "</h2>";
 static const unsigned char csp_str17[18] = "<div id=\"footer\">";
 static const unsigned char csp_str18[38] = "</div>\n</div>\n</div>\n</body>\n</html>\n";
 
-/* $Id: reg_edit_page.csp 8144 2014-04-26 19:32:23Z cher $ */
+/* $Id: reg_edit_page.csp 8158 2014-05-10 08:41:13Z cher $ */
 #include "new-server.h"
 #include "new_server_pi.h"
 #include "new_server_proto.h"
@@ -112,9 +112,13 @@ struct userlist_user *u = 0;
   ui = userlist_get_cnts0(u);
   if (ui && ui->cnts_read_only) goto redirect_back;
   if (phr->action == NEW_SRV_ACTION_REG_EDIT_MEMBER_PAGE) {
-    if (hr_cgi_param_int(phr, "role", &role) < 0) goto redirect_back;
-    if (hr_cgi_param_int(phr, "member", &member) < 0) goto redirect_back;
-    if (role < 0 || role >= CONTEST_M_GUEST) goto redirect_back;
+if (hr_cgi_param_int_2(phr, "role", &(role)) <= 0) {
+  goto redirect_back;
+}
+if (hr_cgi_param_int_2(phr, "member", &(member)) <= 0) {
+  goto redirect_back;
+}
+if (role < 0 || role >= CONTEST_M_GUEST) goto redirect_back;
     if (!cnts->members[role]) goto redirect_back;
     if (!(m = userlist_members_get_nth(ui->members, role, member)))
       goto redirect_back;
