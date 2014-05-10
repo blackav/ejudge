@@ -139,8 +139,7 @@ int retval __attribute__((unused)) = 0;
   struct sformat_extra_data fe __attribute__((unused));
   const struct section_global_data *global __attribute__((unused)) = cs?cs->global:NULL;
   time_t start_time __attribute__((unused)) = 0, stop_time __attribute__((unused)) = 0;
-int n, clar_id, show_astr_time;
-  const unsigned char *s;
+int clar_id, show_astr_time;
   size_t clar_size = 0;
   struct clar_entry_v1 ce;
   time_t clar_time;
@@ -148,17 +147,10 @@ int n, clar_id, show_astr_time;
   unsigned char dur_str[64];
   const unsigned char *clar_subj = 0;
   unsigned char title[1024];
-
-  if ((n = hr_cgi_param(phr, "clar_id", &s)) <= 0) {
-    fprintf(log_f, "'clar_id' parameter is missing or invalid");
-    FAIL(NEW_SRV_ERR_INV_CLAR_ID);
-  }
-  if (sscanf(s, "%d%n", &clar_id, &n) != 1 || s[n]) {
-    fprintf(log_f, "'clar_id' parameter is missing or invalid");
-    FAIL(NEW_SRV_ERR_INV_CLAR_ID);
-  }
-
-  if (cs->clients_suspended) {
+if (hr_cgi_param_int_2(phr, "clar_id", &(clar_id)) <= 0) {
+  FAIL(NEW_SRV_ERR_INV_CLAR_ID);
+}
+if (cs->clients_suspended) {
     FAIL(NEW_SRV_ERR_CLIENTS_SUSPENDED);
   }
   if (global->disable_clars) {

@@ -35,7 +35,7 @@ static const unsigned char csp_str31[10] = "</b></p>\n";
 static const unsigned char csp_str32[18] = "<div id=\"footer\">";
 static const unsigned char csp_str33[38] = "</div>\n</div>\n</div>\n</body>\n</html>\n";
 
-/* $Id: reg_login_page.csp 8142 2014-04-23 22:55:03Z cher $ */
+/* $Id: reg_login_page.csp 8161 2014-05-10 11:21:55Z cher $ */
 #include "new-server.h"
 #include "new_server_pi.h"
 #include "new_server_proto.h"
@@ -103,12 +103,11 @@ const unsigned char *login = 0, *password = 0, *email = 0;
     fprintf(phr->log_f, "Undefined contest\n");
     FAIL(NEW_SRV_ERR_INV_CONTEST_ID);
   }
-
-  hr_cgi_param(phr, "login", &login);
-  if (!login) login = "";
-  hr_cgi_param(phr, "password", &password);
+hr_cgi_param(phr, "login", &(login));
+hr_cgi_param(phr, "password", &(password));
+hr_cgi_param(phr, "email", &(email));
+if (!login) login = "";
   if (!password) password = "";
-  hr_cgi_param(phr, "email", &email);
   if (!email) email = "";
 
   l10n_setlocale(phr->locale_id);

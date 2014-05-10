@@ -243,7 +243,6 @@ int retval __attribute__((unused)) = 0;
   const struct section_global_data *global __attribute__((unused)) = cs?cs->global:NULL;
   time_t start_time __attribute__((unused)) = 0, stop_time __attribute__((unused)) = 0;
 time_t finish_time = 0;
-  const unsigned char *s;
   int all_runs = 0, all_clars = 0;
   unsigned char *solved_flag = 0;
   unsigned char *accepted_flag = 0;
@@ -258,7 +257,7 @@ time_t finish_time = 0;
   int *best_score = 0;
   int *prev_successes = 0;
   int *all_attempts = 0;
-  int n, v, prob_id = 0, i, j, variant = 0;
+  int prob_id = 0, i, j, variant = 0;
   char **lang_list;
   path_t variant_stmt_file;
   struct watched_file *pw = 0;
@@ -277,20 +276,14 @@ time_t finish_time = 0;
   unsigned char prev_group_name[256] = { 0 };
   const unsigned char *title = NULL;
   int enable_virtual_start = 0;
-
-  if (hr_cgi_param(phr, "all_runs", &s) > 0
-      && sscanf(s, "%d%n", &v, &n) == 1 && !s[n] && v >= 0 && v <= 1) {
-    phr->session_extra->user_view_all_runs = v;
-  }
-  all_runs = phr->session_extra->user_view_all_runs;
-  if (hr_cgi_param(phr, "all_clars", &s) > 0
-      && sscanf(s, "%d%n", &v, &n) == 1 && !s[n] && v >= 0 && v <= 1) {
-    phr->session_extra->user_view_all_clars = v;
-  }
-  all_clars = phr->session_extra->user_view_all_clars;
-  if (hr_cgi_param(phr, "prob_id", &s) > 0
-      && sscanf(s, "%d%n", &v, &n) == 1 && !s[n] && v >= -1)
-    prob_id = v;
+hr_cgi_param_int_opt(phr, "all_runs", &(all_runs), 0);
+if (all_runs != 1) all_runs = 0;
+  phr->session_extra->user_view_all_runs = all_runs;
+hr_cgi_param_int_opt(phr, "all_clars", &(all_clars), 0);
+if (all_clars != 1) all_clars = 0;
+  phr->session_extra->user_view_all_clars = all_clars;
+hr_cgi_param_int_opt(phr, "prob_id", &(prob_id), 0);
+if (prob_id < 0) prob_id = 0;
   
   XALLOCAZ(solved_flag, cs->max_prob + 1);
   XALLOCAZ(accepted_flag, cs->max_prob + 1);

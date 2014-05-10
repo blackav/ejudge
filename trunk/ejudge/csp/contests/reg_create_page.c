@@ -35,7 +35,7 @@ static const unsigned char csp_str31[18] = ".\n\n<p>&nbsp;</p>\n";
 static const unsigned char csp_str32[18] = "<div id=\"footer\">";
 static const unsigned char csp_str33[38] = "</div>\n</div>\n</div>\n</body>\n</html>\n";
 
-/* $Id: reg_create_page.csp 8158 2014-05-10 08:41:13Z cher $ */
+/* $Id: reg_create_page.csp 8161 2014-05-10 11:21:55Z cher $ */
 #include "new-server.h"
 #include "new_server_pi.h"
 #include "new_server_proto.h"
@@ -130,11 +130,11 @@ if (cnts->assign_logins) {
     
     (void) allowed_info_edit;
   } else {
-    if (hr_cgi_param(phr, "login", &login) <= 0) login = 0;
-    if (!login) login = "";
+hr_cgi_param(phr, "login", &(login));
+if (!login) login = "";
   }
-  if (hr_cgi_param(phr, "email", &email) <= 0) email = 0;
-  if (!email) email = "";
+hr_cgi_param(phr, "email", &(email));
+if (!email) email = "";
 
   l10n_setlocale(phr->locale_id);
   snprintf(title, sizeof(title), "%s [%s]", _("Create user account"), extra->contest_arm);

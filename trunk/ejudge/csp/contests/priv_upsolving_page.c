@@ -71,7 +71,7 @@ int retval __attribute__((unused)) = 0;
 const unsigned char *freeze_standings = 0;
   const unsigned char *view_source = 0;
   const unsigned char *view_protocol = 0;
-  const unsigned char *full_proto = 0;
+  const unsigned char *full_protocol = 0;
   const unsigned char *disable_clars = 0;
   const unsigned char *title = NULL;
 
@@ -79,16 +79,16 @@ const unsigned char *freeze_standings = 0;
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);  
 
   if (cs->upsolving_mode) {
-    hr_cgi_param(phr, "freeze_standings", &freeze_standings);
-    hr_cgi_param(phr, "view_source", &view_source);
-    hr_cgi_param(phr, "view_protocol", &view_protocol);
-    hr_cgi_param(phr, "full_protocol", &full_proto);
-    hr_cgi_param(phr, "disable_clars", &disable_clars);
-  } else {
+hr_cgi_param(phr, "freeze_standings", &(freeze_standings));
+hr_cgi_param(phr, "view_source", &(view_source));
+hr_cgi_param(phr, "view_protocol", &(view_protocol));
+hr_cgi_param(phr, "full_protocol", &(full_protocol));
+hr_cgi_param(phr, "disable_clars", &(disable_clars));
+} else {
     freeze_standings = "1";
     view_source = "1";
     view_protocol = "1";
-    full_proto = 0;
+    full_protocol = 0;
     disable_clars = "1";
   }
 

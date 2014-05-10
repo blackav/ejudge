@@ -108,10 +108,8 @@ const int *cntslist = 0;
     " bgcolor=\"#d0d0d0\"",
     " bgcolor=\"#e0e0e0\"",
   };
-
-  hr_cgi_param(phr, "login", &login);
-
-  // defaulting to English as we have no contest chosen
+hr_cgi_param(phr, "login", &(login));
+// defaulting to English as we have no contest chosen
   orig_locale_id = phr->locale_id;
   if (phr->locale_id < 0) phr->locale_id = 0;
 

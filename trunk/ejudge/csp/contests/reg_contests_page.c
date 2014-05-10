@@ -27,7 +27,7 @@ static const unsigned char csp_str23[11] = "\n</table>\n";
 static const unsigned char csp_str24[18] = "<div id=\"footer\">";
 static const unsigned char csp_str25[38] = "</div>\n</div>\n</div>\n</body>\n</html>\n";
 
-/* $Id: reg_contests_page.csp 8120 2014-04-15 10:06:17Z cher $ */
+/* $Id: reg_contests_page.csp 8161 2014-05-10 11:21:55Z cher $ */
 #include "new-server.h"
 #include "new_server_pi.h"
 #include "new_server_proto.h"
@@ -102,9 +102,8 @@ static const unsigned char * const form_row_attrs[]=
 };
 
 // initial code goes here
-  hr_cgi_param(phr, "login", &login);
-
-  // defaulting to English as we have no contest chosen
+hr_cgi_param(phr, "login", &(login));
+// defaulting to English as we have no contest chosen
   if (phr->locale_id < 0) phr->locale_id = 0;
 
   // even don't know about the contest specific settings
