@@ -198,11 +198,9 @@ int need_examiners = 0;
   time_t server_start_time = nsf_get_server_start_time(phr->fw_state);
   const unsigned char *title = _("Main page");
 if (hr_cgi_param(phr, "filter_expr", &s) > 0) filter_expr = s;
-
-  hr_cgi_param_int_opt_2(phr, "filter_first_run", &filter_first_run, &filter_first_run_set);
-  hr_cgi_param_int_opt_2(phr, "filter_last_run", &filter_last_run, &filter_last_run_set);
-
-  if (hr_cgi_param(phr, "filter_first_clar", &s) > 0 && s)
+hr_cgi_param_int_opt_2(phr, "filter_first_run", &(filter_first_run), &(filter_first_run_set));
+hr_cgi_param_int_opt_2(phr, "filter_last_run", &(filter_last_run), &(filter_last_run_set));
+if (hr_cgi_param(phr, "filter_first_clar", &s) > 0 && s)
     filter_first_clar_str = s;
   if (hr_cgi_param(phr, "filter_last_clar", &s) > 0 && s)
     filter_last_clar_str = s;
