@@ -5,6 +5,7 @@
 #include "ej_uuid.h"
 #include "mime_type.h"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@set err_prefix = "NEW_SRV_ERR_"
 %><%@set getter_name = "csp_get_priv_edit_run_page"
 %><%@page csp_view_priv_edit_run_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 %><%@include "priv_stdvars.csp"
@@ -18,14 +19,8 @@
   const unsigned char *str = NULL;
   const unsigned char *s;
   int run_id = 0, prob_id, lang_id;
-  int n;
 
-  if (hr_cgi_param(phr, "run_id", &s) <= 0
-      || sscanf(s, "%d%n", &run_id, &n) != 1 || s[n]
-      || run_id < 0 || run_id >= run_get_total(cs->runlog_state)) {
-    FAIL(NEW_SRV_ERR_INV_RUN_ID);
-  }
-
+%><s:read var="run_id" required="yes" error="inv-run-id" /><%
   if (opcaps_check(phr->caps, OPCAP_EDIT_RUN) < 0) {
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   }

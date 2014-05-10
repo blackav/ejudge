@@ -3,25 +3,19 @@
 %><%@include "priv_includes.csp"
 %><%@set getter_name = "csp_get_priv_edit_clar_page"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@set err_prefix = "NEW_SRV_ERR_"
 %><%@page csp_view_priv_edit_clar_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 %><%@include "priv_stdvars.csp"
 %><%
   struct clar_entry_v1 clar;
   const unsigned char *from_str = NULL, *to_str = NULL;
   unsigned char from_buf[128], to_buf[128];
-  const unsigned char *s;
   unsigned char *msg_txt = NULL;
   size_t msg_len = 0;
   int clar_id = 0;
   unsigned char title[1024];
-  int n;
 
-  if (hr_cgi_param(phr, "clar_id", &s) <= 0
-      || sscanf(s, "%d%n", &clar_id, &n) != 1 || s[n]
-      || clar_id < 0 || clar_id >= clar_get_total(cs->clarlog_state)) {
-    FAIL(NEW_SRV_ERR_INV_CLAR_ID);
-  }
-
+%><s:read var="clar_id" required="yes" error="inv-clar-id" /><%
   if (opcaps_check(phr->caps, OPCAP_EDIT_RUN) < 0) {
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   }

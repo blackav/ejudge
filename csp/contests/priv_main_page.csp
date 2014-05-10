@@ -3,6 +3,7 @@
 %><%@include "priv_includes.csp"
 %><%@set getter_name = "csp_get_priv_main_page"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@set err_prefix = "NEW_SRV_ERR_"
 %><%@page csp_view_priv_main_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 %><%@include "priv_stdvars.csp"
 %><%
@@ -39,8 +40,8 @@
 %><%
   if (hr_cgi_param(phr, "filter_expr", &s) > 0) filter_expr = s;
 
-  hr_cgi_param_int_opt_2(phr, "filter_first_run", &filter_first_run, &filter_first_run_set);
-  hr_cgi_param_int_opt_2(phr, "filter_last_run", &filter_last_run, &filter_last_run_set);
+%><s:read var="filter_first_run" flagvar="filter_first_run_set" ignoreerrors="yes" /><%
+%><s:read var="filter_last_run" flagvar="filter_last_run_set" ignoreerrors="yes" /><%
 
   if (hr_cgi_param(phr, "filter_first_clar", &s) > 0 && s)
     filter_first_clar_str = s;
