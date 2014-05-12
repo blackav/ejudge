@@ -1,4 +1,4 @@
-#include "../config.h"
+#include "../include/ejudge/config.h"
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>

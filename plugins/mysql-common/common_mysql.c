@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "config.h"
+#include "ejudge/config.h"
 #include "ej_limits.h"
 #include "common_mysql.h"
 #include "xml_utils.h"

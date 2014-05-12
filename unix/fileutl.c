@@ -15,7 +15,7 @@
  * Lesser General Public License for more details.
  */
 
-#include "config.h"
+#include "ejudge/config.h"
 
 #include "fileutl.h"
 #include "unix/unix_fileutl.h"

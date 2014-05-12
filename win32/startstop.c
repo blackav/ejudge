@@ -17,7 +17,7 @@
 
 #define STARTSTOP_DEBUG 0
 
-#include "config.h"
+#include "ejudge/config.h"
 #include "ejudge/ej_types.h"
 #include "version.h"
 #include "startstop.h"

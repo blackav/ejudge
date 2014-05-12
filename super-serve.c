@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "config.h"
+#include "ejudge/config.h"
 #include "ejudge/ej_types.h"
 
 #include "version.h"
