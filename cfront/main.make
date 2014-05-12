@@ -15,14 +15,14 @@
 
 ifeq ($(ARCH), unix)
 CFLAGS = -Wall -g ${WERROR}
-CFLAGSINT = -D_GNU_SOURCE -I. -I.. -I../reuse/include -std=gnu99 ${NO_POINTER_SIGN}
+CFLAGSINT = -D_GNU_SOURCE -I. -I.. -I../include -std=gnu99 ${NO_POINTER_SIGN}
 LDFLAGS = -Wall -g
 LDFLAGSINT = -L../reuse/objs -std=gnu99
 LDLIBSINT = -lreuse -lm
 LDLIBS =
 else
 CFLAGS = -O2 -Wall
-CFLAGSINT = -D_GNU_SOURCE -I. -I.. -I../reuse/include -mno-cygwin -std=gnu99
+CFLAGSINT = -D_GNU_SOURCE -I. -I.. -I../include -mno-cygwin -std=gnu99
 LDFLAGS = -s
 LDFLAGSINT = -L../reuse/objs -mno-cygwin -std=gnu99
 LDLIBSINT = -lreuse
@@ -112,7 +112,7 @@ unix/%.c : ../unix/%.c
 	$(LN) ../$< $@
 
 deps.make: cdeps ${CFRONTCFILES} ${TOOLCFILES} ${CFRONTHFILES} 
-	@./cdeps -I .. -I . -I ../reuse/include ${CFRONTCFILES} ${TOOLCFILES} > deps.make
+	@./cdeps -I .. -I . -I ../include ${CFRONTCFILES} ${TOOLCFILES} > deps.make
 
 cdeps.o : cdeps.c
 

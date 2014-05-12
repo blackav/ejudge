@@ -21,7 +21,7 @@ CSP_C_FILES = csp/contests/priv_main_page.c
 CSP_O_FILES = $(CSP_C_FILES:.c=.o)
 
 META_CC = ./cfront/ej-cfront
-META_CC_FLAGS = -B cfront/ -I cfront/include/stdlib -I reuse/include -I .
+META_CC_FLAGS = -B cfront/ -I cfront/include/stdlib -I include -I .
 
 contests_meta.c contests_meta.h : $(META_CC) contests.h
 	$(META_CC) $(META_CC_FLAGS) contests.h -o contests.out --force-h --meta --meta-struct contest_desc --meta-enum-prefix CNTS --meta-func-prefix contest_desc 

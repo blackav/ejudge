@@ -21,7 +21,7 @@ endif
 CEXTRAFLAGS=
 LDEXTRAFLAGS=
 EXTRALIBS=
-CCOMPFLAGS=-D_GNU_SOURCE -std=gnu99 -I../.. -I../../reuse/include -g -DPIC -fPIC
+CCOMPFLAGS=-D_GNU_SOURCE -std=gnu99 -I../.. -I../../include -g -DPIC -fPIC
 LDCOMPFLAGS= -g -shared
 EXESFX=
 
