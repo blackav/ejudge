@@ -16,7 +16,7 @@
  */
 
 #include "config.h"
-#include "ej_types.h"
+#include "ejudge/ej_types.h"
 
 #include "errlog.h"
 #include "server_framework.h"

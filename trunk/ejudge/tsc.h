@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  */
 
-#include "ej_types.h"
+#include "ejudge/ej_types.h"
 
 /* taken from linux/include/asm-i386/msr.h */
 /* corresponds to the kernel 2.6.22.1 */

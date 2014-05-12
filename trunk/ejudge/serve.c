@@ -16,7 +16,7 @@
  */
 
 #include "config.h"
-#include "ej_types.h"
+#include "ejudge/ej_types.h"
 #include "ej_limits.h"
 
 #include "runlog.h"
