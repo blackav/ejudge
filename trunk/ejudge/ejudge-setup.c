@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "config.h"
+#include "ejudge/config.h"
 #include "version.h"
 
 #include "ncurses_utils.h"

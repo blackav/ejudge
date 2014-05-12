@@ -22,7 +22,7 @@
  * Note: this program must compile and work on win32
  */
 
-#include "config.h"
+#include "ejudge/config.h"
 
 #include "prepare.h"
 #include "pathutl.h"

@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "config.h"
+#include "ejudge/config.h"
 #include "external_action.h"
 #include "errlog.h"
 

@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,7 @@
  */
 
 #if defined HAVE_CONFIG_H && HAVE_CONFIG_H > 0
-#include "../config.h"
+#include "../include/ejudge/config.h"
 #endif
 
 #include <stdio.h>

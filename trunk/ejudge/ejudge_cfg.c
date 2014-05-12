@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "config.h"
+#include "ejudge/config.h"
 
 #ifdef __MINGW32__
 #undef HAVE_PWD_H

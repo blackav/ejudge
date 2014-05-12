@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "config.h"
+#include "ejudge/config.h"
 #include "ej_limits.h"
 
 #include "expat_iface.h"

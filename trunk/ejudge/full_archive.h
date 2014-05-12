@@ -18,7 +18,7 @@
  */
 
 #include "reuse/integral.h"
-#include "config.h"
+#include "ejudge/config.h"
 
 #if defined CONF_HAS_LIBZIP
 #include <zip.h>
