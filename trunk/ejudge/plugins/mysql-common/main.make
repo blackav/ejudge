@@ -23,7 +23,7 @@ HFILES =
 CC = gcc
 LD = gcc
 
-CFLAGS = -I. -I../.. -I../../reuse/include $(MYSQL_INCL_OPT) $(EXPAT_INCL_OPT) $(CDEBUGFLAGS) $(CCOMPFLAGS) $(CEXTRAFLAGS) $(WPTRSIGN)
+CFLAGS = -I. -I../.. -I../../include $(MYSQL_INCL_OPT) $(EXPAT_INCL_OPT) $(CDEBUGFLAGS) $(CCOMPFLAGS) $(CEXTRAFLAGS) $(WPTRSIGN)
 LDFLAGS = $(MYSQL_LIB_OPT) $(EXPAT_LIB_OPT) $(CDEBUGFLAGS) $(LDCOMPFLAGS) $(LDEXTRAFLAGS)
 LDLIBS = $(EXTRALIBS) $(MYSQL_LIBS) -lexpat -lm
 
@@ -42,7 +42,7 @@ distclean : clean
 	-rm -f Makefile
 
 deps.make : $(CFILES) $(HFILES)
-	../../cdeps -v COMMON_MYSQL_OFILES -I ../.. -I ../../reuse/include -g -c '$$(CC) $$(CFLAGS) -DPIC -fPIC' $(COMMON_MYSQL_CFILES) > deps.make
+	../../cdeps -v COMMON_MYSQL_OFILES -I ../.. -I ../../include -g -c '$$(CC) $$(CFLAGS) -DPIC -fPIC' $(COMMON_MYSQL_CFILES) > deps.make
 
 include deps.make
 

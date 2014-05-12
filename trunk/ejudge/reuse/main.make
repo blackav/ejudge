@@ -15,14 +15,14 @@
 
 ifeq ($(ARCH), unix)
 CFLAGS = -Wall $(WERROR)
-CFLAGSINT = -D_GNU_SOURCE -Iinclude -I.. -std=gnu99 $(NO_POINTER_SIGN) -g
+CFLAGSINT = -D_GNU_SOURCE -I../include -I.. -std=gnu99 $(NO_POINTER_SIGN) -g
 LDFLAGS = -Wall
 LDFLAGSINT = -std=gnu99 -g
 LDLIBSINT = -lm
 LDLIBS =
 else
 CFLAGS = -O2 -Wall
-CFLAGSINT = -D_GNU_SOURCE -Iinclude -I.. -mno-cygwin -std=gnu99 $(NO_POINTER_SIGN)
+CFLAGSINT = -D_GNU_SOURCE -I../include -I.. -mno-cygwin -std=gnu99 $(NO_POINTER_SIGN)
 LDFLAGS = -s
 LDFLAGSINT = -mno-cygwin -std=gnu99
 LDLIBSINT = 
@@ -105,27 +105,27 @@ REUSECFILES =\
  $(ARCH)/xfile.c
 
 REUSEHFILES =\
- include/reuse/c_value.h\
- include/reuse/c_value_ops.h\
- include/reuse/errors.h\
- include/reuse/exec.h\
- include/reuse/flexstring.h\
- include/reuse/fp_props.h\
- include/reuse/getopt.h\
- include/reuse/hash.h\
- include/reuse/hash_priv.h\
- include/reuse/integral.h\
- include/reuse/logger.h\
- include/reuse/mempage.h\
- include/reuse/number_io.h\
- include/reuse/osdeps.h\
- include/reuse/positions.h\
- include/reuse/positionsp.h\
- include/reuse/stringset.h\
- include/reuse/str_utils.h\
- include/reuse/tempfile.h\
- include/reuse/xalloc.h\
- include/reuse/xfile.h
+ ../include/reuse/c_value.h\
+ ../include/reuse/c_value_ops.h\
+ ../include/reuse/errors.h\
+ ../include/reuse/exec.h\
+ ../include/reuse/flexstring.h\
+ ../include/reuse/fp_props.h\
+ ../include/reuse/getopt.h\
+ ../include/reuse/hash.h\
+ ../include/reuse/hash_priv.h\
+ ../include/reuse/integral.h\
+ ../include/reuse/logger.h\
+ ../include/reuse/mempage.h\
+ ../include/reuse/number_io.h\
+ ../include/reuse/osdeps.h\
+ ../include/reuse/positions.h\
+ ../include/reuse/positionsp.h\
+ ../include/reuse/stringset.h\
+ ../include/reuse/str_utils.h\
+ ../include/reuse/tempfile.h\
+ ../include/reuse/xalloc.h\
+ ../include/reuse/xfile.h
 
 all : objs objs/$(ARCH) objs/libreuse.a
 
@@ -136,7 +136,7 @@ clean :
 	-rm -fr objs/* cdeps *.o
 
 deps.make: objs objs/cdeps ${REUSECFILES} ${REUSEHFILES} 
-	./objs/cdeps -I .. -I include -v REUSEOFILES -D -d objs/ ${REUSECFILES} > deps.make
+	./objs/cdeps -I .. -I ../include -v REUSEOFILES -D -d objs/ ${REUSECFILES} > deps.make
 
 include deps.make
 

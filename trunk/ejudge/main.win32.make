@@ -18,7 +18,7 @@ CDEBUGFLAGS=-g -Wall -Werror
 CEXTRAFLAGS=
 LDEXTRAFLAGS=
 EXTRALIBS=
-CCOMPFLAGS=-std=gnu99 -Ireuse/include $(WPTRSIGN)
+CCOMPFLAGS=-std=gnu99 -Iinclude $(WPTRSIGN)
 LDCOMPFLAGS=-std=gnu99
 EXESFX=.exe
 else
@@ -212,7 +212,7 @@ libuserlist_clnt.a: $(USERLIST_CLNT_CFILES:.c=.o)
 	ar rcv $@ $^
 
 deps.make: cdeps.exe ${CFILES} ${HFILES} filter_expr.c filter_expr.h filter_scan.c 
-	./cdeps -I reuse/include -I . ${CFILES} filter_expr.c filter_scan.c > deps.make
+	./cdeps -I include -I . ${CFILES} filter_expr.c filter_scan.c > deps.make
 
 tags : ${CFILES} ${HFILES} filter_expr.c filter_expr.h filter_scan.c 
 	ctags -e $^
