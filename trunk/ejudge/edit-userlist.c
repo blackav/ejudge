@@ -16,7 +16,7 @@
  */
 
 #include "config.h"
-#include "ej_types.h"
+#include "ejudge/ej_types.h"
 
 #include "userlist_clnt.h"
 #include "userlist_proto.h"

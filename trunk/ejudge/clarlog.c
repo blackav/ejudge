@@ -16,7 +16,7 @@
  */
 
 #include "config.h"
-#include "ej_types.h"
+#include "ejudge/ej_types.h"
 
 #include "clarlog.h"
 #include "cldb_plugin.h"

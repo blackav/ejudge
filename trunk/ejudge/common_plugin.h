@@ -19,7 +19,7 @@
  */
 
 #include "ejudge_plugin.h"
-#include "ej_types.h"
+#include "ejudge/ej_types.h"
 #include "iterators.h"
 #include "ejudge_cfg.h"
 
