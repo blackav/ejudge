@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  */
 
-#include "ej_types.h"
+#include "ejudge/ej_types.h"
 #include "opcaps.h"
 
 #include <stdio.h>

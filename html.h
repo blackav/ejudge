@@ -18,7 +18,7 @@
  */
 
 #include "opcaps.h"
-#include "ej_types.h"
+#include "ejudge/ej_types.h"
 #include "serve_state.h"
 
 #include <stdio.h>

@@ -18,7 +18,7 @@
  * GNU General Public License for more details.
  */
 
-#include "ej_types.h"
+#include "ejudge/ej_types.h"
 #include "server_framework.h"
 #include "iterators.h"
 #include "watched_file.h"
