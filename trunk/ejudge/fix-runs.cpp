@@ -1,8 +1,8 @@
 /* $Id$ */
 
 extern "C" {
-#include "config.h"
-#include "ej_types.h"
+#include "ejudge/config.h"
+#include "ejudge/ej_types.h"
 #include "ej_limits.h"
 #include "version.h"
 

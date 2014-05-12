@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "config.h"
+#include "reuse/config.h"
 #include "lconfig.h"
 
 #include "cfrontenv.h"
