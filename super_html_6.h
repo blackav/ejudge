@@ -18,7 +18,7 @@
  * GNU General Public License for more details.
  */
 
-#include "ej_types.h"
+#include "ejudge/ej_types.h"
 
 struct ss_op_param_USER_CREATE_ONE_ACTION
 {

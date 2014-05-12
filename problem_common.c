@@ -16,7 +16,7 @@
  */
 
 #include "problem_common.h"
-#include "ej_types.h"
+#include "ejudge/ej_types.h"
 
 #include "reuse/logger.h"
 
