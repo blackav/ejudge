@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "ej_types.h"
+#include "ejudge/ej_types.h"
 #include "new_server_clnt/new_server_clnt_priv.h"
 #include "new_server_proto.h"
 #include "errlog.h"
