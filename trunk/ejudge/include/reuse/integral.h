@@ -18,7 +18,7 @@
  * Lesser General Public License for more details.
  */
 
-#include "config.h"
+#include "reuse/config.h"
 
 /* shorthands */
 typedef signed char    rschar_t;
