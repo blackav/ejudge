@@ -19,7 +19,7 @@
 #include "ej_limits.h"
 #include "version.h"
 
-#include "ej_types.h"
+#include "ejudge/ej_types.h"
 #include "misctext.h"
 
 #include "reuse/osdeps.h"

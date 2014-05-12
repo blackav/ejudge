@@ -17,7 +17,7 @@
  * Lesser General Public License for more details.
  */
 
-#include "ej_types.h"
+#include "ejudge/ej_types.h"
 
 int ej_uuid_parse(const unsigned char *str, ruint32_t uuid[4]);
 const unsigned char *ej_uuid_unparse(const ruint32_t uuid[4], const unsigned char *default_value);
