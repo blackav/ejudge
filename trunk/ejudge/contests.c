@@ -16,8 +16,7 @@
  */
 
 #include "ejudge/config.h"
-
-#include "ej_limits.h"
+#include "ejudge/ej_limits.h"
 #include "contests.h"
 #include "pathutl.h"
 #include "errlog.h"

@@ -17,7 +17,7 @@
 
 #include "ejudge/config.h"
 #include "version.h"
-#include "ej_limits.h"
+#include "ejudge/ej_limits.h"
 
 #include "super-serve.h"
 #include "super_proto.h"

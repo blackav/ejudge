@@ -18,7 +18,7 @@
 #include "ejudge/config.h"
 #include "version.h"
 
-#include "ej_limits.h"
+#include "ejudge/ej_limits.h"
 #include "lang_config_vis.h"
 #include "ncurses_utils.h"
 #include "pathutl.h"

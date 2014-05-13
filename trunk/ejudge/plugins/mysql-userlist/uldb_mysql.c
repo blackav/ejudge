@@ -16,7 +16,7 @@
  */
 
 #include "ejudge/config.h"
-#include "ej_limits.h"
+#include "ejudge/ej_limits.h"
 #include "errlog.h"
 #include "uldb_plugin.h"
 #include "xml_utils.h"

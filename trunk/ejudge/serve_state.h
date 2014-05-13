@@ -3,7 +3,7 @@
 #ifndef __SERVE_STATE_H__
 #define __SERVE_STATE_H__
 
-/* Copyright (C) 2006-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,7 +18,7 @@
  */
 
 #include "ejudge/ej_types.h"
-#include "ej_limits.h"
+#include "ejudge/ej_limits.h"
 #include "opcaps.h"
 #include "watched_file.h"
 #include "problem_plugin.h"

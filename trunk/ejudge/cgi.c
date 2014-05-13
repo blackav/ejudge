@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "ej_limits.h"
+#include "ejudge/ej_limits.h"
 #include "cgi.h"
 #include "errlog.h"
 

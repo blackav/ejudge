@@ -21,7 +21,7 @@
 #include "unix/unix_fileutl.h"
 #include "pathutl.h"
 #include "errlog.h"
-#include "ej_limits.h"
+#include "ejudge/ej_limits.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"
