@@ -595,7 +595,7 @@ HFILES=\
  userlist_clnt.h\
  varsubst.h\
  vcs.h\
- version.h\
+ ./include/ejudge/version.h\
  watched_file.h\
  win32_compat.h\
  unix/unix_fileutl.h\

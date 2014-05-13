@@ -19,7 +19,7 @@
 
 #include "prepare.h"
 #include "varsubst.h"
-#include "version.h"
+#include "ejudge/version.h"
 #include "prepare_serve.h"
 #include "teamdb.h"
 #include "errlog.h"

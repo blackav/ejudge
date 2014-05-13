@@ -17,7 +17,7 @@
 
 #include "ejudge/config.h"
 #include "ejudge/ej_types.h"
-#include "version.h"
+#include "ejudge/version.h"
 
 #include "ejudge_cfg.h"
 #include "contests.h"

@@ -16,7 +16,7 @@
  */
 
 #include "ejudge/config.h"
-#include "version.h"
+#include "ejudge/version.h"
 
 #include "ncurses_utils.h"
 #include "lang_config_vis.h"
