@@ -27,7 +27,7 @@
 #include "userlist_proto.h"
 #include "contests.h"
 #include "ejudge/version.h"
-#include "sha.h"
+#include "ejudge/sha.h"
 #include "misctext.h"
 #include "l10n.h"
 #include "tsc.h"

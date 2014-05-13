@@ -19,7 +19,7 @@
 
 #include "filehash.h"
 #include "timestamp.h"
-#include "sha.h"
+#include "ejudge/sha.h"
 #include "pathutl.h"
 #include "errlog.h"
 

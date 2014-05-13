@@ -42,7 +42,7 @@
 #include "html.h"
 #include "watched_file.h"
 #include "mime_type.h"
-#include "sha.h"
+#include "ejudge/sha.h"
 #include "archive_paths.h"
 #include "curtime.h"
 #include "clarlog.h"

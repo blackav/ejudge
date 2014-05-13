@@ -27,7 +27,7 @@
 #include "clarlog.h"
 #include "protocol.h"
 #include "userlist.h"
-#include "sha.h"
+#include "ejudge/sha.h"
 #include "l10n.h"
 #include "archive_paths.h"
 #include "team_extra.h"
