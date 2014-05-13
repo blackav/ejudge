@@ -34,7 +34,7 @@
 #include "misctext.h"
 #include "clarlog.h"
 #include "mime_type.h"
-#include "sha.h"
+#include "ejudge/sha.h"
 #include "filter_tree.h"
 #include "filter_eval.h"
 #include "xml_utils.h"

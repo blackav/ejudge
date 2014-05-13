@@ -41,7 +41,7 @@
 #include "team_extra.h"
 #include "errlog.h"
 #include "csv.h"
-#include "sha.h"
+#include "ejudge/sha.h"
 #include "sformat.h"
 #include "userlist_clnt.h"
 #include "charsets.h"

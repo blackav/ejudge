@@ -29,7 +29,7 @@
 */
 
 #include "reuse/integral.h"
-#include "sha.h"
+#include "ejudge/sha.h"
 
 #include <stdio.h>
 #include <stdlib.h>

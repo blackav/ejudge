@@ -576,7 +576,7 @@ HFILES=\
  super_proto.h\
  super_run_packet.h\
  super-serve.h\
- sha.h\
+ ./include/ejudge/sha.h\
  t3m_dir_listener.h\
  t3m_packet_class.h\
  t3m_submits.h\
