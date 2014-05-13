@@ -16,7 +16,7 @@
  */
 
 #include "ejudge/config.h"
-#include "version.h"
+#include "ejudge/version.h"
 
 #include "testinfo.h"
 #include "fileutl.h"

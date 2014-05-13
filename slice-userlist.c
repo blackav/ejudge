@@ -3,9 +3,9 @@
 
 /* Copyright (C) 2004-2014 Alexander Chernov <cher@ejudge.ru> */
 
-#include "config.h"
+#include "ejudge/config.h"
 
-#include "version.h"
+#include "ejudge/version.h"
 #include "ejudge_cfg.h"
 #include "userlist.h"
 

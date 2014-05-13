@@ -15,9 +15,9 @@
  * GNU General Public License for more details.
  */
 
-#include "config.h"
+#include "ejudge/config.h"
 
-#include "version.h"
+#include "ejudge/version.h"
 #include "ejudge_cfg.h"
 #include "userlist.h"
 #include "contests.h"

@@ -17,7 +17,7 @@
 
 #include "ejudge/config.h"
 #include "ejudge/ej_types.h"
-#include "version.h"
+#include "ejudge/version.h"
 
 #include "startstop.h"
 #include "pathutl.h"

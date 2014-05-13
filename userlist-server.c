@@ -26,7 +26,7 @@
 #include "base64.h"
 #include "userlist_proto.h"
 #include "contests.h"
-#include "version.h"
+#include "ejudge/version.h"
 #include "sha.h"
 #include "misctext.h"
 #include "l10n.h"
