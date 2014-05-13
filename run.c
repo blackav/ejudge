@@ -16,11 +16,10 @@
  */
 
 #include "ejudge/config.h"
-#include "ej_limits.h"
+#include "ejudge/ej_limits.h"
 
 #include "prepare.h"
 #include "runlog.h"
-//#include "cr_serialize.h"
 #include "testinfo.h"
 #include "interrupt.h"
 #include "run_packet.h"

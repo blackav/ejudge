@@ -513,7 +513,7 @@ HFILES=\
  ejudge_cfg.h\
  ejudge_plugin.h\
  ej_import_packet.h\
- ej_limits.h\
+ ./include/ejudge/ej_limits.h\
  ej_process.h\
  ./include/ejudge/ej_types.h\
  ej_uuid.h\

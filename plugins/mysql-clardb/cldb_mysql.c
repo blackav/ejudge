@@ -16,7 +16,7 @@
  */
 
 #include "ejudge/config.h"
-#include "ej_limits.h"
+#include "ejudge/ej_limits.h"
 #include "cldb_plugin.h"
 #include "clarlog.h"
 #include "clarlog_state.h"

@@ -16,7 +16,7 @@
  */
 
 #include "ejudge/config.h"
-#include "ej_limits.h"
+#include "ejudge/ej_limits.h"
 
 #include "t3m_submits.h"
 #include "list_ops.h"

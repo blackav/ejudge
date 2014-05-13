@@ -16,7 +16,7 @@
  */
 
 #include "ejudge/config.h"
-#include "ej_limits.h"
+#include "ejudge/ej_limits.h"
 
 #include "run.h"
 #include "serve_state.h"

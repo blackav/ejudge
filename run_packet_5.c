@@ -16,7 +16,7 @@
  */
 
 #include "ejudge/ej_types.h"
-#include "ej_limits.h"
+#include "ejudge/ej_limits.h"
 #include "ej_byteorder.h"
 
 #include "run_packet.h"

@@ -16,7 +16,7 @@
  */
 
 #include "ejudge/config.h"
-#include "ej_limits.h"
+#include "ejudge/ej_limits.h"
 #include "common_mysql.h"
 #include "xml_utils.h"
 #include "pathutl.h"

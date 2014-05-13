@@ -16,7 +16,7 @@
  */
 
 #include "ejudge/config.h"
-#include "ej_limits.h"
+#include "ejudge/ej_limits.h"
 #include "rldb_plugin.h"
 #include "runlog.h"
 #include "teamdb.h"

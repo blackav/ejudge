@@ -16,7 +16,7 @@
  */
 
 #include "ejudge/config.h"
-#include "ej_limits.h"
+#include "ejudge/ej_limits.h"
 #include "ejudge_plugin.h"
 #include "errlog.h"
 #include "pathutl.h"
