@@ -16,7 +16,7 @@
  */
 
 #include "misctext.h"
-#include "base64.h"
+#include "ejudge/base64.h"
 #include "compat.h"
 
 #include "reuse/xalloc.h"

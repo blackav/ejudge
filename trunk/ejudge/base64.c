@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "base64.h"
+#include "ejudge/base64.h"
 
 #include "errlog.h"
 

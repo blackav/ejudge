@@ -23,7 +23,7 @@
 #include "clarlog_state.h"
 
 #include "teamdb.h"
-#include "base64.h"
+#include "ejudge/base64.h"
 
 #include "unix/unix_fileutl.h"
 #include "pathutl.h"

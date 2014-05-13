@@ -43,7 +43,7 @@
 #include "ejudge_cfg.h"
 
 #include "misctext.h"
-#include "base64.h"
+#include "ejudge/base64.h"
 #include "pathutl.h"
 #include "errlog.h"
 #include "fileutl.h"

@@ -23,7 +23,7 @@
 #include "userlist.h"
 #include "pathutl.h"
 #include "errlog.h"
-#include "base64.h"
+#include "ejudge/base64.h"
 #include "userlist_proto.h"
 #include "contests.h"
 #include "ejudge/version.h"

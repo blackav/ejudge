@@ -487,7 +487,7 @@ CFILES=\
 
 HFILES=\
  archive_paths.h\
- base64.h\
+ ./include/ejudge/base64.h\
  bitset.h\
  build_support.h\
  cgi.h\

@@ -31,7 +31,7 @@
 #include "mime_type.h"
 #include "archive_paths.h"
 #include "fileutl.h"
-#include "base64.h"
+#include "ejudge/base64.h"
 #include "ej_uuid.h"
 
 #include "reuse/xalloc.h"

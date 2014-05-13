@@ -26,7 +26,7 @@
 #include "teamdb.h"
 #include "clarlog.h"
 #include "runlog.h"
-#include "base64.h"
+#include "ejudge/base64.h"
 #include "html.h"
 #include "fileutl.h"
 #include "sformat.h"
