@@ -43,7 +43,7 @@ static const unsigned char csp_str29[18] = "\n</body>\n</html>\n";
 #include "prepare.h"
 #include "xml_utils.h"
 #include "teamdb.h"
-#include "copyright.h"
+#include "ejudge/copyright.h"
 #include "mischtml.h"
 #include "html.h"
 #include "userlist.h"
