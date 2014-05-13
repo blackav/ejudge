@@ -26,7 +26,7 @@
 #include "unix/unix_fileutl.h"
 #include "misctext.h"
 #include "protocol.h"
-#include "copyright.h"
+#include "ejudge/copyright.h"
 #include "xml_utils.h"
 
 #include "reuse/xalloc.h"
