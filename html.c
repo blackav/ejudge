@@ -31,7 +31,7 @@
 #include "ejudge/base64.h"
 #include "sformat.h"
 #include "protocol.h"
-#include "copyright.h"
+#include "ejudge/copyright.h"
 #include "archive_paths.h"
 #include "team_extra.h"
 #include "xml_utils.h"

@@ -24,7 +24,7 @@
 #include "pathutl.h"
 #include "xml_utils.h"
 #include "misctext.h"
-#include "copyright.h"
+#include "ejudge/copyright.h"
 #include "userlist_clnt.h"
 #include "ejudge_cfg.h"
 #include "errlog.h"

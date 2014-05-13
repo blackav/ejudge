@@ -23,7 +23,7 @@
 #include "super-serve.h"
 #include "super-serve_meta.h"
 #include "super_proto.h"
-#include "copyright.h"
+#include "ejudge/copyright.h"
 #include "misctext.h"
 #include "contests.h"
 #include "contests_meta.h"

@@ -16,8 +16,7 @@
  */
 
 #include "ejudge/config.h"
-
-#include "copyright.h"
+#include "ejudge/copyright.h"
 #include "ejudge/version.h"
 
 #include "reuse/xalloc.h"

@@ -27,7 +27,7 @@
 #include "contests.h"
 #include "l10n.h"
 #include "xml_utils.h"
-#include "copyright.h"
+#include "ejudge/copyright.h"
 #include "team_extra.h"
 
 #include "reuse/xalloc.h"
