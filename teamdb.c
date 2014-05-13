@@ -20,7 +20,7 @@
 
 #include "pathutl.h"
 #include "errlog.h"
-#include "base64.h"
+#include "ejudge/base64.h"
 #include "userlist_clnt.h"
 #include "userlist_proto.h"
 #include "userlist.h"

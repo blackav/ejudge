@@ -28,7 +28,7 @@
 #include "clarlog.h"
 #include "teamdb.h"
 #include "prepare.h"
-#include "base64.h"
+#include "ejudge/base64.h"
 #include "sformat.h"
 #include "protocol.h"
 #include "copyright.h"

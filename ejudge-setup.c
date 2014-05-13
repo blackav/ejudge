@@ -20,7 +20,7 @@
 
 #include "ncurses_utils.h"
 #include "sha.h"
-#include "base64.h"
+#include "ejudge/base64.h"
 #include "startstop.h"
 #include "cpu.h"
 #include "misctext.h"
