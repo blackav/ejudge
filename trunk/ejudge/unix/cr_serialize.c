@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "cr_serialize.h"
+#include "ejudge/cr_serialize.h"
 #include "prepare.h"
 #include "ejudge/errlog.h"
 #include "serve_state.h"

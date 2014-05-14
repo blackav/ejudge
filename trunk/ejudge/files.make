@@ -504,7 +504,7 @@ HFILES=\
  contests.h\
  ./include/ejudge/copyright.h\
  ./include/ejudge/cpu.h\
- cr_serialize.h\
+ ./include/ejudge/cr_serialize.h\
  csv.h\
  ./include/ejudge/curtime.h\
  diff.h\
