@@ -30,7 +30,7 @@
 #include "archive_paths.h"
 #include "fileutl.h"
 #include "mime_type.h"
-#include "l10n.h"
+#include "ejudge/l10n.h"
 #include "filehash.h"
 #include "digest_io.h"
 #include "testing_report_xml.h"

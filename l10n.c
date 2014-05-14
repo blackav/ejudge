@@ -16,8 +16,7 @@
  */
 
 #include "ejudge/config.h"
-
-#include "l10n.h"
+#include "ejudge/l10n.h"
 
 #include <stdlib.h>
 #include <stdio.h>

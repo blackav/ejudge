@@ -24,7 +24,7 @@
 #include "misctext.h"
 #include "ejudge/errlog.h"
 #include "contests.h"
-#include "l10n.h"
+#include "ejudge/l10n.h"
 #include "xml_utils.h"
 #include "ejudge/copyright.h"
 #include "team_extra.h"

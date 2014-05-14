@@ -28,7 +28,7 @@
 #include "ejudge/version.h"
 #include "ejudge/sha.h"
 #include "misctext.h"
-#include "l10n.h"
+#include "ejudge/l10n.h"
 #include "ejudge/tsc.h"
 #include "sformat.h"
 #include "fileutl.h"

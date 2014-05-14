@@ -30,7 +30,7 @@
 #include "userlist_proto.h"
 #include "contests.h"
 #include "nsdb_plugin.h"
-#include "l10n.h"
+#include "ejudge/l10n.h"
 #include "fileutl.h"
 #include "userlist.h"
 #include "mischtml.h"

@@ -26,7 +26,7 @@
 #include "misctext.h"
 #include "contests.h"
 #include "contests_meta.h"
-#include "l10n.h"
+#include "ejudge/l10n.h"
 #include "charsets.h"
 #include "fileutl.h"
 #include "xml_utils.h"

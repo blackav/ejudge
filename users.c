@@ -28,7 +28,7 @@
 #include "userlist_proto.h"
 #include "misctext.h"
 #include "fileutl.h"
-#include "l10n.h"
+#include "ejudge/l10n.h"
 #include "xml_utils.h"
 
 #include "reuse/xalloc.h"
