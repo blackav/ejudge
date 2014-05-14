@@ -27,6 +27,7 @@
 #include "rldb_plugin.h"
 #include "prepare.h"
 #include "ejudge/ej_uuid.h"
+#include "ejudge/win32_compat.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"
@@ -40,8 +41,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-
-#include "win32_compat.h"
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>

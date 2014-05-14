@@ -20,6 +20,7 @@
 #include "teamdb.h"
 #include "userlist.h"
 #include "misctext.h"
+#include "ejudge/win32_compat.h"
 
 #include "reuse/xalloc.h"
 
@@ -29,8 +30,6 @@
 #include <errno.h>
 #include <limits.h>
 #include <string.h>
-
-#include "win32_compat.h"
 
 #define ARMOR(s)  html_armor_buf(&ab, (s))
 

@@ -37,6 +37,7 @@
 #include "prepare_serve.h"
 #include "userlist.h"
 #include "xml_utils.h"
+#include "ejudge/win32_compat.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"
@@ -48,8 +49,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <ctype.h>
-
-#include "win32_compat.h"
 
 serve_state_t
 serve_state_init(int contest_id)

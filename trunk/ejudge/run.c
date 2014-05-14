@@ -36,6 +36,7 @@
 #include "misctext.h"
 #include "run.h"
 #include "super_run_packet.h"
+#include "ejudge/win32_compat.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"
@@ -56,8 +57,6 @@
 #ifndef __MINGW32__
 #include <sys/vfs.h>
 #endif
-
-#include "win32_compat.h"
 
 #ifdef HAVE_TERMIOS_H
 #include <termios.h>
