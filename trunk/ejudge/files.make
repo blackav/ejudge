@@ -512,6 +512,7 @@ HFILES=\
  dwarf_parse.h\
  ejudge_cfg.h\
  ejudge_plugin.h\
+ ./include/ejudge/ej_byteorder.h\
  ej_import_packet.h\
  ./include/ejudge/ej_limits.h\
  ej_process.h\
