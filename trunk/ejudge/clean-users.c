@@ -16,13 +16,12 @@
  */
 
 #include "ejudge/config.h"
-
 #include "ejudge/version.h"
 #include "ejudge_cfg.h"
 #include "userlist.h"
 #include "contests.h"
 #include "pathutl.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 #include "runlog.h"
 #include "clarlog.h"
 #include "userlist_clnt.h"

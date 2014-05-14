@@ -16,13 +16,12 @@
  */
 
 #include "ejudge/config.h"
-
 #include "prepare.h"
 #include "varsubst.h"
 #include "ejudge/version.h"
 #include "prepare_serve.h"
 #include "teamdb.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 #include "serve_state.h"
 #include "runlog.h"
 

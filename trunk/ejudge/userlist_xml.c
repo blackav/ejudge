@@ -17,9 +17,8 @@
 
 #include "ejudge/config.h"
 #include "ejudge/ej_limits.h"
-
 #include "userlist.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 #include "protocol.h"
 #include "misctext.h"
 #include "xml_utils.h"

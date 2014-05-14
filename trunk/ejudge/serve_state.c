@@ -23,12 +23,10 @@
 #include "clarlog.h"
 #include "prepare.h"
 #include "pathutl.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 #include "userlist_proto.h"
 #include "userlist_clnt.h"
 #include "ejudge_plugin.h"
-
-// these includes are for the structure sizes array
 #include "csv.h"
 #include "ejudge_cfg.h"
 #include "misctext.h"

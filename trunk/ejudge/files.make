@@ -517,7 +517,7 @@ HFILES=\
  ej_process.h\
  ./include/ejudge/ej_types.h\
  ej_uuid.h\
- errlog.h\
+ ./include/ejudge/errlog.h\
  expat_iface.h\
  external_action.h\
  filehash.h\

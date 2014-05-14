@@ -16,8 +16,7 @@
  */
 
 #include "ejudge/base64.h"
-
-#include "errlog.h"
+#include "ejudge/errlog.h"
 
 #include "reuse/logger.h"
 

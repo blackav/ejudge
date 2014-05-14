@@ -17,7 +17,6 @@
 
 #include "ejudge/config.h"
 #include "ejudge/version.h"
-
 #include "super_html.h"
 #include "super-serve.h"
 #include "misctext.h"
@@ -35,7 +34,7 @@
 #include "userlist_proto.h"
 #include "userlist.h"
 #include "prepare_serve.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 #include "random.h"
 #include "compat.h"
 #include "file_perms.h"

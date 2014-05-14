@@ -18,7 +18,6 @@
 #include "ejudge/config.h"
 #include "ejudge/ej_limits.h"
 #include "ejudge/version.h"
-
 #include "mime_type.h"
 #include "t3_packets.h"
 #include "interrupt.h"
@@ -26,7 +25,7 @@
 #include "ejudge_cfg.h"
 #include "pathutl.h"
 #include "fileutl.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 #include "misctext.h"
 #include "parsecfg.h"
 #include "contests.h"

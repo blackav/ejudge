@@ -17,10 +17,9 @@
 
 #include "ejudge/config.h"
 #include "ejudge/ej_limits.h"
-
 #include "expat_iface.h"
 #include "pathutl.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 #include "misctext.h"
 
 #include "reuse/xalloc.h"

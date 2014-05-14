@@ -17,7 +17,7 @@
 
 #include "fileutl.h"
 #include "pathutl.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 #include "ejudge/ej_limits.h"
 
 #include "reuse/xalloc.h"

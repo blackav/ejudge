@@ -16,14 +16,13 @@
  */
 
 #include "ejudge/config.h"
-
 #include "super_html.h"
 #include "super-serve.h"
 #include "pathutl.h"
 #include "contests.h"
 #include "prepare.h"
 #include "ejudge_cfg.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 #include "compat.h"
 #include "fileutl.h"
 #include "ej_process.h"

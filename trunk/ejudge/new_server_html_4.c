@@ -18,7 +18,6 @@
 #include "ejudge/config.h"
 #include "ejudge/ej_types.h"
 #include "ejudge/ej_limits.h"
-
 #include "new-server.h"
 #include "new_server_proto.h"
 #include "contests.h"
@@ -41,7 +40,7 @@
 #include "charsets.h"
 #include "compat.h"
 #include "ejudge_cfg.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 #include "prepare_dflt.h"
 #include "ej_uuid.h"
 

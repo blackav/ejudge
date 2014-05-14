@@ -17,13 +17,12 @@
 
 #include "ejudge/config.h"
 #include "ejudge/ej_limits.h"
-
 #include "misctext.h"
 #include "prepare.h"
 #include "run_packet.h"
 #include "super_run_packet.h"
 #include "run.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 #include "runlog.h"
 #include "digest_io.h"
 #include "fileutl.h"

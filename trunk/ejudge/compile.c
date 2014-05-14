@@ -26,10 +26,9 @@
 
 #include "prepare.h"
 #include "pathutl.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 #include "parsecfg.h"
 #include "fileutl.h"
-//#include "cr_serialize.h"
 #include "interrupt.h"
 #include "runlog.h"
 #include "compile_packet.h"

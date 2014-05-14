@@ -17,11 +17,10 @@
 
 #include "ejudge/config.h"
 #include "ejudge/ej_limits.h"
-
 #include "runlog.h"
 #include "expat_iface.h"
 #include "pathutl.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 #include "teamdb.h"
 #include "prepare.h"
 #include "misctext.h"

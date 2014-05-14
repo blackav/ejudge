@@ -15,7 +15,7 @@
  * Lesser General Public License for more details.
  */
 
-#include "errlog.h"
+#include "ejudge/errlog.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

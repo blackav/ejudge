@@ -18,10 +18,9 @@
 #include "ejudge/config.h"
 #include "ejudge/ej_limits.h"
 #include "ejudge/version.h"
-
 #include "parsecfg.h"
 #include "fileutl.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 #include "runlog.h"
 #include "nwrun_packet.h"
 

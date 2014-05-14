@@ -17,7 +17,7 @@
 
 #include "super_clnt.h"
 #include "super_proto.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 #include "sock_op.h"
 
 #include "reuse/osdeps.h"

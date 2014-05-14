@@ -25,7 +25,7 @@
 #define RUNS_ACCESS 
 #include "runlog_state.h"
 
-#include "errlog.h"
+#include "ejudge/errlog.h"
 #include "xml_utils.h"
 #include "contests.h"
 #include "prepare.h"

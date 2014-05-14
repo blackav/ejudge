@@ -16,8 +16,7 @@
  */
 
 #include "sock_op.h"
-
-#include "errlog.h"
+#include "ejudge/errlog.h"
 
 #include "reuse/osdeps.h"
 

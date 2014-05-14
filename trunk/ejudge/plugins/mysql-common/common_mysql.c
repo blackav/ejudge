@@ -20,7 +20,7 @@
 #include "common_mysql.h"
 #include "xml_utils.h"
 #include "pathutl.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

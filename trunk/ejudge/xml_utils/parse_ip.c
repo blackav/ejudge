@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,7 @@
  */
 
 #include "xml_utils.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 
 #include <ctype.h>
 #include <string.h>

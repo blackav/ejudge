@@ -16,9 +16,8 @@
  */
 
 #include "ejudge/config.h"
-
 #include "userlist_clnt/private.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 
 #include <sys/ioctl.h>
 #ifdef __linux__

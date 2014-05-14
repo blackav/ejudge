@@ -26,7 +26,7 @@
 #include "pathutl.h"
 #include "contests.h"
 #include "prepare.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 #include "fileutl.h"
 #include "unix/unix_fileutl.h"
 #include "xml_utils.h"

@@ -18,11 +18,10 @@
 #include "ejudge/ej_types.h"
 #include "ejudge/ej_limits.h"
 #include "ej_byteorder.h"
-
 #include "compile_packet.h"
 #include "compile_packet_priv.h"
 #include "pathutl.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 #include "prepare.h"
 #include "runlog.h"
 

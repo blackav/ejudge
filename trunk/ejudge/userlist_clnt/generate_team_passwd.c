@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,13 +16,14 @@
  */
 
 #include "userlist_clnt/private.h"
-
-#include "errlog.h"
+#include "ejudge/errlog.h"
 
 int
-userlist_clnt_generate_team_passwd(struct userlist_clnt *clnt,
-                                   int cmd,
-                                   int contest_id, int out_fd)
+userlist_clnt_generate_team_passwd(
+        struct userlist_clnt *clnt,
+        int cmd,
+        int contest_id,
+        int out_fd)
 {
   struct userlist_pk_map_contest *out = 0;
   struct userlist_packet *in = 0;

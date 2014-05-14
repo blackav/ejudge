@@ -16,12 +16,12 @@
  */
 
 #include "super_run_packet.h"
-
-#include "reuse/xalloc.h"
 #include "meta_generic.h"
 #include "super_run_packet_meta.h"
 #include "prepare.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
+
+#include "reuse/xalloc.h"
 
 #include <string.h>
 

@@ -18,11 +18,10 @@
 #include "ejudge/config.h"
 #include "ejudge/ej_limits.h"
 #include "ejudge/version.h"
-
 #include "startstop.h"
 #include "ejudge_cfg.h"
 #include "fileutl.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 #include "prepare.h"
 #include "interrupt.h"
 #include "super_run_packet.h"

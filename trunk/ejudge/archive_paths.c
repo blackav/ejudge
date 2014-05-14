@@ -22,7 +22,7 @@
 #include "prepare.h"
 #include "fileutl.h"
 #include "pathutl.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 #include "serve_state.h"
 #include "ej_uuid.h"
 #include "prepare_dflt.h"

@@ -18,7 +18,6 @@
 #include "ejudge/config.h"
 #include "ejudge/version.h"
 #include "ejudge/ej_limits.h"
-
 #include "super_html.h"
 #include "super-serve.h"
 #include "super-serve_meta.h"
@@ -40,7 +39,7 @@
 #include "prepare_dflt.h"
 #include "cpu.h"
 #include "compat.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

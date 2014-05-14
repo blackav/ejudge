@@ -18,7 +18,6 @@
 #include "ejudge/config.h"
 #include "ejudge/version.h"
 #include "ejudge/ej_limits.h"
-
 #include "super_html.h"
 #include "super-serve.h"
 #include "super_proto.h"
@@ -27,7 +26,7 @@
 #include "userlist_clnt.h"
 #include "userlist.h"
 #include "misctext.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 #include "xml_utils.h"
 #include "ejudge_cfg.h"
 #include "super_html_6.h"
