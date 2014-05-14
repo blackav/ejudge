@@ -33,7 +33,7 @@
 #include "interrupt.h"
 #include "nwrun_packet.h"
 #include "filehash.h"
-#include "curtime.h"
+#include "ejudge/curtime.h"
 #include "ejudge/cpu.h"
 #include "ejudge/ej_process.h"
 

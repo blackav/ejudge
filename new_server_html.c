@@ -43,7 +43,7 @@
 #include "mime_type.h"
 #include "ejudge/sha.h"
 #include "archive_paths.h"
-#include "curtime.h"
+#include "ejudge/curtime.h"
 #include "clarlog.h"
 #include "team_extra.h"
 #include "diff.h"

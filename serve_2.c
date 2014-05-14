@@ -32,7 +32,7 @@
 #include "xml_utils.h"
 #include "compile_packet.h"
 #include "run_packet.h"
-#include "curtime.h"
+#include "ejudge/curtime.h"
 #include "userlist.h"
 #include "sformat.h"
 #include "misctext.h"
