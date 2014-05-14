@@ -19,13 +19,12 @@
 #include "ejudge/ej_types.h"
 #include "ejudge/ej_limits.h"
 #include "ejudge/version.h"
-
 #include "ejudge_cfg.h"
 #include "contests.h"
 #include "prepare.h"
 #include "common_plugin.h"
 #include "xml_utils.h"
-#include "compat.h"
+#include "ejudge/compat.h"
 
 #define EJUDGE_SKIP_MYSQL 1
 #include "plugins/mysql-common/common_mysql.h"

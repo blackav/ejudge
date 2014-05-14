@@ -17,7 +17,6 @@
 
 #include "ejudge/config.h"
 #include "ejudge/ej_types.h"
-
 #include "userlist_clnt.h"
 #include "userlist_proto.h"
 #include "contests.h"
@@ -26,7 +25,7 @@
 #include "xml_utils.h"
 #include "misctext.h"
 #include "ncurses_utils.h"
-#include "compat.h"
+#include "ejudge/compat.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

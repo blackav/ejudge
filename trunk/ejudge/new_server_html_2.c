@@ -44,7 +44,7 @@
 #include "sformat.h"
 #include "userlist_clnt.h"
 #include "charsets.h"
-#include "compat.h"
+#include "ejudge/compat.h"
 #include "run_packet.h"
 #include "prepare_dflt.h"
 #include "super_run_packet.h"

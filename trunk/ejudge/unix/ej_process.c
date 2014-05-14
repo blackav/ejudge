@@ -16,7 +16,7 @@
  */
 
 #include "ejudge/ej_process.h"
-#include "compat.h"
+#include "ejudge/compat.h"
 #include "list_ops.h"
 #include "pollfds.h"
 

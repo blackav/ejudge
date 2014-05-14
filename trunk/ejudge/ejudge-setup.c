@@ -28,7 +28,7 @@
 #include "lang_config_vis.h"
 #include "stringset.h"
 #include "fileutl.h"
-#include "compat.h"
+#include "ejudge/compat.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

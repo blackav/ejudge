@@ -28,7 +28,7 @@
 #include "misctext.h"
 #include "ejudge/random.h"
 #include "../mysql-common/common_mysql.h"
-#include "compat.h"
+#include "ejudge/compat.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

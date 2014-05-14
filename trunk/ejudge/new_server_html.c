@@ -51,7 +51,7 @@
 #include "printing.h"
 #include "sformat.h"
 #include "charsets.h"
-#include "compat.h"
+#include "ejudge/compat.h"
 #include "ejudge/ej_uuid.h"
 #include "prepare_dflt.h"
 #include "new_server_match.h"

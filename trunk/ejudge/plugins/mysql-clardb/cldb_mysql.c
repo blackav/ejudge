@@ -25,7 +25,7 @@
 #include "ejudge/errlog.h"
 #include "contests.h"
 #include "prepare.h"
-#include "compat.h"
+#include "ejudge/compat.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

@@ -36,7 +36,7 @@
 #include "userlist.h"
 #include "ejudge/ej_process.h"
 #include "vcs.h"
-#include "compat.h"
+#include "ejudge/compat.h"
 #include "file_perms.h"
 
 #include "reuse/xalloc.h"

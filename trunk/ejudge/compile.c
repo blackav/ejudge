@@ -35,7 +35,7 @@
 #include "serve_state.h"
 #include "startstop.h"
 #include "ejudge_cfg.h"
-#include "compat.h"
+#include "ejudge/compat.h"
 #include "ejudge/ej_uuid.h"
 
 #include "reuse/xalloc.h"

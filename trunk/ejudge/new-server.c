@@ -30,7 +30,7 @@
 #include "l10n.h"
 #include "pathutl.h"
 #include "userlist.h"
-#include "compat.h"
+#include "ejudge/compat.h"
 #include "xml_utils.h"
 
 #include "reuse/xalloc.h"

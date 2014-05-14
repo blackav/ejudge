@@ -18,7 +18,6 @@
 #include "ejudge/config.h"
 #include "ejudge/ej_types.h"
 #include "ejudge/ej_limits.h"
-
 #include "new-server.h"
 #include "new_server_proto.h"
 #include "userlist_clnt.h"
@@ -29,7 +28,7 @@
 #include "mischtml.h"
 #include "xml_utils.h"
 #include "l10n.h"
-#include "compat.h"
+#include "ejudge/compat.h"
 #include "ejudge_cfg.h"
 #include "external_action.h"
 

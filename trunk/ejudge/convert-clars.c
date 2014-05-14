@@ -19,12 +19,11 @@
 #include "ejudge/ej_types.h"
 #include "ejudge/ej_limits.h"
 #include "ejudge/version.h"
-
 #include "ejudge_cfg.h"
 #include "contests.h"
 #include "clarlog.h"
 #include "xml_utils.h"
-#include "compat.h"
+#include "ejudge/compat.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/osdeps.h"

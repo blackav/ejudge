@@ -498,7 +498,7 @@ HFILES=\
  client_actions.h\
  clntutil.h\
  common_plugin.h\
- compat.h\
+ ./include/ejudge/compat.h\
  compile_packet.h\
  compile_packet_priv.h\
  contests.h\

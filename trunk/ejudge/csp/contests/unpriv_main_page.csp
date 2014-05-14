@@ -2,7 +2,7 @@
 /* $Id$ */
 %><%@include "unpriv_includes.csp"
 %><%
-#include "compat.h"
+#include "ejudge/compat.h"
 
 void
 ns_unparse_statement(
