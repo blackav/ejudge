@@ -82,7 +82,7 @@ static const unsigned char csp_str57[18] = "\n</body>\n</html>\n";
 #define _(x) gettext(x)
 
 #define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
-#include "ej_uuid.h"
+#include "ejudge/ej_uuid.h"
 #include "mime_type.h"
 int csp_view_priv_edit_run_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr);
 static PageInterfaceOps page_ops =
