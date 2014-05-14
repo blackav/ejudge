@@ -25,7 +25,7 @@
 #include "misctext.h"
 #include "protocol.h"
 #include "ejudge/copyright.h"
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

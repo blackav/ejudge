@@ -25,7 +25,7 @@
 #include "ejudge/fileutl.h"
 #include "teamdb.h"
 #include "sformat.h"
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 #include "new-server.h"
 #include "userlist.h"
 #include "ejudge/random.h"

@@ -604,7 +604,7 @@ HFILES=\
  new_server_clnt.h\
  new_server_proto.h\
  new_server_clnt/new_server_clnt_priv.h\
- xml_utils.h\
+ ./include/ejudge/xml_utils.h\
  zip_utils.h
 
 OTHERFILES=\

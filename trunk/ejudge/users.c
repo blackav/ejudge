@@ -29,7 +29,7 @@
 #include "misctext.h"
 #include "ejudge/fileutl.h"
 #include "ejudge/l10n.h"
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

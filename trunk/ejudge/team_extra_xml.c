@@ -21,7 +21,7 @@
 #include "ejudge/expat_iface.h"
 #include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

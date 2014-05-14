@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 #include "ejudge/expat_iface.h"
 
 const unsigned char *
@@ -37,6 +37,5 @@ xml_err_get_attr_name(const struct xml_attr *a)
 /*
  * Local variables:
  *  compile-command: "make -C .."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")
  * End:
  */

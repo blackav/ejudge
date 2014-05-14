@@ -21,7 +21,7 @@
 #include "new-server.h"
 #include "new_server_proto.h"
 #include "ejudge/pathutl.h"
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 #include "misctext.h"
 #include "ejudge/copyright.h"
 #include "userlist_clnt.h"

@@ -8,7 +8,7 @@
 #include "runlog.h"
 #include "ejudge/l10n.h"
 #include "prepare.h"
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 #include "teamdb.h"
 #include "ejudge/copyright.h"
 #include "mischtml.h"

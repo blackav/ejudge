@@ -25,7 +25,7 @@
 #include "unix/unix_fileutl.h"
 #include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 #include "ejudge/charsets.h"
 #include "prepare.h"
 

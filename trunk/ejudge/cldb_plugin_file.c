@@ -23,7 +23,7 @@
 #include "prepare.h"
 #include "ejudge/errlog.h"
 #include "unix/unix_fileutl.h"
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 #include "ejudge/base64.h"
 #include "ejudge/fileutl.h"
 

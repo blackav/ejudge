@@ -19,7 +19,7 @@
 #include "ejudge/ej_limits.h"
 #include "ejudge/errlog.h"
 #include "uldb_plugin.h"
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 #include "ejudge/expat_iface.h"
 #include "ejudge_cfg.h"
 #include "ejudge/pathutl.h"

@@ -23,7 +23,7 @@
 #include "contests.h"
 #include "prepare.h"
 #include "common_plugin.h"
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 #include "ejudge/compat.h"
 
 #define EJUDGE_SKIP_MYSQL 1

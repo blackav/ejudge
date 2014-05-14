@@ -35,7 +35,7 @@
 #include "compile_packet.h"
 #include "run_packet.h"
 #include "ejudge/curtime.h"
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 #include "job_packet.h"
 #include "serve_state.h"
 #include "ejudge/startstop.h"

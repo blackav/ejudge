@@ -21,7 +21,7 @@
 #include "ejudge_cfg.h"
 #include "contests.h"
 #include "ejudge/pathutl.h"
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 #include "new_server_clnt.h"
 #include "new-server.h"
 #include "new_server_proto.h"

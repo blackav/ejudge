@@ -17,7 +17,7 @@
 
 #include "meta_generic.h"
 #include "misctext.h"
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 #include "ejudge/charsets.h"
 
 #include "reuse/xalloc.h"

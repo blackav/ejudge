@@ -40,7 +40,7 @@
 #include "run_packet.h"
 #include "testing_report_xml.h"
 #include "zip_utils.h"
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

@@ -25,7 +25,7 @@
 #include "protocol.h"
 #include "userlist.h"
 #include "serve_state.h"
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 #include "prepare_dflt.h"
 
 #include "reuse/exec.h"

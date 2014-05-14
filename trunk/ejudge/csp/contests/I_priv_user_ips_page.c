@@ -21,7 +21,7 @@
 #include "contests.h"
 #include "userlist_clnt.h"
 #include "runlog.h"
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

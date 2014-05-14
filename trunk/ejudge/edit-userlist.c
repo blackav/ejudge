@@ -22,7 +22,7 @@
 #include "contests.h"
 #include "userlist.h"
 #include "ejudge_cfg.h"
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 #include "misctext.h"
 #include "ncurses_utils.h"
 #include "ejudge/compat.h"

@@ -29,7 +29,7 @@
 #include "ejudge/l10n.h"
 #include "ejudge/charsets.h"
 #include "ejudge/fileutl.h"
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 #include "userlist.h"
 #include "ejudge_cfg.h"
 #include "mischtml.h"

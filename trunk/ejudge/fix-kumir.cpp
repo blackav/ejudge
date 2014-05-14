@@ -8,7 +8,7 @@ extern "C" {
 #include "ejudge_cfg.h"
 #include "contests.h"
 #include "runlog.h"
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 #include "misctext.h"
 #include "ejudge/fileutl.h"
 #include "sha.h"

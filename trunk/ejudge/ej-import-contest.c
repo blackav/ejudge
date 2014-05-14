@@ -25,7 +25,7 @@
 #include "problem_config.h"
 #include "build_support.h"
 #include "super-serve.h"
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 #include "super_html.h"
 #include "prepare.h"
 #include "problem_config_meta.h"

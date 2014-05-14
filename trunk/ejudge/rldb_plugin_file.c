@@ -29,7 +29,7 @@
 #include "ejudge/errlog.h"
 #include "ejudge/fileutl.h"
 #include "unix/unix_fileutl.h"
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 #include "ejudge/random.h"
 
 #include "reuse/xalloc.h"

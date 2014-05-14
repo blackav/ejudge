@@ -16,7 +16,7 @@
  */
 
 #include "problem_xml.h"
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 
 #include "reuse/xalloc.h"
 

@@ -26,7 +26,7 @@
 #include "runlog_state.h"
 
 #include "ejudge/errlog.h"
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 #include "contests.h"
 #include "prepare.h"
 #include "ejudge/mime_type.h"

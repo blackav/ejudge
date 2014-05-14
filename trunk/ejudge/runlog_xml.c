@@ -25,7 +25,7 @@
 #include "prepare.h"
 #include "misctext.h"
 #include "contests.h"
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 #include "serve_state.h"
 #include "ejudge/mime_type.h"
 #include "archive_paths.h"
