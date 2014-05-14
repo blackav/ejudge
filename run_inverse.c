@@ -17,7 +17,6 @@
 
 #include "ejudge/config.h"
 #include "ejudge/ej_limits.h"
-
 #include "run.h"
 #include "serve_state.h"
 #include "fileutl.h"
@@ -31,7 +30,7 @@
 #include "runlog.h"
 #include "testing_report_xml.h"
 #include "super_run_packet.h"
-#include "cpu.h"
+#include "ejudge/cpu.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

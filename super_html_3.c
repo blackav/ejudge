@@ -29,7 +29,7 @@
 #include "prepare_dflt.h"
 #include "xml_utils.h"
 #include "ejudge/ej_process.h"
-#include "cpu.h"
+#include "ejudge/cpu.h"
 #include "userlist_clnt.h"
 #include "userlist_proto.h"
 #include "userlist.h"

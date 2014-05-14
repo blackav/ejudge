@@ -34,7 +34,7 @@
 #include "nwrun_packet.h"
 #include "filehash.h"
 #include "curtime.h"
-#include "cpu.h"
+#include "ejudge/cpu.h"
 #include "ejudge/ej_process.h"
 
 #include "reuse/xalloc.h"

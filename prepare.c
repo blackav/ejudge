@@ -26,7 +26,7 @@
 #include "prepare_serve.h"
 #include "prepare_dflt.h"
 #include "ejudge_cfg.h"
-#include "cpu.h"
+#include "ejudge/cpu.h"
 #include "ejudge/errlog.h"
 #include "serve_state.h"
 #include "xml_utils.h"
