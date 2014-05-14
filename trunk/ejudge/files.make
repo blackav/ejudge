@@ -491,7 +491,7 @@ HFILES=\
  ./include/ejudge/bitset.h\
  build_support.h\
  cgi.h\
- charsets.h\
+ ./include/ejudge/charsets.h\
  clarlog.h\
  clarlog_state.h\
  cldb_plugin.h\
