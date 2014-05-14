@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "bitset.h"
+#include "ejudge/bitset.h"
 
 #include "reuse/xalloc.h"
 

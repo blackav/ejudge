@@ -18,9 +18,8 @@
  */
 
 #include "ejudge/ej_types.h"
-
 #include "opcaps.h"
-#include "bitset.h"
+#include "ejudge/bitset.h"
 #include "http_request.h"
 
 #include <time.h>
