@@ -588,7 +588,7 @@ HFILES=\
  testinfo.h\
  testing_report_xml.h\
  tex_dom.h\
- timestamp.h\
+ ./include/ejudge/timestamp.h\
  ./include/ejudge/tsc.h\
  type_info.h\
  uldb_plugin.h\

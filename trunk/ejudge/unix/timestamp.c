@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "timestamp.h"
+#include "ejudge/timestamp.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"
