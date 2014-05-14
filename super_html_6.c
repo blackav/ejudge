@@ -32,7 +32,7 @@
 #include "super_html_6.h"
 #include "super_html_6_meta.h"
 #include "meta_generic.h"
-#include "charsets.h"
+#include "ejudge/charsets.h"
 #include "csv.h"
 #include "ejudge/bitset.h"
 #include "fileutl.h"

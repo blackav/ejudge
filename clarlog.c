@@ -26,7 +26,7 @@
 #include "pathutl.h"
 #include "ejudge/errlog.h"
 #include "xml_utils.h"
-#include "charsets.h"
+#include "ejudge/charsets.h"
 #include "prepare.h"
 
 #include "reuse/xalloc.h"

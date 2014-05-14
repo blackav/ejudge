@@ -36,7 +36,7 @@
 #include "xml_utils.h"
 #include "testing_report_xml.h"
 #include "serve_state.h"
-#include "charsets.h"
+#include "ejudge/charsets.h"
 #include "ejudge/compat.h"
 #include "filter_eval.h"
 

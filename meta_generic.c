@@ -16,10 +16,9 @@
  */
 
 #include "meta_generic.h"
-
 #include "misctext.h"
 #include "xml_utils.h"
-#include "charsets.h"
+#include "ejudge/charsets.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

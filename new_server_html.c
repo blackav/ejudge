@@ -50,7 +50,7 @@
 #include "protocol.h"
 #include "printing.h"
 #include "sformat.h"
-#include "charsets.h"
+#include "ejudge/charsets.h"
 #include "ejudge/compat.h"
 #include "ejudge/ej_uuid.h"
 #include "prepare_dflt.h"

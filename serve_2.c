@@ -36,7 +36,7 @@
 #include "userlist.h"
 #include "sformat.h"
 #include "misctext.h"
-#include "charsets.h"
+#include "ejudge/charsets.h"
 #include "ejudge/compat.h"
 #include "varsubst.h"
 #include "mime_type.h"

@@ -16,7 +16,7 @@
  */
 
 #include "parsecfg.h"
-#include "charsets.h"
+#include "ejudge/charsets.h"
 #include "xml_utils.h"
 #include "misctext.h"
 #include "meta_generic.h"
