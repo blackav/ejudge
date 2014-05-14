@@ -505,7 +505,7 @@ HFILES=\
  ./include/ejudge/copyright.h\
  ./include/ejudge/cpu.h\
  ./include/ejudge/cr_serialize.h\
- csv.h\
+ ./include/ejudge/csv.h\
  ./include/ejudge/curtime.h\
  diff.h\
  digest_io.h\
