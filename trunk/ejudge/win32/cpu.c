@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "cpu.h"
+#include "ejudge/cpu.h"
 #include "ejudge/errlog.h"
 
 #include <stdlib.h>

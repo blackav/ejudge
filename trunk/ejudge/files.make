@@ -503,7 +503,7 @@ HFILES=\
  compile_packet_priv.h\
  contests.h\
  ./include/ejudge/copyright.h\
- cpu.h\
+ ./include/ejudge/cpu.h\
  cr_serialize.h\
  csv.h\
  curtime.h\

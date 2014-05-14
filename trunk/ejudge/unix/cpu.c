@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "cpu.h"
+#include "ejudge/cpu.h"
 
 #include "reuse/xalloc.h"
 

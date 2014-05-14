@@ -17,12 +17,11 @@
 
 #include "ejudge/config.h"
 #include "ejudge/version.h"
-
 #include "ncurses_utils.h"
 #include "ejudge/sha.h"
 #include "ejudge/base64.h"
 #include "startstop.h"
-#include "cpu.h"
+#include "ejudge/cpu.h"
 #include "misctext.h"
 #include "pathutl.h"
 #include "shellcfg_parse.h"
