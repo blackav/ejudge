@@ -3,7 +3,7 @@
 %><%@include "priv_includes.csp"
 %><%
 #include "ejudge/ej_uuid.h"
-#include "mime_type.h"
+#include "ejudge/mime_type.h"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@set err_prefix = "NEW_SRV_ERR_"
 %><%@set getter_name = "csp_get_priv_edit_run_page"

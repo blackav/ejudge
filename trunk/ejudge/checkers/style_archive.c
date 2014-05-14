@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "../mime_type.h"
+#include "../include/ejudge/mime_type.h"
 #include "../include/ejudge/ej_process.h"
 
 #include <stdio.h>

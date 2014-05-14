@@ -39,7 +39,7 @@
 #include "ejudge/charsets.h"
 #include "ejudge/compat.h"
 #include "varsubst.h"
-#include "mime_type.h"
+#include "ejudge/mime_type.h"
 #include "ejudge_cfg.h"
 #include "super_run_packet.h"
 #include "prepare_dflt.h"

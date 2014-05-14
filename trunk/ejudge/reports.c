@@ -30,7 +30,7 @@
 #include "userlist.h"
 #include "ejudge/random.h"
 #include "testing_report_xml.h"
-#include "mime_type.h"
+#include "ejudge/mime_type.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/osdeps.h"

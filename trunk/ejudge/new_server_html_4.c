@@ -32,7 +32,7 @@
 #include "teamdb.h"
 #include "misctext.h"
 #include "clarlog.h"
-#include "mime_type.h"
+#include "ejudge/mime_type.h"
 #include "ejudge/sha.h"
 #include "filter_tree.h"
 #include "filter_eval.h"

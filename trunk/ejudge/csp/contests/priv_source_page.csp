@@ -3,7 +3,7 @@
 %><%@include "priv_includes.csp"
 %><%
 #include "ejudge/ej_uuid.h"
-#include "mime_type.h"
+#include "ejudge/mime_type.h"
 #include "ejudge/charsets.h"
 #include "fileutl.h"
 %><%@set getter_name = "csp_get_priv_source_page"
