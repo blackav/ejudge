@@ -34,7 +34,7 @@
 #include "diff.h"
 #include "compile_packet.h"
 #include "run_packet.h"
-#include "curtime.h"
+#include "ejudge/curtime.h"
 #include "xml_utils.h"
 #include "job_packet.h"
 #include "serve_state.h"

@@ -22,7 +22,7 @@
 #include "testinfo.h"
 #include "interrupt.h"
 #include "run_packet.h"
-#include "curtime.h"
+#include "ejudge/curtime.h"
 #include "full_archive.h"
 #include "digest_io.h"
 #include "filehash.h"

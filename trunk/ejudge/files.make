@@ -506,7 +506,7 @@ HFILES=\
  ./include/ejudge/cpu.h\
  cr_serialize.h\
  csv.h\
- curtime.h\
+ ./include/ejudge/curtime.h\
  diff.h\
  digest_io.h\
  dwarf_parse.h\

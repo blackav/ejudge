@@ -31,7 +31,7 @@
 #include "interrupt.h"
 #include "runlog.h"
 #include "compile_packet.h"
-#include "curtime.h"
+#include "ejudge/curtime.h"
 #include "serve_state.h"
 #include "startstop.h"
 #include "ejudge_cfg.h"
