@@ -24,7 +24,7 @@
 #include "ejudge_cfg.h"
 #include "contests.h"
 #include "mischtml.h"
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 #include "serve_state.h"
 #include "misctext.h"
 #include "prepare.h"

@@ -36,7 +36,7 @@
 #include "prepare.h"
 #include "prepare_serve.h"
 #include "userlist.h"
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 #include "ejudge/win32_compat.h"
 
 #include "reuse/xalloc.h"

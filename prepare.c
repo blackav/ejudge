@@ -29,7 +29,7 @@
 #include "ejudge/cpu.h"
 #include "ejudge/errlog.h"
 #include "serve_state.h"
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 #include "ejudge/compat.h"
 
 #include "reuse/xalloc.h"

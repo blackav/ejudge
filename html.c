@@ -33,7 +33,7 @@
 #include "ejudge/copyright.h"
 #include "archive_paths.h"
 #include "team_extra.h"
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 #include "testing_report_xml.h"
 #include "serve_state.h"
 #include "ejudge/charsets.h"

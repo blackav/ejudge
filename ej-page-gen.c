@@ -22,7 +22,7 @@
 #include "type_info.h"
 #include "dwarf_parse.h"
 #include "html_parse.h"
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 #include "new_server_pi.h"
 
 #include "reuse/osdeps.h"

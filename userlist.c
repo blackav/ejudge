@@ -21,7 +21,7 @@
 #include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
 #include "ejudge/tsc.h"
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 #include "ejudge/ej_limits.h"
 #include "ejudge/win32_compat.h"
 

@@ -26,7 +26,7 @@
 #include "contests.h"
 #include "misctext.h"
 #include "mischtml.h"
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 #include "ejudge/l10n.h"
 #include "ejudge/compat.h"
 #include "ejudge_cfg.h"

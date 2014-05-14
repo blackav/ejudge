@@ -31,7 +31,7 @@
 #include "ejudge/pathutl.h"
 #include "userlist.h"
 #include "ejudge/compat.h"
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/osdeps.h"

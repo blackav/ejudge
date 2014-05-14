@@ -36,7 +36,7 @@
 #include "ejudge/sha.h"
 #include "filter_tree.h"
 #include "filter_eval.h"
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 #include "ejudge/charsets.h"
 #include "ejudge/compat.h"
 #include "ejudge_cfg.h"

@@ -26,7 +26,7 @@
 #include "html.h"
 #include "clarlog.h"
 #include "ejudge/base64.h"
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 #include "archive_paths.h"
 #include "ejudge/fileutl.h"
 #include "ejudge/mime_type.h"

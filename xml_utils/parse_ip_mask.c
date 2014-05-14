@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 #include "ejudge/errlog.h"
 
 #include <string.h>

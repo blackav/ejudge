@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 #include "ejudge/errlog.h"
 
 int
@@ -53,6 +53,5 @@ xml_parse_int(
 /*
  * Local variables:
  *  compile-command: "make -C .."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  * End:
  */

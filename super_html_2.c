@@ -29,7 +29,7 @@
 #include "ejudge_cfg.h"
 #include "ejudge/pathutl.h"
 #include "ejudge/fileutl.h"
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 #include "prepare.h"
 #include "userlist_proto.h"
 #include "userlist_clnt.h"

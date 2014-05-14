@@ -29,7 +29,7 @@
 #include "run.h"
 #include "ejudge/curtime.h"
 #include "ejudge/ej_process.h"
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 #include "ejudge/ej_uuid.h"
 
 #include "reuse/xalloc.h"

@@ -29,7 +29,7 @@
 #include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
 #include "ejudge/fileutl.h"
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 #include "prepare.h"
 #include "vcs.h"
 #include "ejudge/compat.h"

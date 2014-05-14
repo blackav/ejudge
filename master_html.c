@@ -31,7 +31,7 @@
 #include "sformat.h"
 #include "archive_paths.h"
 #include "team_extra.h"
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 #include "userlist.h"
 #include "testing_report_xml.h"
 #include "full_archive.h"

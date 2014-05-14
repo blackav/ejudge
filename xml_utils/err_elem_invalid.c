@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 #include "ejudge/pathutl.h"
 #include "ejudge/expat_iface.h"
 
@@ -33,6 +33,5 @@ xml_err_elem_invalid(const struct xml_tree *p)
 /*
  * Local variables:
  *  compile-command: "make -C .."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")
  * End:
  */

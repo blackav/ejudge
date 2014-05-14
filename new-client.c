@@ -24,7 +24,7 @@
 #include "clntutil.h"
 #include "ejudge/errlog.h"
 #include "parsecfg.h"
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

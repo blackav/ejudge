@@ -35,7 +35,7 @@
 #include "job_packet.h"
 #include "ejudge_plugin.h"
 #include "uldb_plugin.h"
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 #include "ejudge/random.h"
 #include "ejudge/startstop.h"
 #include "ejudge/csv.h"

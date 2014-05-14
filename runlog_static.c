@@ -19,7 +19,7 @@
 
 #include "runlog.h"
 #include "problem_common.h"
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>

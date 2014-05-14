@@ -27,7 +27,7 @@
 #include "userlist.h"
 #include "misctext.h"
 #include "ejudge/errlog.h"
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 #include "ejudge_cfg.h"
 #include "super_html_6.h"
 #include "super_html_6_meta.h"

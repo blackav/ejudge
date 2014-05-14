@@ -38,7 +38,7 @@
 #include "ejudge/ej_process.h"
 #include "ejudge/ej_byteorder.h"
 #include "pollfds.h"
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

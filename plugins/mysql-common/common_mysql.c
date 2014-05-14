@@ -18,7 +18,7 @@
 #include "ejudge/config.h"
 #include "ejudge/ej_limits.h"
 #include "common_mysql.h"
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 #include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
 

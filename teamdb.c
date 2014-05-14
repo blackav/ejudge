@@ -23,7 +23,7 @@
 #include "userlist_clnt.h"
 #include "userlist_proto.h"
 #include "userlist.h"
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

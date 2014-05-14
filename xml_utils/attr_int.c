@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 #include "ejudge/errlog.h"
 #include "ejudge/expat_iface.h"
 
@@ -48,6 +48,5 @@ xml_attr_int(struct xml_attr *a, int *pval)
 /*
  * Local variables:
  *  compile-command: "make -C .."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  * End:
  */

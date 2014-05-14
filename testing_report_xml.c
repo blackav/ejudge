@@ -19,7 +19,7 @@
 #include "ejudge/ej_limits.h"
 #include "testing_report_xml.h"
 #include "ejudge/expat_iface.h"
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 #include "protocol.h"
 #include "runlog.h"
 #include "digest_io.h"

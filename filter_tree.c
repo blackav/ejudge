@@ -20,7 +20,7 @@
 #include "filter_tree.h"
 #include "filter_expr.h"
 #include "runlog.h"
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

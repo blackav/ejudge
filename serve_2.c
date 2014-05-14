@@ -29,7 +29,7 @@
 #include "contests.h"
 #include "job_packet.h"
 #include "archive_paths.h"
-#include "xml_utils.h"
+#include "ejudge/xml_utils.h"
 #include "compile_packet.h"
 #include "run_packet.h"
 #include "ejudge/curtime.h"
