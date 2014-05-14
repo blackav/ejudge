@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "file_perms.h"
+#include "ejudge/file_perms.h"
 #include "misctext.h"
 
 #include "reuse/osdeps.h"

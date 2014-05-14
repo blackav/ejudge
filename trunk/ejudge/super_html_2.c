@@ -37,7 +37,7 @@
 #include "ejudge/ej_process.h"
 #include "vcs.h"
 #include "ejudge/compat.h"
-#include "file_perms.h"
+#include "ejudge/file_perms.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"
