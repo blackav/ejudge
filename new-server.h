@@ -20,7 +20,7 @@
 
 #include "ejudge/ej_types.h"
 #include "server_framework.h"
-#include "iterators.h"
+#include "ejudge/iterators.h"
 #include "watched_file.h"
 #include "serve_state.h"
 #include "http_request.h"

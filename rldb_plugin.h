@@ -4,7 +4,7 @@
 #ifndef __RLDB_PLUGIN_H__
 #define __RLDB_PLUGIN_H__
 
-/* Copyright (C) 2008-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -21,7 +21,7 @@
 #include "ejudge_plugin.h"
 #include "common_plugin.h"
 #include "ejudge/ej_types.h"
-#include "iterators.h"
+#include "ejudge/iterators.h"
 #include "ejudge_cfg.h"
 
 struct ejudge_cfg;
