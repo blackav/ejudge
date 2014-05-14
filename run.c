@@ -20,7 +20,7 @@
 #include "prepare.h"
 #include "runlog.h"
 #include "testinfo.h"
-#include "interrupt.h"
+#include "ejudge/interrupt.h"
 #include "run_packet.h"
 #include "ejudge/curtime.h"
 #include "full_archive.h"
