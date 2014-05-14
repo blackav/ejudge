@@ -4,7 +4,7 @@
 #ifndef __PROBLEM_PLUGIN_H__
 #define __PROBLEM_PLUGIN_H__
 
-/* Copyright (C) 2007-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -20,7 +20,7 @@
 
 #include "ejudge_plugin.h"
 #include "ejudge/ej_types.h"
-#include "iterators.h"
+#include "ejudge/iterators.h"
 
 #include <stdio.h>
 

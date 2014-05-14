@@ -4,7 +4,7 @@
 #ifndef __NSDB_PLUGIN_H__
 #define __NSDB_PLUGIN_H__
 
-/* Copyright (C) 2006-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -20,7 +20,7 @@
 
 #include "ejudge_plugin.h"
 #include "ejudge/ej_types.h"
-#include "iterators.h"
+#include "ejudge/iterators.h"
 
 struct ejudge_cfg;
 struct xml_tree;

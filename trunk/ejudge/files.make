@@ -531,7 +531,7 @@ HFILES=\
  html_parse.h\
  http_request.h\
  ./include/ejudge/interrupt.h\
- iterators.h\
+ ./include/ejudge/iterators.h\
  job_packet.h\
  ./include/ejudge/l10n.h\
  lang_config_vis.h\
