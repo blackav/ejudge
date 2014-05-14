@@ -17,9 +17,8 @@
 
 #include "ejudge/config.h"
 #include "ejudge/ej_limits.h"
-
 #include "t3m_dir_listener.h"
-#include "list_ops.h"
+#include "ejudge/list_ops.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"
