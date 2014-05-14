@@ -19,7 +19,7 @@
 #include "ejudge/ej_types.h"
 #include "ejudge/version.h"
 #include "ejudge/startstop.h"
-#include "pathutl.h"
+#include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
 
 #include "reuse/xalloc.h"

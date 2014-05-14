@@ -20,7 +20,7 @@
 #include "html.h"
 #include "misctext.h"
 #include "mischtml.h"
-#include "pathutl.h"
+#include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
 #include "ejudge/fileutl.h"
 #include "runlog.h"

@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,7 @@
  */
 
 #include "xml_utils.h"
-#include "pathutl.h"
+#include "ejudge/pathutl.h"
 #include "expat_iface.h"
 
 int

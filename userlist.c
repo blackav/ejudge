@@ -18,7 +18,7 @@
 #include "ejudge/config.h"
 #include "userlist.h"
 #include "contests.h"
-#include "pathutl.h"
+#include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
 #include "ejudge/tsc.h"
 #include "xml_utils.h"

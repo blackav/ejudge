@@ -22,7 +22,7 @@
 #include "xml_utils.h"
 #include "expat_iface.h"
 #include "ejudge_cfg.h"
-#include "pathutl.h"
+#include "ejudge/pathutl.h"
 #include "userlist.h"
 #include "ejudge/list_ops.h"
 #include "misctext.h"

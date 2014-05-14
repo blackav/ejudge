@@ -19,7 +19,7 @@
 #include "ejudge/ej_limits.h"
 #include "ejudge_plugin.h"
 #include "ejudge/errlog.h"
-#include "pathutl.h"
+#include "ejudge/pathutl.h"
 
 #include "reuse/xalloc.h"
 

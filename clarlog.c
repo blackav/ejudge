@@ -23,7 +23,7 @@
 #include "teamdb.h"
 #include "ejudge/base64.h"
 #include "unix/unix_fileutl.h"
-#include "pathutl.h"
+#include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
 #include "xml_utils.h"
 #include "ejudge/charsets.h"

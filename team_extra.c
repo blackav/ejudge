@@ -17,7 +17,7 @@
 
 #include "ejudge/ej_limits.h"
 #include "team_extra.h"
-#include "pathutl.h"
+#include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
 
 #include "reuse/xalloc.h"

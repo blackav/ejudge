@@ -16,7 +16,7 @@
  */
 
 #include "ejudge/fileutl.h"
-#include "pathutl.h"
+#include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
 #include "ejudge/ej_limits.h"
 

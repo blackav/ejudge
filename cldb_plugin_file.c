@@ -19,7 +19,7 @@
 #include "clarlog.h"
 #include "clarlog_state.h"
 #include "ejudge_cfg.h"
-#include "pathutl.h"
+#include "ejudge/pathutl.h"
 #include "prepare.h"
 #include "ejudge/errlog.h"
 #include "unix/unix_fileutl.h"

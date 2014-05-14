@@ -18,7 +18,7 @@
 #include "ejudge/config.h"
 #include "runlog.h"
 #include "teamdb.h"
-#include "pathutl.h"
+#include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
 #include "unix/unix_fileutl.h"
 #include "xml_utils.h"

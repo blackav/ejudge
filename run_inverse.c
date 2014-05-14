@@ -20,7 +20,7 @@
 #include "run.h"
 #include "serve_state.h"
 #include "ejudge/fileutl.h"
-#include "pathutl.h"
+#include "ejudge/pathutl.h"
 #include "ejudge/mime_type.h"
 #include "prepare.h"
 #include "run_packet.h"

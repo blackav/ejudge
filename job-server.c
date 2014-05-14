@@ -20,7 +20,7 @@
 #include "ejudge/version.h"
 #include "ejudge/errlog.h"
 #include "ejudge_cfg.h"
-#include "pathutl.h"
+#include "ejudge/pathutl.h"
 #include "ejudge/fileutl.h"
 #include "ejudge/startstop.h"
 #include "ejudge/compat.h"

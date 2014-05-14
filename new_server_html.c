@@ -20,7 +20,7 @@
 #include "ejudge/ej_limits.h"
 #include "new-server.h"
 #include "new_server_proto.h"
-#include "pathutl.h"
+#include "ejudge/pathutl.h"
 #include "xml_utils.h"
 #include "misctext.h"
 #include "ejudge/copyright.h"

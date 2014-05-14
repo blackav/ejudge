@@ -19,7 +19,7 @@
 #include "ejudge/ej_types.h"
 #include "job_packet.h"
 #include "ejudge/errlog.h"
-#include "pathutl.h"
+#include "ejudge/pathutl.h"
 #include "ejudge/fileutl.h"
 
 #include "reuse/xalloc.h"

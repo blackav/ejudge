@@ -20,7 +20,7 @@
 #include "archive_paths.h"
 #include "prepare.h"
 #include "ejudge/fileutl.h"
-#include "pathutl.h"
+#include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
 #include "serve_state.h"
 #include "ejudge/ej_uuid.h"

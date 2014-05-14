@@ -20,7 +20,7 @@
 #include "ejudge/version.h"
 #include "ejudge_cfg.h"
 #include "contests.h"
-#include "pathutl.h"
+#include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
 #include "userlist_clnt.h"
 #include "super_proto.h"

@@ -20,7 +20,7 @@
 #include "ejudge/ej_limits.h"
 #include "ejudge_cfg.h"
 #include "userlist.h"
-#include "pathutl.h"
+#include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
 #include "ejudge/base64.h"
 #include "userlist_proto.h"

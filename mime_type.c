@@ -17,7 +17,7 @@
 
 #include "ejudge/config.h"
 #include "ejudge/mime_type.h"
-#include "pathutl.h"
+#include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
 #include "ejudge/fileutl.h"
 

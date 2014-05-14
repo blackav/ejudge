@@ -18,7 +18,7 @@
 #include "ejudge/config.h"
 #include "ejudge/ej_types.h"
 #include "clntutil.h"
-#include "pathutl.h"
+#include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
 #include "ejudge/fileutl.h"
 #include "unix/unix_fileutl.h"

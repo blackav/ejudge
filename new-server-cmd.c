@@ -18,10 +18,9 @@
 #include "ejudge/config.h"
 #include "ejudge/ej_types.h"
 #include "ejudge/version.h"
-
 #include "ejudge_cfg.h"
 #include "contests.h"
-#include "pathutl.h"
+#include "ejudge/pathutl.h"
 #include "xml_utils.h"
 #include "new_server_clnt.h"
 #include "new-server.h"

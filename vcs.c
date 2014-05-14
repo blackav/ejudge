@@ -18,7 +18,7 @@
 #include "ejudge/config.h"
 #include "ejudge/version.h"
 #include "vcs.h"
-#include "pathutl.h"
+#include "ejudge/pathutl.h"
 #include "ejudge/ej_process.h"
 #include "ejudge/compat.h"
 

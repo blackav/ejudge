@@ -16,7 +16,7 @@
  */
 
 #include "xml_utils.h"
-#include "pathutl.h"
+#include "ejudge/pathutl.h"
 #include "expat_iface.h"
 
 #include "reuse/xalloc.h"

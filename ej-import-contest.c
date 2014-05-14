@@ -31,7 +31,7 @@
 #include "problem_config_meta.h"
 #include "prepare_meta.h"
 #include "prepare_dflt.h"
-#include "pathutl.h"
+#include "ejudge/pathutl.h"
 #include "ej_import_packet.h"
 
 #include "reuse/osdeps.h"
