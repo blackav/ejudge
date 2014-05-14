@@ -36,7 +36,7 @@
 #include "sock_op.h"
 #include "compat.h"
 #include "ej_process.h"
-#include "ej_byteorder.h"
+#include "ejudge/ej_byteorder.h"
 #include "pollfds.h"
 #include "xml_utils.h"
 
