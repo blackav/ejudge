@@ -23,6 +23,7 @@
 #include "tsc.h"
 #include "xml_utils.h"
 #include "ejudge/ej_limits.h"
+#include "ejudge/win32_compat.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"
@@ -33,8 +34,6 @@
 #include <time.h>
 #include <ctype.h>
 #include <errno.h>
-
-#include "win32_compat.h"
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>

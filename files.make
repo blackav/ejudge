@@ -598,7 +598,7 @@ HFILES=\
  vcs.h\
  ./include/ejudge/version.h\
  watched_file.h\
- win32_compat.h\
+ ./include/ejudge/win32_compat.h\
  unix/unix_fileutl.h\
  userlist_clnt/private.h\
  new_server_clnt.h\

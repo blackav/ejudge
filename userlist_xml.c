@@ -22,6 +22,7 @@
 #include "protocol.h"
 #include "misctext.h"
 #include "xml_utils.h"
+#include "ejudge/win32_compat.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"
@@ -34,8 +35,6 @@
 #include <errno.h>
 #include <limits.h>
 #include <time.h>
-
-#include "win32_compat.h"
 
 #ifndef EJUDGE_CHARSET
 #define EJUDGE_CHARSET EJ_INTERNAL_CHARSET

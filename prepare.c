@@ -43,7 +43,7 @@
 #include <ctype.h>
 #include <errno.h>
 
-#include "win32_compat.h"
+#include "ejudge/win32_compat.h"
 
 static int
 do_problem_parse_type(const unsigned char *str, void *ptr, size_t size);

@@ -30,7 +30,7 @@
 #include <errno.h>
 #include <limits.h>
 
-#include "win32_compat.h"
+#include "ejudge/win32_compat.h"
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>

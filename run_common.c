@@ -28,7 +28,7 @@
 #include "fileutl.h"
 #include "testinfo.h"
 #include "full_archive.h"
-#include "win32_compat.h"
+#include "ejudge/win32_compat.h"
 #include "ejudge_cfg.h"
 #include "interrupt.h"
 #include "nwrun_packet.h"

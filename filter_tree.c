@@ -34,7 +34,7 @@
 #include <regex.h>
 #endif
 
-#include "win32_compat.h"
+#include "ejudge/win32_compat.h"
 
 struct filter_tree_regexp
 {

@@ -16,14 +16,13 @@
  */
 
 #include "tsc.h"
+#include "ejudge/win32_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
-
-#include "win32_compat.h"
 
 ej_tsc_t cpu_frequency;
 int
