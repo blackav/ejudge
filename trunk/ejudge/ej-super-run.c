@@ -23,7 +23,7 @@
 #include "fileutl.h"
 #include "ejudge/errlog.h"
 #include "prepare.h"
-#include "interrupt.h"
+#include "ejudge/interrupt.h"
 #include "super_run_packet.h"
 #include "run_packet.h"
 #include "run.h"

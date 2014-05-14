@@ -530,7 +530,7 @@ HFILES=\
  html.h\
  html_parse.h\
  http_request.h\
- interrupt.h\
+ ./include/ejudge/interrupt.h\
  iterators.h\
  job_packet.h\
  ./include/ejudge/l10n.h\

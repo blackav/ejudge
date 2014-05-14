@@ -20,7 +20,7 @@
 #include "ejudge/version.h"
 #include "mime_type.h"
 #include "t3_packets.h"
-#include "interrupt.h"
+#include "ejudge/interrupt.h"
 #include "startstop.h"
 #include "ejudge_cfg.h"
 #include "pathutl.h"

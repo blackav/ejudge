@@ -30,7 +30,7 @@
 #include "full_archive.h"
 #include "ejudge/win32_compat.h"
 #include "ejudge_cfg.h"
-#include "interrupt.h"
+#include "ejudge/interrupt.h"
 #include "nwrun_packet.h"
 #include "filehash.h"
 #include "ejudge/curtime.h"

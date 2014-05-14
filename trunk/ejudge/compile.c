@@ -28,7 +28,7 @@
 #include "ejudge/errlog.h"
 #include "parsecfg.h"
 #include "fileutl.h"
-#include "interrupt.h"
+#include "ejudge/interrupt.h"
 #include "runlog.h"
 #include "compile_packet.h"
 #include "ejudge/curtime.h"
