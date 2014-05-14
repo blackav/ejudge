@@ -20,7 +20,7 @@
 #include "vcs.h"
 #include "pathutl.h"
 #include "ejudge/ej_process.h"
-#include "compat.h"
+#include "ejudge/compat.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

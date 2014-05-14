@@ -34,7 +34,7 @@
 #include "startstop.h"
 #include "super-serve_meta.h"
 #include "sock_op.h"
-#include "compat.h"
+#include "ejudge/compat.h"
 #include "ejudge/ej_process.h"
 #include "ejudge/ej_byteorder.h"
 #include "pollfds.h"

@@ -37,7 +37,7 @@
 #include "testing_report_xml.h"
 #include "serve_state.h"
 #include "charsets.h"
-#include "compat.h"
+#include "ejudge/compat.h"
 #include "filter_eval.h"
 
 #include "reuse/xalloc.h"

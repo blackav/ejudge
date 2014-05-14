@@ -24,7 +24,7 @@
 #include "ejudge_cfg.h"
 #include "ejudge/errlog.h"
 #include "fileutl.h"
-#include "compat.h"
+#include "ejudge/compat.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

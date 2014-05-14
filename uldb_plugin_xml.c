@@ -23,7 +23,7 @@
 #include "ejudge/random.h"
 #include "misctext.h"
 #include "ejudge/ej_limits.h"
-#include "compat.h"
+#include "ejudge/compat.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

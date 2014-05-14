@@ -17,7 +17,6 @@
 
 #include "ejudge/config.h"
 #include "ejudge/ej_types.h"
-
 #include "ejudge/ej_limits.h"
 #include "expat_iface.h"
 #include "xml_utils.h"
@@ -30,7 +29,7 @@
 #include "userlist_proto.h"
 #include "super_clnt.h"
 #include "super_proto.h"
-#include "compat.h"
+#include "ejudge/compat.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

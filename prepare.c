@@ -30,7 +30,7 @@
 #include "ejudge/errlog.h"
 #include "serve_state.h"
 #include "xml_utils.h"
-#include "compat.h"
+#include "ejudge/compat.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

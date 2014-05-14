@@ -23,7 +23,7 @@
 #include "pathutl.h"
 #include "fileutl.h"
 #include "startstop.h"
-#include "compat.h"
+#include "ejudge/compat.h"
 #include "misctext.h"
 
 #include "reuse/xalloc.h"

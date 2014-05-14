@@ -38,7 +38,7 @@
 #include "meta_generic.h"
 #include "prepare_dflt.h"
 #include "ejudge/cpu.h"
-#include "compat.h"
+#include "ejudge/compat.h"
 #include "ejudge/errlog.h"
 
 #include "reuse/xalloc.h"

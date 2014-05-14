@@ -37,7 +37,7 @@
 #include "sformat.h"
 #include "misctext.h"
 #include "charsets.h"
-#include "compat.h"
+#include "ejudge/compat.h"
 #include "varsubst.h"
 #include "mime_type.h"
 #include "ejudge_cfg.h"

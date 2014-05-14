@@ -5,7 +5,6 @@ extern "C" {
 #include "ejudge/ej_types.h"
 #include "ejudge/ej_limits.h"
 #include "ejudge/version.h"
-
 #include "ejudge_cfg.h"
 #include "contests.h"
 #include "runlog.h"
@@ -13,9 +12,9 @@ extern "C" {
 #include "misctext.h"
 #include "fileutl.h"
 #include "sha.h"
+#include "ejudge/compat.h"
 
 #include "reuse/xalloc.h"
-#include "compat.h"
 }
 
 #include <stdio.h>

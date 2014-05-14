@@ -31,7 +31,7 @@
 #include "prepare.h"
 #include "mime_type.h"
 #include "misctext.h"
-#include "compat.h"
+#include "ejudge/compat.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

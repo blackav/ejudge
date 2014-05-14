@@ -36,7 +36,7 @@
 #include "prepare_serve.h"
 #include "ejudge/errlog.h"
 #include "ejudge/random.h"
-#include "compat.h"
+#include "ejudge/compat.h"
 #include "file_perms.h"
 #include "build_support.h"
 

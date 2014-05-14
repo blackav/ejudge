@@ -40,7 +40,7 @@
 #include "startstop.h"
 #include "csv.h"
 #include "sock_op.h"
-#include "compat.h"
+#include "ejudge/compat.h"
 #include "bitset.h"
 
 #include "reuse/xalloc.h"
