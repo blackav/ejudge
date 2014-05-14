@@ -38,7 +38,7 @@
 #include "xml_utils.h"
 #include "ejudge/random.h"
 #include "ejudge/startstop.h"
-#include "csv.h"
+#include "ejudge/csv.h"
 #include "sock_op.h"
 #include "ejudge/compat.h"
 #include "ejudge/bitset.h"

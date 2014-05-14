@@ -39,7 +39,7 @@
 #include "userlist.h"
 #include "team_extra.h"
 #include "ejudge/errlog.h"
-#include "csv.h"
+#include "ejudge/csv.h"
 #include "ejudge/sha.h"
 #include "sformat.h"
 #include "userlist_clnt.h"

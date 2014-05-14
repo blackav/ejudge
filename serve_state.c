@@ -27,7 +27,7 @@
 #include "userlist_proto.h"
 #include "userlist_clnt.h"
 #include "ejudge_plugin.h"
-#include "csv.h"
+#include "ejudge/csv.h"
 #include "ejudge_cfg.h"
 #include "misctext.h"
 #include "new-server.h"

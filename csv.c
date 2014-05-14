@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "csv.h"
+#include "ejudge/csv.h"
 
 #include "reuse/xalloc.h"
 
