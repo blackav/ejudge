@@ -20,7 +20,7 @@
 #include "pathutl.h"
 #include "ejudge_cfg.h"
 #include "userlist.h"
-#include "random.h"
+#include "ejudge/random.h"
 #include "misctext.h"
 #include "ejudge/ej_limits.h"
 #include "compat.h"

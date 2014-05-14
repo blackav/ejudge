@@ -17,7 +17,6 @@
 
 #include "ejudge/config.h"
 #include "ejudge/ej_types.h"
-
 #include "serve_state.h"
 #include "prepare.h"
 #include "runlog.h"
@@ -29,7 +28,7 @@
 #include "xml_utils.h"
 #include "new-server.h"
 #include "userlist.h"
-#include "random.h"
+#include "ejudge/random.h"
 #include "testing_report_xml.h"
 #include "mime_type.h"
 

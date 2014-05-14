@@ -22,7 +22,7 @@
 #include "ejudge/errlog.h"
 #include "unix/unix_fileutl.h"
 #include "xml_utils.h"
-#include "random.h"
+#include "ejudge/random.h"
 #include "runlog_state.h"
 #include "rldb_plugin.h"
 #include "prepare.h"

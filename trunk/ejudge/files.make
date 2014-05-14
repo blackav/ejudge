@@ -558,7 +558,7 @@ HFILES=\
  problem_config.h\
  problem_xml.h\
  protocol.h\
- random.h\
+ ./include/ejudge/random.h\
  rldb_plugin.h\
  run.h\
  runlog.h\
