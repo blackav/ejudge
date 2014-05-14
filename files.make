@@ -523,7 +523,7 @@ HFILES=\
  external_action.h\
  filehash.h\
  ./include/ejudge/file_perms.h\
- fileutl.h\
+ ./include/ejudge/fileutl.h\
  filter_eval.h\
  filter_tree.h\
  full_archive.h\

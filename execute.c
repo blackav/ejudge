@@ -17,9 +17,8 @@
 
 #include "ejudge/config.h"
 #include "ejudge/version.h"
-
 #include "testinfo.h"
-#include "fileutl.h"
+#include "ejudge/fileutl.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/exec.h"

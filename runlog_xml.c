@@ -29,7 +29,7 @@
 #include "serve_state.h"
 #include "ejudge/mime_type.h"
 #include "archive_paths.h"
-#include "fileutl.h"
+#include "ejudge/fileutl.h"
 #include "ejudge/base64.h"
 #include "ejudge/ej_uuid.h"
 

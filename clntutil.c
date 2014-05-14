@@ -20,7 +20,7 @@
 #include "clntutil.h"
 #include "pathutl.h"
 #include "ejudge/errlog.h"
-#include "fileutl.h"
+#include "ejudge/fileutl.h"
 #include "unix/unix_fileutl.h"
 #include "misctext.h"
 #include "protocol.h"

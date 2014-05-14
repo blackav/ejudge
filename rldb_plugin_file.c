@@ -27,7 +27,7 @@
 #include "contests.h"
 #include "prepare.h"
 #include "ejudge/errlog.h"
-#include "fileutl.h"
+#include "ejudge/fileutl.h"
 #include "unix/unix_fileutl.h"
 #include "xml_utils.h"
 #include "ejudge/random.h"

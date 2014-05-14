@@ -25,7 +25,7 @@
 #include "ejudge/errlog.h"
 #include "runlog.h"
 #include "digest_io.h"
-#include "fileutl.h"
+#include "ejudge/fileutl.h"
 #include "testinfo.h"
 #include "full_archive.h"
 #include "ejudge/win32_compat.h"

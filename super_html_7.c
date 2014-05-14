@@ -29,7 +29,7 @@
 #include "misctext.h"
 #include "prepare.h"
 #include "prepare_dflt.h"
-#include "fileutl.h"
+#include "ejudge/fileutl.h"
 #include "testinfo.h"
 #include "ejudge/file_perms.h"
 #include "ejudge/ej_process.h"

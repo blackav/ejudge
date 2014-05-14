@@ -31,7 +31,7 @@
 #include "contests.h"
 #include "nsdb_plugin.h"
 #include "ejudge/l10n.h"
-#include "fileutl.h"
+#include "ejudge/fileutl.h"
 #include "userlist.h"
 #include "mischtml.h"
 #include "serve_state.h"

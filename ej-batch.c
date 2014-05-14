@@ -24,7 +24,7 @@
 #include "startstop.h"
 #include "ejudge_cfg.h"
 #include "pathutl.h"
-#include "fileutl.h"
+#include "ejudge/fileutl.h"
 #include "ejudge/errlog.h"
 #include "misctext.h"
 #include "parsecfg.h"

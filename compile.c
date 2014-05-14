@@ -27,7 +27,7 @@
 #include "pathutl.h"
 #include "ejudge/errlog.h"
 #include "parsecfg.h"
-#include "fileutl.h"
+#include "ejudge/fileutl.h"
 #include "ejudge/interrupt.h"
 #include "runlog.h"
 #include "compile_packet.h"

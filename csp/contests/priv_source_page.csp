@@ -5,7 +5,7 @@
 #include "ejudge/ej_uuid.h"
 #include "ejudge/mime_type.h"
 #include "ejudge/charsets.h"
-#include "fileutl.h"
+#include "ejudge/fileutl.h"
 %><%@set getter_name = "csp_get_priv_source_page"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@set err_prefix = "NEW_SRV_ERR_"

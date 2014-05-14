@@ -27,7 +27,7 @@
 #include "shellcfg_parse.h"
 #include "lang_config_vis.h"
 #include "stringset.h"
-#include "fileutl.h"
+#include "ejudge/fileutl.h"
 #include "ejudge/compat.h"
 
 #include "reuse/xalloc.h"

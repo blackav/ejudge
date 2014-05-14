@@ -25,7 +25,7 @@
 #include "prepare_meta.h"
 #include "ejudge_cfg.h"
 #include "super_proto.h"
-#include "fileutl.h"
+#include "ejudge/fileutl.h"
 #include "prepare_dflt.h"
 #include "xml_utils.h"
 #include "ejudge/ej_process.h"

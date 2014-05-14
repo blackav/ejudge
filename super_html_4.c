@@ -28,7 +28,7 @@
 #include "contests_meta.h"
 #include "ejudge/l10n.h"
 #include "ejudge/charsets.h"
-#include "fileutl.h"
+#include "ejudge/fileutl.h"
 #include "xml_utils.h"
 #include "userlist.h"
 #include "ejudge_cfg.h"
