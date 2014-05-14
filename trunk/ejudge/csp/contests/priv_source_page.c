@@ -87,7 +87,7 @@ static const unsigned char csp_str62[18] = "\n</body>\n</html>\n";
 #define _(x) gettext(x)
 
 #define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
-#include "ej_uuid.h"
+#include "ejudge/ej_uuid.h"
 #include "mime_type.h"
 #include "charsets.h"
 #include "fileutl.h"
