@@ -18,11 +18,10 @@
 #include "ejudge/config.h"
 #include "ejudge/ej_limits.h"
 #include "ejudge/version.h"
-
 #include "ejudge_cfg.h"
 #include "contests.h"
 #include "fileutl.h"
-#include "ej_process.h"
+#include "ejudge/ej_process.h"
 #include "problem_config.h"
 #include "build_support.h"
 #include "super-serve.h"

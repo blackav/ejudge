@@ -17,10 +17,9 @@
 
 #include "ejudge/config.h"
 #include "ejudge/version.h"
-
 #include "vcs.h"
 #include "pathutl.h"
-#include "ej_process.h"
+#include "ejudge/ej_process.h"
 #include "compat.h"
 
 #include "reuse/xalloc.h"

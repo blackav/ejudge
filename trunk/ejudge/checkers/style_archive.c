@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2010-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,7 @@
  */
 
 #include "../mime_type.h"
-#include "../ej_process.h"
+#include "../include/ejudge/ej_process.h"
 
 #include <stdio.h>
 #include <stdlib.h>

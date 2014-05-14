@@ -28,7 +28,7 @@
 #include "fileutl.h"
 #include "prepare_dflt.h"
 #include "xml_utils.h"
-#include "ej_process.h"
+#include "ejudge/ej_process.h"
 #include "cpu.h"
 #include "userlist_clnt.h"
 #include "userlist_proto.h"

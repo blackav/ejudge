@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "ej_process.h"
+#include "ejudge/ej_process.h"
 #include "compat.h"
 #include "list_ops.h"
 #include "pollfds.h"

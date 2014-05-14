@@ -18,7 +18,6 @@
 #include "ejudge/config.h"
 #include "ejudge/version.h"
 #include "ejudge/ej_limits.h"
-
 #include "super_html.h"
 #include "super-serve.h"
 #include "super_proto.h"
@@ -35,7 +34,7 @@
 #include "userlist_proto.h"
 #include "userlist_clnt.h"
 #include "userlist.h"
-#include "ej_process.h"
+#include "ejudge/ej_process.h"
 #include "vcs.h"
 #include "compat.h"
 #include "file_perms.h"

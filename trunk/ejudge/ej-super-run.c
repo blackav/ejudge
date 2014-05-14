@@ -28,7 +28,7 @@
 #include "run_packet.h"
 #include "run.h"
 #include "curtime.h"
-#include "ej_process.h"
+#include "ejudge/ej_process.h"
 #include "xml_utils.h"
 #include "ejudge/ej_uuid.h"
 
