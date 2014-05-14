@@ -20,7 +20,7 @@
 #include "contests.h"
 #include "pathutl.h"
 #include "ejudge/errlog.h"
-#include "tsc.h"
+#include "ejudge/tsc.h"
 #include "xml_utils.h"
 #include "ejudge/ej_limits.h"
 #include "ejudge/win32_compat.h"
