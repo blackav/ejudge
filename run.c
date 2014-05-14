@@ -27,7 +27,7 @@
 #include "digest_io.h"
 #include "filehash.h"
 #include "serve_state.h"
-#include "startstop.h"
+#include "ejudge/startstop.h"
 #include "ejudge_cfg.h"
 #include "nwrun_packet.h"
 #include "prepare_dflt.h"

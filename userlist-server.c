@@ -37,7 +37,7 @@
 #include "uldb_plugin.h"
 #include "xml_utils.h"
 #include "ejudge/random.h"
-#include "startstop.h"
+#include "ejudge/startstop.h"
 #include "csv.h"
 #include "sock_op.h"
 #include "ejudge/compat.h"

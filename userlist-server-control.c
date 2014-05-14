@@ -18,11 +18,10 @@
 #include "ejudge/config.h"
 #include "ejudge/ej_types.h"
 #include "ejudge/version.h"
-
 #include "ejudge_cfg.h"
 #include "userlist_clnt.h"
 #include "userlist_proto.h"
-#include "startstop.h"
+#include "ejudge/startstop.h"
 
 #include "reuse/osdeps.h"
 

@@ -570,7 +570,7 @@ HFILES=\
  sformat.h\
  shellcfg_parse.h\
  sock_op.h\
- startstop.h\
+ ./include/ejudge/startstop.h\
  stringset.h\
  super_clnt.h\
  super_html.h\

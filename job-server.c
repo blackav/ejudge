@@ -22,7 +22,7 @@
 #include "ejudge_cfg.h"
 #include "pathutl.h"
 #include "ejudge/fileutl.h"
-#include "startstop.h"
+#include "ejudge/startstop.h"
 #include "ejudge/compat.h"
 #include "misctext.h"
 
