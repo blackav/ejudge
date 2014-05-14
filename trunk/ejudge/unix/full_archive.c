@@ -16,7 +16,7 @@
  */
 
 #include "full_archive.h"
-#include "pathutl.h"
+#include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
 #include "ejudge/fileutl.h"
 

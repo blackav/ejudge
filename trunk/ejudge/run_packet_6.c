@@ -17,7 +17,7 @@
 
 #include "run_packet.h"
 #include "run_packet_priv.h"
-#include "pathutl.h"
+#include "ejudge/pathutl.h"
 #include "prepare.h"
 #include "runlog.h"
 

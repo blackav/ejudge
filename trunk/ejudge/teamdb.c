@@ -17,7 +17,7 @@
 
 #include "teamdb.h"
 #include "teamdb_priv.h"
-#include "pathutl.h"
+#include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
 #include "ejudge/base64.h"
 #include "userlist_clnt.h"

@@ -547,7 +547,7 @@ HFILES=\
  nwrun_packet.h\
  opcaps.h\
  parsecfg.h\
- pathutl.h\
+ ./include/ejudge/pathutl.h\
  pollfds.h\
  polygon_packet.h\
  prepare.h\

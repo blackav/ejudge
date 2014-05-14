@@ -18,7 +18,7 @@
  */
 
 #include "ejudge/ej_types.h"
-#include "pathutl.h"
+#include "ejudge/pathutl.h"
 #include "contests.h"
 #include "parsecfg.h"
 #include "serve_state.h"

@@ -19,7 +19,7 @@
 #include "expat_iface.h"
 #include "xml_utils.h"
 #include "ejudge/errlog.h"
-#include "pathutl.h"
+#include "ejudge/pathutl.h"
 #include "new-server.h"
 
 #include "reuse/xalloc.h"

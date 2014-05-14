@@ -26,7 +26,7 @@
 #include "opcaps.h"
 #include "protocol.h"
 #include "ejudge_cfg.h"
-#include "pathutl.h"
+#include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
 #include "ejudge/fileutl.h"
 #include "xml_utils.h"

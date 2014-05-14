@@ -20,7 +20,7 @@
 #include "ejudge/ej_limits.h"
 #include "lang_config_vis.h"
 #include "ncurses_utils.h"
-#include "pathutl.h"
+#include "ejudge/pathutl.h"
 #include "ejudge/compat.h"
 #include "varsubst.h"
 

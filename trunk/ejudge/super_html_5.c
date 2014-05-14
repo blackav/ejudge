@@ -21,7 +21,7 @@
 #include "super_html.h"
 #include "super-serve.h"
 #include "super_proto.h"
-#include "pathutl.h"
+#include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
 
 #include "reuse/xalloc.h"

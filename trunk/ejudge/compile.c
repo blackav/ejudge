@@ -24,7 +24,7 @@
 
 #include "ejudge/config.h"
 #include "prepare.h"
-#include "pathutl.h"
+#include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
 #include "parsecfg.h"
 #include "ejudge/fileutl.h"

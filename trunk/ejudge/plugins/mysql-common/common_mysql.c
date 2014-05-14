@@ -19,7 +19,7 @@
 #include "ejudge/ej_limits.h"
 #include "common_mysql.h"
 #include "xml_utils.h"
-#include "pathutl.h"
+#include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
 
 #include "reuse/xalloc.h"

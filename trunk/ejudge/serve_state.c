@@ -22,7 +22,7 @@
 #include "teamdb.h"
 #include "clarlog.h"
 #include "prepare.h"
-#include "pathutl.h"
+#include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
 #include "userlist_proto.h"
 #include "userlist_clnt.h"

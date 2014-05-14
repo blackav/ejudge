@@ -19,7 +19,7 @@
 #include "ejudge/ej_types.h"
 #include "ejudge/version.h"
 #include "ejudge_cfg.h"
-#include "pathutl.h"
+#include "ejudge/pathutl.h"
 #include "serve_state.h"
 #include "prepare.h"
 #include "compile_packet.h"

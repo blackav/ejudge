@@ -15,7 +15,7 @@
  * Lesser General Public License for more details.
  */
 
-#include "pathutl.h"
+#include "ejudge/pathutl.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

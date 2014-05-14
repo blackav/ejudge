@@ -20,7 +20,7 @@
 #include "ejudge/ej_byteorder.h"
 #include "run_packet.h"
 #include "run_packet_priv.h"
-#include "pathutl.h"
+#include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
 #include "prepare.h"
 #include "runlog.h"

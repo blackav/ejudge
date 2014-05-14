@@ -19,7 +19,7 @@
 #include "ejudge/ej_types.h"
 #include "new_server_proto.h"
 #include "new_server_clnt.h"
-#include "pathutl.h"
+#include "ejudge/pathutl.h"
 #include "ejudge/cgi.h"
 #include "clntutil.h"
 #include "ejudge/errlog.h"

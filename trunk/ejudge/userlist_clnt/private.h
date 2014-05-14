@@ -24,7 +24,7 @@
 
 #include "userlist_clnt.h"
 #include "userlist_proto.h"
-#include "pathutl.h"
+#include "ejudge/pathutl.h"
 
 /* for python bindings we don't want reuse stuff... */
 #if !defined PYTHON

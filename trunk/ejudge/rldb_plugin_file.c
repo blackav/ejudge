@@ -23,7 +23,7 @@
 #define RUNS_ACCESS 
 #include "runlog_state.h"
 
-#include "pathutl.h"
+#include "ejudge/pathutl.h"
 #include "contests.h"
 #include "prepare.h"
 #include "ejudge/errlog.h"

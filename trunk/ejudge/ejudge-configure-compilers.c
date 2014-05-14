@@ -19,7 +19,7 @@
 #include "ejudge/version.h"
 #include "ncurses_utils.h"
 #include "lang_config_vis.h"
-#include "pathutl.h"
+#include "ejudge/pathutl.h"
 #include "ejudge_cfg.h"
 #include "ejudge/fileutl.h"
 #include "ejudge/compat.h"

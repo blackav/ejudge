@@ -20,7 +20,7 @@
 #include "ejudge/ej_limits.h"
 #include "expat_iface.h"
 #include "xml_utils.h"
-#include "pathutl.h"
+#include "ejudge/pathutl.h"
 #include "clntutil.h"
 #include "contests.h"
 #include "userlist_clnt.h"
