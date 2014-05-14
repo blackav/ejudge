@@ -40,7 +40,7 @@
 #include "runlog.h"
 #include "html.h"
 #include "watched_file.h"
-#include "mime_type.h"
+#include "ejudge/mime_type.h"
 #include "ejudge/sha.h"
 #include "archive_paths.h"
 #include "ejudge/curtime.h"

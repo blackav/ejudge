@@ -27,7 +27,7 @@
 #include "contests.h"
 #include "xml_utils.h"
 #include "serve_state.h"
-#include "mime_type.h"
+#include "ejudge/mime_type.h"
 #include "archive_paths.h"
 #include "fileutl.h"
 #include "ejudge/base64.h"

@@ -29,7 +29,7 @@
 #include "xml_utils.h"
 #include "contests.h"
 #include "prepare.h"
-#include "mime_type.h"
+#include "ejudge/mime_type.h"
 #include "misctext.h"
 #include "ejudge/compat.h"
 

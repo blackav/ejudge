@@ -21,7 +21,7 @@
 #include "serve_state.h"
 #include "fileutl.h"
 #include "pathutl.h"
-#include "mime_type.h"
+#include "ejudge/mime_type.h"
 #include "prepare.h"
 #include "run_packet.h"
 #include "prepare_dflt.h"

@@ -16,7 +16,7 @@
  */
 
 #include "ejudge/config.h"
-#include "mime_type.h"
+#include "ejudge/mime_type.h"
 #include "pathutl.h"
 #include "ejudge/errlog.h"
 #include "fileutl.h"

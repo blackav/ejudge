@@ -16,7 +16,6 @@
  */
 
 #include "diff.h"
-
 #include "runlog.h"
 #include "protocol.h"
 #include "prepare.h"
@@ -24,7 +23,7 @@
 #include "fileutl.h"
 #include "serve_state.h"
 #include "misctext.h"
-#include "mime_type.h"
+#include "ejudge/mime_type.h"
 #include "prepare_dflt.h"
 
 #include "reuse/xalloc.h"

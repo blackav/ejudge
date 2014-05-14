@@ -537,7 +537,7 @@ HFILES=\
  lang_config_vis.h\
  ./include/ejudge/list_ops.h\
  meta_generic.h\
- mime_type.h\
+ ./include/ejudge/mime_type.h\
  mischtml.h\
  misctext.h\
  ncheck_packet.h\

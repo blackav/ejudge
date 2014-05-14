@@ -29,7 +29,7 @@
 #include "xml_utils.h"
 #include "archive_paths.h"
 #include "fileutl.h"
-#include "mime_type.h"
+#include "ejudge/mime_type.h"
 #include "ejudge/l10n.h"
 #include "filehash.h"
 #include "digest_io.h"

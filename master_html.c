@@ -39,7 +39,7 @@
 #include "digest_io.h"
 #include "ejudge/errlog.h"
 #include "serve_state.h"
-#include "mime_type.h"
+#include "ejudge/mime_type.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"
