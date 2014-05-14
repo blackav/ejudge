@@ -34,7 +34,7 @@
 #include "meta_generic.h"
 #include "charsets.h"
 #include "csv.h"
-#include "bitset.h"
+#include "ejudge/bitset.h"
 #include "fileutl.h"
 #include "polygon_packet.h"
 #include "prepare.h"
