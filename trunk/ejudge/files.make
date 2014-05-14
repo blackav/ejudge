@@ -490,7 +490,7 @@ HFILES=\
  ./include/ejudge/base64.h\
  ./include/ejudge/bitset.h\
  build_support.h\
- cgi.h\
+ ./include/ejudge/cgi.h\
  ./include/ejudge/charsets.h\
  clarlog.h\
  clarlog_state.h\
