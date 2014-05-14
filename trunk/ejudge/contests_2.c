@@ -23,7 +23,7 @@
 #include "pathutl.h"
 #include "ejudge_cfg.h"
 #include "ejudge/errlog.h"
-#include "fileutl.h"
+#include "ejudge/fileutl.h"
 #include "ejudge/compat.h"
 
 #include "reuse/xalloc.h"

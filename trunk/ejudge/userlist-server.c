@@ -31,7 +31,7 @@
 #include "ejudge/l10n.h"
 #include "ejudge/tsc.h"
 #include "sformat.h"
-#include "fileutl.h"
+#include "ejudge/fileutl.h"
 #include "job_packet.h"
 #include "ejudge_plugin.h"
 #include "uldb_plugin.h"

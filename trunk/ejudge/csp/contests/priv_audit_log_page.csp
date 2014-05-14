@@ -2,7 +2,7 @@
 /* $Id: priv_assign_cyphers_page.csp 7996 2014-03-18 13:33:03Z cher $ */
 %><%@include "priv_includes.csp"
 %><%
-#include "fileutl.h"
+#include "ejudge/fileutl.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>

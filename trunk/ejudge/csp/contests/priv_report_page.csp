@@ -3,7 +3,7 @@
 %><%@include "priv_includes.csp"
 %><%
 #include "archive_paths.h"
-#include "fileutl.h"
+#include "ejudge/fileutl.h"
 %><%@set getter_name = "csp_get_priv_report_page"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@page csp_view_priv_report_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)

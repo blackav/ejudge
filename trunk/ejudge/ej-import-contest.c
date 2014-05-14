@@ -20,7 +20,7 @@
 #include "ejudge/version.h"
 #include "ejudge_cfg.h"
 #include "contests.h"
-#include "fileutl.h"
+#include "ejudge/fileutl.h"
 #include "ejudge/ej_process.h"
 #include "problem_config.h"
 #include "build_support.h"

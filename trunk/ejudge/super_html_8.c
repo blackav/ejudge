@@ -24,7 +24,7 @@
 #include "ejudge_cfg.h"
 #include "ejudge/errlog.h"
 #include "ejudge/compat.h"
-#include "fileutl.h"
+#include "ejudge/fileutl.h"
 #include "ejudge/ej_process.h"
 #include "super_proto.h"
 #include "misctext.h"

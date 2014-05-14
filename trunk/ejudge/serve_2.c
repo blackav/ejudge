@@ -24,7 +24,7 @@
 #include "ejudge/errlog.h"
 #include "protocol.h"
 #include "clarlog.h"
-#include "fileutl.h"
+#include "ejudge/fileutl.h"
 #include "teamdb.h"
 #include "contests.h"
 #include "job_packet.h"

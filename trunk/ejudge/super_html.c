@@ -28,7 +28,7 @@
 #include "ejudge_cfg.h"
 #include "pathutl.h"
 #include "ejudge/errlog.h"
-#include "fileutl.h"
+#include "ejudge/fileutl.h"
 #include "xml_utils.h"
 #include "prepare.h"
 #include "vcs.h"

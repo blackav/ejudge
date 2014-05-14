@@ -25,7 +25,7 @@
 #include "super-serve.h"
 #include "super_proto.h"
 #include "ejudge/file_perms.h"
-#include "fileutl.h"
+#include "ejudge/fileutl.h"
 #include "misctext.h"
 
 #include "reuse/xalloc.h"

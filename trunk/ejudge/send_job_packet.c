@@ -20,7 +20,7 @@
 #include "job_packet.h"
 #include "ejudge/errlog.h"
 #include "pathutl.h"
-#include "fileutl.h"
+#include "ejudge/fileutl.h"
 
 #include "reuse/xalloc.h"
 

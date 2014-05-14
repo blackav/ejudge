@@ -31,7 +31,7 @@
 #include "ejudge_cfg.h"
 #include "nwrun_packet.h"
 #include "prepare_dflt.h"
-#include "fileutl.h"
+#include "ejudge/fileutl.h"
 #include "ejudge/errlog.h"
 #include "misctext.h"
 #include "run.h"

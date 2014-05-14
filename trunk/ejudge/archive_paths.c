@@ -19,7 +19,7 @@
 #include "ejudge/ej_limits.h"
 #include "archive_paths.h"
 #include "prepare.h"
-#include "fileutl.h"
+#include "ejudge/fileutl.h"
 #include "pathutl.h"
 #include "ejudge/errlog.h"
 #include "serve_state.h"

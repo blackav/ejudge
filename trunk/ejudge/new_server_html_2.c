@@ -28,7 +28,7 @@
 #include "ejudge/base64.h"
 #include "xml_utils.h"
 #include "archive_paths.h"
-#include "fileutl.h"
+#include "ejudge/fileutl.h"
 #include "ejudge/mime_type.h"
 #include "ejudge/l10n.h"
 #include "filehash.h"

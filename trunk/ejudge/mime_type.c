@@ -19,7 +19,7 @@
 #include "ejudge/mime_type.h"
 #include "pathutl.h"
 #include "ejudge/errlog.h"
-#include "fileutl.h"
+#include "ejudge/fileutl.h"
 
 #include "reuse/osdeps.h"
 

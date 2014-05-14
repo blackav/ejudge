@@ -25,7 +25,7 @@
 #include "unix/unix_fileutl.h"
 #include "xml_utils.h"
 #include "ejudge/base64.h"
-#include "fileutl.h"
+#include "ejudge/fileutl.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

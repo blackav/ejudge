@@ -2,7 +2,7 @@
 /* $Id$ */
 %><%@include "unpriv_includes.csp"
 %><%
-#include "fileutl.h"
+#include "ejudge/fileutl.h"
 #include "archive_paths.h"
 
 int

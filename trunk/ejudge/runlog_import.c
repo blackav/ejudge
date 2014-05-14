@@ -21,7 +21,7 @@
 #include "teamdb.h"
 #include "archive_paths.h"
 #include "serve_state.h"
-#include "fileutl.h"
+#include "ejudge/fileutl.h"
 #include "ejudge/compat.h"
 
 #include "reuse/xalloc.h"

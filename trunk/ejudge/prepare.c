@@ -20,7 +20,7 @@
 #include "varsubst.h"
 #include "ejudge/version.h"
 #include "prepare_meta.h"
-#include "fileutl.h"
+#include "ejudge/fileutl.h"
 #include "sformat.h"
 #include "teamdb.h"
 #include "prepare_serve.h"
