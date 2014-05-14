@@ -31,7 +31,7 @@
 #include "prepare.h"
 #include "serve_state.h"
 #include "ejudge/random.h"
-#include "startstop.h"
+#include "ejudge/startstop.h"
 #include "super-serve_meta.h"
 #include "sock_op.h"
 #include "ejudge/compat.h"

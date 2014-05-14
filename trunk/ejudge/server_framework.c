@@ -21,7 +21,7 @@
 #include "server_framework.h"
 #include "new_server_proto.h"
 #include "sock_op.h"
-#include "startstop.h"
+#include "ejudge/startstop.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

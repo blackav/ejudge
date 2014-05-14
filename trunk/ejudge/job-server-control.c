@@ -18,10 +18,9 @@
 #include "ejudge/config.h"
 #include "ejudge/ej_types.h"
 #include "ejudge/version.h"
-
 #include "ejudge_cfg.h"
 #include "job_packet.h"
-#include "startstop.h"
+#include "ejudge/startstop.h"
 
 #include "reuse/logger.h"
 #include "reuse/osdeps.h"

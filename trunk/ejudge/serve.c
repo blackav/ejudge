@@ -38,7 +38,7 @@
 #include "xml_utils.h"
 #include "job_packet.h"
 #include "serve_state.h"
-#include "startstop.h"
+#include "ejudge/startstop.h"
 #include "ejudge_cfg.h"
 #include "misctext.h"
 #include "ejudge/base64.h"

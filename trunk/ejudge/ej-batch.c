@@ -21,7 +21,7 @@
 #include "ejudge/mime_type.h"
 #include "t3_packets.h"
 #include "ejudge/interrupt.h"
-#include "startstop.h"
+#include "ejudge/startstop.h"
 #include "ejudge_cfg.h"
 #include "pathutl.h"
 #include "ejudge/fileutl.h"

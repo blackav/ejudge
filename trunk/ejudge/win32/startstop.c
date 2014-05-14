@@ -20,7 +20,7 @@
 #include "ejudge/config.h"
 #include "ejudge/ej_types.h"
 #include "ejudge/version.h"
-#include "startstop.h"
+#include "ejudge/startstop.h"
 
 #include "reuse/logger.h"
 

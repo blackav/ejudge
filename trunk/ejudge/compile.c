@@ -33,7 +33,7 @@
 #include "compile_packet.h"
 #include "ejudge/curtime.h"
 #include "serve_state.h"
-#include "startstop.h"
+#include "ejudge/startstop.h"
 #include "ejudge_cfg.h"
 #include "ejudge/compat.h"
 #include "ejudge/ej_uuid.h"

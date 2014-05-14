@@ -24,7 +24,7 @@
 #include "prepare.h"
 #include "compile_packet.h"
 #include "ejudge/fileutl.h"
-#include "startstop.h"
+#include "ejudge/startstop.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"
