@@ -17,7 +17,7 @@
 
 #include "ejudge/config.h"
 #include "external_action.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 
 #include "reuse/xalloc.h"
 

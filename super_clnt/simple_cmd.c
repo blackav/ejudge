@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004,2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2014 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,14 +17,15 @@
 
 #include "super_clnt.h"
 #include "super_proto.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 
 #include <stdlib.h>
 
 int
-super_clnt_simple_cmd(int sock_fd,
-                      int cmd,
-                      int contest_id)
+super_clnt_simple_cmd(
+        int sock_fd,
+        int cmd,
+        int contest_id)
 {
   struct prot_super_pkt_simple_cmd *out = 0;
   struct prot_super_packet *in = 0;

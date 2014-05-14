@@ -16,7 +16,7 @@
  */
 
 #include "uldb_plugin.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 #include "pathutl.h"
 #include "ejudge_cfg.h"
 #include "userlist.h"

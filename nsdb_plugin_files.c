@@ -18,7 +18,7 @@
 #include "nsdb_plugin.h"
 #include "expat_iface.h"
 #include "xml_utils.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 #include "pathutl.h"
 #include "new-server.h"
 

@@ -16,13 +16,12 @@
  */
 
 #include "ejudge/config.h"
-
 #include "serve_state.h"
 #include "runlog.h"
 #include "prepare.h"
 #include "l10n.h"
 #include "html.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 #include "protocol.h"
 #include "clarlog.h"
 #include "fileutl.h"

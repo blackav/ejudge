@@ -18,8 +18,7 @@
 #include "ejudge/config.h"
 #include "ejudge/ej_types.h"
 #include "ejudge/version.h"
-
-#include "errlog.h"
+#include "ejudge/errlog.h"
 #include "ejudge_cfg.h"
 #include "pathutl.h"
 #include "fileutl.h"

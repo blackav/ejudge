@@ -16,9 +16,8 @@
  */
 
 #include "full_archive.h"
-
 #include "pathutl.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 #include "fileutl.h"
 
 #include "reuse/xalloc.h"

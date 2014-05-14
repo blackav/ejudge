@@ -16,7 +16,7 @@
  */
 
 #include "random.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 
 #include "reuse/logger.h"
 #include "reuse/osdeps.h"

@@ -16,7 +16,7 @@
  */
 
 #include "common_plugin.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 
 #include "reuse/xalloc.h"
 

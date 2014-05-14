@@ -18,7 +18,6 @@
 #include "ejudge/config.h"
 #include "ejudge/ej_types.h"
 #include "ejudge/ej_limits.h"
-
 #include "runlog.h"
 #include "parsecfg.h"
 #include "teamdb.h"
@@ -41,11 +40,10 @@
 #include "serve_state.h"
 #include "startstop.h"
 #include "ejudge_cfg.h"
-
 #include "misctext.h"
 #include "ejudge/base64.h"
 #include "pathutl.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 #include "fileutl.h"
 
 #include "reuse/xalloc.h"

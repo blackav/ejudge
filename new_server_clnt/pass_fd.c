@@ -18,7 +18,7 @@
 #include "new_server_clnt/new_server_clnt_priv.h"
 #include "sock_op.h"
 #include "new_server_proto.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 
 #include "reuse/osdeps.h"
 

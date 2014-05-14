@@ -17,17 +17,14 @@
 
 #include "ejudge/config.h"
 #include "ejudge/ej_types.h"
-
 #include "clarlog.h"
 #include "cldb_plugin.h"
 #include "clarlog_state.h"
-
 #include "teamdb.h"
 #include "ejudge/base64.h"
-
 #include "unix/unix_fileutl.h"
 #include "pathutl.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 #include "xml_utils.h"
 #include "charsets.h"
 #include "prepare.h"

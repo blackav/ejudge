@@ -16,8 +16,7 @@
  */
 
 #include "userlist_clnt/private.h"
-
-#include "errlog.h"
+#include "ejudge/errlog.h"
 
 #include "reuse/integral.h"
 

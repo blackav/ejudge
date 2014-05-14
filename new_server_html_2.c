@@ -18,7 +18,6 @@
 #include "ejudge/config.h"
 #include "ejudge/ej_types.h"
 #include "ejudge/ej_limits.h"
-
 #include "new-server.h"
 #include "new_server_proto.h"
 #include "filter_eval.h"
@@ -39,7 +38,7 @@
 #include "teamdb.h"
 #include "userlist.h"
 #include "team_extra.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 #include "csv.h"
 #include "ejudge/sha.h"
 #include "sformat.h"

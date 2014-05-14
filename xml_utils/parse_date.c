@@ -16,7 +16,7 @@
  */
 
 #include "xml_utils.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 
 #include "reuse/xalloc.h"
 

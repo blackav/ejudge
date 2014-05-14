@@ -17,7 +17,7 @@
 
 #include "cr_serialize.h"
 #include "prepare.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 #include "serve_state.h"
 #include "serve_state.h"
 

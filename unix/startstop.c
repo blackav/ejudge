@@ -18,10 +18,9 @@
 #include "ejudge/config.h"
 #include "ejudge/ej_types.h"
 #include "ejudge/version.h"
-
 #include "startstop.h"
 #include "pathutl.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/osdeps.h"

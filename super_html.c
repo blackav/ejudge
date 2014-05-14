@@ -17,7 +17,6 @@
 
 #include "ejudge/config.h"
 #include "ejudge/version.h"
-
 #include "super_html.h"
 #include "super-serve.h"
 #include "super_proto.h"
@@ -28,7 +27,7 @@
 #include "protocol.h"
 #include "ejudge_cfg.h"
 #include "pathutl.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 #include "fileutl.h"
 #include "xml_utils.h"
 #include "prepare.h"

@@ -16,9 +16,8 @@
  */
 
 #include "ejudge/config.h"
-
 #include "varsubst.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 #include "serve_state.h"
 
 #include "reuse/xalloc.h"

@@ -18,7 +18,7 @@
 #include "ejudge/config.h"
 #include "ejudge/ej_limits.h"
 #include "ejudge_plugin.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 #include "pathutl.h"
 
 #include "reuse/xalloc.h"

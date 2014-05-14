@@ -17,7 +17,6 @@
 
 #include "ejudge/config.h"
 #include "ejudge/ej_limits.h"
-
 #include "prepare.h"
 #include "runlog.h"
 #include "testinfo.h"
@@ -33,7 +32,7 @@
 #include "nwrun_packet.h"
 #include "prepare_dflt.h"
 #include "fileutl.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 #include "misctext.h"
 #include "run.h"
 #include "super_run_packet.h"

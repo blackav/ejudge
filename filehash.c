@@ -16,12 +16,11 @@
  */
 
 #include "ejudge/ej_types.h"
-
 #include "filehash.h"
 #include "timestamp.h"
 #include "ejudge/sha.h"
 #include "pathutl.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

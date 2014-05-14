@@ -18,9 +18,8 @@
 #include "ejudge/config.h"
 #include "ejudge/ej_types.h"
 #include "ejudge/version.h"
-
 #include "startstop.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 #include "server_framework.h"
 #include "new_server_proto.h"
 #include "new-server.h"

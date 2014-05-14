@@ -16,12 +16,10 @@
  */
 
 #include "ejudge/config.h"
-
 #include "prepare.h"
 #include "varsubst.h"
 #include "ejudge/version.h"
 #include "prepare_meta.h"
-
 #include "fileutl.h"
 #include "sformat.h"
 #include "teamdb.h"
@@ -29,7 +27,7 @@
 #include "prepare_dflt.h"
 #include "ejudge_cfg.h"
 #include "cpu.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 #include "serve_state.h"
 #include "xml_utils.h"
 #include "compat.h"

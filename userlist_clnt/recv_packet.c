@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,12 +16,13 @@
  */
 
 #include "userlist_clnt/private.h"
-
-#include "errlog.h"
+#include "ejudge/errlog.h"
 
 int
-userlist_clnt_recv_packet(struct userlist_clnt *clnt,
-                          size_t *p_size, void **p_data)
+userlist_clnt_recv_packet(
+        struct userlist_clnt *clnt,
+        size_t *p_size,
+        void **p_data)
 {
   unsigned char len_buf[4], *b, *bb = 0;
   int r, n;

@@ -18,7 +18,6 @@
 #include "ejudge/config.h"
 #include "ejudge/ej_types.h"
 #include "ejudge/ej_limits.h"
-
 #include "new-server.h"
 #include "new_server_proto.h"
 #include "pathutl.h"
@@ -27,7 +26,7 @@
 #include "ejudge/copyright.h"
 #include "userlist_clnt.h"
 #include "ejudge_cfg.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 #include "userlist_proto.h"
 #include "contests.h"
 #include "nsdb_plugin.h"

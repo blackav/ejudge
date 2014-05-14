@@ -16,15 +16,13 @@
  */
 
 #include "ejudge/config.h"
-
 #include "contests.h"
 #include "contests_meta.h"
-
 #include "xml_utils.h"
 #include "misctext.h"
 #include "pathutl.h"
 #include "ejudge_cfg.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 #include "fileutl.h"
 #include "compat.h"
 

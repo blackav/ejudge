@@ -16,11 +16,10 @@
  */
 
 #include "ejudge/config.h"
-
 #include "userlist.h"
 #include "contests.h"
 #include "pathutl.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 #include "tsc.h"
 #include "xml_utils.h"
 #include "ejudge/ej_limits.h"

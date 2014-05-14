@@ -21,9 +21,8 @@
 #include "clarlog.h"
 #include "clarlog_state.h"
 #include "../mysql-common/common_mysql.h"
-
 #include "xml_utils.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 #include "contests.h"
 #include "prepare.h"
 #include "compat.h"

@@ -18,11 +18,10 @@
 #include "cldb_plugin.h"
 #include "clarlog.h"
 #include "clarlog_state.h"
-
 #include "ejudge_cfg.h"
 #include "pathutl.h"
 #include "prepare.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 #include "unix/unix_fileutl.h"
 #include "xml_utils.h"
 #include "ejudge/base64.h"

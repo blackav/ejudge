@@ -16,7 +16,6 @@
  */
 
 #include "ejudge/config.h"
-
 #include "filter_tree.h"
 #include "filter_eval.h"
 #include "prepare.h"
@@ -38,7 +37,7 @@
 #include "full_archive.h"
 #include "filehash.h"
 #include "digest_io.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 #include "serve_state.h"
 #include "mime_type.h"
 

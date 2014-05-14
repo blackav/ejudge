@@ -17,12 +17,11 @@
 
 #include "ejudge/config.h"
 #include "ejudge/ej_limits.h"
-
 #include "html.h"
 #include "misctext.h"
 #include "mischtml.h"
 #include "pathutl.h"
-#include "errlog.h"
+#include "ejudge/errlog.h"
 #include "fileutl.h"
 #include "runlog.h"
 #include "clarlog.h"
