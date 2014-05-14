@@ -2,7 +2,7 @@
 /* $Id$ */
 %><%@include "priv_includes.csp"
 %><%
-#include "ej_uuid.h"
+#include "ejudge/ej_uuid.h"
 #include "mime_type.h"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@set err_prefix = "NEW_SRV_ERR_"

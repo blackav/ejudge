@@ -16,8 +16,7 @@
  */
 
 #include "ejudge/config.h"
-
-#include "ej_uuid.h"
+#include "ejudge/ej_uuid.h"
 
 #include <stdio.h>
 #include <string.h>

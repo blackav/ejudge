@@ -45,7 +45,7 @@
 #include "prepare_dflt.h"
 #include "testing_report_xml.h"
 #include "server_framework.h"
-#include "ej_uuid.h"
+#include "ejudge/ej_uuid.h"
 #include "team_extra.h"
 
 #include "reuse/xalloc.h"

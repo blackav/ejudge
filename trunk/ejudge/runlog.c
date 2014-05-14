@@ -26,7 +26,7 @@
 #include "runlog_state.h"
 #include "rldb_plugin.h"
 #include "prepare.h"
-#include "ej_uuid.h"
+#include "ejudge/ej_uuid.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

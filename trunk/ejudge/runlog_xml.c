@@ -31,7 +31,7 @@
 #include "archive_paths.h"
 #include "fileutl.h"
 #include "ejudge/base64.h"
-#include "ej_uuid.h"
+#include "ejudge/ej_uuid.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

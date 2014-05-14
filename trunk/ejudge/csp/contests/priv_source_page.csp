@@ -2,7 +2,7 @@
 /* $Id$ */
 %><%@include "priv_includes.csp"
 %><%
-#include "ej_uuid.h"
+#include "ejudge/ej_uuid.h"
 #include "mime_type.h"
 #include "charsets.h"
 #include "fileutl.h"

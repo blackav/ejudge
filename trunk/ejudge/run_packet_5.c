@@ -24,6 +24,8 @@
 #include "ejudge/errlog.h"
 #include "prepare.h"
 #include "runlog.h"
+#include "xml_utils.h"
+#include "ejudge/ej_uuid.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"
@@ -102,9 +104,6 @@ run_reply_packet_write(
   xfree(out_data);
   return -1;
 }
-
-#include "xml_utils.h"
-#include "ej_uuid.h"
 
 void
 run_reply_packet_dump(
