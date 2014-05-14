@@ -26,7 +26,7 @@
 #include "userlist.h"
 #include "list_ops.h"
 #include "misctext.h"
-#include "random.h"
+#include "ejudge/random.h"
 #include "../mysql-common/common_mysql.h"
 #include "compat.h"
 

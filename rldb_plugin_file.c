@@ -30,7 +30,7 @@
 #include "fileutl.h"
 #include "unix/unix_fileutl.h"
 #include "xml_utils.h"
-#include "random.h"
+#include "ejudge/random.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

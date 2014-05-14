@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "random.h"
+#include "ejudge/random.h"
 #include "ejudge/errlog.h"
 
 #include "reuse/logger.h"
