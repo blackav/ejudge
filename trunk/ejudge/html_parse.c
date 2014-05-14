@@ -16,7 +16,7 @@
  */
 
 #include "html_parse.h"
-#include "list_ops.h"
+#include "ejudge/list_ops.h"
 #include "misctext.h"
 
 #include "reuse/xalloc.h"

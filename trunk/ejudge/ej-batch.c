@@ -31,7 +31,7 @@
 #include "contests.h"
 #include "serve_state.h"
 #include "prepare.h"
-#include "list_ops.h"
+#include "ejudge/list_ops.h"
 #include "compile_packet.h"
 #include "t3m_dir_listener.h"
 #include "t3m_packet_class.h"

@@ -535,7 +535,7 @@ HFILES=\
  job_packet.h\
  ./include/ejudge/l10n.h\
  lang_config_vis.h\
- list_ops.h\
+ ./include/ejudge/list_ops.h\
  meta_generic.h\
  mime_type.h\
  mischtml.h\

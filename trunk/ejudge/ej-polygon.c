@@ -18,12 +18,11 @@
 #include "ejudge/config.h"
 #include "ejudge/ej_limits.h"
 #include "ejudge/version.h"
-
 #include "polygon_packet.h"
 #include "expat_iface.h"
 #include "xml_utils.h"
 #include "problem_config.h"
-#include "list_ops.h"
+#include "ejudge/list_ops.h"
 #include "misctext.h"
 #include "html_parse.h"
 
