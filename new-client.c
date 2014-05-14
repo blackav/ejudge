@@ -20,7 +20,7 @@
 #include "new_server_proto.h"
 #include "new_server_clnt.h"
 #include "pathutl.h"
-#include "cgi.h"
+#include "ejudge/cgi.h"
 #include "clntutil.h"
 #include "ejudge/errlog.h"
 #include "parsecfg.h"

@@ -24,7 +24,7 @@
 #include "clntutil.h"
 #include "contests.h"
 #include "userlist_clnt.h"
-#include "cgi.h"
+#include "ejudge/cgi.h"
 #include "userlist.h"
 #include "userlist_proto.h"
 #include "super_clnt.h"

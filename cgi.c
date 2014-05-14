@@ -16,7 +16,7 @@
  */
 
 #include "ejudge/ej_limits.h"
-#include "cgi.h"
+#include "ejudge/cgi.h"
 #include "ejudge/errlog.h"
 
 #include "reuse/xalloc.h"
