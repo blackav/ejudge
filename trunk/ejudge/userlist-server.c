@@ -29,7 +29,7 @@
 #include "ejudge/sha.h"
 #include "misctext.h"
 #include "l10n.h"
-#include "tsc.h"
+#include "ejudge/tsc.h"
 #include "sformat.h"
 #include "fileutl.h"
 #include "job_packet.h"
