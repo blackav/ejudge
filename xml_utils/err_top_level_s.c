@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,7 @@
  */
 
 #include "xml_utils.h"
-#include "expat_iface.h"
+#include "ejudge/expat_iface.h"
 
 int
 xml_err_top_level_s(const struct xml_tree *tree, const unsigned char *s_elem)
@@ -28,6 +28,5 @@ xml_err_top_level_s(const struct xml_tree *tree, const unsigned char *s_elem)
 /*
  * Local variables:
  *  compile-command: "make -C .."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")
  * End:
  */

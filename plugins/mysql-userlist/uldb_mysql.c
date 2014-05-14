@@ -20,7 +20,7 @@
 #include "ejudge/errlog.h"
 #include "uldb_plugin.h"
 #include "xml_utils.h"
-#include "expat_iface.h"
+#include "ejudge/expat_iface.h"
 #include "ejudge_cfg.h"
 #include "ejudge/pathutl.h"
 #include "userlist.h"

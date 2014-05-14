@@ -17,7 +17,7 @@
 
 #include "xml_utils.h"
 #include "ejudge/errlog.h"
-#include "expat_iface.h"
+#include "ejudge/expat_iface.h"
 
 #include <stdarg.h>
 
@@ -57,6 +57,5 @@ xml_err(const struct xml_tree *pos, const char *format, ...)
 /*
  * Local variables:
  *  compile-command: "make -C .."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")
  * End:
  */

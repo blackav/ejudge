@@ -4,7 +4,7 @@
 #ifndef __EJUDGE_CFG_H__
 #define __EJUDGE_CFG_H__ 1
 
-/* Copyright (C) 2002-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,7 +18,7 @@
  * GNU General Public License for more details.
  */
 
-#include "expat_iface.h"
+#include "ejudge/expat_iface.h"
 #include "opcaps.h"
 
 #include <stdio.h>

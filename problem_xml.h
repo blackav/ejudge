@@ -4,7 +4,7 @@
 #ifndef __PROBLEM_XML_H__
 #define __PROBLEM_XML_H__
 
-/* Copyright (C) 2007-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,7 +18,7 @@
  * GNU General Public License for more details.
  */
 
-#include "expat_iface.h"
+#include "ejudge/expat_iface.h"
 #include "problem_common.h"
 
 #include <time.h>

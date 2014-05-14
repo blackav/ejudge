@@ -18,7 +18,7 @@
 #include "ejudge/config.h"
 #include "ejudge/ej_types.h"
 #include "ejudge/ej_limits.h"
-#include "expat_iface.h"
+#include "ejudge/expat_iface.h"
 #include "xml_utils.h"
 #include "ejudge/pathutl.h"
 #include "clntutil.h"

@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,7 @@
  */
 
 #include "xml_utils.h"
-#include "expat_iface.h"
+#include "ejudge/expat_iface.h"
 
 const unsigned char *
 xml_err_get_attr_name(const struct xml_attr *a)

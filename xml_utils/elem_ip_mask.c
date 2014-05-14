@@ -16,7 +16,7 @@
  */
 
 #include "xml_utils.h"
-#include "expat_iface.h"
+#include "ejudge/expat_iface.h"
 
 #include <string.h>
 

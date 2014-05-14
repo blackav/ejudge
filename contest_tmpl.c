@@ -20,7 +20,7 @@
 #include "ejudge/ej_limits.h"
 #include "contests.h"
 #include "ejudge_cfg.h"
-#include "expat_iface.h"
+#include "ejudge/expat_iface.h"
 #include "super_html.h"
 #include "super-serve.h"
 #include "ejudge/fileutl.h"

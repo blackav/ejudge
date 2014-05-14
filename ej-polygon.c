@@ -19,7 +19,7 @@
 #include "ejudge/ej_limits.h"
 #include "ejudge/version.h"
 #include "polygon_packet.h"
-#include "expat_iface.h"
+#include "ejudge/expat_iface.h"
 #include "xml_utils.h"
 #include "problem_config.h"
 #include "ejudge/list_ops.h"

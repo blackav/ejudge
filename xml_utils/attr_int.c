@@ -17,7 +17,7 @@
 
 #include "xml_utils.h"
 #include "ejudge/errlog.h"
-#include "expat_iface.h"
+#include "ejudge/expat_iface.h"
 
 int
 xml_attr_int(struct xml_attr *a, int *pval)
