@@ -27,7 +27,7 @@
 #include "protocol.h"
 #include "userlist.h"
 #include "ejudge/sha.h"
-#include "l10n.h"
+#include "ejudge/l10n.h"
 #include "archive_paths.h"
 #include "team_extra.h"
 #include "printing.h"

@@ -6,7 +6,7 @@
 #include "clarlog.h"
 #include "misctext.h"
 #include "runlog.h"
-#include "l10n.h"
+#include "ejudge/l10n.h"
 #include "prepare.h"
 #include "xml_utils.h"
 #include "teamdb.h"

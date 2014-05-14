@@ -27,7 +27,7 @@
 #include "contests.h"
 #include "ejudge_plugin.h"
 #include "nsdb_plugin.h"
-#include "l10n.h"
+#include "ejudge/l10n.h"
 #include "pathutl.h"
 #include "userlist.h"
 #include "ejudge/compat.h"

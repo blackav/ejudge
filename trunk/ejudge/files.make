@@ -533,7 +533,7 @@ HFILES=\
  interrupt.h\
  iterators.h\
  job_packet.h\
- l10n.h\
+ ./include/ejudge/l10n.h\
  lang_config_vis.h\
  list_ops.h\
  meta_generic.h\
