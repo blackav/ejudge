@@ -18,7 +18,6 @@
 #include "ejudge/config.h"
 #include "ejudge/version.h"
 #include "ejudge/ej_limits.h"
-
 #include "super-serve.h"
 #include "super_proto.h"
 #include "super_html.h"
@@ -33,7 +32,7 @@
 #include "fileutl.h"
 #include "testinfo.h"
 #include "file_perms.h"
-#include "ej_process.h"
+#include "ejudge/ej_process.h"
 #include "sformat.h"
 #include "build_support.h"
 

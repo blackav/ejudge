@@ -515,7 +515,7 @@ HFILES=\
  ./include/ejudge/ej_byteorder.h\
  ej_import_packet.h\
  ./include/ejudge/ej_limits.h\
- ej_process.h\
+ ./include/ejudge/ej_process.h\
  ./include/ejudge/ej_types.h\
  ./include/ejudge/ej_uuid.h\
  ./include/ejudge/errlog.h\

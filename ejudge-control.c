@@ -18,10 +18,9 @@
 #include "ejudge/config.h"
 #include "ejudge/ej_types.h"
 #include "ejudge/version.h"
-
 #include "ejudge_cfg.h"
 #include "pathutl.h"
-#include "ej_process.h"
+#include "ejudge/ej_process.h"
 
 #include "reuse/logger.h"
 #include "reuse/osdeps.h"

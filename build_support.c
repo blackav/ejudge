@@ -16,10 +16,9 @@
  */
 
 #include "ejudge/config.h"
-
 #include "build_support.h"
 #include "ejudge_cfg.h"
-#include "ej_process.h"
+#include "ejudge/ej_process.h"
 #include "serve_state.h"
 #include "prepare.h"
 #include "prepare_dflt.h"

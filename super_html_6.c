@@ -38,7 +38,7 @@
 #include "fileutl.h"
 #include "polygon_packet.h"
 #include "prepare.h"
-#include "ej_process.h"
+#include "ejudge/ej_process.h"
 #include "problem_config.h"
 
 #include "reuse/xalloc.h"

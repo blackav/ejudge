@@ -35,7 +35,7 @@
 #include "super-serve_meta.h"
 #include "sock_op.h"
 #include "compat.h"
-#include "ej_process.h"
+#include "ejudge/ej_process.h"
 #include "ejudge/ej_byteorder.h"
 #include "pollfds.h"
 #include "xml_utils.h"

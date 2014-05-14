@@ -35,7 +35,7 @@
 #include "filehash.h"
 #include "curtime.h"
 #include "cpu.h"
-#include "ej_process.h"
+#include "ejudge/ej_process.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/osdeps.h"
