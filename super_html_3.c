@@ -37,7 +37,7 @@
 #include "ejudge/errlog.h"
 #include "ejudge/random.h"
 #include "ejudge/compat.h"
-#include "file_perms.h"
+#include "ejudge/file_perms.h"
 #include "build_support.h"
 
 #include "reuse/xalloc.h"

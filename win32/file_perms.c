@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2009-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2009-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "file_perms.h"
+#include "ejudge/file_perms.h"
 #include "misctext.h"
 
 int
@@ -53,6 +53,5 @@ file_perms_get(
 /*
  * Local variables:
  *  compile-command: "make -C .."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  * End:
  */

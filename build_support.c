@@ -24,7 +24,7 @@
 #include "prepare_dflt.h"
 #include "super-serve.h"
 #include "super_proto.h"
-#include "file_perms.h"
+#include "ejudge/file_perms.h"
 #include "fileutl.h"
 #include "misctext.h"
 

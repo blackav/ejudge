@@ -31,7 +31,7 @@
 #include "prepare_dflt.h"
 #include "fileutl.h"
 #include "testinfo.h"
-#include "file_perms.h"
+#include "ejudge/file_perms.h"
 #include "ejudge/ej_process.h"
 #include "sformat.h"
 #include "build_support.h"

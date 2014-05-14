@@ -522,7 +522,7 @@ HFILES=\
  expat_iface.h\
  external_action.h\
  filehash.h\
- file_perms.h\
+ ./include/ejudge/file_perms.h\
  fileutl.h\
  filter_eval.h\
  filter_tree.h\
