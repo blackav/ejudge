@@ -18,7 +18,7 @@
 #include "ejudge/config.h"
 #include "ejudge/ej_limits.h"
 #include "t3_packets.h"
-#include "expat_iface.h"
+#include "ejudge/expat_iface.h"
 #include "xml_utils.h"
 #include "ejudge/mime_type.h"
 #include "misctext.h"

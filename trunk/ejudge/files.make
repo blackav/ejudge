@@ -519,7 +519,7 @@ HFILES=\
  ./include/ejudge/ej_types.h\
  ./include/ejudge/ej_uuid.h\
  ./include/ejudge/errlog.h\
- expat_iface.h\
+ ./include/ejudge/expat_iface.h\
  external_action.h\
  filehash.h\
  ./include/ejudge/file_perms.h\

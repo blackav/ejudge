@@ -4,7 +4,7 @@
 #ifndef __CONTESTS_H__
 #define __CONTESTS_H__
 
-/* Copyright (C) 2002-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -19,7 +19,7 @@
  */
 
 #include "ejudge/ej_types.h"
-#include "expat_iface.h"
+#include "ejudge/expat_iface.h"
 #include "opcaps.h"
 
 #include <stdlib.h>

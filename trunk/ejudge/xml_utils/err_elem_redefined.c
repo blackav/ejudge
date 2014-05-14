@@ -17,7 +17,7 @@
 
 #include "xml_utils.h"
 #include "ejudge/pathutl.h"
-#include "expat_iface.h"
+#include "ejudge/expat_iface.h"
 
 int
 xml_err_elem_redefined(const struct xml_tree *p)

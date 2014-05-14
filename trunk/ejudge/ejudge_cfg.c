@@ -22,7 +22,7 @@
 #endif
 
 #include "ejudge_cfg.h"
-#include "expat_iface.h"
+#include "ejudge/expat_iface.h"
 #include "ejudge/errlog.h"
 #include "xml_utils.h"
 

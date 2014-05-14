@@ -17,7 +17,7 @@
 
 #include "xml_utils.h"
 #include "ejudge/pathutl.h"
-#include "expat_iface.h"
+#include "ejudge/expat_iface.h"
 
 #include <stdarg.h>
 
@@ -37,6 +37,5 @@ xml_err_attr_not_allowed(const struct xml_tree *p,
 /*
  * Local variables:
  *  compile-command: "make -C .."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")
  * End:
  */
