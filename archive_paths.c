@@ -17,14 +17,13 @@
 
 #include "ejudge/ej_types.h"
 #include "ejudge/ej_limits.h"
-
 #include "archive_paths.h"
 #include "prepare.h"
 #include "fileutl.h"
 #include "pathutl.h"
 #include "ejudge/errlog.h"
 #include "serve_state.h"
-#include "ej_uuid.h"
+#include "ejudge/ej_uuid.h"
 #include "prepare_dflt.h"
 
 #include "reuse/logger.h"

@@ -52,7 +52,7 @@
 #include "sformat.h"
 #include "charsets.h"
 #include "compat.h"
-#include "ej_uuid.h"
+#include "ejudge/ej_uuid.h"
 #include "prepare_dflt.h"
 #include "new_server_match.h"
 #include "external_action.h"

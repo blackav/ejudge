@@ -30,7 +30,7 @@
 #include "curtime.h"
 #include "ej_process.h"
 #include "xml_utils.h"
-#include "ej_uuid.h"
+#include "ejudge/ej_uuid.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/osdeps.h"

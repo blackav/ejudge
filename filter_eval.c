@@ -23,7 +23,7 @@
 #include "teamdb.h"
 #include "userlist.h"
 #include "archive_paths.h"
-#include "ej_uuid.h"
+#include "ejudge/ej_uuid.h"
 #include "prepare_dflt.h"
 
 #include "reuse/logger.h"

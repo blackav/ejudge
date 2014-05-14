@@ -48,7 +48,7 @@
 #include "run_packet.h"
 #include "prepare_dflt.h"
 #include "super_run_packet.h"
-#include "ej_uuid.h"
+#include "ejudge/ej_uuid.h"
 #include "new_server_pi.h"
 
 #include "reuse/xalloc.h"

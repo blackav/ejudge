@@ -42,7 +42,7 @@
 #include "ejudge_cfg.h"
 #include "ejudge/errlog.h"
 #include "prepare_dflt.h"
-#include "ej_uuid.h"
+#include "ejudge/ej_uuid.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"
