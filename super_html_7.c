@@ -21,7 +21,7 @@
 #include "super-serve.h"
 #include "super_proto.h"
 #include "super_html.h"
-#include "ejudge_cfg.h"
+#include "ejudge/ejudge_cfg.h"
 #include "contests.h"
 #include "ejudge/mischtml.h"
 #include "ejudge/xml_utils.h"
@@ -34,7 +34,7 @@
 #include "ejudge/file_perms.h"
 #include "ejudge/ej_process.h"
 #include "sformat.h"
-#include "build_support.h"
+#include "ejudge/build_support.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/osdeps.h"

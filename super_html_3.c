@@ -23,7 +23,7 @@
 #include "ejudge/mischtml.h"
 #include "prepare.h"
 #include "prepare_meta.h"
-#include "ejudge_cfg.h"
+#include "ejudge/ejudge_cfg.h"
 #include "super_proto.h"
 #include "ejudge/fileutl.h"
 #include "prepare_dflt.h"
@@ -38,7 +38,7 @@
 #include "ejudge/random.h"
 #include "ejudge/compat.h"
 #include "ejudge/file_perms.h"
-#include "build_support.h"
+#include "ejudge/build_support.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

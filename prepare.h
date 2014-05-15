@@ -3,7 +3,7 @@
 #ifndef __PREPARE_H__
 #define __PREPARE_H__
 
-/* Copyright (C) 2000-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -20,7 +20,7 @@
 #include "ejudge/ej_types.h"
 #include "ejudge/pathutl.h"
 #include "contests.h"
-#include "parsecfg.h"
+#include "ejudge/parsecfg.h"
 #include "serve_state.h"
 #include "problem_common.h"
 #include "problem_xml.h"

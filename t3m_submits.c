@@ -17,7 +17,7 @@
 
 #include "ejudge/config.h"
 #include "ejudge/ej_limits.h"
-#include "t3m_submits.h"
+#include "ejudge/t3m_submits.h"
 #include "ejudge/list_ops.h"
 
 #include "reuse/xalloc.h"

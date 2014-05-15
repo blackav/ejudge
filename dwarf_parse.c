@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "dwarf_parse.h"
+#include "ejudge/dwarf_parse.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

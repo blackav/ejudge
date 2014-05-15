@@ -16,7 +16,7 @@
  */
 
 #include "ejudge/config.h"
-#include "sock_op.h"
+#include "ejudge/sock_op.h"
 #include "ejudge/errlog.h"
 
 #include "reuse/osdeps.h"

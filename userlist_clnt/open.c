@@ -17,7 +17,7 @@
 
 #include "userlist_clnt/private.h"
 #include "ejudge/errlog.h"
-#include "sock_op.h"
+#include "ejudge/sock_op.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -93,6 +93,5 @@ userlist_clnt_open(char const *socketpath)
 /*
  * Local variables:
  *  compile-command: "make -C .."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  * End:
  */

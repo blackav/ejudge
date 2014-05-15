@@ -2,7 +2,7 @@
 /* $Id$ */
 %><%@include "reg_includes.csp"
 %><%
-#include "ejudge_cfg.h"
+#include "ejudge/ejudge_cfg.h"
 #include "userlist_clnt.h"
 #include "userlist_proto.h"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"

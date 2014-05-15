@@ -22,7 +22,7 @@
 #include "ejudge/xml_utils.h"
 #include "prepare_serve.h"
 #include "ejudge/errlog.h"
-#include "ejudge_cfg.h"
+#include "ejudge/ejudge_cfg.h"
 #include "ejudge/misctext.h"
 #include "sformat.h"
 #include "varsubst.h"

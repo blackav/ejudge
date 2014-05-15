@@ -23,7 +23,7 @@
 #include "ejudge/cgi.h"
 #include "clntutil.h"
 #include "ejudge/errlog.h"
-#include "parsecfg.h"
+#include "ejudge/parsecfg.h"
 #include "ejudge/xml_utils.h"
 
 #include "reuse/xalloc.h"

@@ -17,7 +17,7 @@
 
 #include "ejudge/config.h"
 #include "ejudge/version.h"
-#include "ejudge_cfg.h"
+#include "ejudge/ejudge_cfg.h"
 #include "userlist.h"
 #include "contests.h"
 #include "ejudge/pathutl.h"
@@ -418,6 +418,5 @@ main(int argc, char **argv)
 /*
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")
  * End:
  */

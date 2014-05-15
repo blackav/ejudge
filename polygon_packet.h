@@ -3,7 +3,7 @@
 #ifndef __POLYGON_PACKET_H__
 #define __POLYGON_PACKET_H__
 
-/* Copyright (C) 2012-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -18,7 +18,7 @@
  */
 
 #include "ejudge/ej_types.h"
-#include "parsecfg.h"
+#include "ejudge/parsecfg.h"
 
 #include <time.h>
 

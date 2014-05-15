@@ -21,10 +21,10 @@
 #include "userlist_proto.h"
 #include "contests.h"
 #include "userlist.h"
-#include "ejudge_cfg.h"
+#include "ejudge/ejudge_cfg.h"
 #include "ejudge/xml_utils.h"
 #include "ejudge/misctext.h"
-#include "ncurses_utils.h"
+#include "ejudge/ncurses_utils.h"
 #include "ejudge/compat.h"
 
 #include "reuse/xalloc.h"

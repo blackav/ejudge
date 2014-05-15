@@ -2,7 +2,7 @@
 /* $Id$ */
 %><%@include "reg_includes.csp"
 %><%
-#include "ejudge_cfg.h"
+#include "ejudge/ejudge_cfg.h"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@set err_prefix = "NEW_SRV_ERR_"
 %><%@set getter_name = "csp_get_reg_login_page"

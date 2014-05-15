@@ -16,7 +16,7 @@
  */
 
 #include "rldb_plugin.h"
-#include "ejudge_cfg.h"
+#include "ejudge/ejudge_cfg.h"
 #include "runlog.h"
 #include "teamdb.h"
 

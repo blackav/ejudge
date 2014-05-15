@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "stringset.h"
+#include "ejudge/stringset.h"
 
 #include "reuse/xalloc.h"
 

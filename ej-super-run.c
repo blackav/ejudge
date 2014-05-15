@@ -19,7 +19,7 @@
 #include "ejudge/ej_limits.h"
 #include "ejudge/version.h"
 #include "ejudge/startstop.h"
-#include "ejudge_cfg.h"
+#include "ejudge/ejudge_cfg.h"
 #include "ejudge/fileutl.h"
 #include "ejudge/errlog.h"
 #include "prepare.h"

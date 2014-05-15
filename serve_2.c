@@ -40,11 +40,11 @@
 #include "ejudge/compat.h"
 #include "varsubst.h"
 #include "ejudge/mime_type.h"
-#include "ejudge_cfg.h"
+#include "ejudge/ejudge_cfg.h"
 #include "super_run_packet.h"
 #include "prepare_dflt.h"
 #include "testing_report_xml.h"
-#include "server_framework.h"
+#include "ejudge/server_framework.h"
 #include "ejudge/ej_uuid.h"
 #include "team_extra.h"
 

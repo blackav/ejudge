@@ -18,7 +18,7 @@
  * GNU General Public License for more details.
  */
 
-#include "ejudge_plugin.h"
+#include "ejudge/ejudge_plugin.h"
 #include "ejudge/ej_types.h"
 #include "ejudge/iterators.h"
 

@@ -18,10 +18,9 @@
 #include "ejudge/config.h"
 #include "ejudge/ej_limits.h"
 #include "ejudge/ej_types.h"
-
-#include "type_info.h"
-#include "dwarf_parse.h"
-#include "html_parse.h"
+#include "ejudge/type_info.h"
+#include "ejudge/dwarf_parse.h"
+#include "ejudge/html_parse.h"
 #include "ejudge/xml_utils.h"
 #include "new_server_pi.h"
 

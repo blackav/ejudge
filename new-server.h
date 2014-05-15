@@ -19,11 +19,11 @@
  */
 
 #include "ejudge/ej_types.h"
-#include "server_framework.h"
+#include "ejudge/server_framework.h"
 #include "ejudge/iterators.h"
-#include "watched_file.h"
+#include "ejudge/watched_file.h"
 #include "serve_state.h"
-#include "http_request.h"
+#include "ejudge/http_request.h"
 
 #include <stdio.h>
 #include <time.h>

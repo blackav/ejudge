@@ -17,10 +17,10 @@
 
 #include "ejudge/config.h"
 #include "ejudge/version.h"
-#include "ncurses_utils.h"
-#include "lang_config_vis.h"
+#include "ejudge/ncurses_utils.h"
+#include "ejudge/lang_config_vis.h"
 #include "ejudge/pathutl.h"
-#include "ejudge_cfg.h"
+#include "ejudge/ejudge_cfg.h"
 #include "ejudge/fileutl.h"
 #include "ejudge/compat.h"
 

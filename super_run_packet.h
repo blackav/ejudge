@@ -18,7 +18,7 @@
  */
 
 #include "ejudge/ej_types.h"
-#include "parsecfg.h"
+#include "ejudge/parsecfg.h"
 
 #ifndef META_ATTRIB
 #if defined __RCC__

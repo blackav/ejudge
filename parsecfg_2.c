@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "parsecfg.h"
+#include "ejudge/parsecfg.h"
 #include "ejudge/compat.h"
 
 #include <stdio.h>

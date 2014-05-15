@@ -18,7 +18,7 @@
 #include "ejudge/ej_process.h"
 #include "ejudge/compat.h"
 #include "ejudge/list_ops.h"
-#include "pollfds.h"
+#include "ejudge/pollfds.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

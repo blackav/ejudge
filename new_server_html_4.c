@@ -39,7 +39,7 @@
 #include "ejudge/xml_utils.h"
 #include "ejudge/charsets.h"
 #include "ejudge/compat.h"
-#include "ejudge_cfg.h"
+#include "ejudge/ejudge_cfg.h"
 #include "ejudge/errlog.h"
 #include "prepare_dflt.h"
 #include "ejudge/ej_uuid.h"

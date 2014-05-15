@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "pollfds.h"
+#include "ejudge/pollfds.h"
 
 #include "reuse/xalloc.h"
 

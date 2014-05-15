@@ -29,7 +29,7 @@
 #include "ejudge/xml_utils.h"
 #include "ejudge/l10n.h"
 #include "ejudge/compat.h"
-#include "ejudge_cfg.h"
+#include "ejudge/ejudge_cfg.h"
 #include "external_action.h"
 
 #include "reuse/xalloc.h"

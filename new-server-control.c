@@ -18,7 +18,7 @@
 #include "ejudge/config.h"
 #include "ejudge/ej_types.h"
 #include "ejudge/version.h"
-#include "ejudge_cfg.h"
+#include "ejudge/ejudge_cfg.h"
 #include "new_server_proto.h"
 #include "new_server_clnt.h"
 #include "new_server_proto.h"

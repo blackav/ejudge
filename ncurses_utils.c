@@ -15,8 +15,8 @@
  * GNU General Public License for more details.
  */
 
-#include "ncurses_utils.h"
-#include "tex_dom.h"
+#include "ejudge/ncurses_utils.h"
+#include "ejudge/tex_dom.h"
 #include "ejudge/misctext.h"
 
 #include "reuse/xalloc.h"

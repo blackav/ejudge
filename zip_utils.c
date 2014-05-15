@@ -17,8 +17,7 @@
 
 #include "ejudge/config.h"
 #include "ejudge/ej_limits.h"
-
-#include "zip_utils.h"
+#include "ejudge/zip_utils.h"
 
 #include "reuse/xalloc.h"
 

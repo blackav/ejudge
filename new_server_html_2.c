@@ -34,7 +34,7 @@
 #include "ejudge/filehash.h"
 #include "ejudge/digest_io.h"
 #include "testing_report_xml.h"
-#include "full_archive.h"
+#include "ejudge/full_archive.h"
 #include "teamdb.h"
 #include "userlist.h"
 #include "team_extra.h"
