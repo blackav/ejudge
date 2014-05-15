@@ -28,7 +28,7 @@
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/cpu.h"
 #include "ejudge/errlog.h"
-#include "serve_state.h"
+#include "ejudge/serve_state.h"
 #include "ejudge/xml_utils.h"
 #include "ejudge/compat.h"
 

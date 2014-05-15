@@ -19,7 +19,7 @@
 #include "ejudge/build_support.h"
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/ej_process.h"
-#include "serve_state.h"
+#include "ejudge/serve_state.h"
 #include "prepare.h"
 #include "prepare_dflt.h"
 #include "super-serve.h"

@@ -32,7 +32,7 @@
 #include "runlog.h"
 #include "compile_packet.h"
 #include "ejudge/curtime.h"
-#include "serve_state.h"
+#include "ejudge/serve_state.h"
 #include "ejudge/startstop.h"
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/compat.h"

@@ -19,7 +19,7 @@
 
 #include "ejudge/opcaps.h"
 #include "ejudge/ej_types.h"
-#include "serve_state.h"
+#include "ejudge/serve_state.h"
 
 #include <stdio.h>
 #include <time.h>

@@ -17,7 +17,7 @@
 
 #include "ejudge/config.h"
 #include "ejudge/ej_types.h"
-#include "serve_state.h"
+#include "ejudge/serve_state.h"
 #include "prepare.h"
 #include "runlog.h"
 #include "ejudge/misctext.h"

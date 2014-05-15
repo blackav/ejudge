@@ -21,7 +21,7 @@
 #include "ejudge/pathutl.h"
 #include "ejudge/contests.h"
 #include "ejudge/parsecfg.h"
-#include "serve_state.h"
+#include "ejudge/serve_state.h"
 #include "ejudge/problem_common.h"
 #include "problem_xml.h"
 

@@ -26,7 +26,7 @@
 #include "clarlog.h"
 #include "userlist_clnt.h"
 #include "userlist_proto.h"
-#include "serve_state.h"
+#include "ejudge/serve_state.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/osdeps.h"

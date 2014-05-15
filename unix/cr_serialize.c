@@ -18,8 +18,7 @@
 #include "ejudge/cr_serialize.h"
 #include "prepare.h"
 #include "ejudge/errlog.h"
-#include "serve_state.h"
-#include "serve_state.h"
+#include "ejudge/serve_state.h"
 
 #include "reuse/osdeps.h"
 

@@ -20,7 +20,7 @@
 #include "ejudge/version.h"
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/pathutl.h"
-#include "serve_state.h"
+#include "ejudge/serve_state.h"
 #include "prepare.h"
 #include "compile_packet.h"
 #include "ejudge/fileutl.h"

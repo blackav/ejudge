@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2010-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,7 +18,7 @@
 #include "teamdb.h"
 #include "teamdb_priv.h"
 #include "userlist.h"
-#include "serve_state.h"
+#include "ejudge/serve_state.h"
 #include "filter_eval.h"
 
 #include <string.h>

@@ -34,7 +34,7 @@
 #include "ejudge/fileutl.h"
 #include "userlist.h"
 #include "ejudge/mischtml.h"
-#include "serve_state.h"
+#include "ejudge/serve_state.h"
 #include "teamdb.h"
 #include "prepare.h"
 #include "runlog.h"
