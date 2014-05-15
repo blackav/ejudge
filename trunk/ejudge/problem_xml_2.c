@@ -17,7 +17,7 @@
 
 #include "ejudge/config.h"
 
-#include "problem_xml.h"
+#include "ejudge/problem_xml.h"
 #include "ejudge/misctext.h"
 
 #define ARMOR(s)  html_armor_buf(&ab, (s))
