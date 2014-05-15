@@ -24,7 +24,7 @@
 #include "problem_config.h"
 #include "ejudge/list_ops.h"
 #include "ejudge/misctext.h"
-#include "html_parse.h"
+#include "ejudge/html_parse.h"
 
 #include "reuse/osdeps.h"
 #include "reuse/xalloc.h"

@@ -16,9 +16,8 @@
  */
 
 #include "ejudge/config.h"
-
 #include "prepare.h"
-#include "shellcfg_parse.h"
+#include "ejudge/shellcfg_parse.h"
 
 #include <string.h>
 #include <dirent.h>

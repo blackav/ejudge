@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "html_parse.h"
+#include "ejudge/html_parse.h"
 #include "ejudge/list_ops.h"
 #include "ejudge/misctext.h"
 

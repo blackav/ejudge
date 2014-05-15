@@ -17,10 +17,9 @@
 
 #include "ejudge/config.h"
 #include "ejudge/ej_limits.h"
-
-#include "t3m_packet_class.h"
+#include "ejudge/t3m_packet_class.h"
 #include "serve_state.h"
-#include "t3_packets.h"
+#include "ejudge/t3_packets.h"
 #include "ejudge/misctext.h"
 #include "prepare.h"
 

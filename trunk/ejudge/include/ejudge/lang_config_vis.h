@@ -3,7 +3,7 @@
 #ifndef __LANG_CONFIG_VIS_H__
 #define __LANG_CONFIG_VIS_H__
 
-/* Copyright (C) 2008-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  */
 
-#include "shellcfg_parse.h"
+#include "ejudge/shellcfg_parse.h"
 
 #include <stdlib.h>
 

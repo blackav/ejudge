@@ -4,7 +4,7 @@
 #ifndef __COMMON_MYSQL_H__
 #define __COMMON_MYSQL_H__
 
-/* Copyright (C) 2008-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,8 +18,8 @@
  * GNU General Public License for more details.
  */
 
-#include "ejudge_plugin.h"
-#include "common_plugin.h"
+#include "ejudge/ejudge_plugin.h"
+#include "ejudge/common_plugin.h"
 
 struct common_mysql_iface;
 struct common_mysql_state;

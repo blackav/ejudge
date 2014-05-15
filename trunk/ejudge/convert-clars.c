@@ -19,7 +19,7 @@
 #include "ejudge/ej_types.h"
 #include "ejudge/ej_limits.h"
 #include "ejudge/version.h"
-#include "ejudge_cfg.h"
+#include "ejudge/ejudge_cfg.h"
 #include "contests.h"
 #include "clarlog.h"
 #include "ejudge/xml_utils.h"

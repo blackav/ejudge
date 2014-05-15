@@ -19,7 +19,7 @@
  */
 
 #include "ejudge/expat_iface.h"
-#include "opcaps.h"
+#include "ejudge/opcaps.h"
 
 #include <stdio.h>
 #include <time.h>

@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "common_plugin.h"
+#include "ejudge/common_plugin.h"
 #include "ejudge/errlog.h"
 
 #include "reuse/xalloc.h"

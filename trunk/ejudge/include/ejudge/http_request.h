@@ -18,7 +18,7 @@
  */
 
 #include "ejudge/ej_types.h"
-#include "opcaps.h"
+#include "ejudge/opcaps.h"
 
 #include <stdio.h>
 #include <sys/time.h>

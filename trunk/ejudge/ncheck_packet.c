@@ -18,9 +18,8 @@
 #include "ejudge/config.h"
 #include "ejudge/ej_limits.h"
 #include "ejudge/version.h"
-
 #include "ncheck_packet.h"
-#include "parsecfg.h"
+#include "ejudge/parsecfg.h"
 
 #include "reuse/xalloc.h"
 

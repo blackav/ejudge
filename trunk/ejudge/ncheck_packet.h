@@ -3,7 +3,7 @@
 #ifndef __NCHECK_PACKET_H__
 #define __NCHECK_PACKET_H__
 
-/* Copyright (C) 2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * Lesser General Public License for more details.
  */
 
-#include "parsecfg.h"
+#include "ejudge/parsecfg.h"
 
 #ifndef EJ_PATH_MAX
 #define EJ_PATH_MAX 4096

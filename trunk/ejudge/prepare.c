@@ -25,7 +25,7 @@
 #include "teamdb.h"
 #include "prepare_serve.h"
 #include "prepare_dflt.h"
-#include "ejudge_cfg.h"
+#include "ejudge/ejudge_cfg.h"
 #include "ejudge/cpu.h"
 #include "ejudge/errlog.h"
 #include "serve_state.h"

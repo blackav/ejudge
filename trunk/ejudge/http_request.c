@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "http_request.h"
+#include "ejudge/http_request.h"
 #include "contests.h"
 
 #include "reuse/logger.h"

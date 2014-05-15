@@ -28,7 +28,7 @@
 #include "ejudge/misctext.h"
 #include "ejudge/errlog.h"
 #include "ejudge/xml_utils.h"
-#include "ejudge_cfg.h"
+#include "ejudge/ejudge_cfg.h"
 #include "super_html_6.h"
 #include "super_html_6_meta.h"
 #include "meta_generic.h"

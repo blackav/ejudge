@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "type_info.h"
+#include "ejudge/type_info.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

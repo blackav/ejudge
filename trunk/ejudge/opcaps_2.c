@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "opcaps.h"
+#include "ejudge/opcaps.h"
 #include "ejudge/compat.h"
 
 #include <string.h>

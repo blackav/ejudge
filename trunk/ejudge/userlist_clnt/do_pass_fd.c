@@ -16,7 +16,7 @@
  */
 
 #include "userlist_clnt/private.h"
-#include "sock_op.h"
+#include "ejudge/sock_op.h"
 #include "ejudge/errlog.h"
 
 int
@@ -46,6 +46,5 @@ userlist_clnt_do_pass_fd(
 /*
  * Local variables:
  *  compile-command: "make -C .."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  * End:
  */

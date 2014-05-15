@@ -18,9 +18,9 @@
 #include "ejudge/config.h"
 #include "ejudge/ej_types.h"
 #include "ejudge/errlog.h"
-#include "server_framework.h"
+#include "ejudge/server_framework.h"
 #include "new_server_proto.h"
-#include "sock_op.h"
+#include "ejudge/sock_op.h"
 #include "ejudge/startstop.h"
 
 #include "reuse/xalloc.h"

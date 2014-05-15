@@ -19,8 +19,8 @@
 
 #include "ejudge/ej_types.h"
 #include "ejudge/ej_limits.h"
-#include "opcaps.h"
-#include "watched_file.h"
+#include "ejudge/opcaps.h"
+#include "ejudge/watched_file.h"
 #include "problem_plugin.h"
 #include "contest_plugin.h"
 

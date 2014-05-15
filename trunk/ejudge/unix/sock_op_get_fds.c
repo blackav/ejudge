@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "sock_op.h"
+#include "ejudge/sock_op.h"
 #include "ejudge/errlog.h"
 
 #include "reuse/osdeps.h"

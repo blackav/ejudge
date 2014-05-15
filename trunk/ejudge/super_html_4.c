@@ -31,7 +31,7 @@
 #include "ejudge/fileutl.h"
 #include "ejudge/xml_utils.h"
 #include "userlist.h"
-#include "ejudge_cfg.h"
+#include "ejudge/ejudge_cfg.h"
 #include "ejudge/mischtml.h"
 #include "prepare.h"
 #include "prepare_meta.h"

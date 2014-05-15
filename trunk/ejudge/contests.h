@@ -20,7 +20,7 @@
 
 #include "ejudge/ej_types.h"
 #include "ejudge/expat_iface.h"
-#include "opcaps.h"
+#include "ejudge/opcaps.h"
 
 #include <stdlib.h>
 #include <time.h>

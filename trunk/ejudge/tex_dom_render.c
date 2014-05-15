@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "tex_dom.h"
+#include "ejudge/tex_dom.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

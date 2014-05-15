@@ -21,7 +21,7 @@
 #undef HAVE_PWD_H
 #endif
 
-#include "ejudge_cfg.h"
+#include "ejudge/ejudge_cfg.h"
 #include "ejudge/expat_iface.h"
 #include "ejudge/errlog.h"
 #include "ejudge/xml_utils.h"

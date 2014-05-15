@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "full_archive.h"
+#include "ejudge/full_archive.h"
 #include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
 #include "ejudge/fileutl.h"

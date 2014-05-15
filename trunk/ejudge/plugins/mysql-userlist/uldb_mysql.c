@@ -21,7 +21,7 @@
 #include "uldb_plugin.h"
 #include "ejudge/xml_utils.h"
 #include "ejudge/expat_iface.h"
-#include "ejudge_cfg.h"
+#include "ejudge/ejudge_cfg.h"
 #include "ejudge/pathutl.h"
 #include "userlist.h"
 #include "ejudge/list_ops.h"
