@@ -27,7 +27,7 @@
 #include "ejudge/fileutl.h"
 #include "ejudge/ej_process.h"
 #include "super_proto.h"
-#include "misctext.h"
+#include "ejudge/misctext.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/osdeps.h"

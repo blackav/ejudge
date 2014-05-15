@@ -508,7 +508,7 @@ HFILES=\
  ./include/ejudge/csv.h\
  ./include/ejudge/curtime.h\
  diff.h\
- digest_io.h\
+ ./include/ejudge/digest_io.h\
  dwarf_parse.h\
  ejudge_cfg.h\
  ejudge_plugin.h\
@@ -521,7 +521,7 @@ HFILES=\
  ./include/ejudge/errlog.h\
  ./include/ejudge/expat_iface.h\
  external_action.h\
- filehash.h\
+ ./include/ejudge/filehash.h\
  ./include/ejudge/file_perms.h\
  ./include/ejudge/fileutl.h\
  filter_eval.h\
@@ -538,8 +538,8 @@ HFILES=\
  ./include/ejudge/list_ops.h\
  meta_generic.h\
  ./include/ejudge/mime_type.h\
- mischtml.h\
- misctext.h\
+ ./include/ejudge/mischtml.h\
+ ./include/ejudge/misctext.h\
  ncheck_packet.h\
  ncurses_utils.h\
  new-server.h\

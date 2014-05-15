@@ -9,9 +9,9 @@ extern "C" {
 #include "contests.h"
 #include "runlog.h"
 #include "ejudge/xml_utils.h"
-#include "misctext.h"
+#include "ejudge/misctext.h"
 #include "ejudge/fileutl.h"
-#include "sha.h"
+#include "ejudge/sha.h"
 #include "ejudge/compat.h"
 
 #include "reuse/xalloc.h"

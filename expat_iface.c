@@ -20,7 +20,7 @@
 #include "ejudge/expat_iface.h"
 #include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
-#include "misctext.h"
+#include "ejudge/misctext.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

@@ -16,7 +16,7 @@
  */
 
 #include "meta_generic.h"
-#include "misctext.h"
+#include "ejudge/misctext.h"
 #include "ejudge/xml_utils.h"
 #include "ejudge/charsets.h"
 

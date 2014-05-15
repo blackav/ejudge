@@ -18,9 +18,8 @@
 #include "ejudge/config.h"
 #include "ejudge/ej_limits.h"
 #include "ejudge/version.h"
-
 #include "ejudge/ej_types.h"
-#include "misctext.h"
+#include "ejudge/misctext.h"
 
 #include "reuse/osdeps.h"
 #include "reuse/xalloc.h"

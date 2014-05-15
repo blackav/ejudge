@@ -21,7 +21,7 @@
 #include "new-server.h"
 #include "new_server_proto.h"
 #include "prepare.h"
-#include "misctext.h"
+#include "ejudge/misctext.h"
 #include "ejudge/errlog.h"
 #include "contests.h"
 #include "ejudge/l10n.h"

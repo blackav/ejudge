@@ -17,7 +17,7 @@
 
 #include "ncurses_utils.h"
 #include "tex_dom.h"
-#include "misctext.h"
+#include "ejudge/misctext.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

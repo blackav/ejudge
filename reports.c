@@ -20,7 +20,7 @@
 #include "serve_state.h"
 #include "prepare.h"
 #include "runlog.h"
-#include "misctext.h"
+#include "ejudge/misctext.h"
 #include "archive_paths.h"
 #include "ejudge/fileutl.h"
 #include "teamdb.h"

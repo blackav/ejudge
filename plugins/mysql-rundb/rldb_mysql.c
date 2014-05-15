@@ -30,7 +30,7 @@
 #include "contests.h"
 #include "prepare.h"
 #include "ejudge/mime_type.h"
-#include "misctext.h"
+#include "ejudge/misctext.h"
 #include "ejudge/compat.h"
 
 #include "reuse/xalloc.h"

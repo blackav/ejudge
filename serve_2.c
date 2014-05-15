@@ -35,7 +35,7 @@
 #include "ejudge/curtime.h"
 #include "userlist.h"
 #include "sformat.h"
-#include "misctext.h"
+#include "ejudge/misctext.h"
 #include "ejudge/charsets.h"
 #include "ejudge/compat.h"
 #include "varsubst.h"

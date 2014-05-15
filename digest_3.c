@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "digest_io.h"
+#include "ejudge/digest_io.h"
 
 #include "reuse/logger.h"
 

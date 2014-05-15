@@ -16,7 +16,7 @@
  */
 
 #include "ejudge/xml_utils.h"
-#include "misctext.h"
+#include "ejudge/misctext.h"
 
 #include <stdlib.h>
 

@@ -16,7 +16,7 @@
  */
 
 #include "runlog.h"
-#include "misctext.h"
+#include "ejudge/misctext.h"
 #include "prepare.h"
 #include "teamdb.h"
 #include "archive_paths.h"

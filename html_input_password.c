@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "mischtml.h"
+#include "ejudge/mischtml.h"
 
 #include <stdio.h>
 #include <stdarg.h>

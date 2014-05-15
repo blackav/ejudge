@@ -26,7 +26,7 @@
 #include "super_proto.h"
 #include "ejudge/file_perms.h"
 #include "ejudge/fileutl.h"
-#include "misctext.h"
+#include "ejudge/misctext.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/osdeps.h"

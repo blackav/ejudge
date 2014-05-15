@@ -30,7 +30,7 @@
 #include "archive_paths.h"
 #include "ejudge/fileutl.h"
 #include "teamdb.h"
-#include "misctext.h"
+#include "ejudge/misctext.h"
 #include "clarlog.h"
 #include "ejudge/mime_type.h"
 #include "ejudge/sha.h"

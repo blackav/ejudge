@@ -22,8 +22,8 @@
 #include "ejudge/xml_utils.h"
 #include "protocol.h"
 #include "runlog.h"
-#include "digest_io.h"
-#include "misctext.h"
+#include "ejudge/digest_io.h"
+#include "ejudge/misctext.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

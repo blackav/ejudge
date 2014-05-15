@@ -26,7 +26,7 @@
 #include "ejudge/errlog.h"
 #include "contests.h"
 #include "userlist_proto.h"
-#include "misctext.h"
+#include "ejudge/misctext.h"
 #include "ejudge/fileutl.h"
 #include "ejudge/l10n.h"
 #include "ejudge/xml_utils.h"

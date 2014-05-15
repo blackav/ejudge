@@ -17,7 +17,7 @@
 
 #include "printing.h"
 #include "runlog.h"
-#include "misctext.h"
+#include "ejudge/misctext.h"
 #include "teamdb.h"
 #include "prepare.h"
 #include "archive_paths.h"

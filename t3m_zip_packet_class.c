@@ -21,7 +21,7 @@
 #include "t3m_packet_class.h"
 #include "serve_state.h"
 #include "t3_packets.h"
-#include "misctext.h"
+#include "ejudge/misctext.h"
 #include "prepare.h"
 
 #include "reuse/xalloc.h"

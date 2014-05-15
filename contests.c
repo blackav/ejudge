@@ -22,7 +22,7 @@
 #include "ejudge/errlog.h"
 #include "userlist.h"
 #include "ejudge/xml_utils.h"
-#include "misctext.h"
+#include "ejudge/misctext.h"
 #include "ejudge/fileutl.h"
 #include "ejudge/l10n.h"
 #include "ejudge_cfg.h"
