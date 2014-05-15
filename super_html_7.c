@@ -22,7 +22,7 @@
 #include "super_proto.h"
 #include "super_html.h"
 #include "ejudge/ejudge_cfg.h"
-#include "contests.h"
+#include "ejudge/contests.h"
 #include "ejudge/mischtml.h"
 #include "ejudge/xml_utils.h"
 #include "serve_state.h"

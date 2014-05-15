@@ -19,7 +19,7 @@
 #include "ejudge/ej_types.h"
 #include "userlist_clnt.h"
 #include "userlist_proto.h"
-#include "contests.h"
+#include "ejudge/contests.h"
 #include "userlist.h"
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/xml_utils.h"

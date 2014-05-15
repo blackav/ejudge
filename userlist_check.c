@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "contests.h"
+#include "ejudge/contests.h"
 #include "userlist.h"
 #include "ejudge/misctext.h"
 

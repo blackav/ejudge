@@ -19,7 +19,7 @@
 #include "ejudge/ej_types.h"
 #include "ejudge/version.h"
 #include "ejudge/ejudge_cfg.h"
-#include "contests.h"
+#include "ejudge/contests.h"
 #include "ejudge/pathutl.h"
 #include "ejudge/xml_utils.h"
 #include "new_server_clnt.h"

@@ -24,7 +24,7 @@
 #include "teamdb.h"
 #include "prepare.h"
 #include "ejudge/misctext.h"
-#include "contests.h"
+#include "ejudge/contests.h"
 #include "ejudge/xml_utils.h"
 #include "serve_state.h"
 #include "ejudge/mime_type.h"

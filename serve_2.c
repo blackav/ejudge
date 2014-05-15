@@ -26,7 +26,7 @@
 #include "clarlog.h"
 #include "ejudge/fileutl.h"
 #include "teamdb.h"
-#include "contests.h"
+#include "ejudge/contests.h"
 #include "job_packet.h"
 #include "archive_paths.h"
 #include "ejudge/xml_utils.h"

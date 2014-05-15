@@ -501,7 +501,7 @@ HFILES=\
  ./include/ejudge/compat.h\
  compile_packet.h\
  compile_packet_priv.h\
- contests.h\
+ ./include/ejudge/contests.h\
  ./include/ejudge/copyright.h\
  ./include/ejudge/cpu.h\
  ./include/ejudge/cr_serialize.h\

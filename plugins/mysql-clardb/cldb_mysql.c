@@ -23,7 +23,7 @@
 #include "../mysql-common/common_mysql.h"
 #include "ejudge/xml_utils.h"
 #include "ejudge/errlog.h"
-#include "contests.h"
+#include "ejudge/contests.h"
 #include "prepare.h"
 #include "ejudge/compat.h"
 

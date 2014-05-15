@@ -20,7 +20,7 @@
 
 #include "ejudge/ej_types.h"
 #include "ejudge/expat_iface.h"
-#include "contests.h"
+#include "ejudge/contests.h"
 
 #include <stdio.h>
 

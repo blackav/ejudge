@@ -21,7 +21,7 @@
 #include "super_html.h"
 #include "super-serve.h"
 #include "super_proto.h"
-#include "contests.h"
+#include "ejudge/contests.h"
 #include "ejudge/misctext.h"
 #include "ejudge/mischtml.h"
 #include "ejudge/opcaps.h"

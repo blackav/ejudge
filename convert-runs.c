@@ -20,7 +20,7 @@
 #include "ejudge/ej_limits.h"
 #include "ejudge/version.h"
 #include "ejudge/ejudge_cfg.h"
-#include "contests.h"
+#include "ejudge/contests.h"
 #include "runlog.h"
 #include "ejudge/xml_utils.h"
 #include "ejudge/compat.h"
