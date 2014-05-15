@@ -18,7 +18,7 @@
 #include "ejudge/config.h"
 #include "ejudge/version.h"
 #include "super_html.h"
-#include "super-serve.h"
+#include "ejudge/super-serve.h"
 #include "super_proto.h"
 #include "ejudge/contests.h"
 #include "ejudge/misctext.h"

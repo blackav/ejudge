@@ -15,9 +15,8 @@
  * GNU General Public License for more details.
  */
 
-#include "polygon_packet.h"
+#include "ejudge/polygon_packet.h"
 #include "polygon_packet_meta.h"
-
 #include "ejudge/meta_generic.h"
 
 #include "reuse/xalloc.h"

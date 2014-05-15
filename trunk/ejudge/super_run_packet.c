@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "super_run_packet.h"
+#include "ejudge/super_run_packet.h"
 #include "ejudge/meta_generic.h"
 #include "super_run_packet_meta.h"
 #include "ejudge/prepare.h"
