@@ -18,7 +18,7 @@
 #include "diff.h"
 #include "runlog.h"
 #include "protocol.h"
-#include "prepare.h"
+#include "ejudge/prepare.h"
 #include "archive_paths.h"
 #include "ejudge/fileutl.h"
 #include "ejudge/serve_state.h"

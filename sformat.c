@@ -16,7 +16,7 @@
  */
 
 #include "sformat.h"
-#include "prepare.h"
+#include "ejudge/prepare.h"
 #include "teamdb.h"
 #include "userlist.h"
 #include "ejudge/misctext.h"

@@ -21,7 +21,7 @@
 #include "ejudge/serve_state.h"
 #include "ejudge/t3_packets.h"
 #include "ejudge/misctext.h"
-#include "prepare.h"
+#include "ejudge/prepare.h"
 
 #include "reuse/xalloc.h"
 

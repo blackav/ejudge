@@ -24,7 +24,7 @@
 #include "ejudge/xml_utils.h"
 #include "ejudge/errlog.h"
 #include "ejudge/contests.h"
-#include "prepare.h"
+#include "ejudge/prepare.h"
 #include "ejudge/compat.h"
 
 #include "reuse/xalloc.h"

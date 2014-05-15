@@ -25,7 +25,7 @@
 #include "ejudge/random.h"
 #include "runlog_state.h"
 #include "rldb_plugin.h"
-#include "prepare.h"
+#include "ejudge/prepare.h"
 #include "ejudge/ej_uuid.h"
 #include "ejudge/win32_compat.h"
 

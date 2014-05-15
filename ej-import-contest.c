@@ -27,7 +27,7 @@
 #include "super-serve.h"
 #include "ejudge/xml_utils.h"
 #include "super_html.h"
-#include "prepare.h"
+#include "ejudge/prepare.h"
 #include "problem_config_meta.h"
 #include "prepare_meta.h"
 #include "prepare_dflt.h"

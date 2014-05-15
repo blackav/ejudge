@@ -17,11 +17,10 @@
 
 #include "ejudge/ej_types.h"
 #include "ejudge/config.h"
-
 #include "protocol.h"
 #include "runlog.h"
 #include "clarlog.h"
-#include "prepare.h"
+#include "ejudge/prepare.h"
 #include "super-serve.h"
 #include "compile_packet_priv.h"
 #include "problem_config.h"

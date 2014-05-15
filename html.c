@@ -26,7 +26,7 @@
 #include "runlog.h"
 #include "clarlog.h"
 #include "teamdb.h"
-#include "prepare.h"
+#include "ejudge/prepare.h"
 #include "ejudge/base64.h"
 #include "sformat.h"
 #include "protocol.h"

@@ -22,7 +22,7 @@
 #include "ejudge/fileutl.h"
 #include "ejudge/pathutl.h"
 #include "ejudge/mime_type.h"
-#include "prepare.h"
+#include "ejudge/prepare.h"
 #include "run_packet.h"
 #include "prepare_dflt.h"
 #include "ejudge/misctext.h"

@@ -30,7 +30,7 @@
 #include "ejudge/parsecfg.h"
 #include "ejudge/contests.h"
 #include "ejudge/serve_state.h"
-#include "prepare.h"
+#include "ejudge/prepare.h"
 #include "ejudge/list_ops.h"
 #include "compile_packet.h"
 #include "ejudge/t3m_dir_listener.h"

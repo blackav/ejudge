@@ -18,7 +18,7 @@
 #include "run_packet.h"
 #include "run_packet_priv.h"
 #include "ejudge/pathutl.h"
-#include "prepare.h"
+#include "ejudge/prepare.h"
 #include "runlog.h"
 
 #include "reuse/xalloc.h"

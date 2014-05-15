@@ -36,7 +36,7 @@
 #include "ejudge/mischtml.h"
 #include "ejudge/serve_state.h"
 #include "teamdb.h"
-#include "prepare.h"
+#include "ejudge/prepare.h"
 #include "runlog.h"
 #include "html.h"
 #include "ejudge/watched_file.h"

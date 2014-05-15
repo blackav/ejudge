@@ -20,7 +20,7 @@
 #include "clarlog_state.h"
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/pathutl.h"
-#include "prepare.h"
+#include "ejudge/prepare.h"
 #include "ejudge/errlog.h"
 #include "unix/unix_fileutl.h"
 #include "ejudge/xml_utils.h"

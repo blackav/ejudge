@@ -37,7 +37,7 @@
 #include "ejudge/bitset.h"
 #include "ejudge/fileutl.h"
 #include "polygon_packet.h"
-#include "prepare.h"
+#include "ejudge/prepare.h"
 #include "ejudge/ej_process.h"
 #include "problem_config.h"
 

@@ -22,7 +22,7 @@
 #include "run_packet_priv.h"
 #include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
-#include "prepare.h"
+#include "ejudge/prepare.h"
 #include "runlog.h"
 #include "ejudge/xml_utils.h"
 #include "ejudge/ej_uuid.h"

@@ -550,7 +550,7 @@ HFILES=\
  ./include/ejudge/pathutl.h\
  ./include/ejudge/pollfds.h\
  polygon_packet.h\
- prepare.h\
+ ./include/ejudge/prepare.h\
  prepare_dflt.h\
  prepare_serve.h\
  printing.h\

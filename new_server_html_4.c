@@ -26,7 +26,7 @@
 #include "userlist_clnt.h"
 #include "runlog.h"
 #include "html.h"
-#include "prepare.h"
+#include "ejudge/prepare.h"
 #include "archive_paths.h"
 #include "ejudge/fileutl.h"
 #include "teamdb.h"
