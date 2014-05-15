@@ -23,7 +23,7 @@
 #include "ejudge/parsecfg.h"
 #include "ejudge/serve_state.h"
 #include "ejudge/problem_common.h"
-#include "problem_xml.h"
+#include "ejudge/problem_xml.h"
 
 #include <stdio.h>
 #include <time.h>

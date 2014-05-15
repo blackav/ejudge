@@ -556,7 +556,7 @@ HFILES=\
  printing.h\
  ./include/ejudge/problem_common.h\
  problem_config.h\
- problem_xml.h\
+ ./include/ejudge/problem_xml.h\
  protocol.h\
  ./include/ejudge/random.h\
  rldb_plugin.h\

@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "problem_xml.h"
+#include "ejudge/problem_xml.h"
 #include "ejudge/xml_utils.h"
 
 #include "reuse/xalloc.h"
