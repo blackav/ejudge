@@ -25,7 +25,7 @@
 #include "ejudge/pathutl.h"
 #include "userlist.h"
 #include "ejudge/list_ops.h"
-#include "misctext.h"
+#include "ejudge/misctext.h"
 #include "ejudge/random.h"
 #include "../mysql-common/common_mysql.h"
 #include "ejudge/compat.h"

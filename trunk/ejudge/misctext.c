@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "misctext.h"
+#include "ejudge/misctext.h"
 #include "ejudge/base64.h"
 #include "ejudge/compat.h"
 

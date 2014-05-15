@@ -21,7 +21,7 @@
 #include "ejudge_cfg.h"
 #include "userlist.h"
 #include "ejudge/random.h"
-#include "misctext.h"
+#include "ejudge/misctext.h"
 #include "ejudge/ej_limits.h"
 #include "ejudge/compat.h"
 

@@ -40,7 +40,7 @@
 #include "serve_state.h"
 #include "ejudge/startstop.h"
 #include "ejudge_cfg.h"
-#include "misctext.h"
+#include "ejudge/misctext.h"
 #include "ejudge/base64.h"
 #include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"

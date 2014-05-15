@@ -25,7 +25,7 @@
 #include "prepare.h"
 #include "run_packet.h"
 #include "prepare_dflt.h"
-#include "misctext.h"
+#include "ejudge/misctext.h"
 #include "ejudge/curtime.h"
 #include "runlog.h"
 #include "testing_report_xml.h"

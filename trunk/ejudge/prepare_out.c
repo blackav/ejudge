@@ -23,7 +23,7 @@
 #include "prepare_serve.h"
 #include "ejudge/errlog.h"
 #include "ejudge_cfg.h"
-#include "misctext.h"
+#include "ejudge/misctext.h"
 #include "sformat.h"
 #include "varsubst.h"
 

@@ -20,7 +20,7 @@
 #include "userlist.h"
 #include "ejudge/errlog.h"
 #include "protocol.h"
-#include "misctext.h"
+#include "ejudge/misctext.h"
 #include "ejudge/xml_utils.h"
 #include "ejudge/win32_compat.h"
 

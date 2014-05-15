@@ -26,7 +26,7 @@
 #include "ejudge/pathutl.h"
 #include "ejudge/fileutl.h"
 #include "ejudge/errlog.h"
-#include "misctext.h"
+#include "ejudge/misctext.h"
 #include "parsecfg.h"
 #include "contests.h"
 #include "serve_state.h"

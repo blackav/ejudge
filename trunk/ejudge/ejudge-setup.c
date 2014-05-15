@@ -22,7 +22,7 @@
 #include "ejudge/base64.h"
 #include "ejudge/startstop.h"
 #include "ejudge/cpu.h"
-#include "misctext.h"
+#include "ejudge/misctext.h"
 #include "ejudge/pathutl.h"
 #include "shellcfg_parse.h"
 #include "lang_config_vis.h"

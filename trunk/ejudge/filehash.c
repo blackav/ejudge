@@ -16,7 +16,7 @@
  */
 
 #include "ejudge/ej_types.h"
-#include "filehash.h"
+#include "ejudge/filehash.h"
 #include "ejudge/timestamp.h"
 #include "ejudge/sha.h"
 #include "ejudge/pathutl.h"

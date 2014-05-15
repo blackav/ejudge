@@ -19,7 +19,7 @@
 #include "prepare.h"
 #include "teamdb.h"
 #include "userlist.h"
-#include "misctext.h"
+#include "ejudge/misctext.h"
 #include "ejudge/win32_compat.h"
 
 #include "reuse/xalloc.h"

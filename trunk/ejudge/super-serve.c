@@ -25,7 +25,7 @@
 #include "userlist_clnt.h"
 #include "super_proto.h"
 #include "userlist_proto.h"
-#include "misctext.h"
+#include "ejudge/misctext.h"
 #include "super-serve.h"
 #include "super_html.h"
 #include "prepare.h"

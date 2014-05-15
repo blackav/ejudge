@@ -27,7 +27,7 @@
 #include "contests.h"
 #include "ejudge/version.h"
 #include "ejudge/sha.h"
-#include "misctext.h"
+#include "ejudge/misctext.h"
 #include "ejudge/l10n.h"
 #include "ejudge/tsc.h"
 #include "sformat.h"

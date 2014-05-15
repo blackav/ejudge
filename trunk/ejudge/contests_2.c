@@ -19,7 +19,7 @@
 #include "contests.h"
 #include "contests_meta.h"
 #include "ejudge/xml_utils.h"
-#include "misctext.h"
+#include "ejudge/misctext.h"
 #include "ejudge/pathutl.h"
 #include "ejudge_cfg.h"
 #include "ejudge/errlog.h"

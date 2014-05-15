@@ -22,7 +22,7 @@
 #include "archive_paths.h"
 #include "ejudge/fileutl.h"
 #include "serve_state.h"
-#include "misctext.h"
+#include "ejudge/misctext.h"
 #include "ejudge/mime_type.h"
 #include "prepare_dflt.h"
 

@@ -16,7 +16,7 @@
  */
 
 #include "ejudge/file_perms.h"
-#include "misctext.h"
+#include "ejudge/misctext.h"
 
 int
 file_perms_parse_mode(const unsigned char *mode)

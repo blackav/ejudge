@@ -21,7 +21,7 @@
 #include "ejudge/expat_iface.h"
 #include "ejudge/xml_utils.h"
 #include "ejudge/mime_type.h"
-#include "misctext.h"
+#include "ejudge/misctext.h"
 
 #include "reuse/xalloc.h"
 

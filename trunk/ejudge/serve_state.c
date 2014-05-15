@@ -29,7 +29,7 @@
 #include "ejudge_plugin.h"
 #include "ejudge/csv.h"
 #include "ejudge_cfg.h"
-#include "misctext.h"
+#include "ejudge/misctext.h"
 #include "new-server.h"
 #include "sformat.h"
 #include "testing_report_xml.h"
