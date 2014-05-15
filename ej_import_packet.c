@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "ej_import_packet.h"
+#include "ejudge/ej_import_packet.h"
 #include "ej_import_packet_meta.h"
 #include "ejudge/meta_generic.h"
 

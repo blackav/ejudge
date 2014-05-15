@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "problem_config.h"
+#include "ejudge/problem_config.h"
 #include "problem_config_meta.h"
 #include "ejudge/meta_generic.h"
 

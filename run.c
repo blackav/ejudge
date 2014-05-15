@@ -34,7 +34,7 @@
 #include "ejudge/errlog.h"
 #include "ejudge/misctext.h"
 #include "run.h"
-#include "super_run_packet.h"
+#include "ejudge/super_run_packet.h"
 #include "ejudge/win32_compat.h"
 
 #include "reuse/xalloc.h"

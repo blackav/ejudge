@@ -24,7 +24,7 @@
 #include "ejudge/errlog.h"
 #include "ejudge/prepare.h"
 #include "ejudge/interrupt.h"
-#include "super_run_packet.h"
+#include "ejudge/super_run_packet.h"
 #include "run_packet.h"
 #include "run.h"
 #include "ejudge/curtime.h"

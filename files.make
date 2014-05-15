@@ -513,7 +513,7 @@ HFILES=\
  ./include/ejudge/ejudge_cfg.h\
  ./include/ejudge/ejudge_plugin.h\
  ./include/ejudge/ej_byteorder.h\
- ej_import_packet.h\
+ ./include/ejudge/ej_import_packet.h\
  ./include/ejudge/ej_limits.h\
  ./include/ejudge/ej_process.h\
  ./include/ejudge/ej_types.h\
@@ -549,13 +549,13 @@ HFILES=\
  ./include/ejudge/parsecfg.h\
  ./include/ejudge/pathutl.h\
  ./include/ejudge/pollfds.h\
- polygon_packet.h\
+ ./include/ejudge/polygon_packet.h\
  ./include/ejudge/prepare.h\
  prepare_dflt.h\
  prepare_serve.h\
  printing.h\
  ./include/ejudge/problem_common.h\
- problem_config.h\
+ ./include/ejudge/problem_config.h\
  ./include/ejudge/problem_xml.h\
  protocol.h\
  ./include/ejudge/random.h\
@@ -575,8 +575,8 @@ HFILES=\
  super_clnt.h\
  super_html.h\
  super_proto.h\
- super_run_packet.h\
- super-serve.h\
+ ./include/ejudge/super_run_packet.h\
+ ./include/ejudge/super-serve.h\
  ./include/ejudge/sha.h\
  ./include/ejudge/t3m_dir_listener.h\
  ./include/ejudge/t3m_packet_class.h\

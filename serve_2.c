@@ -41,7 +41,7 @@
 #include "varsubst.h"
 #include "ejudge/mime_type.h"
 #include "ejudge/ejudge_cfg.h"
-#include "super_run_packet.h"
+#include "ejudge/super_run_packet.h"
 #include "prepare_dflt.h"
 #include "testing_report_xml.h"
 #include "ejudge/server_framework.h"

@@ -47,7 +47,7 @@
 #include "ejudge/compat.h"
 #include "run_packet.h"
 #include "prepare_dflt.h"
-#include "super_run_packet.h"
+#include "ejudge/super_run_packet.h"
 #include "ejudge/ej_uuid.h"
 #include "new_server_pi.h"
 

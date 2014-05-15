@@ -22,7 +22,7 @@
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/expat_iface.h"
 #include "super_html.h"
-#include "super-serve.h"
+#include "ejudge/super-serve.h"
 #include "ejudge/fileutl.h"
 
 #include "reuse/xalloc.h"

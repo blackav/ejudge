@@ -29,7 +29,7 @@
 #include "ejudge/curtime.h"
 #include "runlog.h"
 #include "testing_report_xml.h"
-#include "super_run_packet.h"
+#include "ejudge/super_run_packet.h"
 #include "ejudge/cpu.h"
 
 #include "reuse/xalloc.h"

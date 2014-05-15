@@ -26,7 +26,7 @@
 #include "super_proto.h"
 #include "userlist_proto.h"
 #include "ejudge/misctext.h"
-#include "super-serve.h"
+#include "ejudge/super-serve.h"
 #include "super_html.h"
 #include "ejudge/prepare.h"
 #include "ejudge/serve_state.h"
