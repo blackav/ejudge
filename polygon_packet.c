@@ -18,7 +18,7 @@
 #include "polygon_packet.h"
 #include "polygon_packet_meta.h"
 
-#include "meta_generic.h"
+#include "ejudge/meta_generic.h"
 
 #include "reuse/xalloc.h"
 

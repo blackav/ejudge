@@ -21,8 +21,8 @@
 #include "ejudge/ej_limits.h"
 #include "ejudge/opcaps.h"
 #include "ejudge/watched_file.h"
-#include "problem_plugin.h"
-#include "contest_plugin.h"
+#include "ejudge/problem_plugin.h"
+#include "ejudge/contest_plugin.h"
 
 #include <time.h>
 

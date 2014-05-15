@@ -18,7 +18,7 @@
 #include "ejudge/config.h"
 
 #include "runlog.h"
-#include "problem_common.h"
+#include "ejudge/problem_common.h"
 #include "ejudge/xml_utils.h"
 
 #if CONF_HAS_LIBINTL - 0 == 1

@@ -19,7 +19,7 @@
  */
 
 #include "ejudge/expat_iface.h"
-#include "problem_common.h"
+#include "ejudge/problem_common.h"
 
 #include <time.h>
 #include <stdio.h>

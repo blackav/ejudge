@@ -19,7 +19,7 @@
 #include "ejudge/charsets.h"
 #include "ejudge/xml_utils.h"
 #include "ejudge/misctext.h"
-#include "meta_generic.h"
+#include "ejudge/meta_generic.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

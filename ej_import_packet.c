@@ -17,8 +17,7 @@
 
 #include "ej_import_packet.h"
 #include "ej_import_packet_meta.h"
-
-#include "meta_generic.h"
+#include "ejudge/meta_generic.h"
 
 #include "reuse/xalloc.h"
 

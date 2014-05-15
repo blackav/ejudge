@@ -536,7 +536,7 @@ HFILES=\
  ./include/ejudge/l10n.h\
  ./include/ejudge/lang_config_vis.h\
  ./include/ejudge/list_ops.h\
- meta_generic.h\
+ ./include/ejudge/meta_generic.h\
  ./include/ejudge/mime_type.h\
  ./include/ejudge/mischtml.h\
  ./include/ejudge/misctext.h\
@@ -554,7 +554,7 @@ HFILES=\
  prepare_dflt.h\
  prepare_serve.h\
  printing.h\
- problem_common.h\
+ ./include/ejudge/problem_common.h\
  problem_config.h\
  problem_xml.h\
  protocol.h\

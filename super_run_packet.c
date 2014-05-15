@@ -16,7 +16,7 @@
  */
 
 #include "super_run_packet.h"
-#include "meta_generic.h"
+#include "ejudge/meta_generic.h"
 #include "super_run_packet_meta.h"
 #include "prepare.h"
 #include "ejudge/errlog.h"
