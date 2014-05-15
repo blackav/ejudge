@@ -18,7 +18,7 @@
 #include "ejudge/config.h"
 #include "ejudge/ej_limits.h"
 #include "run.h"
-#include "serve_state.h"
+#include "ejudge/serve_state.h"
 #include "ejudge/fileutl.h"
 #include "ejudge/pathutl.h"
 #include "ejudge/mime_type.h"

@@ -25,7 +25,7 @@
 #include "ejudge/curtime.h"
 #include "ejudge/full_archive.h"
 #include "ejudge/digest_io.h"
-#include "serve_state.h"
+#include "ejudge/serve_state.h"
 #include "ejudge/startstop.h"
 #include "ejudge/ejudge_cfg.h"
 #include "nwrun_packet.h"

@@ -566,7 +566,7 @@ HFILES=\
  run_packet.h\
  run_packet_priv.h\
  ./include/ejudge/server_framework.h\
- serve_state.h\
+ ./include/ejudge/serve_state.h\
  sformat.h\
  ./include/ejudge/shellcfg_parse.h\
  ./include/ejudge/sock_op.h\

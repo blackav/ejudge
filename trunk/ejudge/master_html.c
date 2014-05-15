@@ -38,7 +38,7 @@
 #include "ejudge/filehash.h"
 #include "ejudge/digest_io.h"
 #include "ejudge/errlog.h"
-#include "serve_state.h"
+#include "ejudge/serve_state.h"
 #include "ejudge/mime_type.h"
 
 #include "reuse/xalloc.h"

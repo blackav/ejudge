@@ -22,7 +22,7 @@
 #include "ejudge/server_framework.h"
 #include "ejudge/iterators.h"
 #include "ejudge/watched_file.h"
-#include "serve_state.h"
+#include "ejudge/serve_state.h"
 #include "ejudge/http_request.h"
 
 #include <stdio.h>

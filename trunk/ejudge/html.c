@@ -35,7 +35,7 @@
 #include "team_extra.h"
 #include "ejudge/xml_utils.h"
 #include "testing_report_xml.h"
-#include "serve_state.h"
+#include "ejudge/serve_state.h"
 #include "ejudge/charsets.h"
 #include "ejudge/compat.h"
 #include "filter_eval.h"

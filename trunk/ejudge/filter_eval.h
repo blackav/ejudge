@@ -4,7 +4,7 @@
 #ifndef __FILTER_EVAL_H__
 #define __FILTER_EVAL_H__
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -22,7 +22,7 @@
 #include "runlog.h"
 #include "filter_tree.h"
 #include "teamdb.h"
-#include "serve_state.h"
+#include "ejudge/serve_state.h"
 
 struct filter_env
 {

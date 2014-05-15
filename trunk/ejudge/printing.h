@@ -4,7 +4,7 @@
 #ifndef __PRINTING_H__
 #define __PRINTING_H__
 
-/* Copyright (C) 2004, 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,7 +18,7 @@
  * GNU General Public License for more details.
  */
 
-#include "serve_state.h"
+#include "ejudge/serve_state.h"
 
 int priv_print_run(serve_state_t state, int run_id, int user_id);
 int team_print_run(serve_state_t state, int run_id, int user_id);

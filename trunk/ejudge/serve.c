@@ -37,7 +37,7 @@
 #include "ejudge/curtime.h"
 #include "ejudge/xml_utils.h"
 #include "job_packet.h"
-#include "serve_state.h"
+#include "ejudge/serve_state.h"
 #include "ejudge/startstop.h"
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/misctext.h"

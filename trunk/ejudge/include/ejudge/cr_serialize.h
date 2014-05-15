@@ -4,7 +4,7 @@
 #ifndef __CR_SERIALIZE_H__
 #define __CR_SERIALIZE_H__
 
-/* Copyright (C) 2002, 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,7 +18,7 @@
  * GNU General Public License for more details.
  */
 
-#include "serve_state.h"
+#include "ejudge/serve_state.h"
 
 int cr_serialize_init(const serve_state_t);
 int cr_serialize_lock(const serve_state_t);

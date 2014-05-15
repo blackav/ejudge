@@ -3,7 +3,7 @@
 #ifndef __VARSUBST_H__
 #define __VARSUBST_H__
 
-/* Copyright (C) 2004-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,7 +18,7 @@
  */
 
 #include "prepare.h"
-#include "serve_state.h"
+#include "ejudge/serve_state.h"
 
 unsigned char *varsubst_heap(const serve_state_t, unsigned char *in_str,
                              int free_flag,

@@ -24,7 +24,7 @@
 #include "ejudge/fileutl.h"
 #include "protocol.h"
 #include "userlist.h"
-#include "serve_state.h"
+#include "ejudge/serve_state.h"
 #include "ejudge/xml_utils.h"
 #include "prepare_dflt.h"
 

@@ -16,7 +16,7 @@
  */
 
 #include "ejudge/config.h"
-#include "serve_state.h"
+#include "ejudge/serve_state.h"
 #include "runlog.h"
 #include "prepare.h"
 #include "ejudge/l10n.h"

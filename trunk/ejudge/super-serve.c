@@ -29,7 +29,7 @@
 #include "super-serve.h"
 #include "super_html.h"
 #include "prepare.h"
-#include "serve_state.h"
+#include "ejudge/serve_state.h"
 #include "ejudge/random.h"
 #include "ejudge/startstop.h"
 #include "super-serve_meta.h"

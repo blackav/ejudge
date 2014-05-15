@@ -22,7 +22,7 @@
 #include "ejudge/fileutl.h"
 #include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
-#include "serve_state.h"
+#include "ejudge/serve_state.h"
 #include "ejudge/ej_uuid.h"
 #include "prepare_dflt.h"
 

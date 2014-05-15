@@ -25,7 +25,7 @@
 #include "ejudge/contests.h"
 #include "ejudge/mischtml.h"
 #include "ejudge/xml_utils.h"
-#include "serve_state.h"
+#include "ejudge/serve_state.h"
 #include "ejudge/misctext.h"
 #include "prepare.h"
 #include "prepare_dflt.h"

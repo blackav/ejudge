@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  */
 
-#include "serve_state.h"
+#include "ejudge/serve_state.h"
 
 #include <stdio.h>
 #include <stdlib.h>

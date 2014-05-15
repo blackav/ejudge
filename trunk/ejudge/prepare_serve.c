@@ -22,7 +22,7 @@
 #include "prepare_serve.h"
 #include "teamdb.h"
 #include "ejudge/errlog.h"
-#include "serve_state.h"
+#include "ejudge/serve_state.h"
 #include "runlog.h"
 
 #include "reuse/xalloc.h"
