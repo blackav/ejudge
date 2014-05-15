@@ -20,7 +20,7 @@
 #include "super-serve.h"
 #include "ejudge/pathutl.h"
 #include "ejudge/contests.h"
-#include "prepare.h"
+#include "ejudge/prepare.h"
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/errlog.h"
 #include "ejudge/compat.h"

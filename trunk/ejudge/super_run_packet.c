@@ -18,7 +18,7 @@
 #include "super_run_packet.h"
 #include "ejudge/meta_generic.h"
 #include "super_run_packet_meta.h"
-#include "prepare.h"
+#include "ejudge/prepare.h"
 #include "ejudge/errlog.h"
 
 #include "reuse/xalloc.h"

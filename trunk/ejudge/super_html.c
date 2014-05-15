@@ -30,7 +30,7 @@
 #include "ejudge/errlog.h"
 #include "ejudge/fileutl.h"
 #include "ejudge/xml_utils.h"
-#include "prepare.h"
+#include "ejudge/prepare.h"
 #include "ejudge/vcs.h"
 #include "ejudge/compat.h"
 

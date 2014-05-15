@@ -21,7 +21,7 @@
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/pathutl.h"
 #include "ejudge/serve_state.h"
-#include "prepare.h"
+#include "ejudge/prepare.h"
 #include "compile_packet.h"
 #include "ejudge/fileutl.h"
 #include "ejudge/startstop.h"

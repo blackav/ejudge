@@ -21,7 +21,7 @@
 #include "super-serve.h"
 #include "ejudge/misctext.h"
 #include "ejudge/mischtml.h"
-#include "prepare.h"
+#include "ejudge/prepare.h"
 #include "prepare_meta.h"
 #include "ejudge/ejudge_cfg.h"
 #include "super_proto.h"

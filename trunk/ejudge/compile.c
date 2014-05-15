@@ -23,7 +23,7 @@
  */
 
 #include "ejudge/config.h"
-#include "prepare.h"
+#include "ejudge/prepare.h"
 #include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
 #include "ejudge/parsecfg.h"

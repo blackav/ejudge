@@ -28,7 +28,7 @@
 #include "ejudge/misctext.h"
 #include "super-serve.h"
 #include "super_html.h"
-#include "prepare.h"
+#include "ejudge/prepare.h"
 #include "ejudge/serve_state.h"
 #include "ejudge/random.h"
 #include "ejudge/startstop.h"

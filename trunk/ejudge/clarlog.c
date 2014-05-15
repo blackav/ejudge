@@ -27,7 +27,7 @@
 #include "ejudge/errlog.h"
 #include "ejudge/xml_utils.h"
 #include "ejudge/charsets.h"
-#include "prepare.h"
+#include "ejudge/prepare.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

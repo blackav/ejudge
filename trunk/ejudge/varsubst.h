@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  */
 
-#include "prepare.h"
+#include "ejudge/prepare.h"
 #include "ejudge/serve_state.h"
 
 unsigned char *varsubst_heap(const serve_state_t, unsigned char *in_str,

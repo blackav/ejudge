@@ -28,7 +28,7 @@
 #include "ejudge/errlog.h"
 #include "ejudge/xml_utils.h"
 #include "ejudge/contests.h"
-#include "prepare.h"
+#include "ejudge/prepare.h"
 #include "ejudge/mime_type.h"
 #include "ejudge/misctext.h"
 #include "ejudge/compat.h"

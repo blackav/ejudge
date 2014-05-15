@@ -19,7 +19,7 @@
 #include "runlog.h"
 #include "ejudge/misctext.h"
 #include "teamdb.h"
-#include "prepare.h"
+#include "ejudge/prepare.h"
 #include "archive_paths.h"
 #include "ejudge/fileutl.h"
 #include "protocol.h"

@@ -18,7 +18,7 @@
  * GNU General Public License for more details.
  */
 
-#include "prepare.h"
+#include "ejudge/prepare.h"
 #include "runlog.h"
 #include "filter_tree.h"
 #include "teamdb.h"

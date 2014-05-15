@@ -21,7 +21,7 @@
 #include "runlog.h"
 #include "ejudge/parsecfg.h"
 #include "teamdb.h"
-#include "prepare.h"
+#include "ejudge/prepare.h"
 #include "html.h"
 #include "clarlog.h"
 #include "protocol.h"

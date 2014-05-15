@@ -16,7 +16,7 @@
  */
 
 #include "ejudge/cr_serialize.h"
-#include "prepare.h"
+#include "ejudge/prepare.h"
 
 #include <windows.h>
 

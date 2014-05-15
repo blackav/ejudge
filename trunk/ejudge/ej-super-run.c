@@ -22,7 +22,7 @@
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/fileutl.h"
 #include "ejudge/errlog.h"
-#include "prepare.h"
+#include "ejudge/prepare.h"
 #include "ejudge/interrupt.h"
 #include "super_run_packet.h"
 #include "run_packet.h"

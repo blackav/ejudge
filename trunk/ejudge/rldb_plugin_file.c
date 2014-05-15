@@ -25,7 +25,7 @@
 
 #include "ejudge/pathutl.h"
 #include "ejudge/contests.h"
-#include "prepare.h"
+#include "ejudge/prepare.h"
 #include "ejudge/errlog.h"
 #include "ejudge/fileutl.h"
 #include "unix/unix_fileutl.h"
