@@ -35,7 +35,7 @@
 #include "ejudge/mischtml.h"
 #include "prepare.h"
 #include "prepare_meta.h"
-#include "meta_generic.h"
+#include "ejudge/meta_generic.h"
 #include "prepare_dflt.h"
 #include "ejudge/cpu.h"
 #include "ejudge/compat.h"

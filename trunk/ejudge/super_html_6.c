@@ -31,7 +31,7 @@
 #include "ejudge/ejudge_cfg.h"
 #include "super_html_6.h"
 #include "super_html_6_meta.h"
-#include "meta_generic.h"
+#include "ejudge/meta_generic.h"
 #include "ejudge/charsets.h"
 #include "ejudge/csv.h"
 #include "ejudge/bitset.h"

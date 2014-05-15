@@ -22,7 +22,7 @@
 #include "ejudge/contests.h"
 #include "ejudge/parsecfg.h"
 #include "serve_state.h"
-#include "problem_common.h"
+#include "ejudge/problem_common.h"
 #include "problem_xml.h"
 
 #include <stdio.h>

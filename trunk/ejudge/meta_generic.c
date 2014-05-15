@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "meta_generic.h"
+#include "ejudge/meta_generic.h"
 #include "ejudge/misctext.h"
 #include "ejudge/xml_utils.h"
 #include "ejudge/charsets.h"

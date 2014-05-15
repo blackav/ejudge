@@ -17,8 +17,8 @@
 
 #include "problem_config.h"
 #include "problem_config_meta.h"
+#include "ejudge/meta_generic.h"
 
-#include "meta_generic.h"
 #include "reuse/xalloc.h"
 
 #include <limits.h>
