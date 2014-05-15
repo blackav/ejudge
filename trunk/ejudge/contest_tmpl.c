@@ -18,7 +18,7 @@
 #include "ejudge/config.h"
 #include "ejudge/version.h"
 #include "ejudge/ej_limits.h"
-#include "contests.h"
+#include "ejudge/contests.h"
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/expat_iface.h"
 #include "super_html.h"

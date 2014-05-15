@@ -24,7 +24,7 @@
 #include "new_server_proto.h"
 #include "new-server.h"
 #include "ejudge/ejudge_cfg.h"
-#include "contests.h"
+#include "ejudge/contests.h"
 #include "ejudge/ejudge_plugin.h"
 #include "nsdb_plugin.h"
 #include "ejudge/l10n.h"

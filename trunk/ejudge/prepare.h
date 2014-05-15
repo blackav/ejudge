@@ -19,7 +19,7 @@
 
 #include "ejudge/ej_types.h"
 #include "ejudge/pathutl.h"
-#include "contests.h"
+#include "ejudge/contests.h"
 #include "ejudge/parsecfg.h"
 #include "serve_state.h"
 #include "problem_common.h"

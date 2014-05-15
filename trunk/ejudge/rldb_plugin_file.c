@@ -24,7 +24,7 @@
 #include "runlog_state.h"
 
 #include "ejudge/pathutl.h"
-#include "contests.h"
+#include "ejudge/contests.h"
 #include "prepare.h"
 #include "ejudge/errlog.h"
 #include "ejudge/fileutl.h"

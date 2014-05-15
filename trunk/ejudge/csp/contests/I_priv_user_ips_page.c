@@ -18,7 +18,7 @@
 #include "ejudge/ej_types.h"
 #include "new-server.h"
 #include "new_server_pi.h"
-#include "contests.h"
+#include "ejudge/contests.h"
 #include "userlist_clnt.h"
 #include "runlog.h"
 #include "ejudge/xml_utils.h"

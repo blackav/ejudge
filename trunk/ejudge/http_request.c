@@ -16,7 +16,7 @@
  */
 
 #include "ejudge/http_request.h"
-#include "contests.h"
+#include "ejudge/contests.h"
 
 #include "reuse/logger.h"
 

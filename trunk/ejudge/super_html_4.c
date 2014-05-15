@@ -24,7 +24,7 @@
 #include "super_proto.h"
 #include "ejudge/copyright.h"
 #include "ejudge/misctext.h"
-#include "contests.h"
+#include "ejudge/contests.h"
 #include "contests_meta.h"
 #include "ejudge/l10n.h"
 #include "ejudge/charsets.h"

@@ -22,7 +22,7 @@
 #include "ejudge/xml_utils.h"
 #include "ejudge/pathutl.h"
 #include "clntutil.h"
-#include "contests.h"
+#include "ejudge/contests.h"
 #include "userlist_clnt.h"
 #include "ejudge/cgi.h"
 #include "userlist.h"

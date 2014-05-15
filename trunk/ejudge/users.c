@@ -24,7 +24,7 @@
 #include "clntutil.h"
 #include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
-#include "contests.h"
+#include "ejudge/contests.h"
 #include "userlist_proto.h"
 #include "ejudge/misctext.h"
 #include "ejudge/fileutl.h"

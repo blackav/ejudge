@@ -23,7 +23,7 @@
 #include "prepare.h"
 #include "ejudge/misctext.h"
 #include "ejudge/errlog.h"
-#include "contests.h"
+#include "ejudge/contests.h"
 #include "ejudge/l10n.h"
 #include "ejudge/xml_utils.h"
 #include "ejudge/copyright.h"

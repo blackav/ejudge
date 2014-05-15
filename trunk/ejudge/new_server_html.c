@@ -28,7 +28,7 @@
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/errlog.h"
 #include "userlist_proto.h"
-#include "contests.h"
+#include "ejudge/contests.h"
 #include "nsdb_plugin.h"
 #include "ejudge/l10n.h"
 #include "ejudge/fileutl.h"

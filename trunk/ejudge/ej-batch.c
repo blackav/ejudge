@@ -28,7 +28,7 @@
 #include "ejudge/errlog.h"
 #include "ejudge/misctext.h"
 #include "ejudge/parsecfg.h"
-#include "contests.h"
+#include "ejudge/contests.h"
 #include "serve_state.h"
 #include "prepare.h"
 #include "ejudge/list_ops.h"
