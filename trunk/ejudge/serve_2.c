@@ -33,7 +33,7 @@
 #include "ejudge/compile_packet.h"
 #include "ejudge/run_packet.h"
 #include "ejudge/curtime.h"
-#include "userlist.h"
+#include "ejudge/userlist.h"
 #include "ejudge/sformat.h"
 #include "ejudge/misctext.h"
 #include "ejudge/charsets.h"

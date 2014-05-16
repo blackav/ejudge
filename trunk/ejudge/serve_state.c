@@ -34,7 +34,7 @@
 #include "ejudge/sformat.h"
 #include "testing_report_xml.h"
 #include "prepare_serve.h"
-#include "userlist.h"
+#include "ejudge/userlist.h"
 #include "ejudge/xml_utils.h"
 #include "ejudge/win32_compat.h"
 

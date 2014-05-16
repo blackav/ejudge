@@ -23,7 +23,7 @@
 #include "ejudge/expat_iface.h"
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/pathutl.h"
-#include "userlist.h"
+#include "ejudge/userlist.h"
 #include "ejudge/list_ops.h"
 #include "ejudge/misctext.h"
 #include "ejudge/random.h"

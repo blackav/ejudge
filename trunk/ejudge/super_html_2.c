@@ -33,7 +33,7 @@
 #include "ejudge/prepare.h"
 #include "userlist_proto.h"
 #include "userlist_clnt.h"
-#include "userlist.h"
+#include "ejudge/userlist.h"
 #include "ejudge/ej_process.h"
 #include "ejudge/vcs.h"
 #include "ejudge/compat.h"

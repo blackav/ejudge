@@ -30,7 +30,7 @@
 #include "ejudge/charsets.h"
 #include "ejudge/fileutl.h"
 #include "ejudge/xml_utils.h"
-#include "userlist.h"
+#include "ejudge/userlist.h"
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/mischtml.h"
 #include "ejudge/prepare.h"

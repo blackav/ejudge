@@ -13,7 +13,7 @@
 #include "ejudge/copyright.h"
 #include "ejudge/mischtml.h"
 #include "html.h"
-#include "userlist.h"
+#include "ejudge/userlist.h"
 #include "ejudge/sformat.h"
 
 #include "reuse/xalloc.h"

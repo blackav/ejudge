@@ -21,7 +21,7 @@
 #include "filter_expr.h"
 #include "filter_eval.h"
 #include "teamdb.h"
-#include "userlist.h"
+#include "ejudge/userlist.h"
 #include "ejudge/archive_paths.h"
 #include "ejudge/ej_uuid.h"
 #include "prepare_dflt.h"

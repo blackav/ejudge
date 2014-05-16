@@ -592,7 +592,7 @@ HFILES=\
  ./include/ejudge/tsc.h\
  ./include/ejudge/type_info.h\
  uldb_plugin.h\
- userlist.h\
+ ./include/ejudge/userlist.h\
  userlist_clnt.h\
  ./include/ejudge/varsubst.h\
  ./include/ejudge/vcs.h\

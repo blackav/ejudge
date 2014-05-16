@@ -22,7 +22,7 @@
 #include "ejudge/base64.h"
 #include "userlist_clnt.h"
 #include "userlist_proto.h"
-#include "userlist.h"
+#include "ejudge/userlist.h"
 #include "ejudge/xml_utils.h"
 
 #include "reuse/xalloc.h"

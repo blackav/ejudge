@@ -20,7 +20,7 @@
 #include "ejudge/contests.h"
 #include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
-#include "userlist.h"
+#include "ejudge/userlist.h"
 #include "ejudge/xml_utils.h"
 #include "ejudge/misctext.h"
 #include "ejudge/fileutl.h"

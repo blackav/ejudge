@@ -17,7 +17,7 @@
 
 #include "teamdb.h"
 #include "teamdb_priv.h"
-#include "userlist.h"
+#include "ejudge/userlist.h"
 #include "ejudge/serve_state.h"
 #include "filter_eval.h"
 

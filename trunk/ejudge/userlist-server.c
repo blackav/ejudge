@@ -19,7 +19,7 @@
 #include "ejudge/ej_types.h"
 #include "ejudge/ej_limits.h"
 #include "ejudge/ejudge_cfg.h"
-#include "userlist.h"
+#include "ejudge/userlist.h"
 #include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
 #include "ejudge/base64.h"
