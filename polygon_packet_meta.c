@@ -1,8 +1,8 @@
 // This is an auto-generated file, do not edit
 
-#include "polygon_packet_meta.h"
-#include "polygon_packet.h"
-#include "meta_generic.h"
+#include "ejudge/meta/polygon_packet_meta.h"
+#include "ejudge/polygon_packet.h"
+#include "ejudge/meta_generic.h"
 
 #include "reuse/xalloc.h"
 

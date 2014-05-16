@@ -1,8 +1,8 @@
 // This is an auto-generated file, do not edit
 
-#include "prepare_meta.h"
-#include "prepare.h"
-#include "meta_generic.h"
+#include "ejudge/meta/prepare_meta.h"
+#include "ejudge/prepare.h"
+#include "ejudge/meta_generic.h"
 
 #include "reuse/xalloc.h"
 

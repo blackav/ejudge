@@ -1,8 +1,8 @@
 // This is an auto-generated file, do not edit
 
-#include "contests_meta.h"
-#include "contests.h"
-#include "meta_generic.h"
+#include "ejudge/meta/contests_meta.h"
+#include "ejudge/contests.h"
+#include "ejudge/meta_generic.h"
 
 #include "reuse/xalloc.h"
 

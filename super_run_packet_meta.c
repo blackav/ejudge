@@ -1,8 +1,8 @@
 // This is an auto-generated file, do not edit
 
-#include "super_run_packet_meta.h"
-#include "super_run_packet.h"
-#include "meta_generic.h"
+#include "ejudge/meta/super_run_packet_meta.h"
+#include "ejudge/super_run_packet.h"
+#include "ejudge/meta_generic.h"
 
 #include "reuse/xalloc.h"
 
