@@ -2452,8 +2452,10 @@ parse_expression_15(ScannerState *ss, TypeContext *cntx, TypeInfo **p_info)
                 return -1;
             }
             next_token(ss);
+            /*
             fprintf(stderr, "type: ");
             tc_print(stderr, t);
+            */
             t = tc_skip_tcv(t);
             if (t->kind == NODE_POINTER_TYPE) {
                 t = tc_skip_tcv(t->n.info[1]);
@@ -3268,9 +3270,11 @@ handle_a_open(
                     TypeInfo *t = NULL;
                     r = parse_c_expression(ps, cntx, log_f, attr->value, &t, ps->pos);
                     if (r >= 0) {
+                        /*
                         fprintf(log_f, "Expression type: ");
                         tc_print_2(log_f, t, 2);
                         fprintf(log_f, "\n");
+                        */
 
                         processor_state_invoke_type_handler(log_f, cntx, ps, txt_f, prg_f, attr->value, child, t);
                     }
@@ -3491,9 +3495,11 @@ handle_v_open(
         int r = parse_c_expression(ps, cntx, log_f, at->value, &t, ps->pos);
         if (r < 0) return r;
 
+        /*
         fprintf(log_f, "Expression type: ");
         tc_print_2(log_f, t, 2);
         fprintf(log_f, "\n");
+        */
     }
 
     processor_state_invoke_type_handler(log_f, cntx, ps, txt_f, prg_f, at->value, elem, t);
@@ -4018,9 +4024,11 @@ handle_img_open(
                     TypeInfo *t = NULL;
                     r = parse_c_expression(ps, cntx, log_f, attr->value, &t, ps->pos);
                     if (r >= 0) {
+                        /*
                         fprintf(log_f, "Expression type: ");
                         tc_print_2(log_f, t, 2);
                         fprintf(log_f, "\n");
+                        */
 
                         processor_state_invoke_type_handler(log_f, cntx, ps, txt_f, prg_f, attr->value, child, t);
                     }
@@ -4086,9 +4094,11 @@ handle_read_open(
         parser_error_2(ps, "failed to parse C expression for var attribute");
         return -1;
     }
+    /*
     fprintf(log_f, "Read expression type: ");
     tc_print_2(log_f, var_type, 2);
     fprintf(log_f, "\n");
+    */
     r = processor_state_invoke_read_type_handler(log_f, cntx, ps, txt_f, prg_f, elem, var_attr->value, name_attr->value, var_type);
     if (r < 0) {
         return -1;
