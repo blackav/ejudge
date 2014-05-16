@@ -167,7 +167,7 @@ main_meta_generate(tree_t tree, const unsigned char *output_name)
   snprintf(bn_buf, sizeof(bn_buf), "%s", output_name);
   strip_suffix(bn_buf);
   snprintf(c_buf, sizeof(c_buf), "%s_meta.c", bn_buf);
-  snprintf(h_buf, sizeof(h_buf), "%s_meta.h", bn_buf);
+  snprintf(h_buf, sizeof(h_buf), "include/ejudge/meta/%s_meta.h", bn_buf);
 
   if (!meta_structs.u) {
     fprintf(stderr, "no structure tags specified\n");
@@ -189,7 +189,7 @@ main_meta_generate(tree_t tree, const unsigned char *output_name)
   } while (os_CheckAccess(temp_c_buf, REUSE_F_OK) >= 0);
   serial = 0;
   do {
-    snprintf(temp_h_buf, sizeof(temp_h_buf), "%s_meta_tmp%d.h", bn_buf, serial);
+    snprintf(temp_h_buf, sizeof(temp_h_buf), "include/ejudge/meta/%s_meta_tmp%d.h", bn_buf, serial);
     serial++;
   } while (os_CheckAccess(temp_h_buf, REUSE_F_OK) >= 0);
 

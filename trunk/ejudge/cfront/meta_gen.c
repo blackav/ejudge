@@ -109,10 +109,12 @@ generate_c_header(
   if (c_header_generated) return;
   c_header_generated = 1;
 
+  unsigned char *basename = os_GetBasename(h_name);
+
   fprintf(out_c, "// This is an auto-generated file, do not edit\n");
   if (ts_buf && ts_buf[0]) fprintf(out_c, "%s", ts_buf);
   fprintf(out_c, "\n");
-  fprintf(out_c, "#include \"%s\"\n", h_name);
+  fprintf(out_c, "#include \"ejudge/meta/%s.h\"\n", basename);
   fprintf(out_c, "#include \"ejudge/%s.h\"\n", b_name);
   fprintf(out_c, "#include \"ejudge/meta_generic.h\"\n\n");
   fprintf(out_c, "#include \"reuse/xalloc.h\"\n\n");
