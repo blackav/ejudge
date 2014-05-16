@@ -21,7 +21,7 @@
 #include "ejudge/expat_iface.h"
 #include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
-#include "teamdb.h"
+#include "ejudge/teamdb.h"
 #include "ejudge/prepare.h"
 #include "ejudge/misctext.h"
 #include "ejudge/contests.h"

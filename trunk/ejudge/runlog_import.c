@@ -18,7 +18,7 @@
 #include "ejudge/runlog.h"
 #include "ejudge/misctext.h"
 #include "ejudge/prepare.h"
-#include "teamdb.h"
+#include "ejudge/teamdb.h"
 #include "ejudge/archive_paths.h"
 #include "ejudge/serve_state.h"
 #include "ejudge/fileutl.h"

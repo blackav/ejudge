@@ -21,7 +21,7 @@
 #include "ejudge/prepare.h"
 #include "ejudge/runlog.h"
 #include "filter_tree.h"
-#include "teamdb.h"
+#include "ejudge/teamdb.h"
 #include "ejudge/serve_state.h"
 
 struct filter_env

@@ -17,7 +17,7 @@
 
 #include "ejudge/config.h"
 #include "ejudge/ej_limits.h"
-#include "cldb_plugin.h"
+#include "ejudge/cldb_plugin.h"
 #include "ejudge/clarlog.h"
 #include "clarlog_state.h"
 #include "../mysql-common/common_mysql.h"

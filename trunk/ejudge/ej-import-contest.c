@@ -30,7 +30,7 @@
 #include "ejudge/prepare.h"
 #include "ejudge/meta/problem_config_meta.h"
 #include "ejudge/meta/prepare_meta.h"
-#include "prepare_dflt.h"
+#include "ejudge/prepare_dflt.h"
 #include "ejudge/pathutl.h"
 #include "ejudge/ej_import_packet.h"
 

@@ -17,7 +17,7 @@
 
 #include "ejudge/config.h"
 #include "ejudge/ej_limits.h"
-#include "team_extra.h"
+#include "ejudge/team_extra.h"
 #include "ejudge/expat_iface.h"
 #include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"

@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "cldb_plugin.h"
+#include "ejudge/cldb_plugin.h"
 #include "ejudge/clarlog.h"
 #include "clarlog_state.h"
 #include "ejudge/ejudge_cfg.h"

@@ -17,7 +17,7 @@
 
 #include "ejudge/sformat.h"
 #include "ejudge/prepare.h"
-#include "teamdb.h"
+#include "ejudge/teamdb.h"
 #include "ejudge/userlist.h"
 #include "ejudge/misctext.h"
 #include "ejudge/win32_compat.h"

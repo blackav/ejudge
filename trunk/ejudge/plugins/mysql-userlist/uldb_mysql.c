@@ -18,7 +18,7 @@
 #include "ejudge/config.h"
 #include "ejudge/ej_limits.h"
 #include "ejudge/errlog.h"
-#include "uldb_plugin.h"
+#include "ejudge/uldb_plugin.h"
 #include "ejudge/xml_utils.h"
 #include "ejudge/expat_iface.h"
 #include "ejudge/ejudge_cfg.h"

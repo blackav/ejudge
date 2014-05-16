@@ -2,7 +2,7 @@
 /* $Id$ */
 %><%@include "priv_includes.csp"
 %><%
-#include "team_extra.h"
+#include "ejudge/team_extra.h"
 %><%@set getter_name = "csp_get_priv_user_info_page"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@set err_prefix = "NEW_SRV_ERR_"

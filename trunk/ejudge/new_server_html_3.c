@@ -27,7 +27,7 @@
 #include "ejudge/l10n.h"
 #include "ejudge/xml_utils.h"
 #include "ejudge/copyright.h"
-#include "team_extra.h"
+#include "ejudge/team_extra.h"
 
 #include "reuse/xalloc.h"
 

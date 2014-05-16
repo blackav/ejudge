@@ -26,7 +26,7 @@
 #include "ejudge/ejudge_cfg.h"
 #include "super_proto.h"
 #include "ejudge/fileutl.h"
-#include "prepare_dflt.h"
+#include "ejudge/prepare_dflt.h"
 #include "ejudge/xml_utils.h"
 #include "ejudge/ej_process.h"
 #include "ejudge/cpu.h"

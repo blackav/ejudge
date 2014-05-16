@@ -21,7 +21,7 @@
 #include "ejudge/ej_process.h"
 #include "ejudge/serve_state.h"
 #include "ejudge/prepare.h"
-#include "prepare_dflt.h"
+#include "ejudge/prepare_dflt.h"
 #include "ejudge/super-serve.h"
 #include "super_proto.h"
 #include "ejudge/file_perms.h"

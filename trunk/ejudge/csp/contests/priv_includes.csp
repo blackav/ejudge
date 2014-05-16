@@ -9,10 +9,10 @@
 #include "ejudge/l10n.h"
 #include "ejudge/prepare.h"
 #include "ejudge/xml_utils.h"
-#include "teamdb.h"
+#include "ejudge/teamdb.h"
 #include "ejudge/copyright.h"
 #include "ejudge/mischtml.h"
-#include "html.h"
+#include "ejudge/html.h"
 #include "ejudge/userlist.h"
 
 #include "reuse/xalloc.h"

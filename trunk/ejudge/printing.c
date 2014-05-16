@@ -18,15 +18,15 @@
 #include "ejudge/printing.h"
 #include "ejudge/runlog.h"
 #include "ejudge/misctext.h"
-#include "teamdb.h"
+#include "ejudge/teamdb.h"
 #include "ejudge/prepare.h"
 #include "ejudge/archive_paths.h"
 #include "ejudge/fileutl.h"
-#include "protocol.h"
+#include "ejudge/protocol.h"
 #include "ejudge/userlist.h"
 #include "ejudge/serve_state.h"
 #include "ejudge/xml_utils.h"
-#include "prepare_dflt.h"
+#include "ejudge/prepare_dflt.h"
 
 #include "reuse/exec.h"
 
