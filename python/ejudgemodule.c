@@ -20,7 +20,7 @@
 #include "ejudge/config.h"
 #include "userlist_clnt.h"
 #include "userlist_proto.h"
-#include "userlist.h"
+#include "ejudge/userlist.h"
 #include "ejudge/xml_utils.h"
 
 /* userlist_clnt implementation status

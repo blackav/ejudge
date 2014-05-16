@@ -32,7 +32,7 @@
 #include "ejudge/cpu.h"
 #include "userlist_clnt.h"
 #include "userlist_proto.h"
-#include "userlist.h"
+#include "ejudge/userlist.h"
 #include "prepare_serve.h"
 #include "ejudge/errlog.h"
 #include "ejudge/random.h"

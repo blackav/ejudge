@@ -29,7 +29,7 @@
 #include "nsdb_plugin.h"
 #include "ejudge/l10n.h"
 #include "ejudge/pathutl.h"
-#include "userlist.h"
+#include "ejudge/userlist.h"
 #include "ejudge/compat.h"
 #include "ejudge/xml_utils.h"
 

@@ -24,7 +24,7 @@
 #include "ejudge/mischtml.h"
 #include "userlist_proto.h"
 #include "userlist_clnt.h"
-#include "userlist.h"
+#include "ejudge/userlist.h"
 #include "ejudge/misctext.h"
 #include "ejudge/errlog.h"
 #include "ejudge/xml_utils.h"

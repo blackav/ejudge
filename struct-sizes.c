@@ -24,7 +24,7 @@
 #include "ejudge/super-serve.h"
 #include "ejudge/compile_packet_priv.h"
 #include "ejudge/problem_config.h"
-#include "userlist.h"
+#include "ejudge/userlist.h"
 
 #include <stdio.h>
 

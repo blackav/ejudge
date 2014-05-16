@@ -32,7 +32,7 @@
 #include "ejudge/archive_paths.h"
 #include "team_extra.h"
 #include "ejudge/xml_utils.h"
-#include "userlist.h"
+#include "ejudge/userlist.h"
 #include "testing_report_xml.h"
 #include "ejudge/full_archive.h"
 #include "ejudge/filehash.h"

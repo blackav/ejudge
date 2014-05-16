@@ -36,7 +36,7 @@
 #include "testing_report_xml.h"
 #include "ejudge/full_archive.h"
 #include "teamdb.h"
-#include "userlist.h"
+#include "ejudge/userlist.h"
 #include "team_extra.h"
 #include "ejudge/errlog.h"
 #include "ejudge/csv.h"

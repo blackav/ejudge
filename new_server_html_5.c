@@ -22,7 +22,7 @@
 #include "new_server_proto.h"
 #include "userlist_clnt.h"
 #include "userlist_proto.h"
-#include "userlist.h"
+#include "ejudge/userlist.h"
 #include "ejudge/contests.h"
 #include "ejudge/misctext.h"
 #include "ejudge/mischtml.h"

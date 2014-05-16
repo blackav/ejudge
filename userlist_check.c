@@ -16,7 +16,7 @@
  */
 
 #include "ejudge/contests.h"
-#include "userlist.h"
+#include "ejudge/userlist.h"
 #include "ejudge/misctext.h"
 
 #include "reuse/logger.h"

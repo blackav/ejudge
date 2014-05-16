@@ -25,7 +25,7 @@
 #include "html.h"
 #include "ejudge/clarlog.h"
 #include "protocol.h"
-#include "userlist.h"
+#include "ejudge/userlist.h"
 #include "ejudge/sha.h"
 #include "ejudge/l10n.h"
 #include "ejudge/archive_paths.h"

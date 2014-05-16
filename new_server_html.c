@@ -32,7 +32,7 @@
 #include "nsdb_plugin.h"
 #include "ejudge/l10n.h"
 #include "ejudge/fileutl.h"
-#include "userlist.h"
+#include "ejudge/userlist.h"
 #include "ejudge/mischtml.h"
 #include "ejudge/serve_state.h"
 #include "teamdb.h"
