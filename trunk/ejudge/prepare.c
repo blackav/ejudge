@@ -19,7 +19,7 @@
 #include "ejudge/prepare.h"
 #include "ejudge/varsubst.h"
 #include "ejudge/version.h"
-#include "prepare_meta.h"
+#include "ejudge/meta/prepare_meta.h"
 #include "ejudge/fileutl.h"
 #include "ejudge/sformat.h"
 #include "teamdb.h"

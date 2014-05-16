@@ -22,7 +22,7 @@
 #include "ejudge/misctext.h"
 #include "ejudge/mischtml.h"
 #include "ejudge/prepare.h"
-#include "prepare_meta.h"
+#include "ejudge/meta/prepare_meta.h"
 #include "ejudge/ejudge_cfg.h"
 #include "super_proto.h"
 #include "ejudge/fileutl.h"

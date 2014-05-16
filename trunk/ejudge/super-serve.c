@@ -32,7 +32,7 @@
 #include "ejudge/serve_state.h"
 #include "ejudge/random.h"
 #include "ejudge/startstop.h"
-#include "super-serve_meta.h"
+#include "ejudge/meta/super-serve_meta.h"
 #include "ejudge/sock_op.h"
 #include "ejudge/compat.h"
 #include "ejudge/ej_process.h"

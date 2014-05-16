@@ -26,7 +26,7 @@
 #include "ejudge/fileutl.h"
 #include "ejudge/l10n.h"
 #include "ejudge/ejudge_cfg.h"
-#include "contests_meta.h"
+#include "ejudge/meta/contests_meta.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"
