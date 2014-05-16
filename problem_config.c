@@ -16,7 +16,7 @@
  */
 
 #include "ejudge/problem_config.h"
-#include "problem_config_meta.h"
+#include "ejudge/meta/problem_config_meta.h"
 #include "ejudge/meta_generic.h"
 
 #include "reuse/xalloc.h"

@@ -18,7 +18,7 @@
 #include "ejudge/config.h"
 #include "ejudge/prepare.h"
 #include "prepare_dflt.h"
-#include "prepare_meta.h"
+#include "ejudge/meta/prepare_meta.h"
 #include "ejudge/xml_utils.h"
 #include "prepare_serve.h"
 #include "ejudge/errlog.h"

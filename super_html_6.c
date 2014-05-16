@@ -30,7 +30,7 @@
 #include "ejudge/xml_utils.h"
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/super_html_6.h"
-#include "super_html_6_meta.h"
+#include "ejudge/meta/super_html_6_meta.h"
 #include "ejudge/meta_generic.h"
 #include "ejudge/charsets.h"
 #include "ejudge/csv.h"
