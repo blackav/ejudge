@@ -16,8 +16,7 @@
  */
 
 #include "ejudge/config.h"
-
-#include "runlog.h"
+#include "ejudge/runlog.h"
 #include "ejudge/problem_common.h"
 #include "ejudge/xml_utils.h"
 

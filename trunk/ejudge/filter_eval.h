@@ -19,7 +19,7 @@
  */
 
 #include "ejudge/prepare.h"
-#include "runlog.h"
+#include "ejudge/runlog.h"
 #include "filter_tree.h"
 #include "teamdb.h"
 #include "ejudge/serve_state.h"

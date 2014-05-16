@@ -23,7 +23,7 @@
 #include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
 #include "ejudge/fileutl.h"
-#include "runlog.h"
+#include "ejudge/runlog.h"
 #include "clarlog.h"
 #include "teamdb.h"
 #include "ejudge/prepare.h"

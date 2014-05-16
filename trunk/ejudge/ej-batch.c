@@ -36,7 +36,7 @@
 #include "ejudge/t3m_dir_listener.h"
 #include "ejudge/t3m_packet_class.h"
 #include "ejudge/t3m_submits.h"
-#include "runlog.h"
+#include "ejudge/runlog.h"
 #include "ejudge/run_packet.h"
 #include "testing_report_xml.h"
 #include "ejudge/zip_utils.h"

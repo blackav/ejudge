@@ -5,7 +5,7 @@
 #include "external_action.h"
 #include "clarlog.h"
 #include "ejudge/misctext.h"
-#include "runlog.h"
+#include "ejudge/runlog.h"
 #include "ejudge/l10n.h"
 #include "ejudge/prepare.h"
 #include "ejudge/xml_utils.h"

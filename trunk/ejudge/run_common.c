@@ -23,7 +23,7 @@
 #include "ejudge/super_run_packet.h"
 #include "run.h"
 #include "ejudge/errlog.h"
-#include "runlog.h"
+#include "ejudge/runlog.h"
 #include "ejudge/digest_io.h"
 #include "ejudge/fileutl.h"
 #include "testinfo.h"

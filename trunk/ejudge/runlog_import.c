@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "runlog.h"
+#include "ejudge/runlog.h"
 #include "ejudge/misctext.h"
 #include "ejudge/prepare.h"
 #include "teamdb.h"

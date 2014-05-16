@@ -24,7 +24,7 @@
 #include "ejudge/mischtml.h"
 #include "teamdb.h"
 #include "clarlog.h"
-#include "runlog.h"
+#include "ejudge/runlog.h"
 #include "ejudge/base64.h"
 #include "html.h"
 #include "ejudge/fileutl.h"

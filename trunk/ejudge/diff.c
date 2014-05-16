@@ -16,7 +16,7 @@
  */
 
 #include "ejudge/diff.h"
-#include "runlog.h"
+#include "ejudge/runlog.h"
 #include "protocol.h"
 #include "ejudge/prepare.h"
 #include "ejudge/archive_paths.h"

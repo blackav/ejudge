@@ -21,7 +21,7 @@
 #include "ejudge/parsecfg.h"
 #include "ejudge/fileutl.h"
 #include "ejudge/errlog.h"
-#include "runlog.h"
+#include "ejudge/runlog.h"
 #include "nwrun_packet.h"
 
 #include "reuse/xalloc.h"

@@ -19,7 +19,7 @@
 #include "ejudge/ej_types.h"
 #include "ejudge/serve_state.h"
 #include "ejudge/prepare.h"
-#include "runlog.h"
+#include "ejudge/runlog.h"
 #include "ejudge/misctext.h"
 #include "ejudge/archive_paths.h"
 #include "ejudge/fileutl.h"

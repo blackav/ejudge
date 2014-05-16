@@ -16,7 +16,7 @@
  */
 
 #include "ejudge/printing.h"
-#include "runlog.h"
+#include "ejudge/runlog.h"
 #include "ejudge/misctext.h"
 #include "teamdb.h"
 #include "ejudge/prepare.h"

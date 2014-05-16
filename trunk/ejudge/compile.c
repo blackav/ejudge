@@ -29,7 +29,7 @@
 #include "ejudge/parsecfg.h"
 #include "ejudge/fileutl.h"
 #include "ejudge/interrupt.h"
-#include "runlog.h"
+#include "ejudge/runlog.h"
 #include "ejudge/compile_packet.h"
 #include "ejudge/curtime.h"
 #include "ejudge/serve_state.h"

@@ -18,7 +18,7 @@
 #include "ejudge/config.h"
 #include "ejudge/ej_limits.h"
 #include "ejudge/prepare.h"
-#include "runlog.h"
+#include "ejudge/runlog.h"
 #include "testinfo.h"
 #include "ejudge/interrupt.h"
 #include "ejudge/run_packet.h"
