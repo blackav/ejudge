@@ -20,7 +20,7 @@
 #include "ejudge/runlog.h"
 #include "team_extra.h"
 #include "teamdb.h"
-#include "clarlog.h"
+#include "ejudge/clarlog.h"
 #include "ejudge/prepare.h"
 #include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"

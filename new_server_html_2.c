@@ -24,7 +24,7 @@
 #include "ejudge/misctext.h"
 #include "ejudge/mischtml.h"
 #include "html.h"
-#include "clarlog.h"
+#include "ejudge/clarlog.h"
 #include "ejudge/base64.h"
 #include "ejudge/xml_utils.h"
 #include "ejudge/archive_paths.h"

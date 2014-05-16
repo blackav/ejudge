@@ -3,7 +3,7 @@
 #include "new_server_pi.h"
 #include "new_server_proto.h"
 #include "external_action.h"
-#include "clarlog.h"
+#include "ejudge/clarlog.h"
 #include "ejudge/misctext.h"
 #include "ejudge/runlog.h"
 #include "ejudge/l10n.h"

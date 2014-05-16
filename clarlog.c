@@ -17,7 +17,7 @@
 
 #include "ejudge/config.h"
 #include "ejudge/ej_types.h"
-#include "clarlog.h"
+#include "ejudge/clarlog.h"
 #include "cldb_plugin.h"
 #include "clarlog_state.h"
 #include "teamdb.h"

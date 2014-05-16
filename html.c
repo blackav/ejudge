@@ -24,7 +24,7 @@
 #include "ejudge/errlog.h"
 #include "ejudge/fileutl.h"
 #include "ejudge/runlog.h"
-#include "clarlog.h"
+#include "ejudge/clarlog.h"
 #include "teamdb.h"
 #include "ejudge/prepare.h"
 #include "ejudge/base64.h"

@@ -23,7 +23,7 @@
 #include "ejudge/misctext.h"
 #include "ejudge/mischtml.h"
 #include "teamdb.h"
-#include "clarlog.h"
+#include "ejudge/clarlog.h"
 #include "ejudge/runlog.h"
 #include "ejudge/base64.h"
 #include "html.h"

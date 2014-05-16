@@ -31,7 +31,7 @@
 #include "ejudge/win32_compat.h"
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/interrupt.h"
-#include "nwrun_packet.h"
+#include "ejudge/nwrun_packet.h"
 #include "ejudge/filehash.h"
 #include "ejudge/curtime.h"
 #include "ejudge/cpu.h"

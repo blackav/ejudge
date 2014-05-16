@@ -22,7 +22,7 @@
 #include "ejudge/fileutl.h"
 #include "ejudge/errlog.h"
 #include "ejudge/runlog.h"
-#include "nwrun_packet.h"
+#include "ejudge/nwrun_packet.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/osdeps.h"

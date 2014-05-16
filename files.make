@@ -492,7 +492,7 @@ HFILES=\
  ./include/ejudge/build_support.h\
  ./include/ejudge/cgi.h\
  ./include/ejudge/charsets.h\
- clarlog.h\
+ ./include/ejudge/clarlog.h\
  clarlog_state.h\
  cldb_plugin.h\
  client_actions.h\
@@ -540,11 +540,11 @@ HFILES=\
  ./include/ejudge/mime_type.h\
  ./include/ejudge/mischtml.h\
  ./include/ejudge/misctext.h\
- ncheck_packet.h\
+ ./include/ejudge/ncheck_packet.h\
  ./include/ejudge/ncurses_utils.h\
  new-server.h\
  nsdb_plugin.h\
- nwrun_packet.h\
+ ./include/ejudge/nwrun_packet.h\
  ./include/ejudge/opcaps.h\
  ./include/ejudge/parsecfg.h\
  ./include/ejudge/pathutl.h\

@@ -23,7 +23,7 @@
 #include "teamdb.h"
 #include "ejudge/prepare.h"
 #include "html.h"
-#include "clarlog.h"
+#include "ejudge/clarlog.h"
 #include "protocol.h"
 #include "userlist.h"
 #include "ejudge/sha.h"
