@@ -768,9 +768,11 @@ parse_index_range_die(
     } else {
         Dwarf_Unsigned ub = 0;
         if (s_dwarf_formudata(log_f, path, ub_attr, &ub) < 0) goto done;
-        if (ub >= INT_MAX) {
-            fprintf(log_f, "%s: invalid upper bound: %llu\n", path, ub);
-            dump_die(log_f, dbg, die);
+        if (ub == INT_MAX) {
+            ub = 0;
+        } else if (ub > INT_MAX) {
+            //fprintf(log_f, "%s: invalid upper bound: %llu\n", path, ub);
+            //dump_die(log_f, dbg, die);
             ub = 0;
         }
         *p_info = tc_get_array_type(cntx, base_info, tc_get_u32(cntx, ub + 1));
