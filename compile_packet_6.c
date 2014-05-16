@@ -15,8 +15,8 @@
  * GNU General Public License for more details.
  */
 
-#include "compile_packet.h"
-#include "compile_packet_priv.h"
+#include "ejudge/compile_packet.h"
+#include "ejudge/compile_packet_priv.h"
 #include "ejudge/pathutl.h"
 #include "ejudge/prepare.h"
 #include "runlog.h"
