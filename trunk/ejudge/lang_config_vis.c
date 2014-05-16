@@ -22,7 +22,7 @@
 #include "ejudge/ncurses_utils.h"
 #include "ejudge/pathutl.h"
 #include "ejudge/compat.h"
-#include "varsubst.h"
+#include "ejudge/varsubst.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

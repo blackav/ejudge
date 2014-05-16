@@ -19,7 +19,7 @@
 #include "ejudge/misctext.h"
 #include "ejudge/prepare.h"
 #include "teamdb.h"
-#include "archive_paths.h"
+#include "ejudge/archive_paths.h"
 #include "ejudge/serve_state.h"
 #include "ejudge/fileutl.h"
 #include "ejudge/compat.h"

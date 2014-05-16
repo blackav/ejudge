@@ -486,7 +486,7 @@ CFILES=\
  ${NEW_SERVER_CLNT_CFILES}
 
 HFILES=\
- archive_paths.h\
+ ./include/ejudge/archive_paths.h\
  ./include/ejudge/base64.h\
  ./include/ejudge/bitset.h\
  ./include/ejudge/build_support.h\
@@ -507,7 +507,7 @@ HFILES=\
  ./include/ejudge/cr_serialize.h\
  ./include/ejudge/csv.h\
  ./include/ejudge/curtime.h\
- diff.h\
+ ./include/ejudge/diff.h\
  ./include/ejudge/digest_io.h\
  ./include/ejudge/dwarf_parse.h\
  ./include/ejudge/ejudge_cfg.h\
@@ -532,7 +532,7 @@ HFILES=\
  ./include/ejudge/http_request.h\
  ./include/ejudge/interrupt.h\
  ./include/ejudge/iterators.h\
- job_packet.h\
+ ./include/ejudge/job_packet.h\
  ./include/ejudge/l10n.h\
  ./include/ejudge/lang_config_vis.h\
  ./include/ejudge/list_ops.h\
@@ -553,7 +553,7 @@ HFILES=\
  ./include/ejudge/prepare.h\
  prepare_dflt.h\
  prepare_serve.h\
- printing.h\
+ ./include/ejudge/printing.h\
  ./include/ejudge/problem_common.h\
  ./include/ejudge/problem_config.h\
  ./include/ejudge/problem_xml.h\
@@ -567,7 +567,7 @@ HFILES=\
  run_packet_priv.h\
  ./include/ejudge/server_framework.h\
  ./include/ejudge/serve_state.h\
- sformat.h\
+ ./include/ejudge/sformat.h\
  ./include/ejudge/shellcfg_parse.h\
  ./include/ejudge/sock_op.h\
  ./include/ejudge/startstop.h\
@@ -594,7 +594,7 @@ HFILES=\
  uldb_plugin.h\
  userlist.h\
  userlist_clnt.h\
- varsubst.h\
+ ./include/ejudge/varsubst.h\
  ./include/ejudge/vcs.h\
  ./include/ejudge/version.h\
  ./include/ejudge/watched_file.h\

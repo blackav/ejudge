@@ -27,7 +27,7 @@
 #include "runlog.h"
 #include "html.h"
 #include "ejudge/prepare.h"
-#include "archive_paths.h"
+#include "ejudge/archive_paths.h"
 #include "ejudge/fileutl.h"
 #include "teamdb.h"
 #include "ejudge/misctext.h"

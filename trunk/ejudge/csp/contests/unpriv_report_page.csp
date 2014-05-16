@@ -3,7 +3,7 @@
 %><%@include "unpriv_includes.csp"
 %><%
 #include "ejudge/fileutl.h"
-#include "archive_paths.h"
+#include "ejudge/archive_paths.h"
 
 int
 ns_unpriv_parse_run_id(

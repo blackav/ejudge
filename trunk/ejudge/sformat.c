@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "sformat.h"
+#include "ejudge/sformat.h"
 #include "ejudge/prepare.h"
 #include "teamdb.h"
 #include "userlist.h"

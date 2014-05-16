@@ -15,12 +15,12 @@
  * GNU General Public License for more details.
  */
 
-#include "printing.h"
+#include "ejudge/printing.h"
 #include "runlog.h"
 #include "ejudge/misctext.h"
 #include "teamdb.h"
 #include "ejudge/prepare.h"
-#include "archive_paths.h"
+#include "ejudge/archive_paths.h"
 #include "ejudge/fileutl.h"
 #include "protocol.h"
 #include "userlist.h"

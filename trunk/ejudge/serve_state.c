@@ -31,7 +31,7 @@
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/misctext.h"
 #include "new-server.h"
-#include "sformat.h"
+#include "ejudge/sformat.h"
 #include "testing_report_xml.h"
 #include "prepare_serve.h"
 #include "userlist.h"

@@ -33,7 +33,7 @@
 #include "testinfo.h"
 #include "ejudge/file_perms.h"
 #include "ejudge/ej_process.h"
-#include "sformat.h"
+#include "ejudge/sformat.h"
 #include "ejudge/build_support.h"
 
 #include "reuse/xalloc.h"
