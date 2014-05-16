@@ -28,7 +28,7 @@
 #include "ejudge/serve_state.h"
 #include "ejudge/startstop.h"
 #include "ejudge/ejudge_cfg.h"
-#include "nwrun_packet.h"
+#include "ejudge/nwrun_packet.h"
 #include "prepare_dflt.h"
 #include "ejudge/fileutl.h"
 #include "ejudge/errlog.h"

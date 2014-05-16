@@ -44,7 +44,7 @@
 #include "ejudge/sha.h"
 #include "ejudge/archive_paths.h"
 #include "ejudge/curtime.h"
-#include "clarlog.h"
+#include "ejudge/clarlog.h"
 #include "team_extra.h"
 #include "ejudge/diff.h"
 #include "protocol.h"

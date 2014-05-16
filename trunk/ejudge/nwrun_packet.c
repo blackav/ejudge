@@ -18,7 +18,7 @@
 #include "ejudge/config.h"
 #include "ejudge/ej_limits.h"
 #include "ejudge/version.h"
-#include "nwrun_packet.h"
+#include "ejudge/nwrun_packet.h"
 #include "ejudge/errlog.h"
 
 #include "reuse/xalloc.h"

@@ -19,7 +19,7 @@
 #include "ejudge/config.h"
 #include "protocol.h"
 #include "ejudge/runlog.h"
-#include "clarlog.h"
+#include "ejudge/clarlog.h"
 #include "ejudge/prepare.h"
 #include "ejudge/super-serve.h"
 #include "ejudge/compile_packet_priv.h"

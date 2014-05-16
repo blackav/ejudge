@@ -31,7 +31,7 @@
 #include "ejudge/fileutl.h"
 #include "teamdb.h"
 #include "ejudge/misctext.h"
-#include "clarlog.h"
+#include "ejudge/clarlog.h"
 #include "ejudge/mime_type.h"
 #include "ejudge/sha.h"
 #include "filter_tree.h"

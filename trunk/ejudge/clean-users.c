@@ -23,7 +23,7 @@
 #include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
 #include "ejudge/runlog.h"
-#include "clarlog.h"
+#include "ejudge/clarlog.h"
 #include "userlist_clnt.h"
 #include "userlist_proto.h"
 #include "ejudge/serve_state.h"
