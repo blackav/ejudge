@@ -113,8 +113,8 @@ generate_c_header(
   if (ts_buf && ts_buf[0]) fprintf(out_c, "%s", ts_buf);
   fprintf(out_c, "\n");
   fprintf(out_c, "#include \"%s\"\n", h_name);
-  fprintf(out_c, "#include \"%s.h\"\n", b_name);
-  fprintf(out_c, "#include \"meta_generic.h\"\n\n");
+  fprintf(out_c, "#include \"ejudge/%s.h\"\n", b_name);
+  fprintf(out_c, "#include \"ejudge/meta_generic.h\"\n\n");
   fprintf(out_c, "#include \"reuse/xalloc.h\"\n\n");
   fprintf(out_c, "#include \"reuse/logger.h\"\n");
   fprintf(out_c, "#include <string.h>\n");
