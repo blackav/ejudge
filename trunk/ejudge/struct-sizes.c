@@ -22,7 +22,7 @@
 #include "clarlog.h"
 #include "ejudge/prepare.h"
 #include "ejudge/super-serve.h"
-#include "compile_packet_priv.h"
+#include "ejudge/compile_packet_priv.h"
 #include "ejudge/problem_config.h"
 #include "userlist.h"
 

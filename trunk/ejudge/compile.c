@@ -30,7 +30,7 @@
 #include "ejudge/fileutl.h"
 #include "ejudge/interrupt.h"
 #include "runlog.h"
-#include "compile_packet.h"
+#include "ejudge/compile_packet.h"
 #include "ejudge/curtime.h"
 #include "ejudge/serve_state.h"
 #include "ejudge/startstop.h"

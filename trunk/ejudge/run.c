@@ -21,7 +21,7 @@
 #include "runlog.h"
 #include "testinfo.h"
 #include "ejudge/interrupt.h"
-#include "run_packet.h"
+#include "ejudge/run_packet.h"
 #include "ejudge/curtime.h"
 #include "ejudge/full_archive.h"
 #include "ejudge/digest_io.h"

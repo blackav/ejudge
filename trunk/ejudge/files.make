@@ -499,8 +499,8 @@ HFILES=\
  clntutil.h\
  ./include/ejudge/common_plugin.h\
  ./include/ejudge/compat.h\
- compile_packet.h\
- compile_packet_priv.h\
+ ./include/ejudge/compile_packet.h\
+ ./include/ejudge/compile_packet_priv.h\
  ./include/ejudge/contests.h\
  ./include/ejudge/copyright.h\
  ./include/ejudge/cpu.h\
@@ -563,8 +563,8 @@ HFILES=\
  run.h\
  runlog.h\
  runlog_state.h\
- run_packet.h\
- run_packet_priv.h\
+ ./include/ejudge/run_packet.h\
+ ./include/ejudge/run_packet_priv.h\
  ./include/ejudge/server_framework.h\
  ./include/ejudge/serve_state.h\
  ./include/ejudge/sformat.h\

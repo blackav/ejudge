@@ -19,7 +19,7 @@
 #include "ejudge/ej_limits.h"
 #include "ejudge/misctext.h"
 #include "ejudge/prepare.h"
-#include "run_packet.h"
+#include "ejudge/run_packet.h"
 #include "ejudge/super_run_packet.h"
 #include "run.h"
 #include "ejudge/errlog.h"
