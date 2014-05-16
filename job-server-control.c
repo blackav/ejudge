@@ -19,7 +19,7 @@
 #include "ejudge/ej_types.h"
 #include "ejudge/version.h"
 #include "ejudge/ejudge_cfg.h"
-#include "job_packet.h"
+#include "ejudge/job_packet.h"
 #include "ejudge/startstop.h"
 
 #include "reuse/logger.h"

@@ -24,8 +24,8 @@
 #include "ejudge/errlog.h"
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/misctext.h"
-#include "sformat.h"
-#include "varsubst.h"
+#include "ejudge/sformat.h"
+#include "ejudge/varsubst.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

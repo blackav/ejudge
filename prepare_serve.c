@@ -17,7 +17,7 @@
 
 #include "ejudge/config.h"
 #include "ejudge/prepare.h"
-#include "varsubst.h"
+#include "ejudge/varsubst.h"
 #include "ejudge/version.h"
 #include "prepare_serve.h"
 #include "teamdb.h"

@@ -17,11 +17,11 @@
 
 #include "ejudge/config.h"
 #include "ejudge/prepare.h"
-#include "varsubst.h"
+#include "ejudge/varsubst.h"
 #include "ejudge/version.h"
 #include "prepare_meta.h"
 #include "ejudge/fileutl.h"
-#include "sformat.h"
+#include "ejudge/sformat.h"
 #include "teamdb.h"
 #include "prepare_serve.h"
 #include "prepare_dflt.h"

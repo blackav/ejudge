@@ -17,7 +17,7 @@
 
 #include "ejudge/config.h"
 #include "ejudge/ej_types.h"
-#include "job_packet.h"
+#include "ejudge/job_packet.h"
 #include "ejudge/errlog.h"
 #include "ejudge/pathutl.h"
 #include "ejudge/fileutl.h"

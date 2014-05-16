@@ -22,7 +22,7 @@
 #include "filter_eval.h"
 #include "teamdb.h"
 #include "userlist.h"
-#include "archive_paths.h"
+#include "ejudge/archive_paths.h"
 #include "ejudge/ej_uuid.h"
 #include "prepare_dflt.h"
 

@@ -17,7 +17,7 @@
 
 #include "ejudge/ej_types.h"
 #include "ejudge/ej_limits.h"
-#include "archive_paths.h"
+#include "ejudge/archive_paths.h"
 #include "ejudge/prepare.h"
 #include "ejudge/fileutl.h"
 #include "ejudge/pathutl.h"

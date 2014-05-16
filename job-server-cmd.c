@@ -18,8 +18,7 @@
 #include "ejudge/config.h"
 #include "ejudge/ej_types.h"
 #include "ejudge/version.h"
-
-#include "job_packet.h"
+#include "ejudge/job_packet.h"
 
 #include <stdio.h>
 

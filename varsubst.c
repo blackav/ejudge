@@ -16,7 +16,7 @@
  */
 
 #include "ejudge/config.h"
-#include "varsubst.h"
+#include "ejudge/varsubst.h"
 #include "ejudge/errlog.h"
 #include "ejudge/serve_state.h"
 

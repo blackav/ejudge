@@ -2,7 +2,7 @@
 /* $Id$ */
 %><%@include "priv_includes.csp"
 %><%
-#include "archive_paths.h"
+#include "ejudge/archive_paths.h"
 #include "ejudge/fileutl.h"
 %><%@set getter_name = "csp_get_priv_report_page"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"

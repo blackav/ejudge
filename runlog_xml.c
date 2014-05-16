@@ -28,7 +28,7 @@
 #include "ejudge/xml_utils.h"
 #include "ejudge/serve_state.h"
 #include "ejudge/mime_type.h"
-#include "archive_paths.h"
+#include "ejudge/archive_paths.h"
 #include "ejudge/fileutl.h"
 #include "ejudge/base64.h"
 #include "ejudge/ej_uuid.h"
