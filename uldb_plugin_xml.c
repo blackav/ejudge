@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "uldb_plugin.h"
+#include "ejudge/uldb_plugin.h"
 #include "ejudge/errlog.h"
 #include "ejudge/pathutl.h"
 #include "ejudge/ejudge_cfg.h"

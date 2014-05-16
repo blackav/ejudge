@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "teamdb.h"
+#include "ejudge/teamdb.h"
 #include "teamdb_priv.h"
 #include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"

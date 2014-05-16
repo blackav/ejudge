@@ -24,7 +24,7 @@
 #include "ejudge/errlog.h"
 #include "ejudge/serve_state.h"
 #include "ejudge/ej_uuid.h"
-#include "prepare_dflt.h"
+#include "ejudge/prepare_dflt.h"
 
 #include "reuse/logger.h"
 #include "reuse/osdeps.h"

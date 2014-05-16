@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "protocol.h"
+#include "ejudge/protocol.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

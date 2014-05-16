@@ -494,7 +494,7 @@ HFILES=\
  ./include/ejudge/charsets.h\
  ./include/ejudge/clarlog.h\
  clarlog_state.h\
- cldb_plugin.h\
+ ./include/ejudge/cldb_plugin.h\
  client_actions.h\
  clntutil.h\
  ./include/ejudge/common_plugin.h\
@@ -527,7 +527,7 @@ HFILES=\
  filter_eval.h\
  filter_tree.h\
  ./include/ejudge/full_archive.h\
- html.h\
+ ./include/ejudge/html.h\
  ./include/ejudge/html_parse.h\
  ./include/ejudge/http_request.h\
  ./include/ejudge/interrupt.h\
@@ -551,15 +551,15 @@ HFILES=\
  ./include/ejudge/pollfds.h\
  ./include/ejudge/polygon_packet.h\
  ./include/ejudge/prepare.h\
- prepare_dflt.h\
+ ./include/ejudge/prepare_dflt.h\
  prepare_serve.h\
  ./include/ejudge/printing.h\
  ./include/ejudge/problem_common.h\
  ./include/ejudge/problem_config.h\
  ./include/ejudge/problem_xml.h\
- protocol.h\
+ ./include/ejudge/protocol.h\
  ./include/ejudge/random.h\
- rldb_plugin.h\
+ ./include/ejudge/rldb_plugin.h\
  run.h\
  ./include/ejudge/runlog.h\
  runlog_state.h\
@@ -582,16 +582,16 @@ HFILES=\
  ./include/ejudge/t3m_packet_class.h\
  ./include/ejudge/t3m_submits.h\
  ./include/ejudge/t3_packets.h\
- teamdb.h\
+ ./include/ejudge/teamdb.h\
  teamdb_priv.h\
- team_extra.h\
+ ./include/ejudge/team_extra.h\
  testinfo.h\
- testing_report_xml.h\
+ ./include/ejudge/testing_report_xml.h\
  ./include/ejudge/tex_dom.h\
  ./include/ejudge/timestamp.h\
  ./include/ejudge/tsc.h\
  ./include/ejudge/type_info.h\
- uldb_plugin.h\
+ ./include/ejudge/uldb_plugin.h\
  ./include/ejudge/userlist.h\
  userlist_clnt.h\
  ./include/ejudge/varsubst.h\

@@ -36,7 +36,7 @@
 #include "ejudge/prepare.h"
 #include "ejudge/meta/prepare_meta.h"
 #include "ejudge/meta_generic.h"
-#include "prepare_dflt.h"
+#include "ejudge/prepare_dflt.h"
 #include "ejudge/cpu.h"
 #include "ejudge/compat.h"
 #include "ejudge/errlog.h"

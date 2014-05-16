@@ -23,7 +23,7 @@
 #include "ejudge/fileutl.h"
 #include "unix/unix_fileutl.h"
 #include "ejudge/misctext.h"
-#include "protocol.h"
+#include "ejudge/protocol.h"
 #include "ejudge/copyright.h"
 #include "ejudge/xml_utils.h"
 

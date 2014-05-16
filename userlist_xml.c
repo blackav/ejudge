@@ -19,7 +19,7 @@
 #include "ejudge/ej_limits.h"
 #include "ejudge/userlist.h"
 #include "ejudge/errlog.h"
-#include "protocol.h"
+#include "ejudge/protocol.h"
 #include "ejudge/misctext.h"
 #include "ejudge/xml_utils.h"
 #include "ejudge/win32_compat.h"

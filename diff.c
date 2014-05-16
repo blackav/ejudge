@@ -17,14 +17,14 @@
 
 #include "ejudge/diff.h"
 #include "ejudge/runlog.h"
-#include "protocol.h"
+#include "ejudge/protocol.h"
 #include "ejudge/prepare.h"
 #include "ejudge/archive_paths.h"
 #include "ejudge/fileutl.h"
 #include "ejudge/serve_state.h"
 #include "ejudge/misctext.h"
 #include "ejudge/mime_type.h"
-#include "prepare_dflt.h"
+#include "ejudge/prepare_dflt.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/exec.h"

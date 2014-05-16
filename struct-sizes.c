@@ -17,7 +17,7 @@
 
 #include "ejudge/ej_types.h"
 #include "ejudge/config.h"
-#include "protocol.h"
+#include "ejudge/protocol.h"
 #include "ejudge/runlog.h"
 #include "ejudge/clarlog.h"
 #include "ejudge/prepare.h"

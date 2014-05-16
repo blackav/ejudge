@@ -20,11 +20,11 @@
 #include "filter_tree.h"
 #include "filter_expr.h"
 #include "filter_eval.h"
-#include "teamdb.h"
+#include "ejudge/teamdb.h"
 #include "ejudge/userlist.h"
 #include "ejudge/archive_paths.h"
 #include "ejudge/ej_uuid.h"
-#include "prepare_dflt.h"
+#include "ejudge/prepare_dflt.h"
 
 #include "reuse/logger.h"
 #include "reuse/mempage.h"

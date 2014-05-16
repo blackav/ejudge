@@ -24,11 +24,11 @@
 #include "ejudge/mime_type.h"
 #include "ejudge/prepare.h"
 #include "ejudge/run_packet.h"
-#include "prepare_dflt.h"
+#include "ejudge/prepare_dflt.h"
 #include "ejudge/misctext.h"
 #include "ejudge/curtime.h"
 #include "ejudge/runlog.h"
-#include "testing_report_xml.h"
+#include "ejudge/testing_report_xml.h"
 #include "ejudge/super_run_packet.h"
 #include "ejudge/cpu.h"
 

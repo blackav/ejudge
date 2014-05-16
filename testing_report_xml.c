@@ -17,10 +17,10 @@
 
 #include "ejudge/config.h"
 #include "ejudge/ej_limits.h"
-#include "testing_report_xml.h"
+#include "ejudge/testing_report_xml.h"
 #include "ejudge/expat_iface.h"
 #include "ejudge/xml_utils.h"
-#include "protocol.h"
+#include "ejudge/protocol.h"
 #include "ejudge/runlog.h"
 #include "ejudge/digest_io.h"
 #include "ejudge/misctext.h"

@@ -25,7 +25,7 @@
 #include "ejudge/misctext.h"
 #include "ejudge/mischtml.h"
 #include "ejudge/opcaps.h"
-#include "protocol.h"
+#include "ejudge/protocol.h"
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/pathutl.h"
 #include "ejudge/fileutl.h"

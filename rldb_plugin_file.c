@@ -15,10 +15,10 @@
  * GNU General Public License for more details.
  */
 
-#include "rldb_plugin.h"
+#include "ejudge/rldb_plugin.h"
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/runlog.h"
-#include "teamdb.h"
+#include "ejudge/teamdb.h"
 
 #define RUNS_ACCESS 
 #include "runlog_state.h"

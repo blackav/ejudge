@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "html.h"
+#include "ejudge/html.h"
 
 static const unsigned char * const months_names[] =
 {
@@ -46,10 +46,3 @@ html_date_select(FILE *f, time_t t)
   fprintf(f, "/<input type=\"text\" name=\"d_year\" value=\"%d\" size=\"4\" maxlength=\"4\"/>", tt->tm_year + 1900);
   if (!t) fprintf(f, "<i>(Not set)</i>");
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list" "fd_set" "DIR")
- * End:
- */
