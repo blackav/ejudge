@@ -18,7 +18,7 @@
 #include "ejudge/config.h"
 #include "ejudge/ej_limits.h"
 #include "rldb_plugin.h"
-#include "runlog.h"
+#include "ejudge/runlog.h"
 #include "teamdb.h"
 #include "../mysql-common/common_mysql.h"
 

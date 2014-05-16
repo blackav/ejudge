@@ -23,7 +23,7 @@
 #include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
 #include "ejudge/prepare.h"
-#include "runlog.h"
+#include "ejudge/runlog.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

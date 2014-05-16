@@ -17,7 +17,7 @@
 
 #include "ejudge/serve_state.h"
 #include "filter_tree.h"
-#include "runlog.h"
+#include "ejudge/runlog.h"
 #include "team_extra.h"
 #include "teamdb.h"
 #include "clarlog.h"

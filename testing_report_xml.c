@@ -21,7 +21,7 @@
 #include "ejudge/expat_iface.h"
 #include "ejudge/xml_utils.h"
 #include "protocol.h"
-#include "runlog.h"
+#include "ejudge/runlog.h"
 #include "ejudge/digest_io.h"
 #include "ejudge/misctext.h"
 

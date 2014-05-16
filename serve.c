@@ -18,7 +18,7 @@
 #include "ejudge/config.h"
 #include "ejudge/ej_types.h"
 #include "ejudge/ej_limits.h"
-#include "runlog.h"
+#include "ejudge/runlog.h"
 #include "ejudge/parsecfg.h"
 #include "teamdb.h"
 #include "ejudge/prepare.h"

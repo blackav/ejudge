@@ -16,7 +16,7 @@
  */
 
 #include "ejudge/config.h"
-#include "runlog.h"
+#include "ejudge/runlog.h"
 #include "teamdb.h"
 #include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"

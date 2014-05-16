@@ -19,7 +19,7 @@
 #include "new-server.h"
 #include "ejudge/contests.h"
 #include "userlist_clnt.h"
-#include "runlog.h"
+#include "ejudge/runlog.h"
 #include "ejudge/xml_utils.h"
 
 #include "reuse/xalloc.h"

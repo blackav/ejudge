@@ -27,7 +27,7 @@
 #include "prepare_dflt.h"
 #include "ejudge/misctext.h"
 #include "ejudge/curtime.h"
-#include "runlog.h"
+#include "ejudge/runlog.h"
 #include "testing_report_xml.h"
 #include "ejudge/super_run_packet.h"
 #include "ejudge/cpu.h"

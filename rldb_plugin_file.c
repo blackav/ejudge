@@ -17,7 +17,7 @@
 
 #include "rldb_plugin.h"
 #include "ejudge/ejudge_cfg.h"
-#include "runlog.h"
+#include "ejudge/runlog.h"
 #include "teamdb.h"
 
 #define RUNS_ACCESS 

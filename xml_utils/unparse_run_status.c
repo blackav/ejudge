@@ -16,7 +16,7 @@
  */
 
 #include "ejudge/xml_utils.h"
-#include "runlog.h"
+#include "ejudge/runlog.h"
 
 #include <string.h>
 

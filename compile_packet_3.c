@@ -19,7 +19,7 @@
 #include "ejudge/compile_packet_priv.h"
 #include "ejudge/pathutl.h"
 #include "ejudge/prepare.h"
-#include "runlog.h"
+#include "ejudge/runlog.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

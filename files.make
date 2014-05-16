@@ -561,7 +561,7 @@ HFILES=\
  ./include/ejudge/random.h\
  rldb_plugin.h\
  run.h\
- runlog.h\
+ ./include/ejudge/runlog.h\
  runlog_state.h\
  ./include/ejudge/run_packet.h\
  ./include/ejudge/run_packet_priv.h\

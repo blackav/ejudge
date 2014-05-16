@@ -24,7 +24,7 @@
 #include "userlist.h"
 #include "userlist_proto.h"
 #include "userlist_clnt.h"
-#include "runlog.h"
+#include "ejudge/runlog.h"
 #include "html.h"
 #include "ejudge/prepare.h"
 #include "ejudge/archive_paths.h"
