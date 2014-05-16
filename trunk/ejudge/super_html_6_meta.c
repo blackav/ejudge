@@ -1,8 +1,8 @@
 // This is an auto-generated file, do not edit
 
-#include "super_html_6_meta.h"
-#include "super_html_6.h"
-#include "meta_generic.h"
+#include "ejudge/meta/super_html_6_meta.h"
+#include "ejudge/super_html_6.h"
+#include "ejudge/meta_generic.h"
 
 #include "reuse/xalloc.h"
 

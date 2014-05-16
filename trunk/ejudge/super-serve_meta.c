@@ -1,8 +1,8 @@
 // This is an auto-generated file, do not edit
 
-#include "super-serve_meta.h"
-#include "super-serve.h"
-#include "meta_generic.h"
+#include "ejudge/meta/super-serve_meta.h"
+#include "ejudge/super-serve.h"
+#include "ejudge/meta_generic.h"
 
 #include "reuse/xalloc.h"
 

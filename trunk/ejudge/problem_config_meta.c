@@ -1,8 +1,8 @@
 // This is an auto-generated file, do not edit
 
-#include "problem_config_meta.h"
-#include "problem_config.h"
-#include "meta_generic.h"
+#include "ejudge/meta/problem_config_meta.h"
+#include "ejudge/problem_config.h"
+#include "ejudge/meta_generic.h"
 
 #include "reuse/xalloc.h"
 

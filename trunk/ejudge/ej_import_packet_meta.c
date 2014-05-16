@@ -1,8 +1,8 @@
 // This is an auto-generated file, do not edit
 
-#include "ej_import_packet_meta.h"
-#include "ej_import_packet.h"
-#include "meta_generic.h"
+#include "ejudge/meta/ej_import_packet_meta.h"
+#include "ejudge/ej_import_packet.h"
+#include "ejudge/meta_generic.h"
 
 #include "reuse/xalloc.h"
 
