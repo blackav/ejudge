@@ -22,7 +22,7 @@
 #include "ejudge/dwarf_parse.h"
 #include "ejudge/html_parse.h"
 #include "ejudge/xml_utils.h"
-#include "new_server_pi.h"
+#include "ejudge/new_server_pi.h"
 
 #include "reuse/osdeps.h"
 #include "reuse/xalloc.h"

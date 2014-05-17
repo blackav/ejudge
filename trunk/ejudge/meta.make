@@ -50,7 +50,7 @@ ej_import_packet_meta.c ./include/ejudge/meta/ej_import_packet_meta.h : $(META_C
 new_server_match.c : genmatcher new_server_at.c
 	./genmatcher > new_server_match.c
 
-genmatcher : genmatcher.c new-server.h new_server_at.c
+genmatcher : genmatcher.c ./include/ejudge/new-server.h new_server_at.c
 	$(CC) $(CFLAGS) $< -o $@
 
 csp/contests/priv_main_page.c : ej-page-gen csp/contests/priv_main_page.csp

@@ -26,7 +26,7 @@
 #include "ejudge/interrupt.h"
 #include "ejudge/super_run_packet.h"
 #include "ejudge/run_packet.h"
-#include "run.h"
+#include "ejudge/run.h"
 #include "ejudge/curtime.h"
 #include "ejudge/ej_process.h"
 #include "ejudge/xml_utils.h"

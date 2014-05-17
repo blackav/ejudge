@@ -14,7 +14,7 @@
  * GNU General Public License for more details.
  */
 
-#include "new-server.h"
+#include "ejudge/new-server.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -152,7 +152,7 @@ int main(void)
 {
   printf("/* This is auto-generated file */\n"
          "#include <ctype.h>\n"
-         "#include \"new-server.h\"\n"
+         "#include \"ejudge/new-server.h\"\n"
          "int ns_match_action(const unsigned char *str)\n"
          "{\n"
          "  int c;\n"

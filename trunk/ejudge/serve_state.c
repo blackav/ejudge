@@ -30,7 +30,7 @@
 #include "ejudge/csv.h"
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/misctext.h"
-#include "new-server.h"
+#include "ejudge/new-server.h"
 #include "ejudge/sformat.h"
 #include "ejudge/testing_report_xml.h"
 #include "ejudge/prepare_serve.h"

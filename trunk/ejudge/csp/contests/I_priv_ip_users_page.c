@@ -15,8 +15,8 @@
  * GNU General Public License for more details.
  */
 
-#include "new_server_pi.h"
-#include "new-server.h"
+#include "ejudge/new_server_pi.h"
+#include "ejudge/new-server.h"
 #include "ejudge/contests.h"
 #include "ejudge/userlist_clnt.h"
 #include "ejudge/runlog.h"

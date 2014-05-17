@@ -23,7 +23,7 @@
 #include "ejudge/pathutl.h"
 #include "ejudge/xml_utils.h"
 #include "ejudge/new_server_clnt.h"
-#include "new-server.h"
+#include "ejudge/new-server.h"
 #include "ejudge/new_server_proto.h"
 
 #include "reuse/xalloc.h"

@@ -16,10 +16,10 @@
  */
 
 #include "ejudge/teamdb.h"
-#include "teamdb_priv.h"
+#include "ejudge/teamdb_priv.h"
 #include "ejudge/userlist.h"
 #include "ejudge/serve_state.h"
-#include "filter_eval.h"
+#include "ejudge/filter_eval.h"
 
 #include <string.h>
 

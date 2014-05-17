@@ -523,7 +523,7 @@ HFILES=\
  ./include/ejudge/filehash.h\
  ./include/ejudge/file_perms.h\
  ./include/ejudge/fileutl.h\
- filter_eval.h\
+ ./include/ejudge/filter_eval.h\
  ./include/ejudge/filter_tree.h\
  ./include/ejudge/full_archive.h\
  ./include/ejudge/html.h\
@@ -541,7 +541,7 @@ HFILES=\
  ./include/ejudge/misctext.h\
  ./include/ejudge/ncheck_packet.h\
  ./include/ejudge/ncurses_utils.h\
- new-server.h\
+ ./include/ejudge/new-server.h\
  ./include/ejudge/nsdb_plugin.h\
  ./include/ejudge/nwrun_packet.h\
  ./include/ejudge/opcaps.h\
@@ -559,7 +559,7 @@ HFILES=\
  ./include/ejudge/protocol.h\
  ./include/ejudge/random.h\
  ./include/ejudge/rldb_plugin.h\
- run.h\
+ ./include/ejudge/run.h\
  ./include/ejudge/runlog.h\
  ./include/ejudge/runlog_state.h\
  ./include/ejudge/run_packet.h\
@@ -582,7 +582,7 @@ HFILES=\
  ./include/ejudge/t3m_submits.h\
  ./include/ejudge/t3_packets.h\
  ./include/ejudge/teamdb.h\
- teamdb_priv.h\
+ ./include/ejudge/teamdb_priv.h\
  ./include/ejudge/team_extra.h\
  ./include/ejudge/testinfo.h\
  ./include/ejudge/testing_report_xml.h\

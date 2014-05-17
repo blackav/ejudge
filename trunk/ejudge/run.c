@@ -33,7 +33,7 @@
 #include "ejudge/fileutl.h"
 #include "ejudge/errlog.h"
 #include "ejudge/misctext.h"
-#include "run.h"
+#include "ejudge/run.h"
 #include "ejudge/super_run_packet.h"
 #include "ejudge/win32_compat.h"
 
