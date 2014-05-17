@@ -64,22 +64,22 @@ static const unsigned char csp_str60[18] = "<div id=\"footer\">";
 static const unsigned char csp_str61[38] = "</div>\n</div>\n</div>\n</body>\n</html>\n";
 
 /* $Id$ */
-#include "new-server.h"
-#include "new_server_pi.h"
-#include "new_server_proto.h"
-#include "external_action.h"
-#include "clarlog.h"
-#include "misctext.h"
-#include "runlog.h"
-#include "l10n.h"
-#include "prepare.h"
-#include "xml_utils.h"
-#include "teamdb.h"
+#include "ejudge/new-server.h"
+#include "ejudge/new_server_pi.h"
+#include "ejudge/new_server_proto.h"
+#include "ejudge/external_action.h"
+#include "ejudge/clarlog.h"
+#include "ejudge/misctext.h"
+#include "ejudge/runlog.h"
+#include "ejudge/l10n.h"
+#include "ejudge/prepare.h"
+#include "ejudge/xml_utils.h"
+#include "ejudge/teamdb.h"
 #include "ejudge/copyright.h"
-#include "mischtml.h"
-#include "html.h"
-#include "userlist.h"
-#include "sformat.h"
+#include "ejudge/mischtml.h"
+#include "ejudge/html.h"
+#include "ejudge/userlist.h"
+#include "ejudge/sformat.h"
 
 #include "reuse/xalloc.h"
 
@@ -96,8 +96,8 @@ unpriv_load_html_style(struct http_request_info *phr,
 void
 do_json_user_state(FILE *fout, const serve_state_t cs, int user_id,
                    int need_reload_check);
-#include "fileutl.h"
-#include "archive_paths.h"
+#include "ejudge/fileutl.h"
+#include "ejudge/archive_paths.h"
 
 int
 ns_unpriv_parse_run_id(

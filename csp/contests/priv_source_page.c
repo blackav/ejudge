@@ -65,21 +65,21 @@ static const unsigned char csp_str61[7] = "<hr/>\n";
 static const unsigned char csp_str62[18] = "\n</body>\n</html>\n";
 
 /* $Id$ */
-#include "new-server.h"
-#include "new_server_pi.h"
-#include "new_server_proto.h"
-#include "external_action.h"
-#include "clarlog.h"
-#include "misctext.h"
-#include "runlog.h"
-#include "l10n.h"
-#include "prepare.h"
-#include "xml_utils.h"
-#include "teamdb.h"
+#include "ejudge/new-server.h"
+#include "ejudge/new_server_pi.h"
+#include "ejudge/new_server_proto.h"
+#include "ejudge/external_action.h"
+#include "ejudge/clarlog.h"
+#include "ejudge/misctext.h"
+#include "ejudge/runlog.h"
+#include "ejudge/l10n.h"
+#include "ejudge/prepare.h"
+#include "ejudge/xml_utils.h"
+#include "ejudge/teamdb.h"
 #include "ejudge/copyright.h"
-#include "mischtml.h"
-#include "html.h"
-#include "userlist.h"
+#include "ejudge/mischtml.h"
+#include "ejudge/html.h"
+#include "ejudge/userlist.h"
 
 #include "reuse/xalloc.h"
 
@@ -88,9 +88,9 @@ static const unsigned char csp_str62[18] = "\n</body>\n</html>\n";
 
 #define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
 #include "ejudge/ej_uuid.h"
-#include "mime_type.h"
-#include "charsets.h"
-#include "fileutl.h"
+#include "ejudge/mime_type.h"
+#include "ejudge/charsets.h"
+#include "ejudge/fileutl.h"
 int csp_view_priv_source_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr);
 static PageInterfaceOps page_ops =
 {
