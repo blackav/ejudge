@@ -23,7 +23,7 @@
 #include "ejudge/contests.h"
 #include "ejudge/userlist.h"
 #include "ejudge/userlist_proto.h"
-#include "userlist_clnt.h"
+#include "ejudge/userlist_clnt.h"
 #include "ejudge/runlog.h"
 #include "ejudge/html.h"
 #include "ejudge/prepare.h"

@@ -23,11 +23,11 @@
 #include "ejudge/pathutl.h"
 #include "ejudge/clntutil.h"
 #include "ejudge/contests.h"
-#include "userlist_clnt.h"
+#include "ejudge/userlist_clnt.h"
 #include "ejudge/cgi.h"
 #include "ejudge/userlist.h"
 #include "ejudge/userlist_proto.h"
-#include "super_clnt.h"
+#include "ejudge/super_clnt.h"
 #include "ejudge/super_proto.h"
 #include "ejudge/compat.h"
 

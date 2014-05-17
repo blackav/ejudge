@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "super_clnt.h"
+#include "ejudge/super_clnt.h"
 #include "ejudge/super_proto.h"
 #include "ejudge/sock_op.h"
 #include "ejudge/errlog.h"

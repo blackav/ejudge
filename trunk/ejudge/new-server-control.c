@@ -20,7 +20,7 @@
 #include "ejudge/version.h"
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/new_server_proto.h"
-#include "new_server_clnt.h"
+#include "ejudge/new_server_clnt.h"
 #include "ejudge/startstop.h"
 
 #include "reuse/xalloc.h"

@@ -24,7 +24,7 @@
 #include "ejudge/xml_utils.h"
 #include "ejudge/misctext.h"
 #include "ejudge/copyright.h"
-#include "userlist_clnt.h"
+#include "ejudge/userlist_clnt.h"
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/errlog.h"
 #include "ejudge/userlist_proto.h"

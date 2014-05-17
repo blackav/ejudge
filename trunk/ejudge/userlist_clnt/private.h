@@ -22,7 +22,7 @@
 #include <Python.h>
 #endif
 
-#include "userlist_clnt.h"
+#include "ejudge/userlist_clnt.h"
 #include "ejudge/userlist_proto.h"
 #include "ejudge/pathutl.h"
 

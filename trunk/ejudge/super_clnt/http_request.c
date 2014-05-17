@@ -16,7 +16,7 @@
  */
 
 #include "ejudge/ej_types.h"
-#include "super_clnt.h"
+#include "ejudge/super_clnt.h"
 #include "ejudge/super_proto.h"
 #include "ejudge/errlog.h"
 

@@ -23,7 +23,7 @@
 #include "ejudge/super_proto.h"
 #include "ejudge/mischtml.h"
 #include "ejudge/userlist_proto.h"
-#include "userlist_clnt.h"
+#include "ejudge/userlist_clnt.h"
 #include "ejudge/userlist.h"
 #include "ejudge/misctext.h"
 #include "ejudge/errlog.h"

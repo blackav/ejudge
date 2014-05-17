@@ -22,7 +22,7 @@
 #include "ejudge/contests.h"
 #include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
-#include "userlist_clnt.h"
+#include "ejudge/userlist_clnt.h"
 #include "ejudge/super_proto.h"
 #include "ejudge/userlist_proto.h"
 #include "ejudge/misctext.h"
