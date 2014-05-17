@@ -21,7 +21,7 @@
 #include "ejudge/teamdb.h"
 
 #define RUNS_ACCESS 
-#include "runlog_state.h"
+#include "ejudge/runlog_state.h"
 
 #include "ejudge/pathutl.h"
 #include "ejudge/contests.h"

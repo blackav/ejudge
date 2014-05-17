@@ -23,7 +23,7 @@
 #include "ejudge/fileutl.h"
 #include "ejudge/sformat.h"
 #include "ejudge/teamdb.h"
-#include "prepare_serve.h"
+#include "ejudge/prepare_serve.h"
 #include "ejudge/prepare_dflt.h"
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/cpu.h"

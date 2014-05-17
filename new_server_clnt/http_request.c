@@ -17,7 +17,7 @@
 
 #include "ejudge/ej_types.h"
 #include "new_server_clnt/new_server_clnt_priv.h"
-#include "new_server_proto.h"
+#include "ejudge/new_server_proto.h"
 #include "ejudge/errlog.h"
 
 #include "reuse/xalloc.h"

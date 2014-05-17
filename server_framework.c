@@ -19,7 +19,7 @@
 #include "ejudge/ej_types.h"
 #include "ejudge/errlog.h"
 #include "ejudge/server_framework.h"
-#include "new_server_proto.h"
+#include "ejudge/new_server_proto.h"
 #include "ejudge/sock_op.h"
 #include "ejudge/startstop.h"
 

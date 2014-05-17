@@ -16,7 +16,7 @@
  */
 
 %{
-#include "filter_tree.h"
+#include "ejudge/filter_tree.h"
 
 #include "reuse/logger.h"
 

@@ -16,7 +16,7 @@
  */
 
 #include "ejudge/config.h"
-#include "super_html.h"
+#include "ejudge/super_html.h"
 #include "ejudge/super-serve.h"
 #include "ejudge/pathutl.h"
 #include "ejudge/contests.h"
@@ -26,7 +26,7 @@
 #include "ejudge/compat.h"
 #include "ejudge/fileutl.h"
 #include "ejudge/ej_process.h"
-#include "super_proto.h"
+#include "ejudge/super_proto.h"
 #include "ejudge/misctext.h"
 
 #include "reuse/xalloc.h"

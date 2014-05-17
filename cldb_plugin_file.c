@@ -17,7 +17,7 @@
 
 #include "ejudge/cldb_plugin.h"
 #include "ejudge/clarlog.h"
-#include "clarlog_state.h"
+#include "ejudge/clarlog_state.h"
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/pathutl.h"
 #include "ejudge/prepare.h"

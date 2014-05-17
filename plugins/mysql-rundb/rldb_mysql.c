@@ -23,7 +23,7 @@
 #include "../mysql-common/common_mysql.h"
 
 #define RUNS_ACCESS 
-#include "runlog_state.h"
+#include "ejudge/runlog_state.h"
 
 #include "ejudge/errlog.h"
 #include "ejudge/xml_utils.h"

@@ -3,7 +3,7 @@
 #ifndef __TEAMDB_PRIV_H__
 #define __TEAMDB_PRIV_H__
 
-/* Copyright (C) 2010-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  */
 
-#include "userlist_proto.h"
+#include "ejudge/userlist_proto.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>

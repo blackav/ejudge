@@ -4,7 +4,7 @@
 #ifndef __SUPER_CLNT_H__
 #define __SUPER_CLNT_H__
 
-/* Copyright (C) 2004-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,7 +18,7 @@
  * GNU General Public License for more details.
  */
 
-#include "super_proto.h"
+#include "ejudge/super_proto.h"
 
 #include <string.h>
 

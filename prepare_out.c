@@ -20,7 +20,7 @@
 #include "ejudge/prepare_dflt.h"
 #include "ejudge/meta/prepare_meta.h"
 #include "ejudge/xml_utils.h"
-#include "prepare_serve.h"
+#include "ejudge/prepare_serve.h"
 #include "ejudge/errlog.h"
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/misctext.h"

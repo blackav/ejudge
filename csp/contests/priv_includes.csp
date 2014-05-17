@@ -1,8 +1,8 @@
 <%
 #include "new-server.h"
 #include "new_server_pi.h"
-#include "new_server_proto.h"
-#include "external_action.h"
+#include "ejudge/new_server_proto.h"
+#include "ejudge/external_action.h"
 #include "ejudge/clarlog.h"
 #include "ejudge/misctext.h"
 #include "ejudge/runlog.h"

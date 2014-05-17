@@ -20,7 +20,7 @@
 
 #include "ejudge/prepare.h"
 #include "ejudge/runlog.h"
-#include "filter_tree.h"
+#include "ejudge/filter_tree.h"
 #include "ejudge/teamdb.h"
 #include "ejudge/serve_state.h"
 

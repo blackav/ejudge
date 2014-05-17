@@ -18,9 +18,8 @@
 #include "ejudge/config.h"
 #include "ejudge/ej_types.h"
 #include "ejudge/ej_limits.h"
-
 #include "new-server.h"
-#include "new_server_proto.h"
+#include "ejudge/new_server_proto.h"
 
 #include <stdarg.h>
 

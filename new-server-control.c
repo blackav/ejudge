@@ -19,9 +19,8 @@
 #include "ejudge/ej_types.h"
 #include "ejudge/version.h"
 #include "ejudge/ejudge_cfg.h"
-#include "new_server_proto.h"
+#include "ejudge/new_server_proto.h"
 #include "new_server_clnt.h"
-#include "new_server_proto.h"
 #include "ejudge/startstop.h"
 
 #include "reuse/xalloc.h"

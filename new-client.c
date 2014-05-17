@@ -17,11 +17,11 @@
 
 #include "ejudge/config.h"
 #include "ejudge/ej_types.h"
-#include "new_server_proto.h"
+#include "ejudge/new_server_proto.h"
 #include "new_server_clnt.h"
 #include "ejudge/pathutl.h"
 #include "ejudge/cgi.h"
-#include "clntutil.h"
+#include "ejudge/clntutil.h"
 #include "ejudge/errlog.h"
 #include "ejudge/parsecfg.h"
 #include "ejudge/xml_utils.h"

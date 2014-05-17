@@ -19,7 +19,7 @@
 #define YYSTYPE struct filter_tree *
 
 #include "filter_expr.h"
-#include "filter_tree.h"
+#include "ejudge/filter_tree.h"
 #include "ejudge/runlog.h"
 
 #include <stdio.h>

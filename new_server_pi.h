@@ -19,7 +19,7 @@
 
 #include "ejudge/ej_types.h"
 
-#include "external_action.h"
+#include "ejudge/external_action.h"
 
 #include <time.h>
 

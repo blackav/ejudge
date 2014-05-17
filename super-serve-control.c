@@ -19,7 +19,7 @@
 #include "ejudge/ej_types.h"
 #include "ejudge/version.h"
 #include "ejudge/ejudge_cfg.h"
-#include "super_proto.h"
+#include "ejudge/super_proto.h"
 #include "super_clnt.h"
 #include "ejudge/startstop.h"
 

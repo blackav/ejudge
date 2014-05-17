@@ -21,7 +21,7 @@
 #include "ejudge/errlog.h"
 #include "ejudge/base64.h"
 #include "userlist_clnt.h"
-#include "userlist_proto.h"
+#include "ejudge/userlist_proto.h"
 #include "ejudge/userlist.h"
 #include "ejudge/xml_utils.h"
 

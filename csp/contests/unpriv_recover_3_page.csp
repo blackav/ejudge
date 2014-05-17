@@ -3,7 +3,7 @@
 %><%@include "unpriv_includes.csp"
 %><%
 #include "userlist_clnt.h"
-#include "userlist_proto.h"
+#include "ejudge/userlist_proto.h"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@set getter_name = "csp_get_unpriv_recover_3_page"
 %><%@page csp_view_unpriv_recover_3_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
