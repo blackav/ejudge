@@ -21,7 +21,7 @@
 #include "ejudge/contests.h"
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/expat_iface.h"
-#include "super_html.h"
+#include "ejudge/super_html.h"
 #include "ejudge/super-serve.h"
 #include "ejudge/fileutl.h"
 

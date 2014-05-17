@@ -24,7 +24,7 @@
 #include "ejudge/xml_utils.h"
 #include "new_server_clnt.h"
 #include "new-server.h"
-#include "new_server_proto.h"
+#include "ejudge/new_server_proto.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

@@ -493,10 +493,9 @@ HFILES=\
  ./include/ejudge/cgi.h\
  ./include/ejudge/charsets.h\
  ./include/ejudge/clarlog.h\
- clarlog_state.h\
+ ./include/ejudge/clarlog_state.h\
  ./include/ejudge/cldb_plugin.h\
- client_actions.h\
- clntutil.h\
+ ./include/ejudge/clntutil.h\
  ./include/ejudge/common_plugin.h\
  ./include/ejudge/compat.h\
  ./include/ejudge/compile_packet.h\
@@ -520,12 +519,12 @@ HFILES=\
  ./include/ejudge/ej_uuid.h\
  ./include/ejudge/errlog.h\
  ./include/ejudge/expat_iface.h\
- external_action.h\
+ ./include/ejudge/external_action.h\
  ./include/ejudge/filehash.h\
  ./include/ejudge/file_perms.h\
  ./include/ejudge/fileutl.h\
  filter_eval.h\
- filter_tree.h\
+ ./include/ejudge/filter_tree.h\
  ./include/ejudge/full_archive.h\
  ./include/ejudge/html.h\
  ./include/ejudge/html_parse.h\
@@ -543,7 +542,7 @@ HFILES=\
  ./include/ejudge/ncheck_packet.h\
  ./include/ejudge/ncurses_utils.h\
  new-server.h\
- nsdb_plugin.h\
+ ./include/ejudge/nsdb_plugin.h\
  ./include/ejudge/nwrun_packet.h\
  ./include/ejudge/opcaps.h\
  ./include/ejudge/parsecfg.h\
@@ -552,7 +551,7 @@ HFILES=\
  ./include/ejudge/polygon_packet.h\
  ./include/ejudge/prepare.h\
  ./include/ejudge/prepare_dflt.h\
- prepare_serve.h\
+ ./include/ejudge/prepare_serve.h\
  ./include/ejudge/printing.h\
  ./include/ejudge/problem_common.h\
  ./include/ejudge/problem_config.h\
@@ -562,7 +561,7 @@ HFILES=\
  ./include/ejudge/rldb_plugin.h\
  run.h\
  ./include/ejudge/runlog.h\
- runlog_state.h\
+ ./include/ejudge/runlog_state.h\
  ./include/ejudge/run_packet.h\
  ./include/ejudge/run_packet_priv.h\
  ./include/ejudge/server_framework.h\
@@ -573,8 +572,8 @@ HFILES=\
  ./include/ejudge/startstop.h\
  ./include/ejudge/stringset.h\
  super_clnt.h\
- super_html.h\
- super_proto.h\
+ ./include/ejudge/super_html.h\
+ ./include/ejudge/super_proto.h\
  ./include/ejudge/super_run_packet.h\
  ./include/ejudge/super-serve.h\
  ./include/ejudge/sha.h\
@@ -602,7 +601,7 @@ HFILES=\
  unix/unix_fileutl.h\
  userlist_clnt/private.h\
  new_server_clnt.h\
- new_server_proto.h\
+ ./include/ejudge/new_server_proto.h\
  new_server_clnt/new_server_clnt_priv.h\
  ./include/ejudge/xml_utils.h\
  ./include/ejudge/zip_utils.h

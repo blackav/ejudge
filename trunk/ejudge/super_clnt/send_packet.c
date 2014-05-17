@@ -16,7 +16,7 @@
  */
 
 #include "super_clnt.h"
-#include "super_proto.h"
+#include "ejudge/super_proto.h"
 #include "ejudge/errlog.h"
 
 #include "reuse/osdeps.h"

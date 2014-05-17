@@ -20,7 +20,7 @@
 #include "ejudge/version.h"
 #include "ejudge/ejudge_cfg.h"
 #include "userlist_clnt.h"
-#include "userlist_proto.h"
+#include "ejudge/userlist_proto.h"
 #include "ejudge/startstop.h"
 
 #include "reuse/osdeps.h"

@@ -19,7 +19,7 @@
 #include "ejudge/prepare.h"
 #include "ejudge/varsubst.h"
 #include "ejudge/version.h"
-#include "prepare_serve.h"
+#include "ejudge/prepare_serve.h"
 #include "ejudge/teamdb.h"
 #include "ejudge/errlog.h"
 #include "ejudge/serve_state.h"

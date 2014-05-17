@@ -16,7 +16,7 @@
  */
 
 #include "ejudge/serve_state.h"
-#include "filter_tree.h"
+#include "ejudge/filter_tree.h"
 #include "ejudge/runlog.h"
 #include "ejudge/team_extra.h"
 #include "ejudge/teamdb.h"
@@ -24,7 +24,7 @@
 #include "ejudge/prepare.h"
 #include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
-#include "userlist_proto.h"
+#include "ejudge/userlist_proto.h"
 #include "userlist_clnt.h"
 #include "ejudge/ejudge_plugin.h"
 #include "ejudge/csv.h"
@@ -33,7 +33,7 @@
 #include "new-server.h"
 #include "ejudge/sformat.h"
 #include "ejudge/testing_report_xml.h"
-#include "prepare_serve.h"
+#include "ejudge/prepare_serve.h"
 #include "ejudge/userlist.h"
 #include "ejudge/xml_utils.h"
 #include "ejudge/win32_compat.h"

@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "nsdb_plugin.h"
+#include "ejudge/nsdb_plugin.h"
 #include "ejudge/expat_iface.h"
 #include "ejudge/xml_utils.h"
 #include "ejudge/errlog.h"

@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "super_proto.h"
+#include "ejudge/super_proto.h"
 
 #include "reuse/xalloc.h"
 

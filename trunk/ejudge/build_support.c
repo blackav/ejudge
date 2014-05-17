@@ -23,7 +23,7 @@
 #include "ejudge/prepare.h"
 #include "ejudge/prepare_dflt.h"
 #include "ejudge/super-serve.h"
-#include "super_proto.h"
+#include "ejudge/super_proto.h"
 #include "ejudge/file_perms.h"
 #include "ejudge/fileutl.h"
 #include "ejudge/misctext.h"

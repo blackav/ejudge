@@ -19,7 +19,7 @@
 #include "ejudge/ej_types.h"
 #include "ejudge/clarlog.h"
 #include "ejudge/cldb_plugin.h"
-#include "clarlog_state.h"
+#include "ejudge/clarlog_state.h"
 #include "ejudge/teamdb.h"
 #include "ejudge/base64.h"
 #include "unix/unix_fileutl.h"

@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2014 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,7 @@
  */
 
 #include "super_clnt.h"
-#include "super_proto.h"
+#include "ejudge/super_proto.h"
 #include "ejudge/errlog.h"
 
 #include <stdlib.h>
@@ -53,9 +53,8 @@ super_clnt_simple_cmd(
   return in->id;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make -C .."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  * End:
  */

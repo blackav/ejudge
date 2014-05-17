@@ -4,7 +4,7 @@
 %><%
 #include "ejudge/ejudge_cfg.h"
 #include "userlist_clnt.h"
-#include "userlist_proto.h"
+#include "ejudge/userlist_proto.h"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@set err_prefix = "NEW_SRV_ERR_"
 %><%@set getter_name = "csp_get_reg_create_page"

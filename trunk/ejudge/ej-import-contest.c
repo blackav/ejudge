@@ -26,7 +26,7 @@
 #include "ejudge/build_support.h"
 #include "ejudge/super-serve.h"
 #include "ejudge/xml_utils.h"
-#include "super_html.h"
+#include "ejudge/super_html.h"
 #include "ejudge/prepare.h"
 #include "ejudge/meta/problem_config_meta.h"
 #include "ejudge/meta/prepare_meta.h"
