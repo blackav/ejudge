@@ -18,7 +18,7 @@
 %{
 #define YYSTYPE struct filter_tree *
 
-#include "filter_expr.h"
+#include "ejudge/filter_expr.h"
 #include "ejudge/filter_tree.h"
 #include "ejudge/runlog.h"
 
