@@ -133,7 +133,7 @@ all : objs objs/$(ARCH) objs/libreuse.a
 install :
 
 clean :
-	-rm -fr objs/* cdeps *.o
+	#-#rm -fr objs/* cdeps *.o
 
 deps.make: objs objs/cdeps ${REUSECFILES} ${REUSEHFILES} 
 	./objs/cdeps -I .. -I ../include -v REUSEOFILES -D -d objs/ ${REUSECFILES} > deps.make

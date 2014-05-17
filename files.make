@@ -584,7 +584,7 @@ HFILES=\
  ./include/ejudge/teamdb.h\
  teamdb_priv.h\
  ./include/ejudge/team_extra.h\
- testinfo.h\
+ ./include/ejudge/testinfo.h\
  ./include/ejudge/testing_report_xml.h\
  ./include/ejudge/tex_dom.h\
  ./include/ejudge/timestamp.h\

@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -15,7 +15,11 @@
  * GNU General Public License for more details.
  */
 
+#ifdef EJUDGE_CHECKER
 #include "testinfo.h"
+#else
+#include "ejudge/testinfo.h"
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -593,6 +597,5 @@ testinfo_strerror(int err)
 /*
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  * End:
  */

@@ -30,7 +30,7 @@
 #include "ejudge/prepare.h"
 #include "ejudge/prepare_dflt.h"
 #include "ejudge/fileutl.h"
-#include "testinfo.h"
+#include "ejudge/testinfo.h"
 #include "ejudge/file_perms.h"
 #include "ejudge/ej_process.h"
 #include "ejudge/sformat.h"
