@@ -17,7 +17,7 @@
 
 #include "ejudge/config.h"
 #include "ejudge/filter_tree.h"
-#include "filter_eval.h"
+#include "ejudge/filter_eval.h"
 #include "ejudge/prepare.h"
 #include "ejudge/protocol.h"
 #include "ejudge/misctext.h"

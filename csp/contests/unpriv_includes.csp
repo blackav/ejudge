@@ -1,6 +1,6 @@
 <%
-#include "new-server.h"
-#include "new_server_pi.h"
+#include "ejudge/new-server.h"
+#include "ejudge/new_server_pi.h"
 #include "ejudge/new_server_proto.h"
 #include "ejudge/external_action.h"
 #include "ejudge/clarlog.h"

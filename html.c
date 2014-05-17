@@ -38,7 +38,7 @@
 #include "ejudge/serve_state.h"
 #include "ejudge/charsets.h"
 #include "ejudge/compat.h"
-#include "filter_eval.h"
+#include "ejudge/filter_eval.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

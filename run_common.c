@@ -21,7 +21,7 @@
 #include "ejudge/prepare.h"
 #include "ejudge/run_packet.h"
 #include "ejudge/super_run_packet.h"
-#include "run.h"
+#include "ejudge/run.h"
 #include "ejudge/errlog.h"
 #include "ejudge/runlog.h"
 #include "ejudge/digest_io.h"

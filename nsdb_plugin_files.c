@@ -20,7 +20,7 @@
 #include "ejudge/xml_utils.h"
 #include "ejudge/errlog.h"
 #include "ejudge/pathutl.h"
-#include "new-server.h"
+#include "ejudge/new-server.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

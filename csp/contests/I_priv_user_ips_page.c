@@ -16,8 +16,8 @@
  */
 
 #include "ejudge/ej_types.h"
-#include "new-server.h"
-#include "new_server_pi.h"
+#include "ejudge/new-server.h"
+#include "ejudge/new_server_pi.h"
 #include "ejudge/contests.h"
 #include "ejudge/userlist_clnt.h"
 #include "ejudge/runlog.h"

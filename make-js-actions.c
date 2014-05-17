@@ -1,7 +1,7 @@
 /* $Id$ */
 
 #include <stdio.h>
-#include "new-server.h"
+#include "ejudge/new-server.h"
 
 #define A(n) [n] = #n
 const unsigned char * const action_table[NEW_SRV_ACTION_LAST] =

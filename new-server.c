@@ -22,7 +22,7 @@
 #include "ejudge/errlog.h"
 #include "ejudge/server_framework.h"
 #include "ejudge/new_server_proto.h"
-#include "new-server.h"
+#include "ejudge/new-server.h"
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/contests.h"
 #include "ejudge/ejudge_plugin.h"

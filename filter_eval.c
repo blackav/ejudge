@@ -19,7 +19,7 @@
 
 #include "ejudge/filter_tree.h"
 #include "ejudge/filter_expr.h"
-#include "filter_eval.h"
+#include "ejudge/filter_eval.h"
 #include "ejudge/teamdb.h"
 #include "ejudge/userlist.h"
 #include "ejudge/archive_paths.h"
