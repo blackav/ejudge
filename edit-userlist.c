@@ -17,7 +17,7 @@
 
 #include "ejudge/config.h"
 #include "ejudge/ej_types.h"
-#include "userlist_clnt.h"
+#include "ejudge/userlist_clnt.h"
 #include "ejudge/userlist_proto.h"
 #include "ejudge/contests.h"
 #include "ejudge/userlist.h"

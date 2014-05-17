@@ -42,7 +42,7 @@
 #include "ejudge/csv.h"
 #include "ejudge/sha.h"
 #include "ejudge/sformat.h"
-#include "userlist_clnt.h"
+#include "ejudge/userlist_clnt.h"
 #include "ejudge/charsets.h"
 #include "ejudge/compat.h"
 #include "ejudge/run_packet.h"

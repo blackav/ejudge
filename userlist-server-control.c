@@ -19,7 +19,7 @@
 #include "ejudge/ej_types.h"
 #include "ejudge/version.h"
 #include "ejudge/ejudge_cfg.h"
-#include "userlist_clnt.h"
+#include "ejudge/userlist_clnt.h"
 #include "ejudge/userlist_proto.h"
 #include "ejudge/startstop.h"
 

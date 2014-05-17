@@ -18,7 +18,7 @@
 #include "new_server_pi.h"
 #include "new-server.h"
 #include "ejudge/contests.h"
-#include "userlist_clnt.h"
+#include "ejudge/userlist_clnt.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"

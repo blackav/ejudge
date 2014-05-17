@@ -20,7 +20,7 @@
 #include "ejudge/version.h"
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/super_proto.h"
-#include "super_clnt.h"
+#include "ejudge/super_clnt.h"
 #include "ejudge/startstop.h"
 
 #include "reuse/osdeps.h"

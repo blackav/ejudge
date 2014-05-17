@@ -19,7 +19,7 @@
 #include "new-server.h"
 #include "new_server_pi.h"
 #include "ejudge/contests.h"
-#include "userlist_clnt.h"
+#include "ejudge/userlist_clnt.h"
 #include "ejudge/runlog.h"
 #include "ejudge/xml_utils.h"
 

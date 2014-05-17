@@ -2,7 +2,7 @@
 /* $Id$ */
 %><%@include "priv_includes.csp"
 %><%
-#include "userlist_clnt.h"
+#include "ejudge/userlist_clnt.h"
 #include "ejudge/userlist_proto.h"
 %><%@set getter_name = "csp_get_priv_users_page"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"

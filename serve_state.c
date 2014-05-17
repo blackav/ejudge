@@ -25,7 +25,7 @@
 #include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
 #include "ejudge/userlist_proto.h"
-#include "userlist_clnt.h"
+#include "ejudge/userlist_clnt.h"
 #include "ejudge/ejudge_plugin.h"
 #include "ejudge/csv.h"
 #include "ejudge/ejudge_cfg.h"

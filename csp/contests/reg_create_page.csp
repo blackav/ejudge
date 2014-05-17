@@ -3,7 +3,7 @@
 %><%@include "reg_includes.csp"
 %><%
 #include "ejudge/ejudge_cfg.h"
-#include "userlist_clnt.h"
+#include "ejudge/userlist_clnt.h"
 #include "ejudge/userlist_proto.h"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@set err_prefix = "NEW_SRV_ERR_"

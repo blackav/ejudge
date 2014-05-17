@@ -20,7 +20,7 @@
 #include "ejudge/ej_limits.h"
 #include "new-server.h"
 #include "ejudge/new_server_proto.h"
-#include "userlist_clnt.h"
+#include "ejudge/userlist_clnt.h"
 #include "ejudge/userlist_proto.h"
 #include "ejudge/userlist.h"
 #include "ejudge/contests.h"

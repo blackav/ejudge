@@ -20,7 +20,7 @@
 #include "ejudge/ej_limits.h"
 #include "ejudge/expat_iface.h"
 #include "ejudge/cgi.h"
-#include "userlist_clnt.h"
+#include "ejudge/userlist_clnt.h"
 #include "ejudge/clntutil.h"
 #include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"

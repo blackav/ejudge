@@ -4,7 +4,7 @@
 #ifndef __NEW_SERVER_CLNT_PRIV_H__
 #define __NEW_SERVER_CLNT_PRIV_H__
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,7 +18,7 @@
  * GNU General Public License for more details.
  */
 
-#include "new_server_clnt.h"
+#include "ejudge/new_server_clnt.h"
 
 struct new_server_conn
 {

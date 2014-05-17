@@ -571,7 +571,7 @@ HFILES=\
  ./include/ejudge/sock_op.h\
  ./include/ejudge/startstop.h\
  ./include/ejudge/stringset.h\
- super_clnt.h\
+ ./include/ejudge/super_clnt.h\
  ./include/ejudge/super_html.h\
  ./include/ejudge/super_proto.h\
  ./include/ejudge/super_run_packet.h\
@@ -592,7 +592,7 @@ HFILES=\
  ./include/ejudge/type_info.h\
  ./include/ejudge/uldb_plugin.h\
  ./include/ejudge/userlist.h\
- userlist_clnt.h\
+ ./include/ejudge/userlist_clnt.h\
  ./include/ejudge/varsubst.h\
  ./include/ejudge/vcs.h\
  ./include/ejudge/version.h\
@@ -600,7 +600,7 @@ HFILES=\
  ./include/ejudge/win32_compat.h\
  unix/unix_fileutl.h\
  userlist_clnt/private.h\
- new_server_clnt.h\
+ ./include/ejudge/new_server_clnt.h\
  ./include/ejudge/new_server_proto.h\
  new_server_clnt/new_server_clnt_priv.h\
  ./include/ejudge/xml_utils.h\
