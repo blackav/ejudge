@@ -67,7 +67,7 @@ ifndef NO_RPATH
 RPATHOPT=-Wl,-rpath,${libdir}
 endif
 
-CCOMPFLAGS=-D_GNU_SOURCE
+CCOMPFLAGS=-D_GNU_SOURCE -DEJUDGE_CHECKER
 LDCOMPFLAGS=
 
 LDLIBS=${EXTRALIBS} -lm
@@ -230,8 +230,8 @@ pic/xstrdup.o: xstrdup.c checker_internal.h
 testinfo.o: testinfo.c testinfo.h
 pic/testinfo.o: testinfo.c testinfo.h
 
-testinfo.h: ../testinfo.h
-	ln -f ../testinfo.h .
+testinfo.h: ../include/ejudge/testinfo.h
+	ln -f ../include/ejudge/testinfo.h .
 testinfo.c: ../testinfo.c
 	ln -sf ../testinfo.c
 
