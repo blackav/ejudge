@@ -213,8 +213,9 @@ local_install: ${TARGETS} ejudge-config po mo
 	install -d "${DESTDIR}${datadir}/ejudge/style/icons"
 	for i in style/icons/*.png; do install -m 0644 $$i "${DESTDIR}${datadir}/ejudge/style/icons"; done
 	install -m 0755 style/ejudge-upgrade-web "${DESTDIR}${bindir}"
-	mkdir -p "${DESTDIR}${includedir}/ejudge"
-	for i in problem_plugin_impl.h problem_plugin.h ejudge_plugin.h ej_types.h iterators.h contest_plugin.h; do install -m 644 $$i "${DESTDIR}${includedir}/ejudge"; done
+	#mkdir -p "${DESTDIR}${includedir}/ejudge"
+	#for i in problem_plugin_impl.h problem_plugin.h ejudge_plugin.h ej_types.h iterators.h contest_plugin.h; do install -m 644 $$i "${DESTDIR}${includedir}/ejudge"; done
+	cp -rpd include "${DESTDIR}${prefix}"
 
 install: local_install
 	$(MAKE) -C reuse DESTDIR="${DESTDIR}" install
