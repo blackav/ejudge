@@ -35,7 +35,7 @@ static const unsigned char csp_str31[18] = ".\n\n<p>&nbsp;</p>\n";
 static const unsigned char csp_str32[18] = "<div id=\"footer\">";
 static const unsigned char csp_str33[38] = "</div>\n</div>\n</div>\n</body>\n</html>\n";
 
-/* $Id: reg_create_page.csp 8237 2014-05-17 06:40:01Z cher $ */
+/* $Id: reg_create_page.csp 8243 2014-05-23 12:11:56Z cher $ */
 #include "ejudge/new-server.h"
 #include "ejudge/new_server_pi.h"
 #include "ejudge/new_server_proto.h"
@@ -108,13 +108,13 @@ const unsigned char *login = 0, *email = 0;
     fprintf(phr->log_f, "registration is not available\n");
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   }
-if (hr_cgi_param_int_2(phr, "retval", &(reg_error)) <= 0) {
+if (hr_cgi_param_int_opt(phr, "retval", &(reg_error), 0) < 0) {
   FAIL(NEW_SRV_ERR_INV_PARAM);
 }
-if (hr_cgi_param_int_2(phr, "ul_error", &(reg_ul_error)) <= 0) {
+if (hr_cgi_param_int_opt(phr, "ul_error", &(reg_ul_error), 0) < 0) {
   FAIL(NEW_SRV_ERR_INV_PARAM);
 }
-if (hr_cgi_param_int_2(phr, "regular", &(regular_flag)) <= 0) {
+if (hr_cgi_param_int_opt(phr, "regular", &(regular_flag), 0) < 0) {
   FAIL(NEW_SRV_ERR_INV_PARAM);
 }
 if (cnts->assign_logins) {
