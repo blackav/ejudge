@@ -22,9 +22,9 @@
     fprintf(phr->log_f, "registration is not available\n");
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   }
-%><s:read var="reg_error" name="retval" required="yes" /><%
-%><s:read var="reg_ul_error" name="ul_error" required="yes" /><%
-%><s:read var="regular_flag" name="regular" required="yes" /><%
+%><s:read var="reg_error" name="retval" /><%
+%><s:read var="reg_ul_error" name="ul_error" /><%
+%><s:read var="regular_flag" name="regular" /><%
   if (cnts->assign_logins) {
     if (!cnts->disable_name) allowed_info_edit = 1;
     if (!cnts->force_registration) allowed_info_edit = 1;
