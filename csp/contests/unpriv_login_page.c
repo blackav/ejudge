@@ -97,7 +97,6 @@ int retval __attribute__((unused)) = 0;
   time_t start_time __attribute__((unused)) = 0, stop_time __attribute__((unused)) = 0;
 time_t cur_time;
   int vis_flag = 0;
-  const unsigned char *cnts_name = NULL;
   const unsigned char *login_str = NULL;
   const unsigned char *password_str = NULL;
   int orig_locale_id = phr->locale_id;
@@ -144,17 +143,15 @@ time_t cur_time;
     else extra->footer_txt = ns_fancy_footer;
     extra->separator_txt = ns_fancy_separator;
   }
-
-  if (phr->locale_id == 0 && cnts->name_en) {
-    cnts_name = html_armor_string_dup(cnts->name_en);
-  } else {
-    cnts_name = html_armor_string_dup(cnts->name);
-  }
 hr_cgi_param(phr, "login", &(login_str));
 hr_cgi_param(phr, "password", &(password_str));
 phr->hidden_vars = "";
   l10n_setlocale(phr->locale_id);
-  snprintf(title, sizeof(title), "%s [%s]", _("User login page"), cnts_name);
+  if (phr->locale_id == 0 && cnts->name_en) {
+    snprintf(title, sizeof(title), "%s [%s]", _("User login page"), cnts->name_en);
+  } else {
+    snprintf(title, sizeof(title), "%s [%s]", _("User login page"), cnts->name);
+  }
 fwrite(csp_str0, 1, 183, out_f);
 fwrite("utf-8", 1, 5, out_f);
 fwrite(csp_str1, 1, 33, out_f);
