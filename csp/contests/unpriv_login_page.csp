@@ -70,7 +70,7 @@
 
   phr->hidden_vars = "";
   l10n_setlocale(phr->locale_id);
-  snprintf(title, sizeof(title), "%s [%s]", _("User login"), cnts_name);
+  snprintf(title, sizeof(title), "%s [%s]", _("User login page"), cnts_name);
 %><%@include "unpriv_simple_header.csp"
 %><s:form>
 <s:hidden name="contest_id" value="phr->contest_id" />
@@ -113,7 +113,7 @@
              && (cnts->reg_deadline <= 0 || cur_time < cnts->reg_deadline)) {
 %><td class="menu"><div class="contest_actions_item"><%
     if (phr->config->disable_new_users <= 0) {
-%><s:url name="RegisterUrl" script="register" ac="main-page">
+%><s:url name="RegisterUrl" script="register" ac="reg-login-page">
     <s:param name="contest_id" value="phr->contest_id" />
     <s:param name="locale_id" value="phr->locale_id" />
 </s:url><s:a class="menu" url="RegisterUrl"><s:tr>Registration</s:tr></s:a><%
@@ -125,8 +125,8 @@
 <%  if (cnts && cnts->enable_password_recovery && cnts->disable_team_password) {
 %>
 <s:url name="ForgotPassword1Url" ac="forgot-password-1">
-    <s:param name="contest_id" param="phr->contest_id" />
-    <s:param name="locale_id" param="phr->locale_id" />
+    <s:param name="contest_id" value="phr->contest_id" />
+    <s:param name="locale_id" value="phr->locale_id" />
 </s:url>
 <td class="menu"><div class="contest_actions_item"><s:a class="menu" url="ForgotPassword1Url"><s:tr>Forgot password?</s:tr></s:a></div></td>
 <%    vis_flag++;
