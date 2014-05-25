@@ -32,6 +32,15 @@
 #include <stdarg.h>
 #include <ctype.h>
 
+#define EJ_USERS_MASK 1
+#define EJ_SUPER_SERVER_MASK 2
+#define EJ_COMPILE_MASK 4
+#define EJ_SUPER_RUN_MASK 8
+#define EJ_JOBS_MASK 16
+#define EJ_CONTESTS_MASK 32
+#define EJ_LAST_MASK 64
+#define EJ_ALL_MASK (EJ_LAST_MASK - 1)
+
 static const unsigned char *program_name = "";
 
 static void startup_error(const char *format, ...)
@@ -82,6 +91,12 @@ write_help(void)
          "    -s        slave mode (ej-compile and ej-super-server)\n"
          "    -r        serve all contests in run mode\n"
          "    -m        master mode (all except ej-compile)\n"
+         "    -nu       skip start of ej-users\n"
+         "    -ns       skip start of ej-super-server\n"
+         "    -no       skip start of ej-compile\n"
+         "    -nr       skip start of ej-super-run\n"
+         "    -nj       skip start of ej-jobs\n"
+         "    -nc       skip start of ej-contests\n"
          "  COMMAND:\n"
          "    start     start the ejudge daemons\n"
          "    stop      stop the ejudge daemons\n"
@@ -124,7 +139,8 @@ command_start(
         int slave_mode,
         int all_run_serve,
         int master_mode,
-        int super_run_parallelism)
+        int super_run_parallelism,
+        int skip_mask)
 {
   tTask *tsk = 0;
   path_t path;
@@ -142,7 +158,7 @@ command_start(
 #endif
 
   // start ej-users
-  if (!slave_mode) {
+  if (!slave_mode && !(skip_mask & EJ_USERS_MASK)) {
     snprintf(path, sizeof(path), "%s/ej-users", EJUDGE_SERVER_BIN_PATH);
     tsk = task_New();
     task_AddArg(tsk, path);
@@ -172,44 +188,46 @@ command_start(
   }
 
   // start ej-super-server
-  snprintf(path, sizeof(path), "%s/ej-super-server", EJUDGE_SERVER_BIN_PATH);
-  tsk = task_New();
-  task_AddArg(tsk, path);
-  task_AddArg(tsk, "-D");
-  if (user) {
-    task_AddArg(tsk, "-u");
-    task_AddArg(tsk, user);
-  }
-  if (group) {
-    task_AddArg(tsk, "-g");
-    task_AddArg(tsk, group);
-  }
-  if (workdir) {
-    task_AddArg(tsk, "-C");
-    task_AddArg(tsk, workdir);
-  }
-  if (force_mode) {
+  if (!(skip_mask & EJ_SUPER_SERVER_MASK)) {
+    snprintf(path, sizeof(path), "%s/ej-super-server", EJUDGE_SERVER_BIN_PATH);
+    tsk = task_New();
+    task_AddArg(tsk, path);
+    task_AddArg(tsk, "-D");
+    if (user) {
+      task_AddArg(tsk, "-u");
+      task_AddArg(tsk, user);
+    }
+    if (group) {
+      task_AddArg(tsk, "-g");
+      task_AddArg(tsk, group);
+    }
+    if (workdir) {
+      task_AddArg(tsk, "-C");
+      task_AddArg(tsk, workdir);
+    }
+    if (force_mode) {
     task_AddArg(tsk, "-f");
+    }
+    if (slave_mode) {
+      task_AddArg(tsk, "-s");
+    }
+    if (all_run_serve) {
+      task_AddArg(tsk, "-r");
+    }
+    if (master_mode) {
+      task_AddArg(tsk, "-m");
+    }
+    task_AddArg(tsk, ejudge_xml_path);
+    task_SetPathAsArg0(tsk);
+    task_Start(tsk);
+    task_Wait(tsk);
+    if (task_IsAbnormal(tsk)) goto failed;
+    task_Delete(tsk); tsk = 0;
+    super_serve_started = 1;
   }
-  if (slave_mode) {
-    task_AddArg(tsk, "-s");
-  }
-  if (all_run_serve) {
-    task_AddArg(tsk, "-r");
-  }
-  if (master_mode) {
-    task_AddArg(tsk, "-m");
-  }
-  task_AddArg(tsk, ejudge_xml_path);
-  task_SetPathAsArg0(tsk);
-  task_Start(tsk);
-  task_Wait(tsk);
-  if (task_IsAbnormal(tsk)) goto failed;
-  task_Delete(tsk); tsk = 0;
-  super_serve_started = 1;
 
   // start ej-compile
-  if (!master_mode) {
+  if (!master_mode && !(skip_mask & EJ_COMPILE_MASK)) {
     snprintf(path, sizeof(path), "%s/ej-compile", EJUDGE_SERVER_BIN_PATH);
     tsk = task_New();
     task_AddArg(tsk, path);
@@ -237,7 +255,7 @@ command_start(
   }
 
   // start ej-super-run
-  if (!master_mode) {
+  if (!master_mode && !(skip_mask & EJ_SUPER_RUN_MASK)) {
     for (int i = 0; i < super_run_parallelism; ++i) {
       snprintf(path, sizeof(path), "%s/ej-super-run", EJUDGE_SERVER_BIN_PATH);
       tsk = task_New();
@@ -265,7 +283,7 @@ command_start(
   }
 
   // start ej-jobs
-  if (!slave_mode) {
+  if (!slave_mode && !(skip_mask & EJ_JOBS_MASK)) {
     snprintf(path, sizeof(path), "%s/ej-jobs", EJUDGE_SERVER_BIN_PATH);
     tsk = task_New();
     task_AddArg(tsk, path);
@@ -292,7 +310,7 @@ command_start(
   }
 
   // start ej-contests
-  if (!slave_mode) {
+  if (!slave_mode && !(skip_mask & EJ_CONTESTS_MASK)) {
     snprintf(path, sizeof(path), "%s/ej-contests", EJUDGE_SERVER_BIN_PATH);
     tsk = task_New();
     task_AddArg(tsk, path);
@@ -386,6 +404,7 @@ main(int argc, char *argv[])
   int all_run_serve = 0;
   int master_mode = 0;
   int parallelism = 1;
+  int skip_mask = 0;
   unsigned char **host_names = NULL;
 
   logger_set_level(-1, LOG_WARNING);
@@ -405,11 +424,11 @@ main(int argc, char *argv[])
     } else if (!strcmp(argv[i], "--version")) {
       write_version();
     } else if (!strcmp(argv[i], "-u")) {
-      if (i + 1 >= argc) startup_error("argument expeted for `-u'");
+      if (i + 1 >= argc) startup_error("argument expected for `-u'");
       user = argv[i + 1];
       i += 2;
     } else if (!strcmp(argv[i], "-g")) {
-      if (i + 1 >= argc) startup_error("argument expeted for `-g'");
+      if (i + 1 >= argc) startup_error("argument expected for `-g'");
       group = argv[i + 1];
       i += 2;
     } else if (!strcmp(argv[i], "-f")) {
@@ -424,6 +443,18 @@ main(int argc, char *argv[])
     } else if (!strcmp(argv[i], "-m")) {
       master_mode = 1;
       i++;
+    } else if (!strcmp(argv[i], "-nu")) {
+      skip_mask |= EJ_USERS_MASK;
+    } else if (!strcmp(argv[i], "-ns")) {
+      skip_mask |= EJ_SUPER_SERVER_MASK;
+    } else if (!strcmp(argv[i], "-no")) {
+      skip_mask |= EJ_COMPILE_MASK;
+    } else if (!strcmp(argv[i], "-nr")) {
+      skip_mask |= EJ_SUPER_RUN_MASK;
+    } else if (!strcmp(argv[i], "-nj")) {
+      skip_mask |= EJ_JOBS_MASK;
+    } else if (!strcmp(argv[i], "-nc")) {
+      skip_mask |= EJ_CONTESTS_MASK;
     } else if (!strcmp(argv[i], "--")) {
       i++;
       break;
@@ -459,7 +490,8 @@ main(int argc, char *argv[])
 
   if (!strcmp(command, "start")) {
     if (command_start(config, user, group, ejudge_xml_path, force_mode,
-                      slave_mode, all_run_serve, master_mode, parallelism) < 0) 
+                      slave_mode, all_run_serve, master_mode, parallelism,
+                      skip_mask) < 0) 
       r = 1;
   } else if (!strcmp(command, "stop")) {
     if (command_stop(config, ejudge_xml_path, slave_mode, master_mode) < 0)
