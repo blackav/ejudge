@@ -2,13 +2,6 @@
 /* $Id$ */
 %><%@include "priv_includes.csp"
 %><%
-static int
-fix_prio(int val)
-{
-  if (val < -16) val = -16;
-  if (val > 15) val = 15;
-  return val;
-}
 %><%@set getter_name = "csp_get_priv_priorities_page"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@page csp_view_priv_priorities_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
@@ -20,7 +13,7 @@ fix_prio(int val)
     int prob_id;
     const unsigned char *title = NULL;
 
-    glob_prio = fix_prio(global->priority_adjustment);
+    glob_prio = ej_fix_prio(global->priority_adjustment);
 
     if (phr->role != USER_ROLE_ADMIN) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
@@ -45,10 +38,10 @@ fix_prio(int val)
        prob_id <= cs->max_prob && prob_id < EJ_SERVE_STATE_TOTAL_PROBS;
        ++prob_id) {
     if (!(prob = cs->probs[prob_id])) continue;
-    prob_prio = fix_prio(prob->priority_adjustment);
-    static_prio = fix_prio(glob_prio + prob_prio);
-    local_prio = fix_prio(cs->prob_prio[prob_id]);
-    total_prio = fix_prio(static_prio + local_prio);
+    prob_prio = ej_fix_prio(prob->priority_adjustment);
+    static_prio = ej_fix_prio(glob_prio + prob_prio);
+    local_prio = ej_fix_prio(cs->prob_prio[prob_id]);
+    total_prio = ej_fix_prio(static_prio + local_prio);
 %>
     <tr>
         <td class="b1"><s:v value="prob_id" /></td>

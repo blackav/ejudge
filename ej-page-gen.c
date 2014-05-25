@@ -2274,7 +2274,7 @@ parse_init_declr(
             } else if (IS_OPER(ss, ']')) {
                 --depth;
                 next_token(ss);
-                if (!depth) break;
+                //if (!depth) break;
             } else {
                 next_token(ss);
             }

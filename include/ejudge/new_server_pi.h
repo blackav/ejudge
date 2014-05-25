@@ -105,6 +105,13 @@ typedef struct TestingQueueArray
   struct TestingQueueEntry *v;
 } TestingQueueArray;
 
+inline int
+ej_fix_prio(int val)
+{
+  if (val < -16) val = -16;
+  if (val > 15) val = 15;
+  return val;
+}
 
 #endif /* __NEW_SERVER_PI_H__ */
 
