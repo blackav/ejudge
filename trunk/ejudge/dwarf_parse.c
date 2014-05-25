@@ -665,6 +665,8 @@ parse_base_type_die(
     } else if (bs == 16 && enc == DW_ATE_float) {
         // FIXME: f128?
         ti = tc_get_f80_type(cntx);
+    } else if (enc == DW_ATE_complex_float) {
+        ti = tc_get_f64_type(cntx);
     }
 
     const char *ate_name = NULL;
