@@ -50,13 +50,6 @@ static const unsigned char csp_str25[18] = "\n</body>\n</html>\n";
 #define _(x) gettext(x)
 
 #define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
-static int
-fix_prio(int val)
-{
-  if (val < -16) val = -16;
-  if (val > 15) val = 15;
-  return val;
-}
 int csp_view_priv_priorities_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr);
 static PageInterfaceOps page_ops =
 {
@@ -89,7 +82,7 @@ const struct section_global_data *global = cs->global;
     int prob_id;
     const unsigned char *title = NULL;
 
-    glob_prio = fix_prio(global->priority_adjustment);
+    glob_prio = ej_fix_prio(global->priority_adjustment);
 
     if (phr->role != USER_ROLE_ADMIN) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
@@ -158,10 +151,10 @@ for (prob_id = 1;
        prob_id <= cs->max_prob && prob_id < EJ_SERVE_STATE_TOTAL_PROBS;
        ++prob_id) {
     if (!(prob = cs->probs[prob_id])) continue;
-    prob_prio = fix_prio(prob->priority_adjustment);
-    static_prio = fix_prio(glob_prio + prob_prio);
-    local_prio = fix_prio(cs->prob_prio[prob_id]);
-    total_prio = fix_prio(static_prio + local_prio);
+    prob_prio = ej_fix_prio(prob->priority_adjustment);
+    static_prio = ej_fix_prio(glob_prio + prob_prio);
+    local_prio = ej_fix_prio(cs->prob_prio[prob_id]);
+    total_prio = ej_fix_prio(static_prio + local_prio);
 fwrite(csp_str13, 1, 33, out_f);
 fprintf(out_f, "%d", (int)(prob_id));
 fwrite(csp_str14, 1, 29, out_f);
