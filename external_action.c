@@ -32,6 +32,277 @@
 #include <dlfcn.h>
 #include <string.h>
 
+typedef struct ExternalActionDependency
+{
+    unsigned char *lhs; // left-hand side of the dependency
+    int rhs_a;
+    int rhs_u;
+    unsigned char **rhs; // right-hand side
+} ExternalActionDependency;
+
+ExternalActionDependency *
+external_action_dep_free(ExternalActionDependency *d)
+{
+    if (d) {
+        xfree(d->lhs);
+        for (int i = 0; i < d->rhs_u; ++i) {
+            xfree(d->rhs[i]); d->rhs[i] = NULL;
+        }
+        xfree(d->rhs);
+        memset(d, 0, sizeof(*d));
+        xfree(d);
+    }
+    return NULL;
+}
+
+void
+external_action_dep_add(ExternalActionDependency *d, const unsigned char *str)
+{
+    if (!d->rhs_a) {
+        d->rhs_a = 16;
+        XCALLOC(d->rhs, d->rhs_a);
+    } else if (d->rhs_u == d->rhs_a) {
+        XREALLOC(d->rhs, d->rhs_a *= 2);
+    }
+    d->rhs[d->rhs_u++] = xstrdup(str);
+}
+
+typedef struct ExternalActionDependencies
+{
+    int a, u;
+    ExternalActionDependency **v;
+} ExternalActionDependencies;
+
+ExternalActionDependencies *
+external_action_deps_free(ExternalActionDependencies *dd)
+{
+    if (dd) {
+        for (int i = 0; i < dd->u; ++i) {
+            dd->v[i] = external_action_dep_free(dd->v[i]);
+        }
+        xfree(dd->v);
+        memset(dd, 0, sizeof(*dd));
+        xfree(dd);
+    }
+    return NULL;
+}
+
+void
+external_action_deps_add(ExternalActionDependencies *dd, ExternalActionDependency *d)
+{
+    for (int i = 0; i < dd->u; ++i) {
+        if (!strcmp(dd->v[i]->lhs, d->lhs)) {
+            external_action_dep_free(dd->v[i]);
+            dd->v[i] = d;
+            return;
+        }
+    }
+    if (!dd->a) {
+        XCALLOC(dd->v, (dd->a = 16));
+    } else if (dd->u == dd->a) {
+        XREALLOC(dd->v, (dd->a *= 2));
+    }
+    dd->v[dd->u++] = d;
+}
+
+static int
+do_getc(FILE *f)
+{
+    int c = getc(f);
+    if (c != '\\') return c;
+    c = getc(f);
+    if (c == EOF) return '\\';
+    if (!isspace(c)) {
+        ungetc(c, f);
+        return '\\';
+    }
+    while (isspace(c) && c != '\n') {
+        c = getc(f);
+    }
+    if (c == '\n') c = ' ';
+    return c;
+}
+
+int
+external_action_parse_deps(
+        FILE *log_f,
+        FILE *dep_f,
+        ExternalActionDependencies *dd)
+{
+    int buf_a = 0, buf_u = 0;
+    unsigned char *buf = NULL;
+    ExternalActionDependency *d = NULL;
+
+    int c = do_getc(dep_f);
+    while (c != EOF) {
+        if (c == '\t') {
+            while (c != EOF && c != '\n') {
+                c = do_getc(dep_f);
+            }
+            if (c == '\n') {
+                c = do_getc(dep_f);
+            }
+            continue;
+        }
+        while (isspace(c) && c != '\n') {
+            c = do_getc(dep_f);
+        }
+        if (c == '\n') {
+            c = do_getc(dep_f);
+            continue;
+        }
+        if (c == '#') {
+            while (c != EOF && c != '\n') {
+                c = do_getc(dep_f);
+            }
+            if (c == '\n') {
+                c = do_getc(dep_f);
+            }
+            continue;
+        }
+        if (!buf) {
+            buf_a = 32; buf_u = 0;
+            buf = xmalloc(buf_a);
+        }
+        buf_u = 0;
+        while (c != EOF && !isspace(c) && c != '=' && c != ':') {
+            if (buf_u + 1 >= buf_a) {
+                buf = xrealloc(buf, buf_a *= 2);
+            }
+            buf[buf_u++] = c;
+            c = do_getc(dep_f);
+        }
+        buf[buf_u] = 0;
+        if (!buf_u) {
+            // invalid dependency line
+            while (c != EOF && c != '\n') {
+                c = do_getc(dep_f);
+            }
+            if (c == '\n') {
+                c = do_getc(dep_f);
+            }
+            continue;
+        }
+        while (c != EOF && isspace(c)) {
+            c = do_getc(dep_f);
+        }
+        if (c != ':') {
+            // not a dependency line
+            while (c != EOF && c != '\n') {
+                c = do_getc(dep_f);
+            }
+            if (c == '\n') {
+                c = do_getc(dep_f);
+            }
+            continue;
+        }
+        c = do_getc(dep_f);
+
+        XCALLOC(d, 1);
+        d->lhs = xstrdup(buf);
+
+        while (isspace(c) && c != '\n') {
+            c = do_getc(dep_f);
+        }
+        while (c != EOF && c != '\n') {
+            buf_u = 0;
+            while (c != EOF && !isspace(c)) {
+                if (buf_u + 1 >= buf_a) {
+                    buf = xrealloc(buf, buf_a *= 2);
+                }
+                buf[buf_u++] = c;
+                c = do_getc(dep_f);
+            }
+            buf[buf_u] = 0;
+            external_action_dep_add(d, buf);
+            while (isspace(c) && c != '\n') {
+                c = do_getc(dep_f);
+            }
+        }
+        if (c == '\n') {
+            c = do_getc(dep_f);
+        }
+        // one dependency done
+        external_action_deps_add(dd, d);
+        d = NULL;
+    }
+
+    xfree(buf);
+    return 0;
+}
+
+/*
+  PREFIX = /opt/ejudge
+  ${PREFIX}/share/ejudge -- source path
+
+  EJUDGE_LOCAL_DIR = /var/lib/ejudge
+  ${EJUDGE_LOCAL_DIR}/bin
+  ${EJUDGE_LOCAL_DIR}/obj -- temp dir for compilation
+  ${EJUDGE_LOCAL_DIR}/gen -- generated .c, .d, .dd files
+
+  EJUDGE_CONTESTS_HOME_DIR = /home/judges
+  ${EJUDGE_CONTESTS_HOME_DIR}/bin
+  ${EJUDGE_CONTESTS_HOME_DIR}/obj -- temp dir for compilation
+  ${EJUDGE_CONTESTS_HOME_DIR}/gen -- generated .c, .d, .dd files
+ */
+static int initialized_flag = 0;
+static unsigned char *csp_src_path = NULL;
+static unsigned char *csp_gen_path = NULL;
+static unsigned char *csp_obj_path = NULL;
+static unsigned char *csp_bin_path = NULL;
+static void
+initialize_module(void)
+{
+    unsigned char prefix[PATH_MAX];
+    unsigned char path[PATH_MAX];
+
+    if (initialized_flag) return;
+
+    prefix[0] = 0;
+#if defined EJUDGE_PREFIX_DIR
+    snprintf(prefix, sizeof(prefix), "%s", EJUDGE_PREFIX_DIR);
+#endif
+    if (!prefix[0]) {
+        // should not get here...
+        snprintf(prefix, sizeof(prefix), "%s", "/opt/ejudge");
+    }
+    snprintf(path, sizeof(path), "%s/share/ejudge", prefix);
+    csp_src_path = xstrdup(path);
+
+    prefix[0] = 0;
+#if defined EJUDGE_LOCAL_DIR
+    snprintf(prefix, sizeof(prefix), "%s", EJUDGE_LOCAL_DIR);
+#endif
+#if defined EJUDGE_CONTESTS_HOME_DIR
+    if (!prefix[0]) {
+        snprintf(prefix, sizeof(prefix), "%s", EJUDGE_CONTESTS_HOME_DIR);
+    }
+#endif
+    if (!prefix[0] && getenv("TMPDIR")) {
+        snprintf(prefix, sizeof(prefix), "%s", getenv("TMPDIR"));
+    }
+    if (!prefix[0] && getenv("TEMPDIR")) {
+        snprintf(prefix, sizeof(prefix), "%s", getenv("TEMPDIR"));
+    }
+#if defined P_tmpdir
+    if (!prefix[0]) {
+        snprintf(prefix, sizeof(prefix), "%s", P_tmpdir);
+    }
+#endif
+    if (!prefix[0]) {
+        snprintf(prefix, sizeof(prefix), "%s", "/tmp");
+    }
+
+    snprintf(path, sizeof(path), "%s/gen", prefix);
+    csp_gen_path = xstrdup(path);
+    snprintf(path, sizeof(path), "%s/obj", prefix);
+    csp_obj_path = xstrdup(path);
+    snprintf(path, sizeof(path), "%s/bin", prefix);
+    csp_bin_path = xstrdup(path);
+
+    initialized_flag = 1;
+}
+
 static const unsigned char *
 fix_action(
         unsigned char *buf,
@@ -120,16 +391,20 @@ external_action_load(
 {
     unsigned char action_buf[128];
 
+    if (!initialized_flag) initialize_module();
+
     if (state && state->action_handler) return state;
 
     if (!state) {
         XCALLOC(state, 1);
     }
     fix_action(action_buf, sizeof(action_buf), action);
+    /*
     if (try_load_action(state, ".", dir, action, name_prefix) >= 0) {
         return state;
     }
-    if (try_load_action(state, EJUDGE_LIBEXEC_DIR "/ejudge", dir, action, name_prefix) >= 0) {
+    */
+    if (try_load_action(state, EJUDGE_LIBEXEC_DIR "/ejudge", dir, action_buf, name_prefix) >= 0) {
         return state;
     }
 
