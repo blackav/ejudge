@@ -18,8 +18,10 @@
 #include "ejudge/config.h"
 #include "ejudge/external_action.h"
 #include "ejudge/errlog.h"
+#include "ejudge/ej_process.h"
 
 #include "reuse/xalloc.h"
+#include "reuse/osdeps.h"
 
 #include <stdio.h>
 #include <ctype.h>
@@ -305,6 +307,24 @@ initialize_module(void)
     initialized_flag = 1;
 }
 
+ExternalActionState *
+external_action_state_create(const unsigned char *dir)
+{
+    ExternalActionState *state = NULL;
+    unsigned char path[PATH_MAX];
+
+    XCALLOC(state, 1);
+    snprintf(path, sizeof(path), "%s/%s", csp_src_path, dir);
+    state->src_dir = xstrdup(path);
+    snprintf(path, sizeof(path), "%s/%s", csp_gen_path, dir);
+    state->gen_dir = xstrdup(path);
+    snprintf(path, sizeof(path), "%s/%s", csp_obj_path, dir);
+    state->obj_dir = xstrdup(path);
+    snprintf(path, sizeof(path), "%s/%s", csp_bin_path, dir);
+    state->bin_dir = xstrdup(path);
+    return state;
+}
+
 static const unsigned char *
 fix_action(
         unsigned char *buf,
@@ -322,8 +342,11 @@ fix_action(
     return buf;
 }
 
-int
-func2()
+static int
+invoke_page_gen(
+        FILE *log_f,
+        ExternalActionState *state,
+        const unsigned char *action)
 {
     unsigned char arg0[PATH_MAX];
     unsigned char arg1[PATH_MAX];
@@ -331,61 +354,48 @@ func2()
     unsigned char arg5[PATH_MAX];
     char *args[7];
     unsigned char *stderr_text = NULL;
-    unsigned char full_src_dir[PATH_MAX];
-    unsigned char full_gen_dir[PATH_MAX];
-
-    snprintf(full_gen_dir, sizeof(full_gen_dir), "%s/%s", csp_gen_path, dir);
-    os_MakeDirPath(full_gen_dir, 0700);
 
     snprintf(arg0, sizeof(arg0), "%s/ej-page-gen", EJUDGE_SERVER_BIN_PATH);
     args[0] = arg0;
     snprintf(arg1, sizeof(arg1), "%s.csp", action);
     args[1] = arg1;
     args[2] = "-d";
-    snprintf(arg3, sizeof(arg3), "%s/%s/%s.ds", csp_gen_path, dir, action);
+    snprintf(arg3, sizeof(arg3), "%s/%s.ds", state->gen_dir, action);
     args[3] = arg3;
     args[4] = "-o";
-    snprintf(arg5, sizeof(arg5), "%s/%s/%s.c", csp_gen_path, dir, action);
+    snprintf(arg5, sizeof(arg5), "%s/%s.c", state->gen_dir, action);
     args[5] = arg5;
     args[6] = NULL;
 
-    snprintf(full_src_dir, sizeof(full_src_dir), "%s/%s", csp_src_path, dir);
-    int ret = ejudge_invoke_process(args, NULL, full_src_dir, NULL, NULL,
-                                    0, NULL, &stderr_text);
-    /*
-int
-ejudge_invoke_process(
-        char **args,
-        char **envs,
-        const unsigned char *workdir,
-        const unsigned char *stdin_file,
-        const unsigned char *stdin_text,
-        int merge_out_flag,
-        unsigned char **stdout_text,
-        unsigned char **stderr_text);
-    */
-
-
+    int ret = ejudge_invoke_process(args, NULL, state->src_dir, NULL, NULL, 0, NULL, &stderr_text);
+    if (ret != 0) {
+        if (log_f) {
+            fprintf(log_f, "ej-page-gen failed\n");
+            fprintf(log_f, "command line: %s %s %s %s %s %s\n", args[0], args[1], args[2], args[3], args[4], args[5]);
+            fprintf(log_f, "output:\n");
+            fprintf(log_f, "%s\n", stderr_text);
+        }
+        ret = -1;
+    }
+    xfree(stderr_text);
+    return ret;
 }
 
-int
-func3()
+static int
+invoke_gcc(
+        FILE *log_f,
+        ExternalActionState *state,
+        const unsigned char *action,
+        int enable_i_c)
 {
-    snprintf(full_src_dir, sizeof(full_src_dir), "%s/%s", csp_src_path, dir);
-    snprintf(full_gen_dir, sizeof(full_gen_dir), "%s/%s", csp_gen_path, dir);
-    snprintf(full_obj_dir, sizeof(full_obj_dir), "%s/%s", csp_obj_path, dir);
-    snprintf(full_bin_dir, sizeof(full_bin_dir), "%s/%s", csp_bin_path, dir);
-
-    os_MakeDirPath(full_gen_dir, 0700);
-    os_MakeDirPath(full_obj_dir, 0700);
-
-    // generate makefile
-    snprintf(mfile, sizeof(mfile), "%s/%s.make", full_gen_dir, action);
-    out_m = fopen(mfile, "w");
+    unsigned char mfile[PATH_MAX];
+    snprintf(mfile, sizeof(mfile), "%s/%s.make", state->gen_dir, action);
+    FILE *out_m = fopen(mfile, "w");
+    fprintf(out_m, "include %s/lib/ejudge/make/csp_header.make\n\n", EJUDGE_PREFIX_DIR);
     fprintf(out_m, "all :\n");
     if (enable_i_c) {
         fprintf(out_m, "\t-rm -f \"I_%s.c\"\n", action);
-        fprintf(out_m, "\tln -s \"%s/I_%s.c\" \"I_%s.c\"\n", full_src_dir, action, action);
+        fprintf(out_m, "\tln -s \"%s/I_%s.c\" \"I_%s.c\"\n", state->src_dir, action, action);
     }
     fprintf(out_m, "\t$(CC) $(CCOMPFLAGS) ${WPTRSIGN} $(LDFLAGS) -MM %s.c", action);
     if (enable_i_c) {
@@ -396,10 +406,12 @@ func3()
     if (enable_i_c) {
         fprintf(out_m, " I_%s.c", action);
     }
-    fprintf(out_m, " -o %s/%s.so\n", full_obj_dir, action);
-    fprintf(out_m, "\tmv %s/%s.so %s/%s.so\n", full_obj_dir, action, full_bin_dir, action);
+    fprintf(out_m, " -o %s/%s.so\n", state->obj_dir, action);
+    fprintf(out_m, "\tmv %s/%s.so %s/%s.so\n", state->obj_dir, action, state->bin_dir, action);
     fclose(out_m); out_m = NULL;
 
+    char *args[5];
+    unsigned char arg2[PATH_MAX];
     args[0] = "/usr/bin/make";
     args[1] = "-f";
     snprintf(arg2, sizeof(arg2), "%s.make", action);
@@ -407,33 +419,45 @@ func3()
     args[3] = "all";
     args[4] = NULL;
 
-    int res = ejudge_invoke_process(args, NULL, full_gen_dir, NULL, NULL, 0, NULL, &stderr_text);
-    /*
-int
-ejudge_invoke_process(
-        char **args,
-        char **envs,
-        const unsigned char *workdir,
-        const unsigned char *stdin_file,
-        const unsigned char *stdin_text,
-        int merge_out_flag,
-        unsigned char **stdout_text,
-        unsigned char **stderr_text);
-    */
-
+    unsigned char *stderr_text = NULL;
+    int ret = ejudge_invoke_process(args, NULL, state->gen_dir, NULL, NULL, 0, NULL, &stderr_text);
+    if (ret != 0) {
+        if (log_f) {
+            fprintf(log_f, "compilation failed\n");
+            fprintf(log_f, "command line: %s %s %s %s\n", args[0], args[1], args[2], args[3]);
+            fprintf(log_f, "output:\n");
+            fprintf(log_f, "%s\n", stderr_text);
+        }
+        ret = -1;
+    }
+    xfree(stderr_text);
+    return ret;
 }
 
-int
-func()
+static int
+full_recompile(
+        FILE *log_f,
+        ExternalActionState *state,
+        const unsigned char *dir,
+        const unsigned char *action)
 {
+    unsigned char src_dir[PATH_MAX];
     unsigned char csp_name[PATH_MAX];
-    snprintf(csp_name, sizeof(csp_name), "%s/%s/%s.csp", csp_src_path, dir, action);
 
+    snprintf(src_dir, sizeof(src_dir), "%s/%s", EJUDGE_CONTESTS_HOME_DIR, dir);
+    snprintf(csp_name, sizeof(csp_name), "%s/%s.csp", src_dir, action);
     struct stat stb;
+    if (stat(csp_name, &stb) < 0) {
+        snprintf(src_dir, sizeof(src_dir), "%s/%s", csp_src_path, dir);
+        snprintf(csp_name, sizeof(csp_name), "%s/%s.csp", src_dir, action);
+    }
     if (stat(csp_name, &stb) < 0) {
         fprintf(stderr, "File '%s' does not exist\n", csp_name);
         return -1;
     }
+    xfree(state->src_dir);
+    state->src_dir = xstrdup(src_dir);
+
     if (!S_ISREG(stb.st_mode)) {
         fprintf(stderr, "File '%s' is not a regular file\n", csp_name);
         return -1;
@@ -444,22 +468,29 @@ func()
     }
 
     unsigned char i_c_name[PATH_MAX];
-    snprintf(i_c_name, sizeof(i_c_name), "%s/%s/I_%s.c", csp_src_path, dir, action);
+    int enable_i_c = 0;
+    snprintf(i_c_name, sizeof(i_c_name), "%s/I_%s.c", state->src_dir, action);
     if (stat(i_c_name, &stb) < 0) {
-        i_c_name[0] = 0;
     } else if (!S_ISREG(stb.st_mode)) {
-        fprintf(stderr, "File '%s' is not a regular file\n", i_c_name);
-        i_c_name[0] = 0;
+        fprintf(log_f, "File '%s' is not a regular file\n", i_c_name);
     } else if (access(i_c_name, R_OK) < 0) {
-        fprintf(stderr, "File '%s' is not readable\n", i_c_name);
-        i_c_name[0] = 0;
+        fprintf(log_f, "File '%s' is not readable\n", i_c_name);
+    } else {
+        enable_i_c = 1;
     }
+
+    int ret = invoke_page_gen(log_f, state, action);
+    if (ret < 0) return ret;
+    ret = invoke_gcc(log_f, state, action, enable_i_c);
+    if (ret < 0) return ret;
+
+    // FIXME: load deps
+    return 0;
 }
 
 static int
 try_load_action(
         ExternalActionState *state,
-        const unsigned char *path,
         const unsigned char *dir,
         const unsigned char *action,
         const unsigned char *name_prefix)
@@ -468,11 +499,18 @@ try_load_action(
     unsigned char full_name[PATH_MAX];
     int retval = 0;
 
-    snprintf(full_path, sizeof(full_path), "%s/%s/%s.so", path, dir, action);
+    snprintf(full_path, sizeof(full_path), "%s/%s.so", state->bin_dir, action);
 
     struct stat stb;
     if (lstat(full_path, &stb) < 0) {
-        goto fail_use_errno;
+        if (full_recompile(stderr, state, dir, action) < 0) {
+            xfree(state->err_msg);
+            state->err_msg = "Compilation failed";
+            return -1;
+        }
+        if (lstat(full_path, &stb) < 0) {
+            goto fail_use_errno;
+        }
     }
     if (S_ISLNK(stb.st_mode)) {
         retval = -ELOOP;
@@ -533,15 +571,13 @@ external_action_load(
     if (state && state->action_handler && state->last_check_time > 0 && current_time < state->last_check_time + CHECK_INTERVAL) return state;
 
     if (!state) {
-        XCALLOC(state, 1);
+        state = external_action_state_create(dir);
+        os_MakeDirPath(state->gen_dir, 0700);
+        os_MakeDirPath(state->obj_dir, 0700);
+        os_MakeDirPath(state->bin_dir, 0700);
     }
     fix_action(action_buf, sizeof(action_buf), action);
-    /*
-    if (try_load_action(state, ".", dir, action, name_prefix) >= 0) {
-        return state;
-    }
-    */
-    if (try_load_action(state, csp_bin_path, dir, action_buf, name_prefix) >= 0) {
+    if (try_load_action(state, dir, action_buf, name_prefix) >= 0) {
         return state;
     }
 

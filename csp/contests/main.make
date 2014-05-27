@@ -84,6 +84,8 @@ all : $(CFILES) $(SOFILES)
 install : all
 	install -d "${DESTDIR}${TARGETDIR}"
 	for i in ${SOFILES}; do install -m 0755 $$i "${DESTDIR}${TARGETDIR}"; done
+	install -d "${DESTDIR}${prefix}/share/ejudge/csp/contests"
+	for i in *.csp I_*.c; do install -m 0644 $$i "${DESTDIR}${prefix}/share/ejudge/csp/contests"; done
 
 clean : 
 	-rm -f *.o *.so
