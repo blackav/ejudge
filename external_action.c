@@ -349,21 +349,21 @@ invoke_page_gen(
         const unsigned char *action)
 {
     unsigned char arg0[PATH_MAX];
-    unsigned char arg1[PATH_MAX];
-    unsigned char arg3[PATH_MAX];
+    unsigned char arg2[PATH_MAX];
+    unsigned char arg4[PATH_MAX];
     unsigned char arg5[PATH_MAX];
     char *args[7];
     unsigned char *stderr_text = NULL;
 
     snprintf(arg0, sizeof(arg0), "%s/ej-page-gen", EJUDGE_SERVER_BIN_PATH);
     args[0] = arg0;
-    snprintf(arg1, sizeof(arg1), "%s.csp", action);
-    args[1] = arg1;
-    args[2] = "-d";
-    snprintf(arg3, sizeof(arg3), "%s/%s.ds", state->gen_dir, action);
-    args[3] = arg3;
-    args[4] = "-o";
-    snprintf(arg5, sizeof(arg5), "%s/%s.c", state->gen_dir, action);
+    args[1] = "-d";
+    snprintf(arg2, sizeof(arg2), "%s/%s.ds", state->gen_dir, action);
+    args[2] = arg2;
+    args[3] = "-o";
+    snprintf(arg4, sizeof(arg4), "%s/%s.c", state->gen_dir, action);
+    args[4] = arg4;
+    snprintf(arg5, sizeof(arg5), "%s.csp", action);
     args[5] = arg5;
     args[6] = NULL;
 
