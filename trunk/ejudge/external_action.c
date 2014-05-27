@@ -32,6 +32,8 @@
 #include <dlfcn.h>
 #include <string.h>
 
+#define CHECK_INTERVAL 60
+
 typedef struct ExternalActionDependency
 {
     unsigned char *lhs; // left-hand side of the dependency
@@ -387,13 +389,14 @@ external_action_load(
         ExternalActionState *state,
         const unsigned char *dir,
         const unsigned char *action,
-        const unsigned char *name_prefix)
+        const unsigned char *name_prefix,
+        time_t current_time)
 {
     unsigned char action_buf[128];
 
     if (!initialized_flag) initialize_module();
 
-    if (state && state->action_handler) return state;
+    if (state && state->action_handler && state->last_check_time > 0 && current_time < state->last_check_time + CHECK_INTERVAL) return state;
 
     if (!state) {
         XCALLOC(state, 1);

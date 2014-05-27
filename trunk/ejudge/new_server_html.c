@@ -6863,7 +6863,8 @@ error_page(
   error_states[error_code] = external_action_load(error_states[error_code],
                                                   "csp/contests",
                                                   error_name,
-                                                  "csp_get_");
+                                                  "csp_get_",
+                                                  phr->current_time);
   if (!error_states[error_code]) {
     return ns_html_error(out_f, phr, priv_mode, error_code);
   }
@@ -6888,7 +6889,8 @@ priv_external_action(FILE *out_f, struct http_request_info *phr)
     external_priv_action_states[action] = external_action_load(external_priv_action_states[action],
                                                                "csp/contests",
                                                                external_priv_action_names[action],
-                                                               "csp_get_");
+                                                               "csp_get_",
+                                                               phr->current_time);
   }
 
   if (external_priv_action_states[action] && external_priv_action_states[action]->action_handler) {
@@ -10261,7 +10263,8 @@ unpriv_external_action(FILE *out_f, struct http_request_info *phr)
     external_unpriv_action_states[action] = external_action_load(external_unpriv_action_states[action],
                                                                  "csp/contests",
                                                                  external_unpriv_action_names[action],
-                                                                 "csp_get_");
+                                                                 "csp_get_",
+                                                                 phr->current_time);
   }
 
   if (external_unpriv_action_states[action] && external_unpriv_action_states[action]->action_handler) {
