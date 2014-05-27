@@ -38,6 +38,10 @@ typedef struct PageInterface
 typedef struct ExternalActionState
 {
     time_t last_check_time;
+    unsigned char *src_dir;
+    unsigned char *gen_dir;
+    unsigned char *obj_dir;
+    unsigned char *bin_dir;
     void *dl_handle;
     void *action_handler;
     unsigned char *err_msg;
