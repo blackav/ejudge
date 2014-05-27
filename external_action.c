@@ -322,6 +322,140 @@ fix_action(
     return buf;
 }
 
+int
+func2()
+{
+    unsigned char arg0[PATH_MAX];
+    unsigned char arg1[PATH_MAX];
+    unsigned char arg3[PATH_MAX];
+    unsigned char arg5[PATH_MAX];
+    char *args[7];
+    unsigned char *stderr_text = NULL;
+    unsigned char full_src_dir[PATH_MAX];
+    unsigned char full_gen_dir[PATH_MAX];
+
+    snprintf(full_gen_dir, sizeof(full_gen_dir), "%s/%s", csp_gen_path, dir);
+    os_MakeDirPath(full_gen_dir, 0700);
+
+    snprintf(arg0, sizeof(arg0), "%s/ej-page-gen", EJUDGE_SERVER_BIN_PATH);
+    args[0] = arg0;
+    snprintf(arg1, sizeof(arg1), "%s.csp", action);
+    args[1] = arg1;
+    args[2] = "-d";
+    snprintf(arg3, sizeof(arg3), "%s/%s/%s.ds", csp_gen_path, dir, action);
+    args[3] = arg3;
+    args[4] = "-o";
+    snprintf(arg5, sizeof(arg5), "%s/%s/%s.c", csp_gen_path, dir, action);
+    args[5] = arg5;
+    args[6] = NULL;
+
+    snprintf(full_src_dir, sizeof(full_src_dir), "%s/%s", csp_src_path, dir);
+    int ret = ejudge_invoke_process(args, NULL, full_src_dir, NULL, NULL,
+                                    0, NULL, &stderr_text);
+    /*
+int
+ejudge_invoke_process(
+        char **args,
+        char **envs,
+        const unsigned char *workdir,
+        const unsigned char *stdin_file,
+        const unsigned char *stdin_text,
+        int merge_out_flag,
+        unsigned char **stdout_text,
+        unsigned char **stderr_text);
+    */
+
+
+}
+
+int
+func3()
+{
+    snprintf(full_src_dir, sizeof(full_src_dir), "%s/%s", csp_src_path, dir);
+    snprintf(full_gen_dir, sizeof(full_gen_dir), "%s/%s", csp_gen_path, dir);
+    snprintf(full_obj_dir, sizeof(full_obj_dir), "%s/%s", csp_obj_path, dir);
+    snprintf(full_bin_dir, sizeof(full_bin_dir), "%s/%s", csp_bin_path, dir);
+
+    os_MakeDirPath(full_gen_dir, 0700);
+    os_MakeDirPath(full_obj_dir, 0700);
+
+    // generate makefile
+    snprintf(mfile, sizeof(mfile), "%s/%s.make", full_gen_dir, action);
+    out_m = fopen(mfile, "w");
+    fprintf(out_m, "all :\n");
+    if (enable_i_c) {
+        fprintf(out_m, "\t-rm -f \"I_%s.c\"\n", action);
+        fprintf(out_m, "\tln -s \"%s/I_%s.c\" \"I_%s.c\"\n", full_src_dir, action, action);
+    }
+    fprintf(out_m, "\t$(CC) $(CCOMPFLAGS) ${WPTRSIGN} $(LDFLAGS) -MM %s.c", action);
+    if (enable_i_c) {
+        fprintf(out_m, " I_%s.c", action);
+    }
+    fprintf(out_m, " > %s.dc\n", action);
+    fprintf(out_m, "\t$(CC) $(CCOMPFLAGS) ${WPTRSIGN} $(LDFLAGS) %s.c", action);
+    if (enable_i_c) {
+        fprintf(out_m, " I_%s.c", action);
+    }
+    fprintf(out_m, " -o %s/%s.so\n", full_obj_dir, action);
+    fprintf(out_m, "\tmv %s/%s.so %s/%s.so\n", full_obj_dir, action, full_bin_dir, action);
+    fclose(out_m); out_m = NULL;
+
+    args[0] = "/usr/bin/make";
+    args[1] = "-f";
+    snprintf(arg2, sizeof(arg2), "%s.make", action);
+    args[2] = arg2;
+    args[3] = "all";
+    args[4] = NULL;
+
+    int res = ejudge_invoke_process(args, NULL, full_gen_dir, NULL, NULL, 0, NULL, &stderr_text);
+    /*
+int
+ejudge_invoke_process(
+        char **args,
+        char **envs,
+        const unsigned char *workdir,
+        const unsigned char *stdin_file,
+        const unsigned char *stdin_text,
+        int merge_out_flag,
+        unsigned char **stdout_text,
+        unsigned char **stderr_text);
+    */
+
+}
+
+int
+func()
+{
+    unsigned char csp_name[PATH_MAX];
+    snprintf(csp_name, sizeof(csp_name), "%s/%s/%s.csp", csp_src_path, dir, action);
+
+    struct stat stb;
+    if (stat(csp_name, &stb) < 0) {
+        fprintf(stderr, "File '%s' does not exist\n", csp_name);
+        return -1;
+    }
+    if (!S_ISREG(stb.st_mode)) {
+        fprintf(stderr, "File '%s' is not a regular file\n", csp_name);
+        return -1;
+    }
+    if (access(csp_name, R_OK) < 0) {
+        fprintf(stderr, "File '%s' is not readable\n", csp_name);
+        return -1;
+    }
+
+    unsigned char i_c_name[PATH_MAX];
+    snprintf(i_c_name, sizeof(i_c_name), "%s/%s/I_%s.c", csp_src_path, dir, action);
+    if (stat(i_c_name, &stb) < 0) {
+        i_c_name[0] = 0;
+    } else if (!S_ISREG(stb.st_mode)) {
+        fprintf(stderr, "File '%s' is not a regular file\n", i_c_name);
+        i_c_name[0] = 0;
+    } else if (access(i_c_name, R_OK) < 0) {
+        fprintf(stderr, "File '%s' is not readable\n", i_c_name);
+        i_c_name[0] = 0;
+    }
+}
+
 static int
 try_load_action(
         ExternalActionState *state,
@@ -407,7 +541,7 @@ external_action_load(
         return state;
     }
     */
-    if (try_load_action(state, EJUDGE_LIBEXEC_DIR "/ejudge", dir, action_buf, name_prefix) >= 0) {
+    if (try_load_action(state, csp_bin_path, dir, action_buf, name_prefix) >= 0) {
         return state;
     }
 
