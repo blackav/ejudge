@@ -18,6 +18,7 @@
  */
 
 #include <stdio.h>
+#include <time.h>
 
 struct PageInterface;
 struct http_request_info;
@@ -36,6 +37,7 @@ typedef struct PageInterface
 
 typedef struct ExternalActionState
 {
+    time_t last_check_time;
     void *dl_handle;
     void *action_handler;
     unsigned char *err_msg;
@@ -46,7 +48,8 @@ external_action_load(
         ExternalActionState *state,
         const unsigned char *dir,
         const unsigned char *action,
-        const unsigned char *name_prefix);
+        const unsigned char *name_prefix,
+        time_t current_time);
 
 #endif /* __EXTERNAL_ACTION_H__ */
 

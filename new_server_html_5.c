@@ -2501,7 +2501,8 @@ error_page(
   error_states[error_code] = external_action_load(error_states[error_code],
                                                   "csp/contests",
                                                   error_name,
-                                                  "csp_get_");
+                                                  "csp_get_",
+                                                  phr->current_time);
   if (!error_states[error_code]) {
     return ns_html_error(out_f, phr, 0, error_code);
   }
@@ -2526,7 +2527,8 @@ reg_external_action(FILE *out_f, struct http_request_info *phr, int action)
     external_reg_action_states[action] = external_action_load(external_reg_action_states[action],
                                                               "csp/contests",
                                                               external_reg_action_names[action],
-                                                              "csp_get_");
+                                                              "csp_get_",
+                                                              phr->current_time);
   }
 
   if (external_reg_action_states[action] && external_reg_action_states[action]->action_handler) {
