@@ -216,6 +216,8 @@ local_install: ${TARGETS} ejudge-config po mo
 	#mkdir -p "${DESTDIR}${includedir}/ejudge"
 	#for i in problem_plugin_impl.h problem_plugin.h ejudge_plugin.h ej_types.h iterators.h contest_plugin.h; do install -m 644 $$i "${DESTDIR}${includedir}/ejudge"; done
 	cp -rpd include "${DESTDIR}${prefix}"
+	install -d "${DESTDIR}${libdir}/ejudge/make"
+	install -m 0644 csp_header.make "${DESTDIR}${libdir}/ejudge/make"
 
 install: local_install
 	$(MAKE) -C reuse DESTDIR="${DESTDIR}" install
