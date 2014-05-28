@@ -36,7 +36,7 @@
   title = _("Contest selection");
 %><%@include "unpriv_simple_header.csp"
 %><s:form>
-<s:hidden ac="change-language" />
+<s:hidden name="action" ac="change-language" />
 <div class="user_actions"><table class="menu"><tr>
 <td class="menu"><div class="user_action_item"><s:tr>language</s:tr>: <% l10n_html_locale_select(out_f, phr->locale_id); %></div></td>
 <td class="menu"><div class="user_action_item"><s:submit name="submit" label="Change Language" /></div></td>
