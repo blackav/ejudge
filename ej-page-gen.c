@@ -5066,7 +5066,9 @@ main(int argc, char *argv[])
     if (output_name && deps_name) {
         dep_f = fopen(deps_name, "w");
         if (!dep_f) fatal("cannot open output file '%s'", deps_name);
-        fprintf(dep_f, "%s : %s", output_name, source_path);
+        unsigned char *last_name = os_GetLastname(output_name);
+        fprintf(dep_f, "%s : %s", last_name, source_path);
+        xfree(last_name);
     }
 
     int result = 0;
