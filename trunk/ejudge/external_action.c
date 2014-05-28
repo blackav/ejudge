@@ -109,6 +109,18 @@ external_action_deps_add(ExternalActionDependencies *dd, ExternalActionDependenc
     dd->v[dd->u++] = d;
 }
 
+ExternalActionDependency *
+external_action_deps_find(ExternalActionDependencies *dd, const unsigned char *file)
+{
+    if (!dd) return NULL;
+    for (int i = 0; i < dd->u; ++i) {
+        if (!strcmp(dd->v[i]->lhs, file)) {
+            return dd->v[i];
+        }
+    }
+    return NULL;
+}
+
 static int
 do_getc(FILE *f)
 {
@@ -235,6 +247,53 @@ external_action_parse_deps(
     return 0;
 }
 
+typedef struct FileInfo
+{
+    unsigned char *path;
+    time_t check_time;
+    time_t mod_time;
+} FileInfo;
+
+static int fileinfo_u, fileinfo_a;
+static FileInfo **fileinfos;
+
+static FileInfo *
+file_info_get(
+        const unsigned char *path,
+        time_t current_time,
+        int force_check)
+{
+    int i;
+    struct stat stb;
+    FileInfo *fi = NULL;
+    for (i = 0; i < fileinfo_u; ++i) {
+        fi = fileinfos[i];
+        if (!strcmp(fi->path, path)) {
+            if (force_check || fi->check_time + CHECK_INTERVAL <= current_time) {
+                fi->check_time = current_time;
+                fi->mod_time = 0;
+                if (stat(path, &stb) >= 0) {
+                    fi->mod_time = stb.st_mtime;
+                }
+            }
+            return fi;
+        }
+    }
+    if (!fileinfos) {
+        XCALLOC(fileinfos, fileinfo_a = 16);
+    } else if (fileinfo_u == fileinfo_a) {
+        XREALLOC(fileinfos, fileinfo_a *= 2);
+    }
+    XCALLOC(fi, 1);
+    fi->path = xstrdup(path);
+    fi->check_time = current_time;
+    if (stat(path, &stb) >= 0) {
+        fi->mod_time = stb.st_mtime;
+    }
+    fileinfos[fileinfo_u++] = fi;
+    return fi;
+}
+
 /*
   PREFIX = /opt/ejudge
   ${PREFIX}/share/ejudge -- source path
@@ -307,24 +366,6 @@ initialize_module(void)
     initialized_flag = 1;
 }
 
-ExternalActionState *
-external_action_state_create(const unsigned char *dir)
-{
-    ExternalActionState *state = NULL;
-    unsigned char path[PATH_MAX];
-
-    XCALLOC(state, 1);
-    snprintf(path, sizeof(path), "%s/%s", csp_src_path, dir);
-    state->src_dir = xstrdup(path);
-    snprintf(path, sizeof(path), "%s/%s", csp_gen_path, dir);
-    state->gen_dir = xstrdup(path);
-    snprintf(path, sizeof(path), "%s/%s", csp_obj_path, dir);
-    state->obj_dir = xstrdup(path);
-    snprintf(path, sizeof(path), "%s/%s", csp_bin_path, dir);
-    state->bin_dir = xstrdup(path);
-    return state;
-}
-
 static const unsigned char *
 fix_action(
         unsigned char *buf,
@@ -342,11 +383,50 @@ fix_action(
     return buf;
 }
 
+ExternalActionState *
+external_action_state_create(
+        const unsigned char *dir, 
+        const unsigned char *action)
+{
+    ExternalActionState *state = NULL;
+    unsigned char path[PATH_MAX];
+    unsigned char action_buf[256];
+
+    XCALLOC(state, 1);
+    state->package = xstrdup(dir);
+
+    snprintf(path, sizeof(path), "%s/%s", csp_gen_path, dir);
+    state->gen_dir = xstrdup(path);
+    snprintf(path, sizeof(path), "%s/%s", csp_obj_path, dir);
+    state->obj_dir = xstrdup(path);
+    snprintf(path, sizeof(path), "%s/%s", csp_bin_path, dir);
+    state->bin_dir = xstrdup(path);
+
+    fix_action(action_buf, sizeof(action_buf), action);
+    state->action = xstrdup(action_buf);
+
+    snprintf(path, sizeof(path), "%s/%s.so", state->bin_dir, state->action);
+    state->so_path = xstrdup(path);
+
+    return state;
+}
+
+void
+external_action_state_unload(ExternalActionState *state)
+{
+    if (state) {
+        state->action_handler = NULL;
+        if (state->dl_handle) {
+            dlclose(state->dl_handle);
+            state->dl_handle = NULL;
+        }
+    }
+}
+
 static int
 invoke_page_gen(
         FILE *log_f,
-        ExternalActionState *state,
-        const unsigned char *action)
+        ExternalActionState *state)
 {
     unsigned char arg0[PATH_MAX];
     unsigned char arg2[PATH_MAX];
@@ -358,12 +438,12 @@ invoke_page_gen(
     snprintf(arg0, sizeof(arg0), "%s/ej-page-gen", EJUDGE_SERVER_BIN_PATH);
     args[0] = arg0;
     args[1] = "-d";
-    snprintf(arg2, sizeof(arg2), "%s/%s.ds", state->gen_dir, action);
+    snprintf(arg2, sizeof(arg2), "%s/%s.ds", state->gen_dir, state->action);
     args[2] = arg2;
     args[3] = "-o";
-    snprintf(arg4, sizeof(arg4), "%s/%s.c", state->gen_dir, action);
+    snprintf(arg4, sizeof(arg4), "%s/%s.c", state->gen_dir, state->action);
     args[4] = arg4;
-    snprintf(arg5, sizeof(arg5), "%s.csp", action);
+    snprintf(arg5, sizeof(arg5), "%s.csp", state->action);
     args[5] = arg5;
     args[6] = NULL;
 
@@ -385,36 +465,35 @@ static int
 invoke_gcc(
         FILE *log_f,
         ExternalActionState *state,
-        const unsigned char *action,
         int enable_i_c)
 {
     unsigned char mfile[PATH_MAX];
-    snprintf(mfile, sizeof(mfile), "%s/%s.make", state->gen_dir, action);
+    snprintf(mfile, sizeof(mfile), "%s/%s.make", state->gen_dir, state->action);
     FILE *out_m = fopen(mfile, "w");
     fprintf(out_m, "include %s/lib/ejudge/make/csp_header.make\n\n", EJUDGE_PREFIX_DIR);
     fprintf(out_m, "all :\n");
     if (enable_i_c) {
-        fprintf(out_m, "\t-rm -f \"I_%s.c\"\n", action);
-        fprintf(out_m, "\tln -s \"%s/I_%s.c\" \"I_%s.c\"\n", state->src_dir, action, action);
+        fprintf(out_m, "\t-rm -f \"I_%s.c\"\n", state->action);
+        fprintf(out_m, "\tln -s \"%s/I_%s.c\" \"I_%s.c\"\n", state->src_dir, state->action, state->action);
     }
-    fprintf(out_m, "\t$(CC) $(CCOMPFLAGS) ${WPTRSIGN} $(LDFLAGS) -MM %s.c", action);
+    fprintf(out_m, "\t$(CC) $(CCOMPFLAGS) ${WPTRSIGN} $(LDFLAGS) -MM %s.c", state->action);
     if (enable_i_c) {
-        fprintf(out_m, " I_%s.c", action);
+        fprintf(out_m, " I_%s.c", state->action);
     }
-    fprintf(out_m, " > %s.dc\n", action);
-    fprintf(out_m, "\t$(CC) $(CCOMPFLAGS) ${WPTRSIGN} $(LDFLAGS) %s.c", action);
+    fprintf(out_m, " > %s.dc\n", state->action);
+    fprintf(out_m, "\t$(CC) $(CCOMPFLAGS) ${WPTRSIGN} $(LDFLAGS) %s.c", state->action);
     if (enable_i_c) {
-        fprintf(out_m, " I_%s.c", action);
+        fprintf(out_m, " I_%s.c", state->action);
     }
-    fprintf(out_m, " -o %s/%s.so\n", state->obj_dir, action);
-    fprintf(out_m, "\tmv %s/%s.so %s/%s.so\n", state->obj_dir, action, state->bin_dir, action);
+    fprintf(out_m, " -o %s/%s.so\n", state->obj_dir, state->action);
+    fprintf(out_m, "\tmv %s/%s.so %s\n", state->obj_dir, state->action, state->so_path);
     fclose(out_m); out_m = NULL;
 
     char *args[5];
     unsigned char arg2[PATH_MAX];
     args[0] = "/usr/bin/make";
     args[1] = "-f";
-    snprintf(arg2, sizeof(arg2), "%s.make", action);
+    snprintf(arg2, sizeof(arg2), "%s.make", state->action);
     args[2] = arg2;
     args[3] = "all";
     args[4] = NULL;
@@ -435,57 +514,313 @@ invoke_gcc(
 }
 
 static int
-full_recompile(
+update_src_dir(
         FILE *log_f,
-        ExternalActionState *state,
-        const unsigned char *dir,
-        const unsigned char *action)
+        ExternalActionState *state)
 {
     unsigned char src_dir[PATH_MAX];
     unsigned char csp_name[PATH_MAX];
-
-    snprintf(src_dir, sizeof(src_dir), "%s/%s", EJUDGE_CONTESTS_HOME_DIR, dir);
-    snprintf(csp_name, sizeof(csp_name), "%s/%s.csp", src_dir, action);
     struct stat stb;
-    if (stat(csp_name, &stb) < 0) {
-        snprintf(src_dir, sizeof(src_dir), "%s/%s", csp_src_path, dir);
-        snprintf(csp_name, sizeof(csp_name), "%s/%s.csp", src_dir, action);
-    }
-    if (stat(csp_name, &stb) < 0) {
-        fprintf(stderr, "File '%s' does not exist\n", csp_name);
-        return -1;
-    }
-    xfree(state->src_dir);
-    state->src_dir = xstrdup(src_dir);
 
+    snprintf(src_dir, sizeof(src_dir), "%s/%s", EJUDGE_CONTESTS_HOME_DIR, state->package);
+    snprintf(csp_name, sizeof(csp_name), "%s/%s.csp", src_dir, state->action);
+    if (stat(csp_name, &stb) < 0) {
+        snprintf(src_dir, sizeof(src_dir), "%s/%s", csp_src_path, state->package);
+        snprintf(csp_name, sizeof(csp_name), "%s/%s.csp", src_dir, state->action);
+        if (stat(csp_name, &stb) < 0) {
+            fprintf(stderr, "Action file '%s.csp' does not exist neither in '%s/%s' nor in '%s/%s'\n",
+                    state->action, EJUDGE_CONTESTS_HOME_DIR, state->package, csp_src_path, state->package);
+            return -1;
+        }
+    }
     if (!S_ISREG(stb.st_mode)) {
-        fprintf(stderr, "File '%s' is not a regular file\n", csp_name);
+        fprintf(stderr, "Action file '%s' is not a regular file\n", csp_name);
         return -1;
     }
     if (access(csp_name, R_OK) < 0) {
-        fprintf(stderr, "File '%s' is not readable\n", csp_name);
+        fprintf(stderr, "Action file '%s' is not readable\n", csp_name);
         return -1;
     }
 
+    if (!state->src_dir || strcmp(state->src_dir, src_dir) != 0) {
+        xfree(state->src_dir);
+        state->src_dir = xstrdup(src_dir);
+        return 1;
+    }
+    return 0;
+}
+
+static int
+full_recompile(
+        FILE *log_f,
+        ExternalActionState *state)
+{
     unsigned char i_c_name[PATH_MAX];
     int enable_i_c = 0;
-    snprintf(i_c_name, sizeof(i_c_name), "%s/I_%s.c", state->src_dir, action);
+    struct stat stb;
+    snprintf(i_c_name, sizeof(i_c_name), "%s/I_%s.c", state->src_dir, state->action);
     if (stat(i_c_name, &stb) < 0) {
     } else if (!S_ISREG(stb.st_mode)) {
-        fprintf(log_f, "File '%s' is not a regular file\n", i_c_name);
+        fprintf(log_f, "Support file '%s' is not a regular file\n", i_c_name);
     } else if (access(i_c_name, R_OK) < 0) {
-        fprintf(log_f, "File '%s' is not readable\n", i_c_name);
+        fprintf(log_f, "Support file '%s' is not readable\n", i_c_name);
     } else {
         enable_i_c = 1;
     }
 
-    int ret = invoke_page_gen(log_f, state, action);
+    int ret = invoke_page_gen(log_f, state);
     if (ret < 0) return ret;
-    ret = invoke_gcc(log_f, state, action, enable_i_c);
+    ret = invoke_gcc(log_f, state, enable_i_c);
     if (ret < 0) return ret;
 
-    // FIXME: load deps
     return 0;
+}
+
+static int
+check_so_file(
+        FILE *log_f,
+        ExternalActionState *state,
+        const unsigned char *path)
+{
+    int retval = 0;
+    struct stat stb;
+    xfree(state->err_msg);
+    state->err_msg = NULL;
+    if (lstat(path, &stb) < 0) {
+        retval = -errno;
+        state->err_msg = xstrdup(strerror(-retval));
+    } else if (S_ISLNK(stb.st_mode)) {
+        retval = -ELOOP;
+        state->err_msg = xstrdup(strerror(-retval));
+    } else if (!S_ISREG(stb.st_mode)) {
+        retval = -EISDIR;
+        state->err_msg = xstrdup(strerror(-retval));
+    } else if (access(path, X_OK | R_OK) < 0) {
+        retval = -errno;
+        state->err_msg = xstrdup(strerror(-retval));
+    }
+    return retval;
+}
+
+static ExternalActionDependencies *external_deps = NULL;
+
+static int
+load_ds_file(
+        FILE *log_f,
+        ExternalActionState *state)
+{
+    unsigned char path[PATH_MAX];
+
+    if (!external_deps) {
+        XCALLOC(external_deps, 1);
+    }
+
+    snprintf(path, sizeof(path), "%s/%s.ds", state->gen_dir, state->action);
+    FILE *f = fopen(path, "r");
+    if (!f) {
+        fprintf(log_f, "Dependency file '%s' does not exist\n", path);
+        return -1;
+    }
+    if (external_action_parse_deps(log_f, f, external_deps) < 0) {
+        fprintf(log_f, "Parsing of dependency file '%s' failed\n", path);
+        return -1;
+    }
+    fclose(f); f = NULL;
+    return 0;
+}
+
+static int
+check_deps(
+        FILE *log_f,
+        ExternalActionState *state,
+        time_t current_time)
+{
+    unsigned char c_file[PATH_MAX];
+    snprintf(c_file, sizeof(c_file), "%s.c", state->action);
+    ExternalActionDependency *d = external_action_deps_find(external_deps, c_file);
+    if (!d) {
+        return 1;
+    }
+    FileInfo *so_info = file_info_get(state->so_path, current_time, 0);
+    if (!so_info || so_info->mod_time <= 0) {
+        return 1;
+    }
+    for (int i = 0; i < d->rhs_u; ++i) {
+        unsigned char rhs_path[PATH_MAX];
+        snprintf(rhs_path, sizeof(rhs_path), "%s/%s", state->src_dir, d->rhs[i]);
+        FileInfo *csp_info = file_info_get(rhs_path, current_time, 0);
+        if (csp_info && csp_info->mod_time > 0 && csp_info->mod_time > so_info->mod_time) {
+            return 1;
+        }
+    }
+    unsigned char i_c_path[PATH_MAX];
+    snprintf(i_c_path, sizeof(i_c_path), "%s/I_%s.c", state->src_dir, state->action);
+    struct stat stb;
+    if (stat(i_c_path, &stb) > 0) {
+        FileInfo *i_c_info = file_info_get(i_c_path, current_time, 0);
+        if (i_c_info && i_c_info->mod_time > 0 && i_c_info->mod_time > so_info->mod_time) {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+static int
+load_so_file(
+        FILE *log_f,
+        ExternalActionState *state,
+        const unsigned char *name_prefix,
+        time_t current_time)
+{
+    int retval = 0;
+    unsigned char func_name[1024];
+
+    xfree(state->err_msg); state->err_msg = NULL;
+
+    state->dl_handle = dlopen(state->so_path, RTLD_GLOBAL | RTLD_NOW);
+    if (!state->dl_handle) {
+        state->err_msg = xstrdup(dlerror());
+        retval = -ENOEXEC;
+        goto done;
+    }
+
+    snprintf(func_name, sizeof(func_name), "%s%s", name_prefix, state->action);
+    state->action_handler = dlsym(state->dl_handle, func_name);
+    if (!state->action_handler) {
+        state->err_msg = xstrdup(dlerror());
+        external_action_state_unload(state);
+        retval = -ESRCH;
+        goto done;
+    }
+
+done:
+    state->last_check_time = current_time;
+    return retval;
+}
+
+static int
+recompile_and_load(
+        FILE *log_f,
+        ExternalActionState *state,
+        const unsigned char *name_prefix,
+        time_t current_time)
+{
+    int retval = 0;
+
+    xfree(state->err_msg); state->err_msg = NULL;
+
+    if (full_recompile(log_f, state) < 0) {
+        state->err_msg = xstrdup("Compilation failed, see log for details");
+        retval = -EINVAL;
+        goto done;
+    }
+
+    if ((retval = check_so_file(log_f, state, state->so_path)) < 0) {
+        goto done;
+    }
+
+    if (load_ds_file(log_f, state) < 0) {
+        state->err_msg = xstrdup("Failed to load .csp dependencies file");
+        retval = -EINVAL;
+        goto done;
+    }
+
+    return load_so_file(log_f, state, name_prefix, current_time);
+
+done:
+    state->last_check_time = current_time;
+    return retval;
+}
+
+static int
+first_load(
+        FILE *log_f,
+        ExternalActionState *state,
+        const unsigned char *name_prefix,
+        time_t current_time)
+{
+    struct stat stb;
+    if (lstat(state->so_path, &stb) < 0) {
+        if (update_src_dir(log_f, state) < 0) {
+            state->last_check_time = current_time;
+            return -1;
+        }
+        return recompile_and_load(log_f, state, name_prefix, current_time);
+    }
+
+    if (update_src_dir(log_f, state) < 0) {
+        return recompile_and_load(log_f, state, name_prefix, current_time);
+    }
+    if (load_ds_file(log_f, state) < 0) {
+        return recompile_and_load(log_f, state, name_prefix, current_time);
+    }
+    if (check_deps(log_f, state, current_time)) {
+        return recompile_and_load(log_f, state, name_prefix, current_time);
+    }
+    return load_so_file(log_f, state, name_prefix, current_time);
+}
+
+/*
+static int
+reload_action(
+        ExternalActionState *state,
+        const unsigned char *name_prefix)
+{
+    unsigned char full_path[PATH_MAX];
+    unsigned char full_name[PATH_MAX];
+    int retval = 0;
+
+    snprintf(full_path, sizeof(full_path), "%s/%s.so", state->bin_dir, state->action);
+
+    if (full_recompile(stderr, state) < 0) {
+        xfree(state->err_msg);
+        state->err_msg = xstrdup("Compilation failed, see log for details");
+        return -EINVAL;
+    }
+    
+    struct stat stb;
+    if (lstat(full_path, &stb) < 0) {
+        goto fail_use_errno;
+    }
+    if (S_ISLNK(stb.st_mode)) {
+        retval = -ELOOP;
+        goto fail_with_errno;
+    }
+    if (!S_ISREG(stb.st_mode)) {
+        retval = -EISDIR;
+        goto fail_with_errno;
+    }
+    if (access(full_path, X_OK | R_OK) < 0) {
+        goto fail_use_errno;
+    }
+    state->dl_handle = dlopen(full_path, RTLD_GLOBAL | RTLD_NOW);
+    if (!state->dl_handle) {
+        retval = -ENOEXEC;
+        goto fail_use_dlerror;
+    }
+    snprintf(full_name, sizeof(full_name), "%s%s", name_prefix, state->action);
+    state->action_handler = dlsym(state->dl_handle, full_name);
+    if (!state->action_handler) {
+        retval = -ESRCH;
+        goto fail_use_dlerror;
+    }
+    retval = 0;
+    return retval;
+
+fail_use_errno:
+    retval = -errno;
+
+fail_with_errno:
+    xfree(state->err_msg);
+    state->err_msg = xstrdup(strerror(-retval));
+    return retval;
+
+fail_use_dlerror:
+    xfree(state->err_msg);
+    state->err_msg = xstrdup(dlerror());
+    external_action_state_unload(state);
+    return retval;
 }
 
 static int
@@ -503,7 +838,7 @@ try_load_action(
 
     struct stat stb;
     if (lstat(full_path, &stb) < 0) {
-        if (full_recompile(stderr, state, dir, action) < 0) {
+        if (full_recompile(stderr, state) < 0) {
             xfree(state->err_msg);
             state->err_msg = "Compilation failed";
             return -1;
@@ -555,6 +890,7 @@ fail_use_dlerror:
     }
     return retval;
 }
+*/
 
 ExternalActionState *
 external_action_load(
@@ -564,10 +900,23 @@ external_action_load(
         const unsigned char *name_prefix,
         time_t current_time)
 {
-    unsigned char action_buf[128];
-
     if (!initialized_flag) initialize_module();
 
+    if (!state) {
+        state = external_action_state_create(dir, action);
+        os_MakeDirPath(state->gen_dir, 0700);
+        os_MakeDirPath(state->obj_dir, 0700);
+        os_MakeDirPath(state->bin_dir, 0700);
+
+        if (first_load(stderr, state, name_prefix, current_time) < 0) {
+            err("page load error: %s", state->err_msg);
+        }
+        return state;
+    }
+
+
+
+    /*
     if (state && state->action_handler && state->last_check_time > 0 && current_time < state->last_check_time + CHECK_INTERVAL) return state;
 
     if (!state) {
@@ -580,7 +929,7 @@ external_action_load(
     if (try_load_action(state, dir, action_buf, name_prefix) >= 0) {
         return state;
     }
-
+    */
     err("page load error: %s", state->err_msg);
     return state;
 }
