@@ -2503,7 +2503,7 @@ error_page(
                                                   error_name,
                                                   "csp_get_",
                                                   phr->current_time);
-  if (!error_states[error_code]) {
+  if (!error_states[error_code] || !error_states[error_code]->action_handler) {
     return ns_html_error(out_f, phr, 0, error_code);
   }
   PageInterface *pg = ((external_action_handler_t) error_states[error_code]->action_handler)();
