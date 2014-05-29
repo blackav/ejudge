@@ -817,6 +817,7 @@ external_action_load(
     if (check_and_compile_and_load(stderr, state, name_prefix, current_time) < 0) {
         err("page load error: %s", state->err_msg);
     }
+    state->last_check_time = current_time;
     return state;
 }
 
