@@ -761,136 +761,28 @@ first_load(
     return load_so_file(log_f, state, name_prefix, current_time);
 }
 
-/*
 static int
-reload_action(
+check_and_compile_and_load(
+        FILE *log_f,
         ExternalActionState *state,
-        const unsigned char *name_prefix)
+        const unsigned char *name_prefix,
+        time_t current_time)
 {
-    unsigned char full_path[PATH_MAX];
-    unsigned char full_name[PATH_MAX];
-    int retval = 0;
+    if (!state->action_handler || !state->dl_handle) {
+        goto need_compile_and_load;
+    }
+    if (update_src_dir(stderr, state) != 0) {
+        goto need_compile_and_load;
+    }
+    if (check_deps(stderr, state, current_time)) {
+        goto need_compile_and_load;
+    }
+    return 0;
 
-    snprintf(full_path, sizeof(full_path), "%s/%s.so", state->bin_dir, state->action);
-
-    if (full_recompile(stderr, state) < 0) {
-        xfree(state->err_msg);
-        state->err_msg = xstrdup("Compilation failed, see log for details");
-        return -EINVAL;
-    }
-    
-    struct stat stb;
-    if (lstat(full_path, &stb) < 0) {
-        goto fail_use_errno;
-    }
-    if (S_ISLNK(stb.st_mode)) {
-        retval = -ELOOP;
-        goto fail_with_errno;
-    }
-    if (!S_ISREG(stb.st_mode)) {
-        retval = -EISDIR;
-        goto fail_with_errno;
-    }
-    if (access(full_path, X_OK | R_OK) < 0) {
-        goto fail_use_errno;
-    }
-    state->dl_handle = dlopen(full_path, RTLD_GLOBAL | RTLD_NOW);
-    if (!state->dl_handle) {
-        retval = -ENOEXEC;
-        goto fail_use_dlerror;
-    }
-    snprintf(full_name, sizeof(full_name), "%s%s", name_prefix, state->action);
-    state->action_handler = dlsym(state->dl_handle, full_name);
-    if (!state->action_handler) {
-        retval = -ESRCH;
-        goto fail_use_dlerror;
-    }
-    retval = 0;
-    return retval;
-
-fail_use_errno:
-    retval = -errno;
-
-fail_with_errno:
-    xfree(state->err_msg);
-    state->err_msg = xstrdup(strerror(-retval));
-    return retval;
-
-fail_use_dlerror:
-    xfree(state->err_msg);
-    state->err_msg = xstrdup(dlerror());
+need_compile_and_load:
     external_action_state_unload(state);
-    return retval;
+    return recompile_and_load(log_f, state, name_prefix, current_time);
 }
-
-static int
-try_load_action(
-        ExternalActionState *state,
-        const unsigned char *dir,
-        const unsigned char *action,
-        const unsigned char *name_prefix)
-{
-    unsigned char full_path[PATH_MAX];
-    unsigned char full_name[PATH_MAX];
-    int retval = 0;
-
-    snprintf(full_path, sizeof(full_path), "%s/%s.so", state->bin_dir, action);
-
-    struct stat stb;
-    if (lstat(full_path, &stb) < 0) {
-        if (full_recompile(stderr, state) < 0) {
-            xfree(state->err_msg);
-            state->err_msg = "Compilation failed";
-            return -1;
-        }
-        if (lstat(full_path, &stb) < 0) {
-            goto fail_use_errno;
-        }
-    }
-    if (S_ISLNK(stb.st_mode)) {
-        retval = -ELOOP;
-        goto fail_with_errno;
-    }
-    if (!S_ISREG(stb.st_mode)) {
-        retval = -EISDIR;
-        goto fail_with_errno;
-    }
-    if (access(full_path, X_OK | R_OK) < 0) {
-        goto fail_use_errno;
-    }
-    state->dl_handle = dlopen(full_path, RTLD_GLOBAL | RTLD_NOW);
-    if (!state->dl_handle) {
-        retval = -ENOEXEC;
-        goto fail_use_dlerror;
-    }
-    snprintf(full_name, sizeof(full_name), "%s%s", name_prefix, action);
-    state->action_handler = dlsym(state->dl_handle, full_name);
-    if (!state->action_handler) {
-        retval = -ESRCH;
-        goto fail_use_dlerror;
-    }
-    retval = 0;
-    return retval;
-
-fail_use_errno:
-    retval = -errno;
-
-fail_with_errno:
-    xfree(state->err_msg);
-    state->err_msg = xstrdup(strerror(-retval));
-    return retval;
-
-fail_use_dlerror:
-    xfree(state->err_msg);
-    state->err_msg = xstrdup(dlerror());
-    state->action_handler = NULL;
-    if (state->dl_handle) {
-        dlclose(state->dl_handle);
-        state->dl_handle = NULL;
-    }
-    return retval;
-}
-*/
 
 ExternalActionState *
 external_action_load(
@@ -914,23 +806,13 @@ external_action_load(
         return state;
     }
 
-
-
-    /*
-    if (state && state->action_handler && state->last_check_time > 0 && current_time < state->last_check_time + CHECK_INTERVAL) return state;
-
-    if (!state) {
-        state = external_action_state_create(dir);
-        os_MakeDirPath(state->gen_dir, 0700);
-        os_MakeDirPath(state->obj_dir, 0700);
-        os_MakeDirPath(state->bin_dir, 0700);
-    }
-    fix_action(action_buf, sizeof(action_buf), action);
-    if (try_load_action(state, dir, action_buf, name_prefix) >= 0) {
+    if (state->last_check_time > 0 && current_time > state->last_check_time + CHECK_INTERVAL) {
         return state;
     }
-    */
-    err("page load error: %s", state->err_msg);
+
+    if (check_and_compile_and_load(stderr, state, name_prefix, current_time) < 0) {
+        err("page load error: %s", state->err_msg);
+    }
     return state;
 }
 
