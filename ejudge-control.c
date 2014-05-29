@@ -445,16 +445,22 @@ main(int argc, char *argv[])
       i++;
     } else if (!strcmp(argv[i], "-nu")) {
       skip_mask |= EJ_USERS_MASK;
+      i++;
     } else if (!strcmp(argv[i], "-ns")) {
       skip_mask |= EJ_SUPER_SERVER_MASK;
+      i++;
     } else if (!strcmp(argv[i], "-no")) {
       skip_mask |= EJ_COMPILE_MASK;
+      i++;
     } else if (!strcmp(argv[i], "-nr")) {
       skip_mask |= EJ_SUPER_RUN_MASK;
+      i++;
     } else if (!strcmp(argv[i], "-nj")) {
       skip_mask |= EJ_JOBS_MASK;
+      i++;
     } else if (!strcmp(argv[i], "-nc")) {
       skip_mask |= EJ_CONTESTS_MASK;
+      i++;
     } else if (!strcmp(argv[i], "--")) {
       i++;
       break;
