@@ -2682,6 +2682,7 @@ run_get_total_users(runlog_state_t state)
       for (int user_id = 1; user_id < user_id_bound; ++user_id) {
         user_count += map[user_id];
       }
+      xfree(map); map = NULL;
     }
     state->user_count = user_count;
   }

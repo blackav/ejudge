@@ -133,6 +133,7 @@ teamdb_get_user_map(
   }
 
   /*
+   * FIXME: why is that?
   env.mem = filter_tree_delete(env.mem);
   filter->stand_user_tree = 0;
   */
