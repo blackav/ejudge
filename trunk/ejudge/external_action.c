@@ -558,6 +558,9 @@ full_recompile(
     unsigned char i_c_name[PATH_MAX];
     int enable_i_c = 0;
     struct stat stb;
+
+    info("Compiling action %s", state->action);
+
     snprintf(i_c_name, sizeof(i_c_name), "%s/I_%s.c", state->src_dir, state->action);
     if (stat(i_c_name, &stb) < 0) {
     } else if (!S_ISREG(stb.st_mode)) {
@@ -806,10 +809,11 @@ external_action_load(
         return state;
     }
 
-    if (state->last_check_time > 0 && current_time > state->last_check_time + CHECK_INTERVAL) {
+    if (state->last_check_time > 0 && current_time < state->last_check_time + CHECK_INTERVAL) {
         return state;
     }
 
+    info("Checking dependencies for action %s", state->action);
     if (check_and_compile_and_load(stderr, state, name_prefix, current_time) < 0) {
         err("page load error: %s", state->err_msg);
     }
