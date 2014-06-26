@@ -37,9 +37,9 @@
       fprintf(out_f, "%s", pw->text);
     }
 %>
-<h2><s:tr>Select another problem</s:tr></h2>
+<div class="h2-long"><h2><s:tr>Select another problem</s:tr></h2></div>
 <s:form>
-<table class="b0">
+<table class="b0 info-table-line">
 <tr><td class="b0"><s:tr>Problem</s:tr>:</td><td class="b0"><%
     html_problem_selection_2(cs, out_f, phr, 0, start_time);
 %></td><td class="b0"><s:submit ac="view-problem-statements" label="Select problem" /></td></tr></table>

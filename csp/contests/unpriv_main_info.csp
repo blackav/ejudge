@@ -1,6 +1,6 @@
 <%
   if (!cnts->exam_mode) {
-%><h2><s:tr>Server status</s:tr></h2>
+%><div class="h2-long"><h2><s:tr>Server status</s:tr></h2></div>
 <p><b><%
     if (stop_time > 0) {
       if (duration > 0 && global->board_fog_time > 0
@@ -76,7 +76,7 @@
     }
 %>
 
-<table class="b0">
+<table class="b0 info-table-line">
 <tr><td class="b0"><s:tr>Server time</s:tr>:</td><td class="b0"><s:v value="cs->current_time" /></td></tr>
 <%    if (start_time > 0) {
 %><tr><td class="b0"><%

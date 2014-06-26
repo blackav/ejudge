@@ -1,4 +1,4 @@
-<h2><s:tr>Problem status summary</s:tr></h2>
+<div class="h2-long"><h2><s:tr>Problem status summary</s:tr></h2></div>
 <%
     if (cnts->exam_mode && global->score_system == SCORE_OLYMPIAD
         && global->is_virtual && stop_time > 0
