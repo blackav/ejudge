@@ -87,46 +87,65 @@
     <s:param name="run_id" value="run_id" />
 </s:url>
 
-<table class="b0"><tr>
-    <td class="b0"><s:a ac="main-page"><s:tr>Main page</s:tr></s:a></td>
-    <td class="b0"><s:a url="ViewSourceUrl"><s:tr>Source</s:tr></s:a></td>
-    <td class="b0"><s:a url="ViewReportUrl"><s:tr>Report</s:tr></s:a></td>
-    <td class="b0"><s:a url="ViewUserReportUrl"><s:tr>User report</s:tr></s:a></td>
-    <td class="b0"><s:a url="ViewAuditLogUrl"><s:tr>Audit log</s:tr></s:a></td>
-</tr></table>
+  <div id="main-menu">
+<ul>
+<li><s:a ac="main-page"><s:tr>Main page</s:tr></s:a></li>
+<li><s:a  class="current" url="ViewSourceUrl"><s:tr>Source</s:tr></s:a></li>
+<li><s:a url="ViewReportUrl"><s:tr>Report</s:tr></s:a></li>
+<li><s:a url="ViewUserReportUrl"><s:tr>User report</s:tr></s:a></li>
+<li><s:a url="ViewAuditLogUrl"><s:tr>Audit log</s:tr></s:a></li>
+</ul></div></div>
 
 <s:url name="PrivEditRunPageUrl" ac="priv-edit-run-page">
     <s:param name="run_id" value="run_id" />
 </s:url>
 
-<h2><s:tr>Information about run</s:tr> <s:v value="run_id" /><%
+<div id="info-brief">
+<div class="h2-long" style="margin-top: 0;"><h2><s:tr>Information about run</s:tr> <s:v value="run_id" /><%
   if (phr->role == USER_ROLE_ADMIN && opcaps_check(phr->caps, OPCAP_EDIT_RUN) >= 0) {
 %> [<s:a url="PrivEditRunPageUrl"><s:tr>Edit</s:tr></s:a>]
-<% } %></h2>
+<% } %></h2></div>
 
-<table>
-<tr><td style="width: 10em;"><s:tr>Run ID</s:tr>:</td><td><s:v value="info.run_id" /></td></tr>
-<tr><td><s:tr>Submission time</s:tr>:</td><td><s:v value="info.time" />:<s:v value="info.nsec" /></td></tr>
-<tr><td><s:tr>Contest time</s:tr>:</td><td><s:v type="duration" value="run_time - start_time, info.nsec" /></td></tr>
-<% #if CONF_HAS_LIBUUID - 0 != 0 %>
-<tr><td>UUID:</td><td><s:v type="uuid" value="info.run_uuid" /></td></tr>
+<div class="table-scroll" style="margin-top: -10px; margin-bottom: 5px;">
+<table class="table">
+<tr><th style="width: 10em;"><s:tr>Run ID</s:tr></th> <th><s:tr>Submission time</s:tr></th> <th><s:tr>Contest time</s:tr></th> <% #if CONF_HAS_LIBUUID - 0 != 0 %>
+<th>UUID</th>
 <% #endif %>
-
+<th><s:tr>Originator IP</s:tr></th>
+<th><s:tr>User ID</s:tr></th>
+<th><s:tr>User login</s:tr></th>
+<th><s:tr>User name</s:tr></th>
+<th><s:tr>Problem</s:tr></th>
+<th><s:tr>Problem</s:tr></th>
+<th><s:tr>Variant</s:tr></th>
+<th><s:tr>Variant</s:tr></th>
+<th><s:tr>Language</s:tr></th>
+<th><s:tr>Language</s:tr></th>
+<th><s:tr>Language</s:tr></th>
+<th><s:tr>EOLN Type</s:tr></th>
+<th><s:tr>Status</s:tr></th>
+<th><s:tr>Tests passed</s:tr></th>
+<th><s:tr>Tests passed</s:tr></th>
+<th><s:tr>Score gained</s:tr></th>
+<th><s:tr>Failed test</s:tr></th>
+<th><s:tr>Score gained</s:tr></th>
+<th><s:tr>Failed test</s:tr></th>
+<th><s:tr>Marked?</s:tr></th>
+</tr>
+<tr><td><s:v value="info.run_id" /></td><td><s:v value="info.time" />:<s:v value="info.nsec" /></td> <td><s:v type="duration" value="run_time - start_time, info.nsec" /></td> <% #if CONF_HAS_LIBUUID - 0 != 0 %>
+<td><s:v type="uuid" value="info.run_uuid" /></td>
+<% #endif %>
 <% snprintf(filtbuf1, sizeof(filtbuf1), "ip == ip(%d)", run_id); %>
 <s:url name="FilteredMainUrl" ac="main-page">
     <s:param name="filter_expr" value="filtbuf1" />
-</s:url>
-<tr><td><s:tr>Originator IP</s:tr></td><td><s:a url="FilteredMainUrl"><s:v value="info.a.ip" /></s:a></td></tr>
-
+</s:url> <td><s:a url="FilteredMainUrl"><s:v value="info.a.ip" /></s:a></td>
 <% snprintf(filtbuf1, sizeof(filtbuf1), "uid == %d", info.user_id); %>
 <s:url name="FilteredMainUrl" ac="main-page">
     <s:param name="filter_expr" value="filtbuf1" />
-</s:url>
-<tr><td><s:tr>User ID</s:tr>:</td><td><s:a url="FilteredMainUrl"><s:v value="info.user_id" /></s:a></td></tr>
+</s:url><td><s:a url="FilteredMainUrl"><s:v value="info.user_id" /></s:a></td>
+<td><s:v value="teamdb_get_login(cs->teamdb_state, info.user_id)" /></td>
+ <td><s:v value="teamdb_get_name(cs->teamdb_state, info.user_id)" /></td>
 
-<tr><td><s:tr>User login</s:tr>:</td><td><s:v value="teamdb_get_login(cs->teamdb_state, info.user_id)" /></td></tr>
-
-<tr><td><s:tr>User name</s:tr>:</td><td><s:v value="teamdb_get_name(cs->teamdb_state, info.user_id)" /></td></tr>
 
 <% if (prob) { %>
 
@@ -134,13 +153,13 @@
 <s:url name="FilteredMainUrl" ac="main-page">
     <s:param name="filter_expr" value="filtbuf1" />
 </s:url>
-<tr><td><s:tr>Problem</s:tr>:</td><td><s:a url="FilteredMainUrl"><s:v value="prob->short_name" escape="false" /> - <s:v value="prob->long_name" /></s:a><%
+<td><s:a url="FilteredMainUrl"><s:v value="prob->short_name" escape="false" /> - <s:v value="prob->long_name" /></s:a><%
     if (prob->xml_file && prob->xml_file[0]) {
 %><s:url name="SubmitPageUrl" ac="priv-submit-page"><s:param name="problem" value="prob->id" /></s:url> <s:a url="SubmitPageUrl">[<s:tr>Statement</s:tr>]</s:a><%
     }
-%></td></tr>
+%></td>
 <% } else { %>
-<tr><td><s:tr>Problem</s:tr>:</td><td>#<s:v value="info.prob_id" /></td></tr>
+<td>#<s:v value="info.prob_id" /></td>
 <% } %>
 
 <% if (prob && prob->variant_num > 0) {
@@ -152,66 +171,68 @@
 <s:url name="FilteredMainUrl" ac="main-page">
     <s:param name="filter_expr" value="filtbuf1" />
 </s:url>
-<tr><td><s:tr>Variant</s:tr>:</td><td><s:a url="FilteredMainUrl"><%
+<td><s:a url="FilteredMainUrl"><%
       if (info.variant > 0) {
 %><s:v value="(int) info.variant" /><%
       } else {
 %><s:v value="variant" /> (implicit)<%
       }
-%></s:a></td></tr>
+%></s:a></td>
 <%    } else { %>
-<tr><td><s:tr>Variant</s:tr>:</td><td><i>unassigned</i></td></tr>
+<td><i>unassigned</i></td>
 <%    } %>
 <% } %>
+
+
 
 <%  if (lang) { %>
 <% snprintf(filtbuf1, sizeof(filtbuf1), "lang == \"%s\"", lang->short_name); %>
 <s:url name="FilteredMainUrl" ac="main-page">
     <s:param name="filter_expr" value="filtbuf1" />
 </s:url>
-<tr><td><s:tr>Language</s:tr>:</td><td><s:a url="FilteredMainUrl" ><s:v escape="false" value="lang->short_name" /> - <s:v value="lang->long_name" /></s:a></td></tr>
+<td><s:a url="FilteredMainUrl" ><s:v escape="false" value="lang->short_name" /> - <s:v value="lang->long_name" /></s:a></td>
 <%  } else if (!info.lang_id) { %>
-<tr><td><s:tr>Language</s:tr>:</td><td>N/A</td></tr>
+<td>N/A</td>
 <%  } else { %>
-<tr><td><s:tr>Language</s:tr>:</td><td>#<s:v value="info.lang_id" /></td></tr>
+<td>#<s:v value="info.lang_id" /></td>
 <%  } %>
 
-<tr><td><s:tr>EOLN Type</s:tr>:</td><td><s:v type="eoln_type" value="info.eoln_type" /></td></tr>
+<td><s:v type="eoln_type" value="info.eoln_type" /></td>
 
 <%
   run_status_to_str_short(bb, sizeof(bb), info.status);
   snprintf(filtbuf1, sizeof(filtbuf1), "status == %s", bb);
 %>
-<tr><td><s:tr>Status</s:tr>:</td><td><s:a url="FilteredMainUrl"><s:v type="run_status" value="info.status" /></s:a></td></tr>
+<td><s:a url="FilteredMainUrl"><s:v type="run_status" value="info.status" /></s:a></td>
 
 <% if (info.passed_mode > 0) { %>
-<tr><td><s:tr>Tests passed</s:tr>:</td><td><s:v value="info.test" checkExpr=">= 0" defstr="N/A" /></td></tr>
+<td><s:v value="info.test" checkExpr=">= 0" defstr="N/A" /></td>
 <% } %>
 
 <%  if (global->score_system == SCORE_KIROV
       || global->score_system == SCORE_OLYMPIAD) {
     if (info.passed_mode <= 0) {
 %>
-<tr><td><s:tr>Tests passed</s:tr>:</td><td><s:v value="info.test - 1" checkExpr=">= 0" defstr="N/A" /></td></tr>
+<td><s:v value="info.test - 1" checkExpr=">= 0" defstr="N/A" /></td>
 <%    } %>
 
-<tr><td><s:tr>Score gained</s:tr>:</td><td><s:v value="info.score" checkExpr=">= 0" defstr="N/A" /></td></tr>
+<td><s:v value="info.score" checkExpr=">= 0" defstr="N/A" /></td>
 <%  } else if (global->score_system == SCORE_MOSCOW) {
     if (info.passed_mode <= 0) {
 %>
-<tr><td><s:tr>Failed test</s:tr>:</td><td><s:v value="info.test" checkExpr="> 0" defstr="N/A" /></td></tr>
+<td><s:v value="info.test" checkExpr="> 0" defstr="N/A" /></td>
 <%    } %>
 
-<tr><td><s:tr>Score gained</s:tr>:</td><td><s:v value="info.score" checkExpr=">= 0" defstr="N/A" /></td></tr>
+<td><s:v value="info.score" checkExpr=">= 0" defstr="N/A" /></td>
 <%  } else { %>
 <%    if (info.passed_mode <= 0) { %>
-<tr><td><s:tr>Failed test</s:tr>:</td><td><s:v value="info.test" checkExpr="> 0" defstr="N/A" /></td></tr>
+<td><s:v value="info.test" checkExpr="> 0" defstr="N/A" /></td>
 <%    }
   }
 %>
 
-<tr><td><s:tr>Marked?</s:tr>:</td><td><s:vb value="info.is_marked" /></td></tr>
-</table>
+<td><s:vb value="info.is_marked" /></td></tr>
+</table></div>
 
 <script language="javascript">
 function setDivVisibility(oper, value)
@@ -235,36 +256,52 @@ function setDivVisibility(oper, value)
 
 <br/>
 
-<table>
-
+<div class="table-scroll" style="margin-top: 7px;">
+<table class="table">
+<tr>
 <% if (!info.lang_id) { %>
-<tr><td><s:tr>Content type</s:tr></td><td><s:v type="mime_type" value="info.mime_type" /></td></tr>
+<th><s:tr>Content type</s:tr></th><td><s:v type="mime_type" value="info.mime_type" /></td>
 <% } %>
-
-<tr><td style="width: 10em;"><s:tr>Imported?</s:tr>:</td><td><s:vb value="info.is_imported" /></td></tr>
-<tr><td><s:tr>Hidden?</s:tr>:</td><td><s:vb value="info.is_hidden" /></td></tr>
-<tr><td><s:tr>Saved?</s:tr>:</td><td><s:vb value="info.is_saved" /></td></tr>
-<tr><td><s:tr>Read-only?</s:tr>:</td><td><s:vb value="info.is_readonly" /></td></tr>
-<tr><td><s:tr>Locale ID</s:tr>:</td><td><s:v value="info.locale_id" /></td></tr>
-
+<th style="width: 10em;"><s:tr>Imported?</s:tr></th>
+<th><s:tr>Hidden?</s:tr></th>
+<th><s:tr>Saved?</s:tr></th>
+<th><s:tr>Read-only?</s:tr></th>
+<th><s:tr>Locale ID</s:tr></th>
 <%  if (global->score_system != SCORE_ACM) { %>
-<tr><td><s:tr>Score adjustment</s:tr>:</td><td><s:v value="info.score_adj" /></td></tr>
+<th><s:tr>Score adjustment</s:tr></th>
 <%  } %>
-
+<th><s:tr>Size</s:tr></th>
+<th><s:tr>Hash value</s:tr></th>
+<th><s:tr>Pages printed</s:tr>:</th>
+</tr>
+<tr>
+<% if (!info.lang_id) { %>
+<td><s:v type="mime_type" value="info.mime_type" /></td>
+<% } %>
+<td><s:vb value="info.is_imported" /></td>
+<td><s:vb value="info.is_hidden" /></td>
+<td><s:vb value="info.is_saved" /></td>
+<td><s:vb value="info.is_readonly" /></td>
+<td><s:v value="info.locale_id" /></td>
+<%  if (global->score_system != SCORE_ACM) { %>
+<td><s:v value="info.score_adj" /></td>
+<%  } %>
 <% snprintf(filtbuf1, sizeof(filtbuf1), "size == size(%d)", run_id); %>
-<tr><td><s:tr>Size</s:tr>:</td><td><s:a url="FilteredMainUrl"><s:v value="info.size" /></s:a></td></tr>
-
+<td><s:a url="FilteredMainUrl"><s:v value="info.size" /></s:a></td>
 <% snprintf(filtbuf1, sizeof(filtbuf1), "hash == hash(%d)", run_id); %>
-<tr><td><s:tr>Hash value</s:tr>:</td><td><s:a url="FilteredMainUrl"><s:v type="sha1" value="info.sha1" /></s:a></td></tr>
+<td><s:a url="FilteredMainUrl"><s:v type="sha1" value="info.sha1" /></s:a></td>
+<td><s:v value="(int) info.pages" /></td>
+</tr>
 
-<tr><td><s:tr>Pages printed</s:tr>:</td><td><s:v value="(int) info.pages" /></td></tr>
 </table>
 </div>
+</div>
 
+ <div id="brief-actions">
 <s:url name="DownloadRunUrl" ac="priv-download-run">
     <s:param name="run_id" value="run_id" />
 </s:url>
-<p><s:a url="DownloadRunUrl"><s:tr>Download run</s:tr></s:a></p>
+<p style="display: inline-block;"><s:a url="DownloadRunUrl"><s:tr>Download run</s:tr></s:a></p>
 
 <% if (phr->role == USER_ROLE_ADMIN && opcaps_check(phr->caps, OPCAP_EDIT_RUN) >= 0 && info.is_readonly <= 0) { %>
 <s:form>
@@ -308,8 +345,11 @@ function setDivVisibility(oper, value)
 </s:form>
 <% } %>
 
+</div>
+</div>
 <hr />
 
+<div id="prog">
 <%  if (prob && prob->type > 0 && info.mime_type > 0) {
     if(info.mime_type >= MIME_TYPE_IMAGE_FIRST
        && info.mime_type <= MIME_TYPE_IMAGE_LAST) {
@@ -336,7 +376,7 @@ function setDivVisibility(oper, value)
         src_len = strlen(src_text);
       }
 %>
-<table class="b0"><% text_table_number_lines(out_f, src_text, src_len, 0, " class=\"b0\""); %></table><br/><hr/>
+<table class="b0"><% text_table_number_lines(out_f, src_text, src_len, 0, " class=\"b0\""); %></table></div>
 <%
       xfree(src_text); src_text = 0;
     }
@@ -349,36 +389,38 @@ function setDivVisibility(oper, value)
     if (generic_read_file(&txt_text, 0, &txt_size, txt_flags, 0,
                           txt_path, 0) >= 0) {
 %>
+
+<div id="output">
 <h2><s:tr>Style checker output</s:tr></h2>
-<pre><s:v value="txt_text" /></pre>
+<pre><s:v value="txt_text" /></pre></div>
 <%
       xfree(txt_text); txt_text = 0; txt_size = 0;
     }
   }
 %>
 
-<h2><s:tr>Send a message about this run</s:tr></h2>
+<hr/ style="clear: both;">
 
-<s:form id="run_comment">
-<s:hidden name="run_id" />
 
-<table class="b0"><tr>
-<td class="b0"><s:submit ac="priv-submit-run-just-ignore" /></td>
-<td class="b0"><s:submit ac="priv-submit-run-just-ok" /></td>
-</tr></table>
-
-<table class="b0"><tr>
-<td><s:button onclick="formatViolation()" label="Formatting rules violation" /></td>
-</tr></table>
+<div class="h2-long" style="margin-top: 13px; margin-bottom: 5px;">
+<h2><s:tr>Send a message about this run</s:tr></h2></div>
 
 <p><textarea id="msg_text" name="msg_text" rows="20" cols="60"></textarea></p>
 
-<table class="b0"><tr>
-<td class="b0"><s:submit ac="priv-submit-run-comment" /></td>
-<td class="b0"><s:submit ac="priv-submit-run-comment-and-ignore" /></td>
-<td class="b0"><s:submit ac="priv-submit-run-comment-and-ok" /></td>
-<td class="b0"><s:submit ac="priv-set-run-rejected" /></td>
-</tr></table></s:form>
+<div class="buttons" style="margin-top: -13px;">
+<s:form id="run_comment">
+<s:hidden name="run_id" />
+<s:submit ac="priv-submit-run-just-ignore" />
+<s:submit ac="priv-submit-run-just-ok" />
+<s:button onclick="formatViolation()" label="Formatting rules violation" />
+<s:submit ac="priv-submit-run-comment" />
+<s:submit ac="priv-submit-run-comment-and-ignore" />
+<s:submit ac="priv-submit-run-comment-and-ok" />
+<s:submit ac="priv-set-run-rejected" />
+</div></s:form>
+
+<br />
+
 <%@include "priv_footer.csp"
 %><%
   l10n_setlocale(0);
