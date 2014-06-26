@@ -1,6 +1,6 @@
 <%    if (!global->disable_clars && !global->disable_team_clars && start_time > 0 && stop_time <= 0) {
 %>
-<h2><s:tr>Send a message to judges</s:tr></h2>
+<div class="h2-long"><h2><s:tr>Send a message to judges</s:tr></h2></div>
 <s:form>
 <table class="b0"><tr><td class="b0"><s:tr>Problem</s:tr>:</td><td class="b0"><%
       html_problem_selection(cs, out_f, phr, solved_flag, accepted_flag, 0, 1, start_time);
@@ -16,7 +16,7 @@
         && global->appeal_deadline > 0
         && cs->current_time < global->appeal_deadline) {
 %>
-<h2><s:tr>Send an appeal</s:tr></h2>
+<div class="h2-long"><h2><s:tr>Send an appeal</s:tr></h2></div>
 <s:form>
 <table class="b0"><tr><td class="b0"><s:tr>Problem</s:tr>:</td><td class="b0"><%
       html_problem_selection(cs, out_f, phr, solved_flag, accepted_flag, 0, 1, start_time);
