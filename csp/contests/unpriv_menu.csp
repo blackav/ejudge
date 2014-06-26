@@ -56,7 +56,7 @@
   if (global && global->is_virtual > 0 && ((start_time <= 0 && global->disable_virtual_start <= 0) || stop_time <= 0)) {
 %><%
     if (phr->action != NEW_SRV_ACTION_VIEW_STARTSTOP) {
-%><li><div class="contest_actions_item"><a:a class="menu" ac="view-startstop"><%
+%><li><div class="contest_actions_item"><s:a class="menu" ac="view-startstop"><%
     } else {
 %><li class="current"><div class="contest_actions_item"><%
   }  if (start_time <= 0) {
@@ -85,7 +85,9 @@
 %><li><div class="contest_actions_item"><s:a class="menu" ac="view-problem-summary"><%
     } else {
 %><li class="current"><div class="contest_actions_item"><s:tr>Summary</s:tr><%
-  }  if (phr->action != NEW_SRV_ACTION_VIEW_PROBLEM_SUMMARY) {
+    }
+%><%
+    if (phr->action != NEW_SRV_ACTION_VIEW_PROBLEM_SUMMARY) {
 %></s:a><%
     }
 %></div></li><%
