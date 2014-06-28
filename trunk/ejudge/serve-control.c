@@ -2241,6 +2241,9 @@ main(int argc, char *argv[])
   authentificate();
   read_state_params();
 
+  if (client_action >= 0 && client_action < SSERV_CMD_LAST && super_proto_is_http_request[client_action]) {
+    client_action = SSERV_CMD_HTTP_REQUEST;
+  }
   switch (client_action) {
   case SSERV_CMD_CONTEST_PAGE:
     action_view_contest(SSERV_CMD_CONTEST_PAGE);
