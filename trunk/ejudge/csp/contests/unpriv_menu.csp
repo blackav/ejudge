@@ -216,7 +216,7 @@
     } else {
 %><s:tr>Logout</s:tr><%
     }
-%> [<s:v value="phr->login" escape="false" />]</a></div></div>
+%> [<s:v value="phr->login" escape="false" />]</s:a></div></div>
 </div>
 </div></div>
 <div id="l11"><img src="<s:config name="style-prefix" />logo3.gif" alt="logo"/></div>
