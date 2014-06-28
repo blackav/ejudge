@@ -364,12 +364,12 @@ super_html_main_page(
   fprintf(f, "</tr></table>");
   */
 
-  fprintf(f, "<table border=\"0\"><tr><td>%sProblem editor</a></td></tr></table>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST, SSERV_OP_BROWSE_PROBLEM_PACKAGES));
+  fprintf(f, "<table border=\"0\"><tr><td>%sProblem editor</a></td></tr></table>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST, SSERV_CMD_BROWSE_PROBLEM_PACKAGES));
 
-  fprintf(f, "<table border=\"0\"><tr><td>%sUser editor</a></td></tr></table>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE));
-  fprintf(f, "<table border=\"0\"><tr><td>%sSystem user mapping</a></td></tr></table>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_MAP_MAIN_PAGE));
-  fprintf(f, "<table border=\"0\"><tr><td>%sGlobal user capabilities</a></td></tr></table>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST, SSERV_OP_CAPS_MAIN_PAGE));
-  fprintf(f, "<table border=\"0\"><tr><td>%sGroup editor</a></td></tr></table>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST, SSERV_OP_GROUP_BROWSE_PAGE));
+  fprintf(f, "<table border=\"0\"><tr><td>%sUser editor</a></td></tr></table>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST, SSERV_CMD_USER_BROWSE_PAGE));
+  fprintf(f, "<table border=\"0\"><tr><td>%sSystem user mapping</a></td></tr></table>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST, SSERV_CMD_USER_MAP_MAIN_PAGE));
+  fprintf(f, "<table border=\"0\"><tr><td>%sGlobal user capabilities</a></td></tr></table>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST, SSERV_CMD_CAPS_MAIN_PAGE));
+  fprintf(f, "<table border=\"0\"><tr><td>%sGroup editor</a></td></tr></table>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST, SSERV_CMD_GROUP_BROWSE_PAGE));
 
   fprintf(f, "<table border=\"0\"><tr><td>%sCreate new contest</a></td>", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d", SSERV_CMD_CREATE_CONTEST));
   if (sstate->edited_cnts) {
@@ -379,12 +379,12 @@ super_html_main_page(
   }
   fprintf(f, "</tr></table>\n");
 
-  fprintf(f, "<table border=\"0\"><tr><td>%sCreate new contest (New interface)</a></td>", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST, SSERV_OP_CREATE_NEW_CONTEST_PAGE));
+  fprintf(f, "<table border=\"0\"><tr><td>%sCreate new contest (New interface)</a></td>", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST, SSERV_CMD_CREATE_NEW_CONTEST_PAGE));
   if (sstate->edited_cnts) {
     fprintf(f, "<td>%sEdit current contest (New interface)</a></td>",
             html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
                           "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST,
-                          SSERV_OP_EDIT_CONTEST_PAGE_2));
+                          SSERV_CMD_EDIT_CONTEST_PAGE_2));
   }
   fprintf(f, "</tr></table>\n");
 
@@ -579,7 +579,7 @@ super_html_main_page(
     if (priv_level >= PRIV_LEVEL_JUDGE
         && opcaps_check(caps, OPCAP_LIST_USERS) >= 0
         && contests_check_serve_control_ip_2(cnts, ip_address, ssl)) {
-      fprintf(f, "<td>%sEdit users</a></td>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d&op=%d&contest_id=%d", SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE, contest_id));
+      fprintf(f, "<td>%sEdit users</a></td>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d&op=%d&contest_id=%d", SSERV_CMD_HTTP_REQUEST, SSERV_CMD_USER_BROWSE_PAGE, contest_id));
     } else {
       fprintf(f, "<td>&nbsp;</td>\n");
     }
@@ -594,7 +594,7 @@ super_html_main_page(
       fprintf(f, "<td>%sEdit tests</a></td>\n",
               html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
                             "action=%d&op=%d&contest_id=%d", SSERV_CMD_HTTP_REQUEST,
-                            SSERV_OP_TESTS_MAIN_PAGE, contest_id));
+                            SSERV_CMD_TESTS_MAIN_PAGE, contest_id));
       fprintf(f, "<td>%sView details</a></td>\n",
               html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
                             "contest_id=%d&action=%d", contest_id,
@@ -793,7 +793,7 @@ super_html_contest_page(
     fprintf(f, "<tr><td>Contest keywords:</td><td><tt>%s</tt></td></tr>\n", cnts->keywords);
   }
 
-  fprintf(f, "<tr><td>View/edit users</td><td>%sUsers</a></td></tr>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d&op=%d&contest_id=%d", SSERV_CMD_HTTP_REQUEST, SSERV_OP_USER_BROWSE_PAGE, contest_id));
+  fprintf(f, "<tr><td>View/edit users</td><td>%sUsers</a></td></tr>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d&op=%d&contest_id=%d", SSERV_CMD_HTTP_REQUEST, SSERV_CMD_USER_BROWSE_PAGE, contest_id));
 
   // report judge URL
   if (opcaps_check(caps, OPCAP_JUDGE_LOGIN) >= 0 && judge_url[0]
@@ -1029,7 +1029,7 @@ super_html_contest_page(
             html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
                           "contest_id=%d&action=%d&op=%d",
                           contest_id, SSERV_CMD_HTTP_REQUEST,
-                          SSERV_OP_EDIT_CONTEST_PAGE));
+                          SSERV_CMD_EDIT_CONTEST_PAGE));
   }
   if (!refcount) fprintf(f, "&nbsp;");
   fprintf(f, "</td>");
@@ -1058,7 +1058,7 @@ super_html_contest_page(
             html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
                           "contest_id=%d&action=%d&op=%d",
                           contest_id, SSERV_CMD_HTTP_REQUEST,
-                          SSERV_OP_EDIT_CONTEST_PAGE));
+                          SSERV_CMD_EDIT_CONTEST_PAGE));
   }
   if (!refcount) fprintf(f, "&nbsp;");
   fprintf(f, "</td>");
@@ -1070,7 +1070,7 @@ super_html_contest_page(
           html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
                         "contest_id=%d&action=%d&op=%d",
                         contest_id, SSERV_CMD_HTTP_REQUEST,
-                        SSERV_OP_TESTS_MAIN_PAGE));
+                        SSERV_CMD_TESTS_MAIN_PAGE));
   fprintf(f, "</tr>\n");
 
   fprintf(f, "</table>\n");
@@ -1080,7 +1080,7 @@ super_html_contest_page(
           html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
                         "contest_id=%d&action=%d&op=%d",
                         contest_id, SSERV_CMD_HTTP_REQUEST,
-                        SSERV_OP_UPDATE_FROM_POLYGON_PAGE));
+                        SSERV_CMD_UPDATE_FROM_POLYGON_PAGE));
   fprintf(f, "</p>\n");
 
   if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0) {
@@ -1739,7 +1739,7 @@ super_html_locked_cnts_dialog(
     fprintf(out_f, "<table border=\"0\">");
     fprintf(out_f, "<tr><td>");
     html_start_form(out_f, 1, self_url, hidden_vars);
-    html_hidden(out_f, "op", "%d", SSERV_OP_EDITED_CNTS_BACK);
+    html_hidden(out_f, "op", "%d", SSERV_CMD_EDITED_CNTS_BACK);
     html_submit_button(out_f, SSERV_CMD_HTTP_REQUEST, "Back");
     fprintf(out_f, "</form>\n");
     fprintf(out_f, "</td><td>Return to the main page</td></tr>");
@@ -1756,14 +1756,14 @@ super_html_locked_cnts_dialog(
   fprintf(out_f, "<table border=\"0\">");
   fprintf(out_f, "<tr><td>");
   html_start_form(out_f, 1, self_url, hidden_vars);
-  html_hidden(out_f, "op", "%d", SSERV_OP_EDITED_CNTS_BACK);
+  html_hidden(out_f, "op", "%d", SSERV_CMD_EDITED_CNTS_BACK);
   html_submit_button(out_f, SSERV_CMD_HTTP_REQUEST, "Back");
   fprintf(out_f, "</form>\n");
   fprintf(out_f, "</td><td>Return to the main page</td></tr>");
 
   fprintf(out_f, "<tr><td>");
   html_start_form(out_f, 1, self_url, hidden_vars);
-  html_hidden(out_f, "op", "%d", SSERV_OP_LOCKED_CNTS_FORGET);
+  html_hidden(out_f, "op", "%d", SSERV_CMD_LOCKED_CNTS_FORGET);
   if (new_edit_mode) html_hidden(out_f, "new_edit", "1");
   html_hidden(out_f, "contest_id", "%d", contest_id);
   html_submit_button(out_f, SSERV_CMD_HTTP_REQUEST, "Forget editing");
@@ -1772,7 +1772,7 @@ super_html_locked_cnts_dialog(
 
   fprintf(out_f, "<tr><td>");
   html_start_form(out_f, 1, self_url, hidden_vars);
-  html_hidden(out_f, "op", "%d", SSERV_OP_LOCKED_CNTS_CONTINUE);
+  html_hidden(out_f, "op", "%d", SSERV_CMD_LOCKED_CNTS_CONTINUE);
   if (new_edit_mode) html_hidden(out_f, "new_edit", "1");
   html_hidden(out_f, "contest_id", "%d", contest_id);
   html_submit_button(out_f, SSERV_CMD_HTTP_REQUEST, "Continue here");
@@ -1832,14 +1832,14 @@ super_html_edited_cnts_dialog(
 
   fprintf(out_f, "<tr><td>");
   html_start_form(out_f, 1, self_url, hidden_vars);
-  html_hidden(out_f, "op", "%d", SSERV_OP_EDITED_CNTS_BACK);
+  html_hidden(out_f, "op", "%d", SSERV_CMD_EDITED_CNTS_BACK);
   html_submit_button(out_f, SSERV_CMD_HTTP_REQUEST, "Back");
   fprintf(out_f, "</form>\n");
   fprintf(out_f, "</td><td>Return to the main page</td></tr>");
 
   fprintf(out_f, "<tr><td>");
   html_start_form(out_f, 1, self_url, hidden_vars);
-  html_hidden(out_f, "op", "%d", SSERV_OP_EDITED_CNTS_CONTINUE);
+  html_hidden(out_f, "op", "%d", SSERV_CMD_EDITED_CNTS_CONTINUE);
   if (new_edit_mode) html_hidden(out_f, "new_edit", "1");
   html_submit_button(out_f, SSERV_CMD_HTTP_REQUEST, "Continue");
   fprintf(out_f, "</form>\n");
@@ -1847,7 +1847,7 @@ super_html_edited_cnts_dialog(
 
   fprintf(out_f, "<tr><td>");
   html_start_form(out_f, 1, self_url, hidden_vars);
-  html_hidden(out_f, "op", "%d", SSERV_OP_EDITED_CNTS_START_NEW);
+  html_hidden(out_f, "op", "%d", SSERV_CMD_EDITED_CNTS_START_NEW);
   if (new_edit_mode) html_hidden(out_f, "new_edit", "1");
   if (contest_id > 0)
     html_hidden(out_f, "contest_id", "%d", contest_id);

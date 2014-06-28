@@ -502,7 +502,7 @@ super_serve_op_TESTS_MAIN_PAGE(
                   ARMOR(adv_path), cl, 
                   html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                                 NULL, "action=%d&amp;op=%d&amp;contest_id=%d&amp;variant=%d&amp;prob_id=%d",
-                                SSERV_CMD_HTTP_REQUEST, SSERV_OP_TESTS_STATEMENT_EDIT_PAGE,
+                                SSERV_CMD_HTTP_REQUEST, SSERV_CMD_TESTS_STATEMENT_EDIT_PAGE,
                                 contest_id, variant, prob_id),
                   "Edit");
         } else {
@@ -517,7 +517,7 @@ super_serve_op_TESTS_MAIN_PAGE(
                   ARMOR(prob->source_header), cl, 
                   html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                                 NULL, "action=%d&amp;op=%d&amp;contest_id=%d&amp;variant=%d&amp;prob_id=%d",
-                                SSERV_CMD_HTTP_REQUEST, SSERV_OP_TESTS_SOURCE_HEADER_EDIT_PAGE,
+                                SSERV_CMD_HTTP_REQUEST, SSERV_CMD_TESTS_SOURCE_HEADER_EDIT_PAGE,
                                 contest_id, variant, prob_id),
                   "Edit");
         } else {
@@ -532,7 +532,7 @@ super_serve_op_TESTS_MAIN_PAGE(
                   ARMOR(prob->source_footer), cl, 
                   html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                                 NULL, "action=%d&amp;op=%d&amp;contest_id=%d&amp;variant=%d&amp;prob_id=%d",
-                                SSERV_CMD_HTTP_REQUEST, SSERV_OP_TESTS_SOURCE_FOOTER_EDIT_PAGE,
+                                SSERV_CMD_HTTP_REQUEST, SSERV_CMD_TESTS_SOURCE_FOOTER_EDIT_PAGE,
                                 contest_id, variant, prob_id),
                   "Edit");
         } else {
@@ -554,7 +554,7 @@ super_serve_op_TESTS_MAIN_PAGE(
                   ARMOR(s), cl, 
                   html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                                 NULL, "action=%d&amp;op=%d&amp;contest_id=%d&amp;variant=%d&amp;prob_id=%d",
-                                SSERV_CMD_HTTP_REQUEST, SSERV_OP_TESTS_SOLUTION_EDIT_PAGE,
+                                SSERV_CMD_HTTP_REQUEST, SSERV_CMD_TESTS_SOLUTION_EDIT_PAGE,
                                 contest_id, variant, prob_id),
                   "Edit");
         } else {
@@ -569,7 +569,7 @@ super_serve_op_TESTS_MAIN_PAGE(
                   cl, 
                   html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                                 NULL, "action=%d&amp;op=%d&amp;contest_id=%d&amp;variant=%d&amp;prob_id=%d",
-                                SSERV_CMD_HTTP_REQUEST, SSERV_OP_TESTS_STYLE_CHECKER_EDIT_PAGE,
+                                SSERV_CMD_HTTP_REQUEST, SSERV_CMD_TESTS_STYLE_CHECKER_EDIT_PAGE,
                                 contest_id, variant, prob_id),
                   "Edit");
         } else {
@@ -590,7 +590,7 @@ super_serve_op_TESTS_MAIN_PAGE(
               ARMOR(adv_path), cl, 
               html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                             NULL, "action=%d&amp;op=%d&amp;contest_id=%d&amp;variant=%d&amp;prob_id=%d",
-                            SSERV_CMD_HTTP_REQUEST, SSERV_OP_TESTS_TESTS_VIEW_PAGE,
+                            SSERV_CMD_HTTP_REQUEST, SSERV_CMD_TESTS_TESTS_VIEW_PAGE,
                             contest_id, variant, prob_id),
               "View");
 
@@ -605,7 +605,7 @@ super_serve_op_TESTS_MAIN_PAGE(
                 cl, 
                 html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                               NULL, "action=%d&amp;op=%d&amp;contest_id=%d&amp;variant=%d&amp;prob_id=%d",
-                              SSERV_CMD_HTTP_REQUEST, SSERV_OP_TESTS_CHECKER_EDIT_PAGE,
+                              SSERV_CMD_HTTP_REQUEST, SSERV_CMD_TESTS_CHECKER_EDIT_PAGE,
                               contest_id, variant, prob_id),
                 "Edit");
       } else {
@@ -618,7 +618,7 @@ super_serve_op_TESTS_MAIN_PAGE(
                   cl, 
                   html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                                 NULL, "action=%d&amp;op=%d&amp;contest_id=%d&amp;variant=%d&amp;prob_id=%d",
-                                SSERV_CMD_HTTP_REQUEST, SSERV_OP_TESTS_VALUER_EDIT_PAGE,
+                                SSERV_CMD_HTTP_REQUEST, SSERV_CMD_TESTS_VALUER_EDIT_PAGE,
                                 contest_id, variant, prob_id),
                   "Edit");
         } else {
@@ -632,7 +632,7 @@ super_serve_op_TESTS_MAIN_PAGE(
                   cl, 
                   html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                                 NULL, "action=%d&amp;op=%d&amp;contest_id=%d&amp;variant=%d&amp;prob_id=%d",
-                                SSERV_CMD_HTTP_REQUEST, SSERV_OP_TESTS_INTERACTOR_EDIT_PAGE,
+                                SSERV_CMD_HTTP_REQUEST, SSERV_CMD_TESTS_INTERACTOR_EDIT_PAGE,
                                 contest_id, variant, prob_id),
                   "Edit");
         } else {
@@ -646,7 +646,7 @@ super_serve_op_TESTS_MAIN_PAGE(
                   cl, 
                   html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                                 NULL, "action=%d&amp;op=%d&amp;contest_id=%d&amp;variant=%d&amp;prob_id=%d",
-                                SSERV_CMD_HTTP_REQUEST, SSERV_OP_TESTS_TEST_CHECKER_EDIT_PAGE,
+                                SSERV_CMD_HTTP_REQUEST, SSERV_CMD_TESTS_TEST_CHECKER_EDIT_PAGE,
                                 contest_id, variant, prob_id),
                   "Edit");
         } else {
@@ -659,7 +659,7 @@ super_serve_op_TESTS_MAIN_PAGE(
                   cl, 
                   html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                                 NULL, "action=%d&amp;op=%d&amp;contest_id=%d&amp;variant=%d&amp;prob_id=%d",
-                                SSERV_CMD_HTTP_REQUEST, SSERV_OP_TESTS_INIT_EDIT_PAGE,
+                                SSERV_CMD_HTTP_REQUEST, SSERV_CMD_TESTS_INIT_EDIT_PAGE,
                                 contest_id, variant, prob_id),
                   "Edit");
         } else {
@@ -671,13 +671,13 @@ super_serve_op_TESTS_MAIN_PAGE(
         fprintf(out_f, "%s%s</a>",
                 html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                               NULL, "action=%d&amp;op=%d&amp;contest_id=%d&amp;variant=%d&amp;prob_id=%d",
-                              SSERV_CMD_HTTP_REQUEST, SSERV_OP_TESTS_MAKEFILE_EDIT_PAGE,
+                              SSERV_CMD_HTTP_REQUEST, SSERV_CMD_TESTS_MAKEFILE_EDIT_PAGE,
                               contest_id, variant, prob_id),
                 "Edit");
         fprintf(out_f, "<br/>%s%s</a>",
                 html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                               NULL, "action=%d&amp;op=%d&amp;contest_id=%d&amp;variant=%d&amp;prob_id=%d",
-                              SSERV_CMD_HTTP_REQUEST, SSERV_OP_TESTS_MAKE,
+                              SSERV_CMD_HTTP_REQUEST, SSERV_CMD_TESTS_MAKE,
                               contest_id, variant, prob_id),
                 "Run");
         fprintf(out_f, "</td>");
@@ -716,19 +716,19 @@ write_problem_editing_links(
     fprintf(out_f, "<li>%s%s</a></li>\n",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                           "action=%d&op=%d&contest_id=%d&prob_id=%d&variant=%d&plain_view=1", SSERV_CMD_HTTP_REQUEST,
-                          SSERV_OP_TESTS_STATEMENT_EDIT_PAGE, contest_id, prob_id, variant),
+                          SSERV_CMD_TESTS_STATEMENT_EDIT_PAGE, contest_id, prob_id, variant),
             "Edit the statement as a text file");
     fprintf(out_f, "<li>%s%s</a></li>\n",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                           "action=%d&op=%d&contest_id=%d&prob_id=%d&variant=%d", SSERV_CMD_HTTP_REQUEST,
-                          SSERV_OP_TESTS_STATEMENT_EDIT_PAGE, contest_id, prob_id, variant),
+                          SSERV_CMD_TESTS_STATEMENT_EDIT_PAGE, contest_id, prob_id, variant),
             "Edit the statement by sections");
   }
   if (prob->source_header && prob->source_header[0]) {
     fprintf(out_f, "<li>%s%s</a></li>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                           NULL, "action=%d&amp;op=%d&amp;contest_id=%d&amp;variant=%d&amp;prob_id=%d",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_TESTS_SOURCE_HEADER_EDIT_PAGE,
+                          SSERV_CMD_HTTP_REQUEST, SSERV_CMD_TESTS_SOURCE_HEADER_EDIT_PAGE,
                           contest_id, variant, prob_id),
             "Edit source header");
   }
@@ -736,7 +736,7 @@ write_problem_editing_links(
     fprintf(out_f, "<li>%s%s</a></li>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                           NULL, "action=%d&amp;op=%d&amp;contest_id=%d&amp;variant=%d&amp;prob_id=%d",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_TESTS_SOURCE_FOOTER_EDIT_PAGE,
+                          SSERV_CMD_HTTP_REQUEST, SSERV_CMD_TESTS_SOURCE_FOOTER_EDIT_PAGE,
                           contest_id, variant, prob_id),
             "Edit source footer");
   }
@@ -744,7 +744,7 @@ write_problem_editing_links(
     fprintf(out_f, "<li>%s%s</a></li>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                           NULL, "action=%d&amp;op=%d&amp;contest_id=%d&amp;variant=%d&amp;prob_id=%d",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_TESTS_SOLUTION_EDIT_PAGE,
+                          SSERV_CMD_HTTP_REQUEST, SSERV_CMD_TESTS_SOLUTION_EDIT_PAGE,
                           contest_id, variant, prob_id),
             "Edit solution");
   }
@@ -752,21 +752,21 @@ write_problem_editing_links(
     fprintf(out_f, "<li>%s%s</a></li>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                           NULL, "action=%d&amp;op=%d&amp;contest_id=%d&amp;variant=%d&amp;prob_id=%d",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_TESTS_STYLE_CHECKER_EDIT_PAGE,
+                          SSERV_CMD_HTTP_REQUEST, SSERV_CMD_TESTS_STYLE_CHECKER_EDIT_PAGE,
                           contest_id, variant, prob_id),
             "Edit style checker");
   }
   fprintf(out_f, "<li>%s%s</a></li>\n",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                         "action=%d&op=%d&contest_id=%d&prob_id=%d&variant=%d", SSERV_CMD_HTTP_REQUEST,
-                        SSERV_OP_TESTS_TESTS_VIEW_PAGE, contest_id, prob_id, variant),
+                        SSERV_CMD_TESTS_TESTS_VIEW_PAGE, contest_id, prob_id, variant),
           "View tests");
   if (!(prob->standard_checker && prob->standard_checker[0])
       && (prob->check_cmd && prob->check_cmd[0])) {
     fprintf(out_f, "<li>%s%s</a></li>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                           NULL, "action=%d&amp;op=%d&amp;contest_id=%d&amp;variant=%d&amp;prob_id=%d",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_TESTS_CHECKER_EDIT_PAGE,
+                          SSERV_CMD_HTTP_REQUEST, SSERV_CMD_TESTS_CHECKER_EDIT_PAGE,
                           contest_id, variant, prob_id),
             "Edit checker");
   }
@@ -774,7 +774,7 @@ write_problem_editing_links(
     fprintf(out_f, "<li>%s%s</a><li>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                           NULL, "action=%d&amp;op=%d&amp;contest_id=%d&amp;variant=%d&amp;prob_id=%d",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_TESTS_VALUER_EDIT_PAGE,
+                          SSERV_CMD_HTTP_REQUEST, SSERV_CMD_TESTS_VALUER_EDIT_PAGE,
                           contest_id, variant, prob_id),
             "Edit valuer");
   }
@@ -782,7 +782,7 @@ write_problem_editing_links(
     fprintf(out_f, "<li>%s%s</a></li>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                           NULL, "action=%d&amp;op=%d&amp;contest_id=%d&amp;variant=%d&amp;prob_id=%d",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_TESTS_INTERACTOR_EDIT_PAGE,
+                          SSERV_CMD_HTTP_REQUEST, SSERV_CMD_TESTS_INTERACTOR_EDIT_PAGE,
                           contest_id, variant, prob_id),
             "Edit interactor");
   }
@@ -790,7 +790,7 @@ write_problem_editing_links(
     fprintf(out_f, "<li>%s%s</a></li>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                           NULL, "action=%d&amp;op=%d&amp;contest_id=%d&amp;variant=%d&amp;prob_id=%d",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_TESTS_TEST_CHECKER_EDIT_PAGE,
+                          SSERV_CMD_HTTP_REQUEST, SSERV_CMD_TESTS_TEST_CHECKER_EDIT_PAGE,
                           contest_id, variant, prob_id),
             "Edit test checker");
   }
@@ -798,7 +798,7 @@ write_problem_editing_links(
     fprintf(out_f, "<li>%s%s</a></li>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                           NULL, "action=%d&amp;op=%d&amp;contest_id=%d&amp;variant=%d&amp;prob_id=%d",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_TESTS_INIT_EDIT_PAGE,
+                          SSERV_CMD_HTTP_REQUEST, SSERV_CMD_TESTS_INIT_EDIT_PAGE,
                           contest_id, variant, prob_id),
             "Edit init-style interactor");
   }
@@ -806,13 +806,13 @@ write_problem_editing_links(
     fprintf(out_f, "<li>%s%s</a></li>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                           NULL, "action=%d&amp;op=%d&amp;contest_id=%d&amp;variant=%d&amp;prob_id=%d",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_TESTS_MAKEFILE_EDIT_PAGE,
+                          SSERV_CMD_HTTP_REQUEST, SSERV_CMD_TESTS_MAKEFILE_EDIT_PAGE,
                           contest_id, variant, prob_id),
             "Edit Makefile");
     fprintf(out_f, "<li>%s%s</a></li>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                           NULL, "action=%d&amp;op=%d&amp;contest_id=%d&amp;variant=%d&amp;prob_id=%d",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_OP_TESTS_MAKE,
+                          SSERV_CMD_HTTP_REQUEST, SSERV_CMD_TESTS_MAKE,
                           contest_id, variant, prob_id),
             "Run make");
   }
@@ -1596,7 +1596,7 @@ super_serve_op_TESTS_TESTS_VIEW_PAGE(
   fprintf(out_f, "<li>%s%s</a></li>\n",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                         "action=%d&op=%d&contest_id=%d", SSERV_CMD_HTTP_REQUEST,
-                        SSERV_OP_TESTS_MAIN_PAGE, contest_id),
+                        SSERV_CMD_TESTS_MAIN_PAGE, contest_id),
           "Problems page");
   fprintf(out_f, "</ul>\n");
 
@@ -1610,13 +1610,13 @@ super_serve_op_TESTS_TESTS_VIEW_PAGE(
     fprintf(out_f, "&nbsp;%s[%s]</a>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                           "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d", SSERV_CMD_HTTP_REQUEST,
-                          SSERV_OP_TESTS_README_EDIT_PAGE, contest_id, prob_id),
+                          SSERV_CMD_TESTS_README_EDIT_PAGE, contest_id, prob_id),
             "Edit");
     fprintf(out_f, "</td><td%s>", cl);
     fprintf(out_f, "&nbsp;%s[%s]</a>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                           "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d", SSERV_CMD_HTTP_REQUEST,
-                          SSERV_OP_TESTS_README_DELETE_PAGE, contest_id, prob_id),
+                          SSERV_CMD_TESTS_README_DELETE_PAGE, contest_id, prob_id),
             "Delete");
     fprintf(out_f, "</td></tr></table>\n");
   } else {
@@ -1627,7 +1627,7 @@ super_serve_op_TESTS_TESTS_VIEW_PAGE(
     fprintf(out_f, "&nbsp;%s[%s]</a>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                           "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d", SSERV_CMD_HTTP_REQUEST,
-                          SSERV_OP_TESTS_README_CREATE_PAGE, contest_id, prob_id),
+                          SSERV_CMD_TESTS_README_CREATE_PAGE, contest_id, prob_id),
             "Create");
     fprintf(out_f, "</td></tr></table>\n");
   }
@@ -1651,46 +1651,46 @@ super_serve_op_TESTS_TESTS_VIEW_PAGE(
     fprintf(out_f, "%s[%s]</a>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                           "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;test_num=%d", SSERV_CMD_HTTP_REQUEST,
-                          SSERV_OP_TESTS_TEST_MOVE_UP_ACTION, contest_id, prob_id, i + 1),
+                          SSERV_CMD_TESTS_TEST_MOVE_UP_ACTION, contest_id, prob_id, i + 1),
             "Move up");
     fprintf(out_f, "&nbsp;%s[%s]</a>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                           "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;test_num=%d", SSERV_CMD_HTTP_REQUEST,
-                          SSERV_OP_TESTS_TEST_MOVE_DOWN_ACTION, contest_id, prob_id, i + 1),
+                          SSERV_CMD_TESTS_TEST_MOVE_DOWN_ACTION, contest_id, prob_id, i + 1),
             "Move down");
     fprintf(out_f, "<br/>%s[%s]</a>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                           "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;test_num=%d", SSERV_CMD_HTTP_REQUEST,
-                          SSERV_OP_TESTS_TEST_MOVE_TO_SAVED_ACTION, contest_id, prob_id, i + 1),
+                          SSERV_CMD_TESTS_TEST_MOVE_TO_SAVED_ACTION, contest_id, prob_id, i + 1),
             "Move to saved");
     fprintf(out_f, "&nbsp;%s[%s]</a>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                           "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;test_num=%d", SSERV_CMD_HTTP_REQUEST,
-                          SSERV_OP_TESTS_TEST_INSERT_PAGE, contest_id, prob_id, i + 1),
+                          SSERV_CMD_TESTS_TEST_INSERT_PAGE, contest_id, prob_id, i + 1),
             "Insert before");
     fprintf(out_f, "<br/>%s[%s]</a>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                           "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;test_num=%d", SSERV_CMD_HTTP_REQUEST,
-                          SSERV_OP_TESTS_TEST_EDIT_PAGE, contest_id, prob_id, i + 1),
+                          SSERV_CMD_TESTS_TEST_EDIT_PAGE, contest_id, prob_id, i + 1),
             "Edit");
     if (prob->test_checker_cmd && prob->test_checker_cmd[0]) {
       fprintf(out_f, "&nbsp;%s[%s]</a>",
               html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                             "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;test_num=%d", SSERV_CMD_HTTP_REQUEST,
-                            SSERV_OP_TESTS_TEST_CHECK_ACTION, contest_id, prob_id, i + 1),
+                            SSERV_CMD_TESTS_TEST_CHECK_ACTION, contest_id, prob_id, i + 1),
               "Check input");
     }
     if (prob->solution_cmd && prob->solution_cmd[0]) {
       fprintf(out_f, "&nbsp;%s[%s]</a>",
               html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                             "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;test_num=%d", SSERV_CMD_HTTP_REQUEST,
-                            SSERV_OP_TESTS_TEST_GENERATE_ACTION, contest_id, prob_id, i + 1),
+                            SSERV_CMD_TESTS_TEST_GENERATE_ACTION, contest_id, prob_id, i + 1),
               "Generate output");
     }
     fprintf(out_f, "<br/>%s[%s]</a>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                           "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;test_num=%d", SSERV_CMD_HTTP_REQUEST,
-                          SSERV_OP_TESTS_TEST_DELETE_PAGE, contest_id, prob_id, i + 1),
+                          SSERV_CMD_TESTS_TEST_DELETE_PAGE, contest_id, prob_id, i + 1),
             "Delete");
     fprintf(out_f, "</td>");
     fprintf(out_f, "</tr>\n");
@@ -1702,14 +1702,14 @@ super_serve_op_TESTS_TESTS_VIEW_PAGE(
   fprintf(out_f, "&nbsp;%s[%s]</a>",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                         "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;test_num=%d", SSERV_CMD_HTTP_REQUEST,
-                        SSERV_OP_TESTS_TEST_INSERT_PAGE, contest_id, prob_id, i + 1),
+                        SSERV_CMD_TESTS_TEST_INSERT_PAGE, contest_id, prob_id, i + 1),
           "Add a new test after the last test");
   if (prob->test_checker_cmd && prob->test_checker_cmd[0]) {
     fprintf(out_f, "</td><td%s>", cl);
     fprintf(out_f, "&nbsp;%s[%s]</a>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                           "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d", SSERV_CMD_HTTP_REQUEST,
-                          SSERV_OP_TESTS_CHECK_TESTS_PAGE, contest_id, prob_id),
+                          SSERV_CMD_TESTS_CHECK_TESTS_PAGE, contest_id, prob_id),
             "Check all tests");
   }
   if (prob->solution_cmd && prob->solution_cmd[0]) {
@@ -1717,14 +1717,14 @@ super_serve_op_TESTS_TESTS_VIEW_PAGE(
     fprintf(out_f, "&nbsp;%s[%s]</a>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                           "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d", SSERV_CMD_HTTP_REQUEST,
-                          SSERV_OP_TESTS_GENERATE_ANSWERS_PAGE, contest_id, prob_id),
+                          SSERV_CMD_TESTS_GENERATE_ANSWERS_PAGE, contest_id, prob_id),
             "Generate all answers");
   }
   fprintf(out_f, "</td><td%s>", cl);
   fprintf(out_f, "&nbsp;%s[%s]</a>",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                         "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d", SSERV_CMD_HTTP_REQUEST,
-                        SSERV_OP_TESTS_TEST_UPLOAD_ARCHIVE_1_PAGE, contest_id, prob_id),
+                        SSERV_CMD_TESTS_TEST_UPLOAD_ARCHIVE_1_PAGE, contest_id, prob_id),
           "Upload an archive of tests");
   fprintf(out_f, "</td></tr></table>\n");
 
@@ -1747,22 +1747,22 @@ super_serve_op_TESTS_TESTS_VIEW_PAGE(
       fprintf(out_f, "&nbsp;%s[%s]</a>",
               html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                             "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;test_num=%d", SSERV_CMD_HTTP_REQUEST,
-                            SSERV_OP_TESTS_SAVED_MOVE_UP_ACTION, contest_id, prob_id, i + 1),
+                            SSERV_CMD_TESTS_SAVED_MOVE_UP_ACTION, contest_id, prob_id, i + 1),
               "Move up");
       fprintf(out_f, "&nbsp;%s[%s]</a>",
               html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                             "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;test_num=%d", SSERV_CMD_HTTP_REQUEST,
-                            SSERV_OP_TESTS_SAVED_MOVE_DOWN_ACTION, contest_id, prob_id, i + 1),
+                            SSERV_CMD_TESTS_SAVED_MOVE_DOWN_ACTION, contest_id, prob_id, i + 1),
               "Move down");
       fprintf(out_f, "&nbsp;%s[%s]</a>",
               html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                             "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;test_num=%d", SSERV_CMD_HTTP_REQUEST,
-                            SSERV_OP_TESTS_SAVED_MOVE_TO_TEST_ACTION, contest_id, prob_id, i + 1),
+                            SSERV_CMD_TESTS_SAVED_MOVE_TO_TEST_ACTION, contest_id, prob_id, i + 1),
               "Move to tests");
       fprintf(out_f, "&nbsp;%s[%s]</a>",
               html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                             "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;test_num=%d", SSERV_CMD_HTTP_REQUEST,
-                            SSERV_OP_TESTS_SAVED_DELETE_PAGE, contest_id, prob_id, i + 1),
+                            SSERV_CMD_TESTS_SAVED_DELETE_PAGE, contest_id, prob_id, i + 1),
               "Delete");
       fprintf(out_f, "</td>");
       fprintf(out_f, "</tr>\n");
@@ -2245,13 +2245,13 @@ super_serve_op_TESTS_TEST_MOVE_UP_ACTION(
   ss_cgi_param_int_opt(phr, "test_num", &test_num, 0);
   if (test_num <= 0 || test_num >= 1000000) FAIL(S_ERR_INV_TEST_NUM);
 
-  if (phr->opcode == SSERV_OP_TESTS_SAVED_MOVE_UP_ACTION || phr->opcode == SSERV_OP_TESTS_SAVED_MOVE_DOWN_ACTION) {
+  if (phr->opcode == SSERV_CMD_TESTS_SAVED_MOVE_UP_ACTION || phr->opcode == SSERV_CMD_TESTS_SAVED_MOVE_DOWN_ACTION) {
     pat_prefix = SAVED_TEST_PREFIX;
   }
-  if (phr->opcode == SSERV_OP_TESTS_TEST_MOVE_UP_ACTION || phr->opcode == SSERV_OP_TESTS_SAVED_MOVE_UP_ACTION) {
+  if (phr->opcode == SSERV_CMD_TESTS_TEST_MOVE_UP_ACTION || phr->opcode == SSERV_CMD_TESTS_SAVED_MOVE_UP_ACTION) {
     to_test_num = test_num - 1;
     from_test_num = test_num;
-  } else if (phr->opcode == SSERV_OP_TESTS_TEST_MOVE_DOWN_ACTION || phr->opcode == SSERV_OP_TESTS_SAVED_MOVE_DOWN_ACTION) {
+  } else if (phr->opcode == SSERV_CMD_TESTS_TEST_MOVE_DOWN_ACTION || phr->opcode == SSERV_CMD_TESTS_SAVED_MOVE_DOWN_ACTION) {
     to_test_num = test_num + 1;
     from_test_num = test_num;
   } else {
@@ -2265,7 +2265,7 @@ super_serve_op_TESTS_TEST_MOVE_UP_ACTION(
   if (retval < 0) goto cleanup;
   retval = 0;
 
-  if (phr->opcode == SSERV_OP_TESTS_TEST_MOVE_DOWN_ACTION || phr->opcode == SSERV_OP_TESTS_SAVED_MOVE_DOWN_ACTION) {
+  if (phr->opcode == SSERV_CMD_TESTS_TEST_MOVE_DOWN_ACTION || phr->opcode == SSERV_CMD_TESTS_SAVED_MOVE_DOWN_ACTION) {
     if (!check_test_existance(log_f, test_dir, test_pat, corr_pat, info_pat, tgz_pat, tgzdir_pat,
                               pat_prefix, to_test_num))
       goto done;
@@ -2277,7 +2277,7 @@ super_serve_op_TESTS_TEST_MOVE_UP_ACTION(
   retval = 0;
 
 done:
-  ss_redirect_2(out_f, phr, SSERV_OP_TESTS_TESTS_VIEW_PAGE, contest_id, prob_id, variant, 0, NULL);
+  ss_redirect_2(out_f, phr, SSERV_CMD_TESTS_TESTS_VIEW_PAGE, contest_id, prob_id, variant, 0, NULL);
 
 cleanup:
   return retval;
@@ -2344,7 +2344,7 @@ super_serve_op_TESTS_TEST_MOVE_TO_SAVED_ACTION(
   retval = scan_test_directory(log_f, &td_info, cnts, test_dir, test_pat, corr_pat, info_pat, tgz_pat, tgzdir_pat);
   if (retval < 0) goto cleanup;
 
-  if (phr->opcode == SSERV_OP_TESTS_TEST_MOVE_TO_SAVED_ACTION) {
+  if (phr->opcode == SSERV_CMD_TESTS_TEST_MOVE_TO_SAVED_ACTION) {
     if (test_num <= 0 || test_num > td_info.test_ref_count) goto done;
     if (move_files(log_f, test_dir, test_pat, corr_pat, info_pat, tgz_pat, tgzdir_pat,
                    NULL, SAVED_TEST_PREFIX, TEMP_TEST_PREFIX,
@@ -2353,7 +2353,7 @@ super_serve_op_TESTS_TEST_MOVE_TO_SAVED_ACTION(
     if (delete_test(log_f, test_dir, test_pat, corr_pat, info_pat, tgz_pat, tgzdir_pat,
                     NULL, td_info.test_ref_count, test_num) < 0)
       goto cleanup;
-  } else if (phr->opcode == SSERV_OP_TESTS_SAVED_MOVE_TO_TEST_ACTION) {
+  } else if (phr->opcode == SSERV_CMD_TESTS_SAVED_MOVE_TO_TEST_ACTION) {
     if (test_num <= 0 || test_num > td_info.saved_ref_count) goto done;
     if (move_files(log_f, test_dir, test_pat, corr_pat, info_pat, tgz_pat, tgzdir_pat,
                    SAVED_TEST_PREFIX, NULL, TEMP_TEST_PREFIX,
@@ -2367,7 +2367,7 @@ super_serve_op_TESTS_TEST_MOVE_TO_SAVED_ACTION(
   }
 
 done:
-  ss_redirect_2(out_f, phr, SSERV_OP_TESTS_TESTS_VIEW_PAGE, contest_id, prob_id, variant, 0, NULL);
+  ss_redirect_2(out_f, phr, SSERV_CMD_TESTS_TESTS_VIEW_PAGE, contest_id, prob_id, variant, 0, NULL);
 
 cleanup:
   test_dir_info_free(&td_info);
@@ -2577,7 +2577,7 @@ super_serve_op_TESTS_TEST_EDIT_PAGE(
 
   memset(&testinfo, 0, sizeof(testinfo));
 
-  if (phr->opcode == SSERV_OP_TESTS_TEST_INSERT_PAGE) insert_mode = 1;
+  if (phr->opcode == SSERV_CMD_TESTS_TEST_INSERT_PAGE) insert_mode = 1;
   ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
   if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
@@ -2633,7 +2633,7 @@ super_serve_op_TESTS_TEST_EDIT_PAGE(
   fprintf(out_f, "<li>%s%s</a></li>\n",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                         "action=%d&op=%d&contest_id=%d", SSERV_CMD_HTTP_REQUEST,
-                        SSERV_OP_TESTS_MAIN_PAGE, contest_id),
+                        SSERV_CMD_TESTS_MAIN_PAGE, contest_id),
           "Problems page");
   fprintf(out_f, "</ul>\n");
 
@@ -2668,13 +2668,13 @@ super_serve_op_TESTS_TEST_EDIT_PAGE(
               html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                             "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;variant=%d&amp;test_num=%d&amp;file_type=%d",
                             SSERV_CMD_HTTP_REQUEST,
-                            SSERV_OP_TESTS_TEST_DOWNLOAD, contest_id, prob_id, variant, test_num, 1),
+                            SSERV_CMD_TESTS_TEST_DOWNLOAD, contest_id, prob_id, variant, test_num, 1),
               "Download file");
       fprintf(out_f, "<td%s>%s%s</a></td>", cl,
               html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                             "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;variant=%d&amp;test_num=%d&amp;file_type=%d",
                             SSERV_CMD_HTTP_REQUEST,
-                            SSERV_OP_TESTS_TEST_UPLOAD_PAGE, contest_id, prob_id, variant, test_num, 1),
+                            SSERV_CMD_TESTS_TEST_UPLOAD_PAGE, contest_id, prob_id, variant, test_num, 1),
               "Upload file");
       fprintf(out_f, "</table>\n");
     }
@@ -2697,13 +2697,13 @@ super_serve_op_TESTS_TEST_EDIT_PAGE(
               html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                             "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;variant=%d&amp;test_num=%d&amp;file_type=%d",
                             SSERV_CMD_HTTP_REQUEST,
-                            SSERV_OP_TESTS_TEST_DOWNLOAD, contest_id, prob_id, variant, test_num, 2),
+                            SSERV_CMD_TESTS_TEST_DOWNLOAD, contest_id, prob_id, variant, test_num, 2),
               "Download file");
       fprintf(out_f, "<td%s>%s%s</a></td>", cl,
               html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                             "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;variant=%d&amp;test_num=%d&amp;file_type=%d",
                             SSERV_CMD_HTTP_REQUEST,
-                            SSERV_OP_TESTS_TEST_UPLOAD_PAGE, contest_id, prob_id, variant, test_num, 2),
+                            SSERV_CMD_TESTS_TEST_UPLOAD_PAGE, contest_id, prob_id, variant, test_num, 2),
               "Upload file");
       fprintf(out_f, "</table>\n");
     }
@@ -2758,7 +2758,7 @@ super_serve_op_TESTS_TEST_EDIT_PAGE(
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                           "action=%d&amp;op=%d&amp;contest_id=%d&amp;prob_id=%d&amp;variant=%d&amp;test_num=%d&amp;file_type=%d",
                           SSERV_CMD_HTTP_REQUEST,
-                          SSERV_OP_TESTS_TEST_CLEAR_INF_ACTION, contest_id, prob_id, variant, test_num, 3),
+                          SSERV_CMD_TESTS_TEST_CLEAR_INF_ACTION, contest_id, prob_id, variant, test_num, 3),
             "Clear file");
     fprintf(out_f, "</table>\n");
     xfree(text); text = NULL;
@@ -2774,20 +2774,20 @@ super_serve_op_TESTS_TEST_EDIT_PAGE(
   cl = " class=\"b0\"";
   fprintf(out_f, "<table%s><tr>", cl);
   fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
-          cl, SSERV_OP_TESTS_CANCEL_ACTION, "Cancel");
+          cl, SSERV_CMD_TESTS_CANCEL_ACTION, "Cancel");
   if (insert_mode) {
     fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
-            cl, SSERV_OP_TESTS_TEST_INSERT_ACTION, "Insert test");
+            cl, SSERV_CMD_TESTS_TEST_INSERT_ACTION, "Insert test");
   } else {
     fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
-            cl, SSERV_OP_TESTS_TEST_EDIT_ACTION, "Save changes");
+            cl, SSERV_CMD_TESTS_TEST_EDIT_ACTION, "Save changes");
   }
   fprintf(out_f, "<td%s width=\"100px\">&nbsp;</td>", cl);
   if (!insert_mode) {
     fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
-            cl, SSERV_OP_TESTS_TEST_DELETE_PAGE, "Delete this test");
+            cl, SSERV_CMD_TESTS_TEST_DELETE_PAGE, "Delete this test");
     fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
-            cl, SSERV_OP_TESTS_TEST_MOVE_TO_SAVED_ACTION, "Move this test to saved");
+            cl, SSERV_CMD_TESTS_TEST_MOVE_TO_SAVED_ACTION, "Move this test to saved");
   }
   fprintf(out_f, "</tr></table>\n");
 
@@ -2815,10 +2815,10 @@ super_serve_op_TESTS_CANCEL_ACTION(
   const struct section_problem_data *prob = NULL;
   int prob_id = 0;
   int variant = 0;
-  int next_op = SSERV_OP_TESTS_TESTS_VIEW_PAGE;
+  int next_op = SSERV_CMD_TESTS_TESTS_VIEW_PAGE;
 
-  if (phr->opcode == SSERV_OP_TESTS_CANCEL_2_ACTION) {
-    next_op = SSERV_OP_TESTS_MAIN_PAGE;
+  if (phr->opcode == SSERV_CMD_TESTS_CANCEL_2_ACTION) {
+    next_op = SSERV_CMD_TESTS_MAIN_PAGE;
   }
 
   ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
@@ -3095,7 +3095,7 @@ super_serve_op_TESTS_TEST_EDIT_ACTION(
   info_del_path[0] = 0;
   memset(&tinfo, 0, sizeof(tinfo));
   memset(&td_info, 0, sizeof(td_info));
-  if (phr->opcode == SSERV_OP_TESTS_TEST_INSERT_ACTION) insert_mode = 1;
+  if (phr->opcode == SSERV_CMD_TESTS_TEST_INSERT_ACTION) insert_mode = 1;
 
   ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
@@ -3309,16 +3309,16 @@ super_serve_op_TESTS_TEST_EDIT_ACTION(
   if (prob->test_checker_cmd && prob->test_checker_cmd[0]) {
     buf[0] = 0;
     if (prob->solution_cmd && prob->solution_cmd[0]) {
-      snprintf(buf, sizeof(buf), "next_action=%d", SSERV_OP_TESTS_TEST_GENERATE_ACTION);
+      snprintf(buf, sizeof(buf), "next_action=%d", SSERV_CMD_TESTS_TEST_GENERATE_ACTION);
     }
-    ss_redirect_2(out_f, phr, SSERV_OP_TESTS_TEST_CHECK_ACTION, contest_id, prob_id, variant, test_num, buf);
+    ss_redirect_2(out_f, phr, SSERV_CMD_TESTS_TEST_CHECK_ACTION, contest_id, prob_id, variant, test_num, buf);
   }
 
   if (prob->solution_cmd && prob->solution_cmd[0]) {
-    ss_redirect_2(out_f, phr, SSERV_OP_TESTS_TEST_GENERATE_ACTION, contest_id, prob_id, variant, test_num, NULL);
+    ss_redirect_2(out_f, phr, SSERV_CMD_TESTS_TEST_GENERATE_ACTION, contest_id, prob_id, variant, test_num, NULL);
   }
 
-  ss_redirect_2(out_f, phr, SSERV_OP_TESTS_TESTS_VIEW_PAGE, contest_id, prob_id, variant, 0, NULL);
+  ss_redirect_2(out_f, phr, SSERV_CMD_TESTS_TESTS_VIEW_PAGE, contest_id, prob_id, variant, 0, NULL);
 
 cleanup:
   test_dir_info_free(&td_info);
@@ -3439,12 +3439,12 @@ super_serve_op_TESTS_TEST_DELETE_PAGE(
   fprintf(out_f, "<li>%s%s</a></li>\n",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                         "action=%d&op=%d&contest_id=%d", SSERV_CMD_HTTP_REQUEST,
-                        SSERV_OP_TESTS_MAIN_PAGE, contest_id),
+                        SSERV_CMD_TESTS_MAIN_PAGE, contest_id),
           "Problems page");
   fprintf(out_f, "<li>%s%s</a></li>\n",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                         "action=%d&op=%d&contest_id=%d&prob_id=%d&variant=%d", SSERV_CMD_HTTP_REQUEST,
-                        SSERV_OP_TESTS_TESTS_VIEW_PAGE, contest_id, prob_id, variant),
+                        SSERV_CMD_TESTS_TESTS_VIEW_PAGE, contest_id, prob_id, variant),
           "Tests page");
   fprintf(out_f, "</ul>\n");
 
@@ -3476,13 +3476,13 @@ super_serve_op_TESTS_TEST_DELETE_PAGE(
   cl = " class=\"b0\"";
   fprintf(out_f, "<table%s><tr>", cl);
   fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
-          cl, SSERV_OP_TESTS_CANCEL_ACTION, "Cancel");
+          cl, SSERV_CMD_TESTS_CANCEL_ACTION, "Cancel");
   fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
-          cl, SSERV_OP_TESTS_TEST_DELETE_ACTION, "Delete test!");
+          cl, SSERV_CMD_TESTS_TEST_DELETE_ACTION, "Delete test!");
   fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
-          cl, SSERV_OP_TESTS_TEST_EDIT_PAGE, "Edit this test");
+          cl, SSERV_CMD_TESTS_TEST_EDIT_PAGE, "Edit this test");
   fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
-          cl, SSERV_OP_TESTS_TEST_MOVE_TO_SAVED_ACTION, "Move this test to saved");
+          cl, SSERV_CMD_TESTS_TEST_MOVE_TO_SAVED_ACTION, "Move this test to saved");
   fprintf(out_f, "</tr></table>\n");
 
   fprintf(out_f, "</form>\n");
@@ -3563,7 +3563,7 @@ super_serve_op_TESTS_TEST_DELETE_ACTION(
   if (retval < 0) goto cleanup;
   retval = 0;
 
-  ss_redirect_2(out_f, phr, SSERV_OP_TESTS_TESTS_VIEW_PAGE, contest_id, prob_id, variant, 0, NULL);
+  ss_redirect_2(out_f, phr, SSERV_CMD_TESTS_TESTS_VIEW_PAGE, contest_id, prob_id, variant, 0, NULL);
 
 cleanup:
   test_dir_info_free(&td_info);
@@ -3638,7 +3638,7 @@ super_serve_op_TESTS_MAKEFILE_EDIT_PAGE(
   fprintf(out_f, "<li>%s%s</a></li>\n",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                         "action=%d&op=%d&contest_id=%d", SSERV_CMD_HTTP_REQUEST,
-                        SSERV_OP_TESTS_MAIN_PAGE, contest_id),
+                        SSERV_CMD_TESTS_MAIN_PAGE, contest_id),
           "Problems page");
   fprintf(out_f, "</ul>\n");
 
@@ -3664,15 +3664,15 @@ super_serve_op_TESTS_MAKEFILE_EDIT_PAGE(
   cl = " class=\"b0\"";
   fprintf(out_f, "<table%s><tr>", cl);
   fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
-          cl, SSERV_OP_TESTS_CANCEL_2_ACTION, "Cancel");
+          cl, SSERV_CMD_TESTS_CANCEL_2_ACTION, "Cancel");
   if (r != -2) {
     fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
-            cl, SSERV_OP_TESTS_MAKEFILE_EDIT_ACTION, "Save");
+            cl, SSERV_CMD_TESTS_MAKEFILE_EDIT_ACTION, "Save");
   }
   fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
-          cl, SSERV_OP_TESTS_MAKEFILE_DELETE_ACTION, "Delete!");
+          cl, SSERV_CMD_TESTS_MAKEFILE_DELETE_ACTION, "Delete!");
   fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
-          cl, SSERV_OP_TESTS_MAKEFILE_GENERATE_ACTION, "Generate");
+          cl, SSERV_CMD_TESTS_MAKEFILE_GENERATE_ACTION, "Generate");
   fprintf(out_f, "</tr></table>\n");
   fprintf(out_f, "</form>\n");
 
@@ -3767,7 +3767,7 @@ super_serve_op_TESTS_MAKEFILE_EDIT_ACTION(
   }
 
 done:
-  ss_redirect_2(out_f, phr, SSERV_OP_TESTS_MAIN_PAGE, contest_id, prob_id, variant, 0, NULL);
+  ss_redirect_2(out_f, phr, SSERV_CMD_TESTS_MAIN_PAGE, contest_id, prob_id, variant, 0, NULL);
 
 cleanup:
   xfree(text2);
@@ -3820,7 +3820,7 @@ super_serve_op_TESTS_MAKEFILE_DELETE_ACTION(
   get_advanced_layout_path(makefile_path, sizeof(makefile_path), global, prob, DFLT_P_MAKEFILE, variant);
   if (logged_unlink(log_f, makefile_path) < 0) FAIL(S_ERR_FS_ERROR);
 
-  ss_redirect_2(out_f, phr, SSERV_OP_TESTS_MAIN_PAGE, contest_id, prob_id, variant, 0, NULL);
+  ss_redirect_2(out_f, phr, SSERV_CMD_TESTS_MAIN_PAGE, contest_id, prob_id, variant, 0, NULL);
 
 cleanup:
   return retval;
@@ -3892,7 +3892,7 @@ super_serve_op_TESTS_MAKEFILE_GENERATE_ACTION(
 
   retval = build_generate_makefile(log_f, phr->config, cnts, cs, NULL, global, prob, variant);
   if (!retval) {
-    ss_redirect_2(out_f, phr, SSERV_OP_TESTS_MAKEFILE_EDIT_PAGE, contest_id, prob_id, variant, 0, NULL);
+    ss_redirect_2(out_f, phr, SSERV_CMD_TESTS_MAKEFILE_EDIT_PAGE, contest_id, prob_id, variant, 0, NULL);
   }
 
 cleanup:
@@ -4057,7 +4057,7 @@ super_serve_op_TESTS_STATEMENT_EDIT_PAGE(
   fprintf(out_f, "<li>%s%s</a></li>\n",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                         "action=%d&op=%d&contest_id=%d", SSERV_CMD_HTTP_REQUEST,
-                        SSERV_OP_TESTS_MAIN_PAGE, contest_id),
+                        SSERV_CMD_TESTS_MAIN_PAGE, contest_id),
           "Problems page");
   fprintf(out_f, "</ul>\n");
 
@@ -4098,13 +4098,13 @@ super_serve_op_TESTS_STATEMENT_EDIT_PAGE(
     cl = " class=\"b0\"";
     fprintf(out_f, "<table%s><tr>", cl);
     fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
-            cl, SSERV_OP_TESTS_CANCEL_2_ACTION, "Cancel");
+            cl, SSERV_CMD_TESTS_CANCEL_2_ACTION, "Cancel");
     fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
-            cl, SSERV_OP_TESTS_STATEMENT_EDIT_5_ACTION, "Save");
+            cl, SSERV_CMD_TESTS_STATEMENT_EDIT_5_ACTION, "Save");
     fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
-            cl, SSERV_OP_TESTS_STATEMENT_EDIT_2_ACTION, "Save and view");
+            cl, SSERV_CMD_TESTS_STATEMENT_EDIT_2_ACTION, "Save and view");
     fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
-            cl, SSERV_OP_TESTS_STATEMENT_DELETE_ACTION, "Delete!");
+            cl, SSERV_CMD_TESTS_STATEMENT_DELETE_ACTION, "Delete!");
     fprintf(out_f, "</tr></table>\n");
 
     fprintf(out_f, "</form>\n");
@@ -4213,7 +4213,7 @@ super_serve_op_TESTS_STATEMENT_EDIT_PAGE(
         if (file_t == NULL) file_t = xstrdup("");
         fprintf(out_f, "<tr><td%s>%s %d<br/>", cl, "Sample input", serial);
         fprintf(out_f, "<input onclick=\"setSampleNumToDelete(%d)\" type=\"submit\" name=\"op_%d\" value=\"%s\" />",
-                serial, SSERV_OP_TESTS_STATEMENT_DELETE_SAMPLE_ACTION, "Delete");
+                serial, SSERV_CMD_TESTS_STATEMENT_DELETE_SAMPLE_ACTION, "Delete");
         fprintf(out_f, "</td><td%s>", cl);
         snprintf(hbuf, sizeof(hbuf), "prob_sample_input_%d", serial);
         edit_file_textarea(out_f, hbuf, 100, 20, file_t, 0);
@@ -4229,7 +4229,7 @@ super_serve_op_TESTS_STATEMENT_EDIT_PAGE(
         if (file_t == NULL) file_t = xstrdup("");
         fprintf(out_f, "<tr><td%s>%s %d<br/>", cl, "Sample output", serial);
         fprintf(out_f, "<input onclick=\"setSampleNumToDelete(%d)\" type=\"submit\" name=\"op_%d\" value=\"%s\" />",
-                serial, SSERV_OP_TESTS_STATEMENT_DELETE_SAMPLE_ACTION, "Delete");
+                serial, SSERV_CMD_TESTS_STATEMENT_DELETE_SAMPLE_ACTION, "Delete");
         fprintf(out_f, "</td><td%s>", cl);
         snprintf(hbuf, sizeof(hbuf), "prob_sample_output_%d", serial);
         edit_file_textarea(out_f, hbuf, 100, 20, file_t, 0);
@@ -4243,15 +4243,15 @@ super_serve_op_TESTS_STATEMENT_EDIT_PAGE(
     cl = " class=\"b0\"";
     fprintf(out_f, "<table%s><tr>", cl);
     fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
-            cl, SSERV_OP_TESTS_CANCEL_2_ACTION, "Cancel");
+            cl, SSERV_CMD_TESTS_CANCEL_2_ACTION, "Cancel");
     fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
-            cl, SSERV_OP_TESTS_STATEMENT_EDIT_ACTION, "Save");
+            cl, SSERV_CMD_TESTS_STATEMENT_EDIT_ACTION, "Save");
     fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
-            cl, SSERV_OP_TESTS_STATEMENT_EDIT_4_ACTION, "Save and add a sample");
+            cl, SSERV_CMD_TESTS_STATEMENT_EDIT_4_ACTION, "Save and add a sample");
     fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
-            cl, SSERV_OP_TESTS_STATEMENT_EDIT_3_ACTION, "Save and view as file");
+            cl, SSERV_CMD_TESTS_STATEMENT_EDIT_3_ACTION, "Save and view as file");
     fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
-            cl, SSERV_OP_TESTS_STATEMENT_DELETE_ACTION, "Delete!");
+            cl, SSERV_CMD_TESTS_STATEMENT_DELETE_ACTION, "Delete!");
     fprintf(out_f, "</tr></table>\n");
 
     fprintf(out_f, "</form>\n");
@@ -4312,7 +4312,7 @@ super_serve_op_TESTS_STATEMENT_EDIT_ACTION(
   struct xml_tree **test_input_nodes = NULL;
   struct xml_tree **test_output_nodes = NULL;
   struct problem_stmt *prob_stmt = NULL;
-  int next_action = SSERV_OP_TESTS_MAIN_PAGE;
+  int next_action = SSERV_CMD_TESTS_MAIN_PAGE;
   unsigned char extra_redirect_args[1024];
 
   xml_path_tmp[0] = 0;
@@ -4449,20 +4449,20 @@ super_serve_op_TESTS_STATEMENT_EDIT_ACTION(
     test_output_nodes[i] = NULL;
   }
 
-  if (phr->opcode == SSERV_OP_TESTS_STATEMENT_EDIT_3_ACTION) {
+  if (phr->opcode == SSERV_CMD_TESTS_STATEMENT_EDIT_3_ACTION) {
     // save and view as text file
     snprintf(extra_redirect_args, sizeof(extra_redirect_args), "plain_view=1");
-    next_action = SSERV_OP_TESTS_STATEMENT_EDIT_PAGE;
-  } else if (phr->opcode == SSERV_OP_TESTS_STATEMENT_EDIT_4_ACTION) {
+    next_action = SSERV_CMD_TESTS_STATEMENT_EDIT_PAGE;
+  } else if (phr->opcode == SSERV_CMD_TESTS_STATEMENT_EDIT_4_ACTION) {
     // save and add a sample
     problem_xml_add_example(prob_xml,
                             problem_xml_parse_text(log_f, "", PROB_T_INPUT),
                             problem_xml_parse_text(log_f, "", PROB_T_OUTPUT));
-    next_action = SSERV_OP_TESTS_STATEMENT_EDIT_PAGE;
-  } else if (phr->opcode == SSERV_OP_TESTS_STATEMENT_DELETE_SAMPLE_ACTION) {
+    next_action = SSERV_CMD_TESTS_STATEMENT_EDIT_PAGE;
+  } else if (phr->opcode == SSERV_CMD_TESTS_STATEMENT_DELETE_SAMPLE_ACTION) {
     // save and delete a sample
     problem_xml_delete_test(prob_xml, delete_num);
-    next_action = SSERV_OP_TESTS_STATEMENT_EDIT_PAGE;
+    next_action = SSERV_CMD_TESTS_STATEMENT_EDIT_PAGE;
   }
 
   if (create_problem_directory(log_f, xml_path_tmp, cnts) < 0)
@@ -4533,7 +4533,7 @@ super_serve_op_TESTS_STATEMENT_EDIT_2_ACTION(
   problem_xml_t prob_xml = NULL;
   const unsigned char *s = NULL;
   unsigned char *text = NULL;
-  int next_action = SSERV_OP_TESTS_MAIN_PAGE;
+  int next_action = SSERV_CMD_TESTS_MAIN_PAGE;
 
   xml_path_tmp[0] = 0;
 
@@ -4577,9 +4577,9 @@ super_serve_op_TESTS_STATEMENT_EDIT_2_ACTION(
   ss_cgi_param(phr, "xml_text", &s);
   text = normalize_textarea(s);
 
-  if (phr->opcode == SSERV_OP_TESTS_STATEMENT_EDIT_2_ACTION) {
+  if (phr->opcode == SSERV_CMD_TESTS_STATEMENT_EDIT_2_ACTION) {
     // save and view
-    next_action = SSERV_OP_TESTS_STATEMENT_EDIT_PAGE;
+    next_action = SSERV_CMD_TESTS_STATEMENT_EDIT_PAGE;
   }
 
   if (create_problem_directory(log_f, xml_path_tmp, cnts) < 0)
@@ -4662,7 +4662,7 @@ super_serve_op_TESTS_STATEMENT_DELETE_ACTION(
 
   if (logged_rename(log_f, xml_path, xml_path_bak) < 0) FAIL(S_ERR_FS_ERROR);
 
-  ss_redirect_2(out_f, phr, SSERV_OP_TESTS_MAIN_PAGE, contest_id, prob_id, variant, 0, NULL);
+  ss_redirect_2(out_f, phr, SSERV_CMD_TESTS_MAIN_PAGE, contest_id, prob_id, variant, 0, NULL);
 
 cleanup:
   return retval;
@@ -4719,17 +4719,17 @@ super_serve_op_TESTS_SOURCE_HEADER_EDIT_PAGE(
     if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
   }
 
-  if (phr->opcode == SSERV_OP_TESTS_SOURCE_HEADER_EDIT_PAGE) {
+  if (phr->opcode == SSERV_CMD_TESTS_SOURCE_HEADER_EDIT_PAGE) {
     file_name = prob->source_header;
     title = "source header";
-    action = SSERV_OP_TESTS_SOURCE_HEADER_EDIT_ACTION;
-    delete_action = SSERV_OP_TESTS_SOURCE_HEADER_DELETE_ACTION;
-  } else if (phr->opcode == SSERV_OP_TESTS_SOURCE_FOOTER_EDIT_PAGE) {
+    action = SSERV_CMD_TESTS_SOURCE_HEADER_EDIT_ACTION;
+    delete_action = SSERV_CMD_TESTS_SOURCE_HEADER_DELETE_ACTION;
+  } else if (phr->opcode == SSERV_CMD_TESTS_SOURCE_FOOTER_EDIT_PAGE) {
     file_name = prob->source_footer;
     title = "source footer";
-    action = SSERV_OP_TESTS_SOURCE_FOOTER_EDIT_ACTION;
-    delete_action = SSERV_OP_TESTS_SOURCE_FOOTER_DELETE_ACTION;
-  } else if (phr->opcode == SSERV_OP_TESTS_SOLUTION_EDIT_PAGE) {
+    action = SSERV_CMD_TESTS_SOURCE_FOOTER_EDIT_ACTION;
+    delete_action = SSERV_CMD_TESTS_SOURCE_FOOTER_DELETE_ACTION;
+  } else if (phr->opcode == SSERV_CMD_TESTS_SOLUTION_EDIT_PAGE) {
     if (prob->solution_src && prob->solution_src[0]) {
       file_name = prob->solution_src;
     } else if (prob->solution_cmd && prob->solution_cmd[0]) {
@@ -4758,8 +4758,8 @@ super_serve_op_TESTS_SOURCE_HEADER_EDIT_PAGE(
       file_name = file_name_buf;
     }
     title = "solution";
-    action = SSERV_OP_TESTS_SOLUTION_EDIT_ACTION;
-    delete_action = SSERV_OP_TESTS_SOLUTION_DELETE_ACTION;
+    action = SSERV_CMD_TESTS_SOLUTION_EDIT_ACTION;
+    delete_action = SSERV_CMD_TESTS_SOLUTION_DELETE_ACTION;
   } else {
     FAIL(S_ERR_INV_OPER);
   }
@@ -4786,7 +4786,7 @@ super_serve_op_TESTS_SOURCE_HEADER_EDIT_PAGE(
   fprintf(out_f, "<li>%s%s</a></li>\n",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                         "action=%d&op=%d&contest_id=%d", SSERV_CMD_HTTP_REQUEST,
-                        SSERV_OP_TESTS_MAIN_PAGE, contest_id),
+                        SSERV_CMD_TESTS_MAIN_PAGE, contest_id),
           "Problems page");
   fprintf(out_f, "</ul>\n");
 
@@ -4813,7 +4813,7 @@ super_serve_op_TESTS_SOURCE_HEADER_EDIT_PAGE(
   cl = " class=\"b0\"";
   fprintf(out_f, "<table%s><tr>", cl);
   fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
-          cl, SSERV_OP_TESTS_CANCEL_2_ACTION, "Cancel");
+          cl, SSERV_CMD_TESTS_CANCEL_2_ACTION, "Cancel");
   fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
           cl, action, "Save");
   fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
@@ -4851,7 +4851,7 @@ super_serve_op_TESTS_SOURCE_HEADER_EDIT_ACTION(
   unsigned char file_path_bak[PATH_MAX];
   const unsigned char *s = NULL;
   unsigned char *text = NULL;
-  int next_action = SSERV_OP_TESTS_MAIN_PAGE;
+  int next_action = SSERV_CMD_TESTS_MAIN_PAGE;
   unsigned char file_name_buf[PATH_MAX];
 
   file_path_tmp[0] = 0;
@@ -4880,11 +4880,11 @@ super_serve_op_TESTS_SOURCE_HEADER_EDIT_ACTION(
     if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
   }
 
-  if (phr->opcode == SSERV_OP_TESTS_SOURCE_HEADER_EDIT_ACTION) {
+  if (phr->opcode == SSERV_CMD_TESTS_SOURCE_HEADER_EDIT_ACTION) {
     file_name = prob->source_header;
-  } else if (phr->opcode == SSERV_OP_TESTS_SOURCE_FOOTER_EDIT_ACTION) {
+  } else if (phr->opcode == SSERV_CMD_TESTS_SOURCE_FOOTER_EDIT_ACTION) {
     file_name = prob->source_footer;
-  } else if (phr->opcode == SSERV_OP_TESTS_SOLUTION_EDIT_ACTION) {
+  } else if (phr->opcode == SSERV_CMD_TESTS_SOLUTION_EDIT_ACTION) {
     if (prob->solution_src && prob->solution_src[0]) {
       file_name = prob->solution_src;
     } else if (prob->solution_cmd && prob->solution_cmd[0]) {
@@ -4941,7 +4941,7 @@ super_serve_op_TESTS_SOURCE_HEADER_EDIT_ACTION(
   if (logged_rename(log_f, file_path_tmp, file_path) < 0) FAIL(S_ERR_FS_ERROR);
   super_html_set_cnts_file_perms(log_f, file_path, cnts);
   file_path_tmp[0] = 0;
-  next_action = SSERV_OP_TESTS_MAKE;
+  next_action = SSERV_CMD_TESTS_MAKE;
 
 done:
   ss_redirect_2(out_f, phr, next_action, contest_id, prob_id, variant, 0, NULL);
@@ -4995,11 +4995,11 @@ super_serve_op_TESTS_SOURCE_HEADER_DELETE_ACTION(
     if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
   }
 
-  if (phr->opcode == SSERV_OP_TESTS_SOURCE_HEADER_DELETE_ACTION) {
+  if (phr->opcode == SSERV_CMD_TESTS_SOURCE_HEADER_DELETE_ACTION) {
     file_name = prob->source_header;
-  } else if (phr->opcode == SSERV_OP_TESTS_SOURCE_FOOTER_DELETE_ACTION) {
+  } else if (phr->opcode == SSERV_CMD_TESTS_SOURCE_FOOTER_DELETE_ACTION) {
     file_name = prob->source_footer;
-  } else if (phr->opcode == SSERV_OP_TESTS_SOLUTION_DELETE_ACTION) {
+  } else if (phr->opcode == SSERV_CMD_TESTS_SOLUTION_DELETE_ACTION) {
     file_name = prob->solution_src;
   } else {
     FAIL(S_ERR_INV_OPER);
@@ -5017,7 +5017,7 @@ super_serve_op_TESTS_SOURCE_HEADER_DELETE_ACTION(
 
   if (logged_unlink(log_f, file_path) < 0) FAIL(S_ERR_FS_ERROR);
 
-  ss_redirect_2(out_f, phr, SSERV_OP_TESTS_MAIN_PAGE, contest_id, prob_id, variant, 0, NULL);
+  ss_redirect_2(out_f, phr, SSERV_CMD_TESTS_MAIN_PAGE, contest_id, prob_id, variant, 0, NULL);
 
 cleanup:
   return retval;
@@ -5073,42 +5073,42 @@ super_serve_op_TESTS_CHECKER_CREATE_PAGE(
   }
 
   switch (phr->opcode) {
-  case SSERV_OP_TESTS_STYLE_CHECKER_CREATE_PAGE:
+  case SSERV_CMD_TESTS_STYLE_CHECKER_CREATE_PAGE:
     if (!prob->style_checker_cmd || !prob->style_checker_cmd[0]) FAIL(S_ERR_INV_OPER);
     title = "Style checker";
     file_name = prob->style_checker_cmd;
-    action = SSERV_OP_TESTS_STYLE_CHECKER_CREATE_ACTION;
+    action = SSERV_CMD_TESTS_STYLE_CHECKER_CREATE_ACTION;
     break;
-  case SSERV_OP_TESTS_CHECKER_CREATE_PAGE:
+  case SSERV_CMD_TESTS_CHECKER_CREATE_PAGE:
     if (prob->standard_checker && prob->standard_checker[0]) FAIL(S_ERR_INV_OPER);
     if (!prob->check_cmd || !prob->check_cmd[0]) FAIL(S_ERR_INV_OPER);
     title = "Checker";
     file_name = prob->check_cmd;
-    action = SSERV_OP_TESTS_CHECKER_CREATE_ACTION;
+    action = SSERV_CMD_TESTS_CHECKER_CREATE_ACTION;
     break;
-  case SSERV_OP_TESTS_VALUER_CREATE_PAGE:
+  case SSERV_CMD_TESTS_VALUER_CREATE_PAGE:
     if (!prob->valuer_cmd || !prob->valuer_cmd[0]) FAIL(S_ERR_INV_OPER);
     title = "Valuer";
     file_name = prob->valuer_cmd;
-    action = SSERV_OP_TESTS_VALUER_CREATE_ACTION;
+    action = SSERV_CMD_TESTS_VALUER_CREATE_ACTION;
     break;
-  case SSERV_OP_TESTS_INTERACTOR_CREATE_PAGE:
+  case SSERV_CMD_TESTS_INTERACTOR_CREATE_PAGE:
     if (!prob->interactor_cmd || !prob->interactor_cmd[0]) FAIL(S_ERR_INV_OPER);
     title = "Interactor";
     file_name = prob->interactor_cmd;
-    action = SSERV_OP_TESTS_INTERACTOR_CREATE_ACTION;
+    action = SSERV_CMD_TESTS_INTERACTOR_CREATE_ACTION;
     break;
-  case SSERV_OP_TESTS_TEST_CHECKER_CREATE_PAGE:
+  case SSERV_CMD_TESTS_TEST_CHECKER_CREATE_PAGE:
     if (!prob->test_checker_cmd || !prob->test_checker_cmd[0]) FAIL(S_ERR_INV_OPER);
     title = "Test checker";
     file_name = prob->test_checker_cmd;
-    action = SSERV_OP_TESTS_TEST_CHECKER_CREATE_ACTION;
+    action = SSERV_CMD_TESTS_TEST_CHECKER_CREATE_ACTION;
     break;
-  case SSERV_OP_TESTS_INIT_CREATE_PAGE:
+  case SSERV_CMD_TESTS_INIT_CREATE_PAGE:
     if (!prob->init_cmd || !prob->init_cmd[0]) FAIL(S_ERR_INV_OPER);
     title = "Init-style interactor";
     file_name = prob->init_cmd;
-    action = SSERV_OP_TESTS_INIT_CREATE_ACTION;
+    action = SSERV_CMD_TESTS_INIT_CREATE_ACTION;
     break;
   default:
     FAIL(S_ERR_INV_OPER);
@@ -5136,7 +5136,7 @@ super_serve_op_TESTS_CHECKER_CREATE_PAGE(
   fprintf(out_f, "<li>%s%s</a></li>\n",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                         "action=%d&op=%d&contest_id=%d", SSERV_CMD_HTTP_REQUEST,
-                        SSERV_OP_TESTS_MAIN_PAGE, contest_id),
+                        SSERV_CMD_TESTS_MAIN_PAGE, contest_id),
           "Problems page");
   fprintf(out_f, "</ul>\n");
 
@@ -5178,7 +5178,7 @@ super_serve_op_TESTS_CHECKER_CREATE_PAGE(
   cl = " class=\"b0\"";
   fprintf(out_f, "<table%s><tr>", cl);
   fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
-          cl, SSERV_OP_TESTS_CANCEL_2_ACTION, "Cancel");
+          cl, SSERV_CMD_TESTS_CANCEL_2_ACTION, "Cancel");
   fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
           cl, action, "Create");
   fprintf(out_f, "</tr></table>\n");
@@ -5424,36 +5424,36 @@ super_serve_op_TESTS_CHECKER_CREATE_ACTION(
   if (gen_makefile != 1) gen_makefile = 0;
 
   switch (phr->opcode) {
-  case SSERV_OP_TESTS_STYLE_CHECKER_CREATE_ACTION:
+  case SSERV_CMD_TESTS_STYLE_CHECKER_CREATE_ACTION:
     if (!prob->style_checker_cmd || !prob->style_checker_cmd[0]) FAIL(S_ERR_INV_OPER);
     file_name = prob->style_checker_cmd;
-    action = SSERV_OP_TESTS_STYLE_CHECKER_EDIT_PAGE;
+    action = SSERV_CMD_TESTS_STYLE_CHECKER_EDIT_PAGE;
     break;
-  case SSERV_OP_TESTS_CHECKER_CREATE_ACTION:
+  case SSERV_CMD_TESTS_CHECKER_CREATE_ACTION:
     if (prob->standard_checker && prob->standard_checker[0]) FAIL(S_ERR_INV_OPER);
     if (!prob->check_cmd || !prob->check_cmd[0]) FAIL(S_ERR_INV_OPER);
     file_name = prob->check_cmd;
-    action = SSERV_OP_TESTS_CHECKER_EDIT_PAGE;
+    action = SSERV_CMD_TESTS_CHECKER_EDIT_PAGE;
     break;
-  case SSERV_OP_TESTS_VALUER_CREATE_ACTION:
+  case SSERV_CMD_TESTS_VALUER_CREATE_ACTION:
     if (!prob->valuer_cmd || !prob->valuer_cmd[0]) FAIL(S_ERR_INV_OPER);
     file_name = prob->valuer_cmd;
-    action = SSERV_OP_TESTS_VALUER_EDIT_PAGE;
+    action = SSERV_CMD_TESTS_VALUER_EDIT_PAGE;
     break;
-  case SSERV_OP_TESTS_INTERACTOR_CREATE_ACTION:
+  case SSERV_CMD_TESTS_INTERACTOR_CREATE_ACTION:
     if (!prob->interactor_cmd || !prob->interactor_cmd[0]) FAIL(S_ERR_INV_OPER);
     file_name = prob->interactor_cmd;
-    action = SSERV_OP_TESTS_INTERACTOR_EDIT_PAGE;
+    action = SSERV_CMD_TESTS_INTERACTOR_EDIT_PAGE;
     break;
-  case SSERV_OP_TESTS_TEST_CHECKER_CREATE_ACTION:
+  case SSERV_CMD_TESTS_TEST_CHECKER_CREATE_ACTION:
     if (!prob->test_checker_cmd || !prob->test_checker_cmd[0]) FAIL(S_ERR_INV_OPER);
     file_name = prob->test_checker_cmd;
-    action = SSERV_OP_TESTS_TEST_CHECKER_EDIT_PAGE;
+    action = SSERV_CMD_TESTS_TEST_CHECKER_EDIT_PAGE;
     break;
-  case SSERV_OP_TESTS_INIT_CREATE_ACTION:
+  case SSERV_CMD_TESTS_INIT_CREATE_ACTION:
     if (!prob->init_cmd || !prob->init_cmd[0]) FAIL(S_ERR_INV_OPER);
     file_name = prob->init_cmd;
-    action = SSERV_OP_TESTS_INIT_EDIT_PAGE;
+    action = SSERV_CMD_TESTS_INIT_EDIT_PAGE;
     break;
   default:
     FAIL(S_ERR_INV_OPER);
@@ -5489,7 +5489,7 @@ test_checker_edit_page_actions(FILE *out_f, int action, int delete_page)
   const unsigned char *cl = " class=\"b0\"";
   fprintf(out_f, "<table%s><tr>", cl);
   fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
-          cl, SSERV_OP_TESTS_CANCEL_2_ACTION, "Cancel");
+          cl, SSERV_CMD_TESTS_CANCEL_2_ACTION, "Cancel");
   if (action > 0) {
     fprintf(out_f, "<td%s><input type=\"submit\" name=\"op_%d\" value=\"%s\" /></td>",
             cl, action, "Save");
@@ -5560,54 +5560,54 @@ super_serve_op_TESTS_CHECKER_EDIT_PAGE(
   }
 
   switch (phr->opcode) {
-  case SSERV_OP_TESTS_STYLE_CHECKER_EDIT_PAGE:
+  case SSERV_CMD_TESTS_STYLE_CHECKER_EDIT_PAGE:
     if (!prob->style_checker_cmd || !prob->style_checker_cmd[0]) FAIL(S_ERR_INV_OPER);
     title = "Style checker";
     file_name = prob->style_checker_cmd;
-    create_page = SSERV_OP_TESTS_STYLE_CHECKER_CREATE_PAGE;
-    action = SSERV_OP_TESTS_STYLE_CHECKER_EDIT_ACTION;
-    delete_page = SSERV_OP_TESTS_STYLE_CHECKER_DELETE_PAGE;
+    create_page = SSERV_CMD_TESTS_STYLE_CHECKER_CREATE_PAGE;
+    action = SSERV_CMD_TESTS_STYLE_CHECKER_EDIT_ACTION;
+    delete_page = SSERV_CMD_TESTS_STYLE_CHECKER_DELETE_PAGE;
     break;
-  case SSERV_OP_TESTS_CHECKER_EDIT_PAGE:
+  case SSERV_CMD_TESTS_CHECKER_EDIT_PAGE:
     if (prob->standard_checker && prob->standard_checker[0]) FAIL(S_ERR_INV_OPER);
     if (!prob->check_cmd || !prob->check_cmd[0]) FAIL(S_ERR_INV_OPER);
     title = "Checker";
     file_name = prob->check_cmd;
-    create_page = SSERV_OP_TESTS_CHECKER_CREATE_PAGE;
-    action = SSERV_OP_TESTS_CHECKER_EDIT_ACTION;
-    delete_page = SSERV_OP_TESTS_CHECKER_DELETE_PAGE;
+    create_page = SSERV_CMD_TESTS_CHECKER_CREATE_PAGE;
+    action = SSERV_CMD_TESTS_CHECKER_EDIT_ACTION;
+    delete_page = SSERV_CMD_TESTS_CHECKER_DELETE_PAGE;
     break;
-  case SSERV_OP_TESTS_VALUER_EDIT_PAGE:
+  case SSERV_CMD_TESTS_VALUER_EDIT_PAGE:
     if (!prob->valuer_cmd || !prob->valuer_cmd[0]) FAIL(S_ERR_INV_OPER);
     title = "Valuer";
     file_name = prob->valuer_cmd;
-    create_page = SSERV_OP_TESTS_VALUER_CREATE_PAGE;
-    action = SSERV_OP_TESTS_VALUER_EDIT_ACTION;
-    delete_page = SSERV_OP_TESTS_VALUER_DELETE_PAGE;
+    create_page = SSERV_CMD_TESTS_VALUER_CREATE_PAGE;
+    action = SSERV_CMD_TESTS_VALUER_EDIT_ACTION;
+    delete_page = SSERV_CMD_TESTS_VALUER_DELETE_PAGE;
     break;
-  case SSERV_OP_TESTS_INTERACTOR_EDIT_PAGE:
+  case SSERV_CMD_TESTS_INTERACTOR_EDIT_PAGE:
     if (!prob->interactor_cmd || !prob->interactor_cmd[0]) FAIL(S_ERR_INV_OPER);
     title = "Interactor";
     file_name = prob->interactor_cmd;
-    create_page = SSERV_OP_TESTS_INTERACTOR_CREATE_PAGE;
-    action = SSERV_OP_TESTS_INTERACTOR_EDIT_ACTION;
-    delete_page = SSERV_OP_TESTS_INTERACTOR_DELETE_PAGE;
+    create_page = SSERV_CMD_TESTS_INTERACTOR_CREATE_PAGE;
+    action = SSERV_CMD_TESTS_INTERACTOR_EDIT_ACTION;
+    delete_page = SSERV_CMD_TESTS_INTERACTOR_DELETE_PAGE;
     break;
-  case SSERV_OP_TESTS_TEST_CHECKER_EDIT_PAGE:
+  case SSERV_CMD_TESTS_TEST_CHECKER_EDIT_PAGE:
     if (!prob->test_checker_cmd || !prob->test_checker_cmd[0]) FAIL(S_ERR_INV_OPER);
     title = "Test checker";
     file_name = prob->test_checker_cmd;
-    create_page = SSERV_OP_TESTS_TEST_CHECKER_CREATE_PAGE;
-    action = SSERV_OP_TESTS_TEST_CHECKER_EDIT_ACTION;
-    delete_page = SSERV_OP_TESTS_TEST_CHECKER_DELETE_PAGE;
+    create_page = SSERV_CMD_TESTS_TEST_CHECKER_CREATE_PAGE;
+    action = SSERV_CMD_TESTS_TEST_CHECKER_EDIT_ACTION;
+    delete_page = SSERV_CMD_TESTS_TEST_CHECKER_DELETE_PAGE;
     break;
-  case SSERV_OP_TESTS_INIT_EDIT_PAGE:
+  case SSERV_CMD_TESTS_INIT_EDIT_PAGE:
     if (!prob->init_cmd || !prob->init_cmd[0]) FAIL(S_ERR_INV_OPER);
     title = "Init-style interactor";
     file_name = prob->init_cmd;
-    create_page = SSERV_OP_TESTS_INIT_CREATE_PAGE;
-    action = SSERV_OP_TESTS_INIT_EDIT_ACTION;
-    delete_page = SSERV_OP_TESTS_INIT_DELETE_PAGE;
+    create_page = SSERV_CMD_TESTS_INIT_CREATE_PAGE;
+    action = SSERV_CMD_TESTS_INIT_EDIT_ACTION;
+    delete_page = SSERV_CMD_TESTS_INIT_DELETE_PAGE;
     break;
   default:
     FAIL(S_ERR_INV_OPER);
@@ -5643,7 +5643,7 @@ super_serve_op_TESTS_CHECKER_EDIT_PAGE(
   fprintf(out_f, "<li>%s%s</a></li>\n",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                         "action=%d&op=%d&contest_id=%d", SSERV_CMD_HTTP_REQUEST,
-                        SSERV_OP_TESTS_MAIN_PAGE, contest_id),
+                        SSERV_CMD_TESTS_MAIN_PAGE, contest_id),
           "Problems page");
   fprintf(out_f, "</ul>\n");
 
@@ -5740,7 +5740,7 @@ super_serve_op_TESTS_CHECKER_EDIT_ACTION(
   int lang_mask = 0;
   unsigned char *text = NULL;
   const unsigned char *src_suffix = NULL, *s = NULL;
-  int next_action = SSERV_OP_TESTS_MAIN_PAGE;
+  int next_action = SSERV_CMD_TESTS_MAIN_PAGE;
 
   file_path_tmp[0] = 0;
 
@@ -5769,28 +5769,28 @@ super_serve_op_TESTS_CHECKER_EDIT_ACTION(
   }
 
   switch (phr->opcode) {
-  case SSERV_OP_TESTS_STYLE_CHECKER_EDIT_ACTION:
+  case SSERV_CMD_TESTS_STYLE_CHECKER_EDIT_ACTION:
     if (!prob->style_checker_cmd || !prob->style_checker_cmd[0]) FAIL(S_ERR_INV_OPER);
     file_name = prob->style_checker_cmd;
     break;
-  case SSERV_OP_TESTS_CHECKER_EDIT_ACTION:
+  case SSERV_CMD_TESTS_CHECKER_EDIT_ACTION:
     if (prob->standard_checker && prob->standard_checker[0]) FAIL(S_ERR_INV_OPER);
     if (!prob->check_cmd || !prob->check_cmd[0]) FAIL(S_ERR_INV_OPER);
     file_name = prob->check_cmd;
     break;
-  case SSERV_OP_TESTS_VALUER_EDIT_ACTION:
+  case SSERV_CMD_TESTS_VALUER_EDIT_ACTION:
     if (!prob->valuer_cmd || !prob->valuer_cmd[0]) FAIL(S_ERR_INV_OPER);
     file_name = prob->valuer_cmd;
     break;
-  case SSERV_OP_TESTS_INTERACTOR_EDIT_ACTION:
+  case SSERV_CMD_TESTS_INTERACTOR_EDIT_ACTION:
     if (!prob->interactor_cmd || !prob->interactor_cmd[0]) FAIL(S_ERR_INV_OPER);
     file_name = prob->interactor_cmd;
     break;
-  case SSERV_OP_TESTS_TEST_CHECKER_EDIT_ACTION:
+  case SSERV_CMD_TESTS_TEST_CHECKER_EDIT_ACTION:
     if (!prob->test_checker_cmd || !prob->test_checker_cmd[0]) FAIL(S_ERR_INV_OPER);
     file_name = prob->test_checker_cmd;
     break;
-  case SSERV_OP_TESTS_INIT_EDIT_ACTION:
+  case SSERV_CMD_TESTS_INIT_EDIT_ACTION:
     if (!prob->init_cmd || !prob->init_cmd[0]) FAIL(S_ERR_INV_OPER);
     file_name = prob->init_cmd;
     break;
@@ -5835,7 +5835,7 @@ super_serve_op_TESTS_CHECKER_EDIT_ACTION(
   if (logged_rename(log_f, file_path_tmp, file_path) < 0) FAIL(S_ERR_FS_ERROR);
   super_html_set_cnts_file_perms(log_f, file_path, cnts);
   file_path_tmp[0] = 0;
-  next_action = SSERV_OP_TESTS_MAKE;
+  next_action = SSERV_CMD_TESTS_MAKE;
 
 done:
   ss_redirect_2(out_f, phr, next_action, contest_id, prob_id, variant, 0, NULL);
@@ -5950,41 +5950,41 @@ super_serve_op_TESTS_CHECKER_DELETE_PAGE(
   }
 
   switch (phr->opcode) {
-  case SSERV_OP_TESTS_STYLE_CHECKER_DELETE_PAGE:
+  case SSERV_CMD_TESTS_STYLE_CHECKER_DELETE_PAGE:
     if (!prob->style_checker_cmd || !prob->style_checker_cmd[0]) FAIL(S_ERR_INV_OPER);
     file_name = prob->style_checker_cmd;
-    action = SSERV_OP_TESTS_STYLE_CHECKER_DELETE_ACTION;
+    action = SSERV_CMD_TESTS_STYLE_CHECKER_DELETE_ACTION;
     title = "Style checker";
     break;
-  case SSERV_OP_TESTS_CHECKER_DELETE_PAGE:
+  case SSERV_CMD_TESTS_CHECKER_DELETE_PAGE:
     if (prob->standard_checker && prob->standard_checker[0]) FAIL(S_ERR_INV_OPER);
     if (!prob->check_cmd || !prob->check_cmd[0]) FAIL(S_ERR_INV_OPER);
     file_name = prob->check_cmd;
-    action = SSERV_OP_TESTS_CHECKER_DELETE_ACTION;
+    action = SSERV_CMD_TESTS_CHECKER_DELETE_ACTION;
     title = "Checker";
     break;
-  case SSERV_OP_TESTS_VALUER_DELETE_PAGE:
+  case SSERV_CMD_TESTS_VALUER_DELETE_PAGE:
     if (!prob->valuer_cmd || !prob->valuer_cmd[0]) FAIL(S_ERR_INV_OPER);
     file_name = prob->valuer_cmd;
-    action = SSERV_OP_TESTS_VALUER_DELETE_ACTION;
+    action = SSERV_CMD_TESTS_VALUER_DELETE_ACTION;
     title = "Valuer";
     break;
-  case SSERV_OP_TESTS_INTERACTOR_DELETE_PAGE:
+  case SSERV_CMD_TESTS_INTERACTOR_DELETE_PAGE:
     if (!prob->interactor_cmd || !prob->interactor_cmd[0]) FAIL(S_ERR_INV_OPER);
     file_name = prob->interactor_cmd;
-    action = SSERV_OP_TESTS_INTERACTOR_DELETE_ACTION;
+    action = SSERV_CMD_TESTS_INTERACTOR_DELETE_ACTION;
     title = "Interactor";
     break;
-  case SSERV_OP_TESTS_TEST_CHECKER_DELETE_PAGE:
+  case SSERV_CMD_TESTS_TEST_CHECKER_DELETE_PAGE:
     if (!prob->test_checker_cmd || !prob->test_checker_cmd[0]) FAIL(S_ERR_INV_OPER);
     file_name = prob->test_checker_cmd;
-    action = SSERV_OP_TESTS_TEST_CHECKER_DELETE_ACTION;
+    action = SSERV_CMD_TESTS_TEST_CHECKER_DELETE_ACTION;
     title = "Test checker";
     break;
-  case SSERV_OP_TESTS_INIT_DELETE_PAGE:
+  case SSERV_CMD_TESTS_INIT_DELETE_PAGE:
     if (!prob->init_cmd || !prob->init_cmd[0]) FAIL(S_ERR_INV_OPER);
     file_name = prob->init_cmd;
-    action = SSERV_OP_TESTS_INIT_DELETE_ACTION;
+    action = SSERV_CMD_TESTS_INIT_DELETE_ACTION;
     title = "Init-style interactor";
     break;
   default:
@@ -6039,7 +6039,7 @@ super_serve_op_TESTS_CHECKER_DELETE_PAGE(
   fprintf(out_f, "<li>%s%s</a></li>\n",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                         "action=%d&op=%d&contest_id=%d", SSERV_CMD_HTTP_REQUEST,
-                        SSERV_OP_TESTS_MAIN_PAGE, contest_id),
+                        SSERV_CMD_TESTS_MAIN_PAGE, contest_id),
           "Problems page");
   fprintf(out_f, "</ul>\n");
 
@@ -6120,28 +6120,28 @@ super_serve_op_TESTS_CHECKER_DELETE_ACTION(
   }
 
   switch (phr->opcode) {
-  case SSERV_OP_TESTS_STYLE_CHECKER_DELETE_ACTION:
+  case SSERV_CMD_TESTS_STYLE_CHECKER_DELETE_ACTION:
     if (!prob->style_checker_cmd || !prob->style_checker_cmd[0]) FAIL(S_ERR_INV_OPER);
     file_name = prob->style_checker_cmd;
     break;
-  case SSERV_OP_TESTS_CHECKER_DELETE_ACTION:
+  case SSERV_CMD_TESTS_CHECKER_DELETE_ACTION:
     if (prob->standard_checker && prob->standard_checker[0]) FAIL(S_ERR_INV_OPER);
     if (!prob->check_cmd || !prob->check_cmd[0]) FAIL(S_ERR_INV_OPER);
     file_name = prob->check_cmd;
     break;
-  case SSERV_OP_TESTS_VALUER_DELETE_ACTION:
+  case SSERV_CMD_TESTS_VALUER_DELETE_ACTION:
     if (!prob->valuer_cmd || !prob->valuer_cmd[0]) FAIL(S_ERR_INV_OPER);
     file_name = prob->valuer_cmd;
     break;
-  case SSERV_OP_TESTS_INTERACTOR_DELETE_ACTION:
+  case SSERV_CMD_TESTS_INTERACTOR_DELETE_ACTION:
     if (!prob->interactor_cmd || !prob->interactor_cmd[0]) FAIL(S_ERR_INV_OPER);
     file_name = prob->interactor_cmd;
     break;
-  case SSERV_OP_TESTS_TEST_CHECKER_DELETE_ACTION:
+  case SSERV_CMD_TESTS_TEST_CHECKER_DELETE_ACTION:
     if (!prob->test_checker_cmd || !prob->test_checker_cmd[0]) FAIL(S_ERR_INV_OPER);
     file_name = prob->test_checker_cmd;
     break;
-  case SSERV_OP_TESTS_INIT_DELETE_ACTION:
+  case SSERV_CMD_TESTS_INIT_DELETE_ACTION:
     if (!prob->init_cmd || !prob->init_cmd[0]) FAIL(S_ERR_INV_OPER);
     file_name = prob->init_cmd;
     break;
@@ -6191,7 +6191,7 @@ super_serve_op_TESTS_CHECKER_DELETE_ACTION(
     unlink(tmp_path);
   }
 
-  ss_redirect_2(out_f, phr, SSERV_OP_TESTS_MAIN_PAGE, contest_id, prob_id, variant, 0, NULL);
+  ss_redirect_2(out_f, phr, SSERV_CMD_TESTS_MAIN_PAGE, contest_id, prob_id, variant, 0, NULL);
 
 cleanup:
   if (d) closedir(d);
@@ -6295,7 +6295,7 @@ super_serve_op_TESTS_MAKE(
   fprintf(out_f, "<li>%s%s</a></li>\n",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                         "action=%d&op=%d&contest_id=%d", SSERV_CMD_HTTP_REQUEST,
-                        SSERV_OP_TESTS_MAIN_PAGE, contest_id),
+                        SSERV_CMD_TESTS_MAIN_PAGE, contest_id),
           "Problems page");
   fprintf(out_f, "</ul>\n");
 
@@ -6321,9 +6321,9 @@ super_serve_op_TESTS_MAKE(
     goto done;
   }
 
-  if (phr->opcode == SSERV_OP_TESTS_GENERATE_ANSWERS_PAGE) {
+  if (phr->opcode == SSERV_CMD_TESTS_GENERATE_ANSWERS_PAGE) {
     target = "answers";
-  } else if (phr->opcode == SSERV_OP_TESTS_CHECK_TESTS_PAGE) {
+  } else if (phr->opcode == SSERV_CMD_TESTS_CHECK_TESTS_PAGE) {
     target = "check_tests";
   }
 
@@ -6450,9 +6450,9 @@ super_serve_op_TESTS_TEST_CHECK_ACTION(
 
   errbuf[0] = 0;
 
-  if (phr->opcode == SSERV_OP_TESTS_TEST_CHECK_ACTION) {
+  if (phr->opcode == SSERV_CMD_TESTS_TEST_CHECK_ACTION) {
     target = "check_test";
-  } else if (phr->opcode == SSERV_OP_TESTS_TEST_GENERATE_ACTION) {
+  } else if (phr->opcode == SSERV_CMD_TESTS_TEST_GENERATE_ACTION) {
     target = "answer";
   } else {
     FAIL(S_ERR_NOT_IMPLEMENTED);
@@ -6476,9 +6476,9 @@ super_serve_op_TESTS_TEST_CHECK_ACTION(
   if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
   if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
 
-  if (phr->opcode == SSERV_OP_TESTS_TEST_CHECK_ACTION) {
+  if (phr->opcode == SSERV_CMD_TESTS_TEST_CHECK_ACTION) {
     command = prob->test_checker_cmd;
-  } else if (phr->opcode == SSERV_OP_TESTS_TEST_GENERATE_ACTION) {
+  } else if (phr->opcode == SSERV_CMD_TESTS_TEST_GENERATE_ACTION) {
     command = prob->solution_cmd;
   } else {
     FAIL(S_ERR_NOT_IMPLEMENTED);
@@ -6495,7 +6495,7 @@ super_serve_op_TESTS_TEST_CHECK_ACTION(
 
   ss_cgi_param_int_opt(phr, "next_action", &next_action, 0);
   // FIXME: check valid next_action
-  if (next_action <= 0) next_action = SSERV_OP_TESTS_TESTS_VIEW_PAGE;
+  if (next_action <= 0) next_action = SSERV_CMD_TESTS_TESTS_VIEW_PAGE;
 
   if (!command || !command[0]) FAIL(S_ERR_INV_PROB_ID);
 
@@ -6550,7 +6550,7 @@ fail_page:
   fprintf(out_f, "<li>%s%s</a></li>\n",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                         "action=%d&op=%d&contest_id=%d", SSERV_CMD_HTTP_REQUEST,
-                        SSERV_OP_TESTS_MAIN_PAGE, contest_id),
+                        SSERV_CMD_TESTS_MAIN_PAGE, contest_id),
           "Problems page");
   fprintf(out_f, "</ul>\n");
 
@@ -6561,7 +6561,7 @@ fail_page:
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                         "action=%d&op=%d&contest_id=%d&prob_id=%d&variant=%d&test_num=%d",
                         SSERV_CMD_HTTP_REQUEST,
-                        SSERV_OP_TESTS_TEST_EDIT_PAGE, contest_id, prob_id, variant, test_num),
+                        SSERV_CMD_TESTS_TEST_EDIT_PAGE, contest_id, prob_id, variant, test_num),
           "Edit test", test_num);
   fprintf(out_f, "</ul>\n");
 
@@ -6656,7 +6656,7 @@ super_serve_op_TESTS_TEST_CHECK_ACTION_continuation(struct background_process *p
   fprintf(phr->out_f, "<li>%s%s</a></li>\n",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                         "action=%d&op=%d&contest_id=%d", SSERV_CMD_HTTP_REQUEST,
-                        SSERV_OP_TESTS_MAIN_PAGE, cntx->contest_id),
+                        SSERV_CMD_TESTS_MAIN_PAGE, cntx->contest_id),
           "Problems page");
   fprintf(phr->out_f, "</ul>\n");
 
@@ -6667,7 +6667,7 @@ super_serve_op_TESTS_TEST_CHECK_ACTION_continuation(struct background_process *p
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                         "action=%d&op=%d&contest_id=%d&prob_id=%d&variant=%d&test_num=%d",
                         SSERV_CMD_HTTP_REQUEST,
-                        SSERV_OP_TESTS_TEST_EDIT_PAGE, cntx->contest_id, cntx->prob_id, cntx->variant, cntx->test_num),
+                        SSERV_CMD_TESTS_TEST_EDIT_PAGE, cntx->contest_id, cntx->prob_id, cntx->variant, cntx->test_num),
           "Edit test", cntx->test_num);
   fprintf(phr->out_f, "</ul>\n");
 
