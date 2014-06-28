@@ -53,7 +53,7 @@
 %></s:a><%
   }
 %></div></li><%
-  if (global && global->is_virtual > 0 && ((start_time <= 0 && global->disable_virtual_start <= 0) || stop_time <= 0)) {
+  if (global && cnts && global->is_virtual > 0 && ((start_time <= 0 && global->disable_virtual_start <= 0) || stop_time <= 0)) {
 %><%
 
     // start/stop virtual contest
@@ -210,13 +210,17 @@
   }
 %>
 </ul>
-<div id="logout"><div class="contest_actions_item"><s:a class="menu" ac="logout"><%
+<%
+  if (cnts) {
+%><div id="logout"><div class="contest_actions_item"><s:a class="menu" ac="logout"><%
     if (cnts->exam_mode) {
 %><s:tr>Finish session</s:tr><%
     } else {
 %><s:tr>Logout</s:tr><%
     }
-%> [<s:v value="phr->login" escape="false" />]</s:a></div></div>
+%> [<s:v value="phr->login" escape="false" />]</s:a></div></div><%
+  }
+%>
 </div>
 </div></div>
 <div id="l11"><img src="<s:config name="style-prefix" />logo3.gif" alt="logo"/></div>
