@@ -55,11 +55,15 @@
 %></div></li><%
   if (global && global->is_virtual > 0 && ((start_time <= 0 && global->disable_virtual_start <= 0) || stop_time <= 0)) {
 %><%
+
+    // start/stop virtual contest
     if (phr->action != NEW_SRV_ACTION_VIEW_STARTSTOP) {
 %><li><div class="contest_actions_item"><s:a class="menu" ac="view-startstop"><%
     } else {
 %><li class="current"><div class="contest_actions_item"><%
-  }  if (start_time <= 0) {
+    }
+%><%
+    if (start_time <= 0) {
       if (cnts->exam_mode) {
 %><s:tr>Start exam</s:tr><%
       } else {
@@ -84,9 +88,9 @@
     if (phr->action != NEW_SRV_ACTION_VIEW_PROBLEM_SUMMARY) {
 %><li><div class="contest_actions_item"><s:a class="menu" ac="view-problem-summary"><%
     } else {
-%><li class="current"><div class="contest_actions_item"><s:tr>Summary</s:tr><%
+%><li class="current"><div class="contest_actions_item"><%
     }
-%><%
+%><s:tr>Summary</s:tr><%
     if (phr->action != NEW_SRV_ACTION_VIEW_PROBLEM_SUMMARY) {
 %></s:a><%
     }
@@ -114,8 +118,10 @@
     if (phr->action != NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT) {
 %><li><div class="contest_actions_item"><s:a class="menu" ac="view-problem-submit"><%
     } else {
-%><li class="current"><div class="contest_actions_item"><s:tr>Submit</s:tr><%
-  }  if (phr->action != NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT) {
+%><li class="current"><div class="contest_actions_item"><%
+    }
+%><s:tr>Submit</s:tr><%
+    if (phr->action != NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT) {
 %></s:a><%
     }
 %></div></li><%
@@ -126,8 +132,10 @@
     if (phr->action != NEW_SRV_ACTION_VIEW_SUBMISSIONS) {
 %><li><div class="contest_actions_item"><s:a class="menu" ac="view-submissions"><%
     } else {
-%><li class="current"><div class="contest_actions_item"><s:tr>Submissions</s:tr><%
-  }  if (phr->action != NEW_SRV_ACTION_VIEW_SUBMISSIONS) {
+%><li class="current"><div class="contest_actions_item"><%
+    }
+%><s:tr>Submissions</s:tr><%
+    if (phr->action != NEW_SRV_ACTION_VIEW_SUBMISSIONS) {
 %></s:a><%
     }
 %></div></li><%
@@ -178,8 +186,10 @@
     if (phr->action != NEW_SRV_ACTION_VIEW_CLAR_SUBMIT) {
 %><li><div class="contest_actions_item"><s:a class="menu" ac="view-clar-submit"><%
     } else {
-%><li class="current"><div class="contest_actions_item"><s:tr>Submit clar</s:tr><%
-  }  if (phr->action != NEW_SRV_ACTION_VIEW_CLAR_SUBMIT) {
+%><li class="current"><div class="contest_actions_item"><%
+    }
+%><s:tr>Submit clar</s:tr><%
+    if (phr->action != NEW_SRV_ACTION_VIEW_CLAR_SUBMIT) {
 %></s:a><%
     }
 %></div></li><%
@@ -190,8 +200,10 @@
     if (phr->action != NEW_SRV_ACTION_VIEW_CLARS) {
 %><li><div class="contest_actions_item"><s:a class="menu" ac="view-clars"><%
     } else {
-%><li class="current"><div class="contest_actions_item"> <% } %> <s:tr>Clars</s:tr><%
-   if (phr->action != NEW_SRV_ACTION_VIEW_CLARS) {
+%><li class="current"><div class="contest_actions_item"><%
+    }
+%><s:tr>Clars</s:tr><%
+    if (phr->action != NEW_SRV_ACTION_VIEW_CLARS) {
 %></s:a><%
     }
 %></div></li><%
@@ -205,11 +217,7 @@
 %><s:tr>Logout</s:tr><%
     }
 %> [<s:v value="phr->login" escape="false" />]</a></div></div>
-
 </div>
-
-
-
 </div></div>
 <div id="l11"><img src="<s:config name="style-prefix" />logo3.gif" alt="logo"/></div>
 <div id="l13">
