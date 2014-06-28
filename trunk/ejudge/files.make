@@ -227,6 +227,7 @@ COMMON_CFILES=\
  super_html_6.c\
  super_html_7.c\
  super_html_8.c\
+ super_http_request.c\
  super_proto.c\
  super_run_packet.c\
  sha.c\
