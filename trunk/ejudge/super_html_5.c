@@ -221,7 +221,7 @@ super_serve_op_browse_problem_packages(
         snprintf(buf, sizeof(buf), "%s", dls[i].name);
       }
       snprintf(jbuf, sizeof(jbuf), "ssPackage(%d, '%s')",
-               SSERV_OP_BROWSE_PROBLEM_PACKAGES, buf);
+               SSERV_CMD_BROWSE_PROBLEM_PACKAGES, buf);
       fprintf(out_f, "<tr><td onClick=\"%s\" class=\"cnts_edit_legend\"><img src=\"%sicons/%s.png\" alt=\"folder\" /></td><td onClick=\"%s\" class=\"cnts_edit_legend\"><tt>%s</tt></td></tr>\n", jbuf, CONF_STYLE_PREFIX, "folder-16x16", jbuf, dls[i].name);
     }
     fprintf(out_f, "</table><br/>\n");
@@ -232,7 +232,7 @@ super_serve_op_browse_problem_packages(
     fprintf(out_f, "<table class=\"cnts_edit\">\n");
     for (; i < dl_u && dls[i].kind == DIRLIST_PROBLEM; ++i) {
       snprintf(jbuf, sizeof(jbuf), "ssEditProblem(%d, '%s', '%s')",
-               SSERV_OP_EDIT_PROBLEM, package, dls[i].name);
+               SSERV_CMD_EDIT_PROBLEM, package, dls[i].name);
       fprintf(out_f, "<tr><td onClick=\"%s\" class=\"cnts_edit_legend\"><img src=\"%sicons/%s.png\" alt=\"problem\" /></td><td onClick=\"%s\" class=\"cnts_edit_legend\"><tt>%s</tt></td></tr>\n", jbuf, CONF_STYLE_PREFIX, "edit_page-16x16", jbuf, dls[i].name);
     }
     fprintf(out_f, "</table><br/>\n");
@@ -240,11 +240,11 @@ super_serve_op_browse_problem_packages(
 
   fprintf(out_f, "<table class=\"cnts_edit\">\n");
   snprintf(jbuf, sizeof(jbuf), "ssPackageOp(%d, %d, '%s', arguments[0])",
-           SSERV_OP_CREATE_PACKAGE, SSERV_OP_BROWSE_PROBLEM_PACKAGES,
+           SSERV_CMD_CREATE_PACKAGE, SSERV_CMD_BROWSE_PROBLEM_PACKAGES,
            package);
   fprintf(out_f, "<tr><td class=\"cnts_edit_legend\">Create new package:&nbsp;</td><td class=\"cnts_edit_data\" width=\"200px\"><div class=\"cnts_edit_data\" dojoType=\"dijit.InlineEditBox\" onChange=\"%s\" autoSave=\"true\"></div></td></tr>\n", jbuf);
   snprintf(jbuf, sizeof(jbuf), "ssEditProblem(%d, '%s', arguments[0])",
-           SSERV_OP_CREATE_PROBLEM, package);
+           SSERV_CMD_CREATE_PROBLEM, package);
   fprintf(out_f, "<tr><td class=\"cnts_edit_legend\">Create new problem:&nbsp;</td><td class=\"cnts_edit_data\" width=\"200px\"><div class=\"cnts_edit_data\" dojoType=\"dijit.InlineEditBox\" onChange=\"%s\" autoSave=\"true\"></div></td></tr>\n", jbuf);
   fprintf(out_f, "</table><br/>\n");
 
@@ -257,7 +257,7 @@ super_serve_op_browse_problem_packages(
     buf[len] = 0;
     ss_dojo_button(out_f, "2", "back-32x32", "Level up",
                    "ssPackage(%d, \"%s\")",
-                   SSERV_OP_BROWSE_PROBLEM_PACKAGES, buf);
+                   SSERV_CMD_BROWSE_PROBLEM_PACKAGES, buf);
   }
   ss_write_html_footer(out_f);
 
@@ -299,7 +299,7 @@ super_serve_op_package_operation(
     FAIL(S_ERR_INV_PACKAGE);
 
   switch (phr->opcode) {
-  case SSERV_OP_CREATE_PACKAGE:
+  case SSERV_CMD_CREATE_PACKAGE:
     snprintf(fpath, sizeof(fpath), "%s/%s", pkgpath, item);
     if (stat(fpath, &stb) >= 0)
       FAIL(S_ERR_ITEM_EXISTS);
