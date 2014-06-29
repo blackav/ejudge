@@ -3290,7 +3290,7 @@ cmd_clear_file_contest_xml(
   p_str = (unsigned char**) ss_sid_state_get_ptr_nc(phr->ss, f_id2);
   xfree(*p_str); *p_str = 0;
   p_int = (int*) ss_sid_state_get_ptr_nc(phr->ss, cnts_text_load_map[f_id]);
-  if (phr->opcode == SSERV_CMD_CLEAR_FILE_CONTEST_XML) {
+  if (phr->action == SSERV_CMD_CLEAR_FILE_CONTEST_XML) {
     *p_int = 1;
   } else {
     *p_int = 0;
@@ -4387,10 +4387,10 @@ cmd_op_rule_cmd(
 
   phr->json_reply = 1;
 
-  if (phr->opcode < SSERV_CMD_DELETE_RULE
-      || phr->opcode > SSERV_CMD_BACKWARD_RULE)
+  if (phr->action < SSERV_CMD_DELETE_RULE
+      || phr->action > SSERV_CMD_BACKWARD_RULE)
     FAIL(S_ERR_INV_OPER);
-  if (!(contest_func = contest_funcs[phr->opcode - SSERV_CMD_DELETE_RULE]))
+  if (!(contest_func = contest_funcs[phr->action - SSERV_CMD_DELETE_RULE]))
     FAIL(S_ERR_INV_OPER);
 
   if (!(ecnts = phr->ss->edited_cnts))
@@ -6663,23 +6663,37 @@ static void *self_dl_handle = 0;
 static int
 do_http_request(FILE *log_f, FILE *out_f, struct http_request_info *phr)
 {
-  int opcode = 0;
+  int action = 0;
   int retval = 0;
-  int n = 0;
+  int n = 0, r = 0;
   const unsigned char *s = 0;
 
-  if ((s = ss_cgi_nname(phr, "op_", 3))) {
-    if (sscanf(s, "op_%d%n", &opcode, &n) != 1 || s[n]
-        || opcode <= 0 || opcode >= SSERV_CMD_LAST)
+  if ((s = ss_cgi_nname(phr, "action_", 7))) {
+    if (sscanf(s, "action_%d%n", &action, &n) != 1 || s[n] || action <= 0 || action >= SSERV_CMD_LAST) {
       FAIL(S_ERR_INV_OPER);
-  } else if (parse_opcode(phr, &opcode) < 0)
-    FAIL(S_ERR_INV_OPER);
+    }
+  } else if ((r = ss_cgi_param(phr, "action", &s)) < 0 || !s || !*s) {
+    return S_ERR_INV_OPER;
+  } else {
+    if (sscanf(s, "%d%n", &action, &n) != 1 || s[n] || action <= 0 || action >= SSERV_CMD_LAST) {
+      FAIL(S_ERR_INV_OPER);
+    }
+  }
 
-  if (!super_proto_op_names[opcode]) FAIL(S_ERR_INV_OPER);
-  if (op_handlers[opcode] == (handler_func_t) 1) FAIL(S_ERR_NOT_IMPLEMENTED);
-  phr->opcode = opcode;
+  if (action == SSERV_CMD_HTTP_REQUEST) {
+    // compatibility option: parse op
+    if ((s = ss_cgi_nname(phr, "op_", 3))) {
+      if (sscanf(s, "op_%d%n", &action, &n) != 1 || s[n] || action <= 0 || action >= SSERV_CMD_LAST)
+        FAIL(S_ERR_INV_OPER);
+    } else if (parse_opcode(phr, &action) < 0)
+      FAIL(S_ERR_INV_OPER);
+  }
 
-  if (!op_handlers[opcode]) {
+  if (!super_proto_op_names[action]) FAIL(S_ERR_INV_OPER);
+  if (op_handlers[action] == (handler_func_t) 1) FAIL(S_ERR_NOT_IMPLEMENTED);
+  phr->action = action;
+
+  if (!op_handlers[action]) {
     if (self_dl_handle == (void*) 1) FAIL(S_ERR_NOT_IMPLEMENTED);
     self_dl_handle = dlopen(NULL, RTLD_NOW);
     if (!self_dl_handle) {
@@ -6688,37 +6702,37 @@ do_http_request(FILE *log_f, FILE *out_f, struct http_request_info *phr)
       FAIL(S_ERR_NOT_IMPLEMENTED);
     }
 
-    int redir_opcode = opcode;
-    if (super_proto_op_redirect[opcode] > 0) {
-      redir_opcode = super_proto_op_redirect[opcode];
-      if (redir_opcode <= 0 || redir_opcode >= SSERV_CMD_LAST || !super_proto_op_names[redir_opcode]) {
-        err("do_http_request: invalid opcode redirect %d->%d", opcode, redir_opcode);
-        op_handlers[opcode] = (handler_func_t) 1;
+    int redir_action = action;
+    if (super_proto_op_redirect[action] > 0) {
+      redir_action = super_proto_op_redirect[action];
+      if (redir_action <= 0 || redir_action >= SSERV_CMD_LAST || !super_proto_op_names[redir_action]) {
+        err("do_http_request: invalid action redirect %d->%d", action, redir_action);
+        op_handlers[action] = (handler_func_t) 1;
         FAIL(S_ERR_NOT_IMPLEMENTED);
       }
-      if (op_handlers[redir_opcode] == (handler_func_t) 1) {
-        err("do_http_request: not implemented opcode redirect %d->%d", opcode, redir_opcode);
-        op_handlers[opcode] = (handler_func_t) 1;
+      if (op_handlers[redir_action] == (handler_func_t) 1) {
+        err("do_http_request: not implemented action redirect %d->%d", action, redir_action);
+        op_handlers[action] = (handler_func_t) 1;
         FAIL(S_ERR_NOT_IMPLEMENTED);
       }
     }
 
-    if (op_handlers[redir_opcode]) {
-      op_handlers[opcode] = op_handlers[redir_opcode];
+    if (op_handlers[redir_action]) {
+      op_handlers[action] = op_handlers[redir_action];
     } else {
       unsigned char func_name[512];
-      snprintf(func_name, sizeof(func_name), "super_serve_op_%s", super_proto_op_names[redir_opcode]);
+      snprintf(func_name, sizeof(func_name), "super_serve_op_%s", super_proto_op_names[redir_action]);
       void *void_func = dlsym(self_dl_handle, func_name);
       if (!void_func) {
         err("do_http_request: function %s is not found", func_name);
-        op_handlers[opcode] = (handler_func_t) 1;
+        op_handlers[action] = (handler_func_t) 1;
         FAIL(S_ERR_NOT_IMPLEMENTED);
       }
-      op_handlers[opcode] = (handler_func_t) void_func;
+      op_handlers[action] = (handler_func_t) void_func;
     }
   }
 
-  retval = (*op_handlers[opcode])(log_f, out_f, phr);
+  retval = (*op_handlers[action])(log_f, out_f, phr);
 
  cleanup:
   return retval;

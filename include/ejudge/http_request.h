@@ -61,7 +61,6 @@ struct http_request_info
   int locale_id;
   int role;
   int action;
-  int opcode; // additional part for super-serve
   unsigned char role_name[32];
 
   int priv_level;

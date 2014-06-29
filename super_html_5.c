@@ -298,7 +298,7 @@ super_serve_op_package_operation(
   if (stat(pkgpath, &stb) < 0 || !S_ISDIR(stb.st_mode))
     FAIL(S_ERR_INV_PACKAGE);
 
-  switch (phr->opcode) {
+  switch (phr->action) {
   case SSERV_CMD_CREATE_PACKAGE:
     snprintf(fpath, sizeof(fpath), "%s/%s", pkgpath, item);
     if (stat(fpath, &stb) >= 0)
