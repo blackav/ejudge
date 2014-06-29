@@ -1238,7 +1238,7 @@ super_serve_op_USER_FILTER_CHANGE_ACTION(
   if (user_count <= 0) user_count = 20;
   if (user_count > 200) user_count = 200;
 
-  switch (phr->opcode) {
+  switch (phr->action) {
   case SSERV_CMD_USER_FILTER_CHANGE_ACTION:
     if (ss_cgi_param_int(phr, "user_offset", &value) >= 0) {
       user_offset = value;
@@ -1390,7 +1390,7 @@ super_serve_op_USER_BROWSE_MARK_ALL_ACTION(
   }
   if (group_id < 0) group_id = 0;
 
-  if (phr->opcode == SSERV_CMD_USER_BROWSE_UNMARK_ALL_ACTION) {
+  if (phr->action == SSERV_CMD_USER_BROWSE_UNMARK_ALL_ACTION) {
     xfree(marked_str); marked_str = 0;
     goto cleanup;
   }
@@ -1403,13 +1403,13 @@ super_serve_op_USER_BROWSE_MARK_ALL_ACTION(
   xfree(xml_text); xml_text = 0;
   bitset_resize(&marked, users->user_map_size);
 
-  if (phr->opcode == SSERV_CMD_USER_BROWSE_MARK_ALL_ACTION) {
+  if (phr->action == SSERV_CMD_USER_BROWSE_MARK_ALL_ACTION) {
     for (user_id = 1; user_id < users->user_map_size; ++user_id) {
       if (users->user_map[user_id]) {
         bitset_on(&marked, user_id);
       }
     }
-  } else if (phr->opcode == SSERV_CMD_USER_BROWSE_TOGGLE_ALL_ACTION) {
+  } else if (phr->action == SSERV_CMD_USER_BROWSE_TOGGLE_ALL_ACTION) {
     for (user_id = 1; user_id < users->user_map_size; ++user_id) {
       if (users->user_map[user_id]) {
         bitset_toggle(&marked, user_id);
@@ -1534,7 +1534,7 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
   }
 
   /* additional parameters */
-  switch (phr->opcode) {
+  switch (phr->action) {
   case SSERV_CMD_USER_SEL_CHANGE_REG_STATUS_PAGE:
     ss_cgi_param_int_opt(phr, "status", &status, -1);
     if (status < 0 || status >= USERLIST_REG_LAST) FAIL(S_ERR_INV_VALUE);
@@ -1583,7 +1583,7 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
   }
 
   /* contest_id check and preliminary permission check */
-  switch (phr->opcode) {
+  switch (phr->action) {
   case SSERV_CMD_USER_SEL_RANDOM_PASSWD_PAGE:
     if (get_global_caps(phr, &gcaps) < 0) FAIL(S_ERR_PERM_DENIED);
     if (opcaps_check(gcaps, OPCAP_EDIT_PASSWD) < 0 && opcaps_check(gcaps, OPCAP_PRIV_EDIT_PASSWD) < 0)
@@ -1653,7 +1653,7 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
         continue;
       }
       /* per-user check */
-      switch (phr->opcode) {
+      switch (phr->action) {
       case SSERV_CMD_USER_SEL_RANDOM_PASSWD_PAGE:
         if (is_privileged(phr, cnts, u)) {
           if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_PASSWD) < 0) u = 0;
@@ -1718,7 +1718,7 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
   }
 
   /* page header generation */
-  switch (phr->opcode) {
+  switch (phr->action) {
   case SSERV_CMD_USER_SEL_RANDOM_PASSWD_PAGE:
     snprintf(buf, sizeof(buf), "serve-control: %s, generate random registration passwords", phr->html_name);
     break;
@@ -1818,7 +1818,7 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
   fprintf(out_f, "<h1>%s</h1>\n<br/>\n", buf);
 
   /* additional info */
-  switch (phr->opcode) {
+  switch (phr->action) {
   case SSERV_CMD_USER_SEL_CLEAR_CNTS_PASSWD_PAGE:
   case SSERV_CMD_USER_SEL_RANDOM_CNTS_PASSWD_PAGE:
   case SSERV_CMD_USER_SEL_DELETE_REG_PAGE:
@@ -1847,7 +1847,7 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
   }
 
   /* additional info */
-  switch (phr->opcode) {
+  switch (phr->action) {
   case SSERV_CMD_USER_SEL_RANDOM_PASSWD_PAGE:
     fprintf(out_f, "<p>The registration passwords are to be regenerated for the following %d users:</p>\n",
             user_count);
@@ -1935,7 +1935,7 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
     fprintf(out_f, "</td></tr>\n");
     fprintf(out_f, "</table>\n");
 
-    switch (phr->opcode) {
+    switch (phr->action) {
     case SSERV_CMD_USER_SEL_CREATE_REG_PAGE:
       operation = SSERV_CMD_USER_SEL_CREATE_REG_ACTION;
       button_label = "Register!";
@@ -2039,7 +2039,7 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
   }
   fprintf(out_f, "</table>\n");
 
-  if (phr->opcode != SSERV_CMD_USER_SEL_CHANGE_REG_FLAGS_PAGE) {
+  if (phr->action != SSERV_CMD_USER_SEL_CHANGE_REG_FLAGS_PAGE) {
     cl = " class=\"b0\"";
     fprintf(out_f, "<table%s>", cl);
     if (need_privileged) {
@@ -2150,7 +2150,7 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_ACTION(
   if (include_disqualified != 1) include_disqualified = 0;
 
   /* additional parameters */
-  switch (phr->opcode) {
+  switch (phr->action) {
   case SSERV_CMD_USER_SEL_CHANGE_REG_STATUS_ACTION:
     ss_cgi_param_int_opt(phr, "status", &status, -1);
     if (status < 0 || status >= USERLIST_REG_LAST) FAIL(S_ERR_INV_VALUE);
@@ -2227,7 +2227,7 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_ACTION(
     break;
   }
 
-  switch (phr->opcode) {
+  switch (phr->action) {
   case SSERV_CMD_USER_SEL_RANDOM_PASSWD_ACTION:
     if (get_global_caps(phr, &gcaps) < 0) FAIL(S_ERR_PERM_DENIED);
     if (opcaps_check(gcaps, OPCAP_EDIT_PASSWD) < 0 && opcaps_check(gcaps, OPCAP_PRIV_EDIT_PASSWD) < 0)
@@ -2314,7 +2314,7 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_ACTION(
         bitset_off(&marked, user_id);
         continue;
       }
-      if (cnts && phr->opcode != SSERV_CMD_USER_SEL_CHANGE_REG_FLAGS_ACTION
+      if (cnts && phr->action != SSERV_CMD_USER_SEL_CHANGE_REG_FLAGS_ACTION
           && (reg = userlist_get_user_contest(u, contest_id))) {
         if (((reg->flags & USERLIST_UC_INVISIBLE) && !include_invisible)
             || ((reg->flags & USERLIST_UC_BANNED) && !include_banned)
@@ -2324,7 +2324,7 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_ACTION(
           continue;
         }
       }
-      switch (phr->opcode) {
+      switch (phr->action) {
       case SSERV_CMD_USER_SEL_RANDOM_PASSWD_ACTION:
         if (is_privileged(phr, cnts, u)) {
           if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_PASSWD) < 0) u = 0;
@@ -2389,7 +2389,7 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_ACTION(
     if (!bitset_get(&marked, user_id)) continue;
 
     r = 0;
-    switch (phr->opcode) {
+    switch (phr->action) {
     case SSERV_CMD_USER_SEL_RANDOM_PASSWD_ACTION:
       r = userlist_clnt_register_contest(phr->userlist_clnt, ULS_RANDOM_PASSWD, user_id,
                                          contest_id, 0, 0);
@@ -6509,10 +6509,10 @@ super_serve_op_USER_SAVE_ACTION(
 
   int next_user_id = 0;
   int next_op = SSERV_CMD_USER_DETAIL_PAGE;
-  if (phr->opcode == SSERV_CMD_USER_SAVE_AND_PREV_ACTION) {
+  if (phr->action == SSERV_CMD_USER_SAVE_AND_PREV_ACTION) {
     userlist_clnt_get_prev_user_id(phr->userlist_clnt, ULS_PREV_USER, contest_id, group_id, other_user_id,
                                    NULL, &next_user_id);
-  } else if (phr->opcode == SSERV_CMD_USER_SAVE_AND_NEXT_ACTION) {
+  } else if (phr->action == SSERV_CMD_USER_SAVE_AND_NEXT_ACTION) {
     userlist_clnt_get_prev_user_id(phr->userlist_clnt, ULS_NEXT_USER, contest_id, group_id, other_user_id,
                                    NULL, &next_user_id);
   } else {
@@ -6553,14 +6553,14 @@ super_serve_op_USER_CANCEL_ACTION(
     if (contests_get(contest_id, &cnts) < 0 || !cnts)
       FAIL(S_ERR_INV_CONTEST);
   }
-  if (other_user_id <= 0) phr->opcode = SSERV_CMD_USER_CANCEL_ACTION;
+  if (other_user_id <= 0) phr->action = SSERV_CMD_USER_CANCEL_ACTION;
 
   int next_user_id = 0;
   int next_op = SSERV_CMD_USER_DETAIL_PAGE;
-  if (phr->opcode == SSERV_CMD_USER_CANCEL_AND_PREV_ACTION) {
+  if (phr->action == SSERV_CMD_USER_CANCEL_AND_PREV_ACTION) {
     userlist_clnt_get_prev_user_id(phr->userlist_clnt, ULS_PREV_USER, contest_id, group_id, other_user_id,
                                    NULL, &next_user_id);
-  } else if (phr->opcode == SSERV_CMD_USER_CANCEL_AND_NEXT_ACTION) {
+  } else if (phr->action == SSERV_CMD_USER_CANCEL_AND_NEXT_ACTION) {
     userlist_clnt_get_prev_user_id(phr->userlist_clnt, ULS_NEXT_USER, contest_id, group_id, other_user_id,
                                    NULL, &next_user_id);
   } else {
@@ -7207,7 +7207,7 @@ super_serve_op_USER_SEL_VIEW_PASSWD_PAGE(
   if (group_id < 0) group_id = 0;
 
   /* check permissions */
-  switch (phr->opcode) {
+  switch (phr->action) {
   case SSERV_CMD_USER_SEL_VIEW_PASSWD_PAGE:
     get_global_caps(phr, &gcaps);
     if (cnts) get_contest_caps(phr, cnts, &caps);
@@ -7235,7 +7235,7 @@ super_serve_op_USER_SEL_VIEW_PASSWD_PAGE(
   users = userlist_parse_str(xml_text);
   if (!users) FAIL(S_ERR_DB_ERROR);
 
-  switch (phr->opcode) {
+  switch (phr->action) {
   case SSERV_CMD_USER_SEL_VIEW_PASSWD_PAGE:
     snprintf(buf, sizeof(buf), "serve-control: %s, view registration passwords", phr->html_name);
     break;
@@ -7263,7 +7263,7 @@ super_serve_op_USER_SEL_VIEW_PASSWD_PAGE(
   fprintf(out_f, "<th%s>%s</th><th%s>%s</th><th%s>%s</th>",
           cl, "NN", cl, "User ID", cl, "Login");
   s = "Registration password";
-  if (phr->opcode == SSERV_CMD_USER_SEL_VIEW_CNTS_PASSWD_PAGE) s = "Contest password";
+  if (phr->action == SSERV_CMD_USER_SEL_VIEW_CNTS_PASSWD_PAGE) s = "Contest password";
   fprintf(out_f, "<th%s>%s</th>", cl, s);
   if (cnts) {
     fprintf(out_f, "<th%s>%s</th><th%s>%s</th><th%s>%s</th><th%s>%s</th><th%s>%s</th>",
@@ -7287,7 +7287,7 @@ super_serve_op_USER_SEL_VIEW_PASSWD_PAGE(
     allowed = 0;
     passwd_method = -1;
     passwd = 0;
-    switch (phr->opcode) {
+    switch (phr->action) {
     case SSERV_CMD_USER_SEL_VIEW_PASSWD_PAGE:
       if (is_globally_privileged(phr, u)) {
         if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_PASSWD) >= 0) allowed = 1;
@@ -7401,7 +7401,7 @@ super_serve_op_USER_SEL_VIEW_PASSWD_REDIRECT(
   ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   ss_cgi_param_int_opt(phr, "group_id", &group_id, 0);
   marked_str = collect_marked_set(phr, &marked);
-  switch (phr->opcode) {
+  switch (phr->action) {
   case SSERV_CMD_USER_SEL_VIEW_PASSWD_REDIRECT:
     next_op = SSERV_CMD_USER_SEL_VIEW_PASSWD_PAGE;
     break;
@@ -7995,7 +7995,7 @@ super_serve_GROUP_FILTER_CHANGE_ACTION(
   if (group_count <= 0) group_count = 20;
   if (group_count > 200) group_count = 200;
 
-  switch (phr->opcode) {
+  switch (phr->action) {
   case SSERV_CMD_GROUP_FILTER_CHANGE_ACTION:
     if (ss_cgi_param_int(phr, "group_offset", &value) >= 0) {
       group_offset = value;
@@ -8657,7 +8657,7 @@ migration_page(
 
   // FIXME: check, that the new files are correct (can be parsed)
 
-  if (phr->opcode == SSERV_CMD_EJUDGE_XML_UPDATE_ACTION) {
+  if (phr->action == SSERV_CMD_EJUDGE_XML_UPDATE_ACTION) {
     unsigned char dirname[PATH_MAX];
     dirname[0] = 0;
     os_rDirName(phr->config->ejudge_xml_path, dirname, sizeof(dirname));
@@ -10433,7 +10433,7 @@ super_serve_op_DOWNLOAD_CLEANUP_ACTION(
   }
 
   int action = SSERV_CMD_CONTEST_PAGE;
-  if (phr->opcode == SSERV_CMD_DOWNLOAD_CLEANUP_AND_CHECK_ACTION) action = SSERV_CMD_CHECK_TESTS;
+  if (phr->action == SSERV_CMD_DOWNLOAD_CLEANUP_AND_CHECK_ACTION) action = SSERV_CMD_CHECK_TESTS;
   ss_redirect_3(out_f, phr, action, "contest_id=%d", us->contest_id);
 
 cleanup:

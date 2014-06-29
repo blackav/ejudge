@@ -2245,13 +2245,13 @@ super_serve_op_TESTS_TEST_MOVE_UP_ACTION(
   ss_cgi_param_int_opt(phr, "test_num", &test_num, 0);
   if (test_num <= 0 || test_num >= 1000000) FAIL(S_ERR_INV_TEST_NUM);
 
-  if (phr->opcode == SSERV_CMD_TESTS_SAVED_MOVE_UP_ACTION || phr->opcode == SSERV_CMD_TESTS_SAVED_MOVE_DOWN_ACTION) {
+  if (phr->action == SSERV_CMD_TESTS_SAVED_MOVE_UP_ACTION || phr->action == SSERV_CMD_TESTS_SAVED_MOVE_DOWN_ACTION) {
     pat_prefix = SAVED_TEST_PREFIX;
   }
-  if (phr->opcode == SSERV_CMD_TESTS_TEST_MOVE_UP_ACTION || phr->opcode == SSERV_CMD_TESTS_SAVED_MOVE_UP_ACTION) {
+  if (phr->action == SSERV_CMD_TESTS_TEST_MOVE_UP_ACTION || phr->action == SSERV_CMD_TESTS_SAVED_MOVE_UP_ACTION) {
     to_test_num = test_num - 1;
     from_test_num = test_num;
-  } else if (phr->opcode == SSERV_CMD_TESTS_TEST_MOVE_DOWN_ACTION || phr->opcode == SSERV_CMD_TESTS_SAVED_MOVE_DOWN_ACTION) {
+  } else if (phr->action == SSERV_CMD_TESTS_TEST_MOVE_DOWN_ACTION || phr->action == SSERV_CMD_TESTS_SAVED_MOVE_DOWN_ACTION) {
     to_test_num = test_num + 1;
     from_test_num = test_num;
   } else {
@@ -2265,7 +2265,7 @@ super_serve_op_TESTS_TEST_MOVE_UP_ACTION(
   if (retval < 0) goto cleanup;
   retval = 0;
 
-  if (phr->opcode == SSERV_CMD_TESTS_TEST_MOVE_DOWN_ACTION || phr->opcode == SSERV_CMD_TESTS_SAVED_MOVE_DOWN_ACTION) {
+  if (phr->action == SSERV_CMD_TESTS_TEST_MOVE_DOWN_ACTION || phr->action == SSERV_CMD_TESTS_SAVED_MOVE_DOWN_ACTION) {
     if (!check_test_existance(log_f, test_dir, test_pat, corr_pat, info_pat, tgz_pat, tgzdir_pat,
                               pat_prefix, to_test_num))
       goto done;
@@ -2344,7 +2344,7 @@ super_serve_op_TESTS_TEST_MOVE_TO_SAVED_ACTION(
   retval = scan_test_directory(log_f, &td_info, cnts, test_dir, test_pat, corr_pat, info_pat, tgz_pat, tgzdir_pat);
   if (retval < 0) goto cleanup;
 
-  if (phr->opcode == SSERV_CMD_TESTS_TEST_MOVE_TO_SAVED_ACTION) {
+  if (phr->action == SSERV_CMD_TESTS_TEST_MOVE_TO_SAVED_ACTION) {
     if (test_num <= 0 || test_num > td_info.test_ref_count) goto done;
     if (move_files(log_f, test_dir, test_pat, corr_pat, info_pat, tgz_pat, tgzdir_pat,
                    NULL, SAVED_TEST_PREFIX, TEMP_TEST_PREFIX,
@@ -2353,7 +2353,7 @@ super_serve_op_TESTS_TEST_MOVE_TO_SAVED_ACTION(
     if (delete_test(log_f, test_dir, test_pat, corr_pat, info_pat, tgz_pat, tgzdir_pat,
                     NULL, td_info.test_ref_count, test_num) < 0)
       goto cleanup;
-  } else if (phr->opcode == SSERV_CMD_TESTS_SAVED_MOVE_TO_TEST_ACTION) {
+  } else if (phr->action == SSERV_CMD_TESTS_SAVED_MOVE_TO_TEST_ACTION) {
     if (test_num <= 0 || test_num > td_info.saved_ref_count) goto done;
     if (move_files(log_f, test_dir, test_pat, corr_pat, info_pat, tgz_pat, tgzdir_pat,
                    SAVED_TEST_PREFIX, NULL, TEMP_TEST_PREFIX,
@@ -2577,7 +2577,7 @@ super_serve_op_TESTS_TEST_EDIT_PAGE(
 
   memset(&testinfo, 0, sizeof(testinfo));
 
-  if (phr->opcode == SSERV_CMD_TESTS_TEST_INSERT_PAGE) insert_mode = 1;
+  if (phr->action == SSERV_CMD_TESTS_TEST_INSERT_PAGE) insert_mode = 1;
   ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
   if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
@@ -2817,7 +2817,7 @@ super_serve_op_TESTS_CANCEL_ACTION(
   int variant = 0;
   int next_op = SSERV_CMD_TESTS_TESTS_VIEW_PAGE;
 
-  if (phr->opcode == SSERV_CMD_TESTS_CANCEL_2_ACTION) {
+  if (phr->action == SSERV_CMD_TESTS_CANCEL_2_ACTION) {
     next_op = SSERV_CMD_TESTS_MAIN_PAGE;
   }
 
@@ -3095,7 +3095,7 @@ super_serve_op_TESTS_TEST_EDIT_ACTION(
   info_del_path[0] = 0;
   memset(&tinfo, 0, sizeof(tinfo));
   memset(&td_info, 0, sizeof(td_info));
-  if (phr->opcode == SSERV_CMD_TESTS_TEST_INSERT_ACTION) insert_mode = 1;
+  if (phr->action == SSERV_CMD_TESTS_TEST_INSERT_ACTION) insert_mode = 1;
 
   ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
@@ -4449,17 +4449,17 @@ super_serve_op_TESTS_STATEMENT_EDIT_ACTION(
     test_output_nodes[i] = NULL;
   }
 
-  if (phr->opcode == SSERV_CMD_TESTS_STATEMENT_EDIT_3_ACTION) {
+  if (phr->action == SSERV_CMD_TESTS_STATEMENT_EDIT_3_ACTION) {
     // save and view as text file
     snprintf(extra_redirect_args, sizeof(extra_redirect_args), "plain_view=1");
     next_action = SSERV_CMD_TESTS_STATEMENT_EDIT_PAGE;
-  } else if (phr->opcode == SSERV_CMD_TESTS_STATEMENT_EDIT_4_ACTION) {
+  } else if (phr->action == SSERV_CMD_TESTS_STATEMENT_EDIT_4_ACTION) {
     // save and add a sample
     problem_xml_add_example(prob_xml,
                             problem_xml_parse_text(log_f, "", PROB_T_INPUT),
                             problem_xml_parse_text(log_f, "", PROB_T_OUTPUT));
     next_action = SSERV_CMD_TESTS_STATEMENT_EDIT_PAGE;
-  } else if (phr->opcode == SSERV_CMD_TESTS_STATEMENT_DELETE_SAMPLE_ACTION) {
+  } else if (phr->action == SSERV_CMD_TESTS_STATEMENT_DELETE_SAMPLE_ACTION) {
     // save and delete a sample
     problem_xml_delete_test(prob_xml, delete_num);
     next_action = SSERV_CMD_TESTS_STATEMENT_EDIT_PAGE;
@@ -4577,7 +4577,7 @@ super_serve_op_TESTS_STATEMENT_EDIT_2_ACTION(
   ss_cgi_param(phr, "xml_text", &s);
   text = normalize_textarea(s);
 
-  if (phr->opcode == SSERV_CMD_TESTS_STATEMENT_EDIT_2_ACTION) {
+  if (phr->action == SSERV_CMD_TESTS_STATEMENT_EDIT_2_ACTION) {
     // save and view
     next_action = SSERV_CMD_TESTS_STATEMENT_EDIT_PAGE;
   }
@@ -4719,17 +4719,17 @@ super_serve_op_TESTS_SOURCE_HEADER_EDIT_PAGE(
     if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
   }
 
-  if (phr->opcode == SSERV_CMD_TESTS_SOURCE_HEADER_EDIT_PAGE) {
+  if (phr->action == SSERV_CMD_TESTS_SOURCE_HEADER_EDIT_PAGE) {
     file_name = prob->source_header;
     title = "source header";
     action = SSERV_CMD_TESTS_SOURCE_HEADER_EDIT_ACTION;
     delete_action = SSERV_CMD_TESTS_SOURCE_HEADER_DELETE_ACTION;
-  } else if (phr->opcode == SSERV_CMD_TESTS_SOURCE_FOOTER_EDIT_PAGE) {
+  } else if (phr->action == SSERV_CMD_TESTS_SOURCE_FOOTER_EDIT_PAGE) {
     file_name = prob->source_footer;
     title = "source footer";
     action = SSERV_CMD_TESTS_SOURCE_FOOTER_EDIT_ACTION;
     delete_action = SSERV_CMD_TESTS_SOURCE_FOOTER_DELETE_ACTION;
-  } else if (phr->opcode == SSERV_CMD_TESTS_SOLUTION_EDIT_PAGE) {
+  } else if (phr->action == SSERV_CMD_TESTS_SOLUTION_EDIT_PAGE) {
     if (prob->solution_src && prob->solution_src[0]) {
       file_name = prob->solution_src;
     } else if (prob->solution_cmd && prob->solution_cmd[0]) {
@@ -4880,11 +4880,11 @@ super_serve_op_TESTS_SOURCE_HEADER_EDIT_ACTION(
     if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
   }
 
-  if (phr->opcode == SSERV_CMD_TESTS_SOURCE_HEADER_EDIT_ACTION) {
+  if (phr->action == SSERV_CMD_TESTS_SOURCE_HEADER_EDIT_ACTION) {
     file_name = prob->source_header;
-  } else if (phr->opcode == SSERV_CMD_TESTS_SOURCE_FOOTER_EDIT_ACTION) {
+  } else if (phr->action == SSERV_CMD_TESTS_SOURCE_FOOTER_EDIT_ACTION) {
     file_name = prob->source_footer;
-  } else if (phr->opcode == SSERV_CMD_TESTS_SOLUTION_EDIT_ACTION) {
+  } else if (phr->action == SSERV_CMD_TESTS_SOLUTION_EDIT_ACTION) {
     if (prob->solution_src && prob->solution_src[0]) {
       file_name = prob->solution_src;
     } else if (prob->solution_cmd && prob->solution_cmd[0]) {
@@ -4995,11 +4995,11 @@ super_serve_op_TESTS_SOURCE_HEADER_DELETE_ACTION(
     if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
   }
 
-  if (phr->opcode == SSERV_CMD_TESTS_SOURCE_HEADER_DELETE_ACTION) {
+  if (phr->action == SSERV_CMD_TESTS_SOURCE_HEADER_DELETE_ACTION) {
     file_name = prob->source_header;
-  } else if (phr->opcode == SSERV_CMD_TESTS_SOURCE_FOOTER_DELETE_ACTION) {
+  } else if (phr->action == SSERV_CMD_TESTS_SOURCE_FOOTER_DELETE_ACTION) {
     file_name = prob->source_footer;
-  } else if (phr->opcode == SSERV_CMD_TESTS_SOLUTION_DELETE_ACTION) {
+  } else if (phr->action == SSERV_CMD_TESTS_SOLUTION_DELETE_ACTION) {
     file_name = prob->solution_src;
   } else {
     FAIL(S_ERR_INV_OPER);
@@ -5072,7 +5072,7 @@ super_serve_op_TESTS_CHECKER_CREATE_PAGE(
     if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
   }
 
-  switch (phr->opcode) {
+  switch (phr->action) {
   case SSERV_CMD_TESTS_STYLE_CHECKER_CREATE_PAGE:
     if (!prob->style_checker_cmd || !prob->style_checker_cmd[0]) FAIL(S_ERR_INV_OPER);
     title = "Style checker";
@@ -5423,7 +5423,7 @@ super_serve_op_TESTS_CHECKER_CREATE_ACTION(
   ss_cgi_param_int_opt(phr, "gen_makefile", &gen_makefile, 0);
   if (gen_makefile != 1) gen_makefile = 0;
 
-  switch (phr->opcode) {
+  switch (phr->action) {
   case SSERV_CMD_TESTS_STYLE_CHECKER_CREATE_ACTION:
     if (!prob->style_checker_cmd || !prob->style_checker_cmd[0]) FAIL(S_ERR_INV_OPER);
     file_name = prob->style_checker_cmd;
@@ -5559,7 +5559,7 @@ super_serve_op_TESTS_CHECKER_EDIT_PAGE(
     if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
   }
 
-  switch (phr->opcode) {
+  switch (phr->action) {
   case SSERV_CMD_TESTS_STYLE_CHECKER_EDIT_PAGE:
     if (!prob->style_checker_cmd || !prob->style_checker_cmd[0]) FAIL(S_ERR_INV_OPER);
     title = "Style checker";
@@ -5768,7 +5768,7 @@ super_serve_op_TESTS_CHECKER_EDIT_ACTION(
     if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
   }
 
-  switch (phr->opcode) {
+  switch (phr->action) {
   case SSERV_CMD_TESTS_STYLE_CHECKER_EDIT_ACTION:
     if (!prob->style_checker_cmd || !prob->style_checker_cmd[0]) FAIL(S_ERR_INV_OPER);
     file_name = prob->style_checker_cmd;
@@ -5949,7 +5949,7 @@ super_serve_op_TESTS_CHECKER_DELETE_PAGE(
     if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
   }
 
-  switch (phr->opcode) {
+  switch (phr->action) {
   case SSERV_CMD_TESTS_STYLE_CHECKER_DELETE_PAGE:
     if (!prob->style_checker_cmd || !prob->style_checker_cmd[0]) FAIL(S_ERR_INV_OPER);
     file_name = prob->style_checker_cmd;
@@ -6119,7 +6119,7 @@ super_serve_op_TESTS_CHECKER_DELETE_ACTION(
     if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
   }
 
-  switch (phr->opcode) {
+  switch (phr->action) {
   case SSERV_CMD_TESTS_STYLE_CHECKER_DELETE_ACTION:
     if (!prob->style_checker_cmd || !prob->style_checker_cmd[0]) FAIL(S_ERR_INV_OPER);
     file_name = prob->style_checker_cmd;
@@ -6321,9 +6321,9 @@ super_serve_op_TESTS_MAKE(
     goto done;
   }
 
-  if (phr->opcode == SSERV_CMD_TESTS_GENERATE_ANSWERS_PAGE) {
+  if (phr->action == SSERV_CMD_TESTS_GENERATE_ANSWERS_PAGE) {
     target = "answers";
-  } else if (phr->opcode == SSERV_CMD_TESTS_CHECK_TESTS_PAGE) {
+  } else if (phr->action == SSERV_CMD_TESTS_CHECK_TESTS_PAGE) {
     target = "check_tests";
   }
 
@@ -6450,9 +6450,9 @@ super_serve_op_TESTS_TEST_CHECK_ACTION(
 
   errbuf[0] = 0;
 
-  if (phr->opcode == SSERV_CMD_TESTS_TEST_CHECK_ACTION) {
+  if (phr->action == SSERV_CMD_TESTS_TEST_CHECK_ACTION) {
     target = "check_test";
-  } else if (phr->opcode == SSERV_CMD_TESTS_TEST_GENERATE_ACTION) {
+  } else if (phr->action == SSERV_CMD_TESTS_TEST_GENERATE_ACTION) {
     target = "answer";
   } else {
     FAIL(S_ERR_NOT_IMPLEMENTED);
@@ -6476,9 +6476,9 @@ super_serve_op_TESTS_TEST_CHECK_ACTION(
   if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
   if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
 
-  if (phr->opcode == SSERV_CMD_TESTS_TEST_CHECK_ACTION) {
+  if (phr->action == SSERV_CMD_TESTS_TEST_CHECK_ACTION) {
     command = prob->test_checker_cmd;
-  } else if (phr->opcode == SSERV_CMD_TESTS_TEST_GENERATE_ACTION) {
+  } else if (phr->action == SSERV_CMD_TESTS_TEST_GENERATE_ACTION) {
     command = prob->solution_cmd;
   } else {
     FAIL(S_ERR_NOT_IMPLEMENTED);
