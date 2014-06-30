@@ -40,6 +40,7 @@
 #include "ejudge/cpu.h"
 #include "ejudge/compat.h"
 #include "ejudge/errlog.h"
+#include "ejudge/external_action.h"
 
 #include "reuse/xalloc.h"
 #include "reuse/logger.h"
@@ -6659,39 +6660,51 @@ parse_opcode(struct http_request_info *phr, int *p_opcode)
   return S_ERR_INV_OPER;
 }
 
-static void *self_dl_handle = 0;
 static int
-do_http_request(FILE *log_f, FILE *out_f, struct http_request_info *phr)
+parse_action(struct http_request_info *phr)
 {
   int action = 0;
-  int retval = 0;
   int n = 0, r = 0;
   const unsigned char *s = 0;
 
   if ((s = ss_cgi_nname(phr, "action_", 7))) {
-    if (sscanf(s, "action_%d%n", &action, &n) != 1 || s[n] || action <= 0 || action >= SSERV_CMD_LAST) {
-      FAIL(S_ERR_INV_OPER);
+    if (sscanf(s, "action_%d%n", &action, &n) != 1 || s[n] || action < 0 || action >= SSERV_CMD_LAST) {
+      return -1;
     }
   } else if ((r = ss_cgi_param(phr, "action", &s)) < 0 || !s || !*s) {
-    return S_ERR_INV_OPER;
+    return -1;
   } else {
-    if (sscanf(s, "%d%n", &action, &n) != 1 || s[n] || action <= 0 || action >= SSERV_CMD_LAST) {
-      FAIL(S_ERR_INV_OPER);
+    if (sscanf(s, "%d%n", &action, &n) != 1 || s[n] || action < 0 || action >= SSERV_CMD_LAST) {
+      return -1;
     }
   }
 
   if (action == SSERV_CMD_HTTP_REQUEST) {
     // compatibility option: parse op
     if ((s = ss_cgi_nname(phr, "op_", 3))) {
-      if (sscanf(s, "op_%d%n", &action, &n) != 1 || s[n] || action <= 0 || action >= SSERV_CMD_LAST)
-        FAIL(S_ERR_INV_OPER);
-    } else if (parse_opcode(phr, &action) < 0)
-      FAIL(S_ERR_INV_OPER);
+      if (sscanf(s, "op_%d%n", &action, &n) != 1 || s[n] || action < 0 || action >= SSERV_CMD_LAST)
+        return -1;
+    } else if (parse_opcode(phr, &action) < 0) {
+      return -1;
+    }
+  }
+  phr->action = action;
+  return action;
+}
+
+static void *self_dl_handle = 0;
+static int
+do_http_request(FILE *log_f, FILE *out_f, struct http_request_info *phr)
+{
+  int action = 0;
+  int retval = 0;
+
+  if ((action = parse_action(phr)) < 0) {
+    FAIL(S_ERR_INV_OPER);
   }
 
   if (!super_proto_op_names[action]) FAIL(S_ERR_INV_OPER);
   if (op_handlers[action] == (handler_func_t) 1) FAIL(S_ERR_NOT_IMPLEMENTED);
-  phr->action = action;
 
   if (!op_handlers[action]) {
     if (self_dl_handle == (void*) 1) FAIL(S_ERR_NOT_IMPLEMENTED);
@@ -6766,6 +6779,96 @@ parse_cookie(struct http_request_info *phr)
   }
 }
 
+static const int external_action_aliases[SSERV_CMD_LAST] =
+{
+};
+static const unsigned char * const external_action_names[SSERV_CMD_LAST] =
+{
+  [SSERV_CMD_BROWSE_PROBLEM_PACKAGES] = "problem_packages_page",
+};
+
+static const unsigned char * const external_error_names[S_ERR_LAST] = 
+{
+  [1] = NULL, // here comes the default error handler
+};
+
+static ExternalActionState *external_action_states[SSERV_CMD_LAST];
+static ExternalActionState *external_error_states[S_ERR_LAST];
+
+static void
+default_error_page(
+        char **p_out_t,
+        size_t *p_out_z,
+        struct http_request_info *phr)
+{
+  if (phr->log_f) {
+    fclose(phr->log_f); phr->log_f = NULL;
+  }
+  FILE *out_f = open_memstream(p_out_t, p_out_z);
+
+  fprintf(out_f, "Content-type: text/html; charset=%s\n\n", EJUDGE_CHARSET);
+  fprintf(out_f,
+          "<html>\n"
+          "<head>\n"
+          "<title>Error %d</title>\n"
+          "</head>\n"
+          "<body>\n"
+          "<h1>Error %d</h1>\n",
+          phr->error_code, phr->error_code);
+  if (phr->log_t && *phr->log_t) {
+    fprintf(out_f, "<p>Additional messages:</p>\n");
+    unsigned char *s = html_armor_string_dup(phr->log_t);
+    fprintf(out_f, "<pre><font color=\"red\">%s</font></pre>\n", s);
+    xfree(s); s = NULL;
+    xfree(phr->log_t); phr->log_t = NULL;
+    phr->log_z = 0;
+  }
+  fprintf(out_f, "</body>\n</html>\n");
+  fclose(out_f); out_f = NULL;
+}
+
+typedef PageInterface *(*external_action_handler_t)(void);
+
+static void
+external_error_page(
+        char **p_out_t,
+        size_t *p_out_z,
+        struct http_request_info *phr,
+        int error_code)
+{
+  if (error_code < 0) error_code = -error_code;
+  if (error_code <= 0 || error_code >= S_ERR_LAST) error_code = 1;
+  phr->error_code = error_code;
+
+  if (!external_error_names[error_code]) error_code = 1;
+  if (!external_error_names[error_code]) {
+    default_error_page(p_out_t, p_out_z, phr);
+    return;
+  }
+
+  external_error_states[error_code] = external_action_load(external_error_states[error_code],
+                                                           "csp/super-server",
+                                                           external_error_names[error_code],
+                                                           "csp_get_",
+                                                           phr->current_time);
+  if (!external_error_states[error_code] || !external_error_states[error_code]->action_handler) {
+    default_error_page(p_out_t, p_out_z, phr);
+    return;
+  }
+  PageInterface *pg = ((external_action_handler_t) external_error_states[error_code]->action_handler)();
+  if (!pg) {
+    default_error_page(p_out_t, p_out_z, phr);
+    return;
+  }
+
+  snprintf(phr->content_type, sizeof(phr->content_type), "text/html; charset=%s", EJUDGE_CHARSET);
+  phr->out_f = open_memstream(p_out_t, p_out_z);
+  pg->ops->render(pg, NULL, phr->out_f, phr);
+  xfree(phr->log_t); phr->log_t = NULL;
+  phr->log_z = 0;
+  fclose(phr->out_f); phr->out_f = NULL;
+}
+
 void
 super_html_http_request(
         char **p_out_t,
@@ -6792,15 +6895,86 @@ super_html_http_request(
   phr->script_name = script_name;
 
   parse_cookie(phr);
-
-  if ((r = ss_cgi_param(phr, "SID", &s)) < 0) {
-    r = -S_ERR_INV_SID;
-  }
-  if (r > 0) {
+  if (parse_action(phr) < 0) {
+    r = -S_ERR_INV_OPER;
+  } else {
     r = 0;
-    if (sscanf(s, "%llx%n", &phr->session_id, &n) != 1
-        || s[n] || !phr->session_id) {
+  }
+
+  if (!r) {
+    if ((r = ss_cgi_param(phr, "SID", &s)) < 0) {
       r = -S_ERR_INV_SID;
+    }
+    if (r > 0) {
+      r = 0;
+      if (sscanf(s, "%llx%n", &phr->session_id, &n) != 1
+          || s[n] || !phr->session_id) {
+        r = -S_ERR_INV_SID;
+      }
+    }
+  }
+
+  if (!r) {
+    // try external actions
+    int ext_action = phr->action;
+    if (ext_action < 0 || ext_action >= SSERV_CMD_LAST) ext_action = 0;
+    if (external_action_aliases[ext_action] > 0) ext_action = external_action_aliases[ext_action];
+    if (external_action_names[ext_action]) {
+      if (phr->current_time <= 0) phr->current_time = time(NULL);
+      external_action_states[ext_action] = external_action_load(external_action_states[ext_action],
+                                                                "csp/super-server",
+                                                                external_action_names[ext_action],
+                                                                "csp_get_",
+                                                                phr->current_time);
+      if (!external_action_states[ext_action] && !external_action_states[ext_action]->action_handler) {
+        external_error_page(p_out_t, p_out_z, phr, S_ERR_INV_OPER);
+        return;
+      }
+
+      phr->log_f = open_memstream(&phr->log_t, &phr->log_z);
+      phr->out_f = open_memstream(&phr->out_t, &phr->out_z);
+      PageInterface *pg = ((external_action_handler_t) external_action_states[ext_action]->action_handler)();
+      if (pg->ops->execute) {
+        r = pg->ops->execute(pg, phr->log_f, phr);
+        if (r < 0) {
+          fclose(phr->out_f); phr->out_f = NULL;
+          xfree(phr->out_t); phr->out_t = NULL;
+          phr->out_z = 0;
+          external_error_page(p_out_t, p_out_z, phr, -r);
+          return;
+        }
+      }
+      if (pg->ops->render) {
+        snprintf(phr->content_type, sizeof(phr->content_type), "text/html; charset=%s", EJUDGE_CHARSET);
+        r = pg->ops->render(pg, phr->log_f, phr->out_f, phr);
+        if (r < 0) {
+          fclose(phr->out_f); phr->out_f = NULL;
+          xfree(phr->out_t); phr->out_t = NULL;
+          phr->out_z = 0;
+          external_error_page(p_out_t, p_out_z, phr, -r);
+          return;
+        }
+      }
+      if (pg->ops->destroy) {
+        pg->ops->destroy(pg);
+      }
+      pg = NULL;
+
+      fclose(phr->log_f); phr->log_f = NULL;
+      xfree(phr->log_t); phr->log_t = NULL;
+      phr->log_z = 0;
+
+      fclose(phr->out_f); phr->out_f = NULL;
+
+      FILE *tmp_f = open_memstream(p_out_t, p_out_z);
+      fprintf(tmp_f, "Content-type: %s\n\n", phr->content_type);
+      fwrite(phr->out_t, 1, phr->out_z, tmp_f);
+      fclose(tmp_f); tmp_f = NULL;
+
+      xfree(phr->out_t); phr->out_t = NULL;
+      phr->out_z = 0; phr->out_z = 0;
+
+      return;
     }
   }
 

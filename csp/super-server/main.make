@@ -42,7 +42,7 @@ all : $(CFILES) $(SOFILES)
 
 install : all
 	install -d "${DESTDIR}${prefix}/share/ejudge/csp/super-server"
-	for i in *.csp I_*.c; do install -m 0644 $$i "${DESTDIR}${prefix}/share/ejudge/csp/super-server"; done
+	for i in *.csp; do install -m 0644 $$i "${DESTDIR}${prefix}/share/ejudge/csp/super-server"; done
 
 clean : 
 	-rm -f *.o *.so
