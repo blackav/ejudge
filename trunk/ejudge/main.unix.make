@@ -175,6 +175,7 @@ subdirs_all:
 	$(MAKE) -C plugins/mysql-clardb DESTDIR="${DESTDIR}" all
 	$(MAKE) -C plugins/mysql-rundb DESTDIR="${DESTDIR}" all
 	$(MAKE) -C csp/contests DESTDIR="${DESTDIR}" all
+	$(MAKE) -C csp/super-server DESTDIR="${DESTDIR}" all
 
 extra_progs:
 	$(MAKE) -C extra DESTDIR="${DESTDIR}" all
@@ -229,6 +230,7 @@ install: local_install
 	$(MAKE) -C plugins/mysql-clardb DESTDIR="${DESTDIR}" install
 	$(MAKE) -C plugins/mysql-rundb DESTDIR="${DESTDIR}" install
 	$(MAKE) -C csp/contests DESTDIR="${DESTDIR}" install
+	$(MAKE) -C csp/super-server DESTDIR="${DESTDIR}" install
 	if [ ! -f "${INSTALLSCRIPT}" ]; then ./ejudge-setup -b; fi
 	if [ -f "${INSTALLSCRIPT}" ]; then install -m 0755 "${INSTALLSCRIPT}" "${DESTDIR}${bindir}"; fi
 
@@ -362,6 +364,7 @@ subdir_clean:
 	$(MAKE) -C plugins/mysql-clardb DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C plugins/mysql-rundb DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C csp/contests DESTDIR="${DESTDIR}" clean
+	$(MAKE) -C csp/super-server DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C cfront clean
 	$(MAKE) -C reuse clean
 
@@ -380,6 +383,7 @@ subdir_distclean :
 	$(MAKE) -C plugins/mysql-clardb DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C plugins/mysql-rundb DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C csp/contests DESTDIR="${DESTDIR}" distclean
+	$(MAKE) -C csp/super-server DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C cfront distclean
 	$(MAKE) -C reuse distclean
 

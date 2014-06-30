@@ -476,35 +476,35 @@ print_top_navigation_links(
           "Main page");
   fprintf(out_f, "<li>%s%s</a></li>",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                        NULL, "action=%d&amp;op=%d%s",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_CMD_USER_BROWSE_PAGE, marked_param),
+                        NULL, "action=%d%s",
+                        SSERV_CMD_USER_BROWSE_PAGE, marked_param),
           "Browse users");
   fprintf(out_f, "<li>%s%s</a></li>",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                        NULL, "action=%d&amp;op=%d",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_CMD_GROUP_BROWSE_PAGE),
+                        NULL, "action=%d",
+                        SSERV_CMD_GROUP_BROWSE_PAGE),
           "Browse groups");
   if (contest_id > 0) {
     fprintf(out_f, "<li>%s%s %d</a></li>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                          NULL, "action=%d&amp;op=%d%s%s",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_CMD_USER_BROWSE_PAGE,
+                          NULL, "action=%d%s%s",
+                          SSERV_CMD_USER_BROWSE_PAGE,
                           contest_id_str, marked_param),
             "Browse users of contest", contest_id);
   }
   if (group_id > 0) {
     fprintf(out_f, "<li>%s%s %d</a></li>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                          NULL, "action=%d&amp;op=%d%s%s",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_CMD_USER_BROWSE_PAGE,
+                          NULL, "action=%d%s%s",
+                          SSERV_CMD_USER_BROWSE_PAGE,
                           group_id_str, marked_param),
             "Browse users of group", group_id);
   }
   if (other_user_id > 0) {
     fprintf(out_f, "<li>%s%s</a></li>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                          NULL, "action=%d&amp;op=%d&amp;other_user_id=%d%s%s",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_CMD_USER_DETAIL_PAGE,
+                          NULL, "action=%d&amp;other_user_id=%d%s%s",
+                          SSERV_CMD_USER_DETAIL_PAGE,
                           other_user_id,
                           contest_id_str, group_id_str),
             "User details");
