@@ -6,10 +6,11 @@
 %><%@page csp_view_problem_packages_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 %><%@include "stdvars.csp"
 %><%
+  const unsigned char *title = "Test";
 %><%@include "header.csp"
 %>
 
-
+<p>This is a test!</p>
 
 <%@include "footer.csp"
 %><%
