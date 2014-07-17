@@ -17,6 +17,9 @@
 
 #include "ejudge/super_serve_pi.h"
 #include "ejudge/contests.h"
+#include "ejudge/http_request.h"
+#include "ejudge/super_html.h"
+#include "ejudge/super-serve.h"
 
 #include "reuse/xalloc.h"
 
@@ -62,7 +65,7 @@ execute_func(
     int contest_max_id = contests_get_set(&contests_map);
     if (contest_max_id <= 0 || !contests_map) return 0;
 
-    for (int contest_id = 1; contest_id < contest_max_id; ++contest_id) {
+    for (int contest_id = 1, serial = 0; contest_id < contest_max_id; ++contest_id) {
         if (!contests_map[contest_id]) {
             // FIXME: removed from map?
             continue;
@@ -73,28 +76,48 @@ execute_func(
             // FIXME: display errors
             continue;
         }
-        
+        opcap_t caps = 0;
+        int has_caps = opcaps_find(&cnts->capabilities, phr->login, &caps);
+        if (phr->priv_level < PRIV_LEVEL_ADMIN && !(phr->ss->flags & SID_STATE_SHOW_UNMNG)) {
+            // skip contests, where nor ADMIN neither JUDGE permissions are set
+            if (has_caps < 0) continue;
+            if (opcaps_check(caps, OPCAP_MASTER_LOGIN) < 0 && opcaps_check(caps, OPCAP_JUDGE_LOGIN) < 0) continue;
+        }
+        if (has_caps < 0) caps = 0;
+
+        if (!(phr->ss->flags & SID_STATE_SHOW_HIDDEN) && cnts->invisible) continue;
+        if (!(phr->ss->flags & SID_STATE_SHOW_CLOSED) && cnts->closed) continue;
+
+        //struct ss_contest_extra *extra = get_existing_contest_extra(contest_id);
+        CspContestInfo *ci = 0;
+        XCALLOC(ci, 1);
+        if (pp->contests.a == pp->contests.u) {
+            if (!(pp->contests.a *= 2)) pp->contests.a = 32;
+            XREALLOC(pp->contests.v, pp->contests.a);
+        }
+        pp->contests.v[pp->contests.u++] = ci;
+
+        ci->serial = ++serial;
+        ci->id = cnts->id;
+        // FIXME: choose between name and name_en
+        ci->name = xstrdup(cnts->name);
+        ci->closed = cnts->closed;
+        ci->invisible = cnts->invisible;
+
+        /*
+    int details_enabled;
+    int edit_users_enabled;
+    int edit_settings_enabled;
+    int edit_tests_enabled;
+    int judge_enabled;
+    int master_enabled;
+    int user_enabled;
+        */
+
+        char *addi_t = 0;
+        size_t addi_z = 0;
+        FILE *addi_f = open_memstream(&addi_t, &addi_z);
     /*
-    if (priv_level < PRIV_LEVEL_ADMIN && !(sstate->flags & SID_STATE_SHOW_UNMNG)) {
-      // skip contests, where nor ADMIN neither JUDGE permissions are set
-      if (opcaps_find(&cnts->capabilities, login, &caps) < 0) continue;
-      if (opcaps_check(caps, OPCAP_MASTER_LOGIN) < 0
-          && opcaps_check(caps, OPCAP_JUDGE_LOGIN) < 0) continue;
-    } else {
-      caps = 0;
-      opcaps_find(&cnts->capabilities, login, &caps);
-    }
-
-    if (!(sstate->flags & SID_STATE_SHOW_HIDDEN) && cnts->invisible) continue;
-    if (!(sstate->flags & SID_STATE_SHOW_CLOSED) && cnts->closed) continue;
-
-    extra = get_existing_contest_extra(contest_id);
-
-    fprintf(f, "<tr>");
-    fprintf(f, "<td>%d</td>", contest_id);
-    html_name = html_armor_string_dup(cnts->name);
-    fprintf(f, "<td>%s</td>", html_name);
-    xfree(html_name);
 
     // report "closed" flag
     fprintf(f, "<td>%s</td>", cnts->closed?"closed":"&nbsp;");
@@ -213,6 +236,9 @@ execute_func(
       fprintf(f, "<td>&nbsp;</td>\n");
     }
      */
+        fclose(addi_f); addi_f = 0;
+        ci->comment = addi_t;
+        addi_t = 0; addi_z = 0;
     }
 
 
