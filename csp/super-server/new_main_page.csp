@@ -1,9 +1,8 @@
 <%
 /* $Id$ */
 %><%@include "includes.csp"
-%><%@set getter_name = "csp_get_problem_packages_page"
-%><%@set ac_prefix = "SSERV_CMD_"
-%><%@page csp_view_problem_packages_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+<%@set ac_prefix = "SSERV_CMD_"
+%><%@page csp_view_new_main_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 %><%@include "stdvars.csp"
 %><%
   const unsigned char *title = "Test";

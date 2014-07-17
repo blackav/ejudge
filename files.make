@@ -230,6 +230,7 @@ COMMON_CFILES=\
  super_http_request.c\
  super_proto.c\
  super_run_packet.c\
+ super_serve_pi.c\
  sha.c\
  t3m_dir_listener.c\
  t3m_submits.c\

@@ -53,6 +53,9 @@ po : super-server.po
 super-server.po : $(CFILES)
 	${XGETTEXT} -d ejudge --no-location --foreign-user  -k_ -k__ -s -o $@ *.c
 
+new_main_page.so : new_main_page.c I_new_main_page.c
+	$(CC) $(CCOMPFLAGS) ${WPTRSIGN} $(LDFLAGS) $^ -o $@
+
 problem_packages_page.c : problem_packages_page.csp includes.csp stdvars.csp header.csp footer.csp
 new_main_page.c : new_main_page.csp includes.csp stdvars.csp header.csp footer.csp
 

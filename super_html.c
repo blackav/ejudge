@@ -365,6 +365,7 @@ super_html_main_page(
   */
 
   fprintf(f, "<table border=\"0\"><tr><td>%sProblem editor</a></td></tr></table>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST, SSERV_CMD_BROWSE_PROBLEM_PACKAGES));
+  fprintf(f, "<table border=\"0\"><tr><td>%sNew main page</a></td></tr></table>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d", SSERV_CMD_BROWSE_PROBLEM_PACKAGES));
 
   fprintf(f, "<table border=\"0\"><tr><td>%sUser editor</a></td></tr></table>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST, SSERV_CMD_USER_BROWSE_PAGE));
   fprintf(f, "<table border=\"0\"><tr><td>%sSystem user mapping</a></td></tr></table>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST, SSERV_CMD_USER_MAP_MAIN_PAGE));
