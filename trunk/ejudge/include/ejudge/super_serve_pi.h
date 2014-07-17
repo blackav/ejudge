@@ -23,9 +23,33 @@
 
 #include <time.h>
 
+typedef struct CspContestInfo
+{
+    int serial;
+    int id;
+    unsigned char *name;
+    int closed;
+    int invisible;
+    int details_enabled;
+    int edit_users_enabled;
+    int edit_settings_enabled;
+    int edit_tests_enabled;
+    int judge_enabled;
+    int master_enabled;
+    int user_enabled;
+    unsigned char *comment;
+} CspContestInfo;
+
+typedef struct CspContestsArray
+{
+    int a, u;
+    CspContestInfo **v;
+} CspContestsArray;
+
 typedef struct CspNewMainPage
 {
     PageInterface b;
+    CspContestsArray contests;
 } CspNewMainPage;
 
 void super_serve_pi_init(void);
