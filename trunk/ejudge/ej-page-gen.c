@@ -23,6 +23,7 @@
 #include "ejudge/html_parse.h"
 #include "ejudge/xml_utils.h"
 #include "ejudge/new_server_pi.h"
+#include "ejudge/super_serve_pi.h"
 
 #include "reuse/osdeps.h"
 #include "reuse/xalloc.h"
@@ -5014,6 +5015,8 @@ main(int argc, char *argv[])
     unsigned char *deps_name = NULL;
     FILE *out_f = NULL;
     FILE *dep_f = NULL;
+
+    super_serve_pi_init();
 
     progname = os_GetLastname(argv[0]);
 
