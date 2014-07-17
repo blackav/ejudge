@@ -34,6 +34,7 @@ EXPAT_LIB=-lexpat
 
 TARGETDIR = ${libexecdir}/ejudge/csp/contests
 CFILES = \
+ new_main_page.c\
  problem_packages_page.c
 
 SOFILES = $(CFILES:.c=.so)
@@ -43,6 +44,7 @@ all : $(CFILES) $(SOFILES)
 install : all
 	install -d "${DESTDIR}${prefix}/share/ejudge/csp/super-server"
 	for i in *.csp; do install -m 0644 $$i "${DESTDIR}${prefix}/share/ejudge/csp/super-server"; done
+	for i in I_*.c; do install -m 0644 $$i "${DESTDIR}${prefix}/share/ejudge/csp/super-server"; done
 
 clean : 
 	-rm -f *.o *.so
@@ -52,6 +54,7 @@ super-server.po : $(CFILES)
 	${XGETTEXT} -d ejudge --no-location --foreign-user  -k_ -k__ -s -o $@ *.c
 
 problem_packages_page.c : problem_packages_page.csp includes.csp stdvars.csp header.csp footer.csp
+new_main_page.c : new_main_page.csp includes.csp stdvars.csp header.csp footer.csp
 
 %.c : %.csp
 	../../ej-page-gen -o $@ -d $*.ds $<
