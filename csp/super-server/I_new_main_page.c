@@ -16,8 +16,11 @@
  */
 
 #include "ejudge/super_serve_pi.h"
+#include "ejudge/contests.h"
 
 #include "reuse/xalloc.h"
+
+#include <string.h>
 
 extern int
 csp_view_new_main_page(
@@ -31,6 +34,18 @@ destroy_func(
         PageInterface *ps)
 {
     CspNewMainPage *pp = (CspNewMainPage *) ps;
+    if (!pp) return;
+    for (int i = 0; i < pp->contests.u; ++i) {
+        CspContestInfo *ci = pp->contests.v[i];
+        if (ci) {
+            xfree(ci->name);
+            xfree(ci->comment);
+            xfree(ci);
+        }
+        pp->contests.v[i] = 0;
+    }
+    xfree(pp->contests.v);
+    memset(pp, 0, sizeof(*pp));
     xfree(pp);
 }
 
@@ -41,6 +56,167 @@ execute_func(
         struct http_request_info *phr)
 {
     CspNewMainPage *pp = (CspNewMainPage *) ps;
+    if (!pp) return 0;
+
+    const unsigned char *contests_map = 0;
+    int contest_max_id = contests_get_set(&contests_map);
+    if (contest_max_id <= 0 || !contests_map) return 0;
+
+    for (int contest_id = 1; contest_id < contest_max_id; ++contest_id) {
+        if (!contests_map[contest_id]) {
+            // FIXME: removed from map?
+            continue;
+        }
+        int errcode = 0;
+        const struct contest_desc *cnts = 0;
+        if ((errcode = contests_get(contest_id, &cnts)) < 0) {
+            // FIXME: display errors
+            continue;
+        }
+        
+    /*
+    if (priv_level < PRIV_LEVEL_ADMIN && !(sstate->flags & SID_STATE_SHOW_UNMNG)) {
+      // skip contests, where nor ADMIN neither JUDGE permissions are set
+      if (opcaps_find(&cnts->capabilities, login, &caps) < 0) continue;
+      if (opcaps_check(caps, OPCAP_MASTER_LOGIN) < 0
+          && opcaps_check(caps, OPCAP_JUDGE_LOGIN) < 0) continue;
+    } else {
+      caps = 0;
+      opcaps_find(&cnts->capabilities, login, &caps);
+    }
+
+    if (!(sstate->flags & SID_STATE_SHOW_HIDDEN) && cnts->invisible) continue;
+    if (!(sstate->flags & SID_STATE_SHOW_CLOSED) && cnts->closed) continue;
+
+    extra = get_existing_contest_extra(contest_id);
+
+    fprintf(f, "<tr>");
+    fprintf(f, "<td>%d</td>", contest_id);
+    html_name = html_armor_string_dup(cnts->name);
+    fprintf(f, "<td>%s</td>", html_name);
+    xfree(html_name);
+
+    // report "closed" flag
+    fprintf(f, "<td>%s</td>", cnts->closed?"closed":"&nbsp;");
+
+    // report run mastering status
+    if (priv_level >= PRIV_LEVEL_ADMIN) {
+      if (!cnts->old_run_managed && (!extra || !extra->run_used)) {
+        cnt = 0;
+        if (cnts && cnts->slave_rules) {
+          for (p = cnts->slave_rules->first_down; p; p = p->right)
+            if (p->tag == CONTEST_RUN_MANAGED_ON)
+              cnt++;
+        }
+        if (cnt > 0) {
+          fprintf(f, "<td><i>Managed on:");
+          for (p = cnts->slave_rules->first_down; p; p = p->right)
+            if (p->tag == CONTEST_RUN_MANAGED_ON)
+              fprintf(f, " %s", p->text);
+          fprintf(f, "</i></td>\n");
+        } else if (cnts && cnts->run_managed) {
+          fprintf(f, "<td><i>Super-run</i></td>\n");
+        } else {
+          fprintf(f, "<td><i>Not managed</i></td>\n");
+        }
+      } else if (!extra || !extra->run_used) {
+        fprintf(f, "<td bgcolor=\"#ffff88\">Not yet managed</td>\n");
+      } else if (!cnts->old_run_managed) {
+        // still managed, but not necessary
+        if (extra->run_suspended) {
+          fprintf(f, "<td bgcolor=\"#ff8888\">Failed, not managed</td>\n");
+        } else if (extra->run_pid > 0) {
+          fprintf(f, "<td bgcolor=\"#ffff88\">Running, %d, not managed</td>\n",
+                  extra->run_pid);
+        } else {
+          fprintf(f, "<td bgcolor=\"#ffff88\">Waiting, not managed</td>\n");
+        }
+      } else {
+        // managed as need to
+        if (extra->run_suspended) {
+          fprintf(f, "<td bgcolor=\"#ff8888\">Failed</td>\n");
+        } else if (extra->run_pid > 0) {
+          fprintf(f, "<td>Running, %d</td>\n", extra->run_pid);
+        } else {
+          fprintf(f, "<td>Waiting</td>\n");
+        }
+      }
+    } else {
+      fprintf(f, "<td>&nbsp;</td>\n");
+    }
+
+    if (priv_level >= PRIV_LEVEL_JUDGE
+        && opcaps_check(caps, OPCAP_LIST_USERS) >= 0
+        && contests_check_serve_control_ip_2(cnts, ip_address, ssl)) {
+      fprintf(f, "<td>%sEdit users</a></td>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d&op=%d&contest_id=%d", SSERV_CMD_HTTP_REQUEST, SSERV_CMD_USER_BROWSE_PAGE, contest_id));
+    } else {
+      fprintf(f, "<td>&nbsp;</td>\n");
+    }
+
+    if (priv_level >= PRIV_LEVEL_ADMIN
+        && opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0
+        && contests_check_serve_control_ip_2(cnts, ip_address, ssl)) {
+      fprintf(f, "<td>%sEdit settings</a></td>",
+              html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
+                            "contest_id=%d&action=%d", contest_id,
+                            SSERV_CMD_EDIT_CONTEST_XML));
+      fprintf(f, "<td>%sEdit tests</a></td>\n",
+              html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
+                            "action=%d&op=%d&contest_id=%d", SSERV_CMD_HTTP_REQUEST,
+                            SSERV_CMD_TESTS_MAIN_PAGE, contest_id));
+      fprintf(f, "<td>%sView details</a></td>\n",
+              html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
+                            "contest_id=%d&action=%d", contest_id,
+                            SSERV_CMD_CONTEST_PAGE));
+    } else {
+      fprintf(f, "<td>&nbsp;</td>\n");
+      fprintf(f, "<td>&nbsp;</td>\n");
+      fprintf(f, "<td>&nbsp;</td>\n");
+    }
+
+    // report judge URL
+    if (opcaps_check(caps, OPCAP_JUDGE_LOGIN) >= 0 && judge_url[0]
+        && contests_check_judge_ip_2(cnts, ip_address, ssl)) {
+      if (cnts->managed) {
+        fprintf(f, "<td><a href=\"%s?SID=%016llx&contest_id=%d&action=3\" target=\"_blank\">Judge</a></td>\n",
+                new_judge_url, session_id, contest_id);
+      } else {
+        fprintf(f, "<td><a href=\"%s?SID=%016llx&contest_id=%d\" target=\"_blank\">Judge</a></td>\n",
+                judge_url, session_id, contest_id);
+      }
+    } else {
+      fprintf(f, "<td>&nbsp;</td>\n");
+    }
+    // report master URL
+    if (opcaps_check(caps, OPCAP_MASTER_LOGIN) >= 0 && master_url[0]
+        && contests_check_master_ip_2(cnts, ip_address, ssl)) {
+      if (cnts->managed) {
+        fprintf(f, "<td><a href=\"%s?SID=%016llx&contest_id=%d&action=3\" target=\"_blank\">Master</a></td>\n",
+                new_master_url, session_id, contest_id);
+      } else {
+        fprintf(f, "<td><a href=\"%s?SID=%016llx&contest_id=%d\" target=\"_blank\">Master</a></td>\n",
+                master_url, session_id, contest_id);
+      }
+    } else {
+      fprintf(f, "<td>&nbsp;</td>\n");
+    }
+    // report user URL
+    if (client_url[0] && contests_check_team_ip_2(cnts, ip_address, ssl)) {
+      if (cnts->managed) {
+        fprintf(f, "<td><a href=\"%s?contest_id=%d\" target=\"_blank\">User</a></td>\n",
+                new_client_url, contest_id);
+      } else {
+        fprintf(f, "<td><a href=\"%s?contest_id=%d\" target=\"_blank\">User</a></td>\n",
+                client_url, contest_id);
+      }
+    } else {
+      fprintf(f, "<td>&nbsp;</td>\n");
+    }
+     */
+    }
+
+
+
     (void) pp;
     return 0;
 }
