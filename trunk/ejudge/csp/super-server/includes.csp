@@ -6,6 +6,8 @@
 #include "ejudge/external_action.h"
 #include "ejudge/super_serve_pi.h"
 #include "ejudge/super_proto.h"
+#include "ejudge/super_html.h"
+#include "ejudge/super-serve.h"
 
 #include "reuse/xalloc.h"
 

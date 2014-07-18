@@ -11,10 +11,82 @@
 %><%@include "header.csp"
 %>
 
+<h2>Controls</h2>
 
-  client_put_header(stdout, 0, 0, config->charset, 1, 0, client_key,
-                    "%s: %s@%s, %d%s", "serve-control", user_login, http_host, contest_id,
-                    extra_str);
+<table border="0">
+    <tr>
+        <td>
+            <s:form>
+<%
+    if ((phr->ss->flags & SID_STATE_SHOW_HIDDEN)) {
+%><s:submit ac="hide-hidden" label="Hide hidden contests" /><%
+    } else {
+%><s:submit ac="show-hidden" label="Show hidden contests" /><%
+    }
+%>
+            </s:form>
+        </td>
+
+
+  fprintf(f, "<td>");
+  html_start_form(f, 1, self_url, hidden_vars);
+  if ((sstate->flags & SID_STATE_SHOW_CLOSED)) {
+    html_submit_button(f, SSERV_CMD_HIDE_CLOSED, "Hide closed contests");
+  } else {
+    html_submit_button(f, SSERV_CMD_SHOW_CLOSED, "Show closed contests");
+  }
+  fprintf(f, "</form></td>");
+  fprintf(f, "<td>");
+  html_start_form(f, 1, self_url, hidden_vars);
+  if ((sstate->flags & SID_STATE_SHOW_UNMNG)) {
+    html_submit_button(f, SSERV_CMD_HIDE_UNMNG, "Hide unmanageable contests");
+  } else {
+    html_submit_button(f, SSERV_CMD_SHOW_UNMNG, "Show unmanageable contests");
+  }
+  fprintf(f, "</form></td>");
+  fprintf(f, "</tr></table>");
+
+</table>
+
+  /*
+  fprintf(f, "<table border=\"0\"><tr>\n");
+  fprintf(f, "<td>");
+  html_start_form(f, 1, session_id, self_url, hidden_vars);
+  html_submit_button(f, SSERV_CMD_RESTART, "Restart the daemon");
+  fprintf(f, "</form></td>");
+  fprintf(f, "</tr></table>");
+  */
+
+  fprintf(f, "<table border=\"0\"><tr><td>%sProblem editor</a></td></tr></table>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST, SSERV_CMD_BROWSE_PROBLEM_PACKAGES));
+  fprintf(f, "<table border=\"0\"><tr><td>%sNew main page</a></td></tr></table>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d", SSERV_CMD_NEW_MAIN_PAGE));
+
+  fprintf(f, "<table border=\"0\"><tr><td>%sUser editor</a></td></tr></table>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST, SSERV_CMD_USER_BROWSE_PAGE));
+  fprintf(f, "<table border=\"0\"><tr><td>%sSystem user mapping</a></td></tr></table>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST, SSERV_CMD_USER_MAP_MAIN_PAGE));
+  fprintf(f, "<table border=\"0\"><tr><td>%sGlobal user capabilities</a></td></tr></table>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST, SSERV_CMD_CAPS_MAIN_PAGE));
+  fprintf(f, "<table border=\"0\"><tr><td>%sGroup editor</a></td></tr></table>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST, SSERV_CMD_GROUP_BROWSE_PAGE));
+
+  fprintf(f, "<table border=\"0\"><tr><td>%sCreate new contest</a></td>", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d", SSERV_CMD_CREATE_CONTEST));
+  if (sstate->edited_cnts) {
+    fprintf(f, "<td>%sEdit current contest</a></td>",
+            html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
+                          "action=%d", SSERV_CMD_EDIT_CURRENT_CONTEST));
+  }
+  fprintf(f, "</tr></table>\n");
+
+  fprintf(f, "<table border=\"0\"><tr><td>%sCreate new contest (New interface)</a></td>", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST, SSERV_CMD_CREATE_NEW_CONTEST_PAGE));
+  if (sstate->edited_cnts) {
+    fprintf(f, "<td>%sEdit current contest (New interface)</a></td>",
+            html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
+                          "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST,
+                          SSERV_CMD_EDIT_CONTEST_PAGE_2));
+  }
+  fprintf(f, "</tr></table>\n");
+
+  fprintf(f, "<table border=\"0\"><tr><td>%sRefresh</a></td></tr></table>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, 0));
+
+
+
+
 
 
 <h2>Contests</h2>
