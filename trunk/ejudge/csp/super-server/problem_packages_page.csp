@@ -7,6 +7,7 @@
 %><%@include "stdvars.csp"
 %><%
   const unsigned char *title = "Test";
+  const unsigned char *subtitle = 0;
 %><%@include "header.csp"
 %>
 

@@ -6,9 +6,16 @@
 %><%@include "stdvars.csp"
 %><%
     CspNewMainPage *pp = (CspNewMainPage *) pg;
-    const unsigned char *title = "Test";
+    const unsigned char *title = 0;
+    const unsigned char *subtitle = 0;
 %><%@include "header.csp"
 %>
+
+
+  client_put_header(stdout, 0, 0, config->charset, 1, 0, client_key,
+                    "%s: %s@%s, %d%s", "serve-control", user_login, http_host, contest_id,
+                    extra_str);
+
 
 <h2>Contests</h2>
 
