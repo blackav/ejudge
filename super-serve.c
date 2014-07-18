@@ -4664,6 +4664,8 @@ main(int argc, char **argv)
   char **argv_restart = 0;
   int pid;
 
+  hr_set_symbolic_action_table(0, 0);
+
   program_name = os_GetBasename(argv[0]);
   start_set_self_args(argc, argv);
   XCALLOC(argv_restart, argc + 2);
