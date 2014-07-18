@@ -6883,6 +6883,7 @@ super_html_http_request(
   const unsigned char *s = 0;
   unsigned char self_url_buf[4096];
   unsigned char context_url[4096];
+  unsigned char hid_buf[4096];
 
   if (ss_getenv(phr, "SSL_PROTOCOL") || ss_getenv(phr, "HTTPS")) {
     phr->ssl_flag = 1;
@@ -6936,6 +6937,11 @@ super_html_http_request(
         external_error_page(p_out_t, p_out_z, phr, S_ERR_INV_OPER);
         return;
       }
+
+      snprintf(hid_buf, sizeof(hid_buf),
+               "<input type=\"hidden\" name=\"SID\" value=\"%016llx\"/>",
+               phr->session_id);
+      phr->hidden_vars = hid_buf;
 
       phr->log_f = open_memstream(&phr->log_t, &phr->log_z);
       phr->out_f = open_memstream(&phr->out_t, &phr->out_z);
