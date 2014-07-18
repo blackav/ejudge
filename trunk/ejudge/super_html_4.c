@@ -6878,7 +6878,6 @@ super_html_http_request(
 {
   int r = 0, n;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
-  const unsigned char *http_host = 0;
   const unsigned char *script_name = 0;
   const unsigned char *protocol = "http";
   const unsigned char *s = 0;
@@ -6889,10 +6888,10 @@ super_html_http_request(
     phr->ssl_flag = 1;
     protocol = "https";
   }
-  if (!(http_host = ss_getenv(phr, "HTTP_HOST"))) http_host = "localhost";
+  if (!(phr->http_host = ss_getenv(phr, "HTTP_HOST"))) phr->http_host = "localhost";
   if (!(script_name = ss_getenv(phr, "SCRIPT_NAME")))
     script_name = "/cgi-bin/serve-control";
-  snprintf(self_url_buf, sizeof(self_url_buf), "%s://%s%s", protocol, http_host, script_name);
+  snprintf(self_url_buf, sizeof(self_url_buf), "%s://%s%s", protocol, phr->http_host, script_name);
   phr->self_url = self_url_buf;
   phr->script_name = script_name;
 

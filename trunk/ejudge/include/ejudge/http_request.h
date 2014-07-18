@@ -50,6 +50,7 @@ struct http_request_info
   const size_t *param_sizes;
   const unsigned char **params;
 
+  const unsigned char *http_host;
   const unsigned char *self_url;
   const unsigned char *context_url;
   const unsigned char *script_name;
