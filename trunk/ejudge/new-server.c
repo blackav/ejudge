@@ -708,6 +708,7 @@ main(int argc, char *argv[])
   int pid;
   time_t server_start_time = 0;
 
+  hr_set_symbolic_action_table(ns_symbolic_action_table, NEW_SRV_ACTION_LAST);
   time(&server_start_time);
   start_set_self_args(argc, argv);
   /* certain options should be removed for restart */

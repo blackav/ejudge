@@ -3250,12 +3250,12 @@ handle_a_open(
         if (script_attr) {
             fprintf(prg_f, "hr_%s_url(out_f, phr);\n", script_attr->value);
             if (nosid_flag) {
-                fprintf(prg_f, "sep = ns_url_4(out_f, phr, %s);\n", buf);
+                fprintf(prg_f, "sep = hr_url_4(out_f, phr, %s);\n", buf);
             } else {
-                fprintf(prg_f, "sep = ns_url_3(out_f, phr, %s);\n", buf);
+                fprintf(prg_f, "sep = hr_url_3(out_f, phr, %s);\n", buf);
             }
         } else {
-            fprintf(prg_f, "sep = ns_url_2(out_f, phr, %s);\n", buf);
+            fprintf(prg_f, "sep = hr_url_2(out_f, phr, %s);\n", buf);
         }
         for (HtmlElement *child = url_elem->first_child; child; child = child->next_sibling) {
             HtmlAttribute *full_check_expr = html_element_find_attribute(child, "fullcheckexpr");
@@ -3301,12 +3301,12 @@ handle_a_open(
         if (script_attr) {
             fprintf(prg_f, "hr_%s_url(out_f, phr);\n", script_attr->value);
             if (nosid_flag) {
-                fprintf(prg_f, "sep = ns_url_4(out_f, phr, %s);\n", buf);
+                fprintf(prg_f, "sep = hr_url_4(out_f, phr, %s);\n", buf);
             } else {
-                fprintf(prg_f, "sep = ns_url_3(out_f, phr, %s);\n", buf);
+                fprintf(prg_f, "sep = hr_url_3(out_f, phr, %s);\n", buf);
             }
         } else {
-            fprintf(prg_f, "sep = ns_url_2(out_f, phr, %s);\n", buf);
+            fprintf(prg_f, "sep = hr_url_2(out_f, phr, %s);\n", buf);
         }
         fprintf(prg_f, "fputs(\"\\\">\", out_f);\n");
         //fprintf(prg_f, "fputs(ns_aref(hbuf, sizeof(hbuf), phr, %s, 0), out_f);\n", buf);
@@ -4014,7 +4014,7 @@ handle_img_open(
             parser_error_2(ps, "ac attribute is undefined");
             return -1;
         }
-        fprintf(prg_f, "sep = ns_url_2(out_f, phr, %s);\n", buf);
+        fprintf(prg_f, "sep = hr_url_2(out_f, phr, %s);\n", buf);
         for (HtmlElement *child = url_elem->first_child; child; child = child->next_sibling) {
             fprintf(prg_f, "fputs(sep, out_f); sep = \"&amp;\";\n");
             attr = html_element_find_attribute(child, "name");

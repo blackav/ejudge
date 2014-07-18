@@ -25,6 +25,9 @@
 #include <errno.h>
 #include <stdlib.h>
 
+static const unsigned char * const *symbolic_action_table;
+static int symbolic_action_table_size;
+
 const unsigned char*
 hr_getenv(
         const struct http_request_info *phr,
@@ -236,6 +239,90 @@ hr_client_url(
     fprintf(out_f, "%s/new-client", phr->contest_url);
 #endif
   }
+}
+
+void
+hr_set_symbolic_action_table(
+        const unsigned char * const *table,
+        int table_size)
+{
+    symbolic_action_table = table;
+    symbolic_action_table_size = table_size;
+}
+
+const unsigned char *
+hr_url_2(
+        FILE *out_f,
+        const struct http_request_info *phr,
+        int action)
+{
+    if (phr->rest_mode > 0 && symbolic_action_table) {
+        if (action < 0 || action >= symbolic_action_table_size) action = 0;
+        fprintf(out_f, "%s/%s", phr->self_url, symbolic_action_table[action]);
+        if (phr->session_id) {
+            fprintf(out_f, "/S%016llx", phr->session_id);
+        }
+        return "?";
+    } else {
+        const unsigned char *sep = "?";
+        fprintf(out_f, "%s", phr->self_url);
+        if (phr->session_id) {
+            fprintf(out_f, "%sSID=%016llx", sep, phr->session_id);
+            sep = "&amp;";
+        }
+        if (action > 0) {
+            fprintf(out_f, "%saction=%d", sep, action);
+            sep = "&amp;";
+        }
+        return sep;
+    }
+}
+
+const unsigned char *
+hr_url_3(
+        FILE *out_f,
+        const struct http_request_info *phr,
+        int action)
+{
+    if (phr->rest_mode > 0 && symbolic_action_table) {
+        if (action < 0 || action >= symbolic_action_table_size) action = 0;
+        fprintf(out_f, "/%s", symbolic_action_table[action]);
+        if (phr->session_id) {
+            fprintf(out_f, "/S%016llx", phr->session_id);
+        }
+        return "?";
+    } else {
+        const unsigned char *sep = "?";
+        if (phr->session_id) {
+            fprintf(out_f, "%sSID=%016llx", sep, phr->session_id);
+            sep = "&amp;";
+        }
+        if (action > 0) {
+            fprintf(out_f, "%saction=%d", sep, action);
+            sep = "&amp;";
+        }
+        return sep;
+    }
+}
+
+const unsigned char *
+hr_url_4(
+        FILE *out_f,
+        const struct http_request_info *phr,
+        int action)
+{
+    if (phr->rest_mode > 0 && symbolic_action_table) {
+        if (action < 0 || action >= symbolic_action_table_size) action = 0;
+        fprintf(out_f, "/%s", symbolic_action_table[action]);
+        return "?";
+    } else {
+        const unsigned char *sep = "?";
+        if (action > 0) {
+            fprintf(out_f, "%saction=%d", sep, action);
+            sep = "&amp;";
+        }
+        return sep;
+    }
 }
 
 /*
