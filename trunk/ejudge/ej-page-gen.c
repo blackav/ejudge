@@ -3166,7 +3166,12 @@ process_ac_attr(
         int bufsize)
 {
     HtmlAttribute *at = html_element_find_attribute(elem, "ac"); // action code
-    if (!at) return 0;
+    if (!at) {
+        at = html_element_find_attribute(elem, "action");
+        if (!at) return 0;
+        snprintf(buf, bufsize, "%s", at->value);
+        return 1;
+    }
 
     TypeInfo *ac_prefix = processor_state_find_setting(ps, tc_get_ident(cntx, "ac_prefix"));
     if (!ac_prefix) {
