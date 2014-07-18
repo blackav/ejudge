@@ -6883,6 +6883,7 @@ super_html_http_request(
   const unsigned char *protocol = "http";
   const unsigned char *s = 0;
   unsigned char self_url_buf[4096];
+  unsigned char context_url[4096];
 
   if (ss_getenv(phr, "SSL_PROTOCOL") || ss_getenv(phr, "HTTPS")) {
     phr->ssl_flag = 1;
@@ -6894,6 +6895,11 @@ super_html_http_request(
   snprintf(self_url_buf, sizeof(self_url_buf), "%s://%s%s", protocol, http_host, script_name);
   phr->self_url = self_url_buf;
   phr->script_name = script_name;
+
+  snprintf(context_url, sizeof(context_url), "%s", phr->self_url);
+  unsigned char *rs = strrchr(context_url, '/');
+  if (rs) *rs = 0;
+  phr->context_url = context_url;
 
   parse_cookie(phr);
   if (parse_action(phr) < 0) {
