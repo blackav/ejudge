@@ -3,12 +3,22 @@
 <meta http-equiv="Content-type" content='text/html; charset=<s:config name="charset" />' />
 <link rel="stylesheet" href='<s:config name="style-prefix" />priv.css' type="text/css" />
 <script type="text/javascript" charset="UTF-8" src="<s:config name="style-prefix"/>priv.js"></script>
-<title>XXX</title>
+<title><%
+    if (title) {
+%><s:v value="title" /><%
+    } else {
+%>serve-control: <s:v checkexpr="" value="phr->login" />@<s:v value="phr->http_host" /><%
+        if (phr->contest_id > 0) {
+%>, <s:v value="phr->contest_id" /><%
+        }
+%><s:v checkexpr="" value="subtitle" /><%
+    }
+%></title>
 </head>
 <body>
 <h1><%
     if (title) {
-%><s:v escape="false" value="" /><%
+%><s:v escape="false" value="title" /><%
     } else {
 %>serve-control: <s:v checkexpr="" value="phr->login" />@<s:v value="phr->http_host" /><%
         if (phr->contest_id > 0) {
