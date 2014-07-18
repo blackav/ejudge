@@ -104,15 +104,29 @@ execute_func(
         ci->closed = cnts->closed;
         ci->invisible = cnts->invisible;
 
-        /*
-    int details_enabled;
-    int edit_users_enabled;
-    int edit_settings_enabled;
-    int edit_tests_enabled;
-    int judge_enabled;
-    int master_enabled;
-    int user_enabled;
-        */
+        if (phr->priv_level >= PRIV_LEVEL_ADMIN && opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0
+            && contests_check_serve_control_ip_2(cnts, &phr->ip, phr->ssl_flag)) {
+            ci->details_enabled = 1;
+            ci->edit_settings_enabled = 1;
+            ci->edit_tests_enabled = 1;
+        }
+
+        if (phr->priv_level >= PRIV_LEVEL_JUDGE && opcaps_check(caps, OPCAP_LIST_USERS) >= 0
+            && contests_check_serve_control_ip_2(cnts, &phr->ip, phr->ssl_flag)) {
+            ci->edit_users_enabled = 1;
+        }
+
+        if (opcaps_check(caps, OPCAP_JUDGE_LOGIN) >= 0 && contests_check_judge_ip_2(cnts, &phr->ip, phr->ssl_flag)) {
+            ci->judge_enabled = 1;
+        }
+
+        if (opcaps_check(caps, OPCAP_MASTER_LOGIN) >= 0 && contests_check_master_ip_2(cnts, &phr->ip, phr->ssl_flag)) {
+            ci->master_enabled = 1;
+        }
+
+        if (contests_check_team_ip_2(cnts, &phr->ip, phr->ssl_flag)) {
+            ci->user_enabled = 1;
+        }
 
         char *addi_t = 0;
         size_t addi_z = 0;
