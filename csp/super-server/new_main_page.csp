@@ -41,10 +41,54 @@
 %>&nbsp;<%
         }
 %></td>
+        <td><%
+        if (ci->edit_users_enabled) {
+%><s:tr>Users</s:tr><%
+        } else {
+%>&nbsp;<%
+        }
+%></td>
+        <td><%
+        if (ci->edit_settings_enabled) {
+%><s:tr>Settings</s:tr><%
+        } else {
+%>&nbsp;<%
+        }
+%></td>
+        <td><%
+        if (ci->edit_tests_enabled) {
+%><s:tr>Tests</s:tr><%
+        } else {
+%>&nbsp;<%
+        }
+%></td>
+        <td><%
+        if (ci->judge_enabled) {
+%><s:tr>Judge</s:tr><%
+        } else {
+%>&nbsp;<%
+        }
+%></td>
+        <td><%
+        if (ci->master_enabled) {
+%><s:tr>Master</s:tr><%
+        } else {
+%>&nbsp;<%
+        }
+%></td>
+        <td><%
+        if (ci->user_enabled) {
+%><s:tr>User</s:tr><%
+        } else {
+%>&nbsp;<%
+        }
+%></td>
+        <td><s:v checkexpr="" value="ci->comment" /></td:
     </tr>
 <%
     }
 %>
+</table>
 
 <%@include "footer.csp"
 %><%
