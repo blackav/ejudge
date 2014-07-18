@@ -24,6 +24,7 @@
         <th>Judge</th>
         <th>Master</th>
         <th>User</th>
+        <th>Comment</th>
     </tr>
 <%
     for (int i = 0; i < pp->contests.u; ++i) {
@@ -36,7 +37,7 @@
         <td><s:v value="ci->name" /></td>
         <td><%
         if (ci->details_enabled) {
-%><s:tr>Details</s:tr><%
+%><s:url name="DetailsUrl" ac="contest-page"><s:param name="contest_id" value="ci->id" /></s:url><s:a url="DetailsUrl"><s:tr>Details</s:tr></s:a><%
         } else {
 %>&nbsp;<%
         }
