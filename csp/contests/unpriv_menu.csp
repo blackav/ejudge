@@ -211,7 +211,7 @@
 %>
 </ul>
 <%
-  if (cnts) {
+  if (cnts && phr->login) {
 %><div id="logout"><div class="contest_actions_item"><s:a class="menu" ac="logout"><%
     if (cnts->exam_mode) {
 %><s:tr>Finish session</s:tr><%
