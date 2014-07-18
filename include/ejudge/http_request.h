@@ -183,6 +183,24 @@ hr_client_url(
         FILE *out_f,
         const struct http_request_info *phr);
 
+void
+hr_set_symbolic_action_table(const unsigned char * const *table, int table_size);
+
+const unsigned char *
+hr_url_2(
+        FILE *out_f,
+        const struct http_request_info *phr,
+        int action);
+const unsigned char *
+hr_url_3(
+        FILE *out_f,
+        const struct http_request_info *phr,
+        int action);
+const unsigned char *
+hr_url_4(
+        FILE *out_f,
+        const struct http_request_info *phr,
+        int action);
 
 #endif /* __HTTP_REQUEST_H__ */
 
