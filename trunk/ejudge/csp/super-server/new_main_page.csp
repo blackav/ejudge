@@ -26,68 +26,55 @@
 %>
             </s:form>
         </td>
-
-
-  fprintf(f, "<td>");
-  html_start_form(f, 1, self_url, hidden_vars);
-  if ((sstate->flags & SID_STATE_SHOW_CLOSED)) {
-    html_submit_button(f, SSERV_CMD_HIDE_CLOSED, "Hide closed contests");
+        <td>
+            <s:form>
+<%
+  if ((phr->ss->flags & SID_STATE_SHOW_CLOSED)) {
+%><s:submit ac="hide-closed" label="Hide closed contests" /><%
   } else {
-    html_submit_button(f, SSERV_CMD_SHOW_CLOSED, "Show closed contests");
+%><s:submit ac="show-closed" label="Show closed contests" /><%
   }
-  fprintf(f, "</form></td>");
-  fprintf(f, "<td>");
-  html_start_form(f, 1, self_url, hidden_vars);
-  if ((sstate->flags & SID_STATE_SHOW_UNMNG)) {
-    html_submit_button(f, SSERV_CMD_HIDE_UNMNG, "Hide unmanageable contests");
+%>
+            </s:form>
+        </td>
+        <td>
+            <s:form>
+<%
+  if ((phr->ss->flags & SID_STATE_SHOW_UNMNG)) {
+%><s:submit ac="hide-unmng" label="Hide unmanageable contests" /><%
   } else {
-    html_submit_button(f, SSERV_CMD_SHOW_UNMNG, "Show unmanageable contests");
+%><s:submit ac="show-unmng" label="Show unmanageable contests" /><%
   }
-  fprintf(f, "</form></td>");
-  fprintf(f, "</tr></table>");
-
+%>
+            </s:form>
+        </td>
+    </tr>
 </table>
 
-  /*
-  fprintf(f, "<table border=\"0\"><tr>\n");
-  fprintf(f, "<td>");
-  html_start_form(f, 1, session_id, self_url, hidden_vars);
-  html_submit_button(f, SSERV_CMD_RESTART, "Restart the daemon");
-  fprintf(f, "</form></td>");
-  fprintf(f, "</tr></table>");
-  */
+<table border="0">
+    <tr><td><s:a ac="browse-problem-packages"><s:tr>Problem editor</s:tr></s:a></td></tr>
+    <tr><td><s:a ac="new-main-page"><s:tr>New main page</s:tr></s:a></td></tr>
+    <tr><td><s:a ac="user-browse-page"><s:tr>User editor</s:tr></s:a></td></tr>
+    <tr><td><s:a ac="user-map-main-page"><s:tr>System user mapping</s:tr></s:a></td></tr>
+    <tr><td><s:a ac="caps-main-page"><s:tr>Global user capabilities</s:tr></s:a></td></tr>
+    <tr><td><s:a ac="group-browse-page"><s:tr>Group editor</s:tr></s:a></td></tr>
 
-  fprintf(f, "<table border=\"0\"><tr><td>%sProblem editor</a></td></tr></table>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST, SSERV_CMD_BROWSE_PROBLEM_PACKAGES));
-  fprintf(f, "<table border=\"0\"><tr><td>%sNew main page</a></td></tr></table>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d", SSERV_CMD_NEW_MAIN_PAGE));
+    <tr><td><s:a ac="create-contest"><s:tr>Create new contest</s:tr></s:a></td></tr>
+<%
+    if (phr->ss->edited_cnts) {
+%><tr><td><s:a ac="edit-current-contest"><s:tr>Edit current contest</s:tr></s:a></td></tr><%
+    }
+%>
 
-  fprintf(f, "<table border=\"0\"><tr><td>%sUser editor</a></td></tr></table>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST, SSERV_CMD_USER_BROWSE_PAGE));
-  fprintf(f, "<table border=\"0\"><tr><td>%sSystem user mapping</a></td></tr></table>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST, SSERV_CMD_USER_MAP_MAIN_PAGE));
-  fprintf(f, "<table border=\"0\"><tr><td>%sGlobal user capabilities</a></td></tr></table>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST, SSERV_CMD_CAPS_MAIN_PAGE));
-  fprintf(f, "<table border=\"0\"><tr><td>%sGroup editor</a></td></tr></table>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST, SSERV_CMD_GROUP_BROWSE_PAGE));
+    <tr><td><s:a ac="create-new-contest-page"><s:tr>Create new contest (New interface)</s:tr></s:a></td></tr>
+<%
+    if (phr->ss->edited_cnts) {
+%><tr><td><s:a ac="edit-contest-page-2"><s:tr>Edit current contest (New interface)</s:tr></s:a></td></tr><%
+    }
+%>
 
-  fprintf(f, "<table border=\"0\"><tr><td>%sCreate new contest</a></td>", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d", SSERV_CMD_CREATE_CONTEST));
-  if (sstate->edited_cnts) {
-    fprintf(f, "<td>%sEdit current contest</a></td>",
-            html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
-                          "action=%d", SSERV_CMD_EDIT_CURRENT_CONTEST));
-  }
-  fprintf(f, "</tr></table>\n");
-
-  fprintf(f, "<table border=\"0\"><tr><td>%sCreate new contest (New interface)</a></td>", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST, SSERV_CMD_CREATE_NEW_CONTEST_PAGE));
-  if (sstate->edited_cnts) {
-    fprintf(f, "<td>%sEdit current contest (New interface)</a></td>",
-            html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
-                          "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST,
-                          SSERV_CMD_EDIT_CONTEST_PAGE_2));
-  }
-  fprintf(f, "</tr></table>\n");
-
-  fprintf(f, "<table border=\"0\"><tr><td>%sRefresh</a></td></tr></table>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, 0));
-
-
-
-
-
+    <tr><td><s:a ac="new-main-page"><s:tr>Refresh</s:tr></s:a></td></tr>
+</table>
 
 <h2>Contests</h2>
 
