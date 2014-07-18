@@ -17,6 +17,7 @@
 
 #include "ejudge/http_request.h"
 #include "ejudge/contests.h"
+#include "ejudge/l10n.h"
 
 #include "reuse/logger.h"
 
@@ -24,8 +25,10 @@
 #include <ctype.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <libintl.h>
 
 static const unsigned char * const *symbolic_action_table;
+static const unsigned char * const *submit_button_labels;
 static int symbolic_action_table_size;
 
 const unsigned char*
@@ -280,6 +283,7 @@ hr_client_url(
 void
 hr_set_symbolic_action_table(
         const unsigned char * const *table,
+        const unsigned char * const *submit_labels,
         int table_size)
 {
     symbolic_action_table = table;
@@ -359,6 +363,26 @@ hr_url_4(
         }
         return sep;
     }
+}
+
+void
+hr_submit_button(
+        FILE *out_f,
+        const unsigned char *var_name,
+        int action,
+        const unsigned char *label)
+{
+    if (!var_name) var_name = "action";
+
+    if (!label && submit_button_labels && action > 0 && action < symbolic_action_table_size)
+        label = gettext(submit_button_labels[action]);
+    if (!label) label = "Submit";
+
+    fprintf(out_f, "<input type=\"submit\" name=\"%s", var_name);
+    if (action > 0) {
+        fprintf(out_f, "_%d", action);
+    }
+    fprintf(out_f, "\" value=\"%s\" />", label);
 }
 
 /*

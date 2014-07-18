@@ -193,7 +193,10 @@ hr_client_url(
         const struct http_request_info *phr);
 
 void
-hr_set_symbolic_action_table(const unsigned char * const *table, int table_size);
+hr_set_symbolic_action_table(
+        const unsigned char * const *table, 
+        const unsigned char * const *submit_labels,
+        int table_size);
 
 const unsigned char *
 hr_url_2(
@@ -210,6 +213,13 @@ hr_url_4(
         FILE *out_f,
         const struct http_request_info *phr,
         int action);
+
+void
+hr_submit_button(
+        FILE *out_f,
+        const unsigned char *var_name,
+        int action,
+        const unsigned char *label);
 
 #endif /* __HTTP_REQUEST_H__ */
 

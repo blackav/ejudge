@@ -3449,9 +3449,9 @@ handle_submit_open(
     int r = process_ac_attr(log_f, cntx, ps, elem, buf, sizeof(buf));
     if (r < 0) return r;
     if (r > 0) {
-        fprintf(prg_f, "fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, %s, %s), out_f);\n", buf, value);
+        fprintf(prg_f, "hr_submit_button(out_f, 0, %s, %s);\n", buf, value);
     } else if ((at = html_element_find_attribute(elem, "action"))) {
-        fprintf(prg_f, "fputs(ns_submit_button(hbuf, sizeof(hbuf), 0, (%s), %s), out_f);\n", at->value, value);
+        fprintf(prg_f, "hr_submit_button(out_f, 0, (%s), %s);\n", at->value, value);
     }
 
     return 0;
