@@ -175,6 +175,14 @@ hr_cgi_param_int_opt_2(
         int *p_set_flag);
 
 void
+hr_master_url(
+        FILE *out_f,
+        const struct http_request_info *phr);
+void
+hr_judge_url(
+        FILE *out_f,
+        const struct http_request_info *phr);
+void
 hr_register_url(
         FILE *out_f,
         const struct http_request_info *phr);
