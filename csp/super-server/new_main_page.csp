@@ -1,15 +1,50 @@
 <%
 /* $Id$ */
 %><%@include "includes.csp"
-<%@set ac_prefix = "SSERV_CMD_"
+%><%@set ac_prefix = "SSERV_CMD_"
 %><%@page csp_view_new_main_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 %><%@include "stdvars.csp"
 %><%
-  const unsigned char *title = "Test";
+    CspNewMainPage *pp = (CspNewMainPage *) pg;
+    const unsigned char *title = "Test";
 %><%@include "header.csp"
 %>
 
-<p>This is a test!</p>
+<h2>Contests</h2>
+
+<table border="1">
+    <tr>
+        <th>N</th>
+        <th>Id</th>
+        <th>Name</th>
+        <th>View details</th>
+        <th>Edit users</th>
+        <th>Edit settings</th>
+        <th>Edit tests</th>
+        <th>Judge</th>
+        <th>Master</th>
+        <th>User</th>
+    </tr>
+<%
+    for (int i = 0; i < pp->contests.u; ++i) {
+        CspContestInfo *ci = pp->contests.v[i];
+        if (!ci) continue;
+%>
+    <tr>
+        <td><s:v value="ci->serial" /></td>
+        <td><s:v value="ci->id" /></td>
+        <td><s:v value="ci->name" /></td>
+        <td><%
+        if (ci->details_enabled) {
+%><s:tr>Details</s:tr><%
+        } else {
+%>&nbsp;<%
+        }
+%></td>
+    </tr>
+<%
+    }
+%>
 
 <%@include "footer.csp"
 %><%

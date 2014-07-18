@@ -255,9 +255,6 @@ execute_func(
         addi_t = 0; addi_z = 0;
     }
 
-
-
-    (void) pp;
     return 0;
 }
 
