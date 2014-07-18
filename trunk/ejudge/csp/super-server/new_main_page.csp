@@ -79,7 +79,7 @@
 %></td>
         <td><%
         if (ci->user_enabled) {
-%><s:url name="ClientUrl" script="client" action="0"><s:param name="contest_id" value="ci->id" /></s:url><s:a url="ClientUrl" target="_blank"><s:tr>User</s:tr></s:a><%
+%><s:url name="ClientUrl" script="client" action="0" nosid="yes"><s:param name="contest_id" value="ci->id" /></s:url><s:a url="ClientUrl" target="_blank"><s:tr>User</s:tr></s:a><%
         } else {
 %>&nbsp;<%
         }
