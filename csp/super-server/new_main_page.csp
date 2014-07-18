@@ -44,21 +44,21 @@
 %></td>
         <td><%
         if (ci->edit_users_enabled) {
-%><s:tr>Users</s:tr><%
+%><s:url name="UsersUrl" ac="user-browse-page"><s:param name="contest_id" value="ci->id" /></s:url><s:a url="UsersUrl"><s:tr>Users</s:tr></s:a><%
         } else {
 %>&nbsp;<%
         }
 %></td>
         <td><%
         if (ci->edit_settings_enabled) {
-%><s:tr>Settings</s:tr><%
+%><s:url name="SettingsUrl" ac="edit-contest-xml"><s:param name="contest_id" value="ci->id" /></s:url><s:a url="SettingsUrl"><s:tr>Settings</s:tr></s:a><%
         } else {
 %>&nbsp;<%
         }
 %></td>
         <td><%
         if (ci->edit_tests_enabled) {
-%><s:tr>Tests</s:tr><%
+%><s:url name="TestsUrl" ac="edit-contest-xml"><s:param name="contest_id" value="ci->id" /></s:url><s:a url="TestsUrl"><s:tr>Tests</s:tr></s:a><%
         } else {
 %>&nbsp;<%
         }
