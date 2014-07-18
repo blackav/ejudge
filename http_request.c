@@ -206,6 +206,42 @@ hr_cgi_param_int_opt_2(
 }
 
 void
+hr_master_url(
+        FILE *out_f,
+        const struct http_request_info *phr)
+{
+  if (phr->rest_mode > 0) {
+    fprintf(out_f, "%s/master", phr->context_url);
+  } else if (phr->cnts && phr->cnts->register_url) {
+    fprintf(out_f, "%s", phr->cnts->register_url);
+  } else {
+#if defined CGI_PROG_SUFFIX
+    fprintf(out_f, "%s/new-master%s", phr->context_url, CGI_PROG_SUFFIX);
+#else
+    fprintf(out_f, "%s/new-master", phr->context_url);
+#endif
+  }
+}
+
+void
+hr_judge_url(
+        FILE *out_f,
+        const struct http_request_info *phr)
+{
+  if (phr->rest_mode > 0) {
+    fprintf(out_f, "%s/judge", phr->context_url);
+  } else if (phr->cnts && phr->cnts->register_url) {
+    fprintf(out_f, "%s", phr->cnts->register_url);
+  } else {
+#if defined CGI_PROG_SUFFIX
+    fprintf(out_f, "%s/new-judge%s", phr->context_url, CGI_PROG_SUFFIX);
+#else
+    fprintf(out_f, "%s/new-judge", phr->context_url);
+#endif
+  }
+}
+
+void
 hr_register_url(
         FILE *out_f,
         const struct http_request_info *phr)
@@ -218,7 +254,7 @@ hr_register_url(
 #if defined CGI_PROG_SUFFIX
     fprintf(out_f, "%s/new-register%s", phr->context_url, CGI_PROG_SUFFIX);
 #else
-    fprintf(out_f, "%s/new-register", phr->contest_url);
+    fprintf(out_f, "%s/new-register", phr->context_url);
 #endif
   }
 }
@@ -236,7 +272,7 @@ hr_client_url(
 #if defined CGI_PROG_SUFFIX
     fprintf(out_f, "%s/new-client%s", phr->context_url, CGI_PROG_SUFFIX);
 #else
-    fprintf(out_f, "%s/new-client", phr->contest_url);
+    fprintf(out_f, "%s/new-client", phr->context_url);
 #endif
   }
 }
