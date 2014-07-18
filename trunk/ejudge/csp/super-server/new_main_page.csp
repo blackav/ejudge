@@ -58,14 +58,14 @@
 %></td>
         <td><%
         if (ci->edit_tests_enabled) {
-%><s:url name="TestsUrl" ac="edit-contest-xml"><s:param name="contest_id" value="ci->id" /></s:url><s:a url="TestsUrl"><s:tr>Tests</s:tr></s:a><%
+%><s:url name="TestsUrl" ac="tests-main-page"><s:param name="contest_id" value="ci->id" /></s:url><s:a url="TestsUrl"><s:tr>Tests</s:tr></s:a><%
         } else {
 %>&nbsp;<%
         }
 %></td>
         <td><%
         if (ci->judge_enabled) {
-%><s:tr>Judge</s:tr><%
+%><s:url name="JudgeUrl" script="judge" action="3"><s:param name="contest_id" value="ci->id" /></s:url><s:a url="JudgeUrl"><s:tr>Judge</s:tr></s:a><%
         } else {
 %>&nbsp;<%
         }
