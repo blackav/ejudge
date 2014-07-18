@@ -65,21 +65,21 @@
 %></td>
         <td><%
         if (ci->judge_enabled) {
-%><s:url name="JudgeUrl" script="judge" action="3"><s:param name="contest_id" value="ci->id" /></s:url><s:a url="JudgeUrl"><s:tr>Judge</s:tr></s:a><%
+%><s:url name="JudgeUrl" script="judge" action="3"><s:param name="contest_id" value="ci->id" /></s:url><s:a url="JudgeUrl" target="_blank"><s:tr>Judge</s:tr></s:a><%
         } else {
 %>&nbsp;<%
         }
 %></td>
         <td><%
         if (ci->master_enabled) {
-%><s:tr>Master</s:tr><%
+%><s:url name="MasterUrl" script="master" action="3"><s:param name="contest_id" value="ci->id" /></s:url><s:a url="MasterUrl" target="_blank"><s:tr>Master</s:tr></s:a><%
         } else {
 %>&nbsp;<%
         }
 %></td>
         <td><%
         if (ci->user_enabled) {
-%><s:tr>User</s:tr><%
+%><s:url name="ClientUrl" script="client" action="0"><s:param name="contest_id" value="ci->id" /></s:url><s:a url="ClientUrl" target="_blank"><s:tr>User</s:tr></s:a><%
         } else {
 %>&nbsp;<%
         }
