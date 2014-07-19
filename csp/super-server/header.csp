@@ -7,11 +7,7 @@
     if (title) {
 %><s:v value="title" /><%
     } else {
-%>serve-control: <s:v checkexpr="" value="phr->login" />@<s:v value="phr->http_host" /><%
-        if (phr->contest_id > 0) {
-%>, <s:v value="phr->contest_id" /><%
-        }
-%><s:v checkexpr="" value="subtitle" /><%
+%>serve-control: <s:v checkexpr="" value="phr->login" />@<s:v value="phr->http_host" /><s:v sep=", " checkexpr=" > 0" value="phr->contest_id" /><s:v sep=", " checkexpr="" value="subtitle" /><%
     }
 %></title>
 </head>
@@ -20,10 +16,6 @@
     if (title) {
 %><s:v escape="false" value="title" /><%
     } else {
-%>serve-control: <s:v checkexpr="" value="phr->login" />@<s:v value="phr->http_host" /><%
-        if (phr->contest_id > 0) {
-%>, <s:v value="phr->contest_id" /><%
-        }
-%><s:v checkexpr="" value="subtitle" /><%
+%>serve-control: <s:v checkexpr="" value="phr->login" />@<s:v value="phr->http_host" /><s:v sep=", " checkexpr=" > 0" value="phr->contest_id" /><s:v sep=", " checkexpr="" value="subtitle" /><%
     }
 %></h1>
