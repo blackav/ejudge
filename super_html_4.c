@@ -6786,6 +6786,7 @@ static const unsigned char * const external_action_names[SSERV_CMD_LAST] =
 {
   [SSERV_CMD_BROWSE_PROBLEM_PACKAGES] = "problem_packages_page",
   [SSERV_CMD_NEW_MAIN_PAGE] = "new_main_page",
+  [SSERV_CMD_NEW_CONTEST_PAGE] = "contest_page",
 };
 
 static const unsigned char * const external_error_names[S_ERR_LAST] = 
@@ -6920,6 +6921,8 @@ super_html_http_request(
       }
     }
   }
+
+  hr_cgi_param_int_opt(phr, "contest_id", &phr->contest_id, 0);
 
   if (!r) {
     // try external actions

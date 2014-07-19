@@ -3483,6 +3483,11 @@ handle_v_open(
         fprintf(prg_f, "if ((%s) %s) {\n", at->value, check_attr->value);
     }
 
+    HtmlAttribute *sep_attr = html_element_find_attribute(elem, "sep");
+    if (sep_attr) {
+        fprintf(prg_f, "fputs(\"%s\", out_f);\n", sep_attr->value);
+    }
+
     TypeInfo *t = NULL;
 
     HtmlAttribute *type_attr = html_element_find_attribute(elem, "type");
