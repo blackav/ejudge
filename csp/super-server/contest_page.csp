@@ -21,7 +21,10 @@
 
 <table border="0">
     <tr><td><s:tr>Contest ID</s:tr>:</td><td><s:v value="cnts->id" /></td></tr>
-    <tr><td><s:tr>Name</s:tr>:</td><td><s:v value="cnts->name" /></td></tr>
+<% if (cnts->ext_id && *cnts->ext_id) { %>
+    <tr><td><s:tr>External ID</s:tr>:</td><td><s:v value="cnts->ext_id" /></td></tr>
+<% } %>
+    <tr><td><s:tr>Name</s:tr>:</td><td><s:v checkexpr="" value="cnts->name" /></td></tr>
 <% if (cnts->name_en && *cnts->name_en) { %>
     <tr><td><s:tr>Name (English)</s:tr>:</td><td><s:v value="cnts->name_en" /></td></tr>
 <% } %>
@@ -31,6 +34,13 @@
 <% if (cnts->keywords && *cnts->keywords) { %>
     <tr><td><s:tr>Keywords</s:tr>:</td><td><tt><s:v value="cnts->keywords" /></tt></td></tr>
 <% } %>
+<% if (cnts->root_dir && *cnts->root_dir) { %>
+    <tr><td><s:tr>Contest directory</s:tr>:</td><td><tt><s:v value="cnts->root_dir" /></tt></td></tr>
+<% } %>
+<% if (cnts->conf_dir && *cnts->conf_dir) { %>
+    <tr><td><s:tr>Contest configuration directory</s:tr>:</td><td><tt><s:v value="cnts->conf_dir" /></tt></td></tr>
+<% } %>
+
     <tr><th colspan="2" align="center"><s:tr>Contest Flags</s:tr></th></tr>
 <% if (cnts->autoregister) { %>
     <tr><td><s:tr>Registration mode</s:tr>:</td><td>Free registration</td></tr>
@@ -52,12 +62,12 @@
 <% if (cnts->closed) { %>
         <td><font color="red">Closed</font></td>
 <%   if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0) { %>
-        <td><s:submit ac="open-contest" label="Close" /></td>
+        <td><s:submit ac="open-contest" label="Open" /></td>
 <%   } %>
 <% } else { %>
         <td><font color="green">Open</font></td>
 <%   if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0) { %>
-        <td><s:submit ac="close-contest" label="Open" /></td>
+        <td><s:submit ac="close-contest" label="Close" /></td>
 <%   } %>
 <% } %>
     </tr>
@@ -184,33 +194,11 @@
     </tr>
 <% } %>
 
-<% if (cnts->users_header_file && *cnts->users_header_file) { %>
-    <tr>
-        <td>HTML header file for 'users' CGI-program:</td>
-        <td><tt><s:v value="cnts->users_header_file" /></tt></td>
-    </tr>
-<% } %>
-<% if (cnts->users_footer_file && *cnts->users_footer_file) { %>
-    <tr>
-        <td>HTML footer file for 'users' CGI-program:</td>
-        <td><tt><s:v value="cnts->users_footer_file" /></tt></td>
-    </tr>
-<% } %>
-
-<% if (cnts->register_header_file && *cnts->register_header_file) { %>
-    <tr>
-        <td>HTML header file for 'register' CGI-program:</td>
-        <td><tt><s:v value="cnts->register_header_file" /></tt></td>
-    </tr>
-<% } %>
-<% if (cnts->register_footer_file && *cnts->register_footer_file) { %>
-    <tr>
-        <td>HTML footer file for 'register' CGI-program:</td>
-        <td><tt><s:v value="cnts->register_footer_file" /></tt></td>
-    </tr>
-<% } %>
-
 <!--
+  unsigned char *users_header_file;
+  unsigned char *users_footer_file;
+  unsigned char *register_header_file;
+  unsigned char *register_footer_file;
   unsigned char *team_header_file;
   unsigned char *team_menu_1_file;
   unsigned char *team_menu_2_file;
@@ -240,6 +228,31 @@
         <td><tt><a href='<s:v value="cnts->team_url" />' target="_blank"><s:v value="cnts->team_url" /></a></td>
     </tr>
 <% } %>
+<% if (cnts->standings_url && *cnts->standings_url) { %>
+    <tr>
+        <td>URL for the current standings:</td>
+        <td><tt><a href='<s:v value="cnts->standings_url" />' target="_blank"><s:v value="cnts->standings_url" /></a></td>
+    </tr>
+<% } %>
+<% if (cnts->problems_url && *cnts->problems_url) { %>
+    <tr>
+        <td>URL for the problemset:</td>
+        <td><tt><a href='<s:v value="cnts->problems_url" />' target="_blank"><s:v value="cnts->problems_url" /></a></td>
+    </tr>
+<% } %>
+<% if (cnts->logo_url && *cnts->logo_url) { %>
+    <tr>
+        <td>URL for the contest logo:</td>
+        <td><tt><s:v value="cnts->logo_url" /></tt><img alt="logo" src='<s:v value="cnts->logo_url" />' /></td>
+    </tr>
+<% } %>
+<% if (cnts->css_url && *cnts->css_url) { %>
+    <tr>
+        <td>URL for the contest CSS:</td>
+        <td><tt><a href='<s:v value="cnts->css_url" />' target="_blank"><s:v value="cnts->css_url" /></a></td>
+    </tr>
+<% } %>
+
 <% if (cnts->login_template && *cnts->login_template) { %>
     <tr>
         <td>Auto-created logins template:</td>
@@ -254,17 +267,32 @@
 <% } %>
 
 <!--
-  unsigned char *root_dir;
-  unsigned char *conf_dir;
-  unsigned char *standings_url;
-  unsigned char *problems_url;
   unsigned char *serve_user;
   unsigned char *serve_group;
   unsigned char *run_user;
   unsigned char *run_group;
-  unsigned char *register_email_file;
-  unsigned char *register_subject;
-  unsigned char *register_subject_en;
+-->
+
+<% if (cnts->register_subject && *cnts->register_subject) { %>
+    <tr>
+        <td>Registration letter subject:</td>
+        <td><tt><s:v value="cnts->register_subject" /></tt></td>
+    </tr>
+<% } %>
+<% if (cnts->register_subject_en && *cnts->register_subject_en) { %>
+    <tr>
+        <td>Registration letter subject (en):</td>
+        <td><tt><s:v value="cnts->register_subject_en" /></tt></td>
+    </tr>
+<% } %>
+<% if (cnts->register_email_file && *cnts->register_email_file) { %>
+    <tr>
+        <td>Registration letter template file:</td>
+        <td><tt><s:v value="cnts->register_email_file" /></tt></td>
+    </tr>
+<% } %>
+
+<!--
   unsigned char *users_head_style;
   unsigned char *users_par_style;
   unsigned char *users_table_style;
@@ -278,25 +306,76 @@
   unsigned char *register_table_style;
   unsigned char *team_head_style;
   unsigned char *team_par_style;
-  unsigned char *cf_notify_email;
-  unsigned char *clar_notify_email;
-  unsigned char *daily_stat_email;
+-->
 
+<% if (cnts->cf_notify_email && *cnts->cf_notify_email) { %>
+    <tr>
+        <td>Check failed e-mail notification address:</td>
+        <td><a href='mailto:<s:v value="cnts->cf_notify_email" />'><tt><s:v value="cnts->cf_notify_email" /></tt></a></td>
+    </tr>
+<% } %>
+<% if (cnts->clar_notify_email && *cnts->clar_notify_email) { %>
+    <tr>
+        <td>Clar request e-mail notification address:</td>
+        <td><a href='mailto:<s:v value="cnts->clar_notify_email" />'><tt><s:v value="cnts->clar_notify_email" /></tt></a></td>
+    </tr>
+<% } %>
+<% if (cnts->daily_stat_email && *cnts->daily_stat_email) { %>
+    <tr>
+        <td>Daily statistics email:</td>
+        <td><a href='mailto:<s:v value="cnts->daily_stat_email" />'><tt><s:v value="cnts->daily_stat_email" /></tt></a></td>
+    </tr>
+<% } %>
+
+<!--
   unsigned char *user_name_comment;
   unsigned char *allowed_languages;
   unsigned char *allowed_regions;
-  unsigned char *user_contest;
+-->
 
-  unsigned char *dir_mode;
-  unsigned char *dir_group;
-  unsigned char *file_mode;
-  unsigned char *file_group;
-  unsigned char *default_locale;
+<% if (cnts->user_contest && *cnts->user_contest) { %>
+    <tr>
+        <td>Contest to share users with:</td>
+        <td><tt><s:v value="cnts->user_contest" /></tt></td>
+    </tr>
+<% } %>
+<% if (cnts->default_locale && *cnts->default_locale) { %>
+    <tr>
+        <td>Default locale:</td>
+        <td><tt><s:v value="cnts->default_locale" /></tt></td>
+    </tr>
+<% } %>
+
+<% if (cnts->dir_mode && *cnts->dir_mode) { %>
+    <tr>
+        <td>The directory permissions (octal):</td>
+        <td><tt><s:v value="cnts->dir_mode" /></tt></td>
+    </tr>
+<% } %>
+<% if (cnts->dir_group && *cnts->dir_group) { %>
+    <tr>
+        <td>The directory group:</td>
+        <td><tt><s:v value="cnts->dir_group" /></tt></td>
+    </tr>
+<% } %>
+<% if (cnts->file_mode && *cnts->file_mode) { %>
+    <tr>
+        <td>The file permissions (octal):</td>
+        <td><tt><s:v value="cnts->file_mode" /></tt></td>
+    </tr>
+<% } %>
+<% if (cnts->file_group && *cnts->file_group) { %>
+    <tr>
+        <td>The file group:</td>
+        <td><tt><s:v value="cnts->file_group" /></tt></td>
+    </tr>
+<% } %>
+
+<!--
   unsigned char *welcome_file;
   unsigned char *reg_welcome_file;
-  unsigned char *logo_url;
-  unsigned char *css_url;
-  unsigned char *ext_id;
+-->
+<!--
   unsigned char *problem_count;
 -->
 
