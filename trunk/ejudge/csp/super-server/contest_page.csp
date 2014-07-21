@@ -26,7 +26,7 @@
 </s:url>
         <td>[<s:a ac="new-main-page">Main page</s:a>]</td>
         <td>[<s:a url="ContestPageUrl">Refresh</s:a>]</td>
-        <td>[<s:a ac="logout"]Logout</s:a>]</td>
+        <td>[<s:a ac="logout">Logout</s:a>]</td>
     </tr>
 </table>
 
@@ -622,6 +622,7 @@
     <tr>
         <td>Tests:</td>
         <td><tt><s:v value="cnts->root_dir" />/*</tt></td>
+        <td>
 <% if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0) { %>
 <s:url name="EditTestsUrl" ac="tests-main-page">
     <s:param name="contest_id" value="phr->contest_id" />
@@ -636,6 +637,7 @@
                 <s:submit ac="check-tests" label="Check contest settings" />
             </s:form>
 <% } %>
+         </td>
     </tr>
 </table>
 
@@ -646,7 +648,7 @@
 </s:url>
         <td>[<s:a ac="new-main-page">Main page</s:a>]</td>
         <td>[<s:a url="ContestPageUrl">Refresh</s:a>]</td>
-        <td>[<s:a ac="logout"]Logout</s:a>]</td>
+        <td>[<s:a ac="logout">Logout</s:a>]</td>
     </tr>
 </table>
 
