@@ -19,6 +19,17 @@
 %><%@include "header.csp"
 %>
 
+<table border="0">
+    <tr>
+<s:url name="ContestPageUrl" ac="new-contest-page">
+    <s:param name="contest_id" value="phr->contest_id" />
+</s:url>
+        <td>[<s:a ac="new-main-page">Main page</s:a>]</td>
+        <td>[<s:a url="ContestPageUrl">Refresh</s:a>]</td>
+        <td>[<s:a ac="logout"]Logout</s:a>]</td>
+    </tr>
+</table>
+
 <h2>Detailed information about contest <s:v value="phr->contest_id" /></h2>
 
 <table border="0">
@@ -579,133 +590,65 @@
     <s:param name="contest_id" value="phr->contest_id" />
 </s:url>
             [<s:a url="EditContestXmlUrl">Edit</s:a>]
+<s:url name="NewEditContestXmlUrl" ac="edit-contest-page">
+    <s:param name="contest_id" value="phr->contest_id" />
+</s:url>
+            [<s:a url="NewEditContestXmlUrl">New edit (experimental)</s:a>]
 <% } %>
         </td>
     </tr>
+    <tr>
+        <td>Testing settings:</td>
+        <td><tt><s:v value="cnts->conf_dir" />/serve.cfg</tt></td>
+        <td>
+<% if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0) { %>
+<s:url name="ViewServeCfgUrl" ac="view-serve-cfg">
+    <s:param name="contest_id" value="phr->contest_id" />
+</s:url>
+            [<s:a url="ViewServeCfgUrl">View</s:a>]
+<% } %>
+<% if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0) { %>
+<s:url name="EditServeCfgUrl" ac="edit-contest-xml">
+    <s:param name="contest_id" value="phr->contest_id" />
+</s:url>
+            [<s:a url="EditServeCfgUrl">Edit</s:a>]
+<s:url name="NewEditContestXmlUrl" ac="edit-contest-page">
+    <s:param name="contest_id" value="phr->contest_id" />
+</s:url>
+            [<s:a url="NewEditContestXmlUrl">New edit (experimental)</s:a>]
+<% } %>
+        </td>
+    </tr>
+    <tr>
+        <td>Tests:</td>
+        <td><tt><s:v value="cnts->root_dir" />/*</tt></td>
+<% if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0) { %>
+<s:url name="EditTestsUrl" ac="tests-main-page">
+    <s:param name="contest_id" value="phr->contest_id" />
+</s:url>
+<s:url name="UpdateFromPolygonUrl" ac="update-from-polygon-page">
+    <s:param name="contest_id" value="phr->contest_id" />
+</s:url>
+            [<s:a url="EditTestsUrl">Edit</s:a>]
+            [<s:a url="UpdateFromPolygonUrl">Update from Polygon</s:a>]
+            <s:form>
+                <s:hidden name="contest_id" value="phr->contest_id" />
+                <s:submit ac="check-tests" label="Check contest settings" />
+            </s:form>
+<% } %>
+    </tr>
+</table>
 
-  fprintf(f, "<tr><td>XML configuration file:</td><td>&nbsp;</td>");
-  fprintf(f, "<td>");
-  refcount = 0;
-  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0) {
-    fprintf(f, "%sView</a>",
-            html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
-                          "contest_id=%d&action=%d", contest_id,
-                          SSERV_CMD_VIEW_CONTEST_XML));
-    refcount++;
-  }
-  // FIXME: check editing permissions
-  if (1 >= 0)
-  {
-    if (refcount) fprintf(f, "&nbsp;");
-    fprintf(f, "%sEdit</a>",
-            html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
-                          "contest_id=%d&action=%d", contest_id,
-                          SSERV_CMD_EDIT_CONTEST_XML));
-    refcount++;
-    fprintf(f, "&nbsp;%sNew edit (experimental)</a>",
-            html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
-                          "contest_id=%d&action=%d&op=%d",
-                          contest_id, SSERV_CMD_HTTP_REQUEST,
-                          SSERV_CMD_EDIT_CONTEST_PAGE));
-  }
-  if (!refcount) fprintf(f, "&nbsp;");
-  fprintf(f, "</td>");
-  fprintf(f, "</tr>\n");
-
-  fprintf(f, "<tr><td>Serve configuration file:</td><td>&nbsp;</td>");
-  fprintf(f, "<td>");
-  refcount = 0;
-  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0) {
-    fprintf(f, "%sView</a>",
-            html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
-                          "contest_id=%d&action=%d", contest_id,
-                          SSERV_CMD_VIEW_SERVE_CFG));
-    refcount++;
-  }
-  // FIXME: check editing permissions
-  if (1 >= 0)
-  {
-    if (refcount) fprintf(f, "&nbsp;");
-    fprintf(f, "%sEdit</a>",
-            html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
-                          "contest_id=%d&action=%d", contest_id,
-                          SSERV_CMD_EDIT_CONTEST_XML));
-    refcount++;
-    fprintf(f, "&nbsp;%sNew edit (experimental)</a>",
-            html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
-                          "contest_id=%d&action=%d&op=%d",
-                          contest_id, SSERV_CMD_HTTP_REQUEST,
-                          SSERV_CMD_EDIT_CONTEST_PAGE));
-  }
-  if (!refcount) fprintf(f, "&nbsp;");
-  fprintf(f, "</td>");
-  fprintf(f, "</tr>\n");
-
-  fprintf(f, "<tr>");
-  fprintf(f, "<td>Edit tests:</td><td>&nbsp;</td>");
-  fprintf(f, "<td>%sEdit</a></td>",
-          html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
-                        "contest_id=%d&action=%d&op=%d",
-                        contest_id, SSERV_CMD_HTTP_REQUEST,
-                        SSERV_CMD_TESTS_MAIN_PAGE));
-  fprintf(f, "</tr>\n");
-
-  fprintf(f, "</table>\n");
-
-  fprintf(f, "<p>");
-  fprintf(f, "<td>[%sUpdate problems from Polygon</a>]</td>",
-          html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
-                        "contest_id=%d&action=%d&op=%d",
-                        contest_id, SSERV_CMD_HTTP_REQUEST,
-                        SSERV_CMD_UPDATE_FROM_POLYGON_PAGE));
-  fprintf(f, "</p>\n");
-
-  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0) {
-    if (cnts && !cnts->run_managed) {
-      fprintf(f, "<p>");
-      html_start_form(f, 1, self_url, new_hidden_vars);
-      html_submit_button(f, SSERV_CMD_CONTEST_RESTART, "Restart management");
-      fprintf(f, "</form></p>\n");
-    }
-
-    fprintf(f, "<p>");
-    html_start_form(f, 1, self_url, new_hidden_vars);
-    html_submit_button(f, SSERV_CMD_CHECK_TESTS, "Check contest settings");
-    fprintf(f, "</form></p>\n");
-  }
-
-  fprintf(f, "<table border=\"0\"><tr>");
-  fprintf(f, "<td>%sBack</a></td>",
-          html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, 0));
-  fprintf(f, "<td>%sRefresh</a></td>",
-          html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
-                        "contest_id=%d&action=%d", contest_id,
-                        SSERV_CMD_CONTEST_PAGE));
-  fprintf(f, "<td>%sLogout</a></td>",
-          html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
-                        "action=%d", SSERV_CMD_LOGOUT));
-  fprintf(f, "</tr></table>");
-
-  if (extra && extra->messages) {
-    fprintf(f, "<hr><h3>Start-up messages</h3>\n");
-    if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0) {
-      fprintf(f, "<p>");
-      html_submit_button(f, SSERV_CMD_CLEAR_MESSAGES, "Clear");
-    }
-    html_log = html_armor_string_dupa(extra->messages);
-    fprintf(f, "<p><pre>%s</pre>\n", html_log);
-  }
--->
-
-
-
-
-
-
-
-
-
-
+<table border="0">
+    <tr>
+<s:url name="ContestPageUrl" ac="new-contest-page">
+    <s:param name="contest_id" value="phr->contest_id" />
+</s:url>
+        <td>[<s:a ac="new-main-page">Main page</s:a>]</td>
+        <td>[<s:a url="ContestPageUrl">Refresh</s:a>]</td>
+        <td>[<s:a ac="logout"]Logout</s:a>]</td>
+    </tr>
+</table>
 
 <%@include "footer.csp"
 %><%
