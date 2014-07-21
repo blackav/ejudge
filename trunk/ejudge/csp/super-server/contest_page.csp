@@ -379,56 +379,40 @@
   unsigned char *problem_count;
 -->
 
+</table>
 
-
-
-
-
-
-
+<table border="0">
+    <tr>
+<% if (opcaps_check(caps, OPCAP_LIST_USERS) >= 0) { %>
+<s:url name="ViewUsersUrl" ac="user-browse-page">
+    <s:param name="contest_id" value="phr->contest_id" />
+</s:url>
+        <td>[<s:a url="ViewUsersUrl">View/edit users</s:a>]</td>
+<% } %>
+<% if (opcaps_check(caps, OPCAP_JUDGE_LOGIN) >= 0 && contests_check_judge_ip_2(cnts, &phr->ip, phr->ssl_flag) && cnts->managed) { %>
+<s:url name="JudgeUrl" script="judge" action="3">
+    <s:param name="contest_id" value="phr->contest_id" />
+</s:url>
+        <td>[<s:a url="JudgeUrl" target="_blank"><s:tr>Judge</s:tr></s:a>]</td>
+<% } %>
+<% if (opcaps_check(caps, OPCAP_MASTER_LOGIN) >= 0 && contests_check_master_ip_2(cnts, &phr->ip, phr->ssl_flag) && cnts->managed) { %>
+<s:url name="MasterUrl" script="master" action="3">
+    <s:param name="contest_id" value="phr->contest_id" />
+</s:url>
+        <td>[<s:a url="MasterUrl" target="_blank"><s:tr>Administrator</s:tr></s:a>]</td>
+<% } %>
+<% if (contests_check_team_ip_2(cnts, &phr->ip, phr->ssl_flag) && cnts->managed) { %>
+<s:url name="ClientUrl" script="client" action="0">
+    <s:param name="contest_id" value="phr->contest_id" />
+</s:url>
+        <td>[<s:a url="ClientUrl" target="_blank"><s:tr>Participant</s:tr></s:a>]</td>
+<% } %>
+    </tr>
 </table>
 
 
 
-
 <!--
-  fprintf(f, "<tr><td>View/edit users</td><td>%sUsers</a></td></tr>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d&op=%d&contest_id=%d", SSERV_CMD_HTTP_REQUEST, SSERV_CMD_USER_BROWSE_PAGE, contest_id));
-
-  // report judge URL
-  if (opcaps_check(caps, OPCAP_JUDGE_LOGIN) >= 0 && judge_url[0]
-      && contests_check_judge_ip_2(cnts, ip_address, ssl)) {
-    if (cnts->managed) {
-      fprintf(f, "<tr><td>Judge CGI program</td><td><a href=\"%s?SID=%016llx&contest_id=%d&action=3\" target=\"_blank\">Judge</a></td></tr>\n",
-              new_judge_url, session_id, contest_id);
-    } else {
-      fprintf(f, "<tr><td>Judge CGI program</td><td><a href=\"%s?SID=%016llx&contest_id=%d\" target=\"_blank\">Judge</a></td></tr>\n",
-              judge_url, session_id, contest_id);
-    }
-  }
-
-  // report master URL
-  if (opcaps_check(caps, OPCAP_MASTER_LOGIN) >= 0 && master_url[0]
-      && contests_check_master_ip_2(cnts, ip_address, ssl)) {
-    if (cnts->managed) {
-      fprintf(f, "<tr><td>Master CGI program</td><td><a href=\"%s?SID=%016llx&contest_id=%d&action=3\" target=\"_blank\">Master</a></td></tr>\n",
-              new_master_url, session_id, contest_id);
-    } else {
-      fprintf(f, "<tr><td>Master CGI program</td><td><a href=\"%s?SID=%016llx&contest_id=%d\" target=\"_blank\">Master</a></td></tr>\n",
-              master_url, session_id, contest_id);
-    }
-  }
-
-  // report user URL
-  if (client_url[0] && contests_check_team_ip_2(cnts, ip_address, ssl)) {
-    if (cnts->managed) {
-      fprintf(f, "<tr><td>Client CGI program</td><td><a href=\"%s?contest_id=%d\" target=\"_blank\">Client</a></td></tr>\n",
-              new_client_url, contest_id);
-    } else {
-      fprintf(f, "<tr><td>Client CGI program</td><td><a href=\"%s?contest_id=%d\" target=\"_blank\">Client</a></td></tr>\n",
-              client_url, contest_id);
-    }
-  }
-
 
   // report run status
   mng_status = get_run_management_status(cnts, extra);
