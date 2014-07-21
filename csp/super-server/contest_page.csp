@@ -9,11 +9,13 @@
     const unsigned char *title = 0;
     const unsigned char *subtitle = "contest details";
     opcap_t caps = 0;
+    unsigned char xml_path[PATH_MAX];
 
     if (contests_get(phr->contest_id, &cnts) < 0 || !cnts) FAIL(SSERV_ERR_INVALID_CONTEST);
     if (opcaps_find(&cnts->capabilities, phr->login, &caps) < 0) FAIL(SSERV_ERR_PERMISSION_DENIED);
     if (opcaps_check(caps, OPCAP_MASTER_LOGIN) < 0 && opcaps_check(caps, OPCAP_JUDGE_LOGIN) < 0) FAIL(SSERV_ERR_PERMISSION_DENIED);
     if (!contests_check_serve_control_ip_2(cnts, &phr->ip, phr->ssl_flag)) FAIL(SSERV_ERR_BANNED_IP);
+    contests_make_path(xml_path, sizeof(xml_path), phr->contest_id);
 %><%@include "header.csp"
 %>
 
@@ -402,7 +404,7 @@
         <td>[<s:a url="MasterUrl" target="_blank"><s:tr>Administrator</s:tr></s:a>]</td>
 <% } %>
 <% if (contests_check_team_ip_2(cnts, &phr->ip, phr->ssl_flag) && cnts->managed) { %>
-<s:url name="ClientUrl" script="client" action="0">
+<s:url name="ClientUrl" script="client" action="0" nosid="yes">
     <s:param name="contest_id" value="phr->contest_id" />
 </s:url>
         <td>[<s:a url="ClientUrl" target="_blank"><s:tr>Participant</s:tr></s:a>]</td>
@@ -557,6 +559,29 @@
     fprintf(f, "</td>");
   }
   fprintf(f, "</tr>\n");
+-->
+
+<h2>Configuration files</h2>
+
+<table border="0">
+    <tr>
+        <td>General contest settings:</td>
+        <td><tt><s:v value="xml_path" /></tt></td>
+        <td>
+<% if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0) { %>
+<s:url name="ViewContestXmlUrl" ac="view-contest-xml">
+    <s:param name="contest_id" value="phr->contest_id" />
+</s:url>
+            [<s:a url="ViewContestXmlUrl">View</s:a>]
+<% } %>
+<% if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0) { %>
+<s:url name="EditContestXmlUrl" ac="edit-contest-xml">
+    <s:param name="contest_id" value="phr->contest_id" />
+</s:url>
+            [<s:a url="EditContestXmlUrl">Edit</s:a>]
+<% } %>
+        </td>
+    </tr>
 
   fprintf(f, "<tr><td>XML configuration file:</td><td>&nbsp;</td>");
   fprintf(f, "<td>");
