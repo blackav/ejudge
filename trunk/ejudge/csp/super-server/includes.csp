@@ -8,6 +8,8 @@
 #include "ejudge/super_proto.h"
 #include "ejudge/super_html.h"
 #include "ejudge/super-serve.h"
+#include "ejudge/contests.h"
+#include "ejudge/xml_utils.h"
 
 #include "reuse/xalloc.h"
 
