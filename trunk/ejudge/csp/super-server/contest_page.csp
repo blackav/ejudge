@@ -228,12 +228,32 @@
         <td><tt><s:v value="cnts->register_email" /></td>
     </tr>
 <% } %>
+<% if (cnts->register_url && *cnts->register_url) { %>
+    <tr>
+        <td>URL to complete registration:</td>
+        <td><tt><a href='<s:v value="cnts->register_url" />' target="_blank"><s:v value="cnts->register_url" /></a></td>
+    </tr>
+<% } %>
+<% if (cnts->team_url && *cnts->team_url) { %>
+    <tr>
+        <td>URL for the 'team' ('client') CGI program:</td>
+        <td><tt><a href='<s:v value="cnts->team_url" />' target="_blank"><s:v value="cnts->team_url" /></a></td>
+    </tr>
+<% } %>
+<% if (cnts->login_template && *cnts->login_template) { %>
+    <tr>
+        <td>Auto-created logins template:</td>
+        <td><tt><s:v value="cnts->login_template" /></tt></td>
+    </tr>
+<% } %>
+<% if (cnts->login_template_options && *cnts->login_template_options) { %>
+    <tr>
+        <td>Auto-created logins options:</td>
+        <td><tt><s:v value="cnts->login_template_options" /></tt></td>
+    </tr>
+<% } %>
 
 <!--
-  unsigned char *register_url;
-  unsigned char *team_url;
-  unsigned char *login_template;
-  unsigned char *login_template_options;
   unsigned char *root_dir;
   unsigned char *conf_dir;
   unsigned char *standings_url;
