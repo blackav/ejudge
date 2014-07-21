@@ -8,12 +8,600 @@
 %><%
     const unsigned char *title = 0;
     const unsigned char *subtitle = "contest details";
+    opcap_t caps = 0;
+
+    if (contests_get(phr->contest_id, &cnts) < 0 || !cnts) FAIL(SSERV_ERR_INVALID_CONTEST);
+    if (opcaps_find(&cnts->capabilities, phr->login, &caps) < 0) FAIL(SSERV_ERR_PERMISSION_DENIED);
+    if (opcaps_check(caps, OPCAP_MASTER_LOGIN) < 0 && opcaps_check(caps, OPCAP_JUDGE_LOGIN) < 0) FAIL(SSERV_ERR_PERMISSION_DENIED);
+    if (!contests_check_serve_control_ip_2(cnts, &phr->ip, phr->ssl_flag)) FAIL(SSERV_ERR_BANNED_IP);
 %><%@include "header.csp"
 %>
+
+<h2>Detailed information about contest <s:v value="phr->contest_id" /></h2>
+
+<table border="0">
+    <tr><td><s:tr>Contest ID</s:tr>:</td><td><s:v value="cnts->id" /></td></tr>
+    <tr><td><s:tr>Name</s:tr>:</td><td><s:v value="cnts->name" /></td></tr>
+<% if (cnts->name_en && *cnts->name_en) { %>
+    <tr><td><s:tr>Name (English)</s:tr>:</td><td><s:v value="cnts->name_en" /></td></tr>
+<% } %>
+<% if (cnts->main_url && *cnts->main_url) { %>
+    <tr><td><s:tr>Main URL</s:tr>:</td><td><tt><a href='<s:v escape="false" value="cnts->main_url" />' target="_blank"><s:v escape="false" value="cnts->main_url" /></a></tt></td></tr>
+<% } %>
+<% if (cnts->keywords && *cnts->keywords) { %>
+    <tr><td><s:tr>Keywords</s:tr>:</td><td><tt><s:v value="cnts->keywords" /></tt></td></tr>
+<% } %>
+    <tr><th colspan="2" align="center"><s:tr>Contest Flags</s:tr></th></tr>
+<% if (cnts->autoregister) { %>
+    <tr><td><s:tr>Registration mode</s:tr>:</td><td>Free registration</td></tr>
+<% } %>
+<% if (cnts->disable_team_password) { %>
+    <tr><td><s:tr>Disable separate team password</s:tr>?</td><td><s:vb value="cnts->disable_team_password" /></td></tr>
+<% } %>
+<% if (!cnts->managed) { %>
+    <tr><td><s:tr>Contest management</s:tr>:</td><td><font color="red">Disabled</font></td></tr>
+<% } %>
+<% if (!cnts->run_managed && cnts->old_run_managed) { %>
+    <tr><td><s:tr>Submit testing mode</s:tr>:</td><td><font color="yellow">Legacy mode (super-serve/ej-run)</font></td></tr>
+<% } else if (!cnts->run_managed && !cnts->old_run_managed) { %>
+    <tr><td><s:tr>Submit testing mode</s:tr>:</td><td><font color="red">Unmanaged</font></td></tr>
+<% } %>
+<!--  ejbytebool_t clean_users; -->
+    <tr>
+        <td><s:tr>Open for participation</s:tr>?</td>
+<% if (cnts->closed) { %>
+        <td><font color="red">Closed</font></td>
+<%   if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0) { %>
+        <td><s:submit ac="open-contest" label="Close" /></td>
+<%   } %>
+<% } else { %>
+        <td><font color="green">Open</font></td>
+<%   if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0) { %>
+        <td><s:submit ac="close-contest" label="Open" /></td>
+<%   } %>
+<% } %>
+    </tr>
+    <tr>
+        <td>Visible for <tt>serve-control</tt>?</td>
+<% if (cnts->invisible) { %>
+        <td><font color="yellow">Invisible</font></td>
+<%   if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0) { %>
+        <td><s:submit ac="visible-contest" label="Make visible" /></td>
+<%   } %>
+<% } else { %>
+        <td><font color="green">Visible</font></td>
+<%   if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0) { %>
+        <td><s:submit ac="invisible-contest" label="Make invisible" /></td>
+<%   } %>
+<% } %>
+    </tr>
+<% if (cnts->personal) { %>
+    <tr>
+        <td><s:tr>The contest is personal</s:tr>?</td>
+        <td><s:vb value="cnts->personal" /></td>
+    </tr>
+<% } %>
+<% if (cnts->simple_registration) { %>
+    <tr>
+        <td><s:tr>Enable simple registration (no email)</s:tr>?</td>
+        <td><s:vb value="cnts->simple_registration" /></td>
+    </tr>
+<% } %>
+<% if (cnts->send_passwd_email) { %>
+    <tr>
+        <td><s:tr>Send e-mail with password anyway</s:tr>?</td>
+        <td><s:vb value="cnts->send_passwd_email" /></td>
+    </tr>
+<% } %>
+<% if (cnts->assign_logins) { %>
+    <tr>
+        <td><s:tr>Auto-assign logins</s:tr>?</td>
+        <td><s:vb value="cnts->assign_logins" /></td>
+    </tr>
+<% } %>
+<% if (cnts->force_registration) { %>
+    <tr>
+        <td><s:tr>Force contest registration</s:tr>?</td>
+        <td><s:vb value="cnts->force_registration" /></td>
+    </tr>
+<% } %>
+<% if (cnts->disable_name) { %>
+    <tr>
+        <td><s:tr>Disable &quot;Name&quot; field</s:tr>?</td>
+        <td><s:vb value="cnts->disable_name" /></td>
+    </tr>
+<% } %>
+<% if (cnts->enable_password_recovery) { %>
+    <tr>
+        <td><s:tr>Enable password restoration</s:tr>?</td>
+        <td><s:vb value="cnts->enable_password_recovery" /></td>
+    </tr>
+<% } %>
+<% if (cnts->exam_mode) { %>
+    <tr>
+        <td><s:tr>Examination mode</s:tr>?</td>
+        <td><s:vb value="cnts->exam_mode" /></td>
+    </tr>
+<% } %>
+<% if (cnts->disable_password_change) { %>
+    <tr>
+        <td><s:tr>Disable password change</s:tr>?</td>
+        <td><s:vb value="cnts->disable_password_change" /></td>
+    </tr>
+<% } %>
+<% if (cnts->disable_locale_change) { %>
+    <tr>
+        <td><s:tr>Disable locale change</s:tr>?</td>
+        <td><s:vb value="cnts->disable_locale_change" /></td>
+    </tr>
+<% } %>
+<% if (cnts->allow_reg_data_edit) { %>
+    <tr>
+        <td><s:tr>Allow edit registration data during contest</s:tr>?</td>
+        <td><s:vb value="cnts->allow_reg_data_edit" /></td>
+    </tr>
+<% } %>
+<% if (cnts->disable_member_delete) { %>
+    <tr>
+        <td><s:tr>Disable team member deletion</s:tr>?</td>
+        <td><s:vb value="cnts->disable_member_delete" /></td>
+    </tr>
+<% } %>
+<% if (cnts->ready) { %>
+    <tr>
+        <td><s:tr>Contest is ready for testing</s:tr>?</td>
+        <td><s:vb value="cnts->ready" /></td>
+    </tr>
+<% } %>
+<% if (cnts->reg_deadline > 0) { %>
+    <tr>
+        <td><s:tr>Registration deadline</s:tr>:</td>
+        <td><s:v value="cnts->reg_deadline" /></td>
+    </tr>
+<% } %>
+<% if (cnts->sched_time > 0) { %>
+    <tr>
+        <td><s:tr>Contest start date</s:tr>:</td>
+        <td><s:v value="cnts->sched_time" /></td>
+    </tr>
+<% } %>
+<% if (cnts->open_time > 0) { %>
+    <tr>
+        <td><s:tr>Virtual contest open date</s:tr>:</td>
+        <td><s:v value="cnts->open_time" /></td>
+    </tr>
+<% } %>
+<% if (cnts->close_time > 0) { %>
+    <tr>
+        <td><s:tr>Virtual contest close date</s:tr>:</td>
+        <td><s:v value="cnts->close_time" /></td>
+    </tr>
+<% } %>
+<% if (cnts->update_time > 0) { %>
+    <tr>
+        <td><s:tr>Contest update time</s:tr>:</td>
+        <td><s:v value="cnts->update_time" /></td>
+    </tr>
+<% } %>
+
+<% if (cnts->users_header_file && *cnts->users_header_file) { %>
+    <tr>
+        <td>HTML header file for 'users' CGI-program:</td>
+        <td><tt><s:v value="cnts->users_header_file" /></tt></td>
+    </tr>
+<% } %>
+<% if (cnts->users_footer_file && *cnts->users_footer_file) { %>
+    <tr>
+        <td>HTML footer file for 'users' CGI-program:</td>
+        <td><tt><s:v value="cnts->users_footer_file" /></tt></td>
+    </tr>
+<% } %>
+
+<% if (cnts->register_header_file && *cnts->register_header_file) { %>
+    <tr>
+        <td>HTML header file for 'register' CGI-program:</td>
+        <td><tt><s:v value="cnts->register_header_file" /></tt></td>
+    </tr>
+<% } %>
+<% if (cnts->register_footer_file && *cnts->register_footer_file) { %>
+    <tr>
+        <td>HTML footer file for 'register' CGI-program:</td>
+        <td><tt><s:v value="cnts->register_footer_file" /></tt></td>
+    </tr>
+<% } %>
+
+<!--
+  unsigned char *team_header_file;
+  unsigned char *team_menu_1_file;
+  unsigned char *team_menu_2_file;
+  unsigned char *team_menu_3_file;
+  unsigned char *team_separator_file;
+  unsigned char *team_footer_file;
+  unsigned char *priv_header_file;
+  unsigned char *priv_footer_file;
+  unsigned char *copyright_file;
+-->
+
+<% if (cnts->register_email && *cnts->register_email) { %>
+    <tr>
+        <td>Registration email sender (From: field):</td>
+        <td><tt><s:v value="cnts->register_email" /></td>
+    </tr>
+<% } %>
+
+<!--
+  unsigned char *register_url;
+  unsigned char *team_url;
+  unsigned char *login_template;
+  unsigned char *login_template_options;
+  unsigned char *root_dir;
+  unsigned char *conf_dir;
+  unsigned char *standings_url;
+  unsigned char *problems_url;
+  unsigned char *serve_user;
+  unsigned char *serve_group;
+  unsigned char *run_user;
+  unsigned char *run_group;
+  unsigned char *register_email_file;
+  unsigned char *register_subject;
+  unsigned char *register_subject_en;
+  unsigned char *users_head_style;
+  unsigned char *users_par_style;
+  unsigned char *users_table_style;
+  unsigned char *users_verb_style;
+  unsigned char *users_table_format;
+  unsigned char *users_table_format_en;
+  unsigned char *users_table_legend;
+  unsigned char *users_table_legend_en;
+  unsigned char *register_head_style;
+  unsigned char *register_par_style;
+  unsigned char *register_table_style;
+  unsigned char *team_head_style;
+  unsigned char *team_par_style;
+  unsigned char *cf_notify_email;
+  unsigned char *clar_notify_email;
+  unsigned char *daily_stat_email;
+
+  unsigned char *user_name_comment;
+  unsigned char *allowed_languages;
+  unsigned char *allowed_regions;
+  unsigned char *user_contest;
+
+  unsigned char *dir_mode;
+  unsigned char *dir_group;
+  unsigned char *file_mode;
+  unsigned char *file_group;
+  unsigned char *default_locale;
+  unsigned char *welcome_file;
+  unsigned char *reg_welcome_file;
+  unsigned char *logo_url;
+  unsigned char *css_url;
+  unsigned char *ext_id;
+  unsigned char *problem_count;
+-->
+
+
+
+
+
+
+
+
+</table>
+
+
+
+
+<!--
+  fprintf(f, "<tr><td>View/edit users</td><td>%sUsers</a></td></tr>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d&op=%d&contest_id=%d", SSERV_CMD_HTTP_REQUEST, SSERV_CMD_USER_BROWSE_PAGE, contest_id));
+
+  // report judge URL
+  if (opcaps_check(caps, OPCAP_JUDGE_LOGIN) >= 0 && judge_url[0]
+      && contests_check_judge_ip_2(cnts, ip_address, ssl)) {
+    if (cnts->managed) {
+      fprintf(f, "<tr><td>Judge CGI program</td><td><a href=\"%s?SID=%016llx&contest_id=%d&action=3\" target=\"_blank\">Judge</a></td></tr>\n",
+              new_judge_url, session_id, contest_id);
+    } else {
+      fprintf(f, "<tr><td>Judge CGI program</td><td><a href=\"%s?SID=%016llx&contest_id=%d\" target=\"_blank\">Judge</a></td></tr>\n",
+              judge_url, session_id, contest_id);
+    }
+  }
+
+  // report master URL
+  if (opcaps_check(caps, OPCAP_MASTER_LOGIN) >= 0 && master_url[0]
+      && contests_check_master_ip_2(cnts, ip_address, ssl)) {
+    if (cnts->managed) {
+      fprintf(f, "<tr><td>Master CGI program</td><td><a href=\"%s?SID=%016llx&contest_id=%d&action=3\" target=\"_blank\">Master</a></td></tr>\n",
+              new_master_url, session_id, contest_id);
+    } else {
+      fprintf(f, "<tr><td>Master CGI program</td><td><a href=\"%s?SID=%016llx&contest_id=%d\" target=\"_blank\">Master</a></td></tr>\n",
+              master_url, session_id, contest_id);
+    }
+  }
+
+  // report user URL
+  if (client_url[0] && contests_check_team_ip_2(cnts, ip_address, ssl)) {
+    if (cnts->managed) {
+      fprintf(f, "<tr><td>Client CGI program</td><td><a href=\"%s?contest_id=%d\" target=\"_blank\">Client</a></td></tr>\n",
+              new_client_url, contest_id);
+    } else {
+      fprintf(f, "<tr><td>Client CGI program</td><td><a href=\"%s?contest_id=%d\" target=\"_blank\">Client</a></td></tr>\n",
+              client_url, contest_id);
+    }
+  }
+
+
+  // report run status
+  mng_status = get_run_management_status(cnts, extra);
+  snprintf(mng_status_str, sizeof(mng_status_str),
+           mng_status_table[mng_status], extra?extra->run_pid:0);
+  fprintf(f, "<tr><td><tt>run</tt> management status:</td><td>%s</td>",
+          mng_status_str);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0) {
+    fprintf(f, "<td>");
+    html_start_form(f, 1, self_url, new_hidden_vars);
+    switch (mng_status) {
+    case MNG_STAT_NOT_MANAGED:
+      fprintf(f, "&nbsp;");
+      /*
+      html_submit_button(f, SSERV_CMD_RUN_MNG_TEMP,
+                         "Manage temporarily");
+      html_submit_button(f, SSERV_CMD_RUN_MNG, "Manage permanently");
+      */
+      break;
+    case MNG_STAT_TEMP_NOT_MANAGED:
+      fprintf(f, "&nbsp;");
+      /*
+      html_submit_button(f, SSERV_CMD_RUN_MNG_RESUME,
+                         "Resume management");
+      html_submit_button(f, SSERV_CMD_RUN_MNG_STOP, "Stop management");
+      */
+      break;
+    case MNG_STAT_TEMP_FAILED:
+      /*
+      html_submit_button(f, SSERV_CMD_RUN_MNG, "Manage permanently");
+      html_submit_button(f, SSERV_CMD_RUN_MNG_STOP, "Stop management");
+      */
+      html_submit_button(f, SSERV_CMD_RUN_MNG_RESET_ERROR,
+                         "Reset error flag");
+      /*
+      html_submit_button(f, SSERV_CMD_RUN_MNG_PROBE_RUN,
+                         "Do probe run");
+      */
+      break;
+    case MNG_STAT_TEMP_RUNNING:
+      /*
+      html_submit_button(f, SSERV_CMD_RUN_MNG, "Manage permanently");
+      html_submit_button(f, SSERV_CMD_RUN_MNG_STOP, "Stop management");
+      */
+      html_submit_button(f, SSERV_CMD_RUN_MNG_TERM, "Terminate run");
+      break;
+    case MNG_STAT_TEMP_WAITING:
+      fprintf(f, "&nbsp;");
+      /*
+      html_submit_button(f, SSERV_CMD_RUN_MNG, "Manage permanently");
+      html_submit_button(f, SSERV_CMD_RUN_MNG_STOP, "Stop management");
+      html_submit_button(f, SSERV_CMD_RUN_MNG_PROBE_RUN,
+                         "Do probe run");
+      */
+      break;
+    case MNG_STAT_FAILED:
+      /*
+      html_submit_button(f, SSERV_CMD_RUN_MNG_SUSPEND,
+                         "Suspend management");
+      html_submit_button(f, SSERV_CMD_RUN_MNG_STOP, "Stop management");
+      */
+      html_submit_button(f, SSERV_CMD_RUN_MNG_RESET_ERROR,
+                         "Reset error flag");
+      /*
+      html_submit_button(f, SSERV_CMD_RUN_MNG_PROBE_RUN,
+                         "Do probe run");
+      */
+      break;
+    case MNG_STAT_RUNNING:
+      /*
+      html_submit_button(f, SSERV_CMD_RUN_MNG_SUSPEND,
+                         "Suspend management");
+      html_submit_button(f, SSERV_CMD_RUN_MNG_STOP, "Stop management");
+      */
+      html_submit_button(f, SSERV_CMD_RUN_MNG_TERM, "Terminate run");
+      break;
+    case MNG_STAT_WAITING:
+      fprintf(f, "&nbsp;");
+      /*
+      html_submit_button(f, SSERV_CMD_RUN_MNG_SUSPEND,
+                         "Suspend management");
+      html_submit_button(f, SSERV_CMD_RUN_MNG_STOP,
+                         "Stop management");
+      html_submit_button(f, SSERV_CMD_RUN_MNG_PROBE_RUN,
+                         "Do probe run");
+      */
+      break;
+    case MNG_STAT_SUPER_RUN:
+      fprintf(f, "&nbsp;");
+      break;
+    default:
+      abort();
+    }
+    fprintf(f, "</form>");
+    fprintf(f, "</td>");
+  }
+
+  // run log file status
+  if (!cnts->root_dir) {
+    logfilemode = 3;
+    snprintf(mng_status_str, sizeof(mng_status_str), "N/A");
+  } else {
+    snprintf(log_file_path, sizeof(log_file_path),
+             "%s/var/ej-run-messages.log", cnts->root_dir);
+    if (stat(log_file_path, &logfilestat) < 0) {
+      logfilemode = 0;
+      snprintf(mng_status_str, sizeof(mng_status_str), "nonexistant");
+    } else if (!nodevnull
+               && logfilestat.st_dev == devnullstat.st_dev
+               && logfilestat.st_ino == devnullstat.st_ino) {
+      logfilemode = 1;
+      snprintf(mng_status_str, sizeof(mng_status_str), "/dev/null");
+    } else {
+      logfilemode = 2;
+      snprintf(mng_status_str, sizeof(mng_status_str), "%lld bytes",
+               (long long) logfilestat.st_size);
+    }
+  }
+
+  fprintf(f, "<tr><td>Run log:</td><td>%s</td>", mng_status_str);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0
+      && logfilemode != 3) {
+    fprintf(f, "<td>");
+    html_start_form(f, 1, self_url, new_hidden_vars);
+    if (logfilemode == 0) {
+      html_submit_button(f, SSERV_CMD_RUN_LOG_DEV_NULL,
+                         "Redirect to /dev/null");
+    } else if (logfilemode == 2) {
+      html_submit_button(f, SSERV_CMD_RUN_LOG_TRUNC, "Truncate log");
+      html_submit_button(f, SSERV_CMD_RUN_LOG_DEV_NULL,
+                         "Redirect to /dev/null");
+      if (logfilestat.st_size <= MAX_LOG_VIEW_SIZE) {
+        fprintf(f, "%sView</a>",
+                html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
+                              "contest_id=%d&action=%d", contest_id,
+                              SSERV_CMD_VIEW_RUN_LOG));
+      }
+    } else {
+      html_submit_button(f, SSERV_CMD_RUN_LOG_FILE, "Redirect to file");
+    }
+    fprintf(f, "</form>");
+    fprintf(f, "</td>");
+  }
+  fprintf(f, "</tr>\n");
+
+  fprintf(f, "<tr><td>XML configuration file:</td><td>&nbsp;</td>");
+  fprintf(f, "<td>");
+  refcount = 0;
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0) {
+    fprintf(f, "%sView</a>",
+            html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
+                          "contest_id=%d&action=%d", contest_id,
+                          SSERV_CMD_VIEW_CONTEST_XML));
+    refcount++;
+  }
+  // FIXME: check editing permissions
+  if (1 >= 0)
+  {
+    if (refcount) fprintf(f, "&nbsp;");
+    fprintf(f, "%sEdit</a>",
+            html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
+                          "contest_id=%d&action=%d", contest_id,
+                          SSERV_CMD_EDIT_CONTEST_XML));
+    refcount++;
+    fprintf(f, "&nbsp;%sNew edit (experimental)</a>",
+            html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
+                          "contest_id=%d&action=%d&op=%d",
+                          contest_id, SSERV_CMD_HTTP_REQUEST,
+                          SSERV_CMD_EDIT_CONTEST_PAGE));
+  }
+  if (!refcount) fprintf(f, "&nbsp;");
+  fprintf(f, "</td>");
+  fprintf(f, "</tr>\n");
+
+  fprintf(f, "<tr><td>Serve configuration file:</td><td>&nbsp;</td>");
+  fprintf(f, "<td>");
+  refcount = 0;
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0) {
+    fprintf(f, "%sView</a>",
+            html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
+                          "contest_id=%d&action=%d", contest_id,
+                          SSERV_CMD_VIEW_SERVE_CFG));
+    refcount++;
+  }
+  // FIXME: check editing permissions
+  if (1 >= 0)
+  {
+    if (refcount) fprintf(f, "&nbsp;");
+    fprintf(f, "%sEdit</a>",
+            html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
+                          "contest_id=%d&action=%d", contest_id,
+                          SSERV_CMD_EDIT_CONTEST_XML));
+    refcount++;
+    fprintf(f, "&nbsp;%sNew edit (experimental)</a>",
+            html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
+                          "contest_id=%d&action=%d&op=%d",
+                          contest_id, SSERV_CMD_HTTP_REQUEST,
+                          SSERV_CMD_EDIT_CONTEST_PAGE));
+  }
+  if (!refcount) fprintf(f, "&nbsp;");
+  fprintf(f, "</td>");
+  fprintf(f, "</tr>\n");
+
+  fprintf(f, "<tr>");
+  fprintf(f, "<td>Edit tests:</td><td>&nbsp;</td>");
+  fprintf(f, "<td>%sEdit</a></td>",
+          html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
+                        "contest_id=%d&action=%d&op=%d",
+                        contest_id, SSERV_CMD_HTTP_REQUEST,
+                        SSERV_CMD_TESTS_MAIN_PAGE));
+  fprintf(f, "</tr>\n");
+
+  fprintf(f, "</table>\n");
+
+  fprintf(f, "<p>");
+  fprintf(f, "<td>[%sUpdate problems from Polygon</a>]</td>",
+          html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
+                        "contest_id=%d&action=%d&op=%d",
+                        contest_id, SSERV_CMD_HTTP_REQUEST,
+                        SSERV_CMD_UPDATE_FROM_POLYGON_PAGE));
+  fprintf(f, "</p>\n");
+
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0) {
+    if (cnts && !cnts->run_managed) {
+      fprintf(f, "<p>");
+      html_start_form(f, 1, self_url, new_hidden_vars);
+      html_submit_button(f, SSERV_CMD_CONTEST_RESTART, "Restart management");
+      fprintf(f, "</form></p>\n");
+    }
+
+    fprintf(f, "<p>");
+    html_start_form(f, 1, self_url, new_hidden_vars);
+    html_submit_button(f, SSERV_CMD_CHECK_TESTS, "Check contest settings");
+    fprintf(f, "</form></p>\n");
+  }
+
+  fprintf(f, "<table border=\"0\"><tr>");
+  fprintf(f, "<td>%sBack</a></td>",
+          html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, 0));
+  fprintf(f, "<td>%sRefresh</a></td>",
+          html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
+                        "contest_id=%d&action=%d", contest_id,
+                        SSERV_CMD_CONTEST_PAGE));
+  fprintf(f, "<td>%sLogout</a></td>",
+          html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
+                        "action=%d", SSERV_CMD_LOGOUT));
+  fprintf(f, "</tr></table>");
+
+  if (extra && extra->messages) {
+    fprintf(f, "<hr><h3>Start-up messages</h3>\n");
+    if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0) {
+      fprintf(f, "<p>");
+      html_submit_button(f, SSERV_CMD_CLEAR_MESSAGES, "Clear");
+    }
+    html_log = html_armor_string_dupa(extra->messages);
+    fprintf(f, "<p><pre>%s</pre>\n", html_log);
+  }
+-->
+
+
+
+
+
+
+
+
+
+
 
 <%@include "footer.csp"
 %><%
   l10n_setlocale(0);
-//cleanup:
+cleanup:
   html_armor_free(&ab);
 %>
