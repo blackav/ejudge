@@ -9999,7 +9999,7 @@ skip_tests:
   fprintf(f, "<td>%sBack</a></td>",
           html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
                         "contest_id=%d&action=%d", cnts->id,
-                        SSERV_CMD_CONTEST_PAGE));
+                        SSERV_CMD_NEW_CONTEST_PAGE));
   fprintf(f, "</tr></table>\n");
 
 cleanup:
@@ -10023,7 +10023,7 @@ check_failed:
   fprintf(f, "<td>%sBack</a></td>",
           html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
                         "contest_id=%d&action=%d", cnts->id,
-                        SSERV_CMD_CONTEST_PAGE));
+                        SSERV_CMD_NEW_CONTEST_PAGE));
   fprintf(f, "<td>");
   html_start_form(f, 1, self_url, hidden_vars);
   fprintf(f, "<input type=\"hidden\" name=\"contest_id\" value=\"%d\"/>", cnts->id);
