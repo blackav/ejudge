@@ -2245,9 +2245,6 @@ main(int argc, char *argv[])
     client_action = SSERV_CMD_HTTP_REQUEST;
   }
   switch (client_action) {
-  case SSERV_CMD_OLD_CONTEST_PAGE:
-    action_view_contest(SSERV_CMD_OLD_CONTEST_PAGE);
-    break;
   case SSERV_CMD_VIEW_RUN_LOG:
     action_view_contest(SSERV_CMD_VIEW_RUN_LOG);
     break;
