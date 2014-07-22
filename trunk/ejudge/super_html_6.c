@@ -10432,7 +10432,7 @@ super_serve_op_DOWNLOAD_CLEANUP_ACTION(
     goto cleanup;
   }
 
-  int action = SSERV_CMD_CONTEST_PAGE;
+  int action = SSERV_CMD_NEW_CONTEST_PAGE;
   if (phr->action == SSERV_CMD_DOWNLOAD_CLEANUP_AND_CHECK_ACTION) action = SSERV_CMD_CHECK_TESTS;
   ss_redirect_3(out_f, phr, action, "contest_id=%d", us->contest_id);
 
@@ -10779,7 +10779,7 @@ super_serve_op_UPDATE_FROM_POLYGON_PAGE(
   fprintf(out_f, "<li>%sDetails</a></li>\n",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                         "contest_id=%d&action=%d", contest_id,
-                        SSERV_CMD_CONTEST_PAGE));
+                        SSERV_CMD_NEW_CONTEST_PAGE));
   fprintf(out_f, "</ul>");
 
   html_start_form(out_f, 1, phr->self_url, "");

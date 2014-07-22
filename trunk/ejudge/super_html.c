@@ -460,7 +460,7 @@ super_html_main_page(
       fprintf(f, "<td>%sDetails</a></td>\n",
               html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
                             "contest_id=%d&action=%d", contest_id,
-                            SSERV_CMD_CONTEST_PAGE));
+                            SSERV_CMD_NEW_CONTEST_PAGE));
       continue;
     }
     if ((errcode = contests_get(contest_id, &cnts)) < 0) {
@@ -504,7 +504,7 @@ super_html_main_page(
       fprintf(f, "<td>%sDetails</a></td>\n",
               html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
                             "contest_id=%d&action=%d", contest_id,
-                            SSERV_CMD_CONTEST_PAGE));
+                            SSERV_CMD_NEW_CONTEST_PAGE));
       continue;
     }
     if (priv_level < PRIV_LEVEL_ADMIN && !(sstate->flags & SID_STATE_SHOW_UNMNG)) {
@@ -599,7 +599,7 @@ super_html_main_page(
       fprintf(f, "<td>%sView details</a></td>\n",
               html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
                             "contest_id=%d&action=%d", contest_id,
-                            SSERV_CMD_CONTEST_PAGE));
+                            SSERV_CMD_NEW_CONTEST_PAGE));
     } else {
       fprintf(f, "<td>&nbsp;</td>\n");
       fprintf(f, "<td>&nbsp;</td>\n");
@@ -1104,7 +1104,7 @@ super_html_contest_page(
   fprintf(f, "<td>%sRefresh</a></td>",
           html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
                         "contest_id=%d&action=%d", contest_id,
-                        SSERV_CMD_CONTEST_PAGE));
+                        SSERV_CMD_NEW_CONTEST_PAGE));
   fprintf(f, "<td>%sLogout</a></td>",
           html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
                         "action=%d", SSERV_CMD_LOGOUT));
@@ -1222,7 +1222,7 @@ super_html_log_page(
   fprintf(f, "<td>%sTo contest details</a></td>",
           html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
                         "contest_id=%d&action=%d", contest_id,
-                        SSERV_CMD_CONTEST_PAGE));
+                        SSERV_CMD_NEW_CONTEST_PAGE));
   fprintf(f, "<td>%sRefresh</a></td>",
           html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
                         "contest_id=%d&action=%d", contest_id,

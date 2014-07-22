@@ -1480,7 +1480,7 @@ cmd_main_page(struct client_state *p, int len,
 
   // extra incoming packet checks
   switch (pkt->b.id) {
-  case SSERV_CMD_CONTEST_PAGE:
+  case SSERV_CMD_OLD_CONTEST_PAGE:
     if ((r = contests_get(pkt->contest_id, &cnts)) < 0 || !cnts) {
       err("cmd_main_page: invalid contest_id %d", pkt->contest_id);
       cnts = 0;
@@ -1529,7 +1529,7 @@ cmd_main_page(struct client_state *p, int len,
       return send_reply(p, -SSERV_ERR_PERMISSION_DENIED);
     }
     break;
-  case SSERV_CMD_CONTEST_PAGE:
+  case SSERV_CMD_OLD_CONTEST_PAGE:
   case SSERV_CMD_VIEW_RUN_LOG:
   case SSERV_CMD_VIEW_CONTEST_XML:
   case SSERV_CMD_VIEW_SERVE_CFG:
@@ -1636,7 +1636,7 @@ cmd_main_page(struct client_state *p, int len,
                              p->cookie, &p->ip, p->ssl, pkt->flags, config, sstate,
                              self_url_ptr, hidden_vars_ptr, extra_args_ptr);
     break;
-  case SSERV_CMD_CONTEST_PAGE:
+  case SSERV_CMD_OLD_CONTEST_PAGE:
     r = super_html_contest_page(f, p->priv_level, p->user_id, pkt->contest_id,
                                 p->login, p->cookie, &p->ip, p->ssl, config,
                                 self_url_ptr, hidden_vars_ptr, extra_args_ptr);
@@ -3150,7 +3150,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
 {
   [SSERV_CMD_PASS_FD] = { cmd_pass_fd },
   [SSERV_CMD_MAIN_PAGE] = { cmd_main_page },
-  [SSERV_CMD_CONTEST_PAGE] = { cmd_main_page },
+  [SSERV_CMD_OLD_CONTEST_PAGE] = { cmd_main_page },
   [SSERV_CMD_VIEW_RUN_LOG] = { cmd_main_page },
   [SSERV_CMD_VIEW_CONTEST_XML] = { cmd_main_page },
   [SSERV_CMD_VIEW_SERVE_CFG] = { cmd_main_page },
