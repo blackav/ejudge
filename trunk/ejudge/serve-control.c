@@ -2229,8 +2229,6 @@ static const int next_action_map[SSERV_CMD_LAST] =
 int
 main(int argc, char *argv[])
 {
-  int r;
-
   initialize(argc, argv);
 
   // check ip limitations from the configuration file
@@ -3088,16 +3086,6 @@ main(int argc, char *argv[])
   }
 
   /* default (main) screen */
-  open_super_server();
-  client_put_header(stdout, 0, 0, config->charset, 1, 0, client_key,
-                    "%s: %s@%s", "serve-control", user_login, http_host);
-  fflush(stdout);
-  r = super_clnt_main_page(super_serve_fd, 1, SSERV_CMD_MAIN_PAGE, 0,
-                           0, 0, self_url, hidden_vars, "");
-  if (r < 0) {
-    printf("<h2><font color=\"red\">%s</font></h2>\n",
-           super_proto_strerror(-r));
-  }
-  client_put_footer(stdout, 0);
+  action_http_request(argv);
   return 0;
 }

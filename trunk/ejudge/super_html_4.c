@@ -6638,7 +6638,10 @@ static int
 parse_opcode(struct http_request_info *phr, int *p_opcode)
 {
   const unsigned char *s = NULL;
-  if (ss_cgi_param(phr, "op", &s) <= 0 || !s || !*s) return S_ERR_INV_OPER;
+  if (ss_cgi_param(phr, "op", &s) <= 0 || !s || !*s) {
+    *p_opcode = 0;
+    return 0;
+  }
   const unsigned char *q;
   for (q = s; isdigit(*q); ++q) {}
   if (!*q) {
@@ -6646,7 +6649,7 @@ parse_opcode(struct http_request_info *phr, int *p_opcode)
     errno = 0;
     long val = strtol(s, &eptr, 10);
     if (errno || *eptr) return S_ERR_INV_OPER;
-    if (val <= 0 || val >= SSERV_CMD_LAST) return S_ERR_INV_OPER;
+    if (val < 0 || val >= SSERV_CMD_LAST) return S_ERR_INV_OPER;
     *p_opcode = val;
     return 0;
   }
@@ -6657,7 +6660,8 @@ parse_opcode(struct http_request_info *phr, int *p_opcode)
       return 0;
     }
   }
-  return S_ERR_INV_OPER;
+  *p_opcode = 0;
+  return 0;
 }
 
 static int
@@ -6672,7 +6676,8 @@ parse_action(struct http_request_info *phr)
       return -1;
     }
   } else if ((r = ss_cgi_param(phr, "action", &s)) < 0 || !s || !*s) {
-    return -1;
+    phr->action = 0;
+    return 0;
   } else {
     if (sscanf(s, "%d%n", &action, &n) != 1 || s[n] || action < 0 || action >= SSERV_CMD_LAST) {
       return -1;
@@ -6927,6 +6932,10 @@ super_html_http_request(
   if (!r) {
     // try external actions
     int ext_action = phr->action;
+
+    // main_page by default
+    if (!super_proto_op_names[ext_action]) ext_action = SSERV_CMD_NEW_MAIN_PAGE;
+
     if (ext_action < 0 || ext_action >= SSERV_CMD_LAST) ext_action = 0;
     if (external_action_aliases[ext_action] > 0) ext_action = external_action_aliases[ext_action];
     if (external_action_names[ext_action]) {

@@ -1506,7 +1506,8 @@ cmd_main_page(struct client_state *p, int len,
 
   // check permissions: MASTER_PAGE
   switch (pkt->b.id) {
-  case SSERV_CMD_MAIN_PAGE:
+    /*
+  case SSERV_CMD_OLD_MAIN_PAGE:
     if (ejudge_cfg_opcaps_find(config, p->login, &caps) < 0) {
       err("%d: user %d has no privileges", p->id, p->user_id);
       return send_reply(p, -SSERV_ERR_PERMISSION_DENIED);
@@ -1522,6 +1523,7 @@ cmd_main_page(struct client_state *p, int len,
       return send_reply(p, -SSERV_ERR_PERMISSION_DENIED);
     }
     break;
+    */
   case SSERV_CMD_VIEW_RUN_LOG:
   case SSERV_CMD_VIEW_CONTEST_XML:
   case SSERV_CMD_VIEW_SERVE_CFG:
@@ -1623,11 +1625,6 @@ cmd_main_page(struct client_state *p, int len,
 
   // handle command
   switch (pkt->b.id) {
-  case SSERV_CMD_MAIN_PAGE:
-    r = super_html_main_page(f, p->priv_level, p->user_id, p->login,
-                             p->cookie, &p->ip, p->ssl, pkt->flags, config, sstate,
-                             self_url_ptr, hidden_vars_ptr, extra_args_ptr);
-    break;
   case SSERV_CMD_VIEW_RUN_LOG:
   case SSERV_CMD_VIEW_CONTEST_XML:
   case SSERV_CMD_VIEW_SERVE_CFG:
@@ -3136,7 +3133,6 @@ struct packet_handler
 static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
 {
   [SSERV_CMD_PASS_FD] = { cmd_pass_fd },
-  [SSERV_CMD_MAIN_PAGE] = { cmd_main_page },
   [SSERV_CMD_VIEW_RUN_LOG] = { cmd_main_page },
   [SSERV_CMD_VIEW_CONTEST_XML] = { cmd_main_page },
   [SSERV_CMD_VIEW_SERVE_CFG] = { cmd_main_page },
