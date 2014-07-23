@@ -25,20 +25,6 @@
 struct ejudge_cfg;
 struct sid_state;
 
-int super_html_main_page(FILE *f,
-                         int priv_level,
-                         int user_id,
-                         const unsigned char *login,
-                         ej_cookie_t session_id,
-                         const ej_ip_t *ip_address,
-                         int ssl,
-                         unsigned int flags,
-                         struct ejudge_cfg *config,
-                         struct sid_state *sstate,
-                         const unsigned char *self_url,
-                         const unsigned char *hidden_vars,
-                         const unsigned char *extra_args);
-
 int super_html_serve_probe_run(FILE *f,
                                int priv_level,
                                int user_id,
