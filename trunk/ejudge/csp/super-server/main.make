@@ -35,7 +35,7 @@ EXPAT_LIB=-lexpat
 TARGETDIR = ${libexecdir}/ejudge/csp/contests
 CFILES = \
  contest_page.c\
- new_main_page.c\
+ main_page.c\
  problem_packages_page.c
 
 SOFILES = $(CFILES:.c=.so)
@@ -54,11 +54,11 @@ po : super-server.po
 super-server.po : $(CFILES)
 	${XGETTEXT} -d ejudge --no-location --foreign-user  -k_ -k__ -s -o $@ *.c
 
-new_main_page.so : new_main_page.c I_new_main_page.c
+main_page.so : main_page.c I_main_page.c
 	$(CC) $(CCOMPFLAGS) ${WPTRSIGN} $(LDFLAGS) $^ -o $@
 
 contest_page.c : contest_page.csp includes.csp stdvars.csp header.csp footer.csp
-new_main_page.c : new_main_page.csp includes.csp stdvars.csp header.csp footer.csp
+main_page.c : main_page.csp includes.csp stdvars.csp header.csp footer.csp
 problem_packages_page.c : problem_packages_page.csp includes.csp stdvars.csp header.csp footer.csp
 
 %.c : %.csp

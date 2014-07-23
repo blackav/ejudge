@@ -26,7 +26,7 @@
 #include <string.h>
 
 extern int
-csp_view_new_main_page(
+csp_view_main_page(
         PageInterface *ps,
         FILE *log_f,
         FILE *out_f,
@@ -262,11 +262,11 @@ static struct PageInterfaceOps ops =
 {
     destroy_func,
     execute_func,
-    csp_view_new_main_page,
+    csp_view_main_page,
 };
 
 PageInterface *
-csp_get_new_main_page(void)
+csp_get_main_page(void)
 {
     CspNewMainPage *pg = NULL;
 
