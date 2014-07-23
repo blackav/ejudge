@@ -161,7 +161,7 @@
 %>&nbsp;<%
         }
 %></td>
-        <td><s:v checkexpr="" value="ci->comment" /></td:
+        <td><s:v checkexpr="" value="ci->comment" /></td>
     </tr>
 <%
     }
