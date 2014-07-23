@@ -1506,24 +1506,6 @@ cmd_main_page(struct client_state *p, int len,
 
   // check permissions: MASTER_PAGE
   switch (pkt->b.id) {
-    /*
-  case SSERV_CMD_OLD_MAIN_PAGE:
-    if (ejudge_cfg_opcaps_find(config, p->login, &caps) < 0) {
-      err("%d: user %d has no privileges", p->id, p->user_id);
-      return send_reply(p, -SSERV_ERR_PERMISSION_DENIED);
-    }
-    switch (p->priv_level) {
-    case PRIV_LEVEL_JUDGE: capbit = OPCAP_JUDGE_LOGIN; break;
-    case PRIV_LEVEL_ADMIN: capbit = OPCAP_MASTER_LOGIN; break;
-    default:
-      return send_reply(p, -SSERV_ERR_PERMISSION_DENIED);
-    }
-    if (opcaps_check(caps, capbit) < 0) {
-      err("%d: user %d has no capability %d", p->id, p->user_id, capbit);
-      return send_reply(p, -SSERV_ERR_PERMISSION_DENIED);
-    }
-    break;
-    */
   case SSERV_CMD_VIEW_RUN_LOG:
   case SSERV_CMD_VIEW_CONTEST_XML:
   case SSERV_CMD_VIEW_SERVE_CFG:
