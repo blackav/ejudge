@@ -352,7 +352,7 @@ ejudge-install.sh : ejudge-setup
 	./ejudge-setup -b
 
 local_clean:
-	-rm -f *.o *~ *.a $(TARGETS) revinfo version.c $(ARCH)/*.o ejudge.po mkChangeLog2 userlist_clnt/*.o xml_utils/*.o super_clnt/*.o cdeps deps.make filter_expr.[ch] filter_scan.c users users${CGI_PROG_SUFFIX} ejudge-config serve-control serve-control${CGI_PROG_SUFFIX} prjutils2/*.o make-js-actions new_server_clnt/*.o mktable struct-sizes
+	-rm -f *.o *~ *.a $(TARGETS) revinfo newrevinfo version.c $(ARCH)/*.o ejudge.po mkChangeLog2 userlist_clnt/*.o xml_utils/*.o super_clnt/*.o cdeps deps.make filter_expr.[ch] filter_scan.c users users${CGI_PROG_SUFFIX} ejudge-config serve-control serve-control${CGI_PROG_SUFFIX} prjutils2/*.o make-js-actions new_server_clnt/*.o mktable struct-sizes
 	-rm -rf locale
 clean: subdir_clean local_clean
 
@@ -391,14 +391,16 @@ pristine : distclean
 	rm -f configure
 
 version.c: revinfo $(HFILES) $(CFILES) $(OTHERFILES)
-	@REVINFO_NO_COMMIT=1 ./revinfo -S -C -p -d db/versions -r db/revisions $(HFILES) $(CFILES) $(OTHERFILES)
+	./newrevinfo
+#	#@REVINFO_NO_COMMIT=1 ./revinfo -S -C -p -d db/versions -r db/revisions $(HFILES) $(CFILES) $(OTHERFILES)
 version.o: version.c
 
-new_revision: revinfo $(HFILES) $(CFILES) $(OTHERFILES)
-	@./revinfo -S -C -d db/versions -r db/revisions $(HFILES) $(CFILES) $(OTHERFILES)
+#new_revision: revinfo $(HFILES) $(CFILES) $(OTHERFILES)
+#	@./revinfo -S -C -d db/versions -r db/revisions $(HFILES) $(CFILES) $(OTHERFILES)
+#
+#new_version: revinfo force
+#	@./revinfo -S -C -n -d db/versions -r db/revisions $(HFILES) $(CFILES) $(OTHERFILES)
 
-new_version: revinfo force
-	@./revinfo -S -C -n -d db/versions -r db/revisions $(HFILES) $(CFILES) $(OTHERFILES)
 force:
 
 revinfo: prjutils2/revinfo.o
