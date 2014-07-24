@@ -206,13 +206,26 @@ read_svn_status(unsigned char *id_buf, int id_buf_size, int *p_has_changes)
 
         if (buf[0] == '?') continue;
 
+        buf[2] = ' ';
+        buf[3] = ' ';
+
         unsigned char c1 = 0, c2 = 0;
         int rev1 = 0, rev2 = 0, n = 0, is_changed = 0;
         unsigned char user[sizeof(buf)];
         unsigned char *path = 0;
-        if (sscanf(buf, "%c%c%d%d%s%n", &c1, &c2, &rev1, &rev2, user, &n) != 5) {
-            fprintf(stderr, "SVN status line parse error: <%s>\n", buf);
-            exit(1);
+
+        user[0] = 0;
+        if (buf[0] == 'A') {
+            unsigned char tmp1[64], tmp2[64], tmp3[64];
+            if (sscanf(buf, "%c%c%s%s%s%n", &c1, &c2, tmp1, tmp2, tmp3, &n) != 5) {
+                fprintf(stderr, "SVN status line parse error: <%s>\n", buf);
+                exit(1);
+            }
+        } else {
+            if (sscanf(buf, "%c%c%d%d%s%n", &c1, &c2, &rev1, &rev2, user, &n) != 5) {
+                fprintf(stderr, "SVN status line parse error: <%s>\n", buf);
+                exit(1);
+            }
         }
         if (rev1 >= max_rev) max_rev = rev1;
         if (rev2 >= max_rev) max_rev = rev2;
@@ -444,7 +457,7 @@ main(int argc, char **argv)
     if (get_file_type(".svn") == FILE_DIR) {
         read_svn_status(rev_id, sizeof(rev_id), &changed_flag);
         if (changed_flag < 0) exit(1);
-        printf("changed flag: %d, id: %s\n", changed_flag, rev_id);
+        //printf("changed flag: %d, id: %s\n", changed_flag, rev_id);
         if (!changed_flag && !strcmp(latest->id, rev_id)) {
             // the version exactly
             snprintf(version_string, sizeof(version_string), "%s", full_version);
