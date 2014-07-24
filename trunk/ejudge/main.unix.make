@@ -153,7 +153,7 @@ INSTALLSCRIPT = ejudge-install.sh
 BINTARGETS = ejudge-jobs-cmd ejudge-edit-users ejudge-setup ejudge-configure-compilers ejudge-control ejudge-execute ejudge-contests-cmd
 SERVERBINTARGETS = ej-compile ej-compile-control ej-run ej-nwrun ej-ncheck ej-batch ej-serve ej-users ej-users-control ej-jobs ej-jobs-control ej-super-server ej-super-server-control ej-contests ej-contests-control uudecode ej-convert-clars ej-convert-runs ej-fix-db ej-super-run ej-super-run-control ej-normalize ej-polygon ej-import-contest ej-page-gen
 CGITARGETS = users${CGI_PROG_SUFFIX} serve-control${CGI_PROG_SUFFIX} new-client${CGI_PROG_SUFFIX}
-TARGETS = ${SERVERBINTARGETS} ${BINTARGETS} ${CGITARGETS}
+TARGETS = ${SERVERBINTARGETS} ${BINTARGETS} ${CGITARGETS} newrevinfo
 STYLEFILES = style/logo.gif style/logo3.gif style/priv.css style/unpriv.css style/unpriv3.css style/ejudge3.css style/priv.js style/unpriv.js style/filter_expr.html style/sprintf.js
 
 all: prereq_all local_all subdirs_all mo
@@ -404,6 +404,10 @@ force:
 revinfo: prjutils2/revinfo.o
 	$(LD) $(LDFLAGS) $^ -o $@
 prjutils2/revinfo.o: prjutils2/revinfo.c
+
+newrevinfo : newrevinfo.o
+	$(LD) $(LDFLAGS) $^ -o $@
+newrevinfo.o : newrevinfo.c
 
 mkChangeLog2: prjutils2/mkChangeLog2.o prjutils2/changelog.o prjutils2/expat_iface.o prjutils2/svn_xmllog.o prjutils2/usermap.o prjutils2/xalloc.o
 	${LD} ${LDFLAGS} $^ -o $@ -lexpat -lm
