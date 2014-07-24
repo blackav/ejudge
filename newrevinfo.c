@@ -95,14 +95,191 @@ read_verdb(unsigned char const *name)
     fclose(f);
 }
 
+struct file_info
+{
+    const unsigned char *summ;
+    const unsigned char *path;
+};
+static struct file_info *file_infos;
+static int file_info_a = 0, file_info_u = 0;
+
+static void
+add_file_info(const unsigned char *summ, const unsigned char *path)
+{
+    if (file_info_u >= file_info_a) {
+        if (!(file_info_a *= 2)) file_info_a = 128;
+        file_infos = realloc(file_infos, file_info_a * sizeof(file_infos[0]));
+    }
+    struct file_info *cur = &file_infos[file_info_u++];
+    cur->summ = strdup(summ);
+    cur->path = strdup(path);
+}
+
 static int
-does_directory_exist(const unsigned char *path)
+read_file_info(const unsigned char *name)
+{
+    FILE *f = fopen(name, "r");
+    if (!f) return -1;
+
+    unsigned char buf[1024];
+    while (fgets(buf, sizeof(buf), f)) {
+        int buflen = strlen(buf);
+        if (buflen == sizeof(buf) - 1 && buf[buflen - 1] != '\n') {
+            fprintf(stderr, "input line is too long\n");
+            exit(1);
+        }
+        while (buflen > 0 && isspace(buf[buflen - 1])) --buflen;
+        buf[buflen] = 0;
+        if (buflen <= 0) continue;
+
+        unsigned char summ[sizeof(buf)];
+        int n = 0;
+        if (sscanf(buf, "%s%n", summ, &n) != 1) {
+            fprintf(stderr, "invalid input file\n");
+            exit(1);
+        }
+        while (isspace(buf[n])) ++n;
+        add_file_info(summ, buf + n);
+    }
+    fclose(f); f = NULL;
+    return 0;
+}
+
+struct svn_info
+{
+    int is_changed;
+    int rev1, rev2;
+    unsigned char *user;
+    unsigned char *path;
+};
+static struct svn_info *svn_infos;
+static int svn_info_a = 0, svn_info_u = 0;
+
+static void
+add_svn_info(int is_changed, int rev1, int rev2, const unsigned char *user, const unsigned char *path)
+{
+    if (svn_info_u >= svn_info_a) {
+        if (!(svn_info_a *= 2)) svn_info_a = 128;
+        svn_infos = realloc(svn_infos, svn_info_a * sizeof(svn_infos[0]));
+    }
+    struct svn_info *cur = &svn_infos[svn_info_u++];
+    cur->is_changed = is_changed;
+    cur->rev1 = rev1;
+    cur->rev2 = rev2;
+    cur->user = strdup(user);
+    cur->path = strdup(path);
+}
+
+enum { FILE_MISSING = -1, FILE_NORMAL = 0, FILE_DIR = 1, FILE_OTHER = 2 };
+
+static int
+get_file_type(const unsigned char *path)
 {
     struct stat stbuf;
 
-    if (stat(path, &stbuf) < 0) return 0;
-    if (S_ISDIR(stbuf.st_mode)) return 1;
+    if (stat(path, &stbuf) < 0) return FILE_MISSING;
+    if (S_ISREG(stbuf.st_mode)) return FILE_NORMAL;
+    if (S_ISDIR(stbuf.st_mode)) return FILE_DIR;
+    return FILE_OTHER;
+}
+
+static int
+read_svn_status(unsigned char *id_buf, int id_buf_size, int *p_has_changes)
+{
+    FILE *f = popen("svn status -v", "r");
+    if (!f) {
+        fprintf(stderr, "cannot invoke svn\n");
+        exit(1);
+    }
+
+    unsigned char buf[1024];
+    int max_rev = 0;
+    int has_changes = 0;
+    while (fgets(buf, sizeof(buf), f)) {
+        int len = strlen(buf);
+        if (len == sizeof(buf) - 1 && buf[len - 1] != '\n') {
+            fprintf(stderr, "SVN status line is too long\n");
+            exit(1);
+        }
+        while (len > 0 && isspace(buf[len - 1])) --len;
+        buf[len] = 0;
+
+        if (buf[0] == '?') continue;
+
+        unsigned char c1 = 0, c2 = 0;
+        int rev1 = 0, rev2 = 0, n = 0, is_changed = 0;
+        unsigned char user[sizeof(buf)];
+        unsigned char *path = 0;
+        if (sscanf(buf, "%c%c%d%d%s%n", &c1, &c2, &rev1, &rev2, user, &n) != 5) {
+            fprintf(stderr, "SVN status line parse error: <%s>\n", buf);
+            exit(1);
+        }
+        if (rev1 >= max_rev) max_rev = rev1;
+        if (rev2 >= max_rev) max_rev = rev2;
+
+        while (isspace(buf[n])) ++n;
+        path = buf + n;
+
+        // ignore "db/" stuff
+        if (!strncmp(path, "db/", 3)) continue;
+
+        if (c1 != ' ' || c2 != ' ') {
+            is_changed = 1;
+            has_changes = 1;
+        }
+        int file_type = get_file_type(path);
+        if (file_type == FILE_DIR) continue;
+        if (file_type == FILE_OTHER) {
+            fprintf(stderr, "file '%s' is neither file nor directory\n", path);
+            exit(1);
+        }
+        if (file_type == FILE_MISSING) {
+            is_changed = 1;
+            has_changes = 1;
+        }
+        add_svn_info(is_changed, rev1, rev2, user, path);
+    }
+    pclose(f); f = NULL;
+
+    if (p_has_changes) *p_has_changes = has_changes;
+    if (id_buf && id_buf_size > 0) {
+        snprintf(id_buf, id_buf_size, "%d", max_rev);
+    }
+
     return 0;
+}
+
+static int
+checksum_file(const unsigned char *name, unsigned char *buf, int size)
+{
+    FILE *f = fopen(name, "r");
+    if (!f) return -1;
+    long long sum = 0;
+    int c;
+    while ((c = getc(f)) != EOF) {
+        sum += c;
+    }
+    fclose(f); f = NULL;
+    snprintf(buf, size, "%llx", sum);
+    return 0;
+}
+
+static int
+has_checksum_changed(void)
+{
+    int changed = 0;
+    for (int i = 0; i < file_info_u; ++i) {
+        struct file_info *cur = &file_infos[i];
+        unsigned char checksum_buf[1024];
+        if (checksum_file(cur->path, checksum_buf, sizeof(checksum_buf)) < 0) {
+            changed = 1;
+            printf("File '%s' no longer exists\n", cur->path);
+        } else if (strcmp(checksum_buf, cur->summ) != 0) {
+            changed = 1;
+            printf("File '%s' is changed\n", cur->path);
+        }
+    }
+    return changed;
 }
 
 static void
@@ -139,44 +316,6 @@ write_build(char const *name, int build)
     fclose(f);
 }
 
-static int
-has_svn_changed_files(unsigned char *id_buf, int id_buf_size)
-{
-    FILE *f = popen("svn status -v", "r");
-    if (!f) {
-        fprintf(stderr, "cannot invoke svn\n");
-        return -1;
-    }
-
-    int has_changed = 0;
-    unsigned char buf[1024];
-    int id_val = 0, max_id = 0;
-    while (fgets(buf, sizeof(buf), f)) {
-        int buflen = strlen(buf);
-        if (buflen == sizeof(buf) - 1 && buf[buflen - 1] != '\n') {
-            fprintf(stderr, "svn status line is too long\n");
-            pclose(f);
-            return -1;
-        }
-        while (buflen > 0 && isspace(buf[buflen - 1])) --buflen;
-        buf[buflen] = 0;
-
-        if (buflen > 3) {
-            sscanf(buf + 2, "%d", &id_val);
-            if (id_val > max_id) max_id = id_val;
-        }
-        if (strstr(buf, "db/revisions")) {
-            continue;
-        }
-        if (buflen <= 0) continue;
-        if (buf[0] == ' ' || buf[0] == '?') continue;
-        has_changed = 1;
-    }
-    pclose(f); f = NULL;
-    snprintf(id_buf, id_buf_size, "%d", max_id);
-    return has_changed;
-}
-
 static void
 write_output(
         unsigned char const *name,
@@ -205,54 +344,145 @@ write_output(
   fclose(f);
 }
 
+static void
+new_minor_version(const unsigned char *versions_file, const unsigned char *checksum_prefix, const unsigned char *version)
+{
+    struct verdb *latest = &verdb[verdb_u - 1];
+
+    if (get_file_type(".svn") != FILE_DIR) {
+        fprintf(stderr, "SVN is not connected\n");
+        exit(1);
+    }
+    unsigned char id_str[1024];
+    int changed_flag = 0;
+    id_str[0] = 0;
+    if (read_svn_status(id_str, sizeof(id_str), &changed_flag) < 0) {
+        fprintf(stderr, "Failed to parse SVN status\n");
+        exit(1);
+    }
+    if (changed_flag) {
+        fprintf(stderr, "There are uncommited changes\n");
+        exit(1);
+    }
+    int id_val = 0;
+    if (sscanf(id_str, "%d", &id_val) != 1) {
+        fprintf(stderr, "Invalid revision id\n");
+        exit(1);
+    }
+
+    int patch = 0;
+    if (!version) {
+        version = latest->version;
+        patch = latest->patch + 1;
+    }
+
+    unsigned char full_version[1024];
+    snprintf(full_version, sizeof(full_version), "%s.%d", version, patch);
+    unsigned char out_file[1024];
+    snprintf(out_file, sizeof(out_file), "%s%s", checksum_prefix, full_version);
+    FILE *cf = fopen(out_file, "w");
+    if (!cf) {
+        fprintf(stderr, "Cannot open '%s' for writing\n", out_file);
+        exit(1);
+    }
+    for (int i = 0; i < svn_info_u; ++i) {
+        unsigned char checksum_buf[1024];
+        if (checksum_file(svn_infos[i].path, checksum_buf, sizeof(checksum_buf)) < 0) {
+            fprintf(stderr, "Failed to checksum file '%s'\n", svn_infos[i].path);
+            exit(1);
+        }
+        fprintf(cf, "%s %s\n", checksum_buf, svn_infos[i].path);
+    }
+    fclose(cf); cf = NULL;
+
+    time_t cur_time = time(0);
+    struct tm *ptm = localtime(&cur_time);
+
+    FILE *f = fopen(versions_file, "a");
+    if (!f) {
+        fprintf(stderr, "Cannot open '%s' for appending\n", versions_file);
+        exit(1);
+    }
+    fprintf(f, "%d %s %d %04d/%02d/%02d\n", id_val + 1, version, patch,
+            ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday);
+    fclose(f); f = NULL;
+}
+
 int
 main(int argc, char **argv)
 {
     const unsigned char *build_file = ".build";
     const unsigned char *version_file = "version.c";
+    const unsigned char *versions_file = "db/versions";
+    const unsigned char *checksum_prefix = "db/info-";
+    unsigned char full_version[1024];
     unsigned char version_string[1024];
     int build = 0;
+    struct verdb *latest = NULL;
 
     version_string[0] = 0;
-    read_verdb("db/versions");
+    read_verdb(versions_file);
     if (verdb_u <= 0) {
         fprintf(stderr, "no latest version info\n");
         exit(1);
     }
-    printf("Latest version: %s %s %d\n", verdb[verdb_u - 1].id, verdb[verdb_u - 1].version, verdb[verdb_u - 1].patch);
+    latest = &verdb[verdb_u - 1];
+    snprintf(full_version, sizeof(full_version), "%s.%d", latest->version, latest->patch);
+
+    if (argc == 2 && !strcmp(argv[1], "new-minor")) {
+        new_minor_version(versions_file, checksum_prefix, NULL);
+        exit(0);
+    }
+    if (argc == 3 && !strcmp(argv[1], "new-major")) {
+        new_minor_version(versions_file, checksum_prefix, argv[2]);
+        exit(0);
+    }
 
     int changed_flag = 0;
     unsigned char rev_id[1024];
     rev_id[0] = 0;
-    if (does_directory_exist(".svn")) {
-        changed_flag = has_svn_changed_files(rev_id, sizeof(rev_id));
+    if (get_file_type(".svn") == FILE_DIR) {
+        read_svn_status(rev_id, sizeof(rev_id), &changed_flag);
         if (changed_flag < 0) exit(1);
         printf("changed flag: %d, id: %s\n", changed_flag, rev_id);
-        if (!changed_flag && !strcmp(verdb[verdb_u - 1].id, rev_id)) {
+        if (!changed_flag && !strcmp(latest->id, rev_id)) {
             // the version exactly
-            snprintf(version_string, sizeof(version_string), "%s.%d",
-                     verdb[verdb_u - 1].version, verdb[verdb_u - 1].patch);
+            snprintf(version_string, sizeof(version_string), "%s", full_version);
             write_build(build_file, 0);
         } else if (!changed_flag) {
             // some SVN rev exactly
-            snprintf(version_string, sizeof(version_string), "%s.%d+ (SVN r%s)",
-                     verdb[verdb_u - 1].version, verdb[verdb_u - 1].patch,
-                     rev_id);
+            snprintf(version_string, sizeof(version_string), "%s+ (SVN r%s)", full_version, rev_id);
             write_build(build_file, 0);
-        } else if (!strcmp(verdb[verdb_u - 1].id, rev_id)) {
+        } else if (!strcmp(latest->id, rev_id)) {
             // some changed version
             read_build(build_file, &build);
             build++;
             write_build(build_file, build);
-            sprintf(version_string, "%s.%d #%d", verdb[verdb_u - 1].version, verdb[verdb_u - 1].patch, build);
+            sprintf(version_string, "%s #%d", full_version, build);
         } else {
             // some SVN changed revision
             read_build(build_file, &build);
             build++;
             write_build(build_file, build);
-            snprintf(version_string, sizeof(version_string), "%s.%d+ (SVN r%s) #%d",
-                     verdb[verdb_u - 1].version, verdb[verdb_u - 1].patch,
-                     rev_id, build);
+            snprintf(version_string, sizeof(version_string), "%s+ (SVN r%s) #%d", full_version, rev_id, build);
+        }
+    } else {
+        unsigned char checksum_file[1024];
+        snprintf(checksum_file, sizeof(checksum_file), "%s%s", checksum_prefix, full_version);
+        if (read_file_info(checksum_file) < 0 || file_info_u <= 0) {
+            // no data to compare
+            read_build(build_file, &build);
+            build++;
+            write_build(build_file, build);
+            sprintf(version_string, "%s #%d", full_version, build);
+        } else if (has_checksum_changed()) {
+            read_build(build_file, &build);
+            build++;
+            write_build(build_file, build);
+            sprintf(version_string, "%s #%d", full_version, build);
+        } else {
+            snprintf(version_string, sizeof(version_string), "%s", full_version);
+            write_build(build_file, 0);
         }
     }
 
