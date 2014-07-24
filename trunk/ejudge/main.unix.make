@@ -390,7 +390,7 @@ subdir_distclean :
 pristine : distclean
 	rm -f configure
 
-version.c: revinfo $(HFILES) $(CFILES) $(OTHERFILES)
+version.c: newrevinfo $(HFILES) $(CFILES) $(OTHERFILES)
 	./newrevinfo
 #	#@REVINFO_NO_COMMIT=1 ./revinfo -S -C -p -d db/versions -r db/revisions $(HFILES) $(CFILES) $(OTHERFILES)
 version.o: version.c
