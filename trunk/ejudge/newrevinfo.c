@@ -260,7 +260,7 @@ checksum_file(const unsigned char *name, unsigned char *buf, int size)
         sum += c;
     }
     fclose(f); f = NULL;
-    snprintf(buf, size, "%llx", sum);
+    snprintf(buf, size, "%016llx", sum);
     return 0;
 }
 
