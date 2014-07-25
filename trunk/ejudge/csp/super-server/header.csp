@@ -10,8 +10,23 @@
 %>serve-control: <s:v checkexpr="" value="phr->login" />@<s:v value="phr->http_host" /><s:v sep=", " checkexpr=" > 0" value="phr->contest_id" /><s:v sep=", " checkexpr="" value="subtitle" /><%
     }
 %></title>
+
+<link rel="stylesheet" href='<s:config name="style-prefix" />ejudge3_ss.css' type="text/css" />
+
+<!--[if (IE)]>
+<style type="text/css">
+#container {
+	background: white;
+}
+
+</style>
+<![endif]-->
+
 </head>
 <body>
+<div id="main-cont"><div id="container">
+<div id="header">
+<div id="logo"><img src="<s:config name="style-prefix" />logo3.png" alt="logo"/></div>
 <h1><%
     if (title) {
 %><s:v escape="false" value="title" /><%
@@ -19,3 +34,4 @@
 %>serve-control: <s:v checkexpr="" value="phr->login" />@<s:v value="phr->http_host" /><s:v sep=", " checkexpr=" > 0" value="phr->contest_id" /><s:v sep=", " checkexpr="" value="subtitle" /><%
     }
 %></h1>
+</div>

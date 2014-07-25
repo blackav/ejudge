@@ -22,9 +22,36 @@
 %><%@include "header.csp"
 %>
 
-<h2>Controls</h2>
+<div class="h2-long" style="margin-top: 0"><h2>Controls</h2></div>
 
-<table border="0">
+<div class="icons" style="margin-top: -25px; height: 57px; border-bottom: 1px solid rgb(207, 207, 207); margin-bottom: 0;">
+<div style="float: left;">
+   
+    <s:a ac="user-browse-page"><img src="<s:config name="style-prefix" />user_sh.png" alt="User editor" /></s:a>
+    <s:a ac="user-map-main-page"><img src="<s:config name="style-prefix" />mapping_sh.png" alt="System user mapping" /></s:a>
+	<s:a ac="caps-main-page"><img src="<s:config name="style-prefix" />capabilities_sh.png" alt="Global user capabilities" /></s:a>
+    <s:a ac="group-browse-page"><img src="<s:config name="style-prefix" />group_sh.png" alt="Group editor" /></s:a>
+
+    <s:a ac="create-contest"><img src="<s:config name="style-prefix" />new_cont_sh.png" alt="Create new contest" /></s:a>
+	
+	<s:a ac="new-main-page"><img src="<s:config name="style-prefix" />refresh_sh.png" alt="Refresh" /></s:a>
+</div>
+<div class="icons-menu-txt" style="margin-top: 5px;">
+ <%
+    if (phr->ss->edited_cnts) {
+%><s:a ac="edit-current-contest"><s:tr>[Edit current contest]</s:tr></s:a><%
+    }
+%>
+<s:a ac="create-new-contest-page"><s:tr>[Create new contest (New interface)]</s:tr></s:a>
+<%
+    if (phr->ss->edited_cnts) {
+%><s:a ac="edit-contest-page-2"><s:tr>[Edit current contest (New interface)]</s:tr></s:a><%
+    }
+%>
+</div>
+</div>
+
+<table border="0" style="margin-left: -20px; margin-bottom: -25px; margin-top: 1px;">
     <tr>
         <td>
             <s:form>
@@ -62,34 +89,9 @@
     </tr>
 </table>
 
-<table border="0">
-    <tr><td><s:a ac="browse-problem-packages"><s:tr>Problem editor</s:tr></s:a></td></tr>
-    <tr><td><s:a ac="new-main-page"><s:tr>New main page</s:tr></s:a></td></tr>
-    <tr><td><s:a ac="user-browse-page"><s:tr>User editor</s:tr></s:a></td></tr>
-    <tr><td><s:a ac="user-map-main-page"><s:tr>System user mapping</s:tr></s:a></td></tr>
-    <tr><td><s:a ac="caps-main-page"><s:tr>Global user capabilities</s:tr></s:a></td></tr>
-    <tr><td><s:a ac="group-browse-page"><s:tr>Group editor</s:tr></s:a></td></tr>
+<div class="h2-long"><h2>Contests</h2></div>
 
-    <tr><td><s:a ac="create-contest"><s:tr>Create new contest</s:tr></s:a></td></tr>
-<%
-    if (phr->ss->edited_cnts) {
-%><tr><td><s:a ac="edit-current-contest"><s:tr>Edit current contest</s:tr></s:a></td></tr><%
-    }
-%>
-
-    <tr><td><s:a ac="create-new-contest-page"><s:tr>Create new contest (New interface)</s:tr></s:a></td></tr>
-<%
-    if (phr->ss->edited_cnts) {
-%><tr><td><s:a ac="edit-contest-page-2"><s:tr>Edit current contest (New interface)</s:tr></s:a></td></tr><%
-    }
-%>
-
-    <tr><td><s:a ac="new-main-page"><s:tr>Refresh</s:tr></s:a></td></tr>
-</table>
-
-<h2>Contests</h2>
-
-<table border="1">
+<table class="table" border="1">
     <tr>
         <th>N</th>
         <th>Id</th>

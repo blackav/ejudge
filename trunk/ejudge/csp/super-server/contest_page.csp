@@ -19,55 +19,55 @@
 %><%@include "header.csp"
 %>
 
-<table border="0">
-    <tr>
+<div class="icons-1">
+   
 <s:url name="ContestPageUrl" ac="new-contest-page">
     <s:param name="contest_id" value="phr->contest_id" />
 </s:url>
-        <td>[<s:a ac="new-main-page">Main page</s:a>]</td>
-        <td>[<s:a url="ContestPageUrl">Refresh</s:a>]</td>
-        <td>[<s:a ac="logout">Logout</s:a>]</td>
-    </tr>
-</table>
+        <s:a ac="new-main-page"><img src="<s:config name="style-prefix" />back_sh.png" alt="Main page" /></s:a>
+        <s:a url="ContestPageUrl"><img src="<s:config name="style-prefix" />refresh_sh.png" alt="Refresh" /></s:a>
+       <s:a ac="logout"><img src="<s:config name="style-prefix" />logout_sh.png" alt="Logout"/></s:a>
+    
+</div>
 
-<h2>Detailed information about contest <s:v value="phr->contest_id" /></h2>
+<div class="h2-long" style="margin-top: 0"><h2>Detailed information about contest <s:v value="phr->contest_id" /></h2></div>
 
-<table border="0">
-    <tr><td><s:tr>Contest ID</s:tr>:</td><td><s:v value="cnts->id" /></td></tr>
+<table class="table-info" border="0">
+    <tr><td><s:tr>Contest ID</s:tr>:</td><td><s:v value="cnts->id" /></td><td></td></tr>
 <% if (cnts->ext_id && *cnts->ext_id) { %>
-    <tr><td><s:tr>External ID</s:tr>:</td><td><s:v value="cnts->ext_id" /></td></tr>
+    <tr><td><s:tr>External ID</s:tr>:</td><td><s:v value="cnts->ext_id" /></td><td></td></tr>
 <% } %>
-    <tr><td><s:tr>Name</s:tr>:</td><td><s:v checkexpr="" value="cnts->name" /></td></tr>
+    <tr><td><s:tr>Name</s:tr>:</td><td><s:v checkexpr="" value="cnts->name" /></td><td></td></tr>
 <% if (cnts->name_en && *cnts->name_en) { %>
-    <tr><td><s:tr>Name (English)</s:tr>:</td><td><s:v value="cnts->name_en" /></td></tr>
+    <tr><td><s:tr>Name (English)</s:tr>:</td><td><s:v value="cnts->name_en" /></td><td></td></tr>
 <% } %>
 <% if (cnts->main_url && *cnts->main_url) { %>
-    <tr><td><s:tr>Main URL</s:tr>:</td><td><tt><a href='<s:v escape="false" value="cnts->main_url" />' target="_blank"><s:v escape="false" value="cnts->main_url" /></a></tt></td></tr>
+    <tr><td><s:tr>Main URL</s:tr>:</td><td><tt><a href='<s:v escape="false" value="cnts->main_url" />' target="_blank"><s:v escape="false" value="cnts->main_url" /></a></tt></td><td></td></tr>
 <% } %>
 <% if (cnts->keywords && *cnts->keywords) { %>
-    <tr><td><s:tr>Keywords</s:tr>:</td><td><tt><s:v value="cnts->keywords" /></tt></td></tr>
+    <tr><td><s:tr>Keywords</s:tr>:</td><td><tt><s:v value="cnts->keywords" /></tt></td><td></td></tr>
 <% } %>
 <% if (cnts->root_dir && *cnts->root_dir) { %>
-    <tr><td><s:tr>Contest directory</s:tr>:</td><td><tt><s:v value="cnts->root_dir" /></tt></td></tr>
+    <tr><td><s:tr>Contest directory</s:tr>:</td><td><tt><s:v value="cnts->root_dir" /></tt></td><td></td></tr>
 <% } %>
 <% if (cnts->conf_dir && *cnts->conf_dir) { %>
-    <tr><td><s:tr>Contest configuration directory</s:tr>:</td><td><tt><s:v value="cnts->conf_dir" /></tt></td></tr>
+    <tr><td><s:tr>Contest configuration directory</s:tr>:</td><td><tt><s:v value="cnts->conf_dir" /></tt></td><td></td></tr>
 <% } %>
 
-    <tr><th colspan="2" align="center"><s:tr>Contest Flags</s:tr></th></tr>
+    <tr><td colspan="3" align="center" style="font-weight: bold;"><s:tr>Contest Flags</s:tr></td></tr>
 <% if (cnts->autoregister) { %>
-    <tr><td><s:tr>Registration mode</s:tr>:</td><td>Free registration</td></tr>
+    <tr><td><s:tr>Registration mode</s:tr>:</td><td>Free registration</td><td></td></tr>
 <% } %>
 <% if (cnts->disable_team_password) { %>
-    <tr><td><s:tr>Disable separate team password</s:tr>?</td><td><s:vb value="cnts->disable_team_password" /></td></tr>
+    <tr><td><s:tr>Disable separate team password</s:tr>?</td><td><s:vb value="cnts->disable_team_password" /></td><td></td></tr>
 <% } %>
 <% if (!cnts->managed) { %>
-    <tr><td><s:tr>Contest management</s:tr>:</td><td><font color="red">Disabled</font></td></tr>
+    <tr><td><s:tr>Contest management</s:tr>:</td><td><font color="red">Disabled</font></td><td></td></tr>
 <% } %>
 <% if (!cnts->run_managed && cnts->old_run_managed) { %>
-    <tr><td><s:tr>Submit testing mode</s:tr>:</td><td><font color="yellow">Legacy mode (super-serve/ej-run)</font></td></tr>
+    <tr><td><s:tr>Submit testing mode</s:tr>:</td><td><font color="yellow">Legacy mode (super-serve/ej-run)</font></td><td></td></tr>
 <% } else if (!cnts->run_managed && !cnts->old_run_managed) { %>
-    <tr><td><s:tr>Submit testing mode</s:tr>:</td><td><font color="red">Unmanaged</font></td></tr>
+    <tr><td><s:tr>Submit testing mode</s:tr>:</td><td><font color="red">Unmanaged</font></td><td></td></tr>
 <% } %>
 <!--  ejbytebool_t clean_users; -->
     <tr>
@@ -101,109 +101,127 @@
 <% if (cnts->personal) { %>
     <tr>
         <td><s:tr>The contest is personal</s:tr>?</td>
-        <td><s:vb value="cnts->personal" /></td>
+        <td><s:vb value="cnts->personal" /></td> 
+        <td></td>
     </tr>
 <% } %>
 <% if (cnts->simple_registration) { %>
     <tr>
         <td><s:tr>Enable simple registration (no email)</s:tr>?</td>
         <td><s:vb value="cnts->simple_registration" /></td>
+        <td></td>
     </tr>
 <% } %>
 <% if (cnts->send_passwd_email) { %>
     <tr>
         <td><s:tr>Send e-mail with password anyway</s:tr>?</td>
         <td><s:vb value="cnts->send_passwd_email" /></td>
+        <td></td>
     </tr>
 <% } %>
 <% if (cnts->assign_logins) { %>
     <tr>
         <td><s:tr>Auto-assign logins</s:tr>?</td>
         <td><s:vb value="cnts->assign_logins" /></td>
+        <td></td>
     </tr>
 <% } %>
 <% if (cnts->force_registration) { %>
     <tr>
         <td><s:tr>Force contest registration</s:tr>?</td>
         <td><s:vb value="cnts->force_registration" /></td>
+        <td></td>
     </tr>
 <% } %>
 <% if (cnts->disable_name) { %>
     <tr>
         <td><s:tr>Disable &quot;Name&quot; field</s:tr>?</td>
         <td><s:vb value="cnts->disable_name" /></td>
+        <td></td>
     </tr>
 <% } %>
 <% if (cnts->enable_password_recovery) { %>
     <tr>
         <td><s:tr>Enable password restoration</s:tr>?</td>
         <td><s:vb value="cnts->enable_password_recovery" /></td>
+        <td></td>
     </tr>
 <% } %>
 <% if (cnts->exam_mode) { %>
     <tr>
         <td><s:tr>Examination mode</s:tr>?</td>
         <td><s:vb value="cnts->exam_mode" /></td>
+        <td></td>
     </tr>
 <% } %>
 <% if (cnts->disable_password_change) { %>
     <tr>
         <td><s:tr>Disable password change</s:tr>?</td>
         <td><s:vb value="cnts->disable_password_change" /></td>
+        <td></td>
     </tr>
 <% } %>
 <% if (cnts->disable_locale_change) { %>
     <tr>
         <td><s:tr>Disable locale change</s:tr>?</td>
         <td><s:vb value="cnts->disable_locale_change" /></td>
+        <td></td>
     </tr>
 <% } %>
 <% if (cnts->allow_reg_data_edit) { %>
     <tr>
         <td><s:tr>Allow edit registration data during contest</s:tr>?</td>
         <td><s:vb value="cnts->allow_reg_data_edit" /></td>
+        <td></td>
     </tr>
 <% } %>
 <% if (cnts->disable_member_delete) { %>
     <tr>
         <td><s:tr>Disable team member deletion</s:tr>?</td>
         <td><s:vb value="cnts->disable_member_delete" /></td>
+        <td></td>
     </tr>
 <% } %>
 <% if (cnts->ready) { %>
     <tr>
         <td><s:tr>Contest is ready for testing</s:tr>?</td>
         <td><s:vb value="cnts->ready" /></td>
+        <td></td>
     </tr>
 <% } %>
 <% if (cnts->reg_deadline > 0) { %>
     <tr>
         <td><s:tr>Registration deadline</s:tr>:</td>
         <td><s:v value="cnts->reg_deadline" /></td>
+        <td></td>
     </tr>
 <% } %>
 <% if (cnts->sched_time > 0) { %>
     <tr>
         <td><s:tr>Contest start date</s:tr>:</td>
         <td><s:v value="cnts->sched_time" /></td>
+        <td></td>
     </tr>
 <% } %>
 <% if (cnts->open_time > 0) { %>
     <tr>
         <td><s:tr>Virtual contest open date</s:tr>:</td>
         <td><s:v value="cnts->open_time" /></td>
+        <td></td>
     </tr>
 <% } %>
 <% if (cnts->close_time > 0) { %>
     <tr>
         <td><s:tr>Virtual contest close date</s:tr>:</td>
         <td><s:v value="cnts->close_time" /></td>
+        <td></td>
     </tr>
 <% } %>
 <% if (cnts->update_time > 0) { %>
     <tr>
         <td><s:tr>Contest update time</s:tr>:</td>
         <td><s:v value="cnts->update_time" /></td>
+        <td></td>
     </tr>
 <% } %>
 
@@ -227,42 +245,49 @@
     <tr>
         <td>Registration email sender (From: field):</td>
         <td><tt><s:v value="cnts->register_email" /></td>
+        <td></td>
     </tr>
 <% } %>
 <% if (cnts->register_url && *cnts->register_url) { %>
     <tr>
         <td>URL to complete registration:</td>
         <td><tt><a href='<s:v value="cnts->register_url" />' target="_blank"><s:v value="cnts->register_url" /></a></td>
+        <td></td>
     </tr>
 <% } %>
 <% if (cnts->team_url && *cnts->team_url) { %>
     <tr>
         <td>URL for the 'team' ('client') CGI program:</td>
         <td><tt><a href='<s:v value="cnts->team_url" />' target="_blank"><s:v value="cnts->team_url" /></a></td>
+        <td></td>
     </tr>
 <% } %>
 <% if (cnts->standings_url && *cnts->standings_url) { %>
     <tr>
         <td>URL for the current standings:</td>
         <td><tt><a href='<s:v value="cnts->standings_url" />' target="_blank"><s:v value="cnts->standings_url" /></a></td>
+        <td></td>
     </tr>
 <% } %>
 <% if (cnts->problems_url && *cnts->problems_url) { %>
     <tr>
         <td>URL for the problemset:</td>
         <td><tt><a href='<s:v value="cnts->problems_url" />' target="_blank"><s:v value="cnts->problems_url" /></a></td>
+        <td></td>
     </tr>
 <% } %>
 <% if (cnts->logo_url && *cnts->logo_url) { %>
     <tr>
         <td>URL for the contest logo:</td>
         <td><tt><s:v value="cnts->logo_url" /></tt><img alt="logo" src='<s:v value="cnts->logo_url" />' /></td>
+        <td></td>
     </tr>
 <% } %>
 <% if (cnts->css_url && *cnts->css_url) { %>
     <tr>
         <td>URL for the contest CSS:</td>
         <td><tt><a href='<s:v value="cnts->css_url" />' target="_blank"><s:v value="cnts->css_url" /></a></td>
+        <td></td>
     </tr>
 <% } %>
 
@@ -270,12 +295,14 @@
     <tr>
         <td>Auto-created logins template:</td>
         <td><tt><s:v value="cnts->login_template" /></tt></td>
+        <td></td>
     </tr>
 <% } %>
 <% if (cnts->login_template_options && *cnts->login_template_options) { %>
     <tr>
         <td>Auto-created logins options:</td>
         <td><tt><s:v value="cnts->login_template_options" /></tt></td>
+        <td></td>
     </tr>
 <% } %>
 
@@ -290,18 +317,21 @@
     <tr>
         <td>Registration letter subject:</td>
         <td><tt><s:v value="cnts->register_subject" /></tt></td>
+        <td></td>
     </tr>
 <% } %>
 <% if (cnts->register_subject_en && *cnts->register_subject_en) { %>
     <tr>
         <td>Registration letter subject (en):</td>
         <td><tt><s:v value="cnts->register_subject_en" /></tt></td>
+        <td></td>
     </tr>
 <% } %>
 <% if (cnts->register_email_file && *cnts->register_email_file) { %>
     <tr>
         <td>Registration letter template file:</td>
         <td><tt><s:v value="cnts->register_email_file" /></tt></td>
+        <td></td>
     </tr>
 <% } %>
 
@@ -325,18 +355,21 @@
     <tr>
         <td>Check failed e-mail notification address:</td>
         <td><a href='mailto:<s:v value="cnts->cf_notify_email" />'><tt><s:v value="cnts->cf_notify_email" /></tt></a></td>
+        <td></td>
     </tr>
 <% } %>
 <% if (cnts->clar_notify_email && *cnts->clar_notify_email) { %>
     <tr>
         <td>Clar request e-mail notification address:</td>
         <td><a href='mailto:<s:v value="cnts->clar_notify_email" />'><tt><s:v value="cnts->clar_notify_email" /></tt></a></td>
+        <td></td>
     </tr>
 <% } %>
 <% if (cnts->daily_stat_email && *cnts->daily_stat_email) { %>
     <tr>
         <td>Daily statistics email:</td>
         <td><a href='mailto:<s:v value="cnts->daily_stat_email" />'><tt><s:v value="cnts->daily_stat_email" /></tt></a></td>
+        <td></td>
     </tr>
 <% } %>
 
@@ -350,12 +383,14 @@
     <tr>
         <td>Contest to share users with:</td>
         <td><tt><s:v value="cnts->user_contest" /></tt></td>
+        <td></td>
     </tr>
 <% } %>
 <% if (cnts->default_locale && *cnts->default_locale) { %>
     <tr>
         <td>Default locale:</td>
         <td><tt><s:v value="cnts->default_locale" /></tt></td>
+        <td></td>
     </tr>
 <% } %>
 
@@ -363,24 +398,28 @@
     <tr>
         <td>The directory permissions (octal):</td>
         <td><tt><s:v value="cnts->dir_mode" /></tt></td>
+        <td></td>
     </tr>
 <% } %>
 <% if (cnts->dir_group && *cnts->dir_group) { %>
     <tr>
         <td>The directory group:</td>
         <td><tt><s:v value="cnts->dir_group" /></tt></td>
+        <td></td>
     </tr>
 <% } %>
 <% if (cnts->file_mode && *cnts->file_mode) { %>
     <tr>
         <td>The file permissions (octal):</td>
         <td><tt><s:v value="cnts->file_mode" /></tt></td>
+        <td></td>
     </tr>
 <% } %>
 <% if (cnts->file_group && *cnts->file_group) { %>
     <tr>
         <td>The file group:</td>
         <td><tt><s:v value="cnts->file_group" /></tt></td>
+		<td></td>
     </tr>
 <% } %>
 
@@ -572,9 +611,11 @@
   fprintf(f, "</tr>\n");
 -->
 
-<h2>Configuration files</h2>
+<br />
+<br />
+<div class="h2-long" style="margin-top: 0"><h2>Configuration files</h2></div>
 
-<table border="0">
+<table class="table-info" border="0">
     <tr>
         <td>General contest settings:</td>
         <td><tt><s:v value="xml_path" /></tt></td>
