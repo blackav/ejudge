@@ -3041,18 +3041,6 @@ cmd_http_request(
     bptr += param_sizes[i] + 1;
   }
 
-  if ((r = get_peer_local_user(p)) < 0) {
-    send_reply(p, r);
-    xfree(phr);
-    return;
-  }
-
-  if (p->client_fds[0] < 0 || p->client_fds[1] < 0) {
-    err("cmd_main_page: two file descriptors expected");
-    xfree(phr);
-    return send_reply(p, -SSERV_ERR_PROTOCOL_ERROR);
-  }
-
   phr->arg_num = pkt->arg_num;
   phr->args = args;
   phr->env_num = pkt->env_num;
@@ -3061,20 +3049,38 @@ cmd_http_request(
   phr->param_names = param_names;
   phr->param_sizes = my_param_sizes;
   phr->params = params;
-
-  phr->user_id = p->user_id;
-  phr->priv_level = p->priv_level;
-  phr->login = p->login;
-  phr->name = p->name;
-  phr->html_login = p->html_login;
-  phr->html_name = p->html_name;
-  phr->ip = p->ip;
-  phr->ssl_flag = p->ssl;
   phr->system_login = userlist_login;
   phr->userlist_clnt = userlist_clnt;
-
-  phr->ss = sid_state_get(p->cookie, &p->ip, p->user_id, p->login, p->name);
   phr->config = config;
+
+  const unsigned char *s = 0;
+  if (hr_cgi_param(phr, "login_page", &s) > 0) {
+    phr->anonymous_mode = 1;
+  }
+
+  if (!phr->anonymous_mode) {
+    if ((r = get_peer_local_user(p)) < 0) {
+      send_reply(p, r);
+      xfree(phr);
+      return;
+    }
+
+    if (p->client_fds[0] < 0 || p->client_fds[1] < 0) {
+      err("cmd_main_page: two file descriptors expected");
+      xfree(phr);
+      return send_reply(p, -SSERV_ERR_PROTOCOL_ERROR);
+    }
+
+    phr->user_id = p->user_id;
+    phr->priv_level = p->priv_level;
+    phr->login = p->login;
+    phr->name = p->name;
+    phr->html_login = p->html_login;
+    phr->html_name = p->html_name;
+    phr->ip = p->ip;
+    phr->ssl_flag = p->ssl;
+    phr->ss = sid_state_get(p->cookie, &p->ip, p->user_id, p->login, p->name);
+  }
 
   super_html_http_request(&out_t, &out_z, phr);
   if (phr->suspend_reply > 0) {

@@ -328,6 +328,11 @@ static int client_action;
 static unsigned char hidden_vars[1024];
 static ej_cookie_t client_key;
 
+static void operation_status_page(int userlist_code,
+                                  int super_code,
+                                  const unsigned char *format,
+                                  ...) __attribute__((noreturn));
+
 static void
 make_self_url(void)
 {
@@ -532,10 +537,42 @@ invalid_login(void)
   exit(0);
 }
 
-static void display_login_page(void) __attribute__((noreturn));
+static void read_state_params(void);
+static void display_login_page(char *argv[]) __attribute__((noreturn));
 static void
-display_login_page(void)
+display_login_page(char *argv[])
 {
+  int param_num, i, r;
+  unsigned char **param_names, **params;
+  size_t *param_sizes;
+
+  read_state_params();
+  open_super_server();
+
+  param_num = cgi_get_param_num();
+  XALLOCAZ(param_names, param_num + 1);
+  XALLOCAZ(param_sizes, param_num + 1);
+  XALLOCAZ(params, param_num + 1);
+  for (i = 0; i < param_num; i++) {
+    cgi_get_nth_param_bin(i, &param_names[i], &param_sizes[i], &params[i]);
+  }
+
+  ++param_num;
+  param_names[i] = "login_page";
+  param_sizes[i] = 1;
+  params[i] = "1";
+
+  r = super_clnt_http_request(super_serve_fd, 1, (unsigned char**) argv,
+                              (unsigned char **) environ,
+                              param_num, param_names,
+                              param_sizes, params, 0, 0);
+  if (r < 0) {
+    operation_status_page(-1, -1, "Invalid request");
+  }
+
+  exit(0);
+
+  /*
   client_put_header(stdout, 0, 0, config->charset, 1, 0,
                     NULL_CLIENT_KEY, "serve-control: %s", http_host);
 
@@ -558,6 +595,7 @@ display_login_page(void)
          _("Login"), _("Password"), _("Submit"));
   client_put_footer(stdout, 0);
   exit(0);
+  */
 }
 
 static unsigned char * hyperref(unsigned char *, size_t,
@@ -686,10 +724,6 @@ parse_contest_id(void)
   return v;
 }
 
-static void operation_status_page(int userlist_code,
-                                  int super_code,
-                                  const unsigned char *format,
-                                  ...) __attribute__((noreturn));
 static void
 operation_status_page(int userlist_code,
                       int super_code,
@@ -741,7 +775,7 @@ operation_status_page(int userlist_code,
 }
 
 static void
-authentificate(void)
+authentificate(char *argv[])
 {
   int r;
   unsigned char buf[512];
@@ -772,7 +806,7 @@ authentificate(void)
 
   user_login = cgi_param("login");
   user_password = cgi_param("password");
-  if (!user_login || !user_password) display_login_page();
+  if (!user_login || !user_password) display_login_page(argv);
 
   open_userlist_server();
   r = userlist_clnt_priv_login(userlist_conn, ULS_PRIV_LOGIN, &user_ip,
@@ -2236,7 +2270,7 @@ main(int argc, char *argv[])
     client_access_denied(config->charset, 0);
   }
 
-  authentificate();
+  authentificate(argv);
   read_state_params();
 
   if (client_action >= 0 && client_action < SSERV_CMD_LAST && super_proto_is_http_request[client_action]) {

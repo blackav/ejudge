@@ -6790,6 +6790,7 @@ static const int external_action_aliases[SSERV_CMD_LAST] =
 static const unsigned char * const external_action_names[SSERV_CMD_LAST] =
 {
   [SSERV_CMD_BROWSE_PROBLEM_PACKAGES] = "problem_packages_page",
+  [SSERV_CMD_LOGIN_PAGE] = "login_page",
   [SSERV_CMD_NEW_MAIN_PAGE] = "main_page",
   [SSERV_CMD_NEW_CONTEST_PAGE] = "contest_page",
 };
@@ -6907,22 +6908,26 @@ super_html_http_request(
   if (rs) *rs = 0;
   phr->context_url = context_url;
 
-  parse_cookie(phr);
-  if (parse_action(phr) < 0) {
-    r = -S_ERR_INV_OPER;
+  if (phr->anonymous_mode) {
+    phr->action = SSERV_CMD_LOGIN_PAGE;
   } else {
-    r = 0;
-  }
-
-  if (!r) {
-    if ((r = ss_cgi_param(phr, "SID", &s)) < 0) {
-      r = -S_ERR_INV_SID;
-    }
-    if (r > 0) {
+    parse_cookie(phr);
+    if (parse_action(phr) < 0) {
+      r = -S_ERR_INV_OPER;
+    } else {
       r = 0;
-      if (sscanf(s, "%llx%n", &phr->session_id, &n) != 1
-          || s[n] || !phr->session_id) {
+    }
+
+    if (!r) {
+      if ((r = ss_cgi_param(phr, "SID", &s)) < 0) {
         r = -S_ERR_INV_SID;
+      }
+      if (r > 0) {
+        r = 0;
+        if (sscanf(s, "%llx%n", &phr->session_id, &n) != 1
+            || s[n] || !phr->session_id) {
+          r = -S_ERR_INV_SID;
+        }
       }
     }
   }

@@ -63,6 +63,7 @@ struct http_request_info
   int role;
   int action;
   unsigned char role_name[32];
+  int anonymous_mode; // not authentificated
 
   int priv_level;
   int user_id;

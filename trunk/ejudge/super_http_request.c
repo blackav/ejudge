@@ -1044,6 +1044,7 @@ const unsigned char super_proto_is_http_request[] =
   [SSERV_CMD_CREATE_CONTEST_BATCH_ACTION] = 1,
   [SSERV_CMD_IMPORT_CONTEST_FROM_POLYGON_PAGE] = 1,
 
+  [SSERV_CMD_LOGIN_PAGE] = 1,
   [SSERV_CMD_NEW_MAIN_PAGE] = 1,
   [SSERV_CMD_NEW_CONTEST_PAGE] = 1,
 };
