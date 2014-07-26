@@ -1,0 +1,40 @@
+<%
+/* $Id$ */
+%><%@include "includes.csp"
+%><%@set getter_name = "csp_get_login_page"
+%><%@set ac_prefix = "SSERV_CMD_"
+%><%@page csp_view_login_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "stdvars.csp"
+%><%
+    const unsigned char *title = 0;
+    unsigned char title_buf[1024];
+    const unsigned char *subtitle = 0;
+
+    snprintf(title_buf, sizeof(title_buf), "serve-control: %s", phr->http_host);
+    title = title_buf;
+%><%@include "header.csp"
+%>
+
+<s:form>
+    <table>
+        <tr>
+            <td><s:tr>Login</s:tr></td>
+            <td><s:textfield name="login" size="16" value="" /></td>
+        </tr>
+        <tr>
+            <td><s:tr>Password</s:tr></td>
+            <td><s:password name="password" size="16" value="" /></td>
+        </tr>
+        <tr>
+            <td>&nbsp;</td>
+            <td><s:submit name="submit" label="Log in" /></td>
+        </tr>
+    </table>
+</s:form>
+
+<%@include "footer.csp"
+%><%
+  l10n_setlocale(0);
+//cleanup:
+  html_armor_free(&ab);
+%>
