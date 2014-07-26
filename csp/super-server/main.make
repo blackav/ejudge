@@ -55,13 +55,13 @@ po : super-server.po
 super-server.po : $(CFILES)
 	${XGETTEXT} -d ejudge --no-location --foreign-user  -k_ -k__ -s -o $@ *.c
 
-main_page.so : csp_main_page.c I_main_page.c
+csp_main_page.so : csp_main_page.c I_main_page.c
 	$(CC) $(CCOMPFLAGS) ${WPTRSIGN} $(LDFLAGS) $^ -o $@
 
-contest_page.c : contest_page.csp includes.csp stdvars.csp header.csp footer.csp
-login_page.c : main_page.csp includes.csp stdvars.csp header.csp footer.csp
-main_page.c : main_page.csp includes.csp stdvars.csp header.csp footer.csp
-problem_packages_page.c : problem_packages_page.csp includes.csp stdvars.csp header.csp footer.csp
+csp_contest_page.c : contest_page.csp includes.csp stdvars.csp header.csp footer.csp
+csp_login_page.c : main_page.csp includes.csp stdvars.csp header.csp footer.csp
+csp_main_page.c : main_page.csp includes.csp stdvars.csp header.csp footer.csp
+csp_problem_packages_page.c : problem_packages_page.csp includes.csp stdvars.csp header.csp footer.csp
 
 csp_%.c : %.csp
 	../../ej-page-gen -o $@ -d $*.ds $<
