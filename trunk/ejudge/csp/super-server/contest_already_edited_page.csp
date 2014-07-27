@@ -1,0 +1,56 @@
+<%
+/* $Id$ */
+%><%@include "includes.csp"
+%><%@set getter_name = "csp_get_contest_already_edited_page"
+%><%@set ac_prefix = "SSERV_CMD_"
+%><%@page csp_view_contest_already_edited_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "stdvars.csp"
+%><%
+    const unsigned char *title = 0;
+    const unsigned char *subtitle = "another contest is being edited";
+    opcap_t caps = 0;
+
+    if (phr->priv_level != PRIV_LEVEL_ADMIN) FAIL(SSERV_ERR_PERMISSION_DENIED);
+    if (ejudge_cfg_opcaps_find(phr->config, phr->login, &caps) < 0) FAIL(SSERV_ERR_PERMISSION_DENIED);
+    if (opcaps_check(caps, OPCAP_EDIT_CONTEST) < 0) FAIL(SSERV_ERR_PERMISSION_DENIED);
+
+    if (!phr->ss->edited_cnts) {
+        // ???
+    }
+
+    const struct contest_desc *c0 = phr->ss->edited_cnts;
+    const struct contest_desc *c1 = 0;
+    contests_get(phr->contest_id, &c1);
+%><%@include "header.csp"
+%>
+
+<h2>Another contest opened for editing</h2>
+
+<p>You have already opened another contest (<s:v value="c0->id" /><s:v checkexpr="" sep=", " value="c0->name" />) for editing.
+Editing of several contests at a time is not supported.
+You may either continue suspended editing of contest <s:v value="c0->id" /> or cancel that editing and<%
+  if (!c1) {
+%> create a new contest<%
+  } else {
+%> start editing of contest <s:v value="c1->id" /><s:v checkexpr="" sep=", " value="c1->name" /><%
+  }
+%>.</p>
+
+<table border="0">
+    <tr><td><s:form><s:submit ac="edited-cnts-back" label="Back" /></s:form></td><td><s:tr>Return to the main page</s:tr></td></tr>
+    <tr><td><s:form><s:submit ac="edited-cnts-continue" label="Continue" /><s:hidden name="new_edit" value="1" /></s:form></td><td><s:tr>Continue suspended editing</s:tr></td></tr>
+    <tr><td><s:form>
+<!--  if (new_edit_mode) html_hidden(out_f, "new_edit", "1");
+  if (contest_id > 0)
+    html_hidden(out_f, "contest_id", "%d", contest_id);
+-->
+<s:submit ac="edited-cnts-start-new" label="Start new" /></s:form></td><td><s:tr>Start new editing</s:tr> <font color=\"red\"><s:tr>All changes to the old contest will be lost!</s:tr></font></td></tr>
+</table>
+
+
+<%@include "footer.csp"
+%><%
+  l10n_setlocale(0);
+cleanup:
+  html_armor_free(&ab);
+%>
