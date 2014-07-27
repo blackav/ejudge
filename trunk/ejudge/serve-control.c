@@ -856,17 +856,11 @@ action_view_contest(int cmd)
   case SSERV_CMD_VIEW_RUN_LOG:
     extra_str = ", run log";
     break;
-  case SSERV_CMD_VIEW_CONTEST_XML:
-    extra_str = ", contest.xml";
-    break;
   case SSERV_CMD_EDIT_CONTEST_XML:
     extra_str = ", editing contest.xml";
     break;
   case SSERV_CMD_EDIT_SERVE_CFG_PROB:
     extra_str = ", editing serve.cfg";
-    break;
-  case SSERV_CMD_VIEW_SERVE_CFG:
-    extra_str = ", serve.cfg";
     break;
   case SSERV_CMD_CHECK_TESTS:
     extra_str = ", checking contest settings";
@@ -2279,12 +2273,6 @@ main(int argc, char *argv[])
   switch (client_action) {
   case SSERV_CMD_VIEW_RUN_LOG:
     action_view_contest(SSERV_CMD_VIEW_RUN_LOG);
-    break;
-  case SSERV_CMD_VIEW_CONTEST_XML:
-    action_view_contest(SSERV_CMD_VIEW_CONTEST_XML);
-    break;
-  case SSERV_CMD_VIEW_SERVE_CFG:
-    action_view_contest(SSERV_CMD_VIEW_SERVE_CFG);
     break;
 
   case SSERV_CMD_OPEN_CONTEST:

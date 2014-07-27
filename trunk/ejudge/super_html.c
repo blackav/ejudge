@@ -175,17 +175,6 @@ super_html_log_page(
     progname = "run";
     refresh_action = SSERV_CMD_VIEW_RUN_LOG;
     break;
-  case SSERV_CMD_VIEW_CONTEST_XML:
-    contests_make_path(log_file_path, sizeof(log_file_path), cnts->id);
-    progname = "contest.xml";
-    refresh_action = SSERV_CMD_VIEW_CONTEST_XML;
-    break;
-  case SSERV_CMD_VIEW_SERVE_CFG:
-    snprintf(log_file_path, sizeof(log_file_path),
-             "%s/conf/serve.cfg", cnts->root_dir);
-    progname = "serve.cfg";
-    refresh_action = SSERV_CMD_VIEW_SERVE_CFG;
-    break;
   default:
     abort();
   }
@@ -203,10 +192,6 @@ super_html_log_page(
   switch (cmd) {
   case SSERV_CMD_VIEW_RUN_LOG:
     fprintf(f, "<h2><tt>%s</tt> log file</h2>\n", progname);
-    break;
-  case SSERV_CMD_VIEW_CONTEST_XML:
-  case SSERV_CMD_VIEW_SERVE_CFG:
-    fprintf(f, "<h2><tt>%s</tt> configuration file</h2>\n", progname);
     break;
   }
 
