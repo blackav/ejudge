@@ -6795,6 +6795,7 @@ static const unsigned char * const external_action_names[SSERV_CMD_LAST] =
   [SSERV_CMD_NEW_MAIN_PAGE] = "main_page",
   [SSERV_CMD_NEW_CONTEST_PAGE] = "contest_page",
   [SSERV_CMD_NEW_CONTEST_XML_PAGE] = "contest_xml_page",
+  [SSERV_CMD_NEW_CREATE_CONTEST_PAGE] = "create_contest_page",
 };
 
 static const unsigned char * const external_error_names[S_ERR_LAST] = 

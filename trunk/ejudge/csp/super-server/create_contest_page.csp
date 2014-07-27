@@ -1,0 +1,62 @@
+<%
+/* $Id$ */
+%><%@include "includes.csp"
+%><%@set getter_name = "csp_get_create_contest_page"
+%><%@set ac_prefix = "SSERV_CMD_"
+%><%@page csp_view_create_contest_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "stdvars.csp"
+%><%
+    const unsigned char *title = 0;
+    const unsigned char *subtitle = "create new contest";
+    opcap_t caps = 0;
+
+    if (phr->priv_level != PRIV_LEVEL_ADMIN) FAIL(SSERV_ERR_PERMISSION_DENIED);
+    if (ejudge_cfg_opcaps_find(phr->config, phr->login, &caps) < 0) FAIL(SSERV_ERR_PERMISSION_DENIED);
+    if (opcaps_check(caps, OPCAP_EDIT_CONTEST) < 0) FAIL(SSERV_ERR_PERMISSION_DENIED);
+
+/*
+  if (sstate->edited_cnts)
+    return super_html_edited_cnts_dialog(f, priv_level, user_id, login,
+                                         session_id, ip_address, config,
+                                         sstate, self_url, hidden_vars,
+                                         extra_args, NULL, 0);
+*/
+
+    const int *contests = 0;
+    int contest_num = contests_get_list(&contests);
+    int recomm_id = 1;
+    if (contest_num > 0) recomm_id = contests[contest_num - 1] + 1;
+%><%@include "header.csp"
+%>
+<s:form>
+
+<h2>Contest number</h2>
+
+<table border="0">
+    <tr><td><input type="radio" name="num_mode" value="0" checked="checked"/></td><td><s:tr>Assign automatically</s:tr></td><td>&nbsp;</td></tr>
+    <tr><td><input type="radio" name="num_mode" value="1"/></td><td><s:tr>Assign manually:</s:tr></td><td><s:textfield name="contest_id" value="recomm_id" size="6" /></td></tr>
+</table>
+
+<h2>Contest template</h2>
+<table border="0">
+    <tr><td><input type="radio" name="templ_mode" value="0" checked="checked" /></td><td><s:tr>From scratch</s:tr></td><td>&nbsp;</td></tr>
+    <tr><td><input type="radio" name="templ_mode" value="1" /></td><td><s:tr>Use existing contest:</s:tr></td><td><select name="templ_id"><%
+   for (int j = 0; j < contest_num; j++) {
+        int cnts_id = contests[j];
+        const struct contest_desc *cnts = 0;
+        if (contests_get(cnts_id, &cnts) < 0) continue;
+%><s:option value="cnts_id"><s:v value="cnts_id" /> - <s:v value="cnts->name" /></s:option><%
+    }
+%></select></td></tr></table>
+
+<h2>Actions</h2>
+
+<s:submit ac="create-contest-2" label="Create contest!" />
+</s:form>
+
+<%@include "footer.csp"
+%><%
+  l10n_setlocale(0);
+cleanup:
+  html_armor_free(&ab);
+%>
