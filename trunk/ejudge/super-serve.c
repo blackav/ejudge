@@ -1508,22 +1508,6 @@ cmd_main_page(struct client_state *p, int len,
     // all checks are performed in super_html_log_page
     break;
 
-    // global CREATE_CONTEST is required
-  case SSERV_CMD_CREATE_CONTEST:
-    if (p->priv_level != PRIV_LEVEL_ADMIN) {
-      err("%d: inappropriate privilege level", p->id);
-      return send_reply(p, -SSERV_ERR_PERMISSION_DENIED);
-    }
-    if (ejudge_cfg_opcaps_find(config, p->login, &caps) < 0) {
-      err("%d: user %d has no privileges", p->id, p->user_id);
-      return send_reply(p, -SSERV_ERR_PERMISSION_DENIED);
-    }
-    if (opcaps_check(caps, OPCAP_EDIT_CONTEST) < 0) {
-      err("%d: user %d has no capability %d", p->id, p->user_id, capbit);
-      return send_reply(p, -SSERV_ERR_PERMISSION_DENIED);
-    }
-    break;
-
   case SSERV_CMD_EDIT_CONTEST_XML:
   case SSERV_CMD_EDIT_SERVE_CFG_PROB:
   case SSERV_CMD_CHECK_TESTS:
@@ -1608,11 +1592,6 @@ cmd_main_page(struct client_state *p, int len,
                             pkt->contest_id, p->login, p->cookie, &p->ip, p->ssl,
                             config,
                             self_url_ptr, hidden_vars_ptr, extra_args_ptr);
-    break;
-  case SSERV_CMD_CREATE_CONTEST:
-    r = super_html_create_contest(f, p->priv_level, p->user_id, p->login,
-                                  p->cookie, &p->ip, config, sstate,
-                                  self_url_ptr, hidden_vars_ptr, extra_args_ptr);
     break;
   case SSERV_CMD_EDIT_CURRENT_CONTEST:
     r = super_html_edit_contest_page(f, p->priv_level, p->user_id, p->login,
@@ -3134,7 +3113,6 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_HIDE_CLOSED] = { cmd_simple_top_command },
   [SSERV_CMD_SHOW_UNMNG] = { cmd_simple_top_command },
   [SSERV_CMD_HIDE_UNMNG] = { cmd_simple_top_command },
-  [SSERV_CMD_CREATE_CONTEST] = { cmd_main_page },
   [SSERV_CMD_CREATE_CONTEST_2] = { cmd_create_contest },
   [SSERV_CMD_EDIT_CURRENT_CONTEST] = { cmd_main_page },
   [SSERV_CMD_CNTS_BASIC_VIEW] = { cmd_simple_top_command },
