@@ -44,7 +44,7 @@ You may either continue suspended editing of contest <s:v value="c0->id" /> or c
   if (contest_id > 0)
     html_hidden(out_f, "contest_id", "%d", contest_id);
 -->
-<s:submit ac="edited-cnts-start-new" label="Start new" /></s:form></td><td><s:tr>Start new editing</s:tr> <font color=\"red\"><s:tr>All changes to the old contest will be lost!</s:tr></font></td></tr>
+<s:submit ac="edited-cnts-start-new" label="Start new" /></s:form></td><td><s:tr>Start new editing</s:tr> <font color="red"><s:tr>All changes to the old contest will be lost!</s:tr></font></td></tr>
 </table>
 
 
