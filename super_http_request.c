@@ -1047,4 +1047,6 @@ const unsigned char super_proto_is_http_request[] =
   [SSERV_CMD_LOGIN_PAGE] = 1,
   [SSERV_CMD_NEW_MAIN_PAGE] = 1,
   [SSERV_CMD_NEW_CONTEST_PAGE] = 1,
+  [SSERV_CMD_NEW_CONTEST_XML_PAGE] = 1,
+  [SSERV_CMD_NEW_SERVE_CFG_PAGE] = 1,
 };

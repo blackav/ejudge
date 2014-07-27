@@ -1,0 +1,64 @@
+<%
+/* $Id$ */
+%><%@include "includes.csp"
+%><%@set getter_name = "csp_get_contest_xml_page"
+%><%@set ac_prefix = "SSERV_CMD_"
+%><%@page csp_view_contest_xml_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "stdvars.csp"
+%><%
+    const unsigned char *title = 0;
+    const unsigned char *subtitle = 0;
+    opcap_t caps = 0;
+    unsigned char path[PATH_MAX];
+    unsigned char subtitle_buf[1024];
+    char *raw_file = 0;
+    size_t raw_file_size = 0;
+    int err_flag = 0;
+
+    subtitle_buf[0] = 0;
+    subtitle = subtitle_buf;
+    path[0] = 0;
+
+    if (contests_get(phr->contest_id, &cnts) < 0 || !cnts) FAIL(SSERV_ERR_INVALID_CONTEST);
+    if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(SSERV_ERR_PERMISSION_DENIED);
+    if (opcaps_find(&cnts->capabilities, phr->login, &caps) < 0) FAIL(SSERV_ERR_PERMISSION_DENIED);
+    if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(SSERV_ERR_PERMISSION_DENIED);
+    if (!contests_check_serve_control_ip_2(cnts, &phr->ip, phr->ssl_flag)) FAIL(SSERV_ERR_BANNED_IP);
+
+    if (phr->action == SSERV_CMD_NEW_CONTEST_XML_PAGE) {
+        contests_make_path(path, sizeof(path), phr->contest_id);
+        snprintf(subtitle_buf, sizeof(subtitle_buf), "XML configuration file");
+    } else if (phr->action == SSERV_CMD_NEW_SERVE_CFG_PAGE) {
+        snprintf(path, sizeof(path), "%s/conf/serve.cfg", cnts->root_dir);
+        snprintf(subtitle_buf, sizeof(subtitle_buf), "serve.cfg configuration file");
+    }
+
+    err_flag = generic_read_file(&raw_file, 0, &raw_file_size, 0, 0, path, 0);
+%><%@include "header.csp"
+%>
+<h2><s:v value="subtitle" /></h2>
+
+<table border="0">
+    <tr>
+        <td><s:a ac="new-main-page"><s:tr>To contests list</s:tr></s:a></td>
+        <td><s:a ac="new-contest-page"><s:tr>To contest details</s:tr></s:a></td>
+        <td><s:a action="phr->action"><s:tr>Refresh</s:tr></s:a></td>
+        <td><s:a ac="logout"><s:tr>Logout</s:tr></s:a></td>
+    </tr>
+</table>
+
+<% if (err_flag >= 0) { %>
+<hr/>
+<pre><s:v value="raw_file" /></pre>
+<% } else { %>
+<hr/>
+<p><font color="red"><s:tr>Cannot read file!</s:tr></font></p>
+<% } %>
+
+<%@include "footer.csp"
+%><%
+  l10n_setlocale(0);
+cleanup:
+  html_armor_free(&ab);
+  xfree(raw_file);
+%>
