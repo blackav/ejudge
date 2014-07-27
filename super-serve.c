@@ -1481,8 +1481,6 @@ cmd_main_page(struct client_state *p, int len,
   // extra incoming packet checks
   switch (pkt->b.id) {
   case SSERV_CMD_VIEW_RUN_LOG:
-  case SSERV_CMD_VIEW_CONTEST_XML:
-  case SSERV_CMD_VIEW_SERVE_CFG:
   case SSERV_CMD_EDIT_CONTEST_XML:
   case SSERV_CMD_EDIT_SERVE_CFG_PROB:
     if ((r = contests_get(pkt->contest_id, &cnts)) < 0 || !cnts) {
@@ -1507,8 +1505,6 @@ cmd_main_page(struct client_state *p, int len,
   // check permissions: MASTER_PAGE
   switch (pkt->b.id) {
   case SSERV_CMD_VIEW_RUN_LOG:
-  case SSERV_CMD_VIEW_CONTEST_XML:
-  case SSERV_CMD_VIEW_SERVE_CFG:
     // all checks are performed in super_html_log_page
     break;
 
@@ -1608,8 +1604,6 @@ cmd_main_page(struct client_state *p, int len,
   // handle command
   switch (pkt->b.id) {
   case SSERV_CMD_VIEW_RUN_LOG:
-  case SSERV_CMD_VIEW_CONTEST_XML:
-  case SSERV_CMD_VIEW_SERVE_CFG:
     r = super_html_log_page(f, pkt->b.id, p->priv_level, p->user_id,
                             pkt->contest_id, p->login, p->cookie, &p->ip, p->ssl,
                             config,
@@ -3122,8 +3116,6 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
 {
   [SSERV_CMD_PASS_FD] = { cmd_pass_fd },
   [SSERV_CMD_VIEW_RUN_LOG] = { cmd_main_page },
-  [SSERV_CMD_VIEW_CONTEST_XML] = { cmd_main_page },
-  [SSERV_CMD_VIEW_SERVE_CFG] = { cmd_main_page },
   [SSERV_CMD_OPEN_CONTEST] = { cmd_simple_command },
   [SSERV_CMD_CLOSE_CONTEST] = { cmd_simple_command },
   [SSERV_CMD_INVISIBLE_CONTEST] = { cmd_simple_command },
