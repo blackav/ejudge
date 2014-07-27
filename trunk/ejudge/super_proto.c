@@ -343,6 +343,8 @@ const unsigned char * const super_proto_op_names[SSERV_CMD_LAST] =
   [SSERV_CMD_LOGIN_PAGE] = "LOGIN_PAGE",
   [SSERV_CMD_NEW_MAIN_PAGE] = "NEW_MAIN_PAGE",
   [SSERV_CMD_NEW_CONTEST_PAGE] = "NEW_CONTEST_PAGE",
+  [SSERV_CMD_NEW_CONTEST_XML_PAGE] = "NEW_CONTEST_XML_PAGE",
+  [SSERV_CMD_NEW_SERVE_CFG_PAGE] = "NEW_SERVE_CFG_PAGE",
 };
 
 const int super_proto_op_redirect[SSERV_CMD_LAST] =
