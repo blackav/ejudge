@@ -916,27 +916,6 @@ action_contest_command(int cmd, int next_state)
   operation_status_page(-1, -1, "Contest view parameters are invalid");
 }
 
-static void action_create_contest(void) __attribute__((noreturn));
-static void
-action_create_contest(void)
-{
-  int r;
-
-  open_super_server();
-  client_put_header(stdout, 0, 0, config->charset, 1, 0, client_key,
-                    "%s: %s@%s, creating new contest", "serve-control", user_login, http_host);
-  fflush(stdout);
-
-  r = super_clnt_main_page(super_serve_fd, 1, SSERV_CMD_CREATE_CONTEST,
-                           0, 0, 0, self_url, hidden_vars, "");
-  if (r < 0) {
-    printf("<h2><font color=\"red\">%s</font></h2>\n",
-           super_proto_strerror(-r));
-  }
-  client_put_footer(stdout, 0);
-  exit(0);
-}
-
 static void action_edit_current_contest(int cmd) __attribute__((noreturn));
 static void
 action_edit_current_contest(int cmd)
@@ -2306,9 +2285,6 @@ main(int argc, char *argv[])
     break;
   case SSERV_CMD_SHOW_UNMNG:
     action_simple_top_command(SSERV_CMD_SHOW_UNMNG);
-    break;
-  case SSERV_CMD_CREATE_CONTEST:
-    action_create_contest();
     break;
   case SSERV_CMD_CREATE_CONTEST_2:
     action_create_contest_2();

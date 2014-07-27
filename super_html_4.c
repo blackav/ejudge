@@ -590,7 +590,7 @@ cmd_edited_cnts_start_new(
     }
   } else {
     if (!contest_id) {
-      refresh_page(out_f, phr, "action=%d", SSERV_CMD_CREATE_CONTEST);
+      refresh_page(out_f, phr, "action=%d", SSERV_CMD_NEW_CREATE_CONTEST_PAGE);
     } else {
       refresh_page(out_f, phr, "action=%d&contest_id=%d",
                    SSERV_CMD_EDIT_CONTEST_XML, contest_id);
