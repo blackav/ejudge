@@ -14,13 +14,10 @@
     if (ejudge_cfg_opcaps_find(phr->config, phr->login, &caps) < 0) FAIL(SSERV_ERR_PERMISSION_DENIED);
     if (opcaps_check(caps, OPCAP_EDIT_CONTEST) < 0) FAIL(SSERV_ERR_PERMISSION_DENIED);
 
-/*
-  if (sstate->edited_cnts)
-    return super_html_edited_cnts_dialog(f, priv_level, user_id, login,
-                                         session_id, ip_address, config,
-                                         sstate, self_url, hidden_vars,
-                                         extra_args, NULL, 0);
-*/
+    if (phr->ss->edited_cnts) {
+        retval = SSERV_CMD_CONTEST_ALREADY_EDITED_PAGE;
+        goto cleanup;
+    }
 
     const int *contests = 0;
     int contest_num = contests_get_list(&contests);

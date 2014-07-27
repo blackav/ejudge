@@ -6895,6 +6895,7 @@ super_html_http_request(
   unsigned char self_url_buf[4096];
   unsigned char context_url[4096];
   unsigned char hid_buf[4096];
+  int ext_action = 0;
 
   if (ss_getenv(phr, "SSL_PROTOCOL") || ss_getenv(phr, "HTTPS")) {
     phr->ssl_flag = 1;
@@ -6940,8 +6941,9 @@ super_html_http_request(
 
   if (!r) {
     // try external actions
-    int ext_action = phr->action;
+    ext_action = phr->action;
 
+redo_action:
     // main_page by default
     if (!super_proto_op_names[ext_action]) ext_action = SSERV_CMD_NEW_MAIN_PAGE;
 
@@ -6986,6 +6988,14 @@ super_html_http_request(
           phr->out_z = 0;
           external_error_page(p_out_t, p_out_z, phr, -r);
           return;
+        }
+        if (r > 0) {
+          ext_action = r;
+          if (pg->ops->destroy) pg->ops->destroy(pg);
+          pg = NULL;
+          fclose(phr->out_f); phr->out_f = NULL;
+          xfree(phr->out_t); phr->out_t = NULL;
+          goto redo_action;
         }
       }
       if (pg->ops->destroy) {
