@@ -117,32 +117,6 @@ ss_cgi_param_utf8_str(
   return 1;
 }
 
-static int
-ss_cgi_param_bin(
-        const struct http_request_info *phr,
-        const unsigned char *param,
-        const unsigned char **p_value,
-        size_t *p_size)
-  __attribute__((unused));
-static int
-ss_cgi_param_bin(
-        const struct http_request_info *phr,
-        const unsigned char *param,
-        const unsigned char **p_value,
-        size_t *p_size)
-{
-  int i;
-
-  if (!param) return -1;
-  for (i = 0; i < phr->param_num; i++)
-    if (!strcmp(phr->param_names[i], param))
-      break;
-  if (i >= phr->param_num) return 0;
-  *p_value = phr->params[i];
-  *p_size = phr->param_sizes[i];
-  return 1;
-}
-
 static const unsigned char *
 ss_cgi_nname(
         const struct http_request_info *phr,
