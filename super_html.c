@@ -841,64 +841,6 @@ super_html_edited_cnts_dialog(
   return 0;
 }
 
-int
-super_html_create_contest(
-        FILE *f,
-        int priv_level,
-        int user_id,
-        const unsigned char *login,
-        ej_cookie_t session_id,
-        const ej_ip_t *ip_address,
-        struct ejudge_cfg *config,
-        struct sid_state *sstate,
-        const unsigned char *self_url,
-        const unsigned char *hidden_vars,
-        const unsigned char *extra_args)
-{
-  int contest_num;
-  const int *contests = 0;
-  int recomm_id = 1, cnts_id, j;
-  const struct contest_desc *cnts = 0;
-  unsigned char *cnts_name = 0;
-
-  if (sstate->edited_cnts)
-    return super_html_edited_cnts_dialog(f, priv_level, user_id, login,
-                                         session_id, ip_address, config,
-                                         sstate, self_url, hidden_vars,
-                                         extra_args, NULL, 0);
-
-  contest_num = contests_get_list(&contests);
-  if (contest_num > 0) recomm_id = contests[contest_num - 1] + 1;
-
-  html_start_form(f, 1, self_url, hidden_vars);
-  fprintf(f, "<h2>Contest number</h2>\n");
-  fprintf(f, "<table border=\"0\">"
-          "<tr><td><input type=\"radio\" name=\"num_mode\" value=\"0\" checked=\"yes\"/></td><td>Assign automatically</td><td>&nbsp;</td></tr>\n"
-          "<tr><td><input type=\"radio\" name=\"num_mode\" value=\"1\"/></td><td>Assign manually:</td><td><input type=\"text\" name=\"contest_id\" value=\"%d\" size=\"6\"/></td></tr>\n"
-          "</table>", recomm_id);
-
-  fprintf(f, "<h2>Contest template</h2>\n");
-  fprintf(f, "<table border=\"0\">"
-          "<tr><td><input type=\"radio\" name=\"templ_mode\" value=\"0\" checked=\"yes\"/></td><td>From scratch</td><td>&nbsp;</td></tr>\n"
-          "<tr><td><input type=\"radio\" name=\"templ_mode\" value=\"1\"/></td><td>Use existing contest:</td><td><select name=\"templ_id\">\n");
-
-  for (j = 0; j < contest_num; j++) {
-    cnts_id = contests[j];
-    if (contests_get(cnts_id, &cnts) < 0) continue;
-    cnts_name = html_armor_string_dup(cnts->name);
-    fprintf(f, "<option value=\"%d\">%d - %s</option>", cnts_id, cnts_id, cnts_name);
-    xfree(cnts_name);
-  }
-
-  fprintf(f, "</select></td></tr></table>\n");
-
-  fprintf(f, "<h2>Actions</h2>\n");
-  html_submit_button(f, SSERV_CMD_CREATE_CONTEST_2, "Create contest!");
-  fprintf(f, "</form>\n");
-
-  return 0;
-}
-
 static void
 print_string_editing_row(FILE *f,
                          const unsigned char *title,
