@@ -117,27 +117,6 @@ ss_cgi_param_utf8_str(
   return 1;
 }
 
-static const unsigned char *
-ss_cgi_nname(
-        const struct http_request_info *phr,
-        const unsigned char *prefix,
-        size_t pflen)
-  __attribute__((unused));
-static const unsigned char *
-ss_cgi_nname(
-        const struct http_request_info *phr,
-        const unsigned char *prefix,
-        size_t pflen)
-{
-  int i;
-
-  if (!prefix || !pflen) return 0;
-  for (i = 0; i < phr->param_num; i++)
-    if (!strncmp(phr->param_names[i], prefix, pflen))
-      return phr->param_names[i];
-  return 0;
-}
-
 int
 ss_cgi_param_int(
         struct http_request_info *phr,
@@ -6627,7 +6606,7 @@ parse_action(struct http_request_info *phr)
   int n = 0, r = 0;
   const unsigned char *s = 0;
 
-  if ((s = ss_cgi_nname(phr, "action_", 7))) {
+  if ((s = hr_cgi_nname(phr, "action_", 7))) {
     if (sscanf(s, "action_%d%n", &action, &n) != 1 || s[n] || action < 0 || action >= SSERV_CMD_LAST) {
       return -1;
     }
@@ -6642,7 +6621,7 @@ parse_action(struct http_request_info *phr)
 
   if (action == SSERV_CMD_HTTP_REQUEST) {
     // compatibility option: parse op
-    if ((s = ss_cgi_nname(phr, "op_", 3))) {
+    if ((s = hr_cgi_nname(phr, "op_", 3))) {
       if (sscanf(s, "op_%d%n", &action, &n) != 1 || s[n] || action < 0 || action >= SSERV_CMD_LAST)
         return -1;
     } else if (parse_opcode(phr, &action) < 0) {
