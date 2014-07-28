@@ -1240,10 +1240,10 @@ super_serve_op_USER_FILTER_CHANGE_ACTION(
 
   switch (phr->action) {
   case SSERV_CMD_USER_FILTER_CHANGE_ACTION:
-    if (ss_cgi_param_int(phr, "user_offset", &value) >= 0) {
+    if (hr_cgi_param_int(phr, "user_offset", &value) >= 0) {
       user_offset = value;
     }
-    if (ss_cgi_param_int(phr, "user_count", &value) >= 0) {
+    if (hr_cgi_param_int(phr, "user_count", &value) >= 0) {
       user_count = value;
     }
     if (user_count <= 0) user_count = 20;
@@ -2690,7 +2690,7 @@ super_serve_op_USER_DETAIL_PAGE(
   opcap_t gcaps = 0;
   opcap_t caps = 0;
 
-  if (ss_cgi_param_int(phr, "other_user_id", &other_user_id) < 0) {
+  if (hr_cgi_param_int(phr, "other_user_id", &other_user_id) < 0) {
     FAIL(S_ERR_INV_USER_ID);
   }
   ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
@@ -3477,7 +3477,7 @@ super_serve_op_USER_PASSWORD_PAGE(
   const unsigned char *s = 0;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
 
-  if (ss_cgi_param_int(phr, "other_user_id", &other_user_id) < 0) {
+  if (hr_cgi_param_int(phr, "other_user_id", &other_user_id) < 0) {
     FAIL(S_ERR_INV_USER_ID);
   }
   ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
@@ -3619,10 +3619,10 @@ super_serve_op_USER_CNTS_PASSWORD_PAGE(
   const unsigned char *s = 0;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
 
-  if (ss_cgi_param_int(phr, "other_user_id", &other_user_id) < 0) {
+  if (hr_cgi_param_int(phr, "other_user_id", &other_user_id) < 0) {
     FAIL(S_ERR_INV_USER_ID);
   }
-  if (ss_cgi_param_int(phr, "contest_id", &contest_id) < 0) {
+  if (hr_cgi_param_int(phr, "contest_id", &contest_id) < 0) {
     FAIL(S_ERR_INV_CONTEST);
   }
   ss_cgi_param_int_opt(phr, "group_id", &group_id, 0);
@@ -3786,7 +3786,7 @@ super_serve_op_USER_CREATE_REG_PAGE(
   const int *cnts_id_list = 0;
   int cnts_id_count, i, other_contest_id_2;
 
-  if (ss_cgi_param_int(phr, "other_user_id", &other_user_id) < 0) {
+  if (hr_cgi_param_int(phr, "other_user_id", &other_user_id) < 0) {
     FAIL(S_ERR_INV_USER_ID);
   }
   ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
@@ -3922,10 +3922,10 @@ super_serve_op_USER_EDIT_REG_PAGE(
   const unsigned char *checked = " checked=\"checked\"";
   const unsigned char *s = 0;
 
-  if (ss_cgi_param_int(phr, "other_user_id", &other_user_id) < 0) {
+  if (hr_cgi_param_int(phr, "other_user_id", &other_user_id) < 0) {
     FAIL(S_ERR_INV_USER_ID);
   }
-  if (ss_cgi_param_int(phr, "other_contest_id", &other_contest_id) < 0) {
+  if (hr_cgi_param_int(phr, "other_contest_id", &other_contest_id) < 0) {
     FAIL(S_ERR_INV_CONTEST);
   }
   ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
@@ -4099,10 +4099,10 @@ super_serve_op_USER_DELETE_REG_PAGE(
   const unsigned char *yes = " <b>YES</b>";
   const unsigned char *s = 0;
 
-  if (ss_cgi_param_int(phr, "other_user_id", &other_user_id) < 0) {
+  if (hr_cgi_param_int(phr, "other_user_id", &other_user_id) < 0) {
     FAIL(S_ERR_INV_USER_ID);
   }
-  if (ss_cgi_param_int(phr, "other_contest_id", &other_contest_id) < 0) {
+  if (hr_cgi_param_int(phr, "other_contest_id", &other_contest_id) < 0) {
     FAIL(S_ERR_INV_CONTEST);
   }
   ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
@@ -5374,7 +5374,7 @@ super_serve_op_USER_CHANGE_PASSWORD_ACTION(
   if (opcaps_check(caps, OPCAP_EDIT_PASSWD) < 0 && opcaps_check(caps, OPCAP_PRIV_EDIT_PASSWD) < 0)
     FAIL(S_ERR_PERM_DENIED);
 
-  if (ss_cgi_param_int(phr, "other_user_id", &other_user_id) < 0) FAIL(S_ERR_INV_USER_ID);
+  if (hr_cgi_param_int(phr, "other_user_id", &other_user_id) < 0) FAIL(S_ERR_INV_USER_ID);
   if (!phr->userlist_clnt) FAIL(S_ERR_NO_CONNECTION);
   r = userlist_clnt_get_info(phr->userlist_clnt, ULS_PRIV_GET_USER_INFO,
                              other_user_id, 0, &xml_text);
@@ -5426,7 +5426,7 @@ super_serve_op_USER_CHANGE_CNTS_PASSWORD_ACTION(
   struct userlist_user *u = 0;
   unsigned char *xml_text = 0;
 
-  if (ss_cgi_param_int(phr, "contest_id", &contest_id) <= 0) FAIL(S_ERR_INV_CONTEST);
+  if (hr_cgi_param_int(phr, "contest_id", &contest_id) <= 0) FAIL(S_ERR_INV_CONTEST);
   if (contest_id <= 0 || contests_get(contest_id, &cnts) < 0 || !cnts)
     FAIL(S_ERR_INV_CONTEST);
 
@@ -5461,7 +5461,7 @@ super_serve_op_USER_CHANGE_CNTS_PASSWORD_ACTION(
   if (opcaps_check(fcaps, OPCAP_EDIT_PASSWD) < 0 && opcaps_check(fcaps, OPCAP_PRIV_EDIT_PASSWD) < 0)
     FAIL(S_ERR_PERM_DENIED);
 
-  if (ss_cgi_param_int(phr, "other_user_id", &other_user_id) < 0) FAIL(S_ERR_INV_USER_ID);
+  if (hr_cgi_param_int(phr, "other_user_id", &other_user_id) < 0) FAIL(S_ERR_INV_USER_ID);
   if (!phr->userlist_clnt) FAIL(S_ERR_NO_CONNECTION);
   r = userlist_clnt_get_info(phr->userlist_clnt, ULS_PRIV_GET_USER_INFO,
                              other_user_id, contest_id, &xml_text);
@@ -6143,7 +6143,7 @@ super_serve_op_USER_SAVE_ACTION(
 
   ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   ss_cgi_param_int_opt(phr, "group_id", &group_id, 0);
-  if (ss_cgi_param_int(phr, "other_user_id", &other_user_id) < 0)
+  if (hr_cgi_param_int(phr, "other_user_id", &other_user_id) < 0)
     FAIL(S_ERR_INV_USER_ID);
   if (contest_id > 0) {
     if (contests_get(contest_id, &cnts) < 0 || !cnts)
@@ -6673,13 +6673,13 @@ super_serve_op_USER_DELETE_MEMBER_PAGE(
   unsigned char buf[1024];
   unsigned char hbuf[1024];
 
-  if (ss_cgi_param_int(phr, "other_user_id", &other_user_id) < 0 || other_user_id <= 0) {
+  if (hr_cgi_param_int(phr, "other_user_id", &other_user_id) < 0 || other_user_id <= 0) {
     FAIL(S_ERR_INV_USER_ID);
   }
-  if (ss_cgi_param_int(phr, "serial", &serial) < 0 || serial <= 0) {
+  if (hr_cgi_param_int(phr, "serial", &serial) < 0 || serial <= 0) {
     FAIL(S_ERR_INV_SERIAL);
   }
-  if (ss_cgi_param_int(phr, "contest_id", &contest_id) < 0 || contest_id <= 0) {
+  if (hr_cgi_param_int(phr, "contest_id", &contest_id) < 0 || contest_id <= 0) {
     FAIL(S_ERR_INV_CONTEST);
   }
   if (contest_id > 0) {
@@ -7997,10 +7997,10 @@ super_serve_GROUP_FILTER_CHANGE_ACTION(
 
   switch (phr->action) {
   case SSERV_CMD_GROUP_FILTER_CHANGE_ACTION:
-    if (ss_cgi_param_int(phr, "group_offset", &value) >= 0) {
+    if (hr_cgi_param_int(phr, "group_offset", &value) >= 0) {
       group_offset = value;
     }
-    if (ss_cgi_param_int(phr, "group_count", &value) >= 0) {
+    if (hr_cgi_param_int(phr, "group_count", &value) >= 0) {
       group_count = value;
     }
     if (group_count <= 0) group_count = 20;
@@ -11104,7 +11104,7 @@ super_serve_op_CREATE_CONTEST_BATCH_ACTION(
     snprintf(errbuf, sizeof(errbuf), "permission denied");
     FAIL(S_ERR_PERM_DENIED);
   }
-  if (ss_cgi_param_int(phr, "contest_id", &contest_id) < 0) {
+  if (hr_cgi_param_int(phr, "contest_id", &contest_id) < 0) {
     snprintf(errbuf, sizeof(errbuf), "contest_id is undefined");
     FAIL(S_ERR_INV_CONTEST);
   }
