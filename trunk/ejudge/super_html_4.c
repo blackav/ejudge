@@ -94,34 +94,6 @@ ss_cgi_param_utf8_str(
   return 1;
 }
 
-int
-ss_cgi_param_int_opt(
-        struct http_request_info *phr,
-        const unsigned char *name,
-        int *p_val,
-        int default_value)
-{
-  const unsigned char *s = 0, *p;
-  char *eptr = 0;
-  int x;
-
-  if (!(x = hr_cgi_param(phr, name, &s))) {
-    if (p_val) *p_val = default_value;
-    return 0;
-  } else if (x < 0) return -1;
-  p = s;
-  while (*p && isspace(*p)) p++;
-  if (!*p) {
-    if (p_val) *p_val = default_value;
-    return 0;
-  }
-  errno = 0;
-  x = strtol(s, &eptr, 10);
-  if (errno || *eptr) return -1;
-  if (p_val) *p_val = x;
-  return 0;
-}
-
 const unsigned char *
 veprintf(unsigned char *buf, size_t size, const char *format, va_list args)
 {
@@ -469,8 +441,8 @@ cmd_edited_cnts_start_new(
   int contest_id = 0;
   int new_edit = -1;
 
-  ss_cgi_param_int_opt(phr, "new_edit", &new_edit, 0);
-  if (ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0) < 0
+  hr_cgi_param_int_opt(phr, "new_edit", &new_edit, 0);
+  if (hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0) < 0
       || contest_id < 0) contest_id = 0;
   super_serve_clear_edited_contest(phr->ss);
   if (new_edit == 1) {
