@@ -22,7 +22,6 @@ const unsigned char super_proto_is_http_request[] =
   [SSERV_CMD_PASS_FD] = 0,
   [SSERV_CMD_STOP] = 0,
   [SSERV_CMD_RESTART] = 0,
-  [SSERV_CMD_VIEW_RUN_LOG] = 0,
   [SSERV_CMD_OPEN_CONTEST] = 0,
   [SSERV_CMD_CLOSE_CONTEST] = 0,
   [SSERV_CMD_INVISIBLE_CONTEST] = 0,

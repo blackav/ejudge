@@ -853,9 +853,6 @@ action_view_contest(int cmd)
   if ((contest_id = parse_contest_id()) <= 0) goto invalid_parameter;
 
   switch (cmd) {
-  case SSERV_CMD_VIEW_RUN_LOG:
-    extra_str = ", run log";
-    break;
   case SSERV_CMD_EDIT_CONTEST_XML:
     extra_str = ", editing contest.xml";
     break;
@@ -2250,10 +2247,6 @@ main(int argc, char *argv[])
     client_action = SSERV_CMD_HTTP_REQUEST;
   }
   switch (client_action) {
-  case SSERV_CMD_VIEW_RUN_LOG:
-    action_view_contest(SSERV_CMD_VIEW_RUN_LOG);
-    break;
-
   case SSERV_CMD_OPEN_CONTEST:
   case SSERV_CMD_CLOSE_CONTEST:
   case SSERV_CMD_CLEAR_MESSAGES:
