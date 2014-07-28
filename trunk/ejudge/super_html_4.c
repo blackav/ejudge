@@ -95,24 +95,6 @@ ss_cgi_param_utf8_str(
 }
 
 int
-ss_cgi_param_int(
-        struct http_request_info *phr,
-        const unsigned char *name,
-        int *p_val)
-{
-  const unsigned char *s = 0;
-  char *eptr = 0;
-  int x;
-
-  if (hr_cgi_param(phr, name, &s) <= 0) return -1;
-  errno = 0;
-  x = strtol(s, &eptr, 10);
-  if (errno || *eptr) return -1;
-  if (p_val) *p_val = x;
-  return 0;
-}
-
-int
 ss_cgi_param_int_opt(
         struct http_request_info *phr,
         const unsigned char *name,
@@ -469,7 +451,7 @@ cmd_edited_cnts_continue(
 {
   int new_edit = -1;
 
-  if (ss_cgi_param_int(phr, "new_edit", &new_edit) >= 0 && new_edit == 1) {
+  if (hr_cgi_param_int(phr, "new_edit", &new_edit) >= 0 && new_edit == 1) {
     refresh_page(out_f, phr, "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST,
                  SSERV_CMD_EDIT_CONTEST_PAGE_2);
   } else {
@@ -526,7 +508,7 @@ cmd_locked_cnts_forget(
 
   if (phr->ss->edited_cnts)
     goto done;
-  if (ss_cgi_param_int(phr, "contest_id", &contest_id) < 0 || contest_id <= 0)
+  if (hr_cgi_param_int(phr, "contest_id", &contest_id) < 0 || contest_id <= 0)
     goto done;
   if (!(ss = super_serve_sid_state_get_cnts_editor_nc(contest_id)))
     goto done;
@@ -553,7 +535,7 @@ cmd_locked_cnts_continue(
 
   if (phr->ss->edited_cnts)
     goto top_level;
-  if (ss_cgi_param_int(phr, "contest_id", &contest_id) < 0 || contest_id <= 0)
+  if (hr_cgi_param_int(phr, "contest_id", &contest_id) < 0 || contest_id <= 0)
     goto top_level;
   if (!(ss = super_serve_sid_state_get_cnts_editor_nc(contest_id)))
     goto top_level;
@@ -562,7 +544,7 @@ cmd_locked_cnts_continue(
 
   super_serve_move_edited_contest(phr->ss, ss);
 
-  if (ss_cgi_param_int(phr, "new_edit", &new_edit) >= 0 && new_edit == 1) {
+  if (hr_cgi_param_int(phr, "new_edit", &new_edit) >= 0 && new_edit == 1) {
     refresh_page(out_f, phr, "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST,
                  SSERV_CMD_EDIT_CONTEST_PAGE_2);
   } else {
@@ -2383,7 +2365,7 @@ contest_xml_page(
   const struct section_global_data *global = 0;
   void *edit_ptr = 0;
 
-  if (ss_cgi_param_int(phr, "page", &page) < 0 || page < 0 || page > 3)
+  if (hr_cgi_param_int(phr, "page", &page) < 0 || page < 0 || page > 3)
     page = phr->ss->edit_page;
   phr->ss->edit_page = page;
   pg = &edit_page_descs[page];
@@ -2464,7 +2446,7 @@ cmd_edit_contest_page(
   unsigned char buf[1024];
   const struct sid_state *other_ss;
 
-  if (ss_cgi_param_int(phr, "contest_id", &contest_id) < 0
+  if (hr_cgi_param_int(phr, "contest_id", &contest_id) < 0
       || contest_id <= 0 || contest_id > EJ_MAX_CONTEST_ID)
     FAIL(S_ERR_INV_CONTEST);
   if (contests_get(contest_id, &cnts) < 0 || !cnts)
@@ -2606,7 +2588,7 @@ cmd_clear_contest_xml_field(
 
   if (!phr->ss->edited_cnts)
     FAIL(S_ERR_NO_EDITED_CNTS);
-  if (ss_cgi_param_int(phr, "field_id", &f_id) < 0
+  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
       || f_id <= 0 || f_id >= CNTS_LAST_FIELD)
     FAIL(S_ERR_INV_FIELD_ID);
   if (!(f_ptr = contest_desc_get_ptr_nc(phr->ss->edited_cnts, f_id)))
@@ -2716,7 +2698,7 @@ handle_time_t_editing(
   int retval = 0;
   int subf_id = 0;
 
-  if (ss_cgi_param_int(phr, "subfield_id", &subf_id) < 0
+  if (hr_cgi_param_int(phr, "subfield_id", &subf_id) < 0
       || subf_id < 1 || subf_id > 2)
     FAIL(S_ERR_INV_FIELD_ID);
 
@@ -2833,7 +2815,7 @@ cmd_edit_contest_xml_field(
   if (!phr->ss->edited_cnts)
     FAIL(S_ERR_NO_EDITED_CNTS);
   ecnts = phr->ss->edited_cnts;
-  if (ss_cgi_param_int(phr, "field_id", &f_id) < 0
+  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
       || f_id <= 0 || f_id >= CNTS_LAST_FIELD)
     FAIL(S_ERR_INV_FIELD_ID);
   if (!(f_ptr = contest_desc_get_ptr_nc(ecnts, f_id)))
@@ -3034,7 +3016,7 @@ cmd_toggle_contest_xml_vis(
 
   if (!phr->ss->edited_cnts)
     FAIL(S_ERR_NO_EDITED_CNTS);
-  if (ss_cgi_param_int(phr, "field_id", &f_id) < 0
+  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
       || f_id <= 0 || f_id >= SSSS_LAST_FIELD
       || !valid_ss_visibilities[f_id])
     FAIL(S_ERR_INV_FIELD_ID);
@@ -3096,7 +3078,7 @@ cmd_edit_contest_xml_file(
   if (!phr->ss->edited_cnts)
     FAIL(S_ERR_NO_EDITED_CNTS);
   ecnts = phr->ss->edited_cnts;
-  if (ss_cgi_param_int(phr, "field_id", &f_id) < 0
+  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
       || f_id <= 0 || f_id >= CNTS_LAST_FIELD
       || !(ss_id = cnts_text_edit_map[f_id]))
     FAIL(S_ERR_INV_FIELD_ID);
@@ -3195,7 +3177,7 @@ cmd_clear_file_contest_xml(
 
   if (!phr->ss->edited_cnts)
     FAIL(S_ERR_NO_EDITED_CNTS);
-  if (ss_cgi_param_int(phr, "field_id", &f_id) < 0
+  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
       || f_id <= 0 || f_id >= CNTS_LAST_FIELD
       || !(f_id2 = cnts_text_edit_map[f_id]))
     FAIL(S_ERR_INV_FIELD_ID);
@@ -3231,7 +3213,7 @@ cmd_save_file_contest_xml(
 
   if (!phr->ss->edited_cnts)
     FAIL(S_ERR_NO_EDITED_CNTS);
-  if (ss_cgi_param_int(phr, "field_id", &f_id) < 0
+  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
       || f_id <= 0 || f_id >= CNTS_LAST_FIELD)
     FAIL(S_ERR_INV_FIELD_ID);
   if (!(f_id2 = cnts_text_edit_map[f_id]))
@@ -3286,7 +3268,7 @@ cmd_contest_xml_access_edit_page(
   if (!phr->ss->edited_cnts)
     FAIL(S_ERR_NO_EDITED_CNTS);
   ecnts = phr->ss->edited_cnts;
-  if (ss_cgi_param_int(phr, "field_id", &f_id) < 0
+  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
       || f_id <= 0 || f_id >= CNTS_LAST_FIELD
       || !(access_field_set[f_id]))
     FAIL(S_ERR_INV_FIELD_ID);
@@ -3457,7 +3439,7 @@ cmd_contest_xml_field_edit_page(
 {
   int f_id, retval = 0;
 
-  if (ss_cgi_param_int(phr, "field_id", &f_id) < 0
+  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
       || f_id <= 0 || f_id >= CNTS_LAST_FIELD)
     FAIL(S_ERR_INV_FIELD_ID);
   if (!contest_xml_field_edit_cmd[f_id])
@@ -3483,7 +3465,7 @@ cmd_copy_access_rules_page(
   const struct contest_desc *cnts = 0;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
 
-  if (ss_cgi_param_int(phr, "field_id", &f_id) < 0
+  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
       || f_id <= 0 || f_id >= CNTS_LAST_FIELD
       || !access_field_set[f_id])
     FAIL(S_ERR_INV_FIELD_ID);
@@ -3603,7 +3585,7 @@ cmd_copy_all_access_rules(
 
   if (!(ecnts = phr->ss->edited_cnts))
     FAIL(S_ERR_NO_EDITED_CNTS);
-  if (ss_cgi_param_int(phr, "contest_id_2", &contest_id_2) < 0
+  if (hr_cgi_param_int(phr, "contest_id_2", &contest_id_2) < 0
       || contest_id_2 <= 0)
     FAIL(S_ERR_INV_CONTEST);
   if (contest_id_2 == ecnts->id) goto cleanup;
@@ -3724,7 +3706,7 @@ cmd_edit_permissions_page(
   unsigned char buf[1024];
 
   if (!(ecnts = phr->ss->edited_cnts)) FAIL(S_ERR_NO_EDITED_CNTS);
-  if (ss_cgi_param_int(phr, "field_id", &field_id) < 0 || field_id < 0)
+  if (hr_cgi_param_int(phr, "field_id", &field_id) < 0 || field_id < 0)
     FAIL(S_ERR_INV_FIELD_ID);
 
   for (perms = CNTS_FIRST_PERM(ecnts), j = 0; perms && j != field_id;
@@ -3846,7 +3828,7 @@ cmd_edit_member_fields_page(
   const unsigned char *cl = " class=\"cnts_edit_legend\"";
 
   if (!(ecnts = phr->ss->edited_cnts)) FAIL(S_ERR_NO_EDITED_CNTS);
-  if (ss_cgi_param_int(phr, "field_id", &memb_id) < 0
+  if (hr_cgi_param_int(phr, "field_id", &memb_id) < 0
       || memb_id < 0 || memb_id >= CONTEST_LAST_MEMBER)
     FAIL(S_ERR_INV_FIELD_ID);
   memb = ecnts->members[memb_id];
@@ -3937,7 +3919,7 @@ cmd_op_delete_priv_user(
 
   if (!(ecnts = phr->ss->edited_cnts))
     FAIL(S_ERR_NO_EDITED_CNTS);
-  if (ss_cgi_param_int(phr, "field_id", &user_num) < 0 || user_num < 0)
+  if (hr_cgi_param_int(phr, "field_id", &user_num) < 0 || user_num < 0)
     FAIL(S_ERR_INV_FIELD_ID);
   if (contests_remove_nth_permission(ecnts, user_num) < 0)
     FAIL(S_ERR_INV_FIELD_ID);
@@ -3967,7 +3949,7 @@ cmd_op_add_priv_user(
     FAIL(S_ERR_INV_VALUE);
   if (!*login || check_str(login, login_accept_chars) < 0)
     FAIL(S_ERR_INV_VALUE);
-  if (ss_cgi_param_int(phr, "perms", &perms_id) < 0
+  if (hr_cgi_param_int(phr, "perms", &perms_id) < 0
       || perms_id <= 0 || perms_id >= OPCAP_PREDEF_LAST)
     FAIL(S_ERR_INV_VALUE);
 
@@ -3994,7 +3976,7 @@ cmd_op_copy_all_priv_users(
 
   if (!(ecnts = phr->ss->edited_cnts))
     FAIL(S_ERR_NO_EDITED_CNTS);
-  if (ss_cgi_param_int(phr, "contest_id_2", &contest_id_2) < 0
+  if (hr_cgi_param_int(phr, "contest_id_2", &contest_id_2) < 0
       || contest_id_2 < 0)
     FAIL(S_ERR_INV_CONTEST);
 
@@ -4025,9 +4007,9 @@ cmd_op_set_predef_priv(
 
   if (!(ecnts = phr->ss->edited_cnts))
     FAIL(S_ERR_NO_EDITED_CNTS);
-  if (ss_cgi_param_int(phr, "field_id", &user_num) < 0 || user_num < 0)
+  if (hr_cgi_param_int(phr, "field_id", &user_num) < 0 || user_num < 0)
     FAIL(S_ERR_INV_FIELD_ID);
-  if (ss_cgi_param_int(phr, "value", &perms_id) < 0)
+  if (hr_cgi_param_int(phr, "value", &perms_id) < 0)
     FAIL(S_ERR_INV_FIELD_ID);
   if (perms_id < 0 || perms_id >= OPCAP_PREDEF_LAST)
     FAIL(S_ERR_INV_VALUE);
@@ -4060,7 +4042,7 @@ cmd_op_set_priv(
 
   if (!(ecnts = phr->ss->edited_cnts))
     FAIL(S_ERR_NO_EDITED_CNTS);
-  if (ss_cgi_param_int(phr, "field_id", &user_num) < 0 || user_num < 0)
+  if (hr_cgi_param_int(phr, "field_id", &user_num) < 0 || user_num < 0)
     FAIL(S_ERR_INV_FIELD_ID);
 
   for (i = 0; i < OPCAP_LAST; ++i) {
@@ -4092,12 +4074,12 @@ cmd_op_set_default_access(
 
   if (!(ecnts = phr->ss->edited_cnts))
     FAIL(S_ERR_NO_EDITED_CNTS);
-  if (ss_cgi_param_int(phr, "field_id", &f_id) < 0
+  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
       || f_id <= 0 || f_id >= CNTS_LAST_FIELD
       || !(access_field_set[f_id]))
     FAIL(S_ERR_INV_FIELD_ID);
   p_acc = (struct contest_access**) contest_desc_get_ptr(ecnts, f_id);
-  if (ss_cgi_param_int(phr, "value", &val) < 0
+  if (hr_cgi_param_int(phr, "value", &val) < 0
       || val < 0 || val > 1)
     FAIL(S_ERR_INV_VALUE);
   contests_set_default(ecnts, p_acc, access_field_tag[f_id], val);
@@ -4148,7 +4130,7 @@ cmd_op_add_ip(
 
   if (!(ecnts = phr->ss->edited_cnts))
     FAIL(S_ERR_NO_EDITED_CNTS);
-  if (ss_cgi_param_int(phr, "field_id", &f_id) < 0
+  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
       || f_id <= 0 || f_id >= CNTS_LAST_FIELD
       || !(access_field_set[f_id]))
     FAIL(S_ERR_INV_FIELD_ID);
@@ -4157,10 +4139,10 @@ cmd_op_add_ip(
     FAIL(S_ERR_INV_VALUE);
   if (xml_parse_ipv6_mask(NULL, 0, 0, 0, mask_str, &addr, &mask) < 0)
     FAIL(S_ERR_INV_VALUE);
-  if (ss_cgi_param_int(phr, "ssl_flag", &ssl_flag) < 0
+  if (hr_cgi_param_int(phr, "ssl_flag", &ssl_flag) < 0
       || ssl_flag < -1 || ssl_flag > 1)
     FAIL(S_ERR_INV_VALUE);
-  if (ss_cgi_param_int(phr, "default_allow", &default_allow) < 0
+  if (hr_cgi_param_int(phr, "default_allow", &default_allow) < 0
       || default_allow < 0 || default_allow > 1)
     FAIL(S_ERR_INV_VALUE);
   contests_add_ip(ecnts, p_acc, access_field_tag[f_id],
@@ -4188,14 +4170,14 @@ cmd_op_set_rule_access(
 
   if (!(ecnts = phr->ss->edited_cnts))
     FAIL(S_ERR_NO_EDITED_CNTS);
-  if (ss_cgi_param_int(phr, "field_id", &f_id) < 0
+  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
       || f_id <= 0 || f_id >= CNTS_LAST_FIELD
       || !(access_field_set[f_id]))
     FAIL(S_ERR_INV_FIELD_ID);
   acc = *(struct contest_access**) contest_desc_get_ptr(ecnts, f_id);
-  if (ss_cgi_param_int(phr, "subfield_id", &subf_id) < 0 || subf_id < 0)
+  if (hr_cgi_param_int(phr, "subfield_id", &subf_id) < 0 || subf_id < 0)
     FAIL(S_ERR_INV_FIELD_ID);
-  if (ss_cgi_param_int(phr, "value", &allow) < 0 || allow < 0 || allow > 1)
+  if (hr_cgi_param_int(phr, "value", &allow) < 0 || allow < 0 || allow > 1)
     FAIL(S_ERR_INV_VALUE);
   if (!(p = contests_get_ip_rule_nc(acc, subf_id)))
     FAIL(S_ERR_INV_FIELD_ID);
@@ -4223,14 +4205,14 @@ cmd_op_set_rule_ssl(
 
   if (!(ecnts = phr->ss->edited_cnts))
     FAIL(S_ERR_NO_EDITED_CNTS);
-  if (ss_cgi_param_int(phr, "field_id", &f_id) < 0
+  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
       || f_id <= 0 || f_id >= CNTS_LAST_FIELD
       || !(access_field_set[f_id]))
     FAIL(S_ERR_INV_FIELD_ID);
   acc = *(struct contest_access**) contest_desc_get_ptr(ecnts, f_id);
-  if (ss_cgi_param_int(phr, "subfield_id", &subf_id) < 0 || subf_id < 0)
+  if (hr_cgi_param_int(phr, "subfield_id", &subf_id) < 0 || subf_id < 0)
     FAIL(S_ERR_INV_FIELD_ID);
-  if (ss_cgi_param_int(phr, "value", &ssl) < 0 || ssl < -1 || ssl > 1)
+  if (hr_cgi_param_int(phr, "value", &ssl) < 0 || ssl < -1 || ssl > 1)
     FAIL(S_ERR_INV_VALUE);
   if (!(p = contests_get_ip_rule_nc(acc, subf_id)))
     FAIL(S_ERR_INV_FIELD_ID);
@@ -4259,12 +4241,12 @@ cmd_op_set_rule_ip(
 
   if (!(ecnts = phr->ss->edited_cnts))
     FAIL(S_ERR_NO_EDITED_CNTS);
-  if (ss_cgi_param_int(phr, "field_id", &f_id) < 0
+  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
       || f_id <= 0 || f_id >= CNTS_LAST_FIELD
       || !(access_field_set[f_id]))
     FAIL(S_ERR_INV_FIELD_ID);
   acc = *(struct contest_access**) contest_desc_get_ptr(ecnts, f_id);
-  if (ss_cgi_param_int(phr, "subfield_id", &subf_id) < 0 || subf_id < 0)
+  if (hr_cgi_param_int(phr, "subfield_id", &subf_id) < 0 || subf_id < 0)
     FAIL(S_ERR_INV_FIELD_ID);
   if (hr_cgi_param(phr, "value", &mask_str) <= 0)
     FAIL(S_ERR_INV_VALUE);
@@ -4308,12 +4290,12 @@ cmd_op_rule_cmd(
 
   if (!(ecnts = phr->ss->edited_cnts))
     FAIL(S_ERR_NO_EDITED_CNTS);
-  if (ss_cgi_param_int(phr, "field_id", &f_id) < 0
+  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
       || f_id <= 0 || f_id >= CNTS_LAST_FIELD
       || !(access_field_set[f_id]))
     FAIL(S_ERR_INV_FIELD_ID);
   p_acc = (struct contest_access**) contest_desc_get_ptr(ecnts, f_id);
-  if (ss_cgi_param_int(phr, "subfield_id", &subf_id) < 0 || subf_id < 0)
+  if (hr_cgi_param_int(phr, "subfield_id", &subf_id) < 0 || subf_id < 0)
     FAIL(S_ERR_INV_FIELD_ID);
   if (contest_func(p_acc, subf_id) < 0)
     FAIL(S_ERR_INV_FIELD_ID);
@@ -4340,17 +4322,17 @@ cmd_op_copy_access_rules(
 
   if (!(ecnts = phr->ss->edited_cnts))
     FAIL(S_ERR_NO_EDITED_CNTS);
-  if (ss_cgi_param_int(phr, "field_id", &f_id) < 0
+  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
       || f_id <= 0 || f_id >= CNTS_LAST_FIELD
       || !(access_field_set[f_id]))
     FAIL(S_ERR_INV_FIELD_ID);
   p_acc = (struct contest_access**) contest_desc_get_ptr(ecnts, f_id);
-  if (ss_cgi_param_int(phr, "contest_id_2", &contest_id_2) < 0
+  if (hr_cgi_param_int(phr, "contest_id_2", &contest_id_2) < 0
       || contest_id_2 <= 0)
     FAIL(S_ERR_INV_VALUE);
   if (contests_get(contest_id_2, &cnts) < 0 || !cnts)
     FAIL(S_ERR_INV_VALUE);
-  if (ss_cgi_param_int(phr, "field_id_2", &f_id_2) < 0
+  if (hr_cgi_param_int(phr, "field_id_2", &f_id_2) < 0
       || f_id_2 <= 0 || f_id_2 >= CNTS_LAST_FIELD
       || !(access_field_set[f_id_2]))
     FAIL(S_ERR_INV_VALUE);
@@ -4387,7 +4369,7 @@ cmd_op_edit_general_fields(
 
   for (ff = 1; ff < CONTEST_LAST_FIELD; ++ff) {
     snprintf(vbuf, sizeof(vbuf), "field_%d", ff);
-    if (ss_cgi_param_int(phr, vbuf, &opt_val) < 0
+    if (hr_cgi_param_int(phr, vbuf, &opt_val) < 0
         || opt_val < 0 || opt_val > 2)
       FAIL(S_ERR_INV_VALUE);
     snprintf(vbuf, sizeof(vbuf), "legend_%d", ff);
@@ -4425,21 +4407,21 @@ cmd_op_edit_member_fields(
 
   if (!(ecnts = phr->ss->edited_cnts))
     FAIL(S_ERR_NO_EDITED_CNTS);
-  if (ss_cgi_param_int(phr, "field_id", &m_id) < 0
+  if (hr_cgi_param_int(phr, "field_id", &m_id) < 0
       || m_id < 0 || m_id >= CONTEST_LAST_MEMBER)
     FAIL(S_ERR_INV_FIELD_ID);
-  if (ss_cgi_param_int(phr, "init_count", &init_count) < 0
+  if (hr_cgi_param_int(phr, "init_count", &init_count) < 0
       || init_count < 0 || init_count > 5)
     FAIL(S_ERR_INV_VALUE);
-  if (ss_cgi_param_int(phr, "min_count", &min_count) < 0
+  if (hr_cgi_param_int(phr, "min_count", &min_count) < 0
       || min_count < 0 || min_count > 5)
     FAIL(S_ERR_INV_VALUE);
-  if (ss_cgi_param_int(phr, "max_count", &max_count) < 0
+  if (hr_cgi_param_int(phr, "max_count", &max_count) < 0
       || max_count < 0 || max_count > 5)
     FAIL(S_ERR_INV_VALUE);
   for (ff = 1; ff < CONTEST_LAST_MEMBER_FIELD; ++ff) {
     snprintf(vbuf, sizeof(vbuf), "field_%d", ff);
-    if (ss_cgi_param_int(phr, vbuf, &opt_val) < 0
+    if (hr_cgi_param_int(phr, vbuf, &opt_val) < 0
         || opt_val < 0 || opt_val > 2)
       FAIL(S_ERR_INV_VALUE);
     opt_vals[ff] = opt_val;
@@ -4566,10 +4548,10 @@ cmd_op_create_new_contest(
     FAIL(S_ERR_PERM_DENIED);
   if (opcaps_check(phr->caps, OPCAP_EDIT_CONTEST) < 0)
     FAIL(S_ERR_PERM_DENIED);
-  if (ss_cgi_param_int(phr, "contest_id", &contest_id) < 0
+  if (hr_cgi_param_int(phr, "contest_id", &contest_id) < 0
       || contest_id < 0 || contest_id > EJ_MAX_CONTEST_ID)
     FAIL(S_ERR_INV_VALUE);
-  if (ss_cgi_param_int(phr, "templ_id", &templ_id) < 0 || templ_id < 0)
+  if (hr_cgi_param_int(phr, "templ_id", &templ_id) < 0 || templ_id < 0)
     FAIL(S_ERR_INV_VALUE);
 
   contest_num = contests_get_list(&contests);
@@ -4750,7 +4732,7 @@ cmd_op_edit_serve_global_field(
   if (!phr->ss->edited_cnts || !phr->ss->global)
     FAIL(S_ERR_NO_EDITED_CNTS);
   global = phr->ss->global;
-  if (ss_cgi_param_int(phr, "field_id", &f_id) < 0
+  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
       || f_id <= 0 || f_id >= CNTSGLOB_LAST_FIELD)
     FAIL(S_ERR_INV_FIELD_ID);
   if (!editable_global_fields)
@@ -4956,7 +4938,7 @@ cmd_op_clear_serve_global_field(
   if (!phr->ss->edited_cnts || !phr->ss->global)
     FAIL(S_ERR_NO_EDITED_CNTS);
   global = phr->ss->global;
-  if (ss_cgi_param_int(phr, "field_id", &f_id) < 0
+  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
       || f_id <= 0 || f_id >= CNTSGLOB_LAST_FIELD)
     FAIL(S_ERR_INV_FIELD_ID);
   if (!editable_global_fields)
@@ -5071,7 +5053,7 @@ cmd_op_edit_sid_state_field(
 
   if (!phr->ss->edited_cnts)
     FAIL(S_ERR_NO_EDITED_CNTS);
-  if (ss_cgi_param_int(phr, "field_id", &f_id) < 0
+  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
       || f_id <= 0 || f_id >= CNTSGLOB_LAST_FIELD)
     FAIL(S_ERR_INV_FIELD_ID);
   if (!editable_sid_state_fields[f_id])
@@ -5085,7 +5067,7 @@ cmd_op_edit_sid_state_field(
     {
       int val;
 
-      if (ss_cgi_param_int(phr, "value", &val) < 0 || val < 0 || val > 1)
+      if (hr_cgi_param_int(phr, "value", &val) < 0 || val < 0 || val > 1)
         FAIL(S_ERR_INV_VALUE);
       *(ejintbool_t*) f_ptr = val;
       retval = 1;
@@ -5119,12 +5101,12 @@ cmd_op_edit_sid_state_field_neg(
 
   if (!phr->ss->edited_cnts)
     FAIL(S_ERR_NO_EDITED_CNTS);
-  if (ss_cgi_param_int(phr, "field_id", &f_id) < 0
+  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
       || f_id <= 0 || f_id >= CNTSGLOB_LAST_FIELD)
     FAIL(S_ERR_INV_FIELD_ID);
   if (!editable_sid_state_fields_neg[f_id])
     FAIL(S_ERR_INV_FIELD_ID);
-  if (ss_cgi_param_int(phr, "value", &val) < 0 || val < 0 || val > 1)
+  if (hr_cgi_param_int(phr, "value", &val) < 0 || val < 0 || val > 1)
     FAIL(S_ERR_INV_VALUE);
   if (!(f_ptr = ss_sid_state_get_ptr_nc(phr->ss, f_id)))
     FAIL(S_ERR_INV_FIELD_ID);
@@ -5171,7 +5153,7 @@ cmd_op_edit_serve_global_field_detail_page(
     FAIL(S_ERR_NO_EDITED_CNTS);
   ecnts = phr->ss->edited_cnts;
   global = phr->ss->global;
-  if (ss_cgi_param_int(phr, "field_id", &f_id) < 0
+  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
       || f_id <= 0 || f_id >= CNTSGLOB_LAST_FIELD
       || !(global_editable_details[f_id]))
     FAIL(S_ERR_INV_FIELD_ID);
@@ -5250,7 +5232,7 @@ cmd_op_edit_serve_global_field_detail(
   if (!phr->ss->edited_cnts || !phr->ss->global)
     FAIL(S_ERR_NO_EDITED_CNTS);
   global = phr->ss->global;
-  if (ss_cgi_param_int(phr, "field_id", &f_id) < 0
+  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
       || f_id <= 0 || f_id >= CNTSGLOB_LAST_FIELD
       || !(global_editable_details[f_id]))
     FAIL(S_ERR_INV_FIELD_ID);
@@ -5322,37 +5304,37 @@ cmd_op_set_sid_state_lang_field(
 
   if (!phr->ss->edited_cnts || !phr->ss->global)
     FAIL(S_ERR_NO_EDITED_CNTS);
-  if (ss_cgi_param_int(phr, "field_id", &f_id) < 0)
+  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0)
     FAIL(S_ERR_INV_FIELD_ID);
 
   switch (f_id) {
   case SSSS_lang_flags:         // show/hide
     // cs_lang_id is the compilation server language ID
-    if (ss_cgi_param_int(phr, "item_id", &cs_lang_id) < 0)
+    if (hr_cgi_param_int(phr, "item_id", &cs_lang_id) < 0)
       FAIL(S_ERR_INV_LANG_ID);
     if (cs_lang_id <= 0 || cs_lang_id >= phr->ss->cs_lang_total
         || !phr->ss->cs_langs[cs_lang_id])
       FAIL(S_ERR_INV_LANG_ID);
     new_id = phr->ss->cs_loc_map[cs_lang_id];
-    if (ss_cgi_param_int(phr, "value", &val) < 0 || val < 0 || val > 1)
+    if (hr_cgi_param_int(phr, "value", &val) < 0 || val < 0 || val > 1)
       FAIL(S_ERR_INV_VALUE);
     phr->ss->lang_flags[new_id] = val;
     break;
 
   case SSSS_langs:              // activate/deactivate
     // cs_lang_id is the compilation server language ID
-    if (ss_cgi_param_int(phr, "item_id", &cs_lang_id) < 0)
+    if (hr_cgi_param_int(phr, "item_id", &cs_lang_id) < 0)
       FAIL(S_ERR_INV_LANG_ID);
     if (cs_lang_id <= 0 || cs_lang_id >= phr->ss->cs_lang_total
         || !phr->ss->cs_langs[cs_lang_id])
       FAIL(S_ERR_INV_LANG_ID);
-    if (ss_cgi_param_int(phr, "value", &val) < 0 || val < 0 || val > 1)
+    if (hr_cgi_param_int(phr, "value", &val) < 0 || val < 0 || val > 1)
       FAIL(S_ERR_INV_VALUE);
     (val?super_html_lang_activate:super_html_lang_deactivate)(phr->ss, cs_lang_id);
     break;
 
   case SSSS_lang_opts:          // compiler options
-    if (ss_cgi_param_int(phr, "item_id", &lang_id) < 0)
+    if (hr_cgi_param_int(phr, "item_id", &lang_id) < 0)
       FAIL(S_ERR_INV_LANG_ID);
     if (lang_id <= 0 || lang_id >= phr->ss->lang_a
         || !phr->ss->langs[lang_id])
@@ -5387,11 +5369,11 @@ cmd_op_clear_sid_state_lang_field(
 
   if (!phr->ss->edited_cnts || !phr->ss->langs)
     FAIL(S_ERR_NO_EDITED_CNTS);
-  if (ss_cgi_param_int(phr, "item_id", &lang_id) < 0)
+  if (hr_cgi_param_int(phr, "item_id", &lang_id) < 0)
     FAIL(S_ERR_INV_LANG_ID);
   if (lang_id <= 0 || lang_id >= phr->ss->lang_a || !phr->ss->langs[lang_id])
     FAIL(S_ERR_INV_LANG_ID);
-  if (ss_cgi_param_int(phr, "field_id", &f_id) < 0)
+  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0)
     FAIL(S_ERR_INV_FIELD_ID);
   switch (f_id) {
   case SSSS_lang_opts:
@@ -5438,11 +5420,11 @@ cmd_op_set_serve_lang_field(
 
   if (!phr->ss->edited_cnts || !phr->ss->langs)
     FAIL(S_ERR_NO_EDITED_CNTS);
-  if (ss_cgi_param_int(phr, "item_id", &lang_id) < 0)
+  if (hr_cgi_param_int(phr, "item_id", &lang_id) < 0)
     FAIL(S_ERR_INV_LANG_ID);
   if (lang_id <= 0 || lang_id >= phr->ss->lang_a || !phr->ss->langs[lang_id])
     FAIL(S_ERR_INV_LANG_ID);
-  if (ss_cgi_param_int(phr, "field_id", &f_id) < 0)
+  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0)
     FAIL(S_ERR_INV_FIELD_ID);
   if (!lang_editable_fields[f_id])
     FAIL(S_ERR_INV_FIELD_ID);
@@ -5456,7 +5438,7 @@ cmd_op_set_serve_lang_field(
       ejintbool_t *p_bool = (ejintbool_t*) f_ptr;
       ejintbool_t val = -1;
 
-      if (ss_cgi_param_int(phr, "value", &val) < 0 || val < 0 || val > 1)
+      if (hr_cgi_param_int(phr, "value", &val) < 0 || val < 0 || val > 1)
         FAIL(S_ERR_INV_VALUE);
       *p_bool = val;
       if (f_id == CNTSLANG_disable_auto_testing) retval = 1;
@@ -5520,11 +5502,11 @@ cmd_op_clear_serve_lang_field(
 
   if (!phr->ss->edited_cnts || !phr->ss->langs)
     FAIL(S_ERR_NO_EDITED_CNTS);
-  if (ss_cgi_param_int(phr, "item_id", &lang_id) < 0)
+  if (hr_cgi_param_int(phr, "item_id", &lang_id) < 0)
     FAIL(S_ERR_INV_LANG_ID);
   if (lang_id <= 0 || lang_id >= phr->ss->lang_a || !phr->ss->langs[lang_id])
     FAIL(S_ERR_INV_LANG_ID);
-  if (ss_cgi_param_int(phr, "field_id", &f_id) < 0)
+  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0)
     FAIL(S_ERR_INV_FIELD_ID);
   if (!lang_editable_fields[f_id])
     FAIL(S_ERR_INV_FIELD_ID);
@@ -5582,11 +5564,11 @@ cmd_op_edit_serve_lang_field_detail_page(
   if (!phr->ss->edited_cnts || !phr->ss->langs)
     FAIL(S_ERR_NO_EDITED_CNTS);
   ecnts = phr->ss->edited_cnts;
-  if (ss_cgi_param_int(phr, "item_id", &lang_id) < 0
+  if (hr_cgi_param_int(phr, "item_id", &lang_id) < 0
       || lang_id <= 0 || lang_id >= phr->ss->lang_a
       || !phr->ss->langs[lang_id])
     FAIL(S_ERR_INV_LANG_ID);
-  if (ss_cgi_param_int(phr, "field_id", &f_id) < 0
+  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
       || f_id <= 0 || f_id >= CNTSLANG_LAST_FIELD
       || !(lang_editable_details[f_id]))
     FAIL(S_ERR_INV_FIELD_ID);
@@ -5665,11 +5647,11 @@ cmd_op_edit_serve_lang_field_detail(
 
   if (!phr->ss->edited_cnts || !phr->ss->langs)
     FAIL(S_ERR_NO_EDITED_CNTS);
-  if (ss_cgi_param_int(phr, "item_id", &lang_id) < 0
+  if (hr_cgi_param_int(phr, "item_id", &lang_id) < 0
       || lang_id <= 0 || lang_id >= phr->ss->lang_a
       || !phr->ss->langs[lang_id])
     FAIL(S_ERR_INV_LANG_ID);
-  if (ss_cgi_param_int(phr, "field_id", &f_id) < 0
+  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
       || f_id <= 0 || f_id >= CNTSLANG_LAST_FIELD
       || !(lang_editable_details[f_id]))
     FAIL(S_ERR_INV_FIELD_ID);
@@ -5799,7 +5781,7 @@ cmd_op_delete_prob(
 
   if (!phr->ss->edited_cnts || !phr->ss->global)
     FAIL(S_ERR_NO_EDITED_CNTS);
-  if (ss_cgi_param_int(phr, "item_id", &prob_id) < 0)
+  if (hr_cgi_param_int(phr, "item_id", &prob_id) < 0)
     FAIL(S_ERR_INV_PROB_ID);
   if (prob_id < 0) {
     prob_id = -prob_id - 1;
@@ -5839,7 +5821,7 @@ cmd_op_set_sid_state_prob_field(
 
   if (!phr->ss->edited_cnts || !phr->ss->global)
     FAIL(S_ERR_NO_EDITED_CNTS);
-  if (ss_cgi_param_int(phr, "item_id", &prob_id) < 0)
+  if (hr_cgi_param_int(phr, "item_id", &prob_id) < 0)
     FAIL(S_ERR_INV_PROB_ID);
   if (prob_id < 0) {
     prob_id = -prob_id - 1;
@@ -5851,9 +5833,9 @@ cmd_op_set_sid_state_prob_field(
     if (!phr->ss->probs[prob_id]) FAIL(S_ERR_INV_PROB_ID);
     p_flags = &phr->ss->prob_flags[prob_id];
   }
-  if (ss_cgi_param_int(phr, "field_id", &f_id) < 0)
+  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0)
     FAIL(S_ERR_INV_FIELD_ID);
-  if (ss_cgi_param_int(phr, "value", &value) < 0 || value < 0 || value > 1)
+  if (hr_cgi_param_int(phr, "value", &value) < 0 || value < 0 || value > 1)
     FAIL(S_ERR_INV_VALUE);
 
   switch (f_id) {
@@ -6086,7 +6068,7 @@ cmd_op_set_serve_prob_field(
 
   if (!phr->ss->edited_cnts || !phr->ss->global)
     FAIL(S_ERR_NO_EDITED_CNTS);
-  if (ss_cgi_param_int(phr, "item_id", &prob_id) < 0)
+  if (hr_cgi_param_int(phr, "item_id", &prob_id) < 0)
     FAIL(S_ERR_INV_PROB_ID);
   if (prob_id >= 0) {
     if (prob_id <= 0 || prob_id >= phr->ss->prob_a
@@ -6097,7 +6079,7 @@ cmd_op_set_serve_prob_field(
     if (prob_id >= phr->ss->aprob_u || !(prob = phr->ss->aprobs[prob_id]))
       FAIL(S_ERR_INV_PROB_ID);
   }
-  if (ss_cgi_param_int(phr, "field_id", &f_id) < 0
+  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
       || f_id <= 0 || f_id >= CNTSPROB_LAST_FIELD)
     FAIL(S_ERR_INV_FIELD_ID);
   if (f_id == CNTSPROB_id 
@@ -6240,7 +6222,7 @@ cmd_op_clear_serve_prob_field(
 
   if (!phr->ss->edited_cnts || !phr->ss->global)
     FAIL(S_ERR_NO_EDITED_CNTS);
-  if (ss_cgi_param_int(phr, "item_id", &prob_id) < 0)
+  if (hr_cgi_param_int(phr, "item_id", &prob_id) < 0)
     FAIL(S_ERR_INV_PROB_ID);
   if (prob_id >= 0) {
     if (prob_id <= 0 || prob_id >= phr->ss->prob_a
@@ -6251,7 +6233,7 @@ cmd_op_clear_serve_prob_field(
     if (prob_id >= phr->ss->aprob_u || !(prob = phr->ss->aprobs[prob_id]))
       FAIL(S_ERR_INV_PROB_ID);
   }
-  if (ss_cgi_param_int(phr, "field_id", &f_id) < 0
+  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
       || f_id <= 0 || f_id >= CNTSPROB_LAST_FIELD)
     FAIL(S_ERR_INV_FIELD_ID);
 
@@ -6305,7 +6287,7 @@ cmd_op_edit_serve_prob_field_detail_page(
   if (!phr->ss->edited_cnts || !phr->ss->global)
     FAIL(S_ERR_NO_EDITED_CNTS);
   ecnts = phr->ss->edited_cnts;
-  if (ss_cgi_param_int(phr, "item_id", &prob_id) < 0)
+  if (hr_cgi_param_int(phr, "item_id", &prob_id) < 0)
     FAIL(S_ERR_INV_PROB_ID);
   if (prob_id >= 0) {
     if (prob_id <= 0 || prob_id >= phr->ss->prob_a
@@ -6316,7 +6298,7 @@ cmd_op_edit_serve_prob_field_detail_page(
     if (prob_id >= phr->ss->aprob_u || !(prob = phr->ss->aprobs[prob_id]))
       FAIL(S_ERR_INV_PROB_ID);
   }
-  if (ss_cgi_param_int(phr, "field_id", &f_id) < 0
+  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
       || f_id <= 0 || f_id >= CNTSPROB_LAST_FIELD
       || !(prob_editable_details[f_id]))
     FAIL(S_ERR_INV_FIELD_ID);
@@ -6397,7 +6379,7 @@ cmd_op_edit_serve_prob_field_detail(
 
   if (!phr->ss->edited_cnts || !phr->ss->global)
     FAIL(S_ERR_NO_EDITED_CNTS);
-  if (ss_cgi_param_int(phr, "item_id", &prob_id) < 0)
+  if (hr_cgi_param_int(phr, "item_id", &prob_id) < 0)
     FAIL(S_ERR_INV_PROB_ID);
   if (prob_id >= 0) {
     if (prob_id <= 0 || prob_id >= phr->ss->prob_a
@@ -6408,7 +6390,7 @@ cmd_op_edit_serve_prob_field_detail(
     if (prob_id >= phr->ss->aprob_u || !(prob = phr->ss->aprobs[prob_id]))
       FAIL(S_ERR_INV_PROB_ID);
   }
-  if (ss_cgi_param_int(phr, "field_id", &f_id) < 0
+  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
       || f_id <= 0 || f_id >= CNTSPROB_LAST_FIELD
       || !(prob_editable_details[f_id]))
     FAIL(S_ERR_INV_FIELD_ID);

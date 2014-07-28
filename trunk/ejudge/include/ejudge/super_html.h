@@ -418,11 +418,6 @@ struct std_checker_info
 };
 
 int
-ss_cgi_param_int(
-        struct http_request_info *phr,
-        const unsigned char *name,
-        int *p_val);
-int
 ss_cgi_param_int_opt(
         struct http_request_info *phr,
         const unsigned char *name,
