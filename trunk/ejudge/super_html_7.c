@@ -3144,10 +3144,10 @@ super_serve_op_TESTS_TEST_EDIT_ACTION(
     if (testinfo_exit_code < 0 || testinfo_exit_code >= 128) FAIL(S_ERR_INV_EXIT_CODE);
     ss_cgi_param_int_opt(phr, "testinfo_check_stderr", &testinfo_check_stderr, 0);
     if (testinfo_check_stderr != 1) testinfo_check_stderr = 0;
-    ss_cgi_param(phr, "testinfo_cmdline", &testinfo_cmdline);
-    ss_cgi_param(phr, "testinfo_environ", &testinfo_environ);
-    ss_cgi_param(phr, "testinfo_user_comment", &testinfo_user_comment);
-    ss_cgi_param(phr, "testinfo_comment", &testinfo_comment);
+    hr_cgi_param(phr, "testinfo_cmdline", &testinfo_cmdline);
+    hr_cgi_param(phr, "testinfo_environ", &testinfo_environ);
+    hr_cgi_param(phr, "testinfo_user_comment", &testinfo_user_comment);
+    hr_cgi_param(phr, "testinfo_comment", &testinfo_comment);
 
     make_prefixed_path(info_tmp_path, sizeof(info_tmp_path), test_dir, NEW_TEST_PREFIX, info_pat, test_num);
     make_prefixed_path(info_out_path, sizeof(info_out_path), test_dir, NULL, info_pat, test_num);
@@ -3203,7 +3203,7 @@ super_serve_op_TESTS_TEST_EDIT_ACTION(
   if (norm_type == TEST_NORM_DEFAULT) norm_type = TEST_NORM_NL;
 
   if (prob->binary_input <= 0 && prob->use_corr > 0 && corr_pat[0] > ' ') {
-    r = ss_cgi_param(phr, "corr_txt", &corr_txt);
+    r = hr_cgi_param(phr, "corr_txt", &corr_txt);
     if (r < 0) FAIL(S_ERR_INV_VALUE);
     if (r > 0) {
       make_prefixed_path(corr_tmp_path, sizeof(corr_tmp_path), test_dir, NEW_TEST_PREFIX, corr_pat, test_num);
@@ -3228,7 +3228,7 @@ super_serve_op_TESTS_TEST_EDIT_ACTION(
   }
 
   if (prob->binary_input <= 0) {
-    r = ss_cgi_param(phr, "test_txt", &test_txt);
+    r = hr_cgi_param(phr, "test_txt", &test_txt);
     if (r < 0) FAIL(S_ERR_INV_VALUE);
     if (r > 0) {
       make_prefixed_path(test_tmp_path, sizeof(test_tmp_path), test_dir, NEW_TEST_PREFIX, test_pat, test_num);
@@ -3743,7 +3743,7 @@ super_serve_op_TESTS_MAKEFILE_EDIT_ACTION(
     ss_cgi_param_int_opt(phr, "variant", &variant, 0);
     if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
   }
-  if (ss_cgi_param(phr, "text", &text) <= 0) FAIL(S_ERR_INV_VALUE);
+  if (hr_cgi_param(phr, "text", &text) <= 0) FAIL(S_ERR_INV_VALUE);
 
   get_advanced_layout_path(tmp_makefile_path, sizeof(tmp_makefile_path), global, prob, "tmp_Makefile", variant);
   get_advanced_layout_path(makefile_path, sizeof(makefile_path), global, prob, DFLT_P_MAKEFILE, variant);
@@ -4359,17 +4359,17 @@ super_serve_op_TESTS_STATEMENT_EDIT_ACTION(
 
   // prob_package, prob_name, prob_title, prob_desc, prob_input_format, prob_output_format, prob_notes
   s = NULL;
-  ss_cgi_param(phr, "prob_package", &s);
+  hr_cgi_param(phr, "prob_package", &s);
   prob_package = fix_string(s);
   if (!prob_package || !*prob_package) FAIL(S_ERR_UNSPEC_PROB_PACKAGE);
 
   s = NULL;
-  ss_cgi_param(phr, "prob_name", &s);
+  hr_cgi_param(phr, "prob_name", &s);
   prob_name = fix_string(s);
   if (!prob_name || !*prob_name) FAIL(S_ERR_UNSPEC_PROB_NAME);
 
   s = NULL;
-  ss_cgi_param(phr, "prob_title", &s);
+  hr_cgi_param(phr, "prob_title", &s);
   text = fix_string(s);
   if (text && *text) {
     if (!(title_node = problem_xml_parse_text(log_f, text, PROB_T_TITLE))) FAIL(S_ERR_INV_XHTML);
@@ -4377,7 +4377,7 @@ super_serve_op_TESTS_STATEMENT_EDIT_ACTION(
   xfree(text); text = NULL;
 
   s = NULL;
-  ss_cgi_param(phr, "prob_desc", &s);
+  hr_cgi_param(phr, "prob_desc", &s);
   text = normalize_textarea(s);
   if (text && *text) {
     if (!(desc_node = problem_xml_parse_text(log_f, text, PROB_T_DESCRIPTION))) FAIL(S_ERR_INV_XHTML);
@@ -4385,7 +4385,7 @@ super_serve_op_TESTS_STATEMENT_EDIT_ACTION(
   xfree(text); text = NULL;
 
   s = NULL;
-  ss_cgi_param(phr, "prob_input_format", &s);
+  hr_cgi_param(phr, "prob_input_format", &s);
   text = normalize_textarea(s);
   if (text && *text) {
     if (!(input_format_node = problem_xml_parse_text(log_f, text, PROB_T_INPUT_FORMAT))) FAIL(S_ERR_INV_XHTML);
@@ -4393,7 +4393,7 @@ super_serve_op_TESTS_STATEMENT_EDIT_ACTION(
   xfree(text); text = NULL;
 
   s = NULL;
-  ss_cgi_param(phr, "prob_output_format", &s);
+  hr_cgi_param(phr, "prob_output_format", &s);
   text = normalize_textarea(s);
   if (text && *text) {
     if (!(output_format_node = problem_xml_parse_text(log_f, text, PROB_T_OUTPUT_FORMAT))) FAIL(S_ERR_INV_XHTML);
@@ -4401,7 +4401,7 @@ super_serve_op_TESTS_STATEMENT_EDIT_ACTION(
   xfree(text); text = NULL;
 
   s = NULL;
-  ss_cgi_param(phr, "prob_notes", &s);
+  hr_cgi_param(phr, "prob_notes", &s);
   text = normalize_textarea(s);
   if (text && *text) {
     if (!(notes_node = problem_xml_parse_text(log_f, text, PROB_T_NOTES))) FAIL(S_ERR_INV_XHTML);
@@ -4412,9 +4412,9 @@ super_serve_op_TESTS_STATEMENT_EDIT_ACTION(
   // prob_sample_input_%d, prob_sample_output_%d
   while (1) {
     snprintf(test_param_name, sizeof(test_param_name), "prob_sample_input_%d", test_count);
-    if (ss_cgi_param(phr, test_param_name, &s) <= 0) break;
+    if (hr_cgi_param(phr, test_param_name, &s) <= 0) break;
     snprintf(test_param_name, sizeof(test_param_name), "prob_sample_output_%d", test_count);
-    if (ss_cgi_param(phr, test_param_name, &s) <= 0) break;
+    if (hr_cgi_param(phr, test_param_name, &s) <= 0) break;
     ++test_count;
   }
 
@@ -4423,14 +4423,14 @@ super_serve_op_TESTS_STATEMENT_EDIT_ACTION(
   for (i = 1; i < test_count; ++i) {
     s = NULL;
     snprintf(test_param_name, sizeof(test_param_name), "prob_sample_input_%d", i);
-    ss_cgi_param(phr, test_param_name, &s);
+    hr_cgi_param(phr, test_param_name, &s);
     text = normalize_textarea(s);
     if (!(test_input_nodes[i] = problem_xml_parse_text(log_f, text, PROB_T_INPUT))) FAIL(S_ERR_INV_XHTML);
     xfree(text); text = NULL;
 
     s = NULL;
     snprintf(test_param_name, sizeof(test_param_name), "prob_sample_output_%d", i);
-    ss_cgi_param(phr, test_param_name, &s);
+    hr_cgi_param(phr, test_param_name, &s);
     text = normalize_textarea(s);
     if (!(test_output_nodes[i] = problem_xml_parse_text(log_f, text, PROB_T_OUTPUT))) FAIL(S_ERR_INV_XHTML);
     xfree(text); text = NULL;
@@ -4574,7 +4574,7 @@ super_serve_op_TESTS_STATEMENT_EDIT_2_ACTION(
 
   // xml_text
   s = NULL;
-  ss_cgi_param(phr, "xml_text", &s);
+  hr_cgi_param(phr, "xml_text", &s);
   text = normalize_textarea(s);
 
   if (phr->action == SSERV_CMD_TESTS_STATEMENT_EDIT_2_ACTION) {
@@ -4928,7 +4928,7 @@ super_serve_op_TESTS_SOURCE_HEADER_EDIT_ACTION(
   snprintf(file_path_tmp, sizeof(file_path_tmp), "%s.tmp", file_path);
   snprintf(file_path_bak, sizeof(file_path_bak), "%s.bak", file_path);
 
-  ss_cgi_param(phr, "text", &s);
+  hr_cgi_param(phr, "text", &s);
   text = normalize_textarea(s);
 
   if (create_problem_directory(log_f, file_path_tmp, cnts) < 0)
@@ -5825,7 +5825,7 @@ super_serve_op_TESTS_CHECKER_EDIT_ACTION(
   if (create_problem_directory(log_f, file_path_tmp, cnts) < 0)
     FAIL(S_ERR_FS_ERROR);
 
-  ss_cgi_param(phr, "text", &s);
+  hr_cgi_param(phr, "text", &s);
   text = normalize_textarea(s);
 
   write_file(file_path_tmp, text);

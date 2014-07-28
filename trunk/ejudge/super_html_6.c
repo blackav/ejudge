@@ -354,7 +354,7 @@ ss_parse_params(
     case '1':                   /* ej_textbox_t */
       {
         const unsigned char *s = 0;
-        if (ss_cgi_param(phr, field_name, &s) <= 0 || !s || !*s) {
+        if (hr_cgi_param(phr, field_name, &s) <= 0 || !s || !*s) {
           return -S_ERR_INV_VALUE;
         }
         unsigned char *s2 = fix_string(s);
@@ -368,7 +368,7 @@ ss_parse_params(
     case '2':                   /* ej_textbox_opt_t */
       {
         const unsigned char *s = 0;
-        if (ss_cgi_param(phr, field_name, &s) < 0) {
+        if (hr_cgi_param(phr, field_name, &s) < 0) {
           return -S_ERR_INV_VALUE;
         }
         unsigned char *s2 = fix_string(s);
@@ -559,7 +559,7 @@ super_serve_op_USER_BROWSE_PAGE(
   ss_cgi_param_int_opt(phr, "group_id", &group_id, 0);
 
   s = 0;
-  if (ss_cgi_param(phr, "marked", &s) > 0 && s) {
+  if (hr_cgi_param(phr, "marked", &s) > 0 && s) {
     if (bitset_url_decode(s, &marked) >= 0) {
       marked_str = bitset_url_encode(&marked);
     }
@@ -1132,7 +1132,7 @@ collect_marked_set(
 {
   const unsigned char *s = 0;
 
-  if (ss_cgi_param(phr, "marked", &s) > 0 && s) {
+  if (hr_cgi_param(phr, "marked", &s) > 0 && s) {
     bitset_url_decode(s, pms);
   }
 
@@ -5355,12 +5355,12 @@ super_serve_op_USER_CHANGE_PASSWORD_ACTION(
   }
 
   s = 0;
-  if (ss_cgi_param(phr, "reg_password1", &s) <= 0 || !s) FAIL(S_ERR_UNSPEC_PASSWD1);
+  if (hr_cgi_param(phr, "reg_password1", &s) <= 0 || !s) FAIL(S_ERR_UNSPEC_PASSWD1);
   reg_password1 = fix_string(s);
   if (!reg_password1 || !*reg_password1) FAIL(S_ERR_UNSPEC_PASSWD1);
   if (strlen(reg_password1) > 1024) FAIL(S_ERR_INV_PASSWD1);
   s = 0;
-  if (ss_cgi_param(phr, "reg_password2", &s) <= 0 || !s) FAIL(S_ERR_UNSPEC_PASSWD2);
+  if (hr_cgi_param(phr, "reg_password2", &s) <= 0 || !s) FAIL(S_ERR_UNSPEC_PASSWD2);
   reg_password2 = fix_string(s);
   if (!reg_password2 || !*reg_password2) FAIL(S_ERR_UNSPEC_PASSWD2);
   if (strlen(reg_password2) > 1024) FAIL(S_ERR_INV_PASSWD2);
@@ -5442,12 +5442,12 @@ super_serve_op_USER_CHANGE_CNTS_PASSWORD_ACTION(
 
   if (!useregpasswd && !settonull) {
     s = 0;
-    if (ss_cgi_param(phr, "cnts_password1", &s) <= 0 || !s) FAIL(S_ERR_UNSPEC_PASSWD1);
+    if (hr_cgi_param(phr, "cnts_password1", &s) <= 0 || !s) FAIL(S_ERR_UNSPEC_PASSWD1);
     cnts_password1 = fix_string(s);
     if (!cnts_password1 || !*cnts_password1) FAIL(S_ERR_UNSPEC_PASSWD1);
     if (strlen(cnts_password1) > 1024) FAIL(S_ERR_INV_PASSWD1);
     s = 0;
-    if (ss_cgi_param(phr, "cnts_password2", &s) <= 0 || !s) FAIL(S_ERR_UNSPEC_PASSWD2);
+    if (hr_cgi_param(phr, "cnts_password2", &s) <= 0 || !s) FAIL(S_ERR_UNSPEC_PASSWD2);
     cnts_password2 = fix_string(s);
     if (!cnts_password2 || !*cnts_password2) FAIL(S_ERR_UNSPEC_PASSWD2);
     if (strlen(cnts_password2) > 1024) FAIL(S_ERR_INV_PASSWD2);
@@ -5880,7 +5880,7 @@ super_serve_op_USER_CREATE_FROM_CSV_ACTION(
     }
   }
 
-  if (ss_cgi_param(phr, "csv_file", &csv_text) <= 0 || !csv_text) {
+  if (hr_cgi_param(phr, "csv_file", &csv_text) <= 0 || !csv_text) {
     FAIL(S_ERR_INV_CSV_FILE);
   }
 
@@ -6164,9 +6164,9 @@ super_serve_op_USER_SAVE_ACTION(
   }
   if (!(u = userlist_parse_user_str(xml_text))) FAIL(S_ERR_DB_ERROR);
 
-  if (ss_cgi_param(phr, "other_login", &s) <= 0 || !s) FAIL(S_ERR_UNSPEC_LOGIN);
+  if (hr_cgi_param(phr, "other_login", &s) <= 0 || !s) FAIL(S_ERR_UNSPEC_LOGIN);
   other_login_str = fix_string(s);
-  if (ss_cgi_param(phr, "email", &s) <= 0) FAIL(S_ERR_INV_VALUE);
+  if (hr_cgi_param(phr, "email", &s) <= 0) FAIL(S_ERR_INV_VALUE);
   email_str = fix_string(s);
   if (email_str && *email_str && !is_valid_email_address(email_str))
     FAIL(S_ERR_INV_EMAIL);
@@ -6323,7 +6323,7 @@ super_serve_op_USER_SAVE_ACTION(
     if (info_null_fields[field_id]) continue;
     snprintf(param_name, sizeof(param_name), "field_%d", field_id);
     s = 0;
-    if (ss_cgi_param(phr, param_name, &s) < 0) FAIL(S_ERR_INV_VALUE);
+    if (hr_cgi_param(phr, param_name, &s) < 0) FAIL(S_ERR_INV_VALUE);
     if (!s) s = "";
     info_fields[field_id] = fix_string(s);
   }
@@ -6445,7 +6445,7 @@ super_serve_op_USER_SAVE_ACTION(
         for (int i = 0; (field_id = member_field_ids[i]); ++i) {
           if (member_null_fields[field_id]) continue;
           snprintf(param_name, sizeof(param_name), "field_%d_%d", field_id, m->serial);
-          int r = ss_cgi_param(phr, param_name, &s);
+          int r = hr_cgi_param(phr, param_name, &s);
           if (!r || !s) continue;
           if (r < 0) FAIL(S_ERR_INV_VALUE);
           if (!s) s = "";
@@ -7517,11 +7517,11 @@ super_serve_op_USER_IMPORT_CSV_ACTION(
     FAIL(S_ERR_PERM_DENIED);
   }
 
-  if (ss_cgi_param(phr, "csv_file", &csv_text) <= 0 || !csv_text) {
+  if (hr_cgi_param(phr, "csv_file", &csv_text) <= 0 || !csv_text) {
     FAIL(S_ERR_INV_CSV_FILE);
   }
 
-  ss_cgi_param(phr, "charset", &charset);
+  hr_cgi_param(phr, "charset", &charset);
   if (charset && *charset) {
     int charset_id = charset_get_id(charset);
     if (charset_id < 0) FAIL(S_ERR_INV_CHARSET);
@@ -7532,7 +7532,7 @@ super_serve_op_USER_IMPORT_CSV_ACTION(
     }
   }
 
-  ss_cgi_param(phr, "separator", &separator);
+  hr_cgi_param(phr, "separator", &separator);
   if (!separator || !*separator) separator = ";";
   if (strlen(separator) != 1) FAIL(S_ERR_INV_SEPARATOR);
 
@@ -8280,14 +8280,14 @@ super_serve_op_GROUP_CREATE_ACTION(
   }
 
   s = 0;
-  if (ss_cgi_param(phr, "group_name", &s) <= 0 || !s) FAIL(S_ERR_INV_GROUP_NAME);
+  if (hr_cgi_param(phr, "group_name", &s) <= 0 || !s) FAIL(S_ERR_INV_GROUP_NAME);
   group_name = fix_string(s);
   if (!group_name || !*group_name) FAIL(S_ERR_INV_GROUP_NAME);
   if (strlen(group_name) > 1024) FAIL(S_ERR_INV_GROUP_NAME);
   if (check_str(group_name, login_accept_chars) < 0) FAIL(S_ERR_INV_GROUP_NAME);
 
   s = 0;
-  if (ss_cgi_param(phr, "description", &s) < 0) FAIL(S_ERR_INV_DESCRIPTION);
+  if (hr_cgi_param(phr, "description", &s) < 0) FAIL(S_ERR_INV_DESCRIPTION);
   if (!s) {
     description = xstrdup("");
   } else {
@@ -8343,14 +8343,14 @@ super_serve_op_GROUP_MODIFY_ACTION(
     FAIL(S_ERR_INV_GROUP_ID);
 
   s = 0;
-  if (ss_cgi_param(phr, "group_name", &s) <= 0 || !s) FAIL(S_ERR_INV_GROUP_NAME);
+  if (hr_cgi_param(phr, "group_name", &s) <= 0 || !s) FAIL(S_ERR_INV_GROUP_NAME);
   group_name = fix_string(s);
   if (!group_name || !*group_name) FAIL(S_ERR_INV_GROUP_NAME);
   if (strlen(group_name) > 1024) FAIL(S_ERR_INV_GROUP_NAME);
   if (check_str(group_name, login_accept_chars) < 0) FAIL(S_ERR_INV_GROUP_NAME);
 
   s = 0;
-  if (ss_cgi_param(phr, "description", &s) < 0) FAIL(S_ERR_INV_DESCRIPTION);
+  if (hr_cgi_param(phr, "description", &s) < 0) FAIL(S_ERR_INV_DESCRIPTION);
   if (!s) {
     description = xstrdup("");
   } else {
@@ -9121,11 +9121,11 @@ super_serve_op_USER_MAP_ADD_ACTION(
 
   const unsigned char *unix_login = NULL;
   const unsigned char *ejudge_login = NULL;
-  if (ss_cgi_param(phr, "unix_login", &unix_login) <= 0) {
+  if (hr_cgi_param(phr, "unix_login", &unix_login) <= 0) {
     fprintf(log_f, "unix login is undefined\n");
     FAIL(S_ERR_INV_OPER);
   }
-  if (ss_cgi_param(phr, "ejudge_login", &ejudge_login) <= 0) {
+  if (hr_cgi_param(phr, "ejudge_login", &ejudge_login) <= 0) {
     fprintf(log_f, "ejudge login is undefined\n");
     FAIL(S_ERR_INV_OPER);
   }
@@ -9340,7 +9340,7 @@ super_serve_op_CAPS_ADD_ACTION(
   struct ejudge_cfg *root = phr->config->caps_file_info->root;
 
   const unsigned char *ejudge_login = NULL;
-  if (ss_cgi_param(phr, "ejudge_login", &ejudge_login) <= 0 || !ejudge_login) {
+  if (hr_cgi_param(phr, "ejudge_login", &ejudge_login) <= 0 || !ejudge_login) {
     fprintf(log_f, "ejudge login is undefined\n");
     FAIL(S_ERR_INV_OPER);
   }
@@ -9569,7 +9569,7 @@ super_serve_op_CAPS_EDIT_SAVE_ACTION(
     unsigned char nbuf[64];
     snprintf(nbuf, sizeof(nbuf), "cap_%d", cap);
     const unsigned char *s = NULL;
-    if (ss_cgi_param(phr, nbuf, &s) > 0 && s) {
+    if (hr_cgi_param(phr, nbuf, &s) > 0 && s) {
       new_caps |= 1ULL << cap;
     }
   }
@@ -9867,7 +9867,7 @@ super_serve_op_IMPORT_FROM_POLYGON_ACTION(
       FAIL(S_ERR_INV_OPER);
     }
 
-    if ((r = ss_cgi_param(phr, "ejudge_short_name", &s)) < 0) {
+    if ((r = hr_cgi_param(phr, "ejudge_short_name", &s)) < 0) {
       fprintf(log_f, "ejudge problem short name is invalid\n");
       FAIL(S_ERR_INV_OPER);
     }
@@ -9883,7 +9883,7 @@ super_serve_op_IMPORT_FROM_POLYGON_ACTION(
   // FIXME: check for valid characters
   }
 
-  if ((r = ss_cgi_param(phr, "polygon_login", &s)) < 0) {
+  if ((r = hr_cgi_param(phr, "polygon_login", &s)) < 0) {
     fprintf(log_f, "polygon login is invalid\n");
     FAIL(S_ERR_INV_OPER);
   }
@@ -9893,7 +9893,7 @@ super_serve_op_IMPORT_FROM_POLYGON_ACTION(
   }
   polygon_login = xstrdup(s);
 
-  if ((r = ss_cgi_param(phr, "polygon_password", &s)) < 0) {
+  if ((r = hr_cgi_param(phr, "polygon_password", &s)) < 0) {
     fprintf(log_f, "polygon password is invalid\n");
     FAIL(S_ERR_INV_OPER);
   }
@@ -9903,10 +9903,10 @@ super_serve_op_IMPORT_FROM_POLYGON_ACTION(
   }
   polygon_password = xstrdup(s);
 
-  if (ss_cgi_param(phr, "save_auth", &s) > 0) save_auth_flag = 1;
+  if (hr_cgi_param(phr, "save_auth", &s) > 0) save_auth_flag = 1;
 
   if (contest_mode) {
-    if ((r = ss_cgi_param(phr, "polygon_contest_id", &s)) < 0) {
+    if ((r = hr_cgi_param(phr, "polygon_contest_id", &s)) < 0) {
       fprintf(log_f, "polygon contest id/name is invalid\n");
       FAIL(S_ERR_INV_OPER);
     }
@@ -9920,7 +9920,7 @@ super_serve_op_IMPORT_FROM_POLYGON_ACTION(
       FAIL(S_ERR_INV_OPER);
     }
   } else {
-    if ((r = ss_cgi_param(phr, "polygon_id", &s)) < 0) {
+    if ((r = hr_cgi_param(phr, "polygon_id", &s)) < 0) {
       fprintf(log_f, "polygon problem id/name is invalid\n");
       FAIL(S_ERR_INV_OPER);
     }
@@ -9935,16 +9935,16 @@ super_serve_op_IMPORT_FROM_POLYGON_ACTION(
     }
   }
 
-  if ((r = ss_cgi_param(phr, "polygon_url", &s)) < 0) {
+  if ((r = hr_cgi_param(phr, "polygon_url", &s)) < 0) {
     fprintf(log_f, "polygon url is invalid\n");
     FAIL(S_ERR_INV_OPER);
   } else if (r > 0) {
     polygon_url = fix_string_2(s);
   }
 
-  if (ss_cgi_param(phr, "max_stack_size", &s) > 0) max_stack_size_flag = 1;
+  if (hr_cgi_param(phr, "max_stack_size", &s) > 0) max_stack_size_flag = 1;
 
-  if (ss_cgi_param(phr, "language_priority", &s) > 0 && *s) {
+  if (hr_cgi_param(phr, "language_priority", &s) > 0 && *s) {
     if (!strcmp(s, "ru,en")
         || !strcmp(s, "en,ru")) {
       language_priority = s;
@@ -10890,7 +10890,7 @@ super_serve_op_UPDATE_FROM_POLYGON_ACTION(
     FAIL(S_ERR_INV_OPER);
   }
 
-  if ((r = ss_cgi_param(phr, "polygon_login", &s)) < 0) {
+  if ((r = hr_cgi_param(phr, "polygon_login", &s)) < 0) {
     fprintf(log_f, "polygon login is invalid\n");
     FAIL(S_ERR_INV_OPER);
   }
@@ -10900,7 +10900,7 @@ super_serve_op_UPDATE_FROM_POLYGON_ACTION(
   }
   polygon_login = xstrdup(s);
 
-  if ((r = ss_cgi_param(phr, "polygon_password", &s)) < 0) {
+  if ((r = hr_cgi_param(phr, "polygon_password", &s)) < 0) {
     fprintf(log_f, "polygon password is invalid\n");
     FAIL(S_ERR_INV_OPER);
   }
@@ -10910,9 +10910,9 @@ super_serve_op_UPDATE_FROM_POLYGON_ACTION(
   }
   polygon_password = xstrdup(s);
 
-  if (ss_cgi_param(phr, "save_auth", &s) > 0) save_auth_flag = 1;
+  if (hr_cgi_param(phr, "save_auth", &s) > 0) save_auth_flag = 1;
 
-  if ((r = ss_cgi_param(phr, "polygon_url", &s)) < 0) {
+  if ((r = hr_cgi_param(phr, "polygon_url", &s)) < 0) {
     fprintf(log_f, "polygon url is invalid\n");
     FAIL(S_ERR_INV_OPER);
   } else if (r > 0) {
@@ -11047,7 +11047,7 @@ super_serve_op_IMPORT_PROBLEMS_BATCH_ACTION(
     FAIL(S_ERR_PERM_DENIED);
   }
 
-  if (ss_cgi_param(phr, "path", &path) <= 0 || !path || !*path) {
+  if (hr_cgi_param(phr, "path", &path) <= 0 || !path || !*path) {
     fprintf(log_f, "'path' parameter is undefined");
     FAIL(S_ERR_OPERATION_FAILED);
   }
@@ -11128,12 +11128,12 @@ super_serve_op_CREATE_CONTEST_BATCH_ACTION(
   }
 
   const unsigned char *xml_path = NULL;
-  if (ss_cgi_param(phr, "xml_path", &xml_path) < 0 || !xml_path) {
+  if (hr_cgi_param(phr, "xml_path", &xml_path) < 0 || !xml_path) {
     snprintf(errbuf, sizeof(errbuf), "xml_path is undefined");
     FAIL(S_ERR_INV_OPER);
   }
   const unsigned char *cfg_path = NULL;
-  if (ss_cgi_param(phr, "cfg_path", &cfg_path) < 0 || !cfg_path) {
+  if (hr_cgi_param(phr, "cfg_path", &cfg_path) < 0 || !cfg_path) {
     snprintf(errbuf, sizeof(errbuf), "cfg_path is undefined");
     FAIL(S_ERR_INV_OPER);
   }
