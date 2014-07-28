@@ -127,7 +127,7 @@ super_serve_op_browse_problem_packages(
   struct dirlist_entry *dls = 0;
   unsigned char buf[1024], jbuf[1024];
 
-  if (ss_cgi_param(phr, "package", &package) < 0)
+  if (hr_cgi_param(phr, "package", &package) < 0)
     FAIL(S_ERR_INV_PACKAGE);
   if (!package) package = "";
   if (!is_valid_package(pkgdir, sizeof(pkgdir), package))
@@ -283,12 +283,12 @@ super_serve_op_package_operation(
 
   phr->json_reply = 1;
 
-  if (ss_cgi_param(phr, "package", &package) < 0)
+  if (hr_cgi_param(phr, "package", &package) < 0)
     FAIL(S_ERR_INV_PACKAGE);
   if (!package) package = "";
   if (!is_valid_package(pkgdir, sizeof(pkgdir), package))
     FAIL(S_ERR_INV_PACKAGE);
-  if (ss_cgi_param(phr, "item", &item) <= 0 || !item || !*item)
+  if (hr_cgi_param(phr, "item", &item) <= 0 || !item || !*item)
     FAIL(S_ERR_INV_PACKAGE);
   if (!is_valid_dir(pkgname, sizeof(pkgname), item))
     FAIL(S_ERR_INV_PACKAGE);

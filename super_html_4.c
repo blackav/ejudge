@@ -84,24 +84,6 @@ ss_getenv(
   return 0;
 }
 
-int
-ss_cgi_param(
-        const struct http_request_info *phr,
-        const unsigned char *param,
-        const unsigned char **p_value)
-{
-  int i;
-
-  if (!param) return -1;
-  for (i = 0; i < phr->param_num; i++)
-    if (!strcmp(phr->param_names[i], param))
-      break;
-  if (i >= phr->param_num) return 0;
-  if (strlen(phr->params[i]) != phr->param_sizes[i]) return -1;
-  *p_value = phr->params[i];
-  return 1;
-}
-
 static int
 ss_cgi_param_utf8_str(
         const struct http_request_info *phr,
@@ -192,7 +174,7 @@ ss_cgi_param_int(
   char *eptr = 0;
   int x;
 
-  if (ss_cgi_param(phr, name, &s) <= 0) return -1;
+  if (hr_cgi_param(phr, name, &s) <= 0) return -1;
   errno = 0;
   x = strtol(s, &eptr, 10);
   if (errno || *eptr) return -1;
@@ -211,7 +193,7 @@ ss_cgi_param_int_opt(
   char *eptr = 0;
   int x;
 
-  if (!(x = ss_cgi_param(phr, name, &s))) {
+  if (!(x = hr_cgi_param(phr, name, &s))) {
     if (p_val) *p_val = default_value;
     return 0;
   } else if (x < 0) return -1;
@@ -2930,7 +2912,7 @@ cmd_edit_contest_xml_field(
     FAIL(S_ERR_INV_FIELD_ID);
   if (f_id == CNTS_user_contest_num || f_id == CNTS_default_locale_num)
     FAIL(S_ERR_INV_FIELD_ID);
-  if (ss_cgi_param(phr, "value", &valstr) <= 0 || !valstr)
+  if (hr_cgi_param(phr, "value", &valstr) <= 0 || !valstr)
     FAIL(S_ERR_INV_VALUE);
   if ((vallen = strlen(valstr)) > 16384)
     FAIL(S_ERR_INV_VALUE);
@@ -4051,7 +4033,7 @@ cmd_op_add_priv_user(
 
   if (!(ecnts = phr->ss->edited_cnts))
     FAIL(S_ERR_NO_EDITED_CNTS);
-  if (ss_cgi_param(phr, "login", &login) <= 0 || !login)
+  if (hr_cgi_param(phr, "login", &login) <= 0 || !login)
     FAIL(S_ERR_INV_VALUE);
   if (!*login || check_str(login, login_accept_chars) < 0)
     FAIL(S_ERR_INV_VALUE);
@@ -4153,7 +4135,7 @@ cmd_op_set_priv(
 
   for (i = 0; i < OPCAP_LAST; ++i) {
     snprintf(capname, sizeof(capname), "cap_%d", i);
-    if (ss_cgi_param(phr, capname, &s) > 0)
+    if (hr_cgi_param(phr, capname, &s) > 0)
       caps |= 1ULL << i;
   }
   if (contests_set_permission(ecnts, user_num, caps) < 0)
@@ -4207,7 +4189,7 @@ cmd_op_check_ip_mask(
 
   phr->json_reply = 1;
 
-  if (ss_cgi_param(phr, "value", &value) <= 0 || !value)
+  if (hr_cgi_param(phr, "value", &value) <= 0 || !value)
     FAIL(S_ERR_INV_VALUE);
   if (xml_parse_ipv6_mask(NULL, 0, 0, 0, value, &addr, &mask) < 0)
     FAIL(S_ERR_INV_VALUE);
@@ -4241,7 +4223,7 @@ cmd_op_add_ip(
       || !(access_field_set[f_id]))
     FAIL(S_ERR_INV_FIELD_ID);
   p_acc = (struct contest_access**) contest_desc_get_ptr(ecnts, f_id);
-  if (ss_cgi_param(phr, "ip_mask", &mask_str) <= 0)
+  if (hr_cgi_param(phr, "ip_mask", &mask_str) <= 0)
     FAIL(S_ERR_INV_VALUE);
   if (xml_parse_ipv6_mask(NULL, 0, 0, 0, mask_str, &addr, &mask) < 0)
     FAIL(S_ERR_INV_VALUE);
@@ -4354,7 +4336,7 @@ cmd_op_set_rule_ip(
   acc = *(struct contest_access**) contest_desc_get_ptr(ecnts, f_id);
   if (ss_cgi_param_int(phr, "subfield_id", &subf_id) < 0 || subf_id < 0)
     FAIL(S_ERR_INV_FIELD_ID);
-  if (ss_cgi_param(phr, "value", &mask_str) <= 0)
+  if (hr_cgi_param(phr, "value", &mask_str) <= 0)
     FAIL(S_ERR_INV_VALUE);
   if (xml_parse_ipv6_mask(NULL, 0, 0, 0, mask_str, &addr, &mask) < 0)
     FAIL(S_ERR_INV_VALUE);
@@ -5346,7 +5328,7 @@ cmd_op_edit_serve_global_field_detail(
     FAIL(S_ERR_INV_FIELD_ID);
   if (!(f_type = cntsglob_get_type(f_id)))
     FAIL(S_ERR_INV_FIELD_ID);
-  if (ss_cgi_param(phr, "param", &valstr) <= 0)
+  if (hr_cgi_param(phr, "param", &valstr) <= 0)
     FAIL(S_ERR_INV_VALUE);
   if ((vallen = strlen(valstr)) > 128 * 1024)
     FAIL(S_ERR_INV_VALUE);
@@ -5765,7 +5747,7 @@ cmd_op_edit_serve_lang_field_detail(
     FAIL(S_ERR_INV_FIELD_ID);
   if (!(f_type = cntslang_get_type(f_id)))
     FAIL(S_ERR_INV_FIELD_ID);
-  if (ss_cgi_param(phr, "param", &valstr) <= 0)
+  if (hr_cgi_param(phr, "param", &valstr) <= 0)
     FAIL(S_ERR_INV_VALUE);
   if ((vallen = strlen(valstr)) > 128 * 1024)
     FAIL(S_ERR_INV_VALUE);
@@ -5830,7 +5812,7 @@ cmd_op_create_abstr_prob(
 
   phr->json_reply = 1;
 
-  if (ss_cgi_param(phr, "prob_name", &prob_name) <= 0) FAIL(S_ERR_INV_PROB_ID);
+  if (hr_cgi_param(phr, "prob_name", &prob_name) <= 0) FAIL(S_ERR_INV_PROB_ID);
   if (super_html_add_abstract_problem(phr->ss, prob_name) < 0)
     FAIL(S_ERR_INV_PROB_ID);
 
@@ -5853,7 +5835,7 @@ cmd_op_create_concrete_prob(
 
   phr->json_reply = 1;
 
-  if (ss_cgi_param(phr, "prob_id", &s) < 0) FAIL(S_ERR_INV_PROB_ID);
+  if (hr_cgi_param(phr, "prob_id", &s) < 0) FAIL(S_ERR_INV_PROB_ID);
   if (s) {
     p = s;
     while (*p && isspace(*p)) ++p;
@@ -6197,7 +6179,7 @@ cmd_op_set_serve_prob_field(
   if (!(f_ptr = cntsprob_get_ptr_nc(prob, f_id))) FAIL(S_ERR_INV_FIELD_ID);
   f_type = cntsprob_get_type(f_id);
   f_size = cntsprob_get_size(f_id);
-  if (ss_cgi_param(phr, "value", &valstr) <= 0)
+  if (hr_cgi_param(phr, "value", &valstr) <= 0)
     FAIL(S_ERR_INV_VALUE);
   if ((vallen = strlen(valstr)) >= 128 * 1024)
     FAIL(S_ERR_INV_VALUE);
@@ -6504,7 +6486,7 @@ cmd_op_edit_serve_prob_field_detail(
     FAIL(S_ERR_INV_FIELD_ID);
   if (!(f_type = cntsprob_get_type(f_id)))
     FAIL(S_ERR_INV_FIELD_ID);
-  if (ss_cgi_param(phr, "param", &valstr) <= 0)
+  if (hr_cgi_param(phr, "param", &valstr) <= 0)
     FAIL(S_ERR_INV_VALUE);
   if ((vallen = strlen(valstr)) > 128 * 1024)
     FAIL(S_ERR_INV_VALUE);
@@ -6638,7 +6620,7 @@ static int
 parse_opcode(struct http_request_info *phr, int *p_opcode)
 {
   const unsigned char *s = NULL;
-  if (ss_cgi_param(phr, "op", &s) <= 0 || !s || !*s) {
+  if (hr_cgi_param(phr, "op", &s) <= 0 || !s || !*s) {
     *p_opcode = 0;
     return 0;
   }
@@ -6675,7 +6657,7 @@ parse_action(struct http_request_info *phr)
     if (sscanf(s, "action_%d%n", &action, &n) != 1 || s[n] || action < 0 || action >= SSERV_CMD_LAST) {
       return -1;
     }
-  } else if ((r = ss_cgi_param(phr, "action", &s)) < 0 || !s || !*s) {
+  } else if ((r = hr_cgi_param(phr, "action", &s)) < 0 || !s || !*s) {
     phr->action = 0;
     return 0;
   } else {
@@ -6924,7 +6906,7 @@ super_html_http_request(
     }
 
     if (!r) {
-      if ((r = ss_cgi_param(phr, "SID", &s)) < 0) {
+      if ((r = hr_cgi_param(phr, "SID", &s)) < 0) {
         r = -S_ERR_INV_SID;
       }
       if (r > 0) {
