@@ -38,13 +38,14 @@ You may either continue suspended editing of contest <s:v value="c0->id" /> or c
 
 <table border="0">
     <tr><td><s:form><s:submit ac="edited-cnts-back" label="Back" /></s:form></td><td><s:tr>Return to the main page</s:tr></td></tr>
-    <tr><td><s:form><s:submit ac="edited-cnts-continue" label="Continue" /><s:hidden name="new_edit" value="1" /></s:form></td><td><s:tr>Continue suspended editing</s:tr></td></tr>
-    <tr><td><s:form>
-<!--  if (new_edit_mode) html_hidden(out_f, "new_edit", "1");
-  if (contest_id > 0)
-    html_hidden(out_f, "contest_id", "%d", contest_id);
--->
-<s:submit ac="edited-cnts-start-new" label="Start new" /></s:form></td><td><s:tr>Start new editing</s:tr> <font color="red"><s:tr>All changes to the old contest will be lost!</s:tr></font></td></tr>
+    <tr><td><s:form><s:submit ac="edited-cnts-continue" label="Continue" /><%
+%><!--<s:hidden name="new_edit" value="1" />--><%
+%></s:form></td><td><s:tr>Continue suspended editing</s:tr></td></tr>
+    <tr><td><s:form><%
+%><!--<s:hidden name="new_edit" value="1" />--><%
+%><% if (c1) { %>
+<s:hidden name="contest_id" value="c1->id" /><%
+%><% } %><s:submit ac="edited-cnts-start-new" label="Start new" /></s:form></td><td><s:tr>Start new editing</s:tr> <font color="red"><s:tr>All changes to the old contest will be lost!</s:tr></font></td></tr>
 </table>
 
 
