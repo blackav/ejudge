@@ -344,7 +344,7 @@ super_serve_op_TESTS_MAIN_PAGE(
   char *prb_t = NULL;
   size_t prb_z = 0;
 
-  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
   if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
 
@@ -1551,7 +1551,7 @@ super_serve_op_TESTS_TESTS_VIEW_PAGE(
 
   memset(&td_info, 0, sizeof(td_info));
 
-  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
   if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
 
@@ -1565,13 +1565,13 @@ super_serve_op_TESTS_TESTS_VIEW_PAGE(
   cs = phr->ss->te_state;
   global = cs->global;
 
-  ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
+  hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
   if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
   if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
-    ss_cgi_param_int_opt(phr, "variant", &variant, 0);
+    hr_cgi_param_int_opt(phr, "variant", &variant, 0);
     if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
   }
 
@@ -2218,7 +2218,7 @@ super_serve_op_TESTS_TEST_MOVE_UP_ACTION(
   int from_test_num = 0;
   int to_test_num = 0;
 
-  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
   if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
 
@@ -2232,17 +2232,17 @@ super_serve_op_TESTS_TEST_MOVE_UP_ACTION(
   cs = phr->ss->te_state;
   global = cs->global;
 
-  ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
+  hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
   if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
   if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
-    ss_cgi_param_int_opt(phr, "variant", &variant, 0);
+    hr_cgi_param_int_opt(phr, "variant", &variant, 0);
     if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
   }
 
-  ss_cgi_param_int_opt(phr, "test_num", &test_num, 0);
+  hr_cgi_param_int_opt(phr, "test_num", &test_num, 0);
   if (test_num <= 0 || test_num >= 1000000) FAIL(S_ERR_INV_TEST_NUM);
 
   if (phr->action == SSERV_CMD_TESTS_SAVED_MOVE_UP_ACTION || phr->action == SSERV_CMD_TESTS_SAVED_MOVE_DOWN_ACTION) {
@@ -2308,7 +2308,7 @@ super_serve_op_TESTS_TEST_MOVE_TO_SAVED_ACTION(
   struct test_dir_info td_info;
 
   memset(&td_info, 0, sizeof(td_info));
-  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
   if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
 
@@ -2322,17 +2322,17 @@ super_serve_op_TESTS_TEST_MOVE_TO_SAVED_ACTION(
   cs = phr->ss->te_state;
   global = cs->global;
 
-  ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
+  hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
   if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
   if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
-    ss_cgi_param_int_opt(phr, "variant", &variant, 0);
+    hr_cgi_param_int_opt(phr, "variant", &variant, 0);
     if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
   }
 
-  ss_cgi_param_int_opt(phr, "test_num", &test_num, 0);
+  hr_cgi_param_int_opt(phr, "test_num", &test_num, 0);
   if (test_num <= 0 || test_num >= 1000000) FAIL(S_ERR_INV_TEST_NUM);
 
   retval = build_prepare_test_file_names(log_f, cnts, global, prob, variant, NULL,
@@ -2578,7 +2578,7 @@ super_serve_op_TESTS_TEST_EDIT_PAGE(
   memset(&testinfo, 0, sizeof(testinfo));
 
   if (phr->action == SSERV_CMD_TESTS_TEST_INSERT_PAGE) insert_mode = 1;
-  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
   if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
 
@@ -2592,7 +2592,7 @@ super_serve_op_TESTS_TEST_EDIT_PAGE(
   cs = phr->ss->te_state;
   global = cs->global;
 
-  ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
+  hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
   if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
   if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
   if (prob->binary_input <= 0) {
@@ -2603,11 +2603,11 @@ super_serve_op_TESTS_TEST_EDIT_PAGE(
 
   variant = -1;
   if (prob->variant_num > 0) {
-    ss_cgi_param_int_opt(phr, "variant", &variant, 0);
+    hr_cgi_param_int_opt(phr, "variant", &variant, 0);
     if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
   }
 
-  ss_cgi_param_int_opt(phr, "test_num", &test_num, 0);
+  hr_cgi_param_int_opt(phr, "test_num", &test_num, 0);
   if (test_num <= 0 || test_num >= 1000000) FAIL(S_ERR_INV_TEST_NUM);
 
   retval = build_prepare_test_file_names(log_f, cnts, global, prob, variant, NULL,
@@ -2821,7 +2821,7 @@ super_serve_op_TESTS_CANCEL_ACTION(
     next_op = SSERV_CMD_TESTS_MAIN_PAGE;
   }
 
-  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
   if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
 
@@ -2835,13 +2835,13 @@ super_serve_op_TESTS_CANCEL_ACTION(
   retval = 0;
   cs = phr->ss->te_state;
 
-  ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
+  hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
   if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
   if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
-    ss_cgi_param_int_opt(phr, "variant", &variant, 0);
+    hr_cgi_param_int_opt(phr, "variant", &variant, 0);
     if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
   }
 
@@ -3097,7 +3097,7 @@ super_serve_op_TESTS_TEST_EDIT_ACTION(
   memset(&td_info, 0, sizeof(td_info));
   if (phr->action == SSERV_CMD_TESTS_TEST_INSERT_ACTION) insert_mode = 1;
 
-  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
   if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
 
@@ -3120,17 +3120,17 @@ super_serve_op_TESTS_TEST_EDIT_ACTION(
   cs = phr->ss->te_state;
   global = cs->global;
 
-  ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
+  hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
   if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
   if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
-    ss_cgi_param_int_opt(phr, "variant", &variant, 0);
+    hr_cgi_param_int_opt(phr, "variant", &variant, 0);
     if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
   }
 
-  ss_cgi_param_int_opt(phr, "test_num", &test_num, 0);
+  hr_cgi_param_int_opt(phr, "test_num", &test_num, 0);
   if (test_num <= 0 || test_num >= 1000000) FAIL(S_ERR_INV_TEST_NUM);
 
   retval = build_prepare_test_file_names(log_f, cnts, global, prob, variant, NULL,
@@ -3140,9 +3140,9 @@ super_serve_op_TESTS_TEST_EDIT_ACTION(
   retval = 0;
 
   if (prob->use_info > 0 && info_pat[0] > ' ') {
-    ss_cgi_param_int_opt(phr, "testinfo_exit_code", &testinfo_exit_code, 0);
+    hr_cgi_param_int_opt(phr, "testinfo_exit_code", &testinfo_exit_code, 0);
     if (testinfo_exit_code < 0 || testinfo_exit_code >= 128) FAIL(S_ERR_INV_EXIT_CODE);
-    ss_cgi_param_int_opt(phr, "testinfo_check_stderr", &testinfo_check_stderr, 0);
+    hr_cgi_param_int_opt(phr, "testinfo_check_stderr", &testinfo_check_stderr, 0);
     if (testinfo_check_stderr != 1) testinfo_check_stderr = 0;
     hr_cgi_param(phr, "testinfo_cmdline", &testinfo_cmdline);
     hr_cgi_param(phr, "testinfo_environ", &testinfo_environ);
@@ -3198,7 +3198,7 @@ super_serve_op_TESTS_TEST_EDIT_ACTION(
     file_perms_set(log_f, info_tmp_path, file_group, file_mode, -1, -1);
   }
 
-  ss_cgi_param_int_opt(phr, "norm_type", &norm_type, -1);
+  hr_cgi_param_int_opt(phr, "norm_type", &norm_type, -1);
   if (norm_type < TEST_NORM_FIRST || norm_type >= TEST_NORM_LAST) norm_type = TEST_NORM_NONE;
   if (norm_type == TEST_NORM_DEFAULT) norm_type = TEST_NORM_NL;
 
@@ -3394,7 +3394,7 @@ super_serve_op_TESTS_TEST_DELETE_PAGE(
 
   memset(&testinfo, 0, sizeof(testinfo));
 
-  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
   if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
 
@@ -3408,17 +3408,17 @@ super_serve_op_TESTS_TEST_DELETE_PAGE(
   cs = phr->ss->te_state;
   global = cs->global;
 
-  ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
+  hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
   if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
   if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
-    ss_cgi_param_int_opt(phr, "variant", &variant, 0);
+    hr_cgi_param_int_opt(phr, "variant", &variant, 0);
     if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
   }
 
-  ss_cgi_param_int_opt(phr, "test_num", &test_num, 0);
+  hr_cgi_param_int_opt(phr, "test_num", &test_num, 0);
   if (test_num <= 0 || test_num >= 1000000) FAIL(S_ERR_INV_TEST_NUM);
 
   retval = build_prepare_test_file_names(log_f, cnts, global, prob, variant, NULL,
@@ -3521,7 +3521,7 @@ super_serve_op_TESTS_TEST_DELETE_ACTION(
 
   memset(&td_info, 0, sizeof(td_info));
 
-  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
   if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
 
@@ -3535,17 +3535,17 @@ super_serve_op_TESTS_TEST_DELETE_ACTION(
   cs = phr->ss->te_state;
   global = cs->global;
 
-  ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
+  hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
   if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
   if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
-    ss_cgi_param_int_opt(phr, "variant", &variant, 0);
+    hr_cgi_param_int_opt(phr, "variant", &variant, 0);
     if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
   }
 
-  ss_cgi_param_int_opt(phr, "test_num", &test_num, 0);
+  hr_cgi_param_int_opt(phr, "test_num", &test_num, 0);
   if (test_num <= 0 || test_num >= 1000000) FAIL(S_ERR_INV_TEST_NUM);
 
   retval = build_prepare_test_file_names(log_f, cnts, global, prob, variant, NULL,
@@ -3596,7 +3596,7 @@ super_serve_op_TESTS_MAKEFILE_EDIT_PAGE(
   char *prb_t = NULL;
   size_t prb_z = 0;
 
-  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
   if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
 
@@ -3612,13 +3612,13 @@ super_serve_op_TESTS_MAKEFILE_EDIT_PAGE(
 
   if (global->advanced_layout <= 0) FAIL(S_ERR_INV_CONTEST);
 
-  ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
+  hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
   if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
   if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
-    ss_cgi_param_int_opt(phr, "variant", &variant, 0);
+    hr_cgi_param_int_opt(phr, "variant", &variant, 0);
     if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
   }
 
@@ -3709,7 +3709,7 @@ super_serve_op_TESTS_MAKEFILE_EDIT_ACTION(
   int file_group = -1;
   int file_mode = -1;
 
-  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
   if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
 
@@ -3734,13 +3734,13 @@ super_serve_op_TESTS_MAKEFILE_EDIT_ACTION(
 
   if (global->advanced_layout <= 0) FAIL(S_ERR_INV_CONTEST);
 
-  ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
+  hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
   if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
   if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
-    ss_cgi_param_int_opt(phr, "variant", &variant, 0);
+    hr_cgi_param_int_opt(phr, "variant", &variant, 0);
     if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
   }
   if (hr_cgi_param(phr, "text", &text) <= 0) FAIL(S_ERR_INV_VALUE);
@@ -3791,7 +3791,7 @@ super_serve_op_TESTS_MAKEFILE_DELETE_ACTION(
   const struct section_problem_data *prob = NULL;
   unsigned char makefile_path[PATH_MAX];
 
-  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
   if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
 
@@ -3807,13 +3807,13 @@ super_serve_op_TESTS_MAKEFILE_DELETE_ACTION(
 
   if (global->advanced_layout <= 0) FAIL(S_ERR_INV_CONTEST);
 
-  ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
+  hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
   if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
   if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
-    ss_cgi_param_int_opt(phr, "variant", &variant, 0);
+    hr_cgi_param_int_opt(phr, "variant", &variant, 0);
     if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
   }
 
@@ -3861,7 +3861,7 @@ super_serve_op_TESTS_MAKEFILE_GENERATE_ACTION(
   const struct section_problem_data *prob = NULL;
   unsigned char tmp_makefile_path[PATH_MAX];
 
-  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
   if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
 
@@ -3877,13 +3877,13 @@ super_serve_op_TESTS_MAKEFILE_GENERATE_ACTION(
 
   if (global->advanced_layout <= 0) FAIL(S_ERR_INV_CONTEST);
 
-  ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
+  hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
   if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
   if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
-    ss_cgi_param_int_opt(phr, "variant", &variant, 0);
+    hr_cgi_param_int_opt(phr, "variant", &variant, 0);
     if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
   }
 
@@ -4004,7 +4004,7 @@ super_serve_op_TESTS_STATEMENT_EDIT_PAGE(
   struct xml_tree *p, *q;
   int serial;
 
-  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
   if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
 
@@ -4018,16 +4018,16 @@ super_serve_op_TESTS_STATEMENT_EDIT_PAGE(
   cs = phr->ss->te_state;
   global = cs->global;
 
-  ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
+  hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
   if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
   if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
-    ss_cgi_param_int_opt(phr, "variant", &variant, 0);
+    hr_cgi_param_int_opt(phr, "variant", &variant, 0);
     if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
   }
-  ss_cgi_param_int_opt(phr, "plain_view", &plain_view, 0);
+  hr_cgi_param_int_opt(phr, "plain_view", &plain_view, 0);
   if (plain_view != 1) plain_view = 0;
 
   if (!prob->xml_file || !prob->xml_file[0]) FAIL(S_ERR_INV_PROB_ID);
@@ -4318,7 +4318,7 @@ super_serve_op_TESTS_STATEMENT_EDIT_ACTION(
   xml_path_tmp[0] = 0;
   extra_redirect_args[0] = 0;
 
-  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
   if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
 
@@ -4332,19 +4332,19 @@ super_serve_op_TESTS_STATEMENT_EDIT_ACTION(
   cs = phr->ss->te_state;
   global = cs->global;
 
-  ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
+  hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
   if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
   if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
-    ss_cgi_param_int_opt(phr, "variant", &variant, 0);
+    hr_cgi_param_int_opt(phr, "variant", &variant, 0);
     if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
   }
-  ss_cgi_param_int_opt(phr, "plain_view", &plain_view, 0);
+  hr_cgi_param_int_opt(phr, "plain_view", &plain_view, 0);
   if (plain_view != 1) plain_view = 0;
 
-  ss_cgi_param_int_opt(phr, "delete_num", &delete_num, 0);
+  hr_cgi_param_int_opt(phr, "delete_num", &delete_num, 0);
 
   if (!prob->xml_file || !prob->xml_file[0]) FAIL(S_ERR_INV_PROB_ID);
   if (global->advanced_layout > 0) {
@@ -4537,7 +4537,7 @@ super_serve_op_TESTS_STATEMENT_EDIT_2_ACTION(
 
   xml_path_tmp[0] = 0;
 
-  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
   if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
 
@@ -4551,13 +4551,13 @@ super_serve_op_TESTS_STATEMENT_EDIT_2_ACTION(
   cs = phr->ss->te_state;
   global = cs->global;
 
-  ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
+  hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
   if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
   if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
-    ss_cgi_param_int_opt(phr, "variant", &variant, 0);
+    hr_cgi_param_int_opt(phr, "variant", &variant, 0);
     if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
   }
 
@@ -4626,7 +4626,7 @@ super_serve_op_TESTS_STATEMENT_DELETE_ACTION(
   unsigned char xml_path[PATH_MAX];
   unsigned char xml_path_bak[PATH_MAX];
 
-  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
   if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
 
@@ -4640,13 +4640,13 @@ super_serve_op_TESTS_STATEMENT_DELETE_ACTION(
   cs = phr->ss->te_state;
   global = cs->global;
 
-  ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
+  hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
   if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
   if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
-    ss_cgi_param_int_opt(phr, "variant", &variant, 0);
+    hr_cgi_param_int_opt(phr, "variant", &variant, 0);
     if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
   }
 
@@ -4695,7 +4695,7 @@ super_serve_op_TESTS_SOURCE_HEADER_EDIT_PAGE(
   const unsigned char *cl = NULL;
   unsigned char file_name_buf[PATH_MAX];
 
-  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
   if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
 
@@ -4709,13 +4709,13 @@ super_serve_op_TESTS_SOURCE_HEADER_EDIT_PAGE(
   cs = phr->ss->te_state;
   global = cs->global;
 
-  ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
+  hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
   if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
   if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
-    ss_cgi_param_int_opt(phr, "variant", &variant, 0);
+    hr_cgi_param_int_opt(phr, "variant", &variant, 0);
     if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
   }
 
@@ -4856,7 +4856,7 @@ super_serve_op_TESTS_SOURCE_HEADER_EDIT_ACTION(
 
   file_path_tmp[0] = 0;
 
-  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
   if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
 
@@ -4870,13 +4870,13 @@ super_serve_op_TESTS_SOURCE_HEADER_EDIT_ACTION(
   cs = phr->ss->te_state;
   global = cs->global;
 
-  ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
+  hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
   if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
   if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
-    ss_cgi_param_int_opt(phr, "variant", &variant, 0);
+    hr_cgi_param_int_opt(phr, "variant", &variant, 0);
     if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
   }
 
@@ -4971,7 +4971,7 @@ super_serve_op_TESTS_SOURCE_HEADER_DELETE_ACTION(
   unsigned char tmp_path[PATH_MAX];
   unsigned char file_path[PATH_MAX];
 
-  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
   if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
 
@@ -4985,13 +4985,13 @@ super_serve_op_TESTS_SOURCE_HEADER_DELETE_ACTION(
   cs = phr->ss->te_state;
   global = cs->global;
 
-  ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
+  hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
   if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
   if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
-    ss_cgi_param_int_opt(phr, "variant", &variant, 0);
+    hr_cgi_param_int_opt(phr, "variant", &variant, 0);
     if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
   }
 
@@ -5048,7 +5048,7 @@ super_serve_op_TESTS_CHECKER_CREATE_PAGE(
   int action = 0;
   const unsigned char *cl = "";
 
-  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
   if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
 
@@ -5062,13 +5062,13 @@ super_serve_op_TESTS_CHECKER_CREATE_PAGE(
   cs = phr->ss->te_state;
   global = cs->global;
 
-  ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
+  hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
   if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
   if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
-    ss_cgi_param_int_opt(phr, "variant", &variant, 0);
+    hr_cgi_param_int_opt(phr, "variant", &variant, 0);
     if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
   }
 
@@ -5382,7 +5382,7 @@ super_serve_op_TESTS_CHECKER_CREATE_ACTION(
   unsigned char tmp_path[PATH_MAX];
   unsigned char file_path[PATH_MAX];
 
-  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
   if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
 
@@ -5396,17 +5396,17 @@ super_serve_op_TESTS_CHECKER_CREATE_ACTION(
   cs = phr->ss->te_state;
   global = cs->global;
 
-  ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
+  hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
   if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
   if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
-    ss_cgi_param_int_opt(phr, "variant", &variant, 0);
+    hr_cgi_param_int_opt(phr, "variant", &variant, 0);
     if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
   }
 
-  ss_cgi_param_int_opt(phr, "language", &language, 0);
+  hr_cgi_param_int_opt(phr, "language", &language, 0);
   if (language <= 0) FAIL(S_ERR_INV_LANG_ID);
   for (i = 0; source_suffixes[i].mask; ++i) {
     if (language == source_suffixes[i].mask)
@@ -5414,13 +5414,13 @@ super_serve_op_TESTS_CHECKER_CREATE_ACTION(
   }
   if (!source_suffixes[i].mask) FAIL(S_ERR_INV_LANG_ID);
 
-  ss_cgi_param_int_opt(phr, "use_testlib", &use_testlib, 0);
+  hr_cgi_param_int_opt(phr, "use_testlib", &use_testlib, 0);
   if (use_testlib != 1) use_testlib = 0;
-  ss_cgi_param_int_opt(phr, "use_libchecker", &use_libchecker, 0);
+  hr_cgi_param_int_opt(phr, "use_libchecker", &use_libchecker, 0);
   if (use_libchecker != 1) use_libchecker = 0;
-  ss_cgi_param_int_opt(phr, "use_python3", &use_python3, 0);
+  hr_cgi_param_int_opt(phr, "use_python3", &use_python3, 0);
   if (use_python3 != 1) use_python3 = 0;
-  ss_cgi_param_int_opt(phr, "gen_makefile", &gen_makefile, 0);
+  hr_cgi_param_int_opt(phr, "gen_makefile", &gen_makefile, 0);
   if (gen_makefile != 1) gen_makefile = 0;
 
   switch (phr->action) {
@@ -5535,7 +5535,7 @@ super_serve_op_TESTS_CHECKER_EDIT_PAGE(
   int is_binary = 0;
   const unsigned char *src_code_title = "";
 
-  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
   if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
 
@@ -5549,13 +5549,13 @@ super_serve_op_TESTS_CHECKER_EDIT_PAGE(
   cs = phr->ss->te_state;
   global = cs->global;
 
-  ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
+  hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
   if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
   if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
-    ss_cgi_param_int_opt(phr, "variant", &variant, 0);
+    hr_cgi_param_int_opt(phr, "variant", &variant, 0);
     if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
   }
 
@@ -5744,7 +5744,7 @@ super_serve_op_TESTS_CHECKER_EDIT_ACTION(
 
   file_path_tmp[0] = 0;
 
-  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
   if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
 
@@ -5758,13 +5758,13 @@ super_serve_op_TESTS_CHECKER_EDIT_ACTION(
   cs = phr->ss->te_state;
   global = cs->global;
 
-  ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
+  hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
   if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
   if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
-    ss_cgi_param_int_opt(phr, "variant", &variant, 0);
+    hr_cgi_param_int_opt(phr, "variant", &variant, 0);
     if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
   }
 
@@ -5808,10 +5808,10 @@ super_serve_op_TESTS_CHECKER_EDIT_ACTION(
     snprintf(tmp2_path, sizeof(tmp2_path), "%s/%s", global->checker_dir, tmp_path);
   }
 
-  ss_cgi_param_int_opt(phr, "no_source", &no_source, 0);
+  hr_cgi_param_int_opt(phr, "no_source", &no_source, 0);
   if (no_source != 1) no_source = 0;
   if (!no_source) {
-    ss_cgi_param_int_opt(phr, "lang_mask", &lang_mask, 0);
+    hr_cgi_param_int_opt(phr, "lang_mask", &lang_mask, 0);
     src_suffix = build_get_source_suffix(lang_mask);
     if (!src_suffix) FAIL(S_ERR_INV_LANG_ID);
     snprintf(file_path, sizeof(file_path), "%s%s", tmp2_path, src_suffix);
@@ -5925,7 +5925,7 @@ super_serve_op_TESTS_CHECKER_DELETE_PAGE(
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   const unsigned char *title = NULL;
 
-  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
   if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
 
@@ -5939,13 +5939,13 @@ super_serve_op_TESTS_CHECKER_DELETE_PAGE(
   cs = phr->ss->te_state;
   global = cs->global;
 
-  ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
+  hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
   if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
   if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
-    ss_cgi_param_int_opt(phr, "variant", &variant, 0);
+    hr_cgi_param_int_opt(phr, "variant", &variant, 0);
     if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
   }
 
@@ -6095,7 +6095,7 @@ super_serve_op_TESTS_CHECKER_DELETE_ACTION(
   unsigned char **files = NULL;
   int i;
 
-  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
   if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
 
@@ -6109,13 +6109,13 @@ super_serve_op_TESTS_CHECKER_DELETE_ACTION(
   cs = phr->ss->te_state;
   global = cs->global;
 
-  ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
+  hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
   if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
   if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
-    ss_cgi_param_int_opt(phr, "variant", &variant, 0);
+    hr_cgi_param_int_opt(phr, "variant", &variant, 0);
     if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
   }
 
@@ -6255,7 +6255,7 @@ super_serve_op_TESTS_MAKE(
   unsigned char local_buf[4096];
   const unsigned char *target = "all";
 
-  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
   if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
 
@@ -6269,13 +6269,13 @@ super_serve_op_TESTS_MAKE(
   cs = phr->ss->te_state;
   global = cs->global;
 
-  ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
+  hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
   if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
   if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
-    ss_cgi_param_int_opt(phr, "variant", &variant, 0);
+    hr_cgi_param_int_opt(phr, "variant", &variant, 0);
     if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
   }
 
@@ -6458,7 +6458,7 @@ super_serve_op_TESTS_TEST_CHECK_ACTION(
     FAIL(S_ERR_NOT_IMPLEMENTED);
   }
 
-  ss_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
+  hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
   if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
 
@@ -6472,7 +6472,7 @@ super_serve_op_TESTS_TEST_CHECK_ACTION(
   cs = phr->ss->te_state;
   global = cs->global;
 
-  ss_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
+  hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
   if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
   if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
 
@@ -6486,14 +6486,14 @@ super_serve_op_TESTS_TEST_CHECK_ACTION(
 
   variant = -1;
   if (prob->variant_num > 0) {
-    ss_cgi_param_int_opt(phr, "variant", &variant, 0);
+    hr_cgi_param_int_opt(phr, "variant", &variant, 0);
     if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
   }
 
-  ss_cgi_param_int_opt(phr, "test_num", &test_num, 0);
+  hr_cgi_param_int_opt(phr, "test_num", &test_num, 0);
   if (test_num <= 0 || test_num >= 1000000) FAIL(S_ERR_INV_TEST_NUM);
 
-  ss_cgi_param_int_opt(phr, "next_action", &next_action, 0);
+  hr_cgi_param_int_opt(phr, "next_action", &next_action, 0);
   // FIXME: check valid next_action
   if (next_action <= 0) next_action = SSERV_CMD_TESTS_TESTS_VIEW_PAGE;
 
