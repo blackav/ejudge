@@ -61,29 +61,6 @@
 #define URLARMOR(s)  url_armor_buf(&ab, s)
 #define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
 
-static const unsigned char*
-ss_getenv(
-        const struct http_request_info *phr,
-        const unsigned char *var)
-  __attribute__((unused));
-static const unsigned char*
-ss_getenv(
-        const struct http_request_info *phr,
-        const unsigned char *var)
-{
-  int i;
-  size_t var_len;
-
-  if (!var) return 0;
-  var_len = strlen(var);
-  for (i = 0; i < phr->env_num; i++)
-    if (!strncmp(phr->envs[i], var, var_len) && phr->envs[i][var_len] == '=')
-      break;
-  if (i < phr->env_num)
-    return phr->envs[i] + var_len + 1;
-  return 0;
-}
-
 static int
 ss_cgi_param_utf8_str(
         const struct http_request_info *phr,
@@ -6694,7 +6671,7 @@ do_http_request(FILE *log_f, FILE *out_f, struct http_request_info *phr)
 static void
 parse_cookie(struct http_request_info *phr)
 {
-  const unsigned char *cookies = ss_getenv(phr, "HTTP_COOKIE");
+  const unsigned char *cookies = hr_getenv(phr, "HTTP_COOKIE");
   if (!cookies) return;
   const unsigned char *s = cookies;
   ej_cookie_t client_key = 0;
@@ -6832,12 +6809,12 @@ super_html_http_request(
   unsigned char hid_buf[4096];
   int ext_action = 0;
 
-  if (ss_getenv(phr, "SSL_PROTOCOL") || ss_getenv(phr, "HTTPS")) {
+  if (hr_getenv(phr, "SSL_PROTOCOL") || hr_getenv(phr, "HTTPS")) {
     phr->ssl_flag = 1;
     protocol = "https";
   }
-  if (!(phr->http_host = ss_getenv(phr, "HTTP_HOST"))) phr->http_host = "localhost";
-  if (!(script_name = ss_getenv(phr, "SCRIPT_NAME")))
+  if (!(phr->http_host = hr_getenv(phr, "HTTP_HOST"))) phr->http_host = "localhost";
+  if (!(script_name = hr_getenv(phr, "SCRIPT_NAME")))
     script_name = "/cgi-bin/serve-control";
   snprintf(self_url_buf, sizeof(self_url_buf), "%s://%s%s", protocol, phr->http_host, script_name);
   phr->self_url = self_url_buf;
