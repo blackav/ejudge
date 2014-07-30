@@ -114,7 +114,7 @@
         <td><s:v value="ci->name" /></td>
         <td><%
         if (ci->details_enabled) {
-%><s:url name="DetailsUrl" ac="new-contest-page"><s:param name="contest_id" value="ci->id" /></s:url><s:a url="DetailsUrl"><s:tr>Details</s:tr></s:a><%
+%><s:url name="DetailsUrl" ac="contest-page"><s:param name="contest_id" value="ci->id" /></s:url><s:a url="DetailsUrl"><s:tr>Details</s:tr></s:a><%
         } else {
 %>&nbsp;<%
         }

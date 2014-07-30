@@ -21,7 +21,7 @@
 
 <div class="icons-1">
    
-<s:url name="ContestPageUrl" ac="new-contest-page">
+<s:url name="ContestPageUrl" ac="contest-page">
     <s:param name="contest_id" value="phr->contest_id" />
 </s:url>
         <s:a ac="main-page"><img src="<s:config name="style-prefix" />back_sh.png" alt="Main page" /></s:a>
@@ -684,7 +684,7 @@
 
 <table border="0">
     <tr>
-<s:url name="ContestPageUrl" ac="new-contest-page">
+<s:url name="ContestPageUrl" ac="contest-page">
     <s:param name="contest_id" value="phr->contest_id" />
 </s:url>
         <td>[<s:a ac="main-page">Main page</s:a>]</td>

@@ -26,7 +26,7 @@
 
 <table border="0"><tr>
     <td><s:a ac="main-page"><s:tr>To the top</s:tr></s:a></td>
-    <s:url name="ContestPageUrl" ac="new-contest-page">
+    <s:url name="ContestPageUrl" ac="contest-page">
         <s:param name="contest_id" value="phr->contest_id" />
     </s:url>
     <td><s:a url="ContestPageUrl"><s:tr>Back</s:tr></s:a></td>
@@ -39,7 +39,7 @@
 
 <table border="0"><tr>
     <td><s:a ac="main-page"><s:tr>To the top</s:tr></s:a></td>
-    <s:url name="ContestPageUrl" ac="new-contest-page">
+    <s:url name="ContestPageUrl" ac="contest-page">
         <s:param name="contest_id" value="phr->contest_id" />
     </s:url>
     <td><s:a url="ContestPageUrl"><s:tr>Back</s:tr></s:a></td>
