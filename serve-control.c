@@ -931,38 +931,6 @@ action_edit_current_contest(int cmd)
   exit(0);
 }
 
-static void action_edit_permissions(void) __attribute__((noreturn));
-static void
-action_edit_permissions(void)
-{
-  char *s;
-  int num, n, r;
-
-  if (!(s = cgi_param("num"))
-      || sscanf(s, "%d%n", &num, &n) != 1
-      || s[n]
-      || num < 0 || num >= 100000)
-    goto invalid_parameter;
-
-  open_super_server();
-  client_put_header(stdout, 0, 0, config->charset, 1, 0, client_key,
-                    "%s: %s@%s, editing permissions for contest", "serve-control",
-                    user_login, http_host);
-  fflush(stdout);
-
-  r = super_clnt_main_page(super_serve_fd, 1, SSERV_CMD_CNTS_EDIT_PERMISSION,
-                           0, 0, num, self_url, hidden_vars, "");
-  if (r < 0) {
-    printf("<h2><font color=\"red\">%s</font></h2>\n",
-           super_proto_strerror(-r));
-  }
-  client_put_footer(stdout, 0);
-  exit(0);
-
- invalid_parameter:
-  operation_status_page(-1, -1, "Contest view parameters are invalid");
-}
-
 static void action_create_contest_2(void) __attribute__((noreturn));
 static void
 action_create_contest_2(void)
@@ -2332,9 +2300,6 @@ main(int argc, char *argv[])
   case SSERV_CMD_EDIT_CONTEST_XML:
   case SSERV_CMD_EDIT_SERVE_CFG_PROB:
     action_view_contest(client_action);
-    break;
-  case SSERV_CMD_CNTS_EDIT_PERMISSION:
-    action_edit_permissions();
     break;
 
   case SSERV_CMD_CNTS_CHANGE_NAME:

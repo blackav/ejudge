@@ -1520,7 +1520,6 @@ cmd_main_page(struct client_state *p, int len,
   case SSERV_CMD_EDIT_JUDGE_ACCESS:
   case SSERV_CMD_EDIT_TEAM_ACCESS:
   case SSERV_CMD_EDIT_SERVE_CONTROL_ACCESS:
-  case SSERV_CMD_CNTS_EDIT_PERMISSION:
   case SSERV_CMD_CNTS_EDIT_FORM_FIELDS:
   case SSERV_CMD_CNTS_EDIT_CONTESTANT_FIELDS:
   case SSERV_CMD_CNTS_EDIT_RESERVE_FIELDS:
@@ -1629,11 +1628,6 @@ cmd_main_page(struct client_state *p, int len,
                                        p->cookie, &p->ip, config, sstate,
                                        self_url_ptr, hidden_vars_ptr, extra_args_ptr);
     }
-    break;
-  case SSERV_CMD_CNTS_EDIT_PERMISSION:
-    r = super_html_edit_permission(f, p->priv_level, p->user_id, p->login,
-                                   p->cookie, &p->ip, config, sstate, pkt->flags,
-                                   self_url_ptr, hidden_vars_ptr, extra_args_ptr);
     break;
   case SSERV_CMD_CNTS_EDIT_FORM_FIELDS:
   case SSERV_CMD_CNTS_EDIT_CONTESTANT_FIELDS:
@@ -3106,7 +3100,6 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_HIDE_PERMISSIONS] = { cmd_simple_top_command },
   [SSERV_CMD_EDIT_CONTEST_XML] = { cmd_main_page },
   [SSERV_CMD_EDIT_SERVE_CFG_PROB] = { cmd_main_page },
-  [SSERV_CMD_CNTS_EDIT_PERMISSION] = { cmd_main_page },
   [SSERV_CMD_CNTS_SHOW_FORM_FIELDS] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_HIDE_FORM_FIELDS] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_EDIT_FORM_FIELDS] = { cmd_main_page },
