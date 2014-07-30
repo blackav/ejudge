@@ -287,6 +287,7 @@ hr_set_symbolic_action_table(
         int table_size)
 {
     symbolic_action_table = table;
+    submit_button_labels = submit_labels;
     symbolic_action_table_size = table_size;
 }
 
