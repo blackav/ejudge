@@ -835,7 +835,7 @@ print_permissions(FILE *f, struct contest_desc *cnts,
     s = opcaps_unparse(0, 32, p->caps);
     fprintf(f, "%s</pre></font></td><td>%sEdit</a>", s,
             html_hyperref(href, sizeof(href), session_id, self_url, extra_args,
-                          "action=%d&num=%d", SSERV_CMD_CNTS_EDIT_PERMISSION, i));
+                          "action=%d&num=%d", SSERV_CMD_NEW_EDIT_PERMISSIONS_PAGE, i));
     xfree(s);
     html_submit_button(f, SSERV_CMD_CNTS_DELETE_PERMISSION, "Delete");
     fprintf(f, "</td><td>&nbsp;</td></tr></form>");
@@ -2171,7 +2171,8 @@ super_html_edit_access_rules(
 
   return 0;
 }
-static const char * contest_cap_descs[OPCAP_LAST] =
+
+const char * super_html_contest_cap_descs[OPCAP_LAST] =
 {
   [OPCAP_MASTER_LOGIN] = "Use the `master' CGI-program",
   [OPCAP_JUDGE_LOGIN] = "Use the `judge' CGI-program",
@@ -2238,7 +2239,7 @@ super_html_print_caps_table(
             "<td%s>%s</td>"
             "</tr>\n",
             form_row_attrs[row ^= 1], td_opts, i, td_opts, i, s,
-            td_opts, opcaps_get_name(i), td_opts, contest_cap_descs[i]);
+            td_opts, opcaps_get_name(i), td_opts, super_html_contest_cap_descs[i]);
   }
   fprintf(out_f, "</table>");
 }
