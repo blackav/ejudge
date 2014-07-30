@@ -71,6 +71,7 @@ ns_unparse_answers(
   unsigned char prev_group_name[256] = { 0 };
   const unsigned char *title = NULL;
   int enable_virtual_start = 0;
+  int tab_counter;
 
 %><s:read var="all_runs" ignoreerrors="yes" default="0" /><%
   if (all_runs != 1) all_runs = 0;
@@ -164,16 +165,19 @@ ns_unparse_answers(
     upper_tab_id = prob_id;
     if (global->vertical_navigation <= 0) {
 %><tr id="probNavTopList"><td width="100%" class="nTopNavList"><ul class="nTopNavList"><%
-      for (i = 1; i <= cs->max_prob; i++) {
+      for (i = 1, tab_counter = 0; i <= cs->max_prob; i++) {
         if (!(prob = cs->probs[i])) continue;
         if (!(prob_status[i] & PROB_STATUS_TABABLE)) continue;
 %><%
         if (i == prob_id) {
 %><li id="nTopNavSelected"><%
+        } else if (!tab_counter) {
+%><li class="first-rad"><%
         } else {
 %><li><%
         }
 %><%
+        ++tab_counter;
         if (i == prob_id) {
 %><div class="nProbCurrent"><%
         } else if (!all_attempts[i]) {
@@ -191,7 +195,7 @@ ns_unparse_answers(
 %><s:a class="tab" url="ProblemUrl"><s:v value="prob->short_name" escape="false" /></s:a></div></li><%
       }
 %></ul></td></tr>
-<tr><td id="probNavTaskArea" valign="top"><div id="probNavTaskArea"><%
+<tr><td id="probNavTaskArea" valign="top"><div id="probNavTaskArea-ins"><%
     } else {
 %><tr><td class="b0" id="probNavTaskArea" valign="top"><div id="probNavTaskArea"><%
     }
@@ -292,16 +296,19 @@ ns_unparse_answers(
     // bottom navigation bar
 %></div></td></tr>
 <tr id="probNavBottomList"><td width="100%" class="nBottomNavList"><ul class="nBottomNavList"><%
-    for (i = 1; i <= cs->max_prob; i++) {
+    for (i = 1, tab_counter = 0; i <= cs->max_prob; i++) {
       if (!(prob = cs->probs[i])) continue;
       if (!(prob_status[i] & PROB_STATUS_TABABLE)) continue;
 %><%
       if (i == upper_tab_id) {
 %><li id="nBottomNavSelected"><%
+      } else if (!tab_counter) {
+%><li id="first-rad"><%
       } else {
 %><li><%
       }
 %><%
+      ++tab_counter;
       if (i == upper_tab_id) {
 %><div class="nProbCurrent"><%
       } else if (!all_attempts[i]) {
