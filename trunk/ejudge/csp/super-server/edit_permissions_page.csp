@@ -1,0 +1,107 @@
+<%
+/* $Id$ */
+%><%@include "includes.csp"
+%><%
+extern const char * super_html_contest_cap_descs[OPCAP_LAST];
+%><%@set getter_name = "csp_get_edit_permissions_page"
+%><%@set ac_prefix = "SSERV_CMD_"
+%><%@set err_prefix = "SSERV_ERR_"
+%><%@page csp_view_edit_permissions_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "stdvars.csp"
+%><%
+    unsigned char subtitle_buf[1024];
+    const unsigned char *title = 0;
+    const unsigned char *subtitle = subtitle_buf;
+    opcap_t caps = 0;
+    int num = 0;
+
+static const unsigned char * const form_row_attrs[]=
+{
+  " bgcolor=\"#d0d0d0\"",
+  " bgcolor=\"#e0e0e0\"",
+};
+
+    if (phr->priv_level != PRIV_LEVEL_ADMIN) FAIL(SSERV_ERR_PERMISSION_DENIED);
+    if (ejudge_cfg_opcaps_find(phr->config, phr->login, &caps) < 0) FAIL(SSERV_ERR_PERMISSION_DENIED);
+    if (opcaps_check(caps, OPCAP_EDIT_CONTEST) < 0) FAIL(SSERV_ERR_PERMISSION_DENIED);
+    if (!phr->ss->edited_cnts) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
+%><s:read var="num" required="yes" /><%
+
+    struct opcap_list_item *p;
+    int i;
+    cnts = phr->ss->edited_cnts;
+    for (i = 0, p = CNTS_FIRST_PERM(cnts); i < num && p; ++i, p = CNTS_NEXT_PERM_NC(p));
+    if (i != num || !p || !p->login) FAIL(SSERV_ERR_INVALID_PARAMETER);
+
+    snprintf(subtitle_buf, sizeof(subtitle_buf), "capabilities for %s, contest %d", p->login, cnts->id);
+    int row = 1;
+%><%@include "header.csp"
+%>
+
+<h2>Editing capabilities for user <s:v value="p->login" />, contest <s:v value="cnts->id" /></h2>
+
+<s:form>
+<s:hidden checkExpr=">= 0" name="num" value="num" />
+
+<table border="0">
+<%
+    for (i = 0; i < OPCAP_LAST; i++) {
+%>
+    <tr<s:v value="form_row_attrs[row ^= 1]" escape="false"/>>
+        <td><s:v value="i" /></td>
+        <td><input type="checkbox" name="cap_<s:v value="i" />"<% if (opcaps_check(p->caps, i) >= 0) { %> checked="checked"<% } %>/></td>
+        <td><tt><s:v value="opcaps_get_name(i)" escape="false" /></tt></td>
+        <td><s:v checkExpr="" value="super_html_contest_cap_descs[i]" /></td>
+    </tr>
+<%
+  }
+%>
+</table>
+
+<table border="0"><tr>
+    <td><s:a ac="new-main-page"><s:tr>To the top</s:tr></s:a></td>
+    <td><s:a ac="edit-current-contest"><s:tr>Forget changes</s:tr></s:a></td>
+    <td><s:submit ac="cnts-save-permissions" label="Save" /></td>
+</tr></table>
+</s:form>
+
+<h2>Predefined permission sets</h2>
+
+<s:form>
+<s:hidden checkExpr=">= 0" name="num" value="num" />
+<table border="0"><tr>
+    <td>
+        <select name="param">
+            <option value="0"></option>
+            <option value="1">Observer</option>
+            <option value="2">Judge</option>
+            <option value="3">Full control</option>
+        </select>
+    </td>
+    <td><s:submit ac="cnts-set-predef-permissions" label="Set permissions" /></td>
+</tr></table>
+</s:form>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<%@include "footer.csp"
+%><%
+  l10n_setlocale(0);
+cleanup:
+  html_armor_free(&ab);
+%>
