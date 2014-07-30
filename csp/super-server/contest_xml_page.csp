@@ -25,7 +25,7 @@
     if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(SSERV_ERR_PERMISSION_DENIED);
     if (!contests_check_serve_control_ip_2(cnts, &phr->ip, phr->ssl_flag)) FAIL(SSERV_ERR_BANNED_IP);
 
-    if (phr->action == SSERV_CMD_NEW_CONTEST_XML_PAGE) {
+    if (phr->action == SSERV_CMD_CONTEST_XML_PAGE) {
         contests_make_path(path, sizeof(path), phr->contest_id);
         snprintf(subtitle_buf, sizeof(subtitle_buf), "XML configuration file");
     } else if (phr->action == SSERV_CMD_NEW_SERVE_CFG_PAGE) {

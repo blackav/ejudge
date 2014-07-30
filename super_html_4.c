@@ -6652,7 +6652,7 @@ parse_cookie(struct http_request_info *phr)
 
 static const int external_action_aliases[SSERV_CMD_LAST] =
 {
-  [SSERV_CMD_NEW_SERVE_CFG_PAGE] = SSERV_CMD_NEW_CONTEST_XML_PAGE,
+  [SSERV_CMD_NEW_SERVE_CFG_PAGE] = SSERV_CMD_CONTEST_XML_PAGE,
 };
 static const unsigned char * const external_action_names[SSERV_CMD_LAST] =
 {
@@ -6660,7 +6660,7 @@ static const unsigned char * const external_action_names[SSERV_CMD_LAST] =
   [SSERV_CMD_LOGIN_PAGE] = "login_page",
   [SSERV_CMD_MAIN_PAGE] = "main_page",
   [SSERV_CMD_CONTEST_PAGE] = "contest_page",
-  [SSERV_CMD_NEW_CONTEST_XML_PAGE] = "contest_xml_page",
+  [SSERV_CMD_CONTEST_XML_PAGE] = "contest_xml_page",
   [SSERV_CMD_NEW_CREATE_CONTEST_PAGE] = "create_contest_page",
   [SSERV_CMD_CONTEST_ALREADY_EDITED_PAGE] = "contest_already_edited_page",
   [SSERV_CMD_NEW_CHECK_TESTS_PAGE] = "check_tests_page",
