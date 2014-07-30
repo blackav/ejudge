@@ -24,7 +24,7 @@
 <s:url name="ContestPageUrl" ac="new-contest-page">
     <s:param name="contest_id" value="phr->contest_id" />
 </s:url>
-        <s:a ac="new-main-page"><img src="<s:config name="style-prefix" />back_sh.png" alt="Main page" /></s:a>
+        <s:a ac="main-page"><img src="<s:config name="style-prefix" />back_sh.png" alt="Main page" /></s:a>
         <s:a url="ContestPageUrl"><img src="<s:config name="style-prefix" />refresh_sh.png" alt="Refresh" /></s:a>
        <s:a ac="logout"><img src="<s:config name="style-prefix" />logout_sh.png" alt="Logout"/></s:a>
     
@@ -687,7 +687,7 @@
 <s:url name="ContestPageUrl" ac="new-contest-page">
     <s:param name="contest_id" value="phr->contest_id" />
 </s:url>
-        <td>[<s:a ac="new-main-page">Main page</s:a>]</td>
+        <td>[<s:a ac="main-page">Main page</s:a>]</td>
         <td>[<s:a url="ContestPageUrl">Refresh</s:a>]</td>
         <td>[<s:a ac="logout">Logout</s:a>]</td>
     </tr>

@@ -25,7 +25,7 @@
 <p><pre><font><s:v checkexpr="" value="pp->log_txt" /></font></pre></p>
 
 <table border="0"><tr>
-    <td><s:a ac="new-main-page"><s:tr>To the top</s:tr></s:a></td>
+    <td><s:a ac="main-page"><s:tr>To the top</s:tr></s:a></td>
     <s:url name="ContestPageUrl" ac="new-contest-page">
         <s:param name="contest_id" value="phr->contest_id" />
     </s:url>
@@ -38,7 +38,7 @@
 <p><pre><font color="red"><s:v checkexpr="" value="pp->log_txt" /></font></pre></p>
 
 <table border="0"><tr>
-    <td><s:a ac="new-main-page"><s:tr>To the top</s:tr></s:a></td>
+    <td><s:a ac="main-page"><s:tr>To the top</s:tr></s:a></td>
     <s:url name="ContestPageUrl" ac="new-contest-page">
         <s:param name="contest_id" value="phr->contest_id" />
     </s:url>

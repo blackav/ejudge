@@ -40,7 +40,7 @@
 
 <table border="0">
     <tr>
-        <td><s:a ac="new-main-page"><s:tr>To contests list</s:tr></s:a></td>
+        <td><s:a ac="main-page"><s:tr>To contests list</s:tr></s:a></td>
         <td><s:a ac="new-contest-page"><s:tr>To contest details</s:tr></s:a></td>
         <td><s:a action="phr->action"><s:tr>Refresh</s:tr></s:a></td>
         <td><s:a ac="logout"><s:tr>Logout</s:tr></s:a></td>
