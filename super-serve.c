@@ -1491,21 +1491,12 @@ cmd_main_page(struct client_state *p, int len,
     }
     */
     break;
-  case SSERV_CMD_CHECK_TESTS:
-    if ((r = contests_get(pkt->contest_id, &cnts)) < 0 || !cnts) {
-      return send_reply(p, -SSERV_ERR_INVALID_CONTEST);
-    }
-    if (sstate->edited_cnts) {
-      return send_reply(p, -SSERV_ERR_CONTEST_EDITED);
-    }
-    break;
   }
 
   // check permissions: MASTER_PAGE
   switch (pkt->b.id) {
   case SSERV_CMD_EDIT_CONTEST_XML:
   case SSERV_CMD_EDIT_SERVE_CFG_PROB:
-  case SSERV_CMD_CHECK_TESTS:
     if (p->priv_level != PRIV_LEVEL_ADMIN) {
       err("%d: inappropriate privilege level", p->id);
       return send_reply(p, -SSERV_ERR_PERMISSION_DENIED);
@@ -1638,17 +1629,6 @@ cmd_main_page(struct client_state *p, int len,
                                        p->cookie, &p->ip, config, sstate,
                                        self_url_ptr, hidden_vars_ptr, extra_args_ptr);
     }
-    break;
-  case SSERV_CMD_CHECK_TESTS:
-    if ((r = contests_load(pkt->contest_id, &rw_cnts)) < 0 || !rw_cnts) {
-      return send_reply(p, -SSERV_ERR_INVALID_CONTEST);
-    }
-    sstate->edited_cnts = rw_cnts;
-    super_html_load_serve_cfg(rw_cnts, config, sstate);
-    r = super_html_check_tests(f, p->priv_level, p->user_id, p->login,
-                               p->cookie, &p->ip, config, sstate,
-                               self_url_ptr, hidden_vars_ptr, extra_args_ptr);
-    super_serve_clear_edited_contest(sstate);
     break;
   case SSERV_CMD_CNTS_EDIT_PERMISSION:
     r = super_html_edit_permission(f, p->priv_level, p->user_id, p->login,
@@ -3126,7 +3106,6 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_HIDE_PERMISSIONS] = { cmd_simple_top_command },
   [SSERV_CMD_EDIT_CONTEST_XML] = { cmd_main_page },
   [SSERV_CMD_EDIT_SERVE_CFG_PROB] = { cmd_main_page },
-  [SSERV_CMD_CHECK_TESTS] = { cmd_main_page },
   [SSERV_CMD_CNTS_EDIT_PERMISSION] = { cmd_main_page },
   [SSERV_CMD_CNTS_SHOW_FORM_FIELDS] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_HIDE_FORM_FIELDS] = { cmd_simple_top_command },

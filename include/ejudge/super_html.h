@@ -328,17 +328,11 @@ void super_html_load_serve_cfg(const struct contest_desc *cnts,
 void super_html_fix_serve(struct sid_state *sstate,
                           int orig_id, int contest_id);
 
-int super_html_check_tests(FILE *f,
-                           int priv_level,
-                           int user_id,
-                           const unsigned char *login,
-                           ej_cookie_t session_id,
-                           const ej_ip_t *ip_address,
-                           struct ejudge_cfg *config,
-                           struct sid_state *sstate,
-                           const unsigned char *self_url,
-                           const unsigned char *hidden_vars,
-                           const unsigned char *extra_args);
+int
+super_html_new_check_tests(
+        FILE *flog,
+        const struct ejudge_cfg *config,
+        struct sid_state *sstate);
 
 int super_html_update_versions(struct sid_state *sstate);
 

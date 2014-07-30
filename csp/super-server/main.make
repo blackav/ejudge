@@ -34,6 +34,7 @@ EXPAT_LIB=-lexpat
 
 TARGETDIR = ${libexecdir}/ejudge/csp/contests
 CFILES = \
+ csp_check_tests_page.c\
  csp_contest_already_edited_page.c\
  csp_contest_page.c\
  csp_contest_xml_page.c\
@@ -60,7 +61,10 @@ super-server.po : $(CFILES)
 
 csp_main_page.so : csp_main_page.c I_main_page.c
 	$(CC) $(CCOMPFLAGS) ${WPTRSIGN} $(LDFLAGS) $^ -o $@
+csp_check_tests_page.so : csp_check_tests_page.c I_check_tests_page.c
+	$(CC) $(CCOMPFLAGS) ${WPTRSIGN} $(LDFLAGS) $^ -o $@
 
+csp_check_tests_page.c : check_tests_page.csp includes.csp stdvars.csp header.csp footer.csp
 csp_contest_already_edited_page.c : contest_already_edited_page.csp includes.csp stdvars.csp header.csp footer.csp
 csp_contest_page.c : contest_page.csp includes.csp stdvars.csp header.csp footer.csp
 csp_contest_xml_page.c : contest_xml_page.csp includes.csp stdvars.csp header.csp footer.csp

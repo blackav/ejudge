@@ -18,6 +18,7 @@
 #include "ejudge/super_serve_pi.h"
 
 CspNewMainPage dummy_csp_new_main_page;
+CspCheckTestsPage dummy_csp_check_tests_page;
 
 void
 super_serve_pi_init(void)

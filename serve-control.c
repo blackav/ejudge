@@ -859,9 +859,6 @@ action_view_contest(int cmd)
   case SSERV_CMD_EDIT_SERVE_CFG_PROB:
     extra_str = ", editing serve.cfg";
     break;
-  case SSERV_CMD_CHECK_TESTS:
-    extra_str = ", checking contest settings";
-    break;
   case SSERV_CMD_PROB_EDIT_VARIANTS:
   case SSERV_CMD_PROB_EDIT_VARIANTS_2:
     extra_str = ", editing variant map";
@@ -2332,7 +2329,6 @@ main(int argc, char *argv[])
   case SSERV_CMD_CNTS_FORGET:
     action_simple_top_command(client_action);
     break;
-  case SSERV_CMD_CHECK_TESTS:
   case SSERV_CMD_EDIT_CONTEST_XML:
   case SSERV_CMD_EDIT_SERVE_CFG_PROB:
     action_view_contest(client_action);
