@@ -621,7 +621,7 @@
         <td><tt><s:v value="xml_path" /></tt></td>
         <td>
 <% if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0) { %>
-<s:url name="ViewContestXmlUrl" ac="new-contest-xml-page">
+<s:url name="ViewContestXmlUrl" ac="contest-xml-page">
     <s:param name="contest_id" value="phr->contest_id" />
 </s:url>
             [<s:a url="ViewContestXmlUrl">View</s:a>]
