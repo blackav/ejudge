@@ -28,7 +28,7 @@
     if (phr->action == SSERV_CMD_CONTEST_XML_PAGE) {
         contests_make_path(path, sizeof(path), phr->contest_id);
         snprintf(subtitle_buf, sizeof(subtitle_buf), "XML configuration file");
-    } else if (phr->action == SSERV_CMD_NEW_SERVE_CFG_PAGE) {
+    } else if (phr->action == SSERV_CMD_SERVE_CFG_PAGE) {
         snprintf(path, sizeof(path), "%s/conf/serve.cfg", cnts->root_dir);
         snprintf(subtitle_buf, sizeof(subtitle_buf), "serve.cfg configuration file");
     }
