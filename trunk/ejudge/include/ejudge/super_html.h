@@ -63,19 +63,6 @@ int super_html_edit_access_rules(FILE *f,
                                  const unsigned char *hidden_vars,
                                  const unsigned char *extra_args);
 
-int super_html_edit_permission(FILE *f,
-                               int priv_level,
-                               int user_id,
-                               const unsigned char *login,
-                               ej_cookie_t session_id,
-                               const ej_ip_t *ip_address,
-                               struct ejudge_cfg *config,
-                               struct sid_state *sstate,
-                               int num,
-                               const unsigned char *self_url,
-                               const unsigned char *hidden_vars,
-                               const unsigned char *extra_args);
-
 int super_html_edit_form_fields(FILE *f,
                                 int priv_level,
                                 int user_id,
