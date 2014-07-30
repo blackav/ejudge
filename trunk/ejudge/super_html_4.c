@@ -456,7 +456,7 @@ cmd_edited_cnts_start_new(
     }
   } else {
     if (!contest_id) {
-      refresh_page(out_f, phr, "action=%d", SSERV_CMD_NEW_CREATE_CONTEST_PAGE);
+      refresh_page(out_f, phr, "action=%d", SSERV_CMD_CREATE_CONTEST_PAGE);
     } else {
       refresh_page(out_f, phr, "action=%d&contest_id=%d",
                    SSERV_CMD_EDIT_CONTEST_XML, contest_id);
@@ -6661,7 +6661,7 @@ static const unsigned char * const external_action_names[SSERV_CMD_LAST] =
   [SSERV_CMD_MAIN_PAGE] = "main_page",
   [SSERV_CMD_CONTEST_PAGE] = "contest_page",
   [SSERV_CMD_CONTEST_XML_PAGE] = "contest_xml_page",
-  [SSERV_CMD_NEW_CREATE_CONTEST_PAGE] = "create_contest_page",
+  [SSERV_CMD_CREATE_CONTEST_PAGE] = "create_contest_page",
   [SSERV_CMD_CONTEST_ALREADY_EDITED_PAGE] = "contest_already_edited_page",
   [SSERV_CMD_NEW_CHECK_TESTS_PAGE] = "check_tests_page",
   [SSERV_CMD_CNTS_EDIT_PERMISSIONS_PAGE] = "cnts_edit_permissions_page",
