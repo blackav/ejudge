@@ -6658,7 +6658,7 @@ static const unsigned char * const external_action_names[SSERV_CMD_LAST] =
 {
   [SSERV_CMD_BROWSE_PROBLEM_PACKAGES] = "problem_packages_page",
   [SSERV_CMD_LOGIN_PAGE] = "login_page",
-  [SSERV_CMD_NEW_MAIN_PAGE] = "main_page",
+  [SSERV_CMD_MAIN_PAGE] = "main_page",
   [SSERV_CMD_NEW_CONTEST_PAGE] = "contest_page",
   [SSERV_CMD_NEW_CONTEST_XML_PAGE] = "contest_xml_page",
   [SSERV_CMD_NEW_CREATE_CONTEST_PAGE] = "create_contest_page",
@@ -6813,7 +6813,7 @@ super_html_http_request(
 
 redo_action:
     // main_page by default
-    if (!super_proto_op_names[ext_action]) ext_action = SSERV_CMD_NEW_MAIN_PAGE;
+    if (!super_proto_op_names[ext_action]) ext_action = SSERV_CMD_MAIN_PAGE;
 
     if (ext_action < 0 || ext_action >= SSERV_CMD_LAST) ext_action = 0;
     if (external_action_aliases[ext_action] > 0) ext_action = external_action_aliases[ext_action];
