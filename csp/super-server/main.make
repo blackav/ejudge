@@ -35,11 +35,11 @@ EXPAT_LIB=-lexpat
 TARGETDIR = ${libexecdir}/ejudge/csp/contests
 CFILES = \
  csp_check_tests_page.c\
+ csp_cnts_edit_permissions_page.c\
  csp_contest_already_edited_page.c\
  csp_contest_page.c\
  csp_contest_xml_page.c\
  csp_create_contest_page.c\
- csp_edit_permissions_page.c\
  csp_login_page.c\
  csp_main_page.c\
  csp_problem_packages_page.c
@@ -66,11 +66,11 @@ csp_check_tests_page.so : csp_check_tests_page.c I_check_tests_page.c
 	$(CC) $(CCOMPFLAGS) ${WPTRSIGN} $(LDFLAGS) $^ -o $@
 
 csp_check_tests_page.c : check_tests_page.csp includes.csp stdvars.csp header.csp footer.csp
+csp_cnts_edit_permissions_page.c : cnts_edit_permissions_page.csp includes.csp stdvars.csp header.csp footer.csp
 csp_contest_already_edited_page.c : contest_already_edited_page.csp includes.csp stdvars.csp header.csp footer.csp
 csp_contest_page.c : contest_page.csp includes.csp stdvars.csp header.csp footer.csp
 csp_contest_xml_page.c : contest_xml_page.csp includes.csp stdvars.csp header.csp footer.csp
 csp_create_contest_page.c : create_contest_page.csp includes.csp stdvars.csp header.csp footer.csp
-csp_edit_permissions_page.c : edit_permissions_page.csp includes.csp stdvars.csp header.csp footer.csp
 csp_login_page.c : main_page.csp includes.csp stdvars.csp header.csp footer.csp
 csp_main_page.c : main_page.csp includes.csp stdvars.csp header.csp footer.csp
 csp_problem_packages_page.c : problem_packages_page.csp includes.csp stdvars.csp header.csp footer.csp
