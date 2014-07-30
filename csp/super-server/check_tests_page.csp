@@ -43,7 +43,7 @@
         <s:param name="contest_id" value="phr->contest_id" />
     </s:url>
     <td><s:a url="ContestPageUrl"><s:tr>Back</s:tr></s:a></td>
-    <td><s:form><s:hidden name="contest_id" value="phr->contest_id" /><s:submit ac="new-check-tests-page" label="Check again" /></s:form></td>
+    <td><s:form><s:hidden name="contest_id" value="phr->contest_id" /><s:submit ac="check-tests-page" label="Check again" /></s:form></td>
 </tr></table>
 
 <% } %>
