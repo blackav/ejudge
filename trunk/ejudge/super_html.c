@@ -835,7 +835,7 @@ print_permissions(FILE *f, struct contest_desc *cnts,
     s = opcaps_unparse(0, 32, p->caps);
     fprintf(f, "%s</pre></font></td><td>%sEdit</a>", s,
             html_hyperref(href, sizeof(href), session_id, self_url, extra_args,
-                          "action=%d&num=%d", SSERV_CMD_NEW_EDIT_PERMISSIONS_PAGE, i));
+                          "action=%d&num=%d", SSERV_CMD_CNTS_EDIT_PERMISSIONS_PAGE, i));
     xfree(s);
     html_submit_button(f, SSERV_CMD_CNTS_DELETE_PERMISSION, "Delete");
     fprintf(f, "</td><td>&nbsp;</td></tr></form>");
