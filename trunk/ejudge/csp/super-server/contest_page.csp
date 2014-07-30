@@ -675,7 +675,7 @@
             [<s:a url="UpdateFromPolygonUrl">Update from Polygon</s:a>]
             <s:form>
                 <s:hidden name="contest_id" value="phr->contest_id" />
-                <s:submit ac="check-tests" label="Check contest settings" />
+                <s:submit ac="new-check-tests-page" label="Check contest settings" />
             </s:form>
 <% } %>
          </td>

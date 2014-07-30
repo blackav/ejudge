@@ -52,6 +52,13 @@ typedef struct CspNewMainPage
     CspContestsArray contests;
 } CspNewMainPage;
 
+typedef struct CspCheckTestsPage
+{
+    PageInterface b;
+    int status;
+    unsigned char *log_txt;
+} CspCheckTestsPage;
+
 void super_serve_pi_init(void);
 
 #endif /* __SUPER_SERVE_PI_H__ */

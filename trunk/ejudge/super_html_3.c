@@ -9529,19 +9529,12 @@ check_test_score(FILE *flog, int ntests, int test_score, int full_score,
 }
 
 int
-super_html_check_tests(
-        FILE *f,
-        int priv_level,
-        int user_id,
-        const unsigned char *login,
-        ej_cookie_t session_id,
-        const ej_ip_t *ip_address,
-        struct ejudge_cfg *config,
-        struct sid_state *sstate,
-        const unsigned char *self_url,
-        const unsigned char *hidden_vars,
-        const unsigned char *extra_args)
+super_html_new_check_tests(
+        FILE *flog,
+        const struct ejudge_cfg *config,
+        struct sid_state *sstate)
 {
+  int retval = -1;
   path_t conf_path;
   path_t g_test_path;
   path_t g_corr_path;
@@ -9555,30 +9548,21 @@ super_html_check_tests(
   struct section_problem_data *prob, *abstr;
   struct section_problem_data *tmp_prob = 0;
   int i, j, k, variant;
-  char *flog_txt = 0;
-  size_t flog_len = 0;
-  FILE *flog = 0;
   struct stat stbuf;
   int total_tests = 0, v_total_tests = 0;
-  unsigned char hbuf[1024];
   int file_group, file_mode;
   int already_compiled = 0;
-  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   path_t test_checker_cmd;
 
   if (sstate->serve_parse_errors) {
-    fprintf(f, "<h2>The tests cannot be checked</h2>\n");
-    fprintf(f, "<p><pre><font color=\"red\">%s</font></pre></p>\n",
-            ARMOR(sstate->serve_parse_errors));
+    fprintf(flog, "%s\n", sstate->serve_parse_errors);
     goto cleanup;
   }
 
   if (!sstate->edited_cnts || !sstate->global) {
-    fprintf(f, "<h2>The tests cannot be checked: No contest</h2>\n");
+    fprintf(flog, "The tests cannot be checked: No contest\n");
     goto cleanup;
   }
-
-  flog = open_memstream(&flog_txt, &flog_len);
 
   cnts = sstate->edited_cnts;
   global = sstate->global;
@@ -9613,7 +9597,7 @@ super_html_check_tests(
       if (!abstr) {
         fprintf(flog, "Error: no abstract checker for problem `%s'\n",
                 prob->short_name);
-        goto check_failed;
+        goto cleanup;
       }
     }
 
@@ -9687,15 +9671,15 @@ super_html_check_tests(
     if (global->advanced_layout > 0) {
       if (prob->variant_num <= 0) {
         if (build_generate_makefile(flog, config, cnts, NULL, sstate, global, tmp_prob, 0) < 0)
-          goto check_failed;
+          goto cleanup;
         if ((j = invoke_make(flog, config, global, tmp_prob, -1)) < 0)
-          goto check_failed;
+          goto cleanup;
       } else {
         for (variant = 1; variant <= prob->variant_num; ++variant) {
           if (build_generate_makefile(flog, config, cnts, NULL, sstate, global, tmp_prob, variant) < 0)
-            goto check_failed;
+            goto cleanup;
           if ((j = invoke_make(flog, config, global, tmp_prob, variant)) < 0)
-            goto check_failed;
+            goto cleanup;
         }
       }
       continue;
@@ -9704,7 +9688,7 @@ super_html_check_tests(
     if (!tmp_prob->standard_checker[0] && !already_compiled) {
       if (prob->variant_num <= 0) {
         if (recompile_checker(config, flog, checker_path) < 0)
-          goto check_failed;
+          goto cleanup;
       } else {
         for (variant = 1; variant <= prob->variant_num; variant++) {
           if (global->advanced_layout > 0) {
@@ -9715,7 +9699,7 @@ super_html_check_tests(
                      checker_path, variant);
           }
           if (recompile_checker(config, flog, v_checker_path) < 0)
-            goto check_failed;
+            goto cleanup;
         }
       }
     }
@@ -9730,11 +9714,11 @@ super_html_check_tests(
       }
       if (stat(test_path, &stbuf) < 0) {
         fprintf(flog, "Error: test directory %s does not exist\n", test_path);
-        goto check_failed;
+        goto cleanup;
       }
       if (!S_ISDIR(stbuf.st_mode)) {
         fprintf(flog, "Error: test directory %s is not a directory\n", test_path);
-        goto check_failed;
+        goto cleanup;
       }
       if (tmp_prob->use_corr) {
         if (global->advanced_layout > 0) {
@@ -9743,11 +9727,11 @@ super_html_check_tests(
         }
         if (stat(corr_path, &stbuf) < 0) {
           fprintf(flog, "Error: test directory %s does not exist\n", corr_path);
-          goto check_failed;
+          goto cleanup;
         }
         if (!S_ISDIR(stbuf.st_mode)) {
           fprintf(flog, "Error: test directory %s is not a directory\n", corr_path);
-          goto check_failed;
+          goto cleanup;
         }
       }
       if (tmp_prob->use_info) {
@@ -9757,11 +9741,11 @@ super_html_check_tests(
         }
         if (stat(info_path, &stbuf) < 0) {
           fprintf(flog, "Error: test directory %s does not exist\n", info_path);
-          goto check_failed;
+          goto cleanup;
         }
         if (!S_ISDIR(stbuf.st_mode)) {
           fprintf(flog, "Error: test directory %s is not a directory\n", info_path);
-          goto check_failed;
+          goto cleanup;
         }
       }
 
@@ -9780,7 +9764,7 @@ super_html_check_tests(
         }
         if (access(test_checker_cmd, X_OK) < 0) {
           fprintf(flog, "Error: test checker %s does not exist or non-executable", test_checker_cmd);
-          goto check_failed;
+          goto cleanup;
         }
       }
 
@@ -9789,18 +9773,18 @@ super_html_check_tests(
         k = check_test_file(flog, total_tests, test_path,
                             tmp_prob->test_pat, tmp_prob->test_sfx, 1,
                             tmp_prob->binary_input, file_group, file_mode);
-        if (k < 0) goto check_failed;
+        if (k < 0) goto cleanup;
         if (!k) break;
         total_tests++;
       }
       total_tests--;
       if (!total_tests) {
         fprintf(flog, "Error: no tests defined for the problem\n");
-        goto check_failed;
+        goto cleanup;
       }
       if (tmp_prob->type > 0 && total_tests != 1) {
         fprintf(flog, "Error: output-only problem must have only one test\n");
-        goto check_failed;
+        goto cleanup;
       }
       fprintf(flog, "Info: assuming, that there are %d tests for this problem\n",
               total_tests);
@@ -9810,12 +9794,12 @@ super_html_check_tests(
             && check_test_file(flog, j, corr_path, tmp_prob->corr_pat,
                                tmp_prob->corr_sfx, 0, tmp_prob->binary_input,
                                file_group, file_mode) <= 0)
-          goto check_failed;
+          goto cleanup;
         if (tmp_prob->use_info
             && check_test_file(flog, j, info_path, tmp_prob->info_pat,
                                tmp_prob->info_sfx, 0, 0, file_group,
                                file_mode) <= 0)
-          goto check_failed;
+          goto cleanup;
 
         if (invoke_test_checker(flog, j, test_checker_cmd,
                                 tmp_prob->test_checker_env,
@@ -9823,7 +9807,7 @@ super_html_check_tests(
                                 tmp_prob->test_sfx,
                                 corr_path, tmp_prob->corr_pat,
                                 tmp_prob->corr_sfx) < 0)
-          goto check_failed;
+          goto cleanup;
       }
 
       if (tmp_prob->use_corr
@@ -9831,14 +9815,14 @@ super_html_check_tests(
                              tmp_prob->corr_sfx, 1, tmp_prob->binary_input,
                              file_group, file_mode) != 0) {
         fprintf(flog, "Error: there is answer file for test %d, but no data file\n", j);
-        goto check_failed;
+        goto cleanup;
       }
       if (tmp_prob->use_info
           && check_test_file(flog, j, info_path, tmp_prob->info_pat,
                              tmp_prob->info_sfx, 1, 0,
                              file_group, file_mode) != 0) {
         fprintf(flog, "Error: there is test info file for test %d, but no data file\n", j);
-        goto check_failed;
+        goto cleanup;
       }
     } else {
       for (variant = 1; variant <= prob->variant_num; variant++) {
@@ -9851,11 +9835,11 @@ super_html_check_tests(
         }
         if (stat(v_test_path, &stbuf) < 0) {
           fprintf(flog, "Error: test directory %s does not exist\n", v_test_path);
-          goto check_failed;
+          goto cleanup;
         }
         if (!S_ISDIR(stbuf.st_mode)) {
           fprintf(flog, "Error: test directory %s is not a directory\n", v_test_path);
-          goto check_failed;
+          goto cleanup;
         }
         if (tmp_prob->use_corr) {
           if (global->advanced_layout > 0) {
@@ -9867,11 +9851,11 @@ super_html_check_tests(
           }
           if (stat(v_corr_path, &stbuf) < 0) {
             fprintf(flog, "Error: test directory %s does not exist\n", v_corr_path);
-            goto check_failed;
+            goto cleanup;
           }
           if (!S_ISDIR(stbuf.st_mode)) {
             fprintf(flog, "Error: test directory %s is not a directory\n", v_corr_path);
-            goto check_failed;
+            goto cleanup;
           }
         }
         if (tmp_prob->use_info) {
@@ -9884,11 +9868,11 @@ super_html_check_tests(
           }
           if (stat(v_info_path, &stbuf) < 0) {
             fprintf(flog, "Error: test directory %s does not exist\n", v_info_path);
-            goto check_failed;
+            goto cleanup;
           }
           if (!S_ISDIR(stbuf.st_mode)) {
             fprintf(flog, "Error: test directory %s is not a directory\n", v_info_path);
-            goto check_failed;
+            goto cleanup;
           }
         }
 
@@ -9907,7 +9891,7 @@ super_html_check_tests(
           }
           if (access(test_checker_cmd, X_OK) < 0) {
             fprintf(flog, "Error: test checker %s does not exist or non-executable", test_checker_cmd);
-            goto check_failed;
+            goto cleanup;
           }
         }
 
@@ -9916,18 +9900,18 @@ super_html_check_tests(
           k = check_test_file(flog, total_tests, v_test_path,
                               tmp_prob->test_pat, tmp_prob->test_sfx, 1,
                               tmp_prob->binary_input, file_group, file_mode);
-          if (k < 0) goto check_failed;
+          if (k < 0) goto cleanup;
           if (!k) break;
           total_tests++;
         }
         total_tests--;
         if (!total_tests) {
           fprintf(flog, "Error: no tests defined for the problem\n");
-          goto check_failed;
+          goto cleanup;
         }
         if (tmp_prob->type > 0 && total_tests != 1) {
           fprintf(flog, "Error: output-only problem must have only one test\n");
-          goto check_failed;
+          goto cleanup;
         }
         if (variant == 1) {
           fprintf(flog, "Info: assuming, that there are %d tests for this problem\n",
@@ -9936,7 +9920,7 @@ super_html_check_tests(
         } else {
           if (v_total_tests != total_tests) {
             fprintf(flog, "Error: variant 1 defines %d tests, but variant %d defines %d tests\n", v_total_tests, variant, total_tests);
-            goto check_failed;
+            goto cleanup;
           }
         }
       
@@ -9945,12 +9929,12 @@ super_html_check_tests(
               && check_test_file(flog, j, v_corr_path, tmp_prob->corr_pat,
                                  tmp_prob->corr_sfx, 0, tmp_prob->binary_input,
                                  file_group, file_mode) <= 0)
-            goto check_failed;
+            goto cleanup;
           if (tmp_prob->use_info
               && check_test_file(flog, j, v_info_path, tmp_prob->info_pat,
                                  tmp_prob->info_sfx, 0, 0, file_group,
                                  file_mode) <= 0)
-            goto check_failed;
+            goto cleanup;
 
           if (invoke_test_checker(flog, j, test_checker_cmd,
                                   tmp_prob->test_checker_env,
@@ -9958,7 +9942,7 @@ super_html_check_tests(
                                   tmp_prob->test_sfx,
                                   v_corr_path, tmp_prob->corr_pat,
                                   tmp_prob->corr_sfx) < 0)
-            goto check_failed;
+            goto cleanup;
         }
 
         if (tmp_prob->use_corr
@@ -9966,14 +9950,14 @@ super_html_check_tests(
                                tmp_prob->corr_sfx, 1, tmp_prob->binary_input,
                                file_group, file_mode) != 0) {
           fprintf(flog, "Error: there is answer file for test %d, but no data file, variant %d\n", j, variant);
-          goto check_failed;
+          goto cleanup;
         }
         if (tmp_prob->use_info
             && check_test_file(flog, j, v_info_path, tmp_prob->info_pat,
                                tmp_prob->info_sfx, 1, 0, file_group,
                                file_mode) != 0) {
           fprintf(flog, "Error: there is test info file for test %d, but no data file, variant %d\n", j, variant);
-          goto check_failed;
+          goto cleanup;
         }
       }
     }
@@ -9982,57 +9966,17 @@ super_html_check_tests(
         && global->score_system != SCORE_MOSCOW) {
       if (check_test_score(flog, total_tests, tmp_prob->test_score,
                            tmp_prob->full_score, tmp_prob->test_score_list) < 0)
-        goto check_failed;
+        goto cleanup;
     }
   }
 
 skip_tests:
-
-  close_memstream(flog); flog = 0;
-  fprintf(f, "<h2>Contest is set up OK</h2>\n");
-  fprintf(f, "<p><pre><font>%s</font></pre></p>\n", ARMOR(flog_txt));
-  xfree(flog_txt); flog_txt = 0;
-
-  fprintf(f, "<table border=\"0\"><tr>");
-  fprintf(f, "<td>%sTo the top</a></td>",
-          html_hyperref(hbuf, sizeof(hbuf), session_id, self_url,extra_args,0));
-  fprintf(f, "<td>%sBack</a></td>",
-          html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
-                        "contest_id=%d&action=%d", cnts->id,
-                        SSERV_CMD_NEW_CONTEST_PAGE));
-  fprintf(f, "</tr></table>\n");
+  retval = 0;
 
 cleanup:
   tmp_prob = prepare_problem_free(tmp_prob);
-  html_armor_free(&ab);
 
-  return 0;
-
-check_failed:
-  tmp_prob = prepare_problem_free(tmp_prob);
-  fclose(flog);
-
-  fprintf(f, "<h2>Contest settings contain error:</h2>\n");
-  fprintf(f, "<p><pre><font color=\"red\">%s</font></pre></p>\n",
-          ARMOR(flog_txt));
-  xfree(flog_txt);
-
-  fprintf(f, "<table border=\"0\"><tr>");
-  fprintf(f, "<td>%sTo the top</a></td>",
-          html_hyperref(hbuf, sizeof(hbuf), session_id, self_url,extra_args,0));
-  fprintf(f, "<td>%sBack</a></td>",
-          html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
-                        "contest_id=%d&action=%d", cnts->id,
-                        SSERV_CMD_NEW_CONTEST_PAGE));
-  fprintf(f, "<td>");
-  html_start_form(f, 1, self_url, hidden_vars);
-  fprintf(f, "<input type=\"hidden\" name=\"contest_id\" value=\"%d\"/>", cnts->id);
-  html_submit_button(f, SSERV_CMD_CHECK_TESTS, "Check again");
-  fprintf(f, "</form></td>\n");
-  fprintf(f, "</tr></table>\n");
-
-  html_armor_free(&ab);
-  return 0;
+  return retval;
 }
 
 static int

@@ -10433,7 +10433,7 @@ super_serve_op_DOWNLOAD_CLEANUP_ACTION(
   }
 
   int action = SSERV_CMD_NEW_CONTEST_PAGE;
-  if (phr->action == SSERV_CMD_DOWNLOAD_CLEANUP_AND_CHECK_ACTION) action = SSERV_CMD_CHECK_TESTS;
+  if (phr->action == SSERV_CMD_DOWNLOAD_CLEANUP_AND_CHECK_ACTION) action = SSERV_CMD_NEW_CHECK_TESTS_PAGE;
   ss_redirect_3(out_f, phr, action, "contest_id=%d", us->contest_id);
 
 cleanup:
