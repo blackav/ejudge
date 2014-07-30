@@ -1603,7 +1603,7 @@ super_html_commit_contest(
   fprintf(f, "<td>");
   html_start_form(f, 1, self_url, new_hidden_vars);
   fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\"/>",
-          SSERV_CMD_NEW_CHECK_TESTS_PAGE, "Check contest settings");
+          SSERV_CMD_CHECK_TESTS_PAGE, "Check contest settings");
   fprintf(f, "</form></td>\n");
   fprintf(f, "</tr></table>\n");
 
