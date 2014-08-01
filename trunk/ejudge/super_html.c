@@ -2124,56 +2124,6 @@ super_html_edit_form_fields(
   }
 
   switch (cmd) {
-  case SSERV_CMD_CNTS_EDIT_CONTESTANT_FIELDS:
-    first_index = 1;
-    last_index = CONTEST_LAST_MEMBER_FIELD;
-    field_names_func = contests_get_member_field_name;
-    allow_setting_minmax = 1;
-    memb = cnts->members[CONTEST_M_CONTESTANT];
-    if (memb) fields = memb->fields;
-    desc_txt = "Fields for \"Contestant\" participants";
-    commit_action = SSERV_CMD_CNTS_SAVE_CONTESTANT_FIELDS;
-    break;
-  case SSERV_CMD_CNTS_EDIT_RESERVE_FIELDS:
-    first_index = 1;
-    last_index = CONTEST_LAST_MEMBER_FIELD;
-    field_names_func = contests_get_member_field_name;
-    allow_setting_minmax = 1;
-    memb = cnts->members[CONTEST_M_RESERVE];
-    if (memb) fields = memb->fields;
-    desc_txt = "Fields for \"Reserve\" participants";
-    commit_action = SSERV_CMD_CNTS_SAVE_RESERVE_FIELDS;
-    break;
-  case SSERV_CMD_CNTS_EDIT_COACH_FIELDS:
-    first_index = 1;
-    last_index = CONTEST_LAST_MEMBER_FIELD;
-    field_names_func = contests_get_member_field_name;
-    allow_setting_minmax = 1;
-    memb = cnts->members[CONTEST_M_COACH];
-    if (memb) fields = memb->fields;
-    desc_txt = "Fields for \"Coach\" participants";
-    commit_action = SSERV_CMD_CNTS_SAVE_COACH_FIELDS;
-    break;
-  case SSERV_CMD_CNTS_EDIT_ADVISOR_FIELDS:
-    first_index = 1;
-    last_index = CONTEST_LAST_MEMBER_FIELD;
-    field_names_func = contests_get_member_field_name;
-    allow_setting_minmax = 1;
-    memb = cnts->members[CONTEST_M_ADVISOR];
-    if (memb) fields = memb->fields;
-    desc_txt = "Fields for \"Advisor\" participants";
-    commit_action = SSERV_CMD_CNTS_SAVE_ADVISOR_FIELDS;
-    break;
-  case SSERV_CMD_CNTS_EDIT_GUEST_FIELDS:
-    first_index = 1;
-    last_index = CONTEST_LAST_MEMBER_FIELD;
-    field_names_func = contests_get_member_field_name;
-    allow_setting_minmax = 1;
-    memb = cnts->members[CONTEST_M_GUEST];
-    if (memb) fields = memb->fields;
-    desc_txt = "Fields for \"Guest\" participants";
-    commit_action = SSERV_CMD_CNTS_SAVE_GUEST_FIELDS;
-    break;
   default:
     abort();
   }
