@@ -82,23 +82,6 @@ static const unsigned char * const form_row_attrs[]=
 </tr></table>
 </s:form>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 <%@include "footer.csp"
 %><%
   l10n_setlocale(0);

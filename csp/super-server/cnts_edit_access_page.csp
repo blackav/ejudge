@@ -31,7 +31,7 @@ static const unsigned char * const form_row_attrs[]=
     const unsigned char *acc_desc = 0;
     int default_is_allow = 0;
 
-    switch (cmd) {
+    switch (phr->action) {
     case SSERV_CMD_NEW_EDIT_REGISTER_ACCESS_PAGE:
         acc = cnts->register_access;
         acc_mode = "0";
@@ -86,10 +86,14 @@ static const unsigned char * const form_row_attrs[]=
         <tr<s:v value="form_row_attrs[row ^= 1]" escape="false"/>>
             <td><s:v value="i" /></td>
             <td><tt><s:v value="xml_unparse_ipv6_mask(&p->addr, &p->mask))" escape="false" /></tt></td>
-            <td><select name="access"><s:option selectedExpr="!p->allow">deny</s:option><s:option selectedExpr="p->allow">allow</s:option></select></td>
-            <td><%
-      html_ssl_select(out_f, p->ssl);
-%></td>
+            <td><select name="access"><s:option value="0" selectedExpr="!p->allow">deny</s:option><s:option value="1" selectedExpr="p->allow">allow</s:option></select></td>
+            <td>
+                <select name="ssl">
+                    <s:option value="-1" selectedExpr="p->ssl < 0">Any</s:option>
+                    <s:option value="0" selectedExpr="!p->ssl">No SSL</s:option>
+                    <s:option value="1" selectedExpr="p->ssl > 0">SSL</s:option>
+                </select>
+            </td>
             <td>
                 <s:submit ac="cnts-change-rule" label="Change" />
                 <s:submit ac="cnts-delete-rule" label="Delete" />
@@ -117,88 +121,73 @@ static const unsigned char * const form_row_attrs[]=
   }
 %>
 
-  html_start_form(f, 1, self_url, hidden_vars);
-  html_hidden_var(f, "acc_mode", acc_mode);
-  fprintf(f, "<tr%s><td>New address:</td><td>", form_row_attrs[row ^= 1]);
-  html_edit_text_form(f, 16, 16, "ip", "");
-  fprintf(f, "</td><td>");
-  html_boolean_select(f, 0, "access", "deny", "allow");
-  fprintf(f, "</td><td>");
-  html_ssl_select(f, -1);
-  fprintf(f, "</td><td>");
-  html_submit_button(f, SSERV_CMD_CNTS_ADD_RULE, "Add");
-  fprintf(f, "</td></tr></form>\n");
+    <s:form>
+    <s:hidden name="acc_mode" checkExpr=">= 0" />
+    <tr<s:v value="form_row_attrs[row ^= 1]" escape="false"/>>
+        <td>New address:</td>
+        <td><s:textfield name="ip" value="" size="16" /></td>
+        <td><select name="access"><s:option value="0" selectedExpr="1">deny</s:option><s:option value="1" selectedExpr="0">allow</s:option></select></td>
+        <td>
+            <select name="ssl">
+                <s:option value="-1" selectedExpr="1">Any</s:option>
+                <s:option value="0" selectedExpr="0">No SSL</s:option>
+                <s:option value="1" selectedExpr="0">SSL</s:option>
+            </select>
+        </td>
+        <td><s:submit ac="cnts-add-rule" label="Add" /></td>
+    </tr>
+    </s:form>
 
-  html_start_form(f, 1, self_url, hidden_vars);
-  html_hidden_var(f, "acc_mode", acc_mode);
-  fprintf(f, "<tr%s><td>Default access:</td><td>", form_row_attrs[row ^= 1]);
-  html_boolean_select(f, default_is_allow, "access", "deny", "allow");
-  fprintf(f, "</td><td>");
-  html_submit_button(f, SSERV_CMD_CNTS_DEFAULT_ACCESS, "Change");
-  fprintf(f, "</td></tr></form>\n");
-  fprintf(f, "</table>\n");
+    <s:form>
+    <s:hidden name="acc_mode" checkExpr=">= 0" />
+    <tr<s:v value="form_row_attrs[row ^= 1]" escape="false"/>>
+        <td>Default access:</td>
+        <td><select name="access"><s:option value="0" selectedExpr="!default_is_allow">deny</s:option><s:option value="1" selectedExpr="default_is_allow">allow</s:option></select></td>
+        <td><s:submit ac="cnts-default-access" label="Change" /></td>
+    </tr>
+    </s:form>
+</table>
 
-  contest_num = contests_get_list(&contests);
-  fprintf(f, "<p><table border=\"0\">\n");
-  html_start_form(f, 1, self_url, hidden_vars);
-  html_hidden_var(f, "acc_mode", acc_mode);
-  fprintf(f, "<tr><td>Copy access rules from:</td><td>");
-  fprintf(f, "<select name=\"templ_id\">\n");
-  fprintf(f, "<option value=\"0\">Current contest</option>\n");
-  for (j = 0; j < contest_num; j++) {
-    cnts_id = contests[j];
-    if (contests_get(cnts_id, &tmp_cnts) < 0) continue;
-    cnts_name = html_armor_string_dup(tmp_cnts->name);
-    fprintf(f, "<option value=\"%d\">%d - %s</option>", cnts_id, cnts_id, cnts_name);
-    xfree(cnts_name);
+<%
+    const int *contests = 0;
+    int contest_num = contests_get_list(&contests);
+%>
+<s:form>
+<s:hidden name="acc_mode" checkExpr=">= 0" />
+<table border="0"><tr>
+    <td>Copy access rules from:</td>
+    <td>
+        <select name="templ_id">
+            <option value="0">Current contest</option>
+<%
+  for (int j = 0; j < contest_num; j++) {
+    const struct contest_desc *tmp_cnts = 0;
+    if (contests_get(contests[j], &tmp_cnts) < 0) continue;
+%>
+            <s:option value="tmp_cnts->id"><s:v value="tmp_cnts->id" /> - <s:v value="tmp_cnts->name" /></s:option>
+<%
   }
-  fprintf(f,
-          "</td><td><select name=\"acc_from\">\n"
-          "<option value=\"0\">&lt;register_access&gt;</option>\n"
-          "<option value=\"1\">&lt;users_access&gt;</option>\n"
-          "<option value=\"2\">&lt;master_access&gt;</option>\n"
-          "<option value=\"3\">&lt;judge_access&gt;</option>\n"
-          "<option value=\"4\">&lt;team_access&gt;</option>\n"
-          "<option value=\"5\">&lt;serve_control_access&gt;</option>\n"
-          "</select></td><td>");
-  html_submit_button(f, SSERV_CMD_CNTS_COPY_ACCESS, "Copy");
-  fprintf(f, "</td></tr></form>");
-  fprintf(f, "</table>\n");
-  contests = 0;
+%>
+        </select>
+    <td>
+    <td>
+        <select name="acc_from">
+            <option value="0">&lt;register_access&gt;</option>
+            <option value="1">&lt;users_access&gt;</option>
+            <option value="2">&lt;master_access&gt;</option>
+            <option value="3">&lt;judge_access&gt;</option>
+            <option value="4">&lt;team_access&gt;</option>
+            <option value="5">&lt;serve_control_access&gt;</option>
+        </select>
+    </td>
+    <td><s:submit ac="cnts-copy-access" label="Copy" /></td>
+</tr></table>
+</s:form>
 
-  fprintf(f, "<table border=\"0\"><tr><td>%sTo the top</a></td>",
-          html_hyperref(hbuf,sizeof(hbuf),session_id,self_url,extra_args, 0));
-  fprintf(f, "<td>%sBack</a></td></tr></table>\n",
-          html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
-                        "action=%d", SSERV_CMD_EDIT_CURRENT_CONTEST));
-
-  return 0;
-}
-
-
-
-
-
-
-static void
-html_ssl_select(FILE *f, int value)
-{
-  fprintf(f, "<select name=\"ssl\"><option value=\"-1\"%s>Any</option><option value=\"0\"%s>No SSL</option><option value=\"1\"%s>SSL</option></select>",
-          value < 0 ? " selected=\"1\"" : "",
-          !value ? " selected=\"1\"" : "",
-          value > 0 ? " selected=\"1\"" : "");
-
-}
-
-
-
-
-
-
-
-
-
-
+<table border="0"><tr>
+    <td><s:a ac="main-page">To the top</s:a></td>
+    <td><s:a ac="edit-current-contest">Back</s:a></td>
+</tr></table>
 
 <%@include "footer.csp"
 %><%
