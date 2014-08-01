@@ -3957,7 +3957,7 @@ handle_yesno_open(
             "  unsigned char *s1 = \"\", *s2 = \"\";\n");
     if (value_attr) {
         fprintf(prg_f,
-                "if ((%s)) { s2 = \" selected=\\\"selected\\\"\"; } else { s2 = \" selected=\\\"selected\\\"\"; }\n",
+                "if ((%s)) { s2 = \" selected=\\\"selected\\\"\"; } else { s1 = \" selected=\\\"selected\\\"\"; }\n",
                 value_attr->value);
     }
 
