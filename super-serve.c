@@ -1514,11 +1514,6 @@ cmd_main_page(struct client_state *p, int len,
     // Current contest editing commands are allowed to anybody,
     // because the editing mode cannot be entered without privilege
   case SSERV_CMD_EDIT_CURRENT_CONTEST:
-  case SSERV_CMD_CNTS_EDIT_CONTESTANT_FIELDS:
-  case SSERV_CMD_CNTS_EDIT_RESERVE_FIELDS:
-  case SSERV_CMD_CNTS_EDIT_COACH_FIELDS:
-  case SSERV_CMD_CNTS_EDIT_ADVISOR_FIELDS:
-  case SSERV_CMD_CNTS_EDIT_GUEST_FIELDS:
   case SSERV_CMD_CNTS_EDIT_USERS_HEADER:
   case SSERV_CMD_CNTS_EDIT_USERS_FOOTER:
   case SSERV_CMD_CNTS_EDIT_REGISTER_HEADER:
@@ -1611,15 +1606,6 @@ cmd_main_page(struct client_state *p, int len,
                                        p->cookie, &p->ip, config, sstate,
                                        self_url_ptr, hidden_vars_ptr, extra_args_ptr);
     }
-    break;
-  case SSERV_CMD_CNTS_EDIT_CONTESTANT_FIELDS:
-  case SSERV_CMD_CNTS_EDIT_RESERVE_FIELDS:
-  case SSERV_CMD_CNTS_EDIT_COACH_FIELDS:
-  case SSERV_CMD_CNTS_EDIT_ADVISOR_FIELDS:
-  case SSERV_CMD_CNTS_EDIT_GUEST_FIELDS:
-    r = super_html_edit_form_fields(f, p->priv_level, p->user_id, p->login,
-                                    p->cookie, &p->ip, config, sstate, pkt->b.id,
-                                    self_url_ptr, hidden_vars_ptr, extra_args_ptr);
     break;
 
   case SSERV_CMD_CNTS_EDIT_USERS_HEADER:
@@ -3078,11 +3064,6 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_EDIT_SERVE_CFG_PROB] = { cmd_main_page },
   [SSERV_CMD_CNTS_SHOW_FORM_FIELDS] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_HIDE_FORM_FIELDS] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_EDIT_CONTESTANT_FIELDS] = { cmd_main_page },
-  [SSERV_CMD_CNTS_EDIT_RESERVE_FIELDS] = { cmd_main_page },
-  [SSERV_CMD_CNTS_EDIT_COACH_FIELDS] = { cmd_main_page },
-  [SSERV_CMD_CNTS_EDIT_ADVISOR_FIELDS] = { cmd_main_page },
-  [SSERV_CMD_CNTS_EDIT_GUEST_FIELDS] = { cmd_main_page },
   [SSERV_CMD_CNTS_EDIT_USERS_HEADER] = { cmd_main_page },
   [SSERV_CMD_CNTS_EDIT_USERS_FOOTER] = { cmd_main_page },
   [SSERV_CMD_CNTS_EDIT_REGISTER_HEADER] = { cmd_main_page },
