@@ -2124,15 +2124,6 @@ super_html_edit_form_fields(
   }
 
   switch (cmd) {
-  case SSERV_CMD_CNTS_EDIT_FORM_FIELDS:
-    first_index = 1;
-    last_index = CONTEST_LAST_FIELD;
-    field_names_func = contests_get_form_field_name;
-    allow_setting_minmax = 0;
-    fields = cnts->fields;
-    desc_txt = "Basic fields";
-    commit_action = SSERV_CMD_CNTS_SAVE_FORM_FIELDS;
-    break;
   case SSERV_CMD_CNTS_EDIT_CONTESTANT_FIELDS:
     first_index = 1;
     last_index = CONTEST_LAST_MEMBER_FIELD;
