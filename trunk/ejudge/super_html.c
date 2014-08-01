@@ -940,31 +940,31 @@ print_form_fields(FILE *f, struct contest_desc *cnts,
   memb = 0;
   if (cnts->members) memb = cnts->members[CONTEST_M_CONTESTANT];
   print_form_fields_2(f, memb, "\"Contestant\" member parameters",
-                      SSERV_CMD_CNTS_EDIT_CONTESTANT_FIELDS,
+                      SSERV_CMD_NEW_CNTS_EDIT_CONTESTANT_FIELDS_PAGE,
                       session_id, row_attrs[1],
                       self_url, hidden_vars, extra_args);
   memb = 0;
   if (cnts->members) memb = cnts->members[CONTEST_M_RESERVE];
   print_form_fields_2(f, memb, "\"Reserve\" member parameters",
-                      SSERV_CMD_CNTS_EDIT_RESERVE_FIELDS,
+                      SSERV_CMD_NEW_CNTS_EDIT_RESERVE_FIELDS_PAGE,
                       session_id, row_attrs[0],
                       self_url, hidden_vars, extra_args);
   memb = 0;
   if (cnts->members) memb = cnts->members[CONTEST_M_COACH];
   print_form_fields_2(f, memb, "\"Coach\" member parameters",
-                      SSERV_CMD_CNTS_EDIT_COACH_FIELDS,
+                      SSERV_CMD_NEW_CNTS_EDIT_COACH_FIELDS_PAGE,
                       session_id, row_attrs[1],
                       self_url, hidden_vars, extra_args);
   memb = 0;
   if (cnts->members) memb = cnts->members[CONTEST_M_ADVISOR];
   print_form_fields_2(f, memb, "\"Advisor\" member parameters",
-                      SSERV_CMD_CNTS_EDIT_ADVISOR_FIELDS,
+                      SSERV_CMD_NEW_CNTS_EDIT_ADVISOR_FIELDS_PAGE,
                       session_id, row_attrs[0],
                       self_url, hidden_vars, extra_args);
   memb = 0;
   if (cnts->members) memb = cnts->members[CONTEST_M_GUEST];
   print_form_fields_2(f, memb, "\"Guest\" member parameters",
-                      SSERV_CMD_CNTS_EDIT_GUEST_FIELDS,
+                      SSERV_CMD_NEW_CNTS_EDIT_GUEST_FIELDS_PAGE,
                       session_id, row_attrs[1],
                       self_url, hidden_vars, extra_args);
 }
