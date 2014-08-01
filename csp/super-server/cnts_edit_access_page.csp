@@ -32,32 +32,32 @@ static const unsigned char * const form_row_attrs[]=
     int default_is_allow = 0;
 
     switch (phr->action) {
-    case SSERV_CMD_NEW_EDIT_REGISTER_ACCESS_PAGE:
+    case SSERV_CMD_EDIT_REGISTER_ACCESS_PAGE:
         acc = cnts->register_access;
         acc_mode = "0";
         acc_desc = "Access rules for contest registration";
         break;
-    case SSERV_CMD_NEW_EDIT_USERS_ACCESS_PAGE:
+    case SSERV_CMD_EDIT_USERS_ACCESS_PAGE:
         acc = cnts->users_access;
         acc_mode = "1";
         acc_desc = "Access rules for registered users list";
         break;
-    case SSERV_CMD_NEW_EDIT_MASTER_ACCESS_PAGE:
+    case SSERV_CMD_EDIT_MASTER_ACCESS_PAGE:
         acc = cnts->master_access;
         acc_mode = "2";
         acc_desc = "Access rules for contest administration";
         break;
-    case SSERV_CMD_NEW_EDIT_JUDGE_ACCESS_PAGE:
+    case SSERV_CMD_EDIT_JUDGE_ACCESS_PAGE:
         acc = cnts->judge_access;
         acc_mode = "3";
         acc_desc = "Access rules for contest judges";
         break;
-    case SSERV_CMD_NEW_EDIT_TEAM_ACCESS_PAGE:
+    case SSERV_CMD_EDIT_TEAM_ACCESS_PAGE:
         acc = cnts->team_access;
         acc_mode = "4";
         acc_desc = "Access rules for contest participation";
         break;
-    case SSERV_CMD_NEW_EDIT_SERVE_CONTROL_ACCESS_PAGE:
+    case SSERV_CMD_EDIT_SERVE_CONTROL_ACCESS_PAGE:
         acc = cnts->serve_control_access;
         acc_mode = "5";
         acc_desc = "Access rules for contest setup";
@@ -85,8 +85,8 @@ static const unsigned char * const form_row_attrs[]=
         <s:hidden name="rule_num" value="i" checkExpr=">=0" />
         <tr<s:v value="form_row_attrs[row ^= 1]" escape="false"/>>
             <td><s:v value="i" /></td>
-            <td><tt><s:v value="xml_unparse_ipv6_mask(&p->addr, &p->mask))" escape="false" /></tt></td>
-            <td><select name="access"><s:option value="0" selectedExpr="!p->allow">deny</s:option><s:option value="1" selectedExpr="p->allow">allow</s:option></select></td>
+            <td><tt><s:v value="xml_unparse_ipv6_mask(&p->addr, &p->mask)" escape="false" /></tt></td>
+            <td><s:yesno name="access" value="p->allow" noLabel="Deny" yesLabel="Allow" /></td>
             <td>
                 <select name="ssl">
                     <s:option value="-1" selectedExpr="p->ssl < 0">Any</s:option>
@@ -126,7 +126,7 @@ static const unsigned char * const form_row_attrs[]=
     <tr<s:v value="form_row_attrs[row ^= 1]" escape="false"/>>
         <td>New address:</td>
         <td><s:textfield name="ip" value="" size="16" /></td>
-        <td><select name="access"><s:option value="0" selectedExpr="1">deny</s:option><s:option value="1" selectedExpr="0">allow</s:option></select></td>
+        <td><s:yesno name="access" value="0" noLabel="Deny" yesLabel="Allow" /></td>
         <td>
             <select name="ssl">
                 <s:option value="-1" selectedExpr="1">Any</s:option>
@@ -142,7 +142,7 @@ static const unsigned char * const form_row_attrs[]=
     <s:hidden name="acc_mode" checkExpr=">= 0" />
     <tr<s:v value="form_row_attrs[row ^= 1]" escape="false"/>>
         <td>Default access:</td>
-        <td><select name="access"><s:option value="0" selectedExpr="!default_is_allow">deny</s:option><s:option value="1" selectedExpr="default_is_allow">allow</s:option></select></td>
+        <td><s:yesno name="access" value="default_is_allow" noLabel="Deny" yesLabel="Allow" /></td>
         <td><s:submit ac="cnts-default-access" label="Change" /></td>
     </tr>
     </s:form>
