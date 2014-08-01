@@ -1514,7 +1514,6 @@ cmd_main_page(struct client_state *p, int len,
     // Current contest editing commands are allowed to anybody,
     // because the editing mode cannot be entered without privilege
   case SSERV_CMD_EDIT_CURRENT_CONTEST:
-  case SSERV_CMD_CNTS_EDIT_FORM_FIELDS:
   case SSERV_CMD_CNTS_EDIT_CONTESTANT_FIELDS:
   case SSERV_CMD_CNTS_EDIT_RESERVE_FIELDS:
   case SSERV_CMD_CNTS_EDIT_COACH_FIELDS:
@@ -1613,7 +1612,6 @@ cmd_main_page(struct client_state *p, int len,
                                        self_url_ptr, hidden_vars_ptr, extra_args_ptr);
     }
     break;
-  case SSERV_CMD_CNTS_EDIT_FORM_FIELDS:
   case SSERV_CMD_CNTS_EDIT_CONTESTANT_FIELDS:
   case SSERV_CMD_CNTS_EDIT_RESERVE_FIELDS:
   case SSERV_CMD_CNTS_EDIT_COACH_FIELDS:
@@ -3080,7 +3078,6 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_EDIT_SERVE_CFG_PROB] = { cmd_main_page },
   [SSERV_CMD_CNTS_SHOW_FORM_FIELDS] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_HIDE_FORM_FIELDS] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_EDIT_FORM_FIELDS] = { cmd_main_page },
   [SSERV_CMD_CNTS_EDIT_CONTESTANT_FIELDS] = { cmd_main_page },
   [SSERV_CMD_CNTS_EDIT_RESERVE_FIELDS] = { cmd_main_page },
   [SSERV_CMD_CNTS_EDIT_COACH_FIELDS] = { cmd_main_page },
