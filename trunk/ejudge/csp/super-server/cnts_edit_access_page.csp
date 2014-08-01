@@ -32,32 +32,32 @@ static const unsigned char * const form_row_attrs[]=
     int default_is_allow = 0;
 
     switch (phr->action) {
-    case SSERV_CMD_EDIT_REGISTER_ACCESS_PAGE:
+    case SSERV_CMD_CNTS_EDIT_REGISTER_ACCESS_PAGE:
         acc = cnts->register_access;
         acc_mode = "0";
         acc_desc = "Access rules for contest registration";
         break;
-    case SSERV_CMD_EDIT_USERS_ACCESS_PAGE:
+    case SSERV_CMD_CNTS_EDIT_USERS_ACCESS_PAGE:
         acc = cnts->users_access;
         acc_mode = "1";
         acc_desc = "Access rules for registered users list";
         break;
-    case SSERV_CMD_EDIT_MASTER_ACCESS_PAGE:
+    case SSERV_CMD_CNTS_EDIT_MASTER_ACCESS_PAGE:
         acc = cnts->master_access;
         acc_mode = "2";
         acc_desc = "Access rules for contest administration";
         break;
-    case SSERV_CMD_EDIT_JUDGE_ACCESS_PAGE:
+    case SSERV_CMD_CNTS_EDIT_JUDGE_ACCESS_PAGE:
         acc = cnts->judge_access;
         acc_mode = "3";
         acc_desc = "Access rules for contest judges";
         break;
-    case SSERV_CMD_EDIT_TEAM_ACCESS_PAGE:
+    case SSERV_CMD_CNTS_EDIT_TEAM_ACCESS_PAGE:
         acc = cnts->team_access;
         acc_mode = "4";
         acc_desc = "Access rules for contest participation";
         break;
-    case SSERV_CMD_EDIT_SERVE_CONTROL_ACCESS_PAGE:
+    case SSERV_CMD_CNTS_EDIT_SERVE_CONTROL_ACCESS_PAGE:
         acc = cnts->serve_control_access;
         acc_mode = "5";
         acc_desc = "Access rules for contest setup";
