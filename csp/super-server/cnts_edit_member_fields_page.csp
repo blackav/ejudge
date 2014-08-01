@@ -32,27 +32,27 @@ static const unsigned char * const form_row_attrs[]=
     int val;
 
     switch (phr->action) {
-    case SSERV_CMD_NEW_CNTS_EDIT_CONTESTANT_FIELDS_PAGE:
+    case SSERV_CMD_CNTS_EDIT_CONTESTANT_FIELDS_PAGE:
         memb = phr->ss->edited_cnts->members[CONTEST_M_CONTESTANT];
         desc_txt = "Fields for \"Contestant\" participants";
         commit_action = SSERV_CMD_CNTS_SAVE_CONTESTANT_FIELDS;
         break;
-    case SSERV_CMD_NEW_CNTS_EDIT_RESERVE_FIELDS_PAGE:
+    case SSERV_CMD_CNTS_EDIT_RESERVE_FIELDS_PAGE:
         memb = phr->ss->edited_cnts->members[CONTEST_M_RESERVE];
         desc_txt = "Fields for \"Reserve\" participants";
         commit_action = SSERV_CMD_CNTS_SAVE_RESERVE_FIELDS;
         break;
-    case SSERV_CMD_NEW_CNTS_EDIT_COACH_FIELDS_PAGE:
+    case SSERV_CMD_CNTS_EDIT_COACH_FIELDS_PAGE:
         memb = phr->ss->edited_cnts->members[CONTEST_M_COACH];
         desc_txt = "Fields for \"Coach\" participants";
         commit_action = SSERV_CMD_CNTS_SAVE_COACH_FIELDS;
         break;
-    case SSERV_CMD_NEW_CNTS_EDIT_ADVISOR_FIELDS_PAGE:
+    case SSERV_CMD_CNTS_EDIT_ADVISOR_FIELDS_PAGE:
         memb = phr->ss->edited_cnts->members[CONTEST_M_ADVISOR];
         desc_txt = "Fields for \"Advisor\" participants";
         commit_action = SSERV_CMD_CNTS_SAVE_ADVISOR_FIELDS;
         break;
-    case SSERV_CMD_NEW_CNTS_EDIT_GUEST_FIELDS_PAGE:
+    case SSERV_CMD_CNTS_EDIT_GUEST_FIELDS_PAGE:
         memb = phr->ss->edited_cnts->members[CONTEST_M_GUEST];
         desc_txt = "Fields for \"Guest\" participants";
         commit_action = SSERV_CMD_CNTS_SAVE_GUEST_FIELDS;
