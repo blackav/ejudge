@@ -1,0 +1,72 @@
+<%
+/* $Id$ */
+%><%@include "includes.csp"
+%><%
+%><%@set getter_name = "csp_get_cnts_edit_user_fields_page"
+%><%@set ac_prefix = "SSERV_CMD_"
+%><%@set err_prefix = "SSERV_ERR_"
+%><%@page csp_view_cnts_edit_user_fields_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "stdvars.csp"
+%><%
+    unsigned char subtitle_buf[1024];
+    const unsigned char *title = 0;
+    const unsigned char *subtitle = subtitle_buf;
+    opcap_t caps = 0;
+    int row = 1;
+
+static const unsigned char * const form_row_attrs[]=
+{
+  " bgcolor=\"#d0d0d0\"",
+  " bgcolor=\"#e0e0e0\"",
+};
+
+    if (phr->priv_level != PRIV_LEVEL_ADMIN) FAIL(SSERV_ERR_PERMISSION_DENIED);
+    if (ejudge_cfg_opcaps_find(phr->config, phr->login, &caps) < 0) FAIL(SSERV_ERR_PERMISSION_DENIED);
+    if (opcaps_check(caps, OPCAP_EDIT_CONTEST) < 0) FAIL(SSERV_ERR_PERMISSION_DENIED);
+    if (!phr->ss->edited_cnts) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
+
+    snprintf(subtitle_buf, sizeof(subtitle_buf), "General fields, contest %d", phr->ss->edited_cnts->id);
+%><%@include "header.csp"
+%>
+
+<h2><s:tr>General registration form fields</s:tr></h2>
+
+<s:form>
+<table border="0">
+<%
+  int i;
+  for (i = 1; i < CONTEST_LAST_FIELD; ++i) {
+%>
+<%
+    int val = 0;
+    if (phr->ss->edited_cnts->fields && phr->ss->edited_cnts->fields[i]) {
+      val = 1;
+      if (phr->ss->edited_cnts->fields[i]->mandatory) val = 2;
+    }
+%>
+    <tr<s:v value="form_row_attrs[row ^= 1]" escape="false"/>>
+        <td><s:v value="contests_get_form_field_name(i)" escape="false" /></td>
+        <td><select name='field_<s:v value="i" />'>
+            <s:option value="0" selectedExpr="val == 0"><s:tr>Disabled</s:tr></s:option>
+            <s:option value="1" selectedExpr="val == 1"><s:tr>Optional</s:tr></s:option>
+            <s:option value="2" selectedExpr="val == 2"><s:tr>Mandatory</s:tr></s:option>
+        </select></td>
+    </tr>
+<%
+  }
+%>
+</table>
+
+<table border="0"><tr>
+    <td><s:a ac="main-page"><s:tr>To the top</s:tr></s:a></td>
+    <td><s:a ac="edit-current-contest"><s:tr>Back</s:tr></s:a></td>
+    <td><s:submit ac="cnts-save-form-fields" label="Save" /></td>
+</tr></table>
+</s:form>
+
+<%@include "footer.csp"
+%><%
+  l10n_setlocale(0);
+cleanup:
+  html_armor_free(&ab);
+%>

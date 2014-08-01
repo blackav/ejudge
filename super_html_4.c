@@ -6671,6 +6671,7 @@ static const unsigned char * const external_action_names[SSERV_CMD_LAST] =
   [SSERV_CMD_CHECK_TESTS_PAGE] = "check_tests_page",
   [SSERV_CMD_CNTS_EDIT_PERMISSIONS_PAGE] = "cnts_edit_permissions_page",
   [SSERV_CMD_EDIT_REGISTER_ACCESS_PAGE] = "cnts_edit_access_page",
+  [SSERV_CMD_NEW_EDIT_USER_FIELDS_PAGE] = "cnts_edit_user_fields_page",
 };
 
 static const unsigned char * const external_error_names[S_ERR_LAST] = 
