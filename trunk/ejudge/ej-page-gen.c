@@ -3961,16 +3961,27 @@ handle_yesno_open(
                 value_attr->value);
     }
 
+    const unsigned char *no_label = "No";
+    HtmlAttribute *no_attr = html_element_find_attribute(elem, "nolabel");
+    if (no_attr) {
+        no_label = no_attr->value;
+    }
+    const unsigned char *yes_label = "Yes";
+    HtmlAttribute *yes_attr = html_element_find_attribute(elem, "yeslabel");
+    if (yes_attr) {
+        yes_label = yes_attr->value;
+    }
+
     fprintf(prg_f,
             "fputs(\"<select name=\\\"%s\\\"><option value=\\\"0\\\"\", out_f);\n"
             "fputs(s1, out_f);\n"
             "fputs(\">\", out_f);\n"
-            "fputs(_(\"No\"), out_f);\n"
+            "fputs(_(\"%s\"), out_f);\n"
             "fputs(\"</option><option value=\\\"1\\\"\", out_f);\n"
             "fputs(s2, out_f);\n"
             "fputs(\">\", out_f);\n"
-            "fputs(_(\"Yes\"), out_f);\n"
-            "fputs(\"</option></select>\", out_f);\n", name_attr->value);
+            "fputs(_(\"%s\"), out_f);\n"
+            "fputs(\"</option></select>\", out_f);\n", name_attr->value, no_label, yes_label);
     fprintf(prg_f,
             "}\n");
     return 0;
