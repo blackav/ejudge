@@ -1514,12 +1514,6 @@ cmd_main_page(struct client_state *p, int len,
     // Current contest editing commands are allowed to anybody,
     // because the editing mode cannot be entered without privilege
   case SSERV_CMD_EDIT_CURRENT_CONTEST:
-  case SSERV_CMD_EDIT_REGISTER_ACCESS:
-  case SSERV_CMD_EDIT_USERS_ACCESS:
-  case SSERV_CMD_EDIT_MASTER_ACCESS:
-  case SSERV_CMD_EDIT_JUDGE_ACCESS:
-  case SSERV_CMD_EDIT_TEAM_ACCESS:
-  case SSERV_CMD_EDIT_SERVE_CONTROL_ACCESS:
   case SSERV_CMD_CNTS_EDIT_FORM_FIELDS:
   case SSERV_CMD_CNTS_EDIT_CONTESTANT_FIELDS:
   case SSERV_CMD_CNTS_EDIT_RESERVE_FIELDS:
@@ -1575,16 +1569,6 @@ cmd_main_page(struct client_state *p, int len,
   case SSERV_CMD_EDIT_CURRENT_CONTEST:
     r = super_html_edit_contest_page(f, p->priv_level, p->user_id, p->login,
                                      p->cookie, &p->ip, config, sstate,
-                                     self_url_ptr, hidden_vars_ptr, extra_args_ptr);
-    break;
-  case SSERV_CMD_EDIT_REGISTER_ACCESS:
-  case SSERV_CMD_EDIT_USERS_ACCESS:
-  case SSERV_CMD_EDIT_MASTER_ACCESS:
-  case SSERV_CMD_EDIT_JUDGE_ACCESS:
-  case SSERV_CMD_EDIT_TEAM_ACCESS:
-  case SSERV_CMD_EDIT_SERVE_CONTROL_ACCESS:
-    r = super_html_edit_access_rules(f, p->priv_level, p->user_id, p->login,
-                                     p->cookie, &p->ip, config, sstate, pkt->b.id,
                                      self_url_ptr, hidden_vars_ptr, extra_args_ptr);
     break;
   case SSERV_CMD_EDIT_CONTEST_XML:
@@ -3090,12 +3074,6 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_HIDE_NOTIFICATIONS] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_SHOW_ACCESS_RULES] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_HIDE_ACCESS_RULES] = { cmd_simple_top_command },
-  [SSERV_CMD_EDIT_REGISTER_ACCESS] = { cmd_main_page },
-  [SSERV_CMD_EDIT_USERS_ACCESS] = { cmd_main_page },
-  [SSERV_CMD_EDIT_MASTER_ACCESS] = { cmd_main_page },
-  [SSERV_CMD_EDIT_JUDGE_ACCESS] = { cmd_main_page },
-  [SSERV_CMD_EDIT_TEAM_ACCESS] = { cmd_main_page },
-  [SSERV_CMD_EDIT_SERVE_CONTROL_ACCESS] = { cmd_main_page },
   [SSERV_CMD_CNTS_SHOW_PERMISSIONS] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_HIDE_PERMISSIONS] = { cmd_simple_top_command },
   [SSERV_CMD_EDIT_CONTEST_XML] = { cmd_main_page },
