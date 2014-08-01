@@ -1047,4 +1047,5 @@ const unsigned char super_proto_is_http_request[] =
   [SSERV_CMD_EDIT_JUDGE_ACCESS_PAGE] = 1,
   [SSERV_CMD_EDIT_TEAM_ACCESS_PAGE] = 1,
   [SSERV_CMD_EDIT_SERVE_CONTROL_ACCESS_PAGE] = 1,
+  [SSERV_CMD_NEW_EDIT_USER_FIELDS_PAGE] = 1,
 };

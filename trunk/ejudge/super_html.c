@@ -934,7 +934,7 @@ print_form_fields(FILE *f, struct contest_desc *cnts,
   struct contest_member *memb;
 
   print_form_fields_3(f, cnts->fields, "Primary registration fields",
-                      SSERV_CMD_CNTS_EDIT_FORM_FIELDS,
+                      SSERV_CMD_NEW_EDIT_USER_FIELDS_PAGE,
                       session_id, row_attrs[0],
                       self_url, hidden_vars, extra_args);
   memb = 0;
