@@ -1469,28 +1469,28 @@ super_html_edit_contest_page(
 
   if (sstate->show_access_rules) {
     print_access_summary(f, cnts->register_access, "Access to `register' program",
-                         SSERV_CMD_EDIT_REGISTER_ACCESS,
+                         SSERV_CMD_NEW_EDIT_REGISTER_ACCESS_PAGE,
                          session_id, form_row_attrs[row ^= 1],
                          self_url, extra_args);
     print_access_summary(f, cnts->users_access, "Access to `users' program",
-                         SSERV_CMD_EDIT_USERS_ACCESS,
+                         SSERV_CMD_NEW_EDIT_USERS_ACCESS_PAGE,
                          session_id, form_row_attrs[row ^= 1],
                          self_url, extra_args);
     print_access_summary(f, cnts->master_access, "Access to `master' program",
-                         SSERV_CMD_EDIT_MASTER_ACCESS,
+                         SSERV_CMD_NEW_EDIT_MASTER_ACCESS_PAGE,
                          session_id, form_row_attrs[row ^= 1],
                          self_url, extra_args);
     print_access_summary(f, cnts->judge_access, "Access to `judge' program",
-                         SSERV_CMD_EDIT_JUDGE_ACCESS,
+                         SSERV_CMD_NEW_EDIT_JUDGE_ACCESS_PAGE,
                          session_id, form_row_attrs[row ^= 1],
                          self_url, extra_args);
     print_access_summary(f, cnts->team_access, "Access to `team' program",
-                         SSERV_CMD_EDIT_TEAM_ACCESS,
+                         SSERV_CMD_NEW_EDIT_TEAM_ACCESS_PAGE,
                          session_id, form_row_attrs[row ^= 1],
                          self_url, extra_args);
     print_access_summary(f, cnts->serve_control_access,
                          "Access to `serve-control' program",
-                         SSERV_CMD_EDIT_SERVE_CONTROL_ACCESS,
+                         SSERV_CMD_NEW_EDIT_SERVE_CONTROL_ACCESS_PAGE,
                          session_id, form_row_attrs[row ^= 1],
                          self_url, extra_args);
   }
