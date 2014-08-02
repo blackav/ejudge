@@ -3988,6 +3988,85 @@ handle_yesno_open(
 }
 
 static int
+html_attr_parse_int(const HtmlAttribute *attr, int *p_value)
+{
+    if (!attr) return 0;
+    char *endp = attr->value;
+    while (isspace(*endp)) ++endp;
+    if (!*endp) return 0;
+
+    endp = 0;
+    errno = 0;
+    int res = strtol(attr->value, &endp, 10);
+    if (errno || *endp) return -1;
+    *p_value = res;
+    return 1;
+}
+
+static int
+handle_numselect_open(
+        FILE *log_f,
+        TypeContext *cntx,
+        ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f)
+{
+    HtmlElement *elem = ps->el_stack->el;
+
+    HtmlAttribute *name_attr = html_element_find_attribute(elem, "name");
+    if (!name_attr) {
+        parser_error_2(ps, "<s:numselect> element requires 'name' attribute");
+        return -1;
+    }
+    HtmlAttribute *value_attr = html_element_find_attribute(elem, "value");
+
+    int low_value = 0;
+    HtmlAttribute *low_attr = html_element_find_attribute(elem, "lowvalue");
+    if (html_attr_parse_int(low_attr, &low_value) < 0) {
+        parser_error_2(ps, "<s:numselect> 'lowValue' attribute is invalid");
+        return -1;
+    }
+
+    int high_value = 0;
+    HtmlAttribute *high_attr = html_element_find_attribute(elem, "highvalue");
+    if (!high_attr) {
+        parser_error_2(ps, "<s:numselect> element requires 'highValue' attribute");
+        return -1;
+    }
+    if (html_attr_parse_int(high_attr, &high_value) <= 0) {
+        parser_error_2(ps, "<s:numselect> 'highValue' attribute is invalid");
+        return -1;
+    }
+    if (low_value == high_value) {
+        parser_error_2(ps, "<s:numselect> empty range");
+        return -1;
+    }
+
+    fprintf(prg_f,
+            "fputs(\"<select name=\\\"%s\\\">\\n\", out_f);\n", name_attr->value);
+    if (low_value < high_value) {
+        fprintf(prg_f, "for (int numsel_i = %d; numsel_i < %d; ++numsel_i) {\n", low_value, high_value);
+    } else {
+        fprintf(prg_f, "for (int numsel_i = %d; numsel_i > %d; --numsel_i) {\n", high_value, low_value);
+    }
+
+    fprintf(prg_f,
+            "  fprintf(out_f, \"<option value=\\\"%%d\\\"\", numsel_i);\n");
+    if (value_attr) {
+        fprintf(prg_f,
+                "  if (%s == numsel_i) { fputs(\" selected=\\\"selected\\\"\", out_f); }\n",
+                value_attr->value);
+    }
+    fprintf(prg_f,
+            "  fprintf(out_f, \">%%d</option>\\n\", numsel_i);\n");
+    fprintf(prg_f, "}\n");
+    fprintf(prg_f,
+            "fputs(\"</select>\\n\", out_f);\n");
+
+    return 0;
+}
+
+static int
 handle_button_open(
         FILE *log_f,
         TypeContext *cntx,
@@ -4179,6 +4258,7 @@ static const struct ElementInfo element_handlers[] =
     { "s:radio", handle_textfield_open, NULL },
     { "s:ac", handle_ac_open, NULL },
     { "s:read", handle_read_open, NULL },
+    { "s:numselect", handle_numselect_open, NULL },
 
     { NULL, NULL, NULL },
 };

@@ -76,7 +76,7 @@ static const unsigned char * const form_row_attrs[]=
 %>
     <tr<s:v value="form_row_attrs[row ^= 1]" escape="false"/>>
         <td>Minimal number:</td>
-        <td><s:textfield checkExpr=">= 0" name="min_count" value="val" size="5" /></td>
+        <td><s:numselect name="min_count" value="val" highValue="6" /></td>
     </tr>
 <%
     val = 0;
@@ -84,7 +84,7 @@ static const unsigned char * const form_row_attrs[]=
 %>
     <tr<s:v value="form_row_attrs[row ^= 1]" escape="false"/>>
         <td>Maximal number:</td>
-        <td><s:textfield checkExpr=">= 0" name="max_count" value="val" size="5" /></td>
+        <td><s:numselect name="max_count" value="val" highValue="6" /></td>
     </tr>
 <%
     val = 0;
@@ -92,7 +92,7 @@ static const unsigned char * const form_row_attrs[]=
 %>
     <tr<s:v value="form_row_attrs[row ^= 1]" escape="false"/>>
         <td>Initial number:</td>
-        <td><s:textfield checkExpr=">= 0" name="init_count" value="val" size="5" /></td>
+        <td><s:numselect name="init_count" value="val" highValue="6" /></td>
     </tr>
 
 <%
