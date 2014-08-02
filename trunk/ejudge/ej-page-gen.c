@@ -3157,6 +3157,12 @@ handle_html_text(FILE *out_f, FILE *txt_f, FILE *log_f, const unsigned char *mem
 }
 
 static int
+handle_html_string(FILE *out_f, FILE *txt_f, FILE *log_f, const unsigned char *str)
+{
+    return handle_html_text(out_f, txt_f, log_f, str, 0, strlen(str));
+}
+
+static int
 process_ac_attr(
         FILE *log_f,
         TypeContext *cntx,
@@ -3353,11 +3359,11 @@ handle_htr_open(
 
     HtmlAttribute *attr_attr = html_element_find_attribute(elem, "attr");
     if (attr_attr) {
-        fprintf(prg_f, "fputs(\"<tr \", out_f);\n");
+        handle_html_string(prg_f, txt_f, log_f, "<tr ");
         fprintf(prg_f, "fputs(%s, out_f);\n", attr_attr->value);
-        fprintf(prg_f, "fputs(\">\", out_f);\n");        
+        handle_html_string(prg_f, txt_f, log_f, ">\n");
     } else {
-        fprintf(prg_f, "fputs(\"<tr>\", out_f);\n");
+        handle_html_string(prg_f, txt_f, log_f, "<tr>\n");
     }
 
     return 0;
@@ -3375,7 +3381,7 @@ handle_htr_close(
         int end_i)
 {
     handle_html_text(prg_f, txt_f, log_f, mem, beg_i, end_i);
-    fprintf(prg_f, "fputs(\"</tr>\", out_f);\n");
+    handle_html_string(prg_f, txt_f, log_f, "</tr>\n");
     return 0;
 }
 
