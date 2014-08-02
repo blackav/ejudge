@@ -3342,6 +3342,44 @@ handle_a_close(
 }
 
 static int
+handle_htr_open(
+        FILE *log_f,
+        TypeContext *cntx,
+        ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f)
+{
+    HtmlElement *elem = ps->el_stack->el;
+
+    HtmlAttribute *attr_attr = html_element_find_attribute(elem, "attr");
+    if (attr_attr) {
+        fprintf(prg_f, "fputs(\"<tr \", out_f);\n");
+        fprintf(prg_f, "fputs(%s, out_f);\n", attr_attr->value);
+        fprintf(prg_f, "fputs(\">\", out_f);\n");        
+    } else {
+        fprintf(prg_f, "fputs(\"<tr>\", out_f);\n");
+    }
+
+    return 0;
+}
+
+static int
+handle_htr_close(
+        FILE *log_f,
+        TypeContext *cntx,
+        ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f,
+        unsigned char *mem,
+        int beg_i,
+        int end_i)
+{
+    handle_html_text(prg_f, txt_f, log_f, mem, beg_i, end_i);
+    fprintf(prg_f, "fputs(\"</tr>\", out_f);\n");
+    return 0;
+}
+
+static int
 handle_form_open(
         FILE *log_f,
         TypeContext *cntx,
@@ -4259,6 +4297,7 @@ static const struct ElementInfo element_handlers[] =
     { "s:ac", handle_ac_open, NULL },
     { "s:read", handle_read_open, NULL },
     { "s:numselect", handle_numselect_open, NULL },
+    { "s:htr", handle_htr_open, handle_htr_close },
 
     { NULL, NULL, NULL },
 };
