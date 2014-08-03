@@ -25,11 +25,11 @@
 <p><pre><font><s:v checkexpr="" value="pp->log_txt" /></font></pre></p>
 
 <table border="0"><tr>
-    <td><s:a ac="main-page"><s:tr>To the top</s:tr></s:a></td>
+    <td><s:a ac="main-page"><s:_>To the top</s:_></s:a></td>
     <s:url name="ContestPageUrl" ac="contest-page">
         <s:param name="contest_id" value="phr->contest_id" />
     </s:url>
-    <td><s:a url="ContestPageUrl"><s:tr>Back</s:tr></s:a></td>
+    <td><s:a url="ContestPageUrl"><s:_>Back</s:_></s:a></td>
 </tr></table>
 
 <% } else { %>
@@ -38,11 +38,11 @@
 <p><pre><font color="red"><s:v checkexpr="" value="pp->log_txt" /></font></pre></p>
 
 <table border="0"><tr>
-    <td><s:a ac="main-page"><s:tr>To the top</s:tr></s:a></td>
+    <td><s:a ac="main-page"><s:_>To the top</s:_></s:a></td>
     <s:url name="ContestPageUrl" ac="contest-page">
         <s:param name="contest_id" value="phr->contest_id" />
     </s:url>
-    <td><s:a url="ContestPageUrl"><s:tr>Back</s:tr></s:a></td>
+    <td><s:a url="ContestPageUrl"><s:_>Back</s:_></s:a></td>
     <td><s:form><s:hidden name="contest_id" value="phr->contest_id" /><s:submit ac="check-tests-page" label="Check again" /></s:form></td>
 </tr></table>
 

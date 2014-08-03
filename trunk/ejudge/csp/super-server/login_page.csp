@@ -18,11 +18,11 @@
 <s:form>
     <table>
         <tr>
-            <td><s:tr>Login</s:tr></td>
+            <td><s:_>Login</s:_></td>
             <td><s:textfield name="login" size="16" value="" /></td>
         </tr>
         <tr>
-            <td><s:tr>Password</s:tr></td>
+            <td><s:_>Password</s:_></td>
             <td><s:password name="password" size="16" value="" /></td>
         </tr>
         <tr>
