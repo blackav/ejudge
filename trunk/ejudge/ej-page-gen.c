@@ -3253,14 +3253,20 @@ handle_a_open(
             parser_error_2(ps, "ac attribute is undefined");
             return -1;
         }
-        fprintf(prg_f, "fputs(\"<a");
+        char *str_p = 0;
+        size_t str_z = 0;
+        FILE *str_f = open_memstream(&str_p, &str_z);
+        fprintf(str_f, "<a");
         if (class_attr) {
-            fprintf(prg_f, " class=\\\"%s\\\"", class_attr->value);
+            fprintf(str_f, " class=\"%s\"", class_attr->value);
         }
         if (target_attr) {
-            fprintf(prg_f, " target=\\\"%s\\\"", target_attr->value);
+            fprintf(str_f, " target=\"%s\"", target_attr->value);
         }
-        fprintf(prg_f, " href=\\\"\", out_f);\n");
+        fprintf(str_f, " href=\"");
+        fclose(str_f); str_f = 0; 
+        handle_html_string(prg_f, txt_f, log_f, str_p);
+        free(str_p); str_p = 0; str_z = 0;
         if (script_attr) {
             fprintf(prg_f, "hr_%s_url(out_f, phr);\n", script_attr->value);
             if (nosid_flag) {
@@ -3279,7 +3285,13 @@ handle_a_open(
             fprintf(prg_f, "fputs(sep, out_f); sep = \"&amp;\";\n");
             attr = html_element_find_attribute(child, "name");
             if (attr) {
-                fprintf(prg_f, "fputs(\"%s=\", out_f);\n", attr->value);
+                str_p = 0;
+                str_z = 0;
+                str_f = open_memstream(&str_p, &str_z);
+                fprintf(str_f, "%s=", attr->value);
+                fclose(str_f); str_f = 0;
+                handle_html_string(prg_f, txt_f, log_f, str_p);
+                free(str_p); str_p = 0; str_z = 0;
                 attr = html_element_find_attribute(child, "value");
                 if (attr) {
                     TypeInfo *t = NULL;
@@ -3300,21 +3312,28 @@ handle_a_open(
             }
         }
         fprintf(prg_f, "(void) sep;\n");
-        fprintf(prg_f, "fputs(\"\\\">\", out_f);\n");
+        handle_html_string(prg_f, txt_f, log_f, "\">");
+
         return 0;
     }
 
     r = process_ac_attr(log_f, cntx, ps, elem, buf, sizeof(buf));
     if (r < 0) return r;
     if (r > 0) {
-        fprintf(prg_f, "fputs(\"<a");
+        char *str_p = 0;
+        size_t str_z = 0;
+        FILE *str_f = open_memstream(&str_p, &str_z);
+        fprintf(str_f, "<a");
         if (class_attr) {
-            fprintf(prg_f, " class=\\\"%s\\\"", class_attr->value);
+            fprintf(str_f, " class=\"%s\"", class_attr->value);
         }
         if (target_attr) {
-            fprintf(prg_f, " target=\\\"%s\\\"", target_attr->value);
+            fprintf(str_f, " target=\"%s\"", target_attr->value);
         }
-        fprintf(prg_f, " href=\\\"\", out_f);\n");
+        fprintf(str_f, " href=\"");
+        fclose(str_f); str_f = 0;
+        handle_html_string(prg_f, txt_f, log_f, str_p);
+        free(str_p); str_p = 0; str_z = 0;
         if (script_attr) {
             fprintf(prg_f, "hr_%s_url(out_f, phr);\n", script_attr->value);
             if (nosid_flag) {
@@ -3325,7 +3344,7 @@ handle_a_open(
         } else {
             fprintf(prg_f, "sep = hr_url_2(out_f, phr, %s);\n", buf);
         }
-        fprintf(prg_f, "fputs(\"\\\">\", out_f);\n");
+        handle_html_string(prg_f, txt_f, log_f, "\">");
         //fprintf(prg_f, "fputs(ns_aref(hbuf, sizeof(hbuf), phr, %s, 0), out_f);\n", buf);
     }
     return 0;
@@ -3343,7 +3362,7 @@ handle_a_close(
         int end_i)
 {
     handle_html_text(prg_f, txt_f, log_f, mem, beg_i, end_i);
-    fprintf(prg_f, "fputs(\"</a>\", out_f);\n");
+    handle_html_string(prg_f, txt_f, log_f, "</a>");
     return 0;
 }
 
@@ -3415,16 +3434,23 @@ handle_form_open(
     }
 
     // FIXME: handle action, or ac
-    fprintf(prg_f, "fputs(\"<form method=\\\"%s\\\"", method);
+    char *str_p = 0;
+    size_t str_z = 0;
+    FILE *str_f = open_memstream(&str_p, &str_z);
+    fprintf(str_f, "<form method=\"%s\"", method);
     if (enctype && *enctype) {
-        fprintf(prg_f, " enctype=\\\"%s\\\"", enctype);
+        fprintf(str_f, " enctype=\"%s\"", enctype);
     }
     if (id && *id) {
-        fprintf(prg_f, " id=\\\"%s\\\"", id);
+        fprintf(str_f, " id=\"%s\"", id);
     }
-    fprintf(prg_f, " action=\\\"\", out_f);\n");
+    fprintf(str_f, " action=\"");
+    fclose(str_f); str_f = 0;
+    handle_html_string(prg_f, txt_f, log_f, str_p);
+    free(str_p); str_p = 0; str_z = 0;
     fprintf(prg_f, "fputs(phr->self_url, out_f);\n");
-    fprintf(prg_f, "fputs(\"\\\">\", out_f);\n");
+    handle_html_string(prg_f, txt_f, log_f, "\">");
+
     fprintf(prg_f, "if (phr->hidden_vars) { fputs(phr->hidden_vars, out_f); }\n");
 
     return 0;
@@ -3442,7 +3468,8 @@ handle_form_close(
         int end_i)
 {
     handle_html_text(prg_f, txt_f, log_f, mem, beg_i, end_i);
-    fprintf(prg_f, "fputs(\"</form>\", out_f);\n");
+    handle_html_string(prg_f, txt_f, log_f, "</form>");
+
     return 0;
 }
 
@@ -3467,11 +3494,23 @@ handle_submit_open(
         } else {
             value_attr = html_element_find_attribute(elem, "label");
             if (value_attr) {
-                fprintf(prg_f, "fputs(\"<input type=\\\"submit\\\" name=\\\"%s\\\" value=\\\"\",out_f);\n", name_attr->value);
+                char *str_p = 0;
+                size_t str_z = 0;
+                FILE *str_f = open_memstream(&str_p, &str_z);
+                fprintf(str_f, "<input type=\"submit\" name=\"%s\" value=\"", name_attr->value);
+                fclose(str_f); str_f = 0;
+                handle_html_string(prg_f, txt_f, log_f, str_p);
+                free(str_p); str_p = 0; str_z = 0;
                 fprintf(prg_f, "fputs(_(\"%s\"), out_f);\n", value_attr->value);
-                fprintf(prg_f, "fputs(\"\\\" />\", out_f);\n");
+                handle_html_string(prg_f, txt_f, log_f, "\" />");
             } else {
-                fprintf(prg_f, "fputs(\"<input type=\\\"submit\\\" name=\\\"%s\\\" />\",out_f);\n", name_attr->value);
+                char *str_p = 0;
+                size_t str_z = 0;
+                FILE *str_f = open_memstream(&str_p, &str_z);
+                fprintf(str_f, "<input type=\"submit\" name=\"%s\" />", name_attr->value);
+                fclose(str_f); str_f = 0;
+                handle_html_string(prg_f, txt_f, log_f, str_p);
+                free(str_p); str_p = 0; str_z = 0;
             }
         }
         return 0;
@@ -3529,7 +3568,7 @@ handle_v_open(
 
     HtmlAttribute *sep_attr = html_element_find_attribute(elem, "sep");
     if (sep_attr) {
-        fprintf(prg_f, "fputs(\"%s\", out_f);\n", sep_attr->value);
+        handle_html_string(prg_f, txt_f, log_f, sep_attr->value);
     }
 
     TypeInfo *t = NULL;
@@ -3777,27 +3816,37 @@ handle_textfield_open(
 
     HtmlAttribute *disabled_attr = html_element_find_attribute(elem, "disabledexpr");
 
-    fprintf(prg_f, "fputs(\"<input type=\\\"%s\\\" name=\\\"%s\\\"", input_type, name_attr->value);
+    char *str_p = 0;
+    size_t str_z = 0;
+    FILE *str_f = open_memstream(&str_p, &str_z);
+    fprintf(str_f, "<input type=\"%s\" name=\"%s\"", input_type, name_attr->value);
     HtmlAttribute *size_attr = html_element_find_attribute(elem, "size");
     if (size_attr) {
-        fprintf(prg_f, " size=\\\"%s\\\"", size_attr->value);
+        fprintf(str_f, " size=\"%s\"", size_attr->value);
     }
     if (skip_value) {
         if (disabled_attr) {
-            fprintf(prg_f, "\", out_f);\n");
+            fclose(str_f); str_f = 0;
+            handle_html_string(prg_f, txt_f, log_f, str_p);
+            free(str_p); str_p = 0; str_z = 0;
             fprintf(prg_f, "if (%s) {\n", disabled_attr->value);
-            fprintf(prg_f, "fputs(\" disabled=\\\"disabled\\\"\", out_f);\n");
+            handle_html_string(prg_f, txt_f, log_f, " disabled=\"disabled\"");
             fprintf(prg_f, "}\n");
-            fprintf(prg_f, "fputs(\" />\", out_f);\n");
+            handle_html_string(prg_f, txt_f, log_f, " />");
         } else {
-            fprintf(prg_f, " />\", out_f);\n");
+            fprintf(str_f, " />");
+            fclose(str_f); str_f = 0;
+            handle_html_string(prg_f, txt_f, log_f, str_p);
+            free(str_p); str_p = 0; str_z = 0;
         }
         return 0;
     }
-    fprintf(prg_f, "\", out_f);\n");
+    fclose(str_f); str_f = 0;
+    handle_html_string(prg_f, txt_f, log_f, str_p);
+    free(str_p); str_p = 0; str_z = 0;
     if (disabled_attr) {
         fprintf(prg_f, "if (%s) {\n", disabled_attr->value);
-        fprintf(prg_f, "fputs(\" disabled=\\\"disabled\\\"\", out_f);\n");
+        handle_html_string(prg_f, txt_f, log_f, " disabled=\"disabled\"");
         fprintf(prg_f, "}\n");
     }
 
@@ -3811,13 +3860,13 @@ handle_textfield_open(
         }
         fprintf(prg_f, ") {\n");
     }
-    fprintf(prg_f, "fputs(\" value=\\\"\", out_f);\n");
+    handle_html_string(prg_f, txt_f, log_f, " value=\"");
     processor_state_invoke_type_handler(log_f, cntx, ps, txt_f, prg_f, expr, elem, value_type);
-    fprintf(prg_f, "fputs(\"\\\"\", out_f);\n");
+    handle_html_string(prg_f, txt_f, log_f, "\"");
     if (need_check) {
         fprintf(prg_f, "}\n");
     }
-    fprintf(prg_f, "fputs(\" />\", out_f);\n");
+    handle_html_string(prg_f, txt_f, log_f, " />");
     return 0;
 }
 
@@ -3843,22 +3892,27 @@ handle_checkbox_open(
         value_str = value_attr->value;
     }
 
-    fprintf(prg_f, "fputs(\"<input type=\\\"checkbox\\\" name=\\\"%s\\\" value=\\\"%s\\\"\", out_f);\n", name_attr->value, value_str);
+    char *str_p = 0;
+    size_t str_z = 0;
+    FILE *str_f = open_memstream(&str_p, &str_z);
+    fprintf(str_f, "<input type=\"checkbox\" name=\"%s\" value=\"%s\"", name_attr->value, value_str);
+    fclose(str_f); str_f = 0;
+    handle_html_string(prg_f, txt_f, log_f, str_p);
+    free(str_p); str_p = 0; str_z = 0;
+
     HtmlAttribute *checked_attr = html_element_find_attribute(elem, "checkedExpr");
     if (checked_attr) {
-        fprintf(prg_f,
-                "if (%s) {\n"
-                "fputs(\" checked=\\\"checked\\\"\", out_f);\n"
-                "}\n", checked_attr->value);
+        fprintf(prg_f, "if (%s) {\n", checked_attr->value);
+        handle_html_string(prg_f, txt_f, log_f, " checked=\"checked\"");
+        fprintf(prg_f, "}\n");
     }
     HtmlAttribute *disabled_attr = html_element_find_attribute(elem, "disabledExpr");
     if (disabled_attr) {
-        fprintf(prg_f,
-                "if (%s) {\n"
-                "fputs(\" disabled=\\\"disabled\\\"\", out_f);\n"
-                "}\n", disabled_attr->value);
+        fprintf(prg_f, "if (%s) {\n", disabled_attr->value);
+        handle_html_string(prg_f, txt_f, log_f, " disabled=\"disabled\"");
+        fprintf(prg_f, "}\n");
     }
-    fprintf(prg_f, "fputs(\" />\", out_f);\n");
+    handle_html_string(prg_f, txt_f, log_f, " />");
 
     return 0;
 }
@@ -3901,23 +3955,23 @@ handle_option_open(
 {
     HtmlElement *elem = ps->el_stack->el;
 
-    fprintf(prg_f, "fputs(\"<option\", out_f);\n");
+    handle_html_string(prg_f, txt_f, log_f, "<option");
+
     HtmlAttribute *selected_attr = html_element_find_attribute(elem, "selectedexpr");
     if (selected_attr) {
-        fprintf(prg_f,
-                "if (%s) {\n"
-                "fputs(\" selected=\\\"selected\\\"\", out_f);\n"
-                "}\n", selected_attr->value);
+        fprintf(prg_f, "if (%s) {\n", selected_attr->value);
+        handle_html_string(prg_f, txt_f, log_f, " selected=\"selected\"");
+        fprintf(prg_f, "}\n");
     }
     HtmlAttribute *value_attr = html_element_find_attribute(elem, "value");
     TypeInfo *value_type = NULL;
     if (value_attr) {
-        fprintf(prg_f, "fputs(\" value=\\\"\", out_f);\n");
+        handle_html_string(prg_f, txt_f, log_f, " value=\"");
         parse_c_expression(ps, cntx, log_f, value_attr->value, &value_type, ps->pos);
         processor_state_invoke_type_handler(log_f, cntx, ps, txt_f, prg_f, value_attr->value, elem, value_type);
-        fprintf(prg_f, "fputs(\"\\\"\", out_f);\n");
+        handle_html_string(prg_f, txt_f, log_f, "\"");
     }
-    fprintf(prg_f, "fputs(\">\", out_f);\n");
+    handle_html_string(prg_f, txt_f, log_f, ">");
     return 0;
 }
 
@@ -3933,7 +3987,7 @@ handle_option_close(
         int end_i)
 {
     handle_html_text(prg_f, txt_f, log_f, mem, beg_i, end_i);
-    fprintf(prg_f, "fputs(\"</option>\", out_f);\n");
+    handle_html_string(prg_f, txt_f, log_f, "</option>");
     return 0;
 }
 
@@ -3952,15 +4006,21 @@ handle_select_open(
         parser_error_2(ps, "<s:select> element requires 'name' attribute");
         return -1;
     }
-    fprintf(prg_f, "fputs(\"<select name=\\\"%s\\\"\", out_f);\n", name_attr->value);
+    char *str_p = 0;
+    size_t str_z = 0;
+    FILE *str_f = open_memstream(&str_p, &str_z);
+    fprintf(str_f, "<select name=\"%s\"", name_attr->value);
+    fclose(str_f); str_f = 0;
+    handle_html_string(prg_f, txt_f, log_f, str_p);
+    free(str_p); str_p = 0; str_z = 0;
+
     HtmlAttribute *disabled_attr = html_element_find_attribute(elem, "disabledexpr");
     if (disabled_attr) {
-        fprintf(prg_f,
-                "if (%s) {\n"
-                "fputs(\" disabled=\\\"disabled\\\"\", out_f);\n"
-                "}\n", disabled_attr->value);
+        fprintf(prg_f, "if (%s) {\n", disabled_attr->value);
+        handle_html_string(prg_f, txt_f, log_f, " disabled=\"disabled\"");
+        fprintf(prg_f, "}\n");
     }
-    fprintf(prg_f, "fputs(\">\", out_f);\n");
+    handle_html_string(prg_f, txt_f, log_f, ">");
     return 0;
 }
 
@@ -3976,7 +4036,7 @@ handle_select_close(
         int end_i)
 {
     handle_html_text(prg_f, txt_f, log_f, mem, beg_i, end_i);
-    fprintf(prg_f, "fputs(\"</select>\", out_f);\n");
+    handle_html_string(prg_f, txt_f, log_f, "</select>");
     return 0;
 }
 
@@ -4016,16 +4076,22 @@ handle_yesno_open(
         yes_label = yes_attr->value;
     }
 
-    fprintf(prg_f,
-            "fputs(\"<select name=\\\"%s\\\"><option value=\\\"0\\\"\", out_f);\n"
-            "fputs(s1, out_f);\n"
-            "fputs(\">\", out_f);\n"
-            "fputs(_(\"%s\"), out_f);\n"
-            "fputs(\"</option><option value=\\\"1\\\"\", out_f);\n"
-            "fputs(s2, out_f);\n"
-            "fputs(\">\", out_f);\n"
-            "fputs(_(\"%s\"), out_f);\n"
-            "fputs(\"</option></select>\", out_f);\n", name_attr->value, no_label, yes_label);
+    char *str_p = 0;
+    size_t str_z = 0;
+    FILE *str_f = open_memstream(&str_p, &str_z);
+    fprintf(str_f, "<select name=\"%s\"><option value=\"0\"", name_attr->value);
+    fclose(str_f); str_f = 0;
+    handle_html_string(prg_f, txt_f, log_f, str_p);
+    free(str_p); str_p = 0; str_z = 0;
+    fprintf(prg_f, "fputs(s1, out_f);\n");
+    handle_html_string(prg_f, txt_f, log_f, ">");
+    fprintf(prg_f, "fputs(_(\"%s\"), out_f);\n", no_label);
+    handle_html_string(prg_f, txt_f, log_f, "</option><option value=\"1\"");
+    fprintf(prg_f, "fputs(s2, out_f);\n");
+    handle_html_string(prg_f, txt_f, log_f, ">");
+    fprintf(prg_f, "fputs(_(\"%s\"), out_f);\n", yes_label);
+    handle_html_string(prg_f, txt_f, log_f, "</option></select>");
+
     fprintf(prg_f,
             "}\n");
     return 0;
@@ -4086,8 +4152,14 @@ handle_numselect_open(
         return -1;
     }
 
-    fprintf(prg_f,
-            "fputs(\"<select name=\\\"%s\\\">\\n\", out_f);\n", name_attr->value);
+    char *str_p = 0;
+    size_t str_z = 0;
+    FILE *str_f = open_memstream(&str_p, &str_z);
+    fprintf(str_f,"<select name=\"%s\">\n", name_attr->value);
+    fclose(str_f); str_f = 0;
+    handle_html_string(prg_f, txt_f, log_f, str_p);
+    free(str_p); str_p = 0; str_z = 0;
+
     if (low_value < high_value) {
         fprintf(prg_f, "for (int numsel_i = %d; numsel_i < %d; ++numsel_i) {\n", low_value, high_value);
     } else {
@@ -4097,15 +4169,14 @@ handle_numselect_open(
     fprintf(prg_f,
             "  fprintf(out_f, \"<option value=\\\"%%d\\\"\", numsel_i);\n");
     if (value_attr) {
-        fprintf(prg_f,
-                "  if (%s == numsel_i) { fputs(\" selected=\\\"selected\\\"\", out_f); }\n",
-                value_attr->value);
+        fprintf(prg_f, "  if (%s == numsel_i) {\n", value_attr->value);
+        handle_html_string(prg_f, txt_f, log_f, " selected=\"selected\"");
+        fprintf(prg_f, "}\n");
     }
     fprintf(prg_f,
             "  fprintf(out_f, \">%%d</option>\\n\", numsel_i);\n");
     fprintf(prg_f, "}\n");
-    fprintf(prg_f,
-            "fputs(\"</select>\\n\", out_f);\n");
+    handle_html_string(prg_f, txt_f, log_f, "</select>");
 
     return 0;
 }
@@ -4120,19 +4191,25 @@ handle_button_open(
 {
     HtmlElement *elem = ps->el_stack->el;
 
-    fprintf(prg_f, "fputs(\"<input type=\\\"button\\\"\", out_f);\n");
+    handle_html_string(prg_f, txt_f, log_f, "<input type=\"button\"");
 
     HtmlAttribute *label_attr = html_element_find_attribute(elem, "label");
     if (label_attr) {
-        fprintf(prg_f, "fputs(\" value=\\\"\", out_f);\n");
+        handle_html_string(prg_f, txt_f, log_f, " value=\"");
         fprintf(prg_f, "fputs(_(\"%s\"), out_f);\n", label_attr->value);
-        fprintf(prg_f, "fputs(\"\\\"\", out_f);\n");
+        handle_html_string(prg_f, txt_f, log_f, "\"");
     }
     HtmlAttribute *onclick_attr = html_element_find_attribute(elem, "onclick");
     if (onclick_attr) {
-        fprintf(prg_f, "fputs(\" onclick=\\\"%s\\\"\", out_f);\n", onclick_attr->value);
+        char *str_p = 0;
+        size_t str_z = 0;
+        FILE *str_f = open_memstream(&str_p, &str_z);
+        fprintf(str_f, " onclick=\"%s\"", onclick_attr->value);
+        fclose(str_f); str_f = 0;
+        handle_html_string(prg_f, txt_f, log_f, str_p);
+        free(str_p); str_p = 0; str_z = 0;
     }
-    fprintf(prg_f, "fputs(\" />\", out_f);\n");
+    handle_html_string(prg_f, txt_f, log_f, " />");
 
     return 0;
 }
@@ -4148,7 +4225,7 @@ handle_img_open(
     HtmlElement *elem = ps->el_stack->el;
     unsigned char buf[1024];
 
-    fprintf(prg_f, "fputs(\"<img src=\\\"\", out_f);\n");
+    handle_html_string(prg_f, txt_f, log_f, "<img src=\"");
 
     // url, label
     HtmlAttribute *attr = html_element_find_attribute(elem, "url");
@@ -4169,7 +4246,13 @@ handle_img_open(
             fprintf(prg_f, "fputs(sep, out_f); sep = \"&amp;\";\n");
             attr = html_element_find_attribute(child, "name");
             if (attr) {
-                fprintf(prg_f, "fputs(\"%s=\", out_f);\n", attr->value);
+                char *str_p = 0;
+                size_t str_z = 0;
+                FILE *str_f = open_memstream(&str_p, &str_z);
+                fprintf(str_f, "%s=", attr->value);
+                fclose(str_f); str_f = 0;
+                handle_html_string(prg_f, txt_f, log_f, str_p);
+                free(str_p); str_p = 0; str_z = 0;
                 attr = html_element_find_attribute(child, "value");
                 if (attr) {
                     TypeInfo *t = NULL;
@@ -4188,16 +4271,16 @@ handle_img_open(
         }
         fprintf(prg_f, "(void) sep;\n");
     }
-    fprintf(prg_f, "fputs(\"\\\"\", out_f);\n");
+    handle_html_string(prg_f, txt_f, log_f, "\"");
 
     attr = html_element_find_attribute(elem, "label");
     if (attr) {
-        fprintf(prg_f, "fputs(\" alt=\\\"\", out_f);\n");
+        handle_html_string(prg_f, txt_f, log_f, " alt=\"");
         fprintf(prg_f, "fputs(_(\"%s\"), out_f);\n", attr->value);
-        fprintf(prg_f, "fputs(\"\\\"\", out_f);\n");
+        handle_html_string(prg_f, txt_f, log_f, "\"");
     }
 
-    fprintf(prg_f, "fputs(\" />\", out_f);\n");
+    handle_html_string(prg_f, txt_f, log_f, " />");
     return 0;
 }
 
