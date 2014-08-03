@@ -37,15 +37,15 @@ You may either continue suspended editing of contest <s:v value="c0->id" /> or c
 %>.</p>
 
 <table border="0">
-    <tr><td><s:form><s:submit ac="edited-cnts-back" label="Back" /></s:form></td><td><s:tr>Return to the main page</s:tr></td></tr>
+    <tr><td><s:form><s:submit ac="edited-cnts-back" label="Back" /></s:form></td><td><s:_>Return to the main page</s:_></td></tr>
     <tr><td><s:form><s:submit ac="edited-cnts-continue" label="Continue" /><%
 %><!--<s:hidden name="new_edit" value="1" />--><%
-%></s:form></td><td><s:tr>Continue suspended editing</s:tr></td></tr>
+%></s:form></td><td><s:_>Continue suspended editing</s:_></td></tr>
     <tr><td><s:form><%
 %><!--<s:hidden name="new_edit" value="1" />--><%
 %><% if (c1) { %>
 <s:hidden name="contest_id" value="c1->id" /><%
-%><% } %><s:submit ac="edited-cnts-start-new" label="Start new" /></s:form></td><td><s:tr>Start new editing</s:tr> <font color="red"><s:tr>All changes to the old contest will be lost!</s:tr></font></td></tr>
+%><% } %><s:submit ac="edited-cnts-start-new" label="Start new" /></s:form></td><td><s:_>Start new editing</s:_> <font color="red"><s:_>All changes to the old contest will be lost!</s:_></font></td></tr>
 </table>
 
 

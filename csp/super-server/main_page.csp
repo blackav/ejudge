@@ -37,13 +37,13 @@
 <div class="icons-menu-txt" style="margin-top: 5px;">
  <%
     if (phr->ss->edited_cnts) {
-%><s:a ac="edit-current-contest"><s:tr>[Edit current contest]</s:tr></s:a><%
+%><s:a ac="edit-current-contest"><s:_>[Edit current contest]</s:_></s:a><%
     }
 %>
-<s:a ac="create-new-contest-page"><s:tr>[Create new contest (New interface)]</s:tr></s:a>
+<s:a ac="create-new-contest-page"><s:_>[Create new contest (New interface)]</s:_></s:a>
 <%
     if (phr->ss->edited_cnts) {
-%><s:a ac="edit-contest-page-2"><s:tr>[Edit current contest (New interface)]</s:tr></s:a><%
+%><s:a ac="edit-contest-page-2"><s:_>[Edit current contest (New interface)]</s:_></s:a><%
     }
 %>
 </div>
@@ -114,49 +114,49 @@
         <td><s:v value="ci->name" /></td>
         <td><%
         if (ci->details_enabled) {
-%><s:url name="DetailsUrl" ac="contest-page"><s:param name="contest_id" value="ci->id" /></s:url><s:a url="DetailsUrl"><s:tr>Details</s:tr></s:a><%
+%><s:url name="DetailsUrl" ac="contest-page"><s:param name="contest_id" value="ci->id" /></s:url><s:a url="DetailsUrl"><s:_>Details</s:_></s:a><%
         } else {
 %>&nbsp;<%
         }
 %></td>
         <td><%
         if (ci->edit_users_enabled) {
-%><s:url name="UsersUrl" ac="user-browse-page"><s:param name="contest_id" value="ci->id" /></s:url><s:a url="UsersUrl"><s:tr>Users</s:tr></s:a><%
+%><s:url name="UsersUrl" ac="user-browse-page"><s:param name="contest_id" value="ci->id" /></s:url><s:a url="UsersUrl"><s:_>Users</s:_></s:a><%
         } else {
 %>&nbsp;<%
         }
 %></td>
         <td><%
         if (ci->edit_settings_enabled) {
-%><s:url name="SettingsUrl" ac="edit-contest-xml"><s:param name="contest_id" value="ci->id" /></s:url><s:a url="SettingsUrl"><s:tr>Settings</s:tr></s:a><%
+%><s:url name="SettingsUrl" ac="edit-contest-xml"><s:param name="contest_id" value="ci->id" /></s:url><s:a url="SettingsUrl"><s:_>Settings</s:_></s:a><%
         } else {
 %>&nbsp;<%
         }
 %></td>
         <td><%
         if (ci->edit_tests_enabled) {
-%><s:url name="TestsUrl" ac="tests-main-page"><s:param name="contest_id" value="ci->id" /></s:url><s:a url="TestsUrl"><s:tr>Tests</s:tr></s:a><%
+%><s:url name="TestsUrl" ac="tests-main-page"><s:param name="contest_id" value="ci->id" /></s:url><s:a url="TestsUrl"><s:_>Tests</s:_></s:a><%
         } else {
 %>&nbsp;<%
         }
 %></td>
         <td><%
         if (ci->judge_enabled) {
-%><s:url name="JudgeUrl" script="judge" action="3"><s:param name="contest_id" value="ci->id" /></s:url><s:a url="JudgeUrl" target="_blank"><s:tr>Judge</s:tr></s:a><%
+%><s:url name="JudgeUrl" script="judge" action="3"><s:param name="contest_id" value="ci->id" /></s:url><s:a url="JudgeUrl" target="_blank"><s:_>Judge</s:_></s:a><%
         } else {
 %>&nbsp;<%
         }
 %></td>
         <td><%
         if (ci->master_enabled) {
-%><s:url name="MasterUrl" script="master" action="3"><s:param name="contest_id" value="ci->id" /></s:url><s:a url="MasterUrl" target="_blank"><s:tr>Master</s:tr></s:a><%
+%><s:url name="MasterUrl" script="master" action="3"><s:param name="contest_id" value="ci->id" /></s:url><s:a url="MasterUrl" target="_blank"><s:_>Master</s:_></s:a><%
         } else {
 %>&nbsp;<%
         }
 %></td>
         <td><%
         if (ci->user_enabled) {
-%><s:url name="ClientUrl" script="client" action="0" nosid="yes"><s:param name="contest_id" value="ci->id" /></s:url><s:a url="ClientUrl" target="_blank"><s:tr>User</s:tr></s:a><%
+%><s:url name="ClientUrl" script="client" action="0" nosid="yes"><s:param name="contest_id" value="ci->id" /></s:url><s:a url="ClientUrl" target="_blank"><s:_>User</s:_></s:a><%
         } else {
 %>&nbsp;<%
         }

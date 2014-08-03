@@ -40,10 +40,10 @@
 
 <table border="0">
     <tr>
-        <td><s:a ac="main-page"><s:tr>To contests list</s:tr></s:a></td>
-        <td><s:a ac="contest-page"><s:tr>To contest details</s:tr></s:a></td>
-        <td><s:a action="phr->action"><s:tr>Refresh</s:tr></s:a></td>
-        <td><s:a ac="logout"><s:tr>Logout</s:tr></s:a></td>
+        <td><s:a ac="main-page"><s:_>To contests list</s:_></s:a></td>
+        <td><s:a ac="contest-page"><s:_>To contest details</s:_></s:a></td>
+        <td><s:a action="phr->action"><s:_>Refresh</s:_></s:a></td>
+        <td><s:a ac="logout"><s:_>Logout</s:_></s:a></td>
     </tr>
 </table>
 
@@ -52,7 +52,7 @@
 <pre><s:v value="raw_file" /></pre>
 <% } else { %>
 <hr/>
-<p><font color="red"><s:tr>Cannot read file!</s:tr></font></p>
+<p><font color="red"><s:_>Cannot read file!</s:_></font></p>
 <% } %>
 
 <%@include "footer.csp"

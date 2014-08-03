@@ -29,7 +29,7 @@ static const unsigned char * const form_row_attrs[]=
 %><%@include "header.csp"
 %>
 
-<h2><s:tr>General registration form fields</s:tr></h2>
+<h2><s:_>General registration form fields</s:_></h2>
 
 <s:form>
 <table border="0">
@@ -47,9 +47,9 @@ static const unsigned char * const form_row_attrs[]=
     <tr<s:v value="form_row_attrs[row ^= 1]" escape="false"/>>
         <td><s:v value="contests_get_form_field_name(i)" escape="false" /></td>
         <td><select name='field_<s:v value="i" />'>
-            <s:option value="0" selectedExpr="val == 0"><s:tr>Disabled</s:tr></s:option>
-            <s:option value="1" selectedExpr="val == 1"><s:tr>Optional</s:tr></s:option>
-            <s:option value="2" selectedExpr="val == 2"><s:tr>Mandatory</s:tr></s:option>
+            <s:option value="0" selectedExpr="val == 0"><s:_>Disabled</s:_></s:option>
+            <s:option value="1" selectedExpr="val == 1"><s:_>Optional</s:_></s:option>
+            <s:option value="2" selectedExpr="val == 2"><s:_>Mandatory</s:_></s:option>
         </select></td>
     </tr>
 <%
@@ -58,8 +58,8 @@ static const unsigned char * const form_row_attrs[]=
 </table>
 
 <table border="0"><tr>
-    <td><s:a ac="main-page"><s:tr>To the top</s:tr></s:a></td>
-    <td><s:a ac="edit-current-contest"><s:tr>Back</s:tr></s:a></td>
+    <td><s:a ac="main-page"><s:_>To the top</s:_></s:a></td>
+    <td><s:a ac="edit-current-contest"><s:_>Back</s:_></s:a></td>
     <td><s:submit ac="cnts-save-form-fields" label="Save" /></td>
 </tr></table>
 </s:form>

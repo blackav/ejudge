@@ -30,14 +30,14 @@
 <h2>Contest number</h2>
 
 <table border="0">
-    <tr><td><input type="radio" name="num_mode" value="0" checked="checked"/></td><td><s:tr>Assign automatically</s:tr></td><td>&nbsp;</td></tr>
-    <tr><td><input type="radio" name="num_mode" value="1"/></td><td><s:tr>Assign manually:</s:tr></td><td><s:textfield name="contest_id" value="recomm_id" size="6" /></td></tr>
+    <tr><td><input type="radio" name="num_mode" value="0" checked="checked"/></td><td><s:_>Assign automatically</s:_></td><td>&nbsp;</td></tr>
+    <tr><td><input type="radio" name="num_mode" value="1"/></td><td><s:_>Assign manually:</s:_></td><td><s:textfield name="contest_id" value="recomm_id" size="6" /></td></tr>
 </table>
 
 <h2>Contest template</h2>
 <table border="0">
-    <tr><td><input type="radio" name="templ_mode" value="0" checked="checked" /></td><td><s:tr>From scratch</s:tr></td><td>&nbsp;</td></tr>
-    <tr><td><input type="radio" name="templ_mode" value="1" /></td><td><s:tr>Use existing contest:</s:tr></td><td><select name="templ_id"><%
+    <tr><td><input type="radio" name="templ_mode" value="0" checked="checked" /></td><td><s:_>From scratch</s:_></td><td>&nbsp;</td></tr>
+    <tr><td><input type="radio" name="templ_mode" value="1" /></td><td><s:_>Use existing contest:</s:_></td><td><select name="templ_id"><%
    for (int j = 0; j < contest_num; j++) {
         int cnts_id = contests[j];
         const struct contest_desc *cnts = 0;
