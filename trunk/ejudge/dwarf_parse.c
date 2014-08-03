@@ -1709,7 +1709,10 @@ parse_cu(
 
     // first pass: create named structure/union typeinfo without fields
     Dwarf_Die die = NULL;
-    if (s_dwarf_child(log_f, path, cu_die, &die) <= 0) goto done;
+    if (s_dwarf_child(log_f, path, cu_die, &die) <= 0) {
+        retval = 0;
+        goto done;
+    }
     if (parse_die_pass_0(log_f, path, dbg, die, cntx, dm) < 0) goto done;
     while (s_dwarf_sibling(log_f, path, dbg, die, &die) > 0) {
         if (parse_die_pass_0(log_f, path, dbg, die, cntx, dm) < 0) goto done;
