@@ -4364,6 +4364,7 @@ struct ElementInfo
 static const struct ElementInfo element_handlers[] =
 {
     { "s:tr", handle_tr_open, handle_tr_close },
+    { "s:_", handle_tr_open, handle_tr_close },
     { "s:a", handle_a_open, handle_a_close },
     { "s:submit", handle_submit_open, NULL },
     { "s:v", handle_v_open, NULL },
