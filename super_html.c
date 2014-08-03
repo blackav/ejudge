@@ -514,8 +514,12 @@ super_html_contest_page_menu(FILE *f,
   fprintf(f, "<table border=\"0\"><tr><td>%sTo the top (postpone editing)</a></td><td>",
           html_hyperref(hbuf, sizeof(hbuf), session_id, self_url,extra_args,0));
   if (cur_page != 1) {
+    /*
     fprintf(f, "%s", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
                                    "action=%d", SSERV_CMD_EDIT_CURRENT_CONTEST));
+    */
+    fprintf(f, "%s", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
+                                   "action=%d", SSERV_CMD_NEW_CNTS_EDIT_CURRENT_PAGE));
   }
   fprintf(f, "General settings (contest.xml)");
   if (cur_page != 1) {
