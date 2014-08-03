@@ -1671,7 +1671,8 @@ id_scope_cmp_2(const TypeInfo *p1, const void *p2)
     const TypeInfo *id2 = tc_get_name_node((const TypeInfo*) p2);
     if ((ptrdiff_t) id1 < (ptrdiff_t) id2) return -1;
     if ((ptrdiff_t) id1 > (ptrdiff_t) id2) return 1;
-    abort();
+    //fprintf(stderr, "Node '%s' already in tree\n", id1->s.str);
+    //abort();
     return 0;
 }
 
