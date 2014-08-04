@@ -2248,7 +2248,6 @@ main(int argc, char *argv[])
     action_create_contest_2();
     break;
 
-  case SSERV_CMD_EDIT_CURRENT_CONTEST:
   case SSERV_CMD_CNTS_EDIT_USERS_HEADER:
   case SSERV_CMD_CNTS_EDIT_USERS_FOOTER:
   case SSERV_CMD_CNTS_EDIT_REGISTER_HEADER:
