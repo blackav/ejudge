@@ -1,0 +1,57 @@
+<%
+/* $Id$ */
+%><%@include "includes.csp"
+%><%@set getter_name = "csp_get_create_contest_2_action"
+%><%@set ac_prefix = "SSERV_CMD_"
+%><%@set err_prefix = "SSERV_ERR_"
+%><%@page csp_view_create_contest_2_action(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "stdvars.csp"
+%><%
+    // global OPCAP_EDIT_CONTEST capability is required to create contests
+    opcap_t caps = 0;
+    if (phr->priv_level != PRIV_LEVEL_ADMIN) FAIL(SSERV_ERR_PERMISSION_DENIED);
+    if (ejudge_cfg_opcaps_find(phr->config, phr->login, &caps) < 0) FAIL(SSERV_ERR_PERMISSION_DENIED);
+    if (opcaps_check(caps, OPCAP_EDIT_CONTEST) < 0) FAIL(SSERV_ERR_PERMISSION_DENIED);
+    if (phr->ss->edited_cnts) FAIL(SSERV_ERR_CONTEST_EDITED);
+
+    const int *contests = 0;
+    int contest_num = contests_get_list(&contests);
+    if (contest_num < 0 || !contests) FAIL(SSERV_ERR_SYSTEM_ERROR);
+
+    int contest_id = 0;
+    int num_mode = 0;
+%><s:read var="num_mode" default="0" /><%
+    if (num_mode != 1) {
+        contest_id = 1;
+        if (contest_num > 0) contest_id = contests[contest_num - 1] + 1;
+    } else {
+%><s:read var="contest_id" required="yes" /><%
+        if (contest_id <= 0 || contest_id > EJ_MAX_CONTEST_ID) FAIL(SSERV_ERR_INVALID_CONTEST);
+        int i;
+        for (i = 0; i < contest_num && contests[i] != contest_id; ++i);
+        if (i < contest_num) FAIL(SSERV_ERR_CONTEST_ALREADY_USED);
+    }
+    if (super_serve_sid_state_get_cnts_editor(contest_id)) FAIL(SSERV_ERR_CONTEST_ALREADY_USED);
+
+    int templ_mode = 0;
+%><s:read var="templ_mode" default="0" /><%
+    int templ_id =0;
+    const struct contest_desc *templ_cnts = 0;
+
+    if (templ_mode == 1) {
+%><s:read var="templ_id" required="yes" /><%
+        if (contests_get(templ_id, &templ_cnts) < 0 || !templ_cnts) FAIL(SSERV_ERR_INVALID_CONTEST);
+    }
+
+    if (!templ_cnts) {
+        phr->ss->edited_cnts = contest_tmpl_new(contest_id, phr->login, phr->self_url, phr->system_login, &phr->ip, phr->ssl_flag, phr->config);
+        phr->ss->global = prepare_new_global_section(contest_id, phr->ss->edited_cnts->root_dir, phr->config);
+    } else {
+        super_html_load_serve_cfg(templ_cnts, phr->config, phr->ss);
+        super_html_fix_serve(phr->ss, templ_id, contest_id);
+        phr->ss->edited_cnts = contest_tmpl_clone(phr->ss, contest_id, templ_id, phr->login, phr->system_login);
+    }
+
+    // FIXME: do redirect
+cleanup: ;
+%>

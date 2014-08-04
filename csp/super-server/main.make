@@ -46,6 +46,7 @@ CFILES = \
  csp_contest_page.c\
  csp_contest_xml_page.c\
  csp_create_contest_page.c\
+ csp_create_contest_2_action.c\
  csp_login_page.c\
  csp_main_page.c\
  csp_problem_packages_page.c
@@ -83,6 +84,7 @@ csp_contest_locked_page.c : contest_locked_page.csp includes.csp stdvars.csp hea
 csp_contest_page.c : contest_page.csp includes.csp stdvars.csp header.csp footer.csp
 csp_contest_xml_page.c : contest_xml_page.csp includes.csp stdvars.csp header.csp footer.csp
 csp_create_contest_page.c : create_contest_page.csp includes.csp stdvars.csp header.csp footer.csp
+csp_create_contest_2_action.c : create_contest_2_action.csp includes.csp stdvars.csp header.csp footer.csp
 csp_login_page.c : main_page.csp includes.csp stdvars.csp header.csp footer.csp
 csp_main_page.c : main_page.csp includes.csp stdvars.csp header.csp footer.csp
 csp_problem_packages_page.c : problem_packages_page.csp includes.csp stdvars.csp header.csp footer.csp
