@@ -928,62 +928,6 @@ action_edit_current_contest(int cmd)
   exit(0);
 }
 
-static void action_create_contest_2(void) __attribute__((noreturn));
-static void
-action_create_contest_2(void)
-{
-  int r, n;
-  unsigned char *s;
-  int num_mode, templ_mode, contest_id = 0, templ_id = 0;
-
-  if (!(s = cgi_param("num_mode"))
-      || sscanf(s, "%d%n", &num_mode, &n) != 1
-      || s[n]
-      || num_mode < 0 || num_mode > 1)
-    goto invalid_parameter;
-  if (!(s = cgi_param("templ_mode"))
-      || sscanf(s, "%d%n", &templ_mode, &n) != 1
-      || s[n]
-      || templ_mode < 0 || templ_mode > 1)
-    goto invalid_parameter;
-  if (num_mode) {
-    if (!(s = cgi_param("contest_id"))
-        || sscanf(s, "%d%n", &contest_id, &n) != 1
-        || s[n]
-        || contest_id <= 0 || contest_id > EJ_MAX_CONTEST_ID)
-      goto invalid_parameter;
-  }
-  if (templ_mode) {
-    if (!(s = cgi_param("templ_id"))
-        || sscanf(s, "%d%n", &templ_id, &n) != 1
-        || s[n]
-        || templ_id <= 0 || templ_id > EJ_MAX_CONTEST_ID)
-      goto invalid_parameter;
-  }
-
-  open_super_server();
-  client_put_header(stdout, 0, 0, config->charset, 1, 0, client_key,
-                    "%s: %s@%s, editing new contest", "serve-control", user_login, http_host);
-  fflush(stdout);
-
-  r = 0;
-  /*
-  r = super_clnt_create_contest(super_serve_fd, 1, SSERV_CMD_CREATE_CONTEST_2,
-                                num_mode, templ_mode, contest_id, templ_id,
-                                self_url, hidden_vars, "");
-  */
-  if (r < 0) {
-    printf("<h2><font color=\"red\">%s</font></h2>\n",
-           super_proto_strerror(-r));
-  }
-
-  client_put_footer(stdout, 0);
-  exit(0);
-
- invalid_parameter:
-  operation_status_page(-1, -1, "Contest creation parameters are invalid");
-}
-
 static void action_simple_top_command(int cmd) __attribute__((noreturn));
 static void
 action_simple_top_command(int cmd)
