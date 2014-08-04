@@ -853,9 +853,6 @@ action_view_contest(int cmd)
   if ((contest_id = parse_contest_id()) <= 0) goto invalid_parameter;
 
   switch (cmd) {
-  case SSERV_CMD_EDIT_CONTEST_XML:
-    extra_str = ", editing contest.xml";
-    break;
   case SSERV_CMD_EDIT_SERVE_CFG_PROB:
     extra_str = ", editing serve.cfg";
     break;
@@ -2284,7 +2281,6 @@ main(int argc, char *argv[])
   case SSERV_CMD_CNTS_FORGET:
     action_simple_top_command(client_action);
     break;
-  case SSERV_CMD_EDIT_CONTEST_XML:
   case SSERV_CMD_EDIT_SERVE_CFG_PROB:
     action_view_contest(client_action);
     break;

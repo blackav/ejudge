@@ -627,7 +627,7 @@
             [<s:a url="ViewContestXmlUrl">View</s:a>]
 <% } %>
 <% if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0) { %>
-<s:url name="EditContestXmlUrl" ac="new-cnts-start-edit-action">
+<s:url name="EditContestXmlUrl" ac="cnts-start-edit-action">
     <s:param name="contest_id" value="phr->contest_id" />
 </s:url>
             [<s:a url="EditContestXmlUrl">Edit</s:a>]
@@ -649,7 +649,7 @@
             [<s:a url="ViewServeCfgUrl">View</s:a>]
 <% } %>
 <% if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0) { %>
-<s:url name="EditServeCfgUrl" ac="new-cnts-start-edit-action">
+<s:url name="EditServeCfgUrl" ac="cnts-start-edit-action">
     <s:param name="contest_id" value="phr->contest_id" />
 </s:url>
             [<s:a url="EditServeCfgUrl">Edit</s:a>]
