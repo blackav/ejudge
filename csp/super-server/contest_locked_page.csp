@@ -1,0 +1,67 @@
+<%
+/* $Id$ */
+%><%@include "includes.csp"
+%><%@set getter_name = "csp_get_contest_locked_page"
+%><%@set ac_prefix = "SSERV_CMD_"
+%><%@page csp_view_contest_locked_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "stdvars.csp"
+%><%
+    const unsigned char *title = 0;
+    const unsigned char *subtitle = "another contest is being edited";
+    opcap_t caps = 0;
+
+    if (phr->action == SSERV_CMD_CONTEST_LOCKED_PAGE) FAIL(SSERV_ERR_INVALID_PARAMETER);
+    if (phr->priv_level != PRIV_LEVEL_ADMIN) FAIL(SSERV_ERR_PERMISSION_DENIED);
+    if (ejudge_cfg_opcaps_find(phr->config, phr->login, &caps) < 0) FAIL(SSERV_ERR_PERMISSION_DENIED);
+    if (opcaps_check(caps, OPCAP_EDIT_CONTEST) < 0) FAIL(SSERV_ERR_PERMISSION_DENIED);
+
+    const struct sid_state *other_ss = super_serve_sid_state_get_cnts_editor(phr->contest_id);
+    if (!other_ss) FAIL(SSERV_ERR_INVALID_PARAMETER);
+%><%@include "header.csp"
+%>
+<%
+  if (other_ss->user_id != phr->user_id) {
+%>
+<h2>This contest is being edited by another user</h2>
+
+<p>Contest <s:v value="phr->contest_id" /> is being edited in session <s:v value="other_ss->sid" /> by user <s:v value="other_ss->user_login" /> (<s:v value="other_ss->user_name" />).</p>
+
+<p>Please contact this user to release the lock.</p>
+
+<table border="0"><tr>
+    <td><s:form><s:submit ac="edited-cnts-back" label="Back" /></s:form></td>
+    <td>Return to the main page</td>
+</tr></table>
+<%
+  } else {
+%>
+<h2>This contest is being edited by YOU in another session</h2>
+
+<p>Contest <s:v value="phr->contest_id" /> is already edited by you in session <s:v value="other_ss->sid" />.</p>
+
+<table border="0">
+    <tr>
+        <td><s:form><s:submit ac="edited-cnts-back" label="Back" /></s:form></td>
+        <td>Return to the main page</td>
+    </tr>
+    <tr>
+        <td><s:form><s:hidden name="contest_id" value="phr->contest_id" /><s:submit ac="locked-cnts-forget" label="Forget editing" /></s:form></td>
+<!-- if (new_edit_mode) html_hidden(out_f, "new_edit", "1"); -->
+        <td>Forget editing in that session and return to the top page<font color="red">(All changes to the old contest will be lost)!</font></td>
+    </tr>
+    <tr>
+        <td><s:form><s:hidden name="contest_id" value="phr->contest_id" /><s:submit ac="locked-cnts-continue" label="Continue in this session" /></s:form></td>
+<!-- if (new_edit_mode) html_hidden(out_f, "new_edit", "1"); -->
+        <td>Continue editing in this session</td>
+    </tr>
+</table>
+<%
+  }
+%>
+
+<%@include "footer.csp"
+%><%
+  l10n_setlocale(0);
+cleanup:
+  html_armor_free(&ab);
+%>
