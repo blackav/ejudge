@@ -3376,13 +3376,29 @@ handle_htr_open(
 {
     HtmlElement *elem = ps->el_stack->el;
 
+    char *str_p = 0;
+    size_t str_z = 0;
+    FILE *str_f = open_memstream(&str_p, &str_z);
+    fprintf(str_f, "<tr");
+
+    HtmlAttribute *valign_attr = html_element_find_attribute(elem, "valign");
+    if (valign_attr) {
+        fprintf(str_f, " valign=\"%s\"", valign_attr->value);
+    }
+
     HtmlAttribute *attr_attr = html_element_find_attribute(elem, "attr");
     if (attr_attr) {
-        handle_html_string(prg_f, txt_f, log_f, "<tr ");
+        fprintf(str_f, " ");
+        fclose(str_f); str_f = 0;
+        handle_html_string(prg_f, txt_f, log_f, str_p);
+        free(str_p); str_p = 0; str_z = 0;
         fprintf(prg_f, "fputs(%s, out_f);\n", attr_attr->value);
         handle_html_string(prg_f, txt_f, log_f, ">\n");
     } else {
-        handle_html_string(prg_f, txt_f, log_f, "<tr>\n");
+        fprintf(str_f, ">");
+        fclose(str_f); str_f = 0;
+        handle_html_string(prg_f, txt_f, log_f, str_p);
+        free(str_p); str_p = 0; str_z = 0;
     }
 
     return 0;
