@@ -2,7 +2,6 @@
 /* $Id$ */
 %><%@include "includes.csp"
 %><%
-extern int print_help_url(FILE * f, int action);
 %><%@set getter_name = "csp_get_cnts_edit_contest_xml_page"
 %><%@set ac_prefix = "SSERV_CMD_"
 %><%@set err_prefix = "SSERV_ERR_"
@@ -91,7 +90,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>Name:</td>
             <td><s:textfield size="48" name="param" value="cnts->name" /><% if (!cnts->name) { %>(<i>Not set</i>)<% } %></td>
             <td><s:submit ac="cnts-change-name" label="Change" /><s:submit ac="cnts-clear-name" label="Clear" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_NAME); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_NAME); %>
         </s:htr>
     </s:form>
     <s:form>
@@ -99,7 +98,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>Name (English):</td>
             <td><s:textfield size="48" name="param" value="cnts->name_en" /><% if (!cnts->name_en) { %>(<i>Not set</i>)<% } %></td>
             <td><s:submit ac="cnts-change-name-en" label="Change" /><s:submit ac="cnts-clear-name-en" label="Clear" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_NAME_EN); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_NAME_EN); %>
         </s:htr>
     </s:form>
     <s:form>
@@ -107,7 +106,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>Main URL:</td>
             <td><s:textfield size="48" name="param" value="cnts->main_url" /><% if (!cnts->main_url) { %>(<i>Not set</i>)<% } %></td>
             <td><s:submit ac="cnts-change-main-url" label="Change" /><s:submit ac="cnts-clear-main-url" label="Clear" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_MAIN_URL); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_MAIN_URL); %>
         </s:htr>
     </s:form>
     <s:form>
@@ -115,7 +114,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>Keywords:</td>
             <td><s:textfield size="48" name="param" value="cnts->keywords" /><% if (!cnts->keywords) { %>(<i>Not set</i>)<% } %></td>
             <td><s:submit ac="cnts-change-keywords" label="Change" /><s:submit ac="cnts-clear-keywords" label="Clear" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_KEYWORDS); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_KEYWORDS); %>
         </s:htr>
     </s:form>
     <s:form>
@@ -123,7 +122,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>Contest to share users with:</td>
             <td><s:textfield size="48" name="param" value="cnts->user_contest" /><% if (!cnts->user_contest) { %>(<i>Not set</i>)<% } %></td>
             <td><s:submit ac="cnts-change-user-contest" label="Change" /><s:submit ac="cnts-clear-user-contest" label="Clear" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_USER_CONTEST); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_USER_CONTEST); %>
         </s:htr>
     </s:form>
     <s:form>
@@ -131,7 +130,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>Default locale:</td>
             <td><s:textfield size="48" name="param" value="cnts->default_locale" /><% if (!cnts->default_locale) { %>(<i>Not set</i>)<% } %></td>
             <td><s:submit ac="cnts-change-default-locale" label="Change" /><s:submit ac="cnts-clear-default-locale" label="Clear" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_DEFAULT_LOCALE); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_DEFAULT_LOCALE); %>
         </s:htr>
     </s:form>
     <s:form>
@@ -139,7 +138,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>The contest is personal?</td>
             <td><s:yesno name="param" value="cnts->personal" /></td>
             <td><s:submit ac="cnts-change-personal" label="Change" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_PERSONAL); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_PERSONAL); %>
         </s:htr>
     </s:form>
 
@@ -150,7 +149,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>Registration mode:</td>
             <td><s:yesno name="param" value="cnts->autoregister" noLabel="Moderated registration" yesLabel="Free registration" /></td>
             <td><s:submit ac="cnts-change-autoregister" label="Change" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_AUTOREGISTER); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_AUTOREGISTER); %>
         </s:htr>
     </s:form>
     <s:form>
@@ -158,7 +157,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>Registration deadline:</td>
             <td><% html_date_select(out_f, cnts->reg_deadline); %></td>
             <td><s:submit ac="cnts-change-deadline" label="Change" /><s:submit ac="cnts-clear-deadline" label="Clear" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_DEADLINE); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_DEADLINE); %>
         </s:htr>
     </s:form>
     <s:form>
@@ -166,7 +165,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>Contest start date:</td>
             <td><% html_date_select(out_f, cnts->sched_time); %></td>
             <td><s:submit ac="cnts-change-sched-time" label="Change" /><s:submit ac="cnts-clear-sched-time" label="Clear" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_SCHED_TIME); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_SCHED_TIME); %>
         </s:htr>
     </s:form>
     <s:form>
@@ -174,7 +173,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>Virtual contest open date:</td>
             <td><% html_date_select(out_f, cnts->open_time); %></td>
             <td><s:submit ac="cnts-change-open-time" label="Change" /><s:submit ac="cnts-clear-open-time" label="Clear" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_OPEN_TIME); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_OPEN_TIME); %>
         </s:htr>
     </s:form>
     <s:form>
@@ -182,7 +181,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>Virtual contest close date:</td>
             <td><% html_date_select(out_f, cnts->close_time); %></td>
             <td><s:submit ac="cnts-change-close-time" label="Change" /><s:submit ac="cnts-clear-close-time" label="Clear" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_CLOSE_TIME); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_CLOSE_TIME); %>
         </s:htr>
     </s:form>
     <s:form>
@@ -190,7 +189,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>Registration email sender (From: field):</td>
             <td><s:textfield size="48" name="param" value="cnts->register_email" /><% if (!cnts->register_email) { %>(<i>Not set</i>)<% } %></td>
             <td><s:submit ac="cnts-change-register-email" label="Change" /><s:submit ac="cnts-clear-register-email" label="Clear" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_REGISTER_EMAIL); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_REGISTER_EMAIL); %>
         </s:htr>
     </s:form>
     <s:form>
@@ -198,7 +197,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>URL for registration:</td>
             <td><s:textfield size="48" name="param" value="cnts->register_url" /><% if (!cnts->register_url) { %>(<i>Not set</i>)<% } %></td>
             <td><s:submit ac="cnts-change-register-url" label="Change" /><s:submit ac="cnts-clear-register-url" label="Clear" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_REGISTER_URL); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_REGISTER_URL); %>
         </s:htr>
     </s:form>
     <s:form>
@@ -206,7 +205,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>Registration letter subject:</td>
             <td><s:textfield size="48" name="param" value="cnts->register_subject" /><% if (!cnts->register_subject) { %>(<i>Not set</i>)<% } %></td>
             <td><s:submit ac="cnts-change-register-subject" label="Change" /><s:submit ac="cnts-clear-register-subject" label="Clear" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_REGISTER_SUBJECT); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_REGISTER_SUBJECT); %>
         </s:htr>
     </s:form>
     <s:form>
@@ -214,7 +213,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>Registration letter subject (en):</td>
             <td><s:textfield size="48" name="param" value="cnts->register_subject_en" /><% if (!cnts->register_subject_en) { %>(<i>Not set</i>)<% } %></td>
             <td><s:submit ac="cnts-change-register-subject-en" label="Change" /><s:submit ac="cnts-clear-register-subject-en" label="Clear" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_REGISTER_SUBJECT_EN); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_REGISTER_SUBJECT_EN); %>
         </s:htr>
     </s:form>
     <s:form>
@@ -222,7 +221,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>Registration letter template file:</td>
             <td><s:textfield size="48" name="param" value="cnts->register_email_file" /><% if (!cnts->register_email_file) { %>(<i>Not set</i>)<% } %></td>
             <td><s:submit ac="cnts-change-register-email-file" label="Change" /><s:submit ac="cnts-clear-register-email-file" label="Clear" />[<s:a ac="cnts-edit-register-email-file">Edit</s:a>]</td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_REGISTER_EMAIL_FILE); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_REGISTER_EMAIL_FILE); %>
         </s:htr>
     </s:form>
 
@@ -234,7 +233,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>URL for participation:</td>
             <td><s:textfield size="48" name="param" value="cnts->team_url" /><% if (!cnts->team_url) { %>(<i>Not set</i>)<% } %></td>
             <td><s:submit ac="cnts-change-team-url" label="Change" /><s:submit ac="cnts-clear-team-url" label="Clear" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_TEAM_URL); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_TEAM_URL); %>
         </s:htr>
     </s:form>
     <s:form>
@@ -242,7 +241,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>URL for the current standings:</td>
             <td><s:textfield size="48" name="param" value="cnts->standings_url" /><% if (!cnts->standings_url) { %>(<i>Not set</i>)<% } %></td>
             <td><s:submit ac="cnts-change-standings-url" label="Change" /><s:submit ac="cnts-clear-standings-url" label="Clear" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_STANDINGS_URL); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_STANDINGS_URL); %>
         </s:htr>
     </s:form>
     <s:form>
@@ -250,7 +249,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>URL for the problemset:</td>
             <td><s:textfield size="48" name="param" value="cnts->problems_url" /><% if (!cnts->problems_url) { %>(<i>Not set</i>)<% } %></td>
             <td><s:submit ac="cnts-change-problems-url" label="Change" /><s:submit ac="cnts-clear-problems-url" label="Clear" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_PROBLEMS_URL); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_PROBLEMS_URL); %>
         </s:htr>
     </s:form>
     <s:form>
@@ -258,7 +257,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>URL for the contest logo:</td>
             <td><s:textfield size="48" name="param" value="cnts->logo_url" /><% if (!cnts->logo_url) { %>(<i>Not set</i>)<% } %></td>
             <td><s:submit ac="cnts-change-logo-url" label="Change" /><s:submit ac="cnts-clear-logo-url" label="Clear" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_LOGO_URL); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_LOGO_URL); %>
         </s:htr>
     </s:form>
     <s:form>
@@ -266,7 +265,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>URL for the contest CSS:</td>
             <td><s:textfield size="48" name="param" value="cnts->css_url" /><% if (!cnts->css_url) { %>(<i>Not set</i>)<% } %></td>
             <td><s:submit ac="cnts-change-css-url" label="Change" /><s:submit ac="cnts-clear-css-url" label="Clear" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_CSS_URL); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_CSS_URL); %>
         </s:htr>
     </s:form>
 
@@ -286,7 +285,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>Disable separate team password?</td>
             <td><s:yesno name="param" value="cnts->disable_team_password" /></td>
             <td><s:submit ac="cnts-change-team-passwd" label="Change" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_TEAM_PASSWD); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_TEAM_PASSWD); %>
         </s:htr>
     </s:form>
     <s:form>
@@ -294,7 +293,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>Enable simple registration (no email)?</td>
             <td><s:yesno name="param" value="cnts->simple_registration" /></td>
             <td><s:submit ac="cnts-change-simple-registration" label="Change" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_SIMPLE_REGISTRATION); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_SIMPLE_REGISTRATION); %>
         </s:htr>
     </s:form>
 <%
@@ -305,7 +304,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>Send e-mail with password anyway?</td>
             <td><s:yesno name="param" value="cnts->send_passwd_email" /></td>
             <td><s:submit ac="cnts-change-send-passwd-email" label="Change" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_SEND_PASSWD_EMAIL); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_SEND_PASSWD_EMAIL); %>
         </s:htr>
     </s:form>
 <%
@@ -320,7 +319,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>Allow pruning users?</td>
             <td><s:yesno name="param" value="cnts->clean_users" /></td>
             <td><s:submit ac="cnts-change-clean-users" label="Change" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_CLEAN_USERS); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_CLEAN_USERS); %>
         </s:htr>
     </s:form>
 <%
@@ -332,7 +331,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>Closed for participation?</td>
             <td><s:yesno name="param" value="cnts->closed" /></td>
             <td><s:submit ac="cnts-change-closed" label="Change" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_CLOSED); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_CLOSED); %>
         </s:htr>
     </s:form>
 
@@ -344,7 +343,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>Invisible in serve-control?</td>
             <td><s:yesno name="param" value="cnts->invisible" /></td>
             <td><s:submit ac="cnts-change-invisible" label="Change" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_INVISIBLE); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_INVISIBLE); %>
         </s:htr>
     </s:form>
 <%
@@ -359,7 +358,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>Disallow team member removal?</td>
             <td><s:yesno name="param" value="cnts->disable_member_delete" /></td>
             <td><s:submit ac="cnts-change-member-delete" label="Change" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_MEMBER_DELETE); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_MEMBER_DELETE); %>
         </s:htr>
     </s:form>
 <%
@@ -374,7 +373,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>Auto-assign logins?</td>
             <td><s:yesno name="param" value="cnts->assign_logins" /></td>
             <td><s:submit ac="cnts-change-assign-logins" label="Change" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_ASSIGN_LOGINS); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_ASSIGN_LOGINS); %>
         </s:htr>
     </s:form>
 <%
@@ -389,7 +388,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>Force contest registration?</td>
             <td><s:yesno name="param" value="cnts->force_registration" /></td>
             <td><s:submit ac="cnts-change-force-registration" label="Change" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_FORCE_REGISTRATION); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_FORCE_REGISTRATION); %>
         </s:htr>
     </s:form>
 <%
@@ -404,7 +403,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>Disable &quot;Name&quot; field?</td>
             <td><s:yesno name="param" value="cnts->disable_name" /></td>
             <td><s:submit ac="cnts-change-disable-name" label="Change" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_DISABLE_NAME); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_DISABLE_NAME); %>
         </s:htr>
     </s:form>
 <%
@@ -419,7 +418,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>Enable password recovery?</td>
             <td><s:yesno name="param" value="cnts->enable_password_recovery" /></td>
             <td><s:submit ac="cnts-change-enable-password-recovery" label="Change" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_ENABLE_PASSWORD_RECOVERY); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_ENABLE_PASSWORD_RECOVERY); %>
         </s:htr>
     </s:form>
 <%
@@ -434,7 +433,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>Examination mode?</td>
             <td><s:yesno name="param" value="cnts->exam_mode" /></td>
             <td><s:submit ac="cnts-change-exam-mode" label="Change" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_EXAM_MODE); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_EXAM_MODE); %>
         </s:htr>
     </s:form>
 <%
@@ -449,7 +448,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>Disable password change?</td>
             <td><s:yesno name="param" value="cnts->disable_password_change" /></td>
             <td><s:submit ac="cnts-change-disable-password-change" label="Change" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_DISABLE_PASSWORD_CHANGE); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_DISABLE_PASSWORD_CHANGE); %>
         </s:htr>
     </s:form>
 <%
@@ -464,7 +463,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>Disable locale change?</td>
             <td><s:yesno name="param" value="cnts->disable_locale_change" /></td>
             <td><s:submit ac="cnts-change-disable-locale-change" label="Change" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_DISABLE_LOCALE_CHANGE); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_DISABLE_LOCALE_CHANGE); %>
         </s:htr>
     </s:form>
 <%
@@ -479,7 +478,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>Allow edit registration data during contest?</td>
             <td><s:yesno name="param" value="cnts->allow_reg_data_edit" /></td>
             <td><s:submit ac="cnts-change-allow-reg-data-edit" label="Change" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_ALLOW_REG_DATA_EDIT); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_ALLOW_REG_DATA_EDIT); %>
         </s:htr>
     </s:form>
 <%
@@ -497,36 +496,54 @@ static const unsigned char * const form_row_attrs[]=
     </s:form>
 <% row = 1; %>
 
-
-<!--
-  if (sstate->show_access_rules) {
-    print_access_summary(f, cnts->register_access, "Access to `register' program",
-                         SSERV_CMD_CNTS_EDIT_REGISTER_ACCESS_PAGE,
-                         session_id, form_row_attrs[row ^= 1],
-                         self_url, extra_args);
-    print_access_summary(f, cnts->users_access, "Access to `users' program",
-                         SSERV_CMD_CNTS_EDIT_USERS_ACCESS_PAGE,
-                         session_id, form_row_attrs[row ^= 1],
-                         self_url, extra_args);
-    print_access_summary(f, cnts->master_access, "Access to `master' program",
-                         SSERV_CMD_CNTS_EDIT_MASTER_ACCESS_PAGE,
-                         session_id, form_row_attrs[row ^= 1],
-                         self_url, extra_args);
-    print_access_summary(f, cnts->judge_access, "Access to `judge' program",
-                         SSERV_CMD_CNTS_EDIT_JUDGE_ACCESS_PAGE,
-                         session_id, form_row_attrs[row ^= 1],
-                         self_url, extra_args);
-    print_access_summary(f, cnts->team_access, "Access to `team' program",
-                         SSERV_CMD_CNTS_EDIT_TEAM_ACCESS_PAGE,
-                         session_id, form_row_attrs[row ^= 1],
-                         self_url, extra_args);
-    print_access_summary(f, cnts->serve_control_access,
-                         "Access to `serve-control' program",
-                         SSERV_CMD_CNTS_EDIT_SERVE_CONTROL_ACCESS_PAGE,
-                         session_id, form_row_attrs[row ^= 1],
-                         self_url, extra_args);
-  }
--->
+<% if (phr->ss->show_access_rules) { %>
+    <s:htr valign="top" attr="form_row_attrs[row ^= 1]">
+        <td>Access to contest registration</td>
+        <td><pre><% super_html_unparse_access_2(out_f, cnts->register_access); %></pre></td>
+        <td><s:a ac="cnts-edit-register-access-page">Edit</s:a></td>
+        <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_EDIT_REGISTER_ACCESS_PAGE); %>
+    </s:htr>
+<% } %>
+<% if (phr->ss->show_access_rules) { %>
+    <s:htr valign="top" attr="form_row_attrs[row ^= 1]">
+        <td>Access to user list display</td>
+        <td><pre><% super_html_unparse_access_2(out_f, cnts->users_access); %></pre></td>
+        <td><s:a ac="cnts-edit-users-access-page">Edit</s:a></td>
+        <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_EDIT_USERS_ACCESS_PAGE); %>
+    </s:htr>
+<% } %>
+<% if (phr->ss->show_access_rules) { %>
+    <s:htr valign="top" attr="form_row_attrs[row ^= 1]">
+        <td>Access to contest participation</td>
+        <td><pre><% super_html_unparse_access_2(out_f, cnts->team_access); %></pre></td>
+        <td><s:a ac="cnts-edit-team-access-page">Edit</s:a></td>
+        <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_EDIT_TEAM_ACCESS_PAGE); %>
+    </s:htr>
+<% } %>
+<% if (phr->ss->show_access_rules) { %>
+    <s:htr valign="top" attr="form_row_attrs[row ^= 1]">
+        <td>Access to contest administration</td>
+        <td><pre><% super_html_unparse_access_2(out_f, cnts->master_access); %></pre></td>
+        <td><s:a ac="cnts-edit-master-access-page">Edit</s:a></td>
+        <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_EDIT_MASTER_ACCESS_PAGE); %>
+    </s:htr>
+<% } %>
+<% if (phr->ss->show_access_rules) { %>
+    <s:htr valign="top" attr="form_row_attrs[row ^= 1]">
+        <td>Access to contest judging</td>
+        <td><pre><% super_html_unparse_access_2(out_f, cnts->judge_access); %></pre></td>
+        <td><s:a ac="cnts-edit-judge-access-page">Edit</s:a></td>
+        <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_EDIT_JUDGE_ACCESS_PAGE); %>
+    </s:htr>
+<% } %>
+<% if (phr->ss->show_access_rules) { %>
+    <s:htr valign="top" attr="form_row_attrs[row ^= 1]">
+        <td>Access to contest setup</td>
+        <td><pre><% super_html_unparse_access_2(out_f, cnts->serve_control_access); %></pre></td>
+        <td><s:a ac="cnts-edit-serve-control-access-page">Edit</s:a></td>
+        <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_EDIT_SERVE_CONTROL_ACCESS_PAGE); %>
+    </s:htr>
+<% } %>
 
     <s:form>
         <s:htr attr="head_row_attr"><td colspan="4" align="center"><b>User permissions</b><%
@@ -539,12 +556,38 @@ static const unsigned char * const form_row_attrs[]=
     </s:form>
 <% row = 1; %>
 
-<!--
-  if (sstate->show_permissions) {
-    print_permissions(f, cnts, session_id, form_row_attrs,
-                      self_url, hidden_vars, extra_args);
+<%
+  if (phr->ss->show_permissions) {
+%>
+<%
+    const struct opcap_list_item *p;
+    int i;
+    for (i = 0, p = CNTS_FIRST_PERM(cnts); p; ++i, p = CNTS_NEXT_PERM(p)) {
+%>
+    <s:form>
+        <s:hidden name="num" value="i" checkExpr=">= 0" />
+        <s:htr valign="top" attr="form_row_attrs[row ^= 1]">
+            <td><s:v value="i" />: <s:v value="p->login" /></td>
+            <td><font size=\"-2\"><pre><% opcaps_unparse_2(out_f, 0, 32, p->caps); %></pre></font></td>
+            <s:url name="EditPermissionsUrl" ac="cnts-edit-permissions-page"><s:param name="num" value="i" /></s:url>
+            <td>[<s:a url="EditPermissionsUrl">Edit</s:a>]<s:submit ac="cnts-delete-permission" label="Delete" /></td>
+            <td>&nbsp;</td>
+         </s:htr>
+    </s:form>
+<%
+    }
+%>
+    <s:form>
+        <s:htr valign="top" attr="form_row_attrs[row ^= 1]">
+            <td>Add new user:</td>
+            <td>Login: <s:textfield name="param" value="" size="32" /></td>
+            <td><s:submit ac="cnts-add-permission" label="Add" /></td>
+            <td>&nbsp;</td>
+         </s:htr>
+    </s:form>
+<%
   }
--->
+%>
 
     <s:form>
         <s:htr attr="head_row_attr"><td colspan="4" align="center"><b>Registration form fields</b><%
@@ -557,12 +600,197 @@ static const unsigned char * const form_row_attrs[]=
     </s:form>
 <% row = 1; %>
 
-<!--
-  if (sstate->show_form_fields) {
-    print_form_fields(f, cnts, session_id, form_row_attrs,
-                      self_url, hidden_vars, extra_args);
+<%
+  if (phr->ss->show_form_fields) {
+%>
+    <s:htr valign="top" attr="form_row_attrs[row ^= 1]">
+        <td>Primary registration fields</td>
+        <td><font size=\"-1\"><pre><%
+    if (cnts->fields) {
+      int i;
+      for (i = 1; i < CONTEST_LAST_FIELD; i++) {
+        if (!cnts->fields[i]) continue;
+%>&quot;<s:v value="contests_get_form_field_name(i)" escape="false" />&quot; <% if (cnts->fields[i]->mandatory) { %>mandatory<% } else { %>optional<% } %>
+<%
+      }
+    }
+%></pre></font></td>
+        <td><s:a ac="cnts-edit-user-fields-page">Edit</s:a></td>
+        <td>&nbsp;</td>
+    </s:htr>
+<%
   }
--->
+%>
+
+<%
+  if (phr->ss->show_form_fields) {
+    struct contest_member *memb = 0;
+    if (cnts->members) memb = cnts->members[CONTEST_M_CONTESTANT];
+%>
+    <s:htr valign="top" attr="form_row_attrs[row ^= 1]">
+        <td>&quot;Contestant&quot; member parameters</td>
+        <td><font size=\"-1\"><pre><%
+    if (!memb) {
+%>minimal count = 0
+maximal count = 0
+initial count = 0
+<%
+    } else {
+%>minimal count = <s:v value="memb->min_count" />
+maximal count = <s:v value="memb->max_count" />
+initial count = <s:v value="memb->init_count" />
+<%
+      int i;
+      for (i = 1; i < CONTEST_LAST_MEMBER_FIELD; i++) {
+        if (!memb->fields[i]) continue;
+%>
+&quot;<s:v value="contests_get_member_field_name(i)" escape="false" />&quot; <% if (memb->fields[i]->mandatory) { %>mandatory<% } else { %>optional<% } %>
+<%
+      }
+    }
+%></pre></font></td>
+        <td><s:a ac="cnts-edit-contestant-fields-page">Edit</s:a></td>
+        <td>&nbsp;</td>
+    </s:htr>
+<%
+  }
+%>
+
+<%
+  if (phr->ss->show_form_fields) {
+    struct contest_member *memb = 0;
+    if (cnts->members) memb = cnts->members[CONTEST_M_RESERVE];
+%>
+    <s:htr valign="top" attr="form_row_attrs[row ^= 1]">
+        <td>&quot;Reserve&quot; member parameters</td>
+        <td><font size=\"-1\"><pre><%
+    if (!memb) {
+%>minimal count = 0
+maximal count = 0
+initial count = 0
+<%
+    } else {
+%>minimal count = <s:v value="memb->min_count" />
+maximal count = <s:v value="memb->max_count" />
+initial count = <s:v value="memb->init_count" />
+<%
+      int i;
+      for (i = 1; i < CONTEST_LAST_MEMBER_FIELD; i++) {
+        if (!memb->fields[i]) continue;
+%>
+&quot;<s:v value="contests_get_member_field_name(i)" escape="false" />&quot; <% if (memb->fields[i]->mandatory) { %>mandatory<% } else { %>optional<% } %>
+<%
+      }
+    }
+%></pre></font></td>
+        <td><s:a ac="cnts-edit-reserve-fields-page">Edit</s:a></td>
+        <td>&nbsp;</td>
+    </s:htr>
+<%
+  }
+%>
+
+<%
+  if (phr->ss->show_form_fields) {
+    struct contest_member *memb = 0;
+    if (cnts->members) memb = cnts->members[CONTEST_M_COACH];
+%>
+    <s:htr valign="top" attr="form_row_attrs[row ^= 1]">
+        <td>&quot;Coach&quot; member parameters</td>
+        <td><font size=\"-1\"><pre><%
+    if (!memb) {
+%>minimal count = 0
+maximal count = 0
+initial count = 0
+<%
+    } else {
+%>minimal count = <s:v value="memb->min_count" />
+maximal count = <s:v value="memb->max_count" />
+initial count = <s:v value="memb->init_count" />
+<%
+      int i;
+      for (i = 1; i < CONTEST_LAST_MEMBER_FIELD; i++) {
+        if (!memb->fields[i]) continue;
+%>
+&quot;<s:v value="contests_get_member_field_name(i)" escape="false" />&quot; <% if (memb->fields[i]->mandatory) { %>mandatory<% } else { %>optional<% } %>
+<%
+      }
+    }
+%></pre></font></td>
+        <td><s:a ac="cnts-edit-coach-fields-page">Edit</s:a></td>
+        <td>&nbsp;</td>
+    </s:htr>
+<%
+  }
+%>
+
+<%
+  if (phr->ss->show_form_fields) {
+    struct contest_member *memb = 0;
+    if (cnts->members) memb = cnts->members[CONTEST_M_ADVISOR];
+%>
+    <s:htr valign="top" attr="form_row_attrs[row ^= 1]">
+        <td>&quot;Advisor&quot; member parameters</td>
+        <td><font size=\"-1\"><pre><%
+    if (!memb) {
+%>minimal count = 0
+maximal count = 0
+initial count = 0
+<%
+    } else {
+%>minimal count = <s:v value="memb->min_count" />
+maximal count = <s:v value="memb->max_count" />
+initial count = <s:v value="memb->init_count" />
+<%
+      int i;
+      for (i = 1; i < CONTEST_LAST_MEMBER_FIELD; i++) {
+        if (!memb->fields[i]) continue;
+%>
+&quot;<s:v value="contests_get_member_field_name(i)" escape="false" />&quot; <% if (memb->fields[i]->mandatory) { %>mandatory<% } else { %>optional<% } %>
+<%
+      }
+    }
+%></pre></font></td>
+        <td><s:a ac="cnts-edit-advisor-fields-page">Edit</s:a></td>
+        <td>&nbsp;</td>
+    </s:htr>
+<%
+  }
+%>
+
+<%
+  if (phr->ss->show_form_fields) {
+    struct contest_member *memb = 0;
+    if (cnts->members) memb = cnts->members[CONTEST_M_GUEST];
+%>
+    <s:htr valign="top" attr="form_row_attrs[row ^= 1]">
+        <td>&quot;Guest&quot; member parameters</td>
+        <td><font size=\"-1\"><pre><%
+    if (!memb) {
+%>minimal count = 0
+maximal count = 0
+initial count = 0
+<%
+    } else {
+%>minimal count = <s:v value="memb->min_count" />
+maximal count = <s:v value="memb->max_count" />
+initial count = <s:v value="memb->init_count" />
+<%
+      int i;
+      for (i = 1; i < CONTEST_LAST_MEMBER_FIELD; i++) {
+        if (!memb->fields[i]) continue;
+%>
+&quot;<s:v value="contests_get_member_field_name(i)" escape="false" />&quot; <% if (memb->fields[i]->mandatory) { %>mandatory<% } else { %>optional<% } %>
+<%
+      }
+    }
+%></pre></font></td>
+        <td><s:a ac="cnts-edit-guest-fields-page">Edit</s:a></td>
+        <td>&nbsp;</td>
+    </s:htr>
+<%
+  }
+%>
 
     <s:form>
         <s:htr attr="head_row_attr"><td colspan="4" align="center"><b>HTML headers and footers</b><%
@@ -583,7 +811,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>HTML header file for 'users' CGI-program:</td>
             <td><s:textfield size="48" name="param" value="cnts->users_header_file" /><% if (!cnts->users_header_file) { %>(<i>Not set</i>)<% } %></td>
             <td><s:submit ac="cnts-change-users-header" label="Change" /><s:submit ac="cnts-clear-users-header" label="Clear" />[<s:a ac="cnts-edit-users-header">Edit</s:a>]</td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_USERS_HEADER); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_USERS_HEADER); %>
         </s:htr>
     </s:form>
 <%
@@ -598,7 +826,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>HTML footer file for 'users' CGI-program:</td>
             <td><s:textfield size="48" name="param" value="cnts->users_footer_file" /><% if (!cnts->users_footer_file) { %>(<i>Not set</i>)<% } %></td>
             <td><s:submit ac="cnts-change-users-footer" label="Change" /><s:submit ac="cnts-clear-users-footer" label="Clear" />[<s:a ac="cnts-edit-users-footer">Edit</s:a>]</td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_USERS_FOOTER); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_USERS_FOOTER); %>
         </s:htr>
     </s:form>
 <%
@@ -613,7 +841,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>Copyright notice file:</td>
             <td><s:textfield size="48" name="param" value="cnts->copyright_file" /><% if (!cnts->copyright_file) { %>(<i>Not set</i>)<% } %></td>
             <td><s:submit ac="cnts-change-copyright" label="Change" /><s:submit ac="cnts-clear-copyright" label="Clear" />[<s:a ac="cnts-edit-copyright">Edit</s:a>]</td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_COPYRIGHT); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_COPYRIGHT); %>
         </s:htr>
     </s:form>
 <%
@@ -628,7 +856,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>Participant's welcome message:</td>
             <td><s:textfield size="48" name="param" value="cnts->welcome_file" /><% if (!cnts->welcome_file) { %>(<i>Not set</i>)<% } %></td>
             <td><s:submit ac="cnts-change-welcome" label="Change" /><s:submit ac="cnts-clear-welcome" label="Clear" />[<s:a ac="cnts-edit-welcome">Edit</s:a>]</td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_WELCOME); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_WELCOME); %>
         </s:htr>
     </s:form>
 <%
@@ -643,7 +871,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>Registration welcome message:</td>
             <td><s:textfield size="48" name="param" value="cnts->reg_welcome_file" /><% if (!cnts->reg_welcome_file) { %>(<i>Not set</i>)<% } %></td>
             <td><s:submit ac="cnts-change-reg-welcome" label="Change" /><s:submit ac="cnts-clear-reg-welcome" label="Clear" />[<s:a ac="cnts-edit-reg-welcome">Edit</s:a>]</td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_REG_WELCOME); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_REG_WELCOME); %>
         </s:htr>
     </s:form>
 <%
@@ -669,7 +897,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>HTML attributes for 'users' headers:</td>
             <td><s:textfield size="48" name="param" value="cnts->users_head_style" /><% if (!cnts->users_head_style) { %>(<i>Not set</i>)<% } %></td>
             <td><s:submit ac="cnts-change-users-head-style" label="Change" /><s:submit ac="cnts-clear-users-head-style" label="Clear" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_USERS_HEAD_STYLE); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_USERS_HEAD_STYLE); %>
         </s:htr>
     </s:form>
 <%
@@ -684,7 +912,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>HTML attributes for 'users' paragraphs:</td>
             <td><s:textfield size="48" name="param" value="cnts->users_par_style" /><% if (!cnts->users_par_style) { %>(<i>Not set</i>)<% } %></td>
             <td><s:submit ac="cnts-change-users-par-style" label="Change" /><s:submit ac="cnts-clear-users-par-style" label="Clear" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_USERS_PAR_STYLE); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_USERS_PAR_STYLE); %>
         </s:htr>
     </s:form>
 <%
@@ -699,7 +927,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>HTML attributes for 'users' tables:</td>
             <td><s:textfield size="48" name="param" value="cnts->users_table_style" /><% if (!cnts->users_table_style) { %>(<i>Not set</i>)<% } %></td>
             <td><s:submit ac="cnts-change-users-table-style" label="Change" /><s:submit ac="cnts-clear-users-table-style" label="Clear" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_USERS_TABLE_STYLE); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_USERS_TABLE_STYLE); %>
         </s:htr>
     </s:form>
 <%
@@ -714,7 +942,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>HTML attributes for 'users' verbatim text:</td>
             <td><s:textfield size="48" name="param" value="cnts->users_verb_style" /><% if (!cnts->users_verb_style) { %>(<i>Not set</i>)<% } %></td>
             <td><s:submit ac="cnts-change-users-verb-style" label="Change" /><s:submit ac="cnts-clear-users-verb-style" label="Clear" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_USERS_VERB_STYLE); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_USERS_VERB_STYLE); %>
         </s:htr>
     </s:form>
 <%
@@ -729,7 +957,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>Format specification for users table:</td>
             <td><s:textfield size="48" name="param" value="cnts->users_table_format" /><% if (!cnts->users_table_format) { %>(<i>Not set</i>)<% } %></td>
             <td><s:submit ac="cnts-change-users-table-format" label="Change" /><s:submit ac="cnts-clear-users-table-format" label="Clear" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_USERS_TABLE_FORMAT); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_USERS_TABLE_FORMAT); %>
         </s:htr>
     </s:form>
 <%
@@ -744,7 +972,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>Format specification for users table (En):</td>
             <td><s:textfield size="48" name="param" value="cnts->users_table_format_en" /><% if (!cnts->users_table_format_en) { %>(<i>Not set</i>)<% } %></td>
             <td><s:submit ac="cnts-change-users-table-format-en" label="Change" /><s:submit ac="cnts-clear-users-table-format-en" label="Clear" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_USERS_TABLE_FORMAT_EN); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_USERS_TABLE_FORMAT_EN); %>
         </s:htr>
     </s:form>
 <%
@@ -759,7 +987,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>Legend specification for users table:</td>
             <td><s:textfield size="48" name="param" value="cnts->users_table_legend" /><% if (!cnts->users_table_legend) { %>(<i>Not set</i>)<% } %></td>
             <td><s:submit ac="cnts-change-users-table-legend" label="Change" /><s:submit ac="cnts-clear-users-table-legend" label="Clear" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_USERS_TABLE_LEGEND); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_USERS_TABLE_LEGEND); %>
         </s:htr>
     </s:form>
 <%
@@ -774,7 +1002,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>Legend specification for users table (En):</td>
             <td><s:textfield size="48" name="param" value="cnts->users_table_legend_en" /><% if (!cnts->users_table_legend_en) { %>(<i>Not set</i>)<% } %></td>
             <td><s:submit ac="cnts-change-users-table-legend-en" label="Change" /><s:submit ac="cnts-clear-users-table-legend-en" label="Clear" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_USERS_TABLE_LEGEND_EN); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_USERS_TABLE_LEGEND_EN); %>
         </s:htr>
     </s:form>
 <%
@@ -789,7 +1017,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>Additional comment for user name field:</td>
             <td><s:textfield size="48" name="param" value="cnts->user_name_comment" /><% if (!cnts->user_name_comment) { %>(<i>Not set</i>)<% } %></td>
             <td><s:submit ac="cnts-change-register-name-comment" label="Change" /><s:submit ac="cnts-clear-register-name-comment" label="Clear" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_REGISTER_NAME_COMMENT); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_REGISTER_NAME_COMMENT); %>
         </s:htr>
     </s:form>
 <%
@@ -804,7 +1032,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>Allowed programming languages:</td>
             <td><s:textfield size="48" name="param" value="cnts->allowed_languages" /><% if (!cnts->allowed_languages) { %>(<i>Not set</i>)<% } %></td>
             <td><s:submit ac="cnts-change-allowed-languages" label="Change" /><s:submit ac="cnts-clear-allowed-languages" label="Clear" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_ALLOWED_LANGUAGES); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_ALLOWED_LANGUAGES); %>
         </s:htr>
     </s:form>
 <%
@@ -819,7 +1047,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>Allowed regions:</td>
             <td><s:textfield size="48" name="param" value="cnts->allowed_regions" /><% if (!cnts->allowed_regions) { %>(<i>Not set</i>)<% } %></td>
             <td><s:submit ac="cnts-change-allowed-regions" label="Change" /><s:submit ac="cnts-clear-allowed-regions" label="Clear" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_ALLOWED_REGIONS); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_ALLOWED_REGIONS); %>
         </s:htr>
     </s:form>
 <%
@@ -845,7 +1073,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>CHECK FAILED e-mail notification address:</td>
             <td><s:textfield size="48" name="param" value="cnts->cf_notify_email" /><% if (!cnts->cf_notify_email) { %>(<i>Not set</i>)<% } %></td>
             <td><s:submit ac="cnts-change-cf-notify-email" label="Change" /><s:submit ac="cnts-clear-cf-notify-email" label="Clear" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_CF_NOTIFY_EMAIL); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_CF_NOTIFY_EMAIL); %>
         </s:htr>
     </s:form>
 <%
@@ -860,7 +1088,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>Clar request e-mail notification address:</td>
             <td><s:textfield size="48" name="param" value="cnts->clar_notify_email" /><% if (!cnts->clar_notify_email) { %>(<i>Not set</i>)<% } %></td>
             <td><s:submit ac="cnts-change-clar-notify-email" label="Change" /><s:submit ac="cnts-clear-clar-notify-email" label="Clear" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_CLAR_NOTIFY_EMAIL); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_CLAR_NOTIFY_EMAIL); %>
         </s:htr>
     </s:form>
 <%
@@ -875,7 +1103,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>Daily statistics email address:</td>
             <td><s:textfield size="48" name="param" value="cnts->daily_stat_email" /><% if (!cnts->daily_stat_email) { %>(<i>Not set</i>)<% } %></td>
             <td><s:submit ac="cnts-change-daily-stat-email" label="Change" /><s:submit ac="cnts-clear-daily-stat-email" label="Clear" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_DAILY_STAT_EMAIL); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_DAILY_STAT_EMAIL); %>
         </s:htr>
     </s:form>
 <%
@@ -890,7 +1118,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>Template for new logins:</td>
             <td><s:textfield size="48" name="param" value="cnts->login_template" /><% if (!cnts->login_template) { %>(<i>Not set</i>)<% } %></td>
             <td><s:submit ac="cnts-change-login-template" label="Change" /><s:submit ac="cnts-clear-login-template" label="Clear" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_LOGIN_TEMPLATE); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_LOGIN_TEMPLATE); %>
         </s:htr>
     </s:form>
 <%
@@ -905,7 +1133,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>Login auto-assign options:</td>
             <td><s:textfield size="48" name="param" value="cnts->login_template_options" /><% if (!cnts->login_template_options) { %>(<i>Not set</i>)<% } %></td>
             <td><s:submit ac="cnts-change-login-template-options" label="Change" /><s:submit ac="cnts-clear-login-template-options" label="Clear" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_LOGIN_TEMPLATE_OPTIONS); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_LOGIN_TEMPLATE_OPTIONS); %>
         </s:htr>
     </s:form>
 <%
@@ -931,7 +1159,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>The directory permissions (octal):</td>
             <td><s:textfield size="48" name="param" value="cnts->dir_mode" /><% if (!cnts->dir_mode) { %>(<i>Not set</i>)<% } %></td>
             <td><s:submit ac="cnts-change-dir-mode" label="Change" /><s:submit ac="cnts-clear-dir-mode" label="Clear" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_DIR_MODE); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_DIR_MODE); %>
         </s:htr>
     </s:form>
 <%
@@ -946,7 +1174,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>The directory group:</td>
             <td><s:textfield size="48" name="param" value="cnts->dir_group" /><% if (!cnts->dir_group) { %>(<i>Not set</i>)<% } %></td>
             <td><s:submit ac="cnts-change-dir-group" label="Change" /><s:submit ac="cnts-clear-dir-group" label="Clear" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_DIR_GROUP); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_DIR_GROUP); %>
         </s:htr>
     </s:form>
 <%
@@ -961,7 +1189,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>The file permissions (octal):</td>
             <td><s:textfield size="48" name="param" value="cnts->file_mode" /><% if (!cnts->file_mode) { %>(<i>Not set</i>)<% } %></td>
             <td><s:submit ac="cnts-change-file-mode" label="Change" /><s:submit ac="cnts-clear-file-mode" label="Clear" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_FILE_MODE); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_FILE_MODE); %>
         </s:htr>
     </s:form>
 <%
@@ -976,7 +1204,7 @@ static const unsigned char * const form_row_attrs[]=
             <td>The file group:</td>
             <td><s:textfield size="48" name="param" value="cnts->file_group" /><% if (!cnts->file_group) { %>(<i>Not set</i>)<% } %></td>
             <td><s:submit ac="cnts-change-file-group" label="Change" /><s:submit ac="cnts-clear-file-group" label="Clear" /></td>
-            <% print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_FILE_GROUP); %>
+            <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_FILE_GROUP); %>
         </s:htr>
     </s:form>
 <%
