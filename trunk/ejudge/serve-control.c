@@ -966,9 +966,12 @@ action_create_contest_2(void)
                     "%s: %s@%s, editing new contest", "serve-control", user_login, http_host);
   fflush(stdout);
 
+  r = 0;
+  /*
   r = super_clnt_create_contest(super_serve_fd, 1, SSERV_CMD_CREATE_CONTEST_2,
                                 num_mode, templ_mode, contest_id, templ_id,
                                 self_url, hidden_vars, "");
+  */
   if (r < 0) {
     printf("<h2><font color=\"red\">%s</font></h2>\n",
            super_proto_strerror(-r));
@@ -2240,9 +2243,6 @@ main(int argc, char *argv[])
     break;
   case SSERV_CMD_SHOW_UNMNG:
     action_simple_top_command(SSERV_CMD_SHOW_UNMNG);
-    break;
-  case SSERV_CMD_CREATE_CONTEST_2:
-    action_create_contest_2();
     break;
 
   case SSERV_CMD_CNTS_EDIT_USERS_HEADER:

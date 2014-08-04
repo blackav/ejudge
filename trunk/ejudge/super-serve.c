@@ -1685,7 +1685,7 @@ cmd_main_page(struct client_state *p, int len,
   send_reply(p, SSERV_RPL_OK);
 }
 
-static void
+void
 cmd_create_contest(struct client_state *p, int len,
                    struct prot_super_pkt_create_contest *pkt)
 {
@@ -1737,7 +1737,9 @@ cmd_create_contest(struct client_state *p, int len,
     return send_reply(p, -SSERV_ERR_SYSTEM_ERROR);
   }
 
+  (void) sstate;
   switch (pkt->b.id) {
+    /*
   case SSERV_CMD_CREATE_CONTEST_2:
     r = super_html_create_contest_2(f, p->priv_level, p->user_id, p->login,
                                     userlist_login,
@@ -1746,6 +1748,7 @@ cmd_create_contest(struct client_state *p, int len,
                                     pkt->contest_id, pkt->templ_id,
                                     self_url_ptr, hidden_vars_ptr, extra_args_ptr);
     break;
+    */
   default:
     abort();
   }
@@ -3031,7 +3034,6 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_HIDE_CLOSED] = { cmd_simple_top_command },
   [SSERV_CMD_SHOW_UNMNG] = { cmd_simple_top_command },
   [SSERV_CMD_HIDE_UNMNG] = { cmd_simple_top_command },
-  [SSERV_CMD_CREATE_CONTEST_2] = { cmd_create_contest },
   [SSERV_CMD_CNTS_BASIC_VIEW] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_ADVANCED_VIEW] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_SHOW_HTML_HEADERS] = { cmd_simple_top_command },
