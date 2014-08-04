@@ -2,10 +2,10 @@
 /* $Id$ */
 %><%@include "includes.csp"
 %><%
-%><%@set getter_name = "csp_get_cnts_edit_contest_xml_page"
+%><%@set getter_name = "csp_get_cnts_edit_cur_contest_page"
 %><%@set ac_prefix = "SSERV_CMD_"
 %><%@set err_prefix = "SSERV_ERR_"
-%><%@page csp_view_cnts_edit_contest_xml_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@page csp_view_cnts_edit_cur_contest_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 %><%@include "stdvars.csp"
 %><%
     unsigned char subtitle_buf[1024];
