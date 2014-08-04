@@ -37,7 +37,7 @@ static const unsigned char * const form_row_attrs[]=
     <td><s:a ac="main-page"><s:_>To the top (postpone editing)</s:_></s:a></td>
     <td><%
   if (cur_page != 1) {
-%><s:a ac="new-cnts-edit-current-page"><%
+%><s:a ac="new-cnts-edit-cur-contest-page"><%
   }
 %><s:_>General settings (contest.xml)</s:_><%
   if (cur_page != 1) {
