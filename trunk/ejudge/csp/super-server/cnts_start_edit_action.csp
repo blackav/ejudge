@@ -1,0 +1,46 @@
+<%
+/* $Id$ */
+%><%@include "includes.csp"
+%><%@set getter_name = "csp_get_cnts_start_edit_action"
+%><%@set ac_prefix = "SSERV_CMD_"
+%><%@page csp_view_cnts_start_edit_action(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "stdvars.csp"
+%><%
+    opcap_t caps = 0;
+    if (phr->priv_level != PRIV_LEVEL_ADMIN) FAIL(SSERV_ERR_PERMISSION_DENIED);
+    if (ejudge_cfg_opcaps_find(phr->config, phr->login, &caps) < 0) FAIL(SSERV_ERR_PERMISSION_DENIED);
+    if (opcaps_check(caps, OPCAP_EDIT_CONTEST) < 0) FAIL(SSERV_ERR_PERMISSION_DENIED);
+
+    if (phr->ss->edited_cnts && phr->ss->edited_cnts->id == phr->contest_id) {
+        retval = SSERV_CMD_CNTS_EDIT_CUR_CONTEST_PAGE;
+        goto cleanup;
+    }
+    if (phr->ss->edited_cnts) {
+        retval = SSERV_CMD_CONTEST_ALREADY_EDITED_PAGE;
+        goto cleanup;
+    }
+    const struct sid_state *other_ss = super_serve_sid_state_get_cnts_editor(phr->contest_id);
+    if (other_ss) {
+        retval = SSERV_CMD_CONTEST_LOCKED_PAGE;
+        goto cleanup;
+    }
+    struct contest_desc *rw_cnts = 0;
+    if (contests_load(phr->contest_id, &rw_cnts) < 0 || !rw_cnts) {
+        retval = -SSERV_ERR_INVALID_CONTEST;
+        goto cleanup;
+    }
+    phr->ss->edited_cnts = rw_cnts;
+    super_html_load_serve_cfg(rw_cnts, phr->config, phr->ss);
+/*
+    if (pkt->b.id == SSERV_CMD_EDIT_SERVE_CFG_PROB) {
+      activate_problem(sstate, pkt->flags);
+      r = super_html_edit_problems(f, p->priv_level, p->user_id, p->login,
+                                   p->cookie, &p->ip, config, sstate,
+                                   self_url_ptr, hidden_vars_ptr,
+                                   extra_args_ptr);
+    }
+*/
+    retval = SSERV_CMD_CNTS_EDIT_CUR_CONTEST_PAGE;
+    goto cleanup;
+cleanup: ;
+%>
