@@ -6671,6 +6671,7 @@ static const unsigned char * const external_action_names[SSERV_CMD_LAST] =
   [SSERV_CMD_CONTEST_PAGE] = "contest_page",
   [SSERV_CMD_CONTEST_XML_PAGE] = "contest_xml_page",
   [SSERV_CMD_CREATE_CONTEST_PAGE] = "create_contest_page",
+  [SSERV_CMD_CREATE_CONTEST_2_ACTION] = "create_contest_2_action",
   [SSERV_CMD_CONTEST_ALREADY_EDITED_PAGE] = "contest_already_edited_page",
   [SSERV_CMD_CONTEST_LOCKED_PAGE] = "contest_locked_page",
   [SSERV_CMD_CHECK_TESTS_PAGE] = "check_tests_page",
@@ -6899,7 +6900,7 @@ redo_action:
         if (phr->client_key) {
           fprintf(tmp_f, "Set-Cookie: EJSID=%016llx; Path=/\n", phr->client_key);
         }
-        fprintf(tmp_f, "Location: %s\n", phr->redirect);
+        fprintf(tmp_f, "Location: %s\n\n", phr->redirect);
         fclose(tmp_f); tmp_f = NULL;
 
         xfree(phr->redirect); phr->redirect = NULL;
@@ -6912,8 +6913,8 @@ redo_action:
         xfree(phr->out_t); phr->out_t = NULL;
         phr->out_z = 0;
 
-        return;
       }
+      return;
     }
   }
 
