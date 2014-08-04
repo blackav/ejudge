@@ -2984,6 +2984,7 @@ cmd_http_request(
   (void) q;
   info("cmd_http_request: %zu", out_z);
   send_reply(p, SSERV_RPL_OK);
+  xfree(phr->redirect);
   xfree(phr);
 
   //cleanup:
@@ -3001,6 +3002,7 @@ cmd_http_request_continuation(struct http_request_info *phr)
   xfree(phr->log_t); phr->log_t = NULL; phr->log_z = 0;
   phr->out_t = NULL; phr->out_z = 0;
   send_reply(p, SSERV_RPL_OK);
+  xfree(phr->redirect);
   xfree(phr);
 }
 

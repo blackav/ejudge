@@ -3367,6 +3367,119 @@ handle_a_close(
 }
 
 static int
+handle_redirect_open(
+        FILE *log_f,
+        TypeContext *cntx,
+        ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f)
+{
+    HtmlElement *elem = ps->el_stack->el;
+    unsigned char buf[1024];
+    int r;
+
+    HtmlAttribute *script_attr = html_element_find_attribute(elem, "script");
+    int nosid_flag = html_attribute_get_bool(html_element_find_attribute(elem, "nosid"), 0);
+
+    fprintf(prg_f, "{\n"
+            "char *red_p = 0;\n"
+            "size_t red_z = 0;\n"
+            "FILE *sav_f = out_f;\n"
+            "out_f = open_memstream(&red_p, &red_z);\n");
+
+    HtmlAttribute *attr = html_element_find_attribute(elem, "url");
+    if (attr) {
+        HtmlElement *url_elem = processor_state_find_named_url(ps, tc_get_ident(cntx, attr->value));
+        if (!url_elem) {
+            parser_error_2(ps, "URL '%s' is undefined", attr->value);
+            return -1;
+        }
+        script_attr = html_element_find_attribute(url_elem, "script");
+        nosid_flag = html_attribute_get_bool(html_element_find_attribute(url_elem, "nosid"), 0);
+        r = process_ac_attr(log_f, cntx, ps, url_elem, buf, sizeof(buf));
+        if (r < 0) return r;
+        if (!r) {
+            parser_error_2(ps, "ac attribute is undefined");
+            return -1;
+        }
+
+        if (script_attr) {
+            fprintf(prg_f, "hr_%s_redirect(out_f, phr);\n", script_attr->value);
+            if (nosid_flag) {
+                fprintf(prg_f, "sep = hr_redirect_4(out_f, phr, %s);\n", buf);
+            } else {
+                fprintf(prg_f, "sep = hr_redirect_3(out_f, phr, %s);\n", buf);
+            }
+        } else {
+            fprintf(prg_f, "sep = hr_redirect_2(out_f, phr, %s);\n", buf);
+        }
+        for (HtmlElement *child = url_elem->first_child; child; child = child->next_sibling) {
+            HtmlAttribute *full_check_expr = html_element_find_attribute(child, "fullcheckexpr");
+            if (full_check_expr) {
+                fprintf(prg_f, "if (%s) {\n", full_check_expr->value);
+            }
+            fprintf(prg_f, "fputs(sep, out_f); sep = \"&\";\n");
+            attr = html_element_find_attribute(child, "name");
+            if (attr) {
+                char *str_p = 0;
+                size_t str_z = 0;
+                FILE *str_f = open_memstream(&str_p, &str_z);
+                fprintf(str_f, "%s=", attr->value);
+                fclose(str_f); str_f = 0;
+                handle_html_string(prg_f, txt_f, log_f, str_p);
+                free(str_p); str_p = 0; str_z = 0;
+                attr = html_element_find_attribute(child, "value");
+                if (attr) {
+                    TypeInfo *t = NULL;
+                    r = parse_c_expression(ps, cntx, log_f, attr->value, &t, ps->pos);
+                    if (r >= 0) {
+                        /*
+                        fprintf(log_f, "Expression type: ");
+                        tc_print_2(log_f, t, 2);
+                        fprintf(log_f, "\n");
+                        */
+
+                        processor_state_invoke_type_handler(log_f, cntx, ps, txt_f, prg_f, attr->value, child, t);
+                    }
+                }
+            }
+            if (full_check_expr) {
+                fprintf(prg_f, "}\n");
+            }
+        }
+        fprintf(prg_f, "(void) sep;\n");
+        fprintf(prg_f, "fclose(out_f);\n"
+                "out_f = sav_f;\n"
+                "phr->redirect = red_p;\n"
+                "red_p = 0; red_z = 0;\n"
+                "}\n");
+
+        return 0;
+    }
+
+    r = process_ac_attr(log_f, cntx, ps, elem, buf, sizeof(buf));
+    if (r < 0) return r;
+    if (r > 0) {
+        if (script_attr) {
+            fprintf(prg_f, "hr_%s_redirect(out_f, phr);\n", script_attr->value);
+            if (nosid_flag) {
+                fprintf(prg_f, "sep = hr_redirect_4(out_f, phr, %s);\n", buf);
+            } else {
+                fprintf(prg_f, "sep = hr_redirect_3(out_f, phr, %s);\n", buf);
+            }
+        } else {
+            fprintf(prg_f, "sep = hr_redirect_2(out_f, phr, %s);\n", buf);
+        }
+        fprintf(prg_f, "fclose(out_f);\n"
+                "out_f = sav_f;\n"
+                "phr->redirect = red_p;\n"
+                "red_p = 0; red_z = 0;\n"
+                "}\n");
+    }
+    return 0;
+}
+
+static int
 handle_htr_open(
         FILE *log_f,
         TypeContext *cntx,
@@ -4404,6 +4517,7 @@ static const struct ElementInfo element_handlers[] =
     { "s:read", handle_read_open, NULL },
     { "s:numselect", handle_numselect_open, NULL },
     { "s:htr", handle_htr_open, handle_htr_close },
+    { "s:redirect", handle_redirect_open, NULL },
 
     { NULL, NULL, NULL },
 };

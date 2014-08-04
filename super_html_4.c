@@ -6889,18 +6889,31 @@ redo_action:
       fclose(phr->log_f); phr->log_f = NULL;
       xfree(phr->log_t); phr->log_t = NULL;
       phr->log_z = 0;
-
       fclose(phr->out_f); phr->out_f = NULL;
 
-      FILE *tmp_f = open_memstream(p_out_t, p_out_z);
-      fprintf(tmp_f, "Content-type: %s\n\n", phr->content_type);
-      fwrite(phr->out_t, 1, phr->out_z, tmp_f);
-      fclose(tmp_f); tmp_f = NULL;
+      if (phr->redirect) {
+        xfree(phr->out_t); phr->out_t = NULL;
+        phr->out_z = 0;
 
-      xfree(phr->out_t); phr->out_t = NULL;
-      phr->out_z = 0; phr->out_z = 0;
+        FILE *tmp_f = open_memstream(p_out_t, p_out_z);
+        if (phr->client_key) {
+          fprintf(tmp_f, "Set-Cookie: EJSID=%016llx; Path=/\n", phr->client_key);
+        }
+        fprintf(tmp_f, "Location: %s\n", phr->redirect);
+        fclose(tmp_f); tmp_f = NULL;
 
-      return;
+        xfree(phr->redirect); phr->redirect = NULL;
+      } else {
+        FILE *tmp_f = open_memstream(p_out_t, p_out_z);
+        fprintf(tmp_f, "Content-type: %s\n\n", phr->content_type);
+        fwrite(phr->out_t, 1, phr->out_z, tmp_f);
+        fclose(tmp_f); tmp_f = NULL;
+
+        xfree(phr->out_t); phr->out_t = NULL;
+        phr->out_z = 0;
+
+        return;
+      }
     }
   }
 
