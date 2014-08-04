@@ -386,6 +386,34 @@ hr_submit_button(
     fprintf(out_f, "\" value=\"%s\" />", label);
 }
 
+const unsigned char *
+hr_redirect_2(
+        FILE *out_f,
+        const struct http_request_info *phr,
+        int action)
+{
+    if (phr->rest_mode > 0 && symbolic_action_table) {
+        if (action < 0 || action >= symbolic_action_table_size) action = 0;
+        fprintf(out_f, "%s/%s", phr->self_url, symbolic_action_table[action]);
+        if (phr->session_id) {
+            fprintf(out_f, "/S%016llx", phr->session_id);
+        }
+        return "?";
+    } else {
+        const unsigned char *sep = "?";
+        fprintf(out_f, "%s", phr->self_url);
+        if (phr->session_id) {
+            fprintf(out_f, "%sSID=%016llx", sep, phr->session_id);
+            sep = "&";
+        }
+        if (action > 0) {
+            fprintf(out_f, "%saction=%d", sep, action);
+            sep = "&";
+        }
+        return sep;
+    }
+}
+
 /*
  * Local variables:
  *  c-basic-offset: 4

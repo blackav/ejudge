@@ -92,6 +92,7 @@ struct http_request_info
   int allow_empty_output;
   int no_reply;
   int error_code;
+  unsigned char *redirect;
 
   // content type
   unsigned char content_type[128];
@@ -221,6 +222,12 @@ hr_submit_button(
         const unsigned char *var_name,
         int action,
         const unsigned char *label);
+
+const unsigned char *
+hr_redirect_2(
+        FILE *out_f,
+        const struct http_request_info *phr,
+        int action);
 
 #endif /* __HTTP_REQUEST_H__ */
 
