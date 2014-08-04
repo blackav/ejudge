@@ -619,6 +619,22 @@ print_help_url(FILE *f, int action)
   }
 }
 
+void
+super_html_print_help_url(FILE *f, int action)
+{
+  const unsigned char *help_url = 0;
+
+  if (action > 0 && action < SSERV_CMD_LAST) {
+    help_url = action_to_help_url_map[action];
+  }
+  if (help_url) {
+    fprintf(f, "<td><a target=\"_blank\" href=\"http://www.ejudge.ru/wiki/index.php/%s\">%s</a></td>",
+            help_url, "Help");
+  } else {
+    fprintf(f, "<td>&nbsp;</td>");
+  }
+}
+
 /*
 static void
 print_language_help_url(FILE *f, int action)

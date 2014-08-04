@@ -334,6 +334,8 @@ super_html_http_request(
         struct http_request_info *hr);
 
 struct contest_access;
+void
+super_html_unparse_access_2(FILE *out_f, const struct contest_access *acc);
 unsigned char *
 super_html_unparse_access(const struct contest_access *acc);
 struct contest_access *
@@ -453,5 +455,8 @@ super_html_set_cnts_file_perms(
         FILE *log_f,
         const unsigned char *path,
         const struct contest_desc *cnts);
+
+void
+super_html_print_help_url(FILE *f, int action);
 
 #endif /* __SUPER_HTML_H__ */
