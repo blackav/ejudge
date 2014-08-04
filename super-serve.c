@@ -1513,7 +1513,6 @@ cmd_main_page(struct client_state *p, int len,
     
     // Current contest editing commands are allowed to anybody,
     // because the editing mode cannot be entered without privilege
-  case SSERV_CMD_EDIT_CURRENT_CONTEST:
   case SSERV_CMD_CNTS_EDIT_USERS_HEADER:
   case SSERV_CMD_CNTS_EDIT_USERS_FOOTER:
   case SSERV_CMD_CNTS_EDIT_REGISTER_HEADER:
@@ -1560,11 +1559,6 @@ cmd_main_page(struct client_state *p, int len,
 
   // handle command
   switch (pkt->b.id) {
-  case SSERV_CMD_EDIT_CURRENT_CONTEST:
-    r = super_html_edit_contest_page(f, p->priv_level, p->user_id, p->login,
-                                     p->cookie, &p->ip, config, sstate,
-                                     self_url_ptr, hidden_vars_ptr, extra_args_ptr);
-    break;
   case SSERV_CMD_EDIT_CONTEST_XML:
   case SSERV_CMD_EDIT_SERVE_CFG_PROB:
     if (sstate->edited_cnts && sstate->edited_cnts->id == cnts->id) {
@@ -3044,7 +3038,6 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_SHOW_UNMNG] = { cmd_simple_top_command },
   [SSERV_CMD_HIDE_UNMNG] = { cmd_simple_top_command },
   [SSERV_CMD_CREATE_CONTEST_2] = { cmd_create_contest },
-  [SSERV_CMD_EDIT_CURRENT_CONTEST] = { cmd_main_page },
   [SSERV_CMD_CNTS_BASIC_VIEW] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_ADVANCED_VIEW] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_SHOW_HTML_HEADERS] = { cmd_simple_top_command },
