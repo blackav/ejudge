@@ -25,14 +25,11 @@ extern const opcap_t OPCAP_OBSERVER_PERMS;
 extern const opcap_t OPCAP_JUDGE_PERMS;
 extern const opcap_t OPCAP_MASTER_PERMS;
 
-unsigned char *
-opcaps_unparse(int left_margin, int max_width, opcap_t cap)
+void
+opcaps_unparse_2(FILE *out_f, int left_margin, int max_width, opcap_t cap)
 {
-  char *out_str = 0;
-  size_t out_len = 0;
   int first_flag = 1;
   int cur_pos = 0, i, j;
-  FILE *f;
   const unsigned char *perm_set = 0;
 
   // check, that capability set is a subset of predefined sets
@@ -50,17 +47,16 @@ opcaps_unparse(int left_margin, int max_width, opcap_t cap)
     cap &= ~OPCAP_OBSERVER_PERMS;
   }
 
-  f = open_memstream(&out_str, &out_len);
   if (perm_set) {
     if (first_flag) {
       first_flag = 0;
-      for (j = 0; j < left_margin; j++) putc(' ', f);
+      for (j = 0; j < left_margin; j++) putc(' ', out_f);
       cur_pos = left_margin;
     }
-    fprintf(f, "%s,", perm_set);
+    fprintf(out_f, "%s,", perm_set);
     cur_pos += strlen(perm_set) + 1;
     if (cur_pos >= max_width) {
-      fprintf(f, "\n");
+      fprintf(out_f, "\n");
       first_flag = 1;
     }
   }
@@ -68,17 +64,28 @@ opcaps_unparse(int left_margin, int max_width, opcap_t cap)
     if (!(cap & (1ULL << i))) continue;
     if (first_flag) {
       first_flag = 0;
-      for (j = 0; j < left_margin; j++) putc(' ', f);
+      for (j = 0; j < left_margin; j++) putc(' ', out_f);
       cur_pos = left_margin;
     }
-    fprintf(f, "%s,", opcaps_cap_list[i]);
+    fprintf(out_f, "%s,", opcaps_cap_list[i]);
     cur_pos += strlen(opcaps_cap_list[i]) + 1;
     if (cur_pos >= max_width) {
-      fprintf(f, "\n");
+      fprintf(out_f, "\n");
       first_flag = 1;
     }
   }
-  if (!first_flag) fprintf(f, "\n");
+  if (!first_flag) fprintf(out_f, "\n");
+}
+
+unsigned char *
+opcaps_unparse(int left_margin, int max_width, opcap_t cap)
+{
+  char *out_str = 0;
+  size_t out_len = 0;
+  FILE *f;
+
+  f = open_memstream(&out_str, &out_len);
+  opcaps_unparse_2(f, left_margin, max_width, cap);
   close_memstream(f);
   return out_str;
 }
@@ -86,6 +93,5 @@ opcaps_unparse(int left_margin, int max_width, opcap_t cap)
 /*
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")
  * End:
  */

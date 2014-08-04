@@ -109,6 +109,7 @@ opcaps_check(opcap_t cap, int bit)
 
 int opcaps_parse(unsigned char const *str, opcap_t *pcap);
 
+void opcaps_unparse_2(FILE *out_f, int left_margin, int max_width, opcap_t cap);
 unsigned char *opcaps_unparse(int left_margin, int max_width, opcap_t cap);
 
 const unsigned char *opcaps_get_name(int cap);
