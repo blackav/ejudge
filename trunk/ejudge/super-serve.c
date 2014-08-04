@@ -1559,10 +1559,11 @@ cmd_main_page(struct client_state *p, int len,
   switch (pkt->b.id) {
   case SSERV_CMD_EDIT_SERVE_CFG_PROB:
     if (sstate->edited_cnts && sstate->edited_cnts->id == cnts->id) {
-      r = super_html_edit_contest_page(f, p->priv_level, p->user_id, p->login,
-                                       p->cookie, &p->ip, config, sstate,
-                                       self_url_ptr, hidden_vars_ptr,
-                                       extra_args_ptr);
+      activate_problem(sstate, pkt->flags);
+      r = super_html_edit_problems(f, p->priv_level, p->user_id, p->login,
+                                   p->cookie, &p->ip, config, sstate,
+                                   self_url_ptr, hidden_vars_ptr,
+                                   extra_args_ptr);
       break;
     }
     if (sstate->edited_cnts) {
@@ -1586,17 +1587,11 @@ cmd_main_page(struct client_state *p, int len,
     }
     sstate->edited_cnts = rw_cnts;
     super_html_load_serve_cfg(rw_cnts, config, sstate);
-    if (pkt->b.id == SSERV_CMD_EDIT_SERVE_CFG_PROB) {
-      activate_problem(sstate, pkt->flags);
-      r = super_html_edit_problems(f, p->priv_level, p->user_id, p->login,
-                                   p->cookie, &p->ip, config, sstate,
-                                   self_url_ptr, hidden_vars_ptr,
-                                   extra_args_ptr);
-    } else {
-      r = super_html_edit_contest_page(f, p->priv_level, p->user_id, p->login,
-                                       p->cookie, &p->ip, config, sstate,
-                                       self_url_ptr, hidden_vars_ptr, extra_args_ptr);
-    }
+    activate_problem(sstate, pkt->flags);
+    r = super_html_edit_problems(f, p->priv_level, p->user_id, p->login,
+                                 p->cookie, &p->ip, config, sstate,
+                                 self_url_ptr, hidden_vars_ptr,
+                                 extra_args_ptr);
     break;
 
   case SSERV_CMD_CNTS_EDIT_USERS_HEADER:
