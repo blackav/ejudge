@@ -37,7 +37,7 @@
 <div class="icons-menu-txt" style="margin-top: 5px;">
  <%
     if (phr->ss->edited_cnts) {
-%><s:a ac="edit-current-contest"><s:_>[Edit current contest]</s:_></s:a><%
+%><s:a ac="cnts-edit-cur-contest-page"><s:_>[Edit current contest]</s:_></s:a><%
     }
 %>
 <s:a ac="create-new-contest-page"><s:_>[Create new contest (New interface)]</s:_></s:a>

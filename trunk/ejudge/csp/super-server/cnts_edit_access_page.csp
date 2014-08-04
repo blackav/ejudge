@@ -186,7 +186,7 @@ static const unsigned char * const form_row_attrs[]=
 
 <table border="0"><tr>
     <td><s:a ac="main-page">To the top</s:a></td>
-    <td><s:a ac="edit-current-contest">Back</s:a></td>
+    <td><s:a ac="cnts-edit-cur-contest-page">Back</s:a></td>
 </tr></table>
 
 <%@include "footer.csp"
