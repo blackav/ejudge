@@ -495,7 +495,7 @@ super_html_report_error(FILE *f,
           html_hyperref(hbuf, sizeof(hbuf), session_id, self_url,extra_args,0));
   fprintf(f, "<td>%sBack</a></td>",
           html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
-                        "action=%d", SSERV_CMD_NEW_CNTS_EDIT_CUR_CONTEST_PAGE));
+                        "action=%d", SSERV_CMD_CNTS_EDIT_CUR_CONTEST_PAGE));
   fprintf(f, "</tr></table>\n");
   return 0;
 }
@@ -519,7 +519,7 @@ super_html_contest_page_menu(FILE *f,
                                    "action=%d", SSERV_CMD_EDIT_CURRENT_CONTEST));
     */
     fprintf(f, "%s", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
-                                   "action=%d", SSERV_CMD_NEW_CNTS_EDIT_CUR_CONTEST_PAGE));
+                                   "action=%d", SSERV_CMD_CNTS_EDIT_CUR_CONTEST_PAGE));
   }
   fprintf(f, "General settings (contest.xml)");
   if (cur_page != 1) {
@@ -2269,7 +2269,7 @@ super_html_edit_template_file(
     commit_action = SSERV_CMD_CNTS_SAVE_USERS_HEADER;
     reread_action = SSERV_CMD_CNTS_CLEAR_USERS_HEADER_TEXT;
     clear_action = SSERV_CMD_CNTS_CLEAR_USERS_HEADER_TEXT;
-    back_action = SSERV_CMD_NEW_CNTS_EDIT_CUR_CONTEST_PAGE;
+    back_action = SSERV_CMD_CNTS_EDIT_CUR_CONTEST_PAGE;
     help_txt = super_html_template_help_1;
     break;
   case SSERV_CMD_CNTS_EDIT_USERS_FOOTER:
@@ -2283,7 +2283,7 @@ super_html_edit_template_file(
     commit_action = SSERV_CMD_CNTS_SAVE_USERS_FOOTER;
     reread_action = SSERV_CMD_CNTS_CLEAR_USERS_FOOTER_TEXT;
     clear_action = SSERV_CMD_CNTS_CLEAR_USERS_FOOTER_TEXT;
-    back_action = SSERV_CMD_NEW_CNTS_EDIT_CUR_CONTEST_PAGE;
+    back_action = SSERV_CMD_CNTS_EDIT_CUR_CONTEST_PAGE;
     help_txt = super_html_template_help_1;
     break;
   case SSERV_CMD_CNTS_EDIT_REGISTER_HEADER:
@@ -2297,7 +2297,7 @@ super_html_edit_template_file(
     commit_action = SSERV_CMD_CNTS_SAVE_REGISTER_HEADER;
     reread_action = SSERV_CMD_CNTS_CLEAR_REGISTER_HEADER_TEXT;
     clear_action = SSERV_CMD_CNTS_CLEAR_REGISTER_HEADER_TEXT;
-    back_action = SSERV_CMD_NEW_CNTS_EDIT_CUR_CONTEST_PAGE;
+    back_action = SSERV_CMD_CNTS_EDIT_CUR_CONTEST_PAGE;
     help_txt = super_html_template_help_1;
     break;
   case SSERV_CMD_CNTS_EDIT_REGISTER_FOOTER:
@@ -2311,7 +2311,7 @@ super_html_edit_template_file(
     commit_action = SSERV_CMD_CNTS_SAVE_REGISTER_FOOTER;
     reread_action = SSERV_CMD_CNTS_CLEAR_REGISTER_FOOTER_TEXT;
     clear_action = SSERV_CMD_CNTS_CLEAR_REGISTER_FOOTER_TEXT;
-    back_action = SSERV_CMD_NEW_CNTS_EDIT_CUR_CONTEST_PAGE;
+    back_action = SSERV_CMD_CNTS_EDIT_CUR_CONTEST_PAGE;
     help_txt = super_html_template_help_1;
     break;
   case SSERV_CMD_CNTS_EDIT_TEAM_HEADER:
@@ -2325,7 +2325,7 @@ super_html_edit_template_file(
     commit_action = SSERV_CMD_CNTS_SAVE_TEAM_HEADER;
     reread_action = SSERV_CMD_CNTS_CLEAR_TEAM_HEADER_TEXT;
     clear_action = SSERV_CMD_CNTS_CLEAR_TEAM_HEADER_TEXT;
-    back_action = SSERV_CMD_NEW_CNTS_EDIT_CUR_CONTEST_PAGE;
+    back_action = SSERV_CMD_CNTS_EDIT_CUR_CONTEST_PAGE;
     help_txt = super_html_template_help_1;
     break;
   case SSERV_CMD_CNTS_EDIT_TEAM_MENU_1:
@@ -2339,7 +2339,7 @@ super_html_edit_template_file(
     commit_action = SSERV_CMD_CNTS_SAVE_TEAM_MENU_1;
     reread_action = SSERV_CMD_CNTS_CLEAR_TEAM_MENU_1_TEXT;
     clear_action = SSERV_CMD_CNTS_CLEAR_TEAM_MENU_1_TEXT;
-    back_action = SSERV_CMD_NEW_CNTS_EDIT_CUR_CONTEST_PAGE;
+    back_action = SSERV_CMD_CNTS_EDIT_CUR_CONTEST_PAGE;
     help_txt = super_html_template_help_1;
     break;
   case SSERV_CMD_CNTS_EDIT_TEAM_MENU_2:
@@ -2353,7 +2353,7 @@ super_html_edit_template_file(
     commit_action = SSERV_CMD_CNTS_SAVE_TEAM_MENU_2;
     reread_action = SSERV_CMD_CNTS_CLEAR_TEAM_MENU_2_TEXT;
     clear_action = SSERV_CMD_CNTS_CLEAR_TEAM_MENU_2_TEXT;
-    back_action = SSERV_CMD_NEW_CNTS_EDIT_CUR_CONTEST_PAGE;
+    back_action = SSERV_CMD_CNTS_EDIT_CUR_CONTEST_PAGE;
     help_txt = super_html_template_help_1;
     break;
   case SSERV_CMD_CNTS_EDIT_TEAM_MENU_3:
@@ -2367,7 +2367,7 @@ super_html_edit_template_file(
     commit_action = SSERV_CMD_CNTS_SAVE_TEAM_MENU_3;
     reread_action = SSERV_CMD_CNTS_CLEAR_TEAM_MENU_3_TEXT;
     clear_action = SSERV_CMD_CNTS_CLEAR_TEAM_MENU_3_TEXT;
-    back_action = SSERV_CMD_NEW_CNTS_EDIT_CUR_CONTEST_PAGE;
+    back_action = SSERV_CMD_CNTS_EDIT_CUR_CONTEST_PAGE;
     help_txt = super_html_template_help_1;
     break;
   case SSERV_CMD_CNTS_EDIT_TEAM_SEPARATOR:
@@ -2381,7 +2381,7 @@ super_html_edit_template_file(
     commit_action = SSERV_CMD_CNTS_SAVE_TEAM_SEPARATOR;
     reread_action = SSERV_CMD_CNTS_CLEAR_TEAM_SEPARATOR_TEXT;
     clear_action = SSERV_CMD_CNTS_CLEAR_TEAM_SEPARATOR_TEXT;
-    back_action = SSERV_CMD_NEW_CNTS_EDIT_CUR_CONTEST_PAGE;
+    back_action = SSERV_CMD_CNTS_EDIT_CUR_CONTEST_PAGE;
     help_txt = super_html_template_help_1;
     break;
   case SSERV_CMD_CNTS_EDIT_TEAM_FOOTER:
@@ -2395,7 +2395,7 @@ super_html_edit_template_file(
     commit_action = SSERV_CMD_CNTS_SAVE_TEAM_FOOTER;
     reread_action = SSERV_CMD_CNTS_CLEAR_TEAM_FOOTER_TEXT;
     clear_action = SSERV_CMD_CNTS_CLEAR_TEAM_FOOTER_TEXT;
-    back_action = SSERV_CMD_NEW_CNTS_EDIT_CUR_CONTEST_PAGE;
+    back_action = SSERV_CMD_CNTS_EDIT_CUR_CONTEST_PAGE;
     help_txt = super_html_template_help_1;
     break;
   case SSERV_CMD_CNTS_EDIT_PRIV_HEADER:
@@ -2409,7 +2409,7 @@ super_html_edit_template_file(
     commit_action = SSERV_CMD_CNTS_SAVE_PRIV_HEADER;
     reread_action = SSERV_CMD_CNTS_CLEAR_PRIV_HEADER_TEXT;
     clear_action = SSERV_CMD_CNTS_CLEAR_PRIV_HEADER_TEXT;
-    back_action = SSERV_CMD_NEW_CNTS_EDIT_CUR_CONTEST_PAGE;
+    back_action = SSERV_CMD_CNTS_EDIT_CUR_CONTEST_PAGE;
     help_txt = super_html_template_help_1;
     break;
   case SSERV_CMD_CNTS_EDIT_PRIV_FOOTER:
@@ -2423,7 +2423,7 @@ super_html_edit_template_file(
     commit_action = SSERV_CMD_CNTS_SAVE_PRIV_FOOTER;
     reread_action = SSERV_CMD_CNTS_CLEAR_PRIV_FOOTER_TEXT;
     clear_action = SSERV_CMD_CNTS_CLEAR_PRIV_FOOTER_TEXT;
-    back_action = SSERV_CMD_NEW_CNTS_EDIT_CUR_CONTEST_PAGE;
+    back_action = SSERV_CMD_CNTS_EDIT_CUR_CONTEST_PAGE;
     help_txt = super_html_template_help_1;
     break;
   case SSERV_CMD_CNTS_EDIT_COPYRIGHT:
@@ -2437,7 +2437,7 @@ super_html_edit_template_file(
     commit_action = SSERV_CMD_CNTS_SAVE_COPYRIGHT;
     reread_action = SSERV_CMD_CNTS_CLEAR_COPYRIGHT_TEXT;
     clear_action = SSERV_CMD_CNTS_CLEAR_COPYRIGHT_TEXT;
-    back_action = SSERV_CMD_NEW_CNTS_EDIT_CUR_CONTEST_PAGE;
+    back_action = SSERV_CMD_CNTS_EDIT_CUR_CONTEST_PAGE;
     help_txt = super_html_template_help_1;
     break;
   case SSERV_CMD_CNTS_EDIT_WELCOME:
@@ -2451,7 +2451,7 @@ super_html_edit_template_file(
     commit_action = SSERV_CMD_CNTS_SAVE_WELCOME;
     reread_action = SSERV_CMD_CNTS_CLEAR_WELCOME_TEXT;
     clear_action = SSERV_CMD_CNTS_CLEAR_WELCOME_TEXT;
-    back_action = SSERV_CMD_NEW_CNTS_EDIT_CUR_CONTEST_PAGE;
+    back_action = SSERV_CMD_CNTS_EDIT_CUR_CONTEST_PAGE;
     help_txt = super_html_template_help_1;
     break;
   case SSERV_CMD_CNTS_EDIT_REG_WELCOME:
@@ -2465,7 +2465,7 @@ super_html_edit_template_file(
     commit_action = SSERV_CMD_CNTS_SAVE_REG_WELCOME;
     reread_action = SSERV_CMD_CNTS_CLEAR_REG_WELCOME_TEXT;
     clear_action = SSERV_CMD_CNTS_CLEAR_REG_WELCOME_TEXT;
-    back_action = SSERV_CMD_NEW_CNTS_EDIT_CUR_CONTEST_PAGE;
+    back_action = SSERV_CMD_CNTS_EDIT_CUR_CONTEST_PAGE;
     help_txt = super_html_template_help_1;
     break;
   case SSERV_CMD_CNTS_EDIT_REGISTER_EMAIL_FILE:
@@ -2479,7 +2479,7 @@ super_html_edit_template_file(
     commit_action = SSERV_CMD_CNTS_SAVE_REGISTER_EMAIL_FILE;
     reread_action = SSERV_CMD_CNTS_CLEAR_REGISTER_EMAIL_FILE_TEXT;
     clear_action = SSERV_CMD_CNTS_CLEAR_REGISTER_EMAIL_FILE_TEXT;
-    back_action = SSERV_CMD_NEW_CNTS_EDIT_CUR_CONTEST_PAGE;
+    back_action = SSERV_CMD_CNTS_EDIT_CUR_CONTEST_PAGE;
     help_txt = super_html_template_help_2;
     break;
   default:
