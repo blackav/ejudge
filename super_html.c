@@ -766,30 +766,37 @@ print_string_editing_row(FILE *f,
   fprintf(f, "</tr></form>\n");
 }
 
-unsigned char *
-super_html_unparse_access(const struct contest_access *acc)
+void
+super_html_unparse_access_2(FILE *out_f, const struct contest_access *acc)
 {
-  char *acc_txt = 0;
-  size_t acc_len = 0;
-  FILE *af = 0;
   const struct contest_ip *p;
   unsigned char ssl_str[64];
 
-  af = open_memstream(&acc_txt, &acc_len);
   if (!acc) {
-    fprintf(af, "default deny\n");
+    fprintf(out_f, "default deny\n");
   } else {
     for (p = (const struct contest_ip*) acc->b.first_down;
          p; p = (const struct contest_ip*) p->b.right) {
       ssl_str[0] = 0;
       if (p->ssl >= 0)
         snprintf(ssl_str, sizeof(ssl_str), " %s", p->ssl?"(SSL)":"(No SSL)");
-      fprintf(af, "%s%s %s\n",
+      fprintf(out_f, "%s%s %s\n",
               xml_unparse_ipv6_mask(&p->addr, &p->mask), ssl_str,
               p->allow?"allow":"deny");
     }
-    fprintf(af, "default %s\n", acc->default_is_allow?"allow":"deny");
+    fprintf(out_f, "default %s\n", acc->default_is_allow?"allow":"deny");
   }
+}
+
+unsigned char *
+super_html_unparse_access(const struct contest_access *acc)
+{
+  char *acc_txt = 0;
+  size_t acc_len = 0;
+  FILE *af = 0;
+
+  af = open_memstream(&acc_txt, &acc_len);
+  super_html_unparse_access_2(af, acc);
   close_memstream(af); af = 0;
   return acc_txt;
 }
