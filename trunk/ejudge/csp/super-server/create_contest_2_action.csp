@@ -51,7 +51,6 @@
         super_html_fix_serve(phr->ss, templ_id, contest_id);
         phr->ss->edited_cnts = contest_tmpl_clone(phr->ss, contest_id, templ_id, phr->login, phr->system_login);
     }
-
-    // FIXME: do redirect
+%><s:redirect ac="cnts-edit-cur-contest-page" /><%
 cleanup: ;
 %>

@@ -48,7 +48,7 @@
 
 <h2>Actions</h2>
 
-<s:submit ac="create-contest-2" label="Create contest!" />
+<s:submit ac="create-contest-2-action" label="Create contest!" />
 </s:form>
 
 <%@include "footer.csp"
