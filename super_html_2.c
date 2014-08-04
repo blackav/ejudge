@@ -1655,7 +1655,7 @@ super_html_commit_contest(
           html_hyperref(hbuf, sizeof(hbuf), session_id, self_url,extra_args,0));
   fprintf(f, "<td>%sBack</a></td>",
           html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
-                        "action=%d", SSERV_CMD_NEW_CNTS_EDIT_CUR_CONTEST_PAGE));
+                        "action=%d", SSERV_CMD_CNTS_EDIT_CUR_CONTEST_PAGE));
   fprintf(f, "</tr></table>\n");
   return 0;
 }
