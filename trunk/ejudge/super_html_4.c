@@ -6672,11 +6672,13 @@ static const unsigned char * const external_action_names[SSERV_CMD_LAST] =
   [SSERV_CMD_CONTEST_XML_PAGE] = "contest_xml_page",
   [SSERV_CMD_CREATE_CONTEST_PAGE] = "create_contest_page",
   [SSERV_CMD_CONTEST_ALREADY_EDITED_PAGE] = "contest_already_edited_page",
+  [SSERV_CMD_CONTEST_LOCKED_PAGE] = "contest_locked_page",
   [SSERV_CMD_CHECK_TESTS_PAGE] = "check_tests_page",
   [SSERV_CMD_CNTS_EDIT_PERMISSIONS_PAGE] = "cnts_edit_permissions_page",
   [SSERV_CMD_CNTS_EDIT_REGISTER_ACCESS_PAGE] = "cnts_edit_access_page",
   [SSERV_CMD_CNTS_EDIT_USER_FIELDS_PAGE] = "cnts_edit_user_fields_page",
   [SSERV_CMD_CNTS_EDIT_CONTESTANT_FIELDS_PAGE] = "cnts_edit_member_fields_page",
+  [SSERV_CMD_NEW_CNTS_START_EDIT_ACTION] = "cnts_start_edit_action",
   [SSERV_CMD_CNTS_EDIT_CUR_CONTEST_PAGE] = "cnts_edit_cur_contest_page",
 };
 

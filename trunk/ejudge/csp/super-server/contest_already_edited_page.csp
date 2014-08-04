@@ -13,10 +13,8 @@
     if (phr->priv_level != PRIV_LEVEL_ADMIN) FAIL(SSERV_ERR_PERMISSION_DENIED);
     if (ejudge_cfg_opcaps_find(phr->config, phr->login, &caps) < 0) FAIL(SSERV_ERR_PERMISSION_DENIED);
     if (opcaps_check(caps, OPCAP_EDIT_CONTEST) < 0) FAIL(SSERV_ERR_PERMISSION_DENIED);
-
-    if (!phr->ss->edited_cnts) {
-        // ???
-    }
+    if (!phr->ss->edited_cnts) FAIL(SSERV_ERR_INVALID_PARAMETER);
+    if (phr->action == SSERV_CMD_CONTEST_ALREADY_EDITED_PAGE) FAIL(SSERV_ERR_INVALID_PARAMETER);
 
     const struct contest_desc *c0 = phr->ss->edited_cnts;
     const struct contest_desc *c1 = 0;
