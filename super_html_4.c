@@ -427,7 +427,7 @@ cmd_edited_cnts_continue(
     refresh_page(out_f, phr, "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST,
                  SSERV_CMD_EDIT_CONTEST_PAGE_2);
   } else {
-    refresh_page(out_f, phr, "action=%d", SSERV_CMD_EDIT_CURRENT_CONTEST);
+    refresh_page(out_f, phr, "action=%d", SSERV_CMD_NEW_CNTS_EDIT_CUR_CONTEST_PAGE);
   }
   return 0;
 }
@@ -520,7 +520,7 @@ cmd_locked_cnts_continue(
     refresh_page(out_f, phr, "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST,
                  SSERV_CMD_EDIT_CONTEST_PAGE_2);
   } else {
-    refresh_page(out_f, phr, "action=%d", SSERV_CMD_EDIT_CURRENT_CONTEST);
+    refresh_page(out_f, phr, "action=%d", SSERV_CMD_NEW_CNTS_EDIT_CUR_CONTEST_PAGE);
   }
   return 0;
 
@@ -6677,7 +6677,7 @@ static const unsigned char * const external_action_names[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_EDIT_REGISTER_ACCESS_PAGE] = "cnts_edit_access_page",
   [SSERV_CMD_CNTS_EDIT_USER_FIELDS_PAGE] = "cnts_edit_user_fields_page",
   [SSERV_CMD_CNTS_EDIT_CONTESTANT_FIELDS_PAGE] = "cnts_edit_member_fields_page",
-  [SSERV_CMD_NEW_CNTS_EDIT_CURRENT_PAGE] = "cnts_edit_contest_xml_page",
+  [SSERV_CMD_NEW_CNTS_EDIT_CUR_CONTEST_PAGE] = "cnts_edit_cur_contest_page",
 };
 
 static const unsigned char * const external_error_names[S_ERR_LAST] = 
