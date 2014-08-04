@@ -128,7 +128,7 @@
 %></td>
         <td><%
         if (ci->edit_settings_enabled) {
-%><s:url name="SettingsUrl" ac="edit-contest-xml"><s:param name="contest_id" value="ci->id" /></s:url><s:a url="SettingsUrl"><s:_>Settings</s:_></s:a><%
+%><s:url name="SettingsUrl" ac="new-cnts-start-edit-action"><s:param name="contest_id" value="ci->id" /></s:url><s:a url="SettingsUrl"><s:_>Settings</s:_></s:a><%
         } else {
 %>&nbsp;<%
         }
