@@ -63,24 +63,6 @@ int super_html_edit_template_file(FILE *f,
                                   const unsigned char *hidden_vars,
                                   const unsigned char *extra_args);
 
-int super_html_create_contest_2(FILE *f,
-                                int priv_level,
-                                int user_id,
-                                const unsigned char *login,
-                                const unsigned char *ss_login,
-                                ej_cookie_t session_id,
-                                const ej_ip_t *ip_address,
-                                int ssl_flag,
-                                struct ejudge_cfg *config,
-                                struct sid_state *sstate,
-                                int num_mode,
-                                int templ_mode,
-                                int contest_id,
-                                int templ_id,
-                                const unsigned char *self_url,
-                                const unsigned char *hidden_vars,
-                                const unsigned char *extra_args);
-
 struct userlist_clnt;
 int super_html_commit_contest(FILE *f,
                               int priv_level,
