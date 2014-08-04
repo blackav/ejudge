@@ -121,7 +121,7 @@ static const unsigned char * const form_row_attrs[]=
 
 <table border="0"><tr>
     <td><s:a ac="main-page"><s:_>To the top</s:_></s:a></td>
-    <td><s:a ac="edit-current-contest"><s:_>Back</s:_></s:a></td>
+    <td><s:a ac="cnts-edit-cur-contest-page"><s:_>Back</s:_></s:a></td>
     <td><s:submit action="commit_action" label="Save" /></td>
 </tr></table>
 </s:form>
