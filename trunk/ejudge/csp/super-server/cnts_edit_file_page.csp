@@ -23,6 +23,7 @@ static const unsigned char * const form_row_attrs[]=
     if (opcaps_check(caps, OPCAP_EDIT_CONTEST) < 0) FAIL(SSERV_ERR_PERMISSION_DENIED);
     if (!phr->ss->edited_cnts) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
 
+    cnts = phr->ss->edited_cnts;
     const unsigned char *file_path1 = 0;
     const unsigned char *param_expl = 0;
     unsigned char **p_str = 0;
@@ -33,14 +34,12 @@ static const unsigned char * const form_row_attrs[]=
         file_path1 = phr->ss->global->contest_start_cmd;
         param_expl = "Contest start script";
         p_str = &phr->ss->contest_start_cmd_text;
-        help_type = 3;
         break;
     case SSERV_CMD_NEW_GLOB_EDIT_CONTEST_STOP_CMD_PAGE:
         if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
         file_path1 = phr->ss->global->contest_stop_cmd;
         param_expl = "Contest stop script";
         p_str = &phr->ss->contest_stop_cmd_text;
-        help_type = 3;
         break;
     case SSERV_CMD_NEW_GLOB_EDIT_STAND_HEADER_FILE_PAGE:
         if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
@@ -98,73 +97,37 @@ static const unsigned char * const form_row_attrs[]=
         p_str = &phr->ss->users_footer_text;
         help_type = 1;
         break;
-  case SSERV_CMD_CNTS_EDIT_COPYRIGHT:
-    if (!cnts) {
-      failure_text = "no current contest";
-      goto failure;
+    case SSERV_CMD_CNTS_EDIT_COPYRIGHT:
+        if (!phr->ss->edited_cnts) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
+        file_path1 = phr->ss->edited_cnts->copyright_file;
+        param_expl = "copyright notice file";
+        p_str = &phr->ss->copyright_text;
+        help_type = 1;
+        break;
+    case SSERV_CMD_CNTS_EDIT_WELCOME:
+        if (!phr->ss->edited_cnts) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
+        file_path1 = phr->ss->edited_cnts->welcome_file;
+        param_expl = "participant welcome message";
+        p_str = &phr->ss->welcome_text;
+        help_type = 1;
+        break;
+    case SSERV_CMD_CNTS_EDIT_REG_WELCOME:
+        if (!phr->ss->edited_cnts) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
+        file_path1 = phr->ss->edited_cnts->reg_welcome_file;
+        param_expl = "registration welcome message";
+        p_str = &phr->ss->reg_welcome_text;
+        help_type = 1;
+        break;
+    case SSERV_CMD_CNTS_EDIT_REGISTER_EMAIL_FILE:
+        if (!phr->ss->edited_cnts) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
+        file_path1 = phr->ss->edited_cnts->register_email_file;
+        param_expl = "registration letter template";
+        p_str = &phr->ss->register_email_text;
+        help_type = 2;
+        break;
+    default:
+        FAIL(SSERV_ERR_INVALID_PARAMETER);
     }
-    file_path1 = cnts->copyright_file;
-    param_expl = "copyright notice file";
-    p_str = &sstate->copyright_text;
-    commit_action = SSERV_CMD_CNTS_SAVE_COPYRIGHT;
-    reread_action = SSERV_CMD_CNTS_CLEAR_COPYRIGHT_TEXT;
-    clear_action = SSERV_CMD_CNTS_CLEAR_COPYRIGHT_TEXT;
-    back_action = SSERV_CMD_EDIT_CURRENT_CONTEST;
-    help_txt = super_html_template_help_1;
-    break;
-  case SSERV_CMD_CNTS_EDIT_WELCOME:
-    if (!cnts) {
-      failure_text = "no current contest";
-      goto failure;
-    }
-    file_path1 = cnts->welcome_file;
-    param_expl = "`team' HTML header file";
-    p_str = &sstate->welcome_text;
-    commit_action = SSERV_CMD_CNTS_SAVE_WELCOME;
-    reread_action = SSERV_CMD_CNTS_CLEAR_WELCOME_TEXT;
-    clear_action = SSERV_CMD_CNTS_CLEAR_WELCOME_TEXT;
-    back_action = SSERV_CMD_EDIT_CURRENT_CONTEST;
-    help_txt = super_html_template_help_1;
-    break;
-  case SSERV_CMD_CNTS_EDIT_REG_WELCOME:
-    if (!cnts) {
-      failure_text = "no current contest";
-      goto failure;
-    }
-    file_path1 = cnts->reg_welcome_file;
-    param_expl = "`team' HTML header file";
-    p_str = &sstate->reg_welcome_text;
-    commit_action = SSERV_CMD_CNTS_SAVE_REG_WELCOME;
-    reread_action = SSERV_CMD_CNTS_CLEAR_REG_WELCOME_TEXT;
-    clear_action = SSERV_CMD_CNTS_CLEAR_REG_WELCOME_TEXT;
-    back_action = SSERV_CMD_EDIT_CURRENT_CONTEST;
-    help_txt = super_html_template_help_1;
-    break;
-  case SSERV_CMD_CNTS_EDIT_REGISTER_EMAIL_FILE:
-    if (!cnts) {
-      failure_text = "no current contest";
-      goto failure;
-    }
-    file_path1 = cnts->register_email_file;
-    param_expl = "registration letter template";
-    p_str = &sstate->register_email_text;
-    commit_action = SSERV_CMD_CNTS_SAVE_REGISTER_EMAIL_FILE;
-    reread_action = SSERV_CMD_CNTS_CLEAR_REGISTER_EMAIL_FILE_TEXT;
-    clear_action = SSERV_CMD_CNTS_CLEAR_REGISTER_EMAIL_FILE_TEXT;
-    back_action = SSERV_CMD_EDIT_CURRENT_CONTEST;
-    help_txt = super_html_template_help_2;
-    break;
-  default:
-    abort();
-  }
-
-
-
-
-
-
-
-
 %><%@include "header.csp"
 %>
 
@@ -185,7 +148,7 @@ static const unsigned char * const form_row_attrs[]=
 
 
 
-
+<!--
 int
 super_html_edit_template_file(
         FILE *f,
@@ -559,7 +522,6 @@ super_html_edit_template_file(
   default:
     abort();
   }
-
   if (!file_path1 || !*file_path1) {
     failure_text = "path variable is not set";
     goto failure;
@@ -583,23 +545,28 @@ super_html_edit_template_file(
   } else {
     snprintf(full_path, sizeof(full_path), "%s", file_path1);
   }
+-->
 
-  fprintf(f, "<h2>Editing %s, contest %d</h2>\n", param_expl, cnts->id);
+<h2>Editing <s:v value="param_expl" escape="false" />, contest <s:v value="cnts->id" /></h2>
 
-  s = html_armor_string_dup(file_path1);
-  fprintf(f, "<table border=\"0\">"
-          "<tr><td>Parameter value:</td><td>%s</td></tr>\n", s);
-  xfree(s);
-  s = html_armor_string_dup(full_path);
-  fprintf(f, "<tr><td>Full path:</td><td>%s</td></tr></table>\n", s);
-  xfree(s);
+<table border="0">
+    <tr><td><s:_>Parameter value</s:_>:</td><td><s:v value="file_path1" /></td></tr>
+    <tr><td><s:_>Full path</s:_>:</td><td><s:v value="full_path" /></td></tr>
+</table>
 
+<%
   if (stat(full_path, &stb) < 0) {
-    fprintf(f, "<p><big><font color=\"red\">Note: file does not exist</font></big></p>\n");
+%>
+<p><big><font color="red">Note: file does not exist</font></big></p>
+<%
   } else if (!S_ISREG(stb.st_mode)) {
-    fprintf(f, "<p><big><font color=\"red\">Note: file is not regular</font></big></p>\n");
+%>
+<p><big><font color="red">Note: file is not regular</font></big></p>
+<%
   } else if (access(full_path, R_OK) < 0) {
-    fprintf(f, "<p><big><font color=\"red\">Note: file is not readable</font></big></p>\n");
+%>
+<p><big><font color="red">Note: file is not readable</font></big></p>
+<%
   } else {
     if (!*p_str) {
       char *tmp_b = 0;
@@ -632,28 +599,44 @@ super_html_edit_template_file(
   fprintf(f, "</td><td>");
   html_submit_button(f, clear_action, "Clear");
   fprintf(f, "</td></tr></table></form>\n");
+%>
 
-  fprintf(f, "<hr><h2>Summary of valid format substitutions</h2>%s\n", help_txt);
+<%
+  if (help_type == 1) {
+%>
+<hr/>
+<h2>Summary of valid format substitutions</h2>
 
-  return 0;
+<table border="1">
+    <tr><td><tt>%L</tt></td><td>The locale number (0 - English, 1 - Russian)</td></tr>
+    <tr><td><tt>%C</tt></td><td>The page character set</td></tr>
+    <tr><td><tt>%T</tt></td><td>The content type (text/html)</td></tr>
+    <tr><td><tt>%H</tt></td><td>The page title</td></tr>
+    <tr><td><tt>%R</tt></td><td>The ejudge copyright notice</td></tr>
+    <tr><td><tt>%%</tt></td><td>The percent sign <tt>%</tt></td></tr>
+</table>
 
- failure:
-  return super_html_report_error(f, session_id, self_url, extra_args,
-                                 "%s", failure_text);
-}
+<%
+  } else if (help_type == 2) {
+%>
+<hr/>
+<h2>Summary of valid format substitutions</h2>
 
+<table border="1">
+    <tr><td><tt>%Ui</tt></td><td>The user identifier</td></tr>
+    <tr><td><tt>%Un</tt></td><td>The user name</td></tr>
+    <tr><td><tt>%Ul</tt></td><td>The user login</td></tr>
+    <tr><td><tt>%Ue</tt></td><td>The user e-mail</td></tr>
+    <tr><td><tt>%Uz</tt></td><td>The user registration password</td></tr>
+    <tr><td><tt>%UZ</tt></td><td>The user team password</td></tr>
+    <tr><td><tt>%Vl</tt></td><td>The locale number (0 - English, 1 - Russian)</td></tr>
+    <tr><td><tt>%Vu</tt></td><td>The `register' CGI-program URL</td></tr>
+    <tr><td><tt>%%</tt></td><td>The percent sign <tt>%</tt></td></tr>
+</table>
 
-
-
-
-
-
-
-
-
-
-
-
+<%
+  }
+%>
 
 <%@include "footer.csp"
 %><%
