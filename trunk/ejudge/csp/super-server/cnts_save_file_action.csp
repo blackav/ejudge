@@ -1,0 +1,93 @@
+<%
+/* $Id$ */
+%><%@include "includes.csp"
+%><%
+%><%@set getter_name = "csp_get_cnts_save_file_action"
+%><%@set ac_prefix = "SSERV_CMD_"
+%><%@set err_prefix = "SSERV_ERR_"
+%><%@page csp_view_cnts_save_file_action(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "stdvars.csp"
+%><%
+    // global OPCAP_EDIT_CONTEST capability is required to create contests
+    opcap_t caps = 0;
+    if (phr->priv_level != PRIV_LEVEL_ADMIN) FAIL(SSERV_ERR_PERMISSION_DENIED);
+    if (ejudge_cfg_opcaps_find(phr->config, phr->login, &caps) < 0) FAIL(SSERV_ERR_PERMISSION_DENIED);
+    if (opcaps_check(caps, OPCAP_EDIT_CONTEST) < 0) FAIL(SSERV_ERR_PERMISSION_DENIED);
+
+    unsigned char **p_str = 0;
+    int edit_action = 0;
+    const unsigned char *param = 0;
+    cnts = phr->ss->edited_cnts;
+
+%><s:read var="edit_action" required="yes" /><%
+%><s:read var="param" /><%
+
+    int back_action = SSERV_CMD_CNTS_EDIT_CUR_CONTEST_PAGE;
+    switch (edit_action) {
+        if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
+        p_str = &phr->ss->contest_start_cmd_text;
+        back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
+        break;
+    case SSERV_CMD_GLOB_EDIT_CONTEST_STOP_CMD_PAGE:
+        if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
+        p_str = &phr->ss->contest_stop_cmd_text;
+        back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
+        break;
+    case SSERV_CMD_GLOB_EDIT_STAND_HEADER_FILE_PAGE:
+        if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
+        p_str = &phr->ss->stand_header_text;
+        back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
+        break;
+    case SSERV_CMD_GLOB_EDIT_STAND_FOOTER_FILE_PAGE:
+        if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
+        p_str = &phr->ss->stand_footer_text;
+        back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
+        break;
+    case SSERV_CMD_GLOB_EDIT_STAND2_HEADER_FILE_PAGE:
+        if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
+        p_str = &phr->ss->stand2_header_text;
+        back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
+        break;
+    case SSERV_CMD_GLOB_EDIT_STAND2_FOOTER_FILE_PAGE:
+        if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
+        p_str = &phr->ss->stand2_footer_text;
+        back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
+        break;
+    case SSERV_CMD_GLOB_EDIT_PLOG_HEADER_FILE_PAGE:
+        if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
+        p_str = &phr->ss->plog_header_text;
+        back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
+        break;
+    case SSERV_CMD_GLOB_EDIT_PLOG_FOOTER_FILE_PAGE:
+        if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
+        p_str = &phr->ss->plog_footer_text;
+        back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
+        break;
+    case SSERV_CMD_CNTS_EDIT_USERS_HEADER_PAGE:
+        p_str = &phr->ss->users_header_text;
+        break;
+    case SSERV_CMD_CNTS_EDIT_USERS_FOOTER_PAGE:
+        p_str = &phr->ss->users_footer_text;
+        break;
+    case SSERV_CMD_CNTS_EDIT_COPYRIGHT_PAGE:
+        p_str = &phr->ss->copyright_text;
+        break;
+    case SSERV_CMD_CNTS_EDIT_WELCOME_PAGE:
+        p_str = &phr->ss->welcome_text;
+        break;
+    case SSERV_CMD_CNTS_EDIT_REG_WELCOME_PAGE:
+        p_str = &phr->ss->reg_welcome_text;
+        break;
+    case SSERV_CMD_CNTS_EDIT_REGISTER_EMAIL_FILE_PAGE:
+        p_str = &phr->ss->register_email_text;
+        break;
+    default:
+        FAIL(SSERV_ERR_INVALID_PARAMETER);
+    }
+
+    xfree(*p_str);
+    if (!param) param = "";
+    *p_str = dos2unix_str(param);
+%><s:redirect action="back_action" /><%
+cleanup: ;
+%>

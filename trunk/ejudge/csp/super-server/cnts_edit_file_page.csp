@@ -157,7 +157,7 @@
             phr->ss->edited_cnts->copyright_file = xstrdup("copyright.html"); 
             file_path1 = cnts->copyright_file;
         }
-        param_expl = "copyright notice file";
+        param_expl = "Copyright notice file";
         p_str = &phr->ss->copyright_text;
         help_type = 1;
         break;
@@ -167,7 +167,7 @@
             phr->ss->edited_cnts->welcome_file = xstrdup("welcome.html"); 
             file_path1 = cnts->welcome_file;
         }
-        param_expl = "participant welcome message";
+        param_expl = "Participant welcome message";
         p_str = &phr->ss->welcome_text;
         help_type = 1;
         break;
@@ -177,7 +177,7 @@
             phr->ss->edited_cnts->reg_welcome_file = xstrdup("reg_welcome.html"); 
             file_path1 = cnts->reg_welcome_file;
         }
-        param_expl = "registration welcome message";
+        param_expl = "Registration welcome message";
         p_str = &phr->ss->reg_welcome_text;
         help_type = 1;
         break;
@@ -187,13 +187,15 @@
             phr->ss->edited_cnts->register_email_file = xstrdup("register_email.txt"); 
             file_path1 = cnts->register_email_file;
         }
-        param_expl = "registration letter template";
+        param_expl = "Registration letter template";
         p_str = &phr->ss->register_email_text;
         help_type = 2;
         break;
     default:
         FAIL(SSERV_ERR_INVALID_PARAMETER);
     }
+
+    snprintf(subtitle_buf, sizeof(subtitle_buf), "%s, contest %d", param_expl, cnts->id);
 
     if (!cnts->root_dir || !*cnts->root_dir) {
         fprintf(log_f, "Contest root directory is not set\n");
