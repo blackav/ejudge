@@ -6953,12 +6953,12 @@ redo_action:
     if (phr->json_reply) {
       write_json_header(phr->out_f);
       fprintf(phr->out_f, "{ \"status\": %d, \"text\": \"%s\" }",
-              r, super_proto_op_error_messages[-r]);
+              r, super_proto_error_messages[-r]);
     } else {
       write_html_header(phr->out_f, phr, "Request failed", 0, 0);
       if (r < -1 && r > -S_ERR_LAST) {
         fprintf(phr->out_f, "<h1>Request failed: error %d</h1>\n", -r);
-        fprintf(phr->out_f, "<h2>%s</h2>\n", super_proto_op_error_messages[-r]);
+        fprintf(phr->out_f, "<h2>%s</h2>\n", super_proto_error_messages[-r]);
       } else {
         fprintf(phr->out_f, "<h1>Request failed</h1>\n");
       }
