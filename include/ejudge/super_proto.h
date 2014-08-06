@@ -1171,17 +1171,7 @@ enum
   SSERV_ERR_PARAM_OUT_OF_RANGE,
   SSERV_ERR_SLAVE_MODE,
 
-  SSERV_UNKNOWN_ERROR,
-  SSERV_ERR_LAST,
-
-  // aliases
-  SSERV_ERR_INV_PARAM = SSERV_ERR_INVALID_PARAMETER,
-};
-
-/* operation error codes */
-enum
-{
-  S_ERR_EMPTY_REPLY = 2,
+  S_ERR_EMPTY_REPLY,
   S_ERR_INV_OPER,
   S_ERR_CONTEST_EDITED,
   S_ERR_INV_SID,
@@ -1243,7 +1233,13 @@ enum
   S_ERR_UNSPEC_PROB_NAME,
   S_ERR_INV_XHTML,
 
-  S_ERR_LAST
+  SSERV_UNKNOWN_ERROR,
+
+  SSERV_ERR_LAST,
+  S_ERR_LAST = SSERV_ERR_LAST,
+
+  // aliases
+  SSERV_ERR_INV_PARAM = SSERV_ERR_INVALID_PARAMETER,
 };
 
 unsigned char const *super_proto_strerror(int n);
@@ -1308,9 +1304,8 @@ struct prot_super_pkt_http_request
 };
 
 extern const int super_proto_op_redirect[SSERV_CMD_LAST];
-extern unsigned char const * const super_proto_op_error_messages[];
+extern unsigned char const * const super_proto_error_messages[];
 extern const unsigned char * const super_proto_cmd_names[SSERV_CMD_LAST];
-
 extern const unsigned char super_proto_is_http_request[];
 
 #endif /* __SUPER_PROTO_H__ */

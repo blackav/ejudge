@@ -21,7 +21,7 @@
 
 #include <stdio.h>
 
-static unsigned char const * const error_map[] =
+unsigned char const * const super_proto_error_messages[] =
 {
   "no error",
   "error code 1",
@@ -55,6 +55,68 @@ static unsigned char const * const error_map[] =
   "parameter is out of range",
   "request disabled in slave mode",
 
+  [S_ERR_EMPTY_REPLY] = "Reply text is empty",
+  [S_ERR_INV_OPER] = "Invalid operation",
+  [S_ERR_CONTEST_EDITED] = "Cannot edit more than one contest at a time",
+  [S_ERR_INV_SID] = "Invalid session id",
+  [S_ERR_INV_CONTEST] = "Invalid contest id",
+  [S_ERR_PERM_DENIED] = "Permission denied",
+  [S_ERR_INTERNAL] = "Internal error",
+  [S_ERR_ALREADY_EDITED] = "Contest is already edited",
+  [S_ERR_NO_EDITED_CNTS] = "No contest is edited",
+  [S_ERR_INV_FIELD_ID] = "Invalid field ID",
+  [S_ERR_NOT_IMPLEMENTED] = "Not implemented yet",
+  [S_ERR_INV_VALUE] = "Invalid value",
+  [S_ERR_CONTEST_ALREADY_EXISTS] = "Contest with this ID already exists",
+  [S_ERR_CONTEST_ALREADY_EDITED] = "Contest is edited by another person",
+  [S_ERR_INV_LANG_ID] = "Invalid Lang ID",
+  [S_ERR_INV_PROB_ID] = "Invalid Prob ID",
+  [S_ERR_INV_PACKAGE] = "Invalid package",
+  [S_ERR_ITEM_EXISTS] = "Such item already exists",
+  [S_ERR_OPERATION_FAILED] = "System operation failed",
+  [S_ERR_INV_USER_ID] = "Invalid User ID",
+  [S_ERR_NO_CONNECTION] = "No connection to the database",
+  [S_ERR_DB_ERROR] = "Database error",
+  [S_ERR_UNSPEC_PASSWD1] = "Password 1 is not specified",
+  [S_ERR_UNSPEC_PASSWD2] = "Password 2 is not specified",
+  [S_ERR_INV_PASSWD1] = "Password 1 is invalid",
+  [S_ERR_INV_PASSWD2] = "Password 2 is invalid",
+  [S_ERR_PASSWDS_DIFFER] = "Passwords do not match each other",
+  [S_ERR_UNSPEC_LOGIN] = "Login is not specified",
+  [S_ERR_DUPLICATED_LOGIN] = "This login is aready used",
+  [S_ERR_INV_GROUP_ID] = "Invalid group ID",
+  [S_ERR_INV_FIRST_SERIAL] = "Invalid first serial number",
+  [S_ERR_INV_LAST_SERIAL] = "Invalid last serial number",
+  [S_ERR_INV_RANGE] = "Invalid serial number range",
+  [S_ERR_INV_LOGIN_TEMPLATE] = "Invalid login template",
+  [S_ERR_INV_REG_PASSWORD_TEMPLATE] = "Invalid registration password template",
+  [S_ERR_INV_CNTS_PASSWORD_TEMPLATE] = "Invalid contest password template",
+  [S_ERR_INV_CNTS_NAME_TEMPLATE] = "Invalid name template",
+  [S_ERR_INV_CSV_FILE] = "Invalid CSV file",
+  [S_ERR_INV_CHARSET] = "Invalid charset",
+  [S_ERR_INV_SEPARATOR] = "Invalid field separator",
+  [S_ERR_DATA_READ_ONLY] = "Data is read-only",
+  [S_ERR_TOO_MANY_MEMBERS] = "Too many members",
+  [S_ERR_INV_SERIAL] = "Invalid member",
+  [S_ERR_INV_EMAIL] = "Invalid email",
+  [S_ERR_INV_GROUP_NAME] = "Invalid group name",
+  [S_ERR_INV_DESCRIPTION] = "Invalid description",
+  [S_ERR_GROUP_CREATION_FAILED] = "Group creation failed",
+  [S_ERR_INV_SERVE_CONFIG_PATH] = "Invalid serve.cfg configuration file",
+  [S_ERR_INV_VARIANT] = "Invalid variant",
+  [S_ERR_UNSUPPORTED_SETTINGS] = "Settings of this contest are incompatible with this feature",
+  [S_ERR_INV_CNTS_SETTINGS] = "Invalid contest settings",
+  [S_ERR_INV_TEST_NUM] = "Invalid test number",
+  [S_ERR_FS_ERROR] = "Filesystem error",
+  [S_ERR_INV_EXIT_CODE] = "Invalid exit code",
+  [S_ERR_INV_SYS_GROUP] = "Invalid system group",
+  [S_ERR_INV_SYS_MODE] = "Invalid system mode",
+  [S_ERR_INV_TESTINFO] = "Invalid test information",
+  [S_ERR_INV_PROB_XML] = "Invalid statement XML file",
+  [S_ERR_UNSPEC_PROB_PACKAGE] = "Problem package is unspecified",
+  [S_ERR_UNSPEC_PROB_NAME] = "Problem name is unspecified",
+  [S_ERR_INV_XHTML] = "Invalid XHTML",
+
   "unknown error",
 };
 
@@ -69,7 +131,7 @@ super_proto_strerror(int n)
     snprintf(buf, sizeof(buf), "unknown error %d", n);
     return xstrdup(buf);
   }
-  return error_map[n];
+  return super_proto_error_messages[n];
 }
 
 const int super_proto_op_redirect[SSERV_CMD_LAST] =
@@ -182,7 +244,7 @@ const int super_proto_op_redirect[SSERV_CMD_LAST] =
   [SSERV_CMD_DOWNLOAD_CLEANUP_AND_CHECK_ACTION] = SSERV_CMD_DOWNLOAD_CLEANUP_ACTION,
 };
 
-unsigned char const * const super_proto_op_error_messages[] =
+unsigned char const * const _super_proto_op_error_messages[] =
 {
   [S_ERR_EMPTY_REPLY] = "Reply text is empty",
   [S_ERR_INV_OPER] = "Invalid operation",
