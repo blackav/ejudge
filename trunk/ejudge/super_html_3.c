@@ -2910,7 +2910,6 @@ super_html_global_param(struct sid_state *sstate, int cmd,
   int *p_int;
   unsigned char *p_str;
   size_t str_size;
-  unsigned char **pp_str;
   char **tmp_env = 0;
   size_t *p_size, zval;
 
@@ -3751,78 +3750,6 @@ super_html_global_param(struct sid_state *sstate, int cmd,
   case SSERV_CMD_GLOB_DETECT_CPU_BOGOMIPS:
     global->cpu_bogomips = cpu_get_bogomips();
     return 0;
-
-  case SSERV_CMD_GLOB_SAVE_CONTEST_START_CMD:
-    pp_str = &sstate->contest_start_cmd_text;
-
-  handle_string_3:
-    xfree(*pp_str);
-    *pp_str = dos2unix_str(param2);
-    return 0;
-
-  case SSERV_CMD_GLOB_CLEAR_CONTEST_START_CMD_TEXT:
-    pp_str = &sstate->contest_start_cmd_text;
-
-  clear_string_2:
-    xfree(*pp_str);
-    *pp_str = 0;
-    return 0;
-
-  case SSERV_CMD_GLOB_SAVE_CONTEST_STOP_CMD:
-    pp_str = &sstate->contest_stop_cmd_text;
-    goto handle_string_3;
-
-  case SSERV_CMD_GLOB_CLEAR_CONTEST_STOP_CMD_TEXT:
-    pp_str = &sstate->contest_stop_cmd_text;
-    goto clear_string_2;
-
-  case SSERV_CMD_GLOB_SAVE_STAND_HEADER:
-    pp_str = &sstate->stand_header_text;
-    goto handle_string_3;
-
-  case SSERV_CMD_GLOB_CLEAR_STAND_HEADER_TEXT:
-    pp_str = &sstate->stand_header_text;
-    goto clear_string_2;
-
-  case SSERV_CMD_GLOB_SAVE_STAND_FOOTER:
-    pp_str = &sstate->stand_footer_text;
-    goto handle_string_3;
-
-  case SSERV_CMD_GLOB_CLEAR_STAND_FOOTER_TEXT:
-    pp_str = &sstate->stand_footer_text;
-    goto clear_string_2;
-
-  case SSERV_CMD_GLOB_SAVE_STAND2_HEADER:
-    pp_str = &sstate->stand2_header_text;
-    goto handle_string_3;
-
-  case SSERV_CMD_GLOB_CLEAR_STAND2_HEADER_TEXT:
-    pp_str = &sstate->stand2_header_text;
-    goto clear_string_2;
-
-  case SSERV_CMD_GLOB_SAVE_STAND2_FOOTER:
-    pp_str = &sstate->stand2_footer_text;
-    goto handle_string_3;
-
-  case SSERV_CMD_GLOB_CLEAR_STAND2_FOOTER_TEXT:
-    pp_str = &sstate->stand2_footer_text;
-    goto clear_string_2;
-
-  case SSERV_CMD_GLOB_SAVE_PLOG_HEADER:
-    pp_str = &sstate->plog_header_text;
-    goto handle_string_3;
-
-  case SSERV_CMD_GLOB_CLEAR_PLOG_HEADER_TEXT:
-    pp_str = &sstate->plog_header_text;
-    goto clear_string_2;
-
-  case SSERV_CMD_GLOB_SAVE_PLOG_FOOTER:
-    pp_str = &sstate->plog_footer_text;
-    goto handle_string_3;
-
-  case SSERV_CMD_GLOB_CLEAR_PLOG_FOOTER_TEXT:
-    pp_str = &sstate->plog_footer_text;
-    goto clear_string_2;
 
   case SSERV_CMD_GLOB_CHANGE_STAND_ROW_ATTR:
     if (sarray_parse_2(param2, &tmp_env) < 0)
