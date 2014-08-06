@@ -1307,7 +1307,6 @@ struct prot_super_pkt_http_request
   int param_num;
 };
 
-extern const unsigned char * const super_proto_op_names[SSERV_CMD_LAST];
 extern const int super_proto_op_redirect[SSERV_CMD_LAST];
 extern unsigned char const * const super_proto_op_error_messages[];
 extern const unsigned char * const super_proto_cmd_names[SSERV_CMD_LAST];
