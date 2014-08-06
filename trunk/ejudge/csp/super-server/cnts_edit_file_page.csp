@@ -11,6 +11,8 @@
     unsigned char subtitle_buf[1024];
     const unsigned char *title = 0;
     const unsigned char *subtitle = subtitle_buf;
+    char *text_p = 0;
+    size_t text_z = 0;
 
 static const unsigned char * const form_row_attrs[]=
 {
@@ -21,25 +23,29 @@ static const unsigned char * const form_row_attrs[]=
     if (phr->priv_level != PRIV_LEVEL_ADMIN) FAIL(SSERV_ERR_PERMISSION_DENIED);
     if (ejudge_cfg_opcaps_find(phr->config, phr->login, &caps) < 0) FAIL(SSERV_ERR_PERMISSION_DENIED);
     if (opcaps_check(caps, OPCAP_EDIT_CONTEST) < 0) FAIL(SSERV_ERR_PERMISSION_DENIED);
-    if (!phr->ss->edited_cnts) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
 
     cnts = phr->ss->edited_cnts;
+    if (!cnts) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
+
     const unsigned char *file_path1 = 0;
     const unsigned char *param_expl = 0;
     unsigned char **p_str = 0;
     int help_type = 0;
+    int back_action = SSERV_CMD_CNTS_EDIT_CUR_CONTEST_PAGE;
     switch (phr->action) {
     case SSERV_CMD_NEW_GLOB_EDIT_CONTEST_START_CMD_PAGE:
         if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
         file_path1 = phr->ss->global->contest_start_cmd;
         param_expl = "Contest start script";
         p_str = &phr->ss->contest_start_cmd_text;
+        back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
         break;
     case SSERV_CMD_NEW_GLOB_EDIT_CONTEST_STOP_CMD_PAGE:
         if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
         file_path1 = phr->ss->global->contest_stop_cmd;
         param_expl = "Contest stop script";
         p_str = &phr->ss->contest_stop_cmd_text;
+        back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
         break;
     case SSERV_CMD_NEW_GLOB_EDIT_STAND_HEADER_FILE_PAGE:
         if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
@@ -47,6 +53,7 @@ static const unsigned char * const form_row_attrs[]=
         param_expl = "Standings HTML header file";
         p_str = &phr->ss->stand_header_text;
         help_type = 1;
+        back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
         break;
     case SSERV_CMD_NEW_GLOB_EDIT_STAND_FOOTER_FILE_PAGE:
         if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
@@ -54,6 +61,7 @@ static const unsigned char * const form_row_attrs[]=
         param_expl = "Standings HTML footer file";
         p_str = &phr->ss->stand_footer_text;
         help_type = 1;
+        back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
         break;
     case SSERV_CMD_NEW_GLOB_EDIT_STAND2_HEADER_FILE_PAGE:
         if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
@@ -61,6 +69,7 @@ static const unsigned char * const form_row_attrs[]=
         param_expl = "Supplementary standings HTML header file";
         p_str = &phr->ss->stand2_header_text;
         help_type = 1;
+        back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
         break;
     case SSERV_CMD_NEW_GLOB_EDIT_STAND2_FOOTER_FILE_PAGE:
         if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
@@ -68,6 +77,7 @@ static const unsigned char * const form_row_attrs[]=
         param_expl = "Supplementary standings HTML footer file";
         p_str = &phr->ss->stand2_footer_text;
         help_type = 1;
+        back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
         break;
     case SSERV_CMD_NEW_GLOB_EDIT_PLOG_HEADER_FILE_PAGE:
         if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
@@ -75,6 +85,7 @@ static const unsigned char * const form_row_attrs[]=
         param_expl = "Public submission log HTML header file";
         p_str = &phr->ss->plog_header_text;
         help_type = 1;
+        back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
         break;
     case SSERV_CMD_NEW_GLOB_EDIT_PLOG_FOOTER_FILE_PAGE:
         if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
@@ -82,51 +93,66 @@ static const unsigned char * const form_row_attrs[]=
         param_expl = "Public submission log HTML footer file";
         p_str = &phr->ss->plog_footer_text;
         help_type = 1;
+        back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
         break;
     case SSERV_CMD_NEW_CNTS_EDIT_USERS_HEADER_PAGE:
-        if (!phr->ss->edited_cnts) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
-        file_path1 = phr->ss->edited_cnts->users_header_file;
+        file_path1 = cnts->users_header_file;
         param_expl = "'users' HTML header file";
         p_str = &phr->ss->users_header_text;
         help_type = 1;
         break;
     case SSERV_CMD_NEW_CNTS_EDIT_USERS_FOOTER_PAGE:
-        if (!phr->ss->edited_cnts) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
-        file_path1 = phr->ss->edited_cnts->users_footer_file;
+        file_path1 = cnts->users_footer_file;
         param_expl = "'users' HTML footer file";
         p_str = &phr->ss->users_footer_text;
         help_type = 1;
         break;
-    case SSERV_CMD_CNTS_EDIT_COPYRIGHT:
-        if (!phr->ss->edited_cnts) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
-        file_path1 = phr->ss->edited_cnts->copyright_file;
+    case SSERV_CMD_NEW_CNTS_EDIT_COPYRIGHT_PAGE:
+        file_path1 = cnts->copyright_file;
         param_expl = "copyright notice file";
         p_str = &phr->ss->copyright_text;
         help_type = 1;
         break;
-    case SSERV_CMD_CNTS_EDIT_WELCOME:
-        if (!phr->ss->edited_cnts) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
-        file_path1 = phr->ss->edited_cnts->welcome_file;
+    case SSERV_CMD_NEW_CNTS_EDIT_WELCOME_PAGE:
+        file_path1 = cnts->welcome_file;
         param_expl = "participant welcome message";
         p_str = &phr->ss->welcome_text;
         help_type = 1;
         break;
-    case SSERV_CMD_CNTS_EDIT_REG_WELCOME:
-        if (!phr->ss->edited_cnts) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
-        file_path1 = phr->ss->edited_cnts->reg_welcome_file;
+    case SSERV_CMD_NEW_CNTS_EDIT_REG_WELCOME_PAGE:
+        file_path1 = cnts->reg_welcome_file;
         param_expl = "registration welcome message";
         p_str = &phr->ss->reg_welcome_text;
         help_type = 1;
         break;
-    case SSERV_CMD_CNTS_EDIT_REGISTER_EMAIL_FILE:
-        if (!phr->ss->edited_cnts) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
-        file_path1 = phr->ss->edited_cnts->register_email_file;
+    case SSERV_CMD_NEW_CNTS_EDIT_REGISTER_EMAIL_FILE_PAGE:
+        file_path1 = cnts->register_email_file;
         param_expl = "registration letter template";
         p_str = &phr->ss->register_email_text;
         help_type = 2;
         break;
     default:
         FAIL(SSERV_ERR_INVALID_PARAMETER);
+    }
+
+    if (!cnts->root_dir || !*cnts->root_dir) {
+        fprintf(log_f, "Contest root directory is not set\n");
+        FAIL(SSERV_ERR_INVALID_PARAMETER);
+    }
+    if (!os_IsAbsolutePath(cnts->root_dir)) {
+        fprintf(log_f, "Contest root directory '%s' is not absolute\n", cnts->root_dir);
+        FAIL(SSERV_ERR_INVALID_PARAMETER);
+    }
+
+    if (!cnts->conf_dir) {
+        snprintf(conf_path, sizeof(conf_path), "%s/%s", cnts->root_dir, "conf");
+    } else if (!os_IsAbsolutePath(cnts->conf_dir)) {
+        snprintf(conf_path, sizeof(conf_path), "%s/%s", cnts->root_dir, cnts->conf_dir);
+    }
+    if (!os_IsAbsolutePath(file_path1)) {
+        snprintf(full_path, sizeof(full_path), "%s/%s", conf_path, file_path1);
+    } else {
+        snprintf(full_path, sizeof(full_path), "%s", file_path1);
     }
 %><%@include "header.csp"
 %>
@@ -522,29 +548,6 @@ super_html_edit_template_file(
   default:
     abort();
   }
-  if (!file_path1 || !*file_path1) {
-    failure_text = "path variable is not set";
-    goto failure;
-  }
-  if (!cnts->root_dir || !*cnts->root_dir) {
-    failure_text = "root_dir is not set";
-    goto failure;
-  }
-  if (!os_IsAbsolutePath(cnts->root_dir)) {
-    failure_text = "root_dir is not absolute";
-    goto failure;
-  }
-
-  if (!cnts->conf_dir) {
-    snprintf(conf_path, sizeof(conf_path), "%s/%s", cnts->root_dir, "conf");
-  } else if (!os_IsAbsolutePath(cnts->conf_dir)) {
-    snprintf(conf_path, sizeof(conf_path), "%s/%s", cnts->root_dir, cnts->conf_dir);
-  }
-  if (!os_IsAbsolutePath(file_path1)) {
-    snprintf(full_path, sizeof(full_path), "%s/%s", conf_path, file_path1);
-  } else {
-    snprintf(full_path, sizeof(full_path), "%s", file_path1);
-  }
 -->
 
 <h2>Editing <s:v value="param_expl" escape="false" />, contest <s:v value="cnts->id" /></h2>
@@ -569,37 +572,29 @@ super_html_edit_template_file(
 <%
   } else {
     if (!*p_str) {
-      char *tmp_b = 0;
-      size_t tmp_sz = 0;
-
-      if (generic_read_file(&tmp_b, 0, &tmp_sz, 0, 0, full_path, 0) < 0) {
-        fprintf(f, "<p><big><font color=\"red\">Note: cannot read file</font></big></p>\n");
+      if (generic_read_file(&text_p, 0, &text_z, 0, 0, full_path, 0) < 0) {
+%><p><big><font color="red">Note: cannot read file</font></big></p>
+<%
       } else {
-        *p_str = tmp_b;
+        *p_str = text_p; text_p = 0;
       }
     }
   }
   if (!*p_str) *p_str = xstrdup("");
+>%
 
-  html_start_form(f, 2, self_url, hidden_vars);
-  s = html_armor_string_dup(*p_str);
-  fprintf(f, "<textarea name=\"param\" rows=\"20\" cols=\"80\">%s</textarea>\n",
-          s);
-  xfree(s);
+<s:form enctype="multipart/form-data">
+<s:hidden name="edit_action" value="phr->action" />
+<textarea name="param" rows="20" cols="80"><s:v value="*p_str" /></textarea>
 
-  fprintf(f, "<table border=\"0\"><tr><td>%sTo the top</a></td>",
-          html_hyperref(hbuf, sizeof(hbuf), session_id, self_url,extra_args,0));
-  fprintf(f, "<td>%sBack</a></td><td>",
-          html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
-                   "action=%d", back_action));
-  fprintf(f, "</td><td>");
-  html_submit_button(f, reread_action, "Re-read");
-  fprintf(f, "</td><td>");
-  html_submit_button(f, commit_action, "Save");
-  fprintf(f, "</td><td>");
-  html_submit_button(f, clear_action, "Clear");
-  fprintf(f, "</td></tr></table></form>\n");
-%>
+<table border="0"><tr>
+    <td><s:a ac="main-page">To the top</s:a></td>
+    <td><s:a action="back_action">Back</s:a></td>
+    <td><s:submit ac="new-cnts-reload-file-action" label="Reload" /></td>
+    <td><s:submit ac="new-cnts-save-file-action" label="Save" /></td>
+    <td><s:submit ac="new-cnts-clear-file-action" label="Clear" /></td>
+</tr></table>
+</s:form>
 
 <%
   if (help_type == 1) {
@@ -642,5 +637,6 @@ super_html_edit_template_file(
 %><%
   l10n_setlocale(0);
 cleanup:
+  xfree(text_p);
   html_armor_free(&ab);
 %>
