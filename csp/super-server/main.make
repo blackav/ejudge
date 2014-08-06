@@ -35,12 +35,15 @@ EXPAT_LIB=-lexpat
 TARGETDIR = ${libexecdir}/ejudge/csp/contests
 CFILES = \
  csp_check_tests_page.c\
+ csp_cnts_clear_file_action.c\
  csp_cnts_edit_access_page.c\
  csp_cnts_edit_cur_contest_page.c\
  csp_cnts_edit_file_page.c\
  csp_cnts_edit_member_fields_page.c\
  csp_cnts_edit_permissions_page.c\
  csp_cnts_edit_user_fields_page.c\
+ csp_cnts_reload_file_action.c\
+ csp_cnts_save_file_action.c\
  csp_cnts_start_edit_action.c\
  csp_contest_already_edited_page.c\
  csp_contest_locked_page.c\
@@ -74,12 +77,15 @@ csp_check_tests_page.so : csp_check_tests_page.c I_check_tests_page.c
 	$(CC) $(CCOMPFLAGS) ${WPTRSIGN} $(LDFLAGS) $^ -o $@
 
 csp_check_tests_page.c : check_tests_page.csp includes.csp stdvars.csp header.csp footer.csp
+csp_cnts_clear_file_action.c : cnts_clear_file_action.csp includes.csp stdvars.csp header.csp footer.csp
 csp_cnts_edit_access_page.c : cnts_edit_access_page.csp includes.csp stdvars.csp header.csp footer.csp
 csp_cnts_edit_cur_contest_page.c : cnts_edit_cur_contest_page.csp includes.csp stdvars.csp header.csp footer.csp
 csp_cnts_edit_file_page.c : cnts_edit_file_page.csp includes.csp stdvars.csp header.csp footer.csp
 csp_cnts_edit_member_fields_page.c : cnts_edit_member_fields_page.csp includes.csp stdvars.csp header.csp footer.csp
 csp_cnts_edit_permissions_page.c : cnts_edit_permissions_page.csp includes.csp stdvars.csp header.csp footer.csp
 csp_cnts_edit_user_fields_page.c : cnts_edit_user_fields_page.csp includes.csp stdvars.csp header.csp footer.csp
+csp_cnts_save_file_action.c : cnts_save_file_action.csp includes.csp stdvars.csp header.csp footer.csp
+csp_cnts_reload_file_action.c : cnts_reload_file_action.csp includes.csp stdvars.csp header.csp footer.csp
 csp_cnts_start_edit_action.c : cnts_start_edit_action.csp includes.csp stdvars.csp header.csp footer.csp
 csp_contest_already_edited_page.c : contest_already_edited_page.csp includes.csp stdvars.csp header.csp footer.csp
 csp_contest_locked_page.c : contest_locked_page.csp includes.csp stdvars.csp header.csp footer.csp
