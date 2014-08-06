@@ -37,6 +37,7 @@ CFILES = \
  csp_check_tests_page.c\
  csp_cnts_edit_access_page.c\
  csp_cnts_edit_cur_contest_page.c\
+ csp_cnts_edit_file_page.c\
  csp_cnts_edit_member_fields_page.c\
  csp_cnts_edit_permissions_page.c\
  csp_cnts_edit_user_fields_page.c\
@@ -75,6 +76,7 @@ csp_check_tests_page.so : csp_check_tests_page.c I_check_tests_page.c
 csp_check_tests_page.c : check_tests_page.csp includes.csp stdvars.csp header.csp footer.csp
 csp_cnts_edit_access_page.c : cnts_edit_access_page.csp includes.csp stdvars.csp header.csp footer.csp
 csp_cnts_edit_cur_contest_page.c : cnts_edit_cur_contest_page.csp includes.csp stdvars.csp header.csp footer.csp
+csp_cnts_edit_file_page.c : cnts_edit_file_page.csp includes.csp stdvars.csp header.csp footer.csp
 csp_cnts_edit_member_fields_page.c : cnts_edit_member_fields_page.csp includes.csp stdvars.csp header.csp footer.csp
 csp_cnts_edit_permissions_page.c : cnts_edit_permissions_page.csp includes.csp stdvars.csp header.csp footer.csp
 csp_cnts_edit_user_fields_page.c : cnts_edit_user_fields_page.csp includes.csp stdvars.csp header.csp footer.csp

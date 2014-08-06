@@ -2,6 +2,12 @@
 /* $Id$ */
 %><%@include "includes.csp"
 %><%
+#include "reuse/osdeps.h"
+
+#include <sys/types.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <unistd.h>
 %><%@set getter_name = "csp_get_cnts_edit_file_page"
 %><%@set ac_prefix = "SSERV_CMD_"
 %><%@set err_prefix = "SSERV_ERR_"
@@ -13,12 +19,10 @@
     const unsigned char *subtitle = subtitle_buf;
     char *text_p = 0;
     size_t text_z = 0;
-
-static const unsigned char * const form_row_attrs[]=
-{
-  " bgcolor=\"#d0d0d0\"",
-  " bgcolor=\"#e0e0e0\"",
-};
+    opcap_t caps = 0;
+    unsigned char conf_path[PATH_MAX];
+    unsigned char full_path[PATH_MAX];
+    struct stat stb;
 
     if (phr->priv_level != PRIV_LEVEL_ADMIN) FAIL(SSERV_ERR_PERMISSION_DENIED);
     if (ejudge_cfg_opcaps_find(phr->config, phr->login, &caps) < 0) FAIL(SSERV_ERR_PERMISSION_DENIED);
@@ -33,100 +37,156 @@ static const unsigned char * const form_row_attrs[]=
     int help_type = 0;
     int back_action = SSERV_CMD_CNTS_EDIT_CUR_CONTEST_PAGE;
     switch (phr->action) {
-    case SSERV_CMD_NEW_GLOB_EDIT_CONTEST_START_CMD_PAGE:
+    case SSERV_CMD_GLOB_EDIT_CONTEST_START_CMD_PAGE:
         if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
         file_path1 = phr->ss->global->contest_start_cmd;
+        if (!file_path1 || !*file_path1) {
+            snprintf(phr->ss->global->contest_start_cmd, sizeof(phr->ss->global->contest_start_cmd), "%s", "start_cmd");
+            file_path1 = phr->ss->global->contest_start_cmd;
+        }
         param_expl = "Contest start script";
         p_str = &phr->ss->contest_start_cmd_text;
         back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
         break;
-    case SSERV_CMD_NEW_GLOB_EDIT_CONTEST_STOP_CMD_PAGE:
+    case SSERV_CMD_GLOB_EDIT_CONTEST_STOP_CMD_PAGE:
         if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
         file_path1 = phr->ss->global->contest_stop_cmd;
+        if (!file_path1 || !*file_path1) {
+            phr->ss->global->contest_stop_cmd = "stop_cmd";
+            file_path1 = phr->ss->global->contest_stop_cmd;
+        }
         param_expl = "Contest stop script";
         p_str = &phr->ss->contest_stop_cmd_text;
         back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
         break;
-    case SSERV_CMD_NEW_GLOB_EDIT_STAND_HEADER_FILE_PAGE:
+    case SSERV_CMD_GLOB_EDIT_STAND_HEADER_FILE_PAGE:
         if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
         file_path1 = phr->ss->global->stand_header_file;
+        if (!file_path1 || !*file_path1) {
+            snprintf(phr->ss->global->stand_header_file, sizeof(phr->ss->global->stand_header_file), "%s", "stand_header.html");
+            file_path1 = phr->ss->global->stand_header_file;
+        }
         param_expl = "Standings HTML header file";
         p_str = &phr->ss->stand_header_text;
         help_type = 1;
         back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
         break;
-    case SSERV_CMD_NEW_GLOB_EDIT_STAND_FOOTER_FILE_PAGE:
+    case SSERV_CMD_GLOB_EDIT_STAND_FOOTER_FILE_PAGE:
         if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
         file_path1 = phr->ss->global->stand_footer_file;
+        if (!file_path1 || !*file_path1) {
+            snprintf(phr->ss->global->stand_footer_file, sizeof(phr->ss->global->stand_footer_file), "%s", "stand_footer.html");
+            file_path1 = phr->ss->global->stand_footer_file;
+        }
         param_expl = "Standings HTML footer file";
         p_str = &phr->ss->stand_footer_text;
         help_type = 1;
         back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
         break;
-    case SSERV_CMD_NEW_GLOB_EDIT_STAND2_HEADER_FILE_PAGE:
+    case SSERV_CMD_GLOB_EDIT_STAND2_HEADER_FILE_PAGE:
         if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
         file_path1 = phr->ss->global->stand2_header_file;
+        if (!file_path1 || !*file_path1) {
+            snprintf(phr->ss->global->stand2_header_file, sizeof(phr->ss->global->stand2_header_file), "%s", "stand2_header.html");
+            file_path1 = phr->ss->global->stand2_header_file;
+        }
         param_expl = "Supplementary standings HTML header file";
         p_str = &phr->ss->stand2_header_text;
         help_type = 1;
         back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
         break;
-    case SSERV_CMD_NEW_GLOB_EDIT_STAND2_FOOTER_FILE_PAGE:
+    case SSERV_CMD_GLOB_EDIT_STAND2_FOOTER_FILE_PAGE:
         if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
         file_path1 = phr->ss->global->stand2_footer_file;
+        if (!file_path1 || !*file_path1) {
+            snprintf(phr->ss->global->stand2_footer_file, sizeof(phr->ss->global->stand2_footer_file), "%s", "stand2_footer.html");
+            file_path1 = phr->ss->global->stand2_footer_file;
+        }
         param_expl = "Supplementary standings HTML footer file";
         p_str = &phr->ss->stand2_footer_text;
         help_type = 1;
         back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
         break;
-    case SSERV_CMD_NEW_GLOB_EDIT_PLOG_HEADER_FILE_PAGE:
+    case SSERV_CMD_GLOB_EDIT_PLOG_HEADER_FILE_PAGE:
         if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
         file_path1 = phr->ss->global->plog_header_file;
+        if (!file_path1 || !*file_path1) {
+            snprintf(phr->ss->global->plog_header_file, sizeof(phr->ss->global->plog_header_file), "%s", "plog_header.html");
+            file_path1 = phr->ss->global->plog_header_file;
+        }
         param_expl = "Public submission log HTML header file";
         p_str = &phr->ss->plog_header_text;
         help_type = 1;
         back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
         break;
-    case SSERV_CMD_NEW_GLOB_EDIT_PLOG_FOOTER_FILE_PAGE:
+    case SSERV_CMD_GLOB_EDIT_PLOG_FOOTER_FILE_PAGE:
         if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
-        file_path1 = phr->ss->plog_footer_file;
+        file_path1 = phr->ss->plog_footer_text;
+        if (!file_path1 || !*file_path1) {
+            snprintf(phr->ss->global->plog_footer_file, sizeof(phr->ss->global->plog_footer_file), "%s", "plog_footer.html");
+            file_path1 = phr->ss->global->plog_footer_file;
+        }
         param_expl = "Public submission log HTML footer file";
         p_str = &phr->ss->plog_footer_text;
         help_type = 1;
         back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
         break;
-    case SSERV_CMD_NEW_CNTS_EDIT_USERS_HEADER_PAGE:
+    case SSERV_CMD_CNTS_EDIT_USERS_HEADER_PAGE:
         file_path1 = cnts->users_header_file;
+        if (!file_path1 || !*file_path1) {
+            phr->ss->edited_cnts->users_header_file = xstrdup("users_header.html"); 
+            file_path1 = cnts->users_header_file;
+        }
         param_expl = "'users' HTML header file";
         p_str = &phr->ss->users_header_text;
         help_type = 1;
         break;
-    case SSERV_CMD_NEW_CNTS_EDIT_USERS_FOOTER_PAGE:
+    case SSERV_CMD_CNTS_EDIT_USERS_FOOTER_PAGE:
         file_path1 = cnts->users_footer_file;
+        if (!file_path1 || !*file_path1) {
+            phr->ss->edited_cnts->users_footer_file = xstrdup("users_footer.html"); 
+            file_path1 = cnts->users_footer_file;
+        }
         param_expl = "'users' HTML footer file";
         p_str = &phr->ss->users_footer_text;
         help_type = 1;
         break;
-    case SSERV_CMD_NEW_CNTS_EDIT_COPYRIGHT_PAGE:
+    case SSERV_CMD_CNTS_EDIT_COPYRIGHT_PAGE:
         file_path1 = cnts->copyright_file;
+        if (!file_path1 || !*file_path1) {
+            phr->ss->edited_cnts->copyright_file = xstrdup("copyright.html"); 
+            file_path1 = cnts->copyright_file;
+        }
         param_expl = "copyright notice file";
         p_str = &phr->ss->copyright_text;
         help_type = 1;
         break;
-    case SSERV_CMD_NEW_CNTS_EDIT_WELCOME_PAGE:
+    case SSERV_CMD_CNTS_EDIT_WELCOME_PAGE:
         file_path1 = cnts->welcome_file;
+        if (!file_path1 || !*file_path1) {
+            phr->ss->edited_cnts->welcome_file = xstrdup("welcome.html"); 
+            file_path1 = cnts->welcome_file;
+        }
         param_expl = "participant welcome message";
         p_str = &phr->ss->welcome_text;
         help_type = 1;
         break;
-    case SSERV_CMD_NEW_CNTS_EDIT_REG_WELCOME_PAGE:
+    case SSERV_CMD_CNTS_EDIT_REG_WELCOME_PAGE:
         file_path1 = cnts->reg_welcome_file;
+        if (!file_path1 || !*file_path1) {
+            phr->ss->edited_cnts->reg_welcome_file = xstrdup("reg_welcome.html"); 
+            file_path1 = cnts->reg_welcome_file;
+        }
         param_expl = "registration welcome message";
         p_str = &phr->ss->reg_welcome_text;
         help_type = 1;
         break;
-    case SSERV_CMD_NEW_CNTS_EDIT_REGISTER_EMAIL_FILE_PAGE:
+    case SSERV_CMD_CNTS_EDIT_REGISTER_EMAIL_FILE_PAGE:
         file_path1 = cnts->register_email_file;
+        if (!file_path1 || !*file_path1) {
+            phr->ss->edited_cnts->register_email_file = xstrdup("register_email.txt"); 
+            file_path1 = cnts->register_email_file;
+        }
         param_expl = "registration letter template";
         p_str = &phr->ss->register_email_text;
         help_type = 2;
@@ -156,399 +216,6 @@ static const unsigned char * const form_row_attrs[]=
     }
 %><%@include "header.csp"
 %>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<!--
-int
-super_html_edit_template_file(
-        FILE *f,
-        int priv_level,
-        int user_id,
-        const unsigned char *login,
-        ej_cookie_t session_id,
-        const ej_ip_t *ip_address,
-        struct ejudge_cfg *config,
-        struct sid_state *sstate,
-        int cmd,
-        const unsigned char *self_url,
-        const unsigned char *hidden_vars,
-        const unsigned char *extra_args)
-{
-  struct contest_desc *cnts = sstate->edited_cnts;
-  struct section_global_data *global = sstate->global;
-  unsigned char hbuf[1024];
-  unsigned char conf_path[PATH_MAX];
-  unsigned char full_path[PATH_MAX];
-  unsigned char *file_path1 = 0;
-  unsigned char *failure_text = 0;
-  unsigned char *param_expl;
-  unsigned char **p_str;
-  unsigned char *s;
-  struct stat stb;
-  int commit_action, reread_action, clear_action, back_action;
-  const unsigned char *help_txt;
-
-  switch (cmd) {
-  case SSERV_CMD_GLOB_EDIT_CONTEST_START_CMD:
-    if (!global) {
-      failure_text = "no current contest";
-      goto failure;
-    }
-    file_path1 = global->contest_start_cmd;
-    param_expl = "Contest start script";
-    p_str = &sstate->contest_start_cmd_text;
-    commit_action = SSERV_CMD_GLOB_SAVE_CONTEST_START_CMD;
-    reread_action = SSERV_CMD_GLOB_CLEAR_CONTEST_START_CMD_TEXT;
-    clear_action = SSERV_CMD_GLOB_CLEAR_CONTEST_START_CMD_TEXT;
-    back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
-    help_txt = super_html_template_help_3;
-    break;
-
-  case SSERV_CMD_GLOB_EDIT_CONTEST_STOP_CMD:
-    if (!global) {
-      failure_text = "no current contest";
-      goto failure;
-    }
-    file_path1 = global->contest_stop_cmd;
-    if (!file_path1) file_path1 = "";
-    param_expl = "Contest start script";
-    p_str = &sstate->contest_stop_cmd_text;
-    commit_action = SSERV_CMD_GLOB_SAVE_CONTEST_STOP_CMD;
-    reread_action = SSERV_CMD_GLOB_CLEAR_CONTEST_STOP_CMD_TEXT;
-    clear_action = SSERV_CMD_GLOB_CLEAR_CONTEST_STOP_CMD_TEXT;
-    back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
-    help_txt = super_html_template_help_3;
-    break;
-
-  case SSERV_CMD_GLOB_EDIT_STAND_HEADER_FILE:
-    if (!global) {
-      failure_text = "no current contest";
-      goto failure;
-    }
-    file_path1 = global->stand_header_file;
-    param_expl = "Standings HTML header file";
-    p_str = &sstate->stand_header_text;
-    commit_action = SSERV_CMD_GLOB_SAVE_STAND_HEADER;
-    reread_action = SSERV_CMD_GLOB_CLEAR_STAND_HEADER_TEXT;
-    clear_action = SSERV_CMD_GLOB_CLEAR_STAND_HEADER_TEXT;
-    back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
-    help_txt = super_html_template_help_1;
-    break;
-  case SSERV_CMD_GLOB_EDIT_STAND_FOOTER_FILE:
-    if (!global) {
-      failure_text = "no current contest";
-      goto failure;
-    }
-    file_path1 = global->stand_footer_file;
-    param_expl = "Standings HTML footer file";
-    p_str = &sstate->stand_footer_text;
-    commit_action = SSERV_CMD_GLOB_SAVE_STAND_FOOTER;
-    reread_action = SSERV_CMD_GLOB_CLEAR_STAND_FOOTER_TEXT;
-    clear_action = SSERV_CMD_GLOB_CLEAR_STAND_FOOTER_TEXT;
-    back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
-    help_txt = super_html_template_help_1;
-    break;
-  case SSERV_CMD_GLOB_EDIT_STAND2_HEADER_FILE:
-    if (!global) {
-      failure_text = "no current contest";
-      goto failure;
-    }
-    file_path1 = global->stand2_header_file;
-    param_expl = "Supplementary standings HTML header file";
-    p_str = &sstate->stand2_header_text;
-    commit_action = SSERV_CMD_GLOB_SAVE_STAND2_HEADER;
-    reread_action = SSERV_CMD_GLOB_CLEAR_STAND2_HEADER_TEXT;
-    clear_action = SSERV_CMD_GLOB_CLEAR_STAND2_HEADER_TEXT;
-    back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
-    help_txt = super_html_template_help_1;
-    break;
-  case SSERV_CMD_GLOB_EDIT_STAND2_FOOTER_FILE:
-    if (!global) {
-      failure_text = "no current contest";
-      goto failure;
-    }
-    file_path1 = global->stand2_footer_file;
-    param_expl = "Supplementary standings HTML footer file";
-    p_str = &sstate->stand2_footer_text;
-    commit_action = SSERV_CMD_GLOB_SAVE_STAND2_FOOTER;
-    reread_action = SSERV_CMD_GLOB_CLEAR_STAND2_FOOTER_TEXT;
-    clear_action = SSERV_CMD_GLOB_CLEAR_STAND2_FOOTER_TEXT;
-    back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
-    help_txt = super_html_template_help_1;
-    break;
-  case SSERV_CMD_GLOB_EDIT_PLOG_HEADER_FILE:
-    if (!global) {
-      failure_text = "no current contest";
-      goto failure;
-    }
-    file_path1 = global->plog_header_file;
-    param_expl = "Public submission log HTML header file";
-    p_str = &sstate->plog_header_text;
-    commit_action = SSERV_CMD_GLOB_SAVE_PLOG_HEADER;
-    reread_action = SSERV_CMD_GLOB_CLEAR_PLOG_HEADER_TEXT;
-    clear_action = SSERV_CMD_GLOB_CLEAR_PLOG_HEADER_TEXT;
-    back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
-    help_txt = super_html_template_help_1;
-    break;
-  case SSERV_CMD_GLOB_EDIT_PLOG_FOOTER_FILE:
-    if (!global) {
-      failure_text = "no current contest";
-      goto failure;
-    }
-    file_path1 = global->plog_footer_file;
-    param_expl = "Public submission log HTML footer file";
-    p_str = &sstate->plog_footer_text;
-    commit_action = SSERV_CMD_GLOB_SAVE_PLOG_FOOTER;
-    reread_action = SSERV_CMD_GLOB_CLEAR_PLOG_FOOTER_TEXT;
-    clear_action = SSERV_CMD_GLOB_CLEAR_PLOG_FOOTER_TEXT;
-    back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
-    help_txt = super_html_template_help_1;
-    break;
-
-  case SSERV_CMD_CNTS_EDIT_USERS_HEADER:
-    if (!cnts) {
-      failure_text = "no current contest";
-      goto failure;
-    }
-    file_path1 = cnts->users_header_file;
-    param_expl = "`users' HTML header file";
-    p_str = &sstate->users_header_text;
-    commit_action = SSERV_CMD_CNTS_SAVE_USERS_HEADER;
-    reread_action = SSERV_CMD_CNTS_CLEAR_USERS_HEADER_TEXT;
-    clear_action = SSERV_CMD_CNTS_CLEAR_USERS_HEADER_TEXT;
-    back_action = SSERV_CMD_EDIT_CURRENT_CONTEST;
-    help_txt = super_html_template_help_1;
-    break;
-  case SSERV_CMD_CNTS_EDIT_USERS_FOOTER:
-    if (!cnts) {
-      failure_text = "no current contest";
-      goto failure;
-    }
-    file_path1 = cnts->users_footer_file;
-    param_expl = "`users' HTML footer file";
-    p_str = &sstate->users_footer_text;
-    commit_action = SSERV_CMD_CNTS_SAVE_USERS_FOOTER;
-    reread_action = SSERV_CMD_CNTS_CLEAR_USERS_FOOTER_TEXT;
-    clear_action = SSERV_CMD_CNTS_CLEAR_USERS_FOOTER_TEXT;
-    back_action = SSERV_CMD_EDIT_CURRENT_CONTEST;
-    help_txt = super_html_template_help_1;
-    break;
-  case SSERV_CMD_CNTS_EDIT_REGISTER_HEADER:
-    if (!cnts) {
-      failure_text = "no current contest";
-      goto failure;
-    }
-    file_path1 = cnts->register_header_file;
-    param_expl = "`register' HTML header file";
-    p_str = &sstate->register_header_text;
-    commit_action = SSERV_CMD_CNTS_SAVE_REGISTER_HEADER;
-    reread_action = SSERV_CMD_CNTS_CLEAR_REGISTER_HEADER_TEXT;
-    clear_action = SSERV_CMD_CNTS_CLEAR_REGISTER_HEADER_TEXT;
-    back_action = SSERV_CMD_EDIT_CURRENT_CONTEST;
-    help_txt = super_html_template_help_1;
-    break;
-  case SSERV_CMD_CNTS_EDIT_REGISTER_FOOTER:
-    if (!cnts) {
-      failure_text = "no current contest";
-      goto failure;
-    }
-    file_path1 = cnts->register_footer_file;
-    param_expl = "`register' HTML footer file";
-    p_str = &sstate->register_footer_text;
-    commit_action = SSERV_CMD_CNTS_SAVE_REGISTER_FOOTER;
-    reread_action = SSERV_CMD_CNTS_CLEAR_REGISTER_FOOTER_TEXT;
-    clear_action = SSERV_CMD_CNTS_CLEAR_REGISTER_FOOTER_TEXT;
-    back_action = SSERV_CMD_EDIT_CURRENT_CONTEST;
-    help_txt = super_html_template_help_1;
-    break;
-  case SSERV_CMD_CNTS_EDIT_TEAM_HEADER:
-    if (!cnts) {
-      failure_text = "no current contest";
-      goto failure;
-    }
-    file_path1 = cnts->team_header_file;
-    param_expl = "`team' HTML header file";
-    p_str = &sstate->team_header_text;
-    commit_action = SSERV_CMD_CNTS_SAVE_TEAM_HEADER;
-    reread_action = SSERV_CMD_CNTS_CLEAR_TEAM_HEADER_TEXT;
-    clear_action = SSERV_CMD_CNTS_CLEAR_TEAM_HEADER_TEXT;
-    back_action = SSERV_CMD_EDIT_CURRENT_CONTEST;
-    help_txt = super_html_template_help_1;
-    break;
-  case SSERV_CMD_CNTS_EDIT_TEAM_MENU_1:
-    if (!cnts) {
-      failure_text = "no current contest";
-      goto failure;
-    }
-    file_path1 = cnts->team_menu_1_file;
-    param_expl = "`team' HTML menu1 file";
-    p_str = &sstate->team_menu_1_text;
-    commit_action = SSERV_CMD_CNTS_SAVE_TEAM_MENU_1;
-    reread_action = SSERV_CMD_CNTS_CLEAR_TEAM_MENU_1_TEXT;
-    clear_action = SSERV_CMD_CNTS_CLEAR_TEAM_MENU_1_TEXT;
-    back_action = SSERV_CMD_EDIT_CURRENT_CONTEST;
-    help_txt = super_html_template_help_1;
-    break;
-  case SSERV_CMD_CNTS_EDIT_TEAM_MENU_2:
-    if (!cnts) {
-      failure_text = "no current contest";
-      goto failure;
-    }
-    file_path1 = cnts->team_menu_2_file;
-    param_expl = "`team' HTML menu2 file";
-    p_str = &sstate->team_menu_2_text;
-    commit_action = SSERV_CMD_CNTS_SAVE_TEAM_MENU_2;
-    reread_action = SSERV_CMD_CNTS_CLEAR_TEAM_MENU_2_TEXT;
-    clear_action = SSERV_CMD_CNTS_CLEAR_TEAM_MENU_2_TEXT;
-    back_action = SSERV_CMD_EDIT_CURRENT_CONTEST;
-    help_txt = super_html_template_help_1;
-    break;
-  case SSERV_CMD_CNTS_EDIT_TEAM_MENU_3:
-    if (!cnts) {
-      failure_text = "no current contest";
-      goto failure;
-    }
-    file_path1 = cnts->team_menu_3_file;
-    param_expl = "`team' HTML menu2 file";
-    p_str = &sstate->team_menu_3_text;
-    commit_action = SSERV_CMD_CNTS_SAVE_TEAM_MENU_3;
-    reread_action = SSERV_CMD_CNTS_CLEAR_TEAM_MENU_3_TEXT;
-    clear_action = SSERV_CMD_CNTS_CLEAR_TEAM_MENU_3_TEXT;
-    back_action = SSERV_CMD_EDIT_CURRENT_CONTEST;
-    help_txt = super_html_template_help_1;
-    break;
-  case SSERV_CMD_CNTS_EDIT_TEAM_SEPARATOR:
-    if (!cnts) {
-      failure_text = "no current contest";
-      goto failure;
-    }
-    file_path1 = cnts->team_separator_file;
-    param_expl = "`team' HTML separator file";
-    p_str = &sstate->team_separator_text;
-    commit_action = SSERV_CMD_CNTS_SAVE_TEAM_SEPARATOR;
-    reread_action = SSERV_CMD_CNTS_CLEAR_TEAM_SEPARATOR_TEXT;
-    clear_action = SSERV_CMD_CNTS_CLEAR_TEAM_SEPARATOR_TEXT;
-    back_action = SSERV_CMD_EDIT_CURRENT_CONTEST;
-    help_txt = super_html_template_help_1;
-    break;
-  case SSERV_CMD_CNTS_EDIT_TEAM_FOOTER:
-    if (!cnts) {
-      failure_text = "no current contest";
-      goto failure;
-    }
-    file_path1 = cnts->team_footer_file;
-    param_expl = "`team' HTML footer file";
-    p_str = &sstate->team_footer_text;
-    commit_action = SSERV_CMD_CNTS_SAVE_TEAM_FOOTER;
-    reread_action = SSERV_CMD_CNTS_CLEAR_TEAM_FOOTER_TEXT;
-    clear_action = SSERV_CMD_CNTS_CLEAR_TEAM_FOOTER_TEXT;
-    back_action = SSERV_CMD_EDIT_CURRENT_CONTEST;
-    help_txt = super_html_template_help_1;
-    break;
-  case SSERV_CMD_CNTS_EDIT_PRIV_HEADER:
-    if (!cnts) {
-      failure_text = "no current contest";
-      goto failure;
-    }
-    file_path1 = cnts->priv_header_file;
-    param_expl = "privileged HTML header file";
-    p_str = &sstate->priv_header_text;
-    commit_action = SSERV_CMD_CNTS_SAVE_PRIV_HEADER;
-    reread_action = SSERV_CMD_CNTS_CLEAR_PRIV_HEADER_TEXT;
-    clear_action = SSERV_CMD_CNTS_CLEAR_PRIV_HEADER_TEXT;
-    back_action = SSERV_CMD_EDIT_CURRENT_CONTEST;
-    help_txt = super_html_template_help_1;
-    break;
-  case SSERV_CMD_CNTS_EDIT_PRIV_FOOTER:
-    if (!cnts) {
-      failure_text = "no current contest";
-      goto failure;
-    }
-    file_path1 = cnts->priv_footer_file;
-    param_expl = "privileged HTML footer file";
-    p_str = &sstate->priv_footer_text;
-    commit_action = SSERV_CMD_CNTS_SAVE_PRIV_FOOTER;
-    reread_action = SSERV_CMD_CNTS_CLEAR_PRIV_FOOTER_TEXT;
-    clear_action = SSERV_CMD_CNTS_CLEAR_PRIV_FOOTER_TEXT;
-    back_action = SSERV_CMD_EDIT_CURRENT_CONTEST;
-    help_txt = super_html_template_help_1;
-    break;
-  case SSERV_CMD_CNTS_EDIT_COPYRIGHT:
-    if (!cnts) {
-      failure_text = "no current contest";
-      goto failure;
-    }
-    file_path1 = cnts->copyright_file;
-    param_expl = "copyright notice file";
-    p_str = &sstate->copyright_text;
-    commit_action = SSERV_CMD_CNTS_SAVE_COPYRIGHT;
-    reread_action = SSERV_CMD_CNTS_CLEAR_COPYRIGHT_TEXT;
-    clear_action = SSERV_CMD_CNTS_CLEAR_COPYRIGHT_TEXT;
-    back_action = SSERV_CMD_EDIT_CURRENT_CONTEST;
-    help_txt = super_html_template_help_1;
-    break;
-  case SSERV_CMD_CNTS_EDIT_WELCOME:
-    if (!cnts) {
-      failure_text = "no current contest";
-      goto failure;
-    }
-    file_path1 = cnts->welcome_file;
-    param_expl = "`team' HTML header file";
-    p_str = &sstate->welcome_text;
-    commit_action = SSERV_CMD_CNTS_SAVE_WELCOME;
-    reread_action = SSERV_CMD_CNTS_CLEAR_WELCOME_TEXT;
-    clear_action = SSERV_CMD_CNTS_CLEAR_WELCOME_TEXT;
-    back_action = SSERV_CMD_EDIT_CURRENT_CONTEST;
-    help_txt = super_html_template_help_1;
-    break;
-  case SSERV_CMD_CNTS_EDIT_REG_WELCOME:
-    if (!cnts) {
-      failure_text = "no current contest";
-      goto failure;
-    }
-    file_path1 = cnts->reg_welcome_file;
-    param_expl = "`team' HTML header file";
-    p_str = &sstate->reg_welcome_text;
-    commit_action = SSERV_CMD_CNTS_SAVE_REG_WELCOME;
-    reread_action = SSERV_CMD_CNTS_CLEAR_REG_WELCOME_TEXT;
-    clear_action = SSERV_CMD_CNTS_CLEAR_REG_WELCOME_TEXT;
-    back_action = SSERV_CMD_EDIT_CURRENT_CONTEST;
-    help_txt = super_html_template_help_1;
-    break;
-  case SSERV_CMD_CNTS_EDIT_REGISTER_EMAIL_FILE:
-    if (!cnts) {
-      failure_text = "no current contest";
-      goto failure;
-    }
-    file_path1 = cnts->register_email_file;
-    param_expl = "registration letter template";
-    p_str = &sstate->register_email_text;
-    commit_action = SSERV_CMD_CNTS_SAVE_REGISTER_EMAIL_FILE;
-    reread_action = SSERV_CMD_CNTS_CLEAR_REGISTER_EMAIL_FILE_TEXT;
-    clear_action = SSERV_CMD_CNTS_CLEAR_REGISTER_EMAIL_FILE_TEXT;
-    back_action = SSERV_CMD_EDIT_CURRENT_CONTEST;
-    help_txt = super_html_template_help_2;
-    break;
-  default:
-    abort();
-  }
--->
 
 <h2>Editing <s:v value="param_expl" escape="false" />, contest <s:v value="cnts->id" /></h2>
 
@@ -581,7 +248,7 @@ super_html_edit_template_file(
     }
   }
   if (!*p_str) *p_str = xstrdup("");
->%
+%>
 
 <s:form enctype="multipart/form-data">
 <s:hidden name="edit_action" value="phr->action" />

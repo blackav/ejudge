@@ -220,7 +220,7 @@ static const unsigned char * const form_row_attrs[]=
         <s:htr attr="form_row_attrs[row ^= 1]">
             <td>Registration letter template file:</td>
             <td><s:textfield size="48" name="param" value="cnts->register_email_file" /><% if (!cnts->register_email_file) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-register-email-file" label="Change" /><s:submit ac="cnts-clear-register-email-file" label="Clear" />[<s:a ac="cnts-edit-register-email-file">Edit</s:a>]</td>
+            <td><s:submit ac="cnts-change-register-email-file" label="Change" /><s:submit ac="cnts-clear-register-email-file" label="Clear" />[<s:a ac="cnts-edit-register-email-file-page">Edit</s:a>]</td>
             <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_REGISTER_EMAIL_FILE); %>
         </s:htr>
     </s:form>
@@ -810,7 +810,7 @@ initial count = <s:v value="memb->init_count" />
         <s:htr attr="form_row_attrs[row ^= 1]">
             <td>HTML header file for 'users' CGI-program:</td>
             <td><s:textfield size="48" name="param" value="cnts->users_header_file" /><% if (!cnts->users_header_file) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-users-header" label="Change" /><s:submit ac="cnts-clear-users-header" label="Clear" />[<s:a ac="cnts-edit-users-header">Edit</s:a>]</td>
+            <td><s:submit ac="cnts-change-users-header" label="Change" /><s:submit ac="cnts-clear-users-header" label="Clear" />[<s:a ac="cnts-edit-users-header-page">Edit</s:a>]</td>
             <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_USERS_HEADER); %>
         </s:htr>
     </s:form>
@@ -825,7 +825,7 @@ initial count = <s:v value="memb->init_count" />
         <s:htr attr="form_row_attrs[row ^= 1]">
             <td>HTML footer file for 'users' CGI-program:</td>
             <td><s:textfield size="48" name="param" value="cnts->users_footer_file" /><% if (!cnts->users_footer_file) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-users-footer" label="Change" /><s:submit ac="cnts-clear-users-footer" label="Clear" />[<s:a ac="cnts-edit-users-footer">Edit</s:a>]</td>
+            <td><s:submit ac="cnts-change-users-footer" label="Change" /><s:submit ac="cnts-clear-users-footer" label="Clear" />[<s:a ac="cnts-edit-users-footer-page">Edit</s:a>]</td>
             <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_USERS_FOOTER); %>
         </s:htr>
     </s:form>
@@ -840,7 +840,7 @@ initial count = <s:v value="memb->init_count" />
         <s:htr attr="form_row_attrs[row ^= 1]">
             <td>Copyright notice file:</td>
             <td><s:textfield size="48" name="param" value="cnts->copyright_file" /><% if (!cnts->copyright_file) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-copyright" label="Change" /><s:submit ac="cnts-clear-copyright" label="Clear" />[<s:a ac="cnts-edit-copyright">Edit</s:a>]</td>
+            <td><s:submit ac="cnts-change-copyright" label="Change" /><s:submit ac="cnts-clear-copyright" label="Clear" />[<s:a ac="cnts-edit-copyright-page">Edit</s:a>]</td>
             <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_COPYRIGHT); %>
         </s:htr>
     </s:form>
@@ -855,7 +855,7 @@ initial count = <s:v value="memb->init_count" />
         <s:htr attr="form_row_attrs[row ^= 1]">
             <td>Participant's welcome message:</td>
             <td><s:textfield size="48" name="param" value="cnts->welcome_file" /><% if (!cnts->welcome_file) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-welcome" label="Change" /><s:submit ac="cnts-clear-welcome" label="Clear" />[<s:a ac="cnts-edit-welcome">Edit</s:a>]</td>
+            <td><s:submit ac="cnts-change-welcome" label="Change" /><s:submit ac="cnts-clear-welcome" label="Clear" />[<s:a ac="cnts-edit-welcome-page">Edit</s:a>]</td>
             <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_WELCOME); %>
         </s:htr>
     </s:form>
@@ -870,7 +870,7 @@ initial count = <s:v value="memb->init_count" />
         <s:htr attr="form_row_attrs[row ^= 1]">
             <td>Registration welcome message:</td>
             <td><s:textfield size="48" name="param" value="cnts->reg_welcome_file" /><% if (!cnts->reg_welcome_file) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-reg-welcome" label="Change" /><s:submit ac="cnts-clear-reg-welcome" label="Clear" />[<s:a ac="cnts-edit-reg-welcome">Edit</s:a>]</td>
+            <td><s:submit ac="cnts-change-reg-welcome" label="Change" /><s:submit ac="cnts-clear-reg-welcome" label="Clear" />[<s:a ac="cnts-edit-reg-welcome-page">Edit</s:a>]</td>
             <% super_html_print_help_url(out_f, SSERV_CMD_CNTS_CHANGE_REG_WELCOME); %>
         </s:htr>
     </s:form>
