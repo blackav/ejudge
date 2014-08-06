@@ -6521,7 +6521,7 @@ parse_opcode(struct http_request_info *phr, int *p_opcode)
   }
 
   for (int i = 1; i < SSERV_CMD_LAST; ++i) {
-    if (!strcasecmp(super_proto_op_names[i], s)) {
+    if (!strcasecmp(super_proto_cmd_names[i], s)) {
       *p_opcode = i;
       return 0;
     }
@@ -6574,7 +6574,7 @@ do_http_request(FILE *log_f, FILE *out_f, struct http_request_info *phr)
     FAIL(S_ERR_INV_OPER);
   }
 
-  if (!super_proto_op_names[action]) FAIL(S_ERR_INV_OPER);
+  if (!super_proto_cmd_names[action]) FAIL(S_ERR_INV_OPER);
   if (op_handlers[action] == (handler_func_t) 1) FAIL(S_ERR_NOT_IMPLEMENTED);
 
   if (!op_handlers[action]) {
@@ -6589,7 +6589,7 @@ do_http_request(FILE *log_f, FILE *out_f, struct http_request_info *phr)
     int redir_action = action;
     if (super_proto_op_redirect[action] > 0) {
       redir_action = super_proto_op_redirect[action];
-      if (redir_action <= 0 || redir_action >= SSERV_CMD_LAST || !super_proto_op_names[redir_action]) {
+      if (redir_action <= 0 || redir_action >= SSERV_CMD_LAST || !super_proto_cmd_names[redir_action]) {
         err("do_http_request: invalid action redirect %d->%d", action, redir_action);
         op_handlers[action] = (handler_func_t) 1;
         FAIL(S_ERR_NOT_IMPLEMENTED);
@@ -6605,7 +6605,7 @@ do_http_request(FILE *log_f, FILE *out_f, struct http_request_info *phr)
       op_handlers[action] = op_handlers[redir_action];
     } else {
       unsigned char func_name[512];
-      snprintf(func_name, sizeof(func_name), "super_serve_op_%s", super_proto_op_names[redir_action]);
+      snprintf(func_name, sizeof(func_name), "super_serve_op_%s", super_proto_cmd_names[redir_action]);
       void *void_func = dlsym(self_dl_handle, func_name);
       if (!void_func) {
         err("do_http_request: function %s is not found", func_name);
@@ -6846,7 +6846,7 @@ super_html_http_request(
 
 redo_action:
     // main_page by default
-    if (!super_proto_op_names[ext_action]) ext_action = SSERV_CMD_MAIN_PAGE;
+    if (!super_proto_cmd_names[ext_action]) ext_action = SSERV_CMD_MAIN_PAGE;
 
     if (ext_action < 0 || ext_action >= SSERV_CMD_LAST) ext_action = 0;
     if (external_action_aliases[ext_action] > 0) ext_action = external_action_aliases[ext_action];
