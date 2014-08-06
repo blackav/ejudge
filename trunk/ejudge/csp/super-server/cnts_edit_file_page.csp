@@ -259,9 +259,9 @@
 <table border="0"><tr>
     <td><s:a ac="main-page">To the top</s:a></td>
     <td><s:a action="back_action">Back</s:a></td>
-    <td><s:submit ac="new-cnts-reload-file-action" label="Reload" /></td>
-    <td><s:submit ac="new-cnts-save-file-action" label="Save" /></td>
-    <td><s:submit ac="new-cnts-clear-file-action" label="Clear" /></td>
+    <td><s:submit ac="cnts-reload-file-action" label="Reload" /></td>
+    <td><s:submit ac="cnts-save-file-action" label="Save" /></td>
+    <td><s:submit ac="cnts-clear-file-action" label="Clear" /></td>
 </tr></table>
 </s:form>
 
