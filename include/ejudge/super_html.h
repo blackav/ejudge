@@ -38,19 +38,6 @@ int super_html_serve_probe_run(FILE *f,
                                const unsigned char *hidden_vars,
                                const unsigned char *extra_args);
 
-int super_html_edit_template_file(FILE *f,
-                                  int priv_level,
-                                  int user_id,
-                                  const unsigned char *login,
-                                  ej_cookie_t session_id,
-                                  const ej_ip_t *ip_address,
-                                  struct ejudge_cfg *config,
-                                  struct sid_state *sstate,
-                                  int cmd,
-                                  const unsigned char *self_url,
-                                  const unsigned char *hidden_vars,
-                                  const unsigned char *extra_args);
-
 struct userlist_clnt;
 int super_html_commit_contest(FILE *f,
                               int priv_level,
