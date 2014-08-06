@@ -864,7 +864,7 @@ super_html_edit_template_file(
   const unsigned char *help_txt;
 
   switch (cmd) {
-  case SSERV_CMD_GLOB_EDIT_CONTEST_START_CMD:
+  case _SSERV_CMD_GLOB_EDIT_CONTEST_START_CMD:
     if (!global) {
       failure_text = "no current contest";
       goto failure;
@@ -879,7 +879,7 @@ super_html_edit_template_file(
     help_txt = super_html_template_help_3;
     break;
 
-  case SSERV_CMD_GLOB_EDIT_CONTEST_STOP_CMD:
+  case _SSERV_CMD_GLOB_EDIT_CONTEST_STOP_CMD:
     if (!global) {
       failure_text = "no current contest";
       goto failure;
@@ -895,7 +895,7 @@ super_html_edit_template_file(
     help_txt = super_html_template_help_3;
     break;
 
-  case SSERV_CMD_GLOB_EDIT_STAND_HEADER_FILE:
+  case _SSERV_CMD_GLOB_EDIT_STAND_HEADER_FILE:
     if (!global) {
       failure_text = "no current contest";
       goto failure;
@@ -909,7 +909,7 @@ super_html_edit_template_file(
     back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
     help_txt = super_html_template_help_1;
     break;
-  case SSERV_CMD_GLOB_EDIT_STAND_FOOTER_FILE:
+  case _SSERV_CMD_GLOB_EDIT_STAND_FOOTER_FILE:
     if (!global) {
       failure_text = "no current contest";
       goto failure;
@@ -923,7 +923,7 @@ super_html_edit_template_file(
     back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
     help_txt = super_html_template_help_1;
     break;
-  case SSERV_CMD_GLOB_EDIT_STAND2_HEADER_FILE:
+  case _SSERV_CMD_GLOB_EDIT_STAND2_HEADER_FILE:
     if (!global) {
       failure_text = "no current contest";
       goto failure;
@@ -937,7 +937,7 @@ super_html_edit_template_file(
     back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
     help_txt = super_html_template_help_1;
     break;
-  case SSERV_CMD_GLOB_EDIT_STAND2_FOOTER_FILE:
+  case _SSERV_CMD_GLOB_EDIT_STAND2_FOOTER_FILE:
     if (!global) {
       failure_text = "no current contest";
       goto failure;
@@ -951,7 +951,7 @@ super_html_edit_template_file(
     back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
     help_txt = super_html_template_help_1;
     break;
-  case SSERV_CMD_GLOB_EDIT_PLOG_HEADER_FILE:
+  case _SSERV_CMD_GLOB_EDIT_PLOG_HEADER_FILE:
     if (!global) {
       failure_text = "no current contest";
       goto failure;
@@ -965,7 +965,7 @@ super_html_edit_template_file(
     back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
     help_txt = super_html_template_help_1;
     break;
-  case SSERV_CMD_GLOB_EDIT_PLOG_FOOTER_FILE:
+  case _SSERV_CMD_GLOB_EDIT_PLOG_FOOTER_FILE:
     if (!global) {
       failure_text = "no current contest";
       goto failure;
@@ -980,7 +980,7 @@ super_html_edit_template_file(
     help_txt = super_html_template_help_1;
     break;
 
-  case SSERV_CMD_CNTS_EDIT_USERS_HEADER:
+  case _SSERV_CMD_CNTS_EDIT_USERS_HEADER:
     if (!cnts) {
       failure_text = "no current contest";
       goto failure;
@@ -994,7 +994,7 @@ super_html_edit_template_file(
     back_action = SSERV_CMD_CNTS_EDIT_CUR_CONTEST_PAGE;
     help_txt = super_html_template_help_1;
     break;
-  case SSERV_CMD_CNTS_EDIT_USERS_FOOTER:
+  case _SSERV_CMD_CNTS_EDIT_USERS_FOOTER:
     if (!cnts) {
       failure_text = "no current contest";
       goto failure;
@@ -1008,7 +1008,7 @@ super_html_edit_template_file(
     back_action = SSERV_CMD_CNTS_EDIT_CUR_CONTEST_PAGE;
     help_txt = super_html_template_help_1;
     break;
-  case SSERV_CMD_CNTS_EDIT_REGISTER_HEADER:
+  case _SSERV_CMD_CNTS_EDIT_REGISTER_HEADER:
     if (!cnts) {
       failure_text = "no current contest";
       goto failure;
@@ -1022,7 +1022,7 @@ super_html_edit_template_file(
     back_action = SSERV_CMD_CNTS_EDIT_CUR_CONTEST_PAGE;
     help_txt = super_html_template_help_1;
     break;
-  case SSERV_CMD_CNTS_EDIT_REGISTER_FOOTER:
+  case _SSERV_CMD_CNTS_EDIT_REGISTER_FOOTER:
     if (!cnts) {
       failure_text = "no current contest";
       goto failure;
@@ -1036,7 +1036,7 @@ super_html_edit_template_file(
     back_action = SSERV_CMD_CNTS_EDIT_CUR_CONTEST_PAGE;
     help_txt = super_html_template_help_1;
     break;
-  case SSERV_CMD_CNTS_EDIT_TEAM_HEADER:
+  case _SSERV_CMD_CNTS_EDIT_TEAM_HEADER:
     if (!cnts) {
       failure_text = "no current contest";
       goto failure;
@@ -1050,7 +1050,7 @@ super_html_edit_template_file(
     back_action = SSERV_CMD_CNTS_EDIT_CUR_CONTEST_PAGE;
     help_txt = super_html_template_help_1;
     break;
-  case SSERV_CMD_CNTS_EDIT_TEAM_MENU_1:
+  case _SSERV_CMD_CNTS_EDIT_TEAM_MENU_1:
     if (!cnts) {
       failure_text = "no current contest";
       goto failure;
@@ -1064,7 +1064,7 @@ super_html_edit_template_file(
     back_action = SSERV_CMD_CNTS_EDIT_CUR_CONTEST_PAGE;
     help_txt = super_html_template_help_1;
     break;
-  case SSERV_CMD_CNTS_EDIT_TEAM_MENU_2:
+  case _SSERV_CMD_CNTS_EDIT_TEAM_MENU_2:
     if (!cnts) {
       failure_text = "no current contest";
       goto failure;
@@ -1078,7 +1078,7 @@ super_html_edit_template_file(
     back_action = SSERV_CMD_CNTS_EDIT_CUR_CONTEST_PAGE;
     help_txt = super_html_template_help_1;
     break;
-  case SSERV_CMD_CNTS_EDIT_TEAM_MENU_3:
+  case _SSERV_CMD_CNTS_EDIT_TEAM_MENU_3:
     if (!cnts) {
       failure_text = "no current contest";
       goto failure;
@@ -1092,7 +1092,7 @@ super_html_edit_template_file(
     back_action = SSERV_CMD_CNTS_EDIT_CUR_CONTEST_PAGE;
     help_txt = super_html_template_help_1;
     break;
-  case SSERV_CMD_CNTS_EDIT_TEAM_SEPARATOR:
+  case _SSERV_CMD_CNTS_EDIT_TEAM_SEPARATOR:
     if (!cnts) {
       failure_text = "no current contest";
       goto failure;
@@ -1106,7 +1106,7 @@ super_html_edit_template_file(
     back_action = SSERV_CMD_CNTS_EDIT_CUR_CONTEST_PAGE;
     help_txt = super_html_template_help_1;
     break;
-  case SSERV_CMD_CNTS_EDIT_TEAM_FOOTER:
+  case _SSERV_CMD_CNTS_EDIT_TEAM_FOOTER:
     if (!cnts) {
       failure_text = "no current contest";
       goto failure;
@@ -1120,7 +1120,7 @@ super_html_edit_template_file(
     back_action = SSERV_CMD_CNTS_EDIT_CUR_CONTEST_PAGE;
     help_txt = super_html_template_help_1;
     break;
-  case SSERV_CMD_CNTS_EDIT_PRIV_HEADER:
+  case _SSERV_CMD_CNTS_EDIT_PRIV_HEADER:
     if (!cnts) {
       failure_text = "no current contest";
       goto failure;
@@ -1134,7 +1134,7 @@ super_html_edit_template_file(
     back_action = SSERV_CMD_CNTS_EDIT_CUR_CONTEST_PAGE;
     help_txt = super_html_template_help_1;
     break;
-  case SSERV_CMD_CNTS_EDIT_PRIV_FOOTER:
+  case _SSERV_CMD_CNTS_EDIT_PRIV_FOOTER:
     if (!cnts) {
       failure_text = "no current contest";
       goto failure;
@@ -1148,7 +1148,7 @@ super_html_edit_template_file(
     back_action = SSERV_CMD_CNTS_EDIT_CUR_CONTEST_PAGE;
     help_txt = super_html_template_help_1;
     break;
-  case SSERV_CMD_CNTS_EDIT_COPYRIGHT:
+  case _SSERV_CMD_CNTS_EDIT_COPYRIGHT:
     if (!cnts) {
       failure_text = "no current contest";
       goto failure;
@@ -1162,7 +1162,7 @@ super_html_edit_template_file(
     back_action = SSERV_CMD_CNTS_EDIT_CUR_CONTEST_PAGE;
     help_txt = super_html_template_help_1;
     break;
-  case SSERV_CMD_CNTS_EDIT_WELCOME:
+  case _SSERV_CMD_CNTS_EDIT_WELCOME:
     if (!cnts) {
       failure_text = "no current contest";
       goto failure;
@@ -1176,7 +1176,7 @@ super_html_edit_template_file(
     back_action = SSERV_CMD_CNTS_EDIT_CUR_CONTEST_PAGE;
     help_txt = super_html_template_help_1;
     break;
-  case SSERV_CMD_CNTS_EDIT_REG_WELCOME:
+  case _SSERV_CMD_CNTS_EDIT_REG_WELCOME:
     if (!cnts) {
       failure_text = "no current contest";
       goto failure;
@@ -1190,7 +1190,7 @@ super_html_edit_template_file(
     back_action = SSERV_CMD_CNTS_EDIT_CUR_CONTEST_PAGE;
     help_txt = super_html_template_help_1;
     break;
-  case SSERV_CMD_CNTS_EDIT_REGISTER_EMAIL_FILE:
+  case _SSERV_CMD_CNTS_EDIT_REGISTER_EMAIL_FILE:
     if (!cnts) {
       failure_text = "no current contest";
       goto failure;
