@@ -128,24 +128,24 @@ super_serve_op_browse_problem_packages(
   unsigned char buf[1024], jbuf[1024];
 
   if (hr_cgi_param(phr, "package", &package) < 0)
-    FAIL(S_ERR_INV_PACKAGE);
+    FAIL(SSERV_ERR_INV_PACKAGE);
   if (!package) package = "";
   if (!is_valid_package(pkgdir, sizeof(pkgdir), package))
-    FAIL(S_ERR_INV_PACKAGE);
+    FAIL(SSERV_ERR_INV_PACKAGE);
   snprintf(pkgroot, sizeof(pkgroot), "%s/problems", EJUDGE_CONTESTS_HOME_DIR);
   if (stat(pkgroot, &stb) < 0) {
     if (mkdir(pkgroot, 0755) < 0) {
       err("%s: mkdir %s failed: %s", __FUNCTION__, pkgroot, os_ErrorMsg());
-      FAIL(S_ERR_INV_PACKAGE);
+      FAIL(SSERV_ERR_INV_PACKAGE);
     }
     if (stat(pkgroot, &stb) < 0) {
       err("%s: stat %s failed: %s", __FUNCTION__, pkgroot, os_ErrorMsg());
-      FAIL(S_ERR_INV_PACKAGE);
+      FAIL(SSERV_ERR_INV_PACKAGE);
     }
   }
   if (!S_ISDIR(stb.st_mode)) {
     err("%s: %s is not a directory", __FUNCTION__, pkgroot);
-    FAIL(S_ERR_INV_PACKAGE);
+    FAIL(SSERV_ERR_INV_PACKAGE);
   }
 
   if (pkgdir[0]) {
@@ -155,15 +155,15 @@ super_serve_op_browse_problem_packages(
   }
   if (stat(pkgpath, &stb) < 0) {
     err("%s: directory %s does not exist", __FUNCTION__, pkgpath);
-    FAIL(S_ERR_INV_PACKAGE);
+    FAIL(SSERV_ERR_INV_PACKAGE);
   }
   if (!S_ISDIR(stb.st_mode)) {
     err("%s: %s is not a directory", __FUNCTION__, pkgpath);
-    FAIL(S_ERR_INV_PACKAGE);
+    FAIL(SSERV_ERR_INV_PACKAGE);
   }
   if (!(d = opendir(pkgpath))) {
     err("%s: cannot open directory %s", __FUNCTION__, pkgpath);
-    FAIL(S_ERR_INV_PACKAGE);
+    FAIL(SSERV_ERR_INV_PACKAGE);
   }
   while ((dd = readdir(d))) {
     if (!strcmp(dd->d_name, ".") || !strcmp(dd->d_name, "..")) continue;
@@ -284,27 +284,27 @@ super_serve_op_package_operation(
   phr->json_reply = 1;
 
   if (hr_cgi_param(phr, "package", &package) < 0)
-    FAIL(S_ERR_INV_PACKAGE);
+    FAIL(SSERV_ERR_INV_PACKAGE);
   if (!package) package = "";
   if (!is_valid_package(pkgdir, sizeof(pkgdir), package))
-    FAIL(S_ERR_INV_PACKAGE);
+    FAIL(SSERV_ERR_INV_PACKAGE);
   if (hr_cgi_param(phr, "item", &item) <= 0 || !item || !*item)
-    FAIL(S_ERR_INV_PACKAGE);
+    FAIL(SSERV_ERR_INV_PACKAGE);
   if (!is_valid_dir(pkgname, sizeof(pkgname), item))
-    FAIL(S_ERR_INV_PACKAGE);
+    FAIL(SSERV_ERR_INV_PACKAGE);
 
   snprintf(pkgpath, sizeof(pkgpath), "%s/problems/%s",
            EJUDGE_CONTESTS_HOME_DIR, pkgdir);
   if (stat(pkgpath, &stb) < 0 || !S_ISDIR(stb.st_mode))
-    FAIL(S_ERR_INV_PACKAGE);
+    FAIL(SSERV_ERR_INV_PACKAGE);
 
   switch (phr->action) {
   case SSERV_CMD_CREATE_PACKAGE:
     snprintf(fpath, sizeof(fpath), "%s/%s", pkgpath, item);
     if (stat(fpath, &stb) >= 0)
-      FAIL(S_ERR_ITEM_EXISTS);
+      FAIL(SSERV_ERR_ITEM_EXISTS);
     if (mkdir(fpath, 0755) < 0)
-      FAIL(S_ERR_OPERATION_FAILED);
+      FAIL(SSERV_ERR_OPERATION_FAILED);
     break;
   default:
     abort();

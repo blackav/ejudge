@@ -624,7 +624,7 @@ build_prepare_test_file_names(
   snprintf(name2, sizeof(name2), test_pat, 2);
   if (!strcmp(name1, name2)) {
     fprintf(log_f, "invalid test files pattern\n");
-    FAIL(S_ERR_UNSUPPORTED_SETTINGS);
+    FAIL(SSERV_ERR_UNSUPPORTED_SETTINGS);
   }
 
   corr_dir[0] = 0;
@@ -639,7 +639,7 @@ build_prepare_test_file_names(
     }
     if (strcmp(corr_dir, test_dir) != 0) {
       fprintf(log_f, "corr_dir and test_dir cannot be different\n");
-      FAIL(S_ERR_UNSUPPORTED_SETTINGS);
+      FAIL(SSERV_ERR_UNSUPPORTED_SETTINGS);
     }
     if (prob->corr_pat[0] >= ' ' ) {
       snprintf(corr_pat, buf_size, "%s%s", pat_prefix, prob->corr_pat);
@@ -652,7 +652,7 @@ build_prepare_test_file_names(
     snprintf(name2, sizeof(name2), corr_pat, 2);
     if (!strcmp(name1, name2)) {
       fprintf(log_f, "invalid correct files pattern\n");
-      FAIL(S_ERR_UNSUPPORTED_SETTINGS);
+      FAIL(SSERV_ERR_UNSUPPORTED_SETTINGS);
     }
   }
 
@@ -668,7 +668,7 @@ build_prepare_test_file_names(
     }
     if (strcmp(info_dir, test_dir) != 0) {
       fprintf(log_f, "info_dir and test_dir cannot be different\n");
-      FAIL(S_ERR_UNSUPPORTED_SETTINGS);
+      FAIL(SSERV_ERR_UNSUPPORTED_SETTINGS);
     }
     if (prob->info_pat[0] >= ' ' ) {
       snprintf(info_pat, buf_size, "%s%s", pat_prefix, prob->info_pat);
@@ -681,7 +681,7 @@ build_prepare_test_file_names(
     snprintf(name2, sizeof(name2), info_pat, 2);
     if (!strcmp(name1, name2)) {
       fprintf(log_f, "invalid info files pattern\n");
-      FAIL(S_ERR_UNSUPPORTED_SETTINGS);
+      FAIL(SSERV_ERR_UNSUPPORTED_SETTINGS);
     }
   }
 
@@ -698,7 +698,7 @@ build_prepare_test_file_names(
     }
     if (strcmp(tgz_dir, test_dir) != 0) {
       fprintf(log_f, "tgz_dir and test_dir cannot be different\n");
-      FAIL(S_ERR_UNSUPPORTED_SETTINGS);
+      FAIL(SSERV_ERR_UNSUPPORTED_SETTINGS);
     }
     if (prob->tgz_pat[0] >= ' ' ) {
       snprintf(tgz_pat, buf_size, "%s%s", pat_prefix, prob->tgz_pat);
@@ -711,7 +711,7 @@ build_prepare_test_file_names(
     snprintf(name2, sizeof(name2), tgz_pat, 2);
     if (!strcmp(name1, name2)) {
       fprintf(log_f, "invalid tgz files pattern\n");
-      FAIL(S_ERR_UNSUPPORTED_SETTINGS);
+      FAIL(SSERV_ERR_UNSUPPORTED_SETTINGS);
     }
     if (prob->tgzdir_pat[0] >= ' ' ) {
       snprintf(tgzdir_pat, buf_size, "%s%s", pat_prefix, prob->tgzdir_pat);
@@ -724,7 +724,7 @@ build_prepare_test_file_names(
     snprintf(name2, sizeof(name2), tgzdir_pat, 2);
     if (!strcmp(name1, name2)) {
       fprintf(log_f, "invalid tgzdir files pattern\n");
-      FAIL(S_ERR_UNSUPPORTED_SETTINGS);
+      FAIL(SSERV_ERR_UNSUPPORTED_SETTINGS);
     }
   }
 
@@ -1426,18 +1426,18 @@ build_generate_makefile(
     file_group = file_perms_parse_group(cnts->file_group);
     if (file_group <= 0) {
       fprintf(log_f, "invalid file group '%s'\n", cnts->file_group);
-      FAIL(S_ERR_INV_SYS_GROUP);
+      FAIL(SSERV_ERR_INV_SYS_GROUP);
     }
   }
   if (cnts->file_mode) {
     file_mode = file_perms_parse_mode(cnts->file_mode);
     if (file_mode <= 0) {
       fprintf(log_f, "invalid file mode '%s'\n", cnts->file_mode);
-      FAIL(S_ERR_INV_SYS_MODE);
+      FAIL(SSERV_ERR_INV_SYS_MODE);
     }
   }
 
-  if (global->advanced_layout <= 0) FAIL(S_ERR_INV_CONTEST);
+  if (global->advanced_layout <= 0) FAIL(SSERV_ERR_INV_CONTEST);
 
   get_advanced_layout_path(problem_path, sizeof(problem_path), global, prob, NULL, variant);
   get_advanced_layout_path(tmp_makefile_path, sizeof(tmp_makefile_path), global, prob, "tmp_Makefile", variant);
@@ -1445,7 +1445,7 @@ build_generate_makefile(
 
   if (access(problem_path, R_OK | W_OK | X_OK) < 0) {
     fprintf(log_f, "insufficent permissions for directory '%s'\n", problem_path);
-    FAIL(S_ERR_FS_ERROR);
+    FAIL(SSERV_ERR_FS_ERROR);
   }
 
   if (generic_read_file(&text, 0, &size, 0, 0, makefile_path, 0) >= 0) {
@@ -1455,7 +1455,7 @@ build_generate_makefile(
   mk_f = fopen(tmp_makefile_path, "w");
   if (!mk_f) {
     fprintf(log_f, "cannot create file '%s'\n", tmp_makefile_path);
-    FAIL(S_ERR_FS_ERROR);
+    FAIL(SSERV_ERR_FS_ERROR);
   }
   if (header) fprintf(mk_f, "%s", header);
   do_generate_makefile(log_f, mk_f, ejudge_config, cnts, cs, sstate, global, prob, variant);
@@ -1469,7 +1469,7 @@ build_generate_makefile(
   r = need_file_update(makefile_path, tmp_makefile_path);
   if (r < 0) {
     fprintf(log_f, "failed to update Makefile\n");
-    FAIL(S_ERR_FS_ERROR);
+    FAIL(SSERV_ERR_FS_ERROR);
   }
   if (!r) {
     unlink(tmp_makefile_path);
@@ -1477,7 +1477,7 @@ build_generate_makefile(
   }
   if (logged_rename(log_f, tmp_makefile_path, makefile_path) < 0) {
     fprintf(log_f, "failed to update Makefile\n");
-    FAIL(S_ERR_FS_ERROR);
+    FAIL(SSERV_ERR_FS_ERROR);
   }
 
 cleanup:

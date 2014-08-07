@@ -306,7 +306,7 @@ check_other_editors(
 
 invalid_serve_cfg:
   phr->ss->te_state = serve_state_destroy(phr->config, cs, cnts, NULL);
-  return -S_ERR_INV_SERVE_CONFIG_PATH;
+  return -SSERV_ERR_INV_SERVE_CONFIG_PATH;
 }
 
 int
@@ -345,12 +345,12 @@ super_serve_op_TESTS_MAIN_PAGE(
   size_t prb_z = 0;
 
   hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
-  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
-  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+  if (contest_id <= 0) FAIL(SSERV_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(SSERV_ERR_INV_CONTEST);
 
-  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
+  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(SSERV_ERR_PERM_DENIED);
   get_full_caps(phr, cnts, &caps);
-  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(S_ERR_PERM_DENIED);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(SSERV_ERR_PERM_DENIED);
 
   retval = check_other_editors(log_f, out_f, phr, contest_id, cnts);
   if (retval <= 0) goto cleanup;
@@ -916,25 +916,25 @@ scan_test_directory(
   if (stat(test_dir, &stb) < 0) {
     if (os_MakeDirPath2(test_dir, cnts->dir_mode, cnts->dir_group) < 0) {
       fprintf(log_f, "failed to created test directory '%s'\n", test_dir);
-      FAIL(S_ERR_INV_CNTS_SETTINGS);
+      FAIL(SSERV_ERR_INV_CNTS_SETTINGS);
     }
   }
   if (stat(test_dir, &stb) < 0) {
     fprintf(log_f, "test directory does not exist and cannot be created\n");
-    FAIL(S_ERR_INV_CNTS_SETTINGS);
+    FAIL(SSERV_ERR_INV_CNTS_SETTINGS);
   }
   if (!S_ISDIR(stb.st_mode)) {
     fprintf(log_f, "test directory is not a directory\n");
-    FAIL(S_ERR_INV_CNTS_SETTINGS);
+    FAIL(SSERV_ERR_INV_CNTS_SETTINGS);
   }
   if (access(test_dir, R_OK | X_OK) < 0) {
     fprintf(log_f, "test directory is not readable\n");
-    FAIL(S_ERR_INV_CNTS_SETTINGS);
+    FAIL(SSERV_ERR_INV_CNTS_SETTINGS);
   }
 
   if (!(d = opendir(test_dir))) {
     fprintf(log_f, "test directory cannot be opened\n");
-    FAIL(S_ERR_INV_CNTS_SETTINGS);
+    FAIL(SSERV_ERR_INV_CNTS_SETTINGS);
   }
   while ((dd = readdir(d))) {
     if (!strcmp(dd->d_name, ".") || !strcmp(dd->d_name, "..")) continue;
@@ -1552,12 +1552,12 @@ super_serve_op_TESTS_TESTS_VIEW_PAGE(
   memset(&td_info, 0, sizeof(td_info));
 
   hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
-  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
-  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+  if (contest_id <= 0) FAIL(SSERV_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(SSERV_ERR_INV_CONTEST);
 
-  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
+  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(SSERV_ERR_PERM_DENIED);
   get_full_caps(phr, cnts, &caps);
-  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(S_ERR_PERM_DENIED);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(SSERV_ERR_PERM_DENIED);
 
   retval = check_other_editors(log_f, out_f, phr, contest_id, cnts);
   if (retval <= 0) goto cleanup;
@@ -1566,13 +1566,13 @@ super_serve_op_TESTS_TESTS_VIEW_PAGE(
   global = cs->global;
 
   hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
-  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
-  if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
+  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(SSERV_ERR_INV_PROB_ID);
+  if (!(prob = cs->probs[prob_id])) FAIL(SSERV_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
     hr_cgi_param_int_opt(phr, "variant", &variant, 0);
-    if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
+    if (variant <= 0 || variant > prob->variant_num) FAIL(SSERV_ERR_INV_VARIANT);
   }
 
   retval = build_prepare_test_file_names(log_f, cnts, global, prob, variant, NULL,
@@ -1876,12 +1876,12 @@ swap_files(
   make_prefixed_path(tgzdir_dst_path, sizeof(tgzdir_dst_path), test_dir, dst_prefix, tgzdir_pat, dst_num);
   make_prefixed_path(tgzdir_tmp_path, sizeof(tgzdir_tmp_path), test_dir, tmp_prefix, tgzdir_pat, dst_num);
 
-  if (logged_unlink(log_f, test_tmp_path) < 0) FAIL(S_ERR_FS_ERROR);
-  if (logged_unlink(log_f, corr_tmp_path) < 0) FAIL(S_ERR_FS_ERROR);
-  if (logged_unlink(log_f, info_tmp_path) < 0) FAIL(S_ERR_FS_ERROR);
-  if (logged_unlink(log_f, tgz_tmp_path) < 0) FAIL(S_ERR_FS_ERROR);
+  if (logged_unlink(log_f, test_tmp_path) < 0) FAIL(SSERV_ERR_FS_ERROR);
+  if (logged_unlink(log_f, corr_tmp_path) < 0) FAIL(SSERV_ERR_FS_ERROR);
+  if (logged_unlink(log_f, info_tmp_path) < 0) FAIL(SSERV_ERR_FS_ERROR);
+  if (logged_unlink(log_f, tgz_tmp_path) < 0) FAIL(SSERV_ERR_FS_ERROR);
   if (tgzdir_pat && *tgzdir_pat) {
-    if (remove_directory_recursively(tgzdir_tmp_path, 0) < 0) FAIL(S_ERR_FS_ERROR);
+    if (remove_directory_recursively(tgzdir_tmp_path, 0) < 0) FAIL(SSERV_ERR_FS_ERROR);
   }
 
   // DST->TMP
@@ -1939,7 +1939,7 @@ fs_error:
   if (stage >= 3) logged_rename(log_f, info_tmp_path, info_dst_path);
   if (stage >= 2) logged_rename(log_f, corr_tmp_path, corr_dst_path);
   if (stage >= 1) logged_rename(log_f, test_tmp_path, test_dst_path);
-  FAIL(S_ERR_FS_ERROR);
+  FAIL(SSERV_ERR_FS_ERROR);
 }
 
 static int
@@ -1990,12 +1990,12 @@ move_files(
   make_prefixed_path(tgzdir_dst_path, sizeof(tgzdir_dst_path), test_dir, dst_prefix, tgzdir_pat, dst_num);
   make_prefixed_path(tgzdir_tmp_path, sizeof(tgzdir_tmp_path), test_dir, tmp_prefix, tgzdir_pat, dst_num);
 
-  if (logged_unlink(log_f, test_tmp_path) < 0) FAIL(S_ERR_FS_ERROR);
-  if (logged_unlink(log_f, corr_tmp_path) < 0) FAIL(S_ERR_FS_ERROR);
-  if (logged_unlink(log_f, info_tmp_path) < 0) FAIL(S_ERR_FS_ERROR);
-  if (logged_unlink(log_f, tgz_tmp_path) < 0) FAIL(S_ERR_FS_ERROR);
+  if (logged_unlink(log_f, test_tmp_path) < 0) FAIL(SSERV_ERR_FS_ERROR);
+  if (logged_unlink(log_f, corr_tmp_path) < 0) FAIL(SSERV_ERR_FS_ERROR);
+  if (logged_unlink(log_f, info_tmp_path) < 0) FAIL(SSERV_ERR_FS_ERROR);
+  if (logged_unlink(log_f, tgz_tmp_path) < 0) FAIL(SSERV_ERR_FS_ERROR);
   if (tgzdir_pat && *tgzdir_pat) {
-    if (remove_directory_recursively(tgzdir_tmp_path, 0) < 0) FAIL(S_ERR_FS_ERROR);
+    if (remove_directory_recursively(tgzdir_tmp_path, 0) < 0) FAIL(SSERV_ERR_FS_ERROR);
   }
 
   // DST->TMP
@@ -2045,7 +2045,7 @@ fs_error:
   if (stage >= 3) logged_rename(log_f, info_tmp_path, info_dst_path);
   if (stage >= 2) logged_rename(log_f, corr_tmp_path, corr_dst_path);
   if (stage >= 1) logged_rename(log_f, test_tmp_path, test_dst_path);
-  FAIL(S_ERR_FS_ERROR);
+  FAIL(SSERV_ERR_FS_ERROR);
 }
 
 static int
@@ -2219,12 +2219,12 @@ super_serve_op_TESTS_TEST_MOVE_UP_ACTION(
   int to_test_num = 0;
 
   hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
-  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
-  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+  if (contest_id <= 0) FAIL(SSERV_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(SSERV_ERR_INV_CONTEST);
 
-  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
+  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(SSERV_ERR_PERM_DENIED);
   get_full_caps(phr, cnts, &caps);
-  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(S_ERR_PERM_DENIED);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(SSERV_ERR_PERM_DENIED);
 
   retval = check_other_editors(log_f, out_f, phr, contest_id, cnts);
   if (retval <= 0) goto cleanup;
@@ -2233,17 +2233,17 @@ super_serve_op_TESTS_TEST_MOVE_UP_ACTION(
   global = cs->global;
 
   hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
-  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
-  if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
+  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(SSERV_ERR_INV_PROB_ID);
+  if (!(prob = cs->probs[prob_id])) FAIL(SSERV_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
     hr_cgi_param_int_opt(phr, "variant", &variant, 0);
-    if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
+    if (variant <= 0 || variant > prob->variant_num) FAIL(SSERV_ERR_INV_VARIANT);
   }
 
   hr_cgi_param_int_opt(phr, "test_num", &test_num, 0);
-  if (test_num <= 0 || test_num >= 1000000) FAIL(S_ERR_INV_TEST_NUM);
+  if (test_num <= 0 || test_num >= 1000000) FAIL(SSERV_ERR_INV_TEST_NUM);
 
   if (phr->action == SSERV_CMD_TESTS_SAVED_MOVE_UP_ACTION || phr->action == SSERV_CMD_TESTS_SAVED_MOVE_DOWN_ACTION) {
     pat_prefix = SAVED_TEST_PREFIX;
@@ -2255,7 +2255,7 @@ super_serve_op_TESTS_TEST_MOVE_UP_ACTION(
     to_test_num = test_num + 1;
     from_test_num = test_num;
   } else {
-    FAIL(S_ERR_INV_OPER);
+    FAIL(SSERV_ERR_INV_OPER);
   }
   if (to_test_num <= 0 || from_test_num <= 0) goto done;
 
@@ -2309,12 +2309,12 @@ super_serve_op_TESTS_TEST_MOVE_TO_SAVED_ACTION(
 
   memset(&td_info, 0, sizeof(td_info));
   hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
-  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
-  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+  if (contest_id <= 0) FAIL(SSERV_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(SSERV_ERR_INV_CONTEST);
 
-  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
+  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(SSERV_ERR_PERM_DENIED);
   get_full_caps(phr, cnts, &caps);
-  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(S_ERR_PERM_DENIED);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(SSERV_ERR_PERM_DENIED);
 
   retval = check_other_editors(log_f, out_f, phr, contest_id, cnts);
   if (retval <= 0) goto cleanup;
@@ -2323,17 +2323,17 @@ super_serve_op_TESTS_TEST_MOVE_TO_SAVED_ACTION(
   global = cs->global;
 
   hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
-  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
-  if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
+  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(SSERV_ERR_INV_PROB_ID);
+  if (!(prob = cs->probs[prob_id])) FAIL(SSERV_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
     hr_cgi_param_int_opt(phr, "variant", &variant, 0);
-    if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
+    if (variant <= 0 || variant > prob->variant_num) FAIL(SSERV_ERR_INV_VARIANT);
   }
 
   hr_cgi_param_int_opt(phr, "test_num", &test_num, 0);
-  if (test_num <= 0 || test_num >= 1000000) FAIL(S_ERR_INV_TEST_NUM);
+  if (test_num <= 0 || test_num >= 1000000) FAIL(SSERV_ERR_INV_TEST_NUM);
 
   retval = build_prepare_test_file_names(log_f, cnts, global, prob, variant, NULL,
                                          sizeof(test_dir), test_dir, test_pat, corr_pat, info_pat,
@@ -2363,7 +2363,7 @@ super_serve_op_TESTS_TEST_MOVE_TO_SAVED_ACTION(
                     SAVED_TEST_PREFIX, td_info.saved_ref_count, test_num) < 0)
       goto cleanup;
   } else {
-    FAIL(S_ERR_INV_OPER);
+    FAIL(SSERV_ERR_INV_OPER);
   }
 
 done:
@@ -2579,12 +2579,12 @@ super_serve_op_TESTS_TEST_EDIT_PAGE(
 
   if (phr->action == SSERV_CMD_TESTS_TEST_INSERT_PAGE) insert_mode = 1;
   hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
-  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
-  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+  if (contest_id <= 0) FAIL(SSERV_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(SSERV_ERR_INV_CONTEST);
 
-  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
+  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(SSERV_ERR_PERM_DENIED);
   get_full_caps(phr, cnts, &caps);
-  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(S_ERR_PERM_DENIED);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(SSERV_ERR_PERM_DENIED);
 
   retval = check_other_editors(log_f, out_f, phr, contest_id, cnts);
   if (retval <= 0) goto cleanup;
@@ -2593,8 +2593,8 @@ super_serve_op_TESTS_TEST_EDIT_PAGE(
   global = cs->global;
 
   hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
-  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
-  if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
+  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(SSERV_ERR_INV_PROB_ID);
+  if (!(prob = cs->probs[prob_id])) FAIL(SSERV_ERR_INV_PROB_ID);
   if (prob->binary_input <= 0) {
     norm_type = test_normalization_parse(prob->normalization);
     if (norm_type < TEST_NORM_FIRST || norm_type >= TEST_NORM_LAST) norm_type = TEST_NORM_NONE;
@@ -2604,11 +2604,11 @@ super_serve_op_TESTS_TEST_EDIT_PAGE(
   variant = -1;
   if (prob->variant_num > 0) {
     hr_cgi_param_int_opt(phr, "variant", &variant, 0);
-    if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
+    if (variant <= 0 || variant > prob->variant_num) FAIL(SSERV_ERR_INV_VARIANT);
   }
 
   hr_cgi_param_int_opt(phr, "test_num", &test_num, 0);
-  if (test_num <= 0 || test_num >= 1000000) FAIL(S_ERR_INV_TEST_NUM);
+  if (test_num <= 0 || test_num >= 1000000) FAIL(SSERV_ERR_INV_TEST_NUM);
 
   retval = build_prepare_test_file_names(log_f, cnts, global, prob, variant, NULL,
                                          sizeof(test_dir), test_dir, test_pat, corr_pat, info_pat,
@@ -2822,12 +2822,12 @@ super_serve_op_TESTS_CANCEL_ACTION(
   }
 
   hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
-  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
-  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+  if (contest_id <= 0) FAIL(SSERV_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(SSERV_ERR_INV_CONTEST);
 
-  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
+  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(SSERV_ERR_PERM_DENIED);
   get_full_caps(phr, cnts, &caps);
-  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(S_ERR_PERM_DENIED);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(SSERV_ERR_PERM_DENIED);
 
   retval = check_other_editors(log_f, out_f, phr, contest_id, cnts);
   if (retval <= 0) goto cleanup;
@@ -2836,13 +2836,13 @@ super_serve_op_TESTS_CANCEL_ACTION(
   cs = phr->ss->te_state;
 
   hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
-  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
-  if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
+  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(SSERV_ERR_INV_PROB_ID);
+  if (!(prob = cs->probs[prob_id])) FAIL(SSERV_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
     hr_cgi_param_int_opt(phr, "variant", &variant, 0);
-    if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
+    if (variant <= 0 || variant > prob->variant_num) FAIL(SSERV_ERR_INV_VARIANT);
   }
 
   ss_redirect_2(out_f, phr, next_op, contest_id, prob_id, variant, 0, NULL);
@@ -3098,21 +3098,21 @@ super_serve_op_TESTS_TEST_EDIT_ACTION(
   if (phr->action == SSERV_CMD_TESTS_TEST_INSERT_ACTION) insert_mode = 1;
 
   hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
-  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
-  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+  if (contest_id <= 0) FAIL(SSERV_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(SSERV_ERR_INV_CONTEST);
 
   if (cnts->file_group) {
     file_group = file_perms_parse_group(cnts->file_group);
-    if (file_group <= 0) FAIL(S_ERR_INV_SYS_GROUP);
+    if (file_group <= 0) FAIL(SSERV_ERR_INV_SYS_GROUP);
   }
   if (cnts->file_mode) {
     file_mode = file_perms_parse_mode(cnts->file_mode);
-    if (file_mode <= 0) FAIL(S_ERR_INV_SYS_MODE);
+    if (file_mode <= 0) FAIL(SSERV_ERR_INV_SYS_MODE);
   }
 
-  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
+  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(SSERV_ERR_PERM_DENIED);
   get_full_caps(phr, cnts, &caps);
-  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(S_ERR_PERM_DENIED);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(SSERV_ERR_PERM_DENIED);
 
   retval = check_other_editors(log_f, out_f, phr, contest_id, cnts);
   if (retval <= 0) goto cleanup;
@@ -3121,17 +3121,17 @@ super_serve_op_TESTS_TEST_EDIT_ACTION(
   global = cs->global;
 
   hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
-  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
-  if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
+  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(SSERV_ERR_INV_PROB_ID);
+  if (!(prob = cs->probs[prob_id])) FAIL(SSERV_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
     hr_cgi_param_int_opt(phr, "variant", &variant, 0);
-    if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
+    if (variant <= 0 || variant > prob->variant_num) FAIL(SSERV_ERR_INV_VARIANT);
   }
 
   hr_cgi_param_int_opt(phr, "test_num", &test_num, 0);
-  if (test_num <= 0 || test_num >= 1000000) FAIL(S_ERR_INV_TEST_NUM);
+  if (test_num <= 0 || test_num >= 1000000) FAIL(SSERV_ERR_INV_TEST_NUM);
 
   retval = build_prepare_test_file_names(log_f, cnts, global, prob, variant, NULL,
                                          sizeof(test_dir), test_dir, test_pat, corr_pat, info_pat,
@@ -3141,7 +3141,7 @@ super_serve_op_TESTS_TEST_EDIT_ACTION(
 
   if (prob->use_info > 0 && info_pat[0] > ' ') {
     hr_cgi_param_int_opt(phr, "testinfo_exit_code", &testinfo_exit_code, 0);
-    if (testinfo_exit_code < 0 || testinfo_exit_code >= 128) FAIL(S_ERR_INV_EXIT_CODE);
+    if (testinfo_exit_code < 0 || testinfo_exit_code >= 128) FAIL(SSERV_ERR_INV_EXIT_CODE);
     hr_cgi_param_int_opt(phr, "testinfo_check_stderr", &testinfo_check_stderr, 0);
     if (testinfo_check_stderr != 1) testinfo_check_stderr = 0;
     hr_cgi_param(phr, "testinfo_cmdline", &testinfo_cmdline);
@@ -3152,7 +3152,7 @@ super_serve_op_TESTS_TEST_EDIT_ACTION(
     make_prefixed_path(info_tmp_path, sizeof(info_tmp_path), test_dir, NEW_TEST_PREFIX, info_pat, test_num);
     make_prefixed_path(info_out_path, sizeof(info_out_path), test_dir, NULL, info_pat, test_num);
     make_prefixed_path(info_del_path, sizeof(info_del_path), test_dir, DEL_TEST_PREFIX, info_pat, test_num);
-    if (!(tmp_f = fopen(info_tmp_path, "w"))) FAIL(S_ERR_FS_ERROR);
+    if (!(tmp_f = fopen(info_tmp_path, "w"))) FAIL(SSERV_ERR_FS_ERROR);
     if (testinfo_exit_code > 0) {
       fprintf(tmp_f, "exit_code = %d\n", testinfo_exit_code);
     }
@@ -3181,13 +3181,13 @@ super_serve_op_TESTS_TEST_EDIT_ACTION(
     xfree(text); text = NULL;
     fclose(tmp_f); tmp_f = NULL;
     if (testinfo_parse(info_tmp_path, &tinfo) < 0) {
-      FAIL(S_ERR_INV_TESTINFO);
+      FAIL(SSERV_ERR_INV_TESTINFO);
     }
     testinfo_free(&tinfo);
     memset(&tinfo, 0, sizeof(tinfo));
     if (!insert_mode) {
       r = need_file_update(info_out_path, info_tmp_path);
-      if (r < 0) FAIL(S_ERR_FS_ERROR);
+      if (r < 0) FAIL(SSERV_ERR_FS_ERROR);
       if (!r) {
         unlink(info_tmp_path);
         info_tmp_path[0] = 0;
@@ -3204,18 +3204,18 @@ super_serve_op_TESTS_TEST_EDIT_ACTION(
 
   if (prob->binary_input <= 0 && prob->use_corr > 0 && corr_pat[0] > ' ') {
     r = hr_cgi_param(phr, "corr_txt", &corr_txt);
-    if (r < 0) FAIL(S_ERR_INV_VALUE);
+    if (r < 0) FAIL(SSERV_ERR_INV_VALUE);
     if (r > 0) {
       make_prefixed_path(corr_tmp_path, sizeof(corr_tmp_path), test_dir, NEW_TEST_PREFIX, corr_pat, test_num);
       make_prefixed_path(corr_out_path, sizeof(corr_out_path), test_dir, NULL, corr_pat, test_num);
       make_prefixed_path(corr_del_path, sizeof(corr_del_path), test_dir, DEL_TEST_PREFIX, corr_pat, test_num);
       text = normalize_text(norm_type, corr_txt);
       r = write_file(corr_tmp_path, text);
-      if (r < 0) FAIL(S_ERR_FS_ERROR);
+      if (r < 0) FAIL(SSERV_ERR_FS_ERROR);
       xfree(text); text = NULL;
       if (!insert_mode) {
         r = need_file_update(corr_out_path, corr_tmp_path);
-        if (r < 0) FAIL(S_ERR_FS_ERROR);
+        if (r < 0) FAIL(SSERV_ERR_FS_ERROR);
         if (!r) {
           unlink(corr_tmp_path);
           corr_tmp_path[0] = 0;
@@ -3229,18 +3229,18 @@ super_serve_op_TESTS_TEST_EDIT_ACTION(
 
   if (prob->binary_input <= 0) {
     r = hr_cgi_param(phr, "test_txt", &test_txt);
-    if (r < 0) FAIL(S_ERR_INV_VALUE);
+    if (r < 0) FAIL(SSERV_ERR_INV_VALUE);
     if (r > 0) {
       make_prefixed_path(test_tmp_path, sizeof(test_tmp_path), test_dir, NEW_TEST_PREFIX, test_pat, test_num);
       make_prefixed_path(test_out_path, sizeof(test_out_path), test_dir, NULL, test_pat, test_num);
       make_prefixed_path(test_del_path, sizeof(test_del_path), test_dir, DEL_TEST_PREFIX, test_pat, test_num);
       text = normalize_text(norm_type, test_txt);
       r = write_file(test_tmp_path, text);
-      if (r < 0) FAIL(S_ERR_FS_ERROR);
+      if (r < 0) FAIL(SSERV_ERR_FS_ERROR);
       xfree(text); text = NULL;
       if (!insert_mode) {
         r = need_file_update(test_out_path, test_tmp_path);
-        if (r < 0) FAIL(S_ERR_FS_ERROR);
+        if (r < 0) FAIL(SSERV_ERR_FS_ERROR);
         if (!r) {
           unlink(test_tmp_path);
           test_tmp_path[0] = 0;
@@ -3270,22 +3270,22 @@ super_serve_op_TESTS_TEST_EDIT_ACTION(
 
   if (test_tmp_path[0]) {
     if (logged_rename(log_f, test_out_path, test_del_path) < 0) {
-      FAIL(S_ERR_FS_ERROR);
+      FAIL(SSERV_ERR_FS_ERROR);
     }
     if (logged_rename(log_f, test_tmp_path, test_out_path) < 0) {
       logged_rename(log_f, test_del_path, test_out_path);
-      FAIL(S_ERR_FS_ERROR);
+      FAIL(SSERV_ERR_FS_ERROR);
     }
   }
   if (corr_tmp_path[0]) {
     if (logged_rename(log_f, corr_out_path, corr_del_path) < 0) {
       logged_rename(log_f, test_del_path, test_out_path);
-      FAIL(S_ERR_FS_ERROR);
+      FAIL(SSERV_ERR_FS_ERROR);
     }
     if (logged_rename(log_f, corr_tmp_path, corr_out_path) < 0) {
       logged_rename(log_f, corr_del_path, corr_out_path);
       logged_rename(log_f, test_del_path, test_out_path);
-      FAIL(S_ERR_FS_ERROR);
+      FAIL(SSERV_ERR_FS_ERROR);
     }
   }
   if (info_tmp_path[0]) {
@@ -3294,7 +3294,7 @@ super_serve_op_TESTS_TEST_EDIT_ACTION(
         logged_rename(log_f, corr_del_path, corr_out_path);
       }
       logged_rename(log_f, test_del_path, test_out_path);
-      FAIL(S_ERR_FS_ERROR);
+      FAIL(SSERV_ERR_FS_ERROR);
     }
     if (logged_rename(log_f, info_tmp_path, info_out_path) < 0) {
       logged_rename(log_f, info_del_path, info_out_path);
@@ -3302,7 +3302,7 @@ super_serve_op_TESTS_TEST_EDIT_ACTION(
         logged_rename(log_f, corr_del_path, corr_out_path);
       }
       logged_rename(log_f, test_del_path, test_out_path);
-      FAIL(S_ERR_FS_ERROR);
+      FAIL(SSERV_ERR_FS_ERROR);
     }
   }
 
@@ -3395,12 +3395,12 @@ super_serve_op_TESTS_TEST_DELETE_PAGE(
   memset(&testinfo, 0, sizeof(testinfo));
 
   hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
-  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
-  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+  if (contest_id <= 0) FAIL(SSERV_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(SSERV_ERR_INV_CONTEST);
 
-  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
+  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(SSERV_ERR_PERM_DENIED);
   get_full_caps(phr, cnts, &caps);
-  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(S_ERR_PERM_DENIED);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(SSERV_ERR_PERM_DENIED);
 
   retval = check_other_editors(log_f, out_f, phr, contest_id, cnts);
   if (retval <= 0) goto cleanup;
@@ -3409,17 +3409,17 @@ super_serve_op_TESTS_TEST_DELETE_PAGE(
   global = cs->global;
 
   hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
-  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
-  if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
+  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(SSERV_ERR_INV_PROB_ID);
+  if (!(prob = cs->probs[prob_id])) FAIL(SSERV_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
     hr_cgi_param_int_opt(phr, "variant", &variant, 0);
-    if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
+    if (variant <= 0 || variant > prob->variant_num) FAIL(SSERV_ERR_INV_VARIANT);
   }
 
   hr_cgi_param_int_opt(phr, "test_num", &test_num, 0);
-  if (test_num <= 0 || test_num >= 1000000) FAIL(S_ERR_INV_TEST_NUM);
+  if (test_num <= 0 || test_num >= 1000000) FAIL(SSERV_ERR_INV_TEST_NUM);
 
   retval = build_prepare_test_file_names(log_f, cnts, global, prob, variant, NULL,
                                          sizeof(test_dir), test_dir, test_pat, corr_pat, info_pat,
@@ -3522,12 +3522,12 @@ super_serve_op_TESTS_TEST_DELETE_ACTION(
   memset(&td_info, 0, sizeof(td_info));
 
   hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
-  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
-  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+  if (contest_id <= 0) FAIL(SSERV_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(SSERV_ERR_INV_CONTEST);
 
-  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
+  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(SSERV_ERR_PERM_DENIED);
   get_full_caps(phr, cnts, &caps);
-  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(S_ERR_PERM_DENIED);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(SSERV_ERR_PERM_DENIED);
 
   retval = check_other_editors(log_f, out_f, phr, contest_id, cnts);
   if (retval <= 0) goto cleanup;
@@ -3536,17 +3536,17 @@ super_serve_op_TESTS_TEST_DELETE_ACTION(
   global = cs->global;
 
   hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
-  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
-  if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
+  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(SSERV_ERR_INV_PROB_ID);
+  if (!(prob = cs->probs[prob_id])) FAIL(SSERV_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
     hr_cgi_param_int_opt(phr, "variant", &variant, 0);
-    if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
+    if (variant <= 0 || variant > prob->variant_num) FAIL(SSERV_ERR_INV_VARIANT);
   }
 
   hr_cgi_param_int_opt(phr, "test_num", &test_num, 0);
-  if (test_num <= 0 || test_num >= 1000000) FAIL(S_ERR_INV_TEST_NUM);
+  if (test_num <= 0 || test_num >= 1000000) FAIL(SSERV_ERR_INV_TEST_NUM);
 
   retval = build_prepare_test_file_names(log_f, cnts, global, prob, variant, NULL,
                                          sizeof(test_dir), test_dir, test_pat, corr_pat, info_pat,
@@ -3597,12 +3597,12 @@ super_serve_op_TESTS_MAKEFILE_EDIT_PAGE(
   size_t prb_z = 0;
 
   hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
-  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
-  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+  if (contest_id <= 0) FAIL(SSERV_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(SSERV_ERR_INV_CONTEST);
 
-  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
+  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(SSERV_ERR_PERM_DENIED);
   get_full_caps(phr, cnts, &caps);
-  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(S_ERR_PERM_DENIED);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(SSERV_ERR_PERM_DENIED);
 
   retval = check_other_editors(log_f, out_f, phr, contest_id, cnts);
   if (retval <= 0) goto cleanup;
@@ -3610,16 +3610,16 @@ super_serve_op_TESTS_MAKEFILE_EDIT_PAGE(
   cs = phr->ss->te_state;
   global = cs->global;
 
-  if (global->advanced_layout <= 0) FAIL(S_ERR_INV_CONTEST);
+  if (global->advanced_layout <= 0) FAIL(SSERV_ERR_INV_CONTEST);
 
   hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
-  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
-  if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
+  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(SSERV_ERR_INV_PROB_ID);
+  if (!(prob = cs->probs[prob_id])) FAIL(SSERV_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
     hr_cgi_param_int_opt(phr, "variant", &variant, 0);
-    if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
+    if (variant <= 0 || variant > prob->variant_num) FAIL(SSERV_ERR_INV_VARIANT);
   }
 
   prb_f = open_memstream(&prb_t, &prb_z);
@@ -3710,12 +3710,12 @@ super_serve_op_TESTS_MAKEFILE_EDIT_ACTION(
   int file_mode = -1;
 
   hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
-  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
-  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+  if (contest_id <= 0) FAIL(SSERV_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(SSERV_ERR_INV_CONTEST);
 
-  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
+  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(SSERV_ERR_PERM_DENIED);
   get_full_caps(phr, cnts, &caps);
-  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(S_ERR_PERM_DENIED);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(SSERV_ERR_PERM_DENIED);
 
   retval = check_other_editors(log_f, out_f, phr, contest_id, cnts);
   if (retval <= 0) goto cleanup;
@@ -3725,45 +3725,45 @@ super_serve_op_TESTS_MAKEFILE_EDIT_ACTION(
 
   if (cnts->file_group) {
     file_group = file_perms_parse_group(cnts->file_group);
-    if (file_group <= 0) FAIL(S_ERR_INV_SYS_GROUP);
+    if (file_group <= 0) FAIL(SSERV_ERR_INV_SYS_GROUP);
   }
   if (cnts->file_mode) {
     file_mode = file_perms_parse_mode(cnts->file_mode);
-    if (file_mode <= 0) FAIL(S_ERR_INV_SYS_MODE);
+    if (file_mode <= 0) FAIL(SSERV_ERR_INV_SYS_MODE);
   }
 
-  if (global->advanced_layout <= 0) FAIL(S_ERR_INV_CONTEST);
+  if (global->advanced_layout <= 0) FAIL(SSERV_ERR_INV_CONTEST);
 
   hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
-  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
-  if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
+  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(SSERV_ERR_INV_PROB_ID);
+  if (!(prob = cs->probs[prob_id])) FAIL(SSERV_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
     hr_cgi_param_int_opt(phr, "variant", &variant, 0);
-    if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
+    if (variant <= 0 || variant > prob->variant_num) FAIL(SSERV_ERR_INV_VARIANT);
   }
-  if (hr_cgi_param(phr, "text", &text) <= 0) FAIL(S_ERR_INV_VALUE);
+  if (hr_cgi_param(phr, "text", &text) <= 0) FAIL(SSERV_ERR_INV_VALUE);
 
   get_advanced_layout_path(tmp_makefile_path, sizeof(tmp_makefile_path), global, prob, "tmp_Makefile", variant);
   get_advanced_layout_path(makefile_path, sizeof(makefile_path), global, prob, DFLT_P_MAKEFILE, variant);
 
-  if (create_problem_directory(log_f, tmp_makefile_path, cnts) < 0) FAIL(S_ERR_FS_ERROR);
+  if (create_problem_directory(log_f, tmp_makefile_path, cnts) < 0) FAIL(SSERV_ERR_FS_ERROR);
 
   text2 = normalize_text(TEST_NORM_NL, text);
-  if (write_file(tmp_makefile_path, text2) < 0) FAIL(S_ERR_FS_ERROR);
+  if (write_file(tmp_makefile_path, text2) < 0) FAIL(SSERV_ERR_FS_ERROR);
   if (file_group > 0 || file_mode > 0) {
     file_perms_set(log_f, tmp_makefile_path, file_group, file_mode, -1, -1);
   }
 
   r = need_file_update(makefile_path, tmp_makefile_path);
-  if (r < 0) FAIL(S_ERR_FS_ERROR);
+  if (r < 0) FAIL(SSERV_ERR_FS_ERROR);
   if (!r) {
     unlink(tmp_makefile_path);
     goto done;
   }
   if (logged_rename(log_f, tmp_makefile_path, makefile_path) < 0) {
-    FAIL(S_ERR_FS_ERROR);
+    FAIL(SSERV_ERR_FS_ERROR);
   }
 
 done:
@@ -3792,12 +3792,12 @@ super_serve_op_TESTS_MAKEFILE_DELETE_ACTION(
   unsigned char makefile_path[PATH_MAX];
 
   hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
-  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
-  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+  if (contest_id <= 0) FAIL(SSERV_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(SSERV_ERR_INV_CONTEST);
 
-  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
+  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(SSERV_ERR_PERM_DENIED);
   get_full_caps(phr, cnts, &caps);
-  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(S_ERR_PERM_DENIED);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(SSERV_ERR_PERM_DENIED);
 
   retval = check_other_editors(log_f, out_f, phr, contest_id, cnts);
   if (retval <= 0) goto cleanup;
@@ -3805,20 +3805,20 @@ super_serve_op_TESTS_MAKEFILE_DELETE_ACTION(
   cs = phr->ss->te_state;
   global = cs->global;
 
-  if (global->advanced_layout <= 0) FAIL(S_ERR_INV_CONTEST);
+  if (global->advanced_layout <= 0) FAIL(SSERV_ERR_INV_CONTEST);
 
   hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
-  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
-  if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
+  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(SSERV_ERR_INV_PROB_ID);
+  if (!(prob = cs->probs[prob_id])) FAIL(SSERV_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
     hr_cgi_param_int_opt(phr, "variant", &variant, 0);
-    if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
+    if (variant <= 0 || variant > prob->variant_num) FAIL(SSERV_ERR_INV_VARIANT);
   }
 
   get_advanced_layout_path(makefile_path, sizeof(makefile_path), global, prob, DFLT_P_MAKEFILE, variant);
-  if (logged_unlink(log_f, makefile_path) < 0) FAIL(S_ERR_FS_ERROR);
+  if (logged_unlink(log_f, makefile_path) < 0) FAIL(SSERV_ERR_FS_ERROR);
 
   ss_redirect_2(out_f, phr, SSERV_CMD_TESTS_MAIN_PAGE, contest_id, prob_id, variant, 0, NULL);
 
@@ -3862,12 +3862,12 @@ super_serve_op_TESTS_MAKEFILE_GENERATE_ACTION(
   unsigned char tmp_makefile_path[PATH_MAX];
 
   hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
-  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
-  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+  if (contest_id <= 0) FAIL(SSERV_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(SSERV_ERR_INV_CONTEST);
 
-  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
+  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(SSERV_ERR_PERM_DENIED);
   get_full_caps(phr, cnts, &caps);
-  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(S_ERR_PERM_DENIED);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(SSERV_ERR_PERM_DENIED);
 
   retval = check_other_editors(log_f, out_f, phr, contest_id, cnts);
   if (retval <= 0) goto cleanup;
@@ -3875,20 +3875,20 @@ super_serve_op_TESTS_MAKEFILE_GENERATE_ACTION(
   cs = phr->ss->te_state;
   global = cs->global;
 
-  if (global->advanced_layout <= 0) FAIL(S_ERR_INV_CONTEST);
+  if (global->advanced_layout <= 0) FAIL(SSERV_ERR_INV_CONTEST);
 
   hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
-  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
-  if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
+  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(SSERV_ERR_INV_PROB_ID);
+  if (!(prob = cs->probs[prob_id])) FAIL(SSERV_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
     hr_cgi_param_int_opt(phr, "variant", &variant, 0);
-    if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
+    if (variant <= 0 || variant > prob->variant_num) FAIL(SSERV_ERR_INV_VARIANT);
   }
 
   get_advanced_layout_path(tmp_makefile_path, sizeof(tmp_makefile_path), global, prob, "tmp_Makefile", variant);
-  if (create_problem_directory(log_f, tmp_makefile_path, cnts) < 0) FAIL(S_ERR_FS_ERROR);
+  if (create_problem_directory(log_f, tmp_makefile_path, cnts) < 0) FAIL(SSERV_ERR_FS_ERROR);
 
   retval = build_generate_makefile(log_f, phr->config, cnts, cs, NULL, global, prob, variant);
   if (!retval) {
@@ -4005,12 +4005,12 @@ super_serve_op_TESTS_STATEMENT_EDIT_PAGE(
   int serial;
 
   hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
-  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
-  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+  if (contest_id <= 0) FAIL(SSERV_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(SSERV_ERR_INV_CONTEST);
 
-  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
+  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(SSERV_ERR_PERM_DENIED);
   get_full_caps(phr, cnts, &caps);
-  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(S_ERR_PERM_DENIED);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(SSERV_ERR_PERM_DENIED);
 
   retval = check_other_editors(log_f, out_f, phr, contest_id, cnts);
   if (retval <= 0) goto cleanup;
@@ -4019,18 +4019,18 @@ super_serve_op_TESTS_STATEMENT_EDIT_PAGE(
   global = cs->global;
 
   hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
-  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
-  if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
+  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(SSERV_ERR_INV_PROB_ID);
+  if (!(prob = cs->probs[prob_id])) FAIL(SSERV_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
     hr_cgi_param_int_opt(phr, "variant", &variant, 0);
-    if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
+    if (variant <= 0 || variant > prob->variant_num) FAIL(SSERV_ERR_INV_VARIANT);
   }
   hr_cgi_param_int_opt(phr, "plain_view", &plain_view, 0);
   if (plain_view != 1) plain_view = 0;
 
-  if (!prob->xml_file || !prob->xml_file[0]) FAIL(S_ERR_INV_PROB_ID);
+  if (!prob->xml_file || !prob->xml_file[0]) FAIL(SSERV_ERR_INV_PROB_ID);
   if (cs->global->advanced_layout > 0) {
     get_advanced_layout_path(xml_path, sizeof(xml_path), cs->global, prob, prob->xml_file, variant);
   } else if (variant > 0) {
@@ -4319,12 +4319,12 @@ super_serve_op_TESTS_STATEMENT_EDIT_ACTION(
   extra_redirect_args[0] = 0;
 
   hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
-  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
-  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+  if (contest_id <= 0) FAIL(SSERV_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(SSERV_ERR_INV_CONTEST);
 
-  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
+  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(SSERV_ERR_PERM_DENIED);
   get_full_caps(phr, cnts, &caps);
-  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(S_ERR_PERM_DENIED);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(SSERV_ERR_PERM_DENIED);
 
   retval = check_other_editors(log_f, out_f, phr, contest_id, cnts);
   if (retval <= 0) goto cleanup;
@@ -4333,20 +4333,20 @@ super_serve_op_TESTS_STATEMENT_EDIT_ACTION(
   global = cs->global;
 
   hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
-  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
-  if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
+  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(SSERV_ERR_INV_PROB_ID);
+  if (!(prob = cs->probs[prob_id])) FAIL(SSERV_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
     hr_cgi_param_int_opt(phr, "variant", &variant, 0);
-    if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
+    if (variant <= 0 || variant > prob->variant_num) FAIL(SSERV_ERR_INV_VARIANT);
   }
   hr_cgi_param_int_opt(phr, "plain_view", &plain_view, 0);
   if (plain_view != 1) plain_view = 0;
 
   hr_cgi_param_int_opt(phr, "delete_num", &delete_num, 0);
 
-  if (!prob->xml_file || !prob->xml_file[0]) FAIL(S_ERR_INV_PROB_ID);
+  if (!prob->xml_file || !prob->xml_file[0]) FAIL(SSERV_ERR_INV_PROB_ID);
   if (global->advanced_layout > 0) {
     get_advanced_layout_path(xml_path, sizeof(xml_path), cs->global, prob, prob->xml_file, variant);
   } else if (variant > 0) {
@@ -4361,18 +4361,18 @@ super_serve_op_TESTS_STATEMENT_EDIT_ACTION(
   s = NULL;
   hr_cgi_param(phr, "prob_package", &s);
   prob_package = fix_string(s);
-  if (!prob_package || !*prob_package) FAIL(S_ERR_UNSPEC_PROB_PACKAGE);
+  if (!prob_package || !*prob_package) FAIL(SSERV_ERR_UNSPEC_PROB_PACKAGE);
 
   s = NULL;
   hr_cgi_param(phr, "prob_name", &s);
   prob_name = fix_string(s);
-  if (!prob_name || !*prob_name) FAIL(S_ERR_UNSPEC_PROB_NAME);
+  if (!prob_name || !*prob_name) FAIL(SSERV_ERR_UNSPEC_PROB_NAME);
 
   s = NULL;
   hr_cgi_param(phr, "prob_title", &s);
   text = fix_string(s);
   if (text && *text) {
-    if (!(title_node = problem_xml_parse_text(log_f, text, PROB_T_TITLE))) FAIL(S_ERR_INV_XHTML);
+    if (!(title_node = problem_xml_parse_text(log_f, text, PROB_T_TITLE))) FAIL(SSERV_ERR_INV_XHTML);
   }
   xfree(text); text = NULL;
 
@@ -4380,7 +4380,7 @@ super_serve_op_TESTS_STATEMENT_EDIT_ACTION(
   hr_cgi_param(phr, "prob_desc", &s);
   text = normalize_textarea(s);
   if (text && *text) {
-    if (!(desc_node = problem_xml_parse_text(log_f, text, PROB_T_DESCRIPTION))) FAIL(S_ERR_INV_XHTML);
+    if (!(desc_node = problem_xml_parse_text(log_f, text, PROB_T_DESCRIPTION))) FAIL(SSERV_ERR_INV_XHTML);
   }
   xfree(text); text = NULL;
 
@@ -4388,7 +4388,7 @@ super_serve_op_TESTS_STATEMENT_EDIT_ACTION(
   hr_cgi_param(phr, "prob_input_format", &s);
   text = normalize_textarea(s);
   if (text && *text) {
-    if (!(input_format_node = problem_xml_parse_text(log_f, text, PROB_T_INPUT_FORMAT))) FAIL(S_ERR_INV_XHTML);
+    if (!(input_format_node = problem_xml_parse_text(log_f, text, PROB_T_INPUT_FORMAT))) FAIL(SSERV_ERR_INV_XHTML);
   }
   xfree(text); text = NULL;
 
@@ -4396,7 +4396,7 @@ super_serve_op_TESTS_STATEMENT_EDIT_ACTION(
   hr_cgi_param(phr, "prob_output_format", &s);
   text = normalize_textarea(s);
   if (text && *text) {
-    if (!(output_format_node = problem_xml_parse_text(log_f, text, PROB_T_OUTPUT_FORMAT))) FAIL(S_ERR_INV_XHTML);
+    if (!(output_format_node = problem_xml_parse_text(log_f, text, PROB_T_OUTPUT_FORMAT))) FAIL(SSERV_ERR_INV_XHTML);
   }
   xfree(text); text = NULL;
 
@@ -4404,7 +4404,7 @@ super_serve_op_TESTS_STATEMENT_EDIT_ACTION(
   hr_cgi_param(phr, "prob_notes", &s);
   text = normalize_textarea(s);
   if (text && *text) {
-    if (!(notes_node = problem_xml_parse_text(log_f, text, PROB_T_NOTES))) FAIL(S_ERR_INV_XHTML);
+    if (!(notes_node = problem_xml_parse_text(log_f, text, PROB_T_NOTES))) FAIL(SSERV_ERR_INV_XHTML);
   }
   xfree(text); text = NULL;
 
@@ -4425,14 +4425,14 @@ super_serve_op_TESTS_STATEMENT_EDIT_ACTION(
     snprintf(test_param_name, sizeof(test_param_name), "prob_sample_input_%d", i);
     hr_cgi_param(phr, test_param_name, &s);
     text = normalize_textarea(s);
-    if (!(test_input_nodes[i] = problem_xml_parse_text(log_f, text, PROB_T_INPUT))) FAIL(S_ERR_INV_XHTML);
+    if (!(test_input_nodes[i] = problem_xml_parse_text(log_f, text, PROB_T_INPUT))) FAIL(SSERV_ERR_INV_XHTML);
     xfree(text); text = NULL;
 
     s = NULL;
     snprintf(test_param_name, sizeof(test_param_name), "prob_sample_output_%d", i);
     hr_cgi_param(phr, test_param_name, &s);
     text = normalize_textarea(s);
-    if (!(test_output_nodes[i] = problem_xml_parse_text(log_f, text, PROB_T_OUTPUT))) FAIL(S_ERR_INV_XHTML);
+    if (!(test_output_nodes[i] = problem_xml_parse_text(log_f, text, PROB_T_OUTPUT))) FAIL(SSERV_ERR_INV_XHTML);
     xfree(text); text = NULL;
   }
 
@@ -4466,21 +4466,21 @@ super_serve_op_TESTS_STATEMENT_EDIT_ACTION(
   }
 
   if (create_problem_directory(log_f, xml_path_tmp, cnts) < 0)
-    FAIL(S_ERR_FS_ERROR);
+    FAIL(SSERV_ERR_FS_ERROR);
 
   xml_f = fopen(xml_path_tmp, "w");
-  if (!xml_f) FAIL(S_ERR_FS_ERROR);
+  if (!xml_f) FAIL(SSERV_ERR_FS_ERROR);
   problem_xml_unparse(xml_f, prob_xml);
   fclose(xml_f); xml_f = NULL;
   if (!need_file_update(xml_path, xml_path_tmp)) goto done;
 
   prob_xml = problem_xml_free(prob_xml);
   prob_xml = problem_xml_parse(log_f, xml_path_tmp);
-  if (!prob_xml) FAIL(S_ERR_INV_PROB_XML);
+  if (!prob_xml) FAIL(SSERV_ERR_INV_PROB_XML);
   prob_xml = problem_xml_free(prob_xml);
 
-  if (logged_rename(log_f, xml_path, xml_path_bak) < 0) FAIL(S_ERR_FS_ERROR);
-  if (logged_rename(log_f, xml_path_tmp, xml_path) < 0) FAIL(S_ERR_FS_ERROR);
+  if (logged_rename(log_f, xml_path, xml_path_bak) < 0) FAIL(SSERV_ERR_FS_ERROR);
+  if (logged_rename(log_f, xml_path_tmp, xml_path) < 0) FAIL(SSERV_ERR_FS_ERROR);
   super_html_set_cnts_file_perms(log_f, xml_path, cnts);
   xml_path_tmp[0] = 0;
 
@@ -4538,12 +4538,12 @@ super_serve_op_TESTS_STATEMENT_EDIT_2_ACTION(
   xml_path_tmp[0] = 0;
 
   hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
-  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
-  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+  if (contest_id <= 0) FAIL(SSERV_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(SSERV_ERR_INV_CONTEST);
 
-  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
+  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(SSERV_ERR_PERM_DENIED);
   get_full_caps(phr, cnts, &caps);
-  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(S_ERR_PERM_DENIED);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(SSERV_ERR_PERM_DENIED);
 
   retval = check_other_editors(log_f, out_f, phr, contest_id, cnts);
   if (retval <= 0) goto cleanup;
@@ -4552,16 +4552,16 @@ super_serve_op_TESTS_STATEMENT_EDIT_2_ACTION(
   global = cs->global;
 
   hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
-  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
-  if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
+  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(SSERV_ERR_INV_PROB_ID);
+  if (!(prob = cs->probs[prob_id])) FAIL(SSERV_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
     hr_cgi_param_int_opt(phr, "variant", &variant, 0);
-    if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
+    if (variant <= 0 || variant > prob->variant_num) FAIL(SSERV_ERR_INV_VARIANT);
   }
 
-  if (!prob->xml_file || !prob->xml_file[0]) FAIL(S_ERR_INV_PROB_ID);
+  if (!prob->xml_file || !prob->xml_file[0]) FAIL(SSERV_ERR_INV_PROB_ID);
   if (global->advanced_layout > 0) {
     get_advanced_layout_path(xml_path, sizeof(xml_path), cs->global, prob, prob->xml_file, variant);
   } else if (variant > 0) {
@@ -4583,18 +4583,18 @@ super_serve_op_TESTS_STATEMENT_EDIT_2_ACTION(
   }
 
   if (create_problem_directory(log_f, xml_path_tmp, cnts) < 0)
-    FAIL(S_ERR_FS_ERROR);
+    FAIL(SSERV_ERR_FS_ERROR);
 
   write_file(xml_path_tmp, text);
   if (!need_file_update(xml_path, xml_path_tmp)) goto done;
 
   prob_xml = problem_xml_free(prob_xml);
   prob_xml = problem_xml_parse(log_f, xml_path_tmp);
-  if (!prob_xml) FAIL(S_ERR_INV_PROB_XML);
+  if (!prob_xml) FAIL(SSERV_ERR_INV_PROB_XML);
   prob_xml = problem_xml_free(prob_xml);
 
-  if (logged_rename(log_f, xml_path, xml_path_bak) < 0) FAIL(S_ERR_FS_ERROR);
-  if (logged_rename(log_f, xml_path_tmp, xml_path) < 0) FAIL(S_ERR_FS_ERROR);
+  if (logged_rename(log_f, xml_path, xml_path_bak) < 0) FAIL(SSERV_ERR_FS_ERROR);
+  if (logged_rename(log_f, xml_path_tmp, xml_path) < 0) FAIL(SSERV_ERR_FS_ERROR);
   super_html_set_cnts_file_perms(log_f, xml_path, cnts);
   xml_path_tmp[0] = 0;
 
@@ -4627,12 +4627,12 @@ super_serve_op_TESTS_STATEMENT_DELETE_ACTION(
   unsigned char xml_path_bak[PATH_MAX];
 
   hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
-  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
-  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+  if (contest_id <= 0) FAIL(SSERV_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(SSERV_ERR_INV_CONTEST);
 
-  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
+  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(SSERV_ERR_PERM_DENIED);
   get_full_caps(phr, cnts, &caps);
-  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(S_ERR_PERM_DENIED);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(SSERV_ERR_PERM_DENIED);
 
   retval = check_other_editors(log_f, out_f, phr, contest_id, cnts);
   if (retval <= 0) goto cleanup;
@@ -4641,16 +4641,16 @@ super_serve_op_TESTS_STATEMENT_DELETE_ACTION(
   global = cs->global;
 
   hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
-  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
-  if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
+  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(SSERV_ERR_INV_PROB_ID);
+  if (!(prob = cs->probs[prob_id])) FAIL(SSERV_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
     hr_cgi_param_int_opt(phr, "variant", &variant, 0);
-    if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
+    if (variant <= 0 || variant > prob->variant_num) FAIL(SSERV_ERR_INV_VARIANT);
   }
 
-  if (!prob->xml_file || !prob->xml_file[0]) FAIL(S_ERR_INV_PROB_ID);
+  if (!prob->xml_file || !prob->xml_file[0]) FAIL(SSERV_ERR_INV_PROB_ID);
   if (global->advanced_layout > 0) {
     get_advanced_layout_path(xml_path, sizeof(xml_path), global, prob, prob->xml_file, variant);
   } else if (variant > 0) {
@@ -4660,7 +4660,7 @@ super_serve_op_TESTS_STATEMENT_DELETE_ACTION(
   }
   snprintf(xml_path_bak, sizeof(xml_path_bak), "%s.bak", xml_path);
 
-  if (logged_rename(log_f, xml_path, xml_path_bak) < 0) FAIL(S_ERR_FS_ERROR);
+  if (logged_rename(log_f, xml_path, xml_path_bak) < 0) FAIL(SSERV_ERR_FS_ERROR);
 
   ss_redirect_2(out_f, phr, SSERV_CMD_TESTS_MAIN_PAGE, contest_id, prob_id, variant, 0, NULL);
 
@@ -4696,12 +4696,12 @@ super_serve_op_TESTS_SOURCE_HEADER_EDIT_PAGE(
   unsigned char file_name_buf[PATH_MAX];
 
   hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
-  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
-  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+  if (contest_id <= 0) FAIL(SSERV_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(SSERV_ERR_INV_CONTEST);
 
-  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
+  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(SSERV_ERR_PERM_DENIED);
   get_full_caps(phr, cnts, &caps);
-  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(S_ERR_PERM_DENIED);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(SSERV_ERR_PERM_DENIED);
 
   retval = check_other_editors(log_f, out_f, phr, contest_id, cnts);
   if (retval <= 0) goto cleanup;
@@ -4710,13 +4710,13 @@ super_serve_op_TESTS_SOURCE_HEADER_EDIT_PAGE(
   global = cs->global;
 
   hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
-  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
-  if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
+  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(SSERV_ERR_INV_PROB_ID);
+  if (!(prob = cs->probs[prob_id])) FAIL(SSERV_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
     hr_cgi_param_int_opt(phr, "variant", &variant, 0);
-    if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
+    if (variant <= 0 || variant > prob->variant_num) FAIL(SSERV_ERR_INV_VARIANT);
   }
 
   if (phr->action == SSERV_CMD_TESTS_SOURCE_HEADER_EDIT_PAGE) {
@@ -4746,12 +4746,12 @@ super_serve_op_TESTS_SOURCE_HEADER_EDIT_PAGE(
       if (lang_count <= 0) {
         // no suitable source file
         // FIXME: display a page to choose language
-        FAIL(S_ERR_INV_PROB_ID);
+        FAIL(SSERV_ERR_INV_PROB_ID);
       }
       if (lang_count > 1) {
         // several suitable source files
         // FIXME: display a page to select one file
-        FAIL(S_ERR_INV_PROB_ID);
+        FAIL(SSERV_ERR_INV_PROB_ID);
       }
       const unsigned char *source_suffix = build_get_source_suffix(lang_mask);
       build_replace_cmd_suffix(file_name_buf, sizeof(file_name_buf), prob->solution_cmd, source_suffix);
@@ -4761,10 +4761,10 @@ super_serve_op_TESTS_SOURCE_HEADER_EDIT_PAGE(
     action = SSERV_CMD_TESTS_SOLUTION_EDIT_ACTION;
     delete_action = SSERV_CMD_TESTS_SOLUTION_DELETE_ACTION;
   } else {
-    FAIL(S_ERR_INV_OPER);
+    FAIL(SSERV_ERR_INV_OPER);
   }
 
-  if (!file_name || !file_name) FAIL(S_ERR_INV_PROB_ID);
+  if (!file_name || !file_name) FAIL(SSERV_ERR_INV_PROB_ID);
   sformat_message(tmp_path, sizeof(tmp_path), 0, file_name, global, prob, NULL, 0, 0, 0, 0, 0);
   if (os_IsAbsolutePath(tmp_path)) {
     snprintf(file_path, sizeof(file_path), "%s", tmp_path);
@@ -4857,12 +4857,12 @@ super_serve_op_TESTS_SOURCE_HEADER_EDIT_ACTION(
   file_path_tmp[0] = 0;
 
   hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
-  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
-  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+  if (contest_id <= 0) FAIL(SSERV_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(SSERV_ERR_INV_CONTEST);
 
-  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
+  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(SSERV_ERR_PERM_DENIED);
   get_full_caps(phr, cnts, &caps);
-  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(S_ERR_PERM_DENIED);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(SSERV_ERR_PERM_DENIED);
 
   retval = check_other_editors(log_f, out_f, phr, contest_id, cnts);
   if (retval <= 0) goto cleanup;
@@ -4871,13 +4871,13 @@ super_serve_op_TESTS_SOURCE_HEADER_EDIT_ACTION(
   global = cs->global;
 
   hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
-  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
-  if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
+  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(SSERV_ERR_INV_PROB_ID);
+  if (!(prob = cs->probs[prob_id])) FAIL(SSERV_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
     hr_cgi_param_int_opt(phr, "variant", &variant, 0);
-    if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
+    if (variant <= 0 || variant > prob->variant_num) FAIL(SSERV_ERR_INV_VARIANT);
   }
 
   if (phr->action == SSERV_CMD_TESTS_SOURCE_HEADER_EDIT_ACTION) {
@@ -4901,22 +4901,22 @@ super_serve_op_TESTS_SOURCE_HEADER_EDIT_ACTION(
       if (lang_count <= 0) {
         // no suitable source file
         // FIXME: display a page to choose language
-        FAIL(S_ERR_INV_PROB_ID);
+        FAIL(SSERV_ERR_INV_PROB_ID);
       }
       if (lang_count > 1) {
         // several suitable source files
         // FIXME: display a page to select one file
-        FAIL(S_ERR_INV_PROB_ID);
+        FAIL(SSERV_ERR_INV_PROB_ID);
       }
       const unsigned char *source_suffix = build_get_source_suffix(lang_mask);
       build_replace_cmd_suffix(file_name_buf, sizeof(file_name_buf), prob->solution_cmd, source_suffix);
       file_name = file_name_buf;
     }
   } else {
-    FAIL(S_ERR_INV_OPER);
+    FAIL(SSERV_ERR_INV_OPER);
   }
 
-  if (!file_name || !file_name) FAIL(S_ERR_INV_PROB_ID);
+  if (!file_name || !file_name) FAIL(SSERV_ERR_INV_PROB_ID);
   sformat_message(tmp_path, sizeof(tmp_path), 0, file_name, global, prob, NULL, 0, 0, 0, 0, 0);
   if (os_IsAbsolutePath(tmp_path)) {
     snprintf(file_path, sizeof(file_path), "%s", tmp_path);
@@ -4932,13 +4932,13 @@ super_serve_op_TESTS_SOURCE_HEADER_EDIT_ACTION(
   text = normalize_textarea(s);
 
   if (create_problem_directory(log_f, file_path_tmp, cnts) < 0)
-    FAIL(S_ERR_FS_ERROR);
+    FAIL(SSERV_ERR_FS_ERROR);
 
   write_file(file_path_tmp, text);
   if (!need_file_update(file_path, file_path_tmp)) goto done;
 
-  if (logged_rename(log_f, file_path, file_path_bak) < 0) FAIL(S_ERR_FS_ERROR);
-  if (logged_rename(log_f, file_path_tmp, file_path) < 0) FAIL(S_ERR_FS_ERROR);
+  if (logged_rename(log_f, file_path, file_path_bak) < 0) FAIL(SSERV_ERR_FS_ERROR);
+  if (logged_rename(log_f, file_path_tmp, file_path) < 0) FAIL(SSERV_ERR_FS_ERROR);
   super_html_set_cnts_file_perms(log_f, file_path, cnts);
   file_path_tmp[0] = 0;
   next_action = SSERV_CMD_TESTS_MAKE;
@@ -4972,12 +4972,12 @@ super_serve_op_TESTS_SOURCE_HEADER_DELETE_ACTION(
   unsigned char file_path[PATH_MAX];
 
   hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
-  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
-  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+  if (contest_id <= 0) FAIL(SSERV_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(SSERV_ERR_INV_CONTEST);
 
-  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
+  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(SSERV_ERR_PERM_DENIED);
   get_full_caps(phr, cnts, &caps);
-  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(S_ERR_PERM_DENIED);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(SSERV_ERR_PERM_DENIED);
 
   retval = check_other_editors(log_f, out_f, phr, contest_id, cnts);
   if (retval <= 0) goto cleanup;
@@ -4986,13 +4986,13 @@ super_serve_op_TESTS_SOURCE_HEADER_DELETE_ACTION(
   global = cs->global;
 
   hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
-  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
-  if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
+  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(SSERV_ERR_INV_PROB_ID);
+  if (!(prob = cs->probs[prob_id])) FAIL(SSERV_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
     hr_cgi_param_int_opt(phr, "variant", &variant, 0);
-    if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
+    if (variant <= 0 || variant > prob->variant_num) FAIL(SSERV_ERR_INV_VARIANT);
   }
 
   if (phr->action == SSERV_CMD_TESTS_SOURCE_HEADER_DELETE_ACTION) {
@@ -5002,10 +5002,10 @@ super_serve_op_TESTS_SOURCE_HEADER_DELETE_ACTION(
   } else if (phr->action == SSERV_CMD_TESTS_SOLUTION_DELETE_ACTION) {
     file_name = prob->solution_src;
   } else {
-    FAIL(S_ERR_INV_OPER);
+    FAIL(SSERV_ERR_INV_OPER);
   }
 
-  if (!file_name || !file_name) FAIL(S_ERR_INV_PROB_ID);
+  if (!file_name || !file_name) FAIL(SSERV_ERR_INV_PROB_ID);
   sformat_message(tmp_path, sizeof(tmp_path), 0, file_name, global, prob, NULL, 0, 0, 0, 0, 0);
   if (os_IsAbsolutePath(tmp_path)) {
     snprintf(file_path, sizeof(file_path), "%s", tmp_path);
@@ -5015,7 +5015,7 @@ super_serve_op_TESTS_SOURCE_HEADER_DELETE_ACTION(
     snprintf(file_path, sizeof(file_path), "%s/%s", global->statement_dir, tmp_path);
   }
 
-  if (logged_unlink(log_f, file_path) < 0) FAIL(S_ERR_FS_ERROR);
+  if (logged_unlink(log_f, file_path) < 0) FAIL(SSERV_ERR_FS_ERROR);
 
   ss_redirect_2(out_f, phr, SSERV_CMD_TESTS_MAIN_PAGE, contest_id, prob_id, variant, 0, NULL);
 
@@ -5049,12 +5049,12 @@ super_serve_op_TESTS_CHECKER_CREATE_PAGE(
   const unsigned char *cl = "";
 
   hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
-  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
-  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+  if (contest_id <= 0) FAIL(SSERV_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(SSERV_ERR_INV_CONTEST);
 
-  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
+  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(SSERV_ERR_PERM_DENIED);
   get_full_caps(phr, cnts, &caps);
-  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(S_ERR_PERM_DENIED);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(SSERV_ERR_PERM_DENIED);
 
   retval = check_other_editors(log_f, out_f, phr, contest_id, cnts);
   if (retval <= 0) goto cleanup;
@@ -5063,58 +5063,58 @@ super_serve_op_TESTS_CHECKER_CREATE_PAGE(
   global = cs->global;
 
   hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
-  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
-  if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
+  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(SSERV_ERR_INV_PROB_ID);
+  if (!(prob = cs->probs[prob_id])) FAIL(SSERV_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
     hr_cgi_param_int_opt(phr, "variant", &variant, 0);
-    if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
+    if (variant <= 0 || variant > prob->variant_num) FAIL(SSERV_ERR_INV_VARIANT);
   }
 
   switch (phr->action) {
   case SSERV_CMD_TESTS_STYLE_CHECKER_CREATE_PAGE:
-    if (!prob->style_checker_cmd || !prob->style_checker_cmd[0]) FAIL(S_ERR_INV_OPER);
+    if (!prob->style_checker_cmd || !prob->style_checker_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
     title = "Style checker";
     file_name = prob->style_checker_cmd;
     action = SSERV_CMD_TESTS_STYLE_CHECKER_CREATE_ACTION;
     break;
   case SSERV_CMD_TESTS_CHECKER_CREATE_PAGE:
-    if (prob->standard_checker && prob->standard_checker[0]) FAIL(S_ERR_INV_OPER);
-    if (!prob->check_cmd || !prob->check_cmd[0]) FAIL(S_ERR_INV_OPER);
+    if (prob->standard_checker && prob->standard_checker[0]) FAIL(SSERV_ERR_INV_OPER);
+    if (!prob->check_cmd || !prob->check_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
     title = "Checker";
     file_name = prob->check_cmd;
     action = SSERV_CMD_TESTS_CHECKER_CREATE_ACTION;
     break;
   case SSERV_CMD_TESTS_VALUER_CREATE_PAGE:
-    if (!prob->valuer_cmd || !prob->valuer_cmd[0]) FAIL(S_ERR_INV_OPER);
+    if (!prob->valuer_cmd || !prob->valuer_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
     title = "Valuer";
     file_name = prob->valuer_cmd;
     action = SSERV_CMD_TESTS_VALUER_CREATE_ACTION;
     break;
   case SSERV_CMD_TESTS_INTERACTOR_CREATE_PAGE:
-    if (!prob->interactor_cmd || !prob->interactor_cmd[0]) FAIL(S_ERR_INV_OPER);
+    if (!prob->interactor_cmd || !prob->interactor_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
     title = "Interactor";
     file_name = prob->interactor_cmd;
     action = SSERV_CMD_TESTS_INTERACTOR_CREATE_ACTION;
     break;
   case SSERV_CMD_TESTS_TEST_CHECKER_CREATE_PAGE:
-    if (!prob->test_checker_cmd || !prob->test_checker_cmd[0]) FAIL(S_ERR_INV_OPER);
+    if (!prob->test_checker_cmd || !prob->test_checker_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
     title = "Test checker";
     file_name = prob->test_checker_cmd;
     action = SSERV_CMD_TESTS_TEST_CHECKER_CREATE_ACTION;
     break;
   case SSERV_CMD_TESTS_INIT_CREATE_PAGE:
-    if (!prob->init_cmd || !prob->init_cmd[0]) FAIL(S_ERR_INV_OPER);
+    if (!prob->init_cmd || !prob->init_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
     title = "Init-style interactor";
     file_name = prob->init_cmd;
     action = SSERV_CMD_TESTS_INIT_CREATE_ACTION;
     break;
   default:
-    FAIL(S_ERR_INV_OPER);
+    FAIL(SSERV_ERR_INV_OPER);
   }
 
-  if (!file_name || !file_name) FAIL(S_ERR_INV_PROB_ID);
+  if (!file_name || !file_name) FAIL(SSERV_ERR_INV_PROB_ID);
   sformat_message(tmp_path, sizeof(tmp_path), 0, file_name, global, prob, NULL, 0, 0, 0, 0, 0);
   if (os_IsAbsolutePath(tmp_path)) {
     snprintf(file_path, sizeof(file_path), "%s", tmp_path);
@@ -5327,13 +5327,13 @@ create_program(
   case LANG_OTHER:
   default:
     fprintf(log_f, "Unsupported language %d\n", lang);
-    FAIL(S_ERR_INV_VALUE);
+    FAIL(SSERV_ERR_INV_VALUE);
   }
   fclose(out_f); out_f = NULL;
 
   if (!out_z) {
     fprintf(log_f, "Generated source file is empty\n");
-    FAIL(S_ERR_INV_VALUE);
+    FAIL(SSERV_ERR_INV_VALUE);
   }
 
   snprintf(src_path, sizeof(src_path), "%s%s", cmd, suffix);
@@ -5343,8 +5343,8 @@ create_program(
   write_file(src_path_tmp, out_t);
   if (!need_file_update(src_path, src_path_tmp)) goto cleanup;
 
-  if (logged_rename(log_f, src_path, src_path_bak) < 0) FAIL(S_ERR_FS_ERROR);
-  if (logged_rename(log_f, src_path_tmp, src_path) < 0) FAIL(S_ERR_FS_ERROR);
+  if (logged_rename(log_f, src_path, src_path_bak) < 0) FAIL(SSERV_ERR_FS_ERROR);
+  if (logged_rename(log_f, src_path_tmp, src_path) < 0) FAIL(SSERV_ERR_FS_ERROR);
   super_html_set_cnts_file_perms(log_f, src_path, cnts);
   src_path_tmp[0] = 0;
 
@@ -5383,12 +5383,12 @@ super_serve_op_TESTS_CHECKER_CREATE_ACTION(
   unsigned char file_path[PATH_MAX];
 
   hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
-  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
-  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+  if (contest_id <= 0) FAIL(SSERV_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(SSERV_ERR_INV_CONTEST);
 
-  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
+  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(SSERV_ERR_PERM_DENIED);
   get_full_caps(phr, cnts, &caps);
-  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(S_ERR_PERM_DENIED);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(SSERV_ERR_PERM_DENIED);
 
   retval = check_other_editors(log_f, out_f, phr, contest_id, cnts);
   if (retval <= 0) goto cleanup;
@@ -5397,22 +5397,22 @@ super_serve_op_TESTS_CHECKER_CREATE_ACTION(
   global = cs->global;
 
   hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
-  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
-  if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
+  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(SSERV_ERR_INV_PROB_ID);
+  if (!(prob = cs->probs[prob_id])) FAIL(SSERV_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
     hr_cgi_param_int_opt(phr, "variant", &variant, 0);
-    if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
+    if (variant <= 0 || variant > prob->variant_num) FAIL(SSERV_ERR_INV_VARIANT);
   }
 
   hr_cgi_param_int_opt(phr, "language", &language, 0);
-  if (language <= 0) FAIL(S_ERR_INV_LANG_ID);
+  if (language <= 0) FAIL(SSERV_ERR_INV_LANG_ID);
   for (i = 0; source_suffixes[i].mask; ++i) {
     if (language == source_suffixes[i].mask)
       break;
   }
-  if (!source_suffixes[i].mask) FAIL(S_ERR_INV_LANG_ID);
+  if (!source_suffixes[i].mask) FAIL(SSERV_ERR_INV_LANG_ID);
 
   hr_cgi_param_int_opt(phr, "use_testlib", &use_testlib, 0);
   if (use_testlib != 1) use_testlib = 0;
@@ -5425,41 +5425,41 @@ super_serve_op_TESTS_CHECKER_CREATE_ACTION(
 
   switch (phr->action) {
   case SSERV_CMD_TESTS_STYLE_CHECKER_CREATE_ACTION:
-    if (!prob->style_checker_cmd || !prob->style_checker_cmd[0]) FAIL(S_ERR_INV_OPER);
+    if (!prob->style_checker_cmd || !prob->style_checker_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
     file_name = prob->style_checker_cmd;
     action = SSERV_CMD_TESTS_STYLE_CHECKER_EDIT_PAGE;
     break;
   case SSERV_CMD_TESTS_CHECKER_CREATE_ACTION:
-    if (prob->standard_checker && prob->standard_checker[0]) FAIL(S_ERR_INV_OPER);
-    if (!prob->check_cmd || !prob->check_cmd[0]) FAIL(S_ERR_INV_OPER);
+    if (prob->standard_checker && prob->standard_checker[0]) FAIL(SSERV_ERR_INV_OPER);
+    if (!prob->check_cmd || !prob->check_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
     file_name = prob->check_cmd;
     action = SSERV_CMD_TESTS_CHECKER_EDIT_PAGE;
     break;
   case SSERV_CMD_TESTS_VALUER_CREATE_ACTION:
-    if (!prob->valuer_cmd || !prob->valuer_cmd[0]) FAIL(S_ERR_INV_OPER);
+    if (!prob->valuer_cmd || !prob->valuer_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
     file_name = prob->valuer_cmd;
     action = SSERV_CMD_TESTS_VALUER_EDIT_PAGE;
     break;
   case SSERV_CMD_TESTS_INTERACTOR_CREATE_ACTION:
-    if (!prob->interactor_cmd || !prob->interactor_cmd[0]) FAIL(S_ERR_INV_OPER);
+    if (!prob->interactor_cmd || !prob->interactor_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
     file_name = prob->interactor_cmd;
     action = SSERV_CMD_TESTS_INTERACTOR_EDIT_PAGE;
     break;
   case SSERV_CMD_TESTS_TEST_CHECKER_CREATE_ACTION:
-    if (!prob->test_checker_cmd || !prob->test_checker_cmd[0]) FAIL(S_ERR_INV_OPER);
+    if (!prob->test_checker_cmd || !prob->test_checker_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
     file_name = prob->test_checker_cmd;
     action = SSERV_CMD_TESTS_TEST_CHECKER_EDIT_PAGE;
     break;
   case SSERV_CMD_TESTS_INIT_CREATE_ACTION:
-    if (!prob->init_cmd || !prob->init_cmd[0]) FAIL(S_ERR_INV_OPER);
+    if (!prob->init_cmd || !prob->init_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
     file_name = prob->init_cmd;
     action = SSERV_CMD_TESTS_INIT_EDIT_PAGE;
     break;
   default:
-    FAIL(S_ERR_INV_OPER);
+    FAIL(SSERV_ERR_INV_OPER);
   }
 
-  if (!file_name || !file_name) FAIL(S_ERR_INV_PROB_ID);
+  if (!file_name || !file_name) FAIL(SSERV_ERR_INV_PROB_ID);
   sformat_message(tmp_path, sizeof(tmp_path), 0, file_name, global, prob, NULL, 0, 0, 0, 0, 0);
   if (os_IsAbsolutePath(tmp_path)) {
     snprintf(file_path, sizeof(file_path), "%s", tmp_path);
@@ -5470,7 +5470,7 @@ super_serve_op_TESTS_CHECKER_CREATE_ACTION(
   }
 
   if (create_problem_directory(log_f, file_path, cnts) < 0)
-    FAIL(S_ERR_FS_ERROR);
+    FAIL(SSERV_ERR_FS_ERROR);
 
   retval = create_program(log_f, phr->config, cnts, file_path, language,
                           use_testlib, use_libchecker,
@@ -5536,12 +5536,12 @@ super_serve_op_TESTS_CHECKER_EDIT_PAGE(
   const unsigned char *src_code_title = "";
 
   hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
-  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
-  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+  if (contest_id <= 0) FAIL(SSERV_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(SSERV_ERR_INV_CONTEST);
 
-  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
+  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(SSERV_ERR_PERM_DENIED);
   get_full_caps(phr, cnts, &caps);
-  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(S_ERR_PERM_DENIED);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(SSERV_ERR_PERM_DENIED);
 
   retval = check_other_editors(log_f, out_f, phr, contest_id, cnts);
   if (retval <= 0) goto cleanup;
@@ -5550,18 +5550,18 @@ super_serve_op_TESTS_CHECKER_EDIT_PAGE(
   global = cs->global;
 
   hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
-  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
-  if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
+  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(SSERV_ERR_INV_PROB_ID);
+  if (!(prob = cs->probs[prob_id])) FAIL(SSERV_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
     hr_cgi_param_int_opt(phr, "variant", &variant, 0);
-    if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
+    if (variant <= 0 || variant > prob->variant_num) FAIL(SSERV_ERR_INV_VARIANT);
   }
 
   switch (phr->action) {
   case SSERV_CMD_TESTS_STYLE_CHECKER_EDIT_PAGE:
-    if (!prob->style_checker_cmd || !prob->style_checker_cmd[0]) FAIL(S_ERR_INV_OPER);
+    if (!prob->style_checker_cmd || !prob->style_checker_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
     title = "Style checker";
     file_name = prob->style_checker_cmd;
     create_page = SSERV_CMD_TESTS_STYLE_CHECKER_CREATE_PAGE;
@@ -5569,8 +5569,8 @@ super_serve_op_TESTS_CHECKER_EDIT_PAGE(
     delete_page = SSERV_CMD_TESTS_STYLE_CHECKER_DELETE_PAGE;
     break;
   case SSERV_CMD_TESTS_CHECKER_EDIT_PAGE:
-    if (prob->standard_checker && prob->standard_checker[0]) FAIL(S_ERR_INV_OPER);
-    if (!prob->check_cmd || !prob->check_cmd[0]) FAIL(S_ERR_INV_OPER);
+    if (prob->standard_checker && prob->standard_checker[0]) FAIL(SSERV_ERR_INV_OPER);
+    if (!prob->check_cmd || !prob->check_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
     title = "Checker";
     file_name = prob->check_cmd;
     create_page = SSERV_CMD_TESTS_CHECKER_CREATE_PAGE;
@@ -5578,7 +5578,7 @@ super_serve_op_TESTS_CHECKER_EDIT_PAGE(
     delete_page = SSERV_CMD_TESTS_CHECKER_DELETE_PAGE;
     break;
   case SSERV_CMD_TESTS_VALUER_EDIT_PAGE:
-    if (!prob->valuer_cmd || !prob->valuer_cmd[0]) FAIL(S_ERR_INV_OPER);
+    if (!prob->valuer_cmd || !prob->valuer_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
     title = "Valuer";
     file_name = prob->valuer_cmd;
     create_page = SSERV_CMD_TESTS_VALUER_CREATE_PAGE;
@@ -5586,7 +5586,7 @@ super_serve_op_TESTS_CHECKER_EDIT_PAGE(
     delete_page = SSERV_CMD_TESTS_VALUER_DELETE_PAGE;
     break;
   case SSERV_CMD_TESTS_INTERACTOR_EDIT_PAGE:
-    if (!prob->interactor_cmd || !prob->interactor_cmd[0]) FAIL(S_ERR_INV_OPER);
+    if (!prob->interactor_cmd || !prob->interactor_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
     title = "Interactor";
     file_name = prob->interactor_cmd;
     create_page = SSERV_CMD_TESTS_INTERACTOR_CREATE_PAGE;
@@ -5594,7 +5594,7 @@ super_serve_op_TESTS_CHECKER_EDIT_PAGE(
     delete_page = SSERV_CMD_TESTS_INTERACTOR_DELETE_PAGE;
     break;
   case SSERV_CMD_TESTS_TEST_CHECKER_EDIT_PAGE:
-    if (!prob->test_checker_cmd || !prob->test_checker_cmd[0]) FAIL(S_ERR_INV_OPER);
+    if (!prob->test_checker_cmd || !prob->test_checker_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
     title = "Test checker";
     file_name = prob->test_checker_cmd;
     create_page = SSERV_CMD_TESTS_TEST_CHECKER_CREATE_PAGE;
@@ -5602,7 +5602,7 @@ super_serve_op_TESTS_CHECKER_EDIT_PAGE(
     delete_page = SSERV_CMD_TESTS_TEST_CHECKER_DELETE_PAGE;
     break;
   case SSERV_CMD_TESTS_INIT_EDIT_PAGE:
-    if (!prob->init_cmd || !prob->init_cmd[0]) FAIL(S_ERR_INV_OPER);
+    if (!prob->init_cmd || !prob->init_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
     title = "Init-style interactor";
     file_name = prob->init_cmd;
     create_page = SSERV_CMD_TESTS_INIT_CREATE_PAGE;
@@ -5610,10 +5610,10 @@ super_serve_op_TESTS_CHECKER_EDIT_PAGE(
     delete_page = SSERV_CMD_TESTS_INIT_DELETE_PAGE;
     break;
   default:
-    FAIL(S_ERR_INV_OPER);
+    FAIL(SSERV_ERR_INV_OPER);
   }
 
-  if (!file_name || !file_name) FAIL(S_ERR_INV_PROB_ID);
+  if (!file_name || !file_name) FAIL(SSERV_ERR_INV_PROB_ID);
   sformat_message(tmp_path, sizeof(tmp_path), 0, file_name, global, prob, NULL, 0, 0, 0, 0, 0);
   if (os_IsAbsolutePath(tmp_path)) {
     snprintf(file_path, sizeof(file_path), "%s", tmp_path);
@@ -5745,12 +5745,12 @@ super_serve_op_TESTS_CHECKER_EDIT_ACTION(
   file_path_tmp[0] = 0;
 
   hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
-  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
-  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+  if (contest_id <= 0) FAIL(SSERV_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(SSERV_ERR_INV_CONTEST);
 
-  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
+  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(SSERV_ERR_PERM_DENIED);
   get_full_caps(phr, cnts, &caps);
-  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(S_ERR_PERM_DENIED);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(SSERV_ERR_PERM_DENIED);
 
   retval = check_other_editors(log_f, out_f, phr, contest_id, cnts);
   if (retval <= 0) goto cleanup;
@@ -5759,46 +5759,46 @@ super_serve_op_TESTS_CHECKER_EDIT_ACTION(
   global = cs->global;
 
   hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
-  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
-  if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
+  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(SSERV_ERR_INV_PROB_ID);
+  if (!(prob = cs->probs[prob_id])) FAIL(SSERV_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
     hr_cgi_param_int_opt(phr, "variant", &variant, 0);
-    if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
+    if (variant <= 0 || variant > prob->variant_num) FAIL(SSERV_ERR_INV_VARIANT);
   }
 
   switch (phr->action) {
   case SSERV_CMD_TESTS_STYLE_CHECKER_EDIT_ACTION:
-    if (!prob->style_checker_cmd || !prob->style_checker_cmd[0]) FAIL(S_ERR_INV_OPER);
+    if (!prob->style_checker_cmd || !prob->style_checker_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
     file_name = prob->style_checker_cmd;
     break;
   case SSERV_CMD_TESTS_CHECKER_EDIT_ACTION:
-    if (prob->standard_checker && prob->standard_checker[0]) FAIL(S_ERR_INV_OPER);
-    if (!prob->check_cmd || !prob->check_cmd[0]) FAIL(S_ERR_INV_OPER);
+    if (prob->standard_checker && prob->standard_checker[0]) FAIL(SSERV_ERR_INV_OPER);
+    if (!prob->check_cmd || !prob->check_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
     file_name = prob->check_cmd;
     break;
   case SSERV_CMD_TESTS_VALUER_EDIT_ACTION:
-    if (!prob->valuer_cmd || !prob->valuer_cmd[0]) FAIL(S_ERR_INV_OPER);
+    if (!prob->valuer_cmd || !prob->valuer_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
     file_name = prob->valuer_cmd;
     break;
   case SSERV_CMD_TESTS_INTERACTOR_EDIT_ACTION:
-    if (!prob->interactor_cmd || !prob->interactor_cmd[0]) FAIL(S_ERR_INV_OPER);
+    if (!prob->interactor_cmd || !prob->interactor_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
     file_name = prob->interactor_cmd;
     break;
   case SSERV_CMD_TESTS_TEST_CHECKER_EDIT_ACTION:
-    if (!prob->test_checker_cmd || !prob->test_checker_cmd[0]) FAIL(S_ERR_INV_OPER);
+    if (!prob->test_checker_cmd || !prob->test_checker_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
     file_name = prob->test_checker_cmd;
     break;
   case SSERV_CMD_TESTS_INIT_EDIT_ACTION:
-    if (!prob->init_cmd || !prob->init_cmd[0]) FAIL(S_ERR_INV_OPER);
+    if (!prob->init_cmd || !prob->init_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
     file_name = prob->init_cmd;
     break;
   default:
-    FAIL(S_ERR_INV_OPER);
+    FAIL(SSERV_ERR_INV_OPER);
   }
 
-  if (!file_name || !file_name) FAIL(S_ERR_INV_PROB_ID);
+  if (!file_name || !file_name) FAIL(SSERV_ERR_INV_PROB_ID);
   sformat_message(tmp_path, sizeof(tmp_path), 0, file_name, global, prob, NULL, 0, 0, 0, 0, 0);
   if (os_IsAbsolutePath(tmp_path)) {
     snprintf(tmp2_path, sizeof(tmp2_path), "%s", tmp_path);
@@ -5813,7 +5813,7 @@ super_serve_op_TESTS_CHECKER_EDIT_ACTION(
   if (!no_source) {
     hr_cgi_param_int_opt(phr, "lang_mask", &lang_mask, 0);
     src_suffix = build_get_source_suffix(lang_mask);
-    if (!src_suffix) FAIL(S_ERR_INV_LANG_ID);
+    if (!src_suffix) FAIL(SSERV_ERR_INV_LANG_ID);
     snprintf(file_path, sizeof(file_path), "%s%s", tmp2_path, src_suffix);
   } else {
     snprintf(file_path, sizeof(file_path), "%s", tmp2_path);
@@ -5823,7 +5823,7 @@ super_serve_op_TESTS_CHECKER_EDIT_ACTION(
   snprintf(file_path_bak, sizeof(file_path_bak), "%s.bak", file_path);
 
   if (create_problem_directory(log_f, file_path_tmp, cnts) < 0)
-    FAIL(S_ERR_FS_ERROR);
+    FAIL(SSERV_ERR_FS_ERROR);
 
   hr_cgi_param(phr, "text", &s);
   text = normalize_textarea(s);
@@ -5831,8 +5831,8 @@ super_serve_op_TESTS_CHECKER_EDIT_ACTION(
   write_file(file_path_tmp, text);
   if (!need_file_update(file_path, file_path_tmp)) goto done;
 
-  if (logged_rename(log_f, file_path, file_path_bak) < 0) FAIL(S_ERR_FS_ERROR);
-  if (logged_rename(log_f, file_path_tmp, file_path) < 0) FAIL(S_ERR_FS_ERROR);
+  if (logged_rename(log_f, file_path, file_path_bak) < 0) FAIL(SSERV_ERR_FS_ERROR);
+  if (logged_rename(log_f, file_path_tmp, file_path) < 0) FAIL(SSERV_ERR_FS_ERROR);
   super_html_set_cnts_file_perms(log_f, file_path, cnts);
   file_path_tmp[0] = 0;
   next_action = SSERV_CMD_TESTS_MAKE;
@@ -5926,12 +5926,12 @@ super_serve_op_TESTS_CHECKER_DELETE_PAGE(
   const unsigned char *title = NULL;
 
   hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
-  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
-  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+  if (contest_id <= 0) FAIL(SSERV_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(SSERV_ERR_INV_CONTEST);
 
-  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
+  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(SSERV_ERR_PERM_DENIED);
   get_full_caps(phr, cnts, &caps);
-  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(S_ERR_PERM_DENIED);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(SSERV_ERR_PERM_DENIED);
 
   retval = check_other_editors(log_f, out_f, phr, contest_id, cnts);
   if (retval <= 0) goto cleanup;
@@ -5940,58 +5940,58 @@ super_serve_op_TESTS_CHECKER_DELETE_PAGE(
   global = cs->global;
 
   hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
-  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
-  if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
+  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(SSERV_ERR_INV_PROB_ID);
+  if (!(prob = cs->probs[prob_id])) FAIL(SSERV_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
     hr_cgi_param_int_opt(phr, "variant", &variant, 0);
-    if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
+    if (variant <= 0 || variant > prob->variant_num) FAIL(SSERV_ERR_INV_VARIANT);
   }
 
   switch (phr->action) {
   case SSERV_CMD_TESTS_STYLE_CHECKER_DELETE_PAGE:
-    if (!prob->style_checker_cmd || !prob->style_checker_cmd[0]) FAIL(S_ERR_INV_OPER);
+    if (!prob->style_checker_cmd || !prob->style_checker_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
     file_name = prob->style_checker_cmd;
     action = SSERV_CMD_TESTS_STYLE_CHECKER_DELETE_ACTION;
     title = "Style checker";
     break;
   case SSERV_CMD_TESTS_CHECKER_DELETE_PAGE:
-    if (prob->standard_checker && prob->standard_checker[0]) FAIL(S_ERR_INV_OPER);
-    if (!prob->check_cmd || !prob->check_cmd[0]) FAIL(S_ERR_INV_OPER);
+    if (prob->standard_checker && prob->standard_checker[0]) FAIL(SSERV_ERR_INV_OPER);
+    if (!prob->check_cmd || !prob->check_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
     file_name = prob->check_cmd;
     action = SSERV_CMD_TESTS_CHECKER_DELETE_ACTION;
     title = "Checker";
     break;
   case SSERV_CMD_TESTS_VALUER_DELETE_PAGE:
-    if (!prob->valuer_cmd || !prob->valuer_cmd[0]) FAIL(S_ERR_INV_OPER);
+    if (!prob->valuer_cmd || !prob->valuer_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
     file_name = prob->valuer_cmd;
     action = SSERV_CMD_TESTS_VALUER_DELETE_ACTION;
     title = "Valuer";
     break;
   case SSERV_CMD_TESTS_INTERACTOR_DELETE_PAGE:
-    if (!prob->interactor_cmd || !prob->interactor_cmd[0]) FAIL(S_ERR_INV_OPER);
+    if (!prob->interactor_cmd || !prob->interactor_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
     file_name = prob->interactor_cmd;
     action = SSERV_CMD_TESTS_INTERACTOR_DELETE_ACTION;
     title = "Interactor";
     break;
   case SSERV_CMD_TESTS_TEST_CHECKER_DELETE_PAGE:
-    if (!prob->test_checker_cmd || !prob->test_checker_cmd[0]) FAIL(S_ERR_INV_OPER);
+    if (!prob->test_checker_cmd || !prob->test_checker_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
     file_name = prob->test_checker_cmd;
     action = SSERV_CMD_TESTS_TEST_CHECKER_DELETE_ACTION;
     title = "Test checker";
     break;
   case SSERV_CMD_TESTS_INIT_DELETE_PAGE:
-    if (!prob->init_cmd || !prob->init_cmd[0]) FAIL(S_ERR_INV_OPER);
+    if (!prob->init_cmd || !prob->init_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
     file_name = prob->init_cmd;
     action = SSERV_CMD_TESTS_INIT_DELETE_ACTION;
     title = "Init-style interactor";
     break;
   default:
-    FAIL(S_ERR_INV_OPER);
+    FAIL(SSERV_ERR_INV_OPER);
   }
 
-  if (!file_name || !file_name) FAIL(S_ERR_INV_PROB_ID);
+  if (!file_name || !file_name) FAIL(SSERV_ERR_INV_PROB_ID);
   sformat_message(tmp_path, sizeof(tmp_path), 0, file_name, global, prob, NULL, 0, 0, 0, 0, 0);
   if (os_IsAbsolutePath(tmp_path)) {
     snprintf(tmp2_path, sizeof(tmp2_path), "%s", tmp_path);
@@ -6004,16 +6004,16 @@ super_serve_op_TESTS_CHECKER_DELETE_PAGE(
   strip_known_exe_suffixes(tmp2_path);
   dirname = os_DirName(tmp2_path);
   if (!dirname || !*dirname) {
-    FAIL(S_ERR_FS_ERROR);
+    FAIL(SSERV_ERR_FS_ERROR);
   }
   lastname = os_GetLastname(tmp2_path);
   lastname_len = strlen(lastname);
   if (!lastname || !*lastname) {
-    FAIL(S_ERR_FS_ERROR);
+    FAIL(SSERV_ERR_FS_ERROR);
   }
 
   d = opendir(dirname);
-  if (!d) FAIL(S_ERR_FS_ERROR);
+  if (!d) FAIL(SSERV_ERR_FS_ERROR);
   lst_f = open_memstream(&lst_t, &lst_z);
   while ((dd = readdir(d))) {
     if (!strcmp(dd->d_name, ".") || !strcmp(dd->d_name, "..")) continue;
@@ -6096,12 +6096,12 @@ super_serve_op_TESTS_CHECKER_DELETE_ACTION(
   int i;
 
   hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
-  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
-  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+  if (contest_id <= 0) FAIL(SSERV_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(SSERV_ERR_INV_CONTEST);
 
-  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
+  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(SSERV_ERR_PERM_DENIED);
   get_full_caps(phr, cnts, &caps);
-  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(S_ERR_PERM_DENIED);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(SSERV_ERR_PERM_DENIED);
 
   retval = check_other_editors(log_f, out_f, phr, contest_id, cnts);
   if (retval <= 0) goto cleanup;
@@ -6110,46 +6110,46 @@ super_serve_op_TESTS_CHECKER_DELETE_ACTION(
   global = cs->global;
 
   hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
-  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
-  if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
+  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(SSERV_ERR_INV_PROB_ID);
+  if (!(prob = cs->probs[prob_id])) FAIL(SSERV_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
     hr_cgi_param_int_opt(phr, "variant", &variant, 0);
-    if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
+    if (variant <= 0 || variant > prob->variant_num) FAIL(SSERV_ERR_INV_VARIANT);
   }
 
   switch (phr->action) {
   case SSERV_CMD_TESTS_STYLE_CHECKER_DELETE_ACTION:
-    if (!prob->style_checker_cmd || !prob->style_checker_cmd[0]) FAIL(S_ERR_INV_OPER);
+    if (!prob->style_checker_cmd || !prob->style_checker_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
     file_name = prob->style_checker_cmd;
     break;
   case SSERV_CMD_TESTS_CHECKER_DELETE_ACTION:
-    if (prob->standard_checker && prob->standard_checker[0]) FAIL(S_ERR_INV_OPER);
-    if (!prob->check_cmd || !prob->check_cmd[0]) FAIL(S_ERR_INV_OPER);
+    if (prob->standard_checker && prob->standard_checker[0]) FAIL(SSERV_ERR_INV_OPER);
+    if (!prob->check_cmd || !prob->check_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
     file_name = prob->check_cmd;
     break;
   case SSERV_CMD_TESTS_VALUER_DELETE_ACTION:
-    if (!prob->valuer_cmd || !prob->valuer_cmd[0]) FAIL(S_ERR_INV_OPER);
+    if (!prob->valuer_cmd || !prob->valuer_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
     file_name = prob->valuer_cmd;
     break;
   case SSERV_CMD_TESTS_INTERACTOR_DELETE_ACTION:
-    if (!prob->interactor_cmd || !prob->interactor_cmd[0]) FAIL(S_ERR_INV_OPER);
+    if (!prob->interactor_cmd || !prob->interactor_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
     file_name = prob->interactor_cmd;
     break;
   case SSERV_CMD_TESTS_TEST_CHECKER_DELETE_ACTION:
-    if (!prob->test_checker_cmd || !prob->test_checker_cmd[0]) FAIL(S_ERR_INV_OPER);
+    if (!prob->test_checker_cmd || !prob->test_checker_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
     file_name = prob->test_checker_cmd;
     break;
   case SSERV_CMD_TESTS_INIT_DELETE_ACTION:
-    if (!prob->init_cmd || !prob->init_cmd[0]) FAIL(S_ERR_INV_OPER);
+    if (!prob->init_cmd || !prob->init_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
     file_name = prob->init_cmd;
     break;
   default:
-    FAIL(S_ERR_INV_OPER);
+    FAIL(SSERV_ERR_INV_OPER);
   }
 
-  if (!file_name || !file_name) FAIL(S_ERR_INV_PROB_ID);
+  if (!file_name || !file_name) FAIL(SSERV_ERR_INV_PROB_ID);
   sformat_message(tmp_path, sizeof(tmp_path), 0, file_name, global, prob, NULL, 0, 0, 0, 0, 0);
   if (os_IsAbsolutePath(tmp_path)) {
     snprintf(tmp2_path, sizeof(tmp2_path), "%s", tmp_path);
@@ -6162,16 +6162,16 @@ super_serve_op_TESTS_CHECKER_DELETE_ACTION(
   strip_known_exe_suffixes(tmp2_path);
   dirname = os_DirName(tmp2_path);
   if (!dirname || !*dirname) {
-    FAIL(S_ERR_FS_ERROR);
+    FAIL(SSERV_ERR_FS_ERROR);
   }
   lastname = os_GetLastname(tmp2_path);
   lastname_len = strlen(lastname);
   if (!lastname || !*lastname) {
-    FAIL(S_ERR_FS_ERROR);
+    FAIL(SSERV_ERR_FS_ERROR);
   }
 
   d = opendir(dirname);
-  if (!d) FAIL(S_ERR_FS_ERROR);
+  if (!d) FAIL(SSERV_ERR_FS_ERROR);
   while ((dd = readdir(d))) {
     if (!strcmp(dd->d_name, ".") || !strcmp(dd->d_name, "..")) continue;
     len = strlen(dd->d_name);
@@ -6256,12 +6256,12 @@ super_serve_op_TESTS_MAKE(
   const unsigned char *target = "all";
 
   hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
-  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
-  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+  if (contest_id <= 0) FAIL(SSERV_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(SSERV_ERR_INV_CONTEST);
 
-  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
+  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(SSERV_ERR_PERM_DENIED);
   get_full_caps(phr, cnts, &caps);
-  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(S_ERR_PERM_DENIED);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(SSERV_ERR_PERM_DENIED);
 
   retval = check_other_editors(log_f, out_f, phr, contest_id, cnts);
   if (retval <= 0) goto cleanup;
@@ -6270,16 +6270,16 @@ super_serve_op_TESTS_MAKE(
   global = cs->global;
 
   hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
-  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
-  if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
+  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(SSERV_ERR_INV_PROB_ID);
+  if (!(prob = cs->probs[prob_id])) FAIL(SSERV_ERR_INV_PROB_ID);
 
   variant = -1;
   if (prob->variant_num > 0) {
     hr_cgi_param_int_opt(phr, "variant", &variant, 0);
-    if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
+    if (variant <= 0 || variant > prob->variant_num) FAIL(SSERV_ERR_INV_VARIANT);
   }
 
-  if (global->advanced_layout <= 0) FAIL(S_ERR_INV_CONTEST);
+  if (global->advanced_layout <= 0) FAIL(SSERV_ERR_INV_CONTEST);
   get_advanced_layout_path(prob_dir, sizeof(prob_dir), global, prob, NULL, variant);
   snprintf(makefile_path, sizeof(makefile_path), "%s/%s", prob_dir, "Makefile");
 
@@ -6455,16 +6455,16 @@ super_serve_op_TESTS_TEST_CHECK_ACTION(
   } else if (phr->action == SSERV_CMD_TESTS_TEST_GENERATE_ACTION) {
     target = "answer";
   } else {
-    FAIL(S_ERR_NOT_IMPLEMENTED);
+    FAIL(SSERV_ERR_NOT_IMPLEMENTED);
   }
 
   hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
-  if (contest_id <= 0) FAIL(S_ERR_INV_CONTEST);
-  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(S_ERR_INV_CONTEST);
+  if (contest_id <= 0) FAIL(SSERV_ERR_INV_CONTEST);
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(SSERV_ERR_INV_CONTEST);
 
-  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
+  if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(SSERV_ERR_PERM_DENIED);
   get_full_caps(phr, cnts, &caps);
-  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(S_ERR_PERM_DENIED);
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) FAIL(SSERV_ERR_PERM_DENIED);
 
   retval = check_other_editors(log_f, out_f, phr, contest_id, cnts);
   if (retval <= 0) goto cleanup;
@@ -6473,31 +6473,31 @@ super_serve_op_TESTS_TEST_CHECK_ACTION(
   global = cs->global;
 
   hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
-  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(S_ERR_INV_PROB_ID);
-  if (!(prob = cs->probs[prob_id])) FAIL(S_ERR_INV_PROB_ID);
+  if (prob_id <= 0 || prob_id > cs->max_prob) FAIL(SSERV_ERR_INV_PROB_ID);
+  if (!(prob = cs->probs[prob_id])) FAIL(SSERV_ERR_INV_PROB_ID);
 
   if (phr->action == SSERV_CMD_TESTS_TEST_CHECK_ACTION) {
     command = prob->test_checker_cmd;
   } else if (phr->action == SSERV_CMD_TESTS_TEST_GENERATE_ACTION) {
     command = prob->solution_cmd;
   } else {
-    FAIL(S_ERR_NOT_IMPLEMENTED);
+    FAIL(SSERV_ERR_NOT_IMPLEMENTED);
   }
 
   variant = -1;
   if (prob->variant_num > 0) {
     hr_cgi_param_int_opt(phr, "variant", &variant, 0);
-    if (variant <= 0 || variant > prob->variant_num) FAIL(S_ERR_INV_VARIANT);
+    if (variant <= 0 || variant > prob->variant_num) FAIL(SSERV_ERR_INV_VARIANT);
   }
 
   hr_cgi_param_int_opt(phr, "test_num", &test_num, 0);
-  if (test_num <= 0 || test_num >= 1000000) FAIL(S_ERR_INV_TEST_NUM);
+  if (test_num <= 0 || test_num >= 1000000) FAIL(SSERV_ERR_INV_TEST_NUM);
 
   hr_cgi_param_int_opt(phr, "next_action", &next_action, 0);
   // FIXME: check valid next_action
   if (next_action <= 0) next_action = SSERV_CMD_TESTS_TESTS_VIEW_PAGE;
 
-  if (!command || !command[0]) FAIL(S_ERR_INV_PROB_ID);
+  if (!command || !command[0]) FAIL(SSERV_ERR_INV_PROB_ID);
 
   get_advanced_layout_path(prob_dir, sizeof(prob_dir), global, prob, NULL, variant);
   get_advanced_layout_path(makefile_path, sizeof(makefile_path), global, prob, DFLT_P_MAKEFILE, variant);

@@ -10,14 +10,14 @@
     const unsigned char *subtitle = 0;
     opcap_t caps = 0;
 
-    if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(S_ERR_PERM_DENIED);
-    if (ejudge_cfg_opcaps_find(phr->config, phr->login, &caps) < 0) FAIL(S_ERR_PERM_DENIED);
+    if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(SSERV_ERR_PERM_DENIED);
+    if (ejudge_cfg_opcaps_find(phr->config, phr->login, &caps) < 0) FAIL(SSERV_ERR_PERM_DENIED);
     if (phr->priv_level == PRIV_LEVEL_JUDGE) {
-        if (opcaps_check(caps, OPCAP_JUDGE_LOGIN) < 0) FAIL(S_ERR_PERM_DENIED);
+        if (opcaps_check(caps, OPCAP_JUDGE_LOGIN) < 0) FAIL(SSERV_ERR_PERM_DENIED);
     } else if (phr->priv_level == PRIV_LEVEL_ADMIN) {
-        if (opcaps_check(caps, OPCAP_MASTER_LOGIN) < 0) FAIL(S_ERR_PERM_DENIED);
+        if (opcaps_check(caps, OPCAP_MASTER_LOGIN) < 0) FAIL(SSERV_ERR_PERM_DENIED);
     } else {
-        FAIL(S_ERR_PERM_DENIED);
+        FAIL(SSERV_ERR_PERM_DENIED);
     }
 %><%@include "header.csp"
 %>
