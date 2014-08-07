@@ -83,40 +83,35 @@
   }
 %>
 <td class="menu"><div class="user_action_item"><s:submit ac="main-page" label="Log in" /></div></td>
-</tr></table></div>
-</s:form>
-<div class="white_empty_block">&nbsp;</div>
-<div class="contest_actions"><table class="menu"><tr><%
+
+<td class="menu"><div class="contest_actions_item">
+<table class="menu">
+<%
   if (cnts && cnts->assign_logins && cnts->force_registration
       && cnts->register_url && contests_check_register_ip_2(cnts, &phr->ip, phr->ssl_flag) > 0
       && (cnts->reg_deadline <= 0 || cur_time < cnts->reg_deadline)) {
-%><td class="menu"><div class="contest_actions_item"><%
     if (phr->config->disable_new_users <= 0) {
       if (cnts->assign_logins) {
 %><s:url name="RegisterUrl" script="register" ac="reg-create-account-page">
     <s:param name="contest_id" value="phr->contest_id" />
     <s:param name="locale_id" value="phr->locale_id" />
-</s:url><s:a class="menu" url="RegisterUrl"><s:tr>Registration</s:tr></s:a><%
+</s:url><tr><td align="right" class="menu"><s:a class="menu" url="RegisterUrl"><s:tr>Registration</s:tr></s:a></td></tr><%
       } else {
 %><s:url name="RegisterUrl" script="register" ac="main-page">
     <s:param name="contest_id" value="phr->contest_id" />
     <s:param name="locale_id" value="phr->locale_id" />
-</s:url><s:a class="menu" url="RegisterUrl"><s:tr>Registration</s:tr></s:a><%
+</s:url><tr><td align="right" class="menu"><s:a class="menu" url="RegisterUrl"><s:tr>Registration</s:tr></s:a></td></tr><%
       }
     }
-%></div></td><%
     vis_flag++;
   } else if (cnts && cnts->register_url && contests_check_register_ip_2(cnts, &phr->ip, phr->ssl_flag) > 0
              && (cnts->reg_deadline <= 0 || cur_time < cnts->reg_deadline)) {
-%><td class="menu"><div class="contest_actions_item"><%
     if (phr->config->disable_new_users <= 0) {
 %><s:url name="RegisterUrl" script="register" ac="reg-login-page">
     <s:param name="contest_id" value="phr->contest_id" />
     <s:param name="locale_id" value="phr->locale_id" />
-</s:url><s:a class="menu" url="RegisterUrl"><s:tr>Registration</s:tr></s:a><%
+</s:url><tr><td align="right" class="menu"><s:a class="menu" url="RegisterUrl"><s:tr>Registration</s:tr></s:a></td></tr><%
     }
-%></div></td><%
-    vis_flag++;
   }
 %>
 <%  if (cnts && cnts->enable_password_recovery && cnts->disable_team_password) {
@@ -125,17 +120,19 @@
     <s:param name="contest_id" value="phr->contest_id" />
     <s:param name="locale_id" value="phr->locale_id" />
 </s:url>
-<td class="menu"><div class="contest_actions_item"><s:a class="menu" url="ForgotPassword1Url"><s:tr>Forgot password?</s:tr></s:a></div></td>
-<%    vis_flag++;
+<tr><td align="right" class="menu"><font size="-1"><s:a class="menu" url="ForgotPassword1Url"><s:tr>Forgot password?</s:tr></s:a></font></td></tr>
+<%
   }
 %>
-<%  if (!vis_flag) {
-%><td class="menu"><div class="contest_actions_item">&nbsp;</div></td><%
-  }
-%>
+</table>
+</div></td>
 </tr></table></div>
+</s:form>
+
+
 <%@include "unpriv_separator.csp"
 %>
+
 <br/>
 <br/>
 <br/>
