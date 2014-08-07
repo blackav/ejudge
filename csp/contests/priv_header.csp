@@ -9,5 +9,5 @@
 <body>
 <div id="main-cont"><div id="container">
 <div id="header">
-<div id="logo"><img src='<s:config name="style-prefix" />logo3.gif' alt="logo"/></div>
+<div id="logo"><img src='<s:config name="style-prefix" />logo3.png' alt="logo"/></div>
 <h1><s:v escape="false" value="ns_unparse_role(phr->role)" /> [<s:v checkExpr="" escape="false" value="phr->name_arm" />, <s:v value="phr->contest_id" />, <% if (extra) { %><s:v checkExpr="" escape="false" value="extra->contest_arm" /><% } %>]: <s:v escape="false" value="title" /></h1></div>

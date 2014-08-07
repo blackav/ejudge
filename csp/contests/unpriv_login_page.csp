@@ -135,7 +135,12 @@
 %>
 </tr></table></div>
 <%@include "unpriv_separator.csp"
-%><%
+%>
+<br/>
+<br/>
+<br/>
+<br/>
+<%
   watched_file_update(&extra->welcome, cnts->welcome_file, cur_time);
   if (extra->welcome.text && extra->welcome.text[0]) {
     fprintf(out_f, "%s", extra->welcome.text);
