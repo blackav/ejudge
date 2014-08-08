@@ -6698,6 +6698,7 @@ static const unsigned char * const external_action_names[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_RELOAD_FILE_ACTION] = "cnts_reload_file_action",
   [SSERV_CMD_CNTS_CLEAR_FILE_ACTION] = "cnts_clear_file_action",
   [SSERV_CMD_CNTS_SAVE_FILE_ACTION] = "cnts_save_file_action",
+  [SSERV_CMD_CNTS_EDIT_CUR_GLOBAL_PAGE] = "cnts_edit_cur_global_page",
 };
 
 static const unsigned char * const external_error_names[SSERV_ERR_LAST] = 

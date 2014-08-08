@@ -46,7 +46,7 @@ static const unsigned char * const form_row_attrs[]=
 %></td>
     <td><%
   if (cur_page != 2) {
-%><s:a ac="edit-current-global"><%
+%><s:a ac="cnts-edit-cur-global-page"><%
   }
 %><s:_>Global settings (serve.cfg)</s:_><%
   if (cur_page != 2) {
