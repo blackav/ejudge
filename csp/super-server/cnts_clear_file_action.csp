@@ -26,42 +26,42 @@
     switch (edit_action) {
         if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
         p_str = &phr->ss->contest_start_cmd_text;
-        back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
+        back_action = SSERV_CMD_CNTS_EDIT_CUR_GLOBAL_PAGE;
         break;
     case SSERV_CMD_GLOB_EDIT_CONTEST_STOP_CMD_PAGE:
         if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
         p_str = &phr->ss->contest_stop_cmd_text;
-        back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
+        back_action = SSERV_CMD_CNTS_EDIT_CUR_GLOBAL_PAGE;
         break;
     case SSERV_CMD_GLOB_EDIT_STAND_HEADER_FILE_PAGE:
         if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
         p_str = &phr->ss->stand_header_text;
-        back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
+        back_action = SSERV_CMD_CNTS_EDIT_CUR_GLOBAL_PAGE;
         break;
     case SSERV_CMD_GLOB_EDIT_STAND_FOOTER_FILE_PAGE:
         if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
         p_str = &phr->ss->stand_footer_text;
-        back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
+        back_action = SSERV_CMD_CNTS_EDIT_CUR_GLOBAL_PAGE;
         break;
     case SSERV_CMD_GLOB_EDIT_STAND2_HEADER_FILE_PAGE:
         if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
         p_str = &phr->ss->stand2_header_text;
-        back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
+        back_action = SSERV_CMD_CNTS_EDIT_CUR_GLOBAL_PAGE;
         break;
     case SSERV_CMD_GLOB_EDIT_STAND2_FOOTER_FILE_PAGE:
         if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
         p_str = &phr->ss->stand2_footer_text;
-        back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
+        back_action = SSERV_CMD_CNTS_EDIT_CUR_GLOBAL_PAGE;
         break;
     case SSERV_CMD_GLOB_EDIT_PLOG_HEADER_FILE_PAGE:
         if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
         p_str = &phr->ss->plog_header_text;
-        back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
+        back_action = SSERV_CMD_CNTS_EDIT_CUR_GLOBAL_PAGE;
         break;
     case SSERV_CMD_GLOB_EDIT_PLOG_FOOTER_FILE_PAGE:
         if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
         p_str = &phr->ss->plog_footer_text;
-        back_action = SSERV_CMD_EDIT_CURRENT_GLOBAL;
+        back_action = SSERV_CMD_CNTS_EDIT_CUR_GLOBAL_PAGE;
         break;
     case SSERV_CMD_CNTS_EDIT_USERS_HEADER_PAGE:
         p_str = &phr->ss->users_header_text;
