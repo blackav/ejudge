@@ -3953,6 +3953,10 @@ handle_textfield_open(
     if (size_attr) {
         fprintf(str_f, " size=\"%s\"", size_attr->value);
     }
+    HtmlAttribute *maxlength_attr = html_element_find_attribute(elem, "maxlength");
+    if (maxlength_attr) {
+        fprintf(str_f, " maxlength=\"%s\"", maxlength_attr->value);
+    }
     if (skip_value) {
         if (disabled_attr) {
             fclose(str_f); str_f = 0;
@@ -4470,6 +4474,23 @@ handle_read_open(
     return 0;
 }
 
+static int
+handle_help_open(
+        FILE *log_f,
+        TypeContext *cntx,
+        ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f)
+{
+    HtmlElement *elem = ps->el_stack->el;
+    unsigned char buf[1024];
+
+    if (process_ac_attr(log_f, cntx, ps, elem, buf, sizeof(buf)) > 0) {
+        fprintf(prg_f, "hr_print_help_url(out_f, %s);\n", buf);
+    }
+    return 0;
+}
+
 struct ElementInfo
 {
     const unsigned char *name;
@@ -4518,6 +4539,7 @@ static const struct ElementInfo element_handlers[] =
     { "s:numselect", handle_numselect_open, NULL },
     { "s:htr", handle_htr_open, handle_htr_close },
     { "s:redirect", handle_redirect_open, NULL },
+    { "s:help", handle_help_open, NULL },
 
     { NULL, NULL, NULL },
 };
