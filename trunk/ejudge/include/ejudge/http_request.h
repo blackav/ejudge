@@ -196,9 +196,10 @@ hr_client_url(
 
 void
 hr_set_symbolic_action_table(
+        int table_size,
         const unsigned char * const *table, 
         const unsigned char * const *submit_labels,
-        int table_size);
+        const unsigned char * const *helps);
 
 const unsigned char *
 hr_url_2(
@@ -228,6 +229,9 @@ hr_redirect_2(
         FILE *out_f,
         const struct http_request_info *phr,
         int action);
+
+void
+hr_print_help_url(FILE *f, int action);
 
 #endif /* __HTTP_REQUEST_H__ */
 

@@ -82,7 +82,7 @@ html_submit_button(FILE *f,
           action, label);
 }
 
-static void
+void
 html_select(FILE *f, int value, const unsigned char *param_name,
             const unsigned char * const *options)
 {
@@ -151,7 +151,7 @@ html_edit_text_form(FILE *f,
   xfree(s);
 }
 
-static const unsigned char * const action_to_help_url_map[SSERV_CMD_LAST] =
+const unsigned char * const super_serve_help_urls[SSERV_CMD_LAST] =
 {
   /*
   SSERV_CMD_CNTS_EDIT_PERMISSION,
@@ -286,7 +286,7 @@ static const unsigned char * const action_to_help_url_map[SSERV_CMD_LAST] =
   [SSERV_CMD_GLOB_CHANGE_DISABLE_SUBMIT_AFTER_OK] = "Serve.cfg:global:disable_submit_after_ok",
   [SSERV_CMD_GLOB_CHANGE_IGNORE_COMPILE_ERRORS] = "Serve.cfg:global:ignore_compile_errors",
   [SSERV_CMD_GLOB_CHANGE_DISABLE_FAILED_TEST_VIEW] = "Serve.cfg:global:disable_failed_test_view",
-  [SSERV_CMD_GLOB_CHANGE_IGNORE_DUPICATED_RUNS] = "Serve.cfg:global:ignore_duplicated_runs",
+  [SSERV_CMD_GLOB_CHANGE_IGNORE_DUPLICATED_RUNS] = "Serve.cfg:global:ignore_duplicated_runs",
   [SSERV_CMD_GLOB_CHANGE_REPORT_ERROR_CODE] = "Serve.cfg:global:report_error_code",
   [SSERV_CMD_GLOB_CHANGE_SHOW_DEADLINE] = "Serve.cfg:global:show_deadline",
   [SSERV_CMD_GLOB_CHANGE_ENABLE_PRINTING] = "Serve.cfg:global:enable_printing",
@@ -609,7 +609,7 @@ print_help_url(FILE *f, int action)
   const unsigned char *help_url = 0;
 
   if (action > 0 && action < SSERV_CMD_LAST) {
-    help_url = action_to_help_url_map[action];
+    help_url = super_serve_help_urls[action];
   }
   if (help_url) {
     fprintf(f, "<td><a target=\"_blank\" href=\"http://www.ejudge.ru/wiki/index.php/%s\">%s</a></td>",
@@ -625,7 +625,7 @@ super_html_print_help_url(FILE *f, int action)
   const unsigned char *help_url = 0;
 
   if (action > 0 && action < SSERV_CMD_LAST) {
-    help_url = action_to_help_url_map[action];
+    help_url = super_serve_help_urls[action];
   }
   if (help_url) {
     fprintf(f, "<td><a target=\"_blank\" href=\"http://www.ejudge.ru/wiki/index.php/%s\">%s</a></td>",
@@ -1312,9 +1312,9 @@ super_html_edit_global_parameters(
     fprintf(f, "<tr%s><td>Identical submits of one contestant are ignored:</td><td>", form_row_attrs[row ^= 1]);
     html_boolean_select(f, global->ignore_duplicated_runs, "param", 0, 0);
     fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_IGNORE_DUPICATED_RUNS, "Change");
+    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_IGNORE_DUPLICATED_RUNS, "Change");
     fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_GLOB_CHANGE_IGNORE_DUPICATED_RUNS);
+    print_help_url(f, SSERV_CMD_GLOB_CHANGE_IGNORE_DUPLICATED_RUNS);
     fprintf(f, "</tr></form>\n");
 
     //GLOBAL_PARAM(show_deadline, "d"),
@@ -3051,7 +3051,7 @@ super_html_global_param(struct sid_state *sstate, int cmd,
     p_int = &global->disable_failed_test_view;
     goto handle_boolean;
 
-  case SSERV_CMD_GLOB_CHANGE_IGNORE_DUPICATED_RUNS:
+  case SSERV_CMD_GLOB_CHANGE_IGNORE_DUPLICATED_RUNS:
     p_int = &global->ignore_duplicated_runs;
     goto handle_boolean;
 

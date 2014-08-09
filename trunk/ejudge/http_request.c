@@ -29,6 +29,7 @@
 
 static const unsigned char * const *symbolic_action_table;
 static const unsigned char * const *submit_button_labels;
+static const unsigned char * const *help_urls;
 static int symbolic_action_table_size;
 
 const unsigned char*
@@ -282,13 +283,15 @@ hr_client_url(
 
 void
 hr_set_symbolic_action_table(
+        int table_size,
         const unsigned char * const *table,
         const unsigned char * const *submit_labels,
-        int table_size)
+        const unsigned char * const * helps)
 {
     symbolic_action_table = table;
     submit_button_labels = submit_labels;
     symbolic_action_table_size = table_size;
+    help_urls = helps;
 }
 
 const unsigned char *
@@ -412,6 +415,21 @@ hr_redirect_2(
         }
         return sep;
     }
+}
+
+void
+hr_print_help_url(FILE *f, int action)
+{
+  const unsigned char *help_url = 0;
+
+  if (action > 0 && action < symbolic_action_table_size) {
+    help_url = help_urls[action];
+  }
+  if (help_url) {
+    fprintf(f, "<a target=\"_blank\" href=\"http://www.ejudge.ru/wiki/index.php/%s\">%s</a>", help_url, "Help");
+  } else {
+    fprintf(f, "&nbsp;");
+  }
 }
 
 /*
