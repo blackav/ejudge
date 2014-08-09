@@ -2307,7 +2307,7 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_GLOB_CHANGE_DISABLE_SUBMIT_AFTER_OK:
   case SSERV_CMD_GLOB_CHANGE_IGNORE_COMPILE_ERRORS:
   case SSERV_CMD_GLOB_CHANGE_DISABLE_FAILED_TEST_VIEW:
-  case SSERV_CMD_GLOB_CHANGE_IGNORE_DUPICATED_RUNS:
+  case SSERV_CMD_GLOB_CHANGE_IGNORE_DUPLICATED_RUNS:
   case SSERV_CMD_GLOB_CHANGE_REPORT_ERROR_CODE:
   case SSERV_CMD_GLOB_CHANGE_SHOW_DEADLINE:
   case SSERV_CMD_GLOB_CHANGE_ENABLE_PRINTING:
@@ -3297,7 +3297,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_GLOB_CHANGE_DISABLE_SUBMIT_AFTER_OK] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_IGNORE_COMPILE_ERRORS] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_DISABLE_FAILED_TEST_VIEW] = { cmd_set_value },
-  [SSERV_CMD_GLOB_CHANGE_IGNORE_DUPICATED_RUNS] = { cmd_set_value },
+  [SSERV_CMD_GLOB_CHANGE_IGNORE_DUPLICATED_RUNS] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_REPORT_ERROR_CODE] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_SHOW_DEADLINE] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_ENABLE_PRINTING] = { cmd_set_value },
@@ -4242,6 +4242,8 @@ write_version(void)
   exit(0);
 }
 
+extern const unsigned char * const super_serve_help_urls[];
+
 int
 main(int argc, char **argv)
 {
@@ -4252,7 +4254,7 @@ main(int argc, char **argv)
   char **argv_restart = 0;
   int pid;
 
-  hr_set_symbolic_action_table(0, 0, 0);
+  hr_set_symbolic_action_table(SSERV_CMD_LAST, 0, 0, super_serve_help_urls);
 
   program_name = os_GetBasename(argv[0]);
   start_set_self_args(argc, argv);

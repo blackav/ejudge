@@ -416,4 +416,8 @@ super_html_set_cnts_file_perms(
 void
 super_html_print_help_url(FILE *f, int action);
 
+void
+html_select(FILE *f, int value, const unsigned char *param_name,
+            const unsigned char * const *options);
+
 #endif /* __SUPER_HTML_H__ */
