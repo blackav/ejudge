@@ -414,9 +414,6 @@ super_html_set_cnts_file_perms(
         const struct contest_desc *cnts);
 
 void
-super_html_print_help_url(FILE *f, int action);
-
-void
 html_select(FILE *f, int value, const unsigned char *param_name,
             const unsigned char * const *options);
 
