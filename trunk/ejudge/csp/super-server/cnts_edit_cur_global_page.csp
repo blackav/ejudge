@@ -55,13 +55,9 @@ static const unsigned char * const form_row_attrs[]=
     snprintf(subtitle_buf, sizeof(subtitle_buf), "editing serve.cfg, global settings");
     cnts = phr->ss->edited_cnts;
     struct section_global_data *global = phr->ss->global;
-
-    (void) row;
-    (void) head_row_attr;
-    (void) form_row_attrs;
-    (void) contest_types;
-    (void) standings_languages;
-    (void) rounding_modes;
+    int score_system;
+    int standings_locale;
+    unsigned char *xstr = 0;
 %><%@include "header.csp"
 %>
 
@@ -88,6 +84,9 @@ static const unsigned char * const form_row_attrs[]=
 %>
 
 <table border="0">
+    <s:htr attr="head_row_attr">
+        <td colspan="4" align="center"><b>Main properties</b></td>
+    </s:htr>
 
     <s:form>
         <s:htr attr="form_row_attrs[row ^= 1]">
@@ -102,1884 +101,1901 @@ static const unsigned char * const form_row_attrs[]=
     unsigned char time_buf[64];
     snprintf(time_buf, sizeof(time_buf), "%d:%02d", global->contest_time / 60, global->contest_time % 60);
 %>
-            <td><s:textfield name="param" value="time_buf" size="8" /></td>
+            <td><s:textfield check="false" name="param" value="time_buf" size="8" /></td>
             <td><s:submit ac="glob-change-duration" label="Change" /><s:submit ac="glob-unlimited-duration" label="Set unlimited" /></td>
 <%
   }
 %>
-            <% super_html_print_help_url(out_f, SSERV_CMD_GLOB_CHANGE_DURATION); %>
+            <td><s:help ac="glob-change-duration" /></td>
         </s:htr>
     </s:form>
 
-<!--
-  if (!global->contest_time) {
-    //GLOBAL_PARAM(contest_finish_time, "t"),
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td>Contest end time:</td><td>",
-            form_row_attrs[row ^= 1]);
-    html_date_select(f, global->contest_finish_time);
-    fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_CONTEST_FINISH_TIME, "Change");
-    html_submit_button(f, SSERV_CMD_GLOB_CLEAR_CONTEST_FINISH_TIME, "Clear");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_GLOB_CHANGE_CONTEST_FINISH_TIME);
-    fprintf(f, "</tr></form>\n");
+<%
+  if (global->contest_time <= 0) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Contest end time:</td>
+            <td><% html_date_select(out_f, global->contest_finish_time); %></td>
+            <td><s:submit ac="glob-change-contest-finish-time" label="Change" /><s:submit ac="glob-clear-contest-finish-time" label="Clear" /></td>
+            <td><s:help ac="glob-change-contest-finish-time" /></td>
+        </s:htr>
+    </s:form>
+<%
   }
+%>
 
-  //GLOBAL_PARAM(score_system, "s"),
-  //GLOBAL_PARAM(virtual, "d"),
-  ASSERT(global->score_system >= SCORE_ACM && global->score_system < SCORE_TOTAL);
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Scoring system:</td>
+            <td><%
+  score_system = global->score_system;
   if (global->is_virtual) {
-    ASSERT(global->score_system == SCORE_ACM || global->score_system == SCORE_OLYMPIAD);
+    if (global->score_system == SCORE_ACM) score_system = SCORE_TOTAL;
+    else score_system = SCORE_TOTAL + 1;
   }
-  html_start_form(f, 1, self_url, hidden_vars);
-  fprintf(f, "<tr%s><td>Scoring system:</td><td>", form_row_attrs[row ^= 1]);
-  param = global->score_system;
-  if (global->is_virtual) {
-    if (global->score_system == SCORE_ACM) param = SCORE_TOTAL;
-    else param = SCORE_TOTAL + 1;
-  }
-  html_select(f, param, "param", contest_types);
-  fprintf(f, "</td><td>");
-  html_submit_button(f, SSERV_CMD_GLOB_CHANGE_TYPE, "Change");
-  fprintf(f, "</td>");
-  print_help_url(f, SSERV_CMD_GLOB_CHANGE_TYPE);
-  fprintf(f, "</tr></form>\n");
+%><% html_select(out_f, score_system, "param", contest_types); %></td>
+            <td><s:submit ac="glob-change-type" label="Change" /></td>
+            <td><s:help ac="glob-change-type" /></td>
+        </s:htr>
+    </s:form>
 
-  //GLOBAL_PARAM(board_fog_time, "d"),
-  //GLOBAL_PARAM(board_unfog_time, "d"),
-  html_start_form(f, 1, self_url, hidden_vars);
-  fprintf(f, "<tr%s><td>Standings freeze time (HH:MM) before finish:</td>"
-          , form_row_attrs[row ^= 1]);
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Standings freeze time (HH:MM) before finish:</td>
+<%
   if (!global->board_fog_time) {
-    fprintf(f, "<td><input type=\"text\" name=\"param\" value=\"0\" size=\"8\"/><i>(No freeze)</i></td><td>");
-    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_FOG_TIME, "Change");
+%>
+            <td><input type="text" name="param" value="0" size="8"/><i>(No freeze)</i></td>
+            <td><s:submit ac="glob-change-fog-time" label="Change" /></td>
+<%
   } else {
-    fprintf(f, "<td><input type=\"text\" name=\"param\" value=\"%d:%02d\" size=\"8\"/></td><td>", global->board_fog_time / 60, global->board_fog_time % 60);
-    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_FOG_TIME, "Change");
-    html_submit_button(f, SSERV_CMD_GLOB_DISABLE_FOG, "Disable");
+    unsigned char time_buf[64];
+    snprintf(time_buf, sizeof(time_buf), "%d:%02d", global->board_fog_time / 60, global->board_fog_time % 60);
+%>
+            <td><s:textfield check="false" name="param" value="time_buf" size="8" /></td>
+            <td><s:submit ac="glob-change-fog-time" label="Change" /><s:submit ac="glob-disable-fog" label="Disable" /></td>
+<%
   }
-  fprintf(f, "</td>");
-  print_help_url(f, SSERV_CMD_GLOB_CHANGE_FOG_TIME);
-  fprintf(f, "</tr></form>\n");
+%>
+            <td><s:help ac="glob-change-fog-time" /></td>
+        </s:htr>
+    </s:form>
+
+<%
   if (global->board_fog_time) {
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td>Standings unfreeze time (HH:MM) after finish:</td>",
-            form_row_attrs[row ^= 1]);
-    fprintf(f, "<td><input type=\"text\" name=\"param\" value=\"%d:%02d\" size=\"8\"/></td><td>", global->board_unfog_time / 60, global->board_unfog_time % 60);
-    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_UNFOG_TIME, "Change");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_GLOB_CHANGE_UNFOG_TIME);
-    fprintf(f, "</tr></form>\n");
+    unsigned char time_buf[64];
+    snprintf(time_buf, sizeof(time_buf), "%d:%02d", global->board_unfog_time / 60, global->board_unfog_time % 60);
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Standings unfreeze time (HH:MM) after finish:</td>
+            <td><s:textfield check="false" name="param" value="time_buf" size="8" /></td>
+            <td><s:submit ac="glob-change-unfog-time" label="Change" /></td>
+            <td><s:help ac="glob-change-unfog-time" /></td>
+        </s:htr>
+    </s:form>
+<%
   }
+%>
 
-  //use standard compilation server?
-  html_start_form(f, 1, self_url, hidden_vars);
-  fprintf(f, "<tr%s><td>Use the default compilation server:</td><td>",
-          form_row_attrs[row ^= 1]);
-  html_boolean_select(f, !sstate->disable_compilation_server, "param", 0, 0);
-  fprintf(f, "</td><td>");
-  html_submit_button(f, SSERV_CMD_GLOB_CHANGE_USE_COMPILATION_SERVER, "Change");
-  fprintf(f, "</td>");
-  print_help_url(f, SSERV_CMD_GLOB_CHANGE_USE_COMPILATION_SERVER);
-  fprintf(f, "</tr></form>\n");
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Use the default compilation server:</td>
+            <td><s:yesno name="param" value="!phr->ss->disable_compilation_server" /></td>
+            <td><s:submit ac="glob-change-use-compilation-server" label="Change" /></td>
+            <td><s:help ac="glob-change-use-compilation-server" /></td>
+        </s:htr>
+    </s:form>
 
-  //enable support for windows languages
-  html_start_form(f, 1, self_url, hidden_vars);
-  fprintf(f, "<tr%s><td>Enable Win32 languages:</td><td>",
-          form_row_attrs[row ^= 1]);
-  html_boolean_select(f, sstate->enable_win32_languages, "param", 0, 0);
-  fprintf(f, "</td><td>");
-  html_submit_button(f, SSERV_CMD_GLOB_CHANGE_ENABLE_WIN32_LANGUAGES, "Change");
-  fprintf(f, "</td>");
-  print_help_url(f, SSERV_CMD_GLOB_CHANGE_ENABLE_WIN32_LANGUAGES);
-  fprintf(f, "</tr></form>\n");
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Enable Win32 languages:</td>
+            <td><s:yesno name="param" value="phr->ss->enable_win32_languages" /></td>
+            <td><s:submit ac="glob-change-enable-win32-languages" label="Change" /></td>
+            <td><s:help ac="glob-change-enable-win32-languages" /></td>
+        </s:htr>
+    </s:form>
 
-  //GLOBAL_PARAM(separate_user_score, "d"),
-  print_boolean_select_row(f, "Calculate and store user-visible score separately:",
-                           global->separate_user_score,
-                           SSERV_CMD_GLOB_CHANGE_SEPARATE_USER_SCORE,
-                           session_id, form_row_attrs[row ^= 1],
-                           self_url, extra_args, hidden_vars);
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Calculate and store user-visible score separately:</td>
+            <td><s:yesno name="param" value="global->separate_user_score" /></td>
+            <td><s:submit ac="glob-change-separate-user-score" label="Change" /></td>
+            <td><s:help ac="glob-change-separate-user-score" /></td>
+        </s:htr>
+    </s:form>
 
-  //GLOBAL_PARAM(secure_run, "d"),
-  print_boolean_select_row(f, "Run programs securely:",
-                           global->secure_run,
-                           SSERV_CMD_GLOB_CHANGE_SECURE_RUN,
-                           session_id, form_row_attrs[row ^= 1],
-                           self_url, extra_args, hidden_vars);
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Run programs securely:</td>
+            <td><s:yesno name="param" value="global->secure_run" /></td>
+            <td><s:submit ac="glob-change-secure-run" label="Change" /></td>
+            <td><s:help ac="glob-change-secure-run" /></td>
+        </s:htr>
+    </s:form>
 
-  //GLOBAL_PARAM(enable_memory_limit_error, "d"),
-  print_boolean_select_row(f, "Enable support for MemoryLimit error:",
-                           global->enable_memory_limit_error,
-                           SSERV_CMD_GLOB_CHANGE_ENABLE_MEMORY_LIMIT_ERROR,
-                           session_id, form_row_attrs[row ^= 1],
-                           self_url, extra_args, hidden_vars);
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Enable support for MemoryLimit error:</td>
+            <td><s:yesno name="param" value="global->enable_memory_limit_error" /></td>
+            <td><s:submit ac="glob-change-enable-memory-limit-error" label="Change" /></td>
+            <td><s:help ac="glob-change-enable-memory-limit-error" /></td>
+        </s:htr>
+    </s:form>
 
-  //GLOBAL_PARAM(detect_violations, "d"),
-  print_boolean_select_row(f, "Detect security violations:",
-                           global->detect_violations,
-                           SSERV_CMD_GLOB_CHANGE_DETECT_VIOLATIONS,
-                           session_id, form_row_attrs[row ^= 1],
-                           self_url, extra_args, hidden_vars);
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Detect security violations:</td>
+            <td><s:yesno name="param" value="global->detect_violations" /></td>
+            <td><s:submit ac="glob-change-detect-violations" label="Change" /></td>
+            <td><s:help ac="glob-change-detect-violations" /></td>
+        </s:htr>
+    </s:form>
 
-  //GLOBAL_PARAM(enable_max_stack_size, "d"),
-  print_boolean_select_row(f, "Assume max_stack_size == max_vm_size:",
-                           global->enable_max_stack_size,
-                           SSERV_CMD_GLOB_CHANGE_ENABLE_MAX_STACK_SIZE,
-                           session_id, form_row_attrs[row ^= 1],
-                           self_url, extra_args, hidden_vars);
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Assume max_stack_size == max_vm_size:</td>
+            <td><s:yesno name="param" value="global->enable_max_stack_size" /></td>
+            <td><s:submit ac="glob-change-enable-max-stack-size" label="Change" /></td>
+            <td><s:help ac="glob-change-enable-max-stack-size" /></td>
+        </s:htr>
+    </s:form>
 
-  //GLOBAL_PARAM(standings_locale, "s"),
+<%
+  standings_locale = 0;
   if (!strcmp(global->standings_locale, "ru_RU.KOI8-R")
       || !strcmp(global->standings_locale, "ru")) {
-    param = 1;
-  } else {
-    param = 0;
+    standings_locale = 1;
   }
-  html_start_form(f, 1, self_url, hidden_vars);
-  fprintf(f, "<tr%s><td>Standings language:</td><td>",
-          form_row_attrs[row ^= 1]);
-  html_select(f, param, "param", standings_languages);
-  fprintf(f, "</td><td>");
-  html_submit_button(f, SSERV_CMD_GLOB_CHANGE_STAND_LOCALE, "Change");
-  fprintf(f, "</td>");
-  print_help_url(f, SSERV_CMD_GLOB_CHANGE_STAND_LOCALE);
-  fprintf(f, "</tr></form>\n");
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Standings language:</td>
+            <td><% html_select(out_f, standings_locale, "param", standings_languages); %></td>
+            <td><s:submit ac="glob-change-stand-locale" label="Change" /></td>
+            <td><s:help ac="glob-change-stand-locale" /></td>
+        </s:htr>
+    </s:form>
 
-  print_string_editing_row(f, "Checker locale:", global->checker_locale,
-                           SSERV_CMD_GLOB_CHANGE_CHECKER_LOCALE,
-                           SSERV_CMD_GLOB_CLEAR_CHECKER_LOCALE,
-                           0,
-                           session_id, form_row_attrs[row ^= 1],
-                           self_url, extra_args, hidden_vars);
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Checker locale:</td>
+            <td><s:textfield name="param" value="global->checker_locale" size="48" maxlength="1024" checkExpr="" /><% if (!global->checker_locale) { %><i>Not set</i><% } %></td>
+            <td><s:submit ac="glob-change-checker-locale" label="Change" /><s:submit ac="glob-clear-checker-locale" label="Clear" /></td>
+            <td><s:help ac="glob-change-checker-locale" /></td>
+        </s:htr>
+    </s:form>
 
+<%
   if (sizeof(long) == sizeof(long long)) {
-    //GLOBAL_PARAM(enable_32bit_checkers, "d"),
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td>Compile 32-bit checkers on 64-bit platforms:</td><td>", form_row_attrs[row ^= 1]);
-    html_boolean_select(f, global->enable_32bit_checkers, "param", 0, 0);
-    fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_ENABLE_32BIT_CHECKERS, "Change");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_GLOB_CHANGE_ENABLE_32BIT_CHECKERS);
-    fprintf(f, "</tr></form>\n");
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Compile 32-bit checkers on 64-bit platforms:</td>
+            <td><s:yesno name="param" value="global->enable_32bit_checkers" /></td>
+            <td><s:submit ac="glob-change-enable-32bit-checkers" label="Change" /></td>
+            <td><s:help ac="glob-change-enable-32bit-checkers" /></td>
+        </s:htr>
+    </s:form>
+<%
   }
+%>
 
-
-
-  html_start_form(f, 1, self_url, hidden_vars);
-  fprintf(f, "<tr%s><td colspan=\"4\" align=\"center\"><b>Contestant's capabilities</b>", head_row_attr);
-  row = 1;
-  if (sstate->show_global_1) {
-    html_submit_button(f, SSERV_CMD_GLOB_HIDE_1, "Hide");
+    <s:form>
+        <s:htr attr="head_row_attr">
+            <td colspan="4" align="center"><b>Contestant's capabilities</b><%
+  if (phr->ss->show_global_1) {
+%><s:submit ac="glob-hide-1" label="Hide" /><%
   } else {
-    html_submit_button(f, SSERV_CMD_GLOB_SHOW_1, "Show");
+%><s:submit ac="glob-show-1" label="Show" /><%
   }
-  fprintf(f, "</td></tr></form>");
-
-  if (sstate->show_global_1) {
-    //GLOBAL_PARAM(team_enable_src_view, "d"),
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td>Contestant may view submitted source code:</td><td>",
-            form_row_attrs[row ^= 1]);
-    html_boolean_select(f, global->team_enable_src_view, "param", 0, 0);
-    fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_SRC_VIEW, "Change");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_GLOB_CHANGE_SRC_VIEW);
-    fprintf(f, "</tr></form>\n");
-
-    //GLOBAL_PARAM(disable_failed_test_view, "d"),
-    if (global->score_system == SCORE_ACM
-        || global->score_system == SCORE_MOSCOW) {
-      html_start_form(f, 1, self_url, hidden_vars);
-      fprintf(f, "<tr%s><td>Participants cannot view failed test number:</td><td>", form_row_attrs[row ^= 1]);
-      html_boolean_select(f, global->disable_failed_test_view, "param", 0, 0);
-      fprintf(f, "</td><td>");
-      html_submit_button(f, SSERV_CMD_GLOB_CHANGE_DISABLE_FAILED_TEST_VIEW, "Change");
-      fprintf(f, "</td>");
-      print_help_url(f, SSERV_CMD_GLOB_CHANGE_DISABLE_FAILED_TEST_VIEW);
-      fprintf(f, "</tr></form>\n");
-    }
-
-    //GLOBAL_PARAM(team_enable_rep_view, "d"),
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td>Contestant may view testing protocol:</td><td>",
-            form_row_attrs[row ^= 1]);
-    html_boolean_select(f, global->team_enable_rep_view, "param", 0, 0);
-    fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_REP_VIEW, "Change");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_GLOB_CHANGE_REP_VIEW);
-    fprintf(f, "</tr></form>\n");
-
-    //GLOBAL_PARAM(team_enable_ce_view, "d"),
-    if (!global->team_enable_rep_view) {
-      html_start_form(f, 1, self_url, hidden_vars);
-      fprintf(f, "<tr%s><td>Contestant may view compilation errors:</td><td>",
-              form_row_attrs[row ^= 1]);
-      html_boolean_select(f, global->team_enable_ce_view, "param", 0, 0);
-      fprintf(f, "</td><td>");
-      html_submit_button(f, SSERV_CMD_GLOB_CHANGE_CE_VIEW, "Change");
-      fprintf(f, "</td>");
-      print_help_url(f, SSERV_CMD_GLOB_CHANGE_CE_VIEW);
-      fprintf(f, "</tr></form>\n");
-    }
-
-    //GLOBAL_PARAM(team_show_judge_report, "d"),
-    if (global->team_enable_rep_view) {
-      html_start_form(f, 1, self_url, hidden_vars);
-      fprintf(f, "<tr%s><td>Contestant may view FULL (judge's) testing protocol:</td><td>", form_row_attrs[row ^= 1]);
-      html_boolean_select(f, global->team_show_judge_report, "param", 0, 0);
-      fprintf(f, "</td><td>");
-      html_submit_button(f, SSERV_CMD_GLOB_CHANGE_JUDGE_REPORT, "Change");
-      fprintf(f, "</td>");
-      print_help_url(f, SSERV_CMD_GLOB_CHANGE_JUDGE_REPORT);
-      fprintf(f, "</tr></form>\n");
-    }
-
-    //GLOBAL_PARAM(report_error_code, "d"),
-    if (global->team_enable_rep_view && !global->team_show_judge_report) {
-      html_start_form(f, 1, self_url, hidden_vars);
-      fprintf(f, "<tr%s><td>Process exit code is shown in testing report:</td><td>", form_row_attrs[row ^= 1]);
-      html_boolean_select(f, global->report_error_code, "param", 0, 0);
-      fprintf(f, "</td><td>");
-      html_submit_button(f, SSERV_CMD_GLOB_CHANGE_REPORT_ERROR_CODE, "Change");
-      fprintf(f, "</td>");
-      print_help_url(f, SSERV_CMD_GLOB_CHANGE_REPORT_ERROR_CODE);
-      fprintf(f, "</tr></form>\n");
-    }
-    
-    //GLOBAL_PARAM(disable_clars, "d"),
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td>Clarification requests are disabled completely:</td><td>", form_row_attrs[row ^= 1]);
-    html_boolean_select(f, global->disable_clars, "param", 0, 0);
-    fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_DISABLE_CLARS, "Change");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_GLOB_CHANGE_DISABLE_CLARS);
-    fprintf(f, "</tr></form>\n");
-    
-    //GLOBAL_PARAM(disable_team_clars, "d"),
-    if (!global->disable_clars) {
-      html_start_form(f, 1, self_url, hidden_vars);
-      fprintf(f, "<tr%s><td>Contestant cannot write clarification request:</td><td>", form_row_attrs[row ^= 1]);
-      html_boolean_select(f, global->disable_team_clars, "param", 0, 0);
-      fprintf(f, "</td><td>");
-      html_submit_button(f, SSERV_CMD_GLOB_CHANGE_DISABLE_TEAM_CLARS, "Change");
-      fprintf(f, "</td>");
-      print_help_url(f, SSERV_CMD_GLOB_CHANGE_DISABLE_TEAM_CLARS);
-      fprintf(f, "</tr></form>\n");
-    }
-
-    //GLOBAL_PARAM(enable_eoln_select, "d"),
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td>Participants may select desired EOLN type:</td><td>", form_row_attrs[row ^= 1]);
-    html_boolean_select(f, global->enable_eoln_select, "param", 0, 0);
-    fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_ENABLE_EOLN_SELECT, "Change");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_GLOB_CHANGE_ENABLE_EOLN_SELECT);
-    fprintf(f, "</tr></form>\n");
-
-    //GLOBAL_PARAM(disable_submit_after_ok, "d"),
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td>Disable submit of already solved problems:</td><td>",
-            form_row_attrs[row ^= 1]);
-    html_boolean_select(f, global->disable_submit_after_ok, "param", 0, 0);
-    fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_DISABLE_SUBMIT_AFTER_OK, "Change");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_GLOB_CHANGE_DISABLE_SUBMIT_AFTER_OK);
-    fprintf(f, "</tr></form>\n");
-
-    //GLOBAL_PARAM(ignore_compile_errors, "d"),
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td>Compilation errors are not counted as failed runs:</td><td>", form_row_attrs[row ^= 1]);
-    html_boolean_select(f, global->ignore_compile_errors, "param", 0, 0);
-    fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_IGNORE_COMPILE_ERRORS, "Change");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_GLOB_CHANGE_IGNORE_COMPILE_ERRORS);
-    fprintf(f, "</tr></form>\n");
-
-    //GLOBAL_PARAM(ignore_duplicated_runs, "d"),
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td>Identical submits of one contestant are ignored:</td><td>", form_row_attrs[row ^= 1]);
-    html_boolean_select(f, global->ignore_duplicated_runs, "param", 0, 0);
-    fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_IGNORE_DUPICATED_RUNS, "Change");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_GLOB_CHANGE_IGNORE_DUPICATED_RUNS);
-    fprintf(f, "</tr></form>\n");
-
-    //GLOBAL_PARAM(show_deadline, "d"),
-    if (!global->contest_time) {
-      html_start_form(f, 1, self_url, hidden_vars);
-      fprintf(f, "<tr%s><td>Show submit deadline in problem selection menu:</td><td>", form_row_attrs[row ^= 1]);
-      html_boolean_select(f, global->show_deadline, "param", 0, 0);
-      fprintf(f, "</td><td>");
-      html_submit_button(f, SSERV_CMD_GLOB_CHANGE_SHOW_DEADLINE, "Change");
-      fprintf(f, "</td>");
-      print_help_url(f, SSERV_CMD_GLOB_CHANGE_SHOW_DEADLINE);
-      fprintf(f, "</tr></form>\n");
-    }
-    
-    //GLOBAL_PARAM(enable_printing, "d"),
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td>Contestant may print his submit:</td><td>",
-            form_row_attrs[row ^= 1]);
-    html_boolean_select(f, global->enable_printing, "param", 0, 0);
-    fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_ENABLE_PRINTING, "Change");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_GLOB_CHANGE_ENABLE_PRINTING);
-    fprintf(f, "</tr></form>\n");
-
-    if (global->enable_printing > 0) {
-      //GLOBAL_PARAM(disable_banner_page, "d"),
-      html_start_form(f, 1, self_url, hidden_vars);
-      fprintf(f, "<tr%s><td>Disable separate banner page:</td><td>",
-              form_row_attrs[row ^= 1]);
-      html_boolean_select(f, global->disable_banner_page, "param", 0, 0);
-      fprintf(f, "</td><td>");
-      html_submit_button(f, SSERV_CMD_GLOB_CHANGE_DISABLE_BANNER_PAGE, "Change");
-      fprintf(f, "</td>");
-      print_help_url(f, SSERV_CMD_GLOB_CHANGE_DISABLE_BANNER_PAGE);
-      fprintf(f, "</tr></form>\n");
-    }
-
-    if (global->enable_printing > 0 && global->disable_banner_page > 0) {
-      //GLOBAL_PARAM(printout_uses_login, "d"),
-      html_start_form(f, 1, self_url, hidden_vars);
-      fprintf(f, "<tr%s><td>Show login (not name) on printouts:</td><td>",
-              form_row_attrs[row ^= 1]);
-      html_boolean_select(f, global->printout_uses_login, "param", 0, 0);
-      fprintf(f, "</td><td>");
-      html_submit_button(f, SSERV_CMD_GLOB_CHANGE_PRINTOUT_USES_LOGIN, "Change");
-      fprintf(f, "</td>");
-      print_help_url(f, SSERV_CMD_GLOB_CHANGE_PRINTOUT_USES_LOGIN);
-      fprintf(f, "</tr></form>\n");
-    }
-
-    //GLOBAL_PARAM(prune_empty_users, "d"),
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td>Do not show contestants, which did not make any submit, in standings:</td><td>", form_row_attrs[row ^= 1]);
-    html_boolean_select(f, global->prune_empty_users, "param", 0, 0);
-    fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_PRUNE_EMPTY_USERS, "Change");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_GLOB_CHANGE_PRUNE_EMPTY_USERS);
-    fprintf(f, "</tr></form>\n");
-
-    //GLOBAL_PARAM(enable_full_archive, "d"),
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td>Store full contestant's program output in the archive:</td><td>", form_row_attrs[row ^= 1]);
-    html_boolean_select(f, global->enable_full_archive, "param", 0, 0);
-    fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_ENABLE_FULL_ARCHIVE, "Change");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_GLOB_CHANGE_ENABLE_FULL_ARCHIVE);
-    fprintf(f, "</tr></form>\n");
-
-    //GLOBAL_PARAM(always_show_problems, "d"),
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td>Contestant may view Problems link before start:</td><td>",
-            form_row_attrs[row ^= 1]);
-    html_boolean_select(f, global->always_show_problems, "param", 0, 0);
-    fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_ALWAYS_SHOW_PROBLEMS, "Change");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_GLOB_CHANGE_ALWAYS_SHOW_PROBLEMS);
-    fprintf(f, "</tr></form>\n");
-
-    //GLOBAL_PARAM(disable_user_standings, "d"),
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td>Disable build-in standings in new-client:</td><td>",
-            form_row_attrs[row ^= 1]);
-    html_boolean_select(f, global->disable_user_standings, "param", 0, 0);
-    fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_DISABLE_USER_STANDINGS, "Change");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_GLOB_CHANGE_DISABLE_USER_STANDINGS);
-    fprintf(f, "</tr></form>\n");
-
-    //GLOBAL_PARAM(disable_language, "d"),
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td>Disable language column in new-client:</td><td>",
-            form_row_attrs[row ^= 1]);
-    html_boolean_select(f, global->disable_language, "param", 0, 0);
-    fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_DISABLE_LANGUAGE, "Change");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_GLOB_CHANGE_DISABLE_LANGUAGE);
-    fprintf(f, "</tr></form>\n");
-
-    //GLOBAL_PARAM(problem_navigation, "d"),
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td>Advanced problem navigation:</td><td>",
-            form_row_attrs[row ^= 1]);
-    html_boolean_select(f, global->problem_navigation, "param", 0, 0);
-    fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_PROBLEM_NAVIGATION, "Change");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_GLOB_CHANGE_PROBLEM_NAVIGATION);
-    fprintf(f, "</tr></form>\n");
-
-    if (global->problem_navigation) {
-      //GLOBAL_PARAM(vertical_navigation, "d"),
-      html_start_form(f, 1, self_url, hidden_vars);
-      fprintf(f, "<tr%s><td>Place problem navigation vertically:</td><td>",
-              form_row_attrs[row ^= 1]);
-      html_boolean_select(f, global->vertical_navigation, "param", 0, 0);
-      fprintf(f, "</td><td>");
-      html_submit_button(f, SSERV_CMD_GLOB_CHANGE_VERTICAL_NAVIGATION,"Change");
-      fprintf(f, "</td>");
-      print_help_url(f, SSERV_CMD_GLOB_CHANGE_VERTICAL_NAVIGATION);
-      fprintf(f, "</tr></form>\n");
-    }
-
-    if (global->is_virtual) {
-      //GLOBAL_PARAM(disable_virtual_start, "d"),
-      html_start_form(f, 1, self_url, hidden_vars);
-      fprintf(f, "<tr%s><td>Disable user Virtual start button:</td><td>",
-              form_row_attrs[row ^= 1]);
-      html_boolean_select(f, global->disable_virtual_start, "param", 0, 0);
-      fprintf(f, "</td><td>");
-      html_submit_button(f, SSERV_CMD_GLOB_CHANGE_DISABLE_VIRTUAL_START, "Change");
-      fprintf(f, "</td>");
-      print_help_url(f, SSERV_CMD_GLOB_CHANGE_DISABLE_VIRTUAL_START);
-      fprintf(f, "</tr></form>\n");
-    }
-
-    //GLOBAL_PARAM(disable_virtual_auto_judge, "d"),
-    if (global->score_system == SCORE_OLYMPIAD) {
-      html_start_form(f, 1, self_url, hidden_vars);
-      fprintf(f, "<tr%s><td>Disable auto-judging after virtual olympiad:</td><td>",
-              form_row_attrs[row ^= 1]);
-      html_boolean_select(f, global->disable_virtual_auto_judge, "param", 0, 0);
-      fprintf(f, "</td><td>");
-      html_submit_button(f, SSERV_CMD_GLOB_CHANGE_DISABLE_VIRTUAL_AUTO_JUDGE, "Change");
-      fprintf(f, "</td>");
-      print_help_url(f, SSERV_CMD_GLOB_CHANGE_DISABLE_VIRTUAL_AUTO_JUDGE);
-      fprintf(f, "</tr></form>\n");
-    }
-
-    //GLOBAL_PARAM(enable_auto_print_protocol, "d"),
-    if (global->score_system == SCORE_OLYMPIAD) {
-      html_start_form(f, 1, self_url, hidden_vars);
-      fprintf(f, "<tr%s><td>Enable automatic protocol printing:</td><td>",
-              form_row_attrs[row ^= 1]);
-      html_boolean_select(f, global->enable_auto_print_protocol, "param", 0, 0);
-      fprintf(f, "</td><td>");
-      html_submit_button(f, SSERV_CMD_GLOB_CHANGE_ENABLE_AUTO_PRINT_PROTOCOL, "Change");
-      fprintf(f, "</td>");
-      print_help_url(f, SSERV_CMD_GLOB_CHANGE_ENABLE_AUTO_PRINT_PROTOCOL);
-      fprintf(f, "</tr></form>\n");
-    }
-
-    //GLOBAL_PARAM(notify_clar_reply, "d"),
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td>Enable e-mail clar notifications:</td><td>",
-            form_row_attrs[row ^= 1]);
-    html_boolean_select(f, global->notify_clar_reply, "param", 0, 0);
-    fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_NOTIFY_CLAR_REPLY, "Change");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_GLOB_CHANGE_NOTIFY_CLAR_REPLY);
-    fprintf(f, "</tr></form>\n");
-
-    //GLOBAL_PARAM(notify_status_change, "d"),
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td>Enable e-mail status change notifications:</td><td>",
-            form_row_attrs[row ^= 1]);
-    html_boolean_select(f, global->notify_status_change, "param", 0, 0);
-    fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_NOTIFY_STATUS_CHANGE, "Change");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_GLOB_CHANGE_NOTIFY_STATUS_CHANGE);
-    fprintf(f, "</tr></form>\n");
-
-    //GLOBAL_PARAM(disable_auto_refresh, "d"),
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td>Disable auto-refreshing:</td><td>", form_row_attrs[row ^= 1]);
-    html_boolean_select(f, global->disable_auto_refresh, "param", 0, 0);
-    fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_DISABLE_AUTO_REFRESH, "Change");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_GLOB_CHANGE_DISABLE_AUTO_REFRESH);
-    fprintf(f, "</tr></form>\n");
-  }
-
-  html_start_form(f, 1, self_url, hidden_vars);
-  fprintf(f, "<tr%s><td colspan=\"4\" align=\"center\"><b>Files and directories</b>", head_row_attr);
+%></td>
+        </s:htr>
+    </s:form>
+<%
+  if (!phr->ss->show_global_1) goto files_and_directories;
   row = 1;
-  if (sstate->show_global_2) {
-    html_submit_button(f, SSERV_CMD_GLOB_HIDE_2, "Hide");
+%>
+
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Contestant may view submitted source code:</td>
+            <td><s:yesno name="param" value="global->team_enable_src_view" /></td>
+            <td><s:submit ac="glob-change-src-view" label="Change" /></td>
+            <td><s:help ac="glob-change-src-view" /></td>
+        </s:htr>
+    </s:form>
+
+<%
+  if (global->score_system == SCORE_ACM || global->score_system == SCORE_MOSCOW) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Participants cannot view failed test number:</td>
+            <td><s:yesno name="param" value="global->disable_failed_test_view" /></td>
+            <td><s:submit ac="glob-change-disable-failed-test-view" label="Change" /></td>
+            <td><s:help ac="glob-change-disable-failed-test-view" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Contestant may view testing protocol:</td>
+            <td><s:yesno name="param" value="global->team_enable_rep_view" /></td>
+            <td><s:submit ac="glob-change-rep-view" label="Change" /></td>
+            <td><s:help ac="glob-change-rep-view" /></td>
+        </s:htr>
+    </s:form>
+
+<%
+  if (!global->team_enable_rep_view) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Contestant may view compilation errors:</td>
+            <td><s:yesno name="param" value="global->team_enable_ce_view" /></td>
+            <td><s:submit ac="glob-change-ce-view" label="Change" /></td>
+            <td><s:help ac="glob-change-ce-view" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+<%
+  if (global->team_enable_rep_view) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Contestant may view FULL (judge's) testing protocol:</td>
+            <td><s:yesno name="param" value="global->team_show_judge_report" /></td>
+            <td><s:submit ac="glob-change-judge-report" label="Change" /></td>
+            <td><s:help ac="glob-change-judge-report" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+<%
+  if (global->team_enable_rep_view && !global->team_show_judge_report) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Process exit code is shown in testing report:</td>
+            <td><s:yesno name="param" value="global->report_error_code" /></td>
+            <td><s:submit ac="glob-change-report-error-code" label="Change" /></td>
+            <td><s:help ac="glob-change-report-error-code" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Clarification requests are disabled completely:</td>
+            <td><s:yesno name="param" value="global->disable_clars" /></td>
+            <td><s:submit ac="glob-change-disable-clars" label="Change" /></td>
+            <td><s:help ac="glob-change-disable-clars" /></td>
+        </s:htr>
+    </s:form>
+
+<%
+  if (!global->disable_clars) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Contestant cannot write clarification request:</td>
+            <td><s:yesno name="param" value="global->disable_team_clars" /></td>
+            <td><s:submit ac="glob-change-disable-team-clars" label="Change" /></td>
+            <td><s:help ac="glob-change-disable-team-clars" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Participants may select desired EOLN type:</td>
+            <td><s:yesno name="param" value="global->enable_eoln_select" /></td>
+            <td><s:submit ac="glob-change-enable-eoln-select" label="Change" /></td>
+            <td><s:help ac="glob-change-enable-eoln-select" /></td>
+        </s:htr>
+    </s:form>
+
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Disable submit of already solved problems:</td>
+            <td><s:yesno name="param" value="global->disable_submit_after_ok" /></td>
+            <td><s:submit ac="glob-change-disable-submit-after-ok" label="Change" /></td>
+            <td><s:help ac="glob-change-disable-submit-after-ok" /></td>
+        </s:htr>
+    </s:form>
+
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Compilation errors are not counted as failed runs:</td>
+            <td><s:yesno name="param" value="global->ignore_compile_errors" /></td>
+            <td><s:submit ac="glob-change-ignore-compile-errors" label="Change" /></td>
+            <td><s:help ac="glob-change-ignore-compile-errors" /></td>
+        </s:htr>
+    </s:form>
+
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Identical submits of one contestant are ignored:</td>
+            <td><s:yesno name="param" value="global->ignore_duplicated_runs" /></td>
+            <td><s:submit ac="glob-change-ignore-duplicated-runs" label="Change" /></td>
+            <td><s:help ac="glob-change-ignore-duplicated-runs" /></td>
+        </s:htr>
+    </s:form>
+
+<%
+  if (global->contest_time <= 0) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Show submit deadline in problem selection menu:</td>
+            <td><s:yesno name="param" value="global->show_deadline" /></td>
+            <td><s:submit ac="glob-change-show-deadline" label="Change" /></td>
+            <td><s:help ac="glob-change-show-deadline" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Contestants may print their submits:</td>
+            <td><s:yesno name="param" value="global->enable_printing" /></td>
+            <td><s:submit ac="glob-change-enable-printing" label="Change" /></td>
+            <td><s:help ac="glob-change-enable-printing" /></td>
+        </s:htr>
+    </s:form>
+
+<%
+  if (global->enable_printing > 0) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Disable separate banner page:</td>
+            <td><s:yesno name="param" value="global->disable_banner_page" /></td>
+            <td><s:submit ac="glob-change-disable-banner-page" label="Change" /></td>
+            <td><s:help ac="glob-change-disable-banner-page" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+<%
+  if (global->enable_printing > 0 && global->disable_banner_page > 0) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Show login (not name) on printouts:</td>
+            <td><s:yesno name="param" value="global->printout_uses_login" /></td>
+            <td><s:submit ac="glob-change-printout-uses-login" label="Change" /></td>
+            <td><s:help ac="glob-change-printout-uses-login" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Do not show contestants, which did not make any submit in standings:</td>
+            <td><s:yesno name="param" value="global->prune_empty_users" /></td>
+            <td><s:submit ac="glob-change-prune-empty-users" label="Change" /></td>
+            <td><s:help ac="glob-change-prune-empty-users" /></td>
+        </s:htr>
+    </s:form>
+
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Store full contestant's program output in the archive:</td>
+            <td><s:yesno name="param" value="global->enable_full_archive" /></td>
+            <td><s:submit ac="glob-change-enable-full-archive" label="Change" /></td>
+            <td><s:help ac="glob-change-enable-full-archive" /></td>
+        </s:htr>
+    </s:form>
+
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Contestant may view Problems link before start:</td>
+            <td><s:yesno name="param" value="global->always_show_problems" /></td>
+            <td><s:submit ac="glob-change-always-show-problems" label="Change" /></td>
+            <td><s:help ac="glob-change-always-show-problems" /></td>
+        </s:htr>
+    </s:form>
+
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Disable build-in standings in new-client:</td>
+            <td><s:yesno name="param" value="global->disable_user_standings" /></td>
+            <td><s:submit ac="glob-change-disable-user-standings" label="Change" /></td>
+            <td><s:help ac="glob-change-disable-user-standings" /></td>
+        </s:htr>
+    </s:form>
+
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Disable language column in new-client:</td>
+            <td><s:yesno name="param" value="global->disable_language" /></td>
+            <td><s:submit ac="glob-change-disable-language" label="Change" /></td>
+            <td><s:help ac="glob-change-disable-language" /></td>
+        </s:htr>
+    </s:form>
+
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Advanced problem navigation:</td>
+            <td><s:yesno name="param" value="global->problem_navigation" /></td>
+            <td><s:submit ac="glob-change-problem-navigation" label="Change" /></td>
+            <td><s:help ac="glob-change-problem-navigation" /></td>
+        </s:htr>
+    </s:form>
+
+<%
+  if (global->problem_navigation > 0) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Place problem navigation vertically:</td>
+            <td><s:yesno name="param" value="global->vertical_navigation" /></td>
+            <td><s:submit ac="glob-change-vertical-navigation" label="Change" /></td>
+            <td><s:help ac="glob-change-vertical-navigation" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+<%
+  if (global->is_virtual > 0) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Disable user Virtual start button:</td>
+            <td><s:yesno name="param" value="global->disable_virtual_start" /></td>
+            <td><s:submit ac="glob-change-disable-virtual-start" label="Change" /></td>
+            <td><s:help ac="glob-change-disable-virtual-start" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+<%
+  if (global->score_system == SCORE_OLYMPIAD) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Disable auto-judging after virtual olympiad:</td>
+            <td><s:yesno name="param" value="global->disable_virtual_auto_judge" /></td>
+            <td><s:submit ac="glob-change-disable-virtual-auto-judge" label="Change" /></td>
+            <td><s:help ac="glob-change-disable-virtual-auto-judge" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+<%
+  if (global->score_system == SCORE_OLYMPIAD) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Enable automatic protocol printing:</td>
+            <td><s:yesno name="param" value="global->enable_auto_print_protocol" /></td>
+            <td><s:submit ac="glob-change-enable-auto-print-protocol" label="Change" /></td>
+            <td><s:help ac="glob-change-enable-auto-print-protocol" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Enable e-mail clar notifications:</td>
+            <td><s:yesno name="param" value="global->notify_clar_reply" /></td>
+            <td><s:submit ac="glob-change-notify-clar-reply" label="Change" /></td>
+            <td><s:help ac="glob-change-notify-clar-reply" /></td>
+        </s:htr>
+    </s:form>
+
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Enable e-mail status change notifications:</td>
+            <td><s:yesno name="param" value="global->notify_status_change" /></td>
+            <td><s:submit ac="glob-change-notify-status-change" label="Change" /></td>
+            <td><s:help ac="glob-change-notify-status-change" /></td>
+        </s:htr>
+    </s:form>
+
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Disable auto-refreshing:</td>
+            <td><s:yesno name="param" value="global->disable_auto_refresh" /></td>
+            <td><s:submit ac="glob-change-disable-auto-refresh" label="Change" /></td>
+            <td><s:help ac="glob-change-disable-auto-refresh" /></td>
+        </s:htr>
+    </s:form>
+
+<%
+files_and_directories: ;
+%>
+
+    <s:form>
+        <s:htr attr="head_row_attr">
+            <td colspan="4" align="center"><b>Files and directories</b><%
+  if (phr->ss->show_global_2) {
+%><s:submit ac="glob-hide-2" label="Hide" /><%
   } else {
-    html_submit_button(f, SSERV_CMD_GLOB_SHOW_2, "Show");
+%><s:submit ac="glob-show-2" label="Show" /><%
   }
-  fprintf(f, "</td></tr></form>");
-
-  if (sstate->show_global_2) {
-    //GLOBAL_PARAM(advanced_layout, "d"),
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td>Advanced problem files layout:</td><td>", form_row_attrs[row ^= 1]);
-    html_boolean_select(f, global->advanced_layout, "param", 0, 0);
-    fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_ADVANCED_LAYOUT, "Change");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_GLOB_CHANGE_ADVANCED_LAYOUT);
-    fprintf(f, "</tr></form>\n");
-  }
-
-  if (sstate->show_global_2) {
-    //GLOBAL_PARAM(uuid_run_store, "d"),
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td>Use UUID instead of run_id to store runs:</td><td>", form_row_attrs[row ^= 1]);
-    html_boolean_select(f, global->uuid_run_store, "param", 0, 0);
-    fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_UUID_RUN_STORE, "Change");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_GLOB_CHANGE_UUID_RUN_STORE);
-    fprintf(f, "</tr></form>\n");
-  }
-
-  if (sstate->show_global_2) {
-    //GLOBAL_PARAM(test_dir, "s"),
-    print_string_editing_row(f, "Directory for tests (relative to contest configuration dir):", global->test_dir,
-                             SSERV_CMD_GLOB_CHANGE_TEST_DIR,
-                             SSERV_CMD_GLOB_CLEAR_TEST_DIR,
-                             0,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url,
-                             extra_args,
-                             hidden_vars);
-
-    //GLOBAL_PARAM(corr_dir, "s"),
-    print_string_editing_row(f, "Directory for correct answers (relative to contest configuration dir):", global->corr_dir,
-                             SSERV_CMD_GLOB_CHANGE_CORR_DIR,
-                             SSERV_CMD_GLOB_CLEAR_CORR_DIR,
-                             0,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url,
-                             extra_args,
-                             hidden_vars);
-
-    //GLOBAL_PARAM(info_dir, "s"),
-    print_string_editing_row(f, "Directory for test info files (relative to contest configuration dir):", global->info_dir,
-                             SSERV_CMD_GLOB_CHANGE_INFO_DIR,
-                             SSERV_CMD_GLOB_CLEAR_INFO_DIR,
-                             0,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url,
-                             extra_args,
-                             hidden_vars);
-
-    //GLOBAL_PARAM(tgz_dir, "s"),
-    print_string_editing_row(f, "Directory for test tgz files (relative to contest configuration dir):", global->tgz_dir,
-                             SSERV_CMD_GLOB_CHANGE_TGZ_DIR,
-                             SSERV_CMD_GLOB_CLEAR_TGZ_DIR,
-                             0,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url,
-                             extra_args,
-                             hidden_vars);
-
-    //GLOBAL_PARAM(checker_dir, "s"),
-    print_string_editing_row(f, "Directory for checkers (relative to contest configuration dir):", global->checker_dir,
-                             SSERV_CMD_GLOB_CHANGE_CHECKER_DIR,
-                             SSERV_CMD_GLOB_CLEAR_CHECKER_DIR,
-                             0,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url,
-                             extra_args,
-                             hidden_vars);
-
-    //GLOBAL_PARAM(statement_dir, "s"),
-    print_string_editing_row(f, "Directory for problem statements (relative to contest configuration dir):", global->statement_dir,
-                             SSERV_CMD_GLOB_CHANGE_STATEMENT_DIR,
-                             SSERV_CMD_GLOB_CLEAR_STATEMENT_DIR,
-                             0,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url,
-                             extra_args,
-                             hidden_vars);
-
-    //GLOBAL_PARAM(plugin_dir, "s"),
-    print_string_editing_row(f, "Directory for problem plugins (relative to contest configuration dir):", global->plugin_dir,
-                             SSERV_CMD_GLOB_CHANGE_PLUGIN_DIR,
-                             SSERV_CMD_GLOB_CLEAR_PLUGIN_DIR,
-                             0,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url,
-                             extra_args,
-                             hidden_vars);
-
-    //GLOBAL_PARAM(contest_start_cmd, "s"),
-    print_string_editing_row(f, "Contest start script:", global->contest_start_cmd,
-                             SSERV_CMD_GLOB_CHANGE_CONTEST_START_CMD,
-                             SSERV_CMD_GLOB_CLEAR_CONTEST_START_CMD,
-                             SSERV_CMD_GLOB_EDIT_CONTEST_START_CMD_PAGE,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url,
-                             extra_args,
-                             hidden_vars);
-
-    //GLOBAL_PARAM(contest_stop_cmd, "s"),
-    print_string_editing_row(f, "Contest stop script:", global->contest_stop_cmd,
-                             SSERV_CMD_GLOB_CHANGE_CONTEST_STOP_CMD,
-                             SSERV_CMD_GLOB_CLEAR_CONTEST_STOP_CMD,
-                             SSERV_CMD_GLOB_EDIT_CONTEST_STOP_CMD_PAGE,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url,
-                             extra_args,
-                             hidden_vars);
-
-    //GLOBAL_PARAM(description_file, "s"),
-    print_string_editing_row(f, "Contest description file:",
-                             global->description_file,
-                             SSERV_CMD_GLOB_CHANGE_DESCRIPTION_FILE,
-                             SSERV_CMD_GLOB_CLEAR_DESCRIPTION_FILE,
-                             0,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url,
-                             extra_args,
-                             hidden_vars);
-  }
-
-  html_start_form(f, 1, self_url, hidden_vars);
-  fprintf(f, "<tr%s><td colspan=\"4\" align=\"center\"><b>Contestant's quotas</b>", head_row_attr);
+%></td>
+        </s:htr>
+    </s:form>
+<%
+  if (!phr->ss->show_global_2) goto contestant_quotas;
   row = 1;
-  if (sstate->show_global_3) {
-    html_submit_button(f, SSERV_CMD_GLOB_HIDE_3, "Hide");
+%>
+
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Advanced problem files layout:</td>
+            <td><s:yesno name="param" value="global->advanced_layout" /></td>
+            <td><s:submit ac="glob-change-advanced-layout" label="Change" /></td>
+            <td><s:help ac="glob-change-advanced-layout" /></td>
+        </s:htr>
+    </s:form>
+
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Use UUID instead of run_id to store runs:</td>
+            <td><s:yesno name="param" value="global->uuid_run_store" /></td>
+            <td><s:submit ac="glob-change-uuid-run-store" label="Change" /></td>
+            <td><s:help ac="glob-change-uuid-run-store" /></td>
+        </s:htr>
+    </s:form>
+
+<%
+  if (global->advanced_layout <= 0) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Directory for tests (relative to contest configuration dir):</td>
+            <td><s:textfield name="param" value="global->test_dir" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-test-dir" label="Change" /><s:submit ac="glob-clear-test-dir" label="Clear" /></td>
+            <td><s:help ac="glob-change-test-dir" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+<%
+  if (global->advanced_layout <= 0) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Directory for correct answers (relative to contest configuration dir):</td>
+            <td><s:textfield name="param" value="global->corr_dir" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-corr-dir" label="Change" /><s:submit ac="glob-clear-corr-dir" label="Clear" /></td>
+            <td><s:help ac="glob-change-corr-dir" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+<%
+  if (global->advanced_layout <= 0) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Directory for test info files (relative to contest configuration dir):</td>
+            <td><s:textfield name="param" value="global->info_dir" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-info-dir" label="Change" /><s:submit ac="glob-clear-info-dir" label="Clear" /></td>
+            <td><s:help ac="glob-change-info-dir" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+<%
+  if (global->advanced_layout <= 0) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Directory for test tgz files (relative to contest configuration dir):</td>
+            <td><s:textfield name="param" value="global->tgz_dir" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-tgz-dir" label="Change" /><s:submit ac="glob-clear-tgz-dir" label="Clear" /></td>
+            <td><s:help ac="glob-change-tgz-dir" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+<%
+  if (global->advanced_layout <= 0) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Directory for checkers (relative to contest configuration dir):</td>
+            <td><s:textfield name="param" value="global->checker_dir" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-checker-dir" label="Change" /><s:submit ac="glob-clear-checker-dir" label="Clear" /></td>
+            <td><s:help ac="glob-change-checker-dir" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+<%
+  if (global->advanced_layout <= 0) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Directory for problem statements (relative to contest configuration dir):</td>
+            <td><s:textfield name="param" value="global->statement_dir" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-statement-dir" label="Change" /><s:submit ac="glob-clear-statement-dir" label="Clear" /></td>
+            <td><s:help ac="glob-change-statement-dir" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+<%
+  if (global->advanced_layout <= 0) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Directory for problem plugins (relative to contest configuration dir):</td>
+            <td><s:textfield name="param" value="global->plugin_dir" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-plugin-dir" label="Change" /><s:submit ac="glob-clear-plugin-dir" label="Clear" /></td>
+            <td><s:help ac="glob-change-plugin-dir" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Contest start script:</td>
+            <td><s:textfield name="param" value="global->contest_start_cmd" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-contest-start-cmd" label="Change" /><s:submit ac="glob-clear-contest-start-cmd" label="Clear" />[<s:a ac="glob-edit-contest-start-cmd-page">Edit</s:a>]</td>
+            <td><s:help ac="glob-change-contest-start-cmd" /></td>
+        </s:htr>
+    </s:form>
+
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Contest stop script:</td>
+            <td><s:textfield name="param" value="global->contest_stop_cmd" size="48" maxlength="1024" checkExpr="" /></td>
+            <td><s:submit ac="glob-change-contest-stop-cmd" label="Change" /><s:submit ac="glob-clear-contest-stop-cmd" label="Clear" />[<s:a ac="glob-edit-contest-stop-cmd-page">Edit</s:a>]</td>
+            <td><s:help ac="glob-change-contest-stop-cmd" /></td>
+        </s:htr>
+    </s:form>
+
+<%
+contestant_quotas:;
+%>
+
+    <s:form>
+        <s:htr attr="head_row_attr">
+            <td colspan="4" align="center"><b>Contestant's quotas</b><%
+  if (phr->ss->show_global_3) {
+%><s:submit ac="glob-hide-3" label="Hide" /><%
   } else {
-    html_submit_button(f, SSERV_CMD_GLOB_SHOW_3, "Show");
+%><s:submit ac="glob-show-3" label="Show" /><%
   }
-  fprintf(f, "</td></tr></form>");
-
-  if (sstate->show_global_3) {
-    //GLOBAL_PARAM(max_run_size, "d"),
-    print_string_editing_row(f, "Maximum size of one submitted program:",
-                             num_to_size_str(hbuf, sizeof(hbuf), global->max_run_size),
-                             SSERV_CMD_GLOB_CHANGE_MAX_RUN_SIZE,
-                             0,
-                             0,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url,
-                             extra_args,
-                             hidden_vars);
-
-    //GLOBAL_PARAM(max_run_total, "d"),
-    print_string_editing_row(f, "Maximum total size of all submitted programs:",
-                             num_to_size_str(hbuf, sizeof(hbuf), global->max_run_total),
-                             SSERV_CMD_GLOB_CHANGE_MAX_RUN_TOTAL,
-                             0,
-                             0,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url,
-                             extra_args,
-                             hidden_vars);
-
-    //GLOBAL_PARAM(max_run_num, "d"),
-    snprintf(hbuf, sizeof(hbuf), "%d", global->max_run_num);
-    print_string_editing_row(f, "Maximum number of submits:",
-                             hbuf,
-                             SSERV_CMD_GLOB_CHANGE_MAX_RUN_NUM,
-                             0,
-                             0,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url,
-                             extra_args,
-                             hidden_vars);
-
-    if (!global->disable_clars && !global->disable_team_clars) {
-      //GLOBAL_PARAM(max_clar_size, "d"),
-      print_string_editing_row(f, "Maximum size of one clarification request:",
-                               num_to_size_str(hbuf, sizeof(hbuf), global->max_clar_size),
-                               SSERV_CMD_GLOB_CHANGE_MAX_CLAR_SIZE,
-                               0,
-                               0,
-                               session_id,
-                               form_row_attrs[row ^= 1],
-                               self_url,
-                               extra_args,
-                               hidden_vars);
-
-      //GLOBAL_PARAM(max_clar_total, "d"),
-      print_string_editing_row(f, "Maximum total size of all clarification requests:",
-                               num_to_size_str(hbuf, sizeof(hbuf), global->max_clar_total),
-                               SSERV_CMD_GLOB_CHANGE_MAX_CLAR_TOTAL,
-                               0,
-                               0,
-                               session_id,
-                               form_row_attrs[row ^= 1],
-                               self_url,
-                               extra_args,
-                               hidden_vars);
-
-      //GLOBAL_PARAM(max_clar_num, "d"),
-      snprintf(hbuf, sizeof(hbuf), "%d", global->max_clar_num);
-      print_string_editing_row(f, "Maximum number of clarification requests:",
-                               hbuf,
-                               SSERV_CMD_GLOB_CHANGE_MAX_CLAR_NUM,
-                               0,
-                               0,
-                               session_id,
-                               form_row_attrs[row ^= 1],
-                               self_url,
-                               extra_args,
-                               hidden_vars);
-    }
-
-    if (global->enable_printing) {
-      //GLOBAL_PARAM(team_page_quota, "d"),
-      snprintf(hbuf, sizeof(hbuf), "%d", global->team_page_quota);
-      print_string_editing_row(f, "Maximum number of printed pages:",
-                               hbuf,
-                               SSERV_CMD_GLOB_CHANGE_TEAM_PAGE_QUOTA,
-                               0,
-                               0,
-                               session_id,
-                               form_row_attrs[row ^= 1],
-                               self_url,
-                               extra_args,
-                               hidden_vars);
-    }
-  }
-
-  html_start_form(f, 1, self_url, hidden_vars);
-  fprintf(f, "<tr%s><td colspan=\"4\" align=\"center\"><b>Standings files and URLs:</b>", head_row_attr);
+%></td>
+        </s:htr>
+    </s:form>
+<%
+  if (!phr->ss->show_global_3) goto standing_files;
   row = 1;
-  if (sstate->show_global_4) {
-    html_submit_button(f, SSERV_CMD_GLOB_HIDE_4, "Hide");
+%>
+
+<%
+  num_to_size_str(hbuf, sizeof(hbuf), global->max_run_size);
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Maximum size of one submitted program:</td>
+            <td><s:textfield name="param" value="hbuf" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-max-run-size" label="Change" /></td>
+            <td><s:help ac="glob-change-max-run-size" /></td>
+        </s:htr>
+    </s:form>
+
+<%
+  num_to_size_str(hbuf, sizeof(hbuf), global->max_run_total);
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Maximum total size of all submitted programs:</td>
+            <td><s:textfield name="param" value="hbuf" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-max-run-total" label="Change" /></td>
+            <td><s:help ac="glob-change-max-run-total" /></td>
+        </s:htr>
+    </s:form>
+
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Maximum number of submits:</td>
+            <td><s:textfield name="param" value="global->max_run_num" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-max-run-num" label="Change" /></td>
+            <td><s:help ac="glob-change-max-run-num" /></td>
+        </s:htr>
+    </s:form>
+
+<%
+  if (global->disable_clars <= 0 && global->disable_team_clars <= 0) {
+%>
+<%
+  num_to_size_str(hbuf, sizeof(hbuf), global->max_clar_size);
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Maximum size of one clarification request:</td>
+            <td><s:textfield name="param" value="hbuf" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-max-clar-size" label="Change" /></td>
+            <td><s:help ac="glob-change-max-clar-size" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+<%
+  if (global->disable_clars <= 0 && global->disable_team_clars <= 0) {
+%>
+<%
+  num_to_size_str(hbuf, sizeof(hbuf), global->max_clar_total);
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Maximum size of all clarification requests:</td>
+            <td><s:textfield name="param" value="hbuf" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-max-clar-total" label="Change" /></td>
+            <td><s:help ac="glob-change-max-clar-total" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+<%
+  if (global->disable_clars <= 0 && global->disable_team_clars <= 0) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Maximum number of clarification requests:</td>
+            <td><s:textfield name="param" value="global->max_clar_num" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-max-clar-num" label="Change" /></td>
+            <td><s:help ac="glob-change-max-clar-num" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+<%
+  if (global->enable_printing > 0) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Maximum number of printed pages:</td>
+            <td><s:textfield name="param" value="global->team_page_quota" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-team-page-quota" label="Change" /></td>
+            <td><s:help ac="glob-change-team-page-quota" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+<%
+standing_files:;
+%>
+
+    <s:form>
+        <s:htr attr="head_row_attr">
+            <td colspan="4" align="center"><b>Standings files and URLs</b><%
+  if (phr->ss->show_global_4) {
+%><s:submit ac="glob-hide-4" label="Hide" /><%
   } else {
-    html_submit_button(f, SSERV_CMD_GLOB_SHOW_4, "Show");
+%><s:submit ac="glob-show-4" label="Show" /><%
   }
-  fprintf(f, "</td></tr></form>");
-
-  if (sstate->show_global_4) {
-    //GLOBAL_PARAM(team_info_url, "s"),
-    print_string_editing_row(f, "URL to view detailed contestant information:",
-                             global->team_info_url,
-                             SSERV_CMD_GLOB_CHANGE_TEAM_INFO_URL,
-                             SSERV_CMD_GLOB_CLEAR_TEAM_INFO_URL,
-                             0,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url,
-                             extra_args,
-                             hidden_vars);
-
-    //GLOBAL_PARAM(prob_info_url, "s"),
-    print_string_editing_row(f, "URL to view problem statement:",
-                             global->prob_info_url,
-                             SSERV_CMD_GLOB_CHANGE_PROB_INFO_URL,
-                             SSERV_CMD_GLOB_CLEAR_PROB_INFO_URL,
-                             0,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url,
-                             extra_args,
-                             hidden_vars);
-
-    //GLOBAL_PARAM(standings_file_name, "s"),
-    print_string_editing_row(f, "Name of the current standings file:",
-                             global->standings_file_name,
-                             SSERV_CMD_GLOB_CHANGE_STAND_FILE_NAME,
-                             SSERV_CMD_GLOB_CLEAR_STAND_FILE_NAME,
-                             0,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url,
-                             extra_args,
-                             hidden_vars);
-
-    //GLOBAL_PARAM(users_on_page, "d"),
-    hbuf[0] = 0;
-    if (global->users_on_page > 0)
-      snprintf(hbuf, sizeof(hbuf), "%d", global->users_on_page);
-    print_string_editing_row(f, "Number of users on standings page:",
-                             hbuf,
-                             SSERV_CMD_GLOB_CHANGE_USERS_ON_PAGE,
-                             0,
-                             0,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url,
-                             extra_args,
-                             hidden_vars);
-
-    //GLOBAL_PARAM(stand_header_file, "s"),
-    print_string_editing_row(f, "HTML header file for the standings:",
-                             global->stand_header_file,
-                             SSERV_CMD_GLOB_CHANGE_STAND_HEADER_FILE,
-                             SSERV_CMD_GLOB_CLEAR_STAND_HEADER_FILE,
-                             SSERV_CMD_GLOB_EDIT_STAND_HEADER_FILE_PAGE,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url,
-                             extra_args,
-                             hidden_vars);
-
-    //GLOBAL_PARAM(stand_footer_file, "s"),
-    print_string_editing_row(f, "HTML footer file for the standings:",
-                             global->stand_footer_file,
-                             SSERV_CMD_GLOB_CHANGE_STAND_FOOTER_FILE,
-                             SSERV_CMD_GLOB_CLEAR_STAND_FOOTER_FILE,
-                             SSERV_CMD_GLOB_EDIT_STAND_FOOTER_FILE_PAGE,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url,
-                             extra_args,
-                             hidden_vars);
-
-    //GLOBAL_PARAM(stand_symlink_dir, "s"),
-    print_string_editing_row(f, "Directory to make standings symlink (rel. to DocumentRoot):",
-                             global->stand_symlink_dir,
-                             SSERV_CMD_GLOB_CHANGE_STAND_SYMLINK_DIR,
-                             SSERV_CMD_GLOB_CLEAR_STAND_SYMLINK_DIR,
-                             0,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url,
-                             extra_args,
-                             hidden_vars);
-
-    //GLOBAL_PARAM(stand_ignore_after, "t"),
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td>Ignore submissions after:</td><td>",
-            form_row_attrs[row ^= 1]);
-    html_date_select(f, global->stand_ignore_after);
-    fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_STAND_IGNORE_AFTER, "Change");
-    html_submit_button(f, SSERV_CMD_GLOB_CLEAR_STAND_IGNORE_AFTER, "Clear");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_GLOB_CHANGE_STAND_IGNORE_AFTER);
-    fprintf(f, "</tr></form>\n");
-
-    // whether supplementary standings are enabled?
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td>Enable supplementary standings table:</td><td>",
-            form_row_attrs[row ^= 1]);
-    html_boolean_select(f, sstate->enable_stand2, "param", 0, 0);
-    fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_ENABLE_STAND2, "Change");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_GLOB_CHANGE_ENABLE_STAND2);
-    fprintf(f, "</tr></form>\n");
-
-    if (sstate->enable_stand2) {
-      //GLOBAL_PARAM(stand2_file_name, "s"),
-      print_string_editing_row(f, "Name of the supplementary standings file:",
-                               global->stand2_file_name,
-                               SSERV_CMD_GLOB_CHANGE_STAND2_FILE_NAME,
-                               SSERV_CMD_GLOB_CLEAR_STAND2_FILE_NAME,
-                               0,
-                               session_id,
-                               form_row_attrs[row ^= 1],
-                               self_url,
-                               extra_args,
-                               hidden_vars);
-
-    //GLOBAL_PARAM(stand2_header_file, "s"),
-    print_string_editing_row(f, "HTML header file for the supplementary standings:",
-                             global->stand2_header_file,
-                             SSERV_CMD_GLOB_CHANGE_STAND2_HEADER_FILE,
-                             SSERV_CMD_GLOB_CLEAR_STAND2_HEADER_FILE,
-                             SSERV_CMD_GLOB_EDIT_STAND2_HEADER_FILE_PAGE,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url,
-                             extra_args,
-                             hidden_vars);
-
-    //GLOBAL_PARAM(stand2_footer_file, "s"),
-    print_string_editing_row(f, "HTML footer file for the supplementary standings:",
-                             global->stand2_footer_file,
-                             SSERV_CMD_GLOB_CHANGE_STAND2_FOOTER_FILE,
-                             SSERV_CMD_GLOB_CLEAR_STAND2_FOOTER_FILE,
-                             SSERV_CMD_GLOB_EDIT_STAND2_FOOTER_FILE_PAGE,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url,
-                             extra_args,
-                             hidden_vars);
-
-    //GLOBAL_PARAM(stand2_symlink_dir, "s"),
-    print_string_editing_row(f, "Directory to make suppl. standings symlink (rel. to DocumentRoot):",
-                             global->stand2_symlink_dir,
-                             SSERV_CMD_GLOB_CHANGE_STAND2_SYMLINK_DIR,
-                             SSERV_CMD_GLOB_CLEAR_STAND2_SYMLINK_DIR,
-                             0,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url,
-                             extra_args,
-                             hidden_vars);
-    }
-
-    // whether public submission log is enabled?
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td>Enable public submission log:</td><td>",
-            form_row_attrs[row ^= 1]);
-    html_boolean_select(f, sstate->enable_plog, "param", 0, 0);
-    fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_ENABLE_PLOG, "Change");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_GLOB_CHANGE_ENABLE_PLOG);
-    fprintf(f, "</tr></form>\n");
-
-    if (sstate->enable_plog) {
-      //GLOBAL_PARAM(plog_file_name, "s"),
-      print_string_editing_row(f, "Name of the public submission log file:",
-                               global->plog_file_name,
-                               SSERV_CMD_GLOB_CHANGE_PLOG_FILE_NAME,
-                               SSERV_CMD_GLOB_CLEAR_PLOG_FILE_NAME,
-                               0,
-                               session_id,
-                               form_row_attrs[row ^= 1],
-                               self_url,
-                               extra_args,
-                               hidden_vars);
-
-      //GLOBAL_PARAM(plog_header_file, "s"),
-      print_string_editing_row(f, "HTML header file for the public submission log:",
-                               global->plog_header_file,
-                               SSERV_CMD_GLOB_CHANGE_PLOG_HEADER_FILE,
-                               SSERV_CMD_GLOB_CLEAR_PLOG_HEADER_FILE,
-                               SSERV_CMD_GLOB_EDIT_PLOG_HEADER_FILE_PAGE,
-                               session_id,
-                               form_row_attrs[row ^= 1],
-                               self_url,
-                               extra_args,
-                               hidden_vars);
-
-      //GLOBAL_PARAM(plog_footer_file, "s"),
-      print_string_editing_row(f, "HTML footer file for the public submission log:",
-                               global->plog_footer_file,
-                               SSERV_CMD_GLOB_CHANGE_PLOG_FOOTER_FILE,
-                               SSERV_CMD_GLOB_CLEAR_PLOG_FOOTER_FILE,
-                               SSERV_CMD_GLOB_EDIT_PLOG_FOOTER_FILE_PAGE,
-                               session_id,
-                               form_row_attrs[row ^= 1],
-                               self_url,
-                               extra_args,
-                               hidden_vars);
-
-      //GLOBAL_PARAM(plog_symlink_dir, "s"),
-      print_string_editing_row(f, "Directory to make symlink to public submission log (rel. to DocumentRoot):",
-                               global->plog_symlink_dir,
-                               SSERV_CMD_GLOB_CHANGE_PLOG_SYMLINK_DIR,
-                               SSERV_CMD_GLOB_CLEAR_PLOG_SYMLINK_DIR,
-                               0,
-                               session_id,
-                               form_row_attrs[row ^= 1],
-                               self_url,
-                               extra_args,
-                               hidden_vars);
-
-      //GLOBAL_PARAM(plog_update_time, "d"),
-      snprintf(hbuf, sizeof(hbuf), "%d", global->plog_update_time);
-      print_string_editing_row(f, "Public submission log update interval (sec):",
-                               hbuf,
-                               SSERV_CMD_GLOB_CHANGE_PLOG_UPDATE_TIME,
-                               0,
-                               0,
-                               session_id,
-                               form_row_attrs[row ^= 1],
-                               self_url,
-                               extra_args,
-                               hidden_vars);
-    }
-
-    //GLOBAL_PARAM(external_xml_update_time, "d"),
-    snprintf(hbuf, sizeof(hbuf), "%d", global->external_xml_update_time);
-    print_string_editing_row(f, "External XML log update interval (sec):",
-                             hbuf,
-                             SSERV_CMD_GLOB_CHANGE_EXTERNAL_XML_UPDATE_TIME,
-                             0,
-                             0,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url,
-                             extra_args,
-                             hidden_vars);
-
-    //GLOBAL_PARAM(internal_xml_update_time, "d"),
-    snprintf(hbuf, sizeof(hbuf), "%d", global->internal_xml_update_time);
-    print_string_editing_row(f, "Internal XML log update interval (sec):",
-                             hbuf,
-                             SSERV_CMD_GLOB_CHANGE_INTERNAL_XML_UPDATE_TIME,
-                             0,
-                             0,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url,
-                             extra_args,
-                             hidden_vars);
-  }
-
-  html_start_form(f, 1, self_url, hidden_vars);
-  fprintf(f, "<tr%s><td colspan=\"4\" align=\"center\"><b>Standings table attributes</b>", head_row_attr);
+%></td>
+        </s:htr>
+    </s:form>
+<%
+  if (!phr->ss->show_global_4) goto standing_table_attributes;
   row = 1;
-  if (sstate->show_global_5) {
-    html_submit_button(f, SSERV_CMD_GLOB_HIDE_5, "Hide");
+%>
+
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>URL to view detailed contestant information:</td>
+            <td><s:textfield name="param" value="global->team_info_url" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-team-info-url" label="Change" /><s:submit ac="glob-clear-team-info-url" label="Clear" /></td>
+            <td><s:help ac="glob-change-team-info-url" /></td>
+        </s:htr>
+    </s:form>
+
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>URL to view problem statement:</td>
+            <td><s:textfield name="param" value="global->prob_info_url" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-prob-info-url" label="Change" /><s:submit ac="glob-clear-prob-info-url" label="Clear" /></td>
+            <td><s:help ac="glob-change-prob-info-url" /></td>
+        </s:htr>
+    </s:form>
+
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Name of the current standings file:</td>
+            <td><s:textfield name="param" value="global->standings_file_name" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-stand-file-name" label="Change" /><s:submit ac="glob-clear-stand-file-name" label="Clear" /></td>
+            <td><s:help ac="glob-change-stand-file-name" /></td>
+        </s:htr>
+    </s:form>
+
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Number of users on standings page:</td>
+            <td><s:textfield name="param" value="global->users_on_page" size="48" maxlength="1024" checkExpr="> 0" /></td>
+            <td><s:submit ac="glob-change-users-on-page" label="Change" /></td>
+            <td><s:help ac="glob-change-users-on-page" /></td>
+        </s:htr>
+    </s:form>
+
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>HTML header file for the standings:</td>
+            <td><s:textfield name="param" value="global->stand_header_file" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-stand-header-file" label="Change" /><s:submit ac="glob-clear-stand-header-file" label="Clear" />[<s:a ac="glob-edit-stand-header-file-page">Edit</s:a>]</td>
+            <td><s:help ac="glob-change-stand-header-file" /></td>
+        </s:htr>
+    </s:form>
+
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>HTML footer file for the standings:</td>
+            <td><s:textfield name="param" value="global->stand_footer_file" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-stand-footer-file" label="Change" /><s:submit ac="glob-clear-stand-footer-file" label="Clear" />[<s:a ac="glob-edit-stand-footer-file-page">Edit</s:a>]</td>
+            <td><s:help ac="glob-change-stand-footer-file" /></td>
+        </s:htr>
+    </s:form>
+
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Directory to make standings symlink (rel. to DocumentRoot):</td>
+            <td><s:textfield name="param" value="global->stand_symlink_dir" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-stand-symlink-dir" label="Change" /><s:submit ac="glob-clear-stand-symlink-dir" label="Clear" /></td>
+            <td><s:help ac="glob-change-stand-symlink-dir" /></td>
+        </s:htr>
+    </s:form>
+
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Ignore submissions after:</td>
+            <td><% html_date_select(out_f, global->stand_ignore_after); %></td>
+            <td><s:submit ac="glob-change-stand-ignore-after" label="Change" /><s:submit ac="glob-clear-stand-ignore-after" label="Clear" /></td>
+            <td><s:help ac="glob-change-stand-ignore-after" /></td>
+        </s:htr>
+    </s:form>
+
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Enable supplementary standings table:</td>
+            <td><s:yesno name="param" value="phr->ss->enable_stand2" /></td>
+            <td><s:submit ac="glob-change-enable-stand2" label="Change" /></td>
+            <td><s:help ac="glob-change-enable-stand2" /></td>
+        </s:htr>
+    </s:form>
+
+<%
+  if (phr->ss->enable_stand2) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Name of the supplementary standings file:</td>
+            <td><s:textfield name="param" value="global->stand2_file_name" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-stand2-file-name" label="Change" /><s:submit ac="glob-clear-stand2-file-name" label="Clear" /></td>
+            <td><s:help ac="glob-change-stand2-file-name" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+<%
+  if (phr->ss->enable_stand2) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>HTML header file for the supplementary standings:</td>
+            <td><s:textfield name="param" value="global->stand2_header_file" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-stand2-header-file" label="Change" /><s:submit ac="glob-clear-stand2-header-file" label="Clear" />[<s:a ac="glob-edit-stand2-header-file-page">Edit</s:a>]</td>
+            <td><s:help ac="glob-change-stand2-header-file" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+<%
+  if (phr->ss->enable_stand2) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>HTML footer file for the supplementary standings:</td>
+            <td><s:textfield name="param" value="global->stand2_footer_file" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-stand2-footer-file" label="Change" /><s:submit ac="glob-clear-stand2-footer-file" label="Clear" />[<s:a ac="glob-edit-stand2-footer-file-page">Edit</s:a>]</td>
+            <td><s:help ac="glob-change-stand2-footer-file" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+<%
+  if (phr->ss->enable_stand2) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Directory to make suppl. standings symlink (rel. to DocumentRoot):</td>
+            <td><s:textfield name="param" value="global->stand2_symlink_dir" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-stand2-symlink-dir" label="Change" /><s:submit ac="glob-clear-stand2-symlink-dir" label="Clear" /></td>
+            <td><s:help ac="glob-change-stand2-symlink-dir" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Enable public submission log:</td>
+            <td><s:yesno name="param" value="phr->ss->enable_plog" /></td>
+            <td><s:submit ac="glob-change-enable-plog" label="Change" /></td>
+            <td><s:help ac="glob-change-enable-plog" /></td>
+        </s:htr>
+    </s:form>
+
+<%
+  if (phr->ss->enable_plog) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Name of the public submission log file:</td>
+            <td><s:textfield name="param" value="global->plog_file_name" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-plog-file-name" label="Change" /><s:submit ac="glob-clear-plog-file-name" label="Clear" /></td>
+            <td><s:help ac="glob-change-plog-file-name" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+<%
+  if (phr->ss->enable_plog) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>HTML header file for the public submission log:</td>
+            <td><s:textfield name="param" value="global->plog_header_file" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-plog-header-file" label="Change" /><s:submit ac="glob-clear-plog-header-file" label="Clear" />[<s:a ac="glob-edit-plog-header-file-page">Edit</s:a>]</td>
+            <td><s:help ac="glob-change-plog-header-file" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+<%
+  if (phr->ss->enable_plog) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>HTML footer file for the public submission log:</td>
+            <td><s:textfield name="param" value="global->plog_footer_file" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-plog-footer-file" label="Change" /><s:submit ac="glob-clear-plog-footer-file" label="Clear" />[<s:a ac="glob-edit-plog-footer-file-page">Edit</s:a>]</td>
+            <td><s:help ac="glob-change-plog-footer-file" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+<%
+  if (phr->ss->enable_plog) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Directory to make symlink to public submission log (rel. to DocumentRoot):</td>
+            <td><s:textfield name="param" value="global->plog_symlink_dir" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-plog-symlink-dir" label="Change" /><s:submit ac="glob-clear-plog-symlink-dir" label="Clear" /></td>
+            <td><s:help ac="glob-change-plog-symlink-dir" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+<%
+  if (phr->ss->enable_plog) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Public submission log update interval (sec):</td>
+            <td><s:textfield name="param" value="global->plog_update_time" size="48" maxlength="1024" check="> 0" /></td>
+            <td><s:submit ac="glob-change-plog-update-time" label="Change" /></td>
+            <td><s:help ac="glob-change-plog-update-time" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>External XML log update interval (sec):</td>
+            <td><s:textfield name="param" value="global->external_xml_update_time" size="48" maxlength="1024" check="> 0" /></td>
+            <td><s:submit ac="glob-change-external-xml-update-time" label="Change" /></td>
+            <td><s:help ac="glob-change-external-xml-update-time" /></td>
+        </s:htr>
+    </s:form>
+
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Internal XML log update interval (sec):</td>
+            <td><s:textfield name="param" value="global->internal_xml_update_time" size="48" maxlength="1024" check="> 0" /></td>
+            <td><s:submit ac="glob-change-internal-xml-update-time" label="Change" /></td>
+            <td><s:help ac="glob-change-internal-xml-update-time" /></td>
+        </s:htr>
+    </s:form>
+
+<%
+standing_table_attributes:;
+%>
+
+    <s:form>
+        <s:htr attr="head_row_attr">
+            <td colspan="4" align="center"><b>Standings table attributes</b><%
+  if (phr->ss->show_global_5) {
+%><s:submit ac="glob-hide-5" label="Hide" /><%
   } else {
-    html_submit_button(f, SSERV_CMD_GLOB_SHOW_5, "Show");
+%><s:submit ac="glob-show-5" label="Show" /><%
   }
-  fprintf(f, "</td></tr></form>");
-
-  if (sstate->show_global_5) {
-    //GLOBAL_PARAM(stand_fancy_style, "d"),
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td>Use fancy decorations:</td><td>",
-            form_row_attrs[row ^= 1]);
-    html_boolean_select(f, global->stand_fancy_style, "param", 0, 0);
-    fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_STAND_FANCY_STYLE, "Change");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_GLOB_CHANGE_STAND_FANCY_STYLE);
-    fprintf(f, "</tr></form>\n");
-
-    //GLOBAL_PARAM(stand_success_attr, "s"),
-    print_string_editing_row(f, "HTML attributes for \"Last success\" note:",
-                             global->stand_success_attr,
-                             SSERV_CMD_GLOB_CHANGE_STAND_SUCCESS_ATTR,
-                             SSERV_CMD_GLOB_CLEAR_STAND_SUCCESS_ATTR,
-                             0,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url,
-                             extra_args,
-                             hidden_vars);
-
-    //GLOBAL_PARAM(stand_table_attr, "s"),
-    print_string_editing_row(f, "HTML attributes for standings table:",
-                             global->stand_table_attr,
-                             SSERV_CMD_GLOB_CHANGE_STAND_TABLE_ATTR,
-                             SSERV_CMD_GLOB_CLEAR_STAND_TABLE_ATTR,
-                             0,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url,
-                             extra_args,
-                             hidden_vars);
-
-    //GLOBAL_PARAM(stand_row_attr, "x"),
-    if (!global->stand_row_attr || !global->stand_row_attr[0]) {
-      xstr = xstrdup("");
-    } else {
-      xstr = sarray_unparse_2(global->stand_row_attr);
-    }
-    print_string_editing_row(f, "Standings row attributes:", xstr,
-                             SSERV_CMD_GLOB_CHANGE_STAND_ROW_ATTR,
-                             SSERV_CMD_GLOB_CLEAR_STAND_ROW_ATTR,
-                             0,
-                             session_id, form_row_attrs[row ^= 1],
-                             self_url, extra_args, hidden_vars);
-    xfree(xstr);
-
-    //GLOBAL_PARAM(stand_place_attr, "s"),
-    print_string_editing_row(f, "HTML attributes for the \"Place\" column:",
-                             global->stand_place_attr,
-                             SSERV_CMD_GLOB_CHANGE_STAND_PLACE_ATTR,
-                             SSERV_CMD_GLOB_CLEAR_STAND_PLACE_ATTR,
-                             0,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url,
-                             extra_args,
-                             hidden_vars);
-
-    //GLOBAL_PARAM(stand_team_attr, "s"),
-    print_string_editing_row(f, "HTML attributes for the \"Team name\" column:",
-                             global->stand_team_attr,
-                             SSERV_CMD_GLOB_CHANGE_STAND_TEAM_ATTR,
-                             SSERV_CMD_GLOB_CLEAR_STAND_TEAM_ATTR,
-                             0,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url,
-                             extra_args,
-                             hidden_vars);
-
-    //GLOBAL_PARAM(stand_prob_attr, "s"),
-    print_string_editing_row(f, "HTML attributes for the \"Problems\" columns:",
-                             global->stand_prob_attr,
-                             SSERV_CMD_GLOB_CHANGE_STAND_PROB_ATTR,
-                             SSERV_CMD_GLOB_CLEAR_STAND_PROB_ATTR,
-                             0,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url,
-                             extra_args,
-                             hidden_vars);
-
-    //GLOBAL_PARAM(stand_solved_attr, "s"),
-    print_string_editing_row(f, "HTML attributes for the \"Solved\" column:",
-                             global->stand_solved_attr,
-                             SSERV_CMD_GLOB_CHANGE_STAND_SOLVED_ATTR,
-                             SSERV_CMD_GLOB_CLEAR_STAND_SOLVED_ATTR,
-                             0,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url,
-                             extra_args,
-                             hidden_vars);
-
-    if (global->score_system == SCORE_KIROV
-        || global->score_system == SCORE_OLYMPIAD) {
-      //GLOBAL_PARAM(stand_score_attr, "s"),
-      print_string_editing_row(f, "HTML attributes for the \"Score\" column:",
-                               global->stand_score_attr,
-                               SSERV_CMD_GLOB_CHANGE_STAND_SCORE_ATTR,
-                               SSERV_CMD_GLOB_CLEAR_STAND_SCORE_ATTR,
-                               0,
-                               session_id,
-                               form_row_attrs[row ^= 1],
-                               self_url,
-                               extra_args,
-                               hidden_vars);
-    }
-
-    if (global->score_system == SCORE_ACM
-        || global->score_system == SCORE_MOSCOW) {
-      //GLOBAL_PARAM(stand_penalty_attr, "s"),
-      print_string_editing_row(f, "HTML attributes for the \"Penalty\" column:",
-                               global->stand_penalty_attr,
-                               SSERV_CMD_GLOB_CHANGE_STAND_PENALTY_ATTR,
-                               SSERV_CMD_GLOB_CLEAR_STAND_PENALTY_ATTR,
-                               0,
-                               session_id,
-                               form_row_attrs[row ^= 1],
-                               self_url,
-                               extra_args,
-                               hidden_vars);
-    }
-
-    //GLOBAL_PARAM(stand_use_login, "d"),
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td>Use login instead of name:</td><td>",
-            form_row_attrs[row ^= 1]);
-    html_boolean_select(f, global->stand_use_login, "param", 0, 0);
-    fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_STAND_USE_LOGIN, "Change");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_GLOB_CHANGE_STAND_USE_LOGIN);
-    fprintf(f, "</tr></form>\n");
-
-    //GLOBAL_PARAM(stand_show_ok_time, "d"),
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td>Show success time in standings:</td><td>",
-            form_row_attrs[row ^= 1]);
-    html_boolean_select(f, global->stand_show_ok_time, "param", 0, 0);
-    fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_STAND_SHOW_OK_TIME, "Change");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_GLOB_CHANGE_STAND_SHOW_OK_TIME);
-    fprintf(f, "</tr></form>\n");
-
-    //GLOBAL_PARAM(stand_show_att_num, "d"),
-    if (global->score_system == SCORE_KIROV
-        || global->score_system == SCORE_OLYMPIAD) {
-      html_start_form(f, 1, self_url, hidden_vars);
-      fprintf(f, "<tr%s><td>Show number of attempts in standings:</td><td>",
-              form_row_attrs[row ^= 1]);
-      html_boolean_select(f, global->stand_show_att_num, "param", 0, 0);
-      fprintf(f, "</td><td>");
-      html_submit_button(f, SSERV_CMD_GLOB_CHANGE_STAND_SHOW_ATT_NUM,"Change");
-      fprintf(f, "</td>");
-      print_help_url(f, SSERV_CMD_GLOB_CHANGE_STAND_SHOW_ATT_NUM);
-      fprintf(f, "</tr></form>\n");
-    }
-
-    //GLOBAL_PARAM(stand_sort_by_solved, "d"),
-    if (global->score_system == SCORE_KIROV
-        || global->score_system == SCORE_OLYMPIAD) {
-      html_start_form(f, 1, self_url, hidden_vars);
-      fprintf(f, "<tr%s><td>Sort participants by the solved problems first:</td><td>", form_row_attrs[row ^= 1]);
-      html_boolean_select(f, global->stand_sort_by_solved, "param", 0, 0);
-      fprintf(f, "</td><td>");
-      html_submit_button(f, SSERV_CMD_GLOB_CHANGE_STAND_SORT_BY_SOLVED, "Change");
-      fprintf(f, "</td>");
-      print_help_url(f, SSERV_CMD_GLOB_CHANGE_STAND_SORT_BY_SOLVED);
-      fprintf(f, "</tr></form>\n");
-    }
-
-    //GLOBAL_PARAM(stand_collate_name, "d"),
-    if (global->score_system == SCORE_KIROV
-        || global->score_system == SCORE_OLYMPIAD) {
-      html_start_form(f, 1, self_url, hidden_vars);
-      fprintf(f, "<tr%s><td>Collate standings on user name:</td><td>",
-              form_row_attrs[row ^= 1]);
-      html_boolean_select(f, global->stand_collate_name, "param", 0, 0);
-      fprintf(f, "</td><td>");
-      html_submit_button(f, SSERV_CMD_GLOB_CHANGE_STAND_COLLATE_NAME, "Change");
-      fprintf(f, "</td>");
-      print_help_url(f, SSERV_CMD_GLOB_CHANGE_STAND_COLLATE_NAME);
-      fprintf(f, "</tr></form>\n");
-    }
-
-    //GLOBAL_PARAM(stand_enable_penalty, "d"),
-    if (global->score_system == SCORE_KIROV
-        || global->score_system == SCORE_OLYMPIAD) {
-      html_start_form(f, 1, self_url, hidden_vars);
-      fprintf(f, "<tr%s><td>Enable time penalties:</td><td>",
-              form_row_attrs[row ^= 1]);
-      html_boolean_select(f, global->stand_enable_penalty, "param", 0, 0);
-      fprintf(f, "</td><td>");
-      html_submit_button(f, SSERV_CMD_GLOB_CHANGE_STAND_ENABLE_PENALTY, "Change");
-      fprintf(f, "</td>");
-      print_help_url(f, SSERV_CMD_GLOB_CHANGE_STAND_ENABLE_PENALTY);
-      fprintf(f, "</tr></form>\n");
-    }
-
-    //GLOBAL_PARAM(ignore_success_time, "d"),
-    if (global->score_system == SCORE_ACM
-        || global->score_system == SCORE_MOSCOW) {
-      html_start_form(f, 1, self_url, hidden_vars);
-      fprintf(f, "<tr%s><td>Ignore success time in penalty calculation:</td><td>", form_row_attrs[row ^= 1]);
-      html_boolean_select(f, global->ignore_success_time, "param", 0, 0);
-      fprintf(f, "</td><td>");
-      html_submit_button(f, SSERV_CMD_GLOB_CHANGE_IGNORE_SUCCESS_TIME, "Change");
-      fprintf(f, "</td>");
-      print_help_url(f, SSERV_CMD_GLOB_CHANGE_IGNORE_SUCCESS_TIME);
-      fprintf(f, "</tr></form>\n");
-    }
-
-    if (global->stand_show_ok_time) {
-      //GLOBAL_PARAM(stand_time_attr, "s"),
-      print_string_editing_row(f, "HTML attributes for the success time:",
-                               global->stand_time_attr,
-                               SSERV_CMD_GLOB_CHANGE_STAND_TIME_ATTR,
-                               SSERV_CMD_GLOB_CLEAR_STAND_TIME_ATTR,
-                               0,
-                               session_id,
-                               form_row_attrs[row ^= 1],
-                               self_url,
-                               extra_args,
-                               hidden_vars);
-    }
-
-    //GLOBAL_PARAM(stand_fail_attr, "s"),
-    print_string_editing_row(f, "HTML attributes for \"Check failed\" cells:",
-                             global->stand_fail_attr,
-                             SSERV_CMD_GLOB_CHANGE_STAND_FAIL_ATTR,
-                             SSERV_CMD_GLOB_CLEAR_STAND_FAIL_ATTR,
-                             0,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url,
-                             extra_args,
-                             hidden_vars);
-
-    //GLOBAL_PARAM(stand_trans_attr, "s"),
-    print_string_editing_row(f, "HTML attributes for transient cells:",
-                             global->stand_trans_attr,
-                             SSERV_CMD_GLOB_CHANGE_STAND_TRANS_ATTR,
-                             SSERV_CMD_GLOB_CLEAR_STAND_TRANS_ATTR,
-                             0,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url,
-                             extra_args,
-                             hidden_vars);
-
-    //GLOBAL_PARAM(stand_disq_attr, "s"),
-    print_string_editing_row(f, "HTML attributes for \"Disqualified\" cells:",
-                             global->stand_disq_attr,
-                             SSERV_CMD_GLOB_CHANGE_STAND_DISQ_ATTR,
-                             SSERV_CMD_GLOB_CLEAR_STAND_DISQ_ATTR,
-                             0,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url,
-                             extra_args,
-                             hidden_vars);
-
-    if (global->is_virtual) {
-      //GLOBAL_PARAM(stand_self_row_attr, "s"),
-      print_string_editing_row(f, "HTML attributes for the participant's table row:",
-                               global->stand_self_row_attr,
-                               SSERV_CMD_GLOB_CHANGE_STAND_SELF_ROW_ATTR,
-                               SSERV_CMD_GLOB_CLEAR_STAND_SELF_ROW_ATTR,
-                               0,
-                               session_id,
-                               form_row_attrs[row ^= 1],
-                               self_url,
-                               extra_args,
-                               hidden_vars);
-
-      //GLOBAL_PARAM(stand_v_row_attr, "s"),
-      print_string_editing_row(f, "HTML attributes for the virtual participant's rows:",
-                               global->stand_v_row_attr,
-                               SSERV_CMD_GLOB_CHANGE_STAND_V_ROW_ATTR,
-                               SSERV_CMD_GLOB_CLEAR_STAND_V_ROW_ATTR,
-                               0,
-                               session_id,
-                               form_row_attrs[row ^= 1],
-                               self_url,
-                               extra_args,
-                               hidden_vars);
-
-      //GLOBAL_PARAM(stand_r_row_attr, "s"),
-      print_string_editing_row(f, "HTML attributes for the real participant's rows:",
-                               global->stand_r_row_attr,
-                               SSERV_CMD_GLOB_CHANGE_STAND_R_ROW_ATTR,
-                               SSERV_CMD_GLOB_CLEAR_STAND_R_ROW_ATTR,
-                               0,
-                               session_id,
-                               form_row_attrs[row ^= 1],
-                               self_url,
-                               extra_args,
-                               hidden_vars);
-
-      //GLOBAL_PARAM(stand_u_row_attr, "s"),
-      print_string_editing_row(f, "HTML attributes for the unknown participant's rows:",
-                               global->stand_u_row_attr,
-                               SSERV_CMD_GLOB_CHANGE_STAND_U_ROW_ATTR,
-                               SSERV_CMD_GLOB_CLEAR_STAND_U_ROW_ATTR,
-                               0,
-                               session_id,
-                               form_row_attrs[row ^= 1],
-                               self_url,
-                               extra_args,
-                               hidden_vars);
-    }
-    
-    //enable "Extra" column
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td>Show \"Extra information\" column:</td><td>", form_row_attrs[row ^= 1]);
-    html_boolean_select(f, sstate->enable_extra_col, "param", 0, 0);
-    fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_ENABLE_EXTRA_COL, "Change");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_GLOB_CHANGE_ENABLE_EXTRA_COL);
-    fprintf(f, "</tr></form>\n");
-
-    if (sstate->enable_extra_col) {
-      //GLOBAL_PARAM(stand_extra_format, "s"),
-      print_string_editing_row(f, "Format string for \"Extra information\" column:",
-                               global->stand_extra_format,
-                               SSERV_CMD_GLOB_CHANGE_STAND_EXTRA_FORMAT,
-                               SSERV_CMD_GLOB_CLEAR_STAND_EXTRA_FORMAT,
-                               0,
-                               session_id,
-                               form_row_attrs[row ^= 1],
-                               self_url,
-                               extra_args,
-                               hidden_vars);
-
-      //GLOBAL_PARAM(stand_extra_legend, "s"),
-      print_string_editing_row(f, "Column title for \"Extra information\" column:",
-                               global->stand_extra_legend,
-                               SSERV_CMD_GLOB_CHANGE_STAND_EXTRA_LEGEND,
-                               SSERV_CMD_GLOB_CLEAR_STAND_EXTRA_LEGEND,
-                               0,
-                               session_id,
-                               form_row_attrs[row ^= 1],
-                               self_url,
-                               extra_args,
-                               hidden_vars);
-
-      //GLOBAL_PARAM(stand_extra_attr, "s"),
-      print_string_editing_row(f, "HTML attributes for \"Extra information\" column:",
-                               global->stand_extra_attr,
-                               SSERV_CMD_GLOB_CHANGE_STAND_EXTRA_ATTR,
-                               SSERV_CMD_GLOB_CLEAR_STAND_EXTRA_ATTR,
-                               0,
-                               session_id,
-                               form_row_attrs[row ^= 1],
-                               self_url,
-                               extra_args,
-                               hidden_vars);
-    }
-
-    //GLOBAL_PARAM(stand_show_warn_number, "d"),
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td>Show \"Warnings\" column:</td><td>",
-            form_row_attrs[row ^= 1]);
-    html_boolean_select(f, global->stand_show_warn_number, "param", 0, 0);
-    fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_STAND_SHOW_WARN_NUMBER, "Change");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_GLOB_CHANGE_STAND_SHOW_WARN_NUMBER);
-    fprintf(f, "</tr></form>\n");
-
-    if (global->stand_show_warn_number) {
-      //GLOBAL_PARAM(stand_warn_number_attr, "s"),
-      print_string_editing_row(f, "HTML attributes for the \"Warnings\" column:",
-                               global->stand_warn_number_attr,
-                               SSERV_CMD_GLOB_CHANGE_STAND_WARN_NUMBER_ATTR,
-                               SSERV_CMD_GLOB_CLEAR_STAND_WARN_NUMBER_ATTR,
-                               0,
-                               session_id,
-                               form_row_attrs[row ^= 1],
-                               self_url,
-                               extra_args,
-                               hidden_vars);
-    }
-
-    if (global->users_on_page > 0) {
-      //GLOBAL_PARAM(stand_page_table_attr, "s"),
-      print_string_editing_row(f, "HTML attributes for page table:",
-                               global->stand_page_table_attr,
-                               SSERV_CMD_GLOB_CHANGE_STAND_PAGE_TABLE_ATTR,
-                               SSERV_CMD_GLOB_CLEAR_STAND_PAGE_TABLE_ATTR,
-                               0,
-                               session_id,
-                               form_row_attrs[row ^= 1],
-                               self_url,
-                               extra_args,
-                               hidden_vars);
-
-      //GLOBAL_PARAM(stand_page_cur_attr, "s"),
-      print_string_editing_row(f, "HTML attributes for current page message:",
-                               global->stand_page_cur_attr,
-                               SSERV_CMD_GLOB_CHANGE_STAND_PAGE_CUR_ATTR,
-                               SSERV_CMD_GLOB_CLEAR_STAND_PAGE_CUR_ATTR,
-                               0,
-                               session_id,
-                               form_row_attrs[row ^= 1],
-                               self_url,
-                               extra_args,
-                               hidden_vars);
-
-      //GLOBAL_PARAM(stand_page_row_attr, "x"),
-      if (!global->stand_page_row_attr || !global->stand_page_row_attr[0]) {
-        xstr = xstrdup("");
-      } else {
-        xstr = sarray_unparse_2(global->stand_page_row_attr);
-      }
-      print_string_editing_row(f, "Page table row attributes:", xstr,
-                               SSERV_CMD_GLOB_CHANGE_STAND_PAGE_ROW_ATTR,
-                               SSERV_CMD_GLOB_CLEAR_STAND_PAGE_ROW_ATTR,
-                               0,
-                               session_id, form_row_attrs[row ^= 1],
-                               self_url, extra_args, hidden_vars);
-      xfree(xstr);
-
-      //GLOBAL_PARAM(stand_page_col_attr, "x"),
-      if (!global->stand_page_col_attr || !global->stand_page_col_attr[0]) {
-        xstr = xstrdup("");
-      } else {
-        xstr = sarray_unparse_2(global->stand_page_col_attr);
-      }
-      print_string_editing_row(f, "Page table column attributes:", xstr,
-                               SSERV_CMD_GLOB_CHANGE_STAND_PAGE_COL_ATTR,
-                               SSERV_CMD_GLOB_CLEAR_STAND_PAGE_COL_ATTR,
-                               0,
-                               session_id, form_row_attrs[row ^= 1],
-                               self_url, extra_args, hidden_vars);
-      xfree(xstr);
-    }
-  }
-
-  html_start_form(f, 1, self_url, hidden_vars);
-  fprintf(f, "<tr%s><td colspan=\"4\" align=\"center\"><b>Advanced settings</b>", head_row_attr);
+%></td>
+        </s:htr>
+    </s:form>
+<%
+  if (!phr->ss->show_global_5) goto advanced_settings;
   row = 1;
-  if (sstate->show_global_6) {
-    html_submit_button(f, SSERV_CMD_GLOB_HIDE_6, "Hide");
+%>
+
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Use fancy decorations:</td>
+            <td><s:yesno name="param" value="global->stand_fancy_style" /></td>
+            <td><s:submit ac="glob-change-stand-fancy-style" label="Change" /></td>
+            <td><s:help ac="glob-change-stand-fancy-style" /></td>
+        </s:htr>
+    </s:form>
+
+<%
+  if (global->stand_fancy_style <= 0) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>HTML attributes for &quot;Last success&quot; note:</td>
+            <td><s:textfield name="param" value="global->stand_success_attr" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-stand-success-attr" label="Change" /><s:submit ac="glob-clear-stand-success-attr" label="Clear" /></td>
+            <td><s:help ac="glob-change-stand-success-attr" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+<%
+  if (global->stand_fancy_style <= 0) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>HTML attributes for standings table:</td>
+            <td><s:textfield name="param" value="global->stand_table_attr" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-stand-table-attr" label="Change" /><s:submit ac="glob-clear-stand-table-attr" label="Clear" /></td>
+            <td><s:help ac="glob-change-stand-table-attr" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+<%
+  if (global->stand_fancy_style <= 0) {
+%><%
+    xstr = 0;
+    if (global->stand_row_attr && global->stand_row_attr[0]) xstr = sarray_unparse_2(global->stand_row_attr);
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Standings row attributes:</td>
+            <td><s:textfield name="param" value="xstr" size="48" maxlength="1024" checkExpr="" /></td>
+            <td><s:submit ac="glob-change-stand-row-attr" label="Change" /><s:submit ac="glob-clear-stand-row-attr" label="Clear" /></td>
+            <td><s:help ac="glob-change-stand-row-attr" /></td>
+        </s:htr>
+    </s:form>
+<%
+  xfree(xstr); xstr = 0;
+%><%
+  }
+%>
+
+<%
+  if (global->stand_fancy_style <= 0) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>HTML attributes for the &quot;Place&quot; column:</td>
+            <td><s:textfield name="param" value="global->stand_place_attr" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-stand-place-attr" label="Change" /><s:submit ac="glob-clear-stand-place-attr" label="Clear" /></td>
+            <td><s:help ac="glob-change-stand-place-attr" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+<%
+  if (global->stand_fancy_style <= 0) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>HTML attributes for the &quot;Team name&quot; column:</td>
+            <td><s:textfield name="param" value="global->stand_team_attr" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-stand-team-attr" label="Change" /><s:submit ac="glob-clear-stand-team-attr" label="Clear" /></td>
+            <td><s:help ac="glob-change-stand-team-attr" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+<%
+  if (global->stand_fancy_style <= 0) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>HTML attributes for the &quot;Problems&quot; column:</td>
+            <td><s:textfield name="param" value="global->stand_prob_attr" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-stand-prob-attr" label="Change" /><s:submit ac="glob-clear-stand-prob-attr" label="Clear" /></td>
+            <td><s:help ac="glob-change-stand-prob-attr" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+<%
+  if (global->stand_fancy_style <= 0) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>HTML attributes for the &quot;Solved&quot; column:</td>
+            <td><s:textfield name="param" value="global->stand_solved_attr" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-stand-solved-attr" label="Change" /><s:submit ac="glob-clear-stand-solved-attr" label="Clear" /></td>
+            <td><s:help ac="glob-change-stand-solved-attr" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+<%
+  if (global->stand_fancy_style <= 0 && (global->score_system == SCORE_KIROV || global->score_system == SCORE_OLYMPIAD)) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>HTML attributes for the &quot;Score&quot; column:</td>
+            <td><s:textfield name="param" value="global->stand_score_attr" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-stand-score-attr" label="Change" /><s:submit ac="glob-clear-stand-score-attr" label="Clear" /></td>
+            <td><s:help ac="glob-change-stand-score-attr" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+<%
+  if (global->stand_fancy_style <= 0 && (global->score_system == SCORE_ACM || global->score_system == SCORE_MOSCOW)) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>HTML attributes for the &quot;Penalty&quot; column:</td>
+            <td><s:textfield name="param" value="global->stand_penalty_attr" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-stand-penalty-attr" label="Change" /><s:submit ac="glob-clear-stand-penalty-attr" label="Clear" /></td>
+            <td><s:help ac="glob-change-stand-penalty-attr" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Use login instead of name:</td>
+            <td><s:yesno name="param" value="global->stand_use_login" /></td>
+            <td><s:submit ac="glob-change-stand-use-login" label="Change" /></td>
+            <td><s:help ac="glob-change-stand-use-login" /></td>
+        </s:htr>
+    </s:form>
+
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Show success time in standings:</td>
+            <td><s:yesno name="param" value="global->stand_show_ok_time" /></td>
+            <td><s:submit ac="glob-change-stand-show-ok-time" label="Change" /></td>
+            <td><s:help ac="glob-change-stand-show-ok-time" /></td>
+        </s:htr>
+    </s:form>
+
+<%
+  if (global->score_system == SCORE_KIROV || global->score_system == SCORE_OLYMPIAD) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Show number of attempts in standings:</td>
+            <td><s:yesno name="param" value="global->stand_show_att_num" /></td>
+            <td><s:submit ac="glob-change-stand-show-att-num" label="Change" /></td>
+            <td><s:help ac="glob-change-stand-show-att-num" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+<%
+  if (global->score_system == SCORE_KIROV || global->score_system == SCORE_OLYMPIAD) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Sort participants by the solved problems first:</td>
+            <td><s:yesno name="param" value="global->stand_sort_by_solved" /></td>
+            <td><s:submit ac="glob-change-stand-sort-by-solved" label="Change" /></td>
+            <td><s:help ac="glob-change-stand-sort-by-solved" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+<%
+  if (global->score_system == SCORE_KIROV || global->score_system == SCORE_OLYMPIAD) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Enable time penalties:</td>
+            <td><s:yesno name="param" value="global->stand_enable_penalty" /></td>
+            <td><s:submit ac="glob-change-stand-enable-penalty" label="Change" /></td>
+            <td><s:help ac="glob-change-stand-enable-penalty" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+<%
+  if (global->score_system == SCORE_ACM || global->score_system == SCORE_MOSCOW) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Ignore success time in penalty calculation:</td>
+            <td><s:yesno name="param" value="global->ignore_success_time" /></td>
+            <td><s:submit ac="glob-change-ignore-success-time" label="Change" /></td>
+            <td><s:help ac="glob-change-ignore-success-time" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+<%
+  if (global->stand_fancy_style <= 0 && global->stand_show_ok_time > 0) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>HTML attributes for the success time:</td>
+            <td><s:textfield name="param" value="global->stand_time_attr" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-stand-time-attr" label="Change" /><s:submit ac="glob-clear-stand-time-attr" label="Clear" /></td>
+            <td><s:help ac="glob-change-stand-time-attr" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+<%
+  if (global->stand_fancy_style <= 0) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>HTML attributes for &quot;Check failed&quot; cells:</td>
+            <td><s:textfield name="param" value="global->stand_fail_attr" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-stand-fail-attr" label="Change" /><s:submit ac="glob-clear-stand-fail-attr" label="Clear" /></td>
+            <td><s:help ac="glob-change-stand-fail-attr" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+<%
+  if (global->stand_fancy_style <= 0) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>HTML attributes for transient cells:</td>
+            <td><s:textfield name="param" value="global->stand_trans_attr" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-stand-trans-attr" label="Change" /><s:submit ac="glob-clear-stand-trans-attr" label="Clear" /></td>
+            <td><s:help ac="glob-change-stand-trans-attr" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+<%
+  if (global->stand_fancy_style <= 0) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>HTML attributes for &quot;Disqualified&quot; cells:</td>
+            <td><s:textfield name="param" value="global->stand_disq_attr" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-stand-disq-attr" label="Change" /><s:submit ac="glob-clear-stand-disq-attr" label="Clear" /></td>
+            <td><s:help ac="glob-change-stand-disq-attr" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+<%
+  if (global->stand_fancy_style <= 0 && global->is_virtual > 0) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>HTML attributes for the participant's table row:</td>
+            <td><s:textfield name="param" value="global->stand_self_row_attr" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-stand-self-row-attr" label="Change" /><s:submit ac="glob-clear-stand-self-row-attr" label="Clear" /></td>
+            <td><s:help ac="glob-change-stand-self-row-attr" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+<%
+  if (global->stand_fancy_style <= 0 && global->is_virtual > 0) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>HTML attributes for the virtual participant's rows:</td>
+            <td><s:textfield name="param" value="global->stand_v_row_attr" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-stand-v-row-attr" label="Change" /><s:submit ac="glob-clear-stand-v-row-attr" label="Clear" /></td>
+            <td><s:help ac="glob-change-stand-v-row-attr" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+<%
+  if (global->stand_fancy_style <= 0 && global->is_virtual > 0) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>HTML attributes for the real participant's rows:</td>
+            <td><s:textfield name="param" value="global->stand_r_row_attr" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-stand-r-row-attr" label="Change" /><s:submit ac="glob-clear-stand-r-row-attr" label="Clear" /></td>
+            <td><s:help ac="glob-change-stand-r-row-attr" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+<%
+  if (global->stand_fancy_style <= 0 && global->is_virtual > 0) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>HTML attributes for the unknown participant's rows:</td>
+            <td><s:textfield name="param" value="global->stand_u_row_attr" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-stand-u-row-attr" label="Change" /><s:submit ac="glob-clear-stand-u-row-attr" label="Clear" /></td>
+            <td><s:help ac="glob-change-stand-u-row-attr" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Show &quot;Extra information&quot; column:</td>
+            <td><s:yesno name="param" value="phr->ss->enable_extra_col" /></td>
+            <td><s:submit ac="glob-change-enable-extra-col" label="Change" /></td>
+            <td><s:help ac="glob-change-enable-extra-col" /></td>
+        </s:htr>
+    </s:form>
+
+<%
+  if (phr->ss->enable_extra_col > 0) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Format string for &quot;Extra information&quot; column:</td>
+            <td><s:textfield name="param" value="global->stand_extra_format" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-stand-extra-format" label="Change" /><s:submit ac="glob-clear-stand-extra-format" label="Clear" /></td>
+            <td><s:help ac="glob-change-stand-extra-format" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+<%
+  if (phr->ss->enable_extra_col > 0) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Column title for &quot;Extra information&quot; column:</td>
+            <td><s:textfield name="param" value="global->stand_extra_legend" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-stand-extra-legend" label="Change" /><s:submit ac="glob-clear-stand-extra-legend" label="Clear" /></td>
+            <td><s:help ac="glob-change-stand-extra-legend" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+<%
+  if (global->stand_fancy_style <= 0 && phr->ss->enable_extra_col > 0) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>HTML attributes for &quot;Extra information&quot; column:</td>
+            <td><s:textfield name="param" value="global->stand_extra_attr" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-stand-extra-attr" label="Change" /><s:submit ac="glob-clear-stand-extra-attr" label="Clear" /></td>
+            <td><s:help ac="glob-change-stand-extra-attr" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Show &quot;Warnings&quot; column:</td>
+            <td><s:yesno name="param" value="global->stand_show_warn_number" /></td>
+            <td><s:submit ac="glob-change-stand-show-warn-number" label="Change" /></td>
+            <td><s:help ac="glob-change-stand-show-warn-number" /></td>
+        </s:htr>
+    </s:form>
+
+<%
+  if (global->stand_fancy_style <= 0 && global->stand_show_warn_number > 0) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>HTML attributes for &quot;Warnings&quot; column:</td>
+            <td><s:textfield name="param" value="global->stand_warn_number_attr" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-stand-warn-number-attr" label="Change" /><s:submit ac="glob-clear-stand-warn-number-attr" label="Clear" /></td>
+            <td><s:help ac="glob-change-stand-warn-number-attr" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+<%
+  if (global->stand_fancy_style <= 0 && global->users_on_page > 0) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>HTML attributes for page table:</td>
+            <td><s:textfield name="param" value="global->stand_page_table_attr" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-stand-page-table-attr" label="Change" /><s:submit ac="glob-clear-stand-page-table-attr" label="Clear" /></td>
+            <td><s:help ac="glob-change-stand-page-table-attr" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+<%
+  if (global->stand_fancy_style <= 0 && global->users_on_page > 0) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>HTML attributes for current page message:</td>
+            <td><s:textfield name="param" value="global->stand_page_cur_attr" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-stand-page-cur-attr" label="Change" /><s:submit ac="glob-clear-stand-page-cur-attr" label="Clear" /></td>
+            <td><s:help ac="glob-change-stand-page-cur-attr" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+<%
+  if (global->stand_fancy_style <= 0 && global->users_on_page > 0) {
+%><%
+    xstr = 0;
+    if (global->stand_page_row_attr && global->stand_page_row_attr[0]) xstr = sarray_unparse_2(global->stand_page_row_attr);
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Page table row attributes:</td>
+            <td><s:textfield name="param" value="xstr" size="48" maxlength="1024" checkExpr="" /></td>
+            <td><s:submit ac="glob-change-stand-page-row-attr" label="Change" /><s:submit ac="glob-clear-stand-page-row-attr" label="Clear" /></td>
+            <td><s:help ac="glob-change-stand-page-row-attr" /></td>
+        </s:htr>
+    </s:form>
+<%
+    xfree(xstr); xstr = 0;
+%><%
+  }
+%>
+
+<%
+  if (global->stand_fancy_style <= 0 && global->users_on_page > 0) {
+%><%
+    xstr = 0;
+    if (global->stand_page_col_attr && global->stand_page_col_attr[0]) xstr = sarray_unparse_2(global->stand_page_col_attr);
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Page table column attributes:</td>
+            <td><s:textfield name="param" value="xstr" size="48" maxlength="1024" checkExpr="" /></td>
+            <td><s:submit ac="glob-change-stand-page-col-attr" label="Change" /><s:submit ac="glob-clear-stand-page-col-attr" label="Clear" /></td>
+            <td><s:help ac="glob-change-stand-page-col-attr" /></td>
+        </s:htr>
+    </s:form>
+<%
+    xfree(xstr); xstr = 0;
+%><%
+  }
+%>
+
+<%
+advanced_settings:;
+%>
+
+    <s:form>
+        <s:htr attr="head_row_attr">
+            <td colspan="4" align="center"><b>Advanced settings</b><%
+  if (phr->ss->show_global_6) {
+%><s:submit ac="glob-hide-6" label="Hide" /><%
   } else {
-    html_submit_button(f, SSERV_CMD_GLOB_SHOW_6, "Show");
+%><s:submit ac="glob-show-6" label="Show" /><%
   }
-  fprintf(f, "</td></tr></form>");
+%></td>
+        </s:htr>
+    </s:form>
+<%
+  if (!phr->ss->show_global_6) goto uneditable_params;
+  row = 1;
+%>
 
-  if (sstate->show_global_6) {
-    //GLOBAL_PARAM(appeal_deadline, "t"),
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td>Appeal deadline:</td><td>",
-            form_row_attrs[row ^= 1]);
-    html_date_select(f, global->appeal_deadline);
-    fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_APPEAL_DEADLINE, "Change");
-    html_submit_button(f, SSERV_CMD_GLOB_CLEAR_APPEAL_DEADLINE, "Clear");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_GLOB_CHANGE_APPEAL_DEADLINE);
-    fprintf(f, "</tr></form>\n");
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Appeal deadline:</td>
+            <td><% html_date_select(out_f, global->appeal_deadline); %></td>
+            <td><s:submit ac="glob-change-appeal-deadline" label="Change" /><s:submit ac="glob-clear-appeal-deadline" label="Clear" /></td>
+            <td><s:help ac="glob-change-appeal-deadline" /></td>
+        </s:htr>
+    </s:form>
 
-    //GLOBAL_PARAM(sleep_time, "d"),
-    snprintf(hbuf, sizeof(hbuf), "%d", global->sleep_time);
-    print_string_editing_row(f, "`compile', `run' sleep time (ms):",
-                             hbuf,
-                             SSERV_CMD_GLOB_CHANGE_SLEEP_TIME,
-                             0,
-                             0,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url,
-                             extra_args,
-                             hidden_vars);
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Update standings automatically (except freeze time):</td>
+            <td><s:yesno name="param" value="global->autoupdate_standings" /></td>
+            <td><s:submit ac="glob-change-autoupdate-standings" label="Change" /></td>
+            <td><s:help ac="glob-change-autoupdate-standings" /></td>
+        </s:htr>
+    </s:form>
 
-    //GLOBAL_PARAM(serve_sleep_time, "d"),
-    snprintf(hbuf, sizeof(hbuf), "%d", global->serve_sleep_time);
-    print_string_editing_row(f, "`serve' sleep time (ms):",
-                             hbuf,
-                             SSERV_CMD_GLOB_CHANGE_SERVE_SLEEP_TIME,
-                             0,
-                             0,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url,
-                             extra_args,
-                             hidden_vars);
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Use PR (Pending Review) status instead of OK:</td>
+            <td><s:yesno name="param" value="global->use_ac_not_ok" /></td>
+            <td><s:submit ac="glob-change-use-ac-not-ok" label="Change" /></td>
+            <td><s:help ac="glob-change-use-ac-not-ok" /></td>
+        </s:htr>
+    </s:form>
 
-    //GLOBAL_PARAM(autoupdate_standings, "d"),
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td>Update standings automatically (except freeze time):</td><td>", form_row_attrs[row ^= 1]);
-    html_boolean_select(f, global->autoupdate_standings, "param", 0, 0);
-    fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_AUTOUPDATE_STANDINGS, "Change");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_GLOB_CHANGE_AUTOUPDATE_STANDINGS);
-    fprintf(f, "</tr></form>\n");
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Seconds to minutes rounding mode:</td>
+            <td><% html_select(out_f, global->rounding_mode, "param", rounding_modes); %></td>
+            <td><s:submit ac="glob-change-rounding-mode" label="Change" /></td>
+            <td><s:help ac="glob-change-rounding-mode" /></td>
+        </s:htr>
+    </s:form>
 
-    //GLOBAL_PARAM(use_ac_not_ok, "d"),
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td>Use AC status instead of OK:</td><td>", form_row_attrs[row ^= 1]);
-    html_boolean_select(f, global->use_ac_not_ok, "param", 0, 0);
-    fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_USE_AC_NOT_OK, "Change");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_GLOB_CHANGE_USE_AC_NOT_OK);
-    fprintf(f, "</tr></form>\n");
+<%
+  num_to_size_str(hbuf, sizeof(hbuf), global->max_file_length);
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Maximal file size to be included into testing protocol:</td>
+            <td><s:textfield name="param" value="hbuf" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-max-file-length" label="Change" /></td>
+            <td><s:help ac="glob-change-max-file-length" /></td>
+        </s:htr>
+    </s:form>
 
-    //GLOBAL_PARAM(rounding_mode, "s"),
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td>Seconds to minutes rounding mode:</td><td>",
-            form_row_attrs[row ^= 1]);
-    html_select(f, global->rounding_mode, "param", rounding_modes);
-    fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_ROUNDING_MODE, "Change");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_GLOB_CHANGE_ROUNDING_MODE);
-    fprintf(f, "</tr></form>\n");
+<%
+  num_to_size_str(hbuf, sizeof(hbuf), global->max_line_length);
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Maximal line length to be included into testing protocol:</td>
+            <td><s:textfield name="param" value="hbuf" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-max-line-length" label="Change" /></td>
+            <td><s:help ac="glob-change-max-line-length" /></td>
+        </s:htr>
+    </s:form>
 
-    //GLOBAL_PARAM(max_file_length, "d"),
-    print_string_editing_row(f, "Maximal file size to be included into testing protocol:",
-                             num_to_size_str(hbuf, sizeof(hbuf), global->max_file_length),
-                             SSERV_CMD_GLOB_CHANGE_MAX_FILE_LENGTH,
-                             0,
-                             0,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url,
-                             extra_args,
-                             hidden_vars);
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Inactivity timeout:</td>
+            <td><s:textfield name="param" value="global->inactivity_timeout" size="48" maxlength="1024" check="> 0" /></td>
+            <td><s:submit ac="glob-change-inactivity-timeout" label="Change" /></td>
+            <td><s:help ac="glob-change-inactivity-timeout" /></td>
+        </s:htr>
+    </s:form>
 
-    //GLOBAL_PARAM(max_line_length, "d"),
-    print_string_editing_row(f, "Maximal line length to be included into testing protocol:",
-                             num_to_size_str(hbuf, sizeof(hbuf), global->max_line_length),
-                             SSERV_CMD_GLOB_CHANGE_MAX_LINE_LENGTH,
-                             0,
-                             0,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url,
-                             extra_args,
-                             hidden_vars);
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Ignore BOM in text submits:</td>
+            <td><s:yesno name="param" value="global->ignore_bom" /></td>
+            <td><s:submit ac="glob-change-ignore-bom" label="Change" /></td>
+            <td><s:help ac="glob-change-ignore-bom" /></td>
+        </s:htr>
+    </s:form>
 
-    //GLOBAL_PARAM(inactivity_timeout, "d"),
-    snprintf(hbuf, sizeof(hbuf), "%d", global->inactivity_timeout);
-    print_string_editing_row(f, "Inactivity timeout for `serve' and `run' (sec)",
-                             hbuf,
-                             SSERV_CMD_GLOB_CHANGE_INACTIVITY_TIMEOUT,
-                             0,
-                             0,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url,
-                             extra_args,
-                             hidden_vars);
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Disable any testing of submissions:</td>
+            <td><s:yesno name="param" value="global->disable_testing" /></td>
+            <td><s:submit ac="glob-change-disable-testing" label="Change" /></td>
+            <td><s:help ac="glob-change-disable-testing" /></td>
+        </s:htr>
+    </s:form>
 
-    //GLOBAL_PARAM(ignore_bom, "d"),
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td>Ignore BOM in text submits:</td><td>", form_row_attrs[row ^= 1]);
-    html_boolean_select(f, global->ignore_bom, "param", 0, 0);
-    fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_IGNORE_BOM, "Change");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_GLOB_CHANGE_IGNORE_BOM);
-    fprintf(f, "</tr></form>\n");
-
-    //GLOBAL_PARAM(disable_testing, "d"),
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td>Disable any testing of submissions:</td><td>",
-            form_row_attrs[row ^= 1]);
-    html_boolean_select(f, global->disable_testing, "param", 0, 0);
-    fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_DISABLE_TESTING, "Change");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_GLOB_CHANGE_DISABLE_TESTING);
-    fprintf(f, "</tr></form>\n");
-
-    if (!global->disable_testing) {
-      //GLOBAL_PARAM(disable_auto_testing, "d"),
-      html_start_form(f, 1, self_url, hidden_vars);
-      fprintf(f, "<tr%s><td>Disable automatic testing of submissions:</td><td>", form_row_attrs[row ^= 1]);
-      html_boolean_select(f, global->disable_auto_testing, "param", 0, 0);
-      fprintf(f, "</td><td>");
-      html_submit_button(f, SSERV_CMD_GLOB_CHANGE_DISABLE_AUTO_TESTING, "Change");
-      fprintf(f, "</td>");
-      print_help_url(f, SSERV_CMD_GLOB_CHANGE_DISABLE_AUTO_TESTING);
-      fprintf(f, "</tr></form>\n");
-    }
-
-    //GLOBAL_PARAM(cr_serialization_key, "d"),
-    snprintf(hbuf, sizeof(hbuf), "%d", global->cr_serialization_key);
-    print_string_editing_row(f, "Serialization semaphore for `compile' and `run'",
-                             hbuf,
-                             SSERV_CMD_GLOB_CHANGE_CR_SERIALIZATION_KEY,
-                             0,
-                             0,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url,
-                             extra_args,
-                             hidden_vars);
-
-    //GLOBAL_PARAM(show_astr_time, "d"),
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td>Show astronomic time instead of relative time:</td><td>", form_row_attrs[row ^= 1]);
-    html_boolean_select(f, global->show_astr_time, "param", 0, 0);
-    fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_SHOW_ASTR_TIME, "Change");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_GLOB_CHANGE_SHOW_ASTR_TIME);
-    fprintf(f, "</tr></form>\n");
-
-    //GLOBAL_PARAM(memoize_user_results, "d"),
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td>Memoize user results:</td><td>", form_row_attrs[row ^= 1]);
-    html_boolean_select(f, global->memoize_user_results, "param", 0, 0);
-    fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_MEMOIZE_USER_RESULTS, "Change");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_GLOB_CHANGE_MEMOIZE_USER_RESULTS);
-    fprintf(f, "</tr></form>\n");
-
-    //GLOBAL_PARAM(enable_continue, "d"),
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td>Enable contest continuation:</td><td>",
-            form_row_attrs[row ^= 1]);
-    html_boolean_select(f, global->enable_continue, "param", 0, 0);
-    fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_ENABLE_CONTINUE, "Change");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_GLOB_CHANGE_ENABLE_CONTINUE);
-    fprintf(f, "</tr></form>\n");
-
-    //GLOBAL_PARAM(enable_report_upload, "d"),
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td>Enable testing protocol upload:</td><td>",
-            form_row_attrs[row ^= 1]);
-    html_boolean_select(f, global->enable_report_upload, "param", 0, 0);
-    fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_ENABLE_REPORT_UPLOAD, "Change");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_GLOB_CHANGE_ENABLE_REPORT_UPLOAD);
-    fprintf(f, "</tr></form>\n");
-
-    //GLOBAL_PARAM(enable_runlog_merge, "d"),
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td>Enable run database importing and merging:</td><td>",
-            form_row_attrs[row ^= 1]);
-    html_boolean_select(f, global->enable_runlog_merge, "param", 0, 0);
-    fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_ENABLE_RUNLOG_MERGE, "Change");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_GLOB_CHANGE_ENABLE_RUNLOG_MERGE);
-    fprintf(f, "</tr></form>\n");
-
-    //GLOBAL_PARAM(disable_user_database, "d"),
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td>Disable user database loading:</td><td>",
-            form_row_attrs[row ^= 1]);
-    html_boolean_select(f, global->disable_user_database, "param", 0, 0);
-    fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_DISABLE_USER_DATABASE, "Change");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_GLOB_CHANGE_DISABLE_USER_DATABASE);
-    fprintf(f, "</tr></form>\n");
-
-    //GLOBAL_PARAM(enable_l10n, "d"),
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td>Enable message translation:</td><td>",
-            form_row_attrs[row ^= 1]);
-    html_boolean_select(f, global->enable_l10n, "param", 0, 0);
-    fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_ENABLE_L10N, "Change");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_GLOB_CHANGE_ENABLE_L10N);
-    fprintf(f, "</tr></form>\n");
-
-    //GLOBAL_PARAM(charset, "s"),
-    print_string_editing_row(f, "Character set:",
-                             global->charset,
-                             SSERV_CMD_GLOB_CHANGE_CHARSET,
-                             SSERV_CMD_GLOB_CLEAR_CHARSET,
-                             0,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url,
-                             extra_args,
-                             hidden_vars);
-
-    //GLOBAL_PARAM(standings_charset, "s"),
-    print_string_editing_row(f, "Stadings character set:",
-                             global->standings_charset,
-                             SSERV_CMD_GLOB_CHANGE_STANDINGS_CHARSET,
-                             SSERV_CMD_GLOB_CLEAR_STANDINGS_CHARSET,
-                             0,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url,
-                             extra_args,
-                             hidden_vars);
-
-    //GLOBAL_PARAM(stand2_charset, "s"),
-    if (sstate->enable_stand2 && global->stand2_file_name[0]) {
-      print_string_editing_row(f, "Aux. stadings character set:",
-                               global->charset,
-                               SSERV_CMD_GLOB_CHANGE_STAND2_CHARSET,
-                               SSERV_CMD_GLOB_CLEAR_STAND2_CHARSET,
-                               0,
-                               session_id,
-                               form_row_attrs[row ^= 1],
-                               self_url,
-                               extra_args,
-                               hidden_vars);
-    }
-
-    //GLOBAL_PARAM(plog_charset, "s"),
-    if (sstate->enable_plog && global->plog_file_name[0]) {
-      print_string_editing_row(f, "Submission log character set:",
-                               global->charset,
-                               SSERV_CMD_GLOB_CHANGE_PLOG_CHARSET,
-                               SSERV_CMD_GLOB_CLEAR_PLOG_CHARSET,
-                               0,
-                               session_id,
-                               form_row_attrs[row ^= 1],
-                               self_url,
-                               extra_args,
-                               hidden_vars);
-    }
-
-    //GLOBAL_PARAM(team_download_time, "d"),
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td>Team archive download interval (HH:MM:SS):</td>",
-            form_row_attrs[row ^= 1]);
-    if (!global->team_download_time) {
-      fprintf(f, "<td><input type=\"text\" name=\"param\" value=\"0\" size=\"8\"/><i>(Disabled)</i></td><td>");
-      html_submit_button(f, SSERV_CMD_GLOB_CHANGE_TEAM_DOWNLOAD_TIME, "Change");
-    } else {
-      fprintf(f, "<td><input type=\"text\" name=\"param\" value=\"%d:%02d:%02d\" size=\"8\"/></td><td>",
-              global->team_download_time / 3600,
-              (global->team_download_time / 60) % 60,
-              global->team_download_time % 60);
-      html_submit_button(f, SSERV_CMD_GLOB_CHANGE_TEAM_DOWNLOAD_TIME, "Change");
-      html_submit_button(f, SSERV_CMD_GLOB_DISABLE_TEAM_DOWNLOAD_TIME, "Disable");
-    }
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_GLOB_CHANGE_TEAM_DOWNLOAD_TIME);
-    fprintf(f, "</tr></form>\n");
-
-    //GLOBAL_PARAM(cpu_bogomips, "d"),
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td>CPU speed (BogoMIPS):</td>",
-            form_row_attrs[row ^= 1]);
-    if (global->cpu_bogomips <= 0) {
-      fprintf(f, "<td><input type=\"text\" name=\"param\" value=\"0\" size=\"8\"/><i>(Unknown)</i></td><td>");
-    } else {
-      fprintf(f, "<td><input type=\"text\" name=\"param\" value=\"%d\" size=\"8\"/></td><td>", global->cpu_bogomips);
-    }
-    html_submit_button(f, SSERV_CMD_GLOB_CHANGE_CPU_BOGOMIPS, "Change");
-    html_submit_button(f, SSERV_CMD_GLOB_DETECT_CPU_BOGOMIPS, "Detect");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_GLOB_CHANGE_CPU_BOGOMIPS);
-    fprintf(f, "</tr></form>\n");
-
-    //GLOBAL_PARAM(load_user_group, "x"),
-    if (!global->load_user_group || !global->load_user_group[0]) {
-      xstr = xstrdup("");
-    } else {
-      xstr = sarray_unparse_2(global->load_user_group);
-    }
-    print_string_editing_row(f, "User groups to load:", xstr,
-                             SSERV_CMD_GLOB_CHANGE_LOAD_USER_GROUP,
-                             SSERV_CMD_GLOB_CLEAR_LOAD_USER_GROUP,
-                             0,
-                             session_id, form_row_attrs[row ^= 1],
-                             self_url, extra_args, hidden_vars);
-    xfree(xstr);
-
-    //GLOBAL_PARAM(clardb_plugin, "s"),
-    print_string_editing_row(f, "ClarDB storage engine:",
-                             global->clardb_plugin,
-                             SSERV_CMD_GLOB_CHANGE_CLARDB_PLUGIN,
-                             SSERV_CMD_GLOB_CLEAR_CLARDB_PLUGIN,
-                             0,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url,
-                             extra_args,
-                             hidden_vars);
-    //GLOBAL_PARAM(rundb_plugin, "s"),
-    print_string_editing_row(f, "RunDB storage engine:",
-                             global->rundb_plugin,
-                             SSERV_CMD_GLOB_CHANGE_RUNDB_PLUGIN,
-                             SSERV_CMD_GLOB_CLEAR_RUNDB_PLUGIN,
-                             0,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url,
-                             extra_args,
-                             hidden_vars);
-    //GLOBAL_PARAM(xuser_plugin, "s"),
-    print_string_editing_row(f, "XuserDB storage engine:",
-                             global->xuser_plugin,
-                             SSERV_CMD_GLOB_CHANGE_XUSER_PLUGIN,
-                             SSERV_CMD_GLOB_CLEAR_XUSER_PLUGIN,
-                             0,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url,
-                             extra_args,
-                             hidden_vars);
+<%
+  if (global->disable_testing <= 0) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Disable automatic testing of submissions:</td>
+            <td><s:yesno name="param" value="global->disable_auto_testing" /></td>
+            <td><s:submit ac="glob-change-disable-auto-testing" label="Change" /></td>
+            <td><s:help ac="glob-change-disable-auto-testing" /></td>
+        </s:htr>
+    </s:form>
+<%
   }
+%>
 
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Show astronomic time instead of relative time:</td>
+            <td><s:yesno name="param" value="global->show_astr_time" /></td>
+            <td><s:submit ac="glob-change-show-astr-time" label="Change" /></td>
+            <td><s:help ac="glob-change-show-astr-time" /></td>
+        </s:htr>
+    </s:form>
+
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Enable testing protocol upload:</td>
+            <td><s:yesno name="param" value="global->enable_report_upload" /></td>
+            <td><s:submit ac="glob-change-enable-report-upload" label="Change" /></td>
+            <td><s:help ac="glob-change-enable-report-upload" /></td>
+        </s:htr>
+    </s:form>
+
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Enable run database importing and merging:</td>
+            <td><s:yesno name="param" value="global->enable_runlog_merge" /></td>
+            <td><s:submit ac="glob-change-enable-runlog-merge" label="Change" /></td>
+            <td><s:help ac="glob-change-enable-runlog-merge" /></td>
+        </s:htr>
+    </s:form>
+
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Disable user database loading:</td>
+            <td><s:yesno name="param" value="global->disable_user_database" /></td>
+            <td><s:submit ac="glob-change-disable-user-database" label="Change" /></td>
+            <td><s:help ac="glob-change-disable-user-database" /></td>
+        </s:htr>
+    </s:form>
+
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Enable message translation:</td>
+            <td><s:yesno name="param" value="global->enable_l10n" /></td>
+            <td><s:submit ac="glob-change-enable-l10n" label="Change" /></td>
+            <td><s:help ac="glob-change-enable-l10n" /></td>
+        </s:htr>
+    </s:form>
+
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Character set:</td>
+            <td><s:textfield name="param" value="global->charset" size="48" maxlength="1024" checkExpr="" /></td>
+            <td><s:submit ac="glob-change-charset" label="Change" /><s:submit ac="glob-clear-charset" label="Clear" /></td>
+            <td><s:help ac="glob-change-charset" /></td>
+        </s:htr>
+    </s:form>
+
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Standings character set:</td>
+            <td><s:textfield name="param" value="global->standings_charset" size="48" maxlength="1024" checkExpr="" /></td>
+            <td><s:submit ac="glob-change-standings-charset" label="Change" /><s:submit ac="glob-clear-standings-charset" label="Clear" /></td>
+            <td><s:help ac="glob-change-standings-charset" /></td>
+        </s:htr>
+    </s:form>
+
+<%
+  if (phr->ss->enable_stand2 && global->stand2_file_name[0]) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Aux. standings character set:</td>
+            <td><s:textfield name="param" value="global->stand2_charset" size="48" maxlength="1024" checkExpr="" /></td>
+            <td><s:submit ac="glob-change-stand2-charset" label="Change" /><s:submit ac="glob-clear-stand2-charset" label="Clear" /></td>
+            <td><s:help ac="glob-change-stand2-charset" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+<%
+  if (phr->ss->enable_plog && global->plog_file_name[0]) {
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Submission log character set:</td>
+            <td><s:textfield name="param" value="global->plog_charset" size="48" maxlength="1024" checkExpr="" /></td>
+            <td><s:submit ac="glob-change-plog-charset" label="Change" /><s:submit ac="glob-clear-plog-charset" label="Clear" /></td>
+            <td><s:help ac="glob-change-plog-charset" /></td>
+        </s:htr>
+    </s:form>
+<%
+  }
+%>
+
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>CPU speed (BogoMIPS):</td>
+            <td><s:textfield name="param" value="global->cpu_bogomips" size="48" maxlength="1024" checkExpr=" > 0" /></td>
+            <td><s:submit ac="glob-change-cpu-bogomips" label="Change" /><s:submit ac="glob-detect-cpu-bogomips" label="Detect" /></td>
+            <td><s:help ac="glob-change-cpu-bogomips" /></td>
+        </s:htr>
+    </s:form>
+
+<%
+  xstr = 0;
+  if (global->load_user_group && global->load_user_group[0]) xstr = sarray_unparse_2(global->load_user_group);
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>User groups to load:</td>
+            <td><s:textfield name="param" value="xstr" size="48" maxlength="1024" checkExpr="" /></td>
+            <td><s:submit ac="glob-change-load-user-group" label="Change" /><s:submit ac="glob-clear-load-user-group" label="Detect" /></td>
+            <td><s:help ac="glob-change-load-user-group" /></td>
+        </s:htr>
+    </s:form>
+<%
+  xfree(xstr); xstr = 0;
+%>
+
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>ClarDB storage engine:</td>
+            <td><s:textfield name="param" value="global->clardb_plugin" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-clardb-plugin" label="Change" /><s:submit ac="glob-clear-clardb-plugin" label="Clear" /></td>
+            <td><s:help ac="glob-change-clardb-plugin" /></td>
+        </s:htr>
+    </s:form>
+
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>RunDB storage engine:</td>
+            <td><s:textfield name="param" value="global->rundb_plugin" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-rundb-plugin" label="Change" /><s:submit ac="glob-clear-clardb-plugin" label="Clear" /></td>
+            <td><s:help ac="glob-change-rundb-plugin" /></td>
+        </s:htr>
+    </s:form>
+
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>XuserDB storage engine:</td>
+            <td><s:textfield name="param" value="global->xuser_plugin" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="glob-change-xuser-plugin" label="Change" /><s:submit ac="glob-clear-xuser-plugin" label="Clear" /></td>
+            <td><s:help ac="glob-change-xuser-plugin" /></td>
+        </s:htr>
+    </s:form>
+
+<%
+uneditable_params:;
+%>
+
+<%
   if (global->unhandled_vars) {
-    html_start_form(f, 1, self_url, hidden_vars);
-    fprintf(f, "<tr%s><td colspan=\"4\" align=\"center\"><b>Uneditable parameters</b>", head_row_attr);
-    row = 1;
-    if (sstate->show_global_7) {
-      html_submit_button(f, SSERV_CMD_GLOB_HIDE_7, "Hide");
+%>
+    <s:form>
+        <s:htr attr="head_row_attr">
+            <td colspan="4" align="center"><b>Uneditable parameters</b><%
+    if (phr->ss->show_global_7) {
+%><s:submit ac="glob-hide-7" label="Hide" /><%
     } else {
-      html_submit_button(f, SSERV_CMD_GLOB_SHOW_7, "Show");
+%><s:submit ac="glob-show-7" label="Show" /><%
     }
-    fprintf(f, "</td></tr></form>\n");
-    if (sstate->show_global_7) {
-      s = html_armor_string_dup(global->unhandled_vars);
-      fprintf(f, "<tr%s><td colspan=\"3\"><pre>%s</pre></td></tr>\n", form_row_attrs[row ^= 1], s);
-      xfree(s);
-    }
+%></td>
+        </s:htr>
+    </s:form>
+<%
   }
--->
+%>
+<%
+  if (!phr->ss->show_global_7) goto done;
+  row = 1;
+%>
+
+<%
+  if (global->unhandled_vars && phr->ss->show_global_7) {
+%>
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td colspan="4"><pre><s:v value="global->unhandled_vars" /></pre></td>
+    </s:htr>
+<%
+  }
+%>
+
+<%
+done:;
+%>
+
 </table>
 
 <%
