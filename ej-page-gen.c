@@ -5311,6 +5311,8 @@ process_unit(
                                      string_type_handler);
     processor_state_set_type_handler(ps, tc_get_open_array_type(cntx, tc_get_i8_type(cntx)),
                                      string_type_handler);
+    processor_state_set_type_handler(ps, tc_find_typedef_type(cntx, tc_get_ident(cntx, "path_t")),
+                                     string_type_handler);
     processor_state_set_type_handler(ps, tc_find_typedef_type(cntx, tc_get_ident(cntx, "ej_cookie_t")),
                                      cookie_type_handler);
     processor_state_set_type_handler(ps, tc_get_i16_type(cntx), int_type_handler);
