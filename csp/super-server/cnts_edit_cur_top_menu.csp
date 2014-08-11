@@ -22,7 +22,7 @@
 %></td>
     <td><%
   if (cur_page != 3) {
-%><s:a ac="edit-current-lang"><%
+%><s:a ac="cnts-edit-cur-language-page"><%
   }
 %><s:_>Language settings (serve.cfg)</s:_><%
   if (cur_page != 3) {

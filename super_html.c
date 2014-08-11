@@ -497,7 +497,7 @@ super_html_contest_page_menu(FILE *f,
   fprintf(f, "</td><td>");
   if (cur_page != 3) {
     fprintf(f, "%s", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
-                                   "action=%d", SSERV_CMD_EDIT_CURRENT_LANG));
+                                   "action=%d", SSERV_CMD_CNTS_EDIT_CUR_LANGUAGE_PAGE));
   }
   fprintf(f, "Language settings (serve.cfg)");
   if (cur_page != 3) {

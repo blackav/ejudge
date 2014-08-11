@@ -9735,7 +9735,7 @@ super_serve_op_IMPORT_FROM_POLYGON_PAGE(
   fprintf(out_f, "<li>%s%s</a></li>",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                         NULL, "action=%d",
-                        SSERV_CMD_EDIT_CURRENT_LANG),
+                        SSERV_CMD_CNTS_EDIT_CUR_LANGUAGE_PAGE),
           "Language settings (serve.cfg)");
   fprintf(out_f, "<li>%s%s</a></li>",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
@@ -10255,7 +10255,7 @@ super_serve_op_DOWNLOAD_PROGRESS_PAGE(
     fprintf(out_f, "<li>%s%s</a></li>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                           NULL, "action=%d",
-                          SSERV_CMD_EDIT_CURRENT_LANG),
+                          SSERV_CMD_CNTS_EDIT_CUR_LANGUAGE_PAGE),
             "Language settings (serve.cfg)");
     fprintf(out_f, "<li>%s%s</a></li>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
@@ -11272,7 +11272,7 @@ super_serve_op_IMPORT_CONTEST_FROM_POLYGON_PAGE(
   fprintf(out_f, "<li>%s%s</a></li>",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                         NULL, "action=%d",
-                        SSERV_CMD_EDIT_CURRENT_LANG),
+                        SSERV_CMD_CNTS_EDIT_CUR_LANGUAGE_PAGE),
           "Language settings (serve.cfg)");
   fprintf(out_f, "<li>%s%s</a></li>",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
