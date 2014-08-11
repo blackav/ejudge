@@ -148,69 +148,74 @@ static const unsigned char * const form_row_attrs[]=
     </s:form>
 
 <%
-  for (int i = 1; i < phr->ss->cs_lang_total; ++i) {
+  int i;
+  for (i = 1; i < phr->ss->cs_lang_total; ++i) {
     const struct section_language_data *cs_lang = phr->ss->cs_langs[i];
     if (!cs_lang) continue;
-%>
-
-<!--
-    if (!sstate->cs_lang_names[i]) continue;
-    if (!*sstate->cs_lang_names[i]) continue;
-    lang = 0;
-    if (sstate->cs_loc_map[i] > 0) lang = sstate->langs[sstate->cs_loc_map[i]];
-    if (lang && lang->long_name[0]) {
-      lang_name = lang->long_name;
-      if (!sstate->cs_lang_names[i]) {
-        cmt = " <font color=\"magenta\">(No version script!)</font>";
-      } else if (!*sstate->cs_lang_names[i]) {
-        cmt = " <font color=\"red\">(Version script failed!)</font>";
-      } else {
-        snprintf(buf2, sizeof(buf2), " (%s)", sstate->cs_lang_names[i]);
-        cmt = buf2;
-      }
-    } else if (!sstate->cs_lang_names[i]) {
-      cmt = " <font color=\"magenta\">(No version script!)</font>";
-      lang_name = cs_lang->long_name;
-    } else if (!*sstate->cs_lang_names[i]) {
-      cmt = " <font color=\"red\">(Version script failed!)</font>";
-      lang_name = cs_lang->long_name;
-    } else {
-      cmt = "";
-      lang_name = sstate->cs_lang_names[i];
-    }
+    if (!phr->ss->cs_lang_names[i]) continue;
+    if (!*phr->ss->cs_lang_names[i]) continue;
+    const struct section_language_data *lang = 0;
+    if (phr->ss->cs_loc_map[i] > 0) lang = phr->ss->langs[phr->ss->cs_loc_map[i]];
+    const unsigned char *td_attr = "";
     td_attr = "";
     if (lang && lang->insecure && global && global->secure_run > 0) {
       td_attr = " bgcolor=\"#ffffdd\"";
     } else if (lang) {
       td_attr = " bgcolor=\"#ddffdd\"";
     }
-    html_start_form(f, 1, self_url, hidden_vars);
-    snprintf(buf, sizeof(buf), "%d", i);
-    html_hidden_var(f, "lang_id", buf);
-    fprintf(f, "<tr><td colspan = \"2\"%s><b>%s</b>%s</td><td>",
-            td_attr, ARMOR(lang_name), cmt);
-    if (lang) {
-      if (!sstate->lang_flags[lang->id]) {
-        html_submit_button(f, SSERV_CMD_LANG_SHOW_DETAILS, "View details");
+%>
+    <s:form>
+        <s:hidden name="lang_id" value="i" />
+        <tr>
+            <td colspan="2"<s:v value="td_attr" escape="false" />><%
+    if (lang && lang->long_name[0]) {
+%><b><s:v value="lang->long_name" /></b><%
+      if (!phr->ss->cs_lang_names[i]) {
+%> <font color="magenta">(No version script!)</font><%
+      } else if (!*phr->ss->cs_lang_names[i]) {
+%> <font color="red">(Version script failed!)</font><%
       } else {
-        html_submit_button(f, SSERV_CMD_LANG_HIDE_DETAILS, "Hide details");
+%> (<s:v value="phr->ss->cs_lang_names[i]" />)<%
       }
-      if (!sstate->loc_cs_map[lang->id]) {
-        html_submit_button(f, SSERV_CMD_LANG_DEACTIVATE, "Deactivate");
+    } else if (!phr->ss->cs_lang_names[i]) {
+%><b><s:v value="cs_lang->long_name" /></b> <font color="magenta">(No version script!)</font><%
+    } else if (!*phr->ss->cs_lang_names[i]) {
+%><b><s:v value="cs_lang->long_name" /></b> <font color="red">(Version script failed!)</font><%
+    } else {
+%><b><s:v value="phr->ss->cs_lang_names[i]" /></b><%
+    }
+%></td>
+            <td<s:v value="td_attr" escape="false" />><%
+    if (lang) {
+      if (!phr->ss->lang_flags[lang->id]) {
+%><s:submit ac="lang-show-details" label="View details" /><%
+      } else {
+%><s:submit ac="lang-hide-details" label="Hide details" /><%
+      }
+      if (!phr->ss->loc_cs_map[lang->id]) {
+%><s:submit ac="lang-deactivate" label="Deactivate" /><%
       }
     } else {
-      html_submit_button(f, SSERV_CMD_LANG_ACTIVATE, "Activate");
+%><s:submit ac="lang-activate" label="Activate" /><%
     }
-    fprintf(f, "</td><td%s>&nbsp;</td></tr></form>\n", td_attr);
+%></td>
+            <td<s:v value="td_attr" escape="false" />>&nbsp;</td>
+        </tr>
+    </s:form>
+
+<%
+    if (!lang || !phr->ss->lang_flags[lang->id]) continue;
+    //ASSERT(lang->compile_id == i);
     row = 1;
+%>
 
-    if (!lang || !sstate->lang_flags[lang->id]) continue;
-    ASSERT(lang->compile_id == i);
-
-    //LANGUAGE_PARAM(id, "d"),
-    fprintf(f, "<tr%s><td>Language ID:</td><td>%d</td><td>&nbsp;</td><td>&nbsp;</td></tr>\n",
-            form_row_attrs[row ^= 1],
-            lang->id);
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Language ID:</td>
+        <td><s:v value="lang->id" /></td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+    </s:htr>
+<!--
     //LANGUAGE_PARAM(compile_id, "d"),
     fprintf(f, "<tr%s><td>Compilation server ID:</td><td>%d</td><td>&nbsp;</td><td>&nbsp;</td></tr>\n",
             form_row_attrs[row ^= 1],
