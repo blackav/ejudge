@@ -33,54 +33,8 @@ static const unsigned char * const form_row_attrs[]=
 %><%@include "header.csp"
 %>
 
-<table border="0"><tr>
-    <td><s:a ac="main-page"><s:_>To the top (postpone editing)</s:_></s:a></td>
-    <td><%
-  if (cur_page != 1) {
-%><s:a ac="cnts-edit-cur-contest-page"><%
-  }
-%><s:_>General settings (contest.xml)</s:_><%
-  if (cur_page != 1) {
-%></s:a><%
-  }
-%></td>
-    <td><%
-  if (cur_page != 2) {
-%><s:a ac="cnts-edit-cur-global-page"><%
-  }
-%><s:_>Global settings (serve.cfg)</s:_><%
-  if (cur_page != 2) {
-%></s:a><%
-  }
-%></td>
-    <td><%
-  if (cur_page != 3) {
-%><s:a ac="edit-current-lang"><%
-  }
-%><s:_>Language settings (serve.cfg)</s:_><%
-  if (cur_page != 3) {
-%></s:a><%
-  }
-%></td>
-    <td><%
-  if (cur_page != 4) {
-%><s:a ac="edit-current-prob"><%
-  }
-%><s:_>Problems (serve.cfg)</s:_><%
-  if (cur_page != 4) {
-%></s:a><%
-  }
-%></td>
-    <td><%
-  if (cur_page != 5) {
-%><s:a ac="prob-edit-variants"><%
-  }
-%><s:_>Variants (variant.map)</s:_><%
-  if (cur_page != 5) {
-%></s:a><%
-  }
-%></td>
-</tr></table>
+<%@include "cnts_edit_cur_top_menu.csp"
+%>
 
 <table border="0">
     <s:htr attr="head_row_attr"><td colspan="4" align="center"><b>Basic contest identification</b></td></s:htr>
