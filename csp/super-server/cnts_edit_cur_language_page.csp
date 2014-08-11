@@ -1,0 +1,81 @@
+<%
+/* $Id$ */
+%><%@include "includes.csp"
+%><%
+%><%@set getter_name = "csp_get_cnts_edit_cur_language_page"
+%><%@set ac_prefix = "SSERV_CMD_"
+%><%@set err_prefix = "SSERV_ERR_"
+%><%@page csp_view_cnts_edit_cur_language_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "stdvars.csp"
+%><%
+    unsigned char subtitle_buf[1024];
+    const unsigned char *title = 0;
+    const unsigned char *subtitle = subtitle_buf;
+    opcap_t caps = 0;
+    int row = 1;
+    int cur_page = 3;
+
+static const unsigned char head_row_attr[] =
+  " bgcolor=\"#a0a0a0\"";
+static const unsigned char * const form_row_attrs[]=
+{
+  " bgcolor=\"#d0d0d0\"",
+  " bgcolor=\"#e0e0e0\"",
+};
+
+    if (phr->priv_level != PRIV_LEVEL_ADMIN) FAIL(SSERV_ERR_PERMISSION_DENIED);
+    if (ejudge_cfg_opcaps_find(phr->config, phr->login, &caps) < 0) FAIL(SSERV_ERR_PERMISSION_DENIED);
+    if (opcaps_check(caps, OPCAP_EDIT_CONTEST) < 0) FAIL(SSERV_ERR_PERMISSION_DENIED);
+    if (!phr->ss->edited_cnts) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
+
+    snprintf(subtitle_buf, sizeof(subtitle_buf), "editing serve.cfg, programming languages");
+    cnts = phr->ss->edited_cnts;
+    struct section_global_data *global = phr->ss->global;
+
+    (void) row;
+    (void) head_row_attr;
+    (void) form_row_attrs;
+%><%@include "header.csp"
+%>
+
+<%@include "cnts_edit_cur_top_menu.csp"
+%>
+
+<%
+  if (phr->ss->serve_parse_errors) {
+%>
+<h2><tt>serve.cfg</tt> cannot be edited</h2>
+<font color="red"><pre><s:v value="phr->ss->serve_parse_errors" /></pre></font>
+<%
+    goto bottom_links;
+  }
+%>
+
+<%
+  if (!global) {
+%>
+<h2>No current global settings!</h2>
+<%
+    goto bottom_links;
+  }
+%>
+
+<%
+bottom_links: ;
+%>
+
+<s:form>
+<table border="0"><tr>
+    <td><s:a ac="main-page"><s:_>To the top</s:_></s:a></td>
+    <td><s:submit ac="cnts-forget" label="Forget it" /></td>
+    <td><s:submit ac="cnts-commit" label="COMMIT changes!" /></td>
+    <td><s:a ac="view-new-serve-cfg"><s:_>View serve.cfg</s:_></s:a></td>
+</tr></table>
+</s:form>
+
+<%@include "footer.csp"
+%><%
+  l10n_setlocale(0);
+cleanup:
+  html_armor_free(&ab);
+%>
