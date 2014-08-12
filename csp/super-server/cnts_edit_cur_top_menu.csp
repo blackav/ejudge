@@ -31,7 +31,7 @@
 %></td>
     <td><%
   if (cur_page != 4) {
-%><s:a ac="edit-current-prob"><%
+%><s:a ac="cnts-edit-cur-problem-page"><%
   }
 %><s:_>Problems (serve.cfg)</s:_><%
   if (cur_page != 4) {

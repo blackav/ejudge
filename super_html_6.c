@@ -9740,7 +9740,7 @@ super_serve_op_IMPORT_FROM_POLYGON_PAGE(
   fprintf(out_f, "<li>%s%s</a></li>",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                         NULL, "action=%d",
-                        SSERV_CMD_EDIT_CURRENT_PROB),
+                        SSERV_CMD_CNTS_EDIT_CUR_PROBLEM_PAGE),
           "Problems (serve.cfg)");
   fprintf(out_f, "<li>%s%s</a></li>",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
@@ -10260,7 +10260,7 @@ super_serve_op_DOWNLOAD_PROGRESS_PAGE(
     fprintf(out_f, "<li>%s%s</a></li>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                           NULL, "action=%d",
-                          SSERV_CMD_EDIT_CURRENT_PROB),
+                          SSERV_CMD_CNTS_EDIT_CUR_PROBLEM_PAGE),
             "Problems (serve.cfg)");
     fprintf(out_f, "<li>%s%s</a></li>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
@@ -10424,7 +10424,7 @@ super_serve_op_DOWNLOAD_CLEANUP_ACTION(
   ss->update_state = NULL;
 
   if (ss->edited_cnts) {
-    ss_redirect_3(out_f, phr, SSERV_CMD_EDIT_CURRENT_PROB, NULL);
+    ss_redirect_3(out_f, phr, SSERV_CMD_CNTS_EDIT_CUR_PROBLEM_PAGE, NULL);
     goto cleanup;
   }
   if (us->contest_id <= 0) {
@@ -10663,7 +10663,7 @@ super_serve_op_DOWNLOAD_CLEANUP_AND_IMPORT_ACTION(
   if (!us) {
     int action = 0;
     if (ss->global) {
-      action = SSERV_CMD_EDIT_CURRENT_PROB;
+      action = SSERV_CMD_CNTS_EDIT_CUR_PROBLEM_PAGE;
     } else if (ss->edited_cnts) {
       action = SSERV_CMD_CNTS_EDIT_CUR_CONTEST_PAGE;
     }
@@ -10709,7 +10709,7 @@ super_serve_op_DOWNLOAD_CLEANUP_AND_IMPORT_ACTION(
   ss->update_state = NULL;
   update_state_free(us); us = NULL;
 
-  ss_redirect_3(out_f, phr, SSERV_CMD_EDIT_CURRENT_PROB, NULL);
+  ss_redirect_3(out_f, phr, SSERV_CMD_CNTS_EDIT_CUR_PROBLEM_PAGE, NULL);
 
 cleanup:
   if (f) fclose(f);
@@ -11277,7 +11277,7 @@ super_serve_op_IMPORT_CONTEST_FROM_POLYGON_PAGE(
   fprintf(out_f, "<li>%s%s</a></li>",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                         NULL, "action=%d",
-                        SSERV_CMD_EDIT_CURRENT_PROB),
+                        SSERV_CMD_CNTS_EDIT_CUR_PROBLEM_PAGE),
           "Problems (serve.cfg)");
   fprintf(out_f, "<li>%s%s</a></li>",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
