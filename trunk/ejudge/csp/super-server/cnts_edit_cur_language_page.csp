@@ -82,18 +82,6 @@ static const unsigned char * const form_row_attrs[]=
   }
 %>
 
-<!--
-  int i;
-  unsigned char *s;
-  struct section_global_data *global = sstate->global;
-  struct section_language_data *lang = 0, *cs_lang;
-  unsigned char buf[1024], buf2[1024];
-  unsigned char *cmt, *lang_name, *td_attr, *env;
-  path_t lang_hidden_vars;
-  int row = 1;
-  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
--->
-
 <table border="0">
     <s:htr attr="head_row_attr">
         <td colspan="5" align="center"><b>Compilation limitations</b></td>
