@@ -1512,7 +1512,6 @@ cmd_main_page(struct client_state *p, int len,
     // Current contest editing commands are allowed to anybody,
     // because the editing mode cannot be entered without privilege
   case SSERV_CMD_CNTS_COMMIT:
-  case _SSERV_CMD_EDIT_CURRENT_LANG:
   case SSERV_CMD_EDIT_CURRENT_PROB:
   case SSERV_CMD_VIEW_NEW_SERVE_CFG:
   case SSERV_CMD_PROB_EDIT_VARIANTS:
@@ -1572,13 +1571,6 @@ cmd_main_page(struct client_state *p, int len,
     r = super_html_commit_contest(f, p->priv_level, p->user_id, p->login,
                                   p->cookie, &p->ip, config, userlist_clnt,
                                   sstate, pkt->b.id,
-                                  self_url_ptr, hidden_vars_ptr,
-                                  extra_args_ptr);
-    break;
-
-  case _SSERV_CMD_EDIT_CURRENT_LANG:
-    r = super_html_edit_languages(f, p->priv_level, p->user_id, p->login,
-                                  p->cookie, &p->ip, config, sstate,
                                   self_url_ptr, hidden_vars_ptr,
                                   extra_args_ptr);
     break;
@@ -3035,7 +3027,6 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_GLOB_HIDE_6] = { cmd_simple_top_command },
   [SSERV_CMD_GLOB_SHOW_7] = { cmd_simple_top_command },
   [SSERV_CMD_GLOB_HIDE_7] = { cmd_simple_top_command },
-  [_SSERV_CMD_EDIT_CURRENT_LANG] = { cmd_main_page },
   [SSERV_CMD_LANG_SHOW_DETAILS] = { cmd_set_value },
   [SSERV_CMD_LANG_HIDE_DETAILS] = { cmd_set_value },
   [SSERV_CMD_LANG_DEACTIVATE] = { cmd_set_value },
