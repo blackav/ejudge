@@ -53,18 +53,6 @@ int super_html_commit_contest(FILE *f,
                               const unsigned char *hidden_vars,
                               const unsigned char *extra_args);
 
-int super_html_edit_languages(FILE *f,
-                              int priv_level,
-                              int user_id,
-                              const unsigned char *login,
-                              ej_cookie_t session_id,
-                              const ej_ip_t *ip_address,
-                              const struct ejudge_cfg *config,
-                              struct sid_state *sstate,
-                              const unsigned char *self_url,
-                              const unsigned char *hidden_vars,
-                              const unsigned char *extra_args);
-
 int super_html_edit_problems(FILE *f,
                              int priv_level,
                              int user_id,
