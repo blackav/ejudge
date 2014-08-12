@@ -6700,6 +6700,7 @@ static const unsigned char * const external_action_names[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_SAVE_FILE_ACTION] = "cnts_save_file_action",
   [SSERV_CMD_CNTS_EDIT_CUR_GLOBAL_PAGE] = "cnts_edit_cur_global_page",
   [SSERV_CMD_CNTS_EDIT_CUR_LANGUAGE_PAGE] = "cnts_edit_cur_language_page",
+  [SSERV_CMD_CNTS_EDIT_CUR_PROBLEM_PAGE] = "cnts_edit_cur_problem_page",
 };
 
 static const unsigned char * const external_error_names[SSERV_ERR_LAST] = 

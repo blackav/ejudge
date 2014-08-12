@@ -993,4 +993,5 @@ const unsigned char super_proto_is_http_request[] =
   [SSERV_CMD_CNTS_CLEAR_FILE_ACTION] = 1,
   [SSERV_CMD_CNTS_EDIT_CUR_GLOBAL_PAGE] = 1,
   [SSERV_CMD_CNTS_EDIT_CUR_LANGUAGE_PAGE] = 1,
+  [SSERV_CMD_CNTS_EDIT_CUR_PROBLEM_PAGE] = 1,
 };
