@@ -16,6 +16,7 @@
     int cur_page = 3;
     unsigned char cs_conf_file[PATH_MAX];
     unsigned char num_buf[1024];
+    unsigned char *env = 0;
 
 static const unsigned char head_row_attr[] =
   " bgcolor=\"#a0a0a0\"";
@@ -33,10 +34,6 @@ static const unsigned char * const form_row_attrs[]=
     snprintf(subtitle_buf, sizeof(subtitle_buf), "editing serve.cfg, programming languages");
     cnts = phr->ss->edited_cnts;
     struct section_global_data *global = phr->ss->global;
-
-    (void) row;
-    (void) head_row_attr;
-    (void) form_row_attrs;
 %><%@include "header.csp"
 %>
 
@@ -99,7 +96,7 @@ static const unsigned char * const form_row_attrs[]=
 
 <table border="0">
     <s:htr attr="head_row_attr">
-        <td colspan="4" align="center"><b>Compilation limitations</b></td>
+        <td colspan="5" align="center"><b>Compilation limitations</b></td>
     </s:htr>
 
 <%
@@ -110,7 +107,7 @@ static const unsigned char * const form_row_attrs[]=
 %>
     <s:form>
         <s:htr attr="form_row_attrs[row ^= 1]">
-            <td>Maximum VM size for compilers:</td>
+            <td colspan="2">Maximum VM size for compilers:</td>
             <td><s:textfield name="param" value="num_buf" size="48" maxlength="1024" check="no" /></td>
             <td><s:submit ac="glob-change-compile-max-vm-size" label="Change" /></td>
             <td><s:help ac="glob-change-compile-max-vm-size" /></td>
@@ -125,7 +122,7 @@ static const unsigned char * const form_row_attrs[]=
 %>
     <s:form>
         <s:htr attr="form_row_attrs[row ^= 1]">
-            <td>Maximum stack size for compilers:</td>
+            <td colspan="2">Maximum stack size for compilers:</td>
             <td><s:textfield name="param" value="num_buf" size="48" maxlength="1024" check="no" /></td>
             <td><s:submit ac="glob-change-compile-max-stack-size" label="Change" /></td>
             <td><s:help ac="glob-change-compile-max-stack-size" /></td>
@@ -140,12 +137,16 @@ static const unsigned char * const form_row_attrs[]=
 %>
     <s:form>
         <s:htr attr="form_row_attrs[row ^= 1]">
-            <td>Maximum file size for compilers:</td>
+            <td colspan="2">Maximum file size for compilers:</td>
             <td><s:textfield name="param" value="num_buf" size="48" maxlength="1024" check="no" /></td>
             <td><s:submit ac="glob-change-compile-max-file-size" label="Change" /></td>
             <td><s:help ac="glob-change-compile-max-file-size" /></td>
         </s:htr>
     </s:form>
+
+    <s:htr attr="head_row_attr">
+        <td colspan="5" align="center"><b>Available compilers</b></td>
+    </s:htr>
 
 <%
   int i;
@@ -167,7 +168,7 @@ static const unsigned char * const form_row_attrs[]=
     <s:form>
         <s:hidden name="lang_id" value="i" />
         <tr>
-            <td colspan="2"<s:v value="td_attr" escape="false" />><%
+            <td colspan="3"<s:v value="td_attr" escape="false" />><%
     if (lang && lang->long_name[0]) {
 %><b><s:v value="lang->long_name" /></b><%
       if (!phr->ss->cs_lang_names[i]) {
@@ -210,221 +211,286 @@ static const unsigned char * const form_row_attrs[]=
 %>
 
     <s:htr attr="form_row_attrs[row ^= 1]">
+        <td width="50">&nbsp;</td>
         <td>Language ID:</td>
         <td><s:v value="lang->id" /></td>
         <td>&nbsp;</td>
         <td>&nbsp;</td>
     </s:htr>
-<!--
-    //LANGUAGE_PARAM(compile_id, "d"),
-    fprintf(f, "<tr%s><td>Compilation server ID:</td><td>%d</td><td>&nbsp;</td><td>&nbsp;</td></tr>\n",
-            form_row_attrs[row ^= 1],
-            lang->compile_id);
-    //LANGUAGE_PARAM(short_name, "s"),
-    fprintf(f, "<tr%s><td>Language short name:</td><td>%s</td><td>&nbsp;</td><td>&nbsp;</td></tr>\n",
-            form_row_attrs[row ^= 1], ARMOR(lang->short_name));
-    //LANGUAGE_PARAM(arch, "s"),
-    s = html_armor_string_dup(lang->arch);
-    fprintf(f, "<tr%s><td>Language architecture:</td><td>%s%s</td><td>&nbsp;</td><td>&nbsp;</td></tr>\n",
-            form_row_attrs[row ^= 1],
-            s, *s?"":"<i>(Default)</i>");
-    xfree(s);
-    //LANGUAGE_PARAM(src_sfx, "s"),
-    fprintf(f, "<tr%s><td>Suffix of the source files:</td><td>%s</td><td>&nbsp;</td><td>&nbsp;</td></tr>\n",
-            form_row_attrs[row ^= 1],
-            ARMOR(lang->src_sfx));
-    //LANGUAGE_PARAM(exe_sfx, "s"),
-    s = html_armor_string_dup(lang->exe_sfx);
-    fprintf(f, "<tr%s><td>Suffix of the executable files:</td><td>%s%s</td><td>&nbsp;</td><td>&nbsp;</td></tr>\n",
-            form_row_attrs[row ^= 1],
-            s, *s?"":"<i>(Empty)</i>");
-    xfree(s);
 
-    snprintf(lang_hidden_vars, sizeof(lang_hidden_vars),
-             "%s<input type=\"hidden\" name=\"lang_id\" value=\"%d\"/>",
-             hidden_vars, lang->compile_id);
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td width="50">&nbsp;</td>
+        <td>Compilation server ID:</td>
+        <td><s:v value="lang->compile_id" /></td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+    </s:htr>
 
-    //LANGUAGE_PARAM(long_name, "s"),
-    print_string_editing_row(f, "Language long name:", lang->long_name,
-                             SSERV_CMD_LANG_CHANGE_LONG_NAME,
-                             SSERV_CMD_LANG_CLEAR_LONG_NAME,
-                             0,
-                             session_id, 
-                             form_row_attrs[row ^= 1],
-                             self_url, extra_args, lang_hidden_vars);
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td width="50">&nbsp;</td>
+        <td>Language short name:</td>
+        <td><s:v value="lang->short_name" /></td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+    </s:htr>
 
-    //LANGUAGE_PARAM(extid, "S"),
-    print_string_editing_row(f, "Language external name:", lang->extid,
-                             SSERV_CMD_LANG_CHANGE_EXTID,
-                             SSERV_CMD_LANG_CLEAR_EXTID,
-                             0,
-                             session_id, 
-                             form_row_attrs[row ^= 1],
-                             self_url, extra_args, lang_hidden_vars);
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td width="50">&nbsp;</td>
+        <td>Language architecture:</td>
+        <td><s:v value="lang->arch" /><% if (!lang->arch || !lang->arch[0]) { %><i>(Default)</i><% } %></td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+    </s:htr>
 
-    //LANGUAGE_PARAM(disabled, "d"),
-    print_boolean_select_row(f, "Disable this language for participants",
-                             lang->disabled,
-                             SSERV_CMD_LANG_CHANGE_DISABLED,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url, extra_args, lang_hidden_vars);
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td width="50">&nbsp;</td>
+        <td>Suffix of the source files:</td>
+        <td><s:v value="lang->src_sfx" /></td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+    </s:htr>
 
-    //LANGUAGE_PARAM(insecure, "d"),
-    print_boolean_select_row(f, "This language is insecure",
-                             lang->insecure,
-                             SSERV_CMD_LANG_CHANGE_INSECURE,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url, extra_args, lang_hidden_vars);
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td width="50">&nbsp;</td>
+        <td>Suffix of the executable files:</td>
+        <td><s:v value="lang->exe_sfx" /><% if (!lang->exe_sfx || !*lang->exe_sfx) { %><i>(Empty)</i><% } %></td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+    </s:htr>
 
-    //LANGUAGE_PARAM(disable_security, "d"),
-    print_boolean_select_row(f, "Disable security restrictions",
-                             lang->disable_security,
-                             SSERV_CMD_LANG_CHANGE_DISABLE_SECURITY,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url, extra_args, lang_hidden_vars);
+    <s:form>
+        <s:hidden name="lang_id" value="lang->compile_id" />
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td width="50">&nbsp;</td>
+            <td>Language long name:</td>
+            <td><s:textfield name="param" value="lang->long_name" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="lang-change-long-name" label="Change" /><s:submit ac="lang-clear-long-name" label="Clear" /></td>
+            <td><s:help ac="lang-change-long-name" /></td>
+        </s:htr>
+    </s:form>
 
-    //LANGUAGE_PARAM(disable_testing, "d"),
-    print_boolean_select_row(f, "Disable any testing of submissions",
-                             lang->disable_testing,
-                             SSERV_CMD_LANG_CHANGE_DISABLE_TESTING,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url, extra_args, lang_hidden_vars);
+    <s:form>
+        <s:hidden name="lang_id" value="lang->compile_id" />
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td width="50">&nbsp;</td>
+            <td>Language external name:</td>
+            <td><s:textfield name="param" value="lang->extid" size="48" maxlength="1024" checkExpr="" /></td>
+            <td><s:submit ac="lang-change-extid" label="Change" /><s:submit ac="lang-clear-extid" label="Clear" /></td>
+            <td><s:help ac="lang-change-extid" /></td>
+        </s:htr>
+    </s:form>
 
+    <s:form>
+        <s:hidden name="lang_id" value="lang->compile_id" />
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td width="50">&nbsp;</td>
+            <td>Disable this language for participants:</td>
+            <td><s:yesno name="param" value="lang->disabled" /></td>
+            <td><s:submit ac="lang-change-disabled" label="Change" /></td>
+            <td><s:help ac="lang-change-disabled" /></td>
+        </s:htr>
+    </s:form>
+
+    <s:form>
+        <s:hidden name="lang_id" value="lang->compile_id" />
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td width="50">&nbsp;</td>
+            <td>This language is insecure:</td>
+            <td><s:yesno name="param" value="lang->insecure" /></td>
+            <td><s:submit ac="lang-change-insecure" label="Change" /></td>
+            <td><s:help ac="lang-change-insecure" /></td>
+        </s:htr>
+    </s:form>
+
+    <s:form>
+        <s:hidden name="lang_id" value="lang->compile_id" />
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td width="50">&nbsp;</td>
+            <td>Disable security restrictions:</td>
+            <td><s:yesno name="param" value="lang->disable_security" /></td>
+            <td><s:submit ac="lang-change-disable-security" label="Change" /></td>
+            <td><s:help ac="lang-change-disable-security" /></td>
+        </s:htr>
+    </s:form>
+
+    <s:form>
+        <s:hidden name="lang_id" value="lang->compile_id" />
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td width="50">&nbsp;</td>
+            <td>Disable any testing of submissions:</td>
+            <td><s:yesno name="param" value="lang->disable_testing" /></td>
+            <td><s:submit ac="lang-change-disable-testing" label="Change" /></td>
+            <td><s:help ac="lang-change-disable-testing" /></td>
+        </s:htr>
+    </s:form>
+
+<%
     if (!lang->disable_testing) {
-      //LANGUAGE_PARAM(disable_auto_testing, "d"),
-      print_boolean_select_row(f, "Disable automatic testing of submissions",
-                               lang->disable_auto_testing,
-                               SSERV_CMD_LANG_CHANGE_DISABLE_AUTO_TESTING,
-                               session_id,
-                               form_row_attrs[row ^= 1],
-                               self_url, extra_args, lang_hidden_vars);
+%>
+    <s:form>
+        <s:hidden name="lang_id" value="lang->compile_id" />
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td width="50">&nbsp;</td>
+            <td>Disable automatic testing of submissions:</td>
+            <td><s:yesno name="param" value="lang->disable_auto_testing" /></td>
+            <td><s:submit ac="lang-change-disable-auto-testing" label="Change" /></td>
+            <td><s:help ac="lang-change-disable-auto-testing" /></td>
+        </s:htr>
+    </s:form>
+<%
     }
+%>
 
-    //LANGUAGE_PARAM(binary, "d"),
-    print_boolean_select_row(f, "Language source files are binary",
-                             lang->binary,
-                             SSERV_CMD_LANG_CHANGE_BINARY,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url, extra_args, lang_hidden_vars);
+    <s:form>
+        <s:hidden name="lang_id" value="lang->compile_id" />
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td width="50">&nbsp;</td>
+            <td>Language source files are binary:</td>
+            <td><s:yesno name="param" value="lang->binary" /></td>
+            <td><s:submit ac="lang-change-binary" label="Change" /></td>
+            <td><s:help ac="lang-change-binary" /></td>
+        </s:htr>
+    </s:form>
 
-    //LANGUAGE_PARAM(is_dos, "d"),
-    print_boolean_select_row(f, "Perform UNIX->DOS conversion",
-                             lang->is_dos,
-                             SSERV_CMD_LANG_CHANGE_IS_DOS,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url, extra_args, lang_hidden_vars);
+    <s:form>
+        <s:hidden name="lang_id" value="lang->compile_id" />
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td width="50">&nbsp;</td>
+            <td>Perform UNIX->DOS conversion:</td>
+            <td><s:yesno name="param" value="lang->is_dos" /></td>
+            <td><s:submit ac="lang-change-is-dos" label="Change" /></td>
+            <td><s:help ac="lang-change-is-dos" /></td>
+        </s:htr>
+    </s:form>
 
-    //LANGUAGE_PARAM(max_vm_size, "d"),
-    if (lang->max_vm_size == -1L || lang->max_vm_size == 0) {
-      num_buf[0] = 0;
-    } else {
+<%
+    num_buf[0] = 0;
+    if (lang->max_vm_size != ~((size_t) 0) && lang->max_vm_size != 0) {
       num_to_size_str(num_buf, sizeof(num_buf), lang->max_vm_size);
     }
-    html_start_form(f, 1, self_url, lang_hidden_vars);
-    fprintf(f, "<tr%s><td>%s</td><td>",
-            form_row_attrs[row ^= 1], "Maximum VM size:");
-    html_edit_text_form(f, 0, 0, "param", num_buf);
-    fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_LANG_CHANGE_MAX_VM_SIZE, "Change");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_LANG_CHANGE_MAX_VM_SIZE);
-    fprintf(f, "</tr></form>\n");
+%>
+    <s:form>
+        <s:hidden name="lang_id" value="lang->compile_id" />
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td width="50">&nbsp;</td>
+            <td>Maximum VM size:</td>
+            <td><s:textfield name="param" value="num_buf" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="lang-change-max-vm-size" label="Change" /></td>
+            <td><s:help ac="lang-change-max-vm-size" /></td>
+        </s:htr>
+    </s:form>
 
-    //LANGUAGE_PARAM(max_stack_size, "d"),
-    if (lang->max_stack_size == -1L || lang->max_stack_size == 0) {
-      num_buf[0] = 0;
-    } else {
+<%
+    num_buf[0] = 0;
+    if (lang->max_stack_size != ~((size_t) 0) && lang->max_stack_size != 0) {
       num_to_size_str(num_buf, sizeof(num_buf), lang->max_stack_size);
     }
-    html_start_form(f, 1, self_url, lang_hidden_vars);
-    fprintf(f, "<tr%s><td>%s</td><td>",
-            form_row_attrs[row ^= 1], "Maximum stack size:");
-    html_edit_text_form(f, 0, 0, "param", num_buf);
-    fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_LANG_CHANGE_MAX_STACK_SIZE, "Change");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_LANG_CHANGE_MAX_STACK_SIZE);
-    fprintf(f, "</tr></form>\n");
+%>
+    <s:form>
+        <s:hidden name="lang_id" value="lang->compile_id" />
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td width="50">&nbsp;</td>
+            <td>Maximum stack size:</td>
+            <td><s:textfield name="param" value="num_buf" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="lang-change-max-stack-size" label="Change" /></td>
+            <td><s:help ac="lang-change-max-stack-size" /></td>
+        </s:htr>
+    </s:form>
 
-    //LANGUAGE_PARAM(max_file_size, "d"),
-    if (lang->max_file_size == -1L || lang->max_file_size == 0) {
-      num_buf[0] = 0;
-    } else {
+<%
+    num_buf[0] = 0;
+    if (lang->max_file_size != ~((size_t) 0) && lang->max_file_size != 0) {
       num_to_size_str(num_buf, sizeof(num_buf), lang->max_file_size);
     }
-    html_start_form(f, 1, self_url, lang_hidden_vars);
-    fprintf(f, "<tr%s><td>%s</td><td>",
-            form_row_attrs[row ^= 1], "Maximum file size:");
-    html_edit_text_form(f, 0, 0, "param", num_buf);
-    fprintf(f, "</td><td>");
-    html_submit_button(f, SSERV_CMD_LANG_CHANGE_MAX_FILE_SIZE, "Change");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_LANG_CHANGE_MAX_FILE_SIZE);
-    fprintf(f, "</tr></form>\n");
+%>
+    <s:form>
+        <s:hidden name="lang_id" value="lang->compile_id" />
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td width="50">&nbsp;</td>
+            <td>Maximum file size:</td>
+            <td><s:textfield name="param" value="num_buf" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="lang-change-max-file-size" label="Change" /></td>
+            <td><s:help ac="lang-change-max-file-size" /></td>
+        </s:htr>
+    </s:form>
 
+<%
     if (lang->binary) {
-      //LANGUAGE_PARAM(content_type, "s"),
-      print_string_editing_row(f, "Content type for files:", lang->content_type,
-                               SSERV_CMD_LANG_CHANGE_CONTENT_TYPE,
-                               SSERV_CMD_LANG_CLEAR_CONTENT_TYPE,
-                               0,
-                               session_id, 
-                               form_row_attrs[row ^= 1],
-                               self_url, extra_args, lang_hidden_vars);
+%>
+    <s:form>
+        <s:hidden name="lang_id" value="lang->compile_id" />
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td width="50">&nbsp;</td>
+            <td>Content type for files:</td>
+            <td><s:textfield name="param" value="lang->content_type" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="lang-change-content-type" label="Change" /><s:submit ac="lang-clear-content-type" label="Clear" /></td>
+            <td><s:help ac="lang-change-content-type" /></td>
+        </s:htr>
+    </s:form>
+<%
     }
+%>
 
-    //LANGUAGE_PARAM(style_checker_cmd, "s"),
-    print_string_editing_row(f, "Style checker command:", lang->style_checker_cmd,
-                               SSERV_CMD_LANG_CHANGE_STYLE_CHECKER_CMD,
-                               SSERV_CMD_LANG_CLEAR_STYLE_CHECKER_CMD,
-                               0,
-                               session_id, 
-                               form_row_attrs[row ^= 1],
-                               self_url, extra_args, lang_hidden_vars);
+    <s:form>
+        <s:hidden name="lang_id" value="lang->compile_id" />
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td width="50">&nbsp;</td>
+            <td>Style checker command:</td>
+            <td><s:textfield name="param" value="lang->style_checker_cmd" size="48" maxlength="1024" check="false" /></td>
+            <td><s:submit ac="lang-change-style-checker-cmd" label="Change" /><s:submit ac="lang-clear-style-checker-cmd" label="Clear" /></td>
+            <td><s:help ac="lang-change-style-checker-cmd" /></td>
+        </s:htr>
+    </s:form>
 
-    // additional compilation options
-    buf[0] = 0;
-    if (sstate->lang_opts[lang->id])
-      snprintf(buf, sizeof(buf), "%s", sstate->lang_opts[lang->id]);
-    print_string_editing_row(f, "Additional compilation options:", buf,
-                             SSERV_CMD_LANG_CHANGE_OPTS,
-                             SSERV_CMD_LANG_CLEAR_OPTS,
-                             0,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url, extra_args, lang_hidden_vars);
+    <s:form>
+        <s:hidden name="lang_id" value="lang->compile_id" />
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td width="50">&nbsp;</td>
+            <td>Additional compilation options:</td>
+            <td><s:textfield name="param" value="phr->ss->lang_opts[lang->id]" size="48" maxlength="1024" checkExpr="" /></td>
+            <td><s:submit ac="lang-change-opts" label="Change" /><s:submit ac="lang-clear-opts" label="Clear" /></td>
+            <td><s:help ac="lang-change-opts" /></td>
+        </s:htr>
+    </s:form>
 
-/*
-  FIXME: LANGUAGE_PARAM(compiler_env, "x"),
- */
-
-    //LANGUAGE_PARAM(style_checker_env, "x"),
-    if (!lang->style_checker_env || !lang->style_checker_env[0]) {
-      env = xstrdup("");
-    } else {
+<%
+    env = 0;
+    if (lang->style_checker_env && lang->style_checker_env[0]) {
       env = sarray_unparse(lang->style_checker_env);
     }
-    print_string_editing_row(f, "Style checker environment:", env,
-                             SSERV_CMD_LANG_CHANGE_STYLE_CHECKER_ENV,
-                             SSERV_CMD_LANG_CLEAR_STYLE_CHECKER_ENV,
-                             0,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url, extra_args, lang_hidden_vars);
+%>
+    <s:form>
+        <s:hidden name="lang_id" value="lang->compile_id" />
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td width="50">&nbsp;</td>
+            <td>Style checker environment:</td>
+            <td><s:textfield name="param" value="env" size="48" maxlength="1024" checkExpr="" /></td>
+            <td><s:submit ac="lang-change-style-checker-env" label="Change" /><s:submit ac="lang-clear-style-checker-env" label="Clear" /></td>
+            <td><s:help ac="lang-change-style-checker-env" /></td>
+        </s:htr>
+    </s:form>
+<%
     xfree(env); env = 0;
+%>
 
+<%
     if (lang->unhandled_vars) {
-      fprintf(f, "<tr%s><td colspan=\"3\" align=\"center\"><b>Uneditable parameters</td></tr>\n<tr><td colspan=\"3\"><pre>%s</pre></td></tr>\n",
-              form_row_attrs[row ^= 1],
-              ARMOR(lang->unhandled_vars));
+      row = 1;
+%>
+    <s:htr attr="head_row_attr">
+        <td width="50">&nbsp;</td>
+        <td colspan="4" align="center"><b>Compilation limitations</b></td>
+    </s:htr>
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td width="50">&nbsp;</td>
+        <td colspan="2"><pre><s:v value="lang->unhandled_vars" checkExpr="" /></pre></td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+    </s:htr>
+<%
     }
--->
+%>
+
 <%
   }
 %>
