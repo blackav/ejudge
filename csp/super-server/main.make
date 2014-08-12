@@ -85,7 +85,7 @@ csp_cnts_edit_access_page.c : cnts_edit_access_page.csp includes.csp stdvars.csp
 csp_cnts_edit_cur_contest_page.c : cnts_edit_cur_contest_page.csp includes.csp stdvars.csp header.csp footer.csp cnts_edit_cur_top_menu.csp
 csp_cnts_edit_cur_global_page.c : cnts_edit_cur_global_page.csp includes.csp stdvars.csp header.csp footer.csp cnts_edit_cur_top_menu.csp
 csp_cnts_edit_cur_language_page.c : cnts_edit_cur_language_page.csp includes.csp stdvars.csp header.csp footer.csp cnts_edit_cur_top_menu.csp
-csp_cnts_edit_cur_problem_page.c : cnts_edit_cur_problem_page.csp includes.csp stdvars.csp header.csp footer.csp cnts_edit_cur_top_menu.csp
+csp_cnts_edit_cur_problem_page.c : cnts_edit_cur_problem_page.csp includes.csp stdvars.csp header.csp footer.csp cnts_edit_cur_top_menu.csp cnts_edit_cur_one_problem.csp
 csp_cnts_edit_file_page.c : cnts_edit_file_page.csp includes.csp stdvars.csp header.csp footer.csp
 csp_cnts_edit_member_fields_page.c : cnts_edit_member_fields_page.csp includes.csp stdvars.csp header.csp footer.csp
 csp_cnts_edit_permissions_page.c : cnts_edit_permissions_page.csp includes.csp stdvars.csp header.csp footer.csp

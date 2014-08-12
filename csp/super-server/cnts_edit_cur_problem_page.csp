@@ -14,6 +14,7 @@
     opcap_t caps = 0;
     int row = 1;
     int cur_page = 4;
+    int i;
 
 static const unsigned char head_row_attr[] =
   " bgcolor=\"#a0a0a0\"";
@@ -60,16 +61,71 @@ static const unsigned char * const form_row_attrs[]=
   }
 %>
 
+<table border="0">
+    <s:htr attr="head_row_attr">
+        <td colspan="4" align="center"><b>Abstract problems</b></td>
+    </s:htr>
+<%
+  for (i = 0; i < phr->ss->aprob_u; ++i) {
+    int is_abstract = 1;
+    const struct section_problem_data *prob = phr->ss->aprobs[i];
+    int flags = phr->ss->aprob_flags[i];
+    int prob_id = -i;
+%><%@include "cnts_edit_cur_one_problem.csp"
+%><%
+  }
+%>
+    <s:htr attr="head_row_attr">
+        <td colspan="4" align="center"><b>Add new abstract problem</b></td>
+    </s:htr>
+<%
+  row = 1;
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Name:</td>
+            <td><s:textfield name="prob_name" value="" size="48" maxlength="1024" /></td>
+            <td><s:submit ac="prob-add-abstract" label="Add" /></td>
+            <td><s:help ac="prob-add-abstract" /></td>
+        </s:htr>
+    </s:form>
 
+    <s:htr attr="head_row_attr">
+        <td colspan="4" align="center"><b>Concrete problems</b></td>
+    </s:htr>
+<%
+  for (i = 1; i < phr->ss->prob_a; ++i) {
+    int is_abstract = 0;
+    const struct section_problem_data *prob = phr->ss->probs[i];
+    int flags = phr->ss->prob_flags[i];
+    int prob_id = i;
+    if (!prob) continue;
+%><%@include "cnts_edit_cur_one_problem.csp"
+%><%
+  }
+%>
+    <s:htr attr="head_row_attr">
+        <td colspan="4" align="center"><b>Concrete problems</b><%
+  if (phr->ss->update_state) {
+%> [<s:a ac="download-progress-page">Download is in progress</s:a>]<%
+  } else {
+%> [<s:a ac="import-from-polygon-page">Import from Polygon</s:a>] [<s:a ac="import-contest-from-polygon-page">Import contest from Polygon</s:a>]<%
+  }
+%></td></tr>
+    </s:htr>
 
-
-
-
-
-
-
-
-
+<%
+  row = 1;
+%>
+    <s:form>
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td>Id (optional):</td>
+            <td><s:textfield name="prob_id" value="" size="48" maxlength="1024" /></td>
+            <td><s:submit ac="prob-add" label="Add" /></td>
+            <td><s:help ac="prob-add" /></td>
+        </s:htr>
+    </s:form>
+</table>
 
 <%
 bottom_links: ;
