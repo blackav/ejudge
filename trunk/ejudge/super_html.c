@@ -506,7 +506,7 @@ super_html_contest_page_menu(FILE *f,
   fprintf(f, "</td><td>");
   if (cur_page != 4) {
     fprintf(f, "%s", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
-                                   "action=%d", SSERV_CMD_EDIT_CURRENT_PROB));
+                                   "action=%d", SSERV_CMD_CNTS_EDIT_CUR_PROBLEM_PAGE));
   }
   fprintf(f, "Problems (serve.cfg)");
   if (cur_page != 4) {
