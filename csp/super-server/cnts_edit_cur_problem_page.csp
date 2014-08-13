@@ -2,6 +2,7 @@
 /* $Id$ */
 %><%@include "includes.csp"
 %><%
+#include "ejudge/meta/prepare_meta.h"
 %><%@set getter_name = "csp_get_cnts_edit_cur_problem_page"
 %><%@set ac_prefix = "SSERV_CMD_"
 %><%@set err_prefix = "SSERV_ERR_"

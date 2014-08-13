@@ -24,6 +24,8 @@
   if ((flags & SID_STATE_SHOW_HIDDEN)) show_details = 1;
   if ((flags & SID_STATE_SHOW_CLOSED)) show_adv = 1;
   struct section_problem_data *tmp_prob = prepare_copy_problem(prob);
+  int prob_type = 0;
+  const unsigned char *str_value = 0;
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
@@ -68,7 +70,6 @@
       }
     }
     row = 1;
-    (void) sup_prob;
 %><%
     if (!is_abstract) {
 %>
@@ -83,7 +84,7 @@
     <s:hidden name="prob_id" check="false" />
     <s:htr attr="form_row_attrs[row ^= 1]">
         <td>Problem short name:</td>
-        <td><s:textfield name="param" value="prob->short_name" size="48" maxlength="1024" check="no" /></td>
+        <td><s:textfield name="param" value="prob->short_name" size="48" maxlength="1024" check="no" /><% if (!prob->short_name) { %>(<i>Not set</i>)<% } %></td>
         <td><s:submit ac="prob-change-short-name" label="Change" /><s:submit ac="prob-clear-short-name" label="Clear" /></td>
         <td><s:help ac="prob-change-short-name" /></td>
     </s:htr>
@@ -96,7 +97,7 @@
     <s:hidden name="prob_id" check="false" />
     <s:htr attr="form_row_attrs[row ^= 1]">
         <td>Internal name:</td>
-        <td><s:textfield name="param" value="prob->internal_name" size="48" maxlength="1024" check="no" /></td>
+        <td><s:textfield name="param" value="prob->internal_name" size="48" maxlength="1024" check="no" /><% if (!prob->internal_name) { %>(<i>Not set</i>)<% } %></td>
         <td><s:submit ac="prob-change-internal-name" label="Change" /><s:submit ac="prob-clear-internal-name" label="Clear" /></td>
         <td><s:help ac="prob-change-internal-name" /></td>
     </s:htr>
@@ -110,7 +111,7 @@
     <s:hidden name="prob_id" check="false" />
     <s:htr attr="form_row_attrs[row ^= 1]">
         <td>Problem long name:</td>
-        <td><s:textfield name="param" value="prob->long_name" size="48" maxlength="1024" check="no" /></td>
+        <td><s:textfield name="param" value="prob->long_name" size="48" maxlength="1024" check="no" /><% if (!prob->long_name) { %>(<i>Not set</i>)<% } %></td>
         <td><s:submit ac="prob-change-long-name" label="Change" /><s:submit ac="prob-clear-long-name" label="Clear" /></td>
         <td><s:help ac="prob-change-long-name" /></td>
     </s:htr>
@@ -147,42 +148,22 @@
     <s:htr attr="form_row_attrs[row ^= 1]">
         <td>Problem type:</td>
         <td><select name="param"><%
-    if (is_abstract) {
-%><%
+    if (is_abstract || !sup_prob) {
+      prob_type = prob->type;
+      if (prob_type < 0 || prob_type >= PROB_TYPE_LAST) prob_type = 0;
+      for (j = 0; j < PROB_TYPE_LAST; ++j) {
+%><s:option value="j" selectedExpr="j == prob_type"><s:v value="problem_unparse_type(j)" escape="false" /></s:option><%
+      }
     } else {
-%>
-<!--
-  //PROBLEM_PARAM(type, "s")
-  if (prob->type < -1 || prob->type >= PROB_TYPE_LAST)
-    prob->type = -1;
-  extra_msg = 0;
-  problem_type_flag = prob->type;
-  if (!prob->abstract) {
-    prepare_set_prob_value(CNTSPROB_type, tmp_prob, sup_prob, sstate->global);
-    snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-             problem_unparse_type(tmp_prob->type));
-    extra_msg = msg_buf;
-    problem_type_flag = tmp_prob->type;
-  } else {
-    if (prob->type < 0) prob->type = 0;
-  }
-  if (problem_type_flag < 0) problem_type_flag = 0;
-  fprintf(f, "<td>");
-  fprintf(f, "<select name=\"param\">");
-  if (!prob->abstract) {
-    s = "";
-    if (prob->type < 0) s = " selected=\"1\"";
-    fprintf(f, "<option value=\"-1\"%s>Default</option>\n", s);
-  }
-  for (i = 0; i < PROB_TYPE_LAST; i++) {
-    s = "";
-    if (prob->type == i) s = " selected=\"1\"";
-    fprintf(f, "<option value=\"%d\"%s>%s</option>\n",
-            i, s, problem_unparse_type(i));
-  }
-  fprintf(f, "</select></td>");
--->
-<%
+      prob_type = prob->type;
+      if (prob_type < -1 || prob_type >= PROB_TYPE_LAST) prob_type = -1;
+      int sup_type = sup_prob->type;
+      if (sup_type < 0 || sup_type >= PROB_TYPE_LAST) sup_type = 0;
+%><s:option value="-1" selectedExpr="prob_type < 0">Default (<s:v value="problem_unparse_type(sup_type)" escape="false" />)</s:option><%
+      for (j = 0; j < PROB_TYPE_LAST; ++j) {
+%><s:option value="j" selectedExpr="j == prob->type"><s:v value="problem_unparse_type(j)" escape="false" /></s:option><%
+      }
+      if (prob_type < 0) prob_type = sup_type;
     }
 %></select></td>
         <td><s:submit ac="prob-change-type" label="Change" /></td>
@@ -190,786 +171,966 @@
     </s:htr>
 </s:form>
 
-
-<!--
-  //PROBLEM_PARAM(stand_name, "s")
-  if (!prob->abstract && show_adv) {
-    print_string_editing_row(f, "Title for the standings column:",
-                             prob->stand_name,
-                             SSERV_CMD_PROB_CHANGE_STAND_NAME,
-                             SSERV_CMD_PROB_CLEAR_STAND_NAME,
-                             0,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url, extra_args, prob_hidden_vars);
-  }
-  //PROBLEM_PARAM(stand_column, "s")
-  if (!prob->abstract && show_adv) {
-    print_string_editing_row(f, "Collate this problem with the specified one:",
-                             prob->stand_column,
-                             SSERV_CMD_PROB_CHANGE_STAND_COLUMN,
-                             SSERV_CMD_PROB_CLEAR_STAND_COLUMN,
-                             0,
-                             session_id,
-                             form_row_attrs[row ^= 1],
-                             self_url, extra_args, prob_hidden_vars);
-  }
-  //PROBLEM_PARAM(manual_checking, "d")
-  if ((prob->abstract && prob->type)
-      || (!prob->abstract && tmp_prob->type > 0)) {
-    extra_msg = 0;
-    if (!prob->abstract) {
-      prepare_set_prob_value(CNTSPROB_manual_checking,
-                             tmp_prob, sup_prob, sstate->global);
-      snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-               tmp_prob->manual_checking?"Yes":"No");
-      extra_msg = msg_buf;
+<%
+    if (!is_abstract && show_adv) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Title for the standings column:</td>
+        <td><s:textfield name="param" value="prob->stand_name" size="48" maxlength="1024" check="no" /><% if (!prob->stand_name) { %>(<i>Not set</i>)<% } %></td>
+        <td><s:submit ac="prob-change-stand-name" label="Change" /><s:submit ac="prob-clear-stand-name" label="Clear" /></td>
+        <td><s:help ac="prob-change-stand-name" /></td>
+    </s:htr>
+</s:form>
+<%
     }
-    print_boolean_3_select_row(f, "Problem is checked manually",
-                               prob->manual_checking,
-                               SSERV_CMD_PROB_CHANGE_MANUAL_CHECKING,
-                               extra_msg,
-                               session_id, form_row_attrs[row ^= 1],
-                               self_url, extra_args, prob_hidden_vars);
-  }
+%>
 
-  //PROBLEM_PARAM(examinator_num, "d")
-  if ((prob->abstract && prob->type)
-      || (!prob->abstract && tmp_prob->type > 0)) {
-    extra_msg = "";
+<%
+    if (!is_abstract && show_adv) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Collate this problem with the specified one:</td>
+        <td><s:textfield name="param" value="prob->stand_column" size="48" maxlength="1024" check="no" /><% if (!prob->stand_column) { %>(<i>Not set</i>)<% } %></td>
+        <td><s:submit ac="prob-change-stand-column" label="Change" /><s:submit ac="prob-clear-stand-column" label="Clear" /></td>
+        <td><s:help ac="prob-change-stand-column" /></td>
+    </s:htr>
+</s:form>
+<%
+    }
+%>
 
-    if (!prob->abstract) {
-      prepare_set_prob_value(CNTSPROB_examinator_num,
-                             tmp_prob, sup_prob, sstate->global);
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %d)</i>",
-               tmp_prob->examinator_num);
-      extra_msg = msg_buf;
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Problem is checked manually:</td>
+        <td><%
+    if (is_abstract || !sup_prob) {
+      int value = (prob->manual_checking == 1);
+%><s:yesno name="param" value="value" /><%
     } else {
-      if (prob->examinator_num < 0) prob->examinator_num = 0;
+      prepare_set_prob_value(CNTSPROB_manual_checking, tmp_prob, sup_prob, global);
+%><s:yesno3 name="param" value="prob->manual_checking" default="sup_prob->manual_checking" /><%
     }
-    html_start_form(f, 1, self_url, prob_hidden_vars);
-    fprintf(f, "<tr%s><td>%s</td><td>", form_row_attrs[row ^= 1],
-            "Number of examinators:");
-    fprintf(f, "<select name=\"param\">");
-    s = "";
-    if (prob->examinator_num == 0) s = " selected=\"1\"";
-    ss = "Default";
-    if (prob->abstract) ss = "0";
-    fprintf(f, "<option value=\"0\"%s>%s</option>", s, ss);
-    for (i = 1; i <= 3; i++) {
-      s = "";
-      if (i == prob->examinator_num) s = " selected=\"1\"";
-      fprintf(f, "<option value=\"%d\"%s>%d</option>", i, s, i);
+%></td>
+        <td><s:submit ac="prob-change-manual-checking" label="Change" /></td>
+        <td><s:help ac="prob-change-manual-checking" /></td>
+    </s:htr>
+</s:form>
+
+<%
+  if (is_abstract || tmp_prob->manual_checking > 0) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Check output presentation anyway?</td>
+        <td><%
+    if (is_abstract || !sup_prob) {
+      int value = (prob->check_presentation == 1);
+%><s:yesno name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_check_presentation, tmp_prob, sup_prob, global);
+%><s:yesno3 name="param" value="prob->check_presentation" default="sup_prob->check_presentation" /><%
     }
-    fprintf(f, "</select>%s</td><td>", extra_msg);
-    html_submit_button(f, SSERV_CMD_PROB_CHANGE_EXAMINATOR_NUM, "Change");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_PROB_CHANGE_EXAMINATOR_NUM);
-    fprintf(f, "</tr></form>\n");
+%></td>
+        <td><s:submit ac="prob-change-check-presentation" label="Change" /></td>
+        <td><s:help ac="prob-change-check-presentation" /></td>
+    </s:htr>
+</s:form>
+<%
   }
+%>
 
-  //PROBLEM_PARAM(check_presentation, "d")
-  if ((prob->abstract && prob->type > 0 && prob->manual_checking > 0)
-      || (!prob->abstract && tmp_prob->type > 0
-          && tmp_prob->manual_checking > 0)) {
-    extra_msg = 0;
-    if (!prob->abstract) {
-      prepare_set_prob_value(CNTSPROB_check_presentation,
-                             tmp_prob, sup_prob, sstate->global);
-      snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-               tmp_prob->check_presentation?"Yes":"No");
-      extra_msg = msg_buf;
+<%
+  if (prob_type == PROB_TYPE_STANDARD) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Use standard input?</td>
+        <td><%
+    if (is_abstract || !sup_prob) {
+      int value = prob->use_stdin;
+%><s:yesno name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_use_stdin, tmp_prob, sup_prob, global);
+%><s:yesno3 name="param" value="prob->use_stdin" default="sup_prob->use_stdin" /><%
     }
-    print_boolean_3_select_row(f, "Check output presentation anyway?",
-                               prob->check_presentation,
-                               SSERV_CMD_PROB_CHANGE_CHECK_PRESENTATION,
-                               extra_msg,
-                               session_id, form_row_attrs[row ^= 1],
-                               self_url, extra_args, prob_hidden_vars);
+%></td>
+        <td><s:submit ac="prob-change-use-stdin" label="Change" /></td>
+        <td><s:help ac="prob-change-use-stdin" /></td>
+    </s:htr>
+</s:form>
+<%
   }
+%>
 
-  //PROBLEM_PARAM(use_stdin, "d"),
-  extra_msg = 0;
-  if (!prob->abstract) {
-    prepare_set_prob_value(CNTSPROB_use_stdin,
-                           tmp_prob, sup_prob, sstate->global);
-    snprintf(msg_buf, sizeof(msg_buf), "Default (%s)", tmp_prob->use_stdin?"Yes":"No");
-    extra_msg = msg_buf;
+<%
+  if (prob_type == PROB_TYPE_STANDARD) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Combined standard/file input?</td>
+        <td><%
+    if (is_abstract || !sup_prob) {
+      int value = prob->combined_stdin;
+%><s:yesno name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_combined_stdin, tmp_prob, sup_prob, global);
+%><s:yesno3 name="param" value="prob->combined_stdin" default="sup_prob->combined_stdin" /><%
+    }
+%></td>
+        <td><s:submit ac="prob-change-combined-stdin" label="Change" /></td>
+        <td><s:help ac="prob-change-combined-stdin" /></td>
+    </s:htr>
+</s:form>
+<%
   }
-  if (!problem_type_flag) {
-    print_boolean_3_select_row(f, "Use standard input", prob->use_stdin,
-                               SSERV_CMD_PROB_CHANGE_USE_STDIN,
-                               extra_msg,
-                               session_id, form_row_attrs[row ^= 1],
-                               self_url, extra_args, prob_hidden_vars);
-  }
+%>
 
-  //PROBLEM_PARAM(input_file, "s"),
-  extra_msg = 0;
-  if (prob->abstract && !prob->use_stdin) extra_msg = "";
-  if (!prob->abstract && !tmp_prob->use_stdin) {
-    extra_msg = "";
-    prepare_set_prob_value(CNTSPROB_input_file,
-                           tmp_prob, sup_prob, sstate->global);
-    if (!prob->input_file[0]) {
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>",
-               ARMOR(tmp_prob->input_file));
-      extra_msg = msg_buf;
+<%
+  if (prob_type == PROB_TYPE_STANDARD) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Input file name:</td>
+        <td><%
+    if (is_abstract || !sup_prob) {
+      const unsigned char *value = prob->input_file;
+      if (value && value[0] < ' ') value = 0;
+%><s:textfield name="param" value="value" size="48" maxlength="1024" checkExpr="" /><% if (!value) { %>(<i>Not set</i>)<% } %><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_input_file, tmp_prob, sup_prob, global);
+      const unsigned char *value = prob->input_file;
+      if (value && value[0] < ' ') value = 0;
+%><s:textfield name="param" value="value" size="48" maxlength="1024" checkExpr="" /><% if (!value) { %>(<i>Default</i>: <i><s:v value="tmp_prob->input_file" /></i>)<% } %><%
+    }
+%></td>
+        <td><s:submit ac="prob-change-input-file" label="Change" /><s:submit ac="prob-clear-input-file" label="Clear" /></td>
+        <td><s:help ac="prob-change-input-file" /></td>
+    </s:htr>
+</s:form>
+<%
+  }
+%>
+
+<%
+  if (prob_type == PROB_TYPE_STANDARD) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Use standard output?</td>
+        <td><%
+    if (is_abstract || !sup_prob) {
+      int value = prob->use_stdout;
+%><s:yesno name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_use_stdout, tmp_prob, sup_prob, global);
+%><s:yesno3 name="param" value="prob->use_stdout" default="sup_prob->use_stdout" /><%
+    }
+%></td>
+        <td><s:submit ac="prob-change-use-stdout" label="Change" /></td>
+        <td><s:help ac="prob-change-use-stdout" /></td>
+    </s:htr>
+</s:form>
+<%
+  }
+%>
+
+<%
+  if (prob_type == PROB_TYPE_STANDARD) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Combined standard/file output?</td>
+        <td><%
+    if (is_abstract || !sup_prob) {
+      int value = prob->combined_stdout;
+%><s:yesno name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_combined_stdout, tmp_prob, sup_prob, global);
+%><s:yesno3 name="param" value="prob->combined_stdout" default="sup_prob->combined_stdout" /><%
+    }
+%></td>
+        <td><s:submit ac="prob-change-combined-stdout" label="Change" /></td>
+        <td><s:help ac="prob-change-combined-stdout" /></td>
+    </s:htr>
+</s:form>
+<%
+  }
+%>
+
+<%
+  if (prob_type == PROB_TYPE_STANDARD) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Output file name:</td>
+        <td><%
+    if (is_abstract || !sup_prob) {
+      const unsigned char *value = prob->output_file;
+      if (value && value[0] < ' ') value = 0;
+%><s:textfield name="param" value="value" size="48" maxlength="1024" checkExpr="" /><% if (!value) { %>(<i>Not set</i>)<% } %><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_output_file, tmp_prob, sup_prob, global);
+      const unsigned char *value = prob->output_file;
+      if (value && value[0] < ' ') value = 0;
+%><s:textfield name="param" value="value" size="48" maxlength="1024" checkExpr="" /><% if (!value) { %>(<i>Default</i>: <i><s:v value="tmp_prob->output_file" /></i>)<% } %><%
+    }
+%></td>
+        <td><s:submit ac="prob-change-output-file" label="Change" /><s:submit ac="prob-clear-output-file" label="Clear" /></td>
+        <td><s:help ac="prob-change-output-file" /></td>
+    </s:htr>
+</s:form>
+<%
+  }
+%>
+
+<%
+  if (prob_type == PROB_TYPE_STANDARD && show_adv) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Consider output to stderr as PE?</td>
+        <td><%
+    if (is_abstract || !sup_prob) {
+      int value = prob->disable_stderr == 1;
+%><s:yesno name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_disable_stderr, tmp_prob, sup_prob, global);
+%><s:yesno3 name="param" value="prob->disable_stderr" default="sup_prob->disable_stderr" /><%
+    }
+%></td>
+        <td><s:submit ac="prob-change-disable-stderr" label="Change" /></td>
+        <td><s:help ac="prob-change-disable-stderr" /></td>
+    </s:htr>
+</s:form>
+<%
+  }
+%>
+
+<%
+  if (prob_type == PROB_TYPE_STANDARD && show_adv) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Input data is binary?</td>
+        <td><%
+    if (is_abstract || !sup_prob) {
+      int value = prob->binary_input == 1;
+%><s:yesno name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_binary_input, tmp_prob, sup_prob, global);
+%><s:yesno3 name="param" value="prob->binary_input" default="sup_prob->binary_input" /><%
+    }
+%></td>
+        <td><s:submit ac="prob-change-binary-input" label="Change" /></td>
+        <td><s:help ac="prob-change-binary-input" /></td>
+    </s:htr>
+</s:form>
+<%
+  }
+%>
+
+<%
+  if (prob_type != PROB_TYPE_STANDARD && prob_type != PROB_TYPE_TESTS) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Submit is binary?</td>
+        <td><%
+    if (is_abstract || !sup_prob) {
+      int value = prob->binary == 1;
+%><s:yesno name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_binary, tmp_prob, sup_prob, global);
+%><s:yesno3 name="param" value="prob->binary" default="sup_prob->binary" /><%
+    }
+%></td>
+        <td><s:submit ac="prob-change-binary" label="Change" /></td>
+        <td><s:help ac="prob-change-binary" /></td>
+    </s:htr>
+</s:form>
+<%
+  }
+%>
+
+<%
+  if (prob_type == PROB_TYPE_STANDARD && show_adv && (is_abstract || tmp_prob->binary_input <= 0)) {
+    int value = 0;
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Test normalization mode:</td>
+        <td><select name="param"><%
+    if (is_abstract || !sup_prob) {
+      value = test_normalization_parse(prob->normalization);
+      if (value < 0) value = TEST_NORM_NL;
+      if (value == TEST_NORM_DEFAULT) value = TEST_NORM_NL;
+    } else {
+      value = test_normalization_parse(prob->normalization);
+      if (value < 0) value = TEST_NORM_DEFAULT;
+      int sup_value = test_normalization_parse(sup_prob->normalization);
+      if (sup_value < 0) sup_value = TEST_NORM_NL;
+      if (sup_value == TEST_NORM_DEFAULT) sup_value = TEST_NORM_NL;
+%><s:option value='""' selectedExpr="value == TEST_NORM_DEFAULT">Default (<s:v value="test_normalization_unparse(sup_value)" escape="false" />)</s:option><%
+    }
+%><s:option value='"none"' selectedExpr="value == TEST_NORM_NONE">none - No normalization</s:option>
+<s:option value='"nl"' selectedExpr="value == TEST_NORM_NL">nl - End-of-line normalization</s:option>
+<s:option value='"nlws"' selectedExpr="value == TEST_NORM_NLWS">nlws - End-of-line and trailing space normalization</s:option>
+<s:option value='"nlwsnp"' selectedExpr="value == TEST_NORM_NLWSNP">nlwsnp - End-of-line, trailing space, and trailing lines normalization</s:option>
+<s:option value='"nlnp"' selectedExpr="value == TEST_NORM_NLNP">nlnp - End-of-line and trailing lines normalization</s:option>
+</select></td>
+        <td><s:submit ac="prob-change-normalization" label="Change" /></td>
+        <td><s:help ac="prob-change-normalization" /></td>
+    </s:htr>
+</s:form>
+<%
+  }
+%>
+
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>XML File with problem statement:</td>
+        <td><%
+  str_value = prob->xml_file;
+  if (str_value && str_value[0] < ' ') str_value = 0;
+%><s:textfield name="param" value="str_value" size="48" maxlength="1024" checkExpr="" /><%
+  if (is_abstract) {
+%><% if (!str_value) { %>(<i>Not set</i>)<% } %><%
+  } else if (!sup_prob) {
+    prepare_set_prob_value(CNTSPROB_xml_file, tmp_prob, sup_prob, global);
+    if (!str_value) {
+%>(<i>Not set</i>)<%
+    } else {
+%>(<i><s:v value="tmp_prob->xml_file" /></i>)<%
+    }
+  } else {
+    prepare_set_prob_value(CNTSPROB_xml_file, tmp_prob, sup_prob, global);
+    if (!str_value) {
+%>(<i>Default: <s:v value="tmp_prob->xml_file" /></i>)<%
+    } else {
+%>(<i><s:v value="tmp_prob->xml_file" /></i>)<%
     }
   }
-  if (!problem_type_flag && extra_msg) {
-    print_string_editing_row_2(f, "Input file name:", prob->input_file,
-                               SSERV_CMD_PROB_CHANGE_INPUT_FILE,
-                               SSERV_CMD_PROB_CLEAR_INPUT_FILE,
-                               extra_msg,
-                               session_id, form_row_attrs[row ^= 1],
-                               self_url, extra_args, prob_hidden_vars);
-                               
-  }
+%></td>
+        <td><s:submit ac="prob-change-xml-file" label="Change" /><s:submit ac="prob-clear-xml-file" label="Clear" /></td>
+        <td><s:help ac="prob-change-xml-file" /></td>
+    </s:htr>
+</s:form>
 
-  //PROBLEM_PARAM(combined_stdin, "d"),
-  extra_msg = 0;
-  if (!prob->abstract) {
-    prepare_set_prob_value(CNTSPROB_combined_stdin,
-                           tmp_prob, sup_prob, sstate->global);
-    snprintf(msg_buf, sizeof(msg_buf), "Default (%s)", tmp_prob->combined_stdin?"Yes":"No");
-    extra_msg = msg_buf;
-  }
-  if (!problem_type_flag) {
-    print_boolean_3_select_row(f, "Combined standard/file input", prob->combined_stdin,
-                               SSERV_CMD_PROB_CHANGE_COMBINED_STDIN,
-                               extra_msg,
-                               session_id, form_row_attrs[row ^= 1],
-                               self_url, extra_args, prob_hidden_vars);
-  }
-
-  //PROBLEM_PARAM(use_stdout, "d"),
-  extra_msg = 0;
-  if (!prob->abstract) {
-    prepare_set_prob_value(CNTSPROB_use_stdout,
-                           tmp_prob, sup_prob, sstate->global);
-    snprintf(msg_buf, sizeof(msg_buf), "Default (%s)", tmp_prob->use_stdout?"Yes":"No");
-    extra_msg = msg_buf;
-  }
-  if (!problem_type_flag) {
-    print_boolean_3_select_row(f, "Use standard output", prob->use_stdout,
-                               SSERV_CMD_PROB_CHANGE_USE_STDOUT,
-                               extra_msg,
-                               session_id, form_row_attrs[row ^= 1],
-                               self_url, extra_args, prob_hidden_vars);
-  }
-
-  //PROBLEM_PARAM(output_file, "s"),
-  extra_msg = 0;
-  if (prob->abstract && !prob->use_stdout) extra_msg = "";
-  if (!prob->abstract && !tmp_prob->use_stdout) {
-    extra_msg = "";
-    prepare_set_prob_value(CNTSPROB_output_file,
-                           tmp_prob, sup_prob, sstate->global);
-    if (!prob->output_file[0]) {
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>",
-               ARMOR(tmp_prob->output_file));
-      extra_msg = msg_buf;
-    }
-  }
-  if (!problem_type_flag && extra_msg) {
-    print_string_editing_row_2(f, "Output file name:", prob->output_file,
-                               SSERV_CMD_PROB_CHANGE_OUTPUT_FILE,
-                               SSERV_CMD_PROB_CLEAR_OUTPUT_FILE,
-                               extra_msg,
-                               session_id, form_row_attrs[row ^= 1],
-                               self_url, extra_args, prob_hidden_vars);
-                               
-  }
-
-  //PROBLEM_PARAM(combined_stdout, "d"),
-  extra_msg = 0;
-  if (!prob->abstract) {
-    prepare_set_prob_value(CNTSPROB_combined_stdout,
-                           tmp_prob, sup_prob, sstate->global);
-    snprintf(msg_buf, sizeof(msg_buf), "Default (%s)", tmp_prob->combined_stdout?"Yes":"No");
-    extra_msg = msg_buf;
-  }
-  if (!problem_type_flag) {
-    print_boolean_3_select_row(f, "Combined standard/file output", prob->combined_stdout,
-                               SSERV_CMD_PROB_CHANGE_COMBINED_STDOUT,
-                               extra_msg,
-                               session_id, form_row_attrs[row ^= 1],
-                               self_url, extra_args, prob_hidden_vars);
-  }
-
-  if (show_adv) {
-    //PROBLEM_PARAM(disable_stderr, "d"),
-    extra_msg = "Undefined";
-    if (!prob->abstract) {
-      prepare_set_prob_value(CNTSPROB_disable_stderr,
-                             tmp_prob, sup_prob, sstate->global);
-      snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-               tmp_prob->disable_stderr?"Yes":"No");
-      extra_msg = msg_buf;
-    }
-    print_boolean_3_select_row(f,"Consider output to stderr as PE:",
-                               prob->disable_stderr,
-                               SSERV_CMD_PROB_CHANGE_DISABLE_STDERR,
-                               extra_msg,
-                               session_id, form_row_attrs[row ^= 1],
-                               self_url, extra_args, prob_hidden_vars);
-  }
-
-  if (show_adv) {
-    //PROBLEM_PARAM(binary_input, "d"),
-    extra_msg = 0;
-    if (!prob->abstract) {
-      prepare_set_prob_value(CNTSPROB_binary_input,
-                             tmp_prob, sup_prob, sstate->global);
-      snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-               tmp_prob->binary_input?"Yes":"No");
-      extra_msg = msg_buf;
-    }
-    print_boolean_3_select_row(f, "Input data is binary", prob->binary_input,
-                               SSERV_CMD_PROB_CHANGE_BINARY_INPUT,
-                               extra_msg,
-                               session_id, form_row_attrs[row ^= 1],
-                               self_url, extra_args, prob_hidden_vars);
-  }
-
-  if (show_adv && tmp_prob->binary_input <= 0) {
-    //PROBLEM_PARAM(normalization, "s"),
-    msg_buf[0] = 0;
-    if (prob->abstract > 0 && !prob->normalization[0]) {
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default)</i>");
-    } else if (prob->abstract > 0) {
-      // nothing
-    } else if (prob->abstract <= 0 && !prob->normalization[0]) {
-      if (!tmp_prob->normalization[0]) {
-        snprintf(msg_buf, sizeof(msg_buf), "<i>(Default)</i>");
+<%
+  if (global->advanced_layout <= 0) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Directory with tests:</td>
+        <td><%
+    str_value = prob->test_dir;
+    if (str_value && str_value[0] < ' ') str_value = 0;
+%><s:textfield name="param" value="str_value" size="48" maxlength="1024" checkExpr="" /><%
+    if (is_abstract) {
+      if (!str_value) {
+%>(<i>Not set</i>)<%
+      }
+    } else {
+      prepare_set_prob_value(CNTSPROB_test_dir, tmp_prob, sup_prob, global);
+      if (!sup_prob && !str_value) {
+%>(<i>Not set</i>)<%
+      } else if (!str_value) {
+%>(<i>Default: <s:v value="tmp_prob->test_dir" /></i>)<%
       } else {
-        snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %s)</i>", ARMOR(tmp_prob->normalization));
+%>(<i><s:v value="tmp_prob->test_dir" /></i>)<%
       }
     }
-    extra_msg = msg_buf;
-    print_string_editing_row_3(f,
-                               "Test normalization mode:",
-                               prob->normalization,
-                               SSERV_CMD_PROB_CHANGE_NORMALIZATION,
-                               SSERV_CMD_PROB_CLEAR_NORMALIZATION,
-                               extra_msg,
-                               session_id, form_row_attrs[row ^= 1],
-                               self_url, extra_args, prob_hidden_vars);
+%></td>
+        <td><s:submit ac="prob-change-test-dir" label="Change" /><s:submit ac="prob-clear-test-dir" label="Clear" /></td>
+        <td><s:help ac="prob-change-test-dir" /></td>
+    </s:htr>
+</s:form>
+<%
   }
+%>
 
-  if (show_adv) {
-    //PROBLEM_PARAM(binary, "d"),
-    extra_msg = 0;
-    if (!prob->abstract) {
-      prepare_set_prob_value(CNTSPROB_binary,
-                             tmp_prob, sup_prob, sstate->global);
-      snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-               tmp_prob->binary?"Yes":"No");
-      extra_msg = msg_buf;
+<%
+  if (!is_abstract) {
+    prepare_set_prob_value(CNTSPROB_test_sfx, tmp_prob, sup_prob, global);
+    prepare_set_prob_value(CNTSPROB_test_pat, tmp_prob, sup_prob, global);
+  }
+%>
+
+<%
+  if (is_abstract || show_adv || tmp_prob->test_pat[0] >= ' ') {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Pattern for test file names:</td>
+        <td><%
+    str_value = prob->test_pat;
+    if (str_value[0] == 1) str_value = 0;
+%><s:textfield name="param" value="str_value" size="48" maxlength="1024" checkExpr="" /><%
+    if (is_abstract) {
+      if (!str_value) {
+%>(<i>Not set</i>)<%
+      }
+    } else {
+      if (!sup_prob && !str_value) {
+%>(<i>Not set</i>)<%
+      } else if (!str_value) {
+%>(<i>Default: <s:v value="tmp_prob->test_pat" /></i>)<%
+      }
     }
-    print_boolean_3_select_row(f, "Submit is binary", prob->binary,
-                               SSERV_CMD_PROB_CHANGE_BINARY,
-                               extra_msg,
-                               session_id, form_row_attrs[row ^= 1],
-                               self_url, extra_args, prob_hidden_vars);
+%></td>
+        <td><s:submit ac="prob-change-test-pat" label="Change" /><s:submit ac="prob-clear-test-pat" label="Clear" /></td>
+        <td><s:help ac="prob-change-test-pat" /></td>
+    </s:htr>
+</s:form>
+<%
   }
+%>
 
-  //PROBLEM_PARAM(xml_file, "s"),
-  extra_msg = 0;
-  if (prob->abstract && !prob->xml_file[0]) extra_msg="<i>(Undefined)</i>";
-  if (!prob->abstract) {
-    prepare_set_prob_value(CNTSPROB_xml_file,
-                           tmp_prob, sup_prob, sstate->global);
-    if (!prob->xml_file[0])
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>",
-               ARMOR(tmp_prob->xml_file));
-    else
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(\"%s\")</i>",
-               ARMOR(tmp_prob->xml_file));
-    extra_msg = msg_buf;
-  }
-  print_string_editing_row_2(f, "XML File with problem statement:",
-                             prob->xml_file,
-                             SSERV_CMD_PROB_CHANGE_XML_FILE,
-                             SSERV_CMD_PROB_CLEAR_XML_FILE,
-                             extra_msg,
-                             session_id, form_row_attrs[row ^= 1],
-                             self_url, extra_args, prob_hidden_vars);
-
-  //PROBLEM_PARAM(alternatives_file, "s"),
-  if (prob->abstract) i = prob->type;
-  else i = tmp_prob->type;
-  if (i == PROB_TYPE_SELECT_MANY || i == PROB_TYPE_SELECT_ONE) {
-    extra_msg = 0;
-    if (prob->abstract && !prob->alternatives_file[0])
-      extra_msg="<i>(Undefined)</i>";
-    if (!prob->abstract) {
-      prepare_set_prob_value(CNTSPROB_alternatives_file,
-                             tmp_prob, sup_prob, sstate->global);
-      if (!prob->alternatives_file[0])
-        snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>",
-                 ARMOR(tmp_prob->alternatives_file));
-      else
-        snprintf(msg_buf, sizeof(msg_buf), "<i>(\"%s\")</i>",
-                 ARMOR(tmp_prob->alternatives_file));
-      extra_msg = msg_buf;
+<%
+  if (is_abstract || tmp_prob->test_pat[0] < ' ') {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Suffix of test files:</td>
+        <td><%
+    str_value = prob->test_sfx;
+    if (str_value[0] == 1) str_value = 0;
+%><s:textfield name="param" value="str_value" size="48" maxlength="1024" checkExpr="" /><%
+    if (is_abstract) {
+      if (!str_value) {
+%>(<i>Not set</i>)<%
+      }
+    } else {
+      if (!sup_prob && !str_value) {
+%>(<i>Not set</i>)<%
+      } else if (!str_value) {
+%>(<i>Default: <s:v value="tmp_prob->test_sfx" /></i>)<%
+      }
     }
-    print_string_editing_row_2(f, "File with answer alternatives:",
-                               prob->alternatives_file,
-                               SSERV_CMD_PROB_CHANGE_ALTERNATIVES_FILE,
-                               SSERV_CMD_PROB_CLEAR_ALTERNATIVES_FILE,
-                               extra_msg,
-                               session_id, form_row_attrs[row ^= 1],
-                               self_url, extra_args, prob_hidden_vars);
+%></td>
+        <td><s:submit ac="prob-change-test-sfx" label="Change" /><s:submit ac="prob-clear-test-sfx" label="Clear" /></td>
+        <td><s:help ac="prob-change-test-sfx" /></td>
+    </s:htr>
+</s:form>
+<%
   }
+%>
 
-  //PROBLEM_PARAM(plugin_file, "s"),
-  extra_msg = 0;
-  if (prob->abstract && !prob->plugin_file[0])extra_msg="<i>(Undefined)</i>";
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Use &quot;correct answer&quot; files for check?</td>
+        <td><%
+    if (is_abstract || !sup_prob) {
+      int value = (prob->use_corr > 0);
+%><s:yesno name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_use_corr, tmp_prob, sup_prob, global);
+%><s:yesno3 name="param" value="prob->use_corr" default="sup_prob->use_corr" /><%
+    }
+%></td>
+        <td><s:submit ac="prob-change-use-corr" label="Change" /></td>
+        <td><s:help ac="prob-change-use-corr" /></td>
+    </s:htr>
+</s:form>
+
+<%
+  if (tmp_prob->use_corr > 0 && global->advanced_layout <= 0) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Directory with &quot;correct answer&quot; files:</td>
+        <td><%
+    str_value = prob->corr_dir;
+    if (str_value && str_value[0] < ' ') str_value = 0;
+%><s:textfield name="param" value="str_value" size="48" maxlength="1024" checkExpr="" /><%
+    if (is_abstract) {
+      if (!str_value) {
+%>(<i>Not set</i>)<%
+      }
+    } else {
+      prepare_set_prob_value(CNTSPROB_corr_dir, tmp_prob, sup_prob, global);
+      if (!sup_prob && !str_value) {
+%>(<i>Not set</i>)<%
+      } else if (!str_value) {
+%>(<i>Default: <s:v value="tmp_prob->corr_dir" /></i>)<%
+      } else {
+%>(<i><s:v value="tmp_prob->corr_dir" /></i>)<%
+      }
+    }
+%></td>
+        <td><s:submit ac="prob-change-corr-dir" label="Change" /><s:submit ac="prob-clear-corr-dir" label="Clear" /></td>
+        <td><s:help ac="prob-change-corr-dir" /></td>
+    </s:htr>
+</s:form>
+<%
+  }
+%>
+
+<%
   if (!prob->abstract) {
-    prepare_set_prob_value(CNTSPROB_plugin_file,
-                           tmp_prob, sup_prob, sstate->global);
-    if (!prob->plugin_file[0])
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>",
-               ARMOR(tmp_prob->plugin_file));
-    else
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(\"%s\")</i>",
-               ARMOR(tmp_prob->plugin_file));
-    extra_msg = msg_buf;
+    prepare_set_prob_value(CNTSPROB_corr_sfx, tmp_prob, sup_prob, global);
+    prepare_set_prob_value(CNTSPROB_corr_pat, tmp_prob, sup_prob, global);
   }
-  print_string_editing_row_2(f, "Problem handling plugin file:",
-                             prob->plugin_file,
-                             SSERV_CMD_PROB_CHANGE_PLUGIN_FILE,
-                             SSERV_CMD_PROB_CLEAR_PLUGIN_FILE,
-                             extra_msg,
-                             session_id, form_row_attrs[row ^= 1],
-                             self_url, extra_args, prob_hidden_vars);
+%>
 
-  //PROBLEM_PARAM(test_dir, "s"),
-  extra_msg = 0;
-  if (prob->abstract && !prob->test_dir[0]) extra_msg = "<i>(Undefined)</i>";
+<%
+  if (tmp_prob->use_corr > 0 && (is_abstract || show_adv || tmp_prob->corr_pat[0] >= ' ')) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Pattern for &quot;correct answer&quot; file names:</td>
+        <td><%
+    str_value = prob->corr_pat;
+    if (str_value[0] == 1) str_value = 0;
+%><s:textfield name="param" value="str_value" size="48" maxlength="1024" checkExpr="" /><%
+    if (is_abstract) {
+      if (!str_value) {
+%>(<i>Not set</i>)<%
+      }
+    } else {
+      if (!sup_prob && !str_value) {
+%>(<i>Not set</i>)<%
+      } else if (!str_value) {
+%>(<i>Default: <s:v value="tmp_prob->corr_pat" /></i>)<%
+      }
+    }
+%></td>
+        <td><s:submit ac="prob-change-corr-pat" label="Change" /><s:submit ac="prob-clear-corr-pat" label="Clear" /></td>
+        <td><s:help ac="prob-change-corr-pat" /></td>
+    </s:htr>
+</s:form>
+<%
+  }
+%>
+
+<%
+  if (tmp_prob->use_corr > 0 && (is_abstract || tmp_prob->corr_pat[0] < ' ')) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Suffix of &quot;correct answer&quot; files:</td>
+        <td><%
+    str_value = prob->corr_sfx;
+    if (str_value[0] == 1) str_value = 0;
+%><s:textfield name="param" value="str_value" size="48" maxlength="1024" checkExpr="" /><%
+    if (is_abstract) {
+      if (!str_value) {
+%>(<i>Not set</i>)<%
+      }
+    } else {
+      if (!sup_prob && !str_value) {
+%>(<i>Not set</i>)<%
+      } else if (!str_value) {
+%>(<i>Default: <s:v value="tmp_prob->corr_sfx" /></i>)<%
+      }
+    }
+%></td>
+        <td><s:submit ac="prob-change-corr-sfx" label="Change" /><s:submit ac="prob-clear-corr-sfx" label="Clear" /></td>
+        <td><s:help ac="prob-change-corr-sfx" /></td>
+    </s:htr>
+</s:form>
+<%
+  }
+%>
+
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Use test info files for check?</td>
+        <td><%
+    if (is_abstract || !sup_prob) {
+      int value = (prob->use_info > 0);
+%><s:yesno name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_use_info, tmp_prob, sup_prob, global);
+%><s:yesno3 name="param" value="prob->use_info" default="sup_prob->use_info" /><%
+    }
+%></td>
+        <td><s:submit ac="prob-change-use-info" label="Change" /></td>
+        <td><s:help ac="prob-change-use-info" /></td>
+    </s:htr>
+</s:form>
+
+<%
+  if (tmp_prob->use_info > 0 && global->advanced_layout <= 0) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Directory with test info files:</td>
+        <td><%
+    str_value = prob->info_dir;
+    if (str_value && str_value[0] < ' ') str_value = 0;
+%><s:textfield name="param" value="str_value" size="48" maxlength="1024" checkExpr="" /><%
+    if (is_abstract) {
+      if (!str_value) {
+%>(<i>Not set</i>)<%
+      }
+    } else {
+      prepare_set_prob_value(CNTSPROB_info_dir, tmp_prob, sup_prob, global);
+      if (!sup_prob && !str_value) {
+%>(<i>Not set</i>)<%
+      } else if (!str_value) {
+%>(<i>Default: <s:v value="tmp_prob->info_dir" /></i>)<%
+      } else {
+%>(<i><s:v value="tmp_prob->info_dir" /></i>)<%
+      }
+    }
+%></td>
+        <td><s:submit ac="prob-change-info-dir" label="Change" /><s:submit ac="prob-clear-info-dir" label="Clear" /></td>
+        <td><s:help ac="prob-change-info-dir" /></td>
+    </s:htr>
+</s:form>
+<%
+  }
+%>
+
+<%
   if (!prob->abstract) {
-    prepare_set_prob_value(CNTSPROB_test_dir,
-                           tmp_prob, sup_prob, sstate->global);
-    if (!prob->test_dir[0])
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>",
-               ARMOR(tmp_prob->test_dir));
-    else
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(\"%s\")</i>",
-               ARMOR(tmp_prob->test_dir));
-    extra_msg = msg_buf;
+    prepare_set_prob_value(CNTSPROB_info_sfx, tmp_prob, sup_prob, global);
+    prepare_set_prob_value(CNTSPROB_info_pat, tmp_prob, sup_prob, global);
   }
-  print_string_editing_row_2(f, "Directory with tests:", prob->test_dir,
-                             SSERV_CMD_PROB_CHANGE_TEST_DIR,
-                             SSERV_CMD_PROB_CLEAR_TEST_DIR,
-                             extra_msg,
-                             session_id, form_row_attrs[row ^= 1],
-                             self_url, extra_args, prob_hidden_vars);
+%>
 
+<%
+  if (tmp_prob->use_info > 0 && (is_abstract || show_adv || tmp_prob->info_pat[0] >= ' ')) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Pattern for test info file names:</td>
+        <td><%
+    str_value = prob->info_pat;
+    if (str_value[0] == 1) str_value = 0;
+%><s:textfield name="param" value="str_value" size="48" maxlength="1024" checkExpr="" /><%
+    if (is_abstract) {
+      if (!str_value) {
+%>(<i>Not set</i>)<%
+      }
+    } else {
+      if (!sup_prob && !str_value) {
+%>(<i>Not set</i>)<%
+      } else if (!str_value) {
+%>(<i>Default: <s:v value="tmp_prob->info_pat" /></i>)<%
+      }
+    }
+%></td>
+        <td><s:submit ac="prob-change-info-pat" label="Change" /><s:submit ac="prob-clear-info-pat" label="Clear" /></td>
+        <td><s:help ac="prob-change-info-pat" /></td>
+    </s:htr>
+</s:form>
+<%
+  }
+%>
+
+<%
+  if (tmp_prob->use_info > 0 && (is_abstract || tmp_prob->info_pat[0] < ' ')) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Suffix of test info:</td>
+        <td><%
+    str_value = prob->info_sfx;
+    if (str_value[0] == 1) str_value = 0;
+%><s:textfield name="param" value="str_value" size="48" maxlength="1024" checkExpr="" /><%
+    if (is_abstract) {
+      if (!str_value) {
+%>(<i>Not set</i>)<%
+      }
+    } else {
+      if (!sup_prob && !str_value) {
+%>(<i>Not set</i>)<%
+      } else if (!str_value) {
+%>(<i>Default: <s:v value="tmp_prob->info_sfx" /></i>)<%
+      }
+    }
+%></td>
+        <td><s:submit ac="prob-change-info-sfx" label="Change" /><s:submit ac="prob-clear-info-sfx" label="Clear" /></td>
+        <td><s:help ac="prob-change-info-sfx" /></td>
+    </s:htr>
+</s:form>
+<%
+  }
+%>
+
+<%
+  if (show_adv && tmp_prob->use_info > 0) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Use special working directory for check?</td>
+        <td><%
+    if (is_abstract || !sup_prob) {
+      int value = (prob->use_tgz > 0);
+%><s:yesno name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_use_tgz, tmp_prob, sup_prob, global);
+%><s:yesno3 name="param" value="prob->use_tgz" default="sup_prob->use_tgz" /><%
+    }
+%></td>
+        <td><s:submit ac="prob-change-use-tgz" label="Change" /></td>
+        <td><s:help ac="prob-change-use-tgz" /></td>
+    </s:htr>
+</s:form>
+<%
+  }
+%>
+
+<%
   if (!prob->abstract) {
-    prepare_set_prob_value(CNTSPROB_test_sfx,
-                           tmp_prob, sup_prob, sstate->global);
-    prepare_set_prob_value(CNTSPROB_test_pat,
-                           tmp_prob, sup_prob, sstate->global);
+    prepare_set_prob_value(CNTSPROB_tgz_sfx, tmp_prob, sup_prob, global);
+    prepare_set_prob_value(CNTSPROB_tgz_pat, tmp_prob, sup_prob, global);
+    prepare_set_prob_value(CNTSPROB_tgzdir_sfx, tmp_prob, sup_prob, global);
+    prepare_set_prob_value(CNTSPROB_tgzdir_pat, tmp_prob, sup_prob, global);
   }
+%>
 
-  //PROBLEM_PARAM(test_sfx, "s"),
-  extra_msg = 0;
-  if (prob->abstract && (!prob->test_pat[0] || prob->test_pat[0] == 1)) extra_msg = "";
-  if (!prob->abstract && !tmp_prob->test_pat[0]) {
-    if (prob->test_sfx[0] == 1)
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>",
-               ARMOR(tmp_prob->test_sfx));
-    else
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(\"%s\")</i>",
-               ARMOR(tmp_prob->test_sfx));
-    extra_msg = msg_buf;
+<%
+  if (show_adv && tmp_prob->use_tgz > 0 && (is_abstract || tmp_prob->tgz_pat[0] >= ' ')) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Pattern for working dir archives:</td>
+        <td><%
+    str_value = prob->tgz_pat;
+    if (str_value[0] == 1) str_value = 0;
+%><s:textfield name="param" value="str_value" size="48" maxlength="1024" checkExpr="" /><%
+    if (is_abstract) {
+      if (!str_value) {
+%>(<i>Not set</i>)<%
+      }
+    } else {
+      if (!sup_prob && !str_value) {
+%>(<i>Not set</i>)<%
+      } else if (!str_value) {
+%>(<i>Default: <s:v value="tmp_prob->tgz_pat" /></i>)<%
+      }
+    }
+%></td>
+        <td><s:submit ac="prob-change-tgz-pat" label="Change" /><s:submit ac="prob-clear-tgz-pat" label="Clear" /></td>
+        <td><s:help ac="prob-change-tgz-pat" /></td>
+    </s:htr>
+</s:form>
+<%
   }
-  if (extra_msg)
-    print_string_editing_row_3(f, "Suffix of test files:", prob->test_sfx,
-                               SSERV_CMD_PROB_CHANGE_TEST_SFX,
-                               SSERV_CMD_PROB_CLEAR_TEST_SFX,
-                               extra_msg,
-                               session_id, form_row_attrs[row ^= 1],
-                               self_url, extra_args, prob_hidden_vars);
+%>
 
-  //PROBLEM_PARAM(test_pat, "s"),
-  extra_msg = 0;
-  if (show_adv && prob->abstract) extra_msg = "";
-  if (!prob->abstract && (show_adv || tmp_prob->test_pat[0])) {
-    extra_msg = "";
-    if (prob->test_pat[0] == 1)
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>",
-               ARMOR(tmp_prob->test_pat));
-    else
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(\"%s\")</i>",
-               ARMOR(tmp_prob->test_pat));
-    extra_msg = msg_buf;
+<%
+  if (show_adv && tmp_prob->use_tgz > 0 && (is_abstract || tmp_prob->tgzdir_pat[0] >= ' ')) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Pattern for master working dirs:</td>
+        <td><%
+    str_value = prob->tgzdir_pat;
+    if (str_value[0] == 1) str_value = 0;
+%><s:textfield name="param" value="str_value" size="48" maxlength="1024" checkExpr="" /><%
+    if (is_abstract) {
+      if (!str_value) {
+%>(<i>Not set</i>)<%
+      }
+    } else {
+      if (!sup_prob && !str_value) {
+%>(<i>Not set</i>)<%
+      } else if (!str_value) {
+%>(<i>Default: <s:v value="tmp_prob->tgzdir_pat" /></i>)<%
+      }
+    }
+%></td>
+        <td><s:submit ac="prob-change-tgzdir-pat" label="Change" /><s:submit ac="prob-clear-tgzdir-pat" label="Clear" /></td>
+        <td><s:help ac="prob-change-tgzdir-pat" /></td>
+    </s:htr>
+</s:form>
+<%
   }
-  if (extra_msg)
-    print_string_editing_row_3(f,
-                               "Pattern for test file names (overrides test_suffix):",
-                               prob->test_pat,
-                               SSERV_CMD_PROB_CHANGE_TEST_PAT,
-                               SSERV_CMD_PROB_CLEAR_TEST_PAT,
-                               extra_msg,
-                               session_id, form_row_attrs[row ^= 1],
-                               self_url, extra_args, prob_hidden_vars);
+%>
 
-  //PROBLEM_PARAM(use_corr, "d"),
-  extra_msg = 0;
-  if (!prob->abstract) {
-    prepare_set_prob_value(CNTSPROB_use_corr,
-                           tmp_prob, sup_prob, sstate->global);
-    snprintf(msg_buf, sizeof(msg_buf), "Default (%s)", tmp_prob->use_corr?"Yes":"No");
-    extra_msg = msg_buf;
+<%
+  if (show_adv && tmp_prob->use_tgz > 0 && (is_abstract || tmp_prob->tgz_pat[0] < ' ')) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Suffix of working dir archives:</td>
+        <td><%
+    str_value = prob->tgz_sfx;
+    if (str_value[0] == 1) str_value = 0;
+%><s:textfield name="param" value="str_value" size="48" maxlength="1024" checkExpr="" /><%
+    if (is_abstract) {
+      if (!str_value) {
+%>(<i>Not set</i>)<%
+      }
+    } else {
+      if (!sup_prob && !str_value) {
+%>(<i>Not set</i>)<%
+      } else if (!str_value) {
+%>(<i>Default: <s:v value="tmp_prob->tgz_sfx" /></i>)<%
+      }
+    }
+%></td>
+        <td><s:submit ac="prob-change-tgz-sfx" label="Change" /><s:submit ac="prob-clear-tgz-sfx" label="Clear" /></td>
+        <td><s:help ac="prob-change-tgz-sfx" /></td>
+    </s:htr>
+</s:form>
+<%
   }
-  print_boolean_3_select_row(f, "Use \"correct answer\" files for check:",
-                             prob->use_corr,
-                             SSERV_CMD_PROB_CHANGE_USE_CORR,
-                             extra_msg,
-                             session_id, form_row_attrs[row ^= 1],
-                             self_url, extra_args, prob_hidden_vars);
+%>
 
-  //PROBLEM_PARAM(corr_dir, "s"),
-  extra_msg = 0;
-  if (prob->abstract && prob->use_corr == 1) {
-    extra_msg = "";
-    if (prob->abstract && !prob->corr_dir[0]) extra_msg = "<i>(Undefined)</i>";
+<%
+  if (show_adv && tmp_prob->use_tgz > 0 && (is_abstract || tmp_prob->tgzdir_pat[0] < ' ')) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Suffix of master working dirs:</td>
+        <td><%
+    str_value = prob->tgzdir_sfx;
+    if (str_value[0] == 1) str_value = 0;
+%><s:textfield name="param" value="str_value" size="48" maxlength="1024" checkExpr="" /><%
+    if (is_abstract) {
+      if (!str_value) {
+%>(<i>Not set</i>)<%
+      }
+    } else {
+      if (!sup_prob && !str_value) {
+%>(<i>Not set</i>)<%
+      } else if (!str_value) {
+%>(<i>Default: <s:v value="tmp_prob->tgzdir_sfx" /></i>)<%
+      }
+    }
+%></td>
+        <td><s:submit ac="prob-change-tgzdir-sfx" label="Change" /><s:submit ac="prob-clear-tgzdir-sfx" label="Clear" /></td>
+        <td><s:help ac="prob-change-tgzdir-sfx" /></td>
+    </s:htr>
+</s:form>
+<%
   }
-  if (!prob->abstract && tmp_prob->use_corr) {
-    prepare_set_prob_value(CNTSPROB_corr_dir,
-                           tmp_prob, sup_prob, sstate->global);
-    if (!prob->corr_dir[0])
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>",
-               ARMOR(tmp_prob->corr_dir));
-    else
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(\"%s\")</i>",
-               ARMOR(tmp_prob->corr_dir));
-    extra_msg = msg_buf;
-  }
-  if (extra_msg) {
-    print_string_editing_row_2(f, "Directory with \"correct answer\" files:",
-                               prob->corr_dir,
-                               SSERV_CMD_PROB_CHANGE_CORR_DIR,
-                               SSERV_CMD_PROB_CLEAR_CORR_DIR,
-                               extra_msg,
-                               session_id, form_row_attrs[row ^= 1],
-                               self_url, extra_args, prob_hidden_vars);
-  }
+%>
 
-  if (!prob->abstract) {
-    prepare_set_prob_value(CNTSPROB_corr_sfx,
-                           tmp_prob, sup_prob, sstate->global);
-    prepare_set_prob_value(CNTSPROB_corr_pat,
-                           tmp_prob, sup_prob, sstate->global);
-  }
+<%
+  prepare_set_prob_value(CNTSPROB_time_limit, tmp_prob, sup_prob, global);
+  prepare_set_prob_value(CNTSPROB_time_limit_millis, tmp_prob, sup_prob, global);
+%>
 
-  //PROBLEM_PARAM(corr_sfx, "s"),
-  extra_msg = 0;
-  if (prob->abstract && prob->use_corr == 1
-      && (!prob->corr_pat[0] || prob->corr_pat[0] == 1)) extra_msg = "";
-  if (!prob->abstract && tmp_prob->use_corr && !tmp_prob->corr_pat[0]) {
-    if (prob->corr_sfx[0] == 1)
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>",
-               ARMOR(tmp_prob->corr_sfx));
-    else
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(\"%s\")</i>",
-               ARMOR(tmp_prob->corr_sfx));
-    extra_msg = msg_buf;
+<%
+  if (show_adv || tmp_prob->time_limit_millis > 0) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Processor time limit (ms):</td>
+        <td><s:textfield name="param" value="prob->time_limit_millis" size="48" maxlength="1024" checkExpr=" > 0" /><%
+    if (is_abstract) {
+      if (prob->time_limit_millis <= 0) {
+%>(<i>Not set</i>)<%
+      }
+    } else {
+      if (prob->time_limit_millis <= 0 && tmp_prob->time_limit_millis <= 0) {
+%>(<i>Not set</i>)<%
+      } else if (prob->time_limit_millis <= 0) {
+%>(<i>Default: <s:v value="tmp_prob->time_limit_millis" /></i>)<%
+      }
+    }
+%></td>
+        <td><s:submit ac="prob-change-time-limit-millis" label="Change" /></td>
+        <td><s:help ac="prob-change-time-limit-millis" /></td>
+    </s:htr>
+</s:form>
+<%
   }
-  if (extra_msg)
-    print_string_editing_row_3(f, "Suffix of \"correct answer\" files:", prob->corr_sfx,
-                               SSERV_CMD_PROB_CHANGE_CORR_SFX,
-                               SSERV_CMD_PROB_CLEAR_CORR_SFX,
-                               extra_msg,
-                               session_id, form_row_attrs[row ^= 1],
-                               self_url, extra_args, prob_hidden_vars);
+%>
 
-  //PROBLEM_PARAM(corr_pat, "s"),
-  extra_msg = 0;
-  if (show_adv && prob->abstract && prob->use_corr == 1) extra_msg = "";
-  if (!prob->abstract && tmp_prob->use_corr
-      && (show_adv || tmp_prob->corr_pat[0])) {
-    extra_msg = "";
-    if (prob->corr_pat[0] == 1)
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>",
-               ARMOR(tmp_prob->corr_pat));
-    else
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(\"%s\")</i>",
-               ARMOR(tmp_prob->corr_pat));
-    extra_msg = msg_buf;
+<%
+  if (tmp_prob->time_limit_millis <= 0) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Processor time limit (s):</td>
+        <td><s:textfield name="param" value="prob->time_limit" size="48" maxlength="1024" checkExpr=" >= 0" /><%
+    if (is_abstract) {
+      if (prob->time_limit < 0) {
+%>(<i>Not set</i>)<%
+      } else if (!prob->time_limit) {
+%>(<i>Unlimited</i>)<%
+      }
+    } else {
+      if (prob->time_limit < 0 && tmp_prob->time_limit < 0) {
+%>(<i>Not set</i>)<%
+      } else if (prob->time_limit < 0 && !tmp_prob->time_limit) {
+%>(<i>Default: Unlimited</i>)<%
+      } else if (prob->time_limit < 0) {
+%>(<i>Default: <s:v value="tmp_prob->time_limit" /></i>)<%
+      } else if (!prob->time_limit) {
+%>(<i>Unlimited</i>)<%
+      }
+    }
+%></td>
+        <td><s:submit ac="prob-change-time-limit" label="Change" /></td>
+        <td><s:help ac="prob-change-time-limit" /></td>
+    </s:htr>
+</s:form>
+<%
   }
-  if (extra_msg)
-    print_string_editing_row_3(f,
-                               "Pattern for \"correct answer\" file names (overrides corr_suffix):",
-                               prob->corr_pat,
-                               SSERV_CMD_PROB_CHANGE_CORR_PAT,
-                               SSERV_CMD_PROB_CLEAR_CORR_PAT,
-                               extra_msg,
-                               session_id, form_row_attrs[row ^= 1],
-                               self_url, extra_args, prob_hidden_vars);
+%>
 
-  //PROBLEM_PARAM(use_info, "d"),
-  extra_msg = 0;
-  if (!prob->abstract) {
-    prepare_set_prob_value(CNTSPROB_use_info,
-                           tmp_prob, sup_prob, sstate->global);
-    snprintf(msg_buf, sizeof(msg_buf), "Default (%s)", tmp_prob->use_info?"Yes":"No");
-    extra_msg = msg_buf;
-  }
-  print_boolean_3_select_row(f, "Use test info files for check:",
-                             prob->use_info,
-                             SSERV_CMD_PROB_CHANGE_USE_INFO,
-                             extra_msg,
-                             session_id, form_row_attrs[row ^= 1],
-                             self_url, extra_args, prob_hidden_vars);
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Real time limit (s):</td>
+        <td><s:textfield name="param" value="prob->real_time_limit" size="48" maxlength="1024" checkExpr=" >= 0" /><%
+    if (is_abstract) {
+      if (prob->real_time_limit < 0) {
+%>(<i>Not set</i>)<%
+      } else if (!prob->real_time_limit) {
+%>(<i>Unlimited</i>)<%
+      }
+    } else {
+      if (prob->real_time_limit < 0 && tmp_prob->real_time_limit < 0) {
+%>(<i>Not set</i>)<%
+      } else if (prob->real_time_limit < 0 && !tmp_prob->real_time_limit) {
+%>(<i>Default: Unlimited</i>)<%
+      } else if (prob->real_time_limit < 0) {
+%>(<i>Default: <s:v value="tmp_prob->real_time_limit" /></i>)<%
+      } else if (!prob->real_time_limit) {
+%>(<i>Unlimited</i>)<%
+      }
+    }
+%></td>
+        <td><s:submit ac="prob-change-real-time-limit" label="Change" /></td>
+        <td><s:help ac="prob-change-real-time-limit" /></td>
+    </s:htr>
+</s:form>
 
-  //PROBLEM_PARAM(info_dir, "s"),
-  extra_msg = 0;
-  if (prob->abstract && prob->use_info == 1) {
-    extra_msg = "";
-    if (prob->abstract && !prob->info_dir[0]) extra_msg = "<i>(Undefined)</i>";
-  }
-  if (!prob->abstract && tmp_prob->use_info) {
-    prepare_set_prob_value(CNTSPROB_info_dir,
-                           tmp_prob, sup_prob, sstate->global);
-    if (!prob->info_dir[0])
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>",
-               ARMOR(tmp_prob->info_dir));
-    else
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(\"%s\")</i>",
-               ARMOR(tmp_prob->info_dir));
-    extra_msg = msg_buf;
-  }
-  if (extra_msg) {
-    print_string_editing_row_2(f, "Directory with test info files:",
-                               prob->info_dir,
-                               SSERV_CMD_PROB_CHANGE_INFO_DIR,
-                               SSERV_CMD_PROB_CLEAR_INFO_DIR,
-                               extra_msg,
-                               session_id, form_row_attrs[row ^= 1],
-                               self_url, extra_args, prob_hidden_vars);
-  }
-
-  if (!prob->abstract) {
-    prepare_set_prob_value(CNTSPROB_info_sfx,
-                           tmp_prob, sup_prob, sstate->global);
-    prepare_set_prob_value(CNTSPROB_info_pat,
-                           tmp_prob, sup_prob, sstate->global);
-  }
-
-  //PROBLEM_PARAM(info_sfx, "s"),
-  extra_msg = 0;
-  if (prob->abstract && prob->use_info == 1
-      && (!prob->info_pat[0] || prob->info_pat[0] == 1)) extra_msg = "";
-  if (!prob->abstract && tmp_prob->use_info && !tmp_prob->info_pat[0]) {
-    if (prob->info_sfx[0] == 1)
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>",
-               ARMOR(tmp_prob->info_sfx));
-    else
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(\"%s\")</i>",
-               ARMOR(tmp_prob->info_sfx));
-    extra_msg = msg_buf;
-  }
-  if (extra_msg)
-    print_string_editing_row_3(f, "Suffix of test info:", prob->info_sfx,
-                               SSERV_CMD_PROB_CHANGE_INFO_SFX,
-                               SSERV_CMD_PROB_CLEAR_INFO_SFX,
-                               extra_msg,
-                               session_id, form_row_attrs[row ^= 1],
-                               self_url, extra_args, prob_hidden_vars);
-
-  //PROBLEM_PARAM(info_pat, "s"),
-  extra_msg = 0;
-  if (show_adv && prob->abstract && prob->use_info == 1) extra_msg = "";
-  if (!prob->abstract && tmp_prob->use_info
-      && (show_adv || tmp_prob->info_pat[0])) {
-    extra_msg = "";
-    if (prob->info_pat[0] == 1)
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>",
-               ARMOR(tmp_prob->info_pat));
-    else
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(\"%s\")</i>",
-               ARMOR(tmp_prob->info_pat));
-    extra_msg = msg_buf;
-  }
-  if (extra_msg)
-    print_string_editing_row_3(f,
-                               "Pattern for test info file names (overrides info_suffix):",
-                               prob->info_pat,
-                               SSERV_CMD_PROB_CHANGE_INFO_PAT,
-                               SSERV_CMD_PROB_CLEAR_INFO_PAT,
-                               extra_msg,
-                               session_id, form_row_attrs[row ^= 1],
-                               self_url, extra_args, prob_hidden_vars);
-
-  //PROBLEM_PARAM(tgz_sfx, "s"),
-  extra_msg = 0;
-  if (prob->abstract && prob->use_info == 1
-      && (!prob->tgz_pat[0] || prob->tgz_pat[0] == 1)) extra_msg = "";
-  if (!prob->abstract && tmp_prob->use_info && !tmp_prob->tgz_pat[0]) {
-    if (prob->tgz_sfx[0] == 1)
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>",
-               ARMOR(tmp_prob->tgz_sfx));
-    else
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(\"%s\")</i>",
-               ARMOR(tmp_prob->tgz_sfx));
-    extra_msg = msg_buf;
-  }
-  if (extra_msg)
-    print_string_editing_row_3(f, "Suffix of working dir archives:", prob->tgz_sfx,
-                               SSERV_CMD_PROB_CHANGE_TGZ_SFX,
-                               SSERV_CMD_PROB_CLEAR_TGZ_SFX,
-                               extra_msg,
-                               session_id, form_row_attrs[row ^= 1],
-                               self_url, extra_args, prob_hidden_vars);
-
-  //PROBLEM_PARAM(tgz_pat, "s"),
-  extra_msg = 0;
-  if (show_adv && prob->abstract && prob->use_info == 1) extra_msg = "";
-  if (!prob->abstract && tmp_prob->use_info
-      && (show_adv || tmp_prob->tgz_pat[0])) {
-    extra_msg = "";
-    if (prob->tgz_pat[0] == 1)
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>",
-               ARMOR(tmp_prob->tgz_pat));
-    else
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(\"%s\")</i>",
-               ARMOR(tmp_prob->tgz_pat));
-    extra_msg = msg_buf;
-  }
-  if (extra_msg)
-    print_string_editing_row_3(f,
-                               "Pattern for working dir archives (overrides tgz_sfx):",
-                               prob->tgz_pat,
-                               SSERV_CMD_PROB_CHANGE_TGZ_PAT,
-                               SSERV_CMD_PROB_CLEAR_TGZ_PAT,
-                               extra_msg,
-                               session_id, form_row_attrs[row ^= 1],
-                               self_url, extra_args, prob_hidden_vars);
-
-  //PROBLEM_PARAM(tgzdir_sfx, "s"),
-  extra_msg = 0;
-  if (prob->abstract && prob->use_info == 1
-      && (!prob->tgzdir_pat[0] || prob->tgzdir_pat[0] == 1)) extra_msg = "";
-  if (!prob->abstract && tmp_prob->use_info && !tmp_prob->tgzdir_pat[0]) {
-    if (prob->tgzdir_sfx[0] == 1)
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>",
-               ARMOR(tmp_prob->tgzdir_sfx));
-    else
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(\"%s\")</i>",
-               ARMOR(tmp_prob->tgzdir_sfx));
-    extra_msg = msg_buf;
-  }
-  if (extra_msg)
-    print_string_editing_row_3(f, "Suffix of master working dirs:", prob->tgzdir_sfx,
-                               SSERV_CMD_PROB_CHANGE_TGZDIR_SFX,
-                               SSERV_CMD_PROB_CLEAR_TGZDIR_SFX,
-                               extra_msg,
-                               session_id, form_row_attrs[row ^= 1],
-                               self_url, extra_args, prob_hidden_vars);
-
-  //PROBLEM_PARAM(tgzdir_pat, "s"),
-  extra_msg = 0;
-  if (show_adv && prob->abstract && prob->use_info == 1) extra_msg = "";
-  if (!prob->abstract && tmp_prob->use_info
-      && (show_adv || tmp_prob->tgzdir_pat[0])) {
-    extra_msg = "";
-    if (prob->tgzdir_pat[0] == 1)
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>",
-               ARMOR(tmp_prob->tgzdir_pat));
-    else
-      snprintf(msg_buf, sizeof(msg_buf), "<i>(\"%s\")</i>",
-               ARMOR(tmp_prob->tgzdir_pat));
-    extra_msg = msg_buf;
-  }
-  if (extra_msg)
-    print_string_editing_row_3(f,
-                               "Pattern for master working dirs (overrides tgzdir_sfx):",
-                               prob->tgzdir_pat,
-                               SSERV_CMD_PROB_CHANGE_TGZDIR_PAT,
-                               SSERV_CMD_PROB_CLEAR_TGZDIR_PAT,
-                               extra_msg,
-                               session_id, form_row_attrs[row ^= 1],
-                               self_url, extra_args, prob_hidden_vars);
-
-  //PROBLEM_PARAM(time_limit, "d"),
-  extra_msg = "";
-  if (prob->abstract) {
-    if (prob->time_limit == -1) extra_msg = "<i>(Undefined)</i>";
-    else if (!prob->time_limit) extra_msg = "<i>(Unlimited)</i>";
-  } else {
-    if (prob->time_limit == -1) {
-      prepare_set_prob_value(CNTSPROB_time_limit,
-                             tmp_prob, sup_prob, sstate->global);
-      if (!tmp_prob->time_limit)
-        snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - Unlimited)</i>");
-      else
-        snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %d)</i>",
-                 tmp_prob->time_limit);
-      extra_msg = msg_buf;
-    } else if (!prob->time_limit) extra_msg = "<i>(Unlimited)</i>";
-  }
-  if (!problem_type_flag) {
-    print_int_editing_row(f, "Processor time limit (sec):",
-                          prob->time_limit, extra_msg,
-                          SSERV_CMD_PROB_CHANGE_TIME_LIMIT,
-                          session_id, form_row_attrs[row ^= 1],
-                          self_url, extra_args, prob_hidden_vars);
-  }
-
-  //PROBLEM_PARAM(time_limit_millis, "d"),
-  extra_msg = "";
-  if (prob->abstract) {
-    if (prob->time_limit_millis == -1) extra_msg = "<i>(Undefined)</i>";
-    else if (!prob->time_limit_millis) extra_msg = "<i>(Unlimited)</i>";
-  } else {
-    if (prob->time_limit_millis == -1) {
-      prepare_set_prob_value(CNTSPROB_time_limit_millis,
-                             tmp_prob, sup_prob, sstate->global);
-      if (!tmp_prob->time_limit_millis)
-        snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - Unlimited)</i>");
-      else
-        snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %d)</i>",
-                 tmp_prob->time_limit_millis);
-      extra_msg = msg_buf;
-    } else if (!prob->time_limit_millis) extra_msg = "<i>(Unlimited)</i>";
-  }
-  if (!problem_type_flag) {
-    print_int_editing_row(f, "Processor time limit (ms, ovverides prev. limit):",
-                          prob->time_limit_millis, extra_msg,
-                          SSERV_CMD_PROB_CHANGE_TIME_LIMIT_MILLIS,
-                          session_id, form_row_attrs[row ^= 1],
-                          self_url, extra_args, prob_hidden_vars);
-  }
-
-  //PROBLEM_PARAM(real_time_limit, "d"),
-  extra_msg = "";
-  if (prob->abstract) {
-    if (prob->real_time_limit == -1) extra_msg = "<i>(Undefined)</i>";
-    else if (!prob->real_time_limit) extra_msg = "<i>(Unlimited)</i>";
-  } else {
-    if (prob->real_time_limit == -1) {
-      prepare_set_prob_value(CNTSPROB_real_time_limit,
-                             tmp_prob, sup_prob, sstate->global);
-      if (!tmp_prob->real_time_limit)
-        snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - Unlimited)</i>");
-      else
-        snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %d)</i>",
-                 tmp_prob->real_time_limit);
-      extra_msg = msg_buf;
-    } else if (!prob->real_time_limit) extra_msg = "<i>(Unlimited)</i>";
-  }
-  if (!problem_type_flag) {
-    print_int_editing_row(f, "Real time limit (sec):",
-                          prob->real_time_limit, extra_msg,
-                          SSERV_CMD_PROB_CHANGE_REAL_TIME_LIMIT,
-                          session_id, form_row_attrs[row ^= 1],
-                          self_url, extra_args, prob_hidden_vars);
-  }
-
+<!--
   //PROBLEM_PARAM(max_vm_size, "d"),
   extra_msg = "";
   if (prob->abstract) {
