@@ -3506,7 +3506,7 @@ handle_htr_open(
         handle_html_string(prg_f, txt_f, log_f, str_p);
         free(str_p); str_p = 0; str_z = 0;
         fprintf(prg_f, "fputs(%s, out_f);\n", attr_attr->value);
-        handle_html_string(prg_f, txt_f, log_f, ">\n");
+        handle_html_string(prg_f, txt_f, log_f, ">");
     } else {
         fprintf(str_f, ">");
         fclose(str_f); str_f = 0;
@@ -4231,6 +4231,91 @@ handle_yesno_open(
 }
 
 static int
+handle_yesno3_open(
+        FILE *log_f,
+        TypeContext *cntx,
+        ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f)
+{
+    HtmlElement *elem = ps->el_stack->el;
+
+    HtmlAttribute *name_attr = html_element_find_attribute(elem, "name");
+    if (!name_attr) {
+        parser_error_2(ps, "<s:yesno3> element requires 'name' attribute");
+        return -1;
+    }
+    HtmlAttribute *value_attr = html_element_find_attribute(elem, "value");
+    if (value_attr) {
+        fprintf(prg_f,
+                "{\n"
+                "  int yesno3_value = (int)(%s);\n", value_attr->value);
+    } else {
+        fprintf(prg_f,
+                "{\n"
+                "  int yesno3_value = -1;\n");
+    }
+    HtmlAttribute *default_attr = html_element_find_attribute(elem, "default");
+    int defaultdefault_value = html_attribute_get_bool(html_element_find_attribute(elem, "defaultdefault"), 0);
+
+    const unsigned char *no_label = "No";
+    HtmlAttribute *no_attr = html_element_find_attribute(elem, "nolabel");
+    if (no_attr) {
+        no_label = no_attr->value;
+    }
+    const unsigned char *yes_label = "Yes";
+    HtmlAttribute *yes_attr = html_element_find_attribute(elem, "yeslabel");
+    if (yes_attr) {
+        yes_label = yes_attr->value;
+    }
+    const unsigned char *default_label = "Default";
+    HtmlAttribute *default_label_attr = html_element_find_attribute(elem, "deflabel");
+    if (default_label_attr) {
+        default_label = default_label_attr->value;
+    }
+
+    char *str_p = 0;
+    size_t str_z = 0;
+    FILE *str_f = open_memstream(&str_p, &str_z);
+    fprintf(str_f, "<select name=\"%s\"><option value=\"-1\"", name_attr->value);
+    fclose(str_f); str_f = 0;
+    handle_html_string(prg_f, txt_f, log_f, str_p);
+    free(str_p); str_p = 0; str_z = 0;
+    fprintf(prg_f, "  if (yesno3_value < 0) {\n");
+    handle_html_string(prg_f, txt_f, log_f, " selected=\"selected\"");
+    fprintf(prg_f, "  }\n");
+    handle_html_string(prg_f, txt_f, log_f, ">");
+    fprintf(prg_f, "fputs(_(\"%s\"), out_f);\n", default_label);
+    handle_html_string(prg_f, txt_f, log_f, " (");
+    if (!defaultdefault_value) {
+        fprintf(prg_f, "  if ((%s) <= 0) {\n", default_attr->value);
+    } else {
+        fprintf(prg_f, "  if (!(%s)) {\n", default_attr->value);
+    }
+    fprintf(prg_f, "fputs(_(\"%s\"), out_f);\n", no_label);
+    fprintf(prg_f, "} else {\n");
+    fprintf(prg_f, "fputs(_(\"%s\"), out_f);\n", yes_label);
+    fprintf(prg_f, "}\n");
+    handle_html_string(prg_f, txt_f, log_f, ")</option><option value=\"0\"");
+    fprintf(prg_f, "  if (yesno3_value == 0) {\n");
+    handle_html_string(prg_f, txt_f, log_f, " selected=\"selected\"");
+    fprintf(prg_f, "  }\n");
+    handle_html_string(prg_f, txt_f, log_f, ">");
+    fprintf(prg_f, "fputs(_(\"%s\"), out_f);\n", no_label);
+    handle_html_string(prg_f, txt_f, log_f, "</option><option value=\"1\"");
+    fprintf(prg_f, "  if (yesno3_value > 0) {\n");
+    handle_html_string(prg_f, txt_f, log_f, " selected=\"selected\"");
+    fprintf(prg_f, "  }\n");
+    handle_html_string(prg_f, txt_f, log_f, ">");
+    fprintf(prg_f, "fputs(_(\"%s\"), out_f);\n", yes_label);
+    handle_html_string(prg_f, txt_f, log_f, "</option></select>");
+
+    fprintf(prg_f,
+            "}\n");
+    return 0;
+}
+
+static int
 html_attr_parse_int(const HtmlAttribute *attr, int *p_value)
 {
     if (!attr) return 0;
@@ -4530,6 +4615,7 @@ static const struct ElementInfo element_handlers[] =
     { "s:select", handle_select_open, handle_select_close },
     { "s:option", handle_option_open, handle_option_close },
     { "s:yesno", handle_yesno_open, NULL },
+    { "s:yesno3", handle_yesno3_open, NULL },
     { "s:vb", handle_vb_open, NULL },
     { "s:button", handle_button_open, NULL },
     { "s:img", handle_img_open, NULL },
