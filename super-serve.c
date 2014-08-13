@@ -2160,6 +2160,7 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_PROB_CLEAR_OUTPUT_FILE:
   case SSERV_CMD_PROB_CHANGE_USE_CORR:
   case SSERV_CMD_PROB_CHANGE_USE_INFO:
+  case SSERV_CMD_PROB_CHANGE_USE_TGZ:
   case SSERV_CMD_PROB_CHANGE_TEST_DIR:
   case SSERV_CMD_PROB_CLEAR_TEST_DIR:
   case SSERV_CMD_PROB_CHANGE_CORR_DIR:
@@ -3152,6 +3153,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_CLEAR_OUTPUT_FILE] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_USE_CORR] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_USE_INFO] = { cmd_set_value },
+  [SSERV_CMD_PROB_CHANGE_USE_TGZ] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_TEST_DIR] = { cmd_set_value },
   [SSERV_CMD_PROB_CLEAR_TEST_DIR] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_CORR_DIR] = { cmd_set_value },
