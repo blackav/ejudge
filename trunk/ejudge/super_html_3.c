@@ -519,6 +519,7 @@ const unsigned char * const super_serve_help_urls[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_CHANGE_OUTPUT_FILE] = "Serve.cfg:problem:output_file",
   [SSERV_CMD_PROB_CHANGE_USE_CORR] = "Serve.cfg:problem:use_corr",
   [SSERV_CMD_PROB_CHANGE_USE_INFO] = "Serve.cfg:problem:use_info",
+  [SSERV_CMD_PROB_CHANGE_USE_TGZ] = "Serve.cfg:problem:use_tgz",
   [SSERV_CMD_PROB_CHANGE_TEST_DIR] = "Serve.cfg:problem:test_dir",
   [SSERV_CMD_PROB_CHANGE_CORR_DIR] = "Serve.cfg:problem:corr_dir",
   [SSERV_CMD_PROB_CHANGE_INFO_DIR] = "Serve.cfg:problem:info_dir",
@@ -5711,6 +5712,10 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_PROB_CHANGE_USE_INFO:
     p_int = &prob->use_info;
+    goto handle_boolean_1;
+
+  case SSERV_CMD_PROB_CHANGE_USE_TGZ:
+    p_int = &prob->use_tgz;
     goto handle_boolean_1;
 
   case SSERV_CMD_PROB_CHANGE_TEST_DIR:
