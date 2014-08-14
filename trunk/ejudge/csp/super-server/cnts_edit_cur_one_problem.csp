@@ -1,24 +1,6 @@
 <%
 /* $Id$ */
 %>
-
-<!--
-  unsigned char name_buf[1024];
-  int i, sel_num;
-  struct section_problem_data *prob, *sup_prob = 0;
-  unsigned char *s, *ss, *checker_env;
-  unsigned char prob_hidden_vars[4096];
-  unsigned char *extra_msg = 0;
-  struct section_problem_data *tmp_prob = 0;
-  unsigned char msg_buf[1024];
-  int flags, show_adv = 0, show_details = 0;;
-  unsigned char num_buf[1024];
-  struct section_global_data *global = sstate->global;
-  unsigned char hbuf[1024];
-  int row = 1, problem_type_flag = 0;
-  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
--->
-
 <%
   int show_details = 0, show_adv = 0;
   if ((flags & SID_STATE_SHOW_HIDDEN)) show_details = 1;
@@ -26,6 +8,7 @@
   struct section_problem_data *tmp_prob = prepare_copy_problem(prob);
   int prob_type = 0;
   const unsigned char *str_value = 0;
+  unsigned char num_buf[1024];
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
@@ -206,7 +189,7 @@
 <s:form>
     <s:hidden name="prob_id" check="false" />
     <s:htr attr="form_row_attrs[row ^= 1]">
-        <td>Problem is checked manually:</td>
+        <td>Problem is checked manually?</td>
         <td><%
     if (is_abstract || !sup_prob) {
       int value = (prob->manual_checking == 1);
@@ -1114,6 +1097,7 @@
 %>(<i>Unlimited</i>)<%
       }
     } else {
+      prepare_set_prob_value(CNTSPROB_real_time_limit, tmp_prob, sup_prob, global);
       if (prob->real_time_limit < 0 && tmp_prob->real_time_limit < 0) {
 %>(<i>Not set</i>)<%
       } else if (prob->real_time_limit < 0 && !tmp_prob->real_time_limit) {
@@ -1130,683 +1114,859 @@
     </s:htr>
 </s:form>
 
-<!--
-  //PROBLEM_PARAM(max_vm_size, "d"),
-  extra_msg = "";
-  if (prob->abstract) {
-    /*
-    if (prob->max_vm_size == -1L) extra_msg = "<i>(Undefined)</i>";
-    else if (!prob->max_vm_size) extra_msg = "<i>(OS Limit)</i>";
-    */
-    if (prob->max_vm_size == -1L || !prob->max_vm_size)
-      extra_msg = "<i>(OS Limit)</i>";
-  } else {
-    if (prob->max_vm_size == -1L) {
-      prepare_set_prob_value(CNTSPROB_max_vm_size,
-                             tmp_prob, sup_prob, sstate->global);
-      if (tmp_prob->max_vm_size == -1L || !tmp_prob->max_vm_size)
-        snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - OS Limit)</i>");
-      else
-        snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %s)</i>",
-                 size_t_to_size_str(num_buf, sizeof(num_buf), tmp_prob->max_vm_size));
-      extra_msg = msg_buf;
-    } else if (!prob->max_vm_size) extra_msg = "<i>(OS Limit)</i>";
-  }
-  if (prob->max_vm_size == -1L) {
-    snprintf(num_buf, sizeof(num_buf), "-1");
-  } else {
-    size_t_to_size_str(num_buf, sizeof(num_buf), tmp_prob->max_vm_size);
-  }
-  if (!problem_type_flag) {
-    html_start_form(f, 1, self_url, prob_hidden_vars);
-    fprintf(f, "<tr%s><td>%s</td><td>", form_row_attrs[row ^= 1],
-            "Maximum virtual memory size:");
-    html_edit_text_form(f, 0, 0, "param", num_buf);
-    fprintf(f, "%s</td><td>", extra_msg);
-    html_submit_button(f, SSERV_CMD_PROB_CHANGE_MAX_VM_SIZE, "Change");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_PROB_CHANGE_MAX_VM_SIZE);
-    fprintf(f, "</tr></form>\n");
-  }
-
-  if (!problem_type_flag && show_adv) {
-    //PROBLEM_PARAM(max_stack_size, "z"),
-    extra_msg = "";
-    if (prob->abstract) {
-      /*
-      if (prob->max_stack_size == -1L) extra_msg = "<i>(Undefined)</i>";
-      else if (!prob->max_stack_size) extra_msg = "<i>(OS Limit)</i>";
-      */
-      if (prob->max_stack_size == -1L || !prob->max_stack_size)
-        extra_msg = "<i>(OS Limit)</i>";
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Real time limit for checker(s):</td>
+        <td><s:textfield name="param" value="prob->checker_real_time_limit" size="48" maxlength="1024" checkExpr=" >= 0" /><%
+    if (is_abstract) {
+      if (prob->checker_real_time_limit < 0) {
+%>(<i>Not set</i>)<%
+      } else if (!prob->checker_real_time_limit) {
+%>(<i>Unlimited</i>)<%
+      }
     } else {
-      if (prob->max_stack_size == -1L) {
-        prepare_set_prob_value(CNTSPROB_max_stack_size,
-                               tmp_prob, sup_prob, sstate->global);
-        if (tmp_prob->max_stack_size == -1L || !tmp_prob->max_stack_size)
-          snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - OS Limit)</i>");
-        else
-          snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %s)</i>",
-                   num_to_size_str(num_buf, sizeof(num_buf), tmp_prob->max_stack_size));
-        extra_msg = msg_buf;
-      } else if (!prob->max_stack_size) extra_msg = "<i>(OS Limit)</i>";
-    }
-    if (prob->max_stack_size == -1L) {
-      snprintf(num_buf, sizeof(num_buf), "-1");
-    } else {
-      num_to_size_str(num_buf, sizeof(num_buf), tmp_prob->max_stack_size);
-    }
-    html_start_form(f, 1, self_url, prob_hidden_vars);
-    fprintf(f, "<tr%s><td>%s</td><td>",
-            form_row_attrs[row ^= 1], "Maximum stack size:");
-    html_edit_text_form(f, 0, 0, "param", num_buf);
-    fprintf(f, "%s</td><td>", extra_msg);
-    html_submit_button(f, SSERV_CMD_PROB_CHANGE_MAX_STACK_SIZE, "Change");
-    fprintf(f, "</td>");
-    print_help_url(f, SSERV_CMD_PROB_CHANGE_MAX_STACK_SIZE);
-    fprintf(f, "</tr></form>\n");
-  }
-
-  //PROBLEM_PARAM(max_core_size, "z"),
-  if (show_adv) {
-    extra_msg = "";
-    if (prob->abstract) {
-      if (prob->max_core_size == -1L)
-        extra_msg = "<i>(OS Limit)</i>";
-    } else {
-      if (prob->max_core_size == -1L) {
-        prepare_set_prob_value(CNTSPROB_max_core_size,
-                               tmp_prob, sup_prob, sstate->global);
-        if (tmp_prob->max_core_size == -1L)
-          snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - OS Limit)</i>");
-      else
-        snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %s)</i>",
-                 size_t_to_size_str(num_buf, sizeof(num_buf), tmp_prob->max_core_size));
-        extra_msg = msg_buf;
+      prepare_set_prob_value(CNTSPROB_checker_real_time_limit, tmp_prob, sup_prob, global);
+      if (prob->checker_real_time_limit < 0 && tmp_prob->checker_real_time_limit < 0) {
+%>(<i>Not set</i>)<%
+      } else if (prob->checker_real_time_limit < 0 && !tmp_prob->checker_real_time_limit) {
+%>(<i>Default: Unlimited</i>)<%
+      } else if (prob->checker_real_time_limit < 0) {
+%>(<i>Default: <s:v value="tmp_prob->checker_real_time_limit" /></i>)<%
+      } else if (!prob->checker_real_time_limit) {
+%>(<i>Unlimited</i>)<%
       }
     }
-    if (prob->max_core_size == -1L) {
-      num_buf[0] = 0;
-    } else {
-      size_t_to_size_str(num_buf, sizeof(num_buf), tmp_prob->max_core_size);
-    }
-    if (!problem_type_flag) {
-      html_start_form(f, 1, self_url, prob_hidden_vars);
-      fprintf(f, "<tr%s><td>%s</td><td>", form_row_attrs[row ^= 1],
-              "Maximum core file size:");
-      html_edit_text_form(f, 0, 0, "param", num_buf);
-      fprintf(f, "%s</td><td>", extra_msg);
-      html_submit_button(f, SSERV_CMD_PROB_CHANGE_MAX_CORE_SIZE, "Change");
-      fprintf(f, "</td>");
-      print_help_url(f, SSERV_CMD_PROB_CHANGE_MAX_CORE_SIZE);
-      fprintf(f, "</tr></form>\n");
-    }
-  }
+%></td>
+        <td><s:submit ac="prob-change-checker-real-time-limit" label="Change" /></td>
+        <td><s:help ac="prob-change-checker-real-time-limit" /></td>
+    </s:htr>
+</s:form>
 
-  //PROBLEM_PARAM(max_file_size, "z"),
-  if (show_adv) {
-    extra_msg = "";
-    if (prob->abstract) {
-      if (prob->max_file_size == -1L)
-        extra_msg = "<i>(OS Limit)</i>";
+<%
+  if (prob_type == PROB_TYPE_STANDARD) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Maximum virtual memory size:</td>
+        <td><%
+    num_buf[0] = 0;
+    if (prob->max_vm_size == ~(size_t) 0 && is_abstract) {
+      snprintf(num_buf, sizeof(num_buf), "%d", -1);
+    } else if (prob->max_vm_size != ~(size_t) 0) {
+      size_t_to_size_str(num_buf, sizeof(num_buf), prob->max_vm_size);
+    }
+%><s:textfield name="param" value="num_buf" size="48" maxlength="1024" check="no" /><%
+    if (is_abstract) {
+      if (prob->max_vm_size == ~(size_t) 0 || prob->max_vm_size == 0) {
+%>(<i>OS Limit</i>)<%
+      }
     } else {
-      if (prob->max_file_size == -1L) {
-        prepare_set_prob_value(CNTSPROB_max_file_size,
-                               tmp_prob, sup_prob, sstate->global);
-        if (tmp_prob->max_file_size == -1L)
-          snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - OS Limit)</i>");
-      else
-        snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %s)</i>",
-                 size_t_to_size_str(num_buf, sizeof(num_buf), tmp_prob->max_file_size));
-        extra_msg = msg_buf;
+      prepare_set_prob_value(CNTSPROB_max_vm_size, tmp_prob, sup_prob, global);
+      if (prob->max_vm_size == ~(size_t) 0) {
+        if (tmp_prob->max_vm_size == ~(size_t) 0) {
+%>(<i>Default: unlimited</i>)<%
+        } else if (tmp_prob->max_vm_size == 0) {
+%>(<i>Default: OS Limit</i>)<%
+        } else {
+          size_t_to_size_str(num_buf, sizeof(num_buf), tmp_prob->max_vm_size);
+%>(<i>Default: <s:v value="num_buf" escape="false"/></i>)<%
+        }
+      } else if (prob->max_vm_size == 0) {
+%>(<i>OS Limit</i>)<%
       }
     }
-    if (prob->max_file_size == -1L) {
-      num_buf[0] = 0;
-    } else {
-      size_t_to_size_str(num_buf, sizeof(num_buf), tmp_prob->max_file_size);
-    }
-    if (!problem_type_flag) {
-      html_start_form(f, 1, self_url, prob_hidden_vars);
-      fprintf(f, "<tr%s><td>%s</td><td>", form_row_attrs[row ^= 1],
-              "Maximum file size:");
-      html_edit_text_form(f, 0, 0, "param", num_buf);
-      fprintf(f, "%s</td><td>", extra_msg);
-      html_submit_button(f, SSERV_CMD_PROB_CHANGE_MAX_FILE_SIZE, "Change");
-      fprintf(f, "</td>");
-      print_help_url(f, SSERV_CMD_PROB_CHANGE_MAX_FILE_SIZE);
-      fprintf(f, "</tr></form>\n");
-    }
+%></td>
+        <td><s:submit ac="prob-change-max-vm-size" label="Change" /></td>
+        <td><s:help ac="prob-change-max-vm-size" /></td>
+    </s:htr>
+</s:form>
+<%
   }
+%>
 
-  //PROBLEM_PARAM(max_open_file_count, "d"),
-  if (show_adv) {
-    extra_msg = "";
-    if (prob->abstract) {
-      if (prob->max_open_file_count < 0)
-        extra_msg = "<i>(OS Limit)</i>";
+<%
+  if (prob_type == PROB_TYPE_STANDARD) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Maximum stack size:</td>
+        <td><%
+    num_buf[0] = 0;
+    if (prob->max_stack_size == ~(size_t) 0 && is_abstract) {
+      snprintf(num_buf, sizeof(num_buf), "%d", -1);
+    } else if (prob->max_stack_size != ~(size_t) 0) {
+      size_t_to_size_str(num_buf, sizeof(num_buf), prob->max_stack_size);
+    }
+%><s:textfield name="param" value="num_buf" size="48" maxlength="1024" check="no" /><%
+    if (is_abstract) {
+      if (prob->max_stack_size == ~(size_t) 0 || prob->max_stack_size == 0) {
+%>(<i>OS Limit</i>)<%
+      }
     } else {
+      prepare_set_prob_value(CNTSPROB_max_stack_size, tmp_prob, sup_prob, global);
+      if (prob->max_stack_size == ~(size_t) 0) {
+        if (tmp_prob->max_stack_size == ~(size_t) 0) {
+%>(<i>Default: unlimited</i>)<%
+        } else if (tmp_prob->max_stack_size == 0) {
+%>(<i>Default: OS Limit</i>)<%
+        } else {
+          size_t_to_size_str(num_buf, sizeof(num_buf), tmp_prob->max_stack_size);
+%>(<i>Default: <s:v value="num_buf" escape="false"/></i>)<%
+        }
+      } else if (prob->max_stack_size == 0) {
+%>(<i>OS Limit</i>)<%
+      }
+    }
+%></td>
+        <td><s:submit ac="prob-change-max-stack-size" label="Change" /></td>
+        <td><s:help ac="prob-change-max-stack-size" /></td>
+    </s:htr>
+</s:form>
+<%
+  }
+%>
+
+<%
+  if (prob_type == PROB_TYPE_STANDARD && show_adv) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Maximum core file size:</td>
+        <td><%
+    num_buf[0] = 0;
+    if (prob->max_core_size == ~(size_t) 0 && is_abstract) {
+      snprintf(num_buf, sizeof(num_buf), "%d", -1);
+    } else if (prob->max_core_size != ~(size_t) 0) {
+      size_t_to_size_str(num_buf, sizeof(num_buf), prob->max_core_size);
+    }
+%><s:textfield name="param" value="num_buf" size="48" maxlength="1024" check="no" /><%
+    if (is_abstract) {
+      if (prob->max_core_size == ~(size_t) 0 || prob->max_core_size == 0) {
+%>(<i>OS Limit</i>)<%
+      }
+    } else {
+      prepare_set_prob_value(CNTSPROB_max_core_size, tmp_prob, sup_prob, global);
+      if (prob->max_core_size == ~(size_t) 0) {
+        if (tmp_prob->max_core_size == ~(size_t) 0) {
+%>(<i>Default: OS Limit</i>)<%
+        } else if (tmp_prob->max_core_size == 0) {
+%>(<i>Default: OS Limit</i>)<%
+        } else {
+          size_t_to_size_str(num_buf, sizeof(num_buf), tmp_prob->max_core_size);
+%>(<i>Default: <s:v value="num_buf" escape="false"/></i>)<%
+        }
+      } else if (prob->max_core_size == 0) {
+%>(<i>OS Limit</i>)<%
+      }
+    }
+%></td>
+        <td><s:submit ac="prob-change-max-core-size" label="Change" /></td>
+        <td><s:help ac="prob-change-max-core-size" /></td>
+    </s:htr>
+</s:form>
+<%
+  }
+%>
+
+<%
+  if (prob_type == PROB_TYPE_STANDARD && show_adv) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Maximum output file size:</td>
+        <td><%
+    num_buf[0] = 0;
+    if (prob->max_file_size == ~(size_t) 0 && is_abstract) {
+      snprintf(num_buf, sizeof(num_buf), "%d", -1);
+    } else if (prob->max_file_size != ~(size_t) 0) {
+      size_t_to_size_str(num_buf, sizeof(num_buf), prob->max_file_size);
+    }
+%><s:textfield name="param" value="num_buf" size="48" maxlength="1024" check="no" /><%
+    if (is_abstract) {
+      if (prob->max_file_size == ~(size_t) 0 || prob->max_file_size == 0) {
+%>(<i>OS Limit</i>)<%
+      }
+    } else {
+      prepare_set_prob_value(CNTSPROB_max_file_size, tmp_prob, sup_prob, global);
+      if (prob->max_file_size == ~(size_t) 0) {
+        if (tmp_prob->max_file_size == ~(size_t) 0) {
+%>(<i>Default: OS Limit</i>)<%
+        } else if (tmp_prob->max_file_size == 0) {
+%>(<i>Default: OS Limit</i>)<%
+        } else {
+          size_t_to_size_str(num_buf, sizeof(num_buf), tmp_prob->max_file_size);
+%>(<i>Default: <s:v value="num_buf" escape="false"/></i>)<%
+        }
+      } else if (prob->max_file_size == 0) {
+%>(<i>OS Limit</i>)<%
+      }
+    }
+%></td>
+        <td><s:submit ac="prob-change-max-file-size" label="Change" /></td>
+        <td><s:help ac="prob-change-max-file-size" /></td>
+    </s:htr>
+</s:form>
+<%
+  }
+%>
+
+<%
+  if (prob_type == PROB_TYPE_STANDARD && show_adv) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Maximum open file count:</td>
+        <td><s:textfield name="param" value="prob->max_open_file_count" size="48" maxlength="1024" checkExpr=" >= 0" /><%
+    if (is_abstract) {
       if (prob->max_open_file_count < 0) {
-        prepare_set_prob_value(CNTSPROB_max_open_file_count,
-                               tmp_prob, sup_prob, sstate->global);
-        if (tmp_prob->max_open_file_count < 0)
-          snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - OS Limit)</i>");
-        else
-          snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %d)</i>",
-                   tmp_prob->max_open_file_count);
-        extra_msg = msg_buf;
+%>(<i>OS Limit</i>)<%
+      }
+    } else {
+      prepare_set_prob_value(CNTSPROB_max_open_file_count, tmp_prob, sup_prob, global);
+      if (prob->max_open_file_count < 0) {
+        if (tmp_prob->max_open_file_count < 0) {
+%>(<i>Default: OS Limit</i>)<%
+        } else {
+%>(<i>Default: <s:v value="tmp_prob->max_open_file_count" /></i>)<%
+        }
       }
     }
-    if (prob->max_open_file_count < 0) {
-      num_buf[0] = 0;
-    } else {
-      snprintf(num_buf, sizeof(num_buf), "%d", tmp_prob->max_open_file_count);
-    }
-    if (!problem_type_flag) {
-      html_start_form(f, 1, self_url, prob_hidden_vars);
-      fprintf(f, "<tr%s><td>%s</td><td>", form_row_attrs[row ^= 1],
-              "Maximum open file count:");
-      html_edit_text_form(f, 0, 0, "param", num_buf);
-      fprintf(f, "%s</td><td>", extra_msg);
-      html_submit_button(f,SSERV_CMD_PROB_CHANGE_MAX_OPEN_FILE_COUNT,"Change");
-      fprintf(f, "</td>");
-      print_help_url(f, SSERV_CMD_PROB_CHANGE_MAX_OPEN_FILE_COUNT);
-      fprintf(f, "</tr></form>\n");
-    }
+%></td>
+        <td><s:submit ac="prob-change-max-open-file-count" label="Change" /></td>
+        <td><s:help ac="prob-change-max-open-file-count" /></td>
+    </s:htr>
+</s:form>
+<%
   }
+%>
 
-  //PROBLEM_PARAM(max_process_count, "d"),
-  if (show_adv) {
-    extra_msg = "";
-    if (prob->abstract) {
-      if (prob->max_process_count < 0)
-        extra_msg = "<i>(OS Limit)</i>";
-    } else {
+<%
+  if (prob_type == PROB_TYPE_STANDARD && show_adv) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Maximum process count:</td>
+        <td><s:textfield name="param" value="prob->max_process_count" size="48" maxlength="1024" checkExpr=" >= 0" /><%
+    if (is_abstract) {
       if (prob->max_process_count < 0) {
-        prepare_set_prob_value(CNTSPROB_max_process_count,
-                               tmp_prob, sup_prob, sstate->global);
-        if (tmp_prob->max_process_count < 0)
-          snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - OS Limit)</i>");
-        else
-          snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %d)</i>",
-                   tmp_prob->max_process_count);
-        extra_msg = msg_buf;
+%>(<i>OS Limit</i>)<%
       }
-    }
-    if (prob->max_process_count < 0) {
-      num_buf[0] = 0;
     } else {
-      snprintf(num_buf, sizeof(num_buf), "%d", tmp_prob->max_process_count);
+      prepare_set_prob_value(CNTSPROB_max_process_count, tmp_prob, sup_prob, global);
+      if (prob->max_process_count < 0) {
+        if (tmp_prob->max_process_count < 0) {
+%>(<i>Default: OS Limit</i>)<%
+        } else {
+%>(<i>Default: <s:v value="tmp_prob->max_process_count" /></i>)<%
+        }
+      }
     }
-    if (!problem_type_flag) {
-      html_start_form(f, 1, self_url, prob_hidden_vars);
-      fprintf(f, "<tr%s><td>%s</td><td>", form_row_attrs[row ^= 1],
-              "Maximum process count:");
-      html_edit_text_form(f, 0, 0, "param", num_buf);
-      fprintf(f, "%s</td><td>", extra_msg);
-      html_submit_button(f,SSERV_CMD_PROB_CHANGE_MAX_PROCESS_COUNT, "Change");
-      fprintf(f, "</td>");
-      print_help_url(f, SSERV_CMD_PROB_CHANGE_MAX_PROCESS_COUNT);
-      fprintf(f, "</tr></form>\n");
-    }
+%></td>
+        <td><s:submit ac="prob-change-max-process-count" label="Change" /></td>
+        <td><s:help ac="prob-change-max-process-count" /></td>
+    </s:htr>
+</s:form>
+<%
   }
+%>
 
-  if (show_adv) {
-    //PROBLEM_PARAM(enable_process_group, "d"),
-    extra_msg = "Undefined";
-    if (!prob->abstract) {
-      prepare_set_prob_value(CNTSPROB_enable_process_group,
-                             tmp_prob, sup_prob, sstate->global);
-      snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-               tmp_prob->enable_process_group?"Yes":"No");
-      extra_msg = msg_buf;
-    }
-    print_boolean_3_select_row(f,"Use separate process group:",
-                               prob->enable_process_group,
-                               SSERV_CMD_PROB_CHANGE_ENABLE_PROCESS_GROUP,
-                               extra_msg,
-                               session_id, form_row_attrs[row ^= 1],
-                               self_url, extra_args, prob_hidden_vars);
-  }
-
-  //PROBLEM_PARAM(checker_real_time_limit, "d"),
-  if (show_adv) {
-    extra_msg = "";
-    if (prob->abstract) {
-      if (prob->checker_real_time_limit == -1) extra_msg = "<i>(Undefined)</i>";
-      else if (!prob->checker_real_time_limit) extra_msg = "<i>(Unlimited)</i>";
+<%
+  if (prob_type == PROB_TYPE_STANDARD && show_adv) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Use separate process group?</td>
+        <td><%
+    if (is_abstract || !sup_prob) {
+      int value = (prob->enable_process_group == 1);
+%><s:yesno name="param" value="value" /><%
     } else {
-      if (prob->checker_real_time_limit == -1) {
-        prepare_set_prob_value(CNTSPROB_checker_real_time_limit,
-                               tmp_prob, sup_prob, sstate->global);
-        if (!tmp_prob->checker_real_time_limit)
-          snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - Unlimited)</i>");
-        else
-          snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %d)</i>",
-                   tmp_prob->checker_real_time_limit);
-        extra_msg = msg_buf;
-      } else if (!prob->checker_real_time_limit) extra_msg = "<i>(Unlimited)</i>";
+      prepare_set_prob_value(CNTSPROB_enable_process_group, tmp_prob, sup_prob, global);
+%><s:yesno3 name="param" value="prob->enable_process_group" default="sup_prob->enable_process_group" /><%
     }
-    print_int_editing_row(f, "Real time limit for checker (sec):",
-                          prob->checker_real_time_limit, extra_msg,
-                          SSERV_CMD_PROB_CHANGE_CHECKER_REAL_TIME_LIMIT,
-                          session_id, form_row_attrs[row ^= 1],
-                          self_url, extra_args, prob_hidden_vars);
+%></td>
+        <td><s:submit ac="prob-change-enable-process-group" label="Change" /></td>
+        <td><s:help ac="prob-change-enable-process-group" /></td>
+    </s:htr>
+</s:form>
+<%
   }
+%>
 
+<%
+  if (prob_type == PROB_TYPE_STANDARD && show_adv) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Use PR (pending review) status instead of OK?</td>
+        <td><%
+    if (is_abstract || !sup_prob) {
+      int value = (prob->use_ac_not_ok == 1);
+%><s:yesno name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_use_ac_not_ok, tmp_prob, sup_prob, global);
+      int value = sup_prob->use_ac_not_ok;
+      if (value < 0) value = global->use_ac_not_ok;
+%><s:yesno3 name="param" value="prob->use_ac_not_ok" default="value" /><%
+    }
+%></td>
+        <td><s:submit ac="prob-change-use-ac-not-ok" label="Change" /></td>
+        <td><s:help ac="prob-change-use-ac-not-ok" /></td>
+    </s:htr>
+</s:form>
+<%
+  }
+%>
+
+<%
+  if (show_adv && (is_abstract || tmp_prob->use_ac_not_ok > 0)) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Mark previous PR as IG (ignored)?</td>
+        <td><%
+    if (is_abstract || !sup_prob) {
+      int value = (prob->ignore_prev_ac == 1);
+%><s:yesno name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_ignore_prev_ac, tmp_prob, sup_prob, global);
+%><s:yesno3 name="param" value="prob->ignore_prev_ac" default="sup_prob->ignore_prev_ac" /><%
+    }
+%></td>
+        <td><s:submit ac="prob-change-ignore-prev-ac" label="Change" /></td>
+        <td><s:help ac="prob-change-ignore-prev-ac" /></td>
+    </s:htr>
+</s:form>
+<%
+  }
+%>
+
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Contestant may view testing protocol?</td>
+        <td><%
+    if (is_abstract || !sup_prob) {
+      int value = (prob->team_enable_rep_view == 1);
+%><s:yesno name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_team_enable_rep_view, tmp_prob, sup_prob, global);
+      int value = sup_prob->team_enable_rep_view;
+      if (value < 0) value = global->team_enable_rep_view;
+%><s:yesno3 name="param" value="prob->team_enable_rep_view" default="value" /><%
+    }
+%></td>
+        <td><s:submit ac="prob-change-team-enable-rep-view" label="Change" /></td>
+        <td><s:help ac="prob-change-team-enable-rep-view" /></td>
+    </s:htr>
+</s:form>
+
+<%
+  if (is_abstract || tmp_prob->team_enable_rep_view <= 0) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Contestant may view compilation errors?</td>
+        <td><%
+    if (is_abstract || !sup_prob) {
+      int value = (prob->team_enable_ce_view == 1);
+%><s:yesno name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_team_enable_ce_view, tmp_prob, sup_prob, global);
+      int value = sup_prob->team_enable_ce_view;
+      if (value < 0) value = global->team_enable_ce_view;
+%><s:yesno3 name="param" value="prob->team_enable_ce_view" default="value" /><%
+    }
+%></td>
+        <td><s:submit ac="prob-change-team-enable-ce-view" label="Change" /></td>
+        <td><s:help ac="prob-change-team-enable-ce-view" /></td>
+    </s:htr>
+</s:form>
+<%
+  }
+%>
+
+<%
+  if (is_abstract || tmp_prob->team_enable_rep_view > 0) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Contestant may view FULL testing protocol?</td>
+        <td><%
+    if (is_abstract || !sup_prob) {
+      int value = (prob->team_show_judge_report == 1);
+%><s:yesno name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_team_show_judge_report, tmp_prob, sup_prob, global);
+      int value = sup_prob->team_show_judge_report;
+      if (value < 0) value = global->team_show_judge_report;
+%><s:yesno3 name="param" value="prob->team_show_judge_report" default="value" /><%
+    }
+%></td>
+        <td><s:submit ac="prob-change-team-show-judge-report" label="Change" /></td>
+        <td><s:help ac="prob-change-team-show-judge-report" /></td>
+    </s:htr>
+</s:form>
+<%
+  }
+%>
+
+<%
+  if (is_abstract || tmp_prob->team_enable_rep_view > 0) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Contestant may view checker comment?</td>
+        <td><%
+    if (is_abstract || !sup_prob) {
+      int value = (prob->show_checker_comment == 1);
+%><s:yesno name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_show_checker_comment, tmp_prob, sup_prob, global);
+%><s:yesno3 name="param" value="prob->show_checker_comment" default="sup_prob->show_checker_comment" /><%
+    }
+%></td>
+        <td><s:submit ac="prob-change-show-checker-comment" label="Change" /></td>
+        <td><s:help ac="prob-change-show-checker-comment" /></td>
+    </s:htr>
+</s:form>
+<%
+  }
+%>
+
+<%
+  if (prob_type == PROB_TYPE_STANDARD) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Ignore compilation errors?</td>
+        <td><%
+    if (is_abstract || !sup_prob) {
+      int value = (prob->ignore_compile_errors == 1);
+%><s:yesno name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_ignore_compile_errors, tmp_prob, sup_prob, global);
+      int value = sup_prob->ignore_compile_errors;
+      if (value < 0) value = global->ignore_compile_errors;
+%><s:yesno3 name="param" value="prob->ignore_compile_errors" default="value" /><%
+    }
+%></td>
+        <td><s:submit ac="prob-change-ignore-compile-errors" label="Change" /></td>
+        <td><s:help ac="prob-change-ignore-compile-errors" /></td>
+    </s:htr>
+</s:form>
+<%
+  }
+%>
+
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Disable user submissions?</td>
+        <td><%
+    if (is_abstract || !sup_prob) {
+      int value = (prob->disable_user_submit == 1);
+%><s:yesno name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_disable_user_submit, tmp_prob, sup_prob, global);
+%><s:yesno3 name="param" value="prob->disable_user_submit" default="sup_prob->disable_user_submit" /><%
+    }
+%></td>
+        <td><s:submit ac="prob-change-disable-user-submit" label="Change" /></td>
+        <td><s:help ac="prob-change-disable-user-submit" /></td>
+    </s:htr>
+</s:form>
+
+<%
+  if (show_adv && global->problem_navigation > 0) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Disable problem tab?</td>
+        <td><%
+    if (is_abstract || !sup_prob) {
+      int value = (prob->disable_tab == 1);
+%><s:yesno name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_disable_tab, tmp_prob, sup_prob, global);
+%><s:yesno3 name="param" value="prob->disable_tab" default="sup_prob->disable_tab" /><%
+    }
+%></td>
+        <td><s:submit ac="prob-change-disable-tab" label="Change" /></td>
+        <td><s:help ac="prob-change-disable-tab" /></td>
+    </s:htr>
+</s:form>
+<%
+  }
+%>
+
+<%
   if (show_adv) {
-    //PROBLEM_PARAM(use_ac_not_ok, "d"),
-    extra_msg = "Undefined";
-    tmp_prob->use_ac_not_ok = prob->use_ac_not_ok;
-    if (!prob->abstract) {
-      prepare_set_prob_value(CNTSPROB_use_ac_not_ok,
-                             tmp_prob, sup_prob, sstate->global);
-      snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-               tmp_prob->use_ac_not_ok?"Yes":"No");
-      extra_msg = msg_buf;
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Restricted problem statement?</td>
+        <td><%
+    if (is_abstract || !sup_prob) {
+      int value = (prob->restricted_statement == 1);
+%><s:yesno name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_restricted_statement, tmp_prob, sup_prob, global);
+%><s:yesno3 name="param" value="prob->restricted_statement" default="sup_prob->restricted_statement" /><%
     }
-    print_boolean_3_select_row(f, "Use AC status instead of OK:",
-                               prob->use_ac_not_ok,
-                               SSERV_CMD_PROB_CHANGE_USE_AC_NOT_OK,
-                               extra_msg,
-                               session_id, form_row_attrs[row ^= 1],
-                               self_url, extra_args, prob_hidden_vars);
+%></td>
+        <td><s:submit ac="prob-change-restricted-statement" label="Change" /></td>
+        <td><s:help ac="prob-change-restricted-statement" /></td>
+    </s:htr>
+</s:form>
+<%
+  }
+%>
 
-    if (tmp_prob->use_ac_not_ok > 0) {
-      extra_msg = "Undefined";
-      tmp_prob->ignore_prev_ac = prob->ignore_prev_ac;
-      if (!prob->abstract) {
-        prepare_set_prob_value(CNTSPROB_ignore_prev_ac,
-                               tmp_prob, sup_prob, sstate->global);
-        snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-                 tmp_prob->ignore_prev_ac?"Yes":"No");
-        extra_msg = msg_buf;
-      }
-      print_boolean_3_select_row(f, "Mark previous AC as IG:",
-                                 prob->ignore_prev_ac,
-                                 SSERV_CMD_PROB_CHANGE_IGNORE_PREV_AC,
-                                 extra_msg,
-                                 session_id, form_row_attrs[row ^= 1],
-                                 self_url, extra_args, prob_hidden_vars);
-    }
-
-    //PROBLEM_PARAM(team_enable_rep_view, "d"),
-    extra_msg = "Undefined";
-    tmp_prob->team_enable_rep_view = prob->team_enable_rep_view;
-    if (!prob->abstract) {
-      prepare_set_prob_value(CNTSPROB_team_enable_rep_view,
-                             tmp_prob, sup_prob, sstate->global);
-      snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-               tmp_prob->team_enable_rep_view?"Yes":"No");
-      extra_msg = msg_buf;
-    }
-    print_boolean_3_select_row(f, "Contestant may view testing protocol:",
-                               prob->team_enable_rep_view,
-                               SSERV_CMD_PROB_CHANGE_TEAM_ENABLE_REP_VIEW,
-                               extra_msg,
-                               session_id, form_row_attrs[row ^= 1],
-                               self_url, extra_args, prob_hidden_vars);
-
-    if (tmp_prob->team_enable_rep_view != 1) {
-      //PROBLEM_PARAM(team_enable_ce_view, "d"),
-      extra_msg = "Undefined";
-      if (!prob->abstract) {
-        prepare_set_prob_value(CNTSPROB_team_enable_ce_view,
-                               tmp_prob, sup_prob, sstate->global);
-        snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-                 tmp_prob->team_enable_ce_view?"Yes":"No");
-        extra_msg = msg_buf;
-      }
-      print_boolean_3_select_row(f, "Contestant may view compilation errors:",
-                                 prob->team_enable_ce_view,
-                                 SSERV_CMD_PROB_CHANGE_TEAM_ENABLE_CE_VIEW,
-                                 extra_msg,
-                                 session_id, form_row_attrs[row ^= 1],
-                                 self_url, extra_args, prob_hidden_vars);
-    }
-
-    if (tmp_prob->team_enable_rep_view != 0) {
-      //PROBLEM_PARAM(team_show_judge_report, "d"),
-      extra_msg = "Undefined";
-      if (!prob->abstract) {
-        prepare_set_prob_value(CNTSPROB_team_show_judge_report,
-                               tmp_prob, sup_prob, sstate->global);
-        snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-                 tmp_prob->team_show_judge_report?"Yes":"No");
-        extra_msg = msg_buf;
-      }
-      print_boolean_3_select_row(f,"Contestant may view FULL (judge's) testing protocol:",
-                                 prob->team_show_judge_report,
-                                 SSERV_CMD_PROB_CHANGE_TEAM_SHOW_JUDGE_REPORT,
-                                 extra_msg,
-                                 session_id, form_row_attrs[row ^= 1],
-                                 self_url, extra_args, prob_hidden_vars);
-
-      //PROBLEM_PARAM(show_checker_comment, "d"),
-      extra_msg = "Undefined";
-      if (!prob->abstract) {
-        prepare_set_prob_value(CNTSPROB_show_checker_comment,
-                               tmp_prob, sup_prob, sstate->global);
-        snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-                 tmp_prob->show_checker_comment?"Yes":"No");
-        extra_msg = msg_buf;
-      }
-      print_boolean_3_select_row(f,"Contestant may view checker comment:",
-                                 prob->show_checker_comment,
-                                 SSERV_CMD_PROB_CHANGE_SHOW_CHECKER_COMMENT,
-                                 extra_msg,
-                                 session_id, form_row_attrs[row ^= 1],
-                                 self_url, extra_args, prob_hidden_vars);
-    }
-
-    //PROBLEM_PARAM(ignore_compile_errors, "d"),
-    extra_msg = "Undefined";
-    tmp_prob->ignore_compile_errors = prob->ignore_compile_errors;
-    if (!prob->abstract) {
-      prepare_set_prob_value(CNTSPROB_ignore_compile_errors,
-                             tmp_prob, sup_prob, sstate->global);
-      snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-               tmp_prob->ignore_compile_errors?"Yes":"No");
-      extra_msg = msg_buf;
-    }
-    print_boolean_3_select_row(f, "Ignore compilation errors:",
-                               prob->ignore_compile_errors,
-                               SSERV_CMD_PROB_CHANGE_IGNORE_COMPILE_ERRORS,
-                               extra_msg,
-                               session_id, form_row_attrs[row ^= 1],
-                               self_url, extra_args, prob_hidden_vars);
-
-    //PROBLEM_PARAM(disable_user_submit, "d"),
-    extra_msg = "Undefined";
-    tmp_prob->disable_user_submit = prob->disable_user_submit;
-    if (!prob->abstract) {
-      prepare_set_prob_value(CNTSPROB_disable_user_submit,
-                             tmp_prob, sup_prob, sstate->global);
-      snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-               tmp_prob->disable_user_submit?"Yes":"No");
-      extra_msg = msg_buf;
-    }
-    print_boolean_3_select_row(f, "Disable user submissions:",
-                               prob->disable_user_submit,
-                               SSERV_CMD_PROB_CHANGE_DISABLE_USER_SUBMIT,
-                               extra_msg,
-                               session_id, form_row_attrs[row ^= 1],
-                               self_url, extra_args, prob_hidden_vars);
-
-    if (global && global->problem_navigation > 0) {
-      //PROBLEM_PARAM(disable_tab, "d"),
-      extra_msg = "Undefined";
-      tmp_prob->disable_tab = prob->disable_tab;
-      if (!prob->abstract) {
-        prepare_set_prob_value(CNTSPROB_disable_tab,
-                               tmp_prob, sup_prob, sstate->global);
-        snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-                 tmp_prob->disable_tab?"Yes":"No");
-        extra_msg = msg_buf;
-      }
-      print_boolean_3_select_row(f, "Disable problem tab:",
-                                 prob->disable_tab,
-                                 SSERV_CMD_PROB_CHANGE_DISABLE_TAB,
-                                 extra_msg,
-                                 session_id, form_row_attrs[row ^= 1],
-                                 self_url, extra_args, prob_hidden_vars);
-    }
-
-    //PROBLEM_PARAM(restricted_statement, "d"),
-    extra_msg = "Undefined";
-    tmp_prob->restricted_statement = prob->restricted_statement;
-    if (!prob->abstract) {
-      prepare_set_prob_value(CNTSPROB_restricted_statement,
-                             tmp_prob, sup_prob, sstate->global);
-      snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-               tmp_prob->restricted_statement?"Yes":"No");
-      extra_msg = msg_buf;
-    }
-    print_boolean_3_select_row(f, "Restricted problem statement:",
-                               prob->restricted_statement,
-                               SSERV_CMD_PROB_CHANGE_RESTRICTED_STATEMENT,
-                               extra_msg,
-                               session_id, form_row_attrs[row ^= 1],
-                               self_url, extra_args, prob_hidden_vars);
-
-    //PROBLEM_PARAM(disable_submit_after_ok, "d"),
-    extra_msg = "Undefined";
-    tmp_prob->disable_submit_after_ok = prob->disable_submit_after_ok;
-    if (!prob->abstract) {
-      prepare_set_prob_value(CNTSPROB_disable_submit_after_ok,
-                             tmp_prob, sup_prob, sstate->global);
-      snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-               tmp_prob->disable_submit_after_ok?"Yes":"No");
-      extra_msg = msg_buf;
-    }
-    print_boolean_3_select_row(f, "Disable submissions after OK:",
-                               prob->disable_submit_after_ok,
-                               SSERV_CMD_PROB_CHANGE_DISABLE_SUBMIT_AFTER_OK,
-                               extra_msg,
-                               session_id, form_row_attrs[row ^= 1],
-                               self_url, extra_args, prob_hidden_vars);
-
-    //PROBLEM_PARAM(disable_security, "d"),
-    extra_msg = "Undefined";
-    tmp_prob->disable_security = prob->disable_security;
-    if (!prob->abstract) {
-      prepare_set_prob_value(CNTSPROB_disable_security,
-                             tmp_prob, sup_prob, sstate->global);
-      snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-               tmp_prob->disable_security?"Yes":"No");
-      extra_msg = msg_buf;
-    }
-    print_boolean_3_select_row(f, "Disable security restrictions:",
-                               prob->disable_security,
-                               SSERV_CMD_PROB_CHANGE_DISABLE_SECURITY,
-                               extra_msg,
-                               session_id, form_row_attrs[row ^= 1],
-                               self_url, extra_args, prob_hidden_vars);
-
-    //PROBLEM_PARAM(disable_testing, "d"),
-    extra_msg = "Undefined";
-    tmp_prob->disable_testing = prob->disable_testing;
-    if (!prob->abstract) {
-      prepare_set_prob_value(CNTSPROB_disable_testing,
-                             tmp_prob, sup_prob, sstate->global);
-      snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-               tmp_prob->disable_testing?"Yes":"No");
-      extra_msg = msg_buf;
-    }
-    print_boolean_3_select_row(f, "Disable any testing of submissions:",
-                               prob->disable_testing,
-                               SSERV_CMD_PROB_CHANGE_DISABLE_TESTING,
-                               extra_msg,
-                               session_id, form_row_attrs[row ^= 1],
-                               self_url, extra_args, prob_hidden_vars);
-
-    if (tmp_prob->disable_testing != 1) {
-      //PROBLEM_PARAM(disable_auto_testing, "d"),
-      extra_msg = "Undefined";
-      tmp_prob->disable_auto_testing = prob->disable_auto_testing;
-      if (!prob->abstract) {
-        prepare_set_prob_value(CNTSPROB_disable_auto_testing,
-                               tmp_prob, sup_prob, sstate->global);
-        snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-                 tmp_prob->disable_auto_testing?"Yes":"No");
-        extra_msg = msg_buf;
-      }
-      print_boolean_3_select_row(f, "Disable automatic testing of submissions:",
-                                 prob->disable_auto_testing,
-                                 SSERV_CMD_PROB_CHANGE_DISABLE_AUTO_TESTING,
-                                 extra_msg,
-                                 session_id, form_row_attrs[row ^= 1],
-                                 self_url, extra_args, prob_hidden_vars);
-    }
-
-    if (!problem_type_flag && tmp_prob->disable_testing == 1) {
-      //PROBLEM_PARAM(enable_compilation, "d"),
-      extra_msg = "Undefined";
-      tmp_prob->enable_compilation = prob->enable_compilation;
-      if (!prob->abstract) {
-        prepare_set_prob_value(CNTSPROB_enable_compilation,
-                               tmp_prob, sup_prob, sstate->global);
-        snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-                 tmp_prob->enable_compilation?"Yes":"No");
-        extra_msg = msg_buf;
-      }
-      print_boolean_3_select_row(f, "Still compile runs to mark as ACCEPTED:",
-                                 prob->enable_compilation,
-                                 SSERV_CMD_PROB_CHANGE_ENABLE_COMPILATION,
-                                 extra_msg,
-                                 session_id, form_row_attrs[row ^= 1],
-                                 self_url, extra_args, prob_hidden_vars);
-    }
-  } /* show_adv */
-
+<%
   if (show_adv) {
-    //PROBLEM_PARAM(ignore_exit_code, "d"),
-    extra_msg = 0;
-    if (!prob->abstract) {
-      prepare_set_prob_value(CNTSPROB_ignore_exit_code,
-                             tmp_prob, sup_prob, sstate->global);
-      snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-               tmp_prob->ignore_exit_code?"Yes":"No");
-      extra_msg = msg_buf;
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Disable submissions after OK?</td>
+        <td><%
+    if (is_abstract || !sup_prob) {
+      int value = (prob->disable_submit_after_ok == 1);
+%><s:yesno name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_disable_submit_after_ok, tmp_prob, sup_prob, global);
+      int value = sup_prob->disable_submit_after_ok;
+      if (value < 0) value = global->disable_submit_after_ok;
+%><s:yesno3 name="param" value="prob->disable_submit_after_ok" default="value" /><%
     }
-    print_boolean_3_select_row(f, "Ignore exit code?", prob->ignore_exit_code,
-                               SSERV_CMD_PROB_CHANGE_IGNORE_EXIT_CODE,
-                               extra_msg,
-                               session_id, form_row_attrs[row ^= 1],
-                               self_url, extra_args, prob_hidden_vars);
+%></td>
+        <td><s:submit ac="prob-change-disable-submit-after-ok" label="Change" /></td>
+        <td><s:help ac="prob-change-disable-submit-after-ok" /></td>
+    </s:htr>
+</s:form>
+<%
   }
+%>
 
-  if (sstate->global && sstate->global->score_system == SCORE_KIROV
-      && show_adv) {
-    //PROBLEM_PARAM(olympiad_mode, "d"),
-    extra_msg = 0;
-    if (!prob->abstract) {
-      prepare_set_prob_value(CNTSPROB_olympiad_mode,
-                             tmp_prob, sup_prob, sstate->global);
-      snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-               tmp_prob->olympiad_mode?"Yes":"No");
-      extra_msg = msg_buf;
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Disable security restrictions?</td>
+        <td><%
+    if (is_abstract || !sup_prob) {
+      int value = (prob->disable_security == 1);
+%><s:yesno name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_disable_security, tmp_prob, sup_prob, global);
+      int value = sup_prob->disable_security;
+%><s:yesno3 name="param" value="prob->disable_security" default="value" /><%
     }
-    print_boolean_3_select_row(f, "Use Olympiad mode?", prob->olympiad_mode,
-                               SSERV_CMD_PROB_CHANGE_OLYMPIAD_MODE,
-                               extra_msg,
-                               session_id, form_row_attrs[row ^= 1],
-                               self_url, extra_args, prob_hidden_vars);
+%></td>
+        <td><s:submit ac="prob-change-disable-security" label="Change" /></td>
+        <td><s:help ac="prob-change-disable-security" /></td>
+    </s:htr>
+</s:form>
+
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Disable any testing of submissions?</td>
+        <td><%
+    if (is_abstract || !sup_prob) {
+      int value = (prob->disable_testing == 1);
+%><s:yesno name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_disable_testing, tmp_prob, sup_prob, global);
+      int value = sup_prob->disable_testing;
+      if (value < 0)  value = global->disable_testing;
+%><s:yesno3 name="param" value="prob->disable_testing" default="value" /><%
+    }
+%></td>
+        <td><s:submit ac="prob-change-disable-testing" label="Change" /></td>
+        <td><s:help ac="prob-change-disable-testing" /></td>
+    </s:htr>
+</s:form>
+
+<%
+  if (is_abstract || tmp_prob->disable_testing <= 0) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Disable automatic testing of submissions?</td>
+        <td><%
+    if (is_abstract || !sup_prob) {
+      int value = (prob->disable_auto_testing == 1);
+%><s:yesno name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_disable_auto_testing, tmp_prob, sup_prob, global);
+      int value = sup_prob->disable_auto_testing;
+      if (value < 0)  value = global->disable_auto_testing;
+%><s:yesno3 name="param" value="prob->disable_auto_testing" default="value" /><%
+    }
+%></td>
+        <td><s:submit ac="prob-change-disable-auto-testing" label="Change" /></td>
+        <td><s:help ac="prob-change-disable-auto-testing" /></td>
+    </s:htr>
+</s:form>
+<%
   }
+%>
 
-  if (sstate->global && sstate->global->score_system == SCORE_KIROV
-      && show_adv) {
-    //PROBLEM_PARAM(score_latest, "d"),
-    extra_msg = 0;
-    if (!prob->abstract) {
-      prepare_set_prob_value(CNTSPROB_score_latest,
-                             tmp_prob, sup_prob, sstate->global);
-      snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-               tmp_prob->score_latest?"Yes":"No");
-      extra_msg = msg_buf;
+<%
+  if (show_adv && prob_type == PROB_TYPE_STANDARD && (is_abstract || tmp_prob->disable_testing > 0)) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Still compile runs to mark as ACCEPTED?</td>
+        <td><%
+    if (is_abstract || !sup_prob) {
+      int value = (prob->enable_compilation == 1);
+%><s:yesno name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_enable_compilation, tmp_prob, sup_prob, global);
+      int value = sup_prob->enable_compilation;
+%><s:yesno3 name="param" value="prob->enable_compilation" default="value" /><%
     }
-    print_boolean_3_select_row(f, "Score the latest submit?", prob->score_latest,
-                               SSERV_CMD_PROB_CHANGE_SCORE_LATEST,
-                               extra_msg,
-                               session_id, form_row_attrs[row ^= 1],
-                               self_url, extra_args, prob_hidden_vars);
-
-    //PROBLEM_PARAM(score_latest_or_unmarked, "d"),
-    extra_msg = 0;
-    if (!prob->abstract) {
-      prepare_set_prob_value(CNTSPROB_score_latest_or_unmarked,
-                             tmp_prob, sup_prob, sstate->global);
-      snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-               tmp_prob->score_latest_or_unmarked?"Yes":"No");
-      extra_msg = msg_buf;
-    }
-    print_boolean_3_select_row(f, "Score the latest or the best unmarked?", prob->score_latest_or_unmarked,
-                               SSERV_CMD_PROB_CHANGE_SCORE_LATEST_OR_UNMARKED,
-                               extra_msg,
-                               session_id, form_row_attrs[row ^= 1],
-                               self_url, extra_args, prob_hidden_vars);
-
-    //PROBLEM_PARAM(score_latest_marked, "d"),
-    extra_msg = 0;
-    if (!prob->abstract) {
-      prepare_set_prob_value(CNTSPROB_score_latest_marked,
-                             tmp_prob, sup_prob, sstate->global);
-      snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-               tmp_prob->score_latest_marked?"Yes":"No");
-      extra_msg = msg_buf;
-    }
-    print_boolean_3_select_row(f, "Score the latest marked submit?", prob->score_latest_marked,
-                               SSERV_CMD_PROB_CHANGE_SCORE_LATEST_MARKED,
-                               extra_msg,
-                               session_id, form_row_attrs[row ^= 1],
-                               self_url, extra_args, prob_hidden_vars);
-
+%></td>
+        <td><s:submit ac="prob-change-enable-compilation" label="Change" /></td>
+        <td><s:help ac="prob-change-enable-compilation" /></td>
+    </s:htr>
+</s:form>
+<%
   }
+%>
 
-  if (sstate->global && sstate->global->score_system != SCORE_ACM) {
-    //PROBLEM_PARAM(full_score, "d"),
-    extra_msg = "";
-    if (prob->full_score == -1) {
-      if (prob->abstract) {
-        extra_msg = "<i>(Undefined)</i>";
-      } else {
-        prepare_set_prob_value(CNTSPROB_full_score,
-                               tmp_prob, sup_prob, sstate->global);
-        snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %d)</i>",
-                 tmp_prob->full_score);
-        extra_msg = msg_buf;
+<%
+  if (show_adv && prob_type == PROB_TYPE_STANDARD) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Ignore exit code?</td>
+        <td><%
+    if (is_abstract || !sup_prob) {
+      int value = (prob->ignore_exit_code == 1);
+%><s:yesno name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_ignore_exit_code, tmp_prob, sup_prob, global);
+      int value = sup_prob->ignore_exit_code;
+%><s:yesno3 name="param" value="prob->ignore_exit_code" default="value" /><%
+    }
+%></td>
+        <td><s:submit ac="prob-change-ignore-exit-code" label="Change" /></td>
+        <td><s:help ac="prob-change-ignore-exit-code" /></td>
+    </s:htr>
+</s:form>
+<%
+  }
+%>
+
+<%
+  if (show_adv && global->score_system == SCORE_KIROV) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Use Olympiad mode?</td>
+        <td><%
+    if (is_abstract || !sup_prob) {
+      int value = (prob->olympiad_mode == 1);
+%><s:yesno name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_olympiad_mode, tmp_prob, sup_prob, global);
+      int value = sup_prob->olympiad_mode;
+%><s:yesno3 name="param" value="prob->olympiad_mode" default="value" /><%
+    }
+%></td>
+        <td><s:submit ac="prob-change-olympiad-mode" label="Change" /></td>
+        <td><s:help ac="prob-change-olympiad-mode" /></td>
+    </s:htr>
+</s:form>
+<%
+  }
+%>
+
+<%
+  if (show_adv && global->score_system == SCORE_KIROV) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Score the latest submit?</td>
+        <td><%
+    if (is_abstract || !sup_prob) {
+      int value = (prob->score_latest == 1);
+%><s:yesno name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_score_latest, tmp_prob, sup_prob, global);
+      int value = sup_prob->score_latest;
+%><s:yesno3 name="param" value="prob->score_latest" default="value" /><%
+    }
+%></td>
+        <td><s:submit ac="prob-change-score-latest" label="Change" /></td>
+        <td><s:help ac="prob-change-score-latest" /></td>
+    </s:htr>
+</s:form>
+<%
+  }
+%>
+
+<%
+  if (show_adv && global->score_system == SCORE_KIROV) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Score the latest or the best unmarked?</td>
+        <td><%
+    if (is_abstract || !sup_prob) {
+      int value = (prob->score_latest_or_unmarked == 1);
+%><s:yesno name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_score_latest_or_unmarked, tmp_prob, sup_prob, global);
+      int value = sup_prob->score_latest_or_unmarked;
+%><s:yesno3 name="param" value="prob->score_latest_or_unmarked" default="value" /><%
+    }
+%></td>
+        <td><s:submit ac="prob-change-score-latest-or-unmarked" label="Change" /></td>
+        <td><s:help ac="prob-change-score-latest-or-unmarked" /></td>
+    </s:htr>
+</s:form>
+<%
+  }
+%>
+
+<%
+  if (show_adv && global->score_system == SCORE_KIROV) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Score the latest marked submit?</td>
+        <td><%
+    if (is_abstract || !sup_prob) {
+      int value = (prob->score_latest_marked == 1);
+%><s:yesno name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_score_latest_marked, tmp_prob, sup_prob, global);
+      int value = sup_prob->score_latest_marked;
+%><s:yesno3 name="param" value="prob->score_latest_marked" default="value" /><%
+    }
+%></td>
+        <td><s:submit ac="prob-change-score-latest-marked" label="Change" /></td>
+        <td><s:help ac="prob-change-score-latest-marked" /></td>
+    </s:htr>
+</s:form>
+<%
+  }
+%>
+
+<%
+  if (global->score_system != SCORE_ACM) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Score for full solution:</td>
+        <td><s:textfield name="param" value="prob->full_score" size="48" maxlength="1024" checkExpr=" >= 0" /><%
+    if (is_abstract) {
+      if (prob->full_score < 0) {
+%>(<i>Not set</i>)<%
+      }
+    } else {
+      prepare_set_prob_value(CNTSPROB_full_score, tmp_prob, sup_prob, global);
+      if (prob->full_score < 0) {
+        if (tmp_prob->full_score < 0) {
+%>(<i>Not set</i>)<%
+        } else {
+%>(<i>Default: <s:v value="tmp_prob->full_score" /></i>)<%
+        }
       }
     }
-    print_int_editing_row(f, "Score for full solution:",
-                          prob->full_score, extra_msg,
-                          SSERV_CMD_PROB_CHANGE_FULL_SCORE,
-                          session_id, form_row_attrs[row ^= 1],
-                          self_url, extra_args, prob_hidden_vars);
+%></td>
+        <td><s:submit ac="prob-change-full-score" label="Change" /></td>
+        <td><s:help ac="prob-change-full-score" /></td>
+    </s:htr>
+</s:form>
+<%
   }
+%>
 
-  if (sstate->global && sstate->global->score_system != SCORE_ACM
-      && sstate->global->separate_user_score > 0) {
-    //PROBLEM_PARAM(full_user_score, "d"),
-    extra_msg = "";
-    if (prob->full_user_score == -1) {
-      if (prob->abstract) {
-        extra_msg = "<i>(Undefined)</i>";
-      } else {
-        prepare_set_prob_value(CNTSPROB_full_user_score,
-                               tmp_prob, sup_prob, sstate->global);
-        snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %d)</i>",
-                 tmp_prob->full_user_score);
-        extra_msg = msg_buf;
+<%
+  if (global->score_system != SCORE_ACM && global->separate_user_score > 0) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Score for user-visible full solution:</td>
+        <td><s:textfield name="param" value="prob->full_user_score" size="48" maxlength="1024" checkExpr=" >= 0" /><%
+    if (is_abstract) {
+      if (prob->full_user_score < 0) {
+%>(<i>Not set</i>)<%
+      }
+    } else {
+      prepare_set_prob_value(CNTSPROB_full_user_score, tmp_prob, sup_prob, global);
+      if (prob->full_user_score < 0) {
+        if (tmp_prob->full_user_score < 0) {
+%>(<i>Not set</i>)<%
+        } else {
+%>(<i>Default: <s:v value="tmp_prob->full_user_score" /></i>)<%
+        }
       }
     }
-    print_int_editing_row(f, "Score for user-visible full solution:",
-                          prob->full_user_score, extra_msg,
-                          SSERV_CMD_PROB_CHANGE_FULL_USER_SCORE,
-                          session_id, form_row_attrs[row ^= 1],
-                          self_url, extra_args, prob_hidden_vars);
+%></td>
+        <td><s:submit ac="prob-change-full-user-score" label="Change" /></td>
+        <td><s:help ac="prob-change-full-user-score" /></td>
+    </s:htr>
+</s:form>
+<%
   }
+%>
 
-  if (sstate->global &&
-      (sstate->global->score_system == SCORE_KIROV
-       || sstate->global->score_system == SCORE_OLYMPIAD)) {
-    if (show_adv) {
-      //PROBLEM_PARAM(variable_full_score, "d"),
-      extra_msg = "Undefined";
-      if (!prob->abstract) {
-        prepare_set_prob_value(CNTSPROB_variable_full_score,
-                               tmp_prob, sup_prob, sstate->global);
-        snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
-                 tmp_prob->variable_full_score?"Yes":"No");
-        extra_msg = msg_buf;
-      }
-      print_boolean_3_select_row(f, "Allow variable score for full solution:",
-                                 prob->variable_full_score,
-                                 SSERV_CMD_PROB_CHANGE_VARIABLE_FULL_SCORE,
-                                 extra_msg,
-                                 session_id, form_row_attrs[row ^= 1],
-                                 self_url, extra_args, prob_hidden_vars);
+<%
+  if (show_adv && (global->score_system == SCORE_KIROV || global->score_system == SCORE_OLYMPIAD)) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Allow variable score for full solution?</td>
+        <td><%
+    if (is_abstract || !sup_prob) {
+      int value = (prob->variable_full_score == 1);
+%><s:yesno name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_variable_full_score, tmp_prob, sup_prob, global);
+      int value = sup_prob->variable_full_score;
+%><s:yesno3 name="param" value="prob->variable_full_score" default="value" /><%
     }
-
+%></td>
+        <td><s:submit ac="prob-change-variable-full-score" label="Change" /></td>
+        <td><s:help ac="prob-change-variable-full-score" /></td>
+    </s:htr>
+</s:form>
+<%
+  }
+%>
+<!--
     //PROBLEM_PARAM(test_score, "d"),
     extra_msg = "";
     if (prob->test_score == -1) {
