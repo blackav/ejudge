@@ -1966,75 +1966,117 @@
 <%
   }
 %>
-<!--
-    //PROBLEM_PARAM(test_score, "d"),
-    extra_msg = "";
-    if (prob->test_score == -1) {
-      if (prob->abstract) {
-        extra_msg = "<i>(Undefined)</i>";
-      } else {
-        prepare_set_prob_value(CNTSPROB_test_score,
-                               tmp_prob, sup_prob, sstate->global);
-        snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %d)</i>",
-                 tmp_prob->test_score);
-        extra_msg = msg_buf;
-      }
-    }
-    print_int_editing_row(f, "Default score for 1 passed test:",
-                          prob->test_score, extra_msg,
-                          SSERV_CMD_PROB_CHANGE_TEST_SCORE,
-                          session_id, form_row_attrs[row ^= 1],
-                          self_url, extra_args, prob_hidden_vars);
 
-    if (sstate->global->score_system == SCORE_KIROV) {
-      //PROBLEM_PARAM(run_penalty, "d"),
-      extra_msg = "";
-      if (prob->run_penalty == -1) {
-        if (prob->abstract) {
-          extra_msg = "<i>(Undefined)</i>";
+<%
+  if (global->score_system == SCORE_KIROV || global->score_system == SCORE_OLYMPIAD) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Default score for 1 passed test:</td>
+        <td><s:textfield name="param" value="prob->test_score" size="48" maxlength="1024" checkExpr=" >= 0" /><%
+    if (is_abstract) {
+      if (prob->test_score < 0) {
+%>(<i>Not set</i>)<%
+      }
+    } else {
+      prepare_set_prob_value(CNTSPROB_test_score, tmp_prob, sup_prob, global);
+      if (prob->test_score < 0) {
+        if (tmp_prob->test_score < 0) {
+%>(<i>Not set</i>)<%
         } else {
-          prepare_set_prob_value(CNTSPROB_run_penalty,
-                                 tmp_prob, sup_prob, sstate->global);
-          snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %d)</i>",
-                   tmp_prob->run_penalty);
-          extra_msg = msg_buf;
+%>(<i>Default: <s:v value="tmp_prob->test_score" /></i>)<%
         }
       }
-      print_int_editing_row(f, "Penalty for a submission:",
-                            prob->run_penalty, extra_msg,
-                            SSERV_CMD_PROB_CHANGE_RUN_PENALTY,
-                            session_id, form_row_attrs[row ^= 1],
-                            self_url, extra_args, prob_hidden_vars);
     }
+%></td>
+        <td><s:submit ac="prob-change-test-score" label="Change" /></td>
+        <td><s:help ac="prob-change-test-score" /></td>
+    </s:htr>
+</s:form>
+<%
+  }
+%>
 
-    //PROBLEM_PARAM(disqualified_penalty, "d"),
-    extra_msg = "";
-    if (prob->disqualified_penalty == -1) {
-      if (prob->abstract) {
-        extra_msg = "<i>(Undefined)</i>";
-      } else {
-        prepare_set_prob_value(CNTSPROB_disqualified_penalty,
-                               tmp_prob, sup_prob, sstate->global);
-        snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %d)</i>",
-                 tmp_prob->disqualified_penalty);
-        extra_msg = msg_buf;
+<%
+  if (global->score_system == SCORE_KIROV) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Penalty for a submission:</td>
+        <td><s:textfield name="param" value="prob->run_penalty" size="48" maxlength="1024" checkExpr=" >= 0" /><%
+    if (is_abstract) {
+      if (prob->run_penalty < 0) {
+%>(<i>Not set</i>)<%
+      }
+    } else {
+      prepare_set_prob_value(CNTSPROB_run_penalty, tmp_prob, sup_prob, global);
+      if (prob->run_penalty < 0) {
+        if (tmp_prob->run_penalty < 0) {
+%>(<i>Not set</i>)<%
+        } else {
+%>(<i>Default: <s:v value="tmp_prob->run_penalty" /></i>)<%
+        }
       }
     }
-    print_int_editing_row(f, "Penalty for a disqualified submission:",
-                          prob->disqualified_penalty, extra_msg,
-                          SSERV_CMD_PROB_CHANGE_DISQUALIFIED_PENALTY,
-                          session_id, form_row_attrs[row ^= 1],
-                          self_url, extra_args, prob_hidden_vars);
-
-    //PROBLEM_PARAM(test_score_list, "s"),
-    print_string_editing_row(f, "Test scores for tests:", prob->test_score_list,
-                             SSERV_CMD_PROB_CHANGE_TEST_SCORE_LIST,
-                             SSERV_CMD_PROB_CLEAR_TEST_SCORE_LIST,
-                             0,
-                             session_id, form_row_attrs[row ^= 1],
-                             self_url, extra_args, prob_hidden_vars);
+%></td>
+        <td><s:submit ac="prob-change-run-penalty" label="Change" /></td>
+        <td><s:help ac="prob-change-run-penalty" /></td>
+    </s:htr>
+</s:form>
+<%
   }
+%>
 
+<%
+  if (show_adv && global->score_system == SCORE_KIROV) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Penalty for a disqualified submission:</td>
+        <td><s:textfield name="param" value="prob->disqualified_penalty" size="48" maxlength="1024" checkExpr=" >= 0" /><%
+    if (is_abstract) {
+      if (prob->disqualified_penalty < 0) {
+%>(<i>Not set</i>)<%
+      }
+    } else {
+      prepare_set_prob_value(CNTSPROB_disqualified_penalty, tmp_prob, sup_prob, global);
+      if (prob->disqualified_penalty < 0) {
+        if (tmp_prob->disqualified_penalty < 0) {
+%>(<i>Not set</i>)<%
+        } else {
+%>(<i>Default: <s:v value="tmp_prob->disqualified_penalty" /></i>)<%
+        }
+      }
+    }
+%></td>
+        <td><s:submit ac="prob-change-disqualified-penalty" label="Change" /></td>
+        <td><s:help ac="prob-change-disqualified-penalty" /></td>
+    </s:htr>
+</s:form>
+<%
+  }
+%>
+
+<%
+  if (!is_abstract && (global->score_system == SCORE_KIROV || global->score_system == SCORE_OLYMPIAD)) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:htr attr="form_row_attrs[row ^= 1]">
+        <td>Test scores for tests:</td>
+        <td><s:textfield name="param" value="prob->test_score_list" size="48" maxlength="1024" checkExpr="" /></td>
+        <td><s:submit ac="prob-change-test-score-list" label="Change" /></td>
+        <td><s:help ac="prob-change-test-score-list" /></td>
+    </s:htr>
+</s:form>
+<%
+  }
+%>
+
+<!--
   if ((sstate->global->score_system == SCORE_ACM
        || sstate->global->score_system == SCORE_MOSCOW)
       && show_adv) {
