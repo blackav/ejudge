@@ -106,13 +106,13 @@ static const unsigned char * const form_row_attrs[]=
   }
 %>
     <s:htr attr="head_row_attr">
-        <td colspan="4" align="center"><b>Concrete problems</b><%
+        <td colspan="4" align="center"><b>Add new problem</b><%
   if (phr->ss->update_state) {
 %> [<s:a ac="download-progress-page">Download is in progress</s:a>]<%
   } else {
 %> [<s:a ac="import-from-polygon-page">Import from Polygon</s:a>] [<s:a ac="import-contest-from-polygon-page">Import contest from Polygon</s:a>]<%
   }
-%></td></tr>
+%></td>
     </s:htr>
 
 <%
