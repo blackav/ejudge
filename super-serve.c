@@ -1480,7 +1480,7 @@ cmd_main_page(struct client_state *p, int len,
 
   // extra incoming packet checks
   switch (pkt->b.id) {
-  case SSERV_CMD_EDIT_SERVE_CFG_PROB:
+  case _SSERV_CMD_EDIT_SERVE_CFG_PROB:
     if ((r = contests_get(pkt->contest_id, &cnts)) < 0 || !cnts) {
       return send_reply(p, -SSERV_ERR_INVALID_CONTEST);
     }
@@ -1494,7 +1494,7 @@ cmd_main_page(struct client_state *p, int len,
 
   // check permissions: MASTER_PAGE
   switch (pkt->b.id) {
-  case SSERV_CMD_EDIT_SERVE_CFG_PROB:
+  case _SSERV_CMD_EDIT_SERVE_CFG_PROB:
     if (p->priv_level != PRIV_LEVEL_ADMIN) {
       err("%d: inappropriate privilege level", p->id);
       return send_reply(p, -SSERV_ERR_PERMISSION_DENIED);
@@ -1530,7 +1530,7 @@ cmd_main_page(struct client_state *p, int len,
 
   // handle command
   switch (pkt->b.id) {
-  case SSERV_CMD_EDIT_SERVE_CFG_PROB:
+  case _SSERV_CMD_EDIT_SERVE_CFG_PROB:
     if (sstate->edited_cnts && sstate->edited_cnts->id == cnts->id) {
       activate_problem(sstate, pkt->flags);
       r = super_html_edit_problems(f, p->priv_level, p->user_id, p->login,
@@ -2842,7 +2842,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_HIDE_ACCESS_RULES] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_SHOW_PERMISSIONS] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_HIDE_PERMISSIONS] = { cmd_simple_top_command },
-  [SSERV_CMD_EDIT_SERVE_CFG_PROB] = { cmd_main_page },
+  [_SSERV_CMD_EDIT_SERVE_CFG_PROB] = { cmd_main_page },
   [SSERV_CMD_CNTS_SHOW_FORM_FIELDS] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_HIDE_FORM_FIELDS] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_NAME] = { cmd_simple_top_command },
