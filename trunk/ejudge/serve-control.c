@@ -842,52 +842,6 @@ authentificate(char *argv[])
   exit(0);
 }
 
-static void action_view_contest(int cmd) __attribute__((noreturn));
-static void
-action_view_contest(int cmd)
-{
-  int contest_id, r;
-  unsigned char *extra_str = "";
-  unsigned int flags = 0;
-
-  if ((contest_id = parse_contest_id()) <= 0) goto invalid_parameter;
-
-  switch (cmd) {
-  case _SSERV_CMD_EDIT_SERVE_CFG_PROB:
-    extra_str = ", editing serve.cfg";
-    break;
-  case SSERV_CMD_PROB_EDIT_VARIANTS:
-  case SSERV_CMD_PROB_EDIT_VARIANTS_2:
-    extra_str = ", editing variant map";
-    break;
-  }
-
-  if (cmd == _SSERV_CMD_EDIT_SERVE_CFG_PROB) {
-    const unsigned char *s = cgi_param("prob_id");
-    int prob_id = 0, n = 0;
-    if (s && sscanf(s, "%d%n", &prob_id, &n) == 1 && !s[n] && prob_id > 0 && prob_id <= EJ_MAX_PROB_ID) {
-      flags = prob_id;
-    }
-  }
-
-  open_super_server();
-  client_put_header(stdout, 0, 0, config->charset, 1, 0, client_key,
-                    "%s: %s@%s, %d%s", "serve-control", user_login, http_host, contest_id,
-                    extra_str);
-  fflush(stdout);
-  r = super_clnt_main_page(super_serve_fd, 1, cmd,
-                           contest_id, 0, flags, self_url, hidden_vars, "");
-  if (r < 0) {
-    printf("<h2><font color=\"red\">%s</font></h2>\n",
-           super_proto_strerror(-r));
-  }
-  client_put_footer(stdout, 0);
-  exit(0);
-
- invalid_parameter:
-  operation_status_page(-1, -1, "Contest view parameters are invalid");
-}
-
 static void
 action_contest_command(int cmd, int next_state)
 {
@@ -2110,9 +2064,6 @@ main(int argc, char *argv[])
     break;
   case SSERV_CMD_CNTS_FORGET:
     action_simple_top_command(client_action);
-    break;
-  case _SSERV_CMD_EDIT_SERVE_CFG_PROB:
-    action_view_contest(client_action);
     break;
 
   case SSERV_CMD_CNTS_CHANGE_NAME:
