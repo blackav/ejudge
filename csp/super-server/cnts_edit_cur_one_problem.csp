@@ -3326,7 +3326,7 @@
 %></td>
         <td><s:submit ac="prob-change-variant-num" label="Change" /><%
     if (prob->variant_num > 0) {
-%>[<s:a ac="prob-edit-variants">Edit variants</s:a>]<%
+%>[<s:a ac="cnts-start-edit-variant-action">Edit variants</s:a>]<%
     }
 %></td>
         <td><s:help ac="prob-change-variant-num" /></td>

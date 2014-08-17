@@ -515,7 +515,7 @@ super_html_contest_page_menu(FILE *f,
   fprintf(f, "</td><td>");
   if (cur_page != 5) {
     fprintf(f, "%s", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
-                                   "action=%d", SSERV_CMD_PROB_EDIT_VARIANTS));
+                                   "action=%d", SSERV_CMD_CNTS_START_EDIT_VARIANT_ACTION));
   }
   fprintf(f, "Variants (variant.map)");
   if (cur_page != 5) {
