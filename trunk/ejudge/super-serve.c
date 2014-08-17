@@ -1512,7 +1512,6 @@ cmd_main_page(struct client_state *p, int len,
     // Current contest editing commands are allowed to anybody,
     // because the editing mode cannot be entered without privilege
   case SSERV_CMD_CNTS_COMMIT:
-  case _SSERV_CMD_EDIT_CURRENT_PROB:
   case SSERV_CMD_VIEW_NEW_SERVE_CFG:
   case SSERV_CMD_PROB_EDIT_VARIANTS:
   case SSERV_CMD_PROB_EDIT_VARIANTS_2:
@@ -1573,13 +1572,6 @@ cmd_main_page(struct client_state *p, int len,
                                   sstate, pkt->b.id,
                                   self_url_ptr, hidden_vars_ptr,
                                   extra_args_ptr);
-    break;
-
-  case _SSERV_CMD_EDIT_CURRENT_PROB:
-    r = super_html_edit_problems(f, p->priv_level, p->user_id, p->login,
-                                 p->cookie, &p->ip, config, sstate,
-                                 self_url_ptr, hidden_vars_ptr,
-                                 extra_args_ptr);
     break;
 
   case SSERV_CMD_VIEW_NEW_SERVE_CFG:
@@ -3056,7 +3048,6 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_LANG_CHANGE_STYLE_CHECKER_ENV] = { cmd_set_value },
   [SSERV_CMD_LANG_CLEAR_STYLE_CHECKER_ENV] = { cmd_set_value },
 
-  [_SSERV_CMD_EDIT_CURRENT_PROB] = { cmd_main_page },
   [SSERV_CMD_PROB_ADD] = { cmd_set_value },
   [SSERV_CMD_PROB_ADD_ABSTRACT] = { cmd_set_value },
   [SSERV_CMD_PROB_SHOW_DETAILS] = { cmd_set_value },
