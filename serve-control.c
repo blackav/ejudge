@@ -2103,7 +2103,6 @@ main(int argc, char *argv[])
     break;
 
   case SSERV_CMD_CNTS_COMMIT:
-  case _SSERV_CMD_EDIT_CURRENT_PROB:
   case SSERV_CMD_VIEW_NEW_SERVE_CFG:
   case SSERV_CMD_PROB_EDIT_VARIANTS:
   case SSERV_CMD_PROB_EDIT_VARIANTS_2:
