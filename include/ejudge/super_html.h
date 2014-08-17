@@ -394,4 +394,7 @@ void
 html_select(FILE *f, int value, const unsigned char *param_name,
             const unsigned char * const *options);
 
+void
+super_html_activate_problem(struct sid_state *sstate, int prob_id);
+
 #endif /* __SUPER_HTML_H__ */

@@ -1415,8 +1415,8 @@ super_serve_move_edited_contest(struct sid_state *dst, struct sid_state *src)
   dst->cs_lang_names = src->cs_lang_names; src->cs_lang_names = 0;
 }
 
-static void
-activate_problem(struct sid_state *sstate, int prob_id)
+void
+super_html_activate_problem(struct sid_state *sstate, int prob_id)
 {
   if (!sstate) return;
   if (prob_id <= 0 || prob_id >= sstate->prob_a || !sstate->probs || !sstate->prob_flags || !sstate->probs[prob_id]) return;
@@ -1532,7 +1532,7 @@ cmd_main_page(struct client_state *p, int len,
   switch (pkt->b.id) {
   case _SSERV_CMD_EDIT_SERVE_CFG_PROB:
     if (sstate->edited_cnts && sstate->edited_cnts->id == cnts->id) {
-      activate_problem(sstate, pkt->flags);
+      super_html_activate_problem(sstate, pkt->flags);
       r = super_html_edit_problems(f, p->priv_level, p->user_id, p->login,
                                    p->cookie, &p->ip, config, sstate,
                                    self_url_ptr, hidden_vars_ptr,
@@ -1560,7 +1560,7 @@ cmd_main_page(struct client_state *p, int len,
     }
     sstate->edited_cnts = rw_cnts;
     super_html_load_serve_cfg(rw_cnts, config, sstate);
-    activate_problem(sstate, pkt->flags);
+    super_html_activate_problem(sstate, pkt->flags);
     r = super_html_edit_problems(f, p->priv_level, p->user_id, p->login,
                                  p->cookie, &p->ip, config, sstate,
                                  self_url_ptr, hidden_vars_ptr,
