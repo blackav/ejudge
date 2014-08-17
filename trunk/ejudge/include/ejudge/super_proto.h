@@ -1254,19 +1254,6 @@ enum
   SSERV_VIEW_INVISIBLE = 1,
 };
 
-struct prot_super_pkt_main_page
-{
-  struct prot_super_packet b;
-
-  int locale_id;
-  int contest_id;               /* for viewing contest details */
-  unsigned int flags;           /* view flags */
-  int self_url_len;
-  int hidden_vars_len;
-  int extra_args_len;
-  unsigned char data[3];
-};
-
 struct prot_super_pkt_simple_cmd
 {
   struct prot_super_packet b;
