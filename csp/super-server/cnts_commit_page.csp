@@ -10,21 +10,81 @@
     opcap_t caps = 0;
     unsigned char subtitle_buf[1024];
     const unsigned char *subtitle = subtitle_buf;
+    char *comm_s = 0;
+    size_t comm_z = 0;
+    FILE *comm_f = 0;
+    int r = 0;
 
     if (phr->priv_level != PRIV_LEVEL_ADMIN) FAIL(SSERV_ERR_PERMISSION_DENIED);
     if (ejudge_cfg_opcaps_find(phr->config, phr->login, &caps) < 0) FAIL(SSERV_ERR_PERMISSION_DENIED);
     if (opcaps_check(caps, OPCAP_EDIT_CONTEST) < 0) FAIL(SSERV_ERR_PERMISSION_DENIED);
     if (!phr->ss->edited_cnts) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
 
-    snprintf(subtitle_buf, sizeof(subtitle_buf), "new serve.cfg");
+    comm_f = open_memstream(&comm_s, &comm_z);
+    r = super_html_commit_contest_2(comm_f, phr->user_id, phr->login, &phr->ip, phr->config, phr->userlist_clnt, phr->ss);
+    fclose(comm_f); comm_f = 0;
+
+    if (r < 0) {
+        snprintf(subtitle_buf, sizeof(subtitle_buf), "Contest saving failed");
+    } else {
+        snprintf(subtitle_buf, sizeof(subtitle_buf), "Contest is saved successfully");
+    }
+    cnts = phr->ss->edited_cnts;
+    struct section_global_data *global = phr->ss->global;
 %><%@include "header.csp"
 %>
 <h2><s:v value="subtitle" /></h2>
 
+<%
+  if (r >= 0) {
+%>
+
+<p>Contest saving log:<br/></p>
+<pre><s:v value="comm_s" /></pre>
+
+<%
+  if (!phr->ss->serve_parse_errors) {
+%>
+<h2>Further instructions</h2>
+<%
+    prepare_further_instructions(log_f, cnts->root_dir, cnts->conf_dir,
+                                 global, phr->ss->aprob_u, phr->ss->aprobs,
+                                 phr->ss->prob_a, phr->ss->probs);
+  }
+%>
+
+<table border="0"><tr>
+    <td><s:a ac="main-page">To the top</s:a></td>
+    <td>
+        <s:form>
+            <s:hidden name="contest_id" value="cnts->id" />
+            <s:submit ac="check-tests-page" label="Check contest settings" />
+        </s:form>
+    </td>
+</tr></table>
+<%
+    super_serve_clear_edited_contest(phr->ss);
+  } else {
+%>
+
+<p>Contest saving log:<br/></p>
+<pre><font color="red"><s:v value="comm_s" /></font></pre>
+
+<table border="0"><tr>
+    <td><s:a ac="main-page">To the top</s:a></td>
+    <td><s:a ac="cnts-edit-cur-contest-page">Back</s:a></td>
+</tr></table>
+
+<%
+  }
+%>
 
 <%@include "footer.csp"
 %><%
   l10n_setlocale(0);
 cleanup:
+  if (comm_f) fclose(comm_f);
+  comm_f = 0;
+  xfree(comm_s); comm_s = 0; comm_z = 0;
   html_armor_free(&ab);
 %>
