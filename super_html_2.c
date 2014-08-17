@@ -788,7 +788,7 @@ super_html_commit_contest_2(
         int user_id,
         const unsigned char *login,
         const ej_ip_t *ip_address,
-        struct ejudge_cfg *config,
+        const struct ejudge_cfg *config,
         struct userlist_clnt *us_conn,
         struct sid_state *sstate)
 {
