@@ -306,6 +306,7 @@ struct std_checker_info
   unsigned char *name;
   unsigned char *desc;
 };
+extern struct std_checker_info super_html_std_checkers[];
 
 void
 ss_write_html_header(
