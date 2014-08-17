@@ -1,0 +1,243 @@
+<%
+/* $Id$ */
+%><%@include "includes.csp"
+%><%
+%><%@set getter_name = "csp_get_cnts_edit_cur_variant_page"
+%><%@set ac_prefix = "SSERV_CMD_"
+%><%@set err_prefix = "SSERV_ERR_"
+%><%@page csp_view_cnts_edit_cur_variant_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "stdvars.csp"
+%><%
+    unsigned char subtitle_buf[1024];
+    const unsigned char *title = 0;
+    const unsigned char *subtitle = subtitle_buf;
+    opcap_t caps = 0;
+    int row = 1;
+    int cur_page = 5;
+static const unsigned char head_row_attr[] =
+  " bgcolor=\"#a0a0a0\"";
+static const unsigned char * const form_row_attrs[]=
+{
+  " bgcolor=\"#d0d0d0\"",
+  " bgcolor=\"#e0e0e0\"",
+};
+
+    if (phr->priv_level != PRIV_LEVEL_ADMIN) FAIL(SSERV_ERR_PERMISSION_DENIED);
+    if (ejudge_cfg_opcaps_find(phr->config, phr->login, &caps) < 0) FAIL(SSERV_ERR_PERMISSION_DENIED);
+    if (opcaps_check(caps, OPCAP_EDIT_CONTEST) < 0) FAIL(SSERV_ERR_PERMISSION_DENIED);
+    if (!phr->ss->edited_cnts) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
+
+    snprintf(subtitle_buf, sizeof(subtitle_buf), "editing serve.cfg, variants");
+    cnts = phr->ss->edited_cnts;
+    struct section_global_data *global = phr->ss->global;
+
+    (void) row;
+    (void) form_row_attrs;
+    (void) head_row_attr;
+%><%@include "header.csp"
+%>
+
+<%@include "cnts_edit_cur_top_menu.csp"
+%>
+
+<%
+  if (phr->ss->serve_parse_errors) {
+%>
+<h2><tt>serve.cfg</tt> cannot be edited</h2>
+<font color="red"><pre><s:v value="phr->ss->serve_parse_errors" /></pre></font>
+<%
+    goto bottom_links;
+  }
+%>
+
+<%
+  if (!global) {
+%>
+<h2>No current global settings!</h2>
+<%
+    goto bottom_links;
+  }
+%>
+
+<%
+  int var_prob_num = 0;
+  if (phr->ss->probs) {
+    int i;
+    for (i = 1; i < phr->ss->prob_a; i++)
+      if (phr->ss->probs[i] && phr->ss->probs[i]->variant_num > 0)
+        var_prob_num++;
+  }
+  if (var_prob_num <= 0) {
+%><h2>Contest does not have variant problems</h2><%
+    prepare_free_variant_map(global->variant_map);
+    global->variant_map = 0;
+    goto bottom_links;
+  }
+%>
+
+<!--
+int
+super_html_edit_variants(
+        FILE *f,
+        int cmd,
+        int priv_level,
+        int user_id,
+        const unsigned char *login,
+        ej_cookie_t session_id,
+        const ej_ip_t *ip_address,
+        int ssl_flag,
+        struct userlist_clnt *userlist_conn,
+        const struct ejudge_cfg *config,
+        struct sid_state *sstate,
+        const unsigned char *self_url,
+        const unsigned char *hidden_vars,
+        const unsigned char *extra_args)
+{
+  const unsigned char *s = 0;
+  struct section_global_data *global = 0;
+  struct contest_desc *cnts = 0;
+  int var_prob_num = 0, i, j, k;
+  char *log_txt = 0;
+  size_t log_len = 0;
+  FILE *log_file = 0;
+  struct variant_map *vmap = 0;
+  struct section_problem_data *prob = 0;
+  unsigned char buf[32];
+  int row = 1;
+-->
+
+<!--
+  log_file = open_memstream(&log_txt, &log_len);
+  if (cmd == SSERV_CMD_PROB_EDIT_VARIANTS_2) {
+    if (!(vmap = global->variant_map) || vmap->prob_map_size != sstate->prob_a
+        || vmap->prob_rev_map_size <= 0) {
+      close_memstream(log_file); log_file = 0;
+      xfree(log_txt);
+      super_html_contest_page_menu(f, session_id, sstate, -1, self_url,
+                                   hidden_vars, extra_args);
+      fprintf(f, "<h2>variant map is obsolete</h2>\n");
+      goto cleanup;
+    }
+  } else {
+    if (super_html_update_variant_map(log_file, cnts->id, userlist_conn,
+                                      cnts, global,
+                                      sstate->prob_a, sstate->probs,
+                                      &sstate->var_header_text,
+                                      &sstate->var_footer_text) < 0){
+      close_memstream(log_file); log_file = 0;
+
+      super_html_contest_page_menu(f, session_id, sstate, -1, self_url,
+                                   hidden_vars, extra_args);
+      fprintf(f, "<h2>variant map cannot be edited</h2>\n");
+      fprintf(f, "<font color=\"red\"><pre>%s</pre></font>\n", ARMOR(log_txt));
+      xfree(log_txt);
+      goto cleanup;
+    }
+  }
+
+  super_html_contest_page_menu(f, session_id, sstate, -1, self_url, hidden_vars,
+                               extra_args);
+
+  close_memstream(log_file); log_file = 0;
+
+  fprintf(f, "<h2>Variant map</h2>\n");
+
+  while (log_len > 0 && isspace(log_txt[log_len - 1])) log_txt[--log_len] = 0;
+  if (log_txt && *log_txt) {
+    fprintf(f, "Variant map parsing messages:\n<pre>%s</pre>\n",
+            ARMOR(log_txt));
+  }
+
+  xfree(log_txt); log_txt = 0;
+  vmap = global->variant_map;
+
+  fprintf(f, "<table border=\"0\">\n");
+  fprintf(f, "<tr%s><th>User Id</th><th>User Login</th><th>User Name</th>",
+          head_row_attr);
+  for (j = 0; j < vmap->prob_rev_map_size; j++) {
+    prob = sstate->probs[vmap->prob_rev_map[j]];
+    fprintf(f, "<th>%s</th>", ARMOR(prob->short_name));
+  }
+  fprintf(f, "<th>Action</th></tr>\n");
+
+  for (i = 0; i < vmap->u; i++) {
+    snprintf(buf, sizeof(buf), "%d", i);
+    html_start_form(f, 1, self_url, hidden_vars);
+    html_hidden_var(f, "row", buf);
+    if (vmap->v[i].user_id > 0)
+      snprintf(buf, sizeof(buf), "%d", vmap->v[i].user_id);
+    else
+      snprintf(buf, sizeof(buf), "&nbsp;");
+    if (vmap->v[i].login)
+      s = ARMOR(vmap->v[i].login);
+    else
+      s = "&nbsp;";
+    fprintf(f, "<tr%s><td>%s</td><td>%s</td>", form_row_attrs[row ^= 1],
+            buf, s);
+    if (vmap->v[i].name)
+      s = ARMOR(vmap->v[i].name);
+    else
+      s = "&nbsp;";
+    fprintf(f, "<td>%s</td>", s);
+
+    for (j = 0; j < vmap->prob_rev_map_size; j++) {
+      prob = sstate->probs[vmap->prob_rev_map[j]];
+      fprintf(f, "<td><select name=\"param_%d\">"
+              "<option value=\"0\"%s>N/A</option>",
+              j, !vmap->v[i].variants[j]?" selected=\"1\"" : "");
+      for (k = 1; k <= prob->variant_num; k++)
+        fprintf(f, "<option value=\"%d\"%s>%d</option>",
+                k, vmap->v[i].variants[j] == k?" selected=\"1\"" : "", k);
+      fprintf(f, "</select></td>");
+    }
+    fprintf(f, "<td>");
+    html_submit_button(f, SSERV_CMD_PROB_CHANGE_VARIANTS, "Change");
+    html_submit_button(f, SSERV_CMD_PROB_DELETE_VARIANTS, "Delete row");
+    fprintf(f, "</td></tr></form>\n");
+  }
+  fprintf(f, "</table>\n");
+
+  // clear variant, generate random variants
+  html_start_form(f, 1, self_url, hidden_vars);
+  fprintf(f, "<table border=\"0\">");
+  fprintf(f, "<tr><td>%s</td><td>", "Problem");
+  fprintf(f, "<select name=\"prob_id\">");
+  fprintf(f, "<option value=\"\"></option>");
+  for (j = 0; j < vmap->prob_rev_map_size; j++) {
+    prob = sstate->probs[vmap->prob_rev_map[j]];
+    fprintf(f, "<option value=\"%d\">%s - %s</option>",
+            prob->id, prob->short_name, ARMOR(prob->long_name));
+  }
+  fprintf(f, "</select></td><td>");
+  html_submit_button(f, SSERV_CMD_PROB_CLEAR_VARIANTS, "Clear variants");
+  html_submit_button(f, SSERV_CMD_PROB_RANDOM_VARIANTS, "Random variants");
+  fprintf(f, "</table></form>\n");
+
+  super_html_contest_footer_menu(f, session_id, sstate,
+                                 self_url, hidden_vars, extra_args);
+
+ cleanup:
+  html_armor_free(&ab);
+  return 0;
+}
+-->
+
+<%
+bottom_links: ;
+%>
+
+<s:form>
+<table border="0"><tr>
+    <td><s:a ac="main-page"><s:_>To the top</s:_></s:a></td>
+    <td><s:submit ac="cnts-forget" label="Forget it" /></td>
+    <td><s:submit ac="cnts-commit" label="COMMIT changes!" /></td>
+    <td><s:a ac="view-new-serve-cfg"><s:_>View serve.cfg</s:_></s:a></td>
+</tr></table>
+</s:form>
+
+<%@include "footer.csp"
+%><%
+  l10n_setlocale(0);
+cleanup:
+  html_armor_free(&ab);
+%>
