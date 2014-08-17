@@ -4218,7 +4218,7 @@ vmap_sort_func(const void *v1, const void *v2)
 int
 super_html_update_variant_map(FILE *flog, int contest_id,
                               struct userlist_clnt *server_conn,
-                              struct contest_desc *cnts,
+                              const struct contest_desc *cnts,
                               struct section_global_data *global,
                               int total_probs,
                               struct section_problem_data **probs,
