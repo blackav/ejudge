@@ -782,65 +782,6 @@ diff_func(const unsigned char *path1, const unsigned char *path2)
   return read_process_output(diff_cmdline, 0, 1, 0);
 }
 
-/*
-int
-super_html_serve_probe_run(FILE *f,
-                           int priv_level,
-                           int user_id,
-                           int contest_id,
-                           const unsigned char *login,
-                           ej_cookie_t session_id,
-                           ej_ip_t ip_address,
-                           int ssl,
-                           struct ejudge_cfg *config,
-                           const unsigned char *self_url,
-                           const unsigned char *hidden_vars,
-                           const unsigned char *extra_args)
-{
-  int errcode;
-  const struct contest_desc *cnts = 0;
-  struct contest_extra *extra = 0;
-  unsigned char *serve_buf = 0, *s = 0;
-  opcap_t caps;
-  unsigned char hbuf[1024];
-
-  if ((errcode = contests_get(contest_id, &cnts)) < 0) {
-    return super_html_report_error(f, session_id, self_url, extra_args,
-                                   "Invalid contest %d!", contest_id);
-  }
-  if (priv_level < PRIV_LEVEL_JUDGE
-      || opcaps_find(&cnts->capabilities, login, &caps) < 0
-      || opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0
-      || !contests_check_serve_control_ip_2(cnts, ip_address, ssl)) {
-    return super_html_report_error(f, session_id, self_url, extra_args,
-                                   "Permission denied");
-  }
-  if (!cnts->root_dir) {
-    return super_html_report_error(f, session_id, self_url, extra_args,
-                                   "Root dir is not defined");
-  }
-  if (!(extra = get_existing_contest_extra(contest_id))) {
-    return super_html_report_error(f, session_id, self_url, extra_args,
-                                   "Contest is not handled");
-  }
-
-  errcode = super_serve_start_serve_test_mode(cnts, &serve_buf, extra->socket_fd);
-  s = html_armor_string_dup(serve_buf);
-  fprintf(f, "<p>Probe run log:<br><pre>%s</pre>\n", s);
-  xfree(s);
-  xfree(serve_buf);
-  fprintf(f, "<table border=\"0\"><tr>");
-  fprintf(f, "<td>%sTo the top</a></td>",
-          html_hyperref(hbuf, sizeof(hbuf), session_id, self_url,extra_args,0));
-  fprintf(f, "<td>%sBack</a></td>",
-          html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
-                        "contest_id=%d&action=%d", contest_id,
-                        SSERV_CMD_CONTEST_PAGE));
-  fprintf(f, "</tr></table>\n");
-  return 0;
-}
-*/
-
 int
 super_html_commit_contest(
         FILE *f,
