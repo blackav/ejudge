@@ -2,6 +2,9 @@
 /* $Id$ */
 %><%@include "includes.csp"
 %><%
+#include "ejudge/prepare_serve.h"
+
+#include <ctype.h>
 %><%@set getter_name = "csp_get_cnts_edit_cur_variant_page"
 %><%@set ac_prefix = "SSERV_CMD_"
 %><%@set err_prefix = "SSERV_ERR_"
@@ -30,10 +33,6 @@ static const unsigned char * const form_row_attrs[]=
     snprintf(subtitle_buf, sizeof(subtitle_buf), "editing serve.cfg, variants");
     cnts = phr->ss->edited_cnts;
     struct section_global_data *global = phr->ss->global;
-
-    (void) row;
-    (void) form_row_attrs;
-    (void) head_row_attr;
 %><%@include "header.csp"
 %>
 
@@ -75,152 +74,127 @@ static const unsigned char * const form_row_attrs[]=
   }
 %>
 
-<!--
-int
-super_html_edit_variants(
-        FILE *f,
-        int cmd,
-        int priv_level,
-        int user_id,
-        const unsigned char *login,
-        ej_cookie_t session_id,
-        const ej_ip_t *ip_address,
-        int ssl_flag,
-        struct userlist_clnt *userlist_conn,
-        const struct ejudge_cfg *config,
-        struct sid_state *sstate,
-        const unsigned char *self_url,
-        const unsigned char *hidden_vars,
-        const unsigned char *extra_args)
-{
-  const unsigned char *s = 0;
-  struct section_global_data *global = 0;
-  struct contest_desc *cnts = 0;
-  int var_prob_num = 0, i, j, k;
-  char *log_txt = 0;
-  size_t log_len = 0;
-  FILE *log_file = 0;
+<%
   struct variant_map *vmap = 0;
-  struct section_problem_data *prob = 0;
-  unsigned char buf[32];
-  int row = 1;
--->
-
-<!--
-  log_file = open_memstream(&log_txt, &log_len);
-  if (cmd == SSERV_CMD_PROB_EDIT_VARIANTS_2) {
-    if (!(vmap = global->variant_map) || vmap->prob_map_size != sstate->prob_a
-        || vmap->prob_rev_map_size <= 0) {
-      close_memstream(log_file); log_file = 0;
-      xfree(log_txt);
-      super_html_contest_page_menu(f, session_id, sstate, -1, self_url,
-                                   hidden_vars, extra_args);
-      fprintf(f, "<h2>variant map is obsolete</h2>\n");
-      goto cleanup;
+  char *vlog_s = 0;
+  size_t vlog_z = 0;
+  if (phr->action == SSERV_CMD_CNTS_EDIT_CUR_VARIANT_PAGE) {
+    vmap = global->variant_map;
+    if (!vmap || vmap->prob_map_size != phr->ss->prob_a || vmap->prob_rev_map_size <= 0) {
+%><h2>Variant map is obsolete</h2><%
+      prepare_free_variant_map(global->variant_map);
+      global->variant_map = 0;
+      goto bottom_links;
     }
   } else {
-    if (super_html_update_variant_map(log_file, cnts->id, userlist_conn,
-                                      cnts, global,
-                                      sstate->prob_a, sstate->probs,
-                                      &sstate->var_header_text,
-                                      &sstate->var_footer_text) < 0){
-      close_memstream(log_file); log_file = 0;
-
-      super_html_contest_page_menu(f, session_id, sstate, -1, self_url,
-                                   hidden_vars, extra_args);
-      fprintf(f, "<h2>variant map cannot be edited</h2>\n");
-      fprintf(f, "<font color=\"red\"><pre>%s</pre></font>\n", ARMOR(log_txt));
-      xfree(log_txt);
-      goto cleanup;
+    FILE *vlog_f = open_memstream(&vlog_s, &vlog_z);
+    int r = super_html_update_variant_map(vlog_f, cnts->id, phr->userlist_clnt,
+                                          cnts, global, phr->ss->prob_a, phr->ss->probs,
+                                          &phr->ss->var_header_text, &phr->ss->var_footer_text);
+    fclose(vlog_f); vlog_f = 0;
+    if (r < 0) {
+%><h2>Variant map cannot be edited</h2>
+<font color="red"><pre><s:v value="vlog_s" /></pre></font>
+<%
+      xfree(vlog_s); vlog_s = 0; vlog_z = 0;
+      goto bottom_links;
     }
   }
+%>
 
-  super_html_contest_page_menu(f, session_id, sstate, -1, self_url, hidden_vars,
-                               extra_args);
+<h2>Variant map</h2>
 
-  close_memstream(log_file); log_file = 0;
-
-  fprintf(f, "<h2>Variant map</h2>\n");
-
-  while (log_len > 0 && isspace(log_txt[log_len - 1])) log_txt[--log_len] = 0;
-  if (log_txt && *log_txt) {
-    fprintf(f, "Variant map parsing messages:\n<pre>%s</pre>\n",
-            ARMOR(log_txt));
+<%
+  if (vlog_s) {
+    while (vlog_z > 0 && isspace(vlog_s[vlog_z - 1])) --vlog_z;
+    vlog_s[vlog_z] = 0;
   }
-
-  xfree(log_txt); log_txt = 0;
+  if (vlog_s && *vlog_s) {
+%><p>Variant map parsing messages:</p>
+<pre><s:v value="vlog_s" /></pre><%
+  }
+  xfree(vlog_s); vlog_s = 0; vlog_z = 0;
   vmap = global->variant_map;
+%>
 
-  fprintf(f, "<table border=\"0\">\n");
-  fprintf(f, "<tr%s><th>User Id</th><th>User Login</th><th>User Name</th>",
-          head_row_attr);
-  for (j = 0; j < vmap->prob_rev_map_size; j++) {
-    prob = sstate->probs[vmap->prob_rev_map[j]];
-    fprintf(f, "<th>%s</th>", ARMOR(prob->short_name));
+<table border="0">
+    <s:htr attr="head_row_attr">
+        <th>User Id</th>
+        <th>User Login</th>
+        <th>User Name</th>
+<%
+  int j = 0;
+  for (j = 0; j < vmap->prob_rev_map_size; ++j) {
+    const struct section_problem_data *prob = phr->ss->probs[vmap->prob_rev_map[j]];
+%>
+        <th><s:v value="prob->short_name" /></th>
+<%
   }
-  fprintf(f, "<th>Action</th></tr>\n");
-
-  for (i = 0; i < vmap->u; i++) {
-    snprintf(buf, sizeof(buf), "%d", i);
-    html_start_form(f, 1, self_url, hidden_vars);
-    html_hidden_var(f, "row", buf);
-    if (vmap->v[i].user_id > 0)
-      snprintf(buf, sizeof(buf), "%d", vmap->v[i].user_id);
-    else
-      snprintf(buf, sizeof(buf), "&nbsp;");
-    if (vmap->v[i].login)
-      s = ARMOR(vmap->v[i].login);
-    else
-      s = "&nbsp;";
-    fprintf(f, "<tr%s><td>%s</td><td>%s</td>", form_row_attrs[row ^= 1],
-            buf, s);
-    if (vmap->v[i].name)
-      s = ARMOR(vmap->v[i].name);
-    else
-      s = "&nbsp;";
-    fprintf(f, "<td>%s</td>", s);
-
-    for (j = 0; j < vmap->prob_rev_map_size; j++) {
-      prob = sstate->probs[vmap->prob_rev_map[j]];
-      fprintf(f, "<td><select name=\"param_%d\">"
-              "<option value=\"0\"%s>N/A</option>",
-              j, !vmap->v[i].variants[j]?" selected=\"1\"" : "");
-      for (k = 1; k <= prob->variant_num; k++)
-        fprintf(f, "<option value=\"%d\"%s>%d</option>",
-                k, vmap->v[i].variants[j] == k?" selected=\"1\"" : "", k);
-      fprintf(f, "</select></td>");
+%>
+        <th>Action</th>
+    </s:htr>
+<%
+  int i;
+  for (i = 0; i < vmap->u; ++i) {
+%>
+    <s:form>
+        <s:hidden name="row" value="i" checkExpr=">= 0" />
+        <s:htr attr="form_row_attrs[row ^= 1]">
+            <td><%
+    if (vmap->v[i].user_id > 0) {
+%><s:v value="vmap->v[i].user_id" /><%
+    } else {
+%>&nbsp;<%
     }
-    fprintf(f, "<td>");
-    html_submit_button(f, SSERV_CMD_PROB_CHANGE_VARIANTS, "Change");
-    html_submit_button(f, SSERV_CMD_PROB_DELETE_VARIANTS, "Delete row");
-    fprintf(f, "</td></tr></form>\n");
+%></td>
+            <td><%
+    if (vmap->v[i].login) {
+%><s:v value="vmap->v[i].login" /><%
+    } else {
+%>&nbsp;<%
+    }
+%></td>
+            <td><%
+    if (vmap->v[i].name) {
+%><s:v value="vmap->v[i].name" /><%
+    } else {
+%>&nbsp;<%
+    }
+%></td>
+<%
+    for (j = 0; j < vmap->prob_rev_map_size; ++j) {
+      const struct section_problem_data *prob = phr->ss->probs[vmap->prob_rev_map[j]];
+%>
+            <td><select name='param_<s:v value="j" />'><s:option value="0" selectedExpr="!vmap->v[i].variants[j]">N/A</s:option><%
+      int k;
+      for (k = 1; k <= prob->variant_num; ++k) {
+%><s:option value="k" selectedExpr="vmap->v[i].variants[j] == k"><s:v value="k" /></s:option><%
+      }
+%></select></td><%
+    }
+%>
+            <td><s:submit ac="prob-change-variants" label="Change"/><s:submit ac="prob-delete-variants" label="Delete row"/></td>
+        </s:htr>
+    </s:form>
+<%
   }
-  fprintf(f, "</table>\n");
+%>
+</table>
 
-  // clear variant, generate random variants
-  html_start_form(f, 1, self_url, hidden_vars);
-  fprintf(f, "<table border=\"0\">");
-  fprintf(f, "<tr><td>%s</td><td>", "Problem");
-  fprintf(f, "<select name=\"prob_id\">");
-  fprintf(f, "<option value=\"\"></option>");
-  for (j = 0; j < vmap->prob_rev_map_size; j++) {
-    prob = sstate->probs[vmap->prob_rev_map[j]];
-    fprintf(f, "<option value=\"%d\">%s - %s</option>",
-            prob->id, prob->short_name, ARMOR(prob->long_name));
+<s:form>
+    <table border="0">
+        <tr>
+            <td>Problem</td>
+            <td><select name="prob_id"><option value=""></option><%
+  for (j = 0; j < vmap->prob_rev_map_size; ++j) {
+    const struct section_problem_data *prob = phr->ss->probs[vmap->prob_rev_map[j]];
+%><s:option value="prob->id"><s:v value="prob->short_name"/> - <s:v value="prob->long_name" /></s:option><%
   }
-  fprintf(f, "</select></td><td>");
-  html_submit_button(f, SSERV_CMD_PROB_CLEAR_VARIANTS, "Clear variants");
-  html_submit_button(f, SSERV_CMD_PROB_RANDOM_VARIANTS, "Random variants");
-  fprintf(f, "</table></form>\n");
-
-  super_html_contest_footer_menu(f, session_id, sstate,
-                                 self_url, hidden_vars, extra_args);
-
- cleanup:
-  html_armor_free(&ab);
-  return 0;
-}
--->
+%></select></td>
+            <td><s:submit ac="prob-clear-variants" label="Clear variants" /><s:submit ac="prob-random-variants" label="Random variants" /></td>
+        </tr>
+    </table>
+</s:form>
 
 <%
 bottom_links: ;
