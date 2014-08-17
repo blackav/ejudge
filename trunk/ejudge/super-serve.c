@@ -1479,8 +1479,6 @@ cmd_main_page(struct client_state *p, int len,
     // because the editing mode cannot be entered without privilege
   case SSERV_CMD_CNTS_COMMIT:
   case SSERV_CMD_VIEW_NEW_SERVE_CFG:
-  case _SSERV_CMD_PROB_EDIT_VARIANTS:
-  case _SSERV_CMD_PROB_EDIT_VARIANTS_2:
     // FIXME: add permissions checks
     break;
 
@@ -1509,14 +1507,6 @@ cmd_main_page(struct client_state *p, int len,
                                       p->cookie, &p->ip, config, sstate,
                                       self_url_ptr, hidden_vars_ptr,
                                       extra_args_ptr);
-    break;
-
-  case _SSERV_CMD_PROB_EDIT_VARIANTS:
-  case _SSERV_CMD_PROB_EDIT_VARIANTS_2:
-    r = super_html_edit_variants(f, pkt->b.id, p->priv_level, p->user_id, p->login,
-                                 p->cookie, &p->ip, p->ssl, userlist_clnt,
-                                 config, sstate, self_url_ptr, hidden_vars_ptr,
-                                 extra_args_ptr);
     break;
 
   default:
@@ -3164,8 +3154,6 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_CHANGE_DEADLINE] = { cmd_set_value },
   [SSERV_CMD_PROB_CLEAR_DEADLINE] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_VARIANT_NUM] = { cmd_set_value },
-  [_SSERV_CMD_PROB_EDIT_VARIANTS] = { cmd_main_page },
-  [_SSERV_CMD_PROB_EDIT_VARIANTS_2] = { cmd_main_page },
   [SSERV_CMD_PROB_CHANGE_VARIANTS] = { cmd_set_value },
   [SSERV_CMD_PROB_DELETE_VARIANTS] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_XML_FILE] = { cmd_set_value },

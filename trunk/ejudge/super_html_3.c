@@ -4510,7 +4510,7 @@ super_html_edit_variants(
   }
 
   log_file = open_memstream(&log_txt, &log_len);
-  if (cmd == _SSERV_CMD_PROB_EDIT_VARIANTS_2) {
+  if (cmd == SSERV_CMD_OLD_PROB_EDIT_VARIANTS_2) {
     if (!(vmap = global->variant_map) || vmap->prob_map_size != sstate->prob_a
         || vmap->prob_rev_map_size <= 0) {
       close_memstream(log_file); log_file = 0;
