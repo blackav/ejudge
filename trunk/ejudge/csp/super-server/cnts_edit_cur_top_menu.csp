@@ -40,7 +40,7 @@
 %></td>
     <td><%
   if (cur_page != 5) {
-%><s:a ac="prob-edit-variants"><%
+%><s:a ac="cnts-start-edit-variant-action"><%
   }
 %><s:_>Variants (variant.map)</s:_><%
   if (cur_page != 5) {
