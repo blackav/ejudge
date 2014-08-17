@@ -6675,6 +6675,7 @@ static const int external_action_aliases[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_EDIT_WELCOME_PAGE] = SSERV_CMD_GLOB_EDIT_CONTEST_START_CMD_PAGE,
   [SSERV_CMD_CNTS_EDIT_REG_WELCOME_PAGE] = SSERV_CMD_GLOB_EDIT_CONTEST_START_CMD_PAGE,
   [SSERV_CMD_CNTS_EDIT_REGISTER_EMAIL_FILE_PAGE] = SSERV_CMD_GLOB_EDIT_CONTEST_START_CMD_PAGE,
+  [SSERV_CMD_CNTS_START_EDIT_VARIANT_ACTION] = SSERV_CMD_CNTS_EDIT_CUR_VARIANT_PAGE,
 };
 static const unsigned char * const external_action_names[SSERV_CMD_LAST] =
 {
@@ -6702,6 +6703,8 @@ static const unsigned char * const external_action_names[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_EDIT_CUR_LANGUAGE_PAGE] = "cnts_edit_cur_language_page",
   [SSERV_CMD_CNTS_EDIT_CUR_PROBLEM_PAGE] = "cnts_edit_cur_problem_page",
   [SSERV_CMD_CNTS_START_EDIT_PROBLEM_ACTION] = "cnts_start_edit_problem_action",
+  [SSERV_CMD_CNTS_EDIT_CUR_VARIANT_PAGE] = "cnts_edit_cur_variant_page",
+  [SSERV_CMD_CNTS_NEW_SERVE_CFG_PAGE] = "cnts_new_serve_cfg_page",
 };
 
 static const unsigned char * const external_error_names[SSERV_ERR_LAST] = 

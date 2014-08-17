@@ -46,6 +46,7 @@ CFILES = \
  csp_cnts_edit_member_fields_page.c\
  csp_cnts_edit_permissions_page.c\
  csp_cnts_edit_user_fields_page.c\
+ csp_cnts_new_serve_cfg_page.c\
  csp_cnts_reload_file_action.c\
  csp_cnts_save_file_action.c\
  csp_cnts_start_edit_action.c\
@@ -93,6 +94,7 @@ csp_cnts_edit_file_page.c : cnts_edit_file_page.csp includes.csp stdvars.csp hea
 csp_cnts_edit_member_fields_page.c : cnts_edit_member_fields_page.csp includes.csp stdvars.csp header.csp footer.csp
 csp_cnts_edit_permissions_page.c : cnts_edit_permissions_page.csp includes.csp stdvars.csp header.csp footer.csp
 csp_cnts_edit_user_fields_page.c : cnts_edit_user_fields_page.csp includes.csp stdvars.csp header.csp footer.csp
+csp_cnts_new_serve_cfg_page.c : cnts_new_serve_cfg_page.csp includes.csp stdvars.csp header.csp footer.csp cnts_edit_cur_top_menu.csp
 csp_cnts_save_file_action.c : cnts_save_file_action.csp includes.csp stdvars.csp header.csp footer.csp
 csp_cnts_reload_file_action.c : cnts_reload_file_action.csp includes.csp stdvars.csp header.csp footer.csp
 csp_cnts_start_edit_action.c : cnts_start_edit_action.csp includes.csp stdvars.csp header.csp footer.csp
