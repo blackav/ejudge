@@ -838,7 +838,7 @@ struct section_problem_data
   /** use a working directory from the tgz archive */
   ejintbool_t use_tgz;
   /** number of tests to accept solutions in olympiad contests */
-  ejintbool_t tests_to_accept;
+  int tests_to_accept;
   /** accept solutions that do not pass all accepting tests */
   ejintbool_t accept_partial;
   /** minimal number of tests to accept solutions in olympiad contests */
