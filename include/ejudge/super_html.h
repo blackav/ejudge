@@ -53,21 +53,6 @@ int super_html_commit_contest(FILE *f,
                               const unsigned char *hidden_vars,
                               const unsigned char *extra_args);
 
-void super_html_contest_page_menu(FILE *f, 
-                                  ej_cookie_t session_id,
-                                  struct sid_state *sstate,
-                                  int cur_page,
-                                  const unsigned char *self_url,
-                                  const unsigned char *hidden_vars,
-                                  const unsigned char *extra_args);
-
-void super_html_contest_footer_menu(FILE *f, 
-                                    ej_cookie_t session_id,
-                                    struct sid_state *sstate,
-                                    const unsigned char *self_url,
-                                    const unsigned char *hidden_vars,
-                                    const unsigned char *extra_args);
-
 struct contest_desc;
 struct sid_state;
 
