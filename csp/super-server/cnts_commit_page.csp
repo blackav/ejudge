@@ -1,0 +1,30 @@
+<%
+/* $Id$ */
+%><%@include "includes.csp"
+%><%@set getter_name = "csp_get_cnts_commit_page"
+%><%@set ac_prefix = "SSERV_CMD_"
+%><%@page csp_view_cnts_commit_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "stdvars.csp"
+%><%
+    const unsigned char *title = 0;
+    opcap_t caps = 0;
+    unsigned char subtitle_buf[1024];
+    const unsigned char *subtitle = subtitle_buf;
+
+    if (phr->priv_level != PRIV_LEVEL_ADMIN) FAIL(SSERV_ERR_PERMISSION_DENIED);
+    if (ejudge_cfg_opcaps_find(phr->config, phr->login, &caps) < 0) FAIL(SSERV_ERR_PERMISSION_DENIED);
+    if (opcaps_check(caps, OPCAP_EDIT_CONTEST) < 0) FAIL(SSERV_ERR_PERMISSION_DENIED);
+    if (!phr->ss->edited_cnts) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
+
+    snprintf(subtitle_buf, sizeof(subtitle_buf), "new serve.cfg");
+%><%@include "header.csp"
+%>
+<h2><s:v value="subtitle" /></h2>
+
+
+<%@include "footer.csp"
+%><%
+  l10n_setlocale(0);
+cleanup:
+  html_armor_free(&ab);
+%>
