@@ -205,7 +205,7 @@ bottom_links: ;
     <td><s:a ac="main-page"><s:_>To the top</s:_></s:a></td>
     <td><s:submit ac="cnts-forget" label="Forget it" /></td>
     <td><s:submit ac="cnts-commit" label="COMMIT changes!" /></td>
-    <td><s:a ac="view-new-serve-cfg"><s:_>View serve.cfg</s:_></s:a></td>
+    <td><s:a ac="cnts-new-serve-cfg-page"><s:_>View serve.cfg</s:_></s:a></td>
 </tr></table>
 </s:form>
 

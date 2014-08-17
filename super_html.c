@@ -541,7 +541,7 @@ super_html_contest_footer_menu(FILE *f,
   html_submit_button(f, SSERV_CMD_CNTS_COMMIT, "COMMIT changes!");
   fprintf(f, "</td><td>%sView serve.cfg</a>",
           html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
-                        "action=%d", SSERV_CMD_VIEW_NEW_SERVE_CFG));
+                        "action=%d", SSERV_CMD_CNTS_NEW_SERVE_CFG_PAGE));
   fprintf(f, "</td></tr></table></form>\n");
 }
 
