@@ -2055,7 +2055,6 @@ main(int argc, char *argv[])
     break;
 
   case SSERV_CMD_CNTS_COMMIT:
-  case SSERV_CMD_VIEW_NEW_SERVE_CFG:
     action_edit_current_contest(client_action);
     break;
   case SSERV_CMD_CNTS_FORGET:

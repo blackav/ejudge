@@ -1478,7 +1478,6 @@ cmd_main_page(struct client_state *p, int len,
     // Current contest editing commands are allowed to anybody,
     // because the editing mode cannot be entered without privilege
   case SSERV_CMD_CNTS_COMMIT:
-  case SSERV_CMD_VIEW_NEW_SERVE_CFG:
     // FIXME: add permissions checks
     break;
 
@@ -1500,13 +1499,6 @@ cmd_main_page(struct client_state *p, int len,
                                   sstate, pkt->b.id,
                                   self_url_ptr, hidden_vars_ptr,
                                   extra_args_ptr);
-    break;
-
-  case SSERV_CMD_VIEW_NEW_SERVE_CFG:
-    r = super_html_view_new_serve_cfg(f, p->priv_level, p->user_id, p->login,
-                                      p->cookie, &p->ip, config, sstate,
-                                      self_url_ptr, hidden_vars_ptr,
-                                      extra_args_ptr);
     break;
 
   default:
@@ -3385,7 +3377,6 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_GLOB_DISABLE_TEAM_DOWNLOAD_TIME] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_CPU_BOGOMIPS] = { cmd_set_value },
   [SSERV_CMD_GLOB_DETECT_CPU_BOGOMIPS] = { cmd_set_value },
-  [SSERV_CMD_VIEW_NEW_SERVE_CFG] = { cmd_main_page },
   [SSERV_CMD_LANG_UPDATE_VERSIONS] = { cmd_simple_top_command },
   [SSERV_CMD_GLOB_CHANGE_COMPILE_MAX_VM_SIZE] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_COMPILE_MAX_STACK_SIZE] = { cmd_set_value },
