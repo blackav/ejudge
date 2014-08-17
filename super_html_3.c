@@ -3034,35 +3034,6 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
   }
 }
 
-int
-super_html_view_new_serve_cfg(
-        FILE *f,
-        int priv_level,
-        int user_id,
-        const unsigned char *login,
-        ej_cookie_t session_id,
-        const ej_ip_t *ip_address,
-        const struct ejudge_cfg *config,
-        struct sid_state *sstate,
-        const unsigned char *self_url,
-        const unsigned char *hidden_vars,
-        const unsigned char *extra_args)
-{
-  char *out_text = 0;
-  size_t out_size = 0;
-  FILE *tmpf = 0;
-  unsigned char *s;
-
-  tmpf = open_memstream(&out_text, &out_size);
-  super_html_serve_unparse_serve_cfg(tmpf, config, sstate);
-  close_memstream(tmpf); tmpf = 0;
-  s = html_armor_string_dup(out_text);
-  fprintf(f, "<pre>%s</pre>\n", s);
-  xfree(s); s = 0;
-  xfree(out_text); out_text = 0; out_size = 0;
-  return 0;
-}
-
 static unsigned char *
 strsubst(const unsigned char *str, const unsigned char *from,
          const unsigned char *to)
