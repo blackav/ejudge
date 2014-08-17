@@ -1426,101 +1426,6 @@ super_html_activate_problem(struct sid_state *sstate, int prob_id)
   sstate->prob_flags[prob_id] |= SID_STATE_SHOW_HIDDEN;
 }
 
-static void
-cmd_main_page(struct client_state *p, int len,
-              struct prot_super_pkt_main_page *pkt)
-{
-  int r;
-  unsigned char *self_url_ptr, *hidden_vars_ptr, *extra_args_ptr;
-  int self_url_len, hidden_vars_len, extra_args_len, total_len;
-  FILE *f;
-  char *html_ptr = 0;
-  size_t html_len = 0;
-  struct client_state *q;
-  struct sid_state *sstate = 0;
-
-  if (slave_mode) return error_slave_mode(p);
-
-  if (len < sizeof(*pkt)) return error_packet_too_short(p, len, sizeof(*pkt));
-  self_url_ptr = pkt->data;
-  self_url_len = strlen(self_url_ptr);
-  if (self_url_len != pkt->self_url_len)
-    return error_field_len_mismatch(p, "self_url",
-                                    self_url_len, pkt->self_url_len);
-  hidden_vars_ptr = self_url_ptr + self_url_len + 1;
-  hidden_vars_len = strlen(hidden_vars_ptr);
-  if (hidden_vars_len != pkt->hidden_vars_len)
-    return error_field_len_mismatch(p, "hidden_vars",
-                                    hidden_vars_len, pkt->hidden_vars_len);
-  extra_args_ptr = hidden_vars_ptr + hidden_vars_len + 1;
-  extra_args_len = strlen(extra_args_ptr);
-  if (extra_args_len != pkt->extra_args_len)
-    return error_field_len_mismatch(p, "extra_args",
-                                    extra_args_len, pkt->extra_args_len);
-  total_len = sizeof(*pkt) + self_url_len + hidden_vars_len + extra_args_len;
-  if (total_len != len)
-    return error_bad_packet_length(p, len, total_len);
-
-  if ((r = get_peer_local_user(p)) < 0) {
-    send_reply(p, r);
-    return;
-  }
-
-  if (p->client_fds[0] < 0 || p->client_fds[1] < 0) {
-    err("cmd_main_page: two file descriptors expected");
-    return send_reply(p, -SSERV_ERR_PROTOCOL_ERROR);
-  }
-
-  sstate = sid_state_get(p->cookie, &p->ip, p->user_id, p->login, p->name);
-
-  // check permissions: MASTER_PAGE
-  switch (pkt->b.id) {
-    // Current contest editing commands are allowed to anybody,
-    // because the editing mode cannot be entered without privilege
-  case _SSERV_CMD_CNTS_COMMIT:
-    // FIXME: add permissions checks
-    break;
-
-  default:
-    err("%d: unhandled request %d", p->id, pkt->b.id);
-    return send_reply(p, -SSERV_ERR_PERMISSION_DENIED);
-  }
-
-  if (!(f = open_memstream(&html_ptr, &html_len))) {
-    err("%d: open_memstream failed", p->id);
-    return send_reply(p, -SSERV_ERR_SYSTEM_ERROR);
-  }
-
-  // handle command
-  switch (pkt->b.id) {
-  case _SSERV_CMD_CNTS_COMMIT:
-    r = super_html_commit_contest(f, p->priv_level, p->user_id, p->login,
-                                  p->cookie, &p->ip, config, userlist_clnt,
-                                  sstate, pkt->b.id,
-                                  self_url_ptr, hidden_vars_ptr,
-                                  extra_args_ptr);
-    break;
-
-  default:
-    abort();
-  }
-
-  if (r < 0) {
-    fclose(f); xfree(html_ptr);
-    info("cmd_main_page: %s", super_proto_strerror(-r));
-    send_reply(p, r);
-    return;
-  }
-
-  close_memstream(f); f = 0;
-  if (!html_ptr) html_ptr = xstrdup("");
-  q = client_state_new_autoclose(p, html_ptr, html_len);
-  (void) q;
-
-  info("cmd_main_page: %zu", html_len);
-  send_reply(p, SSERV_RPL_OK);
-}
-
 static int contest_mngmt_cmd(const struct contest_desc *cnts,
                              int cmd,
                              int user_id,
@@ -2916,7 +2821,6 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_SAVE_COACH_FIELDS] = { cmd_set_value },
   [SSERV_CMD_CNTS_SAVE_ADVISOR_FIELDS] = { cmd_set_value },
   [SSERV_CMD_CNTS_SAVE_GUEST_FIELDS] = { cmd_set_value },
-  [_SSERV_CMD_CNTS_COMMIT] = { cmd_main_page },
   [SSERV_CMD_GLOB_SHOW_1] = { cmd_simple_top_command },
   [SSERV_CMD_GLOB_HIDE_1] = { cmd_simple_top_command },
   [SSERV_CMD_GLOB_SHOW_2] = { cmd_simple_top_command },

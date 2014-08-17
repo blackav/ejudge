@@ -861,27 +861,6 @@ action_contest_command(int cmd, int next_state)
   operation_status_page(-1, -1, "Contest view parameters are invalid");
 }
 
-static void action_edit_current_contest(int cmd) __attribute__((noreturn));
-static void
-action_edit_current_contest(int cmd)
-{
-  int r;
-
-  open_super_server();
-  client_put_header(stdout, 0, 0, config->charset, 1, 0, client_key,
-                    "%s: %s@%s, editing contest", "serve-control", user_login, http_host);
-  fflush(stdout);
-
-  r = super_clnt_main_page(super_serve_fd, 1, cmd,
-                           0, 0, 0, self_url, hidden_vars, "");
-  if (r < 0) {
-    printf("<h2><font color=\"red\">%s</font></h2>\n",
-           super_proto_strerror(-r));
-  }
-  client_put_footer(stdout, 0);
-  exit(0);
-}
-
 static void action_simple_top_command(int cmd) __attribute__((noreturn));
 static void
 action_simple_top_command(int cmd)
@@ -2054,9 +2033,6 @@ main(int argc, char *argv[])
     action_simple_top_command(SSERV_CMD_SHOW_UNMNG);
     break;
 
-  case _SSERV_CMD_CNTS_COMMIT:
-    action_edit_current_contest(client_action);
-    break;
   case SSERV_CMD_CNTS_FORGET:
     action_simple_top_command(client_action);
     break;
