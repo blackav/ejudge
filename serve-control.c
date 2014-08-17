@@ -2054,7 +2054,7 @@ main(int argc, char *argv[])
     action_simple_top_command(SSERV_CMD_SHOW_UNMNG);
     break;
 
-  case SSERV_CMD_CNTS_COMMIT:
+  case _SSERV_CMD_CNTS_COMMIT:
     action_edit_current_contest(client_action);
     break;
   case SSERV_CMD_CNTS_FORGET:

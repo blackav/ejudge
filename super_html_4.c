@@ -2397,7 +2397,7 @@ contest_xml_page(
   ss_dojo_button(out_f, "1", "home-32x32", "To the Top",
               "ssTopLevel()");
   ss_dojo_button(out_f, "2", "accept-32x32", "Save Changes",
-              "ssCommitContest(%d)", SSERV_CMD_CNTS_COMMIT);
+              "ssCommitContest(%d)", SSERV_CMD_CNTS_COMMIT_PAGE);
   ss_dojo_button(out_f, "3", "cancel-32x32", "Forget Changes",
               "ssForgetContest(%d)", SSERV_CMD_FORGET_CONTEST);
 

@@ -1477,7 +1477,7 @@ cmd_main_page(struct client_state *p, int len,
   switch (pkt->b.id) {
     // Current contest editing commands are allowed to anybody,
     // because the editing mode cannot be entered without privilege
-  case SSERV_CMD_CNTS_COMMIT:
+  case _SSERV_CMD_CNTS_COMMIT:
     // FIXME: add permissions checks
     break;
 
@@ -1493,7 +1493,7 @@ cmd_main_page(struct client_state *p, int len,
 
   // handle command
   switch (pkt->b.id) {
-  case SSERV_CMD_CNTS_COMMIT:
+  case _SSERV_CMD_CNTS_COMMIT:
     r = super_html_commit_contest(f, p->priv_level, p->user_id, p->login,
                                   p->cookie, &p->ip, config, userlist_clnt,
                                   sstate, pkt->b.id,
@@ -2916,7 +2916,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_SAVE_COACH_FIELDS] = { cmd_set_value },
   [SSERV_CMD_CNTS_SAVE_ADVISOR_FIELDS] = { cmd_set_value },
   [SSERV_CMD_CNTS_SAVE_GUEST_FIELDS] = { cmd_set_value },
-  [SSERV_CMD_CNTS_COMMIT] = { cmd_main_page },
+  [_SSERV_CMD_CNTS_COMMIT] = { cmd_main_page },
   [SSERV_CMD_GLOB_SHOW_1] = { cmd_simple_top_command },
   [SSERV_CMD_GLOB_HIDE_1] = { cmd_simple_top_command },
   [SSERV_CMD_GLOB_SHOW_2] = { cmd_simple_top_command },
