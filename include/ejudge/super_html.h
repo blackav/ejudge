@@ -218,18 +218,6 @@ super_html_new_check_tests(
 
 int super_html_update_versions(struct sid_state *sstate);
 
-int super_html_edit_variants(FILE *f, int cmd, int priv_level, int user_id,
-                             const unsigned char *login,
-                             ej_cookie_t session_id,
-                             const ej_ip_t *ip_address,
-                             int ssl_flag,
-                             struct userlist_clnt *userlist_conn,
-                             const struct ejudge_cfg *config,
-                             struct sid_state *sstate,
-                             const unsigned char *self_url,
-                             const unsigned char *hidden_vars,
-                             const unsigned char *extra_args);
-
 int super_html_variant_param(struct sid_state *sstate, int cmd,
                              int param1, const unsigned char *param2,
                              int param3, int param4);
