@@ -853,7 +853,7 @@ action_view_contest(int cmd)
   if ((contest_id = parse_contest_id()) <= 0) goto invalid_parameter;
 
   switch (cmd) {
-  case SSERV_CMD_EDIT_SERVE_CFG_PROB:
+  case _SSERV_CMD_EDIT_SERVE_CFG_PROB:
     extra_str = ", editing serve.cfg";
     break;
   case SSERV_CMD_PROB_EDIT_VARIANTS:
@@ -862,7 +862,7 @@ action_view_contest(int cmd)
     break;
   }
 
-  if (cmd == SSERV_CMD_EDIT_SERVE_CFG_PROB) {
+  if (cmd == _SSERV_CMD_EDIT_SERVE_CFG_PROB) {
     const unsigned char *s = cgi_param("prob_id");
     int prob_id = 0, n = 0;
     if (s && sscanf(s, "%d%n", &prob_id, &n) == 1 && !s[n] && prob_id > 0 && prob_id <= EJ_MAX_PROB_ID) {
@@ -2111,7 +2111,7 @@ main(int argc, char *argv[])
   case SSERV_CMD_CNTS_FORGET:
     action_simple_top_command(client_action);
     break;
-  case SSERV_CMD_EDIT_SERVE_CFG_PROB:
+  case _SSERV_CMD_EDIT_SERVE_CFG_PROB:
     action_view_contest(client_action);
     break;
 
