@@ -47,7 +47,7 @@
 %>
 <h2>Further instructions</h2>
 <%
-    prepare_further_instructions(log_f, cnts->root_dir, cnts->conf_dir,
+    prepare_further_instructions(out_f, cnts->root_dir, cnts->conf_dir,
                                  global, phr->ss->aprob_u, phr->ss->aprobs,
                                  phr->ss->prob_a, phr->ss->probs);
   }

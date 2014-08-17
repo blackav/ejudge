@@ -6865,7 +6865,7 @@ redo_action:
                                                                 external_action_names[ext_action],
                                                                 "csp_get_",
                                                                 phr->current_time);
-      if (!external_action_states[ext_action] && !external_action_states[ext_action]->action_handler) {
+      if (!external_action_states[ext_action] || !external_action_states[ext_action]->action_handler) {
         external_error_page(p_out_t, p_out_z, phr, SSERV_ERR_INV_OPER);
         return;
       }
@@ -7003,3 +7003,10 @@ redo_action:
   *p_out_z = phr->out_z;
   html_armor_free(&ab);
 }
+
+// forced link
+static void *forced_link[] __attribute__((unused));
+static void *forced_link[] =
+{
+  html_date_select
+};
