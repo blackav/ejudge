@@ -68,7 +68,7 @@ static const unsigned char * const form_row_attrs[]=
     </s:htr>
 <%
   for (i = 0; i < phr->ss->aprob_u; ++i) {
-    int is_abstract = 1;
+    const int is_abstract = 1;
     const struct section_problem_data *prob = phr->ss->aprobs[i];
     int flags = phr->ss->aprob_flags[i];
     int prob_id = -i;
@@ -96,7 +96,7 @@ static const unsigned char * const form_row_attrs[]=
     </s:htr>
 <%
   for (i = 1; i < phr->ss->prob_a; ++i) {
-    int is_abstract = 0;
+    const int is_abstract = 0;
     const struct section_problem_data *prob = phr->ss->probs[i];
     int flags = phr->ss->prob_flags[i];
     int prob_id = i;
