@@ -1,6 +1,6 @@
 #! /bin/bash
 # $Id$
-# Copyright (c) 2008-2011 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2008-2014 Alexander Chernov <cher@ejudge.ru>
 
 # This script upgrades the web installation of the ejudge system
 
@@ -24,7 +24,7 @@ site="http://www.ejudge.ru/download"
 
 write_help() {
     echo "ejudge-upgrade-web: ejudge web upgrade utility"
-    echo "Copyright (c) 2008-2011 Alexander Chernov <cher@ejudge.ru>"
+    echo "Copyright (c) 2008-2014 Alexander Chernov <cher@ejudge.ru>"
     echo "usage: ejudge-upgrade-web [HTDOCROOT] [CGIBINDIR] [DOJOPATH/SAVEDIR]"
     exit 0
 }
@@ -106,8 +106,10 @@ then
     die "cannot remove old files from ${target}"
 fi
 
+
+
 # symlink the necessary style files
-for i in logo.gif priv.css unpriv.css priv.js unpriv.js filter_expr.html icons sprintf.js
+for i in back_sh.png capabilities_sh.png ejudge3.css ejudge3_ss.css filter_expr.html g_bl_light1.jpg grad2.jpg grad_gr_darker.jpg grad_green_long.jpg grad_grey_d.jpg grad.jpg group_sh.png icons logo3.png logo.gif logout_sh.png mapping_sh.png new_cont_sh.png priv.css priv.js refresh_sh.png settings_sh.png sprintf.js unpriv3.css unpriv.css unpriv.js user_sh.png
 do
     if ! ln -sf "${datadir}/ejudge/style/${i}" "${i}"
     then
