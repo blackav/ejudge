@@ -68,12 +68,14 @@ static const unsigned char * const form_row_attrs[]=
     </s:htr>
 <%
   for (i = 0; i < phr->ss->aprob_u; ++i) {
-    const int is_abstract = 1;
+#define is_abstract 1
+    ;
     const struct section_problem_data *prob = phr->ss->aprobs[i];
     int flags = phr->ss->aprob_flags[i];
     int prob_id = -i;
 %><%@include "cnts_edit_cur_one_problem.csp"
 %><%
+#undef is_abstract
   }
 %>
     <s:htr attr="head_row_attr">
@@ -96,13 +98,15 @@ static const unsigned char * const form_row_attrs[]=
     </s:htr>
 <%
   for (i = 1; i < phr->ss->prob_a; ++i) {
-    const int is_abstract = 0;
+#define is_abstract 0
+    ;
     const struct section_problem_data *prob = phr->ss->probs[i];
     int flags = phr->ss->prob_flags[i];
     int prob_id = i;
     if (!prob) continue;
 %><%@include "cnts_edit_cur_one_problem.csp"
 %><%
+#undef is_abstract
   }
 %>
     <s:htr attr="head_row_attr">
