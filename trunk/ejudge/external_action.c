@@ -448,13 +448,13 @@ invoke_page_gen(
     args[6] = NULL;
 
     int ret = ejudge_invoke_process(args, NULL, state->src_dir, NULL, NULL, 0, NULL, &stderr_text);
+    if (log_f) {
+        fprintf(log_f, "ej-page-gen status: %d\n", ret);
+        fprintf(log_f, "command line: %s %s %s %s %s %s\n", args[0], args[1], args[2], args[3], args[4], args[5]);
+        fprintf(log_f, "output:\n");
+        fprintf(log_f, "%s\n", stderr_text);
+    }
     if (ret != 0) {
-        if (log_f) {
-            fprintf(log_f, "ej-page-gen failed\n");
-            fprintf(log_f, "command line: %s %s %s %s %s %s\n", args[0], args[1], args[2], args[3], args[4], args[5]);
-            fprintf(log_f, "output:\n");
-            fprintf(log_f, "%s\n", stderr_text);
-        }
         ret = -1;
     }
     xfree(stderr_text);
