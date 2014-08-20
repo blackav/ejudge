@@ -153,7 +153,7 @@ INSTALLSCRIPT = ejudge-install.sh
 BINTARGETS = ejudge-jobs-cmd ejudge-edit-users ejudge-setup ejudge-configure-compilers ejudge-control ejudge-execute ejudge-contests-cmd
 SERVERBINTARGETS = ej-compile ej-compile-control ej-run ej-nwrun ej-ncheck ej-batch ej-serve ej-users ej-users-control ej-jobs ej-jobs-control ej-super-server ej-super-server-control ej-contests ej-contests-control uudecode ej-convert-clars ej-convert-runs ej-fix-db ej-super-run ej-super-run-control ej-normalize ej-polygon ej-import-contest ej-page-gen
 CGITARGETS = users${CGI_PROG_SUFFIX} serve-control${CGI_PROG_SUFFIX} new-client${CGI_PROG_SUFFIX}
-TARGETS = ${SERVERBINTARGETS} ${BINTARGETS} ${CGITARGETS} newrevinfo
+TARGETS = ${SERVERBINTARGETS} ${BINTARGETS} ${CGITARGETS} newrevinfo ej-page-gen.debug
 STYLEFILES = style/logo.gif style/priv.css style/unpriv.css style/unpriv3.css style/ejudge3.css style/priv.js style/unpriv.js style/filter_expr.html style/sprintf.js style/ejudge3_ss.css
 
 all: prereq_all local_all subdirs_all mo
@@ -219,6 +219,7 @@ local_install: ${TARGETS} ejudge-config po mo
 	cp -rpd include "${DESTDIR}${prefix}"
 	install -d "${DESTDIR}${prefix}/lib/ejudge/make"
 	install -m 0644 csp_header.make "${DESTDIR}${prefix}/lib/ejudge/make"
+	install -m 0755 ej-page-gen.debug "${DESTDIR}${prefix}/lib/ejudge"
 
 install: local_install
 	$(MAKE) -C reuse DESTDIR="${DESTDIR}" install
@@ -297,6 +298,8 @@ ej-import-contest: ${IC_OBJECTS}
 
 ej-page-gen: ${G_OBJECTS} libuserlist_clnt.a libnew_server_clnt.a
 	${LD} ${LDFLAGS} -Wl,--whole-archive $^ -o $@ ${LDLIBS} -ldwarf -lelf ${EXPAT_LIB} ${LIBZIP} -ldl -lpanel${NCURSES_SUFFIX} -lmenu${NCURSES_SUFFIX} -lncurses${NCURSES_SUFFIX} ${LIBUUID} -Wl,--no-whole-archive
+ej-page-gen.debug : ej-page-gen
+	objcopy --only-keep-debug $< $@
 
 ej-convert-clars: ${CU_OBJECTS}
 	${LD} ${LDFLAGS} -rdynamic $^ libcommon.a libplatform.a -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl
@@ -353,7 +356,7 @@ ejudge-install.sh : ejudge-setup
 	./ejudge-setup -b
 
 local_clean:
-	-rm -f *.o *~ *.a $(TARGETS) revinfo newrevinfo version.c $(ARCH)/*.o ejudge.po mkChangeLog2 userlist_clnt/*.o xml_utils/*.o super_clnt/*.o cdeps deps.make filter_expr.[ch] filter_scan.c users users${CGI_PROG_SUFFIX} ejudge-config serve-control serve-control${CGI_PROG_SUFFIX} prjutils2/*.o make-js-actions new_server_clnt/*.o mktable struct-sizes
+	-rm -f *.o *~ *.a $(TARGETS) revinfo newrevinfo version.c $(ARCH)/*.o ejudge.po mkChangeLog2 userlist_clnt/*.o xml_utils/*.o super_clnt/*.o cdeps deps.make filter_expr.[ch] filter_scan.c users users${CGI_PROG_SUFFIX} ejudge-config serve-control serve-control${CGI_PROG_SUFFIX} prjutils2/*.o make-js-actions new_server_clnt/*.o mktable struct-sizes *.debug
 	-rm -rf locale
 clean: subdir_clean local_clean
 

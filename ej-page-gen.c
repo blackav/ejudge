@@ -5489,6 +5489,7 @@ main(int argc, char *argv[])
     int argi = 1;
     unsigned char *output_name = NULL;
     unsigned char *deps_name = NULL;
+    unsigned char *debug_name = NULL;
     FILE *out_f = NULL;
     FILE *dep_f = NULL;
 
@@ -5507,6 +5508,9 @@ main(int argc, char *argv[])
         } else if (!strcmp(argv[argi], "-d")) {
             if (++argi >= argc) fatal("option -d requires an argument (deps file name)");
             deps_name = argv[argi++];
+        } else if (!strcmp(argv[argi], "-x")) {
+            if (++argi >= argc) fatal("option -x requires an argument (debug info file name)");
+            debug_name = argv[argi++];
         } else if (!strcmp(argv[argi], "--")) {
             ++argi;
             break;
@@ -5527,9 +5531,11 @@ main(int argc, char *argv[])
         fatal("too many command line arguments");
     }
 
+    if (!debug_name) debug_name = argv[0];
+
     TypeContext *cntx = tc_create();
     IdScope *global_scope = tc_scope_create();
-    if (dwarf_parse(stderr, argv[0], cntx, global_scope) < 0) {
+    if (dwarf_parse(stderr, debug_name, cntx, global_scope) < 0) {
         tc_dump_context(stdout, cntx);
         tc_free(cntx);
         fatal("dwarf parsing failed");
