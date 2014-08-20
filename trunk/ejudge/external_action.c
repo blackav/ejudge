@@ -431,26 +431,30 @@ invoke_page_gen(
     unsigned char arg0[PATH_MAX];
     unsigned char arg2[PATH_MAX];
     unsigned char arg4[PATH_MAX];
-    unsigned char arg5[PATH_MAX];
-    char *args[7];
+    unsigned char arg6[PATH_MAX];
+    unsigned char arg7[PATH_MAX];
+    char *args[9];
     unsigned char *stderr_text = NULL;
 
     snprintf(arg0, sizeof(arg0), "%s/ej-page-gen", EJUDGE_SERVER_BIN_PATH);
     args[0] = arg0;
-    args[1] = "-d";
-    snprintf(arg2, sizeof(arg2), "%s/%s.ds", state->gen_dir, state->action);
+    args[1] = "-x";
+    snprintf(arg2, sizeof(arg2), "%s/ejudge/ej-page-gen.debug", EJUDGE_LIB_DIR);
     args[2] = arg2;
-    args[3] = "-o";
-    snprintf(arg4, sizeof(arg4), "%s/%s.c", state->gen_dir, state->action);
+    args[3] = "-d";
+    snprintf(arg4, sizeof(arg4), "%s/%s.ds", state->gen_dir, state->action);
     args[4] = arg4;
-    snprintf(arg5, sizeof(arg5), "%s.csp", state->action);
-    args[5] = arg5;
-    args[6] = NULL;
+    args[5] = "-o";
+    snprintf(arg6, sizeof(arg6), "%s/%s.c", state->gen_dir, state->action);
+    args[6] = arg6;
+    snprintf(arg7, sizeof(arg7), "%s.csp", state->action);
+    args[7] = arg7;
+    args[8] = NULL;
 
     int ret = ejudge_invoke_process(args, NULL, state->src_dir, NULL, NULL, 0, NULL, &stderr_text);
     if (log_f) {
         fprintf(log_f, "ej-page-gen status: %d\n", ret);
-        fprintf(log_f, "command line: %s %s %s %s %s %s\n", args[0], args[1], args[2], args[3], args[4], args[5]);
+        fprintf(log_f, "command line: %s %s %s %s %s %s %s %s\n", args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7]);
         fprintf(log_f, "output:\n");
         fprintf(log_f, "%s\n", stderr_text);
     }
