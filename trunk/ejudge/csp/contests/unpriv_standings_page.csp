@@ -7,7 +7,7 @@
 %><%@page csp_view_unpriv_standings_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 %><%@include "unpriv_stdvars.csp"
 %><%
-  time_t cur_time, fog_stop_time = 0;
+  time_t cur_time = 0, fog_stop_time = 0;
   unsigned char dur_buf[128];
   unsigned char title[1024];
 

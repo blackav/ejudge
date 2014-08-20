@@ -21,7 +21,7 @@
   int variant, src_flags;
   unsigned char filtbuf1[128];
   time_t run_time;
-  int run_id2;
+  int run_id2 = 0;
   unsigned char bb[1024];
   const struct section_problem_data *prob = 0;
   const struct section_language_data *lang = 0;

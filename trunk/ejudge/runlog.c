@@ -1023,6 +1023,7 @@ run_check_duplicate(runlog_state_t state, int run_id)
   p = &state->runs[run_id];
 
   struct user_entry *ue = get_user_entry(state, p->user_id);
+  (void) ue;
   ASSERT(ue);
   ASSERT(ue->run_id_valid > 0); // run index is ok
 
