@@ -152,7 +152,7 @@ csp_reg_main_page.c : reg_main_page.csp reg_includes.csp reg_stdvars.csp reg_hea
 csp_reg_csp_error_unknown.c : reg_error_unknown.csp reg_includes.csp reg_stdvars.csp reg_header.csp reg_footer.csp
 
 csp_%.c : %.csp
-	../../ej-page-gen -o $@ -d $*.ds $<
+	../../ej-page-gen -x ../../ej-page-gen.debug -o $@ -d $*.ds $<
 
 %.o : %.c
 	$(CC) $(CFLAGS) -c $< -o $@

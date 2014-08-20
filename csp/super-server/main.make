@@ -112,7 +112,7 @@ csp_main_page.c : main_page.csp includes.csp stdvars.csp header.csp footer.csp
 csp_problem_packages_page.c : problem_packages_page.csp includes.csp stdvars.csp header.csp footer.csp
 
 csp_%.c : %.csp
-	../../ej-page-gen -o $@ -d $*.ds $<
+	../../ej-page-gen -x ../../ej-page-gen.debug -o $@ -d $*.ds $<
 
 %.o : %.c
 	$(CC) $(CFLAGS) -c $< -o $@
