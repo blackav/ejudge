@@ -4295,7 +4295,7 @@ ns_get_user_problems_summary(
         int *all_attempts)            /* all attempts count */
 {
   const struct section_global_data *global = cs->global;
-  int total_runs, run_id, cur_score, total_teams;
+  int total_runs, run_id, cur_score = 0, total_teams;
   struct run_entry re;
   struct section_problem_data *cur_prob = 0;
   unsigned char *user_flag = 0;

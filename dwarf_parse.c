@@ -85,7 +85,7 @@ die_map_get(DieMap *dm, Dwarf_Off addr)
 static void
 die_map_put(DieMap *dm, Dwarf_Off addr, TypeInfo *ti)
 {
-    int pos;
+    int pos = 0;
     if (dm->u <= 0) {
         pos = 0;
     } else if (addr < dm->e[0].addr) {
