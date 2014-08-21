@@ -755,6 +755,7 @@ then
 int main(void)
 {
   unsigned char *str = "zzz";
+  (void) str;
   return 0;
 }
 ]],[
