@@ -729,6 +729,7 @@ LIBS="${saved_LIBS}"
 
 dnl compiler warning checking
 saved_CC="${CC}"
+saved_CFLAGS="${CFLAGS}"
 AC_MSG_CHECKING([for annoying gcc warnings])
 CC="${CC} -Wall -Werror"
 AC_COMPILE_IFELSE([[
@@ -751,6 +752,7 @@ if [[ x"${ac_cv_annoying_warning}" = x1 ]]
 then
   AC_MSG_CHECKING([for -Wno-pointer-sign])
   CC="${saved_CC} -Wno-pointer-sign -Werror"
+  CFLAGS=
   AC_COMPILE_IFELSE([[
 int main(void)
 {
@@ -766,6 +768,7 @@ AC_MSG_RESULT([no])
 ])
 fi
 CC="${saved_CC}"
+CFLAGS="${saved_CFLAGS}"
 
 dnl check whether long long is supported
 AC_MSG_CHECKING([for long long type])
