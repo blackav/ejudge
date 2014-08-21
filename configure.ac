@@ -806,7 +806,9 @@ ac_cv_has___int64=""
 
 AC_MSG_CHECKING([for -m32 support])
 saved_CC="${CC}"
+saved_CFLAGS="${CFLAGS}"
 CC="${CC} -m32 -fPIC -DPIC"
+CFLAGS=`echo "${CFLAGS}" | sed s/-m32//g | sed s/-m64//g`
 AC_RUN_IFELSE([[
 #include <string.h>
 #include <stdio.h>
@@ -822,10 +824,13 @@ ac_cv_need_32=1
 AC_MSG_RESULT([no])
 ])
 CC="${saved_CC}"
+CFLAGS="${saved_CFLAGS}"
 
 AC_MSG_CHECKING([for -m64 support])
 saved_CC="${CC}"
+saved_CFLAGS="${CFLAGS}"
 CC="${CC} -m64 -fPIC -DPIC"
+CFLAGS=`echo "${CFLAGS}" | sed s/-m32//g | sed s/-m64//g`
 AC_RUN_IFELSE([[
 #include <string.h>
 #include <stdio.h>
@@ -841,6 +846,7 @@ ac_cv_need_64=1
 AC_MSG_RESULT([no])
 ])
 CC="${saved_CC}"
+CFLAGS="${saved_CFLAGS}"
 
 dnl localization stuff
 

@@ -299,8 +299,7 @@ ej-import-contest: ${IC_OBJECTS}
 ej-page-gen: ${G_OBJECTS} libuserlist_clnt.a libnew_server_clnt.a
 	${LD} ${LDFLAGS} -Wl,--whole-archive $^ -o $@ ${LDLIBS} -ldwarf -lelf ${EXPAT_LIB} ${LIBZIP} -ldl -lpanel${NCURSES_SUFFIX} -lmenu${NCURSES_SUFFIX} -lncurses${NCURSES_SUFFIX} ${LIBUUID} -Wl,--no-whole-archive
 ej-page-gen.debug : ej-page-gen
-	#objcopy --only-keep-debug $< $@
-	cp $< $@
+	objcopy --only-keep-debug $< $@
 
 ej-convert-clars: ${CU_OBJECTS}
 	${LD} ${LDFLAGS} -rdynamic $^ libcommon.a libplatform.a -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl
