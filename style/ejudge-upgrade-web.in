@@ -109,14 +109,14 @@ do
     if [ "${copy_mode}" = 1 ]
     then
         rm -f "${i}"
-        if ! cp -rp "${destdir}${datadir}/ejudge/style/${i}" "${destdir}${i}"
+        if ! cp -rp "${destdir}${datadir}/ejudge/style/${i}" "${i}"
         then
-            die "cannot copy ${destdir}${datadir}/ejudge/style/${i} to ${destdir}${i}"
+            die "cannot copy ${destdir}${datadir}/ejudge/style/${i} to ${i}"
         fi
     else
-        if ! ln -sf "${destdir}${datadir}/ejudge/style/${i}" "${destdir}${i}"
+        if ! ln -sf "${destdir}${datadir}/ejudge/style/${i}" "${i}"
         then
-            die "cannot symlink ${destdir}${datadir}/ejudge/style/${i} to ${destdir}${i}"
+            die "cannot symlink ${destdir}${datadir}/ejudge/style/${i} to ${i}"
         fi
     fi
 done
