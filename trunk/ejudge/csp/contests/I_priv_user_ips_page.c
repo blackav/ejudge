@@ -23,8 +23,8 @@
 #include "ejudge/runlog.h"
 #include "ejudge/xml_utils.h"
 
-#include "reuse/xalloc.h"
-#include "reuse/logger.h"
+#include "ejudge/xalloc.h"
+#include "ejudge/logger.h"
 
 extern int
 csp_view_priv_user_ips_page(

@@ -15,7 +15,7 @@
 #include "ejudge/html.h"
 #include "ejudge/userlist.h"
 
-#include "reuse/xalloc.h"
+#include "ejudge/xalloc.h"
 
 #include <libintl.h>
 #define _(x) gettext(x)
