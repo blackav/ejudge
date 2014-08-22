@@ -22,7 +22,7 @@ make %{?_smp_mflags}
 
 %install
 %make_install
-%{buildroot}/%{_bindir}/ejudge-upgrade-web --copy --sandbox %{buildroot}/var/www/html %{buildroot}/var/www/cgi-bin
+%{buildroot}/%{_bindir}/ejudge-upgrade-web --copy --sandbox --destdir %{buildroot}/
 
 %files
 %{_bindir}/*
