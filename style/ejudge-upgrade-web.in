@@ -19,9 +19,6 @@ style_prefix="@ac_cv_style_prefix@"
 ejudge_cgibindir="@cgibindir@"
 cgi_suffix="@ac_cv_cgi_suffix@"
 
-dojoarchive="dojo-release-1.2.2.tar.gz"
-site="http://www.ejudge.ru/download"
-
 write_help() {
     echo "ejudge-upgrade-web: ejudge web upgrade utility"
     echo "Copyright (c) 2008-2014 Alexander Chernov <cher@ejudge.ru>"
@@ -35,15 +32,25 @@ die() {
 }
 
 checked_sln() {
+if [ "${copy_mode}" = 1 ]
+then
+    if ! cp -rp "$1" "$2"
+    then
+        die "cannot copy $1 to $2"
+    fi
+else
     if ! ln -sf "$1" "$2"
     then
         die "cannot symlink $1 to $2"
     fi
+fi
 }
 
 if [ "$1" = "--version" ]; then exec "${bindir}/ejudge-config" --version; fi
 if [ "$1" = "--help" ]; then write_help; fi
 
+copy_mode=0
+if [ "$1" = "--copy" ]; then copy_mode=1; shift; fi
 htdocsroot="$1"
 cgibindir="$2"
 dojodir="$3"
@@ -52,34 +59,10 @@ current_dir=`pwd`
 
 [ "${htdocsroot}" != "" ] || htdocsroot="${dflt_httpd_htdocs_dir}"
 [ "${cgibindir}" != "" ] || cgibindir="${dflt_httpd_cgi_bin_dir}"
-[ "${dojodir}" != "" ] || dojodir="${HOME}"
 
 [ -d "${htdocsroot}" ] || die "${htdocsroot} is not a directory"
 [ -d "${cgibindir}" ] || die "${cgibindir} is not a directory"
 
-# download the archive
-if [ -f "${dojodir}" ]
-then
-    # assume, that this is a tar archive
-    dojofile="${dojodir}"
-elif [ -d "${dojodir}" ]
-then
-    dojofile="${dojodir}/${dojoarchive}"
-    if [ -f "${dojofile}" ]
-    then
-        echo "${dojoarchive} is already downloaded" >& 2
-    else
-        # download dojo-release-1.2.1.tar.gz from the ejudge web site
-        # try wget
-        if ! wget -P "${dojodir}" "${site}/${dojoarchive}"
-        then
-            die "cannot download ${dojoarchive} from ${site}"
-        fi
-        [ -f "${dojofile}" ] || die "${dojofile} still nonexistant"
-    fi
-else
-    die "${dojodir} is neither a directory nor a file"
-fi
 
 target="${htdocsroot}${style_prefix}"
 
@@ -91,53 +74,35 @@ then
     fi
 fi
 
-[ -d "${target}" ] || die "${target} is not a directory"
-
-if ! cp -pf "${dojofile}" "${target}"
-then
-    die "cannot copy ${dojofile} to ${target}"
-fi
-
 # remove old stuff
 # actions.js dojo.js* Storage_* flash6_* storage_* src
 cd "${target}"
-if ! rm -fr actions.js dojo.js* storage_* flash6_* storage_* src dojo dojox dijit
+if ! rm -fr actions.js dojo.js* storage_* flash6_* storage_* src dojo dojox dijit icons
 then
     die "cannot remove old files from ${target}"
 fi
 
-
-
 # symlink the necessary style files
-for i in back_sh.png capabilities_sh.png ejudge3.css ejudge3_ss.css filter_expr.html g_bl_light1.jpg grad2.jpg grad_gr_darker.jpg grad_green_long.jpg grad_grey_d.jpg grad.jpg group_sh.png icons logo3.png logo.gif logout_sh.png mapping_sh.png new_cont_sh.png priv.css priv.js refresh_sh.png settings_sh.png sprintf.js unpriv3.css unpriv.css unpriv.js user_sh.png
+for i in back_sh.png capabilities_sh.png ejudge3.css ejudge3_ss.css filter_expr.html g_bl_light1.jpg grad2.jpg grad_gr_darker.jpg grad_green_long.jpg grad_grey_d.jpg grad.jpg group_sh.png icons logo3.png logo.gif logout_sh.png mapping_sh.png new_cont_sh.png priv.css priv.js refresh_sh.png settings_sh.png sprintf.js unpriv3.css unpriv.css unpriv.js user_sh.png dijit dojo dojox
 do
-    if ! ln -sf "${datadir}/ejudge/style/${i}" "${i}"
+    if [ "${copy_mode}" = 1 ]
     then
-        die "cannot symlink ${datadir}/ejudge/style/${i} to ${i}"
+        rm -f "${i}"
+        if ! cp -rp "${datadir}/ejudge/style/${i}" "${i}"
+        then
+            die "cannot copy ${datadir}/ejudge/style/${i} to ${i}"
+        fi
+    else
+        if ! ln -sf "${datadir}/ejudge/style/${i}" "${i}"
+        then
+            die "cannot symlink ${datadir}/ejudge/style/${i} to ${i}"
+        fi
     fi
 done
-
-# extract and install dojo-1.2.* archive
-
-if ! tar xf "${dojoarchive}"
-then
-    die "cannot extract files from ${dojoarchive}"
-fi
-
-dojobase=`basename "${dojoarchive}"`
-dojobase=${dojobase/.tar.gz/}
-for i in dojo dojox dijit
-do
-    if ! mv "${dojobase}/${i}" .
-    then
-        die "cannot move ${dojobase}/${i} to ."
-    fi
-done
-
-rm -fr "${dojobase}" "${dojoarchive}"
 
 # symlink the CGI programs
 cd "${cgibindir}"
+rm -f "client${cgi_suffix}" "master${cgi_suffix}" "new-judge${cgi_suffix}" "new-register${cgi_suffix}" "serve-control${cgi_suffix}" "users${cgi_suffix}" "judge${cgi_suffix}" "new-client${cgi_suffix}" "new-master${cgi_suffix}" "register${cgi_suffix}" "team${cgi_suffix}"
 
 checked_sln "${ejudge_cgibindir}/serve-control${cgi_suffix}" "serve-control${cgi_suffix}"
 checked_sln "${ejudge_cgibindir}/users${cgi_suffix}" "users${cgi_suffix}"
@@ -151,4 +116,4 @@ checked_sln "${ejudge_cgibindir}/new-client${cgi_suffix}" "master${cgi_suffix}"
 checked_sln "${ejudge_cgibindir}/new-client${cgi_suffix}" "new-judge${cgi_suffix}"
 checked_sln "${ejudge_cgibindir}/new-client${cgi_suffix}" "judge${cgi_suffix}"
 
-echo "upgrade complete"
+#echo "upgrade complete"
