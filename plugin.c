@@ -21,7 +21,7 @@
 #include "ejudge/errlog.h"
 #include "ejudge/pathutl.h"
 
-#include "reuse/xalloc.h"
+#include "ejudge/xalloc.h"
 
 #include <stdio.h>
 #include <stdlib.h>

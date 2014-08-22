@@ -17,7 +17,7 @@
 
 #include "ejudge/bitset.h"
 
-#include "reuse/xalloc.h"
+#include "ejudge/xalloc.h"
 
 #include <string.h>
 #include <stdlib.h>

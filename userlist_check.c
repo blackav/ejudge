@@ -19,7 +19,7 @@
 #include "ejudge/userlist.h"
 #include "ejudge/misctext.h"
 
-#include "reuse/logger.h"
+#include "ejudge/logger.h"
 
 #include <string.h>
 

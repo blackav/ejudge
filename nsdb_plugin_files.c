@@ -22,9 +22,9 @@
 #include "ejudge/pathutl.h"
 #include "ejudge/new-server.h"
 
-#include "reuse/xalloc.h"
-#include "reuse/logger.h"
-#include "reuse/osdeps.h"
+#include "ejudge/xalloc.h"
+#include "ejudge/logger.h"
+#include "ejudge/osdeps.h"
 
 #include <string.h>
 #include <sys/types.h>

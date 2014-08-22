@@ -20,7 +20,7 @@
 #include "ejudge/new_server_proto.h"
 #include "ejudge/errlog.h"
 
-#include "reuse/osdeps.h"
+#include "ejudge/osdeps.h"
 
 #include <stdlib.h>
 

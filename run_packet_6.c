@@ -21,9 +21,9 @@
 #include "ejudge/prepare.h"
 #include "ejudge/runlog.h"
 
-#include "reuse/xalloc.h"
-#include "reuse/logger.h"
-#include "reuse/integral.h"
+#include "ejudge/xalloc.h"
+#include "ejudge/logger.h"
+#include "ejudge/integral.h"
 
 #include <stdlib.h>
 #include <string.h>

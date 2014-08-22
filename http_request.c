@@ -19,7 +19,7 @@
 #include "ejudge/contests.h"
 #include "ejudge/l10n.h"
 
-#include "reuse/logger.h"
+#include "ejudge/logger.h"
 
 #include <string.h>
 #include <ctype.h>

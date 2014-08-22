@@ -21,8 +21,8 @@
 #include "ejudge/ej_types.h"
 #include "ejudge/misctext.h"
 
-#include "reuse/osdeps.h"
-#include "reuse/xalloc.h"
+#include "ejudge/osdeps.h"
+#include "ejudge/xalloc.h"
 
 #include <stdio.h>
 #include <stdarg.h>

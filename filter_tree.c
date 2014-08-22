@@ -22,9 +22,9 @@
 #include "ejudge/runlog.h"
 #include "ejudge/xml_utils.h"
 
-#include "reuse/xalloc.h"
-#include "reuse/logger.h"
-#include "reuse/mempage.h"
+#include "ejudge/xalloc.h"
+#include "ejudge/logger.h"
+#include "ejudge/mempage.h"
 
 #include <errno.h>
 #include <limits.h>

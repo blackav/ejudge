@@ -4,9 +4,9 @@
 #include "ejudge/super_html_6.h"
 #include "ejudge/meta_generic.h"
 
-#include "reuse/xalloc.h"
+#include "ejudge/xalloc.h"
 
-#include "reuse/logger.h"
+#include "ejudge/logger.h"
 #include <string.h>
 #include <stdlib.h>
 

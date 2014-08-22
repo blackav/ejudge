@@ -28,7 +28,7 @@
       Robert Klep <robert@ilse.nl>  -- Expansion function fix
 */
 
-#include "reuse/integral.h"
+#include "ejudge/integral.h"
 #include "ejudge/sha.h"
 
 #include <stdio.h>

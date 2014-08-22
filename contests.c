@@ -28,9 +28,9 @@
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/meta/contests_meta.h"
 
-#include "reuse/xalloc.h"
-#include "reuse/logger.h"
-#include "reuse/osdeps.h"
+#include "ejudge/xalloc.h"
+#include "ejudge/logger.h"
+#include "ejudge/osdeps.h"
 
 #include <string.h>
 #include <time.h>

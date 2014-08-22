@@ -20,8 +20,8 @@
 #include "ejudge/t3m_dir_listener.h"
 #include "ejudge/list_ops.h"
 
-#include "reuse/xalloc.h"
-#include "reuse/logger.h"
+#include "ejudge/xalloc.h"
+#include "ejudge/logger.h"
 
 #include <string.h>
 #include <stdio.h>

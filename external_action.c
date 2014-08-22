@@ -20,8 +20,8 @@
 #include "ejudge/errlog.h"
 #include "ejudge/ej_process.h"
 
-#include "reuse/xalloc.h"
-#include "reuse/osdeps.h"
+#include "ejudge/xalloc.h"
+#include "ejudge/osdeps.h"
 
 #include <stdio.h>
 #include <ctype.h>

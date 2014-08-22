@@ -39,9 +39,9 @@
 #include "ejudge/compat.h"
 #include "ejudge/file_perms.h"
 
-#include "reuse/xalloc.h"
-#include "reuse/logger.h"
-#include "reuse/osdeps.h"
+#include "ejudge/xalloc.h"
+#include "ejudge/logger.h"
+#include "ejudge/osdeps.h"
 
 #include <stdarg.h>
 #include <string.h>

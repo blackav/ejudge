@@ -24,7 +24,7 @@
 #include "ejudge/fileutl.h"
 #include "ejudge/compat.h"
 
-#include "reuse/xalloc.h"
+#include "ejudge/xalloc.h"
 
 #include <stdlib.h>
 #include <stdarg.h>

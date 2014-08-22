@@ -17,7 +17,7 @@
 
 #include "ejudge/stringset.h"
 
-#include "reuse/xalloc.h"
+#include "ejudge/xalloc.h"
 
 #include <string.h>
 

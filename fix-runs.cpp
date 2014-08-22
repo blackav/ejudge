@@ -14,7 +14,7 @@ extern "C" {
 #include "ejudge/sha.h"
 #include "ejudge/compat.h"
 
-#include "reuse/xalloc.h"
+#include "ejudge/xalloc.h"
 }
 
 #include <stdio.h>

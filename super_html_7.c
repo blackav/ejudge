@@ -36,9 +36,9 @@
 #include "ejudge/sformat.h"
 #include "ejudge/build_support.h"
 
-#include "reuse/xalloc.h"
-#include "reuse/osdeps.h"
-#include "reuse/logger.h"
+#include "ejudge/xalloc.h"
+#include "ejudge/osdeps.h"
+#include "ejudge/logger.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>

@@ -19,7 +19,7 @@
 #include "ejudge/list_ops.h"
 #include "ejudge/misctext.h"
 
-#include "reuse/xalloc.h"
+#include "ejudge/xalloc.h"
 
 #include <stdio.h>
 #include <string.h>

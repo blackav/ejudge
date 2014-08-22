@@ -22,7 +22,7 @@
 #include "ejudge/misctext.h"
 #include "ejudge/win32_compat.h"
 
-#include "reuse/xalloc.h"
+#include "ejudge/xalloc.h"
 
 #include <stdio.h>
 #include <stdlib.h>

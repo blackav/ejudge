@@ -32,8 +32,8 @@
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/external_action.h"
 
-#include "reuse/xalloc.h"
-#include "reuse/logger.h"
+#include "ejudge/xalloc.h"
+#include "ejudge/logger.h"
 
 #include <stdio.h>
 #include <errno.h>

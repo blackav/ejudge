@@ -18,7 +18,7 @@
 #include "ejudge/base64.h"
 #include "ejudge/errlog.h"
 
-#include "reuse/logger.h"
+#include "ejudge/logger.h"
 
 #include <string.h>
 

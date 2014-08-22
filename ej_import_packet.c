@@ -19,7 +19,7 @@
 #include "ejudge/meta/ej_import_packet_meta.h"
 #include "ejudge/meta_generic.h"
 
-#include "reuse/xalloc.h"
+#include "ejudge/xalloc.h"
 
 void
 ej_import_packet_init(struct generic_section_config *gp)

@@ -19,7 +19,7 @@
 #include "ejudge/cgi.h"
 #include "ejudge/errlog.h"
 
-#include "reuse/xalloc.h"
+#include "ejudge/xalloc.h"
 
 #include <stdio.h>
 #include <ctype.h>

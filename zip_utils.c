@@ -19,7 +19,7 @@
 #include "ejudge/ej_limits.h"
 #include "ejudge/zip_utils.h"
 
-#include "reuse/xalloc.h"
+#include "ejudge/xalloc.h"
 
 #include <zlib.h>
 #include <string.h>

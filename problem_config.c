@@ -19,7 +19,7 @@
 #include "ejudge/meta/problem_config_meta.h"
 #include "ejudge/meta_generic.h"
 
-#include "reuse/xalloc.h"
+#include "ejudge/xalloc.h"
 
 #include <limits.h>
 

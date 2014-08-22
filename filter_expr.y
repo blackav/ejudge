@@ -18,7 +18,7 @@
 %{
 #include "ejudge/filter_tree.h"
 
-#include "reuse/logger.h"
+#include "ejudge/logger.h"
 
 #include <stdio.h>
 #include <string.h>

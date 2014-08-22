@@ -26,8 +26,8 @@
 #include "ejudge/misctext.h"
 #include "ejudge/html_parse.h"
 
-#include "reuse/osdeps.h"
-#include "reuse/xalloc.h"
+#include "ejudge/osdeps.h"
+#include "ejudge/xalloc.h"
 
 #include <stdio.h>
 #include <stdlib.h>

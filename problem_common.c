@@ -18,7 +18,7 @@
 #include "ejudge/problem_common.h"
 #include "ejudge/ej_types.h"
 
-#include "reuse/logger.h"
+#include "ejudge/logger.h"
 
 #include <string.h>
 

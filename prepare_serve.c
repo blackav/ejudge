@@ -25,7 +25,7 @@
 #include "ejudge/serve_state.h"
 #include "ejudge/runlog.h"
 
-#include "reuse/xalloc.h"
+#include "ejudge/xalloc.h"
 
 int
 find_variant(

@@ -17,7 +17,7 @@
 
 #include "ejudge/mischtml.h"
 
-#include "reuse/logger.h"
+#include "ejudge/logger.h"
 
 #include <stdio.h>
 

@@ -19,8 +19,8 @@
 #include "ejudge/super_proto.h"
 #include "ejudge/errlog.h"
 
-#include "reuse/osdeps.h"
-#include "reuse/integral.h"
+#include "ejudge/osdeps.h"
+#include "ejudge/integral.h"
 
 #include <sys/uio.h>
 #include <stdlib.h>
