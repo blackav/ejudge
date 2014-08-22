@@ -5,9 +5,8 @@ Summary: A programming contest management system
 Source: %{name}-%{version}.tgz
 License: GPL
 URL: http://ejudge.ru
-ExcludeArch: x86_64
-#BuildArch: i386
-#BuildArch: x86_64
+BuildArch: i386
+BuildArch: x86_64
 #BuildRequires:
 #Requires:
 
@@ -18,8 +17,15 @@ A programming contest management system. http://ejudge.ru
 %autosetup -n %{name}
 
 %build
-%configure
+%configure --enable-charset=utf-8 --with-httpd-cgi-bin-dir=/var/www/cgi-bin --with-httpd-htdocs-dir=/var/www/html --enable-ajax --enable-local-dir=/var/lib/ejudge --enable-hidden-server-bins --disable-rpath
 make %{?_smp_mflags}
 
 %install
 %make_install
+
+%files
+%{_bindir}/*
+%{_libdir}/*
+%{_datadir}/%{name}/
+%{_libexecdir}/%{name}/
+%{_includedir}/%{name}/
