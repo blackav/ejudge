@@ -53,6 +53,13 @@ copy_mode=0
 if [ "$1" = "--copy" ]; then copy_mode=1; shift; fi
 sandbox_mode=0
 if [ "$1" = "--sandbox" ]; then sandbox_mode=1; shift; fi
+destdir=
+if [ "$1" = "--destdir" ]
+then
+    shift
+    destdir="$1"
+    shift
+fi
 htdocsroot="$1"
 cgibindir="$2"
 dojodir="$3"
@@ -64,36 +71,36 @@ current_dir=`pwd`
 
 if [ "${sandbox_mode}" = 1 ]
 then
-    if ! mkdir -p "${htdocsroot}"
+    if ! mkdir -p "${destdir}${htdocsroot}"
     then
-        die "cannot create ${htdocsroot}"
+        die "cannot create ${destdir}${htdocsroot}"
     fi
-    if ! mkdir -p "${cgibindir}"
+    if ! mkdir -p "${destdir}${cgibindir}"
     then
-        die "cannot create ${cgibindir}"
+        die "cannot create ${destdir}${cgibindir}"
     fi
 fi
 
-[ -d "${htdocsroot}" ] || die "${htdocsroot} is not a directory"
-[ -d "${cgibindir}" ] || die "${cgibindir} is not a directory"
+[ -d "${destdir}${htdocsroot}" ] || die "${destdir}${htdocsroot} is not a directory"
+[ -d "${destdir}${cgibindir}" ] || die "${destdir}${cgibindir} is not a directory"
 
 
 target="${htdocsroot}${style_prefix}"
 
-if [ ! -e "${target}" ]
+if [ ! -e "${destdir}${target}" ]
 then
-    if ! mkdir "${target}"
+    if ! mkdir "${destdir}${target}"
     then
-        die "cannot create ${target} directory"
+        die "cannot create ${destdir}${target} directory"
     fi
 fi
 
 # remove old stuff
 # actions.js dojo.js* Storage_* flash6_* storage_* src
-cd "${target}"
+cd "${destdir}${target}"
 if ! rm -fr actions.js dojo.js* storage_* flash6_* storage_* src dojo dojox dijit icons
 then
-    die "cannot remove old files from ${target}"
+    die "cannot remove old files from ${destdir}${target}"
 fi
 
 # symlink the necessary style files
@@ -102,32 +109,32 @@ do
     if [ "${copy_mode}" = 1 ]
     then
         rm -f "${i}"
-        if ! cp -rp "${datadir}/ejudge/style/${i}" "${i}"
+        if ! cp -rp "${destdir}${datadir}/ejudge/style/${i}" "${destdir}${i}"
         then
-            die "cannot copy ${datadir}/ejudge/style/${i} to ${i}"
+            die "cannot copy ${destdir}${datadir}/ejudge/style/${i} to ${destdir}${i}"
         fi
     else
-        if ! ln -sf "${datadir}/ejudge/style/${i}" "${i}"
+        if ! ln -sf "${destdir}${datadir}/ejudge/style/${i}" "${destdir}${i}"
         then
-            die "cannot symlink ${datadir}/ejudge/style/${i} to ${i}"
+            die "cannot symlink ${destdir}${datadir}/ejudge/style/${i} to ${destdir}${i}"
         fi
     fi
 done
 
 # symlink the CGI programs
-cd "${cgibindir}"
+cd "${destdir}${cgibindir}"
 rm -f "client${cgi_suffix}" "master${cgi_suffix}" "new-judge${cgi_suffix}" "new-register${cgi_suffix}" "serve-control${cgi_suffix}" "users${cgi_suffix}" "judge${cgi_suffix}" "new-client${cgi_suffix}" "new-master${cgi_suffix}" "register${cgi_suffix}" "team${cgi_suffix}"
 
-checked_sln "${ejudge_cgibindir}/serve-control${cgi_suffix}" "serve-control${cgi_suffix}"
-checked_sln "${ejudge_cgibindir}/users${cgi_suffix}" "users${cgi_suffix}"
-checked_sln "${ejudge_cgibindir}/new-client${cgi_suffix}" "new-client${cgi_suffix}"
-checked_sln "${ejudge_cgibindir}/new-client${cgi_suffix}" "client${cgi_suffix}"
-checked_sln "${ejudge_cgibindir}/new-client${cgi_suffix}" "team${cgi_suffix}"
-checked_sln "${ejudge_cgibindir}/new-client${cgi_suffix}" "new-register${cgi_suffix}"
-checked_sln "${ejudge_cgibindir}/new-client${cgi_suffix}" "register${cgi_suffix}"
-checked_sln "${ejudge_cgibindir}/new-client${cgi_suffix}" "new-master${cgi_suffix}"
-checked_sln "${ejudge_cgibindir}/new-client${cgi_suffix}" "master${cgi_suffix}"
-checked_sln "${ejudge_cgibindir}/new-client${cgi_suffix}" "new-judge${cgi_suffix}"
-checked_sln "${ejudge_cgibindir}/new-client${cgi_suffix}" "judge${cgi_suffix}"
+checked_sln "${destdir}${ejudge_cgibindir}/serve-control${cgi_suffix}" "serve-control${cgi_suffix}"
+checked_sln "${destdir}${ejudge_cgibindir}/users${cgi_suffix}" "users${cgi_suffix}"
+checked_sln "${destdir}${ejudge_cgibindir}/new-client${cgi_suffix}" "new-client${cgi_suffix}"
+checked_sln "${destdir}${ejudge_cgibindir}/new-client${cgi_suffix}" "client${cgi_suffix}"
+checked_sln "${destdir}${ejudge_cgibindir}/new-client${cgi_suffix}" "team${cgi_suffix}"
+checked_sln "${destdir}${ejudge_cgibindir}/new-client${cgi_suffix}" "new-register${cgi_suffix}"
+checked_sln "${destdir}${ejudge_cgibindir}/new-client${cgi_suffix}" "register${cgi_suffix}"
+checked_sln "${destdir}${ejudge_cgibindir}/new-client${cgi_suffix}" "new-master${cgi_suffix}"
+checked_sln "${destdir}${ejudge_cgibindir}/new-client${cgi_suffix}" "master${cgi_suffix}"
+checked_sln "${destdir}${ejudge_cgibindir}/new-client${cgi_suffix}" "new-judge${cgi_suffix}"
+checked_sln "${destdir}${ejudge_cgibindir}/new-client${cgi_suffix}" "judge${cgi_suffix}"
 
 #echo "upgrade complete"
