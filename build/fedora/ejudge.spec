@@ -22,6 +22,7 @@ make %{?_smp_mflags}
 
 %install
 %make_install
+%{_bindir}/ejudge-upgrade-web --copy
 
 %files
 %{_bindir}/*
@@ -29,3 +30,7 @@ make %{?_smp_mflags}
 %{_datadir}/%{name}/
 %{_libexecdir}/%{name}/
 %{_includedir}/%{name}/
+%{_datadir}/locale/ru_RU.UTF-8/LC_MESSAGES/ejudgecheckers.mo
+%{_datadir}/locale/ru_RU.UTF-8/LC_MESSAGES/ejudge.mo
+/var/www/html/ejudge/
+/var/www/cgi-bin/*
