@@ -213,6 +213,7 @@ local_install: ${TARGETS} ejudge-config po mo
 	for i in ${STYLEFILES}; do install -m 0644 $$i "${DESTDIR}${datadir}/ejudge/style"; done
 	for i in style/*.jpg; do install -m 0644 $$i "${DESTDIR}${datadir}/ejudge/style"; done
 	for i in style/*.png; do install -m 0644 $$i "${DESTDIR}${datadir}/ejudge/style"; done
+	tar x -C "${DESTDIR}${datadir}/ejudge/style" -f style/dojo.tgz
 	install -d "${DESTDIR}${datadir}/ejudge/style/icons"
 	for i in style/icons/*.png; do install -m 0644 $$i "${DESTDIR}${datadir}/ejudge/style/icons"; done
 	install -m 0755 style/ejudge-upgrade-web "${DESTDIR}${bindir}"
