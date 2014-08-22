@@ -15,7 +15,7 @@
  * Lesser General Public License for more details.
  */
 
-#include "reuse/osdeps.h"
+#include "ejudge/osdeps.h"
 
 #include <errno.h>
 #include <sys/types.h>

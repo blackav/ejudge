@@ -18,9 +18,9 @@
 #define __REUSE__ 1
 
 /* reuse include directives */
-#include "reuse/integral.h"
-#include "reuse/xalloc.h"
-#include "reuse/flexstring.h"
+#include "ejudge/integral.h"
+#include "ejudge/xalloc.h"
+#include "ejudge/flexstring.h"
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -27,8 +27,8 @@
  * information is preserved.
  */
 
-#include "reuse/integral.h"
-#include "reuse/r_stringset.h"
+#include "ejudge/integral.h"
+#include "ejudge/r_stringset.h"
 
 #include <stdio.h>
 

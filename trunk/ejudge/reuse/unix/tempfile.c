@@ -23,10 +23,10 @@
 #define __REUSE__ 1
 
 /* reuse include directives */
-#include "reuse/tempfile.h"
-#include "reuse/xalloc.h"
-#include "reuse/logger.h"
-#include "reuse/osdeps.h"
+#include "ejudge/tempfile.h"
+#include "ejudge/xalloc.h"
+#include "ejudge/logger.h"
+#include "ejudge/osdeps.h"
 
 #include <stdio.h>
 #include <errno.h>

@@ -17,7 +17,7 @@
 
 #include "ejudge/cpu.h"
 
-#include "reuse/xalloc.h"
+#include "ejudge/xalloc.h"
 
 #include <stdio.h>
 #include <string.h>

@@ -20,7 +20,7 @@
 
 #include "tree.h"
 
-#include "reuse/xalloc.h"
+#include "ejudge/xalloc.h"
 
 #include <stdio.h>
 

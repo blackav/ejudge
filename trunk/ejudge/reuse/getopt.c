@@ -22,12 +22,12 @@
 #define __REUSE__ 1
 
 /* reuse include directives */
-#include "reuse/getopt.h"
-#include "reuse/xalloc.h"
-#include "reuse/logger.h"
-#include "reuse/xfile.h"
-#include "reuse/osdeps.h"
-#include "reuse/flexstring.h"
+#include "ejudge/getopt.h"
+#include "ejudge/xalloc.h"
+#include "ejudge/logger.h"
+#include "ejudge/xfile.h"
+#include "ejudge/osdeps.h"
+#include "ejudge/flexstring.h"
 
 #include <stdio.h>
 #include <assert.h>

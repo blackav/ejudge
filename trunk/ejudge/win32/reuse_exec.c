@@ -16,14 +16,14 @@
  */
 
 /**
- * FILE:    reuse/win32/exec.c
+ * FILE:    ejudge/win32/exec.c
  * PURPOSE: process abstraction layer, Win32 implementation
  */
 
-#include "reuse/xalloc.h"
-#include "reuse/logger.h"
-#include "reuse/osdeps.h"
-#include "reuse/exec.h"
+#include "ejudge/xalloc.h"
+#include "ejudge/logger.h"
+#include "ejudge/osdeps.h"
+#include "ejudge/exec.h"
 
 #include <windows.h>
 #include <stdio.h>

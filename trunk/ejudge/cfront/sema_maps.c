@@ -17,8 +17,8 @@
 
 #include "tree.h"
 
-#include "reuse/c_value.h"
-#include "reuse/logger.h"
+#include "ejudge/c_value.h"
+#include "ejudge/logger.h"
 
 #define ARRSIZE(arr) ((sizeof(arr))/(sizeof((arr)[0])))
 

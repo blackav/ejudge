@@ -18,12 +18,12 @@
 #define __REUSE__ 1
 
 /* reuse include directives */
-#include "reuse/c_value.h"
-#include "reuse/c_value_ops.h"
-#include "reuse/logger.h"
-#include "reuse/positions.h"
-#include "reuse/xalloc.h"
-#include "reuse/errors.h"
+#include "ejudge/c_value.h"
+#include "ejudge/c_value_ops.h"
+#include "ejudge/logger.h"
+#include "ejudge/positions.h"
+#include "ejudge/xalloc.h"
+#include "ejudge/errors.h"
 
 #include <string.h>
 

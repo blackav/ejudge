@@ -18,7 +18,7 @@
  * GNU General Public License for more details.
  */
 
-#include "reuse/getopt.h"
+#include "ejudge/getopt.h"
 
 #if !defined RCC_TREE_T_DEFINED
 #define RCC_TREE_T_DEFINED 1

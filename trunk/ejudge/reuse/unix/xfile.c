@@ -23,11 +23,11 @@
 #define __REUSE__ 1
 
 /* reuse include directives */
-#include "reuse/xfile.h"
-#include "reuse/logger.h"
-#include "reuse/errors.h"
-#include "reuse/osdeps.h"
-#include "reuse/getopt.h"
+#include "ejudge/xfile.h"
+#include "ejudge/logger.h"
+#include "ejudge/errors.h"
+#include "ejudge/osdeps.h"
+#include "ejudge/getopt.h"
 
 #include <errno.h>
 #include <unistd.h>

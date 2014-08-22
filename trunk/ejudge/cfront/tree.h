@@ -20,8 +20,8 @@
 
 #include "pos.h"
 
-#include "reuse/hash.h"
-#include "reuse/c_value.h"
+#include "ejudge/hash.h"
+#include "ejudge/c_value.h"
 
 #include <stdlib.h>
 #include <wchar.h>

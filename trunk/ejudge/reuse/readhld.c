@@ -18,9 +18,9 @@
 #define __REUSE__ 1
 
 /* reuse include directives */
-#include "reuse/integral.h"
-#include "reuse/number_io.h"
-#include "reuse/fp_props.h"
+#include "ejudge/integral.h"
+#include "ejudge/number_io.h"
+#include "ejudge/fp_props.h"
 
 #include <string.h>
 #include <ctype.h>

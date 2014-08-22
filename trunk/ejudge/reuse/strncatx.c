@@ -18,8 +18,8 @@
 #define __REUSE__ 1
 
 /* reuse include directives */
-#include "reuse/integral.h"
-#include "reuse/str_utils.h"
+#include "ejudge/integral.h"
+#include "ejudge/str_utils.h"
 
 #include <string.h>
 

@@ -18,7 +18,7 @@
 #define __REUSE__ 1
 
 /* reuse include directives */
-#include "reuse/r_stringset.h"
+#include "ejudge/r_stringset.h"
 
 #define CLUSTER            16
 

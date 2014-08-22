@@ -22,7 +22,7 @@
 #if defined PYTHON
 #include <Python.h>
 #else
-#include "reuse/osdeps.h"
+#include "ejudge/osdeps.h"
 #endif
 
 #include <string.h>

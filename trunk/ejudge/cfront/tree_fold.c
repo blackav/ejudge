@@ -21,7 +21,7 @@
 #include "sema_func.h"
 #include "builtin_idents.h"
 
-#include "reuse/logger.h"
+#include "ejudge/logger.h"
 
 #include <string.h>
 

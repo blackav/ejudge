@@ -20,8 +20,8 @@
  * PURPOSE: identifier hash table support
  */
 
-#include "reuse/xalloc.h"
-#include "reuse/hash_priv.h"
+#include "ejudge/xalloc.h"
+#include "ejudge/hash_priv.h"
 
 #include <assert.h>
 #include <string.h>

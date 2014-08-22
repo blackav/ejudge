@@ -18,8 +18,8 @@
 #define __REUSE__ 1
 
 /* reuse include directives */
-#include "reuse/flexstring.h"
-#include "reuse/xalloc.h"
+#include "ejudge/flexstring.h"
+#include "ejudge/xalloc.h"
 
 #include <assert.h>
 

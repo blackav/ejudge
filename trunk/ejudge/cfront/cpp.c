@@ -17,13 +17,13 @@
 
 //#include "version.h"
 
-#include "reuse/logger.h"
-#include "reuse/xalloc.h"
-#include "reuse/c_value.h"
-#include "reuse/hash.h"
-#include "reuse/number_io.h"
-#include "reuse/getopt.h"
-#include "reuse/osdeps.h"
+#include "ejudge/logger.h"
+#include "ejudge/xalloc.h"
+#include "ejudge/c_value.h"
+#include "ejudge/hash.h"
+#include "ejudge/number_io.h"
+#include "ejudge/getopt.h"
+#include "ejudge/osdeps.h"
 
 #include <stdio.h>
 #include <stdlib.h>

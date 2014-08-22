@@ -30,7 +30,7 @@
  * 
  */
 
-#include "reuse/integral.h"
+#include "ejudge/integral.h"
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -20,7 +20,7 @@
 #include "ejudge/errlog.h"
 #include "ejudge/serve_state.h"
 
-#include "reuse/osdeps.h"
+#include "ejudge/osdeps.h"
 
 #include <sys/types.h>
 #include <sys/ipc.h>

@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "reuse/config.h"
+#include "ejudge/config.h"
 #include "lconfig.h"
 
 #include "cfrontenv.h"

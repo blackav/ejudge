@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  */
 
-#include "reuse/c_value.h"
+#include "ejudge/c_value.h"
 
 #include <stdio.h>
 

@@ -15,7 +15,7 @@
  * Lesser General Public License for more details.
  */
 
-#include "reuse/xalloc.h"
+#include "ejudge/xalloc.h"
 
 void
 xstrarrayfree(strarray_t *a)

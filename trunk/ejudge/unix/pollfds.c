@@ -17,7 +17,7 @@
 
 #include "ejudge/pollfds.h"
 
-#include "reuse/xalloc.h"
+#include "ejudge/xalloc.h"
 
 #include <poll.h>
 #include <string.h>

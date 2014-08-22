@@ -15,7 +15,7 @@
  * Lesser General Public License for more details.
  */
 
-#include "reuse/xalloc.h"
+#include "ejudge/xalloc.h"
 
 void reuse_null_size(void);
 void reuse_out_of_mem(void);

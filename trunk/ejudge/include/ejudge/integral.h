@@ -18,7 +18,7 @@
  * Lesser General Public License for more details.
  */
 
-#include "reuse/config.h"
+#include "ejudge/config.h"
 
 /* shorthands */
 typedef signed char    rschar_t;

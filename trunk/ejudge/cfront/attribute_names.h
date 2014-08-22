@@ -18,7 +18,7 @@
  * Lesser General Public License for more details.
  */
 
-#include "reuse/hash.h"
+#include "ejudge/hash.h"
 
 enum
 {

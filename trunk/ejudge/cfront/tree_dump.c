@@ -17,7 +17,7 @@
 
 #include "tree.h"
 
-#include "reuse/number_io.h"
+#include "ejudge/number_io.h"
 
 static unsigned char *node_names[] =
 {
