@@ -21,7 +21,7 @@
 #include "ejudge/super_html.h"
 #include "ejudge/super-serve.h"
 
-#include "reuse/xalloc.h"
+#include "ejudge/xalloc.h"
 
 #include <string.h>
 

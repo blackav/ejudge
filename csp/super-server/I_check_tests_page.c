@@ -22,7 +22,7 @@
 #include "ejudge/super-serve.h"
 #include "ejudge/super_proto.h"
 
-#include "reuse/xalloc.h"
+#include "ejudge/xalloc.h"
 
 #include <string.h>
 

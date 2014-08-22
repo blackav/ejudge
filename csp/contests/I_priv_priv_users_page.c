@@ -20,8 +20,8 @@
 #include "ejudge/contests.h"
 #include "ejudge/userlist_clnt.h"
 
-#include "reuse/xalloc.h"
-#include "reuse/logger.h"
+#include "ejudge/xalloc.h"
+#include "ejudge/logger.h"
 
 extern int
 csp_view_priv_priv_users_page(

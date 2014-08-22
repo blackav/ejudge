@@ -2,7 +2,7 @@
 /* $Id$ */
 %><%@include "includes.csp"
 %><%
-#include "reuse/osdeps.h"
+#include "ejudge/osdeps.h"
 
 #include <sys/types.h>
 #include <fcntl.h>
