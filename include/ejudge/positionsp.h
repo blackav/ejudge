@@ -18,7 +18,7 @@
  * Lesser General Public License for more details.
  */
 
-#include "reuse/positions.h"
+#include "ejudge/positions.h"
 
 typedef struct posstate_t
 {

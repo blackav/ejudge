@@ -15,9 +15,9 @@
  * Lesser General Public License for more details.
  */
 
-#include "reuse/logger.h"
-#include "reuse/osdeps.h"
-#include "reuse/xalloc.h"
+#include "ejudge/logger.h"
+#include "ejudge/osdeps.h"
+#include "ejudge/xalloc.h"
 
 #include <windows.h>
 #include <ctype.h>

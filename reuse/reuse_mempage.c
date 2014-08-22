@@ -14,8 +14,8 @@
  * Lesser General Public License for more details.
  */
 
-#include "reuse/xalloc.h"
-#include "reuse/mempage.h"
+#include "ejudge/xalloc.h"
+#include "ejudge/mempage.h"
 
 #include <stdio.h>
 #include <assert.h>

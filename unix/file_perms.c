@@ -18,7 +18,7 @@
 #include "ejudge/file_perms.h"
 #include "ejudge/misctext.h"
 
-#include "reuse/osdeps.h"
+#include "ejudge/osdeps.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>

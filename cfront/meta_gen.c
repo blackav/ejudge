@@ -18,8 +18,8 @@
 #include "meta_gen.h"
 #include "c_errors.h"
 
-#include "reuse/osdeps.h"
-#include "reuse/logger.h"
+#include "ejudge/osdeps.h"
+#include "ejudge/logger.h"
 
 #include <string.h>
 #include <ctype.h>
@@ -117,8 +117,8 @@ generate_c_header(
   fprintf(out_c, "#include \"ejudge/meta/%s.h\"\n", basename);
   fprintf(out_c, "#include \"ejudge/%s.h\"\n", b_name);
   fprintf(out_c, "#include \"ejudge/meta_generic.h\"\n\n");
-  fprintf(out_c, "#include \"reuse/xalloc.h\"\n\n");
-  fprintf(out_c, "#include \"reuse/logger.h\"\n");
+  fprintf(out_c, "#include \"ejudge/xalloc.h\"\n\n");
+  fprintf(out_c, "#include \"ejudge/logger.h\"\n");
   fprintf(out_c, "#include <string.h>\n");
   fprintf(out_c, "#include <stdlib.h>\n\n");
 }

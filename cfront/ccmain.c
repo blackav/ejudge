@@ -26,10 +26,10 @@
 //#include "version.h"
 #include "meta.h"
 
-#include "reuse/tempfile.h"
-#include "reuse/getopt.h"
-#include "reuse/osdeps.h"
-#include "reuse/xalloc.h"
+#include "ejudge/tempfile.h"
+#include "ejudge/getopt.h"
+#include "ejudge/osdeps.h"
+#include "ejudge/xalloc.h"
 
 #include <stdio.h>
 #include <string.h>

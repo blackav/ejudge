@@ -17,7 +17,7 @@
 #ifndef __REUSE_STRINGSET_H__
 #define __REUSE_STRINGSET_H__
 
-#include "reuse/integral.h"
+#include "ejudge/integral.h"
 
 #include <stdio.h>
 

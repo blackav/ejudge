@@ -18,7 +18,7 @@
  * Lesser General Public License for more details.
  */
 
-#include "reuse/integral.h"
+#include "ejudge/integral.h"
 
 /* C Built-in types */
 typedef enum c_builtin_t

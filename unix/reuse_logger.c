@@ -19,8 +19,8 @@
  * PURPOSE: logging facilities, fatal error handling
  */
 
-#include "reuse/xalloc.h"
-#include "reuse/logger.h"
+#include "ejudge/xalloc.h"
+#include "ejudge/logger.h"
 
 #include <stdio.h>
 #include <sys/types.h>

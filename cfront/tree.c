@@ -17,8 +17,8 @@
 
 #include "tree.h"
 
-#include "reuse/mempage.h"
-#include "reuse/logger.h"
+#include "ejudge/mempage.h"
+#include "ejudge/logger.h"
 
 #include <string.h>
 #include <stdarg.h>

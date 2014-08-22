@@ -22,7 +22,7 @@
 #include "ejudge/version.h"
 #include "ejudge/startstop.h"
 
-#include "reuse/logger.h"
+#include "ejudge/logger.h"
 
 #if STARTSTOP_DEBUG - 0
 #include <stdio.h>

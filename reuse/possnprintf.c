@@ -18,8 +18,8 @@
 #define __REUSE__ 1
 
 /* reuse include directives */
-#include "reuse/positionsp.h"
-#include "reuse/logger.h"
+#include "ejudge/positionsp.h"
+#include "ejudge/logger.h"
 
 extern posstate_t positions_state;
 #define S positions_state

@@ -20,7 +20,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 
-#include "reuse/xalloc.h"
+#include "ejudge/xalloc.h"
 
 int   scan_dir(char const *dir, char *result, size_t res_size);
 void  scan_dir_add_ignored(const unsigned char *dir,

@@ -26,10 +26,10 @@
 #define __REUSE__ 1
 
 /* reuse include directives */
-#include "reuse/integral.h"
-#include "reuse/positionsp.h"
-#include "reuse/logger.h"
-#include "reuse/number_io.h"
+#include "ejudge/integral.h"
+#include "ejudge/positionsp.h"
+#include "ejudge/logger.h"
+#include "ejudge/number_io.h"
 
 #include <assert.h>
 #include <stdlib.h>

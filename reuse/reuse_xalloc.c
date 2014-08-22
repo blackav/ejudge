@@ -20,7 +20,7 @@
  * PURPOSE: safe memory allocation routines
  */
 
-#include "reuse/xalloc.h"
+#include "ejudge/xalloc.h"
 
 #include <stdlib.h>
 #include <stdio.h>

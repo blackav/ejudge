@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  */
 
-#include "reuse/integral.h"
+#include "ejudge/integral.h"
 
 #define EJ_COMPILE_PACKET_VERSION 5
 

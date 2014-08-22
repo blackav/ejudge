@@ -19,7 +19,7 @@
 #include "sema_an.h"
 #include "tree.h"
 
-#include "reuse/getopt.h"
+#include "ejudge/getopt.h"
 
 short sema_option_float_arith = 0;
 short sema_option_aggreg_return = 1;

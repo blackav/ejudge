@@ -19,9 +19,9 @@
 #include "tree.h"
 #include "meta_gen.h"
 
-#include "reuse/getopt.h"
-#include "reuse/osdeps.h"
-#include "reuse/xalloc.h"
+#include "ejudge/getopt.h"
+#include "ejudge/osdeps.h"
+#include "ejudge/xalloc.h"
 
 #include <string.h>
 #include <time.h>

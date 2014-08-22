@@ -15,8 +15,8 @@
  * Lesser General Public License for more details.
  */
 
-#include "reuse/xalloc.h"
-#include "reuse/osdeps.h"
+#include "ejudge/xalloc.h"
+#include "ejudge/osdeps.h"
 
 #include <string.h>
 #include <sys/types.h>

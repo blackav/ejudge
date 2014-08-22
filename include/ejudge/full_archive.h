@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  */
 
-#include "reuse/integral.h"
+#include "ejudge/integral.h"
 #include "ejudge/config.h"
 
 #if defined CONF_HAS_LIBZIP

@@ -17,7 +17,7 @@
 
 #define __REUSE__ 1
 
-#include "reuse/logger.h"
+#include "ejudge/logger.h"
 
 #include <windows.h>
 

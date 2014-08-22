@@ -18,8 +18,8 @@
 #define __REUSE__ 1
 
 /* reuse include directives */
-#include "reuse/integral.h"
-#include "reuse/number_io.h"
+#include "ejudge/integral.h"
+#include "ejudge/number_io.h"
 
 #include <stdlib.h>
 #include <errno.h>

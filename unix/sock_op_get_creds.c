@@ -19,7 +19,7 @@
 #include "ejudge/sock_op.h"
 #include "ejudge/errlog.h"
 
-#include "reuse/osdeps.h"
+#include "ejudge/osdeps.h"
 
 #include <string.h>
 #include <stdlib.h>

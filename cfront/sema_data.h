@@ -20,7 +20,7 @@
 
 #include "tree.h"
 
-#include "reuse/hash.h"
+#include "ejudge/hash.h"
 
 /* type information */
 enum

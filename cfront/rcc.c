@@ -15,17 +15,17 @@
  * GNU General Public License for more details.
  */
 
-#include "reuse/integral.h"
+#include "ejudge/integral.h"
 #include "lconfig.h"
 //#include "version.h"
 
 #include "cfrontenv.h"
-#include "reuse/xalloc.h"
-#include "reuse/getopt.h"
-#include "reuse/osdeps.h"
-#include "reuse/errors.h"
-#include "reuse/tempfile.h"
-#include "reuse/exec.h"
+#include "ejudge/xalloc.h"
+#include "ejudge/getopt.h"
+#include "ejudge/osdeps.h"
+#include "ejudge/errors.h"
+#include "ejudge/tempfile.h"
+#include "ejudge/exec.h"
 
 #include <string.h>
 #include <stdarg.h>

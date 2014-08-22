@@ -18,7 +18,7 @@
  * Lesser General Public License for more details.
  */
 
-#include "reuse/hash.h"
+#include "ejudge/hash.h"
 
 #define INIT_SIZE   301         /* initial hash table size */
 #define HASH_STEP   13          /* increment for secondary hash function */

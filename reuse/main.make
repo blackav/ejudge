@@ -105,27 +105,27 @@ REUSECFILES =\
  $(ARCH)/xfile.c
 
 REUSEHFILES =\
- ../include/reuse/c_value.h\
- ../include/reuse/c_value_ops.h\
- ../include/reuse/errors.h\
- ../include/reuse/exec.h\
- ../include/reuse/flexstring.h\
- ../include/reuse/fp_props.h\
- ../include/reuse/getopt.h\
- ../include/reuse/hash.h\
- ../include/reuse/hash_priv.h\
- ../include/reuse/integral.h\
- ../include/reuse/logger.h\
- ../include/reuse/mempage.h\
- ../include/reuse/number_io.h\
- ../include/reuse/osdeps.h\
- ../include/reuse/positions.h\
- ../include/reuse/positionsp.h\
- ../include/reuse/r_stringset.h\
- ../include/reuse/str_utils.h\
- ../include/reuse/tempfile.h\
- ../include/reuse/xalloc.h\
- ../include/reuse/xfile.h
+ ../include/ejudge/c_value.h\
+ ../include/ejudge/c_value_ops.h\
+ ../include/ejudge/errors.h\
+ ../include/ejudge/exec.h\
+ ../include/ejudge/flexstring.h\
+ ../include/ejudge/fp_props.h\
+ ../include/ejudge/getopt.h\
+ ../include/ejudge/hash.h\
+ ../include/ejudge/hash_priv.h\
+ ../include/ejudge/integral.h\
+ ../include/ejudge/logger.h\
+ ../include/ejudge/mempage.h\
+ ../include/ejudge/number_io.h\
+ ../include/ejudge/osdeps.h\
+ ../include/ejudge/positions.h\
+ ../include/ejudge/positionsp.h\
+ ../include/ejudge/r_stringset.h\
+ ../include/ejudge/str_utils.h\
+ ../include/ejudge/tempfile.h\
+ ../include/ejudge/xalloc.h\
+ ../include/ejudge/xfile.h
 
 all : objs objs/$(ARCH) objs/libreuse.a
 

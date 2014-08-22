@@ -17,8 +17,8 @@
 
 #include "attribute_names.h"
 
-#include "reuse/hash.h"
-#include "reuse/xalloc.h"
+#include "ejudge/hash.h"
+#include "ejudge/xalloc.h"
 
 #include <string.h>
 

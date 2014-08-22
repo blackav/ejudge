@@ -18,7 +18,7 @@
  * GNU General Public License for more details.
  */
 
-#include "reuse/hash.h"
+#include "ejudge/hash.h"
 
 void typedef_new_scope(void);
 void typedef_drop_scope(void);
