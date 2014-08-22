@@ -17,7 +17,7 @@
 
 #include "ejudge/misctext.h"
 
-#include "reuse/xalloc.h"
+#include "ejudge/xalloc.h"
 
 #include <stdlib.h>
 #include <ctype.h>

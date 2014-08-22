@@ -17,7 +17,7 @@
 
 #include "ejudge/csv.h"
 
-#include "reuse/xalloc.h"
+#include "ejudge/xalloc.h"
 
 #include <string.h>
 #include <ctype.h>

@@ -17,7 +17,7 @@
 
 #include "ejudge/digest_io.h"
 
-#include "reuse/logger.h"
+#include "ejudge/logger.h"
 
 int
 digest_get_size(int kind)

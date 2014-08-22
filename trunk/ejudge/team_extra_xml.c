@@ -23,8 +23,8 @@
 #include "ejudge/errlog.h"
 #include "ejudge/xml_utils.h"
 
-#include "reuse/xalloc.h"
-#include "reuse/logger.h"
+#include "ejudge/xalloc.h"
+#include "ejudge/logger.h"
 
 #include <ctype.h>
 #include <errno.h>

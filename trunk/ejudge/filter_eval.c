@@ -26,8 +26,8 @@
 #include "ejudge/ej_uuid.h"
 #include "ejudge/prepare_dflt.h"
 
-#include "reuse/logger.h"
-#include "reuse/mempage.h"
+#include "ejudge/logger.h"
+#include "ejudge/mempage.h"
 
 static unsigned char *envdup(struct filter_env *env,
                              unsigned char const *str)

@@ -22,8 +22,8 @@
 #include "ejudge/job_packet.h"
 #include "ejudge/startstop.h"
 
-#include "reuse/logger.h"
-#include "reuse/osdeps.h"
+#include "ejudge/logger.h"
+#include "ejudge/osdeps.h"
 
 #include <stdio.h>
 #include <stdlib.h>

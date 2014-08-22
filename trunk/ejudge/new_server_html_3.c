@@ -29,7 +29,7 @@
 #include "ejudge/copyright.h"
 #include "ejudge/team_extra.h"
 
-#include "reuse/xalloc.h"
+#include "ejudge/xalloc.h"
 
 #include <stdarg.h>
 

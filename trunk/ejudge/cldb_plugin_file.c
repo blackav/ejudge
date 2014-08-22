@@ -27,9 +27,9 @@
 #include "ejudge/base64.h"
 #include "ejudge/fileutl.h"
 
-#include "reuse/xalloc.h"
-#include "reuse/logger.h"
-#include "reuse/osdeps.h"
+#include "ejudge/xalloc.h"
+#include "ejudge/logger.h"
+#include "ejudge/osdeps.h"
 
 #include <unistd.h>
 #include <string.h>

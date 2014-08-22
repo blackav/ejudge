@@ -9,7 +9,7 @@
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/userlist.h"
 
-#include "reuse/xalloc.h"
+#include "ejudge/xalloc.h"
 
 #include <stdio.h>
 #include <stdlib.h>

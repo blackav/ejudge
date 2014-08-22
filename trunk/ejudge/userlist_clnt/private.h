@@ -28,9 +28,9 @@
 
 /* for python bindings we don't want reuse stuff... */
 #if !defined PYTHON
-#include "reuse/xalloc.h"
-#include "reuse/logger.h"
-#include "reuse/osdeps.h"
+#include "ejudge/xalloc.h"
+#include "ejudge/logger.h"
+#include "ejudge/osdeps.h"
 #endif
 
 #include <stdio.h>

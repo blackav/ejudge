@@ -29,9 +29,9 @@
 #include "ejudge/super_proto.h"
 #include "ejudge/misctext.h"
 
-#include "reuse/xalloc.h"
-#include "reuse/osdeps.h"
-#include "reuse/logger.h"
+#include "ejudge/xalloc.h"
+#include "ejudge/osdeps.h"
+#include "ejudge/logger.h"
 
 #include <stdio.h>
 #include <sys/types.h>

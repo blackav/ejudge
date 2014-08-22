@@ -18,7 +18,7 @@
 #include "ejudge/watched_file.h"
 #include "ejudge/fileutl.h"
 
-#include "reuse/xalloc.h"
+#include "ejudge/xalloc.h"
 
 #include <string.h>
 #include <sys/types.h>

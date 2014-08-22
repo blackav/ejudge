@@ -37,10 +37,10 @@
 #include "ejudge/cpu.h"
 #include "ejudge/ej_process.h"
 
-#include "reuse/xalloc.h"
-#include "reuse/osdeps.h"
-#include "reuse/exec.h"
-#include "reuse/logger.h"
+#include "ejudge/xalloc.h"
+#include "ejudge/osdeps.h"
+#include "ejudge/exec.h"
+#include "ejudge/logger.h"
 
 #include <stdlib.h>
 #include <stdio.h>

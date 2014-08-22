@@ -19,8 +19,8 @@
 #include "ejudge/super_proto.h"
 #include "ejudge/errlog.h"
 
-#include "reuse/xalloc.h"
-#include "reuse/osdeps.h"
+#include "ejudge/xalloc.h"
+#include "ejudge/osdeps.h"
 
 #include <unistd.h>
 

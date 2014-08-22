@@ -23,7 +23,7 @@
 #include "ejudge/super_clnt.h"
 #include "ejudge/startstop.h"
 
-#include "reuse/osdeps.h"
+#include "ejudge/osdeps.h"
 
 #include <stdio.h>
 #include <stdlib.h>

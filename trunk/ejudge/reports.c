@@ -32,9 +32,9 @@
 #include "ejudge/testing_report_xml.h"
 #include "ejudge/mime_type.h"
 
-#include "reuse/xalloc.h"
-#include "reuse/osdeps.h"
-#include "reuse/exec.h"
+#include "ejudge/xalloc.h"
+#include "ejudge/osdeps.h"
+#include "ejudge/exec.h"
 
 #include <stdio.h>
 #include <stdlib.h>

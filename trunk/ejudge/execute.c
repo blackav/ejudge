@@ -20,9 +20,9 @@
 #include "ejudge/testinfo.h"
 #include "ejudge/fileutl.h"
 
-#include "reuse/xalloc.h"
-#include "reuse/exec.h"
-#include "reuse/osdeps.h"
+#include "ejudge/xalloc.h"
+#include "ejudge/exec.h"
+#include "ejudge/osdeps.h"
 
 #include <stdio.h>
 #include <stdlib.h>

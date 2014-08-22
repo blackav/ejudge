@@ -23,7 +23,7 @@
 #include "ejudge/mime_type.h"
 #include "ejudge/misctext.h"
 
-#include "reuse/xalloc.h"
+#include "ejudge/xalloc.h"
 
 #include <string.h>
 #include <stdio.h>

@@ -18,7 +18,7 @@
 #include "new_server_clnt/new_server_clnt_priv.h"
 #include "ejudge/new_server_proto.h"
 
-#include "reuse/xalloc.h"
+#include "ejudge/xalloc.h"
 
 #include <unistd.h>
 

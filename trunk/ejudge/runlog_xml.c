@@ -33,8 +33,8 @@
 #include "ejudge/base64.h"
 #include "ejudge/ej_uuid.h"
 
-#include "reuse/xalloc.h"
-#include "reuse/logger.h"
+#include "ejudge/xalloc.h"
+#include "ejudge/logger.h"
 
 #include <errno.h>
 #include <ctype.h>

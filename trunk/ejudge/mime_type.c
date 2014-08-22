@@ -21,7 +21,7 @@
 #include "ejudge/errlog.h"
 #include "ejudge/fileutl.h"
 
-#include "reuse/osdeps.h"
+#include "ejudge/osdeps.h"
 
 #include <stdio.h>
 #include <string.h>

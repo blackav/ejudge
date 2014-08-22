@@ -41,8 +41,8 @@
 #include "ejudge/ej_process.h"
 #include "ejudge/problem_config.h"
 
-#include "reuse/xalloc.h"
-#include "reuse/osdeps.h"
+#include "ejudge/xalloc.h"
+#include "ejudge/osdeps.h"
 
 #include <stdarg.h>
 #include <printf.h>

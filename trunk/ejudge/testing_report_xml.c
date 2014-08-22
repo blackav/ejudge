@@ -25,8 +25,8 @@
 #include "ejudge/digest_io.h"
 #include "ejudge/misctext.h"
 
-#include "reuse/xalloc.h"
-#include "reuse/logger.h"
+#include "ejudge/xalloc.h"
+#include "ejudge/logger.h"
 
 #include <string.h>
 

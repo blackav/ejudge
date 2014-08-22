@@ -29,9 +29,9 @@
 #include "ejudge/ej_uuid.h"
 #include "ejudge/win32_compat.h"
 
-#include "reuse/xalloc.h"
-#include "reuse/logger.h"
-#include "reuse/osdeps.h"
+#include "ejudge/xalloc.h"
+#include "ejudge/logger.h"
+#include "ejudge/osdeps.h"
 
 #include <stdio.h>
 #include <stdlib.h>

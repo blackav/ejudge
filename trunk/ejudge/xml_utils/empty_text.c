@@ -19,7 +19,7 @@
 #include "ejudge/pathutl.h"
 #include "ejudge/expat_iface.h"
 
-#include "reuse/xalloc.h"
+#include "ejudge/xalloc.h"
 
 #include <ctype.h>
 

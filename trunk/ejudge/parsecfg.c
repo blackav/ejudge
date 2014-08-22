@@ -21,8 +21,8 @@
 #include "ejudge/misctext.h"
 #include "ejudge/meta_generic.h"
 
-#include "reuse/xalloc.h"
-#include "reuse/logger.h"
+#include "ejudge/xalloc.h"
+#include "ejudge/logger.h"
 
 #include <stdio.h>
 #include <ctype.h>

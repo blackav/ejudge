@@ -42,9 +42,9 @@
 #include "ejudge/zip_utils.h"
 #include "ejudge/xml_utils.h"
 
-#include "reuse/xalloc.h"
-#include "reuse/logger.h"
-#include "reuse/osdeps.h"
+#include "ejudge/xalloc.h"
+#include "ejudge/logger.h"
+#include "ejudge/osdeps.h"
 
 #if CONF_HAS_LIBZIP - 0 == 1
 #include <zip.h>

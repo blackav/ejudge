@@ -22,7 +22,7 @@
 #include "ejudge/pathutl.h"
 #include "ejudge/fileutl.h"
 
-#include "reuse/xalloc.h"
+#include "ejudge/xalloc.h"
 
 #include <stdio.h>
 #include <string.h>

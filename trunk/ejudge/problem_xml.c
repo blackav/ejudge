@@ -18,7 +18,7 @@
 #include "ejudge/problem_xml.h"
 #include "ejudge/xml_utils.h"
 
-#include "reuse/xalloc.h"
+#include "ejudge/xalloc.h"
 
 #include <string.h>
 #include <errno.h>

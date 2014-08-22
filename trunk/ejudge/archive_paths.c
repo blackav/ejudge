@@ -26,8 +26,8 @@
 #include "ejudge/ej_uuid.h"
 #include "ejudge/prepare_dflt.h"
 
-#include "reuse/logger.h"
-#include "reuse/osdeps.h"
+#include "ejudge/logger.h"
+#include "ejudge/osdeps.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>

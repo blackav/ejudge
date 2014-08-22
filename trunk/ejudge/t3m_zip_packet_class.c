@@ -23,7 +23,7 @@
 #include "ejudge/misctext.h"
 #include "ejudge/prepare.h"
 
-#include "reuse/xalloc.h"
+#include "ejudge/xalloc.h"
 
 #if CONF_HAS_LIBZIP - 0 == 1
 #include <zip.h>

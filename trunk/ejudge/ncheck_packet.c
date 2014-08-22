@@ -21,7 +21,7 @@
 #include "ejudge/ncheck_packet.h"
 #include "ejudge/parsecfg.h"
 
-#include "reuse/xalloc.h"
+#include "ejudge/xalloc.h"
 
 #define XFSIZE(t, x) (sizeof(((t*) 0)->x))
 

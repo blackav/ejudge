@@ -24,9 +24,9 @@
 #include "ejudge/runlog.h"
 #include "ejudge/nwrun_packet.h"
 
-#include "reuse/xalloc.h"
-#include "reuse/osdeps.h"
-#include "reuse/exec.h"
+#include "ejudge/xalloc.h"
+#include "ejudge/osdeps.h"
+#include "ejudge/exec.h"
 
 #include <stdio.h>
 #include <stdlib.h>

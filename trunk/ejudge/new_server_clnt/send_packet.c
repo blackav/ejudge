@@ -19,8 +19,8 @@
 #include "ejudge/new_server_proto.h"
 #include "ejudge/errlog.h"
 
-#include "reuse/osdeps.h"
-#include "reuse/integral.h"
+#include "ejudge/osdeps.h"
+#include "ejudge/integral.h"
 
 #include <unistd.h>
 #include <sys/uio.h>

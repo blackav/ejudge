@@ -4,9 +4,9 @@
 #include "ejudge/polygon_packet.h"
 #include "ejudge/meta_generic.h"
 
-#include "reuse/xalloc.h"
+#include "ejudge/xalloc.h"
 
-#include "reuse/logger.h"
+#include "ejudge/logger.h"
 #include <string.h>
 #include <stdlib.h>
 

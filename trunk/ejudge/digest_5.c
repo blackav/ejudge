@@ -17,7 +17,7 @@
 
 #include "ejudge/digest_io.h"
 
-#include "reuse/logger.h"
+#include "ejudge/logger.h"
 
 #include <string.h>
 

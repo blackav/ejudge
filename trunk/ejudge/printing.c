@@ -28,7 +28,7 @@
 #include "ejudge/xml_utils.h"
 #include "ejudge/prepare_dflt.h"
 
-#include "reuse/exec.h"
+#include "ejudge/exec.h"
 
 #include <stdio.h>
 #include <unistd.h>

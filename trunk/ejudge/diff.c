@@ -26,8 +26,8 @@
 #include "ejudge/mime_type.h"
 #include "ejudge/prepare_dflt.h"
 
-#include "reuse/xalloc.h"
-#include "reuse/exec.h"
+#include "ejudge/xalloc.h"
+#include "ejudge/exec.h"
 
 #include <unistd.h>
 #include <fcntl.h>
