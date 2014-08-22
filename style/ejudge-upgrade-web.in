@@ -51,6 +51,8 @@ if [ "$1" = "--help" ]; then write_help; fi
 
 copy_mode=0
 if [ "$1" = "--copy" ]; then copy_mode=1; shift; fi
+sandbox_mode=0
+if [ "$1" = "--sandbox" ]; then sandbox_mode=1; shift; fi
 htdocsroot="$1"
 cgibindir="$2"
 dojodir="$3"
@@ -59,6 +61,18 @@ current_dir=`pwd`
 
 [ "${htdocsroot}" != "" ] || htdocsroot="${dflt_httpd_htdocs_dir}"
 [ "${cgibindir}" != "" ] || cgibindir="${dflt_httpd_cgi_bin_dir}"
+
+if [ "${sandbox_mode}" = 1 ]
+then
+    if ! mkdir -p "${htdocsroot}"
+    then
+        die "cannot create ${htdocsroot}"
+    fi
+    if ! mkdir -p "${cgibindir}"
+    then
+        die "cannot create ${cgibindir}"
+    fi
+fi
 
 [ -d "${htdocsroot}" ] || die "${htdocsroot} is not a directory"
 [ -d "${cgibindir}" ] || die "${cgibindir} is not a directory"
