@@ -28,7 +28,7 @@
  */
 
 #include "reuse/integral.h"
-#include "reuse/stringset.h"
+#include "reuse/r_stringset.h"
 
 #include <stdio.h>
 
