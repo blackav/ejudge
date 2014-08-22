@@ -121,7 +121,7 @@ REUSEHFILES =\
  ../include/reuse/osdeps.h\
  ../include/reuse/positions.h\
  ../include/reuse/positionsp.h\
- ../include/reuse/stringset.h\
+ ../include/reuse/r_stringset.h\
  ../include/reuse/str_utils.h\
  ../include/reuse/tempfile.h\
  ../include/reuse/xalloc.h\
