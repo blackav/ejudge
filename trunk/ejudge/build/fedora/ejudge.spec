@@ -8,7 +8,7 @@ URL: http://ejudge.ru
 BuildArch: i386
 BuildArch: x86_64
 BuildRequires: make gcc glibc-devel glibc-static bison flex gawk sed zlib zlib-devel ncurses ncurses-devel expat expat-devel libzip libzip-devel gettext gettext-devel mysql-libs mysql mysql-devel libcurl libcurl-devel libuuid libuuid-devel elfutils-libelf-devel elfutils-libelf-devel-static elfutils-libelf libdwarf-devel libdwarf-static libdwarf libdwarf-tools
-#Requires:
+Requires: make gcc glibc-devel glibc-static bison flex gawk sed zlib zlib-devel ncurses ncurses-devel expat expat-devel libzip libzip-devel gettext gettext-devel mysql-libs mysql mysql-devel libcurl libcurl-devel libuuid libuuid-devel elfutils-libelf-devel elfutils-libelf-devel-static elfutils-libelf libdwarf-devel libdwarf-static libdwarf libdwarf-tools
 
 %global _enable_debug_package 0
 %global debug_package %{nil}
@@ -22,6 +22,7 @@ A programming contest management system. http://ejudge.ru
 
 %build
 %configure --enable-charset=utf-8 --with-httpd-cgi-bin-dir=/var/www/cgi-bin --with-httpd-htdocs-dir=/var/www/html --enable-ajax --enable-local-dir=/var/lib/ejudge --enable-hidden-server-bins --disable-rpath
+export EJUDGE_NO_CHECK_PATH=1
 make %{?_smp_mflags}
 
 %install
