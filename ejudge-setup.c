@@ -580,6 +580,8 @@ is_valid_path(int idx)
   struct stat stbuf;
   const struct path_edit_item *pi;
 
+  if (getenv("EJUDGE_NO_CHECK_PATH") != 0) return 1;
+
   ASSERT(idx >= 0 && idx < PATH_LINE_LAST);
   switch (idx) {
   case PATH_LINE_RETURN:
