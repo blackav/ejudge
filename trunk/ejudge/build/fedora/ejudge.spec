@@ -7,8 +7,12 @@ License: GPL
 URL: http://ejudge.ru
 BuildArch: i386
 BuildArch: x86_64
-#BuildRequires:
+BuildRequires: make gcc glibc-devel glibc-static bison flex gawk sed zlib zlib-devel ncurses ncurses-devel expat expat-devel libzip libzip-devel gettext gettext-devel mysql-libs mysql mysql-devel libcurl libcurl-devel libuuid libuuid-devel elfutils-libelf-devel elfutils-libelf-devel-static elfutils-libelf libdwarf-devel libdwarf-static libdwarf libdwarf-tools
 #Requires:
+
+%global _enable_debug_package 0
+%global debug_package %{nil}
+%global __os_install_post /usr/lib/rpm/brp-compress %{nil}
 
 %description
 A programming contest management system. http://ejudge.ru
@@ -23,6 +27,7 @@ make %{?_smp_mflags}
 %install
 %make_install
 %{buildroot}/%{_bindir}/ejudge-upgrade-web --copy --sandbox --destdir %{buildroot}/
+export DONT_STRIP=1
 
 %files
 %{_bindir}/*
