@@ -153,7 +153,7 @@ INSTALLSCRIPT = ejudge-install.sh
 BINTARGETS = ejudge-jobs-cmd ejudge-edit-users ejudge-setup ejudge-configure-compilers ejudge-control ejudge-execute ejudge-contests-cmd
 SERVERBINTARGETS = ej-compile ej-compile-control ej-run ej-nwrun ej-ncheck ej-batch ej-serve ej-users ej-users-control ej-jobs ej-jobs-control ej-super-server ej-super-server-control ej-contests ej-contests-control uudecode ej-convert-clars ej-convert-runs ej-fix-db ej-super-run ej-super-run-control ej-normalize ej-polygon ej-import-contest ej-page-gen
 CGITARGETS = users${CGI_PROG_SUFFIX} serve-control${CGI_PROG_SUFFIX} new-client${CGI_PROG_SUFFIX}
-TARGETS = ${SERVERBINTARGETS} ${BINTARGETS} ${CGITARGETS} newrevinfo ej-page-gen.debug
+TARGETS = ${SERVERBINTARGETS} ${BINTARGETS} ${CGITARGETS} newrevinfo
 STYLEFILES = style/logo.gif style/priv.css style/unpriv.css style/unpriv3.css style/ejudge3.css style/priv.js style/unpriv.js style/filter_expr.html style/sprintf.js style/ejudge3_ss.css
 
 all: prereq_all local_all subdirs_all mo
@@ -220,7 +220,7 @@ local_install: ${TARGETS} ejudge-config po mo
 	cp -rpd include "${DESTDIR}${prefix}"
 	install -d "${DESTDIR}${prefix}/lib/ejudge/make"
 	install -m 0644 csp_header.make "${DESTDIR}${prefix}/lib/ejudge/make"
-	install -m 0755 ej-page-gen.debug "${DESTDIR}${prefix}/lib/ejudge"
+	#install -m 0755 ej-page-gen.debug "${DESTDIR}${prefix}/lib/ejudge"
 
 install: local_install
 	$(MAKE) -C reuse DESTDIR="${DESTDIR}" install

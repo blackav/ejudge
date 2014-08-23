@@ -439,7 +439,8 @@ invoke_page_gen(
     snprintf(arg0, sizeof(arg0), "%s/ej-page-gen", EJUDGE_SERVER_BIN_PATH);
     args[0] = arg0;
     args[1] = "-x";
-    snprintf(arg2, sizeof(arg2), "%s/ejudge/ej-page-gen.debug", EJUDGE_LIB_DIR);
+    //snprintf(arg2, sizeof(arg2), "%s/ejudge/ej-page-gen.debug", EJUDGE_LIB_DIR);
+    snprintf(arg2, sizeof(arg2), "none");
     args[2] = arg2;
     args[3] = "-d";
     snprintf(arg4, sizeof(arg4), "%s/%s.ds", state->gen_dir, state->action);

@@ -5531,6 +5531,7 @@ main(int argc, char *argv[])
         fatal("too many command line arguments");
     }
 
+    if (debug_name && !strcmp(debug_name, "none")) debug_name = 0;
     if (!debug_name) debug_name = argv[0];
 
     TypeContext *cntx = tc_create();
