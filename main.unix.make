@@ -220,7 +220,6 @@ local_install: ${TARGETS} ejudge-config po mo
 	cp -rpd include "${DESTDIR}${prefix}"
 	install -d "${DESTDIR}${prefix}/lib/ejudge/make"
 	install -m 0644 csp_header.make "${DESTDIR}${prefix}/lib/ejudge/make"
-	#install -m 0755 ej-page-gen.debug "${DESTDIR}${prefix}/lib/ejudge"
 
 install: local_install
 	$(MAKE) -C reuse DESTDIR="${DESTDIR}" install
@@ -234,7 +233,7 @@ install: local_install
 	$(MAKE) -C plugins/mysql-rundb DESTDIR="${DESTDIR}" install
 	$(MAKE) -C csp/contests DESTDIR="${DESTDIR}" install
 	$(MAKE) -C csp/super-server DESTDIR="${DESTDIR}" install
-	if [ ! -f "${INSTALLSCRIPT}" ]; then ./ejudge-setup -b; fi
+	#if [ ! -f "${INSTALLSCRIPT}" ]; then ./ejudge-setup -b; fi
 	if [ -f "${INSTALLSCRIPT}" ]; then install -m 0755 "${INSTALLSCRIPT}" "${DESTDIR}${bindir}"; fi
 
 ej-compile$(EXESFX) : $(C_OBJECTS)
