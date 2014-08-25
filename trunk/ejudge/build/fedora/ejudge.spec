@@ -28,8 +28,8 @@ make %{?_smp_mflags}
 
 %install
 %make_install
-%{buildroot}/%{_bindir}/ejudge-upgrade-web --copy --sandbox --destdir %{buildroot}/
-cp -p %{buildsubdir}/init.d/ejudge %{buildroot}/%{_sysconfdir}/init.d/ejudge
+%{buildroot}%{_bindir}/ejudge-upgrade-web --copy --sandbox --destdir %{buildroot}/
+cp -p %{_builddir}/%{name}/init.d/ejudge %{buildroot}%{_sysconfdir}/init.d/ejudge
 export DONT_STRIP=1
 
 %files
