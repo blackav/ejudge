@@ -15,14 +15,14 @@
 # Should-Stop:
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 6
-# Short-Description: Raise network interfaces.
+# Short-Description: ejudge programming contest management system
 ### END INIT INFO
 
 # $Id$
 
 USER="ejudge"
 NAME="ejudge"
-EJUDGE_CTR="/opt/ejudge/bin/ejudge-control" 
+EJUDGE_CTR="ejudge-control" 
 
 start() {
         exec su -c "$EJUDGE_CTR start" - $USER
