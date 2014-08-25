@@ -33,7 +33,7 @@ mkdir -p %{buildroot}%{_sysconfdir}/init.d
 cp -p %{_builddir}/%{name}/init.d/ejudge %{buildroot}%{_sysconfdir}/init.d/ejudge
 if [ -f %{_builddir}/%{name}/build/fedora/%{_arch}/ejudge-install.sh ]
 then
-  cp -p %{_builddir}/%{name}/build/fedora/%{_arch}/ejudge-install.sh %{buildroot}${_bindir}
+  cp -p %{_builddir}/%{name}/build/fedora/%{_arch}/ejudge-install.sh %{buildroot}%{_bindir}
 fi
 export DONT_STRIP=1
 
