@@ -29,8 +29,12 @@ make %{?_smp_mflags}
 %install
 %make_install
 %{buildroot}%{_bindir}/ejudge-upgrade-web --copy --sandbox --destdir %{buildroot}/
-mkdir -p %{buildroot}%{_sysconfdir}/init.d/ejudge
+mkdir -p %{buildroot}%{_sysconfdir}/init.d
 cp -p %{_builddir}/%{name}/init.d/ejudge %{buildroot}%{_sysconfdir}/init.d/ejudge
+if [ -f %{_builddir}/%{name}/build/fedora/%{_arch}/ejudge-install.sh ]
+then
+  cp -p %{_builddir}/%{name}/build/fedora/%{_arch}/ejudge-install.sh %{buildroot}${_bindir}
+fi
 export DONT_STRIP=1
 
 %files
@@ -46,8 +50,8 @@ export DONT_STRIP=1
 %{_sysconfdir}/init.d/ejudge
 
 %pre
-getent group ejudge >/dev/null || groupadd -r ejudge
-getent passwd ejudge >/dev/null || useradd -r -g ejudge -d ejudge -s /bin/bash -c "Ejudge programming contest management system" ejudge
+getent group ejudge >/dev/null || groupadd ejudge
+getent passwd ejudge >/dev/null || useradd -g ejudge -d /home/ejudge -s /bin/bash -c "Ejudge programming contest management system" ejudge
 exit 0
 
 %post
