@@ -40,6 +40,7 @@ export DONT_STRIP=1
 %files
 %{_bindir}/*
 %{_libdir}/*
+%{_prefix}/lib/*
 %{_datadir}/%{name}/
 %{_libexecdir}/%{name}/
 %{_includedir}/%{name}/
