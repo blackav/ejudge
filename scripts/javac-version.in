@@ -59,7 +59,7 @@ then
   [ "${javalastdir}" = "bin" ] || failure
   JAVADIR=`dirname "${javafulldir}"` || failure
   [ "${JAVADIR}" != "" ] || failure
-  version=`${JAVARUN} -version 2>&1 | grep "java version" | sed 's/^.*"\(.*\)"$/\1/g'` || failure
+  version=`${JAVARUN} -version 2>&1 | grep " version" | sed 's/^.*"\(.*\)"$/\1/g'` || failure
   [ "${version}" != "" ] || failure
   case x"${version}" in
     x1.8.*) JAVAVER=1.8;;
