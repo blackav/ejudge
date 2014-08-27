@@ -6,7 +6,7 @@ Source: %{name}-%{version}.tgz
 License: GPL
 URL: http://ejudge.ru
 BuildRequires: make gcc glibc-devel glibc-static bison flex gawk sed zlib zlib-devel ncurses ncurses-devel expat expat-devel libzip libzip-devel gettext gettext-devel mysql-libs mysql mysql-devel libcurl libcurl-devel libuuid libuuid-devel elfutils-libelf-devel elfutils-libelf-devel-static elfutils-libelf libdwarf-devel libdwarf-static libdwarf libdwarf-tools
-Requires: make gcc glibc-devel glibc-static bison flex gawk sed zlib zlib-devel ncurses ncurses-devel expat expat-devel libzip libzip-devel gettext gettext-devel mysql-libs mysql mysql-devel libcurl libcurl-devel libuuid libuuid-devel elfutils-libelf-devel elfutils-libelf-devel-static elfutils-libelf libdwarf-devel libdwarf-static libdwarf libdwarf-tools
+Requires: make gcc glibc-devel glibc-static bison flex gawk sed zlib zlib-devel ncurses ncurses-devel expat expat-devel libzip libzip-devel gettext gettext-devel mysql-libs mysql mysql-devel libcurl libcurl-devel libuuid libuuid-devel elfutils-libelf-devel elfutils-libelf-devel-static elfutils-libelf libdwarf-devel libdwarf-static libdwarf libdwarf-tools gcc-c++ libstdc++-static fpc ruby python python3 php php-common php-cli perl gprolog ghc mono-core mono-basic gcc-gfortran libgfortran-static gcc-go libgo-static mono-extras mono-locale-extras valgrind nasm vim screen wget ncftp mc fuse-sshfs patch kernel-tools kernel-devel gcc strace subversion gdb openssl openssl-devel java-1.8.0-openjdk java-1.8.0-openjdk-headless java-1.8.0-openjdk-devel glibc-devel.i686 libgcc.i686 libstdc++-devel.i686
 Requires(pre): shadow-utils
 
 %global _enable_debug_package 0
