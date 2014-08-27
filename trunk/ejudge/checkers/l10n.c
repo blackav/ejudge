@@ -34,6 +34,10 @@ checker_l10n_prepare(void)
     // shortcuts
     if (!strcasecmp(ej_locale, "russian") || !strcasecmp(ej_locale, "ru") || !strcasecmp(ej_locale, "1")) {
         ej_locale = "ru_RU.UTF-8";
+    } else if (!strcasecmp(ej_locale, "ukrainian") || !strcasecmp(ej_locale, "uk") || !strcasecmp(ej_locale, "2")) {
+        ej_locale = "uk_UA.UTF-8";
+    } else if (!strcasecmp(ej_locale, "kazakh") || !strcasecmp(ej_locale, "kk") || !strcasecmp(ej_locale, "3")) {
+        ej_locale = "kk_KZ.UTF-8";
     }
 
     // some memory is definitely leaked here

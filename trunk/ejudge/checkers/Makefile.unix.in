@@ -1,7 +1,7 @@
 # -*- Makefile -*-
 # $Id$
 
-# Copyright (C) 2003-2013 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2003-2014 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -133,8 +133,7 @@ install : all
 	for i in ${CHKXFILES} ${STYLEXFILES}; do install -m 755 $$i "${DESTDIR}${libexecdir}/ejudge/checkers"; done
 	-cd "${DESTDIR}${datadir}/ejudge/testlib/fpc"; FPC=`"${DESTDIR}${libexecdir}/ejudge"/fpc-version -p`; [ x"$$FPC" != x ] && "$$FPC" testlib.pas
 	-cd "${DESTDIR}${datadir}/ejudge/testlib/delphi"; DCC=`"${DESTDIR}${libexecdir}/ejudge"/dcc-version -p`; [ x"$$DCC" != x ] && "$$DCC" testlib.pas
-	if [ x"${ENABLE_NLS}" = x1 ]; then install -d "${DESTDIR}${datadir}/locale/ru_RU.UTF-8/LC_MESSAGES"; fi
-	if [ x"${ENABLE_NLS}" = x1 ]; then install -m 0644 locale/ru_RU.UTF-8/LC_MESSAGES/ejudgecheckers.mo "${DESTDIR}${datadir}/locale/ru_RU.UTF-8/LC_MESSAGES"; fi
+	if [ x"${ENABLE_NLS}" = x1 ]; then for locale in "ru_RU.UTF-8" "uk_UA.UTF-8" "kk_KZ.UTF-8"; do install -d "${DESTDIR}${datadir}/locale/$${locale}/LC_MESSAGES"; install -m 0644 "locale/$${locale}/LC_MESSAGES/ejudgecheckers.mo" "${DESTDIR}${datadir}/locale/$${locale}/LC_MESSAGES"; done; fi
 
 libchecker.a : ${OFILES}
 	${AR} rcv $@ $^
@@ -256,12 +255,16 @@ m32/%.o : %.c
 	${CC} ${CFLAGS} -m32 -c $< -o $@
 
 ifdef ENABLE_NLS
-mo : locale/ru_RU.UTF-8/LC_MESSAGES/ejudgecheckers.mo
+mo : locale/ru_RU.UTF-8/LC_MESSAGES/ejudgecheckers.mo locale/uk_UA.UTF-8/LC_MESSAGES/ejudgecheckers.mo locale/kk_KZ.UTF-8/LC_MESSAGES/ejudgecheckers.mo
 else
 mo :
 endif
 
 ejudgecheckers.ru_RU.UTF-8.po: $(CFILES) $(CHKCFILES) $(STYLECFILES) ejudgecheckers.po
+	${MSGMERGE} -U $@ ejudgecheckers.po
+ejudgecheckers.uk_UA.UTF-8.po: $(CFILES) $(CHKCFILES) $(STYLECFILES) ejudgecheckers.po
+	${MSGMERGE} -U $@ ejudgecheckers.po
+ejudgecheckers.kk_KZ.UTF-8.po: $(CFILES) $(CHKCFILES) $(STYLECFILES) ejudgecheckers.po
 	${MSGMERGE} -U $@ ejudgecheckers.po
 
 ejudgecheckers.po: $(CFILES) $(CHKCFILES) $(STYLECFILES)
@@ -269,6 +272,14 @@ ejudgecheckers.po: $(CFILES) $(CHKCFILES) $(STYLECFILES)
 
 locale/ru_RU.UTF-8/LC_MESSAGES/ejudgecheckers.mo : ejudgecheckers.ru_RU.UTF-8.po locale/ru_RU.UTF-8/LC_MESSAGES 
 	${MSGFMT} -o $@ -c $<
+locale/uk_UA.UTF-8/LC_MESSAGES/ejudgecheckers.mo : ejudgecheckers.uk_UA.UTF-8.po locale/uk_UA.UTF-8/LC_MESSAGES 
+	${MSGFMT} -o $@ -c $<
+locale/kk_KZ.UTF-8/LC_MESSAGES/ejudgecheckers.mo : ejudgecheckers.kk_KZ.UTF-8.po locale/kk_KZ.UTF-8/LC_MESSAGES 
+	${MSGFMT} -o $@ -c $<
 
 locale/ru_RU.UTF-8/LC_MESSAGES :
+	mkdir -p $@
+locale/uk_UA.UTF-8/LC_MESSAGES :
+	mkdir -p $@
+locale/kk_KZ.UTF-8/LC_MESSAGES :
 	mkdir -p $@

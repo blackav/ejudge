@@ -36,6 +36,8 @@ static const unsigned char * const locales[] =
 {
   "English",
   "Russian",
+  "Ukrainian",
+  "Kazakh",
 
   0
 };
@@ -68,10 +70,44 @@ l10n_setlocale(int locale_id)
   unsigned char *e = 0;
   static unsigned char env_buf[512];
   static unsigned char russian_locale_name[512];
+  static unsigned char ukrainian_locale_name[512];
+  static unsigned char kazakh_locale_name[512];
 
   if (locale_id < 0 || !l10n_flag) return;
 
   switch (locale_id) {
+  case 3:
+    if (!kazakh_locale_name[0]) {
+      unsigned char cbuf[512];
+      int i;
+#if !defined EJUDGE_CHARSET
+      snprintf(cbuf, sizeof(cbuf), "%s", "UTF-8");
+#else
+      snprintf(cbuf, sizeof(cbuf), "%s", EJUDGE_CHARSET);
+#endif
+      for (i = 0; cbuf[i]; i++)
+        cbuf[i] = toupper(cbuf[i]);
+      snprintf(kazakh_locale_name, sizeof(kazakh_locale_name),
+               "kk_KZ.%s", cbuf);
+    }
+    e = kazakh_locale_name;
+    break;
+  case 2:
+    if (!ukrainian_locale_name[0]) {
+      unsigned char cbuf[512];
+      int i;
+#if !defined EJUDGE_CHARSET
+      snprintf(cbuf, sizeof(cbuf), "%s", "UTF-8");
+#else
+      snprintf(cbuf, sizeof(cbuf), "%s", EJUDGE_CHARSET);
+#endif
+      for (i = 0; cbuf[i]; i++)
+        cbuf[i] = toupper(cbuf[i]);
+      snprintf(ukrainian_locale_name, sizeof(ukrainian_locale_name),
+               "uk_UA.%s", cbuf);
+    }
+    e = ukrainian_locale_name;
+    break;
   case 1:
     if (!russian_locale_name[0]) {
       unsigned char cbuf[512];
@@ -109,7 +145,7 @@ l10n_html_locale_select(FILE *fout, int locale_id)
   const unsigned char *ss;
 
   if (l10n_flag) {
-    if (locale_id < 0 || locale_id > 1) locale_id = 0;
+    if (locale_id < 0 || locale_id >= sizeof(locales)/sizeof(locales[0]) ) locale_id = 0;
     fprintf(fout, "<select name=\"locale_id\">");
     for (i = 0; locales[i]; i++) {
       ss = "";
@@ -141,7 +177,7 @@ l10n_html_locale_select_2(
   const unsigned char *ss = 0;
   int i;
 
-  if (locale_id < 0 || locale_id > 1) locale_id = 0;
+  if (locale_id < 0 || locale_id >= sizeof(locales)/sizeof(locales[0])) locale_id = 0;
   fprintf(out_f, "<select");
   if (id) fprintf(out_f, " id=\"%s\"", id);
   if (cl) fprintf(out_f, " class=\"%s\"", cl);
@@ -174,6 +210,16 @@ static struct locale_names
   { "ru_RU", 1 },
   { "Russian", 1 },
 
+  { "2", 1 },
+  { "uk", 1 },
+  { "uk_UA", 1 },
+  { "Ukrainian", 1 },
+
+  { "3", 1 },
+  { "kk", 1 },
+  { "kk_KZ", 1 },
+  { "Kazakh", 1 },
+
   { 0, 0 }
 };
 
@@ -191,7 +237,7 @@ l10n_parse_locale(const unsigned char *locale_str)
 
 const unsigned char * const locale_name_strs[] =
 {
-  "English", "Russian",
+  "English", "Russian", "Ukrainian", "Kazakh",
 };
 const unsigned char *
 l10n_unparse_locale(int n)
@@ -204,6 +250,5 @@ l10n_unparse_locale(int n)
 /*
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")
  * End:
  */

@@ -206,8 +206,7 @@ local_install: ${TARGETS} ejudge-config po mo
 	cd "${DESTDIR}${cgibindir}"; rm -f team${CGI_PROG_SUFFIX}; ln new-client${CGI_PROG_SUFFIX} team${CGI_PROG_SUFFIX}
 	cd "${DESTDIR}${cgibindir}"; rm -f judge${CGI_PROG_SUFFIX}; ln new-client${CGI_PROG_SUFFIX} judge${CGI_PROG_SUFFIX}
 	cd "${DESTDIR}${cgibindir}"; rm -f master${CGI_PROG_SUFFIX}; ln new-client${CGI_PROG_SUFFIX} master${CGI_PROG_SUFFIX}
-	if [ x"${ENABLE_NLS}" = x1 ]; then install -d "${DESTDIR}${datadir}/locale/ru_RU.${CHARSET}/LC_MESSAGES"; fi
-	if [ x"${ENABLE_NLS}" = x1 ]; then install -m 0644 locale/ru_RU.${CHARSET}/LC_MESSAGES/ejudge.mo "${DESTDIR}${datadir}/locale/ru_RU.${CHARSET}/LC_MESSAGES"; fi
+	if [ x"${ENABLE_NLS}" = x1 ]; then for locale in "ru_RU.${CHARSET}" "uk_UA.${CHARSET}" "kk_KZ.${CHARSET}"; do install -d "${DESTDIR}${datadir}/locale/$${locale}/LC_MESSAGES"; install -m 0644 "locale/$${locale}/LC_MESSAGES/ejudge.mo" "${DESTDIR}${datadir}/locale/$${locale}/LC_MESSAGES"; done; fi
 	install -d "${DESTDIR}${datadir}/ejudge"
 	install -d "${DESTDIR}${datadir}/ejudge/style"
 	for i in ${STYLEFILES}; do install -m 0644 $$i "${DESTDIR}${datadir}/ejudge/style"; done
@@ -439,7 +438,7 @@ log: mkChangeLog2
 
 # localization stuff
 ifdef ENABLE_NLS
-po : ejudge.ru_RU.UTF-8.po ejudge.ru_RU.${CHARSET}.po
+po : ejudge.ru_RU.UTF-8.po ejudge.ru_RU.${CHARSET}.po ejudge.uk_UA.${CHARSET}.po ejudge.kk_KZ.${CHARSET}.po
 else
 po :
 endif
@@ -452,22 +451,36 @@ endif
 ejudge.ru_RU.UTF-8.po: $(CFILES) ejudge.po
 	${MSGMERGE} -U $@ ejudge.po
 
+ejudge.uk_UA.UTF-8.po: $(CFILES) ejudge.po
+	${MSGMERGE} -U $@ ejudge.po
+
+ejudge.kk_KZ.UTF-8.po: $(CFILES) ejudge.po
+	${MSGMERGE} -U $@ ejudge.po
+
 ejudge.po: $(CFILES)
 	${XGETTEXT} -d ejudge --no-location --foreign-user  -k_ -k__ -s -o $@ *.c csp/contests/*.c
 
 ru_all:
 	-mkdir -p locale/ru_RU.${CHARSET}/LC_MESSAGES
+uk_all:
+	-mkdir -p locale/uk_UA.${CHARSET}/LC_MESSAGES
+kk_all:
+	-mkdir -p locale/kk_KZ.${CHARSET}/LC_MESSAGES
 
 ejudge-config : ejudge-config.v version.c
 	vvv=`grep compile_version version.c | sed 's/^[^"]*["]\([^"]*\)["].*$$/\1/'` && sed "s/@BUILD_VERSION@/$$vvv/" < ejudge-config.v > ejudge-config && chmod +x ejudge-config
 
 ifdef ENABLE_NLS
-mo : locale/ru_RU.${CHARSET}/LC_MESSAGES/ejudge.mo
+mo : locale/ru_RU.${CHARSET}/LC_MESSAGES/ejudge.mo locale/uk_UA.${CHARSET}/LC_MESSAGES/ejudge.mo locale/kk_KZ.${CHARSET}/LC_MESSAGES/ejudge.mo
 else
 mo :
 endif
 
 locale/ru_RU.${CHARSET}/LC_MESSAGES/ejudge.mo : ejudge.ru_RU.${CHARSET}.po ru_all
+	${MSGFMT} -o $@ -c $<
+locale/uk_UA.${CHARSET}/LC_MESSAGES/ejudge.mo : ejudge.uk_UA.${CHARSET}.po uk_all
+	${MSGFMT} -o $@ -c $<
+locale/kk_KZ.${CHARSET}/LC_MESSAGES/ejudge.mo : ejudge.kk_KZ.${CHARSET}.po kk_all
 	${MSGFMT} -o $@ -c $<
 
 include meta.make
