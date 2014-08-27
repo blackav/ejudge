@@ -1,0 +1,395 @@
+# Ukrainian translation of checker messages
+# This file is put in the public domain.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: ejudge 3.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2014-08-27 14:45+0400\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: Ukrainian <uk@li.org>\n"
+"Language: uk\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#, c-format
+msgid "%s: %d: end-of-line expected"
+msgstr ""
+
+#, c-format
+msgid "%s: %d: invalid control character with code %d"
+msgstr ""
+
+#, c-format
+msgid "%s: %s: input error"
+msgstr ""
+
+#, c-format
+msgid "%s: `-' before uint32 value"
+msgstr ""
+
+#, c-format
+msgid "%s: `-' before uint64 value"
+msgstr ""
+
+#, c-format
+msgid "%s: cannot open %s for reading"
+msgstr ""
+
+#, c-format
+msgid "%s: cannot parse double value"
+msgstr ""
+
+#, c-format
+msgid "%s: cannot parse int32 value"
+msgstr ""
+
+#, c-format
+msgid "%s: cannot parse int64 value"
+msgstr ""
+
+#, c-format
+msgid "%s: cannot parse long double value"
+msgstr ""
+
+#, c-format
+msgid "%s: cannot parse uint32 value"
+msgstr ""
+
+#, c-format
+msgid "%s: cannot parse uint64 value"
+msgstr ""
+
+#, c-format
+msgid "%s: double value is out of range"
+msgstr ""
+
+#, c-format
+msgid "%s: end-of-line expected"
+msgstr ""
+
+#, c-format
+msgid "%s: garbage where EOF expected"
+msgstr ""
+
+#, c-format
+msgid "%s: input element is too long"
+msgstr ""
+
+#, c-format
+msgid "%s: input error"
+msgstr ""
+
+#, c-format
+msgid "%s: input error while seeking EOLN"
+msgstr ""
+
+#, c-format
+msgid "%s: int32 value is out of range"
+msgstr ""
+
+#, c-format
+msgid "%s: int64 value is out of range"
+msgstr ""
+
+#, c-format
+msgid "%s: invalid arguments"
+msgstr ""
+
+#, c-format
+msgid "%s: invalid control character %d"
+msgstr ""
+
+#, c-format
+msgid "%s: invalid control character with code %d"
+msgstr ""
+
+#, c-format
+msgid "%s: long double value is out of range"
+msgstr ""
+
+#, c-format
+msgid "%s: no double value"
+msgstr ""
+
+#, c-format
+msgid "%s: no int32 value"
+msgstr ""
+
+#, c-format
+msgid "%s: no int64 value"
+msgstr ""
+
+#, c-format
+msgid "%s: no long double value"
+msgstr ""
+
+#, c-format
+msgid "%s: no uint32 value"
+msgstr ""
+
+#, c-format
+msgid "%s: no uint64 value"
+msgstr ""
+
+#, c-format
+msgid "%s: uint32 value is out of range"
+msgstr ""
+
+#, c-format
+msgid "%s: uint64 value is out of range"
+msgstr ""
+
+#, c-format
+msgid "%s: unexpected EOF"
+msgstr ""
+
+#, c-format
+msgid "%s: unexpected EOF while seeking EOLN"
+msgstr ""
+
+#, c-format
+msgid "Answers differ: %s: output: %.10g, correct: %.10g"
+msgstr ""
+
+#, c-format
+msgid "Answers differ: %s: output: %.15Lg, correct: %.15Lg"
+msgstr ""
+
+#, c-format
+msgid "Answers differ: %s: output: %d, correct: %d"
+msgstr ""
+
+#, c-format
+msgid "Answers differ: %s: output: %lld, correct: %lld"
+msgstr ""
+
+#, c-format
+msgid "Answers differ: %s: output: %llu, correct: %llu"
+msgstr ""
+
+#, c-format
+msgid "Answers differ: %s: output: %u, correct: %u"
+msgstr ""
+
+msgid "Answers do not match"
+msgstr ""
+
+#, c-format
+msgid "Answers do not match: output: %.10Lg, correct: %.10Lg"
+msgstr ""
+
+#, c-format
+msgid "Answers do not match: output: %.10g, correct: %.10g"
+msgstr ""
+
+#, c-format
+msgid "Answers do not match: output: %d, correct: %d"
+msgstr ""
+
+#, c-format
+msgid "Answers do not match: output: %lld, correct: %lld"
+msgstr ""
+
+#, c-format
+msgid "Answers do not match: output: %llu, correct: %llu"
+msgstr ""
+
+#, c-format
+msgid "Answers do not match: output: %u, correct: %u"
+msgstr ""
+
+#, c-format
+msgid "Cannot open correct output file '%s'"
+msgstr ""
+
+#, c-format
+msgid "Cannot open input directory '%s'"
+msgstr ""
+
+#, c-format
+msgid "Cannot open input file '%s'"
+msgstr ""
+
+#, c-format
+msgid "Cannot open output directory '%s'"
+msgstr ""
+
+#, c-format
+msgid "Cannot open output file '%s'"
+msgstr ""
+
+msgid "Cannot parse EPS value"
+msgstr ""
+
+msgid "Cannot read test count"
+msgstr ""
+
+#, c-format
+msgid "Cannot read test description %d"
+msgstr ""
+
+msgid "Correct answer is neither `yes' nor `no' (case insensitive)"
+msgstr ""
+
+#, c-format
+msgid "Difference at byte %zu: output: %d, correct: %d"
+msgstr ""
+
+#, c-format
+msgid "Different number of lines: output: %zu, correct: %zu"
+msgstr ""
+
+#, c-format
+msgid "Different size: output: %zu, correct: %zu"
+msgstr ""
+
+msgid "Environment variable EPS is not set"
+msgstr ""
+
+#, c-format
+msgid "Format string is too long: %zu"
+msgstr ""
+
+msgid "Input element is too long"
+msgstr ""
+
+#, c-format
+msgid "Input error from %s file"
+msgstr ""
+
+msgid "Input error while seeking EOLN"
+msgstr ""
+
+#, c-format
+msgid "Input error: %s"
+msgstr ""
+
+msgid "Invalid arguments"
+msgstr ""
+
+#, c-format
+msgid "Invalid buf_size %zu"
+msgstr ""
+
+#, c-format
+msgid "Invalid control character %d"
+msgstr ""
+
+#, c-format
+msgid "Invalid control character with code %d"
+msgstr ""
+
+#, c-format
+msgid "Invalid number of arguments: %d instead of %d"
+msgstr ""
+
+#, c-format
+msgid "Invalid result %d in description %d"
+msgstr ""
+
+#, c-format
+msgid "Invalid score %d in description %d"
+msgstr ""
+
+#, c-format
+msgid "Invalid time %d in description %d"
+msgstr ""
+
+msgid "Letter case mismatch"
+msgstr ""
+
+#, c-format
+msgid ""
+"Line %zu differs: output:\n"
+">%s<\n"
+"correct:\n"
+">%s<"
+msgstr ""
+
+msgid "No final \\n in the output file"
+msgstr ""
+
+#, c-format
+msgid "Out of heap memory: calloc(%zu,%zu) failed"
+msgstr ""
+
+#, c-format
+msgid "Out of heap memory: malloc(%zu) failed"
+msgstr ""
+
+#, c-format
+msgid "Out of heap memory: realloc(...,%zu) failed"
+msgstr ""
+
+#, c-format
+msgid "Out of heap memory: strdup(`%s') failed"
+msgstr ""
+
+#, c-format
+msgid "Test count (%d) is invalid"
+msgstr ""
+
+msgid "Test info is requested, but no code compiled in"
+msgstr ""
+
+#, c-format
+msgid "Test info parsing failed: %s"
+msgstr ""
+
+msgid "Too few numbers in the output"
+msgstr ""
+
+msgid "Too many numbers in the output"
+msgstr ""
+
+msgid "Unexpected EOF"
+msgstr ""
+
+#, c-format
+msgid "Unexpected EOF while reading '%s'"
+msgstr ""
+
+msgid "Unexpected EOF while seeking EOLN"
+msgstr ""
+
+msgid "User answer is neither `yes' nor `no' (case insensitive)"
+msgstr ""
+
+#, c-format
+msgid "Wrong answer: output: %s, correct: %s"
+msgstr ""
+
+msgid "\\0 byte in file"
+msgstr ""
+
+#, c-format
+msgid "alloca(%zu) failed"
+msgstr ""
+
+msgid "correct"
+msgstr ""
+
+msgid "correct: not a number"
+msgstr ""
+
+msgid "fscanf returned 0!!!"
+msgstr ""
+
+msgid "output"
+msgstr ""
+
+msgid "output: not a number"
+msgstr ""
+
+msgid "test correct output"
+msgstr ""
+
+msgid "test input data"
+msgstr ""
+
+msgid "user program output"
+msgstr ""
