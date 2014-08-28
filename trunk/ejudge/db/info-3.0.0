@@ -7,8 +7,6 @@
 00000000000ccea4 INSTALL.RUS
 0000000000023ec6 Makefile.unix.in
 000000000001d8c8 Makefile.win32.in
-00000000014f0fbc NEWS
-000000000592deea NEWS.RUS
 000000000014cd2b OLDNEWS
 000000000002862c TODO
 00000000000564f7 UPGRADE
@@ -513,7 +511,7 @@
 000000000000e70b csp/contests/unpriv_main_startstop.csp
 000000000002471e csp/contests/unpriv_main_statements.csp
 00000000000320c6 csp/contests/unpriv_main_summary.csp
-0000000000078726 csp/contests/unpriv_menu.csp
+0000000000078242 csp/contests/unpriv_menu.csp
 000000000004347f csp/contests/unpriv_recover_1_page.csp
 000000000004aa08 csp/contests/unpriv_recover_2_page.csp
 00000000000609cd csp/contests/unpriv_recover_3_page.csp
@@ -570,7 +568,7 @@
 0000000000018d2e digest_4.c
 0000000000013038 digest_5.c
 000000000001854e dos2unix_str.c
-00000000003fdfd1 dwarf_parse.c
+0000000000402537 dwarf_parse.c
 0000000000b6b346 edit-userlist.c
 0000000000330150 ej-batch.c
 00000000005cf511 ej-import-contest.c
@@ -587,9 +585,9 @@
 000000000019e530 ejudge-configure-compilers.c
 0000000000104d9a ejudge-control.c
 0000000000ab65f4 ejudge-setup.c
-0000000000503746 ejudge.kk_KZ.UTF-8.po
-0000000001186707 ejudge.ru_RU.UTF-8.po
-00000000005039d6 ejudge.uk_UA.UTF-8.po
+0000000000502af7 ejudge.kk_KZ.UTF-8.po
+0000000001186897 ejudge.ru_RU.UTF-8.po
+0000000000502d87 ejudge.uk_UA.UTF-8.po
 00000000002635d4 ejudge_cfg.c
 000000000001d53d errlog.c
 00000000001ea949 execute.c
@@ -837,7 +835,7 @@
 00000000012cab3e new_server_match.c
 00000000001d64e7 new_server_proto.c
 000000000013b1c1 new_server_tables.c
-000000000010ea5b newrevinfo.c
+000000000010f7db newrevinfo.c
 000000000021bd09 nsdb_plugin_files.c
 00000000001e15e0 nwrun.c
 00000000000d8531 nwrun_packet.c
