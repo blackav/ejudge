@@ -18,7 +18,7 @@
     if (cnts->allow_reg_data_edit > 0
         && contests_check_register_ip_2(cnts, &phr->ip, phr->ssl_flag) > 0
         && (cnts->reg_deadline <= 0 || cs->current_time < cnts->reg_deadline)) {
-%><li class="contest_actions_item"><s:a class="menu" script="register"><s:tr>Registration data</s:tr></s:a><li>
+%><li class="contest_actions_item"><s:a class="menu" script="register" ac="main-page"><s:tr>Registration</s:tr></s:a><li>
 <%
     }
 %>
