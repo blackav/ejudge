@@ -513,7 +513,7 @@
 000000000000e70b csp/contests/unpriv_main_startstop.csp
 000000000002471e csp/contests/unpriv_main_statements.csp
 00000000000320c6 csp/contests/unpriv_main_summary.csp
-000000000007e5d0 csp/contests/unpriv_menu.csp
+0000000000078726 csp/contests/unpriv_menu.csp
 000000000004347f csp/contests/unpriv_recover_1_page.csp
 000000000004aa08 csp/contests/unpriv_recover_2_page.csp
 00000000000609cd csp/contests/unpriv_recover_3_page.csp
