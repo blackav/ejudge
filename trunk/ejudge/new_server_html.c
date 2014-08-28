@@ -7040,7 +7040,7 @@ privileged_entry_point(
   if (phr->action <= 0 || phr->action >= NEW_SRV_ACTION_LAST) {
     phr->action = NEW_SRV_ACTION_MAIN_PAGE;
   }
-  if (!external_priv_action_names[phr->action] && !actions_table[phr->action]) {
+  if (!external_priv_action_names[phr->action] && !external_priv_action_aliases[phr->action] && !actions_table[phr->action]) {
     phr->action = NEW_SRV_ACTION_MAIN_PAGE;
   }
 
