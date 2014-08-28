@@ -235,6 +235,7 @@ read_svn_status(unsigned char *id_buf, int id_buf_size, int *p_has_changes)
 
         // ignore "db/" stuff
         if (!strncmp(path, "db/", 3)) continue;
+        if (!strncmp(path, "NEWS", 4)) continue;
 
         if (c1 != ' ' || c2 != ' ') {
             is_changed = 1;
