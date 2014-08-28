@@ -197,18 +197,18 @@
 %></div></li><%
   }
 %>
-</ul>
 <%
   if (cnts && phr->login) {
-%><div id="logout"><div class="contest_actions_item"><s:a class="menu" ac="logout"><%
+%><li><div class="contest_actions_item"><s:a class="menu" ac="logout"><%
     if (cnts->exam_mode) {
 %><s:tr>Finish session</s:tr><%
     } else {
 %><s:tr>Logout</s:tr><%
     }
-%> [<s:v value="phr->login" escape="false" />]</s:a></div></div><%
+%> [<s:v value="phr->login" escape="false" />]</s:a></div></li><%
   }
 %>
+</ul>
 </div>
 </div></div>
 <div id="l11"><img src="<s:config name="style-prefix" />logo3.png" alt="logo"/></div>
