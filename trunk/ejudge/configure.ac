@@ -412,7 +412,7 @@ AC_CHECK_HEADER([regex.h],[ac_cv_has_regex=1],[ac_cv_has_regex=0])
 
 dnl check libelf library
 AC_CHECK_HEADER([libelf.h],[ac_cv_has_libelf=1],[ac_cv_has_libelf=0])
-if [[ x"${ac_cv_has_libelf}" != x1 ]]
+if [[ x"${ac_cv_has_libelf}" != x1 -a x"${ac_cv_ejudge_arch}" != xwin32 ]]
 then
   AC_MSG_FAILURE([please install libelf development package])
 fi
@@ -426,7 +426,7 @@ dnl checl libdwarf library
 saved_LIBS="${LIBS}"
 LIBS="-lelf"
 AC_CHECK_HEADER([libdwarf/libdwarf.h],[ac_cv_has_libdwarf=1],[ac_cv_has_libdwarf=0])
-if [[ x"${ac_cv_has_libdwarf}" != x1 ]]
+if [[ x"${ac_cv_has_libdwarf}" != x1 -a x"${ac_cv_ejudge_arch}" != xwin32 ]]
 then
   AC_MSG_FAILURE([please install libdwarf development package])
 fi
