@@ -128,7 +128,7 @@ ejudge-setup: ${ST_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB} -lmenu -lpanel -lncurses
 
 local_clean:
-	-rm -f *.exe *.o *~ *.a $(TARGETS) revinfo version.c $(ARCH)/*.o ejudge.po mkChangeLog serve_clnt/*.o userlist_clnt/*.o xml_utils/*.o super_clnt/*.o cdeps deps.make filter_expr.[ch] filter_scan.c master master${CGI_PROG_SUFFIX} team team${CGI_PROG_SUFFIX} register register${CGI_PROG_SUFFIX} users users${CGI_PROG_SUFFIX} ejudge-config serve-control serve-control${CGI_PROG_SUFFIX} serve-cmd
+	-rm -f *.exe *.o *~ *.a $(TARGETS) revinfo newrevinfo version.c $(ARCH)/*.o ejudge.po mkChangeLog serve_clnt/*.o userlist_clnt/*.o xml_utils/*.o super_clnt/*.o cdeps deps.make filter_expr.[ch] filter_scan.c master master${CGI_PROG_SUFFIX} team team${CGI_PROG_SUFFIX} register register${CGI_PROG_SUFFIX} users users${CGI_PROG_SUFFIX} ejudge-config serve-control serve-control${CGI_PROG_SUFFIX} serve-cmd
 	-rm -rf locale
 clean: local_clean
 	$(MAKE) -C extra clean
@@ -144,9 +144,14 @@ distclean : clean local_distclean
 pristine : distclean
 	rm -f configure
 
-version.c: revinfo $(HFILES) $(CFILES) $(OTHERFILES)
-	REVINFO_NO_COMMIT=1 ./revinfo -S -C -p -d db/versions -r db/revisions $(HFILES) $(CFILES) $(OTHERFILES)
+version.c: newrevinfo $(HFILES) $(CFILES) $(OTHERFILES)
+	./newrevinfo
+	#REVINFO_NO_COMMIT=1 ./revinfo -S -C -p -d db/versions -r db/revisions $(HFILES) $(CFILES) $(OTHERFILES)
 version.o: version.c
+
+newrevinfo : newrevinfo.o
+	$(LD) $(LDFLAGS) $^ -o $@
+newrevinfo.o : newrevinfo.c
 
 revinfo: prjutils2/revinfo.o
 	$(LD) $(LDFLAGS) $^ -o $@
