@@ -417,7 +417,7 @@ then
   AC_MSG_FAILURE([please install libelf development package])
 fi
 AC_CHECK_LIB([elf],[elf_begin],[ac_cv_has_libelf=1],[ac_cv_has_libelf=0])
-if [[ x"${ac_cv_has_libelf}" != x1 ]]
+if [[ x"${ac_cv_has_libelf}" != x1 -a x"${ac_cv_ejudge_arch}" != xwin32 ]]
 then
   AC_MSG_FAILURE([please install libelf development package])
 fi
@@ -431,7 +431,7 @@ then
   AC_MSG_FAILURE([please install libdwarf development package])
 fi
 AC_CHECK_LIB([dwarf],[dwarf_init],[ac_cv_has_libdwarf=1],[ac_cv_has_libdwarf=0])
-if [[ x"${ac_cv_has_libdwarf}" != x1 ]]
+if [[ x"${ac_cv_has_libdwarf}" != x1 -a x"${ac_cv_ejudge_arch}" != xwin32 ]]
 then
   AC_MSG_FAILURE([please install libdwarf development package])
 fi
