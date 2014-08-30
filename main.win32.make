@@ -219,6 +219,7 @@ tags : ${CFILES} ${HFILES} filter_expr.c filter_expr.h filter_scan.c
 
 filter_expr.c filter_expr.h : filter_expr.y
 	bison -l -o filter_expr.c -d -p filter_expr_ $<
+	cp -p filter_expr.h ./include/ejudge/filter_expr.h
 
 filter_scan.c : filter_scan.lex
 	flex -p -s -L -8 -B -o$@ -Pfilter_expr_ $<
