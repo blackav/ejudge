@@ -274,7 +274,11 @@ checksum_file(const unsigned char *name, unsigned char *buf, int size)
         sum += c;
     }
     fclose(f); f = NULL;
+#ifdef _WIN32
+	sprintf(buf, "%016I64x", sum);
+#else
     snprintf(buf, size, "%016llx", sum);
+#endif
     return 0;
 }
 
