@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-08-28 17:21+0400\n"
+"POT-Creation-Date: 2014-09-01 22:30+0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Ukrainian <uk@li.org>\n"
@@ -290,7 +290,13 @@ msgstr ""
 msgid "Actions"
 msgstr ""
 
+msgid "Activate"
+msgstr ""
+
 msgid "Activate new user account"
+msgstr ""
+
+msgid "Add"
 msgstr ""
 
 msgid "Add CHIEF EXAMINER"
@@ -369,13 +375,25 @@ msgstr ""
 msgid "Administrator"
 msgstr ""
 
+msgid "Advanced view"
+msgstr ""
+
 msgid "Advisor"
 msgstr ""
 
 msgid "Advisors"
 msgstr ""
 
+msgid "All changes to the old contest will be lost!"
+msgstr ""
+
 msgid "All clars"
+msgstr ""
+
+msgid "Allow"
+msgstr ""
+
+msgid "Allow edit registration data during contest"
 msgstr ""
 
 msgid "Allow viewing full protocol"
@@ -431,6 +449,9 @@ msgstr ""
 msgid "Area"
 msgstr ""
 
+msgid "Assign automatically"
+msgstr ""
+
 msgid "Assign chief examiner"
 msgstr ""
 
@@ -438,6 +459,9 @@ msgid "Assign cyphers"
 msgstr ""
 
 msgid "Assign examiner"
+msgstr ""
+
+msgid "Assign manually:"
 msgstr ""
 
 msgid "Assign random cyphers"
@@ -461,6 +485,9 @@ msgstr ""
 msgid "Aug"
 msgstr ""
 
+msgid "Auto-assign logins"
+msgstr ""
+
 msgid "Available"
 msgstr ""
 
@@ -482,6 +509,9 @@ msgstr ""
 msgid "Banned?"
 msgstr ""
 
+msgid "Basic view"
+msgstr ""
+
 msgid ""
 "Be careful and type the e-mail address correctly. If you make a mistake, you "
 "will not receive a registration e-mail and be unable to complete the "
@@ -492,6 +522,9 @@ msgid "Binary file is not shown"
 msgstr ""
 
 msgid "Birth Date"
+msgstr ""
+
+msgid "COMMIT changes!"
 msgstr ""
 
 msgid "Cancel"
@@ -508,6 +541,9 @@ msgid "Cannot guess the content type"
 msgstr ""
 
 msgid "Cannot participate"
+msgstr ""
+
+msgid "Cannot read file!"
 msgstr ""
 
 msgid "Cannot read message text!"
@@ -562,6 +598,12 @@ msgid "Changing status of user in contest failed"
 msgstr ""
 
 msgid "Charset"
+msgstr ""
+
+msgid "Check again"
+msgstr ""
+
+msgid "Check contest settings"
 msgstr ""
 
 msgid "Check failed"
@@ -657,9 +699,15 @@ msgstr ""
 msgid "Clear this entry"
 msgstr ""
 
+msgid "Clear variants"
+msgstr ""
+
 msgid ""
 "Client's requests are suspended. Please wait until the contest administrator "
 "resumes the contest"
+msgstr ""
+
+msgid "Close"
 msgstr ""
 
 msgid "Coach"
@@ -752,10 +800,22 @@ msgstr ""
 msgid "Contest"
 msgstr ""
 
+msgid "Contest Flags"
+msgstr ""
+
+msgid "Contest ID"
+msgstr ""
+
 msgid "Contest already finished"
 msgstr ""
 
 msgid "Contest already started"
+msgstr ""
+
+msgid "Contest configuration directory"
+msgstr ""
+
+msgid "Contest directory"
 msgstr ""
 
 msgid "Contest is not finished"
@@ -764,10 +824,16 @@ msgstr ""
 msgid "Contest is not started"
 msgstr ""
 
+msgid "Contest is ready for testing"
+msgstr ""
+
 msgid "Contest is unloaded"
 msgstr ""
 
 msgid "Contest load time"
+msgstr ""
+
+msgid "Contest management"
 msgstr ""
 
 msgid "Contest name"
@@ -797,6 +863,9 @@ msgstr ""
 msgid "Contest settings"
 msgstr ""
 
+msgid "Contest start date"
+msgstr ""
+
 msgid "Contest start time"
 msgstr ""
 
@@ -804,6 +873,9 @@ msgid "Contest status"
 msgstr ""
 
 msgid "Contest time"
+msgstr ""
+
+msgid "Contest update time"
 msgstr ""
 
 #, c-format
@@ -819,7 +891,16 @@ msgstr ""
 msgid "Continue"
 msgstr ""
 
+msgid "Continue in this session"
+msgstr ""
+
+msgid "Continue suspended editing"
+msgstr ""
+
 msgid "Coordinator"
+msgstr ""
+
+msgid "Copy"
 msgstr ""
 
 msgid "Correct answer"
@@ -838,6 +919,9 @@ msgid "Create account"
 msgstr ""
 
 msgid "Create another account"
+msgstr ""
+
+msgid "Create contest!"
 msgstr ""
 
 msgid "Create time"
@@ -871,6 +955,9 @@ msgstr ""
 msgid "Database error"
 msgstr ""
 
+msgid "Deactivate"
+msgstr ""
+
 msgid "Deadline for this problem is expired"
 msgstr ""
 
@@ -895,7 +982,16 @@ msgstr ""
 msgid "Del OBSERVER"
 msgstr ""
 
+msgid "Delete"
+msgstr ""
+
 msgid "Delete all"
+msgstr ""
+
+msgid "Delete row"
+msgstr ""
+
+msgid "Delete!"
 msgstr ""
 
 #, c-format
@@ -903,6 +999,9 @@ msgid "Deleting role %d of user %d from contest %d failed"
 msgstr ""
 
 msgid "Deleting role of user from contest failed"
+msgstr ""
+
+msgid "Deny"
 msgstr ""
 
 msgid "Desired EOLN Type"
@@ -914,13 +1013,40 @@ msgstr ""
 msgid "Detailed information for user (team)"
 msgstr ""
 
+msgid "Details"
+msgstr ""
+
 msgid "Details for user "
+msgstr ""
+
+msgid "Detect"
 msgstr ""
 
 msgid "Directory structure"
 msgstr ""
 
+msgid "Disable"
+msgstr ""
+
+msgid "Disable &quot;Name&quot; field"
+msgstr ""
+
 msgid "Disable clarifications"
+msgstr ""
+
+msgid "Disable locale change"
+msgstr ""
+
+msgid "Disable password change"
+msgstr ""
+
+msgid "Disable separate team password"
+msgstr ""
+
+msgid "Disable team member deletion"
+msgstr ""
+
+msgid "Disabled"
 msgstr ""
 
 msgid "Discipline"
@@ -1043,6 +1169,12 @@ msgstr ""
 msgid "Empty text of warning"
 msgstr ""
 
+msgid "Enable password restoration"
+msgstr ""
+
+msgid "Enable simple registration (no email)"
+msgstr ""
+
 msgid "End time"
 msgstr ""
 
@@ -1070,6 +1202,9 @@ msgstr ""
 msgid "Examination information"
 msgstr ""
 
+msgid "Examination mode"
+msgstr ""
+
 msgid "Examiner"
 msgstr ""
 
@@ -1086,6 +1221,9 @@ msgid "Exit code"
 msgstr ""
 
 msgid "Export runs in XML external format"
+msgstr ""
+
+msgid "External ID"
 msgstr ""
 
 msgid "Extra info"
@@ -1226,10 +1364,22 @@ msgstr ""
 msgid "Flags"
 msgstr ""
 
+msgid "Force contest registration"
+msgstr ""
+
 msgid "Force start virtual contest"
 msgstr ""
 
 msgid "Force virtual contest start for the selected users"
+msgstr ""
+
+msgid "Forget changes"
+msgstr ""
+
+msgid "Forget editing"
+msgstr ""
+
+msgid "Forget it"
 msgstr ""
 
 msgid "Forgot password?"
@@ -1238,10 +1388,19 @@ msgstr ""
 msgid "Formatting rules violation"
 msgstr ""
 
+msgid "Free registration"
+msgstr ""
+
 msgid "Freeze contest standings"
 msgstr ""
 
 msgid "From"
+msgstr ""
+
+msgid "From scratch"
+msgstr ""
+
+msgid "Full path"
 msgstr ""
 
 msgid "Full rejudge displayed runs"
@@ -1268,6 +1427,12 @@ msgstr ""
 msgid "General information"
 msgstr ""
 
+msgid "General registration form fields"
+msgstr ""
+
+msgid "General settings (contest.xml)"
+msgstr ""
+
 msgid "Generate random contest passwords"
 msgstr ""
 
@@ -1278,6 +1443,9 @@ msgid "Generate random registration passwords"
 msgstr ""
 
 msgid "Generate random registration passwords!"
+msgstr ""
+
+msgid "Global settings (serve.cfg)"
 msgstr ""
 
 msgid "Good!"
@@ -1404,7 +1572,25 @@ msgstr ""
 msgid "Hidden?"
 msgstr ""
 
+msgid "Hide"
+msgstr ""
+
+msgid "Hide advanced"
+msgstr ""
+
+msgid "Hide closed contests"
+msgstr ""
+
+msgid "Hide details"
+msgstr ""
+
 msgid "Hide extended info"
+msgstr ""
+
+msgid "Hide hidden contests"
+msgstr ""
+
+msgid "Hide unmanageable contests"
 msgstr ""
 
 msgid "Homepage"
@@ -1714,6 +1900,9 @@ msgstr ""
 msgid "Just ignore the run"
 msgstr ""
 
+msgid "Keywords"
+msgstr ""
+
 msgid "Language"
 msgstr ""
 
@@ -1735,6 +1924,9 @@ msgstr ""
 
 #, c-format
 msgid "Language is empty in row %d\n"
+msgstr ""
+
+msgid "Language settings (serve.cfg)"
 msgstr ""
 
 msgid "Last User_Id (incl.)"
@@ -1822,6 +2014,9 @@ msgstr ""
 msgid "Magistrant"
 msgstr ""
 
+msgid "Main URL"
+msgstr ""
+
 msgid "Main page"
 msgstr ""
 
@@ -1832,6 +2027,9 @@ msgid "Make visible"
 msgstr ""
 
 msgid "Male"
+msgstr ""
+
+msgid "Mandatory"
 msgstr ""
 
 msgid "Mar"
@@ -1862,6 +2060,9 @@ msgid "Mark displayed runs"
 msgstr ""
 
 msgid "Marked?"
+msgstr ""
+
+msgid "Master"
 msgstr ""
 
 msgid "Max memory used"
@@ -1935,7 +2136,13 @@ msgstr ""
 msgid "Mkdir(%s) failed: %s"
 msgstr ""
 
+msgid "Moderated registration"
+msgstr ""
+
 msgid "More info"
+msgstr ""
+
+msgid "Move down"
 msgstr ""
 
 msgid "Move to advisors"
@@ -1948,6 +2155,9 @@ msgid "Move to contestants"
 msgstr ""
 
 msgid "Move to reserves"
+msgstr ""
+
+msgid "Move up"
 msgstr ""
 
 msgid "Mult parameter"
@@ -1963,6 +2173,9 @@ msgid "NOT REGISTERED"
 msgstr ""
 
 msgid "Name"
+msgstr ""
+
+msgid "Name (English)"
 msgstr ""
 
 #, c-format
@@ -2165,6 +2378,12 @@ msgstr ""
 msgid "Online users"
 msgstr ""
 
+msgid "Open"
+msgstr ""
+
+msgid "Open for participation"
+msgstr ""
+
 msgid "Operation completed"
 msgstr ""
 
@@ -2181,6 +2400,9 @@ msgid "Operation is not supported"
 msgstr ""
 
 msgid "Operation succeeded"
+msgstr ""
+
+msgid "Optional"
 msgstr ""
 
 msgid "Originator IP"
@@ -2223,6 +2445,9 @@ msgid "Pages printed"
 msgstr ""
 
 msgid "Parameter is out of range"
+msgstr ""
+
+msgid "Parameter value"
 msgstr ""
 
 msgid "Partial solution"
@@ -2456,6 +2681,9 @@ msgstr ""
 msgid "Problems"
 msgstr ""
 
+msgid "Problems (serve.cfg)"
+msgstr ""
+
 msgid "Professor"
 msgstr ""
 
@@ -2511,6 +2739,9 @@ msgid "RUNNING (frozen)"
 msgstr ""
 
 msgid "Random seed"
+msgstr ""
+
+msgid "Random variants"
 msgstr ""
 
 msgid "Re"
@@ -2620,6 +2851,9 @@ msgid "Rejudge problem!"
 msgstr ""
 
 msgid "Rejudge runs"
+msgstr ""
+
+msgid "Reload"
 msgstr ""
 
 msgid "Reload config files"
@@ -2864,6 +3098,9 @@ msgstr ""
 msgid "Send clarification"
 msgstr ""
 
+msgid "Send e-mail with password anyway"
+msgstr ""
+
 msgid "Send run comment"
 msgstr ""
 
@@ -2937,6 +3174,9 @@ msgstr ""
 msgid "Set judging mode"
 msgstr ""
 
+msgid "Set permissions"
+msgstr ""
+
 msgid "Set priorities"
 msgstr ""
 
@@ -2961,6 +3201,9 @@ msgstr ""
 msgid "Set the registration status of the selected users to REJECTED"
 msgstr ""
 
+msgid "Set unlimited"
+msgstr ""
+
 msgid "Settings"
 msgstr ""
 
@@ -2968,6 +3211,24 @@ msgid "Shift parameter"
 msgstr ""
 
 msgid "Short name"
+msgstr ""
+
+msgid "Show"
+msgstr ""
+
+msgid "Show advanced"
+msgstr ""
+
+msgid "Show closed contests"
+msgstr ""
+
+msgid "Show details"
+msgstr ""
+
+msgid "Show hidden contests"
+msgstr ""
+
+msgid "Show unmanageable contests"
 msgstr ""
 
 msgid "Shown"
@@ -3044,6 +3305,12 @@ msgid "Start at"
 msgstr ""
 
 msgid "Start exam"
+msgstr ""
+
+msgid "Start new"
+msgstr ""
+
+msgid "Start new editing"
 msgstr ""
 
 msgid "Start upsolving"
@@ -3143,6 +3410,9 @@ msgstr ""
 msgid "Submit source viewing is disabled"
 msgstr ""
 
+msgid "Submit testing mode"
+msgstr ""
+
 msgid "Success"
 msgstr ""
 
@@ -3212,6 +3482,9 @@ msgstr ""
 msgid "Testing reports are open"
 msgstr ""
 
+msgid "Tests"
+msgstr ""
+
 #, c-format
 msgid "Tests is empty in row %d\n"
 msgstr ""
@@ -3239,6 +3512,9 @@ msgid "The contest is over"
 msgstr ""
 
 msgid "The contest is over (standings are frozen)"
+msgstr ""
+
+msgid "The contest is personal"
 msgstr ""
 
 msgid ""
@@ -3370,12 +3646,24 @@ msgid ""
 "\n"
 msgstr ""
 
+msgid "To contest details"
+msgstr ""
+
+msgid "To contests list"
+msgstr ""
+
 msgid ""
 "To create an account, please think out, a login and provide your valid e-"
 "mail address in the form above. Then press the \\\"Create account\\\" button."
 msgstr ""
 
 msgid "To main page"
+msgstr ""
+
+msgid "To the top"
+msgstr ""
+
+msgid "To the top (postpone editing)"
 msgstr ""
 
 msgid "To user id"
@@ -3484,6 +3772,9 @@ msgstr ""
 msgid "Update the public standings"
 msgstr ""
 
+msgid "Update versions"
+msgstr ""
+
 msgid "Upload judging protocol"
 msgstr ""
 
@@ -3500,6 +3791,9 @@ msgid "Upsolving mode"
 msgstr ""
 
 msgid "Use an existing account"
+msgstr ""
+
+msgid "Use existing contest:"
 msgstr ""
 
 msgid "Use problem short name"
@@ -3628,6 +3922,9 @@ msgstr ""
 msgid "Variant"
 msgstr ""
 
+msgid "Variants (variant.map)"
+msgstr ""
+
 msgid "View"
 msgstr ""
 
@@ -3641,6 +3938,9 @@ msgid "View check details"
 msgstr ""
 
 msgid "View contest passwords"
+msgstr ""
+
+msgid "View details"
 msgstr ""
 
 msgid "View examination information"
@@ -3659,6 +3959,9 @@ msgid "View regular users"
 msgstr ""
 
 msgid "View report"
+msgstr ""
+
+msgid "View serve.cfg"
 msgstr ""
 
 msgid "View source"
@@ -3718,10 +4021,16 @@ msgstr ""
 msgid "Viewing user report"
 msgstr ""
 
+msgid "Virtual contest close date"
+msgstr ""
+
 msgid "Virtual contest close time"
 msgstr ""
 
 msgid "Virtual contest is not started"
+msgstr ""
+
+msgid "Virtual contest open date"
 msgstr ""
 
 msgid "Virtual contest open time"
@@ -3849,6 +4158,15 @@ msgid "Your submit has been commented in contest %d"
 msgstr ""
 
 msgid "Zip code"
+msgstr ""
+
+msgid "[Create new contest (New interface)]"
+msgstr ""
+
+msgid "[Edit current contest (New interface)]"
+msgstr ""
+
+msgid "[Edit current contest]"
 msgstr ""
 
 msgid "`run_id' parameter is undefined"

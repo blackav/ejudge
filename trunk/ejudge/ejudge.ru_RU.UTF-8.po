@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-08-28 17:21+0400\n"
-"PO-Revision-Date: 2014-05-23 15:37+0400\n"
+"POT-Creation-Date: 2014-09-01 22:37+0400\n"
+"PO-Revision-Date: 2014-09-01 23:24+0400\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -350,8 +350,14 @@ msgstr ""
 msgid "Actions"
 msgstr "Действия"
 
+msgid "Activate"
+msgstr "Активировать"
+
 msgid "Activate new user account"
 msgstr "Активировать новую учётную запись"
+
+msgid "Add"
+msgstr "Добавить"
 
 msgid "Add CHIEF EXAMINER"
 msgstr "Добавить роль ГЛАВНОГО ЭКЗАМЕНАТОРА"
@@ -429,14 +435,26 @@ msgstr "Доп. инф. о тесте"
 msgid "Administrator"
 msgstr "Администратор"
 
+msgid "Advanced view"
+msgstr "Расширенный просмотр"
+
 msgid "Advisor"
 msgstr "Руководитель команды"
 
 msgid "Advisors"
 msgstr "Руководители"
 
+msgid "All changes to the old contest will be lost!"
+msgstr "Все изменения в старом турнире будут потеряны!"
+
 msgid "All clars"
 msgstr "Все сообщения"
+
+msgid "Allow"
+msgstr "Разрешить"
+
+msgid "Allow edit registration data during contest"
+msgstr "Разрешить редактирование регистрационных данных во время турнира"
 
 msgid "Allow viewing full protocol"
 msgstr "Разрешить просмотр полного протокола"
@@ -494,6 +512,9 @@ msgstr "При создании архива программой tar произ
 msgid "Area"
 msgstr "Район"
 
+msgid "Assign automatically"
+msgstr "Назначить автоматически"
+
 msgid "Assign chief examiner"
 msgstr "Назначить старшего экзаменатора"
 
@@ -502,6 +523,9 @@ msgstr "Назначить шифры"
 
 msgid "Assign examiner"
 msgstr "Назначить экзаменатора"
+
+msgid "Assign manually:"
+msgstr "Назначить вручную:"
 
 msgid "Assign random cyphers"
 msgstr "Назначить случайный шифр"
@@ -524,6 +548,9 @@ msgstr "Журнал аудита пуст"
 msgid "Aug"
 msgstr "Авг"
 
+msgid "Auto-assign logins"
+msgstr "Назачить логины автоматически"
+
 msgid "Available"
 msgstr "Доступна"
 
@@ -545,6 +572,9 @@ msgstr "Заблокировать"
 msgid "Banned?"
 msgstr "Заблокированный?"
 
+msgid "Basic view"
+msgstr "Базовый просмотр"
+
 msgid ""
 "Be careful and type the e-mail address correctly. If you make a mistake, you "
 "will not receive a registration e-mail and be unable to complete the "
@@ -559,6 +589,9 @@ msgstr "Бинарный файл"
 
 msgid "Birth Date"
 msgstr "Дата рождения"
+
+msgid "COMMIT changes!"
+msgstr "СОХРАНИТЬ изменения!"
 
 msgid "Cancel"
 msgstr "Отменить"
@@ -575,6 +608,9 @@ msgstr "Невозможно определить тип содержимого"
 
 msgid "Cannot participate"
 msgstr "Участие невозможно"
+
+msgid "Cannot read file!"
+msgstr "Ошибка чтения файла!"
 
 msgid "Cannot read message text!"
 msgstr "Ошибка чтения файла сообщения!"
@@ -629,6 +665,12 @@ msgstr "Изменение статуса пользователя в турни
 
 msgid "Charset"
 msgstr "Кодировка"
+
+msgid "Check again"
+msgstr "Проверить еще раз"
+
+msgid "Check contest settings"
+msgstr "Проверить настройки турнира"
 
 msgid "Check failed"
 msgstr "Ошибка проверяющей системы"
@@ -723,12 +765,18 @@ msgstr "Сбросить еще один флаг"
 msgid "Clear this entry"
 msgstr "Очистить эту запись"
 
+msgid "Clear variants"
+msgstr "Очистить варианты"
+
 msgid ""
 "Client's requests are suspended. Please wait until the contest administrator "
 "resumes the contest"
 msgstr ""
 "Запросы участников временно не обрабатываются. Пожалуйста, подождите, пока "
 "турнир не будет продолжен"
+
+msgid "Close"
+msgstr "Закрыть"
 
 msgid "Coach"
 msgstr "Тренер"
@@ -820,11 +868,23 @@ msgstr "Этот файла недоступен для этой задачи"
 msgid "Contest"
 msgstr "Турнир"
 
+msgid "Contest Flags"
+msgstr "Флаги турнира"
+
+msgid "Contest ID"
+msgstr "ID турнира"
+
 msgid "Contest already finished"
 msgstr "Турнир уже завершён"
 
 msgid "Contest already started"
 msgstr "Турнир уже запущен"
+
+msgid "Contest configuration directory"
+msgstr "Каталог с конфигурацией турнира"
+
+msgid "Contest directory"
+msgstr "Каталог турнира"
 
 msgid "Contest is not finished"
 msgstr "Турнир ещё не закончился"
@@ -832,11 +892,17 @@ msgstr "Турнир ещё не закончился"
 msgid "Contest is not started"
 msgstr "Турнир не начался"
 
+msgid "Contest is ready for testing"
+msgstr "Турнир готов к тестированию"
+
 msgid "Contest is unloaded"
 msgstr "Обслуживание турнира прервано"
 
 msgid "Contest load time"
 msgstr "Время загрузки турнира"
+
+msgid "Contest management"
+msgstr "Управление турниром"
 
 msgid "Contest name"
 msgstr "Название турнира"
@@ -865,6 +931,9 @@ msgstr "Выбор турнира"
 msgid "Contest settings"
 msgstr "Настройки турнира"
 
+msgid "Contest start date"
+msgstr "Время начала турнира"
+
 msgid "Contest start time"
 msgstr "Время начала турнира"
 
@@ -873,6 +942,9 @@ msgstr "Состояние турнира"
 
 msgid "Contest time"
 msgstr "Продолжительность турнира"
+
+msgid "Contest update time"
+msgstr "Время обновления турнира"
 
 #, c-format
 msgid "Contest: %d (%s)\n"
@@ -887,8 +959,17 @@ msgstr "Основные участники"
 msgid "Continue"
 msgstr "Продолжить"
 
+msgid "Continue in this session"
+msgstr "Продолжить в данной сессии"
+
+msgid "Continue suspended editing"
+msgstr "Продолжить приостановленное редактирование"
+
 msgid "Coordinator"
 msgstr "Координатор"
+
+msgid "Copy"
+msgstr "Скопировать"
 
 msgid "Correct answer"
 msgstr "Правильный ответ"
@@ -907,6 +988,9 @@ msgstr "Создать учётную запись"
 
 msgid "Create another account"
 msgstr "Создать ещё одну учётную запись"
+
+msgid "Create contest!"
+msgstr "Создать турнир!"
 
 msgid "Create time"
 msgstr "Время создания"
@@ -939,6 +1023,9 @@ msgstr "ДИСКВАЛИФИЦИРОВАТЬ пользователей"
 msgid "Database error"
 msgstr "Ошибка базы данных"
 
+msgid "Deactivate"
+msgstr "Деактивировать"
+
 msgid "Deadline for this problem is expired"
 msgstr "Срок сдачи данной задачи истёк"
 
@@ -963,8 +1050,17 @@ msgstr "Удалить роль ЭКЗАМЕНАТОРА"
 msgid "Del OBSERVER"
 msgstr "Удалить роль НАБЛЮДАТЕЛЯ"
 
+msgid "Delete"
+msgstr "Удалить"
+
 msgid "Delete all"
 msgstr "Удалить все"
+
+msgid "Delete row"
+msgstr "Удалить строку"
+
+msgid "Delete!"
+msgstr "Удалить!"
 
 #, c-format
 msgid "Deleting role %d of user %d from contest %d failed"
@@ -972,6 +1068,9 @@ msgstr "Удаление роли %d у пользователя %d в турн�
 
 msgid "Deleting role of user from contest failed"
 msgstr "Удаление роли у пользователя в турнире не удалось"
+
+msgid "Deny"
+msgstr "Отказать"
 
 msgid "Desired EOLN Type"
 msgstr "Желаемый тип концов строк"
@@ -982,14 +1081,41 @@ msgstr "Подробная информация об участнике"
 msgid "Detailed information for user (team)"
 msgstr "Подробная информация о пользователе (команде)"
 
+msgid "Details"
+msgstr "Детали"
+
 msgid "Details for user "
 msgstr "Подробная информация о пользователе "
+
+msgid "Detect"
+msgstr "Обнаружить"
 
 msgid "Directory structure"
 msgstr "Структура каталогов"
 
+msgid "Disable"
+msgstr "Запретить"
+
+msgid "Disable &quot;Name&quot; field"
+msgstr "Запретить поле &quot;Имя&quot;"
+
 msgid "Disable clarifications"
 msgstr "Запретить отправку участниками сообщений"
+
+msgid "Disable locale change"
+msgstr "Запретить смену языка интерфейса"
+
+msgid "Disable password change"
+msgstr "Запретить смену пароля"
+
+msgid "Disable separate team password"
+msgstr "Запретить турнирные пароли"
+
+msgid "Disable team member deletion"
+msgstr "Запретить удаление членов команды"
+
+msgid "Disabled"
+msgstr "Запрещен"
 
 msgid "Discipline"
 msgstr "Учебная дисциплина"
@@ -1111,6 +1237,12 @@ msgstr "Пустая посылка"
 msgid "Empty text of warning"
 msgstr "Текст предупреждения пуст"
 
+msgid "Enable password restoration"
+msgstr "Разрешить восстановление пароля"
+
+msgid "Enable simple registration (no email)"
+msgstr "Разрешить упрощенную регистрацию (без e-mail)"
+
 msgid "End time"
 msgstr "Время окончания"
 
@@ -1138,6 +1270,9 @@ msgstr "Состояние экзамена"
 msgid "Examination information"
 msgstr "Информация об экзаменуемых"
 
+msgid "Examination mode"
+msgstr "Режим экзамена"
+
 msgid "Examiner"
 msgstr "Экзаменатор"
 
@@ -1155,6 +1290,9 @@ msgstr "Код завершения"
 
 msgid "Export runs in XML external format"
 msgstr "Сохранить журнал посылок во внешнем XML-формате"
+
+msgid "External ID"
+msgstr "Внешний ID"
 
 msgid "Extra info"
 msgstr "Доп. информация"
@@ -1294,11 +1432,23 @@ msgstr "Первая посылка"
 msgid "Flags"
 msgstr "Флаги"
 
+msgid "Force contest registration"
+msgstr "Регистрировать на турнир принудительно"
+
 msgid "Force start virtual contest"
 msgstr "Начать виртуальный турнир"
 
 msgid "Force virtual contest start for the selected users"
 msgstr "Начать виртуальный турнир для отмеченных пользователей"
+
+msgid "Forget changes"
+msgstr "Забыть изменения"
+
+msgid "Forget editing"
+msgstr "Забыть редактирование"
+
+msgid "Forget it"
+msgstr "Забыть это"
 
 msgid "Forgot password?"
 msgstr "Забыли пароль?"
@@ -1306,11 +1456,20 @@ msgstr "Забыли пароль?"
 msgid "Formatting rules violation"
 msgstr "Нарушение правил оформления программ"
 
+msgid "Free registration"
+msgstr "Свободная регистрация"
+
 msgid "Freeze contest standings"
 msgstr "Не обновлять таблицу результатов"
 
 msgid "From"
 msgstr "От"
+
+msgid "From scratch"
+msgstr "С нуля"
+
+msgid "Full path"
+msgstr "Полный путь"
 
 msgid "Full rejudge displayed runs"
 msgstr "Полностью перепроверить отображённые посылки"
@@ -1336,6 +1495,12 @@ msgstr "Общая информация"
 msgid "General information"
 msgstr "Общая информация"
 
+msgid "General registration form fields"
+msgstr "Общие поля регистрационной анкеты"
+
+msgid "General settings (contest.xml)"
+msgstr "Общие настройки (contest.xml)"
+
 msgid "Generate random contest passwords"
 msgstr "Сгенерировать случайные турнирные пароли"
 
@@ -1347,6 +1512,9 @@ msgstr "Сгенерировать случайные регистрационн
 
 msgid "Generate random registration passwords!"
 msgstr "Сгенерировать случайные регистрационные пароли!"
+
+msgid "Global settings (serve.cfg)"
+msgstr "Глобальные настройки (serve.cfg)"
 
 msgid "Good!"
 msgstr "Отлично!"
@@ -1540,8 +1708,26 @@ msgstr "Помощь"
 msgid "Hidden?"
 msgstr "Скрыт?"
 
+msgid "Hide"
+msgstr "Скрыть"
+
+msgid "Hide advanced"
+msgstr "Скрыть расширенный"
+
+msgid "Hide closed contests"
+msgstr "Скрыть закрытые турниры"
+
+msgid "Hide details"
+msgstr "Скрыть детали"
+
 msgid "Hide extended info"
 msgstr "Скрыть расширенную информацию   "
+
+msgid "Hide hidden contests"
+msgstr "Скрыть скрытые турниры"
+
+msgid "Hide unmanageable contests"
+msgstr "Скрыть неуправляемые турниры"
 
 msgid "Homepage"
 msgstr "Личная страница WEB"
@@ -1856,6 +2042,9 @@ msgstr "Просто пометить посылку OK"
 msgid "Just ignore the run"
 msgstr "Просто проигнорировать посылку"
 
+msgid "Keywords"
+msgstr "Ключевые слова"
+
 msgid "Language"
 msgstr "Язык"
 
@@ -1878,6 +2067,9 @@ msgstr "Столбец \"Язык\" не определен\n"
 #, c-format
 msgid "Language is empty in row %d\n"
 msgstr "В строке %d не определён язык\n"
+
+msgid "Language settings (serve.cfg)"
+msgstr "Настройки языков программирования (serve.cfg)"
 
 msgid "Last User_Id (incl.)"
 msgstr "Последний User_Id (вкл.)"
@@ -1966,6 +2158,9 @@ msgstr "Восстановление пароля [%s]"
 msgid "Magistrant"
 msgstr "Студент магистратуры"
 
+msgid "Main URL"
+msgstr "Главный URL"
+
 msgid "Main page"
 msgstr "Главная"
 
@@ -1977,6 +2172,9 @@ msgstr "Сделать видимой"
 
 msgid "Male"
 msgstr "Мужской"
+
+msgid "Mandatory"
+msgstr "Обязательный"
 
 msgid "Mar"
 msgstr "Мар"
@@ -2007,6 +2205,9 @@ msgstr "Пометить отображённые посылки"
 
 msgid "Marked?"
 msgstr "Отмечена?"
+
+msgid "Master"
+msgstr "Master"
 
 msgid "Max memory used"
 msgstr "Макс. использованная память"
@@ -2083,8 +2284,14 @@ msgstr "Mkdir не сработал"
 msgid "Mkdir(%s) failed: %s"
 msgstr "Mkdir(%s) не сработал: %s"
 
+msgid "Moderated registration"
+msgstr "Модерируемая регистрация"
+
 msgid "More info"
 msgstr "Дополнительная информация"
+
+msgid "Move down"
+msgstr "Вниз"
 
 msgid "Move to advisors"
 msgstr "Перевести в руководители"
@@ -2097,6 +2304,9 @@ msgstr "Перевести в участников"
 
 msgid "Move to reserves"
 msgstr "Перевести в запасные"
+
+msgid "Move up"
+msgstr "Вверх"
 
 msgid "Mult parameter"
 msgstr "Параметр mult"
@@ -2112,6 +2322,9 @@ msgstr "НЕ ЗАРЕГИСТРИРОВАН"
 
 msgid "Name"
 msgstr "Имя"
+
+msgid "Name (English)"
+msgstr "Name (English)"
 
 #, c-format
 msgid "Name is empty in row %d\n"
@@ -2319,6 +2532,12 @@ msgstr "Пользователей в турнире в этот момент"
 msgid "Online users"
 msgstr "Подключившиеся пользователи"
 
+msgid "Open"
+msgstr "Открыть"
+
+msgid "Open for participation"
+msgstr "Открыт для участия"
+
 msgid "Operation completed"
 msgstr "Операция завершена"
 
@@ -2336,6 +2555,9 @@ msgstr "Операция не поддерживается"
 
 msgid "Operation succeeded"
 msgstr "Операция успешно выполнена"
+
+msgid "Optional"
+msgstr "Необязательный"
 
 msgid "Originator IP"
 msgstr "IP-адрес отправителя"
@@ -2378,6 +2600,9 @@ msgstr "Напечатано страниц"
 
 msgid "Parameter is out of range"
 msgstr "Значение параметра не удовлетворяет диапазону допустимых значений"
+
+msgid "Parameter value"
+msgstr "Значение параметра"
 
 msgid "Partial solution"
 msgstr "Неполное решение"
@@ -2618,6 +2843,9 @@ msgstr "Итог по задачам"
 msgid "Problems"
 msgstr "Задачи"
 
+msgid "Problems (serve.cfg)"
+msgstr "Задачи (serve.cfg)"
+
 msgid "Professor"
 msgstr "Преподаватель вуза"
 
@@ -2674,6 +2902,9 @@ msgstr "ТУРНИР ИДЕТ (заморозка)"
 
 msgid "Random seed"
 msgstr "Затравка ГПСЧ"
+
+msgid "Random variants"
+msgstr "Случайные варианты"
 
 msgid "Re"
 msgstr "Re"
@@ -2785,6 +3016,9 @@ msgstr "Пересудить задачу!"
 
 msgid "Rejudge runs"
 msgstr "Пересудить"
+
+msgid "Reload"
+msgstr "Перезагрузить"
 
 msgid "Reload config files"
 msgstr "Перезагрузить конфигурационные файлы"
@@ -3032,6 +3266,9 @@ msgstr "Отправить аппеляцию"
 msgid "Send clarification"
 msgstr "Отправить сообщение"
 
+msgid "Send e-mail with password anyway"
+msgstr "Выслать сообщение с паролем в любом случае"
+
 msgid "Send run comment"
 msgstr "Отправить комментарий к программе"
 
@@ -3105,6 +3342,9 @@ msgstr "Установить флаг законченности проверк�
 msgid "Set judging mode"
 msgstr "Включить режим проверки"
 
+msgid "Set permissions"
+msgstr "Установить права"
+
 msgid "Set priorities"
 msgstr "Установить приоритеты"
 
@@ -3129,6 +3369,9 @@ msgstr "Установить статус регистрации в PENDING, т�
 msgid "Set the registration status of the selected users to REJECTED"
 msgstr "Установить статус регистрации в REJECTED, то есть отказать в участии"
 
+msgid "Set unlimited"
+msgstr "Установить неограниченный"
+
 msgid "Settings"
 msgstr "Настройки"
 
@@ -3137,6 +3380,24 @@ msgstr "Параметр shift"
 
 msgid "Short name"
 msgstr "ID Задачи"
+
+msgid "Show"
+msgstr "Показать"
+
+msgid "Show advanced"
+msgstr "Показать расширенные"
+
+msgid "Show closed contests"
+msgstr "Показать закрытые турниры"
+
+msgid "Show details"
+msgstr "Показать детали"
+
+msgid "Show hidden contests"
+msgstr "Показать скрытые турниры"
+
+msgid "Show unmanageable contests"
+msgstr "Показать неуправляемые турниры"
 
 msgid "Shown"
 msgstr "Показано"
@@ -3213,6 +3474,12 @@ msgstr "Начало в"
 
 msgid "Start exam"
 msgstr "Начать экзамен"
+
+msgid "Start new"
+msgstr "Начать новый"
+
+msgid "Start new editing"
+msgstr "Начать новое редактирование"
 
 msgid "Start upsolving"
 msgstr "Открыть дорешивание"
@@ -3311,6 +3578,9 @@ msgstr "Сдать решение!"
 msgid "Submit source viewing is disabled"
 msgstr "Просмотр текстов программ отключён"
 
+msgid "Submit testing mode"
+msgstr "Включить режим приёма решений"
+
 msgid "Success"
 msgstr "Успешных"
 
@@ -3380,6 +3650,9 @@ msgstr "Просмотр отчетов закрыт"
 msgid "Testing reports are open"
 msgstr "Просмотр отчетов открыт"
 
+msgid "Tests"
+msgstr "Тесты"
+
 #, c-format
 msgid "Tests is empty in row %d\n"
 msgstr "Тесты не заданы в строке %d\n"
@@ -3408,6 +3681,9 @@ msgstr "Турнир закончился"
 
 msgid "The contest is over (standings are frozen)"
 msgstr "Турнир закончился (текущее положение участников не отображается)"
+
+msgid "The contest is personal"
+msgstr "Турнир личный"
 
 msgid ""
 "The contest is temporarily not available. Please, retry the request a bit "
@@ -3564,6 +3840,12 @@ msgstr ""
 "следующий URL: %s?contest_id=%d&locale_id=%d&SID=%016llx&action=%d.\n"
 "\n"
 
+msgid "To contest details"
+msgstr "К деталям турнира"
+
+msgid "To contests list"
+msgstr "К списку турниров"
+
 msgid ""
 "To create an account, please think out, a login and provide your valid e-"
 "mail address in the form above. Then press the \\\"Create account\\\" button."
@@ -3574,6 +3856,12 @@ msgstr ""
 
 msgid "To main page"
 msgstr "На главную страницу"
+
+msgid "To the top"
+msgstr "Наверх"
+
+msgid "To the top (postpone editing)"
+msgstr "Наверх (отложить редактирование)"
 
 msgid "To user id"
 msgstr "Кому (рег. номер)"
@@ -3683,6 +3971,9 @@ msgstr "Обновить таблицу!"
 msgid "Update the public standings"
 msgstr "Обновить публичную таблицу положения участников"
 
+msgid "Update versions"
+msgstr "Обновить версии"
+
 msgid "Upload judging protocol"
 msgstr "Установить протокол тестирования"
 
@@ -3700,6 +3991,9 @@ msgstr "Режим дорешивания"
 
 msgid "Use an existing account"
 msgstr "Использовать существующую учетную запись"
+
+msgid "Use existing contest:"
+msgstr "Использовать существующий турнир:"
 
 msgid "Use problem short name"
 msgstr "Использовать короткое имя задачи"
@@ -3833,6 +4127,9 @@ msgstr "Комментарий об оценивании для судей"
 msgid "Variant"
 msgstr "Вариант"
 
+msgid "Variants (variant.map)"
+msgstr "Варианты (variant.map)"
+
 msgid "View"
 msgstr "Просмотр"
 
@@ -3847,6 +4144,9 @@ msgstr "Отчёт о проверке"
 
 msgid "View contest passwords"
 msgstr "Просмотреть турнирные пароли"
+
+msgid "View details"
+msgstr "Посмотреть детали"
 
 msgid "View examination information"
 msgstr "Посмотреть информацию об экзаменуемых"
@@ -3865,6 +4165,9 @@ msgstr "Посмотреть список обычных пользовател�
 
 msgid "View report"
 msgstr "Просмотреть протокол"
+
+msgid "View serve.cfg"
+msgstr "Посмотреть serve.cfg"
 
 msgid "View source"
 msgstr "Посмотреть исходный текст"
@@ -3923,11 +4226,17 @@ msgstr "Просмотр настроек"
 msgid "Viewing user report"
 msgstr "Просмотр пользовательского протокола"
 
+msgid "Virtual contest close date"
+msgstr "Время закрытия виртуального турнира"
+
 msgid "Virtual contest close time"
 msgstr "Время закрытия виртуального турнира"
 
 msgid "Virtual contest is not started"
 msgstr "Виртуальный турнир не начат"
+
+msgid "Virtual contest open date"
+msgstr "Время открытия виртуального турнира"
 
 msgid "Virtual contest open time"
 msgstr "Время открытия виртуального турнира"
@@ -4068,6 +4377,15 @@ msgstr "Ваша посылка была прокомментирована в �
 
 msgid "Zip code"
 msgstr "Почтовый индекс"
+
+msgid "[Create new contest (New interface)]"
+msgstr "[Создать новый турнир (Новый интерфейс)]"
+
+msgid "[Edit current contest (New interface)]"
+msgstr "[Редактировать текущий турнир (Новый интерфейс)]"
+
+msgid "[Edit current contest]"
+msgstr "[Редактировать текущий турнир]"
 
 msgid "`run_id' parameter is undefined"
 msgstr "Параметр `run_id' не определён"
