@@ -457,8 +457,8 @@ ejudge.uk_UA.UTF-8.po: $(CFILES) ejudge.po
 ejudge.kk_KZ.UTF-8.po: $(CFILES) ejudge.po
 	${MSGMERGE} -U $@ ejudge.po
 
-ejudge.po: $(CFILES)
-	${XGETTEXT} -d ejudge --no-location --foreign-user  -k_ -k__ -s -o $@ *.c csp/contests/*.c
+ejudge.po: $(CFILES) subdirs_all
+	${XGETTEXT} -d ejudge --no-location --foreign-user  -k_ -k__ -s -o $@ *.c csp/contests/*.c csp/super-server/*.c
 
 ru_all:
 	-mkdir -p locale/ru_RU.${CHARSET}/LC_MESSAGES
