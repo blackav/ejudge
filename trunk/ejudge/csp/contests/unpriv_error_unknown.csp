@@ -9,6 +9,7 @@
   unsigned char title[1024];
   const unsigned char *error_title = NULL;
 
+  if (phr->locale_id < 0) phr->locale_id = 0;
   l10n_setlocale(phr->locale_id);
   error_title = ns_error_title(phr->error_code);
   snprintf(title, sizeof(title), "%s: %s", _("Error"), error_title);

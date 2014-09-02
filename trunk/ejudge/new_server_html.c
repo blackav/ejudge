@@ -10242,6 +10242,7 @@ unprivileged_entry_point(
   int online_users = 0;
   serve_state_t cs = 0;
   const unsigned char *s = 0;
+  int cookie_locale_id = -1;
 
   phr->log_f = open_memstream(&phr->log_t, &phr->log_z);
 
@@ -10280,11 +10281,13 @@ unprivileged_entry_point(
                                     phr->session_id,
                                     phr->client_key,
                                     &phr->user_id, &phr->contest_id,
-                                    &phr->locale_id, 0, &phr->role, 0, 0, 0,
+                                    &cookie_locale_id, 0, &phr->role, 0, 0, 0,
                                     &phr->login, &phr->name)) < 0) {
-    if (r < 0 && phr->locale_id < 0 && cnts && cnts->default_locale_num >= 0) {
+    if (phr->locale_id < 0 && cookie_locale_id >= 0) phr->locale_id = cookie_locale_id;
+    if (phr->locale_id < 0 && cnts && cnts->default_locale_num >= 0) {
       phr->locale_id = cnts->default_locale_num;
     }
+    if (phr->locale_id < 0) phr->locale_id = 0;
     switch (-r) {
     case ULS_ERR_NO_COOKIE:
     case ULS_ERR_CANNOT_PARTICIPATE:
@@ -10303,6 +10306,12 @@ unprivileged_entry_point(
       goto cleanup;
     }
   }
+
+  if (phr->locale_id < 0 && cookie_locale_id >= 0) phr->locale_id = cookie_locale_id;
+  if (phr->locale_id < 0 && cnts && cnts->default_locale_num >= 0) {
+    phr->locale_id = cnts->default_locale_num;
+  }
+  if (phr->locale_id < 0) phr->locale_id = 0;
 
   if (phr->contest_id < 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts){
     fprintf(phr->log_f, "invalid contest_id %d\n", phr->contest_id);

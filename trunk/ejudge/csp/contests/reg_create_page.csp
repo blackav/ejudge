@@ -44,6 +44,7 @@
 %><s:read var="email" ignoreerrors="yes" /><%
   if (!email) email = "";
 
+  if (phr->locale_id < 0) phr->locale_id = 0;
   l10n_setlocale(phr->locale_id);
   snprintf(title, sizeof(title), "%s [%s]", _("Create user account"), extra->contest_arm);
 %><%@include "reg_header.csp"
