@@ -1597,6 +1597,7 @@ action_error_page(
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   const unsigned char *n, *s;
 
+  if (phr->locale_id < 0) phr->locale_id = 0;
   l10n_setlocale(phr->locale_id);
 
   s = _("Operation errors");
@@ -2574,6 +2575,7 @@ ns_register_pages(FILE *fout, struct http_request_info *phr)
   time_t cur_time = 0;
   unsigned char *user_info_xml = 0;
   unsigned char hid_buf[1024];
+  int cookie_locale_id = -1;
 
   phr->log_f = open_memstream(&phr->log_t, &phr->log_z);
 
@@ -2594,9 +2596,11 @@ ns_register_pages(FILE *fout, struct http_request_info *phr)
                                     phr->session_id,
                                     phr->client_key,
                                     &phr->user_id, &phr->contest_id,
-                                    &phr->locale_id, 0, &phr->role, &is_team,
+                                    &cookie_locale_id, 0, &phr->role, &is_team,
                                     &phr->reg_status, &phr->reg_flags,
                                     &phr->login, &phr->name)) < 0) {
+    if (phr->locale_id < 0 && cookie_locale_id >= 0) phr->locale_id = cookie_locale_id;
+    if (phr->locale_id < 0) phr->locale_id = 0;
     switch (-r) {
     case ULS_ERR_NO_COOKIE:
     case ULS_ERR_CANNOT_PARTICIPATE:
@@ -2611,6 +2615,8 @@ ns_register_pages(FILE *fout, struct http_request_info *phr)
                                         userlist_strerror(-r));
     }
   }
+  if (phr->locale_id < 0 && cookie_locale_id >= 0) phr->locale_id = cookie_locale_id;
+  if (phr->locale_id < 0) phr->locale_id = 0;
 
   if (phr->role > 0) {
     return ns_html_err_no_perm(fout, phr, 0, "role %d > 0", phr->role);
