@@ -293,19 +293,9 @@ ns_html_err_no_perm(FILE *fout,
   if (phr->contest_id > 0) contests_get(phr->contest_id, &cnts);
   if (cnts) extra = ns_get_contest_extra(phr->contest_id);
   if (extra && !priv_mode) {
-    watched_file_update(&extra->header, cnts->team_header_file, cur_time);
-    watched_file_update(&extra->separator, cnts->team_separator_file, cur_time);
-    watched_file_update(&extra->footer, cnts->team_footer_file, cur_time);
     watched_file_update(&extra->copyright, cnts->copyright_file, cur_time);
-    header = extra->header.text;
-    separator = extra->separator.text;
-    footer = extra->footer.text;
     copyright = extra->copyright.text;
   } else if (extra && priv_mode) {
-    watched_file_update(&extra->priv_header, cnts->priv_header_file, cur_time);
-    watched_file_update(&extra->priv_footer, cnts->priv_footer_file, cur_time);
-    header = extra->priv_header.text;
-    footer = extra->priv_footer.text;
   }
   if (!priv_mode) {
     if (!header || !footer) {
@@ -388,19 +378,9 @@ ns_html_err_simple_registered(
   if (phr->contest_id > 0) contests_get(phr->contest_id, &cnts);
   if (cnts) extra = ns_get_contest_extra(phr->contest_id);
   if (extra && !priv_mode) {
-    watched_file_update(&extra->header, cnts->team_header_file, cur_time);
-    watched_file_update(&extra->separator, cnts->team_separator_file, cur_time);
-    watched_file_update(&extra->footer, cnts->team_footer_file, cur_time);
     watched_file_update(&extra->copyright, cnts->copyright_file, cur_time);
-    header = extra->header.text;
-    separator = extra->separator.text;
-    footer = extra->footer.text;
     copyright = extra->copyright.text;
   } else if (extra && priv_mode) {
-    watched_file_update(&extra->priv_header, cnts->priv_header_file, cur_time);
-    watched_file_update(&extra->priv_footer, cnts->priv_footer_file, cur_time);
-    header = extra->priv_header.text;
-    footer = extra->priv_footer.text;
   }
   if (!priv_mode) {
     if (!header || !footer) {
@@ -475,19 +455,9 @@ ns_html_err_inv_param(FILE *fout,
   if (phr->contest_id > 0) contests_get(phr->contest_id, &cnts);
   if (cnts) extra = ns_get_contest_extra(phr->contest_id);
   if (extra && !priv_mode) {
-    watched_file_update(&extra->header, cnts->team_header_file, cur_time);
-    watched_file_update(&extra->separator, cnts->team_separator_file, cur_time);
-    watched_file_update(&extra->footer, cnts->team_footer_file, cur_time);
     watched_file_update(&extra->copyright, cnts->copyright_file, cur_time);
-    header = extra->header.text;
-    separator = extra->separator.text;
-    footer = extra->footer.text;
     copyright = extra->copyright.text;
   } else if (extra && priv_mode) {
-    watched_file_update(&extra->priv_header, cnts->priv_header_file, cur_time);
-    watched_file_update(&extra->priv_footer, cnts->priv_footer_file, cur_time);
-    header = extra->priv_header.text;
-    footer = extra->priv_footer.text;
   }
   if (!priv_mode) {
     if (!header || !footer) {
@@ -541,13 +511,7 @@ ns_html_err_service_not_available(FILE *fout,
   if (phr->contest_id > 0) contests_get(phr->contest_id, &cnts);
   if (cnts) extra = ns_get_contest_extra(phr->contest_id);
   if (extra) {
-    watched_file_update(&extra->header, cnts->team_header_file, cur_time);
-    watched_file_update(&extra->separator, cnts->team_separator_file, cur_time);
-    watched_file_update(&extra->footer, cnts->team_footer_file, cur_time);
     watched_file_update(&extra->copyright, cnts->copyright_file, cur_time);
-    header = extra->header.text;
-    separator = extra->separator.text;
-    footer = extra->footer.text;
     copyright = extra->copyright.text;
   }
 
@@ -603,13 +567,7 @@ ns_html_err_cnts_unavailable(FILE *fout,
   if (phr->contest_id > 0) contests_get(phr->contest_id, &cnts);
   if (cnts) extra = ns_get_contest_extra(phr->contest_id);
   if (extra) {
-    watched_file_update(&extra->header, cnts->team_header_file, cur_time);
-    watched_file_update(&extra->separator, cnts->team_separator_file, cur_time);
-    watched_file_update(&extra->footer, cnts->team_footer_file, cur_time);
     watched_file_update(&extra->copyright, cnts->copyright_file, cur_time);
-    header = extra->header.text;
-    separator = extra->separator.text;
-    footer = extra->footer.text;
     copyright = extra->copyright.text;
   }
 
@@ -671,19 +629,9 @@ ns_html_err_ul_server_down(FILE *fout,
   if (phr->contest_id > 0) contests_get(phr->contest_id, &cnts);
   if (cnts) extra = ns_get_contest_extra(phr->contest_id);
   if (extra && !priv_mode) {
-    watched_file_update(&extra->header, cnts->team_header_file, cur_time);
-    watched_file_update(&extra->separator, cnts->team_separator_file, cur_time);
-    watched_file_update(&extra->footer, cnts->team_footer_file, cur_time);
     watched_file_update(&extra->copyright, cnts->copyright_file, cur_time);
-    header = extra->header.text;
-    header = extra->separator.text;
-    footer = extra->footer.text;
     copyright = extra->copyright.text;
   } else if (extra && priv_mode) {
-    watched_file_update(&extra->priv_header, cnts->priv_header_file, cur_time);
-    watched_file_update(&extra->priv_footer, cnts->priv_footer_file, cur_time);
-    header = extra->priv_header.text;
-    footer = extra->priv_footer.text;
   }
   if (!priv_mode) {
     if (!header || !footer) {
@@ -739,19 +687,9 @@ ns_html_err_internal_error(FILE *fout,
   if (phr->contest_id > 0) contests_get(phr->contest_id, &cnts);
   if (cnts) extra = ns_get_contest_extra(phr->contest_id);
   if (extra && !priv_mode) {
-    watched_file_update(&extra->header, cnts->team_header_file, cur_time);
-    watched_file_update(&extra->separator, cnts->team_separator_file, cur_time);
-    watched_file_update(&extra->footer, cnts->team_footer_file, cur_time);
     watched_file_update(&extra->copyright, cnts->copyright_file, cur_time);
-    header = extra->header.text;
-    separator = extra->separator.text;
-    footer = extra->footer.text;
     copyright = extra->copyright.text;
   } else if (extra && priv_mode) {
-    watched_file_update(&extra->priv_header, cnts->priv_header_file, cur_time);
-    watched_file_update(&extra->priv_footer, cnts->priv_footer_file, cur_time);
-    header = extra->priv_header.text;
-    footer = extra->priv_footer.text;
   }
   if (!priv_mode) {
     if (!header || !footer) {
@@ -805,19 +743,9 @@ ns_html_err_inv_session(FILE *fout,
   if (phr->contest_id > 0) contests_get(phr->contest_id, &cnts);
   if (cnts) extra = ns_get_contest_extra(phr->contest_id);
   if (extra && !priv_mode) {
-    watched_file_update(&extra->header, cnts->team_header_file, cur_time);
-    watched_file_update(&extra->separator, cnts->team_separator_file, cur_time);
-    watched_file_update(&extra->footer, cnts->team_footer_file, cur_time);
     watched_file_update(&extra->copyright, cnts->copyright_file, cur_time);
-    header = extra->header.text;
-    separator = extra->separator.text;
-    footer = extra->footer.text;
     copyright = extra->copyright.text;
   } else if (extra && priv_mode) {
-    watched_file_update(&extra->priv_header, cnts->priv_header_file, cur_time);
-    watched_file_update(&extra->priv_footer, cnts->priv_footer_file, cur_time);
-    header = extra->priv_header.text;
-    footer = extra->priv_footer.text;
   }
   if (!priv_mode) {
     if (!header || !footer) {
@@ -895,13 +823,7 @@ ns_html_err_registration_incomplete(
   if (phr->contest_id > 0) contests_get(phr->contest_id, &cnts);
   if (cnts) extra = ns_get_contest_extra(phr->contest_id);
   if (extra) {
-    watched_file_update(&extra->header, cnts->team_header_file, cur_time);
-    watched_file_update(&extra->separator, cnts->team_separator_file, cur_time);
-    watched_file_update(&extra->footer, cnts->team_footer_file, cur_time);
     watched_file_update(&extra->copyright, cnts->copyright_file, cur_time);
-    header = extra->header.text;
-    separator = extra->separator.text;
-    footer = extra->footer.text;
     copyright = extra->copyright.text;
   }
   if (!header || !footer) {
@@ -955,13 +877,7 @@ ns_html_err_disqualified(
 
   err("%d: user disqualified", phr->id);
 
-  watched_file_update(&extra->header, cnts->team_header_file, cur_time);
-  watched_file_update(&extra->separator, cnts->team_separator_file, cur_time);
-  watched_file_update(&extra->footer, cnts->team_footer_file, cur_time);
   watched_file_update(&extra->copyright, cnts->copyright_file, cur_time);
-  header = extra->header.text;
-  separator = extra->separator.text;
-  footer = extra->footer.text;
   copyright = extra->copyright.text;
 
   if (!header || !footer) {
@@ -1009,19 +925,9 @@ ns_html_error(
   if (phr->contest_id > 0) contests_get(phr->contest_id, &cnts);
   if (cnts) extra = ns_get_contest_extra(phr->contest_id);
   if (extra && !priv_mode) {
-    watched_file_update(&extra->header, cnts->team_header_file, cur_time);
-    watched_file_update(&extra->separator, cnts->team_separator_file, cur_time);
-    watched_file_update(&extra->footer, cnts->team_footer_file, cur_time);
     watched_file_update(&extra->copyright, cnts->copyright_file, cur_time);
-    header = extra->header.text;
-    separator = extra->separator.text;
-    footer = extra->footer.text;
     copyright = extra->copyright.text;
   } else if (extra && priv_mode) {
-    watched_file_update(&extra->priv_header, cnts->priv_header_file, cur_time);
-    watched_file_update(&extra->priv_footer, cnts->priv_footer_file, cur_time);
-    header = extra->priv_header.text;
-    footer = extra->priv_footer.text;
   }
   if (!priv_mode) {
     if (!header || !footer) {
