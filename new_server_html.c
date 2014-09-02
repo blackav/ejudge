@@ -278,13 +278,6 @@ do_unload_contest(int idx)
   }
 
   xfree(extra->contest_arm);
-  watched_file_clear(&extra->header);
-  watched_file_clear(&extra->menu_1);
-  watched_file_clear(&extra->menu_2);
-  watched_file_clear(&extra->separator);
-  watched_file_clear(&extra->footer);
-  watched_file_clear(&extra->priv_header);
-  watched_file_clear(&extra->priv_footer);
   watched_file_clear(&extra->copyright);
   watched_file_clear(&extra->welcome);
   watched_file_clear(&extra->reg_welcome);
@@ -6978,10 +6971,6 @@ privileged_entry_point(
     log_file_pos_1 = generic_file_size(NULL, ejudge_config->new_server_log, NULL);
   }
 
-  watched_file_update(&extra->priv_header, cnts->priv_header_file, cur_time);
-  watched_file_update(&extra->priv_footer, cnts->priv_footer_file, cur_time);
-  extra->header_txt = extra->priv_header.text;
-  extra->footer_txt = extra->priv_footer.text;
   if (!extra->header_txt || !extra->footer_txt) {
     extra->header_txt = ns_fancy_priv_header;
     extra->footer_txt = ns_fancy_priv_footer;
@@ -7080,15 +7069,7 @@ unpriv_load_html_style(struct http_request_info *phr,
   ASSERT(extra);
 
   cur_time = time(0);
-  watched_file_update(&extra->header, cnts->team_header_file, cur_time);
-  watched_file_update(&extra->menu_1, cnts->team_menu_1_file, cur_time);
-  watched_file_update(&extra->menu_2, cnts->team_menu_2_file, cur_time);
-  watched_file_update(&extra->separator, cnts->team_separator_file, cur_time);
-  watched_file_update(&extra->footer, cnts->team_footer_file, cur_time);
   watched_file_update(&extra->copyright, cnts->copyright_file, cur_time);
-  extra->header_txt = extra->header.text;
-  extra->footer_txt = extra->footer.text;
-  extra->separator_txt = extra->separator.text;
   extra->copyright_txt = extra->copyright.text;
   if (!extra->header_txt || !extra->footer_txt || !extra->separator_txt) {
     extra->header_txt = ns_fancy_header;
@@ -10340,17 +10321,7 @@ unprivileged_entry_point(
     goto cleanup;
   }
 
-  watched_file_update(&extra->header, cnts->team_header_file, cur_time);
-  watched_file_update(&extra->menu_1, cnts->team_menu_1_file, cur_time);
-  watched_file_update(&extra->menu_2, cnts->team_menu_2_file, cur_time);
-  watched_file_update(&extra->separator, cnts->team_separator_file, cur_time);
-  watched_file_update(&extra->footer, cnts->team_footer_file, cur_time);
   watched_file_update(&extra->copyright, cnts->copyright_file, cur_time);
-  extra->header_txt = extra->header.text;
-  extra->menu_1_txt = extra->menu_1.text;
-  extra->menu_2_txt = extra->menu_2.text;
-  extra->separator_txt = extra->separator.text;
-  extra->footer_txt = extra->footer.text;
   extra->copyright_txt = extra->copyright.text;
   //if (!extra->header_txt) extra->header_txt = ns_fancy_header;
   //if (!extra->footer_txt) extra->footer_txt = ns_fancy_footer;
