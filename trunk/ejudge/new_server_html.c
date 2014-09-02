@@ -7224,6 +7224,7 @@ unprivileged_page_login(FILE *fout, struct http_request_info *phr)
     return ns_html_err_inv_param(fout, phr, 0, "invalid contest_id");
   if (phr->locale_id < 0 && cnts->default_locale_num >= 0)
     phr->locale_id = cnts->default_locale_num;
+  if (phr->locale_id < 0) phr->locale_id = 0;
 
   phr->login = xstrdup(login);
   if ((r = hr_cgi_param(phr, "password", &password)) <= 0)
@@ -10535,7 +10536,7 @@ ns_handle_http_request(
   const unsigned char *s;
   path_t self_url;
   path_t context_url;
-  int r, n, orig_locale_id = -1;
+  int r, n;
   unsigned char *rest_args = NULL;
   unsigned char *rest_action = NULL;
 
@@ -10663,7 +10664,6 @@ ns_handle_http_request(
     if (sscanf(s, "%d%n", &phr->locale_id, &n) != 1 || s[n]
         || phr->locale_id < 0)
       return ns_html_err_inv_param(fout, phr, 0, "cannot parse locale_id");
-    orig_locale_id = phr->locale_id;
   }
 
   // parse the action
@@ -10705,7 +10705,6 @@ ns_handle_http_request(
       unprivileged_entry_point(fout, phr);
       return;
     } else if (!strcmp(phr->role_name, "register")) {
-      phr->locale_id = orig_locale_id;
       ns_register_pages(fout, phr);
       return;
     } else if (!strcmp(phr->role_name, "rest")) {
@@ -10749,7 +10748,6 @@ ns_handle_http_request(
     privileged_entry_point(fout, phr);
   } else if (!strcmp(last_name, "new-register") || !strcmp(last_name, "register")) {
     // FIXME: temporary hack
-    phr->locale_id = orig_locale_id;
     strcpy(phr->role_name, "register");
     ns_register_pages(fout, phr);
   } else if (!strcmp(last_name, "ejudge-contests-cmd")) {
