@@ -210,15 +210,15 @@ static struct locale_names
   { "ru_RU", 1 },
   { "Russian", 1 },
 
-  { "2", 1 },
-  { "uk", 1 },
-  { "uk_UA", 1 },
-  { "Ukrainian", 1 },
+  { "2", 2 },
+  { "uk", 2 },
+  { "uk_UA", 2 },
+  { "Ukrainian", 2 },
 
-  { "3", 1 },
-  { "kk", 1 },
-  { "kk_KZ", 1 },
-  { "Kazakh", 1 },
+  { "3", 3 },
+  { "kk", 3 },
+  { "kk_KZ", 3 },
+  { "Kazakh", 3 },
 
   { 0, 0 }
 };
