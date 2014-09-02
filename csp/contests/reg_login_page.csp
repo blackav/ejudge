@@ -25,6 +25,9 @@
   if (!password) password = "";
   if (!email) email = "";
 
+  if (phr->cnts && phr->cnts->default_locale_num >= 0 && phr->locale_id < 0) phr->locale_id = phr->cnts->default_locale_num;
+  if (phr->locale_id < 0) phr->locale_id = 0;
+
   l10n_setlocale(phr->locale_id);
   switch (phr->action) {
   case NEW_SRV_ACTION_REG_ACCOUNT_CREATED_PAGE:
