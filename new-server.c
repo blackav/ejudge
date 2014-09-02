@@ -305,6 +305,7 @@ cmd_http_request(
   hr.fw_state = state;
   gettimeofday(&hr.timestamp1, 0);
   hr.current_time = hr.timestamp1.tv_sec;
+  hr.locale_id = -1;
 
   if (pkt_size < sizeof(*pkt))
     return nsf_err_packet_too_small(state, p, pkt_size, sizeof(*pkt));
