@@ -6,7 +6,7 @@ Source: %{name}-%{version}.tgz
 License: GPL
 URL: http://ejudge.ru
 BuildRequires: make gcc glibc-devel glibc-static bison flex gawk sed zlib zlib-devel ncurses ncurses-devel expat expat-devel libzip libzip-devel gettext gettext-devel mysql-libs mysql mysql-devel libcurl libcurl-devel libuuid libuuid-devel elfutils-libelf-devel elfutils-libelf-devel-static elfutils-libelf libdwarf-devel libdwarf-static libdwarf libdwarf-tools
-Requires: make gcc glibc-devel glibc-static bison flex gawk sed zlib zlib-devel ncurses ncurses-devel expat expat-devel libzip libzip-devel gettext gettext-devel mysql-libs mysql mysql-devel libcurl libcurl-devel libuuid libuuid-devel elfutils-libelf-devel elfutils-libelf-devel-static elfutils-libelf libdwarf-devel libdwarf-static libdwarf libdwarf-tools gcc-c++ libstdc++-static fpc ruby python python3 php php-common php-cli perl gprolog ghc mono-core mono-basic gcc-gfortran libgfortran-static gcc-go libgo-static mono-extras mono-locale-extras valgrind nasm vim screen wget ncftp mc fuse-sshfs patch kernel-tools kernel-devel gcc strace subversion gdb openssl openssl-devel java-1.8.0-openjdk java-1.8.0-openjdk-headless java-1.8.0-openjdk-devel glibc-devel.i686 libgcc.i686 libstdc++-devel.i686
+Requires: make gcc glibc-devel glibc-static bison flex gawk sed zlib zlib-devel ncurses ncurses-devel expat expat-devel libzip libzip-devel gettext gettext-devel mysql-libs mysql mysql-devel libcurl libcurl-devel libuuid libuuid-devel elfutils-libelf-devel elfutils-libelf-devel-static elfutils-libelf libdwarf-devel libdwarf-static libdwarf libdwarf-tools gcc-c++ libstdc++-static fpc ruby python python3 php php-common php-cli perl gprolog ghc mono-core mono-basic gcc-gfortran libgfortran-static gcc-go libgo-static mono-extras mono-locale-extras valgrind nasm vim screen wget ncftp mc fuse-sshfs patch kernel-tools kernel-devel gcc strace subversion gdb openssl openssl-devel java-1.8.0-openjdk java-1.8.0-openjdk-headless java-1.8.0-openjdk-devel
 Requires(pre): shadow-utils
 
 %global _enable_debug_package 0
@@ -42,8 +42,7 @@ export DONT_STRIP=1
 %{_datadir}/%{name}/
 %{_libexecdir}/%{name}/
 %{_includedir}/%{name}/
-%{_datadir}/locale/ru_RU.UTF-8/LC_MESSAGES/ejudgecheckers.mo
-%{_datadir}/locale/ru_RU.UTF-8/LC_MESSAGES/ejudge.mo
+%{_datadir}/locale/
 /var/www/html/ejudge/
 /var/www/cgi-bin/*
 %{_sysconfdir}/init.d/ejudge
