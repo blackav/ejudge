@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-09-01 22:30+0400\n"
+"POT-Creation-Date: 2014-09-03 12:49+0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Kazakh <uk@li.org>\n"
@@ -4158,12 +4158,6 @@ msgid "Your submit has been commented in contest %d"
 msgstr ""
 
 msgid "Zip code"
-msgstr ""
-
-msgid "[Create new contest (New interface)]"
-msgstr ""
-
-msgid "[Edit current contest (New interface)]"
 msgstr ""
 
 msgid "[Edit current contest]"
