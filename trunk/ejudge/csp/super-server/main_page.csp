@@ -27,23 +27,17 @@
 <div class="icons" style="margin-top: -25px; height: 57px; border-bottom: 1px solid rgb(207, 207, 207); margin-bottom: 0;">
 <div style="float: left;">
    
-    <s:a ac="user-browse-page"><img src="<s:config name="style-prefix" />user_sh.png" alt="User editor" /></s:a>
-    <s:a ac="user-map-main-page"><img src="<s:config name="style-prefix" />mapping_sh.png" alt="System user mapping" /></s:a>
-    <s:a ac="caps-main-page"><img src="<s:config name="style-prefix" />capabilities_sh.png" alt="Global user capabilities" /></s:a>
-    <s:a ac="group-browse-page"><img src="<s:config name="style-prefix" />group_sh.png" alt="Group editor" /></s:a>
-    <s:a ac="create-contest-page"><img src="<s:config name="style-prefix" />new_cont_sh.png" alt="Create new contest" /></s:a>
-    <s:a ac="main-page"><img src="<s:config name="style-prefix" />refresh_sh.png" alt="Refresh" /></s:a>
+    <s:a ac="user-browse-page"><img src="<s:config name="style-prefix" />user_sh.png" alt="User editor" title="User editor" /></s:a>
+    <s:a ac="user-map-main-page"><img src="<s:config name="style-prefix" />mapping_sh.png" alt="System user mapping" title="System user mapping" /></s:a>
+    <s:a ac="caps-main-page"><img src="<s:config name="style-prefix" />capabilities_sh.png" alt="Global user capabilities" title="Global user capabilities" /></s:a>
+    <s:a ac="group-browse-page"><img src="<s:config name="style-prefix" />group_sh.png" alt="Group editor" title="Group editor" /></s:a>
+    <s:a ac="create-contest-page"><img src="<s:config name="style-prefix" />new_cont_sh.png" alt="Create new contest" title="Create new contest" /></s:a>
+    <s:a ac="main-page"><img src="<s:config name="style-prefix" />refresh_sh.png" alt="Refresh" title="Refresh" /></s:a>
 </div>
 <div class="icons-menu-txt" style="margin-top: 5px;">
  <%
     if (phr->ss->edited_cnts) {
 %><s:a ac="cnts-edit-cur-contest-page"><s:_>[Edit current contest]</s:_></s:a><%
-    }
-%>
-<s:a ac="create-new-contest-page"><s:_>[Create new contest (New interface)]</s:_></s:a>
-<%
-    if (phr->ss->edited_cnts) {
-%><s:a ac="edit-contest-page-2"><s:_>[Edit current contest (New interface)]</s:_></s:a><%
     }
 %>
 </div>
