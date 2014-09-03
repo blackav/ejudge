@@ -7004,9 +7004,7 @@ redo_action:
   html_armor_free(&ab);
 }
 
-// forced link
-static void *forced_link[] __attribute__((unused));
-static void *forced_link[] =
+void *super_html_forced_link[] =
 {
   html_date_select
 };
