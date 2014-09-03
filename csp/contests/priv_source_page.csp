@@ -305,14 +305,14 @@ function setDivVisibility(oper, value)
 
 <% if (phr->role == USER_ROLE_ADMIN && opcaps_check(phr->caps, OPCAP_EDIT_RUN) >= 0 && info.is_readonly <= 0) { %>
 <s:form>
-<s:hidden name="run_id" />
+<s:hidden name="run_id" checkExpr=">=0" />
 <p><s:submit ac="clear-run" /></p>
 </s:form>
 <% } %>
 
 <% if (opcaps_check(phr->caps, OPCAP_PRINT_RUN) >= 0) { %>
 <s:form>
-<s:hidden name="run_id" />
+<s:hidden name="run_id" checkExpr=">=0" />
 <p><s:submit ac="print-run" /></p>
 </s:form>
 <% } %>
@@ -325,18 +325,18 @@ function setDivVisibility(oper, value)
 %>
 
 <s:form>
-<s:hidden name="run_id" />
+<s:hidden name="run_id" checkExpr=">=0" />
 <p><s:tr>Compare this run with run</s:tr>: <s:textfield name="run_id2" checkExpr=">= 0" size="10" /> <s:submit ac="compare-runs" /></p>
 </s:form>
 
 <s:form>
-<s:hidden name="run_id" />
+<s:hidden name="run_id" checkExpr=">=0" />
 <p><s:tr>Charset</s:tr>: <% charset_html_select(out_f, "run_charset", run_charset); %> <s:submit ac="view-source" /></p>
 </s:form>
 
 <% if (global->enable_report_upload) { %>
 <s:form enctype="multipart/form-data">
-<s:hidden name="run_id" />
+<s:hidden name="run_id" checkExpr=">=0" />
 <p><s:tr>Upload judging protocol</s:tr>: <input type="file" name="file" /><%
     if (global->team_enable_rep_view) {
 %> <s:checkbox name="judge_report" checkedExpr="1" /><s:tr>Judge's report</s:tr><%
@@ -409,7 +409,7 @@ function setDivVisibility(oper, value)
 
 <div class="buttons" style="margin-top: -13px;">
 <s:form id="run_comment">
-<s:hidden name="run_id" />
+<s:hidden name="run_id" checkExpr=">=0" />
 <s:submit ac="priv-submit-run-just-ignore" />
 <s:submit ac="priv-submit-run-just-ok" />
 <s:button onclick="formatViolation()" label="Formatting rules violation" />
