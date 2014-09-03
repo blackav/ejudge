@@ -7687,6 +7687,11 @@ get_advanced_layout_path(
     snprintf(path1,sizeof(path1),"%s/%s",global->root_dir,DFLT_G_PROBLEMS_DIR);
   }
 
+  if (!prob) {
+    snprintf(buf, bufsize, "%s", path1);
+    return buf;
+  }
+
   prob_name = prob->short_name;
   if (prob->internal_name[0]) {
     prob_name = prob->internal_name;

@@ -1411,6 +1411,7 @@ build_generate_makefile(
   unsigned char makefile_path[PATH_MAX];
   unsigned char tmp_makefile_path[PATH_MAX];
   unsigned char problem_path[PATH_MAX];
+  unsigned char cnts_prob_path[PATH_MAX];
   int file_group = -1;
   int file_mode = -1;
   char *text = 0;
@@ -1419,6 +1420,7 @@ build_generate_makefile(
   unsigned char *footer = NULL;
   FILE *mk_f = NULL;
   int r;
+  struct stat stbuf;
 
   tmp_makefile_path[0] = 0;
 
@@ -1439,10 +1441,28 @@ build_generate_makefile(
 
   if (global->advanced_layout <= 0) FAIL(SSERV_ERR_INV_CONTEST);
 
+  get_advanced_layout_path(cnts_prob_path, sizeof(cnts_prob_path), global, NULL, NULL, 0);
+  if (stat(cnts_prob_path, &stbuf) < 0) {
+    fprintf(log_f, "contest problem directory '%s' does not exist", cnts_prob_path);
+    FAIL(SSERV_ERR_FS_ERROR);
+  }
+  if (!S_ISDIR(stbuf.st_mode)) {
+    fprintf(log_f, "contest problem directory '%s' must be directory", cnts_prob_path);
+    FAIL(SSERV_ERR_FS_ERROR);
+  }
+
   get_advanced_layout_path(problem_path, sizeof(problem_path), global, prob, NULL, variant);
   get_advanced_layout_path(tmp_makefile_path, sizeof(tmp_makefile_path), global, prob, "tmp_Makefile", variant);
   get_advanced_layout_path(makefile_path, sizeof(makefile_path), global, prob, DFLT_P_MAKEFILE, variant);
 
+  if (stat(problem_path, &stbuf) < 0) {
+    fprintf(log_f, "problem directory '%s' does not exist\n", problem_path);
+    FAIL(SSERV_ERR_FS_ERROR);
+  }
+  if (!S_ISDIR(stbuf.st_mode)) {
+    fprintf(log_f, "problem directory '%s' must be directory\n", problem_path);
+    FAIL(SSERV_ERR_FS_ERROR);
+  }
   if (access(problem_path, R_OK | W_OK | X_OK) < 0) {
     fprintf(log_f, "insufficent permissions for directory '%s'\n", problem_path);
     FAIL(SSERV_ERR_FS_ERROR);
