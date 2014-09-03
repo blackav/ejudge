@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-09-01 22:37+0400\n"
+"POT-Creation-Date: 2014-09-03 12:49+0400\n"
 "PO-Revision-Date: 2014-09-01 23:24+0400\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -4378,12 +4378,6 @@ msgstr "Ваша посылка была прокомментирована в �
 msgid "Zip code"
 msgstr "Почтовый индекс"
 
-msgid "[Create new contest (New interface)]"
-msgstr "[Создать новый турнир (Новый интерфейс)]"
-
-msgid "[Edit current contest (New interface)]"
-msgstr "[Редактировать текущий турнир (Новый интерфейс)]"
-
 msgid "[Edit current contest]"
 msgstr "[Редактировать текущий турнир]"
 
@@ -4763,6 +4757,12 @@ msgstr "ошибка записи"
 
 msgid "write error to server"
 msgstr "ошибка записи данных на сервер"
+
+#~ msgid "[Create new contest (New interface)]"
+#~ msgstr "[Создать новый турнир (Новый интерфейс)]"
+
+#~ msgid "[Edit current contest (New interface)]"
+#~ msgstr "[Редактировать текущий турнир (Новый интерфейс)]"
 
 #~ msgid "Registration data"
 #~ msgstr "Регистрационные данные"
