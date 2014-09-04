@@ -399,16 +399,17 @@ function setDivVisibility(oper, value)
   }
 %>
 
-<hr/ style="clear: both;">
+<hr style="clear: both;" />
 
 
 <div class="h2-long" style="margin-top: 13px; margin-bottom: 5px;">
 <h2><s:tr>Send a message about this run</s:tr></h2></div>
 
+<s:form id="run_comment">
+
 <p><textarea id="msg_text" name="msg_text" rows="20" cols="60"></textarea></p>
 
 <div class="buttons" style="margin-top: -13px;">
-<s:form id="run_comment">
 <s:hidden name="run_id" checkExpr=">=0" />
 <s:submit ac="priv-submit-run-just-ignore" />
 <s:submit ac="priv-submit-run-just-ok" />
