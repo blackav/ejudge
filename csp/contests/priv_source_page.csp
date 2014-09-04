@@ -125,16 +125,43 @@
     <th><s:tr>Variant</s:tr></th>
 <% } %>
     <th><s:tr>Language</s:tr></th>
+    <th><s:tr>EOLN Type</s:tr></th>
     <th><s:tr>Status</s:tr></th>
-<th><s:tr>EOLN Type</s:tr></th>
-<th><s:tr>Status</s:tr></th>
-<th><s:tr>Tests passed</s:tr></th>
-<th><s:tr>Tests passed</s:tr></th>
-<th><s:tr>Score gained</s:tr></th>
-<th><s:tr>Failed test</s:tr></th>
-<th><s:tr>Score gained</s:tr></th>
-<th><s:tr>Failed test</s:tr></th>
-<th><s:tr>Marked?</s:tr></th>
+<%
+  if (info.passed_mode > 0) {
+%>
+    <th><s:tr>Tests passed</s:tr></th>
+<%
+  }
+%>
+<%
+  if (global->score_system == SCORE_KIROV || global->score_system == SCORE_OLYMPIAD) {
+    if (info.passed_mode <= 0) {
+%>
+    <th><s:tr>Tests passed</s:tr></th>
+<%
+    }
+%>
+    <th><s:tr>Score gained</s:tr></th>
+<%
+  } else if (global->score_system == SCORE_MOSCOW) {
+    if (info.passed_mode <= 0) {
+%>
+    <th><s:tr>Failed test</s:tr></th>
+<%
+    }
+%>
+    <th><s:tr>Score gained</s:tr></th>
+<%
+  } else {
+    if (info.passed_mode <= 0) {
+%>
+    <th><s:tr>Failed test</s:tr></th>
+<%
+    }
+  }
+%>
+    <th><s:tr>Marked?</s:tr></th>
 </tr>
 <tr>
     <td><s:v value="info.run_id" /></td>
@@ -210,33 +237,42 @@
 %>
 <td><s:a url="FilteredMainUrl"><s:v type="run_status" value="info.status" /></s:a></td>
 
-<% if (info.passed_mode > 0) { %>
-<td><s:v value="info.test" checkExpr=">= 0" defstr="N/A" /></td>
-<% } %>
-
-<%  if (global->score_system == SCORE_KIROV
-      || global->score_system == SCORE_OLYMPIAD) {
+<%
+  if (info.passed_mode > 0) {
+%>
+    <td><s:v value="info.test" checkExpr=">= 0" defstr="N/A" /></td>
+<%
+  }
+%>
+<%
+  if (global->score_system == SCORE_KIROV || global->score_system == SCORE_OLYMPIAD) {
     if (info.passed_mode <= 0) {
 %>
-<td><s:v value="info.test - 1" checkExpr=">= 0" defstr="N/A" /></td>
-<%    } %>
-
-<td><s:v value="info.score" checkExpr=">= 0" defstr="N/A" /></td>
-<%  } else if (global->score_system == SCORE_MOSCOW) {
+    <td><s:v value="info.test - 1" checkExpr=">= 0" defstr="N/A" /></td>
+<%
+    }
+%>
+    <td><s:v value="info.score" checkExpr=">= 0" defstr="N/A" /></td>
+<%
+  } else if (global->score_system == SCORE_MOSCOW) {
     if (info.passed_mode <= 0) {
 %>
-<td><s:v value="info.test" checkExpr="> 0" defstr="N/A" /></td>
-<%    } %>
-
-<td><s:v value="info.score" checkExpr=">= 0" defstr="N/A" /></td>
-<%  } else { %>
-<%    if (info.passed_mode <= 0) { %>
-<td><s:v value="info.test" checkExpr="> 0" defstr="N/A" /></td>
-<%    }
+    <td><s:v value="info.test" checkExpr="> 0" defstr="N/A" /></td>
+<%
+    }
+%>
+    <td><s:v value="info.score" checkExpr=">= 0" defstr="N/A" /></td>
+<%
+  } else {
+    if (info.passed_mode <= 0) {
+%>
+    <td><s:v value="info.test" checkExpr="> 0" defstr="N/A" /></td>
+<%
+    }
   }
 %>
 
-<td><s:vb value="info.is_marked" /></td></tr>
+    <td><s:vb value="info.is_marked" /></td></tr>
 </table></div>
 
 <script language="javascript">
