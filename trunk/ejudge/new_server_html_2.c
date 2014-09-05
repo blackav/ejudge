@@ -2040,7 +2040,7 @@ ns_priv_edit_run_action(
   }
   ej_ip_t ipv6;
   run_entry_to_ipv6(&info, &ipv6);
-  if (!ipv6cmp(&new_ip, &ipv6) != 0) {
+  if (ipv6cmp(&new_ip, &ipv6) != 0) {
     ipv6_to_run_entry(&new_ip, &new_info);
     mask |= RE_IP;
   }
