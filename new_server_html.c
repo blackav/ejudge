@@ -6760,6 +6760,10 @@ error_page(
   const unsigned char * const * error_names = external_unpriv_error_names;
   ExternalActionState **error_states = external_unpriv_error_states;
 
+  if (phr->log_f) {
+    fclose(phr->log_f); phr->log_f = 0;
+  }
+
   if (phr->log_t && !*phr->log_t) {
     xfree(phr->log_t); phr->log_t = NULL; phr->log_z = 0;
   }
