@@ -6710,7 +6710,7 @@ static const unsigned char * const external_action_names[SSERV_CMD_LAST] =
 
 static const unsigned char * const external_error_names[SSERV_ERR_LAST] = 
 {
-  [1] = NULL, // here comes the default error handler
+  [1] = "error_unknown_page", // here comes the default error handler
 };
 
 static ExternalActionState *external_action_states[SSERV_CMD_LAST];
@@ -6793,8 +6793,8 @@ external_error_page(
     return;
   }
 
-  snprintf(phr->content_type, sizeof(phr->content_type), "text/html; charset=%s", EJUDGE_CHARSET);
   phr->out_f = open_memstream(p_out_t, p_out_z);
+  fprintf(phr->out_f, "Content-type: text/html; charset=%s\n\n", EJUDGE_CHARSET);
   pg->ops->render(pg, NULL, phr->out_f, phr);
   xfree(phr->log_t); phr->log_t = NULL;
   phr->log_z = 0;
@@ -6948,7 +6948,6 @@ redo_action:
 
         xfree(phr->out_t); phr->out_t = NULL;
         phr->out_z = 0;
-
       }
       return;
     }
