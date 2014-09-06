@@ -60,7 +60,8 @@ CFILES = \
  csp_create_contest_2_action.c\
  csp_login_page.c\
  csp_main_page.c\
- csp_problem_packages_page.c
+ csp_problem_packages_page.c\
+ csp_error_unknown_page.c
 
 SOFILES = $(CFILES:.c=.so)
 
@@ -110,6 +111,8 @@ csp_create_contest_2_action.c : create_contest_2_action.csp includes.csp stdvars
 csp_login_page.c : main_page.csp includes.csp stdvars.csp header.csp footer.csp
 csp_main_page.c : main_page.csp includes.csp stdvars.csp header.csp footer.csp
 csp_problem_packages_page.c : problem_packages_page.csp includes.csp stdvars.csp header.csp footer.csp
+
+csp_error_unknown_page.c : error_unknown_page.csp includes.csp stdvars.csp header.csp footer.csp
 
 csp_%.c : %.csp
 	../../ej-page-gen -x none -o $@ -d $*.ds $<

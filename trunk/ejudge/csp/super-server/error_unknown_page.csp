@@ -1,0 +1,51 @@
+<%
+/* $Id$ */
+%><%@include "includes.csp"
+%><%@set getter_name = "csp_get_unknown_error_page"
+%><%@set ac_prefix = "SSERV_CMD_"
+%><%@page csp_view_unknown_error_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "stdvars.csp"
+%><%
+  unsigned char title_buf[1024];
+  const unsigned char *title = title_buf;
+  const unsigned char *subtitle = 0;
+  unsigned char error_code_buf[32];
+  const unsigned char *errmsg = 0;
+
+  if (phr->error_code < 0) phr->error_code = -phr->error_code;
+  if (phr->error_code > 0 && phr->error_code < SSERV_ERR_LAST) {
+    errmsg = super_proto_error_messages[phr->error_code];
+  }
+  if (!errmsg) {
+    snprintf(error_code_buf, sizeof(error_code_buf), "%d", phr->error_code);
+    errmsg = error_code_buf;
+  }
+
+  title_buf[0] = 0;
+  if (phr->login && phr->login[0]) {
+    snprintf(title_buf, sizeof(title_buf), "serve-control: %s@%s: error: %s", phr->login, phr->http_host, errmsg);
+  } else {
+    snprintf(title_buf, sizeof(title_buf), "serve-control@%s: error: %s", phr->http_host, errmsg);
+  }
+%><%@include "header.csp"
+%>
+
+<h2><s:v value="errmsg" escape="false" />
+
+<%
+  if (phr->log_t && *phr->log_t) {
+%>
+<p>Additional messages:</p>
+<pre><font color="red"><s:v value="phr->log_t" /></font></pre>
+<%
+    xfree(phr->log_t); phr->log_t = NULL;
+    phr->log_z = 0;
+  }
+%>
+
+<%@include "footer.csp"
+%><%
+  l10n_setlocale(0);
+//cleanup:
+  html_armor_free(&ab);
+%>
