@@ -6727,15 +6727,26 @@ default_error_page(
   }
   FILE *out_f = open_memstream(p_out_t, p_out_z);
 
+  if (phr->error_code < 0) phr->error_code = -phr->error_code;
+  unsigned char buf[32];
+  const unsigned char *errmsg = 0;
+  if (phr->error_code > 0 && phr->error_code < SSERV_ERR_LAST) {
+    errmsg = super_proto_error_messages[phr->error_code];
+  }
+  if (!errmsg) {
+    snprintf(buf, sizeof(buf), "%d", phr->error_code);
+    errmsg = buf;
+  }
+
   fprintf(out_f, "Content-type: text/html; charset=%s\n\n", EJUDGE_CHARSET);
   fprintf(out_f,
           "<html>\n"
           "<head>\n"
-          "<title>Error %d</title>\n"
+          "<title>Error: %s</title>\n"
           "</head>\n"
           "<body>\n"
-          "<h1>Error %d</h1>\n",
-          phr->error_code, phr->error_code);
+          "<h1>Error: %s</h1>\n",
+          errmsg, errmsg);
   if (phr->log_t && *phr->log_t) {
     fprintf(out_f, "<p>Additional messages:</p>\n");
     unsigned char *s = html_armor_string_dup(phr->log_t);
