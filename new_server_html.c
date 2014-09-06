@@ -6320,7 +6320,7 @@ priv_generic_operation(FILE *fout,
   }
   if (r < 0) {
     error_page(fout, phr, 1, r);
-    r = 0;
+    return;
   }
   rr = r;
   if (!r) r = ns_priv_next_state[phr->action];
