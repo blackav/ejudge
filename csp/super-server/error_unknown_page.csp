@@ -1,9 +1,9 @@
 <%
 /* $Id$ */
 %><%@include "includes.csp"
-%><%@set getter_name = "csp_get_unknown_error_page"
+%><%@set getter_name = "csp_get_error_unknown_page"
 %><%@set ac_prefix = "SSERV_CMD_"
-%><%@page csp_view_unknown_error_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@page csp_view_error_unknown_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 %><%@include "stdvars.csp"
 %><%
   unsigned char title_buf[1024];
