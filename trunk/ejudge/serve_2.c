@@ -120,7 +120,7 @@ serve_update_standings_file(serve_state_t state,
                     global->stand2_footer_txt,
                     state->accepting_mode, 0, charset_id, 1 /* user_mode */);
   }
-  l10n_setlocale(0);
+  l10n_resetlocale();
   if (global->is_virtual) return;
   switch (p) {
   case 0:
@@ -170,7 +170,7 @@ serve_update_public_log_file(serve_state_t state,
                    global->plog_footer_txt,
                    charset_id, 1 /* user_mode */);
   state->last_update_public_log = state->current_time;
-  l10n_setlocale(0);
+  l10n_resetlocale();
 }
 
 static void

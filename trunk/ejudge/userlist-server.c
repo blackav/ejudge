@@ -1663,7 +1663,7 @@ send_registration_email(
   if (email_subject == NULL) {
     email_subject = _("You have been registered");
   }
-  l10n_setlocale(0);
+  l10n_resetlocale();
 
   const unsigned char *sender_address = get_email_sender(cnts);
   int retval = send_email_message(u->email, sender_address, NULL, email_subject, email_text);
@@ -1961,7 +1961,7 @@ cmd_register_new_2(struct client_state *p,
     xfree(buf);
     xfree(email_tmpl);
 
-    l10n_setlocale(0);
+    l10n_resetlocale();
   }
 }
 
@@ -2201,7 +2201,7 @@ cmd_register_new(struct client_state *p,
     default_remove_user(user_id);
     xfree(buf);
     xfree(email_tmpl);
-    l10n_setlocale(0);
+    l10n_resetlocale();
     send_reply(p, -ULS_ERR_EMAIL_FAILED);
     info("%s -> failed (e-mail)", logbuf);
     return;
@@ -2209,7 +2209,7 @@ cmd_register_new(struct client_state *p,
 
   xfree(buf);
   xfree(email_tmpl);
-  l10n_setlocale(0);
+  l10n_resetlocale();
   send_reply(p,ULS_OK);
   info("%s -> ok, %d", logbuf, u->id);
 }
@@ -5757,7 +5757,7 @@ list_user_info(FILE *f, int contest_id, const struct contest_desc *d,
           d->name, gettext(status_str_map[c->status]));
   fprintf(f, "</table>\n");
 
-  l10n_setlocale(0);
+  l10n_resetlocale();
   html_armor_free(&ab);
 }
 
@@ -5792,7 +5792,7 @@ do_list_users(FILE *f, int contest_id, const struct contest_desc *d,
   if (!iter || !iter->has_next(iter)) {
     fprintf(f, "<p%s>%s</p>\n",
             d->users_par_style, _("No users registered for this contest"));
-    l10n_setlocale(0);
+    l10n_resetlocale();
     if (iter) iter->destroy(iter);
     return;
   }
@@ -5923,7 +5923,7 @@ do_list_users(FILE *f, int contest_id, const struct contest_desc *d,
     default_unlock_user(u);
   }
   fprintf(f, "</table>\n");
-  l10n_setlocale(0);
+  l10n_resetlocale();
   format_s = free_table_spec(format_n, format_s);
   legend_s = free_table_spec(legend_n, legend_s);
   iter->destroy(iter);
