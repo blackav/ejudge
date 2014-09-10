@@ -21,6 +21,6 @@
 <% } %>
 <%@include "priv_footer.csp"
 %><%
-  l10n_setlocale(0);
+  l10n_resetlocale();
   html_armor_free(&ab);
 %>

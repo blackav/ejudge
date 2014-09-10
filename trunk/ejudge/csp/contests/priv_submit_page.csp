@@ -199,7 +199,7 @@ ns_unparse_answers(
 
 <%@include "priv_footer.csp"
 %><%
-  l10n_setlocale(0);
 cleanup:
+  l10n_resetlocale();
   html_armor_free(&ab);
 %>

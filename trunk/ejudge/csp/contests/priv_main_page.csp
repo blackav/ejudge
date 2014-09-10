@@ -36,6 +36,8 @@
   long long tdiff = 0;
   struct server_framework_job *job;
   time_t server_start_time = nsf_get_server_start_time(phr->fw_state);
+  if (phr->locale_id < 0) phr->locale_id = 0;
+  l10n_setlocale(phr->locale_id);
   const unsigned char *title = _("Main page");
 %><%
   if (hr_cgi_param(phr, "filter_expr", &s) > 0) filter_expr = s;
@@ -558,5 +560,6 @@
 <div class="dotted"><p<s:v escape="false" value="cnts->team_par_style" />><s:tr>Page generation time</s:tr>: <s:v value="tdiff / 1000" /> <s:tr>msec</s:tr></p></div>
 <%@include "priv_footer.csp"
 %><%
+  l10n_resetlocale();
   html_armor_free(&ab);
 %>

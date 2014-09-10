@@ -82,6 +82,6 @@ static const unsigned char * const form_row_attrs[]=
 </td><td><s:submit ac="priv-users-add-by-user-id" /></td><td><s:tr>Add a new user specifying his/her User Id</s:tr></td></tr>
 </table><%@include "priv_footer.csp"
 %><%
-  l10n_setlocale(0);
+  l10n_resetlocale();
   html_armor_free(&ab);
 %>

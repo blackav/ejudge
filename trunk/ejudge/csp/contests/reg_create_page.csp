@@ -210,6 +210,6 @@ e-mail address. You should try to register later.
 <%@include "reg_footer.csp"
 %><%
 cleanup:;
-  l10n_setlocale(0);
+  l10n_resetlocale();
   html_armor_free(&ab);
 %>
