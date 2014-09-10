@@ -6900,6 +6900,8 @@ privileged_entry_point(
     }
   }
 
+  if (phr->locale_id < 0) phr->locale_id = 0;
+
   if (phr->contest_id < 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts) {
     fprintf(phr->log_f, "invalid contest_id %d", phr->contest_id);
     error_page(fout, phr, 1, NEW_SRV_ERR_INV_CONTEST_ID);
