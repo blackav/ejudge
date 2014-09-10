@@ -1037,7 +1037,7 @@ html_error_status_page(FILE *fout,
           ns_aref(url, sizeof(url), phr, back_action, "%s", urlextra),
           _("Back"));
   ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
-  l10n_setlocale(0);
+  l10n_resetlocale();
   html_armor_free(&ab);
 }
                        
@@ -3076,9 +3076,7 @@ priv_submit_clar(
     fprintf(msg_f, "%s\n", text3);
     fprintf(msg_f, "\n-\nRegards,\nthe ejudge contest management system (www.ejudge.ru)\n");
     close_memstream(msg_f); msg_f = 0;
-    if (cnts->default_locale_num > 0) {
-      l10n_setlocale(cnts->default_locale_num);
-    }
+    l10n_resetlocale();
     serve_send_email_to_user(ejudge_config, cnts, cs, user_id, nsubj, msg_t);
     xfree(msg_t); msg_t = 0; msg_z = 0;
   }
@@ -3323,9 +3321,7 @@ priv_submit_run_comment(
     fprintf(msg_f, "%s\n", text3);
     fprintf(msg_f, "\n-\nRegards,\nthe ejudge contest management system (www.ejudge.ru)\n");
     close_memstream(msg_f); msg_f = 0;
-    if (cnts->default_locale_num > 0) {
-      l10n_setlocale(cnts->default_locale_num);
-    }
+    l10n_resetlocale();
     serve_send_email_to_user(ejudge_config, cnts, cs, re.user_id, nsubj, msg_t);
     xfree(msg_t); msg_t = 0; msg_z = 0;
   }
@@ -3409,7 +3405,7 @@ priv_clar_reply(
     reply_txt = _("No.");
     break;
   }
-  l10n_setlocale(0);
+  l10n_resetlocale();
 
   reply_len = strlen(reply_txt);
   if (reply_len > 128 * 1024 * 1024) {
@@ -3433,7 +3429,7 @@ priv_clar_reply(
   l10n_setlocale(clar.locale_id);
   new_subj = alloca(orig_len + 64);
   new_subj_len = message_reply_subj(orig_txt, new_subj);
-  l10n_setlocale(0);
+  l10n_resetlocale();
 
   quoted_len = message_quoted_size(orig_txt);
   quoted = alloca(quoted_len + 16);
@@ -3492,9 +3488,7 @@ priv_clar_reply(
     fprintf(msg_f, "%s\n", msg);
     fprintf(msg_f, "\n-\nRegards,\nthe ejudge contest management system (www.ejudge.ru)\n");
     close_memstream(msg_f); msg_f = 0;
-    if (cnts->default_locale_num > 0) {
-      l10n_setlocale(cnts->default_locale_num);
-    }
+    l10n_resetlocale();
     serve_send_email_to_user(ejudge_config, cnts, cs, from_id, nsubj, msg_t);
     xfree(msg_t); msg_t = 0; msg_z = 0;
   }
@@ -4724,7 +4718,7 @@ priv_confirmation_page(FILE *fout,
   fprintf(fout, "</form></td></tr></table>\n");
 
   ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
-  l10n_setlocale(0);
+  l10n_resetlocale();
   html_armor_free(&ab);
   xfree(run_mask);
   return 0;
@@ -4888,7 +4882,7 @@ priv_examiners_page(
             phr->contest_id, extra->contest_arm, _("Add new run"));
   ns_examiners_page(fout, log_f, phr, cnts, extra);
   ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
-  l10n_setlocale(0);
+  l10n_resetlocale();
 
   //cleanup:
   return retval;
@@ -5185,7 +5179,7 @@ priv_upload_runlog_csv_1(
 
   fprintf(fout, "</form>\n");
   ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
-  l10n_setlocale(0);
+  l10n_resetlocale();
 
  cleanup:
   return retval;
@@ -5268,7 +5262,7 @@ priv_upload_runlog_csv_2(
   xfree(log_text); log_text = 0;
 
   ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
-  l10n_setlocale(0);
+  l10n_resetlocale();
 
  cleanup:
   if (ff) fclose(ff);
@@ -5304,7 +5298,7 @@ priv_upload_runlog_xml_1(
 
   fprintf(fout, "</form>\n");
   ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
-  l10n_setlocale(0);
+  l10n_resetlocale();
 
  cleanup:
   return retval;
@@ -5366,7 +5360,7 @@ priv_upload_runlog_xml_2(
   xfree(log_text); log_text = 0;
 
   ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
-  l10n_setlocale(0);
+  l10n_resetlocale();
 
  cleanup:
   if (ff) fclose(ff);
@@ -5643,7 +5637,7 @@ priv_assign_cyphers_2(
   }
 
   ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
-  l10n_setlocale(0);
+  l10n_resetlocale();
 
  cleanup:
   xfree(csv_reply);
@@ -5886,7 +5880,7 @@ priv_print_user_exam_protocol(
   r = ns_print_user_exam_protocol(cnts, cs, ff, user_id, locale_id,
                                   use_user_printer, full_report, use_cypher);
   close_memstream(ff); ff = 0;
-  if (locale_id > 0) l10n_setlocale(0);
+  if (locale_id > 0) l10n_resetlocale();
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
@@ -5912,7 +5906,7 @@ priv_print_user_exam_protocol(
   xfree(log_text); log_text = 0;
 
   ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
-  l10n_setlocale(0);
+  l10n_resetlocale();
 
  cleanup:
   if (ff) fclose(ff);
@@ -5989,7 +5983,7 @@ priv_print_users_exam_protocol(
                                      use_user_printer, full_report, use_cypher);
   }
   close_memstream(ff); ff = 0;
-  if (locale_id > 0) l10n_setlocale(0);
+  if (locale_id > 0) l10n_resetlocale();
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
@@ -6015,7 +6009,7 @@ priv_print_users_exam_protocol(
   xfree(log_text); log_text = 0;
 
   ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
-  l10n_setlocale(0);
+  l10n_resetlocale();
 
  cleanup:
   if (ff) fclose(ff);
@@ -6055,7 +6049,7 @@ priv_print_problem_exam_protocol(
   ff = open_memstream(&log_text, &log_size);
   r = ns_print_prob_exam_protocol(cnts, cs, ff, prob_id, locale_id, 1);
   close_memstream(ff); ff = 0;
-  if (locale_id > 0) l10n_setlocale(0);
+  if (locale_id > 0) l10n_resetlocale();
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
@@ -6081,7 +6075,7 @@ priv_print_problem_exam_protocol(
   xfree(log_text); log_text = 0;
 
   ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
-  l10n_setlocale(0);
+  l10n_resetlocale();
 
  cleanup:
   if (ff) fclose(ff);
@@ -8666,7 +8660,7 @@ unpriv_submit_run(
   }
 
 cleanup:;
-  l10n_setlocale(0);
+  l10n_resetlocale();
   xfree(utf8_str);
   return;
 
@@ -8953,7 +8947,7 @@ virtual_stop_callback(
   ns_print_user_exam_protocol(cnts, cs, tmpf, p->user_id, locale_id, 1, 0, 0);
   close_memstream(tmpf); tmpf = 0;
   xfree(tmps); tmps = 0; tmpz = 0;
-  if (locale_id > 0) l10n_setlocale(0);
+  if (locale_id > 0) l10n_resetlocale();
 }
 
 static void
@@ -9055,7 +9049,7 @@ unpriv_command(FILE *fout,
                                   0, 0);
       fclose(tmpf); tmpf = 0;
       xfree(tmps); tmps = 0; tmpz = 0;
-      if (locale_id > 0) l10n_setlocale(0);
+      if (locale_id > 0) l10n_resetlocale();
     }
 
     break;
@@ -9083,7 +9077,7 @@ unpriv_command(FILE *fout,
   }
 
 cleanup:;
-  l10n_setlocale(0);
+  l10n_resetlocale();
   return;
 
 fail:
@@ -10007,7 +10001,7 @@ unpriv_xml_update_answer(
     l10n_setlocale(phr->locale_id);
     fprintf(fout, "{ \"status\": %d, \"text\": \"%s\" }\n", -retval,
             ARMOR(ns_strerror_2(retval)));
-    l10n_setlocale(0);
+    l10n_resetlocale();
   }
 
   html_armor_free(&ab);

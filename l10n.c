@@ -64,6 +64,15 @@ l10n_prepare(int _l10n_flag, unsigned char const *l10n_dir)
 }
 
 void
+l10n_resetlocale(void)
+{
+#if CONF_HAS_LIBINTL - 0 == 1
+  putenv("LC_ALL=C");
+  setlocale(LC_ALL, "");
+#endif /* CONF_HAS_LIBINTL */
+}
+
+void
 l10n_setlocale(int locale_id)
 {
 #if CONF_HAS_LIBINTL - 0 == 1
