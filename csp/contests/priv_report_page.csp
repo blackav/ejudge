@@ -145,8 +145,8 @@
 
 <%@include "priv_footer.csp"
 %><%
-  l10n_setlocale(0);
 cleanup:
+  l10n_resetlocale();
   xfree(rep_text);
   html_armor_free(&ab);
 %>

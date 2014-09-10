@@ -183,9 +183,8 @@ static const unsigned char * const form_row_attrs[]=
 </table>
 </s:form><%@include "priv_footer.csp"
 %><%
-  l10n_setlocale(0);
-
 cleanup:
+  l10n_resetlocale();
   if (users) userlist_free(&users->b);
   html_armor_free(&ab);
   xfree(run_counts);

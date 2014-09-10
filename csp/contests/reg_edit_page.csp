@@ -119,7 +119,7 @@ ns_edit_general_form(
 <%@include "reg_footer.csp"
 %><%
 //cleanup:;
-  l10n_setlocale(0);
+  l10n_resetlocale();
   html_armor_free(&ab);
   return retval;
 

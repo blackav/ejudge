@@ -186,8 +186,8 @@ ns_unpriv_parse_run_id(
 %><%
 %><%@include "unpriv_footer.csp"
 %><%
-  l10n_setlocale(0);
 cleanup:;
+  l10n_resetlocale();
   html_armor_free(&ab);
   xfree(rep_text);
 %>

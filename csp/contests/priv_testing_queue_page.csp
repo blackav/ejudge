@@ -123,8 +123,8 @@
 
 <%@include "priv_footer.csp"
 %><%
-  l10n_setlocale(0);
 cleanup:
+  l10n_resetlocale();
   for (i = 0; i < vec.u; ++i) {
     xfree(vec.v[i].entry_name);
     super_run_in_packet_free(vec.v[i].packet);

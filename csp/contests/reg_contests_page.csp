@@ -92,6 +92,6 @@ static const unsigned char * const form_row_attrs[]=
 <%@include "reg_footer.csp"
 %><%
 //cleanup:;
-  l10n_setlocale(0);
+  l10n_resetlocale();
   html_armor_free(&ab);
 %>
