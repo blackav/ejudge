@@ -81,8 +81,8 @@
 
 <%@include "footer.csp"
 %><%
-  l10n_setlocale(0);
 cleanup:
+  l10n_resetlocale();
   if (comm_f) fclose(comm_f);
   comm_f = 0;
   xfree(comm_s); comm_s = 0; comm_z = 0;
