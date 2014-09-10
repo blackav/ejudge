@@ -49,7 +49,7 @@ You may either continue suspended editing of contest <s:v value="c0->id" /> or c
 
 <%@include "footer.csp"
 %><%
-  l10n_setlocale(0);
 cleanup:
+  l10n_resetlocale();
   html_armor_free(&ab);
 %>

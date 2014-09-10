@@ -34,7 +34,7 @@
 
 <%@include "footer.csp"
 %><%
-  l10n_setlocale(0);
 //cleanup:
+  l10n_resetlocale();
   html_armor_free(&ab);
 %>

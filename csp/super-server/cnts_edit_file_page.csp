@@ -304,8 +304,8 @@
 
 <%@include "footer.csp"
 %><%
-  l10n_setlocale(0);
 cleanup:
+  l10n_resetlocale();
   xfree(text_p);
   html_armor_free(&ab);
 %>
