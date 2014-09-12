@@ -2,7 +2,7 @@
 <html><head>
 <meta http-equiv="Content-type" content='text/html; charset=<s:config name="charset" />' />
 <link rel="stylesheet" href='<s:config name="style-prefix" />priv.css' type="text/css" />
-<link rel="stylesheet" href='<s:config name="style-prefix" />ejudge3.css' type="text/css" />
+<link rel="stylesheet" href='<s:config name="style-prefix" />ejudge3_ss.css' type="text/css" />
 <script type="text/javascript" charset="UTF-8" src="<s:config name="style-prefix"/>priv.js"></script>
 <title><s:v escape="false" value="ns_unparse_role(phr->role)" /> [<s:v checkExpr="" escape="false" value="phr->name_arm" />, <s:v value="phr->contest_id" />, <% if (extra) { %><s:v checkExpr="" escape="false" value="extra->contest_arm" /><% } %>]: <s:v escape="false" value="title" /></title>
 </head>
