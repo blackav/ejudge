@@ -45,6 +45,7 @@ static const unsigned char * const locales[] =
 #if CONF_HAS_LIBINTL - 0 == 1
 static unsigned char lc_all_env_buf[1024] = "LC_ALL=C";
 static unsigned char *lc_all_env_ptr = &lc_all_env_buf[7];
+static int current_locale_id = -1;
 #endif
 
 void
@@ -64,6 +65,7 @@ l10n_prepare(int l10n_flag_, unsigned char const *l10n_dir)
   putenv(env_buf2); // remove LANGUAGE env var
   putenv(env_buf3); // remove LC_MESSAGES env var
   putenv(lc_all_env_buf); // set LC_ALL=C
+  current_locale_id = 0;
 #endif /* CONF_HAS_LIBINTL */
 }
 
@@ -71,8 +73,10 @@ void
 l10n_resetlocale(void)
 {
 #if CONF_HAS_LIBINTL - 0 == 1
+  if (current_locale_id == 0) return;
   strcpy(lc_all_env_ptr, "C");
   setlocale(LC_ALL, "");
+  current_locale_id = 0;
 #endif /* CONF_HAS_LIBINTL */
 }
 
@@ -86,6 +90,7 @@ l10n_setlocale(int locale_id)
   static unsigned char kazakh_locale_name[512];
 
   if (locale_id < 0 || !l10n_flag) return;
+  if (locale_id == current_locale_id) return;
 
   switch (locale_id) {
   case 3:
@@ -145,6 +150,7 @@ l10n_setlocale(int locale_id)
 
   strcpy(lc_all_env_ptr, e);
   setlocale(LC_ALL, "");
+  current_locale_id = locale_id;
 #endif /* CONF_HAS_LIBINTL */
 }
 
