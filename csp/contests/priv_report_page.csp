@@ -95,13 +95,26 @@
     <s:param name="run_id" value="run_id" />
 </s:url>
 
-<table class="b0"><tr>
-    <td class="b0"><s:a ac="main-page"><s:tr>Main page</s:tr></s:a></td>
-    <td class="b0"><s:a url="ViewSourceUrl"><s:tr>Source</s:tr></s:a></td>
-    <td class="b0"><s:a url="ViewReportUrl"><s:tr>Report</s:tr></s:a></td>
-    <td class="b0"><s:a url="ViewUserReportUrl"><s:tr>User report</s:tr></s:a></td>
-    <td class="b0"><s:a url="ViewAuditLogUrl"><s:tr>Audit log</s:tr></s:a></td>
-</tr></table>
+<div id="main-menu">
+<ul>
+<li><s:a ac="main-page"><s:tr>Main page</s:tr></s:a></li>
+<li><s:a url="ViewSourceUrl"><s:tr>Source</s:tr></s:a></li>
+<%
+  if (phr->action == NEW_SRV_ACTION_VIEW_USER_REPORT) {
+%><li><s:a url="ViewReportUrl"><s:tr>Report</s:tr></s:a></li><%
+  } else {
+%><li><s:a class="current" url="ViewReportUrl"><s:tr>Report</s:tr></s:a></li><%
+  }
+%>
+<%
+  if (phr->action == NEW_SRV_ACTION_VIEW_USER_REPORT) {
+%><li><s:a class="current" url="ViewUserReportUrl"><s:tr>User report</s:tr></s:a></li><%
+  } else {
+%><li><s:a url="ViewUserReportUrl"><s:tr>User report</s:tr></s:a></li><%
+  }
+%>
+<li><s:a url="ViewAuditLogUrl"><s:tr>Audit log</s:tr></s:a></li>
+</ul></div>
 </div>
 
 <%  switch (content_type) {
