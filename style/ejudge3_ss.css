@@ -111,12 +111,9 @@ body {
 	border: 1px solid rgba(66, 144, 163, 0.68);
 	border-bottom: rgb(58, 122, 138) 1px solid;
 	min-width: 700px;
-	/* position: absolute;
+	position: absolute;
 	height: 22px;
-	top: 105px; */
-	display: table;
-	position: relative;
-	bottom: 56px;
+	top: 105px;
 }
 
 #main-menu ul {	

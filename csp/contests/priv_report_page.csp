@@ -102,6 +102,7 @@
     <td class="b0"><s:a url="ViewUserReportUrl"><s:tr>User report</s:tr></s:a></td>
     <td class="b0"><s:a url="ViewAuditLogUrl"><s:tr>Audit log</s:tr></s:a></td>
 </tr></table>
+</div>
 
 <%  switch (content_type) {
   case CONTENT_TYPE_TEXT:

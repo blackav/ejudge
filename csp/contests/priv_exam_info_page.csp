@@ -18,7 +18,10 @@
   l10n_setlocale(phr->locale_id);
   title = _("Examination information");
 %><%@include "priv_header.csp"
-%><table class="b1">
+%>
+</div>
+
+<table class="b1">
     <tr>
         <th class="b1">NN</th>
         <th class="b1"><s:tr>User Id</s:tr></th>

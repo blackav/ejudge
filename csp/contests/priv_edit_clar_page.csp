@@ -30,6 +30,8 @@
   snprintf(title, sizeof(title), "%s %d", _("Editing clar"), clar_id);
 %><%@include "priv_header.csp"
 %>
+</div>
+
 <s:url name="ViewClarUrl" ac="view-clar">
   <s:param name="clar_id" value="clar_id" />
 </s:url>

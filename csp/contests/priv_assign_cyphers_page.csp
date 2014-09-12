@@ -15,6 +15,8 @@
   title = _("Assign cyphers");
 %><%@include "priv_header.csp"
 %>
+</div>
+
 <s:form>
 <table>
 <tr><td><s:textfield name="prefix" size="16" value="" /></td><td><s:tr>Cypher prefix</s:tr></td></tr>

@@ -23,6 +23,8 @@
   title = _("Current standings");
 %><%@include "priv_header.csp"
 %>
+</div>
+
 <s:form>
 <table border="0">
 <tr><td><s:tr>User filter expression</s:tr>:</td><td><s:textfield name="stand_user_expr" size="64" value="u->stand_user_expr" /></td></tr>

@@ -19,6 +19,8 @@
   title = _("Add new run");
 %><%@include "priv_header.csp"
 %>
+</div>
+
 <p><s:a ac="main-page"><s:tr>To main page</s:tr></s:a></p>
 
 <s:form>

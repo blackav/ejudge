@@ -21,6 +21,8 @@
     title = _("Judging priorities");
 %><%@include "priv_header.csp"
 %>
+</div>
+
 <s:form>
 <table class="b1">
     <tr>

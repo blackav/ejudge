@@ -55,7 +55,10 @@ static const unsigned char * const form_row_attrs[]=
 
   l10n_setlocale(phr->locale_id);
 %><%@include "priv_header.csp"
-%><h2>Registered users</h2>
+%>
+</div>
+
+<h2>Registered users</h2>
 
 <s:form>
 <table class="b1"><tr><th class="b1">NN</th><th class="b1">Id</th><th class="b1">Login</th><th class="b1">Name</th><th class="b1">Status</th><th class="b1">Flags</th><th class="b1">Reg. date</th><th class="b1">Login date</th><th class="b1">No. of submits</th><th class="b1">Size of submits</th>
