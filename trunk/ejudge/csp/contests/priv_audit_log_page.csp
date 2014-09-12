@@ -49,6 +49,8 @@
   snprintf(title, sizeof(title), "%s %d", _("Viewing audit log for"), run_id);
 %><%@include "priv_header.csp"
 %>
+</div>
+
 <s:url name="ViewSourceUrl" ac="view-source">
     <s:param name="run_id" value="run_id" />
 </s:url>

@@ -41,6 +41,8 @@
   snprintf(title, sizeof(title), "%s %d", _("Editing run"), run_id);
 %><%@include "priv_header.csp"
 %>
+</div>
+
 <s:url name="ViewSourceUrl" ac="view-source">
     <s:param name="run_id" value="run_id" />
 </s:url>

@@ -15,7 +15,10 @@
     l10n_setlocale(phr->locale_id);
     title = _("Users for IP addresses");
 %><%@include "priv_header.csp"
-%><table class="b1">
+%>
+</div>
+
+<table class="b1">
     <tr>
         <th class="b1">NN</th>
         <th class="b1"><s:tr>IP address</s:tr></th>

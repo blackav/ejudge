@@ -17,6 +17,8 @@
     title = _("IP addresses for users");
 %><%@include "priv_header.csp"
 %>
+</div>
+
 <table class="b1">
     <tr>
         <th class="b1">NN</th>

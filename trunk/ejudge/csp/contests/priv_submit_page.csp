@@ -72,6 +72,8 @@ ns_unparse_answers(
   }
 %><%@include "priv_header.csp"
 %>
+</div>
+
 <% if (prob) { %>
 <h2><s:tr>Problem</s:tr> <s:v value="prob->short_name" escape="false"/>: <s:v value="prob->long_name" /></h2>
 <% } %>

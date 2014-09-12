@@ -28,7 +28,10 @@
   l10n_setlocale(phr->locale_id);
   phr->client_key = 0;
 %><%@include "priv_header.csp" 
-%><s:form>
+%>
+</div>
+
+<s:form>
 <table>
 <tr><td><s:tr>Login</s:tr>:</td><td><s:textfield size="32" name="login" /></td></tr>
 <tr><td><s:tr>Password</s:tr>:</td><td><s:password size="32" name="password" /></td></tr>

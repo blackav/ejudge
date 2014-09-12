@@ -95,7 +95,7 @@
 <li><s:a url="ViewUserReportUrl"><s:tr>User report</s:tr></s:a></li>
 <li><s:a url="ViewAuditLogUrl"><s:tr>Audit log</s:tr></s:a></li>
 </ul></div>
-<!--</div>-->
+</div>
 
 <s:url name="PrivEditRunPageUrl" ac="priv-edit-run-page">
     <s:param name="run_id" value="run_id" />

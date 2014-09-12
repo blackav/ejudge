@@ -35,7 +35,10 @@
   unsigned char title[1024];
   snprintf(title, sizeof(title), "%s %d", _("Viewing clar"), clar_id);
 %><%@include "priv_header.csp" 
-%><h2><s:tr>Message</s:tr> <s:v value="clar_id" />
+%>
+</div>
+
+<h2><s:tr>Message</s:tr> <s:v value="clar_id" />
 <%  if (phr->role == USER_ROLE_ADMIN && opcaps_check(phr->caps, OPCAP_EDIT_RUN) >= 0) { %>
 <s:url name="EditClarUrl" ac="priv-edit-clar-page">
   <s:param name="clar_id" value="clar_id" />

@@ -36,6 +36,8 @@
   title = _("Testing queue");
 %><%@include "priv_header.csp"
 %>
+</div>
+
 <table class="b0"><tr>
 <td class="b0"><s:a ac="main-page"><s:tr>Main page</s:tr></s:a></td>
 <td class="b0"><s:a ac="view-testing-queue"><s:tr>Refresh</s:tr></s:a></td>

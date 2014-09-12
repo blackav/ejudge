@@ -35,6 +35,7 @@
   title = _("Upsolving configuration");
 %><%@include "priv_header.csp"
 %>
+</div>
 
 <s:form>
 <table>

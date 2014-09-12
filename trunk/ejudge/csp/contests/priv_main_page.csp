@@ -76,7 +76,10 @@
     if (cs->probs[i] && cs->probs[i]->manual_checking)
       need_examiners = 1;
 %><%@include "priv_header.csp"
-%><script language="javascript">
+%>
+</div>
+
+<script language="javascript">
     var self_url='<s:v escape="false" value="phr->self_url" />';
     var SID='<s:v value="phr->session_id" />';
 </script>

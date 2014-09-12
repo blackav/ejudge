@@ -28,7 +28,10 @@
 
   l10n_setlocale(phr->locale_id);
 %><%@include "priv_header.csp"
-%><s:form>
+%>
+</div>
+
+<s:form>
 <s:hidden name="run_mask_size" escape="false" value="mask_size_str" />
 <s:hidden name="run_mask" escape="false" value="mask_str" />
 <h2><s:tr>Run selection</s:tr></h2>

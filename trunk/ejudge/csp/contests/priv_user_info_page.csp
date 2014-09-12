@@ -46,6 +46,8 @@
     title = _("Details for user ");
 %><%@include "priv_header.csp"
 %>
+</div>
+
 <ul>
     <li><s:a ac="main-page"><s:tr>Main page</s:tr></s:a></li>
     <li><s:a ac="view-users"><s:tr>View regular users</s:tr></s:a></li>
