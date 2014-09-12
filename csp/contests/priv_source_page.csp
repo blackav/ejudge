@@ -87,7 +87,7 @@
     <s:param name="run_id" value="run_id" />
 </s:url>
 
-  <div id="main-menu">
+<div id="main-menu">
 <ul>
 <li><s:a ac="main-page"><s:tr>Main page</s:tr></s:a></li>
 <li><s:a class="current" url="ViewSourceUrl"><s:tr>Source</s:tr></s:a></li>
