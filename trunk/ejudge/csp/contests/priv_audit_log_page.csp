@@ -49,8 +49,6 @@
   snprintf(title, sizeof(title), "%s %d", _("Viewing audit log for"), run_id);
 %><%@include "priv_header.csp"
 %>
-</div>
-
 <s:url name="ViewSourceUrl" ac="view-source">
     <s:param name="run_id" value="run_id" />
 </s:url>
@@ -64,15 +62,15 @@
     <s:param name="run_id" value="run_id" />
 </s:url>
 
-<table class="b0"><tr>
-    <td class="b0"><s:a ac="main-page"><s:tr>Main page</s:tr></s:a></td>
-    <td class="b0"><s:a url="ViewSourceUrl"><s:tr>Source</s:tr></s:a></td>
-    <td class="b0"><s:a url="ViewReportUrl"><s:tr>Report</s:tr></s:a></td>
-    <td class="b0"><s:a url="ViewUserReportUrl"><s:tr>User report</s:tr></s:a></td>
-    <td class="b0"><s:a url="ViewAuditLogUrl"><s:tr>Audit log</s:tr></s:a></td>
-</tr></table>
-
-<hr/>
+<div id="main-menu">
+<ul>
+<li><s:a ac="main-page"><s:tr>Main page</s:tr></s:a></li>
+<li><s:a url="ViewSourceUrl"><s:tr>Source</s:tr></s:a></li>
+<li><s:a url="ViewReportUrl"><s:tr>Report</s:tr></s:a></li>
+<li><s:a url="ViewUserReportUrl"><s:tr>User report</s:tr></s:a></li>
+<li><s:a class="current" url="ViewAuditLogUrl"><s:tr>Audit log</s:tr></s:a></li>
+</ul></div>
+</div>
 
 <% if (!audit_text || !*audit_text) { %>
 <p><i><s:tr>Audit log is empty</s:tr></i></p>
