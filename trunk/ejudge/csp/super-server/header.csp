@@ -34,4 +34,13 @@
 %>serve-control: <s:v checkexpr="" value="phr->login" />@<s:v value="phr->http_host" /><s:v sep=", " checkexpr=" > 0" value="phr->contest_id" /><s:v sep=", " checkexpr="" value="subtitle" /><%
     }
 %></h1>
+
+<div id="main-menu">
+    <ul>
+        <li><s:a ac="main-page">Main</s:a></li>
+    </ul>
+    <div id="logout">&nbsp;</div>
+    <!--<div id="logout"><s:a ac="logout">Logout</s:a></div>-->
+</div>
+
 </div>

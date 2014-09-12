@@ -1,50 +1,70 @@
 <%
 /* $Id$ */
 %><table border="0"><tr>
-    <td><s:a ac="main-page"><s:_>To the top (postpone editing)</s:_></s:a></td>
-    <td><%
+    <td><s:a class="a-button-style" ac="main-page"><s:_>To the top (postpone editing)</s:_></s:a></td>
+    <%
   if (cur_page != 1) {
-%><s:a ac="cnts-edit-cur-contest-page"><%
+%><td><s:a class="a-button-style" ac="cnts-edit-cur-contest-page"><%
+  } else {
+%><td class="a-button-style"><%
   }
 %><s:_>General settings (contest.xml)</s:_><%
   if (cur_page != 1) {
-%></s:a><%
+%></s:a></td><%
+  } else {
+%></td><%
   }
-%></td>
-    <td><%
+%>
+    <%
   if (cur_page != 2) {
-%><s:a ac="cnts-edit-cur-global-page"><%
+%><td><s:a class="a-button-style" ac="cnts-edit-cur-global-page"><%
+  } else {
+%><td class="a-button-style"><%
   }
 %><s:_>Global settings (serve.cfg)</s:_><%
   if (cur_page != 2) {
-%></s:a><%
+%></s:a></td><%
+  } else {
+%></td><%
   }
-%></td>
-    <td><%
+%>
+    <%
   if (cur_page != 3) {
-%><s:a ac="cnts-edit-cur-language-page"><%
+%><td><s:a class="a-button-style" ac="cnts-edit-cur-language-page"><%
+  } else {
+%><td class="a-button-style"><%
   }
 %><s:_>Language settings (serve.cfg)</s:_><%
   if (cur_page != 3) {
-%></s:a><%
+%></s:a></td><%
+  } else {
+%></td><%
   }
-%></td>
-    <td><%
+%>
+    <%
   if (cur_page != 4) {
-%><s:a ac="cnts-edit-cur-problem-page"><%
+%><td><s:a class="a-button-style" ac="cnts-edit-cur-problem-page"><%
+  } else {
+%><td class="a-button-style"><%
   }
 %><s:_>Problems (serve.cfg)</s:_><%
   if (cur_page != 4) {
-%></s:a><%
+%></s:a></td><%
+  } else {
+%></td><%
   }
-%></td>
-    <td><%
+%>
+    <%
   if (cur_page != 5) {
-%><s:a ac="cnts-start-edit-variant-action"><%
+%><td><s:a class="a-button-style" ac="cnts-start-edit-variant-action"><%
+  } else {
+%><td class="a-button-style"><%
   }
 %><s:_>Variants (variant.map)</s:_><%
   if (cur_page != 5) {
-%></s:a><%
+%></s:a></td><%
+  } else {
+%></td><%
   }
-%></td>
+%>
 </tr></table>
