@@ -107,7 +107,7 @@
       && opcaps_check(phr->caps, OPCAP_REPLY_MESSAGE) >= 0) { %>
 <hr/>
 <s:form>
-<s:hidden name="in_reply_to" value="clar_id" />
+<s:hidden name="in_reply_to" value="clar_id" checkExpr=">= 0" />
 <p><s:submit ac="clar-reply-read-problem" />
 <s:submit ac="clar-reply-no-comments" />
 <s:submit ac="clar-reply-yes" />
