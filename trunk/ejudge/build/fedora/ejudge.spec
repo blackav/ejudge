@@ -1,5 +1,5 @@
 Name: ejudge
-Version: 3.0
+Version: 3.0.2
 Release: 1%{?dist}
 Summary: A programming contest management system
 Source: %{name}-%{version}.tgz
