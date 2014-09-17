@@ -137,7 +137,8 @@ static int use_reply_buf = 0;
 static unsigned char *reply_buf;
 static size_t reply_size;
 static const unsigned char *session_id_file;
-static ej_cookie_t session_id;
+
+static Session session;
 
 static unsigned char **cgi_environ = 0;
 static int cgi_environ_a = 0;
@@ -313,12 +314,6 @@ parse_int(const char *str, int *p_val)
   return 0;
 }
 
-typedef struct Session
-{
-  unsigned long long session_id;
-  unsigned long long client_key;
-} Session;
-
 struct role_str_map
 {
   const char *str;
@@ -366,27 +361,22 @@ shift_args(int *p_argc, char **argv, int i, int n)
 static void
 parse_session_id(int *p_argc, char **argv)
 {
-  char *endp = 0;
   unsigned char buf[1024];
   int c, blen;
   FILE *f = 0;
 
   if (!*p_argc) startup_error("session_id is not specified");
   if (session_mode) {
-    errno = 0;
-    session_id = strtoull(argv[0], &endp, 16);
-    if (errno || *endp || !session_id) startup_error("invalid session_id");
+    if (session_parse(&session, argv[0]) < 0)
+      startup_error("invalid session_id");
   } else if (!strcmp(argv[0], "-") || !strcmp(argv[0], "STDIN")) {
     if (!fgets(buf, sizeof(buf), stdin))
       startup_error("session_id is not specified on STDIN");
     if ((blen = strlen(buf)) > sizeof(buf) - 2)
       startup_error("line is too long on STDIN");
     while (blen > 0 && isspace(buf[blen - 1])) blen--;
-    buf[blen] = 0;
-    errno = 0;
-    session_id = strtoull(buf, &endp, 16);
-    if (errno || *endp || !session_id)
-      startup_error("invalid session_id on STDIN");
+    if (session_parse(&session, buf) < 0)
+      startup_error("invalid session_id");
   } else {
     if (!(f = fopen(argv[0], "r")))
       startup_error("cannot open session file `%s'", argv[0]);
@@ -399,13 +389,15 @@ parse_session_id(int *p_argc, char **argv)
       startup_error("line is too long in session file `%s'", argv[0]);
     while (blen > 0 && isspace(buf[blen - 1])) blen--;
     buf[blen] = 0;
-    errno = 0;
-    session_id = strtoull(buf, &endp, 16);
-    if (errno || *endp || !session_id)
-      startup_error("invalid session_id int file `%s'", argv[0]);
+    if (session_parse(&session, buf) < 0)
+      startup_error("invalid session_id");
   }
   shift_args(p_argc, argv, 0, 1);
-  put_cgi_param_f("SID", "%016llx", session_id);
+  put_cgi_param_f("SID", "%016llx", session.session_id);
+  if (session.client_key) {
+    snprintf(buf, sizeof(buf), "EJSID=%016llx", session.client_key);
+    put_cgi_environ("HTTP_COOKIE", buf);
+  }
 }
 
 /*
@@ -500,27 +492,23 @@ prepare_login(const unsigned char *cmd, int argc, char *argv[], int role,
 static int
 post_login(void)
 {
-  char *eptr = 0;
   FILE *fout = 0;
 
   while (reply_size > 0 && isspace(reply_buf[reply_size - 1])) reply_size--;
   reply_buf[reply_size] = 0;
   if (!reply_size) op_error("reply is empty");
 
-  fprintf(stderr, ">>%s<<\n", reply_buf);
-
-  errno = 0;
-  session_id = strtoull(reply_buf, &eptr, 16);
-  if (errno || *eptr || reply_buf + reply_size != (unsigned char*) eptr
-      || !session_id)
+  if (session_parse(&session, reply_buf) < 0)
     op_error("invalid session_id");
 
   if (!strcmp(session_id_file, "-") || !strcmp(session_id_file, "STDOUT")) {
-    printf("%016llx\n", session_id);
+    session_unparse_f(stdout, &session);
+    putchar('\n');
   } else {
     if (!(fout = fopen(session_id_file, "w")))
       op_error("cannot open output file `%s'", session_id_file);
-    fprintf(fout, "%016llx\n", session_id);
+    session_unparse_f(fout, &session);
+    putc('\n', fout);
     if (ferror(fout) || fclose(fout) < 0)
       op_error("write error");
   }
