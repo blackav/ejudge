@@ -4051,7 +4051,7 @@ handle_checkbox_open(
 }
 
 static int
-handle_tr_open(
+handle_gettext_open(
         FILE *log_f,
         TypeContext *cntx,
         ProcessorState *ps,
@@ -4063,7 +4063,7 @@ handle_tr_open(
 }
 
 static int
-handle_tr_close(
+handle_gettext_close(
         FILE *log_f,
         TypeContext *cntx,
         ProcessorState *ps,
@@ -4598,8 +4598,7 @@ struct ElementInfo
 
 static const struct ElementInfo element_handlers[] =
 {
-    { "s:tr", handle_tr_open, handle_tr_close },
-    { "s:_", handle_tr_open, handle_tr_close },
+    { "s:_", handle_gettext_open, handle_gettext_close },
     { "s:a", handle_a_open, handle_a_close },
     { "s:submit", handle_submit_open, NULL },
     { "s:v", handle_v_open, NULL },
