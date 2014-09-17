@@ -118,7 +118,7 @@ static const unsigned char * const form_row_attrs[]=
 %>
 
 <table border="0">
-    <s:htr attr="head_row_attr">
+    <s:tr attr="head_row_attr">
         <th>User Id</th>
         <th>User Login</th>
         <th>User Name</th>
@@ -132,14 +132,14 @@ static const unsigned char * const form_row_attrs[]=
   }
 %>
         <th>Action</th>
-    </s:htr>
+    </s:tr>
 <%
   int i;
   for (i = 0; i < vmap->u; ++i) {
 %>
     <s:form>
         <s:hidden name="row" value="i" checkExpr=">= 0" />
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td><%
     if (vmap->v[i].user_id > 0) {
 %><s:v value="vmap->v[i].user_id" /><%
@@ -174,7 +174,7 @@ static const unsigned char * const form_row_attrs[]=
     }
 %>
             <td><s:submit ac="prob-change-variants" label="Change"/><s:submit ac="prob-delete-variants" label="Delete row"/></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }

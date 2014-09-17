@@ -74,26 +74,26 @@ static const unsigned char * const form_row_attrs[]=
     val = 0;
     if (memb) val = memb->min_count;
 %>
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Minimal number:</td>
         <td><s:numselect name="min_count" value="val" highValue="6" /></td>
-    </s:htr>
+    </s:tr>
 <%
     val = 0;
     if (memb) val = memb->max_count;
 %>
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Maximal number:</td>
         <td><s:numselect name="max_count" value="val" highValue="6" /></td>
-    </s:htr>
+    </s:tr>
 <%
     val = 0;
     if (memb) val = memb->init_count;
 %>
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Initial number:</td>
         <td><s:numselect name="init_count" value="val" highValue="6" /></td>
-    </s:htr>
+    </s:tr>
 
 <%
   int i;
@@ -106,14 +106,14 @@ static const unsigned char * const form_row_attrs[]=
       if (fields[i]->mandatory) val = 2;
     }
 %>
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td><s:v value="contests_get_member_field_name(i)" escape="false" /></td>
         <td><select name='field_<s:v value="i" />'>
             <s:option value="0" selectedExpr="val == 0"><s:_>Disabled</s:_></s:option>
             <s:option value="1" selectedExpr="val == 1"><s:_>Optional</s:_></s:option>
             <s:option value="2" selectedExpr="val == 2"><s:_>Mandatory</s:_></s:option>
         </select></td>
-    </s:htr>
+    </s:tr>
 <%
   }
 %>

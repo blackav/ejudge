@@ -84,12 +84,12 @@ static const unsigned char * const form_row_attrs[]=
 %>
 
 <table border="0">
-    <s:htr attr="head_row_attr">
+    <s:tr attr="head_row_attr">
         <td colspan="4" align="center"><b>Main properties</b></td>
-    </s:htr>
+    </s:tr>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Contest time (HH:MM):</td>
 <%
   if (global->contest_time <= 0) {
@@ -107,26 +107,26 @@ static const unsigned char * const form_row_attrs[]=
   }
 %>
             <td><s:help ac="glob-change-duration" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
 <%
   if (global->contest_time <= 0) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Contest end time:</td>
             <td><% html_date_select(out_f, global->contest_finish_time); %></td>
             <td><s:submit ac="glob-change-contest-finish-time" label="Change" /><s:submit ac="glob-clear-contest-finish-time" label="Clear" /></td>
             <td><s:help ac="glob-change-contest-finish-time" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
 %>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Scoring system:</td>
             <td><%
   score_system = global->score_system;
@@ -137,11 +137,11 @@ static const unsigned char * const form_row_attrs[]=
 %><% html_select(out_f, score_system, "param", contest_types); %></td>
             <td><s:submit ac="glob-change-type" label="Change" /></td>
             <td><s:help ac="glob-change-type" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Standings freeze time (HH:MM) before finish:</td>
 <%
   if (!global->board_fog_time) {
@@ -159,7 +159,7 @@ static const unsigned char * const form_row_attrs[]=
   }
 %>
             <td><s:help ac="glob-change-fog-time" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
 <%
@@ -168,78 +168,78 @@ static const unsigned char * const form_row_attrs[]=
     snprintf(time_buf, sizeof(time_buf), "%d:%02d", global->board_unfog_time / 60, global->board_unfog_time % 60);
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Standings unfreeze time (HH:MM) after finish:</td>
             <td><s:textfield check="false" name="param" value="time_buf" size="8" /></td>
             <td><s:submit ac="glob-change-unfog-time" label="Change" /></td>
             <td><s:help ac="glob-change-unfog-time" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
 %>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Use the default compilation server:</td>
             <td><s:yesno name="param" value="!phr->ss->disable_compilation_server" /></td>
             <td><s:submit ac="glob-change-use-compilation-server" label="Change" /></td>
             <td><s:help ac="glob-change-use-compilation-server" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Enable Win32 languages:</td>
             <td><s:yesno name="param" value="phr->ss->enable_win32_languages" /></td>
             <td><s:submit ac="glob-change-enable-win32-languages" label="Change" /></td>
             <td><s:help ac="glob-change-enable-win32-languages" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Calculate and store user-visible score separately:</td>
             <td><s:yesno name="param" value="global->separate_user_score" /></td>
             <td><s:submit ac="glob-change-separate-user-score" label="Change" /></td>
             <td><s:help ac="glob-change-separate-user-score" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Run programs securely:</td>
             <td><s:yesno name="param" value="global->secure_run" /></td>
             <td><s:submit ac="glob-change-secure-run" label="Change" /></td>
             <td><s:help ac="glob-change-secure-run" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Enable support for MemoryLimit error:</td>
             <td><s:yesno name="param" value="global->enable_memory_limit_error" /></td>
             <td><s:submit ac="glob-change-enable-memory-limit-error" label="Change" /></td>
             <td><s:help ac="glob-change-enable-memory-limit-error" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Detect security violations:</td>
             <td><s:yesno name="param" value="global->detect_violations" /></td>
             <td><s:submit ac="glob-change-detect-violations" label="Change" /></td>
             <td><s:help ac="glob-change-detect-violations" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Assume max_stack_size == max_vm_size:</td>
             <td><s:yesno name="param" value="global->enable_max_stack_size" /></td>
             <td><s:submit ac="glob-change-enable-max-stack-size" label="Change" /></td>
             <td><s:help ac="glob-change-enable-max-stack-size" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
 <%
@@ -250,40 +250,40 @@ static const unsigned char * const form_row_attrs[]=
   }
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Standings language:</td>
             <td><% html_select(out_f, standings_locale, "param", standings_languages); %></td>
             <td><s:submit ac="glob-change-stand-locale" label="Change" /></td>
             <td><s:help ac="glob-change-stand-locale" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Checker locale:</td>
             <td><s:textfield name="param" value="global->checker_locale" size="48" maxlength="1024" checkExpr="" /><% if (!global->checker_locale) { %><i>Not set</i><% } %></td>
             <td><s:submit ac="glob-change-checker-locale" label="Change" /><s:submit ac="glob-clear-checker-locale" label="Clear" /></td>
             <td><s:help ac="glob-change-checker-locale" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
 <%
   if (sizeof(long) == sizeof(long long)) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Compile 32-bit checkers on 64-bit platforms:</td>
             <td><s:yesno name="param" value="global->enable_32bit_checkers" /></td>
             <td><s:submit ac="glob-change-enable-32bit-checkers" label="Change" /></td>
             <td><s:help ac="glob-change-enable-32bit-checkers" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
 %>
 
     <s:form>
-        <s:htr attr="head_row_attr">
+        <s:tr attr="head_row_attr">
             <td colspan="4" align="center"><b>Contestant's capabilities</b><%
   if (phr->ss->show_global_1) {
 %><s:submit ac="glob-hide-1" label="Hide" /><%
@@ -291,7 +291,7 @@ static const unsigned char * const form_row_attrs[]=
 %><s:submit ac="glob-show-1" label="Show" /><%
   }
 %></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   if (!phr->ss->show_global_1) goto files_and_directories;
@@ -299,48 +299,48 @@ static const unsigned char * const form_row_attrs[]=
 %>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Contestant may view submitted source code:</td>
             <td><s:yesno name="param" value="global->team_enable_src_view" /></td>
             <td><s:submit ac="glob-change-src-view" label="Change" /></td>
             <td><s:help ac="glob-change-src-view" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
 <%
   if (global->score_system == SCORE_ACM || global->score_system == SCORE_MOSCOW) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Participants cannot view failed test number:</td>
             <td><s:yesno name="param" value="global->disable_failed_test_view" /></td>
             <td><s:submit ac="glob-change-disable-failed-test-view" label="Change" /></td>
             <td><s:help ac="glob-change-disable-failed-test-view" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
 %>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Contestant may view testing protocol:</td>
             <td><s:yesno name="param" value="global->team_enable_rep_view" /></td>
             <td><s:submit ac="glob-change-rep-view" label="Change" /></td>
             <td><s:help ac="glob-change-rep-view" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
 <%
   if (!global->team_enable_rep_view) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Contestant may view compilation errors:</td>
             <td><s:yesno name="param" value="global->team_enable_ce_view" /></td>
             <td><s:submit ac="glob-change-ce-view" label="Change" /></td>
             <td><s:help ac="glob-change-ce-view" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
@@ -350,12 +350,12 @@ static const unsigned char * const form_row_attrs[]=
   if (global->team_enable_rep_view) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Contestant may view FULL (judge's) testing protocol:</td>
             <td><s:yesno name="param" value="global->team_show_judge_report" /></td>
             <td><s:submit ac="glob-change-judge-report" label="Change" /></td>
             <td><s:help ac="glob-change-judge-report" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
@@ -365,111 +365,111 @@ static const unsigned char * const form_row_attrs[]=
   if (global->team_enable_rep_view && !global->team_show_judge_report) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Process exit code is shown in testing report:</td>
             <td><s:yesno name="param" value="global->report_error_code" /></td>
             <td><s:submit ac="glob-change-report-error-code" label="Change" /></td>
             <td><s:help ac="glob-change-report-error-code" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
 %>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Clarification requests are disabled completely:</td>
             <td><s:yesno name="param" value="global->disable_clars" /></td>
             <td><s:submit ac="glob-change-disable-clars" label="Change" /></td>
             <td><s:help ac="glob-change-disable-clars" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
 <%
   if (!global->disable_clars) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Contestant cannot write clarification request:</td>
             <td><s:yesno name="param" value="global->disable_team_clars" /></td>
             <td><s:submit ac="glob-change-disable-team-clars" label="Change" /></td>
             <td><s:help ac="glob-change-disable-team-clars" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
 %>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Participants may select desired EOLN type:</td>
             <td><s:yesno name="param" value="global->enable_eoln_select" /></td>
             <td><s:submit ac="glob-change-enable-eoln-select" label="Change" /></td>
             <td><s:help ac="glob-change-enable-eoln-select" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Disable submit of already solved problems:</td>
             <td><s:yesno name="param" value="global->disable_submit_after_ok" /></td>
             <td><s:submit ac="glob-change-disable-submit-after-ok" label="Change" /></td>
             <td><s:help ac="glob-change-disable-submit-after-ok" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Compilation errors are not counted as failed runs:</td>
             <td><s:yesno name="param" value="global->ignore_compile_errors" /></td>
             <td><s:submit ac="glob-change-ignore-compile-errors" label="Change" /></td>
             <td><s:help ac="glob-change-ignore-compile-errors" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Identical submits of one contestant are ignored:</td>
             <td><s:yesno name="param" value="global->ignore_duplicated_runs" /></td>
             <td><s:submit ac="glob-change-ignore-duplicated-runs" label="Change" /></td>
             <td><s:help ac="glob-change-ignore-duplicated-runs" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
 <%
   if (global->contest_time <= 0) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Show submit deadline in problem selection menu:</td>
             <td><s:yesno name="param" value="global->show_deadline" /></td>
             <td><s:submit ac="glob-change-show-deadline" label="Change" /></td>
             <td><s:help ac="glob-change-show-deadline" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
 %>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Contestants may print their submits:</td>
             <td><s:yesno name="param" value="global->enable_printing" /></td>
             <td><s:submit ac="glob-change-enable-printing" label="Change" /></td>
             <td><s:help ac="glob-change-enable-printing" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
 <%
   if (global->enable_printing > 0) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Disable separate banner page:</td>
             <td><s:yesno name="param" value="global->disable_banner_page" /></td>
             <td><s:submit ac="glob-change-disable-banner-page" label="Change" /></td>
             <td><s:help ac="glob-change-disable-banner-page" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
@@ -479,81 +479,81 @@ static const unsigned char * const form_row_attrs[]=
   if (global->enable_printing > 0 && global->disable_banner_page > 0) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Show login (not name) on printouts:</td>
             <td><s:yesno name="param" value="global->printout_uses_login" /></td>
             <td><s:submit ac="glob-change-printout-uses-login" label="Change" /></td>
             <td><s:help ac="glob-change-printout-uses-login" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
 %>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Do not show contestants, which did not make any submit in standings:</td>
             <td><s:yesno name="param" value="global->prune_empty_users" /></td>
             <td><s:submit ac="glob-change-prune-empty-users" label="Change" /></td>
             <td><s:help ac="glob-change-prune-empty-users" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Store full contestant's program output in the archive:</td>
             <td><s:yesno name="param" value="global->enable_full_archive" /></td>
             <td><s:submit ac="glob-change-enable-full-archive" label="Change" /></td>
             <td><s:help ac="glob-change-enable-full-archive" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Contestant may view Problems link before start:</td>
             <td><s:yesno name="param" value="global->always_show_problems" /></td>
             <td><s:submit ac="glob-change-always-show-problems" label="Change" /></td>
             <td><s:help ac="glob-change-always-show-problems" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Disable build-in standings in new-client:</td>
             <td><s:yesno name="param" value="global->disable_user_standings" /></td>
             <td><s:submit ac="glob-change-disable-user-standings" label="Change" /></td>
             <td><s:help ac="glob-change-disable-user-standings" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Disable language column in new-client:</td>
             <td><s:yesno name="param" value="global->disable_language" /></td>
             <td><s:submit ac="glob-change-disable-language" label="Change" /></td>
             <td><s:help ac="glob-change-disable-language" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Advanced problem navigation:</td>
             <td><s:yesno name="param" value="global->problem_navigation" /></td>
             <td><s:submit ac="glob-change-problem-navigation" label="Change" /></td>
             <td><s:help ac="glob-change-problem-navigation" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
 <%
   if (global->problem_navigation > 0) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Place problem navigation vertically:</td>
             <td><s:yesno name="param" value="global->vertical_navigation" /></td>
             <td><s:submit ac="glob-change-vertical-navigation" label="Change" /></td>
             <td><s:help ac="glob-change-vertical-navigation" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
@@ -563,12 +563,12 @@ static const unsigned char * const form_row_attrs[]=
   if (global->is_virtual > 0) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Disable user Virtual start button:</td>
             <td><s:yesno name="param" value="global->disable_virtual_start" /></td>
             <td><s:submit ac="glob-change-disable-virtual-start" label="Change" /></td>
             <td><s:help ac="glob-change-disable-virtual-start" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
@@ -578,12 +578,12 @@ static const unsigned char * const form_row_attrs[]=
   if (global->score_system == SCORE_OLYMPIAD) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Disable auto-judging after virtual olympiad:</td>
             <td><s:yesno name="param" value="global->disable_virtual_auto_judge" /></td>
             <td><s:submit ac="glob-change-disable-virtual-auto-judge" label="Change" /></td>
             <td><s:help ac="glob-change-disable-virtual-auto-judge" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
@@ -593,42 +593,42 @@ static const unsigned char * const form_row_attrs[]=
   if (global->score_system == SCORE_OLYMPIAD) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Enable automatic protocol printing:</td>
             <td><s:yesno name="param" value="global->enable_auto_print_protocol" /></td>
             <td><s:submit ac="glob-change-enable-auto-print-protocol" label="Change" /></td>
             <td><s:help ac="glob-change-enable-auto-print-protocol" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
 %>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Enable e-mail clar notifications:</td>
             <td><s:yesno name="param" value="global->notify_clar_reply" /></td>
             <td><s:submit ac="glob-change-notify-clar-reply" label="Change" /></td>
             <td><s:help ac="glob-change-notify-clar-reply" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Enable e-mail status change notifications:</td>
             <td><s:yesno name="param" value="global->notify_status_change" /></td>
             <td><s:submit ac="glob-change-notify-status-change" label="Change" /></td>
             <td><s:help ac="glob-change-notify-status-change" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Disable auto-refreshing:</td>
             <td><s:yesno name="param" value="global->disable_auto_refresh" /></td>
             <td><s:submit ac="glob-change-disable-auto-refresh" label="Change" /></td>
             <td><s:help ac="glob-change-disable-auto-refresh" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
 <%
@@ -636,7 +636,7 @@ files_and_directories: ;
 %>
 
     <s:form>
-        <s:htr attr="head_row_attr">
+        <s:tr attr="head_row_attr">
             <td colspan="4" align="center"><b>Files and directories</b><%
   if (phr->ss->show_global_2) {
 %><s:submit ac="glob-hide-2" label="Hide" /><%
@@ -644,7 +644,7 @@ files_and_directories: ;
 %><s:submit ac="glob-show-2" label="Show" /><%
   }
 %></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   if (!phr->ss->show_global_2) goto contestant_quotas;
@@ -652,33 +652,33 @@ files_and_directories: ;
 %>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Advanced problem files layout:</td>
             <td><s:yesno name="param" value="global->advanced_layout" /></td>
             <td><s:submit ac="glob-change-advanced-layout" label="Change" /></td>
             <td><s:help ac="glob-change-advanced-layout" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Use UUID instead of run_id to store runs:</td>
             <td><s:yesno name="param" value="global->uuid_run_store" /></td>
             <td><s:submit ac="glob-change-uuid-run-store" label="Change" /></td>
             <td><s:help ac="glob-change-uuid-run-store" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
 <%
   if (global->advanced_layout <= 0) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Directory for tests (relative to contest configuration dir):</td>
             <td><s:textfield name="param" value="global->test_dir" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-test-dir" label="Change" /><s:submit ac="glob-clear-test-dir" label="Clear" /></td>
             <td><s:help ac="glob-change-test-dir" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
@@ -688,12 +688,12 @@ files_and_directories: ;
   if (global->advanced_layout <= 0) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Directory for correct answers (relative to contest configuration dir):</td>
             <td><s:textfield name="param" value="global->corr_dir" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-corr-dir" label="Change" /><s:submit ac="glob-clear-corr-dir" label="Clear" /></td>
             <td><s:help ac="glob-change-corr-dir" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
@@ -703,12 +703,12 @@ files_and_directories: ;
   if (global->advanced_layout <= 0) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Directory for test info files (relative to contest configuration dir):</td>
             <td><s:textfield name="param" value="global->info_dir" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-info-dir" label="Change" /><s:submit ac="glob-clear-info-dir" label="Clear" /></td>
             <td><s:help ac="glob-change-info-dir" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
@@ -718,12 +718,12 @@ files_and_directories: ;
   if (global->advanced_layout <= 0) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Directory for test tgz files (relative to contest configuration dir):</td>
             <td><s:textfield name="param" value="global->tgz_dir" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-tgz-dir" label="Change" /><s:submit ac="glob-clear-tgz-dir" label="Clear" /></td>
             <td><s:help ac="glob-change-tgz-dir" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
@@ -733,12 +733,12 @@ files_and_directories: ;
   if (global->advanced_layout <= 0) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Directory for checkers (relative to contest configuration dir):</td>
             <td><s:textfield name="param" value="global->checker_dir" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-checker-dir" label="Change" /><s:submit ac="glob-clear-checker-dir" label="Clear" /></td>
             <td><s:help ac="glob-change-checker-dir" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
@@ -748,12 +748,12 @@ files_and_directories: ;
   if (global->advanced_layout <= 0) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Directory for problem statements (relative to contest configuration dir):</td>
             <td><s:textfield name="param" value="global->statement_dir" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-statement-dir" label="Change" /><s:submit ac="glob-clear-statement-dir" label="Clear" /></td>
             <td><s:help ac="glob-change-statement-dir" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
@@ -763,33 +763,33 @@ files_and_directories: ;
   if (global->advanced_layout <= 0) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Directory for problem plugins (relative to contest configuration dir):</td>
             <td><s:textfield name="param" value="global->plugin_dir" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-plugin-dir" label="Change" /><s:submit ac="glob-clear-plugin-dir" label="Clear" /></td>
             <td><s:help ac="glob-change-plugin-dir" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
 %>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Contest start script:</td>
             <td><s:textfield name="param" value="global->contest_start_cmd" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-contest-start-cmd" label="Change" /><s:submit ac="glob-clear-contest-start-cmd" label="Clear" />[<s:a ac="glob-edit-contest-start-cmd-page">Edit</s:a>]</td>
             <td><s:help ac="glob-change-contest-start-cmd" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Contest stop script:</td>
             <td><s:textfield name="param" value="global->contest_stop_cmd" size="48" maxlength="1024" checkExpr="" /></td>
             <td><s:submit ac="glob-change-contest-stop-cmd" label="Change" /><s:submit ac="glob-clear-contest-stop-cmd" label="Clear" />[<s:a ac="glob-edit-contest-stop-cmd-page">Edit</s:a>]</td>
             <td><s:help ac="glob-change-contest-stop-cmd" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
 <%
@@ -797,7 +797,7 @@ contestant_quotas:;
 %>
 
     <s:form>
-        <s:htr attr="head_row_attr">
+        <s:tr attr="head_row_attr">
             <td colspan="4" align="center"><b>Contestant's quotas</b><%
   if (phr->ss->show_global_3) {
 %><s:submit ac="glob-hide-3" label="Hide" /><%
@@ -805,7 +805,7 @@ contestant_quotas:;
 %><s:submit ac="glob-show-3" label="Show" /><%
   }
 %></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   if (!phr->ss->show_global_3) goto standing_files;
@@ -816,33 +816,33 @@ contestant_quotas:;
   num_to_size_str(hbuf, sizeof(hbuf), global->max_run_size);
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Maximum size of one submitted program:</td>
             <td><s:textfield name="param" value="hbuf" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-max-run-size" label="Change" /></td>
             <td><s:help ac="glob-change-max-run-size" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
 <%
   num_to_size_str(hbuf, sizeof(hbuf), global->max_run_total);
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Maximum total size of all submitted programs:</td>
             <td><s:textfield name="param" value="hbuf" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-max-run-total" label="Change" /></td>
             <td><s:help ac="glob-change-max-run-total" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Maximum number of submits:</td>
             <td><s:textfield name="param" value="global->max_run_num" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-max-run-num" label="Change" /></td>
             <td><s:help ac="glob-change-max-run-num" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
 <%
@@ -852,12 +852,12 @@ contestant_quotas:;
   num_to_size_str(hbuf, sizeof(hbuf), global->max_clar_size);
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Maximum size of one clarification request:</td>
             <td><s:textfield name="param" value="hbuf" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-max-clar-size" label="Change" /></td>
             <td><s:help ac="glob-change-max-clar-size" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
@@ -870,12 +870,12 @@ contestant_quotas:;
   num_to_size_str(hbuf, sizeof(hbuf), global->max_clar_total);
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Maximum size of all clarification requests:</td>
             <td><s:textfield name="param" value="hbuf" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-max-clar-total" label="Change" /></td>
             <td><s:help ac="glob-change-max-clar-total" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
@@ -885,12 +885,12 @@ contestant_quotas:;
   if (global->disable_clars <= 0 && global->disable_team_clars <= 0) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Maximum number of clarification requests:</td>
             <td><s:textfield name="param" value="global->max_clar_num" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-max-clar-num" label="Change" /></td>
             <td><s:help ac="glob-change-max-clar-num" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
@@ -900,12 +900,12 @@ contestant_quotas:;
   if (global->enable_printing > 0) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Maximum number of printed pages:</td>
             <td><s:textfield name="param" value="global->team_page_quota" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-team-page-quota" label="Change" /></td>
             <td><s:help ac="glob-change-team-page-quota" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
@@ -916,7 +916,7 @@ standing_files:;
 %>
 
     <s:form>
-        <s:htr attr="head_row_attr">
+        <s:tr attr="head_row_attr">
             <td colspan="4" align="center"><b>Standings files and URLs</b><%
   if (phr->ss->show_global_4) {
 %><s:submit ac="glob-hide-4" label="Hide" /><%
@@ -924,7 +924,7 @@ standing_files:;
 %><s:submit ac="glob-show-4" label="Show" /><%
   }
 %></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   if (!phr->ss->show_global_4) goto standing_table_attributes;
@@ -932,96 +932,96 @@ standing_files:;
 %>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>URL to view detailed contestant information:</td>
             <td><s:textfield name="param" value="global->team_info_url" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-team-info-url" label="Change" /><s:submit ac="glob-clear-team-info-url" label="Clear" /></td>
             <td><s:help ac="glob-change-team-info-url" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>URL to view problem statement:</td>
             <td><s:textfield name="param" value="global->prob_info_url" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-prob-info-url" label="Change" /><s:submit ac="glob-clear-prob-info-url" label="Clear" /></td>
             <td><s:help ac="glob-change-prob-info-url" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Name of the current standings file:</td>
             <td><s:textfield name="param" value="global->standings_file_name" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-stand-file-name" label="Change" /><s:submit ac="glob-clear-stand-file-name" label="Clear" /></td>
             <td><s:help ac="glob-change-stand-file-name" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Number of users on standings page:</td>
             <td><s:textfield name="param" value="global->users_on_page" size="48" maxlength="1024" checkExpr="> 0" /></td>
             <td><s:submit ac="glob-change-users-on-page" label="Change" /></td>
             <td><s:help ac="glob-change-users-on-page" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>HTML header file for the standings:</td>
             <td><s:textfield name="param" value="global->stand_header_file" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-stand-header-file" label="Change" /><s:submit ac="glob-clear-stand-header-file" label="Clear" />[<s:a ac="glob-edit-stand-header-file-page">Edit</s:a>]</td>
             <td><s:help ac="glob-change-stand-header-file" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>HTML footer file for the standings:</td>
             <td><s:textfield name="param" value="global->stand_footer_file" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-stand-footer-file" label="Change" /><s:submit ac="glob-clear-stand-footer-file" label="Clear" />[<s:a ac="glob-edit-stand-footer-file-page">Edit</s:a>]</td>
             <td><s:help ac="glob-change-stand-footer-file" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Directory to make standings symlink (rel. to DocumentRoot):</td>
             <td><s:textfield name="param" value="global->stand_symlink_dir" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-stand-symlink-dir" label="Change" /><s:submit ac="glob-clear-stand-symlink-dir" label="Clear" /></td>
             <td><s:help ac="glob-change-stand-symlink-dir" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Ignore submissions after:</td>
             <td><% html_date_select(out_f, global->stand_ignore_after); %></td>
             <td><s:submit ac="glob-change-stand-ignore-after" label="Change" /><s:submit ac="glob-clear-stand-ignore-after" label="Clear" /></td>
             <td><s:help ac="glob-change-stand-ignore-after" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Enable supplementary standings table:</td>
             <td><s:yesno name="param" value="phr->ss->enable_stand2" /></td>
             <td><s:submit ac="glob-change-enable-stand2" label="Change" /></td>
             <td><s:help ac="glob-change-enable-stand2" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
 <%
   if (phr->ss->enable_stand2) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Name of the supplementary standings file:</td>
             <td><s:textfield name="param" value="global->stand2_file_name" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-stand2-file-name" label="Change" /><s:submit ac="glob-clear-stand2-file-name" label="Clear" /></td>
             <td><s:help ac="glob-change-stand2-file-name" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
@@ -1031,12 +1031,12 @@ standing_files:;
   if (phr->ss->enable_stand2) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>HTML header file for the supplementary standings:</td>
             <td><s:textfield name="param" value="global->stand2_header_file" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-stand2-header-file" label="Change" /><s:submit ac="glob-clear-stand2-header-file" label="Clear" />[<s:a ac="glob-edit-stand2-header-file-page">Edit</s:a>]</td>
             <td><s:help ac="glob-change-stand2-header-file" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
@@ -1046,12 +1046,12 @@ standing_files:;
   if (phr->ss->enable_stand2) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>HTML footer file for the supplementary standings:</td>
             <td><s:textfield name="param" value="global->stand2_footer_file" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-stand2-footer-file" label="Change" /><s:submit ac="glob-clear-stand2-footer-file" label="Clear" />[<s:a ac="glob-edit-stand2-footer-file-page">Edit</s:a>]</td>
             <td><s:help ac="glob-change-stand2-footer-file" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
@@ -1061,36 +1061,36 @@ standing_files:;
   if (phr->ss->enable_stand2) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Directory to make suppl. standings symlink (rel. to DocumentRoot):</td>
             <td><s:textfield name="param" value="global->stand2_symlink_dir" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-stand2-symlink-dir" label="Change" /><s:submit ac="glob-clear-stand2-symlink-dir" label="Clear" /></td>
             <td><s:help ac="glob-change-stand2-symlink-dir" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
 %>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Enable public submission log:</td>
             <td><s:yesno name="param" value="phr->ss->enable_plog" /></td>
             <td><s:submit ac="glob-change-enable-plog" label="Change" /></td>
             <td><s:help ac="glob-change-enable-plog" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
 <%
   if (phr->ss->enable_plog) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Name of the public submission log file:</td>
             <td><s:textfield name="param" value="global->plog_file_name" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-plog-file-name" label="Change" /><s:submit ac="glob-clear-plog-file-name" label="Clear" /></td>
             <td><s:help ac="glob-change-plog-file-name" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
@@ -1100,12 +1100,12 @@ standing_files:;
   if (phr->ss->enable_plog) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>HTML header file for the public submission log:</td>
             <td><s:textfield name="param" value="global->plog_header_file" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-plog-header-file" label="Change" /><s:submit ac="glob-clear-plog-header-file" label="Clear" />[<s:a ac="glob-edit-plog-header-file-page">Edit</s:a>]</td>
             <td><s:help ac="glob-change-plog-header-file" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
@@ -1115,12 +1115,12 @@ standing_files:;
   if (phr->ss->enable_plog) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>HTML footer file for the public submission log:</td>
             <td><s:textfield name="param" value="global->plog_footer_file" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-plog-footer-file" label="Change" /><s:submit ac="glob-clear-plog-footer-file" label="Clear" />[<s:a ac="glob-edit-plog-footer-file-page">Edit</s:a>]</td>
             <td><s:help ac="glob-change-plog-footer-file" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
@@ -1130,12 +1130,12 @@ standing_files:;
   if (phr->ss->enable_plog) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Directory to make symlink to public submission log (rel. to DocumentRoot):</td>
             <td><s:textfield name="param" value="global->plog_symlink_dir" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-plog-symlink-dir" label="Change" /><s:submit ac="glob-clear-plog-symlink-dir" label="Clear" /></td>
             <td><s:help ac="glob-change-plog-symlink-dir" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
@@ -1145,33 +1145,33 @@ standing_files:;
   if (phr->ss->enable_plog) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Public submission log update interval (sec):</td>
             <td><s:textfield name="param" value="global->plog_update_time" size="48" maxlength="1024" check="> 0" /></td>
             <td><s:submit ac="glob-change-plog-update-time" label="Change" /></td>
             <td><s:help ac="glob-change-plog-update-time" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
 %>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>External XML log update interval (sec):</td>
             <td><s:textfield name="param" value="global->external_xml_update_time" size="48" maxlength="1024" check="> 0" /></td>
             <td><s:submit ac="glob-change-external-xml-update-time" label="Change" /></td>
             <td><s:help ac="glob-change-external-xml-update-time" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Internal XML log update interval (sec):</td>
             <td><s:textfield name="param" value="global->internal_xml_update_time" size="48" maxlength="1024" check="> 0" /></td>
             <td><s:submit ac="glob-change-internal-xml-update-time" label="Change" /></td>
             <td><s:help ac="glob-change-internal-xml-update-time" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
 <%
@@ -1179,7 +1179,7 @@ standing_table_attributes:;
 %>
 
     <s:form>
-        <s:htr attr="head_row_attr">
+        <s:tr attr="head_row_attr">
             <td colspan="4" align="center"><b>Standings table attributes</b><%
   if (phr->ss->show_global_5) {
 %><s:submit ac="glob-hide-5" label="Hide" /><%
@@ -1187,7 +1187,7 @@ standing_table_attributes:;
 %><s:submit ac="glob-show-5" label="Show" /><%
   }
 %></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   if (!phr->ss->show_global_5) goto advanced_settings;
@@ -1195,24 +1195,24 @@ standing_table_attributes:;
 %>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Use fancy decorations:</td>
             <td><s:yesno name="param" value="global->stand_fancy_style" /></td>
             <td><s:submit ac="glob-change-stand-fancy-style" label="Change" /></td>
             <td><s:help ac="glob-change-stand-fancy-style" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
 <%
   if (global->stand_fancy_style <= 0) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>HTML attributes for &quot;Last success&quot; note:</td>
             <td><s:textfield name="param" value="global->stand_success_attr" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-stand-success-attr" label="Change" /><s:submit ac="glob-clear-stand-success-attr" label="Clear" /></td>
             <td><s:help ac="glob-change-stand-success-attr" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
@@ -1222,12 +1222,12 @@ standing_table_attributes:;
   if (global->stand_fancy_style <= 0) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>HTML attributes for standings table:</td>
             <td><s:textfield name="param" value="global->stand_table_attr" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-stand-table-attr" label="Change" /><s:submit ac="glob-clear-stand-table-attr" label="Clear" /></td>
             <td><s:help ac="glob-change-stand-table-attr" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
@@ -1240,12 +1240,12 @@ standing_table_attributes:;
     if (global->stand_row_attr && global->stand_row_attr[0]) xstr = sarray_unparse_2(global->stand_row_attr);
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Standings row attributes:</td>
             <td><s:textfield name="param" value="xstr" size="48" maxlength="1024" checkExpr="" /></td>
             <td><s:submit ac="glob-change-stand-row-attr" label="Change" /><s:submit ac="glob-clear-stand-row-attr" label="Clear" /></td>
             <td><s:help ac="glob-change-stand-row-attr" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   xfree(xstr); xstr = 0;
@@ -1257,12 +1257,12 @@ standing_table_attributes:;
   if (global->stand_fancy_style <= 0) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>HTML attributes for the &quot;Place&quot; column:</td>
             <td><s:textfield name="param" value="global->stand_place_attr" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-stand-place-attr" label="Change" /><s:submit ac="glob-clear-stand-place-attr" label="Clear" /></td>
             <td><s:help ac="glob-change-stand-place-attr" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
@@ -1272,12 +1272,12 @@ standing_table_attributes:;
   if (global->stand_fancy_style <= 0) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>HTML attributes for the &quot;Team name&quot; column:</td>
             <td><s:textfield name="param" value="global->stand_team_attr" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-stand-team-attr" label="Change" /><s:submit ac="glob-clear-stand-team-attr" label="Clear" /></td>
             <td><s:help ac="glob-change-stand-team-attr" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
@@ -1287,12 +1287,12 @@ standing_table_attributes:;
   if (global->stand_fancy_style <= 0) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>HTML attributes for the &quot;Problems&quot; column:</td>
             <td><s:textfield name="param" value="global->stand_prob_attr" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-stand-prob-attr" label="Change" /><s:submit ac="glob-clear-stand-prob-attr" label="Clear" /></td>
             <td><s:help ac="glob-change-stand-prob-attr" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
@@ -1302,12 +1302,12 @@ standing_table_attributes:;
   if (global->stand_fancy_style <= 0) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>HTML attributes for the &quot;Solved&quot; column:</td>
             <td><s:textfield name="param" value="global->stand_solved_attr" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-stand-solved-attr" label="Change" /><s:submit ac="glob-clear-stand-solved-attr" label="Clear" /></td>
             <td><s:help ac="glob-change-stand-solved-attr" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
@@ -1317,12 +1317,12 @@ standing_table_attributes:;
   if (global->stand_fancy_style <= 0 && (global->score_system == SCORE_KIROV || global->score_system == SCORE_OLYMPIAD)) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>HTML attributes for the &quot;Score&quot; column:</td>
             <td><s:textfield name="param" value="global->stand_score_attr" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-stand-score-attr" label="Change" /><s:submit ac="glob-clear-stand-score-attr" label="Clear" /></td>
             <td><s:help ac="glob-change-stand-score-attr" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
@@ -1332,45 +1332,45 @@ standing_table_attributes:;
   if (global->stand_fancy_style <= 0 && (global->score_system == SCORE_ACM || global->score_system == SCORE_MOSCOW)) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>HTML attributes for the &quot;Penalty&quot; column:</td>
             <td><s:textfield name="param" value="global->stand_penalty_attr" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-stand-penalty-attr" label="Change" /><s:submit ac="glob-clear-stand-penalty-attr" label="Clear" /></td>
             <td><s:help ac="glob-change-stand-penalty-attr" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
 %>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Use login instead of name:</td>
             <td><s:yesno name="param" value="global->stand_use_login" /></td>
             <td><s:submit ac="glob-change-stand-use-login" label="Change" /></td>
             <td><s:help ac="glob-change-stand-use-login" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Show success time in standings:</td>
             <td><s:yesno name="param" value="global->stand_show_ok_time" /></td>
             <td><s:submit ac="glob-change-stand-show-ok-time" label="Change" /></td>
             <td><s:help ac="glob-change-stand-show-ok-time" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
 <%
   if (global->score_system == SCORE_KIROV || global->score_system == SCORE_OLYMPIAD) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Show number of attempts in standings:</td>
             <td><s:yesno name="param" value="global->stand_show_att_num" /></td>
             <td><s:submit ac="glob-change-stand-show-att-num" label="Change" /></td>
             <td><s:help ac="glob-change-stand-show-att-num" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
@@ -1380,12 +1380,12 @@ standing_table_attributes:;
   if (global->score_system == SCORE_KIROV || global->score_system == SCORE_OLYMPIAD) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Sort participants by the solved problems first:</td>
             <td><s:yesno name="param" value="global->stand_sort_by_solved" /></td>
             <td><s:submit ac="glob-change-stand-sort-by-solved" label="Change" /></td>
             <td><s:help ac="glob-change-stand-sort-by-solved" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
@@ -1395,12 +1395,12 @@ standing_table_attributes:;
   if (global->score_system == SCORE_KIROV || global->score_system == SCORE_OLYMPIAD) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Enable time penalties:</td>
             <td><s:yesno name="param" value="global->stand_enable_penalty" /></td>
             <td><s:submit ac="glob-change-stand-enable-penalty" label="Change" /></td>
             <td><s:help ac="glob-change-stand-enable-penalty" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
@@ -1410,12 +1410,12 @@ standing_table_attributes:;
   if (global->score_system == SCORE_ACM || global->score_system == SCORE_MOSCOW) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Ignore success time in penalty calculation:</td>
             <td><s:yesno name="param" value="global->ignore_success_time" /></td>
             <td><s:submit ac="glob-change-ignore-success-time" label="Change" /></td>
             <td><s:help ac="glob-change-ignore-success-time" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
@@ -1425,12 +1425,12 @@ standing_table_attributes:;
   if (global->stand_fancy_style <= 0 && global->stand_show_ok_time > 0) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>HTML attributes for the success time:</td>
             <td><s:textfield name="param" value="global->stand_time_attr" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-stand-time-attr" label="Change" /><s:submit ac="glob-clear-stand-time-attr" label="Clear" /></td>
             <td><s:help ac="glob-change-stand-time-attr" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
@@ -1440,12 +1440,12 @@ standing_table_attributes:;
   if (global->stand_fancy_style <= 0) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>HTML attributes for &quot;Check failed&quot; cells:</td>
             <td><s:textfield name="param" value="global->stand_fail_attr" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-stand-fail-attr" label="Change" /><s:submit ac="glob-clear-stand-fail-attr" label="Clear" /></td>
             <td><s:help ac="glob-change-stand-fail-attr" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
@@ -1455,12 +1455,12 @@ standing_table_attributes:;
   if (global->stand_fancy_style <= 0) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>HTML attributes for transient cells:</td>
             <td><s:textfield name="param" value="global->stand_trans_attr" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-stand-trans-attr" label="Change" /><s:submit ac="glob-clear-stand-trans-attr" label="Clear" /></td>
             <td><s:help ac="glob-change-stand-trans-attr" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
@@ -1470,12 +1470,12 @@ standing_table_attributes:;
   if (global->stand_fancy_style <= 0) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>HTML attributes for &quot;Disqualified&quot; cells:</td>
             <td><s:textfield name="param" value="global->stand_disq_attr" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-stand-disq-attr" label="Change" /><s:submit ac="glob-clear-stand-disq-attr" label="Clear" /></td>
             <td><s:help ac="glob-change-stand-disq-attr" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
@@ -1485,12 +1485,12 @@ standing_table_attributes:;
   if (global->stand_fancy_style <= 0 && global->is_virtual > 0) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>HTML attributes for the participant's table row:</td>
             <td><s:textfield name="param" value="global->stand_self_row_attr" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-stand-self-row-attr" label="Change" /><s:submit ac="glob-clear-stand-self-row-attr" label="Clear" /></td>
             <td><s:help ac="glob-change-stand-self-row-attr" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
@@ -1500,12 +1500,12 @@ standing_table_attributes:;
   if (global->stand_fancy_style <= 0 && global->is_virtual > 0) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>HTML attributes for the virtual participant's rows:</td>
             <td><s:textfield name="param" value="global->stand_v_row_attr" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-stand-v-row-attr" label="Change" /><s:submit ac="glob-clear-stand-v-row-attr" label="Clear" /></td>
             <td><s:help ac="glob-change-stand-v-row-attr" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
@@ -1515,12 +1515,12 @@ standing_table_attributes:;
   if (global->stand_fancy_style <= 0 && global->is_virtual > 0) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>HTML attributes for the real participant's rows:</td>
             <td><s:textfield name="param" value="global->stand_r_row_attr" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-stand-r-row-attr" label="Change" /><s:submit ac="glob-clear-stand-r-row-attr" label="Clear" /></td>
             <td><s:help ac="glob-change-stand-r-row-attr" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
@@ -1530,36 +1530,36 @@ standing_table_attributes:;
   if (global->stand_fancy_style <= 0 && global->is_virtual > 0) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>HTML attributes for the unknown participant's rows:</td>
             <td><s:textfield name="param" value="global->stand_u_row_attr" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-stand-u-row-attr" label="Change" /><s:submit ac="glob-clear-stand-u-row-attr" label="Clear" /></td>
             <td><s:help ac="glob-change-stand-u-row-attr" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
 %>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Show &quot;Extra information&quot; column:</td>
             <td><s:yesno name="param" value="phr->ss->enable_extra_col" /></td>
             <td><s:submit ac="glob-change-enable-extra-col" label="Change" /></td>
             <td><s:help ac="glob-change-enable-extra-col" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
 <%
   if (phr->ss->enable_extra_col > 0) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Format string for &quot;Extra information&quot; column:</td>
             <td><s:textfield name="param" value="global->stand_extra_format" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-stand-extra-format" label="Change" /><s:submit ac="glob-clear-stand-extra-format" label="Clear" /></td>
             <td><s:help ac="glob-change-stand-extra-format" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
@@ -1569,12 +1569,12 @@ standing_table_attributes:;
   if (phr->ss->enable_extra_col > 0) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Column title for &quot;Extra information&quot; column:</td>
             <td><s:textfield name="param" value="global->stand_extra_legend" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-stand-extra-legend" label="Change" /><s:submit ac="glob-clear-stand-extra-legend" label="Clear" /></td>
             <td><s:help ac="glob-change-stand-extra-legend" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
@@ -1584,36 +1584,36 @@ standing_table_attributes:;
   if (global->stand_fancy_style <= 0 && phr->ss->enable_extra_col > 0) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>HTML attributes for &quot;Extra information&quot; column:</td>
             <td><s:textfield name="param" value="global->stand_extra_attr" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-stand-extra-attr" label="Change" /><s:submit ac="glob-clear-stand-extra-attr" label="Clear" /></td>
             <td><s:help ac="glob-change-stand-extra-attr" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
 %>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Show &quot;Warnings&quot; column:</td>
             <td><s:yesno name="param" value="global->stand_show_warn_number" /></td>
             <td><s:submit ac="glob-change-stand-show-warn-number" label="Change" /></td>
             <td><s:help ac="glob-change-stand-show-warn-number" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
 <%
   if (global->stand_fancy_style <= 0 && global->stand_show_warn_number > 0) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>HTML attributes for &quot;Warnings&quot; column:</td>
             <td><s:textfield name="param" value="global->stand_warn_number_attr" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-stand-warn-number-attr" label="Change" /><s:submit ac="glob-clear-stand-warn-number-attr" label="Clear" /></td>
             <td><s:help ac="glob-change-stand-warn-number-attr" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
@@ -1623,12 +1623,12 @@ standing_table_attributes:;
   if (global->stand_fancy_style <= 0 && global->users_on_page > 0) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>HTML attributes for page table:</td>
             <td><s:textfield name="param" value="global->stand_page_table_attr" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-stand-page-table-attr" label="Change" /><s:submit ac="glob-clear-stand-page-table-attr" label="Clear" /></td>
             <td><s:help ac="glob-change-stand-page-table-attr" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
@@ -1638,12 +1638,12 @@ standing_table_attributes:;
   if (global->stand_fancy_style <= 0 && global->users_on_page > 0) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>HTML attributes for current page message:</td>
             <td><s:textfield name="param" value="global->stand_page_cur_attr" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-stand-page-cur-attr" label="Change" /><s:submit ac="glob-clear-stand-page-cur-attr" label="Clear" /></td>
             <td><s:help ac="glob-change-stand-page-cur-attr" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
@@ -1656,12 +1656,12 @@ standing_table_attributes:;
     if (global->stand_page_row_attr && global->stand_page_row_attr[0]) xstr = sarray_unparse_2(global->stand_page_row_attr);
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Page table row attributes:</td>
             <td><s:textfield name="param" value="xstr" size="48" maxlength="1024" checkExpr="" /></td>
             <td><s:submit ac="glob-change-stand-page-row-attr" label="Change" /><s:submit ac="glob-clear-stand-page-row-attr" label="Clear" /></td>
             <td><s:help ac="glob-change-stand-page-row-attr" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
     xfree(xstr); xstr = 0;
@@ -1676,12 +1676,12 @@ standing_table_attributes:;
     if (global->stand_page_col_attr && global->stand_page_col_attr[0]) xstr = sarray_unparse_2(global->stand_page_col_attr);
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Page table column attributes:</td>
             <td><s:textfield name="param" value="xstr" size="48" maxlength="1024" checkExpr="" /></td>
             <td><s:submit ac="glob-change-stand-page-col-attr" label="Change" /><s:submit ac="glob-clear-stand-page-col-attr" label="Clear" /></td>
             <td><s:help ac="glob-change-stand-page-col-attr" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
     xfree(xstr); xstr = 0;
@@ -1694,7 +1694,7 @@ advanced_settings:;
 %>
 
     <s:form>
-        <s:htr attr="head_row_attr">
+        <s:tr attr="head_row_attr">
             <td colspan="4" align="center"><b>Advanced settings</b><%
   if (phr->ss->show_global_6) {
 %><s:submit ac="glob-hide-6" label="Hide" /><%
@@ -1702,7 +1702,7 @@ advanced_settings:;
 %><s:submit ac="glob-show-6" label="Show" /><%
   }
 %></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   if (!phr->ss->show_global_6) goto uneditable_params;
@@ -1710,180 +1710,180 @@ advanced_settings:;
 %>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Appeal deadline:</td>
             <td><% html_date_select(out_f, global->appeal_deadline); %></td>
             <td><s:submit ac="glob-change-appeal-deadline" label="Change" /><s:submit ac="glob-clear-appeal-deadline" label="Clear" /></td>
             <td><s:help ac="glob-change-appeal-deadline" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Update standings automatically (except freeze time):</td>
             <td><s:yesno name="param" value="global->autoupdate_standings" /></td>
             <td><s:submit ac="glob-change-autoupdate-standings" label="Change" /></td>
             <td><s:help ac="glob-change-autoupdate-standings" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Use PR (Pending Review) status instead of OK:</td>
             <td><s:yesno name="param" value="global->use_ac_not_ok" /></td>
             <td><s:submit ac="glob-change-use-ac-not-ok" label="Change" /></td>
             <td><s:help ac="glob-change-use-ac-not-ok" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Seconds to minutes rounding mode:</td>
             <td><% html_select(out_f, global->rounding_mode, "param", rounding_modes); %></td>
             <td><s:submit ac="glob-change-rounding-mode" label="Change" /></td>
             <td><s:help ac="glob-change-rounding-mode" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
 <%
   num_to_size_str(hbuf, sizeof(hbuf), global->max_file_length);
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Maximal file size to be included into testing protocol:</td>
             <td><s:textfield name="param" value="hbuf" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-max-file-length" label="Change" /></td>
             <td><s:help ac="glob-change-max-file-length" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
 <%
   num_to_size_str(hbuf, sizeof(hbuf), global->max_line_length);
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Maximal line length to be included into testing protocol:</td>
             <td><s:textfield name="param" value="hbuf" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-max-line-length" label="Change" /></td>
             <td><s:help ac="glob-change-max-line-length" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Inactivity timeout:</td>
             <td><s:textfield name="param" value="global->inactivity_timeout" size="48" maxlength="1024" check="> 0" /></td>
             <td><s:submit ac="glob-change-inactivity-timeout" label="Change" /></td>
             <td><s:help ac="glob-change-inactivity-timeout" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Ignore BOM in text submits:</td>
             <td><s:yesno name="param" value="global->ignore_bom" /></td>
             <td><s:submit ac="glob-change-ignore-bom" label="Change" /></td>
             <td><s:help ac="glob-change-ignore-bom" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Disable any testing of submissions:</td>
             <td><s:yesno name="param" value="global->disable_testing" /></td>
             <td><s:submit ac="glob-change-disable-testing" label="Change" /></td>
             <td><s:help ac="glob-change-disable-testing" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
 <%
   if (global->disable_testing <= 0) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Disable automatic testing of submissions:</td>
             <td><s:yesno name="param" value="global->disable_auto_testing" /></td>
             <td><s:submit ac="glob-change-disable-auto-testing" label="Change" /></td>
             <td><s:help ac="glob-change-disable-auto-testing" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
 %>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Show astronomic time instead of relative time:</td>
             <td><s:yesno name="param" value="global->show_astr_time" /></td>
             <td><s:submit ac="glob-change-show-astr-time" label="Change" /></td>
             <td><s:help ac="glob-change-show-astr-time" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Enable testing protocol upload:</td>
             <td><s:yesno name="param" value="global->enable_report_upload" /></td>
             <td><s:submit ac="glob-change-enable-report-upload" label="Change" /></td>
             <td><s:help ac="glob-change-enable-report-upload" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Enable run database importing and merging:</td>
             <td><s:yesno name="param" value="global->enable_runlog_merge" /></td>
             <td><s:submit ac="glob-change-enable-runlog-merge" label="Change" /></td>
             <td><s:help ac="glob-change-enable-runlog-merge" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Disable user database loading:</td>
             <td><s:yesno name="param" value="global->disable_user_database" /></td>
             <td><s:submit ac="glob-change-disable-user-database" label="Change" /></td>
             <td><s:help ac="glob-change-disable-user-database" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Enable message translation:</td>
             <td><s:yesno name="param" value="global->enable_l10n" /></td>
             <td><s:submit ac="glob-change-enable-l10n" label="Change" /></td>
             <td><s:help ac="glob-change-enable-l10n" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Character set:</td>
             <td><s:textfield name="param" value="global->charset" size="48" maxlength="1024" checkExpr="" /></td>
             <td><s:submit ac="glob-change-charset" label="Change" /><s:submit ac="glob-clear-charset" label="Clear" /></td>
             <td><s:help ac="glob-change-charset" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Standings character set:</td>
             <td><s:textfield name="param" value="global->standings_charset" size="48" maxlength="1024" checkExpr="" /></td>
             <td><s:submit ac="glob-change-standings-charset" label="Change" /><s:submit ac="glob-clear-standings-charset" label="Clear" /></td>
             <td><s:help ac="glob-change-standings-charset" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
 <%
   if (phr->ss->enable_stand2 && global->stand2_file_name[0]) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Aux. standings character set:</td>
             <td><s:textfield name="param" value="global->stand2_charset" size="48" maxlength="1024" checkExpr="" /></td>
             <td><s:submit ac="glob-change-stand2-charset" label="Change" /><s:submit ac="glob-clear-stand2-charset" label="Clear" /></td>
             <td><s:help ac="glob-change-stand2-charset" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
@@ -1893,24 +1893,24 @@ advanced_settings:;
   if (phr->ss->enable_plog && global->plog_file_name[0]) {
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Submission log character set:</td>
             <td><s:textfield name="param" value="global->plog_charset" size="48" maxlength="1024" checkExpr="" /></td>
             <td><s:submit ac="glob-change-plog-charset" label="Change" /><s:submit ac="glob-clear-plog-charset" label="Clear" /></td>
             <td><s:help ac="glob-change-plog-charset" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
 %>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>CPU speed (BogoMIPS):</td>
             <td><s:textfield name="param" value="global->cpu_bogomips" size="48" maxlength="1024" checkExpr=" > 0" /></td>
             <td><s:submit ac="glob-change-cpu-bogomips" label="Change" /><s:submit ac="glob-detect-cpu-bogomips" label="Detect" /></td>
             <td><s:help ac="glob-change-cpu-bogomips" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
 <%
@@ -1918,42 +1918,42 @@ advanced_settings:;
   if (global->load_user_group && global->load_user_group[0]) xstr = sarray_unparse_2(global->load_user_group);
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>User groups to load:</td>
             <td><s:textfield name="param" value="xstr" size="48" maxlength="1024" checkExpr="" /></td>
             <td><s:submit ac="glob-change-load-user-group" label="Change" /><s:submit ac="glob-clear-load-user-group" label="Detect" /></td>
             <td><s:help ac="glob-change-load-user-group" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   xfree(xstr); xstr = 0;
 %>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>ClarDB storage engine:</td>
             <td><s:textfield name="param" value="global->clardb_plugin" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-clardb-plugin" label="Change" /><s:submit ac="glob-clear-clardb-plugin" label="Clear" /></td>
             <td><s:help ac="glob-change-clardb-plugin" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>RunDB storage engine:</td>
             <td><s:textfield name="param" value="global->rundb_plugin" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-rundb-plugin" label="Change" /><s:submit ac="glob-clear-clardb-plugin" label="Clear" /></td>
             <td><s:help ac="glob-change-rundb-plugin" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>XuserDB storage engine:</td>
             <td><s:textfield name="param" value="global->xuser_plugin" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="glob-change-xuser-plugin" label="Change" /><s:submit ac="glob-clear-xuser-plugin" label="Clear" /></td>
             <td><s:help ac="glob-change-xuser-plugin" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
 <%
@@ -1964,7 +1964,7 @@ uneditable_params:;
   if (global->unhandled_vars) {
 %>
     <s:form>
-        <s:htr attr="head_row_attr">
+        <s:tr attr="head_row_attr">
             <td colspan="4" align="center"><b>Uneditable parameters</b><%
     if (phr->ss->show_global_7) {
 %><s:submit ac="glob-hide-7" label="Hide" /><%
@@ -1972,7 +1972,7 @@ uneditable_params:;
 %><s:submit ac="glob-show-7" label="Show" /><%
     }
 %></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
   }
@@ -1985,9 +1985,9 @@ uneditable_params:;
 <%
   if (global->unhandled_vars && phr->ss->show_global_7) {
 %>
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td colspan="4"><pre><s:v value="global->unhandled_vars" /></pre></td>
-    </s:htr>
+    </s:tr>
 <%
   }
 %>

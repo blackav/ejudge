@@ -56,21 +56,21 @@
 %><%
     if (!is_abstract) {
 %>
-<s:htr attr="form_row_attrs[row ^= 1]">
+<s:tr attr="form_row_attrs[row ^= 1]">
     <td>Problem ID:</td>
     <td><s:v value="prob->id" /></td>
     <td>&nbsp;</td>
     <td>&nbsp;</td>
-</s:htr>
+</s:tr>
 
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Problem short name:</td>
         <td><s:textfield name="param" value="prob->short_name" size="48" maxlength="1024" check="no" /><% if (!prob->short_name) { %>(<i>Not set</i>)<% } %></td>
         <td><s:submit ac="prob-change-short-name" label="Change" /><s:submit ac="prob-clear-short-name" label="Clear" /></td>
         <td><s:help ac="prob-change-short-name" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 
 <%
@@ -78,12 +78,12 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Internal name:</td>
         <td><s:textfield name="param" value="prob->internal_name" size="48" maxlength="1024" check="no" /><% if (!prob->internal_name) { %>(<i>Not set</i>)<% } %></td>
         <td><s:submit ac="prob-change-internal-name" label="Change" /><s:submit ac="prob-clear-internal-name" label="Clear" /></td>
         <td><s:help ac="prob-change-internal-name" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
       }
@@ -91,17 +91,17 @@
 
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Problem long name:</td>
         <td><s:textfield name="param" value="prob->long_name" size="48" maxlength="1024" check="no" /><% if (!prob->long_name) { %>(<i>Not set</i>)<% } %></td>
         <td><s:submit ac="prob-change-long-name" label="Change" /><s:submit ac="prob-clear-long-name" label="Clear" /></td>
         <td><s:help ac="prob-change-long-name" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Base abstract problem:</td>
         <td><select name="param"><option value="0"></option><%
     for (j = 0; j < phr->ss->aprob_u; ++j) {
@@ -110,24 +110,24 @@
 %></select></td>
         <td><s:submit ac="prob-change-super" label="Change" /></td>
         <td><s:help ac="prob-change-super" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
     } else {
 %>
-<s:htr attr="form_row_attrs[row ^= 1]">
+<s:tr attr="form_row_attrs[row ^= 1]">
     <td>Problem Name:</td>
     <td><s:v value="prob->short_name" /></td>
     <td>&nbsp;</td>
     <td>&nbsp;</td>
-</s:htr>
+</s:tr>
 <%
     }
 %>
 
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Problem type:</td>
         <td><select name="param"><%
     if (is_abstract || !sup_prob) {
@@ -150,7 +150,7 @@
 %></select></td>
         <td><s:submit ac="prob-change-type" label="Change" /></td>
         <td><s:help ac="prob-change-type" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 
 <%
@@ -158,12 +158,12 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Title for the standings column:</td>
         <td><s:textfield name="param" value="prob->stand_name" size="48" maxlength="1024" check="no" /><% if (!prob->stand_name) { %>(<i>Not set</i>)<% } %></td>
         <td><s:submit ac="prob-change-stand-name" label="Change" /><s:submit ac="prob-clear-stand-name" label="Clear" /></td>
         <td><s:help ac="prob-change-stand-name" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
     }
@@ -174,12 +174,12 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Collate this problem with the specified one:</td>
         <td><s:textfield name="param" value="prob->stand_column" size="48" maxlength="1024" check="no" /><% if (!prob->stand_column) { %>(<i>Not set</i>)<% } %></td>
         <td><s:submit ac="prob-change-stand-column" label="Change" /><s:submit ac="prob-clear-stand-column" label="Clear" /></td>
         <td><s:help ac="prob-change-stand-column" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
     }
@@ -187,7 +187,7 @@
 
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Problem is checked manually?</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -200,7 +200,7 @@
 %></td>
         <td><s:submit ac="prob-change-manual-checking" label="Change" /></td>
         <td><s:help ac="prob-change-manual-checking" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 
 <%
@@ -208,7 +208,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Check output presentation anyway?</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -221,7 +221,7 @@
 %></td>
         <td><s:submit ac="prob-change-check-presentation" label="Change" /></td>
         <td><s:help ac="prob-change-check-presentation" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -232,7 +232,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Use standard input?</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -245,7 +245,7 @@
 %></td>
         <td><s:submit ac="prob-change-use-stdin" label="Change" /></td>
         <td><s:help ac="prob-change-use-stdin" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -256,7 +256,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Combined standard/file input?</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -269,7 +269,7 @@
 %></td>
         <td><s:submit ac="prob-change-combined-stdin" label="Change" /></td>
         <td><s:help ac="prob-change-combined-stdin" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -280,7 +280,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Input file name:</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -296,7 +296,7 @@
 %></td>
         <td><s:submit ac="prob-change-input-file" label="Change" /><s:submit ac="prob-clear-input-file" label="Clear" /></td>
         <td><s:help ac="prob-change-input-file" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -307,7 +307,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Use standard output?</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -320,7 +320,7 @@
 %></td>
         <td><s:submit ac="prob-change-use-stdout" label="Change" /></td>
         <td><s:help ac="prob-change-use-stdout" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -331,7 +331,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Combined standard/file output?</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -344,7 +344,7 @@
 %></td>
         <td><s:submit ac="prob-change-combined-stdout" label="Change" /></td>
         <td><s:help ac="prob-change-combined-stdout" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -355,7 +355,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Output file name:</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -371,7 +371,7 @@
 %></td>
         <td><s:submit ac="prob-change-output-file" label="Change" /><s:submit ac="prob-clear-output-file" label="Clear" /></td>
         <td><s:help ac="prob-change-output-file" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -382,7 +382,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Consider output to stderr as PE?</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -395,7 +395,7 @@
 %></td>
         <td><s:submit ac="prob-change-disable-stderr" label="Change" /></td>
         <td><s:help ac="prob-change-disable-stderr" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -406,7 +406,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Input data is binary?</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -419,7 +419,7 @@
 %></td>
         <td><s:submit ac="prob-change-binary-input" label="Change" /></td>
         <td><s:help ac="prob-change-binary-input" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -430,7 +430,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Submit is binary?</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -443,7 +443,7 @@
 %></td>
         <td><s:submit ac="prob-change-binary" label="Change" /></td>
         <td><s:help ac="prob-change-binary" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -455,7 +455,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Test normalization mode:</td>
         <td><select name="param"><%
     if (is_abstract || !sup_prob) {
@@ -478,7 +478,7 @@
 </select></td>
         <td><s:submit ac="prob-change-normalization" label="Change" /></td>
         <td><s:help ac="prob-change-normalization" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -486,7 +486,7 @@
 
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>XML File with problem statement:</td>
         <td><%
   str_value = prob->xml_file;
@@ -512,7 +512,7 @@
 %></td>
         <td><s:submit ac="prob-change-xml-file" label="Change" /><s:submit ac="prob-clear-xml-file" label="Clear" /></td>
         <td><s:help ac="prob-change-xml-file" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 
 <%
@@ -520,7 +520,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Directory with tests:</td>
         <td><%
     str_value = prob->test_dir;
@@ -543,7 +543,7 @@
 %></td>
         <td><s:submit ac="prob-change-test-dir" label="Change" /><s:submit ac="prob-clear-test-dir" label="Clear" /></td>
         <td><s:help ac="prob-change-test-dir" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -561,7 +561,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Pattern for test file names:</td>
         <td><%
     str_value = prob->test_pat;
@@ -581,7 +581,7 @@
 %></td>
         <td><s:submit ac="prob-change-test-pat" label="Change" /><s:submit ac="prob-clear-test-pat" label="Clear" /></td>
         <td><s:help ac="prob-change-test-pat" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -592,7 +592,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Suffix of test files:</td>
         <td><%
     str_value = prob->test_sfx;
@@ -612,7 +612,7 @@
 %></td>
         <td><s:submit ac="prob-change-test-sfx" label="Change" /><s:submit ac="prob-clear-test-sfx" label="Clear" /></td>
         <td><s:help ac="prob-change-test-sfx" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -620,7 +620,7 @@
 
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Use &quot;correct answer&quot; files for check?</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -633,7 +633,7 @@
 %></td>
         <td><s:submit ac="prob-change-use-corr" label="Change" /></td>
         <td><s:help ac="prob-change-use-corr" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 
 <%
@@ -641,7 +641,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Directory with &quot;correct answer&quot; files:</td>
         <td><%
     str_value = prob->corr_dir;
@@ -664,7 +664,7 @@
 %></td>
         <td><s:submit ac="prob-change-corr-dir" label="Change" /><s:submit ac="prob-clear-corr-dir" label="Clear" /></td>
         <td><s:help ac="prob-change-corr-dir" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -682,7 +682,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Pattern for &quot;correct answer&quot; file names:</td>
         <td><%
     str_value = prob->corr_pat;
@@ -702,7 +702,7 @@
 %></td>
         <td><s:submit ac="prob-change-corr-pat" label="Change" /><s:submit ac="prob-clear-corr-pat" label="Clear" /></td>
         <td><s:help ac="prob-change-corr-pat" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -713,7 +713,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Suffix of &quot;correct answer&quot; files:</td>
         <td><%
     str_value = prob->corr_sfx;
@@ -733,7 +733,7 @@
 %></td>
         <td><s:submit ac="prob-change-corr-sfx" label="Change" /><s:submit ac="prob-clear-corr-sfx" label="Clear" /></td>
         <td><s:help ac="prob-change-corr-sfx" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -741,7 +741,7 @@
 
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Use test info files for check?</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -754,7 +754,7 @@
 %></td>
         <td><s:submit ac="prob-change-use-info" label="Change" /></td>
         <td><s:help ac="prob-change-use-info" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 
 <%
@@ -762,7 +762,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Directory with test info files:</td>
         <td><%
     str_value = prob->info_dir;
@@ -785,7 +785,7 @@
 %></td>
         <td><s:submit ac="prob-change-info-dir" label="Change" /><s:submit ac="prob-clear-info-dir" label="Clear" /></td>
         <td><s:help ac="prob-change-info-dir" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -803,7 +803,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Pattern for test info file names:</td>
         <td><%
     str_value = prob->info_pat;
@@ -823,7 +823,7 @@
 %></td>
         <td><s:submit ac="prob-change-info-pat" label="Change" /><s:submit ac="prob-clear-info-pat" label="Clear" /></td>
         <td><s:help ac="prob-change-info-pat" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -834,7 +834,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Suffix of test info:</td>
         <td><%
     str_value = prob->info_sfx;
@@ -854,7 +854,7 @@
 %></td>
         <td><s:submit ac="prob-change-info-sfx" label="Change" /><s:submit ac="prob-clear-info-sfx" label="Clear" /></td>
         <td><s:help ac="prob-change-info-sfx" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -865,7 +865,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Use special working directory for check?</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -878,7 +878,7 @@
 %></td>
         <td><s:submit ac="prob-change-use-tgz" label="Change" /></td>
         <td><s:help ac="prob-change-use-tgz" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -898,7 +898,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Pattern for working dir archives:</td>
         <td><%
     str_value = prob->tgz_pat;
@@ -918,7 +918,7 @@
 %></td>
         <td><s:submit ac="prob-change-tgz-pat" label="Change" /><s:submit ac="prob-clear-tgz-pat" label="Clear" /></td>
         <td><s:help ac="prob-change-tgz-pat" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -929,7 +929,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Pattern for master working dirs:</td>
         <td><%
     str_value = prob->tgzdir_pat;
@@ -949,7 +949,7 @@
 %></td>
         <td><s:submit ac="prob-change-tgzdir-pat" label="Change" /><s:submit ac="prob-clear-tgzdir-pat" label="Clear" /></td>
         <td><s:help ac="prob-change-tgzdir-pat" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -960,7 +960,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Suffix of working dir archives:</td>
         <td><%
     str_value = prob->tgz_sfx;
@@ -980,7 +980,7 @@
 %></td>
         <td><s:submit ac="prob-change-tgz-sfx" label="Change" /><s:submit ac="prob-clear-tgz-sfx" label="Clear" /></td>
         <td><s:help ac="prob-change-tgz-sfx" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -991,7 +991,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Suffix of master working dirs:</td>
         <td><%
     str_value = prob->tgzdir_sfx;
@@ -1011,7 +1011,7 @@
 %></td>
         <td><s:submit ac="prob-change-tgzdir-sfx" label="Change" /><s:submit ac="prob-clear-tgzdir-sfx" label="Clear" /></td>
         <td><s:help ac="prob-change-tgzdir-sfx" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -1027,7 +1027,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Processor time limit (ms):</td>
         <td><s:textfield name="param" value="prob->time_limit_millis" size="48" maxlength="1024" checkExpr=" > 0" /><%
     if (is_abstract) {
@@ -1044,7 +1044,7 @@
 %></td>
         <td><s:submit ac="prob-change-time-limit-millis" label="Change" /></td>
         <td><s:help ac="prob-change-time-limit-millis" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -1055,7 +1055,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Processor time limit (s):</td>
         <td><s:textfield name="param" value="prob->time_limit" size="48" maxlength="1024" checkExpr=" >= 0" /><%
     if (is_abstract) {
@@ -1078,7 +1078,7 @@
 %></td>
         <td><s:submit ac="prob-change-time-limit" label="Change" /></td>
         <td><s:help ac="prob-change-time-limit" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -1086,7 +1086,7 @@
 
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Real time limit (s):</td>
         <td><s:textfield name="param" value="prob->real_time_limit" size="48" maxlength="1024" checkExpr=" >= 0" /><%
     if (is_abstract) {
@@ -1110,12 +1110,12 @@
 %></td>
         <td><s:submit ac="prob-change-real-time-limit" label="Change" /></td>
         <td><s:help ac="prob-change-real-time-limit" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Real time limit for checker(s):</td>
         <td><s:textfield name="param" value="prob->checker_real_time_limit" size="48" maxlength="1024" checkExpr=" >= 0" /><%
     if (is_abstract) {
@@ -1139,7 +1139,7 @@
 %></td>
         <td><s:submit ac="prob-change-checker-real-time-limit" label="Change" /></td>
         <td><s:help ac="prob-change-checker-real-time-limit" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 
 <%
@@ -1147,7 +1147,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Maximum virtual memory size:</td>
         <td><%
     num_buf[0] = 0;
@@ -1179,7 +1179,7 @@
 %></td>
         <td><s:submit ac="prob-change-max-vm-size" label="Change" /></td>
         <td><s:help ac="prob-change-max-vm-size" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -1190,7 +1190,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Maximum stack size:</td>
         <td><%
     num_buf[0] = 0;
@@ -1222,7 +1222,7 @@
 %></td>
         <td><s:submit ac="prob-change-max-stack-size" label="Change" /></td>
         <td><s:help ac="prob-change-max-stack-size" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -1233,7 +1233,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Maximum core file size:</td>
         <td><%
     num_buf[0] = 0;
@@ -1265,7 +1265,7 @@
 %></td>
         <td><s:submit ac="prob-change-max-core-size" label="Change" /></td>
         <td><s:help ac="prob-change-max-core-size" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -1276,7 +1276,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Maximum output file size:</td>
         <td><%
     num_buf[0] = 0;
@@ -1308,7 +1308,7 @@
 %></td>
         <td><s:submit ac="prob-change-max-file-size" label="Change" /></td>
         <td><s:help ac="prob-change-max-file-size" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -1319,7 +1319,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Maximum open file count:</td>
         <td><s:textfield name="param" value="prob->max_open_file_count" size="48" maxlength="1024" checkExpr=" >= 0" /><%
     if (is_abstract) {
@@ -1339,7 +1339,7 @@
 %></td>
         <td><s:submit ac="prob-change-max-open-file-count" label="Change" /></td>
         <td><s:help ac="prob-change-max-open-file-count" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -1350,7 +1350,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Maximum process count:</td>
         <td><s:textfield name="param" value="prob->max_process_count" size="48" maxlength="1024" checkExpr=" >= 0" /><%
     if (is_abstract) {
@@ -1370,7 +1370,7 @@
 %></td>
         <td><s:submit ac="prob-change-max-process-count" label="Change" /></td>
         <td><s:help ac="prob-change-max-process-count" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -1381,7 +1381,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Use separate process group?</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -1394,7 +1394,7 @@
 %></td>
         <td><s:submit ac="prob-change-enable-process-group" label="Change" /></td>
         <td><s:help ac="prob-change-enable-process-group" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -1405,7 +1405,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Use PR (pending review) status instead of OK?</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -1418,7 +1418,7 @@
 %></td>
         <td><s:submit ac="prob-change-use-ac-not-ok" label="Change" /></td>
         <td><s:help ac="prob-change-use-ac-not-ok" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -1429,7 +1429,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Mark previous PR as IG (ignored)?</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -1442,7 +1442,7 @@
 %></td>
         <td><s:submit ac="prob-change-ignore-prev-ac" label="Change" /></td>
         <td><s:help ac="prob-change-ignore-prev-ac" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -1450,7 +1450,7 @@
 
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Contestant may view testing protocol?</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -1463,7 +1463,7 @@
 %></td>
         <td><s:submit ac="prob-change-team-enable-rep-view" label="Change" /></td>
         <td><s:help ac="prob-change-team-enable-rep-view" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 
 <%
@@ -1471,7 +1471,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Contestant may view compilation errors?</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -1484,7 +1484,7 @@
 %></td>
         <td><s:submit ac="prob-change-team-enable-ce-view" label="Change" /></td>
         <td><s:help ac="prob-change-team-enable-ce-view" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -1495,7 +1495,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Contestant may view FULL testing protocol?</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -1508,7 +1508,7 @@
 %></td>
         <td><s:submit ac="prob-change-team-show-judge-report" label="Change" /></td>
         <td><s:help ac="prob-change-team-show-judge-report" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -1519,7 +1519,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Contestant may view checker comment?</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -1532,7 +1532,7 @@
 %></td>
         <td><s:submit ac="prob-change-show-checker-comment" label="Change" /></td>
         <td><s:help ac="prob-change-show-checker-comment" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -1543,7 +1543,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Ignore compilation errors?</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -1556,7 +1556,7 @@
 %></td>
         <td><s:submit ac="prob-change-ignore-compile-errors" label="Change" /></td>
         <td><s:help ac="prob-change-ignore-compile-errors" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -1564,7 +1564,7 @@
 
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Disable user submissions?</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -1577,7 +1577,7 @@
 %></td>
         <td><s:submit ac="prob-change-disable-user-submit" label="Change" /></td>
         <td><s:help ac="prob-change-disable-user-submit" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 
 <%
@@ -1585,7 +1585,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Disable problem tab?</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -1598,7 +1598,7 @@
 %></td>
         <td><s:submit ac="prob-change-disable-tab" label="Change" /></td>
         <td><s:help ac="prob-change-disable-tab" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -1609,7 +1609,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Restricted problem statement?</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -1622,7 +1622,7 @@
 %></td>
         <td><s:submit ac="prob-change-restricted-statement" label="Change" /></td>
         <td><s:help ac="prob-change-restricted-statement" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -1633,7 +1633,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Disable submissions after OK?</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -1646,7 +1646,7 @@
 %></td>
         <td><s:submit ac="prob-change-disable-submit-after-ok" label="Change" /></td>
         <td><s:help ac="prob-change-disable-submit-after-ok" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -1654,7 +1654,7 @@
 
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Disable security restrictions?</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -1667,12 +1667,12 @@
 %></td>
         <td><s:submit ac="prob-change-disable-security" label="Change" /></td>
         <td><s:help ac="prob-change-disable-security" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Disable any testing of submissions?</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -1685,7 +1685,7 @@
 %></td>
         <td><s:submit ac="prob-change-disable-testing" label="Change" /></td>
         <td><s:help ac="prob-change-disable-testing" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 
 <%
@@ -1693,7 +1693,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Disable automatic testing of submissions?</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -1706,7 +1706,7 @@
 %></td>
         <td><s:submit ac="prob-change-disable-auto-testing" label="Change" /></td>
         <td><s:help ac="prob-change-disable-auto-testing" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -1717,7 +1717,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Still compile runs to mark as ACCEPTED?</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -1730,7 +1730,7 @@
 %></td>
         <td><s:submit ac="prob-change-enable-compilation" label="Change" /></td>
         <td><s:help ac="prob-change-enable-compilation" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -1741,7 +1741,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Ignore exit code?</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -1754,7 +1754,7 @@
 %></td>
         <td><s:submit ac="prob-change-ignore-exit-code" label="Change" /></td>
         <td><s:help ac="prob-change-ignore-exit-code" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -1765,7 +1765,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Use Olympiad mode?</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -1778,7 +1778,7 @@
 %></td>
         <td><s:submit ac="prob-change-olympiad-mode" label="Change" /></td>
         <td><s:help ac="prob-change-olympiad-mode" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -1789,7 +1789,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Score the latest submit?</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -1802,7 +1802,7 @@
 %></td>
         <td><s:submit ac="prob-change-score-latest" label="Change" /></td>
         <td><s:help ac="prob-change-score-latest" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -1813,7 +1813,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Score the latest or the best unmarked?</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -1826,7 +1826,7 @@
 %></td>
         <td><s:submit ac="prob-change-score-latest-or-unmarked" label="Change" /></td>
         <td><s:help ac="prob-change-score-latest-or-unmarked" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -1837,7 +1837,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Score the latest marked submit?</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -1850,7 +1850,7 @@
 %></td>
         <td><s:submit ac="prob-change-score-latest-marked" label="Change" /></td>
         <td><s:help ac="prob-change-score-latest-marked" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -1861,7 +1861,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Ignore unmarked runs in scoring?</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -1874,7 +1874,7 @@
 %></td>
         <td><s:submit ac="prob-change-ignore-unmarked" label="Change" /></td>
         <td><s:help ac="prob-change-ignore-unmarked" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -1885,7 +1885,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Score for full solution:</td>
         <td><s:textfield name="param" value="prob->full_score" size="48" maxlength="1024" checkExpr=" >= 0" /><%
     if (is_abstract) {
@@ -1905,7 +1905,7 @@
 %></td>
         <td><s:submit ac="prob-change-full-score" label="Change" /></td>
         <td><s:help ac="prob-change-full-score" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -1916,7 +1916,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Score for user-visible full solution:</td>
         <td><s:textfield name="param" value="prob->full_user_score" size="48" maxlength="1024" checkExpr=" >= 0" /><%
     if (is_abstract) {
@@ -1936,7 +1936,7 @@
 %></td>
         <td><s:submit ac="prob-change-full-user-score" label="Change" /></td>
         <td><s:help ac="prob-change-full-user-score" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -1947,7 +1947,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Allow variable score for full solution?</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -1960,7 +1960,7 @@
 %></td>
         <td><s:submit ac="prob-change-variable-full-score" label="Change" /></td>
         <td><s:help ac="prob-change-variable-full-score" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -1971,7 +1971,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Default score for 1 passed test:</td>
         <td><s:textfield name="param" value="prob->test_score" size="48" maxlength="1024" checkExpr=" >= 0" /><%
     if (is_abstract) {
@@ -1991,7 +1991,7 @@
 %></td>
         <td><s:submit ac="prob-change-test-score" label="Change" /></td>
         <td><s:help ac="prob-change-test-score" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -2002,7 +2002,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Penalty for a submission:</td>
         <td><s:textfield name="param" value="prob->run_penalty" size="48" maxlength="1024" checkExpr=" >= 0" /><%
     if (is_abstract) {
@@ -2022,7 +2022,7 @@
 %></td>
         <td><s:submit ac="prob-change-run-penalty" label="Change" /></td>
         <td><s:help ac="prob-change-run-penalty" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -2033,7 +2033,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Penalty for a disqualified submission:</td>
         <td><s:textfield name="param" value="prob->disqualified_penalty" size="48" maxlength="1024" checkExpr=" >= 0" /><%
     if (is_abstract) {
@@ -2053,7 +2053,7 @@
 %></td>
         <td><s:submit ac="prob-change-disqualified-penalty" label="Change" /></td>
         <td><s:help ac="prob-change-disqualified-penalty" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -2064,12 +2064,12 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Test scores for tests:</td>
         <td><s:textfield name="param" value="prob->test_score_list" size="48" maxlength="1024" checkExpr="" /></td>
         <td><s:submit ac="prob-change-test-score-list" label="Change" /></td>
         <td><s:help ac="prob-change-test-score-list" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -2080,7 +2080,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Penalty for a submission (minutes):</td>
         <td><s:textfield name="param" value="prob->acm_run_penalty" size="48" maxlength="1024" checkExpr="" /><%
     if (is_abstract) {
@@ -2098,7 +2098,7 @@
 %></td>
         <td><s:submit ac="prob-change-acm-run-penalty" label="Change" /></td>
         <td><s:help ac="prob-change-acm-run-penalty" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -2109,12 +2109,12 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Tests for problem scores:</td>
         <td><s:textfield name="param" value="prob->score_tests" size="48" maxlength="1024" check="no" /></td>
         <td><s:submit ac="prob-change-score-tests" label="Change" /><s:submit ac="prob-clear-score-tests" label="Clear" /></td>
         <td><s:help ac="prob-change-score-tests" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -2127,7 +2127,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Specially scored test sets:</td>
         <td><s:textfield name="param" value="strs" size="48" maxlength="1024" checkExpr="" /><%
     if (!strs) {
@@ -2136,7 +2136,7 @@
 %></td>
         <td><s:submit ac="prob-change-test-sets" label="Change" /><s:submit ac="prob-clear-test-sets" label="Clear" /></td>
         <td><s:help ac="prob-change-test-sets" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
     xfree(strs);
@@ -2150,7 +2150,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Additional score bonus:</td>
         <td><s:textfield name="param" value="value" size="48" maxlength="1024" checkExpr="" /><%
     if (is_abstract) {
@@ -2174,7 +2174,7 @@
 %></td>
         <td><s:submit ac="prob-change-score-bonus" label="Change" /><s:submit ac="prob-clear-score-bonus" label="Clear" /></td>
         <td><s:help ac="prob-change-score-bonus" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -2185,12 +2185,12 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Tests open for participants:</td>
         <td><s:textfield name="param" value="prob->open_tests" size="48" maxlength="1024" check="no" /></td>
         <td><s:submit ac="prob-change-open-tests" label="Change" /><s:submit ac="prob-clear-open-tests" label="Clear" /></td>
         <td><s:help ac="prob-change-open-tests" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -2201,12 +2201,12 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Tests open for participants finally:</td>
         <td><s:textfield name="param" value="prob->final_open_tests" size="48" maxlength="1024" check="no" /></td>
         <td><s:submit ac="prob-change-final-open-tests" label="Change" /><s:submit ac="prob-clear-final-open-tests" label="Clear" /></td>
         <td><s:help ac="prob-change-final-open-tests" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -2217,7 +2217,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Number of accept tests:</td>
         <td><s:textfield name="param" value="prob->tests_to_accept" size="48" maxlength="1024" checkExpr=">= 0" /><%
     if (is_abstract) {
@@ -2235,7 +2235,7 @@
 %></td>
         <td><s:submit ac="prob-change-tests-to-accept" label="Change" /></td>
         <td><s:help ac="prob-change-tests-to-accept" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -2246,7 +2246,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Accept for testing solutions that do not pass all accept tests?</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -2259,7 +2259,7 @@
 %></td>
         <td><s:submit ac="prob-change-accept-partial" label="Change" /></td>
         <td><s:help ac="prob-change-accept-partial" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -2270,7 +2270,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Min. number of accept tests:</td>
         <td><s:textfield name="param" value="prob->min_tests_to_accept" size="48" maxlength="1024" checkExpr=">= 0" /><%
     if (is_abstract) {
@@ -2288,7 +2288,7 @@
 %></td>
         <td><s:submit ac="prob-change-min-tests-to-accept" label="Change" /></td>
         <td><s:help ac="prob-change-min-tests-to-accept" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -2299,7 +2299,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Max submissions for the problem:</td>
         <td><s:textfield name="param" value="prob->max_user_run_count" size="48" maxlength="1024" checkExpr=">= 0" /><%
     if (is_abstract) {
@@ -2317,7 +2317,7 @@
 %></td>
         <td><s:submit ac="prob-change-max-user-run-count" label="Change" /></td>
         <td><s:help ac="prob-change-max-user-run-count" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -2328,7 +2328,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Do not show this problem in standings?</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -2341,7 +2341,7 @@
 %></td>
         <td><s:submit ac="prob-change-hidden" label="Change" /></td>
         <td><s:help ac="prob-change-hidden" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -2352,14 +2352,14 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Do not show accept time for this problem?</td>
         <td><%
     int value = (prob->stand_hide_time > 0);
 %><s:yesno name="param" value="value" /></td>
         <td><s:submit ac="prob-change-stand-hide-time" label="Change" /></td>
         <td><s:help ac="prob-change-stand-hide-time" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -2370,7 +2370,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Automatically advance to the next problem?</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -2383,7 +2383,7 @@
 %></td>
         <td><s:submit ac="prob-change-advance-to-next" label="Change" /></td>
         <td><s:help ac="prob-change-advance-to-next" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -2394,7 +2394,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Disable any control characters in the source code?</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -2407,7 +2407,7 @@
 %></td>
         <td><s:submit ac="prob-change-disable-ctrl-chars" label="Change" /></td>
         <td><s:help ac="prob-change-disable-ctrl-chars" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -2418,7 +2418,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Enable textarea input form?</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -2431,7 +2431,7 @@
 %></td>
         <td><s:submit ac="prob-change-enable-text-form" label="Change" /></td>
         <td><s:help ac="prob-change-enable-text-form" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -2442,7 +2442,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Standings attributes:</td>
         <td><%
     const unsigned char *value = prob->stand_attr;
@@ -2467,7 +2467,7 @@
 %></td>
         <td><s:submit ac="prob-change-stand-attr" label="Change" /><s:submit ac="prob-clear-stand-attr" label="Change" /></td>
         <td><s:help ac="prob-change-stand-attr" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -2478,7 +2478,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Report Presentation Error as Wrong Answer?</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -2491,7 +2491,7 @@
 %></td>
         <td><s:submit ac="prob-change-disable-pe" label="Change" /></td>
         <td><s:help ac="prob-change-disable-pe" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -2502,7 +2502,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Report Wall Time Limit Exceeded as Time Limit Exceeded?</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -2515,7 +2515,7 @@
 %></td>
         <td><s:submit ac="prob-change-disable-wtl" label="Change" /></td>
         <td><s:help ac="prob-change-disable-wtl" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -2528,7 +2528,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Standard checker:</td>
         <td><select name="param"><%
     for (j = 0; std_checkers[j].name; ++j) {
@@ -2545,7 +2545,7 @@
 %></select></td>
         <td><s:submit ac="prob-change-standard-checker" label="Change" /></td>
         <td><s:help ac="prob-change-standard-checker" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -2556,7 +2556,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Checker name:</td>
         <td><%
     const unsigned char *value = prob->check_cmd;
@@ -2579,7 +2579,7 @@
 %></td>
         <td><s:submit ac="prob-change-check-cmd" label="Change" /><s:submit ac="prob-clear-check-cmd" label="Change" /></td>
         <td><s:help ac="prob-change-check-cmd" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -2590,7 +2590,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Checker environment:</td>
         <td><%
     unsigned char *strs = 0;
@@ -2598,7 +2598,7 @@
 %><s:textfield name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
         <td><s:submit ac="prob-change-checker-env" label="Change" /><s:submit ac="prob-clear-checker-env" label="Change" /></td>
         <td><s:help ac="prob-change-checker-env" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
     xfree(strs); strs = 0;
@@ -2610,7 +2610,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Checker calculates score?</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -2623,7 +2623,7 @@
 %></td>
         <td><s:submit ac="prob-change-scoring-checker" label="Change" /></td>
         <td><s:help ac="prob-change-scoring-checker" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -2634,7 +2634,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Start environment:</td>
         <td><%
     unsigned char *strs = 0;
@@ -2642,7 +2642,7 @@
 %><s:textfield name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
         <td><s:submit ac="prob-change-start-env" label="Change" /><s:submit ac="prob-clear-start-env" label="Change" /></td>
         <td><s:help ac="prob-change-start-env" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
     xfree(strs); strs = 0;
@@ -2654,7 +2654,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Score valuer name:</td>
         <td><%
     const unsigned char *value = prob->valuer_cmd;
@@ -2677,7 +2677,7 @@
 %></td>
         <td><s:submit ac="prob-change-valuer-cmd" label="Change" /><s:submit ac="prob-clear-valuer-cmd" label="Change" /></td>
         <td><s:help ac="prob-change-valuer-cmd" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -2688,7 +2688,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Valuer sets <i>marked</i> flag?</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -2701,7 +2701,7 @@
 %></td>
         <td><s:submit ac="prob-change-valuer-sets-marked" label="Change" /></td>
         <td><s:help ac="prob-change-valuer-sets-marked" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -2712,7 +2712,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Valuer works interactively?</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -2725,7 +2725,7 @@
 %></td>
         <td><s:submit ac="prob-change-interactive-valuer" label="Change" /></td>
         <td><s:help ac="prob-change-interactive-valuer" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -2736,7 +2736,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Valuer environment:</td>
         <td><%
     unsigned char *strs = 0;
@@ -2744,7 +2744,7 @@
 %><s:textfield name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
         <td><s:submit ac="prob-change-valuer-env" label="Change" /><s:submit ac="prob-clear-valuer-env" label="Change" /></td>
         <td><s:help ac="prob-change-valuer-env" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
     xfree(strs); strs = 0;
@@ -2756,7 +2756,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Interactor name:</td>
         <td><%
     const unsigned char *value = prob->interactor_cmd;
@@ -2779,7 +2779,7 @@
 %></td>
         <td><s:submit ac="prob-change-interactor-cmd" label="Change" /><s:submit ac="prob-clear-interactor-cmd" label="Change" /></td>
         <td><s:help ac="prob-change-interactor-cmd" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -2790,7 +2790,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Interactor environment:</td>
         <td><%
     unsigned char *strs = 0;
@@ -2798,7 +2798,7 @@
 %><s:textfield name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
         <td><s:submit ac="prob-change-interactor-env" label="Change" /><s:submit ac="prob-clear-interactor-env" label="Change" /></td>
         <td><s:help ac="prob-change-interactor-env" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
     xfree(strs); strs = 0;
@@ -2810,7 +2810,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Time limit for interactor (s):</td>
         <td><s:textfield name="param" value="prob->interactor_time_limit" size="48" maxlength="1024" checkExpr=" >= 0" /><%
     if (is_abstract || !sup_prob) {
@@ -2836,7 +2836,7 @@
 %></td>
         <td><s:submit ac="prob-change-interactor-time-limit" label="Change" /></td>
         <td><s:help ac="prob-change-interactor-time-limit" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -2847,7 +2847,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Style checker name:</td>
         <td><%
     const unsigned char *value = prob->style_checker_cmd;
@@ -2870,7 +2870,7 @@
 %></td>
         <td><s:submit ac="prob-change-style-checker-cmd" label="Change" /><s:submit ac="prob-clear-style-checker-cmd" label="Change" /></td>
         <td><s:help ac="prob-change-style-checker-cmd" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -2881,7 +2881,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Style checker environment:</td>
         <td><%
     unsigned char *strs = 0;
@@ -2889,7 +2889,7 @@
 %><s:textfield name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
         <td><s:submit ac="prob-change-style-checker-env" label="Change" /><s:submit ac="prob-clear-style-checker-env" label="Change" /></td>
         <td><s:help ac="prob-change-style-checker-env" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
     xfree(strs); strs = 0;
@@ -2901,7 +2901,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Compiler environment:</td>
         <td><%
     unsigned char *strs = 0;
@@ -2909,7 +2909,7 @@
 %><s:textfield name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
         <td><s:submit ac="prob-change-lang-compiler-env" label="Change" /><s:submit ac="prob-clear-lang-compiler-env" label="Change" /></td>
         <td><s:help ac="prob-change-lang-compiler-env" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
     xfree(strs); strs = 0;
@@ -2921,7 +2921,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Test checker name:</td>
         <td><%
 %><s:textfield name="param" value="prob->test_checker_cmd" size="48" maxlength="1024" checkExpr="" /><%
@@ -2942,7 +2942,7 @@
 %></td>
         <td><s:submit ac="prob-change-test-checker-cmd" label="Change" /><s:submit ac="prob-clear-test-checker-cmd" label="Change" /></td>
         <td><s:help ac="prob-change-test-checker-cmd" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -2953,7 +2953,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Test checker environment:</td>
         <td><%
     unsigned char *strs = 0;
@@ -2961,7 +2961,7 @@
 %><s:textfield name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
         <td><s:submit ac="prob-change-test-checker-env" label="Change" /><s:submit ac="prob-clear-test-checker-env" label="Change" /></td>
         <td><s:help ac="prob-change-test-checker-env" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
     xfree(strs); strs = 0;
@@ -2973,7 +2973,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Init-style interactor name:</td>
         <td><%
 %><s:textfield name="param" value="prob->init_cmd" size="48" maxlength="1024" checkExpr="" /><%
@@ -2994,7 +2994,7 @@
 %></td>
         <td><s:submit ac="prob-change-init-cmd" label="Change" /><s:submit ac="prob-clear-init-cmd" label="Change" /></td>
         <td><s:help ac="prob-change-init-cmd" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -3005,7 +3005,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Init-style interactor environment:</td>
         <td><%
     unsigned char *strs = 0;
@@ -3013,7 +3013,7 @@
 %><s:textfield name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
         <td><s:submit ac="prob-change-init-env" label="Change" /><s:submit ac="prob-clear-init-env" label="Change" /></td>
         <td><s:help ac="prob-change-init-env" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
     xfree(strs); strs = 0;
@@ -3025,7 +3025,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Solution source name:</td>
         <td><%
 %><s:textfield name="param" value="prob->solution_src" size="48" maxlength="1024" checkExpr="" /><%
@@ -3046,7 +3046,7 @@
 %></td>
         <td><s:submit ac="prob-change-solution-src" label="Change" /><s:submit ac="prob-clear-solution-src" label="Change" /></td>
         <td><s:help ac="prob-change-solution-src" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -3057,7 +3057,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Solution command:</td>
         <td><%
 %><s:textfield name="param" value="prob->solution_cmd" size="48" maxlength="1024" checkExpr="" /><%
@@ -3078,7 +3078,7 @@
 %></td>
         <td><s:submit ac="prob-change-solution-cmd" label="Change" /><s:submit ac="prob-clear-solution-cmd" label="Change" /></td>
         <td><s:help ac="prob-change-solution-cmd" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -3089,7 +3089,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Special view for scores:</td>
         <td><%
     unsigned char *strs = 0;
@@ -3097,7 +3097,7 @@
 %><s:textfield name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
         <td><s:submit ac="prob-change-score-view" label="Change" /><s:submit ac="prob-clear-score-view" label="Change" /></td>
         <td><s:help ac="prob-change-score-view" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
     xfree(strs); strs = 0;
@@ -3109,7 +3109,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Ignore problem score in standings?</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -3122,7 +3122,7 @@
 %></td>
         <td><s:submit ac="prob-change-stand-ignore-score" label="Change" /></td>
         <td><s:help ac="prob-change-stand-ignore-score" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -3133,7 +3133,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Show the problem after all results?</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -3146,7 +3146,7 @@
 %></td>
         <td><s:submit ac="prob-change-stand-last-column" label="Change" /></td>
         <td><s:help ac="prob-change-stand-last-column" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -3157,7 +3157,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Language-based time-limit adjustment (s):</td>
         <td><%
     unsigned char *strs = 0;
@@ -3165,7 +3165,7 @@
 %><s:textfield name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
         <td><s:submit ac="prob-change-lang-time-adj" label="Change" /><s:submit ac="prob-clear-lang-time-adj" label="Change" /></td>
         <td><s:help ac="prob-change-lang-time-adj" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
     xfree(strs); strs = 0;
@@ -3177,7 +3177,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Language-based time-limit adjustment (ms):</td>
         <td><%
     unsigned char *strs = 0;
@@ -3185,7 +3185,7 @@
 %><s:textfield name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
         <td><s:submit ac="prob-change-lang-time-adj-millis" label="Change" /><s:submit ac="prob-clear-lang-time-adj-millis" label="Change" /></td>
         <td><s:help ac="prob-change-lang-time-adj-millis" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
     xfree(strs); strs = 0;
@@ -3197,7 +3197,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Language-based memory limit:</td>
         <td><%
     unsigned char *strs = 0;
@@ -3205,7 +3205,7 @@
 %><s:textfield name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
         <td><s:submit ac="prob-change-lang-max-vm-size" label="Change" /><s:submit ac="prob-clear-lang-max-vm-size" label="Change" /></td>
         <td><s:help ac="prob-change-lang-max-vm-size" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
     xfree(strs); strs = 0;
@@ -3217,7 +3217,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Language-based stack limit:</td>
         <td><%
     unsigned char *strs = 0;
@@ -3225,7 +3225,7 @@
 %><s:textfield name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
         <td><s:submit ac="prob-change-lang-max-stack-size" label="Change" /><s:submit ac="prob-clear-lang-max-stack-size" label="Change" /></td>
         <td><s:help ac="prob-change-lang-max-stack-size" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
     xfree(strs); strs = 0;
@@ -3237,7 +3237,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Disabled languages:</td>
         <td><%
     unsigned char *strs = 0;
@@ -3245,7 +3245,7 @@
 %><s:textfield name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
         <td><s:submit ac="prob-change-disable-language" label="Change" /><s:submit ac="prob-clear-disable-language" label="Change" /></td>
         <td><s:help ac="prob-change-disable-language" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
     xfree(strs); strs = 0;
@@ -3257,7 +3257,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Enabled languages:</td>
         <td><%
     unsigned char *strs = 0;
@@ -3265,7 +3265,7 @@
 %><s:textfield name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
         <td><s:submit ac="prob-change-enable-language" label="Change" /><s:submit ac="prob-clear-enable-language" label="Change" /></td>
         <td><s:help ac="prob-change-enable-language" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
     xfree(strs); strs = 0;
@@ -3277,7 +3277,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Required problems:</td>
         <td><%
     unsigned char *strs = 0;
@@ -3285,7 +3285,7 @@
 %><s:textfield name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
         <td><s:submit ac="prob-change-require" label="Change" /><s:submit ac="prob-clear-require" label="Change" /></td>
         <td><s:help ac="prob-change-require" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
     xfree(strs); strs = 0;
@@ -3297,7 +3297,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Provide OK to problems:</td>
         <td><%
     unsigned char *strs = 0;
@@ -3305,7 +3305,7 @@
 %><s:textfield name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
         <td><s:submit ac="prob-change-provide-ok" label="Change" /><s:submit ac="prob-clear-provide-ok" label="Change" /></td>
         <td><s:help ac="prob-change-provide-ok" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
     xfree(strs); strs = 0;
@@ -3317,7 +3317,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Number of variants:</td>
         <td><s:textfield name="param" value="prob->variant_num" size="48" maxlength="1024" checkExpr="> 0" /><%
     if (prob->variant_num <= 0) {
@@ -3330,7 +3330,7 @@
     }
 %></td>
         <td><s:help ac="prob-change-variant-num" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -3341,12 +3341,12 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Accept start date:</td>
         <td><% html_date_select(out_f, prob->start_date); %></td>
         <td><s:submit ac="prob-change-start-date" label="Change" /><s:submit ac="prob-clear-start-date" label="Clear" /></td>
         <td><s:help ac="prob-change-start-date" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
 }
@@ -3357,12 +3357,12 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Accept deadline:</td>
         <td><% html_date_select(out_f, prob->deadline); %></td>
         <td><s:submit ac="prob-change-deadline" label="Change" /><s:submit ac="prob-clear-deadline" label="Clear" /></td>
         <td><s:help ac="prob-change-deadline" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
 }
@@ -3373,7 +3373,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Source header file:</td>
         <td><%
     const unsigned char *value = prob->source_header;
@@ -3400,7 +3400,7 @@
 %></td>
         <td><s:submit ac="prob-change-source-header" label="Change" /><s:submit ac="prob-clear-source-header" label="Clear" /></td>
         <td><s:help ac="prob-change-source-header" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -3411,7 +3411,7 @@
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Source footer file:</td>
         <td><%
     const unsigned char *value = prob->source_footer;
@@ -3438,7 +3438,7 @@
 %></td>
         <td><s:submit ac="prob-change-source-footer" label="Change" /><s:submit ac="prob-clear-source-footer" label="Clear" /></td>
         <td><s:help ac="prob-change-source-footer" /></td>
-    </s:htr>
+    </s:tr>
 </s:form>
 <%
   }
@@ -3447,12 +3447,12 @@
 <%
   if (prob->unhandled_vars) {
 %>
-<s:htr attr="form_row_attrs[row ^= 1]">
+<s:tr attr="form_row_attrs[row ^= 1]">
     <td colspan="4" align="center"><b>Uneditable parameters</b></td>
-</s:htr>
-<s:htr attr="form_row_attrs[row ^= 1]">
+</s:tr>
+<s:tr attr="form_row_attrs[row ^= 1]">
     <td colspan="4"><pre><s:v value="prob->unhandled_vars" /></pre></td>
-</s:htr>
+</s:tr>
 <%
   }
 %>
