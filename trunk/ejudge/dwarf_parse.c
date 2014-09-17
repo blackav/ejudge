@@ -1452,6 +1452,7 @@ static const struct TopDieParseTable top_die_table[] =
     { DW_TAG_subroutine_type, NODE_FUNCTION_TYPE, "function", parse_function_type_die },
     { DW_TAG_variable, 0, NULL, NULL },
     { DW_TAG_subprogram, NODE_SUBROUTINE, "subprogram", parse_subroutine_die },
+    { DW_TAG_dwarf_procedure, 0, NULL, NULL },
 
     { 0 },
 };
