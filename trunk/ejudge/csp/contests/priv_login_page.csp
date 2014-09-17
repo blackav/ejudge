@@ -33,11 +33,11 @@
 
 <s:form>
 <table>
-<tr><td><s:tr>Login</s:tr>:</td><td><s:textfield size="32" name="login" /></td></tr>
-<tr><td><s:tr>Password</s:tr>:</td><td><s:password size="32" name="password" /></td></tr>
-<tr><td><s:tr>Contest</s:tr>:</td><td><s:textfield size="32" name="contest_id" checkExpr="&gt; 0" /></td></tr>
-<tr><td><s:tr>Role</s:tr>:</td><td><%  html_role_select(out_f, phr->role, 1, 0); %></td></tr>
-<tr><td><s:tr>Language</s:tr>:</td><td><% l10n_html_locale_select(out_f, phr->locale_id); %></td></tr>
+<tr><td><s:_>Login</s:_>:</td><td><s:textfield size="32" name="login" /></td></tr>
+<tr><td><s:_>Password</s:_>:</td><td><s:password size="32" name="password" /></td></tr>
+<tr><td><s:_>Contest</s:_>:</td><td><s:textfield size="32" name="contest_id" checkExpr="&gt; 0" /></td></tr>
+<tr><td><s:_>Role</s:_>:</td><td><%  html_role_select(out_f, phr->role, 1, 0); %></td></tr>
+<tr><td><s:_>Language</s:_>:</td><td><% l10n_html_locale_select(out_f, phr->locale_id); %></td></tr>
 <tr><td>&nbsp;</td><td><s:submit ac="main-page" label="Submit" /></td></tr>
 </table>
 </s:form><%@include "priv_footer.csp"

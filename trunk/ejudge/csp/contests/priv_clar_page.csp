@@ -38,34 +38,34 @@
 %>
 </div>
 
-<h2><s:tr>Message</s:tr> <s:v value="clar_id" />
+<h2><s:_>Message</s:_> <s:v value="clar_id" />
 <%  if (phr->role == USER_ROLE_ADMIN && opcaps_check(phr->caps, OPCAP_EDIT_RUN) >= 0) { %>
 <s:url name="EditClarUrl" ac="priv-edit-clar-page">
   <s:param name="clar_id" value="clar_id" />
 </s:url>
- [<s:a url="EditClarUrl"><s:tr>Edit</s:tr></s:a>]
+ [<s:a url="EditClarUrl"><s:_>Edit</s:_></s:a>]
 <%  } %>
 </h2>
 <table border="0">
-<tr><td><s:tr>Clar ID</s:tr>:</td><td><s:v value="clar_id" /></td></tr>
+<tr><td><s:_>Clar ID</s:_>:</td><td><s:v value="clar_id" /></td></tr>
 <%  if (clar.hide_flag) { %>
-<tr><td><s:tr>Available only after contest start</s:tr>:</td><td><%
+<tr><td><s:_>Available only after contest start</s:_>:</td><td><%
   fputs(clar.hide_flag?_("YES"):_("NO"), out_f);
 %></td></tr>
 <% } %>
-<tr><td><s:tr>Flags</s:tr>:</td><td><s:v escape="false" value="clar_flags_html(cs->clarlog_state, clar.flags, clar.from, clar.to, 0, 0)" /></td></tr>
-<tr><td><s:tr>Time</s:tr>:</td><td><s:v escape="false" value="duration_str(1, clar.time, 0, 0, 0)" /></td></tr>
+<tr><td><s:_>Flags</s:_>:</td><td><s:v escape="false" value="clar_flags_html(cs->clarlog_state, clar.flags, clar.from, clar.to, 0, 0)" /></td></tr>
+<tr><td><s:_>Time</s:_>:</td><td><s:v escape="false" value="duration_str(1, clar.time, 0, 0, 0)" /></td></tr>
 <%  if (!cs->global->is_virtual && start_time > 0) { %>
-<tr><td><s:tr>Duration</s:tr>:</td><td><s:v escape="false" value="duration_str(0, clar.time, start_time, 0, 0)" /></td></tr>
+<tr><td><s:_>Duration</s:_>:</td><td><s:v escape="false" value="duration_str(0, clar.time, start_time, 0, 0)" /></td></tr>
 <%  } %>
-<tr><td><s:tr>IP address</s:tr>:</td><td><s:v value="clar.a.ip" /></td></tr>
-<tr><td><s:tr>Size</s:tr>:</td><td><s:v value="clar.size" /></td></tr>
-<tr><td><s:tr>Sender</s:tr>:</td>
+<tr><td><s:_>IP address</s:_>:</td><td><s:v value="clar.a.ip" /></td></tr>
+<tr><td><s:_>Size</s:_>:</td><td><s:v value="clar.size" /></td></tr>
+<tr><td><s:_>Sender</s:_>:</td>
 <% if (!clar.from) {
     if (!clar.j_from) { %>
-<td><b><s:tr>judges</s:tr></b></td>
+<td><b><s:_>judges</s:_></b></td>
 <%    } else { %>
-<td><b><s:tr>judges</s:tr></b> (<s:v value="teamdb_get_name_2(cs->teamdb_state, clar.j_from)" />)</td>
+<td><b><s:_>judges</s:_></b> (<s:v value="teamdb_get_name_2(cs->teamdb_state, clar.j_from)" />)</td>
 <%    }
   } else { %>
 <% snprintf(b1, sizeof(b1), "uid == %d", clar.from); %>
@@ -75,11 +75,11 @@
 <td><s:a url="UserFilterUrl"><s:v value="teamdb_get_name_2(cs->teamdb_state, clar.from)" /> (<s:v value="clar.from" />)</s:a></td>
 <%  }%>
 </tr>
-<tr><td><s:tr>To</s:tr>:</td>
+<tr><td><s:_>To</s:_>:</td>
 <%  if (!clar.to && !clar.from) { %>
-<td><b><s:tr>all</s:tr></b></td>
+<td><b><s:_>all</s:_></b></td>
 <%  } else if (!clar.to) { %>
-<td><b><s:tr>judges</s:tr></b></td>
+<td><b><s:_>judges</s:_></b></td>
 <%  } else { %>
 <% snprintf(b1, sizeof(b1), "uid == %d", clar.to); %>
 <s:url name="UserFilterUrl" ac="main-page">
@@ -92,14 +92,14 @@
 <s:url name="ViewOtherClarUrl" ac="view-clar">
   <s:param name="clar_id" value="clar.in_reply_to - 1" />
 </s:url>
-<tr><td><s:tr>In reply to</s:tr>:</td><td><s:a url="ViewOtherClarUrl"><s:v value="clar.in_reply_to - 1" /></s:a></td></tr>
+<tr><td><s:_>In reply to</s:_>:</td><td><s:a url="ViewOtherClarUrl"><s:v value="clar.in_reply_to - 1" /></s:a></td></tr>
 <%  } %>
-<tr><td><s:tr>Locale code</s:tr>:</td><td><s:v value="clar.locale_id" /></td></tr>
-<tr><td><s:tr>Subject</s:tr>:</td><td><s:v value="clar_subj" /></td></tr>
+<tr><td><s:_>Locale code</s:_>:</td><td><s:v value="clar.locale_id" /></td></tr>
+<tr><td><s:_>Subject</s:_>:</td><td><s:v value="clar_subj" /></td></tr>
 </table>
 <hr/>
 <%  if (clar_get_text(cs->clarlog_state, clar_id, &msg_txt, &msg_len) < 0) { %>
-<big><font color="red"><s:tr>Cannot read message text!</s:tr></font></big>
+<big><font color="red"><s:_>Cannot read message text!</s:_></font></big>
 <%  } else { %>
 <pre><s:v value="msg_txt" /></pre>
 <%  } %>

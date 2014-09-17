@@ -89,11 +89,11 @@
 
 <div id="main-menu">
 <ul>
-<li><s:a ac="main-page"><s:tr>Main page</s:tr></s:a></li>
-<li><s:a class="current" url="ViewSourceUrl"><s:tr>Source</s:tr></s:a></li>
-<li><s:a url="ViewReportUrl"><s:tr>Report</s:tr></s:a></li>
-<li><s:a url="ViewUserReportUrl"><s:tr>User report</s:tr></s:a></li>
-<li><s:a url="ViewAuditLogUrl"><s:tr>Audit log</s:tr></s:a></li>
+<li><s:a ac="main-page"><s:_>Main page</s:_></s:a></li>
+<li><s:a class="current" url="ViewSourceUrl"><s:_>Source</s:_></s:a></li>
+<li><s:a url="ViewReportUrl"><s:_>Report</s:_></s:a></li>
+<li><s:a url="ViewUserReportUrl"><s:_>User report</s:_></s:a></li>
+<li><s:a url="ViewAuditLogUrl"><s:_>Audit log</s:_></s:a></li>
 </ul></div>
 </div>
 
@@ -102,35 +102,35 @@
 </s:url>
 
 <div id="info-brief">
-<div class="h2-long" style="margin-top: 0;"><h2><s:tr>Information about run</s:tr> <s:v value="run_id" /><%
+<div class="h2-long" style="margin-top: 0;"><h2><s:_>Information about run</s:_> <s:v value="run_id" /><%
   if (phr->role == USER_ROLE_ADMIN && opcaps_check(phr->caps, OPCAP_EDIT_RUN) >= 0) {
-%> [<s:a url="PrivEditRunPageUrl"><s:tr>Edit</s:tr></s:a>]
+%> [<s:a url="PrivEditRunPageUrl"><s:_>Edit</s:_></s:a>]
 <% } %></h2></div>
 
 <div class="table-scroll" style="margin-top: -10px; margin-bottom: 5px;">
 <table class="table">
 <tr>
-    <th style="width: 10em;"><s:tr>Run ID</s:tr></th>
-    <th><s:tr>Submission time</s:tr></th>
-    <th><s:tr>Contest time</s:tr></th>
+    <th style="width: 10em;"><s:_>Run ID</s:_></th>
+    <th><s:_>Submission time</s:_></th>
+    <th><s:_>Contest time</s:_></th>
 <% #if CONF_HAS_LIBUUID - 0 != 0 %>
     <th>UUID</th>
 <% #endif %>
-    <th><s:tr>Originator IP</s:tr></th>
-    <th><s:tr>User ID</s:tr></th>
-    <th><s:tr>User login</s:tr></th>
-    <th><s:tr>User name</s:tr></th>
-    <th><s:tr>Problem</s:tr></th>
+    <th><s:_>Originator IP</s:_></th>
+    <th><s:_>User ID</s:_></th>
+    <th><s:_>User login</s:_></th>
+    <th><s:_>User name</s:_></th>
+    <th><s:_>Problem</s:_></th>
 <% if (prob && prob->variant_num > 0) { %>
-    <th><s:tr>Variant</s:tr></th>
+    <th><s:_>Variant</s:_></th>
 <% } %>
-    <th><s:tr>Language</s:tr></th>
-    <th><s:tr>EOLN Type</s:tr></th>
-    <th><s:tr>Status</s:tr></th>
+    <th><s:_>Language</s:_></th>
+    <th><s:_>EOLN Type</s:_></th>
+    <th><s:_>Status</s:_></th>
 <%
   if (info.passed_mode > 0) {
 %>
-    <th><s:tr>Tests passed</s:tr></th>
+    <th><s:_>Tests passed</s:_></th>
 <%
   }
 %>
@@ -138,30 +138,30 @@
   if (global->score_system == SCORE_KIROV || global->score_system == SCORE_OLYMPIAD) {
     if (info.passed_mode <= 0) {
 %>
-    <th><s:tr>Tests passed</s:tr></th>
+    <th><s:_>Tests passed</s:_></th>
 <%
     }
 %>
-    <th><s:tr>Score gained</s:tr></th>
+    <th><s:_>Score gained</s:_></th>
 <%
   } else if (global->score_system == SCORE_MOSCOW) {
     if (info.passed_mode <= 0) {
 %>
-    <th><s:tr>Failed test</s:tr></th>
+    <th><s:_>Failed test</s:_></th>
 <%
     }
 %>
-    <th><s:tr>Score gained</s:tr></th>
+    <th><s:_>Score gained</s:_></th>
 <%
   } else {
     if (info.passed_mode <= 0) {
 %>
-    <th><s:tr>Failed test</s:tr></th>
+    <th><s:_>Failed test</s:_></th>
 <%
     }
   }
 %>
-    <th><s:tr>Marked?</s:tr></th>
+    <th><s:_>Marked?</s:_></th>
 </tr>
 <tr>
     <td><s:v value="info.run_id" /></td>
@@ -189,7 +189,7 @@
 </s:url>
     <td><s:a url="FilteredMainUrl"><s:v value="prob->short_name" escape="false" /> - <s:v value="prob->long_name" /></s:a><%
     if (prob->xml_file && prob->xml_file[0]) {
-%><s:url name="SubmitPageUrl" ac="priv-submit-page"><s:param name="problem" value="prob->id" /></s:url> <s:a url="SubmitPageUrl">[<s:tr>Statement</s:tr>]</s:a><%
+%><s:url name="SubmitPageUrl" ac="priv-submit-page"><s:param name="problem" value="prob->id" /></s:url> <s:a url="SubmitPageUrl">[<s:_>Statement</s:_>]</s:a><%
     }
 %></td>
 <% } else { %>
@@ -290,10 +290,10 @@ function setDivVisibility(oper, value)
 }
 </script>
 <div id="ShowExtraDiv">
-<a onclick="setDivVisibility('Extra', true)">[<s:tr>More info</s:tr>]</a>
+<a onclick="setDivVisibility('Extra', true)">[<s:_>More info</s:_>]</a>
 </div>
 <div style="display: none;" id="HideExtraDiv">
-<a onclick="setDivVisibility('Extra', false)">[<s:tr>Hide extended info</s:tr>]</a>
+<a onclick="setDivVisibility('Extra', false)">[<s:_>Hide extended info</s:_>]</a>
 
 <br/>
 
@@ -301,19 +301,19 @@ function setDivVisibility(oper, value)
 <table class="table">
 <tr>
 <% if (!info.lang_id) { %>
-<th><s:tr>Content type</s:tr></th><td><s:v type="mime_type" value="info.mime_type" /></td>
+<th><s:_>Content type</s:_></th><td><s:v type="mime_type" value="info.mime_type" /></td>
 <% } %>
-<th style="width: 10em;"><s:tr>Imported?</s:tr></th>
-<th><s:tr>Hidden?</s:tr></th>
-<th><s:tr>Saved?</s:tr></th>
-<th><s:tr>Read-only?</s:tr></th>
-<th><s:tr>Locale ID</s:tr></th>
+<th style="width: 10em;"><s:_>Imported?</s:_></th>
+<th><s:_>Hidden?</s:_></th>
+<th><s:_>Saved?</s:_></th>
+<th><s:_>Read-only?</s:_></th>
+<th><s:_>Locale ID</s:_></th>
 <%  if (global->score_system != SCORE_ACM) { %>
-<th><s:tr>Score adjustment</s:tr></th>
+<th><s:_>Score adjustment</s:_></th>
 <%  } %>
-<th><s:tr>Size</s:tr></th>
-<th><s:tr>Hash value</s:tr></th>
-<th><s:tr>Pages printed</s:tr>:</th>
+<th><s:_>Size</s:_></th>
+<th><s:_>Hash value</s:_></th>
+<th><s:_>Pages printed</s:_>:</th>
 </tr>
 <tr>
 <% if (!info.lang_id) { %>
@@ -342,7 +342,7 @@ function setDivVisibility(oper, value)
 <s:url name="DownloadRunUrl" ac="priv-download-run">
     <s:param name="run_id" value="run_id" />
 </s:url>
-<p style="display: inline-block;"><s:a url="DownloadRunUrl"><s:tr>Download run</s:tr></s:a></p>
+<p style="display: inline-block;"><s:a url="DownloadRunUrl"><s:_>Download run</s:_></s:a></p>
 
 <% if (phr->role == USER_ROLE_ADMIN && opcaps_check(phr->caps, OPCAP_EDIT_RUN) >= 0 && info.is_readonly <= 0) { %>
 <s:form>
@@ -367,21 +367,21 @@ function setDivVisibility(oper, value)
 
 <s:form>
 <s:hidden name="run_id" checkExpr=">=0" />
-<p><s:tr>Compare this run with run</s:tr>: <s:textfield name="run_id2" checkExpr=">= 0" size="10" /> <s:submit ac="compare-runs" /></p>
+<p><s:_>Compare this run with run</s:_>: <s:textfield name="run_id2" checkExpr=">= 0" size="10" /> <s:submit ac="compare-runs" /></p>
 </s:form>
 
 <s:form>
 <s:hidden name="run_id" checkExpr=">=0" />
-<p><s:tr>Charset</s:tr>: <% charset_html_select(out_f, "run_charset", run_charset); %> <s:submit ac="view-source" /></p>
+<p><s:_>Charset</s:_>: <% charset_html_select(out_f, "run_charset", run_charset); %> <s:submit ac="view-source" /></p>
 </s:form>
 
 <% if (global->enable_report_upload) { %>
 <s:form enctype="multipart/form-data">
 <s:hidden name="run_id" checkExpr=">=0" />
-<p><s:tr>Upload judging protocol</s:tr>: <input type="file" name="file" /><%
+<p><s:_>Upload judging protocol</s:_>: <input type="file" name="file" /><%
     if (global->team_enable_rep_view) {
-%> <s:checkbox name="judge_report" checkedExpr="1" /><s:tr>Judge's report</s:tr><%
-%> <s:checkbox name="user_report" checkedExpr="1" /><s:tr>User's report</s:tr><%
+%> <s:checkbox name="judge_report" checkedExpr="1" /><s:_>Judge's report</s:_><%
+%> <s:checkbox name="user_report" checkedExpr="1" /><s:_>User's report</s:_><%
 } %><s:submit ac="upload-report" />
 </s:form>
 <% } %>
@@ -401,14 +401,14 @@ function setDivVisibility(oper, value)
 </s:url>
 <p><s:img url="PrivDownloadRunUrl" label="Submit image" /></p>
 <%    } else { %>
-<p><s:tr>The submission is binary and thus is not shown.</s:tr></p>
+<p><s:_>The submission is binary and thus is not shown.</s:_></p>
 <%    }
   } else if (lang && lang->binary) {
-%><p><s:tr>The submission is binary and thus is not shown.</s:tr></p>
+%><p><s:_>The submission is binary and thus is not shown.</s:_></p>
 <%  } else if (!info.is_imported) {
     if (src_flags < 0 || generic_read_file(&src_text, 0, &src_len, src_flags, 0, src_path, "") < 0) {
 %>
-<big><font color="red"><s:tr>Cannot read source text!</s:tr></font></big>
+<big><font color="red"><s:_>Cannot read source text!</s:_></font></big>
 <%    } else {
       if (run_charset && (charset_id = charset_get_id(run_charset)) > 0) {
         unsigned char *newsrc = charset_decode_to_heap(charset_id, src_text);
@@ -432,7 +432,7 @@ function setDivVisibility(oper, value)
 %>
 
 <div id="output">
-<h2><s:tr>Style checker output</s:tr></h2>
+<h2><s:_>Style checker output</s:_></h2>
 <pre><s:v value="txt_text" /></pre></div>
 <%
       xfree(txt_text); txt_text = 0; txt_size = 0;
@@ -444,7 +444,7 @@ function setDivVisibility(oper, value)
 
 
 <div class="h2-long" style="margin-top: 13px; margin-bottom: 5px;">
-<h2><s:tr>Send a message about this run</s:tr></h2></div>
+<h2><s:_>Send a message about this run</s:_></h2></div>
 
 <s:form id="run_comment">
 

@@ -1,4 +1,4 @@
-<div class="h2-long"><h2><s:tr>Sent submissions</s:tr> (<% if (all_runs) { %><s:tr>all</s:tr><% } else { %><s:tr>last 15</s:tr><% } %>)</h2></div>
+<div class="h2-long"><h2><s:_>Sent submissions</s:_> (<% if (all_runs) { %><s:_>all</s:_><% } else { %><s:_>last 15</s:_><% } %>)</h2></div>
 <%
     if (cs->contest_plugin && cs->contest_plugin->generate_html_user_runs){
       // FIXME: logged output is also ignored
@@ -22,4 +22,4 @@
 <s:url name="ViewRunsUrl" ac="view-submissions">
     <s:param name="all_runs" value="(int) !all_runs" />
 </s:url>
-<p><s:a url="ViewRunsUrl"><% if (all_runs) { %><s:tr>View last 15</s:tr><% } else { %><s:tr>View all</s:tr><% } %></s:a></p>
+<p><s:a url="ViewRunsUrl"><% if (all_runs) { %><s:_>View last 15</s:_><% } else { %><s:_>View all</s:_><% } %></s:a></p>

@@ -62,27 +62,27 @@ static const unsigned char * const form_row_attrs[]=
 <h2>Available actions</h2>
 
 <table>
-<tr><td><s:a ac="main-page"><s:tr>Back</s:tr></s:a></td><td><s:tr>Return to the main page</s:tr></td></tr>
-<tr><td><s:submit ac="priv-users-remove" /></td><td><s:tr>Remove the selected users from the list (ADMINISTRATORs cannot be removed)</s:tr></td></tr>
-<tr><td><s:submit ac="priv-users-add-observer" /></td><td><s:tr>Add the OBSERVER role to the selected users</s:tr></td></tr>
-<tr><td><s:submit ac="priv-users-del-observer" /></td><td><s:tr>Remove the OBSERVER role from the selected users</s:tr></td></tr>
-<tr><td><s:submit ac="priv-users-add-examiner" /></td><td><s:tr>Add the EXAMINER role to the selected users</s:tr></td></tr>
-<tr><td><s:submit ac="priv-users-add-examiner" /></td><td><s:tr>Remove the EXAMINER role from the selected users</s:tr></td></tr>
-<tr><td><s:submit ac="priv-users-add-chief-examiner" /></td><td><s:tr>Add the CHIEF EXAMINER role to the selected users</s:tr></td></tr>
-<tr><td><s:submit ac="priv-users-del-chief-examiner" /></td><td><s:tr>Remove the CHIEF EXAMINER role from the selected users</s:tr></td></tr>
-<tr><td><s:submit ac="priv-users-add-coordinator" /></td><td><s:tr>Add the COORDINATOR role to the selected users</s:tr></td></tr>
-<tr><td><s:submit ac="priv-users-del-coordinator" /></td><td><s:tr>Remove the COORDINATOR role from the selected users</s:tr></td></tr>
+<tr><td><s:a ac="main-page"><s:_>Back</s:_></s:a></td><td><s:_>Return to the main page</s:_></td></tr>
+<tr><td><s:submit ac="priv-users-remove" /></td><td><s:_>Remove the selected users from the list (ADMINISTRATORs cannot be removed)</s:_></td></tr>
+<tr><td><s:submit ac="priv-users-add-observer" /></td><td><s:_>Add the OBSERVER role to the selected users</s:_></td></tr>
+<tr><td><s:submit ac="priv-users-del-observer" /></td><td><s:_>Remove the OBSERVER role from the selected users</s:_></td></tr>
+<tr><td><s:submit ac="priv-users-add-examiner" /></td><td><s:_>Add the EXAMINER role to the selected users</s:_></td></tr>
+<tr><td><s:submit ac="priv-users-add-examiner" /></td><td><s:_>Remove the EXAMINER role from the selected users</s:_></td></tr>
+<tr><td><s:submit ac="priv-users-add-chief-examiner" /></td><td><s:_>Add the CHIEF EXAMINER role to the selected users</s:_></td></tr>
+<tr><td><s:submit ac="priv-users-del-chief-examiner" /></td><td><s:_>Remove the CHIEF EXAMINER role from the selected users</s:_></td></tr>
+<tr><td><s:submit ac="priv-users-add-coordinator" /></td><td><s:_>Add the COORDINATOR role to the selected users</s:_></td></tr>
+<tr><td><s:submit ac="priv-users-del-coordinator" /></td><td><s:_>Remove the COORDINATOR role from the selected users</s:_></td></tr>
 </table>
 
-<h2><s:tr>Add new user</s:tr></h2>
+<h2><s:_>Add new user</s:_></h2>
 
 <table>
 <tr><td><input type="text" size="32" name="add_login"/></td><td>
 <%  html_role_select(out_f, USER_ROLE_OBSERVER, 0, "add_role_1"); %>
-</td><td><s:submit ac="priv-users-add-by-login" /></td><td><s:tr>Add a new user specifying his/her login</s:tr></td></tr>
+</td><td><s:submit ac="priv-users-add-by-login" /></td><td><s:_>Add a new user specifying his/her login</s:_></td></tr>
 <tr><td><input type="text" size="32" name="add_user_id"/></td><td>
 <%  html_role_select(out_f, USER_ROLE_OBSERVER, 0, "add_role_2"); %>
-</td><td><s:submit ac="priv-users-add-by-user-id" /></td><td><s:tr>Add a new user specifying his/her User Id</s:tr></td></tr>
+</td><td><s:submit ac="priv-users-add-by-user-id" /></td><td><s:_>Add a new user specifying his/her User Id</s:_></td></tr>
 </table><%@include "priv_footer.csp"
 %><%
   l10n_resetlocale();

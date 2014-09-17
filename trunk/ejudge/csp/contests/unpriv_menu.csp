@@ -9,7 +9,7 @@
     } else {
 %><li class="current"><div class="contest_actions_item"><%
     }
-%><s:tr>Settings</s:tr><%
+%><s:_>Settings</s:_><%
     if (phr->action != NEW_SRV_ACTION_VIEW_SETTINGS) {
 %></s:a><%
     }
@@ -18,7 +18,7 @@
     if (cnts->allow_reg_data_edit > 0
         && contests_check_register_ip_2(cnts, &phr->ip, phr->ssl_flag) > 0
         && (cnts->reg_deadline <= 0 || cs->current_time < cnts->reg_deadline)) {
-%><li class="contest_actions_item"><s:a class="menu" script="register" ac="main-page"><s:tr>Registration</s:tr></s:a><li>
+%><li class="contest_actions_item"><s:a class="menu" script="register" ac="main-page"><s:_>Registration</s:_></s:a><li>
 <%
     }
 %>
@@ -32,9 +32,9 @@
   } else {
 %><li class="current"><div class="contest_actions_item"><%
  } if (cnts && cnts->exam_mode) {
-%><s:tr>Instructions</s:tr><%
+%><s:_>Instructions</s:_><%
   } else {
-%><s:tr>Info</s:tr><%
+%><s:_>Info</s:_><%
   }
 %><%
   if (phr->action != NEW_SRV_ACTION_MAIN_PAGE) {
@@ -53,15 +53,15 @@
 %><%
     if (start_time <= 0) {
       if (cnts->exam_mode) {
-%><s:tr>Start exam</s:tr><%
+%><s:_>Start exam</s:_><%
       } else {
-%><s:tr>Start virtual contest</s:tr><%
+%><s:_>Start virtual contest</s:_><%
       }
     } else if (stop_time <= 0) {
       if (cnts->exam_mode) {
-%><s:tr>Stop exam</s:tr><%
+%><s:_>Stop exam</s:_><%
       } else {
-%><s:tr>Stop virtual contest</s:tr><%
+%><s:_>Stop virtual contest</s:_><%
       }
     }
 %><%
@@ -78,7 +78,7 @@
     } else {
 %><li class="current"><div class="contest_actions_item"><%
     }
-%><s:tr>Summary</s:tr><%
+%><s:_>Summary</s:_><%
     if (phr->action != NEW_SRV_ACTION_VIEW_PROBLEM_SUMMARY) {
 %></s:a><%
     }
@@ -91,12 +91,12 @@
 %><li><div class="contest_actions_item"><%
     if (phr->action != NEW_SRV_ACTION_VIEW_PROBLEM_STATEMENTS) {
       if (cnts->problems_url) {
-%><a class="menu" href="<s:v value="cnts->problems_url" escape="false" />" target="_blank"><s:tr>Statements</s:tr></a><%
+%><a class="menu" href="<s:v value="cnts->problems_url" escape="false" />" target="_blank"><s:_>Statements</s:_></a><%
       } else {
-%><s:a class="menu" ac="view-problem-statements"><s:tr>Statements</s:tr></s:a><%
+%><s:a class="menu" ac="view-problem-statements"><s:_>Statements</s:_></s:a><%
       }
     } else {
-%><s:tr>Statements</s:tr><%
+%><s:_>Statements</s:_><%
     }
 %></div></li><%
   }
@@ -108,7 +108,7 @@
     } else {
 %><li class="current"><div class="contest_actions_item"><%
     }
-%><s:tr>Submit</s:tr><%
+%><s:_>Submit</s:_><%
     if (phr->action != NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT) {
 %></s:a><%
     }
@@ -122,7 +122,7 @@
     } else {
 %><li class="current"><div class="contest_actions_item"><%
     }
-%><s:tr>Submissions</s:tr><%
+%><s:_>Submissions</s:_><%
     if (phr->action != NEW_SRV_ACTION_VIEW_SUBMISSIONS) {
 %></s:a><%
     }
@@ -134,9 +134,9 @@
     if (phr->action == NEW_SRV_ACTION_STANDINGS) {
 %><%
       if (cnts->personal) {
-%><s:tr>User standings</s:tr><%
+%><s:_>User standings</s:_><%
       } else {
-%><s:tr>Standings</s:tr><%
+%><s:_>Standings</s:_><%
       }
     } else {
       if (cnts->standings_url) {
@@ -150,17 +150,17 @@
                         tdb.user, cnts, &fe);
 %><a class="menu" href="<s:v value="hbuf" escape="false" />" target="_blank"><%
         if (cnts->personal) {
-%><s:tr>User standings</s:tr><%
+%><s:_>User standings</s:_><%
         } else {
-%><s:tr>Standings</s:tr><%
+%><s:_>Standings</s:_><%
         }
 %></a><%
       } else {
 %><s:a class="menu" ac="standings"><%
         if (cnts->personal) {
-%><s:tr>User standings</s:tr><%
+%><s:_>User standings</s:_><%
         } else {
-%><s:tr>Standings</s:tr><%
+%><s:_>Standings</s:_><%
         }
 %></s:a><%
       }
@@ -176,7 +176,7 @@
     } else {
 %><li class="current"><div class="contest_actions_item"><%
     }
-%><s:tr>Submit clar</s:tr><%
+%><s:_>Submit clar</s:_><%
     if (phr->action != NEW_SRV_ACTION_VIEW_CLAR_SUBMIT) {
 %></s:a><%
     }
@@ -190,7 +190,7 @@
     } else {
 %><li class="current"><div class="contest_actions_item"><%
     }
-%><s:tr>Clars</s:tr><%
+%><s:_>Clars</s:_><%
     if (phr->action != NEW_SRV_ACTION_VIEW_CLARS) {
 %></s:a><%
     }
@@ -201,9 +201,9 @@
   if (cnts && phr->login) {
 %><li><div class="contest_actions_item"><s:a class="menu" ac="logout"><%
     if (cnts->exam_mode) {
-%><s:tr>Finish session</s:tr><%
+%><s:_>Finish session</s:_><%
     } else {
-%><s:tr>Logout</s:tr><%
+%><s:_>Logout</s:_><%
     }
 %> [<s:v value="phr->login" escape="false" />]</s:a></div></li><%
   }

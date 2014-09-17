@@ -1,4 +1,4 @@
-<%
+<% // -*- mode: html -*-
 /* $Id$ */
 %><%@include "unpriv_includes.csp"
 %><%
@@ -73,7 +73,7 @@
 <h2><s:v value="title" escape="false" /></h2>
 
 <%  if (global->disable_user_standings > 0) {
-%><p><s:tr>Information is not available.</s:tr></p><%
+%><p><s:_>Information is not available.</s:_></p><%
   } else if (global->is_virtual) {
     do_write_standings(cs, cnts, out_f, 1, 1, phr->user_id, 0, 0, 0, 0, 1,
                        cur_time, NULL);
@@ -81,9 +81,9 @@
     do_write_standings(cs, cnts, out_f, 1, 1, phr->user_id, 0, 0, 0, 0, 1,
                        cur_time, NULL);
   } else if (global->score_system == SCORE_OLYMPIAD && cs->accepting_mode) {
-%><p><s:tr>Information is not available.</s:tr></p><%
+%><p><s:_>Information is not available.</s:_></p><%
   } else if (global->score_system == SCORE_OLYMPIAD) {
-%><p><s:tr>Information is not available.</s:tr></p><%
+%><p><s:_>Information is not available.</s:_></p><%
     do_write_kirov_standings(cs, cnts, out_f, 0, 1, 1, phr->user_id, 0, 0, 0, 0, 1, cur_time,
                              0, NULL, 1 /* user_mode */);
   } else if (global->score_system == SCORE_KIROV) {

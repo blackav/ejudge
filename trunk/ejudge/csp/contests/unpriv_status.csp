@@ -25,16 +25,16 @@
         && global->board_unfog_time > 0
         && cs->current_time < stop_time + global->board_unfog_time
         && !cs->standings_updated) {
-%><s:tr>OVER (frozen)</s:tr><%
+%><s:_>OVER (frozen)</s:_><%
     } else {
-%><s:tr>OVER</s:tr><%
+%><s:_>OVER</s:_><%
     }
   } else if (start_time > 0) {
     if (fog_start_time > 0 && cs->current_time >= fog_start_time) {
       if (cnts->exam_mode) {
-%><s:tr>EXAM IS RUNNING (frozen)</s:tr><%
+%><s:_>EXAM IS RUNNING (frozen)</s:_><%
       } else {
-%><s:tr>RUNNING (frozen)</s:tr><%
+%><s:_>RUNNING (frozen)</s:_><%
       }
     } else {
       if (cnts->exam_mode) {
@@ -51,40 +51,40 @@
     if (global->score_system == SCORE_OLYMPIAD && !global->is_virtual) {
 %>/ <b><%
       if (cs->accepting_mode) {
-%><s:tr>accepting</s:tr><%
+%><s:_>accepting</s:_><%
       } else if (!cs->testing_finished) {
-%><s:tr>judging</s:tr><%
+%><s:_>judging</s:_><%
       } else {
-%><s:tr>judged</s:tr><%
+%><s:_>judged</s:_><%
       }
 %></b><%
     }
   }
 %><%
   if (cs->upsolving_mode) {
-%> / <b><s:tr>UPSOLVING</s:tr></b><%
+%> / <b><s:_>UPSOLVING</s:_></b><%
   }
 %><%
   if (cs->clients_suspended) {
-%> / <b><font color="red"><s:tr>clients suspended</s:tr></font></b><%
+%> / <b><font color="red"><s:_>clients suspended</s:_></font></b><%
   }
 %><%
   if (start_time > 0) {
     if (cs->testing_suspended) {
-%> / <b><font color="red"><s:tr>testing suspended</s:tr></font></b><%
+%> / <b><font color="red"><s:_>testing suspended</s:_></font></b><%
     }
     if (cs->printing_suspended) {
-%> / <b><font color="red"><s:tr>printing suspended</s:tr></font></b><%
+%> / <b><font color="red"><s:_>printing suspended</s:_></font></b><%
     }
   }
 %><%
   if (!global->is_virtual && start_time <= 0 && sched_time > 0) {
-%> / <s:tr>Start at</s:tr>: <s:v type="brief_time" value="sched_time" /><%
+%> / <s:_>Start at</s:_>: <s:v type="brief_time" value="sched_time" /><%
   }
 %><%
   if (start_time > 0 && stop_time <= 0 && duration > 0) {
     duration_str(0, start_time + duration - cs->current_time, 0, time_buf, 0);
-%> / <s:tr>Remaining</s:tr>: <div id="remainingTime"><s:v value="time_buf" escape="false" /></div><%
+%> / <s:_>Remaining</s:_>: <div id="remainingTime"><s:v value="time_buf" escape="false" /></div><%
   }
 %><div id="reloadButton" style="visibility: <%
   if (global->disable_auto_refresh > 0) {
@@ -92,4 +92,4 @@
   } else {
 %>hidden<%
   }
-%>">/ <a class="menu" onclick="reloadPage()"><b>[ <s:tr>REFRESH</s:tr> ]</b></a></div><div id="statusString" style="visibility: hidden"></div></div>
+%>">/ <a class="menu" onclick="reloadPage()"><b>[ <s:_>REFRESH</s:_> ]</b></a></div><div id="statusString" style="visibility: hidden"></div></div>

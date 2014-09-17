@@ -64,16 +64,16 @@
 
 <div id="main-menu">
 <ul>
-<li><s:a ac="main-page"><s:tr>Main page</s:tr></s:a></li>
-<li><s:a url="ViewSourceUrl"><s:tr>Source</s:tr></s:a></li>
-<li><s:a url="ViewReportUrl"><s:tr>Report</s:tr></s:a></li>
-<li><s:a url="ViewUserReportUrl"><s:tr>User report</s:tr></s:a></li>
-<li><s:a class="current" url="ViewAuditLogUrl"><s:tr>Audit log</s:tr></s:a></li>
+<li><s:a ac="main-page"><s:_>Main page</s:_></s:a></li>
+<li><s:a url="ViewSourceUrl"><s:_>Source</s:_></s:a></li>
+<li><s:a url="ViewReportUrl"><s:_>Report</s:_></s:a></li>
+<li><s:a url="ViewUserReportUrl"><s:_>User report</s:_></s:a></li>
+<li><s:a class="current" url="ViewAuditLogUrl"><s:_>Audit log</s:_></s:a></li>
 </ul></div>
 </div>
 
 <% if (!audit_text || !*audit_text) { %>
-<p><i><s:tr>Audit log is empty</s:tr></i></p>
+<p><i><s:_>Audit log is empty</s:_></i></p>
 <% } else { %>
 <pre><s:v value="audit_text" /></pre>
 <% } %>

@@ -1,6 +1,6 @@
-<div class="h2-long"><h2><s:tr>Messages</s:tr> (<% if(all_clars) { %><s:tr>all</s:tr><% } else { %><s:tr>last 15</s:tr><% } %>)</h2></div>
+<div class="h2-long"><h2><s:_>Messages</s:_> (<% if(all_clars) { %><s:_>all</s:_><% } else { %><s:_>last 15</s:_><% } %>)</h2></div>
 <%    new_write_user_clars(cs, out_f, phr, all_clars, "b1"); %>
 <s:url name="ViewClarsUrl" ac="view-clars">
     <s:param name="all_clars" value="(int) !all_clars" />
 </s:url>
-<p><s:a url="ViewClarsUrl"><% if (all_clars) { %><s:tr>View last 15</s:tr><% } else { %><s:tr>View all</s:tr><% } %></s:a></p>
+<p><s:a url="ViewClarsUrl"><% if (all_clars) { %><s:_>View last 15</s:_><% } else { %><s:_>View all</s:_><% } %></s:a></p>

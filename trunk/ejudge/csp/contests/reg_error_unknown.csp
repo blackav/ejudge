@@ -17,7 +17,7 @@
 %>
 <h2><font color="red"><s:v value="title" escape="false" /></font></h2>
 <% if (phr->log_t && *phr->log_t) { %>
-<p><s:tr>Additional information about this error:</s:tr></p>
+<p><s:_>Additional information about this error:</s:_></p>
 <font color="red"><pre><s:v value="phr->log_t" /></pre></font>
 <% } %>
 <%@include "reg_footer.csp"

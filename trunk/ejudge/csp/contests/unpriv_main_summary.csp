@@ -1,4 +1,4 @@
-<div class="h2-long"><h2><s:tr>Problem status summary</s:tr></h2></div>
+<div class="h2-long"><h2><s:_>Problem status summary</s:_></h2></div>
 <%
     if (cnts->exam_mode && global->score_system == SCORE_OLYMPIAD
         && global->is_virtual && stop_time > 0
@@ -11,7 +11,7 @@
       int rr = ns_olympiad_final_user_report(ff, fl, cnts, cs,
                                              phr->user_id, phr->locale_id);
       if (rr < 0) {
-%><p><s:tr>Error</s:tr> <s:v value="-rr" /><%
+%><p><s:_>Error</s:_> <s:v value="-rr" /><%
       } else {
         close_memstream(fl); fl = 0;
         if (fl_txt && *fl_txt) {
@@ -30,7 +30,7 @@
                && (run_has_transient_user_runs(cs->runlog_state, phr->user_id)
                    || (global->disable_virtual_auto_judge <= 0
                        && !is_judged_virtual_olympiad(cs, phr->user_id)))) {
-%><p><s:tr>Testing is in progress...</s:tr></p><%
+%><p><s:_>Testing is in progress...</s:_></p><%
     } else {
       if (global->score_system == SCORE_OLYMPIAD
           && global->is_virtual

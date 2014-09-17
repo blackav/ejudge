@@ -66,10 +66,10 @@
 %><s:hidden name="locale_id" value="phr->locale_id" /><%
 } %>
 <div class="user_actions"><table class="menu"><tr>
-<td class="menu"><div class="user_action_item"><s:tr>login</s:tr>: <s:textfield name="login" size="8" value="login_str" /></div></td>
-<td class="menu"><div class="user_action_item"><s:tr>password</s:tr>: <s:password name="password" size="8" value="password_str"/></div></td>
+<td class="menu"><div class="user_action_item"><s:_>login</s:_>: <s:textfield name="login" size="8" value="login_str" /></div></td>
+<td class="menu"><div class="user_action_item"><s:_>password</s:_>: <s:password name="password" size="8" value="password_str"/></div></td>
 <%  if (!cnts->disable_locale_change) {
-%><td class="menu"><div class="user_action_item"><s:tr>language</s:tr>: <% l10n_html_locale_select(out_f, phr->locale_id); %></div></td><%
+%><td class="menu"><div class="user_action_item"><s:_>language</s:_>: <% l10n_html_locale_select(out_f, phr->locale_id); %></div></td><%
   }
 %>
 <td class="menu"><div class="user_action_item"><s:submit ac="main-page" label="Log in" /></div></td>
@@ -85,12 +85,12 @@
 %><s:url name="RegisterUrl" script="register" ac="reg-create-account-page">
     <s:param name="contest_id" value="phr->contest_id" />
     <s:param name="locale_id" value="phr->locale_id" />
-</s:url><tr><td align="right" class="menu"><s:a class="menu" url="RegisterUrl"><s:tr>Registration</s:tr></s:a></td></tr><%
+</s:url><tr><td align="right" class="menu"><s:a class="menu" url="RegisterUrl"><s:_>Registration</s:_></s:a></td></tr><%
       } else {
 %><s:url name="RegisterUrl" script="register" ac="main-page">
     <s:param name="contest_id" value="phr->contest_id" />
     <s:param name="locale_id" value="phr->locale_id" />
-</s:url><tr><td align="right" class="menu"><s:a class="menu" url="RegisterUrl"><s:tr>Registration</s:tr></s:a></td></tr><%
+</s:url><tr><td align="right" class="menu"><s:a class="menu" url="RegisterUrl"><s:_>Registration</s:_></s:a></td></tr><%
       }
     }
     vis_flag++;
@@ -100,7 +100,7 @@
 %><s:url name="RegisterUrl" script="register" ac="reg-login-page">
     <s:param name="contest_id" value="phr->contest_id" />
     <s:param name="locale_id" value="phr->locale_id" />
-</s:url><tr><td align="right" class="menu"><s:a class="menu" url="RegisterUrl"><s:tr>Registration</s:tr></s:a></td></tr><%
+</s:url><tr><td align="right" class="menu"><s:a class="menu" url="RegisterUrl"><s:_>Registration</s:_></s:a></td></tr><%
     }
   }
 %>
@@ -110,7 +110,7 @@
     <s:param name="contest_id" value="phr->contest_id" />
     <s:param name="locale_id" value="phr->locale_id" />
 </s:url>
-<tr><td align="right" class="menu"><font size="-1"><s:a class="menu" url="ForgotPassword1Url"><s:tr>Forgot password?</s:tr></s:a></font></td></tr>
+<tr><td align="right" class="menu"><font size="-1"><s:a class="menu" url="ForgotPassword1Url"><s:_>Forgot password?</s:_></s:a></font></td></tr>
 <%
   }
 %>

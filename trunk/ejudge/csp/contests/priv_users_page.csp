@@ -134,44 +134,44 @@ static const unsigned char * const form_row_attrs[]=
 <h2>Users range</h2>
 
 <table>
-<tr><td><s:tr>First User_Id</s:tr>:</td><td><input type="text" name="first_user_id" size="16" /></td></tr>
-<tr><td><s:tr>Last User_Id (incl.)</s:tr></td><td><input type="text" name="last_user_id" size="16" /></td></tr>
+<tr><td><s:_>First User_Id</s:_>:</td><td><input type="text" name="first_user_id" size="16" /></td></tr>
+<tr><td><s:_>Last User_Id (incl.)</s:_></td><td><input type="text" name="last_user_id" size="16" /></td></tr>
 </table>
 
 <h2>Available actions</h2>
 
 <table>
-<tr><td><s:a ac="main-page"><s:tr>Back</s:tr></s:a></td><td><s:tr>Return to the main page</s:tr></td></tr>
-<tr><td><s:submit ac="users-remove-registrations" /></td><td><s:tr>Remove the selected users from the list</s:tr></td></tr>
-<tr><td><s:submit ac="users-set-pending" /></td><td><s:tr>Set the registration status of the selected users to PENDING</s:tr></td></tr>
-<tr><td><s:submit ac="users-set-ok" /></td><td><s:tr>Set the registration status of the selected users to OK</s:tr></td></tr>
-<tr><td><s:submit ac="users-set-rejected" /></td><td><s:tr>Set the registration status of the selected users to REJECTED</s:tr></td></tr>
-<tr><td><s:submit ac="users-set-invisible" /></td><td><s:tr>Set the INVISIBLE flag for the selected users</s:tr></td></tr>
-<tr><td><s:submit ac="users-clear-invisible" /></td><td><s:tr>Clear the INVISIBLE flag for the selected users</s:tr></td></tr>
-<tr><td><s:submit ac="users-set-banned" /></td><td><s:tr>Set the BANNED flag for the selected users</s:tr></td></tr>
-<tr><td><s:submit ac="users-clear-banned" /></td><td><s:tr>Clear the BANNED flag for the selected users</s:tr></td></tr>
-<tr><td><s:submit ac="users-set-locked" /></td><td><s:tr>Set the LOCKED flag for the selected users</s:tr></td></tr>
-<tr><td><s:submit ac="users-clear-locked" /></td><td><s:tr>Clear the LOCKED flag for the selected users</s:tr></td></tr>
-<tr><td><s:submit ac="users-set-incomplete" /></td><td><s:tr>Set the INCOMPLETE flag for the selected users</s:tr></td></tr>
-<tr><td><s:submit ac="users-clear-incomplete" /></td><td><s:tr>Clear the INCOMPLETE flag for the selected users</s:tr></td></tr>
-<tr><td><s:submit ac="users-clear-disqualified" /></td><td><s:tr>Clear the DISQUALIFIED flag for the selected users</s:tr></td></tr>
+<tr><td><s:a ac="main-page"><s:_>Back</s:_></s:a></td><td><s:_>Return to the main page</s:_></td></tr>
+<tr><td><s:submit ac="users-remove-registrations" /></td><td><s:_>Remove the selected users from the list</s:_></td></tr>
+<tr><td><s:submit ac="users-set-pending" /></td><td><s:_>Set the registration status of the selected users to PENDING</s:_></td></tr>
+<tr><td><s:submit ac="users-set-ok" /></td><td><s:_>Set the registration status of the selected users to OK</s:_></td></tr>
+<tr><td><s:submit ac="users-set-rejected" /></td><td><s:_>Set the registration status of the selected users to REJECTED</s:_></td></tr>
+<tr><td><s:submit ac="users-set-invisible" /></td><td><s:_>Set the INVISIBLE flag for the selected users</s:_></td></tr>
+<tr><td><s:submit ac="users-clear-invisible" /></td><td><s:_>Clear the INVISIBLE flag for the selected users</s:_></td></tr>
+<tr><td><s:submit ac="users-set-banned" /></td><td><s:_>Set the BANNED flag for the selected users</s:_></td></tr>
+<tr><td><s:submit ac="users-clear-banned" /></td><td><s:_>Clear the BANNED flag for the selected users</s:_></td></tr>
+<tr><td><s:submit ac="users-set-locked" /></td><td><s:_>Set the LOCKED flag for the selected users</s:_></td></tr>
+<tr><td><s:submit ac="users-clear-locked" /></td><td><s:_>Clear the LOCKED flag for the selected users</s:_></td></tr>
+<tr><td><s:submit ac="users-set-incomplete" /></td><td><s:_>Set the INCOMPLETE flag for the selected users</s:_></td></tr>
+<tr><td><s:submit ac="users-clear-incomplete" /></td><td><s:_>Clear the INCOMPLETE flag for the selected users</s:_></td></tr>
+<tr><td><s:submit ac="users-clear-disqualified" /></td><td><s:_>Clear the DISQUALIFIED flag for the selected users</s:_></td></tr>
 <%  if (global->is_virtual) {%>
-<tr><td><s:submit ac="force-start-virtual" /></td><td><s:tr>Force virtual contest start for the selected users</s:tr></td></tr>
+<tr><td><s:submit ac="force-start-virtual" /></td><td><s:_>Force virtual contest start for the selected users</s:_></td></tr>
 <%  }%>
 
 <%  if (global->user_exam_protocol_header_txt) { %>
-<tr><td><s:submit ac="print-selected-user-protocol" /></td><td><s:tr>Print the user examination protocols for the selected users</s:tr></td></tr>
+<tr><td><s:submit ac="print-selected-user-protocol" /></td><td><s:_>Print the user examination protocols for the selected users</s:_></td></tr>
 <% } %>
 <%  if (global->full_exam_protocol_header_txt) { %>
-<tr><td><s:submit ac="print-selected-user-full-protocol" /></td><td><s:tr>Print the user full examination protocols for the selected users</s:tr></td></tr>
+<tr><td><s:submit ac="print-selected-user-full-protocol" /></td><td><s:_>Print the user full examination protocols for the selected users</s:_></td></tr>
 <% } %>
 <%  if (global->full_exam_protocol_header_txt) { %>
-<tr><td><s:submit ac="print-selected-ufc-protocol" /></td><td><s:tr>Print the user full cyphered examination protocols for the selected users</s:tr></td></tr>
+<tr><td><s:submit ac="print-selected-ufc-protocol" /></td><td><s:_>Print the user full cyphered examination protocols for the selected users</s:_></td></tr>
 <% } %>
 </table>
 
-<h2><s:tr>Disqualify selected users</s:tr></h2>
-<p><s:tr>Disqualification explanation</s:tr>:<br>
+<h2><s:_>Disqualify selected users</s:_></h2>
+<p><s:_>Disqualification explanation</s:_>:<br>
 <p><textarea name="disq_comment" rows="5" cols="60">
 </textarea></p>
 
@@ -179,10 +179,10 @@ static const unsigned char * const form_row_attrs[]=
 <td class="b0"><s:submit ac="users-set-disqualified" /></td>
 </tr></table>
 
-<h2><s:tr>Add new user</s:tr></h2>
+<h2><s:_>Add new user</s:_></h2>
 <table>
-<tr><td><input type="text" size="32" name="add_login"/></td><td><s:submit ac="users-add-by-login" /></td><td><s:tr>Add a new user specifying his/her login</s:tr></td></tr>
-<tr><td><input type="text" size="32" name="add_user_id"/></td><td><s:submit ac="users-add-by-user-id" /></td><td><s:tr>Add a new user specifying his/her User Id</s:tr></td></tr>
+<tr><td><input type="text" size="32" name="add_login"/></td><td><s:submit ac="users-add-by-login" /></td><td><s:_>Add a new user specifying his/her login</s:_></td></tr>
+<tr><td><input type="text" size="32" name="add_user_id"/></td><td><s:submit ac="users-add-by-user-id" /></td><td><s:_>Add a new user specifying his/her User Id</s:_></td></tr>
 </table>
 </s:form><%@include "priv_footer.csp"
 %><%

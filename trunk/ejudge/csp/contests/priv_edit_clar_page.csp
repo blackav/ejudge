@@ -35,9 +35,9 @@
 <s:url name="ViewClarUrl" ac="view-clar">
   <s:param name="clar_id" value="clar_id" />
 </s:url>
-<h2><s:tr>Message</s:tr> <s:v value="clar_id" /><%
+<h2><s:_>Message</s:_> <s:v value="clar_id" /><%
   if (opcaps_check(phr->caps, OPCAP_VIEW_CLAR) >= 0) {
-%> [<s:a url="ViewClarUrl"><s:tr>View</s:tr></s:a>]<% } %></h2>
+%> [<s:a url="ViewClarUrl"><s:_>View</s:_></s:a>]<% } %></h2>
 
 <s:form>
 <s:hidden name="action" ac="priv-edit-clar-action" />

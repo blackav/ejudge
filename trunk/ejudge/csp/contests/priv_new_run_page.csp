@@ -21,37 +21,37 @@
 %>
 </div>
 
-<p><s:a ac="main-page"><s:tr>To main page</s:tr></s:a></p>
+<p><s:a ac="main-page"><s:_>To main page</s:_></s:a></p>
 
 <s:form>
 <table>
-<tr><td><s:tr>User ID</s:tr>:</td><td><s:textfield name="run_user_id" size = "10" value="" /></td></tr>
-<tr><td><s:tr>User login</s:tr>:</td><td><s:textfield name="run_user_login" size="10" value="" /></td></tr>
-<tr><td><s:tr>Problem</s:tr>:</td><td><s:select name="prob_id"><option value=""></option><%
+<tr><td><s:_>User ID</s:_>:</td><td><s:textfield name="run_user_id" size = "10" value="" /></td></tr>
+<tr><td><s:_>User login</s:_>:</td><td><s:textfield name="run_user_login" size="10" value="" /></td></tr>
+<tr><td><s:_>Problem</s:_>:</td><td><s:select name="prob_id"><option value=""></option><%
   for (i = 1; i <= cs->max_prob; i++)
     if (cs->probs[i]) {
 %><s:option value="i"><s:v escape="false" value="cs->probs[i]->short_name" /> - <s:v value="cs->probs[i]->long_name" /></s:option><%
     } %></s:select></td></tr>
-<tr><td><s:tr>Variant</s:tr>:</td><td><s:textfield name="variant" size="10" value="" /></td></tr>
-<tr><td><s:tr>Language</s:tr>:</td><td><s:select name="language"><option value=""></option><%
+<tr><td><s:_>Variant</s:_>:</td><td><s:textfield name="variant" size="10" value="" /></td></tr>
+<tr><td><s:_>Language</s:_>:</td><td><s:select name="language"><option value=""></option><%
   for (i = 1; i <= cs->max_lang; i++)
     if (cs->langs[i]) { %><s:option value="i"><s:v escape="0" value="cs->langs[i]->short_name" /> - <s:v value="cs->langs[i]->long_name" /></s:option><% } %></s:select></td></tr>
 
-<tr><td><s:tr>Imported?</s:tr>:</td><td><s:yesno name="is_imported" /></td></tr>
-<tr><td><s:tr>Hidden?</s:tr>:</td><td><s:yesno name="is_hidden" /></td></tr>
-<tr><td><s:tr>Read-only?</s:tr>:</td><td><s:yesno name="is_readonly" /></td></tr>
-<tr><td><s:tr>Status</s:tr>:</td><% write_change_status_dialog(cs, out_f, 0, 0, 0, -1, 0); %></tr>
+<tr><td><s:_>Imported?</s:_>:</td><td><s:yesno name="is_imported" /></td></tr>
+<tr><td><s:_>Hidden?</s:_>:</td><td><s:yesno name="is_hidden" /></td></tr>
+<tr><td><s:_>Read-only?</s:_>:</td><td><s:yesno name="is_readonly" /></td></tr>
+<tr><td><s:_>Status</s:_>:</td><% write_change_status_dialog(cs, out_f, 0, 0, 0, -1, 0); %></tr>
 <%  if (global->score_system == SCORE_KIROV
       || global->score_system == SCORE_OLYMPIAD) { %>
-<tr><td><s:tr>Tests passed</s:tr>:</td><td><s:textfield name="tests" size="10" value="" /></td></tr>
-<tr><td><s:tr>Score gained</s:tr>:</td><td><s:textfield name="score" size="10" value="" /></td></tr>
+<tr><td><s:_>Tests passed</s:_>:</td><td><s:textfield name="tests" size="10" value="" /></td></tr>
+<tr><td><s:_>Score gained</s:_>:</td><td><s:textfield name="score" size="10" value="" /></td></tr>
 <%  } else if (global->score_system == SCORE_MOSCOW) { %>
-<tr><td><s:tr>Failed test</s:tr>:</td><td><s:textfield name="tests" size="10" value="" /></td></tr>
-<tr><td><s:tr>Score gained</s:tr>:</td><td><s:textfield name="score" size="10" value="" /></td></tr>
+<tr><td><s:_>Failed test</s:_>:</td><td><s:textfield name="tests" size="10" value="" /></td></tr>
+<tr><td><s:_>Score gained</s:_>:</td><td><s:textfield name="score" size="10" value="" /></td></tr>
 <%  } else { %>
-<tr><td><s:tr>Failed test</s:tr>:</td><td><s:textfield name="tests" size="10" value="" /></td></tr>
+<tr><td><s:_>Failed test</s:_>:</td><td><s:textfield name="tests" size="10" value="" /></td></tr>
 <%  } %>
-<tr><td><s:tr>File</s:tr>:</td><td><input type="file" name="file"/></td></tr>
+<tr><td><s:_>File</s:_>:</td><td><input type="file" name="file"/></td></tr>
 <tr><td><s:submit ac="new-run" /></td><td>&nbsp;</td></tr>
 </table>
 </s:form>

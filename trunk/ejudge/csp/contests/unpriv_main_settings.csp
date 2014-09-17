@@ -1,20 +1,20 @@
 <%
     if (!cs->clients_suspended && !cnts->disable_password_change) {
 %>
-<div class="h2-long"><h2><s:tr>Change password</s:tr></h2></div>
+<div class="h2-long"><h2><s:_>Change password</s:_></h2></div>
 <s:form>
 <table class="b0">
-<tr><td class="b0"><s:tr>Old password</s:tr>:</td><td class="b0"><s:password name="oldpasswd" value="" size="16" /></td></tr>
-<tr><td class="b0"><s:tr>New password</s:tr>:</td><td class="b0"><s:password name="newpasswd1" value="" size="16" /></td></tr>
-<tr><td class="b0"><s:tr>Retype new password</s:tr>:</td><td class="b0"><s:password name="newpasswd2" value="" size="16" /></td></tr>
+<tr><td class="b0"><s:_>Old password</s:_>:</td><td class="b0"><s:password name="oldpasswd" value="" size="16" /></td></tr>
+<tr><td class="b0"><s:_>New password</s:_>:</td><td class="b0"><s:password name="newpasswd1" value="" size="16" /></td></tr>
+<tr><td class="b0"><s:_>Retype new password</s:_>:</td><td class="b0"><s:password name="newpasswd2" value="" size="16" /></td></tr>
 <tr><td class="b0" colspan="2"><s:submit ac="change-password" label="Change!" /></td></tr>
 </table></s:form>
 <%    }
 #if CONF_HAS_LIBINTL - 0 == 1
     if (global->enable_l10n && !cs->clients_suspended && !cnts->disable_locale_change) {
-%><div class="h2-long"><h2><s:tr>Change language</s:tr></h2></div>
+%><div class="h2-long"><h2><s:_>Change language</s:_></h2></div>
 <s:form>
-<table class="b0"><tr><td class="b0"><s:tr>Change language</s:tr></td>
+<table class="b0"><tr><td class="b0"><s:_>Change language</s:_></td>
 <td class="b0"><% l10n_html_locale_select(out_f, phr->locale_id); %></td>
 <td class="b0"><s:submit ac="change-language" label="Change" /></td></tr></table>
 </s:form>

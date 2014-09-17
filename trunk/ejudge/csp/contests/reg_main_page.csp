@@ -71,12 +71,12 @@ ns_reg_main_page_view_info(
   if (phr->action != NEW_SRV_ACTION_VIEW_SETTINGS) {
 %><s:a class="menu" ac="view-settings"><%
   }
-%><s:tr>Settings</s:tr><%
+%><s:_>Settings</s:_><%
   if (phr->action != NEW_SRV_ACTION_VIEW_SETTINGS) {
 %></s:a><%
   }
 %></div></td>
-    <td class="menu"><div class="contest_actions_item"><s:a class="menu" ac="logout"><s:tr>Logout</s:tr> [<s:v checkExpr="" value="phr->login" />]</s:a></div></td>
+    <td class="menu"><div class="contest_actions_item"><s:a class="menu" ac="logout"><s:_>Logout</s:_> [<s:v checkExpr="" value="phr->login" />]</s:a></div></td>
 </tr></table></div>
 
 <div class="white_empty_block">&nbsp;</div>
@@ -87,7 +87,7 @@ ns_reg_main_page_view_info(
   if (!(phr->action >= NEW_SRV_ACTION_REG_VIEW_GENERAL && phr->action <= NEW_SRV_ACTION_REG_VIEW_GUESTS)) {
 %><s:a class="menu" ac="reg-view-general"><%
   }
-%><s:tr>User info</s:tr><%
+%><s:_>User info</s:_><%
   if (!(phr->action >= NEW_SRV_ACTION_REG_VIEW_GENERAL && phr->action <= NEW_SRV_ACTION_REG_VIEW_GUESTS)) {
 %></s:a><%
   }
@@ -106,7 +106,7 @@ ns_reg_main_page_view_info(
     <s:param name="login" value="phr->login" fullCheckExpr="phr->login" />
 </s:url><s:a class="menu" url="ClientUrl"><%
     }
-%><s:tr>Participate</s:tr></s:a><%
+%><s:_>Participate</s:_></s:a><%
     shown_items++;
 %></div></td><%
   }
@@ -124,41 +124,41 @@ ns_reg_main_page_view_info(
 <%
   // status row
   if (phr->reg_status < 0) {
-%><div class="server_status_off"><b><s:tr>NOT REGISTERED</s:tr></b><%
+%><div class="server_status_off"><b><s:_>NOT REGISTERED</s:_></b><%
   } else if (phr->reg_status == USERLIST_REG_PENDING) {
     if ((phr->reg_flags & USERLIST_UC_INCOMPLETE)) {
-%><div class="server_status_error"><b><s:tr>REGISTERED, PENDING APPROVAL</s:tr><s:tr>, REGISTRATION DATA INCOMPLETE</s:tr></b><%
+%><div class="server_status_error"><b><s:_>REGISTERED, PENDING APPROVAL</s:_><s:_>, REGISTRATION DATA INCOMPLETE</s:_></b><%
     } else {
-%><div class="server_status_alarm"><b><s:tr>REGISTERED, PENDING APPROVAL</s:tr></b><%
+%><div class="server_status_alarm"><b><s:_>REGISTERED, PENDING APPROVAL</s:_></b><%
     }
   } else if (phr->reg_status == USERLIST_REG_REJECTED) {
-%><div class="server_status_error"><b><s:tr>REGISTRATION REJECTED</s:tr></b><%
+%><div class="server_status_error"><b><s:_>REGISTRATION REJECTED</s:_></b><%
   } else if ((phr->reg_flags & USERLIST_UC_BANNED)) {
-%><div class="server_status_error"><b><s:tr>REGISTERED, BANNED</s:tr></b><%
+%><div class="server_status_error"><b><s:_>REGISTERED, BANNED</s:_></b><%
   } else if ((phr->reg_flags & USERLIST_UC_LOCKED)) {
-%><div class="server_status_error"><b><s:tr>REGISTERED, LOCKED</s:tr></b><%
+%><div class="server_status_error"><b><s:_>REGISTERED, LOCKED</s:_></b><%
   } else if ((phr->reg_flags & USERLIST_UC_INVISIBLE)) {
     if ((phr->reg_flags & USERLIST_UC_INCOMPLETE)) {
-%><div class="server_status_error"><b><s:tr>REGISTERED (INVISIBLE)</s:tr><s:tr>, REGISTRATION DATA INCOMPLETE</s:tr></b><%
+%><div class="server_status_error"><b><s:_>REGISTERED (INVISIBLE)</s:_><s:_>, REGISTRATION DATA INCOMPLETE</s:_></b><%
     } else {
-%><div class="server_status_on"><b><s:tr>REGISTERED (INVISIBLE)</s:tr></b><%
+%><div class="server_status_on"><b><s:_>REGISTERED (INVISIBLE)</s:_></b><%
     }
   } else {
     if ((phr->reg_flags & USERLIST_UC_INCOMPLETE)) {
-%><div class="server_status_error"><b><s:tr>REGISTERED</s:tr><s:tr>, REGISTRATION DATA INCOMPLETE</s:tr></b><%
+%><div class="server_status_error"><b><s:_>REGISTERED</s:_><s:_>, REGISTRATION DATA INCOMPLETE</s:_></b><%
     } else {
-%><div class="server_status_on"><b><s:tr>REGISTERED</s:tr></b><%
+%><div class="server_status_on"><b><s:_>REGISTERED</s:_></b><%
     }
   }
 %><%
   if (phr->reg_status < 0) {
-%><b><s:a class="menu" ac="reg-register"><s:tr>Confirm registration</s:tr></s:a></b><%
+%><b><s:a class="menu" ac="reg-register"><s:_>Confirm registration</s:_></s:a></b><%
   }
 %><%
   u = phr->session_extra->user_info;
   if (u) ui = userlist_get_cnts0(u);
   if (u->read_only || (ui && ui->cnts_read_only)) {
-%>/ <b><s:tr>READ-ONLY</s:tr></b><%
+%>/ <b><s:_>READ-ONLY</s:_></b><%
   }
 %></div>
 <%

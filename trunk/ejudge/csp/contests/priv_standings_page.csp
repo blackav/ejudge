@@ -27,24 +27,24 @@
 
 <s:form>
 <table border="0">
-<tr><td><s:tr>User filter expression</s:tr>:</td><td><s:textfield name="stand_user_expr" size="64" value="u->stand_user_expr" /></td></tr>
-<tr><td><s:tr>Problem filter expression</s:tr>:</td><td><s:textfield name="stand_prob_expr" size="64" value="u->stand_prob_expr" /></td></tr>
-<tr><td><s:tr>Run filter expression</s:tr>:</td><td><s:textfield name="stand_run_expr" size="64" value="u->stand_run_expr" /></td></tr>
+<tr><td><s:_>User filter expression</s:_>:</td><td><s:textfield name="stand_user_expr" size="64" value="u->stand_user_expr" /></td></tr>
+<tr><td><s:_>Problem filter expression</s:_>:</td><td><s:textfield name="stand_prob_expr" size="64" value="u->stand_prob_expr" /></td></tr>
+<tr><td><s:_>Run filter expression</s:_>:</td><td><s:textfield name="stand_run_expr" size="64" value="u->stand_run_expr" /></td></tr>
 <tr><td>&nbsp;</td><td><s:submit ac="set-stand-filter" /><s:submit ac="reset-stand-filter" /></td></tr>
-<tr><td>&nbsp;</td><td><a href='<s:config name="style-prefix" />filter_expr.html' target="_blank"><s:tr>Help</s:tr></a></td></tr>
+<tr><td>&nbsp;</td><td><a href='<s:config name="style-prefix" />filter_expr.html' target="_blank"><s:_>Help</s:_></a></td></tr>
 
 </table>
 </s:form>
 <br/>
 
 <%  if (u->stand_error_msgs) { %>
-<h2><s:tr>Filter expression errors</s:tr></h2>
+<h2><s:_>Filter expression errors</s:_></h2>
 <p><pre><font color="red"><s:v value="u->stand_error_msgs" /></font></pre></p>
 <%  } %>
 
 <table class="b0"><tr>
-<td class="b0"><s:a ac="main-page"><s:tr>Main page</s:tr></a></td>
-<td class="b0"><s:a ac="standings"><s:tr>Refresh</s:tr></a></td>
+<td class="b0"><s:a ac="main-page"><s:_>Main page</s:_></a></td>
+<td class="b0"><s:a ac="standings"><s:_>Refresh</s:_></a></td>
 </tr></table>
 
 <%
