@@ -4622,7 +4622,6 @@ static const struct ElementInfo element_handlers[] =
     { "s:ac", handle_ac_open, NULL },
     { "s:read", handle_read_open, NULL },
     { "s:numselect", handle_numselect_open, NULL },
-    { "s:htr", handle_tr_open, handle_tr_close },
     { "s:tr", handle_tr_open, handle_tr_close },
     { "s:redirect", handle_redirect_open, NULL },
     { "s:help", handle_help_open, NULL },
