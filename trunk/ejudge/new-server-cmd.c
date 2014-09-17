@@ -313,6 +313,12 @@ parse_int(const char *str, int *p_val)
   return 0;
 }
 
+typedef struct Session
+{
+  unsigned long long session_id;
+  unsigned long long client_key;
+} Session;
+
 struct role_str_map
 {
   const char *str;
@@ -500,6 +506,8 @@ post_login(void)
   while (reply_size > 0 && isspace(reply_buf[reply_size - 1])) reply_size--;
   reply_buf[reply_size] = 0;
   if (!reply_size) op_error("reply is empty");
+
+  fprintf(stderr, ">>%s<<\n", reply_buf);
 
   errno = 0;
   session_id = strtoull(reply_buf, &eptr, 16);

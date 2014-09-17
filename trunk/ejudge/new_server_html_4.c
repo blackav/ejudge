@@ -179,7 +179,11 @@ cmd_login(
   }
 
   ns_get_session(phr->session_id, phr->client_key, 0);
-  fprintf(fout, "%016llx\n", phr->session_id);
+  if (phr->client_key) {
+    fprintf(fout, "%016llx-%016llx\n", phr->session_id, phr->client_key);
+  } else {
+    fprintf(fout, "%016llx\n", phr->session_id);
+  }
 
  cleanup:
   return retval;
