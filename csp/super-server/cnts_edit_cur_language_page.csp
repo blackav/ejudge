@@ -83,9 +83,9 @@ static const unsigned char * const form_row_attrs[]=
 %>
 
 <table border="0">
-    <s:htr attr="head_row_attr">
+    <s:tr attr="head_row_attr">
         <td colspan="5" align="center"><b>Compilation limitations</b></td>
-    </s:htr>
+    </s:tr>
 
 <%
   num_buf[0] = 0;
@@ -94,12 +94,12 @@ static const unsigned char * const form_row_attrs[]=
   }
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td colspan="2">Maximum VM size for compilers:</td>
             <td><s:textfield name="param" value="num_buf" size="48" maxlength="1024" check="no" /></td>
             <td><s:submit ac="glob-change-compile-max-vm-size" label="Change" /></td>
             <td><s:help ac="glob-change-compile-max-vm-size" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
 <%
@@ -109,12 +109,12 @@ static const unsigned char * const form_row_attrs[]=
   }
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td colspan="2">Maximum stack size for compilers:</td>
             <td><s:textfield name="param" value="num_buf" size="48" maxlength="1024" check="no" /></td>
             <td><s:submit ac="glob-change-compile-max-stack-size" label="Change" /></td>
             <td><s:help ac="glob-change-compile-max-stack-size" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
 <%
@@ -124,17 +124,17 @@ static const unsigned char * const form_row_attrs[]=
   }
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td colspan="2">Maximum file size for compilers:</td>
             <td><s:textfield name="param" value="num_buf" size="48" maxlength="1024" check="no" /></td>
             <td><s:submit ac="glob-change-compile-max-file-size" label="Change" /></td>
             <td><s:help ac="glob-change-compile-max-file-size" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
-    <s:htr attr="head_row_attr">
+    <s:tr attr="head_row_attr">
         <td colspan="5" align="center"><b>Available compilers</b></td>
-    </s:htr>
+    </s:tr>
 
 <%
   int i;
@@ -198,118 +198,118 @@ static const unsigned char * const form_row_attrs[]=
     row = 1;
 %>
 
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td width="50">&nbsp;</td>
         <td>Language ID:</td>
         <td><s:v value="lang->id" /></td>
         <td>&nbsp;</td>
         <td>&nbsp;</td>
-    </s:htr>
+    </s:tr>
 
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td width="50">&nbsp;</td>
         <td>Compilation server ID:</td>
         <td><s:v value="lang->compile_id" /></td>
         <td>&nbsp;</td>
         <td>&nbsp;</td>
-    </s:htr>
+    </s:tr>
 
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td width="50">&nbsp;</td>
         <td>Language short name:</td>
         <td><s:v value="lang->short_name" /></td>
         <td>&nbsp;</td>
         <td>&nbsp;</td>
-    </s:htr>
+    </s:tr>
 
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td width="50">&nbsp;</td>
         <td>Language architecture:</td>
         <td><s:v value="lang->arch" /><% if (!lang->arch || !lang->arch[0]) { %><i>(Default)</i><% } %></td>
         <td>&nbsp;</td>
         <td>&nbsp;</td>
-    </s:htr>
+    </s:tr>
 
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td width="50">&nbsp;</td>
         <td>Suffix of the source files:</td>
         <td><s:v value="lang->src_sfx" /></td>
         <td>&nbsp;</td>
         <td>&nbsp;</td>
-    </s:htr>
+    </s:tr>
 
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td width="50">&nbsp;</td>
         <td>Suffix of the executable files:</td>
         <td><s:v value="lang->exe_sfx" /><% if (!lang->exe_sfx || !*lang->exe_sfx) { %><i>(Empty)</i><% } %></td>
         <td>&nbsp;</td>
         <td>&nbsp;</td>
-    </s:htr>
+    </s:tr>
 
     <s:form>
         <s:hidden name="lang_id" value="lang->compile_id" />
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td width="50">&nbsp;</td>
             <td>Language long name:</td>
             <td><s:textfield name="param" value="lang->long_name" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="lang-change-long-name" label="Change" /><s:submit ac="lang-clear-long-name" label="Clear" /></td>
             <td><s:help ac="lang-change-long-name" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
         <s:hidden name="lang_id" value="lang->compile_id" />
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td width="50">&nbsp;</td>
             <td>Language external name:</td>
             <td><s:textfield name="param" value="lang->extid" size="48" maxlength="1024" checkExpr="" /></td>
             <td><s:submit ac="lang-change-extid" label="Change" /><s:submit ac="lang-clear-extid" label="Clear" /></td>
             <td><s:help ac="lang-change-extid" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
         <s:hidden name="lang_id" value="lang->compile_id" />
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td width="50">&nbsp;</td>
             <td>Disable this language for participants:</td>
             <td><s:yesno name="param" value="lang->disabled" /></td>
             <td><s:submit ac="lang-change-disabled" label="Change" /></td>
             <td><s:help ac="lang-change-disabled" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
         <s:hidden name="lang_id" value="lang->compile_id" />
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td width="50">&nbsp;</td>
             <td>This language is insecure:</td>
             <td><s:yesno name="param" value="lang->insecure" /></td>
             <td><s:submit ac="lang-change-insecure" label="Change" /></td>
             <td><s:help ac="lang-change-insecure" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
         <s:hidden name="lang_id" value="lang->compile_id" />
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td width="50">&nbsp;</td>
             <td>Disable security restrictions:</td>
             <td><s:yesno name="param" value="lang->disable_security" /></td>
             <td><s:submit ac="lang-change-disable-security" label="Change" /></td>
             <td><s:help ac="lang-change-disable-security" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
         <s:hidden name="lang_id" value="lang->compile_id" />
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td width="50">&nbsp;</td>
             <td>Disable any testing of submissions:</td>
             <td><s:yesno name="param" value="lang->disable_testing" /></td>
             <td><s:submit ac="lang-change-disable-testing" label="Change" /></td>
             <td><s:help ac="lang-change-disable-testing" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
 <%
@@ -317,13 +317,13 @@ static const unsigned char * const form_row_attrs[]=
 %>
     <s:form>
         <s:hidden name="lang_id" value="lang->compile_id" />
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td width="50">&nbsp;</td>
             <td>Disable automatic testing of submissions:</td>
             <td><s:yesno name="param" value="lang->disable_auto_testing" /></td>
             <td><s:submit ac="lang-change-disable-auto-testing" label="Change" /></td>
             <td><s:help ac="lang-change-disable-auto-testing" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
     }
@@ -331,24 +331,24 @@ static const unsigned char * const form_row_attrs[]=
 
     <s:form>
         <s:hidden name="lang_id" value="lang->compile_id" />
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td width="50">&nbsp;</td>
             <td>Language source files are binary:</td>
             <td><s:yesno name="param" value="lang->binary" /></td>
             <td><s:submit ac="lang-change-binary" label="Change" /></td>
             <td><s:help ac="lang-change-binary" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
         <s:hidden name="lang_id" value="lang->compile_id" />
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td width="50">&nbsp;</td>
             <td>Perform UNIX->DOS conversion:</td>
             <td><s:yesno name="param" value="lang->is_dos" /></td>
             <td><s:submit ac="lang-change-is-dos" label="Change" /></td>
             <td><s:help ac="lang-change-is-dos" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
 <%
@@ -359,13 +359,13 @@ static const unsigned char * const form_row_attrs[]=
 %>
     <s:form>
         <s:hidden name="lang_id" value="lang->compile_id" />
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td width="50">&nbsp;</td>
             <td>Maximum VM size:</td>
             <td><s:textfield name="param" value="num_buf" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="lang-change-max-vm-size" label="Change" /></td>
             <td><s:help ac="lang-change-max-vm-size" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
 <%
@@ -376,13 +376,13 @@ static const unsigned char * const form_row_attrs[]=
 %>
     <s:form>
         <s:hidden name="lang_id" value="lang->compile_id" />
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td width="50">&nbsp;</td>
             <td>Maximum stack size:</td>
             <td><s:textfield name="param" value="num_buf" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="lang-change-max-stack-size" label="Change" /></td>
             <td><s:help ac="lang-change-max-stack-size" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
 <%
@@ -393,13 +393,13 @@ static const unsigned char * const form_row_attrs[]=
 %>
     <s:form>
         <s:hidden name="lang_id" value="lang->compile_id" />
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td width="50">&nbsp;</td>
             <td>Maximum file size:</td>
             <td><s:textfield name="param" value="num_buf" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="lang-change-max-file-size" label="Change" /></td>
             <td><s:help ac="lang-change-max-file-size" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
 <%
@@ -407,13 +407,13 @@ static const unsigned char * const form_row_attrs[]=
 %>
     <s:form>
         <s:hidden name="lang_id" value="lang->compile_id" />
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td width="50">&nbsp;</td>
             <td>Content type for files:</td>
             <td><s:textfield name="param" value="lang->content_type" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="lang-change-content-type" label="Change" /><s:submit ac="lang-clear-content-type" label="Clear" /></td>
             <td><s:help ac="lang-change-content-type" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
     }
@@ -421,24 +421,24 @@ static const unsigned char * const form_row_attrs[]=
 
     <s:form>
         <s:hidden name="lang_id" value="lang->compile_id" />
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td width="50">&nbsp;</td>
             <td>Style checker command:</td>
             <td><s:textfield name="param" value="lang->style_checker_cmd" size="48" maxlength="1024" check="false" /></td>
             <td><s:submit ac="lang-change-style-checker-cmd" label="Change" /><s:submit ac="lang-clear-style-checker-cmd" label="Clear" /></td>
             <td><s:help ac="lang-change-style-checker-cmd" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
     <s:form>
         <s:hidden name="lang_id" value="lang->compile_id" />
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td width="50">&nbsp;</td>
             <td>Additional compilation options:</td>
             <td><s:textfield name="param" value="phr->ss->lang_opts[lang->id]" size="48" maxlength="1024" checkExpr="" /></td>
             <td><s:submit ac="lang-change-opts" label="Change" /><s:submit ac="lang-clear-opts" label="Clear" /></td>
             <td><s:help ac="lang-change-opts" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
 <%
@@ -449,13 +449,13 @@ static const unsigned char * const form_row_attrs[]=
 %>
     <s:form>
         <s:hidden name="lang_id" value="lang->compile_id" />
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td width="50">&nbsp;</td>
             <td>Style checker environment:</td>
             <td><s:textfield name="param" value="env" size="48" maxlength="1024" checkExpr="" /></td>
             <td><s:submit ac="lang-change-style-checker-env" label="Change" /><s:submit ac="lang-clear-style-checker-env" label="Clear" /></td>
             <td><s:help ac="lang-change-style-checker-env" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 <%
     xfree(env); env = 0;
@@ -465,16 +465,16 @@ static const unsigned char * const form_row_attrs[]=
     if (lang->unhandled_vars) {
       row = 1;
 %>
-    <s:htr attr="head_row_attr">
+    <s:tr attr="head_row_attr">
         <td width="50">&nbsp;</td>
         <td colspan="4" align="center"><b>Compilation limitations</b></td>
-    </s:htr>
-    <s:htr attr="form_row_attrs[row ^= 1]">
+    </s:tr>
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td width="50">&nbsp;</td>
         <td colspan="2"><pre><s:v value="lang->unhandled_vars" checkExpr="" /></pre></td>
         <td>&nbsp;</td>
         <td>&nbsp;</td>
-    </s:htr>
+    </s:tr>
 <%
     }
 %>

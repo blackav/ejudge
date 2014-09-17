@@ -63,9 +63,9 @@ static const unsigned char * const form_row_attrs[]=
 %>
 
 <table border="0">
-    <s:htr attr="head_row_attr">
+    <s:tr attr="head_row_attr">
         <td colspan="4" align="center"><b>Abstract problems</b></td>
-    </s:htr>
+    </s:tr>
 <%
   for (i = 0; i < phr->ss->aprob_u; ++i) {
 #define is_abstract 1
@@ -78,24 +78,24 @@ static const unsigned char * const form_row_attrs[]=
 #undef is_abstract
   }
 %>
-    <s:htr attr="head_row_attr">
+    <s:tr attr="head_row_attr">
         <td colspan="4" align="center"><b>Add new abstract problem</b></td>
-    </s:htr>
+    </s:tr>
 <%
   row = 1;
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Name:</td>
             <td><s:textfield name="prob_name" value="" size="48" maxlength="1024" /></td>
             <td><s:submit ac="prob-add-abstract" label="Add" /></td>
             <td><s:help ac="prob-add-abstract" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 
-    <s:htr attr="head_row_attr">
+    <s:tr attr="head_row_attr">
         <td colspan="4" align="center"><b>Concrete problems</b></td>
-    </s:htr>
+    </s:tr>
 <%
   for (i = 1; i < phr->ss->prob_a; ++i) {
 #define is_abstract 0
@@ -109,7 +109,7 @@ static const unsigned char * const form_row_attrs[]=
 #undef is_abstract
   }
 %>
-    <s:htr attr="head_row_attr">
+    <s:tr attr="head_row_attr">
         <td colspan="4" align="center"><b>Add new problem</b><%
   if (phr->ss->update_state) {
 %> [<s:a ac="download-progress-page">Download is in progress</s:a>]<%
@@ -117,18 +117,18 @@ static const unsigned char * const form_row_attrs[]=
 %> [<s:a ac="import-from-polygon-page">Import from Polygon</s:a>] [<s:a ac="import-contest-from-polygon-page">Import contest from Polygon</s:a>]<%
   }
 %></td>
-    </s:htr>
+    </s:tr>
 
 <%
   row = 1;
 %>
     <s:form>
-        <s:htr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Id (optional):</td>
             <td><s:textfield name="prob_id" value="" size="48" maxlength="1024" /></td>
             <td><s:submit ac="prob-add" label="Add" /></td>
             <td><s:help ac="prob-add" /></td>
-        </s:htr>
+        </s:tr>
     </s:form>
 </table>
 
