@@ -27,13 +27,13 @@
 <table class="b1">
     <tr>
         <th class="b1">Id</th>
-        <th class="b1"><s:tr>Short name</s:tr></th>
-        <th class="b1"><s:tr>Long name</s:tr></th>
-        <th class="b1"><s:tr>Contest priority</s:tr></th>
-        <th class="b1"><s:tr>Problem priority</s:tr></th>
-        <th class="b1"><s:tr>Static priority</s:tr></th>
-        <th class="b1"><s:tr>Priority adjustment</s:tr></th>
-        <th class="b1"><s:tr>Total priority</s:tr></th>
+        <th class="b1"><s:_>Short name</s:_></th>
+        <th class="b1"><s:_>Long name</s:_></th>
+        <th class="b1"><s:_>Contest priority</s:_></th>
+        <th class="b1"><s:_>Problem priority</s:_></th>
+        <th class="b1"><s:_>Static priority</s:_></th>
+        <th class="b1"><s:_>Priority adjustment</s:_></th>
+        <th class="b1"><s:_>Total priority</s:_></th>
     </tr>
 <%
   for (prob_id = 1;
@@ -66,7 +66,7 @@
 
 <br/>
 
-<p><s:tr>Priority value must be in range [-16, 15]. The less the priority value, the more the judging priority.</s:tr></p>
+<p><s:_>Priority value must be in range [-16, 15]. The less the priority value, the more the judging priority.</s:_></p>
 
 <%@include "priv_footer.csp"
 %><%

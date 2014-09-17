@@ -38,7 +38,7 @@
 %><s:form>
 <s:hidden name="action" ac="change-language" />
 <div class="user_actions"><table class="menu"><tr>
-<td class="menu"><div class="user_action_item"><s:tr>language</s:tr>: <% l10n_html_locale_select(out_f, phr->locale_id); %></div></td>
+<td class="menu"><div class="user_action_item"><s:_>language</s:_>: <% l10n_html_locale_select(out_f, phr->locale_id); %></div></td>
 <td class="menu"><div class="user_action_item"><s:submit name="submit" label="Change Language" /></div></td>
 </tr></table></div></form>
 
@@ -48,11 +48,11 @@
 <%@include "unpriv_separator.csp"
 %>
 
-<h2><s:tr>Select one of available contests</s:tr></h2>
+<h2><s:_>Select one of available contests</s:_></h2>
 
 <% cntsnum = contests_get_list(&cntslist); %>
 
-<table class="b1"><tr><td class="b1">N</td><td class="b1"><s:tr>Contest name</s:tr></td></tr>
+<table class="b1"><tr><td class="b1">N</td><td class="b1"><s:_>Contest name</s:_></td></tr>
 <%
   for (j = 0; j < cntsnum; j++) {
     i = cntslist[j];

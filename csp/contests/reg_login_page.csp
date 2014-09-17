@@ -50,11 +50,11 @@
   }
 %>
 <div class="user_actions"><table class="menu"><tr>
-    <td class="menu"><div class="user_action_item"><s:tr>login</s:tr>: <s:textfield name="login" size="20" value="login" /></div></td>
-    <td class="menu"><div class="user_action_item"><s:tr>password</s:tr>: <s:password name="password" size="20" value="password" /></div></td>
+    <td class="menu"><div class="user_action_item"><s:_>login</s:_>: <s:textfield name="login" size="20" value="login" /></div></td>
+    <td class="menu"><div class="user_action_item"><s:_>password</s:_>: <s:password name="password" size="20" value="password" /></div></td>
 <%
   if (!cnts->disable_locale_change) {
-%><td class="menu"><div class="user_action_item"><s:tr>language</s:tr>: <%
+%><td class="menu"><div class="user_action_item"><s:_>language</s:_>: <%
     l10n_html_locale_select(out_f, phr->locale_id);
 %></div></td><%
   }
@@ -72,9 +72,9 @@
 <s:param name="locale_id" value="phr->locale_id" />
 </s:url><%
     if (created_mode) {
-%><s:a class="menu" url="CreateUrl"><s:tr>Create another account</s:tr></s:a><%
+%><s:a class="menu" url="CreateUrl"><s:_>Create another account</s:_></s:a><%
     } else {
-%><s:a class="menu" url="CreateUrl"><s:tr>Create account</s:tr></s:a><%
+%><s:a class="menu" url="CreateUrl"><s:_>Create account</s:_></s:a><%
     }
 %></div></td><%
     item_cnt++;
@@ -88,7 +88,7 @@
 <s:param name="contest_id" value="phr->contest_id" />
 <s:param name="locale_id" value="phr->locale_id" />
 </s:url><%
-%><s:a class="menu" url="RecoverUrl" noSID="yes"><s:tr>Recover forgot password</s:tr></s:a></div></tr><%
+%><s:a class="menu" url="RecoverUrl" noSID="yes"><s:_>Recover forgot password</s:_></s:a></div></tr><%
     item_cnt++;
   }
 %>
@@ -103,24 +103,24 @@
 %>
 <%
   if (phr->action == NEW_SRV_ACTION_REG_ACCOUNT_CREATED_PAGE) {
-%><h2><s:tr>New user account is created</s:tr></h2><%
+%><h2><s:_>New user account is created</s:_></h2><%
     switch (((cnts->simple_registration & 1) << 1) | (cnts->assign_logins&1)) {
     case 0:                     /* !simple_registration && !assign_logins */
 %><p><%
       fprintf(out_f, _("New account <tt>%s</tt> is successfully created."), html_armor_buf(&ab, login));
 %> <%
       fprintf(out_f, _("An e-mail messages is sent to the address <tt>%s</tt>."), html_armor_buf(&ab, email));
-%> <s:tr>This message contains the password for the initial log in. You will be able to change the password later.</s:tr></p>
-<p><s:tr>Type the login and the password in to the form above and press the "Log in" button to activate the account.</s:tr></p>
-<p><s:tr><b>Note</b>, that you should log in to the system for the first time no later, than in 24 hours after this moment, or the new account is removed.</s:tr></p>
+%> <s:_>This message contains the password for the initial log in. You will be able to change the password later.</s:_></p>
+<p><s:_>Type the login and the password in to the form above and press the "Log in" button to activate the account.</s:_></p>
+<p><s:_><b>Note</b>, that you should log in to the system for the first time no later, than in 24 hours after this moment, or the new account is removed.</s:_></p>
 <%
       break;
     case 1:                     /* !simple_registration &&  assign_logins */
-%><p><s:tr>New account is successfully created.</s:tr> <%
+%><p><s:_>New account is successfully created.</s:_> <%
       fprintf(out_f, _("An e-mail messages is sent to the address <tt>%s</tt>."), html_armor_buf(&ab, login));
-%> <s:tr>This message contains the login name, assigned to you, as well as your password for initial log in. You will be able to change the password later.</s:tr></p>
-<p><s:tr>Type the login and the password in to the form above and press the "Log in" button to activate the account.</s:tr></p>
-<p><s:tr><b>Note</b>, that you should log in to the system for the first time no later, than in 24 hours after this moment, or the new account is removed.</s:tr></p>
+%> <s:_>This message contains the login name, assigned to you, as well as your password for initial log in. You will be able to change the password later.</s:_></p>
+<p><s:_>Type the login and the password in to the form above and press the "Log in" button to activate the account.</s:_></p>
+<p><s:_><b>Note</b>, that you should log in to the system for the first time no later, than in 24 hours after this moment, or the new account is removed.</s:_></p>
 <%
       break;
     case 2:                     /*  simple_registration && !assign_logins */
@@ -132,15 +132,15 @@
       if (cnts->send_passwd_email)
         fprintf(out_f, _("An e-mail with your account parameters is sent to address <tt>%s</tt>. "), html_armor_buf(&ab, email));
 %></p>
-<p><s:tr>The account parameters are as follows:</s:tr></p>
+<p><s:_>The account parameters are as follows:</s:_></p>
 
 <table class="b1">
-    <tr><td><s:tr>Login</s:tr></td><td><tt><s:v checkExpr="" value="login" /></tt></td></tr>
-    <tr><td><s:tr>E-mail</s:tr></td><td><tt><s:v checkExpr="" value="email" /></tt></td></tr>
-    <tr><td><s:tr>Password</s:tr></td><td><tt><s:v checkExpr="" value="password" /></tt></td></tr>
+    <tr><td><s:_>Login</s:_></td><td><tt><s:v checkExpr="" value="login" /></tt></td></tr>
+    <tr><td><s:_>E-mail</s:_></td><td><tt><s:v checkExpr="" value="email" /></tt></td></tr>
+    <tr><td><s:_>Password</s:_></td><td><tt><s:v checkExpr="" value="password" /></tt></td></tr>
 </table>
 
-<p><b><s:tr>Remember or write down the password!</s:tr></b></p>
+<p><b><s:_>Remember or write down the password!</s:_></b></p>
 <%
     }
   }

@@ -61,7 +61,7 @@
 <div class="user_actions"><table class="menu"><tr>
 <%
   if (!cnts->assign_logins) {
-%><td class="menu"><div class="user_action_item"><s:tr>login</s:tr>: <s:textfield name="login" size="20" value="login" checkExpr="" /></div></td><%
+%><td class="menu"><div class="user_action_item"><s:_>login</s:_>: <s:textfield name="login" size="20" value="login" checkExpr="" /></div></td><%
   }
 %>
 <td class="menu"><div class="user_action_item">e-mail: <s:textfield name="email" size="20" value="email" checkExpr="" /></div></td>
@@ -73,12 +73,12 @@
 %>
 <%
     if (!cnts->disable_locale_change) {
-%><td class="menu"><div class="user_action_item"><s:tr>language</s:tr>: <% l10n_html_locale_select(out_f, phr->locale_id); %></div></td>
+%><td class="menu"><div class="user_action_item"><s:_>language</s:_>: <% l10n_html_locale_select(out_f, phr->locale_id); %></div></td>
 <td class="menu"><div class="user_action_item"><s:submit ac="change-language" label="Change language" /></div></td><%
     }
   } else {
     if (!cnts->disable_locale_change) {
-%><td class="menu"><div class="user_action_item"><s:tr>language</s:tr>: <% l10n_html_locale_select(out_f, phr->locale_id); %></div></td><%
+%><td class="menu"><div class="user_action_item"><s:_>language</s:_>: <% l10n_html_locale_select(out_f, phr->locale_id); %></div></td><%
     }
     if (phr->config->disable_new_users <= 0) {
 %><td class="menu"><div class="user_action_item"><s:submit ac="reg-create-account" label="Create account" /></div></td><%
@@ -88,7 +88,7 @@
 </tr></table></div></s:form>
 <div class="white_empty_block">&nbsp;</div>
 <div class="contest_actions"><table class="menu"><tr>
-<td class="menu"><div class="contest_actions_item"><s:url name="LoginUrl" ac="reg-login-page"><s:param name="contest_id" value="phr->contest_id" /><s:param name="locale_id" value="phr->locale_id" /></s:url><s:a url="LoginUrl"><s:tr>Use an existing account</s:tr></s:a></div></td>
+<td class="menu"><div class="contest_actions_item"><s:url name="LoginUrl" ac="reg-login-page"><s:param name="contest_id" value="phr->contest_id" /><s:param name="locale_id" value="phr->locale_id" /></s:url><s:a url="LoginUrl"><s:_>Use an existing account</s:_></s:a></div></td>
 </tr></table></div>
 <%@include "reg_separator.csp"
 %>
@@ -97,15 +97,15 @@
     if (reg_error < 0) reg_error = -reg_error;
     if (reg_ul_error < 0) reg_ul_error = -reg_ul_error;
 %>
-<h2><font color="red"><s:tr>Registration errors</s:tr></font></h2>
+<h2><font color="red"><s:_>Registration errors</s:_></font></h2>
 
 <p><font color="red"><%
     if (reg_ul_error == ULS_ERR_EMAIL_FAILED) {
-%><s:tr>The server was unable to send a registration e-mail
+%><s:_>The server was unable to send a registration e-mail
 to the specified address. This is probably due
 to heavy server load rather than to an invalid
 e-mail address. You should try to register later.
-</s:tr><%
+</s:_><%
     } else if (reg_ul_error) {
       fprintf(out_f, "%s.", gettext(userlist_strerror(reg_ul_error)));
     } else if (reg_error) {
@@ -116,38 +116,38 @@ e-mail address. You should try to register later.
   }
 %>
 
-<h2><s:tr>Registration rules</s:tr></h2>
+<h2><s:_>Registration rules</s:_></h2>
 
 <%
   if (cnts->assign_logins) {
 %>
-<p><s:tr>Please, enter your valid e-mail address and press the "Create account" button.</s:tr></p>
+<p><s:_>Please, enter your valid e-mail address and press the "Create account" button.</s:_></p>
 <%
     if (cnts->simple_registration && !regular_flag) {
 %>
-<p><s:tr>This contest operates in "simplified registration" mode. You will get your login and password immediately after account is created.</s:tr> <%
+<p><s:_>This contest operates in "simplified registration" mode. You will get your login and password immediately after account is created.</s:_> <%
       if (cnts->send_passwd_email) {
-%><s:tr>An email message will be sent to you just for your convenience.</s:tr><%
+%><s:_>An email message will be sent to you just for your convenience.</s:_><%
       } else {
-%><s:tr>No email message at all will be sent to you.</s:tr><%
+%><s:_>No email message at all will be sent to you.</s:_><%
       }
 %></p>
-<p><s:tr>Accounts created using simplified registration procedure cannot be used for participation in contests, which do not allow simplified registration. If you want a regular account, you may create an account using the</s:tr> <s:url name="CreateUrl" ac="reg-create-account-page"><s:param name="regular" value="1" /><s:param name="contest_id" value="phr->contest_id" /><s:param name="locale_id" value="phr->locale_id" /></s:url><s:a url="CreateUrl"><s:tr>regular registration</s:tr></s:a>.</p>
+<p><s:_>Accounts created using simplified registration procedure cannot be used for participation in contests, which do not allow simplified registration. If you want a regular account, you may create an account using the</s:_> <s:url name="CreateUrl" ac="reg-create-account-page"><s:param name="regular" value="1" /><s:param name="contest_id" value="phr->contest_id" /><s:param name="locale_id" value="phr->locale_id" /></s:url><s:a url="CreateUrl"><s:_>regular registration</s:_></s:a>.</p>
 <%
     } else {
 %>
 <%
       if (!cnts->simple_registration || cnts->send_passwd_email) {
 %>
-<p><s:tr>You should receive an e-mail message with a login and a password to the system. Use this password for the first log in. After the first login you will be able to change the password.</s:tr></p>
-<p><s:tr>Be careful and type the e-mail address correctly. If you make a mistake, you will not receive a registration e-mail and be unable to complete the registration process.</s:tr></p>
+<p><s:_>You should receive an e-mail message with a login and a password to the system. Use this password for the first log in. After the first login you will be able to change the password.</s:_></p>
+<p><s:_>Be careful and type the e-mail address correctly. If you make a mistake, you will not receive a registration e-mail and be unable to complete the registration process.</s:_></p>
 <%
       }
 %>
 <%
       if (cnts->simple_registration) {
 %>
-<p><s:url name="CreateUrl" ac="reg-create-account-page"><s:param name="contest_id" value="phr->contest_id" /><s:param name="locale_id" value="phr->locale_id" /></s:url><s:a url="CreateUrl"><s:tr>Simplified registration</s:tr></s:a> <s:tr>is available for this contest. Note, however, that simplified registration imposes certain restrictions on further use of the account!</s:tr></p>
+<p><s:url name="CreateUrl" ac="reg-create-account-page"><s:param name="contest_id" value="phr->contest_id" /><s:param name="locale_id" value="phr->locale_id" /></s:url><s:a url="CreateUrl"><s:_>Simplified registration</s:_></s:a> <s:_>is available for this contest. Note, however, that simplified registration imposes certain restrictions on further use of the account!</s:_></p>
 <%
       }
 %>
@@ -157,34 +157,34 @@ e-mail address. You should try to register later.
 <%
   } else {
 %>
-<p><s:tr>To create an account, please think out, a login and provide your valid e-mail address in the form above. Then press the \"Create account\" button.</s:tr></p>
-<p><s:tr>Login may contain only latin letters, digits, <tt>.</tt> (dot), <tt>-</tt> (minus sign), <tt>_</tt> (undescore).</s:tr></p>
+<p><s:_>To create an account, please think out, a login and provide your valid e-mail address in the form above. Then press the \"Create account\" button.</s:_></p>
+<p><s:_>Login may contain only latin letters, digits, <tt>.</tt> (dot), <tt>-</tt> (minus sign), <tt>_</tt> (undescore).</s:_></p>
 <%
     if (cnts->simple_registration && !regular_flag) {
 %>
-<p><s:tr>This contest operates in \"simplified registration\" mode. You will get your login and password immediately after account is created.</s:tr> <%
+<p><s:_>This contest operates in \"simplified registration\" mode. You will get your login and password immediately after account is created.</s:_> <%
       if (cnts->send_passwd_email) {
-%><s:tr>An email message will be sent to you just for your convenience.</s:tr><%
+%><s:_>An email message will be sent to you just for your convenience.</s:_><%
       } else {
-%><s:tr>No email message at all will be sent to you.</s:tr><%
+%><s:_>No email message at all will be sent to you.</s:_><%
       }
 %></p>
-<p><s:tr>Accounts created using simplified registration procedure cannot be used for participation in contests, which do not allow simplified registration. If you want a regular account, you may create an account using the</s:tr> <s:url name="RegisterUrl" ac="reg-create-account-page"><s:param name="regular" value="1" /><s:param name="contest_id" value="phr->contest_id"/><s:param name="locale_id" value="phr->locale_id" /></s:url><s:a url="RegisterUrl"><s:tr>regular registration</s:tr></s:a>.</p>
+<p><s:_>Accounts created using simplified registration procedure cannot be used for participation in contests, which do not allow simplified registration. If you want a regular account, you may create an account using the</s:_> <s:url name="RegisterUrl" ac="reg-create-account-page"><s:param name="regular" value="1" /><s:param name="contest_id" value="phr->contest_id"/><s:param name="locale_id" value="phr->locale_id" /></s:url><s:a url="RegisterUrl"><s:_>regular registration</s:_></s:a>.</p>
 <%
     } else {
 %>
 <%
       if (!cnts->simple_registration || cnts->send_passwd_email) {
 %>
-<p><s:tr>You should receive an e-mail message with a password to the system. Use this password for the first log in. After the first login you will be able to change the password.</s:tr></p>
-<p><s:tr>Be careful and type the e-mail address correctly. If you make a mistake, you will not receive a registration e-mail and be unable to complete the registration process.</s:tr></p>
+<p><s:_>You should receive an e-mail message with a password to the system. Use this password for the first log in. After the first login you will be able to change the password.</s:_></p>
+<p><s:_>Be careful and type the e-mail address correctly. If you make a mistake, you will not receive a registration e-mail and be unable to complete the registration process.</s:_></p>
 <%
       }
 %>
 <%
       if (cnts->simple_registration) {
 %>
-<p><s:url name="CreateUrl" ac="reg-create-account-page"><s:param name="contest_id" value="phr->contest_id" /><s:param name="locale_id" value="phr->locale_id" /></s:url><s:a url="CreateUrl"><s:tr>Simplified registration</s:tr></s:a> <s:tr>is available for this contest. Note, however, that simplified registration imposes certain restrictions on further use of the account!</s:tr></p>
+<p><s:url name="CreateUrl" ac="reg-create-account-page"><s:param name="contest_id" value="phr->contest_id" /><s:param name="locale_id" value="phr->locale_id" /></s:url><s:a url="CreateUrl"><s:_>Simplified registration</s:_></s:a> <s:_>is available for this contest. Note, however, that simplified registration imposes certain restrictions on further use of the account!</s:_></p>
 <%
       }
 %>
@@ -195,11 +195,11 @@ e-mail address. You should try to register later.
   }
 %>
 
-<p><s:tr><b>Note</b>, that you must log in 24 hours after the form is filled and submitted, or your registration will be cancelled!</s:tr></p>
+<p><s:_><b>Note</b>, that you must log in 24 hours after the form is filled and submitted, or your registration will be cancelled!</s:_></p>
 
-<p><s:tr>If you already have an ejudge account on this server, you may use it. If so, follow the link</s:tr>: 
+<p><s:_>If you already have an ejudge account on this server, you may use it. If so, follow the link</s:_>: 
 <s:url name="LoginUrl" ac="reg-login-page"><s:param name="contest_id" value="phr->contest_id" /><s:param name="locale_id" value="phr->locale_id" /></s:url>
-<s:a url="LoginUrl"><s:tr>Use an existing account</s:tr></s:a>.
+<s:a url="LoginUrl"><s:_>Use an existing account</s:_></s:a>.
 
 <p>&nbsp;</p>
 <%

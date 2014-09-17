@@ -1,5 +1,5 @@
 <%    if (cnts->problems_url && *cnts->problems_url) {
-%><p><a href="<s:v value="cnts->problems_url" escape="false" />" target="_blank"><s:tr>Problem statements</s:tr></a></p>
+%><p><a href="<s:v value="cnts->problems_url" escape="false" />" target="_blank"><s:_>Problem statements</s:_></a></p>
 <%    }
 %><%
     // if prob_id == -1, show all available problem statements
@@ -37,10 +37,10 @@
       fprintf(out_f, "%s", pw->text);
     }
 %>
-<div class="h2-long"><h2><s:tr>Select another problem</s:tr></h2></div>
+<div class="h2-long"><h2><s:_>Select another problem</s:_></h2></div>
 <s:form>
 <table class="b0 info-table-line">
-<tr><td class="b0"><s:tr>Problem</s:tr>:</td><td class="b0"><%
+<tr><td class="b0"><s:_>Problem</s:_>:</td><td class="b0"><%
     html_problem_selection_2(cs, out_f, phr, 0, start_time);
 %></td><td class="b0"><s:submit ac="view-problem-statements" label="Select problem" /></td></tr></table>
 </s:form>

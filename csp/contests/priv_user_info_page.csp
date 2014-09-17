@@ -49,36 +49,36 @@
 </div>
 
 <ul>
-    <li><s:a ac="main-page"><s:tr>Main page</s:tr></s:a></li>
-    <li><s:a ac="view-users"><s:tr>View regular users</s:tr></s:a></li>
-    <li><s:a ac="view-reg-pwds"><s:tr>View registration passwords</s:tr></s:a></li>
+    <li><s:a ac="main-page"><s:_>Main page</s:_></s:a></li>
+    <li><s:a ac="view-users"><s:_>View regular users</s:_></s:a></li>
+    <li><s:a ac="view-reg-pwds"><s:_>View registration passwords</s:_></s:a></li>
 <%  if (!cnts->disable_team_password) { %>
-    <li><s:a ac="view-cnts-pwds"><s:tr>View contest passwords</s:tr></s:a></li>
+    <li><s:a ac="view-cnts-pwds"><s:_>View contest passwords</s:_></s:a></li>
 <%  } %>
 </ul>
 
 <table>
-<tr><td><s:tr>User Id</s:tr>:</td><td><s:v value="view_user_id" /></td><td>&nbsp;</td><td>&nbsp;</td></tr>
-<tr><td><s:tr>User Login</s:tr>:</td><td><tt><s:v value="u_info.login" /></tt></td><td>&nbsp;</td><td>&nbsp;</td></tr>
-<tr><td><s:tr>User Name</s:tr>:</td><td><% if (u_info.name && *u_info.name) { %><s:v value="u_info.name" /><% } else { %><i><s:tr>Not set</s:tr></i><% } %></td><td>&nbsp;</td><td>&nbsp;</td></tr>
-<tr><td><s:tr>Registration time</s:tr>:</td><td><% if (uc && uc->create_time > 0) { %><s:v value="uc->create_time" /><% } else { %>&nbsp;<% } %></td><td>&nbsp;</td><td>&nbsp;</td></tr>
-<tr><td><s:tr>Last login time</s:tr>:</td><td><% if (ui && ui->last_login_time > 0) { %><s:v value="ui->last_login_time" /><% } else { %>&nbsp;<% } %></td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td><s:_>User Id</s:_>:</td><td><s:v value="view_user_id" /></td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td><s:_>User Login</s:_>:</td><td><tt><s:v value="u_info.login" /></tt></td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td><s:_>User Name</s:_>:</td><td><% if (u_info.name && *u_info.name) { %><s:v value="u_info.name" /><% } else { %><i><s:_>Not set</s:_></i><% } %></td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td><s:_>Registration time</s:_>:</td><td><% if (uc && uc->create_time > 0) { %><s:v value="uc->create_time" /><% } else { %>&nbsp;<% } %></td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td><s:_>Last login time</s:_>:</td><td><% if (ui && ui->last_login_time > 0) { %><s:v value="ui->last_login_time" /><% } else { %>&nbsp;<% } %></td><td>&nbsp;</td><td>&nbsp;</td></tr>
 <% if (/*opcaps_check(phr->caps, OPCAP_GENERATE_TEAM_PASSWORDS) >= 0*/ 1) { %>
-<tr><td><s:tr>Registration password</s:tr>:</td><td><%
+<tr><td><s:_>Registration password</s:_>:</td><td><%
     if (u && !u->passwd) {
-%><i><s:tr>Not set</s:tr></i><%
+%><i><s:_>Not set</s:_></i><%
     } else if (u && u->passwd_method != USERLIST_PWD_PLAIN) {
-%><i><s:tr>Changed by user</s:tr></i><%
+%><i><s:_>Changed by user</s:_></i><%
     } else if (u) {
 %><tt><s:v value="u->passwd" /></tt><%
     }
 %><td>&nbsp;</td><td>&nbsp;</td></tr>
 <% if (!cnts->disable_team_password) { %>
-<tr><td><s:tr>Contest password</s:tr>:</td><td><%
+<tr><td><s:_>Contest password</s:_>:</td><td><%
       if (ui && !ui->team_passwd) {
-%><i><s:tr>Not set</s:tr></i><%
+%><i><s:_>Not set</s:_></i><%
       } else if (ui && ui->team_passwd_method != USERLIST_PWD_PLAIN) {
-%><i><s:tr>Changed by user</s:tr></i> <%
+%><i><s:_>Changed by user</s:_></i> <%
       } else if (ui) {
 %><tt><s:v value="ui->team_passwd" /></tt><%
       } else {
@@ -87,7 +87,7 @@
 %>
 <% } %>
 <% } %>
-<tr><td><s:tr>Privileged?</s:tr>:</td><td><s:vb value="u &amp;&amp; u->is_privileged" /></td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td><s:_>Privileged?</s:_>:</td><td><s:vb value="u &amp;&amp; u->is_privileged" /></td><td>&nbsp;</td><td>&nbsp;</td></tr>
 <%
   // invisible, locked, banned status and change buttons
   // to make invisible EDIT_REG is enough for all users
@@ -100,7 +100,7 @@
 <s:hidden name="user_id" value="view_user_id" />
 <%  } %>
 
-<tr><td><s:tr>Invisible?</s:tr>:</td><td><s:vb value="flags &amp; TEAM_INVISIBLE" /></td><td>&nbsp;</td><td><%
+<tr><td><s:_>Invisible?</s:_>:</td><td><s:vb value="flags &amp; TEAM_INVISIBLE" /></td><td>&nbsp;</td><td><%
   if(allowed_edit) {
     if (flags & TEAM_INVISIBLE) {
 %><s:submit ac="toggle-visibility" label="Make visible" /><%
@@ -132,7 +132,7 @@
 <s:form>
 <s:hidden name="user_id" value="view_user_id" />
 <%  } %>
-<tr><td><s:tr>Banned?</s:tr>:</td><td><s:vb value="flags &amp; TEAM_BANNED" /></td><td>&nbsp;</td><td><%
+<tr><td><s:_>Banned?</s:_>:</td><td><s:vb value="flags &amp; TEAM_BANNED" /></td><td>&nbsp;</td><td><%
   if(allowed_edit) {
     if ((flags & TEAM_BANNED)) {
 %><s:submit ac="toggle-ban" label="Remove ban" /><%
@@ -164,7 +164,7 @@
 <s:form>
 <s:hidden name="user_id" value="view_user_id" />
 <% } %>
-<tr><td><s:tr>Locked?</s:tr>:</td><td><s:vb value="flags &amp; TEAM_LOCKED" /></td><td>&nbsp;</td><td><%
+<tr><td><s:_>Locked?</s:_>:</td><td><s:vb value="flags &amp; TEAM_LOCKED" /></td><td>&nbsp;</td><td><%
   if(allowed_edit) {
     if ((flags & TEAM_LOCKED)) {
 %><s:submit ac="toggle-lock" label="Unlock" /><%
@@ -197,7 +197,7 @@
 <s:form>
 <s:hidden name="user_id" value="view_user_id" />
 <%  } %>
-<tr><td><s:tr>Incomplete?</s:tr>:</td><td><s:vb value="flags &amp; TEAM_INCOMPLETE" /></td><td>&nbsp;</td><td><%
+<tr><td><s:_>Incomplete?</s:_>:</td><td><s:vb value="flags &amp; TEAM_INCOMPLETE" /></td><td>&nbsp;</td><td><%
   if(allowed_edit) {
     if ((flags & TEAM_INCOMPLETE)) {
 %><s:submit ac="toggle-incompleteness" label="Clear" /><%
@@ -212,12 +212,12 @@
 </s:form>
 <% } %>
 
-<tr><td><s:tr>Disqualified?</s:tr>:</td><td><s:vb value="flags &amp; TEAM_DISQUALIFIED" /></td><td>&nbsp;</td><td>&nbsp;</td></tr>
-<tr><td><s:tr>Number of Runs</s:tr>:</td><td><s:v value="runs_num" /></td><td>&nbsp;</td><td>&nbsp;</td></tr>
-<tr><td><s:tr>Total size of Runs</s:tr>:</td><td><s:v value="runs_total" /></td><td>&nbsp;</td><td>&nbsp;</td></tr>
-<tr><td><s:tr>Number of Clars</s:tr>:</td><td><s:v value="clars_num" /></td><td>&nbsp;</td><td>&nbsp;</td></tr>
-<tr><td><s:tr>Total size of Clars</s:tr>:</td><td><s:v value="clars_total" /></td><td>&nbsp;</td><td>&nbsp;</td></tr>
-<tr><td><s:tr>Number of printed pages</s:tr>:</td><td><s:v value="pages_total" /></td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td><s:_>Disqualified?</s:_>:</td><td><s:vb value="flags &amp; TEAM_DISQUALIFIED" /></td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td><s:_>Number of Runs</s:_>:</td><td><s:v value="runs_num" /></td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td><s:_>Total size of Runs</s:_>:</td><td><s:v value="runs_total" /></td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td><s:_>Number of Clars</s:_>:</td><td><s:v value="clars_num" /></td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td><s:_>Total size of Clars</s:_>:</td><td><s:v value="clars_total" /></td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td><s:_>Number of printed pages</s:_>:</td><td><s:v value="pages_total" /></td><td>&nbsp;</td><td>&nbsp;</td></tr>
 
 <%  if (global->contestant_status_num > 0) {
     // contestant status is editable when OPCAP_EDIT_REG is set
@@ -228,7 +228,7 @@
 <s:form>
 <s:hidden name="user_id" value="view_user_id" />
 <%    } %>
-<tr><td><s:tr>Status</s:tr>:</td><td><%
+<tr><td><s:_>Status</s:_>:</td><td><%
     init_value = 0;
     if (!u_extra) {
 %>N/A<%
@@ -258,7 +258,7 @@
 <%
   i = 0;
   if (u_extra) i = u_extra->warn_u;
-%><tr><td><s:tr>Number of warnings</s:tr>:</td><td><s:v value="i" /></td><td>&nbsp;</td><td>&nbsp;</td></tr>
+%><tr><td><s:_>Number of warnings</s:_>:</td><td><s:v value="i" /></td><td>&nbsp;</td><td>&nbsp;</td></tr>
 </table>
 
 <s:form>
@@ -278,25 +278,25 @@
 
 <%
   if (!u_extra || !u_extra->warn_u) {
-%><h2><s:tr>No warnings</s:tr></h2><%
+%><h2><s:_>No warnings</s:_></h2><%
   } else {
-%><h2><s:tr>Warnings</s:tr></h2>
+%><h2><s:_>Warnings</s:_></h2>
 <%    for (i = 0; i < u_extra->warn_u; i++) {
       if (!(cur_warn = u_extra->warns[i])) continue;
 %><h3>Warning <s:v value="i + 1" />: issued: <s:v value="cur_warn->date" />: issued by: <s:v value="teamdb_get_login(cs->teamdb_state, cur_warn->issuer_id)" /> (<s:v value="cur_warn->issuer_id" />), issued from: <s:v value="cur_warn->issuer_ip" /></h3>
 
-<p><s:tr>Warning text for the user</s:tr>:\n<pre><s:v value="cur_warn->text" /></pre>
-<p><s:tr>Judge's comment</s:tr>:\n<pre><s:v value="cur_warn->comment" /></pre>
+<p><s:_>Warning text for the user</s:_>:\n<pre><s:v value="cur_warn->text" /></pre>
+<p><s:_>Judge's comment</s:_>:\n<pre><s:v value="cur_warn->comment" /></pre>
 <%    } %>
 <%  } %>
 
 <%  if (opcaps_check(phr->caps, OPCAP_EDIT_REG) >= 0) { %>
-<h2><s:tr>Issue a warning</s:tr></h2>
+<h2><s:_>Issue a warning</s:_></h2>
 <s:form>
 <s:hidden name="user_id" value="view_user_id" />
-<p><s:tr>Warning explanation for the user (mandatory)</s:tr>:<br/>
+<p><s:_>Warning explanation for the user (mandatory)</s:_>:<br/>
 <p><textarea name="warn_text" rows="5" cols="60"></textarea></p>
-<p><s:tr>Comment for other judges (optional)</s:tr>:<br/>
+<p><s:_>Comment for other judges (optional)</s:_>:<br/>
 <p><textarea name="warn_comment" rows="5" cols="60"></textarea></p>
 <p><s:submit ac="issue-warning" /></p>
 </s:form>
@@ -304,10 +304,10 @@
 
 <%  if (opcaps_check(phr->caps, OPCAP_EDIT_REG) >= 0) { %>
 
-<h2><s:tr>Disqualify user</s:tr></h2>
+<h2><s:_>Disqualify user</s:_></h2>
 <s:form>
 <s:hidden name="user_id" value="view_user_id" />
-<p><s:tr>Disqualification explanation</s:tr>:<br/>
+<p><s:_>Disqualification explanation</s:_>:<br/>
 <p><textarea name="disq_comment" rows="5" cols="60"><% if (u_extra->disq_comment) { %><s:v value="u_extra->disq_comment" /><% } %></textarea></p>
 
 <table class="b0"><tr><td class="b0"><%

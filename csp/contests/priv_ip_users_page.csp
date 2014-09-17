@@ -21,8 +21,8 @@
 <table class="b1">
     <tr>
         <th class="b1">NN</th>
-        <th class="b1"><s:tr>IP address</s:tr></th>
-        <th class="b1"><s:tr>Users</s:tr></th>
+        <th class="b1"><s:_>IP address</s:_></th>
+        <th class="b1"><s:_>Users</s:_></th>
     </tr>
 <%  for (i = 0; i < pp->ips.u; ++i) { %>
     <tr>

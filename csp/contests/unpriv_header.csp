@@ -18,10 +18,10 @@
 %>;
 <% }
 #endif
-%>  var updateFailedMessage = "<s:tr>STATUS UPDATE FAILED!</s:tr>";
-  var testingInProgressMessage = "<s:tr>TESTING IN PROGRESS...</s:tr>";
-  var testingCompleted = "<s:tr>TESTING COMPLETED</s:tr>";
-  var waitingTooLong = "<s:tr>REFRESH PAGE MANUALLY!</s:tr>";
+%>  var updateFailedMessage = "<s:_>STATUS UPDATE FAILED!</s:_>";
+  var testingInProgressMessage = "<s:_>TESTING IN PROGRESS...</s:_>";
+  var testingCompleted = "<s:_>TESTING COMPLETED</s:_>";
+  var waitingTooLong = "<s:_>REFRESH PAGE MANUALLY!</s:_>";
 </script>
 <link rel="stylesheet" href="<s:config name="style-prefix" />unpriv.css" type="text/css" />
 <link rel="stylesheet" href="<s:config name="style-prefix" />unpriv3.css" type="text/css" />

@@ -1,4 +1,4 @@
-<%
+<% // -*- mode: html -*-
 /* $Id$ */
 %><%@include "unpriv_includes.csp"
 %><%
@@ -48,7 +48,7 @@
     }
 %><%
   if (!cnts->disable_locale_change) {
-%><td class="menu"><div class="user_action_item"><s:tr>language</s:tr>: <%
+%><td class="menu"><div class="user_action_item"><s:_>language</s:_>: <%
     l10n_html_locale_select(out_f, phr->locale_id);
 %></div></td><%
   }
@@ -58,14 +58,14 @@
 <td class="menu"><div class="contest_actions_item">&nbsp;</div></td></tr></table></div>
 <%@include "unpriv_separator.csp"
 %>
-<s:tr><p class="fixed_width">Password recovery requires several steps. Now, please, specify the <b>login</b> and the <b>e-mail</b>, which was specified when the login was created.</p>
-<p class="fixed_width">Note, that automatic password recovery is not possible for invisible, banned, locked, or privileged users!</p></s:tr>
+<s:_><p class="fixed_width">Password recovery requires several steps. Now, please, specify the <b>login</b> and the <b>e-mail</b>, which was specified when the login was created.</p>
+<p class="fixed_width">Note, that automatic password recovery is not possible for invisible, banned, locked, or privileged users!</p></s:_>
 
 <s:form>
 <s:hidden name="contest_id" value="phr->contest_id" />
 <table>
-<tr><td class="menu"><s:tr>Login</s:tr>:</td><td class="menu"><s:textfield name="login" size="16" value="" /></td></tr>
-<tr><td class="menu"><s:tr>E-mail</s:tr>:</td><td class="menu"><s:textfield name="email" size="16" value="" /></td></tr>
+<tr><td class="menu"><s:_>Login</s:_>:</td><td class="menu"><s:textfield name="login" size="16" value="" /></td></tr>
+<tr><td class="menu"><s:_>E-mail</s:_>:</td><td class="menu"><s:textfield name="email" size="16" value="" /></td></tr>
 <tr><td class="menu">&nbsp;</td><td class="menu"><s:submit ac="forgot-password-2" /></td></tr>
 </table>
 </s:form>

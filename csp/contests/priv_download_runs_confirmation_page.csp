@@ -34,43 +34,43 @@
 <s:form>
 <s:hidden name="run_mask_size" escape="false" value="mask_size_str" />
 <s:hidden name="run_mask" escape="false" value="mask_str" />
-<h2><s:tr>Run selection</s:tr></h2>
+<h2><s:_>Run selection</s:_></h2>
 <table>
-<tr><td><input type="radio" name="run_selection" value="0" checked="yes"/></td><td><s:tr>Download all runs</s:tr></td></tr>
-<tr><td><input type="radio" name="run_selection" value="1"/></td><td><s:tr>Download selected runs</s:tr> (<s:v value="mask_count" />)</td></tr>
-<tr><td><input type="radio" name="run_selection" value="2"/></td><td><s:tr>Download OK runs</s:tr></td></tr>
+<tr><td><input type="radio" name="run_selection" value="0" checked="yes"/></td><td><s:_>Download all runs</s:_></td></tr>
+<tr><td><input type="radio" name="run_selection" value="1"/></td><td><s:_>Download selected runs</s:_> (<s:v value="mask_count" />)</td></tr>
+<tr><td><input type="radio" name="run_selection" value="2"/></td><td><s:_>Download OK runs</s:_></td></tr>
 </table>
 
-<h2><s:tr>File name pattern</s:tr></h2>
+<h2><s:_>File name pattern</s:_></h2>
 <table>
-<tr><td><input type="checkbox" name="file_pattern_run" checked="yes"/></td><td><s:tr>Use run number</s:tr></td></tr>
-<tr><td><input type="checkbox" name="file_pattern_uid"/></td><td><s:tr>Use user Id</s:tr></td></tr>
-<tr><td><input type="checkbox" name="file_pattern_login"/></td><td><s:tr>Use user Login</s:tr></td></tr>
-<tr><td><input type="checkbox" name="file_pattern_name"/></td><td><s:tr>Use user Name</s:tr></td></tr>
-<tr><td><input type="checkbox" name="file_pattern_prob"/></td><td><s:tr>Use problem short name</s:tr></td></tr>
-<tr><td><input type="checkbox" name="file_pattern_lang"/></td><td><s:tr>Use programming language short name</s:tr></td></tr>
-<tr><td><input type="checkbox" name="file_pattern_suffix" checked="yes"/></td><td><s:tr>Use source language or content type suffix</s:tr></td></tr>
+<tr><td><input type="checkbox" name="file_pattern_run" checked="yes"/></td><td><s:_>Use run number</s:_></td></tr>
+<tr><td><input type="checkbox" name="file_pattern_uid"/></td><td><s:_>Use user Id</s:_></td></tr>
+<tr><td><input type="checkbox" name="file_pattern_login"/></td><td><s:_>Use user Login</s:_></td></tr>
+<tr><td><input type="checkbox" name="file_pattern_name"/></td><td><s:_>Use user Name</s:_></td></tr>
+<tr><td><input type="checkbox" name="file_pattern_prob"/></td><td><s:_>Use problem short name</s:_></td></tr>
+<tr><td><input type="checkbox" name="file_pattern_lang"/></td><td><s:_>Use programming language short name</s:_></td></tr>
+<tr><td><input type="checkbox" name="file_pattern_suffix" checked="yes"/></td><td><s:_>Use source language or content type suffix</s:_></td></tr>
 </table>
 
-<h2><s:tr>Directory structure</s:tr></h2>
+<h2><s:_>Directory structure</s:_></h2>
 <table>
-<tr><td><input type="radio" name="dir_struct" value="0" checked="yes"/></td><td><s:tr>No directory structure</s:tr></td></tr>
-<tr><td><input type="radio" name="dir_struct" value="1"/></td><td><s:tr>/&lt;Problem&gt;/&lt;File&gt;</s:tr></td></tr>
-<tr><td><input type="radio" name="dir_struct" value="2"/></td><td><s:tr>/&lt;User_Id&gt;/&lt;File&gt;</s:tr></td></tr>
-<tr><td><input type="radio" name="dir_struct" value="3"/></td><td><s:tr>/&lt;User_Login&gt;/&lt;File&gt;</s:tr></td></tr>
-<tr><td><input type="radio" name="dir_struct" value="8"/></td><td><s:tr>/&lt;User_Name&gt;/&lt;File&gt;</s:tr></td></tr>
-<tr><td><input type="radio" name="dir_struct" value="4"/></td><td><s:tr>/&lt;Problem&gt;/&lt;User_Id&gt;/&lt;File&gt;</s:tr></td></tr>
-<tr><td><input type="radio" name="dir_struct" value="5"/></td><td><s:tr>/&lt;Problem&gt;/&lt;User_Login&gt;/&lt;File&gt;</s:tr></td></tr>
-<tr><td><input type="radio" name="dir_struct" value="9"/></td><td><s:tr>/&lt;Problem&gt;/&lt;User_Name&gt;/&lt;File&gt;</s:tr></td></tr>
-<tr><td><input type="radio" name="dir_struct" value="6"/></td><td><s:tr>/&lt;User_Id&gt;/&lt;Problem&gt;/&lt;File&gt;</s:tr></td></tr>
-<tr><td><input type="radio" name="dir_struct" value="7"/></td><td><s:tr>/&lt;User_Login&gt;/&lt;Problem&gt;/&lt;File&gt;</s:tr></td></tr>
-<tr><td><input type="radio" name="dir_struct" value="10"/></td><td><s:tr>/&lt;User_Name&gt;/&lt;Problem&gt;/&lt;File&gt;</s:tr></td></tr>
+<tr><td><input type="radio" name="dir_struct" value="0" checked="yes"/></td><td><s:_>No directory structure</s:_></td></tr>
+<tr><td><input type="radio" name="dir_struct" value="1"/></td><td><s:_>/&lt;Problem&gt;/&lt;File&gt;</s:_></td></tr>
+<tr><td><input type="radio" name="dir_struct" value="2"/></td><td><s:_>/&lt;User_Id&gt;/&lt;File&gt;</s:_></td></tr>
+<tr><td><input type="radio" name="dir_struct" value="3"/></td><td><s:_>/&lt;User_Login&gt;/&lt;File&gt;</s:_></td></tr>
+<tr><td><input type="radio" name="dir_struct" value="8"/></td><td><s:_>/&lt;User_Name&gt;/&lt;File&gt;</s:_></td></tr>
+<tr><td><input type="radio" name="dir_struct" value="4"/></td><td><s:_>/&lt;Problem&gt;/&lt;User_Id&gt;/&lt;File&gt;</s:_></td></tr>
+<tr><td><input type="radio" name="dir_struct" value="5"/></td><td><s:_>/&lt;Problem&gt;/&lt;User_Login&gt;/&lt;File&gt;</s:_></td></tr>
+<tr><td><input type="radio" name="dir_struct" value="9"/></td><td><s:_>/&lt;Problem&gt;/&lt;User_Name&gt;/&lt;File&gt;</s:_></td></tr>
+<tr><td><input type="radio" name="dir_struct" value="6"/></td><td><s:_>/&lt;User_Id&gt;/&lt;Problem&gt;/&lt;File&gt;</s:_></td></tr>
+<tr><td><input type="radio" name="dir_struct" value="7"/></td><td><s:_>/&lt;User_Login&gt;/&lt;Problem&gt;/&lt;File&gt;</s:_></td></tr>
+<tr><td><input type="radio" name="dir_struct" value="10"/></td><td><s:_>/&lt;User_Name&gt;/&lt;Problem&gt;/&lt;File&gt;</s:_></td></tr>
 </table>
 
-<h2><s:tr>Download runs</s:tr></h2>
+<h2><s:_>Download runs</s:_></h2>
 <table>
 <tr><td><s:submit ac="download-archive-2" /></td></tr>
-<tr><td><s:a ac="main-page"><s:tr>Main page</s:tr></s:a></td></tr>
+<tr><td><s:a ac="main-page"><s:_>Main page</s:_></s:a></td></tr>
 </table>
 </s:form><%@include "priv_footer.csp"
 %><%

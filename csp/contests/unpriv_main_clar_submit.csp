@@ -1,11 +1,11 @@
 <%    if (!global->disable_clars && !global->disable_team_clars && start_time > 0 && stop_time <= 0) {
 %>
-<div class="h2-long"><h2><s:tr>Send a message to judges</s:tr></h2></div>
+<div class="h2-long"><h2><s:_>Send a message to judges</s:_></h2></div>
 <s:form>
-<table class="b0"><tr><td class="b0"><s:tr>Problem</s:tr>:</td><td class="b0"><%
+<table class="b0"><tr><td class="b0"><s:_>Problem</s:_>:</td><td class="b0"><%
       html_problem_selection(cs, out_f, phr, solved_flag, accepted_flag, 0, 1, start_time);
 %></td></tr>
-<tr><td class="b0"><s:tr>Subject</s:tr>:</td><td class="b0"><s:textfield name="subject" value="" size="40" /></td></tr>
+<tr><td class="b0"><s:_>Subject</s:_>:</td><td class="b0"><s:textfield name="subject" value="" size="40" /></td></tr>
 <tr><td colspan="2" class="b0"><textarea name="text" rows="20" cols="60"></textarea></td></tr>
 <tr><td colspan="2" class="b0"><s:submit ac="submit-clar" /></td></tr>
 </table>
@@ -16,12 +16,12 @@
         && global->appeal_deadline > 0
         && cs->current_time < global->appeal_deadline) {
 %>
-<div class="h2-long"><h2><s:tr>Send an appeal</s:tr></h2></div>
+<div class="h2-long"><h2><s:_>Send an appeal</s:_></h2></div>
 <s:form>
-<table class="b0"><tr><td class="b0"><s:tr>Problem</s:tr>:</td><td class="b0"><%
+<table class="b0"><tr><td class="b0"><s:_>Problem</s:_>:</td><td class="b0"><%
       html_problem_selection(cs, out_f, phr, solved_flag, accepted_flag, 0, 1, start_time);
 %></td></tr>
-<tr><td class="b0"><s:tr>Test number</s:tr>:</td><td class="b0"><s:textfield name="test" value="" size="40" /></td></tr>
+<tr><td class="b0"><s:_>Test number</s:_>:</td><td class="b0"><s:textfield name="test" value="" size="40" /></td></tr>
 <tr><td colspan="2" class="b0"><textarea name="text" rows="20" cols="60"></textarea></td></tr>
 <tr><td colspan="2" class="b0"><s:submit ac="submit-appeal" /></td></tr>
 </table>

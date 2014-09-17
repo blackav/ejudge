@@ -75,20 +75,20 @@ ns_unparse_answers(
 </div>
 
 <% if (prob) { %>
-<h2><s:tr>Problem</s:tr> <s:v value="prob->short_name" escape="false"/>: <s:v value="prob->long_name" /></h2>
+<h2><s:_>Problem</s:_> <s:v value="prob->short_name" escape="false"/>: <s:v value="prob->long_name" /></h2>
 <% } %>
 
 <s:form enctype="multipart/form-data">
 
 <table class="b0"><tr>
-<tr><td class="b0"><s:tr>Problem</s:tr>:</td><td class="b0"><s:select name="problem"><%
+<tr><td class="b0"><s:_>Problem</s:_>:</td><td class="b0"><s:select name="problem"><%
   for (i = 1; i <= cs->max_prob; i++) {
     if (!(cs->probs[i])) continue;
 %><s:option value="i" selectedExpr="prob_id > 0 && i == prob_id"><s:v value="cs->probs[i]->short_name" escape="false" /> - <s:v value="cs->probs[i]->long_name" /></s:option><%
   }
 %></s:select></td><td class="b0"><s:submit ac="priv-submit-page" /></td></tr>
 <% if (prob && prob->variant_num > 0) { %>
-<tr><td class="b0"><s:tr>Variant</s:tr>:</td><td class="b0"><s:select name="variant"><%
+<tr><td class="b0"><s:_>Variant</s:_>:</td><td class="b0"><s:select name="variant"><%
     for (i = 0; i <= prob->variant_num; i++) {
 %><s:option value="i" selectedExpr="i == variant"><s:v value="i" checkExpr=" > 0" /></s:option><%
     }
@@ -122,7 +122,7 @@ ns_unparse_answers(
     }
     watched_file_update(pw, pw_path, cs->current_time);
     if (!pw->text) {
-%><big><font color="red"><p><s:tr>The problem statement is not available</s:tr></p></font></big><%
+%><big><font color="red"><p><s:_>The problem statement is not available</s:_></p></font></big><%
      } else {
       fprintf(out_f, "%s", pw->text);
     }
@@ -133,7 +133,7 @@ ns_unparse_answers(
 
 <%  if (!prob || !prob->type) { %>
 <tr>
-<td class="b0"><s:tr>Language</s:tr>:</td><td class="b0"><s:select name="lang_id"><option value=""></option><%
+<td class="b0"><s:_>Language</s:_>:</td><td class="b0"><s:select name="lang_id"><option value=""></option><%
     for (i = 1; i <= cs->max_lang; i++) {
       if (cs->langs[i]) {
 %><s:option value="i"><s:v value="cs->langs[i]->short_name" escape="false" /> - <s:v value="cs->langs[i]->long_name" /></s:option><%
@@ -142,7 +142,7 @@ ns_unparse_answers(
 %></s:select></td></tr>
 
 <% if (cs->global->enable_eoln_select > 0) { %>
-<tr><td class="b0"><s:tr>EOLN Type</s:tr>:</td><td class="b0"><s:select name="eoln_type">
+<tr><td class="b0"><s:_>EOLN Type</s:_>:</td><td class="b0"><s:select name="eoln_type">
 <option value="0"></option>
 <option value="1">LF (Unix/MacOS)</option>
 <option value="2">CRLF (Windows/DOS)</option>
@@ -151,7 +151,7 @@ ns_unparse_answers(
 <% } %>
 
 <%  if (!prob /*|| !prob->type*/) {
-%><tr><td class="b0"><s:tr>File</s:tr></td><td class="b0"><input type="file" name="file" /></td></tr><%
+%><tr><td class="b0"><s:_>File</s:_></td><td class="b0"><input type="file" name="file" /></td></tr><%
    } else {
     switch (prob->type) {
     case PROB_TYPE_STANDARD:
@@ -160,10 +160,10 @@ ns_unparse_answers(
       if (prob->enable_text_form > 0) {
 %><tr><td colspan="2" class="b0"><textarea name="text_form" rows="20" cols="60"></textarea></td></tr><%
       }
-%><tr><td class="b0"><s:tr>File</s:tr></td><td class="b0"><input type="file" name="file"/></td></tr><%
+%><tr><td class="b0"><s:_>File</s:_></td><td class="b0"><input type="file" name="file"/></td></tr><%
       break;
     case PROB_TYPE_SHORT_ANSWER:
-%><tr><td class="b0"><s:tr>Answer</s:tr></td><td class="b0"><input type="text" name="file" /></td></tr><%
+%><tr><td class="b0"><s:_>Answer</s:_></td><td class="b0"><input type="text" name="file" /></td></tr><%
       break;
     case PROB_TYPE_TEXT_ANSWER:
 %><tr><td colspan="2" class="b0"><textarea name="file" rows="20" cols="60"></textarea></td></tr><%
@@ -195,7 +195,7 @@ ns_unparse_answers(
   }
 %>
 <tr><td class="b0">&nbsp;</td><td class="b0"><s:submit ac="submit-run" /></td></tr>
-<tr><td class="b0">&nbsp;</td><td class="b0"><s:a ac="main-page"><s:tr>Main page</s:tr></s:a></td></tr>
+<tr><td class="b0">&nbsp;</td><td class="b0"><s:a ac="main-page"><s:_>Main page</s:_></s:a></td></tr>
 </table>
 </s:form>
 

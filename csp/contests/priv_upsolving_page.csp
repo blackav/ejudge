@@ -39,11 +39,11 @@
 
 <s:form>
 <table>
-<tr><td><s:checkbox name="freeze_standings" checkedExpr="freeze_standings" /></td><td><s:tr>Freeze contest standings</s:tr></td></tr>
-<tr><td><s:checkbox name="view_source" checkedExpr="view_source" /></td><td><s:tr>Allow viewing source code</s:tr></td></tr>
-<tr><td><s:checkbox name="view_protocol" checkedExpr="view_protocol" /></td><td><s:tr>Allow viewing run report</s:tr></td></tr>
-<tr><td><s:checkbox name="full_protocol" checkedExpr="full_protocol" /></td><td><s:tr>Allow viewing full protocol</s:tr></td></tr>
-<tr><td><s:checkbox name="disable_clars" checkedExpr="disable_clars" /></td><td><s:tr>Disable clarifications</s:tr></td></tr>
+<tr><td><s:checkbox name="freeze_standings" checkedExpr="freeze_standings" /></td><td><s:_>Freeze contest standings</s:_></td></tr>
+<tr><td><s:checkbox name="view_source" checkedExpr="view_source" /></td><td><s:_>Allow viewing source code</s:_></td></tr>
+<tr><td><s:checkbox name="view_protocol" checkedExpr="view_protocol" /></td><td><s:_>Allow viewing run report</s:_></td></tr>
+<tr><td><s:checkbox name="full_protocol" checkedExpr="full_protocol" /></td><td><s:_>Allow viewing full protocol</s:_></td></tr>
+<tr><td><s:checkbox name="disable_clars" checkedExpr="disable_clars" /></td><td><s:_>Disable clarifications</s:_></td></tr>
 </table>
 
 <table><tr>

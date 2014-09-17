@@ -39,8 +39,8 @@
 </div>
 
 <table class="b0"><tr>
-<td class="b0"><s:a ac="main-page"><s:tr>Main page</s:tr></s:a></td>
-<td class="b0"><s:a ac="view-testing-queue"><s:tr>Refresh</s:tr></s:a></td>
+<td class="b0"><s:a ac="main-page"><s:_>Main page</s:_></s:a></td>
+<td class="b0"><s:a ac="view-testing-queue"><s:_>Refresh</s:_></s:a></td>
 </tr></table>
 
 <s:form>
@@ -48,15 +48,15 @@
     <tr>
         <th class="b1">NN</th>
         <th class="b1">ContestId</th>
-        <th class="b1"><s:tr>Packet name</s:tr></th>
-        <th class="b1"><s:tr>Priority</s:tr></th>
+        <th class="b1"><s:_>Packet name</s:_></th>
+        <th class="b1"><s:_>Priority</s:_></th>
         <th class="b1">RunId</th>
-        <th class="b1"><s:tr>Problem</s:tr></th>
-        <th class="b1"><s:tr>User</s:tr></th>
-        <th class="b1"><s:tr>Architecture</s:tr></th>
+        <th class="b1"><s:_>Problem</s:_></th>
+        <th class="b1"><s:_>User</s:_></th>
+        <th class="b1"><s:_>Architecture</s:_></th>
         <th class="b1">JudgeId</th>
-        <th class="b1"><s:tr>Create time</s:tr></th>
-        <th class="b1"><s:tr>Actions</s:tr></th>
+        <th class="b1"><s:_>Create time</s:_></th>
+        <th class="b1"><s:_>Actions</s:_></th>
     </tr>
 <%  for (i = 0; i < vec.u; ++i) {
     const struct super_run_in_global_packet *srgp = vec.v[i].packet->global;
@@ -117,10 +117,10 @@
 </s:form>
 
 <table class="b0"><tr>
-<td class="b0"><s:a ac="main-page"><s:tr>Main page</s:tr></s:a></td>
-<td class="b0"><s:a ac="testing-delete-all"><s:tr>Delete all</s:tr></s:a></td>
-<td class="b0"><s:a ac="testing-up-all"><s:tr>Up all</s:tr></s:a></td>
-<td class="b0"><s:a ac="testing-down-all"><s:tr>Down all</s:tr></s:a></td>
+<td class="b0"><s:a ac="main-page"><s:_>Main page</s:_></s:a></td>
+<td class="b0"><s:a ac="testing-delete-all"><s:_>Delete all</s:_></s:a></td>
+<td class="b0"><s:a ac="testing-up-all"><s:_>Up all</s:_></s:a></td>
+<td class="b0"><s:a ac="testing-down-all"><s:_>Down all</s:_></s:a></td>
 </tr></table>
 
 <%@include "priv_footer.csp"

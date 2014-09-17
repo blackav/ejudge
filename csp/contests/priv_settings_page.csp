@@ -19,15 +19,15 @@
 
 <table class="b0">
     <tr>
-        <td class="b0"><s:a ac="main-page"><s:tr>Main page</s:tr></s:a></td>
-        <td class="b0"><s:a ac="admin-contest-settings"><s:tr>Refresh</s:tr></s:a></td>
+        <td class="b0"><s:a ac="main-page"><s:_>Main page</s:_></s:a></td>
+        <td class="b0"><s:a ac="admin-contest-settings"><s:_>Refresh</s:_></s:a></td>
     </tr>
 </table>
 <hr/>
 
 <table class="b0">
     <tr>
-        <td class="b0"><s:tr>Participants can view their source code</s:tr></td>
+        <td class="b0"><s:_>Participants can view their source code</s:_></td>
         <td class="b0"><%
   if (!cs->online_view_source) {
 %>Default (<s:vb value="global-&gt;team_enable_src_view &gt; 0" />)<%
@@ -35,13 +35,13 @@
 %><s:vb value="cs->online_view_source &gt;= 0" /><%
   } %></td>
         <td class="b0"><s:form><s:select name="param">
-<s:option value="0" selectedExpr="!cs->online_view_source"><s:tr>Default</s:tr></s:option>
-<s:option value="-1" selectedExpr="cs->online_view_source < 0"><s:tr>No</s:tr></s:option>
-<s:option value="1" selectedExpr="cs->online_view_source > 0"><s:tr>Yes</s:tr></s:option>
+<s:option value="0" selectedExpr="!cs->online_view_source"><s:_>Default</s:_></s:option>
+<s:option value="-1" selectedExpr="cs->online_view_source < 0"><s:_>No</s:_></s:option>
+<s:option value="1" selectedExpr="cs->online_view_source > 0"><s:_>Yes</s:_></s:option>
 </s:select><s:submit ac="admin-change-online-view-source" /></s:form></td>
     </tr>
     <tr>
-        <td class="b0"><s:tr>Participants can view testing reports</s:tr></td>
+        <td class="b0"><s:_>Participants can view testing reports</s:_></td>
         <td class="b0"><%
   if (!cs->online_view_report) {
 %>Default<%
@@ -51,29 +51,29 @@
 %>Yes<%
   } %></td>
         <td class="b0"><s:form><s:select name="param">
-<s:option value="0" selectedExpr="!cs->online_view_report"><s:tr>Default</s:tr></s:option>
-<s:option value="-1" selectedExpr="cs->online_view_report < 0"><s:tr>No</s:tr></s:option>
-<s:option value="1" selectedExpr="cs->online_view_report > 0"><s:tr>Yes</s:tr></s:option>
+<s:option value="0" selectedExpr="!cs->online_view_report"><s:_>Default</s:_></s:option>
+<s:option value="-1" selectedExpr="cs->online_view_report < 0"><s:_>No</s:_></s:option>
+<s:option value="1" selectedExpr="cs->online_view_report > 0"><s:_>Yes</s:_></s:option>
 </s:select><s:submit ac="admin-change-online-view-report" /></s:form></td>
     </tr>
 
 <%  if (global->separate_user_score > 0) { %>
     <tr>
-        <td class="b0"><s:tr>Participants view judge score</s:tr></td>
+        <td class="b0"><s:_>Participants view judge score</s:_></td>
         <td class="b0"><s:vb value="cs->online_view_judge_score > 0" /></td>
         <td class="b0"><s:form><s:select name="param">
-<s:option value="0" selectedExpr="cs->online_view_judge_score <= 0"><s:tr>No</s:tr></s:option>
-<s:option value="1" selectedExpr="cs->online_view_judge_score > 0"><s:tr>Yes</s:tr></s:option>
+<s:option value="0" selectedExpr="cs->online_view_judge_score <= 0"><s:_>No</s:_></s:option>
+<s:option value="1" selectedExpr="cs->online_view_judge_score > 0"><s:_>Yes</s:_></s:option>
 </s:select><s:submit ac="admin-change-online-view-judge-score" /></s:form></td>
     </tr>
 <%  } %>
 
     <tr>
-        <td class="b0"><s:tr>Final test visibility rules</s:tr></td>
+        <td class="b0"><s:_>Final test visibility rules</s:_></td>
         <td class="b0"><s:vb value="cs->online_final_visibility > 0" /></td>
         <td class="b0"><s:form><s:select name="param">
-<s:option value="0" selectedExpr="cs->online_final_visibility <= 0"><s:tr>No</s:tr></s:option>
-<s:option value="1" selectedExpr="cs->online_final_visibility > 0"><s:tr>Yes</s:tr></s:option>
+<s:option value="0" selectedExpr="cs->online_final_visibility <= 0"><s:_>No</s:_></s:option>
+<s:option value="1" selectedExpr="cs->online_final_visibility > 0"><s:_>Yes</s:_></s:option>
 </s:select><s:submit ac="admin-change-online-final-visibility" /></s:form></td>
     </tr>
 </table>
@@ -82,8 +82,8 @@
 
 <table class="b0">
     <tr>
-        <td class="b0"><s:a ac="main-page"><s:tr>Main page</s:tr></s:a></td>
-        <td class="b0"><s:a ac="admin-contest-settings"><s:tr>Refresh</s:tr></s:a></td>
+        <td class="b0"><s:a ac="main-page"><s:_>Main page</s:_></s:a></td>
+        <td class="b0"><s:a ac="admin-contest-settings"><s:_>Refresh</s:_></s:a></td>
     </tr>
 </table>
 <%@include "priv_footer.csp"

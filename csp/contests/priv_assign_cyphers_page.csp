@@ -19,12 +19,12 @@
 
 <s:form>
 <table>
-<tr><td><s:textfield name="prefix" size="16" value="" /></td><td><s:tr>Cypher prefix</s:tr></td></tr>
-<tr><td><s:textfield name="min_num" size="16" value="" /></td><td><s:tr>Minimal random number</s:tr></td></tr>
-<tr><td><s:textfield name="max_num" size="16" value="" /></td><td><s:tr>Maximal random number</s:tr></td></tr>
-<tr><td><s:textfield name="seed" size="16" value="" /></td><td><s:tr>Random seed</s:tr></td></tr>
-<tr><td><s:textfield name="mult" size="16" value="" /></td><td><s:tr>Mult parameter</s:tr></td></tr>
-<tr><td><s:textfield name="shift" size="16" value="" /></td><td><s:tr>Shift parameter</s:tr></td></tr>
+<tr><td><s:textfield name="prefix" size="16" value="" /></td><td><s:_>Cypher prefix</s:_></td></tr>
+<tr><td><s:textfield name="min_num" size="16" value="" /></td><td><s:_>Minimal random number</s:_></td></tr>
+<tr><td><s:textfield name="max_num" size="16" value="" /></td><td><s:_>Maximal random number</s:_></td></tr>
+<tr><td><s:textfield name="seed" size="16" value="" /></td><td><s:_>Random seed</s:_></td></tr>
+<tr><td><s:textfield name="mult" size="16" value="" /></td><td><s:_>Mult parameter</s:_></td></tr>
+<tr><td><s:textfield name="shift" size="16" value="" /></td><td><s:_>Shift parameter</s:_></td></tr>
 <tr><td><s:submit ac="assign-cyphers-2" /></td><td>&nbsp;</td></tr>
 </table>
 </s:form>

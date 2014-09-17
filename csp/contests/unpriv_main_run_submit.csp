@@ -13,10 +13,10 @@
       prob_id = 0;
 
     if (start_time > 0 && stop_time <= 0 && !prob_id) {
-%><div class="h2-long"><h2><s:tr>View the problem statement and send a submission</s:tr></h2></div>
+%><div class="h2-long"><h2><s:_>View the problem statement and send a submission</s:_></h2></div>
 <s:form>
 <table class="b0">
-<tr><td class="b0"><s:tr>Problem</s:tr>:</td><td class="b0"><%
+<tr><td class="b0"><s:_>Problem</s:_>:</td><td class="b0"><%
       html_problem_selection(cs, out_f, phr, solved_flag, accepted_flag, 0, 0, start_time);
 %></td><td class="b0"><s:submit ac="view-problem-submit" label="Select problem" /></td></tr></table>
 </s:form>
@@ -88,7 +88,7 @@
         ignored_set |= 1 << RUN_IGNORED;
         int remain_count = prob->max_user_run_count - run_count_all_attempts_2(cs->runlog_state, phr->user_id, prob_id, ignored_set);
         if (remain_count < 0) remain_count = 0;
-%><h3><s:tr>Remaining attempts</s:tr>: <s:v value="remain_count" /></h3>
+%><h3><s:_>Remaining attempts</s:_>: <s:v value="remain_count" /></h3>
 <%
         if (remain_count <= 0) prob_status[prob_id] &= ~PROB_STATUS_SUBMITTABLE;
       }
@@ -118,7 +118,7 @@
         }
         watched_file_update(pw, pw_path, cs->current_time);
         if (!pw->text) {
-%><s:v value="bb" escape="false" /><big><font color="red"><p><s:tr>The problem statement is not available</s:tr></p></font></big>
+%><s:v value="bb" escape="false" /><big><font color="red"><p><s:_>The problem statement is not available</s:_></p></font></big>
 <%
         } else {
           if (cnts->exam_mode) bb[0] = 0;
@@ -162,11 +162,11 @@
 
           if (lang_count == 1) {
 %><s:hidden name="lang_id" value="lang_id" />
-<tr><td class="b0"><s:tr>Language</s:tr>:</td><td class="b0"><s:v value="cs->langs[lang_id]->short_name" escape="false" /> - <s:v value="cs->langs[lang_id]->long_name" /></td></tr>
+<tr><td class="b0"><s:_>Language</s:_>:</td><td class="b0"><s:v value="cs->langs[lang_id]->short_name" escape="false" /> - <s:v value="cs->langs[lang_id]->long_name" /></td></tr>
 <%
           } else {
             last_lang_id = get_last_language(cs, phr->user_id, &last_eoln_type);
-%><tr><td class="b0"><s:tr>Language</s:tr>:</td><td class="b0"><s:select name="lang_id"><option value=""></option><%
+%><tr><td class="b0"><s:_>Language</s:_>:</td><td class="b0"><s:select name="lang_id"><option value=""></option><%
             for (i = 1; i <= cs->max_lang; i++) {
               if (!cs->langs[i] || cs->langs[i]->disabled
                   || (cs->langs[i]->insecure && global->secure_run)) continue;
@@ -188,7 +188,7 @@
           }
 %><%
           if (cs->global->enable_eoln_select > 0) {
-%><tr><td class="b0"><s:tr>Desired EOLN Type</s:tr>:</td><td class="b0"><s:select name="eoln_type">
+%><tr><td class="b0"><s:_>Desired EOLN Type</s:_>:</td><td class="b0"><s:select name="eoln_type">
 <option value="0"></option>
 <s:option value="1" selectedExpr="last_eoln_type == 1">LF (Unix/MacOS)</s:option>
 <s:option value="2" selectedExpr="last_eoln_type == 2">CRLF (Windows/DOS)</s:option>
@@ -210,7 +210,7 @@
 %><tr><td colspan="2" class="b0"><textarea name="text_form" rows="20" cols="60"></textarea></td></tr>
 <%
           }
-%><tr><td class="b0"><s:tr>File</s:tr></td><td class="b0"><input type="file" name="file"/></td></tr>
+%><tr><td class="b0"><s:_>File</s:_></td><td class="b0"><input type="file" name="file"/></td></tr>
 <%
           break;
         case PROB_TYPE_SHORT_ANSWER:
@@ -219,10 +219,10 @@
             last_source = get_last_source(cs, phr->user_id, prob->id);
           }
           if (last_source) {
-%><tr><td class="b0"><s:tr>Answer</s:tr></td><td class="b0"><s:textfield name="file" value="last_source" /></td></tr>
+%><tr><td class="b0"><s:_>Answer</s:_></td><td class="b0"><s:textfield name="file" value="last_source" /></td></tr>
 <%
           } else {
-%><tr><td class="b0"><s:tr>Answer</s:tr></td><td class="b0"><input type="text" name="file" /></td></tr>
+%><tr><td class="b0"><s:_>Answer</s:_></td><td class="b0"><input type="text" name="file" /></td></tr>
 <%
           }
           xfree(last_source); last_source = 0;
@@ -291,7 +291,7 @@
             fprintf(out_f, "</tr></table></form>");
           }
         } else {
-%><tr><td class="b0"><s:tr>Send!</s:tr></td><td class="b0"><s:submit ac="submit-run" /></td></tr></table></form>
+%><tr><td class="b0"><s:_>Send!</s:_></td><td class="b0"><s:submit ac="submit-run" /></td></tr></table></form>
 <%
         }
       } /* prob->disable_user_submit <= 0 */
@@ -301,10 +301,10 @@
           && prob->type != PROB_TYPE_SELECT_ONE
           && all_attempts[prob->id]) {
         if (all_attempts[prob->id] <= 15) {
-%><h2><s:tr>Previous submissions of this problem</s:tr></h2>
+%><h2><s:_>Previous submissions of this problem</s:_></h2>
 <%
         } else {
-%><h2><s:tr>Previous submissions of this problem</s:tr> (<s:tr>last 15</s:tr>)</h2>
+%><h2><s:_>Previous submissions of this problem</s:_> (<s:_>last 15</s:_>)</h2>
 <%
         }
         if (cs->contest_plugin && cs->contest_plugin->generate_html_user_runs){
@@ -326,7 +326,7 @@
 %><%
       if (!cnts->exam_mode) {
         if (global->problem_navigation <= 0) {
-%><h2><s:tr>Select another problem</s:tr></h2>
+%><h2><s:_>Select another problem</s:_></h2>
 <%
         } else {
           /*
@@ -347,12 +347,12 @@
           if (i > 0) {
 %><s:url name="ProblemUrl" ac="view-problem-submit">
 <s:param name="prob_id" value="i" />
-</s:url><td class="b0"><s:a url="ProblemUrl"><s:tr>Previous problem</s:tr></s:a></td><%
+</s:url><td class="b0"><s:a url="ProblemUrl"><s:_>Previous problem</s:_></s:a></td><%
           }
         }
 
         if (global->problem_navigation <= 0) {
-%><td class="b0"><s:tr>Problem</s:tr>:</td><td class="b0"><%
+%><td class="b0"><s:_>Problem</s:_>:</td><td class="b0"><%
           html_problem_selection(cs, out_f, phr, solved_flag, accepted_flag, 0, 0, start_time);
 %></td><td class="b0"><s:submit ac="view-problem-submit" /></td><%
         }
@@ -365,7 +365,7 @@
           if (i <= cs->max_prob) {
 %><s:url name="ProblemUrl" ac="view-problem-submit">
 <s:param name="prob_id" value="i" />
-</s:url><td class="b0"><s:a url="ProblemUrl"><s:tr>Next problem</s:tr></s:a></td><%
+</s:url><td class="b0"><s:a url="ProblemUrl"><s:_>Next problem</s:_></s:a></td><%
           }
         }
 %></tr></table>

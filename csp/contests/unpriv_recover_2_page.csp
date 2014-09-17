@@ -1,4 +1,4 @@
-<%
+<% // -*- mode: html -*-
 /* $Id$ */
 %><%@include "unpriv_includes.csp"
 %><%
@@ -76,20 +76,20 @@
 <%@include "unpriv_separator.csp"
 %>
 <% if (r < 0) { %>
-<p><s:tr>Password recovery is not possible because of the following error.</s:tr></p>
+<p><s:_>Password recovery is not possible because of the following error.</s:_></p>
 <font color="red"><pre><%
     if (r == -ULS_ERR_EMAIL_FAILED) {
-%><s:tr>The server was unable to send a registration e-mail
+%><s:_>The server was unable to send a registration e-mail
 to the specified address. This is probably due
 to heavy server load rather than to an invalid
 e-mail address. You should try to register later.
-</s:tr><%
+</s:_><%
     } else {
       fprintf(log_f, gettext(userlist_strerror(-r)));
     }
 %></pre></font>
 <% } else { %>
-<s:tr><p class="fixed_width">First stage of password recovery is successful. You should receive an e-mail message with further instructions. <b>Note,</b> that you should confirm password recovery in 24 hours, or operation will be cancelled.</p></s:tr>
+<s:_><p class="fixed_width">First stage of password recovery is successful. You should receive an e-mail message with further instructions. <b>Note,</b> that you should confirm password recovery in 24 hours, or operation will be cancelled.</p></s:_>
 <% } %>
 <%@include "unpriv_footer.csp"
 %><%

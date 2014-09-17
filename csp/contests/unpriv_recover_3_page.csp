@@ -1,4 +1,4 @@
-<%
+<% // -*- mode: html -*-
 /* $Id$ */
 %><%@include "unpriv_includes.csp"
 %><%
@@ -77,23 +77,23 @@
 <%@include "unpriv_separator.csp"
 %>
 <% if (r < 0) { %>
-<p><s:tr>Password recovery is not possible because of the following error.</s:tr></p>
+<p><s:_>Password recovery is not possible because of the following error.</s:_></p>
 <font color="red"><pre><%
     if (r == -ULS_ERR_EMAIL_FAILED) {
-%><s:tr>The server was unable to send a registration e-mail
+%><s:_>The server was unable to send a registration e-mail
 to the specified address. This is probably due
 to heavy server load rather than to an invalid
 e-mail address. You should try to register later.
-</s:tr><%
+</s:_><%
     } else {
       fprintf(out_f, gettext(userlist_strerror(-r)));
     }
 %></pre></font>
 <% } else { %>
-<p><s:tr>New password is generated.</s:tr></p>
+<p><s:_>New password is generated.</s:_></p>
 <table>
-    <tr><td class="menu"><s:tr>Login</s:tr></td><td class="menu"><tt><s:v value="login" /></tt></td></tr>
-    <tr><td class="menu"><s:tr>Password</s:tr></td><td class="menu"><tt><s:v value="passwd" /></tt></td></tr>
+    <tr><td class="menu"><s:_>Login</s:_></td><td class="menu"><tt><s:v value="login" /></tt></td></tr>
+    <tr><td class="menu"><s:_>Password</s:_></td><td class="menu"><tt><s:v value="passwd" /></tt></td></tr>
 </table>
 <%
   if (regstatus >= 0) {
@@ -114,8 +114,8 @@ e-mail address. You should try to register later.
 <s:hidden name="action" ac="reg-login" />
 <%  } %>
 <table>
-    <tr><td class="menu"><s:tr>Login</s:tr>:</td><td class="menu"><s:textfield name="login" size="16" value="login" /></td></tr>
-    <tr><td class="menu"><s:tr>Password</s:tr>:</td><td class="menu"><s:textfield name="password" size="16" value="passwd" /></td></tr>
+    <tr><td class="menu"><s:_>Login</s:_>:</td><td class="menu"><s:textfield name="login" size="16" value="login" /></td></tr>
+    <tr><td class="menu"><s:_>Password</s:_>:</td><td class="menu"><s:textfield name="password" size="16" value="passwd" /></td></tr>
     <tr><td class="menu">&nbsp;</td><td class="menu"><s:submit name="submit" label="Submit" /></td></tr>
 </table>
 </form>

@@ -91,19 +91,19 @@ ns_edit_general_form(
 %>
 <%
   if (phr->reg_status < 0) {
-%><div class="server_status_off"><b><s:tr>NOT REGISTERED</s:tr></b></div><%
+%><div class="server_status_off"><b><s:_>NOT REGISTERED</s:_></b></div><%
   } else if (phr->reg_status == USERLIST_REG_PENDING) {
-%><div class="server_status_alarm"><b><s:tr>REGISTERED, PENDING APPROVAL</s:tr></b></div><%
+%><div class="server_status_alarm"><b><s:_>REGISTERED, PENDING APPROVAL</s:_></b></div><%
   } else if (phr->reg_status == USERLIST_REG_REJECTED) {
-%><div class="server_status_error"><b><s:tr>REGISTRATION REJECTED</s:tr></b></div><%
+%><div class="server_status_error"><b><s:_>REGISTRATION REJECTED</s:_></b></div><%
   } else if ((phr->reg_flags & USERLIST_UC_BANNED)) {
-%><div class="server_status_error"><b><s:tr>REGISTERED, BANNED</s:tr></b></div><%
+%><div class="server_status_error"><b><s:_>REGISTERED, BANNED</s:_></b></div><%
   } else if ((phr->reg_flags & USERLIST_UC_LOCKED)) {
-%><div class="server_status_error"><b><s:tr>REGISTERED, LOCKED</s:tr></b></div><%
+%><div class="server_status_error"><b><s:_>REGISTERED, LOCKED</s:_></b></div><%
   } else if ((phr->reg_flags & USERLIST_UC_INVISIBLE)) {
-%><div class="server_status_on"><b><s:tr>REGISTERED (INVISIBLE)</s:tr></b></div><%
+%><div class="server_status_on"><b><s:_>REGISTERED (INVISIBLE)</s:_></b></div><%
   } else {
-%><div class="server_status_on"><b><s:tr>REGISTERED</s:tr></b></div><%
+%><div class="server_status_on"><b><s:_>REGISTERED</s:_></b></div><%
   }
 %>
 <%
@@ -112,7 +112,7 @@ ns_edit_general_form(
 %><br/><h2><% fputs(gettext(ns_role_labels[role]), out_f); %> <s:v value="member + 1" /></h2><%
     ns_edit_member_form(out_f, phr, cnts, m, role, member, 0, 0, 0);
   } else {
-%><br/><h2><s:tr>General information</s:tr></h2><%
+%><br/><h2><s:_>General information</s:_></h2><%
     ns_edit_general_form(out_f, phr, cnts, u);
   }
 %>
