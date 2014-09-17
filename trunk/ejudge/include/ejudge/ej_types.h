@@ -19,6 +19,8 @@
 
 #include "ejudge/integral.h"
 
+#include <stdio.h>
+
 /* special types used to store/send data in binary format */
 typedef rint32_t  ej_time_t;     /* time_t as stored in files */
 typedef long long ej_time64_t;   /* time_t for new file formats */
@@ -151,5 +153,36 @@ enum
 };
 
 const unsigned char *eoln_type_unparse_html(int value);
+
+typedef struct Session
+{
+  unsigned long long session_id;
+  unsigned long long client_key;
+} Session;
+
+const unsigned char *
+session_unparse(
+        unsigned char *buf,
+        size_t size,
+        const Session *ps);
+const unsigned char *
+session_unparse_2(
+        unsigned char *buf,
+        size_t size,
+        unsigned long long session_id,
+        unsigned long long client_key);
+void
+session_unparse_f(
+        FILE *out_f,
+        const Session *ps);
+void
+session_unparse_2_f(
+        FILE *out_f,
+        unsigned long long session_id,
+        unsigned long long client_key);
+int
+session_parse(
+        Session *ps,
+        const unsigned char *str);
 
 #endif /* __EJ_TYPES_H__ */
