@@ -216,6 +216,7 @@ COMMON_CFILES=\
  server_framework.c\
  serve_2.c\
  serve_state.c\
+ session.c\
  sformat.c\
  shellcfg_parse.c\
  stringset.c\
