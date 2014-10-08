@@ -628,8 +628,11 @@ parse_base_type_die(
         goto done;
     if (s_dwarf_attr_2(log_f, path, die, DW_AT_encoding, &enc_attr) <= 0)
         goto done;
-    if (s_dwarf_attr_2(log_f, path, die, DW_AT_name, &name_attr) <= 0)
+    if (s_dwarf_attr_2(log_f, path, die, DW_AT_name, &name_attr) <= 0) {
+        // this happens on Debian
+        retval = 0;
         goto done;
+    }
 
     Dwarf_Unsigned bs = 0;
     Dwarf_Unsigned enc = 0;
