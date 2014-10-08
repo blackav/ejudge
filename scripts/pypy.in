@@ -1,0 +1,34 @@
+#!/bin/sh
+# $Id$
+# Copyright (c) 2014 Alexander Chernov <cher@ejudge.ru>
+
+# This is a `compilation' script for the Python language.
+# The idea is to append "#!${PYTHONPATH}" string
+# to the beginning of the file.
+# Usage: python <input> <output>
+
+# using EJUDGE_FLAGS we may pass additional flags
+
+LANG_CONFIG_DIR="@lang_config_dir@"
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/pypy.cfg"
+
+if [ -f "${EJUDGE_LANG_CONFIG}" ]
+then
+  . "${EJUDGE_LANG_CONFIG}"
+else
+  version="unknown"
+  PYTHONPATH="/usr/bin/pypy"
+fi
+
+if [ x"${version}" = x ]
+then
+  echo "This language is not supported." >&2
+  exit 1
+fi
+
+echo "#! ${PYTHONPATH} -W ignore ${EJUDGE_FLAGS}" > $2
+echo "# coding: latin1" >> $2
+echo >> $2
+cat $1 >> $2
+chmod +x $2
+exit 0

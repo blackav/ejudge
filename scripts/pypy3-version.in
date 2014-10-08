@@ -1,11 +1,11 @@
 #!/bin/sh
 # $Id$
-# Copyright (c) 2005-2014 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2014 Alexander Chernov <cher@ejudge.ru>
 
 LANG_CONFIG_DIR="@lang_config_dir@"
 
 common_config() {
-  echo 'long_name="Python3"'
+  echo 'long_name="Python3 (PyPy)"'
   echo 'src_sfx=".py"'
   echo 'arch="linux-shared"'
 }
@@ -36,11 +36,11 @@ if [ x"$1" = x-r ]
 then
   arg="$2"
   [ x"$2" != x ] && python3="$2"
-  [ "${python3}" = "" ] && python3="python3"
+  [ "${python3}" = "" ] && python3="pypy3"
 
-  [ "${verbose}" = 1 ] && echo -n "checking whether Python3 is available..." >&2
+  [ "${verbose}" = 1 ] && echo -n "checking whether Python 3 (PyPy) is available..." >&2
   "${python3}" -V >/dev/null 2>&1 || failure
-  version=`"${python3}" -V 2>&1 | gawk '{ print $2; }'` || failure
+  version=`"${python3}" -V 2>&1 | head -1 | gawk '{ print $2; }'` || failure
   [ "${version}" != "" ] || failure
   PYTHONPATH=`which "${python3}"` || failure
   [ "${PYTHONPATH}" != "" ] || failure
@@ -60,17 +60,17 @@ fi
 
 if [ x"$1" = x-l ]
 then
-  echo "Python3 interpreter [http://www.python.org]"
+  echo "Python3 JIT interpreter [http://www.pypy.org]"
   exit 0
 fi
 
-[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/python3.cfg"
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/pypy3.cfg"
 
 if [ -f "${EJUDGE_LANG_CONFIG}" ]
 then
   . "${EJUDGE_LANG_CONFIG}"
 else
-  PYTHONPATH="/usr/local/bin/python3"
+  PYTHONPATH="/usr/local/bin/pypy3"
 fi
 
 if [ x"${PYTHONPATH}" = x -o x"${PYTHONPATH}" = x/bin/false ]
@@ -87,6 +87,6 @@ fi
 
 "${PYTHONPATH}" -V 2>/dev/null >/dev/null || exit 1
     
-[ x"$1" = x-f ] && echo -n "Python3 "
+[ x"$1" = x-f ] && echo -n "Python3 (PyPy) "
 
-"${PYTHONPATH}" -V 2>&1 | gawk '{ print $2; }'
+"${PYTHONPATH}" -V 2>&1 | head -1 | gawk '{ print $2; }'
