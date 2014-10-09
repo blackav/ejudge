@@ -1,0 +1,50 @@
+#!/bin/sh
+# $Id$
+# Copyright (c) 2010-2014 Alexander Chernov <cher@ejudge.ru>
+
+# This is a `compilation' script for the Kumir language.
+# Usage: kumir <input> <output>
+
+# using EJUDGE_FLAGS we may pass additional flags
+
+LANG_CONFIG_DIR="@lang_config_dir@"
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/kumir2.cfg"
+
+if [ -f "${EJUDGE_LANG_CONFIG}" ]
+then
+  . "${EJUDGE_LANG_CONFIG}"
+else
+  version="unknown"
+  KUMIRPATH="/usr/local/bin/kumir2-bc"
+fi
+
+if [ x"${version}" = x ]
+then
+  echo "This language is not supported." >&2
+  exit 1
+fi
+
+if grep __END__ "$1"
+then
+  echo "Program must not contain __END__" >&2
+  exit 1
+fi
+
+expected_output="${1/.kum/.kod}"
+
+"${KUMIRPATH}" -e=UTF-8 "$1"
+retval=$?
+if [ "$retval" != 0 ]
+then
+  exit $retval
+fi
+
+if [ ! -x "${expected_output}" ]
+then
+  exit 1
+fi
+
+mv "${expected_output}" "$2"
+
+chmod +x "$2"
+exit 0
