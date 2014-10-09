@@ -1,0 +1,102 @@
+#!/bin/sh
+# -*- coding: utf-8 -*-
+# $Id$
+# Copyright (c) 2014 Alexander Chernov <cher@ejudge.ru>
+
+LANG_CONFIG_DIR="@lang_config_dir@"
+
+common_config() {
+  echo 'long_name="Kumir2"'
+  echo 'src_sfx=".kum"'
+  echo 'arch="linux-shared"'
+}
+
+failure() {
+  rm -f conftest*
+  echo 'version='
+  echo 'arg="'"${arg}"'"'
+  common_config
+  echo 'KUMIRPATH=/bin/false'
+  [ "${verbose}" = 1 ] && echo "no" >&2
+  exit 1
+}
+
+unset LANG
+unset LC_ALL
+unset LC_MESSAGES
+unset LANGUAGE
+
+if [ x"$1" = x-v ]
+then
+  verbose=1
+  shift
+fi
+
+# recheck the language
+if [ x"$1" = x-r ]
+then
+  arg="$2"
+  [ x"$2" != x ] && kumir="$2"
+  [ "${kumir}" = "" ] && kumir="kumir2-bc"
+
+  [ "${verbose}" = 1 ] && echo -n "checking whether Kumir2 is available..." >&2
+  "${kumir}" --help >/dev/null 2>&1 || failure
+#  version=`"${python}" -V 2>&1 | gawk '{ print $2; }'` || failure
+#  [ "${version}" != "" ] || failure
+  version=unknown
+  KUMIRPATH=`which "${kumir}"` || failure
+  [ "${KUMIRPATH}" != "" ] || failure
+  cat << __END__ > conftest.kum
+алг тест
+нач
+вывод "OK", нс
+кон
+__END__
+  chmod +x ./conftest.kum || failure
+  "${KUMIRPATH}" -e=UTF-8 ./conftest.kum >/dev/null 2>&1 || failure
+  [ -x ./conftest.kod ] || failure
+  ./conftest.kod >/dev/null 2>&1 || failure
+
+  rm -f ./conftest*
+  echo 'version="'"${version}"'"'
+  echo 'arg="'"${arg}"'"'
+  common_config
+  echo 'secure=1'
+  echo 'KUMIRPATH="'"${KUMIRPATH}"'"'
+  [ "${verbose}" = 1 ] && echo "yes, ${KUMIRPATH}, ${version}" >&2
+  exit 0
+fi
+
+if [ x"$1" = x-l ]
+then
+  echo "Kumir2 [http://www.niisi.ru/kumir/index.htm]"
+  exit 0
+fi
+
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/kumir2.cfg"
+
+if [ -f "${EJUDGE_LANG_CONFIG}" ]
+then
+  . "${EJUDGE_LANG_CONFIG}"
+else
+  KUMIRPATH="/usr/local/bin/kumir2-bc"
+fi
+
+if [ x"${KUMIRPATH}" = x -o x"${KUMIRPATH}" = x/bin/false ]
+then
+  echo "This language is not supported." >&2
+  exit 1
+fi
+
+if [ x"$1" = x-p ]
+then
+    echo "${KUMIRPATH}"
+    exit 0
+fi
+
+"${KUMIRPATH}" --help 2>/dev/null >/dev/null || exit 1
+    
+[ x"$1" = x-f ] && echo -n "Kumir2 "
+
+echo "(unknown version)"
+#"${KUMIRPATH}" -V 2>&1 | gawk '{ print $2; }'
