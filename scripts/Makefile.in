@@ -2,7 +2,7 @@
 # $Id$
 # @configure_input@
 
-# Copyright (C) 2004-2013 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2004-2014 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -92,6 +92,8 @@ SCRIPTS_IN = \
  gprolog-version.in\
  kumir.in\
  kumir-version.in\
+ kumir2.in\
+ kumir2-version.in\
  mzscheme.in\
  mzscheme-version.in\
  nasm-x86.in\
@@ -106,6 +108,10 @@ SCRIPTS_IN = \
  python-version.in\
  python3.in\
  python3-version.in\
+ pypy.in\
+ pypy-version.in\
+ pypy3.in\
+ pypy3-version.in\
  ruby.in\
  ruby-version.in\
  tpc.in\
