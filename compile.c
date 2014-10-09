@@ -600,10 +600,12 @@ filter_languages(char *key)
   for (i = 1; i <= serve_state.max_lang; i++) {
     total += serve_state.langs[i] != 0;
   }
+  /*
   if (!total) {
     err("No languages after filter %s", key);
     return -1;
   }
+  */
   return 0;
 }
 
@@ -623,10 +625,12 @@ check_config(void)
     if (check_executable(serve_state.langs[i]->cmd) < 0) return -1;
   }
 
+  /*
   if (!total) {
     err("no languages");
     return -1;
   }
+  */
   return 0;
 }
 
