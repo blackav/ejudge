@@ -352,7 +352,7 @@ struct-sizes : struct-sizes.o
 	$(LD) $(LDFLAGS) $^ -o $@ $(LDLIBS) ${EXPAT_LIB}
 
 ejudge-install.sh : ejudge-setup
-	./ejudge-setup -b
+	./ejudge-setup -b -i scripts/lang_ids.cfg
 
 local_clean:
 	-rm -f *.o *~ *.a $(TARGETS) revinfo newrevinfo version.c $(ARCH)/*.o ejudge.po mkChangeLog2 userlist_clnt/*.o xml_utils/*.o super_clnt/*.o cdeps deps.make filter_expr.[ch] filter_scan.c users users${CGI_PROG_SUFFIX} ejudge-config serve-control serve-control${CGI_PROG_SUFFIX} prjutils2/*.o make-js-actions new_server_clnt/*.o mktable struct-sizes *.debug
