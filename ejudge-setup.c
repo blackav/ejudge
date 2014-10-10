@@ -167,6 +167,8 @@ static unsigned char const password_accept_chars[] =
 "`abcdefghijklmnopqrstuvwxyz{|}~ ¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿"
 "ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ";
 
+static unsigned char *lang_ids_file = 0;
+
 /* enumeration for path editing */
 enum
 {
@@ -3578,7 +3580,7 @@ do_preview_menu(void)
   snprintf(script_dir, sizeof(script_dir), "%s/lang",
            tmp_work_dir);
   lang_configure_screen(script_dir, script_in_dirs, 0,
-                        tmp_work_dir, NULL, 0, 0, preview_header, 0);
+                        tmp_work_dir, NULL, lang_ids_file, 0, 0, preview_header, 0);
 
   while (1) {
     mvwprintw(stdscr, 0, 0, "Ejudge %s configurator > File preview",
@@ -4264,7 +4266,7 @@ preview_install_script(void)
   script_in_dirs[1] = 0;
   snprintf(script_dir, sizeof(script_dir), "%s/lang", tmp_work_dir);
   lang_configure_screen(script_dir, script_in_dirs, 0,
-                        tmp_work_dir, NULL, 0, 0, header, 0);
+                        tmp_work_dir, NULL, lang_ids_file, 0, 0, header, 0);
 
   /*
   snprintf(script_dir, sizeof(script_dir), "%s/lang",
@@ -4301,7 +4303,7 @@ save_install_script(int batch_mode, const unsigned char *output_name)
   script_in_dirs[0] = script_in_dir0;
   script_in_dirs[1] = 0;
   snprintf(script_dir, sizeof(script_dir), "%s/lang", tmp_work_dir);
-  lang_configure_screen(script_dir, script_in_dirs, 0, tmp_work_dir, NULL,
+  lang_configure_screen(script_dir, script_in_dirs, 0, tmp_work_dir, NULL, lang_ids_file,
                         0, 0, header, batch_mode);
 
   if (check_install_script_validity() < 0) return;
@@ -4419,7 +4421,7 @@ do_main_menu(void)
       script_in_dirs[1] = 0;
       snprintf(script_dir, sizeof(script_dir), "%s/lang", tmp_work_dir);
       while (lang_config_menu(script_dir, script_in_dirs, tmp_work_dir, NULL,
-                              header, utf8_mode, &cur_lang_item));
+                              header, lang_ids_file, utf8_mode, &cur_lang_item));
       break;
     case 5:
       do_preview_menu();
@@ -4571,6 +4573,10 @@ main(int argc, char **argv)
     } else if (!strcmp(argv[cur_arg], "-b")) {
       batch_mode = 1;
       cur_arg += 1;
+    } else if (!strcmp(argv[cur_arg], "-i")) {
+      if (cur_arg + 1 >= argc) arg_expected(argv[0]);
+      lang_ids_file = argv[cur_arg + 1];
+      cur_arg += 2;
     } else {
       break;
     }
