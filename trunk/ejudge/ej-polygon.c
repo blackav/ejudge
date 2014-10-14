@@ -374,7 +374,7 @@ curl_iface_login_action_func(struct DownloadData *data, struct PolygonState *ps)
         goto cleanup;
     }
     password_esc = curl_easy_escape(data->curl, data->pkt->password, 0);
-    snprintf(param_buf, sizeof(param_buf), "submitted=true&loginOrEmail=%s&password=%s&submit=Login%s", login_esc, password_esc, ps->ccid_amp);
+    snprintf(param_buf, sizeof(param_buf), "submitted=true&login=%s&password=%s&submit=Login%s", login_esc, password_esc, ps->ccid_amp);
 
     curl_easy_setopt(data->curl, CURLOPT_AUTOREFERER, 1);
     curl_easy_setopt(data->curl, CURLOPT_FOLLOWLOCATION, 1);
