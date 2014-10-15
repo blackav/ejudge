@@ -441,6 +441,17 @@ static const unsigned char * const form_row_attrs[]=
         </s:tr>
     </s:form>
 
+    <s:form>
+        <s:hidden name="lang_id" value="lang->compile_id" />
+        <s:tr attr="form_row_attrs[row ^= 1]">
+            <td width="50">&nbsp;</td>
+            <td>Additional libraries:</td>
+            <td><s:textfield name="param" value="phr->ss->lang_libs[lang->id]" size="48" maxlength="1024" checkExpr="" /></td>
+            <td><s:submit ac="lang-change-libs" label="Change" /><s:submit ac="lang-clear-libs" label="Clear" /></td>
+            <td><s:help ac="lang-change-libs" /></td>
+        </s:tr>
+    </s:form>
+
 <%
     env = 0;
     if (lang->style_checker_env && lang->style_checker_env[0]) {
