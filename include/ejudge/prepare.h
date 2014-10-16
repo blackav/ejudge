@@ -1333,9 +1333,13 @@ void prepare_unparse_unhandled_global(FILE *f,
                                       const struct section_global_data *global);
 int prepare_check_forbidden_global(FILE *f, const struct section_global_data *global);
 
-void prepare_unparse_lang(FILE *f, const struct section_language_data *lang,
-                          const unsigned char *long_name,
-                          const unsigned char *options);
+void
+prepare_unparse_lang(
+        FILE *f,
+        const struct section_language_data *lang,
+        const unsigned char *long_name,
+        const unsigned char *options,
+        const unsigned char *libs);
 void prepare_unparse_unhandled_lang(FILE *f,
                                     const struct section_language_data *lang);
 int prepare_check_forbidden_lang(FILE *f, const struct section_language_data *lang);

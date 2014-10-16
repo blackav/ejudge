@@ -830,10 +830,11 @@ prepare_unparse_lang(
         FILE *f,
         const struct section_language_data *lang,
         const unsigned char *long_name,
-        const unsigned char *options)
+        const unsigned char *options,
+        const unsigned char *libs)
 {
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
-  int i, flag = 0;
+  int i, flag = 0, lib_flag = 0;
   unsigned char size_buf[256];
 
   fprintf(f, "[language]\n");
@@ -905,6 +906,9 @@ prepare_unparse_lang(
           && options && *options) {
         fprintf(f, "compiler_env = \"EJUDGE_FLAGS=%s\"\n", CARMOR(options));
         flag = 1;
+      } else if (!strncmp(lang->compiler_env[i], "EJUDGE_LIBS=", 12) && libs && *libs) {
+        fprintf(f, "compiler_env = \"EJUDGE_LIBS=%s\"\n", CARMOR(libs));
+        lib_flag = 1;
       } else {
         fprintf(f, "compiler_env = \"%s\"\n", lang->compiler_env[i]);
       }
@@ -912,6 +916,9 @@ prepare_unparse_lang(
   }
   if (!flag && options && *options) {
     fprintf(f, "compiler_env = \"EJUDGE_FLAGS=%s\"\n", CARMOR(options));
+  }
+  if (!lib_flag && libs && *libs) {
+    fprintf(f, "compiler_env = \"EJUDGE_LIBS=%s\"\n", CARMOR(libs));
   }
   do_xstr(f, &ab, "style_checker_env", lang->style_checker_env);
   fprintf(f, "\n");
