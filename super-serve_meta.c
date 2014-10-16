@@ -71,6 +71,7 @@ static struct meta_info_item meta_info_sid_state_data[] =
   [SSSS_loc_cs_map] = { SSSS_loc_cs_map, '?', XSIZE(struct sid_state, loc_cs_map), "loc_cs_map", XOFFSET(struct sid_state, loc_cs_map) },
   [SSSS_cs_loc_map] = { SSSS_cs_loc_map, '?', XSIZE(struct sid_state, cs_loc_map), "cs_loc_map", XOFFSET(struct sid_state, cs_loc_map) },
   [SSSS_lang_opts] = { SSSS_lang_opts, 'x', XSIZE(struct sid_state, lang_opts), "lang_opts", XOFFSET(struct sid_state, lang_opts) },
+  [SSSS_lang_libs] = { SSSS_lang_libs, 'x', XSIZE(struct sid_state, lang_libs), "lang_libs", XOFFSET(struct sid_state, lang_libs) },
   [SSSS_lang_flags] = { SSSS_lang_flags, '?', XSIZE(struct sid_state, lang_flags), "lang_flags", XOFFSET(struct sid_state, lang_flags) },
   [SSSS_aprob_u] = { SSSS_aprob_u, 'i', XSIZE(struct sid_state, aprob_u), "aprob_u", XOFFSET(struct sid_state, aprob_u) },
   [SSSS_aprob_a] = { SSSS_aprob_a, 'i', XSIZE(struct sid_state, aprob_a), "aprob_a", XOFFSET(struct sid_state, aprob_a) },
