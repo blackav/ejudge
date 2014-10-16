@@ -247,7 +247,7 @@ super_html_read_serve(
   sstate->lang_a = 0;
   sstate->langs = 0;
   sstate->loc_cs_map = 0;
-  sstate->_lang_opts = 0;
+  sstate->lang_opts = 0;
   sstate->lang_libs = 0;
   sstate->lang_flags = 0;
   if (total > 0) {
@@ -255,7 +255,7 @@ super_html_read_serve(
     while (total > sstate->lang_a) sstate->lang_a *= 2;
     XCALLOC(sstate->langs, sstate->lang_a);
     XCALLOC(sstate->loc_cs_map, sstate->lang_a);
-    XCALLOC(sstate->_lang_opts, sstate->lang_a);
+    XCALLOC(sstate->lang_opts, sstate->lang_a);
     XCALLOC(sstate->lang_libs, sstate->lang_a);
     XCALLOC(sstate->lang_flags, sstate->lang_a);
     for (pg = sstate->cfg; pg; pg = pg->next) {
@@ -335,7 +335,7 @@ super_html_read_serve(
     if (lang->compiler_env) {
       for (j = 0; lang->compiler_env[j]; j++) {
         if (!strncmp(lang->compiler_env[j], "EJUDGE_FLAGS=", 13)) {
-          sstate->_lang_opts[lang->id] = xstrmerge1(sstate->_lang_opts[lang->id],
+          sstate->lang_opts[lang->id] = xstrmerge1(sstate->lang_opts[lang->id],
                                                    lang->compiler_env[j] + 13);
         }
         if (!strncmp(lang->compiler_env[j], "EJUDGE_LIBS=", 12)) {
@@ -1118,7 +1118,7 @@ super_html_serve_unparse_serve_cfg(
   if (sstate->lang_a > 0) {
     for (i = 1, active_langs = 0; i < sstate->lang_a; i++) {
       if (!sstate->langs[i]) continue;
-      prepare_unparse_lang(f, sstate->langs[i], 0, sstate->_lang_opts[i], sstate->lang_libs[i]);
+      prepare_unparse_lang(f, sstate->langs[i], 0, sstate->lang_opts[i], sstate->lang_libs[i]);
       active_langs++;
     }
   }

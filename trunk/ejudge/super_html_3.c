@@ -1573,24 +1573,24 @@ super_html_lang_activate(
     if (sstate->lang_a > 0) {
       XMEMMOVE(new_langs, sstate->langs, sstate->lang_a);
       XMEMMOVE(new_loc_cs_map, sstate->loc_cs_map, sstate->lang_a);
-      XMEMMOVE(new_lang_opts, sstate->_lang_opts, sstate->lang_a);
+      XMEMMOVE(new_lang_opts, sstate->lang_opts, sstate->lang_a);
       XMEMMOVE(new_lang_libs, sstate->lang_libs, sstate->lang_a);
       XMEMMOVE(new_lang_flags, sstate->lang_flags, sstate->lang_a);
     }
     xfree(sstate->langs);
     xfree(sstate->loc_cs_map);
-    xfree(sstate->_lang_opts);
+    xfree(sstate->lang_opts);
     xfree(sstate->lang_libs);
     xfree(sstate->lang_flags);
     sstate->lang_a = new_lang_a;
     sstate->langs = new_langs;
     sstate->loc_cs_map = new_loc_cs_map;
-    sstate->_lang_opts = new_lang_opts;
+    sstate->lang_opts = new_lang_opts;
     sstate->lang_libs = new_lang_libs;
     sstate->lang_flags = new_lang_flags;
   }
   sstate->langs[lang_id] = lang;
-  sstate->_lang_opts[lang_id] = 0;
+  sstate->lang_opts[lang_id] = 0;
   sstate->lang_libs[lang_id] = 0;
   sstate->lang_flags[lang_id] = 0;
   sstate->cs_loc_map[lang->compile_id] = lang_id;
@@ -1633,9 +1633,9 @@ super_html_lang_deactivate(
   if (sstate->loc_cs_map[lang_id]) return;
 
   sstate->langs[lang_id] = 0;
-  xfree(sstate->_lang_opts[lang_id]);
+  xfree(sstate->lang_opts[lang_id]);
   xfree(sstate->lang_libs[lang_id]);
-  sstate->_lang_opts[lang_id] = 0;
+  sstate->lang_opts[lang_id] = 0;
   sstate->lang_libs[lang_id] = 0;
   sstate->lang_flags[lang_id] = 0;
   sstate->cs_loc_map[cs_lang_id] = 0;
@@ -1796,14 +1796,26 @@ super_html_lang_cmd(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_LANG_CHANGE_OPTS:
     if (!pl_new) return 0;
-    xfree(sstate->_lang_opts[lang_id]);
-    sstate->_lang_opts[lang_id] = xstrdup(param2);
+    xfree(sstate->lang_opts[lang_id]);
+    sstate->lang_opts[lang_id] = xstrdup(param2);
     break;
 
   case SSERV_CMD_LANG_CLEAR_OPTS:
     if (!pl_new) return 0;
-    xfree(sstate->_lang_opts[lang_id]);
-    sstate->_lang_opts[lang_id] = 0;
+    xfree(sstate->lang_opts[lang_id]);
+    sstate->lang_opts[lang_id] = 0;
+    break;
+
+  case SSERV_CMD_LANG_CHANGE_LIBS:
+    if (!pl_new) return 0;
+    xfree(sstate->lang_libs[lang_id]);
+    sstate->lang_libs[lang_id] = xstrdup(param2);
+    break;
+
+  case SSERV_CMD_LANG_CLEAR_LIBS:
+    if (!pl_new) return 0;
+    xfree(sstate->lang_libs[lang_id]);
+    sstate->lang_libs[lang_id] = 0;
     break;
 
   default:

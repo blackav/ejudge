@@ -154,7 +154,7 @@ struct sid_state
   struct section_language_data **langs;
   int *loc_cs_map;              /* map from local ids to compile ids */
   int *cs_loc_map;              /* reverse map */
-  unsigned char **_lang_opts;
+  unsigned char **lang_opts;
   unsigned char **lang_libs;
   int *lang_flags;
 
