@@ -254,10 +254,10 @@ build_get_compiler_flags(
       }
     }
   } else if (sstate) {
-    if (sstate->lang_a <= 0 || !sstate->langs || !sstate->_lang_opts) return NULL;
+    if (sstate->lang_a <= 0 || !sstate->langs || !sstate->lang_opts) return NULL;
     for (lang_id = 1; lang_id < sstate->lang_a; ++lang_id) {
       if (!(lang = sstate->langs[lang_id]) || strcmp(lang->short_name, lang_short_name)) continue;
-      return sstate->_lang_opts[lang_id];
+      return sstate->lang_opts[lang_id];
     }
   }
   return NULL;
