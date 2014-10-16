@@ -1160,7 +1160,8 @@ static const struct cnts_edit_info cnts_language_info[] =
   // content_type
   { NS_LANGUAGE, CNTSLANG_style_checker_cmd, 'S', 1, 1, 1, 1, 0, "Style checker command", "Style checker command", 0 },
   { NS_LANGUAGE, CNTSLANG_style_checker_env, 'X', 1, 1, 1, 1, 0, "Style checker environment", "Style checker environment", 0 },
-  { NS_SID_STATE, SSSS_lang_opts, 138, 1, 1, 1, 1, 0, "Compilation options", 0, 0 },
+  { NS_SID_STATE, SSSS__lang_opts, 138, 1, 1, 1, 1, 0, "Compilation options", 0, 0 },
+  { NS_SID_STATE, SSSS_lang_libs, 144, 1, 1, 1, 1, 0, "Compilation libraries", 0, 0 },
   { NS_LANGUAGE, CNTSLANG_compiler_env, 'X', 1, 1, 1, 1, SSERV_CMD_EDIT_SERVE_LANG_FIELD_DETAIL_PAGE, "Additional environment variables", 0, 0 },
   { 0, 0, '-', 0, 0, 0, 0, 0, "Other parameters", 0, 0 },
   { NS_LANGUAGE, CNTSLANG_unhandled_vars, 137, 0, 0, 0, 0, SSERV_CMD_EDIT_SERVE_LANG_FIELD_DETAIL_PAGE, 0, 0, 0 },
@@ -1875,7 +1876,15 @@ write_editing_rows(
     case 138:
       // lang_opts
       {
-        const unsigned char *s = phr->ss->lang_opts[item_id];
+        const unsigned char *s = phr->ss->_lang_opts[item_id];
+        if (s) fprintf(out_f, "%s", s);
+        if (!s || !*s) is_empty = 1;
+      }
+      break;
+    case 144:
+      // lang_libs
+      {
+        const unsigned char *s = phr->ss->lang_libs[item_id];
         if (s) fprintf(out_f, "%s", s);
         if (!s || !*s) is_empty = 1;
       }
@@ -5305,7 +5314,7 @@ cmd_op_set_sid_state_lang_field(
     (val?super_html_lang_activate:super_html_lang_deactivate)(phr->ss, cs_lang_id);
     break;
 
-  case SSSS_lang_opts:          // compiler options
+  case SSSS__lang_opts:          // compiler options
     if (hr_cgi_param_int(phr, "item_id", &lang_id) < 0)
       FAIL(SSERV_ERR_INV_LANG_ID);
     if (lang_id <= 0 || lang_id >= phr->ss->lang_a
@@ -5313,8 +5322,20 @@ cmd_op_set_sid_state_lang_field(
       FAIL(SSERV_ERR_INV_LANG_ID);
     if (ss_cgi_param_utf8_str(phr, "value", &vb, &sval) <= 0 || !sval)
       FAIL(SSERV_ERR_INV_VALUE);
-    xfree(phr->ss->lang_opts[lang_id]);
-    phr->ss->lang_opts[lang_id] = xstrdup(sval);
+    xfree(phr->ss->_lang_opts[lang_id]);
+    phr->ss->_lang_opts[lang_id] = xstrdup(sval);
+    break;
+
+  case SSSS_lang_libs:          // compiler options
+    if (hr_cgi_param_int(phr, "item_id", &lang_id) < 0)
+      FAIL(SSERV_ERR_INV_LANG_ID);
+    if (lang_id <= 0 || lang_id >= phr->ss->lang_a
+        || !phr->ss->langs[lang_id])
+      FAIL(SSERV_ERR_INV_LANG_ID);
+    if (ss_cgi_param_utf8_str(phr, "value", &vb, &sval) <= 0 || !sval)
+      FAIL(SSERV_ERR_INV_VALUE);
+    xfree(phr->ss->lang_libs[lang_id]);
+    phr->ss->lang_libs[lang_id] = xstrdup(sval);
     break;
 
   default:
@@ -5348,9 +5369,13 @@ cmd_op_clear_sid_state_lang_field(
   if (hr_cgi_param_int(phr, "field_id", &f_id) < 0)
     FAIL(SSERV_ERR_INV_FIELD_ID);
   switch (f_id) {
-  case SSSS_lang_opts:
-    xfree(phr->ss->lang_opts[lang_id]);
-    phr->ss->lang_opts[lang_id] = 0;
+  case SSSS__lang_opts:
+    xfree(phr->ss->_lang_opts[lang_id]);
+    phr->ss->_lang_opts[lang_id] = 0;
+    break;
+  case SSSS_lang_libs:
+    xfree(phr->ss->lang_libs[lang_id]);
+    phr->ss->lang_libs[lang_id] = 0;
     break;
   default:
     FAIL(SSERV_ERR_INV_FIELD_ID);

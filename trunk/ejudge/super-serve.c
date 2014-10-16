@@ -1298,8 +1298,10 @@ super_serve_clear_edited_contest(struct sid_state *p)
   p->disable_compilation_server = 0;
   p->enable_win32_languages = 0;
 
-  for (i = 0; i < p->lang_a; i++)
-    xfree(p->lang_opts[i]);
+  for (i = 0; i < p->lang_a; i++) {
+    xfree(p->_lang_opts[i]);
+    xfree(p->lang_libs[i]);
+  }
   for (i = 0; i < p->cs_lang_total; i++)
     xfree(p->cs_lang_names[i]);
   p->cs_langs_loaded = p->cs_lang_total = 0;
@@ -1315,7 +1317,8 @@ super_serve_clear_edited_contest(struct sid_state *p)
   p->extra_cs_cfgs_total = 0;
   xfree(p->cs_langs); p->cs_langs = 0;
   xfree(p->cs_lang_names); p->cs_lang_names = 0;
-  xfree(p->lang_opts); p->lang_opts = 0;
+  xfree(p->_lang_opts); p->_lang_opts = 0;
+  xfree(p->lang_libs); p->lang_libs = 0;
   xfree(p->lang_flags); p->lang_flags = 0;
 
   xfree(p->contest_start_cmd_text); p->contest_start_cmd_text = 0;
@@ -1393,7 +1396,8 @@ super_serve_move_edited_contest(struct sid_state *dst, struct sid_state *src)
   dst->langs = src->langs; src->langs = 0;
   dst->loc_cs_map = src->loc_cs_map; src->loc_cs_map = 0;
   dst->cs_loc_map = src->cs_loc_map; src->cs_loc_map = 0;
-  dst->lang_opts = src->lang_opts; src->lang_opts = 0;
+  dst->_lang_opts = src->_lang_opts; src->_lang_opts = 0;
+  dst->lang_libs = src->lang_libs; src->lang_libs = 0;
   dst->lang_flags = src->lang_flags; src->lang_flags = 0;
   dst->aprob_u = src->aprob_u; src->aprob_u = 0;
   dst->aprob_a = src->aprob_a; src->aprob_a = 0;
