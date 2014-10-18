@@ -15,6 +15,7 @@
   const unsigned char *arch;
   unsigned char run_queue_dir[PATH_MAX];
   const unsigned char *queue_dir = NULL;
+  int enable_main_menu = 0;
 
   memset(&vec, 0, sizeof(vec));
 

@@ -14,6 +14,7 @@
   size_t msg_len = 0;
   int clar_id = 0;
   unsigned char title[1024];
+  int enable_main_menu = 0;
 
 %><s:read var="clar_id" required="yes" error="inv-clar-id" /><%
   if (opcaps_check(phr->caps, OPCAP_EDIT_RUN) < 0) {

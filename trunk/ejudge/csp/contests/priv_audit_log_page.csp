@@ -20,6 +20,7 @@
   char *audit_text = 0;
   size_t audit_text_size = 0;
   unsigned char title[1024];
+  int enable_main_menu = 0;
 
   if (ns_parse_run_id(out_f, phr, cnts, extra, &run_id, 0) < 0) {
     FAIL(NEW_SRV_ERR_INV_RUN_ID);

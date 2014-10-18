@@ -42,6 +42,7 @@ ns_unparse_answers(
   const unsigned char *pw_path = 0;
   path_t variant_stmt_file;
   unsigned char title[1024];
+  int enable_main_menu = 0;
 
 %><s:read var="prob_id" name="problem" default="0" error="inv-run-id" /><%
   if (prob_id < 0 || prob_id > cs->max_prob) {

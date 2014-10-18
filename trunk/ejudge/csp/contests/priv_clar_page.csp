@@ -14,6 +14,7 @@
   unsigned char b1[1024];
   const unsigned char *clar_subj = 0;
   int clar_id;
+  int enable_main_menu = 0;
 
 %><s:read var="clar_id" required="yes" errors="inv-clar-id" /><%
 

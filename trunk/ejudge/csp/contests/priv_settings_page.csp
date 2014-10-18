@@ -8,6 +8,7 @@
 %><%
     const struct section_global_data *global = cs->global;
     const unsigned char *title = NULL;
+    int enable_main_menu = 0;
 
     if (phr->role != USER_ROLE_ADMIN) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
