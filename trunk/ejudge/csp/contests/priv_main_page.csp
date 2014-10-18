@@ -93,50 +93,49 @@
         <li><s:a ac="view-reg-pwds"><s:_>Registration passwords</s:_></s:a></li>
     <% } %>
     <li><s:a ac="view-testing-queue"><s:_>Testing queue</s:_></s:a></li>
-</ul>
-
-<ul>
+    <li><a><s:_>Dump data</s:_></a>
+        <ul>
     <% if (phr->role >= USER_ROLE_JUDGE && opcaps_check(phr->caps, OPCAP_DUMP_USERS) >= 0) { %>
-        <li><s:a ac="view-user-dump"><s:_>Dump users in CSV format</s:_></s:a></li>
+            <li><s:a ac="view-user-dump"><s:_>Dump users in CSV format</s:_></s:a></li><br/>
     <% } %>
     <% if (phr->role >= USER_ROLE_JUDGE && opcaps_check(phr->caps, OPCAP_DUMP_RUNS) >= 0) { %>
-        <li><s:a ac="view-runs-dump"><s:_>Dump runs in CSV format</s:_></s:a></li>
-        <li><s:a ac="export-xml-runs"><s:_>Export runs in XML external format</s:_></s:a></li>
-        <li><s:a ac="write-xml-runs"><s:_>Write runs in XML internal format</s:_></s:a></li>
-        <li><s:a ac="write-xml-runs-with-src"><s:_>Write runs in XML internal format with source</s:_></s:a></li>
+            <li><s:a ac="view-runs-dump"><s:_>Dump runs in CSV format</s:_></s:a></li><br/>
+            <li><s:a ac="export-xml-runs"><s:_>Export runs in XML external format</s:_></s:a></li><br/>
+            <li><s:a ac="write-xml-runs"><s:_>Write runs in XML internal format</s:_></s:a></li><br/>
+            <li><s:a ac="write-xml-runs-with-src"><s:_>Write runs in XML internal format with source</s:_></s:a></li>
     <% } %>
-</ul>
-
-<ul>
-    <li><s:a ac="priv-users-view"><s:_>View privileged users</s:_></s:a></li>
-    <li><s:a ac="view-exam-info"><s:_>View examination information</s:_></s:a></li>
+        </ul>
+    </li>
+    <li><a><s:_>Other actions</s:_></a>
+        <ul>
+            <li><s:a ac="priv-users-view"><s:_>View privileged users</s:_></s:a></li><br/>
+            <li><s:a ac="view-exam-info"><s:_>View examination information</s:_></s:a></li><br/>
     <% if (phr->role >= USER_ROLE_JUDGE && opcaps_check(phr->caps, OPCAP_EDIT_PASSWD) >= 0) { %>
         <% if (!cnts->disable_team_password) { %>
-            <li><s:a ac="view-cnts-pwds"><s:_>View contest passwords</s:_></s:a></li>
+            <li><s:a ac="view-cnts-pwds"><s:_>View contest passwords</s:_></s:a></li><br/>
         <% } %>
     <% } %>
-    <li><s:a ac="assign-cyphers-1"><s:_>Assign random cyphers</s:_></s:a></li>
-    <li><s:a ac="view-ip-users"><s:_>View users for IP addresses</s:_></s:a></li>
-    <li><s:a ac="view-user-ips"><s:_>View IP addresses for users</s:_></s:a></li>
+            <li><s:a ac="assign-cyphers-1"><s:_>Assign random cyphers</s:_></s:a></li><br/>
+            <li><s:a ac="view-ip-users"><s:_>View users for IP addresses</s:_></s:a></li><br/>
+            <li><s:a ac="view-user-ips"><s:_>View IP addresses for users</s:_></s:a></li><br/>
     <% if (phr->role >= USER_ROLE_ADMIN) { %>
-        <li><s:a ac="admin-contest-settings"><s:_>Contest settings</s:_></s:a></li>
+            <li><s:a ac="admin-contest-settings"><s:_>Contest settings</s:_></s:a></li><br/>
     <% } %>
     <% if (cnts->problems_url) { %>
-        <li><a href='<s:v escape="false" value="cnts->problems_url" />' target="_blank"><s:_>Problems</s:_></a></li>
+            <li><a href='<s:v escape="false" value="cnts->problems_url" />' target="_blank"><s:_>Problems</s:_></a></li><br/>
     <% } %>
-    <li><s:a ac="priv-submit-page"><s:_>Submit a solution</s:_></s:a></li>
+            <li><s:a ac="priv-submit-page"><s:_>Submit a solution</s:_></s:a></li><br/>
     <% if (phr->role == USER_ROLE_ADMIN && opcaps_check(phr->caps, OPCAP_EDIT_RUN) >= 0) { %>
-        <li><s:a ac="prio-form"><s:_>Change judging priorities</s:_></s:a></li>
+            <li><s:a ac="prio-form"><s:_>Change judging priorities</s:_></s:a></li><br/>
     <% } %>
-</ul>
-
-<ul>
     <% if (need_examiners) { %>
-        <li><s:a ac="examiners-page"><s:_>Examiners assignments</s:_></s:a></li>
+            <li><s:a ac="examiners-page"><s:_>Examiners assignments</s:_></s:a></li>
     <% } %>
+        </ul>
+    </li>
 </ul>
 
-<hr /><a name="status"></a><h2><s:_>Server status</s:_></h2>
+<a name="status"></a><h2><s:_>Server status</s:_></h2>
 
 <%  if (stop_time > 0 && !global->is_virtual) {
     if (duration > 0 && global->board_fog_time > 0
