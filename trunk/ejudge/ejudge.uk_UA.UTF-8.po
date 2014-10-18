@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-10-18 12:18+0400\n"
+"POT-Creation-Date: 2014-10-18 18:24+0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Ukrainian <uk@li.org>\n"
@@ -563,9 +563,6 @@ msgid "Change Language"
 msgstr ""
 
 msgid "Change duration"
-msgstr ""
-
-msgid "Change judging priorities"
 msgstr ""
 
 msgid "Change language"
@@ -1436,6 +1433,9 @@ msgstr ""
 msgid "General settings (contest.xml)"
 msgstr ""
 
+msgid "Generate contest passwords"
+msgstr ""
+
 msgid "Generate random contest passwords"
 msgstr ""
 
@@ -1446,6 +1446,9 @@ msgid "Generate random registration passwords"
 msgstr ""
 
 msgid "Generate random registration passwords!"
+msgstr ""
+
+msgid "Generate registration passwords"
 msgstr ""
 
 msgid "Global settings (serve.cfg)"
@@ -2414,9 +2417,6 @@ msgstr ""
 msgid "Other"
 msgstr ""
 
-msgid "Other actions"
-msgstr ""
-
 msgid "Output"
 msgstr ""
 
@@ -2644,6 +2644,9 @@ msgstr ""
 msgid ""
 "Priority value must be in range [-16, 15]. The less the priority value, the "
 "more the judging priority."
+msgstr ""
+
+msgid "Privileged users"
 msgstr ""
 
 msgid "Privileged users page"
@@ -3937,9 +3940,6 @@ msgstr ""
 msgid "View"
 msgstr ""
 
-msgid "View IP addresses for users"
-msgstr ""
-
 msgid "View all"
 msgstr ""
 
@@ -3952,13 +3952,7 @@ msgstr ""
 msgid "View details"
 msgstr ""
 
-msgid "View examination information"
-msgstr ""
-
 msgid "View last 15"
-msgstr ""
-
-msgid "View privileged users"
 msgstr ""
 
 msgid "View registration passwords"
@@ -3980,9 +3974,6 @@ msgid "View submitted answer"
 msgstr ""
 
 msgid "View the problem statement and send a submission"
-msgstr ""
-
-msgid "View users for IP addresses"
 msgstr ""
 
 msgid "Viewing advisors"
