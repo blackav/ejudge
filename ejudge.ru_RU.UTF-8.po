@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-10-18 12:18+0400\n"
-"PO-Revision-Date: 2014-10-18 12:20+0400\n"
+"POT-Creation-Date: 2014-10-18 18:24+0400\n"
+"PO-Revision-Date: 2014-10-18 18:41+0400\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -630,9 +630,6 @@ msgstr "Сменить язык"
 
 msgid "Change duration"
 msgstr "Изменить длительность"
-
-msgid "Change judging priorities"
-msgstr "Изменить приоритет проверки"
 
 msgid "Change language"
 msgstr "Сменить язык"
@@ -1504,6 +1501,9 @@ msgstr "Общие поля регистрационной анкеты"
 msgid "General settings (contest.xml)"
 msgstr "Общие настройки (contest.xml)"
 
+msgid "Generate contest passwords"
+msgstr "Перегенерировать турнирные пароли"
+
 msgid "Generate random contest passwords"
 msgstr "Сгенерировать случайные турнирные пароли"
 
@@ -1515,6 +1515,9 @@ msgstr "Сгенерировать случайные регистрационн
 
 msgid "Generate random registration passwords!"
 msgstr "Сгенерировать случайные регистрационные пароли!"
+
+msgid "Generate registration passwords"
+msgstr "Перегенерировать регистрационные пароли"
 
 msgid "Global settings (serve.cfg)"
 msgstr "Глобальные настройки (serve.cfg)"
@@ -2568,9 +2571,6 @@ msgstr "IP-адрес отправителя"
 msgid "Other"
 msgstr "Прочее"
 
-msgid "Other actions"
-msgstr "Прочее"
-
 msgid "Output"
 msgstr "Результат работы"
 
@@ -2807,6 +2807,9 @@ msgid ""
 msgstr ""
 "Значение приоритета должно находиться в интервале [-16, 15]. Чем меньше "
 "значение приоритета, тем выше приоритет."
+
+msgid "Privileged users"
+msgstr "Привилегированные пользователи"
 
 msgid "Privileged users page"
 msgstr "Список привилегированных пользователей"
@@ -4142,9 +4145,6 @@ msgstr "Варианты (variant.map)"
 msgid "View"
 msgstr "Просмотр"
 
-msgid "View IP addresses for users"
-msgstr "Посмотреть IP-адреса пользователей"
-
 msgid "View all"
 msgstr "Посмотреть всё"
 
@@ -4157,14 +4157,8 @@ msgstr "Просмотреть турнирные пароли"
 msgid "View details"
 msgstr "Посмотреть детали"
 
-msgid "View examination information"
-msgstr "Посмотреть информацию об экзаменуемых"
-
 msgid "View last 15"
 msgstr "Смотреть последние 15"
-
-msgid "View privileged users"
-msgstr "Посмотреть список привилегированных пользователей"
 
 msgid "View registration passwords"
 msgstr "Просмотреть регистрационные пароли"
@@ -4186,9 +4180,6 @@ msgstr "Сданный ответ"
 
 msgid "View the problem statement and send a submission"
 msgstr "Посмотреть условие задачи и отправить решение"
-
-msgid "View users for IP addresses"
-msgstr "Просмотр пользователей по IP-адресам"
 
 msgid "Viewing advisors"
 msgstr "Просмотр руководителей"
@@ -4757,6 +4748,24 @@ msgstr "ошибка записи"
 
 msgid "write error to server"
 msgstr "ошибка записи данных на сервер"
+
+#~ msgid "Change judging priorities"
+#~ msgstr "Изменить приоритет проверки"
+
+#~ msgid "Other actions"
+#~ msgstr "Прочее"
+
+#~ msgid "View IP addresses for users"
+#~ msgstr "Посмотреть IP-адреса пользователей"
+
+#~ msgid "View examination information"
+#~ msgstr "Посмотреть информацию об экзаменуемых"
+
+#~ msgid "View privileged users"
+#~ msgstr "Посмотреть список привилегированных пользователей"
+
+#~ msgid "View users for IP addresses"
+#~ msgstr "Просмотр пользователей по IP-адресам"
 
 #~ msgid "View standings"
 #~ msgstr "Посмотреть положение участников"
