@@ -578,3 +578,13 @@ td.a-button-style, td.a-button-style:hover {
 #menu-inside li a:hover, #menu-inside-green li a:hover {
 	background-color: rgba(0, 0, 0, 0.15);
 }
+
+#menu-inside-green ul {
+        display: none;
+        position: absolute;
+}
+
+#menu-inside-green li:hover ul {
+        display: block;
+}
+
