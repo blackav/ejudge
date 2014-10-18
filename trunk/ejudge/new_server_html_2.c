@@ -982,12 +982,14 @@ ns_write_priv_all_runs(
     fprintf(f, "</form>\n");
   }
 
+  /*
   if (phr->role == USER_ROLE_ADMIN
       && opcaps_check(phr->caps, OPCAP_EDIT_RUN) >= 0) {
     fprintf(f, "<table><tr><td>%s%s</a></td></td></table>\n",
             ns_aref(bb, sizeof(bb), phr, NEW_SRV_ACTION_PRIO_FORM, 0),
             _("Change judging priorities"));
   }
+  */
 
     /*
   if (phr->role == USER_ROLE_ADMIN && global->enable_runlog_merge) {
