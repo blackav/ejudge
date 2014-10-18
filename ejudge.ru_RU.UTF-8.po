@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-10-18 10:18+0400\n"
-"PO-Revision-Date: 2014-10-18 10:43+0400\n"
+"POT-Creation-Date: 2014-10-18 12:18+0400\n"
+"PO-Revision-Date: 2014-10-18 12:20+0400\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -1179,6 +1179,9 @@ msgstr "Конфигурация загружаемых посылок"
 
 msgid "Download selected runs"
 msgstr "Загрузить выбранные посылки"
+
+msgid "Dump data"
+msgstr "Выгрузить данные"
 
 msgid "Dump runs in CSV format"
 msgstr "Вывести базу посылок в CSV-формате"
@@ -2563,6 +2566,9 @@ msgid "Originator IP"
 msgstr "IP-адрес отправителя"
 
 msgid "Other"
+msgstr "Прочее"
+
+msgid "Other actions"
 msgstr "Прочее"
 
 msgid "Output"
