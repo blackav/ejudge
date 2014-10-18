@@ -86,13 +86,40 @@
 </script>
 
 <ul id="menu-inside-green">
+    <li><s:a ac="main-page"><s:_>Refresh</s:_></s:a></li>
     <li><s:a ac="view-users"><s:_>Regular users</s:_></s:a></li>
     <li><s:a ac="view-online-users"><s:_>Online users</s:_></s:a></li>
     <li><s:a ac="standings"><s:_>Standings</s:_></s:a></li>
-    <% if (phr->role >= USER_ROLE_JUDGE && opcaps_check(phr->caps, OPCAP_EDIT_PASSWD) >= 0) { %>
-        <li><s:a ac="view-reg-pwds"><s:_>Registration passwords</s:_></s:a></li>
-    <% } %>
     <li><s:a ac="view-testing-queue"><s:_>Testing queue</s:_></s:a></li>
+
+    <li><a><s:_>View</s:_></a>
+        <ul>
+            <li><s:a ac="view-users"><s:_>Regular users</s:_></s:a></li><br/>
+            <li><s:a ac="priv-users-view"><s:_>Privileged users</s:_></s:a></li><br/>
+            <li><s:a ac="view-exam-info"><s:_>Examination information</s:_></s:a></li><br/>
+    <% if (phr->role >= USER_ROLE_JUDGE && opcaps_check(phr->caps, OPCAP_EDIT_PASSWD) >= 0) { %>
+            <li><s:a ac="view-reg-pwds"><s:_>Registration passwords</s:_></s:a></li><br/>
+        <% if (!cnts->disable_team_password) { %>
+            <li><s:a ac="view-cnts-pwds"><s:_>Contest passwords</s:_></s:a></li><br/>
+        <% } %>
+    <% } %>
+            <li><s:a ac="view-ip-users"><s:_>Users for IP addresses</s:_></s:a></li><br/>
+            <li><s:a ac="view-user-ips"><s:_>IP addresses for users</s:_></s:a></li><br/>
+    <% if (phr->role >= USER_ROLE_ADMIN) { %>
+            <li><s:a ac="admin-contest-settings"><s:_>Contest settings</s:_></s:a></li><br/>
+    <% } %>
+    <% if (cnts->problems_url) { %>
+            <li><a href='<s:v escape="false" value="cnts->problems_url" />' target="_blank"><s:_>Problems</s:_></a></li><br/>
+    <% } %>
+    <% if (phr->role == USER_ROLE_ADMIN && opcaps_check(phr->caps, OPCAP_EDIT_RUN) >= 0) { %>
+            <li><s:a ac="prio-form"><s:_>Judging priorities</s:_></s:a></li><br/>
+    <% } %>
+    <% if (need_examiners) { %>
+            <li><s:a ac="examiners-page"><s:_>Examiners assignments</s:_></s:a></li>
+    <% } %>
+        </ul>
+    </li>
+
     <li><a><s:_>Dump data</s:_></a>
         <ul>
     <% if (phr->role >= USER_ROLE_JUDGE && opcaps_check(phr->caps, OPCAP_DUMP_USERS) >= 0) { %>
@@ -106,31 +133,33 @@
     <% } %>
         </ul>
     </li>
-    <li><a><s:_>Other actions</s:_></a>
+
+    <li><a><s:_>Actions</s:_></a>
         <ul>
-            <li><s:a ac="priv-users-view"><s:_>View privileged users</s:_></s:a></li><br/>
-            <li><s:a ac="view-exam-info"><s:_>View examination information</s:_></s:a></li><br/>
-    <% if (phr->role >= USER_ROLE_JUDGE && opcaps_check(phr->caps, OPCAP_EDIT_PASSWD) >= 0) { %>
-        <% if (!cnts->disable_team_password) { %>
-            <li><s:a ac="view-cnts-pwds"><s:_>View contest passwords</s:_></s:a></li><br/>
-        <% } %>
-    <% } %>
-            <li><s:a ac="assign-cyphers-1"><s:_>Assign random cyphers</s:_></s:a></li><br/>
-            <li><s:a ac="view-ip-users"><s:_>View users for IP addresses</s:_></s:a></li><br/>
-            <li><s:a ac="view-user-ips"><s:_>View IP addresses for users</s:_></s:a></li><br/>
-    <% if (phr->role >= USER_ROLE_ADMIN) { %>
-            <li><s:a ac="admin-contest-settings"><s:_>Contest settings</s:_></s:a></li><br/>
-    <% } %>
-    <% if (cnts->problems_url) { %>
-            <li><a href='<s:v escape="false" value="cnts->problems_url" />' target="_blank"><s:_>Problems</s:_></a></li><br/>
-    <% } %>
             <li><s:a ac="priv-submit-page"><s:_>Submit a solution</s:_></s:a></li><br/>
-    <% if (phr->role == USER_ROLE_ADMIN && opcaps_check(phr->caps, OPCAP_EDIT_RUN) >= 0) { %>
-            <li><s:a ac="prio-form"><s:_>Change judging priorities</s:_></s:a></li><br/>
-    <% } %>
-    <% if (need_examiners) { %>
-            <li><s:a ac="examiners-page"><s:_>Examiners assignments</s:_></s:a></li>
-    <% } %>
+<%
+  if (opcaps_check(phr->caps, OPCAP_SUBMIT_RUN) >= 0 && opcaps_check(phr->caps, OPCAP_EDIT_RUN) >= 0) {
+%>
+            <li><s:a ac="new-run-form"><s:_>Add new run</s:_></s:a></li><br/>
+<%
+  }
+%>
+            <li><s:a ac="assign-cyphers-1"><s:_>Assign random cyphers</s:_></s:a></li><br/>
+<%    if (!cnts->disable_team_password) { %>
+            <li><s:a ac="generate-passwords-1"><s:_>Generate contest passwords</s:_></s:a></li><br/>
+            <li><s:a ac="clear-passwords-1"><s:_>Clear contest passwords</s:_></s:a></li><br/>
+<%    } %>
+            <li><s:a ac="generate-reg-passwords-1"><s:_>Generate registration passwords</s:_></s:a></li><br/>
+            <li><s:a ac="upsolving-config-1"><s:_>Upsolving</s:_></s:a></li><br/>
+<%
+  if (opcaps_check(phr->caps, OPCAP_IMPORT_XML_RUNS) >= 0) {
+%>
+            <li><s:a ac="upload-runlog-csv-1"><s:_>Add new runs in CSV format</s:_></s:a></li><br/>
+            <li><s:a ac="upload-runlog-xml-1"><s:_>Merge runs in XML format</s:_></s:a></li><br/>
+<%
+  }
+%>
+            <li><s:a ac="reset-1"><s:_>Reset the contest!</s:_></s:a></li><br/>
         </ul>
     </li>
 </ul>
@@ -314,7 +343,6 @@
 
 <s:form>
 <s:submit ac="update-standings-1" />
-<s:submit ac="reset-1" />
 <%    action = NEW_SRV_ACTION_SUSPEND;
     if (cs->clients_suspended) action = NEW_SRV_ACTION_RESUME; %>
 <s:submit action="action" />
@@ -340,12 +368,6 @@
         action = NEW_SRV_ACTION_CLEAR_TESTING_FINISHED_FLAG; %>
 <s:submit action="action" />
 <%    } %>
-<%    if (!cnts->disable_team_password) { %>
-<s:submit ac="generate-passwords-1" />
-<s:submit ac="clear-passwords-1" />
-<%    } %>
-<s:submit ac="generate-reg-passwords-1" />
-<s:submit ac="upsolving-config-1" />
 <s:submit ac="reload-server" />
 </s:form>
 <%  } else { %>
