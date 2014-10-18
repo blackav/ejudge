@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-10-18 10:18+0400\n"
+"POT-Creation-Date: 2014-10-18 12:18+0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Ukrainian <uk@li.org>\n"
@@ -1110,6 +1110,9 @@ msgid "Download runs configuration"
 msgstr ""
 
 msgid "Download selected runs"
+msgstr ""
+
+msgid "Dump data"
 msgstr ""
 
 msgid "Dump runs in CSV format"
@@ -2409,6 +2412,9 @@ msgid "Originator IP"
 msgstr ""
 
 msgid "Other"
+msgstr ""
+
+msgid "Other actions"
 msgstr ""
 
 msgid "Output"
