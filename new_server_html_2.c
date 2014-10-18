@@ -939,9 +939,10 @@ ns_write_priv_all_runs(
     }
     fprintf(f, "\"/>\n");
     fprintf(f, "%s", BUTTON(NEW_SRV_ACTION_REJUDGE_DISPLAYED_1));
-    fprintf(f, "</form></td><td>\n");
+    fprintf(f, "</form></td>\n");
 
     if (global->score_system == SCORE_OLYMPIAD && cs->accepting_mode) {
+      fprintf(f, "<td>\n");
       html_start_form(f, 1, phr->self_url, phr->hidden_vars);
       html_hidden(f, "run_mask_size", "%d", displayed_size);
       fprintf(f, "<input type=\"hidden\" name=\"run_mask\" value=\"");
@@ -951,12 +952,15 @@ ns_write_priv_all_runs(
       }
       fprintf(f, "\"/>\n");
       fprintf(f, "%s", BUTTON(NEW_SRV_ACTION_FULL_REJUDGE_DISPLAYED_1));
-      fprintf(f, "</form></td><td>\n");
+      fprintf(f, "</form></td>\n");
     }
 
+    /*
     html_start_form(f, 1, phr->self_url, phr->hidden_vars);
     fprintf(f, "%s", BUTTON(NEW_SRV_ACTION_SQUEEZE_RUNS));
-    fprintf(f, "</form></td></tr></table>\n");
+    fprintf(f, "</form></td>\n");
+    */
+    fprintf(f, "</tr></table>\n");
 
     html_start_form(f, 1, phr->self_url, phr->hidden_vars);
     fprintf(f, "%s: <select name=\"prob_id\"><option value=\"\"></option>\n",
@@ -1017,12 +1021,14 @@ ns_write_priv_all_runs(
     fprintf(f, "</form>\n");
   }
 
+  /*
   if (opcaps_check(phr->caps, OPCAP_SUBMIT_RUN) >= 0
       && opcaps_check(phr->caps, OPCAP_EDIT_RUN) >= 0) {
     fprintf(f, "<table><tr><td>%s%s</a></td></td></table>\n",
             ns_aref(bb, sizeof(bb), phr, NEW_SRV_ACTION_NEW_RUN_FORM, 0),
             _("Add new run"));
   }
+  */
 
   if (opcaps_check(phr->caps, OPCAP_EDIT_RUN) >= 0) {
     html_start_form(f, 1, phr->self_url, phr->hidden_vars);
@@ -1044,6 +1050,7 @@ ns_write_priv_all_runs(
     fprintf(f, "</tr></table></form>\n");
   }
 
+  /*
   if (opcaps_check(phr->caps, OPCAP_IMPORT_XML_RUNS) >= 0) {
     fprintf(f, "<table><tr><td>%s%s</a></td></td></table>\n",
             ns_aref(bb, sizeof(bb), phr, NEW_SRV_ACTION_UPLOAD_RUNLOG_CSV_1, 0),
@@ -1053,9 +1060,11 @@ ns_write_priv_all_runs(
             ns_aref(bb, sizeof(bb), phr, NEW_SRV_ACTION_UPLOAD_RUNLOG_XML_1, 0),
             _("Merge runs in XML format"));
   }
+  */
 
+  /*
   if (opcaps_check(phr->caps, OPCAP_PRINT_RUN) >= 0
-      && /* cnts->exam_mode > 0 && */ phr->role == USER_ROLE_ADMIN) {
+      && cnts->exam_mode > 0 && phr->role == USER_ROLE_ADMIN) {
     html_start_form(f, 1, phr->self_url, phr->hidden_vars);
     fprintf(f, "<table class=\"b0\"><tr><td class=\"b0\">%s:</td><td>",
             _("Print problem protocol"));
@@ -1070,6 +1079,7 @@ ns_write_priv_all_runs(
     fprintf(f, "</select></td><td class=\"b0\">%s</td></tr></table></form>\n",
             BUTTON(NEW_SRV_ACTION_PRINT_PROBLEM_PROTOCOL));
   }
+*/
 
   /*
   print_nav_buttons(state, f, 0, sid, self_url, hidden_vars, extra_args,
