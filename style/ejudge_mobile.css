@@ -43,18 +43,16 @@ a:visited {
 
 body {
 	background: url("grad_grey_d.jpg") repeat-x #555555;
+	margin: 3px;
 }
 
 #main-cont {
-	padding: 15px 0;
+	padding: 1px 0;
 	display: inline-block;
 	min-width: 100%;
 }
 
 #container {
-	margin: 0 45px;
-	width: auto;
-	min-width: 950px;
 	box-shadow: rgba(104, 104, 104, 1) 0px 0px 70px 5px;
 	border: 1px solid #696969;
 	background: rgb(253,253,253); /* Old browsers */
@@ -64,9 +62,9 @@ body {
 	background: -o-linear-gradient(top,  rgba(253,253,253,1) 32%,rgba(225,223,223,1) 100%); /* Opera 11.10+ */
 	background: -ms-linear-gradient(top,  rgba(253,253,253,1) 32%,rgba(225,223,223,1) 100%); /* IE10+ */
 	background: linear-gradient(to bottom,  rgba(253,253,253,1) 32%,rgba(225,223,223,1) 100%); /* W3C */
-	padding-left: 25px;
-	padding-right: 25px;
-	padding-bottom: 20px;
+	margin: 2px;
+	padding: 0 5px 5px 5px;
+	width: auto;
 	position: inherit;
 }
 
@@ -79,27 +77,33 @@ body {
 	background: -ms-linear-gradient(top,  rgba(195,195,195,1) 0%,rgba(207,207,207,1) 15%,rgba(232,232,232,1) 32%,rgba(248,248,248,1) 48%,rgba(246,246,246,1) 55%,rgba(238,238,238,1) 64%,rgba(214,214,214,1) 83%,rgba(196,196,196,1) 100%); /* IE10+ */
 	background: linear-gradient(to bottom,  rgba(195,195,195,1) 0%,rgba(207,207,207,1) 15%,rgba(232,232,232,1) 32%,rgba(248,248,248,1) 48%,rgba(246,246,246,1) 55%,rgba(238,238,238,1) 64%,rgba(214,214,214,1) 83%,rgba(196,196,196,1) 100%); /* W3C */
 	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#c3c3c3', endColorstr='#c4c4c4',GradientType=0 ); /* IE6-9 */
-	height: 100px;
-	padding: 10px 15px;
-	padding-left: 145px;
+	padding: 7px 7px;
 }
 
 #logo {
+	margin-top: 7px;
 	display: inline;
-	margin-left: -120px;
+	float: left;
 }
 
 #header h1 {
-	display: inline;
-	position: relative;
-	top: -70px;
-	left: 15px;
 	text-shadow: rgba(146, 146, 146, 0.6) 0px 4px 8px;
-	font-size: 22px;
+	font-size: 16px;
+	margin-top: 15px;
 }
 
 /************* MENU ***************/
-#main-menu {
+#main-menu {	
+	margin-left: 70px;
+	display: block;
+}
+
+#main-menu ul {
+	margin: 0;
+}
+
+#main-menu ul li {
+	list-style: none;
 	background: #6d9fcf; /* Old browsers */
 	background: -moz-linear-gradient(top,  rgba(225,232,234,1) 0%, rgba(80,151,195,1) 5%, rgba(98,181,247,1) 40%, rgba(101,184,254,1) 56%, rgba(81,154,197,1) 100%); /* FF3.6+ */
 	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(225,232,234,1)), color-stop(5%,rgba(80,151,195,1)), color-stop(40%,rgba(98,181,247,1)), color-stop(56%,rgba(101,184,254,1)), color-stop(100%,rgba(81,154,197,1))); /* Chrome,Safari4+ */
@@ -107,25 +111,8 @@ body {
 	background: -o-linear-gradient(top,  rgba(225,232,234,1) 0%,rgba(80,151,195,1) 5%,rgba(98,181,247,1) 40%,rgba(101,184,254,1) 56%,rgba(81,154,197,1) 100%); /* Opera 11.10+ */
 	background: -ms-linear-gradient(top,  rgba(225,232,234,1) 0%,rgba(80,151,195,1) 5%,rgba(98,181,247,1) 40%,rgba(101,184,254,1) 56%,rgba(81,154,197,1) 100%); /* IE10+ */
 	background: linear-gradient(to bottom,  rgba(225,232,234,1) 0%,rgba(80,151,195,1) 5%,rgba(98,181,247,1) 40%,rgba(101,184,254,1) 56%,rgba(81,154,197,1) 100%); /* W3C */
-	/* margin-left: 125px; */
-	margin-right: 15px;
 	box-shadow:  rgb(179, 189, 196) 0 5px 8px 1px;
-	border: 1px solid rgba(66, 144, 163, 0.68);
 	border-bottom: rgb(58, 122, 138) 1px solid;
-	min-width: 700px;
-	position: absolute;
-	height: 22px;
-	top: 105px;
-}
-
-#main-menu ul {	
-	margin: 0;
-	display: inline-block;
-}
-
-#main-menu ul li {
-	list-style: none;
-	display: inline-block;	
 }
 
 #main-menu ul li a, #main-menu ul li.active  {
@@ -134,16 +121,13 @@ body {
 	font-weight: bold;
 	font-size: 14px;
 	height: 19px;
-	display: inline-block; 
-	margin-left: -3px;
+	display: block; 
 	color: rgb(0, 14, 0);
 	text-shadow: rgb(181, 228, 233) 0px 0px 4px;
 }
 
 #main-menu ul li a.current, #main-menu ul li.active {
 	background: url("g_bl_light1.jpg") repeat-x center !important;
-	border-left: 1px solid rgb(74, 121, 160);
-	border-right: 1px solid rgb(155, 194, 226);
 	box-shadow: inset -1px -2px 6px 1px rgba(4, 65, 94, 0.27)
 }
 
@@ -222,7 +206,7 @@ body {
 
 /************* INSIDE ***************/
 .h2-long h2 {
-	padding: 2px 70px 2px 30px;
+	padding: 2px 20px 2px 15px;
 	font-size: 15px;
 	background: url("grad_gr_darker.jpg") repeat-x;
 	color: rgb(0, 14, 0);
@@ -230,7 +214,7 @@ body {
 	border-right: 1px solid rgb(97, 143, 86);
 }
 
-.h2-long  {
+.h2-long, #menu-inside  {
 	background: url("grad_green_long.jpg") repeat-x;
 	color: rgb(0, 14, 0);
 	border-bottom: 1px solid #3a7a39;
@@ -240,6 +224,8 @@ body {
 	box-shadow: rgba(136, 135, 135, 0.36) 0px 5px 5px 1px;
 	margin: 30px -25px 25px -25px;
 	height: 18px;
+	margin-left: -5px;
+	margin-right: -5px;
 }
 
 .icons, .icons-1 {
@@ -266,8 +252,6 @@ body {
 	padding: 2px 13px;
 	padding: 6px 13px; /* для иконок без тени*/
 	padding: 6px 9px; /* для иконок с тенью*/
-	/* box-shadow: inset 3px 1px 10px 3px rgb(230, 230, 230); */
-	/* box-shadow: 4px 0px 10px 1px rgb(226, 226, 226); */
 }
 
 .icons a:hover , .icons-1 a:hover {
@@ -307,14 +291,6 @@ table {
 	margin: 3px 0px
 }
 
-.red {
-	background: rgba(180, 52, 52, 0.50) !important;
-	border: 1px solid rgb(167, 102, 102) !important;
-}
-
-.red:hover {
-	background: rgba(177, 9, 9, 0.57) !important;
-}
 /**************** TABLES ******************/
 
 .table, .table-info, .info-table {
@@ -385,8 +361,7 @@ table {
 }
 
 hr, #header {
-	margin-left: -25px;
-	margin-right: -25px;
+	margin: 0 -5px;
 }
 
 /**************** FRAME *************************/
@@ -401,8 +376,6 @@ hr, #header {
 
 /************* VIEW SOURCE ************************/
 #info-brief .table-scroll{
-	overflow: auto;
-	width: 100%;	
 	background: none;
 }
 
@@ -421,30 +394,16 @@ hr, #header {
 	margin-bottom: -13px;
 }
 
-#brief-actions form {
-	display: inline-block;
-	margin-left: 35px;
+#brief-actions p {
+	margin: 5px 0;
 }
 
 #prog {
-	/* float: left;
-	width: 60%; */
 	background: white;
-	/* overflow: auto;
-	height: 300px; */
 }
 
-/* #output {
-	float: right;
-	width: 40%;
-	overflow: auto;
-	height: 300px;
-	margin: 0;
-	margin-right: -15px;
-} */
-
 #msg_text {
-	width: 95%;
+	width: auto;
 	height: 100px;
 }
 
@@ -536,37 +495,24 @@ td.a-button-style, td.a-button-style:hover {
 }
 
 /*************** MENU-INSIDE **********************/
-#menu-inside, #menu-inside-green {
-	background: url("grad_green_long.jpg") repeat-x;
-	color: rgb(0, 14, 0);
-	border-bottom: 1px solid #3a7a39;
-	border-top: 1px solid #389532;
-	text-shadow: rgb(208, 238, 205) 0px 0px 4px;
-	padding: 2px 0px;
-	box-shadow: rgba(136, 135, 135, 0.36) 0px 5px 5px 1px;
-	margin: 0px -25px 25px -25px;
-	height: 18px;
+#menu-inside {
+	margin-top: 0px;
 }
 
-#menu-inside-green {
-	padding-left: 25px;
-}
-
-#menu-inside li, #menu-inside-green li {
+#menu-inside li {
 	list-style: none;
 	display: inline-block;
-	font-size: 15px;
 }
 
-#menu-inside li a, #menu-inside-green li a {
+#menu-inside li a {
 	text-decoration: none;
-	padding: 2px 15px 3px 15px;
+	padding: 2px 15px;
 	font-weight: bold;	
 	font-size: 15px;
 	color: black !important;
 }
 
-#menu-inside li a.current, #menu-inside-green li a.current {
+#menu-inside li a.current {
 	padding: 2px 15px;
 	background: url("grad_gr_darker.jpg") repeat-x;
 	color: rgb(0, 14, 0);
@@ -575,6 +521,6 @@ td.a-button-style, td.a-button-style:hover {
 	border-left: 1px solid rgb(97, 143, 86);
 }
 
-#menu-inside li a:hover, #menu-inside-green li a:hover {
+#menu-inside li a:hover {
 	background-color: rgba(0, 0, 0, 0.15);
 }
