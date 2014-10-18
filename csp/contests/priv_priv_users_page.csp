@@ -12,6 +12,7 @@
   unsigned int role_mask;
   int row = 1, cnt, r;
   const unsigned char *title = _("Privileged users page");
+  int enable_main_menu = 0;
 
 static const unsigned char * const form_row_attrs[]=
 {

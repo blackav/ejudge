@@ -39,6 +39,7 @@
   if (phr->locale_id < 0) phr->locale_id = 0;
   l10n_setlocale(phr->locale_id);
   const unsigned char *title = _("Main page");
+  int enable_main_menu = 1;
 %><%
   if (hr_cgi_param(phr, "filter_expr", &s) > 0) filter_expr = s;
 
@@ -83,21 +84,18 @@
     var self_url='<s:v escape="false" value="phr->self_url" />';
     var SID='<s:v value="phr->session_id" />';
 </script>
-<ul>
-    <li><s:a ac="view-users"><s:_>View regular users</s:_></s:a></li>
-    <li><s:a ac="priv-users-view"><s:_>View privileged users</s:_></s:a></li>
-    <li><s:a ac="view-online-users"><s:_>View who is currently online</s:_></s:a></li>
-    <li><s:a ac="view-exam-info"><s:_>View examination information</s:_></s:a></li>
-    <% if (need_examiners) { %>
-        <li><s:a ac="examiners-page"><s:_>Examiners assignments</s:_></s:a></li>
-    <% } %>
-    <li><s:a ac="standings"><s:_>View standings</s:_></s:a></li>
+
+<ul id="menu-inside-green">
+    <li><s:a ac="view-users"><s:_>Regular users</s:_></s:a></li>
+    <li><s:a ac="view-online-users"><s:_>Online users</s:_></s:a></li>
+    <li><s:a ac="standings"><s:_>Standings</s:_></s:a></li>
     <% if (phr->role >= USER_ROLE_JUDGE && opcaps_check(phr->caps, OPCAP_EDIT_PASSWD) >= 0) { %>
-        <li><s:a ac="view-reg-pwds"><s:_>View registration passwords</s:_></s:a></li>
-        <% if (!cnts->disable_team_password) { %>
-            <li><s:a ac="view-cnts-pwds"><s:_>View contest passwords</s:_></s:a></li>
-        <% } %>
+        <li><s:a ac="view-reg-pwds"><s:_>Registration passwords</s:_></s:a></li>
     <% } %>
+    <li><s:a ac="view-testing-queue"><s:_>Testing queue</s:_></s:a></li>
+</ul>
+
+<ul>
     <% if (phr->role >= USER_ROLE_JUDGE && opcaps_check(phr->caps, OPCAP_DUMP_USERS) >= 0) { %>
         <li><s:a ac="view-user-dump"><s:_>Dump users in CSV format</s:_></s:a></li>
     <% } %>
@@ -107,18 +105,35 @@
         <li><s:a ac="write-xml-runs"><s:_>Write runs in XML internal format</s:_></s:a></li>
         <li><s:a ac="write-xml-runs-with-src"><s:_>Write runs in XML internal format with source</s:_></s:a></li>
     <% } %>
+</ul>
+
+<ul>
+    <li><s:a ac="priv-users-view"><s:_>View privileged users</s:_></s:a></li>
+    <li><s:a ac="view-exam-info"><s:_>View examination information</s:_></s:a></li>
+    <% if (phr->role >= USER_ROLE_JUDGE && opcaps_check(phr->caps, OPCAP_EDIT_PASSWD) >= 0) { %>
+        <% if (!cnts->disable_team_password) { %>
+            <li><s:a ac="view-cnts-pwds"><s:_>View contest passwords</s:_></s:a></li>
+        <% } %>
+    <% } %>
     <li><s:a ac="assign-cyphers-1"><s:_>Assign random cyphers</s:_></s:a></li>
     <li><s:a ac="view-ip-users"><s:_>View users for IP addresses</s:_></s:a></li>
     <li><s:a ac="view-user-ips"><s:_>View IP addresses for users</s:_></s:a></li>
-    <li><s:a ac="view-testing-queue"><s:_>View testing queue</s:_></s:a></li>
     <% if (phr->role >= USER_ROLE_ADMIN) { %>
         <li><s:a ac="admin-contest-settings"><s:_>Contest settings</s:_></s:a></li>
     <% } %>
     <% if (cnts->problems_url) { %>
-        <li><a href='<s:v escape="false" value="cnts->problems_url" />' target="_blank"><s:_>Problems</s:_></a>
+        <li><a href='<s:v escape="false" value="cnts->problems_url" />' target="_blank"><s:_>Problems</s:_></a></li>
     <% } %>
     <li><s:a ac="priv-submit-page"><s:_>Submit a solution</s:_></s:a></li>
-    <li><s:a ac="logout"><s:_>Logout</s:_></s:a></li>
+    <% if (phr->role == USER_ROLE_ADMIN && opcaps_check(phr->caps, OPCAP_EDIT_RUN) >= 0) { %>
+        <li><s:a ac="prio-form"><s:_>Change judging priorities</s:_></s:a></li>
+    <% } %>
+</ul>
+
+<ul>
+    <% if (need_examiners) { %>
+        <li><s:a ac="examiners-page"><s:_>Examiners assignments</s:_></s:a></li>
+    <% } %>
 </ul>
 
 <hr /><a name="status"></a><h2><s:_>Server status</s:_></h2>

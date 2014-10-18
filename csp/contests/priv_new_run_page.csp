@@ -9,6 +9,7 @@
     int i;
     const unsigned char *title = NULL;
     const struct section_global_data *global = cs->global;
+    int enable_main_menu = 0;
 
   if (opcaps_check(phr->caps, OPCAP_SUBMIT_RUN) < 0
       || opcaps_check(phr->caps, OPCAP_EDIT_RUN)) {

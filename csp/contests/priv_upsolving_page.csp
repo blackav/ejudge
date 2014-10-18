@@ -13,6 +13,7 @@
   const unsigned char *full_protocol = 0;
   const unsigned char *disable_clars = 0;
   const unsigned char *title = NULL;
+  int enable_main_menu = 0;
 
   if (opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST) < 0)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);  

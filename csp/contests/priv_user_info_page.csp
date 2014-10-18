@@ -23,6 +23,7 @@
     struct userlist_user_info *ui = 0;
     int view_user_id = 0;
     const unsigned char *title = NULL;
+    int enable_main_menu = 0;
 
 %><s:read var="view_user_id" required="yes" name="user_id" error="inv-user-id" /><%
   if (!teamdb_lookup(cs->teamdb_state, view_user_id))

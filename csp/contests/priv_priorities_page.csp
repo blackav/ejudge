@@ -12,6 +12,7 @@
     int glob_prio, prob_prio, static_prio, local_prio, total_prio;
     int prob_id;
     const unsigned char *title = NULL;
+    int enable_main_menu = 0;
 
     glob_prio = ej_fix_prio(global->priority_adjustment);
 

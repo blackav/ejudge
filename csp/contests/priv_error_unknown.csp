@@ -8,6 +8,7 @@
 %><%
   unsigned char title[1024];
   const unsigned char *error_title = NULL;
+  int enable_main_menu = 0;
 
   l10n_setlocale(phr->locale_id);
   error_title = ns_error_title(phr->error_code);

@@ -13,6 +13,7 @@
   size_t mask_count = 0;
   int i, j;
   const unsigned char *title = _("Download runs configuration");
+  int enable_main_menu = 0;
 
   if (opcaps_check(phr->caps, OPCAP_DUMP_RUNS) < 0)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);  

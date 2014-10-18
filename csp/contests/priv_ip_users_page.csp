@@ -9,6 +9,7 @@
     int i, j, serial = 0;
     const unsigned char *title = NULL;
     struct teamdb_export td;
+    int enable_main_menu = 0;
 
     if (phr->role < USER_ROLE_JUDGE) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 

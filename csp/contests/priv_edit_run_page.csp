@@ -19,6 +19,7 @@
   const unsigned char *str = NULL;
   const unsigned char *s;
   int run_id = 0, prob_id, lang_id;
+  int enable_main_menu = 0;
 
 %><s:read var="run_id" required="yes" error="inv-run-id" /><%
   if (opcaps_check(phr->caps, OPCAP_EDIT_RUN) < 0) {

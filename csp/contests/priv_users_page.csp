@@ -23,6 +23,7 @@
   int *run_counts = 0;
   size_t *run_sizes = 0;
   const unsigned char *title = _("Users page");
+  int enable_main_menu = 0;
 
 static const unsigned char * const form_row_attrs[]=
 {
