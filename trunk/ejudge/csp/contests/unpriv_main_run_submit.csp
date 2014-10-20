@@ -114,7 +114,7 @@
         if ((prob_status[prob_id] & PROB_STATUS_SUBMITTABLE) && prob->date_penalty) {
           int dpi;
 %>
-    <tr><td class="b0"><b><s:_>Date penalty</s:_>:</b></td><td class="b0"><%
+    <tr><td class="b0"><b><s:_>Date penalty</s:_>:</b></td><td class="b0"><tt><%
           for (dpi = 0; prob->date_penalty[dpi]; ++dpi) {
             char *dp = prob->date_penalty[dpi];
             if (dp != prob->date_penalty[0]) {
@@ -122,7 +122,7 @@
             }
 %><s:v value="dp" /><%
           }
-%></td></tr>
+%></tt></td></tr>
 <%
         }
 %>

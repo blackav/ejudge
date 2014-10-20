@@ -9539,24 +9539,6 @@ ns_get_problem_status(
   }
 }
 
-static void
-write_row(
-        FILE *fout,
-        const unsigned char *row_label,
-        char *format,
-        ...)
-{
-  va_list args;
-  char buf[1024];
-
-  va_start(args, format);
-  vsnprintf(buf, sizeof(buf), format, args);
-  va_end(args);
-
-  fprintf(fout, "<tr><td class=\"b0\"><b>%s:</b></td><td class=\"b0\">%s</td></tr>\n",
-          row_label, buf);
-}
-
 void
 ns_unparse_statement(
         FILE *fout,
@@ -9598,34 +9580,6 @@ ns_unparse_statement(
     fprintf(fout, "<h3>");
     problem_xml_unparse_node(fout, pp->title, vars, vals);
     fprintf(fout, "</h3>");
-  }
-
-  if (prob->type == PROB_TYPE_STANDARD) {
-    fprintf(fout, "<table class=\"b0\">\n");
-    if (prob->use_stdin <= 0 && prob->input_file[0]) {
-      write_row(fout, _("Input file name"), "<tt>%s</tt>",
-                ARMOR(prob->input_file));
-    }
-    if (prob->use_stdout <= 0 && prob->output_file[0]) {
-      write_row(fout, _("Output file name"), "<tt>%s</tt>",
-                ARMOR(prob->output_file));
-    }
-    if (prob->time_limit_millis > 0) {
-      write_row(fout, _("Time limit"), "%d %s",
-                prob->time_limit_millis, _("ms"));
-    } else if (prob->time_limit > 0) {
-      write_row(fout, _("Time limit"), "%d %s", prob->time_limit, _("s"));
-    }
-    if (prob->max_vm_size > 0) {
-      if (!(prob->max_vm_size % (1024 * 1024))) {
-        write_row(fout, _("Memory limit"), "%zu M",
-                  prob->max_vm_size / (1024*1024));
-      } else {
-        write_row(fout, _("Memory limit"), "%zu",
-                  prob->max_vm_size);
-      }
-    }
-    fprintf(fout, "</table>\n");
   }
 
   if (pp->desc) {
