@@ -65,7 +65,6 @@ ns_unparse_answers(
   const unsigned char *cc = 0;
   int last_answer = -1, last_lang_id, skip_start_form = 0;
   unsigned char *last_source = 0;
-  unsigned char dbuf[1024];
   int upper_tab_id = 0, next_prob_id;
   problem_xml_t px;
   unsigned char prev_group_name[256] = { 0 };
