@@ -1506,6 +1506,18 @@ size_t_to_size_str(
   return buf;
 }
 
+void
+size_t_to_size_str_f(
+        FILE *f,
+        size_t num)
+{
+  if (!num) fprintf(f, "0");
+  else if (!(num % SIZE_G)) fprintf(f, "%" EJ_PRINTF_ZSPEC "uG", EJ_PRINTF_ZCAST(num / SIZE_G));
+  else if (!(num % SIZE_M)) fprintf(f, "%" EJ_PRINTF_ZSPEC "uM", EJ_PRINTF_ZCAST(num / SIZE_M));
+  else if (!(num % SIZE_K)) fprintf(f, "%" EJ_PRINTF_ZSPEC "uK", EJ_PRINTF_ZCAST(num / SIZE_K));
+  else fprintf(f, "%" EJ_PRINTF_ZSPEC "u", EJ_PRINTF_ZCAST(num));
+}
+
 /*
   parse an integral value in range -2147483648...2147483647 checking for overflow
  */
