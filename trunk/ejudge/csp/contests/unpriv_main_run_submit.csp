@@ -40,12 +40,6 @@
         }
 %></h2>
 
-
-  fprintf(fout, "<tr><td class=\"b0\"><b>%s:</b></td><td class=\"b0\">%s</td></tr>\n",
-          row_label, buf);
-
-
-
 <table class="b0">
 <%
         if (prob->type == PROB_TYPE_STANDARD) {
@@ -120,7 +114,7 @@
         if ((prob_status[prob_id] & PROB_STATUS_SUBMITTABLE) && prob->date_penalty) {
           int dpi;
 %>
-    <tr><td><b><s:_>Date penalty</s:_>:</b></td><td><%
+    <tr><td class="b0"><b><s:_>Date penalty</s:_>:</b></td><td class="b0"><%
           for (dpi = 0; prob->date_penalty[dpi]; ++dpi) {
             char *dp = prob->date_penalty[dpi];
             if (dp != prob->date_penalty[0]) {
@@ -143,7 +137,7 @@
         int remain_count = prob->max_user_run_count - run_count_all_attempts_2(cs->runlog_state, phr->user_id, prob_id, ignored_set);
         if (remain_count < 0) remain_count = 0;
 %>
-    <tr><td><b><s:_>Remaining attempts</s:_>:</b></td><td><tt><s:v value="remain_count" /></tt></td></tr>
+    <tr><td class="b0"><b><s:_>Remaining attempts</s:_>:</b></td><td class="b0"><tt><s:v value="remain_count" /></tt></td></tr>
 <%
         if (remain_count <= 0) prob_status[prob_id] &= ~PROB_STATUS_SUBMITTABLE;
       }
