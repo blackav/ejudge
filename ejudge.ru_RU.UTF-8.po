@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-10-18 18:24+0400\n"
-"PO-Revision-Date: 2014-10-18 18:41+0400\n"
+"POT-Creation-Date: 2014-10-20 13:20+0400\n"
+"PO-Revision-Date: 2014-10-20 13:22+0400\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -1020,8 +1020,14 @@ msgstr "ДИСКВАЛИФИЦИРОВАТЬ пользователей"
 msgid "Database error"
 msgstr "Ошибка базы данных"
 
+msgid "Date penalty"
+msgstr "Штраф по дате сдачи"
+
 msgid "Deactivate"
 msgstr "Деактивировать"
+
+msgid "Deadline"
+msgstr "Срок сдачи"
 
 msgid "Deadline for this problem is expired"
 msgstr "Срок сдачи данной задачи истёк"
@@ -2541,6 +2547,9 @@ msgstr "Подключившиеся пользователи"
 msgid "Open"
 msgstr "Открыть"
 
+msgid "Open date"
+msgstr "Дата открытия"
+
 msgid "Open for participation"
 msgstr "Открыт для участия"
 
@@ -2826,9 +2835,6 @@ msgstr "Столбец Problem не определен\n"
 
 msgid "Problem configuration error"
 msgstr "Ошибка конфигурации задачи"
-
-msgid "Problem deadline"
-msgstr "Срок окончания сдачи"
 
 msgid "Problem filter expression"
 msgstr "Условие отбора задач"
@@ -4748,6 +4754,9 @@ msgstr "ошибка записи"
 
 msgid "write error to server"
 msgstr "ошибка записи данных на сервер"
+
+#~ msgid "Problem deadline"
+#~ msgstr "Срок окончания сдачи"
 
 #~ msgid "Change judging priorities"
 #~ msgstr "Изменить приоритет проверки"

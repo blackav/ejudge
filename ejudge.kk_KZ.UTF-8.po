@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-10-18 18:24+0400\n"
+"POT-Creation-Date: 2014-10-20 13:20+0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Kazakh <uk@li.org>\n"
@@ -952,7 +952,13 @@ msgstr ""
 msgid "Database error"
 msgstr ""
 
+msgid "Date penalty"
+msgstr ""
+
 msgid "Deactivate"
+msgstr ""
+
+msgid "Deadline"
 msgstr ""
 
 msgid "Deadline for this problem is expired"
@@ -2387,6 +2393,9 @@ msgstr ""
 msgid "Open"
 msgstr ""
 
+msgid "Open date"
+msgstr ""
+
 msgid "Open for participation"
 msgstr ""
 
@@ -2663,9 +2672,6 @@ msgid "Problem column is undefined\n"
 msgstr ""
 
 msgid "Problem configuration error"
-msgstr ""
-
-msgid "Problem deadline"
 msgstr ""
 
 msgid "Problem filter expression"
