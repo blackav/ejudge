@@ -24,62 +24,55 @@
     } /* 14 */ else if (start_time > 0 && stop_time <= 0 && prob_id > 0) {
       prob = cs->probs[prob_id];
 
-      dbuf[0] = 0;
-      if ((prob_status[prob_id] & PROB_STATUS_SUBMITTABLE)
-          && prob_deadline[prob_id] > 0) {
-        snprintf(dbuf, sizeof(dbuf), "<h3>%s: %s</h3>",
-                 _("Problem deadline"),
-                 xml_unparse_date(prob_deadline[prob_id]));
-      }
-
-      bb[0] = 0;
-      if (variant > 0) {
-        snprintf(bb, sizeof(bb), "<%s>%s %s-%s (%s %d)</%s>%s\n",
-                 cnts->team_head_style,
-                 (prob_status[prob_id] & PROB_STATUS_SUBMITTABLE)?_("Submit a solution for"):_("Problem"),
-                 prob->short_name, prob->long_name, _("Variant"), variant,
-                 cnts->team_head_style, dbuf);
-      } else {
-        if (cnts->exam_mode) {
-          /*
-          if (prob->disable_user_submit > 0) {
-            snprintf(bb, sizeof(bb), "<%s>%s</%s>\n",
-                     cnts->team_head_style,
-                     prob->long_name, cnts->team_head_style);
-          } else {
-            snprintf(bb, sizeof(bb), "<%s>%s %s</%s>\n",
-                     cnts->team_head_style, _("Submit a solution for"),
-                     prob->long_name, cnts->team_head_style);
-          }
-          */
-          snprintf(bb, sizeof(bb), "<%s>%s %s</%s>%s\n",
-                   cnts->team_head_style, _("Problem"),
-                   prob->long_name, cnts->team_head_style, dbuf);
+      if (!cnts->exam_mode) {
+%><h2><%
+        if ((prob_status[prob_id] & PROB_STATUS_SUBMITTABLE)) {
+%><s:_>Submit a solution for</s:_><%
         } else {
-          if (1 /*!(prob_status[prob_id] & PROB_STATUS_SUBMITTABLE)*/) {
-            if (prob->long_name[0]) {
-              snprintf(bb, sizeof(bb), "<%s>%s %s-%s</%s>%s\n",
-                       cnts->team_head_style, _("Problem"),
-                       prob->short_name, prob->long_name, cnts->team_head_style,
-                       dbuf);
-            } else {
-              snprintf(bb, sizeof(bb), "<%s>%s %s</%s>%s\n",
-                       cnts->team_head_style, _("Problem"),
-                       prob->short_name, cnts->team_head_style, dbuf);
-            }
-          } else {
-            if (prob->long_name[0]) {
-              snprintf(bb, sizeof(bb), "<%s>%s %s-%s</%s>%s\n",
-                       cnts->team_head_style, _("Submit a solution for"),
-                       prob->short_name, prob->long_name, cnts->team_head_style,
-                       dbuf);
-            } else {
-              snprintf(bb, sizeof(bb), "<%s>%s %s</%s>%s\n",
-                       cnts->team_head_style, _("Submit a solution for"),
-                       prob->short_name, cnts->team_head_style, dbuf);
-            }
-          }
+%><s:_>Problem</s:_><%
         }
+%> <s:v value="prob->short_name" escape="false" /><%
+        if (prob->long_name && prob->long_name[0]) {
+%>-<s:v value="prob->long_name" /><%
+        }
+        if (variant > 0) {
+%> (<s:_>Variant</s:_> <s:v value="variant" />)<%
+        }
+%></h2>
+
+<%
+        if ((prob_status[prob_id] & PROB_STATUS_SUBMITTABLE) && prob_deadline[prob_id] > 0) {
+%>
+<h3><s:_>Deadline</s:_>: <s:v value="xml_unparse_date(prob_deadline[prob_id])" escape="false"/></h3>
+<%
+        }
+%>
+
+<%
+        if ((prob_status[prob_id] & PROB_STATUS_SUBMITTABLE) && prob->start_date > 0) {
+%>
+<h3><s:_>Open date</s:_>: <s:v value="xml_unparse_date(prob->start_date)" escape="false"/></h3>
+<%
+        }
+%>
+
+<%
+        if ((prob_status[prob_id] & PROB_STATUS_SUBMITTABLE) && prob->date_penalty) {
+          char *dp;
+%>
+<p><s:_>Date penalty</s:_>: <%
+          for (dp = prob->date_penalty[0]; dp; ++dp) {
+            if (dp != prob->date_penalty[0]) {
+%>, <%
+            }
+%><s:v value="dp" /><%
+          }
+%></p>
+<%
+        }
+%>
+
+<%
       }
 %><%
       if (prob->max_user_run_count > 0) {
@@ -102,7 +95,7 @@
 
       /* put problem statement */
       if (px && px->stmts) {
-        ns_unparse_statement(out_f, phr, cnts, extra, prob, 0, px, bb,
+        ns_unparse_statement(out_f, phr, cnts, extra, prob, 0, px, NULL,
                           prob_status[prob_id] & PROB_STATUS_SUBMITTABLE);
       } else if (prob->statement_file[0]
           && (prob_status[prob_id] & PROB_STATUS_VIEWABLE)) {
@@ -118,11 +111,9 @@
         }
         watched_file_update(pw, pw_path, cs->current_time);
         if (!pw->text) {
-%><s:v value="bb" escape="false" /><big><font color="red"><p><s:_>The problem statement is not available</s:_></p></font></big>
+%><big><font color="red"><p><s:_>The problem statement is not available</s:_></p></font></big>
 <%
         } else {
-          if (cnts->exam_mode) bb[0] = 0;
-          fprintf(out_f, "%s", bb);
           if ((prob_status[prob_id] & PROB_STATUS_SUBMITTABLE)
               && prob->type == PROB_TYPE_CUSTOM) {
             html_start_form(out_f, 2, phr->self_url, phr->hidden_vars);
@@ -131,7 +122,6 @@
           fprintf(out_f, "%s", pw->text);
         }
       } else {
-        fprintf(out_f, "%s", bb);
       }
 
       if ((prob_status[prob_id] & PROB_STATUS_SUBMITTABLE)) {
