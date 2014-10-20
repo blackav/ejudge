@@ -10,6 +10,7 @@ enum
   META_POLYGON_PACKET_sleep_interval = 1,
   META_POLYGON_PACKET_enable_max_stack_size,
   META_POLYGON_PACKET_create_mode,
+  META_POLYGON_PACKET_ignore_solutions,
   META_POLYGON_PACKET_retry_count,
   META_POLYGON_PACKET_polygon_url,
   META_POLYGON_PACKET_login,

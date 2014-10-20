@@ -15,6 +15,7 @@ static struct meta_info_item meta_info_polygon_packet_data[] =
   [META_POLYGON_PACKET_sleep_interval] = { META_POLYGON_PACKET_sleep_interval, 'i', XSIZE(struct polygon_packet, sleep_interval), "sleep_interval", XOFFSET(struct polygon_packet, sleep_interval) },
   [META_POLYGON_PACKET_enable_max_stack_size] = { META_POLYGON_PACKET_enable_max_stack_size, 'B', XSIZE(struct polygon_packet, enable_max_stack_size), "enable_max_stack_size", XOFFSET(struct polygon_packet, enable_max_stack_size) },
   [META_POLYGON_PACKET_create_mode] = { META_POLYGON_PACKET_create_mode, 'B', XSIZE(struct polygon_packet, create_mode), "create_mode", XOFFSET(struct polygon_packet, create_mode) },
+  [META_POLYGON_PACKET_ignore_solutions] = { META_POLYGON_PACKET_ignore_solutions, 'B', XSIZE(struct polygon_packet, ignore_solutions), "ignore_solutions", XOFFSET(struct polygon_packet, ignore_solutions) },
   [META_POLYGON_PACKET_retry_count] = { META_POLYGON_PACKET_retry_count, 'i', XSIZE(struct polygon_packet, retry_count), "retry_count", XOFFSET(struct polygon_packet, retry_count) },
   [META_POLYGON_PACKET_polygon_url] = { META_POLYGON_PACKET_polygon_url, 's', XSIZE(struct polygon_packet, polygon_url), "polygon_url", XOFFSET(struct polygon_packet, polygon_url) },
   [META_POLYGON_PACKET_login] = { META_POLYGON_PACKET_login, 's', XSIZE(struct polygon_packet, login), "login", XOFFSET(struct polygon_packet, login) },
