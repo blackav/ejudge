@@ -3,7 +3,7 @@
 #ifndef __MISCTEXT_H__
 #define __MISCTEXT_H__
 
-/* Copyright (C) 2000-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -180,6 +180,10 @@ unsigned char*
 size_t_to_size_str(
         unsigned char *buf,
         size_t buf_size,
+        size_t num);
+void
+size_t_to_size_str_f(
+        FILE *f,
         size_t num);
 
 void
