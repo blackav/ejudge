@@ -45,6 +45,21 @@
         if (prob->type == PROB_TYPE_STANDARD) {
 %>
 <%
+          if (global->score_system == SCORE_KIROV) {
+%>
+    <tr><td class="b0"><b><s:_>Full score</s:_>:</b></td><td class="b0"><tt><s:v value="prob->full_score" /></tt></td></tr>
+    <tr><td class="b0"><b><s:_>Run penalty</s:_>:</b></td><td class="b0"><tt><s:v value="prob->run_penalty" /></tt></td></tr>
+<%
+            if (prob->score_bonus && prob->score_bonus[0]) {
+%>
+    <tr><td class="b0"><b><s:_>Score bonus</s:_>:</b></td><td class="b0"><tt><s:v value="prob->score_bonus" /></tt></td></tr>
+<%
+            }
+%>
+<%
+          }
+%>
+<%
           if (prob->use_stdin <= 0 && prob->input_file[0]) {
 %>
     <tr><td class="b0"><b><s:_>Input file name</s:_>:</b></td><td class="b0"><tt><s:v value="prob->input_file" /></tt></td></tr>
