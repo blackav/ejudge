@@ -40,18 +40,78 @@
         }
 %></h2>
 
+
+  fprintf(fout, "<tr><td class=\"b0\"><b>%s:</b></td><td class=\"b0\">%s</td></tr>\n",
+          row_label, buf);
+
+
+
+<table class="b0">
 <%
-        if ((prob_status[prob_id] & PROB_STATUS_SUBMITTABLE) && prob_deadline[prob_id] > 0) {
+        if (prob->type == PROB_TYPE_STANDARD) {
 %>
-<h3><s:_>Deadline</s:_>: <s:v value="xml_unparse_date(prob_deadline[prob_id])" escape="false"/></h3>
+<%
+          if (prob->use_stdin <= 0 && prob->input_file[0]) {
+%>
+    <tr><td class="b0"><b><s:_>Input file name</s:_>:</b></td><td class="b0"><tt><s:v value="prob->input_file" /></tt></td></tr>
+<%
+          }
+%>
+<%
+          if (prob->use_stdout <= 0 && prob->output_file[0]) {
+%>
+    <tr><td class="b0"><b><s:_>Output file name</s:_>:</b></td><td class="b0"><tt><s:v value="prob->output_file" /></tt></td></tr>
+<%
+          }
+%>
+<%
+          if (prob->time_limit_millis > 0) {
+%>
+    <tr><td class="b0"><b><s:_>Time limit</s:_>:</b></td><td class="b0"><tt><s:v value="prob->time_limit_millis" /> <s:_>ms</s:_></tt></td></tr>
+<%
+          } else if (prob->time_limit > 0) {
+%>
+    <tr><td class="b0"><b><s:_>Time limit</s:_>:</b></td><td class="b0"><tt><s:v value="prob->time_limit" /> <s:_>s</s:_></tt></td></tr>
+<%
+          }
+%>
+<%
+          if (prob->real_time_limit > 0) {
+%>
+    <tr><td class="b0"><b><s:_>Real time limit</s:_>:</b></td><td class="b0"><tt><s:v value="prob->real_time_limit" /> <s:_>s</s:_></tt></td></tr>
+<%
+          }
+%>
+<%
+          if (prob->max_vm_size != 0 && prob->max_vm_size != ~(size_t) 0) {
+%>
+    <tr><td class="b0"><b><s:_>Memory limit</s:_>:</b></td><td class="b0"><tt><s:v format="V" value="prob->max_vm_size" /></tt></td></tr>
+<%
+          }
+%>
+<%
+          if (prob->max_stack_size != 0 && prob->max_stack_size != ~(size_t) 0 && prob->max_stack_size != prob->max_vm_size) {
+%>
+    <tr><td class="b0"><b><s:_>Stack limit</s:_>:</b></td><td class="b0"><tt><s:v format="V" value="prob->max_stack_size" /></tt></td></tr>
+<%
+          }
+%>
 <%
         }
 %>
 
 <%
-        if ((prob_status[prob_id] & PROB_STATUS_SUBMITTABLE) && prob->start_date > 0) {
+        if (prob->start_date > 0) {
 %>
-<h3><s:_>Open date</s:_>: <s:v value="xml_unparse_date(prob->start_date)" escape="false"/></h3>
+    <tr><td class="b0"><b><s:_>Open date</s:_>:</b></td><td class="b0"><tt><s:v value="prob->start_date" /></tt></td></tr>
+<%
+        }
+%>
+
+<%
+        if (prob_deadline[prob_id] > 0) {
+%>
+    <tr><td class="b0"><b><s:_>Deadline</s:_>:</b></td><td class="b0"><tt><s:v value="prob_deadline[prob_id]" /></tt></td></tr>
 <%
         }
 %>
@@ -60,7 +120,7 @@
         if ((prob_status[prob_id] & PROB_STATUS_SUBMITTABLE) && prob->date_penalty) {
           int dpi;
 %>
-<p><s:_>Date penalty</s:_>: <%
+    <tr><td><b><s:_>Date penalty</s:_>:</b></td><td><%
           for (dpi = 0; prob->date_penalty[dpi]; ++dpi) {
             char *dp = prob->date_penalty[dpi];
             if (dp != prob->date_penalty[0]) {
@@ -68,7 +128,7 @@
             }
 %><s:v value="dp" /><%
           }
-%></p>
+%></td></tr>
 <%
         }
 %>
@@ -82,11 +142,16 @@
         ignored_set |= 1 << RUN_IGNORED;
         int remain_count = prob->max_user_run_count - run_count_all_attempts_2(cs->runlog_state, phr->user_id, prob_id, ignored_set);
         if (remain_count < 0) remain_count = 0;
-%><h3><s:_>Remaining attempts</s:_>: <s:v value="remain_count" /></h3>
+%>
+    <tr><td><b><s:_>Remaining attempts</s:_>:</b></td><td><tt><s:v value="remain_count" /></tt></td></tr>
 <%
         if (remain_count <= 0) prob_status[prob_id] &= ~PROB_STATUS_SUBMITTABLE;
       }
-%><%
+%>
+
+</table>
+
+<%
       px = 0;
       if (variant > 0 && prob->xml.a && prob->xml.a[variant - 1]) {
         px = prob->xml.a[variant - 1];
