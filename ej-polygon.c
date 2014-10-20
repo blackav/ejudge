@@ -2066,7 +2066,11 @@ process_polygon_zip(
         goto zip_error;
     }
     unsigned char solutions_path[PATH_MAX];
-    snprintf(solutions_path, sizeof(solutions_path), "%s/solutions", problem_path);
+    if (pkt->ignore_solutions) {
+        snprintf(solutions_path, sizeof(solutions_path), "%s/solutions1", problem_path);
+    } else {
+        snprintf(solutions_path, sizeof(solutions_path), "%s/solutions", problem_path);
+    }
     if (os_MakeDirPath2(solutions_path, pkt->dir_mode, pkt->dir_group) < 0) {
         fprintf(log_f, "failed to create directory '%s'\n", solutions_path);
         goto zip_error;
