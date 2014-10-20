@@ -48,7 +48,13 @@
           if (global->score_system == SCORE_KIROV) {
 %>
     <tr><td class="b0"><b><s:_>Full score</s:_>:</b></td><td class="b0"><tt><s:v value="prob->full_score" /></tt></td></tr>
+<%
+            if (prob->run_penalty > 0) {
+%>
     <tr><td class="b0"><b><s:_>Run penalty</s:_>:</b></td><td class="b0"><tt><s:v value="prob->run_penalty" /></tt></td></tr>
+<%
+            }
+%>
 <%
             if (prob->score_bonus && prob->score_bonus[0]) {
 %>
