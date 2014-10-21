@@ -68,7 +68,7 @@ struct problem_config_section
   ejintbool_t accept_partial;
   ejintbool_t disable_user_submit;
   ejintbool_t disable_tab;
-  ejintbool_t restricted_statement;
+  ejintbool_t unrestricted_statement;
   ejintbool_t disable_submit_after_ok;
   ejintbool_t disable_auto_testing;
   ejintbool_t disable_testing;

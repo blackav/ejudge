@@ -849,8 +849,8 @@ struct section_problem_data
   ejintbool_t disable_user_submit;
   /** no problem tab for this problem in problem_navigation mode */
   ejintbool_t disable_tab;
-  /** do not show problem statement after problem expiration */
-  ejintbool_t restricted_statement;
+  /** do show problem statement after problem expiration */
+  ejintbool_t unrestricted_statement;
   /** disable submission after this problem is solved */
   ejintbool_t disable_submit_after_ok;
   /** do not test this problem automatically */

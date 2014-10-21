@@ -412,7 +412,7 @@ const unsigned char * const super_serve_help_urls[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_CHANGE_IGNORE_COMPILE_ERRORS] = "Serve.cfg:problem:ignore_compile_errors",
   [SSERV_CMD_PROB_CHANGE_DISABLE_USER_SUBMIT] = "Serve.cfg:problem:disable_user_submit",
   [SSERV_CMD_PROB_CHANGE_DISABLE_TAB] = "Serve.cfg:problem:disable_tab",
-  [SSERV_CMD_PROB_CHANGE_RESTRICTED_STATEMENT] = "Serve.cfg:problem:restricted_statement",
+  [SSERV_CMD_PROB_CHANGE_UNRESTRICTED_STATEMENT] = "Serve.cfg:problem:unrestricted_statement",
   [SSERV_CMD_PROB_CHANGE_DISABLE_SUBMIT_AFTER_OK] = "Serve.cfg:problem:disable_submit_after_ok",
   [SSERV_CMD_PROB_CHANGE_DISABLE_SECURITY] = "Serve.cfg:problem:disable_security",
   [SSERV_CMD_PROB_CHANGE_DISABLE_TESTING] = "Serve.cfg:problem:disable_testing",
@@ -2330,8 +2330,8 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
     p_int = &prob->disable_tab;
     goto handle_boolean_2;
 
-  case SSERV_CMD_PROB_CHANGE_RESTRICTED_STATEMENT:
-    p_int = &prob->restricted_statement;
+  case SSERV_CMD_PROB_CHANGE_UNRESTRICTED_STATEMENT:
+    p_int = &prob->unrestricted_statement;
     goto handle_boolean_2;
 
   case SSERV_CMD_PROB_CHANGE_DISABLE_SUBMIT_AFTER_OK:

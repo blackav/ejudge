@@ -9471,7 +9471,7 @@ is_judged_virtual_olympiad(serve_state_t cs, int user_id)
 /*
   *PROBLEM_PARAM(disable_user_submit, "d"),
   *PROBLEM_PARAM(disable_tab, "d"),
-  *PROBLEM_PARAM(restricted_statement, "d"),
+  *PROBLEM_PARAM(unrestricted_statement, "d"),
   *PROBLEM_PARAM(disable_submit_after_ok, "d"),
   *PROBLEM_PARAM(deadline, "s"),
   *PROBLEM_PARAM(start_date, "s"),
@@ -9527,7 +9527,7 @@ ns_get_problem_status(
     is_deadlined = serve_is_problem_deadlined(cs, user_id, user_login,
                                               prob, &user_deadline);
 
-    if (prob->restricted_statement > 0 || !is_deadlined)
+    if (prob->unrestricted_statement > 0 || !is_deadlined)
       pstat[prob_id] |= PROB_STATUS_VIEWABLE;
 
     if (!is_deadlined && prob->disable_user_submit <= 0
@@ -9998,14 +9998,14 @@ unpriv_get_file(
   if (cs->clients_suspended) FAIL(NEW_SRV_ERR_CLIENTS_SUSPENDED);
   if (start_time <= 0) FAIL(NEW_SRV_ERR_CONTEST_NOT_STARTED);
   if (stop_time > 0 && cs->current_time >= stop_time
-      && prob->restricted_statement <= 0)
+      && prob->unrestricted_statement <= 0)
     FAIL(NEW_SRV_ERR_CONTEST_ALREADY_FINISHED);
   if (!serve_is_problem_started(cs, phr->user_id, prob))
     FAIL(NEW_SRV_ERR_PROB_UNAVAILABLE);
 
   if (serve_is_problem_deadlined(cs, phr->user_id, phr->login,
                                  prob, &user_deadline)
-      && prob->restricted_statement <= 0)
+      && prob->unrestricted_statement <= 0)
     FAIL(NEW_SRV_ERR_CONTEST_ALREADY_FINISHED);
 
   // FIXME: check requisites
