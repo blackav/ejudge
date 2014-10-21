@@ -396,6 +396,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(disable_tab, "d"),
   PROBLEM_PARAM(unrestricted_statement, "d"),
   PROBLEM_PARAM(restricted_statement, "d"),
+  PROBLEM_PARAM(hide_file_names, "d"),
   PROBLEM_PARAM(disable_submit_after_ok, "d"),
   PROBLEM_PARAM(disable_security, "d"),
   PROBLEM_PARAM(enable_compilation, "d"),
@@ -945,6 +946,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->disable_user_submit = -1;
   p->disable_tab = -1;
   p->unrestricted_statement = -1;
+  p->hide_file_names = -1;
   p->disable_submit_after_ok = -1;
   p->disable_security = -1;
   p->enable_compilation = -1;
@@ -3423,6 +3425,7 @@ set_defaults(
     prepare_set_prob_value(CNTSPROB_disable_user_submit, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_disable_tab, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_unrestricted_statement, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_hide_file_names, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_disable_submit_after_ok, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_disable_auto_testing, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_disable_testing, prob, aprob, g);
@@ -5859,6 +5862,13 @@ prepare_set_prob_value(
       out->unrestricted_statement = 0;
     break;
 
+  case CNTSPROB_hide_file_names:
+    if (out->hide_file_names < 0 && abstr)
+      out->hide_file_names = abstr->hide_file_names;
+    if (out->hide_file_names < 0)
+      out->hide_file_names = 0;
+    break;
+
   case CNTSPROB_disable_submit_after_ok:
     if (out->disable_submit_after_ok < 0 && abstr)
       out->disable_submit_after_ok = abstr->disable_submit_after_ok;
@@ -6535,7 +6545,7 @@ static const int prob_settable_list[] =
   CNTSPROB_min_tests_to_accept, CNTSPROB_checker_real_time_limit,
   CNTSPROB_disable_auto_testing, CNTSPROB_disable_testing,
   CNTSPROB_disable_user_submit, CNTSPROB_disable_tab,
-  CNTSPROB_unrestricted_statement, CNTSPROB_disable_submit_after_ok,
+  CNTSPROB_unrestricted_statement, CNTSPROB_hide_file_names, CNTSPROB_disable_submit_after_ok,
   CNTSPROB_disable_security, CNTSPROB_enable_compilation,
   CNTSPROB_skip_testing, CNTSPROB_variable_full_score, CNTSPROB_hidden,
   CNTSPROB_priority_adjustment, CNTSPROB_spelling, CNTSPROB_stand_hide_time,
@@ -6629,6 +6639,7 @@ static const unsigned char prob_settable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_disable_user_submit] = 1,
   [CNTSPROB_disable_tab] = 1,
   [CNTSPROB_unrestricted_statement] = 1,
+  [CNTSPROB_hide_file_names] = 1,
   [CNTSPROB_disable_submit_after_ok] = 1,
   [CNTSPROB_disable_security] = 1,
   [CNTSPROB_enable_compilation] = 1,
@@ -6754,7 +6765,7 @@ static const int prob_inheritable_list[] =
   CNTSPROB_min_tests_to_accept, CNTSPROB_checker_real_time_limit,
   CNTSPROB_disable_auto_testing, CNTSPROB_disable_testing,
   CNTSPROB_disable_user_submit, CNTSPROB_disable_tab,
-  CNTSPROB_unrestricted_statement, CNTSPROB_disable_submit_after_ok,
+  CNTSPROB_unrestricted_statement, CNTSPROB_hide_file_names, CNTSPROB_disable_submit_after_ok,
   CNTSPROB_disable_security, CNTSPROB_enable_compilation,
   CNTSPROB_skip_testing, CNTSPROB_variable_full_score,
   CNTSPROB_hidden, CNTSPROB_priority_adjustment, CNTSPROB_spelling,
@@ -6845,6 +6856,7 @@ static const unsigned char prob_inheritable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_disable_user_submit] = 1,
   [CNTSPROB_disable_tab] = 1,
   [CNTSPROB_unrestricted_statement] = 1,
+  [CNTSPROB_hide_file_names] = 1,
   [CNTSPROB_disable_submit_after_ok] = 1,
   [CNTSPROB_disable_security] = 1,
   [CNTSPROB_enable_compilation] = 1,
@@ -6994,6 +7006,7 @@ static const struct section_problem_data prob_undef_values =
   .disable_user_submit = -1,
   .disable_tab = -1,
   .unrestricted_statement = -1,
+  .hide_file_names = -1,
   .disable_submit_after_ok = -1,
   .disable_auto_testing = -1,
   .disable_testing = -1,
@@ -7148,6 +7161,7 @@ static const struct section_problem_data prob_default_values =
   .disable_user_submit = 0,
   .disable_tab = 0,
   .unrestricted_statement = 0,
+  .hide_file_names = 0,
   .disable_submit_after_ok = 0,
   .disable_auto_testing = 0,
   .disable_testing = 0,
