@@ -659,7 +659,7 @@ merge_problem_section(
         { CNTSPROB_accept_partial, META_PROBLEM_CONFIG_SECTION_accept_partial },
         { CNTSPROB_disable_user_submit, META_PROBLEM_CONFIG_SECTION_disable_user_submit },
         { CNTSPROB_disable_tab, META_PROBLEM_CONFIG_SECTION_disable_tab },
-        { CNTSPROB_restricted_statement, META_PROBLEM_CONFIG_SECTION_restricted_statement },
+        { CNTSPROB_unrestricted_statement, META_PROBLEM_CONFIG_SECTION_unrestricted_statement },
         { CNTSPROB_disable_submit_after_ok, META_PROBLEM_CONFIG_SECTION_disable_submit_after_ok },
         { CNTSPROB_disable_auto_testing, META_PROBLEM_CONFIG_SECTION_disable_auto_testing },
         { CNTSPROB_disable_testing, META_PROBLEM_CONFIG_SECTION_disable_testing },
