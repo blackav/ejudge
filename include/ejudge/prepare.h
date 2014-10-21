@@ -853,6 +853,8 @@ struct section_problem_data
   ejintbool_t unrestricted_statement;
   /** for compatibility with old configs */
   ejintbool_t restricted_statement;
+  /** hide input/output file names from problem submit page */
+  ejintbool_t hide_file_names;
   /** disable submission after this problem is solved */
   ejintbool_t disable_submit_after_ok;
   /** do not test this problem automatically */
