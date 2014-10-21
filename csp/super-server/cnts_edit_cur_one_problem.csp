@@ -1634,6 +1634,30 @@
 <s:form>
     <s:hidden name="prob_id" check="false" />
     <s:tr attr="form_row_attrs[row ^= 1]">
+        <td>Hide input/output file names from problem statement?</td>
+        <td><%
+    if (is_abstract || !sup_prob) {
+      int value = (prob->hide_file_names == 1);
+%><s:yesno name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_hide_file_names, tmp_prob, sup_prob, global);
+%><s:yesno3 name="param" value="prob->hide_file_names" default="tmp_prob->hide_file_names" /><%
+    }
+%></td>
+        <td><s:submit ac="prob-change-hide-file-names" label="Change" /></td>
+        <td><s:help ac="prob-change-hide-file-names" /></td>
+    </s:tr>
+</s:form>
+<%
+  }
+%>
+
+<%
+  if (show_adv) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Disable submissions after OK?</td>
         <td><%
     if (is_abstract || !sup_prob) {
