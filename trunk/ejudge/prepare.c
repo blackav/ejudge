@@ -395,6 +395,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(disable_user_submit, "d"),
   PROBLEM_PARAM(disable_tab, "d"),
   PROBLEM_PARAM(unrestricted_statement, "d"),
+  PROBLEM_PARAM(restricted_statement, "d"),
   PROBLEM_PARAM(disable_submit_after_ok, "d"),
   PROBLEM_PARAM(disable_security, "d"),
   PROBLEM_PARAM(enable_compilation, "d"),

@@ -851,6 +851,8 @@ struct section_problem_data
   ejintbool_t disable_tab;
   /** do show problem statement after problem expiration */
   ejintbool_t unrestricted_statement;
+  /** for compatibility with old configs */
+  ejintbool_t restricted_statement;
   /** disable submission after this problem is solved */
   ejintbool_t disable_submit_after_ok;
   /** do not test this problem automatically */
