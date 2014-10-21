@@ -9527,7 +9527,7 @@ ns_get_problem_status(
     is_deadlined = serve_is_problem_deadlined(cs, user_id, user_login,
                                               prob, &user_deadline);
 
-    if (prob->restricted_statement <= 0 || !is_deadlined)
+    if (prob->restricted_statement > 0 || !is_deadlined)
       pstat[prob_id] |= PROB_STATUS_VIEWABLE;
 
     if (!is_deadlined && prob->disable_user_submit <= 0
