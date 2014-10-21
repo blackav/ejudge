@@ -7257,7 +7257,7 @@ unprivileged_page_login(FILE *fout, struct http_request_info *phr)
   prob_name_3[0] = 0;
   if (prob_name && prob_name[0]) {
     url_armor_string(prob_name_2, sizeof(prob_name_2), prob_name);
-    snprintf(prob_name_3, sizeof(prob_name_3), "lt=1&prob_name=%s", prob_name_2);
+    snprintf(prob_name_3, sizeof(prob_name_3), "lt=1&prob_name=%s&action=%d", prob_name_2, NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT);
   } else {
     snprintf(prob_name_3, sizeof(prob_name_3), "lt=1");
   }
