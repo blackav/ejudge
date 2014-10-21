@@ -13,6 +13,7 @@
   int vis_flag = 0;
   const unsigned char *login_str = NULL;
   const unsigned char *password_str = NULL;
+  const unsigned char *prob_name = NULL;
   unsigned char title[1024];
 
   if (phr->contest_id <= 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts) {
@@ -50,6 +51,7 @@
 
 %><s:read var="login_str" name="login" ignoreerrors="yes" /><%
 %><s:read var="password_str" name="password" ignoreerrors="yes" /><%
+%><s:read var="prob_name" ignoreerrors="yes" /><%
 
   phr->hidden_vars = "";
   l10n_setlocale(phr->locale_id);
@@ -62,6 +64,7 @@
 %><s:form>
 <s:hidden name="contest_id" value="phr->contest_id" />
 <s:hidden name="role" value="0" checkExpr=">= 0" />
+<s:hidden name="prob_name" checkExpr="" />
 <% if (cnts->disable_locale_change) {
 %><s:hidden name="locale_id" value="phr->locale_id" /><%
 } %>
