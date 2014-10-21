@@ -7193,8 +7193,11 @@ unprivileged_page_login(FILE *fout, struct http_request_info *phr)
 {
   const unsigned char *login = 0;
   const unsigned char *password = 0;
+  const unsigned char *prob_name = 0;
   int r;
   const struct contest_desc *cnts = 0;
+  unsigned char prob_name_2[1024];
+  unsigned char prob_name_3[1024];
 
   if ((r = hr_cgi_param(phr, "login", &login)) < 0)
     return ns_html_err_inv_param(fout, phr, 0, "cannot parse login");
@@ -7250,8 +7253,17 @@ unprivileged_page_login(FILE *fout, struct http_request_info *phr)
     }
   }
 
+  hr_cgi_param(phr, "prob_name", &prob_name);
+  prob_name_3[0] = 0;
+  if (prob_name && prob_name[0]) {
+    url_armor_string(prob_name_2, sizeof(prob_name_2), prob_name);
+    snprintf(prob_name_3, sizeof(prob_name_3), "lt=1&prob_name=%s", prob_name_2);
+  } else {
+    snprintf(prob_name_3, sizeof(prob_name_3), "lt=1");
+  }
+
   ns_get_session(phr->session_id, phr->client_key, 0);
-  ns_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, "lt=1");
+  ns_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, prob_name_3);
 }
 
 static void
