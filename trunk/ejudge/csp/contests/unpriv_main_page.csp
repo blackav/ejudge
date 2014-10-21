@@ -153,7 +153,7 @@ ns_unparse_answers(
   if (global->problem_navigation > 0 && start_time > 0 && stop_time <= 0) {
     if (prob_id > cs->max_prob) prob_id = 0;
     if (prob_id > 0 && !(prob = cs->probs[prob_id])) prob_id = 0;
-    if (prob_id > 0 && !(prob_status[prob_id] & PROB_STATUS_GOOD))
+    if (prob_id > 0 && !(prob_status[prob_id] & PROB_STATUS_VIEWABLE))
       prob_id = 0;
     if (prob_id > 0 && prob->variant_num > 0
         && (variant = find_variant(cs, phr->user_id, prob_id, 0)) <= 0)
