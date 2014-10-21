@@ -3,6 +3,9 @@
     if (prob_id > 0 && !(prob = cs->probs[prob_id])) prob_id = 0;
     if (prob_id > 0 && !serve_is_problem_started(cs, phr->user_id, prob))
       prob_id = 0;
+    if (prob_id > 0 && prob) {
+      serve_is_problem_deadlined(cs, phr->user_id, phr->login, prob, &prob_deadline[prob_id]);
+    }
 /*
     if (prob_id > 0 && serve_is_problem_deadlined(cs, phr->user_id, phr->login,
                                                   prob,
