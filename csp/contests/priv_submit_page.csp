@@ -85,7 +85,7 @@ ns_unparse_answers(
 <tr><td class="b0"><s:_>Problem</s:_>:</td><td class="b0"><s:select name="problem"><%
   for (i = 1; i <= cs->max_prob; i++) {
     if (!(cs->probs[i])) continue;
-%><s:option value="i" selectedExpr="prob_id > 0 && i == prob_id"><s:v value="cs->probs[i]->short_name" escape="false" /><s:v value="prob->internal_name" checkExpr="[0]" sep=" - " /> - <s:v value="cs->probs[i]->long_name" /></s:option><%
+%><s:option value="i" selectedExpr="prob_id > 0 && i == prob_id"><s:v value="cs->probs[i]->short_name" escape="false" /><s:v value="cs->probs[i]->internal_name" checkExpr="[0]" sep=" - " /> - <s:v value="cs->probs[i]->long_name" /></s:option><%
   }
 %></s:select></td><td class="b0"><s:submit ac="priv-submit-page" /></td></tr>
 <% if (prob && prob->variant_num > 0) { %>
