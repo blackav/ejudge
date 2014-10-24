@@ -442,7 +442,7 @@
 <tr><td><s:_>Problem</s:_>:</td><td><select name="problem">
 <%      for (x = 1; x <= cs->max_prob; x++) {
         if (!(prob = cs->probs[x])) continue; %>
-<option value='<s:v value="x" />'><s:v escape="false" value="prob->short_name" /> - <s:v value="prob->long_name" /></option>
+<option value='<s:v value="x" />'><s:v escape="false" value="prob->short_name" /><s:v value="prob->internal_name" checkExpr="[0]" sep=" - " /> - <s:v value="prob->long_name" /></option>
 <%      }%>
 </select></td><td><s:submit ac="priv-submit-page" label="Select problem" /></td></tr></table></s:form>
 <%
@@ -450,14 +450,13 @@
     } else {
       // a problem is already selected
       // prob and variant have correct values
-      if (variant > 0) {
 %>
 <hr /><a name="submit"></a>
-<h2><s:_>Submit a solution for</s:_> <s:v escape="0" value="prob->short_name" />-<s:v value="prob->long_name" /> (<s:_>Variant</s:_> <s:v value="variant" />)</h2>
-<%      } else { %>
-<hr /><a name="submit"></a>
-<h2><s:_>Submit a solution for</s:_> <s:v escape="0" value="prob->short_name" />-<s:v value="prob->long_name" /></h2>
-<%      }%>
+<h2><s:_>Submit a solution for</s:_> <s:v escape="0" value="prob->short_name" /><s:v value="prob->internal_name" checkExpr="[0]" sep="-" />-<s:v value="prob->long_name" /><%
+      if (variant > 0) {
+%> (<s:_>Variant</s:_> <s:v value="variant" />)<%
+      }
+%></h2>
 
 <%      if (!skip_start_form) {%>
 <s:form method="post" enctype="multipart/form-data">
