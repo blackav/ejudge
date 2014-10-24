@@ -580,11 +580,36 @@ td.a-button-style, td.a-button-style:hover {
 }
 
 #menu-inside-green ul {
-        display: none;
-        position: absolute;
+    display: none;
+	position: absolute;
 }
 
 #menu-inside-green li:hover ul {
-        display: block;
+    display: block;
+}
+
+#menu-inside-green li ul {
+	margin: 0;
+	margin-top: 3px;
+	padding: 0;
+	background: #3e3e3e;
+}
+
+#menu-inside-green li ul li {
+	margin: 0;
+	padding: 0;
+	text-shadow: none;
+	display: inline-block;
+	box-shadow: inset rgba(0, 0, 0, 0.08) 0 2px 20px;
+}
+
+#menu-inside-green li ul li  a{
+	font-weight: normal;
+	padding: 8px 0 9px 15px;
+	color: rgb(205, 205, 205)!important;
+	width: 210px;
+	font-size: 13px;
+	display: block;
+	border-bottom: 1px solid rgba(102, 102, 102, 0.72);
 }
 
