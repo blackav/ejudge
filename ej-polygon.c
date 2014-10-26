@@ -2431,6 +2431,7 @@ check_problem_status(
     unsigned char zip_path[PATH_MAX];
     struct stat stb;
     struct RevisionInfo rinfo;
+    const unsigned char *availability_comment = "latest ";
 
     memset(&rinfo, 0, sizeof(rinfo));
     if (pi->state != STATE_INFO_LOADED) goto cleanup;
@@ -2486,16 +2487,39 @@ check_problem_status(
         goto cleanup;
     }
     if (!r) {
-        if (dif->create_full_package(ddata, ps, pi->edit_session)) {
-            fprintf(log_f, "failed to start full package creation\n");
-            pi->state = STATE_FAILED;
+        if (pkt->fetch_latest_available > 0) {
+            int current_rev = pi->latest_rev;
+            while (1) {
+                if((r = find_revision(log_f, dif->get_page_text(ddata), current_rev, &rinfo)) < 0) {
+                    fprintf(log_f, "packages page parse error\n");
+                    pi->state = STATE_FAILED;
+                    goto cleanup;
+                }
+                if (r > 0) {
+                    pi->latest_rev = current_rev;
+                    availability_comment = "latest AVAILABLE ";
+                    break;
+                }
+                --current_rev;
+                if (current_rev <= 0) {
+                    fprintf(log_f, "no available revision found\n");
+                    pi->state = STATE_FAILED;
+                    goto cleanup;
+                }
+            }
+        } else {
+            if (dif->create_full_package(ddata, ps, pi->edit_session)) {
+                fprintf(log_f, "failed to start full package creation\n");
+                pi->state = STATE_FAILED;
+                goto cleanup;
+            }
+            pi->state = STATE_RUNNING;
             goto cleanup;
         }
-        pi->state = STATE_RUNNING;
-        goto cleanup;
     }
 
-    fprintf(log_f, "problem %d (%s) latest revision info:\n", pi->problem_id, pi->problem_name);
+    fprintf(log_f, "problem %d (%s) %srevision info:\n", pi->problem_id, pi->problem_name,
+            availability_comment);
     fprintf(log_f, "    package_id:    %d\n"
             "    revision:      %d\n"
             "    creation time: %ld\n"
@@ -2521,6 +2545,10 @@ check_problem_status(
         goto cleanup;
     }
     if (strcasecmp(rinfo.state, "READY")) {
+        if (pkt->fetch_latest_available > 0 && pi->latest_rev > 0) {
+            --pi->latest_rev;
+            return check_problem_status(log_f, pkt, dif, ddata, ps, zif, pi);
+        }
         fprintf(log_f, "unknown state '%s', restarting package creation\n", rinfo.state);
         if (dif->create_full_package(ddata, ps, pi->edit_session)) {
             fprintf(log_f, "failed to start full package creation\n");
@@ -2531,6 +2559,10 @@ check_problem_status(
         goto cleanup;
     }
     if (!rinfo.linux_url) {
+        if (pkt->fetch_latest_available > 0 && pi->latest_rev > 0) {
+            --pi->latest_rev;
+            return check_problem_status(log_f, pkt, dif, ddata, ps, zif, pi);
+        }
         fprintf(log_f, "Linux download link is missing, restarting package creation\n");
         if (dif->create_full_package(ddata, ps, pi->edit_session)) {
             fprintf(log_f, "failed to start full package creation\n");
