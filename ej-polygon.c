@@ -1896,7 +1896,7 @@ process_polygon_zip(
                 fprintf(log_f, "failed to parse revision attribute\n");
                 goto zip_error;
             }
-            if (pi->package_rev != revision) {
+            if (pi->package_rev != revision && pkt->fetch_latest_available <= 0) {
                 fprintf(log_f, "package revision mismatch: db == %d, xml attr == %d\n", pi->package_rev, revision);
                 goto zip_error;
             }
