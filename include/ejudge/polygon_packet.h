@@ -40,6 +40,7 @@ struct polygon_packet
     ejintbool_t create_mode;
     ejintbool_t ignore_solutions;
     int retry_count;
+    ejintbool_t fetch_latest_available;
 
     unsigned char *polygon_url;
     unsigned char *login;
