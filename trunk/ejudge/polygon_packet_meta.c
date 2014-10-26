@@ -17,6 +17,7 @@ static struct meta_info_item meta_info_polygon_packet_data[] =
   [META_POLYGON_PACKET_create_mode] = { META_POLYGON_PACKET_create_mode, 'B', XSIZE(struct polygon_packet, create_mode), "create_mode", XOFFSET(struct polygon_packet, create_mode) },
   [META_POLYGON_PACKET_ignore_solutions] = { META_POLYGON_PACKET_ignore_solutions, 'B', XSIZE(struct polygon_packet, ignore_solutions), "ignore_solutions", XOFFSET(struct polygon_packet, ignore_solutions) },
   [META_POLYGON_PACKET_retry_count] = { META_POLYGON_PACKET_retry_count, 'i', XSIZE(struct polygon_packet, retry_count), "retry_count", XOFFSET(struct polygon_packet, retry_count) },
+  [META_POLYGON_PACKET_fetch_latest_available] = { META_POLYGON_PACKET_fetch_latest_available, 'B', XSIZE(struct polygon_packet, fetch_latest_available), "fetch_latest_available", XOFFSET(struct polygon_packet, fetch_latest_available) },
   [META_POLYGON_PACKET_polygon_url] = { META_POLYGON_PACKET_polygon_url, 's', XSIZE(struct polygon_packet, polygon_url), "polygon_url", XOFFSET(struct polygon_packet, polygon_url) },
   [META_POLYGON_PACKET_login] = { META_POLYGON_PACKET_login, 's', XSIZE(struct polygon_packet, login), "login", XOFFSET(struct polygon_packet, login) },
   [META_POLYGON_PACKET_password] = { META_POLYGON_PACKET_password, 's', XSIZE(struct polygon_packet, password), "password", XOFFSET(struct polygon_packet, password) },
