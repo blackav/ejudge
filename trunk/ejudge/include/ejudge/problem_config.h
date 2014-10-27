@@ -70,6 +70,7 @@ struct problem_config_section
   ejintbool_t disable_tab;
   ejintbool_t unrestricted_statement;
   ejintbool_t hide_file_names;
+  ejintbool_t enable_tokens;
   ejintbool_t disable_submit_after_ok;
   ejintbool_t disable_auto_testing;
   ejintbool_t disable_testing;
