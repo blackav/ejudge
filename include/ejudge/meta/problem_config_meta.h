@@ -41,6 +41,7 @@ enum
   META_PROBLEM_CONFIG_SECTION_disable_tab,
   META_PROBLEM_CONFIG_SECTION_unrestricted_statement,
   META_PROBLEM_CONFIG_SECTION_hide_file_names,
+  META_PROBLEM_CONFIG_SECTION_enable_tokens,
   META_PROBLEM_CONFIG_SECTION_disable_submit_after_ok,
   META_PROBLEM_CONFIG_SECTION_disable_auto_testing,
   META_PROBLEM_CONFIG_SECTION_disable_testing,
