@@ -1682,6 +1682,7 @@ serve_run_request(
   srgp->enable_memory_limit_error = global->enable_memory_limit_error;
   srgp->detect_violations = global->detect_violations;
   srgp->time_limit_retry_count = global->time_limit_retry_count;
+  srgp->enable_max_stack_size = global->enable_max_stack_size;
   srgp->priority = prio;
   srgp->arch = xstrdup(arch);
   if (uuid && (uuid[0] || uuid[1] || uuid[2] || uuid[3])) {
