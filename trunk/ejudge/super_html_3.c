@@ -429,6 +429,7 @@ const unsigned char * const super_serve_help_urls[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_CHANGE_DISQUALIFIED_PENALTY] = "Serve.cfg:problem:disqualified_penalty",
   [SSERV_CMD_PROB_CHANGE_VARIABLE_FULL_SCORE] = "Serve.cfg:problem:variable_full_score",
   [SSERV_CMD_PROB_CHANGE_TEST_SCORE_LIST] = "Serve.cfg:problem:test_score_list",
+  [SSERV_CMD_PROB_CHANGE_TOKENS] = "Serve.cfg:problem:tokens",
   [SSERV_CMD_PROB_CHANGE_SCORE_TESTS] = "Serve.cfg:problem:score_tests",
   [SSERV_CMD_PROB_CHANGE_TESTS_TO_ACCEPT] = "Serve.cfg:problem:tests_to_accept",
   [SSERV_CMD_PROB_CHANGE_ACCEPT_PARTIAL] = "Serve.cfg:problem:accept_partial",
@@ -2405,6 +2406,17 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
   case SSERV_CMD_PROB_CLEAR_TEST_SCORE_LIST:
     xfree(prob->test_score_list);
     prob->test_score_list = NULL;
+    return 0;
+
+  case SSERV_CMD_PROB_CHANGE_TOKENS:
+    // FIXME: check for correctness
+    xfree(prob->tokens);
+    prob->tokens = xstrdup(param2);
+    return 0;
+
+  case SSERV_CMD_PROB_CLEAR_TOKENS:
+    xfree(prob->tokens);
+    prob->tokens = NULL;
     return 0;
 
   case SSERV_CMD_PROB_CHANGE_SCORE_TESTS:

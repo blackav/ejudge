@@ -503,6 +503,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(extid, "S"),
   PROBLEM_PARAM(normalization, "s"),
   PROBLEM_PARAM(super_run_dir, "S"),
+  PROBLEM_PARAM(tokens, "S"),
 
   { 0, 0, 0, 0 }
 };
@@ -1005,6 +1006,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
   xfree(p->solution_cmd);
   xfree(p->super_run_dir);
   xfree(p->test_score_list);
+  xfree(p->tokens);
   sarray_free(p->test_sets);
   sarray_free(p->date_penalty);
   sarray_free(p->group_start_date);
@@ -5644,6 +5646,9 @@ prepare_copy_problem(const struct section_problem_data *in)
   out->score_view_text = 0;
   out->xml.p = 0;
   out->extid = 0;
+  if (in->tokens) {
+    out->tokens = xstrdup(in->tokens);
+  }
 
   return out;
 }
@@ -6572,7 +6577,7 @@ static const int prob_settable_list[] =
   CNTSPROB_test_dir, CNTSPROB_test_sfx,
   CNTSPROB_corr_dir, CNTSPROB_corr_sfx, CNTSPROB_info_dir, CNTSPROB_info_sfx,
   CNTSPROB_tgz_dir, CNTSPROB_tgz_sfx, CNTSPROB_tgzdir_sfx, CNTSPROB_input_file,
-  CNTSPROB_output_file, CNTSPROB_test_score_list, CNTSPROB_score_tests,
+  CNTSPROB_output_file, CNTSPROB_test_score_list, CNTSPROB_tokens, CNTSPROB_score_tests,
   CNTSPROB_test_sets, CNTSPROB_deadline, CNTSPROB_start_date,
   CNTSPROB_variant_num, CNTSPROB_date_penalty, CNTSPROB_group_start_date,
   CNTSPROB_group_deadline, CNTSPROB_disable_language,
@@ -6752,6 +6757,7 @@ static const unsigned char prob_settable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_final_open_tests] = 1,
   [CNTSPROB_normalization] = 1,
   [CNTSPROB_super_run_dir] = 1,
+  [CNTSPROB_tokens] = 1,
 };
 
 static const int prob_inheritable_list[] =
@@ -6794,7 +6800,7 @@ static const int prob_inheritable_list[] =
   CNTSPROB_test_dir, CNTSPROB_test_sfx, CNTSPROB_corr_dir, CNTSPROB_corr_sfx,
   CNTSPROB_info_dir, CNTSPROB_info_sfx, CNTSPROB_tgz_dir, CNTSPROB_tgz_sfx,
   CNTSPROB_tgzdir_sfx,
-  CNTSPROB_input_file, CNTSPROB_output_file, CNTSPROB_test_score_list,
+  CNTSPROB_input_file, CNTSPROB_output_file, CNTSPROB_test_score_list, CNTSPROB_tokens,
   CNTSPROB_score_tests, CNTSPROB_test_sets, CNTSPROB_deadline,
   CNTSPROB_start_date, CNTSPROB_variant_num, CNTSPROB_date_penalty,
   CNTSPROB_group_start_date, CNTSPROB_group_deadline,
@@ -6961,6 +6967,7 @@ static const unsigned char prob_inheritable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_score_view] = 1,
   [CNTSPROB_normalization] = 1,
   [CNTSPROB_super_run_dir] = 1,
+  [CNTSPROB_tokens] = 1,
 
   0,
 };
@@ -7120,6 +7127,7 @@ static const struct section_problem_data prob_undef_values =
   .score_view = 0,
   .normalization = { 0 },
   .super_run_dir = NULL,
+  .tokens = NULL,
 };
 
 static const struct section_problem_data prob_default_values =
@@ -7255,6 +7263,7 @@ static const struct section_problem_data prob_default_values =
   .max_process_count = -1,
   .normalization = "",
   .super_run_dir = NULL,
+  .tokens = NULL,
 };
 
 static const int prob_global_map[CNTSPROB_LAST_FIELD] =
