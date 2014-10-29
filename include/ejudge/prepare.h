@@ -929,6 +929,9 @@ struct section_problem_data
   unsigned char output_file[256];
   /** scores for individual tests */
   unsigned char *test_score_list;
+  /** token specification */
+  unsigned char *tokens;
+
   /** number of tests for Moscow scoring */
   unsigned char score_tests[256];
   /** name of the built-in checker */
