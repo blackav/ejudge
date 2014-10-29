@@ -821,6 +821,7 @@ merge_problem_section(
         { CNTSPROB_open_tests, META_PROBLEM_CONFIG_SECTION_open_tests },
         { CNTSPROB_final_open_tests, META_PROBLEM_CONFIG_SECTION_final_open_tests },
         { CNTSPROB_standard_checker, META_PROBLEM_CONFIG_SECTION_standard_checker },
+        { CNTSPROB_tokens, META_PROBLEM_CONFIG_SECTION_tokens },
 
         { 0, 0 },
     };
