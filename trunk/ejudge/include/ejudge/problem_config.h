@@ -161,6 +161,7 @@ struct problem_config_section
   unsigned char *final_open_tests;
   unsigned char *extid;
   unsigned char *revision;
+  unsigned char *tokens;
 
   char **test_sets;
   char **date_penalty;
