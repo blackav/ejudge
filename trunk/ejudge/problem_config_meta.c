@@ -133,6 +133,7 @@ static struct meta_info_item meta_info_problem_config_section_data[] =
   [META_PROBLEM_CONFIG_SECTION_final_open_tests] = { META_PROBLEM_CONFIG_SECTION_final_open_tests, 's', XSIZE(struct problem_config_section, final_open_tests), "final_open_tests", XOFFSET(struct problem_config_section, final_open_tests) },
   [META_PROBLEM_CONFIG_SECTION_extid] = { META_PROBLEM_CONFIG_SECTION_extid, 's', XSIZE(struct problem_config_section, extid), "extid", XOFFSET(struct problem_config_section, extid) },
   [META_PROBLEM_CONFIG_SECTION_revision] = { META_PROBLEM_CONFIG_SECTION_revision, 's', XSIZE(struct problem_config_section, revision), "revision", XOFFSET(struct problem_config_section, revision) },
+  [META_PROBLEM_CONFIG_SECTION_tokens] = { META_PROBLEM_CONFIG_SECTION_tokens, 's', XSIZE(struct problem_config_section, tokens), "tokens", XOFFSET(struct problem_config_section, tokens) },
   [META_PROBLEM_CONFIG_SECTION_test_sets] = { META_PROBLEM_CONFIG_SECTION_test_sets, 'x', XSIZE(struct problem_config_section, test_sets), "test_sets", XOFFSET(struct problem_config_section, test_sets) },
   [META_PROBLEM_CONFIG_SECTION_date_penalty] = { META_PROBLEM_CONFIG_SECTION_date_penalty, 'x', XSIZE(struct problem_config_section, date_penalty), "date_penalty", XOFFSET(struct problem_config_section, date_penalty) },
   [META_PROBLEM_CONFIG_SECTION_group_start_date] = { META_PROBLEM_CONFIG_SECTION_group_start_date, 'x', XSIZE(struct problem_config_section, group_start_date), "group_start_date", XOFFSET(struct problem_config_section, group_start_date) },

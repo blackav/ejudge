@@ -390,6 +390,7 @@ enum
   CNTSPROB_input_file,
   CNTSPROB_output_file,
   CNTSPROB_test_score_list,
+  CNTSPROB_tokens,
   CNTSPROB_score_tests,
   CNTSPROB_standard_checker,
   CNTSPROB_spelling,
