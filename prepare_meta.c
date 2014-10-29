@@ -430,6 +430,7 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_input_file] = { CNTSPROB_input_file, 'S', XSIZE(struct section_problem_data, input_file), "input_file", XOFFSET(struct section_problem_data, input_file) },
   [CNTSPROB_output_file] = { CNTSPROB_output_file, 'S', XSIZE(struct section_problem_data, output_file), "output_file", XOFFSET(struct section_problem_data, output_file) },
   [CNTSPROB_test_score_list] = { CNTSPROB_test_score_list, 's', XSIZE(struct section_problem_data, test_score_list), "test_score_list", XOFFSET(struct section_problem_data, test_score_list) },
+  [CNTSPROB_tokens] = { CNTSPROB_tokens, 's', XSIZE(struct section_problem_data, tokens), "tokens", XOFFSET(struct section_problem_data, tokens) },
   [CNTSPROB_score_tests] = { CNTSPROB_score_tests, 'S', XSIZE(struct section_problem_data, score_tests), "score_tests", XOFFSET(struct section_problem_data, score_tests) },
   [CNTSPROB_standard_checker] = { CNTSPROB_standard_checker, 'S', XSIZE(struct section_problem_data, standard_checker), "standard_checker", XOFFSET(struct section_problem_data, standard_checker) },
   [CNTSPROB_spelling] = { CNTSPROB_spelling, 'S', XSIZE(struct section_problem_data, spelling), "spelling", XOFFSET(struct section_problem_data, spelling) },
