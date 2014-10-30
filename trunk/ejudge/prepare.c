@@ -331,6 +331,8 @@ static const struct config_parse_info section_global_params[] =
 
   GLOBAL_PARAM(load_user_group, "x"),
 
+  GLOBAL_PARAM(tokens, "S"),
+
   GLOBAL_PARAM(compile_max_vm_size, "z"),
   GLOBAL_PARAM(compile_max_stack_size, "z"),
   GLOBAL_PARAM(compile_max_file_size, "z"),

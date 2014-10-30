@@ -535,6 +535,11 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
   do_xstr(f, &ab, "load_user_group", global->load_user_group);
   fprintf(f, "\n");
 
+  if (global->tokens && global->tokens[0]) {
+    do_str(f, &ab, "tokens", global->tokens);
+    fprintf(f, "\n");
+  }
+
   if (global->unhandled_vars) fprintf(f, "%s\n", global->unhandled_vars);
 
   html_armor_free(&ab);
