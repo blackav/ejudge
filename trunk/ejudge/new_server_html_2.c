@@ -425,6 +425,9 @@ ns_write_priv_all_runs(
     if (run_fields & (1 << RUN_VIEW_EOLN_TYPE)) {
       fprintf(f, "<th%s>%s</th>", cl, "EOLN Type");
     }
+    if (run_fields & (1 << RUN_VIEW_TOKENS)) {
+      fprintf(f, "<th%s>%s</th>", cl, "Tokens");
+    }
     if (run_fields & (1 << RUN_VIEW_STATUS)) {
       fprintf(f, "<th%s>%s</th>", cl, "Result");
     }
@@ -544,9 +547,6 @@ ns_write_priv_all_runs(
         if (run_fields & (1 << RUN_VIEW_PROB_NAME)) {
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
-        if (run_fields & (1 << RUN_VIEW_EOLN_TYPE)) {
-          fprintf(f, "<td%s>&nbsp;</td>", cl);
-        }
         if (run_fields & (1 << RUN_VIEW_VARIANT)) {
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
@@ -554,6 +554,12 @@ ns_write_priv_all_runs(
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
         if (run_fields & (1 << RUN_VIEW_LANG_NAME)) {
+          fprintf(f, "<td%s>&nbsp;</td>", cl);
+        }
+        if (run_fields & (1 << RUN_VIEW_EOLN_TYPE)) {
+          fprintf(f, "<td%s>&nbsp;</td>", cl);
+        }
+        if (run_fields & (1 << RUN_VIEW_TOKENS)) {
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
         if (run_fields & (1 << RUN_VIEW_STATUS)) {
@@ -658,6 +664,9 @@ ns_write_priv_all_runs(
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
         if (run_fields & (1 << RUN_VIEW_EOLN_TYPE)) {
+          fprintf(f, "<td%s>&nbsp;</td>", cl);
+        }
+        if (run_fields & (1 << RUN_VIEW_TOKENS)) {
           fprintf(f, "<td%s>&nbsp;</td>", cl);
         }
         if (run_fields & (1 << RUN_VIEW_STATUS)) {
@@ -846,6 +855,9 @@ ns_write_priv_all_runs(
       }
       if (run_fields & (1 << RUN_VIEW_EOLN_TYPE)) {
         fprintf(f, "<td%s>%s</td>", cl, eoln_type_unparse_html(pe->eoln_type));
+      }
+      if (run_fields & (1 << RUN_VIEW_TOKENS)) {
+        fprintf(f, "<td%s>%d, %d</td>", cl, pe->token_flags, pe->token_count);
       }
 
       run_status_str(pe->status, statstr, sizeof(statstr), prob_type, 0);

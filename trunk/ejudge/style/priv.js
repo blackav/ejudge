@@ -672,7 +672,8 @@ var ej_valid_fields =
   23 : "Saved Result",
   24 : "UUID",
   25 : "EOLN Type",
-  26 : "Storage Flags"
+  26 : "Storage Flags",
+  27 : "Tokens"
 }
 
 function ej_field_popup(field_mask)
