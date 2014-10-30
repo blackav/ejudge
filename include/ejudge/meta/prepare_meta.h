@@ -279,6 +279,7 @@ enum
   CNTSGLOB_stand_contestant_status_attr,
   CNTSGLOB_stand_warn_number_attr,
   CNTSGLOB_load_user_group,
+  CNTSGLOB_tokens,
   CNTSGLOB_unhandled_vars,
   CNTSGLOB_disable_prob_long_name,
   CNTSGLOB_disable_passed_tests,
