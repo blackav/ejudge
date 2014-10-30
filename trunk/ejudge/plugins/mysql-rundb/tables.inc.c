@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2008-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -59,6 +59,8 @@ static const char create_runs_query[] =
 "        passed_mode TINYINT NOT NULL DEFAULT 0, "
 "        eoln_type TINYINT NOT NULL DEFAULT 0, "
 "        store_flags INT NOT NULL DEFAULT 0, "
+"        token_flags INT NOT NULL DEFAULT 0, "
+"        token_count INT NOT NULL DEFAULT 0, "
 "        PRIMARY KEY (run_id, contest_id)"
 "        );";
 
@@ -106,9 +108,11 @@ struct run_entry_internal
   int passed_mode;
   int eoln_type;                /* 40 */
   int store_flags;
+  int token_flags;
+  int token_count;
 };
 
-enum { RUNS_ROW_WIDTH = 42 };
+enum { RUNS_ROW_WIDTH = 44 };
 
 #define RUNS_OFFSET(f) XOFFSET(struct run_entry_internal, f)
 static const struct common_mysql_parse_spec runs_spec[RUNS_ROW_WIDTH] =
@@ -155,6 +159,8 @@ static const struct common_mysql_parse_spec runs_spec[RUNS_ROW_WIDTH] =
   { 0, 'd', "passed_mode", RUNS_OFFSET(passed_mode), 0 },
   { 0, 'd', "eoln_type", RUNS_OFFSET(eoln_type), 0 },
   { 0, 'd', "store_flags", RUNS_OFFSET(store_flags), 0 },
+  { 0, 'd', "token_flags", RUNS_OFFSET(token_flags), 0 },
+  { 0, 'd', "token_count", RUNS_OFFSET(token_count), 0 },
 };
 
 enum
