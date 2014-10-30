@@ -182,6 +182,10 @@ static void *filter_expr_user_data;
 %token TOK_CUREOLN_TYPE "cureoln_type"
 %token TOK_STORE_FLAGS "store_flags"
 %token TOK_CURSTORE_FLAGS "curstore_flags"
+%token TOK_TOKEN_FLAGS "token_flags"
+%token TOK_CURTOKEN_FLAGS "curtoken_flags"
+%token TOK_TOKEN_COUNT "token_count"
+%token TOK_CURTOKEN_COUNT "curtoken_count"
 %token TOK_INUSERGROUPINT
 %token TOK_INT       "int"
 %token TOK_STRING    "string"
@@ -397,6 +401,12 @@ exprA :
 | "store_flags" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
 | "store_flags" { $1->kind = TOK_STORE_FLAGS; $$ = $1; }
 | "curstore_flags" { $$ = $1; }
+| "token_flags" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
+| "token_flags" { $1->kind = TOK_TOKEN_FLAGS; $$ = $1; }
+| "curtoken_flags" { $$ = $1; }
+| "token_count" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
+| "token_count" { $1->kind = TOK_TOKEN_COUNT; $$ = $1; }
+| "curtoken_count" { $$ = $1; }
 | "total_score" { $1->kind = TOK_CURTOTAL_SCORE; $$ = $1; }
 | "cypher" { $1->kind = TOK_CURCYPHER; $$ = $1; }
 | "cypher" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
