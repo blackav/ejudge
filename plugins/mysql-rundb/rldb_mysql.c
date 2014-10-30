@@ -478,6 +478,8 @@ load_runs(struct rldb_mysql_cnts *cs)
     re->passed_mode = ri.passed_mode;
     re->eoln_type = ri.eoln_type;
     re->store_flags = ri.store_flags;
+    re->token_flags = ri.token_flags;
+    re->token_count = ri.token_count;
   }
   return 1;
 
@@ -973,6 +975,14 @@ generate_update_entry_clause(
     fprintf(f, "%sstore_flags = %d", sep, re->store_flags);
     sep = comma;
   }
+  if ((flags & RE_TOKEN_FLAGS)) {
+    fprintf(f, "%stoken_flags = %d", sep, re->token_flags);
+    sep = comma;
+  }
+  if ((flags & RE_TOKEN_COUNT)) {
+    fprintf(f, "%stoken_count = %d", sep, re->token_count);
+    sep = comma;
+  }
 
   gettimeofday(&curtime, 0);
   fprintf(f, "%slast_change_time = ", sep);
@@ -1071,6 +1081,12 @@ update_entry(
   }
   if ((flags & RE_STORE_FLAGS)) {
     dst->store_flags = src->store_flags;
+  }
+  if ((flags & RE_TOKEN_FLAGS)) {
+    dst->token_flags = src->token_flags;
+  }
+  if ((flags & RE_TOKEN_COUNT)) {
+    dst->token_count = src->token_count;
   }
 }
 
@@ -1559,6 +1575,8 @@ put_entry_func(
   ri.passed_mode = re->passed_mode;
   ri.eoln_type = re->eoln_type;
   ri.store_flags = re->store_flags;
+  ri.token_flags = re->token_flags;
+  ri.token_count = re->token_count;
 
   cmd_f = open_memstream(&cmd_t, &cmd_z);
   fprintf(cmd_f, "INSERT INTO %sruns VALUES ( ", state->md->table_prefix);

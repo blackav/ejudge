@@ -222,12 +222,12 @@ enum
     RE_IS_READONLY   = 0x00002000,
     RE_PAGES         = 0x00004000,
     RE_SCORE_ADJ     = 0x00008000,
-    //RE_IS_EXAMINABLE = 0x00010000,
+    RE__UNUSED       = 0x00010000,
     RE_JUDGE_ID      = 0x00020000,
     RE_SSL_FLAG      = 0x00040000,
     RE_MIME_TYPE     = 0x00080000,
-    //RE_EXAMINERS     = 0x00100000,
-    //RE_EXAM_SCORE    = 0x00200000,
+    RE_TOKEN_FLAGS   = 0x00100000,
+    RE_TOKEN_COUNT   = 0x00200000,
     RE_IS_MARKED     = 0x00400000,
     RE_IS_SAVED      = 0x00800000,
     RE_SAVED_STATUS  = 0x01000000,
@@ -275,7 +275,9 @@ struct run_entry
   unsigned char  eoln_type;     /* 1 */
   unsigned char  is_marked;     /* 1 */
   ruint32_t      run_uuid[4];   /* 16 */
-  unsigned char  unused2[8];    /* 8 */
+  unsigned char  token_flags;   /* 1 */
+  unsigned char  token_count;   /* 1 */
+  unsigned char  _unused[6];    /* 6 */
   rint32_t       saved_score;   /* 4 */
   rint16_t       saved_test;    /* 2 */
   unsigned char  saved_status;  /* 1 */

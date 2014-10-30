@@ -1331,6 +1331,14 @@ run_set_entry(
     te.store_flags = in->store_flags;
     f = 1;
   }
+  if ((mask & RE_TOKEN_FLAGS) && te.token_flags != in->token_flags) {
+    te.token_flags = in->token_flags;
+    f = 1;
+  }
+  if ((mask & RE_TOKEN_COUNT) && te.token_count != in->token_count) {
+    te.token_count = in->token_count;
+    f = 1;
+  }
 
   /* check consistency of a new record */
   if (te.status == RUN_VIRTUAL_START || te.status == RUN_VIRTUAL_STOP
