@@ -717,6 +717,9 @@ struct section_global_data
   /** the user groups to load */
   char **load_user_group;
 
+  /** global tokens specification */
+  unsigned char *tokens;
+
   /** INTERNAL: text with unhandled variables */
   unsigned char *unhandled_vars;
 
