@@ -278,6 +278,8 @@ do_eval(struct filter_env *env,
   case TOK_PASSED_MODE:
   case TOK_EOLN_TYPE:
   case TOK_STORE_FLAGS:
+  case TOK_TOKEN_FLAGS:
+  case TOK_TOKEN_COUNT:
     if ((c = do_eval(env, t->v.t[0], &r1)) < 0) return c;
     ASSERT(r1.kind == TOK_INT_L);
     if (r1.v.i < 0) r1.v.i = env->rtotal + r1.v.i;
@@ -562,6 +564,16 @@ do_eval(struct filter_env *env,
       res->kind = TOK_INT_L;
       res->type = FILTER_TYPE_INT;
       res->v.i = !!env->rentries[r1.v.i].store_flags;
+      break;
+    case TOK_TOKEN_FLAGS:
+      res->kind = TOK_INT_L;
+      res->type = FILTER_TYPE_INT;
+      res->v.i = !!env->rentries[r1.v.i].token_flags;
+      break;
+    case TOK_TOKEN_COUNT:
+      res->kind = TOK_INT_L;
+      res->type = FILTER_TYPE_INT;
+      res->v.i = !!env->rentries[r1.v.i].token_count;
       break;
     default:
       abort();
@@ -857,6 +869,16 @@ do_eval(struct filter_env *env,
     res->kind = TOK_INT_L;
     res->type = FILTER_TYPE_INT;
     res->v.i = env->cur->store_flags;
+    break;
+  case TOK_CURTOKEN_FLAGS:
+    res->kind = TOK_INT_L;
+    res->type = FILTER_TYPE_INT;
+    res->v.i = env->cur->token_flags;
+    break;
+  case TOK_CURTOKEN_COUNT:
+    res->kind = TOK_INT_L;
+    res->type = FILTER_TYPE_INT;
+    res->v.i = env->cur->token_count;
     break;
   case TOK_CURTOTAL_SCORE:
     res->kind = TOK_INT_L;

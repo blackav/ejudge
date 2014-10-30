@@ -183,6 +183,10 @@ lett    [A-Za-z_]
 "cureoln_type" { TT(TOK_CUREOLN_TYPE, FILTER_TYPE_INT); }
 "store_flags" { TT(TOK_STORE_FLAGS, FILTER_TYPE_INT); }
 "curstore_flags" { TT(TOK_CURSTORE_FLAGS, FILTER_TYPE_INT); }
+"token_flags" { TT(TOK_TOKEN_FLAGS, FILTER_TYPE_INT); }
+"curtoken_flags" { TT(TOK_CURTOKEN_FLAGS, FILTER_TYPE_INT); }
+"token_count" { TT(TOK_TOKEN_COUNT, FILTER_TYPE_INT); }
+"curtoken_count" { TT(TOK_CURTOKEN_COUNT, FILTER_TYPE_INT); }
 
 "int" { TT(TOK_INT, FILTER_TYPE_INT); }
 "string" { TT(TOK_STRING, FILTER_TYPE_STRING); }
