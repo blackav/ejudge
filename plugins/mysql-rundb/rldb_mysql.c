@@ -248,7 +248,16 @@ do_open(struct rldb_mysql_state *state)
       return -1;
     run_version = 6;
   }
-  if (run_version != 6) {
+  if (run_version == 6) {
+    if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN token_flags TINYINT NOT NULL DEFAULT 0 AFTER store_flags", md->table_prefix) < 0)
+      return -1;
+    if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD COLUMN token_count TINYINT NOT NULL DEFAULT 0 AFTER token_flags", md->table_prefix) < 0)
+      return -1;
+    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '7' WHERE config_key = 'run_version' ;", md->table_prefix) < 0)
+      return -1;
+    run_version = 7;
+  }
+  if (run_version != 7) {
     err("run_version == %d is not supported", run_version);
     return -1;
   }
