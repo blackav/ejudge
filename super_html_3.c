@@ -211,6 +211,7 @@ const unsigned char * const super_serve_help_urls[SSERV_CMD_LAST] =
   [SSERV_CMD_GLOB_CHANGE_UNFOG_TIME] = "Serve.cfg:global:board_unfog_time",
   [SSERV_CMD_GLOB_CHANGE_STAND_LOCALE] = "Serve.cfg:global:standings_locale",
   [SSERV_CMD_GLOB_CHANGE_CHECKER_LOCALE] = "Serve.cfg:global:checker_locale",
+  [SSERV_CMD_GLOB_CHANGE_TOKENS] = "Serve.cfg:global:tokens",
   [SSERV_CMD_GLOB_CHANGE_SRC_VIEW] = "Serve.cfg:global:team_enable_src_view",
   [SSERV_CMD_GLOB_CHANGE_REP_VIEW] = "Serve.cfg:global:team_enable_rep_view",
   [SSERV_CMD_GLOB_CHANGE_CE_VIEW] = "Serve.cfg:global:team_enable_ce_view",
@@ -642,6 +643,15 @@ super_html_global_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_GLOB_CLEAR_CHECKER_LOCALE:
     xfree(global->checker_locale); global->checker_locale = 0;
+    return 0;
+
+  case SSERV_CMD_GLOB_CHANGE_TOKENS:
+    xfree(global->tokens);
+    global->tokens = xstrdup(param2);
+    return 0;
+
+  case SSERV_CMD_GLOB_CLEAR_TOKENS:
+    xfree(global->tokens); global->tokens = 0;
     return 0;
 
   case SSERV_CMD_GLOB_CHANGE_SRC_VIEW:
