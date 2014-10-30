@@ -1196,9 +1196,6 @@ add_entry_func(
   if ((flags & RE_SCORE_ADJ)) {
     de->score_adj = re->score_adj;
   }
-  if ((flags & RE_IS_EXAMINABLE)) {
-    //de->is_examinable = re->is_examinable;
-  }
   if ((flags & RE_JUDGE_ID)) {
     de->judge_id = re->judge_id;
   }
@@ -1207,12 +1204,6 @@ add_entry_func(
   }
   if ((flags & RE_MIME_TYPE)) {
     de->mime_type = re->mime_type;
-  }
-  if ((flags & RE_EXAMINERS)) {
-    //memcpy(de->examiners, re->examiners, sizeof(de->examiners));
-  }
-  if ((flags & RE_EXAM_SCORE)) {
-    //memcpy(de->exam_score, re->exam_score, sizeof(de->exam_score));
   }
   if ((flags & RE_IS_MARKED)) {
     de->is_marked = re->is_marked;
