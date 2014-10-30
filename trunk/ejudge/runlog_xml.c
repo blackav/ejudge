@@ -120,6 +120,8 @@ enum
   RUNLOG_A_PASSED_MODE,
   RUNLOG_A_EOLN_TYPE,
   RUNLOG_A_STORE_FLAGS,
+  RUNLOG_A_TOKEN_FLAGS,
+  RUNLOG_A_TOKEN_COUNT,
 
   RUNLOG_LAST_ATTR,
 };
@@ -188,6 +190,8 @@ static const char * const attr_map[] =
   [RUNLOG_A_PASSED_MODE]      = "passed_mode",
   [RUNLOG_A_EOLN_TYPE]        = "eoln_type",
   [RUNLOG_A_STORE_FLAGS]      = "store_flags",
+  [RUNLOG_A_TOKEN_FLAGS]      = "token_flags",
+  [RUNLOG_A_TOKEN_COUNT]      = "token_count",
 
   [RUNLOG_LAST_ATTR] 0,
 };
@@ -521,6 +525,22 @@ process_run_elements(struct xml_tree *xt, struct run_xml_helpers *helper)
           goto invalid_attr_value;
         if (iv < -1) goto invalid_attr_value;
         xr->r.store_flags = iv;
+        break;
+      case RUNLOG_A_TOKEN_FLAGS:
+        if (!xa->text) goto empty_attr_value;
+        n = 0;
+        if (sscanf(xa->text, "%d %n", &iv, &n) != 1 || xa->text[n])
+          goto invalid_attr_value;
+        if (iv < -1) goto invalid_attr_value;
+        xr->r.token_flags = iv;
+        break;
+      case RUNLOG_A_TOKEN_COUNT:
+        if (!xa->text) goto empty_attr_value;
+        n = 0;
+        if (sscanf(xa->text, "%d %n", &iv, &n) != 1 || xa->text[n])
+          goto invalid_attr_value;
+        if (iv < -1) goto invalid_attr_value;
+        xr->r.token_count = iv;
         break;
       default:
         return xml_err_attr_not_allowed(xt, xa);
@@ -998,6 +1018,12 @@ unparse_runlog_xml(
     }
     if (pp->store_flags > 0) {
       fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_STORE_FLAGS], pp->store_flags);
+    }
+    if (pp->token_flags > 0) {
+      fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_TOKEN_FLAGS], pp->token_flags);
+    }
+    if (pp->token_count > 0) {
+      fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_TOKEN_COUNT], pp->token_count);
     }
     if (!source_mode || pp->status >= RUN_MAX_STATUS) {
       fprintf(f, "/>\n");

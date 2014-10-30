@@ -1229,6 +1229,12 @@ add_entry_func(
   if ((flags & RE_STORE_FLAGS)) {
     de->store_flags = re->store_flags;
   }
+  if ((flags & RE_TOKEN_FLAGS)) {
+    de->token_flags = re->token_flags;
+  }
+  if ((flags & RE_TOKEN_COUNT)) {
+    de->token_count = re->token_count;
+  }
 
   return do_flush_entry(cs, run_id);
 }
