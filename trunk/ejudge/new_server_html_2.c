@@ -1778,7 +1778,7 @@ ns_priv_edit_run_action(
   }
 
   value = -1;
-  if (hr_cgi_param_int_opt(phr, "test", &value, -1) < -1) {
+  if (hr_cgi_param_int_opt(phr, "test", &value, -1) < 0) {
     fprintf(log_f, "invalid 'test' field value\n");
     FAIL(NEW_SRV_ERR_INV_PARAM);
   }
@@ -1837,7 +1837,7 @@ ns_priv_edit_run_action(
   if (global->score_system == SCORE_KIROV || global->score_system == SCORE_OLYMPIAD
       || global->score_system == SCORE_MOSCOW) {
     value = -1;
-    if (hr_cgi_param_int_opt(phr, "score", &value, -1) < -1) {
+    if (hr_cgi_param_int_opt(phr, "score", &value, -1) < 0) {
       fprintf(log_f, "invalid 'score' field value\n");
       FAIL(NEW_SRV_ERR_INV_PARAM);
     }
@@ -1893,7 +1893,7 @@ ns_priv_edit_run_action(
     }
 
     value = -100000;
-    if (hr_cgi_param_int_opt(phr, "score_adj", &value, -100000) < -1) {
+    if (hr_cgi_param_int_opt(phr, "score_adj", &value, -100000) < 0) {
       fprintf(log_f, "invalid 'score_adj' field value\n");
       FAIL(NEW_SRV_ERR_INV_PARAM);
     }
@@ -1965,7 +1965,7 @@ ns_priv_edit_run_action(
       }
 
       value = -1;
-      if (hr_cgi_param_int_opt(phr, "saved_test", &value, -1) < -1) {
+      if (hr_cgi_param_int_opt(phr, "saved_test", &value, -1) < 0) {
         fprintf(log_f, "invalid 'saved_test' field value\n");
         FAIL(NEW_SRV_ERR_INV_PARAM);
       }
@@ -2012,7 +2012,7 @@ ns_priv_edit_run_action(
       if (global->score_system == SCORE_KIROV || global->score_system == SCORE_OLYMPIAD
           || global->score_system == SCORE_MOSCOW) {
         value = -1;
-        if (hr_cgi_param_int_opt(phr, "saved_score", &value, -1) < -1) {
+        if (hr_cgi_param_int_opt(phr, "saved_score", &value, -1) < 0) {
           fprintf(log_f, "invalid 'saved_score' field value\n");
           FAIL(NEW_SRV_ERR_INV_PARAM);
         }
