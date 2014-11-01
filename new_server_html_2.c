@@ -1914,6 +1914,24 @@ ns_priv_edit_run_action(
     mask |= RE_IS_MARKED;
   }
 
+  if (prob && prob->enable_tokens > 0) {
+    value = -1;
+    if (hr_cgi_param_int_opt(phr, "token_flags", &value, 0) < 0 || value < 0 || value > 255) {
+      fprintf(log_f, "invalid 'token_flags' field value\n");
+      FAIL(NEW_SRV_ERR_INV_PARAM);
+    }
+    new_info.token_flags = value;
+    mask |= RE_TOKEN_FLAGS;
+
+    value = -1;
+    if (hr_cgi_param_int_opt(phr, "token_count", &value, 0) < 0 || value < 0 || value > 255) {
+      fprintf(log_f, "invalid 'token_count' field value\n");
+      FAIL(NEW_SRV_ERR_INV_PARAM);
+    }
+    new_info.token_count = value;
+    mask |= RE_TOKEN_COUNT;
+  }
+
   if (global->separate_user_score > 0) {
     value = 0;
     if (hr_cgi_param(phr, "is_saved", &s) > 0) value = 1;
