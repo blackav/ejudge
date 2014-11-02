@@ -784,7 +784,10 @@ void
 ns_get_user_problems_summary(
         const serve_state_t cs,
         int user_id,
+        const unsigned char *user_login,
         int accepting_mode,
+        time_t start_time,
+        time_t stop_time,
         struct UserProblemInfo *pinfo); /* user problem info */
 
 void
@@ -1013,15 +1016,6 @@ ns_get_register_url(
         const struct http_request_info *phr);
 
 struct UserProblemInfo;
-void
-ns_get_problem_status(
-        serve_state_t cs,
-        int user_id,
-        const unsigned char *user_login,
-        int accepting_mode,
-        time_t start_time,
-        time_t stop_time,
-        struct UserProblemInfo *pinfo);
 
 // problem status flags
 enum

@@ -4323,7 +4323,10 @@ void
 ns_get_user_problems_summary(
         const serve_state_t cs,
         int user_id,
+        const unsigned char *user_login,
         int accepting_mode,
+        time_t start_time,
+        time_t stop_time,
         UserProblemInfo *pinfo)       /* user problem status */
 {
   const struct section_global_data *global = cs->global;
@@ -4334,7 +4337,6 @@ ns_get_user_problems_summary(
   unsigned char *marked_flag = 0;
   int status, score;
   int separate_user_score = 0;
-  time_t start_time;
   int need_prev_succ = 0; // 1, if we need to compute 'prev_successes' array
 
   /* if 'score_bonus' is set for atleast one problem, we have to scan all runs */
@@ -4353,6 +4355,8 @@ ns_get_user_problems_summary(
   }
   separate_user_score = global->separate_user_score > 0 && cs->online_view_judge_score <= 0;
 
+  /*
+  time_t start_time;
   if (global->is_virtual) {
     if (run_get_virtual_start_entry(cs->runlog_state, user_id, &re) < 0) {
       start_time = run_get_start_time(cs->runlog_state);
@@ -4362,6 +4366,7 @@ ns_get_user_problems_summary(
   } else {
     start_time = run_get_start_time(cs->runlog_state);
   }
+  */
 
   XCALLOC(user_flag, (cs->max_prob + 1) * total_teams);
   XALLOCAZ(marked_flag, cs->max_prob + 1);
@@ -4977,6 +4982,52 @@ ns_get_user_problems_summary(
   }
 
   xfree(user_flag);
+
+  // nothing before contest start
+  if (start_time <= 0) return;
+
+  for (int prob_id = 1; prob_id <= cs->max_prob; prob_id++) {
+    if (!(cur_prob = cs->probs[prob_id])) continue;
+
+    // the problem is completely disabled before its start_date
+    if (!serve_is_problem_started(cs, user_id, cur_prob))
+      continue;
+
+    // the problem is completely disabled before requirements are met
+    // check requirements
+    if (cur_prob->require) {
+      int j;
+      for (j = 0; cur_prob->require[j]; j++) {
+        int k;
+        for (k = 1; k <= cs->max_prob; k++) {
+          if (cs->probs[k]
+              && !strcmp(cs->probs[k]->short_name, cur_prob->require[j]))
+            break;
+        }
+        // no such problem :(
+        if (k > cs->max_prob) break;
+        // this problem is not yet accepted or solved
+        if (!pinfo[k].solved_flag && !pinfo[k].accepted_flag) break;
+      }
+      // if the requirements are not met, skip this problem
+      if (cur_prob->require[j]) continue;
+    }
+
+    // check problem deadline
+    time_t user_deadline = 0;
+    int is_deadlined = serve_is_problem_deadlined(cs, user_id, user_login,
+                                                  cur_prob, &user_deadline);
+
+    if (cur_prob->unrestricted_statement > 0 || !is_deadlined)
+      pinfo[prob_id].status |= PROB_STATUS_VIEWABLE;
+
+    if (!is_deadlined && cur_prob->disable_user_submit <= 0
+        && (cur_prob->disable_submit_after_ok <= 0 || !pinfo[prob_id].solved_flag))
+      pinfo[prob_id].status |= PROB_STATUS_SUBMITTABLE;
+
+    if (cur_prob->disable_tab <= 0)
+      pinfo[prob_id].status |= PROB_STATUS_TABABLE;
+  }
 }
 
 void

@@ -132,9 +132,7 @@ ns_unparse_answers(
 %><%@include "unpriv_menu.csp"
 %><%@include "unpriv_status.csp"
 %><%
-  ns_get_user_problems_summary(cs, phr->user_id, accepting_mode, pinfo);
-  ns_get_problem_status(cs, phr->user_id, phr->login, accepting_mode,
-                        start_time, stop_time, pinfo);
+  ns_get_user_problems_summary(cs, phr->user_id, phr->login, accepting_mode, start_time, stop_time, pinfo);
 %><%
   // top navigation
   if (global->problem_navigation > 0 && start_time > 0 && stop_time <= 0) {
