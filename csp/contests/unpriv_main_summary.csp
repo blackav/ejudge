@@ -42,15 +42,12 @@
         char *us_text = 0;
         size_t us_size = 0;
         FILE *us_file = open_memstream(&us_text, &us_size);
-        (*cs->contest_plugin->generate_html_user_problems_summary)(cs->contest_plugin_data, us_file, out_f, cnts, cs, phr->user_id, accepting_mode, "b1", solved_flag, accepted_flag, pending_flag, trans_flag, best_run, attempts, disqualified, best_score, prev_successes);
+        (*cs->contest_plugin->generate_html_user_problems_summary)(cs->contest_plugin_data, us_file, out_f, cnts, cs, phr->user_id, accepting_mode, "b1", pinfo);
         close_memstream(us_file); us_file = 0;
         xfree(us_text); us_text = 0;
       } else {
         ns_write_user_problems_summary(cnts, cs, out_f, phr->user_id,
-                                       accepting_mode, "b1",
-                                       solved_flag, accepted_flag, pr_flag, pending_flag,
-                                       trans_flag, best_run, attempts,
-                                       disqualified, best_score);
+                                       accepting_mode, "b1", pinfo);
       }
     }
 %>

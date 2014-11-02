@@ -39,19 +39,6 @@ ns_unparse_answers(
 %><%
   time_t finish_time = 0;
   int all_runs = 0, all_clars = 0;
-  unsigned char *solved_flag = 0;
-  unsigned char *accepted_flag = 0;
-  unsigned char *pending_flag = 0;
-  unsigned char *trans_flag = 0;
-  unsigned char *pr_flag = NULL;
-  unsigned char *prob_status = 0;
-  time_t *prob_deadline = 0;
-  int *best_run = 0;
-  int *attempts = 0;
-  int *disqualified = 0;
-  int *best_score = 0;
-  int *prev_successes = 0;
-  int *all_attempts = 0;
   int prob_id = 0, i, j, variant = 0;
   char **lang_list;
   path_t variant_stmt_file;
@@ -72,6 +59,7 @@ ns_unparse_answers(
   int enable_virtual_start = 0;
   int tab_counter;
   const unsigned char *prob_name = 0;
+  UserProblemInfo *pinfo = 0;
 
 %><s:read var="all_runs" ignoreerrors="yes" default="0" /><%
   if (all_runs != 1) all_runs = 0;
@@ -95,20 +83,10 @@ ns_unparse_answers(
   }
   prob = 0;
   
-  XALLOCAZ(solved_flag, cs->max_prob + 1);
-  XALLOCAZ(accepted_flag, cs->max_prob + 1);
-  XALLOCAZ(pending_flag, cs->max_prob + 1);
-  XALLOCAZ(trans_flag, cs->max_prob + 1);
-  XALLOCAZ(pr_flag, cs->max_prob + 1);
-  XALLOCA(best_run, cs->max_prob + 1);
-  memset(best_run, -1, (cs->max_prob + 1) * sizeof(best_run[0]));
-  XALLOCAZ(attempts, cs->max_prob + 1);
-  XALLOCAZ(disqualified, cs->max_prob + 1);
-  XALLOCAZ(best_score, cs->max_prob + 1);
-  XALLOCAZ(prev_successes, cs->max_prob + 1);
-  XALLOCAZ(all_attempts, cs->max_prob + 1);
-  XALLOCAZ(prob_status, cs->max_prob + 1);
-  XALLOCAZ(prob_deadline, cs->max_prob + 1);
+  XALLOCAZ(pinfo, cs->max_prob + 1);
+  for (i = 0; i <= cs->max_prob; ++i) {
+    pinfo[i].best_run = -1;
+  }
 
   if (global->is_virtual) {
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
@@ -154,20 +132,15 @@ ns_unparse_answers(
 %><%@include "unpriv_menu.csp"
 %><%@include "unpriv_status.csp"
 %><%
-  ns_get_user_problems_summary(cs, phr->user_id, accepting_mode,
-                               solved_flag, accepted_flag, pending_flag,
-                               trans_flag, pr_flag,
-                               best_run, attempts, disqualified,
-                               best_score, prev_successes, all_attempts);
+  ns_get_user_problems_summary(cs, phr->user_id, accepting_mode, pinfo);
   ns_get_problem_status(cs, phr->user_id, phr->login, accepting_mode,
-                        start_time, stop_time,
-                        solved_flag, accepted_flag, prob_status);
+                        start_time, stop_time, pinfo);
 %><%
   // top navigation
   if (global->problem_navigation > 0 && start_time > 0 && stop_time <= 0) {
     if (prob_id > cs->max_prob) prob_id = 0;
     if (prob_id > 0 && !(prob = cs->probs[prob_id])) prob_id = 0;
-    if (prob_id > 0 && !(prob_status[prob_id] & PROB_STATUS_VIEWABLE))
+    if (prob_id > 0 && !(pinfo[prob_id].status & PROB_STATUS_VIEWABLE))
       prob_id = 0;
     if (prob_id > 0 && prob->variant_num > 0
         && (variant = find_variant(cs, phr->user_id, prob_id, 0)) <= 0)
@@ -180,7 +153,7 @@ ns_unparse_answers(
 %><tr id="probNavTopList"><td width="100%" class="nTopNavList"><ul class="nTopNavList"><%
       for (i = 1, tab_counter = 0; i <= cs->max_prob; i++) {
         if (!(prob = cs->probs[i])) continue;
-        if (!(prob_status[i] & PROB_STATUS_TABABLE)) continue;
+        if (!(pinfo[i].status & PROB_STATUS_TABABLE)) continue;
 %><%
         if (i == prob_id) {
 %><li id="nTopNavSelected"><%
@@ -193,11 +166,11 @@ ns_unparse_answers(
         ++tab_counter;
         if (i == prob_id) {
 %><div class="nProbCurrent"><%
-        } else if (!all_attempts[i]) {
+        } else if (!pinfo[i].all_attempts) {
 %><div class="nProbEmpty"><%
-        } else if (pending_flag[i] || trans_flag[i]) {
+        } else if (pinfo[i].pending_flag || pinfo[i].trans_flag) {
 %><div class="nProbTrans"><%
-        } else if (accepted_flag[i] || solved_flag[i] || pr_flag[i]) {
+        } else if (pinfo[i].accepted_flag || pinfo[i].solved_flag || pinfo[i].pr_flag) {
 %><div class="nProbOk"><%
         } else if (prob->disable_user_submit > 0) {
 %><div class="nProbDisabled"><%
@@ -278,7 +251,7 @@ ns_unparse_answers(
 
     for (i = 1, j = 0; i <= cs->max_prob; i++) {
       if (!(prob = cs->probs[i])) continue;
-      if (!(prob_status[i] & PROB_STATUS_TABABLE)) continue;
+      if (!(pinfo[i].status & PROB_STATUS_TABABLE)) continue;
 
       if (prob->group_name[0] && strcmp(prob->group_name, prev_group_name)) {
 %><div class="probDisabled"><s:v value="prob->group_name" escape="false" /></div><%
@@ -287,11 +260,11 @@ ns_unparse_answers(
 %><%
       if (i == prob_id) {
 %><div class="probCurrent"><%
-      } else if (!all_attempts[i]) {
+      } else if (!pinfo[i].all_attempts) {
 %><div class="probEmpty"><%
-      } else if (pending_flag[i] || trans_flag[i]) {
+      } else if (pinfo[i].pending_flag || pinfo[i].trans_flag) {
 %><div class="probTrans"><%
-      } else if (accepted_flag[i] || solved_flag[i] || pr_flag[i]) {
+      } else if (pinfo[i].accepted_flag || pinfo[i].solved_flag || pinfo[i].pr_flag) {
 %><div class="probOk"><%
       } else if (prob->disable_user_submit > 0) {
 %><div class="probDisabled"><%
@@ -311,7 +284,7 @@ ns_unparse_answers(
 <tr id="probNavBottomList"><td width="100%" class="nBottomNavList"><ul class="nBottomNavList"><%
     for (i = 1, tab_counter = 0; i <= cs->max_prob; i++) {
       if (!(prob = cs->probs[i])) continue;
-      if (!(prob_status[i] & PROB_STATUS_TABABLE)) continue;
+      if (!(pinfo[i].status & PROB_STATUS_TABABLE)) continue;
 %><%
       if (i == upper_tab_id) {
 %><li id="nBottomNavSelected"><%
@@ -324,11 +297,11 @@ ns_unparse_answers(
       ++tab_counter;
       if (i == upper_tab_id) {
 %><div class="nProbCurrent"><%
-      } else if (!all_attempts[i]) {
+      } else if (!pinfo[i].all_attempts) {
 %><div class="nProbEmpty"><%
-      } else if (pending_flag[i] || trans_flag[i]) {
+      } else if (pinfo[i].pending_flag || pinfo[i].trans_flag) {
 %><div class="nProbTrans"><%
-      } else if (accepted_flag[i] || solved_flag[i] || pr_flag[i]) {
+      } else if (pinfo[i].accepted_flag || pinfo[i].solved_flag || pinfo[i].pr_flag) {
 %><div class="nProbOk"><%
       } else if (prob->disable_user_submit > 0) {
 %><div class="nProbDisabled"><%

@@ -34,6 +34,7 @@ struct http_request_info;
 struct contest_desc;
 struct contest_extra;
 struct serve_state;
+struct UserProblemInfo;
 
 struct contest_plugin_iface
 {
@@ -97,15 +98,7 @@ struct contest_plugin_iface
         int user_id,
         int accepting_mode,
         const unsigned char *table_class,
-        unsigned char *solved_flag,   /* whether the problem was OK */
-        unsigned char *accepted_flag, /* whether the problem was accepted */
-        unsigned char *pending_flag,  /* whether there are pending runs */
-        unsigned char *trans_flag,    /* whether there are transient runs */
-        int *best_run,                /* the number of the best run */
-        int *attempts,                /* the number of previous attempts */
-        int *disqualified,            /* the number of prev. disq. attempts */
-        int *best_score,              /* the best score for the problem */
-        int *prev_successes);         /* the number of prev. successes */
+        struct UserProblemInfo *pinfo);/* user problem info */
 
   int (*generate_html_user_runs)(
         void *handle,

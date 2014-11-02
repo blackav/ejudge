@@ -779,22 +779,13 @@ struct client_state *ns_get_client_by_id(int client_id);
 void ns_send_reply(struct client_state *p, int answer);
 void ns_new_autoclose(struct client_state *p, void *, size_t);
 
+struct UserProblemInfo;
 void
 ns_get_user_problems_summary(
         const serve_state_t cs,
         int user_id,
         int accepting_mode,
-        unsigned char *solved_flag,   /* whether the problem was OK */
-        unsigned char *accepted_flag, /* whether the problem was accepted */
-        unsigned char *pending_flag,  /* whether there are pending runs */
-        unsigned char *trans_flag,    /* whether there are transient runs */
-        unsigned char *pr_flag,       /* whether there are pending review runs */
-        int *best_run,                /* the number of the best run */
-        int *attempts,                /* the number of previous attempts */
-        int *disqualified,            /* the number of prev. disq. attempts */
-        int *best_score,              /* the best score for the problem */
-        int *prev_successes,          /* the number of prev. successes */
-        int *all_attempts);           /* all attempts count */
+        struct UserProblemInfo *pinfo); /* user problem info */
 
 void
 ns_write_user_problems_summary(
@@ -804,15 +795,7 @@ ns_write_user_problems_summary(
         int user_id,
         int accepting_mode,
         const unsigned char *table_class,
-        unsigned char *solved_flag,   /* whether the problem was OK */
-        unsigned char *accepted_flag, /* whether the problem was accepted */
-        unsigned char *pr_flag,       /* whether there are pending review runs */
-        unsigned char *pending_flag,  /* whether there are pending runs */
-        unsigned char *trans_flag,    /* whether there are transient runs */
-        int *best_run,                /* the number of the best run */
-        int *attempts,                /* the number of previous attempts */
-        int *disqualified,            /* the number of prev. disq. attempts */
-        int *best_score);             /* the best score for the problem */
+        struct UserProblemInfo *pinfo);
 
 int ns_insert_variant_num(unsigned char *buf, size_t size,
                           const unsigned char *file, int variant);
@@ -1029,6 +1012,7 @@ ns_get_register_url(
         const struct contest_desc *cnts,
         const struct http_request_info *phr);
 
+struct UserProblemInfo;
 void
 ns_get_problem_status(
         serve_state_t cs,
@@ -1037,9 +1021,7 @@ ns_get_problem_status(
         int accepting_mode,
         time_t start_time,
         time_t stop_time,
-        const unsigned char *solved_flag,
-        const unsigned char *accepted_flag,
-        unsigned char *pstat);
+        struct UserProblemInfo *pinfo);
 
 // problem status flags
 enum
@@ -1056,8 +1038,7 @@ html_problem_selection(
         serve_state_t cs,
         FILE *fout,
         struct http_request_info *phr,
-        const unsigned char *solved_flag,
-        const unsigned char *accepted_flag,
+        const struct UserProblemInfo *pinfo,
         const unsigned char *var_name,
         int light_mode,
         time_t start_time);
