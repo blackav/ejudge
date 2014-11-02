@@ -222,8 +222,8 @@
 <%
   if (prob && prob->enable_tokens > 0) {
 %>
-<tr><td class="b0">Token flags:</td><td class="b0"><s:textfield name="token_flags" size="20" disabledExpr="info.is_readonly" value="info.token_flags" /></td></tr>
-<tr><td class="b0">Token count:</td><td class="b0"><s:textfield name="token_count" size="20" disabledExpr="info.is_readonly" value="info.token_count" /></td></tr>
+<tr><td class="b0">Token flags:</td><td class="b0"><s:textfield name="token_flags" size="20" disabledExpr="info.is_readonly" value="(int) info.token_flags" /></td></tr>
+<tr><td class="b0">Token count:</td><td class="b0"><s:textfield name="token_count" size="20" disabledExpr="info.is_readonly" value="(int) info.token_count" /></td></tr>
 <%
   }
 %>
