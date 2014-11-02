@@ -56,6 +56,7 @@
 #include "ejudge/prepare_dflt.h"
 #include "ejudge/new_server_match.h"
 #include "ejudge/external_action.h"
+#include "ejudge/new_server_pi.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -9267,8 +9268,7 @@ void
 html_problem_selection(serve_state_t cs,
                        FILE *fout,
                        struct http_request_info *phr,
-                       const unsigned char *solved_flag,
-                       const unsigned char *accepted_flag,
+                       const UserProblemInfo *pinfo,
                        const unsigned char *var_name,
                        int light_mode,
                        time_t start_time)
@@ -9288,7 +9288,7 @@ html_problem_selection(serve_state_t cs,
 
   for (i = 1; i <= cs->max_prob; i++) {
     if (!(prob = cs->probs[i])) continue;
-    if (!light_mode && prob->disable_submit_after_ok>0 && solved_flag[i])
+    if (!light_mode && prob->disable_submit_after_ok>0 && pinfo[i].solved_flag)
       continue;
     if (!serve_is_problem_started(cs, phr->user_id, prob))
       continue;
@@ -9316,7 +9316,7 @@ html_problem_selection(serve_state_t cs,
           // no such problem :(
           if (k > cs->max_prob) break;
           // this problem is not yet accepted or solved
-          if (!solved_flag[k] && !accepted_flag[k]) break;
+          if (!pinfo[k].solved_flag && !pinfo[k].accepted_flag) break;
         }
         if (prob->require[j]) continue;
       }
@@ -9501,9 +9501,7 @@ ns_get_problem_status(
         int accepting_mode,
         time_t start_time,
         time_t stop_time,
-        const unsigned char *solved_flag,
-        const unsigned char *accepted_flag,
-        unsigned char *pstat)
+        UserProblemInfo *pinfo)
 {
   const struct section_problem_data *prob;
   int prob_id, is_deadlined, k, j;
@@ -9531,7 +9529,7 @@ ns_get_problem_status(
         // no such problem :(
         if (k > cs->max_prob) break;
         // this problem is not yet accepted or solved
-        if (!solved_flag[k] && !accepted_flag[k]) break;
+        if (!pinfo[k].solved_flag && !pinfo[k].accepted_flag) break;
       }
       // if the requirements are not met, skip this problem
       if (prob->require[j]) continue;
@@ -9542,14 +9540,14 @@ ns_get_problem_status(
                                               prob, &user_deadline);
 
     if (prob->unrestricted_statement > 0 || !is_deadlined)
-      pstat[prob_id] |= PROB_STATUS_VIEWABLE;
+      pinfo[prob_id].status |= PROB_STATUS_VIEWABLE;
 
     if (!is_deadlined && prob->disable_user_submit <= 0
-        && (prob->disable_submit_after_ok <= 0 || !solved_flag[prob_id]))
-      pstat[prob_id] |= PROB_STATUS_SUBMITTABLE;
+        && (prob->disable_submit_after_ok <= 0 || !pinfo[prob_id].solved_flag))
+      pinfo[prob_id].status |= PROB_STATUS_SUBMITTABLE;
 
     if (prob->disable_tab <= 0)
-      pstat[prob_id] |= PROB_STATUS_TABABLE;
+      pinfo[prob_id].status |= PROB_STATUS_TABABLE;
   }
 }
 

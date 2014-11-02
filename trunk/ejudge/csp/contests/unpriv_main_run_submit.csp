@@ -4,12 +4,12 @@
     if (prob_id > 0 && !serve_is_problem_started(cs, phr->user_id, prob))
       prob_id = 0;
     if (prob_id > 0 && prob) {
-      serve_is_problem_deadlined(cs, phr->user_id, phr->login, prob, &prob_deadline[prob_id]);
+      serve_is_problem_deadlined(cs, phr->user_id, phr->login, prob, &pinfo[prob_id].deadline);
     }
 /*
     if (prob_id > 0 && serve_is_problem_deadlined(cs, phr->user_id, phr->login,
                                                   prob,
-                                                  &prob_deadline[prob_id]))
+                                                  &pinfo[prob_id].deadline))
       prob_id = 0;
 */
     //if (prob_id > 0 && prob->disable_user_submit > 0) prob_id = 0;
@@ -22,7 +22,7 @@
 <s:form>
 <table class="b0">
 <tr><td class="b0"><s:_>Problem</s:_>:</td><td class="b0"><%
-      html_problem_selection(cs, out_f, phr, solved_flag, accepted_flag, 0, 0, start_time);
+      html_problem_selection(cs, out_f, phr, pinfo, 0, 0, start_time);
 %></td><td class="b0"><s:submit ac="view-problem-submit" label="Select problem" /></td></tr></table>
 </s:form>
 <%
@@ -31,7 +31,7 @@
 
       if (!cnts->exam_mode) {
 %><h2><%
-        if ((prob_status[prob_id] & PROB_STATUS_SUBMITTABLE)) {
+        if ((pinfo[prob_id].status & PROB_STATUS_SUBMITTABLE)) {
 %><s:_>Submit a solution for</s:_><%
         } else {
 %><s:_>Problem</s:_><%
@@ -129,15 +129,15 @@
 %>
 
 <%
-        if (prob_deadline[prob_id] > 0) {
+        if (pinfo[prob_id].deadline > 0) {
 %>
-    <tr><td class="b0"><b><s:_>Deadline</s:_>:</b></td><td class="b0"><tt><s:v value="prob_deadline[prob_id]" /></tt></td></tr>
+    <tr><td class="b0"><b><s:_>Deadline</s:_>:</b></td><td class="b0"><tt><s:v value="pinfo[prob_id].deadline" /></tt></td></tr>
 <%
         }
 %>
 
 <%
-        if ((prob_status[prob_id] & PROB_STATUS_SUBMITTABLE) && prob->date_penalty) {
+        if ((pinfo[prob_id].status & PROB_STATUS_SUBMITTABLE) && prob->date_penalty) {
           int dpi;
 %>
     <tr><td class="b0"><b><s:_>Date penalty</s:_>:</b></td><td class="b0"><tt><%
@@ -165,7 +165,7 @@
 %>
     <tr><td class="b0"><b><s:_>Remaining attempts</s:_>:</b></td><td class="b0"><tt><s:v value="remain_count" /></tt></td></tr>
 <%
-        if (remain_count <= 0) prob_status[prob_id] &= ~PROB_STATUS_SUBMITTABLE;
+        if (remain_count <= 0) pinfo[prob_id].status &= ~PROB_STATUS_SUBMITTABLE;
       }
 %>
 
@@ -182,9 +182,9 @@
       /* put problem statement */
       if (px && px->stmts) {
         ns_unparse_statement(out_f, phr, cnts, extra, prob, 0, px, NULL,
-                          prob_status[prob_id] & PROB_STATUS_SUBMITTABLE);
+                          pinfo[prob_id].status & PROB_STATUS_SUBMITTABLE);
       } else if (prob->statement_file[0]
-          && (prob_status[prob_id] & PROB_STATUS_VIEWABLE)) {
+          && (pinfo[prob_id].status & PROB_STATUS_VIEWABLE)) {
         if (variant > 0) {
           prepare_insert_variant_num(variant_stmt_file,
                                      sizeof(variant_stmt_file),
@@ -200,7 +200,7 @@
 %><big><font color="red"><p><s:_>The problem statement is not available</s:_></p></font></big>
 <%
         } else {
-          if ((prob_status[prob_id] & PROB_STATUS_SUBMITTABLE)
+          if ((pinfo[prob_id].status & PROB_STATUS_SUBMITTABLE)
               && prob->type == PROB_TYPE_CUSTOM) {
             html_start_form(out_f, 2, phr->self_url, phr->hidden_vars);
             skip_start_form = 1;
@@ -210,7 +210,7 @@
       } else {
       }
 
-      if ((prob_status[prob_id] & PROB_STATUS_SUBMITTABLE)) {
+      if ((pinfo[prob_id].status & PROB_STATUS_SUBMITTABLE)) {
         if (!skip_start_form) {
 %><s:form enctype="multipart/form-data"><%
         }
@@ -375,8 +375,8 @@
       if (global->problem_navigation
           //&& !prob->disable_user_submit
           && prob->type != PROB_TYPE_SELECT_ONE
-          && all_attempts[prob->id]) {
-        if (all_attempts[prob->id] <= 15) {
+          && pinfo[prob->id].all_attempts) {
+        if (pinfo[prob->id].all_attempts <= 15) {
 %><h2><s:_>Previous submissions of this problem</s:_></h2>
 <%
         } else {
@@ -417,7 +417,7 @@
 <%
         if (global->problem_navigation > 0) {
           for (i = prob_id - 1; i > 0; i--) {
-            if (!(prob_status[i] & PROB_STATUS_GOOD)) continue;
+            if (!(pinfo[i].status & PROB_STATUS_GOOD)) continue;
             break;
           }
           if (i > 0) {
@@ -429,13 +429,13 @@
 
         if (global->problem_navigation <= 0) {
 %><td class="b0"><s:_>Problem</s:_>:</td><td class="b0"><%
-          html_problem_selection(cs, out_f, phr, solved_flag, accepted_flag, 0, 0, start_time);
+          html_problem_selection(cs, out_f, phr, pinfo, 0, 0, start_time);
 %></td><td class="b0"><s:submit ac="view-problem-submit" /></td><%
         }
 
         if (global->problem_navigation > 0) {
           for (i = prob_id + 1; i <= cs->max_prob; i++) {
-            if (!(prob_status[i] & PROB_STATUS_GOOD)) continue;
+            if (!(pinfo[i].status & PROB_STATUS_GOOD)) continue;
             break;
           }
           if (i <= cs->max_prob) {

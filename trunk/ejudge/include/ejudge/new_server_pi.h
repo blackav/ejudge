@@ -107,6 +107,25 @@ typedef struct TestingQueueArray
 
 #define ej_fix_prio(x) (((x) < -16)?-16:(((x) > 15)?15:(x)))
 
+/* === For unprivileged main page === */
+
+typedef struct UserProblemInfo
+{
+    time_t deadline;
+    int best_run;
+    int attempts;
+    int disqualified;
+    int best_score;
+    int prev_successes;
+    int all_attempts;
+    unsigned char solved_flag;
+    unsigned char accepted_flag;
+    unsigned char pending_flag;
+    unsigned char pr_flag;
+    unsigned char trans_flag;
+    unsigned char status;
+} UserProblemInfo;
+
 #endif /* __NEW_SERVER_PI_H__ */
 
 /*
