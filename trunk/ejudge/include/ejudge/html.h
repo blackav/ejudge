@@ -188,6 +188,11 @@ score_view_display(
         size_t size,
         const struct section_problem_data *prob,
         int score);
+void
+score_view_display_f(
+        FILE *out_f,
+        const struct section_problem_data *prob,
+        int score);
 
 /* run field selection flags */
 enum
