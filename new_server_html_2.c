@@ -4368,13 +4368,20 @@ ns_get_user_problems_summary(
   }
   */
 
-  XCALLOC(user_flag, (cs->max_prob + 1) * total_teams);
+  if (need_prev_succ) {
+    XCALLOC(user_flag, (cs->max_prob + 1) * total_teams);
+  }
   XALLOCAZ(marked_flag, cs->max_prob + 1);
 
   for (run_id = need_prev_succ?0:run_get_user_first_run_id(cs->runlog_state, user_id);
        run_id >= 0 && run_id < total_runs;
        run_id = need_prev_succ?(run_id + 1):run_get_user_next_run_id(cs->runlog_state, run_id)) {
     if (run_get_entry(cs->runlog_state, run_id, &re) < 0) continue;
+    if (!run_is_valid_status(re.status)) continue;
+    if (re.status >= RUN_PSEUDO_FIRST && re.status <= RUN_PSEUDO_LAST) continue;
+    if (re.prob_id <= 0 || re.prob_id > cs->max_prob) continue;
+    if (!(cur_prob = cs->probs[re.prob_id])) continue;
+    if (re.user_id <= 0 || re.user_id >= total_teams) continue;
 
     if (separate_user_score > 0 && re.is_saved) {
       status = re.saved_status;
@@ -4384,26 +4391,9 @@ ns_get_user_problems_summary(
       score = re.score;
     }
 
-    if (!run_is_valid_status(status)) continue;
-    if (status >= RUN_TRANSIENT_FIRST && status <= RUN_TRANSIENT_LAST
-        && re.user_id == user_id
-        && re.prob_id > 0 && re.prob_id <= cs->max_prob
-        && cs->probs[re.prob_id]) {
-      pinfo[re.prob_id].trans_flag = 1;
-      pinfo[re.prob_id].all_attempts++;
-    }
-    if (status > RUN_MAX_STATUS) continue;
-
-    cur_prob = 0;
-    if (re.prob_id > 0 && re.prob_id <= cs->max_prob)
-      cur_prob = cs->probs[re.prob_id];
-    if (!cur_prob) continue;
-
-    if (re.user_id <= 0 || re.user_id >= total_teams) continue;
-    if (re.user_id != user_id) {
+    if (need_prev_succ && re.user_id != user_id) {
       if (re.is_hidden) continue;
-      if (teamdb_get_flags(cs->teamdb_state,
-                           re.user_id) & (TEAM_INVISIBLE | TEAM_BANNED))
+      if (teamdb_get_flags(cs->teamdb_state, re.user_id) & (TEAM_INVISIBLE | TEAM_BANNED))
         continue;
       if (status == RUN_OK) {
         if (!user_flag[re.user_id * (cs->max_prob + 1) + re.prob_id]) {
@@ -4413,6 +4403,17 @@ ns_get_user_problems_summary(
       }
       continue;
     }
+
+    // re.user_id == user_id
+    pinfo[re.prob_id].token_count += re.token_count;
+    if (status != RUN_IGNORED && (status != RUN_COMPILE_ERR || cur_prob->ignore_compile_errors <= 0)) {
+      ++pinfo[re.prob_id].eff_attempts;
+    }
+    if (status >= RUN_TRANSIENT_FIRST && status <= RUN_TRANSIENT_LAST) {
+      pinfo[re.prob_id].trans_flag = 1;
+      pinfo[re.prob_id].all_attempts++;
+    }
+    if (status > RUN_MAX_STATUS) continue;
 
     pinfo[re.prob_id].all_attempts++;
     if (global->score_system == SCORE_OLYMPIAD && accepting_mode) {
