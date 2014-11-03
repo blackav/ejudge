@@ -903,6 +903,29 @@ score_view_display(
   return buf;
 }
 
+void
+score_view_display_f(
+        FILE *out_f,
+        const struct section_problem_data *prob,
+        int score)
+{
+  int i;
+
+  if (!prob || !prob->score_view || !prob->score_view[0] || !prob->score_view_score) {
+    if (score < 0) score = 0;
+    fprintf(out_f, "%d", score);
+    return;
+  }
+
+  for (i = 0; prob->score_view[i] && prob->score_view_score[i] != score; i++);
+  if (!prob->score_view[i]) {
+    if (score < 0) score = 0;
+    fprintf(out_f, "%d", score);
+  } else {
+    fprintf(out_f, "%s", prob->score_view_text[i]);
+  }
+}
+
 static void
 get_problem_map(
         const serve_state_t state,
