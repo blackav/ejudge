@@ -116,8 +116,10 @@ typedef struct UserProblemInfo
     int attempts;
     int disqualified;
     int best_score;
-    int prev_successes;
+    int prev_successes; // previous successes of other users on this problem
     int all_attempts;
+    int eff_attempts; // all attempts except IGNORED and COMPILE_ERR
+    int token_count;  // tokens spent on the problem
     unsigned char solved_flag;
     unsigned char accepted_flag;
     unsigned char pending_flag;
