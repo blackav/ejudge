@@ -790,16 +790,6 @@ ns_get_user_problems_summary(
         time_t stop_time,
         struct UserProblemInfo *pinfo); /* user problem info */
 
-void
-ns_write_user_problems_summary(
-        const struct contest_desc *cnts,
-        const serve_state_t cs,
-        FILE *fout,
-        int user_id,
-        int accepting_mode,
-        const unsigned char *table_class,
-        struct UserProblemInfo *pinfo);
-
 int ns_insert_variant_num(unsigned char *buf, size_t size,
                           const unsigned char *file, int variant);
 void ns_register_pages(FILE *fout, struct http_request_info *phr);
