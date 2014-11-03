@@ -157,10 +157,7 @@
       }
 %><%
       if (prob->max_user_run_count > 0) {
-        int ignored_set = 0;
-        if (prob->ignore_compile_errors > 0) ignored_set |= 1 << RUN_COMPILE_ERR;
-        ignored_set |= 1 << RUN_IGNORED;
-        int remain_count = prob->max_user_run_count - run_count_all_attempts_2(cs->runlog_state, phr->user_id, prob_id, ignored_set);
+        int remain_count = prob->max_user_run_count - pinfo[prob_id].eff_attempts;
         if (remain_count < 0) remain_count = 0;
 %>
     <tr><td class="b0"><b><s:_>Remaining attempts</s:_>:</b></td><td class="b0"><tt><s:v value="remain_count" /></tt></td></tr>
