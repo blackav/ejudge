@@ -2481,6 +2481,7 @@ prepare_parse_tokens(FILE *log_f, const unsigned char *tokens)
     return NULL;
   }
   p = ep;
+  while (isspace(*p)) ++p;
   if (!*p) {
     fprintf(log_f, "prepare_parse_tokens: '%s': unexpected end of token specification", tokens);
     return NULL;
@@ -2489,9 +2490,33 @@ prepare_parse_tokens(FILE *log_f, const unsigned char *tokens)
     fprintf(log_f, "prepare_parse_tokens: '%s': + or - expected", tokens);
     return NULL;
   }
-  int periodic_sign = 1;
-  if (*p == '-') periodic_sign = -1;
+  int sign = 1;
+  if (*p == '-') sign = -1;
   ++p;
+  while (isspace(*p)) ++p;
+  if (!*p) {
+    fprintf(log_f, "prepare_parse_tokens: '%s': unexpected end of token specification", tokens);
+    return NULL;
+  }
+  errno = 0;
+  int value1 = strtol(p, (char**) &ep, 10);
+  if (errno) {
+    fprintf(log_f, "prepare_parse_tokens: '%s': invalid value\n", tokens);
+    return NULL;
+  }
+  p = ep;
+  while (isspace(*p)) ++p;
+  if (!*p) {
+    fprintf(log_f, "prepare_parse_tokens: '%s': unexpected end of token specification", tokens);
+    return NULL;
+  }
+  if (*p != '/') {
+    fprintf(log_f, "prepare_parse_tokens: '%s': '/' expected\n", tokens);
+    return NULL;
+  }
+  ++p;
+
+
   (void) initial_count;
   (void) periodic_sign;
   return NULL;
