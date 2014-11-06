@@ -116,6 +116,15 @@ struct user_adjustment_info
 };
 struct user_adjustment_map;
 
+struct token_info
+{
+  int initial_count;  // initial token count
+  int time_increment; // periodic token increment
+  int time_interval;  // period length (s)
+  int open_flags;     // what opens by paying
+  int open_cost;      // token cost
+};
+
 /* sizeof(struct section_global_data) == 350132/350296 */
 struct section_global_data
 {
@@ -1424,6 +1433,10 @@ prepare_parse_variant_map(
         const unsigned char *path,
         unsigned char **p_header_txt,
         unsigned char **p_footer_txt);
+
+struct token_info *
+prepare_parse_tokens(FILE *log_f, const unsigned char *tokens);
+
 
 /* This is INTENTIONALLY not an `extern' variable */
 struct ejudge_cfg;

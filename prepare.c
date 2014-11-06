@@ -2466,6 +2466,37 @@ prepare_unparse_secure_exec_type(int value)
   return secure_exec_type_str[value];
 }
 
+struct token_info *
+prepare_parse_tokens(FILE *log_f, const unsigned char *tokens)
+{
+  if (!tokens || !*tokens) return NULL;
+
+  const unsigned char *ep, *p = tokens;
+  // INITIAL+-PERIODIC/INTERVAL+-COST/FLAGS
+  // interval is in seconds > 0
+  errno = 0;
+  int initial_count = strtol(p, (char**) &ep, 10);
+  if (errno) {
+    fprintf(log_f, "prepare_parse_tokens: '%s': initial_count is invalid\n", tokens);
+    return NULL;
+  }
+  p = ep;
+  if (!*p) {
+    fprintf(log_f, "prepare_parse_tokens: '%s': unexpected end of token specification", tokens);
+    return NULL;
+  }
+  if (*p != '+' && *p != '-') {
+    fprintf(log_f, "prepare_parse_tokens: '%s': + or - expected", tokens);
+    return NULL;
+  }
+  int periodic_sign = 1;
+  if (*p == '-') periodic_sign = -1;
+  ++p;
+  (void) initial_count;
+  (void) periodic_sign;
+  return NULL;
+}
+
 static void
 make_stand_file_name_2(serve_state_t state)
 {
