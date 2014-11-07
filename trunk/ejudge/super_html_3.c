@@ -476,6 +476,7 @@ const unsigned char * const super_serve_help_urls[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_CHANGE_SCORE_BONUS] = "Serve.cfg:problem:score_bonus",
   [SSERV_CMD_PROB_CHANGE_OPEN_TESTS] = "Serve.cfg:problem:open_tests",
   [SSERV_CMD_PROB_CHANGE_FINAL_OPEN_TESTS] = "Serve.cfg:problem:final_open_tests",
+  [SSERV_CMD_PROB_CHANGE_TOKEN_OPEN_TESTS] = "Serve.cfg:problem:token_open_tests",
   [SSERV_CMD_PROB_CHANGE_LANG_COMPILER_ENV] = "Serve.cfg:problem:lang_compiler_env",
   [SSERV_CMD_PROB_CHANGE_CHECK_CMD] = "Serve.cfg:problem:check_cmd",
   [SSERV_CMD_PROB_CHANGE_CHECKER_ENV] = "Serve.cfg:problem:checker_env",
@@ -2427,6 +2428,17 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
   case SSERV_CMD_PROB_CLEAR_TOKENS:
     xfree(prob->tokens);
     prob->tokens = NULL;
+    return 0;
+
+  case SSERV_CMD_PROB_CHANGE_TOKEN_OPEN_TESTS:
+    // FIXME: check for correctness
+    xfree(prob->token_open_tests);
+    prob->token_open_tests = xstrdup(param2);
+    return 0;
+
+  case SSERV_CMD_PROB_CLEAR_TOKEN_OPEN_TESTS:
+    xfree(prob->token_open_tests);
+    prob->token_open_tests = NULL;
     return 0;
 
   case SSERV_CMD_PROB_CHANGE_SCORE_TESTS:

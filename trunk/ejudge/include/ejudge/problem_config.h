@@ -159,6 +159,7 @@ struct problem_config_section
   unsigned char *score_bonus;
   unsigned char *open_tests;
   unsigned char *final_open_tests;
+  unsigned char *token_open_tests;
   unsigned char *extid;
   unsigned char *revision;
   unsigned char *tokens;

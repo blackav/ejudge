@@ -820,6 +820,7 @@ merge_problem_section(
         { CNTSPROB_score_bonus, META_PROBLEM_CONFIG_SECTION_score_bonus },
         { CNTSPROB_open_tests, META_PROBLEM_CONFIG_SECTION_open_tests },
         { CNTSPROB_final_open_tests, META_PROBLEM_CONFIG_SECTION_final_open_tests },
+        { CNTSPROB_token_open_tests, META_PROBLEM_CONFIG_SECTION_token_open_tests },
         { CNTSPROB_standard_checker, META_PROBLEM_CONFIG_SECTION_standard_checker },
         { CNTSPROB_tokens, META_PROBLEM_CONFIG_SECTION_tokens },
 
