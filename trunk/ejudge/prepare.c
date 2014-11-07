@@ -2466,6 +2466,72 @@ prepare_unparse_secure_exec_type(int value)
   return secure_exec_type_str[value];
 }
 
+static int
+parse_tokens_periodic(
+        const unsigned char *start,
+        const unsigned char **p_end,
+        int *p_sign,
+        int *p_value1,
+        int *p_value2)
+{
+  int ss = 1;
+  const unsigned char *p = start, *ep;
+  if (*p == '+') {
+  } else if (*p == '-') {
+    ss = -1;
+  } else {
+    return 0;
+  }
+  ++p;
+  errno = 0;
+  int value1 = strtol(p, (char**) &ep, 10);
+  if (errno) return 0;
+  p = ep;
+  while (isspace(*p)) ++p;
+  if (*p != '/') return 0;
+  ++p;
+  long long value2 = strtol(p, (char**) &ep, 10);
+  if (errno) return 0;
+  p = ep;
+  while (isspace(*p)) ++p;
+  if (*p == 's' || *p == 'S') {
+    ++p;
+  } else if (*p == 'm' || *p == 'M') {
+    value2 *= 60;
+    ++p;
+  } else if (*p == 'h' || *p == 'H') {
+    value2 *= 60 * 60;
+    ++p;
+  } else if (*p == 'd' || *p == 'D') {
+    value2 *= 60 * 60 * 24;
+    ++p;
+  } else if (*p == 'w' || *p == 'W') {
+    value2 *= 60 * 60 * 24 * 7;
+    ++p;
+  }
+  if (value2 < INT_MIN || value2 > INT_MAX) {
+    return 0;
+  }
+
+  *p_end = p;
+  *p_sign = ss;
+  *p_value1 = value1;
+  *p_value2 = value2;
+  return 1;
+}
+
+/* static */ int
+parse_tokens_cost(
+        const unsigned char *start,
+        const unsigned char **p_end,
+        int *p_sign,
+        int *p_value1,
+        int *p_value2)
+{
+  // valid flags: FinalScore(1),TokenOpenTests(2),FinalOpenTests(4)
+  return 0;
+}
+
 struct token_info *
 prepare_parse_tokens(FILE *log_f, const unsigned char *tokens)
 {
@@ -2481,44 +2547,12 @@ prepare_parse_tokens(FILE *log_f, const unsigned char *tokens)
     return NULL;
   }
   p = ep;
-  while (isspace(*p)) ++p;
-  if (!*p) {
-    fprintf(log_f, "prepare_parse_tokens: '%s': unexpected end of token specification", tokens);
-    return NULL;
+  int periodic_sign = 0, periodic_val1 = 0, periodic_val2 = 0;
+  if (!parse_tokens_periodic(p, &p, &periodic_sign, &periodic_val1, &periodic_val2)) {
   }
-  if (*p != '+' && *p != '-') {
-    fprintf(log_f, "prepare_parse_tokens: '%s': + or - expected", tokens);
-    return NULL;
-  }
-  int sign = 1;
-  if (*p == '-') sign = -1;
-  ++p;
-  while (isspace(*p)) ++p;
-  if (!*p) {
-    fprintf(log_f, "prepare_parse_tokens: '%s': unexpected end of token specification", tokens);
-    return NULL;
-  }
-  errno = 0;
-  int value1 = strtol(p, (char**) &ep, 10);
-  if (errno) {
-    fprintf(log_f, "prepare_parse_tokens: '%s': invalid value\n", tokens);
-    return NULL;
-  }
-  p = ep;
-  while (isspace(*p)) ++p;
-  if (!*p) {
-    fprintf(log_f, "prepare_parse_tokens: '%s': unexpected end of token specification", tokens);
-    return NULL;
-  }
-  if (*p != '/') {
-    fprintf(log_f, "prepare_parse_tokens: '%s': '/' expected\n", tokens);
-    return NULL;
-  }
-  ++p;
-
 
   (void) initial_count;
-  (void) periodic_sign;
+
   return NULL;
 }
 
