@@ -870,6 +870,8 @@ prepare_global_free_func(struct generic_section_config *gp)
   xfree(p->contest_stop_cmd);
   sarray_free(p->load_user_group);
   xfree(p->super_run_dir);
+  xfree(p->tokens);
+  xfree(p->token_info);
 
   memset(p, 0xab, sizeof(*p));
   xfree(p);
@@ -1010,6 +1012,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
   xfree(p->super_run_dir);
   xfree(p->test_score_list);
   xfree(p->tokens);
+  xfree(p->token_info);
   sarray_free(p->test_sets);
   sarray_free(p->date_penalty);
   sarray_free(p->group_start_date);
@@ -2523,7 +2526,7 @@ parse_tokens_periodic(
   return 1;
 }
 
-/* static */ int
+static int
 parse_tokens_cost(
         const unsigned char *start,
         const unsigned char **p_end,
@@ -2532,7 +2535,48 @@ parse_tokens_cost(
         int *p_value2)
 {
   // valid flags: FinalScore(1),TokenOpenTests(2),FinalOpenTests(4)
-  return 0;
+  int ss = 1;
+  const unsigned char *p = start, *ep;
+  while (isspace(*p)) ++p;
+  if (*p == '+') {
+  } else if (*p == '-') {
+    ss = -1;
+  } else {
+    return 0;
+  }
+  ++p;
+  errno = 0;
+  int value1 = strtol(p, (char**) &ep, 10);
+  if (errno) return 0;
+  p = ep;
+  while (isspace(*p)) ++p;
+  if (*p != '/') return 0;
+  ++p;
+  int value2 = 0;
+  while (1) {
+    while (isspace(*p)) ++p;
+    if (!strncasecmp(p, "finalscore", 10)) {
+      value2 |= 1;
+      p += 10;
+    } else if (!strncasecmp(p, "tokenopentests", 14)){
+      value2 |= 2;
+      p += 14;
+    } else if (!strncasecmp(p, "finalopentests", 14)) {
+      value2 |= 4;
+      p += 14;
+    } else {
+      break;
+    }
+    while (isspace(*p)) ++p;
+    if (*p != ',') break;
+    ++p;
+  }
+
+  *p_end = p;
+  *p_sign = ss;
+  *p_value1 = value1;
+  *p_value2 = value2;
+  return 1;
 }
 
 struct token_info *
@@ -2551,12 +2595,42 @@ prepare_parse_tokens(FILE *log_f, const unsigned char *tokens)
   }
   p = ep;
   int periodic_sign = 0, periodic_val1 = 0, periodic_val2 = 0;
-  if (!parse_tokens_periodic(p, &p, &periodic_sign, &periodic_val1, &periodic_val2)) {
+  int cost_sign = 0, cost_val1 = 0, cost_val2 = 0;
+  while (isspace(*p)) ++p;
+  if (*p) {
+    if (!parse_tokens_periodic(p, &p, &periodic_sign, &periodic_val1, &periodic_val2)) {
+      // failed, so restarting from the same place
+      if (!parse_tokens_cost(p, &p, &cost_sign, &cost_val1, &cost_val2)) {
+        fprintf(log_f, "prepare_parse_tokens: '%s': invalid token specification\n", tokens);
+        return NULL;
+      }
+    } else {
+      while (isspace(*p)) ++p;
+      if (*p) {
+        if (!parse_tokens_cost(p, &p, &cost_sign, &cost_val1, &cost_val2)) {
+          fprintf(log_f, "prepare_parse_tokens: '%s': invalid token specification\n", tokens);
+          return NULL;
+        }
+      }
+    }
+    while (isspace(*p)) ++p;
+  }
+  if (*p) {
+    fprintf(log_f, "prepare_parse_tokens: '%s': garbage after specification\n", tokens);
+    return NULL;
   }
 
-  (void) initial_count;
+  struct token_info *ti = NULL;
+  XCALLOC(ti, 1);
+  ti->initial_count = initial_count;
+  ti->time_sign = periodic_sign;
+  ti->time_increment = periodic_val1;
+  ti->time_interval = periodic_val2;
+  ti->open_sign = cost_sign;
+  ti->open_cost = cost_val1;
+  ti->open_flags = cost_val2;
 
-  return NULL;
+  return ti;
 }
 
 static void
@@ -5752,6 +5826,7 @@ prepare_copy_problem(const struct section_problem_data *in)
   if (in->tokens) {
     out->tokens = xstrdup(in->tokens);
   }
+  out->tokens = 0;
 
   return out;
 }

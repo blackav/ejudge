@@ -119,10 +119,12 @@ struct user_adjustment_map;
 struct token_info
 {
   int initial_count;  // initial token count
+  int time_sign;      // sign (+/-) of the time term
   int time_increment; // periodic token increment
   int time_interval;  // period length (s)
-  int open_flags;     // what opens by paying
+  int open_sign;      // sign (+/-) of the open term
   int open_cost;      // token cost
+  int open_flags;     // what opens by paying
 };
 
 /* sizeof(struct section_global_data) == 350132/350296 */
@@ -729,6 +731,8 @@ struct section_global_data
   /** global tokens specification */
   unsigned char *tokens;
 
+  struct token_info *token_info META_ATTRIB((meta_private));
+
   /** INTERNAL: text with unhandled variables */
   unsigned char *unhandled_vars;
 
@@ -943,6 +947,8 @@ struct section_problem_data
   unsigned char *test_score_list;
   /** token specification */
   unsigned char *tokens;
+
+  struct token_info *token_info META_ATTRIB((meta_private));
 
   /** number of tests for Moscow scoring */
   unsigned char score_tests[256];
