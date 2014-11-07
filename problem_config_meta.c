@@ -131,6 +131,7 @@ static struct meta_info_item meta_info_problem_config_section_data[] =
   [META_PROBLEM_CONFIG_SECTION_score_bonus] = { META_PROBLEM_CONFIG_SECTION_score_bonus, 's', XSIZE(struct problem_config_section, score_bonus), "score_bonus", XOFFSET(struct problem_config_section, score_bonus) },
   [META_PROBLEM_CONFIG_SECTION_open_tests] = { META_PROBLEM_CONFIG_SECTION_open_tests, 's', XSIZE(struct problem_config_section, open_tests), "open_tests", XOFFSET(struct problem_config_section, open_tests) },
   [META_PROBLEM_CONFIG_SECTION_final_open_tests] = { META_PROBLEM_CONFIG_SECTION_final_open_tests, 's', XSIZE(struct problem_config_section, final_open_tests), "final_open_tests", XOFFSET(struct problem_config_section, final_open_tests) },
+  [META_PROBLEM_CONFIG_SECTION_token_open_tests] = { META_PROBLEM_CONFIG_SECTION_token_open_tests, 's', XSIZE(struct problem_config_section, token_open_tests), "token_open_tests", XOFFSET(struct problem_config_section, token_open_tests) },
   [META_PROBLEM_CONFIG_SECTION_extid] = { META_PROBLEM_CONFIG_SECTION_extid, 's', XSIZE(struct problem_config_section, extid), "extid", XOFFSET(struct problem_config_section, extid) },
   [META_PROBLEM_CONFIG_SECTION_revision] = { META_PROBLEM_CONFIG_SECTION_revision, 's', XSIZE(struct problem_config_section, revision), "revision", XOFFSET(struct problem_config_section, revision) },
   [META_PROBLEM_CONFIG_SECTION_tokens] = { META_PROBLEM_CONFIG_SECTION_tokens, 's', XSIZE(struct problem_config_section, tokens), "tokens", XOFFSET(struct problem_config_section, tokens) },
