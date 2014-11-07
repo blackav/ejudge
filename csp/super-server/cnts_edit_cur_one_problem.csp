@@ -2277,6 +2277,22 @@
 %>
 
 <%
+  if (show_adv && !is_abstract) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:tr attr="form_row_attrs[row ^= 1]">
+        <td>Tests open for tokens:</td>
+        <td><s:textfield name="param" value="prob->token_open_tests" size="48" maxlength="1024" check="" /></td>
+        <td><s:submit ac="prob-change-token-open-tests" label="Change" /><s:submit ac="prob-clear-token-open-tests" label="Clear" /></td>
+        <td><s:help ac="prob-change-token-open-tests" /></td>
+    </s:tr>
+</s:form>
+<%
+  }
+%>
+
+<%
   if (global->score_system == SCORE_OLYMPIAD) {
 %>
 <s:form>
