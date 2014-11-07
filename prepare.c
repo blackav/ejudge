@@ -493,6 +493,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(score_bonus, "s"),
   PROBLEM_PARAM(open_tests, "s"),
   PROBLEM_PARAM(final_open_tests, "s"),
+  PROBLEM_PARAM(token_open_tests, "S"),
   PROBLEM_PARAM(statement_file, "s"),
   PROBLEM_PARAM(alternatives_file, "s"),
   PROBLEM_PARAM(plugin_file, "s"),
@@ -1034,6 +1035,8 @@ prepare_problem_free_func(struct generic_section_config *gp)
   xfree(p->score_bonus_val);
   xfree(p->open_tests_val);
   xfree(p->final_open_tests_val);
+  xfree(p->token_open_tests);
+  xfree(p->token_open_tests_val);
   prepare_free_testsets(p->ts_total, p->ts_infos);
   free_deadline_penalties(p->dp_total, p->dp_infos);
   free_personal_deadlines(p->pd_total, p->pd_infos);
@@ -3892,6 +3895,12 @@ set_defaults(
                                      &prob->final_open_tests_count) < 0)
           return -1;
       }
+      if (prob->token_open_tests && prob->token_open_tests[0]) {
+        if (prepare_parse_open_tests(stderr, prob->token_open_tests,
+                                     &prob->token_open_tests_val,
+                                     &prob->token_open_tests_count) < 0)
+          return -1;
+      }
     }
 
     if (!prob->input_file[0] && si != -1 && aprob->input_file[0]) {
@@ -5732,6 +5741,8 @@ prepare_copy_problem(const struct section_problem_data *in)
   out->score_bonus_val = 0;
   out->open_tests_val = 0;
   out->final_open_tests_val = 0;
+  out->token_open_tests = 0;
+  out->token_open_tests_val = 0;
   out->unhandled_vars = 0;
   out->score_view = 0;
   out->score_view_score = 0;
@@ -6624,6 +6635,9 @@ prepare_set_prob_value(
   case CNTSPROB_final_open_tests:
     break;
 
+  case CNTSPROB_token_open_tests:
+    break;
+
   default:
     abort();
   }
@@ -6687,7 +6701,7 @@ static const int prob_settable_list[] =
   CNTSPROB_alternatives_file, CNTSPROB_plugin_file, CNTSPROB_xml_file,
   CNTSPROB_alternative, CNTSPROB_stand_attr, CNTSPROB_source_header,
   CNTSPROB_source_footer, CNTSPROB_score_view,
-  CNTSPROB_open_tests, CNTSPROB_final_open_tests,
+  CNTSPROB_open_tests, CNTSPROB_final_open_tests, CNTSPROB_token_open_tests,
   CNTSPROB_normalization, CNTSPROB_super_run_dir, CNTSPROB_lang_max_vm_size, CNTSPROB_lang_max_stack_size,
 
   0
@@ -6847,6 +6861,7 @@ static const unsigned char prob_settable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_score_view] = 1,
   [CNTSPROB_open_tests] = 1,
   [CNTSPROB_final_open_tests] = 1,
+  [CNTSPROB_token_open_tests] = 1,
   [CNTSPROB_normalization] = 1,
   [CNTSPROB_super_run_dir] = 1,
   [CNTSPROB_tokens] = 1,

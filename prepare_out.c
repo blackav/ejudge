@@ -1242,6 +1242,9 @@ prepare_unparse_prob(
   if (prob->final_open_tests[0]) {
     fprintf(f, "final_open_tests = \"%s\"\n", CARMOR(prob->final_open_tests));
   }
+  if (prob->token_open_tests && prob->token_open_tests[0]) {
+    fprintf(f, "token_open_tests = \"%s\"\n", CARMOR(prob->token_open_tests));
+  }
   if (prob->tokens && prob->tokens[0])
     fprintf(f, "tokens = \"%s\"\n", CARMOR(prob->tokens));
   if (score_system == SCORE_MOSCOW || score_system == SCORE_ACM) {
@@ -1623,6 +1626,8 @@ prepare_unparse_actual_prob(
     fprintf(f, "open_tests = \"%s\"\n", CARMOR(prob->open_tests));
   if (prob->final_open_tests[0])
     fprintf(f, "final_open_tests = \"%s\"\n", CARMOR(prob->final_open_tests));
+  if (prob->token_open_tests && prob->token_open_tests[0])
+    fprintf(f, "token_open_tests = \"%s\"\n", CARMOR(prob->token_open_tests));
   if (prob->tokens && prob->tokens[0])
     fprintf(f, "tokens = \"%s\"\n", CARMOR(prob->tokens));
 
