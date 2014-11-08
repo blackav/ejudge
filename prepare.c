@@ -2534,7 +2534,7 @@ parse_tokens_cost(
         int *p_value1,
         int *p_value2)
 {
-  // valid flags: FinalScore(1),TokenOpenTests(2),FinalOpenTests(4)
+  // valid flags: FinalScore(1),BasicOpenTests,TokenOpenTests,FinalOpenTests
   int ss = 1;
   const unsigned char *p = start, *ep;
   while (isspace(*p)) ++p;
@@ -2556,13 +2556,19 @@ parse_tokens_cost(
   while (1) {
     while (isspace(*p)) ++p;
     if (!strncasecmp(p, "finalscore", 10)) {
-      value2 |= 1;
+      value2 |= TOKEN_FINALSCORE_BIT;
       p += 10;
+    } else if (!strncasecmp(p, "basicopentests", 14)){
+      value2 &= ~TOKEN_TESTS_MASK;
+      value2 |= TOKEN_BASICTESTS_BIT;
+      p += 14;
     } else if (!strncasecmp(p, "tokenopentests", 14)){
-      value2 |= 2;
+      value2 &= ~TOKEN_TESTS_MASK;
+      value2 |= TOKEN_TOKENTESTS_BIT;
       p += 14;
     } else if (!strncasecmp(p, "finalopentests", 14)) {
-      value2 |= 4;
+      value2 &= ~TOKEN_TESTS_MASK;
+      value2 |= TOKEN_FINALTESTS_BIT;
       p += 14;
     } else {
       break;

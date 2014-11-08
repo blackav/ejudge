@@ -185,4 +185,14 @@ session_parse(
         Session *ps,
         const unsigned char *str);
 
+/* token bits */
+enum
+{
+  TOKEN_FINALSCORE_BIT = 1, // show the final score
+  TOKEN_TESTS_MASK = 6,
+  TOKEN_BASICTESTS_BIT = 2, // show the basic test info
+  TOKEN_TOKENTESTS_BIT = 4, // show the token test info
+  TOKEN_FINALTESTS_BIT = 6  // show the final test info
+};
+
 #endif /* __EJ_TYPES_H__ */
