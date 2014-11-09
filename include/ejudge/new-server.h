@@ -911,6 +911,7 @@ ns_submit_run(
 extern int utf8_mode;
 extern time_t server_start_time;
 
+struct UserProblemInfo;
 void
 new_write_user_runs(
         const serve_state_t,
@@ -918,7 +919,8 @@ new_write_user_runs(
         struct http_request_info *phr,
         unsigned int show_flags,
         int prob_id,
-        const unsigned char *table_class);
+        const unsigned char *table_class,
+        const struct UserProblemInfo *pinfo);
 
 void
 new_write_user_clars(
