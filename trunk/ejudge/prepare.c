@@ -832,6 +832,8 @@ global_init_func(struct generic_section_config *gp)
   p->compile_max_vm_size = -1L;
   p->compile_max_stack_size = -1L;
   p->compile_max_file_size = -1L;
+
+  p->enable_tokens = -1;
 }
 
 static void free_user_adjustment_info(struct user_adjustment_info*);
@@ -3688,6 +3690,10 @@ set_defaults(
     prepare_set_prob_value(CNTSPROB_source_footer, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_normalization, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_max_user_run_count, prob, aprob, g);
+
+    if (prob->enable_tokens > 0) {
+      g->enable_tokens = 1;
+    }
 
     if (prob->priority_adjustment == -1000 && si != -1 &&
         aprob->priority_adjustment != -1000) {
