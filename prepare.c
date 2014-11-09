@@ -2498,6 +2498,8 @@ parse_tokens_periodic(
   while (isspace(*p)) ++p;
   if (*p != '/') return 0;
   ++p;
+  while (isspace(*p)) ++p;
+  if (*p < '0' || *p > '9') return 0; 
   long long value2 = strtol(p, (char**) &ep, 10);
   if (errno) return 0;
   p = ep;
