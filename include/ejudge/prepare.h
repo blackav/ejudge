@@ -733,6 +733,9 @@ struct section_global_data
 
   struct token_info *token_info META_ATTRIB((meta_private));
 
+  // set to 1 if there exist a tokenized problem
+  int enable_tokens META_ATTRIB((meta_private));
+
   /** INTERNAL: text with unhandled variables */
   unsigned char *unhandled_vars;
 
