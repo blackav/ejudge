@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-10-20 15:36+0400\n"
-"PO-Revision-Date: 2014-10-20 15:36+0400\n"
+"POT-Creation-Date: 2014-11-09 09:49+0300\n"
+"PO-Revision-Date: 2014-11-09 15:48+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -27,6 +27,10 @@ msgstr ""
 "\n"
 "Всего тестов: %d, пройдено: %d, не пройдено: %d.\n"
 "\n"
+
+#, c-format
+msgid " (%d tokens used)"
+msgstr " (использовано: %d)"
 
 #, c-format
 msgid " / <b>%d unread message(s)</b>"
@@ -4040,6 +4044,9 @@ msgstr "Использовать номер посылки"
 msgid "Use source language or content type suffix"
 msgstr "Использовать суффикс языка или типа файла"
 
+msgid "Use token"
+msgstr "Использовать токен"
+
 msgid "Use user Id"
 msgstr "Использовать идентификатор пользователя"
 
@@ -4770,41 +4777,3 @@ msgstr "ошибка записи"
 msgid "write error to server"
 msgstr "ошибка записи данных на сервер"
 
-#~ msgid "Problem deadline"
-#~ msgstr "Срок окончания сдачи"
-
-#~ msgid "Change judging priorities"
-#~ msgstr "Изменить приоритет проверки"
-
-#~ msgid "Other actions"
-#~ msgstr "Прочее"
-
-#~ msgid "View IP addresses for users"
-#~ msgstr "Посмотреть IP-адреса пользователей"
-
-#~ msgid "View examination information"
-#~ msgstr "Посмотреть информацию об экзаменуемых"
-
-#~ msgid "View privileged users"
-#~ msgstr "Посмотреть список привилегированных пользователей"
-
-#~ msgid "View users for IP addresses"
-#~ msgstr "Просмотр пользователей по IP-адресам"
-
-#~ msgid "View standings"
-#~ msgstr "Посмотреть положение участников"
-
-#~ msgid "View testing queue"
-#~ msgstr "Просмотр очереди тестирования"
-
-#~ msgid "View who is currently online"
-#~ msgstr "Посмотреть подключившихся пользователей"
-
-#~ msgid "[Create new contest (New interface)]"
-#~ msgstr "[Создать новый турнир (Новый интерфейс)]"
-
-#~ msgid "[Edit current contest (New interface)]"
-#~ msgstr "[Редактировать текущий турнир (Новый интерфейс)]"
-
-#~ msgid "Registration data"
-#~ msgstr "Регистрационные данные"
