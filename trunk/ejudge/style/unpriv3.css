@@ -394,7 +394,7 @@ td#probNavTaskArea {
 	text-shadow: rgba(255, 255, 255, 0.7) 0 1px;
 }
 
-div.nProbEmpty {
+div.nProbEmpty, div.nProbBad, div.nProbOk {
 	border-radius: 5px 5px 0 0;
 	border-top: 1px solid rgb(180, 186, 211);
 	border-bottom: 1px solid rgb(160, 169, 177);
@@ -412,7 +412,35 @@ div.nProbEmpty {
 	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#cce2ef', endColorstr='#a4b9cc',GradientType=0 ); /* IE6-9 */
 }
 
-.nBottomNavList div.nProbEmpty {
+div.nProbBad {
+	background: rgb(235,195,198); /* Old browsers */
+	background: -moz-linear-gradient(top,  rgba(235,195,198,1) 0%, rgba(237,190,189,1) 15%, rgba(211,169,169,1) 65%, rgba(199,158,157,1) 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(235,195,198,1)), color-stop(15%,rgba(237,190,189,1)), color-stop(65%,rgba(211,169,169,1)), color-stop(100%,rgba(199,158,157,1))); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top,  rgba(235,195,198,1) 0%,rgba(237,190,189,1) 15%,rgba(211,169,169,1) 65%,rgba(199,158,157,1) 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top,  rgba(235,195,198,1) 0%,rgba(237,190,189,1) 15%,rgba(211,169,169,1) 65%,rgba(199,158,157,1) 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top,  rgba(235,195,198,1) 0%,rgba(237,190,189,1) 15%,rgba(211,169,169,1) 65%,rgba(199,158,157,1) 100%); /* IE10+ */
+	background: linear-gradient(to bottom,  rgba(235,195,198,1) 0%,rgba(237,190,189,1) 15%,rgba(211,169,169,1) 65%,rgba(199,158,157,1) 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ebc3c6', endColorstr='#c79e9d',GradientType=0 ); /* IE6-9 */
+	border: 1px solid rgb(186, 166, 166);
+	border-left: none;
+}
+
+div.nProbBad  a{
+	color: rgb(139, 60, 60) !important;
+}
+
+div.nProbOk {
+	background: rgb(220,238,192); /* Old browsers */
+	background: -moz-linear-gradient(top,  rgba(220,238,192,1) 0%, rgba(214,239,187,1) 15%, rgba(191,216,164,1) 65%, rgba(178,205,151,1) 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(220,238,192,1)), color-stop(15%,rgba(214,239,187,1)), color-stop(65%,rgba(191,216,164,1)), color-stop(100%,rgba(178,205,151,1))); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top,  rgba(220,238,192,1) 0%,rgba(214,239,187,1) 15%,rgba(191,216,164,1) 65%,rgba(178,205,151,1) 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top,  rgba(220,238,192,1) 0%,rgba(214,239,187,1) 15%,rgba(191,216,164,1) 65%,rgba(178,205,151,1) 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top,  rgba(220,238,192,1) 0%,rgba(214,239,187,1) 15%,rgba(191,216,164,1) 65%,rgba(178,205,151,1) 100%); /* IE10+ */
+	background: linear-gradient(to bottom,  rgba(220,238,192,1) 0%,rgba(214,239,187,1) 15%,rgba(191,216,164,1) 65%,rgba(178,205,151,1) 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#dceec0', endColorstr='#b2cd97',GradientType=0 ); /* IE6-9 */
+}
+
+.nBottomNavList div.nProbEmpty, .nBottomNavList div.nProbBad, .nBottomNavList div.nProbOk {
 	border-radius: 0 0 5px 5px;
 	border: 1px solid rgb(149, 163, 187);
 	border-top: none;
@@ -427,6 +455,31 @@ div.nProbEmpty {
 	background: -ms-linear-gradient(top,  rgba(190,212,225,1) 0%,rgba(184,205,224,1) 22%,rgba(165,186,205,1) 59%,rgba(149,170,189,1) 100%); /* IE10+ */
 	background: linear-gradient(to bottom,  rgba(190,212,225,1) 0%,rgba(184,205,224,1) 22%,rgba(165,186,205,1) 59%,rgba(149,170,189,1) 100%); /* W3C */
 	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#bed4e1', endColorstr='#95aabd',GradientType=0 ); /* IE6-9 */
+}
+
+.nBottomNavList div.nProbBad {
+	background: rgb(227,185,187); /* Old browsers */
+	background: -moz-linear-gradient(top,  rgba(227,185,187,1) 0%, rgba(229,179,179,1) 15%, rgba(203,163,163,1) 65%, rgba(194,154,154,1) 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(227,185,187,1)), color-stop(15%,rgba(229,179,179,1)), color-stop(65%,rgba(203,163,163,1)), color-stop(100%,rgba(194,154,154,1))); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top,  rgba(227,185,187,1) 0%,rgba(229,179,179,1) 15%,rgba(203,163,163,1) 65%,rgba(194,154,154,1) 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top,  rgba(227,185,187,1) 0%,rgba(229,179,179,1) 15%,rgba(203,163,163,1) 65%,rgba(194,154,154,1) 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top,  rgba(227,185,187,1) 0%,rgba(229,179,179,1) 15%,rgba(203,163,163,1) 65%,rgba(194,154,154,1) 100%); /* IE10+ */
+	background: linear-gradient(to bottom,  rgba(227,185,187,1) 0%,rgba(229,179,179,1) 15%,rgba(203,163,163,1) 65%,rgba(194,154,154,1) 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#e3b9bb', endColorstr='#c29a9a',GradientType=0 ); /* IE6-9 */
+	border: 1px solid rgb(169, 158, 158);
+	border-top: none;
+	border-left: none;
+}
+
+.nBottomNavList div.nProbOk{
+	background: rgb(215,236,182); /* Old browsers */
+	background: -moz-linear-gradient(top,  rgba(215,236,182,1) 0%, rgba(208,237,177,1) 15%, rgba(185,212,156,1) 65%, rgba(173,202,144,1) 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(215,236,182,1)), color-stop(15%,rgba(208,237,177,1)), color-stop(65%,rgba(185,212,156,1)), color-stop(100%,rgba(173,202,144,1))); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top,  rgba(215,236,182,1) 0%,rgba(208,237,177,1) 15%,rgba(185,212,156,1) 65%,rgba(173,202,144,1) 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top,  rgba(215,236,182,1) 0%,rgba(208,237,177,1) 15%,rgba(185,212,156,1) 65%,rgba(173,202,144,1) 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top,  rgba(215,236,182,1) 0%,rgba(208,237,177,1) 15%,rgba(185,212,156,1) 65%,rgba(173,202,144,1) 100%); /* IE10+ */
+	background: linear-gradient(to bottom,  rgba(215,236,182,1) 0%,rgba(208,237,177,1) 15%,rgba(185,212,156,1) 65%,rgba(173,202,144,1) 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#d7ecb6', endColorstr='#adca90',GradientType=0 ); /* IE6-9 */
 }
 
 table.probNav {
@@ -499,6 +552,14 @@ li .nProbEmpty:hover {
 	border: 1px solid rgb(165, 165, 165);
 	border-top: none;
 	border-left: none;
+}
+
+li .nProbBad:hover {
+	background: rgba(171, 125, 125, 0.47);
+}
+
+li .nProbOk:hover {
+	background: rgba(148, 181, 130, 0.47);
 }
 
 .nTopNavList li.first-rad .nProbEmpty, .nTopNavList li.first-rad .nProbCurrent {
