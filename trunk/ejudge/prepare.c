@@ -3374,6 +3374,11 @@ set_defaults(
     }
   }
 
+  if (mode == PREPARE_SERVE && g->tokens && g->tokens[0]) {
+    if (!(g->token_info = prepare_parse_tokens(stderr, g->tokens)))
+      return -1;
+  }
+
   for (i = 1; i <= state->max_lang && mode != PREPARE_RUN; i++) {
     if (!(lang = state->langs[i])) continue;
     if (!lang->short_name[0]) {
@@ -3985,6 +3990,10 @@ set_defaults(
         if (prepare_parse_open_tests(stderr, prob->token_open_tests,
                                      &prob->token_open_tests_val,
                                      &prob->token_open_tests_count) < 0)
+          return -1;
+      }
+      if (prob->tokens && prob->tokens[0]) {
+        if (!(prob->token_info = prepare_parse_tokens(stderr, prob->tokens)))
           return -1;
       }
     }
