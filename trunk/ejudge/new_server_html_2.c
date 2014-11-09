@@ -5402,7 +5402,8 @@ new_write_user_runs(
         struct http_request_info *phr,
         unsigned int show_flags,
         int prob_id,
-        const unsigned char *table_class)
+        const unsigned char *table_class,
+        const UserProblemInfo *pinfo)
 {
   const struct section_global_data *global = state->global;
   int i, showed, runs_to_show = 0;
@@ -5465,7 +5466,7 @@ new_write_user_runs(
 
   if (enable_src_view)
     fprintf(f, "<th%s>%s</th>", cl, _("View source"));
-  if (enable_rep_view || global->team_enable_ce_view)
+  if (enable_rep_view || global->team_enable_ce_view || global->enable_tokens > 0)
     fprintf(f, "<th%s>%s</th>", cl, _("View report"));
   if (global->enable_printing && !state->printing_suspended)
     fprintf(f, "<th%s>%s</th>", cl, _("Print sources"));
@@ -5565,7 +5566,107 @@ new_write_user_runs(
       fprintf(f, "</td>");
     }
       /* FIXME: RUN_PRESENTATION_ERR and != standard problem type */
-    if (enable_rep_view) {
+    if (cur_prob->enable_tokens > 0) {
+      int enable_report_link = 0;
+      int enable_use_link = 0;
+
+      int available_tokens = 0;
+      if (global->token_info) {
+        available_tokens += global->token_info->initial_count;
+      }
+      if (cur_prob->token_info) {
+        available_tokens += cur_prob->token_info->initial_count;
+      }
+      if (start_time > 0) {
+        long long td = (long long) state->current_time - start_time;
+        if (td > 0) {
+          if (global->token_info) {
+            if (global->token_info->time_sign > 0) {
+              available_tokens += global->token_info->time_increment * (td / global->token_info->time_interval);
+            } else if (global->token_info->time_sign < 0) {
+              available_tokens -= global->token_info->time_increment * (td / global->token_info->time_interval);
+            }
+          }
+          if (cur_prob->token_info) {
+            if (cur_prob->token_info->time_sign > 0) {
+              available_tokens += cur_prob->token_info->time_increment * (td / cur_prob->token_info->time_interval);
+            } else if (cur_prob->token_info->time_sign < 0) {
+              available_tokens -= cur_prob->token_info->time_increment * (td / cur_prob->token_info->time_interval);
+            }
+          }
+        }
+      }
+      if (available_tokens < 0) available_tokens = 0;
+      available_tokens -= pinfo[re.prob_id].token_count;
+      if (available_tokens < 0) available_tokens = 0;
+
+      switch (status) {
+      case RUN_OK:
+      case RUN_RUN_TIME_ERR:
+      case RUN_TIME_LIMIT_ERR:
+      case RUN_PRESENTATION_ERR:
+      case RUN_WRONG_ANSWER_ERR:
+      case RUN_PARTIAL:
+      case RUN_ACCEPTED:
+      case RUN_DISQUALIFIED:
+      case RUN_MEM_LIMIT_ERR:
+      case RUN_SECURITY_ERR:
+      case RUN_WALL_TIME_LIMIT_ERR:
+      case RUN_PENDING_REVIEW:
+      case RUN_REJECTED:
+        if (cur_prob->team_enable_rep_view > 0) {
+          enable_report_link = 1;
+        } else if ((re.token_flags & TOKEN_TESTS_MASK)) {
+          // report is paid by tokens
+          enable_report_link = 1;
+        }
+        if (cur_prob->token_info && (cur_prob->token_info->open_flags & TOKEN_TESTS_MASK) != (re.token_flags & TOKEN_TESTS_MASK)
+            && available_tokens >= cur_prob->token_info->open_cost) {
+          enable_use_link = 1;
+        }
+        break;
+
+      case RUN_COMPILE_ERR:
+      case RUN_STYLE_ERR:
+        if (cur_prob->team_enable_ce_view > 0 || cur_prob->team_enable_rep_view > 0) {
+          // reports enabled by contest settings
+          enable_report_link = 1;
+        } else if ((re.token_flags & TOKEN_TESTS_MASK)) {
+          // report is paid by tokens
+          enable_report_link = 1;
+        } else if (cur_prob->token_info && (cur_prob->token_info->open_flags & TOKEN_TESTS_MASK) != 0
+                   && available_tokens >= cur_prob->token_info->open_cost) {
+          enable_use_link = 1;
+        }
+        break;
+
+        /*
+      case RUN_CHECK_FAILED:
+      case RUN_IGNORED:
+      case RUN_PENDING:
+      case RUN_SKIPPED:
+        */
+      default:
+        // nothing
+        ;
+      }
+      fprintf(f, "<td%s>", cl);
+      if (!enable_report_link && !enable_use_link) {
+        fprintf(f, "N/A");
+      } else {
+        if (enable_report_link) {
+          fprintf(f, "[%s%s</a>]", ns_aref(href, sizeof(href), phr, NEW_SRV_ACTION_VIEW_REPORT, "run_id=%d", i), _("View"));
+        }
+        if (enable_use_link) {
+          fprintf(f, "[%s%s (%d)</a>]", ns_aref(href, sizeof(href), phr, NEW_SRV_ACTION_VIEW_REPORT, "run_id=%d", i), _("Use token"),
+                  cur_prob->token_info->open_cost);
+        }
+      }
+      if (re.token_count > 0) {
+        fprintf(f, _(" (%d tokens used)"), re.token_count);
+      }
+      fprintf(f, "</td>");
+    } else if (enable_rep_view) {
       fprintf(f, "<td%s>", cl);
       if (status == RUN_CHECK_FAILED || status == RUN_IGNORED
           || status == RUN_PENDING || status > RUN_MAX_STATUS
