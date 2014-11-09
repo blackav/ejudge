@@ -15,7 +15,7 @@
 %><%
     } else {
 %><%
-      new_write_user_runs(cs, out_f, phr, all_runs, 0, "b1");
+      new_write_user_runs(cs, out_f, phr, all_runs, 0, "b1", pinfo);
 %><%
     }
 %>
