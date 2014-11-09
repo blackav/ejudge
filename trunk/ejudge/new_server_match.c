@@ -9463,6 +9463,33 @@ int ns_match_action(const unsigned char *str)
                   } else {
                   }
                   return 0;
+                } else if (c < 'r') {
+                  if (c == '-') {
+                    c = str[4];
+                    if (c == 't') {
+                      c = str[5];
+                      if (c == 'o') {
+                        c = str[6];
+                        if (c == 'k') {
+                          c = str[7];
+                          if (c == 'e') {
+                            c = str[8];
+                            if (c == 'n') {
+                              c = str[9];
+                              if (!c) return NEW_SRV_ACTION_USE_TOKEN;
+                              return 0;
+                            }
+                            return 0;
+                          }
+                          return 0;
+                        }
+                        return 0;
+                      }
+                      return 0;
+                    }
+                    return 0;
+                  }
+                } else {
                 }
                 return 0;
               }
