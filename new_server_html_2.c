@@ -5658,7 +5658,7 @@ new_write_user_runs(
           fprintf(f, "[%s%s</a>]", ns_aref(href, sizeof(href), phr, NEW_SRV_ACTION_VIEW_REPORT, "run_id=%d", i), _("View"));
         }
         if (enable_use_link) {
-          fprintf(f, "[%s%s (%d)</a>]", ns_aref(href, sizeof(href), phr, NEW_SRV_ACTION_VIEW_REPORT, "run_id=%d", i), _("Use token"),
+          fprintf(f, "[%s%s (%d)</a>]", ns_aref(href, sizeof(href), phr, NEW_SRV_ACTION_USE_TOKEN, "run_id=%d", i), _("Use token"),
                   cur_prob->token_info->open_cost);
         }
       }
