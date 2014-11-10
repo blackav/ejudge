@@ -7432,6 +7432,64 @@ unpriv_print_run(FILE *fout,
  cleanup:;
 }
 
+static void
+unpriv_use_token(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  int run_id;
+  struct run_entry re;
+  const struct section_problem_data *prob = 0;
+
+  if (unpriv_parse_run_id(fout, phr, cnts, extra, &run_id, &re) < 0)
+    goto cleanup;
+  if (re.prob_id <= 0 || re.prob_id > cs->max_prob || !(prob = cs->probs[re.prob_id])) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_INV_PROB_ID);
+    goto cleanup;
+  }
+
+  /*
+  if (!cs->global->enable_printing || cs->printing_suspended) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_PRINTING_DISABLED);
+    goto cleanup;
+  }
+
+  if (re.status > RUN_LAST
+      || (re.status > RUN_MAX_STATUS && re.status < RUN_TRANSIENT_FIRST)
+      || re.user_id != phr->user_id) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_PERMISSION_DENIED);
+    goto cleanup;
+  }
+
+  if (re.pages > 0) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_ALREADY_PRINTED);
+    goto cleanup;
+  }
+
+  if ((n = team_print_run(cs, run_id, phr->user_id)) < 0) {
+    switch (-n) {
+    case SRV_ERR_PAGES_QUOTA:
+      fprintf(phr->log_f, "Quota: %d\n", cs->global->team_page_quota);
+      error_page(fout, phr, 0, NEW_SRV_ERR_ALREADY_PRINTED);
+      goto cleanup;
+    default:
+      fprintf(phr->log_f, "%d (%s)", -n, protocol_strerror(-n));
+      error_page(fout, phr, 0, NEW_SRV_ERR_PRINTING_FAILED);
+      goto cleanup;
+    }
+  }
+
+  serve_audit_log(cs, run_id, &re, phr->user_id, &phr->ip, phr->ssl_flag,
+                  "print", "ok", -1, "  %d pages printed\n", n);
+  ns_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, 0);
+
+  */
+cleanup:;
+}
+
 int
 ns_submit_run(
         FILE *log_f,
@@ -10030,7 +10088,7 @@ static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_JSON_USER_STATE] = unpriv_json_user_state,
   [NEW_SRV_ACTION_UPDATE_ANSWER] = unpriv_xml_update_answer,
   [NEW_SRV_ACTION_GET_FILE] = unpriv_get_file,
-  [NEW_SRV_ACTION_USE_TOKEN] = NULL, // FIXME
+  [NEW_SRV_ACTION_USE_TOKEN] = unpriv_use_token,
 };
 
 static const unsigned char * const external_unpriv_action_names[NEW_SRV_ACTION_LAST] =
