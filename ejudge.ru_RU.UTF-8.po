@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-11-09 09:49+0300\n"
-"PO-Revision-Date: 2014-11-09 15:48+0300\n"
+"POT-Creation-Date: 2014-11-10 16:44+0300\n"
+"PO-Revision-Date: 2014-11-10 16:46+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -27,6 +27,10 @@ msgstr ""
 "\n"
 "Всего тестов: %d, пройдено: %d, не пройдено: %d.\n"
 "\n"
+
+#, c-format
+msgid " (%d of %d)"
+msgstr " (%d из %d)"
 
 #, c-format
 msgid " (%d tokens used)"
@@ -4776,4 +4780,3 @@ msgstr "ошибка записи"
 
 msgid "write error to server"
 msgstr "ошибка записи данных на сервер"
-
