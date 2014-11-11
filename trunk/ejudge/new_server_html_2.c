@@ -5570,33 +5570,7 @@ new_write_user_runs(
       int enable_report_link = 0;
       int enable_use_link = 0;
 
-      int available_tokens = 0;
-      if (global->token_info) {
-        available_tokens += global->token_info->initial_count;
-      }
-      if (cur_prob->token_info) {
-        available_tokens += cur_prob->token_info->initial_count;
-      }
-      if (start_time > 0) {
-        long long td = (long long) state->current_time - start_time;
-        if (td > 0) {
-          if (global->token_info) {
-            if (global->token_info->time_sign > 0) {
-              available_tokens += global->token_info->time_increment * (td / global->token_info->time_interval);
-            } else if (global->token_info->time_sign < 0) {
-              available_tokens -= global->token_info->time_increment * (td / global->token_info->time_interval);
-            }
-          }
-          if (cur_prob->token_info) {
-            if (cur_prob->token_info->time_sign > 0) {
-              available_tokens += cur_prob->token_info->time_increment * (td / cur_prob->token_info->time_interval);
-            } else if (cur_prob->token_info->time_sign < 0) {
-              available_tokens -= cur_prob->token_info->time_increment * (td / cur_prob->token_info->time_interval);
-            }
-          }
-        }
-      }
-      if (available_tokens < 0) available_tokens = 0;
+      int available_tokens = compute_available_tokens(state, cur_prob, start_time);
       available_tokens -= pinfo[re.prob_id].token_count;
       if (available_tokens < 0) available_tokens = 0;
 
