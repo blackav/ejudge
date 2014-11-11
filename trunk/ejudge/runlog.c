@@ -901,6 +901,28 @@ run_count_all_attempts_2(runlog_state_t state, int user_id, int prob_id, int ign
   return count;
 }
 
+int
+run_count_tokens(runlog_state_t state, int user_id, int prob_id)
+{
+  int i, count = 0;
+
+  struct user_entry *ue = get_user_entry(state, user_id);
+  ASSERT(ue);
+  ASSERT(ue->run_id_valid > 0); // run index is ok
+
+  for (i = ue->run_id_first; i >= 0; i = state->run_extras[i].next_user_id) {
+    ASSERT(i < state->run_u);
+    const struct run_entry *re = &state->runs[i];
+    ASSERT(re->user_id == user_id);
+    if (prob_id <= 0 || re->prob_id == prob_id) {
+      count += re->token_count;
+    }
+  }
+  ASSERT(i == -1);
+
+  return count;
+}
+
 /* FIXME: EVER DUMBER */
 /*
  * if the specified run_id is OK run, how many successes were on the
