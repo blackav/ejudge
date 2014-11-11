@@ -7551,50 +7551,26 @@ unpriv_use_token(
   } else {
     start_time = run_get_start_time(cs->runlog_state);
   }
-  int available_tokens = compute_available_tokens(cs, prob, start_time);
-  (void) available_tokens;
-
-
-
-  /*
-  if (!cs->global->enable_printing || cs->printing_suspended) {
-    error_page(fout, phr, 0, NEW_SRV_ERR_PRINTING_DISABLED);
-    goto cleanup;
-  }
-
-  if (re.status > RUN_LAST
-      || (re.status > RUN_MAX_STATUS && re.status < RUN_TRANSIENT_FIRST)
-      || re.user_id != phr->user_id) {
+  int available_tokens = compute_available_tokens(cs, prob, start_time) - run_count_tokens(cs->runlog_state, phr->user_id, prob->id);
+  if (available_tokens < 0) available_tokens = 0;
+  if (available_tokens < prob->token_info->open_cost) {
     error_page(fout, phr, 0, NEW_SRV_ERR_PERMISSION_DENIED);
     goto cleanup;
   }
 
-  if (re.pages > 0) {
-    error_page(fout, phr, 0, NEW_SRV_ERR_ALREADY_PRINTED);
+  re.token_flags = prob->token_info->open_flags;
+  re.token_count = prob->token_info->open_cost;
+  if (run_set_entry(cs->runlog_state, run_id, RE_TOKEN_FLAGS | RE_TOKEN_COUNT, &re) < 0) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
     goto cleanup;
   }
 
-  if ((n = team_print_run(cs, run_id, phr->user_id)) < 0) {
-    switch (-n) {
-    case SRV_ERR_PAGES_QUOTA:
-      fprintf(phr->log_f, "Quota: %d\n", cs->global->team_page_quota);
-      error_page(fout, phr, 0, NEW_SRV_ERR_ALREADY_PRINTED);
-      goto cleanup;
-    default:
-      fprintf(phr->log_f, "%d (%s)", -n, protocol_strerror(-n));
-      error_page(fout, phr, 0, NEW_SRV_ERR_PRINTING_FAILED);
-      goto cleanup;
-    }
-  }
-
   serve_audit_log(cs, run_id, &re, phr->user_id, &phr->ip, phr->ssl_flag,
-                  "print", "ok", -1, "  %d pages printed\n", n);
+                  "use_token", "ok", -1, "  %d tokens used\n  %d new token flags\n", prob->token_info->open_cost,
+                  prob->token_info->open_flags);
   ns_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, 0);
 
-  */
 cleanup:;
-
-
 }
 
 int
