@@ -1050,4 +1050,10 @@ get_last_source(serve_state_t cs, int user_id, int prob_id);
 int
 get_last_answer_select_one(serve_state_t cs, int user_id, int prob_id);
 
+int
+compute_available_tokens(
+        serve_state_t cs,
+        const struct section_problem_data *prob,
+        time_t start_time);
+
 #endif /* __NEW_SERVER_H__ */

@@ -7432,6 +7432,42 @@ unpriv_print_run(FILE *fout,
  cleanup:;
 }
 
+int
+compute_available_tokens(
+        serve_state_t cs,
+        const struct section_problem_data *prob,
+        time_t start_time)
+{
+  const struct section_global_data *global = cs->global;
+  int available_tokens = 0;
+
+  if (global->token_info) {
+    available_tokens += global->token_info->initial_count;
+  }
+  if (prob->token_info) {
+    available_tokens += prob->token_info->initial_count;
+  }
+  if (start_time > 0 && cs->current_time > start_time) {
+    long long td = (long long) cs->current_time - start_time;
+    if (global->token_info) {
+      if (global->token_info->time_sign > 0) {
+        available_tokens += global->token_info->time_increment * (td / global->token_info->time_interval);
+      } else if (global->token_info->time_sign < 0) {
+        available_tokens -= global->token_info->time_increment * (td / global->token_info->time_interval);
+      }
+    }
+    if (prob->token_info) {
+      if (prob->token_info->time_sign > 0) {
+        available_tokens += prob->token_info->time_increment * (td / prob->token_info->time_interval);
+      } else if (prob->token_info->time_sign < 0) {
+        available_tokens -= prob->token_info->time_increment * (td / prob->token_info->time_interval);
+      }
+    }
+  }
+  if (available_tokens < 0) available_tokens = 0;
+  return available_tokens;
+}
+
 static void
 unpriv_use_token(
         FILE *fout,
@@ -7442,6 +7478,7 @@ unpriv_use_token(
   serve_state_t cs = extra->serve_state;
   int run_id;
   struct run_entry re;
+  const struct section_global_data *global = cs->global;
   const struct section_problem_data *prob = 0;
 
   if (unpriv_parse_run_id(fout, phr, cnts, extra, &run_id, &re) < 0)
@@ -7450,6 +7487,74 @@ unpriv_use_token(
     error_page(fout, phr, 0, NEW_SRV_ERR_INV_PROB_ID);
     goto cleanup;
   }
+
+  if (prob->enable_tokens <= 0 || !prob->token_info || !prob->token_info->open_sign || prob->token_info->open_cost <= 0) {
+    ns_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, 0);
+    goto cleanup;
+  }
+
+  if ((re.token_flags & prob->token_info->open_flags) == prob->token_info->open_flags) {
+    // nothing new to open
+    ns_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, 0);
+    goto cleanup;
+  }
+
+  int separate_user_score = global->separate_user_score > 0 && cs->online_view_judge_score <= 0;
+  int status = re.status;
+  if (separate_user_score > 0 && re.is_saved) {
+    status = re.saved_status;
+  }
+
+  switch (status) {
+  case RUN_OK:
+  case RUN_RUN_TIME_ERR:
+  case RUN_TIME_LIMIT_ERR:
+  case RUN_PRESENTATION_ERR:
+  case RUN_WRONG_ANSWER_ERR:
+  case RUN_PARTIAL:
+  case RUN_ACCEPTED:
+  case RUN_DISQUALIFIED:
+  case RUN_MEM_LIMIT_ERR:
+  case RUN_SECURITY_ERR:
+  case RUN_WALL_TIME_LIMIT_ERR:
+  case RUN_PENDING_REVIEW:
+  case RUN_REJECTED:
+    if (prob->team_enable_rep_view > 0) {
+      ns_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, 0);
+      goto cleanup;
+    }
+    break;
+
+  case RUN_COMPILE_ERR:
+  case RUN_STYLE_ERR:
+    if (prob->team_enable_ce_view > 0 || prob->team_enable_rep_view > 0) {
+      ns_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, 0);
+      goto cleanup;
+    }
+    break;
+
+    /*
+      case RUN_CHECK_FAILED:
+      case RUN_IGNORED:
+      case RUN_PENDING:
+      case RUN_SKIPPED:
+    */
+  default:
+    ns_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, 0);
+    goto cleanup;
+  }
+
+  // count the amount of spent and available tokens
+  time_t start_time = 0;
+  if (global->is_virtual) {
+    start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
+  } else {
+    start_time = run_get_start_time(cs->runlog_state);
+  }
+  int available_tokens = compute_available_tokens(cs, prob, start_time);
+  (void) available_tokens;
+
+
 
   /*
   if (!cs->global->enable_printing || cs->printing_suspended) {
@@ -7488,6 +7593,8 @@ unpriv_use_token(
 
   */
 cleanup:;
+
+
 }
 
 int
