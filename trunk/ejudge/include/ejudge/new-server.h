@@ -921,7 +921,8 @@ new_write_user_runs(
         unsigned int show_flags,
         int prob_id,
         const unsigned char *table_class,
-        const struct UserProblemInfo *pinfo);
+        const struct UserProblemInfo *pinfo,
+        int back_action);
 
 void
 new_write_user_clars(
