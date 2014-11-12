@@ -265,9 +265,15 @@ write_html_run_status(
 
   separate_user_score = global->separate_user_score > 0 && state->online_view_judge_score <= 0;
   if (separate_user_score > 0 && pe->is_saved && user_mode) {
-    status = pe->saved_status;
-    score = pe->saved_score;
-    test = pe->saved_test;
+    if (pe->token_count > 0 && (pe->token_flags & TOKEN_FINALSCORE_BIT)) {
+      status = pe->status;
+      score = pe->score;
+      test = pe->test;
+    } else {
+      status = pe->saved_status;
+      score = pe->saved_score;
+      test = pe->saved_test;
+    }
   } else {
     status = pe->status;
     score = pe->score;
