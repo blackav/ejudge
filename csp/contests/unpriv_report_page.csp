@@ -48,21 +48,20 @@ ns_unpriv_parse_run_id(
     accepting_mode = cs->accepting_mode;
   }
 
+  if (re.user_id != phr->user_id) {
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+  }
+
   if (ns_unpriv_parse_run_id(out_f, phr, cnts, extra, &run_id, &re) < 0)
     goto cleanup;
-
-  enable_rep_view = (cs->online_view_report > 0 || (!cs->online_view_report && global->team_enable_rep_view > 0));
-
+  if (re.prob_id <= 0 || re.prob_id > cs->max_prob || !(prob = cs->probs[re.prob_id])) {
+    FAIL(NEW_SRV_ERR_INV_PROB_ID);
+  }
   if (cs->clients_suspended) {
     FAIL(NEW_SRV_ERR_CLIENTS_SUSPENDED);
   }
 
-  if (re.user_id != phr->user_id) {
-    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
-  }
-  if (re.prob_id <= 0 || re.prob_id > cs->max_prob || !(prob = cs->probs[re.prob_id])) {
-    FAIL(NEW_SRV_ERR_INV_PROB_ID);
-  }
+  enable_rep_view = (cs->online_view_report > 0 || (!cs->online_view_report && global->team_enable_rep_view > 0));
 
   status = re.status;
   if (global->separate_user_score > 0 && re.is_saved) {
