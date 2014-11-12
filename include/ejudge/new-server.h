@@ -759,7 +759,9 @@ ns_write_olympiads_user_runs(
         struct contest_extra *extra,
         int all_runs,
         int prob_id,
-        const unsigned char *table_class);
+        const unsigned char *table_class,
+        const struct UserProblemInfo *pinfo,
+        int back_action);
 
 int
 new_server_cmd_handler(FILE *fout, struct http_request_info *phr);
