@@ -11,7 +11,7 @@
       xfree(ur_text); ur_text = 0;
     } else if (global->score_system == SCORE_OLYMPIAD) {
 %><%
-      ns_write_olympiads_user_runs(phr, out_f, cnts, extra, all_runs, 0, "b1");
+      ns_write_olympiads_user_runs(phr, out_f, cnts, extra, all_runs, 0, "b1", pinfo, NEW_SRV_ACTION_VIEW_SUBMISSIONS);
 %><%
     } else {
 %><%
