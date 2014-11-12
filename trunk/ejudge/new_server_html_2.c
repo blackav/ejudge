@@ -5495,13 +5495,16 @@ new_write_user_runs(
       lang = state->langs[re.lang_id];
 
     if (separate_user_score > 0 && re.is_saved) {
-      status = re.saved_status;
+      if (re.token_count > 0 && (re.token_flags & TOKEN_FINALSCORE_BIT)) {
+        status = re.status;
+      } else {
+        status = re.saved_status;
+      }
     } else {
       status = re.status;
     }
 
-    if (global->score_system == SCORE_OLYMPIAD
-        && state->accepting_mode) {
+    if (global->score_system == SCORE_OLYMPIAD && state->accepting_mode) {
       if (status == RUN_OK || status == RUN_PARTIAL)
         status = RUN_ACCEPTED;
     }
@@ -5594,7 +5597,8 @@ new_write_user_runs(
           // report is paid by tokens
           enable_report_link = 1;
         }
-        if (cur_prob->token_info && (cur_prob->token_info->open_flags & TOKEN_TESTS_MASK) != (re.token_flags & TOKEN_TESTS_MASK)
+        if (cur_prob->token_info
+            && (re.token_flags & cur_prob->token_info->open_flags) != cur_prob->token_info->open_flags
             && available_tokens >= cur_prob->token_info->open_cost) {
           enable_use_link = 1;
         }
