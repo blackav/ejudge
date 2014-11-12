@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-11-10 16:44+0300\n"
-"PO-Revision-Date: 2014-11-10 16:46+0300\n"
+"POT-Creation-Date: 2014-11-12 16:37+0300\n"
+"PO-Revision-Date: 2014-11-12 16:38+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -33,7 +33,7 @@ msgid " (%d of %d)"
 msgstr " (%d из %d)"
 
 #, c-format
-msgid " (%d tokens used)"
+msgid " (%d token(s) used)"
 msgstr " (использовано: %d)"
 
 #, c-format
