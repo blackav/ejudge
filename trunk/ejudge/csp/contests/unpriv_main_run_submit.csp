@@ -391,7 +391,7 @@
           xfree(ur_text); ur_text = 0;
         } else if (global->score_system == SCORE_OLYMPIAD) {
           ns_write_olympiads_user_runs(phr, out_f, cnts, extra, all_runs,
-                                       prob_id, "b1", pinfo, NEW_SRV_ACTION_VIEW_SUBMISSIONS);
+                                       prob_id, "b1", pinfo, NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT);
         } else {
           new_write_user_runs(cs, out_f, phr, all_runs, prob->id, "b1", pinfo, NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT);
         }

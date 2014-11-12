@@ -7480,6 +7480,8 @@ unpriv_use_token(
   struct run_entry re;
   const struct section_global_data *global = cs->global;
   const struct section_problem_data *prob = 0;
+  int back_action = 0;
+  unsigned char param_buf[1024];
 
   if (unpriv_parse_run_id(fout, phr, cnts, extra, &run_id, &re) < 0)
     goto cleanup;
@@ -7488,14 +7490,24 @@ unpriv_use_token(
     goto cleanup;
   }
 
+  hr_cgi_param_int_opt(phr, "back_action", &back_action, 0);
+  param_buf[0] = 0;
+  if (back_action == NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT) {
+    snprintf(param_buf, sizeof(param_buf), "prob_id=%d", re.prob_id);
+  } else if (back_action == NEW_SRV_ACTION_VIEW_SUBMISSIONS) {
+    // nothing
+  } else {
+    back_action = NEW_SRV_ACTION_MAIN_PAGE;
+  }
+
   if (prob->enable_tokens <= 0 || !prob->token_info || !prob->token_info->open_sign || prob->token_info->open_cost <= 0) {
-    ns_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, 0);
+    ns_refresh_page(fout, phr, back_action, param_buf);
     goto cleanup;
   }
 
   if ((re.token_flags & prob->token_info->open_flags) == prob->token_info->open_flags) {
     // nothing new to open
-    ns_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, 0);
+    ns_refresh_page(fout, phr, back_action, param_buf);
     goto cleanup;
   }
 
@@ -7520,7 +7532,7 @@ unpriv_use_token(
   case RUN_PENDING_REVIEW:
   case RUN_REJECTED:
     if (prob->team_enable_rep_view > 0) {
-      ns_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, 0);
+      ns_refresh_page(fout, phr, back_action, param_buf);
       goto cleanup;
     }
     break;
@@ -7528,7 +7540,7 @@ unpriv_use_token(
   case RUN_COMPILE_ERR:
   case RUN_STYLE_ERR:
     if (prob->team_enable_ce_view > 0 || prob->team_enable_rep_view > 0) {
-      ns_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, 0);
+      ns_refresh_page(fout, phr, back_action, param_buf);
       goto cleanup;
     }
     break;
@@ -7540,7 +7552,7 @@ unpriv_use_token(
       case RUN_SKIPPED:
     */
   default:
-    ns_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, 0);
+    ns_refresh_page(fout, phr, back_action, param_buf);
     goto cleanup;
   }
 
@@ -7568,7 +7580,7 @@ unpriv_use_token(
   serve_audit_log(cs, run_id, &re, phr->user_id, &phr->ip, phr->ssl_flag,
                   "use_token", "ok", -1, "  %d tokens used\n  %d new token flags\n", prob->token_info->open_cost,
                   prob->token_info->open_flags);
-  ns_refresh_page(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, 0);
+  ns_refresh_page(fout, phr, back_action, param_buf);
 
 cleanup:;
 }
