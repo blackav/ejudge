@@ -5646,7 +5646,7 @@ new_write_user_runs(
         }
       }
       if (re.token_count > 0) {
-        fprintf(f, _(" (%d tokens used)"), re.token_count);
+        fprintf(f, _(" (%d token(s) used)"), re.token_count);
       }
       fprintf(f, "</td>");
     } else if (enable_rep_view) {
