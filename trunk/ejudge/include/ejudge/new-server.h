@@ -942,6 +942,7 @@ write_xml_team_testing_report(
         struct http_request_info *phr,
         int output_only,
         int is_marked,
+        int token_flags,
         const unsigned char *txt,
         const unsigned char *table_class);
 

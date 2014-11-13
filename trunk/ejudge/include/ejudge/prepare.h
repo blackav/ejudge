@@ -1506,7 +1506,8 @@ int
 cntsprob_get_test_visibility(
         const struct section_problem_data *prob,
         int num,
-        int final_mode);
+        int final_mode,
+        int token_flags);
 
 int
 prepare_parse_test_score_list(

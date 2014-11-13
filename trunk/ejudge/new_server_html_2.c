@@ -5816,6 +5816,7 @@ write_xml_team_testing_report(
         struct http_request_info *phr,
         int output_only,
         int is_marked,
+        int token_flags,
         const unsigned char *txt,
         const unsigned char *table_class)
 {
@@ -5931,7 +5932,7 @@ write_xml_team_testing_report(
   for (i = 0; i < r->run_tests; ++i) {
     if (!(t = r->tests[i])) continue;
     // TV_NORMAL, TV_FULL, TV_FULLIFMARKED, TV_BRIEF, TV_EXISTS, TV_HIDDEN
-    visibility = cntsprob_get_test_visibility(prob, i + 1, state->online_final_visibility);
+    visibility = cntsprob_get_test_visibility(prob, i + 1, state->online_final_visibility, token_flags);
     if (visibility == TV_FULLIFMARKED) {
       visibility = TV_HIDDEN;
       if (is_marked) visibility = TV_FULL;
@@ -5974,7 +5975,7 @@ write_xml_team_testing_report(
   for (i = 0; i < r->run_tests; i++) {
     if (!(t = r->tests[i])) continue;
     // TV_NORMAL, TV_FULL, TV_FULLIFMARKED, TV_BRIEF, TV_EXISTS, TV_HIDDEN
-    visibility = cntsprob_get_test_visibility(prob, i + 1, state->online_final_visibility);
+    visibility = cntsprob_get_test_visibility(prob, i + 1, state->online_final_visibility, token_flags);
     if (visibility == TV_FULLIFMARKED) {
       visibility = TV_HIDDEN;
       if (is_marked) visibility = TV_FULL;
@@ -6113,7 +6114,7 @@ write_xml_team_testing_report(
     for (i = 0; i < r->run_tests; i++) {
       if (!(t = r->tests[i])) continue;
       if (t->status == RUN_SKIPPED) continue;
-      visibility = cntsprob_get_test_visibility(prob, i + 1, state->online_final_visibility);
+      visibility = cntsprob_get_test_visibility(prob, i + 1, state->online_final_visibility, token_flags);
       if (visibility == TV_FULLIFMARKED) {
         visibility = TV_HIDDEN;
         if (is_marked) visibility = TV_FULL;

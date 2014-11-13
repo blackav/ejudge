@@ -67,6 +67,9 @@ ns_unpriv_parse_run_id(
   if (global->separate_user_score > 0 && re.is_saved) {
     status = re.saved_status;
   }
+  if (re.token_count > 0 && (re.token_flags & TOKEN_FINALSCORE_BIT)) {
+    status = re.status;
+  }
   
   // check viewable statuses
   switch (status) {
@@ -95,11 +98,11 @@ ns_unpriv_parse_run_id(
   }
 
   if (enable_rep_view) enable_rep_view = prob->team_enable_rep_view;
-  if (!enable_rep_view
-      && (!prob->team_enable_ce_view
-          || (status != RUN_COMPILE_ERR
-              && status != RUN_STYLE_ERR
-              && status != RUN_REJECTED))) {
+  if (!enable_rep_view && (status == RUN_COMPILE_ERR || status == RUN_STYLE_ERR) && prob->team_enable_ce_view > 0) {
+    enable_rep_view = 1;
+  }
+
+  if (!enable_rep_view) {
     FAIL(NEW_SRV_ERR_REPORT_VIEW_DISABLED);
   }
 
@@ -111,16 +114,14 @@ ns_unpriv_parse_run_id(
     content_type = get_content_type(rep_text, &rep_start);
     if (content_type != CONTENT_TYPE_XML
         && status != RUN_COMPILE_ERR
-        && status != RUN_STYLE_ERR
-        && status != RUN_REJECTED) {
+        && status != RUN_STYLE_ERR) {
       FAIL(NEW_SRV_ERR_REPORT_UNAVAILABLE);
     }
   } else {
     int user_mode = 0;
     if (prob->team_enable_ce_view
         && (status == RUN_COMPILE_ERR
-            || status == RUN_STYLE_ERR
-            || status == RUN_REJECTED)) {
+            || status == RUN_STYLE_ERR)) {
     } else if (prob->team_show_judge_report) {
     } else {
       user_mode = 1;
@@ -174,7 +175,7 @@ ns_unpriv_parse_run_id(
       } else {
         write_xml_team_testing_report(cs, prob, out_f, phr,
                                       prob->type != PROB_TYPE_STANDARD,
-                                      re.is_marked,
+                                      re.is_marked, re.token_flags, 
                                       rep_start, "b1");
       }
     }
