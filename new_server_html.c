@@ -9370,7 +9370,7 @@ unpriv_view_test(
   // report view is enabled by the problem configuration
   if (enable_rep_view < 0 && prob->team_show_judge_report > 0) enable_rep_view = 1;
   if (enable_rep_view < 0) {
-    int visibility = cntsprob_get_test_visibility(prob, test_num, cs->online_final_visibility);
+    int visibility = cntsprob_get_test_visibility(prob, test_num, cs->online_final_visibility, re.token_flags);
     if (visibility == TV_FULLIFMARKED) {
       visibility = TV_HIDDEN;
       if (re.is_marked) visibility = TV_FULL;

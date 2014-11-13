@@ -7961,11 +7961,25 @@ int
 cntsprob_get_test_visibility(
         const struct section_problem_data *prob,
         int num,
-        int final_mode)
+        int final_mode,
+        int token_flags)
 {
   if (!prob) return TV_NORMAL;
   if (final_mode && prob->final_open_tests_val) {
     if (num <= 0 || num >= prob->final_open_tests_count)
+      return TV_NORMAL;
+    return prob->final_open_tests_val[num];
+  }
+  if ((token_flags & TOKEN_TESTS_MASK) == TOKEN_BASICTESTS_BIT) {
+    if (!prob->open_tests_val || num <= 0 || num >= prob->open_tests_count)
+      return TV_NORMAL;
+    return prob->open_tests_val[num];
+  } else if ((token_flags & TOKEN_TESTS_MASK) == TOKEN_TOKENTESTS_BIT) {
+    if (!prob->token_open_tests_val || num <= 0 || num >= prob->token_open_tests_count)
+      return TV_NORMAL;
+    return prob->token_open_tests_val[num];
+  } else if ((token_flags & TOKEN_TESTS_MASK) == TOKEN_FINALTESTS_BIT) {
+    if (!prob->final_open_tests_val || num <= 0 || num >= prob->final_open_tests_count)
       return TV_NORMAL;
     return prob->final_open_tests_val[num];
   }
