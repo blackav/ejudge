@@ -1281,10 +1281,15 @@ then
 fi
 
 AC_CONFIG_HEADERS([config.h])
+
+AC_CONFIG_SUBDIRS([libdwarf])
+
 AC_OUTPUT(Makefile extra/Makefile extra/captest/Makefile checkers/Makefile scripts/Makefile ejudge-config.v scripts/festival plugins/mysql-common/Makefile plugins/mysql-userlist/Makefile plugins/mysql-clardb/Makefile plugins/mysql-rundb/Makefile style/ejudge-upgrade-web cfront/Makefile reuse/Makefile csp/contests/Makefile csp/super-server/Makefile csp_header.make)
 
 #cp -p config.h include/reuse
 cp -p config.h include/ejudge
+cp -p libdwarf/libdwarf/dwarf.h include/libdwarf-internal
+cp -p libdwarf/libdwarf/libdwarf.h include/libdwarf-internal
 
 chmod +x ejudge-config.v scripts/festival style/ejudge-upgrade-web
 
