@@ -31,8 +31,8 @@
 #include <errno.h>
 #include <limits.h>
 
-#include <libdwarf/dwarf.h>
-#include <libdwarf/libdwarf.h>
+#include <libdwarf-internal/dwarf.h>
+#include <libdwarf-internal/libdwarf.h>
 
 typedef struct DieMapEntry
 {

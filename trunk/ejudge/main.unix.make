@@ -163,6 +163,7 @@ release:
 	rm -fr CVS db unix userlist_clnt win32 checkers/CVS checkers/.cvsignore checkers/Makefile checkers/ChangeLog checkers/*.c checkers/*.o checkers/testinfo.h extra/CVS extra/.cvsignore extra/Makefile extra/*.c extra/*.o scripts/CVS .build .cvsignore ChangeLog OLDNEWS TODO *.c *.h *.o *.a *.make *.po makefile *.lex *.y
 
 prereq_all: version.o
+	$(MAKE) -C libdwarf DESTDIR="${DESTDIR}" all
 	$(MAKE) -C reuse DESTDIR="${DESTDIR}" all
 	$(MAKE) -C cfront DESTDIR="${DESTDIR}" all
 
@@ -221,6 +222,7 @@ local_install: ${TARGETS} ejudge-config po mo
 	install -m 0644 csp_header.make "${DESTDIR}${prefix}/lib/ejudge/make"
 
 install: local_install
+	$(MAKE) -C libdwarf DESTDIR="${DESTDIR}" install
 	$(MAKE) -C reuse DESTDIR="${DESTDIR}" install
 	$(MAKE) -C cfront DESTDIR="${DESTDIR}" install
 	$(MAKE) -C scripts DESTDIR="${DESTDIR}" install
@@ -296,7 +298,7 @@ ej-import-contest: ${IC_OBJECTS}
 	${LD} ${LDFLAGS} $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} ${LIBCURL} ${LIBZIP} -ldl
 
 ej-page-gen: ${G_OBJECTS} libuserlist_clnt.a libnew_server_clnt.a
-	${LD} ${LDFLAGS} -Wl,--whole-archive $^ -o $@ ${LDLIBS} -ldwarf -lelf ${EXPAT_LIB} ${LIBZIP} -ldl -lpanel${NCURSES_SUFFIX} -lmenu${NCURSES_SUFFIX} -lncurses${NCURSES_SUFFIX} ${LIBUUID} -Wl,--no-whole-archive
+	${LD} ${LDFLAGS} -Wl,--whole-archive $^ -o $@ ${LDLIBS} libdwarf/libdwarf/libdwarf.a -lelf ${EXPAT_LIB} ${LIBZIP} -ldl -lpanel${NCURSES_SUFFIX} -lmenu${NCURSES_SUFFIX} -lncurses${NCURSES_SUFFIX} ${LIBUUID} -Wl,--no-whole-archive
 ej-page-gen.debug : ej-page-gen
 	objcopy --only-keep-debug $< $@
 
@@ -370,6 +372,7 @@ subdir_clean:
 	$(MAKE) -C csp/super-server DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C cfront clean
 	$(MAKE) -C reuse clean
+	#$(MAKE) -C libdwarf clean
 
 
 local_distclean :
@@ -389,6 +392,7 @@ subdir_distclean :
 	$(MAKE) -C csp/super-server DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C cfront distclean
 	$(MAKE) -C reuse distclean
+	-$(MAKE) -C libdwarf distclean
 
 pristine : distclean
 	rm -f configure
@@ -526,5 +530,8 @@ reuse/objs/libreuse.a :
 
 cfront/ej-cfront : reuse/objs/libreuse.a
 	$(MAKE) -C cfront all
+
+include/libdwarf-internal/dwarf.h include/libdwarf-internal/libdwarf.h libdwarf/libdwarf/libdwarf.a:
+	$(MAKE) -C libdwarf all
 
 include deps.make
