@@ -423,19 +423,19 @@ then
 fi
 
 dnl checl libdwarf library
-saved_LIBS="${LIBS}"
-LIBS="-lelf"
-AC_CHECK_HEADER([libdwarf/libdwarf.h],[ac_cv_has_libdwarf=1],[ac_cv_has_libdwarf=0])
-if [[ x"${ac_cv_has_libdwarf}" != x1 -a x"${ac_cv_ejudge_arch}" != xwin32 ]]
-then
-  AC_MSG_FAILURE([please install libdwarf development package])
-fi
-AC_CHECK_LIB([dwarf],[dwarf_init],[ac_cv_has_libdwarf=1],[ac_cv_has_libdwarf=0])
-if [[ x"${ac_cv_has_libdwarf}" != x1 -a x"${ac_cv_ejudge_arch}" != xwin32 ]]
-then
-  AC_MSG_FAILURE([please install libdwarf development package])
-fi
-LIBS="${saved_LIBS}"
+dnl saved_LIBS="${LIBS}"
+dnl LIBS="-lelf"
+dnl AC_CHECK_HEADER([libdwarf/libdwarf.h],[ac_cv_has_libdwarf=1],[ac_cv_has_libdwarf=0])
+dnl if [[ x"${ac_cv_has_libdwarf}" != x1 -a x"${ac_cv_ejudge_arch}" != xwin32 ]]
+dnl then
+dnl   AC_MSG_FAILURE([please install libdwarf development package])
+dnl fi
+dnl AC_CHECK_LIB([dwarf],[dwarf_init],[ac_cv_has_libdwarf=1],[ac_cv_has_libdwarf=0])
+dnl if [[ x"${ac_cv_has_libdwarf}" != x1 -a x"${ac_cv_ejudge_arch}" != xwin32 ]]
+dnl then
+dnl   AC_MSG_FAILURE([please install libdwarf development package])
+dnl fi
+dnl LIBS="${saved_LIBS}"
 
 dnl Libcap checking stuff
 ac_cv_has_libcap=1
