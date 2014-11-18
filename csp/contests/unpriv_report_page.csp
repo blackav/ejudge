@@ -61,7 +61,7 @@ ns_unpriv_parse_run_id(
     FAIL(NEW_SRV_ERR_CLIENTS_SUSPENDED);
   }
 
-  enable_rep_view = (cs->online_view_report > 0 || (!cs->online_view_report && global->team_enable_rep_view > 0));
+  enable_rep_view = (cs->online_view_report > 0 || prob->team_enable_rep_view > 0);
 
   status = re.status;
   if (global->separate_user_score > 0 && re.is_saved) {
@@ -97,7 +97,6 @@ ns_unpriv_parse_run_id(
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   }
 
-  if (enable_rep_view) enable_rep_view = prob->team_enable_rep_view;
   if (!enable_rep_view && (status == RUN_COMPILE_ERR || status == RUN_STYLE_ERR) && prob->team_enable_ce_view > 0) {
     enable_rep_view = 1;
   }
