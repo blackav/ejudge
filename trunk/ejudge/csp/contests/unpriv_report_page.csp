@@ -48,10 +48,6 @@ ns_unpriv_parse_run_id(
     accepting_mode = cs->accepting_mode;
   }
 
-  if (re.user_id != phr->user_id) {
-    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
-  }
-
   if (ns_unpriv_parse_run_id(out_f, phr, cnts, extra, &run_id, &re) < 0)
     goto cleanup;
   if (re.prob_id <= 0 || re.prob_id > cs->max_prob || !(prob = cs->probs[re.prob_id])) {
@@ -59,6 +55,10 @@ ns_unpriv_parse_run_id(
   }
   if (cs->clients_suspended) {
     FAIL(NEW_SRV_ERR_CLIENTS_SUSPENDED);
+  }
+
+  if (re.user_id != phr->user_id) {
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   }
 
   enable_rep_view = (cs->online_view_report > 0 || prob->team_enable_rep_view > 0);
