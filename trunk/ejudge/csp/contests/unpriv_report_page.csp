@@ -120,7 +120,8 @@ ns_unpriv_parse_run_id(
     int user_mode = 0;
     if (prob->team_enable_ce_view
         && (status == RUN_COMPILE_ERR
-            || status == RUN_STYLE_ERR)) {
+            || status == RUN_STYLE_ERR
+            || status == RUN_REJECTED)) {
     } else if (prob->team_show_judge_report) {
     } else {
       user_mode = 1;
