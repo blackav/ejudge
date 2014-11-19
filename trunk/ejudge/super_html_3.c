@@ -489,6 +489,7 @@ const unsigned char * const super_serve_help_urls[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_CHANGE_TEST_CHECKER_CMD] = "Serve.cfg:problem:test_checker_cmd",
   [SSERV_CMD_PROB_CHANGE_TEST_CHECKER_ENV] = "Serve.cfg:problem:test_checker_env",
   [SSERV_CMD_PROB_CHANGE_INIT_CMD] = "Serve.cfg:problem:init_cmd",
+  [SSERV_CMD_PROB_CHANGE_START_CMD] = "Serve.cfg:problem:start_cmd",
   [SSERV_CMD_PROB_CHANGE_INIT_ENV] = "Serve.cfg:problem:init_env",
   [SSERV_CMD_PROB_CHANGE_START_ENV] = "Serve.cfg:problem:start_env",
   [SSERV_CMD_PROB_CHANGE_SOLUTION_SRC] = "Serve.cfg:problem:solution_src",
@@ -2848,6 +2849,16 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
   case SSERV_CMD_PROB_CLEAR_INIT_CMD:
     xfree(prob->init_cmd);
     prob->init_cmd = 0;
+    return 0;
+
+  case SSERV_CMD_PROB_CHANGE_START_CMD:
+    xfree(prob->start_cmd);
+    prob->start_cmd = xstrdup(param2);
+    return 0;
+
+  case SSERV_CMD_PROB_CLEAR_START_CMD:
+    xfree(prob->start_cmd);
+    prob->start_cmd = 0;
     return 0;
 
   case SSERV_CMD_PROB_CHANGE_INIT_ENV:

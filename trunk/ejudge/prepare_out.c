@@ -1309,6 +1309,9 @@ prepare_unparse_prob(
   if (prob->init_cmd && prob->init_cmd[0]) {
     fprintf(f,"init_cmd = \"%s\"\n", CARMOR(prob->init_cmd));
   }
+  if (prob->start_cmd && prob->start_cmd[0]) {
+    fprintf(f,"start_cmd = \"%s\"\n", CARMOR(prob->start_cmd));
+  }
   if (prob->solution_src && prob->solution_src[0]) {
     fprintf(f,"solution_src = \"%s\"\n", CARMOR(prob->solution_src));
   }
@@ -1653,6 +1656,9 @@ prepare_unparse_actual_prob(
   }
   if ((show_paths || (global && global->advanced_layout > 0)) && prob->init_cmd && prob->init_cmd[0]) {
     fprintf(f,"init_cmd = \"%s\"\n", CARMOR(prob->init_cmd));
+  }
+  if ((show_paths || (global && global->advanced_layout > 0)) && prob->start_cmd && prob->start_cmd[0]) {
+    fprintf(f,"start_cmd = \"%s\"\n", CARMOR(prob->start_cmd));
   }
   if ((show_paths || (global && global->advanced_layout > 0)) && prob->solution_src && prob->solution_src[0]) {
     fprintf(f,"solution_src = \"%s\"\n", CARMOR(prob->solution_src));
@@ -2753,6 +2759,12 @@ prob_instr(
   if (tmp_prob->init_cmd && tmp_prob->init_cmd[0]) {
     fprintf(f, "<p><b>Init-style interactor:</b></p>\n");
     handle_file(f, global, tmp_prob, tmp_prob->init_cmd, 1);
+  }
+
+  prepare_set_prob_value(CNTSPROB_start_cmd, tmp_prob, abstr, global);
+  if (tmp_prob->start_cmd && tmp_prob->start_cmd[0]) {
+    fprintf(f, "<p><b>Start proxy program:</b></p>\n");
+    handle_file(f, global, tmp_prob, tmp_prob->start_cmd, 1);
   }
 
   prepare_set_prob_value(CNTSPROB_solution_src, tmp_prob, abstr, global);

@@ -815,6 +815,7 @@ merge_problem_section(
         { CNTSPROB_style_checker_cmd, META_PROBLEM_CONFIG_SECTION_style_checker_cmd },
         { CNTSPROB_test_checker_cmd, META_PROBLEM_CONFIG_SECTION_test_checker_cmd },
         { CNTSPROB_init_cmd, META_PROBLEM_CONFIG_SECTION_init_cmd },
+        { CNTSPROB_start_cmd, META_PROBLEM_CONFIG_SECTION_start_cmd },
         { CNTSPROB_solution_src, META_PROBLEM_CONFIG_SECTION_solution_src },
         { CNTSPROB_solution_cmd, META_PROBLEM_CONFIG_SECTION_solution_cmd },
         { CNTSPROB_score_bonus, META_PROBLEM_CONFIG_SECTION_score_bonus },

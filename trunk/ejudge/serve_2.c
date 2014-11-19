@@ -1963,6 +1963,17 @@ serve_run_request(
       srpp->init_cmd = xstrdup(prob->init_cmd);
     }
   }
+  if (prob->start_cmd && prob->start_cmd[0]) {
+    if (srgp->advanced_layout > 0) {
+      get_advanced_layout_path(pathbuf, sizeof(pathbuf), global, prob, prob->start_cmd, variant);
+      srpp->start_cmd = xstrdup(pathbuf);
+    } else if (variant > 0) {
+      snprintf(pathbuf, sizeof(pathbuf), "%s-%d", prob->start_cmd, variant);
+      srpp->start_cmd = xstrdup(pathbuf);
+    } else {
+      srpp->start_cmd = xstrdup(prob->start_cmd);
+    }
+  }
   if (prob->solution_cmd && prob->solution_cmd[0]) {
     if (srgp->advanced_layout > 0) {
       get_advanced_layout_path(pathbuf, sizeof(pathbuf), global, prob, prob->solution_cmd, variant);
