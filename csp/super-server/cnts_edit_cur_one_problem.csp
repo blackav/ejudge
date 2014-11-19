@@ -3106,6 +3106,38 @@
 <s:form>
     <s:hidden name="prob_id" check="false" />
     <s:tr attr="form_row_attrs[row ^= 1]">
+        <td>Start proxy program:</td>
+        <td><%
+%><s:textfield name="param" value="prob->start_cmd" size="48" maxlength="1024" checkExpr="" /><%
+    if (is_abstract) {
+      if (!prob->start_cmd) {
+%>(<i>Not set</i>)<%
+      }
+    } else {
+      prepare_set_prob_value(CNTSPROB_start_cmd, tmp_prob, sup_prob, global);
+      if (!prob->start_cmd) {
+        if (!tmp_prob->start_cmd || !tmp_prob->start_cmd[0]) {
+%>(<i>Not set</i>)<%
+        } else {
+%>(<i>Default: <s:v value="tmp_prob->start_cmd" /></i>)<%
+        }
+      }
+    }
+%></td>
+        <td><s:submit ac="prob-change-start-cmd" label="Change" /><s:submit ac="prob-clear-start-cmd" label="Change" /></td>
+        <td><s:help ac="prob-change-start-cmd" /></td>
+    </s:tr>
+</s:form>
+<%
+  }
+%>
+
+<%
+  if (show_adv) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Solution source name:</td>
         <td><%
 %><s:textfield name="param" value="prob->solution_src" size="48" maxlength="1024" checkExpr="" /><%
