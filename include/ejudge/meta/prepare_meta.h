@@ -451,6 +451,7 @@ enum
   CNTSPROB_style_checker_cmd,
   CNTSPROB_test_checker_cmd,
   CNTSPROB_init_cmd,
+  CNTSPROB_start_cmd,
   CNTSPROB_solution_src,
   CNTSPROB_solution_cmd,
   CNTSPROB_lang_time_adj,
