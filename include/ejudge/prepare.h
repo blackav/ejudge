@@ -1063,6 +1063,8 @@ struct section_problem_data
   unsigned char *test_checker_cmd;
   /** start/stop init-style interactor */
   unsigned char *init_cmd;
+  /** proxy to start the program being tested */
+  unsigned char *start_cmd;
   /** solution source file */
   unsigned char *solution_src;
   /** solution command */
