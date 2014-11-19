@@ -2308,6 +2308,15 @@ run_one_test(
     if (srpp->output_file && srpp->output_file[0]) {
       task_SetEnv(tsk, "OUTPUT_FILE", srpp->output_file);
     }
+  } else if (srpp->start_cmd && srpp->start_cmd[0]) {
+    info("starting: %s %s", srpp->start_cmd, arg0_path);
+    task_AddArg(tsk, srpp->start_cmd);
+    if (srpp->input_file && srpp->input_file[0]) {
+      task_SetEnv(tsk, "INPUT_FILE", srpp->input_file);
+    }
+    if (srpp->output_file && srpp->output_file[0]) {
+      task_SetEnv(tsk, "OUTPUT_FILE", srpp->output_file);
+    }
   } else {
     info("starting: %s", arg0_path);
   }

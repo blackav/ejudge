@@ -482,6 +482,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(style_checker_cmd, "s"),
   PROBLEM_PARAM(test_checker_cmd, "S"),
   PROBLEM_PARAM(init_cmd, "S"),
+  PROBLEM_PARAM(start_cmd, "S"),
   PROBLEM_PARAM(solution_src, "S"),
   PROBLEM_PARAM(solution_cmd, "S"),
   PROBLEM_PARAM(test_pat, "s"),
@@ -1009,6 +1010,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
   xfree(p->x_score_tests);
   xfree(p->test_checker_cmd);
   xfree(p->init_cmd);
+  xfree(p->start_cmd);
   xfree(p->solution_src);
   xfree(p->solution_cmd);
   xfree(p->super_run_dir);
@@ -3681,6 +3683,7 @@ set_defaults(
     prepare_set_prob_value(CNTSPROB_style_checker_cmd, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_test_checker_cmd, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_init_cmd, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_start_cmd, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_solution_src, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_solution_cmd, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_super_run_dir, prob, aprob, g);
@@ -5817,6 +5820,9 @@ prepare_copy_problem(const struct section_problem_data *in)
   if (in->init_cmd) {
     out->init_cmd = xstrdup(in->init_cmd);
   }
+  if (in->start_cmd) {
+    out->start_cmd = xstrdup(in->start_cmd);
+  }
   if (in->solution_src) {
     out->solution_src = xstrdup(in->solution_src);
   }
@@ -6621,6 +6627,22 @@ prepare_set_prob_value(
     }
     break;
 
+  case CNTSPROB_start_cmd:
+    if (!out->start_cmd && abstr && abstr->start_cmd) {
+      sformat_message(tmp_buf, sizeof(tmp_buf), 0, abstr->start_cmd,
+                      NULL, out, NULL, NULL, NULL, 0, 0, 0);
+      out->start_cmd = xstrdup(tmp_buf);
+    }
+    if (out->start_cmd && out->start_cmd[0]
+        && global && global->advanced_layout <= 0
+        && !os_IsAbsolutePath(out->start_cmd)) {
+      snprintf(tmp_buf, sizeof(tmp_buf), "%s/%s", global->checker_dir,
+               out->start_cmd);
+      xfree(out->start_cmd);
+      out->start_cmd = xstrdup(tmp_buf);
+    }
+    break;
+
   case CNTSPROB_solution_src:
     if (!out->solution_src && abstr && abstr->solution_src) {
       sformat_message(tmp_buf, sizeof(tmp_buf), 0, abstr->solution_src,
@@ -6792,7 +6814,7 @@ static const int prob_settable_list[] =
   CNTSPROB_start_env, CNTSPROB_lang_time_adj,
   CNTSPROB_lang_time_adj_millis, CNTSPROB_check_cmd, CNTSPROB_valuer_cmd,
   CNTSPROB_interactor_cmd, CNTSPROB_style_checker_cmd,
-  CNTSPROB_test_checker_cmd, CNTSPROB_init_cmd, CNTSPROB_solution_src, CNTSPROB_solution_cmd,
+  CNTSPROB_test_checker_cmd, CNTSPROB_init_cmd, CNTSPROB_start_cmd, CNTSPROB_solution_src, CNTSPROB_solution_cmd,
   CNTSPROB_test_pat, CNTSPROB_corr_pat, CNTSPROB_info_pat, CNTSPROB_tgz_pat,
   CNTSPROB_tgzdir_pat,
   CNTSPROB_personal_deadline, CNTSPROB_score_bonus, CNTSPROB_statement_file,
@@ -6938,6 +6960,7 @@ static const unsigned char prob_settable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_style_checker_cmd] = 1,
   [CNTSPROB_test_checker_cmd] = 1,
   [CNTSPROB_init_cmd] = 1,
+  [CNTSPROB_start_cmd] = 1,
   [CNTSPROB_solution_src] = 1,
   [CNTSPROB_solution_cmd] = 1,
   [CNTSPROB_test_pat] = 1,
@@ -7016,7 +7039,7 @@ static const int prob_inheritable_list[] =
   CNTSPROB_lang_time_adj,
   CNTSPROB_lang_time_adj_millis, CNTSPROB_check_cmd, CNTSPROB_valuer_cmd,
   CNTSPROB_interactor_cmd, CNTSPROB_style_checker_cmd,
-  CNTSPROB_test_checker_cmd, CNTSPROB_init_cmd, CNTSPROB_solution_src, CNTSPROB_solution_cmd,
+  CNTSPROB_test_checker_cmd, CNTSPROB_init_cmd, CNTSPROB_start_cmd, CNTSPROB_solution_src, CNTSPROB_solution_cmd,
   CNTSPROB_test_pat, CNTSPROB_corr_pat,
   CNTSPROB_info_pat, CNTSPROB_tgz_pat, CNTSPROB_tgzdir_pat, CNTSPROB_personal_deadline,
   CNTSPROB_score_bonus, CNTSPROB_statement_file, CNTSPROB_alternatives_file,
@@ -7151,6 +7174,7 @@ static const unsigned char prob_inheritable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_style_checker_cmd] = 1,
   [CNTSPROB_test_checker_cmd] = 1,
   [CNTSPROB_init_cmd] = 1,
+  [CNTSPROB_start_cmd] = 1,
   [CNTSPROB_solution_src] = 1,
   [CNTSPROB_solution_cmd] = 1,
   [CNTSPROB_test_pat] = 1,
@@ -7313,6 +7337,7 @@ static const struct section_problem_data prob_undef_values =
   .style_checker_cmd = { 1, 0 },
   .test_checker_cmd = 0,
   .init_cmd = 0,
+  .start_cmd = 0,
   .solution_src = 0,
   .solution_cmd = 0,
   .lang_time_adj = 0,
@@ -7456,6 +7481,7 @@ static const struct section_problem_data prob_default_values =
   .style_checker_cmd = "",
   .test_checker_cmd = 0,
   .init_cmd = 0,
+  .start_cmd = 0,
   .solution_src = 0,
   .solution_cmd = 0,
   .score_bonus = "",
@@ -7511,6 +7537,7 @@ static const unsigned char prob_format_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_style_checker_cmd] = 1,
   [CNTSPROB_test_checker_cmd] = 1,
   [CNTSPROB_init_cmd] = 1,
+  [CNTSPROB_start_cmd] = 1,
   [CNTSPROB_solution_src] = 1,
   [CNTSPROB_solution_cmd] = 1,
   [CNTSPROB_statement_file] = 1,
