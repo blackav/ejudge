@@ -10150,7 +10150,10 @@ unpriv_get_file(
   if (generic_read_file(&file_bytes, 0, &file_size, 0, 0, fpath, "") < 0)
     FAIL(NEW_SRV_ERR_INV_FILE_NAME);
 
-  fprintf(fout, "Content-type: %s\n\n", content_type);
+  fprintf(fout, "Content-type: %s\n", content_type);
+  fprintf(fout, "Content-Disposition: attachment; filename=\"%s\"\n", s);
+  fprintf(fout, "\n");
+
   fwrite(file_bytes, 1, file_size, fout);
 
  cleanup:
