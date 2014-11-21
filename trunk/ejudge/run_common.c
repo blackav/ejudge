@@ -2068,6 +2068,10 @@ run_one_test(
   tpTask tsk_int = NULL;
   tpTask tsk = NULL;
 
+  unsigned char start_cmd_name[PATH_MAX];
+  unsigned char start_cmd_arg[PATH_MAX];
+  unsigned char start_cmd_path[PATH_MAX];
+
 #ifdef HAVE_TERMIOS_H
   struct termios term_attrs;
 #endif
@@ -2217,6 +2221,24 @@ run_one_test(
   snprintf(exe_path, sizeof(exe_path), "%s/%s", check_dir, exe_name);
   make_executable(exe_path);
 
+  start_cmd_name[0] = 0;
+  start_cmd_arg[0] = 0;
+  start_cmd_path[0] = 0;
+  if (srpp->start_cmd && srpp->start_cmd[0]) {
+    os_rGetBasename(srpp->start_cmd, start_cmd_name, sizeof(start_cmd_name));
+    if (srpp->use_tgz > 0) {
+      snprintf(start_cmd_arg, sizeof(start_cmd_arg), "../%s", start_cmd_name);
+    } else {
+      snprintf(start_cmd_arg, sizeof(start_cmd_arg), "./%s", start_cmd_name);
+    }
+    snprintf(start_cmd_path, sizeof(start_cmd_path), "%s/%s", check_dir, start_cmd_name);
+    if (generic_copy_file(0, NULL, srpp->start_cmd, NULL, 0, NULL, start_cmd_path, NULL) < 0) {
+      append_msg_to_log(check_out_path, "failed to copy %s -> %s", srpp->start_cmd, start_cmd_path);
+      goto check_failed;
+    }
+    make_executable(start_cmd_path);
+  }
+
   if (srpp->use_tgz > 0) {
 #ifdef __WIN32__
     snprintf(arg0_path, sizeof(arg0_path), "%s%s..%s%s", check_dir, CONF_DIRSEP, CONF_DIRSEP, exe_name);
@@ -2308,9 +2330,9 @@ run_one_test(
     if (srpp->output_file && srpp->output_file[0]) {
       task_SetEnv(tsk, "OUTPUT_FILE", srpp->output_file);
     }
-  } else if (srpp->start_cmd && srpp->start_cmd[0]) {
-    info("starting: %s %s", srpp->start_cmd, arg0_path);
-    task_AddArg(tsk, srpp->start_cmd);
+  } else if (start_cmd_arg[0]) {
+    info("starting: %s %s", start_cmd_arg, arg0_path);
+    task_AddArg(tsk, start_cmd_arg);
     if (srpp->input_file && srpp->input_file[0]) {
       task_SetEnv(tsk, "INPUT_FILE", srpp->input_file);
     }
