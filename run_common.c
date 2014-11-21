@@ -2225,7 +2225,7 @@ run_one_test(
   start_cmd_arg[0] = 0;
   start_cmd_path[0] = 0;
   if (srpp->start_cmd && srpp->start_cmd[0]) {
-    os_rGetBasename(srpp->start_cmd, start_cmd_name, sizeof(start_cmd_name));
+    os_rGetLastname(srpp->start_cmd, start_cmd_name, sizeof(start_cmd_name));
     if (srpp->use_tgz > 0) {
       snprintf(start_cmd_arg, sizeof(start_cmd_arg), "../%s", start_cmd_name);
     } else {
