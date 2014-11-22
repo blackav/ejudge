@@ -59,12 +59,20 @@ variant_map_free(struct variant_map *p);
 void
 variant_map_unparse(
         FILE *f,
-        const struct variant_map *vmap);
+        const struct variant_map *vmap,
+        int mode); // 0 - in super-serve, 1 - in contests
 struct variant_map *
 variant_map_parse(
         FILE *log_f,
         struct serve_state *state,
         const unsigned char *path);
+int
+variant_map_set_variant(
+        struct variant_map *vmap,
+        int user_id,
+        const unsigned char *user_login,
+        int prob_id,
+        int variant);
 
 #endif /* __VARIANT_MAP_H__ */
 

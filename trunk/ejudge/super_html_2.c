@@ -1164,7 +1164,7 @@ super_html_commit_contest_2(
 
     if (need_variant_map) {
       vmap_f = open_memstream(&vmap_txt, &vmap_size);
-      variant_map_unparse(vmap_f, global->variant_map);
+      variant_map_unparse(vmap_f, global->variant_map, 0);
       close_memstream(vmap_f); vmap_f = 0;
       if ((vmf = save_conf_file(log_f, "variant map file",
                                 global->variant_map_file, vmap_txt,

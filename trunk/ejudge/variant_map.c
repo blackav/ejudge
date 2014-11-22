@@ -61,7 +61,8 @@ variant_map_free(struct variant_map *p)
 void
 variant_map_unparse(
         FILE *f,
-        const struct variant_map *vmap)
+        const struct variant_map *vmap,
+        int mode)
 {
   int i, j;
   int hlen;
@@ -89,8 +90,14 @@ variant_map_unparse(
         fprintf(f, " virtual %d", vmap->v[i].virtual_variant);
       }
     } else {
-      for (j = 0; j < vmap->prob_rev_map_size; j++)
-        fprintf(f, " %d", vmap->v[i].variants[j]);
+      if (mode == 1) {
+        // in ej-contests
+        for (j = 1; j <= vmap->var_prob_num; j++)
+          fprintf(f, " %d", vmap->v[i].variants[j]);
+      } else {
+        for (j = 0; j < vmap->prob_rev_map_size; j++)
+          fprintf(f, " %d", vmap->v[i].variants[j]);
+      }
     }
     fprintf(f, "\n");
   }
@@ -399,6 +406,7 @@ variant_map_parse(
   XCALLOC(pmap->v, pmap->a);
 
   if (state) {
+    pmap->prob_map_size = state->max_prob + 1;
     XCALLOC(pmap->prob_map, state->max_prob + 1);
     XCALLOC(pmap->prob_rev_map, state->max_prob + 1);
     pmap->var_prob_num = 0;
@@ -539,6 +547,63 @@ variant_map_parse(
   if (head_f) fclose(head_f);
   xfree(head_t);
   return 0;
+}
+
+int
+variant_map_set_variant(
+        struct variant_map *vmap,
+        int user_id,
+        const unsigned char *user_login,
+        int prob_id,
+        int variant)
+{
+    int pind = 0;
+    if (prob_id <= 0 || prob_id >= vmap->prob_map_size || (pind = vmap->prob_map[prob_id]) <= 0) {
+        return -1;
+    }
+    if (user_id <= 0) {
+        return -1;
+    }
+    if (variant <= 0) {
+        return -1;
+    }
+    struct variant_map_item *vi = NULL;
+    if (user_id < vmap->user_map_size && (vi = vmap->user_map[user_id])) {
+        if (vi->variants[pind] == variant) {
+            // no change
+            return 0;
+        }
+        vi->variants[pind] = variant;
+        return 1;
+    }
+    if (user_id >= vmap->user_map_size) {
+        int newsz = 32;
+        while (user_id >= newsz) {
+            newsz *= 2;
+        }
+        struct variant_map_item **newvm = NULL;
+        XCALLOC(newvm, newsz);
+        if (vmap->user_map_size > 0) {
+            memcpy(newvm, vmap->user_map, vmap->user_map_size * sizeof(vmap->user_map[0]));
+        }
+        xfree(vmap->user_map);
+        vmap->user_map = newvm;
+        vmap->user_map_size = newsz;
+    }
+    if (vmap->u >= vmap->a) {
+        if (!vmap->a) vmap->a = 16;
+        vmap->a *= 2;
+        XREALLOC(vmap->v, vmap->a);
+    }
+    vi = &vmap->v[vmap->u++];
+    memset(vi, 0, sizeof(*vi));
+    vi->user_id = user_id;
+    if (user_login) {
+        vi->login = xstrdup(user_login);
+    }
+    XCALLOC(vi->variants, vmap->var_prob_num + 1);
+    vi->variants[pind] = variant;
+    return 1;
 }
 
 /*
