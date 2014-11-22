@@ -38,6 +38,7 @@
 #include "ejudge/vcs.h"
 #include "ejudge/compat.h"
 #include "ejudge/file_perms.h"
+#include "ejudge/variant_map.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -1165,8 +1166,8 @@ super_html_commit_contest_2(
 
     if (need_variant_map) {
       vmap_f = open_memstream(&vmap_txt, &vmap_size);
-      prepare_unparse_variants(vmap_f, global->variant_map,
-                               sstate->var_header_text, sstate->var_footer_text);
+      variant_map_unparse(vmap_f, global->variant_map,
+                          sstate->var_header_text, sstate->var_footer_text);
       close_memstream(vmap_f); vmap_f = 0;
       if ((vmf = save_conf_file(log_f, "variant map file",
                                 global->variant_map_file, vmap_txt,

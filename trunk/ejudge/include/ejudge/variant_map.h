@@ -17,6 +17,9 @@
  * GNU General Public License for more details.
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+
 struct variant_map_item
 {
     unsigned char *login;
@@ -45,6 +48,13 @@ struct variant_map
     size_t a, u;
     struct variant_map_item *v;
 };
+
+void
+variant_map_unparse(
+        FILE *f,
+        const struct variant_map *vmap,
+        const unsigned char *header,
+        const unsigned char *footer);
 
 #endif /* __VARIANT_MAP_H__ */
 
