@@ -1015,6 +1015,8 @@ struct section_problem_data
   time_t deadline;
   /** time for opening this problem for submission */
   time_t start_date;
+  /** autoassign variants? */
+  ejintbool_t autoassign_variants;
   /** number of variants for this problem */
   int variant_num;
 
