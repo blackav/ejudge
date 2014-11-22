@@ -1328,8 +1328,6 @@ super_serve_clear_edited_contest(struct sid_state *p)
   xfree(p->stand2_footer_text); p->stand2_footer_text = 0;
   xfree(p->plog_header_text); p->plog_header_text = 0;
   xfree(p->plog_footer_text); p->plog_footer_text = 0;
-  xfree(p->var_header_text); p->var_header_text = 0;
-  xfree(p->var_footer_text); p->var_footer_text = 0;
   xfree(p->compile_home_dir); p->compile_home_dir = 0;
 }
 
@@ -1379,7 +1377,7 @@ super_serve_move_edited_contest(struct sid_state *dst, struct sid_state *src)
     SSSS_stand_header_text, SSSS_stand_footer_text,
     SSSS_stand2_header_text, SSSS_stand2_footer_text,
     SSSS_plog_header_text, SSSS_plog_footer_text,
-    SSSS_var_header_text, SSSS_var_footer_text, SSSS_compile_home_dir,
+    SSSS_compile_home_dir,
     0,
   };
   for (int i = 0; string_fields[i]; ++i) {

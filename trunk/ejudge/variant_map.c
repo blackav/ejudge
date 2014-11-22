@@ -30,6 +30,12 @@
 #include <ctype.h>
 #include <errno.h>
 
+#if defined EJUDGE_CHARSET
+#define INTERNAL_CHARSET EJUDGE_CHARSET
+#else
+#define INTERNAL_CHARSET "utf-8"
+#endif
+
 void
 variant_map_free(struct variant_map *p)
 {
@@ -46,6 +52,8 @@ variant_map_free(struct variant_map *p)
   xfree(p->prob_rev_map);
   xfree(p->v);
   xfree(p->user_map);
+  xfree(p->header_txt);
+  xfree(p->footer_txt);
   memset(p, 0xab, sizeof(*p));
   xfree(p);
 }
@@ -53,18 +61,23 @@ variant_map_free(struct variant_map *p)
 void
 variant_map_unparse(
         FILE *f,
-        const struct variant_map *vmap,
-        const unsigned char *header,
-        const unsigned char *footer)
+        const struct variant_map *vmap)
 {
   int i, j;
   int hlen;
+  unsigned char *header_txt = vmap->header_txt;
+
+  if (!header_txt) {
+      unsigned char header_buf[1024];
+      snprintf(header_buf, sizeof(header_buf), "<?xml version=\"1.0\" encoding=\"%s\" ?>\n", INTERNAL_CHARSET);
+      header_txt = header_buf;
+  }
 
   // for header ignore the characters after the last '\n'
-  if (header) {
-    hlen = strlen(header);
-    while (hlen > 0 && header[hlen - 1] != '\n') hlen--;
-    fprintf(f, "%.*s", hlen, header);
+  if (header_txt) {
+    hlen = strlen(header_txt);
+    while (hlen > 0 && header_txt[hlen - 1] != '\n') hlen--;
+    fprintf(f, "%.*s", hlen, header_txt);
   }
 
   fprintf(f, "<variant_map version=\"2\">\n");
@@ -82,7 +95,7 @@ variant_map_unparse(
     fprintf(f, "\n");
   }
   fprintf(f, "</variant_map>\n");
-  if (footer) fprintf(f, "%s", footer);
+  if (vmap->footer_txt) fprintf(f, "%s", vmap->footer_txt);
 }
 
 static int
@@ -362,9 +375,7 @@ struct variant_map *
 variant_map_parse(
         FILE *log_f,
         struct serve_state *state,
-        const unsigned char *path,
-        unsigned char **p_header_txt,
-        unsigned char **p_footer_txt)
+        const unsigned char *path)
 {
   int vintage, i, j, k, var_prob_num;
   FILE *f = 0;
@@ -379,12 +390,8 @@ variant_map_parse(
   int *newvar;
 
 #if HAVE_OPEN_MEMSTREAM - 0
-  if (p_header_txt) {
-    head_f = open_memstream(&head_t, &head_z);
-  }
-  if (p_footer_txt) {
-    foot_f = open_memstream(&foot_t, &foot_z);
-  }
+  head_f = open_memstream(&head_t, &head_z);
+  foot_f = open_memstream(&foot_t, &foot_z);
 #endif
 
   XCALLOC(pmap, 1);
@@ -504,21 +511,13 @@ variant_map_parse(
     close_memstream(head_f);
     head_f = 0;
   }
-  if (p_header_txt) {
-    *p_header_txt = head_t;
-    head_t = 0;
-  }
-  xfree(head_t); head_t = 0;
+  pmap->header_txt = head_t; head_t = 0;
 
   if (foot_f) {
     close_memstream(foot_f);
     foot_f = 0;
   }
-  if (p_footer_txt) {
-    *p_footer_txt = foot_t;
-    foot_t = 0;
-  }
-  xfree(foot_t); foot_t = 0;
+  pmap->footer_txt = foot_t; foot_t = 0;
 
   fclose(f);
   return pmap;

@@ -4257,9 +4257,7 @@ super_html_update_variant_map(FILE *flog, int contest_id,
                               const struct contest_desc *cnts,
                               struct section_global_data *global,
                               int total_probs,
-                              struct section_problem_data **probs,
-                              unsigned char **p_header_txt,
-                              unsigned char **p_footer_txt)
+                              struct section_problem_data **probs)
 {
   int r;
   unsigned char *xml_text = 0;
@@ -4272,7 +4270,6 @@ super_html_update_variant_map(FILE *flog, int contest_id,
   int *tvec = 0, *new_map, *new_rev_map;
   struct userlist_user *user;
   struct userlist_user_info *ui;
-  unsigned char header_buf[1024];
 
   if (!cnts->root_dir && !cnts->root_dir[0]) {
     fprintf(flog, "update_variant_map: contest root_dir is not set");
@@ -4306,13 +4303,6 @@ super_html_update_variant_map(FILE *flog, int contest_id,
 
     if (stat(variant_file, &stbuf) < 0) {
       XCALLOC(global->variant_map, 1);
-      if (p_header_txt) {
-        snprintf(header_buf, sizeof(header_buf),
-                 "<?xml version=\"1.0\" encoding=\"%s\" ?>\n"
-                 "<!-- $%s$ -->\n",
-                 INTERNAL_CHARSET, "Id");
-        *p_header_txt = xstrdup(header_buf);
-      }
     } else {
       if (!S_ISREG(stbuf.st_mode)) {
         fprintf(flog, "update_variant_map: variant map file %s is not regular file\n",
@@ -4320,7 +4310,7 @@ super_html_update_variant_map(FILE *flog, int contest_id,
         goto failed;
       }
 
-      if (!(global->variant_map = variant_map_parse(flog, 0, variant_file, p_header_txt, p_footer_txt)))
+      if (!(global->variant_map = variant_map_parse(flog, 0, variant_file)))
         goto failed;
     }
   }

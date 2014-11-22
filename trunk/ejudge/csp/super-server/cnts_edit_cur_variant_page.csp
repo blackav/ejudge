@@ -90,8 +90,7 @@ static const unsigned char * const form_row_attrs[]=
   } else {
     FILE *vlog_f = open_memstream(&vlog_s, &vlog_z);
     int r = super_html_update_variant_map(vlog_f, cnts->id, phr->userlist_clnt,
-                                          cnts, global, phr->ss->prob_a, phr->ss->probs,
-                                          &phr->ss->var_header_text, &phr->ss->var_footer_text);
+                                          cnts, global, phr->ss->prob_a, phr->ss->probs);
     fclose(vlog_f); vlog_f = 0;
     if (r < 0) {
 %><h2>Variant map cannot be edited</h2>
