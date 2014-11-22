@@ -861,7 +861,7 @@ prepare_global_free_func(struct generic_section_config *gp)
   sarray_free(p->stand_row_attr);
   sarray_free(p->stand_page_row_attr);
   sarray_free(p->stand_page_col_attr);
-  prepare_free_variant_map(p->variant_map);
+  variant_map_free(p->variant_map);
   free_user_adjustment_info(p->user_adjustment_info);
   free_user_adjustment_map(p->user_adjustment_map);
   xfree(p->unhandled_vars);
@@ -1740,26 +1740,6 @@ prepare_free_group_dates(struct group_dates *gd)
   }
   xfree(gd->info);
   memset(gd, 0, sizeof(*gd));
-}
-
-void
-prepare_free_variant_map(struct variant_map *p)
-{
-  int i;
-
-  if (!p) return;
-
-  for (i = 0; i < p->u; i++) {
-    xfree(p->v[i].login);
-    xfree(p->v[i].name);
-    xfree(p->v[i].variants);
-  }
-  xfree(p->prob_map);
-  xfree(p->prob_rev_map);
-  xfree(p->v);
-  xfree(p->user_map);
-  memset(p, 0xab, sizeof(*p));
-  xfree(p);
 }
 
 static int

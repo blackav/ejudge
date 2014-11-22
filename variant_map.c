@@ -17,9 +17,31 @@
 
 #include "ejudge/variant_map.h"
 
+#include "ejudge/xalloc.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
+void
+variant_map_free(struct variant_map *p)
+{
+  int i;
+
+  if (!p) return;
+
+  for (i = 0; i < p->u; i++) {
+    xfree(p->v[i].login);
+    xfree(p->v[i].name);
+    xfree(p->v[i].variants);
+  }
+  xfree(p->prob_map);
+  xfree(p->prob_rev_map);
+  xfree(p->v);
+  xfree(p->user_map);
+  memset(p, 0xab, sizeof(*p));
+  xfree(p);
+}
 
 void
 variant_map_unparse(
