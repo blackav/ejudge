@@ -3,6 +3,7 @@
 %><%@include "includes.csp"
 %><%
 #include "ejudge/prepare_serve.h"
+#include "ejudge/variant_map.h"
 
 #include <ctype.h>
 %><%@set getter_name = "csp_get_cnts_edit_cur_variant_page"
