@@ -39,6 +39,7 @@
 #include "ejudge/compat.h"
 #include "ejudge/file_perms.h"
 #include "ejudge/build_support.h"
+#include "ejudge/variant_map.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"

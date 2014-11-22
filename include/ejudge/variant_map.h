@@ -17,6 +17,34 @@
  * GNU General Public License for more details.
  */
 
+struct variant_map_item
+{
+    unsigned char *login;
+    unsigned char *name;
+    int user_id;
+    int var_num;
+    int *variants;
+
+    // variant map version 2
+    int real_variant;             /* one for all problems */
+    int virtual_variant;          /* the displayed variant */
+};
+
+struct variant_map
+{
+    int *prob_map;
+    int prob_map_size;
+    int *prob_rev_map;
+    int prob_rev_map_size;
+    int var_prob_num;
+    int vintage;
+
+    size_t user_map_size;
+    struct variant_map_item **user_map;
+
+    size_t a, u;
+    struct variant_map_item *v;
+};
 
 #endif /* __VARIANT_MAP_H__ */
 
