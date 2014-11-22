@@ -26,6 +26,7 @@
 #include "ejudge/misctext.h"
 #include "ejudge/sformat.h"
 #include "ejudge/varsubst.h"
+#include "ejudge/variant_map.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"

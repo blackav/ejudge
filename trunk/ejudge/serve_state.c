@@ -37,6 +37,7 @@
 #include "ejudge/userlist.h"
 #include "ejudge/xml_utils.h"
 #include "ejudge/win32_compat.h"
+#include "ejudge/variant_map.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"

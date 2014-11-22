@@ -24,6 +24,7 @@
 #include "ejudge/errlog.h"
 #include "ejudge/serve_state.h"
 #include "ejudge/runlog.h"
+#include "ejudge/variant_map.h"
 
 #include "ejudge/xalloc.h"
 
