@@ -1422,12 +1422,6 @@ void prepare_set_abstr_problem_defaults(struct section_problem_data *prob,
                                         struct section_global_data *global);
 void prepare_set_concr_problem_defaults(struct section_problem_data *prob,
                                         struct section_global_data *global);
-struct variant_map;
-void prepare_free_variant_map(struct variant_map *p);
-
-void prepare_unparse_variants(FILE *f, const struct variant_map *vmap,
-                              const unsigned char *header,
-                              const unsigned char *footer);
 
 int *prepare_parse_score_tests(const unsigned char *str, int score);
 const unsigned char *prepare_unparse_problem_type(int val);
@@ -1442,17 +1436,8 @@ prepare_insert_variant_num(
         const unsigned char *file,
         int variant);
 
-struct variant_map *
-prepare_parse_variant_map(
-        FILE *log_f,
-        serve_state_t state,
-        const unsigned char *path,
-        unsigned char **p_header_txt,
-        unsigned char **p_footer_txt);
-
 struct token_info *
 prepare_parse_tokens(FILE *log_f, const unsigned char *tokens);
-
 
 /* This is INTENTIONALLY not an `extern' variable */
 struct ejudge_cfg;

@@ -69,7 +69,7 @@ static const unsigned char * const form_row_attrs[]=
   }
   if (var_prob_num <= 0) {
 %><h2>Contest does not have variant problems</h2><%
-    prepare_free_variant_map(global->variant_map);
+    variant_map_free(global->variant_map);
     global->variant_map = 0;
     goto bottom_links;
   }
@@ -83,7 +83,7 @@ static const unsigned char * const form_row_attrs[]=
     vmap = global->variant_map;
     if (!vmap || vmap->prob_map_size != phr->ss->prob_a || vmap->prob_rev_map_size <= 0) {
 %><h2>Variant map is obsolete</h2><%
-      prepare_free_variant_map(global->variant_map);
+      variant_map_free(global->variant_map);
       global->variant_map = 0;
       goto bottom_links;
     }
