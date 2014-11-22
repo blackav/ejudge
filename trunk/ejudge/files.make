@@ -254,6 +254,7 @@ COMMON_CFILES=\
  userlist_check.c\
  userlist_proto.c\
  userlist_xml.c\
+ variant_map.c\
  varsubst.c\
  vcs.c\
  watched_file.c\
@@ -596,6 +597,7 @@ HFILES=\
  ./include/ejudge/uldb_plugin.h\
  ./include/ejudge/userlist.h\
  ./include/ejudge/userlist_clnt.h\
+ ./include/ejudge/variant_map.h\
  ./include/ejudge/varsubst.h\
  ./include/ejudge/vcs.h\
  ./include/ejudge/version.h\
