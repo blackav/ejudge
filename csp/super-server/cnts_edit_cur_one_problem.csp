@@ -3449,6 +3449,30 @@
 %>
 
 <%
+  if (show_adv) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:tr attr="form_row_attrs[row ^= 1]">
+        <td>Assign variants automatically?</td>
+        <td><%
+    if (is_abstract || !sup_prob) {
+      int value = (prob->autoassign_variants == 1);
+%><s:yesno name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_autoassign_variants, tmp_prob, sup_prob, global);
+%><s:yesno3 name="param" value="prob->autoassign_variants" default="tmp_prob->autoassign_variants" /><%
+    }
+%></td>
+        <td><s:submit ac="prob-change-autoassign-variants" label="Change" /></td>
+        <td><s:help ac="prob-change-autoassign-variants" /></td>
+    </s:tr>
+</s:form>
+<%
+  }
+%>
+
+<%
   if (!is_abstract && show_adv && global->contest_time <= 0) {
 %>
 <s:form>

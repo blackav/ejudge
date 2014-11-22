@@ -444,6 +444,7 @@ const unsigned char * const super_serve_help_urls[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_CHANGE_IGNORE_UNMARKED] = "Serve.cfg:problem:ignore_unmarked",
   [SSERV_CMD_PROB_CHANGE_DISABLE_STDERR] = "Serve.cfg:problem:disable_stderr",
   [SSERV_CMD_PROB_CHANGE_ENABLE_PROCESS_GROUP] = "Serve.cfg:problem:enable_process_group",
+  [SSERV_CMD_PROB_CHANGE_AUTOASSIGN_VARIANTS] = "Serve.cfg:problem:autoassign_variants",
   [SSERV_CMD_PROB_CHANGE_ENABLE_TEXT_FORM] = "Serve.cfg:problem:enable_text_form",
   [SSERV_CMD_PROB_CHANGE_STAND_IGNORE_SCORE] = "Serve.cfg:problem:stand_ignore_score",
   [SSERV_CMD_PROB_CHANGE_STAND_LAST_COLUMN] = "Serve.cfg:problem:stand_last_column",
@@ -2499,6 +2500,10 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_PROB_CHANGE_ENABLE_PROCESS_GROUP:
     p_int = &prob->enable_process_group;
+    goto handle_boolean_1;
+
+  case SSERV_CMD_PROB_CHANGE_AUTOASSIGN_VARIANTS:
+    p_int = &prob->autoassign_variants;
     goto handle_boolean_1;
 
   case SSERV_CMD_PROB_CHANGE_ENABLE_TEXT_FORM:
