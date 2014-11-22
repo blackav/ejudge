@@ -50,6 +50,8 @@ struct variant_map
 };
 
 void
+variant_map_free(struct variant_map *p);
+void
 variant_map_unparse(
         FILE *f,
         const struct variant_map *vmap,
