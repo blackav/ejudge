@@ -425,6 +425,7 @@ enum
   CNTSPROB_normalization_val,
   CNTSPROB_deadline,
   CNTSPROB_start_date,
+  CNTSPROB_autoassign_variants,
   CNTSPROB_variant_num,
   CNTSPROB_date_penalty,
   CNTSPROB_dp_total,

@@ -465,6 +465,7 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_normalization_val] = { CNTSPROB_normalization_val, 'i', XSIZE(struct section_problem_data, normalization_val), NULL, XOFFSET(struct section_problem_data, normalization_val) },
   [CNTSPROB_deadline] = { CNTSPROB_deadline, 't', XSIZE(struct section_problem_data, deadline), "deadline", XOFFSET(struct section_problem_data, deadline) },
   [CNTSPROB_start_date] = { CNTSPROB_start_date, 't', XSIZE(struct section_problem_data, start_date), "start_date", XOFFSET(struct section_problem_data, start_date) },
+  [CNTSPROB_autoassign_variants] = { CNTSPROB_autoassign_variants, 'B', XSIZE(struct section_problem_data, autoassign_variants), "autoassign_variants", XOFFSET(struct section_problem_data, autoassign_variants) },
   [CNTSPROB_variant_num] = { CNTSPROB_variant_num, 'i', XSIZE(struct section_problem_data, variant_num), "variant_num", XOFFSET(struct section_problem_data, variant_num) },
   [CNTSPROB_date_penalty] = { CNTSPROB_date_penalty, 'x', XSIZE(struct section_problem_data, date_penalty), "date_penalty", XOFFSET(struct section_problem_data, date_penalty) },
   [CNTSPROB_dp_total] = { CNTSPROB_dp_total, 'i', XSIZE(struct section_problem_data, dp_total), NULL, XOFFSET(struct section_problem_data, dp_total) },
