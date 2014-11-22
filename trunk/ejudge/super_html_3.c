@@ -4320,7 +4320,7 @@ super_html_update_variant_map(FILE *flog, int contest_id,
         goto failed;
       }
 
-      if (!(global->variant_map = prepare_parse_variant_map(flog, 0, variant_file, p_header_txt, p_footer_txt)))
+      if (!(global->variant_map = variant_map_parse(flog, 0, variant_file, p_header_txt, p_footer_txt)))
         goto failed;
     }
   }

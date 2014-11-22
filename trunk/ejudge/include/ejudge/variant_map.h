@@ -49,6 +49,8 @@ struct variant_map
     struct variant_map_item *v;
 };
 
+struct serve_state;
+
 void
 variant_map_free(struct variant_map *p);
 void
@@ -57,6 +59,13 @@ variant_map_unparse(
         const struct variant_map *vmap,
         const unsigned char *header,
         const unsigned char *footer);
+struct variant_map *
+variant_map_parse(
+        FILE *log_f,
+        struct serve_state *state,
+        const unsigned char *path,
+        unsigned char **p_header_txt,
+        unsigned char **p_footer_txt);
 
 #endif /* __VARIANT_MAP_H__ */
 
