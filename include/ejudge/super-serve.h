@@ -210,9 +210,6 @@ struct sid_state
   unsigned char *plog_header_text;
   unsigned char *plog_footer_text;
 
-  unsigned char *var_header_text;
-  unsigned char *var_footer_text;
-
   unsigned char *compile_home_dir;
 
   ejintbool_t user_filter_set;

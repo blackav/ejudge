@@ -109,8 +109,6 @@ enum
   SSSS_stand2_footer_text,
   SSSS_plog_header_text,
   SSSS_plog_footer_text,
-  SSSS_var_header_text,
-  SSSS_var_footer_text,
   SSSS_compile_home_dir,
   SSSS_user_filter_set,
   SSSS_user_filter,

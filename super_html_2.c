@@ -928,9 +928,7 @@ super_html_commit_contest_2(
       if (super_html_update_variant_map(vlog_f, sstate->edited_cnts->id,
                                         us_conn, sstate->edited_cnts,
                                         sstate->global, sstate->prob_a,
-                                        sstate->probs,
-                                        &sstate->var_header_text,
-                                        &sstate->var_footer_text) < 0) {
+                                        sstate->probs) < 0) {
         close_memstream(vlog_f); vlog_f = 0;
         fprintf(log_f, "Cannot update the variant map:\n%s\n", vlog_s);
         xfree(vlog_s); vlog_s = 0; vlog_z = 0;
@@ -1166,8 +1164,7 @@ super_html_commit_contest_2(
 
     if (need_variant_map) {
       vmap_f = open_memstream(&vmap_txt, &vmap_size);
-      variant_map_unparse(vmap_f, global->variant_map,
-                          sstate->var_header_text, sstate->var_footer_text);
+      variant_map_unparse(vmap_f, global->variant_map);
       close_memstream(vmap_f); vmap_f = 0;
       if ((vmf = save_conf_file(log_f, "variant map file",
                                 global->variant_map_file, vmap_txt,

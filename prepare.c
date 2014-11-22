@@ -3589,7 +3589,7 @@ set_defaults(
         err("There are variant problems, but no variant file name");
         return -1;
       }
-      g->variant_map = variant_map_parse(stderr, state, g->variant_map_file, 0, 0);
+      g->variant_map = variant_map_parse(stderr, state, g->variant_map_file);
       if (!g->variant_map) return -1;
     }
   }
