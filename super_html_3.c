@@ -4562,7 +4562,7 @@ super_html_variant_prob_op(struct sid_state *sstate, int cmd, int prob_id)
         vmap->v[i].variants[j] = 1;
         continue;
       }
-      vmap->v[i].variants[j] = 1 + (int) ((random_u16() / 65536.0) * prob->variant_num);
+      vmap->v[i].variants[j] = random_range(1, prob->variant_num + 1);
     }
     break;
   default:
