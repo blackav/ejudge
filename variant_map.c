@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <errno.h>
+#include <unistd.h>
 
 #if defined EJUDGE_CHARSET
 #define INTERNAL_CHARSET EJUDGE_CHARSET
@@ -103,6 +104,40 @@ variant_map_unparse(
   }
   fprintf(f, "</variant_map>\n");
   if (vmap->footer_txt) fprintf(f, "%s", vmap->footer_txt);
+}
+
+int
+variant_map_save(
+        FILE *log_f,
+        const struct variant_map *vmap, 
+        const unsigned char *path,
+        int mode)
+{
+    unsigned char tmpname[PATH_MAX];
+
+    snprintf(tmpname, sizeof(tmpname), "%s.tmp", path);
+    FILE *f = fopen(tmpname, "w");
+    if (!f) {
+        fprintf(log_f, "variant_map_save: failed to open '%s': %s\n",
+                tmpname, strerror(errno));
+        unlink(tmpname);
+        return -1;
+    }
+    variant_map_unparse(f, vmap, mode);
+    fflush(f);
+    if (ferror(f)) {
+        fprintf(log_f, "variant_map_save: write error to '%s'\n", tmpname);
+        unlink(tmpname);
+        return -1;
+    }
+    fclose(f); f = NULL;
+    if (rename(tmpname, path) < 0) {
+        fprintf(log_f, "variant_map_save: rename to '%s' failed: %s\n",
+                path, strerror(errno));
+        unlink(tmpname);
+        return -1;
+    }
+    return 0;
 }
 
 static int
