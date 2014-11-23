@@ -61,6 +61,12 @@ variant_map_unparse(
         FILE *f,
         const struct variant_map *vmap,
         int mode); // 0 - in super-serve, 1 - in contests
+int
+variant_map_save(
+        FILE *log_f,
+        const struct variant_map *vmap, 
+        const unsigned char *path,
+        int mode);
 struct variant_map *
 variant_map_parse(
         FILE *log_f,
