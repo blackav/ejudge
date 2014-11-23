@@ -4,7 +4,7 @@
 #ifndef __RANDOM_H__
 #define __RANDOM_H__
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -25,5 +25,7 @@ int random_u16(void);
 unsigned random_u32(void);
 unsigned long long random_u64(void);
 void random_bytes(unsigned char *buf, int count);
+
+int random_range(int low, int high);
 
 #endif /* __RANDOM_H__ */

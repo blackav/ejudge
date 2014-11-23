@@ -170,3 +170,14 @@ random_bytes(unsigned char *buf, int count)
   for (; r; r--, p++)
     *p = (unsigned char) rand();
 }
+
+int
+random_range(int low, int high)
+{
+  int range = high - low; // high - excluded
+  if (range > 32767) {
+    // not for now...
+    abort();
+  }
+  return low + (int)((random_u16() / 65536.0) * range);
+}
