@@ -632,6 +632,7 @@ variant_map_set_variant(
     }
     vi = &vmap->v[vmap->u++];
     memset(vi, 0, sizeof(*vi));
+    vmap->user_map[user_id] = vi;
     vi->user_id = user_id;
     if (user_login) {
         vi->login = xstrdup(user_login);
