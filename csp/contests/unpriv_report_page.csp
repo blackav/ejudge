@@ -113,7 +113,8 @@ ns_unpriv_parse_run_id(
     content_type = get_content_type(rep_text, &rep_start);
     if (content_type != CONTENT_TYPE_XML
         && status != RUN_COMPILE_ERR
-        && status != RUN_STYLE_ERR) {
+        && status != RUN_STYLE_ERR
+        && status != RUN_REJECTED) {
       FAIL(NEW_SRV_ERR_REPORT_UNAVAILABLE);
     }
   } else {
