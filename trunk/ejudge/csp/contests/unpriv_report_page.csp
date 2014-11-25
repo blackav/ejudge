@@ -101,6 +101,11 @@ ns_unpriv_parse_run_id(
     enable_rep_view = 1;
   }
 
+  if (!enable_rep_view && re.token_count > 0
+      && (re.token_flags & TOKEN_TESTS_MASK) != 0) {
+    enable_rep_view = 1;
+  }
+
   if (!enable_rep_view) {
     FAIL(NEW_SRV_ERR_REPORT_VIEW_DISABLED);
   }
