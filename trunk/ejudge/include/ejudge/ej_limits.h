@@ -74,7 +74,7 @@
 /* the length of the serve's packet name
  * includes one character for priority
  */
-#define EJ_SERVE_PACKET_NAME_SIZE 13
+//#define EJ_SERVE_PACKET_NAME_SIZE 13
 
 /* maximal length of a CGI parameter value */
 #define EJ_MAX_CGI_VALUE_LEN 2097152

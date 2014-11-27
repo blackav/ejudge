@@ -403,8 +403,6 @@ serve_audit_log(
         ...)
   __attribute__((format(printf, 10, 11)));
 
-void serve_packet_name(int run_id, int prio, unsigned char buf[]);
-
 int
 serve_compile_request(
         serve_state_t state,
