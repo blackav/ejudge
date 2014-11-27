@@ -186,6 +186,7 @@ COMMON_CFILES=\
  nwrun_packet.c\
  opcaps.c\
  opcaps_2.c\
+ packet_name.c\
  parsecfg.c\
  parsecfg_2.c\
  pathutl.c\
@@ -549,6 +550,7 @@ HFILES=\
  ./include/ejudge/nsdb_plugin.h\
  ./include/ejudge/nwrun_packet.h\
  ./include/ejudge/opcaps.h\
+ ./include/ejudge/packet_name.h\
  ./include/ejudge/parsecfg.h\
  ./include/ejudge/pathutl.h\
  ./include/ejudge/pollfds.h\

@@ -244,9 +244,10 @@ scan_dir(char const *partial_path, char *found_item, size_t fi_size)
       continue;
     }
 
-    if (strlen(de->d_name) != EJ_SERVE_PACKET_NAME_SIZE - 1) {
+    /* if (strlen(de->d_name) != EJ_SERVE_PACKET_NAME_SIZE - 1) {
       prio = 0;
-    } else if (de->d_name[0] >= '0' && de->d_name[0] <= '9') {
+      } else */
+    if (de->d_name[0] >= '0' && de->d_name[0] <= '9') {
       prio = -16 + (de->d_name[0] - '0');
     } else if (de->d_name[0] >= 'A' && de->d_name[0] <= 'V') {
       prio = -6 + (de->d_name[0] - 'A');

@@ -47,6 +47,7 @@
 #include "ejudge/server_framework.h"
 #include "ejudge/ej_uuid.h"
 #include "ejudge/team_extra.h"
+#include "ejudge/packet_name.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -980,82 +981,6 @@ serve_audit_log(
   fclose(f);
 }
 
-static const unsigned char b32_digits[]=
-"0123456789ABCDEFGHIJKLMNOPQRSTUV";
-static void
-b32_number(unsigned long long num, unsigned char buf[])
-{
-  int i;
-
-  memset(buf, '0', EJ_SERVE_PACKET_NAME_SIZE - 1);
-  buf[EJ_SERVE_PACKET_NAME_SIZE - 1] = 0;
-  i = EJ_SERVE_PACKET_NAME_SIZE - 2;
-  while (num > 0 && i >= 0) {
-    buf[i] = b32_digits[num & 0x1f];
-    i--;
-    num >>= 5;
-  }
-  ASSERT(!num);
-}
-
-void
-serve_packet_name(int run_id, int prio, unsigned char buf[])
-{
-  unsigned long long num = 0;
-  struct timeval ts;
-
-  // generate "random" number, that would include the
-  // pid of "serve", the current time (with microseconds)
-  // and some small random component.
-  // pid is 2 byte (15 bit)
-  // run_id is 2 byte
-  // time_t component - 4 byte
-  // nanosec component - 4 byte
-
-  // EJ_SERVE_PACKET_NAME_SIZE == 13
-  // total packet name bits: 60 (12 * 5)
-
-  //OLD:
-  // 6666555555555544444444443333333333222222222211111111110000000000
-  // 3210987654321098765432109876543210987654321098765432109876543210
-  //     ==P==
-  //          =====run_id====
-  //                         ======pid======
-  //                                        ===========time==========
-
-  /*
-  num = (getpid() & 0x7fffLLU) << 25LLU;
-  num |= (run_id & 0x7fffLLU) << 40LLU;
-  gettimeofday(&ts, 0);
-  num |= (ts.tv_sec ^ ts.tv_usec) & 0x1ffffff;
-  b32_number(num, buf);
-  prio += 16;
-  if (prio < 0) prio = 0;
-  if (prio > 31) prio = 31;
-  buf[0] = b32_digits[prio];
-  */
-
-  //NEW:
-  // 6666555555555544444444443333333333222222222211111111110000000000
-  // 3210987654321098765432109876543210987654321098765432109876543210
-  //     ==P==
-  //          =====run_id=========
-  //                              =======time=========
-  //                                                  ======usec=====
-
-  prio += 16;
-  if (prio < 0) prio = 0;
-  if (prio > 31) prio = 31;
-  gettimeofday(&ts, 0);
-
-  num = prio;
-  num <<= 55;
-  num |= (run_id & 0xfffffLLU) << 35;
-  num |= (ts.tv_sec & 0xfffffLLU) << 15;
-  num |= (ts.tv_usec & 0x7fffLLU);
-  b32_number(num, buf);
-}
-
 static char **
 filter_lang_environ(const unsigned char *lang_short_name, char **environ)
 {
@@ -1107,7 +1032,7 @@ serve_compile_request(
   struct compile_request_packet cp;
   void *pkt_buf = 0;
   size_t pkt_len = 0;
-  unsigned char pkt_name[EJ_SERVE_PACKET_NAME_SIZE];
+  unsigned char pkt_name[64];
   int arch_flags;
   path_t run_arch;
   const struct section_global_data *global = state->global;
@@ -1295,7 +1220,7 @@ serve_compile_request(
   }
 
   if (!sfx) sfx = "";
-  serve_packet_name(run_id, prio, pkt_name);
+  serve_packet_name(contest_id, run_id, prio, pkt_name, sizeof(pkt_name));
 
   if (src_header_size > 0 || src_footer_size > 0) {
     if (len < 0) {
@@ -1478,7 +1403,7 @@ serve_run_request(
   unsigned char *arch = 0, *exe_sfx = "";
   const unsigned char *user_name;
   int prio;
-  unsigned char pkt_base[EJ_SERVE_PACKET_NAME_SIZE];
+  unsigned char pkt_base[64];
   unsigned char exe_out_name[256];
   unsigned char exe_in_name[256];
   struct teamdb_export te;
@@ -1623,7 +1548,7 @@ serve_run_request(
   if (secure_run && lang && lang->disable_security) secure_run = 0;
 
   /* generate a packet name */
-  serve_packet_name(run_id, prio, pkt_base);
+  serve_packet_name(contest_id, run_id, prio, pkt_base, sizeof(pkt_base));
   snprintf(exe_out_name, sizeof(exe_out_name), "%s%s", pkt_base, exe_sfx);
 
   if (!run_text) {
@@ -4771,7 +4696,8 @@ get_priority_code(int priority)
   priority += 16;
   if (priority < 0) priority = 0;
   if (priority > 31) priority = 31;
-  return b32_digits[priority];
+  if (priority < 10) return '0' + priority;
+  return 'A' + priority;
 }
 
 int

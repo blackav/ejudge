@@ -25,6 +25,7 @@
 #include "ejudge/compile_packet.h"
 #include "ejudge/fileutl.h"
 #include "ejudge/startstop.h"
+#include "ejudge/packet_name.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -105,48 +106,6 @@ write_version(void)
 
 struct serve_state serve_state;
 
-static const unsigned char b32_digits[]=
-"0123456789ABCDEFGHIJKLMNOPQRSTUV";
-static void
-b32_number(unsigned long long num, unsigned char buf[])
-{
-  int i;
-
-  memset(buf, '0', EJ_SERVE_PACKET_NAME_SIZE - 1);
-  buf[EJ_SERVE_PACKET_NAME_SIZE - 1] = 0;
-  i = EJ_SERVE_PACKET_NAME_SIZE - 2;
-  while (num > 0 && i >= 0) {
-    buf[i] = b32_digits[num & 0x1f];
-    i--;
-    num >>= 5;
-  }
-  ASSERT(!num);
-}
-
-void
-serve_packet_name(int run_id, int prio, unsigned char buf[])
-{
-  unsigned long long num = 0;
-  struct timeval ts;
-
-  // generate "random" number, that would include the
-  // pid of "serve", the current time (with microseconds)
-  // and some small random component.
-  // pid is 2 byte (15 bit)
-  // run_id is 2 byte
-  // time_t component - 4 byte
-  // nanosec component - 4 byte
-
-  num = (getpid() & 0x7fffLLU) << 25LLU;
-  num |= (run_id & 0x7fffLLU) << 40LLU;
-  gettimeofday(&ts, 0);
-  num |= (ts.tv_sec ^ ts.tv_usec) & 0x1ffffff;
-  b32_number(num, buf);
-  if (prio < -16) prio = -16;
-  if (prio > 15) prio = 15;
-  buf[0] = b32_digits[prio + 16];
-}
-
 int
 main(int argc, char *argv[])
 {
@@ -165,7 +124,7 @@ main(int argc, char *argv[])
   struct compile_request_packet cp;
   void *pkt_buf = 0;
   size_t pkt_len = 0;
-  unsigned char pkt_name[EJ_SERVE_PACKET_NAME_SIZE];
+  unsigned char pkt_name[64];
   const unsigned char *signame = 0;
   unsigned char cmdstr[1024];
 
@@ -246,7 +205,7 @@ main(int argc, char *argv[])
   memset(&cp, 0, sizeof(cp));
   if (compile_request_packet_write(&cp, &pkt_len, &pkt_buf) < 0)
     op_error("compile packet error");
-  serve_packet_name(0, 0, pkt_name);
+  serve_packet_name(0, 0, 0, pkt_name, sizeof(pkt_name));
   if (generic_write_file(pkt_buf, pkt_len, SAFE,
                          serve_state.global->compile_queue_dir,
                          pkt_name, "") < 0)
@@ -275,7 +234,7 @@ main(int argc, char *argv[])
   cp.lang_id = cmd;
   if (compile_request_packet_write(&cp, &pkt_len, &pkt_buf) < 0)
     op_error("compile packet error");
-  serve_packet_name(0, 0, pkt_name);
+  serve_packet_name(0, 0, 0, pkt_name);
   if (generic_write_file(pkt_buf, pkt_len, SAFE,
                          serve_state.global->compile_queue_dir,
                          pkt_name, "") < 0)
