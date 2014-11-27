@@ -1,3 +1,7 @@
+::selection {background: #328efe; color:#fff;}
+::-moz-selection {background: #328efe; color:#fff;}
+::-webkit-selection {background: #328efe; color:#fff;}
+
 body 
 {
     font-family: "Arial","Lucida Grande","Verdana","Sans-Serif";
@@ -264,8 +268,8 @@ body {
 	border: none;
 	height: 45px;
 	padding: 2px 13px;
-	padding: 6px 13px; /* для иконок без тени*/
-	padding: 6px 9px; /* для иконок с тенью*/
+	padding: 6px 13px; /* ??? ?????? ??? ????*/
+	padding: 6px 9px; /* ??? ?????? ? ?????*/
 	/* box-shadow: inset 3px 1px 10px 3px rgb(230, 230, 230); */
 	/* box-shadow: 4px 0px 10px 1px rgb(226, 226, 226); */
 }
@@ -612,4 +616,3 @@ td.a-button-style, td.a-button-style:hover {
 	display: block;
 	border-bottom: 1px solid rgba(102, 102, 102, 0.72);
 }
-

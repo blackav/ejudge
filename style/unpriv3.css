@@ -1,5 +1,13 @@
+::selection {background: #328efe; color:#fff;}
+::-moz-selection {background: #328efe; color:#fff;}
+::-webkit-selection {background: #328efe; color:#fff;}
+
 * {
 	margin: 0; padding: 0;
+}
+
+body {
+	padding: 0 15px;
 }
 
 a {
@@ -28,7 +36,9 @@ body {
 }
 
 #main-cont {
-	padding: 15px;
+	padding: 15px 0;
+	display: inline-block;
+	min-width: 100%;	
 }
 
 #container {
@@ -373,21 +383,21 @@ td#probNavTaskArea {
 	padding-top: 10px;
 }
 
-.nBottomNavList li {
-	display: inline-block;
-}
+.nBottomNavList li, .nTopNavList li {
+    display: inline-block;
+ }
 
 .nBottomNavList li  a, .nTopNavList li a {
 	font-size: 17px;
 	padding: 0 20px 0;
+	position: relative;
+	bottom: 5px;
 }
 
 .nBottomNavList li  a, .nTopNavList li a , A.tab:visited  {
 	color: rgb(48, 72, 92);
 	text-shadow: white 0 0 2px;
 	padding-top: 10px;
-	position: relative;
-	bottom: 5px;
 }
 
 .nBottomNavList li  a {
@@ -497,13 +507,13 @@ table.probNav {
 	background: -ms-linear-gradient(top,  rgba(215,233,243,1) 0%,rgba(131,196,249,1) 4%,rgba(123,184,225,1) 66%,rgba(120,180,220,1) 100%); /* IE10+ */
 	background: linear-gradient(to bottom,  rgba(215,233,243,1) 0%,rgba(131,196,249,1) 4%,rgba(123,184,225,1) 66%,rgba(120,180,220,1) 100%); /* W3C */
 	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#d7e9f3', endColorstr='#78b4dc',GradientType=0 ); /* IE6-9 */
-	padding-top: 35px;
+	padding-top: 15px;
 	border: 1px solid rgba(66, 144, 163, 0.68);
 	border-radius: 5px 5px 0 0;
 }	
 
 #nBottomNavSelected div.nProbCurrent {
-	padding-top: 35px;
+	padding-top: 14px;
 	background: rgb(141,195,239); /* Old browsers */
 	background: -moz-linear-gradient(top,  rgba(141,195,239,1) 0%, rgba(131,183,217,1) 66%, rgba(128,178,212,1) 100%); /* FF3.6+ */
 	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(141,195,239,1)), color-stop(66%,rgba(131,183,217,1)), color-stop(100%,rgba(128,178,212,1))); /* Chrome,Safari4+ */
@@ -522,25 +532,32 @@ table.probNav {
 
 #nBottomNavSelected {
 	border: none;
-	padding-top: 35px;
+	padding-top: 14px;
 	margin: 0;
 	position: relative;
-	top: 26px;
+	top: 5px;
 }
 
 #nBottomNavSelected a {
 	position: relative;
-	bottom: 29px;
+	bottom: 5px;
 }
 
 #nTopNavSelected {
 	border: none;
-	padding-top: 35px;
+	padding-top: 14px;
 	margin: 0;
 }
 
+#nTopNavSelected a {
+	position: relative;
+	bottom: 10px;
+	padding-top: 0px;
+}
+
 li .nProbEmpty:hover {
-	background: rgba(0, 0, 0, 0.17);
+	/* background: rgba(0, 0, 0, 0.17); */
+	background: #d1d1d1;
 }
 
 .nTopNavList div.nProbEmpty:hover {
@@ -555,11 +572,13 @@ li .nProbEmpty:hover {
 }
 
 li .nProbBad:hover {
-	background: rgba(171, 125, 125, 0.47);
+	/* background: rgba(171, 125, 125, 0.47); */
+	background: #d4bfbf;
 }
 
 li .nProbOk:hover {
-	background: rgba(148, 181, 130, 0.47);
+	/* background: rgba(148, 181, 130, 0.47); */
+	background: #cadac2;
 }
 
 .nTopNavList li.first-rad .nProbEmpty, .nTopNavList li.first-rad .nProbCurrent {
