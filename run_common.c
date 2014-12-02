@@ -2574,8 +2574,6 @@ run_one_test(
   }
 #endif
 
-  if (tsk_int) task_Wait(tsk_int);
-
   if (srpp->enable_process_group > 0 && task_TryProcessGroup(tsk) >= 0) {
     // there exist some processes beloging to the process group
     append_msg_to_log(check_out_path,
@@ -2584,6 +2582,7 @@ run_one_test(
     task_KillProcessGroup(tsk);
   }
 
+  if (tsk_int) task_Wait(tsk_int);
 
   /* set normal permissions for the working directory */
   make_writable(check_dir);
