@@ -2349,7 +2349,13 @@ run_one_test(
   }
   task_SetPathAsArg0(tsk);
   task_SetWorkingDir(tsk, working_dir);
-  if (srpp->enable_process_group > 0) task_EnableProcessGroup(tsk);
+  if (srpp->enable_process_group > 0) {
+    task_EnableProcessGroup(tsk);
+#ifndef __WIN32__
+    snprintf(mem_limit_buf, sizeof(mem_limit_buf), "%d", getpid());
+    task_SetEnv(tsk, "EJ_SUPER_RUN_PID", mem_limit_buf);
+#endif
+  }
 
   if (interactor_cmd) {
     task_SetRedir(tsk, 0, TSR_DUP, pfd2[0]);
