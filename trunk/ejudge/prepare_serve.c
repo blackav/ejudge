@@ -79,6 +79,9 @@ find_variant(
         if (vi->virtual_variant) *p_virtual_variant = vi->virtual_variant;
         else *p_virtual_variant = vi->real_variant;
       }
+      // safety check
+      if (vi->real_variant < 0 || vi->real_variant > prob->variant_num)
+        return 0;
       return vi->real_variant;
     }
     if (p_virtual_variant)
@@ -93,6 +96,8 @@ find_variant(
       // FIXME: handle errors
       variant_map_save(stderr, pmap, state->global->variant_map_file, 1);
     }
+    if (v < 0 || v > prob->variant_num)
+      return 0;
     return v;
   } else if (prob->autoassign_variants > 0) {
     int v = random_range(1, prob->variant_num + 1);
@@ -102,6 +107,8 @@ find_variant(
                             v);
     // FIXME: handle errors
     variant_map_save(stderr, pmap, state->global->variant_map_file, 1);
+    if (v < 0 || v > prob->variant_num)
+      return 0;
     return v;
   }
   return 0;
