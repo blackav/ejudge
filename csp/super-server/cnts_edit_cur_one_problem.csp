@@ -1382,6 +1382,22 @@
 <s:form>
     <s:hidden name="prob_id" check="false" />
     <s:tr attr="form_row_attrs[row ^= 1]">
+        <td>Umask value:</td>
+        <td><s:textfield name="param" value="prob->umask" size="48" maxlength="1024" checkExpr="" /></td>
+        <td><s:submit ac="prob-change-umask" label="Change" /><s:submit ac="prob-clear-umask" label="Clear" /></td>
+        <td><s:help ac="prob-change-umask" /></td>
+    </s:tr>
+</s:form>
+<%
+  }
+%>
+
+<%
+  if (prob_type == PROB_TYPE_STANDARD && show_adv) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Use separate process group?</td>
         <td><%
     if (is_abstract || !sup_prob) {
@@ -3466,6 +3482,30 @@
 %></td>
         <td><s:submit ac="prob-change-autoassign-variants" label="Change" /></td>
         <td><s:help ac="prob-change-autoassign-variants" /></td>
+    </s:tr>
+</s:form>
+<%
+  }
+%>
+
+<%
+  if (show_adv) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:tr attr="form_row_attrs[row ^= 1]">
+        <td>Hide variant from user?</td>
+        <td><%
+    if (is_abstract || !sup_prob) {
+      int value = (prob->hide_variant == 1);
+%><s:yesno name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_hide_variant, tmp_prob, sup_prob, global);
+%><s:yesno3 name="param" value="prob->hide_variant" default="tmp_prob->hide_variant" /><%
+    }
+%></td>
+        <td><s:submit ac="prob-change-hide-variant" label="Change" /></td>
+        <td><s:help ac="prob-change-hide-variant" /></td>
     </s:tr>
 </s:form>
 <%

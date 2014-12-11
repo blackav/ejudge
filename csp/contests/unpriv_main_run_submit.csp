@@ -40,7 +40,7 @@
         if (prob->long_name && prob->long_name[0]) {
 %>-<s:v value="prob->long_name" /><%
         }
-        if (variant > 0) {
+        if (prob->hide_variant <= 0 && variant > 0) {
 %> (<s:_>Variant</s:_> <s:v value="variant" />)<%
         }
 %></h2>
