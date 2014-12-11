@@ -2534,6 +2534,13 @@ run_one_test(
   if (srpp->max_process_count > 0) {
     task_SetMaxProcessCount(tsk, srpp->max_process_count);
   }
+  if (srpp->umask && srpp->umask[0]) {
+    // FIXME: handle errors
+    int umask = strtol(srpp->umask, NULL, 8);
+    if (umask >= 0 && umask <= 0777) {
+      task_SetUmask(tsk, umask);
+    }
+  }
 
   //task_PrintArgs(tsk);
 
