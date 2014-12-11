@@ -88,6 +88,7 @@ struct problem_config_section
   ejintbool_t ignore_unmarked;
   ejintbool_t disable_stderr;
   ejintbool_t enable_process_group;
+  ejintbool_t hide_variant;
 
   int id;
   int real_time_limit;
@@ -164,6 +165,7 @@ struct problem_config_section
   unsigned char *extid;
   unsigned char *revision;
   unsigned char *tokens;
+  unsigned char *umask;
 
   char **test_sets;
   char **date_penalty;
