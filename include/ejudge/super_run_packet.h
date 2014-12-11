@@ -162,6 +162,7 @@ struct super_run_in_problem_packet
   unsigned char *spelling;
   unsigned char *open_tests;
   ejintbool_t enable_process_group;
+  unsigned char *umask;
 
   int type_val META_ATTRIB((meta_hidden));
 };
