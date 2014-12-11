@@ -1201,6 +1201,8 @@ prepare_unparse_prob(
   if (prob->max_process_count >= 0) {
     fprintf(f, "max_process_count = %d\n", prob->max_process_count);
   }
+  if (prob->umask && prob->umask[0])
+    fprintf(f, "umask = \"%s\"\n", CARMOR(prob->umask));
 
   if (score_system == SCORE_KIROV || score_system == SCORE_OLYMPIAD) {
     if (prob->full_score >= 0) {
@@ -1405,6 +1407,10 @@ prepare_unparse_prob(
       || (!prob->abstract && prob->enable_process_group >= 0)) {
     unparse_bool(f, "enable_process_group", prob->enable_process_group);
   }
+  if ((prob->abstract > 0 && prob->hide_variant > 0)
+      || (!prob->abstract && prob->hide_variant >= 0)) {
+    unparse_bool(f, "hide_variant", prob->hide_variant);
+  }
   if (prob->enable_text_form >= 0
       && ((prob->abstract && prob->enable_text_form) || !prob->abstract))
       unparse_bool(f, "enable_text_form", prob->enable_text_form);
@@ -1587,6 +1593,8 @@ prepare_unparse_actual_prob(
   if (prob->max_process_count > 0) {
     fprintf(f, "max_process_count = %d\n", prob->max_process_count);
   }
+  if (prob->umask && prob->umask[0])
+    fprintf(f, "umask = \"%s\"\n", CARMOR(prob->umask));
 
   if (global->score_system == SCORE_KIROV || global->score_system == SCORE_OLYMPIAD) {
     if (prob->full_score >= 0)
@@ -1755,6 +1763,8 @@ prepare_unparse_actual_prob(
     unparse_bool(f, "disable_stderr", prob->disable_stderr);
   if (prob->enable_process_group > 0)
     unparse_bool(f, "enable_process_group", prob->enable_process_group);
+  if (prob->hide_variant > 0)
+    unparse_bool(f, "hide_variant", prob->hide_variant);
   if (prob->enable_text_form > 0)
     unparse_bool(f, "enable_text_form", prob->enable_text_form);
   if (prob->stand_ignore_score > 0)

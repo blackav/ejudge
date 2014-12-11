@@ -1947,6 +1947,8 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_PROB_CLEAR_TEST_SCORE_LIST:
   case SSERV_CMD_PROB_CHANGE_TOKENS:
   case SSERV_CMD_PROB_CLEAR_TOKENS:
+  case SSERV_CMD_PROB_CHANGE_UMASK:
+  case SSERV_CMD_PROB_CLEAR_UMASK:
   case SSERV_CMD_PROB_CHANGE_SCORE_TESTS:
   case SSERV_CMD_PROB_CLEAR_SCORE_TESTS:
   case SSERV_CMD_PROB_CHANGE_TESTS_TO_ACCEPT:
@@ -1960,6 +1962,7 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_PROB_CHANGE_IGNORE_UNMARKED:
   case SSERV_CMD_PROB_CHANGE_DISABLE_STDERR:
   case SSERV_CMD_PROB_CHANGE_ENABLE_PROCESS_GROUP:
+  case SSERV_CMD_PROB_CHANGE_HIDE_VARIANT:
   case SSERV_CMD_PROB_CHANGE_AUTOASSIGN_VARIANTS:
   case SSERV_CMD_PROB_CHANGE_ENABLE_TEXT_FORM:
   case SSERV_CMD_PROB_CHANGE_STAND_IGNORE_SCORE:
@@ -2950,6 +2953,8 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_CLEAR_TEST_SCORE_LIST] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_TOKENS] = { cmd_set_value },
   [SSERV_CMD_PROB_CLEAR_TOKENS] = { cmd_set_value },
+  [SSERV_CMD_PROB_CHANGE_UMASK] = { cmd_set_value },
+  [SSERV_CMD_PROB_CLEAR_UMASK] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_SCORE_TESTS] = { cmd_set_value },
   [SSERV_CMD_PROB_CLEAR_SCORE_TESTS] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_TESTS_TO_ACCEPT] = { cmd_set_value },
@@ -2963,6 +2968,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_CHANGE_IGNORE_UNMARKED] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_DISABLE_STDERR] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_ENABLE_PROCESS_GROUP] = { cmd_set_value },
+  [SSERV_CMD_PROB_CHANGE_HIDE_VARIANT] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_AUTOASSIGN_VARIANTS] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_ENABLE_TEXT_FORM] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_STAND_IGNORE_SCORE] = { cmd_set_value },

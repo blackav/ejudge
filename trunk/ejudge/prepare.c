@@ -416,6 +416,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(ignore_unmarked, "d"),
   PROBLEM_PARAM(disable_stderr, "d"),
   PROBLEM_PARAM(enable_process_group, "d"),
+  PROBLEM_PARAM(hide_variant, "d"),
   PROBLEM_PARAM(autoassign_variants, "d"),
   PROBLEM_PARAM(enable_text_form, "d"),
   PROBLEM_PARAM(stand_ignore_score, "d"),
@@ -510,6 +511,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(normalization, "s"),
   PROBLEM_PARAM(super_run_dir, "S"),
   PROBLEM_PARAM(tokens, "S"),
+  PROBLEM_PARAM(umask, "S"),
 
   { 0, 0, 0, 0 }
 };
@@ -975,6 +977,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->ignore_unmarked = -1;
   p->disable_stderr = -1;
   p->enable_process_group = -1;
+  p->hide_variant = -1;
   p->autoassign_variants = -1;
   p->enable_text_form = -1;
   p->stand_ignore_score = -1;
@@ -1020,6 +1023,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
   xfree(p->test_score_list);
   xfree(p->tokens);
   xfree(p->token_info);
+  xfree(p->umask);
   sarray_free(p->test_sets);
   sarray_free(p->date_penalty);
   sarray_free(p->group_start_date);
@@ -3165,6 +3169,7 @@ set_defaults(
     prepare_set_prob_value(CNTSPROB_ignore_unmarked, prob, aprob, g);    
     prepare_set_prob_value(CNTSPROB_disable_stderr, prob, aprob, g);    
     prepare_set_prob_value(CNTSPROB_enable_process_group, prob, aprob, g);    
+    prepare_set_prob_value(CNTSPROB_hide_variant, prob, aprob, g);    
     prepare_set_prob_value(CNTSPROB_autoassign_variants, prob, aprob, g);    
     prepare_set_prob_value(CNTSPROB_enable_text_form, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_stand_ignore_score, prob, aprob, g);
@@ -5382,7 +5387,10 @@ prepare_copy_problem(const struct section_problem_data *in)
   if (in->tokens) {
     out->tokens = xstrdup(in->tokens);
   }
-  out->tokens = 0;
+  out->token_info = 0;
+  if (in->umask) {
+    out->umask = xstrdup(in->umask);
+  }
 
   return out;
 }
@@ -5778,6 +5786,11 @@ prepare_set_prob_value(
   case CNTSPROB_enable_process_group:
     if (out->enable_process_group < 0 && abstr)
       out->enable_process_group = abstr->enable_process_group;
+    break;
+
+  case CNTSPROB_hide_variant:
+    if (out->hide_variant < 0 && abstr)
+      out->hide_variant = abstr->hide_variant;
     break;
 
   case CNTSPROB_autoassign_variants:
@@ -6324,7 +6337,7 @@ static const int prob_settable_list[] =
   CNTSPROB_priority_adjustment, CNTSPROB_spelling, CNTSPROB_stand_hide_time,
   CNTSPROB_advance_to_next, CNTSPROB_disable_ctrl_chars,
   CNTSPROB_valuer_sets_marked, CNTSPROB_ignore_unmarked,
-  CNTSPROB_disable_stderr, CNTSPROB_enable_process_group, CNTSPROB_autoassign_variants,
+  CNTSPROB_disable_stderr, CNTSPROB_enable_process_group, CNTSPROB_hide_variant, CNTSPROB_autoassign_variants,
   CNTSPROB_enable_text_form,
   CNTSPROB_stand_ignore_score, CNTSPROB_stand_last_column,
   CNTSPROB_score_multiplier, CNTSPROB_prev_runs_to_show,
@@ -6335,7 +6348,7 @@ static const int prob_settable_list[] =
   CNTSPROB_test_dir, CNTSPROB_test_sfx,
   CNTSPROB_corr_dir, CNTSPROB_corr_sfx, CNTSPROB_info_dir, CNTSPROB_info_sfx,
   CNTSPROB_tgz_dir, CNTSPROB_tgz_sfx, CNTSPROB_tgzdir_sfx, CNTSPROB_input_file,
-  CNTSPROB_output_file, CNTSPROB_test_score_list, CNTSPROB_tokens, CNTSPROB_score_tests,
+  CNTSPROB_output_file, CNTSPROB_test_score_list, CNTSPROB_tokens, CNTSPROB_umask, CNTSPROB_score_tests,
   CNTSPROB_test_sets, CNTSPROB_deadline, CNTSPROB_start_date,
   CNTSPROB_variant_num, CNTSPROB_date_penalty, CNTSPROB_group_start_date,
   CNTSPROB_group_deadline, CNTSPROB_disable_language,
@@ -6429,6 +6442,7 @@ static const unsigned char prob_settable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_ignore_unmarked] = 1,
   [CNTSPROB_disable_stderr] = 1,
   [CNTSPROB_enable_process_group] = 1,
+  [CNTSPROB_hide_variant] = 1,
   [CNTSPROB_autoassign_variants] = 1,
   [CNTSPROB_enable_text_form] = 1,
   [CNTSPROB_stand_ignore_score] = 1,
@@ -6519,6 +6533,7 @@ static const unsigned char prob_settable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_normalization] = 1,
   [CNTSPROB_super_run_dir] = 1,
   [CNTSPROB_tokens] = 1,
+  [CNTSPROB_umask] = 1,
 };
 
 static const int prob_inheritable_list[] =
@@ -6551,6 +6566,7 @@ static const int prob_inheritable_list[] =
   CNTSPROB_disable_ctrl_chars, CNTSPROB_valuer_sets_marked,
   CNTSPROB_ignore_unmarked, CNTSPROB_disable_stderr,
   CNTSPROB_enable_process_group,
+  CNTSPROB_hide_variant,
   CNTSPROB_autoassign_variants,
   CNTSPROB_enable_text_form, CNTSPROB_stand_ignore_score,
   CNTSPROB_stand_last_column, CNTSPROB_score_multiplier,
@@ -6562,7 +6578,7 @@ static const int prob_inheritable_list[] =
   CNTSPROB_test_dir, CNTSPROB_test_sfx, CNTSPROB_corr_dir, CNTSPROB_corr_sfx,
   CNTSPROB_info_dir, CNTSPROB_info_sfx, CNTSPROB_tgz_dir, CNTSPROB_tgz_sfx,
   CNTSPROB_tgzdir_sfx,
-  CNTSPROB_input_file, CNTSPROB_output_file, CNTSPROB_test_score_list, CNTSPROB_tokens,
+  CNTSPROB_input_file, CNTSPROB_output_file, CNTSPROB_test_score_list, CNTSPROB_tokens, CNTSPROB_umask,
   CNTSPROB_score_tests, CNTSPROB_test_sets, CNTSPROB_deadline,
   CNTSPROB_start_date, CNTSPROB_variant_num, CNTSPROB_date_penalty,
   CNTSPROB_group_start_date, CNTSPROB_group_deadline,
@@ -6652,6 +6668,7 @@ static const unsigned char prob_inheritable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_ignore_unmarked] = 1,
   [CNTSPROB_disable_stderr] = 1,
   [CNTSPROB_enable_process_group] = 1,
+  [CNTSPROB_hide_variant] = 1,
   [CNTSPROB_autoassign_variants] = 1,
   [CNTSPROB_enable_text_form] = 1,
   [CNTSPROB_stand_ignore_score] = 1,
@@ -6732,6 +6749,7 @@ static const unsigned char prob_inheritable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_normalization] = 1,
   [CNTSPROB_super_run_dir] = 1,
   [CNTSPROB_tokens] = 1,
+  [CNTSPROB_umask] = 1,
 
   0,
 };
@@ -6808,6 +6826,7 @@ static const struct section_problem_data prob_undef_values =
   .ignore_unmarked = -1,
   .disable_stderr = -1,
   .enable_process_group = -1,
+  .hide_variant = -1,
   .autoassign_variants = -1,
   .enable_text_form = -1,
   .stand_ignore_score = -1,
@@ -6894,6 +6913,7 @@ static const struct section_problem_data prob_undef_values =
   .normalization = { 0 },
   .super_run_dir = NULL,
   .tokens = NULL,
+  .umask = NULL,
 };
 
 static const struct section_problem_data prob_default_values =
@@ -6967,6 +6987,7 @@ static const struct section_problem_data prob_default_values =
   .ignore_unmarked = 0,
   .disable_stderr = 0,
   .enable_process_group = 0,
+  .hide_variant = 0,
   .autoassign_variants = 0,
   .enable_text_form = 0,
   .stand_ignore_score = 0,
@@ -7032,6 +7053,7 @@ static const struct section_problem_data prob_default_values =
   .normalization = "",
   .super_run_dir = NULL,
   .tokens = NULL,
+  .umask = NULL,
 };
 
 static const int prob_global_map[CNTSPROB_LAST_FIELD] =
