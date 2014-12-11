@@ -770,6 +770,12 @@ task_SetMaxPendingCount(tTask *tsk, int max_pending_count)
   return 0;
 }
 
+int
+task_SetUmask(tTask *tsk, int umask)
+{
+  return 0;
+}
+
 static char *
 print_as_shell_redir(int oflags)
 {

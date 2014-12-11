@@ -111,6 +111,7 @@ struct tTask
   int    max_process_count;     /* max number of created processes/threads */
   int    max_prio_value;        /* max real-time priority */
   int    max_pending_count;     /* max number of pending signals */
+  int    umask;                 /* process umask */
   struct rusage usage;          /* process resource utilization */
   struct timeval start_time;    /* start real-time */
   struct timeval stop_time;     /* stop real-time */
@@ -391,6 +392,7 @@ task_New(void)
   r->max_process_count = -1;
   r->max_prio_value = -1;
   r->max_pending_count = -1;
+  r->umask = -1;
 
   /* find an empty slot */
   for (i = 0; i < task_u; i++)
@@ -1147,6 +1149,15 @@ task_SetMaxPendingCount(tTask *tsk, int max_pending_count)
 }
 
 int
+task_SetUmask(tTask *tsk, int umask)
+{
+  task_init_module();
+  ASSERT(tsk);
+  tsk->umask = umask;
+  return 0;
+}
+
+int
 task_DisableCoreDump(tTask *tsk)
 {
   task_init_module();
@@ -1814,6 +1825,9 @@ task_Start(tTask *tsk)
     if (tsk->max_pending_count >= 0) {
       set_limit(comm_fd + 1, RLIMIT_SIGPENDING, tsk->max_pending_count);
     }
+    if (tsk->umask >= 0) {
+      umask(tsk->umask & 0777);
+    }
 
     /* set millisecond time limit */
 #ifdef __linux__
@@ -1912,111 +1926,6 @@ task_Start(tTask *tsk)
 task_Wait(tTask *tsk)
 {
   return task_NewWait(tsk);
-
-  pid_t pid;
-  int   stat, n;
-  struct rusage usage;
-  char errbuf[512];
-  sigset_t bs;
-
-  sigemptyset(&bs);
-  sigaddset(&bs, SIGCHLD);
-
-  task_init_module();
-  ASSERT(tsk);
-
-  bury_dead_prc();
-  if (signal(SIGCHLD, sigchld_handler) != sigchld_handler) {
-    //fprintf(stderr, "EXEC: TASK_WAIT: SIGCHLD WAS RESET\n");
-  }
-
-  if (tsk->state == TSK_ERROR || tsk->state == TSK_STOPPED)
-    return 0;
-  if (tsk->state == TSK_SIGNALED || tsk->state == TSK_EXITED)
-    return tsk;
-  ASSERT(tsk->state == TSK_RUNNING);
-
-  /* advanced wait with timeout */
-  if (tsk->max_real_time > 0) {
-    struct timeval cur_time, timeout_time;
-    struct timespec wait_time;
-
-    gettimeofday(&cur_time, 0);
-    timeout_time = cur_time;
-    timeout_time.tv_sec += tsk->max_real_time;
-
-    while (1) {
-      wait_time.tv_nsec = (timeout_time.tv_usec - cur_time.tv_usec) * 1000;
-      wait_time.tv_sec = timeout_time.tv_sec - cur_time.tv_sec;
-      if (wait_time.tv_nsec < 0) {
-        wait_time.tv_nsec += 1000000000;
-        --wait_time.tv_sec;
-      }
-      if ((!wait_time.tv_sec && !wait_time.tv_nsec) || wait_time.tv_sec < 0) {
-        // time is over, kill the process
-        if (tsk->enable_process_group > 0) {
-          kill(-tsk->pid, tsk->termsig);
-        } else {
-          kill(tsk->pid, tsk->termsig);
-        }
-        tsk->was_real_timeout = 1;
-        tsk->was_timeout = 1;
-        /*
-        fprintf(stderr, "EXEC: TASK_WAIT: 1: REAL TIME TIMEOUT %ld.%09ld\n",
-                wait_time.tv_sec, wait_time.tv_nsec);
-        */
-        break;
-      }
-      n = sigtimedwait(&bs, 0, &wait_time);
-      if (n < 0 && errno == EAGAIN) {
-        // time is over, kill the process
-        if (tsk->enable_process_group > 0) {
-          kill(-tsk->pid, tsk->termsig);
-        } else {
-          kill(tsk->pid, tsk->termsig);
-        }
-        tsk->was_timeout = 1;
-        tsk->was_real_timeout = 1;
-        //fprintf(stderr, "EXEC: TASK_WAIT: 2: REAL TIME TIMEOUT %d\n", n);
-        break;
-      }
-      if (n != SIGCHLD) {
-        //fprintf(stderr, "EXEC: TASK_WAIT: SIGTIMEDWAIT RETURNED %d\n", n);
-      } else {
-        int done = 0;
-        memset(&usage, 0, sizeof(usage));
-        while ((pid = wait4(-1, &stat, WNOHANG, &usage)) > 0) {
-          find_prc_in_list(pid, stat, &usage);
-          if (pid == tsk->pid) done = 1;
-          memset(&usage, 0, sizeof(usage));
-        }
-        if (done) break;
-      }
-
-      gettimeofday(&cur_time, 0);
-    }
-  }
-
-  while (tsk->state == TSK_RUNNING) {
-    memset(&usage, 0, sizeof(usage));
-    pid = wait4(-1, &stat, 0, &usage);
-    if (pid == -1 && errno == ECHILD) {
-      snprintf(errbuf, sizeof(errbuf), "wait4 returned -1 (no child)");
-      if (tsk->quiet_flag) {
-        xfree(tsk->last_error_msg);
-        tsk->last_error_msg = xstrdup(errbuf);
-      } else {
-        write_log(LOG_REUSE, LOG_ERROR, "task_Wait: %s", errbuf);
-      }
-      tsk->state = TSK_SIGNALED;
-      tsk->code = 0;
-      return tsk;
-    }
-    if (pid > 0) {
-      find_prc_in_list(pid, stat, &usage);
-    }
-  }
-  return tsk;
 }
 
 struct process_info
