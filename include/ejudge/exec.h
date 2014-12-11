@@ -147,6 +147,7 @@ int task_SetMaxProcessCount(tpTask, int);
 int task_SetMaxPrioValue(tpTask, int);
 // RLIMIT_SIGPENDING
 int task_SetMaxPendingCount(tpTask, int);
+int task_SetUmask(tpTask, int);
 
 #ifdef __cplusplus
 }
