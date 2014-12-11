@@ -2752,9 +2752,13 @@ prob_instr(
   }
 
   if (!tmp_prob->standard_checker[0]) {
-    prepare_set_prob_value(CNTSPROB_check_cmd, tmp_prob, abstr, global);
-    fprintf(f, "<p><b>Output file checker:</b></p>\n");
-    handle_file(f, global, tmp_prob, tmp_prob->check_cmd, 1);
+    if (!tmp_prob->check_cmd[0]) {
+      fprintf(f, "<p><b><font color=\"red\">Neither standard, nor custom checker is defined!</font></b></p>\n");
+    } else {
+      prepare_set_prob_value(CNTSPROB_check_cmd, tmp_prob, abstr, global);
+      fprintf(f, "<p><b>Output file checker:</b></p>\n");
+      handle_file(f, global, tmp_prob, tmp_prob->check_cmd, 1);
+    }
   }
 
   prepare_set_prob_value(CNTSPROB_test_checker_cmd, tmp_prob, abstr, global);
