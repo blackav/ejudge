@@ -821,6 +821,9 @@ cmd_submit_run(
   /* check variant */
   switch (phr->role) {
   case USER_ROLE_CONTESTANT:
+    if (prob->disable_user_submit > 0) {
+      FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+    }
     if (hr_cgi_param(phr, "variant", &s) != 0)
       FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
     if (prob->variant_num > 0) {

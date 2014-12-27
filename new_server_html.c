@@ -8305,6 +8305,10 @@ unpriv_submit_run(
     FAIL2(NEW_SRV_ERR_INV_PROB_ID);
   }
 
+  if (prob->disable_user_submit > 0) {
+    FAIL2(NEW_SRV_ERR_PERMISSION_DENIED);
+  }
+
   // "STANDARD" problems need programming language identifier
   if (prob->type == PROB_TYPE_STANDARD) {
     if (hr_cgi_param(phr, "lang_id", &s) <= 0
