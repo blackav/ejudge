@@ -4519,7 +4519,8 @@ ns_get_user_problems_summary(
         pinfo[re.prob_id].solved_flag = 1;
         pinfo[re.prob_id].best_run = run_id;
         cur_score = calc_kirov_score(0, 0, start_time,
-                                     separate_user_score, 1 /* user_mode */, &re, cur_prob, 0, 0, 0, 0, 0);
+                                     separate_user_score, 1 /* user_mode */, re.token_flags,
+                                     &re, cur_prob, 0, 0, 0, 0, 0);
         //if (cur_score > best_score[re.prob_id])
         pinfo[re.prob_id].best_score = cur_score;
         break;
@@ -4542,7 +4543,7 @@ ns_get_user_problems_summary(
         pinfo[re.prob_id].best_run = run_id;
         pinfo[re.prob_id].attempts++;
         cur_score = calc_kirov_score(0, 0, start_time, separate_user_score,
-                                     1 /* user_mode */,
+                                     1 /* user_mode */, re.token_flags,
                                      &re, cur_prob, 0, 0, 0, 0, 0);
         //if (cur_score > best_score[re.prob_id])
         pinfo[re.prob_id].best_score = cur_score;
@@ -4583,7 +4584,7 @@ ns_get_user_problems_summary(
         case RUN_OK:
           pinfo[re.prob_id].solved_flag = 1;
           cur_score = calc_kirov_score(0, 0, start_time, separate_user_score,
-                                       1 /* user_mode */, &re, cur_prob,
+                                       1 /* user_mode */, re.token_flags, &re, cur_prob,
                                        pinfo[re.prob_id].attempts,
                                        pinfo[re.prob_id].disqualified,
                                        pinfo[re.prob_id].prev_successes, 0, 0);
@@ -4597,7 +4598,7 @@ ns_get_user_problems_summary(
           // this is OK solution without manual confirmation
           pinfo[re.prob_id].pr_flag = 1;
           cur_score = calc_kirov_score(0, 0, start_time, separate_user_score,
-                                       1 /* user_mode */, &re, cur_prob,
+                                       1 /* user_mode */, re.token_flags, &re, cur_prob,
                                        pinfo[re.prob_id].attempts,
                                        pinfo[re.prob_id].disqualified,
                                        pinfo[re.prob_id].prev_successes, 0, 0);
@@ -4630,7 +4631,7 @@ ns_get_user_problems_summary(
 
         case RUN_PARTIAL:
           cur_score = calc_kirov_score(0, 0, start_time, separate_user_score,
-                                       1 /* user_mode */, &re, cur_prob,
+                                       1 /* user_mode */, re.token_flags, &re, cur_prob,
                                        pinfo[re.prob_id].attempts,
                                        pinfo[re.prob_id].disqualified,
                                        pinfo[re.prob_id].prev_successes, 0, 0);
@@ -4666,7 +4667,7 @@ ns_get_user_problems_summary(
         }
 
         cur_score = calc_kirov_score(0, 0, start_time, separate_user_score,
-                                     1 /* user_mode */, &re, cur_prob,
+                                     1 /* user_mode */, re.token_flags, &re, cur_prob,
                                      pinfo[re.prob_id].attempts,
                                      pinfo[re.prob_id].disqualified,
                                      pinfo[re.prob_id].prev_successes, 0, 0);
@@ -4783,7 +4784,7 @@ ns_get_user_problems_summary(
         }
 
         cur_score = calc_kirov_score(0, 0, start_time, separate_user_score,
-                                     1 /* user_mode */, &re, cur_prob,
+                                     1 /* user_mode */, re.token_flags, &re, cur_prob,
                                      pinfo[re.prob_id].attempts,
                                      pinfo[re.prob_id].disqualified,
                                      pinfo[re.prob_id].prev_successes, 0, 0);
