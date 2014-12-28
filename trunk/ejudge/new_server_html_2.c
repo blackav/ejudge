@@ -5848,7 +5848,7 @@ write_xml_team_testing_report(
   max_score = r->max_score;
   run_tests = r->run_tests;
   tests_passed = r->tests_passed;
-  if (global->separate_user_score > 0 && state->online_view_judge_score <= 0) {
+  if (global->separate_user_score > 0 && state->online_view_judge_score <= 0 && !(token_flags & TOKEN_FINALSCORE_BIT)) {
     if (r->user_status >= 0) status = r->user_status;
     if (r->user_score >= 0) score = r->user_score;
     if (r->user_max_score >= 0) max_score = r->user_max_score;
