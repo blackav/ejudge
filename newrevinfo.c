@@ -496,6 +496,7 @@ new_minor_version(const unsigned char *versions_file, const unsigned char *check
             fprintf(stderr, "Failed to read commit_id\n");
             exit(1);
         }
+        fprintf(stderr, "id_str: %s\n", id_str);
     }
 
     FILE *cf = fopen(out_file, "w");
